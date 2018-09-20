@@ -15,7 +15,6 @@
  *
  */
 
-#include "constants.h"
 #include "deltatime.h"
 
 int deltatime_cmp(deltatime_t a, deltatime_t b)

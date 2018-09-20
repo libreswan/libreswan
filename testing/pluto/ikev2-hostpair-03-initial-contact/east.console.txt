@@ -1,0 +1,71 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ # confirm that the network is alive
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add roadnet-eastnet-ipv4-psk-ikev2
+002 added connection description "roadnet-eastnet-ipv4-psk-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec status | grep STATE_
+000 #7: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
+000 #8: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+east #
+ ip xfrm policy
+src 192.1.2.23/32 dst 192.0.2.1/32 
+	dir out priority 1040351 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
+src 192.0.2.1/32 dst 192.1.2.23/32 
+	dir fwd priority 1040351 ptype main 
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.1/32 dst 192.1.2.23/32 
+	dir in priority 1040351 ptype main 
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

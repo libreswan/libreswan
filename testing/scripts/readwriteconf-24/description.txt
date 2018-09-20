@@ -1,2 +1,0 @@
-This tests parsing of a config file with various combinations of ipv4
-and ipv6 parameters that should work

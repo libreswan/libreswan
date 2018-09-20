@@ -60,7 +60,7 @@ static void digest_symkey(struct hash_context *hash,
 
 static void digest_bytes(struct hash_context *hash,
 			 const char *name UNUSED,
-			 const u_int8_t *bytes, size_t sizeof_bytes)
+			 const uint8_t *bytes, size_t sizeof_bytes)
 {
 	passert(digest_bytes == hash->desc->hash_ops->digest_bytes);
 	SECStatus rc = PK11_DigestOp(hash->context, bytes, sizeof_bytes);
@@ -68,11 +68,11 @@ static void digest_bytes(struct hash_context *hash,
 }
 
 static void final_bytes(struct hash_context **hashp,
-			u_int8_t *bytes, size_t sizeof_bytes)
+			uint8_t *bytes, size_t sizeof_bytes)
 {
 	passert(final_bytes == (*hashp)->desc->hash_ops->final_bytes);
 	unsigned out_len = 0;
-	passert(sizeof_bytes == (*hashp)->desc->hash_digest_len);
+	passert(sizeof_bytes == (*hashp)->desc->hash_digest_size);
 	SECStatus rc = PK11_DigestFinal((*hashp)->context, bytes,
 					&out_len, sizeof_bytes);
 	passert(rc == SECSuccess);
@@ -111,9 +111,9 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 static void nss_hash_check(const struct hash_desc *hash)
 {
 	const struct ike_alg *alg = &hash->common;
-	// passert_ike_alg(alg, hash->common.nss_mechanism == 0);
-	passert_ike_alg(alg, hash->nss.oid_tag > 0);
-	passert_ike_alg(alg, hash->nss.derivation_mechanism > 0);
+	// pexpect_ike_alg(alg, hash->common.nss_mechanism == 0);
+	pexpect_ike_alg(alg, hash->nss.oid_tag > 0);
+	pexpect_ike_alg(alg, hash->nss.derivation_mechanism > 0);
 }
 
 const struct hash_ops ike_alg_hash_nss_ops = {

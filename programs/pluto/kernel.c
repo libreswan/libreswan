@@ -53,6 +53,7 @@
 #include "defs.h"
 #include "rnd.h"
 #include "id.h"
+#include "fd.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "timer.h"
@@ -72,15 +73,13 @@
 #include "keys.h"
 
 #include "ike_alg.h"
-#include "ike_alg_3des.h"
-#include "ike_alg_sha2.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_integ.h"
 
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
 #include "ip_address.h"
 #include "lswfips.h" /* for libreswan_fipsmode() */
-
-const struct kernel_sa empty_sa;	/* zero or null in all the right places */
 
 /* which kernel interface to use */
 enum kernel_interface kern_interface = USE_NETKEY;
@@ -91,9 +90,9 @@ bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
  * It is assumed that the destination subnets agree; we are only
  * testing that the interfaces and nexthops match.
  */
-#define routes_agree(c, d) ((c)->interface->ip_dev == (d)->interface->ip_dev \
-				&& sameaddr(&(c)->spd.this.host_nexthop, \
-					&(d)->spd.this.host_nexthop))
+#define routes_agree(c, d) \
+	((c)->interface->ip_dev == (d)->interface->ip_dev && \
+	 sameaddr(&(c)->spd.this.host_nexthop, &(d)->spd.this.host_nexthop))
 
 const struct pfkey_proto_info null_proto_info[2] = {
 	{
@@ -168,7 +167,6 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	int transport_proto, ipsec_spi_t shunt_spi,
 	const char *why)
 {
-
 	/* report any duplication; this should NOT happen */
 	struct bare_shunt **bspp = bare_shunt_ptr(ours, his, transport_proto);
 
@@ -217,8 +215,6 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 #endif
 				const char *why)
 {
-	ip_address src, dst;
-
 	passert(samesubnettype(ours, his));
 
 	/*
@@ -230,6 +226,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 	 *          proc value is different from our internal value?
 	 */
 
+	ip_address src, dst;
 
 	networkof(ours, &src);
 	networkof(his, &dst);
@@ -517,12 +514,12 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 
 	secure_xauth_username_str[0] = '\0';
 
-	if (st != NULL && st->st_username[0] != '\0') {
+	if (st != NULL && st->st_xauth_username[0] != '\0') {
 		char *p = jam_str(secure_xauth_username_str,
 				sizeof(secure_xauth_username_str),
 				"PLUTO_USERNAME='");
 
-		p = clean_xauth_username(st->st_username,
+		p = clean_xauth_username(st->st_xauth_username,
 				p,
 				sizeof(secure_xauth_username_str) -
 				(p - secure_xauth_username_str) - 2);
@@ -668,7 +665,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		kernel_ops->kern_name,
 		metric_str,
 		connmtu_str,
-		st == NULL ? (u_int64_t)0 : st->st_esp.add_time,
+		st == NULL ? (uint64_t)0 : st->st_esp.add_time,
 		prettypolicy(c->policy),	/* 25 */
 		NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",	/* 26 */
 		enum_show(&connection_kind_names, c->kind),
@@ -959,10 +956,10 @@ static enum routability could_route(struct connection *c)
 	}
 
 	/* if routing would affect IKE messages, reject */
-	if (kern_interface != NO_KERNEL
-		&& c->spd.this.host_port != pluto_nat_port
-		&& c->spd.this.host_port != pluto_port &&
-		addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
+	if (kern_interface != NO_KERNEL &&
+	    c->spd.this.host_port != pluto_nat_port &&
+	    c->spd.this.host_port != pluto_port &&
+	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
 		loglog(RC_LOG_SERIOUS,
 			"cannot install route: peer is within its client");
 		return route_impossible;
@@ -1126,9 +1123,7 @@ static bool sag_eroute(const struct state *st,
 
 void migration_up(struct connection *c,  struct state *st)
 {
-	struct spd_route *sr;
-
-	for (sr = &c->spd; sr; sr = sr->spd_next) {
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 #ifdef IPSEC_CONNECTION_LIMIT
 		num_ipsec_eroute++;
 #endif
@@ -1140,16 +1135,13 @@ void migration_up(struct connection *c,  struct state *st)
 
 void migration_down(struct connection *c,  struct state *st)
 {
-	struct spd_route *sr;
-
-	for (sr = &c->spd; sr; sr = sr->spd_next) {
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		enum routing_t cr = sr->routing;
 
-		if (erouted(cr)) {
 #ifdef IPSEC_CONNECTION_LIMIT
+		if (erouted(cr))
 			num_ipsec_eroute--;
 #endif
-		}
 
 		sr->routing = RT_UNROUTED; /* do now so route_owner won't find us */
 
@@ -1165,9 +1157,7 @@ void migration_down(struct connection *c,  struct state *st)
 /* delete any eroute for a connection and unroute it if route isn't shared */
 void unroute_connection(struct connection *c)
 {
-	struct spd_route *sr;
-
-	for (sr = &c->spd; sr; sr = sr->spd_next) {
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		enum routing_t cr = sr->routing;
 
 		if (erouted(cr)) {
@@ -1225,10 +1215,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 {
 	struct bare_shunt *p;
 
-	/* ??? the following 3 lines are embarrassing */
-	pexpect(pp != NULL);
-	if (pp == NULL)
-		return;
+	passert(pp != NULL);
 
 	p = *pp;
 
@@ -1240,9 +1227,8 @@ static void free_bare_shunt(struct bare_shunt **pp)
 unsigned show_shunt_count(void)
 {
 	unsigned i = 0;
-	const struct bare_shunt *bs;
 
-	for (bs = bare_shunts; bs != NULL; bs = bs->next)
+	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next)
 	{
 		i++;
 	}
@@ -1252,11 +1238,9 @@ unsigned show_shunt_count(void)
 
 void show_shunt_status(void)
 {
-	const struct bare_shunt *bs;
-
 	whack_log(RC_COMMENT, "Bare Shunt list:"); /* spacer */
 	whack_log(RC_COMMENT, " "); /* spacer */
-	for (bs = bare_shunts; bs != NULL; bs = bs->next) {
+	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
 
 		int ourport = ntohs(portof(&bs->ours.addr));
@@ -1304,7 +1288,6 @@ bool raw_eroute(const ip_address *this_host,
 	)
 {
 	char text_said[SATOT_BUF + SATOT_BUF];
-	bool result;
 
 	switch (op) {
 	case ERO_ADD:
@@ -1349,7 +1332,7 @@ bool raw_eroute(const ip_address *this_host,
 #endif
 		});
 
-	result = kernel_ops->raw_eroute(this_host, this_client,
+	bool result = kernel_ops->raw_eroute(this_host, this_client,
 					that_host, that_client,
 					cur_spi, new_spi, sa_proto,
 					transport_proto,
@@ -1579,7 +1562,6 @@ bool eroute_connection(const struct spd_route *sr,
 {
 	const ip_address *peer = &sr->that.host_addr;
 	char buf2[256];
-	ip_subnet client;
 
 	snprintf(buf2, sizeof(buf2),
 		"eroute_connection %s", opname);
@@ -1588,6 +1570,8 @@ bool eroute_connection(const struct spd_route *sr,
 		peer = aftoinfo(addrtypeof(peer))->any;
 
 	if (sr->this.has_cat) {
+		ip_subnet client;
+
 		addrtosubnet(&sr->this.host_addr, &client);
 		bool t = raw_eroute(&sr->this.host_addr, &client,
 				peer, &sr->that.client,
@@ -1727,7 +1711,6 @@ bool assign_holdpass(const struct connection *c,
 					(c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
 						"delete narrow %hold"))
 		{
-
 			DBG(DBG_CONTROL,
 				DBG_log("assign_holdpass() delete_bare_shunt() succeeded"));
 		} else {
@@ -1775,13 +1758,13 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 
 	DBG(DBG_KERNEL, DBG_log("delete %s", text_said));
 
-	struct kernel_sa sa = empty_sa;
-
-	sa.spi = spi;
-	sa.proto = proto;
-	sa.src = src;
-	sa.dst = dest;
-	sa.text_said = text_said;
+	struct kernel_sa sa = {
+		.spi = spi,
+		.proto = proto,
+		.src = src,
+		.dst = dest,
+		.text_said = text_said,
+	};
 
 	passert(kernel_ops->del_sa != NULL);
 	return kernel_ops->del_sa(&sa);
@@ -1837,15 +1820,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	char text_esp[SATOT_BUF];
 	char text_ah[SATOT_BUF];
 
-	/*
-	 * encapsulation: encapsulation mode called for
-	 * encap_oneshot: copy of "encapsultion" but reset to
-	 *	ENCAPSULATION_MODE_TRANSPORT after use.
-	 */
-	int encapsulation = ENCAPSULATION_MODE_TRANSPORT;
-	int encap_oneshot;
-	bool add_selector;
-
 	src.maskbits = 0;
 	dst.maskbits = 0;
 
@@ -1861,10 +1835,17 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		dst_client = c->spd.that.client;
 	}
 
+	/*
+	 * encapsulation: encapsulation mode called for
+	 * encap_oneshot: copy of "encapsultion" but reset to
+	 *	ENCAPSULATION_MODE_TRANSPORT after use.
+	 */
+	int encapsulation = ENCAPSULATION_MODE_TRANSPORT;
+	bool add_selector;
+
 	if (st->st_ah.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
-		st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
-		st->st_ipcomp.attrs.encapsulation ==
-		ENCAPSULATION_MODE_TUNNEL) {
+	    st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
+	    st->st_ipcomp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL) {
 		encapsulation = ENCAPSULATION_MODE_TUNNEL;
 		add_selector = FALSE; /* Don't add selectors for tunnel mode */
 	} else {
@@ -1875,23 +1856,23 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		add_selector = TRUE;
 	}
 	c->encapsulation = encapsulation;
-	encap_oneshot = encapsulation;
 
-	struct kernel_sa said_boilerplate = empty_sa;
+	int encap_oneshot = encapsulation;
 
-	said_boilerplate.src = &src.addr;
-	said_boilerplate.dst = &dst.addr;
-	said_boilerplate.src_client = &src_client;
-	said_boilerplate.dst_client = &dst_client;
-	said_boilerplate.inbound = inbound;
-	said_boilerplate.add_selector = add_selector;
-	said_boilerplate.transport_proto = c->spd.this.protocol;
-	said_boilerplate.sa_lifetime = c->sa_ipsec_life_seconds;
-	said_boilerplate.outif = -1;
-
+	struct kernel_sa said_boilerplate = {
+		.src = &src.addr,
+		.dst = &dst.addr,
+		.src_client = &src_client,
+		.dst_client = &dst_client,
+		.inbound = inbound,
+		.add_selector = add_selector,
+		.transport_proto = c->spd.this.protocol,
+		.sa_lifetime = c->sa_ipsec_life_seconds,
+		.outif = -1,
 #ifdef HAVE_LABELED_IPSEC
-	said_boilerplate.sec_ctx = st->sec_ctx;
+		.sec_ctx = st->sec_ctx,
 #endif
+	};
 
 	if (kernel_ops->inbound_eroute) {
 		inner_spi = SPI_PASS;
@@ -2068,8 +2049,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			peer_keymat;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 
-		u_int8_t natt_type = 0;
-		u_int16_t natt_sport = 0, natt_dport = 0;
+		uint8_t natt_type = 0;
+		uint16_t natt_sport = 0, natt_dport = 0;
 		ip_address natt_oa;
 
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
@@ -2175,6 +2156,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		said_next->integ = ta->ta_integ;
+#ifdef USE_SHA2
 		if (said_next->integ == &ike_alg_integ_sha2_256 &&
 			LIN(POLICY_SHA2_TRUNCBUG, c->policy)) {
 			if (kernel_ops->sha2_truncbug_support) {
@@ -2199,6 +2181,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				goto fail;
 			}
 		}
+#endif
 		said_next->authalg = said_next->integ->integ_ikev1_ah_transform;
 
 		if (st->st_esp.attrs.transattrs.esn_enabled) {
@@ -2536,7 +2519,6 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 		struct ipsec_proto_info *info;
 	} protos[4];
 	int i = 0;
-	bool result;
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (kernel_ops->inbound_eroute && inbound &&
@@ -2596,7 +2578,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	}
 	protos[i].proto = 0;
 
-	result = TRUE;
+	bool result = TRUE;
 	for (i = 0; protos[i].proto; i++) {
 		unsigned proto = protos[i].proto;
 		ipsec_spi_t spi;
@@ -2638,7 +2620,6 @@ static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
 
 	kernel_ops->process_queue();
 	pexpect_reset_globals();
-
 }
 
 /* keep track of kernel version  */
@@ -2741,7 +2722,6 @@ void init_kernel(void)
 	}
 
 	/* register SA types that we can negotiate */
-	can_do_IPcomp = FALSE; /* until we get a response from KLIPS */
 	if (kernel_ops->pfkey_register != NULL)
 		kernel_ops->pfkey_register();
 
@@ -2807,8 +2787,8 @@ static void look_for_replacement_state(struct state *st)
 		 * then there is an old state associated, and it is
 		 * different then the new one.
 		 */
-		libreswan_log("keeping refhim=%lu during rekey",
-			(unsigned long)ost->st_refhim);
+		libreswan_log("keeping refhim=%" PRIu32 " during rekey",
+			ost->st_refhim);
 		st->st_refhim = ost->st_refhim;
 	}
 }
@@ -2900,7 +2880,6 @@ bool install_inbound_ipsec_sa(struct state *st)
 	 * we can refer to it in the incoming SA.
 	 */
 	if (st->st_refhim == IPSEC_SAREF_NULL && !st->st_outbound_done) {
-
 		DBG(DBG_CONTROL,
 			DBG_log("installing outgoing SA now as refhim=%u",
 				st->st_refhim));
@@ -2928,19 +2907,10 @@ bool route_and_eroute(struct connection *c,
 		struct spd_route *sr,
 		struct state *st)
 {
-	bool eroute_installed = FALSE,
-		firewall_notified = FALSE,
-		route_installed = FALSE;
-
 	DBG(DBG_CONTROLMORE, DBG_log("route_and_eroute() for proto %d, and source port %d dest port %d",
 		sr->this.protocol, sr->this.port, sr->that.port));
 	setportof(htons(sr->this.port), &sr->this.client.addr);
 	setportof(htons(sr->that.port), &sr->that.client.addr);
-
-
-#ifdef IPSEC_CONNECTION_LIMIT
-	bool new_eroute = FALSE;
-#endif
 
 	struct spd_route *esr, *rosr;
 	struct connection *ero,
@@ -2966,6 +2936,12 @@ bool route_and_eroute(struct connection *c,
 		NULL;
 
 	/* install the eroute */
+
+	bool eroute_installed = FALSE;
+
+#ifdef IPSEC_CONNECTION_LIMIT
+	bool new_eroute = FALSE;
+#endif
 
 	passert(bspp == NULL || ero == NULL);   /* only one non-NULL */
 
@@ -3008,6 +2984,8 @@ bool route_and_eroute(struct connection *c,
 
 	/* notify the firewall of a new tunnel */
 
+	bool firewall_notified = FALSE;
+
 	if (eroute_installed) {
 		/*
 		 * do we have to notify the firewall?
@@ -3023,6 +3001,8 @@ bool route_and_eroute(struct connection *c,
 	}
 
 	/* install the route */
+
+	bool route_installed = FALSE;
 
 	DBG(DBG_CONTROL,
 		DBG_log("route_and_eroute: firewall_notified: %s",
@@ -3501,17 +3481,6 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 	return FALSE;
 }
 
-/* This wrapper is to make the seam_* files in testing/ easier */
-bool kernel_overlap_supported(void)
-{
-	return kernel_ops->overlap_supported;
-}
-
-const char *kernel_if_name(void)
-{
-	return kernel_ops->kern_name;
-}
-
 /*
  * get information about a given sa - needs merging with was_eroute_idle
  *
@@ -3519,14 +3488,13 @@ const char *kernel_if_name(void)
  */
 bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 {
-
 	const struct connection *const c = st->st_connection;
 
 	if (kernel_ops->get_sa == NULL || (!st->st_esp.present && !st->st_ah.present)) {
 		return FALSE;
 	}
 
-	u_int proto;
+	unsigned proto;
 	struct ipsec_proto_info *p2;
 
 	if (st->st_esp.present) {
@@ -3556,13 +3524,13 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	set_text_said(text_said, dst, spi, proto);
 
-	struct kernel_sa sa = empty_sa;
-
-	sa.spi = spi;
-	sa.proto = proto;
-	sa.src = src;
-	sa.dst = dst;
-	sa.text_said = text_said;
+	struct kernel_sa sa = {
+		.spi = spi,
+		.proto = proto,
+		.src = src,
+		.dst = dst,
+		.text_said = text_said,
+	};
 
 	DBG(DBG_KERNEL,
 		DBG_log("get_sa_info %s", text_said));
@@ -3575,7 +3543,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	p2->add_time = add_time;
 
-	/* fied has been set? */
+	/* field has been set? */
 	passert(!is_monotime_epoch(p2->our_lastused));
 	passert(!is_monotime_epoch(p2->peer_lastused));
 
@@ -3701,10 +3669,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 /* XXX move to proper kernel_ops in kernel_netlink */
 void expire_bare_shunts(void)
 {
-	struct bare_shunt **bspp;
-
 	DBG(DBG_OPPO, DBG_log("expiring aged bare shunts from shunt table"));
-	for (bspp = &bare_shunts; *bspp != NULL; ) {
+	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
 

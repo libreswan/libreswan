@@ -5,9 +5,8 @@
 
 #ifndef _LINUX_PFKEY2_H
 #define _LINUX_PFKEY2_H
-#if defined(linux)
-# include <linux/types.h>
-#endif
+
+#include <stdint.h>
 
 #define PF_KEY_V2               2
 #define PFKEYV2_REVISION        199806L
@@ -164,7 +163,7 @@ struct sadb_spirange {
 struct sadb_x_kmprivate {
 	uint16_t sadb_x_kmprivate_len;
 	uint16_t sadb_x_kmprivate_exttype;
-	u_int32_t sadb_x_kmprivate_reserved;
+	uint32_t sadb_x_kmprivate_reserved;
 } __attribute__((packed));
 /* sizeof(struct sadb_x_kmprivate) == 8 */
 
@@ -278,14 +277,14 @@ struct sadb_x_nat_t_port {
 #define SADB_X_AALG_SHA2_256HMAC	5
 #define SADB_X_AALG_SHA2_384HMAC	6
 #define SADB_X_AALG_SHA2_512HMAC	7
-#define SADB_X_AALG_RIPEMD160HMAC	8 /* old ikev1? */
-#define SADB_X_AALG_AES_CMAC		8 /* nwq ikev2 */
+#define SADB_X_AALG_RIPEMD160HMAC	8
 #define SADB_X_AALG_AES_XCBC_MAC        9
 #define SADB_X_AALG_RSA                 10
 #define SADB_X_AALG_AH_AES_128_GMAC     11
 #define SADB_X_AALG_AH_AES_192_GMAC     12
 #define SADB_X_AALG_AH_AES_256_GMAC     13
 
+#define SADB_X_AALG_AES_CMAC_96         250             /* used internally */
 #define SADB_X_AALG_NULL		251	/* kame */
 #define SADB_X_AALG_SHA2_256HMAC_TRUNCBUG	252
 #define SADB_AALG_MAX			255	/* while the AUTH_ALGORITHM is two octets, what is the SADB_AALG? */

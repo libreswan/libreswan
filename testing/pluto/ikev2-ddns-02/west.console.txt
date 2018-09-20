@@ -30,8 +30,7 @@ west #
 west #
  systemctl daemon-reload
 west #
- service unbound start
-Redirecting to /bin/systemctl start  unbound.service
+ systemctl start unbound.service
 west #
  unbound-control local_data right.libreswan.org 3600 IN A 192.1.2.23
 ok

@@ -30,7 +30,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/time.h>           /* for gettimeofday */
 #include <resolv.h>
 
 #include <libreswan.h>
@@ -139,29 +138,29 @@ static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
  */
 
 static bool emit_subnet_id(const ip_subnet *net,
-			   u_int8_t np,
-			   u_int8_t protoid,
-			   u_int16_t port,
+			   uint8_t np,
+			   uint8_t protoid,
+			   uint16_t port,
 			   pb_stream *outs)
 {
 	const struct af_info *ai = aftoinfo(subnettypeof(net));
 	const bool usehost = net->maskbits == ai->mask_cnt;
-	struct isakmp_ipsec_id id;
 	pb_stream id_pbs;
-	ip_address ta;
-	const unsigned char *tbp;
-	size_t tal;
 
-	id.isaiid_np = np;
-	id.isaiid_idtype = (usehost ? ai->id_addr : ai->id_subnet);
-	id.isaiid_protoid = protoid;
-	id.isaiid_port = port;
+	struct isakmp_ipsec_id id = {
+		.isaiid_np = np,
+		.isaiid_idtype = usehost ? ai->id_addr : ai->id_subnet,
+		.isaiid_protoid = protoid,
+		.isaiid_port = port,
+	};
 
 	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_pbs))
 		return FALSE;
 
+	ip_address ta;
 	networkof(net, &ta);
-	tal = addrbytesptr_read(&ta, &tbp);
+	const unsigned char *tbp;
+	size_t tal = addrbytesptr_read(&ta, &tbp);
 	if (!out_raw(tbp, tal, &id_pbs, "client network"))
 		return FALSE;
 
@@ -182,14 +181,18 @@ static bool emit_subnet_id(const ip_subnet *net,
  * specifies how this is to be done.
  */
 static void compute_proto_keymat(struct state *st,
-				 u_int8_t protoid,
+				 uint8_t protoid,
 				 struct ipsec_proto_info *pi,
 				 const char *satypename)
 {
 	size_t needed_len = 0; /* bytes of keying material needed */
 
-	/* Add up the requirements for keying material
-	 * (It probably doesn't matter if we produce too much!)
+	/*
+	 * Add up the requirements for keying material (It probably
+	 * doesn't matter if we produce too much!)
+	 *
+	 * XXX: This entire switch can probably be reduced to just the
+	 * "default:" case.
 	 */
 	switch (protoid) {
 	case PROTO_IPSEC_ESP:
@@ -302,8 +305,8 @@ static void compute_proto_keymat(struct state *st,
 		/* ESP_SEED is for IKEv1 only and not supported. Its number in IKEv2 has been re-used */
 
 		default:
-			needed_len = kernel_alg_esp_enc_max_keylen(
-					pi->attrs.transattrs.ta_ikev1_encrypt);
+			/* bytes */
+			needed_len = encrypt_max_key_bit_length(pi->attrs.transattrs.ta_encrypt) / BITS_PER_BYTE;
 			if (needed_len > 0) {
 				/* XXX: check key_len coupling with kernel.c's */
 				if (pi->attrs.transattrs.enckeylen) {
@@ -594,8 +597,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 /* like decode, but checks that what is received matches what was sent */
 static bool check_net_id(struct isakmp_ipsec_id *id,
 			 pb_stream *id_pbs,
-			 u_int8_t *protoid,
-			 u_int16_t *port,
+			 uint8_t *protoid,
+			 uint16_t *port,
 			 ip_subnet *net,
 			 const char *which)
 {
@@ -611,7 +614,7 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 		subnettot(net, 0, subxmt, sizeof(subxmt));
 		subnettot(&net_temp, 0, subrec, sizeof(subrec));
 		loglog(RC_LOG_SERIOUS,
-		       "%s subnet returned doesn't match my proposal - us:%s vs them:%s",
+		       "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
 		       which, subxmt, subrec);
 #ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
 		loglog(RC_LOG_SERIOUS,
@@ -623,7 +626,7 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	}
 	if (*protoid != id->isaiid_protoid) {
 		loglog(RC_LOG_SERIOUS,
-		       "%s peer returned protocol id does not match my proposal - us%d vs them: %d",
+		       "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
 		       which, *protoid, id->isaiid_protoid);
 #ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
 		loglog(RC_LOG_SERIOUS,
@@ -639,7 +642,7 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	 */
 	if (*port != id->isaiid_port) {
 		loglog(RC_LOG_SERIOUS,
-		       "%s peer returned port doesn't match my proposal - us:%d vs them:%d",
+		       "%s peer returned port doesn't match my proposal - us: %d vs them: %d",
 		       which, *port, id->isaiid_port);
 		if (*port != 0 && id->isaiid_port != 1701) {
 			loglog(RC_LOG_SERIOUS,
@@ -721,7 +724,7 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	DBG_cond_dump(DBG_CRYPT, "last Phase 1 IV:",
 		      st->st_ph1_iv, st->st_ph1_iv_len);
 
-	st->st_new_iv_len = h->hash_digest_len;
+	st->st_new_iv_len = h->hash_digest_size;
 	passert(st->st_new_iv_len <= sizeof(st->st_new_iv));
 
 	DBG_cond_dump(DBG_CRYPT, "current Phase 1 IV:",
@@ -770,7 +773,7 @@ void quick_outI1(int whack_sock,
 #endif
 		 )
 {
-	struct state *st = ikev1_duplicate_state(isakmp_sa, TRUE);
+	struct state *st = ikev1_duplicate_state(isakmp_sa);
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
@@ -867,8 +870,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		*r_hashval,     /* where in reply to jam hash value */
 		*r_hash_start;  /* start of what is to be hashed */
 	bool has_client = c->spd.this.has_client || c->spd.that.has_client ||
-			  c->spd.this.protocol || c->spd.that.protocol ||
-			  c->spd.this.port || c->spd.that.port;
+			  c->spd.this.protocol != 0 || c->spd.that.protocol != 0 ||
+			  c->spd.this.port != 0 || c->spd.that.port != 0;
 
 	if (isakmp_sa == NULL) {
 		/* phase1 state got deleted while cryptohelper was working */
@@ -896,14 +899,14 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	/* HDR* out */
 	{
-		struct isakmp_hdr hdr;
-
-		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION;
-		hdr.isa_np = ISAKMP_NEXT_HASH;
-		hdr.isa_xchg = ISAKMP_XCHG_QUICK;
-		hdr.isa_msgid = st->st_msgid;
-		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
+		struct isakmp_hdr hdr = {
+			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+					  ISAKMP_MINOR_VERSION,
+			.isa_np = ISAKMP_NEXT_HASH,
+			.isa_xchg = ISAKMP_XCHG_QUICK,
+			.isa_msgid = st->st_msgid,
+			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
+		};
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
@@ -937,21 +940,20 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	}
 
 	{
-		int np;
-
-		if (st->st_policy & POLICY_PFS) {
-			np = ISAKMP_NEXT_KE;
-		} else {
-			if (has_client)
-				np = ISAKMP_NEXT_ID;
-			else
-				np = ISAKMP_NEXT_NONE;
-		}
+		/*
+		 * ??? this np calculation says the test for KE is
+		 *	(st->st_policy & POLICY_PFS)
+		 * yet the KE code says the test is
+		 *	st->st_pfs_group != NULL
+		 */
+		int np = (st->st_policy & POLICY_PFS) ?
+				ISAKMP_NEXT_KE :
+			has_client ?
+				ISAKMP_NEXT_ID :
+				ISAKMP_NEXT_NONE;
 
 		/* Ni out */
-		if (!ikev1_ship_nonce(&st->st_ni, r, &rbody,
-				np,
-				"Ni")) {
+		if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, np, "Ni")) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1059,8 +1061,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 /* hold anything we can handle of a Phase 2 ID */
 struct p2id {
 	ip_subnet net;
-	u_int8_t proto;
-	u_int16_t port;
+	uint8_t proto;
+	uint16_t port;
 };
 
 struct verify_oppo_bundle {
@@ -1288,7 +1290,6 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		}
 
 		/* did we find a better connection? */
-		/* should we use an else here, as we did in lsw 2.5.x? */
 		if (p != c) {
 			/* We've got a better connection: it can support the
 			 * specified clients.  But it may need instantiation.
@@ -1317,8 +1318,8 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 				set_debugging(old_cur_debugging);
 			}
 			c = p;
-
 		}
+
 		/* fill in the client's true ip address/subnet */
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("client wildcard: %s  port wildcard: %s  virtual: %s",
@@ -1351,7 +1352,6 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 			if (subnetishost(his_net) &&
 			    addrinsubnet(&c->spd.that.host_addr, his_net)) {
-
 				c->spd.that.has_client = FALSE;
 			}
 
@@ -1376,9 +1376,9 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 	    (hv.st_nat_traversal & NAT_T_WITH_NATOA))
 		nat_traversal_natoa_lookup(md, &hv);
 
-	/* now that we are sure of our connection, create our new state */
+	/* create our new state */
 	{
-		struct state *const st = ikev1_duplicate_state(p1st, IPSEC_SA);
+		struct state *const st = ikev1_duplicate_state(p1st);
 
 		/* first: fill in missing bits of our new state object
 		 * note: we don't copy over st_peer_pubkey, the public key
@@ -1531,14 +1531,39 @@ static void quick_inI1_outR1_continue2(struct state *st,
 	complete_v1_state_transition(mdp, e);
 }
 
+/*
+ * Spit out the IPSec ID payload we got.
+ *
+ * We go to some trouble to use out_struct so NP
+ * for adjacent packets is handled correctly.
+ */
+static bool echo_id(pb_stream *outs,
+	const struct payload_digest *const id_pd,
+	enum next_payload_types_ikev1 np)
+{
+	struct isakmp_ipsec_id id = id_pd->payload.ipsec_id;
+	id.isaiid_np = np;
+	/* We leave .isaiid_length: It will be updated to the same value */
+
+	uint8_t *hs = outs->cur;
+	pb_stream id_body;
+	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_body))
+		return FALSE;
+	ptrdiff_t hl = id_body.cur - hs;	/* length of header */
+
+	if (!out_raw(id_pd->pbs.start + hl, pbs_room(&id_pd->pbs) - hl, &id_body, "ID body"))
+		return FALSE;
+
+	close_output_pbs(&id_body);
+	return TRUE;
+}
+
 static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 						   struct pluto_crypto_req *r)
 {
 	struct state *st = md->st;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
-	struct isakmp_sa sa;
-	pb_stream r_sa_pbs;
 	u_char          /* set by START_HASH_PAYLOAD: */
 		*r_hashval,     /* where in reply to jam hash value */
 		*r_hash_start;  /* from where to start hashing */
@@ -1565,11 +1590,16 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 	passert(st->st_connection != NULL);
 
-	zero(&sa);	/* OK: no pointer fields */
-	sa.isasa_doi = ISAKMP_DOI_IPSEC;
-	sa.isasa_np = ISAKMP_NEXT_NONCE;
-	if (!out_struct(&sa, &isakmp_sa_desc, &rbody, &r_sa_pbs))
-		return STF_INTERNAL_ERROR;
+	pb_stream r_sa_pbs;
+
+	{
+		struct isakmp_sa sa = {
+			.isasa_doi = ISAKMP_DOI_IPSEC,
+			.isasa_np = ISAKMP_NEXT_NONCE,
+		};
+		if (!out_struct(&sa, &isakmp_sa_desc, &rbody, &r_sa_pbs))
+			return STF_INTERNAL_ERROR;
+	}
 
 	/* parse and accept body, this time recording our reply */
 	RETURN_STF_FAILURE(parse_ipsec_sa_body(&sapd->pbs,
@@ -1670,23 +1700,11 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 	/* [ IDci, IDcr ] out */
 	if (id_pd != NULL) {
-		struct isakmp_ipsec_id *p = (void *)rbody.cur; /* UGH! */
-
-		if (!out_raw(id_pd->pbs.start, pbs_room(&id_pd->pbs),
-			     &rbody, "IDci"))
+		passert(id_pd->next->next == NULL);	/* exactly two */
+		if (!echo_id(&rbody, id_pd, ISAKMP_NEXT_ID) ||
+		    !echo_id(&rbody, id_pd->next, ISAKMP_NEXT_NONE))
 			return STF_INTERNAL_ERROR;
-
-		p->isaiid_np = ISAKMP_NEXT_ID;
-
-		p = (void *)rbody.cur; /* UGH! */
-
-		if (!out_raw(id_pd->next->pbs.start,
-			     pbs_room(&id_pd->next->pbs), &rbody, "IDcr"))
-			return STF_INTERNAL_ERROR;
-
-		p->isaiid_np = ISAKMP_NEXT_NONE;
 	}
-
 
 	/* Compute reply HASH(2) and insert in output */
 	(void)quick_mode_hash12(r_hashval, r_hash_start, rbody.cur,

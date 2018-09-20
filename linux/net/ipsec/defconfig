@@ -4,7 +4,7 @@
 #
 
 #
-# First, lets override stuff already set or not in the kernel config.
+# First, let's override stuff already set or not in the kernel config.
 #
 # We can't even think about leaving this off...
 CONFIG_INET=y
@@ -19,7 +19,7 @@ CONFIG_IP_FORWARD=y
 CONFIG_IP_MASQUERADE_IPSEC=n
 
 #
-# Next, lets set the recommended FreeS/WAN configuration.
+# Next, let's set the recommended FreeS/WAN configuration.
 #
 
 # To config as static (preferred), 'y'.  To config as module, 'm'.

@@ -2,13 +2,15 @@
 # as fedora.bhs.mirrors.ovh.net as of 2017-08-09, that doesn't carry
 # F22.
 KVM_ISO_URL = http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
-KVM_OS_VARIANT = fedora22
+KVM_OS_VARIANT ?= fedora22
 
 KVM_KICKSTART_FILE = testing/libvirt/fedora22.ks
 
 KVM_PACKAGE_INSTALL = dnf install -y
 KVM_DEBUGINFO_INSTALL = dnf  debuginfo-install -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
+KVM_STRONGSWAN_PACKAGE ?= https://ftp.nohats.ca/strongswan/strongswan-5.6.3-1.fc22.x86_64.rpm
+KVM_LIBFAKETIME_PACKAGE ?= https://download.nohats.ca/libfaketime/libfaketime-0.9.6-4.fc22.x86_64.rpm
 
 KVM_PACKAGES = \
     ElectricFence \
@@ -66,8 +68,8 @@ KVM_PACKAGES = \
     vim-enhanced \
     xl2tpd \
     xmlto \
-    https://download.nohats.ca/strongswan/strongswan-5.6.0-1.fc22.x86_64.rpm \
-    https://download.nohats.ca/libfaketime/libfaketime-0.9.6-4.fc22.x86_64.rpm
+    $(KVM_STRONGSWAN_PACKAGE) \
+    $(KVM_LIBFAKETIME_PACKAGE)
 
 KVM_DEBUGINFO = \
     ElectricFence \

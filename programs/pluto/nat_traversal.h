@@ -79,8 +79,8 @@ extern bool nat_traversal_support_port_floating;
 /**
  * NAT-D
  */
-extern bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
-				   struct msg_digest *md);
+extern bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
+				   const struct msg_digest *md);
 extern void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie);
 
 /**
@@ -90,7 +90,7 @@ struct hidden_variables;	/* forward */
 
 void nat_traversal_natoa_lookup(struct msg_digest *md,
 				struct hidden_variables *hv);
-bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
+bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
 			     struct state *st, bool initiator);
 
 /**
@@ -106,8 +106,8 @@ extern int nat_traversal_espinudp_socket(int sk, const char *fam);
 /**
  * Vendor ID
  */
-bool nat_traversal_add_vid(u_int8_t np, pb_stream *outs);
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *st);
+bool nat_traversal_add_vid(uint8_t np, pb_stream *outs);
+bool nat_traversal_insert_vid(uint8_t np, pb_stream *outs, const struct connection *c);
 void set_nat_traversal(struct state *st, const struct msg_digest *md);
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
@@ -115,10 +115,9 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 /**
  * New NAT mapping
  */
-#ifdef __PFKEY_V2_H
-void process_pfkey_nat_t_new_mapping(struct sadb_msg *,
-				     struct sadb_ext *[K_SADB_EXT_MAX + 1]);
-#endif
+void nat_traversal_new_mapping(struct state *st,
+			       const ip_address *nsrc,
+			       uint16_t nsrcport);
 
 /**
  * IKE port floating
@@ -127,12 +126,14 @@ bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 			      bool in);
 /* NAT-T IKEv2 v2N */
 
-bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md);
+bool ikev2_out_nat_v2n(uint8_t np, pb_stream *outs, const struct msg_digest *md);
 
-bool ikev2_out_natd(struct state *st, u_int8_t np, ip_address *localaddr,
-			u_int16_t localport, ip_address *remoteaddr,
-			u_int16_t remoteport,  u_int8_t *rcookie,
-			pb_stream *outs);
+bool ikev2_out_natd(const struct state *st,
+		uint8_t np,
+		const ip_address *localaddr, uint16_t localport,
+		const ip_address *remoteaddr, uint16_t remoteport,
+		const uint8_t *rcookie,
+		pb_stream *outs);
 
 /**
  * Encapsulation mode macro (see demux.c)

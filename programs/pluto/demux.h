@@ -147,13 +147,6 @@ extern void release_md(struct msg_digest *md);
 extern void release_any_md(struct msg_digest **mdp);
 void schedule_md_event(const char *name, struct msg_digest *md);
 
-typedef stf_status state_transition_fn(struct state *st, struct msg_digest *md);
-
-extern void fmt_ipsec_sa_established(struct state *st,
-				     char *sadetails, size_t sad_len);
-extern void fmt_isakmp_sa_established(struct state *st,
-				      char *sadetails, size_t sad_len);
-
 extern void free_md_pool(void);
 
 extern void process_packet(struct msg_digest **mdp);

@@ -73,11 +73,6 @@ include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 # Note: Variables here are for Makefiles and build system only.
 # IPSEC_ prefixed variables are to be used in source code
 
-
-### boilerplate, do not change, various scripts use extended BASH syntax!
-SHELL=/bin/bash
-export SHELL
-
 ### install pathnames
 
 # DESTDIR can be used to supply a prefix to all install targets.
@@ -162,7 +157,7 @@ FINALLOGDIR?=$(FINALVARDIR)/log
 LOGDIR?=$(DESTDIR)$(FINALLOGDIR)
 
 # Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
-INITSYSTEM ?= $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
+INITSYSTEM ?= $(shell $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
 # An attempt is made to automatically figure out where boot/shutdown scripts
 # will finally go:  the first directory in INC_RCDIRS that exists gets them.
@@ -218,27 +213,17 @@ MODPROBEARGS?=--quiet --use-blacklist
 # what program to use when installing things
 INSTALL?=install
 
-# flags to the install program, for programs, manpages, and config files
-# -b has install make backups (n.b., unlinks original), --suffix controls
-# how backup names are composed.
-# Note that the install procedures will never overwrite an existing config
-# file, which is why -b is not specified for them.
-INSTBINFLAGS?=-b --suffix=.old
-INSTSUIDFLAGS?=--mode=u+rxs,g+rx,o+rx --group=root -b --suffix=.old
+# flags to the install program, for programs, manpages, and config
+# files -b has install make backups (n.b., unlinks original), --suffix
+# controls how backup names are composed.  Since install procedures
+# will never overwrite an existing config file they omit -b.
 
-# busybox install is not emulating a real install command well enough
-SWANCHECKLINK=$(shell readlink /usr/bin/install)
-ifeq ($(SWANCHECKLINK /bin/busybox),)
-INSTBINFLAGS=
-INSTSUIDFLAGS=-m 0755 -g root -o root
-endif
+# While --suffix is linux centric, there isn't a portable alternative.
+INSTBINFLAGS ?= -b --suffix=.old
 
-
-INSTMANFLAGS?=--mode=0644
-INSTCONFFLAGS?=--mode=0644
-# For OSX use
-#INSTBINFLAGS?=-b -B .old
-#INSTSUIDFLAGS?=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old
+# The -m flag is more portable than --mode=.
+INSTMANFLAGS ?= -m 0644
+INSTCONFFLAGS ?= -m 0644
 
 # flags for bison, overrode in packages/default/foo
 BISONOSFLAGS?=
@@ -249,7 +234,7 @@ BISONOSFLAGS?=
 NSSFLAGS?=$(shell pkg-config --cflags nss)
 # We don't want to link against every library pkg-config --libs nss
 # returns
-NSS_LDFLAGS ?= -lnss3
+NSS_LDFLAGS ?= -lnss3 -lnssutil3
 NSS_SMIME_LDFLAGS ?= -lsmime3
 NSS_UTIL_LDFLAGS ?= -lnssutil3
 NSPR_LDFLAGS ?= -lnspr4
@@ -373,40 +358,6 @@ USE_SINGLE_CONF_DIR?=false
 # Except this to change in Q1 2011
 USE_KEYRR?=true
 
-# Build support for Linux 2.4 and 2.6 KLIPS kernel level IPsec support
-# for pluto
-USE_KLIPS?=true
-
-# Build support for 2.6 KLIPS/MAST variation in pluto
-USE_MAST?=false
-
-# MAST requires KLIPS
-ifeq ($(USE_MAST),true)
-USE_KLIPS=true
-endif
-
-# Build support for Linux NETKEY (XFRM) kernel level IPsec support for
-# pluto (aka "native", "kame")
-USE_NETKEY?=true
-
-# KLIPS needs PFKEYv2, but sometimes we want PFKEY without KLIPS
-# Note: NETLINK does not use PFKEY, but it does share some code,
-# so it is required for NETKEY as well.
-ifeq ($(USE_KLIPS),true)
-USE_PFKEYv2=true
-else
-ifeq ($(USE_NETKEY),true)
-USE_PFKEYv2=true
-endif
-endif
-
-# include support for BSD/KAME IPsec in pluto (on *BSD and OSX)
-USE_BSDKAME?=false
-ifeq ($(USE_BSDKAME),true)
-USE_NETKEY=false
-USE_KLIPS=false
-endif
-
 # Build support for integrity check for libreswan on startup
 USE_FIPSCHECK?=false
 FIPSPRODUCTCHECK?=/etc/system-fips
@@ -417,9 +368,6 @@ USE_LABELED_IPSEC?=false
 # Enable seccomp support (whitelist allows syscalls)
 USE_SECCOMP?=false
 
-# Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
-USE_LIBCAP_NG?=true
-
 # Support for Network Manager
 USE_NM?=true
 
@@ -428,19 +376,6 @@ USE_LDAP?=false
 
 # Include libcurl support (currently used for fetching CRLs)
 USE_LIBCURL?=true
-
-# should we include additional (strong) algorithms?  It adds a measureable
-# amount of code space to pluto, and many of the algorithms have not had
-# the same scrutiny that AES and 3DES have received, but offers possibilities
-# of switching away from AES/3DES quickly.
-# DH22 is too weak - the others listed here are not broken, just not popular
-USE_SERPENT?=true
-USE_TWOFISH?=true
-USE_3DES?=true
-USE_DH22?=false
-USE_CAMELLIA?=true
-USE_CAST?=true
-USE_RIPEMD?=false
 
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
@@ -483,6 +418,7 @@ LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 # 'ld' (does the link) are run from different directories.
 LIBRESWANLIB=$(abs_top_builddir)/lib/libswan/libswan.a
 LSWTOOLLIB=$(abs_top_builddir)/lib/liblswtool/liblswtool.a
+BSDPFKEYLIB=$(abs_top_builddir)/lib/libbsdpfkey/libbsdpfkey.a
 
 # XXX: $(LSWTOOLLIB) has circular references to $(LIBRESWANLIB).
 LSWTOOLLIBS=$(LSWTOOLLIB) $(LIBRESWANLIB)

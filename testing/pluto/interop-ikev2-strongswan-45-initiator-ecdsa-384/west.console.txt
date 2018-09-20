@@ -1,0 +1,82 @@
+/testing/guestbin/swan-prep --userland strongswan
+west #
+ rm -f /etc/strongswan/ipsec.d/cacerts/*
+west #
+ rm -f /etc/strongswan/ipsec.d/certs/*
+west #
+ rm -f /etc/strongswan/ipsec.d/private/*
+west #
+ cp /testing/x509/strongswan/strongCAcert.der /etc/strongswan/ipsec.d/cacerts/
+west #
+ cp /testing/x509/strongswan/strongWestCert.der /etc/strongswan/ipsec.d/certs/
+west #
+ cp /testing/x509/strongswan/strongWestKey.der /etc/strongswan/ipsec.d/private/
+west #
+ chmod 600 /etc/strongswan/ipsec.d/private/*
+west #
+ ../../pluto/bin/strongswan-start.sh
+west #
+ echo "initdone"
+initdone
+west #
+ strongswan up westnet-eastnet-ikev2
+initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(HASH_ALG) N(NATD_S_IP) N(NATD_D_IP) ]
+sending cert request for "C=CH, O=strongSwan, CN=strongSwan CA"
+authentication of 'C=CH, O=strongSwan, CN=strongWest' (myself) with ECDSA_WITH_SHA384_DER successful
+sending end entity cert "C=CH, O=strongSwan, CN=strongWest"
+establishing CHILD_SA westnet-eastnet-ikev2{1}
+generating IKE_AUTH request 1 [ IDi CERT N(INIT_CONTACT) CERTREQ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(1/2) ]
+received fragment #1 of 2, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(2/2) ]
+received fragment #2 of 2, reassembling fragmented IKE message
+parsed IKE_AUTH response 1 [ IDr CERT AUTH SA TSi TSr ]
+received end entity cert "C=CH, O=strongSwan, CN=strongEast"
+  using certificate "C=CH, O=strongSwan, CN=strongEast"
+  using trusted ca certificate "C=CH, O=strongSwan, CN=strongSwan CA"
+checking certificate status of "C=CH, O=strongSwan, CN=strongEast"
+certificate status is not available
+  reached self-signed root ca with a path length of 0
+authentication of 'C=CH, O=strongSwan, CN=strongEast' with ECDSA_WITH_SHA384_DER successful
+IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[C=CH, O=strongSwan, CN=strongWest]...192.1.2.23[C=CH, O=strongSwan, CN=strongEast]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+connection 'westnet-eastnet-ikev2' established successfully
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+whack: Pluto is not running (no "/run/pluto/pluto.ctl")
+west #
+ echo done
+done
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+west #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[C=CH, O=strongSwan, CN=strongWest]...192.1.2.23[C=CH, O=strongSwan, CN=strongEast]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -14,7 +14,7 @@ Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --impair retransmits
+ ipsec whack --impair suppress-retransmits
 road #
  # ensure for tests acquires expire before our failureshunt=2m
 road #
@@ -110,8 +110,8 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.3.254 dev eth0 
-192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209 
+default via 192.1.3.254 dev eth0
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

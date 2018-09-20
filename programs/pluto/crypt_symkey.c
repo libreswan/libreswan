@@ -35,7 +35,7 @@ static PK11SymKey *ephemeral_symkey(void)
 		PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
 						      lsw_return_nss_password_file_info());
 		if (slot == NULL) {
-			LSWLOG_LOG_WHACK(RC_LOG_SERIOUS, buf) {
+			LSWLOG_RC(RC_LOG_SERIOUS, buf) {
 				lswlogs(buf, "NSS: ephemeral slot error");
 				lswlog_nss_error(buf);
 			}
@@ -340,7 +340,10 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 		release_symkey(name, "slot-key", &slot_key);
 		return empty_chunk;
 	}
-	DBG(DBG_CRYPT_LOW, DBG_dump("wrapper:", wrapped_key.data, wrapped_key.len));
+	LSWDBGP(DBG_CRYPT_LOW, buf) {
+		lswlogs(buf, "wrapper: ");
+		lswlog_nss_secitem(buf, &wrapped_key);
+	}
 
 	void *bytes = alloc_bytes(wrapped_key.len, name);
 	unsigned int out_len = 0;
@@ -377,7 +380,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
  * Offset into the SYMKEY is in BYTES.
  */
 
-PK11SymKey *symkey_from_bytes(const char *name, const u_int8_t *bytes, size_t sizeof_bytes)
+PK11SymKey *symkey_from_bytes(const char *name, const uint8_t *bytes, size_t sizeof_bytes)
 {
 	if (sizeof_bytes == 0) {
 		/* hopefully caller knows what they are doing */
@@ -409,7 +412,7 @@ PK11SymKey *symkey_from_chunk(const char *name, chunk_t chunk)
 
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
-				   const u_int8_t *bytes, size_t sizeof_bytes)
+				   const uint8_t *bytes, size_t sizeof_bytes)
 {
 	PK11SymKey *scratch = ephemeral_symkey();
 	PK11SymKey *tmp = merge_symkey_bytes(name, scratch, bytes, sizeof_bytes,
@@ -424,7 +427,7 @@ PK11SymKey *encrypt_key_from_bytes(const char *name,
 }
 
 PK11SymKey *prf_key_from_bytes(const char *name, const struct prf_desc *prf,
-			       const u_int8_t *bytes, size_t sizeof_bytes)
+			       const uint8_t *bytes, size_t sizeof_bytes)
 {
 	PK11SymKey *scratch = ephemeral_symkey();
 	PK11SymKey *tmp = merge_symkey_bytes(name, scratch, bytes, sizeof_bytes,
@@ -471,7 +474,7 @@ PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
 chunk_t concat_chunk_symkey(const char *name, chunk_t lhs, PK11SymKey *rhs)
 {
 	chunk_t rhs_chunk = chunk_from_symkey(name, rhs);
-	chunk_t new = concat_chunk_chunk(name, lhs, rhs_chunk);
+	chunk_t new = clone_chunk_chunk(lhs, rhs_chunk, name);
 	freeanychunk(rhs_chunk);
 	return new;
 }
@@ -486,25 +489,13 @@ PK11SymKey *concat_symkey_byte(PK11SymKey *lhs, uint8_t rhs)
 	return concat_symkey_bytes(lhs, &rhs, sizeof(rhs));
 }
 
-chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs)
-{
-	size_t len = lhs.len + rhs.len;
-	chunk_t cat = {
-		.len = len,
-		.ptr = alloc_things(u_int8_t, len, name),
-	};
-	memcpy(cat.ptr, lhs.ptr, lhs.len);
-	memcpy(cat.ptr + lhs.len, rhs.ptr, rhs.len);
-	return cat;
-}
-
 chunk_t concat_chunk_bytes(const char *name, chunk_t lhs,
 			   const void *rhs, size_t sizeof_rhs)
 {
 	size_t len = lhs.len + sizeof_rhs;
 	chunk_t cat = {
 		.len = len,
-		.ptr = alloc_things(u_int8_t, len, name),
+		.ptr = alloc_things(uint8_t, len, name),
 	};
 	memcpy(cat.ptr, lhs.ptr, lhs.len);
 	memcpy(cat.ptr + lhs.len, rhs, sizeof_rhs);
@@ -553,7 +544,7 @@ void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs)
 
 void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs)
 {
-	chunk_t new = concat_chunk_chunk(name, *lhs, rhs);
+	chunk_t new = clone_chunk_chunk(*lhs, rhs, name);
 	freeanychunk(*lhs);
 	*lhs = new;
 }

@@ -52,7 +52,7 @@ static bool lsw_conf_setdefault(void)
 	}
 
 	/* copy everything to the heap for consistency. */
-	global_oco.rootdir = clone_str("","rootdir");
+	global_oco.rootdir = clone_str("", "rootdir");
 
 	global_oco.confdir = clone_str(IPSEC_CONFDIR, "default conf ipsec_conf_dir");
 	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
@@ -180,11 +180,11 @@ int libreswan_selinux(void)
 {
 	char selinux_flag[1];
 	int n;
-	FILE *fd = fopen("/sys/fs/selinux/enforce","r");
+	FILE *fd = fopen("/sys/fs/selinux/enforce", "r");
 
 	if (fd == NULL) {
 		/* try new location first, then old location */
-		fd = fopen("/selinux/enforce","r");
+		fd = fopen("/selinux/enforce", "r");
 		if (fd == NULL) {
 			DBG(DBG_CONTROL,
 				DBG_log("SElinux: disabled, could not open /sys/fs/selinux/enforce or /selinux/enforce");

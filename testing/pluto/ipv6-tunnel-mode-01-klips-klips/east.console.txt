@@ -25,15 +25,14 @@ east #
 000  
 000 virtual_private (%priv):
 000  
-000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=64, keysizemin=192, keysizemax=192
-000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=64, keysizemin=128, keysizemax=128
-000 algorithm ESP encrypt: id=7, name=ESP_BLOWFISH, ivlen=64, keysizemin=96, keysizemax=448
-000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
-000 algorithm AH/ESP auth: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
-000 algorithm AH/ESP auth: id=9, name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
+000 algorithm ESP encrypt: name=3DES_CBC, keysizemin=192, keysizemax=192
+000 algorithm ESP encrypt: name=BLOWFISH, keysizemin=96, keysizemax=448
+000 algorithm ESP encrypt: name=AES_CBC, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=SERPENT_CBC, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=TWOFISH_CBC, keysizemin=128, keysizemax=256
+000 algorithm AH/ESP auth: name=HMAC_MD5_96, key-length=128
+000 algorithm AH/ESP auth: name=HMAC_SHA1_96, key-length=160
+000 algorithm AH/ESP auth: name=AES_XCBC_96, key-length=128
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
@@ -52,8 +51,6 @@ east #
 000 algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
 000 algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
 000 algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
-000 algorithm IKE DH Key Exchange: name=DH23, bits=2048
-000 algorithm IKE DH Key Exchange: name=DH24, bits=2048
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
@@ -78,40 +75,40 @@ v6-v6-through-v6-klips-klips]# east NOW
 2001:db8:0:2::/64  -> 2001:db8:0:1::/64  => tun0x1000@2001:db8:1:2::45 esp0xafaae4b1@2001:db8:1:2::45  (4)   PAUL: sanitizer missed this line
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
-unreachable ::/96 dev lo  metric 1024  error -XXXX
-unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -XXXX
-2001:db8:0:1::254 via 2001:db8:0:1::254 dev ipsec0  metric 0 
-    cache 
-2001:db8:0:1::/64 dev ipsec0  metric 1024 
-2001:db8:0:2::/64 dev eth0  proto kernel  metric 256 
-2001:db8::/48 via 2001:db8:1:2::45 dev eth1  metric 1024 
-2001:db8:1:2::23 dev ipsec0  proto kernel  metric 256 
-2001:db8:1:2::45 via 2001:db8:1:2::45 dev eth1  metric 0 
-    cache  hoplimit 255
-2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
-2001:db8:9:2::/64 dev eth2  proto kernel  metric 256 
-unreachable 2002:a00::/24 dev lo  metric 1024  error -XXXX
-unreachable 2002:7f00::/24 dev lo  metric 1024  error -XXXX
-unreachable 2002:a9fe::/32 dev lo  metric 1024  error -XXXX
-unreachable 2002:ac10::/28 dev lo  metric 1024  error -XXXX
-unreachable 2002:c0a8::/32 dev lo  metric 1024  error -XXXX
-unreachable 2002:e000::/19 dev lo  metric 1024  error -XXXX
-unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -XXXX
-fe80::1000:ff:fe64:6423 dev ipsec0  proto kernel  metric 256 
-fe80::/64 dev eth0  proto kernel  metric 256 
-fe80::/64 dev eth1  proto kernel  metric 256 
-fe80::/64 dev eth2  proto kernel  metric 256 
-fe80::/64 dev ipsec0  proto kernel  metric 256 
-default via 2001:db8:1:2::254 dev eth1  metric 1 
-default via 2001:db8:1:2::254 dev eth1  metric 1024 
+default via 192.1.2.254 dev eth1
+169.254.0.0/16 dev eth0 scope link metric 1002
+169.254.0.0/16 dev eth1 scope link metric 1003
+169.254.0.0/16 dev eth2 scope link metric 1004
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
+unreachable ::/96 dev lo metric 1024 error -XXXX
+unreachable ::ffff:0.0.0.0/96 dev lo metric 1024 error -XXXX
+2001:db8:0:1::254 via 2001:db8:0:1::254 dev ipsec0 metric 0
+  cache
+2001:db8:0:1::/64 dev ipsec0 metric 1024
+2001:db8:0:2::/64 dev eth0 proto kernel metric 256
+2001:db8::/48 via 2001:db8:1:2::45 dev eth1 metric 1024
+2001:db8:1:2::23 dev ipsec0 proto kernel metric 256
+2001:db8:1:2::45 via 2001:db8:1:2::45 dev eth1 metric 0
+  cache hoplimit 255
+2001:db8:1:2::/64 dev eth1 proto kernel metric 256
+2001:db8:9:2::/64 dev eth2 proto kernel metric 256
+unreachable 2002:a00::/24 dev lo metric 1024 error -XXXX
+unreachable 2002:7f00::/24 dev lo metric 1024 error -XXXX
+unreachable 2002:a9fe::/32 dev lo metric 1024 error -XXXX
+unreachable 2002:ac10::/28 dev lo metric 1024 error -XXXX
+unreachable 2002:c0a8::/32 dev lo metric 1024 error -XXXX
+unreachable 2002:e000::/19 dev lo metric 1024 error -XXXX
+unreachable 3ffe:ffff::/32 dev lo metric 1024 error -XXXX
+fe80::1000:ff:fe64:6423 dev ipsec0 proto kernel metric 256
+fe80::/64 dev eth0 proto kernel metric 256
+fe80::/64 dev eth1 proto kernel metric 256
+fe80::/64 dev eth2 proto kernel metric 256
+fe80::/64 dev ipsec0 proto kernel metric 256
+default via 2001:db8:1:2::254 dev eth1 metric 1
+default via 2001:db8:1:2::254 dev eth1 metric 1024
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

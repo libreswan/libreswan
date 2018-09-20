@@ -119,8 +119,8 @@ int pfkey_alloc_eroute(struct eroute **eroute)
 	}
 
 	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_alloc_eroute: "
-		    "allocating %lu bytes for an eroute at 0p%p\n",
-		    (unsigned long) sizeof(**eroute), *eroute);
+		    "allocating %zu bytes for an eroute at 0p%p\n",
+		    sizeof(**eroute), *eroute);
 
 	memset((caddr_t)*eroute, 0, sizeof(**eroute));
 	(*eroute)->er_eaddr.sen_len = (*eroute)->er_emask.sen_len = sizeof(struct sockaddr_encap);
@@ -281,7 +281,7 @@ DEBUG_NO_STATIC int pfkey_getspi_parse(struct sock *sk,
 		extr->ips->ips_flags |= EMT_INBOUND;
 	else
 #endif
-	if (ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
+	if (ip_chk_addr(extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
 		extr->ips->ips_flags |= EMT_INBOUND;
 
 	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_getspi_parse: "
@@ -435,7 +435,7 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 		extr->ips->ips_flags |= EMT_INBOUND;
 	else
 #endif
-	if (ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
+	if (ip_chk_addr(extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
 		extr->ips->ips_flags |= EMT_INBOUND;
 
 	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_update_parse: "
@@ -707,7 +707,7 @@ DEBUG_NO_STATIC int pfkey_add_parse(struct sock *sk,
 		extr->ips->ips_flags |= EMT_INBOUND;
 	else
 #endif
-	if (ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
+	if (ip_chk_addr(extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
 		extr->ips->ips_flags |= EMT_INBOUND;
 
 	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_add_parse: "
@@ -1370,9 +1370,8 @@ int pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 
 	if (alg_num_a) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_register_reply: "
-			    "allocating %lu bytes for auth algs.\n",
-			    (unsigned long) (alg_num_a *
-					     sizeof(struct sadb_alg)));
+			    "allocating %zu bytes for auth algs.\n",
+			    alg_num_a * sizeof(struct sadb_alg));
 		if ((alg_a = kmalloc(alg_num_a * sizeof(struct sadb_alg),
 				     GFP_ATOMIC) ) == NULL) {
 			KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_register_reply: "
@@ -1384,9 +1383,8 @@ int pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 
 	if (alg_num_e) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_register_reply: "
-			    "allocating %lu bytes for enc algs.\n",
-			    (unsigned long) (alg_num_e *
-					     sizeof(struct sadb_alg)));
+			    "allocating %zu bytes for enc algs.\n",
+			    alg_num_e * sizeof(struct sadb_alg));
 		if ((alg_e = kmalloc(alg_num_e * sizeof(struct sadb_alg),
 				     GFP_ATOMIC) ) == NULL) {
 			KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_register_reply: "
@@ -1692,7 +1690,6 @@ DEBUG_NO_STATIC int pfkey_x_grpsa_parse(struct sock *sk,
 	}
 
 	if (extr->ips2) { /* GRPSA */
-
 		/* group ips2p to be after ips1p */
 
 		ips2p = ipsec_sa_getbyid(&(extr->ips2->ips_said), IPSEC_REFSA);
@@ -1898,21 +1895,19 @@ DEBUG_NO_STATIC int pfkey_x_addflow_parse(struct sock *sk,
 	}
 
 	if (extr->eroute->er_eaddr.sen_type == SENT_IP6) {
-		srcflow.u.v6.sin6_family = AF_INET6;
-		dstflow.u.v6.sin6_family = AF_INET6;
-		srcmask.u.v6.sin6_family = AF_INET6;
-		dstmask.u.v6.sin6_family = AF_INET6;
-
+		SET_V6(srcflow);
+		SET_V6(dstflow);
+		SET_V6(srcmask);
+		SET_V6(dstmask);
 		srcflow.u.v6.sin6_addr = extr->eroute->er_eaddr.sen_ip6_src;
 		dstflow.u.v6.sin6_addr = extr->eroute->er_eaddr.sen_ip6_dst;
 		srcmask.u.v6.sin6_addr = extr->eroute->er_emask.sen_ip6_src;
 		dstmask.u.v6.sin6_addr = extr->eroute->er_emask.sen_ip6_dst;
 	} else {
-		srcflow.u.v4.sin_family = AF_INET;
-		dstflow.u.v4.sin_family = AF_INET;
-		srcmask.u.v4.sin_family = AF_INET;
-		dstmask.u.v4.sin_family = AF_INET;
-
+		SET_V4(srcflow);
+		SET_V4(dstflow);
+		SET_V4(srcmask);
+		SET_V4(dstmask);
 		srcflow.u.v4.sin_addr = extr->eroute->er_eaddr.sen_ip_src;
 		dstflow.u.v4.sin_addr = extr->eroute->er_eaddr.sen_ip_dst;
 		srcmask.u.v4.sin_addr = extr->eroute->er_emask.sen_ip_src;
@@ -2188,11 +2183,10 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 		}
 
 		if (extr->eroute->er_eaddr.sen_type == SENT_IP6) {
-			srcflow.u.v6.sin6_family = AF_INET6;
-			dstflow.u.v6.sin6_family = AF_INET6;
-			srcmask.u.v6.sin6_family = AF_INET6;
-			dstmask.u.v6.sin6_family = AF_INET6;
-
+			SET_V6(srcflow);
+			SET_V6(dstflow);
+			SET_V6(srcmask);
+			SET_V6(dstmask);
 			srcflow.u.v6.sin6_addr =
 				extr->eroute->er_eaddr.sen_ip6_src;
 			dstflow.u.v6.sin6_addr =
@@ -2202,11 +2196,10 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 			dstmask.u.v6.sin6_addr =
 				extr->eroute->er_emask.sen_ip6_dst;
 		} else {
-			srcflow.u.v4.sin_family = AF_INET;
-			dstflow.u.v4.sin_family = AF_INET;
-			srcmask.u.v4.sin_family = AF_INET;
-			dstmask.u.v4.sin_family = AF_INET;
-
+			SET_V4(srcflow);
+			SET_V4(dstflow);
+			SET_V4(srcmask);
+			SET_V4(dstmask);
 			srcflow.u.v4.sin_addr =
 				extr->eroute->er_eaddr.sen_ip_src;
 			dstflow.u.v4.sin_addr =
@@ -2672,34 +2665,34 @@ int pfkey_nat_t_new_mapping(struct ipsec_sa *ipsp, struct sockaddr *ipaddr,
 		      (error = pfkey_msg_hdr_build(&extensions[0],
 						  K_SADB_X_NAT_T_NEW_MAPPING,
 						  satype, 0, ++pfkey_msg_seq,
-						  0), extensions)
+						  0), extensions) &&
 	      /* SA */
-	      && pfkey_safe_build
+	      pfkey_safe_build
 		      (error = pfkey_sa_build(&extensions[K_SADB_EXT_SA],
 					      K_SADB_EXT_SA,
 					      ipsp->ips_said.spi, 0, 0, 0, 0,
-					      0), extensions)
+					      0), extensions) &&
 	      /* ADDRESS_SRC = old addr */
-	      && pfkey_safe_build
+	      pfkey_safe_build
 		      (error = pfkey_address_build(&extensions[K_SADB_EXT_ADDRESS_SRC],
 						  K_SADB_EXT_ADDRESS_SRC,
 						  ipsp->ips_said.proto, 0,
 						  ipsp->ips_addr_s),
-		      extensions)
+		      extensions) &&
 	      /* NAT_T_SPORT = old port */
-	      && pfkey_safe_build
+	      pfkey_safe_build
 		      (error = pfkey_x_nat_t_port_build(&extensions[K_SADB_X_EXT_NAT_T_SPORT],
 						       K_SADB_X_EXT_NAT_T_SPORT,
 						       ipsp->ips_natt_sport),
-		      extensions)
+		      extensions) &&
 	      /* ADDRESS_DST = new addr */
-	      && pfkey_safe_build
+	      pfkey_safe_build
 		      (error = pfkey_address_build(&extensions[K_SADB_EXT_ADDRESS_DST],
 						  K_SADB_EXT_ADDRESS_DST,
 						  ipsp->ips_said.proto, 0,
-						  ipaddr), extensions)
+						  ipaddr), extensions) &&
 	      /* NAT_T_DPORT = new port */
-	      && pfkey_safe_build
+	      pfkey_safe_build
 		      (error = pfkey_x_nat_t_port_build(&extensions[K_SADB_X_EXT_NAT_T_DPORT],
 						       K_SADB_X_EXT_NAT_T_DPORT,
 						       sport), extensions)

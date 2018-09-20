@@ -1,3 +1,8 @@
+# XXX: This optional sanitizer should be rewritten so that it only
+# applies to strongswan commands.  That way it can be run
+# unconditionally.  As things stand it edits stuff it really has no
+# business editing.
+
 s/^\(Starting strongSwan \)\(.*\)\( IPsec.*\)$/\1X.X.X\3/g
 s/^\(Status of IKE charon daemon (strongSwan \).*):$/\1VERSION):/g
 s/\(  uptime: \)\([0-9]*\)\( second[s]*\)\(, since \)\(.*\)$/\1XXX second\4YYY/g
@@ -18,14 +23,10 @@ s/\(INSTALLED, T[A-Z]*, .* in UDP SPIs: \)[a-z0-9]*_i [a-z0-9]*_o/\1SPISPI_i SPI
 /^  loaded plugins: .*$/d
 s/QUICK_MODE request [0-9]* /QUICK_MODE request 0123456789 /g
 s/QUICK_MODE response [0-9]* /QUICK_MODE response 0123456789 /g
-# for ip xfrm commands, as we cannot use ipsec look which normally does this part
-s/ah spi 0x[a-z0-9]* /ah spi 0xSPISPI /g
-s/esp spi 0x[a-z0-9]* /esp spi 0xSPISPI /g
-s/auth-trunc \([^ ]*\) 0x[a-z0-9]* \(.*\)$/auth-trunc \1 0xKEY \2/g
 # strip out our own changing vendor id
 s/received unknown vendor ID: 40:48.*/received unknown vendor ID: LIBRESWAN/g
 s/rekeying in [0-9]* minutes/rekeying in XX minutes/g
 s/ESTABLISHED [0-9]* seconds ago/ESTABLISHED XXX seconds ago/g
 s/established with SPIs .* and /established with SPIs SPISPI_i SPISPI_o and /
 s/received AUTH_LIFETIME of [0-9]*s, scheduling reauthentication in [0-9]*s/received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs/
-
+s/server requested EAP_MD5 authentication.*$/server requested EAP_MD5 authentication XXX/g

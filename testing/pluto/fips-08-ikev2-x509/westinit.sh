@@ -1,6 +1,4 @@
 /testing/guestbin/swan-prep --fips --x509
-/usr/bin/modutil -dbdir /etc/ipsec.d -fips true -force
-/usr/bin/modutil -dbdir /etc/ipsec.d -chkfips true
 fipscheck
 # confirm that the network is alive
 ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254

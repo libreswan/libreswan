@@ -24,13 +24,14 @@ east #
  echo "initdone"
 initdone
 east #
- # we should see conn other being up
+ # we should see a connection switch on east
 east #
  ipsec whack --trafficstatus
 006 #2: "main-east"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west.testing.libreswan.org'
 east #
- ipsec whack --shutdown
-002 shutting down
+ hostname | grep east && grep switched /tmp/pluto.log
+east
+"main-north"[1] 192.1.2.45 #1: switched from "main-north"[1] 192.1.2.45 to "main-east"
 east #
 east #
  ../bin/check-for-core.sh

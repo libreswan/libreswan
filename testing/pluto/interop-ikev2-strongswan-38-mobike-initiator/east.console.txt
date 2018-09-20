@@ -16,10 +16,10 @@ east NOW
 XFRM state:
 src 192.1.3.34 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xKEY
+	enc cbc(aes) 0xENCKEY
 src 192.1.2.23 dst 192.1.3.34
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xKEY
+	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 192.0.2.0/24 dst 192.0.3.0/24
 	dir out priority 1042407 ptype main
@@ -34,11 +34,11 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

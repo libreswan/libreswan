@@ -126,7 +126,7 @@ static void UpdateNSS_RNG(int seedbits)
 {
 	SECStatus rv;
 	int seedbytes = BYTES_FOR_BITS(seedbits);
-	unsigned char *buf = alloc_bytes(seedbytes,"TLA seedmix");
+	unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
 	lsw_random(seedbytes, buf);
 	rv = PK11_RandomUpdate(buf, seedbytes);

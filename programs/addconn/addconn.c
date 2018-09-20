@@ -16,46 +16,25 @@
  * for more details.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
+#include <stdlib.h>
+#include <getopt.h>
 #include <sys/stat.h>
-#include <limits.h>
-#include <fcntl.h>
-#include <string.h>
+#include <unistd.h>
 #include <errno.h>
 
-#include <netinet/in.h>
-
-#include <linux/netlink.h>
-#include <linux/rtnetlink.h>
-
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <ifaddrs.h>
-
-#include <unistd.h>
-#include <getopt.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <libreswan.h>
-#include "sysdep.h"
-#include "constants.h"
-#include "lswalloc.h"
-#include "lswconf.h"
 #include "lswlog.h"
+#include "lswcdefs.h"	/* for UNUSED */
+#include "lswalloc.h"
 #include "lswtool.h"
 #include "whack.h"
+#include "ipsecconf/parser-controls.h"
+#include "ipsecconf/starterlog.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
-#include "ipsecconf/starterlog.h"
 #include "ipsecconf/starterwhack.h"
-#include "ipsecconf/keywords.h"
-#include "ipsecconf/parser-controls.h"
-#include "ipsecconf/addr_lookup.h"
+#ifdef NETKEY_SUPPORT
+#include "addr_lookup.h"
+#endif
 
 #ifdef USE_DNSSEC
 # include "dnssec.h"
@@ -72,14 +51,21 @@ static int verbose = 0;
 
 /*
  * See if conn's left or right is %defaultroute and resolve it.
+ *
+ * XXX: why not let pluto resolve all this like it is already doing?
+ * because of MOBIKE.
  */
-static
-void resolve_defaultroute(struct starter_conn *conn)
+static void resolve_defaultroute(struct starter_conn *conn UNUSED)
 {
+#ifdef NETKEY_SUPPORT
 	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0);
 	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0);
+#else /* !defined(NETKEY_SUPPORT) */
+	fprintf(stderr, "addcon: without NETKEY, cannot resolve_defaultroute()\n");
+	exit(7);	/* random code */
+#endif
 }
 
 #ifdef HAVE_SECCOMP
@@ -154,7 +140,7 @@ static void init_seccomp_addconn(uint32_t def_action)
 
 	int rc = seccomp_load(ctx);
 	if (rc < 0) {
-		printf("seccomp_load() failed!");
+		fprintf(stderr, "seccomp_load() failed!");
 		seccomp_release(ctx);
 		exit(LSW_SECCOMP_EXIT_FAIL);
 	}
@@ -211,8 +197,8 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	bool autoall = FALSE;
-	int configsetup = 0;
-	int checkconfig = 0;
+	bool configsetup = FALSE;
+	bool checkconfig = FALSE;
 	const char *export = "export"; /* display export before the foo=bar or not */
 	bool
 		dolist = FALSE,
@@ -227,7 +213,6 @@ int main(int argc, char *argv[])
 	int exit_status = 0;
 	struct starter_conn *conn = NULL;
 	const char *ctlsocket = NULL;
-	bool resolvip = TRUE; /* default to looking up names */
 
 #if 0
 	/* efence settings */
@@ -257,11 +242,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'T':
-			configsetup++;	/* ??? is this not idempotent? */
+			configsetup = TRUE;
 			break;
 
 		case 'K':
-			checkconfig++;	/* ??? is this not idempotent? */
+			checkconfig = TRUE;
 			break;
 
 		case 'N':
@@ -312,7 +297,7 @@ int main(int argc, char *argv[])
 
 		case 'd':
 		case 'n':
-			printf("Warning: options --defaultroute and --defaultroutenexthop are obsolete and were ignored\n");
+			fprintf(stderr, "Warning: options --defaultroute and --defaultroutenexthop are obsolete and were ignored\n");
 			break;
 
 		default:
@@ -337,7 +322,7 @@ int main(int argc, char *argv[])
 			ws--;
 		}
 		if (ws == 0) {
-			printf("ipsec addconn: timeout waiting on pluto socket %s - aborted\n",
+			fprintf(stderr, "ipsec addconn: timeout waiting on pluto socket %s - aborted\n",
 				ctlsocket);
 			exit(3);
 		}
@@ -345,7 +330,7 @@ int main(int argc, char *argv[])
 
 	/* if nothing to add, then complain */
 	if (optind == argc && !autoall && !dolist && !configsetup &&
-		!checkconfig)
+	    !checkconfig)
 		usage();
 
 	if (verbose > 3) {
@@ -367,28 +352,30 @@ int main(int argc, char *argv[])
 		strcat(configfile, "ipsec.conf");	/* safe: see allocation above */
 	}
 
-	if (verbose)
+	if (verbose > 0)
 		printf("opening file: %s\n", configfile);
 
 	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
-	if (configsetup || checkconfig || dolist) {
-		/* skip if we have no use for them... causes delays */
-		resolvip = FALSE;
-	}
-
 	struct starter_config *cfg = NULL;
 
 	{
-		err_t err = NULL;
+		starter_errors_t errl = { NULL };
 
-		cfg = confread_load(configfile, &err, resolvip, ctlsocket, configsetup);
+		cfg = confread_load(configfile, &errl, ctlsocket, configsetup);
 
 		if (cfg == NULL) {
 			fprintf(stderr, "cannot load config '%s': %s\n",
-				configfile, err);
+				configfile, errl.errors);
+			pfreeany(errl.errors);
 			exit(3);
-		} else if (checkconfig) {
+		}
+		if (errl.errors != NULL) {
+			fprintf(stderr, "addconn, in config '%s', ignoring: %s\n",
+				configfile, errl.errors);
+			pfree(errl.errors);
+		}
+		if (checkconfig) {
 			confread_free(cfg);
 			exit(0);
 		}
@@ -416,7 +403,7 @@ int main(int argc, char *argv[])
 #endif
 
 	if (autoall) {
-		if (verbose)
+		if (verbose > 0)
 			printf("loading all conns according to their auto= settings\n");
 
 		/*
@@ -426,7 +413,7 @@ int main(int argc, char *argv[])
 		 * slower.
 		 * This mimics behaviour of the old _plutoload
 		 */
-		if (verbose)
+		if (verbose > 0)
 			printf("  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
@@ -434,7 +421,7 @@ int main(int argc, char *argv[])
 				conn->desired_state == STARTUP_ONDEMAND ||
 				conn->desired_state == STARTUP_START)
 			{
-				if (verbose)
+				if (verbose > 0)
 					printf(" %s", conn->name);
 				resolve_defaultroute(conn);
 				starter_whack_add_conn(cfg, conn);
@@ -447,118 +434,102 @@ int main(int argc, char *argv[])
 		 */
 		starter_whack_listen(cfg);
 
-		if (verbose)
+		if (verbose > 0)
 			printf("  Pass #2: Routing auto=route connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_ONDEMAND)
 			{
-				if (verbose)
+				if (verbose > 0)
 					printf(" %s", conn->name);
 				if (conn->desired_state == STARTUP_ONDEMAND)
 					starter_whack_route_conn(cfg, conn);
 			}
 		}
 
-		if (verbose)
+		if (verbose > 0)
 			printf("  Pass #3: Initiating auto=start connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_START) {
-				if (verbose)
+				if (verbose > 0)
 					printf(" %s", conn->name);
 				starter_whack_initiate_conn(cfg, conn);
 			}
 		}
 
-		if (verbose)
+		if (verbose > 0)
 			printf("\n");
 	} else {
 		/* load named conns, regardless of their state */
 		int connum;
 
-		if (verbose)
+		if (verbose > 0)
 			printf("loading named conns:");
 		for (connum = optind; connum < argc; connum++) {
-			char *connname = argv[connum];
+			const char *connname = argv[connum];
 
-			if (verbose)
+			const char *p1 = "";	/* message prefix components */
+			const char *p2 = "";
+			const char *p3 = "";
+
+			if (verbose > 0)
 				printf(" %s", connname);
+
+			/* find first name match, if any */
 			for (conn = cfg->conns.tqh_first;
-				conn != NULL;
-				conn = conn->link.tqe_next) {
-				if (streq(conn->name, connname)) {
-					if (conn->state == STATE_ADDED) {
-						printf("\nconn %s already added\n",
-							conn->name);
-					} else if (conn->state ==
-						STATE_FAILED) {
-						printf("\nconn %s did not load properly\n",
-							conn->name);
-					} else {
-						resolve_defaultroute(conn);
-						exit_status =
-							starter_whack_add_conn(
-								cfg,
-								conn);
-						conn->state = STATE_ADDED;
-					}
-					break;
-				}
+			     conn != NULL && !streq(conn->name, connname);
+			     conn = conn->link.tqe_next) {
 			}
 
 			if (conn == NULL) {
-				/*
-				 * only if we don't find it, do we now look
-				 * for aliases
-				 */
+				/* We didn't find name; look for first alias */
+
+				p1 = "alias: ";
+				p2 = connname;
+				p3 = " ";
+
 				for (conn = cfg->conns.tqh_first;
-					conn != NULL;
-					conn = conn->link.tqe_next) {
-					if (conn->strings_set[KSCF_CONNALIAS] &&
-						lsw_alias_cmp(connname,
-							conn->
-							strings[KSCF_CONNALIAS]
-							)) {
-						if (conn->state ==
-							STATE_ADDED) {
-							printf("\nalias: %s conn %s already added\n",
-								connname,
-								conn->name);
-						} else if (conn->state ==
-							STATE_FAILED) {
-							printf("\nalias: %s conn %s did not load properly\n",
-								connname,
-								conn->name);
-						} else {
-							resolve_defaultroute(
-								conn);
-							exit_status =
-								starter_whack_add_conn(
-									cfg,
-									conn);
-							conn->state =
-								STATE_ADDED;
-						}
+				     conn != NULL;
+				     conn = conn->link.tqe_next) {
+					if (lsw_alias_cmp(connname,
+						conn->strings[KSCF_CONNALIAS]))
+					{
 						break;
 					}
 				}
 			}
 
 			if (conn == NULL) {
+				/* we found neither name nor alias */
 				exit_status += RC_UNKNOWN_NAME; /* cause non-zero exit code */
-				if (!verbose) {
-					printf("conn '%s': not found (tried aliases)\n",
-						connname);
-				} else {
+				if (verbose > 0) {
 					printf(" (notfound)\n");
+				}
+				fprintf(stderr, "conn '%s': not found (tried aliases)\n",
+					connname);
+			} else {
+				/* found name or alias */
+				if (conn->state == STATE_ADDED) {
+					fprintf(stderr, "\n%s%s%sconn %s already added\n",
+						p1, p2, p3,
+						conn->name);
+				} else if (conn->state == STATE_FAILED) {
+					fprintf(stderr, "\n%s%s%sconn %s did not load properly\n",
+						p1, p2, p3,
+						conn->name);
+				} else {
+					resolve_defaultroute(conn);
+					exit_status = starter_whack_add_conn(
+						cfg, conn);
+					conn->state = STATE_ADDED;
 				}
 			}
 		}
 	}
 
 	if (listall) {
-		if (verbose)
+		if (verbose > 0)
 			printf("listing all conns\n");
 		for (conn = cfg->conns.tqh_first;
 			conn != NULL;
@@ -567,7 +538,7 @@ int main(int argc, char *argv[])
 		printf("\n");
 	} else {
 		if (listadd) {
-			if (verbose)
+			if (verbose > 0)
 				printf("listing all conns marked as auto=add\n");
 
 			/* list all conns marked as auto=add */
@@ -579,7 +550,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		if (listroute) {
-			if (verbose)
+			if (verbose > 0)
 				printf("listing all conns marked as auto=route and auto=start\n");
 
 			/*
@@ -596,7 +567,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (liststart && !listroute) {
-			if (verbose)
+			if (verbose > 0)
 				printf("listing all conns marked as auto=start\n");
 
 			/* list all conns marked as auto=start */
@@ -609,7 +580,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (listignore) {
-			if (verbose)
+			if (verbose > 0)
 				printf("listing all conns marked as auto=ignore\n");
 
 			/* list all conns marked as auto=start */

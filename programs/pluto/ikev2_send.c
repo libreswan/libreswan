@@ -84,10 +84,10 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
 bool ship_v2UNKNOWN(pb_stream *outs, const char *victim)
 {
 	libreswan_log("IMPAIR: adding an unknown payload of type %d to %s",
-		      ikev2_unknown_payload_desc.np, victim);
+		      ikev2_unknown_payload_desc.pt, victim);
 	struct ikev2_generic gen = {
-		.isag_np = 0,
-		.isag_critical = build_ikev2_critical(false, IMPAIR(UNKNOWN_PAYLOAD_CRITICAL)),
+		.isag_np = ISAKMP_NEXT_v2NONE,
+		.isag_critical = build_ikev2_critical(IMPAIR(UNKNOWN_PAYLOAD_CRITICAL)),
 	};
 	pb_stream pbs = open_output_struct_pbs(outs, &gen, &ikev2_unknown_payload_desc);
 	if (!pbs_ok(&pbs)) {
@@ -137,68 +137,87 @@ bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
 uint8_t build_ikev2_version(void)
 {
 	/* TODO: if bumping, we should also set the Version flag in the ISAKMP header */
-	return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))
+	return ((IKEv2_MAJOR_VERSION + (IMPAIR(MAJOR_VERSION_BUMP) ? 1 : 0))
 			<< ISA_MAJ_SHIFT) |
-	       (IKEv2_MINOR_VERSION + (DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
+	       (IKEv2_MINOR_VERSION + (IMPAIR(MINOR_VERSION_BUMP) ? 1 : 0));
 }
 
-uint8_t build_ikev2_critical(bool critical, bool impair)
+uint8_t build_ikev2_critical(bool impair)
 {
 	uint8_t octet = 0;
 	if (impair) {
 		/* flip the expected bit */
-		if (critical) {
-			libreswan_log("IMPAIR: clearing (should be on) critical payload bit");
-			octet = ISAKMP_PAYLOAD_NONCRITICAL;
-		} else {
-			libreswan_log("IMPAIR: setting (should be off) critical payload bit");
-			octet = ISAKMP_PAYLOAD_CRITICAL;
-		}
+		libreswan_log("IMPAIR: setting (should be off) critical payload bit");
+		octet = ISAKMP_PAYLOAD_CRITICAL;
 	} else {
-		octet = critical ? ISAKMP_PAYLOAD_CRITICAL : ISAKMP_PAYLOAD_NONCRITICAL;
+		octet = ISAKMP_PAYLOAD_NONCRITICAL;
 	}
 	if (IMPAIR(SEND_BOGUS_PAYLOAD_FLAG)) {
-#if 0
 		libreswan_log("IMPAIR: adding bogus bit to critical octet");
-#else
-		libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-#endif
 		octet |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
 	return octet;
 }
 
-/* add notify payload to the rbody */
+/*
+ * ship_v2N: add notify payload to the rbody
+ * (See also specialized versions ship_v2Nsp and ship_v2Ns.)
+ *
+ * - RFC 7296 3.10 "Notify Payload" says:
+ *
+ * o  Protocol ID (1 octet) - If this notification concerns an existing
+ *    SA whose SPI is given in the SPI field, this field indicates the
+ *    type of that SA.  For notifications concerning Child SAs, this
+ *    field MUST contain either (2) to indicate AH or (3) to indicate
+ *    ESP.  Of the notifications defined in this document, the SPI is
+ *    included only with INVALID_SELECTORS, REKEY_SA, and
+ *    CHILD_SA_NOT_FOUND.  If the SPI field is empty, this field MUST be
+ *    sent as zero and MUST be ignored on receipt.
+ *
+ * o  SPI Size (1 octet) - Length in octets of the SPI as defined by the
+ *    IPsec protocol ID or zero if no SPI is applicable.  For a
+ *    notification concerning the IKE SA, the SPI Size MUST be zero and
+ *    the field must be empty.
+ */
 bool ship_v2N(enum next_payload_types_ikev2 np,
-	      u_int8_t critical,
+	      uint8_t critical,
 	      enum ikev2_sec_proto_id protoid,
 	      const chunk_t *spi,
 	      v2_notification_t type,
 	      const chunk_t *n_data,
 	      pb_stream *rbody)
 {
-	struct ikev2_notify n;
-	pb_stream n_pbs;
-
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
 	passert((protoid == PROTO_v2_RESERVED) == (spi->len == 0));
 
-	DBG(DBG_CONTROLMORE, DBG_log("Adding a v2N Payload"));
-
-	zero(&n);	/* OK: no pointer fields */
-
-	n.isan_np = np;
-	n.isan_critical = critical;
-	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-		libreswan_log(
-			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-		n.isan_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+	switch (type) {
+	case v2N_INVALID_SELECTORS:
+	case v2N_REKEY_SA:
+	case v2N_CHILD_SA_NOT_FOUND:
+		/* must have SPI. XXX: ??? this is checking protoid! */
+		if (protoid == PROTO_v2_RESERVED) {
+			DBGF(DBG_MASK, "XXX: type and protoid mismatch");
+		}
+		break;
+	default:
+		/* must not have SPI. XXX: ??? this is checking protoid! */
+		if (protoid != PROTO_v2_RESERVED) {
+			DBGF(DBG_MASK, "XXX: type and protoid mismatch");
+		}
+		break;
 	}
 
-	n.isan_protoid = protoid;
-	n.isan_spisize = spi->len;
-	n.isan_type = type;
+	DBG(DBG_CONTROLMORE, DBG_log("Adding a v2N Payload"));
+
+	struct ikev2_notify n = {
+		.isan_np = np,
+		.isan_critical = critical,
+		.isan_protoid = protoid,
+		.isan_spisize = spi->len,
+		.isan_type = type,
+	};
+	pb_stream n_pbs;
 
 	if (!out_struct(&n, &ikev2_notify_desc, rbody, &n_pbs)) {
 		libreswan_log(
@@ -207,7 +226,7 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	}
 
 	if (spi->len > 0) {
-		if (!out_chunk(*spi, &n_pbs, "SPI ")) {
+		if (!out_chunk(*spi, &n_pbs, "SPI")) {
 			libreswan_log("error writing SPI to notify payload");
 			return FALSE;
 		}
@@ -224,13 +243,37 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	return TRUE;
 }
 
-bool out_v2N(pb_stream *rbody, v2_notification_t ntype, const chunk_t *ndata)
+/*
+ * ship_v2Nsp: partially parameterized shipv2N
+ *
+ * - critical: ISAKMP_PAYLOAD_NONCRITICAL
+ * - protoid: IKEv2_SEC_PROTO_NONE
+ * - spi: none
+ * pass through: all params
+ *
+ * This case is common since
+ *
+ * - almost all notifications are non-critical
+ * - only a specified few include protocol or SPI
+ */
+
+bool ship_v2Nsp(enum next_payload_types_ikev2 np,
+		v2_notification_t type,
+		const chunk_t *n_data,
+		pb_stream *rbody)
 {
-	return ship_v2N(0, build_ikev2_critical(false, false),
-			IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
-			ntype, ndata, rbody);
+	return ship_v2N(np, build_ikev2_critical(false),
+			PROTO_v2_RESERVED, &empty_chunk, type, n_data, rbody);
 }
 
+/* ship_v2Ns: like ship_v2Nsp except n_data is &empty_chunk */
+
+bool ship_v2Ns(enum next_payload_types_ikev2 np,
+	      v2_notification_t type,
+	      pb_stream *rbody)
+{
+	return ship_v2Nsp(np, type, &empty_chunk, rbody);
+}
 
 /*
  * Open an IKEv2 message.
@@ -253,7 +296,7 @@ pb_stream open_v2_message(pb_stream *reply,
 		.isa_version = build_ikev2_version(),
 		.isa_xchg = exchange_type,
 		.isa_length = 0, /* filled in when PBS is closed */
-		.isa_np = 0, /* filled in when next payload is added */
+		.isa_np = ISAKMP_NEXT_v2NONE, /* filled in when next payload is added */
 	};
 
 	/*
@@ -406,12 +449,23 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 
 	/* actual data */
 
-	if (!out_v2N(&sk.pbs, ntype, ndata)) {
-		/*
-		 * XXX: always omitting SPI but ESP/AH packets need
-		 * it!?!
-		 */
-		return;
+	switch (ntype) {
+	case v2N_INVALID_SELECTORS:	/* ??? we never actually generate this */
+	case v2N_REKEY_SA:	/* never follows this path */
+	case v2N_CHILD_SA_NOT_FOUND:
+		DBGF(DBG_MASK, "notification %s needs SPI!", notify_name);
+		/* ??? how can we figure out the protocol and SPI? */
+		if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+			      build_ikev2_critical(false),
+			      PROTO_v2_RESERVED, &empty_chunk,
+			      ntype, ndata, &sk.pbs)) {
+			return;
+		}
+		break;
+	default:
+		if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE, ntype, ndata, &sk.pbs))
+			return;
+		break;
 	}
 
 	if (!close_v2sk_payload(&sk)) {
@@ -479,7 +533,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	}
 
 	/* build and add v2N payload to the packet */
-	if (!out_v2N(&rbody, ntype, ndata)) {
+	if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE, ntype, ndata, &rbody)) {
 		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->msgid_received);
 		return;
@@ -508,7 +562,7 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 			group->common.name, group->group);
 	});
 	/* convert group to a raw buffer */
-	const u_int16_t gr = htons(group->group);
+	const uint16_t gr = htons(group->group);
 	chunk_t nd;
 	setchunk(nd, (void*)&gr, sizeof(gr));
 
@@ -552,7 +606,7 @@ void send_v2_delete(struct state *const st)
 		pb_stream del_pbs;
 		struct ikev2_delete v2del_tmp;
 		/*
-		 * u_int16_t i, j=0;
+		 * uint16_t i, j=0;
 		 * u_char *spi;
 		 * char spi_buf[1024];
 		 */
@@ -607,6 +661,69 @@ void send_v2_delete(struct state *const st)
 	st->st_msgid = htonl(ike->sa.st_msgid_nextuse);
 }
 
+/*
+ * Construct and send an informational request.
+ *
+ * XXX: This and send_v2_delete() should be merged.  However, there
+ * are annoying differences.  For instance, send_v2_delete() updates
+ * st->st_msgid but the below doesn't.
+ */
+stf_status send_v2_informational_request(const char *name,
+					 struct state *st,
+					 struct ike_sa *ike,
+					 stf_status (*payloads)(struct state *st,
+								pb_stream *pbs))
+{
+	/*
+	 * Buffer in which to marshal our informational message.  We
+	 * don't use reply_buffer/reply_stream because it might be in
+	 * use.
+	 */
+	u_char buffer[MIN_OUTPUT_UDP_SIZE];	/* ??? large enough for any informational? */
+	pb_stream packet = open_out_pbs(name, buffer, sizeof(buffer));
+	if (!pbs_ok(&packet)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	pb_stream message = open_v2_message(&packet, ike, NULL,
+					    ISAKMP_v2_INFORMATIONAL);
+	if (!pbs_ok(&message)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct v2sk_payload sk = open_v2sk_payload(&message, ike);
+	if (!pbs_ok(&sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (payloads != NULL) {
+		stf_status e = payloads(st, &sk.pbs);
+		if (e != STF_OK) {
+			return  e;
+		}
+	}
+
+	if (!close_v2sk_payload(&sk)) {
+		return STF_INTERNAL_ERROR;
+	}
+	close_output_pbs(&message);
+	close_output_pbs(&packet);
+
+	stf_status ret = encrypt_v2sk_payload(&sk);
+	if (ret != STF_OK) {
+		return ret;
+	}
+
+	/* cannot use ikev2_update_msgid_counters - no md here */
+	/* But we know we are the initiator for thie exchange */
+	ike->sa.st_msgid_nextuse += 1;
+
+	ike->sa.st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
+	record_and_send_v2_ike_msg(st, &packet, name);
+
+	return STF_OK;
+}
+
 struct v2sk_payload open_v2sk_payload(pb_stream *container,
 				      struct ike_sa *ike)
 {
@@ -619,7 +736,7 @@ struct v2sk_payload open_v2sk_payload(pb_stream *container,
 
 	struct ikev2_generic e = {
 		.isag_length = 0, /* filled in later */
-		.isag_critical = build_ikev2_critical(false, false),
+		.isag_critical = build_ikev2_critical(false),
 	};
 	if (!out_struct(&e, &ikev2_sk_desc, container, &sk.pbs)) {
 		libreswan_log("error initializing SK header for encrypted %s message",

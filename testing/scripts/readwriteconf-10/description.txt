@@ -1,2 +1,0 @@
-this tests parsing of a config file with xauth* values set.
-

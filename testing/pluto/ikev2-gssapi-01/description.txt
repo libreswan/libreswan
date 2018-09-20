@@ -1,1 +1,5 @@
-WIP: gssapi test for ikev1
+Demonstrate a GSSAPI configuration inside the test framework.
+
+This test requires custom domains.  See the script gssapi.sh for an
+example of how they can be set up.
+

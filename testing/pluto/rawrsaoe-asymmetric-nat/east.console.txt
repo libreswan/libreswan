@@ -1,0 +1,38 @@
+/testing/guestbin/swan-prep
+east #
+ cp east-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
+east #
+ cp policies/* /etc/ipsec.d/policies/
+east #
+ echo "192.1.2.254/32"  >> /etc/ipsec.d/policies/clear-or-private
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec whack --impair suppress-retransmits
+east #
+ # give OE policies time to load
+east #
+ sleep 5
+east #
+ echo "initdone"
+initdone
+east #
+ # A tunnel should have established with non-zero byte counters
+east #
+ grep "negotiated connection" /tmp/pluto.log
+"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32 #2: negotiated connection [192.1.2.23-192.1.2.23:0-65535 0] -> [10.0.10.1-10.0.10.1:0-65535 0]
+east #
+ # you should RSA and NULL
+east #
+ grep IKEv2_AUTH_ /tmp/pluto.log
+|    auth method: IKEv2_AUTH_NULL (0xd)
+|    auth method: IKEv2_AUTH_RSA (0x1)
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

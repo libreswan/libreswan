@@ -1,4 +1,5 @@
 /* interface to fake kernel interface, used for testing pluto in-vitro.
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
@@ -17,32 +18,8 @@
  * for more details.
  */
 
-#include <errno.h>
-#include <fcntl.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <sys/select.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-
-#include <libreswan.h>
-#include <libreswan/pfkeyv2.h>
-#include <libreswan/pfkey.h>
-
-#include "sysdep.h"
-#include "constants.h"
-#include "defs.h"
-#include "id.h"
-#include "connections.h"
 #include "kernel.h"
 #include "kernel_nokernel.h"
-#include "log.h"
-#include "whack.h"      /* for RC_LOG_SERIOUS */
 
 static void init_nokernel(void)
 {
@@ -123,6 +100,10 @@ static bool nokernel_shunt_eroute(const struct connection *c UNUSED,
 	return TRUE;
 }
 
+static void nokernel_scan_shunts(void)
+{
+}
+
 const struct kernel_ops nokernel_kernel_ops = {
 	.type = NO_KERNEL,
 	.async_fdp = NULL,
@@ -142,7 +123,7 @@ const struct kernel_ops nokernel_kernel_ops = {
 	.shunt_eroute = nokernel_shunt_eroute,
 	.get_spi = NULL,
 	.inbound_eroute = FALSE,
-	.policy_lifetime = FALSE,
+	.scan_shunts = nokernel_scan_shunts,
 	.exceptsocket = NULL,
 	.docommand = NULL,
 	.kern_name = "nokernel",

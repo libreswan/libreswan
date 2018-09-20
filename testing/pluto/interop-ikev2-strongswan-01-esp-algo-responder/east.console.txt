@@ -1,0 +1,30 @@
+/testing/guestbin/swan-prep --userland strongswan
+east #
+ ../../pluto/bin/strongswan-start.sh
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+east #
+ if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
+Status of IKE charon daemon (strongSwan VERSION):
+  uptime: XXX second, since YYY
+  malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
+Listening IP addresses:
+  192.0.2.254
+  192.1.2.23
+  192.9.2.23
+Connections:
+westnet-eastnet-ikev2-esp-null:  192.1.2.23...192.1.2.45  IKEv2
+westnet-eastnet-ikev2-esp-null:   local:  [east] uses pre-shared key authentication
+westnet-eastnet-ikev2-esp-null:   remote: [west] uses pre-shared key authentication
+westnet-eastnet-ikev2-esp-null:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL
+Security Associations (0 up, 0 connecting):
+  none
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

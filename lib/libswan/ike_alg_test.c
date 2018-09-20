@@ -15,8 +15,8 @@
 
 #include "lswlog.h"
 #include "ike_alg.h"
-#include "ike_alg_camellia.h"
-#include "ike_alg_aes.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_prf.h"
 
 #include "ike_alg_test_ctr.h"
 #include "ike_alg_test_cbc.h"
@@ -25,8 +25,11 @@
 
 void test_ike_alg(void)
 {
+#ifdef USE_CAMELLIA
 	passert(test_cbc_vectors(&ike_alg_encrypt_camellia_cbc,
 				 camellia_cbc_tests));
+#endif
+#ifdef USE_AES
 	passert(test_gcm_vectors(&ike_alg_encrypt_aes_gcm_16,
 				 aes_gcm_tests));
 	passert(test_ctr_vectors(&ike_alg_encrypt_aes_ctr,
@@ -34,4 +37,5 @@ void test_ike_alg(void)
 	passert(test_cbc_vectors(&ike_alg_encrypt_aes_cbc,
 				 aes_cbc_tests));
 	passert(test_prf_vectors(&aes_xcbc_prf_tests));
+#endif
 }

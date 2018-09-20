@@ -46,7 +46,7 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 				   /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */)
 {
 	/* key = Ni|Nr */
-	chunk_t key = concat_chunk_chunk("key = Ni|Nr", Ni, Nr);
+	chunk_t key = clone_chunk_chunk(Ni, Nr, "key = Ni|Nr");
 	struct crypt_prf *prf = crypt_prf_init_chunk("SKEYID sig", DBG_CRYPT,
 						     prf_desc,
 						     "Ni|Nr", key);

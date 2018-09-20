@@ -106,7 +106,7 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 				      const char *name,
 				      const char *key_name,
-				      const u_int8_t *key, size_t sizeof_key)
+				      const uint8_t *key, size_t sizeof_key)
 {
 	/*
 	 * Need a key of the correct type.
@@ -144,7 +144,7 @@ static void digest_symkey(struct prf_context *prf,
 }
 
 static void digest_bytes(struct prf_context *prf, const char *name UNUSED,
-			 const u_int8_t *bytes, size_t sizeof_bytes)
+			 const uint8_t *bytes, size_t sizeof_bytes)
 {
 	SECStatus rc = PK11_DigestOp(prf->context, bytes, sizeof_bytes);
 	passert(rc == SECSuccess);
@@ -161,7 +161,7 @@ static void final(struct prf_context *prf, void *bytes, size_t sizeof_bytes)
 	prf->context = NULL;
 }
 
-static void final_bytes(struct prf_context **prf, u_int8_t *bytes, size_t sizeof_bytes)
+static void final_bytes(struct prf_context **prf, uint8_t *bytes, size_t sizeof_bytes)
 {
 	final(*prf, bytes, sizeof_bytes);
 	pfree(*prf);
@@ -171,7 +171,7 @@ static void final_bytes(struct prf_context **prf, u_int8_t *bytes, size_t sizeof
 static PK11SymKey *final_symkey(struct prf_context **prf)
 {
 	size_t sizeof_bytes = (*prf)->desc->prf_output_size;
-	u_int8_t *bytes = alloc_things(u_int8_t, sizeof_bytes, "bytes");
+	uint8_t *bytes = alloc_things(uint8_t, sizeof_bytes, "bytes");
 	final(*prf, bytes, sizeof_bytes);
 	PK11SymKey *final = symkey_from_bytes("final", bytes, sizeof_bytes);
 	pfree(bytes);
@@ -182,7 +182,7 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 static void nss_prf_check(const struct prf_desc *prf)
 {
 	const struct ike_alg *alg = &prf->common;
-	passert_ike_alg(alg, prf->nss.mechanism > 0);
+	pexpect_ike_alg(alg, prf->nss.mechanism > 0);
 }
 
 const struct prf_ops ike_alg_prf_nss_ops = {

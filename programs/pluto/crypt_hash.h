@@ -49,7 +49,7 @@ void crypt_hash_digest_bytes(struct crypt_hash *hash,
  * This will free HASH and blat the pointer.
  */
 void crypt_hash_final_bytes(struct crypt_hash **hashp,
-			    u_int8_t *bytes, size_t sizeof_bytes);
+			    uint8_t *bytes, size_t sizeof_bytes);
 
 chunk_t crypt_hash_final_chunk(struct crypt_hash **hashp, const char *what);
 

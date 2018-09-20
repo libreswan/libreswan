@@ -336,7 +336,7 @@ int dn_count_wildcards(chunk_t dn)
  */
 static void hex_str(chunk_t bin, chunk_t *str)
 {
-	u_int i;
+	unsigned i;
 
 	format_chunk(str, "0x");
 	for (i = 0; i < bin.len; i++)
@@ -358,7 +358,7 @@ int dntoa(char *dst, size_t dstlen, chunk_t dn)
 
 	if (ugh != NULL) {	/* error, print DN as hex string */
 		libreswan_log("error in DN parsing: %s", ugh);
-		DBG_dump_chunk("Bad DN:",dn);
+		DBG_dump_chunk("Bad DN:", dn);
 		str.ptr = (unsigned char *)dst;
 		str.len = dstlen;
 		hex_str(dn, &str);
@@ -444,6 +444,20 @@ err_t atodn(char *src, chunk_t *dn)
 
 	/* leave room for prefix */
 	u_char *dn_ptr = dn->ptr + 1 + ASN1_MAX_LEN_LEN;
+
+	/*
+	 * Concatenate the contents of a chunk onto dn.
+	 * The destination pointer is incremented by the length.
+	 * Pray that there is enough space.
+	 */
+#	define addchunk(chunk) { \
+			memcpy(dn_ptr, (chunk).ptr, (chunk).len); \
+			dn_ptr += (chunk).len; \
+		}
+#	define addtychunk(ty, chunk) { \
+		*dn_ptr++ = ty; \
+		addchunk(chunk); \
+		}
 
 	state_t state = SEARCH_OID;
 
@@ -543,18 +557,12 @@ err_t atodn(char *src, chunk_t *dn)
 
 				/* encode the relative distinguished name */
 				if (IDTOA_BUF < dn_ptr - dn->ptr +
-					1 + asn1_rdn_set_len.len +
-					/* set */
-					1 + asn1_rdn_seq_len.len +
-					/* sequence */
-					1 + asn1_oid_len.len +
-					x501rdns[pos].oid.len +	/*
-								 * oid len,
-								 * oid
-								 */
-					1 + asn1_name_len.len + name.len
-					/* type name */
-					) {
+				    1 + asn1_rdn_set_len.len + /* set */
+				    1 + asn1_rdn_seq_len.len + /* sequence */
+				    1 + asn1_oid_len.len + /* oid len */
+				    x501rdns[pos].oid.len + /* oid */
+				    1 + asn1_name_len.len + name.len /* type name */
+				    ) {
 					/* no room! */
 					ugh = "DN is too big";
 					state = UNKNOWN_OID;
@@ -563,26 +571,21 @@ err_t atodn(char *src, chunk_t *dn)
 					 * (but perhaps pointless)
 					 */
 				} else {
-					*dn_ptr++ = ASN1_SET;
-					catchunk(dn_ptr, asn1_rdn_set_len);
-					*dn_ptr++ = ASN1_SEQUENCE;
-					catchunk(dn_ptr, asn1_rdn_seq_len);
-					*dn_ptr++ = ASN1_OID;
-					catchunk(dn_ptr, asn1_oid_len);
-					catchunk(dn_ptr, x501rdns[pos].oid);
+					addtychunk(ASN1_SET, asn1_rdn_set_len);
+					addtychunk(ASN1_SEQUENCE, asn1_rdn_seq_len);
+					addtychunk(ASN1_OID, asn1_oid_len);
+					addchunk(x501rdns[pos].oid);
 					/*
 					 * encode the ASN.1 character string
 					 * type of the name
 					 */
-					*dn_ptr++ =
-						(x501rdns[pos].type ==
-							ASN1_PRINTABLESTRING &&
-							!is_printablestring(
-								name)) ?
-						ASN1_T61STRING :
-						x501rdns[pos].type;
-					catchunk(dn_ptr, asn1_name_len);
-					catchunk(dn_ptr, name);
+					asn1_t nt =
+						x501rdns[pos].type == ASN1_PRINTABLESTRING &&
+						!is_printablestring(name) ?
+							ASN1_T61STRING :
+							x501rdns[pos].type;
+					addtychunk(nt, asn1_name_len);
+					addchunk(name);
 
 					/*
 					 * accumulate the length of the
@@ -612,8 +615,10 @@ err_t atodn(char *src, chunk_t *dn)
 	dn->len = 1 + asn1_dn_seq_len.len + dn_seq_len;
 	dn_ptr = dn->ptr;
 	*dn_ptr++ = ASN1_SEQUENCE;
-	catchunk(dn_ptr, asn1_dn_seq_len);
+	addchunk(asn1_dn_seq_len);
 	return ugh;
+#	undef addtychunk
+#	undef addchunk
 }
 
 /*

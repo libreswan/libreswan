@@ -1,0 +1,23 @@
+iptables -t nat -F
+nic #
+ iptables -F
+nic #
+ # A tunnel should have established with non-zero byte counters
+nic #
+ ipsec whack --trafficstatus
+-bash: ipsec: command not found
+nic #
+ grep "negotiated connection" /tmp/pluto.log
+grep: /tmp/pluto.log: No such file or directory
+nic #
+ grep IKEv2_AUTH_ OUTPUT/*pluto.log
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+nic #
+nic #
+ ../bin/check-for-core.sh
+nic #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

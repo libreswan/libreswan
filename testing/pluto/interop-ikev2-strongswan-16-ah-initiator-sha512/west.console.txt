@@ -33,7 +33,7 @@ generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ N(INVAL_KE) ]
-peer didn't accept DH group CURVE_25519, it requested MODP_2048
+peer didn't accept DH group ECP_256, it requested MODP_2048
 initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
@@ -66,27 +66,27 @@ west #
 west #
  ip xfrm state
 src 192.1.2.45 dst 192.1.2.23
-	proto ah spi 0xSPISPI reqid 1 mode tunnel
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec align4
-	auth-trunc hmac(sha512) 0xKEY 256
+	auth-trunc hmac(sha512) 0xHASHKEY 256
 src 192.1.2.23 dst 192.1.2.45
-	proto ah spi 0xSPISPI reqid 1 mode tunnel
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec align4
-	auth-trunc hmac(sha512) 0xKEY 256
+	auth-trunc hmac(sha512) 0xHASHKEY 256
 west #
- ip xfrm pol
+ ip xfrm policy
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 375423 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto ah spi 0xSPISPI reqid 1 mode tunnel
+		proto ah spi 0xSPISPI reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir fwd priority 375423 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto ah reqid 1 mode tunnel
+		proto ah reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir in priority 375423 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto ah reqid 1 mode tunnel
+		proto ah reqid REQID mode tunnel
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 

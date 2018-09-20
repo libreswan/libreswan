@@ -1,0 +1,2 @@
+same a interop-ikev2-strongswan-45-initiator-ecdsa-384 but not libreswan does not
+preload strongswan's certificate, and it all has to really happen over IKE

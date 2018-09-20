@@ -423,7 +423,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "crl-strict",  kv_config,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },
   { "crl_strict",  kv_config | kv_alias,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },  /* obsolete _ */
   { "crlcheckinterval",  kv_config,  kt_time,  KBF_CRL_CHECKINTERVAL, NULL, NULL, },
-  { "strictcrlpolicy",  kv_config | kv_alias,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },  /* obsolete used on openswan */
+  { "strictcrlpolicy",  kv_config | kv_alias,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },  /* obsolete; used on openswan */
 
   { "ocsp-strict",  kv_config,  kt_bool,  KBF_OCSP_STRICT, NULL, NULL, },
   { "ocsp_strict",  kv_config | kv_alias,  kt_bool,  KBF_OCSP_STRICT, NULL, NULL, },  /* obsolete _ */
@@ -484,7 +484,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "disable_port_floating",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },
   { "force_keepalive",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },
   { "plutofork",  kv_config | kv_alias,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },  /* obsolete */
-  { "force-busy",  kv_config,  kt_obsolete, KBF_WARNIGNORE, NULL, NULL, },  /* obsoleted for ddos-mode=busy */
   { "force-busy",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },  /* obsoleted for ddos-mode=busy */
   { "oe",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },
 

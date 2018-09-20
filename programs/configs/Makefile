@@ -15,8 +15,8 @@
 MANPAGES += ipsec.conf.5
 MANPAGES += ipsec.secrets.5
 
-#different mode
-ipsec.secrets.INSTFLAGS = --mode=0600
+# different mode
+ipsec.secrets.INSTFLAGS = -m 0600
 
 CONFFILES += ipsec.conf
 CONFFILES += ipsec.secrets

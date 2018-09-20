@@ -27,6 +27,7 @@ endif
 EXTRA_CFLAGS += -DDISABLE_UDP_CHECKSUM
 
 EXTRA_CFLAGS += -I${KLIPS_TOP}/include
+EXTRA_CFLAGS += -I${LIBRESWANSRCDIR}/include
 EXTRA_CFLAGS += -I${KLIPSSRC}/.
 
 # build version.c using version number from Makefile.ver

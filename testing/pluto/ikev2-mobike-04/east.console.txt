@@ -16,10 +16,10 @@ east NOW
 XFRM state:
 src 192.1.33.209 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xKEY
+	enc cbc(aes) 0xENCKEY
 src 192.1.2.23 dst 192.1.33.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xKEY
+	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 0.0.0.0/0 dst 192.0.3.10/32
 	dir out priority 1048543 ptype main
@@ -34,11 +34,11 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
@@ -51,11 +51,11 @@ east #
 | #2 pst=#1 MOBIKE update remote address 192.1.3.209:500 -> 192.1.33.209:500
 "east-any"[1] 192.1.3.209 #1:  success MOBIKE update remote address 192.1.3.209:500 -> 192.1.33.209:500
 "east-any"[1] 192.1.33.209 #1: MOBIKE request: updating IPsec SA by request
-| adding NATD  payloads to MOBIKE response
+| adding NATD payloads to MOBIKE response
 | #2 pst=#1 MOBIKE update remote address 192.1.33.209:500 -> 192.1.33.209:500
 "east-any"[1] 192.1.33.209 #1: MOBIKE success no change to kernel SA same IP address ad port  192.1.33.209:500
 "east-any"[1] 192.1.33.209 #1: MOBIKE request: updating IPsec SA by request
-| adding NATD  payloads to MOBIKE response
+| adding NATD payloads to MOBIKE response
 east #
  sleep 7
 east #

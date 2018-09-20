@@ -20,40 +20,55 @@
 #include "lmod.h"
 
 /*
- * See plutomain.c for what the extra "\0" is all about (hint it is a
- * hack for encoding what to do with flags).
+ * Initialize both the .name and .help arrays.
+ *
+ * See plutomain.c why the name has an extra "\0" appended (hint it is
+ * a hack for encoding what to do with flags).
+ *
+ * XXX: since only the --debug ... form is supported, has this all
+ * become redundant.
+ *
+ * So that grepping for DBG.<name> finds this file, the N parameter is
+ * the full enum name (DBG_...) and not just the truncated suffix.
  */
 
-#define D(N,A) [N##_IX] = LELEM(N##_IX) == N ? A "\0" : NULL
+struct double_double {
+	const char *name[DBG_roof_IX - DBG_floor_IX];
+	const char *help[DBG_roof_IX - DBG_floor_IX];
+};
 
-static const char *debug_strings[] = {
-	D(DBG_RAW, "debug-raw"),
-	D(DBG_CRYPT, "debug-crypt"),
-	D(DBG_CRYPT_LOW, "debug-crypt-low"),
-	D(DBG_PARSING, "debug-parsing"),
-	D(DBG_EMITTING, "debug-emitting"),
-	D(DBG_CONTROL, "debug-control"),
-	D(DBG_LIFECYCLE, "debug-lifecycle"),
-	D(DBG_KERNEL, "debug-kernel"),
-	D(DBG_DNS, "debug-dns"),
-	D(DBG_OPPO, "debug-oppo"),
-	D(DBG_CONTROLMORE, "debug-controlmore"),
-	D(DBG_PFKEY, "debug-pfkey"),
-	D(DBG_NATT, "debug-nattraversal"),
-	D(DBG_X509, "debug-x509"),
-	D(DBG_DPD, "debug-dpd"),
-	D(DBG_XAUTH, "debug-xauth"),
-	D(DBG_RETRANSMITS, "debug-retransmits"),
-	D(DBG_OPPOINFO, "debug-oppoinfo"),
-	D(DBG_WHACKWATCH, "debug-whackwatch"),
-	D(DBG_PRIVATE, "debug-private"),
-	D(DBG_ADD_PREFIX, "debug-add-prefix"),
-	D(DBG_PROPOSAL_PARSER, "debug-proposal-parser"),
+static struct double_double debug = {
+
+#define D(N,A,H)			       \
+	.name[N##_IX - DBG_floor_IX] = A "\0", \
+	.help[N##_IX - DBG_floor_IX] = H
+
+	D(DBG_ADD_PREFIX, "debug-add-prefix", "add the log+state prefix to debug lines"),
+	D(DBG_CONTROL, "debug-control", "control flow within Pluto"),
+	D(DBG_CONTROLMORE, "debug-controlmore", "more detailed debugging"),
+	D(DBG_CRYPT, "debug-crypt", "high-level encryption/decryption of messages"),
+	D(DBG_CRYPT_LOW, "debug-crypt-low", "low-level encryption/decryption implementation details"),
+	D(DBG_DNS, "debug-dns", "DNS activity"),
+	D(DBG_DPD, "debug-dpd", "DPD items"),
+	D(DBG_EMITTING, "debug-emitting", "show encoding of messages"),
+	D(DBG_KERNEL, "debug-kernel", "messages with the kernel"),
+	D(DBG_LIFECYCLE, "debug-lifecycle", "SA lifecycle"),
+	D(DBG_NATT, "debug-nattraversal", "debugging of NAT-traversal"),
+	D(DBG_OPPO, "debug-oppo", "opportunism"),
+	D(DBG_OPPOINFO, "debug-oppoinfo", "log various informational things about oppo/%trap-keying"),
+	D(DBG_PARSING, "debug-parsing", "show decoding of messages"),
+	D(DBG_PRIVATE, "debug-private", "displays private information: DANGER!"),
+	D(DBG_PROPOSAL_PARSER, "debug-proposal-parser", "parsing ike=... et.al."),
+	D(DBG_RAW, "debug-raw", "raw packet I/O"),
+	D(DBG_RETRANSMITS, "debug-retransmits", "Retransmitting packets"),
+	D(DBG_WHACKWATCH, "debug-whackwatch", "never let WHACK go"),
+	D(DBG_X509, "debug-x509", "X.509/pkix verify, cert retrival"),
+	D(DBG_XAUTH, "debug-xauth", "XAUTH aka PAM"),
 };
 
 const enum_names debug_names = {
 	DBG_floor_IX, DBG_roof_IX - 1,
-	ARRAY_REF(debug_strings),
+	ARRAY_REF(debug.name),
 	"debug-",
 	NULL,
 };
@@ -69,4 +84,10 @@ const struct lmod_info debug_lmod_info = {
 	.all = DBG_ALL,
 	.mask = DBG_MASK,
 	.compat = debug_compat,
+};
+
+const struct enum_names debug_help = {
+	DBG_floor_IX, DBG_roof_IX - 1,
+	ARRAY_REF(debug.help),
+	NULL, NULL,
 };

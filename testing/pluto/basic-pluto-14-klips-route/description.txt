@@ -1,4 +1,4 @@
-Basic pluto test with west has auto=route and klips stack.
+Basic pluto test with west has auto=ondemand and klips stack.
 
 Despite being packet triggered, and this having a shunt, we still leak
 plaintext. This is wrong!

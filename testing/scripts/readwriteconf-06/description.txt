@@ -1,4 +1,0 @@
-this tests parsing of a config file that has blank lines in it.
-i.e. tab tab nl.
-or	space tab nl.
-or	tab nl.

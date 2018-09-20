@@ -22,7 +22,8 @@ static bool fips = false;
 static bool pfs = false;
 static int failures = 0;
 
-enum expect { FAIL = false, PASS = true, IGNORE, };
+enum status { PASSED = 0, FAILED = 1, ERROR = 126, };
+enum expect { FAIL = false, PASS = true, COUNT, };
 
 #define CHECK(TYPE,PARSE,OK) {						\
 		struct proposal_policy policy = {			\
@@ -30,6 +31,7 @@ enum expect { FAIL = false, PASS = true, IGNORE, };
 			.ikev2 = ikev2,					\
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
+			.warning = warning,				\
 		};							\
 		printf("algparse ");					\
 		if (fips) {						\
@@ -83,10 +85,26 @@ enum expect { FAIL = false, PASS = true, IGNORE, };
 					#PARSE,				\
 					algstr == NULL ? "" : "=",	\
 					algstr == NULL ? "" : algstr);	\
+			} else if (expected == COUNT) {			\
+				failures++;				\
 			}						\
 		}							\
 		fflush(NULL);						\
 	}
+
+/*
+ * Dump warnings to stdout.
+ */
+static int warning(const char *fmt, ...)
+{
+	printf("\tWARNING: ");
+	va_list ap;
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	printf("\n");
+	return 0;
+}
 
 /*
  * Kernel not available so fake it.
@@ -135,7 +153,7 @@ static void all(const char *algstr)
 	for (const struct protocol *protocol = protocols;
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
-		protocol->parser(IGNORE, algstr);
+		protocol->parser(COUNT, algstr);
 	}
 }
 
@@ -146,12 +164,12 @@ static void test_proposal(const char *arg)
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
 		if (streq(arg, protocol->name)) {
-			protocol->parser(IGNORE, NULL);
+			protocol->parser(COUNT, NULL);
 			return;
 		}
-		if (startswith(arg, protocol->name)
-		    && arg + strlen(protocol->name) == eq) {
-			protocol->parser(IGNORE, eq + 1);
+		if (startswith(arg, protocol->name) &&
+		    arg + strlen(protocol->name) == eq) {
+			protocol->parser(COUNT, eq + 1);
 			return;
 		}
 	}
@@ -172,23 +190,23 @@ static void test(void)
 	esp(false, "");
 
 	esp(true, "aes");
-	esp(pfs, "aes;modp2048");
+	esp(true, "aes;modp2048");
 	esp(true, "aes-sha1");
 	esp(true, "aes-sha1");
-	esp(pfs, "aes-sha1-modp2048");
+	esp(true, "aes-sha1-modp2048");
 	esp(true, "aes-128");
 	esp(true, "aes-128-sha1");
 	esp(true, "aes-128-sha1");
-	esp(pfs, "aes-128-sha1-modp2048");
+	esp(true, "aes-128-sha1-modp2048");
 
 	esp(true, "aes_gcm_a-128-null");
-	esp(pfs && !fips, "3des-sha1;modp1024");
-	esp(pfs && !fips, "3des-sha1;modp1536");
-	esp(pfs, "3des-sha1;modp2048");
-	esp(pfs && !ikev1, "3des-sha1;dh21");
-	esp(pfs && !ikev1, "3des-sha1;ecp_521");
-	esp(pfs, "3des-sha1;dh23");
-	esp(pfs, "3des-sha1;dh24");
+	esp(!fips, "3des-sha1;modp1024");
+	esp(!fips, "3des-sha1;modp1536");
+	esp(true, "3des-sha1;modp2048");
+	esp(!ikev1, "3des-sha1;dh21");
+	esp(!ikev1, "3des-sha1;ecp_521");
+	esp(false, "3des-sha1;dh23");
+	esp(false, "3des-sha1;dh24");
 	esp(true, "3des-sha1");
 	esp(!fips, "null-sha1");
 
@@ -281,19 +299,19 @@ static void test(void)
 	esp(!fips, "serpent");
 	esp(!fips, "twofish");
 
-	esp(pfs && !fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
-	esp(pfs && !fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
-	esp(pfs, "3des-sha1;modp8192"); /* allow ';' when unambigious */
-	esp(pfs, "3des-sha1-modp8192"); /* allow '-' when unambigious */
-	esp(false, "aes-sha1,3des-sha1;modp8192");
-	esp(pfs, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
-	esp(pfs, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
+	esp(!fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
+	esp(!fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
+	esp(true, "3des-sha1;modp8192"); /* allow ';' when unambigious */
+	esp(true, "3des-sha1-modp8192"); /* allow '-' when unambigious */
+	esp(!pfs, "aes-sha1,3des-sha1;modp8192");
+	esp(true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
+	esp(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
-	esp(pfs && !fips && !ikev1, "aes;none");
-	esp(false, "aes;none,aes");
-	esp(pfs && !fips && !ikev1, "aes;none,aes;modp2048");
-	esp(pfs && !fips && !ikev1, "aes-sha1-none");
-	esp(pfs && !fips && !ikev1, "aes-sha1;none");
+	esp(!ikev1, "aes;none");
+	esp(!ikev1 && !pfs, "aes;none,aes");
+	esp(!ikev1, "aes;none,aes;modp2048");
+	esp(!ikev1, "aes-sha1-none");
+	esp(!ikev1, "aes-sha1;none");
 
 	/*
 	 * should this be supported - for now man page says not
@@ -330,26 +348,24 @@ static void test(void)
 	esp(false, "aes_gcm-123456789012345"); /* huge keylen */
 	esp(false, "3des-sha1;dh22"); /* support for dh22 removed */
 
-	esp(impair, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
-	esp(impair, "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
+	esp(!pfs, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
+	esp(!pfs, "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
 
-	esp(pfs, "3des-sha1-modp8192,3des-sha2-modp8192");
-	esp(pfs, "3des-sha1-modp8192,3des-sha2;modp8192");
-	esp(pfs, "3des-sha1;modp8192,3des-sha2-modp8192");
-	esp(pfs, "3des-sha1;modp8192,3des-sha2;modp8192");
-	esp(impair, "3des-sha1-modp8192,3des-sha2-modp2048");
+	esp(true, "3des-sha1-modp8192,3des-sha2-modp8192");
+	esp(true, "3des-sha1-modp8192,3des-sha2;modp8192");
+	esp(true, "3des-sha1;modp8192,3des-sha2-modp8192");
+	esp(true, "3des-sha1;modp8192,3des-sha2;modp8192");
+	esp(!pfs, "3des-sha1-modp8192,3des-sha2-modp2048");
 
 	/*
 	 * ah=
 	 */
 
-	/* AH tests that should succeed */
-
 	ah(true, NULL);
 	ah(false, "");
 	ah(!fips, "md5");
 	ah(true, "sha");
-	ah(pfs, "sha;modp2048");
+	ah(true, "sha;modp2048");
 	ah(true, "sha1");
 	ah(true, "sha2");
 	ah(true, "sha256");
@@ -359,12 +375,9 @@ static void test(void)
 	ah(true, "sha2_384");
 	ah(true, "sha2_512");
 	ah(true, "aes_xcbc");
-	ah(pfs && !fips && !ikev1, "sha2-none");
-	ah(pfs && !fips && !ikev1, "sha2;none");
-	ah(pfs, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
-
-	/* AH tests that should fail */
-
+	ah(!ikev1, "sha2-none");
+	ah(!ikev1, "sha2;none");
+	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 	ah(impair, "aes-sha1");
 	ah(false, "vanityhash1");
 	ah(impair, "aes_gcm_c-256");
@@ -379,8 +392,6 @@ static void test(void)
 	 * ike=
 	 */
 
-	/* IKE tests that should succeed */
-
 	ike(true, NULL);
 	ike(false, "");
 	ike(true, "3des-sha1");
@@ -392,9 +403,6 @@ static void test(void)
 	ike(!ikev1, "aes_gcm");
 	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 	ike(false, "aes;none");
-
-	/* IKE tests that should fail */
-
 	ike(false, "id2"); /* should be rejected; idXXX removed */
 	ike(false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(false, "aes_ccm"); /* ESP/AH only */
@@ -403,30 +411,49 @@ static void test(void)
 static void usage(void)
 {
 	fprintf(stderr,
-		""
 		"Usage:\n"
-		"  algparse [ <option> ... ] -t | <protocol> | <proposals> | <protocol>=<proposals>\n"
-		"Where:\n"
-		"  -v1: only IKEv1 algorithms\n"
-		"  -v2: only IKEv2 algorithms\n"
-		"  -fips: put NSS in FIPS mode\n"
-		"  -v --verbose: more verbose\n"
-		"  -i --impair: disable all algorithm parser checks\n"
-		"  -d --debug: really verbose\n"
-		"  -tp: run proposal tests\n"
-		"  -ta: run algorithm tests\n"
-		"  -d -nssdir: directory containing crypto database\n"
-		"  -P -nsspw -password: password to unlock crypto database\n"
-		"  <protocol>: the protocol, one of 'ike', 'esp', or 'ah'\n"
-		"  <proposals>: a comma separated list of proposals to parse\n"
-		"For instance:\n"
-		"  algparse -v1 ike\n"
+		"\n"
+		"    algparse [ <option> ... ] -tp | -ta | [<protocol>=][<proposal>{,<proposal>}] ...\n"
+		"\n"
+		"Parse one or more proposals using the algorithm parser.\n"
+		"Either specify the proposals to be parsed on the command line\n"
+		"(exit non-zero if a proposal is not valid):\n"
+		"\n"
+		"    [<protocol>=][<proposals>]\n"
+		"        <protocol>: the 'ike', 'esp' or 'ah' specific parser to use\n"
+		"            if omitted, the proposal is parsed using all three parsers\n"
+		"        <proposals>: a comma separated list of proposals\n"
+		"            if omitted, a default algorithm list is used\n"
+		"\n"
+		"or run a pre-defined testsuite (exit non-zero if a test fails):\n"
+		"\n"
+		"    -tp: run the proposal testsuite\n"
+		"    -ta: also run the algorithm testsuite\n"
+		"\n"
+		"Additional options:\n"
+		"\n"
+		"    -v1 | -ikev1: require IKEv1 support\n"
+		"    -v2 | -ikev2: require IKEv2 support\n"
+		"         default: require either IKEv1 or IKEv2 support\n"
+		"    -pfs | -pfs=yes | -pfs=no: specify PFS (perfect forward privicy)\n"
+		"         default: no\n"
+		"    -fips | -fips=yes | -fips=no: force NSS's FIPS mode\n"
+		"         default: determined by system environment\n"
+		"    -d <dir> | -nssdir <dir>: directory containing crypto database\n"
+		"         default: '"IPSEC_NSSDIR"'\n"
+		"    -P <password> | -nsspw <password> | -password <password>:\n"
+		"        <password> to unlock crypto database\n"
+		"    -v --verbose: be more verbose\n"
+		"    -d --debug: enable debug logging\n"
+		"    -i --impair: disable all algorithm parser checks\n"
+		"\n"
+		"Examples:\n"
+		"\n"
+		"    algparse -v1 ike=\n"
 		"        expand the default IKEv1 'ike' algorithm table\n"
 		"        (with IKEv1, this is the default algorithms, with IKEv2 it is not)\n"
-		"  algparse -v1 ike=esp\n"
-		"        expand 'aes' using the IKEv1 'ike' parser and defaults\n"
-		"  algparse -v1 aes\n"
-		"        expand 'aes' using the the IKEv1 'ike', 'esp', and 'ah' parsers and defaults\n"
+		"    algparse -v2 ike=aes-sha1-dh23\n"
+		"        expand 'aes-sha1-dh23' using the the IKEv2 'ike' parser\n"
 		);
 }
 
@@ -456,9 +483,9 @@ int main(int argc, char *argv[])
 			test_proposals = true;
 		} else if (streq(arg, "ta")) {
 			test_algs = true;
-		} else if (streq(arg, "v1")) {
+		} else if (streq(arg, "v1") || streq(arg, "ikev1")) {
 			ikev1 = true;
-		} else if (streq(arg, "v2")) {
+		} else if (streq(arg, "v2") || streq(arg, "ikev2")) {
 			ikev2 = true;
 		} else if (streq(arg, "pfs") || streq(arg, "pfs=yes") || streq(arg, "pfs=on")) {
 			pfs = true;
@@ -480,19 +507,19 @@ int main(int argc, char *argv[])
 			char *nssdir = *++argp;
 			if (nssdir == NULL) {
 				fprintf(stderr, "missing nss directory\n");
-				exit(1);
+				exit(ERROR);
 			}
 			lsw_conf_nssdir(nssdir);
 		} else if (streq(arg, "P") || streq(arg, "nsspw") || streq(arg, "password")) {
 			char *nsspw = *++argp;
 			if (nsspw == NULL) {
 				fprintf(stderr, "missing nss password\n");
-				exit(1);
+				exit(ERROR);
 			}
 			lsw_conf_nsspassword(nsspw);
 		} else {
 			fprintf(stderr, "unknown option: %s\n", *argp);
-			exit(1);
+			exit(ERROR);
 		}
 	}
 
@@ -512,7 +539,7 @@ int main(int argc, char *argv[])
 				    LSW_NSS_READONLY, lsw_nss_get_password, err);
 	if (!nss_ok) {
 		fprintf(stderr, "unexpected %s\n", err);
-		exit(1);
+		exit(ERROR);
 	}
 
 	/*
@@ -541,23 +568,21 @@ int main(int argc, char *argv[])
 	if (*argp) {
 		if (test_proposals) {
 			fprintf(stderr, "-t conflicts with algorithm list\n");
-			exit(1);
+			exit(ERROR);
 		}
 		for (; *argp != NULL; argp++) {
 			test_proposal(*argp);
 		}
 	} else if (test_proposals) {
 		test();
+		if (failures > 0) {
+			fprintf(stderr, "%d FAILURES\n", failures);
+		}
 	}
 
 	report_leaks();
 
 	lsw_nss_shutdown();
 
-	if (failures > 0) {
-		fprintf(stderr, "%d FAILURES\n", failures);
-		exit(1);
-	}
-
-	exit(0);
+	exit(failures > 0 ? FAILED : PASSED);
 }

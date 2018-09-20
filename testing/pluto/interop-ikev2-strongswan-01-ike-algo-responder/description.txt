@@ -1,0 +1,7 @@
+Interop IKE crypto-suites with pluto initiator and strongswan responder.
+
+Try different IKE crypto suites (algorithm combinations) with pluto as
+the initiator and strongswan as the responder.
+
+This test was updated to use sha2 instead of md5 as strongswan now also
+no longer has md5 in its default proposal list.

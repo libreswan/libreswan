@@ -19,14 +19,6 @@
 # error this file should only be compiled when using DNSSEC
 #endif
 
-/*
- * ub_ctx_add_ta_autr was added in unbound 1.5.0
- * UNBOUND_VERSION_* was introduced >= 1.4.12
- */
-#if !defined(UNBOUND_VERSION_MAJOR) || (UNBOUND_VERSION_MAJOR == 1 && UNBOUND_VERSION_MINOR < 5)
-# define ub_ctx_add_ta_autr(x,y) ub_ctx_add_ta_file(x,y)
-#endif
-
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
@@ -115,10 +107,8 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		}
 	} else {
 		DBG(DBG_DNS, DBG_log("Loading dnssec root key from:%s", rootfile));
-		/* the cast is there for unbound < 1.4.12 */
-		/* ??? ub_ctx_add_ta_autr is not documented to set errno */
 		errno = 0;
-		ugh = ub_ctx_add_ta_autr(dns_ctx, (char *) rootfile);
+		ugh = ub_ctx_add_ta_file(dns_ctx, rootfile);
 		if (ugh != 0) {
 			int e = errno;	/* protect value from ub_strerror */
 
@@ -129,7 +119,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	}
 
 	if (trusted == NULL) {
-		DBG(DBG_DNS,DBG_log("No additional dnssec trust anchors defined via dnssec-trusted= option"));
+		DBG(DBG_DNS, DBG_log("No additional dnssec trust anchors defined via dnssec-trusted= option"));
 	} else {
 		glob_t globbuf;
 		char **fnp;

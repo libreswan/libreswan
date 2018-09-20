@@ -223,8 +223,8 @@ enum ipsec_xmit_value ipsec_mast_send(struct ipsec_xmit_state *ixs)
 		ixs->stats->tx_errors++;
 		printk(KERN_WARNING
 		       "klips_error:ipsec_mast_send: "
-		       "tried to __skb_pull nh-data=%ld, %d available.  This should never happen, please report.\n",
-		       (unsigned long)(ixs->skb->nh.raw - ixs->skb->data),
+		       "tried to __skb_pull nh-data=%td, %d available.  This should never happen, please report.\n",
+		       ixs->skb->nh.raw - ixs->skb->data,
 		       ixs->skb->len);
 		return IPSEC_XMIT_PUSHPULLERR;
 	}
@@ -876,8 +876,8 @@ int ipsec_mast_probe(struct net_device *dev)
 
 	KLIPS_PRINT(debug_mast,
 		    "klips_debug:ipsec_mast_probe: "
-		    "allocating %lu bytes initialising device: %s\n",
-		    (unsigned long) sizeof(struct mastpriv),
+		    "allocating %zu bytes initialising device: %s\n",
+		    sizeof(struct mastpriv),
 		    dev->name ? dev->name : "NULL");
 
 #ifndef USE_NETDEV_OPS

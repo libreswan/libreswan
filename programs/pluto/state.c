@@ -16,7 +16,7 @@
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2017 Andrew Cagney
  * Copyright (C) 2015-2018 Antony Antony <antony@phenome.org>
- * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
@@ -48,6 +48,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "xauth.h"		/* for xauth_cancel() */
@@ -94,21 +95,21 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
  * Global variables: had to go somewhere, might as well be this file.
  */
 
-u_int16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
-u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
+uint16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
+uint16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
 
 /*
  * default global NFLOG group - 0 means no logging
  * Note: variable is only used to display in ipsec status
  * actual work is done outside pluto, by ipsec --checknflog
  */
-u_int16_t pluto_nflog_group = 0;
+uint16_t pluto_nflog_group = 0;
 
 /*
  * Note: variable is only used to display in ipsec status
  * actual work is done outside pluto, by ipsec _stackmanager
  */
-u_int16_t pluto_xfrmlifetime = 300;
+uint16_t pluto_xfrmlifetime = 300;
 
 /*
  * Handle for each and every state.
@@ -239,6 +240,7 @@ static enum categories categorize_state(struct state *st,
 	 */
 	switch (state) {
 	case STATE_UNDEFINED:
+	case STATE_IKEv2_BASE:
 		/*
 		 * When a state object is created by new_state()
 		 * it starts out in STATE_UNDEFINED.
@@ -246,13 +248,13 @@ static enum categories categorize_state(struct state *st,
 		 */
 		return CAT_IGNORE;
 
-	case STATE_IKEv2_BASE:
+	case STATE_PARENT_I0:
 		/*
-		 * IKEv2 initiators, while the INIT packet is being
-		 * constructed, are in STATE_IKEv2_BASE.  Only when
-		 * the packet is sent out do they transition into
-		 * STATE_PARENT_I1 and start being counted as
-		 * half-open.
+		 * IKEv2 IKE SA initiator, while the the SA_INIT
+		 * packet is being constructed, are in state.  Only
+		 * once the packet has been sent out does it
+		 * transition to STATE_PARENT_I1 and start being
+		 * counted as half-open.
 		 */
 		return CAT_IGNORE;
 
@@ -521,9 +523,7 @@ static char *readable_humber(uint64_t num,
 
 static struct ike_sa *get_ike_sa(struct state *st, bool verbose)
 {
-	if (st == NULL) {
-		return NULL;
-	} else if (IS_CHILD_SA(st)) {
+	if (st != NULL && IS_CHILD_SA(st)) {
 		struct state *pst = state_by_serialno(st->st_clonedfrom);
 		if (pst == NULL) {
 			PEXPECT_LOG("child state #%lu missing parent state #%lu",
@@ -534,9 +534,8 @@ static struct ike_sa *get_ike_sa(struct state *st, bool verbose)
 				    st->st_serialno, st->st_clonedfrom);
 		}
 		return (struct ike_sa*) pst;
-	} else {
-		return (struct ike_sa*) st;
 	}
+	return (struct ike_sa*) st;
 }
 
 struct ike_sa *ike_sa(struct state *st)
@@ -551,15 +550,10 @@ struct ike_sa *pexpect_ike_sa(struct state *st)
 
 struct child_sa *pexpect_child_sa(struct state *st)
 {
-	if (st == NULL) {
-		return NULL;
-	} else if (IS_CHILD_SA(st)) {
-		return (struct child_sa*) st;
-	} else {
-		PEXPECT_LOG("expecting child SA but state #%lu is a parent",
-				    st->st_serialno);
-		return (struct child_sa*) st;
-	}
+	if (pexpect(st != NULL))
+		pexpect(IS_CHILD_SA(st));
+
+	return (struct child_sa*) st;
 }
 
 union sas { struct child_sa child; struct ike_sa ike; struct state st; };
@@ -613,7 +607,6 @@ struct state *new_rstate(struct msg_digest *md)
  */
 void init_states(void)
 {
-
 }
 
 void delete_state_by_id_name(struct state *st, void *name)
@@ -633,11 +626,11 @@ void delete_state_by_id_name(struct state *st, void *name)
 
 void v1_delete_state_by_username(struct state *st, void *name)
 {
-	/* only support deleting ikev1 with username */
+	/* only support deleting ikev1 with XAUTH username */
 	if (st->st_ikev2)
 		return;
 
-	if (IS_IKE_SA(st) && streq(st->st_username, name)) {
+	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
 		delete_my_family(st, FALSE);
 		/* note: no md->st to clear */
 	}
@@ -760,7 +753,7 @@ void rehash_state(struct state *st, const u_char *icookie,
  */
 void release_whack(struct state *st)
 {
-	close_any(st->st_whack_sock);
+	close_any(&st->st_whack_sock);
 }
 
 static void release_v2fragments(struct state *st)
@@ -837,7 +830,6 @@ void ikev2_expire_unused_parent(struct state *pst)
 
 static void flush_pending_child(struct state *pst, struct state *st)
 {
-
 	if (!IS_IKE_SA(pst))
 		return; /* we had better be a parent */
 
@@ -877,7 +869,6 @@ static void flush_pending_child(struct state *pst, struct state *st)
 
 static void flush_pending_children(struct state *pst)
 {
-
 	if (IS_CHILD_SA(pst))
 		return;
 
@@ -891,7 +882,6 @@ static void flush_pending_children(struct state *pst)
 
 static bool send_delete_check(const struct state *st)
 {
-
 	if (st->st_suppress_del_notify)
 		return FALSE;
 
@@ -914,38 +904,41 @@ static bool send_delete_check(const struct state *st)
 static void delete_state_log(struct state *st, struct state *cur_state)
 {
 	struct connection *const c = st->st_connection;
-	char *send_inf = send_delete_check(st) ? " and sending notification" : "";
+	bool del_notify = !IMPAIR(SEND_NO_DELETE) && send_delete_check(st);
 
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
 		/* reduced logging of OE failures */
 		DBG(DBG_LIFECYCLE, {
 			char cib[CONN_INST_BUF];
 
-			DBG_log("deleting state #%lu (%s) \"%s\"%s%s",
+			DBG_log("deleting state #%lu (%s) \"%s\"%s and %ssending notification",
 				st->st_serialno,
 				st->st_state_name,
 				c->name,
-				fmt_conn_instance(c, cib), send_inf);
+				fmt_conn_instance(c, cib),
+				del_notify ? "" : "NOT ");
 	});
 	} else if (cur_state != NULL && cur_state == st) {
 		/*
 		* Don't log state and connection if it is the same as
 		* the message prefix.
 		*/
-		libreswan_log("deleting state (%s)%s",
-			st->st_state_name, send_inf);
+		libreswan_log("deleting state (%s) and %ssending notification",
+			st->st_state_name,
+			del_notify ? "" : "NOT ");
 	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
-		libreswan_log("deleting other state #%lu (%s)%s",
+		libreswan_log("deleting other state #%lu (%s) and %ssending notification",
 			st->st_serialno,
 			st->st_state_name,
-			send_inf);
+			del_notify ? "" : "NOT ");
 	} else {
 		char cib[CONN_INST_BUF];
-		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s%s",
+		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s and %ssending notification",
 			st->st_serialno,
 			st->st_state_name,
 			c->name,
-			fmt_conn_instance(c, cib), send_inf);
+			fmt_conn_instance(c, cib),
+			del_notify ? "" : "NOT ");
 	}
 
 	DBG(DBG_CONTROLMORE, {
@@ -1028,8 +1021,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_username);
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_esp.our_bytes;
 			pstats_ipsec_out_bytes += st->st_esp.peer_bytes;
 		}
@@ -1047,8 +1040,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_username);
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_ah.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ah.our_bytes;
 		}
@@ -1066,8 +1059,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_username);
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_ipcomp.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ipcomp.our_bytes;
 		}
@@ -1245,7 +1238,7 @@ void delete_state(struct state *st)
 	wipe_any(st->st_xauth_password.ptr, st->st_xauth_password.len);
 #   undef wipe_any
 
-	/* st_username is an array on the state itself, not clone_str()'ed */
+	/* st_xauth_username is an array on the state itself, not clone_str()'ed */
 	pfreeany(st->st_seen_cfg_dns);
 	pfreeany(st->st_seen_cfg_domains);
 	pfreeany(st->st_seen_cfg_banner);
@@ -1475,8 +1468,7 @@ void delete_states_by_peer(const ip_address *peer)
 						  "peer %s for connection %s crashed; replacing",
 						  peerstr,
 						  c->name);
-					ipsecdoi_replace(this, LEMPTY,
-							 LEMPTY, 1);
+					ipsecdoi_replace(this, 1);
 				} else {
 					event_force(EVENT_SA_REPLACE, this);
 				}
@@ -1530,7 +1522,6 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_localport = st->st_localport;
 	nst->st_interface = st->st_interface;
 	nst->st_clonedfrom = st->st_serialno;
-	nst->st_import = st->st_import;
 	nst->st_ikev2 = st->st_ikev2;
 	nst->st_ikev2_anon = st->st_ikev2_anon;
 	nst->st_original_role = st->st_original_role;
@@ -1541,7 +1532,6 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 
 
 	if (sa_type == IPSEC_SA) {
-
 #   define clone_nss_symkey_field(field) nst->field = reference_symkey(__func__, #field, st->field)
 		clone_nss_symkey_field(st_skeyid_nss);
 		clone_nss_symkey_field(st_skey_d_nss); /* aka st_skeyid_d_nss */
@@ -1568,7 +1558,6 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 		state_clone_chunk(st_skey_responder_salt);
 
 #   undef state_clone_chunk
-
 	}
 
 	/*
@@ -1577,7 +1566,7 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	 * Maybe similarly to above for chunks, do this for all
 	 * strings on the state?
 	 */
-	jam_str(nst->st_username, sizeof(nst->st_username), st->st_username);
+	jam_str(nst->st_xauth_username, sizeof(nst->st_xauth_username), st->st_xauth_username);
 
 	nst->st_seen_cfg_dns = clone_str(st->st_seen_cfg_dns, "child st_seen_cfg_dns");
 	nst->st_seen_cfg_domains = clone_str(st->st_seen_cfg_domains, "child st_seen_cfg_domains");
@@ -1586,9 +1575,9 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	return nst;
 }
 
-struct state *ikev1_duplicate_state(struct state *st, sa_t sa_type)
+struct state *ikev1_duplicate_state(struct state *st)
 {
-	return duplicate_state(st, sa_type);
+	return duplicate_state(st, IPSEC_SA);
 }
 
 struct state *ikev2_duplicate_state(struct ike_sa *ike,
@@ -1801,7 +1790,7 @@ struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
  */
 struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 					       const u_char *rcookie,
-					       u_int8_t protoid,
+					       uint8_t protoid,
 					       ipsec_spi_t spi)
 {
 	struct state *st;
@@ -1905,7 +1894,7 @@ struct state *find_likely_sender(size_t packet_len, u_char *packet)
  * We'll accept this, but mark it as bogus.
  */
 struct state *find_phase2_state_to_delete(const struct state *p1st,
-					  u_int8_t protoid,
+					  uint8_t protoid,
 					  ipsec_spi_t spi,
 					  bool *bogus)
 {
@@ -1975,7 +1964,7 @@ bool find_pending_phase2(const so_serial_t psn,
  */
 bool ikev2_viable_parent(const struct ike_sa *ike)
 {
-	/* this check is defied only for an IKEv2 parent */
+	/* this check is defined only for an IKEv2 parent */
 	if (!ike->sa.st_ikev2)
 		return TRUE;
 
@@ -1986,7 +1975,7 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 				-1 * deltasecs(monotimediff(now, ev->ev_time));
 
 	if (lifetime > PARENT_MIN_LIFE)
-		/* incase st_margin == 0, insist minium life */
+		/* in case st_margin == 0, insist minimum life */
 		if (lifetime > deltasecs(ike->sa.st_margin))
 			return TRUE;
 
@@ -2039,16 +2028,15 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			return;
 		}
 	});
-	DBG(DBG_CONTROL,
-	    {
-		    char ourst[SUBNETTOT_BUF];
-		    char hist[SUBNETTOT_BUF];
+	DBG(DBG_CONTROL, {
+		char ourst[SUBNETTOT_BUF];
+		char hist[SUBNETTOT_BUF];
 
-		    subnettot(ours, 0, ourst, sizeof(ourst));
-		    subnettot(his, 0, hist, sizeof(hist));
-		    DBG_log("unknown tunnel eroute %s -> %s found in scan",
-			    ourst, hist);
-	    });
+		subnettot(ours, 0, ourst, sizeof(ourst));
+		subnettot(his, 0, hist, sizeof(hist));
+		DBG_log("unknown tunnel eroute %s -> %s found in scan",
+			ourst, hist);
+	});
 }
 
 /* note: this mutates *st by calling get_sa_info */
@@ -2079,7 +2067,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 
 		if (get_sa_info(st, TRUE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			u_int inb = st->st_esp.present ? st->st_esp.our_bytes:
+			unsigned inb = st->st_esp.present ? st->st_esp.our_bytes:
 				st->st_ah.present ? st->st_ah.our_bytes :
 				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0;
 			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u", inb);
@@ -2087,7 +2075,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 
 		if (get_sa_info(st, FALSE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			u_int outb = st->st_esp.present ? st->st_esp.peer_bytes :
+			unsigned outb = st->st_esp.present ? st->st_esp.peer_bytes :
 				st->st_ah.present ? st->st_ah.peer_bytes :
 				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
 			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
@@ -2109,7 +2097,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		subnettot(&c->spd.this.client, 0, lease_ip, sizeof(lease_ip));
 	}
 
-	if (st->st_username[0] == '\0') {
+	if (st->st_xauth_username[0] == '\0') {
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
 	}
 
@@ -2117,8 +2105,8 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		 "#%lu: \"%s\"%s%s%s%s%s%s%s%s%s",
 		 st->st_serialno,
 		 c->name, inst,
-		 (st->st_username[0] != '\0') ? ", username=" : "",
-		 (st->st_username[0] != '\0') ? st->st_username : "",
+		 (st->st_xauth_username[0] != '\0') ? ", username=" : "",
+		 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "",
 		 (traffic_buf[0] != '\0') ? traffic_buf : "",
 		 thatidbuf[0] != '\0' ? ", id='" : "",
 		 thatidbuf[0] != '\0' ? thatidbuf : "",
@@ -2153,10 +2141,9 @@ void fmt_state(struct state *st, const monotime_t now,
 	dpdbuf[0] = '\0';	/* default to empty string */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		snprintf(dpdbuf, sizeof(dpdbuf), "; isakmp#%lu",
-			 (unsigned long)st->st_clonedfrom);
+			 st->st_clonedfrom);
 	} else {
 		if (st->hidden_variables.st_peer_supports_dpd) {
-
 			/* ??? why is printing -1 better than 0? */
 			snprintf(dpdbuf, sizeof(dpdbuf),
 				 "; lastdpd=%jds(seq in:%u out:%u)",
@@ -2191,7 +2178,7 @@ void fmt_state(struct state *st, const monotime_t now,
 	}
 
 	snprintf(state_buf, state_buf_len,
-		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s; %s",
+		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s;",
 		 st->st_serialno,
 		 c->name, inst,
 		 st->st_remoteport,
@@ -2204,8 +2191,7 @@ void fmt_state(struct state *st, const monotime_t now,
 		 (st->st_offloaded_task != NULL && !st->st_v1_offloaded_task_in_background)
 		 ? "crypto_calculating" :
 			st->st_suspended_md != NULL ?  "crypto/dns-lookup" :
-			"idle",
-		 enum_name(&pluto_cryptoimportance_names, st->st_import));
+			"idle");
 
 	/* print out SPIs if SAs are established */
 	if (state_buf2_len != 0)
@@ -2341,16 +2327,16 @@ void fmt_state(struct state *st, const monotime_t now,
 #endif
 
 		snprintf(state_buf2, state_buf2_len,
-			"#%lu: \"%s\"%s%s%s ref=%lu refhim=%lu %s %s%s",
+			"#%lu: \"%s\"%s%s%s ref=%" PRIu32 " refhim=%" PRIu32 " %s %s%s",
 			st->st_serialno,
 			c->name, inst,
 			lastused,
 			buf,
-			(unsigned long)st->st_ref,
-			(unsigned long)st->st_refhim,
+			st->st_ref,
+			st->st_refhim,
 			traffic_buf,
-			(st->st_username[0] != '\0') ? "username=" : "",
-			(st->st_username[0] != '\0') ? st->st_username : "");
+			(st->st_xauth_username[0] != '\0') ? "username=" : "",
+			(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "");
 
 #       undef add_said
 	}
@@ -2459,7 +2445,6 @@ static int log_trafic_state(struct connection *c, void *arg UNUSED)
 
 void show_traffic_status(const char *name)
 {
-
 	if (name == NULL) {
 		struct state **array = sort_states(state_compare_serial);
 
@@ -2655,7 +2640,6 @@ void update_ike_endpoints(struct state *st,
 
 		addrtot(&st->st_remoteaddr, 0, oldip, sizeof(oldip));
 		addrtot(&md->sender, 0, newip, sizeof(newip));
-
 	} // why is below not part of this statement????
 
 	st->st_remoteaddr = md->sender;
@@ -2676,7 +2660,7 @@ bool update_mobike_endpoints(struct state *pst,
 	int af = addrtypeof(&md->iface->ip_addr);
 	ipstr_buf b;
 	ip_address *old_addr, *new_addr;
-	u_int16_t old_port, new_port;
+	uint16_t old_port, new_port;
 	bool ret = FALSE;
 
 	/*
@@ -2742,7 +2726,6 @@ bool update_mobike_endpoints(struct state *pst,
 
 			return TRUE;
 		}
-
 	}
 
 	if (!migrate_ipsec_sa(cst)) {
@@ -2761,7 +2744,6 @@ bool update_mobike_endpoints(struct state *pst,
 		pst->st_localaddr = cst->st_localaddr = md->iface->ip_addr;
 		pst->st_localport = cst->st_localport = md->iface->port;
 		pst->st_interface = cst->st_interface = md->iface;
-
 	} else {
 		/* MOBIKE responder */
 		c->spd.that.host_addr = md->sender;
@@ -3080,7 +3062,6 @@ static void append_word(char **sentence, const char *word)
  */
 void append_st_cfg_dns(struct state *st, const char *dnsip)
 {
-
 	if (st->st_seen_cfg_dns == NULL) {
 		st->st_seen_cfg_dns = clone_str(dnsip, "fresh append_st_cfg_dns");
 	} else {
@@ -3121,8 +3102,8 @@ void ISAKMP_SA_established(const struct state *pst)
 
 	/* NULL authentication can never replaced - it is all anonymous */
 	if (LIN(POLICY_AUTH_NULL, c->policy) ||
-	   (c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
-
+	    c->spd.that.authby == AUTH_NULL ||
+	    c->spd.this.authby == AUTH_NULL) {
 		DBG(DBG_CONTROL, DBG_log("NULL Authentication - all clients appear identical"));
 	} else if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
 		/*
@@ -3143,8 +3124,8 @@ void ISAKMP_SA_established(const struct state *pst)
 			struct connection *next = d->ac_next;
 
 			if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
-			    (same_id(&c->spd.this.id, &d->spd.this.id) &&
-			     same_id(&c->spd.that.id, &d->spd.that.id)))
+			    same_id(&c->spd.this.id, &d->spd.this.id) &&
+			    same_id(&c->spd.that.id, &d->spd.that.id))
 			{
 				DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
 				suppress_delete(d); /* don't send a delete */
@@ -3153,14 +3134,38 @@ void ISAKMP_SA_established(const struct state *pst)
 			d = next;
 		}
 
-		if (c->newest_isakmp_sa != SOS_NOBODY &&
-			c->newest_isakmp_sa != pst->st_serialno) {
+		/*
+		 * This only affects IKEv2, since we don't store any
+		 * received INITIAL_CONTACT for IKEv1.
+		 * We don't do this on IKEv1, because it seems to
+		 * confuse various third parties (Windows, Cisco VPN 300,
+		 * and juniper
+		 * likely because this would be called before the IPsec SA
+		 * of QuickMode is installed, so the remote endpoints view
+		 * this IKE SA still as the active one?
+		 */
+		if (pst->st_seen_initialc) {
+			if (c->newest_isakmp_sa != SOS_NOBODY &&
+			    c->newest_isakmp_sa != pst->st_serialno) {
 				struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
 
 				DBG(DBG_CONTROL, DBG_log("deleting replaced IKE state for %s",
 					old_p1->st_connection->name));
 				old_p1->st_suppress_del_notify = TRUE;
 				event_force(EVENT_SA_EXPIRE, old_p1);
+			}
+
+			if (c->newest_ipsec_sa != SOS_NOBODY) {
+				struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
+				struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
+
+				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
+					DBG(DBG_CONTROL, DBG_log("Initial Contact received, deleting old state #%lu from connection '%s'",
+						c->newest_ipsec_sa, c->name));
+					old_p2->st_suppress_del_notify = TRUE;
+					event_force(EVENT_SA_EXPIRE, old_p2);
+				}
+			}
 		}
 	}
 

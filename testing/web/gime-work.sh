@@ -5,12 +5,16 @@ if test $# -lt 1; then
 
 Usage:
 
-    $0 <summarydir> [ <repodir> [ <start-hash> ] ]
+    $0 <summarydir> [ <repodir> [ <first-commit> ] ]
 
-Print an untested commit hash on stdout.  If HEAD is already tested,
-then commit to test is selected according to git-interesting.sh.
+Select, and then print, an untested commit in the range
+[<first-commit>..HEAD].
 
-In the case of runs of untested commits, the longest is split.
+First choice is HEAD; second choice is something "interesting" such as
+a tag or branch (see git-interesting.sh); and the third choice is to
+split the longest run of untested commits.
+
+If no untested commit is selected, the script exits non-zero.
 
 EOF
   exit 1
@@ -28,22 +32,20 @@ fi
 
 # <repodir>
 if test $# -gt 0 ; then
-    cd $1 ; shift
+    repodir=$1 ; shift
+    cd ${repodir} || {
+	echo "could not change-directory to <repodir> ${repodir}" 1>&2
+	exit 1
+    }
 fi
 
-# <start-hash>
+# <first-commit>
 if test $# -gt 0 ; then
-    start_hash=$1 ; shift
+    first_commit=$1 ; shift
 else
-    start_hash=$(${webdir}/earliest-commit.sh ${summarydir})
+    first_commit=$(${webdir}/earliest-commit.sh ${summarydir})
 fi
-
-print_selected() {
-    echo selecting $1 at $2 1>&2
-    ( git show --no-patch $2 ) 1>&2
-    echo $2
-    exit 0
-}
+first_commit=$(git show --no-patch --format=%H ${first_commit})
 
 branch=$(${webdir}/gime-git-branch.sh .)
 remote=$(git config --get branch.${branch}.remote)
@@ -53,29 +55,38 @@ remote=$(git config --get branch.${branch}.remote)
 run=""
 count=0
 
+head_commit=
+head_count=0
+
+points="tag merge branch"
+for point in ${points} ; do
+    point_commit=${point}_commit
+    point_count=${point}_count
+    eval ${point_commit}=
+    eval ${point_count}=0
+done
+
 longest_bias=0
 longest_length=0
 longest_count=0
-longest_hash=
+longest_commit=
 
-point_hash=
-point_count=0
-point_name=
-
-head_hash=
-head_count=0
-
-while read hashes ; do
+while read commits ; do
     count=$(expr ${count} + 1)
-    hash=$(set -- ${hashes} ; echo $1)
+    commit=$(set -- ${commits} ; echo $1)
 
     # already tested?
+    #
+    # Git seems to use both 7 and 9 character abbreviated hashes.  Try
+    # both.
 
-    if test -d $(echo ${summarydir}/*-g${hash}-* | awk '{print $1}'); then
-	tested=true
-    else
-	tested=false
-    fi
+    tested=false
+    for h in ${commit} $(expr ${commit} : '\(.......\).*') $(expr ${commit} : '\(.........\).*') ; do
+	if test -d $(echo ${summarydir}/*-g${h}-* | awk '{print $1}'); then
+	    tested=true
+	    break
+	fi
+    done
 
     # Always test HEAD (even when it isn't interesting).
     #
@@ -84,18 +95,20 @@ while read hashes ; do
     #
     # Use count=1 as a flag to indicate that the test wasn't tested.
 
-    if test -z "${head_hash}" ; then
-	head_hash=${hash}
+    if test -z "${head_commit}" ; then
+	head_commit=${commit}
 	test ${count} -eq 1 # always true
-	${tested} || head_count=${count}
-	echo head ${head_hash} at ${head_count} 1>&2
-	# XXX: Could bail early if untested; but that means analysis
-	# of all the tests is skipped: ${tested} || break
+	${tested} || {
+	    head_count=${count}
+	}
+	echo head ${head_commit} at ${head_count} 1>&2
+	# Don't bail early as some scripts rely on this script
+	# printing an analysis of all the commits.
     fi
 
     # Find out how interesting the commit is; and why.
 
-    if interesting=$(${webdir}/git-interesting.sh ${hash}) ; then
+    if interesting=$(${webdir}/git-interesting.sh ${commit}) ; then
 	uninteresting=false
     else
 	uninteresting=true
@@ -109,7 +122,7 @@ while read hashes ; do
     # a colon).  See README.txt.
 
     if ${tested}; then
-	echo tested: ${hash} ${interesting} 1>&2
+	echo tested: ${commit} ${interesting} 1>&2
     fi
 
     # Skip uninteresting commits; don't include them in untested runs.
@@ -127,8 +140,8 @@ while read hashes ; do
     if test ${run_length} -gt $(expr ${longest_length} + ${longest_bias}) ; then
 	longest_length=${run_length}
 	longest_count=${count}
-	longest_hash=$(echo ${run} | awk '{ print $(NF / 2 + 1)}')
-	echo longest ${longest_hash} at ${longest_count} length ${longest_length} bias ${longest_bias} run ${run} 1>&2
+	longest_commit=$(echo ${run} | awk '{ print $(NF / 2 + 1)}')
+	echo longest ${longest_commit} at ${longest_count} length ${longest_length} bias ${longest_bias} run ${run} 1>&2
     fi
 
     # If this is a really interesting commit (branch, merge, tag),
@@ -140,7 +153,7 @@ while read hashes ; do
     case "${interesting}" in
 	*:* )
 	    longest_bias=$(expr ${longest_bias} + 1)
-	    echo bias ${longest_bias} $(echo ${interesting} | cut -d: -f1) ${hash} at ${count} 1>&2
+	    echo bias ${longest_bias} $(echo ${interesting} | cut -d: -f1) ${commit} at ${count} 1>&2
 	    ;;
     esac
 
@@ -151,51 +164,65 @@ while read hashes ; do
 	continue
     fi
 
-    # Save the first really interesting commit (branch, merge, tag;
-    # and not just a simple change).
-    #
-    # Keep processing as still need to determine the longest run.  The
-    # longest run may occur after this commit.  The only way to
-    # determine that the longest run is before the first branch (say)
-    # is to examining all commits.
+    # Finally, save the first really interesting (as in branch, merge,
+    # or tag) untested commit.
 
-    if test -z "${point_hash}" ; then
-	case "${interesting}" in
-	    *:* )
-		point_hash=${hash}
-		point_count=${count}
-		point_name="$(echo ${interesting} | cut -d: -f1)-point"
-		echo ${point_name} ${point_hash} at ${point_count} 1>&2
+    case "${interesting}" in
+	*:* )
+	    point=$(expr "${interesting}" : '\(.*\):')
+	    point_commit=${point}_commit
+	    point_count=${point}_count
+	    if test -z "${!point_commit}" ; then
+		eval ${point_commit}=${commit}
+		eval ${point_count}=${count}
+		echo "${point} ${!point_commit} at ${!point_count}" 1>&2
 		run=""
 		continue
-		;;
-	esac
-    fi
+	    fi
+	    ;;
+    esac
 
-    run="${run} ${hash}"
+    run="${run} ${commit}"
 
 done < <(git rev-list \
-	     --abbrev-commit \
 	     --topo-order \
 	     --children \
-	     ${start_hash}..${remote} ; echo ${start_hash})
+	     ${first_commit}..${remote} ; echo ${first_commit})
+
+# Dump the results
+
+echo HEAD ${head_commit} at ${head_count} 1>&2
+for point in ${points} ; do
+    point_commit=${point}_commit
+    point_count=${point}_count
+    echo "${point^^} ${!point_commit} at ${!point_count}" 1>&2
+done
+echo LONGEST ${longest_length} ${longest_count} ${longest_commit} 1>&2
 
 # Now which came first?
 
-echo HEAD ${head_hash} at ${head_count} 1>&2
-echo POINT ${point_name} ${point_hash} at ${point_count} 1>&2
-echo LONGEST ${longest_length} ${longest_count} ${longest_hash} 1>&2
+print_selected() {
+    echo selecting $1 at $2 1>&2
+    ( git show --no-patch $2 ) 1>&2
+    echo $2
+    exit 0
+}
 
-if test ${head_count} -gt 0 \
-	-a \( ${longest_count} -eq 0 -o ${head_count} -lt ${longest_count} \) \
-	-a \( ${point_count} -eq 0 -o ${head_count} -lt ${point_count} \) ; then
-    print_selected "head" ${head_hash}
-elif test ${point_count} -gt 0 \
-	  -a ${point_count} -lt ${longest_count} ; then
-    print_selected ${point_name} ${point_hash}
-elif test ${longest_count} -gt 0 ; then
+if test ${head_count} -gt 0 ; then
+    print_selected "head" ${head_commit}
+fi
+
+for point in ${points} ; do
+    point_commit=${point}_commit
+    point_count=${point}_count
+    if test "${!point_count}" -gt 0 -a "${!point_count}" -lt "${longest_count}" ; then
+	print_selected ${point} "${!point_commit}"
+    fi
+done
+
+if test ${longest_count} -gt 0 ; then
     # Split the run in approx two.
-    print_selected "longest-run" ${longest_hash}
+    print_selected "longest-run" ${longest_commit}
 fi
 
 exit 1

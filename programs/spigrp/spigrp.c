@@ -47,7 +47,6 @@
 #include "libreswan/ipsec_encap.h"
 #include "libreswan/ipsec_ah.h"
 
-#include "lsw_select.h"
 #include "ip_address.h"
 
 const char *progname;
@@ -260,12 +259,13 @@ int main(int argc, char **argv)
 			 * +3: proto
 			 */
 			char **p = &argv[i * 4 + 1];
+			int af;
 
 			/* address family */
 			if (streq(p[0], "inet")) {
-				said_af_array[i].af = AF_INET;
+				af = AF_INET;
 			} else if (streq(p[0], "inet6")) {
-				said_af_array[i].af = AF_INET6;
+				af = AF_INET6;
 			} else {
 				fprintf(stderr,
 					"%s: Address family %s not supported\n",
@@ -276,7 +276,7 @@ int main(int argc, char **argv)
 			/* IP address */
 			{
 				err_t error_s = ttoaddr(p[1], 0,
-						  said_af_array[i].af,
+						  af,
 						  &(said_af_array[i].said.dst));
 
 				if (error_s != NULL) {

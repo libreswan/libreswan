@@ -75,6 +75,16 @@
 #include "libreswan/ipsec_xform.h"
 
 #include <linux/crypto.h>
+#ifdef HAS_SKCIPHER
+#include <crypto/skcipher.h>
+
+#define crypto_has_blkcipher    crypto_has_skcipher
+#define crypto_alloc_blkcipher  crypto_alloc_skcipher
+#define crypto_blkcipher_tfm    crypto_skcipher_tfm
+#define crypto_blkcipher_setkey crypto_skcipher_setkey
+#define crypto_blkcipher_ivsize crypto_skcipher_ivsize
+#define crypto_blkcipher_cast   __crypto_skcipher_cast
+#endif /* HAS_SKCIPHER */
 #ifdef CRYPTO_API_VERSION_CODE
 #warning \
 	"Old CryptoAPI is not supported. Only linux-2.4.22+ or linux-2.6.x are supported"
@@ -441,7 +451,11 @@ static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
 	int error = 0;
 	struct crypto_tfm *tfm = (struct crypto_tfm *)key_e;
 	struct scatterlist sg;
+#ifdef HAS_SKCIPHER
+	SKCIPHER_REQUEST_ON_STACK(req, __crypto_skcipher_cast(tfm));
+#else
 	struct blkcipher_desc desc;
+#endif
 	int ivsize = crypto_blkcipher_ivsize(crypto_blkcipher_cast(tfm));
 	char ivp[ivsize];
 
@@ -459,6 +473,18 @@ static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
 	sg_init_table(&sg, 1);
 	sg_set_page(&sg, virt_to_page(in), ilen, offset_in_page(in));
 
+#ifdef HAS_SKCIPHER
+	skcipher_request_set_tfm(req, crypto_blkcipher_cast(tfm));
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+	skcipher_request_set_crypt(req, &sg, &sg, ilen, (void*)&ivp[0]);
+
+	if (encrypt)
+		error = crypto_skcipher_encrypt(req);
+	else
+		error = crypto_skcipher_decrypt(req);
+
+	skcipher_request_zero(req);
+#else
 	memset(&desc, 0, sizeof(desc));
 	desc.tfm = crypto_blkcipher_cast(tfm);
 	desc.info = (void *) &ivp[0];
@@ -467,6 +493,7 @@ static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
 		error = crypto_blkcipher_encrypt_iv(&desc, &sg, &sg, ilen);
 	else
 		error = crypto_blkcipher_decrypt_iv(&desc, &sg, &sg, ilen);
+#endif
 	if (debug_crypto > 1)
 		printk(KERN_DEBUG "klips_debug:_capi_cbc_encrypt:"
 		       "error=%d\n",
@@ -636,7 +663,11 @@ setup_ipsec_alg_capi_digest(struct ipsec_alg_capi_digest *dptr)
 static void
 _capi_destroy_hmac_key (struct ipsec_alg_auth *alg, __u8 *key_a)
 {
-	struct crypto_tfm *tfm=(struct crypto_tfm*)key_a;
+#ifdef HAS_AHASH
+	struct crypto_ahash *tfm = (struct crypto_ahash*)key_a;
+#else
+	struct  crypto_hash *tfm = (struct  crypto_hash*)key_a;
+#endif
 
 	if (debug_crypto > 0)
 		printk(KERN_DEBUG "klips_debug: _capi_destroy_hmac_key:"
@@ -648,7 +679,12 @@ _capi_destroy_hmac_key (struct ipsec_alg_auth *alg, __u8 *key_a)
 		       alg->ixt_common.ixt_name);
 		return;
 	}
-	crypto_free_tfm(tfm);
+
+#ifdef HAS_AHASH
+	crypto_free_ahash(tfm);
+#else
+	crypto_free_hash(tfm);
+#endif
 }
 /*
  *      create hash
@@ -750,7 +786,7 @@ _capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int le
 		return -1;
 
 	ahash_request_set_callback(req, 0, NULL, NULL);
-	ahash_request_set_crypt(req, &sg, hash_buf, 2);
+	ahash_request_set_crypt(req, &sg, hash_buf, len);
 	ret = crypto_ahash_digest(req);
 #else
 	memset(&desc, 0, sizeof(desc));

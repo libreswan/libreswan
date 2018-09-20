@@ -10,7 +10,7 @@
  * Copyright (C) 2013 Kim Heino <b@bbbs.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2013-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -24,6 +24,9 @@
  * for more details.
  *
  */
+
+#ifndef CONNECTIONS_H
+#define CONNECTIONS_H
 
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
@@ -140,9 +143,10 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "id.h"    /* for struct id */
 #include "lmod.h"
 #include "reqid.h"
+#include "err.h"
 #include "state.h"
 
-struct virtual_t;
+struct virtual_t;	/* opaque type */
 
 struct host_pair;	/* opaque type */
 
@@ -165,10 +169,10 @@ struct end {
 	bool has_port_wildcard;
 	bool has_id_wildcards;
 	char *updown;
-	u_int16_t host_port;		/* where the IKE port is */
+	uint16_t host_port;		/* where the IKE port is */
 	bool host_port_specific;	/* if TRUE, then IKE ports are tested for */
-	u_int16_t port;			/* port number, if per-port keying */
-	u_int8_t protocol;		/* transport-protocol number, if per-X keying */
+	uint16_t port;			/* port number, if per-port keying */
+	uint8_t protocol;		/* transport-protocol number, if per-X keying */
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	cert_t cert;			/* end certificate */
@@ -180,9 +184,10 @@ struct end {
 
 	bool xauth_server;
 	bool xauth_client;
-	char *username;
+	char *xauth_username;
 	char *xauth_password;
 	ip_range pool_range;	/* store start of v4 addresspool */
+
 	/*
 	 * Track lease addresses.
 	 *
@@ -218,6 +223,7 @@ struct sa_mark {
 	uint32_t mask;
 	bool unique;
 };
+
 struct sa_marks {
 	struct sa_mark in;
 	struct sa_mark out;
@@ -228,6 +234,7 @@ struct connection {
 	char *foodgroup;
 	char *connalias;
 	lset_t policy;
+	lset_t sighash_policy;
 	deltatime_t sa_ike_life_seconds;
 	deltatime_t sa_ipsec_life_seconds;
 	deltatime_t sa_rekey_margin;
@@ -293,7 +300,6 @@ struct connection {
 	enum connection_kind kind;
 	const struct iface_port *interface;	/* filled in iff oriented */
 
-	bool initiated;
 	bool failed_ikev2;	/* tried ikev2, but failed */
 
 	so_serial_t		/* state object serial number */
@@ -305,7 +311,7 @@ struct connection {
 
 	/* note: if the client is the gateway, the following must be equal */
 	sa_family_t addr_family;	/* between gateways */
-	sa_family_t tunnel_addr_family;	/* between clients */
+	sa_family_t tunnel_addr_family;	/* between clients */	/* ??? set but not used! */
 
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;
@@ -338,14 +344,12 @@ struct connection {
 	char *modecfg_domains;
 	char *modecfg_banner;
 
-	u_int8_t metric;	/* metric for tunnel routes */
-	u_int16_t connmtu;	/* mtu for tunnel routes */
-	u_int32_t statsval;	/* track what we have told statsd */
-	u_int16_t nflog_group;	/* NFLOG group - 0 means disabled  */
+	uint8_t metric;	/* metric for tunnel routes */
+	uint16_t connmtu;	/* mtu for tunnel routes */
+	uint32_t statsval;	/* track what we have told statsd */
+	uint16_t nflog_group;	/* NFLOG group - 0 means disabled  */
 	msgid_t ike_window;     /* IKE v2 window size 7296#section-2.3 */
 };
-
-extern void parse_mark_mask(const struct connection* c,int * mark, int * mask);
 
 #define oriented(c) ((c).interface != NULL)
 extern bool orient(struct connection *c);
@@ -368,7 +372,6 @@ extern void initiate_connection(const char *name,
 				int whackfd,
 				lmod_t more_debugging,
 				lmod_t more_impairing,
-				enum crypto_importance importance,
 				char *remote_host);
 extern void restart_connections_by_peer(struct connection *c);
 
@@ -385,6 +388,7 @@ extern void initiate_ondemand(const ip_address *our_client,
 			     struct xfrm_user_sec_ctx_ike *uctx,
 #endif
 			     err_t why);
+
 extern void terminate_connection(const char *name);
 extern void release_connection(struct connection *c, bool relations);
 extern void delete_connection(struct connection *c, bool relations);
@@ -393,9 +397,9 @@ extern void delete_connections_by_name(const char *name, bool strict);
 extern void delete_every_connection(void);
 extern char *add_group_instance(struct connection *group,
 				const ip_subnet *target,
-				u_int8_t proto,
-				u_int16_t sport,
-				u_int16_t dport);
+				uint8_t proto,
+				uint16_t sport,
+				uint16_t dport);
 
 extern void remove_group_instance(const struct connection *group,
 				  const char *name);
@@ -406,26 +410,26 @@ extern struct connection *route_owner(struct connection *c,
 				      struct spd_route **srp,
 				      struct connection **erop,
 				      struct spd_route **esrp);
+
 extern struct connection *shunt_owner(const ip_subnet *ours,
 				      const ip_subnet *his);
 
-#define his_id_was_instantiated(c) ((c)->kind == CK_INSTANCE \
-				    && (id_is_ipaddr(&(c)->spd.that.id) ? \
-					sameaddr(&(c)->spd.that.id.ip_addr, \
-						 &(c)->spd.that.host_addr) : \
-					TRUE))
+#define remote_id_was_instantiated(c) \
+	( (c)->kind == CK_INSTANCE && \
+	  ( !id_is_ipaddr(&(c)->spd.that.id) || \
+	    sameaddr(&(c)->spd.that.id.ip_addr, &(c)->spd.that.host_addr) ) )
 
 struct state;   /* forward declaration of tag (defined in state.h) */
-extern struct connection
-*conn_by_name(const char *nm, bool strict, bool quiet);
+
+extern struct connection *conn_by_name(const char *nm, bool strict, bool quiet);
 
 stf_status ikev2_find_host_connection(struct connection **cp,
-		const ip_address *me, u_int16_t my_port, const ip_address *him,
-		u_int16_t his_port, lset_t req_policy);
+		const ip_address *me, uint16_t my_port, const ip_address *him,
+		uint16_t his_port, lset_t req_policy);
 
 extern struct connection
-	*find_host_connection(const ip_address *me, u_int16_t my_port,
-		       const ip_address *him, u_int16_t his_port,
+	*find_host_connection(const ip_address *me, uint16_t my_port,
+		       const ip_address *him, uint16_t his_port,
 		       lset_t req_policy, lset_t policy_exact_mask),
 	*find_next_host_connection(struct connection *c,
 		       lset_t req_policy, lset_t policy_exact_mask),
@@ -436,10 +440,10 @@ extern struct connection
 	*find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,
-			const u_int8_t our_protocol,
-			const u_int16_t out_port,
-			const u_int8_t peer_protocol,
-			const u_int16_t peer_port),
+			const uint8_t our_protocol,
+			const uint16_t out_port,
+			const uint8_t peer_protocol,
+			const uint16_t peer_port),
 	*find_connection_for_clients(struct spd_route **srp,
 				      const ip_address *our_client,
 				      const ip_address *peer_client,
@@ -448,6 +452,7 @@ extern struct connection
 /* instantiating routines */
 
 struct alg_info;        /* forward declaration of tag (defined in alg_info.h) */
+
 extern struct connection *rw_instantiate(struct connection *c,
 					 const ip_address *him,
 					 const ip_subnet *his_net,
@@ -539,3 +544,5 @@ extern void liveness_action(struct connection *c, const bool ikev2);
 extern bool idr_wildmatch(const struct connection *c, const struct id *b);
 
 extern uint32_t calculate_sa_prio(const struct connection *c);
+
+#endif

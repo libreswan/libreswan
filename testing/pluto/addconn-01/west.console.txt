@@ -5,10 +5,15 @@ initdone
 west #
  # config contains a conn option in config setup, addconn must deal
 west #
- cd /tmp
-west #
- ipsec addconn --config /etc/ipsec.conf --checkconfig
+ cd /tmp; ipsec addconn --config /etc/ipsec.conf --checkconfig ; cd -
+cannot load config '/etc/ipsec.conf': unexpected keyword 'retransmit-interval' in section 'config setup'
+/testing/pluto/addconn-01
 west #
  echo done
 done
 west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -54,7 +54,7 @@
  */
 static bool present(const char* pattern, chunk_t* ch)
 {
-	u_int pattern_len = strlen(pattern);
+	unsigned pattern_len = strlen(pattern);
 
 	if (ch->len >= pattern_len &&
 		strneq((char *)ch->ptr, pattern, pattern_len)) {
@@ -135,7 +135,7 @@ static bool extract_token(chunk_t *token, char termination, chunk_t *src)
 
 	/* extract token */
 	token->ptr = src->ptr;
-	token->len = (u_int)(eot - src->ptr);
+	token->len = (unsigned)(eot - src->ptr);
 
 	/* advance src pointer after termination symbol */
 	src->ptr = eot + 1;

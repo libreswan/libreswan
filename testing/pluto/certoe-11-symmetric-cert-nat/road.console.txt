@@ -1,0 +1,143 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+road #
+ certutil -D -n east -d sql:/etc/ipsec.d
+road #
+ cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
+road #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ ipsec whack --impair suppress-retransmits
+road #
+ # ensure for tests acquires expire before our failureshunt=2m
+road #
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
+road #
+ # give OE policies time to load
+road #
+ sleep 5
+road #
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out &
+[x] PID
+road #
+ echo "initdone"
+initdone
+road #
+ ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.23
+002 initiate on demand from 192.1.3.209:0 to 192.1.2.23:0 proto=0 because: whack
+133 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiate
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: Authenticated using RSA
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 10.0.10.1
+002 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+road #
+ # should show established tunnel and no bare shunts
+road #
+ # ping should succeed through tunnel
+road #
+ ping -n -c 2 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+road #
+ ../../pluto/bin/ipsec-look.sh
+road NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+XFRM policy:
+src 10.0.10.1/32 dst 192.1.2.23/32
+	dir out priority 1564639 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 10.0.10.1/32
+	dir fwd priority 1564639 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 10.0.10.1/32
+	dir in priority 1564639 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 1564639 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority 1564647 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.3.254 dev eth0
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+east-ec                                                      P,,  
+hashsha2                                                     P,,  
+nic                                                          P,,  
+north                                                        P,,  
+road                                                         u,u,u
+west                                                         P,,  
+west-ec                                                      P,,  
+road #
+ killall ip > /dev/null 2> /dev/null
+[1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out
+road #
+ cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+road #
+ echo done
+done
+road #
+ # A tunnel should have established with non-zero byte counters
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+road #
+ grep "negotiated connection" /tmp/pluto.log
+"private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+road #
+ grep IKEv2_AUTH_ OUTPUT/*pluto.log
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+road #
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

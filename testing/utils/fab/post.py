@@ -21,6 +21,7 @@ import gzip
 import bz2
 
 from fab import logutil
+from fab import jsonutil
 
 # Strings used to mark up files; see also runner.py where it marks up
 # the file names.
@@ -92,6 +93,7 @@ class Issues:
     CORE = "CORE"
     SEGFAULT = "SEGFAULT"
     GPFAULT = "GPFAULT"
+    PRINTF_NULL = "%NULL"
 
     CRASHED = {ASSERTION, EXPECTATION, CORE, SEGFAULT, GPFAULT}
 
@@ -245,8 +247,7 @@ class TestResult:
         """
         return self.resolution in [self.resolution.PASSED, self.resolution.FAILED, self.resolution.UNRESOLVED]
 
-    def __init__(self, logger, test, quick, update=None,
-                 output_directory=None):
+    def __init__(self, logger, test, quick, output_directory=None):
 
         # Set things up for passed
         self.logger = logger
@@ -257,6 +258,12 @@ class TestResult:
         self.sanitized_output = {}
         self.grub_cache = {}
         self.output_directory = output_directory or test.output_directory
+        # times
+        self._start_time = None
+        self._end_time = None
+        self._runtime = None
+        self._boot_time = None
+        self._script_time = None
 
         # If there is no OUTPUT directory the result is UNTESTED -
         # presence of the OUTPUT is a clear indicator that some
@@ -277,7 +284,10 @@ class TestResult:
                 self.resolution.failed()
             if self.grub(pluto_log_filename, "EXPECTATION FAILED"):
                 self.issues.add(Issues.EXPECTATION, host_name)
-                # XXX: allow expection failures?
+                # self.resolution.failed() XXX: allow expection failures?
+            if self.grub(pluto_log_filename, "\(null\)"):
+                self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.resolution.failed()
 
         # Check the raw console output for problems and that it
         # matches expected output.
@@ -313,6 +323,9 @@ class TestResult:
             if self.grub(raw_output_filename, r"GPFAULT"):
                 self.issues.add(Issues.GPFAULT, host_name)
                 self.resolution.failed()
+            if self.grub(raw_output_filename, r"\(null\)"):
+                self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.resolution.failed()
 
             # Check that the host's raw output is complete.
             #
@@ -337,7 +350,8 @@ class TestResult:
                 # is old it may not be the case. and an unresolved
                 # test, but need to first exclude other options.
                 self.issues.add(Issues.OUTPUT_TRUNCATED, host_name)
-                if os.path.isfile(test.result_file(self.output_directory)):
+                result_file = os.path.join(self.output_directory, "RESULT")
+                if os.path.isfile(result_file):
                     self.resolution.failed()
                 else:
                     self.resolution.unresolved()
@@ -363,12 +377,6 @@ class TestResult:
                 self.issues.add(Issues.SANITIZER_FAILED, host_name)
                 self.resolution.unresolved()
                 continue
-            if update:
-                self.logger.debug("host %s updating sanitized output file: %s",
-                                  host_name, sanitized_output_path)
-                with open(sanitized_output_path, "w") as f:
-                    f.write(sanitized_output)
-
             self.sanitized_output[host_name] = sanitized_output
 
             expected_output_path = test.testing_directory("pluto", test.name,
@@ -391,7 +399,6 @@ class TestResult:
                 diff = self.grub(diff_filename)
                 if diff is not None:
                     diff = diff.splitlines()
-
             if diff is None:
                 # use brute force
                 diff = _diff(self.logger,
@@ -399,17 +406,6 @@ class TestResult:
                              expected_output,
                              "OUTPUT/" + test.directory + "/" + host_name + ".console.txt",
                              sanitized_output)
-
-            if update:
-                self.logger.debug("host %s updating diff file %s",
-                                  host_name, diff_filename)
-                # Always create the diff file; when there is no diff
-                # leave it empty.
-                with open(os.path.join(self.output_directory, diff_filename), "w") as f:
-                    if diff:
-                        for line in diff:
-                            f.write(line)
-                            f.write("\n")
 
             if diff:
                 self.diffs[host_name] = diff
@@ -420,6 +416,34 @@ class TestResult:
                     self.issues.add(Issues.OUTPUT_WHITESPACE, host_name)
                 else:
                     self.issues.add(Issues.OUTPUT_DIFFERENT, host_name)
+
+    def save(self, output_directory=None):
+        output_directory = output_directory or self.output_directory
+        # write the sanitized console output
+        for host_name in self.test.host_names:
+            if host_name in self.sanitized_output:
+                sanitized_output = self.sanitized_output[host_name]
+                sanitized_output_filename = host_name + ".console.txt"
+                sanitized_output_pathname = os.path.join(output_directory,
+                                                         sanitized_output_filename)
+                self.logger.debug("host %s writing sanitized output file: %s",
+                                  host_name, sanitized_output_pathname)
+                with open(sanitized_output_pathname, "w") as f:
+                    f.write(sanitized_output)
+        # write the diffs
+        for host_name in self.test.host_names:
+            # Always create the diff file; when there is no diff
+            # leave it empty.
+            diff = host_name in self.diffs and self.diffs[host_name]
+            diff_filename = host_name + ".console.diff"
+            diff_pathname = os.path.join(output_directory, diff_filename)
+            self.logger.debug("host %s writing diff file %s",
+                              host_name, diff_pathname)
+            with open(diff_pathname, "w") as f:
+                if diff:
+                    for line in diff:
+                        f.write(line)
+                        f.write("\n")
 
     def grub(self, filename, regex=None, cast=lambda x: x):
         """Grub around FILENAME to find regex"""
@@ -446,19 +470,52 @@ class TestResult:
         self.logger.debug("grub '%s' matched '%s'", regex, group)
         return cast(group)
 
+    def start_time(self):
+        if not self._start_time:
+            # starting debug log at 2018-08-15 13:00:12.275358
+            self._start_time = self.grub("debug.log", r"starting debug log at (.*)$",
+                                   cast=jsonutil.ptime)
+        return self._start_time
+
+    def end_time(self):
+        if not self._end_time:
+            # ending debug log at 2018-08-15 13:01:31.602533
+            self._end_time = self.grub("debug.log", r"ending debug log at (.*)$",
+                                 cast=jsonutil.ptime)
+        return self._end_time
+
+    def runtime(self):
+        if not self._runtime:
+            # stop testing basic-pluto-01 (test 2 of 756) after 79.3 seconds
+            self._runtime = self.grub("debug.log", r": stop testing .* after (.*) second",
+                                cast=float)
+        return self._runtime
+
+    def boot_time(self):
+        if not self._boot_time:
+            # stop booting domains after 56.9 seconds
+            self._boot_time = self.grub("debug.log", r": stop booting domains after (.*) second",
+                                  cast=float)
+        return self._boot_time
+
+    def script_time(self):
+        if not self._script_time:
+            # stop running scripts east:eastinit.sh ... after 22.4 seconds
+            self._script_time = self.grub("debug.log", r": stop running scripts .* after (.*) second",
+                                    cast=float)
+        return self._script_time
+
 
 # XXX: given that most of args are passed in unchagned, this should
 # change to some type of result factory.
 
 def mortem(test, args, domain_prefix="",
-           baseline=None, output_directory=None,
-           quick=False, update=False):
+           baseline=None, output_directory=None, quick=False):
 
     logger = logutil.getLogger(domain_prefix, __name__, test.name)
 
     test_result = TestResult(logger, test, quick,
-                             output_directory=output_directory,
-                             update=update)
+                             output_directory=output_directory)
 
     if not test_result:
         return test_result

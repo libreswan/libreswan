@@ -9,6 +9,7 @@
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015-2017 Andrew Cagney
 # Copyright (C) 2016-2017 Paul Wouters <pwouters@redhat.com>
+# Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -67,42 +68,25 @@ endif
 # where to find klips headers and Libreswan headers
 HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
 
-# -DKLIPS enables interface to Kernel LINUX IPsec code
-# -DNETKEY enables interface to Kernel NETKEY/XFRM IPsec code
-
-# The following are best left undefined -- each can be overridden at runtime
-# if need be.
-# -DPORT=n sets the default UDP port for IKE messages (otherwise 500)
-
 ifeq ($(USE_PFKEYv2),true)
 OBJS += kernel_pfkey.o
 endif
 
 ifeq ($(USE_NETKEY),true)
-CFLAGS += -DNETKEY_SUPPORT -DPFKEY
 OBJS += kernel_netlink.o
 endif
 
 ifeq ($(USE_KLIPS),true)
-CFLAGS += -DKLIPS -DPFKEY
 OBJS += kernel_klips.o
 endif
 
 ifeq ($(USE_MAST),true)
-CFLAGS += -DKLIPS_MAST
 OBJS += kernel_mast.o
 endif
 
-ifeq ($(USE_WIN2K_NATIVE),true)
-CFLAGS += -DWIN2K_NATIVE_IPSEC
-OBJS += kernel_win2k.o
-endif
-
 ifeq ($(USE_BSDKAME),true)
-CFLAGS += -DBSD_KAME
 OBJS += kernel_bsdkame.o
-# LIBBSDPFKEY is presumably passed in.
-LDFLAGS += ${LIBBSDPFKEY}
+LDFLAGS += $(BSDPFKEYLIB)
 endif
 
 OBJS += x509.o
@@ -115,16 +99,15 @@ endif
 
 OBJS += addresspool.o
 
+# ikev1_xauth.c calls crypt(), link it in.
 OBJS += ikev1_xauth.o
+LDFLAGS += $(CRYPT_LDFLAGS)
+
 ifeq ($(USE_XAUTHPAM),true)
 OBJS += xauth.o
 OBJS += pam_conv.o
 endif
 LDFLAGS += $(XAUTHPAM_LDFLAGS)
-
-ifneq ($(BUILDENV), darwin)
-LDFLAGS += -lcrypt
-endif
 
 OBJS += ikev1_aggr.o
 
@@ -147,10 +130,8 @@ ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
 CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
 endif
 
-OBJS += ike_alg.o
 OBJS += ike_alg_dh_nss_ecp_ops.o
 OBJS += ike_alg_dh_nss_modp_ops.o
-OBJS += ike_alg_encrypt_nss_gcm_ops.o
 OBJS += ike_alg_hash_nss_ops.o
 OBJS += ike_alg_prf_hmac_ops.o
 OBJS += ike_alg_prf_nss_ops.o
@@ -169,15 +150,13 @@ LDFLAGS += $(NSPR_LDFLAGS)
 LDFLAGS += -lpthread
 
 LDFLAGS += $(FIPSCHECK_LDFLAGS)
+LDFLAGS += $(LIBCAP_NG_LDFLAGS)
 
-ifeq ($(USE_LIBCAP_NG),true)
-CFLAGS += -DHAVE_LIBCAP_NG
-LDFLAGS += -lcap-ng
+ifeq ($(USE_BSDKAME),true)
+OBJS += kernel_bsd.o
+else
+OBJS += kernel_linux.o
 endif
-
-# OSDEP already set in objdir.mk?
-OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
-OBJS += sysdep_${OSDEP}.o
 
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
@@ -232,7 +211,7 @@ OBJS += ikev2_ipseckey.o
 endif
 OBJS += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
-OBJS += ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
+OBJS += ikev2_ecdsa.o ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
 OBJS += crypt_hash.o
 OBJS += kernel.o

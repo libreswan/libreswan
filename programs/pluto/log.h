@@ -21,6 +21,7 @@
 
 #include <libreswan.h>
 
+#include "lswcdefs.h"
 #include "lswlog.h"
 
 struct state;
@@ -110,12 +111,12 @@ void log_prefix(struct lswlog *buf, bool debug,
 #define LSWLOG_STATE(STATE, BUF)					\
 	LSWLOG_(true, BUF,						\
 		log_prefix(BUF, false, STATE, NULL),			\
-		lswlog_to_log_whack_stream(BUF, RC_LOG))
+		lswlog_to_default_streams(BUF, RC_LOG))
 
 #define LSWLOG_CONNECTION(CONNECTION, BUF)				\
 	LSWLOG_(true, BUF,						\
 		log_prefix(BUF, true, NULL, CONNECTION),		\
-		lswlog_to_log_whack_stream(BUF, RC_LOG))
+		lswlog_to_default_streams(BUF, RC_LOG))
 
 bool log_debugging(struct state *st, struct connection *c, lset_t predicate);
 

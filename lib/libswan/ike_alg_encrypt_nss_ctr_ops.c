@@ -38,8 +38,8 @@
 #include "ike_alg_encrypt_nss_gcm_ops.h"
 
 static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
-		       u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
-		       u_int8_t *counter_block, bool encrypt)
+		       uint8_t *buf, size_t buf_len, PK11SymKey *sym_key,
+		       uint8_t *counter_block, bool encrypt)
 {
 	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: enter"));
 
@@ -49,7 +49,7 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	}
 
 	CK_AES_CTR_PARAMS counter_param;
-	counter_param.ulCounterBits = sizeof(u_int32_t) * 8;/* Per RFC 3686 */
+	counter_param.ulCounterBits = sizeof(uint32_t) * 8;/* Per RFC 3686 */
 	memcpy(counter_param.cb, counter_block, sizeof(counter_param.cb));
 	SECItem param;
 	param.type = siBuffer;
@@ -57,7 +57,7 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	param.len = sizeof(counter_param);
 
 	/* Output buffer for transformed data.  */
-	u_int8_t *out_buf = PR_Malloc((PRUint32)buf_len);
+	uint8_t *out_buf = PR_Malloc((PRUint32)buf_len);
 	unsigned int out_len = 0;
 
 	if (encrypt) {
@@ -85,15 +85,15 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	 * partial block encoded/decoded.
 	 *
 	 * There's a portability assumption here that the IV buffer is
-	 * at least sizeof(u_int32_t) (4-byte) aligned.
+	 * at least sizeof(uint32_t) (4-byte) aligned.
 	 */
-	u_int32_t *counter = (u_int32_t*)(counter_block + AES_BLOCK_SIZE
-					  - sizeof(u_int32_t));
-	u_int32_t old_counter = ntohl(*counter);
+	uint32_t *counter = (uint32_t*)(counter_block + AES_BLOCK_SIZE
+					  - sizeof(uint32_t));
+	uint32_t old_counter = ntohl(*counter);
 	size_t increment = (buf_len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
-	u_int32_t new_counter = old_counter + increment;
-	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: counter-block updated from 0x%lx to 0x%lx for %zd bytes",
-			       (unsigned long)old_counter, (unsigned long)new_counter, buf_len));
+	uint32_t new_counter = old_counter + increment;
+	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: counter-block updated from 0x%" PRIx32 " to 0x%" PRIx32 " for %zd bytes",
+			       old_counter, new_counter, buf_len));
 	if (new_counter < old_counter) {
 		/* Wrap ... */
 		loglog(RC_LOG_SERIOUS,

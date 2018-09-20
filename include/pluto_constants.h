@@ -2,12 +2,12 @@
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2016-2017, Andrew Cagney
- * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2016-2018, Andrew Cagney
+ * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -86,7 +86,8 @@ enum keyword_authby {
 	AUTH_NEVER	= 1,
 	AUTH_PSK	= 2,
 	AUTH_RSASIG	= 3,
-	AUTH_NULL	= 4,
+	AUTH_ECDSA      = 4,
+	AUTH_NULL	= 5,
 };
 
 enum keyword_xauthby {
@@ -203,24 +204,6 @@ enum event_type {
 #define EVENT_CRYPTO_TIMEOUT_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
 #define EVENT_PAM_TIMEOUT_DELAY		RETRANSMIT_TIMEOUT_DEFAULT /* wait until this side give up on PAM */
 
-/*
- * operational importance of this cryptographic operation.
- * this determines if the operation will be dropped (because the other
- * end will retransmit, if they are legit), if it pertains to an on-going
- * connection, or if it is something that we initiated, and therefore
- * we should do it all costs.
- */
-enum crypto_importance {
-	pcim_notset_crypto,
-	pcim_stranger_crypto,
-	pcim_known_crypto,
-	pcim_ongoing_crypto,
-	pcim_local_crypto,
-	pcim_demand_crypto
-#define CRYPTO_IMPORTANCE_ROOF (pcim_demand_crypto + 1)
-};
-
-
 /* is pluto automatically switching busy state or set manually */
 enum ddos_mode {
 	DDOS_undefined,
@@ -314,32 +297,32 @@ typedef enum {
 
 enum {
 	DBG_floor_IX = 0,
-	DBG_RAW_IX = DBG_floor_IX,		/* raw packet I/O */
-	DBG_PARSING_IX,		/* show decoding of messages */
-	DBG_EMITTING_IX,	/* show encoding of messages */
-	DBG_CONTROL_IX,		/* control flow within Pluto */
-	DBG_LIFECYCLE_IX,	/* SA lifecycle */
-	DBG_KERNEL_IX,		/* messages with the kernel */
-	DBG_DNS_IX,		/* DNS activity */
-	DBG_OPPO_IX,		/* opportunism */
-	DBG_CONTROLMORE_IX,	/* more detailed debugging */
 
-	DBG_PFKEY_IX,		/* turn on the pfkey library debugging */
-	DBG_NATT_IX,		/* debugging of NAT-traversal */
-	DBG_X509_IX,		/* X.509/pkix verify, cert retrival */
-	DBG_DPD_IX,		/* DPD items */
-	DBG_XAUTH_IX,		/* XAUTH aka PAM */
-	DBG_RETRANSMITS_IX,	/* Retransmitting packets */
-	DBG_OPPOINFO_IX,	/* log various informational things about oppo/%trap-keying */
+	DBG_RAW_IX = DBG_floor_IX,
+	DBG_PARSING_IX,
+	DBG_EMITTING_IX,
+	DBG_CONTROL_IX,
+	DBG_LIFECYCLE_IX,
+	DBG_KERNEL_IX,
+	DBG_DNS_IX,
+	DBG_OPPO_IX,
+	DBG_CONTROLMORE_IX,
+
+	DBG_NATT_IX,
+	DBG_X509_IX,
+	DBG_DPD_IX,
+	DBG_XAUTH_IX,
+	DBG_RETRANSMITS_IX,
+	DBG_OPPOINFO_IX,
 
 	/* below are excluded from debug=all */
-	DBG_CRYPT_IX,		/* high-level encryption/decryption of messages */
-	DBG_CRYPT_LOW_IX,	/* low-level encryption/decryption implementation details */
-	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
-	DBG_PROPOSAL_PARSER_IX,	/* parsing ike=... et.al. */
+	DBG_CRYPT_IX,
+	DBG_CRYPT_LOW_IX,
+	DBG_PRIVATE_IX,
+	DBG_PROPOSAL_PARSER_IX,
 
-	DBG_WHACKWATCH_IX,	/* never let WHACK go */
-	DBG_ADD_PREFIX_IX,	/* add the log+state prefix to debug lines */
+	DBG_WHACKWATCH_IX,
+	DBG_ADD_PREFIX_IX,
 
 	DBG_roof_IX,		/* first unassigned DBG is assigned to IMPAIR! */
 };
@@ -361,7 +344,6 @@ enum {
 #define DBG_DNS		LELEM(DBG_DNS_IX)
 #define DBG_OPPO	LELEM(DBG_OPPO_IX)
 #define DBG_CONTROLMORE	LELEM(DBG_CONTROLMORE_IX)
-#define DBG_PFKEY	LELEM(DBG_PFKEY_IX)
 #define DBG_NATT	LELEM(DBG_NATT_IX)
 #define DBG_X509	LELEM(DBG_X509_IX)
 #define DBG_DPD		LELEM(DBG_DPD_IX)
@@ -379,62 +361,66 @@ enum {
 #define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)
 
 /*
- * Index of IMPAIR set elements.  These set at the end of the DBG
- * elements.
+ * Index of IMPAIR set elements.
+ *
+ * see impair.c (libswan) for a definition of each of these fields.
+ *
+ * XXX: For now, these share the same lset_t as the DBG elements
+ * above.
  */
 
 enum {
 	IMPAIR_floor_IX = DBG_roof_IX,
-	IMPAIR_BUST_MI2_IX = IMPAIR_floor_IX,	/* make MI2 really large */
-	IMPAIR_BUST_MR2_IX,			/* make MR2 really large */
-	IMPAIR_DROP_I2_IX,			/* drop second initiator packet */
-	IMPAIR_SA_CREATION_IX,			/* fail all SA creation */
-	IMPAIR_JACOB_TWO_TWO_IX,		/* cause pluto to send all messages twice. */
-						/* cause pluto to send all messages twice. */
-	IMPAIR_ALLOW_NULL_NULL_IX,			/* cause pluto to allow esp=null-null and ah=null for testing */
-	IMPAIR_MAJOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE major version that's higher then we support. */
-	IMPAIR_MINOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE minor version that's higher then we support. */
 
-	IMPAIR_RETRANSMITS_IX,			/* causes pluto to timeout on first retransmit */
-	IMPAIR_TIMEOUT_ON_RETRANSMIT_IX,		/* causes pluto to "retry" (switch protocol) on the first retransmit */
-	IMPAIR_DELETE_ON_RETRANSMIT_IX,		/* causes pluto to fail on the first retransmit */
-	IMPAIR_SUPPRESS_RETRANSMITS_IX,		/* causes pluto to never send retransmits (wait the full timeout) */
+	IMPAIR_BUST_MI2_IX = IMPAIR_floor_IX,
+	IMPAIR_BUST_MR2_IX,
+	IMPAIR_DROP_I2_IX,
+	IMPAIR_SA_CREATION_IX,
+	IMPAIR_JACOB_TWO_TWO_IX,
 
-	IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX,	/* causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it */
-	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,	/* causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it */
-	IMPAIR_SEND_IKEv2_KE_IX,		/* causes pluto to omit sending the KE payload in IKEv2 */
-	IMPAIR_SEND_NO_DELETE_IX,		/* causes pluto to omit sending Notify/Delete messages */
-	IMPAIR_SEND_NO_IKEV2_AUTH_IX,		/* causes pluto to omit sending an IKEv2 IKE_AUTH packet */
-	IMPAIR_SEND_NO_XAUTH_R0_IX,		/* causes pluto to omit sending an XAUTH user/passwd request */
-	IMPAIR_DROP_XAUTH_R0_IX,		/* causes pluto to drop an XAUTH user/passwd request on IKE initiator */
-	IMPAIR_SEND_NO_MAIN_R2_IX,		/* causes pluto to omit sending an last Main Mode response packet */
-	IMPAIR_FORCE_FIPS_IX,			/* causes pluto to believe we are in fips mode, NSS needs its own hack */
-	IMPAIR_SEND_KEY_SIZE_CHECK_IX,		/* causes pluto to omit checking configured ESP key sizes for testing */
-	IMPAIR_SEND_ZERO_GX_IX,			/* causes pluto to send a g^x that is zero, breaking DH calculation */
-	IMPAIR_SEND_BOGUS_DCOOKIE_IX,		/* causes pluto to send a a bogus IKEv2 DCOOKIE */
-	IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX,	/* causes pluto to omit sending hash notify in IKE_SA_INIT Request */
-	IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX,	/* causes pluto to ignore incoming hash notify from IKE_SA_INIT Request */
-	IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX,	/* causes pluto to ignore incoming hash notify from IKE_SA_INIT Response*/
-	IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX,	/* lets pluto exclude integrity 'none' in proposals */
-	IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX,	/* lets pluto include integrity 'none' in proposals */
+	IMPAIR_ALLOW_NULL_NONE_IX,
+	IMPAIR_MAJOR_VERSION_BUMP_IX,
+	IMPAIR_MINOR_VERSION_BUMP_IX,
 
-	IMPAIR_REPLAY_DUPLICATES_IX,		/* replay duplicates of each incoming packet */
-	IMPAIR_REPLAY_FORWARD_IX,		/* replay all earlier packets old-to-new */
-	IMPAIR_REPLAY_BACKWARD_IX,		/* replay all earlier packets new-to-old */
+	IMPAIR_RETRANSMITS_IX,
+	IMPAIR_TIMEOUT_ON_RETRANSMIT_IX,
+	IMPAIR_DELETE_ON_RETRANSMIT_IX,
+	IMPAIR_SUPPRESS_RETRANSMITS_IX,
 
-	IMPAIR_REPLAY_ENCRYPTED_IX,		/* replay encrypted packets */
-	IMPAIR_CORRUPT_ENCRYPTED_IX,		/* corrupts the encrypted packet so that the decryption fails */
+	IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX,
+	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,
 
-	IMPAIR_PROPOSAL_PARSER_IX,		/* impair algorithm parser - what you see is what you get */
+	IMPAIR_SEND_NO_DELETE_IX,
+	IMPAIR_SEND_NO_IKEV2_AUTH_IX,
+	IMPAIR_SEND_NO_XAUTH_R0_IX,
+	IMPAIR_DROP_XAUTH_R0_IX,
+	IMPAIR_SEND_NO_MAIN_R2_IX,
+	IMPAIR_FORCE_FIPS_IX,
+	IMPAIR_SEND_KEY_SIZE_CHECK_IX,
+	IMPAIR_SEND_BOGUS_DCOOKIE_IX,
+	IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX,
+	IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX,
+	IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX,
+	IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX,
+	IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX,
 
-	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_SA_INIT_IX,	/* add a payload with an unknown type to SA_INIT */
-	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_IX,		/* add a payload with an unknown type to AUTH */
-	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK_IX,	/* add a payload with an unknown type to AUTH's SK payload */
-	IMPAIR_UNKNOWN_PAYLOAD_CRITICAL_IX,		/* mark the unknown payload as critical */
+	IMPAIR_REPLAY_DUPLICATES_IX,
+	IMPAIR_REPLAY_FORWARD_IX,
+	IMPAIR_REPLAY_BACKWARD_IX,
 
-	IMPAIR_ALLOW_DNS_INSECURE_IX,		/* allow IPSECKEY lookups without DNSSEC protection */
+	IMPAIR_REPLAY_ENCRYPTED_IX,
+	IMPAIR_CORRUPT_ENCRYPTED_IX,
 
-	IMPAIR_SEND_PKCS7_THINGIE_IX,		/* send certificates as a PKCS7 thingie */
+	IMPAIR_PROPOSAL_PARSER_IX,
+
+	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_SA_INIT_IX,
+	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_IX,
+	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK_IX,
+	IMPAIR_UNKNOWN_PAYLOAD_CRITICAL_IX,
+
+	IMPAIR_ALLOW_DNS_INSECURE_IX,
+
+	IMPAIR_SEND_PKCS7_THINGIE_IX,
 
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
@@ -450,7 +436,7 @@ enum {
 #define IMPAIR_DROP_I2	LELEM(IMPAIR_DROP_I2_IX)
 #define IMPAIR_SA_CREATION	LELEM(IMPAIR_SA_CREATION_IX)
 #define IMPAIR_JACOB_TWO_TWO	LELEM(IMPAIR_JACOB_TWO_TWO_IX)
-#define IMPAIR_ALLOW_NULL_NULL	LELEM(IMPAIR_ALLOW_NULL_NULL_IX)
+#define IMPAIR_ALLOW_NULL_NONE		LELEM(IMPAIR_ALLOW_NULL_NONE_IX)
 #define IMPAIR_MAJOR_VERSION_BUMP	LELEM(IMPAIR_MAJOR_VERSION_BUMP_IX)
 #define IMPAIR_MINOR_VERSION_BUMP	LELEM(IMPAIR_MINOR_VERSION_BUMP_IX)
 
@@ -461,7 +447,11 @@ enum {
 
 #define IMPAIR_SEND_BOGUS_PAYLOAD_FLAG	LELEM(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX)
 #define IMPAIR_SEND_BOGUS_ISAKMP_FLAG	LELEM(IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX)
-#define IMPAIR_SEND_IKEv2_KE	LELEM(IMPAIR_SEND_IKEv2_KE_IX)
+
+#define IMPAIR_SEND_NO_KE_PAYLOAD	LELEM(IMPAIR_SEND_NO_KE_PAYLOAD_IX)
+#define IMPAIR_SEND_EMPTY_KE_PAYLOAD	LELEM(IMPAIR_SEND_EMPTY_KE_PAYLOAD_IX)
+#define IMPAIR_SEND_ZERO_KE_PAYLOAD	LELEM(IMPAIR_SEND_ZERO_KE_PAYLOAD_IX)
+
 #define IMPAIR_SEND_NO_DELETE	LELEM(IMPAIR_SEND_NO_DELETE_IX)
 #define IMPAIR_SEND_NO_IKEV2_AUTH	LELEM(IMPAIR_SEND_NO_IKEV2_AUTH_IX)
 #define IMPAIR_SEND_NO_XAUTH_R0	LELEM(IMPAIR_SEND_NO_XAUTH_R0_IX)
@@ -469,7 +459,6 @@ enum {
 #define IMPAIR_SEND_NO_MAIN_R2	LELEM(IMPAIR_SEND_NO_MAIN_R2_IX)
 #define IMPAIR_FORCE_FIPS	LELEM(IMPAIR_FORCE_FIPS_IX)
 #define IMPAIR_SEND_KEY_SIZE_CHECK	LELEM(IMPAIR_SEND_KEY_SIZE_CHECK_IX)
-#define IMPAIR_SEND_ZERO_GX	LELEM(IMPAIR_SEND_ZERO_GX_IX)
 #define IMPAIR_SEND_BOGUS_DCOOKIE	LELEM(IMPAIR_SEND_BOGUS_DCOOKIE_IX)
 #define IMPAIR_OMIT_HASH_NOTIFY_REQUEST		LELEM(IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX)
 #define IMPAIR_IGNORE_HASH_NOTIFY_REQUEST	LELEM(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX)
@@ -728,12 +717,13 @@ enum sa_role {
 #define IS_ISAKMP_ENCRYPTED(s) ((LELEM(s) & ISAKMP_ENCRYPTED_STATES) != LEMPTY)
 
 /* ??? Is this really authenticate?  Even in xauth case? In STATE_INFO case? */
-#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) \
-				    && STATE_AGGR_R0 != (s) \
-				    && STATE_AGGR_I1 != (s))
+#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) && \
+				    STATE_AGGR_R0 != (s) && \
+				    STATE_AGGR_I1 != (s))
 
-#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I1) |\
-					LELEM(STATE_PARENT_I2))
+#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
+				       LELEM(STATE_PARENT_I1) |	\
+				       LELEM(STATE_PARENT_I2))
 
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
 				       LELEM(STATE_MAIN_I4) | \
@@ -791,18 +781,15 @@ enum sa_role {
       IS_CHILD_SA(st))
 
 #define IS_PARENT_SA_ESTABLISHED(st) \
-    ((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) \
-	&& !IS_CHILD_SA(st))
+    (((st)->st_state == STATE_PARENT_I3 || (st)->st_state == STATE_PARENT_R2) && \
+    !IS_CHILD_SA(st))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 
 #define IS_PARENT_SA(st) (!IS_CHILD_SA(st))
 
-#define IS_IKE_SA(st) ( (st->st_clonedfrom == SOS_NOBODY) &&  (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) || \
-		IS_PARENT_SA(st)) )
-
-#define IS_PARENT_STATE(s) ((s) >= STATE_PARENT_I1 && (s) <= STATE_IKESA_DEL)
-#define IS_IKE_STATE(s) (IS_PHASE1(s) || IS_PHASE15(s) || IS_PARENT_STATE(s))
+#define IS_IKE_SA(st) ( ((st)->st_clonedfrom == SOS_NOBODY) && \
+	(IS_PHASE1((st)->st_state) || IS_PHASE15((st)->st_state) || IS_PARENT_SA(st)) )
 
 #define IS_CHILD_SA_INITIATOR(st) \
 	((st)->st_state == STATE_V2_CREATE_I0 || \
@@ -821,9 +808,6 @@ enum sa_role {
 	(IS_CHILD_SA(st) && ((st)->st_state == STATE_V2_REKEY_IKE_I || \
 	 (st)->st_state == STATE_V2_CREATE_I || \
 	 (st)->st_state == STATE_V2_REKEY_CHILD_I))
-
-#define IS_AUTH_RESPONSE(st) \
-	(IS_CHILD_SA(s) && (st)->st_state == STATE_PARENT_I2)
 
 /* kind of struct connection
  * Ordered (mostly) by concreteness.  Order is exploited.
@@ -942,6 +926,7 @@ enum sa_policy_bits {
 	 */
 	POLICY_PSK_IX = 0,
 	POLICY_RSASIG_IX = 1,
+	POLICY_ECDSA_IX = 2,
 	POLICY_AUTH_NEVER_IX,
 	POLICY_AUTH_NULL_IX,
 
@@ -1032,6 +1017,7 @@ enum sa_policy_bits {
 
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
 #define POLICY_RSASIG	LELEM(POLICY_RSASIG_IX)
+#define POLICY_ECDSA   LELEM(POLICY_ECDSA_IX)
 #define POLICY_AUTH_NEVER	LELEM(POLICY_AUTH_NEVER_IX)
 #define POLICY_AUTH_NULL LELEM(POLICY_AUTH_NULL_IX)
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
@@ -1082,6 +1068,17 @@ enum sa_policy_bits {
 #define NEGOTIATE_AUTH_HASH_SHA2_384		LELEM(IKEv2_AUTH_HASH_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
 #define NEGOTIATE_AUTH_HASH_SHA2_512		LELEM(IKEv2_AUTH_HASH_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
 #define NEGOTIATE_AUTH_HASH_IDENTITY		LELEM(IKEv2_AUTH_HASH_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */
+
+enum sighash_policy_bits {
+	POL_SIGHASH_NONE = 0, /* 0 means no RFC 7427 and plain rsav1.5-sha1 or secret */
+	POL_SIGHASH_SHA2_256_IX = 1,
+	POL_SIGHASH_SHA2_384_IX = 2,
+	POL_SIGHASH_SHA2_512_IX = 3,
+#define POL_SIGHASH_IX_LAST	POL_SIGHASH_SHA2_512_IX
+};
+#define POL_SIGHASH_SHA2_256 LELEM(POL_SIGHASH_SHA2_256_IX)
+#define POL_SIGHASH_SHA2_384 LELEM(POL_SIGHASH_SHA2_384_IX)
+#define POL_SIGHASH_SHA2_512 LELEM(POL_SIGHASH_SHA2_512_IX)
 
 /* Default policy for now is using RSA - this might change to ECC */
 #define POLICY_DEFAULT POLICY_RSASIG
@@ -1134,11 +1131,13 @@ enum PrivateKeyKind {
 	PKK_RSA,
 	PKK_XAUTH,
 	PKK_PPK,
+	PKK_ECDSA, /* should not be needed */
 	PKK_NULL,
+	PKK_INVALID,
 };
 
 #define XAUTH_PROMPT_TRIES 3
-#define MAX_USERNAME_LEN 128
+#define MAX_XAUTH_USERNAME_LEN 128
 #define XAUTH_MAX_PASS_LENGTH 128
 
 #define MIN_LIVENESS 1

@@ -15,65 +15,26 @@ initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ N(INVAL_KE) ]
-peer didn't accept DH group ECP_256, it requested MODP_2048
-initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
-generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
 authentication of 'west' (myself) with pre-shared key
-establishing CHILD_SA westnet-eastnet-ikev2
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
+establishing CHILD_SA westnet-eastnet-ikev2{1}
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ N(NO_PROP) ]
-received message ID 0, expected 1. Ignored
-retransmit 1 of request with message ID 1
+parsed IKE_AUTH response 1 [ N(NO_PROP) ]
+IDr payload missing
+generating INFORMATIONAL request 2 [ N(AUTH_FAILED) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-payload type NOTIFY was not encrypted
-could not decrypt payloads
-integrity check failed
-IKE_AUTH response with message ID 0 processing failed
-retransmit 2 of request with message ID 1
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-payload type NOTIFY was not encrypted
-could not decrypt payloads
-integrity check failed
-IKE_AUTH response with message ID 0 processing failed
-retransmit 3 of request with message ID 1
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-payload type NOTIFY was not encrypted
-could not decrypt payloads
-integrity check failed
-IKE_AUTH response with message ID 0 processing failed
-retransmit 4 of request with message ID 1
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-payload type NOTIFY was not encrypted
-could not decrypt payloads
-integrity check failed
-IKE_AUTH response with message ID 0 processing failed
-retransmit 5 of request with message ID 1
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-payload type NOTIFY was not encrypted
-could not decrypt payloads
-integrity check failed
-IKE_AUTH response with message ID 0 processing failed
-#\[root@west ]#  timedout send line: strongswan up westnet-eastnet-ikev2
-echo done
+establishing connection 'westnet-eastnet-ikev2' failed
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ echo done
 done
 west #
- if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west #
+ if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
 Status of IKE charon daemon (strongSwan VERSION):
-  uptime: XXX minutes, since YYY
+  uptime: XXX second, since YYY
   malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
 Listening IP addresses:
   192.0.1.254
@@ -84,11 +45,9 @@ westnet-eastnet-ikev2:  192.1.2.45...192.1.2.23  IKEv2
 westnet-eastnet-ikev2:   local:  [west] uses pre-shared key authentication
 westnet-eastnet-ikev2:   remote: [east] uses pre-shared key authentication
 westnet-eastnet-ikev2:   child:  dynamic === dynamic TUNNEL
-Security Associations (0 up, 1 connecting):
-westnet-eastnet-ikev2[1]: CONNECTING, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i* SPISPI_r
-westnet-eastnet-ikev2[1]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
-westnet-eastnet-ikev2[1]: Tasks active: IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG CHILD_CREATE IKE_AUTH_LIFETIME IKE_MOBIKE 
+Security Associations (0 up, 0 connecting):
+  none
+west #
 west #
  ../bin/check-for-core.sh
 west #

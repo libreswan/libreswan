@@ -116,8 +116,8 @@ int main(int argc, char *argv[])
 	const char *oops;
 	int af;
 	char *p;
-	u_int32_t pool_size;
-	u_int32_t pool_size1;
+	uint32_t pool_size;
+	uint32_t pool_size1;
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s range\n", argv[0]);
@@ -139,8 +139,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	pool_size = (u_int32_t)ntohl(r.end.u.v4.sin_addr.s_addr) -
-		(u_int32_t)ntohl(r.start.u.v4.sin_addr.s_addr);
+	pool_size = (uint32_t)ntohl(r.end.u.v4.sin_addr.s_addr) -
+		(uint32_t)ntohl(r.start.u.v4.sin_addr.s_addr);
 	pool_size++;
 
 	addrtot(&r.start, 0, buf1, sizeof(buf1));
@@ -153,8 +153,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	pool_size1 = (u_int32_t)ntohl(r1.end.u.v4.sin_addr.s_addr) -
-		(u_int32_t)ntohl(r1.start.u.v4.sin_addr.s_addr);
+	pool_size1 = (uint32_t)ntohl(r1.end.u.v4.sin_addr.s_addr) -
+		(uint32_t)ntohl(r1.start.u.v4.sin_addr.s_addr);
 	pool_size1++;
 	if (pool_size != pool_size1) {
 		fprintf(stderr,
@@ -193,7 +193,7 @@ void regress(void)
 	char in[100];
 	char buf[100];
 	char buf1[100];
-	u_int32_t pool_size;
+	uint32_t pool_size;
 	const char *oops;
 	size_t n;
 	int af;
@@ -212,8 +212,8 @@ void regress(void)
 			status = 1;
 		}
 
-		pool_size = (u_int32_t)ntohl(s.end.u.v4.sin_addr.s_addr) -
-			(u_int32_t)ntohl(s.start.u.v4.sin_addr.s_addr);
+		pool_size = (uint32_t)ntohl(s.end.u.v4.sin_addr.s_addr) -
+			(uint32_t)ntohl(s.start.u.v4.sin_addr.s_addr);
 		pool_size++;
 		snprintf(buf1, sizeof(buf1), "%u", pool_size);
 

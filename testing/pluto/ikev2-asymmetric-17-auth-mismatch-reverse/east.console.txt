@@ -1,0 +1,66 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
+east #
+ ipsec auto --status | grep westnet-eastnet-ikev2
+000 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[ID_NULL]...192.1.2.45<192.1.2.45>[%fromcert]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-ikev2":   our auth:null, their auth:null
+000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-ikev2":   labeled_ipsec:no;
+000 "westnet-eastnet-ikev2":   policy_label:unset;
+000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-ikev2":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-ikev2":   our idtype: ID_NULL; our id=ID_NULL; their idtype: %fromcert; their id=%fromcert
+000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+east #
+ echo "initdone"
+initdone
+east #
+ grep IKEv2_AUTH_ OUTPUT/*pluto.log
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+east #
+ ../../pluto/bin/ipsec-look.sh
+east NOW
+XFRM state:
+XFRM policy:
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+east                                                         u,u,u
+hashsha2                                                     P,,  
+nic                                                          P,,  
+north                                                        P,,  
+road                                                         P,,  
+west                                                         P,,  
+west-ec                                                      P,,  
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

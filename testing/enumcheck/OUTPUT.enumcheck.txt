@@ -2834,12 +2834,24 @@ IETF registry enum_names:
          match PKK_PPK: OK
          short_name 4:  OK
          lswlog_enum_short 4: OK
-    5 -> PKK_NULL
+    5 -> PKK_ECDSA
          lswlog_enum 5: OK
-         search PKK_NULL: OK
-         match PKK_NULL: OK
+         search PKK_ECDSA: OK
+         match PKK_ECDSA: OK
          short_name 5:  OK
          lswlog_enum_short 5: OK
+    6 -> PKK_NULL
+         lswlog_enum 6: OK
+         search PKK_NULL: OK
+         match PKK_NULL: OK
+         short_name 6:  OK
+         lswlog_enum_short 6: OK
+    7 -> PKK_INVALID
+         lswlog_enum 7: OK
+         search PKK_INVALID: OK
+         match PKK_INVALID: OK
+         short_name 7:  OK
+         lswlog_enum_short 7: OK
 
   enc_mode_names:
     1 -> ENCAPSULATION_MODE_TUNNEL
@@ -2986,6 +2998,13 @@ IETF registry enum_names:
          short_name 251:  OK
          lswlog_enum_short 251: OK
          match NULL_KAME [short]: OK
+  252 -> AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG
+         lswlog_enum 252: OK
+         search AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG: OK
+         match AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG: OK
+         short_name 252:  OK
+         lswlog_enum_short 252: OK
+         match HMAC_SHA2_256_TRUNCBUG [short]: OK
 
   xauth_type_names:
     0 -> Generic
@@ -4107,8 +4126,6 @@ IKEv2 transforms:
 
 lswlog_enum_lset_short:
 
-  debug 30000:
+  debug 18000:
 	<<crypt+crypt-low>>
-  impair 100000000000000:
-	<<proposal-parser>>
 

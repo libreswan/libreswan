@@ -277,8 +277,7 @@ static int crypto_helper_delay;
 
 static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 {
-	struct timeval tv0;
-	gettimeofday(&tv0, NULL);
+	realtime_t tv0 = realnow();
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 
 	DBG(DBG_CONTROL,
@@ -294,7 +293,6 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 
 	/* now we have the entire request in the buffer, process it */
 	switch (r->pcr_type) {
-
 	case pcr_build_ke_and_nonce:
 		calc_ke(&r->pcr_d.kn);
 		calc_nonce(&r->pcr_d.kn);
@@ -317,15 +315,15 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 		break;
 	}
 
-	DBG(DBG_CONTROL, {
-			struct timeval tv1;
-			unsigned long tv_diff;
-			gettimeofday(&tv1, NULL);
-			tv_diff = (tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
-			DBG_log("crypto helper %d finished %s; request ID %u time elapsed %ld usec",
-					helpernum,
-					enum_show(&pluto_cryptoop_names, r->pcr_type),
-					cn->pcrc_id, tv_diff));
+	LSWDBGP(DBG_CONTROL, buf) {
+		realtime_t tv1 = realnow();
+		deltatime_t tv_diff = realtimediff(tv1, tv0);
+		lswlogf(buf, "crypto helper %d finished %s; request ID %u time elapsed ",
+			helpernum,
+			enum_show(&pluto_cryptoop_names, r->pcr_type),
+			cn->pcrc_id);
+		lswlog_deltatime(buf, tv_diff);
+		lswlogs(buf, " seconds");
 	}
 
 }

@@ -15,21 +15,16 @@ Examine <gitrev> in <repodir> and determine if it is sufficiently
 
 The output is one of:
 
-    <reason>[: <details>]
+    tag: <tagname>
+    	a commit containing a tag
+    merge: <parents>
+        a merge point
+    branch: <children>
+        a branch point
     true
+        a commit that changes build and/or source files
     false
-
-where:
-
-    tag: <tagname> - a commit containing a tag
-
-    merge: <parents>  - a merge point
-
-    [ branch: <children> - a branch point, disabled ]
-
-    true - a commit that changes build and/or source files
-
-    false - the commit is not interesting
+        the commit is not interesting
 
 EOF
 }
@@ -72,21 +67,16 @@ fi
 # Determining children is messy for some reason.  Search revisions
 # more recent than GITREV (REV.. seems to be interpreted as that) for
 # a parent matching GITREV.
-#
-# For the moment don't consider them interesting as the branch points
-# tend to be weird.
 
-if false ; then
-    children=$(git rev-list --parents ${gitrev}.. | \
-		   while read commit parents ; do
-		       case " ${parents} " in
-			   *" ${gitrev}"* ) echo ${commit} ;;
-		       esac
-		   done)
-    if test $(echo ${children} | wc -w) -gt 1 ; then
-	echo branch: ${children}
-	exit 0
-    fi
+children=$(git rev-list --parents ${gitrev}.. | \
+	       while read commit parents ; do
+		   case " ${parents} " in
+		       *" ${gitrev}"* ) echo ${commit} ;;
+		   esac
+	       done)
+if test $(echo ${children} | wc -w) -gt 1 ; then
+    echo branch: ${children}
+    exit 0
 fi
 
 # grep . exits non-zero when there is no input (i.e., the diff is

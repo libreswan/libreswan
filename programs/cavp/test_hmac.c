@@ -16,8 +16,7 @@
 
 #include "lswalloc.h"
 #include "ike_alg.h"
-#include "ike_alg_sha1.h"
-#include "ike_alg_sha2.h"
+#include "ike_alg_prf.h"
 #include "ike_alg_hash_nss_ops.h"
 #include "ike_alg_prf_hmac_ops.h"
 
@@ -37,10 +36,10 @@ static struct cavp_entry config[] = {
 	{ .key = NULL, },
 };
 
+#ifdef USE_SHA2
 static struct prf_desc ike_alg_prf_sha2_224 = {
 	.common = {
 		.name = "sha2_224",
-		.officname = "sha224",
 		.algo_type = IKE_ALG_PRF,
 		.fips = TRUE,
 	},
@@ -49,13 +48,18 @@ static struct prf_desc ike_alg_prf_sha2_224 = {
 	.hasher = &ike_alg_hash_sha2_224,
 	.prf_ops = &ike_alg_prf_hmac_ops,
 };
+#endif
 
 static const struct prf_desc *prfs[] = {
+#ifdef USE_SHA1
 	&ike_alg_prf_sha1,
+#endif
+#ifdef USE_SHA2
 	&ike_alg_prf_sha2_224,
 	&ike_alg_prf_sha2_256,
 	&ike_alg_prf_sha2_384,
 	&ike_alg_prf_sha2_512,
+#endif
 	NULL,
 };
 

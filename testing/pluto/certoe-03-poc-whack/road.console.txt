@@ -16,7 +16,7 @@ Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --impair retransmits
+ ipsec whack --impair suppress-retransmits
 road #
  # ensure for tests acquires expire before our failureshunt=2m
 road #
@@ -36,9 +36,9 @@ road #
 road #
  ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.23
 002 initiate on demand from 192.1.3.209:0 to 192.1.2.23:0 proto=0 because: whack
-133 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: STATE_PARENT_I1: initiate
-002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+133 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiate
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: Authenticated using RSA
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
@@ -68,6 +68,14 @@ src 192.1.3.209 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
 src 192.1.2.253/32 dst 192.1.3.209/32
 	dir fwd priority 1564639 ptype main
 src 192.1.2.253/32 dst 192.1.3.209/32
@@ -76,6 +84,10 @@ src 192.1.2.254/32 dst 192.1.3.209/32
 	dir fwd priority 1564639 ptype main
 src 192.1.2.254/32 dst 192.1.3.209/32
 	dir in priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 1564639 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.253/32
 	dir out priority 1564639 ptype main
 src 192.1.3.209/32 dst 192.1.2.254/32
@@ -92,28 +104,16 @@ src 192.1.3.254/32 dst 192.1.3.209/32
 	dir fwd priority 1564639 ptype main
 src 192.1.3.254/32 dst 192.1.3.209/32
 	dir in priority 1564639 ptype main
-src 192.1.2.23/32 dst 192.1.3.209/32
-	dir fwd priority 2088927 ptype main
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32
-	dir in priority 2088927 ptype main
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.23/32
-	dir out priority 2088927 ptype main
-	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24
-	dir out priority 2088935 ptype main
+	dir out priority 1564647 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.3.254 dev eth0 
-192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209 
+default via 192.1.3.254 dev eth0
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
@@ -158,6 +158,14 @@ src 192.1.3.209 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
 src 192.1.2.253/32 dst 192.1.3.209/32
 	dir fwd priority 1564639 ptype main
 src 192.1.2.253/32 dst 192.1.3.209/32
@@ -166,6 +174,10 @@ src 192.1.2.254/32 dst 192.1.3.209/32
 	dir fwd priority 1564639 ptype main
 src 192.1.2.254/32 dst 192.1.3.209/32
 	dir in priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 1564639 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.253/32
 	dir out priority 1564639 ptype main
 src 192.1.3.209/32 dst 192.1.2.254/32
@@ -182,28 +194,16 @@ src 192.1.3.254/32 dst 192.1.3.209/32
 	dir fwd priority 1564639 ptype main
 src 192.1.3.254/32 dst 192.1.3.209/32
 	dir in priority 1564639 ptype main
-src 192.1.2.23/32 dst 192.1.3.209/32
-	dir fwd priority 2088927 ptype main
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32
-	dir in priority 2088927 ptype main
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.23/32
-	dir out priority 2088927 ptype main
-	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24
-	dir out priority 2088935 ptype main
+	dir out priority 1564647 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.3.254 dev eth0 
-192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209 
+default via 192.1.3.254 dev eth0
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

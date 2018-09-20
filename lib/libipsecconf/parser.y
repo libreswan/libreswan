@@ -1,5 +1,5 @@
 %{   /* -*- bison-mode -*- */
-/* FreeS/WAN config file parser (parser.y)
+/* Libreswan config file parser (parser.y)
  * Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Michael Richardson <mcr@sandelman.ottawa.on.ca>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
@@ -361,11 +361,9 @@ void yyerror(const char *s)
 		parser_y_error(parser_errstring, ERRSTRING_LEN, s);
 }
 
-struct config_parsed *parser_load_conf(const char *file, err_t *perr)
+struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perrl)
 {
 	parser_errstring[0] = '\0';
-	if (perr != NULL)
-		*perr = NULL;
 
 	struct config_parsed *cfg = malloc(sizeof(struct config_parsed));
 
@@ -400,17 +398,28 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 		}
 		save_errors = FALSE;
 		do {} while (yyparse() != 0);
-	} else if (parser_errstring[0] == '\0') {
-		/**
-		 * Config valid
-		 */
-		return cfg;
+		goto err;
 	}
-	/* falls through on error */
+
+	/* check all are kv_config */
+	for (const struct kw_list *kw = parser_cfg->config_setup;
+	     kw != NULL; kw = kw->next) {
+		if (!(kw->keyword.keydef->validity & kv_config)) {
+			snprintf(parser_errstring, sizeof(parser_errstring),
+				 "unexpected keyword '%s' in section 'config setup'",
+				 kw->keyword.keydef->keyname);
+			goto err;
+		}
+	}
+
+	/**
+	 * Config valid
+	 */
+	return cfg;
 
 err:
-	if (perr != NULL)
-		*perr = (err_t)strdup(parser_errstring);
+	starter_error_append(perrl, "%s", parser_errstring);
+
 	if (cfg != NULL)
 		parser_free_conf(cfg);
 

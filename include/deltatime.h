@@ -1,7 +1,8 @@
-/* time objects and functions, for libreswan
+/* time difference objects and functions, for libreswan
  *
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -15,12 +16,13 @@
  *
  */
 
-#ifndef _DELTATIME_H
-#define _DELTATIME_H    /* seen it, no need to see it again */
+#ifndef DELTATIME_H
+#define DELTATIME_H    /* seen it, no need to see it again */
 
-#include <sys/time.h>
-#include <time.h>
-#include <inttypes.h>
+#include <time.h>		/* for time_t */
+#include <sys/time.h>		/* for struct timeval */
+#include <stdint.h>		/* for intmax_t */
+#include <stdbool.h>		/* for bool */
 
 struct lswlog;
 

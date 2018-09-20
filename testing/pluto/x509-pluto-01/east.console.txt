@@ -2,7 +2,7 @@
 Preparing X.509 files
 east #
  certutil  -d sql:/etc/ipsec.d -D -n mainca
-certutil: could not find certificate named "mainca": SEC_ERROR_UNRECOGNIZED_OID: Unrecognized Object Identifier.
+certutil: could not find certificate named "mainca": SEC_ERROR_...
 east #
  ipsec start
 Redirecting to: systemctl start ipsec.service
@@ -64,11 +64,11 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth1  scope link  src 192.0.2.254 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth1 scope link src 192.0.2.254
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

@@ -28,7 +28,7 @@
 /* The problem (in RedHat 5.0) is the typing of the "longs" (32-bit values)
  * in the [nh]to[hn]l functions:
  * - <asm/byteorder.h> uses unsigned long
- * - <netinet/in.h> uses u_int32_t which is unsigned int
+ * - <netinet/in.h> uses uint32_t which is unsigned int
  * Since 64-bit machines are supported, <asm/byteorder.h> should be changed.
  * For now, we simply don't use <asm/byteorder.h>.
  */

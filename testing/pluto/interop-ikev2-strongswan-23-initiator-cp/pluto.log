@@ -363,7 +363,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 |    SPI size: 0
 |    Notify Message Type: v2N_NAT_DETECTION_DESTINATION_IP
 | processing payload: ISAKMP_NEXT_v2N (len=28)
-| Now lets proceed with state specific processing
+| Now let's proceed with state specific processing
 | calling processor Respond to IKE_SA_INIT
 | will not send/process a dcookie
 | find_host_connection me=192.1.2.23:500 him=192.1.3.209:500 policy=IKEV2_ALLOW
@@ -937,7 +937,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 |    flags: none
 |    length: 328
 | processing payload: ISAKMP_NEXT_v2E (len=328)
-| Now lets proceed with state specific processing
+| Now let's proceed with state specific processing
 | calling processor respond to IKE_AUTH
 | ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2
 | calculating skeyseed using prf=PRF_HMAC_MD5 integ=AUTH_HMAC_MD5_96 cipherkey=3DES

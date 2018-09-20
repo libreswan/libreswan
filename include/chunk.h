@@ -26,19 +26,17 @@
 
 /* chunk is a simple pointer-and-size abstraction */
 
-struct chunk {
+typedef struct /*chunk*/ {
 	uint8_t *ptr;
 	size_t len;
-};
-
-typedef struct chunk chunk_t;
+} chunk_t;
 
 chunk_t chunk(void *ptr, size_t len);
 
 /* XXX: count can't have side effects. */
-#define alloc_chunk(COUNT, NAME) (struct chunk) {			\
-		.len = (COUNT),						\
-		.ptr = alloc_things(u_int8_t, (COUNT), NAME),		\
+#define alloc_chunk(COUNT, NAME) (chunk_t) {			\
+		.len = (COUNT),					\
+		.ptr = alloc_things(uint8_t, (COUNT), NAME),	\
 	}
 
 #define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
@@ -54,22 +52,15 @@ chunk_t chunk(void *ptr, size_t len);
 	{ (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
 
 chunk_t clone_chunk(chunk_t old, const char *name);
+chunk_t clone_chunk_chunk(chunk_t first, chunk_t second, const char *name);
+/* always NUL terminated; NULL is NULL */
+char *clone_chunk_as_string(chunk_t chunk, const char *name);
 
 /* note: the caller must free the result */
 char *str_from_chunk(chunk_t c, const char *name);
 
 #define clonereplacechunk(ch, addr, size, name) \
 	{ pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); }
-
-/*
- * Concatenate the contents of a chunk onto a string.
- * The destination pointer is incremented by the length.
- * Pray that there is enough space.
- */
-#define catchunk(dst, chunk) { \
-		memcpy((dst), (chunk).ptr, (chunk).len); \
-		(dst) += (chunk).len; \
-	}
 
 #define same_chunk(a, b) \
 	((a).len == (b).len && memeq((a).ptr, (b).ptr, (b).len))

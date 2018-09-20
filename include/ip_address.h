@@ -1,5 +1,5 @@
 /*
- * header file for FreeS/WAN library functions
+ * header file for Libreswan library functions
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
  *
@@ -18,6 +18,16 @@
 #ifndef IP_ADDRESS_H
 #define IP_ADDRESS_H
 
+/*
+ * Hack around this file being sucked into linux kernel module builds.
+ */
+#if !defined(linux) && !defined(__KERNEL__)
+#include <netinet/in.h>		/* for struct sockaddr_in */
+#ifdef HAVE_INET6_IN6_H
+#include <netinet6/in6.h>	/* for struct sockaddr_in6 */
+#endif
+#endif
+
 struct lswlog;
 
 /*
@@ -31,6 +41,19 @@ struct lswlog;
  * When KLIPS goes away, the definition of IP_ADDRESS et.al., can be
  * moved here.
  */
+
+/*
+ * Basic data types for the address-handling functions.
+ * ip_address and ip_subnet are supposed to be opaque types; do not
+ * use their definitions directly, they are subject to change!
+ */
+
+typedef struct {
+	union {
+		struct sockaddr_in v4;
+		struct sockaddr_in6 v6;
+	} u;
+} ip_address;
 
 /* network byte ordered */
 int nportof(const ip_address *src);
@@ -48,9 +71,12 @@ struct sockaddr *sockaddrof(const ip_address *src);
 size_t sockaddrlenof(const ip_address *src);
 
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
+
+#define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
 typedef struct {
 	char private_buf[ADDRTOT_BUF]; /* defined in libreswan.h */
 } ipstr_buf;
+
 const char *ipstr(const ip_address *src, ipstr_buf *b);
 const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 

@@ -26,6 +26,7 @@
 # define DEFAULT_UPDOWN "ipsec _updown"
 
 #include "lset.h"
+#include "err.h"
 
 #ifndef _LIBRESWAN_H
 #include <libreswan.h>
@@ -59,8 +60,8 @@ struct starter_end {
 	enum keyword_pubkey rsakey1_type, rsakey2_type;
 	char *rsakey1;
 	char *rsakey2;
-	u_int16_t port;
-	u_int8_t protocol;
+	uint16_t port;
+	uint8_t protocol;
 	bool has_client_wildcard;
 	bool key_from_DNS_on_demand;
 	bool has_port_wildcard;
@@ -89,6 +90,8 @@ struct starter_conn {
 	int_set options_set;
 
 	lset_t policy;
+	lset_t sighash_policy;
+
 	char **alsos;
 
 	struct starter_end left, right;
@@ -136,15 +139,30 @@ struct starter_config {
 	TAILQ_HEAD(, starter_conn) conns;
 };
 
+/*
+ * accumulate errors in this struct.
+ * This is a string with newlines separating messages.
+ * The string is heap-allocated so the caller is responsible
+ * for freeing it.
+ */
+typedef struct {
+	char *errors;
+} starter_errors_t;
+
+extern void starter_error_append(starter_errors_t *perrl, const char *fmt, ...) PRINTF_LIKE(2);
+
+
+extern struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perr);
+extern void parser_free_conf(struct config_parsed *cfg);
+
 extern struct starter_config *confread_load(const char *file,
-					    err_t *perr,
-					    bool resolvip,
+					    starter_errors_t *perrl,
 					    const char *ctlsocket,
 					    bool setuponly);
 extern struct starter_conn *alloc_add_conn(struct starter_config *cfg,
 					   const char *name);
-void confread_free(struct starter_config *cfg);
+extern void confread_free(struct starter_config *cfg);
 
-void ipsecconf_default_values(struct starter_config *cfg);
+extern void ipsecconf_default_values(struct starter_config *cfg);
 
 #endif /* _IPSEC_CONFREAD_H_ */

@@ -5,7 +5,7 @@
  * Copyright (C) 2011 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,60 +20,28 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/time.h>           /* for gettimeofday */
-#include <resolv.h>
 
-#include <libreswan.h>
-#include "libreswan/pfkeyv2.h"
+#include "constants.h"		/* for dup_any()!?! ... */
+#include "lswlog.h"
+#include "alg_info.h"
 
-#include "sysdep.h"
-#include "constants.h"
 #include "defs.h"
 #include "state.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
 #include "connections.h"        /* needs id.h */
-#include "keys.h"
 #include "packet.h"
 #include "demux.h"      /* needs packet.h */
-#include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "cookie.h"
-#include "server.h"
 #include "spdb.h"
-#include "timer.h"
-#include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
-#include "whack.h"
-#include "fetch.h"
-#include "asn1.h"
 #include "ikev1_send.h"
-#include "crypto.h"
-
-#include "ike_alg.h"
-#include "kernel_alg.h"
-#include "plutoalg.h"
 #include "pluto_crypt.h"
 #include "ikev1.h"
-#include "ikev1_continuations.h"
-#include "ip_address.h"
-
-#include "ikev1_xauth.h"
-
 #include "vendor.h"
 #include "nat_traversal.h"
-#include "virtual.h"	/* needs connections.h */
-#include "ikev1_dpd.h"
 #include "pluto_x509.h"
+#include "fd.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
@@ -216,12 +184,6 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	st->st_connection = c;	/* safe: from new_state */
 	change_state(st, STATE_AGGR_R1);
 
-	/*
-	 * until we have clue who this is, be conservative about allocating
-	 * them any crypto bandwidth
-	 */
-	st->st_import = pcim_stranger_crypto;
-
 	st->st_policy = policy;	/* ??? not sure what's needed here */
 
 	/* ??? not sure what's needed here */
@@ -229,6 +191,10 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 		policy & POLICY_RSASIG ? OAKLEY_RSA_SIG :
 		0;	/* we don't really know */
 
+	/*
+	 * note: ikev1_decode_peer_id may change which connection is referenced by md->st->st_connection.
+	 * But not in this case because we are Aggressive Mode
+	 */
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
 		ipstr_buf b;
@@ -242,8 +208,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
-	c = st->st_connection;	/* ikev1_decode_peer_id() may change md->st->st_connection */
-	set_cur_state(st);
+	passert(c == st->st_connection);
 
 	st->st_try = 0;                                 /* Not our job to try again from start */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
@@ -310,20 +275,10 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 						 struct pluto_crypto_req *r)
 {
-	struct state *st = md->st;
-	struct connection *c = st->st_connection;
-	bool send_cert = FALSE;
-	bool send_cr = FALSE;
-	bool send_authcerts = FALSE;
-	bool send_full_chain = FALSE;
+	struct state *const st = md->st;
+	const struct connection *c = st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	int auth_payload;
-	cert_t mycert = c->spd.this.cert;
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-
-	pb_stream r_sa_pbs;
-	pb_stream r_id_pbs; /* ID Payload; also used for hash calculation */
+	const cert_t mycert = c->spd.this.cert;
 
 	/* parse_isakmp_sa also spits out a winning SA into our reply,
 	 * so we have to build our reply_stream and emit HDR before calling it.
@@ -343,25 +298,32 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	 * told we can send one if asked, and we were asked, or we were told
 	 * to always send one.
 	 */
-	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		    mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		    ((c->spd.this.sendcert == CERT_SENDIFASKED &&
-		      st->hidden_variables.st_got_certrequest) ||
-		     c->spd.this.sendcert == CERT_ALWAYSSEND
-		     );
+	bool send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
+		mycert.ty != CERT_NONE &&
+		mycert.u.nss_cert != NULL &&
+		((c->spd.this.sendcert == CERT_SENDIFASKED &&
+		  st->hidden_variables.st_got_certrequest) ||
+		 c->spd.this.sendcert == CERT_ALWAYSSEND
+		);
 
-	send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
-	send_full_chain = (send_authcerts && c->send_ca == CA_SEND_ALL);
+	/*****
+	 * From here on, if send_authcerts, we are obligated to:
+	 * free_auth_chain(auth_chain, chain_len);
+	 *****/
+
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
 				mycert.u.nss_cert,
-				send_full_chain ? TRUE : FALSE);
-	}
+				c->send_ca == CA_SEND_ALL);
 
-	if (chain_len < 1)
-		send_authcerts = FALSE;
+		if (chain_len == 0)
+			send_authcerts = FALSE;
+	}
 
 	doi_log_cert_thinking(st->st_oakley.auth,
 			      mycert.ty,
@@ -370,7 +332,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 			      send_cert, send_authcerts);
 
 	/* send certificate request, if we don't have a preloaded RSA public key */
-	send_cr = send_cert && !has_preloaded_public_key(st);
+	bool send_cr = send_cert && !has_preloaded_public_key(st);
 
 	DBG(DBG_CONTROL,
 	    DBG_log(" I am %ssending a certificate request",
@@ -383,6 +345,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 	/* HDR out */
 	pb_stream rbody;
+
 	{
 		struct isakmp_hdr hdr = md->hdr;
 
@@ -390,7 +353,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		hdr.isa_np = ISAKMP_NEXT_SA;
 
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
@@ -403,13 +366,13 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa;
-		notification_t rn;
+		struct isakmp_sa r_sa = {
+			.isasa_doi = ISAKMP_DOI_IPSEC,
+			.isasa_np = ISAKMP_NEXT_KE,
+		};
 
-		zero(&r_sa);	/* OK: no pointer fields */
-		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
+		pb_stream r_sa_pbs;
 
-		r_sa.isasa_np = ISAKMP_NEXT_KE;
 		if (!out_struct(&r_sa, &isakmp_sa_desc, &rbody,
 				&r_sa_pbs)) {
 			free_auth_chain(auth_chain, chain_len);
@@ -417,8 +380,8 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		}
 
 		/* SA body in and out */
-		rn = parse_isakmp_sa_body(&sa_pd->pbs, &sa_pd->payload.sa,
-					  &r_sa_pbs, FALSE, st);
+		notification_t rn = parse_isakmp_sa_body(&sa_pd->pbs,
+			&sa_pd->payload.sa, &r_sa_pbs, FALSE, st);
 		if (rn != NOTHING_WRONG) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_FAIL + rn;
@@ -426,7 +389,8 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	}
 
 	/* don't know until after SA body has been parsed */
-	auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
+	enum next_payload_types_ikev1 auth_payload =
+		st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
 		       ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
 	/************** build rest of output: KE, Nr, IDir, HASH_R/SIG_R ********/
@@ -445,13 +409,16 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	}
 
 	/* IDir out */
+
+	pb_stream r_id_pbs; /* ID Payload; used later for hash calculation */
+
 	{
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
 
-		build_id_payload(&id_hd, &id_b, &c->spd.this, FALSE);
+		build_id_payload(&id_hd, &id_b, &c->spd.this);
 		id_hd.isaiid_np =
-			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
+			send_cert ? ISAKMP_NEXT_CERT : auth_payload;
 
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &r_id_pbs) ||
@@ -466,27 +433,26 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	/* CERT out */
 	if (send_cert) {
 		pb_stream cert_pbs;
-		struct isakmp_cert cert_hd;
-
+		struct isakmp_cert cert_hd = {
+			.isacert_np = send_cr ? ISAKMP_NEXT_CR : auth_payload,
+			.isacert_type = mycert.ty
+		};
 		libreswan_log("I am sending my certificate");
-
-		cert_hd.isacert_np = (send_cr) ? ISAKMP_NEXT_CR : auth_payload;
-		cert_hd.isacert_type = mycert.ty;
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
 				&rbody,
-				&cert_pbs)) {
-			free_auth_chain(auth_chain, chain_len);
-			return STF_INTERNAL_ERROR;
-		}
-		if (!out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+				&cert_pbs) ||
+		    !out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
 								&cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&cert_pbs);
-		free_auth_chain(auth_chain, chain_len);
 	}
+
+	free_auth_chain(auth_chain, chain_len);
+
+	/***** obligation to free_auth_chain has been discharged *****/
 
 	/* CERTREQ out */
 	if (send_cr) {
@@ -502,6 +468,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	/* HASH_R or SIG_R out */
 	{
 		u_char hash_val[MAX_DIGEST_LEN];
+
 		size_t hash_len =
 			main_mode_hash(st, hash_val, FALSE, &r_id_pbs);
 
@@ -518,8 +485,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 			/* SIG_R out */
 			u_char sig_val[RSA_MAX_OCTETS];
 			size_t sig_len = RSA_sign_hash(c, sig_val, hash_val,
-						       hash_len);
-
+						       hash_len, 0 /* for ikev2 only */);
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "unable to locate my private key for RSA Signature");
@@ -534,33 +500,18 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		}
 	}
 
-	/*
-	 * NOW SEND VENDOR ID payloads
-	 */
+	/* send Vendor IDs */
+	if (!out_vid_set(&rbody, c))
+		return STF_INTERNAL_ERROR;
 
-	if (c->cisco_unity) {
-		if (!out_vid(ISAKMP_NEXT_VID, &rbody, VID_CISCO_UNITY))
-			return STF_INTERNAL_ERROR;
-	}
-	if (c->fake_strongswan) {
-		if (!out_vid(ISAKMP_NEXT_VID, &rbody, VID_STRONGSWAN))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (st->hidden_variables.st_nat_traversal == LEMPTY) {
-		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
-		if (!out_vid(ISAKMP_NEXT_NONE, &rbody, VID_MISC_DPD))
-			return STF_INTERNAL_ERROR;
-	} else {
-		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
-		if (!out_vid(ISAKMP_NEXT_VID, &rbody, VID_MISC_DPD))
-			return STF_INTERNAL_ERROR;
-
-		/* and a couple more NAT VIDs */
-		if (!out_vid(ISAKMP_NEXT_VID,
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
+		/* as Responder, send best NAT VID we received */
+		if (!out_vid(ISAKMP_NEXT_NONE,
 			     &rbody,
 			     md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
+
+		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
 		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
@@ -587,13 +538,17 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	 * when the IP address would not be meaningful (i.e. Road
 	 * Warrior).  So our first task is to unravel the ID payload.
 	 */
-	if (cur_debugging & IMPAIR_DROP_I2) {
+	if (IMPAIR(DROP_I2)) {
 		DBG(DBG_CONTROL, DBG_log("dropping Aggressive Mode I2 packet as per impair"));
 		return STF_IGNORE;
 	}
 
 	st->st_policy |= POLICY_AGGRESSIVE;	/* ??? surely this should be done elsewhere */
 
+	/*
+	 * note: ikev1_decode_peer_id may change which connection is referenced by md->st->st_connection.
+	 * But not in this case because we are Aggressive Mode
+	 */
 	if (!ikev1_decode_peer_id(md, TRUE, TRUE)) {
 		char buf[IDTOA_BUF];
 		ipstr_buf b;
@@ -654,6 +609,7 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	passert(st != NULL);
 	passert(*mdp != NULL);
+	passert((*mdp)->st == st);
 
 	if (!finish_dh_secretiv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
@@ -668,26 +624,25 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st,
 
 static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 {
-	struct state *const st = md->st;
-	struct connection *c = st->st_connection;
-	enum next_payload_types_ikev1 auth_payload;
-	bool send_cert = FALSE;
-	bool send_authcerts = FALSE;
-	bool send_full_chain = FALSE;
-	cert_t mycert = c->spd.this.cert;
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-
 	/* HASH_R or SIG_R in */
 	{
-		stf_status r = aggr_id_and_auth(md, TRUE);
+		/*
+		 * Note: oakley_id_and_auth won't switch connections
+		 * because we are Aggressive Mode.
+		 */
+		stf_status r = oakley_id_and_auth(md, TRUE, TRUE);
 
 		if (r != STF_OK)
 			return r;
 	}
 
-	auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
-		       ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
+	struct state *const st = md->st;
+	struct connection *c = st->st_connection;
+	const cert_t mycert = c->spd.this.cert;
+
+	enum next_payload_types_ikev1 auth_payload =
+		st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
+			ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
 	/* decode certificate requests */
 	ikev1_decode_cr(md);
@@ -700,25 +655,31 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	 * told we can send one if asked, and we were asked, or we were told
 	 * to always send one.
 	 */
-	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		    mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		    ((c->spd.this.sendcert ==
-			CERT_SENDIFASKED &&
-		      st->hidden_variables.st_got_certrequest) ||
-		     c->spd.this.sendcert == CERT_ALWAYSSEND);
+	bool send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
+		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
+		((c->spd.this.sendcert == CERT_SENDIFASKED &&
+		  st->hidden_variables.st_got_certrequest) ||
+		 c->spd.this.sendcert == CERT_ALWAYSSEND
+		);
 
-	send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
-	send_full_chain = (send_authcerts && c->send_ca == CA_SEND_ALL);
+	/*****
+	 * From here on, if send_authcerts, we are obligated to:
+	 * free_auth_chain(auth_chain, chain_len);
+	 *****/
+
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
 				mycert.u.nss_cert,
-				send_full_chain ? TRUE : FALSE);
-	}
+				c->send_ca == CA_SEND_ALL);
 
-	if (chain_len < 1)
-		send_authcerts = FALSE;
+		if (chain_len == 0)
+			send_authcerts = FALSE;
+	}
 
 	doi_log_cert_thinking(st->st_oakley.auth,
 			      mycert.ty,
@@ -739,10 +700,10 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 		hdr.isa_flags = 0; /* clear reserved fields */
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-		hdr.isa_np = send_cert ? ISAKMP_NEXT_CERT : auth_payload;
+		hdr.isa_np = ISAKMP_NEXT_NONE,	/* rewritten */
 		hdr.isa_flags |= ISAKMP_FLAGS_v1_ENCRYPTION;
 
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
@@ -753,63 +714,67 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		}
 	}
 
-	/* CERT out */
+	/* [ CERT out ] */
 	if (send_cert) {
 		pb_stream cert_pbs;
 
-		struct isakmp_cert cert_hd;
-		cert_hd.isacert_np = ISAKMP_NEXT_NONE; /* rewritten by NAT-D payloads */
-		cert_hd.isacert_type = mycert.ty;
-		cert_hd.isacert_reserved = 0;
-		cert_hd.isacert_length = 0; /* XXX unused on sending ? */
+		struct isakmp_cert cert_hd = {
+			.isacert_np = ISAKMP_NEXT_NONE, /* rewritten by NAT-D payloads */
+			.isacert_type = mycert.ty,
+			.isacert_reserved = 0,
+			.isacert_length = 0 /* XXX unused on sending ? */
+		};
 
 		libreswan_log("I am sending my cert");
 
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
 				&rbody,
-				&cert_pbs)) {
-			free_auth_chain(auth_chain, chain_len);
-			return STF_INTERNAL_ERROR;
-		}
-
-		if (!out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+				&cert_pbs) ||
+		    !out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
 								&cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 
 		close_output_pbs(&cert_pbs);
-		free_auth_chain(auth_chain, chain_len);
 	}
 
+	free_auth_chain(auth_chain, chain_len);
+
+	/***** obligation to free_auth_chain has been discharged *****/
+
+	/* [ NAT-D, NAT-D ] */
+	/* ??? why does this come before AUTH payload? */
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
+		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
 		if (!ikev1_nat_traversal_add_natd(auth_payload, &rbody, md)) {
-			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* HASH_I or SIG_I out */
 	{
-		u_char idbuf[1024]; /* fits all possible identity payloads? */
+		/* first build an ID payload as a raw material */
+
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
-		pb_stream id_pbs;
-		u_char hash_val[MAX_DIGEST_LEN];
-		size_t hash_len;
+		build_id_payload(&id_hd, &id_b, &c->spd.this);
 
-		build_id_payload(&id_hd, &id_b, &c->spd.this, FALSE);
+		pb_stream id_pbs;
+		u_char idbuf[1024]; /* fits all possible identity payloads? */
 		init_out_pbs(&id_pbs, idbuf, sizeof(idbuf), "identity payload");
-		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
+		pb_stream r_id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
-				&id_pbs, NULL) ||
-		    !out_chunk(id_b, &id_pbs, "my identity")) {
-			free_auth_chain(auth_chain, chain_len);
+				&id_pbs, &r_id_pbs) ||
+		    !out_chunk(id_b, &r_id_pbs, "my identity")) {
 			return STF_INTERNAL_ERROR;
 		}
+		close_output_pbs(&r_id_pbs);
+		close_output_pbs(&id_pbs);
 
-		hash_len = main_mode_hash(st, hash_val, TRUE, &id_pbs);
+		u_char hash_val[MAX_DIGEST_LEN];
+		size_t hash_len = main_mode_hash(st, hash_val, TRUE, &id_pbs);
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
@@ -822,7 +787,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 			u_char sig_val[RSA_MAX_OCTETS];
 			size_t sig_len = RSA_sign_hash(st->st_connection,
 						       sig_val, hash_val,
-						       hash_len);
+						       hash_len, 0 /* for ikev2 only */);
 
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
@@ -836,7 +801,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 					     "SIG_I"))
 				return STF_INTERNAL_ERROR;
 		}
-
 	}
 
 	/* RFC2408 says we must encrypt at this point */
@@ -915,9 +879,8 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		pb_stream pbs;
 		pb_stream id_pbs;
 
-		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.that, FALSE);
+		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.that);
 		init_out_pbs(&pbs, idbuf, sizeof(idbuf), "identity payload");
-		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
 
 		/* interop ID for SoftRemote & maybe others ? */
 		id_hd.isaiid_protoid = st->st_peeridentity_protocol;
@@ -929,23 +892,37 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&id_pbs);
+
+		/* rewind id_pbs and read what we wrote */
 		id_pbs.roof = pbs.cur;
 		id_pbs.cur = pbs.start;
 		if (!in_struct(&id_pd.payload, &isakmp_identification_desc, &id_pbs,
 			  &id_pd.pbs))
 			return STF_FAIL + PAYLOAD_MALFORMED;
 	}
+
+	/*
+	 * ??? this looks like a really rude assignment
+	 *
+	 * - we are rewriting the input.  Sheesh!
+	 * - at least we undo the damage after calling oakley_id_and_auth.
+	 */
+	struct payload_digest *save_id = md->chain[ISAKMP_NEXT_ID];
 	md->chain[ISAKMP_NEXT_ID] = &id_pd;
 
 	/* HASH_I or SIG_I in */
 	{
-		stf_status r = aggr_id_and_auth(md, FALSE);
+		/*
+		 * Note: oakley_id_and_auth won't switch connections
+		 * because we are Aggressive Mode.
+		 */
+		stf_status r = oakley_id_and_auth(md, FALSE, TRUE);
 		if (r != STF_OK)
 			return r;
 	}
 
 	/* And reset the md to not leave stale pointers to our private id payload */
-	md->chain[ISAKMP_NEXT_ID] = NULL;
+	md->chain[ISAKMP_NEXT_ID] = save_id;
 
 	/**************** done input ****************/
 
@@ -1018,12 +995,12 @@ static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
  * RFC 2409 5.2: --> HDR, SA, [ HASH(1),] KE, <IDii_b>Pubkey_r, <Ni_b>Pubkey_r
  * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
  */
+/* extern initiator_function aggr_outI1; */	/* type assertion */
 void aggr_outI1(int whack_sock,
 		struct connection *c,
 		struct state *predecessor,
 		lset_t policy,
-		unsigned long try,
-		enum crypto_importance importance
+		unsigned long try
 #ifdef HAVE_LABELED_IPSEC
 		, struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -1056,14 +1033,12 @@ void aggr_outI1(int whack_sock,
 
 	get_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
 
-	st->st_import = importance;
-
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
-			if (sr->this.username != NULL) {
-				jam_str(st->st_username,
-					sizeof(st->st_username),
-					sr->this.username);
+			if (sr->this.xauth_username != NULL) {
+				jam_str(st->st_xauth_username,
+					sizeof(st->st_xauth_username),
+					sr->this.xauth_username);
 				break;
 			}
 		}
@@ -1145,9 +1120,9 @@ static stf_status aggr_outI1_tail(struct state *st,
 	struct connection *c = st->st_connection;
 	cert_t mycert = c->spd.this.cert;
 	bool send_cr = mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-			!has_preloaded_public_key(st) &&
-		    (c->spd.this.sendcert == CERT_SENDIFASKED ||
-		     c->spd.this.sendcert == CERT_ALWAYSSEND);
+		!has_preloaded_public_key(st) &&
+		(c->spd.this.sendcert == CERT_SENDIFASKED ||
+		 c->spd.this.sendcert == CERT_ALWAYSSEND);
 
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_outI1_tail for #%lu",
@@ -1160,13 +1135,12 @@ static stf_status aggr_outI1_tail(struct state *st,
 	/* HDR out */
 	pb_stream rbody;
 	{
-		struct isakmp_hdr hdr;
-
-		zero(&hdr);	/* OK: no pointer fields */
-		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION;
-		hdr.isa_np = ISAKMP_NEXT_SA;
-		hdr.isa_xchg = ISAKMP_XCHG_AGGR;
+		struct isakmp_hdr hdr = {
+			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				  ISAKMP_MINOR_VERSION,
+			.isa_np = ISAKMP_NEXT_SA,
+			.isa_xchg = ISAKMP_XCHG_AGGR,
+		};
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		/* R-cookie, flags and MessageID are left zero */
 
@@ -1209,7 +1183,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 		chunk_t id_b;
 		pb_stream id_pbs;
 
-		build_id_payload(&id_hd, &id_b, &c->spd.this, FALSE);
+		build_id_payload(&id_hd, &id_b, &c->spd.this);
 		id_hd.isaiid_np = send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_VID;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &id_pbs) ||
@@ -1228,79 +1202,13 @@ static stf_status aggr_outI1_tail(struct state *st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	/* Vendor ID's out */
-	int numvidtosend = 1; /* Always announce DPD capablity */
+	/* send Vendor IDs */
+	if (!out_vid_set(&rbody, c))
+		return STF_INTERNAL_ERROR;
 
-	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
-		numvidtosend++;
-
-	if (nat_traversal_enabled && c->ikev1_natt != NATT_NONE)
-		numvidtosend++;
-
-	if (c->cisco_unity)
-		numvidtosend++;
-
-	if (c->fake_strongswan)
-		numvidtosend++;
-
-	if (c->send_vendorid)
-		numvidtosend++;
-
-	if (c->policy & POLICY_IKE_FRAG_ALLOW)
-		numvidtosend++;
-
-	/* ALWAYS Announce our ability to do Dead Peer Detection to the peer */
-	{
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_MISC_DPD))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (nat_traversal_enabled && c->ikev1_natt != NATT_NONE) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!nat_traversal_insert_vid(np, &rbody, st)) {
-			reset_cur_state();
-			return STF_INTERNAL_ERROR;
-		}
-	} else {
-		DBG(DBG_NATT, DBG_log("not sending any NATT VID's"));
-	}
-
-	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_MISC_XAUTH))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (c->cisco_unity) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_CISCO_UNITY))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (c->fake_strongswan) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_STRONGSWAN))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (c->send_vendorid) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_LIBRESWANSELF))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_IKE_FRAGMENTATION))
-			return STF_INTERNAL_ERROR;
-	}
-
-	/* INITIAL_CONTACT is an authenticated message, no VID here */
-
-	passert(numvidtosend == 0);
-
+	/* as Initiator, spray NAT VIDs */
+	if (!nat_traversal_insert_vid(ISAKMP_NEXT_NONE, &rbody, c))
+		return STF_INTERNAL_ERROR;
 
 	/* finish message */
 

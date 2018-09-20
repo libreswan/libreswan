@@ -993,11 +993,12 @@ static const char *const auth_alg_name_stolen_use[] = {
 					 * comments from jjo, needs
 					 * verification
 					 */
+	"AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG",
 };
 
 static enum_names auth_alg_names_stolen_use = {
 	AUTH_ALGORITHM_AES_CMAC_96,
-	AUTH_ALGORITHM_NULL_KAME,
+	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG,
 	ARRAY_REF(auth_alg_name_stolen_use),
 	NULL, /* prefix */
 	NULL
@@ -2050,12 +2051,14 @@ static const char *const pkk_name[] = {
 	"PKK_RSA",
 	"PKK_XAUTH",
 	"PKK_PPK",
+	"PKK_ECDSA",
 	"PKK_NULL",
+	"PKK_INVALID",
 };
 
 enum_names pkk_names = {
 	PKK_PSK,
-	PKK_NULL,
+	PKK_INVALID,
 	ARRAY_REF(pkk_name),
 	NULL, /* prefix */
 	NULL

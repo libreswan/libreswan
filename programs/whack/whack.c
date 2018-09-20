@@ -41,9 +41,11 @@
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <assert.h>
+#include <limits.h>	/* for INT_MAX */
 
 #include <libreswan.h>
 
+#include "lswtool.h"
 #include "sysdep.h"
 #include "socketwrapper.h"
 #include "constants.h"
@@ -271,6 +273,7 @@ enum option_enums {
 	OPT_KEYID,
 	OPT_ADDKEY,
 	OPT_PUBKEYRSA,
+	OPT_PUBKEYECDSA,
 
 	OPT_ROUTE,
 	OPT_UNROUTE,
@@ -432,6 +435,9 @@ enum option_enums {
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
 	CD_NIC_OFFLOAD,
+	CD_RSA_SHA2_256,
+	CD_RSA_SHA2_384,
+	CD_RSA_SHA2_512,
 	CD_ESP,
 #   define CD_LAST CD_ESP	/* last connection description */
 
@@ -465,10 +471,11 @@ enum option_enums {
 
 	DBGOPT_DEBUG,
 	DBGOPT_IMPAIR,
+	DBGOPT_NO_IMPAIR,
 
-	DBGOPT_LAST = DBGOPT_IMPAIR,
+	DBGOPT_LAST = DBGOPT_NO_IMPAIR,
 
-#define	OPTION_ENUMS_LAST	DBGOPT_IMPAIR
+#define	OPTION_ENUMS_LAST	DBGOPT_LAST
 };
 
 /*
@@ -589,6 +596,7 @@ static const struct option long_opts[] = {
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
 	PS("psk", PSK),
 	PS("rsasig", RSASIG),
+	PS("ecdsa", ECDSA),
 	PS("auth-never", AUTH_NEVER),
 	PS("auth-null", AUTH_NULL),
 
@@ -677,6 +685,11 @@ static const struct option long_opts[] = {
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
 
+	{ "rsa-sha2", no_argument, NULL, CD_RSA_SHA2_256 + OO },
+	{ "rsa-sha2_256", no_argument, NULL, CD_RSA_SHA2_256 + OO },
+	{ "rsa-sha2_384", no_argument, NULL, CD_RSA_SHA2_384 + OO },
+	{ "rsa-sha2_512", no_argument, NULL, CD_RSA_SHA2_512 + OO },
+
 	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO + NUMERIC_ARG },
 	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO + NUMERIC_ARG },
 	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_T + OO + NUMERIC_ARG },
@@ -732,6 +745,7 @@ static const struct option long_opts[] = {
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
 	{ "debug", required_argument, NULL, DBGOPT_DEBUG + OO, },
 	{ "impair", required_argument, NULL, DBGOPT_IMPAIR + OO, },
+	{ "no-impair", required_argument, NULL, DBGOPT_NO_IMPAIR + OO, },
 
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
@@ -836,6 +850,8 @@ static void send_reply(int sock, char *buf, ssize_t len)
 
 int main(int argc, char **argv)
 {
+	tool_init_log(argv[0]);
+
 	struct whack_message msg;
 	struct whackpacker wp;
 	char esp_buf[256];	/* uses snprintf */
@@ -853,7 +869,7 @@ int main(int argc, char **argv)
 	/* space for at most one RSA key */
 	char keyspace[RSA_MAX_ENCODING_BYTES];
 
-	char username[MAX_USERNAME_LEN];
+	char xauthusername[MAX_XAUTH_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
 	int usernamelen = 0;
 	int xauthpasslen = 0;
@@ -1150,6 +1166,32 @@ int main(int argc, char **argv)
 			msg.keyval.ptr = (unsigned char *)keyspace;
 		}
 			continue;
+		case OPT_PUBKEYECDSA:	/* --pubkeyecdsa <key> */
+		{
+			char mydiag_space[TTODATAV_BUF];
+
+			if (msg.keyval.ptr != NULL)
+				diagq("only one ECDSA public-key allowed", optarg);
+
+			ugh = ttodatav(optarg, 0, 0,
+				       keyspace, sizeof(keyspace),
+				       &msg.keyval.len, mydiag_space,
+				       sizeof(mydiag_space),
+				       TTODATAV_SPACECOUNTS);
+
+			if (ugh != NULL) {
+				/* perhaps enough space */
+				char ugh_space[80];
+
+				snprintf(ugh_space, sizeof(ugh_space),
+					 "ECDSA public-key data malformed (%s)",
+					 ugh);
+				diagq(ugh_space, optarg);
+			}
+			msg.pubkey_alg = PUBKEY_ALG_ECDSA;
+			msg.keyval.ptr = (unsigned char *)keyspace;
+		}
+			continue;
 
 		case OPT_ROUTE:	/* --route */
 			msg.whack_route = TRUE;
@@ -1190,7 +1232,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		/* --deleteuser  --name <username> */
+		/* --deleteuser --name <xauthusername> */
 		case OPT_DELETEUSER:
 			msg.whack_deleteuser = TRUE;
 			continue;
@@ -1676,7 +1718,7 @@ int main(int argc, char **argv)
 			 * ??? what values are legitimate?
 			 * 32 and often 64, but what else?
 			 * Not so large that the
-			 * number of bits overflows u_int32_t.
+			 * number of bits overflows uint32_t.
 			 */
 			msg.sa_replay_window = opt_whole;
 			continue;
@@ -1818,6 +1860,16 @@ int main(int argc, char **argv)
 			 */
 			continue;
 
+		case CD_RSA_SHA2_256:
+			msg.sighash_policy = POL_SIGHASH_SHA2_256;
+			continue;
+		case CD_RSA_SHA2_384:
+			msg.sighash_policy = POL_SIGHASH_SHA2_384;
+			continue;
+		case CD_RSA_SHA2_512:
+			msg.sighash_policy = POL_SIGHASH_SHA2_512;
+			continue;
+
 		case CD_CONNIPV6:
 			if (LHAS(cd_seen, CD_CONNIPV4 - CD_FIRST))
 				diag("--ipv6 conflicts with --ipv4");
@@ -1874,12 +1926,12 @@ int main(int argc, char **argv)
 			 * if this is going to be an conn definition, so do
 			 * both actions
 			 */
-			msg.right.username = optarg;
+			msg.right.xauth_username = optarg;
 			gotusername = TRUE;
 			/* ??? why does this length include NUL? */
-			usernamelen = jam_str(username, sizeof(username),
+			usernamelen = jam_str(xauthusername, sizeof(xauthusername),
 					optarg) -
-				username + 1;
+				xauthusername + 1;
 			continue;
 
 		case OPT_XAUTHPASS:
@@ -2078,6 +2130,11 @@ int main(int argc, char **argv)
 							lswlogs(buf, "  ");
 						}
 						lswlog_enum_short(buf, &debug_names, e);
+						const char *help = enum_name(&debug_help, e);
+						if (help != NULL) {
+							lswlogs(buf, ": ");
+							lswlogs(buf, help);
+						}
 					}
 				}
 				exit(1);
@@ -2088,24 +2145,42 @@ int main(int argc, char **argv)
 			continue;
 
 		case DBGOPT_IMPAIR:
-			if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
+			if (streq(optarg, "help") || streq(optarg, "?")) {
 				fprintf(stderr, "impair options:\n");
 				for (long e = next_enum(&impair_names, -1);
 				     e != -1; e = next_enum(&impair_names, e)) {
 					LSWLOG_FILE(stdout, buf) {
 						lswlogs(buf, "  ");
 						lswlog_enum_short(buf, &impair_names, e);
+						const char *help = enum_name(&impair_help, e);
+						if (help != NULL) {
+							lswlogs(buf, ": ");
+							lswlogs(buf, help);
+						}
 					}
 				}
+				help_impair("  ");
 				exit(1);
-			} else if (!lmod_arg(&msg.impairing, &impair_lmod_info, optarg)) {
-				fprintf(stderr, "whack: unrecognized --impair '%s' option; ignored\n",
-					optarg);
+			} else if (lmod_arg(&msg.impairing, &impair_lmod_info, optarg)) {
+				if (lmod_is_set(msg.impairing, IMPAIR_FORCE_FIPS)) {
+					fprintf(stderr, "whack: invalid --impair '%s' option; must be passed directly to pluto\n",
+						optarg);
+					lmod_clr(msg.impairing, IMPAIR_FORCE_FIPS);
+				}
+				if (streq(optarg, "none")) {
+					/* hack to pass 'none' onto new code */
+					passert(parse_impair(optarg, &msg.impairment, true));
+				}
+			} else if (!parse_impair(optarg, &msg.impairment, true)) {
+				/* parse_impair() issued the error */
+				exit(1);
 			}
-			if (lmod_is_set(msg.impairing, IMPAIR_FORCE_FIPS)) {
-				fprintf(stderr, "whack: invalid --impair '%s' option; must be passed directly to pluto\n",
-					optarg);
-				lmod_clr(msg.impairing, IMPAIR_FORCE_FIPS);
+			continue;
+
+		case DBGOPT_NO_IMPAIR:
+			if (!parse_impair(optarg, &msg.impairment, false)) {
+				/* parse_impair() issued the error */
+				exit(1);
 			}
 			continue;
 
@@ -2460,11 +2535,11 @@ int main(int argc, char **argv)
 			case RC_USERPROMPT:
 				if (!gotusername) {
 					usernamelen = whack_get_value(
-						username,
-						sizeof(username));
+						xauthusername,
+						sizeof(xauthusername));
 				}
 				send_reply(sock,
-					   username,
+					   xauthusername,
 					   usernamelen);
 				break;
 

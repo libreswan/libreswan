@@ -31,7 +31,7 @@ TRANSFORMED_MANPAGES = $(addprefix $(builddir)/,$(addsuffix .tmp,$(MANPAGES)))
 # Given the file MANPAGE.[0-9].{xml,tmp}, generate a list of
 # <refname/> entries, including the section number.
 
-refnames = $(shell $(SHELL) $(top_srcdir)/packaging/utils/refnames.sh $(1))
+refnames = $(shell $(top_srcdir)/packaging/utils/refnames.sh $(1))
 
 # Man pages to build, since the list of generated man pages isn't
 # predictable (see refnames.sh) use a fake target to mark that each

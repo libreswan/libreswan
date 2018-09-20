@@ -102,19 +102,17 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	})
 	// finally grand total as "untested"
 	sum.push(test_run.total)
-	sums[test_run.commit.abbreviated_commit_hash] = sum
+	sums[test_run.commit.hash] = sum
     })
 
     //
     // Set up the graph dimensions and scale
     //
+    // Use first test run's committer.date (test runs are ordered by
+    // that dated).
 
-    var start = d3.min(summary.commits, function(d) {
-	return d.committer.date
-    })
-    var extent = d3.extent(summary.commits, function(d) {
-	return d.committer.date
-    })
+    var start = summary.test_runs[0].commit.committer.date
+    console.log("graph start:", start)
 
     var xt = d3.scaleUtc()
 	.domain([start, now])
@@ -141,7 +139,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	.domain([
 	    d3.min(full_test_runs, function(d) {
 		// very first accumulative value
-		return 0.8 * sums[d.commit.abbreviated_commit_hash][0]
+		return 0.8 * sums[d.commit.hash][0]
 	    }),
 	    d3.max(full_test_runs, function(d) {
 		return 1.02 * d.total
@@ -236,7 +234,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 		return x(test_run.commit.committer.date)
 	    })
 	    .y(function(test_run) {
-		return y(sums[test_run.commit.abbreviated_commit_hash][sum_index])
+		return y(sums[test_run.commit.hash][sum_index])
 	    })
 	svg.append("path")
 	    .datum(good_first_parent_test_runs)
@@ -260,7 +258,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 		return x(test_run.commit.committer.date)
 	    })
 	    .attr("cy", function(test_run) {
-		return y(sums[test_run.commit.abbreviated_commit_hash][sum_index])
+		return y(sums[test_run.commit.hash][sum_index])
 	    })
 	    .on("click", function(test_run) {
 		lsw_summary_graph_click_test_run(table_id, test_run)
@@ -277,7 +275,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	if (newest_first_parent_test_run) {
 	    keys.push({
 		x: keys_x,
-		y: y(sums[newest_first_parent_test_run.commit.abbreviated_commit_hash][sum_index]),
+		y: y(sums[newest_first_parent_test_run.commit.hash][sum_index]),
 		klass: sum_klass[sum_index],
 		text: sum_text[sum_index],
 	    })

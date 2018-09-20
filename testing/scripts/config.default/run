@@ -1,1 +1,0 @@
-ipsec _confread --config $1 --type config setup

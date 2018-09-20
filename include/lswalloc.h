@@ -78,7 +78,13 @@ extern void report_leaks(void);
 #define clone_str(str, name) \
 	((str) == NULL ? NULL : clone_bytes((str), strlen((str)) + 1, (name)))
 
-#define pfreeany(p) { if ((p) != NULL) pfree(p); }
+#define pfreeany(P) {				\
+		typeof(P) *pp_ = &(P);		\
+		if (*pp_ != NULL) {		\
+			pfree(*pp_);		\
+			*pp_ = NULL;		\
+		}				\
+	}
 
 #define replace(p, q) { pfreeany(p); (p) = (q); }
 

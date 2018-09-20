@@ -69,22 +69,6 @@
 
 #include <assert.h>
 
-#ifdef NOT_YET
-/*
- *      Allocator cache:
- *      Because of the single-threaded nature of pluto/spdb.c,
- *      many heap allocations are made with very short lifetimes.
- *      Just caching last object (currently it will select the
- *      largest) will avoid this allocation mas^Wperturbations
- *
- */
-struct db_ops_alloc_cache {
-	void *ptr;
-	int size;
-};
-#endif
-
-#ifndef NO_DB_OPS_STATS
 /*
  * stats: do accounting for allocations displayed in db_ops_show_status()
  */
@@ -115,20 +99,13 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
 #define ALLOC_BYTES_ST(z, s, st) alloc_bytes_st(z, s, &(st));
 #define PFREE_ST(p, st)         { st.st_curr_cnt--; pfree(p);  }
 
-#else /* NO_DB_OPS_STATS */
-
-#define ALLOC_BYTES_ST(z, s, n) alloc_bytes(z, s);
-#define PFREE_ST(p, n)         pfree(p);
-
-#endif /* NO_DB_OPS_STATS */
-
 /*
  * Initialize db object
  *
  * max_trans and max_attrs can be 0, will be dynamically expanded
  * as a result of "add" operations
  */
-static void db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
+static void db_prop_init(struct db_context *ctx, uint8_t protoid, int max_trans,
 		 int max_attrs)
 {
 	ctx->trans0 = NULL;
@@ -211,7 +188,7 @@ static void db_attrs_expand(struct db_context *ctx, int delta_attrs)
 }
 
 /* Allocate a new db object */
-struct db_context *db_prop_new(u_int8_t protoid, int max_trans, int max_attrs)
+struct db_context *db_prop_new(uint8_t protoid, int max_trans, int max_attrs)
 {
 	struct db_context *ctx = ALLOC_BYTES_ST(sizeof(struct db_context), "db_context",
 			      db_context_st);
@@ -231,7 +208,7 @@ void db_destroy(struct db_context *ctx)
 }
 
 /* Start a new transform, expand trans0 is needed */
-void db_trans_add(struct db_context *ctx, u_int8_t transid)
+void db_trans_add(struct db_context *ctx, uint8_t transid)
 {
 	passert(ctx->trans_cur != NULL);
 	/*	skip incrementing current trans pointer the 1st time*/
@@ -272,7 +249,7 @@ static void db_attr_add(struct db_context *ctx, const struct db_attr *a)
  * Add attr copy (by value) to current transform,
  * expanding attrs0 if needed, just calls db_attr_add().
  */
-void db_attr_add_values(struct db_context *ctx,  enum ikev1_oakley_attr type, u_int16_t val)
+void db_attr_add_values(struct db_context *ctx,  enum ikev1_oakley_attr type, uint16_t val)
 {
 	struct db_attr attr;
 
@@ -282,7 +259,6 @@ void db_attr_add_values(struct db_context *ctx,  enum ikev1_oakley_attr type, u_
 	db_attr_add(ctx, &attr);
 }
 
-#ifndef NO_DB_OPS_STATS
 void db_ops_show_status(void)
 {
 	whack_log(RC_COMMENT, "stats db_ops: "
@@ -294,98 +270,3 @@ void db_ops_show_status(void)
 		  DB_OPS_STATS_F(db_trans_st),
 		  DB_OPS_STATS_F(db_attrs_st));
 }
-#endif /* NO_DB_OPS_STATS */
-
-/*
- * From here to end is just testing stuff ....
- */
-
-#if defined(TEST)
-
-static void db_prop_print(struct db_prop *p)
-{
-	struct db_trans *t;
-	struct db_attr *a;
-	unsigned ti, ai;
-	enum_names *n, *n_at, *n_av;
-
-	/* XXX should it print ikev1_protocol_names or ikev2_protocol_names ? */
-	DBG_log("protoid=\"%s\"", enum_name(&protocol_names, p->protoid));
-	for (ti = 0, t = p->trans; ti < p->trans_cnt; ti++, t++) {
-		switch (p->protoid) {
-		case PROTO_ISAKMP:
-			n = &isakmp_transformid_names;
-			break;
-		case PROTO_IPSEC_ESP:
-			n = &esp_transformid_names;
-			break;
-		case PROTO_IPSEC_AH:
-			n = &ah_transformid_names;
-			break;
-		default:
-			continue;
-		}
-		DBG_log("  transid=\"%s\"", enum_name(n, t->transid));
-
-		for (ai = 0, a = t->attrs; ai < t->attr_cnt; ai++, a++) {
-			int i;
-
-			switch (p->protoid) {
-			case PROTO_ISAKMP:
-				n_at = &oakley_attr_names;
-				i = a->type.oakley | ISAKMP_ATTR_AF_TV;
-				n_av = oakley_attr_val_descs[
-					i & ISAKMP_ATTR_RTYPE_MASK];
-				break;
-
-			case PROTO_IPSEC_AH:
-			case PROTO_IPSEC_ESP:
-				n_at = &ipsec_attr_names;
-				i = a->type.oakley | ISAKMP_ATTR_AF_TV;
-				n_av = ipsec_attr_val_descs[
-					i & ISAKMP_ATTR_RTYPE_MASK];
-				break;
-			default:
-				continue;
-			}
-			DBG_log("    type=\"%s\" value=\"%s\"",
-				enum_name(n_at, i),
-				enum_name(n_av, a->val));
-		}
-	}
-
-}
-
-void db_print(struct db_context *ctx)
-{
-	DBG_log("trans_cur diff=%td, attrs_cur diff=%td",
-		ctx->trans_cur - ctx->trans0,
-		ctx->attrs_cur - ctx->attrs0);
-	db_prop_print(&ctx->prop);
-}
-
-int main(void)
-{
-	struct db_context *ctx = db_prop_new(PROTO_ISAKMP, 0, 0);
-
-	db_trans_add(ctx, KEY_IKE);
-	db_attr_add_values(ctx, OAKLEY_ENCRYPTION_ALGORITHM, OAKLEY_3DES_CBC);
-	db_attr_add_values(ctx, OAKLEY_HASH_ALGORITHM, OAKLEY_MD5);
-	db_attr_add_values(ctx, OAKLEY_AUTHENTICATION_METHOD, OAKLEY_RSA_SIG);
-	db_attr_add_values(ctx, OAKLEY_GROUP_DESCRIPTION,
-			   OAKLEY_GROUP_MODP1024);
-	db_trans_add(ctx, KEY_IKE);
-	db_attr_add_values(ctx, OAKLEY_ENCRYPTION_ALGORITHM, OAKLEY_AES_CBC);
-	db_attr_add_values(ctx, OAKLEY_HASH_ALGORITHM, OAKLEY_MD5);
-	db_attr_add_values(ctx, OAKLEY_AUTHENTICATION_METHOD,
-			   OAKLEY_PRESHARED_KEY);
-	db_attr_add_values(ctx, OAKLEY_GROUP_DESCRIPTION,
-			   OAKLEY_GROUP_MODP1536);
-	db_trans_add(ctx, ESP_3DES);
-	db_attr_add_values(ctx, AUTH_ALGORITHM, AUTH_ALGORITHM_HMAC_SHA1);
-	db_print(ctx);
-	db_destroy(ctx);
-	return 0;
-}
-
-#endif /* #if defined(TEST) */

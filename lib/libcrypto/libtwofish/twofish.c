@@ -30,9 +30,9 @@
 #include <linux/init.h>
 #include <linux/types.h>
 #else
-#include <sys/types.h>
-#define u8 u_int8_t
-#define u32 u_int32_t
+#include <stdint.h>
+#define u8 uint8_t
+#define u32 uint32_t
 #endif
 
 #define rotl generic_rotl32

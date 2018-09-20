@@ -19,6 +19,7 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
+#include "lswcdefs.h"
 #include "lswalloc.h"
 #include "realtime.h"
 
@@ -29,9 +30,10 @@ typedef unsigned long so_serial_t;
 #define SOS_NOBODY      0       /* null serial number */
 #define SOS_FIRST       1       /* first normal serial number */
 
-typedef int sa_t;
-#define  IKE_SA		0
-#define  IPSEC_SA	1
+typedef enum {
+		IKE_SA,
+		IPSEC_SA
+	} sa_t;
 
 /* warns a predefined interval before expiry */
 extern const char *check_expiry(realtime_t expiration_date,
@@ -53,7 +55,7 @@ extern const char *check_expiry(realtime_t expiration_date,
 extern volatile bool exiting_pluto;
 extern void exit_pluto(int /*status*/) NEVER_RETURNS;
 
-typedef u_int32_t msgid_t;      /* Network order for ikev1, host order for ikev2 */
+typedef uint32_t msgid_t;      /* Network order for ikev1, host order for ikev2 */
 
 /* are all bytes 0? */
 extern bool all_zero(const unsigned char *m, size_t len);

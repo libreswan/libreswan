@@ -21,6 +21,7 @@
 #ifndef ALG_INFO_H
 #define ALG_INFO_H
 
+#include "lswcdefs.h"
 #include "constants.h"
 #include "ike_alg.h"
 #include "shunk.h"
@@ -32,7 +33,8 @@ struct proposal_policy;
 struct proposal_parser;
 
 typedef const struct ike_alg *(alg_byname_fn)(const struct proposal_parser *parser,
-					      shunk_t name, size_t key_bit_length);
+					      shunk_t name, size_t key_bit_length,
+					      shunk_t print_name);
 
 /*
  * Parameters to tune the parser.
@@ -50,6 +52,10 @@ struct proposal_policy {
 	 * while an ESP/AH algorithm requires kernel support.
 	 */
 	bool (*alg_is_ok)(const struct ike_alg *alg);
+	/*
+	 * Print a warning.  Signature needs to match libreswan_log.
+	 */
+	int (*warning)(const char *fmt, ...) PRINTF_LIKE(1);
 };
 
 /*

@@ -23,9 +23,6 @@
 #include "cavp_entry.h"
 #include "test_ikev2.h"
 
-#include "ike_alg_sha1.h"
-#include "ike_alg_sha2.h"
-
 #include "test_buffer.h"
 #include "crypt_symkey.h"
 

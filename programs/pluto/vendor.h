@@ -25,14 +25,18 @@
 #define _VENDOR_H_
 
 #include "known_vendorid.h"
+#include "packet.h"		/* for pb_stream */
+
+struct msg_digest;
 
 void init_vendorid(void);
 
-struct msg_digest;
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		     bool ikev2);
 
-bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid);
+bool out_vid(uint8_t np, pb_stream *outs, unsigned int vid);
+
+bool out_vid_set(pb_stream *outs, const struct connection *c);
 
 bool vid_is_oppo(const char *vid, size_t len);
 

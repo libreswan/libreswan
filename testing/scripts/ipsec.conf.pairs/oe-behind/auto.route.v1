@@ -1,2 +1,0 @@
-ipsec whack --name OEnet --route
-ipsec whack --name OEself --route

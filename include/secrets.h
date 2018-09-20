@@ -22,22 +22,18 @@
 #ifndef _SECRETS_H
 #define _SECRETS_H
 
-#include "id.h"
-
 #include <nss.h>
 #include <pk11pub.h>
+
+#include "lswcdefs.h"
 #include "x509.h"
+#include "id.h"
+#include "err.h"
 #include "realtime.h"
+#include "ckaid.h"
 
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */
-
-/*
- * For rationale behind *_t? Blame chunk_t.
- */
-typedef struct {
-	SECItem *nss;
-} ckaid_t;
 
 struct RSA_public_key {
 	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
@@ -85,7 +81,24 @@ struct RSA_private_key {
 	struct RSA_public_key pub;
 };
 
+struct ECDSA_public_key {
+	char keyid[KEYID_BUF];
+	unsigned int k;
+	chunk_t ecParams;
+	chunk_t pub; /* publicValue */
+	ckaid_t ckaid;
+};
+
+struct ECDSA_private_key {
+	struct ECDSA_public_key pub;
+	chunk_t ecParams;
+	chunk_t pub_val; /* publicValue */
+	chunk_t privateValue;
+	chunk_t version;
+};
+
 extern void free_RSA_public_content(struct RSA_public_key *rsa);
+extern void free_ECDSA_public_content(struct ECDSA_public_key *ecdsa);
 
 err_t rsa_pubkey_to_rfc_resource_record(chunk_t exponent, chunk_t modulus, chunk_t *rr);
 err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *exponent, chunk_t *modulus);
@@ -95,8 +108,10 @@ err_t base64_to_rsa_pubkey(const char *rr, chunk_t *exponent, chunk_t *modulus);
 
 err_t pack_RSA_public_key(const struct RSA_public_key *rsa, chunk_t *pubkey);
 err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey);
+err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pubkey); /* ASKK */
 
 void DBG_log_RSA_public_key(const struct RSA_public_key *rsa);
+void DBG_log_ECDSA_public_key(const struct ECDSA_public_key *ecdsa);
 
 struct private_key_stuff {
 	enum PrivateKeyKind kind;
@@ -117,6 +132,7 @@ struct private_key_stuff {
 	union {
 		chunk_t preshared_secret;
 		struct RSA_private_key RSA_private_key;
+		struct ECDSA_private_key ECDSA_private_key;
 		/* struct smartcard *smartcard; */
 	} u;
 
@@ -147,11 +163,12 @@ struct pubkey {
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
 	realtime_t until_time;
-	u_int32_t dns_ttl; /* from wire. until_time is derived using this */
+	uint32_t dns_ttl; /* from wire. until_time is derived using this */
 	chunk_t issuer;
 	enum pubkey_alg alg;
 	union {
 		struct RSA_public_key rsa;
+		struct ECDSA_public_key ecdsa;
 	} u;
 };
 
@@ -170,13 +187,6 @@ extern void delete_public_keys(struct pubkey_list **head,
 			       enum pubkey_alg alg);
 extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
 
-bool ckaid_starts_with(ckaid_t ckaid, const char *start);
-char *ckaid_as_string(ckaid_t ckaid);
-err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
-err_t form_ckaid_nss(const SECItem *const nss_ckaid, ckaid_t *ckaid);
-void freeanyckaid(ckaid_t *ckaid);
-void DBG_log_ckaid(const char *prefix, ckaid_t ckaid);
-
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);
 
@@ -187,8 +197,8 @@ extern err_t add_public_key(const struct id *id,
 			    struct pubkey_list **head);
 extern err_t add_ipseckey(const struct id *id,
 		enum dns_auth_level dns_auth_level,
-		enum pubkey_alg alg, u_int32_t ttl,
-		u_int32_t ttl_used, const chunk_t *key,
+		enum pubkey_alg alg, uint32_t ttl,
+		uint32_t ttl_used, const chunk_t *key,
 		struct pubkey_list **head);
 
 extern bool same_RSA_public_key(const struct RSA_public_key *a,
@@ -218,7 +228,9 @@ extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
 extern err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert);
+extern err_t lsw_add_ecdsa_secret(struct secret **secrets, CERTCertificate *cert);
 extern struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert);
+extern struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert);
 
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);

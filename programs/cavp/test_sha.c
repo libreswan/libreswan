@@ -17,8 +17,7 @@
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "ike_alg.h"
-#include "ike_alg_sha1.h"
-#include "ike_alg_sha2.h"
+#include "ike_alg_hash.h"
 #include "ike_alg_hash_nss_ops.h"
 
 #include "crypt_symkey.h"
@@ -39,21 +38,24 @@ static struct cavp_entry config[] = {
 struct hash_desc ike_alg_hash_sha2_224 = {
 	.common = {
 		.name = "sha2_224",
-		.officname = "sha224",
 		.algo_type = IKE_ALG_HASH,
 		.fips = TRUE,
 	},
-	.hash_digest_len = 28, /* 224/8 */
+	.hash_digest_size = 28, /* 224/8 */
 	.hash_block_size = 64, /* from RFC 4868 */
 	.hash_ops = &ike_alg_hash_nss_ops,
 };
 
 static const struct hash_desc *hashes[] = {
+#ifdef USE_SHA1
 	&ike_alg_hash_sha1,
+#endif
+#ifdef USE_SHA2
 	&ike_alg_hash_sha2_224,
 	&ike_alg_hash_sha2_256,
 	&ike_alg_hash_sha2_384,
 	&ike_alg_hash_sha2_512,
+#endif
 	NULL,
 };
 
@@ -62,7 +64,7 @@ static const struct hash_desc *hash_alg;
 static void print_config(void)
 {
 	for (int i = 0; hashes[i]; i++) {
-		if (hashes[i]->hash_digest_len == l) {
+		if (hashes[i]->hash_digest_size == l) {
 			hash_alg = hashes[i];
 			break;
 		}
@@ -92,8 +94,7 @@ static void msg_run_test(void)
 	/* byte aligned */
 	passert(len == (len & -4));
 	/* when len==0, msg may contain one byte :-/ */
-	passert((len == 0 && msg.len <= 1)
-		|| (len == msg.len * BITS_PER_BYTE));
+	passert((len == 0 && msg.len <= 1) || len == msg.len * BITS_PER_BYTE);
 	print_chunk("Msg", NULL, msg, 0);
 	struct hash_context *hash = hash_alg->hash_ops->init(hash_alg, "sha");
 	/* See above, use LEN, not MSG.LEN */

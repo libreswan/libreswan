@@ -1,9 +1,0 @@
-
-# run ipsec.config anomalies tests
-#
-# Arg is "v1" on a version 1 system and "v2" on a version 2 system
-
-for i in config.default config.martian quotes search.blooper search.closure
-do
-	( cd $i ; sh ./run $1 >out.$1 ; )
-done

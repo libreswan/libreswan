@@ -63,7 +63,6 @@ static void confwrite_int(FILE *out,
 	const struct keyword_def *k;
 
 	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
-
 		if ((k->validity & KV_CONTEXT_MASK) != context)
 			continue;
 
@@ -189,7 +188,6 @@ static void confwrite_str(FILE *out,
 	const struct keyword_def *k;
 
 	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
-
 		if ((k->validity & KV_CONTEXT_MASK) != context)
 			continue;
 
@@ -634,7 +632,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		case POLICY_SHUNT_REJECT:
 			cwf("type", "reject");
 			break;
-
 		}
 
 #		undef cwpb

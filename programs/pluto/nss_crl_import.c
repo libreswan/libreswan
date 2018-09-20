@@ -31,6 +31,7 @@
 #include "log.h"
 #include "lswalloc.h"
 #include "nss_err.h"
+#include "lswnss.h"	/* for lswlog_nss_error() */
 
 static const char crl_name[] = "_import_crl";
 
@@ -39,7 +40,6 @@ static const char crl_name[] = "_import_crl";
  */
 int send_crl_to_import(u_char *der, size_t len, const char *url)
 {
-
 	CERTSignedCrl *crl = NULL;
 	CERTCertificate *cacert = NULL;
 	PLArenaPool *arena = NULL;
@@ -81,7 +81,7 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 # endif
 	}
 #else
-	arg[0] = clone_str("/usr/local/libexec/ipsec/_import_crl","crl helper");
+	arg[0] = clone_str("/usr/local/libexec/ipsec/_import_crl", "crl helper");
 #endif
 
 	if ((size_t)n > sizeof(crl_path_space) - sizeof(crl_name))
@@ -119,17 +119,19 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 
 	/* arena owned by crl */
 	if ((crl = CERT_DecodeDERCrl(arena, &crl_si, SEC_CRL_TYPE)) == NULL) {
-		DBG(DBG_X509,
-		    DBG_log("NSS error decoding CRL: %s",
-			    nss_err_str(PORT_GetError())));
+		LSWDBGP(DBG_X509, buf) {
+			lswlogs(buf, "NSS: decoding CRL using CERT_DecodeDERCrl() failed: ");
+			lswlog_nss_error(buf);
+		}
 		PORT_FreeArena(arena, FALSE);
 		goto end;
 	}
 
 	if ((cacert = CERT_FindCertByName(handle, &crl->crl.derName)) == NULL) {
-		DBG(DBG_X509,
-		    DBG_log("NSS error finding cert by name: %s",
-			    nss_err_str(PORT_GetError())));
+		LSWDBGP(DBG_X509, buf) {
+			lswlogs(buf, "NSS: finding cert by name using CERT_FindCertByName() failed: ");
+			lswlog_nss_error(buf);
+		}
 		SEC_DestroyCrl(crl);
 		goto end;
 	}

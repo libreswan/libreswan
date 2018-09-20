@@ -40,6 +40,7 @@
 #include "kernel.h"	/* for kernel_ops */
 #include "timer.h"
 #include "ip_address.h"
+#include "fd.h"
 
 bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
@@ -78,7 +79,7 @@ int whack_log_fd = NULL_FD;                     /* only set during whack_handle(
  * resetting CUR_STATE will re-expose CUR_CONNECTION.
  *
  * Surely it would be easier to explicitly specify the context with
- * something like LSWLOG_LOG_WHACK_STATE()?
+ * something like LSWLOG_RC_STATE()?
  *
  * Global variables: must be carefully adjusted at transaction
  * boundaries!
@@ -628,7 +629,7 @@ void lswlog_to_log_stream(struct lswlog *buf)
 	/* not whack */
 }
 
-void lswlog_to_log_whack_stream(struct lswlog *buf, enum rc_type rc)
+void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc)
 {
 	log_raw(buf, LOG_WARNING);
 	whack_raw(buf, rc);

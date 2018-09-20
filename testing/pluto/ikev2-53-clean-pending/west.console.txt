@@ -22,7 +22,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:20; timeout:25; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_v2_RETRANSMIT in  XXs; idle; import:admin initiate
+000 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_v2_RETRANSMIT in  XXs; idle;
 000 #1: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
 west #
  echo "initdone"
@@ -45,7 +45,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:20; timeout:25; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_v2_RETRANSMIT in  XXs; idle; import:admin initiate
+000 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_v2_RETRANSMIT in  XXs; idle;
 000 #1: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
 west #
  #sleep for more than PENDING_PHASE2_INTERVAL > 121s
@@ -77,7 +77,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:20; timeout:25; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_v2_RETRANSMIT in  XXs; idle; import:admin initiate
+000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_v2_RETRANSMIT in  XXs; idle;
 000 #2: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
 west #
  # this should find a match
@@ -96,11 +96,11 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

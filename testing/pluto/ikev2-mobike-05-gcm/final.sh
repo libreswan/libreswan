@@ -1,6 +1,6 @@
 ipsec whack --trafficstatus
 ip xfrm state
-ip xfrm pol
+ip xfrm policy
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

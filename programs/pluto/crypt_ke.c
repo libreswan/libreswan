@@ -96,7 +96,6 @@ void request_ke_and_nonce(const char *name,
 			  const struct oakley_group_desc *group,
 			  crypto_req_cont_func *callback)
 {
-
 	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);
 	pcr_kenonce_init(cn, pcr_build_ke_and_nonce, group);
 	send_crypto_helper_request(st, cn);

@@ -1,0 +1,115 @@
+/testing/guestbin/swan-prep --userland strongswan --x509
+west #
+ # confirm that the network is alive
+west #
+ ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm with a ping
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ setenforce 0
+west #
+ ../../pluto/bin/strongswan-start.sh
+west #
+ echo "initdone"
+initdone
+west #
+ strongswan up westnet-eastnet-ikev2
+initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ N(INVAL_KE) ]
+peer didn't accept DH group ECP_256, it requested MODP_2048
+initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(HASH_ALG) N(NATD_S_IP) N(NATD_D_IP) CERTREQ ]
+received cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
+authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' (myself) with RSA_EMSA_PSS_SHA2_384 successful
+establishing CHILD_SA westnet-eastnet-ikev2{1}
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(1/5) ]
+received fragment #1 of 5, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(2/5) ]
+received fragment #2 of 5, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(3/5) ]
+received fragment #3 of 5, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(4/5) ]
+received fragment #4 of 5, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(5/5) ]
+received fragment #5 of 5, reassembling fragmented IKE message
+parsed IKE_AUTH response 1 [ IDr CERT AUTH SA TSi TSr ]
+received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+  using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
+checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+  requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
+libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org port 2560: No route to host
+ocsp request to http://nic.testing.libreswan.org:2560 failed
+ocsp check failed, fallback to crl
+  fetching crl from 'http://nic.testing.libreswan.org/revoked.crl' ...
+libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org port 80: No route to host
+crl fetching failed
+certificate status is not available
+  reached self-signed root ca with a path length of 0
+  using trusted certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' with RSA_EMSA_PSS_SHA2_384 successful
+IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+connection 'westnet-eastnet-ikev2' established successfully
+west #
+ ping -n -c4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # hash algorithm notication should be received
+west #
+ grep SIGNATURE_HASH_ALGO /tmp/charon.log | cut -f 2 -d "]"
+ received SIGNATURE_HASH_ALGORITHMS notify
+west #
+ echo done
+done
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+west #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -1,3 +1,17 @@
+USERLAND_CFLAGS += -DTimeZoneOffset=timezone
+
+# This normally comes in via bind9/config.h
+# Fixes a warning in lib/libisc/random.c:44
+USERLAND_CFLAGS += -DHAVE_SYS_TYPES_H=1
+USERLAND_CFLAGS += -DHAVE_UNISTD_H=1
+
+# Not all environments set this? happened on a arm_tools cross compile
+USERLAND_CFLAGS += -Dlinux
+
+# udpfromto socket option for Linux
+USERLAND_CFLAGS += -DHAVE_UDPFROMTO=1
+USERLAND_CFLAGS += -DHAVE_IP_PKTINFO=1
+
 
 KLIPSSRC=${LIBRESWANSRCDIR}/linux/net/ipsec
 
@@ -8,7 +22,6 @@ MODBUILDDIR?=${LIBRESWANSRCDIR}/modobj
 
 MODULE_FLAGS:=KLIPSMODULE=true -f ${MODULE_DEFCONFIG}
 
-PORTINCLUDE=-I${LIBRESWANSRCDIR}/ports/linux/include
 PORTDEFINE=-DSCANDIR_HAS_CONST
 
 # include KLIPS support

@@ -53,21 +53,15 @@
  * the chunk will not be written, but it is awkward to paste const on it.
  */
 
-void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end, bool nullid)
+void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, const struct end *end)
 {
 	const struct id *id = &end->id;
 	const unsigned char *p;
 
 	zero(hd);	/* OK: no pointer fields */
+	/* hd->np = ISAKMP_NEXT_NONE; */
 	*tl = empty_chunk;
 	hd->isaiid_idtype = id->kind;
-
-	if (nullid) {
-		hd->isaiid_idtype = ID_NULL;
-		tl->len = 0;
-		tl->ptr = NULL;
-		return;
-	}
 
 	switch (id->kind) {
 	case ID_NONE:
@@ -91,10 +85,17 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end, 
 		tl->ptr = DISCARD_CONST(unsigned char *, p);
 		break;
 	case ID_NULL:
-		tl->len = 0;
-		tl->ptr = NULL;
 		break;
 	default:
 		bad_case(id->kind);
 	}
+}
+
+void v2_build_id_payload(struct ikev2_id *hd, chunk_t *tl, const struct end *end)
+{
+	build_id_payload((struct isakmp_ipsec_id *) hd, tl,end);
+	/*
+	 * note: critical bit is zero (ISAKMP_PAYLOAD_NONCRITICAL)
+	 * as it must be (RFC7296 3,2)
+	 */
 }

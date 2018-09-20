@@ -8,8 +8,6 @@ SYSTEMDDIR=$(DESTDIR)$(UNITDIR)
 
 include $(top_srcdir)/Makefile.inc
 
-local-base: $(SYSTEMDFILE)
-
 # Use dependencies to force the order: LOCAL-BASE,
 # INSTALLSYSTEMDSERVICE, OLDINITDCHECK, POSTCHECK.
 #
@@ -17,17 +15,23 @@ local-base: $(SYSTEMDFILE)
 # like local-base and installsystemdservice are allowed to run in
 # parallel)
 
+local-base: $(builddir)/$(SYSTEMDFILE)
+
 local-install-base: installsystemdservice oldinitdcheck postcheck
 
-installsystemdservice: local-base
-	@mkdir -p $(SYSTEMDDIR)
+installsystemdservice: local-base | $(SYSTEMDDIR)
 	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(SYSTEMDFILE) $(SYSTEMDDIR)
 	@if test $(SYSTEMDDIR) = $(UNITDIR) ; then \
+		echo running: systemctl --system daemon-reload; \
 		systemctl --system daemon-reload ; \
 	fi
 	@if test -f $(DESTDIR)/$(FINALLIBEXECDIR)/portexcludes; then \
+		echo fixing port excludes ; \
 		sed -Ei 's@^# (.*/portexcludes)$$@\1@' $(SYSTEMDDIR)/$(SYSTEMDFILE); \
 	fi
+
+$(SYSTEMDDIR):
+	mkdir -p $(SYSTEMDDIR)
 
 oldinitdcheck: installsystemdservice
 	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \
@@ -63,10 +67,11 @@ postcheck: installsystemdservice oldinitdcheck
 
 # XXX: identical to program.mk?
 
-%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver
-	@echo  'IN' $< '->' $(builddir)/$@
-	$(TRANSFORM_VARIABLES) < $< > $(builddir)/$@
-	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
-	@if [ "$(PROGRAM).in" = $< ]; then chmod +x $(builddir)/$@; fi
+$(builddir)/%: $(srcdir)/%.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
+	@echo  'IN' $< '->' $@
+	$(TRANSFORM_VARIABLES) < $< > $@
+	@if [ -x $< ]; then chmod +x $@; fi
+	@if [ "$(PROGRAM).in" = $< ]; then chmod +x $@; fi
 
 include ${top_srcdir}/mk/targets.mk
+include ${top_srcdir}/mk/builddir.mk

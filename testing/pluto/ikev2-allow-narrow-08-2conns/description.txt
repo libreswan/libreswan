@@ -1,0 +1,9 @@
+Basic pluto with IKEv2 on the initiator (west), and on the responder.
+
+However, this test checks to see if the responder accepts two narrowed
+down connections as separate child SA's under the parent SA.
+
+This uses two conns on west to test the narrowing code on east without
+using narrowing code on west
+
+Work In Progress

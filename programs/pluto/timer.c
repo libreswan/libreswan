@@ -38,6 +38,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"	/* needs id.h */
@@ -57,8 +58,7 @@
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
 #include "xauth.h"
-#include "kernel.h" /* for scan_shunts() */
-#include "kernel_pfkey.h" /* for pfkey_scan_shunts */
+#include "kernel.h"		/* for kernel_ops */
 #include "nat_traversal.h"
 #include "pluto_sd.h"
 #include "retry.h"
@@ -77,7 +77,6 @@ static bool parent_vanished(struct state *st)
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	if (pst != NULL) {
-
 		if (c != pst->st_connection) {
 			char cib1[CONN_INST_BUF];
 			char cib2[CONN_INST_BUF];
@@ -210,6 +209,28 @@ static void liveness_check(struct state *st)
 				st->st_serialno, that_ip));
 	deltatime_t delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
 	event_schedule(EVENT_v2_LIVENESS, delay, st);
+}
+
+static void ikev2_log_initiate_child_fail(const struct state *st)
+{
+	const struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+	if (pst == NULL)
+		return;
+
+	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
+
+	if (st->st_state == STATE_V2_REKEY_IKE_I0 ||
+	    st->st_state == STATE_V2_REKEY_CHILD_I0 ||
+	    st->st_state == STATE_V2_CREATE_I0) {
+		if (unack < st->st_connection->ike_window) {
+			loglog(RC_LOG_SERIOUS, "expiring %s state. Possible message id dealock? parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
+					st->st_state_name,
+					pst->st_serialno, unack,
+					pst->st_msgid_nextuse,
+					pst->st_connection->ike_window);
+		}
+	}
 }
 
 static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
@@ -381,13 +402,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_SHUNT_SCAN:
-		if (!kernel_ops->policy_lifetime) {
-			/* KLIPS or MAST - scan eroutes */
-			pfkey_scan_shunts();
-		} else {
-			/* eventually obsoleted via policy expire msg from kernel */
-			expire_bare_shunts();
-		}
+		kernel_ops->scan_shunts();
 		break;
 
 	case EVENT_PENDING_DDNS:
@@ -409,7 +424,9 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_CHECK_CRLS:
+#ifdef LIBCURL
 		check_crls();
+#endif
 		break;
 
 	case EVENT_v2_RELEASE_WHACK:
@@ -496,7 +513,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					break;
 				} else {
 					ikev2_log_v2_sa_expired(st, type);
-					ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
+					ipsecdoi_replace(st, 1);
 				}
 
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&
@@ -523,10 +540,10 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					deltasecs(monotimediff(mononow(),
 							       st->st_outbound_time))));
 		} else {
+			ikev2_log_initiate_child_fail(st);
 			ikev2_log_v2_sa_expired(st, type);
-			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
+			ipsecdoi_replace(st, 1);
 		}
-
 
 		delete_liveness_event(st);
 		delete_dpd_event(st);
@@ -701,8 +718,6 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	 */
 	if (st != NULL) {
 		switch (type) {
-
-
 		case EVENT_v2_ADDR_CHANGE:
 			passert(st->st_addr_change_event == NULL);
 			st->st_addr_change_event = ev;

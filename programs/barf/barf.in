@@ -97,7 +97,7 @@ findlog() {		# findlog string fallbackstring possiblefile ...
 	findlog_startline=1		# arbitrary
 }
 
-if test ! -x /usr/bin/journalctl
+if test ! -x /usr/bin/journalctl -a ! -x /bin/journalctl
 then
 	# no systemd, need to figure out log file location
 	findlog "$fstart" "klips" messages syslog auth.log daemon.log
@@ -409,7 +409,7 @@ fi
 _________________________ klog
 dmesg | egrep -i "klips|ipsec"
 _________________________ plog
-if test -x /usr/bin/journalctl
+if test -x /usr/bin/journalctl -o -x /bin/journalctl
 then
 	journalctl -u ipsec.service --no-pager --since "1 hour ago" |
 		case "$1" in

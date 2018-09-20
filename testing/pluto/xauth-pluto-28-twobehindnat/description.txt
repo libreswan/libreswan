@@ -1,0 +1,12 @@
+Two behind the same NAT, using authby=secret
+
+The client should not get the same IP address because authby=secret
+explicitely forbids this.
+
+Additionally, the xauth username is now part of the addresspool thatid
+marker, so using different xauthusers should also prevent lease sharing
+
+finally, libreswan up to 3.25 handle this wrong, and the road and north
+ip xfrm policies mangle each other up.
+
+This issue is unresolved at the time of writing

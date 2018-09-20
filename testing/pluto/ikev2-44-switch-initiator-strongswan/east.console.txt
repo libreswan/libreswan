@@ -1,0 +1,45 @@
+/testing/guestbin/swan-prep --userland strongswan
+east #
+ ../../pluto/bin/strongswan-start.sh
+east #
+ echo "initdone"
+initdone
+east #
+ strongswan up two
+establishing CHILD_SA two{2}
+generating CREATE_CHILD_SA request 0 [ SA No KE TSi TSr ]
+sending packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+received packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+parsed CREATE_CHILD_SA response 0 [ SA No KE TSi TSr ]
+CHILD_SA two{2} established with SPIs SPISPI_i SPISPI_o and TS 192.0.22.0/24[tcp/kerberos] === 192.0.11.0/24[tcp]
+connection 'two' established successfully
+east #
+ sleep 10
+east #
+ echo done
+done
+east #
+ strongswan up one
+establishing CHILD_SA one{4}
+generating CREATE_CHILD_SA request 1 [ SA No KE TSi TSr ]
+sending packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+received packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+parsed CREATE_CHILD_SA response 1 [ SA No KE TSi TSr ]
+CHILD_SA one{4} established with SPIs SPISPI_i SPISPI_o and TS 192.0.2.0/24[tcp] === 192.0.1.0/24[tcp/http]
+connection 'one' established successfully
+east #
+ strongswan up two
+establishing CHILD_SA two{5}
+generating CREATE_CHILD_SA request 2 [ SA No KE TSi TSr ]
+sending packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+received packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+parsed CREATE_CHILD_SA response 2 [ SA No KE TSi TSr ]
+CHILD_SA two{5} established with SPIs SPISPI_i SPISPI_o and TS 192.0.22.0/24[tcp/kerberos] === 192.0.11.0/24[tcp]
+connection 'two' established successfully
+east #
+ sleep 10
+east #
+ echo done
+done
+east #
+ 

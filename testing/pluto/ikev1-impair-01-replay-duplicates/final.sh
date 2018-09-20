@@ -1,5 +1,5 @@
 ../../pluto/bin/ipsec-look.sh
-grep 'duplicate packet' /tmp/pluto.log
+sed -n -e '/IMPAIR: start duplicate packet/,/IMPAIR: stop duplicate packet/ { /^[^|]/ p }' /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

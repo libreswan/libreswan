@@ -157,7 +157,6 @@ bool finish_dh_v2(struct state *st,
 		freeanychunk(dhv2->skey_responder_salt);
 		freeanychunk(dhv2->skey_chunk_SK_pi);
 		freeanychunk(dhv2->skey_chunk_SK_pr);
-
 	} else {
 		st->st_skey_d_nss = dhv2->skeyid_d;
 		st->st_skey_ai_nss = dhv2->skeyid_ai;

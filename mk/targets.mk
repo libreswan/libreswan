@@ -54,14 +54,6 @@ define recursive-target
   $(1): recursive-$(1)
 	@$$(MAKE) --no-print-directory local-$(1)
 
-  # XXX: Require $(builddir)/Makefile.  Targets that switch to
-  # builddir require it (but are there any left?).  In $(topsrcdir)
-  # this will trigger a re-build of the Makefiles, in sub-directories
-  # this will simply barf.  It's assumed that $(OBJDIR) has been
-  # created by the time a subdir build has run.
-
-  $(1) local-$(1) recursive-$(1): $$(builddir)/Makefile
-
   recursive-$(1):
 	@set -eu $$(foreach subdir,$$(SUBDIRS),; $$(MAKE) -C $$(subdir) $$(patsubst recursive-%,%,$$@))
 

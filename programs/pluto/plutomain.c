@@ -15,7 +15,7 @@
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016, 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,38 +31,19 @@
 #include <pthread.h> /* Must be the first include file */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <ctype.h>
 #include <errno.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <netinet/in.h>
-#include <resolv.h>
+#include <unistd.h>	/* for unlink(), write(), close(), access(), et.al. */
 
-#include <libreswan.h>
-
-#include <libreswan/pfkeyv2.h>
-#include <libreswan/pfkey.h>
-
-#include "sysdep.h"
-#include "constants.h"
 #include "lswconf.h"
 #include "lswfips.h"
 #include "lswnss.h"
 #include "defs.h"
-#include "id.h"
-#include "x509.h"
-#include "pluto_x509.h"
 #include "nss_ocsp.h"
-#include "certs.h"
-#include "connections.h"	/* needs id.h */
-#include "foodgroups.h"
-#include "packet.h"
-#include "demux.h"	/* needs packet.h */
 #include "server.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
@@ -70,13 +51,8 @@
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
 #include "rnd.h"
-#include "state.h"
-#include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "fetch.h"
-#include "crl_queue.h"
-#include "timer.h"
 #include "ipsecconf/confread.h"
-#include "xauth.h"
 #include "crypto.h"
 #include "vendor.h"
 #include "pluto_crypt.h"
@@ -89,11 +65,6 @@
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
 #endif
-
-#include "whack.h"
-
-#include <nss.h>
-#include <nspr.h>
 
 #ifdef HAVE_LIBCAP_NG
 # include <cap-ng.h>	/* from libcap-ng devel */
@@ -116,6 +87,7 @@ pthread_t main_thread;
 static char *rundir = NULL;
 char *pluto_listen = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
+static bool selftest_only = FALSE;
 
 #ifdef FIPS_CHECK
 # include <fipscheck.h> /* from fipscheck devel */
@@ -161,7 +133,7 @@ static void free_pluto_main(void)
  *
  * @param mess String - diagnostic message to print
  */
-static void invocation_fail(const char *mess)
+static void invocation_fail(err_t mess)
 {
 	if (mess != NULL)
 		fprintf(stderr, "%s\n", mess);
@@ -333,17 +305,28 @@ static void delete_lock(void)
  * FIXME: move them to confread_load() parameters
  */
 int verbose = 0;
-int warningsarefatal = 0;
 
 /* Read config file. exit() on error. */
 static struct starter_config *read_cfg_file(char *configfile)
 {
 	struct starter_config *cfg = NULL;
-	err_t err = NULL;
+	starter_errors_t errl = { NULL };
 
-	cfg = confread_load(configfile, &err, FALSE, NULL /* ctl_addr.sun_path? */, TRUE);
-	if (cfg == NULL)
-		invocation_fail(err);
+	cfg = confread_load(configfile, &errl, NULL /* ctl_addr.sun_path? */, TRUE);
+	if (cfg == NULL) {
+		/*
+		 * note: incovation_fail never returns so we will have
+		 * a leak of errl.errors
+		 */
+		invocation_fail(errl.errors);
+	}
+
+	if (errl.errors != NULL) {
+		fprintf(stderr, "pluto --config '%s', ignoring: %s\n",
+			configfile, errl.errors);
+		pfree(errl.errors);
+	}
+
 	return cfg;
 }
 
@@ -384,24 +367,24 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 	}
 
 	ndone = 0;
-		DBG(DBG_CONTROL,DBG_log("need %d bits random for extra seeding of the NSS PRNG",
+		DBG(DBG_CONTROL, DBG_log("need %d bits random for extra seeding of the NSS PRNG",
 			(int) nbytes * BITS_PER_BYTE));
 
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);
 		if (got < 0) {
-			loglog(RC_LOG_SERIOUS,"read error on %s (%s)\n",
+			loglog(RC_LOG_SERIOUS, "read error on %s (%s)\n",
 				device, strerror(errno));
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
 		if (got == 0) {
-			loglog(RC_LOG_SERIOUS,"EOF on %s!?!\n",  device);
+			loglog(RC_LOG_SERIOUS, "EOF on %s!?!\n",  device);
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
 		ndone += got;
 	}
 	close(dev);
-	DBG(DBG_CONTROL,DBG_log("read %zu bytes from /dev/random for NSS PRNG",
+	DBG(DBG_CONTROL, DBG_log("read %zu bytes from /dev/random for NSS PRNG",
 		nbytes));
 }
 
@@ -426,7 +409,7 @@ static bool pluto_init_nss(char *nssdir)
 	 */
 	if (pluto_nss_seedbits != 0) {
 		int seedbytes = BYTES_FOR_BITS(pluto_nss_seedbits);
-		unsigned char *buf = alloc_bytes(seedbytes,"TLA seedmix");
+		unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
 		get_bsi_random(seedbytes, buf); /* much TLA, very blocking */
 		rv = PK11_RandomUpdate(buf, seedbytes);
@@ -454,7 +437,7 @@ deltatime_t crl_check_interval = DELTATIME_INIT(0);
  * This variable specifies (globally!!) which we support: 10 or 32001.
  * ??? surely that makes migration to 32001 all or nothing.
  */
-u_int16_t secctx_attr_type = SECCTX;
+uint16_t secctx_attr_type = SECCTX;
 #endif
 
 /*
@@ -581,6 +564,8 @@ static const struct option long_opts[] = {
 	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
 #endif
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
+
+	{ "selftest\0", no_argument, NULL, '5' },
 
 	{ "leak-detective\0", no_argument, NULL, 'X' },
 	{ "debug-none\0^", no_argument, NULL, 'N' },
@@ -1147,9 +1132,12 @@ int main(int argc, char **argv)
 			keep_alive = deltatime(u);
 			continue;
 
-		case '5':	/* --debug-nat-t aliases */
-			base_debugging |= DBG_NATT;
+		case '5':	/* --selftest */
+			selftest_only = TRUE;
+			log_to_stderr_desired = TRUE;
+			fork_desired = FALSE;
 			continue;
+
 		case '6':	/* --virtual-private */
 			virtual_private = clone_str(optarg, "virtual_private");
 			continue;
@@ -1402,7 +1390,11 @@ int main(int argc, char **argv)
 	}
 
 	oco = lsw_init_options();
-	lockfd = create_lock();
+
+	if (!selftest_only)
+		lockfd = create_lock();
+	else
+		lockfd = 0;
 
 	/* select between logging methods */
 
@@ -1417,7 +1409,7 @@ int main(int argc, char **argv)
 	 * there will be no race condition in using it.  The easiest
 	 * place to do this is before the daemon fork.
 	 */
-	{
+	if (!selftest_only) {
 		err_t ugh = init_ctl_socket();
 
 		if (ugh != NULL) {
@@ -1481,6 +1473,7 @@ int main(int argc, char **argv)
 	} else {
 		/* no daemon fork: we have to fill in lock file */
 		(void) fill_lock(lockfd, getpid());
+
 		if (isatty(fileno(stdout))) {
 			fprintf(stdout, "Pluto initialized\n");
 			fflush(stdout);
@@ -1535,7 +1528,7 @@ int main(int argc, char **argv)
 			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
 		}
 	}
-	if (DBGP(IMPAIR_FORCE_FIPS)) {
+	if (IMPAIR(FORCE_FIPS)) {
 		libreswan_log("Forcing FIPS checks to true to emulate FIPS mode");
 		lsw_set_fips_mode(LSW_FIPS_ON);
 	}
@@ -1731,6 +1724,16 @@ int main(int argc, char **argv)
 	init_connections();
 	init_ike_alg();
 	test_ike_alg();
+
+	if (selftest_only) {
+		/*
+		 * skip pluto_exit()
+		 * Not all components were initialized and
+		 * no lock files were created.
+		 */
+		exit(PLUTO_EXIT_OK);
+	}
+
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();

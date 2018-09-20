@@ -96,7 +96,7 @@ static void ipsec_ocf_queue_init(void)
 {
 	skb_queue_head_init(&ipsec_ocf_skbq);
 	tasklet_init(&ipsec_ocf_task, ipsec_ocf_skbq_process,
-		     (unsigned long) 0);
+		     0ul);
 }
 
 #define ipsec_ocf_queue_task(func, this) \

@@ -14,6 +14,8 @@
  * for more details.
  */
 
+#include "lswcdefs.h"
+
 #ifdef PFKEY
 extern void init_pfkey(void);
 #ifdef KLIPS
@@ -73,8 +75,6 @@ extern void pfkey_scan_shunts(void);
 
 extern int pfkeyfd;
 
-#endif /* PFKEY */
+extern err_t pfkey_mobike_check(struct state *st);
 
-#ifdef NETKEY_SUPPORT
-extern void netlink_register_proto(unsigned satype, const char *satypename);
-#endif
+#endif /* PFKEY */

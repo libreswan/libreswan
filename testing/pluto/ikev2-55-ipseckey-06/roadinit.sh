@@ -1,5 +1,4 @@
 /testing/guestbin/swan-prep --hostname north
-iptables -A OUTPUT -i eth0 -d 192.1.2.0/24 -p icmp -j DROP
 iptables -A INPUT -i eth0 -s 192.1.2.0/24 -p icmp -j DROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start

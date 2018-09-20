@@ -23,12 +23,10 @@
 #include "alg_byname.h"
 
 #include "ike_alg.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_integ.h"
+#include "ike_alg_prf.h"
 #include "ike_alg_dh.h"
-#include "ike_alg_aes.h"
-#include "ike_alg_3des.h"
-#include "ike_alg_sha1.h"
-#include "ike_alg_sha2.h"
-#include "ike_alg_none.h"
 #include "alg_info.h"
 
 static bool ike_proposal_ok(const struct proposal_parser *parser,
@@ -90,7 +88,9 @@ static const struct ike_alg *default_ikev2_groups[] = {
 };
 
 static const struct ike_alg *default_ike_ealgs[] = {
+#ifdef USE_AES
 	&ike_alg_encrypt_aes_cbc.common,
+#endif
 #ifdef USE_3DES
 	&ike_alg_encrypt_3des_cbc.common,
 #endif
@@ -98,9 +98,13 @@ static const struct ike_alg *default_ike_ealgs[] = {
 };
 
 static const struct ike_alg *default_ike_aalgs[] = {
+#ifdef USE_SHA2
 	&ike_alg_prf_sha2_256.common,
 	&ike_alg_prf_sha2_512.common,
+#endif
+#ifdef USE_SHA1
 	&ike_alg_prf_sha1.common,
+#endif
 	NULL,
 };
 

@@ -22,16 +22,7 @@ fi
 pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
 
 targets="install-base module_install"
-echo ">>> $0 'make ${targets}' on $(hostname) at $(date)" >>compile-log.txt
-# XXX: use tee -a instead?
-if make "$@" $targets >>compile-log.txt 2>&1; then
-    : 'make ${targets}' success
-else
-    status=$?
-    tail -20 compile-log.txt
-    : 'make ${targets}' failed: ${status}\; see compile-log.txt for details
-    exit ${status}
-fi
+make "$@" $targets
 
 # ensure selinux bits
 restorecon /usr/local/sbin -Rv

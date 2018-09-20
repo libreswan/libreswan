@@ -59,7 +59,7 @@ static struct prf_context *prf_init(const struct prf_desc *prf_desc,
 static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 				      const char *name,
 				      const char *key_name UNUSED,
-				      const u_int8_t *key, size_t sizeof_key)
+				      const uint8_t *key, size_t sizeof_key)
 {
 	struct prf_context *prf = prf_init(prf_desc, name);
 	/* XXX: use an untyped key */
@@ -126,7 +126,7 @@ static void digest_symkey(struct prf_context *prf, const char *name UNUSED,
 }
 
 static void digest_bytes(struct prf_context *prf, const char *name UNUSED,
-			 const u_int8_t *bytes, size_t sizeof_bytes)
+			 const uint8_t *bytes, size_t sizeof_bytes)
 {
 	passert(digest_bytes == prf->desc->prf_ops->digest_bytes);
 	append_symkey_bytes(&(prf->inner), bytes, sizeof_bytes);
@@ -175,7 +175,7 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 }
 
 static void final_bytes(struct prf_context **prfp,
-			u_int8_t *bytes, size_t sizeof_bytes)
+			uint8_t *bytes, size_t sizeof_bytes)
 {
 	passert(final_bytes == (*prfp)->desc->prf_ops->final_bytes);
 	PK11SymKey *outer = compute_outer(*prfp);
@@ -194,7 +194,7 @@ static void final_bytes(struct prf_context **prfp,
 static void hmac_prf_check(const struct prf_desc *prf)
 {
 	const struct ike_alg *alg = &prf->common;
-	passert_ike_alg(alg, prf->hasher != NULL);
+	pexpect_ike_alg(alg, prf->hasher != NULL);
 }
 
 const struct prf_ops ike_alg_prf_hmac_ops = {

@@ -1,4 +1,4 @@
-/* FreeS/WAN klips init/cleanup (klips.h)
+/* Libreswan klips init/cleanup (klips.h)
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  *
  * This program is free software; you can redistribute it and/or modify it

@@ -4,7 +4,7 @@
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2017 Andrew Cagney
+# Copyright (C) 2015-2018 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -43,7 +43,7 @@ OBJS += constants.o \
 	id.o initaddr.o initsaid.o initsubnet.o \
 	iprange.o \
         keyblobtoid.o \
-	kernel_alg.o lex.o \
+	lex.o \
 	lswconf.o \
 	lswfips.o \
 	rangetosubnet.o sameaddr.o \
@@ -51,12 +51,18 @@ OBJS += constants.o \
 	subnettypeof.o ttoaddr.o ttodata.o ttoprotoport.o \
 	ttorange.o ttosa.o ttosubnet.o ttoul.o \
 	secitem_chunk.o \
-	base64_rsa_pubkey.o \
+	base64_pubkey.o \
 	lswnss.o \
 	lsw_passert_fail.o \
-	libreswan_log.o \
-	libreswan_loglog.o \
 	alg_byname.o
+
+ifeq ($(USE_NETKEY),true)
+OBJS += addr_lookup.o
+endif
+
+OBJS += fd.o
+OBJS += kernel_alg.o
+OBJS += kernel_sadb.o
 
 # These get pulled in from the klips kernel code.
 VPATH += ${KLIPSSRCDIR}
@@ -70,6 +76,8 @@ OBJS += ultot.o
 
 OBJS += alg_info.o esp_info.o ike_info.o ah_info.o
 
+OBJS += ckaid.o
+
 OBJS += chunk.o
 OBJS += shunk.o
 
@@ -82,6 +90,7 @@ OBJS += monotime.o
 
 OBJS += debug.o
 OBJS += impair.o
+OBJS += keywords.o
 
 OBJS += libreswan_DBG_dump.o
 OBJS += libreswan_DBG_log.o
@@ -93,12 +102,16 @@ OBJS += libreswan_bad_case.o
 
 OBJS += rate_log.o
 
+OBJS += libreswan_log.o
+OBJS += libreswan_log_rc.o
+
 OBJS += lswlog.o
 OBJS += lswlog_dbg.o
 OBJS += lswlog_nss_error.o
 OBJS += lswlog_nss_ckm.o
 OBJS += lswlog_nss_ckf.o
 OBJS += lswlog_nss_cka.o
+OBJS += lswlog_nss_secitem.o
 OBJS += lswlog_source_line.o
 OBJS += lswlog_sanitized.o
 OBJS += lswlog_errno.o
@@ -121,9 +134,13 @@ OBJS += lswlog_passert.o
 # not much left using this
 CFLAGS += -I$(top_srcdir)/lib/libcrypto
 
+OBJS += ike_alg.o
 OBJS += ike_alg_test.o
+OBJS += ike_alg_encrypt_chacha20_poly1305.o
+OBJS += ike_alg_encrypt_nss_aead_ops.o
 OBJS += ike_alg_encrypt_nss_cbc_ops.o
 OBJS += ike_alg_encrypt_nss_ctr_ops.o
+OBJS += ike_alg_encrypt_nss_gcm_ops.o
 OBJS += ike_alg_desc.o
 ifeq ($(USE_3DES),true)
 OBJS += ike_alg_3des.o
@@ -160,7 +177,8 @@ ifeq ($(USE_DNSSEC),true)
 OBJS += unbound.o
 endif
 
-OBJS += sanitizestring.o pfkey_print.o pfkey_sock.o pfkey_error.o
+OBJS += sanitizestring.o
+OBJS += pfkey_sock.o pfkey_error.o
 
 ifeq ($(USE_KLIPS),true)
 CFLAGS += -DKLIPS

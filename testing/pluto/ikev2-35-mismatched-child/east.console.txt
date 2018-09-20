@@ -1,0 +1,31 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-mismatch
+002 added connection description "westnet-eastnet-mismatch"
+east #
+ echo "initdone"
+initdone
+east #
+ # this should not match anything
+east #
+ grep v2N_INVALID_MESSAGE_ID /tmp/pluto.log
+east #
+ # this shows we returned the error in IKE_AUTH
+east #
+ grep "exchange type:" /tmp/pluto.log
+|    exchange type: ISAKMP_v2_SA_INIT (0x22)
+|    exchange type: ISAKMP_v2_SA_INIT (0x22)
+|    exchange type: ISAKMP_v2_AUTH (0x23)
+|    exchange type: ISAKMP_v2_AUTH (0x23)
+|    exchange type: ISAKMP_v2_AUTH (0x23)
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

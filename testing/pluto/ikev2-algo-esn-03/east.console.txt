@@ -17,8 +17,8 @@ east #
  # replay-window will show up as 0 when ESN is enabled due to kernel bug.
 east #
  ip xfrm state |grep replay-window
-	replay-window 0 flag af-unspec 80
-	replay-window 0 flag af-unspec 80
+	replay-window 0 flag af-unspec esn
+	replay-window 0 flag af-unspec esn
 east #
  grep "enabling ESN" /tmp/pluto.log
 | netlink: enabling ESN

@@ -34,15 +34,22 @@ def add_arguments(parser):
                                       "options for publishing the results as json")
     group.add_argument("--publish-results", metavar="DIRECTORY",
                        type=argutil.directory,
-                       help="publish the test run results in %(metavar)s as json")
+                       help="publish the results from the test run in %(metavar)s as json")
     group.add_argument("--publish-status", metavar="STATUS-FILE",
                        type=argutil.directory_file,
-                       help="publish the test run status in %(metavar)s as json")
+                       help="publish (with live updates) the status of the test run in %(metavar)s as json")
+    group.add_argument("--publish-summary", metavar="SUMMARY-FILE",
+                       type=argutil.directory_file,
+                       help="publish a summary in %(metavar)s as json; default: DIRECTORY/summary.json")
+    group.add_argument("--publish-hash", metavar="HASH",
+                       help="hash code of the commit being tested; added to the summary")
 
 def log_arguments(logger, args):
     logger.info("Publish arguments:")
-    logger.info("  publish-directory: '%s'", args.publish_results)
+    logger.info("  publish-results: '%s'", args.publish_results)
     logger.info("  publish-status: '%s'", args.publish_status)
+    logger.info("  publish-summary: '%s'", args.publish_summary)
+    logger.info("  publish-hash: '%s'", args.publish_hash)
 
 
 results_to_print = printer.Print(printer.Print.test_name,
@@ -54,7 +61,6 @@ results_to_print = printer.Print(printer.Print.test_name,
                                  printer.Print.result,
                                  printer.Print.issues,
                                  printer.Print.runtime,
-                                 printer.Print.total_time,
                                  printer.Print.boot_time,
                                  printer.Print.script_time)
 
@@ -217,7 +223,13 @@ def json_summary(logger, args):
         JSON_SUMMARY["runtime"] = datetime.utcfromtimestamp(runtime).strftime("%H:%M")
     # other stuff
     JSON_SUMMARY["total"] = len(JSON_RESULTS)
-    path = os.path.join(args.publish_results, "summary.json")
+    if args.publish_hash:
+        JSON_SUMMARY["hash"] = args.publish_hash
+    # emit
+    if args.publish_summary:
+        path = args.publish_summary;
+    else:
+        path = os.path.join(args.publish_results, "summary.json")
     logger.info("writing summary to '%s'", path)
     with open(path, "w") as output:
         jsonutil.dump(JSON_SUMMARY, output)

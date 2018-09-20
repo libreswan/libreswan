@@ -36,7 +36,8 @@
 #include "kernel_alg.h"
 #include "alg_info.h"
 #include "ike_alg.h"
-#include "ike_alg_none.h"
+#include "ike_alg_integ.h"
+#include "ike_alg_encrypt.h"
 #include "plutoalg.h"
 #include "crypto.h"
 #include "spdb.h"
@@ -94,19 +95,13 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 						   esp_info->enckeylen);
 		} else {
 			/* no key length - if required add default here and add another max entry */
-			int def_ks = crypto_req_keysize(CRK_ESPorAH, ealg_i);
-			int new_keysize = (esp_info->encrypt->keylen_omitted ? 0
-					   : esp_info->encrypt->keydeflen);
-			pexpect(def_ks == new_keysize);
+			int def_ks = (esp_info->encrypt->keylen_omitted ? 0
+				      : esp_info->encrypt->keydeflen);
 
 			if (def_ks != 0) {
-				int max_ks = BITS_PER_BYTE *
-					kernel_alg_esp_enc_max_keylen(ealg_i);
-
-				db_attr_add_values(db_ctx,
-					KEY_LENGTH,
-					def_ks);
+				db_attr_add_values(db_ctx, KEY_LENGTH, def_ks);
 				/* add this trans again with max key size */
+				int max_ks = encrypt_max_key_bit_length(esp_info->encrypt);
 				if (def_ks != max_ks) {
 					db_trans_add(db_ctx, ealg_i);
 					if (esp_info->integ != &ike_alg_integ_none) {
@@ -141,16 +136,16 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
  *	malloced pointer (this quirk allows easier spdb.c change)
  */
 static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
-				     lset_t policy, bool logit)
+					    lset_t policy, bool logit)
 {
 	unsigned int trans_cnt = 0;
 	int protoid = PROTO_RESERVED;
 
 	if (policy & POLICY_ENCRYPT) {
-		trans_cnt = (esp_ealg_num * esp_aalg_num);
+		trans_cnt = kernel_alg_encrypt_count() * kernel_alg_integ_count();
 		protoid = PROTO_IPSEC_ESP;
 	} else if (policy & POLICY_AUTHENTICATE) {
-		trans_cnt = esp_aalg_num;
+		trans_cnt = kernel_alg_integ_count();
 		protoid = PROTO_IPSEC_AH;
 	}
 
@@ -170,10 +165,13 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 
 	bool success = TRUE;
 	if (alg_info != NULL) {
-		FOR_EACH_ESP_INFO(alg_info, esp_info) {
-			if (!kernel_alg_db_add(ctx_new,
-					esp_info,
-					policy, logit))
+		FOR_EACH_ESP_INFO(alg_info, proposal) {
+			LSWDBGP(DBG_CONTROL | DBG_EMITTING, buf) {
+				lswlogs(buf, "adding proposal: ");
+				lswlog_proposal_info(buf, proposal);
+			}
+			if (!kernel_alg_db_add(ctx_new, proposal,
+					       policy, logit))
 				success = FALSE;	/* ??? should we break? */
 		}
 	} else {
@@ -213,33 +211,26 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 
 void kernel_alg_show_status(void)
 {
-	unsigned sadb_id;
-
-	whack_log(RC_COMMENT, "ESP algorithms supported:");
+	whack_log(RC_COMMENT, "Kernel algorithms supported:");
 	whack_log(RC_COMMENT, " "); /* spacer */
 
-	ESP_EALG_FOR_EACH(sadb_id) {
-		const struct sadb_alg *alg_p = &esp_ealg[sadb_id];
-
+	for (const struct encrypt_desc **alg_p = next_kernel_encrypt_desc(NULL);
+	     alg_p != NULL; alg_p = next_kernel_encrypt_desc(alg_p)) {
+		const struct encrypt_desc *alg = *alg_p;
 		whack_log(RC_COMMENT,
-			"algorithm ESP encrypt: id=%d, name=%s, ivlen=%d, keysizemin=%d, keysizemax=%d",
-			sadb_id,
-			enum_name(&esp_transformid_names, sadb_id),
-			alg_p->sadb_alg_ivlen,
-			alg_p->sadb_alg_minbits,
-			alg_p->sadb_alg_maxbits);
+			  "algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
+			  alg->common.fqn,
+			  encrypt_min_key_bit_length(alg),
+			  encrypt_max_key_bit_length(alg));
 	}
 
-	ESP_AALG_FOR_EACH(sadb_id) {
-		unsigned id = alg_info_esp_sadb2aa(sadb_id);
-		const struct sadb_alg *alg_p = &esp_aalg[sadb_id];
-
+	for (const struct integ_desc **alg_p = next_kernel_integ_desc(NULL);
+	     alg_p != NULL; alg_p = next_kernel_integ_desc(alg_p)) {
+		const struct integ_desc *alg = *alg_p;
 		whack_log(RC_COMMENT,
-			"algorithm AH/ESP auth: id=%d, name=%s, keysizemin=%d, keysizemax=%d",
-			id,
-			enum_name(&auth_alg_names, id),
-			alg_p->sadb_alg_minbits,
-			alg_p->sadb_alg_maxbits);
+			  "algorithm AH/ESP auth: name=%s, key-length=%zu",
+			  alg->common.fqn,
+			  alg->integ_keymat_size * BITS_PER_BYTE);
 	}
 
 	whack_log(RC_COMMENT, " "); /* spacer */

@@ -1,9 +1,11 @@
 #ifndef _DNSSEC_H
 # define _DNSSEC_H
 
+#include <stdbool.h>
 #include <event2/event.h>
 #include <unbound.h>
 
+#include "ip_address.h"
 
 extern void unbound_ctx_free(void);
 extern void unbound_sync_init(bool do_dnssec, const char *rootfile,

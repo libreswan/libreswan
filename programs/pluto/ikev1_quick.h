@@ -23,9 +23,3 @@ extern void quick_outI1(int whack_sock,
 			, struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			);
-
-extern state_transition_fn
-	quick_inI1_outR1,
-	quick_inR1_outI2,
-	quick_inI2;
-

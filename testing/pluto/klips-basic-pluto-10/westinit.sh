@@ -8,7 +8,7 @@ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 # temporary speed up by giving up on first failure
-ipsec whack --impair retransmits
+ipsec whack --impair suppress-retransmits
 ipsec auto --add westnet-eastnet-null
 ipsec auto --status | grep westnet-eastnet-null
 echo "initdone"

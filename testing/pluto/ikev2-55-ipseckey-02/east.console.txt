@@ -30,7 +30,7 @@ east #
 east #
  ipsec auto --listpubkeys
 000  
-000 List of RSA Public Keys:
+000 List of Public Keys:
 000  
 000 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
 000        ID_FQDN '@east'
@@ -42,7 +42,7 @@ east #
 east #
  ipsec auto --listpubkeys
 000  
-000 List of RSA Public Keys:
+000 List of Public Keys:
 000  
 000 TIMESTAMP, 3712 RSA Key AQPhNstk9 (no private key), until TIMESTAMP warning (expires in X days)
 000        ID_FQDN '@road.testing.libreswan.org'

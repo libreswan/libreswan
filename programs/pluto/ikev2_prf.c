@@ -327,12 +327,12 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 	{
 		chunk_t Ni64 = chunk(Ni.ptr, BYTES_FOR_BITS(64));
 		chunk_t Nr64 = chunk(Nr.ptr, BYTES_FOR_BITS(64));
-		key = concat_chunk_chunk("key = Ni|Nr", Ni64, Nr64);
+		key = clone_chunk_chunk(Ni64, Nr64, "key = Ni|Nr");
 		key_name = "Ni[0:63] | Nr[0:63]";
 		break;
 	}
 	default:
-		key = concat_chunk_chunk("key = Ni|Nr", Ni, Nr);
+		key = clone_chunk_chunk(Ni, Nr, "key = Ni|Nr");
 		key_name = "Ni | Nr";
 		break;
 	}

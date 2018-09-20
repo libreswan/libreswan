@@ -55,8 +55,10 @@ static void nss_ecp_calc_secret(const struct oakley_group_desc *group,
 		PASSERT_FAIL("Lookup of OID %d for EC group %s parameters failed",
 			     group->nss_oid, group->common.name);
 	}
-	DBG(DBG_CRYPT,
-	    DBG_dump("pk11_data", pk11_data->oid.data, pk11_data->oid.len));
+	LSWDBGP(DBG_CRYPT, buf) {
+		lswlogs(buf, "pk11_data->oid: ");
+		lswlog_nss_secitem(buf, &pk11_data->oid);
+	}
 
 	/*
 	 * Need to prepend the param with its size; for moment assume
@@ -69,8 +71,10 @@ static void nss_ecp_calc_secret(const struct oakley_group_desc *group,
 	pk11_param->data[0] = SEC_ASN1_OBJECT_ID;
 	pk11_param->data[1] = pk11_data->oid.len;
 	memcpy(pk11_param->data + 2, pk11_data->oid.data, pk11_data->oid.len);
-	DBG(DBG_CRYPT,
-	    DBG_dump("pk11_param", pk11_param->data, pk11_param->len));
+	LSWDBGP(DBG_CRYPT, buf) {
+		lswlogs(buf, "pk11_param");
+		lswlog_nss_secitem(buf, pk11_param);
+	}
 
 	*privk = SECKEY_CreateECPrivateKey(pk11_param, pubk,
 					   lsw_return_nss_password_file_info());
@@ -84,14 +88,14 @@ static void nss_ecp_calc_secret(const struct oakley_group_desc *group,
 		}
 	}
 
-	DBG(DBG_CRYPT,
-	    DBG_log("public keyType %d size %d publicValue@%p %d bytes",
-		    (*pubk)->keyType,
-		    (*pubk)->u.ec.size,
-		    (*pubk)->u.ec.publicValue.data,
-		    (*pubk)->u.ec.publicValue.len);
-	    DBG_dump("public key", (*pubk)->u.ec.publicValue.data,
-		     (*pubk)->u.ec.publicValue.len));
+	LSWDBGP(DBG_CRYPT, buf) {
+		lswlogf(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
+			(*pubk)->keyType,
+			(*pubk)->u.ec.size,
+			(*pubk)->u.ec.publicValue.data,
+			(*pubk)->u.ec.publicValue.len);
+		lswlog_nss_secitem(buf, &(*pubk)->u.ec.publicValue);
+	}
 
 #ifdef USE_DH31
 	if (group->nss_oid == SEC_OID_CURVE25519) {
@@ -199,7 +203,7 @@ static PK11SymKey *nss_ecp_calc_shared(const struct oakley_group_desc *group,
 static void nss_ecp_check(const struct oakley_group_desc *dhmke)
 {
 	const struct ike_alg *alg = &dhmke->common;
-	passert_ike_alg(alg, dhmke->nss_oid > 0);
+	pexpect_ike_alg(alg, dhmke->nss_oid > 0);
 }
 
 const struct dh_ops ike_alg_dh_nss_ecp_ops = {

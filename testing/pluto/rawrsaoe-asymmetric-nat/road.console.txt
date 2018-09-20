@@ -1,0 +1,76 @@
+/testing/guestbin/swan-prep
+road #
+ cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
+road #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ ipsec whack --impair suppress-retransmits
+road #
+ # ensure for tests acquires expire before our failureshunt=2m
+road #
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
+road #
+ # give OE policies time to load
+road #
+ sleep 5
+road #
+ echo "initdone"
+initdone
+road #
+ ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.23 --keyid 192.1.2.23 --pubkeyrsa 0sAQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv
+002 initiate on demand from 192.1.3.209:0 to 192.1.2.23:0 proto=0 because: whack
+133 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiate
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: Authenticated using RSA
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 10.0.10.1
+002 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+road #
+ # should show established tunnel and no bare shunts
+road #
+ # ping should succeed through tunnel
+road #
+ ping -n -c 2 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23', lease=10.0.10.1/32
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23', lease=10.0.10.1/32
+road #
+ echo done
+done
+road #
+ # A tunnel should have established with non-zero byte counters
+road #
+ grep "negotiated connection" /tmp/pluto.log
+"private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+road #
+ # you should RSA and NULL
+road #
+ grep IKEv2_AUTH_ /tmp/pluto.log
+|    auth method: IKEv2_AUTH_NULL (0xd)
+|    auth method: IKEv2_AUTH_RSA (0x1)
+road #
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

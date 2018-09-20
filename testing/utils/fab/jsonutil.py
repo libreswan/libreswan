@@ -24,27 +24,11 @@ class result:
     issues = "errors" # for historic reasons, "issues" are publicly called "errors"
     script_time = "script_time"
     boot_time = "boot_time"
-    total_time = "total_time"
     hosts = "hosts"
     # keep things going
     time = "time"
     runtime = "runtime"
 
-
-class results:
-    summary = "summary"
-    table = "table"
-
-class summary:
-    passed = "passed"
-    failed = "failed"
-    incomplete = "incomplete"
-    good = "good"
-    total = "Total"
-    # end-time: YYYY-MM-DD HH:MM see ftime/ptime.
-    date = "date"
-    runtime = "runtime"
-    directory = "directory"
 
 def load(io):
     try:

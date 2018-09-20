@@ -33,8 +33,8 @@ generating ID_PROT request 0 [ SA V V V V V ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed ID_PROT response 0 [ SA V V V ]
-received DPD vendor ID
 received FRAGMENTATION vendor ID
+received DPD vendor ID
 received NAT-T (RFC 3947) vendor ID
 generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
@@ -47,11 +47,11 @@ parsed ID_PROT response 0 [ ID HASH ]
 IKE_SA westnet-eastnet-ikev1[1] established between 192.1.2.45[west]...192.1.2.23[east]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
-generating QUICK_MODE request 0123456789 [ HASH SA No ID ID ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed QUICK_MODE response 0123456789 [ HASH SA No ID ID ]
 CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+generating QUICK_MODE request 0123456789 [ HASH ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 connection 'westnet-eastnet-ikev1' established successfully
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
@@ -68,27 +68,27 @@ west #
 west #
  ip xfrm state
 src 192.1.2.45 dst 192.1.2.23
-	proto ah spi 0xSPISPI reqid 1 mode tunnel
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec align4
-	auth-trunc hmac(sha256) 0xKEY 128
+	auth-trunc hmac(sha256) 0xHASHKEY 128
 src 192.1.2.23 dst 192.1.2.45
-	proto ah spi 0xSPISPI reqid 1 mode tunnel
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec align4
-	auth-trunc hmac(sha256) 0xKEY 128
+	auth-trunc hmac(sha256) 0xHASHKEY 128
 west #
- ip xfrm pol
+ ip xfrm policy
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 375423 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto ah spi 0xSPISPI reqid 1 mode tunnel
+		proto ah spi 0xSPISPI reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir fwd priority 375423 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto ah reqid 1 mode tunnel
+		proto ah reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir in priority 375423 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto ah reqid 1 mode tunnel
+		proto ah reqid REQID mode tunnel
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 

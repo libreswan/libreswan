@@ -80,7 +80,7 @@ ip_subnet *dst;
  */
 err_t	/* NULL for success, else string literal */
 addrtosubnet(addr, dst)
-const ip_address * addr;
+const ip_address *addr;
 ip_subnet *dst;
 {
 	int n;

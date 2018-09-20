@@ -65,7 +65,7 @@ static bool send_v1_frags(struct state *st, const char *where)
 		(natt_bonus + NSIZEOF_isakmp_hdr +
 		 NSIZEOF_isakmp_ikefrag);
 
-	u_int8_t *packet_cursor = st->st_tpacket.ptr;
+	uint8_t *packet_cursor = st->st_tpacket.ptr;
 	size_t packet_remainder_len = st->st_tpacket.len;
 
 	/* BUG: this code does not use the marshalling code
@@ -77,19 +77,23 @@ static bool send_v1_frags(struct state *st, const char *where)
 		sizeof(struct isakmp_ikefrag) == NSIZEOF_isakmp_ikefrag);
 
 	while (packet_remainder_len > 0) {
-		u_int8_t frag_prefix[NSIZEOF_isakmp_hdr +
+		uint8_t frag_prefix[NSIZEOF_isakmp_hdr +
 				     NSIZEOF_isakmp_ikefrag];
 		const size_t data_len = packet_remainder_len > max_data_len ?
 					max_data_len : packet_remainder_len;
 		const size_t fragpl_len = NSIZEOF_isakmp_ikefrag + data_len;
 		const size_t isakmppl_len = NSIZEOF_isakmp_hdr + fragpl_len;
 
+		/*
+		 * process_v1_packet would not accept this if it were greater
+		 * than 16 but it is hard to see how this would happen.
+		 */
 		fragnum++;
 
 		/* emit isakmp header derived from original */
 		{
 			struct isakmp_hdr *ih =
-				(struct isakmp_hdr*) frag_prefix;
+				(struct isakmp_hdr *) frag_prefix;
 
 			memcpy(ih, st->st_tpacket.ptr, NSIZEOF_isakmp_hdr);
 			ih->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION; /* one octet */
@@ -104,10 +108,10 @@ static bool send_v1_frags(struct state *st, const char *where)
 		/* Append the ike frag header */
 		{
 			struct isakmp_ikefrag *fh =
-				(struct isakmp_ikefrag*) (frag_prefix +
+				(struct isakmp_ikefrag *) (frag_prefix +
 							  NSIZEOF_isakmp_hdr);
 
-			fh->isafrag_np = 0;             /* must be zero */
+			fh->isafrag_np = ISAKMP_NEXT_NONE;             /* must be zero */
 			fh->isafrag_reserved = 0;       /* reserved at this time, must be zero */
 			fh->isafrag_length = htons(fragpl_len);
 			fh->isafrag_id = htons(1);      /* In theory required to be unique, in practise not needed? */

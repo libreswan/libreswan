@@ -4,7 +4,13 @@
 <para>How the security gateways will authenticate to the other side in
 the case of asymmetric authentication;
 acceptable values are <emphasis remap='B'>rsasig</emphasis>
-for RSA digital signatures based authentication,
+for RSA Authentication with SHA-1,
+<emphasis remap='B'>rsa-sha2</emphasis> for RSA-PSS digital signatures based
+authentication with SHA2-256,
+<emphasis remap='B'>rsa-sha2_384</emphasis> for RSA-PSS digital signatures based
+authentication with SHA2-384,
+<emphasis remap='B'>rsa-sha2_512</emphasis> for RSA-PSS digital signatures based
+authentication with SHA2-512,
 <emphasis remap='B'>secret</emphasis> for shared secrets (PSK) authentication
 and <emphasis remap='B'>null</emphasis> for null-authentication. There is no
 default value - if unset, the symmetrical <emphasis remap='B'>authby=</emphasis>

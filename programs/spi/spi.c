@@ -63,9 +63,9 @@
 #include "lswtool.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
+#include "kernel_sadb.h"
 #include "pfkey_help.h"
 #include "ip_address.h"
-#include "lsw_select.h"
 
 struct encap_msghdr *em;
 
@@ -147,7 +147,7 @@ static void usage(const char *s, FILE *f)
 	exit(-1);
 }
 
-static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
+static bool parse_life_options(uint32_t life[life_maxsever][life_maxtype],
 		       char *life_opt[life_maxsever][life_maxtype],
 		       char *myoptarg)
 {
@@ -285,9 +285,9 @@ static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		}
 		life_opt[life_severity][life_type] = optargt;
 		if (debug) {
-			fprintf(stdout, "%s lifetime %s set to %lu.\n",
+			fprintf(stdout, "%s lifetime %s set to %" PRIu32 ".\n",
 				progname, optargt,
-				(unsigned long)life[life_severity][life_type]);
+				life[life_severity][life_type]);
 		}
 		optargp = endptr + 1;
 	} while (*endptr != '\0');
@@ -387,8 +387,8 @@ static bool kernel_alg_proc_read(void)
 				sadb_alg.sadb_alg_minbits = minbits;
 				sadb_alg.sadb_alg_maxbits = maxbits;
 				sadb_alg.sadb_alg_reserved = 0;
-				kernel_alg_add(satype, supp_exttype,
-					       &sadb_alg);
+				kernel_add_sadb_alg(satype, supp_exttype,
+						    &sadb_alg);
 				break;
 			}
 			break;
@@ -444,7 +444,6 @@ static int decode_esp(char *algname)
 		esp_ealg_id = esp_info->encrypt->common.id[IKEv1_ESP_ID];
 		esp_aalg_id = esp_info->integ->common.id[IKEv1_ESP_ID];
 		if (kernel_alg_proc_read()) {
-
 			proc_read_ok++;
 
 			if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
@@ -504,7 +503,7 @@ static void decode_blob(const char *optarg, const char *name, unsigned char **pp
 }
 
 static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
-	char *lo[life_maxtype], u_int32_t l[life_maxtype])
+	char *lo[life_maxtype], uint32_t l[life_maxtype])
 {
 	if (lo[life_alloc] != NULL ||
 	    lo[life_bytes] != NULL ||
@@ -560,8 +559,8 @@ int main(int argc, char *argv[])
 	struct sadb_msg *pfkey_msg;
 	char *edst_opt, *spi_opt, *proto_opt, *af_opt, *said_opt, *dst_opt,
 		*src_opt;
-	u_int32_t natt;
-	u_int16_t sport, dport;
+	uint32_t natt;
+	uint16_t sport, dport;
 	uint32_t life[life_maxsever][life_maxtype];
 	char *life_opt[life_maxsever][life_maxtype];
 	struct stat sts;
@@ -903,22 +902,18 @@ int main(int argc, char *argv[])
 			}
 			if (streq(optarg, "inet")) {
 				address_family = AF_INET;
-				/* currently we ensure that all addresses belong to the same address family */
-				anyaddr(address_family, &dst);
-				anyaddr(address_family, &edst);
-				anyaddr(address_family, &src);
 			} else if (streq(optarg, "inet6")) {
 				address_family = AF_INET6;
-				/* currently we ensure that all addresses belong to the same address family */
-				anyaddr(address_family, &dst);
-				anyaddr(address_family, &edst);
-				anyaddr(address_family, &src);
 			} else {
 				fprintf(stderr,
 					"%s: Invalid ADDRESS FAMILY parameter: %s.\n",
 					progname, optarg);
 				exit(1);
 			}
+			/* currently we ensure that all addresses belong to the same address family */
+			anyaddr(address_family, &dst);
+			anyaddr(address_family, &edst);
+			anyaddr(address_family, &src);
 			af_opt = optarg;
 			break;
 
@@ -1163,63 +1158,49 @@ int main(int argc, char *argv[])
 	case XF_OTHER_ALG:
 		/* validate keysizes */
 		if (proc_read_ok) {
-			const struct sadb_alg *alg_p;
-			size_t keylen, minbits, maxbits;
-			/*
-			 * XXX: According to "alg_info.h", TRANSID is
-			 * an "enum ipsec_cipher_algo".  This code
-			 * seems to assume that those values 1:1 map
-			 * onto the corresponding kernel SADB value?
-			 */
-			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
-							SADB_EXT_SUPPORTED_ENCRYPT,
-							esp_info->encrypt->common.id[IKEv1_ESP_ID]);
-			assert(alg_p != NULL);
-			keylen = enckeylen * 8;
-
-			minbits = alg_p->sadb_alg_minbits;
-			maxbits = alg_p->sadb_alg_maxbits;
-			/*
-			 * if explicit keylen told in encrypt algo, eg "aes128"
-			 * check actual keylen "equality"
-			 */
-			if (esp_info->enckeylen &&
-			    esp_info->enckeylen != keylen) {
-				fprintf(stderr, "%s: invalid encryption keylen=%d, "
-					"required %d by encrypt algo string=\"%s\"\n",
-					progname,
-					(int)keylen,
-					(int)esp_info->enckeylen,
-					alg_string);
-				exit(1);
-
+			{
+				size_t keylen = enckeylen * 8;
+				size_t minbits = encrypt_min_key_bit_length(esp_info->encrypt);
+				size_t maxbits = encrypt_max_key_bit_length(esp_info->encrypt);
+				/*
+				 * if explicit keylen told in encrypt
+				 * algo, eg "aes128" check actual
+				 * keylen "equality"
+				 */
+				if (esp_info->enckeylen &&
+				    esp_info->enckeylen != keylen) {
+					fprintf(stderr, "%s: invalid encryption keylen=%d, "
+						"required %d by encrypt algo string=\"%s\"\n",
+						progname,
+						(int)keylen,
+						(int)esp_info->enckeylen,
+						alg_string);
+					exit(1);
+				}
+				/* thanks DES for this sh*t */
+				if (minbits > keylen || maxbits < keylen) {
+					fprintf(stderr, "%s: invalid encryption keylen=%d, "
+						"must be between %d and %d bits\n",
+						progname,
+						(int)keylen,
+						(int)minbits,
+						(int)maxbits);
+					exit(1);
+				}
 			}
-			/* thanks DES for this sh*t */
-
-			if (minbits > keylen || maxbits < keylen) {
-				fprintf(stderr, "%s: invalid encryption keylen=%d, "
-					"must be between %d and %d bits\n",
-					progname,
-					(int)keylen,
-					(int)minbits,
-					(int)maxbits);
-				exit(1);
-			}
-			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
-							SADB_EXT_SUPPORTED_AUTH,
-							esp_info->integ->integ_ikev1_ah_transform);
-			assert(alg_p);
-			keylen = authkeylen * 8;
-			minbits = alg_p->sadb_alg_minbits;
-			maxbits = alg_p->sadb_alg_maxbits;
-			if (minbits > keylen || maxbits < keylen) {
-				fprintf(stderr, "%s: invalid auth keylen=%d, "
-					"must be between %d and %d bits\n",
-					progname,
-					(int)keylen,
-					(int)minbits,
-					(int)maxbits);
-				exit(1);
+			{
+				size_t keylen = authkeylen * 8;
+				size_t minbits = esp_info->integ->integ_keymat_size * 8;
+				size_t maxbits = esp_info->integ->integ_keymat_size * 8;
+				if (minbits > keylen || maxbits < keylen) {
+					fprintf(stderr, "%s: invalid auth keylen=%d, "
+						"must be between %d and %d bits\n",
+						progname,
+						(int)keylen,
+						(int)minbits,
+						(int)maxbits);
+					exit(1);
+				}
 			}
 		}
 		/*
@@ -1578,7 +1559,6 @@ int main(int argc, char *argv[])
 			if (!success)
 				return FALSE;
 		}
-
 	}
 
 	if (debug) {
@@ -1722,10 +1702,9 @@ int main(int argc, char *argv[])
 			/* first, see if we got enough for an sadb_msg */
 			if ((size_t)readlen < sizeof(struct sadb_msg)) {
 				if (debug) {
-					printf("%s: runt packet of size: %ld (<%lu)\n",
-						progname, (long)readlen,
-						(unsigned long)sizeof(struct
-								      sadb_msg));
+					printf("%s: runt packet of size: %zd (<%zu)\n",
+						progname, readlen,
+						sizeof(struct sadb_msg));
 				}
 				continue;
 			}

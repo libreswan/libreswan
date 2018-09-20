@@ -54,14 +54,6 @@ $(mk.depend.dependencies.file): $(srcdir)/Makefile $(mk.depend.file) | $(builddi
 	done > $@.tmp
 	mv $@.tmp $@
 
-# Targets needing the builddir should add:
-#
-#     | $(builddir)
-#
-# as a soft/order-only dependency.
-$(builddir):
-	mkdir -p $(builddir)
-
 clean: mk.depend.clean
 .PHONY: mk.depend.clean
 mk.depend.clean:

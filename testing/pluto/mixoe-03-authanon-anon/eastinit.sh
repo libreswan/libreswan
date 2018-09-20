@@ -4,7 +4,7 @@ cp policies/* /etc/ipsec.d/policies/
 echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/clear-or-private
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec whack --impair retransmits
+ipsec whack --impair suppress-retransmits
 # give OE policies time to load
 sleep 5
 ipsec status | grep "our auth" | grep private

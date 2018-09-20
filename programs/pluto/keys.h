@@ -9,6 +9,7 @@
  * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,22 +25,34 @@
 #ifndef _KEYS_H
 #define _KEYS_H
 
+#include "lswcdefs.h"
 #include "x509.h"
 #include "certs.h"
+#include "err.h"
 
 struct connection;
 struct RSA_private_key;
 struct RSA_public_key;
+struct ECDSA_public_key;
+struct ECDSA_private_key;
 struct pubkey;
 
-extern int sign_hash(const struct RSA_private_key *k, const u_char *hash_val,
-		      size_t hash_len, u_char *sig_val, size_t sig_len);
+extern int sign_hash_RSA(const struct RSA_private_key *k, const u_char *hash_val,
+		      size_t hash_len, u_char *sig_val, size_t sig_len,
+		      enum notify_payload_hash_algorithms hash_algo);
+
+extern int sign_hash_ECDSA(const struct ECDSA_private_key *k, const u_char *hash_val,
+		      size_t hash_len, u_char *sig_val, size_t sig_len,
+		      enum notify_payload_hash_algorithms hash_algo);
 
 extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				      const u_char *hash_val, size_t hash_len,
-				      const u_char *sig_val, size_t sig_len);
+				      const u_char *sig_val, size_t sig_len,
+				      enum notify_payload_hash_algorithms hash_algo);
 
 extern const struct RSA_private_key *get_RSA_private_key(
+	const struct connection *c);
+extern const struct ECDSA_private_key *get_ECDSA_private_key(
 	const struct connection *c);
 
 extern bool has_private_key(cert_t cert);
@@ -67,11 +80,28 @@ extern stf_status RSA_check_signature_gen(struct state *st,
 					  const u_char hash_val[MAX_DIGEST_LEN],
 					  size_t hash_len,
 					  const struct packet_byte_stream *sig_pbs,
+					  enum notify_payload_hash_algorithms hash_algo,
 					  err_t (*try_RSA_signature)(
 						  const u_char hash_val[MAX_DIGEST_LEN],
 						  size_t hash_len,
 						  const struct packet_byte_stream *sig_pbs,
 						  struct pubkey *kr,
-						  struct state *st));
+						  struct state *st,
+						  enum notify_payload_hash_algorithms hash_algo));
+
+extern stf_status ECDSA_check_signature_gen(struct state *st,
+					  const u_char hash_val[MAX_DIGEST_LEN],
+					  size_t hash_len,
+					  const struct packet_byte_stream *sig_pbs,
+					  enum notify_payload_hash_algorithms hash_algo,
+					  err_t (*try_ECDSA_signature)(
+						  const u_char hash_val[MAX_DIGEST_LEN],
+						  size_t hash_len,
+						  const struct packet_byte_stream *sig_pbs,
+						  struct pubkey *kr,
+						  struct state *st,
+						  enum notify_payload_hash_algorithms hash_algo));
+
+enum PrivateKeyKind nss_cert_key_kind(CERTCertificate *cert);
 
 #endif /* _KEYS_H */

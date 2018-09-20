@@ -87,7 +87,20 @@ function lsw_summary_load(prefix, f) {
 
 function lsw_summary_cleanup(status, commits, summaries, current) {
 
+
     var summary = {}
+
+    // Create "summary.current" by merging current into status.
+
+    summary.current = status
+    if (current) {
+	Object.keys(current).forEach(function(key) {
+	    status[key] = current[key]
+	})
+    }
+    // probably redundant; but easier
+    lsw_cleanup_dates(summary.current, ["date"])
+    console.log("summary.current", summary.current)
 
     // Clean up the commits discarding anything strange.  Accumulate a
     // table containing all the commits.
@@ -104,7 +117,7 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 	    return false
 	}
 	// add to the lookup table
-	var hash = commit.abbreviated_commit_hash
+	var hash = commit.hash
 	if (!hash) {
 	    console.log("discarding commit with no hash", commit)
 	    return false
@@ -124,7 +137,7 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
     // .children[] fields from the relevant hashes.
 
     summary.commits.forEach(function (commit) {
-	commit.abbreviated_parent_hashes.forEach(function (parent_hash) {
+	commit.parent_hashes.forEach(function (parent_hash) {
 	    var parent = commit_by_hash[parent_hash]
 	    if (parent) {
 		// cross link the parent and child
@@ -134,22 +147,10 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 	})
     })
 
-    // Create "summary.current" by merging current into status.
-
-    summary.current = status
-    if (current) {
-	Object.keys(current).forEach(function(key) {
-	    status[key] = current[key]
-	})
-    }
-    // probably redundant; but easier
-    lsw_cleanup_dates(summary.current, ["date"])
-    console.log("summary.current", summary.current)
-
     // Clean up the result values discarding anything strange.
     //
-    // Use the hash table above to cross link the test run with its
-    // commit.
+    // Use the hash table above to cross link each test run with a
+    // corresponding commit.
     //
     // Ensure the summary for current is up-to-date by appending the
     // latest and discarding any older earlier entry.
@@ -157,7 +158,7 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
     if (current) {
 	summaries.push(summary.current)
     }
-    summary.test_runs = summaries.filter(function (test_run, index) {
+    summary.test_runs = summaries.filter(function(test_run, index) {
 	// The above appended current's summary on the end so anything
 	// earlier is an out-of-date duplicate.
 	if (index < summaries.length - 1 && status.directory == test_run.directory) {
@@ -170,15 +171,15 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 	    return false
 	}
 	// Try to cross link commit and test_run
-	var hash = test_run.hash = lsw_directory_hash(test_run.directory)
+	var hash = test_run.hash
 	if (!hash) {
-	    console.warn("discarding test run", test_run, "at", index, "with an invalid hash")
+	    console.warn("discarding test run", test_run, "at", index, "with a missing .hash")
 	    return false
 	}
 	// Cross link when possible.
 	var commit = commit_by_hash[hash]
 	if (!commit) {
-	    console.warn("discarding test run", test_run, "at", index, "with no corresponding commit")
+	    console.warn("discarding test run", test_run, "at", index, "with commit matching .hash")
 	    return false
 	}
 	// Cross link commits and test_runs
@@ -188,15 +189,21 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
     })
 
     // Sort the test run by committer.date in assending order.
+
     summary.test_runs.sort(function(l, r) {
 	return l.commit.committer.date - r.commit.committer.date
     })
 
     // Use the commit<->test_run and commit.parent[] links created
-    // above to find the commits unique to this test run.
+    // above to find the commits unique to this test run.  Cross link
+    // those additional commits back to the test.
 
     summary.test_runs.forEach(function(test_run) {
 	test_run.commits = lsw_summary_commits(test_run.commit)
+	test_run.commits.forEach(function(commit) {
+	    // One of these assignments is redundant, oops.
+	    commit.test_run = test_run;
+	})
     })
 
     return summary
@@ -264,6 +271,8 @@ function lsw_html_escape(string) {
 
 // Return the commits as a blob of HTML.
 
+var lsw_abbrev_hash_length = 9
+
 function lsw_commits_html(commits) {
     html = ""
     html += "<table class=\"commits\"><tbody class=\"commits\">"
@@ -275,9 +284,9 @@ function lsw_commits_html(commits) {
 	html += "<td class=\"hash\">"
 	html += "<a href=\""
 	html += "https://github.com/libreswan/libreswan/commit/"
-	html += commit.abbreviated_commit_hash
+	html += commit.hash
 	html += "\">"
-	html += commit.abbreviated_commit_hash
+	html += commit.hash.substring(0, lsw_abbrev_hash_length);
 	html += "</a>"
 	html += "</td>"
 	html += "<td class=\"subject\">"
@@ -286,5 +295,22 @@ function lsw_commits_html(commits) {
 	html += "</tr>"
     })
     html += "</tbody></table>"
+    return html
+}
+
+// Return the errors as a blob of HTML.
+
+function lsw_errors_html(errors) {
+    var html = ""
+    if (errors) {
+	html += "<div class=\"errors\">"
+	Object.keys(errors).sort().forEach(function(error) {
+	    // only real errors are UPPER CASE?
+	    if (error == error.toUpperCase()) {
+		html += error + ": " + errors[error] + "<br>"
+	    }
+	})
+	html += "</div>"
+    }
     return html
 }

@@ -2730,7 +2730,7 @@ def setup_result_dir(args, to_create):
             pass
 
     if not ipsecversion:
-        # Lets assume the path is <LIBRESWANSRC>/testing/utis
+        # Let's assume the path is <LIBRESWANSRC>/testing/utis
         cwd = os.getcwd()
         dn = args.libreswandir
         os.chdir(dn)

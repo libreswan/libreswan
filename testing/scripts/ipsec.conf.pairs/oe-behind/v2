@@ -1,8 +1,0 @@
-# conn for OE for network behind us.
-# Uses implicit conn OEself.
-
-version 2.0
-
-conn private-or-clear-behind
-	leftsubnet=192.0.2.0/24	# behind east
-	also=private-or-clear

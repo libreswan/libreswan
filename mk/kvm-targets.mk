@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015-2017 Andrew Cagney
+# Copyright (C) 2015-2018 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -21,6 +21,18 @@
 # variable '$*'.  It is used to extract the DOMAIN from targets like
 # kvm-install-DOMAIN.
 
+#
+# The guest operating system.
+#
+# Pull in all its defaults so that they override everything below.
+
+KVM_OS ?= fedora22
+include testing/libvirt/$(KVM_OS).mk
+
+
+#
+# where things live and what gets created
+#
 
 KVM_SOURCEDIR ?= $(abs_top_srcdir)
 KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
@@ -34,7 +46,12 @@ KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
 KVM_WORKERS ?= 1
 KVM_USER ?= $(shell id -u)
 KVM_GROUP ?= $(shell id -g qemu)
-KVM_MAKEFLAGS ?= USE_EFENCE=true
+KVM_MAKEFLAGS ?= USE_EFENCE=false ALL_ALGS=false USE_DH31=false USE_SECCOMP=true USE_LABELED_IPSEC=true
+
+# targets for dumping the above
+.PHONY: print-kvm-prefixes
+print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
+
 
 #
 # Generate local names using prefixes
@@ -51,8 +68,7 @@ add-all-domain-prefixes = \
 # (there's a rumour that libreswan's main testing machine has this
 # problem) define a dedicated swandefault gateway.
 
-KVM_BASE_GATEWAY ?= swandefault
-KVM_LOCAL_GATEWAY = $(KVM_BASE_GATEWAY)
+KVM_GATEWAY ?= swandefault
 
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
@@ -66,15 +82,15 @@ KVM_CONNECTION ?= qemu:///system
 VIRSH = sudo virsh --connect $(KVM_CONNECTION)
 
 VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION)
+VIRT_CPU ?= --cpu host-passthrough
+VIRT_DISK_SIZE_GB ?=8
 VIRT_RND ?= --rng type=random,device=/dev/random
 VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_USER):$(KVM_GROUP)',relabel=yes
-VIRT_BASE_GATEWAY ?= --network=network:$(KVM_BASE_GATEWAY),model=virtio
-VIRT_LOCAL_GATEWAY ?= --network=network:$(KVM_LOCAL_GATEWAY),model=virtio
+VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
 VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=swansource
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
-
-# The KVM's operating system.
-KVM_OS ?= fedora22
+KVM_OS_VARIANT ?= $(KVM_OS)
+VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
 
 #
 # Hosts
@@ -83,7 +99,7 @@ KVM_OS ?= fedora22
 KVM_BASE_HOST = swan$(KVM_OS)base
 
 KVM_CLONE_HOST ?= clone
-KVM_BUILD_HOST ?= $(firstword $(KVM_INSTALL_HOSTS))
+KVM_BUILD_HOST ?= build
 
 KVM_TEST_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_BASIC_HOSTS = nic
@@ -114,21 +130,8 @@ KVM_DOMAINS = $(KVM_BASE_DOMAIN) $(KVM_LOCAL_DOMAINS)
 # what needs to be copied?
 #
 
-# A non-empty KVM_BUILD_COPIES indicates a separate build domain.
-
-KVM_CLONE_COPIES =
-KVM_BUILD_COPIES =
-
-KVM_CLONE_COPIES += $(KVM_BASIC_DOMAINS)
-ifneq ($(filter $(KVM_BUILD_DOMAIN),$(KVM_INSTALL_DOMAINS)),)
-# build is an install domain
-KVM_CLONE_COPIES += $(KVM_INSTALL_DOMAINS)
-else
-# separate build
-KVM_CLONE_COPIES += $(KVM_BUILD_DOMAIN)
-KVM_BUILD_COPIES += $(KVM_INSTALL_DOMAINS)
-endif
-
+KVM_CLONE_COPIES = $(KVM_BASIC_DOMAINS) $(KVM_BUILD_DOMAIN)
+KVM_BUILD_COPIES = $(KVM_INSTALL_DOMAINS)
 
 #
 # Other utilities and directories
@@ -175,7 +178,7 @@ check-kvm-entropy:
 	$(call check-kvm-entropy)
 broken-kvm-entropy:
 	:
-	:  According to $(KVM_ENTROPY_FILE) your computer do not seem to have much entropy.
+	:  According to $(KVM_ENTROPY_FILE) your computer does not seem to have much entropy.
 	:
 	:  Check the wiki for hints on how to fix this.
 	:
@@ -276,7 +279,7 @@ web-pages-disabled:
 define kvm-test
 .PHONY: $(1)
 $(1): kvm-keys kvm-shutdown-local-domains web-test-prep
-	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
+	$$(if $$(WEB_ENABLED),,@$(MAKE) -s web-pages-disabled)
 	: kvm-test target=$(1) param=$(2)
 	$$(call check-kvm-qemu-directory)
 	$$(call check-kvm-entropy)
@@ -284,10 +287,12 @@ $(1): kvm-keys kvm-shutdown-local-domains web-test-prep
 	$$(KVMRUNNER) \
 		$$(foreach prefix,$$(KVM_PREFIXES), --prefix $$(prefix)) \
 		$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) \
-		$$(if $$(WEB_RESULTSDIR), --publish-results $$(WEB_RESULTSDIR)) \
-		$$(if $$(WEB_SUMMARYDIR), --publish-status $$(WEB_SUMMARYDIR)/status.json) \
+		$$(if $$(WEB_ENABLED), \
+			--publish-hash $$(WEB_HASH) \
+			--publish-results $$(WEB_RESULTSDIR) \
+			--publish-status $$(WEB_SUMMARYDIR)/status.json) \
 		$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
-	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
+	$$(if $$(WEB_ENABLED),,@$(MAKE) -s web-pages-disabled)
 endef
 
 # "test" and "check" just runs the entire testsuite.
@@ -316,25 +321,6 @@ kvm-diffs:
 #
 # Build the KVM keys using the KVM.
 #
-
-KVM_KEYS_SCRIPT = ./testing/x509/kvm-keys.sh
-KVM_KEYS_EXPIRATION_DAY = 7
-KVM_KEYS_EXPIRED = find testing/x509/*/ -mtime +$(KVM_KEYS_EXPIRATION_DAY)
-
-.PHONY: kvm-keys
-kvm-keys: $(KVM_KEYS)
-	$(MAKE) --no-print-directory kvm-keys-up-to-date
-
-# For moment don't force keys to be re-built.
-.PHONY: kvm-keys-up-to-date
-kvm-keys-up-to-date:
-	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
-		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
-		$(KVM_KEYS_EXPIRED) | sed -e 's/^/  /' ; \
-		echo "run 'make kvm-keys-clean kvm-keys' to force an update" ; \
-		exit 1 ; \
-	fi
-
 # XXX:
 #
 # Can't yet force the domain's creation.  This target may have been
@@ -344,19 +330,66 @@ kvm-keys-up-to-date:
 # Make certain everything is shutdown.  Can't depend on the phony
 # target kvm-shutdown-local-domains as that triggers an unconditional
 # rebuild.  Instead invoke that rule inline.
+#
+# "dist_certs.py" can't create a directory called "certs/" on a 9p
+# mounted file system (OSError: [Errno 13] Permission denied:
+# 'certs/').  In fact, "mkdir xxx/ certs/" half fails (only xxx/ is
+# created) so it might even be a problem with the mkdir call!  Get
+# around this by first creating the certs in /tmp on the guest, and
+# then copying back using a tar file.
+#
+# "dist_certs.py" always writes its certificates to $(dirname $0).
+# Get around this by running a copy of dist_certs.py placed in /tmp.
 
-$(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+KVM_KEYS_EXPIRATION_DAY = 7
+KVM_KEYS_EXPIRED = find testing/x509/*/ -mtime +$(KVM_KEYS_EXPIRATION_DAY)
+
+.PHONY: kvm-keys
+kvm-keys: $(KVM_KEYS)
+	$(MAKE) --no-print-directory kvm-keys-up-to-date
+
+# $(KVM_KEYS): | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+$(KVM_KEYS): $(top_srcdir)/testing/x509/dist_certs.py
+$(KVM_KEYS): $(top_srcdir)/testing/x509/strongswan-ec-gen.sh
+$(KVM_KEYS): $(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh
+$(KVM_KEYS):
 	$(call check-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(call check-kvm-entropy)
 	$(call check-kvm-qemu-directory)
-	: invoke phony target to shut things down
+	: invoke phony target to shut things down and delete old keys
 	$(MAKE) kvm-shutdown-local-domains
 	$(MAKE) kvm-keys-clean
-	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
+	:
+	: disable FIPS
+	:
+	$(KVMSH) $(KVM_BUILD_DOMAIN) rm -f /etc/system-fips
+	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) ./testing/guestbin/fipsoff
+	:
+	: create the empty /tmp/x509 directory ready for the keys
+	:
+	$(KVMSH) $(KVM_BUILD_DOMAIN) rm -rf /tmp/x509
+	$(KVMSH) $(KVM_BUILD_DOMAIN) mkdir /tmp/x509
+	:
+	: per comments, generate everything in /tmp/x509
+	:
+	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) cp -f ./testing/x509/dist_certs.py /tmp/x509
+	$(KVMSH) --chdir /tmp/x509 $(KVM_BUILD_DOMAIN) ./dist_certs.py
+	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) cp -f ./testing/x509/strongswan-ec-gen.sh /tmp/x509
+	$(KVMSH) --chdir /tmp/x509 $(KVM_BUILD_DOMAIN) ./strongswan-ec-gen.sh
+	:
+	: copy the certs from guest to host in a tar ball to avoid 9fs bug
+	:
+	rm -f testing/x509/kvm-keys.tar
+	$(KVMSH) --chdir /tmp/x509 $(KVM_BUILD_DOMAIN) tar cf kvm-keys.tar '*/' nss-pw
+	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) cp /tmp/x509/kvm-keys.tar testing/x509
+	cd testing/x509 && tar xf kvm-keys.tar
+	rm -f testing/x509/kvm-keys.tar
+	:
 	: Also regenerate the DNSSEC keys -- uses host
+	:
 	$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh
 	$(KVMSH) --shutdown $(KVM_BUILD_DOMAIN)
-	touch $(KVM_KEYS)
+	touch $@
 
 KVM_KEYS_CLEAN_TARGETS = clean-kvm-keys kvm-clean-keys kvm-keys-clean
 .PHONY: $(KVM_KEYS_CLEAN_TARGETS)
@@ -367,7 +400,17 @@ $(KVM_KEYS_CLEAN_TARGETS):
 	rm -f testing/baseconfigs/all/etc/bind/keys/*.key
 	rm -f testing/baseconfigs/all/etc/bind/keys/*.private
 	rm -f testing/baseconfigs/all/etc/bind/dsset/dsset-*
+	rm -f testing/x509/kvm-keys.tar
 
+# For moment don't force keys to be re-built.
+.PHONY: kvm-keys-up-to-date
+kvm-keys-up-to-date:
+	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
+		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
+		$(KVM_KEYS_EXPIRED) | sed -e 's/^/  /' ; \
+		echo "run 'make kvm-keys-clean kvm-keys' to force an update" ; \
+		exit 1 ; \
+	fi
 
 #
 # Create an RPM for the test domains
@@ -417,27 +460,25 @@ endef
 # Base gateway.
 #
 
-KVM_BASE_GATEWAY_FILE = $(KVM_BASEDIR)/$(KVM_BASE_GATEWAY).xml
-.PHONY: install-kvm-network-$(KVM_BASE_GATEWAY)
-install-kvm-network-$(KVM_BASE_GATEWAY): $(KVM_BASE_GATEWAY_FILE)
-$(KVM_BASE_GATEWAY_FILE): | testing/libvirt/net/$(KVM_BASE_GATEWAY) $(KVM_BASEDIR)
-	$(call destroy-kvm-network,$(KVM_BASE_GATEWAY))
-	cp testing/libvirt/net/$(KVM_BASE_GATEWAY) $@.tmp
-	$(call create-kvm-network,$(KVM_BASE_GATEWAY),$@.tmp)
+KVM_GATEWAY_FILE = $(KVM_BASEDIR)/$(KVM_GATEWAY).xml
+.PHONY: install-kvm-network-$(KVM_GATEWAY)
+install-kvm-network-$(KVM_GATEWAY): $(KVM_GATEWAY_FILE)
+$(KVM_GATEWAY_FILE): | testing/libvirt/net/$(KVM_GATEWAY) $(KVM_BASEDIR)
+	$(call destroy-kvm-network,$(KVM_GATEWAY))
+	cp testing/libvirt/net/$(KVM_GATEWAY) $@.tmp
+	$(call create-kvm-network,$(KVM_GATEWAY),$@.tmp)
 	mv $@.tmp $@
 
-.PHONY: uninstall-kvm-network-$(KVM_BASE_GATEWAY)
-uninstall-kvm-network-$(KVM_BASE_GATEWAY):
-	rm -f $(KVM_BASE_GATEWAY_FILE)
-	$(call destroy-kvm-network,$(KVM_BASE_GATEWAY))
+.PHONY: uninstall-kvm-network-$(KVM_GATEWAY)
+uninstall-kvm-network-$(KVM_GATEWAY):
+	rm -f $(KVM_GATEWAY_FILE)
+	$(call destroy-kvm-network,$(KVM_GATEWAY))
 
 # zap dependent domains
 
-uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
-uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_CLONE_DOMAIN)
-ifneq ($(KVM_BUILD_COPIES),)
-uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_BUILD_DOMAIN)
-endif
+uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
+uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_CLONE_DOMAIN)
+uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_BUILD_DOMAIN)
 
 #
 # Test networks.
@@ -511,39 +552,9 @@ define upgrade-kvm-domain
 	$(KVMSH) --shutdown $(1)
 endef
 
-.PHONY: kvm-upgrade-base-domain
-kvm-upgrade-base-domain: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-	$(call upgrade-kvm-domain, $(KVM_BASE_DOMAIN))
-
-# need to both delete any dependent domains and/or build the clone
-# domain.
-
-.PHONY: kvm-upgrade kvm-upgrade-local-domains
-kvm-upgrade: kvm-upgrade-local-domains
-kvm-upgrade-local-domains: $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
-kvm-upgrade-local-domains: $(addprefix uninstall-kvm-domain-, $(KVM_CLONE_COPIES))
-kvm-upgrade-local-domains:
-	$(call upgrade-kvm-domain, $(KVM_CLONE_DOMAIN))
-	$(MAKE) kvm-install-local-domains
-
-
 #
 # Build KVM domains from scratch
 #
-
-# XXX: Once KVM_OS gets re-named to include the release, this hack can
-# be deleted.
-include testing/libvirt/$(KVM_OS).mk
-
-ifeq ($(KVM_OS_VARIANT),)
-$(error KVM_OS_VARIANT not defined)
-endif
-ifeq ($(KVM_ISO_URL),)
-$(error KVM_ISO_URL not defined)
-endif
-ifeq ($(KVM_KICKSTART_FILE),)
-$(error KVM_KICKSTART_FILE not defined)
-endif
 
 KVM_ISO = $(KVM_BASEDIR)/$(notdir $(KVM_ISO_URL))
 
@@ -566,12 +577,13 @@ define create-kvm-domain
 	: create-kvm-domain domain=$(1)
 	$(VIRT_INSTALL) \
 		--name $(1) \
-		--os-variant $(KVM_OS_VARIANT) \
+		$(VIRT_OS_VARIANT) \
 		--vcpus=1 \
 		--memory 512 \
 		--nographics \
 		--disk cache=writeback,path=$(KVM_LOCALDIR)/$(1).qcow2 \
-		$(VIRT_LOCAL_GATEWAY) \
+		$(VIRT_CPU) \
+		$(VIRT_GATEWAY) \
 		$(VIRT_RND) \
 		$(VIRT_SECURITY) \
 		$(VIRT_SOURCEDIR) \
@@ -597,19 +609,6 @@ define destroy-kvm-domain
 	fi
 endef
 
-define shadow-kvm-disk
-	: shadow-kvm-disk to=$(1) from-domain=$(2)
-	: shutdown from and fix any disk modes - logging into from messes that up
-	$(KVMSH) --shutdown $(2)
-	test -r $(KVM_LOCALDIR)/$(2).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_LOCALDIR)/$(2).qcow2
-	test -r $(KVM_LOCALDIR)/$(2).qcow2 || sudo chmod g+r          $(KVM_LOCALDIR)/$(2).qcow2
-	: create a shadow - from is used as a backing store
-	rm -f $(1)
-	qemu-img create -f qcow2 \
-		-b $(KVM_LOCALDIR)/$(2).qcow2 \
-		$(1)
-endef
-
 
 #
 # Create the base domain and (as a side effect) the disk image.
@@ -623,7 +622,7 @@ endef
 # disk-image in an incomplete state is avoided.
 
 .PRECIOUS: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_GATEWAY_FILE) $(KVM_BASEDIR)
+$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_GATEWAY_FILE) $(KVM_BASEDIR)
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_BASE_DOMAIN))
 	: delete any old disk and let virt-install create the image
@@ -633,12 +632,13 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 	: XXX: Passing $(VIRT_SECURITY) to virt-install causes it to panic
 	$(VIRT_INSTALL) \
 		--name=$(KVM_BASE_DOMAIN) \
-		--os-variant $(KVM_OS_VARIANT) \
+		$(VIRT__OS_VARIANT) \
 		--vcpus=1 \
 		--memory 1024 \
 		--nographics \
-		--disk size=8,cache=writeback,path=$(basename $@).qcow2 \
-		$(VIRT_BASE_GATEWAY) \
+		--disk size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
+		$(VIRT_CPU) \
+		$(VIRT_GATEWAY) \
 		$(VIRT_RND) \
 		--location=$(KVM_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
@@ -666,6 +666,9 @@ $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2: | $(KVM_LOCALDIR)
 	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
 	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
 	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r          $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
+	: if this test fails, user probably forgot this step:
+	: https://libreswan.org/wiki/Test_Suite#Setting_Users_and_Groups
+	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
 	: create a full copy
 	rm -f $@
 	qemu-img convert \
@@ -674,7 +677,23 @@ $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2: | $(KVM_LOCALDIR)
 		$@.tmp
 	mv $@.tmp $@
 
-# Create the basic disk images from clone
+# Create the local disk images from clone
+
+define shadow-kvm-disk
+	: shadow-kvm-disk to=$(1) from-domain=$(2)
+	: shutdown from and fix any disk modes - logging into from messes that up
+	$(KVMSH) --shutdown $(2)
+	test -r $(KVM_LOCALDIR)/$(2).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_LOCALDIR)/$(2).qcow2
+	test -r $(KVM_LOCALDIR)/$(2).qcow2 || sudo chmod g+r          $(KVM_LOCALDIR)/$(2).qcow2
+	: if this test fails, user probably forgot this step:
+	: https://libreswan.org/wiki/Test_Suite#Setting_Users_and_Groups
+	test -r $(KVM_LOCALDIR)/$(2).qcow2
+	: create a shadow - from is used as a backing store
+	rm -f $(1)
+	qemu-img create -f qcow2 \
+		-b $(KVM_LOCALDIR)/$(2).qcow2 \
+		$(1)
+endef
 
 KVM_CLONE_DISK_COPIES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_CLONE_COPIES)))
 $(KVM_CLONE_DISK_COPIES): | $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2
@@ -683,14 +702,12 @@ $(KVM_CLONE_DISK_COPIES): | $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2
 	$(call shadow-kvm-disk,$@.tmp,$(KVM_CLONE_DOMAIN))
 	mv $@.tmp $@
 
-ifneq ($(KVM_BUILD_COPIES),)
 KVM_BUILD_DISK_COPIES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_BUILD_COPIES)))
 $(KVM_BUILD_DISK_COPIES): | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
 	: copy-build-disk $@
 	$(call check-kvm-qemu-directory)
 	$(call shadow-kvm-disk,$@.tmp,$(KVM_BUILD_DOMAIN))
 	mv $@.tmp $@
-endif
 
 #
 # Create the local domains
@@ -710,11 +727,12 @@ endif
 $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2 \
-		$(KVM_BASE_GATEWAY_FILE) \
+		$(KVM_GATEWAY_FILE) \
 		$(KVM_LOCALDIR)
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(call create-kvm-domain,$(KVM_CLONE_DOMAIN))
+	$(call upgrade-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_CLONE_DOMAIN)
@@ -723,9 +741,17 @@ install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
 #
 # Create the "build" domain (if unique)
 #
+# Depend on a fully constructed $(KVM_CLONE_DOMAIN) (and not just that
+# domain's disk image).  If make creates the $(KVM_BUILD_DOMAIN)
+# before $(KVM_CLONE_DOMAIN) then virt-install complains that
+# $(KVM_CLONE_DOMAIN)'s disk is already in use.
+#
 
-ifneq ($(KVM_BUILD_COPIES),)
-$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: | $(KVM_BASE_GATEWAY_FILE) $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
+$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
+		| \
+		$(KVM_BASE_GATEWAY_FILE) \
+		$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml \
+		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
 	: build-domain $@
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
@@ -734,7 +760,6 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: | $(KVM_BASE_GATEWAY_FILE) $(KVM_LOCALD
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_BUILD_DOMAIN)
 install-kvm-domain-$(KVM_BUILD_DOMAIN): $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
-endif
 
 
 #
@@ -764,7 +789,6 @@ define install-kvm-test-domain
 		< 'testing/libvirt/vm/$(2)' \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
-	$(if $$(KVM_F26_HACK),$(KVM_F26_HACK))
 	mv $$@.tmp $$@
 endef
 
@@ -802,10 +826,8 @@ $(foreach domain, $(KVM_LOCAL_DOMAINS), \
 
 $(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN)): \
 	$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_COPIES))
-ifneq ($(KVM_BUILD_COPIES),)
 $(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN)): \
 	$(addprefix uninstall-kvm-domain-, $(KVM_BUILD_COPIES))
-endif
 
 #
 # Generic kvm-* rules, point at the *-kvm-* primitives defined
@@ -846,7 +868,7 @@ $(eval $(call kvm-hosts-domains,shutdown))
 
 
 .PHONY: kvm-install-base-network
-kvm-install-base-network: $(addprefix install-kvm-network-, $(KVM_BASE_GATEWAY))
+kvm-install-base-network: $(addprefix install-kvm-network-, $(KVM_GATEWAY))
 
 .PHONY: kvm-install-test-networks
 kvm-install-test-networks: $(addprefix install-kvm-network-,$(KVM_TEST_NETWORKS))
@@ -858,7 +880,7 @@ kvm-install-local-networks: kvm-install-test-networks
 kvm-uninstall-test-networks: $(addprefix uninstall-kvm-network-, $(KVM_TEST_NETWORKS))
 
 .PHONY: kvm-uninstall-base-network
-kvm-uninstall-base-network: $(addprefix uninstall-kvm-network-, $(KVM_BASE_GATEWAY))
+kvm-uninstall-base-network: $(addprefix uninstall-kvm-network-, $(KVM_GATEWAY))
 
 .PHONY: kvm-uninstall-local-networks
 kvm-uninstall-local-networks:  kvm-uninstall-test-networks
@@ -977,11 +999,7 @@ kvm-hive-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-hive)
 
 # If BUILD is defined, assume the HIVE install should be used.
 .PHONY: kvm-install
-ifneq ($(KVM_BUILD_COPIES),)
 kvm-install: kvm-hive-install
-else
-kvm-install: kvm-all-install
-endif
 
 # Since the install domains list isn't exhaustive (for instance, nic
 # is missing), add an explicit dependency on all the domains so that
@@ -1008,9 +1026,7 @@ kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_LOCALDIR)/$(domain).xm
 .PHONY: kvm-uninstall
 kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_INSTALL_DOMAINS))
 kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_BASIC_DOMAINS))
-ifneq ($(KVM_BUILD_COPIES),)
 kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN))
-endif
 
 
 #
@@ -1041,10 +1057,8 @@ $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOSTS)), \
 .PHONY: kvmsh-base
 kvmsh-base: kvmsh-$(KVM_BASE_DOMAIN)
 
-ifeq ($(KVM_BUILD_COPIES),)
 .PHONY: kvmsh-build
 kvmsh-build: kvmsh-$(KVM_BUILD_DOMAIN)
-endif
 
 
 #
@@ -1104,11 +1118,19 @@ define kvm-var-value
 $(1)=$(value $(1)) [$($(1))]
 endef
 
+define kvm-value
+$($(1)) [$(value $(1))]
+endef
+
+define kvm-var
+$($(1)) [$$($(1))]
+endef
+
 define kvm-config
 
 Configuration:
 
-  kvm configuration:
+  Makefile variables:
 
     $(call kvm-var-value,KVM_SOURCEDIR)
     $(call kvm-var-value,KVM_TESTINGDIR)
@@ -1118,111 +1140,102 @@ Configuration:
     $(call kvm-var-value,KVM_GROUP)
     $(call kvm-var-value,KVM_CONNECTION)
     $(call kvm-var-value,KVM_MAKEFLAGS)
-
-  Directories:
-
-    By default all the VMs are stored in the directory:
-
-      $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
-
-    This can be tuned, with the VMs split across two directories:
-
-      $(call kvm-var-value,KVM_BASEDIR)$(if $(wildcard $(KVM_BASEDIR)),, [MISSING])
-
-          for storing the shared base (master) VM; should be
-          relatively permanent storage
-
-      $(call kvm-var-value,KVM_LOCALDIR)$(if $(wildcard $(KVM_LOCALDIR)),, [MISSING])
-
-          for storing the VMs dedicated to this build tree; can be
-          temporary storage (if you feel lucky you can try pointing
-          this at /tmp)
-
-  Networks:
-
-    Two types of networks are used.
-
-    First there is the shared NATting gateways.  They are used by the
-    base (master) domain along with any local domains when internet
-    access is required:
-
-      $(call kvm-var-value,KVM_BASE_GATEWAY)
-      $(call kvm-var-value,KVM_LOCAL_GATEWAY)
-
-    Second there are the local test networks used to interconnect the
-    test domains.  Using $$(KVM_PREFIXES), test group is assigned
-    their own set of networks:
-
-      $(call kvm-var-value,KVM_TEST_SUBNETS)
-      $(call kvm-var-value,KVM_TEST_NETWORKS)
-
-  Base domain:
-
-    The (per OS) base domain is used as a shared starting point for
-    creating all the other domains.
-
-    Once created the base domain is rarely modified or rebuilt:
-
-    - the process is slow and not 100% reliable
-
-    - the image is shared between build trees
-
-    (instead the clone domain, see below, is best suited for trialing
-    new packages and domain modifications).
-
+    $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
+	default directory for storing VM files
+    $(call kvm-var-value,KVM_BASEDIR)$(if $(wildcard $(KVM_BASEDIR)),, [MISSING])
+	directory for storing the shared base (master) VM;
+	should be relatively permanent storage
+    $(call kvm-var-value,KVM_LOCALDIR)$(if $(wildcard $(KVM_LOCALDIR)),, [MISSING])
+	directory for storing the VMs local to this build tree;
+	can be temporary storage (for instance /tmp)
+    $(call kvm-var-value,KVM_GATEWAY)
+	the shared NATting gateway;
+	used by the base (master) domain along with any local domains
+	when internet access is required
     $(call kvm-var-value,KVM_OS)
     $(call kvm-var-value,KVM_KICKSTART_FILE)
     $(call kvm-var-value,KVM_BASE_HOST)
     $(call kvm-var-value,KVM_BASE_DOMAIN)
-    $(call kvm-var-value,KVM_BASE_GATEWAY)
+    $(call kvm-var-value,KVM_GATEWAY)
     $(call kvm-var-value,KVM_BASEDIR)
 
-  Clone domain:
+ KVM Domains:
 
-    The clone domain, made unique to the build tree by KVM_PREFIXES,
-    is used as the local starting point for all test domains.
-
-    Since it is not shared across build trees, and has access to the
-    real world (via the default network) it is easy to modify or
-    rebuild.  For instance, experimental packages can be installed on
-    the clone domain (and then the test domains rebuilt) without
-    affecting other build trees.
-
-    $(call kvm-var-value,KVM_CLONE_HOST)
-    $(call kvm-var-value,KVM_CLONE_DOMAIN)
-    $(call kvm-var-value,KVM_LOCAL_GATEWAY)
-    $(call kvm-var-value,KVM_LOCALDIR)
-
-  Build domain:
-
-    The build domain, made unique to the build tree by KVM_PREFIXES,
-    is used to build and install libreswan.  Test domains are then
-    created as a copy of this domain.
-
-    Since it is not shared across build trees, and has access to the
-    real world (via the default network) it is easy to modify or
-    rebuild.  For instance, experimental packages can be installed on
-    the clone domain (and then the test domains rebuilt) without
-    affecting other build trees.
-
-    $(call kvm-var-value,KVM_BUILD_HOST)
-    $(call kvm-var-value,KVM_BUILD_DOMAIN)
-    $(call kvm-var-value,KVM_LOCAL_GATEWAY)
-    $(call kvm-var-value,KVM_LOCALDIR)
-
-  Test domains:
-
-    Groups of test domains, made unique to the build tree by
-    KVM_PREFIXES, are used to run the tests in parallel.
-
-    Separate build directories should use different KVM_PREFIXES (the
-    variable is set in Makefile.inc.local
-$(foreach prefix,$(KVM_PREFIXES),$(crlf)\
-$(sp) $(sp)test group: $(call strip-prefix,$(prefix))$(crlf) \
-$(sp) $(sp) $(sp)domains: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))$(crlf) \
-$(sp) $(sp) $(sp)networks: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_SUBNETS))$(crlf) \
-$(sp) $(sp) $(sp)directory: $(KVM_LOCALDIR))
-
+    $(call kvm-value,KVM_BASE_DOMAIN)
+    |
+    | - used as the starting point for creating
+    |   $(call kvm-var,KVM_OS) domains
+    |
+    | - shared between across directories
+    |
+    | - rarely modified or rebuilt as the process is
+    |   slow and not 100% reliable
+    |
+    | gateway:
+    |   $(call kvm-value,KVM_GATEWAY)
+    |
+    | directory:
+    |   $(call kvm-value,KVM_BASEDIR)
+    |
+    + $(call kvm-value,KVM_CLONE_DOMAIN)
+      |
+      | The clone domain is used as the local starting point for the
+      | directory's test domains.
+      |
+      | Since it is not shared across build trees, and has access to
+      | the real world (via the default network) it is easy to modify
+      | or rebuild.  For instance, experimental packages can be
+      | installed on the clone domain (and then the test domains
+      | rebuilt) without affecting other build trees.
+      |
+      | gateway:
+      |   $(call kvm-value,KVM_GATEWAY)
+      |
+      | directory:
+      |   $(call kvm-value,KVM_LOCALDIR)
+      |
+      + $(call kvm-value,KVM_BUILD_DOMAIN)
+      | |
+      | | The build domain is used to build and install libreswan.
+      | | Test domains are then created as a clone of this domain.
+      | |
+      | | Since it is not shared across build trees, and has access to
+      | | the real world (via the default network) it is easy to
+      | | modify or rebuild.  For instance, experimental packages can
+      | | be installed on the build domain (and then the test domains
+      | | rebuilt) without affecting other build trees.
+      | |
+      | | gateway:
+      | |   $(call kvm-value,KVM_GATEWAY)
+      | |
+      | | directory:
+      | |   $(call kvm-value,KVM_LOCALDIR)
+      | |
+      | | Groups of test domains are used to run the tests in parallel.
+      | | \
+$(foreach prefix,$(KVM_PREFIXES), \
+  \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)| test group $(prefix) \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp)$(sp) basic domains: \
+  $(foreach basic,$(KVM_BASIC_HOSTS), \
+    $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp) +------ $(call strip-prefix,$(prefix))$(basic) \
+  ) \
+  \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp)$(sp) install domains: \
+  $(foreach install,$(KVM_INSTALL_HOSTS), \
+    $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)| +---- $(call strip-prefix,$(prefix))$(install) \
+  ) \
+  \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp)$(sp) networks: \
+  $(foreach network, $(KVM_TEST_SUBNETS), \
+    $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp$)$(sp)$(sp)$(sp)$(sp) $(call strip-prefix,$(prefix))$(network) \
+  ) \
+  \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp)$(sp) directory: \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp)$(sp)$(sp)$(sp) $(call kvm-value,KVM_LOCALDIR) \
+  \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)| \
+)
 endef
 
 define kvm-help
@@ -1270,23 +1283,11 @@ Standard targets and operations:
   Try to delete (almost) everything:
 
     kvm-purge
-        - delete everything specific to this directory, i.e., clone,
+        - delete everything local to this directory, i.e., clone,
           build, and test domains, test networks, test results, and
           test build
     kvm-demolish
-        XXX use kvm-uninstall-base-domain for now, this delete's clone's gateway
-        - also delete the base domain and base gateway
-
-  Upgrading domains:
-
-    kvm-upgrade
-    kvm-upgrade-local-domains
-        - force just the local domains to be upgraded
-	- implemented by upgrading the local clone domain, while
-          deleting all the other local domains; the next kvm-install
-          et.al. will create the remaining domains
-    kvm-upgrade-base-domain
-        - force just the base base domain to be upgraded
+        - also delete the base domain
 
   Manipulating and accessing (loging into) domains:
 
@@ -1309,19 +1310,22 @@ Standard targets and operations:
 
   To set things up for a test run:
 
-    kvm-install (kvm-uninstall)
-       - (un)install (or update) libreswan on the test domains ready
-         for a test run, that is:
-         - build/install or rebuild libreswan on $(KVM_BUILD_DOMAIN)
-	 - clone $(KVM_BUILD_DOMAIN) creating the test domains
-       - uninstall cheats by deleting the build and test domains
+    kvm-install: install (or update) libreswan on the test domains
+	- cheats by building/installing using the local build domain
+          ($(KVM_BUILD_DOMAIN)) and then cloning it to create the test domains
+	- if necessary, creates the local build domain ($(KVM_BUILD_DOMAIN))
+          from the local clone domain ($(KVM_CLONE_DOMAIN))
+	- if necessary, creates and upgrade the local clone domain
+	  ($(KVM_CLONE_DOMAIN)) from the base domain ($(KVM_BASE_DOMAIN))
 
-    kvm-clean
-       - deletes the build directory so that the next kvm-install
-         builds from scratch
-       - deletes the test keys so the next kvm-check builds fresh keys
-       - deletes the test results from the previous test run
-       - KVM domains are not touched
+    kvm-uninstall: uninstall libreswan from the the test domains
+	- cheats by deleting the build and test domains
+
+    kvm-clean: cleans the directory forcing 'kvm-install' to perform a 'clean' build
+	- deletes the test domains
+	- deletes the build domain ($(KVM_BUILD_DOMAIN))
+	- deletes the test keys so the next kvm-check builds fresh keys
+	- deletes the test results from the previous test run
 
   To run the testsuite against libreswan installed on the test domains
   (see "make kvm-install" above):
@@ -1340,8 +1344,12 @@ Standard targets and operations:
 
   To analyze test results:
 
-    kvm-results       list the tests and their results
-    kvm-diffs         list the tests and their differences
+    kvm-results           list the tests and their results
+    kvm-diffs             list the tests and their differences
+
+  To print make variables:
+
+    print-kvm-prefixes    print prefixes being used
 
 endef
 

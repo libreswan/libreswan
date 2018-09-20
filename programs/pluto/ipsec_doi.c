@@ -7,7 +7,7 @@
  * Copyright (C) 2003-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010-2011 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2014,2017 Andrew Cagney <cagney@gmail.com>
@@ -33,7 +33,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/time.h>           /* for gettimeofday */
 #include <resolv.h>
 
 #include <libreswan.h>
@@ -44,6 +43,7 @@
 #include "defs.h"
 #include "state.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
@@ -66,7 +66,8 @@
 #include "secrets.h"
 #include "crypt_dh.h"
 #include "ike_alg.h"
-#include "ike_alg_none.h"
+#include "ike_alg_integ.h"
+#include "ike_alg_encrypt.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "pluto_crypt.h"
@@ -163,14 +164,14 @@ void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 	*n = kn->n;
 }
 
-bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs, u_int8_t np,
+bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs, uint8_t np,
 		    const char *name)
 {
 	return ikev1_out_generic_chunk(np, &isakmp_nonce_desc, outs, *n, name);
 }
 
 bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
-		pb_stream *outs, u_int8_t np,
+		pb_stream *outs, uint8_t np,
 		const char *name)
 {
 	unpack_nonce(n, r);
@@ -204,8 +205,7 @@ void ipsecdoi_initiate(int whack_sock,
 		       struct connection *c,
 		       lset_t policy,
 		       unsigned long try,
-		       so_serial_t replacing,
-		       enum crypto_importance importance
+		       so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
 		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -228,21 +228,16 @@ void ipsecdoi_initiate(int whack_sock,
 		initiator_function *initiator = pick_initiator(c, policy);
 
 		if (initiator != NULL) {
-			initiator(whack_sock, c, NULL, policy, try, importance
+			initiator(whack_sock, c, NULL, policy, try
 #ifdef HAVE_LABELED_IPSEC
 				  , uctx
 #endif
 				  );
 		} else {
 			/* fizzle: whack_sock will be unused */
-			close_any(whack_sock);
+			close_any(&whack_sock);
 		}
 	} else if (HAS_IPSEC_POLICY(policy)) {
-
-		/* boost priority if necessary */
-		if (st->st_import < importance)
-			st->st_import = importance;
-
 		if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 			/* leave our Phase 2 negotiation pending */
 			add_pending(whack_sock, st, c, policy, try,
@@ -287,41 +282,42 @@ void ipsecdoi_initiate(int whack_sock,
  * - duplicate whack fd, if live.
  * Does not delete the old state -- someone else will do that.
  */
-void ipsecdoi_replace(struct state *st,
-		      lset_t policy_add, lset_t policy_del,
-		      unsigned long try)
+void ipsecdoi_replace(struct state *st, unsigned long try)
 {
-	initiator_function *initiator;
-	lset_t policy = st->st_policy;
-
 	if (IS_PARENT_SA_ESTABLISHED(st) &&
-			!LIN(POLICY_REAUTH, st->st_connection->policy) &&
-			ikev2_rekey_ike_start(st)) {
+	    !LIN(POLICY_REAUTH, st->st_connection->policy)) {
 		libreswan_log("initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
+		/* ??? why does this not need whack socket fd? */
+		ikev2_rekey_ike_start(st);
 	} else if (IS_IKE_SA(st)) {
-		if (IS_PARENT_SA_ESTABLISHED(st) &&
-				LIN(POLICY_REAUTH, st->st_connection->policy)) {
-			libreswan_log("initiate reauthentication of IKE SA");
-		}
-		struct connection *c = st->st_connection;
-		policy = (c->policy & ~POLICY_IPSEC_MASK &
-				~policy_del) | policy_add;
+		/* start from policy in connection */
 
-		initiator = pick_initiator(c, policy);
-		passert(!HAS_IPSEC_POLICY(policy));
+		struct connection *c = st->st_connection;
+
+		lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
+
+		if (IS_PARENT_SA_ESTABLISHED(st))
+			libreswan_log("initiate reauthentication of IKE SA");
+
+		initiator_function *initiator = pick_initiator(c, policy);
+
 		if (initiator != NULL) {
 			(void) initiator(dup_any(st->st_whack_sock),
-				st->st_connection, st, policy, try, st->st_import
+				c, st, policy, try
 #ifdef HAVE_LABELED_IPSEC
 				, st->sec_ctx
 #endif
 				);
 		}
 	} else {
-		/* Add features of actual old state to policy.  This ensures
-		 * that rekeying doesn't downgrade security.  I admit that
-		 * this doesn't capture everything.
+		/*
+		 * Start from policy in (ipsec) state, not connection.
+		 * This ensures that rekeying doesn't downgrade
+		 * security.  I admit that this doesn't capture
+		 * everything.
 		 */
+		lset_t policy = st->st_policy;
+
 		if (st->st_pfs_group != NULL)
 			policy |= POLICY_PFS;
 		if (st->st_ah.present) {
@@ -347,7 +343,7 @@ void ipsecdoi_replace(struct state *st,
 		if (!st->st_ikev2)
 			passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(dup_any(st->st_whack_sock), st->st_connection,
-			policy, try, st->st_serialno, st->st_import
+			policy, try, st->st_serialno
 #ifdef HAVE_LABELED_IPSEC
 			, st->sec_ctx
 #endif
@@ -479,8 +475,7 @@ void initialize_new_state(struct state *st,
 			  struct connection *c,
 			  lset_t policy,
 			  int try,
-			  int whack_sock,
-			  enum crypto_importance importance)
+			  int whack_sock)
 {
 	st->st_connection = c;	/* surely safe: must be a new state */
 
@@ -491,14 +486,12 @@ void initialize_new_state(struct state *st,
 	st->st_whack_sock = whack_sock;
 	st->st_try = try;
 
-	st->st_import = importance;
-
 	const struct spd_route *sr;
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
-			if (sr->this.username != NULL) {
-				jam_str(st->st_username, sizeof(st->st_username), sr->this.username);
+			if (sr->this.xauth_username != NULL) {
+				jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), sr->this.xauth_username);
 				break;
 			}
 		}
@@ -511,7 +504,7 @@ void initialize_new_state(struct state *st,
 
 void send_delete(struct state *st)
 {
-	if (DBGP(IMPAIR_SEND_NO_DELETE)) {
+	if (IMPAIR(SEND_NO_DELETE)) {
 		DBGF(DBG_CONTROL, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
 	} else {
 		DBGF(DBG_CONTROL, "#%lu send %s delete notification for %s",
@@ -533,16 +526,12 @@ static void pstats_sa(bool nat, bool tfc, bool esn)
 		pstats_ipsec_tfc++;
 }
 
-void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
+void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 {
 	struct connection *const c = st->st_connection;
-	char *b;
 	const char *ini = " {";
-	ipstr_buf ipb;
 
-	b = jam_str(sadetails, sad_len,
-	       c->policy & POLICY_TUNNEL ?
-		" tunnel mode" : " transport mode");
+	lswlogs(buf, c->policy & POLICY_TUNNEL ? " tunnel mode" : " transport mode");
 
 	/* don't count IKEv1 half ipsec sa */
 	if (st->st_state == STATE_QUICK_R1) {
@@ -555,143 +544,135 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
 
 		if (nat)
-			DBG(DBG_NATT, DBG_log("NAT-T: NAT Traversal detected - their IKE port is '%d'",
-				    c->spd.that.host_port));
+			DBGF(DBG_NATT, "NAT-T: NAT Traversal detected - their IKE port is '%d'",
+			     c->spd.that.host_port);
 
-		DBG(DBG_NATT, DBG_log("NAT-T: encaps is '%s'",
-			    c->encaps == yna_auto ? "auto" :
-				bool_str(c->encaps == yna_yes)));
+		DBGF(DBG_NATT, "NAT-T: encaps is '%s'",
+		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
 
-		snprintf(b, sad_len - (b - sadetails),
-			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
-			 ini,
-			 nat ? "/NAT" : "",
-			 esn ? "/ESN" : "",
-			 tfc ? "/TFC" : "",
-			 (unsigned long)ntohl(st->st_esp.attrs.spi),
-			 (unsigned long)ntohl(st->st_esp.our_spi),
-			 st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
-			 st->st_esp.attrs.transattrs.enckeylen,
-			 st->st_esp.attrs.transattrs.ta_integ->common.fqn);
-
-		/* advance b to end of string */
-		b = b + strlen(b);
+		lswlogf(buf, "%sESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
+			ini,
+			nat ? "/NAT" : "",
+			esn ? "/ESN" : "",
+			tfc ? "/TFC" : "",
+			ntohl(st->st_esp.attrs.spi),
+			ntohl(st->st_esp.our_spi));
+		lswlogf(buf, " xfrm=%s", st->st_esp.attrs.transattrs.ta_encrypt->common.fqn);
+		/* log keylen when it is required and/or "interesting" */
+		if (!st->st_esp.attrs.transattrs.ta_encrypt->keylen_omitted ||
+		    (st->st_esp.attrs.transattrs.enckeylen != 0 &&
+		     st->st_esp.attrs.transattrs.enckeylen != st->st_esp.attrs.transattrs.ta_encrypt->keydeflen)) {
+			lswlogf(buf, "_%u", st->st_esp.attrs.transattrs.enckeylen);
+		}
+		lswlogf(buf, "-%s", st->st_esp.attrs.transattrs.ta_integ->common.fqn);
 
 		if (st->st_ikev2 && st->st_pfs_group != NULL)  {
-			b = add_str(sadetails, sad_len , b, "-");
-			b = add_str(sadetails, sad_len, b, st->st_pfs_group->common.name);
+			lswlogs(buf, "-");
+			lswlogs(buf, st->st_pfs_group->common.name);
 		}
 
 		ini = " ";
 
 		pstats_ipsec_esp++;
-		pstats(ipsec_encr, st->st_esp.attrs.transattrs.ta_ikev1_encrypt);
-		pstats(ipsec_integ, st->st_esp.attrs.transattrs.ta_ikev1_integ_hash);
+		pstatsv(ipsec_encrypt, st->st_ikev2,
+			st->st_esp.attrs.transattrs.ta_encrypt->common.id[IKEv1_ESP_ID],
+			st->st_esp.attrs.transattrs.ta_encrypt->common.id[IKEv2_ALG_ID]);
+		pstatsv(ipsec_integ, st->st_ikev2,
+			st->st_esp.attrs.transattrs.ta_integ->common.id[IKEv1_ESP_ID],
+			st->st_esp.attrs.transattrs.ta_integ->common.id[IKEv2_ALG_ID]);
 		pstats_sa(nat, tfc, esn);
 	}
 
 	if (st->st_ah.present) {
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
 
-		snprintf(b, sad_len - (b - sadetails),
-			 "%sAH%s=>0x%08lx <0x%08lx xfrm=%s",
-			 ini,
-			 st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
-			 (unsigned long)ntohl(st->st_ah.attrs.spi),
-			 (unsigned long)ntohl(st->st_ah.our_spi),
-			 st->st_ah.attrs.transattrs.ta_integ->common.fqn);
-
-		/* advance b to end of string */
-		b = b + strlen(b);
+		lswlogf(buf, "%sAH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
+			ini,
+			st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
+			ntohl(st->st_ah.attrs.spi),
+			ntohl(st->st_ah.our_spi),
+			st->st_ah.attrs.transattrs.ta_integ->common.fqn);
 
 		ini = " ";
 
 		pstats_ipsec_ah++;
-		pstats(ipsec_integ, st->st_ah.attrs.transattrs.ta_ikev1_integ_hash);
+		pstatsv(ipsec_integ, st->st_ikev2,
+			st->st_ah.attrs.transattrs.ta_integ->common.id[IKEv1_ESP_ID],
+			st->st_ah.attrs.transattrs.ta_integ->common.id[IKEv2_ALG_ID]);
 		pstats_sa(FALSE, FALSE, esn);
 	}
 
 	if (st->st_ipcomp.present) {
-		snprintf(b, sad_len - (b - sadetails),
-			 "%sIPCOMP=>0x%08lx <0x%08lx",
-			 ini,
-			 (unsigned long)ntohl(st->st_ipcomp.attrs.spi),
-			 (unsigned long)ntohl(st->st_ipcomp.our_spi));
-
-		/* advance b to end of string */
-		b = b + strlen(b);
+		lswlogf(buf, "%sIPCOMP=>0x%08" PRIx32 " <0x%08" PRIx32,
+			ini,
+			ntohl(st->st_ipcomp.attrs.spi),
+			ntohl(st->st_ipcomp.our_spi));
 
 		ini = " ";
 
 		pstats_ipsec_ipcomp++;
 	}
 
-	b = add_str(sadetails, sad_len, b, ini);
-	b = add_str(sadetails, sad_len, b, "NATOA=");
-	b = add_str(sadetails, sad_len, b,
-		isanyaddr(&st->hidden_variables.st_nat_oa) ? "none" :
-			ipstr(&st->hidden_variables.st_nat_oa, &ipb));
+	lswlogs(buf, ini);
+	lswlogs(buf, "NATOA=");
+	/* XXX: can lswlog_ip() be used? */
+	ipstr_buf ipb;
+	lswlogs(buf, isanyaddr(&st->hidden_variables.st_nat_oa) ? "none" :
+		ipstr(&st->hidden_variables.st_nat_oa, &ipb));
 
-	b = add_str(sadetails, sad_len, b, " NATD=");
+	lswlogs(buf, " NATD=");
 
 	if (isanyaddr(&st->hidden_variables.st_natd)) {
-		b = add_str(sadetails, sad_len, b, "none");
+		lswlogs(buf, "none");
 	} else {
+		/* XXX: can lswlog_ip() be used?  need to check st_remoteport */
 		char oa[ADDRTOT_BUF + sizeof(":00000")];
-
 		snprintf(oa, sizeof(oa),
 			 "%s:%d",
 			 sensitive_ipstr(&st->hidden_variables.st_natd, &ipb),
 			 st->st_remoteport);
-		b = add_str(sadetails, sad_len, b, oa);
+		lswlogs(buf, oa);
 	}
 
-	b = add_str(sadetails, sad_len, b,
-		dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
+	lswlogf(buf, dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
-	if (st->st_username[0] != '\0') {
-		b = add_str(sadetails, sad_len, b, " username=");
-		b = add_str(sadetails, sad_len, b, st->st_username);
+	if (st->st_xauth_username[0] != '\0') {
+		lswlogs(buf, " username=");
+		lswlogs(buf, st->st_xauth_username);
 	}
 
-	add_str(sadetails, sad_len, b, "}");
+	lswlogs(buf, "}");
 }
 
-void fmt_isakmp_sa_established(struct state *st, char *sa_details,
-			       size_t sa_details_size)
+void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 {
 	passert(st->st_oakley.ta_encrypt != NULL);
 	passert(st->st_oakley.ta_prf != NULL);
 	passert(st->st_oakley.ta_dh != NULL);
+
+	lswlogs(buf, " {auth=");
+	if (st->st_ikev2) {
+		lswlogs(buf, "IKEv2");
+	} else {
+		lswlog_enum_short(buf, &oakley_auth_names, st->st_oakley.auth);
+	}
+
+	lswlogf(buf, " cipher=%s", st->st_oakley.ta_encrypt->common.fqn);
+	if (st->st_oakley.enckeylen > 0) {
+		/* XXX: also check omit key? */
+		lswlogf(buf, "_%d", st->st_oakley.enckeylen);
+	}
+
 	/*
 	 * Note: for IKEv1 and AEAD encrypters,
 	 * st->st_oakley.ta_integ is 'none'!
 	 */
-
-	struct esb_buf anb;
-	const char *auth_name = st->st_ikev2 ? "IKEv2" :
-		enum_show_shortb(&oakley_auth_names, st->st_oakley.auth, &anb);
-
-	const char *prf_common_name = st->st_oakley.ta_prf->common.name;
-
-	char prf_name[30] = "";
-	if (st->st_ikev2) {
-		snprintf(prf_name, sizeof(prf_name),
-			 " prf=%s", prf_common_name);
-	}
-
-	const char *integ_name;
-	char integ_buf[30];
+	lswlogs(buf, " integ=");
 	if (st->st_ikev2) {
 		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
-			integ_name = "n/a";
+			lswlogs(buf, "n/a");
 		} else {
-			snprintf(integ_buf, sizeof(integ_buf),
-				 "%s_%zu",
-				 st->st_oakley.ta_integ->common.officname,
-				 (st->st_oakley.ta_integ->integ_output_size *
-				  BITS_PER_BYTE));
-			integ_name = integ_buf;
+			lswlogs(buf, st->st_oakley.ta_integ->common.fqn);
 		}
 	} else {
 		/*
@@ -699,17 +680,14 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		 * (always?) NULL.  Display the PRF.  The choice and
 		 * behaviour are historic.
 		 */
-		integ_name = prf_common_name;
+		lswlogs(buf, st->st_oakley.ta_prf->common.fqn);
 	}
 
-	snprintf(sa_details, sa_details_size,
-		 " {auth=%s cipher=%s_%d integ=%s%s group=%s}",
-		 auth_name,
-		 st->st_oakley.ta_encrypt->common.name,
-		 st->st_oakley.enckeylen,
-		 integ_name,
-		 prf_name,
-		 st->st_oakley.ta_dh->common.name);
+	if (st->st_ikev2) {
+		lswlogf(buf, " prf=%s", st->st_oakley.ta_prf->common.fqn);
+	}
+
+	lswlogf(buf, " group=%s}", st->st_oakley.ta_dh->common.fqn);
 
 	/* keep IKE SA statistics */
 	if (st->st_ikev2) {

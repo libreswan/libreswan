@@ -63,25 +63,71 @@
 #include <nss.h>
 #include <pk11pub.h>
 
-static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* 4306  2:15 */
-static const size_t psk_key_pad_str_len = 17;                  /* sizeof(psk_key_pad_str); -1 */
-
-static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
+static bool ikev2_calculate_psk_sighash(bool verify,
+					const struct state *st,
 					enum keyword_authby authby,
-					unsigned char *idhash,
-					chunk_t firstpacket,
-					unsigned char *signed_octets)
+					const unsigned char *idhash,
+					const chunk_t firstpacket,
+					unsigned char signed_octets[MAX_DIGEST_LEN])
 {
 	const struct connection *c = st->st_connection;
-	const chunk_t *pss = &empty_chunk;
-	const size_t hash_len =  st->st_oakley.ta_prf->prf_output_size;
+	const size_t hash_len = st->st_oakley.ta_prf->prf_output_size;
 
+	passert(hash_len <= MAX_DIGEST_LEN);
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
-	DBG(DBG_CONTROL,DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
+	DBG(DBG_CONTROL, DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
 		st->st_state_name,
 		verify ? "verify" : "create",
 		enum_name(&ikev2_asym_auth_name, authby)));
+
+	/* pick nullauth_pss, nonce, and nonce_name suitable for (state, verify) */
+
+	const chunk_t *nonce;
+	const char *nonce_name;
+	const chunk_t *nullauth_pss;
+
+	switch (st->st_state) {
+	case STATE_PARENT_I2:
+		if (!verify) {
+			/* we are initiator sending PSK */
+			nullauth_pss = &st->st_skey_chunk_SK_pi;
+			nonce = &st->st_nr;
+			nonce_name = "create: initiator inputs to hash2 (responder nonce)";
+			break;
+		}
+		/* FALL THROUGH */
+	case STATE_PARENT_I3:
+		/* we are initiator verifying PSK */
+		passert(verify);
+		nullauth_pss = &st->st_skey_chunk_SK_pr;
+		nonce = &st->st_ni;
+		nonce_name = "verify: initiator inputs to hash2 (initiator nonce)";
+		break;
+
+	case STATE_PARENT_R1:
+		/* we are responder verifying PSK */
+		passert(verify);
+		nullauth_pss = &st->st_skey_chunk_SK_pi;
+		nonce = &st->st_nr;
+		nonce_name = "verify: initiator inputs to hash2 (responder nonce)";
+		break;
+
+	case STATE_PARENT_R2:
+		/* we are responder sending PSK */
+		passert(!verify);
+		nullauth_pss = &st->st_skey_chunk_SK_pr;
+		nonce = &st->st_ni;
+		nonce_name = "create: responder inputs to hash2 (initiator nonce)";
+		break;
+
+	default:
+		bad_case(st->st_state);
+	}
+
+	/* pick pss */
+
+	const chunk_t *pss;
 
 	if (authby != AUTH_NULL) {
 		pss = get_psk(c);
@@ -126,33 +172,20 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 		 */
 		passert(st->hidden_variables.st_skeyid_calculated);
 
-		if (st->st_state == STATE_PARENT_I2 && !verify) {
-			/* we are initiator sending PSK */
-			pss = &st->st_skey_chunk_SK_pi;
-		} else if ((st->st_state == STATE_PARENT_I2 ||
-				st->st_state == STATE_PARENT_I3) && verify) {
-			/* we are initiator verifying PSK */
-			pss = &st->st_skey_chunk_SK_pr;
-		} else if (st->st_state == STATE_PARENT_R2 && !verify) {
-			/* we are responder sending PSK */
-			pss = &st->st_skey_chunk_SK_pr;
-		} else if (st->st_state == STATE_PARENT_R1 && verify) {
-			/* we are responder verifying PSK */
-			pss = &st->st_skey_chunk_SK_pi;
-		}
-
-		 DBG(DBG_PRIVATE, DBG_dump_chunk("AUTH_NULL PSK:", *pss));
+		pss = nullauth_pss;
+		DBG(DBG_PRIVATE, DBG_dump_chunk("AUTH_NULL PSK:", *pss));
 	}
 
 	passert(pss->len != 0);
 
 	/*
 	 * RFC 4306 2.15:
-	 * AUTH = prf(prf(Shared Secret,"Key Pad for IKEv2"), <msg octets>)
+	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
 	 */
 
 	/* calculate inner prf */
 	PK11SymKey *prf_psk;
+
 	{
 		struct crypt_prf *prf =
 			crypt_prf_init_chunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
@@ -169,35 +202,15 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 			       st->st_oakley.ta_prf->common.name);
 			return FALSE;
 		}
-		crypt_prf_update_bytes(psk_key_pad_str/*name*/, prf,
-				       psk_key_pad_str, psk_key_pad_str_len);
+
+		static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* RFC 4306  2:15 */
+
+		crypt_prf_update_bytes(psk_key_pad_str, /* name */
+				       prf,
+				       psk_key_pad_str,
+				       sizeof(psk_key_pad_str) - 1);
 		prf_psk = crypt_prf_final_symkey(&prf);
 	}
-
-	/* pick nonce */
-	const chunk_t *nonce = NULL;
-	const char *nonce_name = NULL;
-
-	if (st->st_state == STATE_PARENT_I2 && !verify) {
-		/* we are initiator sending PSK */
-		nonce = &st->st_nr;
-		nonce_name = "create: initiator inputs to hash2 (responder nonce)";
-	} else if ((st->st_state == STATE_PARENT_I2 ||
-			st->st_state == STATE_PARENT_I3) && verify) {
-		/* we are initiator verifying PSK */
-		nonce = &st->st_ni;
-		nonce_name = "verify: initiator inputs to hash2 (initiator nonce)";
-	} else if (st->st_state == STATE_PARENT_R2 && !verify) {
-		/* we are responder sending PSK */
-		nonce = &st->st_ni;
-		nonce_name = "create: responder inputs to hash2 (initiator nonce)";
-	} else if (st->st_state == STATE_PARENT_R1 && verify) {
-		/* we are responder verifying PSK */
-		nonce = &st->st_nr;
-		nonce_name = "verify: initiator inputs to hash2 (responder nonce)";
-	}
-
-	passert(nonce != NULL);	/* we NEED a nonce */
 
 	/* calculate outer prf */
 	{
@@ -234,47 +247,44 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 }
 
 bool ikev2_create_psk_auth(enum keyword_authby authby,
-			      struct state *st,
-			      unsigned char *idhash,
-			      pb_stream *a_pbs,
-			      bool calc_additional_auth,
-			      chunk_t *additional_auth)
+			   const struct state *st,
+			   const unsigned char *idhash,
+			   pb_stream *a_pbs,
+			   chunk_t *additional_auth)
 {
 	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
-	unsigned char signed_octets[hash_len];
-	/* used to generate _and_ verify PSK, so use state kind */
-
-	passert(authby == AUTH_PSK || authby == AUTH_NULL);
+	unsigned char signed_octets[MAX_DIGEST_LEN];
 
 	if (!ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
-				st->st_firstpacket_me,
-				signed_octets)) {
+					 st->st_firstpacket_me,
+					 signed_octets))
+	{
 		return FALSE;
 	}
 
 	DBG(DBG_PRIVATE,
 	    DBG_dump("PSK auth octets", signed_octets, hash_len));
 
-	if (calc_additional_auth == FALSE) {
+	if (additional_auth == NULL) {
 		if (!out_raw(signed_octets, hash_len, a_pbs, "PSK auth"))
 			return FALSE;
 	} else {
-		char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
+		passert(a_pbs == NULL);
+		const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
 		clonetochunk(*additional_auth, signed_octets, hash_len, chunk_n);
-		char *auth_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH payload" : "NULL_AUTH payload";
-		DBG(DBG_PRIVATE, DBG_dump_chunk(auth_n, *additional_auth));
+		DBG(DBG_PRIVATE, DBG_dump_chunk(chunk_n, *additional_auth));
 	}
 
 	return TRUE;
 }
 
 stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
-				 struct state *st,
-				 unsigned char *idhash,
+				 const struct state *st,
+				 const unsigned char *idhash,
 				 pb_stream *sig_pbs)
 {
-	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
-	unsigned char calc_hash[hash_len];
+	size_t hash_len = st->st_oakley.ta_prf->prf_output_size;
+	unsigned char calc_hash[MAX_DIGEST_LEN];
 	size_t sig_len = pbs_left(sig_pbs);
 
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
@@ -283,9 +293,8 @@ stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
 		libreswan_log("negotiated prf: %s ",
 			      st->st_oakley.ta_prf->common.name);
 		libreswan_log(
-			"I2 hash length:%lu does not match with PRF hash len %lu",
-			(long unsigned) sig_len,
-			(long unsigned) hash_len);
+			"I2 hash length: %zu does not match with PRF hash len %zu",
+			sig_len, hash_len);
 		return STF_FAIL;
 	}
 

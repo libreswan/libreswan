@@ -43,19 +43,10 @@
  * cacerts, public keys, and crls
  * unused: OCSP_CERT_WARNING_INTERVAL	(30 * secs_per_day)
  * unused: ACERT_WARNING_INTERVAL	(1 * secs_per_day)
+ * unused: CA_CERT_WARNING_INTERVAL	(30 * secs_per_day)
+ * unused: CRL_WARNING_INTERVAL		(7 * secs_per_day)
  */
-#define CA_CERT_WARNING_INTERVAL	(30 * secs_per_day)
 #define PUBKEY_WARNING_INTERVAL		(14 * secs_per_day)
-#define CRL_WARNING_INTERVAL		(7 * secs_per_day)
-
-/* access structure for RSA private keys */
-
-typedef struct rsa_privkey rsa_privkey_t;
-
-struct rsa_privkey {
-	chunk_t keyobject;
-	chunk_t field[8];
-};
 
 /* certificate access structure
  * currently X.509 certificates are supported
@@ -71,5 +62,4 @@ typedef struct {
 const char *cert_nickname(const cert_t *cert);
 
 extern void list_certs(void);
-extern bool load_nsscert_from_nss(const char *nickname, cert_t *cert);
 #endif /* _CERTS_H */

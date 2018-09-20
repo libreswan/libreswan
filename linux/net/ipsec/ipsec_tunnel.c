@@ -145,17 +145,14 @@ DEBUG_NO_STATIC int ipsec_tunnel_close(struct net_device *dev)
 
 static inline int ipsec_tunnel_xmit2(struct sk_buff *skb)
 {
-
 #ifdef NET_26   /* 2.6 kernels */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#  if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	return dst_output(dev_net(skb->dev), skb->sk, skb);
-#else
+#  else
 	return dst_output(skb);
-#endif
-
+#  endif
 #else
 	return ip_send(skb);
-
 #endif
 }
 
@@ -2033,8 +2030,8 @@ int ipsec_tunnel_init(struct net_device *dev)
 
 	KLIPS_PRINT(debug_tunnel,
 		    "klips_debug:ipsec_tunnel_init: "
-		    "allocating %lu bytes initialising device: %s\n",
-		    (unsigned long) sizeof(struct ipsecpriv),
+		    "allocating %zu bytes initialising device: %s\n",
+		    sizeof(struct ipsecpriv),
 		    dev->name ? dev->name : "NULL");
 
 #ifdef ipsec_alloc_netdev
@@ -2203,9 +2200,9 @@ int ipsec_tunnel_init_devices(void)
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 		    "klips_debug:ipsec_tunnel_init_devices: "
-		    "creating and registering IPSEC_NUM_IF=%u devices, allocating %lu per device, IFNAMSIZ=%u.\n",
+		    "creating and registering IPSEC_NUM_IF=%u devices, allocating %zu per device, IFNAMSIZ=%u.\n",
 		    IPSEC_NUM_IF,
-		    (unsigned long) (sizeof(struct net_device) + IFNAMSIZ),
+		    sizeof(struct net_device) + IFNAMSIZ,
 		    IFNAMSIZ);
 
 	for (i = 0; i < IPSEC_NUM_IF; i++) {
@@ -2527,7 +2524,7 @@ DEBUG_NO_STATIC int ipsec_tunnel_attach(struct net_device *dev,
 
 #ifdef CONFIG_KLIPS_IPV6
 /*
- * stolen from ip6tables,  we need a copy incase iptables iscompiled out of
+ * stolen from ip6tables,  we need a copy in case iptables is compiled out of
  * the kernel.
  *
  * find the offset to specified header or the protocol number of last header

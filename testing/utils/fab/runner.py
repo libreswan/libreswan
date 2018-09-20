@@ -119,8 +119,8 @@ class TestDomain:
     def boot_and_login(self):
         self.console = remote.boot_to_login_prompt(self.domain, self.console)
         remote.login(self.domain, self.console)
-        test_directory = remote.directory(self.domain, self.console,
-                                          self.test.directory)
+        test_directory = remote.path(self.domain, self.console,
+                                     path=self.test.directory)
         if not test_directory:
             abspath = os.path.abspath(self.test.directory)
             self.logger.error("directory %s not mounted on %s", abspath, self.domain)
@@ -293,17 +293,29 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                         prefix, test_prefix, details, suffix)
             return
 
-        # Skipping the test, leaving old results.
+        # Skip the test, leaving old results?
         #
-        # Be lazy when gathering the results, don't run the sanitizer
-        # or diff.  Let post.mortem figure out if the test finished.
+        # For instance, during a test re-run, skip any tests that are
+        # passing.
+        #
+        # The check below compares the test and expected output,
+        # ignoring any previous test result.  This way the results are
+        # consistent with kvmresults.py which always reflects the
+        # current sources.
+        #
+        # - modifying the expected output so that it no longer matches
+        #   the last result is a fail
+        #
+        # - modifying the expected output so that it matches the last
+        #   result is a pass
 
-        old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=True)
+        old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=False)
         if skip.result(logger, args, old_result):
             logger.info("%s %s skipped (previously %s) %s",
                         prefix, test_prefix, old_result, suffix)
             test_stats.add(test, "skipped")
             result_stats.add_skipped(old_result)
+            publish.everything(logger, args, old_result)
             return
 
         # Running the test ...
@@ -438,10 +450,11 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             with logger.time("post-mortem %s", test_prefix):
                 # The test finished; it is assumed that post.mortem
                 # can deal with a crashed test.
-                result = post.mortem(test, args, domain_prefix=domain_prefix,
-                                     update=True)
+                result = post.mortem(test, args, domain_prefix=domain_prefix)
                 logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
                             result.issues and " ", result.issues, suffix)
+
+            result.save()
 
             # If the test was run (a fresh run would delete RESULT)
             # and finished (resolved in POSIX terminology), emit
@@ -452,7 +465,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             #
             # XXX: this should go away.
 
-            if not os.path.isfile(test.result_file()) \
+            result_file = os.path.join(test.output_directory, "RESULT")
+            if not os.path.isfile(result_file) \
             and result.resolution.isresolved():
                 RESULT = {
                     jsonutil.result.testname: test.name,
@@ -464,11 +478,10 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                     jsonutil.result.runtime: round(test_runtime.seconds(), 1),
                     jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
                     jsonutil.result.script_time: round(test_script_time.seconds(), 1),
-                    jsonutil.result.total_time: round(test_runtime.seconds(), 1),
                 }
                 j = jsonutil.dumps(RESULT)
-                logger.debug("filling '%s' with json: %s", test.result_file(), j)
-                with open(test.result_file(), "w") as f:
+                logger.debug("filling '%s' with json: %s", result_file, j)
+                with open(result_file, "w") as f:
                     f.write(j)
                     f.write("\n")
 

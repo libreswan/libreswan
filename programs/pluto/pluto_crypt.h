@@ -37,9 +37,8 @@
 #ifndef _PLUTO_CRYPT_H
 #define _PLUTO_CRYPT_H
 
-#include "lsw_select.h"
 #include "crypto.h"
-#include "libreswan/passert.h"
+#include "chunk.h"
 
 struct state;
 struct msg_digest;

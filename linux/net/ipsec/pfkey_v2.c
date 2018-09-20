@@ -295,8 +295,8 @@ int pfkey_list_insert_socket(struct socket *socketp,
 
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_list_insert_socket: "
-		    "allocating %lu bytes for socketp=0p%p\n",
-		    (unsigned long) sizeof(struct socket_list),
+		    "allocating %zu bytes for socketp=0p%p\n",
+		    sizeof(struct socket_list),
 		    socketp);
 
 	if ((socket_listp = (struct socket_list *)
@@ -377,8 +377,8 @@ int pfkey_list_insert_supported(struct ipsec_alg_supported *supported,
 
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_list_insert_supported: "
-		    "allocating %lu bytes for incoming, supported=0p%p, supported_list=0p%p\n",
-		    (unsigned long) sizeof(struct supported_list),
+		    "allocating %zu bytes for incoming, supported=0p%p, supported_list=0p%p\n",
+		    sizeof(struct supported_list),
 		    supported,
 		    supported_list);
 
@@ -1297,7 +1297,6 @@ DEBUG_NO_STATIC int supported_add_all(int satype,
 		    (int)(size / sizeof(struct ipsec_alg_supported)));
 
 	for (i = 0; i < size / sizeof(struct ipsec_alg_supported); i++) {
-
 		const char *n = supported[i].ias_name;
 		if (n == NULL)
 			n = "unknown";

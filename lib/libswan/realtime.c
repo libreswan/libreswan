@@ -15,7 +15,11 @@
  *
  */
 
-#include "constants.h"
+#include <time.h>	/* for clock_*() + clockid_t */
+
+#include "constants.h"	/* for memeq() which is clearly not a constant */
+#include "lswlog.h"	/* for libreswan_exit_log_errno() */
+
 #include "realtime.h"
 
 const realtime_t realtime_epoch = REALTIME_EPOCH;
@@ -50,11 +54,35 @@ deltatime_t realtimediff(realtime_t a, realtime_t b)
 	return deltatime_ms((intmax_t)d.tv_sec * 1000 + d.tv_usec / 1000);
 }
 
+clockid_t realtime_clockid(void)
+{
+	return CLOCK_REALTIME;
+}
+
 realtime_t realnow(void)
 {
-	realtime_t t;
-	gettimeofday(&t.rt, NULL);
+	struct timespec ts;
+	int e = clock_gettime(realtime_clockid(), &ts);
+	if (e != 0) {
+		libreswan_exit_log_errno(e, "clock_gettime(%d,...) call in realnow() failed",
+					 realtime_clockid());
+	}
+	realtime_t t = {
+		.rt = {
+			.tv_sec = ts.tv_sec,
+			.tv_usec = ts.tv_nsec / 1000,
+		},
+	};
 	return t;
+}
+
+struct timespec realtime_as_timespec(realtime_t t)
+{
+	struct timespec ts =  {
+		.tv_sec = t.rt.tv_sec,
+		.tv_nsec = t.rt.tv_usec * 1000,
+	};
+	return ts;
 }
 
 struct realtm local_realtime(realtime_t t)

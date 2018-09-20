@@ -1,4 +1,4 @@
-/* FreeS/WAN IPsec starter (starter.c)
+/* Libreswan IPsec starter (starter.c)
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2006-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007 Paul Wouters <paul@xelerance.com>

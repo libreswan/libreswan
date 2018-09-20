@@ -2,8 +2,8 @@
 #
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
-# Copyright (C) 2015-2017, Andrew Cagney <cagney@gnu.org>
 # Copyright (C) 2017, Richard Guy Briggs <rgb@tricolour.ca>
+# Copyright (C) 2015-2018  Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -78,10 +78,6 @@ TAGS:	$(TAGSFILES)
 .PHONY: dummy
 dummy:
 
-
-
-kvm:
-	@echo Please run ./testing/libvirt/install.sh
 
 # Run regress stuff after the other check targets.
 .PHONY: regress
@@ -211,12 +207,6 @@ klipsdefaults:
 
 ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
-
-.PHONY: config
-config: ${OBJDIR}/Makefile
-${OBJDIR}/Makefile: $(srcdir)/Makefile packaging/utils/makeshadowdir | $(builddir)
-	@echo Setting up for OBJDIR=${OBJDIR}
-	packaging/utils/makeshadowdir `cd $(srcdir); pwd` ${OBJDIR} "${SUBDIRS}"
 
 # Recursive clean dealt with elsewhere.
 local-clean-base: moduleclean
@@ -606,9 +596,9 @@ showobjdir:
 
 deb:
 	cp -r packaging/debian .
-	grep "@IPSECBASEVERSION@" debian/changelog || \
-		echo "no @IPSECBASEVERSION@ in debian/changelog" && \
-		sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/changelog
+	grep "IPSECBASEVERSION" debian/changelog && \
+		sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/changelog || \
+		echo "missing IPSECBASEVERSION in debian/changelog. This is not git repository?"
 	debuild -i -us -uc -b
 	rm -fr debian
 	#debuild -S -sa

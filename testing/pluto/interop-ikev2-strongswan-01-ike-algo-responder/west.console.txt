@@ -1,0 +1,250 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm with a ping
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair suppress-retransmits --debug crypt,crypt-low
+west #
+ ../bin/libreswan-up-down.sh ike=chacha20poly1305-sha2-dh19 -I 192.0.1.254 192.0.2.254
+002 added connection description "ike=chacha20poly1305-sha2-dh19"
+002 "ike=chacha20poly1305-sha2-dh19" #1: initiating v2 parent SA
+133 "ike=chacha20poly1305-sha2-dh19" #1: initiate
+133 "ike=chacha20poly1305-sha2-dh19" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike=chacha20poly1305-sha2-dh19" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "ike=chacha20poly1305-sha2-dh19" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=CHACHA20_POLY1305_256 integ=n/a prf=HMAC_SHA2_256 group=DH19}
+002 "ike=chacha20poly1305-sha2-dh19" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "ike=chacha20poly1305-sha2-dh19" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike=chacha20poly1305-sha2-dh19" #2: Authenticated using authby=secret
+002 "ike=chacha20poly1305-sha2-dh19" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike=chacha20poly1305-sha2-dh19" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike=chacha20poly1305-sha2-dh19": terminating SAs using this connection
+002 "ike=chacha20poly1305-sha2-dh19" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike=chacha20poly1305-sha2-dh19" #2: ESP traffic information: in=84B out=84B
+002 "ike=chacha20poly1305-sha2-dh19" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike=chacha20poly1305-sha2-dh19": deleting non-instance connection
+west #
+ ../bin/libreswan-up-down.sh ike=aes128-sha2-dh19 -I 192.0.1.254 192.0.2.254
+002 added connection description "ike=aes128-sha2-dh19"
+002 "ike=aes128-sha2-dh19" #3: initiating v2 parent SA
+133 "ike=aes128-sha2-dh19" #3: initiate
+133 "ike=aes128-sha2-dh19" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike=aes128-sha2-dh19" #3: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "ike=aes128-sha2-dh19" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
+002 "ike=aes128-sha2-dh19" #4: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "ike=aes128-sha2-dh19" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike=aes128-sha2-dh19" #4: Authenticated using authby=secret
+002 "ike=aes128-sha2-dh19" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike=aes128-sha2-dh19" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike=aes128-sha2-dh19": terminating SAs using this connection
+002 "ike=aes128-sha2-dh19" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike=aes128-sha2-dh19" #4: ESP traffic information: in=84B out=84B
+002 "ike=aes128-sha2-dh19" #3: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike=aes128-sha2-dh19": deleting non-instance connection
+west #
+ ../bin/libreswan-up-down.sh ike=aes128-sha2-dh20 -I 192.0.1.254 192.0.2.254
+002 added connection description "ike=aes128-sha2-dh20"
+002 "ike=aes128-sha2-dh20" #5: initiating v2 parent SA
+133 "ike=aes128-sha2-dh20" #5: initiate
+133 "ike=aes128-sha2-dh20" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike=aes128-sha2-dh20" #5: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "ike=aes128-sha2-dh20" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH20}
+002 "ike=aes128-sha2-dh20" #6: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "ike=aes128-sha2-dh20" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike=aes128-sha2-dh20" #6: Authenticated using authby=secret
+002 "ike=aes128-sha2-dh20" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike=aes128-sha2-dh20" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike=aes128-sha2-dh20": terminating SAs using this connection
+002 "ike=aes128-sha2-dh20" #6: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike=aes128-sha2-dh20" #6: ESP traffic information: in=84B out=84B
+002 "ike=aes128-sha2-dh20" #5: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike=aes128-sha2-dh20": deleting non-instance connection
+west #
+ ../bin/libreswan-up-down.sh ike=aes128-sha2-dh21 -I 192.0.1.254 192.0.2.254
+002 added connection description "ike=aes128-sha2-dh21"
+002 "ike=aes128-sha2-dh21" #7: initiating v2 parent SA
+133 "ike=aes128-sha2-dh21" #7: initiate
+133 "ike=aes128-sha2-dh21" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike=aes128-sha2-dh21" #7: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "ike=aes128-sha2-dh21" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH21}
+002 "ike=aes128-sha2-dh21" #8: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "ike=aes128-sha2-dh21" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike=aes128-sha2-dh21" #8: Authenticated using authby=secret
+002 "ike=aes128-sha2-dh21" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike=aes128-sha2-dh21" #8: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike=aes128-sha2-dh21": terminating SAs using this connection
+002 "ike=aes128-sha2-dh21" #8: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike=aes128-sha2-dh21" #8: ESP traffic information: in=84B out=84B
+002 "ike=aes128-sha2-dh21" #7: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike=aes128-sha2-dh21": deleting non-instance connection
+west #
+ ../bin/libreswan-up-down.sh ike=aes128-sha1-dh19 -I 192.0.1.254 192.0.2.254
+002 added connection description "ike=aes128-sha1-dh19"
+002 "ike=aes128-sha1-dh19" #9: initiating v2 parent SA
+133 "ike=aes128-sha1-dh19" #9: initiate
+133 "ike=aes128-sha1-dh19" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike=aes128-sha1-dh19" #9: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "ike=aes128-sha1-dh19" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
+002 "ike=aes128-sha1-dh19" #10: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "ike=aes128-sha1-dh19" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike=aes128-sha1-dh19" #10: Authenticated using authby=secret
+002 "ike=aes128-sha1-dh19" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike=aes128-sha1-dh19" #10: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike=aes128-sha1-dh19": terminating SAs using this connection
+002 "ike=aes128-sha1-dh19" #10: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike=aes128-sha1-dh19" #10: ESP traffic information: in=84B out=84B
+002 "ike=aes128-sha1-dh19" #9: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike=aes128-sha1-dh19": deleting non-instance connection
+west #
+ ../bin/libreswan-up-down.sh ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
+002 added connection description "ike=aes128-sha1-dh20"
+002 "ike=aes128-sha1-dh20" #11: initiating v2 parent SA
+133 "ike=aes128-sha1-dh20" #11: initiate
+133 "ike=aes128-sha1-dh20" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike=aes128-sha1-dh20" #11: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "ike=aes128-sha1-dh20" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH20}
+002 "ike=aes128-sha1-dh20" #12: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "ike=aes128-sha1-dh20" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike=aes128-sha1-dh20" #12: Authenticated using authby=secret
+002 "ike=aes128-sha1-dh20" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike=aes128-sha1-dh20" #12: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike=aes128-sha1-dh20": terminating SAs using this connection
+002 "ike=aes128-sha1-dh20" #12: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike=aes128-sha1-dh20" #12: ESP traffic information: in=84B out=84B
+002 "ike=aes128-sha1-dh20" #11: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike=aes128-sha1-dh20": deleting non-instance connection
+west #
+ ../bin/libreswan-up-down.sh ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
+002 added connection description "ike=aes128-sha1-dh21"
+002 "ike=aes128-sha1-dh21" #13: initiating v2 parent SA
+133 "ike=aes128-sha1-dh21" #13: initiate
+133 "ike=aes128-sha1-dh21" #13: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike=aes128-sha1-dh21" #13: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "ike=aes128-sha1-dh21" #14: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
+002 "ike=aes128-sha1-dh21" #14: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "ike=aes128-sha1-dh21" #14: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike=aes128-sha1-dh21" #14: Authenticated using authby=secret
+002 "ike=aes128-sha1-dh21" #14: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike=aes128-sha1-dh21" #14: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike=aes128-sha1-dh21": terminating SAs using this connection
+002 "ike=aes128-sha1-dh21" #14: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike=aes128-sha1-dh21" #14: ESP traffic information: in=84B out=84B
+002 "ike=aes128-sha1-dh21" #13: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike=aes128-sha1-dh21": deleting non-instance connection
+west #
+ ../bin/libreswan-up-down.sh ike=aes_ctr128-sha1-dh21 -I 192.0.1.254 192.0.2.254
+002 added connection description "ike=aes_ctr128-sha1-dh21"
+002 "ike=aes_ctr128-sha1-dh21" #15: initiating v2 parent SA
+133 "ike=aes_ctr128-sha1-dh21" #15: initiate
+133 "ike=aes_ctr128-sha1-dh21" #15: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike=aes_ctr128-sha1-dh21" #15: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "ike=aes_ctr128-sha1-dh21" #16: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CTR_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
+002 "ike=aes_ctr128-sha1-dh21" #16: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "ike=aes_ctr128-sha1-dh21" #16: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike=aes_ctr128-sha1-dh21" #16: Authenticated using authby=secret
+002 "ike=aes_ctr128-sha1-dh21" #16: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike=aes_ctr128-sha1-dh21" #16: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike=aes_ctr128-sha1-dh21": terminating SAs using this connection
+002 "ike=aes_ctr128-sha1-dh21" #16: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike=aes_ctr128-sha1-dh21" #16: ESP traffic information: in=84B out=84B
+002 "ike=aes_ctr128-sha1-dh21" #15: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike=aes_ctr128-sha1-dh21": deleting non-instance connection
+west #
+ ../bin/libreswan-up-down.sh ike=3des-sha2-modp2048 -I 192.0.1.254 192.0.2.254
+002 added connection description "ike=3des-sha2-modp2048"
+002 "ike=3des-sha2-modp2048" #17: initiating v2 parent SA
+133 "ike=3des-sha2-modp2048" #17: initiate
+133 "ike=3des-sha2-modp2048" #17: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike=3des-sha2-modp2048" #17: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "ike=3des-sha2-modp2048" #18: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
+002 "ike=3des-sha2-modp2048" #18: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "ike=3des-sha2-modp2048" #18: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike=3des-sha2-modp2048" #18: Authenticated using authby=secret
+002 "ike=3des-sha2-modp2048" #18: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike=3des-sha2-modp2048" #18: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike=3des-sha2-modp2048": terminating SAs using this connection
+002 "ike=3des-sha2-modp2048" #18: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike=3des-sha2-modp2048" #18: ESP traffic information: in=84B out=84B
+002 "ike=3des-sha2-modp2048" #17: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike=3des-sha2-modp2048": deleting non-instance connection
+west #
+ ../bin/libreswan-up-down.sh ike=aes128-aes_xcbc-modp2048 -I 192.0.1.254 192.0.2.254
+002 added connection description "ike=aes128-aes_xcbc-modp2048"
+002 "ike=aes128-aes_xcbc-modp2048" #19: initiating v2 parent SA
+133 "ike=aes128-aes_xcbc-modp2048" #19: initiate
+133 "ike=aes128-aes_xcbc-modp2048" #19: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike=aes128-aes_xcbc-modp2048" #19: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "ike=aes128-aes_xcbc-modp2048" #20: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=AES_XCBC_96 prf=AES_XCBC group=MODP2048}
+002 "ike=aes128-aes_xcbc-modp2048" #20: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "ike=aes128-aes_xcbc-modp2048" #20: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike=aes128-aes_xcbc-modp2048" #20: Authenticated using authby=secret
+002 "ike=aes128-aes_xcbc-modp2048" #20: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike=aes128-aes_xcbc-modp2048" #20: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike=aes128-aes_xcbc-modp2048": terminating SAs using this connection
+002 "ike=aes128-aes_xcbc-modp2048" #20: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike=aes128-aes_xcbc-modp2048" #20: ESP traffic information: in=84B out=84B
+002 "ike=aes128-aes_xcbc-modp2048" #19: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike=aes128-aes_xcbc-modp2048": deleting non-instance connection
+west #
+ echo done
+done
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+west NOW
+XFRM state:
+XFRM policy:
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

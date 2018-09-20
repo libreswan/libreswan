@@ -50,7 +50,6 @@ struct p_dns_req;
 typedef void dnsr_cb_fn(struct p_dns_req *);
 
 struct p_dns_req {
-
 	stf_status stf_status;
 
 	bool cache_hit;  /* libunbound hit cache/local, calledback immediately */
@@ -60,12 +59,12 @@ struct p_dns_req {
 	char *dbg_buf;
 	char *log_buf;
 
-	struct timeval start_time;
-	struct timeval done_time;
+	realtime_t start_time;
+	realtime_t done_time;
 
 	char *qname;		/* DNS query to send, from ID */
-	u_int16_t qtype;
-	u_int16_t qclass;
+	uint16_t qtype;
+	uint16_t qclass;
 
 	int ub_async_id;	/* used to track libunbound query, to cancel */
 
@@ -189,7 +188,7 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 }
 
 static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
-		u_int32_t ttl)
+		uint32_t ttl)
 {
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
 	struct id keyid = st->st_connection->spd.that.id;
@@ -197,13 +196,13 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	err_t ugh = NULL;
 	char thatidbuf[IDTOA_BUF];
 	char ttl_buf[ULTOT_BUF + 32]; /* 32 is aribitary */
-	u_int32_t ttl_used;
+	uint32_t ttl_used;
 
 	/*
 	 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey does not expire while
 	 * negotiating
 	 */
-	ttl_used = max(ttl,  (u_int32_t)RETRANSMIT_TIMEOUT_DEFAULT);
+	ttl_used = max(ttl,  (uint32_t)RETRANSMIT_TIMEOUT_DEFAULT);
 
 	if (ttl_used == ttl) {
 		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
@@ -346,7 +345,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		}
 		ldns_buffer_printf(output, " ");
 
-		/* lets parse and debug log the usual RR types */
+		/* let's parse and debug log the usual RR types */
 		switch (atype) {
 		case LDNS_RR_TYPE_A:
 			ldns_rdf2buffer_str_a(output, rdf);
@@ -398,7 +397,6 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 /* This is called when dns response arrives */
 static err_t process_dns_resp(struct p_dns_req *dnsr)
 {
-
 	if (dnsr->rcode != 0 ) {
 		return dnsr->rcode_name;
 	}
@@ -460,46 +458,37 @@ void  free_ipseckey_dns(struct p_dns_req *d)
 
 static void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
 {
-	struct timeval served_delta;
-
-	timersub(&dnsr->done_time, &dnsr->start_time, &served_delta);
-
-	loglog(RC_LOG_SERIOUS, "%s "
-			"The state #%lu is gone. %s returned %s"
-			"elapsed time  %lu.%06lu",
+	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
+	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+		lswlogf(buf, "%s The state #%lu is gone. %s returned %s elapsed time  ",
 			dnsr->dbg_buf, dnsr->so_serial_t,
-			dnsr->log_buf,  dnsr->rcode_name,
-			(unsigned long)served_delta.tv_sec,
-			(unsigned long)(served_delta.tv_usec * 1000000));
+			dnsr->log_buf,  dnsr->rcode_name);
+		lswlog_deltatime(buf, served_delta);
+	}
 }
 
 static void ikev2_ipseckey_log_dns_err(struct p_dns_req *dnsr,
 		const char *err)
 {
-	struct timeval served_delta;
-
-	timersub(&dnsr->done_time, &dnsr->start_time, &served_delta);
-
-	loglog(RC_LOG_SERIOUS, "%s returned %s "
-			"rr parse error %s elapsedtime %lu.%06lu.",
+	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
+	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+		lswlogf(buf, "%s returned %s rr parse error %s elapsed time ",
 			dnsr->log_buf,
-			dnsr->rcode_name, err,
-			(unsigned long)served_delta.tv_sec,
-			(unsigned long)(served_delta.tv_usec * 1000000));
+			dnsr->rcode_name, err);
+		lswlog_deltatime(buf, served_delta);
+	}
 }
 
 static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 {
-	struct timeval served_delta;
-
-	timersub(&dnsr->done_time, &dnsr->start_time, &served_delta);
-	DBG(DBG_CONTROL,
-		DBG_log("%s returned %s cache=%s elapsedtime %lu.%06lu",
+	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
+	LSWDBGP(DBG_CONTROL, buf) {
+		lswlogf(buf, "%s returned %s cache=%s elapsed time ",
 			dnsr->log_buf,
 			dnsr->rcode_name,
-			bool_str(dnsr->cache_hit),
-			(unsigned long)served_delta.tv_sec,
-			(unsigned long)(served_delta.tv_usec * 1000000)));
+			bool_str(dnsr->cache_hit));
+		lswlog_deltatime(buf, served_delta);
+	}
 
 	DBG(DBG_DNS, {
 		const enum lswub_resolve_event_secure_kind k = dnsr->secure;
@@ -520,7 +509,7 @@ static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
 	const char *parse_err;
 
-	gettimeofday(&dnsr->done_time, NULL);
+	dnsr->done_time = realnow();
 
 	if (st == NULL) {
 		/* state disappeared we can't find  discard the response */
@@ -577,7 +566,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
 	bool err;
 
-	gettimeofday(&dnsr->done_time, NULL);
+	dnsr->done_time = realnow();
 
 	if (st == NULL) {
 		/* state disappeared we can't find st, hence no md, abort*/
@@ -642,7 +631,7 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	const char *parse_err;
 	bool err;
 
-	gettimeofday(&dnsr->done_time, NULL);
+	dnsr->done_time = realnow();
 
 	if (st == NULL) {
 		/* state disappeared we can't find st, hence no md, abort*/
@@ -692,7 +681,6 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 		free_ipseckey_dns(dnsr);
 		return;
 	} else {
-
 		DBG(DBG_CONTROL, DBG_log("%s unsuspend id=%s", dnsr->dbg_buf,
 					dnsr->qname));
 		free_ipseckey_dns(dnsr);
@@ -728,7 +716,6 @@ static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
 		return "ID is too long >= SWAN_MAX_DOMAIN_LEN";
 
 	switch (id->kind) {
-
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		addrtot(&id->ip_addr, 'r', name_buf, SWAN_MAX_DOMAIN_LEN);
@@ -757,7 +744,6 @@ static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
 
 	default:
 		return "can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR";
-
 	}
 
 	return NULL;
@@ -828,7 +814,7 @@ static stf_status dns_qry_start(struct p_dns_req *dnsr)
 
 	DBG(DBG_CONTROL, DBG_log("%s start %s", dnsr->dbg_buf, dnsr->log_buf));
 
-	gettimeofday(&dnsr->start_time, NULL);
+	dnsr->start_time = realnow();
 
 	ub_ret = ub_resolve_event(get_unbound_ctx(), dnsr->qname, dnsr->qtype,
 			dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);

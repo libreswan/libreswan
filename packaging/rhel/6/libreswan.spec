@@ -95,7 +95,7 @@ tunnel is a virtual private network or VPN.
 This package contains the daemons and userland tools for setting up
 Libreswan. To build KLIPS, see the kmod-libreswan.spec file.
 
-Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
+Libreswan also supports IKEv2 (RFC7296) and Secure Labeling
 
 Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
@@ -135,7 +135,7 @@ make \
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
-install -d -m 0700 %{buildroot}%{_rundir}/pluto
+install -d -m 0755 %{buildroot}%{_rundir}/pluto
 # used when setting --perpeerlog without --perpeerlogbase
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
@@ -200,7 +200,7 @@ fi
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
-%attr(0700,root,root) %dir %{_rundir}/pluto
+%attr(0755,root,root) %dir %{_rundir}/pluto
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
 %attr(0755,root,root) %dir %{_libexecdir}/ipsec

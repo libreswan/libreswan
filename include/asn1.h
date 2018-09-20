@@ -69,53 +69,14 @@ typedef enum {
 	ASN1_CONTEXT_C_5 =          0xA5
 } asn1_t;
 
-/* Definition of ASN1 flags */
-
-#define ASN1_NONE       0x00
-#define ASN1_DEF        0x01
-#define ASN1_OPT        0x02
-#define ASN1_LOOP       0x04
-#define ASN1_END        0x08
-#define ASN1_OBJ        0x10
-#define ASN1_BODY       0x20
-#define ASN1_RAW        0x40
-
 #define ASN1_INVALID_LENGTH     (~(size_t) 0)   /* largest size_t */
 
-#define ASN1_MAX_LEN    (1U << (8 * 3))         /* don't handle objects with length greater than this */
 #define ASN1_MAX_LEN_LEN    4                   /* no coded length takes more than 4 bytes. */
-
-/* definition of an ASN.1 object */
-
-typedef struct {
-	u_int level;
-	const char  *name;
-	asn1_t type;
-	u_char flags;
-} asn1Object_t;
-
-#define ASN1_MAX_LEVEL  10
-
-typedef struct {
-	bool implicit;
-	u_int cond;
-	u_int level0;
-	u_int loopAddr[ASN1_MAX_LEVEL + 1];
-	chunk_t blobs[ASN1_MAX_LEVEL + 2];
-} asn1_ctx_t;
 
 extern int known_oid(chunk_t object);
 extern size_t asn1_length(chunk_t *blob);
 extern void code_asn1_length(size_t length, chunk_t *code);
-extern u_char *build_asn1_object(chunk_t *object, asn1_t type, size_t datalen);
-extern u_char *build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
-					  asn1_t inner_type, size_t datalen);
 extern bool is_printablestring(chunk_t str);
-extern realtime_t asn1totime(const chunk_t *utctime, asn1_t type);
-extern void asn1_init(asn1_ctx_t *ctx, chunk_t blob,
-		      u_int level0, bool implicit, u_int cond);
-extern bool extract_object(const asn1Object_t *const objects,
-			   u_int *objectID, chunk_t *object, u_int *level,
-			   asn1_ctx_t *ctx);
 extern bool is_asn1(chunk_t blob);
-
+extern size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val);
+extern bool is_asn1_der_encoded_signature(chunk_t blob, chunk_t *sig_val);

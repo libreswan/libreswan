@@ -15,6 +15,13 @@
 #ifndef _VIRTUAL_IP_H
 #define _VIRTUAL_IP_H
 
+#include "err.h"
+#include "ip_address.h"
+
+struct connection;
+struct spd_route;
+struct end;
+
 extern void show_virtual_private(void);
 
 extern void init_virtual_ip(const char *private_list);

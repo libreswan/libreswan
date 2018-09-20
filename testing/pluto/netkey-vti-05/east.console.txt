@@ -19,6 +19,7 @@ east #
  # there should be no vti0 device left
 east #
  ip tun
+vti0: ip/ip  remote 192.1.2.45  local 192.1.2.23  ttl inherit  key 20
 ip_vti0: ip/ip  remote any  local any  ttl inherit  nopmtudisc key 0
 east #
 east #

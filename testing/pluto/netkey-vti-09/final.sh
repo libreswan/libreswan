@@ -3,7 +3,7 @@ ip addr show
 ip link show
 ip route show
 ip xfrm state
-ip xfrm pol
+ip xfrm policy
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

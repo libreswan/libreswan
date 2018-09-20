@@ -15,10 +15,11 @@
  * for more details.
  */
 
-#include <unistd.h>	/* for _POSIX_MONOTONIC_CLOCK */
-#include <errno.h>
+#include <time.h>	/* for clock_*() + clockid_t */
 
-#include "lswlog.h"
+#include "constants.h"	/* for memeq() which is clearly not a constant */
+#include "lswlog.h"	/* for libreswan_exit_log_errno() */
+
 #include "monotime.h"
 
 const monotime_t monotime_epoch = MONOTIME_EPOCH;
@@ -28,72 +29,39 @@ bool is_monotime_epoch(monotime_t t)
 	return memeq(&t, &monotime_epoch, sizeof(monotime_t));
 }
 
-/*
- * monotonic variant of time(2)
- *
- * NOT INTENDED TO BE REALTIME!
- *
- * NOTE: static initializer only happens at load time, so
- * delta/last_time are only set to 0 once, not each call.
- */
-
-static monotime_t mononow_fallback(void) {
-	static time_t delta = 0;
-	static time_t last_time = 0;
-
-	time_t n = time(NULL);	/* third best */
-
-	passert(n != (time_t)-1);
-	if (last_time > n) {
-		libreswan_log("time moved backwards %ld seconds",
-			(long)(last_time - n));
-		delta += last_time - n;
-	}
-	last_time = n;
-	return (monotime_t) {
-		.mt = {
-			.tv_sec = n,
-			.tv_usec = 0,
-		},
-	};
+clockid_t monotime_clockid(void)
+{
+#ifdef CLOCK_BOOTTIME
+	return CLOCK_BOOTTIME;	/* best */
+#else
+	return CLOCK_MONOTONIC;	/* second best */
+#endif
 }
 
 monotime_t mononow(void)
 {
-#ifdef _POSIX_MONOTONIC_CLOCK
 	struct timespec t;
-	int r = clock_gettime(
-#   ifdef CLOCK_BOOTTIME
-		CLOCK_BOOTTIME	/* best */
-#   else
-		CLOCK_MONOTONIC	/* second best */
-#   endif
-		, &t);
-
-	switch (r) {
-	case 0:
-		/* OK */
-		return (monotime_t) {
-			.mt = {
-				.tv_sec = t.tv_sec,
-				.tv_usec = t.tv_nsec / 1000,
-			},
-		};
-	case EINVAL:
-		libreswan_log("Invalid clock method for clock_gettime() - possibly compiled with mismatched kernel and glibc-headers ");
-		break;
-	case EPERM:
-		libreswan_log("No permission for clock_gettime()");
-		break;
-	case EFAULT:
-		libreswan_log("Invalid address space return by clock_gettime()");
-		break;
-	default:
-		libreswan_log("unknown clock_gettime() error: %d", r);
-		break;
+	int e = clock_gettime(monotime_clockid(), &t);
+	if (e != 0) {
+		libreswan_exit_log_errno(e, "clock_gettime(%d,...) in mononow() failed",
+					 monotime_clockid());
 	}
-#   endif
-	return mononow_fallback();
+	/* OK */
+	return (monotime_t) {
+		.mt = {
+			.tv_sec = t.tv_sec,
+			.tv_usec = t.tv_nsec / 1000,
+		},
+	};
+}
+
+struct timespec monotime_as_timespec(monotime_t t)
+{
+	struct timespec ts =  {
+		.tv_sec = t.mt.tv_sec,
+		.tv_nsec = t.mt.tv_usec * 1000,
+	};
+	return ts;
 }
 
 intmax_t monosecs(monotime_t m)
@@ -112,7 +80,7 @@ monotime_t monotimesum(monotime_t t, deltatime_t d)
 
 bool monobefore(monotime_t a, monotime_t b)
 {
-	return timercmp(&a.mt, &b.mt,<);
+	return timercmp(&a.mt, &b.mt, <);
 }
 
 deltatime_t monotimediff(monotime_t a, monotime_t b)

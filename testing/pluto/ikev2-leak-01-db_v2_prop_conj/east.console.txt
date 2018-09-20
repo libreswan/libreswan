@@ -1,0 +1,36 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec whack --impair suppress-retransmits
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ grep NO_PROPOSAL_CHOSEN /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ikev2" #1: IKE SA responder matching remote ESP/AH proposals failed, responder SA processing returned STF_FAIL+v2N_NO_PROPOSAL_CHOSEN
+| ikev2_child_sa_respond returned STF_FAIL+v2N_NO_PROPOSAL_CHOSEN
+| ikev2_parent_inI2outR2_continue_tail returned STF_FAIL+v2N_NO_PROPOSAL_CHOSEN
+| #2 complete v2 state transition from STATE_UNDEFINED with STF_FAIL+v2N_NO_PROPOSAL_CHOSEN
+"westnet-eastnet-ipv4-psk-ikev2" #2: responding to AUTH message (ID 1) from 192.1.2.45:500 with encrypted notification NO_PROPOSAL_CHOSEN
+|    Notify Message Type: v2N_NO_PROPOSAL_CHOSEN (0xe)
+| state transition function for STATE_UNDEFINED failed: v2N_NO_PROPOSAL_CHOSEN
+east #
+ ipsec whack --shutdown
+002 shutting down
+east #
+ grep leak /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

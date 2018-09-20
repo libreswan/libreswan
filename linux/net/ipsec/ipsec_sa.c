@@ -205,8 +205,8 @@ static int ipsec_SArefSubTable_alloc(unsigned table)
 
 	KLIPS_PRINT(debug_xform,
 		    "klips_debug:ipsec_SArefSubTable_alloc: "
-		    "allocating %lu bytes for table %u of %u.\n",
-		    (unsigned long) IPSEC_SA_REF_SUBTABLE_SIZE,
+		    "allocating %zu bytes for table %u of %u.\n",
+		    IPSEC_SA_REF_SUBTABLE_SIZE,
 		    table, IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES);
 
 	/* allocate another sub-table */
@@ -1008,9 +1008,8 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 
 		if (ref_table < IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES) {
 			subtable = ipsec_sadb.refTable[ref_table];
-			if (subtable != NULL && subtable->entry[ref_entry] ==
-			    ips) {
-
+			if (subtable != NULL &&
+			    subtable->entry[ref_entry] == ips) {
 				subtable->entry[ref_entry] = NULL;
 			}
 		}
@@ -1272,8 +1271,8 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 
 			KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
 				    "ipsec_sa_init: "
-				    "allocating %lu bytes for md5_ctx.\n",
-				    (unsigned long) sizeof(struct md5_ctx));
+				    "allocating %zu bytes for md5_ctx.\n",
+				    sizeof(struct md5_ctx));
 			if ((ipsp->ips_key_a = (caddr_t)
 					       kmalloc(sizeof(struct md5_ctx),
 						       GFP_ATOMIC)) == NULL) {
@@ -1352,8 +1351,8 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 
 			KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
 				    "ipsec_sa_init: "
-				    "allocating %lu bytes for sha1_ctx.\n",
-				    (unsigned long) sizeof(struct sha1_ctx));
+				    "allocating %zu bytes for sha1_ctx.\n",
+				    sizeof(struct sha1_ctx));
 			if ((ipsp->ips_key_a = (caddr_t)
 					       kmalloc(sizeof(struct sha1_ctx),
 						       GFP_ATOMIC)) == NULL) {
@@ -1480,9 +1479,8 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				KLIPS_PRINT(
 					debug_pfkey && sysctl_ipsec_debug_verbose,
 					"ipsec_sa_init: "
-					"allocating %lu bytes for md5_ctx.\n",
-					(unsigned long) sizeof(struct
-							       md5_ctx));
+					"allocating %zu bytes for md5_ctx.\n",
+					sizeof(struct md5_ctx));
 				if ((ipsp->ips_key_a = (caddr_t)
 					kmalloc(sizeof(struct md5_ctx),
 						GFP_ATOMIC)) == NULL) {
@@ -1568,9 +1566,8 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				KLIPS_PRINT(
 					debug_pfkey && sysctl_ipsec_debug_verbose,
 					"ipsec_sa_init: "
-					"allocating %lu bytes for sha1_ctx.\n",
-					(unsigned long) sizeof(struct
-							       sha1_ctx));
+					"allocating %zu bytes for sha1_ctx.\n",
+					sizeof(struct sha1_ctx));
 				if ((ipsp->ips_key_a = (caddr_t)
 					kmalloc(sizeof(struct sha1_ctx),
 						GFP_ATOMIC)) == NULL) {

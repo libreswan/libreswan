@@ -25,8 +25,9 @@
 #include "constants.h"
 #include "alg_info.h"
 #include "ike_alg.h"
+#include "ike_alg_integ.h"
+#include "ike_alg_dh.h"
 #include "alg_byname.h"
-#include "ike_alg_none.h"
 
 /*
  * Add the proposal defaults for the specific algorithm.
@@ -204,7 +205,8 @@ static bool add_proposal_defaults(const struct proposal_parser *parser,
 					&ike_alg_prf, defaults->prf,
 					merge_prf_default);
 	} else if (proposal->integ == NULL &&
-		   proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)) {
+		   proposal->encrypt != NULL &&
+		   encrypt_desc_is_aead(proposal->encrypt)) {
 		/*
 		 * Since AEAD, integrity is always 'none'.
 		 */
@@ -220,7 +222,8 @@ static bool add_proposal_defaults(const struct proposal_parser *parser,
 					merge_integ_default);
 	} else if (proposal->integ == NULL &&
 		   proposal->prf != NULL &&
-		   proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)) {
+		   proposal->encrypt != NULL &&
+		   !encrypt_desc_is_aead(proposal->encrypt)) {
 		/*
 		 * Since non-AEAD, use an integrity algorithm that is
 		 * implemented using the PRF.
@@ -273,11 +276,13 @@ static const struct ike_alg *lookup_byname(const struct proposal_parser *parser,
 					   alg_byname_fn *alg_byname,
 					   shunk_t name,
 					   size_t key_bit_length,
+					   shunk_t print_name,
 					   const char *what)
 {
 	if (name.len > 0) {
 		if (alg_byname != NULL) {
-			const struct ike_alg *alg = alg_byname(parser, name, key_bit_length);
+			const struct ike_alg *alg = alg_byname(parser, name, key_bit_length,
+							       print_name);
 			if (alg == NULL) {
 				DBG(DBG_PROPOSAL_PARSER,
 				    DBG_log("%s_byname('"PRISHUNK"') failed: %s",
@@ -353,12 +358,14 @@ static bool parse_encrypt(const struct proposal_parser *parser,
 			passert(parser->err_buf[0] != '\0');
 			return false;
 		}
+		/* print <alg>-<len> */
+		shunk_t print_name = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
 		proposal->enckeylen = enckeylen;
 		proposal->encrypt =
 			encrypt_desc(lookup_byname(parser,
 						   encrypt_alg_byname,
 						   ealg, proposal->enckeylen,
-						   "encryption"));
+						   print_name, "encryption"));
 		/* Was <ealg>-<eklen> rejected? */
 		if (parser->err_buf[0] != '\0') {
 			return false;
@@ -367,11 +374,12 @@ static bool parse_encrypt(const struct proposal_parser *parser,
 		return true;
 	}
 	/* try <ealg> */
+	shunk_t print_name = ealg;
 	proposal->encrypt =
 		encrypt_desc(lookup_byname(parser,
 					   encrypt_alg_byname,
 					   ealg, proposal->enckeylen,
-					   "encryption"));
+					   print_name, "encryption"));
 	if (parser->err_buf[0] != '\0') {
 		/*
 		 * Could it be <ealg><eklen> or <ealg>_<eklen>?  Work
@@ -410,7 +418,7 @@ static bool parse_encrypt(const struct proposal_parser *parser,
 			encrypt_desc(lookup_byname(parser,
 						   encrypt_alg_byname,
 						   ealg, proposal->enckeylen,
-						   "encryption"));
+						   print_name, "encryption"));
 		if (parser->err_buf[0] != '\0') {
 			return false;
 		}
@@ -426,7 +434,7 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 	LSWDBGP(DBG_PROPOSAL_PARSER, buf) {
 		lswlogs(buf, "algs:");
 		for (struct token *token = tokens; token->alg.ptr != NULL; token++) {
-			lswlogf(buf, " algs[%zu] = '"PRISHUNK"'",
+			lswlogf(buf, " algs[%tu] = '"PRISHUNK"'",
 				token - tokens, SHUNKF(token->alg));
 		}
 	}
@@ -451,14 +459,17 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 	bool lookup_prf = parser->protocol->prf_alg_byname != NULL;
 	if (!lookup_prf && IMPAIR(PROPOSAL_PARSER)) {
 		/*
-		 * Only force PRF lookup when the folloing token looks
-		 * like an INTEG algorithm.  Otherwise something like
-		 * ah=sha1 gets parsed as ah=[encr]-sha1-[integ]-[dh].
+		 * Force PRF lookup when the folloing token looks like
+		 * an INTEG algorithm (i.e., its lookup succeeds).
+		 * Otherwise something like ah=sha1 gets parsed as
+		 * ah=[encr]-sha1-[integ]-[dh].
 		 */
-		if (tokens[0].alg.ptr != NULL && tokens[1].alg.ptr != NULL) {
-			(void) lookup_byname(parser, integ_alg_byname,
-					     tokens[1].alg, 0, "integrity");
-			lookup_prf = parser->err_buf[0] == '\0';
+		shunk_t prf = tokens[0].alg;
+		shunk_t integ = tokens[1].alg;
+		if (prf.ptr != NULL && integ.ptr != NULL) {
+			lookup_prf = (lookup_byname(parser, integ_alg_byname,
+						    integ, 0, integ, "integrity")
+				      != NULL);
 			parser->err_buf[0] = '\0';
 		}
 	}
@@ -466,7 +477,7 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 		shunk_t prf = tokens[0].alg;
 		proposal.prf = prf_desc(lookup_byname(parser,
 						      prf_alg_byname,
-						      prf, 0, "PRF"));
+						      prf, 0, prf, "PRF"));
 		if (parser->err_buf[0] != '\0') {
 			return false;
 		}
@@ -482,7 +493,7 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 		shunk_t integ = tokens[0].alg;
 		proposal.integ = integ_desc(lookup_byname(parser,
 							  integ_alg_byname,
-							  integ, 0, "integrity"));
+							  integ, 0, integ, "integrity"));
 		if (parser->err_buf[0] != '\0') {
 			if (tokens[1].alg.ptr != NULL) {
 				/*
@@ -514,7 +525,8 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 		shunk_t dh = tokens[0].alg;
 		proposal.dh = oakley_group_desc(lookup_byname(parser,
 							      dh_alg_byname,
-							      dh, 0, "DH"));
+							      dh, 0,
+							      dh, "DH"));
 		if (parser->err_buf[0] != '\0') {
 			return false;
 		}
@@ -562,7 +574,7 @@ bool alg_info_parse_str(const struct proposal_parser *parser,
 	shunk_t prop_ptr = alg_str;
 	do {
 		/* find the next proposal */
-		shunk_t prop = shunk_token(&prop_ptr, ",");
+		shunk_t prop = shunk_strsep(&prop_ptr, ",");
 		/* parse it */
 		struct token tokens[8];
 		zero(&tokens);
@@ -577,7 +589,7 @@ bool alg_info_parse_str(const struct proposal_parser *parser,
 				return false;
 			}
 			/* find the next alg */
-			shunk_t alg = shunk_token(&alg_ptr, "-;,");
+			shunk_t alg = shunk_strsep(&alg_ptr, "-;,");
 			*token++ = (struct token) {
 				.alg = alg,
 				.sep = last_sep,
@@ -613,12 +625,14 @@ struct proposal_parser proposal_parser(const struct proposal_policy *policy,
 bool proposal_aead_none_ok(const struct proposal_parser *parser,
 			   const struct proposal_info *proposal)
 {
-	if (IMPAIR(ALLOW_NULL_NULL)) {
+	if (IMPAIR(ALLOW_NULL_NONE)) {
 		return true;
 	}
 
-	if (proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)
-	    && proposal->integ != NULL && proposal->integ != &ike_alg_integ_none) {
+	if (proposal->encrypt != NULL &&
+	    encrypt_desc_is_aead(proposal->encrypt) &&
+	    proposal->integ != NULL &&
+	    proposal->integ != &ike_alg_integ_none) {
 		/*
 		 * For instance, esp=aes_gcm-sha1" is invalid.
 		 */
@@ -629,8 +643,10 @@ bool proposal_aead_none_ok(const struct proposal_parser *parser,
 		return false;
 	}
 
-	if (proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)
-	    && proposal->integ != NULL && proposal->integ == &ike_alg_integ_none) {
+	if (proposal->encrypt != NULL &&
+	    !encrypt_desc_is_aead(proposal->encrypt) &&
+	    proposal->integ != NULL &&
+	    proposal->integ == &ike_alg_integ_none) {
 		/*
 		 * For instance, esp=aes_cbc-none" is invalid.
 		 */
@@ -700,7 +716,8 @@ size_t lswlog_proposal_info(struct lswlog *log,
 	if (proposal->integ != NULL && proposal->prf == NULL) {
 		size += lswlogs(log, sep); sep = "-";
 		size += lswlogs(log, proposal->integ->common.fqn);
-	} else if (!(proposal->integ == &ike_alg_integ_none && ike_alg_is_aead(proposal->encrypt)) &&
+	} else if (!(proposal->integ == &ike_alg_integ_none &&
+		     encrypt_desc_is_aead(proposal->encrypt)) &&
 		   proposal->integ != NULL && proposal->integ->prf != proposal->prf) {
 		size += lswlogs(log, sep); sep = "-";
 		size += lswlogs(log, proposal->integ->common.fqn);
@@ -737,8 +754,8 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
 }
 
 /*
- * When PFS=no reject any DH, and when PFS=yes reject mixing implict
- * and explicit DH.
+ * When PFS=no ignore any DH algorithms, and when PFS=yes reject
+ * mixing implict and explicit DH.
  */
 bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 			      struct alg_info_esp *aie)
@@ -782,34 +799,23 @@ bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 	 */
 
 	/*
-	 * PFS=NO overrides any DH so don't silently ignore it.  Check
-	 * this early so that PFS=no code gets this error and not an
-	 * error about adding DH to all proposals.
-	 *
-	 * ;none is handled below.
+	 * Since PFS=NO overrides any DH, don't silently ignore it.
+	 * Check this early so that a conflict with PFS=no code gets
+	 * reported before anything else.
 	 */
-	if (!parser->policy->pfs && first_dh != NULL) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s DH algorithm %s is invalid as PFS policy is disabled",
-			 parser->protocol->name,
-			 first_dh->dh->common.fqn);
-		if (!impair_proposal_errors(parser)) {
-			return false;
+	if (!parser->policy->pfs && (first_dh != NULL || first_none != NULL)) {
+		FOR_EACH_ESP_INFO(aie, alg) {
+			if (alg->dh == &ike_alg_dh_none) {
+				parser->policy->warning("ignoring redundant %s DH algorithm NONE as PFS policy is disabled",
+							parser->protocol->name);
+			} else if (alg->dh != NULL) {
+				parser->policy->warning("ignoring %s DH algorithm %s as PFS policy is disabled",
+							parser->protocol->name,
+							alg->dh->common.fqn);
+			}
+			alg->dh = NULL;
 		}
-	}
-
-	/*
-	 * IKEv1 doesn't support ";none" (the lookup should have
-	 * failed).  IKEv2 does support ;none and when when compbined
-	 * with !PFS ambiguous.  However, for now, still reject it.
-	 */
-	if (!parser->policy->pfs && first_none != NULL) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s DH algorithm 'none' is is invalid as PFS policy is disabled",
-			 parser->protocol->name);
-		if (!impair_proposal_errors(parser)) {
-			return false;
-		}
+		return true;
 	}
 
 	/*

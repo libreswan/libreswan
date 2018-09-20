@@ -1,2 +1,0 @@
-this test is identical in function to basic-pluto-01.
-However, it determines that stuff is still okay when west has an extra X.509 key as well as a regular raw rsa key

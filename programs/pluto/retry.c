@@ -33,6 +33,7 @@
 #include "demux.h"	/* for state_transition_fn used by ipsec_doi.h */
 #include "ipsec_doi.h"
 #include "ikev2.h"	/* for need_this_intiator() */
+#include "fd.h"
 
 /* Time to retransmit, or give up.
  *
@@ -84,23 +85,6 @@ void retransmit_v1_msg(struct state *st)
 		break;
 	}
 
-	/*
-	 * check if we've tried rekeying enough times.  st->st_try ==
-	 * 0 means that this should be the only try (possibly from
-	 * IMPAIR).  c->sa_keying_tries == 0 means that there is no
-	 * limit.
-	 */
-
-	if (IMPAIR(RETRANSMITS) && try > 0) {
-		/*
-		 * IKEv1 never retries to IKEv2; but IKEv2 can retry
-		 * to IKEv1
-		 */
-		libreswan_log("IMPAIR RETRANSMITS: suppressing re-key");
-		/* disable re-key code */
-		try = 0;
-	}
-
 	if (try != 0 && (try <= try_limit || try_limit == 0)) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.  Since
@@ -145,7 +129,7 @@ void retransmit_v1_msg(struct state *st)
 			loglog(RC_COMMENT,
 			       "next attempt will be IKEv2");
 		}
-		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
+		ipsecdoi_replace(st, try);
 	}
 
 	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
@@ -208,25 +192,6 @@ void retransmit_v2_msg(struct state *st)
 	 * function.
 	 */
 
-	/*
-	 * check if we've tried rekeying enough times.  st->st_try ==
-	 * 0 means that this should be the only try (possibly from
-	 * IMPAIR).  c->sa_keying_tries == 0 means that there is no
-	 * limit.
-	 */
-
-	if (IMPAIR(RETRANSMITS) && try > 0) {
-		/*
-		 * XXX: Even though TRY is always non-zero; check it.
-		 * At some point TRY, and the code falling back to
-		 * IKEv1 will go away and this is a bread-crumb for
-		 * what needs to be changed.
-		 */
-		libreswan_log("IMPAIR RETRANSMITS: suppressing re-key");
-		/* disable re-key code */
-		try = 0;
-	}
-
 	if (try != 0 && (try <= try_limit || try_limit == 0)) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.
@@ -261,7 +226,7 @@ void retransmit_v2_msg(struct state *st)
 			c->failed_ikev2 = TRUE;
 			loglog(RC_COMMENT, "next attempt will be IKEv1");
 		}
-		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
+		ipsecdoi_replace(st, try);
 	} else {
 		DBG(DBG_CONTROL|DBG_RETRANSMITS,
 		    DBG_log("maximum number of keyingtries reached - deleting state"));
@@ -300,7 +265,7 @@ bool ikev2_schedule_retry(struct state *st)
 		     "maximum number of retries reached - deleting state");
 		return false;
 	}
-	LSWLOG_LOG_WHACK(RC_COMMENT, buf) {
+	LSWLOG_RC(RC_COMMENT, buf) {
 		lswlogf(buf, "scheduling retry attempt %ld of ", try);
 		if (try_limit == 0) {
 			lswlogs(buf, "an unlimited number");

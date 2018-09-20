@@ -15,37 +15,35 @@ east #
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x3802ecf1 reqid 16389 mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xedfe08643346926b585714b50cd6d3f5ca256aaa 96
-	enc cbc(aes) 0xa1fa58942bc75296c5f3fb83610a5d86
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0x0a0f4093 reqid 16389 mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xb719d7874b2794f7a3fce37e072e423807e897d7 96
-	enc cbc(aes) 0xbab83c2f4936c2facde6341e5c64b2b0
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1042407 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid 16389 mode tunnel
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir fwd priority 2344 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid 16389 mode tunnel
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir in priority 2344 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid 16389 mode tunnel
+		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

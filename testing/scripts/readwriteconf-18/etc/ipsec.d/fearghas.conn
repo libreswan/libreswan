@@ -1,9 +1,0 @@
-
-conn fearghas--ignore
-        left=205.150.200.134
-	leftsubnet=205.150.200.160/28
-        leftnexthop=205.150.200.129
-        right=81.2.117.203
-	rightrsasigkey=0sAQNpHDBvT32qcqco00mbsSjBwbmrctt8VeMShcynIGZoHHJhOStTDbxlMf8iIMw46C2FujmUGottdo+xjEx7n9p0pZisI8cAsK3CIIm04kdb4KW4G1YX4dzQg5ADcvY5gn4ORBOBlUAn8fx5hVwbE2CuYV8nUmq7upB8P7p3jlgTPQuvztCQX0A9E5QboPSSiH7UYo87versO//Bm/QADsOo5+eMrjMJPX9WSBy1KurwztuCJi1PpiC6xChIjIVhhI5o4HOGofhaihgzchnlqG6bwm2NlZxuK5Q0WU5nRNUVM93AZcjQ3nbeg62Fz8fIRzURVsUjXO7xpB15lbycxODz0mRwSf2ECbZvzBVt
-        auto=add
-

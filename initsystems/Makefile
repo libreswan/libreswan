@@ -20,21 +20,8 @@ endif
 # this file uses ifeq, so need config early
 include $(top_srcdir)/mk/config.mk
 
-ifneq ($(filter systemd, $(INITSYSTEM)),)
-
+ifneq ($(INITSYSTEM),)
 SUBDIRS += $(INITSYSTEM)
-
-else
-
-# XXX: Both switch directory and change the target.
-local-base:
-	$(MAKE) -C $(builddir)/$(INITSYSTEM) programs
-local-install-base:
-	$(MAKE) -C $(builddir)/$(INITSYSTEM) install
-
-local-clean-base:
-	rm -f $(filter-out %/Makefile,$(wildcard $(builddir)/$(INITSYSTEM)/*))
-
 endif
 
 include $(top_srcdir)/mk/subdirs.mk

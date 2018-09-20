@@ -1,5 +1,0 @@
-ipsec whack  --name mms --initiate
-ipsec whack  --name amethon --initiate
-ipsec whack  --name elogic --initiate
-ipsec whack  --name mms1 --initiate
-ipsec whack  --name wap --initiate

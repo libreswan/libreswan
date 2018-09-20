@@ -64,32 +64,32 @@ west #
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):
 000  
-000 ESP algorithms supported:
+000 Kernel algorithms supported:
 000  
-000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=8, keysizemin=192, keysizemax=192
-000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=8, keysizemin=128, keysizemax=128
-000 algorithm ESP encrypt: id=11, name=ESP_NULL, ivlen=0, keysizemin=0, keysizemax=0
-000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=13, name=ESP_AES_CTR, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=14, name=ESP_AES_CCM_A, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=23, name=ESP_NULL_AUTH_AES_GMAC, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
-000 algorithm AH/ESP auth: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
-000 algorithm AH/ESP auth: id=5, name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
-000 algorithm AH/ESP auth: id=6, name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
-000 algorithm AH/ESP auth: id=7, name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
-000 algorithm AH/ESP auth: id=8, name=AUTH_ALGORITHM_HMAC_RIPEMD, keysizemin=160, keysizemax=160
-000 algorithm AH/ESP auth: id=9, name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
-000 algorithm AH/ESP auth: id=250, name=AUTH_ALGORITHM_AES_CMAC_96, keysizemin=128, keysizemax=128
-000 algorithm AH/ESP auth: id=251, name=AUTH_ALGORITHM_NULL_KAME, keysizemin=0, keysizemax=0
+000 algorithm ESP encrypt: name=3DES_CBC, keysizemin=192, keysizemax=192
+000 algorithm ESP encrypt: name=AES_CBC, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=AES_CCM_12, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=AES_CCM_16, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=AES_CCM_8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=AES_CTR, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=AES_GCM_12, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=AES_GCM_16, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=AES_GCM_8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=CAMELLIA_CBC, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=CHACHA20_POLY1305, keysizemin=256, keysizemax=256
+000 algorithm ESP encrypt: name=NULL, keysizemin=0, keysizemax=0
+000 algorithm ESP encrypt: name=NULL_AUTH_AES_GMAC, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=SERPENT_CBC, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=TWOFISH_CBC, keysizemin=128, keysizemax=256
+000 algorithm AH/ESP auth: name=AES_CMAC_96, key-length=128
+000 algorithm AH/ESP auth: name=AES_XCBC_96, key-length=128
+000 algorithm AH/ESP auth: name=HMAC_MD5_96, key-length=128
+000 algorithm AH/ESP auth: name=HMAC_SHA1_96, key-length=160
+000 algorithm AH/ESP auth: name=HMAC_SHA2_256_128, key-length=256
+000 algorithm AH/ESP auth: name=HMAC_SHA2_256_TRUNCBUG, key-length=256
+000 algorithm AH/ESP auth: name=HMAC_SHA2_384_192, key-length=384
+000 algorithm AH/ESP auth: name=HMAC_SHA2_512_256, key-length=512
+000 algorithm AH/ESP auth: name=NONE, key-length=0
 000  
 000 IKE algorithms supported:
 000  
@@ -103,6 +103,7 @@ west #
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=28, v2name=CHACHA20_POLY1305, blocksize=16, keydeflen=256
 000 algorithm IKE PRF: name=HMAC_MD5, hashlen=16
 000 algorithm IKE PRF: name=HMAC_SHA1, hashlen=20
 000 algorithm IKE PRF: name=HMAC_SHA2_256, hashlen=32
@@ -119,8 +120,6 @@ west #
 000 algorithm IKE DH Key Exchange: name=DH19, bits=512
 000 algorithm IKE DH Key Exchange: name=DH20, bits=768
 000 algorithm IKE DH Key Exchange: name=DH21, bits=1056
-000 algorithm IKE DH Key Exchange: name=DH23, bits=2048
-000 algorithm IKE DH Key Exchange: name=DH24, bits=2048
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
@@ -162,7 +161,7 @@ west #
 108 "westnet-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet" #1: Authenticated using RSA
-004 "westnet-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
+004 "westnet-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "westnet-eastnet" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
@@ -213,17 +212,16 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- grep 'duplicate packet' /tmp/pluto.log
-| "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_I4
+ sed -n -e '/IMPAIR: start duplicate packet/,/IMPAIR: stop duplicate packet/ { /^[^|]/ p }' /tmp/pluto.log
 west #
 west #
  ../bin/check-for-core.sh

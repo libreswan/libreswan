@@ -59,7 +59,7 @@
 #include "timer.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
-#include "ike_alg_none.h"
+#include "ike_alg_integ.h"
 #include "plutoalg.h"
 /* for show_virtual_private: */
 #include "virtual.h"	/* needs connections.h */
@@ -67,10 +67,7 @@
 
 #include <libaudit.h>
 
-#ifndef NO_DB_OPS_STATS
-#define NO_DB_CONTEXT
 #include "db_ops.h"
-#endif
 
 #include "pluto_stats.h"
 
@@ -112,7 +109,6 @@ void linux_audit_init(void)
 static void do_linux_audit(const int type, const char *message, const char *addr,
 			   const int result)
 {
-
 	int audit_fd, rc;
 
 	audit_fd = audit_open();
@@ -175,9 +171,9 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	char head[IDTOA_BUF];
 	char integname[IDTOA_BUF];
 	char prfname[IDTOA_BUF];
-	struct esb_buf esb, esb2;
+	struct esb_buf esb;
 	/* we need to free() this */
-	char *conn_encode = audit_encode_nv_string("conn-name",c->name,0);
+	char *conn_encode = audit_encode_nv_string("conn-name", c->name,0);
 
 	zero(&cipher_str);	/* OK: no pointer fields */
 	zero(&spi_str);	/* OK: no pointer fields */
@@ -197,7 +193,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 					st->st_oakley.auth, &esb));
 
 		snprintf(prfname, sizeof(prfname), "%s",
-			 st->st_oakley.ta_prf->common.officname);
+			 st->st_oakley.ta_prf->prf_ike_audit_name);
 
 		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
 			if (!st->st_ikev2) {
@@ -209,7 +205,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			}
 		} else if (st->st_oakley.ta_integ != NULL) {
 			snprintf(integname, sizeof(integname), "%s_%zu",
-				st->st_oakley.ta_integ->common.officname,
+				st->st_oakley.ta_integ->integ_ike_audit_name,
 				st->st_oakley.ta_integ->integ_output_size *
 				BITS_PER_BYTE);
 		} else {
@@ -227,7 +223,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 		snprintf(cipher_str, sizeof(cipher_str),
 			"cipher=%s ksize=%d integ=%s prf=%s pfs=%s",
-			st->st_oakley.ta_encrypt->common.officname,
+			st->st_oakley.ta_encrypt->encrypt_ike_audit_name,
 			st->st_oakley.enckeylen,
 			integname, prfname,
 			st->st_oakley.ta_dh->common.name);
@@ -250,45 +246,45 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		 * is for now.
 		 */
 
+		const struct ipsec_proto_info *pi;
 		const struct encrypt_desc *encrypt;
 		const struct integ_desc *integ;
 		unsigned enckeylen;
+
 		if (st->st_esp.present) {
+			pi = &st->st_esp;
 			encrypt = st->st_esp.attrs.transattrs.ta_encrypt;
 			integ = st->st_esp.attrs.transattrs.ta_integ;
 			enckeylen = st->st_esp.attrs.transattrs.enckeylen;
 		} else if (st->st_ah.present) {
+			pi = &st->st_ah;
 			encrypt = NULL;
 			integ = st->st_ah.attrs.transattrs.ta_integ;
 			enckeylen = 0;
 		} else {
+			pi = &st->st_esp;	/* hack: will yield zero SPIs, I think */
 			encrypt = NULL;
 			integ = NULL;
 			enckeylen = 0;
 		}
 		snprintf(cipher_str, sizeof(cipher_str), "cipher=%s ksize=%u integ=%s",
 			 (encrypt == NULL ? "none" :
-			  enum_show_shortb(&esp_transformid_names,
-					   encrypt->common.id[IKEv1_ESP_ID], &esb)),
+			  encrypt->encrypt_kernel_audit_name),
 			 enckeylen,
 			 (integ == NULL ? "none" :
-			  enum_show_shortb(&auth_alg_names,
-					   integ->common.id[IKEv1_ESP_ID], &esb2)));
+			  integ->integ_kernel_audit_name));
 
+		/* note: each arg appears twice because it is printed two ways */
 		snprintf(spi_str, sizeof(spi_str),
-		"in-spi=%lu(0x%08lx) out-spi=%lu(0x%08lx) in-ipcomp=%lu(0x%08lx) out-ipcomp=%lu(0x%08lx)",
-		st->st_esp.present ? (unsigned long)ntohl(st->st_esp.attrs.spi) :
-			(unsigned long)ntohl(st->st_ah.attrs.spi),
-		st->st_esp.present ? (unsigned long)ntohl(st->st_esp.attrs.spi) :
-			(unsigned long)ntohl(st->st_ah.attrs.spi),
-		st->st_esp.present ?  (unsigned long)ntohl(st->st_esp.our_spi) :
-			(unsigned long)ntohl(st->st_ah.our_spi),
-		st->st_esp.present ?  (unsigned long)ntohl(st->st_esp.our_spi) :
-			(unsigned long)ntohl(st->st_ah.our_spi),
-		st->st_ipcomp.present ?  (unsigned long)ntohl(st->st_ipcomp.attrs.spi) : (unsigned long)0,
-		st->st_ipcomp.present ?  (unsigned long)ntohl(st->st_ipcomp.attrs.spi) : (unsigned long)0,
-		st->st_ipcomp.present ? (unsigned long)ntohl(st->st_ipcomp.our_spi) : (unsigned long)0,
-		st->st_ipcomp.present ? (unsigned long)ntohl(st->st_ipcomp.our_spi) : (unsigned long)0);
+			"in-spi=%" PRIu32 "(0x%08" PRIu32 ") out-spi=%" PRIu32 "(0x%08" PRIu32 ") in-ipcomp=%" PRIu32 "(0x%08" PRIu32 ") out-ipcomp=%" PRIu32 "(0x%08" PRIu32 ")",
+			ntohl(pi->attrs.spi),
+			ntohl(pi->attrs.spi),
+			ntohl(pi->our_spi),
+			ntohl(pi->our_spi),
+			ntohl(st->st_ipcomp.attrs.spi),	/* zero if missing */
+			ntohl(st->st_ipcomp.attrs.spi),	/* zero if missing */
+			ntohl(st->st_ipcomp.our_spi),	/* zero if missing */
+			ntohl(st->st_ipcomp.our_spi));	/* zero if missing */
 		break;
 	}
 	default:

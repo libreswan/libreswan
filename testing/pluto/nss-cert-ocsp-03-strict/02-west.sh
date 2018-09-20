@@ -5,6 +5,6 @@ ipsec start
 ipsec auto --add nss-cert-ocsp
 ipsec auto --status |grep nss-cert-ocsp
 echo "initdone"
-ipsec whack --impair retransmits
+ipsec whack --impair delete-on-retransmit
 ipsec auto --up nss-cert-ocsp
 echo done

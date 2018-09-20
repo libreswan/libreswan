@@ -197,6 +197,10 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
                 os.mkdir(dir)
                 if "private" in dir:
                     os.chmod(dir, 0o700)
+            else:
+                oldfiles = glob.glob("%s/*.der"%dir) + glob.glob("%s/*.crt"%dir) + glob.glob("%s/*.pem"%dir) + glob.glob("%s/*.key"%dir)
+                for oldfile in oldfiles:
+                    os.unlink(oldfile)
 
         # test specific files
         ipsecconf = "%s/ipsec.conf" % (testpath)
@@ -226,8 +230,8 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
         if args.userland == "strongswan":
             # check version and fail early
             output = subprocess.getoutput("strongswan version")
-            if not "U5.6.0" in output:
-                sys.exit("strongswan 5.6.0 must be installed")
+            if not "U5.6.3" in output:
+                sys.exit("strongswan 5.6.3 must be installed")
             # required to write log file in /tmp
             subprocess.getoutput("setenforce 0")
             strongswanconf = "%s/%sstrongswan.conf" % (testpath, hostname)

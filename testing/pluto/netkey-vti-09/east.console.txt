@@ -53,27 +53,27 @@ east #
     link/ipip 0.0.0.0 brd 0.0.0.0
 east #
  ip route show
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
 east #
  ip xfrm state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	aead rfc4106(gcm(aes)) 0xKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	aead rfc4106(gcm(aes)) 0xKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	aead rfc4106(gcm(aes)) 0xKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	aead rfc4106(gcm(aes)) 0xKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 east #
- ip xfrm pol
+ ip xfrm policy
 src 10.0.2.0/24 dst 10.0.1.0/24 
 	dir out priority 1042407 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45

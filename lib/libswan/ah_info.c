@@ -20,19 +20,14 @@
 #include <stdint.h>
 #include <limits.h>
 
-#include "constants.h"  /* some how sucks in u_int8_t for pfkeyv2.h */
-#include "libreswan/pfkeyv2.h"
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "alg_info.h"
 #include "alg_byname.h"
-#include "kernel_alg.h"
 #include "lswfips.h"
 
 #include "ike_alg.h"
-#include "ike_alg_none.h"
-#include "ike_alg_aes.h"
-#include "ike_alg_sha1.h"
+#include "ike_alg_integ.h"
 
 static bool ah_proposal_ok(const struct proposal_parser *parser,
 			   const struct proposal_info *proposal)
@@ -42,7 +37,7 @@ static bool ah_proposal_ok(const struct proposal_parser *parser,
 	impaired_passert(PROPOSAL_PARSER, proposal->integ != NULL);
 
 	/* ah=null is invalid */
-	if (!IMPAIR(ALLOW_NULL_NULL) &&
+	if (!IMPAIR(ALLOW_NULL_NONE) &&
 	    proposal->integ == &ike_alg_integ_none) {
 		snprintf(parser->err_buf, parser->err_buf_len,
 			 "AH cannot have 'none' as the integrity algorithm");
@@ -55,7 +50,9 @@ static bool ah_proposal_ok(const struct proposal_parser *parser,
 }
 
 static const struct ike_alg *default_ah_integ[] = {
+#ifdef USE_SHA1
 	&ike_alg_integ_sha1.common,
+#endif
 	NULL,
 };
 
@@ -79,10 +76,9 @@ const struct proposal_protocol ah_proposal_protocol = {
  * XXX: Because it is parsing an "ah" line which requires a different
  * parser configuration - encryption isn't allowed.
  *
- * ??? the only difference between this and alg_info_esp is in two
- * parameters to alg_info_parse_str.  XXX: Things are down to just the
- * last parameter being different - but that is critical as it
- * determines what is allowed.
+ * ??? the only difference between
+ * alg_info_ah_create_from_str and alg_info_esp_create_from_str
+ * is in the second argument to proposal_parser.
  *
  * XXX: On the other hand, since "struct ike_info" and "struct
  * esp_info" are effectively the same, they can be merged.  Doing
@@ -90,6 +86,7 @@ const struct proposal_protocol ah_proposal_protocol = {
  */
 
 /* This function is tested in testing/algparse/algparse.c */
+
 struct alg_info_esp *alg_info_ah_create_from_str(const struct proposal_policy *policy,
 						 const char *alg_str,
 						 char *err_buf, size_t err_buf_len)

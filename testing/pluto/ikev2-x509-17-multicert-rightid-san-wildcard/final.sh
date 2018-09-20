@@ -1,6 +1,6 @@
-# we should see conn other being up
+# we should see a connection switch on east
 ipsec whack --trafficstatus
-ipsec whack --shutdown
+hostname | grep east && grep switched /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

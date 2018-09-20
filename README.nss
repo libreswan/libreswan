@@ -62,7 +62,9 @@ using:
 
 	ipsec initnss
 
-By default the NSS db is created in /etc/ipsec.d/
+By default the NSS db is created in /etc/ipsec.d/ on RHEL/Fedora/CentOS
+but in /var/lib/ipsec/nss/ on Debian/Ubuntu. The remainder of this file
+uses /etc/ipsec.d/ in the examples.
 
 When creating a database, you are prompted for a password. The default
 libreswan package install for RHEL/Fedora/CentOS uses an empty password.
@@ -108,20 +110,15 @@ Note: do not enter any spaces before or after the token name or password.
 
 The "ipsec newhostkey" and "ipsec rsasigkey" utilities are used for
 creating raw RSA keys. If a non-default NSS directory is used, this can
-be specified using the -d option.
+be specified using the --nssdir option.
 
-	ipsec newhostkey --nssdir /etc/ipsec.d [--password password] \
-		--output /etc/ipsec.secrets
+	ipsec newhostkey --nssdir /tmp/ipsec.d [--password password]
 
 The password is only required if the NSS database is protected with a
-non-empty password.  All "private" compontents of the raw RSA key in
-/etc/ipsec.secrets such as the exponents and primes are filled in with
-the CKA ID, which serves as an identifier for NSS to look up the proper
-information in the NSS db during the IKE negotiation.
+non-empty password.
 
-Public key information is directly available in /etc/ipsec.secrets and the
-"ipsec showhostkey" command can be used to generate left/rightrsasigkey=
-entries for /etc/ipsec.conf.
+Public key information is available via the "ipsec showhostkey" command
+can be used to generate left/rightrsasigkey= entries for /etc/ipsec.conf.
 
 #########################################################################
 # Using certificates with NSS
@@ -210,10 +207,8 @@ Now you can import the file into the NSS db:
 
 	ipsec import certkey.p12
 
-NOTE: the ipsec command uses "pk12util -i certkey.p12 -d /etc/ipsec.d"
-
 If you did not pick a name using the -name option, you can use
-certutil -L -d /etc/ipsec.d to figure out the name NSS picked durnig
+certutil -L -d sql:/etc/ipsec.d to figure out the name NSS picked durnig
 the import.
 
 Add following to /etc/ipsec.secrets file:
@@ -234,8 +229,7 @@ Paul: add "ipsec export" ?
 
 To export the CA certificate:
 
-	NSS_DEFAULT_DB_TYPE="sql:" pk12util -o cacert1.p12 -n cacert1 \
-		-d /etc/ipsec.d
+	pk12util -o cacert1.p12 -n cacert1 -d sql:/etc/ipsec.d
 
 Copy the file "cacert1.p12" to the new machine and import it using:
 

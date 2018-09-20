@@ -1,0 +1,105 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add one
+002 added connection description "one"
+west #
+ ipsec auto --add two
+002 added connection description "two"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up one
+002 "one" #1: initiating v2 parent SA
+133 "one" #1: initiate
+133 "one" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "one" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "one" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "one" #2: Authenticated using authby=secret
+002 "one" #2: negotiated connection [192.1.2.45-192.1.2.45:6081-6081 17] -> [192.1.2.23-192.1.2.23:0-65535 17]
+004 "one" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --up two
+139 "two" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "two" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 17] -> [192.1.2.23-192.1.2.23:6081-6081 17]
+004 "two" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+west #
+ ipsec whack --trafficstatus
+006 #2: "one", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #3: "two", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ echo done
+done
+west #
+ ../../pluto/bin/ipsec-look.sh
+west NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32 proto udp dport 6081
+	dir fwd priority 843743 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32 proto udp dport 6081
+	dir in priority 843743 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32 proto udp sport 6081
+	dir fwd priority 843743 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32 proto udp sport 6081
+	dir in priority 843743 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32 proto udp dport 6081
+	dir out priority 843743 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32 proto udp sport 6081
+	dir out priority 843743 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

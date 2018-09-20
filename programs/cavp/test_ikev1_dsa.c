@@ -16,9 +16,7 @@
 
 #include "lswalloc.h"
 #include "ike_alg.h"
-
-#include "ike_alg_sha1.h"
-#include "ike_alg_sha2.h"
+#include "ike_alg_prf.h"
 
 #include "ikev1_prf.h"
 #include "crypt_symkey.h"
@@ -36,11 +34,15 @@ static long int g_xy_length;
 static const struct cavp_entry *prf_entry;
 
 static const struct cavp_entry config_entries[] = {
+#ifdef USE_SHA1
 	{ .key = "SHA-1", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha1, },
+#endif
+#ifdef USE_SHA2
 	{ .key = "SHA-224", .op = op_entry, .entry = &prf_entry, .prf = NULL, },
 	{ .key = "SHA-256", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_256, },
 	{ .key = "SHA-384", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_384, },
 	{ .key = "SHA-512", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_512, },
+#endif
 	{ .key = "Ni length", .op = op_signed_long, .signed_long = &ni_length, },
 	{ .key = "Nr length", .op = op_signed_long, .signed_long = &nr_length, },
 	{ .key = "g^xy length", .op = op_signed_long, .signed_long = &g_xy_length, },

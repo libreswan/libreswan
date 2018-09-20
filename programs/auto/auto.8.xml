@@ -79,8 +79,8 @@ connection</replaceable></arg>
     <arg choice='opt'>--listpubkeys </arg>
     <arg choice='opt'>--checkpubkeys </arg>
     <arg choice='opt'>--listcacerts</arg>
-    <arg choice='opt'>--listcrls | --rereadcrls </arg>
-    <arg choice='opt'>--listgroups | --rereadgroups </arg>
+    <arg choice='opt'>--fetchcrls </arg>
+    <arg choice='opt'>--listcrls </arg>
     <arg choice='opt'>--purgeocsp </arg>
 
 </cmdsynopsis>
@@ -108,7 +108,6 @@ or
 The
 <option>--ready</option>,
 <option>--rereadsecrets</option>,
-<option>--rereadgroups</option>,
 and
 <option>--status</option>
 <replaceable>operations</replaceable> do not take a connection name.
@@ -149,13 +148,7 @@ operation is equivalent to running first with
 and then with
 <option>--up</option>, causing same effect as connection configuration option
 <option>auto=start</option>.
-The
-<option>--rereadgroups</option>
-operation causes any changes to the policy group files to take effect
-(this is currently a synonym for
-<option>--ready</option>,
-but that may change).
-None of the other operations alters the internal database.</para>
+</para>
 
 <para>The
 <option>--up</option>
@@ -238,20 +231,11 @@ which it normally reads only at startup time.
 <option>--ready</option>,
 but that may change.)</para>
 
-
-<para>      The    <option>--rereadsecrets</option>   operation   tells   pluto   to   re-read   the
-       <filename>@IPSEC_SECRETS_FILE@</filename> secret-keys file, which it normally  reads  only  at
-       startup  time.   (This is currently a synonym for <option>--ready,</option> but that may
-       change.)
-</para>
-<para>       The <option>--rereadcrls</option> operation reads all certificate revocation list  (CRL)
-       files  contained  in  the  /etc/ipsec.d/crls directory and adds them to
-       pluto's list of CRLs.  Note CRLs can and should be stored inside
-       NSS instead of in the /etc/ipsec.d/crls directory which will result in automatic updates. This option
-       will be obsoleted in the near future.
+<para>       The <option>--fetchcrls</option> operation reads all certificate revocation list  (CRL)
+       entries of loaded certificates and tries to fetch updates for these from the CRL servers.
 </para>
 <para>       The <option>--rereadall</option> operation is equivalent to the execution of
-         --rereadsecrets and --rereadcrls.
+         --rereadsecrets (in the past there were other kinds of reread operations)
 </para>
 <para>       The <option>--listpubkeys</option> operation lists all RSA public keys  either  received
        from  peers  via the IKE protocol embedded in authenticated certificate
@@ -269,16 +253,12 @@ but that may change.)</para>
 <para>       The  <option>--listcacerts</option>  operation  lists  all  X.509 CA certificates contained in
 	the NSS database.
 </para>
-<para>       The  <option>--listgroups</option>  operation  lists  all groups that are either used in
-       connection definitions in ipsec.conf(5) or are embedded in loaded X.509
-       attributes certificates.
-</para>
 <para>       The <option>--listcrls</option> operation lists all Certificate Revocation Lists  (CRLs)
        either  loaded  locally from the /etc/ipsec.d/crls directory or fetched
        dynamically from an HTTP or LDAP server.
 </para>
 <para>       The  <option>--listall</option>  operation is equivalent to the execution of
-       --listpubkeys,  --listcerts,  --listcacerts,  --listgroups, --listcrls.
+       --listpubkeys,  --listcerts,  --listcacerts,  --listcrls.
 </para>
 <para>       The  <option>--purgeocsp</option>  operation displays --listall and purges the NSS OCSP cache.
 </para>

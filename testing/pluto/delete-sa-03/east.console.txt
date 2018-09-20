@@ -121,10 +121,10 @@ east #
 000 "west-east-c":   newest ISAKMP SA: #1; newest IPsec SA: #4;
 000 "west-east-c":   IKE algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #3: "west-east-b":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:not set
+000 #3: "west-east-b":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #3: "west-east-b" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=4194303B 
-000 #1: "west-east-c":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
-000 #4: "west-east-c":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:not set
+000 #1: "west-east-c":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #4: "west-east-c":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #4: "west-east-c" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=4194303B 
 east #
 east #

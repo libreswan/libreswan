@@ -1,0 +1,73 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+west #
+ echo "initdone"
+initdone
+west #
+ # expect quick fail
+west #
+ ipsec whack --impair ke-payload:omit  --impair delete-on-retransmit
+west #
+ ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating Main Mode
+104 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_MAIN_I1: initiate
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: sending no KE (g^x) payload
+106 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: retransmit so deleting SA
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_MAIN_I2) and NOT sending notification
+west #
+ ipsec whack --impair none
+west #
+ # expect slower fail
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating Main Mode
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+104 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_MAIN_I1: initiate
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+106 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_MAIN_I2: sent MI2, expecting MR2
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: message for STATE_MAIN_I2 is missing payloads ISAKMP_NEXT_KE
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: message for STATE_MAIN_I2 is missing payloads ISAKMP_NEXT_KE
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: message for STATE_MAIN_I2 is missing payloads ISAKMP_NEXT_KE
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: message for STATE_MAIN_I2 is missing payloads ISAKMP_NEXT_KE
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: message for STATE_MAIN_I2 is missing payloads ISAKMP_NEXT_KE
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: message for STATE_MAIN_I2 is missing payloads ISAKMP_NEXT_KE
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: message for STATE_MAIN_I2 is missing payloads ISAKMP_NEXT_KE
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: message for STATE_MAIN_I2 is missing payloads ISAKMP_NEXT_KE
+031 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
+000 "westnet-eastnet-ipv4-psk-ikev2" #2: starting keying attempt 2 of an unlimited number, but releasing whack
+west #
+ echo done
+done
+west #
+ ../../pluto/bin/ipsec-look.sh
+west NOW
+XFRM state:
+XFRM policy:
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

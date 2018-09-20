@@ -35,7 +35,6 @@
 
 #include <libreswan.h>
 #include "libreswan/pfkeyv2.h"
-#include "kameipsec.h"
 
 #include "sysdep.h"
 #include "constants.h"
@@ -116,9 +115,9 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
  * found faster next time.
  */
 struct host_pair *find_host_pair(const ip_address *myaddr,
-				 u_int16_t myport,
+				 uint16_t myport,
 				 const ip_address *hisaddr,
-				 u_int16_t hisport)
+				 uint16_t hisport)
 {
 	struct host_pair *p, *prev;
 
@@ -144,7 +143,6 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 		hisport = pluto_port;
 
 	for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next) {
-
 		DBG(DBG_CONTROLMORE, {
 			ipstr_buf b1;
 			ipstr_buf b2;
@@ -177,9 +175,9 @@ void remove_host_pair(struct host_pair *hp)
 
 /* find head of list of connections with this pair of hosts */
 struct connection *find_host_pair_connections(const ip_address *myaddr,
-					      u_int16_t myport,
+					      uint16_t myport,
 					      const ip_address *hisaddr,
-					      u_int16_t hisport)
+					      uint16_t hisport)
 {
 	struct host_pair *hp =
 		find_host_pair(myaddr, myport, hisaddr, hisport);

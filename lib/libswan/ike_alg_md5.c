@@ -20,29 +20,20 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-
-#include <libreswan.h>
-
-#include <errno.h>
-
-#include "constants.h"
-#include "lswlog.h"
-#include "lswalloc.h"
+#include "constants.h"		/* for BYTES_FOR_BITS() */
+#include "ietf_constants.h"
 #include "ike_alg.h"
-#include "ike_alg_md5.h"
+#include "ike_alg_hash.h"
+#include "ike_alg_prf.h"
 #include "ike_alg_hash_nss_ops.h"
 #include "ike_alg_prf_hmac_ops.h"
+#include "sadb.h"
 
 const struct hash_desc ike_alg_hash_md5 = {
 	.common = {
 		.name = "md5",
 		.fqn = "MD5",
 		.names = { "md5", },
-		.officname = "md5",
 		.algo_type = IKE_ALG_HASH,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
@@ -54,7 +45,7 @@ const struct hash_desc ike_alg_hash_md5 = {
 		.oid_tag = SEC_OID_MD5,
 		.derivation_mechanism = CKM_MD5_KEY_DERIVATION,
 	},
-	.hash_digest_len = MD5_DIGEST_SIZE,
+	.hash_digest_size = MD5_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_ops = &ike_alg_hash_nss_ops,
 };
@@ -65,7 +56,6 @@ const struct prf_desc ike_alg_prf_md5 = {
 		.name = "md5",
 		.fqn = "HMAC_MD5",
 		.names = { "md5", "hmac_md5", },
-		.officname = "md5",
 		.algo_type = IKE_ALG_PRF,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
@@ -77,6 +67,7 @@ const struct prf_desc ike_alg_prf_md5 = {
 	.prf_output_size = MD5_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_md5,
 	.prf_ops = &ike_alg_prf_hmac_ops,
+	.prf_ike_audit_name = "md5",
 };
 
 const struct integ_desc ike_alg_integ_md5 = {
@@ -84,7 +75,6 @@ const struct integ_desc ike_alg_integ_md5 = {
 		.name = "md5",
 		.fqn = "HMAC_MD5_96",
 		.names = { "md5", "hmac_md5", "hmac_md5_96", },
-		.officname = "md5",
 		.algo_type = IKE_ALG_INTEG,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
@@ -96,4 +86,11 @@ const struct integ_desc ike_alg_integ_md5 = {
 	.integ_output_size = MD5_DIGEST_SIZE_96,
 	.integ_ikev1_ah_transform = AH_MD5,
 	.prf = &ike_alg_prf_md5,
+#ifdef SADB_AALG_MD5HMAC
+	.integ_sadb_aalg_id = SADB_AALG_MD5HMAC,
+#endif
+	.integ_netlink_xfrm_name = "md5",
+	.integ_tcpdump_name = "md5",
+	.integ_ike_audit_name = "md5",
+	.integ_kernel_audit_name = "HMAC_MD5",
 };

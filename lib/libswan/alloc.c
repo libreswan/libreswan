@@ -96,8 +96,8 @@ static void *alloc_bytes_raw(size_t size, const char *name)
 
 	if (p == NULL) {
 		if (exit_log_func != NULL) {
-			(*exit_log_func)("unable to malloc %lu bytes for %s",
-					(unsigned long) size, name);
+			(*exit_log_func)("unable to malloc %zu bytes for %s",
+					size, name);
 		}
 		abort();
 	}

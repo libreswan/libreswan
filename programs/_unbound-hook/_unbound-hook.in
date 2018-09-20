@@ -29,14 +29,17 @@ try:
 except:
     sys.exit("Bad arguments to ipsec _unbound")
 
-while (argv != []):
+# unbound now quotes the entire RRDATAs, so it counts as 1 argument in the list
+data = argv.pop(0).split(" ")
+
+while (data != []):
     try:
-        gwprec = argv.pop(0)
-        gwtype = argv.pop(0)
-        gwalg = argv.pop(0)
-        gwid = argv.pop(0)
-        pubkey = argv.pop(0)
-        addkeyip = "ipsec whack --keyid @%s --addkey --pubkeyrsa 0s%s"%(ip, pubkey)
+        gwprec = data.pop(0)
+        gwtype = data.pop(0)
+        gwalg = data.pop(0)
+        gwid = data.pop(0)
+        pubkey = data.pop(0)
+        addkeyip = "ipsec whack --keyid %s --addkey --pubkeyrsa 0s%s"%(ip, pubkey)
         addkeyhostname = "ipsec whack --keyid @%s --addkey --pubkeyrsa 0s%s"%(qname, pubkey)
         print("processing an IPSECKEY record for Opportunistic IPsec to %s(%s)"%(qname,ip))
         print(subprocess.call(addkeyip, shell=True))

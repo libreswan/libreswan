@@ -10,7 +10,7 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --impair send-key-size-check all --impair retransmits
+ ipsec whack --impair send-key-size-check all --impair suppress-retransmits
 whack error: unexpected argument "all"
 west #
  ipsec auto --add westnet-eastnet-aes256

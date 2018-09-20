@@ -31,8 +31,8 @@
 #include "lswnss.h"		/* for lswlog_nss_error() */
 
 static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
-			    u_int8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
-			    u_int8_t *iv, bool enc)
+			    uint8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
+			    uint8_t *iv, bool enc)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS ike_alg_nss_cbc: %s - enter", alg->common.name));
 
@@ -64,7 +64,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	}
 
 	/* Output buffer for transformed data.  */
-	u_int8_t *out_buf = PR_Malloc((PRUint32)in_buf_len);
+	uint8_t *out_buf = PR_Malloc((PRUint32)in_buf_len);
 	int out_buf_len = 0;
 
 	SECStatus rv = PK11_CipherOp(enccontext, out_buf, &out_buf_len, in_buf_len,
@@ -82,7 +82,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	/*
 	 * Update the IV ready for the next call to this function.
 	 */
-	u_int8_t *new_iv;
+	uint8_t *new_iv;
 	if (enc) {
 		/*
 		 * The IV for the next encryption call is the last
@@ -113,7 +113,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 static void nss_cbc_check(const struct encrypt_desc *encrypt)
 {
 	const struct ike_alg *alg = &encrypt->common;
-	passert_ike_alg(alg, encrypt->nss.mechanism > 0);
+	pexpect_ike_alg(alg, encrypt->nss.mechanism > 0);
 }
 
 const struct encrypt_ops ike_alg_encrypt_nss_cbc_ops = {

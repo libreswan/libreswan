@@ -65,7 +65,6 @@ static int import_crl(const char *url, unsigned char *buf, size_t len)
  */
 int main(int argc, char *argv[])
 {
-
 	char *url, *lenstr;
 	unsigned char *buf, *tbuf;
 	size_t len, tlen;

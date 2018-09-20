@@ -171,7 +171,7 @@ Libreswan can join the development mailing list "swan-dev" or talk to the
 development team on IRC in #swan on irc.freenode.net
 
 For those who want to track things a bit more closely, the
-swan-commits@lists.libreswan.org mailinglist will mail all the commit
+swan-commits@lists.libreswan.org mailing list will mail all the commit
 messages when they happen. This list is quite busy during active
 development periods.
 

@@ -1,0 +1,108 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add east-any
+002 added connection description "east-any"
+east #
+ echo initdone
+initdone
+east #
+ # on east this should show 2 sets of in/fwd/out policies
+east #
+ ../../pluto/bin/ipsec-look.sh
+east NOW
+XFRM state:
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 1024 dport 4500 addr 0.0.0.0
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 1024 addr 0.0.0.0
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+XFRM policy:
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir out priority 1048543 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 192.0.2.102/32
+	dir out priority 1048543 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir fwd priority 1048543 ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir in priority 1048543 ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.102/32 dst 0.0.0.0/0
+	dir fwd priority 1048543 ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.102/32 dst 0.0.0.0/0
+	dir in priority 1048543 ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.0.2.101 dev eth1 scope link
+192.0.2.102 dev eth1 scope link
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ # check both connections still work on east
+east #
+ hostname | grep east > /dev/null && ping -c2 192.0.2.101
+PING 192.0.2.101 (192.0.2.101) 56(84) bytes of data.
+64 bytes from 192.0.2.101: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.101: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.0.2.101 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+east #
+ hostname | grep east > /dev/null && ping -c2 192.0.2.102
+PING 192.0.2.102 (192.0.2.102) 56(84) bytes of data.
+64 bytes from 192.0.2.102: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.102: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.0.2.102 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+east #
+ ipsec whack --trafficstatus
+006 #2: "east-any"[2] 192.1.2.254, username=use1, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, lease=192.0.2.101/32
+006 #4: "east-any"[3] 192.1.2.254, username=xroad, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, lease=192.0.2.102/32
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

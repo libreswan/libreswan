@@ -33,6 +33,26 @@ east #
 |    fragment number: 5 (0x5)
 | received IKE fragment id '1', number '5'(last)
 |  updated IKE fragment state to respond using fragments without waiting for re-transmits
+|    fragment id: 1 (0x1)
+|    fragment number: 1 (0x1)
+| received IKE fragment id '1', number '1'
+|    fragment id: 1 (0x1)
+|    fragment number: 2 (0x2)
+| received IKE fragment id '1', number '2'
+|    fragment id: 1 (0x1)
+|    fragment number: 3 (0x3)
+| received IKE fragment id '1', number '3'
+|    fragment id: 1 (0x1)
+|    fragment number: 4 (0x4)
+| received IKE fragment id '1', number '4'
+|    fragment id: 1 (0x1)
+|    fragment number: 5 (0x5)
+| received IKE fragment id '1', number '5'(last)
+| sending IKE fragment id '1', number '1'
+| sending IKE fragment id '1', number '2'
+| sending IKE fragment id '1', number '3'
+| sending IKE fragment id '1', number '4' (last)
+|  updated IKE fragment state to respond using fragments without waiting for re-transmits
 east #
 east #
  ../bin/check-for-core.sh

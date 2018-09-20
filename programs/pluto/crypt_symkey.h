@@ -60,7 +60,6 @@ PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
 				PK11SymKey *rhs);
 PK11SymKey *concat_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
 PK11SymKey *concat_symkey_byte(PK11SymKey *lhs, uint8_t rhs);
-chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs);
 chunk_t concat_chunk_symkey(const char *name, chunk_t lhs, PK11SymKey *rhs);
 chunk_t concat_chunk_bytes(const char *name, chunk_t lhs,
 			   const void *rhs, size_t sizeof_rhs);
@@ -129,15 +128,15 @@ chunk_t chunk_from_symkey_bytes(const char *prefix,
  * Used to avoid interface issues with NSS.
  */
 PK11SymKey *symkey_from_bytes(const char *name,
-			      const u_int8_t *bytes, size_t sizeof_bytes);
+			      const uint8_t *bytes, size_t sizeof_bytes);
 PK11SymKey *symkey_from_chunk(const char *name,
 			      chunk_t chunk);
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
-				   const u_int8_t *bytes, size_t sizeof_bytes);
+				   const uint8_t *bytes, size_t sizeof_bytes);
 PK11SymKey *prf_key_from_bytes(const char *name,
 			       const struct prf_desc *prf,
-			       const u_int8_t *bytes, size_t sizeof_bytes);
+			       const uint8_t *bytes, size_t sizeof_bytes);
 
 /*
  * Extract SIZEOF_KEY bytes of keying material as a KEY.

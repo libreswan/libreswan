@@ -19,9 +19,7 @@
 
 #include "lswalloc.h"
 #include "ike_alg.h"
-#include "ike_alg_sha1.h"
-#include "ike_alg_sha2.h"
-#include "ike_alg_aes.h"
+#include "ike_alg_encrypt.h"
 #include "ike_alg_encrypt_nss_gcm_ops.h"
 #include "crypt_symkey.h"
 
@@ -77,7 +75,6 @@ static struct cavp_entry data[] = {
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 	.common = {
 		.name = "aes_gcm",
-		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
 	},
@@ -96,7 +93,6 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 	.common = {
 		.name = "aes_gcm",
-		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
 	},
@@ -115,7 +111,6 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 	.common = {
 		.name = "aes_gcm",
-		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
 	},
@@ -134,7 +129,6 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
 	.common = {
 		.name = "aes_gcm",
-		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
 	},
@@ -170,7 +164,7 @@ static const struct encrypt_desc *lookup_by_taglen(void) {
 	return NULL;
 }
 
-static u_int8_t a_byte;
+static uint8_t a_byte;
 static chunk_t salt = {
 	.ptr = &a_byte,
 	.len = 0,
@@ -194,7 +188,7 @@ static void gcm_run_test(void)
 							    0, sizeof_symkey(key),
 							    key);
 
-	chunk_t text_and_tag = concat_chunk_chunk("text-and-tag", ct, tag);
+	chunk_t text_and_tag = clone_chunk_chunk(ct, tag, "text-and-tag");
 
 	bool result = gcm_alg->encrypt_ops
 		->do_aead(gcm_alg,

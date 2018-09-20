@@ -1,7 +1,7 @@
 /* tables of names for values defined in constants.h
  *
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -25,7 +25,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <netinet/in.h>
+#ifdef NETKEY_SUPPORT
 #include "linux/xfrm.h" /* local (if configured) or system copy */
+#endif
 #include <libreswan.h>
 #include <libreswan/passert.h>
 
@@ -81,6 +83,7 @@ enum_names dpd_action_names = {
 	NULL
 };
 
+#ifdef NETKEY_SUPPORT
 /* netkey SA direction names */
 static const char *const netkey_sa_dir_name[] = {
 	"XFRM_IN",
@@ -94,6 +97,7 @@ enum_names netkey_sa_dir_names = {
 	NULL, /* prefix */
 	NULL
 };
+#endif
 
 /* systemd watchdog action names */
 static const char *const sd_action_name[] = {
@@ -330,25 +334,7 @@ enum_names natt_method_names = {
 	NULL
 };
 
-/* pluto crypto importance */
-static const char *const pluto_cryptoimportance_strings[] = {
-	"import:not set",
-	"import:respond to stranger",
-	"import:respond to friend",
-	"import:ongoing calculation",
-	"import:local rekey",
-	"import:admin initiate"
-};
-
-enum_names pluto_cryptoimportance_names = {
-	pcim_notset_crypto, pcim_demand_crypto,
-	ARRAY_REF(pluto_cryptoimportance_strings),
-	NULL, /* prefix */
-	NULL
-	};
-
 /* routing status names */
-
 static const char *const routing_story_strings[] = {
 	"unrouted",             /* RT_UNROUTED: unrouted */
 	"unrouted HOLD",        /* RT_UNROUTED_HOLD: unrouted, but HOLD shunt installed */
@@ -366,7 +352,7 @@ enum_names routing_story = {
 	NULL, /* prefix */
 	NULL };
 
-static const char *const stfstatus_names[] = {
+static const char *const stf_status_strings[] = {
 	"STF_IGNORE",
 	"STF_SUSPEND",
 	"STF_OK",
@@ -376,9 +362,9 @@ static const char *const stfstatus_names[] = {
 	"STF_FAIL"
 };
 
-enum_names stfstatus_name = {
+enum_names stf_status_names = {
 	STF_IGNORE, STF_FAIL,
-	ARRAY_REF(stfstatus_names),
+	ARRAY_REF(stf_status_strings),
 	NULL, /* prefix */
 	NULL
 };
@@ -389,6 +375,7 @@ enum_names stfstatus_name = {
 const char *const sa_policy_bit_names[] = {
 	"PSK",
 	"RSASIG",
+	"ECDSA",
 	"AUTH_NEVER",
 	"AUTHNULL",
 	"ENCRYPT",
@@ -441,6 +428,7 @@ static const char *const ikev2_asym_auth_names[] = {
 	"never",
 	"secret",
 	"rsasig",
+	"ecdsa",
 	"null",
 };
 
@@ -496,10 +484,10 @@ const char *prettypolicy(lset_t policy)
 		pbitnamesbuf[0] = '\0';
 	snprintf(buf, sizeof(buf), "%s%s%s%s%s",
 		 pbitnamesbuf,
-		 shunt != 0 ? "+" : "",
-		 shunt != 0 ? policy_shunt_names[shunt] : "",
-		 fail != 0 ? "+failure" : "",
-		 fail != 0 ? policy_fail_names[fail] : "");
+		 shunt == POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT ?  "" : "+",
+		 shunt ==  POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT ? "" : policy_shunt_names[shunt],
+		 fail == POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "" : "+failure",
+		 fail == POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "" : policy_fail_names[fail]);
 	return buf;
 }
 
@@ -511,10 +499,11 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&state_names,
 	&state_stories,
 	&natt_method_names,
-	&pluto_cryptoimportance_names,
 	&routing_story,
-	&stfstatus_name,
+	&stf_status_names,
+#ifdef NETKEY_SUPPORT
 	&netkey_sa_dir_names,
+#endif
 };
 
 void init_pluto_constants(void) {

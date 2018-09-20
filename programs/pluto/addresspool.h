@@ -18,6 +18,8 @@
 #ifndef _ADDRESSPOOL_H
 #define _ADDRESSPOOL_H
 
+#include "err.h"
+
 struct ip_pool;	/* forward declaration; definition is local to addresspool.c */
 
 extern struct ip_pool *install_addresspool(const ip_range *pool_range);
@@ -26,7 +28,7 @@ extern err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 extern void unreference_addresspool(struct connection *c);
 extern void reference_addresspool(struct connection *c);
 
-extern err_t lease_an_address(const struct connection *c, ip_address *ipa /*result*/);
+extern err_t lease_an_address(const struct connection *c, const struct state *st, ip_address *ipa /*result*/);
 extern void rel_lease_addr(struct connection *c);
 
 #endif /* _ADDRESSPOOL_H */

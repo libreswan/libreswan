@@ -1,5 +1,5 @@
 /*
- * header file for FreeS/WAN library functions
+ * header file for Libreswan library functions
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
  *
@@ -16,6 +16,8 @@
  */
 #ifndef _LIBRESWAN_H
 #define _LIBRESWAN_H    /* seen it, no need to see it again */
+
+#include "err.h"
 
 /*
  * Libreswan was written before <stdbool.h> was standardized.
@@ -61,7 +63,6 @@ enum {
  * where we get them depends on whether we're in userland or not.
  */
 /* things that need to come from one place or the other, depending */
-#if defined(linux)
 #if defined(__KERNEL__)
 #include <linux/types.h>
 #include <linux/socket.h>
@@ -73,7 +74,8 @@ enum {
 #include <libreswan/ipsec_param.h>
 #define user_assert(foo)  { } /* nothing */
 
-#else /* NOT in kernel */
+#else /* NOT in (linux) kernel */
+
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -81,74 +83,11 @@ enum {
 #include <assert.h>
 #define user_assert(foo) assert(foo)
 #include <stdio.h>
-
-#  define uint8_t u_int8_t
-#  define uint16_t u_int16_t
-#  define uint32_t u_int32_t
-#  define uint64_t u_int64_t
-
-#endif  /* __KERNEL__ */
-
-#endif  /* linux */
-
-#define DEBUG_NO_STATIC static
-
-/*
- * Yes Virginia, we have started a windows port.
- */
-#if defined(__CYGWIN32__)
-#if !defined(WIN32_KERNEL)
-/* get windows equivalents */
-#include <stdio.h>
-#include <string.h>
-#include <win32/types.h>
-#include <netinet/in.h>
-#include <cygwin/socket.h>
-#include <assert.h>
-#define user_assert(foo) assert(foo)
-#endif  /* _KERNEL */
-#endif  /* WIN32 */
-
-/*
- * Kovacs? A macosx port?
- */
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
-#include <TargetConditionals.h>
-#include <AvailabilityMacros.h>
-#include <machine/types.h>
-#include <machine/endian.h>
 #include <stdint.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <tcpd.h>
-#include <assert.h>
-#define user_assert(foo) assert(foo)
-#define __u32  unsigned int
-#define __u8  unsigned char
-#define s6_addr16 __u6_addr.__u6_addr16
-#define DEBUG_NO_STATIC static
-#endif
 
-/*
- * FreeBSD
- */
-#if defined(__FreeBSD__)
-#  define DEBUG_NO_STATIC static
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <assert.h>
-#define user_assert(foo) assert(foo)
-/* apparently this way to deal with an IPv6 address is not standard. */
-#define s6_addr16 __u6_addr.__u6_addr16
-#endif
+#endif  /* (linux) kernel */
+
+#define DEBUG_NO_STATIC static
 
 #ifndef IPPROTO_COMP
 #  define IPPROTO_COMP 108
@@ -163,40 +102,17 @@ enum {
 #define ESPINUDP_WITH_NON_ESP   2       /* draft-ietf-ipsec-nat-t-ike-02    */
 #endif
 
-/*
- * Basic data types for the address-handling functions.
- * ip_address and ip_subnet are supposed to be opaque types; do not
- * use their definitions directly, they are subject to change!
- */
+#include "ip_address.h"
 
-/* first, some quick fakes in case we're on an old system with no IPv6 */
-#if defined(__CYGWIN32__) && !defined(s6_addr16)
-extern struct in6_addr {
-	union {
-		u_int8_t u6_addr8[16];
-		u_int16_t u6_addr16[8];
-		u_int32_t u6_addr32[4];
-	} in6_u;
-#define s6_addr                 in6_u.u6_addr8
-#define s6_addr16               in6_u.u6_addr16
-#define s6_addr32               in6_u.u6_addr32
-};
-extern struct sockaddr_in6 {
-	unsigned short int sin6_family;         /* AF_INET6 */
-	__u16 sin6_port;                        /* Transport layer port # */
-	__u32 sin6_flowinfo;                    /* IPv6 flow information */
-	struct in6_addr sin6_addr;              /* IPv6 address */
-	__u32 sin6_scope_id;                    /* scope id (new in RFC2553) */
-};
-#endif  /* !s6_addr16 */
+#ifdef NEED_SIN_LEN
+#define SET_V4(a)	{ (a).u.v4.sin_family = AF_INET; (a).u.v4.sin_len = sizeof(struct sockaddr_in); }
+#define SET_V6(a)	{ (a).u.v6.sin6_family = AF_INET6; (a).u.v6.sin6_len = sizeof(struct sockaddr_in6); }
+#else
+#define SET_V4(a)	{ (a).u.v4.sin_family = AF_INET; }
+#define SET_V6(a)	{ (a).u.v6.sin6_family = AF_INET6; }
+#endif
 
 /* then the main types */
-typedef struct {
-	union {
-		struct sockaddr_in v4;
-		struct sockaddr_in6 v6;
-	} u;
-} ip_address;
 typedef struct {
 	ip_address addr;
 	int maskbits;
@@ -255,7 +171,6 @@ typedef struct {                                /* to identify an SA, we need: *
 } ip_said;
 
 /* misc */
-typedef const char *err_t;      /* error message, or NULL for success */
 struct prng {                   /* pseudo-random-number-generator guts */
 	unsigned char sbox[256];
 	int i, j;
@@ -263,7 +178,7 @@ struct prng {                   /* pseudo-random-number-generator guts */
 };
 
 /*
- * definitions for user space, taken from freeswan/ipsec_sa.h
+ * definitions for user space, taken linux/include/libreswan/ipsec_sa.h
  */
 typedef uint32_t IPsecSAref_t;
 
@@ -286,27 +201,7 @@ typedef uint32_t IPsecSAref_t;
 /* Not representable as an nfmark */
 #define IPSEC_SAREF_NA   ((IPsecSAref_t)0xffff0001)
 
-/* GCC magic for use in function definitions! */
-#ifdef GCC_LINT
-# define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
-# define STRFTIME_LIKE(n) __attribute__ ((format (strftime, n, 0)))
-# define NEVER_RETURNS __attribute__ ((noreturn))
-# define UNUSED __attribute__ ((unused))
-# define MUST_USE_RESULT  __attribute__ ((warn_unused_result))
-#else
-# define PRINTF_LIKE(n) /* ignore */
-# define STRFTIME_LIKE(n) /* ignore */
-# define NEVER_RETURNS  /* ignore */
-# define UNUSED         /* ignore */
-# define MUST_USE_RESULT	/* ignore */
-#endif
-
-#ifdef COMPILER_HAS_NO_PRINTF_LIKE
-# undef PRINTF_LIKE
-# define PRINTF_LIKE(n) /* ignore */
-# undef STRFTIME_LIKE
-# define STRFTIME_LIKE(n) /* ignore */
-#endif
+#include "lswcdefs.h"
 
 /*
  * function to log stuff from libraries that may be used in multiple
@@ -336,8 +231,6 @@ extern size_t addrtot(const ip_address *src, int format, char *buf, size_t bufle
 extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
 		    size_t buflen);
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
-/* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
-#define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
 		bool non_zero);
 extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
@@ -467,7 +360,7 @@ subnet6toa(struct in6_addr *addr,
 extern struct in_addr subnetof(struct in_addr addr,
 			struct in_addr mask
 			);
-extern struct in_addr hostof( struct in_addr addr,
+extern struct in_addr hostof(struct in_addr addr,
 		       struct in_addr mask
 		       );
 extern struct in_addr broadcastof(struct in_addr addr,

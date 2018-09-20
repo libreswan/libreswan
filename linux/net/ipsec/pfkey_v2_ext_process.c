@@ -504,7 +504,7 @@ int pfkey_address_process(struct sadb_ext *pfkey_ext,
 			ipsp->ips_said.dst.u.v4.sin_addr.s_addr =
 				((struct sockaddr_in*)(ipsp->ips_addr_d))->
 				sin_addr.s_addr;
-			ipsp->ips_said.dst.u.v4.sin_family      = AF_INET;
+			SET_V4(ipsp->ips_said.dst);
 			if (debug_pfkey)
 				sin_addrtot(ipsp->ips_addr_d, 0, ipaddr_txt,
 					    sizeof(ipaddr_txt));
@@ -516,7 +516,7 @@ int pfkey_address_process(struct sadb_ext *pfkey_ext,
 			ipsp->ips_said.dst.u.v6.sin6_addr =
 				((struct sockaddr_in6 *)(ipsp->ips_addr_d))->
 				sin6_addr;
-			ipsp->ips_said.dst.u.v6.sin6_family      = AF_INET6;
+			SET_V6(ipsp->ips_said.dst);
 			if (debug_pfkey)
 				sin_addrtot(ipsp->ips_addr_d, 0, ipaddr_txt,
 					    sizeof(ipaddr_txt));

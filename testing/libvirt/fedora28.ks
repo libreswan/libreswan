@@ -80,11 +80,6 @@ ifup ens2 >> /var/tmp/network.log
 
 rpm -qa > /var/tmp/rpm-qa-fedora.log
 
-# workaround for vim fedora27 packaging bug. we want vim-enhanced and
-# that clashes with vim-minimal.
-
-rpm -e vim-minimal --nodeps
-
 dnf -y --disablerepo=updates update | tee /var/tmp/dnf-update-fedora.log
 dnf -y --disablerepo=updates install kernel-devel
 sed -i '/exclude=kernel/d' /etc/dnf/dnf.conf
@@ -110,10 +105,16 @@ EOD
 
 cat << EOD >> /etc/rc.d/rc.local
 #!/bin/sh
-mount /testing
-mount /source
-/testing/guestbin/swan-transmogrify
+SELINUX=\$(getenforce)
+echo "getenforce \$SELINUX" > /tmp/rc.local.txt
+setenforce Permissive
+(mount | grep "testing on /testing") || mount /testing
+(mount | grep "swansource on /source") || mount /source
+/testing/guestbin/swan-transmogrify 2>&1 >> /tmp/rc.local.txt || echo "ERROR swan-transmogrify" >> /tmp/rc.local.txt
+echo "restore SELINUX to \$SELINUX"
+setenforce \$SELINUX
 EOD
+
 chmod 755 /etc/rc.d/rc.local
 
 cat << EOD > /etc/profile.d/swanpath.sh

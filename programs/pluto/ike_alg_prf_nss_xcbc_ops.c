@@ -223,7 +223,7 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 static struct prf_context *nss_xcbc_init_bytes(const struct prf_desc *prf_desc,
 					       const char *name,
 					       const char *key_name,
-					       const u_int8_t *key, size_t sizeof_key)
+					       const uint8_t *key, size_t sizeof_key)
 {
 	/*
 	 * Need a key of the correct type.
@@ -279,7 +279,7 @@ static PK11SymKey *nss_xcbc_final_symkey(struct prf_context **prf)
 static void nss_xcbc_check(const struct prf_desc *prf)
 {
 	const struct ike_alg *alg = &prf->common;
-	passert_ike_alg(alg, prf->nss.mechanism > 0);
+	pexpect_ike_alg(alg, prf->nss.mechanism > 0);
 }
 
 const struct prf_ops ike_alg_prf_nss_xcbc_ops = {
