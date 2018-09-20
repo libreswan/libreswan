@@ -3614,51 +3614,30 @@
     <para>For more information on IPsec, the mailing list, and the relevant
     documents, see:</para>
 
-    <!-- .nh -->
-
     <para><emphasis remap="I"><ulink
     url="https://datatracker.ietf.org/wg/ipsecme/charter/">https://datatracker.ietf.org/wg/ipsecme/charter/</ulink></emphasis></para>
 
-    <!-- .hy -->
+    <para>At the time of writing, the latest IETF IKE RFC is:</para>
 
-    <para>At the time of writing, the most relevant IETF RFCs are:</para>
-
-    <para>RFC5996 Internet Key Exchange Protocol Version 2 (IKEv2)</para>
+    <para>RFC 7296 Internet Key Exchange Protocol Version 2 (IKEv2)</para>
 
     <para>The Libreswan web site &lt;https://libreswan.org&gt; and the mailing
     lists described there.</para>
+
+    <para>The Libreswan wiki &lt;https://libreswan.org/wiki&gt; and the mailing
+    lists described there.</para>
+
+    <para>The Libreswan list of implemented RFCs &lt;https://libreswan.org/wiki/Implemented_Standards&gt;</para>
   </refsect1>
 
   <refsect1 id="history">
     <title>HISTORY</title>
 
     <para>This code is released under the GPL terms. See the accompanying
-    files COPYING and CREDITS.* for more details.</para>
+    files CHANGES COPYING and CREDITS.* for more details.</para>
 
-    <para>This software was originally written for the FreeS/WAN project
-    &lt;<ulink
-    url="http://www.freeswan.org">http://www.freeswan.org</ulink>&gt;, founded
-    by John Gilmore and managed by Hugh Daniel. It was written by Angelos D.
-    Keromytis (angelos@dsl.cis.upenn.edu), in May/June 1997, in Athens,
-    Greece. Thanks go to John Ioannidis for his help.</para>
+    <para>Detailed history (including FreeS/WAN and Openswan) can be found in the docs/ directory.</para>
 
-    <para>FreeS/WAN's Pluto was developed/maintained from 2000-2004 by D. Hugh
-    Redelmeier (hugh@mimosa.com), in Canada. The regulations of Greece and
-    Canada allow the code to be freely redistributable.</para>
-
-    <para>Richard Guy Briggs &lt;rgb@conscoop.ottawa.on.ca&gt; was the main resource
-    on KLIPS development</para>
-
-    <para>IKE version 2 was initially written by Michael Richardson, Antony Antony and
-    Paul Wouters. It has since been extended by Avesh Agarwal, D. Hugh Redelmeier,
-    Matt Rogers, Antony Antony and Paul Wouters. </para>
-
-    <para>From 2003 onwards, the code was developed and maintained by The Openswan
-    Project by developers worldwide and distributed from The Netherland and Finland.
-    Due to a lawsuit by Xelerance over the trademark, the project was forced to rename
-    itself and the code to The Libreswan Project in 2012.</para>
-
-    <para>See further: the CHANGES/CREDITS files in the main directory and the doc/ directory.</para>
   </refsect1>
 
   <refsect1 id="bugs">
