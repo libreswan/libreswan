@@ -658,7 +658,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
 	}
 
-	if (policy == IPSEC_POLICY_IPSEC && sadb_op != ERO_DELETE) {
+	if (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD) {
+		if (sadb_op != ERO_DELETE) {
 		struct rtattr *attr;
 
 		struct xfrm_user_tmpl tmpl[4];
@@ -690,6 +691,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		memcpy(RTA_DATA(attr), tmpl, attr->rta_len);
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
+		}
 
 		/* mark policy extension */
 		{
