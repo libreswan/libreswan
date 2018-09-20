@@ -14,6 +14,7 @@
 #include "whack.h"
 #include "lswlog.h"
 #include "fd.h"
+#include "rcv_whack.h"
 
 #include "readwhackmsg.h"
 

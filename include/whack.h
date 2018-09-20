@@ -6,7 +6,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2013,2016 Antony Antony <antony@phenome.org>
- * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016,2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -414,6 +414,5 @@ extern size_t whack_get_secret(char *buf, size_t bufsize);
 extern int whack_get_value(char *buf, size_t bufsize);
 
 extern bool lsw_alias_cmp(const char *name, const char *aliases);
-extern void whack_process(int whackfd, const struct whack_message *const m);
 
 #endif /* _WHACK_H */
