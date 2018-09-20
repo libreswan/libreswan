@@ -277,11 +277,14 @@ bool ikev2_schedule_retry(struct state *st)
 	}
 
 	/*
-	 * XXX: Need to release both the parent and the child!  Why?
+	 * release_pending_whacks() will release ST (and ST's parent
+	 * if it exists and has the same whack).  For instance, when
+	 * the AUTH exchange somehow digs a hole where the child sa
+	 * gets a timeout.
+	 *
+	 * XXX: The child SA 'diging a hole' is likely a bug.
 	 */
 	release_pending_whacks(st, "scheduling a retry");
-	struct state *pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
-	release_whack(pst);
 
 	/*
 	 * XXX: Should the parent or child get re-scheduled?  Does it

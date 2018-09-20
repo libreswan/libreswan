@@ -2848,12 +2848,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		whack_log(RC_FATAL,
 			  "encountered fatal error in state %s",
 			  from_state_name);
-		release_whack(st);
-		if (IS_CHILD_SA(st)) {
-			struct state *pst = state_with_serialno(st->st_clonedfrom);
-
-			release_whack(pst);
-		}
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
 		md->st = st = NULL;
