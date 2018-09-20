@@ -2629,29 +2629,12 @@ static void success_v2_state_transition(struct msg_digest *md)
 		switch (kind) {
 		case EVENT_v2_RETRANSMIT:
 			delete_event(st);
-			if (DBGP(IMPAIR_RETRANSMITS)) {
-				libreswan_log("suppressing retransmit because IMPAIR_RETRANSMITS is set.");
-				if (st->st_rel_whack_event != NULL) {
-					pfreeany(st->st_rel_whack_event);
-					st->st_rel_whack_event = NULL;
-				}
-				event_schedule_s(EVENT_v2_RELEASE_WHACK,
-						 EVENT_RELEASE_WHACK_DELAY, st);
-				kind = EVENT_SA_REPLACE;
-				deltatime_t delay = ikev2_replace_delay(st, &kind);
-				DBG(DBG_LIFECYCLE,
-				    DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %jdms",
-					    deltamillisecs(delay)));
-				passert(kind != EVENT_v2_RETRANSMIT);
-				event_schedule(kind, delay, st);
-
-			}  else {
-				DBG(DBG_LIFECYCLE,
-				    DBG_log("success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%jdms",
-					    deltamillisecs(c->r_interval)));
-				start_retransmits(st, EVENT_v2_RETRANSMIT);
-			}
+			DBGF(DBG_LIFECYCLE,
+			     "success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%jdms",
+			     deltamillisecs(c->r_interval));
+			start_retransmits(st, EVENT_v2_RETRANSMIT);
 			break;
+
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
 		{
 			deltatime_t delay = ikev2_replace_delay(st, &kind);
