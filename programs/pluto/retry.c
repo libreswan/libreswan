@@ -33,6 +33,7 @@
 #include "demux.h"	/* for state_transition_fn used by ipsec_doi.h */
 #include "ipsec_doi.h"
 #include "ikev2.h"	/* for need_this_intiator() */
+#include "fd.h"
 
 /* Time to retransmit, or give up.
  *

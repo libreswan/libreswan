@@ -40,6 +40,7 @@
 #include "kernel.h"	/* for kernel_ops */
 #include "timer.h"
 #include "ip_address.h"
+#include "fd.h"
 
 bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */

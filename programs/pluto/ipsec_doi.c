@@ -43,6 +43,7 @@
 #include "defs.h"
 #include "state.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
@@ -234,7 +235,7 @@ void ipsecdoi_initiate(int whack_sock,
 				  );
 		} else {
 			/* fizzle: whack_sock will be unused */
-			close_any(whack_sock);
+			close_any(&whack_sock);
 		}
 	} else if (HAS_IPSEC_POLICY(policy)) {
 		if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {

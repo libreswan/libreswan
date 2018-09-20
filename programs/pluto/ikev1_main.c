@@ -47,6 +47,7 @@
 #include "state.h"
 #include "ikev1_msgid.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "connections.h" /* needs id.h */

@@ -45,11 +45,13 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "secrets.h"
 
 #include "defs.h"
+#include "fd.h"
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -299,7 +301,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 			whack_log(RC_LOG_SERIOUS,
 				  "cannot initiate: no acceptable kernel algorithms loaded");
 			reset_cur_connection();
-			close_any(is->whackfd);
+			close_any(&is->whackfd);
 			return 0;
 		}
 		free_sa(&phase2_sa);
@@ -336,7 +338,7 @@ void initiate_connection(const char *name, int whackfd,
 	if (c != NULL) {
 		if (!initiate_a_connection(c, &is))
 			whack_log(RC_FATAL, "failed to initiate %s", c->name);
-		close_any(is.whackfd);
+		close_any(&is.whackfd);
 		return;
 	}
 
@@ -348,7 +350,7 @@ void initiate_connection(const char *name, int whackfd,
 			  "no connection named \"%s\"", name);
 	}
 
-	close_any(is.whackfd);
+	close_any(&is.whackfd);
 }
 
 static bool same_host(const char *a_dnshostname, const ip_address *a_host_addr,
@@ -951,7 +953,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 			}
 		});
 
-	close_any(b->whackfd);
+	close_any(&b->whackfd);
 }
 
 void initiate_ondemand(const ip_address *our_client,

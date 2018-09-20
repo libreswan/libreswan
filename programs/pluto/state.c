@@ -48,6 +48,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "xauth.h"		/* for xauth_cancel() */
@@ -752,7 +753,7 @@ void rehash_state(struct state *st, const u_char *icookie,
  */
 void release_whack(struct state *st)
 {
-	close_any(st->st_whack_sock);
+	close_any(&st->st_whack_sock);
 }
 
 static void release_v2fragments(struct state *st)

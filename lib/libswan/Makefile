@@ -60,6 +60,7 @@ ifeq ($(USE_NETKEY),true)
 OBJS += addr_lookup.o
 endif
 
+OBJS += fd.o
 OBJS += kernel_alg.o
 OBJS += kernel_sadb.o
 

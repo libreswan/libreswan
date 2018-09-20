@@ -48,6 +48,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "pluto_x509.h"
 #include "certs.h"

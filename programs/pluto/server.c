@@ -70,6 +70,7 @@
 #include "defs.h"
 #include "state.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */

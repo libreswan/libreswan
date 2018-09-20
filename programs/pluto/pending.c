@@ -37,6 +37,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
@@ -80,7 +81,7 @@ void add_pending(int whack_sock,
 					ipstr(&c->spd.that.host_addr, &b),
 					c->name, fmt_conn_instance(c, cib));
 			});
-			close_any(whack_sock);
+			close_any(&whack_sock);
 			return;
 		}
 	}
@@ -178,7 +179,7 @@ static void delete_pending(struct pending **pp)
 	*pp = p->next;
 	if (p->connection != NULL)
 		connection_discard(p->connection);
-	close_any(p->whack_sock);
+	close_any(&p->whack_sock);
 
 	DBG(DBG_DPD, {
 		if (p->connection == NULL) {

@@ -130,6 +130,7 @@
 #include "defs.h"
 #include "cookie.h"
 #include "id.h"
+#include "fd.h"
 #include "x509.h"
 #include "pluto_x509.h"
 #include "certs.h"

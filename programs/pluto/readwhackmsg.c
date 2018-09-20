@@ -13,6 +13,7 @@
 #include "lswalloc.h"
 #include "whack.h"
 #include "lswlog.h"
+#include "fd.h"
 
 #include "readwhackmsg.h"
 

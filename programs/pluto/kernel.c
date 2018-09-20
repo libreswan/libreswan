@@ -53,6 +53,7 @@
 #include "defs.h"
 #include "rnd.h"
 #include "id.h"
+#include "fd.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "timer.h"
