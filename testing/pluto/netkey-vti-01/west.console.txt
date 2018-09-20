@@ -86,6 +86,14 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
+ # ensure no error on delete
+west #
+ ipsec auto --delete westnet-eastnet-vti
+002 "westnet-eastnet-vti": deleting non-instance connection
+002 "westnet-eastnet-vti" #2: deleting state (STATE_QUICK_I2) and sending notification
+005 "westnet-eastnet-vti" #2: ESP traffic information: in=336B out=336B
+002 "westnet-eastnet-vti" #1: deleting state (STATE_MAIN_I4) and sending notification
+west #
  echo done
 done
 west #
@@ -97,7 +105,7 @@ west #
  # there should be no vti0 device left
 west #
  ip addr show vti0
-6: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1332 qdisc noqueue state UNKNOWN group default
+6: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1480 qdisc noqueue state UNKNOWN group default
     link/ipip 192.1.2.45 peer 192.1.2.23
 west #
 west #
