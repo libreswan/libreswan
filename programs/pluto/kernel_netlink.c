@@ -657,38 +657,40 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
 	}
 
-	if (policy == IPSEC_POLICY_IPSEC && sadb_op != ERO_DELETE) {
-		struct rtattr *attr;
+	if (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD) {
+		if (sadb_op != ERO_DELETE) {
+			struct rtattr *attr;
 
-		struct xfrm_user_tmpl tmpl[4];
-		int i;
+			struct xfrm_user_tmpl tmpl[4];
+			int i;
 
-		zero(&tmpl);
-		for (i = 0; proto_info[i].proto; i++) {
-			tmpl[i].reqid = proto_info[i].reqid;
-			tmpl[i].id.proto = proto_info[i].proto;
-			tmpl[i].optional =
-				proto_info[i].proto == IPPROTO_COMP &&
-				dir != XFRM_POLICY_OUT;
-			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
-			tmpl[i].family = addrtypeof(that_host);
-			tmpl[i].mode =
-				proto_info[i].encapsulation ==
-					ENCAPSULATION_MODE_TUNNEL;
+			zero(&tmpl);
+			for (i = 0; proto_info[i].proto; i++) {
+				tmpl[i].reqid = proto_info[i].reqid;
+				tmpl[i].id.proto = proto_info[i].proto;
+				tmpl[i].optional =
+					proto_info[i].proto == IPPROTO_COMP &&
+					dir != XFRM_POLICY_OUT;
+				tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
+				tmpl[i].family = addrtypeof(that_host);
+				tmpl[i].mode =
+					proto_info[i].encapsulation ==
+						ENCAPSULATION_MODE_TUNNEL;
 
-			if (!tmpl[i].mode)
-				continue;
+				if (!tmpl[i].mode)
+					continue;
 
-			ip2xfrm(this_host, &tmpl[i].saddr);
-			ip2xfrm(that_host, &tmpl[i].id.daddr);
+				ip2xfrm(this_host, &tmpl[i].saddr);
+				ip2xfrm(that_host, &tmpl[i].id.daddr);
+			}
+
+			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+			attr->rta_type = XFRMA_TMPL;
+			attr->rta_len = i * sizeof(tmpl[0]);
+			memcpy(RTA_DATA(attr), tmpl, attr->rta_len);
+			attr->rta_len = RTA_LENGTH(attr->rta_len);
+			req.n.nlmsg_len += attr->rta_len;
 		}
-
-		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-		attr->rta_type = XFRMA_TMPL;
-		attr->rta_len = i * sizeof(tmpl[0]);
-		memcpy(RTA_DATA(attr), tmpl, attr->rta_len);
-		attr->rta_len = RTA_LENGTH(attr->rta_len);
-		req.n.nlmsg_len += attr->rta_len;
 
 		/* mark policy extension */
 		{
