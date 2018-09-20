@@ -48,7 +48,6 @@
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
-#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "xauth.h"		/* for xauth_cancel() */
@@ -572,7 +571,7 @@ struct state *new_state(void)
 	passert(&sas->st == &sas->ike.sa);
 	struct state *st = &sas->st;
 	*st = (struct state) {
-		.st_whack_sock = NULL_FD,	/* note: not 0 */
+		.st_whack_sock = null_fd,	/* note: not 0 */
 		.st_finite_state = &state_undefined,
 		.st_serialno = next_so++,
 	};

@@ -45,13 +45,11 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "id.h"
-#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "secrets.h"
 
 #include "defs.h"
-#include "fd.h"
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -175,7 +173,7 @@ bool orient(struct connection *c)
 }
 
 struct initiate_stuff {
-	int whackfd;
+	fd_t whackfd;
 	lmod_t more_debugging;
 	lmod_t more_impairing;
 	char *remote_host;
@@ -184,7 +182,7 @@ struct initiate_stuff {
 static int initiate_a_connection(struct connection *c, void *arg)
 {
 	struct initiate_stuff *is = (struct initiate_stuff *)arg;
-	int whackfd = is->whackfd;
+	fd_t whackfd = is->whackfd;
 
 	set_cur_connection(c);
 
@@ -308,7 +306,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	}
 
 	c->policy |= POLICY_UP;
-	whackfd = dup(whackfd);
+	whackfd = dup_any(whackfd);
 	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY
 #ifdef HAVE_LABELED_IPSEC
 		  , NULL
@@ -319,7 +317,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	return 1;
 }
 
-void initiate_connection(const char *name, int whackfd,
+void initiate_connection(const char *name, fd_t whackfd,
 			 lmod_t more_debugging,
 			 lmod_t more_impairing,
 			 char *remote_host)
@@ -420,7 +418,7 @@ void restart_connections_by_peer(struct connection *const c)
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
 					d->dnshostname, &d->spd.that.host_addr))
-				initiate_connection(d->name, NULL_FD,
+				initiate_connection(d->name, null_fd,
 						    empty_lmod, empty_lmod,
 						    NULL);
 		}
@@ -461,7 +459,7 @@ struct find_oppo_bundle {
 	policy_prio_t policy_prio;
 	ipsec_spi_t negotiation_shunt; /* in host order! */
 	ipsec_spi_t failure_shunt; /* in host order! */
-	int whackfd;
+	fd_t whackfd;
 };
 
 static void cannot_oppo(struct connection *c,
@@ -618,7 +616,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 	if (DBGP(DBG_OPPOINFO)) {
 		libreswan_log("%s", demandbuf);
 		loggedit = TRUE;
-	} else if (whack_log_fd != NULL_FD) {
+	} else if (fd_p(whack_log_fd)) {
 		whack_log(RC_COMMENT, "%s", demandbuf);
 		loggedit = TRUE;
 	}
@@ -665,7 +663,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 		 * negotiation is already being attempted.
 		 */
 
-		/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
+		/* If we are to proceed asynchronously, b->whackfd will be NULL_WHACKFD. */
 
 		if (c->kind == CK_INSTANCE) {
 			char cib[CONN_INST_BUF];
@@ -726,7 +724,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 				  , uctx
 #endif
 				  );
-		b->whackfd = NULL_FD; /* protect from close */
+		b->whackfd = null_fd; /* protect from close */
 	} else {
 		/* We are handling an opportunistic situation.
 		 * This involves several DNS lookup steps that require suspension.
@@ -889,7 +887,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 				}
 				/* ??? c == NULL -- what can we do? */
 			} else {
-				/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
+				/* If we are to proceed asynchronously, b->whackfd will be NULL_WHACKFD. */
 				passert(c->kind == CK_INSTANCE);
 				passert(HAS_IPSEC_POLICY(c->policy));
 				passert(LHAS(LELEM(RT_UNROUTED) |
@@ -937,7 +935,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 						  , NULL /* shall we pass uctx for opportunistic connections? */
 #endif
 						  );
-				b->whackfd = NULL_FD; /* protect from close */
+				b->whackfd = null_fd; /* protect from close */
 			}
 		}
 
@@ -960,7 +958,7 @@ void initiate_ondemand(const ip_address *our_client,
 		      const ip_address *peer_client,
 		      int transport_proto,
 		      bool held,
-		      int whackfd,
+		      fd_t whackfd,
 #ifdef HAVE_LABELED_IPSEC
 		      struct xfrm_user_sec_ctx_ike *uctx,
 #endif
@@ -1089,7 +1087,7 @@ static void connection_check_ddns1(struct connection *c)
 	 * lookup
 	 */
 	update_host_pairs(c);
-	initiate_connection(c->name, NULL_FD, empty_lmod, empty_lmod, NULL);
+	initiate_connection(c->name, null_fd, empty_lmod, empty_lmod, NULL);
 
 	/* no host pairs, no more to do */
 	pexpect(c->host_pair != NULL);	/* ??? surely */
@@ -1098,7 +1096,7 @@ static void connection_check_ddns1(struct connection *c)
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
 		if (c != d && same_in_some_sense(c, d))
-			initiate_connection(d->name, NULL_FD,
+			initiate_connection(d->name, null_fd,
 					    empty_lmod, empty_lmod, NULL);
 	}
 }
@@ -1195,7 +1193,7 @@ void connection_check_phase2(void)
 				/* start a new connection. Something wanted it up */
 				struct initiate_stuff is;
 
-				is.whackfd = NULL_FD;
+				is.whackfd = null_fd;
 				is.more_debugging = empty_lmod;
 				is.more_impairing = empty_lmod;
 				is.remote_host = NULL;

@@ -43,7 +43,6 @@
 #include "defs.h"
 #include "state.h"
 #include "id.h"
-#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
@@ -201,7 +200,7 @@ static initiator_function *pick_initiator(struct connection *c,
 	}
 }
 
-void ipsecdoi_initiate(int whack_sock,
+void ipsecdoi_initiate(fd_t whack_sock,
 		       struct connection *c,
 		       lset_t policy,
 		       unsigned long try,
@@ -475,7 +474,7 @@ void initialize_new_state(struct state *st,
 			  struct connection *c,
 			  lset_t policy,
 			  int try,
-			  int whack_sock)
+			  fd_t whack_sock)
 {
 	st->st_connection = c;	/* surely safe: must be a new state */
 

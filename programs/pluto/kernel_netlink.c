@@ -79,7 +79,6 @@
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "kernel_alg.h"
-#include "fd.h"
 
 #include "ike_alg.h"
 #include "ike_alg_integ.h"

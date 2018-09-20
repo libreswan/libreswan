@@ -33,7 +33,6 @@
 #include "demux.h"	/* for state_transition_fn used by ipsec_doi.h */
 #include "ipsec_doi.h"
 #include "ikev2.h"	/* for need_this_intiator() */
-#include "fd.h"
 
 /* Time to retransmit, or give up.
  *
@@ -101,7 +100,7 @@ void retransmit_v1_msg(struct state *st)
 
 		/* ??? DBG and real-world code mixed */
 		if (!DBGP(DBG_WHACKWATCH)) {
-			if (st->st_whack_sock != NULL_FD) {
+			if (fd_p(st->st_whack_sock)) {
 				/*
 				 * Release whack because the observer
 				 * will get bored.
@@ -205,7 +204,7 @@ void retransmit_v2_msg(struct state *st)
 			"starting keying attempt %ld of at most %ld",
 			try, try_limit);
 
-		if (st->st_whack_sock != NULL_FD) {
+		if (fd_p(st->st_whack_sock)) {
 			/*
 			 * Release whack because the observer will
 			 * get bored.
@@ -272,7 +271,7 @@ bool ikev2_schedule_retry(struct state *st)
 		} else {
 			lswlogf(buf, "at most %ld", try_limit);
 		}
-		if (st->st_whack_sock != NULL_FD) {
+		if (fd_p(st->st_whack_sock)) {
 			lswlogs(buf, ", but releasing whack");
 		}
 	}

@@ -24,8 +24,42 @@
 #ifndef FD_H
 #define FD_H
 
-#define NULL_FD (-1)	/* NULL file descriptor */
-int dup_any(int fd);
-void close_any(int *fd);
+#include <stdbool.h>
+
+typedef struct { int fd; } fd_t;
+
+/*
+ * A magic value such that: fd_p(null_fd)==false
+ */
+extern const fd_t null_fd;
+
+#define NEW_FD(CODE) new_fd((CODE), #CODE, __func__, PASSERT_BASENAME, __LINE__)
+fd_t new_fd(int fd, const char *code,
+	    const char *func, const char *file, unsigned long line);
+
+#define dup_any(FD) dup_any_fd((FD), __func__, PASSERT_BASENAME, __LINE__)
+fd_t dup_any_fd(fd_t fd, const char *func,
+		const char *file, unsigned long line);
+#define close_any(FD) close_any_fd((FD), __func__, PASSERT_BASENAME, __LINE__)
+void close_any_fd(fd_t *fd,
+		  const char *func, const char *file, unsigned long line);
+
+/*
+ * Is FD valid (as in something non-negative)?
+ *
+ * Use fd_p() to check the wrapped return value from functions like
+ * open(2) (which return -1 on failure).
+ */
+bool fd_p(fd_t fd);
+
+/*
+ * printf("fd "PRI_FD, PRI_fd(whackfd))
+ *
+ * PRI_... names are consistent with shunk_t and hopefully avoid
+ * clashes with reserved PRI* names.
+ */
+#define PRI_FD "fd@%d"
+#define PRI_fd(FD) ((FD).fd)
 
 #endif
+ 

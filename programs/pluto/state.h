@@ -38,6 +38,7 @@
 #include "deltatime.h"
 #include "monotime.h"
 #include "reqid.h"
+#include "fd.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -302,7 +303,7 @@ struct state {
 						 */
 
 	struct connection *st_connection;       /* connection for this SA */
-	int st_whack_sock;                      /* fd for our Whack TCP socket.
+	fd_t st_whack_sock;                /* fd for our Whack TCP socket.
 						 * Single copy: close when
 						 * freeing struct.
 						 */
@@ -739,7 +740,7 @@ extern void initialize_new_state(struct state *st,
 				 struct connection *c,
 				 lset_t policy,
 				 int try,
-				 int whack_sock);
+				 fd_t whack_sock);
 
 extern void show_traffic_status(const char *name);
 extern void show_states_status(void);

@@ -16,13 +16,15 @@
  * for more details.
  */
 
+#include "fd.h"
+
 struct payload_digest;
 struct state;
 struct lswlog;
 
 struct xfrm_user_sec_ctx_ike *uctx; /* forward declaration */
 
-typedef void initiator_function(int whack_sock,
+typedef void initiator_function(fd_t whack_sock,
 				struct connection *c,
 				struct state *predecessor,
 				lset_t policy,
@@ -32,7 +34,7 @@ typedef void initiator_function(int whack_sock,
 #endif
 				);
 
-extern void ipsecdoi_initiate(int whack_sock, struct connection *c,
+extern void ipsecdoi_initiate(fd_t whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
 			      so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC

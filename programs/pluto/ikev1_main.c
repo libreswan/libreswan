@@ -47,7 +47,6 @@
 #include "state.h"
 #include "ikev1_msgid.h"
 #include "id.h"
-#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "connections.h" /* needs id.h */
@@ -96,7 +95,7 @@
  * Note: this is not called from demux.c
  */
 /* extern initiator_function main_outI1; */	/* type assertion */
-void main_outI1(int whack_sock,
+void main_outI1(fd_t whack_sock,
 		struct connection *c,
 		struct state *predecessor,
 		lset_t policy,

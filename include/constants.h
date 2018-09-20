@@ -101,6 +101,8 @@ struct lswlog;
 #  define FALSE false
 #endif
 
+#define NULL_FD (-1)	/* NULL file descriptor */
+
 #include <inttypes.h>
 
 #include <prcpucfg.h>	/* from nspr4 devel */

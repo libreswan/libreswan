@@ -53,7 +53,6 @@
 #include "defs.h"
 #include "rnd.h"
 #include "id.h"
-#include "fd.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "timer.h"
@@ -241,7 +240,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 
 	/* actually initiate opportunism / ondemand */
 	initiate_ondemand(&src, &dst, transport_proto,
-			TRUE, NULL_FD,
+			  TRUE, null_fd,
 #ifdef HAVE_LABELED_IPSEC
 			uctx,
 #endif

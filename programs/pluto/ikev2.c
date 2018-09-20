@@ -2604,8 +2604,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 	}
 
 	if (w == RC_SUCCESS) {
-		DBG(DBG_CONTROL, DBG_log("releasing whack for #%lu (sock=%d)",
-			st->st_serialno, st->st_whack_sock));
+		DBG(DBG_CONTROL, DBG_log("releasing whack for #%lu (sock="PRI_FD")",
+					 st->st_serialno, PRI_fd(st->st_whack_sock)));
 		release_whack(st);
 
 		/* XXX should call unpend again on parent SA */

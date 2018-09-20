@@ -43,7 +43,6 @@
 #include "state.h"
 #include "keys.h" /* needs state.h */
 #include "id.h"
-#include "fd.h"
 #include "connections.h"
 
 #include "crypto.h"
@@ -866,7 +865,7 @@ static crypto_req_cont_func ikev2_parent_outI1_continue;
 
 /* extern initiator_function ikev2_parent_outI1; */	/* type assertion */
 
-void ikev2_parent_outI1(int whack_sock,
+void ikev2_parent_outI1(fd_t whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,
@@ -1513,7 +1512,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
 	/* initialize_new_state expects valid icookie/rcookie values, so create it now */
 	get_cookie(FALSE, st->st_rcookie, &md->sender);
-	initialize_new_state(st, c, policy, 0, NULL_FD);
+	initialize_new_state(st, c, policy, 0, null_fd);
 	update_ike_endpoints(st, md);
 	st->st_ikev2 = TRUE;
 	change_state(st, STATE_PARENT_R1);
@@ -6659,7 +6658,7 @@ static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 void ikev2_rekey_ike_start(struct state *st)
 {
 	struct pending p;
-	p.whack_sock = NULL_FD;
+	p.whack_sock = null_fd;
 	p.isakmp_sa = st;
 	p.connection = st->st_connection;
 	p.policy = LEMPTY;

@@ -130,7 +130,6 @@
 #include "defs.h"
 #include "cookie.h"
 #include "id.h"
-#include "fd.h"
 #include "x509.h"
 #include "pluto_x509.h"
 #include "certs.h"
@@ -778,7 +777,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 				/* Saving connection name and whack sock id */
 				const char *tmp_name = st->st_connection->name;
-				int tmp_whack_sock = dup_any(st->st_whack_sock);
+				fd_t tmp_whack_sock = dup_any(st->st_whack_sock);
 
 				/* deleting ISAKMP SA with the current remote peer */
 				delete_state(st);

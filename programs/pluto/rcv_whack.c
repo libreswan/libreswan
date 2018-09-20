@@ -48,7 +48,6 @@
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
-#include "fd.h"
 #include "x509.h"
 #include "pluto_x509.h"
 #include "certs.h"
@@ -263,7 +262,7 @@ static bool openwhackrecordfile(char *file)
 /*
  * handle a whack message.
  */
-void whack_process(int whackfd, const struct whack_message *const m)
+void whack_process(fd_t whackfd, const struct whack_message *const m)
 {
 	/*
 	 * May be needed in future:
@@ -550,9 +549,9 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				}
 			}
 			initiate_connection(m->name,
-					    m->whack_async ?
-					    NULL_FD :
-					    dup_any(whackfd),
+					    (m->whack_async ?
+					     null_fd :
+					     dup_any(whackfd)),
 					    m->debugging,
 					    m->impairing,
 					    pass_remote ? m->remote_host : NULL);
@@ -568,7 +567,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 						&m->oppo_peer_client, m->oppo_proto,
 						FALSE,
 						m->whack_async ?
-						  NULL_FD :
+						  null_fd :
 						  dup_any(whackfd),
 #ifdef HAVE_LABELED_IPSEC
 						NULL,
@@ -658,9 +657,8 @@ void whack_process(int whackfd, const struct whack_message *const m)
 	}
 
 done:
-	whack_log_fd = NULL_FD;
-	if (whackfd >= 0)
-		close(whackfd);
+	whack_log_fd = null_fd;
+	close_any(&whackfd);
 }
 
 static void whack_handle(int kernelfd);
@@ -679,20 +677,20 @@ static void whack_handle(int whackctlfd)
 	struct whack_message msg, msg_saved;
 	struct sockaddr_un whackaddr;
 	socklen_t whackaddrlen = sizeof(whackaddr);
-	int whackfd = accept(whackctlfd, (struct sockaddr *)&whackaddr,
-			     &whackaddrlen);
+	fd_t whackfd = NEW_FD(accept(whackctlfd, (struct sockaddr *)&whackaddr,
+				     &whackaddrlen));
 	/* Note: actual value in n should fit in int.  To print, cast to int. */
 	ssize_t n;
 
 	/* static int msgnum=0; */
 
-	if (whackfd < 0) {
+	if (!fd_p(whackfd)) {
 		LOG_ERRNO(errno, "accept() failed in whack_handle()");
 		return;
 	}
-	if (fcntl(whackfd, F_SETFD, FD_CLOEXEC) < 0) {
+	if (fcntl(whackfd.fd, F_SETFD, FD_CLOEXEC) < 0) {
 		LOG_ERRNO(errno, "failed to set CLOEXEC in whack_handle()");
-		close(whackfd);
+		close_any(&whackfd);
 		return;
 	}
 
@@ -706,10 +704,10 @@ static void whack_handle(int whackctlfd)
 	 */
 	zero(&msg);
 
-	n = read(whackfd, &msg, sizeof(msg));
+	n = read(whackfd.fd, &msg, sizeof(msg));
 	if (n <= 0) {
 		LOG_ERRNO(errno, "read() failed in whack_handle()");
-		close(whackfd);
+		close_any(&whackfd);
 		return;
 	}
 
@@ -759,8 +757,8 @@ static void whack_handle(int whackctlfd)
 		if (ugh != NULL) {
 			if (*ugh != '\0')
 				loglog(RC_BADWHACKMESSAGE, "%s", ugh);
-			whack_log_fd = NULL_FD;
-			close(whackfd);
+			whack_log_fd = null_fd;
+			close_any(&whackfd);
 			return;
 		}
 	}
@@ -774,13 +772,13 @@ static void whack_handle(int whackctlfd)
 /*
  * interactive input from the whack user, using current whack_fd
  */
-bool whack_prompt_for(int whackfd,
+bool whack_prompt_for(fd_t whackfd,
 		      const char *prompt1,
 		      const char *prompt2,
 		      bool echo,
 		      char *ansbuf, size_t ansbuf_len)
 {
-	int savewfd = whack_log_fd;
+	fd_t savewfd = whack_log_fd;
 	ssize_t n;
 
 	whack_log_fd = whackfd;
@@ -793,7 +791,7 @@ bool whack_prompt_for(int whackfd,
 
 	whack_log_fd = savewfd;
 
-	n = read(whackfd, ansbuf, ansbuf_len);
+	n = read(whackfd.fd, ansbuf, ansbuf_len);
 
 	if (n == -1) {
 		whack_log(RC_LOG_SERIOUS, "read(whackfd) failed: %s",

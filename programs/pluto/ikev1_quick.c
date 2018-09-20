@@ -762,7 +762,7 @@ static void quick_outI1_continue(struct state *st, struct msg_digest **mdp UNUSE
 	}
 }
 
-void quick_outI1(int whack_sock,
+void quick_outI1(fd_t whack_sock,
 		 struct state *isakmp_sa,
 		 struct connection *c,
 		 lset_t policy,

@@ -2051,7 +2051,7 @@ static stf_status xauth_client_resp(struct state *st,
 						return STF_INTERNAL_ERROR;
 
 					if (st->st_xauth_username[0] == '\0') {
-						if (st->st_whack_sock == -1) {
+						if (!fd_p(st->st_whack_sock)) {
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH username requested, but no file descriptor available for prompt");
 							return STF_FAIL;
@@ -2136,7 +2136,7 @@ static stf_status xauth_client_resp(struct state *st,
 					if (st->st_xauth_password.ptr == NULL) {
 						char xauth_password[XAUTH_MAX_PASS_LENGTH];
 
-						if (st->st_whack_sock == -1) {
+						if (!fd_p(st->st_whack_sock)) {
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH password requested, but no file descriptor available for prompt");
 							return STF_FAIL;

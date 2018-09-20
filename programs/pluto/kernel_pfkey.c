@@ -51,7 +51,6 @@
 
 #include "defs.h"
 #include "id.h"
-#include "fd.h"
 #include "connections.h"
 #include "state.h"
 #include "kernel.h"

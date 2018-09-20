@@ -37,7 +37,6 @@
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
-#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
@@ -56,7 +55,7 @@
  * queue an IPsec SA negotiation pending completion of a
  * suitable phase 1 (IKE SA)
  */
-void add_pending(int whack_sock,
+void add_pending(fd_t whack_sock,
 		 struct state *isakmp_sa,
 		 struct connection *c,
 		 lset_t policy,
@@ -129,8 +128,8 @@ void release_pending_whacks(struct state *st, err_t story)
 	struct pending *p, **pp;
 	struct stat stst;
 
-	if (st->st_whack_sock == NULL_FD ||
-	    fstat(st->st_whack_sock, &stst) != 0) {
+	if (!fd_p(st->st_whack_sock) ||
+	    fstat(st->st_whack_sock.fd, &stst) != 0) {
 		/* resulting st_dev/st_ino ought to be distinct */
 		zero(&stst);	/* OK: no pointer fields */
 	}
@@ -144,21 +143,20 @@ void release_pending_whacks(struct state *st, err_t story)
 	for (p = *pp;
 	     p != NULL;
 	     p = p->next) {
-		if (p->isakmp_sa == st && p->whack_sock != NULL_FD) {
+		if (p->isakmp_sa == st && fd_p(p->whack_sock)) {
 			struct stat pst;
 
-			if (fstat(p->whack_sock, &pst) == 0 &&
+			if (fstat(p->whack_sock.fd, &pst) == 0 &&
 			    (stst.st_dev != pst.st_dev ||
 			     stst.st_ino != pst.st_ino)) {
-				passert(whack_log_fd == NULL_FD);
+				passert(!fd_p(whack_log_fd));
 				whack_log_fd = p->whack_sock;
 				whack_log(RC_COMMENT,
 					  "%s for IKE SA, but releasing whack for pending IPSEC SA",
 					  story);
-				whack_log_fd = NULL_FD;
+				whack_log_fd = null_fd;
 			}
-			close(p->whack_sock);
-			p->whack_sock = NULL_FD;
+			close_any(&p->whack_sock);
 		}
 	}
 }
@@ -263,7 +261,7 @@ void unpend(struct state *st, struct connection *cc)
 					fmt_conn_instance(p->connection, cib));
 			});
 
-			p->whack_sock = NULL_FD;        /* ownership transferred */
+			p->whack_sock = null_fd;        /* ownership transferred */
 			p->connection = NULL;           /* ownership transferred */
 			delete_pending(pp);	/* in effect, advances pp */
 		} else {
@@ -274,7 +272,7 @@ void unpend(struct state *st, struct connection *cc)
 
 struct connection *first_pending(const struct state *st,
 				 lset_t *policy,
-				 int *p_whack_sock)
+				 fd_t *p_whack_sock)
 {
 	struct pending **pp, *p;
 

@@ -38,7 +38,6 @@
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
-#include "fd.h"
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"	/* needs id.h */
@@ -430,11 +429,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_v2_RELEASE_WHACK:
-		DBG(DBG_CONTROL, DBG_log("%s releasing whack for #%lu %s (sock=%d)",
+		DBG(DBG_CONTROL, DBG_log("%s releasing whack for #%lu %s (sock="PRI_FD")",
 					enum_show(&timer_event_names, type),
 					st->st_serialno,
 					st->st_state_name,
-					st->st_whack_sock));
+					 PRI_fd(st->st_whack_sock)));
 		release_pending_whacks(st, "release whack");
 		break;
 

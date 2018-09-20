@@ -28,6 +28,8 @@
 #ifndef CONNECTIONS_H
 #define CONNECTIONS_H
 
+#include "fd.h"
+
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
  * - IPsec connections, between clients (for secure IP communication)
@@ -369,7 +371,7 @@ extern size_t format_end(char *buf, size_t buf_len,
 struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm);
 extern void initiate_connection(const char *name,
-				int whackfd,
+				fd_t whackfd,
 				lmod_t more_debugging,
 				lmod_t more_impairing,
 				char *remote_host);
@@ -383,7 +385,7 @@ extern void initiate_ondemand(const ip_address *our_client,
 			     const ip_address *peer_client,
 			     int transport_proto,
 			     bool held,
-			     int whackfd,
+			     fd_t whackfd,
 #ifdef HAVE_LABELED_IPSEC
 			     struct xfrm_user_sec_ctx_ike *uctx,
 #endif
@@ -480,7 +482,7 @@ extern char *fmt_conn_instance(const struct connection *c,
 
 struct pending; /* forward declaration (opaque outside connections.c) */
 
-extern void add_pending(int whack_sock,
+extern void add_pending(fd_t whack_sock,
 			struct state *isakmp_sa,
 			struct connection *c,
 			lset_t policy,

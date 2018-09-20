@@ -19,6 +19,7 @@
  */
 
 #include "monotime.h"
+#include "fd.h"
 
 void flush_pending_by_connection(const struct connection *c);
 bool in_pending_use(const struct connection *c);
@@ -27,7 +28,7 @@ bool pending_check_timeout(const struct connection *c);
 
 extern struct connection *first_pending(const struct state *st,
 					lset_t *policy,
-					int *p_whack_sock);
+					fd_t *p_whack_sock);
 
 /* struct pending, the structure representing IPsec SA
  * negotiations delayed until a Keying Channel has been negotiated.
@@ -35,7 +36,7 @@ extern struct connection *first_pending(const struct state *st,
  */
 
 struct pending {
-	int whack_sock;
+	fd_t whack_sock;
 	struct state *isakmp_sa;
 	struct connection *connection;
 	lset_t policy;
