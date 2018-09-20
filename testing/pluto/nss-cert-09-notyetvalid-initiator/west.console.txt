@@ -21,7 +21,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair retransmits
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up nss-cert
 002 "nss-cert" #1: initiating Main Mode

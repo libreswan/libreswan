@@ -18,7 +18,7 @@ Redirecting to: systemctl start ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
- ipsec whack --impair retransmits
+ ipsec whack --impair suppress-retransmits
 north #
  # ensure for tests acquires expire before our failureshunt=2m
 north #
