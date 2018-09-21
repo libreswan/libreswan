@@ -285,9 +285,11 @@ kvmplutotest	ikev2-impair-05-send-zero-ike-ke	good
 kvmplutotest	ikev1-impair-06-send-no-ike-ke		wip
 kvmplutotest	ikev2-impair-06-send-no-ike-ke		good
 
-
 kvmplutotest	ikev1-impair-07-send-empty-ike-ke	good
 kvmplutotest	ikev2-impair-07-send-empty-ike-ke	good
+
+kvmplutotest	impair-08-ikev1-key-length-attribute	wip
+kvmplutotest	impair-08-ikev2-key-length-attribute	good
 
 kvmplutotest	ikev1-psk-dual-behind-nat-01		good
 kvmplutotest	ikev1-psk-two-rw-id-ip-01		good
