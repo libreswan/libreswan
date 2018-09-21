@@ -687,12 +687,8 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 {
 	struct payload_digest *const n_pld = md->chain[ISAKMP_NEXT_N];
 
-	libreswan_log("PAUL: startof informational()");
-
 	/* If the Notification Payload is not null... */
 	if (n_pld != NULL) {
-		libreswan_log("PAUL: startof contains NOTIFY");
-
 		pb_stream *const n_pbs = &n_pld->pbs;
 		struct isakmp_notification *const n =
 			&n_pld->payload.notification;
