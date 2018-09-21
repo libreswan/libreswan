@@ -14,7 +14,6 @@ v3.26 (September 16, 2018)
 * IKEv2: Fix leaks in ikev2_calculate_rsa_hash [Hugh]
 * IKEv2: Simplify proposal generating [Hugh]
 * IKEv1: Fix handling XAUTH empty passwords [Andrew]
-* IKEv1: Fix XAUTH message padding [Hugh]
 * IKEv1: Various code cleanup, next payload handling [Hugh]
 * IKEv1: fix optional key-length regression (in v3.25) with ESP prop [Andrew]
 * IKEv1: Don't delete replaced IKE SA, it confuses third party clients [Paul]
