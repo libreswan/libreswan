@@ -108,8 +108,6 @@ const struct enum_names impair_help = {
 	NULL, NULL,
 };
 
-enum send_impairment impair_ke_payload;
-
 static const struct keyword send_impairment_value[] = {
 #define S(E, H) [SEND_##E] = { .name = #E, .value = SEND_##E, .details = H, }
 	S(OMIT, "omit payload"),
@@ -130,6 +128,31 @@ struct impairment {
 	size_t sizeof_value;
 };
 
+struct impairment impairments[] = {
+	{ .what = NULL, },
+#define V(V) .value = &V, .sizeof_value = sizeof(V)
+
+	{
+		.what = "ke-payload",
+		.help = "corrupt the outgoing KE payload",
+		.how_keywords = &send_impairment_keywords,
+		V(impair_ke_payload),
+	},
+	{
+		.what = "key-length-attribute",
+		.help = "corrupt the outgoing key length attribute",
+		.how_keywords = &send_impairment_keywords,
+		V(impair_key_length_attribute),
+	},
+};
+
+/*
+ * declare these after above references so above is forced to use
+ * declaration in header
+ */
+enum send_impairment impair_ke_payload;
+enum send_impairment impair_key_length_attribute;
+
 static void help(const char *prefix, const struct impairment *cr)
 {
 	LSWLOG_INFO(buf) {
@@ -148,17 +171,6 @@ static void help(const char *prefix, const struct impairment *cr)
 		}
 	}
 }
-
-struct impairment impairments[] = {
-	{ .what = NULL, },
-	{
-		.what = "ke-payload",
-		.help = "corrupt the outgoing ke-payload",
-		.how_keywords = &send_impairment_keywords,
-		.value = &impair_ke_payload,
-		.sizeof_value = sizeof(impair_ke_payload),
-	},
-};
 
 void help_impair(const char *prefix)
 {

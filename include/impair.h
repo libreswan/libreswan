@@ -37,12 +37,13 @@ enum xxx_impair ...;
 #endif
 
 /*
- * What can be impair.
+ * What can be impaired.
  *
- * XXX: make this a structure so it can be copied aroune?
+ * XXX: make this a structure so it can be copied?
  */
 
 extern enum send_impairment impair_ke_payload;
+extern enum send_impairment impair_key_length_attribute;
 
 /*
  * What whack sends across the wire for a impair.

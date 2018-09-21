@@ -65,37 +65,45 @@
 
 #include "nat_traversal.h"
 
-/* Taken from ikev1_spdb_struct.c, as the format is similar */
-/* Note: cloned from out_attr, with the same bugs */
-static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
-			   unsigned long val,
-			   pb_stream *pbs)
-{
-	/*
-	 * IKEv2 the type determines the format that an attribute must
-	 * use (in IKEv1 it was the value that determined this).
-	 */
-	switch (type) {
-	case IKEv2_KEY_LENGTH:
-		passert((val >> 16) == 0);
-		passert((type & ISAKMP_ATTR_AF_MASK) == 0);
-		/* set the short-form attribute format bit */
-		struct ikev2_trans_attr attr = {
-			.isatr_type = type | ISAKMP_ATTR_AF_TV,
-			.isatr_lv = val,
-		};
-		if (!out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL))
-			return FALSE;
-		break;
+/*
+ * Two possible attribute formats (fixed and variable).  In IKEv2 the
+ * attribute type determines the format that an attribute must use (in
+ * IKEv1 it was the value that determined this).
+ */
 
-	default:
-		/*
-		 * Since there are no IKEv2 long-form attributes,
-		 * there is no long-form code.
-		 */
-		bad_case(type);
+static bool v2_out_attr_fixed(enum ikev2_trans_attr_type type,
+			      unsigned long val, pb_stream *pbs)
+{
+	pexpect((val >> 16) == 0);
+	pexpect((type & ISAKMP_ATTR_AF_MASK) == 0);
+	/* set the short-form attribute format bit */
+	struct ikev2_trans_attr attr = {
+		.isatr_type = type | ISAKMP_ATTR_AF_TV,
+		.isatr_lv = val,
+	};
+	if (!out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL)) {
+		libreswan_log("%s() for attribute %d failed", __func__, type);
+		return false;
 	}
-	return TRUE;
+	return true;
+}
+
+static bool v2_out_attr_variable(enum ikev2_trans_attr_type type,
+				 chunk_t chunk, pb_stream *pbs)
+{
+	pexpect((type & ISAKMP_ATTR_AF_MASK) == 0);
+	/* clear the short-form attribute format bit */
+	struct ikev2_trans_attr attr = {
+		.isatr_type = type & ~ISAKMP_ATTR_AF_TV,
+		.isatr_lv = chunk.len,
+	};
+	if (!pexpect(out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL))) {
+		return false;
+	}
+	if (!pexpect(out_chunk(chunk, pbs, NULL))) {
+		return false;
+	}
+	return true;
 }
 
 /*
@@ -1241,11 +1249,27 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 		return FALSE;
 	}
 	if (transform->attr_keylen > 0) {
-		if (!ikev2_out_attr(IKEv2_KEY_LENGTH,
-				    transform->attr_keylen,
-				    &trans_pbs)) {
-			libreswan_log("ikev2_out_attr() of transfor attribute failed");
-			return FALSE;
+		switch (impair_key_length_attribute) {
+		case SEND_EMPTY:
+			libreswan_log("IMPAIR: emitting zero-length key-length attribute with no key");
+			if (!v2_out_attr_variable(IKEv2_KEY_LENGTH, empty_chunk, &trans_pbs)) {
+				return false;
+			}
+			break;
+		case SEND_OMIT:
+			libreswan_log("IMPAIR: omitting fixed-length key-length attribute");
+			break;
+		case SEND_ZERO:
+			libreswan_log("IMPAIR: emitting fixed-length key-length attribute with 0 key");
+			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, 0, &trans_pbs)) {
+				return false;
+			}
+			break;
+		default:
+			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen, &trans_pbs)) {
+				return false;
+			}
+			break;
 		}
 	}
 	close_output_pbs(&trans_pbs); /* set len */
