@@ -830,26 +830,28 @@ bool ikev1_justship_KE(chunk_t *g,
 		pb_stream *outs, uint8_t np)
 {
 	switch (impair_ke_payload) {
+	case SEND_NORMAL:
+		return ikev1_out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
+				"keyex value");
 	case SEND_OMIT:
 		libreswan_log("IMPAIR: sending no KE (g^x) payload");
 		return true;
-	case SEND_ZERO:
-	{
-		pb_stream z;
-
-		libreswan_log("IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations");
-		/* Only used to test sending/receiving bogus g^x */
-		return ikev1_out_generic(np, &isakmp_keyex_desc, outs, &z) &&
-			out_zero(g->len, &z, "fake g^x") &&
-			(close_output_pbs(&z), TRUE);
-	}
 	case SEND_EMPTY:
 		libreswan_log("IMPAIR: sending empty KE (g^x)");
 		return ikev1_out_generic_chunk(0, &isakmp_keyex_desc, outs,
 					       empty_chunk, "empty KE");
+	case SEND_ROOF:
 	default:
-		return ikev1_out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
-				"keyex value");
+	{
+		pb_stream z;
+		uint8_t byte = impair_ke_payload - SEND_ROOF;
+		libreswan_log("IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations",
+			      byte);
+		/* Only used to test sending/receiving bogus g^x */
+		return ikev1_out_generic(np, &isakmp_keyex_desc, outs, &z) &&
+			out_byte(byte, g->len, &z, "fake g^x") &&
+			(close_output_pbs(&z), TRUE);
+	}
 	}
 }
 

@@ -13,7 +13,7 @@ initdone
 west #
  # should fail fast
 west #
- ipsec whack --impair ke-payload:zero --impair delete-on-retransmit
+ ipsec whack --impair ke-payload:0 --impair delete-on-retransmit
 west #
  ipsec auto --up  westnet-eastnet-ipv4-psk
 002 "westnet-eastnet-ipv4-psk" #1: initiating Main Mode

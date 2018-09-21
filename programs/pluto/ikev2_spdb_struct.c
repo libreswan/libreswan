@@ -1250,6 +1250,11 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 	}
 	if (transform->attr_keylen > 0) {
 		switch (impair_key_length_attribute) {
+		case SEND_NORMAL:
+			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen, &trans_pbs)) {
+				return false;
+			}
+			break;
 		case SEND_EMPTY:
 			libreswan_log("IMPAIR: emitting zero-length key-length attribute with no key");
 			if (!v2_out_attr_variable(IKEv2_KEY_LENGTH, empty_chunk, &trans_pbs)) {
@@ -1259,17 +1264,17 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 		case SEND_OMIT:
 			libreswan_log("IMPAIR: omitting fixed-length key-length attribute");
 			break;
-		case SEND_ZERO:
-			libreswan_log("IMPAIR: emitting fixed-length key-length attribute with 0 key");
-			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, 0, &trans_pbs)) {
-				return false;
-			}
-			break;
+		case SEND_ROOF:
 		default:
-			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen, &trans_pbs)) {
+		{
+			uint16_t keylen = impair_key_length_attribute - SEND_ROOF;
+			libreswan_log("IMPAIR: emitting fixed-length key-length attribute with %u key",
+				      keylen);
+			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, keylen, &trans_pbs)) {
 				return false;
 			}
 			break;
+		}
 		}
 	}
 	close_output_pbs(&trans_pbs); /* set len */

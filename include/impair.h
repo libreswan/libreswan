@@ -26,10 +26,10 @@
  */
 
 enum send_impairment {
-	SEND_OMIT = 1,
+	SEND_NORMAL = 0,
+	SEND_OMIT,
 	SEND_EMPTY,
-	SEND_ZERO,
-	SEND_ROOF,
+	SEND_ROOF, /* >= ROOF -> <number> */
 };
 
 #if 0

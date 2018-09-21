@@ -773,26 +773,25 @@ bool ikev1_out_sa(pb_stream *outs,
 				 */
 				for (unsigned an = 0; an != t->attr_cnt; an++) {
 					const struct db_attr *a = &t->attrs[an];
-					if (impair_key_length_attribute > 0) {
-						/* strip out key-lengt attribs */
-						if (oakley_mode) {
-							enum ikev1_oakley_attr type = a->type.oakley;
-							// type &= ISAKMP_ATTR_AF_MASK;
-							if (type == OAKLEY_KEY_LENGTH) {
-								libreswan_log("IMPAIR: stripping oakley key-length");
-								continue;
-							}
-#if 0
-						} else {
-							enum ikev1_ipsec_attr type = a->type.ipsec;
-							// type &= ISAKMP_ATTR_AF_MASK;
-							if (type == KEY_LENGTH) {
-								libreswan_log("IMPAIR: stripping ipsec key-length");
-								continue;
-							}
-#endif
+					/* strip out oakley key-length attributes? */
+					if (oakley_mode && impair_key_length_attribute > 0) {
+						enum ikev1_oakley_attr type = a->type.oakley;
+						if (type == OAKLEY_KEY_LENGTH) {
+							libreswan_log("IMPAIR: stripping IKE key-length");
+							continue;
 						}
 					}
+#if 0
+					/* strip out ipsec keylength attributes? */
+					if (!oakley_mode && impair_"child"_key_length_attribute > 0) {
+						enum ikev1_ipsec_attr type = a->type.ipsec;
+						// type &= ISAKMP_ATTR_AF_MASK;
+						if (type == KEY_LENGTH) {
+							libreswan_log("IMPAIR: stripping CHILD key-length");
+							continue;
+						}
+					}
+#endif
 					if (!out_attr(oakley_mode ? a->type.oakley : a->type.ipsec ,
 						      a->val,
 						      attr_desc,
@@ -801,19 +800,24 @@ bool ikev1_out_sa(pb_stream *outs,
 						goto fail;
 				}
 				switch (impair_key_length_attribute) {
+				case SEND_NORMAL:
+					break;
 				case SEND_EMPTY: /* XXX: how? */
 				case SEND_OMIT:
 					libreswan_log("IMPAIR: not sending key-length attribute");
 					break;
-				case SEND_ZERO:
-					libreswan_log("IMPAIR: sending key-length attribute value 0");
+				case SEND_ROOF:
+				default:
+				{
+					unsigned keylen = impair_key_length_attribute - SEND_ROOF;
+					libreswan_log("IMPAIR: sending key-length attribute value %u",
+						      keylen);
 					if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,
-						      0, attr_desc, attr_val_descs,
+						      keylen, attr_desc, attr_val_descs,
 						      &trans_pbs))
 						goto fail;
 					break;
-				default:
-					break;
+				}
 				}
 				close_output_pbs(&trans_pbs);
 			}

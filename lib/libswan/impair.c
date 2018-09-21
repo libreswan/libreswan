@@ -14,6 +14,7 @@
  */
 
 #include <stddef.h>
+#include <limits.h>
 
 #include "constants.h"
 #include "enum_names.h"
@@ -110,9 +111,9 @@ const struct enum_names impair_help = {
 
 static const struct keyword send_impairment_value[] = {
 #define S(E, H) [SEND_##E] = { .name = #E, .value = SEND_##E, .details = H, }
-	S(OMIT, "omit payload"),
-	S(EMPTY, "send an empty payload"),
-	S(ZERO, "zero-fill payload"),
+	S(NORMAL, "send normal content"),
+	S(OMIT, "do not send content"),
+	S(EMPTY, "send zero length content"),
 #undef S
 };
 
@@ -122,7 +123,11 @@ static const struct keywords send_impairment_keywords =
 struct impairment {
 	const char *what;
 	const char *help;
-	const struct keywords *how_keywords;
+	/*
+	 * If non-null; HOW is either a keyword or an (unsigned)
+	 * number encoded as keywords.nr_keywords+NUMBER.
+	 */
+	const struct keywords *how_keynum;
 	void *value;
 	/* size_t offsetof_value; */
 	size_t sizeof_value;
@@ -135,13 +140,13 @@ struct impairment impairments[] = {
 	{
 		.what = "ke-payload",
 		.help = "corrupt the outgoing KE payload",
-		.how_keywords = &send_impairment_keywords,
+		.how_keynum = &send_impairment_keywords,
 		V(impair_ke_payload),
 	},
 	{
 		.what = "key-length-attribute",
 		.help = "corrupt the outgoing key length attribute",
-		.how_keywords = &send_impairment_keywords,
+		.how_keynum = &send_impairment_keywords,
 		V(impair_key_length_attribute),
 	},
 };
@@ -158,8 +163,8 @@ static void help(const char *prefix, const struct impairment *cr)
 	LSWLOG_INFO(buf) {
 		lswlogf(buf, "%s%s: %s", prefix, cr->what, cr->help);
 	}
-	if (cr->how_keywords != NULL) {
-		const struct keywords *kw = cr->how_keywords;
+	if (cr->how_keynum != NULL) {
+		const struct keywords *kw = cr->how_keynum;
 		for (unsigned ki = 0; ki < kw->nr_values; ki++) {
 			const struct keyword *kv = &kw->values[ki];
 			if (kv->name != NULL) {
@@ -169,6 +174,10 @@ static void help(const char *prefix, const struct impairment *cr)
 				}
 			}
 		}
+		LSWLOG_INFO(buf) {
+			lswlogf(buf, "%s  %s: %s", prefix,
+				"<unsigned>", "use the unsigned value");
+		}
 	}
 }
 
@@ -177,6 +186,25 @@ void help_impair(const char *prefix)
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *cr = &impairments[ci];
 		help(prefix, cr);
+	}
+}
+
+/*
+ * Return the long value in STRING, but with +ve values adjusted by
+ * BIAS.
+ */
+static bool parse_biased_unsigned(shunk_t string, unsigned *dest, unsigned bias)
+{
+	unsigned u;
+	if (shunk_tou(string, &u, 0)) {
+		if (u <= UINT_MAX - bias) {
+			*dest = u + bias;
+			return true;
+		} else {
+			return false;
+		}
+	} else {
+		return false;
 	}
 }
 
@@ -247,7 +275,8 @@ bool parse_impair(const char *optarg,
 			.how = false,
 		};
 		return true;
-	} else if (cr->how_keywords != NULL) {
+	} else if (cr->how_keynum != NULL) {
+		/* return on fail */
 		if (how.len == 0) {
 			LSWLOG_ERROR(buf) {
 				lswlogf(buf, "option --impair '"PRI_SHUNK"' requires a parameter",
@@ -259,19 +288,29 @@ bool parse_impair(const char *optarg,
 			help("", cr);
 			return false;
 		}
-		const struct keyword *kv = keyword_by_name(cr->how_keywords, how);
-		if (kv == NULL) {
-			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "option '--impair "PRI_SHUNK"' parameter '"PRI_SHUNK"' not recognized",
-					PRI_shunk(what), PRI_shunk(how));
-			}
-			return false;
+		/* return on success. */
+		const struct keyword *kw = keyword_by_name(cr->how_keynum, how);
+		if (kw != NULL) {
+			*whack_impair = (struct whack_impair) {
+				.what = ci,
+				.how = kw->value,
+			};
+			return true;
 		}
-		*whack_impair = (struct whack_impair) {
-			.what = ci,
-			.how = kv->value,
-		};
-		return true;
+		unsigned biased_value;
+		if (parse_biased_unsigned(how, &biased_value,
+					  cr->how_keynum->nr_values)) {
+			*whack_impair = (struct whack_impair) {
+				.what = ci,
+				.how = biased_value,
+			};
+			return true;
+		}
+		LSWLOG_ERROR(buf) {
+			lswlogf(buf, "option '--impair "PRI_SHUNK"' parameter '"PRI_SHUNK"' invalid",
+				PRI_shunk(what), PRI_shunk(how));
+		}
+		return false;
 	} else if (how.len > 0) {
 		/* XXX: ignores "WHAT:" */
 		LSWLOG_ERROR(buf) {
@@ -303,7 +342,7 @@ void process_impair(const struct whack_impair *wc)
 			if (value == 0) {
 				continue;
 			}
-			const struct keyword *kv = keyword_by_value(cr->how_keywords,
+			const struct keyword *kv = keyword_by_value(cr->how_keynum,
 									  value);
 			LSWDBGP(DBG_MASK, buf) {
 				lswlogf(buf, "%s: ", cr->what);
@@ -324,7 +363,7 @@ void process_impair(const struct whack_impair *wc)
 				continue;
 			}
 			unsigned value = *(unsigned*)cr->value;
-			const struct keyword *kv = keyword_by_value(cr->how_keywords,
+			const struct keyword *kv = keyword_by_value(cr->how_keynum,
 									  value);
 			/* XXX: should be whack log? */
 			LSWLOG_INFO(buf) {
@@ -347,28 +386,20 @@ void process_impair(const struct whack_impair *wc)
 		return;
 	}
 	const struct impairment *cr = &impairments[wc->what];
-	if (cr->how_keywords != NULL &&
-	    wc->how >= cr->how_keywords->nr_values) {
-		/* XXX: assuming nr_values matches actual values!!! */
-		LSWLOG_ERROR(buf) {
-			lswlogf(buf, "impairment '%s' value '%u' of range",
-				cr->what, wc->how);
-		}
-		return;
-	}
-	if (cr->how_keywords != NULL) {
-		const struct keyword *kw = keyword_by_value(cr->how_keywords, wc->how);
-		if (kw == NULL) {
-			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "impairment '%s' value '%u' invalid",
-					cr->what, wc->how);
-			}
-			return;
-		}
+	if (cr->how_keynum != NULL) {
+		passert(cr->sizeof_value == sizeof(unsigned));
+		*(unsigned*)cr->value = wc->how; /* do not un-bias */
 		LSWDBGP(DBG_MASK, buf) {
-			lswlogf(buf, "%s: %s", cr->what, kw->name);
+			lswlogf(buf, "%s: ", cr->what);
+			const struct keyword *kw = keyword_by_value(cr->how_keynum, wc->how);
+			if (kw != NULL) {
+				lswlogs(buf, kw->name);
+			} else if (wc->how >= cr->how_keynum->nr_values) {
+				lswlogf(buf, "%zu", wc->how - cr->how_keynum->nr_values);
+			} else {
+				lswlogf(buf, "?%u?", wc->how);
+			}
 		}
-		*(unsigned*)cr->value = kw->value;
 	} else {
 		LSWDBGP(DBG_MASK, buf) {
 			lswlogf(buf, "%s%s", wc->how ? "" : "no-", cr->what);

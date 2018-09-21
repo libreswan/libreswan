@@ -1,5 +1,5 @@
 # should fail fast
-ipsec whack --impair ke-payload:zero --impair delete-on-retransmit
+ipsec whack --impair ke-payload:0 --impair delete-on-retransmit
 ipsec auto --up  westnet-eastnet-ipv4-psk
 ipsec whack --impair none
 
