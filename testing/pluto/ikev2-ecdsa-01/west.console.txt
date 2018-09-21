@@ -29,8 +29,11 @@ west #
 west #
  certutil -M -d sql:/etc/ipsec.d -n "strongSwan CA - strongSwan" -t CT,,
 west #
- ipsec start
-Redirecting to: systemctl start ipsec.service
+ #ipsec start
+west #
+ ipsec _stackmanager start
+west #
+ ipsec pluto --config /etc/ipsec.conf --leak-detective
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
@@ -68,60 +71,32 @@ west #
 000  
 000 List of Public Keys:
 000  
-000 TIMESTAMP,  776 ECDSA Key BP5gSjsOv (no private key), until TIMESTAMP ok
+000 TIMESTAMP,  776 ECDSA Key BXXXXXXXX (no private key), until TIMESTAMP ok
 000        ID_DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongEast'
 000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
-000 TIMESTAMP,  776 ECDSA Key BP5gSjsOv (no private key), until TIMESTAMP ok
+000 TIMESTAMP,  776 ECDSA Key BXXXXXXXX (no private key), until TIMESTAMP ok
 000        ID_FQDN '@east.testing.libreswan.org'
 000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
-000 TIMESTAMP,  776 ECDSA Key BGMDkF4ah (no private key), until TIMESTAMP ok
+000 TIMESTAMP,  776 ECDSA Key BXXXXXXXX (no private key), until TIMESTAMP ok
 000        ID_DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'
 000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
-000 TIMESTAMP,  776 ECDSA Key BGMDkF4ah (no private key), until TIMESTAMP ok
+000 TIMESTAMP,  776 ECDSA Key BXXXXXXXX (no private key), until TIMESTAMP ok
 000        ID_FQDN '@west.testing.libreswan.org'
 000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
+west #
+ # test delete/free
+west #
+ ipsec auto --delete westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2": deleting non-instance connection
+002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=336B out=336B
+002 "westnet-eastnet-ikev2" #1: deleting state (STATE_PARENT_I3) and sending notification
 west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
-west NOW
-XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir out priority 1042407 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir fwd priority 1042407 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir in priority 1042407 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-XFRM done
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-strongSwan CA - strongSwan                                   CT,, 
-strongWest                                                   u,u,u
+ ipsec whack --shutdown
+002 shutting down
 west #
  ../bin/check-for-core.sh
 west #
