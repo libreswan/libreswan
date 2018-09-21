@@ -97,16 +97,8 @@ struct ECDSA_private_key {
 	chunk_t version;
 };
 
-extern void free_RSA_public_content(struct RSA_public_key *rsa);
-extern void free_ECDSA_public_content(struct ECDSA_public_key *ecdsa);
-
-err_t rsa_pubkey_to_rfc_resource_record(chunk_t exponent, chunk_t modulus, chunk_t *rr);
-err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *exponent, chunk_t *modulus);
-
 err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
-err_t base64_to_rsa_pubkey(const char *rr, chunk_t *exponent, chunk_t *modulus);
 
-err_t pack_RSA_public_key(const struct RSA_public_key *rsa, chunk_t *pubkey);
 err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey);
 err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pubkey); /* ASKK */
 
@@ -154,8 +146,6 @@ typedef int (*secret_eval)(struct secret *secret,
 
 extern struct secret *lsw_foreach_secret(struct secret *secrets,
 					 secret_eval func, void *uservoid);
-extern struct secret *lsw_get_defaultsecret(struct secret *secrets);
-
 /* public key machinery */
 struct pubkey {
 	struct id id;
@@ -211,10 +201,10 @@ extern void lsw_load_preshared_secrets(struct secret **psecrets,
 				       const char *secrets_file);
 extern void lsw_free_preshared_secrets(struct secret **psecrets);
 
-extern bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk);
+extern bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *pk);
 
 extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
-						    struct pubkey *my_public_key,
+						    const struct pubkey *my_public_key,
 						    enum PrivateKeyKind kind);
 
 extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
@@ -225,8 +215,6 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
-extern void lock_certs_and_keys(const char *who);
-extern void unlock_certs_and_keys(const char *who);
 extern err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert);
 extern err_t lsw_add_ecdsa_secret(struct secret **secrets, CERTCertificate *cert);
 extern struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert);
@@ -237,6 +225,5 @@ chunk_t same_secitem_as_chunk(SECItem si);
 SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
 
 chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
-SECItem clone_chunk_as_secitem(chunk_t chunk, SECItemType type, const char *name);
 
 #endif /* _SECRETS_H */

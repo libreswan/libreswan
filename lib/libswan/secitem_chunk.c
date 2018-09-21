@@ -47,6 +47,7 @@ chunk_t clone_secitem_as_chunk(SECItem si, const char *name)
 	return chunk;
 }
 
+#if 0	/* not used (yet?) */
 SECItem clone_chunk_as_secitem(chunk_t chunk, SECItemType type, const char *name)
 {
 	SECItem si = {
@@ -56,3 +57,4 @@ SECItem clone_chunk_as_secitem(chunk_t chunk, SECItemType type, const char *name
 	};
 	return si;
 }
+#endif

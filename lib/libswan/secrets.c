@@ -107,10 +107,6 @@ static const struct fld RSA_private_field[] = {
 	},
 };
 
-static err_t lsw_process_psk_secret(chunk_t *psk);
-static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak);
-static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id);
-static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
 
@@ -130,11 +126,8 @@ void DBG_log_ECDSA_public_key(const struct ECDSA_public_key *k)
 	DBG_log_ckaid("CKAID", k->ckaid);
 }
 
-static err_t RSA_public_key_sanity(struct RSA_private_key *k)
+static err_t RSA_public_key_sanity(const struct RSA_private_key *k)
 {
-	/* note that the *last* error found is reported */
-	err_t ugh = NULL;
-
 	/*
 	 * PKCS#1 1.5 section 6 requires modulus to have at least 12 octets.
 	 *
@@ -147,7 +140,7 @@ static err_t RSA_public_key_sanity(struct RSA_private_key *k)
 	if (k->pub.k > RSA_MAX_OCTETS)
 		return RSA_MAX_OCTETS_UGH;
 
-	return ugh;
+	return NULL;
 }
 
 struct secret {
@@ -164,61 +157,6 @@ struct private_key_stuff *lsw_get_pks(struct secret *s)
 struct id_list *lsw_get_idlist(const struct secret *s)
 {
 	return s->ids;
-}
-
-/*
- * This is a bad assumption, and fails when people put PSK
- * entries before the default RSA case, which most people do
- * ??? what is a bad assumption?
- */
-struct secret *lsw_get_defaultsecret(struct secret *secrets)
-{
-	struct secret *s, *s2;
-
-	/* Search for PKK_RSA pks */
-	s2 = secrets;
-	while (s2 != NULL) {
-		for (; s2 != NULL && s2->pks.kind == PKK_RSA; s2 = s2->next)
-			continue;
-		for (s = s2; s != NULL && s->pks.kind != PKK_RSA; s = s->next)
-			continue;
-		if (s != NULL) {
-			struct secret *tmp = s->next;
-			struct secret curr = *s;
-			s2->next = tmp;
-			s->next = s2;
-			*s = *s2;
-			*s2 = curr;
-			s2 = s;
-		} else if (s2 != NULL) {
-			s2 = s2->next;
-		}
-	}
-	return secrets;
-}
-
-static void create_empty_idlist(struct secret *s)
-{
-	if (s->ids == NULL) {
-		/*
-		 * make sure that empty lists have an implicit match
-		 * everything set of IDs (ipv4 and ipv6)
-		 */
-		struct id_list *idl, *idl2;
-		idl = alloc_bytes(sizeof(*idl), "id list");
-		idl->next = NULL;
-		idl->id = empty_id;
-		idl->id.kind = ID_NONE;
-		(void)anyaddr(AF_INET, &idl->id.ip_addr);
-
-		idl2 = alloc_bytes(sizeof(*idl2), "id list");
-		idl2->next = idl;
-		idl2->id = empty_id;
-		idl2->id.kind = ID_NONE;
-		(void)anyaddr(AF_INET, &idl2->id.ip_addr);
-
-		s->ids = idl2;
-	}
 }
 
 /*
@@ -293,17 +231,17 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 	*keysize = n.len;
 }
 
-void free_RSA_public_content(struct RSA_public_key *rsa)
+static void free_RSA_public_content(struct RSA_public_key *rsa)
 {
 	freeanychunk(rsa->n);
 	freeanychunk(rsa->e);
 	freeanyckaid(&rsa->ckaid);
 }
 
-void free_ECDSA_public_content(struct ECDSA_public_key *ecdsa)
+static void free_ECDSA_public_content(struct ECDSA_public_key *ecdsa)
 {
 	freeanychunk(ecdsa->pub);
-	//freeanychunk(&ecdsa->ckaid);
+	/* ??? what about ecdsa->pub.{ecParams,version,ckaid}? */
 }
 
 /*
@@ -331,9 +269,7 @@ void free_public_key(struct pubkey *pk)
 struct secret *lsw_foreach_secret(struct secret *secrets,
 				secret_eval func, void *uservoid)
 {
-	struct secret *s;
-
-	for (s = secrets; s != NULL; s = s->next) {
+	for (struct secret *s = secrets; s != NULL; s = s->next) {
 		struct private_key_stuff *pks = &s->pks;
 		int result = (*func)(s, pks, uservoid);
 
@@ -341,14 +277,14 @@ struct secret *lsw_foreach_secret(struct secret *secrets,
 			return s;
 
 		if (result == -1)
-			return NULL;
+			break;
 	}
 	return NULL;
 }
 
 struct secret_byid {
 	enum PrivateKeyKind kind;
-	struct pubkey *my_public_key;
+	const struct pubkey *my_public_key;
 };
 
 static int lsw_check_secret_byid(struct secret *secret UNUSED,
@@ -382,9 +318,8 @@ static int lsw_check_secret_byid(struct secret *secret UNUSED,
 	return 1;
 }
 
-/* ??? declared in keys.h */
 struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
-					struct pubkey *my_public_key,
+					const struct pubkey *my_public_key,
 					enum PrivateKeyKind kind)
 {
 	struct secret_byid sb;
@@ -401,17 +336,22 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				const struct id *his_id,
 				bool asym)
 {
-	char idstr1[IDTOA_BUF], idme[IDTOA_BUF],
-		idhim[IDTOA_BUF], idhim2[IDTOA_BUF];
+	enum {
+		match_none = 000,
 
-	enum {	/* bits */
-		match_default = 01,
-		match_any = 02,
-		match_him = 04,
+		/* bits */
+		match_default = 001,
+		match_any = 002,
+		match_him = 004,
 		match_me = 010
 	};
-	unsigned int best_match = 0;
-	struct secret *s, *best = NULL;
+	unsigned int best_match = match_none;
+	struct secret *best = NULL;
+
+	char
+		idme[IDTOA_BUF],
+		idhim[IDTOA_BUF],
+		idhim2[IDTOA_BUF];
 
 	idtoa(my_id,  idme,  IDTOA_BUF);
 
@@ -422,7 +362,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 		strcpy(idhim2, idhim);
 	}
 
-	for (s = secrets; s != NULL; s = s->next) {
+	for (struct secret *s = secrets; s != NULL; s = s->next) {
 		DBG(DBG_CONTROLMORE,
 			DBG_log("line %d: key type %s(%s) to type %s",
 				s->pks.line,
@@ -432,7 +372,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			);
 
 		if (s->pks.kind == kind) {
-			unsigned int match = 0;
+			unsigned int match = match_none;
 
 			if (s->ids == NULL) {
 				/*
@@ -446,6 +386,8 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				int idnum = 0;
 
 				for (i = s->ids; i != NULL; i = i->next) {
+					char idstr1[IDTOA_BUF];
+
 					idnum++;
 					idtoa(&i->id, idstr1, IDTOA_BUF);
 
@@ -465,13 +407,12 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 							match |= match_me;
 
 						if (his_id != NULL &&
-							same_id(&i->id,
-								his_id))
+						    same_id(&i->id, his_id))
 							match |= match_him;
 					}
 
 					DBG(DBG_CONTROL,
-						DBG_log("%d: compared key %s to %s / %s -> %d",
+						DBG_log("%d: compared key %s to %s / %s -> 0%02o",
 							idnum, idstr1, idme,
 							idhim, match);
 						);
@@ -488,8 +429,8 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			}
 
 			DBG(DBG_CONTROL,
-				DBG_log("line %d: match=%d", s->pks.line,
-					match);
+				DBG_log("line %d: match=0%02o",
+					s->pks.line, match);
 				);
 
 			switch (match) {
@@ -548,6 +489,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						break;
 					case PKK_ECDSA:
 						/* there are no ECDSA kind of secrets */
+						/* ??? this seems not to be the case */
 						break;
 					case PKK_XAUTH:
 						/*
@@ -576,8 +518,9 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					}
 				} else if (match > best_match) {
 					DBG(DBG_CONTROL,
-						DBG_log("best_match %d>%d best=%p (line=%d)",
-							best_match, match,
+						DBG_log("match 0%02o beats previous best_match 0%02o match=%p (line=%d)",
+							match,
+							best_match,
 							s, s->pks.line);
 						);
 
@@ -586,16 +529,18 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					best = s;
 				} else {
 					DBG(DBG_CONTROL,
-						DBG_log("match(%d) was not best_match(%d)",
+						DBG_log("match 0%02o loses to best_match 0%02o",
 							match, best_match);
 						);
 				}
 			}
 		}
 	}
+
 	DBG(DBG_CONTROL,
-		DBG_log("concluding with best_match=%d best=%p (lineno=%d)",
-			best_match, best, best ? best->pks.line : -1);
+		DBG_log("concluding with best_match=0%02o best=%p (lineno=%d)",
+			best_match, best,
+			best == NULL ? -1 : best->pks.line);
 		);
 
 	return best;
@@ -604,23 +549,17 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 /*
  * check the existence of an RSA private key matching an RSA public
  */
-bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
+bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *pk)
 {
-	struct secret *s;
-	bool has_key = FALSE;
-
-	if (pk == NULL)
-		return FALSE;
-
-	for (s = secrets; s != NULL; s = s->next) {
+	for (const struct secret *s = secrets; s != NULL; s = s->next) {
 		if (s->pks.kind == PKK_RSA &&
-			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
-					&pk->u.rsa)) {
-			has_key = TRUE;
-			break;
+		    same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
+					&pk->u.rsa))
+		{
+			return TRUE;
 		}
 	}
-	return has_key;
+	return FALSE;
 }
 
 /*
@@ -754,6 +693,7 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 {
 	err_t ugh = NULL;
+
 	if (*flp->tok == '"' || *flp->tok == '\'') {
 		size_t len = flp->cur - flp->tok - 2;
 
@@ -920,7 +860,7 @@ static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
 /*
  * lock access to my certs and keys
  */
-void lock_certs_and_keys(const char *who)
+static void lock_certs_and_keys(const char *who)
 {
 	pthread_mutex_lock(&certs_and_keys_mutex);
 	DBG(DBG_CONTROLMORE,
@@ -931,12 +871,39 @@ void lock_certs_and_keys(const char *who)
 /*
  * unlock access to my certs and keys
  */
-void unlock_certs_and_keys(const char *who)
+static void unlock_certs_and_keys(const char *who)
 {
 	DBG(DBG_CONTROLMORE,
 		DBG_log("certs and keys unlocked by '%s'", who);
 		);
 	pthread_mutex_unlock(&certs_and_keys_mutex);
+}
+
+static void add_secret(struct secret **slist,
+		       struct secret *s,
+		       const char *story)
+{
+	/* if the id list is empty, add two empty ids */
+	if (s->ids == NULL) {
+		struct id_list *idl = alloc_bytes(sizeof(struct id_list), "id list");
+		idl->next = NULL;
+		idl->id = empty_id;
+		idl->id.kind = ID_NONE;
+		(void)anyaddr(AF_INET, &idl->id.ip_addr);
+
+		struct id_list *idl2 = alloc_bytes(sizeof(struct id_list), "id list");
+		idl2->next = idl;
+		idl2->id = empty_id;
+		idl2->id.kind = ID_NONE;
+		(void)anyaddr(AF_INET, &idl2->id.ip_addr);
+
+		s->ids = idl2;
+	}
+
+	lock_certs_and_keys(story);
+	s->next = *slist;
+	*slist = s;
+	unlock_certs_and_keys(story);
 }
 
 static void process_secret(struct secret **psecrets,
@@ -991,12 +958,7 @@ static void process_secret(struct secret **psecrets,
 		pfree(s);
 	} else if (flushline("expected record boundary in key")) {
 		/* gauntlet has been run: install new secret */
-		lock_certs_and_keys("process_secret");
-
-		create_empty_idlist(s);
-		s->next   = *psecrets;
-		*psecrets = s;
-		unlock_certs_and_keys("process_secret");
+		add_secret(psecrets, s, "process_secret");
 	}
 }
 
@@ -1380,10 +1342,10 @@ void delete_public_keys(struct pubkey_list **head,
 			const struct id *id, enum pubkey_alg alg)
 {
 	struct pubkey_list **pp, *p;
-	struct pubkey *pk;
 
 	for (pp = head; (p = *pp) != NULL; ) {
-		pk = p->key;
+		struct pubkey *pk = p->key;
+
 		if (same_id(id, &pk->id) && pk->alg == alg)
 			*pp = free_public_keyentry(p);
 		else
@@ -1479,13 +1441,14 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 	pk->u.ecdsa.ecParams = ecParams;
 
 	/* keyid */
-	keyblobtoid((const unsigned char *)keyid,KEYID_BUF,pk->u.ecdsa.keyid,KEYID_BUF);
+	keyblobtoid((const unsigned char *)keyid, KEYID_BUF,
+		    pk->u.ecdsa.keyid, KEYID_BUF);
 
 	/* ckaid */
-	err_t err =form_ckaid_ecdsa(pub,&ckaid);
-		if (err) {
-			return NULL;
-		}
+	err_t err =form_ckaid_ecdsa(pub, &ckaid);
+	if (err != NULL)
+		return NULL;
+
 	pk->u.ecdsa.ckaid = ckaid;
 	/*
 	 * based on comments in form_keyid, the modulus length
@@ -1506,12 +1469,9 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 				      CERTCertificate *cert)
 {
-	err_t ugh = NULL;
-	SECItem *certCKAID = NULL;
-	SECKEYPublicKey *pubk = NULL;
-	SECKEYPrivateKey *privk = NULL;
+	SECKEYPublicKey *pubk = CERT_ExtractPublicKey(cert);
 
-	if ((pubk = CERT_ExtractPublicKey(cert)) == NULL) {
+	if (pubk == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: should not happen: cert public key not found [%d]",
 		       __FUNCTION__, PR_GetError());
@@ -1519,15 +1479,17 @@ static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 	}
 
 	/* only a check */
-	if ((privk = PK11_FindKeyByAnyCert(cert,
-				lsw_return_nss_password_file_info())) == NULL) {
-		SECKEY_DestroyPublicKey(pubk);
-		return "NSS: cert private key not found";
-	}
+	SECKEYPrivateKey *privk = PK11_FindKeyByAnyCert(cert,
+				lsw_return_nss_password_file_info());
 	SECKEY_DestroyPrivateKey(privk);
 
-	certCKAID = PK11_GetLowLevelKeyIDForCert(NULL, cert,
+	if (privk == NULL)
+		return "NSS: cert private key not found";
+
+	SECItem *certCKAID = PK11_GetLowLevelKeyIDForCert(NULL, cert,
 					lsw_return_nss_password_file_info());
+	err_t ugh;
+
 	if (certCKAID == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: no key ID - slot or DB error [%d]",
@@ -1554,7 +1516,7 @@ static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 	clonetochunk(rsak->pub.n, pubk->u.rsa.modulus.data,
 		     pubk->u.rsa.modulus.len, "n");
 	ugh = form_ckaid_nss(certCKAID, &rsak->pub.ckaid);
-	if (ugh) {
+	if (ugh != NULL) {
 		/* let caller clean up mess */
 		goto out;
 	}
@@ -1576,12 +1538,11 @@ out:
 static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 				      CERTCertificate *cert)
 {
-	err_t ugh = NULL;
-	SECItem *certCKAID = NULL;
-	SECKEYPublicKey *pubk = NULL;
-	SECKEYPrivateKey *privk = NULL;
+	err_t ugh;
 
-	if ((pubk = CERT_ExtractPublicKey(cert)) == NULL) {
+	SECKEYPublicKey *pubk = CERT_ExtractPublicKey(cert);
+
+	if (pubk == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: should not happen: cert public key not found [%d]",
 		       __FUNCTION__, PR_GetError());
@@ -1589,14 +1550,16 @@ static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 	}
 
 	/* only a check */
-	if ((privk = PK11_FindKeyByAnyCert(cert,
-				lsw_return_nss_password_file_info())) == NULL) {
+	SECKEYPrivateKey *privk = PK11_FindKeyByAnyCert(cert,
+				lsw_return_nss_password_file_info());
+
+	if (privk == NULL) {
 		SECKEY_DestroyPublicKey(pubk);
 		return "NSS: cert private key not found";
 	}
 	SECKEY_DestroyPrivateKey(privk);
 
-	certCKAID = PK11_GetLowLevelKeyIDForCert(NULL, cert,
+	SECItem *certCKAID = PK11_GetLowLevelKeyIDForCert(NULL, cert,
 					lsw_return_nss_password_file_info());
 	if (certCKAID == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1622,7 +1585,7 @@ static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 	clonetochunk(ecdsak->pub.pub, pubk->u.ec.publicValue.data,
              pubk->u.ec.publicValue.len, "pub");
 	ugh = form_ckaid_nss(certCKAID, &ecdsak->pub.ckaid);
-	if (ugh) {
+	if (ugh != NULL) {
 		/* let caller clean up mess */
 		goto out;
 	}
@@ -1645,44 +1608,42 @@ out:
 static err_t lsw_extract_nss_cert_privkey_RSA(struct RSA_private_key *rsak,
 					  CERTCertificate *cert)
 {
-	err_t ugh = NULL;
-
 	DBG(DBG_CRYPT,
 	    DBG_log("extracting the RSA private key for %s", cert->nickname));
 
-	if ((ugh = add_ckaid_to_rsa_privkey(rsak, cert)) != NULL) {
-		return ugh;
-	}
+	err_t ugh = add_ckaid_to_rsa_privkey(rsak, cert);
 
-	return RSA_public_key_sanity(rsak);
+	if (ugh == NULL) {
+		ugh = RSA_public_key_sanity(rsak);
+	}
+	return ugh;
 }
 
 static err_t lsw_extract_nss_cert_privkey_ECDSA(struct ECDSA_private_key *ecdsak,
                                           CERTCertificate *cert)
 {
-	err_t ugh = NULL;
-
 	DBG(DBG_CRYPT,
 		DBG_log("extracting the ECDSA private key for %s", cert->nickname));
 
-	if ((ugh = add_ckaid_to_ecdsa_privkey(ecdsak, cert)) != NULL) {
-		return ugh;
-	}
+	err_t ugh = add_ckaid_to_ecdsa_privkey(ecdsak, cert);
 
-	//return RSA_public_key_sanity(ecdsak);
-	return NULL; /* ASKK */
+	if (ugh == NULL) {
+		/* ??? we should check the sanity of ecdsak */
+	}
+	return ugh;
 }
+
 static const struct RSA_private_key *get_nss_cert_privkey_RSA(struct secret *secrets,
 							  CERTCertificate *cert)
 {
-	struct secret *s = NULL;
-	const struct RSA_private_key *priv = NULL;
 	struct pubkey *pub = allocate_RSA_public_key_nss(cert);
 	if (pub == NULL) {
 		return NULL;
 	}
 
-	for (s = secrets; s != NULL; s = s->next) {
+	const struct RSA_private_key *priv = NULL;
+
+	for (struct secret *s = secrets; s != NULL; s = s->next) {
 		if (s->pks.kind == PKK_RSA &&
 			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
 					    &pub->u.rsa)) {
@@ -1697,15 +1658,15 @@ static const struct RSA_private_key *get_nss_cert_privkey_RSA(struct secret *sec
 static const struct ECDSA_private_key *get_nss_cert_privkey_ECDSA(struct secret *secrets,
                                                           CERTCertificate *cert)
 {
-	struct secret *s = NULL;
-	const struct ECDSA_private_key *priv = NULL;
 	struct pubkey *pub = allocate_ECDSA_public_key_nss(cert);
 
 	if (pub == NULL) {
 		return NULL;
 	}
 
-	for (s = secrets; s != NULL; s = s->next) {
+	const struct ECDSA_private_key *priv = NULL;
+
+	for (struct secret *s = secrets; s != NULL; s = s->next) {
 		if (s->pks.kind == PKK_ECDSA)   {
 			/* same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
 						&pub->u.rsa)) {*/
@@ -1719,64 +1680,45 @@ static const struct ECDSA_private_key *get_nss_cert_privkey_ECDSA(struct secret 
 
 err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
 {
-	struct secret *s = NULL;
-	const struct RSA_private_key *pkey = NULL;
-	err_t ugh = NULL;
-
-	if ((pkey = get_nss_cert_privkey_RSA(*secrets, cert)) != NULL) {
+	if (get_nss_cert_privkey_RSA(*secrets, cert) != NULL) {
 		DBG(DBG_CONTROL, DBG_log("secrets entry for %s already exists",
 					 cert->nickname));
 		return NULL;
 	}
-	s = alloc_thing(struct secret, "secret");
+
+	struct secret *s = alloc_thing(struct secret, "RSA secret");
 	s->pks.kind = PKK_RSA;
 	s->pks.line = 0;
 
-	if ((ugh = lsw_extract_nss_cert_privkey_RSA(&s->pks.u.RSA_private_key,
-						cert)) != NULL) {
+	err_t ugh = lsw_extract_nss_cert_privkey_RSA(&s->pks.u.RSA_private_key,
+						     cert);
+	if (ugh != NULL) {
 		pfree(s);
-		return ugh;
+	} else {
+		add_secret(secrets, s, "lsw_add_rsa_secret");
 	}
-
-	lock_certs_and_keys("lsw_add_rsa_secret");
-
-	create_empty_idlist(s);
-	s->next = *secrets;
-	*secrets = s;
-
-	unlock_certs_and_keys("lsw_add_rsa_secret");
-
-	return NULL;
+	return ugh;
 }
 
 err_t lsw_add_ecdsa_secret(struct secret **secrets, CERTCertificate *cert)
 {
-	struct secret *s = NULL;
-	const struct ECDSA_private_key *pkey = NULL;
-	err_t ugh = NULL;
-
-	if ((pkey = get_nss_cert_privkey_ECDSA(*secrets, cert)) != NULL) {
+	if (get_nss_cert_privkey_ECDSA(*secrets, cert) != NULL) {
 		DBG(DBG_CONTROL, DBG_log("secrets entry for %s already exists",
 					 cert->nickname));
 		return NULL;
 	}
-	s = alloc_thing(struct secret, "secret");
+
+	struct secret *s = alloc_thing(struct secret, "ECDSA secret");
 	s->pks.kind = PKK_ECDSA;
 	s->pks.line = 0;
 
-	if ((ugh = lsw_extract_nss_cert_privkey_ECDSA(&s->pks.u.ECDSA_private_key,
-						cert)) != NULL) {
+	err_t ugh = lsw_extract_nss_cert_privkey_ECDSA(&s->pks.u.ECDSA_private_key,
+						cert);
+	if (ugh != NULL) {
 		pfree(s);
-		return ugh;
+	} else {
+		add_secret(secrets, s, "lsw_add_ecdsa_secret");
 	}
 
-	lock_certs_and_keys("lsw_add_ecdsa_secret");
-
-	create_empty_idlist(s);
-	s->next = *secrets;
-	*secrets = s;
-
-	unlock_certs_and_keys("lsw_add_ecdsa_secret");
-
-	return NULL;
+	return ugh;
 }
