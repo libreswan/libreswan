@@ -59,6 +59,11 @@ bool shunk_caseeat(shunk_t *lhs, shunk_t rhs);
 bool shunk_strcaseeat(shunk_t *lhs, const char *string);
 
 /*
+ * Number conversion.  like strtoul() et.al.
+ */
+bool shunk_tou(shunk_t lhs, unsigned *value, int base);
+
+/*
  * To print, use: printf(PRI_SHUNK, pri_shunk(shunk));
  *
  * XXX: I suspect ISO-C reserves the PRIabc (no underscore) name

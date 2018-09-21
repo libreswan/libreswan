@@ -15,6 +15,8 @@
  */
 
 #include <string.h>
+#include <stdlib.h>	/* for strtoul() */
+#include <limits.h>
 
 #include "shunk.h"
 
@@ -92,4 +94,32 @@ bool shunk_caseeat(shunk_t *shunk, shunk_t dinner)
 bool shunk_strcaseeat(shunk_t *shunk, const char *dinner)
 {
 	return shunk_caseeat(shunk, shunk1(dinner));
+}
+
+/*
+ * Convert the entire shunk to an unsigned.
+ *
+ * Since strtou() expects a NUL terminated string (which a SHUNK is
+ * not) fudge one up.  XXX: must be code to do this somewhere?
+ */
+bool shunk_tou(shunk_t shunk, unsigned *dest, int base)
+{
+	/* copy SHUNK into a NUL terminated STRING */
+	char string[64] = ""; /* NUL fill */
+	if (shunk.len + 1 >= sizeof(string)) {
+		/* no-space for trailing NUL */
+		return false;
+	}
+	strncpy(string, shunk.ptr, shunk.len);
+	/* convert the string, expect entire shunk to be consumed */
+	char *end = NULL;
+	unsigned long ul = strtoul(string, &end, base);
+	if (string + shunk.len > end) {
+		return false;
+	}
+	if (ul > UINT_MAX) {
+		return false;
+	}
+	*dest = (unsigned)ul;
+	return true;
 }
