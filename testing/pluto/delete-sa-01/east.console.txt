@@ -31,6 +31,10 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
+ # up to 3.26 we printed a bogus message, this is checking that no longer happens
+east #
+ grep "received and ignored empty informational" /tmp/pluto.log
+east #
 east #
  ../bin/check-for-core.sh
 east #
