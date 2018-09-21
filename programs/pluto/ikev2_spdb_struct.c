@@ -1248,12 +1248,17 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 		libreswan_log("out_struct() of transform failed");
 		return FALSE;
 	}
-	if (transform->attr_keylen > 0) {
-		switch (impair_key_length_attribute) {
-		case SEND_NORMAL:
+	if (impair_key_length_attribute == SEND_NORMAL) {
+		/* XXX: should be >= 0; so that '0' can be sent? */
+		if (transform->attr_keylen > 0) {
 			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen, &trans_pbs)) {
 				return false;
 			}
+		}
+	} else if (type == IKEv2_TRANS_TYPE_ENCR) {
+		/* XXX: --impair transform-type:...? */
+		switch (impair_key_length_attribute) {
+		case SEND_NORMAL:
 			break;
 		case SEND_EMPTY:
 			libreswan_log("IMPAIR: emitting zero-length key-length attribute with no key");
