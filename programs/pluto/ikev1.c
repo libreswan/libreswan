@@ -687,8 +687,12 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 {
 	struct payload_digest *const n_pld = md->chain[ISAKMP_NEXT_N];
 
+	libreswan_log("PAUL: startof informational()");
+
 	/* If the Notification Payload is not null... */
 	if (n_pld != NULL) {
+		libreswan_log("PAUL: startof contains NOTIFY");
+
 		pb_stream *const n_pbs = &n_pld->pbs;
 		struct isakmp_notification *const n =
 			&n_pld->payload.notification;
@@ -924,8 +928,11 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			return STF_IGNORE;
 		}
 	} else {
-		loglog(RC_LOG_SERIOUS,
-		       "received and ignored empty informational notification payload");
+		/* warn if we didn't find any Delete or Notify payload in packet */
+		if (md->chain[ISAKMP_NEXT_D] == NULL) {
+			loglog(RC_LOG_SERIOUS,
+				"received and ignored empty informational notification payload");
+		}
 		return STF_IGNORE;
 	}
 }
