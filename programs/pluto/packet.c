@@ -2349,42 +2349,75 @@ bool ikev1_out_generic_raw(uint8_t np, struct_desc *sd,
 	return TRUE;
 }
 
+static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...) PRINTF_LIKE(3);
+static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
+{
+	if (pbs_left(outs) == 0) {
+		/* should this be a DBGLOG? */
+		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+			lswlogf(buf, "%s is already full; discarding ", outs->name);
+			va_list ap;
+			va_start(ap, fmt);
+			lswlogvf(buf, fmt, ap);
+			va_end(ap);
+		}
+		return false;
+	} else if (pbs_left(outs) <= len) {
+		/* overflow at at left==1; left==0 for already overflowed */
+		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+			lswlogf(buf, "%s is full; unable to emit ", outs->name);
+			va_list ap;
+			va_start(ap, fmt);
+			lswlogvf(buf, fmt, ap);
+			va_end(ap);
+		}
+		/* overflow the buffer */
+		outs->cur += pbs_left(outs);
+		return false;
+	} else {
+		LSWDBGP(DBG_EMITTING, buf) {
+			lswlogs(buf, "emitting ");
+			va_list ap;
+			va_start(ap, fmt);
+			lswlogvf(buf, fmt, ap);
+			va_end(ap);
+			lswlogf(buf, " into %s", outs->name);
+		}
+		return true;
+	}
+}
+
 bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 {
-	/*
-	 * clang 3.4: warning: The left operand of '-' [in pbs_left] is a garbage value
-	 * This diagnostic seems wrong.
-	 */
-	if (pbs_left(outs) < len) {
-		loglog(RC_LOG_SERIOUS,
-		       "not enough room left to place %zu bytes of %s in %s",
-		       len, name, outs->name);
-		return FALSE;
-	} else {
-		DBG(DBG_EMITTING,
-		    DBG_log("emitting %u raw bytes of %s into %s",
-			    (unsigned) len, name, outs->name);
-		    DBG_dump(name, bytes, len));
+	if (space_for(len, outs, "%zu bytes of %s", len, name)) {
+		DBG(DBG_EMITTING, DBG_dump(name, bytes, len));
 		memcpy(outs->cur, bytes, len);
 		outs->cur += len;
-		return TRUE;
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool out_byte(uint8_t byte, size_t len, pb_stream *outs, const char *name)
+{
+	if (space_for(len, outs, "%zu 0x%02x bytes of %s", len, byte, name)) {
+		memset(outs->cur, byte, len);
+		outs->cur += len;
+		return true;
+	} else {
+		return false;
 	}
 }
 
 bool out_zero(size_t len, pb_stream *outs, const char *name)
 {
-	if (pbs_left(outs) < len) {
-		loglog(RC_LOG_SERIOUS,
-		       "not enough room left to place %s in %s", name,
-		       outs->name);
-		return FALSE;
-	} else {
-		DBG(DBG_EMITTING,
-		    DBG_log("emitting %u zero bytes of %s into %s",
-			    (unsigned) len, name, outs->name));
-		memset(outs->cur, 0x00, len);
+	if (space_for(len, outs, "%zu zero bytes of %s", len, name)) {
+		memset(outs->cur, 0, len);
 		outs->cur += len;
-		return TRUE;
+		return true;
+	} else {
+		return false;
 	}
 }
 
