@@ -1479,11 +1479,11 @@ rsasig_common:
 				break;
 
 			case OAKLEY_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
-				if (!LHAS(seen_attrs,
-					  OAKLEY_ENCRYPTION_ALGORITHM)) {
+				if (!LHAS(seen_attrs, OAKLEY_ENCRYPTION_ALGORITHM)) {
 					ugh = "OAKLEY_KEY_LENGTH attribute not preceded by OAKLEY_ENCRYPTION_ALGORITHM attribute";
 					break;
 				}
+				/* because the encrypt algorithm wasn't valid? */
 				if (ta.ta_encrypt == NULL) {
 					ugh = "NULL encrypter with seen OAKLEY_ENCRYPTION_ALGORITHM";
 					break;
@@ -1491,14 +1491,8 @@ rsasig_common:
 				/*
 				 * check if this keylen is compatible
 				 * with specified alg_info_ike.
-				 *
-				 * XXX: The val!=0 guard comes from
-				 * the old ike_alg_enc_ok() function
-				 * which only checked the key bit
-				 * length, when val was non-zero.
-				 * Should val==0 check be added?
 				 */
-				if (val != 0 && !encrypt_has_key_bit_length(ta.ta_encrypt, val)) {
+				if (!encrypt_has_key_bit_length(ta.ta_encrypt, val)) {
 					ugh = "peer proposed key_len not valid for encrypt algo setup specified";
 					break;
 				}
@@ -2082,6 +2076,16 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 
 		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
+			if (attrs->transattrs.ta_encrypt == NULL) {
+				loglog(RC_LOG_SERIOUS,
+				       "IKEv1 key-length attribute without encryption algorithm");
+				return false;
+			}
+			if (!encrypt_has_key_bit_length(attrs->transattrs.ta_encrypt, val)) {
+				loglog(RC_LOG_SERIOUS,
+				       "IKEv1 key-length attribute without encryption algorithm");
+				return false;
+			}
 			attrs->transattrs.enckeylen = val;
 			break;
 
