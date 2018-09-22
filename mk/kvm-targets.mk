@@ -46,7 +46,7 @@ KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
 KVM_WORKERS ?= 1
 KVM_USER ?= $(shell id -u)
 KVM_GROUP ?= $(shell id -g qemu)
-KVM_MAKEFLAGS ?= USE_EFENCE=false ALL_ALGS=false USE_DH31=false USE_SECCOMP=true USE_LABELED_IPSEC=true
+KVM_MAKEFLAGS ?= USE_EFENCE=true ALL_ALGS=false USE_DH31=false USE_SECCOMP=true USE_LABELED_IPSEC=true
 
 # targets for dumping the above
 .PHONY: print-kvm-prefixes
