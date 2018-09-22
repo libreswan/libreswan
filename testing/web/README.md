@@ -236,22 +236,28 @@ end with "restart":
   - strip the raw list of everything but test runs; also exclude the
     most recent test run (so the latest result isn't deleted):
 
-        $ grep tested: commits.tmp | tail -n +2 | tee tested.tmp
+        $ grep TESTED: commits.tmp | tail -n +2 | tee tested.tmp
 
   - examine (and perhaps delete) the un-interesting (false) test runs
 
     Un-interesting commits do not modify the C code and are not a
     merge point. These are created when HEAD, which is tested
-    unconditionally, isn't that interesting.
+    unconditionally, isn't that interesting.  Exclude directories
+    already deleted.
 
-        $ grep -e ' false$' tested.tmp | while read t h b ; do d=$(echo results/*-g$h-*) ; test -d "$d" && echo $d ; done
+        $ awk '/ false$/ { print $2 }' tested.tmp | while read d ; do test -d "$d" && echo $d ; done
 
   - examine (and perhaps delete), a selection of more interesting
-    (true) test runs
+    (true) test runs.
 
     More interesting commits do modify the C code but are not a merge.
+    Exclude directories already deleted.
 
-        $ grep -e ' true$' tested.tmp | while read t h b ; do d=$(echo results/*-g$h-*) ; test -d "$d" && echo $d ; done | shuf | tail -n +100
+        $ awk '/ true$/ { print $2 }' tested.tmp | while read d ; do test -d "$d" && echo $d ; done | shuf | tail -n +100
+
+  - (optional) live update the summary directory
+
+    	$ ( cd libreswan-web-master && make web-summarydir )
 
 - restart <tt>tester.sh</tt>:
 

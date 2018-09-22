@@ -7,14 +7,19 @@ Usage:
 
     $0 <summarydir> [ <repodir> [ <first-commit> ] ]
 
-Select, and then print, an untested commit in the range
-[<first-commit>..HEAD].
+Select, and then print on STDOUT, the hash for an untested commit in
+the range [<first-commit>..HEAD].
 
 First choice is HEAD; second choice is something "interesting" such as
 a tag or branch (see git-interesting.sh); and the third choice is to
 split the longest run of untested commits.
 
-If no untested commit is selected, the script exits non-zero.
+Additional debugging information is printed on STDER including lines
+of the form:
+
+    TESTED: <resultdir> <hash> <interesting>
+
+which can be used to examine result directories.
 
 EOF
   exit 1
@@ -75,15 +80,16 @@ while read commits ; do
     count=$(expr ${count} + 1)
     commit=$(set -- ${commits} ; echo $1)
 
-    # already tested?
+    # directory containing test result?
     #
     # Git seems to use both 7 and 9 character abbreviated hashes.  Try
     # both.
 
-    tested=false
+    resultdir=
     for h in ${commit} $(expr ${commit} : '\(.......\).*') $(expr ${commit} : '\(.........\).*') ; do
-	if test -d $(echo ${summarydir}/*-g${h}-* | awk '{print $1}'); then
-	    tested=true
+	d=$(echo ${summarydir}/*-g${h}-* | awk '{print $1}')
+	if test -d "$d" ; then
+	    resultdir=$d
 	    break
 	fi
     done
@@ -98,9 +104,10 @@ while read commits ; do
     if test -z "${head_commit}" ; then
 	head_commit=${commit}
 	test ${count} -eq 1 # always true
-	${tested} || {
+	if test -z "${resultdir}" ; then
+	    # flag that this hasn't been tested
 	    head_count=${count}
-	}
+	fi
 	echo head ${head_commit} at ${head_count} 1>&2
 	# Don't bail early as some scripts rely on this script
 	# printing an analysis of all the commits.
@@ -121,8 +128,8 @@ while read commits ; do
     # subset of the less interesting results (interesting results have
     # a colon).  See README.txt.
 
-    if ${tested}; then
-	echo tested: ${commit} ${interesting} 1>&2
+    if test -n "${resultdir}"; then
+	echo TESTED: ${resultdir} ${commit} ${interesting} 1>&2
     fi
 
     # Skip uninteresting commits; don't include them in untested runs.
@@ -159,7 +166,7 @@ while read commits ; do
 
     # already tested? stop the current run and start again
 
-    if ${tested}; then
+    if test -n "${resultdir}"; then
 	run=""
 	continue
     fi
