@@ -94,7 +94,7 @@ while true ; do
     # become corrupt and need a rebuild.
 
     status "checking KVMs"
-    if grep '"output-missing"' "${summarydir}"/*-g*/results.json > /dev/null ; then
+    if grep '"output-missing"' "${summarydir}"/*-g*/results.json ; then
 	status "corrupt domains detected, deleting old"
 	( cd ${repodir} && make kvm-purge )
 	status "corrupt domains detected, deleting bogus results"
