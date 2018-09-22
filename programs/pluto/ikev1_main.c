@@ -849,7 +849,7 @@ bool ikev1_justship_KE(chunk_t *g,
 			      byte);
 		/* Only used to test sending/receiving bogus g^x */
 		return ikev1_out_generic(np, &isakmp_keyex_desc, outs, &z) &&
-			out_byte(byte, g->len, &z, "fake g^x") &&
+			out_repeated_byte(byte, g->len, &z, "fake g^x") &&
 			(close_output_pbs(&z), TRUE);
 	}
 	}

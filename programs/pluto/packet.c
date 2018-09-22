@@ -2399,7 +2399,7 @@ bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 	}
 }
 
-bool out_byte(uint8_t byte, size_t len, pb_stream *outs, const char *name)
+bool out_repeated_byte(uint8_t byte, size_t len, pb_stream *outs, const char *name)
 {
 	if (space_for(len, outs, "%zu 0x%02x bytes of %s", len, byte, name)) {
 		memset(outs->cur, byte, len);

@@ -993,7 +993,7 @@ bool emit_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 		libreswan_log("IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations",
 			      byte);
 		/* Only used to test sending/receiving bogus g^x */
-		if (!out_byte(byte, g->len, &kepbs, "ikev2 impair KE (g^x) == 0"))
+		if (!out_repeated_byte(byte, g->len, &kepbs, "ikev2 impair KE (g^x) == 0"))
 			return FALSE;
 	} else if (impair_ke_payload == SEND_EMPTY) {
 		libreswan_log("IMPAIR: sending an empty KE value");
