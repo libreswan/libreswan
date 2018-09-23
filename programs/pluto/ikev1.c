@@ -920,7 +920,8 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			return STF_IGNORE;
 		default:
 			loglog(RC_LOG_SERIOUS,
-			       "received and ignored informational message");
+				"received and ignored notification payload: %s",
+				enum_name(&ikev1_notify_names, n->isan_type));
 			return STF_IGNORE;
 		}
 	} else {
