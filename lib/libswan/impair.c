@@ -138,6 +138,11 @@ struct impairment impairments[] = {
 #define V(V) .value = &V, .sizeof_value = sizeof(V)
 
 	{
+		.what = "emitting",
+		.help = "disable correctness-checks when emitting a payload (let anything out)",
+		V(impair_emitting),
+	},
+	{
 		.what = "ke-payload",
 		.help = "corrupt the outgoing KE payload",
 		.how_keynum = &send_impairment_keywords,
@@ -150,13 +155,6 @@ struct impairment impairments[] = {
 		V(impair_key_length_attribute),
 	},
 };
-
-/*
- * declare these after above references so above is forced to use
- * declaration in header
- */
-enum send_impairment impair_ke_payload;
-enum send_impairment impair_key_length_attribute;
 
 static void help(const char *prefix, const struct impairment *cr)
 {
@@ -327,6 +325,41 @@ bool parse_impair(const char *optarg,
 	}
 }
 
+static void lswlog_impairment(struct lswlog *buf, const struct impairment *cr)
+{
+	if (cr->how_keynum != NULL) {
+		passert(cr->sizeof_value == sizeof(unsigned));
+		unsigned value = *(unsigned*)cr->value;
+		const struct keyword *kw = keyword_by_value(cr->how_keynum, value);
+		if (kw != NULL) {
+			lswlogs(buf, kw->name);
+		} else if (value >= cr->how_keynum->nr_values) {
+			lswlogf(buf, "%zu", value - cr->how_keynum->nr_values);
+		} else {
+			lswlogf(buf, "?%u?", value);
+		}
+	} else switch (cr->sizeof_value) {
+#define L(T) case sizeof(uint##T##_t): lswlogf(buf, "%"PRIu##T, *(uint##T##_t*)cr->value); break
+			L(8);
+			L(16);
+			L(32);
+			L(64);
+#undef L
+		default:
+			bad_case(cr->sizeof_value);
+	}
+}
+
+static bool non_zero(const uint8_t *value, size_t sizeof_value)
+{
+	for (unsigned byte = 0; byte < sizeof_value; byte++) {
+		if (value[byte] != 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void process_impair(const struct whack_impair *wc)
 {
 	if (wc->what == 0) {
@@ -335,23 +368,11 @@ void process_impair(const struct whack_impair *wc)
 	} else if (wc->what == IMPAIR_DISABLE) {
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
-			if (!pexpect(cr->sizeof_value == sizeof(unsigned))) {
-				continue;
-			}
-			unsigned value = *(unsigned*)cr->value;
-			if (value == 0) {
-				continue;
-			}
-			const struct keyword *kv = keyword_by_value(cr->how_keynum,
-									  value);
-			LSWDBGP(DBG_MASK, buf) {
-				lswlogf(buf, "%s: ", cr->what);
-				if (kv != NULL) {
-					lswlogs(buf, kv->name);
-				} else {
-					lswlogf(buf, "%u", value);
+			if (non_zero(cr->value, cr->sizeof_value)) {
+				LSWDBGP(DBG_MASK, buf) {
+					lswlogf(buf, "%s: ", cr->what);
+					lswlogs(buf, " disabled");
 				}
-				lswlogs(buf, " disabled");
 				memset(cr->value, 0, cr->sizeof_value);
 			}
 		}
@@ -359,21 +380,11 @@ void process_impair(const struct whack_impair *wc)
 	} else if (wc->what == IMPAIR_LIST) {
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
-			if (!pexpect(cr->sizeof_value == sizeof(unsigned))) {
-				continue;
-			}
-			unsigned value = *(unsigned*)cr->value;
-			const struct keyword *kv = keyword_by_value(cr->how_keynum,
-									  value);
-			/* XXX: should be whack log? */
-			LSWLOG_INFO(buf) {
-				lswlogf(buf, "%s: ", cr->what);
-				if (kv != NULL) {
-					lswlogs(buf, kv->name);
-				} else if (value == 0) {
-					lswlogf(buf, "no");
-				} else {
-					lswlogf(buf, "%u", value);
+			if (non_zero(cr->value, cr->sizeof_value)) {
+				/* XXX: should be whack log? */
+				LSWLOG_INFO(buf) {
+					lswlogf(buf, "%s: ", cr->what);
+					lswlog_impairment(buf, cr);
 				}
 			}
 		}
@@ -389,21 +400,27 @@ void process_impair(const struct whack_impair *wc)
 	if (cr->how_keynum != NULL) {
 		passert(cr->sizeof_value == sizeof(unsigned));
 		*(unsigned*)cr->value = wc->how; /* do not un-bias */
-		LSWDBGP(DBG_MASK, buf) {
-			lswlogf(buf, "%s: ", cr->what);
-			const struct keyword *kw = keyword_by_value(cr->how_keynum, wc->how);
-			if (kw != NULL) {
-				lswlogs(buf, kw->name);
-			} else if (wc->how >= cr->how_keynum->nr_values) {
-				lswlogf(buf, "%zu", wc->how - cr->how_keynum->nr_values);
-			} else {
-				lswlogf(buf, "?%u?", wc->how);
-			}
-		}
-	} else {
-		LSWDBGP(DBG_MASK, buf) {
-			lswlogf(buf, "%s%s", wc->how ? "" : "no-", cr->what);
-		}
-		*(unsigned*)cr->value = wc->how;
+	} else switch (cr->sizeof_value) {
+#define L(T) case sizeof(uint##T##_t): *(uint##T##_t*)cr->value = wc->how; break;
+			L(8);
+			L(16);
+			L(32);
+			L(64);
+#undef L
+		default:
+			bad_case(cr->sizeof_value);
+	}
+	LSWDBGP(DBG_MASK, buf) {
+		lswlogf(buf, "%s: ", cr->what);
+		lswlog_impairment(buf, cr);
 	}
 }
+
+/*
+ * declare these last so that all references are forced to use the
+ * declaration in the header.
+ */
+
+bool impair_emitting;
+enum send_impairment impair_ke_payload;
+enum send_impairment impair_key_length_attribute;

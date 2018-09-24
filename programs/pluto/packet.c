@@ -28,6 +28,7 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "impair.h"
 
 #include "packet.h"
 
@@ -1714,10 +1715,26 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
-				if ((n & ISAKMP_ATTR_AF_MASK) ==
-				    ISAKMP_ATTR_AF_TV)
-					immediate = TRUE;
-			/* FALL THROUGH */
+			{
+				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
+					     ISAKMP_ATTR_AF_TV);
+				last_enum = n & ~ISAKMP_ATTR_AF_MASK;
+				/*
+				 * try to deal with fp->desc
+				 * containing a selection of
+				 * AF+<value> and <value> entries.
+				 */
+				const char *name = enum_name(fp->desc, last_enum);
+				if (name == NULL) {
+					name = enum_show(fp->desc, n);
+				}
+				DBG_log("   %s: %s%s (0x%" PRIx32 ")",
+					fp->name,
+					immediate ? "AF+" : "",
+					name, n);
+				break;
+			}
+
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 			case ft_fcp:
@@ -1897,17 +1914,27 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 					}
 					break;
 				}
+
 				case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
-					if ((n & ISAKMP_ATTR_AF_MASK) ==
-					    ISAKMP_ATTR_AF_TV)
-						immediate = TRUE;
+				case ft_af_enum: /* Attribute Format + value from an enumeration */
+					immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
+						     ISAKMP_ATTR_AF_TV);
+					last_enum = n & ~ISAKMP_ATTR_AF_MASK;
+					/*
+					 * Lookup fp->desc using N and
+					 * not LAST_ENUM.  Only when N
+					 * (value or AF+value) is
+					 * found is it acceptable.
+					 */
+					if (fp->field_type == ft_af_enum &&
+					    enum_name(fp->desc, n) == NULL) {
+						ugh = builddiag("%s of %s has an unknown value: %s%" PRIu32 " (0x%" PRIx32 ")",
+								fp->name, sd->name,
+								immediate ? "AF+" : "",
+								last_enum, n);
+					}
 					break;
 
-				case ft_af_enum: /* Attribute Format + value from an enumeration */
-					if ((n & ISAKMP_ATTR_AF_MASK) ==
-					    ISAKMP_ATTR_AF_TV)
-						immediate = TRUE;
-				/* FALL THROUGH */
 				case ft_enum:   /* value from an enumeration */
 					if (enum_name(fp->desc, n) == NULL) {
 						ugh = builddiag("%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
@@ -2189,17 +2216,25 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				}
 
 				switch (fp->field_type) {
+
 				case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
-					if ((n & ISAKMP_ATTR_AF_MASK) ==
-					    ISAKMP_ATTR_AF_TV)
-						immediate = TRUE;
+				case ft_af_enum: /* Attribute Format + value from an enumeration */
+					immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
+						     ISAKMP_ATTR_AF_TV);
+					last_enum = n & ~ISAKMP_ATTR_AF_MASK;
+					if (fp->field_type == ft_af_enum &&
+					    enum_name(fp->desc, n) == NULL) {
+						ugh = builddiag("%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")",
+								fp->name, sd->name,
+								n & ISAKMP_ATTR_AF_MASK,
+								last_enum, n);
+						if (impair_emitting) {
+							libreswan_log("IMPAIR: emitting %s", ugh);
+							ugh = NULL;
+						}
+					}
 					break;
 
-				case ft_af_enum: /* Attribute Format + value from an enumeration */
-					if ((n & ISAKMP_ATTR_AF_MASK) ==
-					    ISAKMP_ATTR_AF_TV)
-						immediate = TRUE;
-				/* FALL THROUGH */
 				case ft_enum:   /* value from an enumeration */
 					if (enum_name(fp->desc, n) == NULL) {
 						ugh = builddiag("%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",

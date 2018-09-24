@@ -39,9 +39,12 @@ enum xxx_impair ...;
 /*
  * What can be impaired.
  *
+ * See impair.c for documentation.
+ *
  * XXX: make this a structure so it can be copied?
  */
 
+extern bool impair_emitting;
 extern enum send_impairment impair_ke_payload;
 extern enum send_impairment impair_key_length_attribute;
 
