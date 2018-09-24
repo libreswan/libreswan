@@ -1234,6 +1234,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 }
 
 static bool emit_transform(pb_stream *r_proposal_pbs,
+			   enum ikev2_sec_proto_id protoid,
 			   enum ikev2_trans_type type, bool last,
 			   const struct ikev2_transform *transform)
 {
@@ -1248,26 +1249,40 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 		libreswan_log("out_struct() of transform failed");
 		return FALSE;
 	}
-	if (impair_key_length_attribute == SEND_NORMAL) {
+	enum send_impairment impair_key_length_attribute =
+		(protoid == IKEv2_SEC_PROTO_IKE
+		 ? impair_ike_key_length_attribute
+		 : impair_child_key_length_attribute);
+	if (type != IKEv2_TRANS_TYPE_ENCR ||
+	    impair_key_length_attribute == SEND_NORMAL) {
 		/* XXX: should be >= 0; so that '0' can be sent? */
+		/* XXX: screw key-lengths for other types? */
 		if (transform->attr_keylen > 0) {
 			if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen, &trans_pbs)) {
 				return false;
 			}
 		}
-	} else if (type == IKEv2_TRANS_TYPE_ENCR) {
-		/* XXX: --impair transform-type:...? */
+	} else  {
 		switch (impair_key_length_attribute) {
 		case SEND_NORMAL:
+			PASSERT_FAIL("%s", "should have been handled");
 			break;
 		case SEND_EMPTY:
-			libreswan_log("IMPAIR: emitting zero-length key-length attribute with no key");
+			libreswan_log("IMPAIR: emitting variable-size key-length attribute with no key");
 			if (!v2_out_attr_variable(IKEv2_KEY_LENGTH, empty_chunk, &trans_pbs)) {
 				return false;
 			}
 			break;
 		case SEND_OMIT:
-			libreswan_log("IMPAIR: omitting fixed-length key-length attribute");
+			libreswan_log("IMPAIR: omitting fixed-size key-length attribute");
+			break;
+		case SEND_DUPLICATE:
+			for (unsigned dup = 0; dup < 2; dup++) {
+				/* regardless of value */
+				if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen, &trans_pbs)) {
+					return false;
+				}
+			}
 			break;
 		case SEND_ROOF:
 		default:
@@ -1366,7 +1381,8 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			trans_nr++;
 			bool last = trans_nr == nr_trans;
 			if (proposal_pbs != NULL &&
-			    !emit_transform(proposal_pbs, type, last, transform))
+			    !emit_transform(proposal_pbs, proposal->protoid,
+					    type, last, transform))
 				return -1;
 		}
 	}

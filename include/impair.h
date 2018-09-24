@@ -22,13 +22,16 @@
 #include "lswcdefs.h"
 
 /*
- * Ways to impair something.  This is just the start ...
+ * How to impair something.  This is just the start ...
+ *
+ * Extra enums go here.
  */
 
 enum send_impairment {
 	SEND_NORMAL = 0,
 	SEND_OMIT,
 	SEND_EMPTY,
+	SEND_DUPLICATE,
 	SEND_ROOF, /* >= ROOF -> <number> */
 };
 
@@ -46,7 +49,8 @@ enum xxx_impair ...;
 
 extern bool impair_emitting;
 extern enum send_impairment impair_ke_payload;
-extern enum send_impairment impair_key_length_attribute;
+extern enum send_impairment impair_ike_key_length_attribute;
+extern enum send_impairment impair_child_key_length_attribute;
 
 /*
  * What whack sends across the wire for a impair.

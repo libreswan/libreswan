@@ -114,6 +114,7 @@ static const struct keyword send_impairment_value[] = {
 	S(NORMAL, "send normal content"),
 	S(OMIT, "do not send content"),
 	S(EMPTY, "send zero length content"),
+	S(DUPLICATE, "duplicate content"),
 #undef S
 };
 
@@ -148,11 +149,27 @@ struct impairment impairments[] = {
 		.how_keynum = &send_impairment_keywords,
 		V(impair_ke_payload),
 	},
+
+	/*
+	 * IKEv1: the key-length attribute is at the same level as
+	 * other attributes such as encryption.  Just need to know if
+	 * the IKE, or CHILD proposal set should be manipulated.
+	 *
+	 * IKEv2: the key-length attribute is nested within an
+	 * encryption transform.  Hence, also need to know which
+	 * transform to screw with.
+	 */
 	{
-		.what = "key-length-attribute",
-		.help = "corrupt the outgoing key length attribute",
+		.what = "ike-key-length-attribute",
+		.help = "corrupt the outgoing IKE proposal's key length attribute",
 		.how_keynum = &send_impairment_keywords,
-		V(impair_key_length_attribute),
+		V(impair_ike_key_length_attribute),
+	},
+	{
+		.what = "child-key-length-attribute",
+		.help = "corrupt the outgoing CHILD proposal's key length attribute",
+		.how_keynum = &send_impairment_keywords,
+		V(impair_child_key_length_attribute),
 	},
 };
 
@@ -423,4 +440,5 @@ void process_impair(const struct whack_impair *wc)
 
 bool impair_emitting;
 enum send_impairment impair_ke_payload;
-enum send_impairment impair_key_length_attribute;
+enum send_impairment impair_ike_key_length_attribute;
+enum send_impairment impair_child_key_length_attribute;

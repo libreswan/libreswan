@@ -771,27 +771,23 @@ bool ikev1_out_sa(pb_stream *outs,
 				 * OTOH, do completely override
 				 * key-lengths when so impaired.
 				 */
+				enum send_impairment impair_key_length_attribute =
+					(oakley_mode ? impair_ike_key_length_attribute
+					 : impair_child_key_length_attribute);
+				long key_length_to_impair = -1;
 				for (unsigned an = 0; an != t->attr_cnt; an++) {
 					const struct db_attr *a = &t->attrs[an];
-					/* strip out oakley key-length attributes? */
-					if (oakley_mode && impair_key_length_attribute > 0) {
-						enum ikev1_oakley_attr type = a->type.oakley;
-						if (type == OAKLEY_KEY_LENGTH) {
-							libreswan_log("IMPAIR: stripping IKE key-length");
-							continue;
-						}
+					/*
+					 * Strip out or duplicate
+					 * key-length attibute?
+					 */
+					if (impair_key_length_attribute > 0 &&
+					    (oakley_mode ? a->type.oakley == OAKLEY_KEY_LENGTH
+					     :  a->type.ipsec == KEY_LENGTH)) {
+						key_length_to_impair = a->val;
+						libreswan_log("IMPAIR: stripping key-length");
+						continue;
 					}
-#if 0
-					/* strip out ipsec keylength attributes? */
-					if (!oakley_mode && impair_"child"_key_length_attribute > 0) {
-						enum ikev1_ipsec_attr type = a->type.ipsec;
-						// type &= ISAKMP_ATTR_AF_MASK;
-						if (type == KEY_LENGTH) {
-							libreswan_log("IMPAIR: stripping CHILD key-length");
-							continue;
-						}
-					}
-#endif
 					if (!out_attr(oakley_mode ? a->type.oakley : a->type.ipsec ,
 						      a->val,
 						      attr_desc,
@@ -799,12 +795,37 @@ bool ikev1_out_sa(pb_stream *outs,
 						      &trans_pbs))
 						goto fail;
 				}
+				/*
+				 * put back a key-length?
+				 */
 				switch (impair_key_length_attribute) {
 				case SEND_NORMAL:
 					break;
-				case SEND_EMPTY: /* XXX: how? */
+				case SEND_EMPTY:
+					/*
+					 * XXX: how? IKEv2 sends a
+					 * long form packet of no
+					 * length.
+					 */
+					libreswan_log("IMPAIR: key-length-attribute:empty not implemented");
+					break;
 				case SEND_OMIT:
 					libreswan_log("IMPAIR: not sending key-length attribute");
+					break;
+				case SEND_DUPLICATE:
+					if (key_length_to_impair >= 0) {
+						libreswan_log("IMPAIR: duplicating key-length");
+						for (unsigned dup = 0; dup < 2; dup++) {
+							if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,
+								      key_length_to_impair,
+								      attr_desc,
+								      attr_val_descs,
+								      &trans_pbs))
+								goto fail;
+						}
+					} else {
+						libreswan_log("IMPAIR: no key-length to duplicate");
+					}
 					break;
 				case SEND_ROOF:
 				default:
