@@ -51,4 +51,5 @@ algparse:   MODP8192                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  
 algparse:   DH19                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_256
 algparse:   DH20                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_384
 algparse:   DH21                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_521
+algparse:   DH31                    IKEv1: IKE         IKEv2: IKE ESP AH        curve25519
 algparse: leak detective found no leaks

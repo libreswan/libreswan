@@ -86,5 +86,6 @@ DH algorithms:
   DH19                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_256
   DH20                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_384
   DH21                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_521
+  DH31                    IKEv1: IKE         IKEv2: IKE ESP AH        curve25519
 west #
  

@@ -12,6 +12,7 @@ algparse: Integrity algorithm HMAC_MD5_96 disabled; not FIPS compliant
 algparse: Integrity algorithm HMAC_SHA2_256_TRUNCBUG disabled; not FIPS compliant
 algparse: DH algorithm MODP1024 disabled; not FIPS compliant
 algparse: DH algorithm MODP1536 disabled; not FIPS compliant
+algparse: DH algorithm DH31 disabled; not FIPS compliant
 algparse: FIPS Encryption algorithms:
 algparse:   AES_CCM_16              IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  aes_ccm, aes_ccm_c
 algparse:   AES_CCM_12              IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  aes_ccm_b
