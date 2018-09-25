@@ -385,6 +385,8 @@ static stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ik
 
 static crypto_req_cont_func ikev2_crypto_continue;	/* forward decl and type assertion */
 
+static crypto_req_cont_func ikev2_rekey_dh_continue;	/* forward decl and type assertion */
+
 static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 				       struct msg_digest *md)
 {
@@ -408,10 +410,19 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 		start_dh_v2(st, "DHv2 for child sa", role,
 			    pst->st_skey_d_nss, /* only IKE has SK_d */
 			    pst->st_oakley.ta_prf, /* for IKE/ESP/AH */
-			    ikev2_crypto_continue);
+			    ikev2_rekey_dh_continue);
 		return STF_SUSPEND;
 	}
 	return STF_OK;
+}
+
+static void ikev2_rekey_dh_continue(struct state *st,
+				    struct msg_digest **mdp,
+				    struct pluto_crypto_req *r)
+{
+	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
+	     __func__, st->st_serialno, st->st_state_name);
+	ikev2_crypto_continue(st, mdp, r);
 }
 
 
@@ -527,11 +538,6 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	const struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	switch (st->st_state) {
-	case STATE_V2_REKEY_IKE_R:
-		request_ke_and_nonce("IKE rekey KE response gir", st,
-				     st->st_oakley.ta_dh,
-				     ikev2_crypto_continue);
-		return STF_SUSPEND;
 
 	case STATE_V2_CREATE_R:
 		/*
@@ -5689,10 +5695,10 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 
 	RETURN_STF_FAILURE_STATUS(process_ike_rekey_sa_pl(md, pst, st));
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
-		    __func__, st->st_state_name));
-	return ikev2_crypto_start(md, st);
+	request_ke_and_nonce("IKE rekey KE response gir", st,
+			     st->st_oakley.ta_dh,
+			     ikev2_crypto_continue);
+	return STF_SUSPEND;
 }
 
 static stf_status ikev2_child_out_tail(struct msg_digest *md)
