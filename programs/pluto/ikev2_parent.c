@@ -533,39 +533,9 @@ static void ikev2_crypto_continue(struct state *st,
  * - no need to jump through all these hoops.
  */
 
-static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
+static stf_status ikev2_crypto_start(struct msg_digest *md UNUSED, struct state *st)
 {
 	switch (st->st_state) {
-
-	case STATE_V2_CREATE_R:
-		/*
-		 * ??? if we don't have an md (see above) why are we referencing it?
-		 * ??? clang 6.0.0 warns md might be NULL
-		 */
-		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			request_ke_and_nonce("Child Responder KE and nonce nr",
-					     st, st->st_oakley.ta_dh,
-					     ikev2_crypto_continue);
-		} else {
-			request_nonce("Child Responder nonce nr",
-				      st, ikev2_crypto_continue);
-		}
-		return STF_SUSPEND;
-
-	case STATE_V2_REKEY_CHILD_R:
-		/*
-		 * ??? if we don't have an md (see above) why are we referencing it?
-		 * ??? clang 6.0.0 warns md might be NULL
-		 */
-		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			request_ke_and_nonce("Child Rekey Responder KE and nonce nr",
-					     st, st->st_oakley.ta_dh,
-					     ikev2_crypto_continue);
-		} else {
-			request_nonce("Child Rekey Responder nonce nr",
-				      st, ikev2_crypto_continue);
-		}
-		return STF_SUSPEND;
 
 	case STATE_V2_REKEY_CHILD_I0:
 		if (st->st_pfs_group == NULL) {
@@ -5646,7 +5616,12 @@ stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 	return ikev2_crypto_start(md, st);
 }
 
-/* processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request */
+/*
+ * processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request
+ */
+
+static crypto_req_cont_func ikev2_child_inIoutR_continue;
+
 stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 			       struct msg_digest *md)
 {
@@ -5674,14 +5649,57 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 					ISAKMP_v2_CREATE_CHILD_SA));
 	}
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
-		    __func__, st->st_state_name));
-
-	return ikev2_crypto_start(md, st);
+	/*
+	 * XXX: a quick eyeball suggests that the only difference
+	 * between these two cases is the description.
+	 *
+	 * ??? if we don't have an md (see above) why are we referencing it?
+	 * ??? clang 6.0.0 warns md might be NULL
+	 *
+	 * XXX: 'see above' is lost; this is a responder state
+	 * which _always_ has an MD.
+	 */
+	switch (st->st_state) {
+	case STATE_V2_CREATE_R:
+		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
+			request_ke_and_nonce("Child Responder KE and nonce nr",
+					     st, st->st_oakley.ta_dh,
+					     ikev2_child_inIoutR_continue);
+		} else {
+			request_nonce("Child Responder nonce nr",
+				      st, ikev2_child_inIoutR_continue);
+		}
+		return STF_SUSPEND;
+	case STATE_V2_REKEY_CHILD_R:
+		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
+			request_ke_and_nonce("Child Rekey Responder KE and nonce nr",
+					     st, st->st_oakley.ta_dh,
+					     ikev2_child_inIoutR_continue);
+		} else {
+			request_nonce("Child Rekey Responder nonce nr",
+				      st, ikev2_child_inIoutR_continue);
+		}
+		return STF_SUSPEND;
+	default:
+		bad_case(st->st_state);
+	}
 }
 
-/* processsing a new Rekey IKE SA (RFC 7296 1.3.2) request */
+static void ikev2_child_inIoutR_continue(struct state *st,
+					 struct msg_digest **mdp,
+					 struct pluto_crypto_req *r)
+{
+	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
+	     __func__, st->st_serialno, st->st_state_name);
+	ikev2_crypto_continue(st, mdp, r);
+}
+
+/*
+ * processsing a new Rekey IKE SA (RFC 7296 1.3.2) request
+ */
+
+static crypto_req_cont_func ikev2_child_ike_inIoutR_continue;
+
 stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 				   struct msg_digest *md)
 {
@@ -5702,8 +5720,17 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 
 	request_ke_and_nonce("IKE rekey KE response gir", st,
 			     st->st_oakley.ta_dh,
-			     ikev2_crypto_continue);
+			     ikev2_child_ike_inIoutR_continue);
 	return STF_SUSPEND;
+}
+
+static void ikev2_child_ike_inIoutR_continue(struct state *st,
+					     struct msg_digest **mdp,
+					     struct pluto_crypto_req *r)
+{
+	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
+	     __func__, st->st_serialno, st->st_state_name);
+	ikev2_crypto_continue(st, mdp, r);
 }
 
 static stf_status ikev2_child_out_tail(struct msg_digest *md)
