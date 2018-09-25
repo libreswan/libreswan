@@ -260,7 +260,7 @@ int parser_y_include (const char *filename)
 	case 0:
 		/* success */
 
-		if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH) {
+		if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH - 1) {
 			yyerror("max inclusion depth reached");
 			return 1;
 		}
