@@ -520,57 +520,6 @@ static void ikev2_crypto_continue(struct state *st,
 }
 
 /*
- * We need an md because the crypto continuation mechanism requires one
- * but we don't have one because we are not responding to an
- * incoming packet.
- * Solution: build a fake one.  How much do we need to fake?
- * Note: almost identical code appears at the end of aggr_outI1.
- *
- * XXX: This code does a crypto continue using an indirect dispatch
- * through the FSM.  Beyond making the code flow confusing is this
- * useful?  For instance, since SA_INIT has only one code path, it can
- * directly request ke and nonce with its dedicated continue function
- * - no need to jump through all these hoops.
- */
-
-static stf_status ikev2_crypto_start(struct msg_digest *md UNUSED, struct state *st)
-{
-	switch (st->st_state) {
-
-	case STATE_V2_REKEY_CHILD_I0:
-		if (st->st_pfs_group == NULL) {
-			request_nonce("Child Rekey Initiator nonce ni",
-				      st, ikev2_crypto_continue);
-		} else {
-			request_ke_and_nonce("Child Rekey Initiator KE and nonce ni",
-					     st, st->st_pfs_group,
-					     ikev2_crypto_continue);
-		}
-		return STF_SUSPEND;
-
-	case STATE_V2_CREATE_I0:
-		if (st->st_pfs_group == NULL) {
-			request_nonce("Child Initiator nonce ni",
-				      st, ikev2_crypto_continue);
-		} else {
-			request_ke_and_nonce("Child Initiator KE and nonce ni",
-					     st, st->st_pfs_group,
-					     ikev2_crypto_continue);
-		}
-		return STF_SUSPEND;
-
-	case STATE_V2_REKEY_IKE_I0:
-		request_ke_and_nonce("IKE REKEY Initiator KE and nonce ni",
-				     st, st->st_oakley.ta_dh,
-				     ikev2_crypto_continue);
-		return STF_SUSPEND;
-
-	default:
-		bad_case(st->st_state);
-	}
-}
-
-/*
  * Check the MODP (KE) group matches the accepted proposal.
  *
  * The caller is responsible for freeing any scratch objects.
@@ -6853,12 +6802,52 @@ void ikev2_initiate_child_sa(struct pending *p)
 	reset_globals();
 }
 
+static crypto_req_cont_func ikev2_child_outI_continue;
+
 void ikev2_child_outI(struct state *st)
 {
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
-		    __func__, st->st_state_name));
-	ikev2_crypto_start(NULL, st);
+	switch (st->st_state) {
+
+	case STATE_V2_REKEY_CHILD_I0:
+		if (st->st_pfs_group == NULL) {
+			request_nonce("Child Rekey Initiator nonce ni",
+				      st, ikev2_child_outI_continue);
+		} else {
+			request_ke_and_nonce("Child Rekey Initiator KE and nonce ni",
+					     st, st->st_pfs_group,
+					     ikev2_child_outI_continue);
+		}
+		break; /* return STF_SUSPEND; */
+
+	case STATE_V2_CREATE_I0:
+		if (st->st_pfs_group == NULL) {
+			request_nonce("Child Initiator nonce ni",
+				      st, ikev2_child_outI_continue);
+		} else {
+			request_ke_and_nonce("Child Initiator KE and nonce ni",
+					     st, st->st_pfs_group,
+					     ikev2_child_outI_continue);
+		}
+		break; /* return STF_SUSPEND; */
+
+	case STATE_V2_REKEY_IKE_I0:
+		request_ke_and_nonce("IKE REKEY Initiator KE and nonce ni",
+				     st, st->st_oakley.ta_dh,
+				     ikev2_child_outI_continue);
+		break; /* return STF_SUSPEND; */
+
+	default:
+		bad_case(st->st_state);
+	}
+}
+
+static void ikev2_child_outI_continue(struct state *st,
+				      struct msg_digest **mdp,
+				      struct pluto_crypto_req *r)
+{
+	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
+	     __func__, st->st_serialno, st->st_state_name);
+	ikev2_crypto_continue(st, mdp, r);
 }
 
 /*
