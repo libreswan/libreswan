@@ -559,18 +559,6 @@ static stf_status ikev2_crypto_start(struct msg_digest *md UNUSED, struct state 
 		}
 		return STF_SUSPEND;
 
-	case STATE_V2_REKEY_CHILD_I:
-		start_dh_v2(st, "ikev2 Child Rekey SA initiator pfs=yes",
-			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
-			    ikev2_crypto_continue);
-		return STF_SUSPEND;
-
-	case STATE_V2_CREATE_I:
-		start_dh_v2(st, "ikev2 Child SA initiator pfs=yes",
-			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
-			    ikev2_crypto_continue);
-		return STF_SUSPEND;
-
 	case STATE_V2_REKEY_IKE_I0:
 		request_ke_and_nonce("IKE REKEY Initiator KE and nonce ni",
 				     st, st->st_oakley.ta_dh,
@@ -5598,7 +5586,12 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 	ikev2_crypto_continue(st, mdp, r);
 }
 
-/* initiator received a create Child SA Response (RFC 7296 1.3.1, 1.3.2) */
+/*
+ * initiator received a create Child SA Response (RFC 7296 1.3.1, 1.3.2)
+ */
+
+static crypto_req_cont_func ikev2_child_inR_continue;
+
 stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 {
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
@@ -5610,10 +5603,32 @@ stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 
 	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
-		    __func__, st->st_state_name));
-	return ikev2_crypto_start(md, st);
+	/*
+	 * XXX: other than logging, these two cases are identical.
+	 */
+	switch (st->st_state) {
+	case STATE_V2_CREATE_I:
+		start_dh_v2(st, "ikev2 Child SA initiator pfs=yes",
+			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
+			    ikev2_child_inR_continue);
+		return STF_SUSPEND;
+	case STATE_V2_REKEY_CHILD_I:
+		start_dh_v2(st, "ikev2 Child Rekey SA initiator pfs=yes",
+			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
+			    ikev2_child_inR_continue);
+		return STF_SUSPEND;
+	default:
+		bad_case(st->st_state);
+	}
+}
+
+static void ikev2_child_inR_continue(struct state *st,
+				     struct msg_digest **mdp,
+				     struct pluto_crypto_req *r)
+{
+	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
+	     __func__, st->st_serialno, st->st_state_name);
+	ikev2_crypto_continue(st, mdp, r);
 }
 
 /*
