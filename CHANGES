@@ -4,6 +4,7 @@ See also https://libreswan.org/
 v3.27 (unreleased)
 * XFRM: SA marks must be included for delete operation [Tijs Van Buggenhout]
 * pluto: Resolve a crasher in ECDSA freeing code [Hugh/Sahana]
+* pluto: Resolve a hang when recursively loading same config file [Hugh]
 * building: Fixup NSS includes and links (caused Debian failures) [Andrew/Paul]
 
 v3.26 (September 16, 2018)
