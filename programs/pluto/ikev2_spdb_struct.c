@@ -1277,6 +1277,7 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 			libreswan_log("IMPAIR: omitting fixed-size key-length attribute");
 			break;
 		case SEND_DUPLICATE:
+			libreswan_log("IMPAIR: duplicating key-length attribute");
 			for (unsigned dup = 0; dup < 2; dup++) {
 				/* regardless of value */
 				if (!v2_out_attr_fixed(IKEv2_KEY_LENGTH, transform->attr_keylen, &trans_pbs)) {

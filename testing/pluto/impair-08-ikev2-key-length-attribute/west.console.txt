@@ -45,6 +45,7 @@ west #
 002 added connection description "aes128"
 002 "aes128" #3: initiating v2 parent SA
 133 "aes128" #3: initiate
+002 "aes128" #3: IMPAIR: duplicating key-length attribute
 133 "aes128" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "aes128" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "aes128" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
@@ -69,6 +70,7 @@ west #
 002 "aes128" #5: initiating v2 parent SA
 133 "aes128" #5: initiate
 133 "aes128" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "aes128" #5: IMPAIR: duplicating key-length attribute
 134 "aes128" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "aes128" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "aes128" #6: Authenticated using authby=secret
