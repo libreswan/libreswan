@@ -1472,6 +1472,12 @@ void add_connection(const struct whack_message *wm)
 		return;
 	}
 
+	if (addrtypeof(&wm->left.client.addr) != addrtypeof(&wm->right.client.addr)) {
+		loglog(RC_FATAL, "Failed to load connection \"%s\": subnets must have the same address family",
+			wm->name);
+		return;
+	}
+
 	/*
 	 * Connection values are set using strings in the whack
 	 * message, unshare_connection() is responsible
