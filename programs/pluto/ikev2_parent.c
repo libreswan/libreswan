@@ -340,9 +340,9 @@ bool emit_wire_iv(const struct state *st, pb_stream *pbs)
 	return out_raw(ivbuf, wire_iv_size, pbs, "IV");
 }
 
-static stf_status add_st_send_list(struct state *st, struct state *pst)
+static stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ike)
 {
-	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
+	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
 	stf_status e = STF_OK;
 	char  *what;
 
@@ -360,15 +360,15 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 		delete_event(st);
 		event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, st);
 		loglog(RC_LOG_SERIOUS, "message id deadlock? %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
-			what, pst->st_serialno, unack,
-			pst->st_msgid_nextuse,
-			pst->st_connection->ike_window);
-		for (p = pst->send_next_ix; (p != NULL && p->next != NULL);
+			what, ike->sa.st_serialno, unack,
+			ike->sa.st_msgid_nextuse,
+			ike->sa.st_connection->ike_window);
+		for (p = ike->sa.send_next_ix; (p != NULL && p->next != NULL);
 				p = p->next) {
 		}
 
 		if (p == NULL) {
-			pst->send_next_ix = n;
+			ike->sa.send_next_ix = n;
 		} else {
 			p->next = n;
 		}
@@ -376,9 +376,9 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 	DBG(DBG_CONTROLMORE,
 		DBG_log("#%lu %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
 			st->st_serialno,
-			what, pst->st_serialno, unack,
-			pst->st_msgid_nextuse,
-			pst->st_connection->ike_window));
+			what, ike->sa.st_serialno, unack,
+			ike->sa.st_msgid_nextuse,
+			ike->sa.st_connection->ike_window));
 	return e;
 }
 
@@ -433,21 +433,18 @@ static void ikev2_crypto_continue(struct state *st,
 	stf_status e = STF_OK;
 	bool only_shared = FALSE;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_crypto_continue for #%lu", st->st_serialno));
+	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
+	     __func__, st->st_serialno, st->st_state_name);
 
 	/* and a parent? */
-	struct state *pst = st;
-	if (IS_CHILD_SA(st)) {
-		pst = state_with_serialno(st->st_clonedfrom);
-		if (pst == NULL) {
-			PEXPECT_LOG("IKEv2 crypto continue failed because sponsoring child state #%lu has no parent state #%lu",
-				    st->st_serialno, st->st_clonedfrom);
-			/* XXX: release what? */
-			return;
-		}
+	struct ike_sa *ike = ike_sa(st);
+	if (ike == NULL) {
+		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
+			    st->st_serialno, st->st_clonedfrom);
+		/* XXX: release what? */
+		return;
 	}
-	passert(pst != NULL);
+	passert(ike != NULL);
 
 	if (*mdp == NULL) {
 		*mdp = fake_md(st);
@@ -460,13 +457,13 @@ static void ikev2_crypto_continue(struct state *st,
 		if (r->pcr_type == pcr_build_ke_and_nonce)
 			unpack_KE_from_helper(st, r, &st->st_gi);
 
-		e = add_st_send_list(st, pst);
+		e = add_st_to_ike_sa_send_list(st, ike);
 		break;
 
 	case STATE_V2_REKEY_IKE_I0:
 		unpack_nonce(&st->st_ni, r);
 		unpack_KE_from_helper(st, r, &st->st_gi);
-		e = add_st_send_list(st, pst);
+		e = add_st_to_ike_sa_send_list(st, ike);
 		break;
 
 	case STATE_V2_REKEY_CHILD_I:
