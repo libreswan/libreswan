@@ -56,7 +56,7 @@ const pb_stream empty_pbs;
 static field_desc isa_fields[] = {
 	{ ft_raw, COOKIE_SIZE, "initiator cookie", NULL },
 	{ ft_raw, COOKIE_SIZE, "responder cookie", NULL },
-	{ ft_fcp, 8 / BITS_PER_BYTE, "first contained payload type", &payload_names_ikev1orv2 },
+	{ ft_fcp, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_loose_enum, 8 / BITS_PER_BYTE, "ISAKMP version", &version_names },
 	{ ft_enum, 8 / BITS_PER_BYTE, "exchange type", &exchange_names_ikev1orv2 },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", isakmp_flag_names },
@@ -1404,7 +1404,7 @@ struct_desc ikev2_ts1_desc = {
  */
 /* almost the same as ikev2generic_fields (ft_fcp instead of ft_pnp) */
 static field_desc ikev2sk_fields[] = {
-	{ ft_fcp, 8 / BITS_PER_BYTE, "first contained payload type", &ikev2_payload_names },
+	{ ft_fcp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_end,  0, NULL, NULL }
