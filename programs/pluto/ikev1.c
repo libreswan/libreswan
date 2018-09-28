@@ -1781,47 +1781,46 @@ void process_packet_tail(struct msg_digest **mdp)
 		 * Each post phase 1 exchange generates IVs from
 		 * the last phase 1 block, not the last block sent.
 		 */
-		{
-			const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
+		const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
 
-			if (pbs_left(&md->message_pbs) % e->enc_blocksize != 0)
-			{
-				loglog(RC_LOG_SERIOUS,
-				       "malformed message: not a multiple of encryption blocksize");
-				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
-				return;
-			}
-
-			/* XXX Detect weak keys */
-
-			/* grab a copy of raw packet (for duplicate packet detection) */
-			clonetochunk(md->raw_packet, md->packet_pbs.start,
-				     pbs_room(&md->packet_pbs), "raw packet");
-
-			/* Decrypt everything after header */
-			if (!new_iv_set) {
-				if (st->st_iv_len == 0) {
-					init_phase2_iv(st, &md->hdr.isa_msgid);
-				} else {
-					/* use old IV */
-					restore_new_iv(st, st->st_iv, st->st_iv_len);
-				}
-			}
-
-			passert(st->st_new_iv_len >= e->enc_blocksize);
-			st->st_new_iv_len = e->enc_blocksize;   /* truncate */
-			e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
-						 pbs_left(&md->message_pbs),
-						 st->st_enc_key_nss,
-						 st->st_new_iv, FALSE);
-
+		if (pbs_left(&md->message_pbs) % e->enc_blocksize != 0) {
+			loglog(RC_LOG_SERIOUS, "malformed message: not a multiple of encryption blocksize");
+			return;
 		}
 
-		DBG_cond_dump(DBG_CRYPT, "decrypted:\n", md->message_pbs.cur,
-			      md->message_pbs.roof - md->message_pbs.cur);
+		/* XXX Detect weak keys */
 
-		DBG_cond_dump(DBG_CRYPT, "next IV:",
+		/* grab a copy of raw packet (for duplicate packet detection) */
+		clonetochunk(md->raw_packet, md->packet_pbs.start,
+			     pbs_room(&md->packet_pbs), "raw packet");
+
+		/* Decrypt everything after header */
+		if (!new_iv_set) {
+			if (st->st_iv_len == 0) {
+				init_phase2_iv(st, &md->hdr.isa_msgid);
+			} else {
+				/* use old IV */
+				restore_new_iv(st, st->st_iv, st->st_iv_len);
+			}
+		}
+
+		passert(st->st_new_iv_len >= e->enc_blocksize);
+		st->st_new_iv_len = e->enc_blocksize;   /* truncate */
+
+		DBG_cond_dump(DBG_CRYPT, "IV before:",
 			      st->st_new_iv, st->st_new_iv_len);
+		e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
+					 pbs_left(&md->message_pbs),
+					 st->st_enc_key_nss,
+					 st->st_new_iv, FALSE);
+		DBG_cond_dump(DBG_CRYPT, "IV after:",
+			      st->st_new_iv, st->st_new_iv_len);
+
+		DBG(DBG_CRYPT,
+		    DBG_log("decrypted payload (starts at offset %td):",
+			    md->message_pbs.cur - md->message_pbs.roof);
+		    DBG_dump("", md->message_pbs.start,
+			     md->message_pbs.roof - md->message_pbs.start));
 	} else {
 		/* packet was not encryped -- should it have been? */
 
