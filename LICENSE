@@ -1,17 +1,17 @@
-Except for the DES library, MD5 code, and linux/net/ipsec/radij.c
-this software is under the GNU General Public License (GPL), see
-the file COPYING.
-See the file CREDITS for details on origins of more of the code.
+Except for the exceptions listed below, this software is under the GNU
+General Public License (GPLv2+), see the file COPYING.
+
+See the file CREDITS and docs/CREDITS.openswan and docs/CREDITS.freeswan
+for contribution details.
 
 The linux/net/ipsec/radij.c code is derived from BSD 4.4lite code
 from sys/net/radix.c.
 
-In addition to the terms set out under the GPL, permission is granted to
+In addition to the terms set out under the GPLv2+, permission is granted to
 link the software against the libdes, md5c.c, and radij.c libraries just
 mentioned.
 
-
-The following additional notes apply if if you are NOT using CrytpoAPI:
+The following additional notes apply if you are NOT using CrytpoAPI:
 
 The DES library is under a BSD style license, see
 	linux/crypto/ciphers/des/COPYRIGHT.
