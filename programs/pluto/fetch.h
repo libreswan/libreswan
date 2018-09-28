@@ -14,12 +14,11 @@
  */
 
 #include <nss.h>
-extern void list_distribution_points(const generalName_t *gn);
 extern void list_crl_fetch_requests(bool utc);
 
 extern void init_fetch(void);
 extern void free_crl_fetch(void);
-void check_crls(void);
+extern void check_crls(void);
 
 extern char *curl_iface;
 extern long curl_timeout;

@@ -715,7 +715,7 @@ static void merge_crl_fetch_request(struct crl_fetch_request *request)
 /*
  * list all distribution points
  */
-void list_distribution_points(const generalName_t *first_gn)
+static void list_distribution_points(const generalName_t *first_gn)
 {
 	const generalName_t *gn;
 	for (gn = first_gn; gn != NULL; gn = gn->next) {
