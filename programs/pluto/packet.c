@@ -1855,21 +1855,25 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 			passert(outp - (cur - ins->cur) == struct_ptr);
 
 #if 0
-			DBG(DBG_PARSING, DBG_log("%d %s",
-						 (int) (cur - ins->cur),
-						 fp->name == NULL ?
-						   "" : fp->name));
+			DBGF(DBG_PARSING, "%td (%td) '%s'.'%s' %d bytes ",
+			     (cur - ins->cur), (cur - ins->start),
+			     sd->name, fp->name == NULL ? "" : fp->name,
+			     fp->size);
 #endif
+
 			switch (fp->field_type) {
 			case ft_zig: /* should be zero, ignore if not - liberal in what to receive, strict to send */
 				for (; i != 0; i--) {
-					if (*cur++ != 0) {
-						/* We cannot zeroize it, it would break our hash calculation */
-						libreswan_log(
-							"byte %d of %s should have been zero, but was not (ignored)",
-							(int) (cur - ins->cur),
-							sd->name);
+					uint8_t byte = *cur;
+					if (byte != 0) {
+						/* We cannot zeroize it, it would break our hash calculation. */
+						libreswan_log( "byte at offset %td (%td) of '%s'.'%s' is 0x%02"PRIx8" but should have been zero (ignored)",
+							       (cur - ins->cur),
+							       (cur - ins->start),
+							       sd->name, fp->name,
+							       byte);
 					}
+					cur++;
 					*outp++ = '\0'; /* probably redundant */
 				}
 				break;
