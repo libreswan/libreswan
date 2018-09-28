@@ -28,7 +28,7 @@
 #include "crypt_symkey.h"
 
 /*
- * Ref: http://tools.ietf.org/html/rfc3602: Test Vectors
+ * Ref: https://tools.ietf.org/html/rfc3602: Test Vectors
  */
 static const struct cbc_test_vector aes_cbc_test_vectors[] = {
 	{

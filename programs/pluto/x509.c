@@ -830,7 +830,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
  * Decode the CERT payload of Phase 1.
  */
 /* todo:
- * http://tools.ietf.org/html/rfc4945
+ * https://tools.ietf.org/html/rfc4945
  *  3.3.4. PKCS #7 Wrapped X.509 Certificate
  *
  *  This type defines a particular encoding, not a particular certificate
@@ -921,7 +921,7 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 /*
  * Decode the CR payload of Phase 1.
  *
- *  http://tools.ietf.org/html/rfc4945
+ *  https://tools.ietf.org/html/rfc4945
  *  3.2.4. PKCS #7 wrapped X.509 certificate
  *
  *  This ID type defines a particular encoding (not a particular

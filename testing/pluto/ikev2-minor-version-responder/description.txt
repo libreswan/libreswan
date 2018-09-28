@@ -4,7 +4,7 @@ This test enables --impair-minor-version-bump that will send a higher
 minor version number on the responder. The connection should still
 establish fine.
 
-See: http://tools.ietf.org/html/rfc5996#section-2.5
+See: https://tools.ietf.org/html/rfc5996#section-2.5
 
    The major version number should be incremented only if the packet
    formats or required actions have changed so dramatically that an
