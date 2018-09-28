@@ -168,7 +168,7 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 	return p;
 }
 
-void remove_host_pair(struct host_pair *hp)
+static void remove_host_pair(struct host_pair *hp)
 {
 	list_rm(struct host_pair, next, hp, host_pairs);
 }

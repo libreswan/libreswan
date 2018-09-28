@@ -34,6 +34,7 @@ struct host_pair {
 extern struct host_pair *host_pairs;
 
 extern void connect_to_host_pair(struct connection *c);
+
 extern struct connection *find_host_pair_connections(const ip_address *myaddr,
 						     uint16_t myport,
 						     const ip_address *hisaddr,
@@ -52,6 +53,5 @@ extern struct host_pair *find_host_pair(const ip_address *myaddr,
 	}
 
 void delete_oriented_hp(struct connection *c);
-extern void remove_host_pair(struct host_pair *hp);
 
 extern struct connection *connections;
