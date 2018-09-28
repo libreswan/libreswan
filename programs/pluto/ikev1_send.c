@@ -177,11 +177,6 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 	}
 }
 
-bool send_recorded_v1_ike_msg(struct state *st, const char *where)
-{
-	return send_or_resend_v1_ike_msg_from_state(st, where, FALSE);
-}
-
 bool resend_recorded_v1_ike_msg(struct state *st, const char *where)
 {
 	bool ret = send_or_resend_v1_ike_msg_from_state(st, where, TRUE);
@@ -198,5 +193,5 @@ bool resend_recorded_v1_ike_msg(struct state *st, const char *where)
 bool record_and_send_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 {
 	record_outbound_ike_msg(st, pbs, what);
-	return send_recorded_v1_ike_msg(st, what);
+	return send_or_resend_v1_ike_msg_from_state(st, what, FALSE);
 }

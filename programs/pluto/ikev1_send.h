@@ -23,7 +23,6 @@ struct state;
 bool record_and_send_v1_ike_msg(struct state *st, pb_stream *pbs,
 				const char *what);
 
-bool send_recorded_v1_ike_msg(struct state *st, const char *where);
 bool resend_recorded_v1_ike_msg(struct state *st, const char *where);
 
 #endif
