@@ -474,8 +474,7 @@ int resolve_defaultroute_one(struct starter_end *host,
 			}
 		}
 
-		if (seeking_gateway && r_destination[0] == '\0' &&
-			(has_dst || r_source[0] == '\0')) {
+		if (seeking_gateway && r_destination[0] == '\0') {
 			if (r_gateway[0] == '\0' && r_interface[0] != '\0') {
 				/*
 				 * Point-to-Point default gw without "via IP"
