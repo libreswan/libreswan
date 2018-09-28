@@ -43,6 +43,7 @@ enum field_type {
 	ft_len,			/* length of this struct and any following crud */
 	ft_fcp,			/* message's first contained payload type field */
 	ft_pnp,			/* payload's next payload type field */
+	ft_lss,			/* Last Substructure field */
 	ft_lv,			/* length/value field of attribute */
 	ft_enum,		/* value from an enumeration */
 	ft_loose_enum,		/* value from an enumeration with only some names known */
@@ -72,7 +73,17 @@ typedef const struct {
 	field_desc *fields;
 	size_t size;
 	int pt;	/* this payload type */
+	unsigned nsst; /* Nested Substructure Type */
 } struct_desc;
+
+/*
+ * Something to fixup later.
+ */
+struct fixup {
+	uint8_t *loc;
+	struct_desc *sd;
+	field_desc *fp; /* name .fp from packet.c */
+};
 
 /*
  * The formatting of input and output of packets is done through
@@ -112,7 +123,31 @@ struct packet_byte_stream {
 	uint8_t *previous_np;	/* always one octet */
 	field_desc *previous_np_field;
 	struct_desc *previous_np_struct;
+
+	/*
+	 * For patching Last Substructure field.
+	 *
+	 * IKEv2 has nested substructures.  An SA Payload contains
+	 * Proposal Substructures, and a Proposal Substructure
+	 * contains Transform Substructures.
+	 *
+	 * When emitting a the substructure, the Last Substruc[ture]
+	 * field is set to either that substructure's type (non-last)
+	 * or zero (last).
+	 *
+	 * This is separate to the Next Payload field and the payload
+	 * "chain" - the SA payload is both linked into the payload
+	 * "chain" (.PT) and requires a specific sub-structure (.SST).
+	 *
+	 * IKEv1 is functionally equivalent (IKEv2 changed some names
+	 * and re-wrote the text so that it was clear that this is how
+	 * things really work).
+	 *
+	 * XXX: IKEv1 should use this mechanism.
+	 */
+	struct fixup previous_ss;
 };
+
 typedef struct packet_byte_stream pb_stream;
 
 extern const pb_stream empty_pbs;

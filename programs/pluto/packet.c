@@ -821,6 +821,7 @@ struct_desc ikev2_sa_desc = {
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_sa),
 	.pt = ISAKMP_NEXT_v2SA,
+	.nsst = v2_PROPOSAL_NON_LAST,
 };
 
 /* IKEv2 - Proposal sub-structure
@@ -845,7 +846,7 @@ struct_desc ikev2_sa_desc = {
  *             Figure 7:  Proposal Substructure
  */
 static field_desc ikev2prop_fields[] = {
-	{ ft_pnp, 8 / BITS_PER_BYTE, "last proposal", &ikev2_last_proposal_desc },
+	{ ft_lss, 8 / BITS_PER_BYTE, "last proposal", &ikev2_last_proposal_desc },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "prop #", NULL },
@@ -859,7 +860,7 @@ struct_desc ikev2_prop_desc = {
 	.name = "IKEv2 Proposal Substructure Payload",
 	.fields = ikev2prop_fields,
 	.size = sizeof(struct ikev2_prop),
-	.pt = v2_PROPOSAL_NON_LAST,
+	.nsst = v2_TRANSFORM_NON_LAST,
 };
 
 /*
@@ -880,7 +881,7 @@ struct_desc ikev2_prop_desc = {
  */
 
 static field_desc ikev2trans_fields[] = {
-	{ ft_pnp, 8 / BITS_PER_BYTE, "last transform", &ikev2_last_transform_desc },
+	{ ft_lss, 8 / BITS_PER_BYTE, "last transform", &ikev2_last_transform_desc },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 transform type", &ikev2_trans_type_names },
@@ -893,7 +894,6 @@ struct_desc ikev2_trans_desc = {
 	.name = "IKEv2 Transform Substructure Payload",
 	.fields = ikev2trans_fields,
 	.size = sizeof(struct ikev2_trans),
-	.pt = v2_TRANSFORM_NON_LAST,
 };
 
 /*
@@ -1680,6 +1680,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		case ft_loose_enum:     /* value from an enumeration with only some names known */
 		case ft_fcp:
 		case ft_pnp:
+		case ft_lss:		/* last substructure field */
 		case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
@@ -1739,6 +1740,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 			case ft_fcp:
 			case ft_pnp:
+			case ft_lss:
 				last_enum = n;
 				DBG_log("   %s: %s (0x%" PRIx32 ")",
 					fp->name,
@@ -1879,6 +1881,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 			case ft_fcp:
 			case ft_pnp:
+			case ft_lss:
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
@@ -1946,6 +1949,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
 				case ft_fcp:
 				case ft_pnp:
+				case ft_lss:
 					last_enum = n;
 					break;
 
@@ -2142,6 +2146,11 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			/* .previous_np = NULL, */
 			/* .previous_np_field = NULL, */
 			/* .previous_np_struct = NULL, */
+
+			/* until an ft_lss is discovered */
+			/* .previous_ss = NULL, */
+			/* .previous_ss_field = NULL, */
+			/* .previous_ss = NULL, */
 		};
 
 		for (field_desc *fp = sd->fields; ugh == NULL; fp++) {
@@ -2194,6 +2203,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 			case ft_fcp:
 			case ft_pnp:
+			case ft_lss:
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
@@ -2283,6 +2293,47 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					outs->previous_np_field = fp;
 					break;
 				}
+
+				case ft_lss:
+					/*					 *
+					 * The containing structure
+					 * should be expecting
+					 * substructures.
+					 */
+					passert(fp->size == 1);
+					pexpect(outs->desc->nsst != ISAKMP_NEXT_NONE);
+					/*
+					 * Since there's a previous
+					 * substructure, it can no
+					 * longer be last.  Check/set
+					 * its last substructure field
+					 * to its type.
+					 */
+					if (outs->previous_ss.loc != NULL) {
+						struct esb_buf ssb;
+						/* not set or set correctly */
+						pexpect(outs->previous_ss.loc[0] == ISAKMP_NEXT_NONE ||
+							outs->previous_ss.loc[0] == outs->desc->nsst);
+						DBGF(DBG_EMITTING, "last substructure: setting '%s'.'%s'.'%s' to %s (0x%x)",
+						     outs->desc->name,
+						     outs->previous_ss.sd->name,
+						     outs->previous_ss.fp->name,
+						     enum_showb(outs->previous_ss.fp->desc,
+								outs->desc->nsst, &ssb),
+						     outs->desc->nsst);
+					}
+					/*
+					 * Now save the location of
+					 * this Last Substructure.
+					 */
+					DBGF(DBG_EMITTING, "last substructure: saving location '%s'.'%s'.'%s'",
+					     outs->desc->name, sd->name, fp->name);
+					outs->previous_ss.loc = cur;
+					outs->previous_ss.sd = sd;
+					outs->previous_ss.fp = fp;
+					pexpect(n == ISAKMP_NEXT_NONE || n == outs->desc->nsst);
+					last_enum = n;
+					break;
 
 				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 					ugh = enum_enum_checker(sd->name, fp, last_enum);
