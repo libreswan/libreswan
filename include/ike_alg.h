@@ -665,7 +665,7 @@ struct integ_desc {
 	const size_t integ_output_size;
 	/*
 	 * IKEv1 IPsec AH transform values
-	 * http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
+	 * https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
 	 *
 	 * An IKEv1 AH proposal is structured as:
 	 *

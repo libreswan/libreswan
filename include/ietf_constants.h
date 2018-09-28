@@ -15,7 +15,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -312,7 +312,7 @@
 #define  AES_KEY_MAX_LEN        256
 
 /*
- * http://tools.ietf.org/html/rfc3566#section-4.1
+ * https://tools.ietf.org/html/rfc3566#section-4.1
  */
 #define AES_XCBC_DIGEST_SIZE BYTES_FOR_BITS(128)
 #define AES_XCBC_DIGEST_SIZE_TRUNC BYTES_FOR_BITS(96)
@@ -325,7 +325,7 @@
 
 /*
  * RFC 4106 AES GCM
- * http://tools.ietf.org/html/rfc4106#section-8.1
+ * https://tools.ietf.org/html/rfc4106#section-8.1
  */
 #define AES_GCM_SALT_BYTES 4
 #define AES_GCM_KEY_MIN_LEN 128
@@ -334,7 +334,7 @@
 
 /*
  * RFC 4309 AES CCM
- * http://tools.ietf.org/html/rfc4309#section-7.1
+ * https://tools.ietf.org/html/rfc4309#section-7.1
  */
 #define AES_CCM_SALT_BYTES 3
 #define AES_CCM_KEY_MIN_LEN 128
@@ -358,7 +358,7 @@
 
 
 /*
- * http://tools.ietf.org/html/rfc2451#section-2.2
+ * https://tools.ietf.org/html/rfc2451#section-2.2
  * ESP_CAST is the cast5 algorithm, not cast6
  * We avoid cast-128 padding by enforcing a minimum of 128
  */
@@ -775,7 +775,7 @@ extern const char *const sit_bit_names[];
 #define SIT_INTEGRITY 0x04
 
 /*
- * See http://tools.ietf.org/html/rfc5996#section-3.2
+ * See https://tools.ietf.org/html/rfc5996#section-3.2
  * Critical bit in each payload
  */
 extern const char *const critical_names[];
@@ -802,7 +802,7 @@ extern const char *const critical_names[];
 /*
  * IKEv2 Security Protocol Identifiers - RFC 5996
  *
- * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-18
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-18
  *
  * According to the IKEv2 RFC, these values are stored in 'Protocol
  * ID' field of a payload (see: 3.3.1.  Proposal Substructure; 3.10.
@@ -828,7 +828,7 @@ enum ikev2_sec_proto_id {
 
 /*
  * IKEv2 proposal
- * See http://www.iana.org/assignments/ikev2-parameters
+ * See https://www.iana.org/assignments/ikev2-parameters
  * Assume indexing is [1..IKEv2_TRANS_TYPE_ROOF)
  */
 enum ikev2_trans_type {
@@ -843,7 +843,7 @@ enum ikev2_trans_type {
 
 /*
  * IKE and ESP encryption algorithms (note iana lists two table columns for these)
- * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
  * (TODO: rename this to ikev2_encr_esp_ike)
  */
 enum ikev2_trans_type_encr {
@@ -1211,7 +1211,7 @@ typedef uint16_t oakley_auth_t;
 enum ikev2_cp_attribute_type {
 	/*
 	 * IKEv2 CP Attribute types
-	 * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
+	 * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
 	 */
 	IKEv2_CP_ATTR_RESERVED = 0,
 	IKEv2_INTERNAL_IP4_ADDRESS = 1,
@@ -1253,7 +1253,7 @@ enum ikev2_cp_type {
 
 /*
  * extern enum_names ikev2_auth_names;
- * http://www.iana.nl/assignments/ikev2-parameters/ikev2-parameters.xhtml
+ * https://www.iana.nl/assignments/ikev2-parameters/ikev2-parameters.xhtml
  * IKEv2 Authentication Method
  */
 
@@ -1281,7 +1281,7 @@ typedef enum ike_trans_type_dh oakley_group_t;
 
 /*	you must also touch: constants.c, crypto.c */
 /* https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-10 */
-/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8 */
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8 */
 enum ike_trans_type_dh {
 	OAKLEY_GROUP_NONE = 0,	/* RFC 7296 */
 	OAKLEY_GROUP_MODP768 = 1,
@@ -1337,7 +1337,7 @@ enum ike_trans_type_dh {
  */
 
 /*
- * IKEv1 RFC2408 http://www.iana.org/assignments/ipsec-registry
+ * IKEv1 RFC2408 https://www.iana.org/assignments/ipsec-registry
  * extern enum_names notification_names;
  * extern enum_names ipsec_notification_names;
  */
@@ -1416,7 +1416,7 @@ typedef enum {
 } notification_t;
 
 /*
- * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13
  * IKEv2 is very similar, but different. Let's not re-use and confuse
  **/
 typedef enum {
@@ -1589,7 +1589,7 @@ enum ike_id_type {
 /*
  * Certificate type values
  * RFC 2408 ISAKMP, chapter 3.9
- * http://tools.ietf.org/html/rfc2408#section-3.9
+ * https://tools.ietf.org/html/rfc2408#section-3.9
  * (no corresponding IANA registry?)
  *
  * IKEv2 Certificate Encodings
@@ -1621,7 +1621,7 @@ enum ike_cert_type {
 /*
  * (IKEv1) IPsec AH transform values
  *
- * IKEv1: http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
+ * IKEv1: https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
  * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-7
  *
  * IKEv1 and IKEv2 versions are very different :(

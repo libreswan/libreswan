@@ -9,7 +9,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -239,7 +239,7 @@ static const char *const payload_name_ikev2[] = {
 	"ISAKMP_NEXT_v2NONE", /* same for IKEv1 */
 };
 
-/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-2 */
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-2 */
 /* dual-use: for enum_name and for bitnamesof */
 static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",	/* 33 */
@@ -364,7 +364,7 @@ static const char *const exchange_name_doi[] = {
 	"ISAKMP_XCHG_NGRP",
 };
 
-/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
 static const char *const exchange_name_ikev2[] = {
 	"ISAKMP_v2_SA_INIT", /* RFC 7296 */
 	"ISAKMP_v2_AUTH",
@@ -1252,7 +1252,7 @@ enum_names oakley_enc_names = {
 
 /*
  * Oakley Hash Algorithm attribute
- * http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
  */
 
 /* these string names map via a lookup function to configuration sttrings */
@@ -1337,7 +1337,7 @@ enum_names oakley_auth_names = {
 
 /*
  * IKEv2 CP attribute name. Some of them are shared with XAUTH Attrib names.
- * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
  */
 static const char *const ikev2_cp_attribute_type_name[] = {
 	"IKEv2_CP_ATTR_RESERVED",
@@ -1633,7 +1633,7 @@ static enum_names ikev2_notify_names_private = {
 	NULL
 };
 
-/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
 static const char *const ikev2_notify_name_16384[] = {
 	"v2N_INITIAL_CONTACT",    /* 16384 */
 	"v2N_SET_WINDOW_SIZE",
@@ -1757,7 +1757,7 @@ enum_names ikev2_notify_names = {
 	&ikev2_notify_names_16384
 };
 
-/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-19 */
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-19 */
 static const char *const ikev2_ts_type_name[] = {
 	"IKEv2_TS_IPV4_ADDR_RANGE",
 	"IKEv2_TS_IPV6_ADDR_RANGE",
