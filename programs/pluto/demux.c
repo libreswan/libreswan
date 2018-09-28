@@ -453,12 +453,34 @@ void comm_handle_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *a
  * when the remote starts re-transmitting them.
  */
 
-static void process_md_clone(struct msg_digest *orig, const char *name)
+static void process_md_clone(struct msg_digest *orig, const char *fmt, ...) PRINTF_LIKE(2);
+static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 {
 	/* not whack FD yet is expected to be reset! */
 	pexpect_reset_globals();
-	struct msg_digest *md = clone_md(orig, name);
+	struct msg_digest *md = clone_md(orig, fmt /* good enough */);
+
+	LSWLOG(buf) {
+		lswlogs(buf, "IMPAIR: start processing ");
+		va_list ap;
+		va_start(ap, fmt);
+		lswlogvf(buf, fmt, ap);
+		va_end(ap);
+		lswlogf(buf, " (%td bytes)", pbs_room(&md->packet_pbs));
+	}
+	DBG(DBG_RAW,
+	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
+
 	process_md(&md);
+
+	LSWLOG(buf) {
+		lswlogf(buf, "IMPAIR: stop processing ");
+		va_list ap;
+		va_start(ap, fmt);
+		lswlogvf(buf, fmt, ap);
+		va_end(ap);
+	}
+
 	pexpect(md == NULL);
 	pexpect_reset_globals();
 }
@@ -505,10 +527,8 @@ static bool impair_incoming(struct msg_digest **mdp)
 		/* MD is the most recent entry */
 		struct replay_entry *e = NULL;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
-			process_md_clone(e->md, "original");
-			libreswan_log("IMPAIR: start duplicate packet");
-			process_md_clone(e->md, "replay-duplicates");
-			libreswan_log("IMPAIR: stop duplicate packet");
+			process_md_clone(e->md, "original packet");
+			process_md_clone(e->md, "duplicate packet");
 			break;
 		}
 	}
@@ -516,22 +536,16 @@ static bool impair_incoming(struct msg_digest **mdp)
 		save_any_md_for_replay(mdp);
 		struct replay_entry *e = NULL;
 		FOR_EACH_LIST_ENTRY_OLD2NEW(&replay_packets, e) {
-			libreswan_log("IMPAIR: start replay forward: packet %lu of %lu",
-				      e->nr, replay_count);
-			process_md_clone(e->md, "replay-forward");
-			libreswan_log("IMPAIR: stop replay forward: packet %lu of %lu",
-				      e->nr, replay_count);
+			process_md_clone(e->md, "replay forward: packet %lu of %lu",
+					 e->nr, replay_count);
 		}
 	}
 	if (IMPAIR(REPLAY_BACKWARD)) {
 		save_any_md_for_replay(mdp);
 		struct replay_entry *e = NULL;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
-			libreswan_log("IMPAIR: start replay backward: packet %lu of %lu",
-				      e->nr, replay_count);
-			process_md_clone(e->md, "replay-backward");
-			libreswan_log("IMPAIR: stop replay backward: packet %lu of %lu",
-				      e->nr, replay_count);
+			process_md_clone(e->md, "start replay backward: packet %lu of %lu",
+					 e->nr, replay_count);
 		}
 	}
 	/* MDP NULL implies things were impaired */
