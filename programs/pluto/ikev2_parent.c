@@ -975,7 +975,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 		}
 	}
 	/*
-	 * http://tools.ietf.org/html/rfc5996#section-2.6
+	 * https://tools.ietf.org/html/rfc5996#section-2.6
 	 * reply with the anti DDOS cookie if we received one (remote is under attack)
 	 */
 	if (st->st_dcookie.ptr != NULL) {
@@ -4547,7 +4547,7 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 		bestfit_p = -1;
 		bestfit_pr = -1;
 
-		/* Check TSi/TSr http://tools.ietf.org/html/rfc5996#section-2.9 */
+		/* Check TSi/TSr https://tools.ietf.org/html/rfc5996#section-2.9 */
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("TS: check narrowing - we are responding to I2"));
 

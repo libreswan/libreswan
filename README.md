@@ -159,7 +159,7 @@ at https://bugs.libreswan.org/
 
 ## Security Information
 All security issues found that require public disclosure will
-receive proper CVE tracking numbers (see http://mitre.org/) and
+receive proper CVE tracking numbers (see https://www.mitre.org/) and
 will be co-ordinated via the vendor-sec / oss-security lists. A
 complete list of known security vulnerabilities is available at:
 

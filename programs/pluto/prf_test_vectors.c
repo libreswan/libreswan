@@ -31,7 +31,7 @@
 #include "crypt_symkey.h"
 
 /*
- * Ref: http://tools.ietf.org/html/rfc4435: Test Vectors
+ * Ref: https://tools.ietf.org/html/rfc4435: Test Vectors
  */
 
 const struct prf_test_vectors aes_xcbc_prf_tests = {

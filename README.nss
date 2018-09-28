@@ -5,7 +5,7 @@
 #########################################################################
 
 For detailed developer information about NSS, see
-http://www.mozilla.org/projects/security/pki/nss/
+https://www.mozilla.org/projects/security/pki/nss/
 
 The NSS crypto library is a user space library. It is only used with the
 libreswan userspace IKE daemon pluto for cryptographic operations. NSS
@@ -41,16 +41,16 @@ currently being FIPS certified for RHEL7.
 - certutil: Look and modify the NSS db. "ipsec initnss" and "ipsec look"
   use certutil under the hood.
 
-http://www.mozilla.org/projects/security/pki/nss/tools/certutil.html
+https://www.mozilla.org/projects/security/pki/nss/tools/certutil.html
 
 - pk12util: import and export certificates and keys from and to the NSS db.
   The "ipsec import" command is a simple wrapper around this utility.
 
-http://www.mozilla.org/projects/security/pki/nss/tools/pk12util.html
+https://www.mozilla.org/projects/security/pki/nss/tools/pk12util.html
 
 - modutil: Put NSS into FIPS mode
 
-http://www.mozilla.org/projects/security/pki/nss/tools/modutil.html
+https://www.mozilla.org/projects/security/pki/nss/tools/modutil.html
 
 #########################################################################
 # Creating the NSS db for use with libreswan's pluto IKE daemon
