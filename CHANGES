@@ -7,6 +7,7 @@ v3.27 (unreleased)
 * pluto: Resolve a hang when recursively loading same config file [Hugh]
 * pluto: Refuse to load conns with different subnet address families [Paul]
 * building: Fixup NSS includes and links (fixes Debian builds) [Andrew/Paul]
+* documentation: Update (L)GPL license links and http -> https links [dkg]
 
 v3.26 (September 16, 2018)
 * IKEv2: Support for RSA-PSS (RFC 7427) via authby=rsa-sha2 [Sahana Prasad]
