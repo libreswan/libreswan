@@ -139,11 +139,9 @@ struct packet_byte_stream {
 	 * "chain" - the SA payload is both linked into the payload
 	 * "chain" (.PT) and requires a specific sub-structure (.SST).
 	 *
-	 * IKEv1 is functionally equivalent (IKEv2 changed some names
-	 * and re-wrote the text so that it was clear that this is how
-	 * things really work).
-	 *
-	 * XXX: IKEv1 should use this mechanism.
+	 * Since IKEv1's SA, Proposal, and Transform payloads are
+	 * functionally equivalent it, too, uses this code (IKEv2
+	 * changed the names to avoid confusion).
 	 */
 	struct fixup previous_ss;
 };

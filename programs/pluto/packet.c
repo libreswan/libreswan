@@ -146,8 +146,16 @@ struct_desc isakmp_xauth_attribute_desc = {
 
 /* ISAKMP Security Association Payload
  * layout from RFC 2408 "ISAKMP" section 3.4
- * A variable length Situation follows.
+ *
+ * A variable length Situation followed by 0 or more Proposal payloads
+ * follow.
+ *
+ * The "Next Payload [...] field MUST NOT contain the values for the
+ * Proposal or Transform payloads as they are considered part of the
+ * security association negotiation".  Hence .csst is set.
+ *
  * Previous next payload: ISAKMP_NEXT_SA
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -173,6 +181,7 @@ struct_desc isakmp_sa_desc = {
 	.fields = isasa_fields,
 	.size = sizeof(struct isakmp_sa),
 	.pt = ISAKMP_NEXT_SA,
+	.nsst = ISAKMP_NEXT_P,
 };
 
 static field_desc ipsec_sit_field[] = {
@@ -188,8 +197,20 @@ struct_desc ipsec_sit_desc = {
 
 /* ISAKMP Proposal Payload
  * layout from RFC 2408 "ISAKMP" section 3.5
- * A variable length SPI follows.
- * Previous next payload: ISAKMP_NEXT_P
+ *
+ * A variable length SPI and then Transform Payloads follow.
+ *
+ * XXX:
+ *
+ * The Next Payload field below is something of a misnomer.  It
+ * doesn't play any part in the Next Payload Chain.  Instead it just
+ * acts as a flag where 0 indicate if it is the last payload within
+ * the SA.
+ *
+ * In IKEv2, this payload/field has been replaced by a sub-structure and
+ * "Last Substruct[ure]" field (and then makes the point that it is
+ * entirely redundant).
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -201,7 +222,7 @@ struct_desc ipsec_sit_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isap_fields[] = {
-	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_lss, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "proposal number", NULL },
@@ -215,13 +236,25 @@ struct_desc isakmp_proposal_desc = {
 	.name = "ISAKMP Proposal Payload",
 	.fields = isap_fields,
 	.size = sizeof(struct isakmp_proposal),
-	.pt = ISAKMP_NEXT_P,
+	.nsst = ISAKMP_NEXT_T,
 };
 
 /* ISAKMP Transform Payload
  * layout from RFC 2408 "ISAKMP" section 3.6
+ *
  * Variable length SA Attributes follow.
- * Previous next payload: ISAKMP_NEXT_T
+ *
+ * XXX:
+ *
+ * The Next Payload field below is something of a misnomer.  It
+ * doesn't play any part in the Next Payload Chain.  Instead it just
+ * acts as a flag where zero indicates that it is last payload within
+ * the proposal.
+ *
+ * In IKEv2, this payload/field has been replaced by a sub-structure and
+ * "Last Substruct[ure]" field (and then makes the point that it is
+ * entirely redundant).
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -237,7 +270,7 @@ struct_desc isakmp_proposal_desc = {
 
 /* PROTO_ISAKMP */
 static field_desc isat_fields_isakmp[] = {
-	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_lss, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "ISAKMP transform number", NULL },
@@ -250,12 +283,11 @@ struct_desc isakmp_isakmp_transform_desc = {
 	.name = "ISAKMP Transform Payload (ISAKMP)",
 	.fields = isat_fields_isakmp,
 	.size = sizeof(struct isakmp_transform),
-	.pt = ISAKMP_NEXT_T,
 };
 
 /* PROTO_IPSEC_AH */
 static field_desc isat_fields_ah[] = {
-	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_lss, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "AH transform number", NULL },
@@ -268,12 +300,11 @@ struct_desc isakmp_ah_transform_desc = {
 	.name = "ISAKMP Transform Payload (AH)",
 	.fields = isat_fields_ah,
 	.size = sizeof(struct isakmp_transform),
-	.pt = ISAKMP_NEXT_T,
 };
 
 /* PROTO_IPSEC_ESP */
 static field_desc isat_fields_esp[] = {
-	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_lss, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "ESP transform number", NULL },
@@ -286,12 +317,11 @@ struct_desc isakmp_esp_transform_desc = {
 	.name = "ISAKMP Transform Payload (ESP)",
 	.fields = isat_fields_esp,
 	.size = sizeof(struct isakmp_transform),
-	.pt = ISAKMP_NEXT_T,
 };
 
 /* PROTO_IPCOMP */
 static field_desc isat_fields_ipcomp[] = {
-	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_lss, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "IPCOMP transform number", NULL },
@@ -304,7 +334,6 @@ struct_desc isakmp_ipcomp_transform_desc = {
 	.name = "ISAKMP Transform Payload (COMP)",
 	.fields = isat_fields_ipcomp,
 	.size = sizeof(struct isakmp_transform),
-	.pt = ISAKMP_NEXT_T,
 };
 
 /* ISAKMP Key Exchange Payload: no fixed fields beyond the generic ones.
