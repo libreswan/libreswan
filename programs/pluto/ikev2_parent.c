@@ -2184,12 +2184,12 @@ static void construct_enc_iv(const char *name,
  * Adding to the confusion, ESP requires a minimum of 4-byte alignment
  * and IKE is free to use the ESP code for padding - we don't.
  */
-static bool ikev2_padup_pre_encrypt(struct state *st,
+static bool ikev2_padup_pre_encrypt(const struct state *st,
 				    pb_stream *e_pbs_cipher) MUST_USE_RESULT;
-static bool ikev2_padup_pre_encrypt(struct state *st,
+static bool ikev2_padup_pre_encrypt(const struct state *st,
 				    pb_stream *e_pbs_cipher)
 {
-	struct state *pst = st;
+	const struct state *pst = st;
 
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
@@ -2224,11 +2224,11 @@ static bool ikev2_padup_pre_encrypt(struct state *st,
 	return TRUE;
 }
 
-uint8_t *ikev2_authloc(struct state *st,
+uint8_t *ikev2_authloc(const struct state *st,
 		       pb_stream *e_pbs)
 {
 	unsigned char *b12;
-	struct state *pst = st;
+	const struct state *pst = st;
 
 	if (IS_CHILD_SA(st)) {
 		pst = state_with_serialno(st->st_clonedfrom);
@@ -2982,6 +2982,82 @@ static stf_status ikev2_send_auth(struct connection *c,
 }
 
 /*
+ * start_encrypted_payload:
+ *
+ * Starts SK/SKF payload, inserts IV, creates PBS for encrypted portion of payload.
+ *
+ * To keep track of the part of the output packet that will be
+ * encrypted, we wrap it in a PBS.  This PBS is a little odd
+ * since backpatching obligations are really those of its parent.
+ */
+
+static uint8_t *start_encrypted_payload(
+	const struct state *st,
+	const void *e,
+	struct_desc *ed,
+	pb_stream *rbody,	/* body of reply */
+	pb_stream *sk_pbs,	/* body of SK payload (created by this routine) */
+	pb_stream *enc_pbs)	/* portion of payload to be encrypted (created by this routine) */
+{
+	if (!out_struct(e, ed, rbody, sk_pbs))
+		return NULL;
+
+	/* insert IV */
+
+	uint8_t *const iv = sk_pbs->cur;
+
+	if (!emit_wire_iv(st, sk_pbs))
+		return NULL;
+
+	const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
+
+	if (!out_struct(&fake_struct, &ikev2_encrypted_portion, sk_pbs, enc_pbs))
+		return NULL;
+
+	move_pbs_previous_np(enc_pbs, sk_pbs);	/* backpatching obligation */
+	return iv;
+}
+
+static uint8_t *start_SK_payload(
+	const struct state *st,
+	enum next_payload_types_ikev2 np,
+	pb_stream *rbody,	/* body of reply */
+	pb_stream *sk_pbs,	/* body of SK payload (created by this routine) */
+	pb_stream *enc_pbs)	/* portion of payload to be encrypted (created by this routine) */
+{
+	/* create an Encryption payload header (SK) */
+	const struct ikev2_generic e = {
+		.isag_np = np,
+		.isag_critical = build_ikev2_critical(false),
+	};
+
+	return start_encrypted_payload(st,
+		&e, &ikev2_sk_desc,
+		rbody, sk_pbs, enc_pbs);
+}
+
+static uint8_t *end_encrypted_payload(
+	const struct state *st,
+	pb_stream *rbody,	/* body of reply */
+	pb_stream *sk_pbs,	/* body of SK payload */
+	pb_stream *enc_pbs)	/* portion of payload to be encrypted */
+{
+	if (!ikev2_padup_pre_encrypt(st, enc_pbs))
+		return NULL;
+
+	move_pbs_previous_np(sk_pbs, enc_pbs);	/* backpatching obligation */
+	close_output_pbs(enc_pbs);
+
+	uint8_t *const authloc = ikev2_authloc(st, sk_pbs);
+	if (authloc == NULL)
+		return authloc;
+
+	close_output_pbs(sk_pbs);
+	close_output_pbs(rbody);
+	return authloc;
+}
+
+/*
  * fragment contents:
  * - sometimes:	NON_ESP_MARKER (RFC3948) (NON_ESP_MARKER_SIZE) (4)
  * - always:	isakmp header (NSIZEOF_isakmp_hdr) (28)
@@ -2993,7 +3069,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 static stf_status ikev2_record_outbound_fragment(
 	struct msg_digest *md,
 	struct isakmp_hdr *hdr,
-	struct ikev2_generic *oe,
+	enum next_payload_types_ikev2 np,
 	struct v2_ike_tfrag **fragp,
 	chunk_t *payload,	/* read-only */
 	unsigned int count, unsigned int total,
@@ -3018,45 +3094,18 @@ static stf_status ikev2_record_outbound_fragment(
 			&rbody))
 		return STF_INTERNAL_ERROR;
 
-	/* insert an Encryption Fragment payload header (SKF) */
 	pb_stream e_pbs;
-
-	{
-		struct ikev2_skf e = {
-			.isaskf_np = count == 1 ? oe->isag_np : 0,
-			.isaskf_critical = oe->isag_critical,
-			.isaskf_number = count,
-			.isaskf_total = total,
-		};
-
-		if (!out_struct(&e, &ikev2_skf_desc, &rbody, &e_pbs))
-			return STF_INTERNAL_ERROR;
-
-		/*
-		 * the np field is not at all what the backpatch logic
-		 * expects so we suppress its check.
-		 */
-		rbody.previous_np = NULL;
-	}
-
-	/* insert IV */
-	uint8_t *iv = e_pbs.cur;
-
-	if (!emit_wire_iv(st, &e_pbs))
-		return STF_INTERNAL_ERROR;
-	passert(frag_stream.start <= iv);
-
-	/*
-	 * Note where cleartext starts by inserting an extra layer of
-	 * PBS that has no header!
-	 * Any First NP backpatching must look through this layer
-	 * (but there isn't any).
-	 */
 	pb_stream e_pbs_cipher;
-	const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
 
-	if (!out_struct(&fake_struct, &ikev2_encrypted_portion, &e_pbs, &e_pbs_cipher))
-		return STF_INTERNAL_ERROR;
+	const struct ikev2_skf e = {
+		.isaskf_np = count == 1 ? np : 0,
+		.isaskf_critical = build_ikev2_critical(false),
+		.isaskf_number = count,
+		.isaskf_total = total,
+	};
+	uint8_t *iv = start_encrypted_payload(st,
+			&e, &ikev2_skf_desc,
+			&rbody, &e_pbs, &e_pbs_cipher);
 
 	uint8_t *encstart = e_pbs_cipher.cur;
 	passert(frag_stream.start <= iv && iv <= encstart);
@@ -3065,30 +3114,21 @@ static stf_status ikev2_record_outbound_fragment(
 		     "cleartext fragment"))
 		return STF_INTERNAL_ERROR;
 
-	/*
-	 * need to extend the packet so that we will know how big it is
-	 * since the length is under the integrity check
-	 */
-	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
+	uint8_t *authloc = end_encrypted_payload(
+			st,
+			&rbody, &e_pbs, &e_pbs_cipher);
+
+	if (authloc == NULL)
 		return STF_INTERNAL_ERROR;
 
-	close_output_pbs(&e_pbs_cipher);
+	passert(frag_stream.start <= iv && iv <= encstart && encstart <= authloc);
 
-	{
-		uint8_t *authloc = ikev2_authloc(st, &e_pbs);
-		if (authloc == NULL)
-			return STF_INTERNAL_ERROR;
-		passert(frag_stream.start <= iv && iv <= encstart && encstart <= authloc);
+	close_output_pbs(&frag_stream);
 
-		close_output_pbs(&e_pbs);
-		close_output_pbs(&rbody);
-		close_output_pbs(&frag_stream);
-
-		stf_status ret = ikev2_encrypt_msg(ike_sa(st), frag_stream.start,
-						   iv, encstart, authloc);
-		if (ret != STF_OK)
-			return ret;
-	}
+	stf_status ret = ikev2_encrypt_msg(ike_sa(st), frag_stream.start,
+					   iv, encstart, authloc);
+	if (ret != STF_OK)
+		return ret;
 
 	*fragp = alloc_thing(struct v2_ike_tfrag, "v2_ike_tfrag");
 	(*fragp)->next = NULL;
@@ -3100,7 +3140,7 @@ static stf_status ikev2_record_outbound_fragment(
 static stf_status ikev2_record_outbound_fragments(
 	struct msg_digest *md,
 	struct isakmp_hdr *hdr,
-	struct ikev2_generic *e,
+	enum next_payload_types_ikev2 np,
 	chunk_t *payload, /* read-only */
 	const char *desc)
 {
@@ -3151,7 +3191,7 @@ static stf_status ikev2_record_outbound_fragments(
 		offset += cipher.len;
 		count++;
 		ret = ikev2_record_outbound_fragment(
-			md, hdr, e, fragp, &cipher, count, nfrags, desc);
+			md, hdr, np, fragp, &cipher, count, nfrags, desc);
 
 		if (ret != STF_OK || offset == payload->len)
 			break;
@@ -3293,35 +3333,14 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	/* insert an Encryption payload header (SK) */
+
 	pb_stream e_pbs;
-
-	struct ikev2_generic e = {
-		.isag_np = ISAKMP_NEXT_v2IDi,
-		.isag_critical = build_ikev2_critical(false),
-	};
-
-	if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
-		return STF_INTERNAL_ERROR;
-
-	/* insert IV */
-
-	uint8_t *const iv = e_pbs.cur;
-	passert(reply_stream.start <= iv);
-
-	if (!emit_wire_iv(cst, &e_pbs))
-		return STF_INTERNAL_ERROR;
-
-	/*
-	 * Note where cleartext starts by inserting an extra layer of
-	 * PBS that has no header!
-	 * Any First NP backpatching must look through this layer.
-	 */
 	pb_stream e_pbs_cipher;
-	const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
 
-	if (!out_struct(&fake_struct, &ikev2_encrypted_portion, &e_pbs, &e_pbs_cipher))
+	uint8_t *const iv = start_SK_payload(cst, ISAKMP_NEXT_v2IDi, &rbody, &e_pbs, &e_pbs_cipher);
+
+	if (iv == NULL)
 		return STF_INTERNAL_ERROR;
-	move_pbs_previous_np(&e_pbs_cipher, &e_pbs);	/* backpatching obligation */
 
 	uint8_t *const encstart = e_pbs_cipher.cur;
 	passert(reply_stream.start <= iv && iv <= encstart);
@@ -3631,31 +3650,16 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	const unsigned int len = pbs_offset(&e_pbs_cipher);
 
-	/*
-	 * need to extend the packet so that we will know how big it is
-	 * since the length is under the integrity check
-	 */
-	if (!ikev2_padup_pre_encrypt(cst, &e_pbs_cipher))
-		return STF_INTERNAL_ERROR;
-
-	move_pbs_previous_np(&e_pbs, &e_pbs_cipher);	/* backpatching obligation */
-	close_output_pbs(&e_pbs_cipher);
-
-	uint8_t *const authloc = ikev2_authloc(cst, &e_pbs);
+	uint8_t *const authloc = end_encrypted_payload(cst, &rbody, &e_pbs, &e_pbs_cipher);
 	if (authloc == NULL)
 		return STF_INTERNAL_ERROR;
-	passert(reply_stream.start <= iv && iv <= encstart && encstart <= authloc);
-
-	close_output_pbs(&e_pbs);
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
 
 	if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream), TRUE)) {
 		chunk_t payload;
 
 		setchunk(payload, e_pbs_cipher.start, len);
 		stf_status ret = ikev2_record_outbound_fragments(
-			md, &hdr, &e, &payload,
+			md, &hdr, ISAKMP_NEXT_v2IDi, &payload,
 			"reply fragment for ikev2_parent_outR1_I2");
 		pst->st_msgid_lastreplied = md->msgid_received;
 		return ret;
@@ -4068,7 +4072,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 {
 	struct connection *const c = st->st_connection;
 	unsigned char idhash_out[MAX_DIGEST_LEN];
-	unsigned int np;
 
 	if (!pam_status) {
 		/*
@@ -4155,35 +4158,20 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		/* insert an Encryption payload header */
 		pb_stream e_pbs;
-		struct ikev2_generic e = {
-			.isag_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ?
-					ISAKMP_NEXT_v2UNKNOWN :
-				(notifies != 0) ?
-					ISAKMP_NEXT_v2N :
-					ISAKMP_NEXT_v2IDr,
-			.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-		};
-
-		if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
-			return STF_INTERNAL_ERROR;
-
-		/* insert IV */
-		uint8_t *iv = e_pbs.cur;
-		passert(reply_stream.start <= iv);
-		if (!emit_wire_iv(st, &e_pbs))
-			return STF_INTERNAL_ERROR;
-
-		/*
-		 * Note where cleartext starts by inserting an extra layer of
-		 * PBS that has no header!
-		 * Any First NP backpatching must look through this layer.
-		 */
 		pb_stream e_pbs_cipher;
-		const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
+		enum next_payload_types_ikev2 sk_np =
+			IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ?
+				ISAKMP_NEXT_v2UNKNOWN :
+			notifies != 0 ?
+				ISAKMP_NEXT_v2N :
+				ISAKMP_NEXT_v2IDr;
 
-		if (!out_struct(&fake_struct, &ikev2_encrypted_portion, &e_pbs, &e_pbs_cipher))
+		uint8_t *iv = start_SK_payload(
+				st, sk_np,
+				&rbody, &e_pbs, &e_pbs_cipher);
+
+		if (iv == NULL)
 			return STF_INTERNAL_ERROR;
-		move_pbs_previous_np(&e_pbs_cipher, &e_pbs);	/* backpatching obligation */
 
 		uint8_t *encstart = e_pbs_cipher.cur;
 		passert(reply_stream.start <= iv && iv <= encstart);
@@ -4283,6 +4271,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		}
 
 		/* authentication good, see if there is a child SA being proposed */
+		unsigned int auth_np;
+
 		if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
 		    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
 		    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
@@ -4293,10 +4283,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			} else {
 				DBG(DBG_CONTROLMORE, DBG_log("No CHILD SA proposals received"));
 			}
-			np = ISAKMP_NEXT_v2NONE;
+			auth_np = ISAKMP_NEXT_v2NONE;
 		} else {
 			DBG(DBG_CONTROLMORE, DBG_log("CHILD SA proposals received"));
-			np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
+			auth_np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
 				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
 		}
 
@@ -4306,7 +4296,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		/* now send AUTH payload */
 		{
 			stf_status authstat = ikev2_send_auth(c, st,
-							      ORIGINAL_RESPONDER, np,
+							      ORIGINAL_RESPONDER, auth_np,
 							      idhash_out,
 							      &e_pbs_cipher, NULL);
 							      /* ??? NULL - don't calculate additional NULL_AUTH ??? */
@@ -4315,7 +4305,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 				return authstat;
 		}
 
-		if (np == ISAKMP_NEXT_v2SA || np == ISAKMP_NEXT_v2CP) {
+		if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 			/* must have enough to build an CHILD_SA */
 			stf_status ret = ikev2_child_sa_respond(md, &e_pbs_cipher,
 								ISAKMP_v2_AUTH);
@@ -4340,28 +4330,18 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		unsigned int len = pbs_offset(&e_pbs_cipher);
 
-		if (!ikev2_padup_pre_encrypt(cst, &e_pbs_cipher))
-			return STF_INTERNAL_ERROR;
+		uint8_t *authloc = end_encrypted_payload(cst, &rbody, &e_pbs, &e_pbs_cipher);
 
-		move_pbs_previous_np(&e_pbs, &e_pbs_cipher);	/* backpatching obligation */
-		close_output_pbs(&e_pbs_cipher);
-
-		uint8_t *authloc = ikev2_authloc(cst, &e_pbs);
-		if (authloc == NULL)
-			return STF_INTERNAL_ERROR;
-		passert(reply_stream.start <= iv && iv <= encstart && encstart <= authloc);
-
-		close_output_pbs(&e_pbs);
-		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 
 		if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream),
-						TRUE)) {
+						TRUE))
+		{
 			chunk_t payload;
 
 			setchunk(payload, e_pbs_cipher.start, len);
 			stf_status ret = ikev2_record_outbound_fragments(
-				md, &hdr, &e, &payload,
+				md, &hdr, sk_np, &payload,
 				"reply fragment for ikev2_parent_inI2outR2_tail");
 			st->st_msgid_lastreplied = md->msgid_received;
 			return ret;
@@ -5748,33 +5728,12 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 
 	/* insert an Encryption payload header */
 	pb_stream e_pbs;
-
-	{
-		struct ikev2_generic e = {
-			.isag_np = ISAKMP_NEXT_v2SA,
-			.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-		};
-		if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
-			return STF_INTERNAL_ERROR;
-	}
-
-	/* IV */
-	uint8_t *iv = e_pbs.cur;
-	if (!emit_wire_iv(pst, &e_pbs))
-		return STF_INTERNAL_ERROR;
-	passert(reply_stream.start <= iv);
-
-	/*
-	 * Note where cleartext starts by inserting an extra layer of
-	 * PBS that has no header!
-	 * Any First NP backpatching must look through this layer.
-	 */
 	pb_stream e_pbs_cipher;
-	const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
 
-	if (!out_struct(&fake_struct, &ikev2_encrypted_portion, &e_pbs, &e_pbs_cipher))
+	uint8_t *iv = start_SK_payload(pst, ISAKMP_NEXT_v2SA, &rbody, &e_pbs, &e_pbs_cipher);
+
+	if (iv == NULL)
 		return STF_INTERNAL_ERROR;
-	move_pbs_previous_np(&e_pbs_cipher, &e_pbs);	/* backpatching obligation */
 
 	uint8_t *encstart = e_pbs_cipher.cur;
 	passert(reply_stream.start <= iv && iv <= encstart);
@@ -5806,31 +5765,20 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		return ret; /* abort building the response message */
 	}
 
-	if (!ikev2_padup_pre_encrypt(pst, &e_pbs_cipher))
+	uint8_t *authloc = end_encrypted_payload(pst, &rbody, &e_pbs, &e_pbs_cipher);
+	if (authloc == NULL)
 		return STF_INTERNAL_ERROR;
 
-	move_pbs_previous_np(&e_pbs, &e_pbs_cipher);	/* backpatching obligation */
-	close_output_pbs(&e_pbs_cipher);
+	close_output_pbs(&reply_stream);
+	ret = ikev2_encrypt_msg(ike_sa(pst), reply_stream.start,
+				iv, encstart, authloc);
 
-	{
-		uint8_t *authloc = ikev2_authloc(pst, &e_pbs);
-		if (authloc == NULL)
-			return STF_INTERNAL_ERROR;
-		passert(reply_stream.start <= iv && iv <= encstart && encstart <= authloc);
-
-		close_output_pbs(&e_pbs);
-		close_output_pbs(&rbody);
-		close_output_pbs(&reply_stream);
-		ret = ikev2_encrypt_msg(ike_sa(pst), reply_stream.start,
-					iv, encstart, authloc);
-
-		if (ret != STF_OK)
-			return ret;
-	}
+	if (ret != STF_OK)
+		return ret;
 
 	/*
 	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
-	 * should we support fragmenting? may be one day.
+	 * ??? Should we support fragmenting?  Maybe one day.
 	 */
 	record_outbound_ike_msg(pst, &reply_stream,
 				"packet from ikev2_child_out_cont");
@@ -6309,6 +6257,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	/*
 	 * Variables for generating response.
 	 * NOTE: only meaningful if "responding" is true!
+	 * These declarations must be placed so early because they must be in scope for
+	 * all of the several chunks of code that handle responding.
 	 */
 
 	unsigned char *iv = NULL;	/* initialized to silence GCC */
@@ -6317,7 +6267,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	pb_stream rbody;
 	pb_stream e_pbs;
 	pb_stream e_pbs_cipher;
-
 
 	if (responding) {
 		/* make sure HDR is at start of a clean buffer */
@@ -6354,41 +6303,15 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 
 		/* insert an Encryption payload header */
 
-		{
-			struct ikev2_generic e;
-
-			/*
-			 * IKE SA DELETE response is NONE
-			 * IPsec SA DELETE response is DELETE
-			 * Neither can mix with MOBIKE
-			 */
-			e.isag_np =
-				del_ike ? ISAKMP_NEXT_v2NONE :
+		iv = start_SK_payload(
+			st,
+			del_ike ? ISAKMP_NEXT_v2NONE :
 				ndp != 0 ? ISAKMP_NEXT_v2D :
 				send_mobike_resp ? ISAKMP_NEXT_v2N :
-				ISAKMP_NEXT_v2NONE;
-
-			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-
-			if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
-				return STF_INTERNAL_ERROR;
-		}
-
-		/* insert IV */
-		iv = e_pbs.cur;
-		if (!emit_wire_iv(st, &e_pbs))
+				ISAKMP_NEXT_v2NONE,
+			&rbody, &e_pbs, &e_pbs_cipher);
+		if (iv == NULL)
 			return STF_INTERNAL_ERROR;
-
-		/*
-		 * Note where cleartext starts by inserting an extra layer of
-		 * PBS that has no header!
-		 * Any First NP backpatching must look through this layer.
-		 */
-		const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
-
-		if (!out_struct(&fake_struct, &ikev2_encrypted_portion, &e_pbs, &e_pbs_cipher))
-			return STF_INTERNAL_ERROR;
-		move_pbs_previous_np(&e_pbs_cipher, &e_pbs);	/* backpatching obligation */
 
 		encstart = e_pbs_cipher.cur;
 
@@ -6565,31 +6488,23 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		 * Close up the packet and send it.
 		 */
 
-		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
+		uint8_t *authloc = end_encrypted_payload(st, &rbody, &e_pbs, &e_pbs_cipher);
+		if (authloc == NULL)
 			return STF_INTERNAL_ERROR;
 
-		move_pbs_previous_np(&e_pbs, &e_pbs_cipher);	/* backpatching obligation */
-		close_output_pbs(&e_pbs_cipher);
+		close_output_pbs(&reply_stream);
 
-		{
-			unsigned char *authloc = ikev2_authloc(st, &e_pbs);
-
-			passert(authloc != NULL);
-
-			close_output_pbs(&e_pbs);
-			close_output_pbs(&rbody);
-			close_output_pbs(&reply_stream);
-
-			stf_status ret =
-				ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
-						  iv, encstart, authloc);
-			if (ret != STF_OK)
-				return ret;
-		}
+		stf_status ret =
+			ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
+					  iv, encstart, authloc);
+		if (ret != STF_OK)
+			return ret;
 
 		struct mobike mobike_remote;
 
 		mobike_switch_remote(md, &mobike_remote);
+
+		/* ??? should we support fragmenting?  Maybe one day. */
 		record_and_send_v2_ike_msg(st, &reply_stream,
 					   "reply packet for process_encrypted_informational_ikev2");
 		st->st_msgid_lastreplied = md->msgid_received;

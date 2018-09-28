@@ -98,7 +98,7 @@ bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
 uint8_t build_ikev2_version(void);
 uint8_t build_ikev2_critical(bool impair);
 bool emit_wire_iv(const struct state *st, pb_stream *pbs);
-uint8_t *ikev2_authloc(struct state *st,
+uint8_t *ikev2_authloc(const struct state *st,
 		       pb_stream *e_pbs);
 stf_status ikev2_encrypt_msg(struct ike_sa *ike,
 			     uint8_t *auth_start,
