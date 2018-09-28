@@ -7,7 +7,7 @@
 For detailed developer information about NSS, see
 http://www.mozilla.org/projects/security/pki/nss/
 
-The NSS crypto library is user space library. It is only used with the
+The NSS crypto library is a user space library. It is only used with the
 libreswan userspace IKE daemon pluto for cryptographic operations. NSS
 does not perform IPsec crypto operations inside the kernel (KLIPS
 nor NETKEY)
@@ -133,12 +133,12 @@ https://github.com/libreswan/libreswan/tree/master/testing/x509
 
 Below, we will be using the nss tools to generate certificates
 
-* To create a certificate authority (CA certficate):
+* To create a certificate authority (CA certificate):
 
 	certutil -S -k rsa -n "ExampleCA" -s "CN=Example CA Inc" -v 12 \
 		-t "CT,," -x -d sql:/etc/ipsec.d
 
-It creates a certificate with RSA keys (-k rsa) with the nick name
+It creates a certificate with RSA keys (-k rsa) with the nickname
 "ExampleCA", and with common name "Example CA Inc". The option
 "-v" specifies the certificates validy period. "-t" specifies the attributes
 of the certificate. "C" is required for creating a CA certificate. "-x" mean
@@ -153,7 +153,7 @@ certificate can be obtained from anywhere in the world.
 	certutil -S -k rsa -c "ExampleCA" -n "user1" -s "CN=User Common Name" \
 		-v 12 -t "u,u,u" -d sql:/etc/ipsec.d
 
-It creates a user cert with nick name "user1" with attributes
+It creates a user cert with nickname "user1" with attributes
 "u,u,u" signed by the CA cert "ExampleCA".
 
 NOTE: You must provide a nick name when creating a user certificate,
@@ -179,7 +179,7 @@ This is specified using:
 
  : RSA nickname
 
-NOTE: In openswan and freeswan  it was required to specify a file name or
+NOTE: In openswan and freeswan it was required to specify a file name or
 password. With libreswan, this is not required.
 NOTE: openswan and freeswan stored private keys in /etc/ipsec.d/private/
 This directory does not exist for libreswan.
@@ -208,7 +208,7 @@ Now you can import the file into the NSS db:
 	ipsec import certkey.p12
 
 If you did not pick a name using the -name option, you can use
-certutil -L -d sql:/etc/ipsec.d to figure out the name NSS picked durnig
+certutil -L -d sql:/etc/ipsec.d to figure out the name NSS picked during
 the import.
 
 Add following to /etc/ipsec.secrets file:
