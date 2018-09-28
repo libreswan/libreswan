@@ -82,7 +82,12 @@
 
 static const char *pluto_name;	/* name (path) we were invoked with */
 
-pthread_t main_thread;
+static pthread_t main_thread;
+
+bool in_main_thread(void)
+{
+	return pthread_equal(pthread_self(), main_thread);
+}
 
 static char *rundir = NULL;
 char *pluto_listen = NULL;

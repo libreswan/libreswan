@@ -512,7 +512,7 @@ static void whack_raw(struct lswlog *b, enum rc_type rc)
 	 * Helper threads, which are asynchronous, shouldn't be trying
 	 * to directly emit whack output.
 	 */
-	if (pthread_equal(pthread_self(), main_thread)) {
+	if (in_main_thread()) {
 		if (whack_log_p()) {
 			/*
 			 * On the assumption that logging to whack is
@@ -534,7 +534,7 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 			      struct connection *cur_connection,
 			      const ip_address *cur_from)
 {
-	if (!pthread_equal(pthread_self(), main_thread)) {
+	if (!in_main_thread()) {
 		return;
 	}
 
@@ -684,14 +684,14 @@ void libreswan_exit(enum rc_type rc)
 
 void whack_log_pre(enum rc_type rc, struct lswlog *buf)
 {
-	passert(pthread_equal(pthread_self(), main_thread));
+	passert(in_main_thread());
 	add_whack_rc_prefix(buf, rc);
 	lswlog_log_prefix(buf);
 }
 
 void lswlog_to_whack_stream(struct lswlog *buf)
 {
-	passert(pthread_equal(pthread_self(), main_thread));
+	passert(in_main_thread());
 
 	fd_t wfd = fd_p(whack_log_fd) ? whack_log_fd :
 		cur_state != NULL ? cur_state->st_whack_sock :
@@ -726,7 +726,7 @@ void lswlog_to_whack_stream(struct lswlog *buf)
 
 bool whack_log_p(void)
 {
-	if (!pthread_equal(pthread_self(), main_thread)) {
+	if (!in_main_thread()) {
 		PEXPECT_LOG("%s", "whack_log*() must be called from the main thread");
 		return false;
 	}
