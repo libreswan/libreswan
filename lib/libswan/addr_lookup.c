@@ -52,11 +52,11 @@ static void resolve_ppp_peer(char *interface, sa_family_t family, char *peer, bo
 	/* Find the right interface */
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next)
 		if ((ifa->ifa_flags & IFF_POINTOPOINT) != 0 &&
-		    streq(ifa->ifa_name, interface)) {
+			streq(ifa->ifa_name, interface)) {
 			struct sockaddr *sa = ifa->ifa_ifu.ifu_dstaddr;
 
 			if (sa != NULL && sa->sa_family == family &&
-			    getnameinfo(sa,
+				getnameinfo(sa,
 					sa->sa_family == AF_INET ?
 						sizeof(struct sockaddr_in) :
 						sizeof(struct sockaddr_in6),
@@ -181,7 +181,7 @@ static ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
 		struct nlmsghdr *nlhdr = (struct nlmsghdr *)(*pbuf + msglen);
 
 		if (!NLMSG_OK(nlhdr, (size_t)readlen) ||
-		    nlhdr->nlmsg_type == NLMSG_ERROR)
+			nlhdr->nlmsg_type == NLMSG_ERROR)
 			return -1;
 
 		/* Move read pointer */
@@ -196,8 +196,7 @@ static ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
 			break;
 
 		/* all done if this is the one we were searching for */
-		if (nlhdr->nlmsg_seq == seqnum &&
-		    nlhdr->nlmsg_pid == pid)
+		if (nlhdr->nlmsg_seq == seqnum && nlhdr->nlmsg_pid == pid)
 			break;
 
 		/* Allocate more memory for buffer if needed. */
@@ -332,7 +331,7 @@ int resolve_defaultroute_one(struct starter_end *host,
 		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
 		has_dst = TRUE;
 		if (seeking_src && seeking_gateway &&
-		    host->addr_family == AF_INET) {
+			host->addr_family == AF_INET) {
 			/*
 			 * If we have only peer IP and no gateway/src we must
 			 * do two queries:
@@ -404,7 +403,7 @@ int resolve_defaultroute_one(struct starter_end *host,
 		struct rtmsg *rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
 
 		if (rtmsg->rtm_family != AF_INET &&
-		    rtmsg->rtm_family != AF_INET6)
+			rtmsg->rtm_family != AF_INET6)
 			continue;
 
 		/* Parse one route entry */
@@ -476,7 +475,7 @@ int resolve_defaultroute_one(struct starter_end *host,
 		}
 
 		if (seeking_gateway && r_destination[0] == '\0' &&
-		    (has_dst || r_source[0] == '\0')) {
+			(has_dst || r_source[0] == '\0')) {
 			if (r_gateway[0] == '\0' && r_interface[0] != '\0') {
 				/*
 				 * Point-to-Point default gw without "via IP"
