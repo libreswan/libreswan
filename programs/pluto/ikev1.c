@@ -1748,13 +1748,11 @@ void process_packet_tail(struct msg_digest **mdp)
 		if (st == NULL) {
 			libreswan_log(
 				"discarding encrypted message for an unknown ISAKMP SA");
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED /* XXX ? */);
 			return;
 		}
 		if (st->st_skey_ei_nss == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"discarding encrypted message because we haven't yet negotiated keying material");
-			SEND_NOTIFICATION(INVALID_FLAGS);
 			return;
 		}
 
@@ -1855,7 +1853,9 @@ void process_packet_tail(struct msg_digest **mdp)
 				loglog(RC_LOG_SERIOUS,
 				       "more than %zu payloads in message; ignored",
 				       elemsof(md->digest));
-				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+				if (!md->encrypted) {
+					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+				}
 				return;
 			}
 			struct payload_digest *const pd = md->digest + md->digest_roof;
@@ -1939,7 +1939,9 @@ void process_packet_tail(struct msg_digest **mdp)
 						loglog(RC_LOG_SERIOUS,
 						       "%smalformed payload in packet",
 						       excuse);
-						SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+						if (!md->encrypted) {
+							SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+						}
 						return;
 					}
 					np = pd->payload.generic.isag_np;
@@ -1951,7 +1953,9 @@ void process_packet_tail(struct msg_digest **mdp)
 						"%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 					       excuse,
 					       enum_show(&ikev1_payload_names, np));
-					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
+					if (!md->encrypted) {
+						SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
+					}
 					return;
 				}
 				passert(sd != NULL);
@@ -1974,7 +1978,9 @@ void process_packet_tail(struct msg_digest **mdp)
 						excuse,
 						enum_show(&ikev1_payload_names, np),
 						st->st_state_name);
-					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
+					if (!md->encrypted) {
+						SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
+					}
 					return;
 				}
 
@@ -1990,7 +1996,9 @@ void process_packet_tail(struct msg_digest **mdp)
 				loglog(RC_LOG_SERIOUS,
 				       "%smalformed payload in packet",
 				       excuse);
-				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+				if (!md->encrypted) {
+					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+				}
 				return;
 			}
 
@@ -2049,7 +2057,9 @@ void process_packet_tail(struct msg_digest **mdp)
 			       "message for %s is missing payloads %s",
 			       enum_name(&state_names, from_state),
 			       bitnamesof(payload_name_ikev1, needed));
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			if (!md->encrypted) {
+				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			}
 			return;
 		}
 	}
@@ -2064,7 +2074,9 @@ void process_packet_tail(struct msg_digest **mdp)
 		    md->hdr.isa_np != ISAKMP_NEXT_SA) {
 			loglog(RC_LOG_SERIOUS,
 			       "malformed Phase 1 message: does not start with an SA payload");
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			if (!md->encrypted) {
+				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			}
 			return;
 		}
 	} else if (IS_QUICK(from_state)) {
@@ -2086,7 +2098,9 @@ void process_packet_tail(struct msg_digest **mdp)
 		if (md->hdr.isa_np != ISAKMP_NEXT_HASH) {
 			loglog(RC_LOG_SERIOUS,
 			       "malformed Quick Mode message: does not start with a HASH payload");
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			if (!md->encrypted) {
+				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			}
 			return;
 		}
 
@@ -2100,7 +2114,9 @@ void process_packet_tail(struct msg_digest **mdp)
 				if (p != &md->digest[i]) {
 					loglog(RC_LOG_SERIOUS,
 					       "malformed Quick Mode message: SA payload is in wrong position");
-					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+					if (!md->encrypted) {
+						SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+					}
 					return;
 				}
 				p = p->next;
