@@ -17,3 +17,4 @@ s/add bare shunt 0x[^ ]* /add bare shunt 0xPOINTER /
 s/delete bare shunt 0x[^ ]* /delete bare shunt 0xPOINTER /
 s/ike-scan \(.*\) with/ike-scan XX with/
 s/Ending ike-scan \(.*\):/ Ending ike-scan XX:/
+s/conntrack v[0-9]*\.[0-9]*\.[0-9]* /conntrack vA.B.C /
