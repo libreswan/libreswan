@@ -49,7 +49,7 @@ west #
 west #
  ../../pluto/bin/wait-until-alive 192.1.2.23
 ping -n -c 1 -w 4 192.1.2.23
-connect: Network is unreachable
+connect: No route to host
 destination 192.1.2.23 is dead
 west #
  sleep 45
@@ -61,11 +61,10 @@ west #
  # But shuntstatus only shows bare shunts, not connection shunts :(
 west #
  conntrack -L -n
-[ 00.00] ctnetlink v0.93: registering with nfnetlink.
-conntrack v1.4.3 (conntrack-tools): 0 flow entries have been shown.
+conntrack vA.B.C (conntrack-tools): 0 flow entries have been shown.
 west #
  conntrack -F
-conntrack v1.4.3 (conntrack-tools): connection tracking table has been emptied.
+conntrack vA.B.C (conntrack-tools): connection tracking table has been emptied.
 west #
  ipsec whack --trafficstatus
 west #
@@ -96,7 +95,7 @@ west #
  ping -w 2 -q -n -c 3 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
-3 packets transmitted, 0 received, 100% packet loss, time XXXX
+2 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
  # Remove the null route
 west #
