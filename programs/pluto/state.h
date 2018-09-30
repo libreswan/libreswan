@@ -360,6 +360,17 @@ struct state {
 
 	chunk_t st_rpacket;			/* Received packet - v1 only */
 
+	/*
+	 * The last successful state transition (edge, microcode).
+	 * Used when transitioning to this current state.
+	 */
+	const struct state_v1_microcode *st_v1_last_transition;
+#if 0
+	const struct state_v1_microcode *st_v1_next_transition;
+	const struct state_v2_microcode *st_v2_last_transition;
+	const struct state_v2_microcode *st_v2_next_transition;
+#endif
+
 	/* Initialization Vectors for IKE encryption */
 
 	u_char st_new_iv[MAX_DIGEST_LEN];	/* tentative IV (calculated from current packet) */

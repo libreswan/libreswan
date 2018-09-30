@@ -988,7 +988,21 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
 	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
 		  st->st_rpacket.len)) {
-		if (st->st_finite_state->fs_flags & SMF_RETRANSMIT_ON_DUPLICATE) {
+		/*
+		 * Duplicate.  Drop or retransmit?
+		 *
+		 * Only re-transmit when the last state transition
+		 * (triggered by this packet the first time) included
+		 * a reply.
+		 *
+		 * XXX: is SMF_RETRANSMIT_ON_DUPLICATE useful or
+		 * correct?
+		 */
+		bool replied = (st->st_v1_last_transition != NULL &&
+				(st->st_v1_last_transition->flags & SMF_REPLY));
+		bool retransmit_on_duplicate =
+			(st->st_finite_state->fs_flags & SMF_RETRANSMIT_ON_DUPLICATE);
+		if (replied && retransmit_on_duplicate) {
 			/*
 			 * States with EVENT_SO_DISCARD always respond
 			 * to re-transmits; else cap.
@@ -1007,8 +1021,11 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 		} else {
 			LSWDBGP(DBG_CONTROLMORE, buf) {
 				lswlog_log_prefix(buf);
-				lswlogf(buf, "discarding duplicate packet; already %s",
-				st->st_state_name);
+				lswlogf(buf, "discarding duplicate packet; already %s;",
+					st->st_state_name);
+				lswlogf(buf, " replied=%s", replied ? "T" : "F");
+				lswlogf(buf, " retransmit_on_duplicate=%s",
+					retransmit_on_duplicate ? "T" : "F");
 			}
 		}
 		return true;
@@ -2439,13 +2456,23 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			nat_traversal_change_port_lookup(md, st);
 		}
 
+		/*
+		 * Save both the received packet, and this
+		 * state-transition.
+		 *
+		 * Only when the (last) state transition was a "reply"
+		 * should a duplicate packet trigger a retransmit
+		 * (else they get discarded).
+		 *
+		 * XXX: .st_finite_state .fs_flags & SMF_REPLY can't
+		 * be used because it contains flags for the new state
+		 * not the old-to-new state transition.
+		 */
+		remember_received_packet(st, md);
+		st->st_v1_last_transition = md->smc;
+
 		/* if requested, send the new reply packet */
 		if (smc->flags & SMF_REPLY) {
-			/*
-			 * Since replying, save previous packet so
-			 * that re-transmits can deal with it.
-			 */
-			remember_received_packet(st, md);
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
 				DBG_log("sending reply packet to %s:%u (from port %u)",
