@@ -46,7 +46,6 @@ west #
 002 "westnet-eastnet-ipv4-psk-ppk" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 003 "westnet-eastnet-ipv4-psk-ppk" #1: connection requires PPK, but we didn't find one
 036 "westnet-eastnet-ipv4-psk-ppk" #1: encountered fatal error in state STATE_PARENT_I1
-000 "westnet-eastnet-ipv4-psk-ppk" #1: fatal error for IKE SA, but releasing whack for pending IPSEC SA
 west #
  echo done
 done

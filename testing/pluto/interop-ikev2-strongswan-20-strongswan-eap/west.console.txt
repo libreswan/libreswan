@@ -42,11 +42,11 @@ establishing CHILD_SA rw-eap{1}
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ EF(2/2) ]
-received fragment #2 of 2, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ EF(1/2) ]
-received fragment #1 of 2, reassembling fragmented IKE message
+received fragment #1 of 2, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(2/2) ]
+received fragment #2 of 2, reassembling fragmented IKE message
 parsed IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/MD5 ]
 received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
@@ -77,8 +77,6 @@ IKE_SA rw-eap[1] established between 192.1.2.45[user1@testing.libreswan.org]...1
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 CHILD_SA rw-eap{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
-received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs
-peer supports MOBIKE
 connection 'rw-eap' established successfully
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254

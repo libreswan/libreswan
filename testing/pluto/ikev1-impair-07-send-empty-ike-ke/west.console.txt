@@ -21,7 +21,7 @@ west #
 002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: sending empty KE (g^x)
 106 "westnet-eastnet-ipv4-psk" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 003 "westnet-eastnet-ipv4-psk" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-003 "westnet-eastnet-ipv4-psk" #1: received and ignored informational message
+003 "westnet-eastnet-ipv4-psk" #1: received and ignored notification payload: INVALID_KEY_INFORMATION
 002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk" #1: deleting state (STATE_MAIN_I2) and NOT sending notification
 west #
@@ -56,6 +56,7 @@ west #
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
 "westnet-eastnet-ipv4-psk" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 | processing informational INVALID_KEY_INFORMATION (17)
+"westnet-eastnet-ipv4-psk" #1: received and ignored notification payload: INVALID_KEY_INFORMATION
 | complete v1 state transition with INVALID_KEY_INFORMATION
 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)

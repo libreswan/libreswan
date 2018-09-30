@@ -32,6 +32,7 @@ west #
 |    Notify Message Type: NO_PROPOSAL_CHOSEN (0xe)
 "westnet-eastnet-ipv4-psk-ikev1" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 | processing informational NO_PROPOSAL_CHOSEN (14)
+"westnet-eastnet-ipv4-psk-ikev1" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 west #
 west #
  ../bin/check-for-core.sh

@@ -41,8 +41,8 @@ Certificate Nickname                                         Trust Attributes
 mainca                                                       CT,, 
 nic                                                          P,,  
 west_chain_endcert                                           u,u,u
-east_chain_2                                                 CT,, 
-east_chain_1                                                 CT,, 
+west_chain_int_2                                             CT,, 
+west_chain_int_1                                             CT,, 
 west #
  echo "initdone"
 initdone
@@ -67,8 +67,8 @@ Certificate Nickname                                         Trust Attributes
 mainca                                                       CT,, 
 nic                                                          P,,  
 west_chain_endcert                                           u,u,u
-east_chain_2                                                 CT,, 
-east_chain_1                                                 CT,, 
+west_chain_int_2                                             CT,, 
+west_chain_int_1                                             CT,, 
 west #
 west #
  ../bin/check-for-core.sh

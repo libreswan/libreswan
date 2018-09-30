@@ -82,7 +82,21 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=null_auth_aes_gmac-null": deleting non-instance connection
 west #
  modinfo chacha20poly1305 > /dev/null && ../bin/libreswan-up-down.sh esp=chacha20_poly1305-null -I 192.0.1.254 192.0.2.254 || true
-modinfo: ERROR: Module chacha20poly1305 not found.
+002 added connection description "esp=chacha20_poly1305-null"
+002 "esp=chacha20_poly1305-null" #7: initiating v2 parent SA
+133 "esp=chacha20_poly1305-null" #7: initiate
+133 "esp=chacha20_poly1305-null" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "esp=chacha20_poly1305-null" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "esp=chacha20_poly1305-null" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "esp=chacha20_poly1305-null" #8: Authenticated using authby=secret
+002 "esp=chacha20_poly1305-null" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "esp=chacha20_poly1305-null" #8: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305-NONE NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "esp=chacha20_poly1305-null": terminating SAs using this connection
+002 "esp=chacha20_poly1305-null" #8: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "esp=chacha20_poly1305-null" #8: ESP traffic information: in=84B out=84B
+002 "esp=chacha20_poly1305-null" #7: deleting state (STATE_PARENT_I3) and sending notification
+002 "esp=chacha20_poly1305-null": deleting non-instance connection
 west #
  echo done
 done
