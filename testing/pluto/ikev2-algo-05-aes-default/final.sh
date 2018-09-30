@@ -1,5 +1,5 @@
 : dump key-length attributes to the connsole - none can be zero
-grep -A 1 'af+type: IKEv2_KEY_LENGTH' /tmp/pluto.log
+grep -A 1 'af+type: AF+IKEv2_KEY_LENGTH' /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

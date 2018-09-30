@@ -121,89 +121,89 @@ done
 west #
  : dump key-length attributes to the connsole - none can be zero
 west #
- grep -A 1 'af+type: IKEv2_KEY_LENGTH' /tmp/pluto.log
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+ grep -A 1 'af+type: AF+IKEv2_KEY_LENGTH' /tmp/pluto.log
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 256 (0x100)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (0x80)
 west #
 west #
