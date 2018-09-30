@@ -10,9 +10,9 @@ east #
 east #
  ipsec auto --status
 000 using kernel interface: netkey
+000 interface eth1/eth1 2001:db8:1:2::23@500
 000 interface lo/lo ::1@500
 000 interface eth2/eth2 2001:db8:9:2::23@500
-000 interface eth1/eth1 2001:db8:1:2::23@500
 000 interface eth0/eth0 2001:db8:0:2::254@500
 000 interface lo/lo 127.0.0.1@4500
 000 interface lo/lo 127.0.0.1@500
@@ -186,8 +186,6 @@ unreachable ::/96 dev lo metric 1024 error -XXXX
 unreachable ::ffff:0.0.0.0/96 dev lo metric 1024 error -XXXX
 2001:db8:0:2::/64 dev eth0 proto kernel metric 256
 2001:db8::/48 via 2001:db8:1:2::45 dev eth1 metric 1024
-2001:db8:1:2::45 dev eth1 metric 0
-  cache
 2001:db8:1:2::/64 dev eth1 proto kernel metric 256
 2001:db8:9:2::/64 dev eth2 proto kernel metric 256
 unreachable 2002:a00::/24 dev lo metric 1024 error -XXXX

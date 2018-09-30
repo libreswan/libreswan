@@ -88,29 +88,29 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
-unreachable ::/96 dev lo  metric 1024  error -113
-unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -113
-2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
-2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
-2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
-2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
-unreachable 2002:a00::/24 dev lo  metric 1024  error -113
-unreachable 2002:7f00::/24 dev lo  metric 1024  error -113
-unreachable 2002:a9fe::/32 dev lo  metric 1024  error -113
-unreachable 2002:ac10::/28 dev lo  metric 1024  error -113
-unreachable 2002:c0a8::/32 dev lo  metric 1024  error -113
-unreachable 2002:e000::/19 dev lo  metric 1024  error -113
-unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -113
-fe80::/64 dev eth0  proto kernel  metric 256 
-fe80::/64 dev eth1  proto kernel  metric 256 
-fe80::/64 dev eth2  proto kernel  metric 256 
-default via 2001:db8:1:2::254 dev eth1  metric 1 
-default via 2001:db8:1:2::254 dev eth1  metric 1024 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
+unreachable ::/96 dev lo metric 1024 error -XXXX
+unreachable ::ffff:0.0.0.0/96 dev lo metric 1024 error -XXXX
+2001:db8:0:1::/64 dev eth0 proto kernel metric 256
+2001:db8::/48 via 2001:db8:1:2::23 dev eth1 metric 1024
+2001:db8:1:2::/64 dev eth1 proto kernel metric 256
+2001:db8:9:4::/64 dev eth2 proto kernel metric 256
+unreachable 2002:a00::/24 dev lo metric 1024 error -XXXX
+unreachable 2002:7f00::/24 dev lo metric 1024 error -XXXX
+unreachable 2002:a9fe::/32 dev lo metric 1024 error -XXXX
+unreachable 2002:ac10::/28 dev lo metric 1024 error -XXXX
+unreachable 2002:c0a8::/32 dev lo metric 1024 error -XXXX
+unreachable 2002:e000::/19 dev lo metric 1024 error -XXXX
+unreachable 3ffe:ffff::/32 dev lo metric 1024 error -XXXX
+fe80::/64 dev eth0 proto kernel metric 256
+fe80::/64 dev eth1 proto kernel metric 256
+fe80::/64 dev eth2 proto kernel metric 256
+default via 2001:db8:1:2::254 dev eth1 metric 1
+default via 2001:db8:1:2::254 dev eth1 metric 1024
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
@@ -162,29 +162,29 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
-unreachable ::/96 dev lo  metric 1024  error -113
-unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -113
-2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
-2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
-2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
-2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
-unreachable 2002:a00::/24 dev lo  metric 1024  error -113
-unreachable 2002:7f00::/24 dev lo  metric 1024  error -113
-unreachable 2002:a9fe::/32 dev lo  metric 1024  error -113
-unreachable 2002:ac10::/28 dev lo  metric 1024  error -113
-unreachable 2002:c0a8::/32 dev lo  metric 1024  error -113
-unreachable 2002:e000::/19 dev lo  metric 1024  error -113
-unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -113
-fe80::/64 dev eth0  proto kernel  metric 256 
-fe80::/64 dev eth1  proto kernel  metric 256 
-fe80::/64 dev eth2  proto kernel  metric 256 
-default via 2001:db8:1:2::254 dev eth1  metric 1 
-default via 2001:db8:1:2::254 dev eth1  metric 1024 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
+unreachable ::/96 dev lo metric 1024 error -XXXX
+unreachable ::ffff:0.0.0.0/96 dev lo metric 1024 error -XXXX
+2001:db8:0:1::/64 dev eth0 proto kernel metric 256
+2001:db8::/48 via 2001:db8:1:2::23 dev eth1 metric 1024
+2001:db8:1:2::/64 dev eth1 proto kernel metric 256
+2001:db8:9:4::/64 dev eth2 proto kernel metric 256
+unreachable 2002:a00::/24 dev lo metric 1024 error -XXXX
+unreachable 2002:7f00::/24 dev lo metric 1024 error -XXXX
+unreachable 2002:a9fe::/32 dev lo metric 1024 error -XXXX
+unreachable 2002:ac10::/28 dev lo metric 1024 error -XXXX
+unreachable 2002:c0a8::/32 dev lo metric 1024 error -XXXX
+unreachable 2002:e000::/19 dev lo metric 1024 error -XXXX
+unreachable 3ffe:ffff::/32 dev lo metric 1024 error -XXXX
+fe80::/64 dev eth0 proto kernel metric 256
+fe80::/64 dev eth1 proto kernel metric 256
+fe80::/64 dev eth2 proto kernel metric 256
+default via 2001:db8:1:2::254 dev eth1 metric 1
+default via 2001:db8:1:2::254 dev eth1 metric 1024
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

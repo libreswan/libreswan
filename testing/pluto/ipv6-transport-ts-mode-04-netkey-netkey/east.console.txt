@@ -64,8 +64,6 @@ unreachable ::/96 dev lo metric 1024 error -XXXX
 unreachable ::ffff:0.0.0.0/96 dev lo metric 1024 error -XXXX
 2001:db8:0:2::/64 dev eth0 proto kernel metric 256
 2001:db8::/48 via 2001:db8:1:2::45 dev eth1 metric 1024
-2001:db8:1:2::45 dev eth1 metric 0
-  cache
 2001:db8:1:2::/64 dev eth1 proto kernel metric 256
 2001:db8:9:2::/64 dev eth2 proto kernel metric 256
 unreachable 2002:a00::/24 dev lo metric 1024 error -XXXX
