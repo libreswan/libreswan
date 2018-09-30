@@ -613,8 +613,20 @@ void init_ikev1(void)
 		/*
 		 * Copy over the flags that apply to the state; and
 		 * not the edge.
+		 *
+		 * Expect all states to have the same bits set.
 		 */
-		fs->fs_flags = t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
+		if ((t->flags & fs->fs_flags) != fs->fs_flags) {
+			LSWDBGP(DBG_CONTROLMORE, buf) {
+				lswlogs(buf, "microcode for ");
+				lswlog_finite_state(buf, finite_states[t->state]);
+				lswlogs(buf, " -> ");
+				lswlog_finite_state(buf, fs);
+				lswlogf(buf, " missing flags 0x%"PRIxLSET,
+					fs->fs_flags);
+			}
+		}
+		fs->fs_flags |= t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
 		do {
 			t++;
 		} while (t->state == fs->fs_state);
