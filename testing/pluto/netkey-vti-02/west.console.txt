@@ -54,29 +54,26 @@ west #
 004 "westnet-eastnet-vti-01" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-vti-01" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "westnet-eastnet-vti-01" #2: STATE_QUICK_I1: initiate
+002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.disable_policy = 1
+002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.rp_filter = 0
+002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.forwarding = 1
+002 "westnet-eastnet-vti-01" #2: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
+002 "westnet-eastnet-vti-01" #2: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+002 "westnet-eastnet-vti-01" #2: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+002 "westnet-eastnet-vti-01" #2: route-client output: done ip route
 004 "westnet-eastnet-vti-01" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up  westnet-eastnet-vti-02
 002 "westnet-eastnet-vti-02" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "westnet-eastnet-vti-02" #3: STATE_QUICK_I1: initiate
+002 "westnet-eastnet-vti-02" #3: up-client output: vti interface "ipsec0" already exists with conflicting setting
+002 "westnet-eastnet-vti-02" #3: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+002 "westnet-eastnet-vti-02" #3: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+002 "westnet-eastnet-vti-02" #3: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
+002 "westnet-eastnet-vti-02" #3: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+002 "westnet-eastnet-vti-02" #3: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+002 "westnet-eastnet-vti-02" #3: route-client output: done ip route
 004 "westnet-eastnet-vti-02" #3: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
-west #
- ip tunnel add west-east mode vti remote 192.1.2.23 local 192.1.2.45 ikey 20 okey 21
-west #
- ip link set west-east up
-west #
- sysctl -w net.ipv4.conf.west-east.disable_policy=1
-net.ipv4.conf.west-east.disable_policy = 1
-west #
- sysctl -w net.ipv4.conf.west-east.rp_filter=0
-net.ipv4.conf.west-east.rp_filter = 0
-west #
- sysctl -w net.ipv4.conf.west-east.forwarding=1
-net.ipv4.conf.west-east.forwarding = 1
-west #
- ip route add 192.0.2.0/24 dev west-east
-west #
- ip route add 10.0.2.0/24 dev west-east
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -131,44 +128,44 @@ src 192.1.2.45 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 10.0.1.0/24 dst 10.0.2.0/24
 	dir out priority 1042407 ptype main
-	mark 21/0xffffffff
+	mark 0x15/0xffffffff
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 src 10.0.2.0/24 dst 10.0.1.0/24
 	dir fwd priority 1042407 ptype main
-	mark 20/0xffffffff
+	mark 0x14/0xffffffff
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
 src 10.0.2.0/24 dst 10.0.1.0/24
 	dir in priority 1042407 ptype main
-	mark 20/0xffffffff
+	mark 0x14/0xffffffff
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority 1042407 ptype main
-	mark 21/0xffffffff
+	mark 0x15/0xffffffff
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24
 	dir fwd priority 1042407 ptype main
-	mark 20/0xffffffff
+	mark 0x14/0xffffffff
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24
 	dir in priority 1042407 ptype main
-	mark 20/0xffffffff
+	mark 0x14/0xffffffff
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1
-10.0.2.0/24 dev west-east scope link
+10.0.2.0/24 dev ipsec0 scope link
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 dev west-east scope link
+192.0.2.0/24 dev ipsec0 scope link
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
 NSS_CERTIFICATES
