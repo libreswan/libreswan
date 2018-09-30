@@ -20,8 +20,12 @@ initdone
 east #
  ping -n -c 4 10.0.10.1
 PING 10.0.10.1 (10.0.10.1) 56(84) bytes of data.
+From 192.1.2.254 icmp_seq=1 Destination Net Unreachable
+From 192.1.2.254 icmp_seq=2 Destination Net Unreachable
+From 192.1.2.254 icmp_seq=3 Destination Net Unreachable
+From 192.1.2.254 icmp_seq=4 Destination Net Unreachable
 --- 10.0.10.1 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+4 packets transmitted, 0 received, +4 errors, 100% packet loss, time XXXX
 east #
  ipsec whack --trafficstatus
 006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===192.1.2.45/32, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=192.1.2.45/32

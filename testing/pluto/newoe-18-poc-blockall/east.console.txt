@@ -22,10 +22,16 @@ XFRM state:
 XFRM policy:
 src 0.0.0.0/0 dst 192.1.2.23/32
 	dir fwd action block priority 1564639 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
 src 0.0.0.0/0 dst 192.1.2.23/32
 	dir in action block priority 1564639 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
 src 192.1.2.23/32 dst 0.0.0.0/0
 	dir out action block priority 1564639 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
 src 192.1.2.23/32 dst 192.1.2.253/32
 	dir out priority 1564639 ptype main
 src 192.1.2.23/32 dst 192.1.2.254/32
