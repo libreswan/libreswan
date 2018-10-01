@@ -174,27 +174,21 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- sed -n -e '/IMPAIR: start duplicate packet/,/IMPAIR: stop duplicate packet/ { /^[^|]/ p }' /tmp/pluto.log
-IMPAIR: start duplicate packet
+ sed -n -e '/IMPAIR: start processing duplicate packet/,/IMPAIR: stop processing duplicate packet/ { /^[^|]/ p }' /tmp/pluto.log
+IMPAIR: start processing duplicate packet (792 bytes)
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R1
-IMPAIR: stop duplicate packet
-IMPAIR: start duplicate packet
+IMPAIR: stop processing duplicate packet
+IMPAIR: start processing duplicate packet (396 bytes)
 "westnet-eastnet" #1: "westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_MAIN_R1
-IMPAIR: stop duplicate packet
-IMPAIR: start duplicate packet
+IMPAIR: stop processing duplicate packet
+IMPAIR: start processing duplicate packet (332 bytes)
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
-IMPAIR: stop duplicate packet
-IMPAIR: start duplicate packet
-"westnet-eastnet" #1: ignoring informational payload INVALID_PAYLOAD_TYPE, msgid=00000000, length=12
-"westnet-eastnet" #1: received and ignored informational message
-IMPAIR: stop duplicate packet
-IMPAIR: start duplicate packet
+IMPAIR: stop processing duplicate packet
+IMPAIR: start processing duplicate packet (476 bytes)
 "westnet-eastnet" #2: "westnet-eastnet" #2: discarding packet received during asynchronous work (DNS or crypto) in STATE_QUICK_R0
-IMPAIR: stop duplicate packet
-IMPAIR: start duplicate packet
-"westnet-eastnet" #2: message ignored because it contains an unexpected payload type (ISAKMP_NEXT_HASH)
-"westnet-eastnet" #2: sending encrypted notification INVALID_PAYLOAD_TYPE to 192.1.2.45:500
-IMPAIR: stop duplicate packet
+IMPAIR: stop processing duplicate packet
+IMPAIR: start processing duplicate packet (76 bytes)
+IMPAIR: stop processing duplicate packet
 east #
 east #
  ../bin/check-for-core.sh
