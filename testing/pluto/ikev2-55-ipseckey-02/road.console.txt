@@ -86,7 +86,7 @@ road #
 002 "road-east-2" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 003 "road-east-2" #1: Can't find the certificate or private key from the NSS CKA_ID
 003 "road-east-2" #1: Failed to find our RSA key
-031 "road-east-2" #1: STATE_PARENT_I2: max number of retransmissions (0) reached after 79.635 seconds.  Possible authentication failure: no acceptable response to our first encrypted message
+031 "road-east-2" #1: STATE_PARENT_I2: max number of retransmissions (0) reached after 57.587 seconds.  Possible authentication failure: no acceptable response to our first encrypted message
 000 "road-east-2" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 road #
  ping -n -c 4 -I 192.1.3.209 192.1.2.23
