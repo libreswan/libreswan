@@ -2481,7 +2481,7 @@ static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 
 bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 {
-	if (space_for(len, outs, "%zu bytes of %s", len, name)) {
+	if (space_for(len, outs, "%zu raw bytes of %s", len, name)) {
 		DBG(DBG_EMITTING, DBG_dump(name, bytes, len));
 		memcpy(outs->cur, bytes, len);
 		outs->cur += len;
@@ -2493,7 +2493,7 @@ bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 
 bool out_repeated_byte(uint8_t byte, size_t len, pb_stream *outs, const char *name)
 {
-	if (space_for(len, outs, "%zu 0x%02x bytes of %s", len, byte, name)) {
+	if (space_for(len, outs, "%zu 0x%02x repeated bytes of %s", len, byte, name)) {
 		memset(outs->cur, byte, len);
 		outs->cur += len;
 		return true;
