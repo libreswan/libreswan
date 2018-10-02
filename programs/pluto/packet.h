@@ -41,8 +41,8 @@ enum field_type {
 	ft_zig,			/* zero (ignore violations) */
 	ft_nat,			/* natural number (may be 0) */
 	ft_len,			/* length of this struct and any following crud */
-	ft_fcp,			/* message's first contained payload type field */
-	ft_pnp,			/* payload's next payload type field */
+	ft_mnpc,		/* message's Next Payload chain field */
+	ft_pnpc,		/* payload's Next Payload chain field */
 	ft_lss,			/* Last Substructure field */
 	ft_lv,			/* length/value field of attribute */
 	ft_enum,		/* value from an enumeration */
@@ -114,18 +114,21 @@ struct packet_byte_stream {
 	field_desc *lenfld_desc;	/* includes length */
 
 	/*
-	 * For patching Next Payload field in successive Payloads.
+	 * For patching IKEv2's Next Payload field chain.
 	 *
-	 * References the header of the previous payload in this stream.
-	 * Initially it may reference the First-Next-Payload field of parent
-	 * (in case of ft_fcp)
+	 * IKEv2 has a "chain" of next payloads.  The chain starts
+	 * with the message's Next Payload field, and then threads its
+	 * way through every single payload header.  For SK, it's Next
+	 * Payload field is for the first containing payload.
+	 *
+	 * IKEv1, provided payloads nested within an SK payload are
+	 * excluded (see below), is functionally equivalent and so can
+	 * also use this code.
 	 */
-	uint8_t *previous_np;	/* always one octet */
-	field_desc *previous_np_field;
-	struct_desc *previous_np_struct;
+	struct fixup next_payload_chain;
 
 	/*
-	 * For patching Last Substructure field.
+	 * For patching IKEv2's Last Substructure field.
 	 *
 	 * IKEv2 has nested substructures.  An SA Payload contains
 	 * Proposal Substructures, and a Proposal Substructure
@@ -187,7 +190,6 @@ extern void init_out_pbs(pb_stream *pbs, uint8_t *start, size_t len,
 			 const char *name);
 extern pb_stream open_out_pbs(const char *name, uint8_t *buffer,
 			      size_t sizeof_buffer);
-extern void move_pbs_previous_np(pb_stream *dst, pb_stream *src);
 
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
 		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;

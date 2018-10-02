@@ -3013,8 +3013,6 @@ static uint8_t *start_encrypted_payload(
 
 	if (!out_struct(&fake_struct, &ikev2_encrypted_portion, sk_pbs, enc_pbs))
 		return NULL;
-
-	move_pbs_previous_np(enc_pbs, sk_pbs);	/* backpatching obligation */
 	return iv;
 }
 
@@ -3045,7 +3043,6 @@ static uint8_t *end_encrypted_payload(
 	if (!ikev2_padup_pre_encrypt(st, enc_pbs))
 		return NULL;
 
-	move_pbs_previous_np(sk_pbs, enc_pbs);	/* backpatching obligation */
 	close_output_pbs(enc_pbs);
 
 	uint8_t *const authloc = ikev2_authloc(st, sk_pbs);
