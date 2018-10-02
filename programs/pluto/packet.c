@@ -715,8 +715,7 @@ static field_desc isanat_oa_fields[] = {
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ike_idtype_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
-	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
+	{ ft_zig, 24 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -996,8 +995,7 @@ static field_desc ikev2id_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev2_idtype_names },
-	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
-	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
+	{ ft_zig, 24 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL },
 };
 
@@ -1051,8 +1049,7 @@ static field_desc ikev2cp_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2_cfg_type", &ikev2_cp_type_names },
-	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
-	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
+	{ ft_zig, 24 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1163,8 +1160,7 @@ static field_desc ikev2a_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "auth method", &ikev2_auth_names },
-	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
-	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
+	{ ft_zig, 24 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1324,8 +1320,7 @@ static field_desc ikev2ts_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "number of TS", NULL },
-	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
-	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
+	{ ft_zig, 24 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 struct_desc ikev2_ts_i_desc = {
