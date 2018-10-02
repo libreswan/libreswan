@@ -62,8 +62,7 @@ static void resolve_ppp_peer(char *interface, sa_family_t family, char *peer, bo
 						sizeof(struct sockaddr_in6),
 					peer, NI_MAXHOST,
 					NULL, 0,
-					NI_NUMERICHOST) == 0)
-			{
+					NI_NUMERICHOST) == 0) {
 				if (verbose) {
 					printf("found peer %s to interface %s\n",
 						peer,

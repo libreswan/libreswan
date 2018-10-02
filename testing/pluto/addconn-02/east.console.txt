@@ -445,7 +445,7 @@ dst 178.62.192.1 via  dev eth1 src 178.62.253.21 table 254
 set addr: 178.62.253.21
 seeking_src = 0, seeking_gateway = 0, has_peer = 1
 conn: "test" modecfgdns=<unset>
-conn: "test" modecfgdomains=(null)
+conn: "test" modecfgdomains=<unset>
 conn: "test" modecfgbanner=<unset>
 conn: "test" mark=<unset>
 conn: "test" mark-in=<unset>

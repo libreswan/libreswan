@@ -666,7 +666,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 			msg.modecfg_dns);
 	msg.modecfg_domains = conn->modecfg_domains;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomains=%s",
-		conn->name, msg.modecfg_domains = NULL ? "<unset>" :
+		conn->name, msg.modecfg_domains == NULL ? "<unset>" :
 			msg.modecfg_domains);
 	msg.modecfg_banner = conn->modecfg_banner;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
