@@ -1857,7 +1857,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 #if 0
 			DBGF(DBG_PARSING, "%td (%td) '%s'.'%s' %d bytes ",
 			     (cur - ins->cur), (cur - ins->start),
-			     sd->name, fp->name == NULL ? "" : fp->name,
+			     sd->name, fp->name == NULL ? "?reserved?" : fp->name,
 			     fp->size);
 #endif
 
@@ -1870,7 +1870,9 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 						libreswan_log( "byte at offset %td (%td) of '%s'.'%s' is 0x%02"PRIx8" but should have been zero (ignored)",
 							       (cur - ins->cur),
 							       (cur - ins->start),
-							       sd->name, fp->name,
+							       sd->name,
+							       (fp->name != NULL ?
+								fp->name : "?reserved?"),
 							       byte);
 					}
 					cur++;
