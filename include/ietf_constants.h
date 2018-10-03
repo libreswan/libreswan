@@ -297,9 +297,57 @@
 /* Default is based on minimum IKEv2 requirement */
 #define DEFAULT_NONCE_SIZE 32 /* bytes */
 
-/* COOKIE_SIZE is also IKEv2 IKE SPI size */
-#define COOKIE_SIZE 8
-#define MAX_ISAKMP_SPI_SIZE 16
+/*
+ * Security Parameter Index (SPI):
+ *
+ * The IKE SA's SPI, which is a fixed part of the IKEv1/IKEv2 message
+ * header, is 8 bytes long.
+ *
+ * The CHILD SA's SPI is 4 bytes (IKEv2: 3.3.1.  Proposal
+ * Substructure).
+ *
+ * XXX:
+ *
+ * IKEv1, presumably as a way to ensure maximum confusion, used the
+ * term "cookie" when describing the IKE SA's SPI in the message
+ * header, and the term SPI when describing IKE SPIs (yes, one or two)
+ * within a payload (the term "cookie" is included as a parenthetical
+ * clarification).
+ *
+ * IKEv1, instead consistently uses SPI for both the IKE and CHILD
+ * SAs, that is both when describing the message header and the
+ * contents of payloads.  Unfortunately, IKEv2 then went on to use
+ * term "cookie" when describing its new cookie mechanism (implemented
+ * with notifications).
+ *
+ * This would have all been ok if FreeS/WAN had used the term SPI in
+ * its code.
+ *
+ * It didn't.
+ *
+ * Instead it choose to use the word "cookie".  Hence lingering
+ * presence of things like [ir]cookie, the macro COOKIE_SIZE (below),
+ * and IKEv1 centric types such as ipsec_spi_t in the code.
+ */
+
+#define IKE_SA_SPI_SIZE			8
+#define CHILD_SA_SPI_SIZE		4
+#define MAX_SPI_SIZE			IKE_SA_SPI_SIZE
+
+#define COOKIE_SIZE 			IKE_SA_SPI_SIZE
+
+/*
+ * XXX:
+ *
+ * For IKEv1, the maximum number of SPI bytes in some payloads.  For
+ * instance: rfc2408: 4.6.3.1 RESPONDER-LIFETIME: either sixteen (16)
+ * (two eight-octet ISAKMP cookies) or four (4) (one IPSEC SPI)
+ *
+ * XXX: this desperately needs a better name.  In IKEv2 SPI size
+ * always refers to the size of one SPI and never a pair.
+ */
+#define MAX_ISAKMP_SPI_SIZE 		(2 * IKE_SA_SPI_SIZE)
+
 
 /* IKEv2 DOS COOKIE */
 #define IKEv2_MAX_COOKIE_SIZE 64
