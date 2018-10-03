@@ -1092,7 +1092,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 	if (is_msg_request(md)) {
 		/* this an IKE request and not a response */
 		if (resp_state_with_msgid(pst->st_serialno,
-					  htonl(md->msgid_received)) != NULL) {
+					  md->msgid_received) != NULL) {
 			what = "CREATE_CHILD_SA Request retransmission ignored";
 			st = NULL;
 		} else if (md->from_state == STATE_V2_CREATE_R) {
@@ -1100,21 +1100,21 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IPSEC_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_CREATE_R);
-			st->st_msgid = htonl(md->msgid_received);
+			st->st_msgid = md->msgid_received;
 			insert_state(st); /* needed for delete - we are duplicating early */
 		} else {
 			what = "IKE Rekey Request";
 			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IKE_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
-			st->st_msgid = htonl(md->msgid_received);
+			st->st_msgid = md->msgid_received;
 			/* can not call insert_state yet. no IKE cookies yet */
 		}
 	} else  {
 		/* this a response */
 		what = "Child SA Response";
 		st = state_with_parent_msgid(pst->st_serialno,
-				htonl(md->msgid_received));
+				md->msgid_received);
 		if (st == NULL) {
 			switch (md->from_state) {
 			case STATE_V2_CREATE_I:
@@ -1230,7 +1230,7 @@ static bool processed_retransmit(struct state *st,
 				st->st_msgid_lastreplied);
 		}
 		struct state *cst =  resp_state_with_msgid(st->st_serialno,
-							   htonl(st->st_msgid_lastrecv));
+							   st->st_msgid_lastrecv);
 		if (cst == NULL) {
 			/* XXX: why? */
 			return false; /* process the re-transtmited message */
@@ -1303,7 +1303,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 * 2) is it initiator or not?
 	 */
 
-	md->msgid_received = ntohl(md->hdr.isa_msgid);
+	md->msgid_received = md->hdr.isa_msgid;
 	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
 	md->message_role = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) ? MESSAGE_RESPONSE : MESSAGE_REQUEST;
 	const bool sent_by_ike_initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;

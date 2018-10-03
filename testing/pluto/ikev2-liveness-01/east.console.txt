@@ -15,36 +15,36 @@ east #
 east #
  hostname | grep west > /dev/null || ipsec whack --trafficstatus
 east #
- grep "message ID:" /tmp/pluto.log
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 02
-|    message ID:  00 00 00 02
-|    message ID:  00 00 00 03
-|    message ID:  00 00 00 03
-|    message ID:  00 00 00 04
-|    message ID:  00 00 00 04
-|    message ID:  00 00 00 05
-|    message ID:  00 00 00 05
-|    message ID:  00 00 00 06
-|    message ID:  00 00 00 06
-|    message ID:  00 00 00 07
-|    message ID:  00 00 00 07
-|    message ID:  00 00 00 08
-|    message ID:  00 00 00 08
-|    message ID:  00 00 00 09
-|    message ID:  00 00 00 0a
-|    message ID:  00 00 00 0b
-|    message ID:  00 00 00 0c
-|    message ID:  00 00 00 0d
-|    message ID:  00 00 00 0e
-|    message ID:  00 00 00 0f
+ grep "Message ID:" /tmp/pluto.log
+|    Message ID: 0 (0x0)
+|    Message ID: 0 (0x0)
+|    Message ID: 1 (0x1)
+|    Message ID: 1 (0x1)
+|    Message ID: 0 (0x0)
+|    Message ID: 0 (0x0)
+|    Message ID: 1 (0x1)
+|    Message ID: 1 (0x1)
+|    Message ID: 2 (0x2)
+|    Message ID: 2 (0x2)
+|    Message ID: 3 (0x3)
+|    Message ID: 3 (0x3)
+|    Message ID: 4 (0x4)
+|    Message ID: 4 (0x4)
+|    Message ID: 5 (0x5)
+|    Message ID: 5 (0x5)
+|    Message ID: 6 (0x6)
+|    Message ID: 6 (0x6)
+|    Message ID: 7 (0x7)
+|    Message ID: 7 (0x7)
+|    Message ID: 8 (0x8)
+|    Message ID: 8 (0x8)
+|    Message ID: 9 (0x9)
+|    Message ID: 10 (0xa)
+|    Message ID: 11 (0xb)
+|    Message ID: 12 (0xc)
+|    Message ID: 13 (0xd)
+|    Message ID: 14 (0xe)
+|    Message ID: 15 (0xf)
 east #
  # grep on east
 east #

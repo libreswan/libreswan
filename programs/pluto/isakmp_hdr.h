@@ -51,6 +51,6 @@ struct isakmp_hdr {
 	uint8_t isa_version;	/* high-order 4 bits: Major; low order 4: Minor */
 	uint8_t isa_xchg;	/* Exchange type */
 	uint8_t isa_flags;
-	uint32_t isa_msgid;	/* Message ID (RAW) */
+	uint32_t isa_msgid;	/* Message ID */
 	uint32_t isa_length;	/* Length of message */
 };

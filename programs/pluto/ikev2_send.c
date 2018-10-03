@@ -387,10 +387,10 @@ pb_stream open_v2_message(pb_stream *reply,
 	 * this is for the IKE SA or a CHILD SA).
 	 */
 	if (md != NULL) {
-		hdr.isa_msgid = htonl(md->msgid_received);
+		hdr.isa_msgid = md->msgid_received;
 	} else {
 		passert(ike != NULL);
-		hdr.isa_msgid = htonl(ike->sa.st_msgid_nextuse);
+		hdr.isa_msgid = ike->sa.st_msgid_nextuse;
 	}
 
 	return open_output_struct_pbs(reply, &hdr, &isakmp_hdr_desc);
@@ -660,7 +660,7 @@ void send_v2_delete(struct state *const st)
 	/* increase message ID for next delete message */
 	/* ikev2_update_msgid_counters need an md */
 	ike->sa.st_msgid_nextuse++;
-	st->st_msgid = htonl(ike->sa.st_msgid_nextuse);
+	st->st_msgid = ike->sa.st_msgid_nextuse;
 }
 
 /*

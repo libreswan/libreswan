@@ -677,16 +677,18 @@ static size_t quick_mode_hash12(u_char *dest, const u_char *start,
 	DBG_dump("hash key", st->st_skeyid_a.ptr, st->st_skeyid_a.len);
 #endif
 	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
-	hmac_update(&ctx, (const void *) msgid, sizeof(msgid_t));
+	passert(sizeof(msgid_t) == sizeof(uint32_t));
+	msgid_t raw_msgid = htonl(*msgid);
+	hmac_update(&ctx, (const void *)&raw_msgid, sizeof(raw_msgid));
 	if (hash2)
 		hmac_update_chunk(&ctx, st->st_ni); /* include Ni_b in the hash */
 	hmac_update(&ctx, start, roof - start);
 	hmac_final(dest, &ctx);
 
 	DBG(DBG_CRYPT, {
-		    DBG_log("HASH(%d) computed:", hash2 + 1);
-		    DBG_dump("", dest, ctx.hmac_digest_len);
-	    });
+			DBG_log("HASH(%d) computed:", hash2 + 1);
+			DBG_dump("", dest, ctx.hmac_digest_len);
+		});
 	return ctx.hmac_digest_len;
 
 #   undef hmac_update
@@ -704,7 +706,9 @@ static size_t quick_mode_hash3(u_char *dest, struct state *st)
 
 	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const u_char *)"\0", 1);
-	hmac_update(&ctx, (u_char *) &st->st_msgid, sizeof(st->st_msgid));
+	passert(sizeof(msgid_t) == sizeof(uint32_t));
+	msgid_t raw_msgid = htonl(st->st_msgid);
+	hmac_update(&ctx, (const void*)&raw_msgid, sizeof(raw_msgid));
 	hmac_update_chunk(&ctx, st->st_ni);
 	hmac_update_chunk(&ctx, st->st_nr);
 	hmac_final(dest, &ctx);
