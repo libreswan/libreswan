@@ -36,21 +36,20 @@
 # include <netdb.h>
 #endif
 
-/*
- * Resolve interface's peer.
- * Return: 0 = ok, fill peer
- *         -1 = not found
- */
-static void resolve_ppp_peer(char *interface, sa_family_t family, char *peer, bool verbose)
+static void resolve_point_to_point_peer(
+	const char *interface,
+	sa_family_t family,
+	char peer[ADDRTOT_BUF],	/* result, if any */
+	bool verbose)
 {
-	struct ifaddrs *ifap, *ifa;
+	struct ifaddrs *ifap;
 
 	/* Get info about all interfaces */
 	if (getifaddrs(&ifap) != 0)
 		return;
 
-	/* Find the right interface */
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next)
+	/* Find the right interface, if any */
+	for (const struct ifaddrs *ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_POINTOPOINT) != 0 &&
 			streq(ifa->ifa_name, interface)) {
 			struct sockaddr *sa = ifa->ifa_ifu.ifu_dstaddr;
@@ -60,7 +59,7 @@ static void resolve_ppp_peer(char *interface, sa_family_t family, char *peer, bo
 					sa->sa_family == AF_INET ?
 						sizeof(struct sockaddr_in) :
 						sizeof(struct sockaddr_in6),
-					peer, NI_MAXHOST,
+					peer, ADDRTOT_BUF,
 					NULL, 0,
 					NI_NUMERICHOST) == 0) {
 				if (verbose) {
@@ -68,13 +67,14 @@ static void resolve_ppp_peer(char *interface, sa_family_t family, char *peer, bo
 						peer,
 						interface);
 				}
-				freeifaddrs(ifap);
-				return;
+				break;
 			}
+			/* in case failing getnameinfo set peer */
+			*peer = '\0';
 		}
+	}
 	freeifaddrs(ifap);
 }
-
 
 /*
  * Buffer size for netlink query (~100 bytes) and replies.
@@ -480,8 +480,9 @@ int resolve_defaultroute_one(struct starter_end *host,
 				 * Attempt to find r_gateway as the IP address
 				 * on the interface.
 				 */
-				resolve_ppp_peer(r_interface, host->addr_family,
-						 r_gateway, verbose);
+				resolve_point_to_point_peer(
+					r_interface, host->addr_family,
+					r_gateway, verbose);
 			}
 			if (r_gateway[0] != '\0') {
 				err_t err = tnatoaddr(r_gateway, 0,
