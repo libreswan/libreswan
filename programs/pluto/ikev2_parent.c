@@ -6257,26 +6257,12 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		st->st_pend_liveness = FALSE;
 
 		/* HDR out */
-		{
-			struct isakmp_hdr hdr = {
-				.isa_np = ISAKMP_NEXT_v2SK,
-				.isa_version = build_ikev2_version(),
-				.isa_xchg = ISAKMP_v2_INFORMATIONAL,
-				.isa_flags = ISAKMP_FLAGS_v2_MSG_R,
-				.isa_msgid = md->msgid_received,
-				.isa_length = 0, /* filled in on pbs close */
-			};
 
-			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-			if (ike->sa.st_sa_role == SA_INITIATOR)
-				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
-			if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG))
-				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-
-			if (!out_struct(&hdr, &isakmp_hdr_desc,
-					&reply_stream, &rbody))
-				return STF_INTERNAL_ERROR;
+		rbody = open_v2_message(&reply_stream, ike,
+					md /* response */,
+					ISAKMP_v2_INFORMATIONAL);
+		if (!pbs_ok(&rbody)) {
+			return STF_INTERNAL_ERROR;
 		}
 
 		/* insert an Encryption payload header */
