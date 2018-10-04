@@ -950,30 +950,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	}
 
 	/* HDR out */
-	pb_stream rbody;
-	{
-		struct isakmp_hdr hdr = {
-			.isa_np = st->st_dcookie.ptr != NULL ?
-				ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2SA,
-			.isa_version = build_ikev2_version(),
-			.isa_xchg = ISAKMP_v2_SA_INIT,
-			.isa_flags = ISAKMP_FLAGS_v2_IKE_I,
-			.isa_msgid = v2_INITIAL_MSGID,
-		};
-		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-		/* R-cookie left as zero */
 
-		/* add original initiator flag - version flag could be set */
-		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
-			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-		}
-
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&rbody)) {
-			reset_cur_state();
-			return STF_INTERNAL_ERROR;
-		}
+	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
+					  NULL /* request */,
+					  ISAKMP_v2_SA_INIT);
+	if (!pbs_ok(&rbody)) {
+		return STF_INTERNAL_ERROR;
 	}
+
 	/*
 	 * https://tools.ietf.org/html/rfc5996#section-2.6
 	 * reply with the anti DDOS cookie if we received one (remote is under attack)
