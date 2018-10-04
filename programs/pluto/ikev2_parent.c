@@ -3290,29 +3290,12 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* HDR out */
 
-	/* XXX references to cst should be to parent state??? */
-	struct isakmp_hdr hdr = {
-		.isa_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH) ?
-			ISAKMP_NEXT_v2UNKNOWN : ISAKMP_NEXT_v2SK,
-		.isa_version = build_ikev2_version(),
-		.isa_xchg = ISAKMP_v2_AUTH,
-		.isa_flags = ISAKMP_FLAGS_v2_IKE_I,	/* original initiator; all other flags clear */
-		.isa_msgid = cst->st_msgid,
-		.isa_length = 0, /* filled in when pbs is closed */
-	};
-
-	memcpy(hdr.isa_icookie, cst->st_icookie, COOKIE_SIZE);
-	memcpy(hdr.isa_rcookie, cst->st_rcookie, COOKIE_SIZE);
-
-	if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
-		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-	}
-
-	pb_stream rbody;
-
-	if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-			&rbody))
+	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(pst),
+					  NULL /* request */,
+					  ISAKMP_v2_AUTH);
+	if (!pbs_ok(&rbody)) {
 		return STF_INTERNAL_ERROR;
+	}
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
 		if (!ship_v2UNKNOWN(&rbody, "AUTH request")) {
@@ -4078,7 +4061,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	/* send response */
 	{
-		struct isakmp_hdr hdr;
 		int notifies = 0;
 
 		if (LIN(POLICY_MOBIKE, c->policy) && st->st_seen_mobike) {
@@ -4106,27 +4088,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			 "reply packet");
 
 		/* HDR out */
-		pb_stream rbody;
-		{
-			hdr = md->hdr; /* grab cookies */
 
-			hdr.isa_version = build_ikev2_version();
-			hdr.isa_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH) ?
-				ISAKMP_NEXT_v2UNKNOWN : ISAKMP_NEXT_v2SK;
-			hdr.isa_xchg = ISAKMP_v2_AUTH;
-			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-
-			/* set msg responder flag - clear others */
-			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
-			if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
-				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-			}
-
-			if (!out_struct(&hdr, &isakmp_hdr_desc,
-					&reply_stream, &rbody))
-				return STF_INTERNAL_ERROR;
-		}
+		pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
+						  md /* response */,
+						  ISAKMP_v2_AUTH);
 
 		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
 			if (!ship_v2UNKNOWN(&rbody, "AUTH reply")) {
