@@ -133,8 +133,7 @@ struct_desc isakmp_ipsec_attribute_desc = {
 
 /* XAUTH Attributes */
 static field_desc isaat_fields_xauth[] = {
-	{ ft_af_loose_enum, 16 / BITS_PER_BYTE, "ModeCfg attr type",
-	  &modecfg_attr_names },
+	{ ft_af_loose_enum, 16 / BITS_PER_BYTE, "ModeCfg attr type", &modecfg_attr_names },
 	{ ft_lv, 16 / BITS_PER_BYTE, "length/value", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
@@ -242,8 +241,7 @@ static field_desc isat_fields_isakmp[] = {
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "ISAKMP transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ISAKMP transform ID",
-	  &isakmp_transformid_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "ISAKMP transform ID", &isakmp_transformid_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
@@ -297,8 +295,7 @@ static field_desc isat_fields_ipcomp[] = {
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "IPCOMP transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "IPCOMP transform ID",
-	  &ipcomp_transformid_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "IPCOMP transform ID", &ipcomp_transformid_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
@@ -1061,8 +1058,7 @@ struct_desc ikev2_cp_desc = {
 };
 
 static field_desc ikev2_cp_attrbute_fields[] = {
-	{ ft_enum, 16 / BITS_PER_BYTE, "Attribute Type",
-		&ikev2_cp_attribute_type_names },
+	{ ft_enum, 16 / BITS_PER_BYTE, "Attribute Type", &ikev2_cp_attribute_type_names },
 	{ ft_lv, 16 / BITS_PER_BYTE, "length/value", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
