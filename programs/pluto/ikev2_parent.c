@@ -2987,24 +2987,6 @@ static uint8_t *start_encrypted_payload(
 	return iv;
 }
 
-static uint8_t *start_SK_payload(
-	const struct state *st,
-	enum next_payload_types_ikev2 np,
-	pb_stream *rbody,	/* body of reply */
-	pb_stream *sk_pbs,	/* body of SK payload (created by this routine) */
-	pb_stream *enc_pbs)	/* portion of payload to be encrypted (created by this routine) */
-{
-	/* create an Encryption payload header (SK) */
-	const struct ikev2_generic e = {
-		.isag_np = np,
-		.isag_critical = build_ikev2_critical(false),
-	};
-
-	return start_encrypted_payload(st,
-		&e, &ikev2_sk_desc,
-		rbody, sk_pbs, enc_pbs);
-}
-
 static uint8_t *end_encrypted_payload(
 	const struct state *st,
 	pb_stream *rbody,	/* body of reply */
@@ -4098,27 +4080,14 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		bool send_cert = ikev2_send_cert_decision(st);
 
 		/* insert an Encryption payload header */
-		pb_stream e_pbs;
-		pb_stream e_pbs_cipher;
-		enum next_payload_types_ikev2 sk_np =
-			IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ?
-				ISAKMP_NEXT_v2UNKNOWN :
-			notifies != 0 ?
-				ISAKMP_NEXT_v2N :
-				ISAKMP_NEXT_v2IDr;
 
-		uint8_t *iv = start_SK_payload(
-				st, sk_np,
-				&rbody, &e_pbs, &e_pbs_cipher);
-
-		if (iv == NULL)
+		v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(st));
+		if (!pbs_ok(&sk.pbs)) {
 			return STF_INTERNAL_ERROR;
-
-		uint8_t *encstart = e_pbs_cipher.cur;
-		passert(reply_stream.start <= iv && iv <= encstart);
+		}
 
 		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
-			if (!ship_v2UNKNOWN(&e_pbs_cipher, "AUTH's SK reply")) {
+			if (!ship_v2UNKNOWN(&sk.pbs, "AUTH's SK reply")) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -4127,14 +4096,14 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		if (st->st_sent_mobike) {
 			notifies--;
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
-			if (!ship_v2Ns(np, v2N_MOBIKE_SUPPORTED, &e_pbs_cipher))
+			if (!ship_v2Ns(np, v2N_MOBIKE_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (st->st_ppk_used) {
 			notifies--;
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
-			if (!ship_v2Ns(np, v2N_PPK_IDENTITY, &e_pbs_cipher))
+			if (!ship_v2Ns(np, v2N_PPK_IDENTITY, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -4142,7 +4111,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			notifies--;
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
 			if (!ship_v2Ns(np, v2N_USE_TRANSPORT_MODE,
-					&e_pbs_cipher))
+					&sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -4150,7 +4119,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			notifies--;
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
 			if (!ship_v2Ns(np, v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-					&e_pbs_cipher))
+					&sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -4180,9 +4149,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						 &c->spd.this);
 			}
 
-			id_start = e_pbs_cipher.cur + NSIZEOF_isakmp_generic;
+			id_start = sk.pbs.cur + NSIZEOF_isakmp_generic;
 
-			if (!out_struct(&r_id, &ikev2_id_r_desc, &e_pbs_cipher,
+			if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
 					&r_id_pbs) ||
 			    !out_chunk(id_b, &r_id_pbs, "my identity"))
 				return STF_INTERNAL_ERROR;
@@ -4190,7 +4159,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			close_output_pbs(&r_id_pbs);
 
 			/* calculate hash of IDi for AUTH below */
-			id_len = e_pbs_cipher.cur - id_start;
+			id_len = sk.pbs.cur - id_start;
 			DBG(DBG_CRYPT,
 			    DBG_dump("idhash calc R2", id_start, id_len));
 			hmac_update(&id_ctx, id_start, id_len);
@@ -4206,7 +4175,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		 * but ultimately should go into the CERT decision
 		 */
 		if (send_cert) {
-			stf_status certstat = ikev2_send_cert(st, &e_pbs_cipher);
+			stf_status certstat = ikev2_send_cert(st, &sk.pbs);
 			if (certstat != STF_OK)
 				return certstat;
 		}
@@ -4239,7 +4208,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			stf_status authstat = ikev2_send_auth(c, st,
 							      ORIGINAL_RESPONDER, auth_np,
 							      idhash_out,
-							      &e_pbs_cipher, NULL);
+							      &sk.pbs, NULL);
 							      /* ??? NULL - don't calculate additional NULL_AUTH ??? */
 
 			if (authstat != STF_OK)
@@ -4248,7 +4217,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 			/* must have enough to build an CHILD_SA */
-			stf_status ret = ikev2_child_sa_respond(md, &e_pbs_cipher,
+			stf_status ret = ikev2_child_sa_respond(md, &sk.pbs,
 								ISAKMP_v2_AUTH);
 
 			/* note: st: parent; md->st: child */
@@ -4269,31 +4238,29 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		 */
 		struct state *const cst = md->st;	/* may actually be parent if no child */
 
-		unsigned int len = pbs_offset(&e_pbs_cipher);
-
-		uint8_t *authloc = end_encrypted_payload(cst, &rbody, &e_pbs, &e_pbs_cipher);
-
+		if (!close_v2SK_payload(&sk)) {
+			return STF_INTERNAL_ERROR;
+		}
+		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 
 		if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream),
 					    TRUE)) {
-			chunk_t payload = chunk(e_pbs_cipher.start, len);
-			chunk_t e_chunk = same_pbs_as_chunk(&e_pbs);
-			stf_status ret = v2_record_outbound_fragments(md, &rbody, &e_chunk,
-								      &payload,
+			stf_status ret = v2_record_outbound_fragments(md, &rbody,
+								      &sk.payload,
+								      &sk.cleartext,
 								      "reply fragment for ikev2_parent_inI2outR2_tail");
 			st->st_msgid_lastreplied = md->msgid_received;
 			return ret;
 		} else {
-			stf_status ret = ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
-							   iv, encstart, authloc);
-
-			if (ret == STF_OK) {
-				record_outbound_ike_msg(st, &reply_stream,
-					"reply packet for ikev2_parent_inI2outR2_auth_tail");
-				st->st_msgid_lastreplied = md->msgid_received;
+			stf_status ret = encrypt_v2SK_payload(&sk);
+			if (ret != STF_OK) {
+				libreswan_log("error encrypting notify message");
+				return ret;
 			}
-
+			record_outbound_ike_msg(st, &reply_stream,
+						"reply packet for ikev2_parent_inI2outR2_auth_tail");
+			st->st_msgid_lastreplied = md->msgid_received;
 			return ret;
 		}
 	}
