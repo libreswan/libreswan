@@ -3306,16 +3306,12 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* insert an Encryption payload header (SK) */
 
-	pb_stream e_pbs;
-	pb_stream e_pbs_cipher;
-
-	uint8_t *const iv = start_SK_payload(cst, ISAKMP_NEXT_v2IDi, &rbody, &e_pbs, &e_pbs_cipher);
-
-	if (iv == NULL)
+	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(pst));
+	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
+	}
 
-	uint8_t *const encstart = e_pbs_cipher.cur;
-	passert(reply_stream.start <= iv && iv <= encstart);
+	/* actual data */
 
 	/* decide whether to send CERT payload */
 
@@ -3347,11 +3343,11 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		/* HASH of ID is not done over common header */
 		unsigned char *const id_start =
-			e_pbs_cipher.cur + NSIZEOF_isakmp_generic;
+			sk.pbs.cur + NSIZEOF_isakmp_generic;
 
 		if (!out_struct(&i_id,
 				&ikev2_id_i_desc,
-				&e_pbs_cipher,
+				&sk.pbs,
 				&i_id_pbs) ||
 		    !out_chunk(id_b, &i_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
@@ -3360,7 +3356,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		/* calculate hash of IDi for AUTH below */
 
-		const size_t id_len = e_pbs_cipher.cur - id_start;
+		const size_t id_len = sk.pbs.cur - id_start;
 
 		DBG(DBG_CRYPT, DBG_dump("idhash calc I2", id_start, id_len));
 		hmac_update(&id_ctx, id_start, id_len);
@@ -3377,14 +3373,14 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
-		if (!ship_v2UNKNOWN(&e_pbs_cipher, "AUTH's SK request")) {
+		if (!ship_v2UNKNOWN(&sk.pbs, "AUTH's SK request")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(cst, &e_pbs_cipher);
+		stf_status certstat = ikev2_send_cert(cst, &sk.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 
@@ -3395,7 +3391,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			dntoa(buf, IDTOA_BUF, cst->st_connection->spd.that.ca);
 			DBG(DBG_X509,
 			    DBG_log("Sending [CERTREQ] of %s", buf));
-			ikev2_send_certreq(cst, md, &e_pbs_cipher);
+			ikev2_send_certreq(cst, md, &sk.pbs);
 		}
 	}
 
@@ -3434,7 +3430,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				 &pc->spd.that);
 			r_id.isai_np = ic ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
 
-			if (!out_struct(&r_id, &ikev2_id_r_desc, &e_pbs_cipher,
+			if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
 				&r_id_pbs) ||
 			    !out_chunk(id_b, &r_id_pbs, "IDr"))
 				return STF_INTERNAL_ERROR;
@@ -3446,7 +3442,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	if (ic) {
 		libreswan_log("sending INITIAL_CONTACT");
 		if (!ship_v2Ns(ISAKMP_NEXT_v2AUTH, v2N_INITIAL_CONTACT,
-				&e_pbs_cipher))
+				&sk.pbs))
 			return STF_INTERNAL_ERROR;
 	} else {
 		DBG(DBG_CONTROL, DBG_log("not sending INITIAL_CONTACT"));
@@ -3454,13 +3450,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* send out the AUTH payload */
 	stf_status authstat = ikev2_send_auth(pc, cst, ORIGINAL_INITIATOR, 0,
-					      idhash, &e_pbs_cipher, &null_auth);
+					      idhash, &sk.pbs, &null_auth);
 	if (authstat != STF_OK)
 		return authstat;
 
 	if (need_configuration_payload(pc, pst->hidden_variables.st_nat_traversal)) {
 		stf_status cpstat = ikev2_send_cp(pst, ISAKMP_NEXT_v2SA,
-						  &e_pbs_cipher);
+						  &sk.pbs);
 		if (cpstat != STF_OK)
 			return cpstat;
 	}
@@ -3538,14 +3534,14 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 					       "IKE SA initiator emitting ESP/AH proposals",
 					       &unset_group);
 
-		if (!ikev2_emit_sa_proposals(&e_pbs_cipher, cc->esp_or_ah_proposals,
+		if (!ikev2_emit_sa_proposals(&sk.pbs, cc->esp_or_ah_proposals,
 					     &local_spi))
 			return STF_INTERNAL_ERROR;
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
 
-		ikev2_emit_ts_payloads(pexpect_child_sa(cst), &e_pbs_cipher, SA_INITIATOR, cc,
+		ikev2_emit_ts_payloads(pexpect_child_sa(cst), &sk.pbs, SA_INITIATOR, cc,
 				       (notifies != 0) ? ISAKMP_NEXT_v2N : ia_np);
 
 		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
@@ -3553,7 +3549,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			notifies--;
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
-			if (!ship_v2Ns(np, v2N_USE_TRANSPORT_MODE, &e_pbs_cipher))
+			if (!ship_v2Ns(np, v2N_USE_TRANSPORT_MODE, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		} else {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
@@ -3563,7 +3559,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			notifies--;
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
 			if (!ship_v2Ns(np, v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-					&e_pbs_cipher))
+					&sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -3571,7 +3567,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			notifies--;
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
 			cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
-			if (!ship_v2Ns(np, v2N_MOBIKE_SUPPORTED, &e_pbs_cipher))
+			if (!ship_v2Ns(np, v2N_MOBIKE_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 		if (pst->st_seen_ppk) {
@@ -3581,7 +3577,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 			notifies--; /* used for one or two payloads */
 			if (!ship_v2Nsp(np, v2N_PPK_IDENTITY, &notify_data,
-					&e_pbs_cipher))
+					&sk.pbs))
 				return STF_INTERNAL_ERROR;
 			freeanychunk(notify_data);
 
@@ -3590,7 +3586,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				ikev2_calc_no_ppk_auth(cc, pst, idhash_npa, &pst->st_no_ppk_auth);
 				if (!ship_v2Nsp(np,
 					v2N_NO_PPK_AUTH, &pst->st_no_ppk_auth,
-					&e_pbs_cipher))
+					&sk.pbs))
 						return STF_INTERNAL_ERROR;
 			}
 		}
@@ -3599,7 +3595,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			notifies--;
 			if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE,
 				v2N_NULL_AUTH, &null_auth,
-				&e_pbs_cipher))
+				&sk.pbs))
 					return STF_INTERNAL_ERROR;
 			freeanychunk(null_auth);
 		}
@@ -3609,34 +3605,32 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		/* send CP payloads */
 		if (pc->modecfg_domains != NULL || pc->modecfg_dns != NULL) {
 			ikev2_send_cp(pst, ISAKMP_NEXT_v2NONE,
-				&e_pbs_cipher);
+				&sk.pbs);
 		}
 	}
 
-	const unsigned int len = pbs_offset(&e_pbs_cipher);
-
-	uint8_t *const authloc = end_encrypted_payload(cst, &rbody, &e_pbs, &e_pbs_cipher);
-	if (authloc == NULL)
+	if (!close_v2SK_payload(&sk)) {
 		return STF_INTERNAL_ERROR;
+	}
+	close_output_pbs(&rbody);
+	close_output_pbs(&reply_stream);
 
 	if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream), TRUE)) {
-		chunk_t payload = chunk(e_pbs_cipher.start, len);
-		chunk_t e_chunk = same_pbs_as_chunk(&e_pbs);
 		stf_status ret = v2_record_outbound_fragments(md, &rbody,
-							      &e_chunk,
-							      &payload,
+							      &sk.header,
+							      &sk.cleartext,
 			"reply fragment for ikev2_parent_outR1_I2");
 		pst->st_msgid_lastreplied = md->msgid_received;
 		return ret;
 	} else {
-		stf_status ret = ikev2_encrypt_msg(ike_sa(pst), reply_stream.start,
-						   iv, encstart, authloc);
-
-		if (ret == STF_OK) {
-			record_outbound_ike_msg(pst, &reply_stream,
-				"reply packet for ikev2_parent_inR1outI2_tail");
-			pst->st_msgid_lastreplied = md->msgid_received;
+		stf_status ret = encrypt_v2SK_payload(&sk);
+		if (ret != STF_OK) {
+			libreswan_log("error encrypting notify message");
+			return ret;
 		}
+		record_outbound_ike_msg(pst, &reply_stream,
+					"reply packet for ikev2_parent_inR1outI2_tail");
+		pst->st_msgid_lastreplied = md->msgid_received;
 		return ret;
 	}
 }
