@@ -259,7 +259,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 
 	ipstr_buf b;
 	libreswan_log("responding to %s message (ID %u) from %s:%u with encrypted notification %s",
-		      exchange_name, md->msgid_received,
+		      exchange_name, md->hdr.isa_msgid,
 		      sensitive_ipstr(&pst->st_remoteaddr, &b),
 		      pst->st_remoteport,
 		      notify_name);
@@ -347,7 +347,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 
 	ipstr_buf b;
 	libreswan_log("responding to %s message (ID %u) from %s:%u with unencrypted notification %s",
-		      exchange_name, md->msgid_received,
+		      exchange_name, md->hdr.isa_msgid,
 		      sensitive_ipstr(&md->sender, &b),
 		      hportof(&md->sender),
 		      notify_name);
@@ -373,14 +373,14 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	pb_stream rbody = open_v2_message(&reply, NULL, md, exchange_type);
 	if (!pbs_ok(&rbody)) {
 		PEXPECT_LOG("error building header for unencrypted %s %s notification with message ID %u",
-			    exchange_name, notify_name, md->msgid_received);
+			    exchange_name, notify_name, md->hdr.isa_msgid);
 		return;
 	}
 
 	/* build and add v2N payload to the packet */
 	if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE, ntype, ndata, &rbody)) {
 		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
-			    exchange_name, notify_name, md->msgid_received);
+			    exchange_name, notify_name, md->hdr.isa_msgid);
 		return;
 	}
 

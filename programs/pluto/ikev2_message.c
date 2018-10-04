@@ -193,7 +193,7 @@ pb_stream open_v2_message(pb_stream *reply,
 	 * this is for the IKE SA or a CHILD SA).
 	 */
 	if (md != NULL) {
-		hdr.isa_msgid = md->msgid_received;
+		hdr.isa_msgid = md->hdr.isa_msgid;
 	} else {
 		passert(ike != NULL);
 		hdr.isa_msgid = ike->sa.st_msgid_nextuse;
@@ -1038,6 +1038,6 @@ stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 	 * XXX: when initiating an exchange there is no MD (or only a
 	 * badly faked up MD).
 	 */
-	sk->ike->sa.st_msgid_lastreplied = md->msgid_received;
+	sk->ike->sa.st_msgid_lastreplied = md->hdr.isa_msgid;
 	return ret;
 }

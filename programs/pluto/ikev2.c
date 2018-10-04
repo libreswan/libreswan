@@ -1092,7 +1092,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 
 	if (is_msg_request(md)) {
 		/* this an IKE request and not a response */
-		if (v2_child_sa_responder_with_msgid(ike, md->msgid_received) != NULL) {
+		if (v2_child_sa_responder_with_msgid(ike, md->hdr.isa_msgid) != NULL) {
 			what = "CREATE_CHILD_SA Request retransmission ignored";
 			st = NULL;
 		} else if (md->from_state == STATE_V2_CREATE_R) {
@@ -1100,20 +1100,20 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 			st = ikev2_duplicate_state(ike, IPSEC_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_CREATE_R);
-			st->st_msgid = md->msgid_received;
+			st->st_msgid = md->hdr.isa_msgid;
 			insert_state(st); /* needed for delete - we are duplicating early */
 		} else {
 			what = "IKE Rekey Request";
 			st = ikev2_duplicate_state(ike, IKE_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
-			st->st_msgid = md->msgid_received;
+			st->st_msgid = md->hdr.isa_msgid;
 			/* can not call insert_state yet. no IKE cookies yet */
 		}
 	} else  {
 		/* this a response */
 		what = "Child SA Response";
-		st = v2_child_sa_initiator_with_msgid(ike, md->msgid_received);
+		st = v2_child_sa_initiator_with_msgid(ike, md->hdr.isa_msgid);
 		if (st == NULL) {
 			switch (md->from_state) {
 			case STATE_V2_CREATE_I:
@@ -1138,9 +1138,9 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 	}
 
 	if (st == NULL) {
-		libreswan_log("rejecting %s CREATE_CHILD_SA%s msgid_received: %u st_msgid_lastrecv %u",
+		libreswan_log("rejecting %s CREATE_CHILD_SA%s hdr.isa_msgid: %u st_msgid_lastrecv %u",
 			      what, why,
-			      md->msgid_received,
+			      md->hdr.isa_msgid,
 			      ike->sa.st_msgid_lastrecv);
 	} else {
 		bool st_busy = st->st_suspended_md != NULL || st->st_suspended_md != NULL;
@@ -1190,15 +1190,15 @@ static bool processed_retransmit(struct state *st,
 	DBGF(DBG_MASK, "#%lu st.st_msgid_lastrecv %d md.hdr.isa_msgid %08x",
 	     st->st_serialno, st->st_msgid_lastrecv, md->hdr.isa_msgid);
 	if (st->st_msgid_lastrecv != v2_INVALID_MSGID &&
-	    st->st_msgid_lastrecv > md->msgid_received) {
+	    st->st_msgid_lastrecv > md->hdr.isa_msgid) {
 		/* this is an OLD retransmit. we can't do anything */
 		libreswan_log("received too old retransmit: %u < %u",
-			      md->msgid_received,
+			      md->hdr.isa_msgid,
 			      st->st_msgid_lastrecv);
 		return true;
 	}
 
-	if (st->st_msgid_lastrecv != md->msgid_received) {
+	if (st->st_msgid_lastrecv != md->hdr.isa_msgid) {
 		/* presumably not a re-transmit */
 		return false;
 	}
@@ -1304,7 +1304,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 * 2) is it initiator or not?
 	 */
 
-	md->msgid_received = md->hdr.isa_msgid;
 	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
 	const bool sent_by_ike_initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
 
@@ -1344,7 +1343,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * The message ID of the initial exchange is always
 		 * zero.
 		 */
-		if (md->msgid_received != 0) {
+		if (md->hdr.isa_msgid != 0) {
 			libreswan_log("dropping IKE_SA_INIT packet containing non-zero message ID");
 			return;
 		}
@@ -1496,25 +1495,25 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * Beware of unsigned arrithmetic.
 			 */
 			if (st->st_msgid_lastack != v2_INVALID_MSGID &&
-			    st->st_msgid_lastack > md->msgid_received) {
+			    st->st_msgid_lastack > md->hdr.isa_msgid) {
 				/*
 				 * An old response to our request?
 				 */
 				LSWDBGP(DBG_CONTROL|DBG_RETRANSMITS, buf) {
 					lswlog_retransmit_prefix(buf, st);
 					lswlogf(buf, "dropping retransmitted response with msgid %u from peer - we already processed %u.",
-						md->msgid_received, st->st_msgid_lastack);
+						md->hdr.isa_msgid, st->st_msgid_lastack);
 				}
 				return;
 			}
 			if (st->st_msgid_nextuse != v2_INVALID_MSGID &&
-			    md->msgid_received >= st->st_msgid_nextuse) {
+			    md->hdr.isa_msgid >= st->st_msgid_nextuse) {
 				/*
 				 * A reply for an unknown request (or
 				 * request we've not yet sent)? Huh!
 				 */
 				DBGF(DBG_CONTROL, "dropping unasked response with msgid %u from peer (our last used msgid is %u)",
-				     md->msgid_received,
+				     md->hdr.isa_msgid,
 				     st->st_msgid_nextuse - 1);
 				return;
 			}
@@ -1535,7 +1534,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * The log line lets find out.
 			 */
 			DBGF(DBG_CONTROL, "using IKE SA #%lu for response with msgid %u (nextuse: %u, lastack: %u)",
-			     st->st_serialno, md->msgid_received,
+			     st->st_serialno, md->hdr.isa_msgid,
 			     st->st_msgid_nextuse, st->st_msgid_lastack);
 		}
 	} else {
@@ -2350,7 +2349,6 @@ void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
 	 * that belong in the state transition.
 	 */
 	if (md != NULL) {
-		md->msgid_received = v2_INVALID_MSGID;
 		md->hdr.isa_flags &= ~ISAKMP_FLAGS_v2_MSG_R;
 	}
 }
@@ -2392,19 +2390,19 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 
 	if (is_msg_response(md)) {
 		/* we were initiator for this message exchange */
-		if (md->msgid_received == v2_INITIAL_MSGID &&
+		if (md->hdr.isa_msgid == v2_INITIAL_MSGID &&
 				ike->sa.st_msgid_lastack == v2_INVALID_MSGID) {
-			ike->sa.st_msgid_lastack = md->msgid_received;
-		} else if (md->msgid_received > ike->sa.st_msgid_lastack) {
-			ike->sa.st_msgid_lastack = md->msgid_received;
+			ike->sa.st_msgid_lastack = md->hdr.isa_msgid;
+		} else if (md->hdr.isa_msgid > ike->sa.st_msgid_lastack) {
+			ike->sa.st_msgid_lastack = md->hdr.isa_msgid;
 		} /* else { lowever message id ignore it? } */
 	} else {
 		/* we were responder for this message exchange */
-		if (md->msgid_received > ike->sa.st_msgid_lastrecv) {
-			ike->sa.st_msgid_lastrecv = md->msgid_received;
+		if (md->hdr.isa_msgid > ike->sa.st_msgid_lastrecv) {
+			ike->sa.st_msgid_lastrecv = md->hdr.isa_msgid;
 		}
 		/* first request from the other side */
-		if (md->msgid_received == v2_INITIAL_MSGID &&
+		if (md->hdr.isa_msgid == v2_INITIAL_MSGID &&
 				ike->sa.st_msgid_lastrecv == v2_INVALID_MSGID) {
 			ike->sa.st_msgid_lastrecv = v2_INITIAL_MSGID;
 		}
@@ -2427,9 +2425,9 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 			lswlogf(buf, "; CHILD #%lu %s",
 				st->st_serialno, st->st_finite_state->fs_short_name);
 		}
-		lswlogf(buf, "; message-%s msgid=%u copy=%u",
+		lswlogf(buf, "; message-%s msgid=%u",
 			is_msg_response(md) ? "resonse" : "request",
-			md->hdr.isa_msgid, md->msgid_received);
+			md->hdr.isa_msgid);
 
 		lswlogf(buf, "; initiator { lastack=%u", st_msgid_lastack);
 		if (st_msgid_lastack != ike->sa.st_msgid_lastack) {

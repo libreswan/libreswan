@@ -416,7 +416,7 @@ static struct msg_digest *fake_md(struct state *st)
 	struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
 	fake_md->st = st;
 	fake_md->from_state = STATE_IKEv2_BASE;
-	fake_md->msgid_received = v2_INVALID_MSGID;
+	fake_md->hdr.isa_msgid = v2_INVALID_MSGID;
 	/* asume first microcode is valid */
 	fake_md->svm = st->st_finite_state->fs_microcode;
 	return fake_md;
@@ -4870,7 +4870,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 				"packet from ikev2_child_out_cont");
 
 	if (IS_CHILD_SA_RESPONDER(st))
-		pst->st_msgid_lastreplied = md->msgid_received;
+		pst->st_msgid_lastreplied = md->hdr.isa_msgid;
 
 	if (st->st_state == STATE_V2_CREATE_R ||
 			st->st_state == STATE_V2_REKEY_CHILD_R) {
@@ -5574,7 +5574,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		/* ??? should we support fragmenting?  Maybe one day. */
 		record_and_send_v2_ike_msg(st, &reply_stream,
 					   "reply packet for process_encrypted_informational_ikev2");
-		st->st_msgid_lastreplied = md->msgid_received;
+		st->st_msgid_lastreplied = md->hdr.isa_msgid;
 
 		mobike_reset_remote(st, &mobike_remote);
 

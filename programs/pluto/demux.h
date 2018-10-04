@@ -87,8 +87,6 @@ struct msg_digest {
 	bool new_iv_set;			/* (v1) */
 	struct state *st;			/* current state object */
 
-	msgid_t msgid_received;			/* (v2) - Host order! */
-
 	notification_t v1_note;			/* reason for failure */
 	bool dpd;				/* (v1) Peer supports RFC 3706 DPD */
 	bool ikev2;				/* Peer supports IKEv2 */
