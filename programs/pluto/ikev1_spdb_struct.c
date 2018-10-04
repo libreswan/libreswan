@@ -215,6 +215,12 @@ static bool out_attr(int type,
 static bool ikev1_verify_esp(const struct connection *c,
 			     const struct trans_attrs *ta)
 {
+	if (!(c->policy & POLICY_ENCRYPT)) {
+		DBGF(DBG_PARSING,
+		     "ignoring ESP proposal as POLICY_ENCRYPT unset");
+		return false;       /* try another */
+	}
+
 	/*
 	 * Check encryption.
 	 *
@@ -318,9 +324,14 @@ static bool ikev1_verify_esp(const struct connection *c,
 	return false;
 }
 
-static bool ikev1_verify_ah(const struct trans_attrs *ta,
-			    const struct alg_info_esp *alg_info)
+static bool ikev1_verify_ah(const struct connection *c,
+			    const struct trans_attrs *ta)
 {
+	if (!(c->policy & POLICY_AUTHENTICATE)) {
+		DBGF(DBG_PARSING,
+		     "ignoring AH proposal as POLICY_AUTHENTICATE unset");
+		return false;       /* try another */
+	}
 	if (ta->ta_encrypt != NULL) {
 		PEXPECT_LOG("AH IPsec Transform refused: contains unexpected encryption %s",
 			    ta->ta_encrypt->common.fqn);
@@ -340,13 +351,13 @@ static bool ikev1_verify_ah(const struct trans_attrs *ta,
 			    ta->ta_dh->common.fqn);
 		return false;
 	}
-	if (alg_info == NULL) {
+	if (c->alg_info_esp == NULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("AH IPsec Transform verified unconditionally; no alg_info to check against"));
 		return true;
 	}
 
-	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
+	FOR_EACH_ESP_INFO(c->alg_info_esp, esp_info) {	/* really AH */
 		if (esp_info->integ == ta->ta_integ) {
 			DBG(DBG_CONTROL,
 			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
@@ -2608,8 +2619,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				continue; /* we didn't find a nice one */
 
 			/* Check AH proposal with configuration */
-			if (!ikev1_verify_ah(&ah_attrs.transattrs,
-					     c->alg_info_esp)) {
+			if (!ikev1_verify_ah(c, &ah_attrs.transattrs)) {
 				continue;
 			}
 			ah_attrs.spi = ah_spi;
