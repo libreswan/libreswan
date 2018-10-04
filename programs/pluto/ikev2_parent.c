@@ -1524,23 +1524,11 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 		vids++;
 
 	/* HDR out */
-	pb_stream rbody;
-	{
-		struct isakmp_hdr hdr = md->hdr;
-
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-		hdr.isa_np = ISAKMP_NEXT_v2SA;
-		hdr.isa_version = build_ikev2_version();
-
-		/* set msg responder flag - clear other flags */
-		hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
-		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
-			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-		}
-
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&rbody))
-			return STF_INTERNAL_ERROR;
+	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
+					  md /* response */,
+					  ISAKMP_v2_SA_INIT);
+	if (!pbs_ok(&rbody)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	/* start of SA out */
