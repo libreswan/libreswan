@@ -5669,38 +5669,13 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
 	/* HDR out Start assembling respone message */
-	pb_stream rbody;
-	{
-		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_v2SK,
-			.isa_version = build_ikev2_version(),
-			.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA,
-		};
 
-		memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
-		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
-		if (IS_CHILD_SA_RESPONDER(st)) {
-			hdr.isa_msgid = md->msgid_received;
-			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R; /* response on */
-		} else {
-			hdr.isa_msgid = pst->st_msgid_nextuse;
-			/* store it to match response */
-			st->st_msgid = pst->st_msgid_nextuse;
-		}
-
-		if (pst->st_original_role == ORIGINAL_INITIATOR) {
-			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
-		}
-
-		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG))
-			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-
-		if (!IS_CHILD_SA_RESPONDER(st)) {
-			md->hdr = hdr; /* fill it with fake header ??? */
-		}
-		if (!out_struct(&hdr, &isakmp_hdr_desc,
-				&reply_stream, &rbody))
-			return STF_FATAL;
+	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
+					  IS_CHILD_SA_RESPONDER(st) ? md : NULL,
+					  ISAKMP_v2_CREATE_CHILD_SA);
+	if (!IS_CHILD_SA_RESPONDER(st)) {
+		/* store it to match response */
+		st->st_msgid = pst->st_msgid_nextuse;
 	}
 
 	/* insert an Encryption payload header */
