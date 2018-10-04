@@ -1155,7 +1155,4 @@ struct pbs_reply_backup {
 	uint8_t *buffer;
 };
 
-struct pbs_reply_backup *save_reply_pbs(void);
-void restore_reply_pbs(struct pbs_reply_backup **);
-
 #endif /* _PACKET_H */

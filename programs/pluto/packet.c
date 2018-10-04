@@ -2542,45 +2542,6 @@ pb_stream reply_stream;
 uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 /*
- * Turns out that while the above was correct, the reply_stream still
- * needs to be saved/restored:
- *
- * midway through an IKEv2 AUTH reply pluto will try to delete related
- * IKE SAs and the delete message stomps all over the global
- * reply_stream
- */
-struct pbs_reply_backup *save_reply_pbs(void)
-{
-	struct pbs_reply_backup *backup = alloc_thing(struct pbs_reply_backup,
-						      "saved reply stream");
-	backup->stream = reply_stream;
-	if (pbs_offset(&reply_stream) == 0) {
-		backup->buffer = NULL;
-	} else {
-		backup->buffer = clone_bytes(reply_stream.start,
-					     pbs_offset(&reply_stream),
-					     "saved reply buffer");
-	}
-	DBGF(DBG_CONTROL, "saved %zd bytes of reply stream",
-	     pbs_offset(&reply_stream));
-	return backup;
-}
-
-void restore_reply_pbs(struct pbs_reply_backup **backup)
-{
-	reply_stream = (*backup)->stream;
-	if ((*backup)->buffer != NULL) {
-		memcpy(reply_stream.start, (*backup)->buffer,
-		       pbs_offset(&reply_stream));
-		pfree((*backup)->buffer);
-	}
-	pfree((*backup));
-	*backup = NULL;
-	DBGF(DBG_CONTROL, "restored %zd bytes of reply stream",
-	     pbs_offset(&reply_stream));
-}
-
-/*
  * close_output_pbs: record current length and check previous_NP
  *
  * Note: currently, this may be repeated any number of times;
