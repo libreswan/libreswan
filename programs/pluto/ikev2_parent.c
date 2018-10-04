@@ -5645,31 +5645,26 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	}
 
 	/* insert an Encryption payload header */
-	pb_stream e_pbs;
-	pb_stream e_pbs_cipher;
 
-	uint8_t *iv = start_SK_payload(pst, ISAKMP_NEXT_v2SA, &rbody, &e_pbs, &e_pbs_cipher);
-
-	if (iv == NULL)
+	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(pst));
+	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
-
-	uint8_t *encstart = e_pbs_cipher.cur;
-	passert(reply_stream.start <= iv && iv <= encstart);
+	}
 
 	switch (st->st_state) {
 	case STATE_V2_REKEY_IKE_R:
 	case STATE_V2_REKEY_IKE_I0:
-		ret = ikev2_child_add_ike_payloads(md, &e_pbs_cipher);
+		ret = ikev2_child_add_ike_payloads(md, &sk.pbs);
 		break;
 	case STATE_V2_CREATE_I0:
 	case STATE_V2_REKEY_CHILD_I0:
-		ret = ikev2_child_add_ipsec_payloads(md, &e_pbs_cipher,
+		ret = ikev2_child_add_ipsec_payloads(md, &sk.pbs,
 				ISAKMP_v2_CREATE_CHILD_SA);
 		break;
 	default:
 		/* ??? which states are actually correct? */
 		RETURN_STF_FAILURE_STATUS(ikev2_rekey_child_copy_ts(md));
-		ret = ikev2_child_sa_respond(md, &e_pbs_cipher,
+		ret = ikev2_child_sa_respond(md, &sk.pbs,
 					     ISAKMP_v2_CREATE_CHILD_SA);
 	}
 
@@ -5683,14 +5678,14 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		return ret; /* abort building the response message */
 	}
 
-	uint8_t *authloc = end_encrypted_payload(pst, &rbody, &e_pbs, &e_pbs_cipher);
-	if (authloc == NULL)
+	/* const unsigned int len = pbs_offset(&sk.pbs); */
+	if (!close_v2SK_payload(&sk)) {
 		return STF_INTERNAL_ERROR;
-
+	}
+	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
-	ret = ikev2_encrypt_msg(ike_sa(pst), reply_stream.start,
-				iv, encstart, authloc);
 
+	ret = encrypt_v2SK_payload(&sk);
 	if (ret != STF_OK)
 		return ret;
 
