@@ -280,6 +280,8 @@ bool ship_v2Ns(enum next_payload_types_ikev2 np,
  *
  * At least one of the IKE SA and/or MD must be specified.
  *
+ * XXX: is this sufficient for handing child SAs?
+ *
  * The opened PBS is put into next-payload back-patch mode so
  * containing payloads should not specify their payload-type.  It will
  * instead be taken from the payload struct descriptor.
@@ -442,7 +444,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 		return;
 	}
 
-	struct v2sk_payload sk = open_v2sk_payload(&rbody, ike_sa(pst));
+	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(pst));
 	if (!pbs_ok(&sk.pbs)) {
 		return;
 	}
@@ -468,13 +470,13 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 		break;
 	}
 
-	if (!close_v2sk_payload(&sk)) {
+	if (!close_v2SK_payload(&sk)) {
 		return;
 	}
 	close_output_pbs(&rbody);
 	close_output_pbs(&reply);
 
-	stf_status ret = encrypt_v2sk_payload(&sk);
+	stf_status ret = encrypt_v2SK_payload(&sk);
 	if (ret != STF_OK) {
 		libreswan_log("error encrypting notify message");
 		return;
@@ -597,7 +599,7 @@ void send_v2_delete(struct state *const st)
 		return;
 	}
 
-	struct v2sk_payload sk = open_v2sk_payload(&rbody, ike);
+	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return;
 	}
@@ -640,13 +642,13 @@ void send_v2_delete(struct state *const st)
 		close_output_pbs(&del_pbs);
 	}
 
-	if (!close_v2sk_payload(&sk)) {
+	if (!close_v2SK_payload(&sk)) {
 		return;
 	}
 	close_output_pbs(&rbody);
 	close_output_pbs(&packet);
 
-	stf_status ret = encrypt_v2sk_payload(&sk);
+	stf_status ret = encrypt_v2SK_payload(&sk);
 	if (ret != STF_OK) {
 		libreswan_log("error encrypting notify message");
 		return;
@@ -691,7 +693,7 @@ stf_status send_v2_informational_request(const char *name,
 		return STF_INTERNAL_ERROR;
 	}
 
-	struct v2sk_payload sk = open_v2sk_payload(&message, ike);
+	v2SK_payload_t sk = open_v2SK_payload(&message, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -703,13 +705,13 @@ stf_status send_v2_informational_request(const char *name,
 		}
 	}
 
-	if (!close_v2sk_payload(&sk)) {
+	if (!close_v2SK_payload(&sk)) {
 		return STF_INTERNAL_ERROR;
 	}
 	close_output_pbs(&message);
 	close_output_pbs(&packet);
 
-	stf_status ret = encrypt_v2sk_payload(&sk);
+	stf_status ret = encrypt_v2SK_payload(&sk);
 	if (ret != STF_OK) {
 		return ret;
 	}
@@ -724,11 +726,11 @@ stf_status send_v2_informational_request(const char *name,
 	return STF_OK;
 }
 
-struct v2sk_payload open_v2sk_payload(pb_stream *container,
-				      struct ike_sa *ike)
+v2SK_payload_t open_v2SK_payload(pb_stream *container,
+				 struct ike_sa *ike)
 {
-	static const struct v2sk_payload empty_sk;
-	struct v2sk_payload sk = {
+	static const v2SK_payload_t empty_sk;
+	v2SK_payload_t sk = {
 		.ike = ike,
 	};
 
@@ -763,9 +765,9 @@ struct v2sk_payload open_v2sk_payload(pb_stream *container,
 	return sk;
 }
 
-bool close_v2sk_payload(struct v2sk_payload *sk)
+bool close_v2SK_payload(v2SK_payload_t *sk)
 {
-	/* padding + pad-length */
+	/* add: padding + pad-length */
 
 	size_t padding;
 	if (sk->ike->sa.st_oakley.ta_encrypt->pad_to_blocksize) {
@@ -807,7 +809,7 @@ bool close_v2sk_payload(struct v2sk_payload *sk)
 	return true;
 }
 
-stf_status encrypt_v2sk_payload(struct v2sk_payload *sk)
+stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 {
 	return ikev2_encrypt_msg(sk->ike, sk->pbs.container->start,
 				 sk->iv, sk->cleartext,
