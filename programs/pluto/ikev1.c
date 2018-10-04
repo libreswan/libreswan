@@ -188,6 +188,30 @@ struct state_v1_microcode {
  * Most entries will use SMF_ALL_AUTH because they apply to all.
  * Note: SMF_ALL_AUTH matches 0 for those circumstances when no auth
  * has been set.
+ *
+ * The IKEv1 state machine then uses the auth type (SMF_*_AUTH flags)
+ * to select the exact state transition.  For states where auth
+ * (SMF_*_AUTH flags) don't apply (.e.g, child states)
+ * flags|=SMF_ALL_AUTH so the first transition always matches.
+ *
+ * Once a transition is selected, the containing payloads are checked
+ * against what is allowed.  For instance, in STATE_MAIN_R2 ->
+ * STATE_MAIN_R3 with SMF_DS_AUTH requires P(SIG).
+ *
+ * In IKEv2, it is the message header and payload types that select
+ * the state.  As for how the IKEv1 'from state' is slected, look for
+ * a big nasty magic switch.
+ *
+ * XXX: the state transition table is littered with STATE_UNDEFINED /
+ * SMF_ALL_AUTH / unexpected() entries.  These are to catch things
+ * like unimplemented auth cases, and unexpected packets.  For the
+ * latter, they seem to be place holders so that the table contains at
+ * least one entry for the state.
+ *
+ * XXX: Some of the SMF flags specify attributes of the current state
+ * (e.g., SMF_RETRANSMIT_ON_DUPLICATE), some apply to the state
+ * transition (e.g., SMF_REPLY), and some can be interpreted as either
+ * (.e.g., SMF_INPUT_ENCRYPTED).
  */
 #define SMF_ALL_AUTH    LRANGE(0, OAKLEY_AUTH_ROOF - 1)
 #define SMF_PSK_AUTH    LELEM(OAKLEY_PRESHARED_KEY)
@@ -1679,6 +1703,19 @@ void process_v1_packet(struct msg_digest **mdp)
 	smc = fs->fs_microcode;
 	passert(smc != NULL);
 
+	/*
+	 * Find the state's the state transitions that has matching
+	 * authentication.
+	 *
+	 * For states where this makes no sense (eg, quick states
+	 * creating a CHILD_SA), .flags|=SMF_ALL_AUTH so the first
+	 * (only) one always matches.
+	 *
+	 * XXX: The code assums that when there is always a match (if
+	 * there isn't the passert() triggers.  If needed, bogus
+	 * transitions that log/drop the packet are added to the
+	 * table?  Would simply dropping the packets be easier.
+	 */
 	if (st != NULL) {
 		oakley_auth_t baseauth =
 			xauth_calcbaseauth(st->st_oakley.auth);
@@ -1689,6 +1726,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 	}
 
+	/*
+	 * XXX: do this earlier? */
 	if (verbose_state_busy(st))
 		return;
 
@@ -1701,6 +1740,8 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * wasn't received -- retransmit it.  Otherwise, just discard
 	 * it.  ??? Notification packets are like exchanges -- I hope
 	 * that they are idempotent!
+	 *
+	 * XXX: do this earlier?
 	 */
 	if (st != NULL && ikev1_duplicate(st, md)) {
 		return;

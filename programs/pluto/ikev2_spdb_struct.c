@@ -100,7 +100,7 @@ static bool v2_out_attr_variable(enum ikev2_trans_attr_type type,
 	if (!pexpect(out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL))) {
 		return false;
 	}
-	if (!pexpect(out_chunk(chunk, pbs, NULL))) {
+	if (!pexpect(out_chunk(chunk, pbs, "attribute value"))) {
 		return false;
 	}
 	return true;
