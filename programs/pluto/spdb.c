@@ -736,10 +736,6 @@ static struct db_trans esp_trans[] = {
 	{ .transid = ESP_3DES, .attrs = NULL },
 };
 
-static struct db_trans espnull_trans[] = {
-	{ AD_TR(ESP_NULL, espsha1_attr) },
-};
-
 static struct db_trans ah_trans[] = {
 	{ AD_TR(AH_SHA, ah_HMAC_SHA1_attr) },
 };
@@ -752,10 +748,6 @@ static struct db_trans ipcomp_trans[] = {
 
 static struct db_prop ah_pc[] = {
 	{ AD_PR(PROTO_IPSEC_AH, ah_trans) },
-};
-
-static struct db_prop espnull_pc[] = {
-	{ AD_PR(PROTO_IPSEC_ESP, espnull_trans) },
 };
 
 static struct db_prop esp_pc[] = {
@@ -776,11 +768,6 @@ static struct db_prop ah_compress_pc[] = {
 	{ AD_PR(PROTO_IPCOMP, ipcomp_trans) },
 };
 
-static struct db_prop espnull_compress_pc[] = {
-	{ AD_PR(PROTO_IPSEC_ESP, espnull_trans) },
-	{ AD_PR(PROTO_IPCOMP, ipcomp_trans) },
-};
-
 static struct db_prop esp_compress_pc[] = {
 	{ AD_PR(PROTO_IPSEC_ESP, espa_trans) },
 	{ AD_PR(PROTO_IPCOMP, ipcomp_trans) },
@@ -796,7 +783,6 @@ static struct db_prop ah_esp_compress_pc[] = {
 
 static struct db_prop_conj ah_props[] = {
 	{ AD_PC(ah_pc) },
-	{ AD_PC(espnull_pc) },
 };
 
 static struct db_prop_conj esp_props[] =
@@ -811,7 +797,6 @@ static struct db_prop_conj compress_props[] = {
 
 static struct db_prop_conj ah_compress_props[] = {
 	{ AD_PC(ah_compress_pc) },
-	{ AD_PC(espnull_compress_pc) },
 };
 
 static struct db_prop_conj esp_compress_props[] =
