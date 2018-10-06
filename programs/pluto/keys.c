@@ -1402,17 +1402,18 @@ static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t bu
 
 struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid)
 {
-	size_t buflen = strlen(ckaid); /* good enough */
-	char *buf = alloc_bytes(buflen, "ckaid");
-	const char *ugh = ttodata(ckaid, 0, 16, buf, buflen, &buflen);
+	/* convert hex string ckaid to binary bin */
+	size_t binlen = (strlen(ckaid) + 1) / 2;
+	char *bin = alloc_bytes(binlen, "ckaid");
+	const char *ugh = ttodata(ckaid, 0, 16, bin, binlen, &binlen);
 	if (ugh != NULL) {
-		pfree(buf);
+		pfree(bin);
 		/* should have been rejected by whack? */
 		libreswan_log("invalid hex CKAID '%s': %s", ckaid, ugh);
 		return NULL;
 	}
 	DBG(DBG_CONTROL,
-	    DBG_dump("looking for pubkey with CKAID that matches", buf, buflen));
+	    DBG_dump("looking for pubkey with CKAID that matches", bin, binlen));
 
 	struct pubkey_list *p;
 	for (p = pluto_pubkeys; p != NULL; p = p->next) {
@@ -1420,9 +1421,9 @@ struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid)
 		struct pubkey *key = p->key;
 		switch (key->alg) {
 		case PUBKEY_ALG_RSA: {
-			if (rsa_pubkey_ckaid_matches(key, buf, buflen)) {
+			if (rsa_pubkey_ckaid_matches(key, bin, binlen)) {
 				DBGF(DBG_CONTROL, "ckaid matching pubkey");
-				pfree(buf);
+				pfree(bin);
 				return key;
 			}
 		}
@@ -1430,6 +1431,6 @@ struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid)
 			break;
 		}
 	}
-	pfree(buf);
+	pfree(bin);
 	return NULL;
 }
