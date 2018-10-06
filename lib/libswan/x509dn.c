@@ -378,33 +378,6 @@ int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
 }
 
 /*
- * function for use in atodn() that escapes a character in
- * in the leftid/rightid string. Needed for '//' and ',,'
- * escapes for OID fields
- */
-static void escape_char(char *str, char esc)
-{
-	char *src, *dst;
-	int once = 0;
-
-	src = dst = str;
-	while (*src != '\0' && once == 0) {
-		*dst = *src;
-		src++;
-		if (*dst++ == esc && *src == esc) {
-			src++;
-			once = 1;
-		}
-	}
-	while (*src != '\0') {
-		*dst = *src;
-		src++;
-		dst++;
-	}
-	*dst = '\0';
-}
-
-/*
  * Converts an LDAP-style human-readable ASCII-encoded
  * ASN.1 distinguished name into binary DER-encoded format
  */
@@ -434,7 +407,6 @@ err_t atodn(char *src, chunk_t *dn)
 	chunk_t oid = empty_chunk;
 	chunk_t name = empty_chunk;
 
-	int whitespace = 0;
 	int rdn_seq_len = 0;
 	int rdn_set_len = 0;
 	int dn_seq_len = 0;
@@ -465,6 +437,7 @@ err_t atodn(char *src, chunk_t *dn)
 		switch (state) {
 		case SEARCH_OID:
 			if (*src != '\0' && *src != ' ' && *src != '/' && *src != ',') {
+				/* start of oid */
 				oid.ptr = (unsigned char *)src;
 				oid.len = 1;
 				state = READ_OID;
@@ -479,8 +452,10 @@ err_t atodn(char *src, chunk_t *dn)
 			 * OID should not come at end of string.
 			 */
 			if (*src != ' ' && *src != '=') {
+				/* one more character for oid */
 				oid.len++;
 			} else {
+				/* oid terminated: look it up */
 				for (pos = 0; pos < (int)X501_RDN_ROOF;
 					pos++) {
 					if (strlen(x501rdns[pos].name) ==
@@ -511,42 +486,38 @@ err_t atodn(char *src, chunk_t *dn)
 			 * (and nothing else) nothing will use it.
 			 */
 			if (*src != ' ' && *src != '=') {
+				/* start of name */
 				name.ptr = (unsigned char *)src;
 				name.len = 1;
-				whitespace = 0;
 				state = READ_NAME;
 			}
 			break;
 		case READ_NAME:
-			if (*src != ',' && *src != '/' && *src != '\0') {
-				name.len++;
-				if (*src == ' ')
-					whitespace++;
-				else
-					whitespace = 0;
-			} else {
-				if (*src == ',') {
-					if (*++src == ',') {
-						src--;
-						name.len++;
-						escape_char(src, ',');
-						break;
-					} else {
-						src--;
-					}
+			switch (*src) {
+			default:
+				/* continue with name */
+				break;
+			case ',':
+			case '/':
+				if (src[0] == src[1]) {
+					/*
+					 * doubled: a form of escape.
+					 * It stands for a single copy,
+					 * so we get rid of duplicate in
+					 * src by shifting it left 1 position.
+					 */
+					memmove(src + 1, src + 2, strlen(src + 2) + 1);
+					/* continue with name */
+					break;
 				}
-				if (*src == '/') {
-					if (*++src == '/') {
-						src--;
-						name.len++;
-						escape_char(src, '/');
-						break;
-					} else {
-						src--;
-					}
-				}
+				/* not doubled: terminator for name */
+				/* fall through */
+			case '\0':
+				/* terminator for name: process name */
+				name.len = (unsigned char *)src - name.ptr;
+				while (name.len > 0 && name.ptr[name.len -1] == ' ')
+					name.len--;
 
-				name.len -= whitespace;
 				code_asn1_length(name.len, &asn1_name_len);
 
 				/*
