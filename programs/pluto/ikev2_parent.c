@@ -3200,22 +3200,17 @@ static stf_status ikev2_record_outbound_fragments(
 	return ret;
 }
 
-/* next payload: ISAKMP_NEXT_v2CP or np? */
-
-static int ikev2_np_cp_or(const struct connection *const pc,
-			  int np,
-			  const lset_t st_nat_traversal)
+static bool need_configuration_payload(const struct connection *const pc,
+			    const lset_t st_nat_traversal)
 {
 	return (pc->spd.this.modecfg_client &&
-		(!pc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST))) ?
-			ISAKMP_NEXT_v2CP : np;
+		(!pc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST)));
 }
 
 static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_digest *md,
 					      struct pluto_crypto_req *r)
 {
 	struct connection *const pc = pst->st_connection;	/* parent connection */
-	int send_cp_r = 0;
 	struct ppk_id_payload ppk_id_p;
 	chunk_t null_auth;
 
@@ -3482,21 +3477,14 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	/* send out the AUTH payload */
-	{
-		int np = send_cp_r = ikev2_np_cp_or(pc, ISAKMP_NEXT_v2SA,
-				pst->hidden_variables.st_nat_traversal);
+	stf_status authstat = ikev2_send_auth(pc, cst, ORIGINAL_INITIATOR, 0,
+					      idhash, &e_pbs_cipher, &null_auth);
+	if (authstat != STF_OK)
+		return authstat;
 
-		stf_status authstat = ikev2_send_auth(pc, cst, ORIGINAL_INITIATOR, np,
-				idhash, &e_pbs_cipher, &null_auth);
-
-		if (authstat != STF_OK)
-			return authstat;
-	}
-
-	if (send_cp_r == ISAKMP_NEXT_v2CP) {
+	if (need_configuration_payload(pc, pst->hidden_variables.st_nat_traversal)) {
 		stf_status cpstat = ikev2_send_cp(pst, ISAKMP_NEXT_v2SA,
-				&e_pbs_cipher);
-
+						  &e_pbs_cipher);
 		if (cpstat != STF_OK)
 			return cpstat;
 	}
@@ -4487,13 +4475,11 @@ static stf_status ikev2_process_cp_respnse(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
-	int cp_r = ikev2_np_cp_or(c, ISAKMP_NEXT_v2NONE,
-		st->hidden_variables.st_nat_traversal);
 
 	if (st->st_state == STATE_V2_REKEY_CHILD_I)
 		return STF_OK; /* CP response is  not allowed in a REKEY response */
 
-	if (cp_r == ISAKMP_NEXT_v2CP) {
+	if (need_configuration_payload(c, st->hidden_variables.st_nat_traversal)) {
 		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			/* not really anything to here... but it would be worth unpending again */
 			loglog(RC_LOG_SERIOUS, "missing v2CP reply, not attempting to setup child SA");
