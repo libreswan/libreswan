@@ -166,7 +166,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 
 		curl_easy_setopt(curl, CURLOPT_URL, uri);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_buffer);
-		curl_easy_setopt(curl, CURLOPT_FILE, (void *)&response);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
 		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, timeout);
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2 * timeout);
