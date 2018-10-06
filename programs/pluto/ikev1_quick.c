@@ -925,15 +925,15 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	 * POLICY_COMPRESS is considered iff we can do IPcomp.
 	 */
 	{
-		lset_t pm = POLICY_ENCRYPT | POLICY_AUTHENTICATE;
-
-		if (can_do_IPcomp)
-			pm |= POLICY_COMPRESS;
+		lset_t pm = st->st_policy & (POLICY_ENCRYPT |
+					     POLICY_AUTHENTICATE |
+					     can_do_IPcomp ? POLICY_COMPRESS : 0);
+		DBGF(DBG_CONTROL, "emitting quick defaults using policy %s",
+		     bitnamesof(sa_policy_bit_names, pm));
 
 		if (!ikev1_out_sa(&rbody,
-			    &ipsec_sadb[(st->st_policy &
-					 pm) >> POLICY_IPSEC_SHIFT],
-			    st, FALSE, FALSE, ISAKMP_NEXT_NONCE)) {
+				  &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT],
+				  st, FALSE, FALSE, ISAKMP_NEXT_NONCE)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}

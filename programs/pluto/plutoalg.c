@@ -331,16 +331,17 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 {
 	if (ei == NULL) {
 		struct db_sa *sadb;
-		lset_t pm = POLICY_ENCRYPT | POLICY_AUTHENTICATE;
+		lset_t pm = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 
-		sadb = &ipsec_sadb[(policy & pm) >> POLICY_IPSEC_SHIFT];
+		DBGF(DBG_CONTROL,
+		     "empty esp_info, returning defaults for %s",
+		     bitnamesof(sa_policy_bit_names, pm));
+
+		sadb = &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT];
 
 		/* make copy, to keep from freeing the static policies */
 		sadb = sa_copy_sa(sadb);
 		sadb->parentSA = FALSE;
-
-		DBG(DBG_CONTROL,
-		    DBG_log("empty esp_info, returning defaults"));
 		return sadb;
 	}
 
