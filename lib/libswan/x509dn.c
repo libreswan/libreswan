@@ -464,13 +464,20 @@ err_t atodn(char *src, chunk_t *dn)
 	do {
 		switch (state) {
 		case SEARCH_OID:
-			if (*src != ' ' && *src != '/' && *src != ',') {
+			if (*src != '\0' && *src != ' ' && *src != '/' && *src != ',') {
 				oid.ptr = (unsigned char *)src;
 				oid.len = 1;
 				state = READ_OID;
 			}
 			break;
 		case READ_OID:
+			/*
+			 * ??? what if *src == '\0'?
+			 * Probably safe because oid
+			 * will include it, precluding a
+			 * match with a table entry.
+			 * OID should not come at end of string.
+			 */
 			if (*src != ' ' && *src != '=') {
 				oid.len++;
 			} else {
@@ -497,6 +504,12 @@ err_t atodn(char *src, chunk_t *dn)
 			}
 			break;
 		case SEARCH_NAME:
+			/*
+			 * ??? what if *src == '\0'?
+			 * Probably safe because loop will end.
+			 * Even though name will include '\0'
+			 * (and nothing else) nothing will use it.
+			 */
 			if (*src != ' ' && *src != '=') {
 				name.ptr = (unsigned char *)src;
 				name.len = 1;
@@ -606,16 +619,21 @@ err_t atodn(char *src, chunk_t *dn)
 		}
 	} while (*src++ != '\0');
 
-	/*
-	 * complete the distinguished name sequence: prefix it with
-	 * ASN1_SEQUENCE and length
-	 */
-	code_asn1_length((size_t)dn_seq_len, &asn1_dn_seq_len);
-	dn->ptr += ASN1_MAX_LEN_LEN + 1 - 1 - asn1_dn_seq_len.len;
-	dn->len = 1 + asn1_dn_seq_len.len + dn_seq_len;
-	dn_ptr = dn->ptr;
-	*dn_ptr++ = ASN1_SEQUENCE;
-	addchunk(asn1_dn_seq_len);
+	if (ugh == NULL && state != SEARCH_OID)
+		ugh = "incomplete sequence";
+
+	if (ugh == NULL) {
+		/*
+		 * complete the distinguished name sequence: prefix it with
+		 * ASN1_SEQUENCE and length
+		 */
+		code_asn1_length((size_t)dn_seq_len, &asn1_dn_seq_len);
+		dn->ptr += ASN1_MAX_LEN_LEN + 1 - 1 - asn1_dn_seq_len.len;
+		dn->len = 1 + asn1_dn_seq_len.len + dn_seq_len;
+		dn_ptr = dn->ptr;
+		*dn_ptr++ = ASN1_SEQUENCE;
+		addchunk(asn1_dn_seq_len);
+	}
 	return ugh;
 #	undef addtychunk
 #	undef addchunk
