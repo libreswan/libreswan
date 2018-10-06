@@ -36,8 +36,8 @@ bool ckaid_starts_with(ckaid_t ckaid, const char *start)
 	if (strlen(start) > ckaid.nss->len * 2) {
 		return false;
 	}
-	int i;
-	for (i = 0; start[i]; i++) {
+
+	for (int i = 0; start[i] != '\0'; i++) {
 		const char *p = start + i;
 		unsigned byte = ckaid.nss->data[i / 2];
 		/* high or low */
@@ -45,7 +45,7 @@ bool ckaid_starts_with(ckaid_t ckaid, const char *start)
 		char n[2] = { *p, };
 		char *end;
 		unsigned long ni = strtoul(n, &end, 16);
-		if (*end) {
+		if (*end != '\0') {
 			return false;
 		}
 		if (ni != nibble) {
@@ -111,7 +111,7 @@ err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
 
 void freeanyckaid(ckaid_t *ckaid)
 {
-	if (ckaid && ckaid->nss) {
+	if (ckaid != NULL && ckaid->nss) {
 		SECITEM_FreeItem(ckaid->nss, PR_TRUE);
 		ckaid->nss = NULL;
 	}
