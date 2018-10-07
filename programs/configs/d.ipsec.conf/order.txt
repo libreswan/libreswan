@@ -15,6 +15,7 @@ d.ipsec.conf/leftprotoport.xml
 d.ipsec.conf/leftnexthop.xml
 d.ipsec.conf/leftsourceip.xml
 d.ipsec.conf/leftupdown.xml
+d.ipsec.conf/leftcat.xml
 d.ipsec.conf/leftfirewall.xml
 d.ipsec.conf/conngeneralend.xml
 d.ipsec.conf/connauto.xml
