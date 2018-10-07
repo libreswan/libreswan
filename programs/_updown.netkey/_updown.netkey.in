@@ -784,6 +784,7 @@ case "${PLUTO_VERB}" in
 	addcat
 	addsource
 	notifyNM connect
+	addvti
 	;;
     down-client)
 	# connection to my client subnet going down
