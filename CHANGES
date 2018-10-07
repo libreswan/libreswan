@@ -18,6 +18,7 @@ v3.27 (unreleased)
 * documentation: Update (L)GPL license links and http -> https links [dkg]
 * Bugtracker bugs fixed:
    #177 left=%defaultroute not working when "src" in the default route [Kim]
+   #80 VTI interface vanishes when peer goes down and up [yu-shiba]
 
 v3.26 (September 16, 2018)
 * IKEv2: Support for RSA-PSS (RFC 7427) via authby=rsa-sha2 [Sahana Prasad]
