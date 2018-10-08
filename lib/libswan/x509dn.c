@@ -82,33 +82,35 @@ static u_char oid_TCGID[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x89, 0x31, 0x01,
 				0x01, 0x02, 0x02, 0x4B };
 
 static const x501rdn_t x501rdns[] = {
-	{ "ND", { oid_ND, 7 }, ASN1_PRINTABLESTRING },
-	{ "UID", { oid_UID, 10 }, ASN1_PRINTABLESTRING },
-	{ "DC", { oid_DC, 10 }, ASN1_PRINTABLESTRING },
-	{ "CN", { oid_CN, 3 }, ASN1_PRINTABLESTRING },
-	{ "S", { oid_S, 3 }, ASN1_PRINTABLESTRING },
-	{ "SN", { oid_SN, 3 }, ASN1_PRINTABLESTRING },
-	{ "serialNumber", { oid_SN, 3 }, ASN1_PRINTABLESTRING },
-	{ "C", { oid_C, 3 }, ASN1_PRINTABLESTRING },
-	{ "L", { oid_L, 3 }, ASN1_PRINTABLESTRING },
-	{ "ST", { oid_ST, 3 }, ASN1_PRINTABLESTRING },
-	{ "O", { oid_O, 3 }, ASN1_PRINTABLESTRING },
-	{ "OU", { oid_OU, 3 }, ASN1_PRINTABLESTRING },
-	{ "T", { oid_T, 3 }, ASN1_PRINTABLESTRING },
-	{ "D", { oid_D, 3 }, ASN1_PRINTABLESTRING },
-	{ "N", { oid_N, 3 }, ASN1_PRINTABLESTRING },
-	{ "G", { oid_G, 3 }, ASN1_PRINTABLESTRING },
-	{ "I", { oid_I, 3 }, ASN1_PRINTABLESTRING },
-	{ "ID", { oid_ID, 3 }, ASN1_PRINTABLESTRING },
-	{ "E", { oid_E, 9 }, ASN1_IA5STRING },
-	{ "Email", { oid_E, 9 }, ASN1_IA5STRING },
-	{ "emailAddress", { oid_E, 9 }, ASN1_IA5STRING },
-	{ "UN", { oid_UN, 9 }, ASN1_IA5STRING },
-	{ "unstructuredName", { oid_UN, 9 }, ASN1_IA5STRING },
-	{ "TCGID", { oid_TCGID, 12 }, ASN1_PRINTABLESTRING }
-};
+#	define OC(oid) { .ptr = oid, .len = sizeof(oid) }
 
-#define X501_RDN_ROOF elemsof(x501rdns)
+	{ "ND", OC(oid_ND), ASN1_PRINTABLESTRING },
+	{ "UID", OC(oid_UID), ASN1_PRINTABLESTRING },
+	{ "DC", OC(oid_DC), ASN1_PRINTABLESTRING },
+	{ "CN", OC(oid_CN), ASN1_PRINTABLESTRING },
+	{ "S", OC(oid_S), ASN1_PRINTABLESTRING },
+	{ "SN", OC(oid_SN), ASN1_PRINTABLESTRING },
+	{ "serialNumber", OC(oid_SN), ASN1_PRINTABLESTRING },
+	{ "C", OC(oid_C), ASN1_PRINTABLESTRING },
+	{ "L", OC(oid_L), ASN1_PRINTABLESTRING },
+	{ "ST", OC(oid_ST), ASN1_PRINTABLESTRING },
+	{ "O", OC(oid_O), ASN1_PRINTABLESTRING },
+	{ "OU", OC(oid_OU), ASN1_PRINTABLESTRING },
+	{ "T", OC(oid_T), ASN1_PRINTABLESTRING },
+	{ "D", OC(oid_D), ASN1_PRINTABLESTRING },
+	{ "N", OC(oid_N), ASN1_PRINTABLESTRING },
+	{ "G", OC(oid_G), ASN1_PRINTABLESTRING },
+	{ "I", OC(oid_I), ASN1_PRINTABLESTRING },
+	{ "ID", OC(oid_ID), ASN1_PRINTABLESTRING },
+	{ "E", OC(oid_E), ASN1_IA5STRING },
+	{ "Email", OC(oid_E), ASN1_IA5STRING },
+	{ "emailAddress", OC(oid_E), ASN1_IA5STRING },
+	{ "UN", OC(oid_UN), ASN1_IA5STRING },
+	{ "unstructuredName", OC(oid_UN), ASN1_IA5STRING },
+	{ "TCGID", OC(oid_TCGID), ASN1_PRINTABLESTRING }
+
+#	undef OC
+};
 
 static void format_chunk(chunk_t *ch, const char *format, ...) PRINTF_LIKE(2);
 
@@ -379,37 +381,42 @@ int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
 
 /*
  * Converts an LDAP-style human-readable ASCII-encoded
- * ASN.1 distinguished name into binary DER-encoded format
+ * ASN.1 distinguished name into binary DER-encoded format.
+ * *dn is the result, allocated by temporary_cyclic_buffer.
+ * Note: this rewrites src!
+ * Structure of the output is a sequence of OIDs, wrapped in a ASN1_SEQUENCE.
  */
 err_t atodn(char *src, chunk_t *dn)
 {
 	DBGF(DBG_X509, "ASCII to DN \"%s\"", src);
 
 	dn->ptr = temporary_cyclic_buffer();	/* nasty! */
-	unsigned char *dn_roof = dn->ptr + IDTOA_BUF;
 	dn->len = 0;
 
-	size_t dn_seq_len = 0;
+	/* leave room for prefix, ASN1_SEQUENCE */
+	unsigned char *const seq_start = dn->ptr + 1 + ASN1_MAX_LEN_LEN;
 
-	err_t ugh = NULL;
-
-	/* leave room for prefix */
-	u_char *dn_ptr = dn->ptr + 1 + ASN1_MAX_LEN_LEN;
+	unsigned char *dn_ptr = seq_start;
 
 	/*
 	 * Concatenate the contents of a chunk onto dn.
 	 * The destination pointer is incremented by the length.
+	 * NOTE: return from the atodn if we run out of space!
+	 * To avoid space checking in addtychunk, we leave slack
+	 * for next type byte.
 	 */
+	unsigned char *const dn_redline = dn->ptr + IDTOA_BUF - 1;
+
 #	define addchunk(chunk) { \
-			if (dn_roof - dn_ptr < (ptrdiff_t)(chunk).len + 1) \
-				return "DN overflow"; \
-			memcpy(dn_ptr, (chunk).ptr, (chunk).len); \
-			dn_ptr += (chunk).len; \
-		}
+		if (dn_redline - dn_ptr < (ptrdiff_t)(chunk).len) \
+			return "DN overflow"; \
+		memcpy(dn_ptr, (chunk).ptr, (chunk).len); \
+		dn_ptr += (chunk).len; \
+	}
 #	define addtychunk(ty, chunk) { \
-			*dn_ptr++ = ty; \
-			addchunk(chunk); \
-		}
+		*dn_ptr++ = (ty); \
+		addchunk(chunk); \
+	}
 
 	for (;;) {
 		/* parse OID */
@@ -419,31 +426,24 @@ err_t atodn(char *src, chunk_t *dn)
 		src += strspn(src, " /,");	/* skip any separators */
 
 		if (*src == '\0')
-			break;
+			break;	/* finished! */
 
 		size_t ol = strcspn(src, " =");	/* length of OID name */
 
 		const x501rdn_t *op;	/* OID description */
 
 		for (op = x501rdns; ; op++) {
-			if (op == &x501rdns[X501_RDN_ROOF]) {
+			if (op == &x501rdns[elemsof(x501rdns)]) {
 				DBGF(DBG_X509, "unknown OID: \"%.*s\"",
 					(int)ol, src);
-				ugh = "unknown OID in ID_DER_ASN1_DN";
-				break;
+				return "unknown OID in ID_DER_ASN1_DN";
 			}
 			if (strlen(op->name) == ol && strncaseeq(op->name, src, ol)) {
 				break;	/* found */
 			}
 		}
-		if (ugh != NULL)
-			break;
 
 		src += ol;
-
-		u_char oid_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
-		chunk_t asn1_oid_len = { oid_len_buf, 0 };
-		code_asn1_length(op->oid.len, &asn1_oid_len);
 
 		/* parse name */
 
@@ -483,21 +483,42 @@ err_t atodn(char *src, chunk_t *dn)
 
 		src += nl;
 
-		if (nl == 0) {
-			ugh = "DN is empty";
-			break;
-		}
+		if (nl == 0)
+			return "DN component is empty";
 
+		/*
+		 * Now we concatenate this component of the DER
+		 *
+		 * ASN1_SET {
+		 *	ASN1_SEQUENCE {
+		 *		ASN1_OID op->oid
+		 *		op->type|ASN1_PRINTABLESTRING name
+		 * }
+		 */
+
+		/*
+		 * Compute the length strings, inside out.
+		 * We need to compute the lengths of the length
+		 * of inside things before we can compute
+		 * the length of the container.
+		 */
+
+		/* format length for op->oid.len */
+		u_char oid_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
+		chunk_t asn1_oid_len = { oid_len_buf, 0 };
+		code_asn1_length(op->oid.len, &asn1_oid_len);
+
+		/* format length for length of name string */
 		u_char name_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
 		chunk_t asn1_name_len = { name_len_buf, 0 };
 		code_asn1_length(nl, &asn1_name_len);
 
 		/*
 		 * compute the length of the relative
-		 * distinguished name sequence
+		 * distinguished name sequence (ASN1_SEQUENCE).
+		 * Contains oid and name
 		 */
-		size_t rdn_seq_len = 1 + asn1_oid_len.len +
-			op->oid.len +
+		size_t rdn_seq_len = 1 + asn1_oid_len.len + op->oid.len +
 			1 + asn1_name_len.len + nl;
 
 		u_char rdn_seq_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
@@ -507,7 +528,7 @@ err_t atodn(char *src, chunk_t *dn)
 
 		/*
 		 * compute the length of the relative
-		 * distinguished name set
+		 * distinguished name set (ASN1_SET).
 		 */
 		size_t rdn_set_len = 1 + asn1_rdn_seq_len.len +
 			rdn_seq_len;
@@ -518,41 +539,21 @@ err_t atodn(char *src, chunk_t *dn)
 				&asn1_rdn_set_len);
 
 		/* encode the relative distinguished name */
-		if (IDTOA_BUF < dn_ptr - dn->ptr +
-		    1 + asn1_rdn_set_len.len + /* set */
-		    1 + asn1_rdn_seq_len.len + /* sequence */
-		    1 + asn1_oid_len.len + /* oid len */
-		    op->oid.len + /* oid */
-		    1 + asn1_name_len.len + nl /* type name */
-		    ) {
-			/* no room! */
-			ugh = "DN is too big";
-			break;
-		} else {
-			addtychunk(ASN1_SET, asn1_rdn_set_len);
-			addtychunk(ASN1_SEQUENCE, asn1_rdn_seq_len);
-			addtychunk(ASN1_OID, asn1_oid_len);
-			addchunk(op->oid);
-			/*
-			 * encode the ASN.1 character string
-			 * type of the name
-			 */
-			asn1_t nt =
-				op->type == ASN1_PRINTABLESTRING &&
-				!is_printablestring(name) ?
-					ASN1_T61STRING :
-					op->type;
-			addtychunk(nt, asn1_name_len);
-			addchunk(name);
-
-			/*
-			 * accumulate the length of the
-			 * distinguished name sequence
-			 */
-			dn_seq_len += 1 +
-				asn1_rdn_set_len.len +
-				rdn_set_len;
-		}
+		addtychunk(ASN1_SET, asn1_rdn_set_len);
+		addtychunk(ASN1_SEQUENCE, asn1_rdn_seq_len);
+		addtychunk(ASN1_OID, asn1_oid_len);
+		addchunk(op->oid);
+		/*
+		 * encode the ASN.1 character string
+		 * type of the name
+		 */
+		asn1_t nt =
+			op->type == ASN1_PRINTABLESTRING &&
+			!is_printablestring(name) ?
+				ASN1_T61STRING :
+				op->type;
+		addtychunk(nt, asn1_name_len);
+		addchunk(name);
 	}
 
 	/*
@@ -561,13 +562,14 @@ err_t atodn(char *src, chunk_t *dn)
 	 */
 	u_char dn_seq_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
 	chunk_t asn1_dn_seq_len = { dn_seq_len_buf, 0 };
-	code_asn1_length((size_t)dn_seq_len, &asn1_dn_seq_len);
+	code_asn1_length(dn_ptr - seq_start, &asn1_dn_seq_len);
 
-	dn->ptr += ASN1_MAX_LEN_LEN + 1 - 1 - asn1_dn_seq_len.len;
-	dn->len = 1 + asn1_dn_seq_len.len + dn_seq_len;
+	dn->ptr = seq_start - (1 + asn1_dn_seq_len.len);
+	dn->len = dn_ptr - dn->ptr;
+
 	dn_ptr = dn->ptr;
 	addtychunk(ASN1_SEQUENCE, asn1_dn_seq_len);
-	return ugh;
+	return NULL;
 #	undef addtychunk
 #	undef addchunk
 }
