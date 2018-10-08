@@ -166,7 +166,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	} else {
 		DBGF(DBG_CONTROL, "%s: state #%lu "PRI_FD" .st_dev=%lu .st_ino=%lu",
 		     __func__, st->st_serialno, PRI_fd(st->st_whack_sock),
-		     stst.st_dev, stst.st_ino);
+		     (unsigned long)stst.st_dev, (unsigned long)stst.st_ino);
 		release_whack(st);
 	}
 

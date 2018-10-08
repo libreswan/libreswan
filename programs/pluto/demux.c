@@ -466,7 +466,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		va_start(ap, fmt);
 		lswlogvf(buf, fmt, ap);
 		va_end(ap);
-		lswlogf(buf, " (%td bytes)", pbs_room(&md->packet_pbs));
+		lswlogf(buf, " (%d bytes)", (int)pbs_room(&md->packet_pbs));
 	}
 	DBG(DBG_RAW,
 	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
