@@ -1,6 +1,6 @@
-libreswan (3.27-1) UNRELEASED; urgency=low
+libreswan (@IPSECBASEVERSION@-1) UNRELEASED; urgency=low
 
-  * Release 3.27-1
+  * Release @IPSECBASEVERSION@-1
 
  -- Unknown User <unknown@libreswan.org>  Sun,  7 Oct 2018 01:00:00 +0200
 
