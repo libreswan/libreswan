@@ -6,8 +6,6 @@ Redirecting to: systemctl start ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
- ipsec whack --impair suppress-retransmits
-north #
  ipsec auto --add north-dpd
 002 added connection description "north-dpd/0x1"
 002 added connection description "north-dpd/0x2"
@@ -25,6 +23,7 @@ north #
 108 "north-dpd/0x2" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "north-dpd/0x2" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "north-dpd/0x2" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+003 "north-dpd/0x2" #1: Authenticated using RSA
 004 "north-dpd/0x2" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "north-dpd/0x1" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 002 "north-dpd/0x2" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
@@ -100,7 +99,9 @@ north #
 000 "north-dpd/0x2":   newest ISAKMP SA: #1; newest IPsec SA: #0;
 000 "north-dpd/0x2":   aliases: north-dpd
 000 "north-dpd/0x2":   IKE algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
-000 #1: "north-dpd/0x2":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=29s(seq in:29641 out:29640); idle;
+000 #5: "north-dpd/0x1":500 STATE_QUICK_I1 (sent QI1, expecting QR1); EVENT_v1_RETRANSMIT in  XXs; lastdpd=-1s(seq in:0 out:0); idle;
+000 #1: "north-dpd/0x2":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=28s(seq in:16370 out:16369); idle;
+000 #4: "north-dpd/0x2":500 STATE_QUICK_I1 (sent QI1, expecting QR1); EVENT_v1_RETRANSMIT in  XXs; lastdpd=-1s(seq in:0 out:0); idle;
 north #
  ip route del unreachable 192.1.2.23
 north #
@@ -119,8 +120,9 @@ north #
  # state number shuld be higher than the previous one
 north #
  ipsec whack --trafficstatus
+006 #5: "north-dpd/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 006 #6: "north-dpd/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-006 #7: "north-dpd/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #4: "north-dpd/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
  echo done
 done

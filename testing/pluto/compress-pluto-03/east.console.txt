@@ -12,6 +12,7 @@ east #
 000 "westnet-eastnet-esp-3des-alg": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-esp-3des-alg":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-esp-3des-alg":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-esp-3des-alg":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-esp-3des-alg":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-esp-3des-alg":   labeled_ipsec:no;
 000 "westnet-eastnet-esp-3des-alg":   policy_label:unset;
@@ -21,6 +22,7 @@ east #
 000 "westnet-eastnet-esp-3des-alg":   policy: RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-esp-3des-alg":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-esp-3des-alg":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-esp-3des-alg":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-esp-3des-alg":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-esp-3des-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-esp-3des-alg":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96
@@ -58,24 +60,24 @@ src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1042407 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto comp reqid REQID mode tunnel
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir fwd priority 2344 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto comp reqid REQID mode tunnel
-		level use 
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir in priority 2344 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto comp reqid REQID mode tunnel
-		level use 
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done

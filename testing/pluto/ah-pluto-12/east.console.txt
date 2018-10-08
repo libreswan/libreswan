@@ -23,17 +23,17 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 32 flag af-unspec align4
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto ah reqid REQID mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto ah reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1042407 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto ah reqid REQID mode tunnel
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir fwd priority 2344 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto ah reqid REQID mode tunnel
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir in priority 2344 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto ah reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES

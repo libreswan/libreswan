@@ -79,6 +79,14 @@ src 10.0.10.1/32 dst 192.1.2.23/32
 	dir in priority 1564639 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
+src 10.0.10.2/32 dst 192.1.2.23/32
+	dir fwd priority 1564639 ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 10.0.10.2/32 dst 192.1.2.23/32
+	dir in priority 1564639 ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 10.0.10.1/32
 	dir out priority 1564639 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.254
