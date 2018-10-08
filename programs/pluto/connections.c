@@ -898,7 +898,6 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 		} else if (!streq(src->ca, "%any")) {
 			err_t ugh;
 
-			dst->ca.ptr = temporary_cyclic_buffer();
 			ugh = atodn(src->ca, &dst->ca);
 			if (ugh != NULL) {
 				libreswan_log(

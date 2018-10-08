@@ -383,34 +383,13 @@ int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
  */
 err_t atodn(char *src, chunk_t *dn)
 {
-	/* finite state machine for atodn */
+	DBGF(DBG_X509, "ASCII to DN \"%s\"", src);
 
-	typedef enum {
-		SEARCH_OID = 0,
-		READ_OID = 1,
-		SEARCH_NAME = 2,
-		READ_NAME = 3,
-		UNKNOWN_OID = 4
-	} state_t;
+	dn->ptr = temporary_cyclic_buffer();	/* nasty! */
+	unsigned char *dn_roof = dn->ptr + IDTOA_BUF;
+	dn->len = 0;
 
-	u_char oid_len_buf[ASN1_MAX_LEN_LEN];
-	u_char name_len_buf[ASN1_MAX_LEN_LEN];
-	u_char rdn_seq_len_buf[ASN1_MAX_LEN_LEN];
-	u_char rdn_set_len_buf[ASN1_MAX_LEN_LEN];
-	u_char dn_seq_len_buf[ASN1_MAX_LEN_LEN];
-
-	chunk_t asn1_oid_len = { oid_len_buf, 0 };
-	chunk_t asn1_name_len = { name_len_buf, 0 };
-	chunk_t asn1_rdn_seq_len = { rdn_seq_len_buf, 0 };
-	chunk_t asn1_rdn_set_len = { rdn_set_len_buf, 0 };
-	chunk_t asn1_dn_seq_len = { dn_seq_len_buf, 0 };
-	chunk_t oid = empty_chunk;
-	chunk_t name = empty_chunk;
-
-	int rdn_seq_len = 0;
-	int rdn_set_len = 0;
-	int dn_seq_len = 0;
-	int pos = 0;
+	size_t dn_seq_len = 0;
 
 	err_t ugh = NULL;
 
@@ -420,191 +399,174 @@ err_t atodn(char *src, chunk_t *dn)
 	/*
 	 * Concatenate the contents of a chunk onto dn.
 	 * The destination pointer is incremented by the length.
-	 * Pray that there is enough space.
 	 */
 #	define addchunk(chunk) { \
+			if (dn_roof - dn_ptr < (ptrdiff_t)(chunk).len + 1) \
+				return "DN overflow"; \
 			memcpy(dn_ptr, (chunk).ptr, (chunk).len); \
 			dn_ptr += (chunk).len; \
 		}
 #	define addtychunk(ty, chunk) { \
-		*dn_ptr++ = ty; \
-		addchunk(chunk); \
+			*dn_ptr++ = ty; \
+			addchunk(chunk); \
 		}
 
-	state_t state = SEARCH_OID;
+	for (;;) {
+		/* parse OID */
 
-	do {
-		switch (state) {
-		case SEARCH_OID:
-			if (*src != '\0' && *src != ' ' && *src != '/' && *src != ',') {
-				/* start of oid */
-				oid.ptr = (unsigned char *)src;
-				oid.len = 1;
-				state = READ_OID;
-			}
-			break;
-		case READ_OID:
-			/*
-			 * ??? what if *src == '\0'?
-			 * Probably safe because oid
-			 * will include it, precluding a
-			 * match with a table entry.
-			 * OID should not come at end of string.
-			 */
-			if (*src != ' ' && *src != '=') {
-				/* one more character for oid */
-				oid.len++;
-			} else {
-				/* oid terminated: look it up */
-				for (pos = 0; pos < (int)X501_RDN_ROOF;
-					pos++) {
-					if (strlen(x501rdns[pos].name) ==
-						oid.len &&
-						strncaseeq(x501rdns[pos].name,
-							(char *)oid.ptr,
-							oid.len))
-						break;	/* found a valid OID */
-				}
-				if (pos == X501_RDN_ROOF) {
-					ugh = "unknown OID in ID_DER_ASN1_DN";
-					state = UNKNOWN_OID;
-					break;
-				}
-				code_asn1_length(x501rdns[pos].oid.len,
-						&asn1_oid_len);
+		/* ??? are multiple '/' and ',' OK? */
 
-				/* reset oid and change state */
-				oid = empty_chunk;
-				state = SEARCH_NAME;
-			}
+		src += strspn(src, " /,");	/* skip any separators */
+
+		if (*src == '\0')
 			break;
-		case SEARCH_NAME:
-			/*
-			 * ??? what if *src == '\0'?
-			 * Probably safe because loop will end.
-			 * Even though name will include '\0'
-			 * (and nothing else) nothing will use it.
-			 */
-			if (*src != ' ' && *src != '=') {
-				/* start of name */
-				name.ptr = (unsigned char *)src;
-				name.len = 1;
-				state = READ_NAME;
-			}
-			break;
-		case READ_NAME:
-			switch (*src) {
-			default:
-				/* continue with name */
+
+		size_t ol = strcspn(src, " =");	/* length of OID name */
+
+		const x501rdn_t *op;	/* OID description */
+
+		for (op = x501rdns; ; op++) {
+			if (op == &x501rdns[X501_RDN_ROOF]) {
+				DBGF(DBG_X509, "unknown OID: \"%.*s\"",
+					(int)ol, src);
+				ugh = "unknown OID in ID_DER_ASN1_DN";
 				break;
-			case ',':
-			case '/':
-				if (src[0] == src[1]) {
-					/*
-					 * doubled: a form of escape.
-					 * It stands for a single copy,
-					 * so we get rid of duplicate in
-					 * src by shifting it left 1 position.
-					 */
-					memmove(src + 1, src + 2, strlen(src + 2) + 1);
-					/* continue with name */
-					break;
-				}
-				/* not doubled: terminator for name */
-				/* fall through */
-			case '\0':
-				/* terminator for name: process name */
-				name.len = (unsigned char *)src - name.ptr;
-				while (name.len > 0 && name.ptr[name.len -1] == ' ')
-					name.len--;
-
-				code_asn1_length(name.len, &asn1_name_len);
-
-				/*
-				 * compute the length of the relative
-				 * distinguished name sequence
-				 */
-				rdn_seq_len = 1 + asn1_oid_len.len +
-					x501rdns[pos].oid.len +
-					1 + asn1_name_len.len + name.len;
-				code_asn1_length(rdn_seq_len,
-						&asn1_rdn_seq_len);
-
-				/*
-				 * compute the length of the relative
-				 * distinguished name set
-				 */
-				rdn_set_len = 1 + asn1_rdn_seq_len.len +
-					rdn_seq_len;
-				code_asn1_length(rdn_set_len,
-						&asn1_rdn_set_len);
-
-				/* encode the relative distinguished name */
-				if (IDTOA_BUF < dn_ptr - dn->ptr +
-				    1 + asn1_rdn_set_len.len + /* set */
-				    1 + asn1_rdn_seq_len.len + /* sequence */
-				    1 + asn1_oid_len.len + /* oid len */
-				    x501rdns[pos].oid.len + /* oid */
-				    1 + asn1_name_len.len + name.len /* type name */
-				    ) {
-					/* no room! */
-					ugh = "DN is too big";
-					state = UNKNOWN_OID;
-					/*
-					 * I think that it is safe to continue
-					 * (but perhaps pointless)
-					 */
-				} else {
-					addtychunk(ASN1_SET, asn1_rdn_set_len);
-					addtychunk(ASN1_SEQUENCE, asn1_rdn_seq_len);
-					addtychunk(ASN1_OID, asn1_oid_len);
-					addchunk(x501rdns[pos].oid);
-					/*
-					 * encode the ASN.1 character string
-					 * type of the name
-					 */
-					asn1_t nt =
-						x501rdns[pos].type == ASN1_PRINTABLESTRING &&
-						!is_printablestring(name) ?
-							ASN1_T61STRING :
-							x501rdns[pos].type;
-					addtychunk(nt, asn1_name_len);
-					addchunk(name);
-
-					/*
-					 * accumulate the length of the
-					 * distinguished name sequence
-					 */
-					dn_seq_len += 1 +
-						asn1_rdn_set_len.len +
-						rdn_set_len;
-
-					/* reset name and change state */
-					name = empty_chunk;
-					state = SEARCH_OID;
-				}
 			}
+			if (strlen(op->name) == ol && strncaseeq(op->name, src, ol)) {
+				break;	/* found */
+			}
+		}
+		if (ugh != NULL)
 			break;
-		case UNKNOWN_OID:
+
+		src += ol;
+
+		u_char oid_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
+		chunk_t asn1_oid_len = { oid_len_buf, 0 };
+		code_asn1_length(op->oid.len, &asn1_oid_len);
+
+		/* parse name */
+
+		/* ??? are multiple '=' OK? */
+		src += strspn(src, " =");	/* skip any separators */
+
+		size_t nl = 0;	/* name length */
+
+		for (;;) {
+			/* look for characters that are escaped by doubling */
+			nl += strcspn(src + nl, ",/");
+			if (src[nl] != '\0' && src[nl] == src[nl + 1]) {
+				/*
+				 * doubled: a form of escape.
+				 * It stands for a single copy,
+				 * so we get rid of duplicate
+				 * by shifting tail left 1 position.
+				 * Result is still part of name
+				 */
+				memmove(src + nl + 1, src + nl + 2, strlen(src + nl + 2) + 1);
+				/* continue with name */
+				continue;
+			}
+
+			/* terminal */
 			break;
 		}
-	} while (*src++ != '\0');
 
-	if (ugh == NULL && state != SEARCH_OID)
-		ugh = "incomplete sequence";
+		/* remove trailing SPaces */
+		while (nl > 0 && src[nl-1] == ' ')
+			nl--;
 
-	if (ugh == NULL) {
+		const chunk_t name = {
+			.ptr = (unsigned char *)src,
+			.len = nl
+		};
+
+		src += nl;
+
+		if (nl == 0) {
+			ugh = "DN is empty";
+			break;
+		}
+
+		u_char name_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
+		chunk_t asn1_name_len = { name_len_buf, 0 };
+		code_asn1_length(nl, &asn1_name_len);
+
 		/*
-		 * complete the distinguished name sequence: prefix it with
-		 * ASN1_SEQUENCE and length
+		 * compute the length of the relative
+		 * distinguished name sequence
 		 */
-		code_asn1_length((size_t)dn_seq_len, &asn1_dn_seq_len);
-		dn->ptr += ASN1_MAX_LEN_LEN + 1 - 1 - asn1_dn_seq_len.len;
-		dn->len = 1 + asn1_dn_seq_len.len + dn_seq_len;
-		dn_ptr = dn->ptr;
-		*dn_ptr++ = ASN1_SEQUENCE;
-		addchunk(asn1_dn_seq_len);
+		size_t rdn_seq_len = 1 + asn1_oid_len.len +
+			op->oid.len +
+			1 + asn1_name_len.len + nl;
+
+		u_char rdn_seq_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
+		chunk_t asn1_rdn_seq_len = { rdn_seq_len_buf, 0 };
+		code_asn1_length(rdn_seq_len,
+				&asn1_rdn_seq_len);
+
+		/*
+		 * compute the length of the relative
+		 * distinguished name set
+		 */
+		size_t rdn_set_len = 1 + asn1_rdn_seq_len.len +
+			rdn_seq_len;
+
+		u_char rdn_set_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
+		chunk_t asn1_rdn_set_len = { rdn_set_len_buf, 0 };
+		code_asn1_length(rdn_set_len,
+				&asn1_rdn_set_len);
+
+		/* encode the relative distinguished name */
+		if (IDTOA_BUF < dn_ptr - dn->ptr +
+		    1 + asn1_rdn_set_len.len + /* set */
+		    1 + asn1_rdn_seq_len.len + /* sequence */
+		    1 + asn1_oid_len.len + /* oid len */
+		    op->oid.len + /* oid */
+		    1 + asn1_name_len.len + nl /* type name */
+		    ) {
+			/* no room! */
+			ugh = "DN is too big";
+			break;
+		} else {
+			addtychunk(ASN1_SET, asn1_rdn_set_len);
+			addtychunk(ASN1_SEQUENCE, asn1_rdn_seq_len);
+			addtychunk(ASN1_OID, asn1_oid_len);
+			addchunk(op->oid);
+			/*
+			 * encode the ASN.1 character string
+			 * type of the name
+			 */
+			asn1_t nt =
+				op->type == ASN1_PRINTABLESTRING &&
+				!is_printablestring(name) ?
+					ASN1_T61STRING :
+					op->type;
+			addtychunk(nt, asn1_name_len);
+			addchunk(name);
+
+			/*
+			 * accumulate the length of the
+			 * distinguished name sequence
+			 */
+			dn_seq_len += 1 +
+				asn1_rdn_set_len.len +
+				rdn_set_len;
+		}
 	}
+
+	/*
+	 * complete the distinguished name sequence: prefix it with
+	 * ASN1_SEQUENCE and length
+	 */
+	u_char dn_seq_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
+	chunk_t asn1_dn_seq_len = { dn_seq_len_buf, 0 };
+	code_asn1_length((size_t)dn_seq_len, &asn1_dn_seq_len);
+
+	dn->ptr += ASN1_MAX_LEN_LEN + 1 - 1 - asn1_dn_seq_len.len;
+	dn->len = 1 + asn1_dn_seq_len.len + dn_seq_len;
+	dn_ptr = dn->ptr;
+	addtychunk(ASN1_SEQUENCE, asn1_dn_seq_len);
 	return ugh;
 #	undef addtychunk
 #	undef addchunk

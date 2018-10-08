@@ -81,9 +81,6 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 	} else if (!oe_only && strchr(src, '=') != NULL) {
 		/* we interpret this as an ASCII X.501 ID_DER_ASN1_DN */
 		id->kind = ID_DER_ASN1_DN;
-		/* assign temporary buffer */
-		id->name.ptr = temporary_cyclic_buffer();
-		id->name.len = 0;
 		/*
 		 * convert from LDAP style or openssl x509 -subject style
 		 * to ASN.1 DN
