@@ -42,7 +42,7 @@ index aa58d1eff..f28c3b17d 100644
  	ipsec import certkey.p12
  
  If you did not pick a name using the -name option, you can use
--certutil -L -d sql:/etc/ipsec.d to figure out the name NSS picked durnig
+-certutil -L -d sql:/etc/ipsec.d to figure out the name NSS picked during
 +certutil -L -d sql:/var/lib/ipsec/nss to figure out the name NSS picked during
  the import.
  
