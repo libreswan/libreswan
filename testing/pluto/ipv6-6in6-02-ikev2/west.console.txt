@@ -18,7 +18,7 @@ west #
 west #
  ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
- # confirm with a ping
+ # confirm clear text does not get through
 west #
  ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
 PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes

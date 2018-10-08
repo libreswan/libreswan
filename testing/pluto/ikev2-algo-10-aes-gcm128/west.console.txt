@@ -13,7 +13,7 @@ west #
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
- # confirm with a ping
+ # confirm clear text does not get through
 west #
  ping -n -c 4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.

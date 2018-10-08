@@ -16,7 +16,7 @@ west #
 west #
  ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::23 -p ipv6-icmp --icmpv6-type echo-reply -j DROP
 west #
- # confirm with a ping
+ # confirm clear text does not get through
 west #
  ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
 PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes

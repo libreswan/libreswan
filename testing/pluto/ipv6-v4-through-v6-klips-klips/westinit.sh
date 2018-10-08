@@ -3,8 +3,8 @@
 ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through
 iptables -A INPUT -i eth1 -p icmp -j DROP
-# confirm with a ping
-ping -n -c 4 -I 192.0.1.254 192.0.2.254
+# confirm clear text does not get through
+../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-4in6

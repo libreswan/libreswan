@@ -16,7 +16,7 @@ road #
 road #
  ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 road #
- # confirm with a ping
+ # confirm clear text does not get through
 road #
  ping6 -n -c 4 -I 2001:db8:1:3::209 2001:db8:1:2::23
 PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:3::209 : 56 data bytes

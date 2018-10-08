@@ -3,7 +3,7 @@
 ping6 -n -c 4 -I 2001:db8:1:3::209 2001:db8:1:2::23
 ip6tables -A INPUT -i eth0 -s 2001:db8:1:2::23 -p ipv6-icmp --icmpv6-type echo-reply -j LOGDROP
 ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-# confirm with a ping
+# confirm clear text does not get through
 ping6 -n -c 4 -I 2001:db8:1:3::209 2001:db8:1:2::23
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started

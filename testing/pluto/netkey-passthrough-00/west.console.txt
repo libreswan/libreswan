@@ -10,7 +10,7 @@ west #
 west #
  ## iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
- # confirm with a ping
+ # confirm clear text does not get through
 west #
  ## ping -n -c 4 -I 192.1.2.45 192.1.2.23
 west #

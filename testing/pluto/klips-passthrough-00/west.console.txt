@@ -7,7 +7,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # confirm that clear text is dead
 west #
- ! ../../pluto/bin/one-ping.sh -I 192.1.2.45 192.1.2.23
+ ../../pluto/bin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
 down
 west #
  # ensure that clear text does not get through
@@ -16,9 +16,9 @@ west #
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
- # confirm with a ping
+ # confirm clear text does not get through
 west #
- ! ../../pluto/bin/one-ping.sh -I 192.1.2.45 192.1.2.23
+ ../../pluto/bin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
 down
 west #
  ipsec start

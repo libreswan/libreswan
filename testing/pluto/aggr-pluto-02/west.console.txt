@@ -13,7 +13,7 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ! ../../pluto/bin/one-ping.sh -I 192.0.1.254 192.0.2.254
+ ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 [ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
 down
 west #
