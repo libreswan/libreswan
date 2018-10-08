@@ -3311,7 +3311,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		.isa_xchg = ISAKMP_v2_AUTH,
 		.isa_flags = ISAKMP_FLAGS_v2_IKE_I,	/* original initiator; all other flags clear */
 		.isa_msgid = cst->st_msgid,
-		.isa_length = 0; /* filled in when pbs is closed */
+		.isa_length = 0, /* filled in when pbs is closed */
 	};
 
 	memcpy(hdr.isa_icookie, cst->st_icookie, COOKIE_SIZE);
