@@ -129,16 +129,12 @@ west #
 000  
 west #
  grep -E "liveness action|acquire" OUTPUT/west.pluto.log
-| xfrm acquire rtattribute type 5
-| xfrm acquire rtattribute type 16
 | add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
 initiate on demand from 192.0.1.254:8 to 192.0.2.254:0 proto=1 because: acquire
 | delete bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
 west #
  grep -E "liveness: action|acquire" OUTPUT/west.pluto.log
 "westnet-eastnet-ikev2" #2: IKEv2 liveness: action - putting connection into hold
-| xfrm acquire rtattribute type 5
-| xfrm acquire rtattribute type 16
 | add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
 initiate on demand from 192.0.1.254:8 to 192.0.2.254:0 proto=1 because: acquire
 | delete bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink

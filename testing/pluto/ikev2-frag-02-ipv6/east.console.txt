@@ -64,10 +64,8 @@ default via 192.1.2.254 dev eth1
 unreachable ::/96 dev lo metric 1024 error -XXXX
 unreachable ::ffff:0.0.0.0/96 dev lo metric 1024 error -XXXX
 2001:db8:0:2::/64 dev eth0 proto kernel metric 256
-2001:db8::/48 via 2001:db8:1:2::45 dev eth1 metric 1024 mtu 1480
-2001:db8:1:2::45 dev eth1 metric 0
-  cache mtu 1480
-2001:db8:1:2::/64 dev eth1 proto kernel metric 256 mtu 1480
+2001:db8::/48 via 2001:db8:1:2::45 dev eth1 metric 1024
+2001:db8:1:2::/64 dev eth1 proto kernel metric 256
 2001:db8:9:2::/64 dev eth2 proto kernel metric 256
 unreachable 2002:a00::/24 dev lo metric 1024 error -XXXX
 unreachable 2002:7f00::/24 dev lo metric 1024 error -XXXX
@@ -77,10 +75,10 @@ unreachable 2002:c0a8::/32 dev lo metric 1024 error -XXXX
 unreachable 2002:e000::/19 dev lo metric 1024 error -XXXX
 unreachable 3ffe:ffff::/32 dev lo metric 1024 error -XXXX
 fe80::/64 dev eth0 proto kernel metric 256
-fe80::/64 dev eth1 proto kernel metric 256 mtu 1480
+fe80::/64 dev eth1 proto kernel metric 256
 fe80::/64 dev eth2 proto kernel metric 256
-default via 2001:db8:1:2::254 dev eth1 metric 1 mtu 1480
-default via 2001:db8:1:2::254 dev eth1 metric 1024 mtu 1480
+default via 2001:db8:1:2::254 dev eth1 metric 1
+default via 2001:db8:1:2::254 dev eth1 metric 1024
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

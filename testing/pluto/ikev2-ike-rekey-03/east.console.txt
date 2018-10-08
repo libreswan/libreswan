@@ -28,8 +28,7 @@ east #
  ipsec whack --trafficstatus
 006 #12: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@west'
 006 #13: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@west'
-006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@west'
-006 #14: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@west'
+006 #14: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@west'
 east #
  ipsec status |grep STATE_ | sort
 000 #11: "westnet-eastnet-ikev2c":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
@@ -37,12 +36,10 @@ east #
 000 #13: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#11; idle;
 000 #14: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#11; idle;
 east #
- # there should be only one IKE_INIT exchange
+ # there should be only one IKE_INIT exchange created
 east #
- grep "STATE_PARENT_I1 with STF_OK" /tmp/pluto.log
-east #
- grep "STATE_PARENT_R1 with STF_OK" /tmp/pluto.log
-| #1 complete v2 state transition from STATE_PARENT_R1 with STF_OK
+ grep "STATE_UNDEFINED(ignore) => STATE_PARENT" /tmp/pluto.log  |grep parent
+| parent state #1: STATE_UNDEFINED(ignore) => STATE_PARENT_R1(half-open-ike)
 east #
 east #
  ../bin/check-for-core.sh

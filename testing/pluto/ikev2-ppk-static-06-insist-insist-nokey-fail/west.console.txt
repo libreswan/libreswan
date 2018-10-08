@@ -49,8 +49,6 @@ west #
 002 "westnet-eastnet-ipv4-psk-ppk" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 031 "westnet-eastnet-ipv4-psk-ppk" #2: STATE_PARENT_I2: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 000 "westnet-eastnet-ipv4-psk-ppk" #2: starting keying attempt 2 of an unlimited number, but releasing whack
-002 "westnet-eastnet-ipv4-psk-ppk" #1: deleting state (STATE_PARENT_I2) and NOT sending notification
-003 "westnet-eastnet-ipv4-psk-ppk" #1: reschedule pending child #2 STATE_PARENT_I2 of connection "westnet-eastnet-ipv4-psk-ppk" - the parent is going away
 west #
  echo done
 done
