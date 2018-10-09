@@ -1010,6 +1010,7 @@ int main(int argc, char **argv)
 		case 'B':	/* --ocsp-method get|post */
 			if (streq(optarg, "post")) {
 				ocsp_method = OCSP_METHOD_POST;
+				ocsp_post = TRUE;
 			} else {
 				if (streq(optarg, "get")) {
 					ocsp_method = OCSP_METHOD_GET;
@@ -1191,6 +1192,7 @@ int main(int argc, char **argv)
 			ocsp_strict = cfg->setup.options[KBF_OCSP_STRICT];
 			ocsp_timeout = cfg->setup.options[KBF_OCSP_TIMEOUT];
 			ocsp_method = cfg->setup.options[KBF_OCSP_METHOD];
+			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->setup.options[KBF_OCSP_CACHE_SIZE];
 			ocsp_cache_min_age = cfg->setup.options[KBF_OCSP_CACHE_MIN];
 			ocsp_cache_max_age = cfg->setup.options[KBF_OCSP_CACHE_MAX];

@@ -196,7 +196,7 @@ static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
 	rev->chainTests.cert_rev_flags_per_method = cflags;
 }
 
-static unsigned int rev_val_flags(PRBool strict)
+static unsigned int rev_val_flags(PRBool strict, PRBool post)
 {
 	unsigned int flags = CERT_REV_M_TEST_USING_THIS_METHOD;
 
@@ -204,17 +204,22 @@ static unsigned int rev_val_flags(PRBool strict)
 		flags |= CERT_REV_M_REQUIRE_INFO_ON_MISSING_SOURCE;
 		flags |= CERT_REV_M_FAIL_ON_MISSING_FRESH_INFO;
 	}
+
+	if (post) {
+		flags |= CERT_REV_M_FORCE_POST_METHOD_FOR_OCSP;
+	}
 	return flags;
 }
 
 static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
 						     bool ocsp,
-						     bool ocsp_strict)
+						     bool ocsp_strict,
+						     bool ocsp_post)
 {
 	CERTRevocationTests *rt = &rev->leafTests;
 	PRUint64 *rf = rt->cert_rev_flags_per_method;
-	DBG(DBG_X509, DBG_log("crl_strict: %d, ocsp: %d, ocsp_strict: %d",
-				crl_strict, ocsp, ocsp_strict));
+	DBG(DBG_X509, DBG_log("crl_strict: %d, ocsp: %d, ocsp_strict: %d, ocsp_post: %d",
+				crl_strict, ocsp, ocsp_strict, ocsp_post));
 
 	rt->number_of_defined_methods = cert_revocation_method_count;
 	rt->number_of_preferred_methods = 0;
@@ -223,7 +228,7 @@ static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
 	rf[cert_revocation_method_crl] |= CERT_REV_M_FORBID_NETWORK_FETCHING;
 
 	if (ocsp) {
-		rf[cert_revocation_method_ocsp] = rev_val_flags(ocsp_strict);
+		rf[cert_revocation_method_ocsp] = rev_val_flags(ocsp_strict, ocsp_post);
 	}
 }
 
@@ -272,7 +277,8 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
 	set_rev_params(&rev, rev_opts[RO_CRL_S], rev_opts[RO_OCSP],
-						 rev_opts[RO_OCSP_S]);
+						 rev_opts[RO_OCSP_S],
+						 rev_opts[RO_OCSP_P]);
 	int in_idx = 0;
 	CERTValInParam cvin[7];
 	CERTValOutParam cvout[3];

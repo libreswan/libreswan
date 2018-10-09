@@ -25,3 +25,4 @@ extern long curl_timeout;
 extern bool crl_strict;
 extern bool ocsp_strict;
 extern bool ocsp_enable;
+extern bool ocsp_post;
