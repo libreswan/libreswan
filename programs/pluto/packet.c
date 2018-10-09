@@ -2070,6 +2070,64 @@ bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name)
 	}
 }
 
+/*
+ * Check IKEv2's Last Substructure field.
+ */
+
+static void update_last_substructure(pb_stream *outs,
+				     struct_desc *sd, field_desc *fp,
+				     const uint8_t *inp, uint8_t *cur)
+{
+	/*
+	 * The containing structure should be expecting substructures.
+	 */
+	passert(fp->size == 1);
+	pexpect(outs->desc->nsst != 0);
+	uint8_t n = *inp;
+	pexpect(n == 0 || n == outs->desc->nsst);
+	*cur = n;
+	/*
+	 * Since there's a previous substructure, it can no longer be
+	 * last.  Check/set its last substructure field to its type.
+	 */
+	if (outs->last_substructure.loc != NULL) {
+		struct esb_buf ssb;
+		DBGF(DBG_EMITTING, "last substructure: checking '%s'.'%s'.'%s' is %s (0x%x)",
+		     outs->desc->name,
+		     outs->last_substructure.sd->name,
+		     outs->last_substructure.fp->name,
+		     enum_showb(outs->last_substructure.fp->desc,
+				outs->desc->nsst, &ssb),
+		     outs->desc->nsst);
+		pexpect(outs->last_substructure.loc[0] == outs->desc->nsst);
+	}
+	/*
+	 * Now save the location of this Last Substructure.
+	 */
+	DBGF(DBG_EMITTING, "last substructure: saving location '%s'.'%s'.'%s'",
+	     outs->desc->name, sd->name, fp->name);
+	outs->last_substructure.loc = cur;
+	outs->last_substructure.sd = sd;
+	outs->last_substructure.fp = fp;
+}
+
+static void close_last_substructure(pb_stream *pbs)
+{
+	if (pbs->last_substructure.loc != NULL) {
+		DBGF(DBG_EMITTING, "last substructure: checking '%s'.'%s'.'%s' is 0",
+		     pbs->desc->name,
+		     pbs->last_substructure.sd->name,
+		     pbs->last_substructure.fp->name);
+		pexpect(pbs->desc->nsst != 0);
+		pexpect(pbs->last_substructure.loc[0] == 0);
+#if 0
+	} else {
+		/* XXX: too strong, rejects empty? */
+		pexpect(pbs->desc->nsst == 0);
+#endif
+	}
+}
+
 /* "emit" a host struct into a network packet.
  *
  * This code assumes that the network and host structure
@@ -2172,9 +2230,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			/* .previous_np_struct = NULL, */
 
 			/* until an ft_lss is discovered */
-			/* .previous_ss = NULL, */
-			/* .previous_ss_field = NULL, */
-			/* .previous_ss = NULL, */
+			/* .last_substructure = {0}, */
 		};
 
 		for (field_desc *fp = sd->fields; ugh == NULL; fp++) {
@@ -2199,6 +2255,14 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				memset(cur, 0, i);
 				inp += i;
 				cur += i;
+				break;
+
+			case ft_lss:
+				update_last_substructure(outs, sd, fp,
+							 inp, cur);
+				last_enum = ISAKMP_NEXT_NONE;
+				inp += fp->size;
+				cur += fp->size;
 				break;
 
 			case ft_len:            /* length of this struct and any following crud */
@@ -2227,7 +2291,6 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 			case ft_fcp:
 			case ft_pnp:
-			case ft_lss:
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
@@ -2317,47 +2380,6 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					outs->previous_np_field = fp;
 					break;
 				}
-
-				case ft_lss:
-					/*					 *
-					 * The containing structure
-					 * should be expecting
-					 * substructures.
-					 */
-					passert(fp->size == 1);
-					pexpect(outs->desc->nsst != ISAKMP_NEXT_NONE);
-					/*
-					 * Since there's a previous
-					 * substructure, it can no
-					 * longer be last.  Check/set
-					 * its last substructure field
-					 * to its type.
-					 */
-					if (outs->previous_ss.loc != NULL) {
-						struct esb_buf ssb;
-						/* not set or set correctly */
-						pexpect(outs->previous_ss.loc[0] == ISAKMP_NEXT_NONE ||
-							outs->previous_ss.loc[0] == outs->desc->nsst);
-						DBGF(DBG_EMITTING, "last substructure: setting '%s'.'%s'.'%s' to %s (0x%x)",
-						     outs->desc->name,
-						     outs->previous_ss.sd->name,
-						     outs->previous_ss.fp->name,
-						     enum_showb(outs->previous_ss.fp->desc,
-								outs->desc->nsst, &ssb),
-						     outs->desc->nsst);
-					}
-					/*
-					 * Now save the location of
-					 * this Last Substructure.
-					 */
-					DBGF(DBG_EMITTING, "last substructure: saving location '%s'.'%s'.'%s'",
-					     outs->desc->name, sd->name, fp->name);
-					outs->previous_ss.loc = cur;
-					outs->previous_ss.sd = sd;
-					outs->previous_ss.fp = fp;
-					pexpect(n == ISAKMP_NEXT_NONE || n == outs->desc->nsst);
-					last_enum = n;
-					break;
 
 				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 					ugh = enum_enum_checker(sd->name, fp, last_enum);
@@ -2613,6 +2635,9 @@ void close_output_pbs(pb_stream *pbs)
 			pbs->previous_np_field->name,
 			enum_showb(pbs->previous_np_field->desc, *pbs->previous_np, &npb));
 	}
+
+	/* if there is one */
+	close_last_substructure(pbs);
 
 	if (pbs->container != NULL)
 		pbs->container->cur = pbs->cur; /* pass space utilization up */

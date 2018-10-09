@@ -143,7 +143,7 @@ struct packet_byte_stream {
 	 * functionally equivalent it, too, uses this code (IKEv2
 	 * changed the names to avoid confusion).
 	 */
-	struct fixup previous_ss;
+	struct fixup last_substructure;
 };
 
 typedef struct packet_byte_stream pb_stream;
