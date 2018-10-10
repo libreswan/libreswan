@@ -6274,6 +6274,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 				.isa_xchg = ISAKMP_v2_INFORMATIONAL,
 				.isa_flags = ISAKMP_FLAGS_v2_MSG_R,
 				.isa_msgid = htonl(md->msgid_received),
+				.isa_length = 0, /* filled in on pbs close */
 			};
 
 			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
