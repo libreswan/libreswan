@@ -1,3 +1,0 @@
-Basic pluto test, but now using compress=yes on both ends.
-
-NOTE: traffic stats is not properly displayed on --down

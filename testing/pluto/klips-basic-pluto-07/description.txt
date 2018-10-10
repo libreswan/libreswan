@@ -1,5 +1,0 @@
-Basic pluto test:
-
-the policy has been adjusted to permit only AES256 for phase 1 and 3DES-MD5
-for phase 2.
-

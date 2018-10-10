@@ -214,12 +214,7 @@ kvmplutotest	ikev2-nat-pluto-03			good
 kvmplutotest	ikev1-algo-ike-dh-ecp-01		good
 kvmplutotest	ikev2-algo-ike-dh-ecp-01		good
 
-kvmplutotest	klips-ikev2-algo-sha2-07		good
-kvmplutotest	klips-ikev2-liveness-01			wip
 kvmplutotest	ikev2-child-re-up-01			wip
-# interop tests for KLIPS-NETKEY with SHA2
-kvmplutotest	ikev1-algo-esp-sha2-01-netkey-klips	good
-kvmplutotest	ikev1-algo-esp-sha2-02-netkey-klips	good
 
 # various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-ike-sha2-01			good
@@ -606,9 +601,6 @@ kvmplutotest	x509-ikev2-frag-01-ike-aes_gcm	good
 
 kvmplutotest	nat-pluto-01		good
 kvmplutotest	nat-pluto-02		good
-kvmplutotest	nat-pluto-02-klips-netkey	good
-kvmplutotest	nat-pluto-02-netkey-klips	good
-kvmplutotest	nat-pluto-02-klips-klips	good
 kvmplutotest	nat-pluto-03		good
 kvmplutotest	nat-pluto-04		good
 kvmplutotest	nat-pluto-07		good
@@ -688,7 +680,6 @@ kvmplutotest	ikev1-expire-r1-02-aggr	good
 # passthrough protoport tests
 kvmplutotest	basic-pluto-12		good
 kvmplutotest	basic-pluto-13-netkey-ondemand good
-kvmplutotest	basic-pluto-14-klips-route wip
 kvmplutotest	basic-pluto-15-no-retransmit good
 
 # this tests rekeys (--down/--up) when behind a NAT. a --replace
@@ -710,11 +701,6 @@ kvmplutotest	netkey-algo-camellia-01	good
 kvmplutotest	netkey-algo-null-01	good
 kvmplutotest	netkey-algo-null-02	good
 
-kvmplutotest	klips-algo-twofish-01	good
-kvmplutotest	klips-algo-serpent-01	good
-kvmplutotest	klips-basic-pluto-01	good
-
-#
 # a test of using aes256 for phase 1 and phase 2,
 # with appropriate modp group
 kvmplutotest    algo-pluto-01          good
@@ -735,7 +721,6 @@ kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
 
 # transport mode related tests
-kvmplutotest	klips-transport-01	wip
 kvmplutotest	nat-transport-02	good
 kvmplutotest	ikev2-21-mode-mismatch-01	good
 kvmplutotest	ikev2-21-mode-mismatch-02	good
@@ -745,7 +730,6 @@ kvmplutotest	ah-pluto-02		good
 kvmplutotest	ah-pluto-03		good
 kvmplutotest	ah-pluto-04		good
 kvmplutotest	ah-pluto-05		good
-kvmplutotest	ah-pluto-07-klips-netkey	good
 kvmplutotest	ah-pluto-09		good
 kvmplutotest	ah-pluto-10		good
 
@@ -771,8 +755,6 @@ kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
 kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
 kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
 
-kvmplutotest    netkey-klips-pluto-03		good
-kvmplutotest    klips-netkey-pluto-06		good
 # Selinux / secure labeling tests (require netkey and selinux)
 kvmplutotest    labeled-ipsec-01		wip
 
@@ -780,7 +762,6 @@ kvmplutotest    labeled-ipsec-01		wip
 kvmplutotest    compress-pluto-01		good
 kvmplutotest    compress-pluto-02		good
 kvmplutotest    compress-pluto-netkey-03	good
-kvmplutotest    compress-pluto-netkey-klips-04	good
 kvmplutotest	sourceip-01			good
 
 #################################################################
@@ -793,17 +774,9 @@ kvmplutotest	ipv6-6in6-02-ikev2			good
 kvmplutotest	ipv6-4in6-01-ikev1			good
 kvmplutotest	ipv6-4in6-02-ikev2			good
 
-kvmplutotest	ipv6-v6-through-v6-klips-klips		good
-kvmplutotest	ipv6-v6-through-v6-klips-netkey		wip
-kvmplutotest	ipv6-v4-through-v6-klips-klips		wip
-kvmplutotest	ipv6-v6-through-v4-klips-klips		wip
-kvmplutotest	ipv6-transport-mode-01-klips-klips	wip
 kvmplutotest	ipv6-transport-mode-02-netkey-netkey	good
-kvmplutotest	ipv6-transport-mode-03-klips-netkey	wip
 kvmplutotest	ipv6-transport-mode-04-ondemand-netkey	good
-kvmplutotest	ipv6-tunnel-mode-01-klips-klips		wip
 kvmplutotest	ipv6-tunnel-mode-02-netkey-netkey	good
-kvmplutotest	ipv6-tunnel-mode-03-klips-netkey	wip
 kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	good
 kvmplutotest	ipv6-tunnel-mode-03-rw			good
 kvmplutotest	ipv6-tunnel-mode-04-rw			good
@@ -918,7 +891,6 @@ kvmplutotest	netkey-passthrough-00			good
 kvmplutotest	netkey-passthrough-01			good
 kvmplutotest	netkey-passthrough-02			good
 kvmplutotest	netkey-passthrough-03			good
-kvmplutotest	klips-passthrough-00			good
 
 kvmplutotest	ikev1-isakmp-reserved-flags-01		good
 kvmplutotest	ikev1-isakmp-reserved-flags-02		good
@@ -990,34 +962,10 @@ kvmplutotest	ikev2-leak-01-db_v2_prop_conj	good
 kvmplutotest	ikev2-leak-02-no-psk		good
 
 #################################################################
-# old saved KLIPS tests that were converted to NETKEY.
-# (theses tests were not actually testing stack features
-#################################################################
-kvmplutotest	klips-ah-pluto-01		skiptest
-kvmplutotest	klips-ah-pluto-12		skiptest
-kvmplutotest	klips-ah-pluto-13		skiptest
-kvmplutotest	klips-algo-pluto-01		skiptest
-kvmplutotest	klips-basic-pluto-02		skiptest
-kvmplutotest	klips-basic-pluto-03		skiptest
-kvmplutotest	klips-basic-pluto-04		skiptest
-kvmplutotest	klips-basic-pluto-05		skiptest
-kvmplutotest	klips-basic-pluto-07		skiptest
-kvmplutotest	klips-basic-pluto-09		skiptest
-kvmplutotest	klips-basic-pluto-10		skiptest
-kvmplutotest	klips-basic-pluto-12		skiptest
-kvmplutotest	klips-compress-pluto-01		skiptest
-kvmplutotest	klips-compress-pluto-03		skiptest
-kvmplutotest	klips-ipv6-tunnel-mode-03-rw	skiptest
-kvmplutotest	klips-nat-transport-02		skiptest
-kvmplutotest	klips-pluto-ipcmp-01		skiptest
-
-
-#################################################################
 # old algorithm tests
 #################################################################
 kvmplutotest	ikev2-algo-08-cast				skiptest
 kvmplutotest	netkey-algo-cast-01				skiptest
-kvmplutotest	klips-algo-cast-01				skiptest
 kvmplutotest	interop-ikev1-strongswan-09-dh22-initiator	skiptest
 kvmplutotest	interop-ikev1-strongswan-05-dh24-responder	skiptest
 kvmplutotest	interop-ikev1-strongswan-06-dh24-initiator	skiptest
