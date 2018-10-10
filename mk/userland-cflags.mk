@@ -87,7 +87,7 @@ USE_KLIPS?=true
 endif
 
 # support KLIPS kernel module (KLIPS requires PFKEYv2)
-USE_KLIPS?=true
+USE_KLIPS?=false
 ifeq ($(USE_KLIPS),true)
 USE_PFKEYv2?=true
 endif
