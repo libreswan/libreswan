@@ -7,6 +7,7 @@
 %global with_dnssec 0
 # Libreswan config options
 %global libreswan_config \\\
+    USE_KLIPS=false \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     INC_RCDEFAULT=%{_initrddir} \\\

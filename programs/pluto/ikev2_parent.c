@@ -3013,8 +3013,6 @@ static uint8_t *start_encrypted_payload(
 
 	if (!out_struct(&fake_struct, &ikev2_encrypted_portion, sk_pbs, enc_pbs))
 		return NULL;
-
-	move_pbs_previous_np(enc_pbs, sk_pbs);	/* backpatching obligation */
 	return iv;
 }
 
@@ -3045,7 +3043,6 @@ static uint8_t *end_encrypted_payload(
 	if (!ikev2_padup_pre_encrypt(st, enc_pbs))
 		return NULL;
 
-	move_pbs_previous_np(sk_pbs, enc_pbs);	/* backpatching obligation */
 	close_output_pbs(enc_pbs);
 
 	uint8_t *const authloc = ikev2_authloc(st, sk_pbs);
@@ -3270,7 +3267,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
 	cst->st_try = pst->st_try;
 
-	cst->st_msgid = htonl(pst->st_msgid_nextuse); /* PAUL: note ordering */
+	cst->st_msgid = pst->st_msgid_nextuse;
 	insert_state(cst);
 	md->st = cst;
 
@@ -5690,12 +5687,12 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
 		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
 		if (IS_CHILD_SA_RESPONDER(st)) {
-			hdr.isa_msgid = htonl(md->msgid_received);
+			hdr.isa_msgid = md->msgid_received;
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R; /* response on */
 		} else {
-			hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
+			hdr.isa_msgid = pst->st_msgid_nextuse;
 			/* store it to match response */
-			st->st_msgid = htonl(pst->st_msgid_nextuse);
+			st->st_msgid = pst->st_msgid_nextuse;
 		}
 
 		if (pst->st_original_role == ORIGINAL_INITIATOR) {
@@ -6273,7 +6270,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 				.isa_version = build_ikev2_version(),
 				.isa_xchg = ISAKMP_v2_INFORMATIONAL,
 				.isa_flags = ISAKMP_FLAGS_v2_MSG_R,
-				.isa_msgid = htonl(md->msgid_received),
+				.isa_msgid = md->msgid_received,
 				.isa_length = 0, /* filled in on pbs close */
 			};
 

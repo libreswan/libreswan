@@ -674,7 +674,7 @@ struct state *resp_state_with_msgid(so_serial_t psn, msgid_t st_msgid)
 	});
 	DBG(DBG_CONTROL,
 		DBG_log("no waiting child state matching pst #%lu msg id %u",
-			psn, ntohs(st_msgid)));
+			psn, st_msgid));
 	return NULL;
 }
 
@@ -694,7 +694,7 @@ struct state *state_with_parent_msgid(so_serial_t psn, msgid_t st_msgid)
 	});
 	DBG(DBG_CONTROL,
 		DBG_log("no waiting child state matching pst #%lu msg id %u",
-			psn, ntohs(st_msgid)));
+			psn, st_msgid));
 	return NULL;
 }
 
@@ -1614,8 +1614,8 @@ struct state *find_state_ikev1(const uint8_t *icookie,
 			DBG(DBG_CONTROL,
 			    DBG_log("v1 peer and cookies match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
 				    st->st_serialno,
-				    ntohl(msgid),
-				    ntohl(st->st_msgid)));
+				    msgid,
+				    st->st_msgid));
 			if (msgid == st->st_msgid)
 				break;
 		}
@@ -1643,8 +1643,8 @@ struct state *find_state_ikev1_init(const uint8_t *icookie,
 			DBG(DBG_CONTROL,
 			    DBG_log("v1 peer and icookie match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
 				    st->st_serialno,
-				    ntohl(msgid),
-				    ntohl(st->st_msgid)));
+				    msgid,
+				    st->st_msgid));
 			if (msgid == st->st_msgid)
 				break;
 		}
@@ -1844,9 +1844,9 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 		DBG(DBG_CONTROL,
 		    DBG_log("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
 			    st->st_serialno,
-			    ntohl(msgid),
-			    ntohl(st->st_msgid),
-			    ntohl(st->st_msgid_phase15)));
+			    msgid,
+			    st->st_msgid,
+			    st->st_msgid_phase15));
 		if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
 		     msgid == st->st_msgid_phase15) ||
 		    msgid == st->st_msgid)

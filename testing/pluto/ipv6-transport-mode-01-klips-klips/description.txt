@@ -1,9 +1,0 @@
-Basic pluto test using IPv6 (and KLIPS):
-
-This is a host-host connection using transport mode
-
-1) west ping6's from its public ip to the east public ip
-2) west adds an ip6table rule to block icmp
-3) west pings again, but pong should be dropped by rule
-4) west initiates connection "v6-transport"; east responds
-5) icmp packets flow from west to east and are not dropped when encrypted

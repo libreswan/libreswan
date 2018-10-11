@@ -1,5 +1,0 @@
-Basic pluto test using IPv6 (and KLIPS):
-
-WIP: the ping test seems to use link local addresses so the tunnel is not actually tested
-
-NOTE: the netkey variant of this works fine
