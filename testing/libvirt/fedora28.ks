@@ -12,7 +12,7 @@ firewall --disable
 selinux --enforcing
 timezone --utc America/New_York
 #firstboot --disable
-bootloader --location=mbr --append="console=tty0 console=ttyS0,115200 rd_NO_PLYMOUTH net.ifnames=0 biosdevname=0"
+bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,115200 rd_NO_PLYMOUTH net.ifnames=0 biosdevname=0"
 zerombr
 clearpart --all --initlabel
 part / --asprimary --grow
@@ -94,8 +94,8 @@ EOD
 
 # noauto for now, as we seem to need more system parts started before we can mount 9p
 cat << EOD >> /etc/fstab
-testing /testing 9p defaults,noauto,trans=virtio,version=9p2000.L,context=system_u:object_r:var_log_t:s0 0 0
-swansource /source 9p defaults,noauto,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0 0 0
+testing /testing 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:var_log_t:s0 0 0
+swansource /source 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0 0 0
 tmpfs                   /dev/shm                tmpfs   defaults        0 0
 tmpfs                   /tmp                    tmpfs   defaults        0 0
 devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
@@ -113,6 +113,7 @@ setenforce Permissive
 /testing/guestbin/swan-transmogrify 2>&1 >> /tmp/rc.local.txt || echo "ERROR swan-transmogrify" >> /tmp/rc.local.txt
 echo "restore SELINUX to \$SELINUX"
 setenforce \$SELINUX
+hostname |grep -q swanbase || rm /etc/rc.d/rc.local
 EOD
 
 chmod 755 /etc/rc.d/rc.local
