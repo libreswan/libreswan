@@ -38,7 +38,6 @@ KVM_SOURCEDIR ?= $(abs_top_srcdir)
 KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
-KVM_BASEDIR ?= $(KVM_POOLDIR)
 KVM_LOCALDIR ?= $(KVM_POOLDIR)
 # While KVM_PREFIX might be empty, KVM_PREFIXES is never empty.
 KVM_PREFIX ?=
@@ -205,11 +204,11 @@ broken-kvm-qemu-directory:
 
 
 .PHONY: check-kvm-clonedir check-kvm-basedir
-check-kvm-clonedir check-kvm-basedir: | $(KVM_LOCALDIR) $(KVM_BASEDIR)
-ifeq ($(KVM_BASEDIR),$(KVM_LOCALDIR))
+check-kvm-clonedir check-kvm-basedir: | $(KVM_LOCALDIR) $(KVM_POOLDIR)
+ifeq ($(KVM_POOLDIR),$(KVM_LOCALDIR))
   $(KVM_LOCALDIR):
 else
-  $(KVM_BASEDIR) $(KVM_LOCALDIR):
+  $(KVM_POOLDIR) $(KVM_LOCALDIR):
 endif
 	:
 	:  The directory:
@@ -226,11 +225,7 @@ endif
 	:                  - the default is ../pool
 	:
 	:      KVM_LOCALDIR=$(KVM_LOCALDIR)
-	:                  - used for store the cloned test domain disk images and files
-	:                  - the default is KVM_POOLDIR
-	:
-	:      KVM_BASEDIR=$(KVM_BASEDIR)
-	:                  - used for store the base domain disk image and files
+	:                  - used for store the test domain disk images and files
 	:                  - the default is KVM_POOLDIR
 	:
 	:  Either create the above directory or adjust its location by setting
@@ -460,10 +455,10 @@ endef
 # Base gateway.
 #
 
-KVM_GATEWAY_FILE = $(KVM_BASEDIR)/$(KVM_GATEWAY).xml
+KVM_GATEWAY_FILE = $(KVM_POOLDIR)/$(KVM_GATEWAY).xml
 .PHONY: install-kvm-network-$(KVM_GATEWAY)
 install-kvm-network-$(KVM_GATEWAY): $(KVM_GATEWAY_FILE)
-$(KVM_GATEWAY_FILE): | testing/libvirt/net/$(KVM_GATEWAY) $(KVM_BASEDIR)
+$(KVM_GATEWAY_FILE): | testing/libvirt/net/$(KVM_GATEWAY) $(KVM_POOLDIR)
 	$(call destroy-kvm-network,$(KVM_GATEWAY))
 	cp testing/libvirt/net/$(KVM_GATEWAY) $@.tmp
 	$(call create-kvm-network,$(KVM_GATEWAY),$@.tmp)
@@ -556,12 +551,12 @@ endef
 # Build KVM domains from scratch
 #
 
-KVM_ISO = $(KVM_BASEDIR)/$(notdir $(KVM_ISO_URL))
+KVM_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_ISO_URL))
 
 .PHONY: kvm-iso
 kvm-iso: $(KVM_ISO)
-$(KVM_ISO): | $(KVM_BASEDIR)
-	cd $(KVM_BASEDIR) && wget $(KVM_ISO_URL)
+$(KVM_ISO): | $(KVM_POOLDIR)
+	cd $(KVM_POOLDIR) && wget $(KVM_ISO_URL)
 
 define check-kvm-domain
 	: check-kvm-domain domain=$(1)
@@ -621,8 +616,8 @@ endef
 # very end.  That way the problem of a virt-install crash leaving the
 # disk-image in an incomplete state is avoided.
 
-.PRECIOUS: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_GATEWAY_FILE) $(KVM_BASEDIR)
+.PRECIOUS: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
+$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_GATEWAY_FILE) $(KVM_POOLDIR)
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_BASE_DOMAIN))
 	: delete any old disk and let virt-install create the image
@@ -650,7 +645,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_G
 	$(call upgrade-kvm-domain, $(KVM_BASE_DOMAIN))
 	cp $(KVM_KICKSTART_FILE) $@
 .PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
-install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
+install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
 
 #
 # Create the local disk images
@@ -666,16 +661,16 @@ $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2: | $(KVM_LOCALDIR)
 	: create the base domain if needed
 	$(MAKE) kvm-install-base-domain
 	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
-	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
-	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r          $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
+	test -r $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	test -r $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r          $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	: if this test fails, user probably forgot this step:
 	: https://libreswan.org/wiki/Test_Suite#Setting_Users_and_Groups
-	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
+	test -r $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	: create a full copy
 	rm -f $@
 	qemu-img convert \
 		-p -O qcow2 \
-		$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 \
+		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 \
 		$@.tmp
 	mv $@.tmp $@
 
@@ -816,7 +811,7 @@ define uninstall-kvm-domain-DOMAIN
 endef
 
 $(foreach domain, $(KVM_BASE_DOMAIN), \
-	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_BASEDIR))))
+	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_POOLDIR))))
 $(foreach domain, $(KVM_LOCAL_DOMAINS), \
 	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_LOCALDIR))))
 
@@ -1048,7 +1043,7 @@ define kvmsh-DOMAIN
 endef
 
 $(foreach domain,  $(KVM_BASE_DOMAIN), \
-	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).ks)))
+	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_POOLDIR)/$$(KVM_BASE_DOMAIN).ks)))
 
 $(foreach domain,  $(KVM_LOCAL_DOMAINS), \
 	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_LOCALDIR)/$(domain).xml)))
@@ -1144,7 +1139,7 @@ Configuration:
     $(call kvm-var-value,KVM_MAKEFLAGS)
     $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
 	default directory for storing VM files
-    $(call kvm-var-value,KVM_BASEDIR)$(if $(wildcard $(KVM_BASEDIR)),, [MISSING])
+    $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
 	directory for storing the shared base (master) VM;
 	should be relatively permanent storage
     $(call kvm-var-value,KVM_LOCALDIR)$(if $(wildcard $(KVM_LOCALDIR)),, [MISSING])
@@ -1159,7 +1154,7 @@ Configuration:
     $(call kvm-var-value,KVM_BASE_HOST)
     $(call kvm-var-value,KVM_BASE_DOMAIN)
     $(call kvm-var-value,KVM_GATEWAY)
-    $(call kvm-var-value,KVM_BASEDIR)
+    $(call kvm-var-value,KVM_POOLDIR)
 
  KVM Domains:
 
@@ -1177,7 +1172,7 @@ Configuration:
     |   $(call kvm-value,KVM_GATEWAY)
     |
     | directory:
-    |   $(call kvm-value,KVM_BASEDIR)
+    |   $(call kvm-value,KVM_POOLDIR)
     |
     + $(call kvm-value,KVM_CLONE_DOMAIN)
       |
