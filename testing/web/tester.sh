@@ -135,8 +135,9 @@ while true ; do
 
     status "looking for work"
     if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${first_commit}) ; then \
-	# Seemlingly nothing to do.
-	seconds=$(expr 60 \* 60 \* 3)
+	# Seemlingly nothing to do; github gets updated up every 15
+	# minutes so sleep for less than that
+	seconds=$(expr 10 \* 60)
 	now=$(date +%s)
 	future=$(expr ${now} + ${seconds})
 	status "idle; will retry $(date -u -d @${future} +%H:%M)"
