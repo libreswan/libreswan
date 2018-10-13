@@ -43,6 +43,7 @@ KVM_LOCALDIR ?= $(KVM_POOLDIR)
 KVM_PREFIX ?=
 KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
 KVM_WORKERS ?= 1
+#KVM_WORKERS ?= $(shell awk 'BEGIN { c=1 } /cpu cores/ { c=$$4 } END { if (c>1) print c/2; }' /proc/cpuinfo)
 KVM_GROUP ?= qemu
 KVM_MAKEFLAGS ?= USE_EFENCE=true ALL_ALGS=false USE_SECCOMP=true USE_LABELED_IPSEC=true
 
