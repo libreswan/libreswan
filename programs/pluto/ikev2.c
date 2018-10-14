@@ -2324,7 +2324,12 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 
 	ikesa = IS_CHILD_SA(st) ?  state_with_serialno(st->st_clonedfrom) : st;
 
+	/* message ID sequence for things we send (as initiator) */
+	msgid_t st_msgid_lastack = ikesa->st_msgid_lastack;
 	msgid_t st_msgid_nextuse = ikesa->st_msgid_nextuse;
+	/* message ID sequence for things we receive (as responder) */
+	msgid_t st_msgid_lastrecv = ikesa->st_msgid_lastrecv;
+	msgid_t st_msgid_lastreplied = ikesa->st_msgid_lastreplied;
 
 	/* update when sending a request */
 	if (is_msg_request(md) &&
@@ -2367,15 +2372,36 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 		}
 	}
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("message ID #%lu %s %s pst #%lu st_msgid_nextuse(before=%u) %u st_msgid_lastack %u st_msgid_lastrecv %u md is a %s",
-			st->st_serialno, st->st_state_name,
-			st->st_connection->name, ikesa->st_serialno,
-			st_msgid_nextuse,
-			ikesa->st_msgid_nextuse, ikesa->st_msgid_lastack,
-			ikesa->st_msgid_lastrecv,
-			is_msg_response(md) ? "resonse" : "request"));
+	LSWDBGP(DBG_MASK, buf) {
+		lswlogf(buf, "Message ID: '%s' IKE #%lu %s",
+			st->st_connection->name,
+			ikesa->st_serialno, ikesa->st_finite_state->fs_short_name);
+		if (ikesa != st) {
+			lswlogf(buf, "; CHILD #%lu %s",
+				st->st_serialno, st->st_finite_state->fs_short_name);
+		}
+		lswlogf(buf, "; message-%s msgid=%u copy=%u",
+			is_msg_response(md) ? "resonse" : "request",
+			md->hdr.isa_msgid, md->msgid_received);
 
+		lswlogf(buf, "; initiator { lastack=%u", st_msgid_lastack);
+		if (st_msgid_lastack != ikesa->st_msgid_lastack) {
+			lswlogf(buf, "->%u", ikesa->st_msgid_lastack);
+		}
+		lswlogf(buf, " nextuse=%u", st_msgid_nextuse);
+		if (st_msgid_nextuse != ikesa->st_msgid_nextuse) {
+			lswlogf(buf, "->%u", ikesa->st_msgid_nextuse);
+		}
+		lswlogf(buf, " } responder { lastrecv=%u", st_msgid_lastrecv);
+		if (st_msgid_lastrecv != ikesa->st_msgid_lastrecv) {
+			lswlogf(buf, "->%u", ikesa->st_msgid_lastrecv);
+		}
+		lswlogf(buf, " lastreplied=%u", st_msgid_lastreplied);
+		if (st_msgid_lastreplied != ikesa->st_msgid_lastreplied) {
+			lswlogf(buf, "->%u", ikesa->st_msgid_lastreplied);
+		}
+		lswlogf(buf, " }");
+	}
 }
 
 deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind)
