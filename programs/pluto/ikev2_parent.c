@@ -1778,15 +1778,12 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				libreswan_log("Received anti-DDOS COOKIE, resending I1 with cookie payload");
 			}
 
-			md->svm = finite_states[STATE_PARENT_I0]->fs_microcode;
-
-			change_state(st, STATE_PARENT_I1);
-			/* AA_2016 why do we need to mess with st_msgid_nextuse
-			 * now ?
-			st->st_msgid_lastack = v2_INVALID_MSGID;
-			md->msgid_received = v2_INVALID_MSGID;
-			st->st_msgid_nextuse = 0;
-			*/
+			/*
+			 * Need to wind things back to the point that
+			 * the Message ID counter code thinks this is
+			 * an initial outgoing message.
+			 */
+			v2_msgid_restart_init_request(st, md);
 			/* re-send the SA_INIT request with cookies added */
 			return ikev2_parent_outI1_common(md, st);
 		}

@@ -2311,6 +2311,47 @@ static void schedule_next_send(struct state *st)
 	}
 }
 
+/*
+ * Maintain or reset Message IDs.
+ *
+ * When resetting, need to fudge things up sufficient to fool
+ * ikev2_update_msgid_counters(() into thinking that this is a shiny
+ * new init request.
+ */
+
+void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
+{
+	/* Ok? */
+	st->st_msgid_lastack = v2_INVALID_MSGID;
+	st->st_msgid_lastrecv = v2_INVALID_MSGID;
+	st->st_msgid_nextuse = 0;
+	st->st_msgid = 0;
+	/*
+	 * XXX: Why?!?
+	 *
+	 * Shouldn't the state transitions STATE_PARENT_I0 ->
+	 * STATE_PARENT_I1 and STATE_PARENT_I1 -> STATE_PARENT_I1 be
+	 * functionally 'identical'.
+	 *
+	 * Yes, unfortunately the code below does all sorts of magic
+	 * involving the state's magic number and assumed attributes.
+	 */
+	md->svm = finite_states[STATE_PARENT_I0]->fs_microcode;
+	change_state(st, STATE_PARENT_I0);
+	/*
+	 * XXX: Why?!?
+	 *
+	 * Shouldn't MD be ignored!
+	 *
+	 * Yes, unfortunately the code below still assumes that
+	 * there's always an MD (the initiator does not have an MD so
+	 * fake_md() and tries to use MD attributes to make decisions
+	 * that belong in the state transition.
+	 */
+	md->msgid_received = v2_INVALID_MSGID;
+	md->hdr.isa_flags &= ~ISAKMP_FLAGS_v2_MSG_R;
+}
+
 void ikev2_update_msgid_counters(struct msg_digest *md)
 {
 	struct state *st = md->st;

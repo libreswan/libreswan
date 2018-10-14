@@ -230,6 +230,7 @@ extern stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 					     enum original_role role, enum
 					     isakmp_xchg_types isa_xchg);
 
+void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md);
 extern void ikev2_update_msgid_counters(struct msg_digest *md);
 extern void ikev2_print_ts(const struct traffic_selector *ts);
 
