@@ -746,7 +746,7 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 				 * Compatibility"
 				 */
 				const char *role;
-				switch (md->message_role) {
+				switch (v2_msg_role(md)) {
 				case MESSAGE_REQUEST:
 					role = "request";
 					break;
@@ -754,7 +754,7 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 					role = "response";
 					break;
 				default:
-					bad_case(md->message_role);
+					bad_case(v2_msg_role(md));
 				}
 				loglog(RC_LOG_SERIOUS,
 				       "message %s contained an unknown critical payload type (%s)",
@@ -1307,12 +1307,11 @@ void ikev2_process_packet(struct msg_digest **mdp)
 
 	md->msgid_received = md->hdr.isa_msgid;
 	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
-	md->message_role = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) ? MESSAGE_RESPONSE : MESSAGE_REQUEST;
 	const bool sent_by_ike_initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
 
 	DBG(DBG_CONTROL, {
 			struct esb_buf ixb;
-			switch (md->message_role) {
+			switch (v2_msg_role(md)) {
 			case MESSAGE_RESPONSE:
 				DBG_log("I am receiving an IKEv2 Response %s",
 					enum_showb(&ikev2_exchange_names, ix, &ixb));
@@ -1322,7 +1321,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 					enum_showb(&ikev2_exchange_names, ix, &ixb));
 				break;
 			default:
-				bad_case(md->message_role);
+				bad_case(v2_msg_role(md));
 			}
 		});
 
@@ -1354,11 +1353,11 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * The initiator must send: IKE_I && !MSG_R
 		 * The responder must send: !IKE_I && MSG_R.
 		 */
-		if (sent_by_ike_initiator && md->message_role != MESSAGE_REQUEST) {
+		if (sent_by_ike_initiator && v2_msg_role(md) != MESSAGE_REQUEST) {
 			libreswan_log("dropping IKE_SA_INIT request with conflicting message response flag");
 			return;
 		}
-		if (!sent_by_ike_initiator && md->message_role != MESSAGE_RESPONSE) {
+		if (!sent_by_ike_initiator && v2_msg_role(md) != MESSAGE_RESPONSE) {
 			libreswan_log("dropping IKE_SA_INIT response with conflicting message response flag");
 			return;
 		}
@@ -1447,7 +1446,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 */
 			rehash_state(st, NULL, md->hdr.isa_rcookie);
 		}
-	} else if (md->message_role == MESSAGE_REQUEST) {
+	} else if (v2_msg_role(md) == MESSAGE_REQUEST) {
 		/*
 		 * A request; send it to the IKE SA.
 		 */
@@ -1465,7 +1464,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			return;
 		}
 		/* update lastrecv later on */
-	} else if (md->message_role == MESSAGE_RESPONSE) {
+	} else if (v2_msg_role(md) == MESSAGE_RESPONSE) {
 		/*
 		 * A response; find the child that made the request
 		 * and send it to that.
@@ -1541,7 +1540,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			     st->st_msgid_nextuse, st->st_msgid_lastack);
 		}
 	} else {
-		PASSERT_FAIL("message role %d invalid", md->message_role);
+		PASSERT_FAIL("message role %d invalid", v2_msg_role(md));
 	}
 
 	/*
@@ -1707,7 +1706,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				 * SK payload has been verified,
 				 * things must simply be dropped.
 				 */
-				if (ix == ISAKMP_v2_SA_INIT && md->message_role == MESSAGE_REQUEST) {
+				if (ix == ISAKMP_v2_SA_INIT && v2_msg_role(md) == MESSAGE_REQUEST) {
 					chunk_t data = chunk(md->message_payloads.data,
 							     md->message_payloads.data_size);
 					send_v2_notification_from_md(md, md->message_payloads.n,
@@ -1855,7 +1854,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			md->encrypted_payloads = ikev2_decode_payloads(md, &sk->pbs,
 								       sk->payload.generic.isag_np);
 			if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
-				switch (md->message_role) {
+				switch (v2_msg_role(md)) {
 				case MESSAGE_REQUEST:
 				{
 					chunk_t data = chunk(md->encrypted_payloads.data,
@@ -1869,7 +1868,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 					/* drop packet */
 					break;
 				default:
-					bad_case(md->message_role);
+					bad_case(v2_msg_role(md));
 				}
 				/*
 				 * XXX: Setting/clearing md->st is to
@@ -2961,6 +2960,35 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
 	return v2N_NOTHING_WRONG;
+}
+
+/*
+ * Map the MSG_R bit onto the ENUM message_role.
+ *
+ * Several reasons:
+ *
+ * - makes passing a role parameter clearer vis:
+ *     foo(true) VS foo(MESSAGE_RESPONSE)
+ *
+ * - never zero (and never matches other roles) so accidental value
+ *   less likely
+ *
+ * - encourages the coding style making it easier to find where
+     REQUEST / RESPONSE code lives:
+ *
+ *   switch(role) {
+ *   case MESSAGE_REQUEST: ...; break;
+ *   case MESSAGE_RESPONSE: ...; break;
+ *   default: bad_case(role);
+ *   }
+ */
+enum message_role v2_msg_role(const struct msg_digest *md)
+{
+	if ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0) {
+		return MESSAGE_RESPONSE;
+	} else {
+		return MESSAGE_REQUEST;
+	}
 }
 
 /*
