@@ -824,9 +824,9 @@ define uninstall-kvm-domain-DOMAIN
 	rm -f $(2)/$(1).img
 endef
 
-$(foreach domain, $(KVM_BASE_DOMAIN), \
+$(foreach domain, $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN), \
 	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_POOLDIR))))
-$(foreach domain, $(KVM_LOCAL_DOMAINS), \
+$(foreach domain, $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS), \
 	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_LOCALDIR))))
 
 # Direct dependencies.  This is so that a primitive like
