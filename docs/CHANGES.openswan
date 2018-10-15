@@ -285,10 +285,10 @@ v2.6.29 (September 27, 2010)
 ! Duplicate CVE's issues for these are CVE-2010-3752 and CVE-2010-3753
 * XAUTH: Avoid buffer overflow in CISCO DNS info [dhr/paul]
          Avoid shell problems with single quotes CISCO DNS parameters [dhr/paul]
-  http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=2010-3302
+  https://cve.mitre.org/cgi-bin/cvename.cgi?name=2010-3302
 * XAUTH: Avoid buffer overflow in CISCO BANNER [dhr/paul]
          Avoid shell problems with single quotes in CISCO parameters [dhr/paul]
-  http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=2010-3308
+  https://cve.mitre.org/cgi-bin/cvename.cgi?name=2010-3308
 * NETKEY: Fix for spurious %hold netlink-acquires [Paul/dhr]
 * KLIPS: Fix compiling on 2.6.18 based RHEL5 kernels [Paul]
 * Various fixes based on automated source code review [dhr]
