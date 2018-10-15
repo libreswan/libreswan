@@ -361,7 +361,7 @@ v2.6.27 (June 21, 2010)
 * Memory leak fix unshare_connection_strings [Shinichi Furuso]
 * define ALLOW_MICROSOFT_BAD_PROPOSAL to allow connecting to behind NAT [Paul]
 * Missing load_oswcrypto() call 'ipsec showhostkey' [Kevin Locke]
-  (this is http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=575757?)
+  (this is https://bugs.debian.org/575757?)
 * Log the netfilter mark (him/me) with HAVE_STATSD=true [Paul]
 * saref-bind kernel patch that allows setsockopt() to an saref [Bart]
 * Rename /bin/statsd to /bin/openswan-statsd with HAVE_STATSD=true [Paul]
