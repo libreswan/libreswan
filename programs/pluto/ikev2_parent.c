@@ -3060,14 +3060,13 @@ static uint8_t *end_encrypted_payload(
  * - variable:	fragment's data
  * - variable:	padding (no padding is longer than MAX_CBC_BLOCK_SIZE) (16 or less)
  */
-static stf_status ikev2_record_outbound_fragment(
-	struct msg_digest *md,
-	struct isakmp_hdr *hdr,
-	enum next_payload_types_ikev2 np,
-	struct v2_ike_tfrag **fragp,
-	chunk_t *payload,	/* read-only */
-	unsigned int count, unsigned int total,
-	const char *desc)
+static stf_status v2_record_outbound_fragment(struct msg_digest *md,
+					      const struct isakmp_hdr *hdr,
+					      enum next_payload_types_ikev2 skf_np,
+					      struct v2_ike_tfrag **fragp,
+					      chunk_t *fragment,	/* read-only */
+					      unsigned int number, unsigned int total,
+					      const char *desc)
 {
 	struct state *st = IS_CHILD_SA(md->st) ?
 		state_with_serialno(md->st->st_clonedfrom) : md->st;
@@ -3077,13 +3076,10 @@ static stf_status ikev2_record_outbound_fragment(
 
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&frag_stream, frag_buffer, sizeof(frag_buffer),
-		 "reply frag packet");
+		     "reply frag packet");
 
 	/* HDR out */
 	pb_stream rbody;
-
-	hdr->isa_np = ISAKMP_NEXT_v2SKF;
-
 	if (!out_struct(hdr, &isakmp_hdr_desc, &frag_stream,
 			&rbody))
 		return STF_INTERNAL_ERROR;
@@ -3092,9 +3088,9 @@ static stf_status ikev2_record_outbound_fragment(
 	pb_stream e_pbs_cipher;
 
 	const struct ikev2_skf e = {
-		.isaskf_np = count == 1 ? np : 0,
+		.isaskf_np = skf_np,
 		.isaskf_critical = build_ikev2_critical(false),
-		.isaskf_number = count,
+		.isaskf_number = number,
 		.isaskf_total = total,
 	};
 	uint8_t *iv = start_encrypted_payload(st,
@@ -3104,8 +3100,8 @@ static stf_status ikev2_record_outbound_fragment(
 	uint8_t *encstart = e_pbs_cipher.cur;
 	passert(frag_stream.start <= iv && iv <= encstart);
 
-	if (!out_raw(payload->ptr, payload->len, &e_pbs_cipher,
-		     "cleartext fragment"))
+	if (!out_chunk(*fragment, &e_pbs_cipher,
+		       "cleartext fragment"))
 		return STF_INTERNAL_ERROR;
 
 	uint8_t *authloc = end_encrypted_payload(
@@ -3131,12 +3127,11 @@ static stf_status ikev2_record_outbound_fragment(
 	return STF_OK;
 }
 
-static stf_status ikev2_record_outbound_fragments(
-	struct msg_digest *md,
-	struct isakmp_hdr *hdr,
-	enum next_payload_types_ikev2 np,
-	chunk_t *payload, /* read-only */
-	const char *desc)
+static stf_status v2_record_outbound_fragments(struct msg_digest *md,
+					       const pb_stream *rbody,
+					       const pb_stream *sk,
+					       chunk_t *payload, /* read-only */
+					       const char *desc)
 {
 	struct state *const st = IS_CHILD_SA(md->st) ?
 		state_with_serialno(md->st->st_clonedfrom) : md->st;
@@ -3172,26 +3167,57 @@ static stf_status ikev2_record_outbound_fragments(
 		return STF_INTERNAL_ERROR;
 	}
 
-	unsigned int count = 0;
-	unsigned int offset = 0;
-	int ret = STF_INTERNAL_ERROR;
+	/*
+	 * Extract the hdr from the original unfragmented message.
+	 * Set it up for auto-update of it's next payload field chain.
+	 */
+	struct isakmp_hdr hdr;
+	{
+		pb_stream pbs;
+		init_pbs(&pbs, rbody->start, pbs_offset(rbody), "sk hdr");
+		if (!in_struct(&hdr, &isakmp_hdr_desc, &pbs, NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+	hdr.isa_np = ISAKMP_NEXT_v2NONE;
 
-	for (struct v2_ike_tfrag **fragp = &st->st_v2_tfrags; ; fragp = &(*fragp)->next) {
-		chunk_t cipher;
-
-		passert(*fragp == NULL);
-		setchunk(cipher, payload->ptr + offset,
-			PMIN(payload->len - offset, len));
-		offset += cipher.len;
-		count++;
-		ret = ikev2_record_outbound_fragment(
-			md, hdr, np, fragp, &cipher, count, nfrags, desc);
-
-		if (ret != STF_OK || offset == payload->len)
-			break;
+	/*
+	 * Extract the SK's next payload field from the original
+	 * unfragmented message.  This is used as the first SKF's NP
+	 * field, the rest have NP=NONE(0).
+	 */
+	enum next_payload_types_ikev2 skf_np;
+	{
+		pb_stream pbs;
+		init_pbs(&pbs, sk->start, pbs_offset(sk), "sk");
+		struct ikev2_generic e;
+		if (!in_struct(&e, &ikev2_sk_desc, &pbs, NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
+		skf_np = e.isag_np;
 	}
 
-	return ret;
+	unsigned int number = 1;
+	unsigned int offset = 0;
+	struct v2_ike_tfrag **fragp = &st->st_v2_tfrags;
+
+	while (offset < payload->len) {
+		passert(*fragp == NULL);
+		chunk_t fragment = chunk(payload->ptr + offset,
+					 PMIN(payload->len - offset, len));
+		stf_status ret = v2_record_outbound_fragment(md, &hdr, skf_np, fragp,
+							     &fragment, number, nfrags, desc);
+		if (ret != STF_OK) {
+			return ret;
+		}
+
+		offset += fragment.len;
+		number++;
+		skf_np = ISAKMP_NEXT_v2NONE;
+		fragp = &(*fragp)->next;
+	}
+
+	return STF_OK;
 }
 
 static bool need_configuration_payload(const struct connection *const pc,
@@ -3638,11 +3664,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		return STF_INTERNAL_ERROR;
 
 	if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream), TRUE)) {
-		chunk_t payload;
-
-		setchunk(payload, e_pbs_cipher.start, len);
-		stf_status ret = ikev2_record_outbound_fragments(
-			md, &hdr, ISAKMP_NEXT_v2IDi, &payload,
+		chunk_t payload = chunk(e_pbs_cipher.start, len);
+		stf_status ret = v2_record_outbound_fragments(md, &rbody, &e_pbs,
+							      &payload,
 			"reply fragment for ikev2_parent_outR1_I2");
 		pst->st_msgid_lastreplied = md->msgid_received;
 		return ret;
@@ -4318,14 +4342,11 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		close_output_pbs(&reply_stream);
 
 		if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream),
-						TRUE))
-		{
-			chunk_t payload;
-
-			setchunk(payload, e_pbs_cipher.start, len);
-			stf_status ret = ikev2_record_outbound_fragments(
-				md, &hdr, sk_np, &payload,
-				"reply fragment for ikev2_parent_inI2outR2_tail");
+					    TRUE)) {
+			chunk_t payload = chunk(e_pbs_cipher.start, len);
+			stf_status ret = v2_record_outbound_fragments(md, &rbody, &e_pbs,
+								      &payload,
+								      "reply fragment for ikev2_parent_inI2outR2_tail");
 			st->st_msgid_lastreplied = md->msgid_received;
 			return ret;
 		} else {
