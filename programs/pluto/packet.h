@@ -171,10 +171,11 @@ extern const pb_stream empty_pbs;
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
 
 /*
- * Map a pbs onto a chunk, and chunk onto a pbs.
+ * Map to/from/clone pbs and chunk
  */
-extern pb_stream chunk_as_pbs(chunk_t chunk, const char *name);
-#define pbs_as_chunk(PBS) ((chunk_t){ .ptr = (PBS)->start, .len = pbs_offset(PBS), })
+extern pb_stream same_chunk_as_pbs(chunk_t chunk, const char *name);
+extern chunk_t same_pbs_as_chunk(pb_stream *pbs);
+extern chunk_t clone_pbs_as_chunk(pb_stream *pbs, const char *name);
 
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.

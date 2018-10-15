@@ -1610,13 +1610,6 @@ void init_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 	};
 }
 
-pb_stream chunk_as_pbs(chunk_t chunk, const char *name)
-{
-	pb_stream pbs;
-	init_pbs(&pbs, chunk.ptr, chunk.len, name);
-	return pbs;
-}
-
 void init_out_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 {
 	init_pbs(pbs, start, len, name);
@@ -1629,6 +1622,27 @@ pb_stream open_out_pbs(const char *name, uint8_t *buffer, size_t sizeof_buffer)
 	init_out_pbs(&out_pbs, buffer, sizeof_buffer, name);
 	DBGF(DBG_EMITTING, "Opening output PBS %s", name);
 	return out_pbs;
+}
+
+pb_stream same_chunk_as_pbs(chunk_t chunk, const char *name)
+{
+	pb_stream pbs;
+	init_pbs(&pbs, chunk.ptr, chunk.len, name);
+	return pbs;
+}
+
+chunk_t same_pbs_as_chunk(pb_stream *pbs)
+{
+	chunk_t chunk = {
+		.ptr = pbs->start,
+		.len = pbs_offset(pbs),
+	};
+	return chunk;
+}
+
+chunk_t clone_pbs_as_chunk(pb_stream *pbs, const char *name)
+{
+	return clone_chunk(same_pbs_as_chunk(pbs), name);
 }
 
 static err_t enum_enum_checker(

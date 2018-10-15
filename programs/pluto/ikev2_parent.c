@@ -1091,8 +1091,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
-	st->st_firstpacket_me = clone_chunk(pbs_as_chunk(&reply_stream),
-					    "saved first packet");
+	st->st_firstpacket_me = clone_pbs_as_chunk(&reply_stream,
+						   "saved first packet");
 
 	/* Transmit */
 	record_outbound_ike_msg(st, &reply_stream, "reply packet for ikev2_parent_outI1_common");
@@ -1508,8 +1508,8 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* note that we don't update the state here yet */
 
 	/* record first packet for later checking of signature */
-	st->st_firstpacket_him = clone_chunk(pbs_as_chunk(&md->message_pbs),
-					     "saved first received packet");
+	st->st_firstpacket_him = clone_pbs_as_chunk(&md->message_pbs,
+						    "saved first received packet");
 
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -1687,7 +1687,8 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
-	st->st_firstpacket_me = clone_chunk(pbs_as_chunk(&reply_stream), "saved first packet");
+	st->st_firstpacket_me = clone_pbs_as_chunk(&reply_stream,
+						   "saved first packet");
 
 	/* note: retransmission is driven by initiator, not us */
 
@@ -2619,7 +2620,7 @@ static bool ikev2_reassemble_fragments(struct state *st,
 	struct payload_digest *sk = &md->digest[md->digest_roof++];
 	md->chain[ISAKMP_NEXT_v2SK] = sk;
 	sk->payload.generic.isag_np = st->st_v2_rfrags->first_np;
-	sk->pbs = chunk_as_pbs(md->raw_packet, "decrypted SFK payloads");
+	sk->pbs = same_chunk_as_pbs(md->raw_packet, "decrypted SFK payloads");
 
 	md->chain[ISAKMP_NEXT_v2SKF] = NULL;
 	release_fragments(st);
@@ -2662,7 +2663,7 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 				  e_pbs->roof - md->packet_pbs.start);
 		ok = ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md, &c,
 							 e_pbs->cur - md->packet_pbs.start);
-		md->chain[ISAKMP_NEXT_v2SK]->pbs = chunk_as_pbs(c, "decrypted SK payload");
+		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_pbs(c, "decrypted SK payload");
 	}
 
 	DBG(DBG_CONTROLMORE,
@@ -3106,7 +3107,7 @@ static stf_status v2_record_outbound_fragment(struct msg_digest *md,
 
 	*fragp = alloc_thing(struct v2_ike_tfrag, "v2_ike_tfrag");
 	(*fragp)->next = NULL;
-	(*fragp)->cipher = clone_chunk(pbs_as_chunk(&frag_stream), desc);
+	(*fragp)->cipher = clone_pbs_as_chunk(&frag_stream, desc);
 
 	return STF_OK;
 }
@@ -3291,8 +3292,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	change_state(pst, STATE_PARENT_I2);
 
 	/* record first packet for later checking of signature */
-	pst->st_firstpacket_him = clone_chunk(pbs_as_chunk(&md->message_pbs),
-					      "saved first received packet");
+	pst->st_firstpacket_him = clone_pbs_as_chunk(&md->message_pbs,
+						     "saved first received packet");
 
 	/* beginning of data going out */
 
