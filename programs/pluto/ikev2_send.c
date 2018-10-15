@@ -733,34 +733,37 @@ v2SK_payload_t open_v2SK_payload(pb_stream *container,
 	static const v2SK_payload_t empty_sk;
 	v2SK_payload_t sk = {
 		.ike = ike,
+		.payload.ptr = container->cur,
 	};
 
-	/* insert an Encryption payload header */
+	/* emit Encryption payload header, save location */
 
 	struct ikev2_generic e = {
 		.isag_length = 0, /* filled in later */
 		.isag_critical = build_ikev2_critical(false),
 	};
+	sk.header.ptr = container->cur;
 	if (!out_struct(&e, &ikev2_sk_desc, container, &sk.pbs)) {
 		libreswan_log("error initializing SK header for encrypted %s message",
 			      container->name);
 		return empty_sk;
 	}
+	sk.header.len = sk.pbs.cur - sk.header.ptr;
 
-	/* insert IV */
+	/* emit IV, save location */
 
-	sk.iv = sk.pbs.cur;
-	passert(sk.pbs.cur <= sk.iv);
+	sk.iv.ptr = sk.pbs.cur;
 	if (!emit_wire_iv(&ike->sa, &sk.pbs)) {
 		libreswan_log("error initializing IV for encrypted %s message",
 			      container->name);
 		return empty_sk;
 	}
+	sk.iv.len = sk.pbs.cur - sk.iv.ptr;
 
-	/* save the start of cleartext proper */
+	/* save cleartext start */
 
-	sk.cleartext = sk.pbs.cur;
-	passert(sk.iv <= sk.cleartext);
+	sk.cleartext.ptr = sk.pbs.cur;
+	passert(sk.iv.ptr <= sk.cleartext.ptr);
 	passert(sk.pbs.container->name == container->name);
 
 	return sk;
@@ -768,12 +771,16 @@ v2SK_payload_t open_v2SK_payload(pb_stream *container,
 
 bool close_v2SK_payload(v2SK_payload_t *sk)
 {
-	/* add: padding + pad-length */
+	/* save cleartext end */
+
+	sk->cleartext.len = sk->pbs.cur - sk->cleartext.ptr;
+
+	/* emit padding + pad-length; save location */
 
 	size_t padding;
 	if (sk->ike->sa.st_oakley.ta_encrypt->pad_to_blocksize) {
 		const size_t blocksize = sk->ike->sa.st_oakley.ta_encrypt->enc_blocksize;
-		padding = pad_up(sk->pbs.cur - sk->cleartext, blocksize);
+		padding = pad_up(sk->pbs.cur - sk->cleartext.ptr, blocksize);
 		if (padding == 0) {
 			padding = blocksize;
 		}
@@ -783,28 +790,34 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 	DBG(DBG_EMITTING,
 	    DBG_log("adding %zd bytes of padding (including 1 byte padding-length)",
 		    padding));
-	char b[MAX_CBC_BLOCK_SIZE];
-	passert(sizeof(b) >= padding);
+	sk->padding.ptr = sk->pbs.cur;
 	for (unsigned i = 0; i < padding; i++) {
-		b[i] = i;
+		if (!out_repeated_byte(i, 1, &sk->pbs, "padding and length")) {
+			libreswan_log("error initializing padding for encrypted %s payload",
+				      sk->pbs.container->name);
+			return false;
+		}
 	}
-	if (!out_raw(b, padding, &sk->pbs, "padding and length")) {
-		libreswan_log("error initializing padding for encrypted %s payload",
-			      sk->pbs.container->name);
+	sk->padding.len = sk->pbs.cur - sk->padding.ptr;
+
+	/* emit space for integrity checksum data; save location  */
+
+	size_t integ_size = (encrypt_desc_is_aead(sk->ike->sa.st_oakley.ta_encrypt)
+			     ? sk->ike->sa.st_oakley.ta_encrypt->aead_tag_size
+			     : sk->ike->sa.st_oakley.ta_integ->integ_output_size);
+	if (integ_size == 0) {
+		PEXPECT_LOG("error initializing integrity checksum for encrypted %s payload",
+			    sk->pbs.container->name);
 		return false;
 	}
-
-	/* integrity checksum data */
-
-	sk->integrity = ikev2_authloc(&sk->ike->sa, &sk->pbs);
-	passert(sk->cleartext <= sk->integrity);
-	if (sk->integrity == NULL) {
-		libreswan_log("error initializing integrity checksum for encrypted %s payload",
-			      sk->pbs.container->name);
+	sk->integrity = chunk(sk->pbs.cur, integ_size);
+	if (!out_zero(integ_size, &sk->pbs, "length of truncated HMAC/KEY")) {
 		return false;
 	}
 
 	/* close the SK payload */
+
+	sk->payload.len = sk->pbs.cur - sk->payload.ptr;
 
 	close_output_pbs(&sk->pbs);
 	return true;
@@ -813,6 +826,6 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 {
 	return ikev2_encrypt_msg(sk->ike, sk->pbs.container->start,
-				 sk->iv, sk->cleartext,
-				 sk->integrity);
+				 sk->iv.ptr, sk->cleartext.ptr,
+				 sk->integrity.ptr);
 }

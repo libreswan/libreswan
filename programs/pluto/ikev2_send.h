@@ -52,11 +52,14 @@ pb_stream open_v2_message(pb_stream *reply,
 
 typedef struct {
 	struct ike_sa *ike;
-	pb_stream pbs;
-	/* pointers into payload buffer (not .payload) */
-	uint8_t *iv;
-	uint8_t *cleartext; /* where cleartext starts */
-	uint8_t *integrity;
+	pb_stream pbs; /* within SK */
+	/* pointers into SK header+contents */
+	chunk_t payload; /* header+iv+cleartext+padding+integrity */
+	chunk_t header;
+	chunk_t iv;
+	chunk_t cleartext;
+	chunk_t padding;
+	chunk_t integrity;
 } v2SK_payload_t;
 
 v2SK_payload_t open_v2SK_payload(pb_stream *container,
