@@ -31,7 +31,7 @@ original work.
 Xelerance (https://www.xelerance.com) has sponsored the continued development
 of Openswan since version 1.0
 
-RedHat (http://www.redhat.com/) sponsored the development of IKEv2, USE_LIBNSS
+RedHat (https://www.redhat.com/) sponsored the development of IKEv2, USE_LIBNSS
 and various fixes related to NETKEY.
 
 Secure Computing / Snapgear contributed OCF integration, DYNDNS support and many
