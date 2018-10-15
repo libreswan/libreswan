@@ -21,6 +21,7 @@ endif
 
 override_dh_auto_build:
 	$(MAKE) programs \
+		ARCH=$(DEB_HOST_ARCH) \
 		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
 		INC_USRLOCAL=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
@@ -39,6 +40,7 @@ override_dh_auto_build:
 override_dh_auto_install-arch:
 	# Add here commands to install the package into debian/libreswan
 	$(MAKE) install \
+		ARCH=$(DEB_HOST_ARCH) \
 		INC_USRLOCAL=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
 		INC_MANDIR=share/man \
