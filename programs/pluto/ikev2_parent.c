@@ -3114,7 +3114,7 @@ static stf_status v2_record_outbound_fragment(struct msg_digest *md,
 
 static stf_status v2_record_outbound_fragments(struct msg_digest *md,
 					       const pb_stream *rbody,
-					       const pb_stream *sk,
+					       chunk_t *sk_header,
 					       chunk_t *payload, /* read-only */
 					       const char *desc)
 {
@@ -3173,8 +3173,7 @@ static stf_status v2_record_outbound_fragments(struct msg_digest *md,
 	 */
 	enum next_payload_types_ikev2 skf_np;
 	{
-		pb_stream pbs;
-		init_pbs(&pbs, sk->start, pbs_offset(sk), "sk");
+		pb_stream pbs = same_chunk_as_pbs(*sk_header, "sk");
 		struct ikev2_generic e;
 		if (!in_struct(&e, &ikev2_sk_desc, &pbs, NULL)) {
 			return STF_INTERNAL_ERROR;
@@ -3650,7 +3649,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream), TRUE)) {
 		chunk_t payload = chunk(e_pbs_cipher.start, len);
-		stf_status ret = v2_record_outbound_fragments(md, &rbody, &e_pbs,
+		chunk_t e_chunk = same_pbs_as_chunk(&e_pbs);
+		stf_status ret = v2_record_outbound_fragments(md, &rbody,
+							      &e_chunk,
 							      &payload,
 			"reply fragment for ikev2_parent_outR1_I2");
 		pst->st_msgid_lastreplied = md->msgid_received;
@@ -4329,7 +4330,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream),
 					    TRUE)) {
 			chunk_t payload = chunk(e_pbs_cipher.start, len);
-			stf_status ret = v2_record_outbound_fragments(md, &rbody, &e_pbs,
+			chunk_t e_chunk = same_pbs_as_chunk(&e_pbs);
+			stf_status ret = v2_record_outbound_fragments(md, &rbody, &e_chunk,
 								      &payload,
 								      "reply fragment for ikev2_parent_inI2outR2_tail");
 			st->st_msgid_lastreplied = md->msgid_received;
