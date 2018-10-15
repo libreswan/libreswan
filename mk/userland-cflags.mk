@@ -240,7 +240,7 @@ ifeq ($(USE_DH24),true)
 USERLAND_CFLAGS += -DUSE_DH24
 endif
 
-USE_DH31 ?= true
+USE_DH31 ?= $(shell if printf '\#include <secoidt.h>\nint main() { return SEC_OID_CURVE25519; }\n'| $(CC) -x c $$(pkg-config --cflags nss) -o /dev/null -; then echo true; else echo false; fi )
 ifeq ($(USE_DH31),true)
 USERLAND_CFLAGS += -DUSE_DH31
 endif
