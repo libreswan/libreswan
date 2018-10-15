@@ -543,19 +543,18 @@ $(foreach prefix, $(KVM_PREFIXES), \
 
 
 #
-# Upgrade domains
+# Upgrade the base domain
 #
 
-define upgrade-kvm-domain
-	: upgrade-kvm-domain domain=$(1)
+.PHONY: kvm-upgrade-base-domain
+kvm-upgrade-base-domain: kvm-install-base-domain
 	$(if $(KVM_PACKAGES), \
-		$(KVMSH) $(1) $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
+		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
 	$(if $(KVM_INSTALL_RPM_LIST), \
-		$(KVMSH) $(1) $(KVM_INSTALL_RPM_LIST))
+		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_INSTALL_RPM_LIST))
 	$(if $(KVM_DEBUGINFO), \
-		$(KVMSH) $(1) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
-	$(KVMSH) --shutdown $(1)
-endef
+		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
+
 
 #
 # Build KVM domains from scratch
@@ -652,7 +651,6 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_G
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0" \
 		--noreboot
 	: the reboot message from virt-install can be ignored
-	$(call upgrade-kvm-domain, $(KVM_BASE_DOMAIN))
 	cp $(KVM_KICKSTART_FILE) $@
 .PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
 install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
@@ -670,7 +668,9 @@ $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2: | $(KVM_POOLDIR)
 	$(call check-kvm-qemu-directory)
 	: create the base domain if needed
 	$(MAKE) kvm-install-base-domain
-	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
+	: let the upgrade fail network might be down
+	-$(MAKE) kvm-upgrade-base-domain
+	$(MAKE) kvm-shutdown-base-domain
 	test -r $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	test -r $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r          $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	: if this test fails, user probably forgot this step:
@@ -743,7 +743,6 @@ $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml: \
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(call create-kvm-domain,$(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN))
-	$(call upgrade-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_CLONE_DOMAIN)
