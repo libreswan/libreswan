@@ -2,7 +2,7 @@
 Note that listings are in chronological order of release times, not in order
 of version numbers, so you will find 2.5.x and 2.6.x releases intersperced.
 
-See also docs/KNOWN_BUGS.txt and http://www.openswan.org/
+See also docs/KNOWN_BUGS.txt and https://www.openswan.org/
 
 v2.6.39 (unreleased)
 * Bugtracker bugs fixed:
@@ -1272,7 +1272,7 @@ v2.4.5 (Apr 6, 2006)
 
 v2.4.4 (Nov 18, 2005)
   #487 ASSERTION FAILED at state.c:120:IS_ISAKMP_ENCRYPTED(isakmp_sa->st_state)
-  (see http://www.openswan.org/niscc2/)
+  (see https://www.openswan.org/niscc2/)
   (proper fix in pluto_constants.h)
 * Fix for kernels having strstr
 * Various gcc4 warning fixes
@@ -1281,14 +1281,14 @@ v2.4.4 (Nov 18, 2005)
 * questionable spin_unlock commented out. Might fix reported SMP crashers.
 * update to permit alg code without module support
 * Fix for detecting proper kernel source/header directory on fedora
-* Various bugfixes as reported on http://bugs.openswan.org/
+* Various bugfixes as reported on https://bugs.openswan.org/
   #499: check for module support in kernel for IPsec Modular Extensions
   #500: recent awk breaks on 'setdefault' command
 
 
 v2.4.3 (-)
   #487 ASSERTION FAILED at state.c:120:IS_ISAKMP_ENCRYPTED(isakmp_sa->st_state)
-  (see http://www.openswan.org/niscc2/)
+  (see https://www.openswan.org/niscc2/)
   (incorrect fixed. version not released)
 
 v2.4.2 (Nov 13, 2005)
@@ -1298,12 +1298,12 @@ v2.4.2 (Nov 13, 2005)
 * Fix for NAT-T on 2.4.31
 * Fix for 'short' packets with KLIPS on 2.4.x
 * Merged in Jacco's l2tp configuration examples
-* Various bugfixes as reported on http://bugs.openswan.org/
+* Various bugfixes as reported on https://bugs.openswan.org/
   #286 Incorrect links in intro.html
   #344 netkey-acquire patch
   #376 install_ipsec_sa and install_inbound_ipsec_sa
   #486 ASSERTION FAILED at crypto.c:258: key_size==(DES_CBC_BLOCK_SIZE * 3)
-  (see http://www.openswan.org/niscc2/)
+  (see https://www.openswan.org/niscc2/)
 
 v2.4.1
 * Not publicly released
@@ -1314,7 +1314,7 @@ v2.4.0 (Sep 12, 2005)
 * Fix for NAT-T/PSK rekey (Ulrich @ Astaro)
 * Delete _updown.c and _updown.posix versions as they were obsolete
 * Fixes for aggressive mode and policy mode
-* Various bugfixes as reported on http://bugs.openswan.org/
+* Various bugfixes as reported on https://bugs.openswan.org/
   #201 pluto not accepting negotiations on port 500 after port floating to 4500
   #249 two default routes confuses scripts
   #261 2 RW's w/DPD behind a NAT kick each other off at rekey time
