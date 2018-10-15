@@ -18,7 +18,7 @@
 +  Their charter can be found at: 
 +  http://www.ietf.org/html.charters/ipsec-charter.html
 +  Snapshots and releases of the current work can be found at: 
-+  http://www.freeswan.org/
++  https://www.freeswan.org/
 +
 +IPSEC: IP-in-IP encapsulation
 +CONFIG_IPSEC_IPIP

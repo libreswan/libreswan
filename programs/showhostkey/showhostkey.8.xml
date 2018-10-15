@@ -290,7 +290,7 @@ IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
   <title>HISTORY</title>
   <para>
     Written for the Linux FreeS/WAN project &lt;<ulink
-    url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
+    url='https://www.freeswan.org'>https://www.freeswan.org</ulink>&gt;
     by Henry Spencer. Updated by Paul Wouters for the IPSECKEY
     format.
   </para>

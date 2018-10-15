@@ -156,7 +156,7 @@ v2.6.34 (June 8, 2011))
 * Fix a bunch of gcc unused-but-set-variable warnings [Paul]
 * Fix some WERROR warnings [mcr]
 * Various file descriptor leaks and mimor memleaks [Avesh/dhr]
-* Removed reference to http://www.freeswan.org from ipsec --help [Tuomo]
+* Removed reference to https://www.freeswan.org from ipsec --help [Tuomo]
 * Bugtracker bugs fixed:
    #1233 WARNING: at net/ipv4/af_inet.c:151 inet_sock_destruct on stop [David]
 

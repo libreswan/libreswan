@@ -93,7 +93,7 @@ it will resort to a brute-force search of most (non-compressed) files in
 
 <refsect1 id='history'><title>HISTORY</title>
 <para>Written for the Linux FreeS/WAN project
-&lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
+&lt;<ulink url='https://www.freeswan.org'>https://www.freeswan.org</ulink>&gt;
 by Henry Spencer.</para>
 </refsect1>
 
