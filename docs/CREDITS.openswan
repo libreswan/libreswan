@@ -28,7 +28,7 @@ Openswan is a fork of the FreeS/WAN 2.04 codebase.
 Please see the doc/CREDITS.freeswan file from FreeS/WAN for details on
 original work.
 
-Xelerance (http://www.xelerance.com) has sponsored the continued development
+Xelerance (https://www.xelerance.com) has sponsored the continued development
 of Openswan since version 1.0
 
 RedHat (http://www.redhat.com/) sponsored the development of IKEv2, USE_LIBNSS
