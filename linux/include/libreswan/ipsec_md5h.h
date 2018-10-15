@@ -20,7 +20,7 @@ typedef __u32 UINT4;
 
 /* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991.
  *
- * http://www.ietf.org/ietf-ftp/IPR/RSA-MD-all
+ * https://www.ietf.org/ietf-ftp/IPR/RSA-MD-all
  */
 
 /* MD5 context. */
