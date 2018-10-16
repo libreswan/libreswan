@@ -69,12 +69,13 @@
 #include "ip_address.h"
 #include "ikev2_send.h"
 #include "alg_info.h" /* for ike_info / esp_info */
-
+#include "state_db.h"
 #include "ietf_constants.h"
 
 #include "plutoalg.h" /* for default_ike_groups */
 
 #include "pluto_stats.h"
+#include "keywords.h"
 
 enum smf2_flags {
 	/*
@@ -1077,7 +1078,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 }
 
 static struct state *process_v2_child_ix(struct msg_digest *md,
-		struct state *pst)
+					 struct state *is_this_ike_or_child_sa)
 {
 	struct state *st; /* child state */
 
@@ -1087,24 +1088,23 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 
 	/* force pst to be parent state */
 	/* ??? should we not already know whether this is a parent state? */
-	pst = IS_CHILD_SA(pst) ? state_with_serialno(pst->st_clonedfrom) : pst;
+	struct ike_sa *ike = ike_sa(is_this_ike_or_child_sa);
 
 	if (is_msg_request(md)) {
 		/* this an IKE request and not a response */
-		if (resp_state_with_msgid(pst->st_serialno,
-					  md->msgid_received) != NULL) {
+		if (v2_child_sa_responder_with_msgid(ike, md->msgid_received) != NULL) {
 			what = "CREATE_CHILD_SA Request retransmission ignored";
 			st = NULL;
 		} else if (md->from_state == STATE_V2_CREATE_R) {
 			what = "Child SA Request";
-			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IPSEC_SA,
+			st = ikev2_duplicate_state(ike, IPSEC_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_CREATE_R);
 			st->st_msgid = md->msgid_received;
 			insert_state(st); /* needed for delete - we are duplicating early */
 		} else {
 			what = "IKE Rekey Request";
-			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IKE_SA,
+			st = ikev2_duplicate_state(ike, IKE_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
 			st->st_msgid = md->msgid_received;
@@ -1113,8 +1113,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 	} else  {
 		/* this a response */
 		what = "Child SA Response";
-		st = state_with_parent_msgid(pst->st_serialno,
-				md->msgid_received);
+		st = v2_child_sa_initiator_with_msgid(ike, md->msgid_received);
 		if (st == NULL) {
 			switch (md->from_state) {
 			case STATE_V2_CREATE_I:
@@ -1140,9 +1139,9 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 
 	if (st == NULL) {
 		libreswan_log("rejecting %s CREATE_CHILD_SA%s msgid_received: %u st_msgid_lastrecv %u",
-				what, why,
-				md->msgid_received,
-				pst->st_msgid_lastrecv);
+			      what, why,
+			      md->msgid_received,
+			      ike->sa.st_msgid_lastrecv);
 	} else {
 		bool st_busy = st->st_suspended_md != NULL || st->st_suspended_md != NULL;
 		DBG(DBG_CONTROLMORE, {
@@ -1150,9 +1149,9 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 			char ca[CONN_INST_BUF];
 			char cb[CONN_INST_BUF];
 			DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA%s from %s:%u Child \"%s\"%s #%lu in %s %s",
-				pst->st_connection->name,
-				fmt_conn_instance(pst->st_connection, ca),
-				pst->st_serialno,
+				ike->sa.st_connection->name,
+				fmt_conn_instance(ike->sa.st_connection, ca),
+				ike->sa.st_serialno,
 				what, why, ipstr(&md->sender, &b),
 				hportof(&md->sender),
 				st->st_connection->name,
@@ -1231,8 +1230,8 @@ static bool processed_retransmit(struct state *st,
 				enum_name(&ikev2_exchange_names, ix),
 				st->st_msgid_lastreplied);
 		}
-		struct state *cst =  resp_state_with_msgid(st->st_serialno,
-							   st->st_msgid_lastrecv);
+		struct state *cst =  v2_child_sa_responder_with_msgid(ike_sa(st),
+								      st->st_msgid_lastrecv);
 		if (cst == NULL) {
 			/* XXX: why? */
 			return false; /* process the re-transtmited message */
@@ -3070,4 +3069,96 @@ void lswlog_v2_stf_status(struct lswlog *buf, unsigned status)
 		lswlogs(buf, "STF_FAIL+");
 		lswlog_enum(buf, &ikev2_notify_names, status - STF_FAIL);
 	}
+}
+
+/*
+ * Find the state object that match the following:
+ *	st_msgid (IKEv2 Child responder state)
+ *	parent duplicated from
+ *	expected state
+ *
+ * XXX: can this use cookies?  Probably except after an IKE SA rekey
+ * it isn't clear of all the children get re-hashed to the parent's
+ * new slot?
+ *
+ * XXX: Looking at IS_CHILD_SA_RESPONDER() suggets this is testing the
+ * re-key CHILD SA role, should this be looking elsewhere?
+ */
+
+struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_msgid)
+{
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
+		if (IS_CHILD_SA(st) &&
+		    st->st_clonedfrom == ike->sa.st_serialno &&
+		    st->st_msgid == st_msgid) {
+			if (IS_CHILD_SA_RESPONDER(st)) {
+				pexpect(st->st_sa_role == SA_RESPONDER);
+				return st;
+			} else if (st->st_sa_role != SA_INITIATOR) {
+				/*
+				 * XXX: seemingly an IKE rekey can
+				 * trigger this - the CHILD_SA created
+				 * during the initial exchange is in
+				 * state STATE_V2_IPSEC_R and that
+				 * isn't covered by the above.
+				 */
+				/*
+				 * XXX: seemingly an IKE rekey can
+				 * cause this?
+				 */
+				LSWDBGP(DBG_MASK, buf) {
+					lswlogf(buf, "child state #%lu has an unexpected SA role ",
+						st->st_serialno);
+					lswlog_keyname(buf, &sa_role_names, st->st_sa_role);
+				}
+			}
+		}
+	};
+	DBGF(DBG_MASK, "no waiting child responder state matching pst #%lu msg id %u",
+	     ike->sa.st_serialno, st_msgid);
+	return NULL;
+}
+
+/*
+ * Find the state object that match the following:
+ *	st_msgid (IKE/IPsec initiator state)
+ *	parent duplicated from
+ *	expected state
+ *
+ * XXX: can this use cookies?  Probably except after an IKE SA rekey
+ * it isn't clear of all the children get re-hashed to the parent's
+ * new slot?
+ *
+ * XXX: Looking at IS_CHILD_IPSECSA_RESPONSE() suggets this is
+ * checking the rekey CHILD SA exchange role.  Should it be looking
+ * elsewhere?
+ */
+
+struct state *v2_child_sa_initiator_with_msgid(struct ike_sa *ike, msgid_t st_msgid)
+{
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
+		if (IS_CHILD_SA(st) &&
+		    st->st_clonedfrom == ike->sa.st_serialno &&
+		    st->st_msgid == st_msgid) {
+			if (IS_CHILD_IPSECSA_RESPONSE(st)) {
+				pexpect(st->st_sa_role == SA_INITIATOR);
+				return st;
+			} else if (st->st_sa_role != SA_RESPONDER) {
+				/*
+				 * XXX: seemingly an IKE rekey can
+				 * cause this?
+				 */
+				LSWDBGP(DBG_MASK, buf) {
+					lswlogf(buf, "child state #%lu has an unexpected SA role ",
+						st->st_serialno);
+					lswlog_keyname(buf, &sa_role_names, st->st_sa_role);
+				}
+			}
+		}
+	};
+	DBGF(DBG_MASK, "no waiting child initiator state matching pst #%lu msg id %u",
+	     ike->sa.st_serialno, st_msgid);
+	return NULL;
 }
