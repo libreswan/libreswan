@@ -14,7 +14,7 @@
  */
 
 #include "keywords.h"
-#include "lswlog.h"	/* for passert() */
+#include "lswlog.h"
 
 const struct keyword *keyword_by_name(const struct keywords *keywords,
 				      shunk_t name)
@@ -22,6 +22,18 @@ const struct keyword *keyword_by_name(const struct keywords *keywords,
 	for (unsigned ki = 0; ki < keywords->nr_values; ki++) {
 		const struct keyword *kv = &keywords->values[ki];
 		if (kv->name != NULL && shunk_strcaseeq(name, kv->name)) {
+			return kv;
+		}
+	}
+	return NULL;
+}
+
+const struct keyword *keyword_by_sname(const struct keywords *keywords,
+				       shunk_t name)
+{
+	for (unsigned ki = 0; ki < keywords->nr_values; ki++) {
+		const struct keyword *kv = &keywords->values[ki];
+		if (kv->sname != NULL && shunk_strcaseeq(name, kv->sname)) {
 			return kv;
 		}
 	}
@@ -65,4 +77,24 @@ const struct keyword *keyword_by_value(const struct keywords *keywords,
 				       unsigned value)
 {
 	return keywords->by_value(keywords, value);
+}
+
+size_t lswlog_keyname(struct lswlog *buf, const struct keywords *keywords, unsigned value)
+{
+	const struct keyword *keyword = keyword_by_value(keywords, value);
+	if (keyword == NULL) {
+		return lswlogf(buf, "'%s %u'", keywords->name, value);
+	} else {
+		return lswlogs(buf, keyword->name);
+	}
+}
+
+size_t lswlog_keysname(struct lswlog *buf, const struct keywords *keywords, unsigned value)
+{
+	const struct keyword *keyword = keyword_by_value(keywords, value);
+	if (keyword == NULL) {
+		return lswlogf(buf, "'%s %u'", keywords->name, value);
+	} else {
+		return lswlogs(buf, keyword->sname);
+	}
 }

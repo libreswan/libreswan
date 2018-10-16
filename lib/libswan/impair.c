@@ -110,7 +110,7 @@ const struct enum_names impair_help = {
 };
 
 static const struct keyword send_impairment_value[] = {
-#define S(E, H) [SEND_##E] = { .name = #E, .value = SEND_##E, .details = H, }
+#define S(E, H) [SEND_##E] = { .name = "SEND_" #E, .sname = #E, .value = SEND_##E, .details = H, }
 	S(NORMAL, "send normal content"),
 	S(OMIT, "do not send content"),
 	S(EMPTY, "send zero length content"),
@@ -119,7 +119,7 @@ static const struct keyword send_impairment_value[] = {
 };
 
 static const struct keywords send_impairment_keywords =
-	DIRECT_KEYWORDS(send_impairment_value);
+	DIRECT_KEYWORDS("send impaired content", send_impairment_value);
 
 struct impairment {
 	const char *what;
@@ -185,7 +185,7 @@ static void help(const char *prefix, const struct impairment *cr)
 			if (kv->name != NULL) {
 				LSWLOG_INFO(buf) {
 					lswlogf(buf, "%s  %s: %s", prefix,
-						kv->name, kv->details);
+						kv->sname, kv->details);
 				}
 			}
 		}
@@ -304,7 +304,7 @@ bool parse_impair(const char *optarg,
 			return false;
 		}
 		/* return on success. */
-		const struct keyword *kw = keyword_by_name(cr->how_keynum, how);
+		const struct keyword *kw = keyword_by_sname(cr->how_keynum, how);
 		if (kw != NULL) {
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
@@ -349,7 +349,7 @@ static void lswlog_impairment(struct lswlog *buf, const struct impairment *cr)
 		unsigned value = *(unsigned*)cr->value;
 		const struct keyword *kw = keyword_by_value(cr->how_keynum, value);
 		if (kw != NULL) {
-			lswlogs(buf, kw->name);
+			lswlogs(buf, kw->sname);
 		} else if (value >= cr->how_keynum->nr_values) {
 			lswlogf(buf, "%zu", value - cr->how_keynum->nr_values);
 		} else {

@@ -56,10 +56,9 @@
  * shouldn't be so many NAME<>VALUE maps.
  */
 
-/* public */
-
 struct keyword {
 	const char *name;
+	const char *sname;
 	unsigned value;
 	const char *details;
 };
@@ -72,7 +71,20 @@ const struct keyword *keyword_by_value(const struct keywords *keywords,
 const struct keyword *keyword_by_name(const struct keywords *keywords,
 				      shunk_t name);
 
-/* "private" */
+const struct keyword *keyword_by_sname(const struct keywords *keywords,
+				       shunk_t name);
+
+/*
+ * logging short-cuts
+ */
+
+size_t lswlog_keyname(struct lswlog *buf, const struct keywords *keywords, unsigned value);
+size_t lswlog_keysname(struct lswlog *buf, const struct keywords *keywords, unsigned value);
+
+
+/*
+ * "private"
+ */
 
 typedef const struct keyword *(keyword_by_value_fn)(const struct keywords *, unsigned);
 
@@ -80,6 +92,7 @@ struct keywords {
 	const struct keyword *values;
 	size_t nr_values;
 	keyword_by_value_fn *by_value;
+	const char *name;
 };
 
 /*
@@ -89,18 +102,33 @@ struct keywords {
  * starting at 1, values[0].name==NULL.
  */
 keyword_by_value_fn keyword_by_value_direct;
-#define DIRECT_KEYWORDS(VALUES) { .values = VALUES, .nr_values = elemsof(VALUES), .by_value = keyword_by_value_direct, }
+#define DIRECT_KEYWORDS(NAME, VALUES) {					\
+		.values = VALUES,					\
+			.nr_values = elemsof(VALUES),			\
+			.by_value = keyword_by_value_direct,		\
+			.name = (NAME),					\
+			}
 
 /*
  * sorted map: binary search possible
  */
 keyword_by_value_fn keyword_by_value_binary;
-#define SORTED_KEYWORDS(VALUES) { .values = VALUES, .nr_values = elemsof(VALUES), .by_value = keyword_by_value_binary, }
+#define SORTED_KEYWORDS(NAME, VALUES) {					\
+		.values = VALUES,					\
+			.nr_values = elemsof(VALUES),			\
+			.by_value = keyword_by_value_binary,		\
+			.name = (NAME),					\
+			}
 
 /*
  * sparse map: linear search required
  */
 keyword_by_value_fn keyword_by_value_linear;
-#define SPARSE_KEYWORDS(VALUES) { .values = VALUES, .nr_values = elemsof(VALUES), .by_value = keyword_by_value_linear, }
+#define SPARSE_KEYWORDS(NAME, VALUES) {					\
+		.values = VALUES,					\
+			.nr_values = elemsof(VALUES),			\
+			.by_value = keyword_by_value_linear,		\
+			.name = (NAME),					\
+			}
 
 #endif
