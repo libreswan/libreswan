@@ -630,18 +630,20 @@ enum state_kind {
  * responder will see the I flag set in all packets it receives from
  * the original initiator.
  *
- * The original role is used to identify which SPI (cookie) to use in
- * the header and which keying material to use when encrypting and
- * decrypting SK payloads.
- *
  * The IKEv1 equivalent is the phase1 role.  It is identified by the
  * IKEv1 IS_PHASE1_INIT() macro.
  *
  * The values are chosen such that no role has values that overlap.
+ *
+ * XXX: If IKEv2 code correctly uses CHILD_SA and IKE_SA then the, is
+ * probably be redundant - An IKE SA's SA_ROLE should be consistent
+ * with its ORIGINAL_ROLE.  Currently code isn't consistent, so both
+ * are used/defined.
  */
+
 enum original_role {
-	ORIGINAL_INITIATOR = 1, /* IKE_I present */
-	ORIGINAL_RESPONDER = 2, /* IKE_I missing */
+	ORIGINAL_INITIATOR = 5, /* IKE_I present */
+	ORIGINAL_RESPONDER = 6, /* IKE_I missing */
 };
 
 /*
@@ -664,23 +666,33 @@ enum message_role {
 	MESSAGE_RESPONSE = 4, /* MSR_R present */
 };
 
+extern struct keywords message_role_names;
+
 /*
  * The SA role determined by who initiated the SA.
  *
- * For both an IKE and CHILD SA it is determined by who sent the
- * request.
+ * For all IKEv2 exchanges establishing or rekeying an SA it is
+ * determined by who initiated that SA exchange.  During the exchange,
+ * the SA_INITIATOR will always have the R(esponse) bit clear and the
+ * SA_RESPONDER will always have the R(esponse) bit set.
+ *
+ * The IKE SA's role is used to identify which SPI (cookie) to use in
+ * the header by setting or clearing the I(Initiator) flag.
+ *
+ * The IKE or CHILD SA role is used when assigning keying material.
+ *
+ * The IKEv1 equivalent is the phase1 role.  It is identified by the
+ * IKEv1 IS_PHASE1_INIT() macro.
  *
  * The values are chosen such that no role has values that overlap.
- *
- * XXX: If IKEv2 code correctly used CHILD_SA and IKE_SA then
- * ORIGINAL_ROLE, above is probably be redundant - An IKE SA's SA_ROLE
- * should be consistent with its ORIGINAL_ROLE.  Currently code isn't
- * consistent, so both are used/defined.
  */
+
 enum sa_role {
-	SA_INITIATOR = 5,
-	SA_RESPONDER = 6,
+	SA_INITIATOR = 1,
+	SA_RESPONDER = 2,
 };
+
+extern struct keywords sa_role_names;
 
 
 #define PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \

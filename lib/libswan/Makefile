@@ -63,6 +63,7 @@ endif
 OBJS += fd.o
 OBJS += kernel_alg.o
 OBJS += kernel_sadb.o
+OBJS += role.o
 
 # These get pulled in from the klips kernel code.
 VPATH += ${KLIPSSRCDIR}
