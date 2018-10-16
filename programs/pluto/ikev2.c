@@ -1978,14 +1978,15 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			return;
 		}
 
+		md->st = st;
+		DBGF(DBG_MASK, "Message ID: why update IKE #%lu and not CHILD #%lu?",
+		     st->st_serialno, cst->st_serialno);
+		v2_msgid_update_counters(st, md);
+
+		/* switch from parent state to child state */
 		DBGF(DBG_CONTROL,
 		     "switching from parent? #%lu to child #%lu in FSM processor",
 		     st->st_serialno, cst->st_serialno);
-
-		md->st = st;
-		ikev2_update_msgid_counters(md);
-
-		/* switch from parent state to child state */
 		st = cst;
 	}
 
@@ -2321,6 +2322,7 @@ static void schedule_next_send(struct state *st)
 
 void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
 {
+	DBGF(DBG_MASK, "restarting Message ID of state #%lu", st->st_serialno);
 	/* Ok? */
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
@@ -2333,7 +2335,7 @@ void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
 	 * STATE_PARENT_I1 and STATE_PARENT_I1 -> STATE_PARENT_I1 be
 	 * functionally 'identical'.
 	 *
-	 * Yes, unfortunately the code below does all sorts of magic
+	 * Yes.  Unfortunately the code below does all sorts of magic
 	 * involving the state's magic number and assumed attributes.
 	 */
 	md->svm = finite_states[STATE_PARENT_I0]->fs_microcode;
@@ -2341,35 +2343,41 @@ void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
 	/*
 	 * XXX: Why?!?
 	 *
-	 * Shouldn't MD be ignored!
+	 * Shouldn't MD be ignored!  After all it could be NULL.
 	 *
-	 * Yes, unfortunately the code below still assumes that
+	 * Yes.  unfortunately the code below still assumes that
 	 * there's always an MD (the initiator does not have an MD so
 	 * fake_md() and tries to use MD attributes to make decisions
 	 * that belong in the state transition.
 	 */
-	md->msgid_received = v2_INVALID_MSGID;
-	md->hdr.isa_flags &= ~ISAKMP_FLAGS_v2_MSG_R;
+	if (md != NULL) {
+		md->msgid_received = v2_INVALID_MSGID;
+		md->hdr.isa_flags &= ~ISAKMP_FLAGS_v2_MSG_R;
+	}
 }
 
-void ikev2_update_msgid_counters(struct msg_digest *md)
+/*
+ * While there's always a state, there may not always be an incomming
+ * message.  Hence, don't rely on md->st and instead explicitly pass
+ * in ST.
+ *
+ * XXX: Should this looking at .st_state_transition->flags to decide
+ * what to do?
+ */
+void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
-	struct state *ikesa;
-
 	if (st == NULL) {
-		/* current processor deleted the state, nothing to update */
+		DBGF(DBG_MASK, "Message ID: current processor deleted the state nothing to update");
 		return;
 	}
-
-	ikesa = IS_CHILD_SA(st) ?  state_with_serialno(st->st_clonedfrom) : st;
+	struct ike_sa *ike = ike_sa(st);
 
 	/* message ID sequence for things we send (as initiator) */
-	msgid_t st_msgid_lastack = ikesa->st_msgid_lastack;
-	msgid_t st_msgid_nextuse = ikesa->st_msgid_nextuse;
+	msgid_t st_msgid_lastack = ike->sa.st_msgid_lastack;
+	msgid_t st_msgid_nextuse = ike->sa.st_msgid_nextuse;
 	/* message ID sequence for things we receive (as responder) */
-	msgid_t st_msgid_lastrecv = ikesa->st_msgid_lastrecv;
-	msgid_t st_msgid_lastreplied = ikesa->st_msgid_lastreplied;
+	msgid_t st_msgid_lastrecv = ike->sa.st_msgid_lastrecv;
+	msgid_t st_msgid_lastreplied = ike->sa.st_msgid_lastreplied;
 
 	/* update when sending a request */
 	if (is_msg_request(md) &&
@@ -2377,46 +2385,46 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 			 st->st_state == STATE_V2_REKEY_IKE_I ||
 			 st->st_state == STATE_V2_REKEY_CHILD_I ||
 			 st->st_state == STATE_V2_CREATE_I)) {
-		ikesa->st_msgid_nextuse += 1;
+		ike->sa.st_msgid_nextuse += 1;
 		/* an informational exchange does its own increment */
 	} else if (st->st_state == STATE_PARENT_I2) {
-		ikesa->st_msgid_nextuse += 1;
+		ike->sa.st_msgid_nextuse += 1;
 	}
 
 	if (is_msg_response(md)) {
 		/* we were initiator for this message exchange */
 		if (md->msgid_received == v2_INITIAL_MSGID &&
-				ikesa->st_msgid_lastack == v2_INVALID_MSGID) {
-			ikesa->st_msgid_lastack = md->msgid_received;
-		} else if (md->msgid_received > ikesa->st_msgid_lastack) {
-			ikesa->st_msgid_lastack = md->msgid_received;
+				ike->sa.st_msgid_lastack == v2_INVALID_MSGID) {
+			ike->sa.st_msgid_lastack = md->msgid_received;
+		} else if (md->msgid_received > ike->sa.st_msgid_lastack) {
+			ike->sa.st_msgid_lastack = md->msgid_received;
 		} /* else { lowever message id ignore it? } */
 	} else {
 		/* we were responder for this message exchange */
-		if (md->msgid_received > ikesa->st_msgid_lastrecv) {
-			ikesa->st_msgid_lastrecv = md->msgid_received;
+		if (md->msgid_received > ike->sa.st_msgid_lastrecv) {
+			ike->sa.st_msgid_lastrecv = md->msgid_received;
 		}
 		/* first request from the other side */
 		if (md->msgid_received == v2_INITIAL_MSGID &&
-				ikesa->st_msgid_lastrecv == v2_INVALID_MSGID) {
-			ikesa->st_msgid_lastrecv = v2_INITIAL_MSGID;
+				ike->sa.st_msgid_lastrecv == v2_INVALID_MSGID) {
+			ike->sa.st_msgid_lastrecv = v2_INITIAL_MSGID;
 		}
 	}
 
 	{
-		msgid_t unack = ikesa->st_msgid_nextuse -
-			ikesa->st_msgid_lastack - 1;
+		msgid_t unack = ike->sa.st_msgid_nextuse -
+			ike->sa.st_msgid_lastack - 1;
 
-		if (unack < ikesa->st_connection->ike_window) {
-			schedule_next_send(ikesa);
+		if (unack < ike->sa.st_connection->ike_window) {
+			schedule_next_send(&ike->sa);
 		}
 	}
 
 	LSWDBGP(DBG_MASK, buf) {
 		lswlogf(buf, "Message ID: '%s' IKE #%lu %s",
 			st->st_connection->name,
-			ikesa->st_serialno, ikesa->st_finite_state->fs_short_name);
-		if (ikesa != st) {
+			ike->sa.st_serialno, ike->sa.st_finite_state->fs_short_name);
+		if (&ike->sa != st) {
 			lswlogf(buf, "; CHILD #%lu %s",
 				st->st_serialno, st->st_finite_state->fs_short_name);
 		}
@@ -2425,20 +2433,20 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 			md->hdr.isa_msgid, md->msgid_received);
 
 		lswlogf(buf, "; initiator { lastack=%u", st_msgid_lastack);
-		if (st_msgid_lastack != ikesa->st_msgid_lastack) {
-			lswlogf(buf, "->%u", ikesa->st_msgid_lastack);
+		if (st_msgid_lastack != ike->sa.st_msgid_lastack) {
+			lswlogf(buf, "->%u", ike->sa.st_msgid_lastack);
 		}
 		lswlogf(buf, " nextuse=%u", st_msgid_nextuse);
-		if (st_msgid_nextuse != ikesa->st_msgid_nextuse) {
-			lswlogf(buf, "->%u", ikesa->st_msgid_nextuse);
+		if (st_msgid_nextuse != ike->sa.st_msgid_nextuse) {
+			lswlogf(buf, "->%u", ike->sa.st_msgid_nextuse);
 		}
 		lswlogf(buf, " } responder { lastrecv=%u", st_msgid_lastrecv);
-		if (st_msgid_lastrecv != ikesa->st_msgid_lastrecv) {
-			lswlogf(buf, "->%u", ikesa->st_msgid_lastrecv);
+		if (st_msgid_lastrecv != ike->sa.st_msgid_lastrecv) {
+			lswlogf(buf, "->%u", ike->sa.st_msgid_lastrecv);
 		}
 		lswlogf(buf, " lastreplied=%u", st_msgid_lastreplied);
-		if (st_msgid_lastreplied != ikesa->st_msgid_lastreplied) {
-			lswlogf(buf, "->%u", ikesa->st_msgid_lastreplied);
+		if (st_msgid_lastreplied != ike->sa.st_msgid_lastreplied) {
+			lswlogf(buf, "->%u", ike->sa.st_msgid_lastreplied);
 		}
 		lswlogf(buf, " }");
 	}
@@ -2604,11 +2612,15 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 	if (from_state == STATE_V2_REKEY_IKE_R ||
 	    from_state == STATE_V2_REKEY_IKE_I) {
-		ikev2_update_msgid_counters(md);
+		DBGF(DBG_MASK, "Message ID: updating counters for #%lu before emancipating",
+		     md->st->st_serialno);
+		v2_msgid_update_counters(md->st, md);
 		ikev2_child_emancipate(md);
 	} else  {
 		change_state(st, svm->next_state);
-		ikev2_update_msgid_counters(md);
+		DBGF(DBG_MASK, "Message ID: updating counters for #%lu after switching state",
+		     md->st->st_serialno);
+		v2_msgid_update_counters(md->st, md);
 	}
 
 	w = RC_NEW_STATE + st->st_state;
