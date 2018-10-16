@@ -6236,14 +6236,16 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	 * NOTE: only meaningful if "responding" is true!
 	 * These declarations must be placed so early because they must be in scope for
 	 * all of the several chunks of code that handle responding.
+	 *
+	 * XXX: in terms of readability and reliability, this
+	 * interleaving of initiator vs response code paths is pretty
+	 * screwed up.
 	 */
 
-	unsigned char *iv = NULL;	/* initialized to silence GCC */
-	unsigned char *encstart = NULL;	/* initialized to silence GCC */
-
 	pb_stream rbody;
-	pb_stream e_pbs;
-	pb_stream e_pbs_cipher;
+	v2SK_payload_t sk;
+	zero(&rbody);
+	zero(&sk);
 
 	if (responding) {
 		/* make sure HDR is at start of a clean buffer */
@@ -6257,47 +6259,26 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		st->st_pend_liveness = FALSE;
 
 		/* HDR out */
-		{
-			struct isakmp_hdr hdr = {
-				.isa_np = ISAKMP_NEXT_v2SK,
-				.isa_version = build_ikev2_version(),
-				.isa_xchg = ISAKMP_v2_INFORMATIONAL,
-				.isa_flags = ISAKMP_FLAGS_v2_MSG_R,
-				.isa_msgid = md->msgid_received,
-				.isa_length = 0, /* filled in on pbs close */
-			};
 
-			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-			if (ike->sa.st_sa_role == SA_INITIATOR)
-				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
-			if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG))
-				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-
-			if (!out_struct(&hdr, &isakmp_hdr_desc,
-					&reply_stream, &rbody))
-				return STF_INTERNAL_ERROR;
+		rbody = open_v2_message(&reply_stream, ike,
+					md /* response */,
+					ISAKMP_v2_INFORMATIONAL);
+		if (!pbs_ok(&rbody)) {
+			return STF_INTERNAL_ERROR;
 		}
 
 		/* insert an Encryption payload header */
 
-		iv = start_SK_payload(
-			st,
-			del_ike ? ISAKMP_NEXT_v2NONE :
-				ndp != 0 ? ISAKMP_NEXT_v2D :
-				send_mobike_resp ? ISAKMP_NEXT_v2N :
-				ISAKMP_NEXT_v2NONE,
-			&rbody, &e_pbs, &e_pbs_cipher);
-		if (iv == NULL)
+		sk = open_v2SK_payload(&rbody, ike_sa(st));
+		if (!pbs_ok(&sk.pbs)) {
 			return STF_INTERNAL_ERROR;
-
-		encstart = e_pbs_cipher.cur;
+		}
 
 		if (send_mobike_resp) {
 			int np = (cookie2.len != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
 			stf_status e = add_mobike_response_payloads(np,
 				&cookie2,	/* will be freed */
-				md, &e_pbs_cipher);
+				md, &sk.pbs);
 			if (e != STF_OK)
 				return e;
 		}
@@ -6429,7 +6410,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 
 					if (!out_struct(&v2del_tmp,
 							&ikev2_delete_desc,
-							&e_pbs_cipher,
+							&sk.pbs,
 							&del_pbs) ||
 					    !out_raw(spi_buf,
 							j * sizeof(spi_buf[0]),
@@ -6466,15 +6447,14 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		 * Close up the packet and send it.
 		 */
 
-		uint8_t *authloc = end_encrypted_payload(st, &rbody, &e_pbs, &e_pbs_cipher);
-		if (authloc == NULL)
+		/* const size_t len = pbs_offset(&sk.pbs); */
+		if (!close_v2SK_payload(&sk)) {
 			return STF_INTERNAL_ERROR;
-
+		}
+		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
-
-		stf_status ret =
-			ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
-					  iv, encstart, authloc);
+;
+		stf_status ret = encrypt_v2SK_payload(&sk);
 		if (ret != STF_OK)
 			return ret;
 
