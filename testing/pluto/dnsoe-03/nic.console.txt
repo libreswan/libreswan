@@ -4,7 +4,7 @@ nic #
 nic #
  #/testing/guestbin/swan-prep --dnssec
 nic #
- setenforce 0
+ setenforce Permissive
 nic #
  systemctl start nsd-keygen
 nic #
