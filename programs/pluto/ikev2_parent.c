@@ -3016,7 +3016,7 @@ static uint8_t *end_encrypted_payload(
  * - variable:	fragment's data
  * - variable:	padding (no padding is longer than MAX_CBC_BLOCK_SIZE) (16 or less)
  */
-static stf_status v2_record_outbound_fragment(struct msg_digest *md,
+static stf_status v2_record_outbound_fragment(struct ike_sa *ike,
 					      const struct isakmp_hdr *hdr,
 					      enum next_payload_types_ikev2 skf_np,
 					      struct v2_ike_tfrag **fragp,
@@ -3024,9 +3024,6 @@ static stf_status v2_record_outbound_fragment(struct msg_digest *md,
 					      unsigned int number, unsigned int total,
 					      const char *desc)
 {
-	struct state *st = IS_CHILD_SA(md->st) ?
-		state_with_serialno(md->st->st_clonedfrom) : md->st;
-
 	pb_stream frag_stream;
 	unsigned char frag_buffer[PMAX(MIN_MAX_UDP_DATA_v4, MIN_MAX_UDP_DATA_v6)];
 
@@ -3049,9 +3046,9 @@ static stf_status v2_record_outbound_fragment(struct msg_digest *md,
 		.isaskf_number = number,
 		.isaskf_total = total,
 	};
-	uint8_t *iv = start_encrypted_payload(st,
-			&e, &ikev2_skf_desc,
-			&rbody, &e_pbs, &e_pbs_cipher);
+	uint8_t *iv = start_encrypted_payload(&ike->sa,
+					      &e, &ikev2_skf_desc,
+					      &rbody, &e_pbs, &e_pbs_cipher);
 
 	uint8_t *encstart = e_pbs_cipher.cur;
 	passert(frag_stream.start <= iv && iv <= encstart);
@@ -3060,9 +3057,8 @@ static stf_status v2_record_outbound_fragment(struct msg_digest *md,
 		       "cleartext fragment"))
 		return STF_INTERNAL_ERROR;
 
-	uint8_t *authloc = end_encrypted_payload(
-			st,
-			&rbody, &e_pbs, &e_pbs_cipher);
+	uint8_t *authloc = end_encrypted_payload(&ike->sa,
+						 &rbody, &e_pbs, &e_pbs_cipher);
 
 	if (authloc == NULL)
 		return STF_INTERNAL_ERROR;
@@ -3071,7 +3067,7 @@ static stf_status v2_record_outbound_fragment(struct msg_digest *md,
 
 	close_output_pbs(&frag_stream);
 
-	stf_status ret = ikev2_encrypt_msg(ike_sa(st), frag_stream.start,
+	stf_status ret = ikev2_encrypt_msg(ike, frag_stream.start,
 					   iv, encstart, authloc);
 	if (ret != STF_OK)
 		return ret;
@@ -3083,43 +3079,40 @@ static stf_status v2_record_outbound_fragment(struct msg_digest *md,
 	return STF_OK;
 }
 
-static stf_status v2_record_outbound_fragments(struct msg_digest *md,
+static stf_status v2_record_outbound_fragments(struct state *st,
 					       const pb_stream *rbody,
-					       chunk_t *sk_header,
-					       chunk_t *payload, /* read-only */
+					       v2SK_payload_t *sk,
 					       const char *desc)
 {
-	struct state *const st = IS_CHILD_SA(md->st) ?
-		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	unsigned int len;
 
 	release_fragments(st);
 	freeanychunk(st->st_tpacket);
 
-	len = (st->st_connection->addr_family == AF_INET) ?
+	len = (sk->ike->sa.st_connection->addr_family == AF_INET) ?
 	      ISAKMP_V2_FRAG_MAXLEN_IPv4 : ISAKMP_V2_FRAG_MAXLEN_IPv6;
 
-	if (st->st_interface != NULL && st->st_interface->ike_float)
+	if (sk->ike->sa.st_interface != NULL && sk->ike->sa.st_interface->ike_float)
 		len -= NON_ESP_MARKER_SIZE;
 
 	len -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
 
-	len -= (encrypt_desc_is_aead(st->st_oakley.ta_encrypt)
-		? st->st_oakley.ta_encrypt->aead_tag_size
-		: st->st_oakley.ta_integ->integ_output_size);
+	len -= (encrypt_desc_is_aead(sk->ike->sa.st_oakley.ta_encrypt)
+		? sk->ike->sa.st_oakley.ta_encrypt->aead_tag_size
+		: sk->ike->sa.st_oakley.ta_integ->integ_output_size);
 
-	if (st->st_oakley.ta_encrypt->pad_to_blocksize)
-		len &= ~(st->st_oakley.ta_encrypt->enc_blocksize - 1);
+	if (sk->ike->sa.st_oakley.ta_encrypt->pad_to_blocksize)
+		len &= ~(sk->ike->sa.st_oakley.ta_encrypt->enc_blocksize - 1);
 
 	len -= 2;	/* ??? what's this? */
 
-	passert(payload->len != 0);
+	passert(sk->cleartext.len != 0);
 
-	unsigned int nfrags = (payload->len + len - 1) / len;
+	unsigned int nfrags = (sk->cleartext.len + len - 1) / len;
 
 	if (nfrags > MAX_IKE_FRAGMENTS) {
 		loglog(RC_LOG_SERIOUS, "Fragmenting this %zu byte message into %u byte chunks leads to too many frags",
-		       payload->len, len);
+		       sk->cleartext.len, len);
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -3144,7 +3137,7 @@ static stf_status v2_record_outbound_fragments(struct msg_digest *md,
 	 */
 	enum next_payload_types_ikev2 skf_np;
 	{
-		pb_stream pbs = same_chunk_as_pbs(*sk_header, "sk");
+		pb_stream pbs = same_chunk_as_pbs(sk->payload, "sk");
 		struct ikev2_generic e;
 		if (!in_struct(&e, &ikev2_sk_desc, &pbs, NULL)) {
 			return STF_INTERNAL_ERROR;
@@ -3156,11 +3149,11 @@ static stf_status v2_record_outbound_fragments(struct msg_digest *md,
 	unsigned int offset = 0;
 	struct v2_ike_tfrag **fragp = &st->st_v2_tfrags;
 
-	while (offset < payload->len) {
+	while (offset < sk->cleartext.len) {
 		passert(*fragp == NULL);
-		chunk_t fragment = chunk(payload->ptr + offset,
-					 PMIN(payload->len - offset, len));
-		stf_status ret = v2_record_outbound_fragment(md, &hdr, skf_np, fragp,
+		chunk_t fragment = chunk(sk->cleartext.ptr + offset,
+					 PMIN(sk->cleartext.len - offset, len));
+		stf_status ret = v2_record_outbound_fragment(sk->ike, &hdr, skf_np, fragp,
 							     &fragment, number, nfrags, desc);
 		if (ret != STF_OK) {
 			return ret;
@@ -3178,24 +3171,29 @@ static stf_status v2_record_outbound_fragments(struct msg_digest *md,
 /*
  * Record the message ready for sending.  If needed, first fragment
  * it.
+ *
+ * ST is where to save the outgoing message.  XXX: Currently it is
+ * always the parent.  But that breaks when trying to juggle multiple
+ * children trying to exchange messages.
  */
 
-static stf_status record_outbound_v2SK_msg(struct ike_sa *ike, struct state *st,
+static stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 					   struct msg_digest *md,
-					   pb_stream *msg, v2SK_payload_t *sk,
+					   pb_stream *msg,
+					   v2SK_payload_t *sk,
 					   const char *what)
 {
 	stf_status ret;
-	if (should_fragment_ike_msg(st, pbs_offset(msg), true/*IKEv1 retransmit*/)) {
-		ret = v2_record_outbound_fragments(md, msg, &sk->payload,
-						   &sk->cleartext, what);
+	if (should_fragment_ike_msg(&sk->ike->sa, pbs_offset(msg),
+				    true/*IKEv1 retransmit*/)) {
+		ret = v2_record_outbound_fragments(msg_sa, msg, sk, what);
 	} else {
 		ret = encrypt_v2SK_payload(sk);
 		if (ret != STF_OK) {
 			libreswan_log("error encrypting %s message", what);
 			return ret;
 		}
-		record_outbound_ike_msg(&ike->sa, &reply_stream, what);
+		record_outbound_ike_msg(msg_sa, &reply_stream, what);
 	}
 	/*
 	 * XXX: huh?  there are two sliding windws - one for requests
@@ -3205,7 +3203,7 @@ static stf_status record_outbound_v2SK_msg(struct ike_sa *ike, struct state *st,
 	 * XXX: when initiating an exchange there is no MD (or only a
 	 * badly faked up MD).
 	 */
-	ike->sa.st_msgid_lastreplied = md->msgid_received;
+	sk->ike->sa.st_msgid_lastreplied = md->msgid_received;
 	return ret;
 }
 
@@ -3631,7 +3629,11 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
 
-	return record_outbound_v2SK_msg(ike_sa(cst), cst, md,
+	/*
+	 * For AUTH exchange, store the message in the IKE SA.  The
+	 * attempt to create the CHILD SA could have failed.
+	 */
+	return record_outbound_v2SK_msg(&sk.ike->sa, md,
 					&reply_stream, &sk,
 					"sending AUTH request");
 }
@@ -4249,21 +4251,18 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			}
 		}
 
-		/*
-		 * note:
-		 * st: parent state
-		 * cst: child, if any, else parent
-		 * There is probably no good reason to use st from here on.
-		 */
-		struct state *const cst = md->st;	/* may actually be parent if no child */
-
 		if (!close_v2SK_payload(&sk)) {
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 
-		return record_outbound_v2SK_msg(ike_sa(cst), cst, md,
+		/*
+		 * For AUTH exchange, store the message in the IKE SA.
+		 * The attempt to create the CHILD SA could have
+		 * failed.
+		 */
+		return record_outbound_v2SK_msg(&sk.ike->sa, md,
 						&reply_stream, &sk,
 						"replying to AUTH request");
 	}
