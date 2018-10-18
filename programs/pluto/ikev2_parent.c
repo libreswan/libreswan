@@ -3175,6 +3175,40 @@ static stf_status v2_record_outbound_fragments(struct msg_digest *md,
 	return STF_OK;
 }
 
+/*
+ * Record the message ready for sending.  If needed, first fragment
+ * it.
+ */
+
+static stf_status record_outbound_v2SK_msg(struct ike_sa *ike, struct state *st,
+					   struct msg_digest *md,
+					   pb_stream *msg, v2SK_payload_t *sk,
+					   const char *what)
+{
+	stf_status ret;
+	if (should_fragment_ike_msg(st, pbs_offset(msg), true/*IKEv1 retransmit*/)) {
+		ret = v2_record_outbound_fragments(md, msg, &sk->payload,
+						   &sk->cleartext, what);
+	} else {
+		ret = encrypt_v2SK_payload(sk);
+		if (ret != STF_OK) {
+			libreswan_log("error encrypting %s message", what);
+			return ret;
+		}
+		record_outbound_ike_msg(&ike->sa, &reply_stream, what);
+	}
+	/*
+	 * XXX: huh?  there are two sliding windws - one for requests
+	 * and one for responses - yet this always updates the same
+	 * value.
+	 *
+	 * XXX: when initiating an exchange there is no MD (or only a
+	 * badly faked up MD).
+	 */
+	ike->sa.st_msgid_lastreplied = md->msgid_received;
+	return ret;
+}
+
 static bool need_configuration_payload(const struct connection *const pc,
 			    const lset_t st_nat_traversal)
 {
@@ -3597,24 +3631,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
 
-	if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream), TRUE)) {
-		stf_status ret = v2_record_outbound_fragments(md, &rbody,
-							      &sk.header,
-							      &sk.cleartext,
-			"reply fragment for ikev2_parent_outR1_I2");
-		pst->st_msgid_lastreplied = md->msgid_received;
-		return ret;
-	} else {
-		stf_status ret = encrypt_v2SK_payload(&sk);
-		if (ret != STF_OK) {
-			libreswan_log("error encrypting notify message");
-			return ret;
-		}
-		record_outbound_ike_msg(pst, &reply_stream,
-					"reply packet for ikev2_parent_inR1outI2_tail");
-		pst->st_msgid_lastreplied = md->msgid_received;
-		return ret;
-	}
+	return record_outbound_v2SK_msg(ike_sa(cst), cst, md,
+					&reply_stream, &sk,
+					"sending AUTH request");
 }
 
 #ifdef XAUTH_HAVE_PAM
@@ -4244,25 +4263,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 
-		if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream),
-					    TRUE)) {
-			stf_status ret = v2_record_outbound_fragments(md, &rbody,
-								      &sk.payload,
-								      &sk.cleartext,
-								      "reply fragment for ikev2_parent_inI2outR2_tail");
-			st->st_msgid_lastreplied = md->msgid_received;
-			return ret;
-		} else {
-			stf_status ret = encrypt_v2SK_payload(&sk);
-			if (ret != STF_OK) {
-				libreswan_log("error encrypting notify message");
-				return ret;
-			}
-			record_outbound_ike_msg(st, &reply_stream,
-						"reply packet for ikev2_parent_inI2outR2_auth_tail");
-			st->st_msgid_lastreplied = md->msgid_received;
-			return ret;
-		}
+		return record_outbound_v2SK_msg(ike_sa(cst), cst, md,
+						&reply_stream, &sk,
+						"replying to AUTH request");
 	}
 }
 
