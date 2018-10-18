@@ -67,4 +67,7 @@ char *str_from_chunk(chunk_t c, const char *name);
 
 extern const chunk_t empty_chunk;
 
+#define PRI_CHUNK "%p@%zu"
+#define pri_chunk(CHUNK) (CHUNK).ptr, (CHUNK).len
+
 #endif
