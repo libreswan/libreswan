@@ -1930,7 +1930,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 		uint8_t *roof = cur + sd->size; /* may be changed by a length field */
 		uint8_t *outp = struct_ptr;
 		bool immediate = FALSE;
-		uint32_t last_enum = 0;
+		uintmax_t last_enum = 0;
 
 		for (field_desc *fp = sd->fields; ugh == NULL; fp++) {
 
@@ -1978,7 +1978,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_set:            /* bits representing set */
 			{
-				uint32_t n = 0;
+				uintmax_t n = 0;
 
 				/* Reportedly fails on arm, see bug #775 */
 				for (size_t i = fp->size; i != 0; i--)
@@ -1988,19 +1988,21 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 				case ft_len:    /* length of this struct and any following crud */
 				case ft_lv:     /* length/value field of attribute */
 				{
-					uint32_t len = fp->field_type ==
+					size_t len = fp->field_type ==
 							ft_len ? n :
 							immediate ? sd->size :
 							n + sd->size;
 
 					if (len < sd->size) {
 						ugh = builddiag(
-							"%s of %s is smaller than minimum",
+							"%zd-byte %s of %s is smaller than minimum",
+							len,
 							fp->name,
 							sd->name);
 					} else if (pbs_left(ins) < len) {
 						ugh = builddiag(
-							"%s of %s is larger than can fit",
+							"%zd-byte %s of %s is larger than can fit",
+							len,
 							fp->name,
 							sd->name);
 					} else {
@@ -2022,7 +2024,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 					 */
 					if (fp->field_type == ft_af_enum &&
 					    enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag("%s of %s has an unknown value: %s%" PRIu32 " (0x%" PRIx32 ")",
+						ugh = builddiag("%s of %s has an unknown value: %s%ju (0x%jx)",
 								fp->name, sd->name,
 								immediate ? "AF+" : "",
 								last_enum, n);
@@ -2031,10 +2033,9 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 
 				case ft_enum:   /* value from an enumeration */
 					if (enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag("%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+						ugh = builddiag("%s of %s has an unknown value: %ju (0x%jx)",
 								fp->name, sd->name,
-								n,
-								n);
+								n, n);
 					}
 				/* FALL THROUGH */
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
@@ -2050,7 +2051,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 
 				case ft_set:            /* bits representing set */
 					if (!testset(fp->desc, n)) {
-						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%ju)",
 								fp->name, sd->name,
 								bitnamesof(fp->desc, n),
 								n);
