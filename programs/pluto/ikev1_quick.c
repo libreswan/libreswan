@@ -1536,7 +1536,7 @@ static void quick_inI1_outR1_continue2(struct state *st,
 }
 
 /*
- * Spit out the IPSec ID payload we got.
+ * Spit out the IPsec ID payload we got.
  *
  * We go to some trouble to use out_struct so NP
  * for adjacent packets is handled correctly.
