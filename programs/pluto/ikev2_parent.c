@@ -12,7 +12,7 @@
  * Copyright (C) 2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2017 Andrew Cagney
+ * Copyright (C) 2015-2018 Andrew Cagney
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
@@ -2141,88 +2141,6 @@ static void construct_enc_iv(const char *name,
 	DBG(DBG_CRYPT, DBG_dump(name, enc_iv, encrypter->enc_blocksize));
 }
 
-/*
- * Append optional "padding" and reguired "padding-length" byte.
- *
- * Some encryption modes, namely CBC, require things to be padded to
- * the encryption block-size.  While others, such as CTR, do not.
- * Either way a "padding-length" byte is always appended.
- *
- * This code starts by appending a 0 pad-octet, and each subsequent
- * octet is one larger.  Thus the last octet always contains one less
- * than the number of octets added i.e., the padding-length.
- *
- * Adding to the confusion, ESP requires a minimum of 4-byte alignment
- * and IKE is free to use the ESP code for padding - we don't.
- */
-static bool ikev2_padup_pre_encrypt(const struct state *st,
-				    pb_stream *e_pbs_cipher) MUST_USE_RESULT;
-static bool ikev2_padup_pre_encrypt(const struct state *st,
-				    pb_stream *e_pbs_cipher)
-{
-	const struct state *pst = st;
-
-	if (IS_CHILD_SA(st))
-		pst = state_with_serialno(st->st_clonedfrom);
-
-	/* pads things up to message size boundary */
-	{
-		size_t blocksize = pst->st_oakley.ta_encrypt->enc_blocksize;
-		char b[MAX_CBC_BLOCK_SIZE];
-		unsigned int i;
-		size_t padding;
-
-		if (pst->st_oakley.ta_encrypt->pad_to_blocksize) {
-			passert(blocksize <= MAX_CBC_BLOCK_SIZE);
-			padding = pad_up(pbs_offset(e_pbs_cipher), blocksize);
-			if (padding == 0) {
-				padding = blocksize;
-			}
-			DBG(DBG_CRYPT,
-			    DBG_log("ikev2_padup_pre_encrypt: adding %zd bytes of padding (last is padding-length)",
-				    padding));
-		} else {
-			padding = 1;
-			DBG(DBG_CRYPT,
-			    DBG_log("ikev2_padup_pre_encrypt: adding %zd byte padding-length", padding));
-		}
-
-		for (i = 0; i < padding; i++)
-			b[i] = i;
-		if (!out_raw(b, padding, e_pbs_cipher, "padding and length"))
-			return FALSE;
-	}
-	return TRUE;
-}
-
-uint8_t *ikev2_authloc(const struct state *st,
-		       pb_stream *e_pbs)
-{
-	unsigned char *b12;
-	const struct state *pst = st;
-
-	if (IS_CHILD_SA(st)) {
-		pst = state_with_serialno(st->st_clonedfrom);
-		if (pst == NULL)
-			return NULL;
-	}
-
-	b12 = e_pbs->cur;
-	size_t integ_size = (encrypt_desc_is_aead(pst->st_oakley.ta_encrypt)
-			     ? pst->st_oakley.ta_encrypt->aead_tag_size
-			     : pst->st_oakley.ta_integ->integ_output_size);
-	if (integ_size == 0) {
-		DBG(DBG_CRYPT, DBG_log("ikev2_authloc: HMAC/KEY size is zero"));
-		return NULL;
-	}
-
-	if (!out_zero(integ_size, e_pbs, "length of truncated HMAC/KEY")) {
-		return NULL;
-	}
-
-	return b12;
-}
-
 stf_status ikev2_encrypt_msg(struct ike_sa *ike,
 			     uint8_t *auth_start,
 			     uint8_t *wire_iv_start,
@@ -2953,61 +2871,6 @@ static stf_status ikev2_send_auth(struct connection *c,
 }
 
 /*
- * start_encrypted_payload:
- *
- * Starts SK/SKF payload, inserts IV, creates PBS for encrypted portion of payload.
- *
- * To keep track of the part of the output packet that will be
- * encrypted, we wrap it in a PBS.  This PBS is a little odd
- * since backpatching obligations are really those of its parent.
- */
-
-static uint8_t *start_encrypted_payload(
-	const struct state *st,
-	const void *e,
-	struct_desc *ed,
-	pb_stream *rbody,	/* body of reply */
-	pb_stream *sk_pbs,	/* body of SK payload (created by this routine) */
-	pb_stream *enc_pbs)	/* portion of payload to be encrypted (created by this routine) */
-{
-	if (!out_struct(e, ed, rbody, sk_pbs))
-		return NULL;
-
-	/* insert IV */
-
-	uint8_t *const iv = sk_pbs->cur;
-
-	if (!emit_wire_iv(st, sk_pbs))
-		return NULL;
-
-	const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
-
-	if (!out_struct(&fake_struct, &ikev2_encrypted_portion, sk_pbs, enc_pbs))
-		return NULL;
-	return iv;
-}
-
-static uint8_t *end_encrypted_payload(
-	const struct state *st,
-	pb_stream *rbody,	/* body of reply */
-	pb_stream *sk_pbs,	/* body of SK payload */
-	pb_stream *enc_pbs)	/* portion of payload to be encrypted */
-{
-	if (!ikev2_padup_pre_encrypt(st, enc_pbs))
-		return NULL;
-
-	close_output_pbs(enc_pbs);
-
-	uint8_t *const authloc = ikev2_authloc(st, sk_pbs);
-	if (authloc == NULL)
-		return authloc;
-
-	close_output_pbs(sk_pbs);
-	close_output_pbs(rbody);
-	return authloc;
-}
-
-/*
  * fragment contents:
  * - sometimes:	NON_ESP_MARKER (RFC3948) (NON_ESP_MARKER_SIZE) (4)
  * - always:	isakmp header (NSIZEOF_isakmp_hdr) (28)
@@ -3032,13 +2895,27 @@ static stf_status v2_record_outbound_fragment(struct ike_sa *ike,
 		     "reply frag packet");
 
 	/* HDR out */
+
 	pb_stream rbody;
 	if (!out_struct(hdr, &isakmp_hdr_desc, &frag_stream,
 			&rbody))
 		return STF_INTERNAL_ERROR;
 
-	pb_stream e_pbs;
-	pb_stream e_pbs_cipher;
+	/*
+	 * Fake up an SK payload description sufficient to fool the
+	 * encryption code.
+	 *
+	 * While things are close, they are not identical - an SKF
+	 * payload header has extra fields and, for the first
+	 * fragment, forces the Next Payload.
+	 */
+
+	v2SK_payload_t skf = {
+		.ike = ike,
+		.payload.ptr = rbody.cur,
+	};
+
+	/* emit SKF header, save location */
 
 	const struct ikev2_skf e = {
 		.isaskf_np = skf_np,
@@ -3046,31 +2923,42 @@ static stf_status v2_record_outbound_fragment(struct ike_sa *ike,
 		.isaskf_number = number,
 		.isaskf_total = total,
 	};
-	uint8_t *iv = start_encrypted_payload(&ike->sa,
-					      &e, &ikev2_skf_desc,
-					      &rbody, &e_pbs, &e_pbs_cipher);
+	skf.header.ptr = rbody.cur;
+	if (!out_struct(&e, &ikev2_skf_desc, &rbody, &skf.pbs))
+		return STF_INTERNAL_ERROR;
+	skf.header.len = skf.pbs.cur - skf.header.ptr;
 
-	uint8_t *encstart = e_pbs_cipher.cur;
-	passert(frag_stream.start <= iv && iv <= encstart);
+	/* emit IV, save location */
 
-	if (!out_chunk(*fragment, &e_pbs_cipher,
+	skf.iv.ptr = skf.pbs.cur;
+	if (!emit_wire_iv(&ike->sa, &skf.pbs)) {
+		libreswan_log("error initializing IV for encrypted %s message",
+			      desc);
+		return STF_INTERNAL_ERROR;
+	}
+	skf.iv.len = skf.pbs.cur - skf.iv.ptr;
+
+	/* save cleartext start */
+
+	skf.cleartext.ptr = skf.pbs.cur;
+
+	/* output the fragment */
+
+	if (!out_chunk(*fragment, &skf.pbs,
 		       "cleartext fragment"))
 		return STF_INTERNAL_ERROR;
 
-	uint8_t *authloc = end_encrypted_payload(&ike->sa,
-						 &rbody, &e_pbs, &e_pbs_cipher);
-
-	if (authloc == NULL)
+	if (!close_v2SK_payload(&skf)) {
 		return STF_INTERNAL_ERROR;
+	}
 
-	passert(frag_stream.start <= iv && iv <= encstart && encstart <= authloc);
-
+	close_output_pbs(&rbody);
 	close_output_pbs(&frag_stream);
 
-	stf_status ret = ikev2_encrypt_msg(ike, frag_stream.start,
-					   iv, encstart, authloc);
-	if (ret != STF_OK)
+	stf_status ret = encrypt_v2SK_payload(&skf);
+	if (ret != STF_OK) {
 		return ret;
+	}
 
 	*fragp = alloc_thing(struct v2_ike_tfrag, "v2_ike_tfrag");
 	(*fragp)->next = NULL;

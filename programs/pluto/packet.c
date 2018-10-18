@@ -1424,16 +1424,6 @@ struct_desc ikev2_sk_desc = {
 	.pt = ISAKMP_NEXT_v2SK,
 };
 
-/* note: no fields! */
-static field_desc ikev2encrypted_portion_fields[] = {
-        { ft_end,  0, NULL, NULL }
-};
-struct_desc ikev2_encrypted_portion = {
-	.name = "IKEv2 encrypted portion",
-	.fields = ikev2encrypted_portion_fields,
-	.size = 0,
-};
-
 /*
  * RFC 7383 2.5.  Fragmenting Message
  *

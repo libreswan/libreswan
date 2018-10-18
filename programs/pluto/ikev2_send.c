@@ -135,7 +135,7 @@ bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
  *
  * top 4 bits are major version, lower 4 bits are minor version
  */
-uint8_t build_ikev2_version(void)
+static uint8_t build_ikev2_version(void)
 {
 	/* TODO: if bumping, we should also set the Version flag in the ISAKMP header */
 	return ((IKEv2_MAJOR_VERSION + (IMPAIR(MAJOR_VERSION_BUMP) ? 1 : 0))
