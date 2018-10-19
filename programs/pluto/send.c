@@ -228,7 +228,7 @@ bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet)
 bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
 				    const char *where)
 {
-	return send_chunk_using_state(st, where, same_pbs_as_chunk(pbs));
+	return send_chunk_using_state(st, where, same_out_pbs_as_chunk(pbs));
 }
 
 void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
@@ -236,7 +236,7 @@ void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 	passert(pbs_offset(pbs) != 0);
 	release_fragments(st);
 	freeanychunk(st->st_tpacket);
-	st->st_tpacket = clone_pbs_as_chunk(pbs, what);
+	st->st_tpacket = clone_out_pbs_as_chunk(pbs, what);
 }
 
 /*

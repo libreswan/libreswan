@@ -727,7 +727,7 @@ static bool ikev2_reassemble_fragments(struct state *st,
 	struct payload_digest *sk = &md->digest[md->digest_roof++];
 	md->chain[ISAKMP_NEXT_v2SK] = sk;
 	sk->payload.generic.isag_np = st->st_v2_rfrags->first_np;
-	sk->pbs = same_chunk_as_pbs(md->raw_packet, "decrypted SFK payloads");
+	sk->pbs = same_chunk_as_in_pbs(md->raw_packet, "decrypted SFK payloads");
 
 	md->chain[ISAKMP_NEXT_v2SKF] = NULL;
 	release_fragments(st);
@@ -770,7 +770,7 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 				  e_pbs->roof - md->packet_pbs.start);
 		ok = ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md, &c,
 							 e_pbs->cur - md->packet_pbs.start);
-		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_pbs(c, "decrypted SK payload");
+		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_in_pbs(c, "decrypted SK payload");
 	}
 
 	DBG(DBG_CONTROLMORE,
@@ -879,7 +879,7 @@ static stf_status v2_record_outbound_fragment(struct ike_sa *ike,
 
 	*fragp = alloc_thing(struct v2_ike_tfrag, "v2_ike_tfrag");
 	(*fragp)->next = NULL;
-	(*fragp)->cipher = clone_pbs_as_chunk(&frag_stream, desc);
+	(*fragp)->cipher = clone_out_pbs_as_chunk(&frag_stream, desc);
 
 	return STF_OK;
 }
@@ -942,7 +942,7 @@ static stf_status v2_record_outbound_fragments(struct state *st,
 	 */
 	enum next_payload_types_ikev2 skf_np;
 	{
-		pb_stream pbs = same_chunk_as_pbs(sk->payload, "sk");
+		pb_stream pbs = same_chunk_as_in_pbs(sk->payload, "sk");
 		struct ikev2_generic e;
 		if (!in_struct(&e, &ikev2_sk_desc, &pbs, NULL)) {
 			return STF_INTERNAL_ERROR;

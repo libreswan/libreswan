@@ -1076,8 +1076,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
-	st->st_firstpacket_me = clone_pbs_as_chunk(&reply_stream,
-						   "saved first packet");
+	st->st_firstpacket_me = clone_out_pbs_as_chunk(&reply_stream,
+						       "saved first packet");
 
 	/* Transmit */
 	record_outbound_ike_msg(st, &reply_stream, "reply packet for ikev2_parent_outI1_common");
@@ -1492,9 +1492,26 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* note that we don't update the state here yet */
 
+	/*
+	 * XXX:
+	 *
+	 * Should this code use clone_in_pbs_as_chunk() which uses
+	 * pbs_room() (.roof-.start)?  The original code:
+	 *
+	 * 	clonetochunk(st->st_firstpacket_him, md->message_pbs.start,
+	 *		     pbs_offset(&md->message_pbs),
+	 *		     "saved first received packet");
+	 *
+	 * and clone_out_pbs_as_chunk() both use pbs_offset()
+	 * (.cur-.start).
+	 *
+	 * Suspect it doesn't matter as the code initializing
+	 * .message_pbs forces .roof==.cur - look for the comment
+	 * "trim padding (not actually legit)".
+	 */
 	/* record first packet for later checking of signature */
-	st->st_firstpacket_him = clone_pbs_as_chunk(&md->message_pbs,
-						    "saved first received packet");
+	st->st_firstpacket_him = clone_out_pbs_as_chunk(&md->message_pbs,
+							"saved first received packet");
 
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -1660,7 +1677,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
-	st->st_firstpacket_me = clone_pbs_as_chunk(&reply_stream,
+	st->st_firstpacket_me = clone_out_pbs_as_chunk(&reply_stream,
 						   "saved first packet");
 
 	/* note: retransmission is driven by initiator, not us */
@@ -2469,9 +2486,26 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* need to force parent state to I2 */
 	change_state(pst, STATE_PARENT_I2);
 
+	/*
+	 * XXX:
+	 *
+	 * Should this code use clone_in_pbs_as_chunk() which uses
+	 * pbs_room() (.roof-.start)?  The original code:
+	 *
+	 * 	clonetochunk(st->st_firstpacket_him, md->message_pbs.start,
+	 *		     pbs_offset(&md->message_pbs),
+	 *		     "saved first received packet");
+	 *
+	 * and clone_out_pbs_as_chunk() both use pbs_offset()
+	 * (.cur-.start).
+	 *
+	 * Suspect it doesn't matter as the code initializing
+	 * .message_pbs forces .roof==.cur - look for the comment
+	 * "trim padding (not actually legit)".
+	 */
 	/* record first packet for later checking of signature */
-	pst->st_firstpacket_him = clone_pbs_as_chunk(&md->message_pbs,
-						     "saved first received packet");
+	pst->st_firstpacket_him = clone_out_pbs_as_chunk(&md->message_pbs,
+							 "saved first received packet");
 
 	/* beginning of data going out */
 

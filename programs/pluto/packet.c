@@ -1614,14 +1614,14 @@ pb_stream open_out_pbs(const char *name, uint8_t *buffer, size_t sizeof_buffer)
 	return out_pbs;
 }
 
-pb_stream same_chunk_as_pbs(chunk_t chunk, const char *name)
+pb_stream same_chunk_as_in_pbs(chunk_t chunk, const char *name)
 {
 	pb_stream pbs;
 	init_pbs(&pbs, chunk.ptr, chunk.len, name);
 	return pbs;
 }
 
-chunk_t same_pbs_as_chunk(pb_stream *pbs)
+chunk_t same_out_pbs_as_chunk(pb_stream *pbs)
 {
 	chunk_t chunk = {
 		.ptr = pbs->start,
@@ -1630,9 +1630,19 @@ chunk_t same_pbs_as_chunk(pb_stream *pbs)
 	return chunk;
 }
 
-chunk_t clone_pbs_as_chunk(pb_stream *pbs, const char *name)
+chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name)
 {
-	return clone_chunk(same_pbs_as_chunk(pbs), name);
+	return clone_chunk(same_out_pbs_as_chunk(pbs), name);
+}
+
+chunk_t clone_in_pbs_as_chunk(pb_stream *pbs, const char *name)
+{
+	return clone_chunk(chunk(pbs->start, pbs_room(pbs)), name);
+}
+
+chunk_t clone_in_pbs_left_as_chunk(pb_stream *pbs, const char *name)
+{
+	return clone_chunk(chunk(pbs->cur, pbs_left(pbs)), name);
 }
 
 static err_t enum_enum_checker(

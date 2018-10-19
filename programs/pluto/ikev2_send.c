@@ -331,7 +331,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	 * exchange, one with retrying).  So we need not preserve the
 	 * packet we are sending.
 	 */
-	send_chunk_using_state(pst, "v2 notify", same_pbs_as_chunk(&reply));
+	send_chunk_using_state(pst, "v2 notify", same_out_pbs_as_chunk(&reply));
 	pstat(ikev2_sent_notifies_e, ntype);
 }
 
@@ -394,7 +394,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	 * are sending.
 	 */
 	send_chunk("v2 notify", SOS_NOBODY, md->iface, md->sender,
-		   same_pbs_as_chunk(&reply));
+		   same_out_pbs_as_chunk(&reply));
 
 	pstat(ikev2_sent_notifies_e, ntype);
 }

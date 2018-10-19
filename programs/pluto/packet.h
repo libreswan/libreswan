@@ -163,7 +163,6 @@ extern const pb_stream empty_pbs;
  *	pbs_offset is current size of stream.
  *	pbs_room is maximum size allowed.
  *	pbs_left is amount of space remaining
- *      pbs_as_chunk is the current stream's contents as a chunk
  */
 #define pbs_ok(PBS) ((PBS)->start != NULL)
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
@@ -171,11 +170,25 @@ extern const pb_stream empty_pbs;
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
 
 /*
- * Map to/from/clone pbs and chunk
+ * Map/clone the current contents of an output PBS (i.e., everything
+ * written so far) as a chunk.
  */
-extern pb_stream same_chunk_as_pbs(chunk_t chunk, const char *name);
-extern chunk_t same_pbs_as_chunk(pb_stream *pbs);
-extern chunk_t clone_pbs_as_chunk(pb_stream *pbs, const char *name);
+extern chunk_t same_out_pbs_as_chunk(pb_stream *pbs);
+extern chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name);
+
+/*
+ * Map an input PBS onto CHUNK.
+ */
+extern pb_stream same_chunk_as_in_pbs(chunk_t chunk, const char *name);
+
+/*
+ * Clone the entire contents of an input PBS as a chunk.
+ */
+extern chunk_t clone_in_pbs_as_chunk(pb_stream *pbs, const char *name);
+/*
+ * Clone the remaining (left) contents of an input PBS as a chun.
+ */
+extern chunk_t clone_in_pbs_left_as_chunk(pb_stream *pbs, const char *name);
 
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
