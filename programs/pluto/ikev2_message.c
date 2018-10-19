@@ -204,18 +204,21 @@ pb_stream open_v2_message(pb_stream *reply,
 
 /*
  * This code assumes that the encrypted part of an IKE message starts
- * with an Initialization Vector (IV) of enc_blocksize of random octets.
- * The IV will subsequently be discarded after decryption.
+ * with an Initialization Vector (IV) of enc_blocksize of random
+ * octets.  The IV will subsequently be discarded after decryption.
  * This is true of Cipher Block Chaining mode (CBC).
  */
-static bool emit_wire_iv(const struct state *st, pb_stream *pbs)
+static bool emit_v2SK_iv(v2SK_payload_t *sk)
 {
-	size_t wire_iv_size = st->st_oakley.ta_encrypt->wire_iv_size;
-	unsigned char ivbuf[MAX_CBC_BLOCK_SIZE];
-
-	passert(wire_iv_size <= MAX_CBC_BLOCK_SIZE);
-	get_rnd_bytes(ivbuf, wire_iv_size);
-	return out_raw(ivbuf, wire_iv_size, pbs, "IV");
+	/* compute location/size */
+	sk->iv = chunk(sk->pbs.cur, sk->ike->sa.st_oakley.ta_encrypt->wire_iv_size);
+	/* make space */
+	if (!out_zero(sk->iv.len, &sk->pbs, "IV")) {
+		return false;
+	}
+	/* scribble on it */
+	fill_rnd_chunk(sk->iv);
+	return true;
 }
 
 v2SK_payload_t open_v2SK_payload(pb_stream *container,
@@ -239,15 +242,13 @@ v2SK_payload_t open_v2SK_payload(pb_stream *container,
 		return empty_sk;
 	}
 
-	/* emit IV, save location */
+	/* emit IV and save location */
 
-	sk.iv.ptr = sk.pbs.cur;
-	if (!emit_wire_iv(&ike->sa, &sk.pbs)) {
+	if (!emit_v2SK_iv(&sk)) {
 		libreswan_log("error initializing IV for encrypted %s message",
 			      container->name);
 		return empty_sk;
 	}
-	sk.iv.len = sk.pbs.cur - sk.iv.ptr;
 
 	/* save cleartext start */
 
@@ -790,14 +791,30 @@ stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 }
 
 /*
- * fragment contents:
- * - sometimes:	NON_ESP_MARKER (RFC3948) (NON_ESP_MARKER_SIZE) (4)
- * - always:	isakmp header (NSIZEOF_isakmp_hdr) (28)
- * - always:	ikev2_skf header (NSIZEOF_ikev2_skf) (8)
- * - variable:	IV (no IV is longer than SHA2_512_DIGEST_SIZE) (64 or less)
- * - variable:	fragment's data
- * - variable:	padding (no padding is longer than MAX_CBC_BLOCK_SIZE) (16 or less)
+ * IKEv2 fragments:
+ *
+ *                        1                   2                   3
+ *    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   | Next Payload  |C|  RESERVED   |         Payload Length        |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |        Fragment Number        |        Total Fragments        |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |                     Initialization Vector                     |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   ~                      Encrypted content                        ~
+ *   +               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |               |             Padding (0-255 octets)            |
+ *   +-+-+-+-+-+-+-+-+                               +-+-+-+-+-+-+-+-+
+ *   |                                               |  Pad Length   |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   ~                    Integrity Checksum Data                    ~
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *
+
+ *
  */
+
 static stf_status v2_record_outbound_fragment(struct ike_sa *ike,
 					      const struct isakmp_hdr *hdr,
 					      enum next_payload_types_ikev2 skf_np,
@@ -845,15 +862,13 @@ static stf_status v2_record_outbound_fragment(struct ike_sa *ike,
 	if (!out_struct(&e, &ikev2_skf_desc, &rbody, &skf.pbs))
 		return STF_INTERNAL_ERROR;
 
-	/* emit IV, save location */
+	/* emit IV and save location */
 
-	skf.iv.ptr = skf.pbs.cur;
-	if (!emit_wire_iv(&ike->sa, &skf.pbs)) {
+	if (!emit_v2SK_iv(&skf)) {
 		libreswan_log("error initializing IV for encrypted %s message",
 			      desc);
 		return STF_INTERNAL_ERROR;
 	}
-	skf.iv.len = skf.pbs.cur - skf.iv.ptr;
 
 	/* save cleartext start */
 
@@ -893,6 +908,21 @@ static stf_status v2_record_outbound_fragments(struct state *st,
 
 	release_fragments(st);
 	freeanychunk(st->st_tpacket);
+
+	/*
+	 * fragment contents:
+	 * - sometimes:	NON_ESP_MARKER (RFC3948) (NON_ESP_MARKER_SIZE) (4)
+	 * - always:	isakmp header (NSIZEOF_isakmp_hdr) (28)
+	 * - always:	ikev2_skf header (NSIZEOF_ikev2_skf) (8)
+	 * - variable:	IV (no IV is longer than SHA2_512_DIGEST_SIZE) (64 or less)
+	 * - variable:	fragment's data
+	 * - variable:	padding (no padding is longer than MAX_CBC_BLOCK_SIZE) (16 or less)
+	 */
+
+	/*
+	 * XXX: this math seems very contrived, can the fragment()
+	 * function above be left to do the computation on-the-fly?
+	 */
 
 	len = (sk->ike->sa.st_connection->addr_family == AF_INET) ?
 	      ISAKMP_V2_FRAG_MAXLEN_IPv4 : ISAKMP_V2_FRAG_MAXLEN_IPv6;
