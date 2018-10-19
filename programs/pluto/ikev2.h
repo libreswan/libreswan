@@ -243,8 +243,6 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 
-bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md);
-
 struct ikev2_payload_errors {
 	bool bad;
 	lset_t excessive;

@@ -66,6 +66,7 @@
 #include "rnd.h"
 #include "ip_address.h"
 #include "ikev2_send.h"
+#include "ikev2_message.h"
 
 void ikev2_print_ts(const struct traffic_selector *ts)
 {

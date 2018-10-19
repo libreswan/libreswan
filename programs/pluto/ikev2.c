@@ -73,7 +73,7 @@
 #include "ietf_constants.h"
 
 #include "plutoalg.h" /* for default_ike_groups */
-
+#include "ikev2_message.h"	/* for ikev2_decrypt_msg() */
 #include "pluto_stats.h"
 #include "keywords.h"
 

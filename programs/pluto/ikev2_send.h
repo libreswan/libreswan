@@ -46,28 +46,6 @@ extern stf_status send_v2_informational_request(const char *name,
 						stf_status (*payloads)(struct state *st,
 								       pb_stream *pbs));
 
-pb_stream open_v2_message(pb_stream *reply,
-			  struct ike_sa *ike, struct msg_digest *md,
-			  enum isakmp_xchg_types exchange_type);
-
-typedef struct {
-	struct ike_sa *ike;
-	pb_stream pbs; /* within SK */
-	/* pointers into SK header+contents */
-	chunk_t payload; /* header+iv+cleartext+padding+integrity */
-	chunk_t header;
-	chunk_t iv;
-	chunk_t cleartext;
-	chunk_t padding;
-	chunk_t integrity;
-} v2SK_payload_t;
-
-v2SK_payload_t open_v2SK_payload(pb_stream *container,
-				 struct ike_sa *st);
-bool close_v2SK_payload(v2SK_payload_t *sk);
-
-stf_status encrypt_v2SK_payload(v2SK_payload_t *sk);
-
 /*
  * XXX: Where does the name ship_v2*() come from?  Is for when a
  * function writes an entire payload into the PBS?  emit_v2*() might
@@ -94,16 +72,5 @@ bool ship_v2Ns(enum next_payload_types_ikev2 np,
 
 bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
 	      const char *string);
-
-/*
- * XXX: should be local to ikev2_send.c
- */
-uint8_t build_ikev2_critical(bool impair);
-bool emit_wire_iv(const struct state *st, pb_stream *pbs);
-stf_status ikev2_encrypt_msg(struct ike_sa *ike,
-			     uint8_t *auth_start,
-			     uint8_t *wire_iv_start,
-			     uint8_t *enc_start,
-			     uint8_t *integ_start);
 
 #endif

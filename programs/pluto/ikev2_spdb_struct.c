@@ -61,7 +61,7 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "rnd.h"
-#include "ikev2_send.h"		/* for build_ikev2_critical() */
+#include "ikev2_message.h"		/* for build_ikev2_critical() */
 
 #include "nat_traversal.h"
 

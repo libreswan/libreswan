@@ -50,7 +50,9 @@ OBJS =
 
 OBJS += send.o
 OBJS += ikev1_send.o
+
 OBJS += ikev2_send.o
+OBJS += ikev2_message.o
 
 OBJS += state_db.o
 OBJS += show.o
