@@ -155,7 +155,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 
 	if (curl != NULL) {
 		/* we need a NUL-terminated string for curl */
-		uri = str_from_chunk(url, "NUL-terminated url");
+		uri = clone_chunk_as_string(url, "NUL-terminated url");
 
 		if (curl_timeout > 0)
 			timeout = curl_timeout;
@@ -378,7 +378,7 @@ static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri)
 {
 	/* for CRL use the name passed to helper for the uri */
 	bool ret = FALSE;
-	char *uri_str = str_from_chunk(crl_uri, "URI str");
+	char *uri_str = clone_chunk_as_string(crl_uri, "URI str");
 
 	if (uri_str == NULL) {
 		DBGF(DBG_X509, "no CRL URI available");

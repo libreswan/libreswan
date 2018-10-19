@@ -240,9 +240,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	 * be already filled-in.
 	 */
 	pexpect(st->st_p1isa.ptr == NULL);
-
-	clonereplacechunk(st->st_p1isa, sa_pd->pbs.start,
-		pbs_room(&sa_pd->pbs), "sa in aggr_inI1_outR1()");
+	st->st_p1isa = clone_in_pbs_as_chunk(&sa_pd->pbs, "sa in aggr_inI1_outR1()");
 
 	/*
 	 * parse_isakmp_sa picks the right group, which we need to know

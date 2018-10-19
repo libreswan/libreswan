@@ -744,7 +744,7 @@ struct secret *lsw_get_ppk_by_id(struct secret *s, chunk_t ppk_id)
 {
 	while (s != NULL) {
 		struct private_key_stuff pks = s->pks;
-		if (pks.kind == PKK_PPK && same_chunk(pks.ppk_id, ppk_id))
+		if (pks.kind == PKK_PPK && chunk_eq(pks.ppk_id, ppk_id))
 			return s;
 		s = s->next;
 	}
@@ -1294,7 +1294,7 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
 	 * difference.
 	 */
 	DBG(DBG_CRYPT,
-	    if (a->k != b->k && same_chunk(a->e, b->e)) {
+	    if (a->k != b->k && chunk_eq(a->e, b->e)) {
 		    DBG_log("XXX: different modulus k (%u vs %u) modulus (%zu vs %zu) caused a mismatch",
 			    a->k, b->k, a->n.len, b->n.len);
 	    });
@@ -1304,17 +1304,17 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
 		);
 	DBG(DBG_CRYPT,
 	    DBG_log("n did %smatch",
-		    same_chunk(a->n, b->n) ? "" : "NOT ");
+		    chunk_eq(a->n, b->n) ? "" : "NOT ");
 		);
 	DBG(DBG_CRYPT,
 		DBG_log("e did %smatch",
-			same_chunk(a->e, b->e) ? "" : "NOT ");
+			chunk_eq(a->e, b->e) ? "" : "NOT ");
 		);
 
 	return a == b ||
 		(a->k == b->k &&
-		 same_chunk(a->n, b->n) &&
-		 same_chunk(a->e, b->e));
+		 chunk_eq(a->n, b->n) &&
+		 chunk_eq(a->e, b->e));
 }
 
 void install_public_key(struct pubkey *pk, struct pubkey_list **head)

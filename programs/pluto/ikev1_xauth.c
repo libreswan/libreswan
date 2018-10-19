@@ -2163,11 +2163,11 @@ static stf_status xauth_client_resp(struct state *st,
 							if (cptr != NULL)
 								*cptr = '\0';
 						}
-						clonereplacechunk(
-							st->st_xauth_password,
-							xauth_password,
-							strlen(xauth_password),
-							"XAUTH password");
+						/* see above */
+						pexpect(st->st_xauth_password.ptr == NULL);
+						st->st_xauth_password = clone_bytes_as_chunk(xauth_password,
+											     strlen(xauth_password),
+											     "XAUTH password");
 						discard_pw = TRUE;
 					}
 
