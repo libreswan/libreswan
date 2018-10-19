@@ -18,6 +18,14 @@
  *
  */
 
+#include "rnd.h"
+#include <pk11pub.h>
+
+#include "lswnss.h"
+#include "lswlog.h"
+
+#include "timer.h"
+
 /* A true random number generator (we hope)
  *
  * Under LINUX, use NSS for FIPS compliant RNG.
@@ -55,38 +63,24 @@
  *   exchange.  Eventually, one per informational exchange.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/time.h>
-#include <fcntl.h>
-#include <time.h>
-
-#include <libreswan.h>
-
-#include "constants.h"
-#include "defs.h"
-#include "rnd.h"
-#include "log.h"
-#include "timer.h"
-
-#include <nss.h>
-#include <pk11pub.h>
-
 void get_rnd_bytes(u_char *buffer, int length)
 {
 	SECStatus rv = PK11_GenerateRandom(buffer, length);
-
 	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS RNG failed");
-		abort();
+		LSWLOG_PASSERT(buf) {
+			lswlogs(buf, "NSS RNG failed");
+			lswlog_nss_error(buf);
+		}
 	}
 }
 
-u_char secret_of_the_day[SHA1_DIGEST_SIZE];
-u_char ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
+void fill_rnd_chunk(chunk_t chunk)
+{
+	get_rnd_bytes(chunk.ptr, chunk.len);
+}
+
+uint8_t secret_of_the_day[SHA1_DIGEST_SIZE];
+uint8_t ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
 
 void init_secret(void)
 {
@@ -95,5 +89,6 @@ void init_secret(void)
 	 * schedule an event for refresh.
 	 */
 	get_rnd_bytes(secret_of_the_day, sizeof(secret_of_the_day));
+	get_rnd_bytes(ikev2_secret_of_the_day, sizeof(secret_of_the_day));
 	event_schedule_s(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
 }
