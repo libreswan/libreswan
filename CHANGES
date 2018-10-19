@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v3.28 (unreleased)
 * KLIPS: Disable KLIPS userland support per default [Paul]
+* x509: Support for NSS IPsec profiles mbz#1252891 [Kai Engbert]
 
 v3.27 (October 7, 2018)
 * XFRM: SA marks must be included for delete operation [Tijs Van Buggenhout]
