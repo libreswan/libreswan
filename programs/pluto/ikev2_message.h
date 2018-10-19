@@ -34,10 +34,10 @@ typedef struct {
 	pb_stream pbs; /* within SK */
 	/* pointers into SK header+contents */
 	chunk_t payload; /* header+iv+cleartext+padding+integrity */
-	chunk_t header;
+	/* chunk_t header; */
 	chunk_t iv;
 	chunk_t cleartext;
-	chunk_t padding;
+	/* chunk_t padding; */
 	chunk_t integrity;
 } v2SK_payload_t;
 

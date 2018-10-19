@@ -227,19 +227,17 @@ v2SK_payload_t open_v2SK_payload(pb_stream *container,
 		.payload.ptr = container->cur,
 	};
 
-	/* emit Encryption payload header, save location */
+	/* emit Encryption Payload header */
 
 	struct ikev2_generic e = {
 		.isag_length = 0, /* filled in later */
 		.isag_critical = build_ikev2_critical(false),
 	};
-	sk.header.ptr = container->cur;
 	if (!out_struct(&e, &ikev2_sk_desc, container, &sk.pbs)) {
 		libreswan_log("error initializing SK header for encrypted %s message",
 			      container->name);
 		return empty_sk;
 	}
-	sk.header.len = sk.pbs.cur - sk.header.ptr;
 
 	/* emit IV, save location */
 
@@ -266,7 +264,7 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 
 	sk->cleartext.len = sk->pbs.cur - sk->cleartext.ptr;
 
-	/* emit padding + pad-length; save location */
+	/* emit padding + pad-length */
 
 	size_t padding;
 	if (sk->ike->sa.st_oakley.ta_encrypt->pad_to_blocksize) {
@@ -281,7 +279,6 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 	DBG(DBG_EMITTING,
 	    DBG_log("adding %zd bytes of padding (including 1 byte padding-length)",
 		    padding));
-	sk->padding.ptr = sk->pbs.cur;
 	for (unsigned i = 0; i < padding; i++) {
 		if (!out_repeated_byte(i, 1, &sk->pbs, "padding and length")) {
 			libreswan_log("error initializing padding for encrypted %s payload",
@@ -289,7 +286,6 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 			return false;
 		}
 	}
-	sk->padding.len = sk->pbs.cur - sk->padding.ptr;
 
 	/* emit space for integrity checksum data; save location  */
 
@@ -309,8 +305,8 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 	/* close the SK payload */
 
 	sk->payload.len = sk->pbs.cur - sk->payload.ptr;
-
 	close_output_pbs(&sk->pbs);
+
 	return true;
 }
 
@@ -846,10 +842,8 @@ static stf_status v2_record_outbound_fragment(struct ike_sa *ike,
 		.isaskf_number = number,
 		.isaskf_total = total,
 	};
-	skf.header.ptr = rbody.cur;
 	if (!out_struct(&e, &ikev2_skf_desc, &rbody, &skf.pbs))
 		return STF_INTERNAL_ERROR;
-	skf.header.len = skf.pbs.cur - skf.header.ptr;
 
 	/* emit IV, save location */
 
