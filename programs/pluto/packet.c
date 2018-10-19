@@ -1850,10 +1850,12 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 		uint32_t last_enum = 0;
 
 		for (field_desc *fp = sd->fields; ugh == NULL; fp++) {
-			size_t i = fp->size;
 
-			passert(ins->roof - cur >= (ptrdiff_t)i);
-			passert(cur - ins->cur <= (ptrdiff_t)(sd->size - i));
+			/* field ends within PBS? */
+			passert(cur + fp->size <= ins->roof);
+			/* field ends within struct? */
+			passert(cur + fp->size <= ins->cur + sd->size);
+			/* "offset into struct" - "offset into pbs" == "start of struct"? */
 			passert(outp - (cur - ins->cur) == struct_ptr);
 
 #if 0
@@ -1865,7 +1867,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 
 			switch (fp->field_type) {
 			case ft_zig: /* should be zero, ignore if not - liberal in what to receive, strict to send */
-				for (; i != 0; i--) {
+				for (size_t i = fp->size; i != 0; i--) {
 					uint8_t byte = *cur;
 					if (byte != 0) {
 						/* We cannot zeroize it, it would break our hash calculation. */
@@ -1896,7 +1898,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 				uint32_t n = 0;
 
 				/* Reportedly fails on arm, see bug #775 */
-				for (; i != 0; i--)
+				for (size_t i = fp->size; i != 0; i--)
 					n = (n << BITS_PER_BYTE) | *cur++;
 
 				switch (fp->field_type) {
@@ -1977,8 +1979,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 				}
 
 				/* deposit the value in the struct */
-				i = fp->size;
-				switch (i) {
+				switch (fp->size) {
 				case 8 / BITS_PER_BYTE:
 					*(uint8_t *)outp = n;
 					break;
@@ -1989,14 +1990,14 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 					*(uint32_t *)outp = n;
 					break;
 				default:
-					bad_case(i);
+					bad_case(fp->size);
 				}
-				outp += i;
+				outp += fp->size;
 				break;
 			}
 
 			case ft_raw: /* bytes to be left in network-order */
-				for (; i != 0; i--)
+				for (size_t i = fp->size; i != 0; i--)
 					*outp++ = *cur++;
 				break;
 
