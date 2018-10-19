@@ -299,6 +299,28 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	cvout[1].value.pointer.chain = NULL;
 	cvout[2].type = cert_po_end;
 
+	int fin;
+
+#ifdef NSS_IPSEC_PROFILE
+	SECStatus rv = CERT_PKIXVerifyCert(end_cert, certificateUsageIPsec,
+						cvin, cvout, NULL);
+	if (rv != SECSuccess || cur_log->count > 0) {
+		if (cur_log->count > 0 && cur_log->head != NULL) {
+			fin = nss_err_to_revfail(cur_log->head);
+		} else {
+			/*
+			 * An rv != SECSuccess without CERTVerifyLog
+			 * results should not * happen, but catch it anyway
+			 */
+			loglog(RC_LOG_SERIOUS, "X509: unspecified NSS verification failure");
+			fin = VERIFY_RET_FAIL;
+		}
+	} else {
+		DBG(DBG_X509, DBG_log("certificate is valid"));
+		*end_out = end_cert;
+		fin = VERIFY_RET_OK;
+	}
+#else
 	/* kludge alert!!
 	 * verification may be performed twice: once with the
 	 * 'client' usage and once with 'server', which is an NSS
@@ -307,12 +329,10 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	 * KU/EKU combinations
 	 */
 
-	int fin;
 	SECCertificateUsage usage;
 
 	for (usage = certificateUsageSSLClient; ; usage = certificateUsageSSLServer) {
 		SECStatus rv = CERT_PKIXVerifyCert(end_cert, usage, cvin, cvout, NULL);
-
 		if (rv != SECSuccess || cur_log->count > 0) {
 			if (cur_log->count > 0 && cur_log->head != NULL) {
 				if (usage == certificateUsageSSLClient &&
@@ -346,6 +366,7 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 		}
 		break;
 	}
+#endif
 	pexpect(fin != 0);
 
 	CERT_DestroyCertList(trustcl);

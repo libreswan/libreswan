@@ -200,10 +200,6 @@ CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
 CFLAGS+=$(USERLAND_CFLAGS)
 CFLAGS+=${CROSSFLAGS}
 
-ifeq ($(NSS_REQ_AVA_COPY),true)
-CFLAGS+=-DNSS_REQ_AVA_COPY
-endif
-
 OBJS += $(abs_builddir)/version.o
 
 include $(top_srcdir)/mk/library.mk
