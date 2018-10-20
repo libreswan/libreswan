@@ -1187,8 +1187,8 @@ static bool processed_retransmit(struct state *st,
 	 *
 	 * Beware of unsigned arrithmetic.
 	 */
-	DBGF(DBG_MASK, "#%lu st.st_msgid_lastrecv %d md.msgid_received %d md.hdr.isa_msgid %08x",
-	     st->st_serialno, st->st_msgid_lastrecv, md->msgid_received, md->hdr.isa_msgid);
+	DBGF(DBG_MASK, "#%lu st.st_msgid_lastrecv %d md.hdr.isa_msgid %08x",
+	     st->st_serialno, st->st_msgid_lastrecv, md->hdr.isa_msgid);
 	if (st->st_msgid_lastrecv != v2_INVALID_MSGID &&
 	    st->st_msgid_lastrecv > md->msgid_received) {
 		/* this is an OLD retransmit. we can't do anything */

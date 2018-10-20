@@ -46,8 +46,8 @@ west #
  # CHILD_SA the values start at 0.
 west #
  grep hdr.isa_msgid /tmp/pluto.log
-| #1 st.st_msgid_lastrecv -1 md.msgid_received 0 md.hdr.isa_msgid 00000000
-| #1 st.st_msgid_lastrecv -1 md.msgid_received 1 md.hdr.isa_msgid 00000001
-| #1 st.st_msgid_lastrecv -1 md.msgid_received 2 md.hdr.isa_msgid 00000002
+| #1 st.st_msgid_lastrecv -1 md.hdr.isa_msgid 00000000
+| #1 st.st_msgid_lastrecv -1 md.hdr.isa_msgid 00000001
+| #1 st.st_msgid_lastrecv -1 md.hdr.isa_msgid 00000002
 west #
  
