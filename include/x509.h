@@ -83,7 +83,7 @@ extern int dn_count_wildcards(chunk_t dn);
 extern int dntoa(char *dst, size_t dstlen, chunk_t dn);
 extern int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
 			 const char *null_dn);
-extern err_t atodn(char *src, chunk_t *dn);
+extern err_t atodn(const char *src, chunk_t *dn);
 extern void free_generalNames(generalName_t *gn, bool free_name);
 extern void load_crls(void);
 extern void list_authcerts(void);

@@ -48,41 +48,42 @@
 static void hex_str(chunk_t bin, chunk_t *str);	/* forward */
 
 /* coding of X.501 distinguished name */
-typedef struct {
+typedef const struct {
 	const char *name;
-	chunk_t oid;
-	u_char type;
+	const unsigned char *oid_ptr;
+	size_t oid_len;
+	asn1_t type;
 } x501rdn_t;
 
 /* X.501 acronyms for well known object identifiers (OIDs) */
-static u_char oid_ND[] = { 0x02, 0x82, 0x06, 0x01, 0x0A, 0x07, 0x14 };
-static u_char oid_UID[] = { 0x09, 0x92, 0x26, 0x89, 0x93, 0xF2, 0x2C, 0x64,
+static const unsigned char oid_ND[] = { 0x02, 0x82, 0x06, 0x01, 0x0A, 0x07, 0x14 };
+static const unsigned char oid_UID[] = { 0x09, 0x92, 0x26, 0x89, 0x93, 0xF2, 0x2C, 0x64,
 				0x01, 0x01 };
-static u_char oid_DC[] = { 0x09, 0x92, 0x26, 0x89, 0x93, 0xF2, 0x2C, 0x64,
+static const unsigned char oid_DC[] = { 0x09, 0x92, 0x26, 0x89, 0x93, 0xF2, 0x2C, 0x64,
 				0x01, 0x19 };
-static u_char oid_CN[] = { 0x55, 0x04, 0x03 };
-static u_char oid_S[] = { 0x55, 0x04, 0x04 };
-static u_char oid_SN[] = { 0x55, 0x04, 0x05 };
-static u_char oid_C[] = { 0x55, 0x04, 0x06 };
-static u_char oid_L[] = { 0x55, 0x04, 0x07 };
-static u_char oid_ST[] = { 0x55, 0x04, 0x08 };
-static u_char oid_O[] = { 0x55, 0x04, 0x0A };
-static u_char oid_OU[] = { 0x55, 0x04, 0x0B };
-static u_char oid_T[] = { 0x55, 0x04, 0x0C };
-static u_char oid_D[] = { 0x55, 0x04, 0x0D };
-static u_char oid_N[] = { 0x55, 0x04, 0x29 };
-static u_char oid_G[] = { 0x55, 0x04, 0x2A };
-static u_char oid_I[] = { 0x55, 0x04, 0x2B };
-static u_char oid_ID[] = { 0x55, 0x04, 0x2D };
-static u_char oid_E[] = { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09,
+static const unsigned char oid_CN[] = { 0x55, 0x04, 0x03 };
+static const unsigned char oid_S[] = { 0x55, 0x04, 0x04 };
+static const unsigned char oid_SN[] = { 0x55, 0x04, 0x05 };
+static const unsigned char oid_C[] = { 0x55, 0x04, 0x06 };
+static const unsigned char oid_L[] = { 0x55, 0x04, 0x07 };
+static const unsigned char oid_ST[] = { 0x55, 0x04, 0x08 };
+static const unsigned char oid_O[] = { 0x55, 0x04, 0x0A };
+static const unsigned char oid_OU[] = { 0x55, 0x04, 0x0B };
+static const unsigned char oid_T[] = { 0x55, 0x04, 0x0C };
+static const unsigned char oid_D[] = { 0x55, 0x04, 0x0D };
+static const unsigned char oid_N[] = { 0x55, 0x04, 0x29 };
+static const unsigned char oid_G[] = { 0x55, 0x04, 0x2A };
+static const unsigned char oid_I[] = { 0x55, 0x04, 0x2B };
+static const unsigned char oid_ID[] = { 0x55, 0x04, 0x2D };
+static const unsigned char oid_E[] = { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09,
 				0x01 };
-static u_char oid_UN[] = { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09,
+static const unsigned char oid_UN[] = { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09,
 				0x02 };
-static u_char oid_TCGID[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x89, 0x31, 0x01,
+static const unsigned char oid_TCGID[] = { 0x2B, 0x06, 0x01, 0x04, 0x01, 0x89, 0x31, 0x01,
 				0x01, 0x02, 0x02, 0x4B };
 
 static const x501rdn_t x501rdns[] = {
-#	define OC(oid) { .ptr = oid, .len = sizeof(oid) }
+#	define OC(oid) oid, sizeof(oid)
 
 	{ "ND", OC(oid_ND), ASN1_PRINTABLESTRING },
 	{ "UID", OC(oid_UID), ASN1_PRINTABLESTRING },
@@ -383,54 +384,82 @@ int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
  * Converts an LDAP-style human-readable ASCII-encoded
  * ASN.1 distinguished name into binary DER-encoded format.
  * *dn is the result, allocated by temporary_cyclic_buffer.
- * Note: this rewrites src!
- * Structure of the output is a sequence of OIDs, wrapped in a ASN1_SEQUENCE.
+ *
+ * Structure of the output:
+ *
+ * ASN_SEQUENCE {
+ *	for each Relative DN {
+ *		ASN1_SET {
+ *			ASN1_SEQUENCE {
+ *				ASN1_OID {
+ *					op->oid
+ *				}
+ *				op->type|ASN1_PRINTABLESTRING {
+ *					name
+ *				}
+ *			}
+ *		}
+ *	}
+ * }
  */
-err_t atodn(char *src, chunk_t *dn)
+err_t atodn(const char *src, chunk_t *dn)
 {
-	DBGF(DBG_X509, "ASCII to DN \"%s\"", src);
+	DBGF(DBG_X509, "ASCII to DN <= \"%s\"", src);
 
+	/* stack of unfilled lengths */
+	unsigned char *(patchpoint[5]);	/* only 4 are actually needed */
+	unsigned char **ppp = patchpoint;
+
+	/* space for result */
 	dn->ptr = temporary_cyclic_buffer();	/* nasty! */
-	dn->len = 0;
 
-	/* leave room for prefix, ASN1_SEQUENCE */
-	unsigned char *const seq_start = dn->ptr + 1 + ASN1_MAX_LEN_LEN;
+	unsigned char *dn_ptr = dn->ptr;	/* growth point */
+	unsigned char *dn_redline = dn_ptr + IDTOA_BUF;
 
-	unsigned char *dn_ptr = seq_start;
+#	define START_OBJ() { *ppp++ = dn_ptr; }
+
+	/* note: on buffer overflow this returns from atodn */
+#	define EXTEND_OBJ(ptr, len) { \
+		if (dn_redline - dn_ptr < (ptrdiff_t)(len)) \
+			return "DN too big"; \
+		memcpy(dn_ptr, (ptr), (len)); \
+		dn_ptr += (len); \
+	}
 
 	/*
-	 * Concatenate the contents of a chunk onto dn.
-	 * The destination pointer is incremented by the length.
-	 * NOTE: return from the atodn if we run out of space!
-	 * To avoid space checking in addtychunk, we leave slack
-	 * for next type byte.
+	 * insert type and operand length before the operand already in the buffer
+	 * Note: on buffer overflow this returns from atodn
 	 */
-	unsigned char *const dn_redline = dn->ptr + IDTOA_BUF - 1;
-
-#	define addchunk(chunk) { \
-		if (dn_redline - dn_ptr < (ptrdiff_t)(chunk).len) \
+#	define END_OBJ(ty) { \
+		size_t len = dn_ptr - *--ppp; \
+		unsigned char len_buf[ASN1_MAX_LEN_LEN + 1] = { ty }; \
+		chunk_t obj_len = { len_buf + 1, 0 }; \
+		code_asn1_length(len, &obj_len); \
+		if (dn_redline - dn_ptr < (ptrdiff_t)obj_len.len + 1) \
 			return "DN overflow"; \
-		memcpy(dn_ptr, (chunk).ptr, (chunk).len); \
-		dn_ptr += (chunk).len; \
+		memmove(*ppp + obj_len.len + 1, *ppp, len); \
+		memcpy(*ppp, len_buf, obj_len.len + 1); \
+		dn_ptr += obj_len.len + 1; \
 	}
-#	define addtychunk(ty, chunk) { \
-		*dn_ptr++ = (ty); \
-		addchunk(chunk); \
-	}
+
+	START_OBJ();	/* 0 ASN1_SEQUENCE */
 
 	for (;;) {
-		/* parse OID */
+		/* for each Relative DN */
 
 		/* ??? are multiple '/' and ',' OK? */
-
 		src += strspn(src, " /,");	/* skip any separators */
-
 		if (*src == '\0')
 			break;	/* finished! */
 
+		/* parse OID */
+
+		START_OBJ();	/* 1 ASN1_SET */
+		START_OBJ();	/* 2 ASN1_SEQUENCE */
+
 		size_t ol = strcspn(src, " =");	/* length of OID name */
 
-		const x501rdn_t *op;	/* OID description */
+		x501rdn_t *op;	/* OID description */
 
 		for (op = x501rdns; ; op++) {
 			if (op == &x501rdns[elemsof(x501rdns)]) {
@@ -445,133 +474,58 @@ err_t atodn(char *src, chunk_t *dn)
 
 		src += ol;
 
+		START_OBJ();	/* 3 ASN1_OID */
+		EXTEND_OBJ(op->oid_ptr, op->oid_len);
+		END_OBJ(ASN1_OID);	/* 3 */
+
 		/* parse name */
 
 		/* ??? are multiple '=' OK? */
 		src += strspn(src, " =");	/* skip any separators */
 
-		size_t nl = 0;	/* name length */
+		START_OBJ();	/* 3 op->type or ASN1_T61STRING */
 
 		for (;;) {
-			/* look for characters that are escaped by doubling */
-			nl += strcspn(src + nl, ",/");
-			if (src[nl] != '\0' && src[nl] == src[nl + 1]) {
-				/*
-				 * doubled: a form of escape.
-				 * It stands for a single copy,
-				 * so we get rid of duplicate
-				 * by shifting tail left 1 position.
-				 * Result is still part of name
-				 */
-				memmove(src + nl + 1, src + nl + 2, strlen(src + nl + 2) + 1);
-				/* continue with name */
-				continue;
-			}
+			size_t nl = strcspn(src, ",/");
 
-			/* terminal */
-			break;
+			EXTEND_OBJ(src, nl);
+			src += nl;
+
+			if (src[0] == '\0' || src[0] != src[1])
+				break;	/* end of name */
+			/*
+			 * doubled: a form of escape.
+			 * Insert a single copy of the char.
+			 */
+			EXTEND_OBJ(src, 1);
+			src += 2;	/* skip both copies */
 		}
 
-		/* remove trailing SPaces */
-		while (nl > 0 && src[nl-1] == ' ')
-			nl--;
+		/* remove trailing SPaces from name operand */
 
-		const chunk_t name = {
-			.ptr = (unsigned char *)src,
-			.len = nl
-		};
+		unsigned char *ns = ppp[-1];	/* name operand start */
 
-		src += nl;
+		while (dn_ptr > ns && dn_ptr[-1] == ' ')
+			dn_ptr--;
 
-		if (nl == 0)
-			return "DN component is empty";
+		asn1_t t = op->type == ASN1_PRINTABLESTRING &&
+			!is_printablestring(chunk(ns, dn_ptr - ns)) ?
+				ASN1_T61STRING : op->type;
 
-		/*
-		 * Now we concatenate this component of the DER
-		 *
-		 * ASN1_SET {
-		 *	ASN1_SEQUENCE {
-		 *		ASN1_OID op->oid
-		 *		op->type|ASN1_PRINTABLESTRING name
-		 * }
-		 */
+		END_OBJ(t);	/* 3 name */
 
-		/*
-		 * Compute the length strings, inside out.
-		 * We need to compute the lengths of the length
-		 * of inside things before we can compute
-		 * the length of the container.
-		 */
-
-		/* format length for op->oid.len */
-		u_char oid_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
-		chunk_t asn1_oid_len = { oid_len_buf, 0 };
-		code_asn1_length(op->oid.len, &asn1_oid_len);
-
-		/* format length for length of name string */
-		u_char name_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
-		chunk_t asn1_name_len = { name_len_buf, 0 };
-		code_asn1_length(nl, &asn1_name_len);
-
-		/*
-		 * compute the length of the relative
-		 * distinguished name sequence (ASN1_SEQUENCE).
-		 * Contains oid and name
-		 */
-		size_t rdn_seq_len = 1 + asn1_oid_len.len + op->oid.len +
-			1 + asn1_name_len.len + nl;
-
-		u_char rdn_seq_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
-		chunk_t asn1_rdn_seq_len = { rdn_seq_len_buf, 0 };
-		code_asn1_length(rdn_seq_len,
-				&asn1_rdn_seq_len);
-
-		/*
-		 * compute the length of the relative
-		 * distinguished name set (ASN1_SET).
-		 */
-		size_t rdn_set_len = 1 + asn1_rdn_seq_len.len +
-			rdn_seq_len;
-
-		u_char rdn_set_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
-		chunk_t asn1_rdn_set_len = { rdn_set_len_buf, 0 };
-		code_asn1_length(rdn_set_len,
-				&asn1_rdn_set_len);
-
-		/* encode the relative distinguished name */
-		addtychunk(ASN1_SET, asn1_rdn_set_len);
-		addtychunk(ASN1_SEQUENCE, asn1_rdn_seq_len);
-		addtychunk(ASN1_OID, asn1_oid_len);
-		addchunk(op->oid);
-		/*
-		 * encode the ASN.1 character string
-		 * type of the name
-		 */
-		asn1_t nt =
-			op->type == ASN1_PRINTABLESTRING &&
-			!is_printablestring(name) ?
-				ASN1_T61STRING :
-				op->type;
-		addtychunk(nt, asn1_name_len);
-		addchunk(name);
+		END_OBJ(ASN1_SEQUENCE);	/* 2 */
+		END_OBJ(ASN1_SET);	/* 1 */
 	}
 
-	/*
-	 * complete the distinguished name sequence: prefix it with
-	 * ASN1_SEQUENCE and length
-	 */
-	u_char dn_seq_len_buf[ASN1_MAX_LEN_LEN];	/* space for chunk */
-	chunk_t asn1_dn_seq_len = { dn_seq_len_buf, 0 };
-	code_asn1_length(dn_ptr - seq_start, &asn1_dn_seq_len);
-
-	dn->ptr = seq_start - (1 + asn1_dn_seq_len.len);
+	END_OBJ(ASN1_SEQUENCE);	/* 0 */
 	dn->len = dn_ptr - dn->ptr;
-
-	dn_ptr = dn->ptr;
-	addtychunk(ASN1_SEQUENCE, asn1_dn_seq_len);
+	DBG_cond_dump_chunk(DBG_X509, "ASCII to DN =>", *dn);
 	return NULL;
-#	undef addtychunk
-#	undef addchunk
+
+#	undef START_OBJ
+#	undef EXTEND_OBJ
+#	undef END_OBJ
 }
 
 /*
