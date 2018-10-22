@@ -314,6 +314,7 @@ kvmplutotest	ikev1-x509-aggr-13-san-dn-mismatch	good
 kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
 
 kvmplutotest	ikev2-x509-01				good
+kvmplutotest	ikev2-x509-02-eku			good
 kvmplutotest	ikev2-x509-03				good
 kvmplutotest	ikev2-x509-05-san-firstemail-match	good
 kvmplutotest	ikev2-x509-06-san-email-mismatch	good
