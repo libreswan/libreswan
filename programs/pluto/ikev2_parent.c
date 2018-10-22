@@ -1860,7 +1860,7 @@ stf_status ikev2_auth_initiator_process_failure_notification(struct state *st,
 	 * is possible to figure out which code path
 	 * was taken.
 	 */
-	libreswan_log("IKE SA authentication request rejected: %s",
+	libreswan_log("IKE SA authentication request rejected by peer: %s",
 		      enum_short_name(&ikev2_notify_names, n));
 	/*
 	 * 2.21.2.  Error Handling in IKE_AUTH
