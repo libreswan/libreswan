@@ -134,6 +134,10 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 	elif cnstr == 'usage-both.testing.libreswan.org':
 		eku_str = 'serverAuth,clientAuth'
 		ku_str = ku_str + ',keyEncipherment,nonRepudiation'
+	elif cnstr == 'west-eku.testing.libreswan.org':
+		# IPSEC Protection EKU
+		print "EKU: IPsec protection set on %s"%cnstr
+		eku_str = '1.3.6.1.5.5.8.2.2'
 
 	if ocsp:
 		ku_str = ku_str + ',keyCertSign,cRLSign'
@@ -610,7 +614,7 @@ def run_dist_certs():
 						'sunrise','north','south',
 						'pole','park','beet','carrot',
 					    'usage-server', 'usage-client',
-					    'usage-both',
+					    'usage-both', 'west-eku',
 						'nic-noext', 'nic-nourl',
 						'japan','bigkey', 'key4096',
 						'notyetvalid','notvalidanymore',
