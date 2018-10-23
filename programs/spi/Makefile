@@ -25,7 +25,7 @@ OBJS += $(PROGRAM).o
 # What, if anything, should be moved to libswan or another library?
 #
 CFLAGS += -I$(top_srcdir)/programs/pluto
-PLUTOOBJS += $(patsubst %.c,%.o,$(notdir $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c)))
+PLUTOOBJS += $(patsubst %.c,%.o,$(notdir $(sort $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c))))
 PLUTOOBJS += crypt_symkey.o
 PLUTOOBJS += crypt_hash.o
 PLUTOOBJS += test_buffer.o
