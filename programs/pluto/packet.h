@@ -170,8 +170,8 @@ extern const pb_stream empty_pbs;
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
 
 /*
- * Map/clone the current contents of an output PBS (i.e., everything
- * written so far) as a chunk.
+ * Map/clone the current contents (i.e., everything written so far)
+ * [start..cur) of an output PBS as a chunk.
  */
 extern chunk_t same_out_pbs_as_chunk(pb_stream *pbs);
 extern chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name);
@@ -182,12 +182,17 @@ extern chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name);
 extern pb_stream same_chunk_as_in_pbs(chunk_t chunk, const char *name);
 
 /*
- * Clone the entire contents of an input PBS as a chunk.
+ * Map/Clone the entire contents [start..pbs_room()) of an input PBS
+ * as a chunk.
  */
+extern chunk_t same_in_pbs_as_chunk(pb_stream *pbs);
 extern chunk_t clone_in_pbs_as_chunk(pb_stream *pbs, const char *name);
+
 /*
- * Clone the remaining (left) contents of an input PBS as a chun.
+ * Map/Clone the remaining contents [cur..pbs_left()) of an input PBS
+ * as a chunk.
  */
+extern chunk_t same_in_pbs_left_as_chunk(pb_stream *pbs);
 extern chunk_t clone_in_pbs_left_as_chunk(pb_stream *pbs, const char *name);
 
 /*
