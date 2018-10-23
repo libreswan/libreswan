@@ -248,7 +248,7 @@ _________________________ ps
 # -i ppid picks up the header
 ps alxwf | egrep -i 'ppid|pluto|ipsec|klips'
 _________________________ ipsec/conf
-ipsec readwriteconf --config @IPSEC_CONF@ | ipsec _keycensor
+ipsec readwriteconf --config @IPSEC_CONF@
 _________________________ ipsec/secrets
 cat @IPSEC_SECRETS_FILE@ | ipsec _secretcensor
 _________________________ ipsec/listall
