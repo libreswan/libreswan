@@ -324,9 +324,6 @@ struct keyword_enum_values {
 	size_t valuesize;
 };
 
-extern const char *keyword_name(struct keyword_enum_values *kevs,
-				unsigned int value);
-
 /* sparse_names is much like enum_names, except values are
  * not known to be contiguous or ordered.
  * The array of names is ended with one with the name sparse_end
