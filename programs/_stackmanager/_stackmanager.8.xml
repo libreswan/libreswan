@@ -69,7 +69,7 @@ the modules are available inside the containers.</para>
 <refsect1 id='history'><title>HISTORY</title>
 <para>This script was introduced in Libreswan. On the older Openswan systems, this functionality was split
 over various script files such as ipsec _startnetkey, ipsec _startklips, ipsec _realsetup and ipsec setup.
-Man page written for the Libreswan project &lt;<ulink url='http://www.libreswan.org/'>http://www.libreswan.org/</ulink>&gt;
+Man page written for the Libreswan project &lt;<ulink url='https://libreswan.org/'>https://libreswan.org/</ulink>&gt;
 by Paul Wouters. </para>
 
 </refsect1>

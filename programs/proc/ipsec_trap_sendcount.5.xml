@@ -48,7 +48,7 @@ count, in hexadecimal, of PF_ACQUIRE messages that were successfully sent to use
 
 <refsect1 id='history'><title>HISTORY</title>
 <para>Written for the Linux FreeS/WAN project
-&lt;<ulink url='http://www.freeswan.org/'>http://www.freeswan.org/</ulink>&gt;
+&lt;<ulink url='https://www.freeswan.org/'>https://www.freeswan.org/</ulink>&gt;
 by Michael C. Richardson &lt;mcr@freeswan.org&gt;</para>
 
 </refsect1>

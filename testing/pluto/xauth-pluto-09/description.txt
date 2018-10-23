@@ -1,5 +1,4 @@
 As from xauth-pluto-05 but the left/right in the conn
-are reversed. This is a test for reported bug 246:
-	http://bugs.openswan.org/view.php?id=246
+are reversed. This is a test for reported openswan bug 246
 
 (work in progress)
