@@ -44,7 +44,7 @@ road #
 002 "road-east-ikev2" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "road-east-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "road-east-ikev2" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
-002 "road-east-ikev2" #2: IKE SA authentication request rejected: AUTHENTICATION_FAILED
+002 "road-east-ikev2" #2: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 000 "road-east-ikev2" #2: scheduling retry attempt 1 of an unlimited number, but releasing whack
 road #
  # there should be two public keys. including road

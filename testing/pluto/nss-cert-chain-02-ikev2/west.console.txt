@@ -42,7 +42,7 @@ west #
 002 "nss-cert-chain" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "nss-cert-chain" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "nss-cert-chain" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
-002 "nss-cert-chain" #2: IKE SA authentication request rejected: AUTHENTICATION_FAILED
+002 "nss-cert-chain" #2: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 000 "nss-cert-chain" #2: scheduling retry attempt 1 of an unlimited number, but releasing whack
 west #
  echo done
