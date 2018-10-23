@@ -1,3 +1,10 @@
+
+#########################################################################
+# 2018-10-23:
+# WARNING: KLIPS is obsolete. Please use VTI/XFRMi interfaces instead
+#########################################################################
+
+
 #########################################################################
 #            KLIPS Libreswan 3.X Release Notes
 #########################################################################
@@ -132,7 +139,7 @@ security vulnerabilities is available at: https://www.libreswan.org/security/
 #########################################################################
 
 Those interested in the development, patches, beta releases of Libreswan
-can join the development mailing list (http://lists.libreswan.org -
+can join the development mailing list (https://lists.libreswan.org -
 dev@lists.libreswan.org) or join the development team on IRC in #swan
 on irc.freenode.net
 
