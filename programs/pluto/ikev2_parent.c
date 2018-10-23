@@ -86,6 +86,7 @@
 #include "addr_lookup.h"
 #include "impair.h"
 #include "ikev2_message.h"
+#include "ikev2_cookie.h"
 
 #include "crypt_symkey.h" /* for release_symkey */
 struct mobike {
@@ -97,9 +98,6 @@ struct mobike {
 static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						   struct msg_digest *md,
 						   bool pam_status);
-
-static void ikev2_calc_dcookie(u_char *dcookie, chunk_t st_ni,
-			      const ip_address *addr, chunk_t spiI);
 
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
@@ -1125,38 +1123,12 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	 * attacker from being able to inject a lot of data used later to HMAC
 	 */
 	if (seen_dcookie != NULL || require_dcookie) {
-		u_char dcookie[SHA2_256_DIGEST_SIZE];
-		chunk_t dc, ni, spiI;
-
-		setchunk(spiI, md->hdr.isa_icookie, COOKIE_SIZE);
-		setchunk(ni, md->chain[ISAKMP_NEXT_v2Ni]->pbs.cur,
-			md->chain[ISAKMP_NEXT_v2Ni]->payload.v2gen.isag_length);
-		/*
-		 * RFC 5996 Section 2.10
-		 * Nonces used in IKEv2 MUST be randomly chosen, MUST be at
-		 * least 128 bits in size, and MUST be at least half the key
-		 * size of the negotiated pseudorandom function (PRF).
-		 * (We can check for minimum 128bit length)
-		 */
-
-		/*
-		 * XXX: Note that we check the nonce size in accept_v2_nonce() so this
-		 * check is extra. I guess since we need to extract the nonce to calculate
-		 * the cookie, it is cheap to check here and reject.
-		 */
-
-		if (ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < ni.len) {
-			/*
-			 * If this were a DDOS, we cannot afford to log.
-			 * We do log if we are debugging.
-			 */
-			DBG(DBG_CONTROL, DBG_log("Dropping message with insufficient length Nonce"));
+		v2_cookie_t cookie;
+		if (!compute_v2_cookie_from_md(&cookie, md)) {
 			return STF_IGNORE;
 		}
-
-		ikev2_calc_dcookie(dcookie, ni, &md->sender, spiI);
-		dc.ptr = dcookie;
-		dc.len = SHA2_256_DIGEST_SIZE;
+		/* easier to manipulate */
+		chunk_t dc = chunk(&cookie, sizeof(cookie));
 
 		if (seen_dcookie != NULL) {
 			/* we received a dcookie: verify that it is the one we sent */
@@ -1174,12 +1146,10 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 			chunk_t idc = {.ptr = dc_pbs->cur, .len = pbs_left(dc_pbs)};
 
 			DBG(DBG_CONTROLMORE,
-			    DBG_dump_chunk("received dcookie", idc);
-			    DBG_dump("dcookie computed", dcookie,
-				     SHA2_256_DIGEST_SIZE));
+			    DBG_dump_chunk("received cookie", idc);
+			    DBG_dump_chunk("computed cookie", dc));
 
-			if (idc.len != SHA2_256_DIGEST_SIZE ||
-			    !memeq(idc.ptr, dcookie, SHA2_256_DIGEST_SIZE)) {
+			if (!chunk_eq(idc, dc)) {
 				DBG(DBG_CONTROLMORE, DBG_log(
 					"mismatch in DOS v2N_COOKIE: dropping message (possible attack)"
 				));
@@ -4065,42 +4035,6 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	}
 
 	return ikev2_process_ts_and_rest(md);
-}
-
-/*
- * Cookie = <VersionIDofSecret> | Hash(Ni | IPi | SPIi | <secret>)
- * where <secret> is a randomly generated secret known only to us
- *
- * Our implementation does not use <VersionIDofSecret> which means
- * once a day and while under DOS attack, we could fail a few cookies
- * until the peer restarts from scratch.
- *
- * TODO: This use of sha2 should be allowed even with USE_SHA2=false
- */
-static void ikev2_calc_dcookie(u_char *dcookie, chunk_t ni,
-			      const ip_address *addr, chunk_t spiI)
-{
-	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
-						 "dcookie", DBG_CRYPT);
-
-	crypt_hash_digest_chunk(ctx, "ni", ni);
-
-	const unsigned char *addr_ptr;
-	size_t addr_length = addrbytesptr_read(addr, &addr_ptr);
-	crypt_hash_digest_bytes(ctx, "addr", addr_ptr, addr_length);
-
-	crypt_hash_digest_chunk(ctx, "spiI", spiI);
-	crypt_hash_digest_bytes(ctx, "sod", ikev2_secret_of_the_day,
-				SHA2_256_DIGEST_SIZE);
-	crypt_hash_final_bytes(&ctx, dcookie, SHA2_256_DIGEST_SIZE);
-	DBG(DBG_PRIVATE,
-	    DBG_log("ikev2 secret_of_the_day used %s, length %d",
-		    ikev2_secret_of_the_day,
-		    SHA2_256_DIGEST_SIZE));
-
-	DBG(DBG_CRYPT,
-	    DBG_dump("computed dcookie: HASH(Ni | IPi | SPIi | <secret>)",
-		     dcookie, SHA2_256_DIGEST_SIZE));
 }
 
 static struct state *find_state_to_rekey(struct payload_digest *p,

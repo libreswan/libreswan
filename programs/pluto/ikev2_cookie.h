@@ -1,6 +1,5 @@
-/* randomness machinery
+/* IKEv2 cookie calculation, for Libreswan
  *
- * Copyright (C) 1998, 1999  D. Hugh Redelmeier.
  * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -14,16 +13,24 @@
  * for more details.
  */
 
-#ifndef PLUTO_RND_H
-#define PLUTO_RND_H
+#ifndef IKEV2_COOKIE_H
+#define IKEV2_COOKIE_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
-#include "chunk.h"
+struct msg_digest;
 
-extern void fill_rnd_chunk(chunk_t chunk);
-extern void get_rnd_bytes(uint8_t *buffer, int length);
+/*
+ * That the cookie size of 32-bytes happens to match
+ * SHA2_256_DIGEST_SIZE is just a happy coincidence.
+ */
+typedef struct {
+	uint8_t bytes[32];
+} v2_cookie_t;
 
-extern void init_secret(void);
+bool compute_v2_cookie_from_md(v2_cookie_t *cookie, struct msg_digest *md);
+
+void refresh_v2_cookie_secret(void);
 
 #endif

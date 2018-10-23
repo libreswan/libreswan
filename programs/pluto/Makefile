@@ -53,6 +53,7 @@ OBJS += ikev1_send.o
 
 OBJS += ikev2_send.o
 OBJS += ikev2_message.o
+OBJS += ikev2_cookie.o
 
 OBJS += state_db.o
 OBJS += show.o
