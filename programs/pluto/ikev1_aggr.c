@@ -32,7 +32,7 @@
 #include "packet.h"
 #include "demux.h"      /* needs packet.h */
 #include "log.h"
-#include "cookie.h"
+#include "ike_spi.h"
 #include "spdb.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "ikev1_send.h"
@@ -214,7 +214,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-	get_cookie(FALSE, st->st_rcookie, &md->sender);
+	fill_ike_responder_spi(ike_sa(st), &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
@@ -1032,7 +1032,7 @@ void aggr_outI1(fd_t whack_sock,
 	st->st_try = try;
 	change_state(st, STATE_AGGR_I1);
 
-	get_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
+	fill_ike_initiator_spi(ike_sa(st));
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {

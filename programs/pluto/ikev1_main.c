@@ -55,7 +55,7 @@
 #include "demux.h" /* needs packet.h */
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
-#include "cookie.h"
+#include "ike_spi.h"
 #include "server.h"
 #include "spdb.h"
 #include "timer.h"
@@ -110,7 +110,7 @@ void main_outI1(fd_t whack_sock,
 	st = new_state();
 
 	/* set up new state */
-	get_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
+	fill_ike_initiator_spi(ike_sa(st));
 	initialize_new_state(st, c, policy, try, whack_sock);
 	change_state(st, STATE_MAIN_I1);
 
@@ -672,7 +672,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 	change_state(st, STATE_MAIN_R0);
 
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-	get_cookie(FALSE, st->st_rcookie, &md->sender);
+	fill_ike_responder_spi(ike_sa(st), &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 

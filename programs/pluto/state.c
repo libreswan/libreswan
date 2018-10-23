@@ -65,8 +65,6 @@
 #include "demux.h"	/* needs packet.h */
 #include "pending.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
-
-#include "cookie.h"
 #include "crypto.h"
 #include "crypt_symkey.h"
 #include "spdb.h"

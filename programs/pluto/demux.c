@@ -49,7 +49,6 @@
 #include "lswlog.h"
 
 #include "defs.h"
-#include "cookie.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"

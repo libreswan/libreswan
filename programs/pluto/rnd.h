@@ -25,7 +25,6 @@
 #include "constants.h"
 #include "ietf_constants.h"
 
-extern uint8_t secret_of_the_day[SHA1_DIGEST_SIZE];
 extern uint8_t ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
 
 extern void fill_rnd_chunk(chunk_t chunk);
