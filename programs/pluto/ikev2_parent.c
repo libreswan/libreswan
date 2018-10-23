@@ -959,29 +959,11 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 		}
 	}
 	/* SA out */
-	{
-		ikev2_need_ike_proposals(c, "IKE SA initiator emitting local proposals");
-		/*
-		 * Since this is an initial IKE exchange, the SPI is
-		 * emitted as is part of the packet header and not the
-		 * proposal.  Hence the NULL SPIs.
-		 */
-		u_char *sa_start = rbody.cur;
-		bool ret = ikev2_emit_sa_proposals(&rbody,
-						   c->ike_proposals,
-						   (chunk_t*)NULL);
-		if (!ret) {
-			libreswan_log("outsa fail");
-			reset_cur_state();
-			return STF_INTERNAL_ERROR;
-		}
-		/* save initiator SA for later HASH */
-		if (st->st_p1isa.ptr == NULL) {
-			/* no leak! (MUST be first time) */
-			clonetochunk(st->st_p1isa, sa_start,
-				     rbody.cur - sa_start,
-				     "SA in ikev2_parent_outI1_common");
-		}
+
+	ikev2_need_ike_proposals(c, "IKE SA initiator emitting local proposals");
+	if (!ikev2_emit_sa_proposals(&rbody, c->ike_proposals,
+				     (chunk_t*)NULL /* IKE - no CHILD SPI */)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
