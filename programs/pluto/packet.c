@@ -1635,14 +1635,24 @@ chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name)
 	return clone_chunk(same_out_pbs_as_chunk(pbs), name);
 }
 
+chunk_t same_in_pbs_as_chunk(pb_stream *pbs)
+{
+	return chunk(pbs->start, pbs_room(pbs));
+}
+
 chunk_t clone_in_pbs_as_chunk(pb_stream *pbs, const char *name)
 {
-	return clone_chunk(chunk(pbs->start, pbs_room(pbs)), name);
+	return clone_chunk(same_in_pbs_as_chunk(pbs), name);
+}
+
+chunk_t same_in_pbs_left_as_chunk(pb_stream *pbs)
+{
+	return chunk(pbs->cur, pbs_left(pbs));
 }
 
 chunk_t clone_in_pbs_left_as_chunk(pb_stream *pbs, const char *name)
 {
-	return clone_chunk(chunk(pbs->cur, pbs_left(pbs)), name);
+	return clone_chunk(same_in_pbs_left_as_chunk(pbs), name);
 }
 
 static err_t enum_enum_checker(

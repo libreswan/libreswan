@@ -18,7 +18,6 @@
 #include "state_db.h"
 #include "state.h"
 #include "lswlog.h"
-#include "cookie.h"
 #include "hash_table.h"
 
 #define STATE_TABLE_SIZE 499

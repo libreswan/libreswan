@@ -23,6 +23,7 @@
 
 #include "lswnss.h"
 #include "lswlog.h"
+#include "ike_spi.h"
 
 #include "timer.h"
 
@@ -88,7 +89,7 @@ void init_secret(void)
 	 * Generate the secret value for responder cookies, and
 	 * schedule an event for refresh.
 	 */
-	get_rnd_bytes(secret_of_the_day, sizeof(secret_of_the_day));
+	refresh_ike_spi_secret();
 	get_rnd_bytes(ikev2_secret_of_the_day, sizeof(secret_of_the_day));
 	event_schedule_s(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
 }

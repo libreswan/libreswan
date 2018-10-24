@@ -19,8 +19,8 @@
 extern const struct hash_desc ike_alg_hash_sha1;
 #endif
 
-#ifdef USE_SHA2
 extern const struct hash_desc ike_alg_hash_sha2_256;
+#ifdef USE_SHA2
 extern const struct hash_desc ike_alg_hash_sha2_384;
 extern const struct hash_desc ike_alg_hash_sha2_512;
 #endif

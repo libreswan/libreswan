@@ -128,7 +128,7 @@
 #include "lswlog.h"
 
 #include "defs.h"
-#include "cookie.h"
+#include "ike_spi.h"
 #include "id.h"
 #include "x509.h"
 #include "pluto_x509.h"
