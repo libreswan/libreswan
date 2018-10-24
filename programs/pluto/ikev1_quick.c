@@ -736,7 +736,9 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	struct crypt_hash *ctx = crypt_hash_init(h, "IV", DBG_CRYPT);
 	crypt_hash_digest_bytes(ctx, "PH1_IV", st->st_ph1_iv, st->st_ph1_iv_len);
 	passert(*msgid != 0);
-	crypt_hash_digest_bytes(ctx, "MSGID", (const u_char *)msgid, sizeof(*msgid));
+	passert(sizeof(msgid_t) == sizeof(uint32_t));
+	msgid_t raw_msgid = htonl(*msgid);
+	crypt_hash_digest_bytes(ctx, "MSGID", (void*) &raw_msgid, sizeof(raw_msgid));
 	crypt_hash_final_bytes(&ctx, st->st_new_iv, st->st_new_iv_len);
 
 	DBG_cond_dump(DBG_CRYPT, "computed Phase 2 IV:",
