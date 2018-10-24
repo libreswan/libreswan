@@ -230,8 +230,8 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
         if args.userland == "strongswan":
             # check version and fail early
             output = subprocess.getoutput("strongswan version")
-            if not "U5.6.3" in output:
-                sys.exit("strongswan 5.6.3 must be installed")
+            if not "U5.7.1" in output:
+                sys.exit("strongswan 5.7.1 must be installed")
             # required to write log file in /tmp
             subprocess.getoutput("setenforce 0")
             strongswanconf = "%s/%sstrongswan.conf" % (testpath, hostname)
