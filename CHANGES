@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v3.28 (unreleased)
 * KLIPS: Disable KLIPS userland support per default [Paul]
+* pluto: metric= value should accept values > 255 [Tuomo]
 * x509: Support for NSS IPsec profiles mbz#1252891 [Kai Engbert]
 * IKEv2: initialize daily secret used for DCOOKIES [Paul/Andrew]
 * building: sort all wildcarded object files for build reproducibility [dkg]
