@@ -544,18 +544,31 @@ $(foreach prefix, $(KVM_PREFIXES), \
 
 
 #
-# Upgrade the base domain
+# Install/Upgrade the base domain
+#
+# This is invoked before creating the clone domain's disk to ensure
+# that all current packages are installed and up-to-date.
+#
+# The install is to ensure that all currently required packages are
+# present (perhaps $(KVM_PACKAGES) changed), and the upgrade is to
+# ensure that the latest version is installed (rather than an older
+# version from the DVD image, say).
+#
+# Does the order matter?  Trying to upgrade an uninstalled package
+# barfs.  And re-installing a package with a pending upgrade does
+# nothing.
 #
 
 .PHONY: kvm-upgrade-base-domain
 kvm-upgrade-base-domain: kvm-install-base-domain
 	$(if $(KVM_PACKAGES), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
+	$(if $(KVM_PACKAGES), \
+		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_UPGRADE) $(KVM_PACKAGES))
 	$(if $(KVM_INSTALL_RPM_LIST), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_INSTALL_RPM_LIST))
 	$(if $(KVM_DEBUGINFO), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
-
 
 #
 # Build KVM domains from scratch
