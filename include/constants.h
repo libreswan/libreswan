@@ -27,7 +27,6 @@
 #include <stddef.h> /* for size_t */
 
 #include "shunk.h"
-#include "lset.h"
 
 struct lswlog;
 
@@ -284,26 +283,6 @@ size_t lswlog_enum_enum(struct lswlog *log, enum_enum_names *een,
 			unsigned long table, unsigned long val);
 size_t lswlog_enum_enum_short(struct lswlog *log, enum_enum_names *een,
 			      unsigned long table, unsigned long val);
-
-/* Printing lset_t values:
- *
- * These routines require a name table which is a NULL-terminated
- * sequence of strings.  That means that each bit in the set must
- * have a name.
- *
- * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
- * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
- *
- * lswlog_enum_lset_short() formats into a caller-supplied buffer -- only form
- */
-extern bool testset(const char *const table[], lset_t val);
-extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-ENTRANT */
-extern const char *bitnamesofb(const char *const table[],
-			       lset_t val,
-			       char *buf, size_t blen);
-
-size_t lswlog_enum_lset_short(struct lswlog *, enum_names *sd,
-			      const char *separator, lset_t val);
 
 /*
  * The sparser_name should be transformed into keyword_enum_value

@@ -84,6 +84,7 @@ OBJS += shunk.o
 OBJS += ip_address.o
 
 OBJS += lmod.o
+OBJS += lset.o
 OBJS += deltatime.o
 OBJS += realtime.o
 OBJS += monotime.o

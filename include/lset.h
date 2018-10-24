@@ -18,7 +18,12 @@
 #ifndef LSET_H
 #define LSET_H
 
+#include <stddef.h>		/* for size_t */
 #include <stdint.h>		/* for uint_fast64_t */
+#include <stdbool.h>
+
+struct enum_names;
+struct lswlog;
 
 /*
  * set type with room for at least 64 elements for ALG opts (was 32 in
@@ -38,5 +43,25 @@ typedef uint_fast64_t lset_t;
 /* LFIRST: find first element of a set (tricky use of twos complement) */
 #define LFIRST(s) ((s) & -(s))
 #define LSINGLETON(s) ((s) != LEMPTY && LFIRST(s) == (s))
+
+/* Printing lset_t values:
+ *
+ * These routines require a name table which is a NULL-terminated
+ * sequence of strings.  That means that each bit in the set must
+ * have a name.
+ *
+ * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
+ * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
+ *
+ * lswlog_enum_lset_short() formats into a caller-supplied buffer -- only form
+ */
+extern bool testset(const char *const table[], lset_t val);
+extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-ENTRANT */
+extern const char *bitnamesofb(const char *const table[],
+			       lset_t val,
+			       char *buf, size_t blen);
+
+size_t lswlog_enum_lset_short(struct lswlog *, const struct enum_names *sd,
+			      const char *separator, lset_t val);
 
 #endif /* CONSTANTS_H */
