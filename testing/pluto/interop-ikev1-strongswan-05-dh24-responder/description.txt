@@ -1,5 +1,5 @@
 Basic pluto with IKEv1 using PSK on the initiator (west), and Strongswan on
 the responder.
 
-This is the reverse test of interop-ikev1-strongswan-03
+This is a test for DH24, but this algorithm is no longer compiled in per default
 
