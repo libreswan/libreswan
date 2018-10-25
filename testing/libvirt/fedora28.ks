@@ -16,7 +16,7 @@ bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,11520
 zerombr
 clearpart --all --initlabel
 part / --asprimary --grow
-part swap --size 1024
+# part swap --size 1024
 services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
 %packages --ignoremissing
