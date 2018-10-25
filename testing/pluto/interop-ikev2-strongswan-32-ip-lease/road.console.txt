@@ -11,6 +11,7 @@ generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP
 sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
+selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/MODP_2048
 local host is behind NAT, sending keep alives
 no IDi configured, fall back on IP address
 authentication of '192.1.3.209' (myself) with pre-shared key
@@ -26,6 +27,7 @@ maximum IKE_SA lifetime XXXs
 installing DNS server 1.2.3.4 to /etc/strongswan/resolv.conf
 installing DNS server 8.8.8.8 to /etc/strongswan/resolv.conf
 installing new virtual IP 192.0.1.254
+selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
 CHILD_SA client{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.254/32 === 192.0.2.0/24
 connection 'client' established successfully
 road #
