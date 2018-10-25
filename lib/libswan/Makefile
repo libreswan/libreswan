@@ -66,7 +66,6 @@ OBJS += kernel_sadb.o
 OBJS += role.o
 
 # These get pulled in from the klips kernel code.
-VPATH += ${KLIPSSRCDIR}
 OBJS += addrtot.o
 OBJS += addrtypeof.o
 OBJS += anyaddr.o

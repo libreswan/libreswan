@@ -24,7 +24,6 @@ RM=rm
 CFLAGS += -pthread
 CFLAGS += $(USERLAND_CFLAGS)
 CFLAGS += $(PORTINCLUDE)
-CFLAGS += -I$(KLIPSINC)
 CFLAGS += -I$(top_srcdir)/include
 CFLAGS += $(NSSFLAGS)
 CFLAGS += $(CROSSFLAGS)
