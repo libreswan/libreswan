@@ -230,18 +230,42 @@ enum seccomp_mode {
  * notification_t or v2_notification_t) means fail with that
  * notification.  Since <notification> is a uint16_t, it is limited to
  * 65535 possible values (0 isn't valid).
+ *
+ * tbd? means someone needs to look at the IKEv1/IKEv2 code and figure
+ * it out.
+ *
+ * delete 'if state': delete state is known - the post processing
+ * function function complete_*_state_transition() assumes there is a
+ * message and if it contains a state (*MDP)->ST delete it.  XXX: This
+ * is messed up - a state transition function, which by definition is
+ * operating on a state, should require a state and not the message.
+ *
+ * delete 'maybe?': For IKEv2, delete the IKE_SA_INIT responder state
+ * but only when STF_FAIL+<v2notification>.  IKEv1?  XXX: With no
+ * clear / fast rule, this just creates confusion; perhaps the intent
+ * is for it to delete larval response states, who knows?
+ *
+ * respond 'message?': if the state transition says a message should
+ * be sent (hopefully there is one).
+ *
+ * respond 'maybe?': For instance, with IKEv2 when a responder and
+ * STF_FAIL+<notification>, a notification is sent as the only content
+ * in a response.  XXX: for IKEv2 this is broken: KE responses can't
+ * use it - need to suggest KE; AUTH responses can't use it - need to
+ * send other stuff (but they do breaking auth).
+ *
+ * XXX: suspect STF_DROP can be merged into STF_FAIL.
  */
 
 typedef enum {
-	STF_IGNORE,             /* don't respond */
-	STF_SUSPEND,            /* unfinished -- don't release resources */
-	STF_OK,                 /* success */
-	STF_INTERNAL_ERROR,     /* discard everything, we failed */
-	STF_FATAL,              /* just stop. we can't continue. */
-	STF_DROP,               /* just stop, delete any state, and don't log or respond */
-	STF_FAIL,               /* discard everything, something failed.  notification_t added.
-				 * values STF_FAIL + x are notifications.
-				 */
+	/*                         TRANSITION  DELETE   RESPOND  LOG */
+	STF_IGNORE,             /*     no        no       no     tbd? */
+	STF_SUSPEND,            /*   suspend     no       no     tbd? */
+	STF_OK,                 /*    yes        no     message? tbd? */
+	STF_INTERNAL_ERROR,     /*     no        no      never   tbd? */
+	STF_FATAL,		/*     no      always    never   fail */
+	STF_DROP,		/*     no     if state   never  silent */
+	STF_FAIL,       	/*     no      maybe?    maybe?  fail */
 	STF_ROOF = STF_FAIL + 65536 /* see RFC and above */
 } stf_status;
 
