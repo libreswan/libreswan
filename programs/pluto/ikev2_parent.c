@@ -503,12 +503,11 @@ static void ikev2_crypto_continue(struct state *st,
 }
 
 /*
- * Check the MODP (KE) group matches the accepted proposal.
- *
- * The caller is responsible for freeing any scratch objects.
+ * Check that the bundled keying material (KE) matches the accepted
+ * proposal and if it doesn't send out a notification returning true.
  */
-static stf_status ikev2_match_ke_group_and_proposal(struct msg_digest *md,
-						    const struct oakley_group_desc *accepted_dh)
+static bool v2_reject_wrong_ke_for_proposal(struct msg_digest *md,
+					    const struct oakley_group_desc *accepted_dh)
 {
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
@@ -522,10 +521,10 @@ static stf_status ikev2_match_ke_group_and_proposal(struct msg_digest *md,
 		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
 		send_v2_notification_invalid_ke(md, accepted_dh);
 		pexpect(md->st == NULL);
-		return STF_FAIL;
+		return true;
+	} else {
+		return false;
 	}
-
-	return STF_OK;
 }
 
 /*
@@ -1295,12 +1294,16 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	 */
 
 	/*
-	 * Check the MODP group in the payload matches the accepted proposal.
+	 * Check the MODP group in the payload matches the accepted
+	 * proposal.
 	 */
-	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.ta_dh);
-	if (ret != STF_OK) {
+	if (v2_reject_wrong_ke_for_proposal(md, accepted_oakley.ta_dh)) {
 		free_ikev2_proposal(&accepted_ike_proposal);
-		return ret;
+		/*
+		 * If there was a state then this could return
+		 * STF_FATAL and let the caller clean up the mess.
+		 */
+		return STF_FAIL; /* XXX: STF_FATAL? */
 	}
 
 	/*
@@ -4489,11 +4492,15 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 		return STF_IGNORE;
 	}
 
-	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.ta_dh);
-	if (ret != STF_OK) {
+	if (v2_reject_wrong_ke_for_proposal(md, accepted_oakley.ta_dh)) {
 		free_ikev2_proposal(&accepted_ike_proposal);
 		md->st = pst;
-		return ret;
+		/*
+		 * XXX; where is 'st' freed?  Should the code instead
+		 * tunnel back md.st==st and return STF_FATAL which
+		 * will delete the child state?
+		 */
+		return STF_FAIL; /* XXX; STF_FATAL? */
 	}
 
 	/*
