@@ -191,7 +191,7 @@ OBJS += pfkey_v2_debug.o
 endif
 
 # Original flags; this is a mess.
-CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSINC}
+CFLAGS+=${PORTINCLUDE} -I.
 CFLAGS+=-I${LIBRESWANSRCDIR}
 CFLAGS+= $(NSSFLAGS)
 CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
@@ -201,13 +201,13 @@ CFLAGS+=${CROSSFLAGS}
 
 OBJS += $(abs_builddir)/version.o
 
-include $(top_srcdir)/mk/library.mk
-
 # build version.c using version number from Makefile.ver
-$(abs_builddir)/version.c: ${KLIPSSRCDIR}/version.in.c $(top_srcdir)/Makefile.ver
+$(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/Makefile.ver
 	rm -f $@.tmp
 	sed -e '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' \
 	    -e '/"/s/@IPSECVIDVERSION@/$(IPSECVIDVERSION)/' \
-	    ${KLIPSSRCDIR}/version.in.c \
+	    $(srcdir)/version.in.c \
 	    > $@.tmp
 	mv $@.tmp $@
+
+include $(top_srcdir)/mk/library.mk

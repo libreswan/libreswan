@@ -68,8 +68,8 @@ ifeq ($(USE_GLIBC_KERN_FLIP_HEADERS),true)
 CFLAGS+=-DGLIBC_KERN_FLIP_HEADERS
 endif
 
-# where to find klips headers and Libreswan headers
-HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
+# where to find libreswan headers
+HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto
 
 ifeq ($(USE_PFKEYv2),true)
 OBJS += kernel_pfkey.o
