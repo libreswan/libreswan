@@ -9,7 +9,6 @@ PORTINCLUDE= -I/opt/local/include
 USERLINK=-L/usr/local/lib -L/opt/local/lib
 
 USE_MAST=false
-USE_KLIPS=false
 USE_NETKEY=false
 USE_WIN2K=false
 BUILD_KLIPS=false
