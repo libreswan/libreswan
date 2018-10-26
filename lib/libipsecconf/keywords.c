@@ -233,7 +233,6 @@ static const struct keyword_enum_values kw_rsasigkey_list = VALUES_INITIALIZER(k
 static const struct keyword_enum_value kw_proto_stack_list[] = {
 	{ "none",         NO_KERNEL },
 	{ "klips",        USE_KLIPS },
-	{ "mast",         USE_MASTKLIPS },
 	{ "auto",         USE_NETKEY }, /* auto now means netkey */
 	{ "netkey",       USE_NETKEY },
 	{ "native",       USE_NETKEY },

@@ -2652,12 +2652,6 @@ struct connection *route_owner(struct connection *c,
 	for (struct connection *d = connections; d != NULL; d = d->ac_next) {
 		if (!oriented(*d))
 			continue;
-#ifdef KLIPS_MAST
-		/* in mast mode we must also delete the iptables rule */
-		if (kern_interface == USE_MASTKLIPS &&
-		    compatible_overlapping_connections(c, d))
-			continue;
-#endif
 
 		/*
 		 * allow policies different by mark/mask

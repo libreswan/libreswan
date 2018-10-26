@@ -9,7 +9,6 @@ USERLAND_CFLAGS += -Ds6_addr32=__u6_addr.__u6_addr32
 PORTINCLUDE= -isystem /usr/local/include
 
 # no KLIPS, we will be using FreeBSD copy of pfkey code.
-USE_MAST=false
 USE_NETKEY=false
 USE_WIN2K=false
 USE_YACC=false

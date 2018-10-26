@@ -56,7 +56,6 @@ enum kernel_interface {
 	USE_KLIPS = 2,
 	USE_NETKEY= 3,
 	USE_WIN2K = 4,
-	USE_MASTKLIPS = 5,
 	USE_BSDKAME = 6,
 };
 

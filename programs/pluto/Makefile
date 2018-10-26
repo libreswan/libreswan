@@ -83,10 +83,6 @@ ifeq ($(USE_KLIPS),true)
 OBJS += kernel_klips.o
 endif
 
-ifeq ($(USE_MAST),true)
-OBJS += kernel_mast.o
-endif
-
 ifeq ($(USE_BSDKAME),true)
 OBJS += kernel_bsdkame.o
 LDFLAGS += $(BSDPFKEYLIB)

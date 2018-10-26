@@ -892,14 +892,6 @@ static int kernelop2klips(enum pluto_sadb_operations op)
 		break;
 	}
 
-#if defined(KLIPS_MAST)
-	/* In mast mode, we never want to set an eroute.
-	 * Setting the POLICYONLY disables eroutes.
-	 */
-	if (kernel_ops->type == USE_MASTKLIPS)
-		klips_flags |= SADB_X_SAFLAGS_POLICYONLY;
-#endif
-
 	return klips_op | (klips_flags << KLIPS_OP_FLAG_SHIFT);
 }
 
@@ -977,17 +969,6 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 					  "pfkey_addr_d add flow", text_said,
 					  extensions)))
 			return FALSE;
-#if defined(KLIPS_MAST)
-	} else if (kernel_ops->type == USE_MASTKLIPS) {
-		/* in mast mode, deletes also include the extension flags */
-		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
-						 K_SADB_EXT_SA,
-						 cur_spi, /* in network order */
-						 0, 0, 0, 0, klips_op >>
-						 KLIPS_OP_FLAG_SHIFT),
-				  "pfkey_sa del flow", text_said, extensions)))
-			return FALSE;
-#endif
 	}
 
 	if (!pfkeyext_address(K_SADB_X_EXT_ADDRESS_SRC_FLOW, &sflow_ska,
@@ -1065,19 +1046,6 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 		if (!success)
 			return FALSE;
 	}
-
-#ifdef KLIPS_MAST
-	if (sa->ref != IPSEC_SAREF_NULL || sa->refhim != IPSEC_SAREF_NULL) {
-		success = pfkey_build(pfkey_saref_build(&extensions[
-							   K_SADB_X_EXT_SAREF],
-							sa->ref,
-							sa->refhim),
-				      "pfkey_key_sare Add SA",
-				      sa->text_said, extensions);
-		if (!success)
-			return FALSE;
-	}
-#endif
 
 	if (sa->outif != -1) {
 		success = pfkey_outif_build(&extensions[K_SADB_X_EXT_PLUMBIF],
@@ -1171,16 +1139,6 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 		error = pfkey_msg_parse(&pfb.msg, NULL, replies, EXT_BITS_IN);
 		if (error != 0)
 			libreswan_log("success on unparsable message - cannot happen");
-
-#ifdef KLIPS_MAST
-		if (replies[K_SADB_X_EXT_SAREF]) {
-			struct sadb_x_saref *sar = (struct sadb_x_saref *)
-				replies[K_SADB_X_EXT_SAREF];
-
-			sa->ref = sar->sadb_x_saref_me;
-			sa->refhim = sar->sadb_x_saref_him;
-		}
-#endif
 	}
 	return success;
 }
@@ -1618,7 +1576,7 @@ void pfkey_scan_shunts(void)
 	int lino;
 	struct eroute_info *expired = NULL;
 
-	passert(kern_interface == USE_KLIPS || kern_interface == USE_MASTKLIPS);
+	passert(kern_interface == USE_KLIPS);
 
 	event_schedule(EVENT_SHUNT_SCAN, bare_shunt_interval, NULL);
 
@@ -1993,28 +1951,3 @@ void pfkey_remove_orphaned_holds(int transport_proto,
 		}
 	}
 }
-
-#ifdef KLIPS_MAST
-bool pfkey_plumb_mast_device(int mast_dev)
-{
-	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
-	int error;
-
-	pfkey_extensions_init(extensions);
-
-	if ((error = pfkey_msg_hdr_build(&extensions[0],
-					 K_SADB_X_PLUMBIF,
-					 0, 0,
-					 ++pfkey_seq, pid)))
-		return FALSE;
-
-	if ((error = pfkey_outif_build(&extensions[K_SADB_X_EXT_PLUMBIF],
-				       mast_dev)))
-		return FALSE;
-
-	if (!finish_pfkey_msg(extensions, "configure_mast_device", "", NULL))
-		return FALSE;
-
-	return TRUE;
-}
-#endif  /* KLIPS_MAST */

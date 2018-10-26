@@ -8,7 +8,6 @@ CC=gcc
 PORTINCLUDE= -I/opt/local/include
 USERLINK=-L/usr/local/lib -L/opt/local/lib
 
-USE_MAST=false
 USE_NETKEY=false
 USE_WIN2K=false
 # no longer needed now the bison/yacc options got updated

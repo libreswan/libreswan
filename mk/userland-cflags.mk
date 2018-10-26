@@ -77,13 +77,6 @@ USE_BSDKAME?=false
 ifeq ($(USE_BSDKAME),true)
 USE_NETKEY?=false
 USE_KLIPS?=false
-USE_MAST?=false
-endif
-
-# support KLIPS/MAST kernel variation (MAST requires KLIPS)
-USE_MAST?=false
-ifeq ($(USE_MAST),true)
-USE_KLIPS?=true
 endif
 
 # support KLIPS kernel module (KLIPS requires PFKEYv2)
@@ -105,10 +98,6 @@ USE_PFKEYv2?=false
 
 ifeq ($(USE_BSDKAME),true)
 USERLAND_CFLAGS += -DBSD_KAME
-endif
-
-ifeq ($(USE_MAST),true)
-USERLAND_CFLAGS += -DKLIPS_MAST
 endif
 
 ifeq ($(USE_KLIPS),true)

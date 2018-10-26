@@ -195,8 +195,7 @@ struct raw_iface *find_raw_ifaces4(void)
 
 		/* ignore if our interface names were specified, and this isn't one - for KLIPS/MAST only */
 		if (pluto_ifn_roof != 0 &&
-		    (kern_interface == USE_MASTKLIPS ||
-		     kern_interface == USE_KLIPS)) {
+		    kern_interface == USE_KLIPS) {
 			int i;
 
 			DBG(DBG_CONTROLMORE,
