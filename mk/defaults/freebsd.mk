@@ -19,7 +19,6 @@ CRYPT_LDFLAGS =
 USE_BSDKAME=true
 
 # build modules, etc. for KLIPS.
-BUILD_KLIPS=false
 
 USERLINK=-L/usr/local/lib -lcrypt
 
