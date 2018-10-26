@@ -951,7 +951,9 @@ define kvm-DOMAIN-build
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR)'
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) base'
+ifeq ($(USE_KLIPS),true)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) module'
+endif
 	: install will run $$(KVMSH) --shutdown $(1)
 endef
 
@@ -983,7 +985,17 @@ define kvm-DOMAIN-install
   kvm-$(1)-install: kvm-shutdown-local-domains kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-install domain=$(1)
 	$(call check-kvm-qemu-directory)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) './testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS)'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) install-base'
+ifeq ($(USE_KLIPS),true)
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) module_install'
+endif
+ifeq ($(USE_FIPSCHECK),true)
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) install-fipshmac'
+endif
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'sed -i "s/Restart=always/Restart=no/" /lib/systemd/system/ipsec.service'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'systemctl disable ipsec.service'
+	: $$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'systemctl daemon-reload'
 	$$(KVMSH) --shutdown $(1)
 endef
 
