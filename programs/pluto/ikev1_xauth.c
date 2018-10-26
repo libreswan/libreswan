@@ -1059,17 +1059,12 @@ static bool do_file_authentication(struct state *st, const char *name,
 		    (connectionname == NULL || streq(connectionname, connname)))
 		{
 			const char *cp;
-#if defined(__CYGWIN32__)
-			/* password is in the clear! */
-			cp = password;
-#else
 			/*
 			 * keep the passwords using whatever utilities
 			 * we have NOTE: crypt() may not be
 			 * thread-safe
 			 */
 			cp = crypt(password, passwdhash);
-#endif
 			win = cp != NULL && streq(cp, passwdhash);
 
 			DBG(DBG_PRIVATE,

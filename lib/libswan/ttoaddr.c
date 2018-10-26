@@ -17,10 +17,6 @@
 #include "internal.h"
 #include "libreswan.h"
 
-#if defined(__CYGWIN32__)
-#define gethostbyname2(X, Y) gethostbyname(X)
-#endif
-
 /*
  * Legal ASCII characters in a domain name.  Underscore technically is not,
  * but is a common misunderstanding.  Non-ASCII characters are simply
@@ -178,11 +174,9 @@ static err_t tryname(
 	}
 
 	h = gethostbyname2(cp, af);
-#if !defined(__CYGWIN32__)
 	/* like, windows even has an /etc/networks? */
 	if (h == NULL && af == AF_INET)
 		ne = getnetbyname(cp);
-#endif
 	if (p != namebuf)
 		FREE(p);
 	if (h == NULL && ne == NULL) {

@@ -2668,14 +2668,6 @@ void init_kernel(void)
 		break;
 #endif
 
-#if defined(WIN32) && defined(WIN32_NATIVE)
-	case USE_WIN32_NATIVE:
-		libreswan_log("Using Win2K native IPsec interface code on %s",
-			kversion);
-		kernel_ops = &win2k_kernel_ops;
-		break;
-#endif
-
 	case NO_KERNEL:
 		libreswan_log("Using 'no_kernel' interface code on %s",
 			kversion);
@@ -3424,12 +3416,6 @@ void delete_ipsec_sa(struct state *st)
 		(void) teardown_half_ipsec_sa(st, TRUE);
 
 		break;
-#if defined(WIN32) && defined(WIN32_NATIVE)
-	case USE_WIN32_NATIVE:
-		DBG(DBG_CONTROL,
-			DBG_log("No support (required?) to delete_ipsec_sa with Win2k"));
-		break;
-#endif
 	case NO_KERNEL:
 		DBG(DBG_CONTROL,
 			DBG_log("No support required to delete_ipsec_sa with NoKernel support"));

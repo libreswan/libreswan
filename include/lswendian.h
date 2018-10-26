@@ -14,9 +14,7 @@
 
 /* sets BYTE_ORDER, LITTLE_ENDIAN, and BIG_ENDIAN */
 
-#if defined(__CYGWIN__)
-# include <endian.h>
-#elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__)
 # include <machine/endian.h>
 #elif defined(linux)
 # if defined(i386) && !defined(__i386__)
