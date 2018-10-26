@@ -2812,10 +2812,6 @@ static void log_stf_suspend(struct state *st, stf_status result)
 void complete_v2_state_transition(struct msg_digest **mdp,
 				  stf_status result)
 {
-	struct msg_digest *md = *mdp;
-	struct state *st;
-	const char *from_state_name;
-
 	/* statistics */
 	if (result > STF_FAIL) {
 		pstats(ike_stf, STF_FAIL);
@@ -2823,45 +2819,29 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		pstats(ike_stf, result);
 	}
 
-	/* handle oddball/meta results now */
+	/*
+	 * Since this is a state machine, there really should always
+	 * be a state.
+	 *
+	 * Unfortunately #1: instead of always having a state and
+	 * passing it round, state transition functions create the
+	 * state locally and then try to tunnel it back using the
+	 * received message's digest - *MDP->st.  The big offenders
+	 * are IKE_SA_INIT and IKE_AUTH reponders
+	 *
+	 * Unfortunately #2: the initiator of an exchange doesn't have
+	 * a received message's digest, but that's ok one is sometimes
+	 * created using fake_md().
+	 *
+	 * Hence, expect any of MDP, *MDP, or *MDP->st to be NULL.
+	 */
+	struct msg_digest *md = (mdp != NULL ? (*mdp) /*NULL?*/ : NULL);
+	struct state *st = md != NULL ? md->st /*NULL?*/ : NULL;
+	set_cur_state(st); /* might have changed */ /* XXX: huh? */
 
-	switch (result) {
-	case STF_SUSPEND:
-		if (*mdp != NULL) {
-			/*
-			 * If this transition was triggered by an
-			 * incoming packet, save it.
-			 *
-			 * XXX: some initiator code creates a fake MD
-			 * (there isn't a real one); save that as
-			 * well.
-			 */
-			suspend_md(md->st, mdp);
-			passert(*mdp == NULL); /* ownership transfered */
-		}
-		log_stf_suspend(md->st, result);
-		return;
-
-	case STF_IGNORE:
-		LSWDBGP(DBG_CONTROL, buf) {
-			lswlogs(buf, "complete v2 state transition with ");
-			lswlog_v2_stf_status(buf, result);
-		}
-		return;
-
-	default:
-		break;
-	}
-
-	/* safe to refer to *md */
-
-	st = md->st;
-
-	/* XXX; When would state be NULL? */
-	from_state_name = enum_name(&state_names,
-		st == NULL ? STATE_UNDEFINED : st->st_state);
-
-	set_cur_state(st); /* might have changed */
+	/* get the from state */
+	const char *from_state_name = (st != NULL ? st->st_finite_state
+				       : finite_states[STATE_UNDEFINED])->fs_name;
 
 	/*
 	 * XXX/SML:  There is no need to abort here in all cases where st is
@@ -2893,6 +2873,32 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	}
 
 	switch (result) {
+
+	case STF_SUSPEND:
+		if (pexpect(st != NULL)) {
+			/*
+			 * If this transition was triggered by an
+			 * incoming packet, save it.
+			 *
+			 * XXX: some initiator code creates a fake MD
+			 * (there isn't a real one); save that as
+			 * well.
+			 */
+			if (*mdp != NULL) {
+				suspend_md(st, mdp);
+				passert(*mdp == NULL); /* ownership transfered */
+			}
+			log_stf_suspend(st, result);
+		}
+		return;
+
+	case STF_IGNORE:
+		LSWDBGP(DBG_CONTROL, buf) {
+			lswlogs(buf, "complete v2 state transition with ");
+			lswlog_v2_stf_status(buf, result);
+		}
+		return;
+
 	case STF_OK:
 		if (st == NULL) {
 			DBG(DBG_CONTROL, DBG_log("STF_OK but no state object remains"));
