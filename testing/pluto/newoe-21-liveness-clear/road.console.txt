@@ -38,8 +38,6 @@ road #
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
 road #
  ../../pluto/bin/ipsec-look.sh
 road NOW
@@ -121,8 +119,6 @@ road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
 road #
  # ensure for tests acquires expire before our failureshunt=2m
 road #
@@ -147,8 +143,6 @@ road #
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
 road #
  ../../pluto/bin/ipsec-look.sh
 road NOW

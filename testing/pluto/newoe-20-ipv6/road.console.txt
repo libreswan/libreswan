@@ -46,8 +46,6 @@ road #
 006 #2: "private-or-clear#2001:db8:1:2::/64"[1] ...2001:db8:1:2::23, type=ESP, add_time=1234567890, inBytes=728, outBytes=728, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
 road #
  killall ip > /dev/null 2> /dev/null
 [1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out

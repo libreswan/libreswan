@@ -46,8 +46,6 @@ road #
  sleep 3
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
 road #
  echo done
 done

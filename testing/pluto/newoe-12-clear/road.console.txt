@@ -40,8 +40,6 @@ road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
 road #
  ../../pluto/bin/ipsec-look.sh
 road NOW

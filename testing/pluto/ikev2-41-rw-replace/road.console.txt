@@ -177,8 +177,6 @@ road #
 000 #2: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "road-east-x509-ipv4"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
 000  
-000 Bare Shunt list:
-000  
 road #
  sleep 60
 road #
@@ -342,8 +340,6 @@ road #
 000 #2: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#3; idle;
 000 #2: "road-east-x509-ipv4"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 ref=0 refhim=0 Traffic: ESPin=672B ESPout=672B! ESPmax=0B 
 000 #3: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
-000  
-000 Bare Shunt list:
 000  
 road #
  echo done
