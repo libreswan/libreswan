@@ -13,6 +13,7 @@ look()
 	 -o -name '*~' -prune \
 	 -o -name '*.orig' -prune \
 	 -o -name '*.rej' -prune \
+	 -o -name '.*' -prune \
 	 \
 	 -o         -path "$d/OBJ.*" -prune \
 	 -o         -path "$d/linux" -prune \
