@@ -69,6 +69,8 @@ west #
  ipsec whack --trafficstatus
 west #
  ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
 west #
  ipsec status | grep westnet-eastnet-ikev2
 000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; prospective erouted; eroute owner: #0
@@ -123,6 +125,8 @@ west #
 006 #4: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
  ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
 west #
  grep -E "liveness action|acquire" OUTPUT/west.pluto.log
 | add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink

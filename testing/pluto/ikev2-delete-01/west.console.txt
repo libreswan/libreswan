@@ -176,6 +176,8 @@ west #
 000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
 000  
+000 Bare Shunt list:
+000  
 west #
  ipsec whack --deletestate 1
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting other state #2 (STATE_V2_IPSEC_I) and sending notification
@@ -302,6 +304,8 @@ west #
 000 State Information: DDoS cookies not required, Accepting new IKE connections
 000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
 000 IPsec SAs: total(0), authenticated(0), anonymous(0)
+000  
+000 Bare Shunt list:
 000  
 west #
  echo done

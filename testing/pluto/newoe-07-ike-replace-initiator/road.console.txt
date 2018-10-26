@@ -84,6 +84,8 @@ road #
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=1596, outBytes=1596, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
 road #
  killall ip > /dev/null 2> /dev/null
 [1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out

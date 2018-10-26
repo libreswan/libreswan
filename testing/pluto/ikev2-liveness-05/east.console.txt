@@ -15,6 +15,8 @@ east #
 006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
 east #
  ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
 east #
 east #
  ../bin/check-for-core.sh

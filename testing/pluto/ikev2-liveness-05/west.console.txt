@@ -70,6 +70,8 @@ west #
  ipsec whack --trafficstatus
 west #
  ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
 west #
  # packets should be caught in firewall and no icmp replies should happen
 west #
@@ -113,6 +115,8 @@ west #
  ipsec whack --trafficstatus
 west #
  ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
 west #
 west #
  ../bin/check-for-core.sh
