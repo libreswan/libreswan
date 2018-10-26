@@ -216,5 +216,6 @@ install-fipshmac:
 include ${LIBRESWANSRCDIR}/mk/docker-targets.mk
 include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk
 include ${LIBRESWANSRCDIR}/mk/web-targets.mk
+ifeq ($(USE_KLIPS),true)
 include ${LIBRESWANSRCDIR}/mk/kernel.mk
-
+endif
