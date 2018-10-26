@@ -35,6 +35,15 @@
 #include "demux.h"
 #include "ike_alg_hash.h"	/* for sha2 */
 #include "crypt_hash.h"
+#include "ikev2_send.h"
+
+/*
+ * That the cookie size of 32-bytes happens to match
+ * SHA2_256_DIGEST_SIZE is just a happy coincidence.
+ */
+typedef struct {
+	uint8_t bytes[32];
+} v2_cookie_t;
 
 static uint8_t v2_cookie_secret[sizeof(v2_cookie_t)];
 
@@ -54,7 +63,8 @@ void refresh_v2_cookie_secret(void)
  * once a day and while under DOS attack, we could fail a few cookies
  * until the peer restarts from scratch.
  */
-bool compute_v2_cookie_from_md(v2_cookie_t *cookie, struct msg_digest *md)
+static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
+				      struct msg_digest *md)
 {
 	chunk_t SPIi = chunk(md->hdr.isa_icookie, IKE_SA_SPI_SIZE);
 	chunk_t Ni = same_in_pbs_left_as_chunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
@@ -104,4 +114,84 @@ bool compute_v2_cookie_from_md(v2_cookie_t *cookie, struct msg_digest *md)
 		     cookie->bytes, sizeof(cookie->bytes)));
 
 	return true;
+}
+
+bool v2_reject_cookie(struct msg_digest *md, bool require_dcookie)
+{
+	struct payload_digest *seen_dcookie = NULL;
+
+	/* Process NOTIFY payloads, including checking for a DCOOKIE */
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		if (ntfy->payload.v2n.isan_type == v2N_COOKIE) {
+			if (seen_dcookie == NULL) {
+				DBG(DBG_CONTROLMORE,
+					DBG_log("Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
+				seen_dcookie = ntfy;
+				if (ntfy != md->chain[ISAKMP_NEXT_v2N]) {
+					/* ??? Should this error be logged?  Might make DDOS worse. */
+					DBG(DBG_CONTROL, DBG_log("ERROR: NOTIFY payload of type COOKIE is not the first payload"));
+					/* accept dcookie anyway */
+				}
+			} else {
+				/* ??? Should this error be logged?  Might make DDOS worse. */
+				DBG(DBG_CONTROL,
+					DBG_log("ignoring second NOTIFY payload of type COOKIE"));
+			}
+		}
+	}
+
+	/*
+	 * The RFC states we should ignore unexpected cookies. We
+	 * purposefully violate the RFC and validate the cookie
+	 * anyway. This prevents an attacker from being able to inject
+	 * a lot of data used later to HMAC
+	 */
+	if (seen_dcookie != NULL || require_dcookie) {
+		v2_cookie_t cookie;
+		if (!compute_v2_cookie_from_md(&cookie, md)) {
+			return true; /* reject cookie */
+		}
+		/* easier to manipulate */
+		chunk_t dc = chunk(&cookie, sizeof(cookie));
+
+		if (seen_dcookie != NULL) {
+			/* we received a dcookie: verify that it is the one we sent */
+
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("received a DOS cookie in I1 verify it"));
+			if (seen_dcookie->payload.v2n.isan_spisize != 0) {
+				DBG(DBG_CONTROLMORE, DBG_log(
+					"DOS cookie contains non-zero length SPI - message discarded"
+				));
+				return true; /* reject cookie */
+			}
+
+			const pb_stream *dc_pbs = &seen_dcookie->pbs;
+			chunk_t idc = {.ptr = dc_pbs->cur, .len = pbs_left(dc_pbs)};
+
+			DBG(DBG_CONTROLMORE,
+			    DBG_dump_chunk("received cookie", idc);
+			    DBG_dump_chunk("computed cookie", dc));
+
+			if (!chunk_eq(idc, dc)) {
+				DBG(DBG_CONTROLMORE, DBG_log(
+					"mismatch in DOS v2N_COOKIE: dropping message (possible attack)"
+				));
+				return true; /* reject cookie */
+			}
+			DBG(DBG_CONTROLMORE, DBG_log(
+				"dcookie received matched computed one"));
+		} else {
+			/* we are under DOS attack and I1 contains no COOKIE */
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("busy mode on. received I1 without a valid dcookie");
+			    DBG_log("send a dcookie and forget this state"));
+			send_v2_notification_from_md(md, v2N_COOKIE, &dc);
+			return true; /* reject cookie */
+		}
+	} else {
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("anti-DDoS cookies not required (and no cookie received)"));
+	}
+	return false; /* love the cookie */
 }

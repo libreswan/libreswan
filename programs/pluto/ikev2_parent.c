@@ -86,7 +86,6 @@
 #include "addr_lookup.h"
 #include "impair.h"
 #include "ikev2_message.h"
-#include "ikev2_cookie.h"
 
 #include "crypt_symkey.h" /* for release_symkey */
 struct mobike {
@@ -1089,88 +1088,6 @@ static crypto_transition_fn ikev2_parent_inI1outR1_continue_tail;	/* forward dec
 stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 {
 	passert(null_st == NULL);	/* initial responder -> no state */
-
-	struct payload_digest *seen_dcookie = NULL;
-	bool require_dcookie = require_ddos_cookies();
-
-	if (drop_new_exchanges()) {
-		/* only log for debug to prevent disk filling up */
-		DBG(DBG_CONTROL, DBG_log("pluto is overloaded with half-open IKE SAs - dropping IKE_INIT request"));
-		return STF_IGNORE;
-	}
-
-	/* Process NOTIFY payloads, including checking for a DCOOKIE */
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		if (ntfy->payload.v2n.isan_type == v2N_COOKIE) {
-			if (seen_dcookie == NULL) {
-				DBG(DBG_CONTROLMORE,
-					DBG_log("Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
-				seen_dcookie = ntfy;
-				if (ntfy != md->chain[ISAKMP_NEXT_v2N]) {
-					/* ??? Should this error be logged?  Might make DDOS worse. */
-					DBG(DBG_CONTROL, DBG_log("ERROR: NOTIFY payload of type COOKIE is not the first payload"));
-					/* accept dcookie anyway */
-				}
-			} else {
-				/* ??? Should this error be logged?  Might make DDOS worse. */
-				DBG(DBG_CONTROL,
-					DBG_log("ignoring second NOTIFY payload of type COOKIE"));
-			}
-		}
-	}
-
-	/*
-	 * The RFC states we should ignore unexpected cookies. We purposefully
-	 * violate the RFC and validate the cookie anyway. This prevents an
-	 * attacker from being able to inject a lot of data used later to HMAC
-	 */
-	if (seen_dcookie != NULL || require_dcookie) {
-		v2_cookie_t cookie;
-		if (!compute_v2_cookie_from_md(&cookie, md)) {
-			return STF_IGNORE;
-		}
-		/* easier to manipulate */
-		chunk_t dc = chunk(&cookie, sizeof(cookie));
-
-		if (seen_dcookie != NULL) {
-			/* we received a dcookie: verify that it is the one we sent */
-
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("received a DOS cookie in I1 verify it"));
-			if (seen_dcookie->payload.v2n.isan_spisize != 0) {
-				DBG(DBG_CONTROLMORE, DBG_log(
-					"DOS cookie contains non-zero length SPI - message discarded"
-				));
-				return STF_IGNORE;
-			}
-
-			const pb_stream *dc_pbs = &seen_dcookie->pbs;
-			chunk_t idc = {.ptr = dc_pbs->cur, .len = pbs_left(dc_pbs)};
-
-			DBG(DBG_CONTROLMORE,
-			    DBG_dump_chunk("received cookie", idc);
-			    DBG_dump_chunk("computed cookie", dc));
-
-			if (!chunk_eq(idc, dc)) {
-				DBG(DBG_CONTROLMORE, DBG_log(
-					"mismatch in DOS v2N_COOKIE: dropping message (possible attack)"
-				));
-				return STF_IGNORE;
-			}
-			DBG(DBG_CONTROLMORE, DBG_log(
-				"dcookie received matched computed one"));
-		} else {
-			/* we are under DOS attack and I1 contains no COOKIE */
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("busy mode on. received I1 without a valid dcookie");
-			    DBG_log("send a dcookie and forget this state"));
-			send_v2_notification_from_md(md, v2N_COOKIE, &dc);
-			return STF_FAIL;
-		}
-	} else {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("anti-DDoS cookies not required (and no cookie received)"));
-	}
 
 	/* authentication policy alternatives in order of decreasing preference */
 	static const lset_t policies[] = { POLICY_ECDSA, POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };

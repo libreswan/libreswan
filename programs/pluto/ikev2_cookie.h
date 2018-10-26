@@ -21,16 +21,8 @@
 
 struct msg_digest;
 
-/*
- * That the cookie size of 32-bytes happens to match
- * SHA2_256_DIGEST_SIZE is just a happy coincidence.
- */
-typedef struct {
-	uint8_t bytes[32];
-} v2_cookie_t;
-
-bool compute_v2_cookie_from_md(v2_cookie_t *cookie, struct msg_digest *md);
-
 void refresh_v2_cookie_secret(void);
+
+bool v2_reject_cookie(struct msg_digest *md, bool require_cookie);
 
 #endif

@@ -70,7 +70,7 @@
 #include "alg_info.h" /* for ike_info / esp_info */
 #include "state_db.h"
 #include "ietf_constants.h"
-
+#include "ikev2_cookie.h"
 #include "plutoalg.h" /* for default_ike_groups */
 #include "ikev2_message.h"	/* for ikev2_decrypt_msg() */
 #include "pluto_stats.h"
@@ -123,6 +123,12 @@ enum smf2_flags {
 	 * encryption can occur.
 	 */
 	SMF2_NO_SKEYSEED = LELEM(7),
+
+	/*
+	 * Is this a new exchange (and should only be started when
+	 * non-busy?).
+	 */
+	SMF2_NEW_EXCHANGE = LELEM(8),
 };
 
 /*
@@ -394,7 +400,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .state      = STATE_PARENT_R0,
 	  .next_state = STATE_PARENT_R1,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_NEW_EXCHANGE,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2_parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
@@ -1941,6 +1947,27 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				send_v2_notification_from_md(md, v2N_INVALID_IKE_SPI, NULL);
 		}
 		return;
+	}
+
+	/*
+	 * Does this start a new exchange, and hence, should it be
+	 * dropped or given special treatment.  Since some of this
+	 * proceessing requires a decoded payload, do it late.
+	 */
+	if (svm->flags & SMF2_NEW_EXCHANGE) {
+		/*
+		 * Too busy to process packet.
+		 */
+		if (drop_new_exchanges()) {
+			/* only log for debug to prevent disk filling up */
+			DBGF(DBG_MASK, "pluto is overloaded with half-open IKE SAs; dropping new exchange");
+			return;
+		}
+		if (v2_reject_cookie(md, require_ddos_cookies())) {
+			/* only log for debug to prevent disk filling up */
+			DBGF(DBG_MASK, "pluto is overloaded and demanding cookies; dropping new exchange");
+			return;
+		}
 	}
 
 	md->from_state = svm->state;
