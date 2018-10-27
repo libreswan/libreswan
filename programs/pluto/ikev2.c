@@ -661,6 +661,12 @@ void init_ikev2(void)
 		if (t->opt_enc_payloads != LEMPTY) {
 			t->encrypted_payloads.optional = t->opt_enc_payloads;
 		}
+#if 0
+		LSWLOG_DEBUG(buf) {
+			lswlog_finite_state(buf, fs);
+			lswlogf(buf, " crypto_end %p", t->crypto_end);
+		}
+#endif
 	}
 
 	/*
