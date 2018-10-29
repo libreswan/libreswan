@@ -2246,7 +2246,8 @@ void fmt_state(struct state *st, const monotime_t now,
 					traffic_buf + sizeof(traffic_buf),
 					"! IPCOMPmax=");
 		}
-#ifdef KLIPS
+
+#if defined(NETKEY_SUPPORT) || defined(KLIPS)
 		if (st->st_ah.attrs.encapsulation ==
 			ENCAPSULATION_MODE_TUNNEL ||
 			st->st_esp.attrs.encapsulation ==

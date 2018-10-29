@@ -356,13 +356,15 @@ void delete_connection(struct connection *c, bool relations)
 		alg_info_delref(&c->alg_info_ike->ai);
 		c->alg_info_ike = NULL;
 	}
-	free_ikev2_proposals(&c->ike_proposals);
+	free_ikev2_proposals(&c->v2_ike_proposals);
 
 	if (c->alg_info_esp != NULL) {
 		alg_info_delref(&c->alg_info_esp->ai);
 		c->alg_info_esp = NULL;
 	}
-	free_ikev2_proposals(&c->esp_or_ah_proposals);
+	free_ikev2_proposals(&c->v2_ike_auth_child_proposals);
+	free_ikev2_proposals(&c->v2_create_child_proposals);
+	c->v2_create_child_proposals_default_dh = NULL; /* static pointer */
 
 	pfree(c);
 }
@@ -2650,12 +2652,6 @@ struct connection *route_owner(struct connection *c,
 	for (struct connection *d = connections; d != NULL; d = d->ac_next) {
 		if (!oriented(*d))
 			continue;
-#ifdef KLIPS_MAST
-		/* in mast mode we must also delete the iptables rule */
-		if (kern_interface == USE_MASTKLIPS &&
-		    compatible_overlapping_connections(c, d))
-			continue;
-#endif
 
 		/*
 		 * allow policies different by mark/mask

@@ -123,3 +123,18 @@ const char *ipstr(const ip_address *src, ipstr_buf *b)
 	addrtot(src, 0, b->private_buf, sizeof(b->private_buf));
 	return b->private_buf;
 }
+
+chunk_t same_ip_address_as_chunk(const ip_address *address)
+{
+	if (address == NULL) {
+		return empty_chunk;
+	}
+	switch (address->u.v4.sin_family) {
+	case AF_INET:
+		return chunk((void*)&address->u.v4.sin_addr.s_addr, 4); /* strip const */
+	case AF_INET6:
+		return chunk((void*)&address->u.v6.sin6_addr, 16); /* strip const */
+	default:
+		return empty_chunk;
+	}
+}

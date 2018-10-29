@@ -98,9 +98,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						   struct msg_digest *md,
 						   bool pam_status);
 
-static void ikev2_calc_dcookie(u_char *dcookie, chunk_t st_ni,
-			      const ip_address *addr, chunk_t spiI);
-
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
@@ -505,12 +502,11 @@ static void ikev2_crypto_continue(struct state *st,
 }
 
 /*
- * Check the MODP (KE) group matches the accepted proposal.
- *
- * The caller is responsible for freeing any scratch objects.
+ * Check that the bundled keying material (KE) matches the accepted
+ * proposal and if it doesn't send out a notification returning true.
  */
-static stf_status ikev2_match_ke_group_and_proposal(struct msg_digest *md,
-						    const struct oakley_group_desc *accepted_dh)
+static bool v2_reject_wrong_ke_for_proposal(struct msg_digest *md,
+					    const struct oakley_group_desc *accepted_dh)
 {
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
@@ -524,10 +520,10 @@ static stf_status ikev2_match_ke_group_and_proposal(struct msg_digest *md,
 		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
 		send_v2_notification_invalid_ke(md, accepted_dh);
 		pexpect(md->st == NULL);
-		return STF_FAIL;
+		return true;
+	} else {
+		return false;
 	}
-
-	return STF_OK;
 }
 
 /*
@@ -833,8 +829,9 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	 * Initialize st->st_oakley, including the group number.
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
-	ikev2_need_ike_proposals(c, "IKE SA initiator selecting KE");
-	st->st_oakley.ta_dh = ikev2_proposals_first_dh(c->ike_proposals);
+	struct ikev2_proposals *ike_proposals =
+		get_v2_ike_proposals(c, "IKE SA initiator selecting KE");
+	st->st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals);
 	if (st->st_oakley.ta_dh == NULL) {
 		libreswan_log("proposals do not contain a valid DH");
 		delete_state(st); /* pops state? */
@@ -958,30 +955,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 			return STF_INTERNAL_ERROR;
 		}
 	}
+
 	/* SA out */
-	{
-		ikev2_need_ike_proposals(c, "IKE SA initiator emitting local proposals");
-		/*
-		 * Since this is an initial IKE exchange, the SPI is
-		 * emitted as is part of the packet header and not the
-		 * proposal.  Hence the NULL SPIs.
-		 */
-		u_char *sa_start = rbody.cur;
-		bool ret = ikev2_emit_sa_proposals(&rbody,
-						   c->ike_proposals,
-						   (chunk_t*)NULL);
-		if (!ret) {
-			libreswan_log("outsa fail");
-			reset_cur_state();
-			return STF_INTERNAL_ERROR;
-		}
-		/* save initiator SA for later HASH */
-		if (st->st_p1isa.ptr == NULL) {
-			/* no leak! (MUST be first time) */
-			clonetochunk(st->st_p1isa, sa_start,
-				     rbody.cur - sa_start,
-				     "SA in ikev2_parent_outI1_common");
-		}
+
+	struct ikev2_proposals *ike_proposals =
+		get_v2_ike_proposals(c, "IKE SA initiator emitting local proposals");
+	if (!ikev2_emit_sa_proposals(&rbody, ike_proposals,
+				     (chunk_t*)NULL /* IKE - no CHILD SPI */)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
@@ -1108,116 +1089,6 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 {
 	passert(null_st == NULL);	/* initial responder -> no state */
 
-	struct payload_digest *seen_dcookie = NULL;
-	bool require_dcookie = require_ddos_cookies();
-
-	if (drop_new_exchanges()) {
-		/* only log for debug to prevent disk filling up */
-		DBG(DBG_CONTROL, DBG_log("pluto is overloaded with half-open IKE SAs - dropping IKE_INIT request"));
-		return STF_IGNORE;
-	}
-
-	/* Process NOTIFY payloads, including checking for a DCOOKIE */
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		if (ntfy->payload.v2n.isan_type == v2N_COOKIE) {
-			if (seen_dcookie == NULL) {
-				DBG(DBG_CONTROLMORE,
-					DBG_log("Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
-				seen_dcookie = ntfy;
-				if (ntfy != md->chain[ISAKMP_NEXT_v2N]) {
-					/* ??? Should this error be logged?  Might make DDOS worse. */
-					DBG(DBG_CONTROL, DBG_log("ERROR: NOTIFY payload of type COOKIE is not the first payload"));
-					/* accept dcookie anyway */
-				}
-			} else {
-				/* ??? Should this error be logged?  Might make DDOS worse. */
-				DBG(DBG_CONTROL,
-					DBG_log("ignoring second NOTIFY payload of type COOKIE"));
-			}
-		}
-	}
-
-	/*
-	 * The RFC states we should ignore unexpected cookies. We purposefully
-	 * violate the RFC and validate the cookie anyway. This prevents an
-	 * attacker from being able to inject a lot of data used later to HMAC
-	 */
-	if (seen_dcookie != NULL || require_dcookie) {
-		u_char dcookie[SHA2_256_DIGEST_SIZE];
-		chunk_t dc, ni, spiI;
-
-		setchunk(spiI, md->hdr.isa_icookie, COOKIE_SIZE);
-		setchunk(ni, md->chain[ISAKMP_NEXT_v2Ni]->pbs.cur,
-			md->chain[ISAKMP_NEXT_v2Ni]->payload.v2gen.isag_length);
-		/*
-		 * RFC 5996 Section 2.10
-		 * Nonces used in IKEv2 MUST be randomly chosen, MUST be at
-		 * least 128 bits in size, and MUST be at least half the key
-		 * size of the negotiated pseudorandom function (PRF).
-		 * (We can check for minimum 128bit length)
-		 */
-
-		/*
-		 * XXX: Note that we check the nonce size in accept_v2_nonce() so this
-		 * check is extra. I guess since we need to extract the nonce to calculate
-		 * the cookie, it is cheap to check here and reject.
-		 */
-
-		if (ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < ni.len) {
-			/*
-			 * If this were a DDOS, we cannot afford to log.
-			 * We do log if we are debugging.
-			 */
-			DBG(DBG_CONTROL, DBG_log("Dropping message with insufficient length Nonce"));
-			return STF_IGNORE;
-		}
-
-		ikev2_calc_dcookie(dcookie, ni, &md->sender, spiI);
-		dc.ptr = dcookie;
-		dc.len = SHA2_256_DIGEST_SIZE;
-
-		if (seen_dcookie != NULL) {
-			/* we received a dcookie: verify that it is the one we sent */
-
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("received a DOS cookie in I1 verify it"));
-			if (seen_dcookie->payload.v2n.isan_spisize != 0) {
-				DBG(DBG_CONTROLMORE, DBG_log(
-					"DOS cookie contains non-zero length SPI - message discarded"
-				));
-				return STF_IGNORE;
-			}
-
-			const pb_stream *dc_pbs = &seen_dcookie->pbs;
-			chunk_t idc = {.ptr = dc_pbs->cur, .len = pbs_left(dc_pbs)};
-
-			DBG(DBG_CONTROLMORE,
-			    DBG_dump_chunk("received dcookie", idc);
-			    DBG_dump("dcookie computed", dcookie,
-				     SHA2_256_DIGEST_SIZE));
-
-			if (idc.len != SHA2_256_DIGEST_SIZE ||
-			    !memeq(idc.ptr, dcookie, SHA2_256_DIGEST_SIZE)) {
-				DBG(DBG_CONTROLMORE, DBG_log(
-					"mismatch in DOS v2N_COOKIE: dropping message (possible attack)"
-				));
-				return STF_IGNORE;
-			}
-			DBG(DBG_CONTROLMORE, DBG_log(
-				"dcookie received matched computed one"));
-		} else {
-			/* we are under DOS attack and I1 contains no COOKIE */
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("busy mode on. received I1 without a valid dcookie");
-			    DBG_log("send a dcookie and forget this state"));
-			send_v2_notification_from_md(md, v2N_COOKIE, &dc);
-			return STF_FAIL;
-		}
-	} else {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("anti-DDoS cookies not required (and no cookie received)"));
-	}
-
 	/* authentication policy alternatives in order of decreasing preference */
 	static const lset_t policies[] = { POLICY_ECDSA, POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
 
@@ -1297,7 +1168,8 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	}
 
 	/* Get the proposals ready.  */
-	ikev2_need_ike_proposals(c, "IKE SA responder matching remote proposals");
+	struct ikev2_proposals *ike_proposals =
+		get_v2_ike_proposals(c, "IKE SA responder matching remote proposals");
 
 	/*
 	 * Select the proposal.
@@ -1311,7 +1183,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 						  /*expect_accepted*/ FALSE,
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
 						  &accepted_ike_proposal,
-						  c->ike_proposals);
+						  ike_proposals);
 	if (ret != STF_OK)
 		return ret;
 
@@ -1339,12 +1211,16 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	 */
 
 	/*
-	 * Check the MODP group in the payload matches the accepted proposal.
+	 * Check the MODP group in the payload matches the accepted
+	 * proposal.
 	 */
-	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.ta_dh);
-	if (ret != STF_OK) {
+	if (v2_reject_wrong_ke_for_proposal(md, accepted_oakley.ta_dh)) {
 		free_ikev2_proposal(&accepted_ike_proposal);
-		return ret;
+		/*
+		 * If there was a state then this could return
+		 * STF_FATAL and let the caller clean up the mess.
+		 */
+		return STF_FAIL; /* XXX: STF_FATAL? */
 	}
 
 	/*
@@ -1785,9 +1661,10 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			pstats(invalidke_recv_s, sg.sg_group);
 			pstats(invalidke_recv_u, st->st_oakley.ta_dh->group);
 
-			ikev2_need_ike_proposals(c, "IKE SA initiator validating remote's suggested KE");
+			struct ikev2_proposals *ike_proposals =
+				get_v2_ike_proposals(c, "IKE SA initiator validating remote's suggested KE");
 
-			if (ikev2_proposals_include_modp(c->ike_proposals, sg.sg_group)) {
+			if (ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
 				/*
 				 * Since there must be a group object
@@ -2054,7 +1931,8 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-		ikev2_need_ike_proposals(c, "IKE SA initiator accepting remote proposal");
+		struct ikev2_proposals *ike_proposals =
+			get_v2_ike_proposals(c, "IKE SA initiator accepting remote proposal");
 
 		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 							  &sa_pd->pbs,
@@ -2063,7 +1941,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 							  /*expect_accepted*/ TRUE,
 							  LIN(POLICY_OPPORTUNISTIC, c->policy),
 							  &st->st_accepted_ike_proposal,
-							  c->ike_proposals);
+							  ike_proposals);
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()"));
 			return ret;
@@ -2749,17 +2627,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			 sizeof(proto_info->our_spi));
 
 		/*
-		 * UNSET_GROUP means strip DH from the proposal. A
-		 * CHILD_SA established during an AUTH exchange does
+		 * A CHILD_SA established during an AUTH exchange does
 		 * not propose DH - the IKE SA's SKEYSEED is always
 		 * used.
 		 */
-		free_ikev2_proposals(&cc->esp_or_ah_proposals);
-		ikev2_need_esp_or_ah_proposals(cc,
-					       "IKE SA initiator emitting ESP/AH proposals",
-					       &unset_group);
-
-		if (!ikev2_emit_sa_proposals(&sk.pbs, cc->esp_or_ah_proposals,
+		struct ikev2_proposals *child_proposals =
+			get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals");
+		if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals,
 					     &local_spi))
 			return STF_INTERNAL_ERROR;
 
@@ -3491,40 +3365,34 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		ikev2_child_sa_proto_info(st, c->policy);
 	stf_status ret;
 
-	char *what;
-	const struct oakley_group_desc *default_dh;
+	const char *what;
+	struct ikev2_proposals *child_proposals;
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		if (st->st_state == STATE_V2_CREATE_I) {
-			what = "ESP/AH initiator accepting remote proposal";
+			what = "CREATE_CHILD_SA initiator accepting remote ESP/AH proposal";
 		} else {
-			what = "ESP/AH responder matching remote proposals";
+			what = "CREATE_CHILD_SA responder matching remote ESP/AH proposals";
 		}
-		default_dh = (c->policy & POLICY_PFS) != LEMPTY
+		const struct oakley_group_desc *default_dh = (c->policy & POLICY_PFS) != LEMPTY
 			? ike->sa.st_oakley.ta_dh
 			: &ike_alg_dh_none;
+		child_proposals = get_v2_create_child_proposals(c, what, default_dh);
 	} else if (expect_accepted) {
-		what = "IKE SA initiator accepting remote ESP/AH proposal";
-		default_dh = &unset_group; /* no DH */
+		what = "IKE_AUTH initiator accepting remote ESP/AH proposal";
+		child_proposals = get_v2_ike_auth_child_proposals(c, what);
 	} else {
-		what = "IKE SA responder matching remote ESP/AH proposals";
-		default_dh = &unset_group; /* no DH */
+		what = "IKE_AUTH responder matching remote ESP/AH proposals";
+		child_proposals = get_v2_ike_auth_child_proposals(c, what);
 	}
-
-	if (!expect_accepted) {
-		/* preparing to initiate or parse a request flush old ones */
-		free_ikev2_proposals(&c->esp_or_ah_proposals);
-	}
-
-	ikev2_need_esp_or_ah_proposals(c, what, default_dh);
 
 	ret = ikev2_process_sa_payload(what,
-			&sa_pd->pbs,
-			/*expect_ike*/ FALSE,
-			/*expect_spi*/ TRUE,
-			expect_accepted,
-			LIN(POLICY_OPPORTUNISTIC, c->policy),
-			&st->st_accepted_esp_or_ah_proposal,
-			c->esp_or_ah_proposals);
+				       &sa_pd->pbs,
+				       /*expect_ike*/ FALSE,
+				       /*expect_spi*/ TRUE,
+				       expect_accepted,
+				       LIN(POLICY_OPPORTUNISTIC, c->policy),
+				       &st->st_accepted_esp_or_ah_proposal,
+				       child_proposals);
 
 	if (ret != STF_OK) {
 		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
@@ -4085,42 +3953,6 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	return ikev2_process_ts_and_rest(md);
 }
 
-/*
- * Cookie = <VersionIDofSecret> | Hash(Ni | IPi | SPIi | <secret>)
- * where <secret> is a randomly generated secret known only to us
- *
- * Our implementation does not use <VersionIDofSecret> which means
- * once a day and while under DOS attack, we could fail a few cookies
- * until the peer restarts from scratch.
- *
- * TODO: This use of sha2 should be allowed even with USE_SHA2=false
- */
-static void ikev2_calc_dcookie(u_char *dcookie, chunk_t ni,
-			      const ip_address *addr, chunk_t spiI)
-{
-	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
-						 "dcookie", DBG_CRYPT);
-
-	crypt_hash_digest_chunk(ctx, "ni", ni);
-
-	const unsigned char *addr_ptr;
-	size_t addr_length = addrbytesptr_read(addr, &addr_ptr);
-	crypt_hash_digest_bytes(ctx, "addr", addr_ptr, addr_length);
-
-	crypt_hash_digest_chunk(ctx, "spiI", spiI);
-	crypt_hash_digest_bytes(ctx, "sod", ikev2_secret_of_the_day,
-				SHA2_256_DIGEST_SIZE);
-	crypt_hash_final_bytes(&ctx, dcookie, SHA2_256_DIGEST_SIZE);
-	DBG(DBG_PRIVATE,
-	    DBG_log("ikev2 secret_of_the_day used %s, length %d",
-		    ikev2_secret_of_the_day,
-		    SHA2_256_DIGEST_SIZE));
-
-	DBG(DBG_CRYPT,
-	    DBG_dump("computed dcookie: HASH(Ni | IPi | SPIi | <secret>)",
-		     dcookie, SHA2_256_DIGEST_SIZE));
-}
-
 static struct state *find_state_to_rekey(struct payload_digest *p,
 		struct state *pst)
 {
@@ -4334,8 +4166,16 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 	setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			sizeof(proto_info->our_spi));
 
-	if (!ikev2_emit_sa_proposals(outpbs, cc->esp_or_ah_proposals,
-				     &local_spi))
+	/*
+	 * HACK: Use the CREATE_CHILD_SA proposal suite hopefully
+	 * generated during the CHILD SA's initiation.
+	 *
+	 * XXX: this code should be either using get_v2...() (hard to
+	 * figure out what DEFAULT_DH is) or saving the proposal in
+	 * the state.
+	 */
+	passert(cc->v2_create_child_proposals != NULL);
+	if (!ikev2_emit_sa_proposals(outpbs, cc->v2_create_child_proposals, &local_spi))
 		return STF_INTERNAL_ERROR;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
@@ -4428,12 +4268,11 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 				sizeof(st->st_icookie));
 		local_nonce = st->st_ni;
 
-		/* ??? why do we need to free the previous proposals? */
-		free_ikev2_proposals(&c->ike_proposals);
-		ikev2_need_ike_proposals(c, "IKE SA initiating rekey");
+		struct ikev2_proposals *ike_proposals =
+			get_v2_ike_proposals(c, "IKE SA initiating rekey");
 
 		/* send v2 IKE SAs*/
-		if (!ikev2_emit_sa_proposals(outpbs, c->ike_proposals, &local_spi))  {
+		if (!ikev2_emit_sa_proposals(outpbs, ike_proposals, &local_spi))  {
 			libreswan_log("outsa fail");
 			DBG(DBG_CONTROL, DBG_log("problem emitting connection ike proposals in CREATE_CHILD_SA"));
 			return STF_INTERNAL_ERROR;
@@ -4495,7 +4334,8 @@ static notification_t process_ike_rekey_sa_pl_response(struct msg_digest *md,
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 
 	/* Get the proposals ready.  */
-	ikev2_need_ike_proposals(c, "IKE SA accept response to rekey");
+	struct ikev2_proposals *ike_proposals =
+		get_v2_ike_proposals(c, "IKE SA accept response to rekey");
 
 	stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 						  &sa_pd->pbs,
@@ -4504,7 +4344,7 @@ static notification_t process_ike_rekey_sa_pl_response(struct msg_digest *md,
 						  /*expect_accepted*/ TRUE,
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
 						  &st->st_accepted_ike_proposal,
-						  c->ike_proposals);
+						  ike_proposals);
 	if (ret != STF_OK) {
 		DBG(DBG_CONTROLMORE, DBG_log("failed to accept IKE SA, REKEY, response, in process_ike_rekey_sa_pl_response"));
 		return ret;
@@ -4540,7 +4380,8 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 
 	/* Get the proposals ready.  */
-	ikev2_need_ike_proposals(c, "IKE SA responding to rekey");
+	struct ikev2_proposals *ike_proposals =
+		get_v2_ike_proposals(c, "IKE SA responding to rekey");
 
 	struct ikev2_proposal *accepted_ike_proposal = NULL;
 	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
@@ -4550,7 +4391,7 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 			/*expect_accepted*/ FALSE,
 			LIN(POLICY_OPPORTUNISTIC, c->policy),
 			&accepted_ike_proposal,
-			c->ike_proposals);
+			ike_proposals);
 	if (ret != STF_OK)
 		return ret;
 
@@ -4568,11 +4409,15 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 		return STF_IGNORE;
 	}
 
-	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.ta_dh);
-	if (ret != STF_OK) {
+	if (v2_reject_wrong_ke_for_proposal(md, accepted_oakley.ta_dh)) {
 		free_ikev2_proposal(&accepted_ike_proposal);
 		md->st = pst;
-		return ret;
+		/*
+		 * XXX; where is 'st' freed?  Should the code instead
+		 * tunnel back md.st==st and return STF_FATAL which
+		 * will delete the child state?
+		 */
+		return STF_FAIL; /* XXX; STF_FATAL? */
 	}
 
 	/*
@@ -5746,20 +5591,25 @@ void ikev2_initiate_child_sa(struct pending *p)
 		const struct state *rst = state_with_serialno(p->replacing);
 
 		/*
-		 * Because the proposal generated during AUTH won't contain DH,
-		 * always force the proposal to be re-generated here.  Not the
-		 * most efficient, fix probably means moving the proposals to
-		 * the state object.
+		 * Use the CREATE_CHILD_SA proposal suite - the
+		 * proposal generated during IKE_AUTH will have been
+		 * stripped of DH.
+		 *
+		 * XXX: If the IKE SA's DH changes, then the child
+		 * proposals will be re-generated.  Should the child
+		 * proposals instead be somehow stored in state and
+		 * dragged around?
 		 */
-		free_ikev2_proposals(&c->esp_or_ah_proposals);
 		const struct oakley_group_desc *default_dh =
 			c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
+		struct ikev2_proposals *child_proposals =
+			get_v2_create_child_proposals(c,
+						      "ESP/AH initiator emitting proposals",
+						      default_dh);
+		/* see ikev2_child_add_ipsec_payloads */
+		passert(c->v2_create_child_proposals != NULL);
 
-		ikev2_need_esp_or_ah_proposals(c,
-					       "ESP/AH initiator emitting proposals",
-					       default_dh);
-
-		st->st_pfs_group = ikev2_proposals_first_dh(c->esp_or_ah_proposals);
+		st->st_pfs_group = ikev2_proposals_first_dh(child_proposals);
 
 		DBG(DBG_CONTROLMORE, {
 			const char *pfsgroupname = st->st_pfs_group == NULL ?

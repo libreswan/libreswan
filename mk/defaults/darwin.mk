@@ -8,11 +8,8 @@ CC=gcc
 PORTINCLUDE= -I/opt/local/include
 USERLINK=-L/usr/local/lib -L/opt/local/lib
 
-USE_MAST=false
-USE_KLIPS=false
 USE_NETKEY=false
 USE_WIN2K=false
-BUILD_KLIPS=false
 # no longer needed now the bison/yacc options got updated
 USE_YACC=false
 
@@ -22,7 +19,6 @@ USE_BSDKAME=true
 USE_PFKEYv2=true
 
 # build modules, etc. for KLIPS.
-BUILD_KLIPS=false
 
 CRYPT_LDFLAGS =
 

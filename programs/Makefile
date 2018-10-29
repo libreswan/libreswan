@@ -41,9 +41,6 @@ endif
 ifeq ($(USE_KLIPS),true)
 SUBDIRS+= _updown.klips eroute klipsdebug pf_key spi spigrp tncfg
 endif
-ifeq ($(USE_MAST),true)
-SUBDIRS+= _updown.mast
-endif
 ifeq ($(USE_NETKEY),true)
 SUBDIRS+= _updown.netkey
 endif

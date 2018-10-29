@@ -4,7 +4,8 @@ KVM_KICKSTART_FILE = testing/libvirt/fedora28.ks
 # LIE!
 KVM_OS_VARIANT ?= fedora26
 KVM_PACKAGE_INSTALL = dnf install -y
-KVM_DEBUGINFO_INSTALL = dnf  debuginfo-install -y
+KVM_PACKAGE_UPGRADE = dnf upgrade -y
+KVM_DEBUGINFO_INSTALL = dnf debuginfo-install -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 
 KVM_PACKAGES = \

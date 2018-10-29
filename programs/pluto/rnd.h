@@ -21,12 +21,6 @@
 
 #include "chunk.h"
 
-/* for SHA1_DIGEST_SIZE */
-#include "constants.h"
-#include "ietf_constants.h"
-
-extern uint8_t ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
-
 extern void fill_rnd_chunk(chunk_t chunk);
 extern void get_rnd_bytes(uint8_t *buffer, int length);
 

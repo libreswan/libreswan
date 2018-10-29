@@ -17,7 +17,7 @@ import re
 import shutil
 import functools
 import copy
-import bz2
+import gzip
 
 from collections import defaultdict
 from datetime import datetime
@@ -152,8 +152,9 @@ def test_output_files(logger, args, result):
             logger.info("copying '%s' to '%s'", src, dst)
             shutil.copyfile(src, dst)
             continue
-        # copy compressed files
-        dst = dst + ".bz2"
+        # copy compressed files; gzip is used as that works with the
+        # web's deflate?!?
+        dst = dst + ".gz"
         if os.path.isfile(dst) \
         and os.path.getmtime(src) < os.path.getmtime(dst):
             continue
@@ -161,7 +162,7 @@ def test_output_files(logger, args, result):
             logger.info("compressing '%s' to '%s'", src, dst)
             with open(src, "rb") as f:
                 data = f.read()
-            with bz2.open(dst, "wb") as f:
+            with gzip.open(dst, "wb") as f:
                 f.write(data)
             continue
 

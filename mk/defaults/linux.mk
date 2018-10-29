@@ -24,11 +24,6 @@ MODULE_FLAGS:=KLIPSMODULE=true -f ${MODULE_DEFCONFIG}
 
 PORTDEFINE=-DSCANDIR_HAS_CONST
 
-# include KLIPS support
-USE_KLIPS?=true
-
-# build modules, etc. for KLIPS.
-BUILD_KLIPS?=true
 BISONOSFLAGS=-g --verbose
 
 USE_LABELED_IPSEC?=true

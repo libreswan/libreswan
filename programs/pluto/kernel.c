@@ -2213,13 +2213,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->natt_dport = natt_dport;
 		said_next->natt_type = natt_type;
 		said_next->natt_oa = &natt_oa;
-#ifdef KLIPS_MAST
-		if (st->st_esp.attrs.encapsulation ==
-			ENCAPSULATION_MODE_TRANSPORT &&
-			useful_mastno != -1)
-			said_next->outif = MASTTRANSPORT_OFFSET +
-				useful_mastno;
-#endif
 		said_next->text_said = text_esp;
 
 		DBG(DBG_PRIVATE, {
@@ -2632,7 +2625,7 @@ void init_kernel(void)
 {
 	struct utsname un;
 
-#if defined(NETKEY_SUPPORT) || defined(KLIPS) || defined(KLIPS_MAST)
+#if defined(NETKEY_SUPPORT) || defined(KLIPS)
 	struct stat buf;
 #endif
 
@@ -2667,31 +2660,11 @@ void init_kernel(void)
 		break;
 #endif
 
-#if defined(KLIPS_MAST)
-	case USE_MASTKLIPS:
-		if (stat("/proc/sys/net/ipsec/debug_mast", &buf) != 0) {
-			libreswan_log("No MASTKLIPS kernel interface detected");
-			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
-		}
-		libreswan_log("Using KLIPSng (mast) IPsec interface code on %s",
-			kversion);
-		kernel_ops = &mast_kernel_ops;
-		break;
-#endif
-
 #if defined(BSD_KAME)
 	case USE_BSDKAME:
 		libreswan_log("Using BSD/KAME IPsec interface code on %s",
 			kversion);
 		kernel_ops = &bsdkame_kernel_ops;
-		break;
-#endif
-
-#if defined(WIN32) && defined(WIN32_NATIVE)
-	case USE_WIN32_NATIVE:
-		libreswan_log("Using Win2K native IPsec interface code on %s",
-			kversion);
-		kernel_ops = &win2k_kernel_ops;
 		break;
 #endif
 
@@ -3367,7 +3340,6 @@ void delete_ipsec_sa(struct state *st)
 		linux_audit_conn(st, LAK_CHILD_DESTROY);
 #endif
 	switch (kern_interface) {
-	case USE_MASTKLIPS:
 	case USE_KLIPS:
 	case USE_NETKEY:
 		{
@@ -3437,16 +3409,6 @@ void delete_ipsec_sa(struct state *st)
 							libreswan_log("shunt_eroute() failed replace with shunt in delete_ipsec_sa()");
 						}
 					}
-
-#ifdef KLIPS_MAST
-					/* in mast mode we must also delete the iptables rule */
-					if (kern_interface == USE_MASTKLIPS)
-						if (!sag_eroute(st, sr,
-									ERO_DELETE,
-									"delete")) {
-							libreswan_log("sag_eroute() failed delete in delete_ipsec_sa()");
-						}
-#endif
 				}
 			}
 			(void) teardown_half_ipsec_sa(st, FALSE);
@@ -3454,12 +3416,6 @@ void delete_ipsec_sa(struct state *st)
 		(void) teardown_half_ipsec_sa(st, TRUE);
 
 		break;
-#if defined(WIN32) && defined(WIN32_NATIVE)
-	case USE_WIN32_NATIVE:
-		DBG(DBG_CONTROL,
-			DBG_log("No support (required?) to delete_ipsec_sa with Win2k"));
-		break;
-#endif
 	case NO_KERNEL:
 		DBG(DBG_CONTROL,
 			DBG_log("No support required to delete_ipsec_sa with NoKernel support"));

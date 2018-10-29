@@ -53,6 +53,7 @@ OBJS += ikev1_send.o
 
 OBJS += ikev2_send.o
 OBJS += ikev2_message.o
+OBJS += ikev2_cookie.o
 
 OBJS += state_db.o
 OBJS += show.o
@@ -67,8 +68,8 @@ ifeq ($(USE_GLIBC_KERN_FLIP_HEADERS),true)
 CFLAGS+=-DGLIBC_KERN_FLIP_HEADERS
 endif
 
-# where to find klips headers and Libreswan headers
-HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
+# where to find libreswan headers
+HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto
 
 ifeq ($(USE_PFKEYv2),true)
 OBJS += kernel_pfkey.o
@@ -80,10 +81,6 @@ endif
 
 ifeq ($(USE_KLIPS),true)
 OBJS += kernel_klips.o
-endif
-
-ifeq ($(USE_MAST),true)
-OBJS += kernel_mast.o
 endif
 
 ifeq ($(USE_BSDKAME),true)

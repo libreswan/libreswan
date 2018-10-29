@@ -327,9 +327,23 @@ struct connection {
 	 * Since they are allocated on-demand so there's no need to
 	 * worry about copying them when a connection object gets
 	 * cloned.
+	 *
+	 * For a child SA, two different proposals are used:
+	 *
+	 * - during the IKE_AUTH exchange a proposal stripped of any
+	 *   DH (it uses keying material from the IKE SA's SKSEED).
+	 *
+	 * - during a CREATE_CHILD_SA exchange, a mash up of the
+	 *   proposal and the IKE SA's DH algorithm.  Since the IKE
+	 *   SA's DH can change, it too is saved so a rebuild can be
+	 *   triggered.
+	 *
+	 * XXX: has to be a better way?
 	 */
-	struct ikev2_proposals *ike_proposals;
-	struct ikev2_proposals *esp_or_ah_proposals;
+	struct ikev2_proposals *v2_ike_proposals;
+	struct ikev2_proposals *v2_ike_auth_child_proposals;
+	struct ikev2_proposals *v2_create_child_proposals;
+	const struct oakley_group_desc *v2_create_child_proposals_default_dh;
 
 	/* host_pair linkage */
 	struct host_pair *host_pair;

@@ -98,11 +98,27 @@ void DBG_log_ikev2_proposal(const char *prefix, const struct ikev2_proposal *pro
 void free_ikev2_proposal(struct ikev2_proposal **proposal);
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
-void ikev2_need_ike_proposals(struct connection *c, const char *why);
+/*
+ * On-demand, generate proposals for either the IKE SA or the CHILD
+ * SA.
+ *
+ * For CHILD SAs, two different proposal suites are used: during the
+ * IKE_AUTH exchange a stripped down proposal that excludes DH; and
+ * during the CREATE_CHILD_SA exchange DH a mashed up proposal that
+ * can include the IKE SA's latest DH.
+ *
+ * This is done on-demand as, only at the point where the IKE or CHILD
+ * SA is being instantiated, is it clear what proposals are needed.
+ * For instance, when a CHILD SA shares an existing IKE SA, the CHILD
+ * won't need IKE proposals but will need the IKE SA's DH.
+ *
+ * XXX: Should the CREATE CHILD SA proposals be stored in the state?
+ */
 
-void ikev2_need_esp_or_ah_proposals(struct connection *c,
-				    const char *why,
-				    const struct oakley_group_desc *default_dh);
+struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *why);
+struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, const char *why);
+struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, const char *why,
+						      const struct oakley_group_desc *default_dh);
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
 			    const struct ikev2_proposal *proposal,

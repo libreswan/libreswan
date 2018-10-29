@@ -23,7 +23,8 @@
 
 #include "lswnss.h"
 #include "lswlog.h"
-#include "ike_spi.h"
+#include "ike_spi.h"		/* for refresh_ike_spi_secret() */
+#include "ikev2_cookie.h"	/* for refresh_v2_cookie_secret() */
 
 #include "timer.h"
 
@@ -80,9 +81,6 @@ void fill_rnd_chunk(chunk_t chunk)
 	get_rnd_bytes(chunk.ptr, chunk.len);
 }
 
-uint8_t secret_of_the_day[SHA1_DIGEST_SIZE];
-uint8_t ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
-
 void init_secret(void)
 {
 	/*
@@ -90,6 +88,6 @@ void init_secret(void)
 	 * schedule an event for refresh.
 	 */
 	refresh_ike_spi_secret();
-	get_rnd_bytes(ikev2_secret_of_the_day, sizeof(secret_of_the_day));
+	refresh_v2_cookie_secret();
 	event_schedule_s(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
 }

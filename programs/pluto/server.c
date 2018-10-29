@@ -669,10 +669,8 @@ void find_ifaces(bool rm_dead)
 		mark_ifaces_dead();
 
 	if (kernel_ops->process_ifaces != NULL) {
-#if !defined(__CYGWIN32__)
 		kernel_ops->process_ifaces(find_raw_ifaces4());
 		kernel_ops->process_ifaces(find_raw_ifaces6());
-#endif
 		kernel_ops->process_ifaces(static_ifn);
 	}
 

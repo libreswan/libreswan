@@ -8,7 +8,6 @@ include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk
 
-INCLUDES+=-I${KLIPSINC}
 INCLUDES+=-I${LIBRESWANSRCDIR}/include
 # nss
 INCLUDES+=${NSSFLAGS}

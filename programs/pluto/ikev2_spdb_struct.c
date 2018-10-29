@@ -1993,29 +1993,30 @@ static struct ikev2_proposals default_ikev2_ike_proposals = {
 };
 
 /*
- * Ensure c->ike_proposals is filled in.  If not, build it.
+ * On-demand compute and return the IKE proposals for the connection.
  *
- * ??? if c->ike_proposals was set for v1 we won't change it.
+ * If the default alg_info_ike includes unknown algorithms those get
+ * dropped, which can lead to no proposals.
  *
- * WARNING: alg_info_ike is IKEv1
- *
- * If alg_info_ike includes unknown algorithms those get dropped,
- * which can lead to no proposals.
- * c->ike_proposals will not be NULL (see passert).
+ * Never returns NULL (see passert).
  */
 
-void ikev2_need_ike_proposals(struct connection *c, const char *why) {
-	if (c->ike_proposals != NULL) {
-		DBGF(DBG_CONTROL, "already constructed local IKE proposals for connection %s (%s)",
-		     c->name, why);
-		return;
+struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *why)
+{
+	if (c->v2_ike_proposals != NULL) {
+		LSWDBGP(DBG_CONTROL, buf) {
+			lswlogf(buf, "using existing local IKE proposals for connection %s (%s): ",
+				c->name, why);
+			print_proposals(buf, c->v2_ike_proposals);
+		}
+		return c->v2_ike_proposals;
 	}
 
 	const char *notes;
 	if (c->alg_info_ike == NULL) {
 		DBGF(DBG_CONTROL, "selecting default constructed local IKE proposals for connection %s (%s)",
 		     c->name, why);
-		c->ike_proposals = &default_ikev2_ike_proposals;
+		c->v2_ike_proposals = &default_ikev2_ike_proposals;
 		notes = " (default)";
 	} else {
 		DBGF(DBG_CONTROL, "constructing local IKE proposals for %s (%s)",
@@ -2043,17 +2044,18 @@ void ikev2_need_ike_proposals(struct connection *c, const char *why) {
 				proposals->roof++;
 			}
 		}
-		c->ike_proposals = proposals;
+		c->v2_ike_proposals = proposals;
 		notes = "";
 	}
 
-	LSWLOG(buf) {
+	LSWLOG_CONNECTION(c, buf) {
 		lswlogf(buf, "constructed local IKE proposals for %s (%s): ",
 			c->name, why);
-		print_proposals(buf, c->ike_proposals);
+		print_proposals(buf, c->v2_ike_proposals);
 		lswlogs(buf, notes);
 	}
-	passert(c->ike_proposals != NULL);
+	passert(c->v2_ike_proposals != NULL);
+	return c->v2_ike_proposals;
 }
 
 static struct ikev2_proposal default_ikev2_esp_proposal_missing_esn[] = {
@@ -2143,19 +2145,23 @@ static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
 	}
 }
 
-void ikev2_need_esp_or_ah_proposals(struct connection *c,
-				    const char *why,
-				    const struct oakley_group_desc *default_dh)
+static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **child_proposals,
+						      struct connection *c,
+						      const char *why,
+						      const struct oakley_group_desc *default_dh)
 {
-	if (c->esp_or_ah_proposals != NULL) {
-		DBGF(DBG_CONTROL, "already constructed local ESP/AH proposals for %s (%s)",
-		     c->name, why);
-		return;
+	if (*child_proposals != NULL) {
+		LSWDBGP(DBG_CONTROL, buf) {
+			lswlogf(buf, "using existing local ESP/AH proposals for %s (%s): ",
+				c->name, why);
+			print_proposals(buf, *child_proposals);
+		}
+		return *child_proposals;
 	}
 
 	const char *notes;
 	if (c->alg_info_esp == NULL) {
-		DBGF(DBG_CONTROL, "selecting default construvted local ESP/AH proposals for %s (%s)",
+		DBGF(DBG_CONTROL, "selecting default local ESP/AH proposals for %s (%s)",
 		     c->name, why);
 		lset_t esp_ah = c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 		struct ikev2_proposals *default_proposals_missing_esn;
@@ -2225,7 +2231,7 @@ void ikev2_need_esp_or_ah_proposals(struct connection *c,
 					break;
 			}
 		}
-		c->esp_or_ah_proposals = proposals;
+		*child_proposals = proposals;
 		notes = " (default)";
 	} else {
 		LSWDBGP(DBG_CONTROL, buf) {
@@ -2306,17 +2312,72 @@ void ikev2_need_esp_or_ah_proposals(struct connection *c,
 			}
 		}
 
-		c->esp_or_ah_proposals = proposals;
+		*child_proposals = proposals;
 		notes = "";
 	}
 
-	LSWLOG(buf) {
+	LSWLOG_CONNECTION(c, buf) {
 		lswlogf(buf, "constructed local ESP/AH proposals for %s (%s): ",
 			c->name, why);
-		print_proposals(buf, c->esp_or_ah_proposals);
+		print_proposals(buf, *child_proposals);
 		lswlogs(buf, notes);
 	}
-	passert(c->esp_or_ah_proposals != NULL);
+	passert(*child_proposals != NULL);
+	return *child_proposals;
+}
+
+/*
+ * If needed, generate the proposals for a CHILD SA being created
+ * during the IKE_AUTH exchange.
+ *
+ * Since a CHILD_SA established during an IKE_AUTH exchange does not
+ * propose DH (keying material is taken from the IKE SA's SKEYSEED),
+ * DH is stripped from the proposals.
+ *
+ * Since only things that affect this proposal suite are the
+ * connection's .policy bits and the contents .alg_info_esp, and
+ * modifiying those triggers the creation of a new connection (true?),
+ * the connection can be cached.
+ */
+
+struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, const char *why)
+{
+	/* UNSET_GROUP means strip DH from the proposal. */
+	return get_v2_child_proposals(&c->v2_ike_auth_child_proposals, c,
+				      why, &unset_group);
+}
+
+/*
+ * If needed, generate the proposals for a CHILD SA being created (or
+ * re-keyed) during a CREATE_CHILD_SA exchange.
+ *
+ * If the proposals do not include DH, and PFS is enabled, then the
+ * DEFAULT_DH (DH used by the IKE SA) is added to all proposals.
+ *
+ * XXX:
+ *
+ * This means that the CHILD SA's proposal suite will change depending
+ * on what DH is negotiated by the IKE SA!  Hence the need to save the
+ * DEFAULT_DH and check for change.  It should probably be storing the
+ * proposal in the state.
+ *
+ * Horrible.
+ */
+struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, const char *why,
+						      const struct oakley_group_desc *default_dh)
+{
+	if (c->v2_create_child_proposals_default_dh != default_dh) {
+		const char *old_fqn = (c->v2_create_child_proposals_default_dh != NULL
+				       ? c->v2_create_child_proposals_default_dh->common.fqn
+				       : "no-PFS");
+		const char *new_fqn = default_dh != NULL ? default_dh->common.fqn : "no-PFS";
+		DBGF(DBG_MASK, "create child proposal's DH changed from %s to %s, flushing",
+		     old_fqn, new_fqn);
+		free_ikev2_proposals(&c->v2_create_child_proposals);
+		c->v2_create_child_proposals_default_dh = default_dh;
+	}
+	return get_v2_child_proposals(&c->v2_create_child_proposals, c, why,
+				      c->v2_create_child_proposals_default_dh);
 }
 
 struct ipsec_proto_info *ikev2_child_sa_proto_info(struct state *st, lset_t policy)

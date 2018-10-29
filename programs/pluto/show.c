@@ -89,7 +89,7 @@ void show_status(void)
 	db_ops_show_status();
 	show_connections_status();
 	show_states_status();
-#ifdef KLIPS
+#if defined(NETKEY_SUPPORT) || defined(KLIPS)
 	show_shunt_status();
 #endif
 }

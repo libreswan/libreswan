@@ -55,7 +55,7 @@ extern const char *check_expiry(realtime_t expiration_date,
 extern volatile bool exiting_pluto;
 extern void exit_pluto(int /*status*/) NEVER_RETURNS;
 
-typedef uint32_t msgid_t;      /* Network order for ikev1, host order for ikev2 */
+typedef uint32_t msgid_t;      /* Host byte ordered */
 
 /* are all bytes 0? */
 extern bool all_zero(const unsigned char *m, size_t len);
