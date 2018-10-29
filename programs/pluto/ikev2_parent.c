@@ -1120,7 +1120,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
 
 	DBG(DBG_CONTROL, {
-			char ci[CONN_INST_BUF];
+		char ci[CONN_INST_BUF];
 		DBG_log("found connection: %s%s with policy %s",
 			c->name, fmt_conn_instance(c, ci),
 			bitnamesof(sa_policy_bit_names, policy));});
@@ -4127,13 +4127,14 @@ static stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 	 */
 
 	DBG(DBG_CONTROLMORE, {
-			char cib[CONN_INST_BUF];
+		char cib[CONN_INST_BUF];
 
-			DBG_log("#%lu inherit spd, TSi TSr, from \"%s\"%s #%lu",
-				st->st_serialno,
-				rst->st_connection->name,
-				fmt_conn_instance(rst->st_connection, cib),
-				rst->st_serialno); });
+		DBG_log("#%lu inherit spd, TSi TSr, from \"%s\"%s #%lu",
+			st->st_serialno,
+			rst->st_connection->name,
+			fmt_conn_instance(rst->st_connection, cib),
+			rst->st_serialno);
+	});
 
 	spd = &rst->st_connection->spd;
 	st->st_ts_this = ikev2_end_to_ts(&spd->this);
