@@ -698,11 +698,17 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 		size_t len = flp->cur - flp->tok - 2;
 
 		clonetochunk(*ppk_id, flp->tok + 1, len, "PPK ID");
-		(void) shift();
 	} else {
 		ugh = "No quotation marks found. PPK ID should be in quotation marks";
 		return ugh;
 	}
+
+	if (!shift()) {
+		ugh = "No PPK found. PPK should be specified after PPK ID";
+		freeanychunk(*ppk_id);
+		return ugh;
+	}
+
 	if (*flp->tok == '"' || *flp->tok == '\'') {
 		size_t len = flp->cur - flp->tok - 2;
 
@@ -726,6 +732,7 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 			/* ttodata didn't like PPK data */
 			ugh = builddiag("PPK data malformed (%s): %s", ugh,
 					flp->tok);
+			freeanychunk(*ppk_id);
 		} else {
 			clonetochunk(*ppk, buf, sz, "PPK");
 			(void) shift();
@@ -955,6 +962,16 @@ static void process_secret(struct secret **psecrets,
 	if (ugh != NULL) {
 		loglog(RC_LOG_SERIOUS, "\"%s\" line %d: %s",
 			flp->filename, flp->lino, ugh);
+		/* free id's that should have been allocated */
+		if (s->ids != NULL) {
+			struct id_list *i, *ni;
+			for (i = s->ids; i != NULL; i = ni) {
+				ni = i->next;	/* grab before freeing i */
+				free_id_content(&i->id);
+				pfree(i);
+			}
+		}
+		/* finally free s */
 		pfree(s);
 	} else if (flushline("expected record boundary in key")) {
 		/* gauntlet has been run: install new secret */
