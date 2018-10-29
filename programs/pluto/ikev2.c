@@ -588,13 +588,14 @@ void init_ikev2(void)
 			t->state < STATE_IKEv2_ROOF);
 		struct finite_state *fs = &v2_states[t->state - STATE_IKEv2_FLOOR];
 		/*
-		 * Point .fs_microcode to the first entry in
+		 * Point .fs_v2_transitions at the first entry in
 		 * v1_state_microcode_table for that state.  All other
 		 * microcodes for that state should follow immediately
 		 * after.
 		 */
-		fs->fs_microcode = t;
+		fs->fs_v2_transitions = t;
 		do {
+			fs->fs_nr_transitions++;
 			t++;
 		} while (t->state == fs->fs_state);
 	} while (t->state < STATE_IKEv2_ROOF);
@@ -2377,7 +2378,7 @@ void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
 	 * Yes.  Unfortunately the code below does all sorts of magic
 	 * involving the state's magic number and assumed attributes.
 	 */
-	md->svm = finite_states[STATE_PARENT_I0]->fs_microcode;
+	md->svm = finite_states[STATE_PARENT_I0]->fs_v2_transitions;
 	change_state(st, STATE_PARENT_I0);
 	/*
 	 * XXX: Why?!?

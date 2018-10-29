@@ -258,7 +258,9 @@ struct finite_state {
 	const char *fs_story;
 	lset_t fs_flags;
 	enum event_type fs_timeout_event;
-	const void *fs_microcode;	/* aka edge */
+	const struct state_v1_microcode *fs_v1_transitions;
+	const struct state_v2_microcode *fs_v2_transitions;
+	size_t fs_nr_transitions;
 };
 
 void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs);

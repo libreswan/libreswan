@@ -628,12 +628,12 @@ void init_ikev1(void)
 			t->state < STATE_IKEv1_ROOF);
 		struct finite_state *fs = &v1_states[t->state - STATE_IKEv1_FLOOR];
 		/*
-		 * Point .fs_microcode to the first entry in
+		 * Point .fs_v1_transitions at to the first entry in
 		 * v1_state_microcode_table for that state.  All other
 		 * microcodes for that state should follow immediately
 		 * after.
 		 */
-		fs->fs_microcode = t;
+		fs->fs_v1_transitions = t;
 		/*
 		 * Copy over the flags that apply to the state; and
 		 * not the edge.
@@ -652,6 +652,7 @@ void init_ikev1(void)
 		}
 		fs->fs_flags |= t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
 		do {
+			fs->fs_nr_transitions++;
 			t++;
 		} while (t->state == fs->fs_state);
 		passert(t->state > fs->fs_state);
@@ -1700,7 +1701,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	passert(STATE_IKEv1_FLOOR <= from_state && from_state < STATE_IKEv1_ROOF);
 	const struct finite_state *fs = finite_states[from_state];
 	passert(fs != NULL);
-	smc = fs->fs_microcode;
+	smc = fs->fs_v1_transitions;
 	passert(smc != NULL);
 
 	/*

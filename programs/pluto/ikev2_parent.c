@@ -424,7 +424,7 @@ static struct msg_digest *fake_md(struct state *st)
 	fake_md->from_state = STATE_IKEv2_BASE;
 	fake_md->hdr.isa_msgid = v2_INVALID_MSGID;
 	/* asume first microcode is valid */
-	fake_md->svm = st->st_finite_state->fs_microcode;
+	fake_md->svm = st->st_finite_state->fs_v2_transitions;
 	return fake_md;
 }
 
