@@ -31,7 +31,8 @@ extern void ikev2_parent_outI1(fd_t whack_sock,
 
 extern void log_ipsec_sa_established(const char *m, const struct state *st);
 
-extern void complete_v2_state_transition(struct msg_digest **mdp,
+extern void complete_v2_state_transition(struct state *st,
+					 struct msg_digest **mdp,
 					 stf_status result);
 
 extern stf_status ikev2_send_livenss_probe(struct state *st);

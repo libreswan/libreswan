@@ -556,7 +556,8 @@ static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 		stf = ikev2_parent_inI2outR2_id_tail(md);
 	}
 
-	complete_v2_state_transition(&md, stf);
+	/* replace (*mdp)->st with st ... */
+	complete_v2_state_transition(md->st, &md, stf);
 	release_any_md(&md);
 	reset_globals();
 }

@@ -1715,7 +1715,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 					send_v2_notification_from_md(md, md->message_payloads.n,
 								     &data);
 				}
-				complete_v2_state_transition(mdp, STF_FAIL);
+				/* replace (*mdp)->st with st ... */
+				complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL);
 				return;
 			}
 		}
@@ -1820,7 +1821,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				 * not having it as a parameter.
 				 */
 				md->st = st;
-				complete_v2_state_transition(mdp, STF_IGNORE);
+				/* replace (*mdp)->st with st ... */
+				complete_v2_state_transition((*mdp)->st, mdp, STF_IGNORE);
 				return;
 			}
 			/*
@@ -1879,7 +1881,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				 * not having it as a parameter.
 				 */
 				md->st = st;
-				complete_v2_state_transition(mdp, STF_FATAL);
+				/* replace (*mdp)->st with st ... */
+				complete_v2_state_transition((*mdp)->st, mdp, STF_FATAL);
 				return;
 			}
 		} /* else { go ahead } */
@@ -1927,10 +1930,12 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		}
 		if (message_payload_status.bad) {
 			ikev2_log_payload_errors(st, md, &message_payload_status);
-			complete_v2_state_transition(mdp, STF_FAIL + v2N_INVALID_SYNTAX);
+			/* replace (*mdp)->st with st ... */
+			complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL + v2N_INVALID_SYNTAX);
 		} else if (encrypted_payload_status.bad) {
 			ikev2_log_payload_errors(st, md, &encrypted_payload_status);
-			complete_v2_state_transition(mdp, STF_FAIL + v2N_INVALID_SYNTAX);
+			/* replace (*mdp)->st with st ... */
+			complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL + v2N_INVALID_SYNTAX);
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*
 			 * We are the responder to this message so
@@ -1998,7 +2003,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		struct state *cst = process_v2_child_ix(md, st);
 		if (cst == NULL) {
 			/* no go. Could improve the status code? */
-			complete_v2_state_transition(mdp, STF_FAIL);
+			/* replace (*mdp)->st with st ... */
+			complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL);
 			return;
 		}
 
@@ -2029,7 +2035,13 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 	DBG(DBG_CONTROL,
 	    DBG_log("calling processor %s", svm->story));
-	complete_v2_state_transition(mdp, (svm->processor)(st, md));
+	/*
+	 * Processor may screw around with md->st, hence use that
+	 * version for now.
+	 */
+	stf_status e = svm->processor(st, md);
+	/* replace (*mdp)->st with st ... */
+	complete_v2_state_transition((*mdp)->st, mdp, e);
 	/* our caller with release_any_md(mdp) */
 }
 
@@ -2625,11 +2637,10 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 				 md->svm->next_state);
 }
 
-static void success_v2_state_transition(struct msg_digest *md)
+static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 {
 	const struct state_v2_microcode *svm = md->svm;
 	enum state_kind from_state = md->from_state;
-	struct state *st = md->st;
 	struct connection *c = st->st_connection;
 	struct state *pst;
 	enum rc_type w;
@@ -2814,21 +2825,45 @@ static void log_stf_suspend(struct state *st, stf_status result)
 	}
 }
 
-/* complete job started by the state-specific state transition function
+/*
+ * Dependant on RESULT, either complete, suspend, abandon, or abort
+ * (delete state) the state transition started by the state-specific
+ * state transition function.
  *
- * This routine requires a valid non-NULL *mdp.
+ * Since this is function is meaningless without a state, ST really
+ * should be non-NULL.
  *
- * So, for example, it does not make sense for state transitions that
- * are not provoked by a packet.
+ * XXX: A broken exception is when responding to an IKE_SA_INIT
+ * request - the state machine calls the state transition function
+ * with no state (trusting that the transition function will do the
+ * job, but that isn't always true).  The fix is to create the state
+ * before calling the state transition function (like is done for the
+ * CHILD_SA code).
  *
- * This routine will not release_any_md(mdp).  It is expected that its
- * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
- * **mdp should not be freed.  So the caller should be prepared for
- * *mdp being set to NULL.
+ * Since, when initiating an exchange there is no message, code can't
+ * assume that (*MDP) is non-NULL.
  *
- * md is used to:
+ * XXX: Some state transition functions switch state part way (see
+ * AUTH child code) and then tunnel the new state to this code via
+ * (*MDP)->st (hence fake_md() and some callers passing in
+ * (*MDP)->st).  The fix is for the AUTH code to handle the CHILD SA
+ * as a nested or separate transition.
+ *
+ * XXX: The state transition structure (microcode) is stored in (*MDP)
+ * forcing that structure to be created.  The fix is to store the
+ * state's transition in the state.  As a bonus this makes determining
+ * if a state is busy really really easy - if there's a
+ * state-transition then it must be.
+ *
+ * This routine does not free (*MDP) (using release_any_md(mdp)).
+ * However, when suspending a state transition, it will save it in ST
+ * and zap (*MDP) so that the caller can't free it.  Hence, the caller
+ * must be prepared for (*MDP) being set to NULL.
+ *
+ * XXX: At some point (*MDP) was being used for:
+ *
  * - find st
- * - success_v2_state_transition(md);
+ * - success_v2_state_transition(st, md);
  *   - for svm:
  *     - svm->next_state,
  *     - svm->flags & SMF2_SEND,
@@ -2846,9 +2881,15 @@ static void log_stf_suspend(struct state *st, stf_status result)
  * - remember_received_packet(st, md);
  * - fragvid, dpd, nortel
  */
-void complete_v2_state_transition(struct msg_digest **mdp,
+void complete_v2_state_transition(struct state *st,
+				  struct msg_digest **mdp,
 				  stf_status result)
 {
+	/*
+	 * XXX; until either .st becomes v1 only or is deleted.
+	 */
+	pexpect(mdp == NULL || *mdp == NULL || (*mdp)->st == st);
+
 	/* statistics */
 	if (result > STF_FAIL) {
 		pstats(ike_stf, STF_FAIL);
@@ -2873,9 +2914,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 * Hence, expect any of MDP, *MDP, or *MDP->st to be NULL.
 	 */
 	struct msg_digest *md = (mdp != NULL ? (*mdp) /*NULL?*/ : NULL);
-	struct state *st = md != NULL ? md->st /*NULL?*/ : NULL;
 	set_cur_state(st); /* might have changed */ /* XXX: huh? */
-
 	/* get the from state */
 	const char *from_state_name = (st != NULL ? st->st_finite_state
 				       : finite_states[STATE_UNDEFINED])->fs_name;
@@ -2941,7 +2980,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			DBG(DBG_CONTROL, DBG_log("STF_OK but no state object remains"));
 		} else {
 			/* advance the state */
-			success_v2_state_transition(md);
+			success_v2_state_transition(st, md);
 		}
 		break;
 
