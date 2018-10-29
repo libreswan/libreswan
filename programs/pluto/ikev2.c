@@ -2033,8 +2033,13 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	/* our caller with release_any_md(mdp) */
 }
 
-bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
+static bool ikev2_decode_peer_id_and_certs_counted(struct msg_digest *md, int depth)
 {
+	if (depth > 10) {
+		/* should not happen, but it would be nice to survive */
+		libreswan_log("decoding IKEv2 peer ID failed due to confusion");
+		return FALSE;
+	}
 	bool initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
 	struct connection *c = md->st->st_connection;
 
@@ -2224,7 +2229,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				c = r;	/* c not subsequently used */
 				/* redo from scratch so we read and check CERT payload */
 				DBG(DBG_X509, DBG_log("retrying ikev2_decode_peer_id_and_certs() with new conn"));
-				return ikev2_decode_peer_id_and_certs(md);
+				return ikev2_decode_peer_id_and_certs_counted(md, depth + 1);
 
 			} else if (c->spd.that.has_id_wildcards) {
 				duplicate_id(&c->spd.that.id, &peer_id);
@@ -2256,6 +2261,11 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	}
 
 	return TRUE;
+}
+
+bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
+{
+	return ikev2_decode_peer_id_and_certs_counted(md, 0);
 }
 
 /*
