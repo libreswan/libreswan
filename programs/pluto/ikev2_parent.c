@@ -403,6 +403,14 @@ static void ikev2_rekey_dh_continue(struct state *st,
 				    struct msg_digest **mdp,
 				    struct pluto_crypto_req *r)
 {
+	/*
+	 * XXX: Should this routine be split so that each instance
+	 * handles only one state transition.  If there's commonality
+	 * then the per-transition functions can all call common code.
+	 */
+	pexpect(st->st_state == STATE_V2_CREATE_R ||
+		st->st_state == STATE_V2_REKEY_CHILD_R ||
+		st->st_state == STATE_V2_REKEY_IKE_R);
 	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 	ikev2_crypto_continue(st, mdp, r);
@@ -4377,6 +4385,13 @@ static void ikev2_child_inR_continue(struct state *st,
 				     struct msg_digest **mdp,
 				     struct pluto_crypto_req *r)
 {
+	/*
+	 * XXX: Should this routine be split so that each instance
+	 * handles only one state transition.  If there's commonality
+	 * then the per-transition functions can all call common code.
+	 */
+	pexpect(st->st_state == STATE_V2_CREATE_I ||
+		st->st_state == STATE_V2_REKEY_CHILD_I);
 	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 	ikev2_crypto_continue(st, mdp, r);
@@ -4455,6 +4470,13 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 					 struct msg_digest **mdp,
 					 struct pluto_crypto_req *r)
 {
+	/*
+	 * XXX: Should this routine be split so that each instance
+	 * handles only one state transition.  If there's commonality
+	 * then the per-transition functions can all call common code.
+	 */
+	pexpect(st->st_state == STATE_V2_CREATE_R ||
+		st->st_state == STATE_V2_REKEY_CHILD_R);
 	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 	ikev2_crypto_continue(st, mdp, r);
@@ -4494,6 +4516,12 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 					     struct msg_digest **mdp,
 					     struct pluto_crypto_req *r)
 {
+	/*
+	 * XXX: Should this routine be split so that each instance
+	 * handles only one state transition.  If there's commonality
+	 * then the per-transition functions can all call common code.
+	 */
+	pexpect(st->st_state == STATE_V2_REKEY_IKE_R);
 	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 	ikev2_crypto_continue(st, mdp, r);
@@ -5540,6 +5568,14 @@ static void ikev2_child_outI_continue(struct state *st,
 				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
 {
+	/*
+	 * XXX: Should this routine be split so that each instance
+	 * handles only one state transition.  If there's commonality
+	 * then the per-transition functions can all call common code.
+	 */
+	pexpect(st->st_state == STATE_V2_CREATE_I0 ||
+		st->st_state == STATE_V2_REKEY_CHILD_I0 ||
+		st->st_state == STATE_V2_REKEY_IKE_I0);
 	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 	ikev2_crypto_continue(st, mdp, r);
