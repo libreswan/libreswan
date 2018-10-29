@@ -41,7 +41,6 @@ OBJS += x509dn.o asn1.o oid.o
 OBJS += constants.o \
 	alloc.o diag.o \
 	id.o initaddr.o initsaid.o initsubnet.o \
-	iprange.o \
         keyblobtoid.o \
 	lex.o \
 	lswconf.o \
@@ -49,7 +48,7 @@ OBJS += constants.o \
 	rangetosubnet.o sameaddr.o \
 	secrets.o subnettot.o \
 	subnettypeof.o ttoaddr.o ttodata.o ttoprotoport.o \
-	ttorange.o ttosa.o ttosubnet.o ttoul.o \
+	ttosa.o ttosubnet.o ttoul.o \
 	secitem_chunk.o \
 	base64_pubkey.o \
 	lswnss.o \
@@ -82,6 +81,8 @@ OBJS += chunk.o
 OBJS += shunk.o
 
 OBJS += ip_address.o
+OBJS += ip_range.o
+
 
 OBJS += lmod.o
 OBJS += lset.o

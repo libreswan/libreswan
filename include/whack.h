@@ -31,6 +31,7 @@
 #include "reqid.h"
 #include "err.h"
 #include "impair.h"
+#include "ip_range.h"
 
 #ifndef DEFAULT_RUNDIR
 # define DEFAULT_RUNDIR "/run/pluto/"

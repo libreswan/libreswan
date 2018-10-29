@@ -37,7 +37,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"
-#include "libswan.h"
 
 #include "defs.h"
 #include "id.h"

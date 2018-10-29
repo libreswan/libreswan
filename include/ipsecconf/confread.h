@@ -27,6 +27,7 @@
 
 #include "lset.h"
 #include "err.h"
+#include "ip_range.h"
 
 #ifndef _LIBRESWAN_H
 #include <libreswan.h>

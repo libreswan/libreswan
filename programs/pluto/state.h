@@ -47,6 +47,7 @@
 #include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
 #include "list_entry.h"
 #include "retransmit.h"
+#include "ip_range.h"
 
 /* msgid_t defined in defs.h */
 
