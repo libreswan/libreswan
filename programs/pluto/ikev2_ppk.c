@@ -54,6 +54,7 @@ chunk_t create_unified_ppk_id(struct ppk_id_payload *payl)
 	u_char type = PPK_ID_FIXED;	/* PPK_ID_FIXED */
 	const chunk_t *ppk_id = &payl->ppk_id;
 
+	/* unified is free'd in ikev2_parent.c */
 	chunk_t unified = alloc_chunk(ppk_id->len + 1, "Unified PPK_ID");
 	unified.ptr[0] = type;
 	memcpy(&unified.ptr[1], ppk_id->ptr, ppk_id->len);
@@ -154,9 +155,7 @@ stf_status ikev2_calc_no_ppk_auth(struct connection *c, struct state *st, unsign
 				memcpy(blobs, sha2_rsa_oid_blob, ASN1_SHA2_RSA_PSS_SIZE);
 				blobs += ASN1_SHA2_RSA_PSS_SIZE;
 				memcpy(blobs, no_ppk_auth->ptr, no_ppk_auth->len);
-				chunk_t release = *no_ppk_auth;
 				setchunk(*no_ppk_auth, ret, len);
-				freeanychunk(release);
 			}
 		}
 		return STF_OK;

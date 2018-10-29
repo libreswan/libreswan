@@ -2979,7 +2979,6 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
 				return STF_FATAL;
 			}
-			DBG(DBG_PRIVATE, DBG_dump_chunk("NO_PPK_AUTH:", no_ppk_auth));
 			st->st_no_ppk_auth = no_ppk_auth;
 			break;
 		}
