@@ -10,6 +10,7 @@
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013-2018 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,12 +25,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <time.h>
-#include <limits.h>
-#include <sys/types.h>
-#include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
@@ -37,12 +32,6 @@
 #include "asn1.h"
 #include "oid.h"
 #include "x509.h"
-#include "certs.h"
-#include <prerror.h>
-#include <nss.h>
-#include <pk11pub.h>
-#include <keyhi.h>
-#include <secerr.h>
 #include "lswconf.h"
 
 static void hex_str(chunk_t bin, chunk_t *str);	/* forward */
@@ -151,150 +140,150 @@ static void format_chunk(chunk_t *ch, const char *format, ...)
 }
 
 /*
- * Pointer is set to the first RDN in a DN
+ * Routines to iterate through a DN.
+ * rdn: remainder of the sequence of RDNs
+ * attribute: remainder of the current RDN.
  */
-static err_t init_rdn(chunk_t dn, chunk_t *rdn, chunk_t *attribute, bool *next)
+
+/* Structure of the DN:
+ *
+ * ASN_SEQUENCE {
+ *	for each Relative DN {
+ *		ASN1_SET {
+ *			ASN1_SEQUENCE {
+ *				ASN1_OID {
+ *					oid
+ *				}
+ *				ASN1_*STRING* {
+ *					value
+ *				}
+ *			}
+ *		}
+ *	}
+ * }
+ */
+
+#define RETURN_IF_ERR(f) { err_t ugh = (f); if (ugh != NULL) return ugh; }
+
+static err_t unwrap(asn1_t ty, chunk_t *container, chunk_t *contents)
 {
-	*rdn = empty_chunk;
+	if (container->len == 0)
+		return "missing ASN1 type";
+	if (container->ptr[0] != ty)
+		return "unexpected ASN1 type";
+	size_t sz = asn1_length(container);
+	if (sz == ASN1_INVALID_LENGTH)
+		return "invalid ASN1 length";
+	if (sz > container->len)
+		return "ASN1 length larger than space";
+	contents->ptr = container->ptr;
+	contents->len = sz;
+	container->ptr += sz;
+	container->len -= sz;
+	return NULL;
+}
+
+static err_t init_rdn(chunk_t dn, /* input (copy) */
+		chunk_t *rdn, /* output */
+		chunk_t *attribute, /* output */
+		bool *more) /* output */
+{
 	*attribute = empty_chunk;
 
 	/* a DN is a SEQUENCE OF RDNs */
-	if (*dn.ptr != ASN1_SEQUENCE)
-		return "DN is not a SEQUENCE";
+	RETURN_IF_ERR(unwrap(ASN1_SEQUENCE, &dn, rdn));
 
-	rdn->len = asn1_length(&dn);
+	/* the whole DN should be this ASN1_SEQUENCE */
+	if (dn.len != 0)
+		return "DN has crud after ASN1_SEQUENCE";
 
-	if (rdn->len == ASN1_INVALID_LENGTH)
-		return "Invalid RDN length";
-
-	rdn->ptr = dn.ptr;
-
-	/* are there any RDNs ? */
-	*next = rdn->len > 0;
-
+	*more = rdn->len != 0;
 	return NULL;
 }
 
 /*
  * Fetches the next RDN in a DN
  */
-static err_t get_next_rdn(chunk_t *rdn,
-	chunk_t *attribute, /* output */
+static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
+	chunk_t *attribute, /* input/output */
 	chunk_t *oid /* output */,
+	asn1_t *val_ty,	/* output */
 	chunk_t *value,	/* output */
-	asn1_t *type,	/* output */
-	bool *next) /* output */
+	bool *more) /* output */
 {
-	chunk_t body;
-
-	/* initialize return values */
-	*oid = empty_chunk;
-	*value = empty_chunk;
-
 	/* if all attributes have been parsed, get next rdn */
-	if (attribute->len <= 0) {
-		/* an RDN is a SET OF attributeTypeAndValue */
-		if (*rdn->ptr != ASN1_SET)
-			return "RDN is not a SET";
-
-		attribute->len = asn1_length(rdn);
-
-		if (attribute->len < 1 || attribute->len == ASN1_INVALID_LENGTH)
-			return "Invalid attribute length";
-
-		attribute->ptr = rdn->ptr;
-
-		/* advance to start of next RDN */
-		rdn->ptr += attribute->len;
-		rdn->len -= attribute->len;
+	if (attribute->len == 0) {
+		/*
+		 * An RDN is a SET OF attributeTypeAndValue.
+		 * Strip off the ASN1_set wrapper.
+		 */
+		RETURN_IF_ERR(unwrap(ASN1_SET, rdn, attribute));
 	}
 
-	/* an attributeTypeAndValue is a SEQUENCE */
-	if (*attribute->ptr != ASN1_SEQUENCE)
-		return "attributeTypeAndValue is not a SEQUENCE";
+	/* An attributeTypeAndValue is a SEQUENCE */
+	chunk_t body;
+	RETURN_IF_ERR(unwrap(ASN1_SEQUENCE, attribute, &body));
 
-	/* extract the attribute body */
-	body.len = asn1_length(attribute);
+	/* extract oid from body */
 
-	if (body.len < 1 || body.len == ASN1_INVALID_LENGTH)
-		return "Invalid attribute body length";
+	RETURN_IF_ERR(unwrap(ASN1_OID, &body, oid));
 
-	body.ptr = attribute->ptr;
+	/* extract string value and its type from body */
 
-	/* advance to start of next attribute */
-	attribute->ptr += body.len;
-	attribute->len -= body.len;
+	if (body.len == 0)
+		return "no room for string's type";
 
-	/* attribute type is an OID */
-	if (*body.ptr != ASN1_OID)
-		return "attributeType is not an OID";
+	*val_ty = body.ptr[0];
 
-	/* extract OID */
-	oid->len = asn1_length(&body);
+	/* ??? what types of string are legitimate? */
+	switch(*val_ty) {
+	case ASN1_PRINTABLESTRING:
+	case ASN1_T61STRING:
+	case ASN1_IA5STRING:
+	case ASN1_UTF8STRING:	/* ??? will this work? */
+	case ASN1_BMPSTRING:
+		break;
+	default:
+		DBGF(DBG_X509, "unexpected ASN1 string type 0x%x", *val_ty);
+		return "unexpected ASN1 string type";
+	}
 
-	if (oid->len == ASN1_INVALID_LENGTH)
-		return "Invalid attribute OID length";
+	RETURN_IF_ERR(unwrap(*val_ty, &body, value));
 
-	oid->ptr = body.ptr;
-
-	/* advance to the attribute value */
-	body.ptr += oid->len;
-	body.len -= oid->len;
-
-	/* extract string type */
-	if (body.len < 2)
-	    return "Invalid value in RDN";
-	*type = *body.ptr;
-
-	/* extract string value */
-	value->len = asn1_length(&body);
-
-	if (value->len == ASN1_INVALID_LENGTH)
-		return "Invalid attribute string length";
-
-	value->ptr = body.ptr;
+	if (body.len != 0)
+		return "crap after OID and value pair of RDN";
 
 	/* are there any RDNs left? */
-	*next = rdn->len > 0 || attribute->len > 0;
-
+	*more = rdn->len > 0 || attribute->len > 0;
 	return NULL;
 }
 
 /*
- * Parses an ASN.1 distinguished name int its OID/value pairs
+ * Parses an ASN.1 distinguished name into its OID/value pairs
  */
 static err_t dn_parse(chunk_t dn, chunk_t *str)
 {
-	chunk_t rdn, oid, attribute, value;
-	asn1_t type;
-	int oid_code;
-	bool next;
-	bool first = TRUE;
-	err_t ugh;
+	chunk_t rdn;
+	chunk_t attribute;
+	bool more;
 
 	if (dn.ptr == NULL) {
 		format_chunk(str, "(empty)");
 		return NULL;
 	}
-	ugh = init_rdn(dn, &rdn, &attribute, &next);
+	RETURN_IF_ERR(init_rdn(dn, &rdn, &attribute, &more));
 
-	if (ugh != NULL)	/* a parsing error has occurred */
-		return ugh;
-
-	while (next) {
-		ugh = get_next_rdn(&rdn, &attribute, &oid, &value, &type,
-				   &next);
-
-		if (ugh != NULL)	/* a parsing error has occurred */
-			return ugh;
-
-		if (first)	/* first OID/value pair */
-			first = FALSE;
-		else	/* separate OID/value pair by a comma */
+	for (bool first = TRUE; more; first = FALSE) {
+		chunk_t oid;
+		asn1_t type;
+		chunk_t value;
+		RETURN_IF_ERR(get_next_rdn(&rdn, &attribute, &oid, &type, &value,
+				   &more));
+		if (!first)
 			format_chunk(str, ", ");
 
 		/* print OID */
-		oid_code = known_oid(oid);
+		int oid_code = known_oid(oid);
 		if (oid_code == OID_UNKNOWN)	/* OID not found in list */
 			hex_str(oid, str);
 		else
@@ -307,27 +296,27 @@ static err_t dn_parse(chunk_t dn, chunk_t *str)
 }
 
 /*
- * Count the number of wildcard RDNs in a distinguished name
+ * Count the number of wildcard RDNs in a distinguished name; -1 signifies error.
  */
 int dn_count_wildcards(chunk_t dn)
 {
-	chunk_t rdn, attribute, oid, value;
-	asn1_t type;
-	bool next;
+	chunk_t rdn;
+	chunk_t attribute;
+	bool more;
 	int wildcards = 0;
 
-	err_t ugh = init_rdn(dn, &rdn, &attribute, &next);
-
-	if (ugh != NULL)	/* a parsing error has occurred */
+	err_t ugh = init_rdn(dn, &rdn, &attribute, &more);
+	if (ugh != NULL)
 		return -1;
 
-	while (next) {
-		ugh = get_next_rdn(&rdn, &attribute, &oid, &value, &type,
-				   &next);
-
-		if (ugh != NULL)	/* a parsing error has occurred */
+	while (more) {
+		chunk_t oid;
+		asn1_t type;
+		chunk_t value;
+		ugh = get_next_rdn(&rdn, &attribute, &oid, &type, &value,
+				   &more);
+		if (ugh != NULL)
 			return -1;
-
 		if (value.len == 1 && *value.ptr == '*')
 			wildcards++;	/* we have found a wildcard RDN */
 	}
@@ -339,10 +328,8 @@ int dn_count_wildcards(chunk_t dn)
  */
 static void hex_str(chunk_t bin, chunk_t *str)
 {
-	unsigned i;
-
 	format_chunk(str, "0x");
-	for (i = 0; i < bin.len; i++)
+	for (unsigned i = 0; i < bin.len; i++)
 		format_chunk(str, "%02X", *bin.ptr++);
 }
 
@@ -352,12 +339,11 @@ static void hex_str(chunk_t bin, chunk_t *str)
  */
 int dntoa(char *dst, size_t dstlen, chunk_t dn)
 {
-	err_t ugh = NULL;
 	chunk_t str;
 
 	str.ptr = (unsigned char *)dst;
 	str.len = dstlen;
-	ugh = dn_parse(dn, &str);
+	err_t ugh = dn_parse(dn, &str);
 
 	if (ugh != NULL) {	/* error, print DN as hex string */
 		libreswan_log("error in DN parsing: %s", ugh);
@@ -374,10 +360,9 @@ int dntoa(char *dst, size_t dstlen, chunk_t dn)
  */
 int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
 {
-	if (dn.ptr == NULL)
-		return snprintf(dst, dstlen, "%s", null_dn);
-	else
-		return dntoa(dst, dstlen, dn);
+	return dn.ptr == NULL ?
+		snprintf(dst, dstlen, "%s", null_dn) :
+		dntoa(dst, dstlen, dn);
 }
 
 /*
@@ -544,10 +529,9 @@ bool same_dn(chunk_t a, chunk_t b)
  */
 bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 {
-	chunk_t rdn_a, rdn_b, attribute_a, attribute_b;
-	chunk_t oid_a, oid_b, value_a, value_b;
-	asn1_t type_a, type_b;
-	bool next_a, next_b;
+	chunk_t rdn_a, rdn_b;
+	chunk_t attribute_a, attribute_b;
+	bool more_a, more_b;
 
 	if (wildcards != NULL) {
 		/* initialize wildcard counter */
@@ -563,55 +547,107 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			return TRUE;
 	}
 
-	/* initialize DN parsing */
-	if (init_rdn(a, &rdn_a, &attribute_a, &next_a) != NULL ||
-		init_rdn(b, &rdn_b, &attribute_b, &next_b) != NULL)
-		return FALSE;
+	/*
+	 * initialize DN parsing.  Stop (silently) on errors.
+	 */
+	{
+		err_t ua = init_rdn(a, &rdn_a, &attribute_a, &more_a);
+		if (ua != NULL) {
+			DBGF(DBG_X509, "match_dn bad a: %s", ua);
+			return FALSE;
+		}
+
+		err_t ub = init_rdn(b, &rdn_b, &attribute_b, &more_b);
+		if (ub != NULL) {
+			DBGF(DBG_X509, "match_dn bad b: %s", ub);
+			return FALSE;
+		}
+	}
 
 	/* fetch next RDN pair */
-	while (next_a && next_b) {
-		/* parse next RDNs and check for errors */
-		if (get_next_rdn(&rdn_a, &attribute_a, &oid_a, &value_a,
-					&type_a, &next_a) != NULL ||
-			get_next_rdn(&rdn_b, &attribute_b, &oid_b, &value_b,
-				&type_b, &next_b) != NULL)
-			return FALSE;
+	for (int n = 1; more_a && more_b; n++) {
+		/*
+		 * Parse next RDNs and check for errors
+		 * but don't report errors.
+		 */
+		chunk_t oid_a, oid_b;
+		asn1_t type_a, type_b;
+		chunk_t value_a, value_b;
+
+		{
+			err_t ua = get_next_rdn(&rdn_a, &attribute_a, &oid_a,
+				 &type_a, &value_a, &more_a);
+			if (ua != NULL) {
+				DBGF(DBG_X509, "match_dn bad a[%d]: %s", n, ua);
+				return FALSE;
+			}
+
+			err_t ub = get_next_rdn(&rdn_b, &attribute_b, &oid_b,
+				 &type_b, &value_b, &more_b);
+			if (ub != NULL) {
+				DBGF(DBG_X509, "match_dn bad b[%d]: %s", n, ub);
+				return FALSE;
+			}
+		}
 
 		/* OIDs must agree */
 		if (oid_a.len != oid_b.len ||
-			!memeq(oid_a.ptr, oid_b.ptr, oid_b.len))
+		    !memeq(oid_a.ptr, oid_b.ptr, oid_b.len))
 			return FALSE;
 
 		/* does rdn_b contain a wildcard? */
+		/* ??? this does not care whether types match.  Should it? */
 		if (wildcards != NULL && value_b.len == 1 && *value_b.ptr == '*') {
 			(*wildcards)++;
 			continue;
 		}
 
-		/* same lengths for values */
 		if (value_a.len != value_b.len)
-			return FALSE;
+			return FALSE;	/* lengths must match */
 
 		/*
-		 * printableStrings and email RDNs require uppercase
-		 * comparison
+		 * If the two types treat the high bit differently
+		 * or if ASN1_PRINTABLESTRING is involved,
+		 * we must forbid the high bit.
 		 */
-		if (type_a == type_b &&
-		    (type_a == ASN1_PRINTABLESTRING ||
-		     (type_a == ASN1_IA5STRING &&
-		      known_oid(oid_a) == OID_PKCS9_EMAIL))) {
-			if (!strncaseeq((char *)value_a.ptr,
-					(char *)value_b.ptr,
-					value_b.len))
-				return FALSE;
-		} else {
-			if (!strneq((char *)value_a.ptr, (char *)value_b.ptr,
-				    value_b.len))
+		if (type_a != type_b || type_a == ASN1_PRINTABLESTRING) {
+			unsigned char or = 0x00;
+			for (size_t i = 0; i != value_a.len; i++)
+				or |= value_a.ptr[i] | value_b.ptr[i];
+			if (or & 0x80)
 				return FALSE;
 		}
+
+		/*
+		 * even though the types may differ, we assume that
+		 * their bits can be compared.
+		 */
+
+		/* cheap match, as if case matters */
+		if (memeq(value_a.ptr, value_b.ptr, value_a.len))
+			continue;
+
+		/*
+		 * printableStrings and email RDNs require comparison
+		 * ignoring case.
+		 * We do require that the types match.
+		 * Forbid NUL in such strings.
+		 */
+
+		if ((type_a == ASN1_PRINTABLESTRING ||
+		     (type_a == ASN1_IA5STRING &&
+		      known_oid(oid_a) == OID_PKCS9_EMAIL)) &&
+		    strncaseeq((char *)value_a.ptr,
+				(char *)value_b.ptr, value_b.len) &&
+		    memchr(value_a.ptr, '\0', a.len) == NULL)
+		{
+			continue;	/* component match */
+		}
+		return FALSE;	/* not a match */
 	}
+
 	/* both DNs must have same number of RDNs */
-	if (next_a || next_b) {
+	if (more_a || more_b) {
 		if (wildcards != NULL && *wildcards != 0) {
 			/* ??? for some reason we think a failure with wildcards is worth logging */
 			char abuf[ASN1_BUF_LEN];
@@ -623,7 +659,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			libreswan_log(
 				"while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
 				abuf, bbuf, *wildcards,
-				(next_a ? "B" : "A"));
+				(more_a ? "B" : "A"));
 		}
 		return FALSE;
 	}
