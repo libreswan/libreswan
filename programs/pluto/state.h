@@ -47,7 +47,7 @@
 #include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
 #include "list_entry.h"
 #include "retransmit.h"
-#include "ip_range.h"
+#include "ikev2_ts.h"		/* for struct traffic_selector */
 
 /* msgid_t defined in defs.h */
 
@@ -245,15 +245,6 @@ struct msg_digest *unsuspend_md(struct state *st);
 		(ST)->st_suspended_md_line = __LINE__;			\
 		passert(state_is_busy(ST));				\
 	}
-
-/* IKEv2, this struct will be mapped into a ikev2_ts1 payload  */
-struct traffic_selector {
-	uint8_t ts_type;
-	uint8_t ipprotoid;
-	uint16_t startport;
-	uint16_t endport;
-	ip_range net;	/* for now, always happens to be a CIDR */
-};
 
 /*
  * Abstract state machine that drives the parent and child SA.

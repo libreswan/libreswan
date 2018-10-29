@@ -198,59 +198,12 @@ extern stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
 
 extern void ikev2_derive_child_keys(struct child_sa *child);
 
-extern struct traffic_selector ikev2_end_to_ts(const struct end *e);
-
-extern int ikev2_evaluate_connection_fit(const struct connection *d,
-					 const struct spd_route *sr,
-					 enum original_role role,
-					 const struct traffic_selector *tsi,
-					 const struct traffic_selector *tsr,
-					 int tsi_n,
-					 int tsr_n);
-
-extern int ikev2_evaluate_connection_port_fit(const struct connection *d,
-					      const struct spd_route *sr,
-					      enum original_role role,
-					      const struct traffic_selector *tsi,
-					      const struct traffic_selector *tsr,
-					      int tsi_n,
-					      int tsr_n,
-					      int *best_tsi_i,
-					      int *best_tsr_i);
-
-extern stf_status ikev2_emit_ts_payloads(const struct child_sa *cst,
-					 pb_stream *outpbs,
-					 enum sa_role role,
-					 const struct connection *c0,
-					 const enum next_payload_types_ikev2 np);
-
-extern int ikev2_parse_ts(struct payload_digest *ts_pd,
-			  struct traffic_selector *array,
-			  unsigned int array_roof);
-
-extern int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
-						  const struct spd_route *sr,
-						  enum original_role role,
-						  const struct traffic_selector *tsi,
-						  const struct traffic_selector *tsr,
-						  int tsi_n,
-						  int tsr_n,
-						  int *best_tsi_i,
-						  int *best_tsr_i);
-
 extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					 pb_stream *outpbs,
 					 enum isakmp_xchg_types isa_xchg);
 
-extern stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
-					     struct state **ret_cst,
-					     enum original_role role, enum
-					     isakmp_xchg_types isa_xchg);
-
 void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md);
 void v2_msgid_update_counters(struct state *st, struct msg_digest *md);
-
-extern void ikev2_print_ts(const struct traffic_selector *ts);
 
 extern deltatime_t ikev2_replace_delay(struct state *st,
 				       enum event_type *pkind);
