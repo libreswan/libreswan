@@ -697,13 +697,13 @@ stf_status RSA_check_signature_gen(struct state *st,
 
 		for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = *pp) {
 			struct pubkey *key = p->key;
-			char printkid[IDTOA_BUF];
 
-			idtoa(&key->id, printkid, IDTOA_BUF);
 			DBG(DBG_CONTROL, {
+				char printkid[IDTOA_BUF];
+				idtoa(&key->id, printkid, IDTOA_BUF);
 				char thatid[IDTOA_BUF];
 				idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
-				DBG_log("checking keyid '%s' for match with '%s'",
+				DBG_log("checking RSA keyid '%s' for match with '%s'",
 					printkid, thatid);
 			});
 
@@ -828,13 +828,12 @@ stf_status ECDSA_check_signature_gen(struct state *st,
 
 		for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = *pp) {
 			struct pubkey *key = p->key;
-			char printkid[IDTOA_BUF];
-
-			idtoa(&key->id, printkid, IDTOA_BUF);
 			DBG(DBG_CONTROL, {
+				char printkid[IDTOA_BUF];
+				idtoa(&key->id, printkid, IDTOA_BUF);
 				char thatid[IDTOA_BUF];
 				idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
-				DBG_log("checking keyid '%s' for match with '%s'",
+				DBG_log("checking ECDSA keyid '%s' for match with '%s'",
 					printkid, thatid);
 			});
 
