@@ -3540,10 +3540,18 @@ static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 
 static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 {
-	struct state *st = md->st;
+	struct child_sa *child = pexpect_child_sa(md->st);
+	struct state *st = &child->sa;
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_cp_respnse(md));
-	RETURN_STF_FAILURE_STATUS(ikev2_process_ts_respnse(md));
+	if (!v2_process_ts_response(child, md)) {
+		/*
+		 * XXX: will this will cause the state machine to
+		 * overwrite the AUTH part of the message - which is
+		 * wrong.  XXX: does this delete the child state?
+		 */
+		return STF_FAIL + v2N_TS_UNACCEPTABLE;
+	}
 
 	/* examin and accpept SA ESP/AH proposals */
 	if (md->hdr.isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)
@@ -3612,7 +3620,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		} /* for */
 	} /* notification block */
 
-	ikev2_derive_child_keys(pexpect_child_sa(st));
+	ikev2_derive_child_keys(child);
 
 	/* now install child SAs */
 	if (!install_ipsec_sa(st, TRUE))

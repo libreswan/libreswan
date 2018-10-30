@@ -36,7 +36,10 @@ struct traffic_selector {
 };
 
 void ikev2_print_ts(const struct traffic_selector *ts);
-stf_status ikev2_process_ts_respnse(struct msg_digest *md);
+
+bool v2_process_ts_response(struct child_sa *child,
+			    struct msg_digest *md);
+
 struct traffic_selector ikev2_end_to_ts(const struct end *e);
 stf_status ikev2_emit_ts_payloads(const struct child_sa *cst,
 				  pb_stream *outpbs,

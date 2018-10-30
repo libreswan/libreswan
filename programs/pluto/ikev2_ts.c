@@ -971,10 +971,13 @@ stf_status ikev2_resp_accept_child_ts(
 }
 
 /* check TS payloads, response */
-stf_status ikev2_process_ts_respnse(struct msg_digest *md)
+bool v2_process_ts_response(struct child_sa *child,
+			    struct msg_digest *md)
 {
-	struct state *st = md->st;
-	struct connection *c = st->st_connection;
+	passert(child->sa.st_sa_role == SA_INITIATOR);
+	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
+
+	struct connection *c = child->sa.st_connection;
 
 	/* check TS payloads */
 	{
@@ -1004,7 +1007,7 @@ stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 		const int tsr_n = ikev2_parse_ts(tsr_pd, tsr, elemsof(tsr));
 
 		if (tsi_n < 0 || tsr_n < 0)
-			return STF_FAIL + v2N_TS_UNACCEPTABLE;
+			return false;
 
 		DBG(DBG_CONTROLMORE, DBG_log("Checking TSi(%d)/TSr(%d) selectors, looking for exact match",
 			tsi_n, tsr_n));
@@ -1065,6 +1068,7 @@ stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 		if (bestfit_n > 0 && bestfit_p > 0) {
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("found an acceptable TSi/TSr Traffic Selector"));
+			struct state *st = &child->sa;
 			memcpy(&st->st_ts_this, &tsi[best_tsi_i],
 			       sizeof(struct traffic_selector));
 			memcpy(&st->st_ts_that, &tsr[best_tsr_i],
@@ -1108,9 +1112,8 @@ stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("reject responder TSi/TSr Traffic Selector"));
 			/* prevents parent from going to I3 */
-			return STF_FAIL + v2N_TS_UNACCEPTABLE;
+			return false;
 		}
 	} /* end of TS check block */
-
-	return STF_OK;
+	return true;
 }
