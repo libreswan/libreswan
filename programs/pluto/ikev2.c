@@ -284,7 +284,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_V2_REKEY_IKE_I,
 	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
-	  .crypto_end = ikev2_child_out_cont,
 	  .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* no state:   --> CREATE IPsec Rekey Request
@@ -295,7 +294,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_V2_REKEY_CHILD_I,
 	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
-	  .crypto_end = ikev2_child_out_cont,
 	  .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* no state:   --> CREATE IPsec Child Request
@@ -306,7 +304,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_V2_CREATE_I,
 	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
-	  .crypto_end = ikev2_child_out_cont,
 	  .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* no state:   --> I1
@@ -460,7 +457,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
 	  .opt_enc_payloads = P(N),
 	  .processor  = ikev2_child_ike_inIoutR,
-	  .crypto_end = ikev2_child_out_cont,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE },
 
@@ -472,7 +468,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = P(SA) | P(Ni) |  P(KE),
 	  .opt_enc_payloads = P(N),
 	  .processor  = ikev2_child_ike_inR,
-	  .crypto_end = ikev2_child_ike_rekey_tail,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -484,7 +479,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N),
 	  .processor  = ikev2_child_inR,
-	  .crypto_end = ikev2_child_inR_tail,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -496,7 +490,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N),
 	  .processor  = ikev2_child_inIoutR,
-	  .crypto_end = ikev2_child_out_cont,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 

@@ -503,7 +503,36 @@ static void ikev2_crypto_continue(struct state *st,
 	}
 
 	if (e == STF_OK) {
-		e = (*mdp)->svm->crypto_end(st, *mdp, r);
+		crypto_transition_fn *crypto_end;
+		switch (st->st_state) {
+		case STATE_V2_REKEY_IKE_I0:
+		case STATE_V2_REKEY_CHILD_I0:
+		case STATE_V2_CREATE_I0:
+		case STATE_V2_REKEY_IKE_R:
+		case STATE_V2_CREATE_R:
+			/* from state table */
+			crypto_end = ikev2_child_out_cont;
+			break;
+		case STATE_V2_REKEY_IKE_I:
+			/* from state table */
+			crypto_end = ikev2_child_ike_rekey_tail;
+			break;
+		case STATE_V2_CREATE_I:
+			/* from state table */
+			crypto_end = ikev2_child_inR_tail;
+			break;
+		case STATE_V2_REKEY_CHILD_I:
+			/* XXX: from reverse engineering */
+			crypto_end = ikev2_child_inR_tail;
+			break;
+		case STATE_V2_REKEY_CHILD_R:
+			/* XXX: from reverse engineering */
+			crypto_end = ikev2_child_out_cont;
+			break;
+		default:
+			bad_case(st->st_state);
+		}
+		e = crypto_end(st, *mdp, r);
 	}
 
 	passert(*mdp != NULL);
