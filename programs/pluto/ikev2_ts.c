@@ -106,14 +106,12 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e)
 
 static stf_status ikev2_emit_ts(pb_stream *outpbs,
 				const struct_desc *ts_desc,
-				const struct traffic_selector *ts,
-				enum next_payload_types_ikev2 np)
+				const struct traffic_selector *ts)
 {
 	pb_stream ts_pbs;
 
 	{
 		struct ikev2_ts its = {
-			.isat_lt = np, /* LT is IKEv1 name? */
 			.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL,
 			.isat_num = 1,
 		};
@@ -186,15 +184,13 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 	return STF_OK;
 }
 
-stf_status ikev2_emit_ts_payloads(const struct child_sa *child,
-				  pb_stream *outpbs,
-				  enum sa_role role,
-				  const struct connection *c0,
-				  const enum next_payload_types_ikev2 np)
+stf_status v2_emit_ts_payloads(const struct child_sa *child,
+			       pb_stream *outpbs,
+			       const struct connection *c0)
 {
 	const struct traffic_selector *ts_i, *ts_r;
 
-	switch (role) {
+	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
 		ts_i = &child->sa.st_ts_this;
 		ts_r = &child->sa.st_ts_that;
@@ -204,7 +200,7 @@ stf_status ikev2_emit_ts_payloads(const struct child_sa *child,
 		ts_r = &child->sa.st_ts_this;
 		break;
 	default:
-		bad_case(role);
+		bad_case(child->sa.st_sa_role);
 	}
 
 	/*
@@ -227,12 +223,11 @@ stf_status ikev2_emit_ts_payloads(const struct child_sa *child,
 
 	for (const struct spd_route *sr = &c0->spd; sr != NULL;
 	     sr = sr->spd_next) {
-		stf_status ret = ikev2_emit_ts(outpbs, &ikev2_ts_i_desc, ts_i,
-					       ISAKMP_NEXT_v2TSr);
+		stf_status ret = ikev2_emit_ts(outpbs, &ikev2_ts_i_desc, ts_i);
 
 		if (ret != STF_OK)
 			return ret;
-		ret = ikev2_emit_ts(outpbs, &ikev2_ts_r_desc, ts_r, np);
+		ret = ikev2_emit_ts(outpbs, &ikev2_ts_r_desc, ts_r);
 		if (ret != STF_OK)
 			return ret;
 	}

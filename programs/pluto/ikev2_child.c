@@ -155,7 +155,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	struct state *cst;	/* child state */
 	struct state *pst;
 	struct connection *c = md->st->st_connection;
-	bool send_use_transport;
 	stf_status ret = STF_FAIL;
 
 	pst = IS_CHILD_SA(md->st) ?
@@ -183,15 +182,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	/*
 	 * The notifies have not yet been processed here, so we cannot
-	 * look at st_seen_use_transport in either st or pst.
-	 * If we change to comply to RFC style transport mode
-	 * negotiation, reading ntfy's will have to be done here.
+	 * look at st_seen_use_transport in either st or pst.  If we
+	 * change to comply to RFC style transport mode negotiation,
+	 * reading ntfy's will have to be done here.
 	 */
-	send_use_transport = ((c->policy & POLICY_TUNNEL) == LEMPTY);
 
 	if (c->spd.that.has_lease &&
-			md->chain[ISAKMP_NEXT_v2CP] != NULL &&
-			cst->st_state != STATE_V2_REKEY_IKE_R) {
+	    md->chain[ISAKMP_NEXT_v2CP] != NULL &&
+	    cst->st_state != STATE_V2_REKEY_IKE_R) {
 		ikev2_send_cp(pst, ISAKMP_NEXT_v2SA, outpbs);
 	} else if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		DBG(DBG_CONTROL, DBG_log("#%lu %s ignoring unexpected v2CP payload",
@@ -299,8 +297,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	}
 
 	{
-		bool send_ntfy = send_use_transport || c->send_no_esp_tfc;
-
 		/* verify if transport / tunnel mode is matches */
 		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
 			/* we should have received transport mode request - and send one */
@@ -319,10 +315,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		 * XXX: see above notes on 'role' - this must be the
 		 * SA_RESPONDER.
 		 */
-		stf_status ret = ikev2_emit_ts_payloads(pexpect_child_sa(cst), outpbs,
-							SA_RESPONDER, c,
-							(send_ntfy ? ISAKMP_NEXT_v2N
-							 : ISAKMP_NEXT_v2NONE));
+		stf_status ret = v2_emit_ts_payloads(pexpect_child_sa(cst),
+						     outpbs, c);
 
 		if (ret != STF_OK)
 			return ret;	/* should we delete_state cst? */

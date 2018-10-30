@@ -2654,8 +2654,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
 
-		ikev2_emit_ts_payloads(pexpect_child_sa(cst), &sk.pbs, SA_INITIATOR, cc,
-				       (notifies != 0) ? ISAKMP_NEXT_v2N : ia_np);
+		v2_emit_ts_payloads(pexpect_child_sa(cst), &sk.pbs, cc);
 
 		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
@@ -4090,9 +4089,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
 	}
 
-	ikev2_emit_ts_payloads(pexpect_child_sa(cst), outpbs, SA_INITIATOR, cc,
-			       (send_use_transport || cc->send_no_esp_tfc) ?
-			       ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE);
+	v2_emit_ts_payloads(pexpect_child_sa(cst), outpbs, cc);
 
 	freeanychunk(rekey_spi);
 

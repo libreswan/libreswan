@@ -41,11 +41,11 @@ bool v2_process_ts_response(struct child_sa *child,
 			    struct msg_digest *md);
 
 struct traffic_selector ikev2_end_to_ts(const struct end *e);
-stf_status ikev2_emit_ts_payloads(const struct child_sa *cst,
-				  pb_stream *outpbs,
-				  enum sa_role role,
-				  const struct connection *c0,
-				  const enum next_payload_types_ikev2 np);
+
+stf_status v2_emit_ts_payloads(const struct child_sa *cst,
+			       pb_stream *outpbs,
+			       const struct connection *c);
+
 stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 				      struct state **ret_cst,
 				      enum original_role role, enum
