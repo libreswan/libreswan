@@ -256,7 +256,6 @@ struct state_v2_microcode {
 
 	const enum event_type timeout_event;
 	ikev2_state_transition_fn *const processor;
-	crypto_transition_fn *const crypto_end;
 };
 
 void ikev2_copy_cookie_from_sa(struct ikev2_proposal *accepted_ike_proposal,

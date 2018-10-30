@@ -532,15 +532,6 @@ static void ikev2_crypto_continue(struct state *st,
 		default:
 			bad_case(st->st_state);
 		}
-#if 0
-		LSWLOG_DEBUG(buf) {
-			lswlogf(buf, "%s crypto_end %p", st->st_state_name, crypto_end);
-			lswlogf(buf, " %s md.crypto_end %p",
-				(*mdp)->svm->story,
-				(*mdp)->svm->crypto_end);
-		}
-#endif
-		pexpect(crypto_end == (*mdp)->svm->crypto_end);
 		e = crypto_end(st, *mdp, r);
 	}
 
