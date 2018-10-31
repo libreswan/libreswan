@@ -4378,9 +4378,38 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 					 struct msg_digest **mdp,
 					 struct pluto_crypto_req *r)
 {
-	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
+	pexpect(st->st_state == STATE_V2_REKEY_IKE_I);
+
+	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
+	pexpect(st->st_sa_role == SA_INITIATOR);
+	pexpect(*mdp != NULL);
+	pexpect(v2_msg_role(*mdp) == MESSAGE_RESPONSE);
+	pexpect((*mdp)->st == st);
+
+	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
-	ikev2_crypto_continue(st, mdp, r);
+
+	/* and a parent? */
+	struct ike_sa *ike = ike_sa(st);
+	if (ike == NULL) {
+		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
+			    st->st_serialno, st->st_clonedfrom);
+		/* XXX: release what? */
+		return;
+	}
+	passert(ike != NULL);
+
+	stf_status e = STF_OK;
+	bool only_shared_false = false;
+	if (!finish_dh_v2(st, r, only_shared_false)) {
+		e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
+	}
+	if (e == STF_OK) {
+		ikev2_rekey_expire_pred(st, st->st_ike_pred);
+		e = STF_OK;
+	}
+
+	complete_v2_state_transition(st, mdp, e);
 }
 
 /*
