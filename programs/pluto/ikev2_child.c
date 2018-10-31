@@ -112,12 +112,13 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  enum isakmp_xchg_types isa_xchg)
 {
 	struct state *cst = NULL;	/* child state */
-	struct state *pst;
 	struct connection *c = md->st->st_connection;
-	stf_status ret = STF_FAIL;
 
-	pst = IS_CHILD_SA(md->st) ?
-		state_with_serialno(md->st->st_clonedfrom) : md->st;
+	/*
+	 * MD->ST could be a parent (AUTH) or pre-created child
+	 * (CHILD_SA).
+	 */
+	struct ike_sa *ike = ike_sa(md->st);
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
 	    md->st->st_ipsec_pred != SOS_NOBODY) {
@@ -129,17 +130,35 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	} else if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		cst = md->st;
 	} else {
+		/* ??? is this only for AUTH exchange? */
+		pexpect(isa_xchg == ISAKMP_v2_AUTH); /* see calls */
+		pexpect(md->hdr.isa_xchg == ISAKMP_v2_AUTH); /* redundant */
+		/*
+		 * While this function is called with MD->ST pointing
+		 * at either an IKE SA or CHILD SA, this code path
+		 * only works when MD->ST is the IKE SA.
+		 *
+		 * XXX: this create-state code block should be moved
+		 * to the ISAKMP_v2_AUTH caller.
+		 */
 		passert(cst == NULL);
 		pexpect(md->st != NULL);
-		pexpect(IS_IKE_SA(md->st));
-		if (!v2_process_ts_request_create_child(md, &cst, isa_xchg)) {
+		pexpect(md->st == &ike->sa); /* passed in parent */
+		cst = ikev2_duplicate_state(ike, IPSEC_SA, SA_RESPONDER);
+		/* needed for delete */
+		insert_state(cst);
+		if (!v2_process_ts_request(pexpect_child_sa(cst), md)) {
+			/*
+			 * XXX: while the CHILD SA failed, the IKE SA
+			 * should continue to exist.  This STF_FAIL
+			 * will blame MD->ST aka the IKE SA.
+			 */
+			delete_state(cst);
 			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 		}
 	}
 
-	if (cst == NULL)
-		return ret;	/* things went badly */
-
+	/* switch to child */
 	md->st = cst;
 	c = cst->st_connection;
 
@@ -153,7 +172,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	if (c->spd.that.has_lease &&
 	    md->chain[ISAKMP_NEXT_v2CP] != NULL &&
 	    cst->st_state != STATE_V2_REKEY_IKE_R) {
-		ikev2_send_cp(pst, ISAKMP_NEXT_v2SA, outpbs);
+		ikev2_send_cp(&ike->sa, ISAKMP_NEXT_v2SA, outpbs);
 	} else if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		DBG(DBG_CONTROL, DBG_log("#%lu %s ignoring unexpected v2CP payload",
 					cst->st_serialno,
@@ -176,7 +195,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		if (!ikev2_emit_sa_proposal(outpbs,
 					cst->st_accepted_esp_or_ah_proposal,
 					&local_spi)) {
-			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
+			DBGF(DBG_CONTROL, "problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -233,11 +252,11 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			break;
 		case v2N_MOBIKE_SUPPORTED:
 			DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED"));
-			cst->st_seen_mobike = pst->st_seen_mobike = TRUE;
+			cst->st_seen_mobike = ike->sa.st_seen_mobike = TRUE;
 			break;
 		case v2N_INITIAL_CONTACT:
 			DBG(DBG_CONTROL, DBG_log("received v2N_INITIAL_CONTACT"));
-			cst->st_seen_initialc = pst->st_seen_initialc = TRUE;
+			cst->st_seen_initialc = ike->sa.st_seen_initialc = TRUE;
 			break;
 		case v2N_REKEY_SA:
 			DBG(DBG_CONTROL, DBG_log("received REKEY_SA already proceesd"));
@@ -324,9 +343,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	 */
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* skip check for rekey */
-		pst->st_connection->newest_isakmp_sa = pst->st_serialno;
+		ike->sa.st_connection->newest_isakmp_sa = ike->sa.st_serialno;
 	} else {
-		ISAKMP_SA_established(pst);
+		ISAKMP_SA_established(&ike->sa);
 	}
 
 	/* install inbound and outbound SPI info */

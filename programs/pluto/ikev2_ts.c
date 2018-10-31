@@ -648,12 +648,11 @@ static int ikev2_evaluate_connection_fit(const struct connection *d,
  *
  * XXX: creating child as a side effect is pretty messed up.
  */
-bool v2_process_ts_request_create_child(const struct msg_digest *md,
-					struct state **ret_cst	/* where to return child state */,
-					enum isakmp_xchg_types isa_xchg)
+bool v2_process_ts_request(struct child_sa *child,
+			   const struct msg_digest *md)
 {
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
-	passert(*ret_cst == NULL || (*ret_cst)->st_sa_role == SA_RESPONDER);
+	passert(child->sa.st_sa_role == SA_RESPONDER);
 
 	/* XXX: md->st here is parent???? */
 	struct connection *c = md->st->st_connection;
@@ -680,8 +679,6 @@ bool v2_process_ts_request_create_child(const struct msg_digest *md,
 
 	int best_tsi_i = -1;
 	int best_tsr_i = -1;
-
-	*ret_cst = NULL;	/* no child state yet */
 
 	/* ??? not very clear diagnostic for our user */
 	if (tsi_n < 0 || tsr_n < 0)
@@ -942,33 +939,22 @@ bool v2_process_ts_request_create_child(const struct msg_digest *md,
 		}
 	}
 
-	struct state *cst = md->st;	/* child state */
+	/*
+	 * this both replaces the child's connection, and flips any
+	 * underlying current-connection
+	 *
+	 * XXX: but this is responder code, there probably isn't a
+	 * current-connection - it would have gone straight to current
+	 * state>
+	 */
+	update_state_connection(&child->sa, best);
 
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		update_state_connection(cst, best);
-	} else {
-		/*
-		 * ??? is this only for AUTH exchange?
-		 *
-		 * XXX: comments above clearly suggest CST is the
-		 * child, yet this code only works if CST is actually
-		 * a parent!!!
-		 */
-		cst = ikev2_duplicate_state(pexpect_ike_sa(cst), IPSEC_SA,
-					    v2_msg_role(md) == MESSAGE_REQUEST ? SA_RESPONDER :
-					    v2_msg_role(md) == MESSAGE_RESPONSE ? SA_INITIATOR :
-					    0);
-		cst->st_connection = best;	/* safe: from duplicate_state */
-		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
-	}
+	child->sa.st_ts_this = ikev2_end_to_ts(&bsr->this);
+	child->sa.st_ts_that = ikev2_end_to_ts(&bsr->that);
 
-	cst->st_ts_this = ikev2_end_to_ts(&bsr->this);
-	cst->st_ts_that = ikev2_end_to_ts(&bsr->that);
+	ikev2_print_ts(&child->sa.st_ts_this);
+	ikev2_print_ts(&child->sa.st_ts_that);
 
-	ikev2_print_ts(&cst->st_ts_this);
-	ikev2_print_ts(&cst->st_ts_that);
-
-	*ret_cst = cst;
 	return true;
 }
 

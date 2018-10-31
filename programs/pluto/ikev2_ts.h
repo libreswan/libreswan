@@ -40,9 +40,8 @@ void ikev2_print_ts(const struct traffic_selector *ts);
 bool v2_process_ts_response(struct child_sa *child,
 			    struct msg_digest *md);
 
-bool v2_process_ts_request_create_child(const struct msg_digest *md,
-					struct state **ret_cst,
-					enum isakmp_xchg_types isa_xchg);
+bool v2_process_ts_request(struct child_sa *child,
+			   const struct msg_digest *md);
 
 struct traffic_selector ikev2_end_to_ts(const struct end *e);
 
