@@ -102,6 +102,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
+static stf_status ikev2_start_new_exchange(struct state *st);
+
+static stf_status ikev2_child_out_tail(struct msg_digest *md);
+
 static bool asn1_hash_in(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs,
 		   uint8_t size, uint8_t asn1_blob_len);
 
@@ -4503,6 +4507,10 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 	}
 }
 
+static void ikev2_child_inIoutR_continue_continue(struct state *st,
+						  struct msg_digest **mdp,
+						  struct pluto_crypto_req *r);
+
 static void ikev2_child_inIoutR_continue(struct state *st,
 					 struct msg_digest **mdp,
 					 struct pluto_crypto_req *r)
@@ -4511,12 +4519,90 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
+	 *
+	 * Instead of computing the entire DH as a single crypto task,
+	 * does a second continue. Yuck!
 	 */
 	pexpect(st->st_state == STATE_V2_CREATE_R ||
 		st->st_state == STATE_V2_REKEY_CHILD_R);
-	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
+
+	/* responder processing request */
+	pexpect(IS_CHILD_SA(st));
+	pexpect(st->st_sa_role == SA_RESPONDER);
+	pexpect(*mdp != NULL);
+	pexpect((*mdp)->st == st);
+
+	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
-	ikev2_crypto_continue(st, mdp, r);
+
+	/* and a parent? */
+	struct ike_sa *ike = ike_sa(st);
+	if (ike == NULL) {
+		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
+			    st->st_serialno, st->st_clonedfrom);
+		/* XXX: release what? */
+		return;
+	}
+
+	stf_status e = STF_OK;
+	unpack_nonce(&st->st_nr, r);
+	if (r->pcr_type == pcr_build_ke_and_nonce) {
+		pexpect((*mdp)->chain[ISAKMP_NEXT_v2KE] != NULL);
+		unpack_KE_from_helper(st, r, &st->st_gr);
+		/* initiate calculation of g^xy */
+		start_dh_v2(st, "DHv2 for child sa", ORIGINAL_RESPONDER,
+			    ike->sa.st_skey_d_nss, /* only IKE has SK_d */
+			    ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
+			    ikev2_child_inIoutR_continue_continue);
+		e = STF_SUSPEND;
+	}
+	if (e == STF_OK) {
+		e = ikev2_child_out_tail(*mdp);
+	}
+
+	complete_v2_state_transition(st, mdp, e);
+}
+
+static void ikev2_child_inIoutR_continue_continue(struct state *st,
+						  struct msg_digest **mdp,
+						  struct pluto_crypto_req *r)
+{
+	/*
+	 * XXX: Should this routine be split so that each instance
+	 * handles only one state transition.  If there's commonality
+	 * then the per-transition functions can all call common code.
+	 */
+	pexpect(st->st_state == STATE_V2_CREATE_R ||
+		st->st_state == STATE_V2_REKEY_CHILD_R);
+
+	/* 'child' responding to request */
+	passert(*mdp != NULL);
+	pexpect((*mdp)->st == st);
+	passert(st->st_sa_role == SA_RESPONDER);
+	passert(v2_msg_role(*mdp) == MESSAGE_REQUEST);
+	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
+
+	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
+	     __func__, st->st_serialno, st->st_state_name);
+
+	/* didn't loose parent? */
+	if (ike_sa(st) == NULL) {
+		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
+			    st->st_serialno, st->st_clonedfrom);
+		/* XXX: release child? */
+		return;
+	}
+
+	stf_status e = STF_OK;
+	bool only_shared_true = true;
+	pexpect(r->pcr_type == pcr_compute_dh_v2);
+	if (!finish_dh_v2(st, r, only_shared_true)) {
+		e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
+	}
+	if (e == STF_OK) {
+		e = ikev2_child_out_tail(*mdp);
+	}
+	complete_v2_state_transition(st, mdp, e);
 }
 
 /*
