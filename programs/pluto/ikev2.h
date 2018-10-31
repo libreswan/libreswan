@@ -55,9 +55,6 @@ extern ikev2_state_transition_fn ikev2_ike_sa_process_auth_request;
 extern ikev2_state_transition_fn ikev2_parent_inR1outI2;
 extern ikev2_state_transition_fn ikev2_parent_inR2;
 
-extern crypto_transition_fn ikev2_child_out_cont;
-extern crypto_transition_fn ikev2_child_inR_tail;
-extern crypto_transition_fn ikev2_child_ike_rekey_tail;
 extern void ikev2_initiate_child_sa(struct pending *p);
 
 void ikev2_rekey_ike_start(struct state *st);

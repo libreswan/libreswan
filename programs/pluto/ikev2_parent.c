@@ -369,57 +369,6 @@ static stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ik
 	return e;
 }
 
-
-static crypto_req_cont_func ikev2_crypto_continue;	/* forward decl and type assertion */
-
-static crypto_req_cont_func ikev2_rekey_dh_continue;	/* forward decl and type assertion */
-
-static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
-				       struct msg_digest *md)
-{
-	struct state *const st = md->st;
-	struct state *pst = state_with_serialno(st->st_clonedfrom);
-
-	if (md->chain[ISAKMP_NEXT_v2KE] == NULL)
-		return STF_OK;
-
-	if (r->pcr_type == pcr_build_ke_and_nonce) {
-		enum original_role  role;
-		role = IS_CHILD_SA_RESPONDER(st) ? ORIGINAL_RESPONDER :
-			ORIGINAL_INITIATOR;
-		if (pst == NULL) {
-			loglog(RC_LOG_SERIOUS, "#%lu can not find parent state "
-					"#%lu to setup DH v2", st->st_serialno,
-					st->st_clonedfrom);
-			return STF_FAIL;
-		}
-		/* initiate calculation of g^xy */
-		start_dh_v2(st, "DHv2 for child sa", role,
-			    pst->st_skey_d_nss, /* only IKE has SK_d */
-			    pst->st_oakley.ta_prf, /* for IKE/ESP/AH */
-			    ikev2_rekey_dh_continue);
-		return STF_SUSPEND;
-	}
-	return STF_OK;
-}
-
-static void ikev2_rekey_dh_continue(struct state *st,
-				    struct msg_digest **mdp,
-				    struct pluto_crypto_req *r)
-{
-	/*
-	 * XXX: Should this routine be split so that each instance
-	 * handles only one state transition.  If there's commonality
-	 * then the per-transition functions can all call common code.
-	 */
-	pexpect(st->st_state == STATE_V2_CREATE_R ||
-		st->st_state == STATE_V2_REKEY_CHILD_R ||
-		st->st_state == STATE_V2_REKEY_IKE_R);
-	dbg("%s calling ikev2_crypto_continue for #%lu %s",
-	     __func__, st->st_serialno, st->st_state_name);
-	ikev2_crypto_continue(st, mdp, r);
-}
-
 static struct msg_digest *fake_md(struct state *st)
 {
 	struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
@@ -429,118 +378,6 @@ static struct msg_digest *fake_md(struct state *st)
 	/* asume first microcode is valid */
 	fake_md->svm = st->st_finite_state->fs_v2_transitions;
 	return fake_md;
-}
-
-static void ikev2_crypto_continue(struct state *st,
-				  struct msg_digest **mdp,
-				  struct pluto_crypto_req *r)
-{
-	stf_status e = STF_OK;
-	bool only_shared = FALSE;
-
-	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state_name);
-
-	/* and a parent? */
-	struct ike_sa *ike = ike_sa(st);
-	if (ike == NULL) {
-		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
-			    st->st_serialno, st->st_clonedfrom);
-		/* XXX: release what? */
-		return;
-	}
-	passert(ike != NULL);
-
-	if (*mdp == NULL) {
-		*mdp = fake_md(st);
-	}
-
-	switch (st->st_state) {
-	case STATE_V2_REKEY_CHILD_I0:
-	case STATE_V2_CREATE_I0:
-		unpack_nonce(&st->st_ni, r);
-		if (r->pcr_type == pcr_build_ke_and_nonce)
-			unpack_KE_from_helper(st, r, &st->st_gi);
-
-		e = add_st_to_ike_sa_send_list(st, ike);
-		break;
-
-	case STATE_V2_REKEY_IKE_I0:
-		unpack_nonce(&st->st_ni, r);
-		unpack_KE_from_helper(st, r, &st->st_gi);
-		e = add_st_to_ike_sa_send_list(st, ike);
-		break;
-
-	case STATE_V2_REKEY_CHILD_I:
-	case STATE_V2_CREATE_I:
-		only_shared = TRUE;
-		if (!finish_dh_v2(st, r, only_shared))
-			e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
-		break;
-
-	case STATE_V2_CREATE_R:
-	case STATE_V2_REKEY_CHILD_R:
-		only_shared = TRUE;
-		/* FALL THROUGH*/
-	case STATE_V2_REKEY_IKE_R:
-		if (r->pcr_type == pcr_compute_dh_v2) {
-			if (!finish_dh_v2(st, r, only_shared))
-				e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
-		} else {
-			unpack_nonce(&st->st_nr, r);
-			if ((*mdp)->chain[ISAKMP_NEXT_v2KE] != NULL &&
-			    r->pcr_type == pcr_build_ke_and_nonce) {
-				unpack_KE_from_helper(st, r, &st->st_gr);
-			}
-			e = ikev2_rekey_dh_start(r, *mdp); /* STF_SUSPEND | OK */
-		}
-		break;
-
-	case STATE_V2_REKEY_IKE_I:
-		if (!finish_dh_v2(st, r, only_shared))
-			e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
-		break;
-
-	default :
-		bad_case(st->st_state);
-	}
-
-	if (e == STF_OK) {
-		crypto_transition_fn *crypto_end;
-		switch (st->st_state) {
-		case STATE_V2_REKEY_IKE_I0:
-		case STATE_V2_REKEY_CHILD_I0:
-		case STATE_V2_CREATE_I0:
-		case STATE_V2_REKEY_IKE_R:
-		case STATE_V2_CREATE_R:
-			/* from state table */
-			crypto_end = ikev2_child_out_cont;
-			break;
-		case STATE_V2_REKEY_IKE_I:
-			/* from state table */
-			crypto_end = ikev2_child_ike_rekey_tail;
-			break;
-		case STATE_V2_CREATE_I:
-			/* from state table */
-			crypto_end = ikev2_child_inR_tail;
-			break;
-		case STATE_V2_REKEY_CHILD_I:
-			/* XXX: from reverse engineering */
-			crypto_end = ikev2_child_inR_tail;
-			break;
-		case STATE_V2_REKEY_CHILD_R:
-			/* XXX: from reverse engineering */
-			crypto_end = ikev2_child_out_cont;
-			break;
-		default:
-			bad_case(st->st_state);
-		}
-		e = crypto_end(st, *mdp, r);
-	}
-
-	passert(*mdp != NULL);
-	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition((*mdp)->st, mdp, e);
 }
 
 /*
@@ -4864,20 +4701,6 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	return STF_OK;
 }
 
-stf_status ikev2_child_ike_rekey_tail(struct state *st UNUSED,
-				      struct msg_digest *md UNUSED,
-				      struct pluto_crypto_req *r UNUSED)
-{
-	ikev2_rekey_expire_pred(st, st->st_ike_pred);
-	return STF_OK;
-}
-
-stf_status ikev2_child_inR_tail(struct state *st UNUSED, struct msg_digest *md,
-				struct pluto_crypto_req *r UNUSED)
-{
-	return ikev2_process_ts_and_rest(md);
-}
-
 static stf_status ikev2_start_new_exchange(struct state *st)
 {
 	if (IS_CHILD_SA_INITIATOR(st)) {
@@ -4896,15 +4719,6 @@ static stf_status ikev2_start_new_exchange(struct state *st)
 	}
 
 	return STF_OK;
-}
-
-stf_status ikev2_child_out_cont(struct state *st, struct msg_digest *md,
-				struct pluto_crypto_req *r UNUSED)
-{
-	set_cur_state(st);
-	RETURN_STF_FAILURE_STATUS(ikev2_start_new_exchange(st));
-
-	return ikev2_child_out_tail(md);
 }
 
 void ikev2_child_send_next(struct state *st)
