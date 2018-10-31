@@ -5613,9 +5613,46 @@ static void ikev2_child_outI_continue(struct state *st,
 	pexpect(st->st_state == STATE_V2_CREATE_I0 ||
 		st->st_state == STATE_V2_REKEY_CHILD_I0 ||
 		st->st_state == STATE_V2_REKEY_IKE_I0);
-	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
+
+	/* child initiating exchange */
+	pexpect(IS_CHILD_SA(st));
+	pexpect(st->st_sa_role == SA_INITIATOR);
+
+	/* initiating, so *MDP should be NULL; later */
+	if (*mdp == NULL) {
+		*mdp = fake_md(st);
+	}
+
+	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
-	ikev2_crypto_continue(st, mdp, r);
+
+	/* and a parent? */
+	struct ike_sa *ike = ike_sa(st);
+	if (ike == NULL) {
+		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
+			    st->st_serialno, st->st_clonedfrom);
+		/* XXX: release child? */
+		return;
+	}
+
+	/* IKE SA => DH */
+	pexpect(st->st_state == STATE_V2_REKEY_IKE_I0 ? r->pcr_type == pcr_build_ke_and_nonce : true);
+
+	unpack_nonce(&st->st_ni, r);
+	if (r->pcr_type == pcr_build_ke_and_nonce)
+		unpack_KE_from_helper(st, r, &st->st_gi);
+	stf_status e = add_st_to_ike_sa_send_list(st, ike);
+
+	if (e == STF_OK) {
+		e = ikev2_start_new_exchange(st);
+	}
+	if (e == STF_OK) {
+		passert(*mdp != NULL);
+		e =ikev2_child_out_tail(*mdp);
+	}
+
+	passert(*mdp != NULL);
+	complete_v2_state_transition(st, mdp, e);
 }
 
 /*
