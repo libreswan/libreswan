@@ -4430,9 +4430,36 @@ static void ikev2_child_inR_continue(struct state *st,
 	 */
 	pexpect(st->st_state == STATE_V2_CREATE_I ||
 		st->st_state == STATE_V2_REKEY_CHILD_I);
-	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
+
+	/* initiator getting back an answer */
+	pexpect(IS_CHILD_SA(st));
+	pexpect(st->st_sa_role == SA_INITIATOR);
+	pexpect(*mdp != NULL);
+	pexpect((*mdp)->st == st);
+	pexpect(v2_msg_role(*mdp) == MESSAGE_RESPONSE);
+
+	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
-	ikev2_crypto_continue(st, mdp, r);
+
+	/* and a parent? */
+	if (ike_sa(st) == NULL) {
+		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
+			    st->st_serialno, st->st_clonedfrom);
+		/* XXX: release what? */
+		return;
+	}
+
+	stf_status e = STF_OK;
+	bool only_shared_true = true;
+	if (!finish_dh_v2(st, r, only_shared_true)) {
+		e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
+	}
+
+	if (e == STF_OK) {
+		e = ikev2_process_ts_and_rest(*mdp);
+	}
+
+	complete_v2_state_transition(st, mdp, e);
 }
 
 /*
