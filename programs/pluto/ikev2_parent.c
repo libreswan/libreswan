@@ -4459,9 +4459,13 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 	RETURN_STF_FAILURE_STATUS(ikev2_rekey_child_resp(md));
 
 	if (st->st_ipsec_pred == SOS_NOBODY) {
-		RETURN_STF_FAILURE_STATUS(ikev2_resp_accept_child_ts(md, &st,
-					ORIGINAL_RESPONDER,
-					ISAKMP_v2_CREATE_CHILD_SA));
+		passert(st != NULL);
+		passert(IS_CHILD_SA(st));
+		pexpect(st == md->st);
+		if (!v2_process_ts_request_create_child(md, &st,
+							ISAKMP_v2_CREATE_CHILD_SA)) {
+			return STF_FAIL + v2N_TS_UNACCEPTABLE;
+		}
 	}
 
 	/*

@@ -111,48 +111,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
-	/*
-	 * XXX: This function was only called with ORIGINAL_ROLE set
-	 * to ORIGINAL_RESPONDER so it was hardwired.  Looking at the
-	 * calls:
-	 *
-	 * - in the original responder's AUTH code so
-	 *   ORIGINAL_RESPONDER is correct
-	 *
-	 * - CHILD_SA reply code (?), since either end can send such a
-	 *   request, the end's original role may not be
-	 *   ORIGINAL_RESPONDER.
-	 *
-	 * Looking at the code:
-	 *
-	 * - it isn't clear if the notification parsing checks need to
-	 *   be conditional on ORIGINAL_ROLE or message responder?
-	 *
-	 *   Does it need the IKE SA ROLE, or the CHILD SA ROLE?
-	 *
-	 * - The function ikev2_derive_child_keys() needs to know the
-	 *   initiator and responder when assigning keying material.
-	 *
-	 *   But who is the initiator and who is the responder?
-	 *
-	 *   Section 1.3.1 (Creating new Child SAs...) refers to the
-	 *   end sending the CHILD_SA request as the initiator (i.e.,
-	 *   as determined by the message_role), but Section 2.17
-	 *   (Generating Keying Material for Child SAs) could be read
-	 *   as refering to the original roles (I suspect it isn't).
-	 *
-	 *   So either ike_sa(cst) .sa .st_original_role or md
-	 *   .message_role should be used here?
-	 *
-	 *   Either way, something is wrong as this call hard-wires
-	 *   the responder but the second call is using ORIGINAL_ROLE!
-	 *
-	 * Consequently 'role' should be deleted and code should
-	 * instead be passed SA_RESPONDER.
-	 */
-	const enum original_role role = ORIGINAL_RESPONDER;
-
-	struct state *cst;	/* child state */
+	struct state *cst = NULL;	/* child state */
 	struct state *pst;
 	struct connection *c = md->st->st_connection;
 	stf_status ret = STF_FAIL;
@@ -161,7 +120,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		state_with_serialno(md->st->st_clonedfrom) : md->st;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
-			md->st->st_ipsec_pred != SOS_NOBODY) {
+	    md->st->st_ipsec_pred != SOS_NOBODY) {
 		/* this is Child SA rekey we already have child state object */
 		cst = md->st;
 	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
@@ -170,8 +129,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	} else if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		cst = md->st;
 	} else {
-		ret = ikev2_resp_accept_child_ts(md, &cst, role,
-				isa_xchg);
+		passert(cst == NULL);
+		pexpect(md->st != NULL);
+		pexpect(IS_IKE_SA(md->st));
+		if (!v2_process_ts_request_create_child(md, &cst, isa_xchg)) {
+			return STF_FAIL + v2N_TS_UNACCEPTABLE;
+		}
 	}
 
 	if (cst == NULL)
@@ -240,59 +203,55 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		}
 	}
 
-	if (role == ORIGINAL_RESPONDER) {
-		struct payload_digest *ntfy;
-
-		/*
-		 * Paul: This is the second time we are processing NOTIFY's
-		 * I suspect we are only interested in those related to
-		 * the Child SA and mark those on the child state. But this
-		 * code is used in IKE_AUTH as well as CREATE_CHILD_SA, so
-		 * we end up double logging bad payloads on the responder.
-		 */
-		/* Process all NOTIFY payloads */
-		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-			switch (ntfy->payload.v2n.isan_type) {
-			case v2N_NAT_DETECTION_SOURCE_IP:
-			case v2N_NAT_DETECTION_DESTINATION_IP:
-			case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-			case v2N_COOKIE:
-			case v2N_USE_PPK:
-				DBG(DBG_CONTROL, DBG_log("received %s which is not valid for current exchange",
-					enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type)));
-				break;
-
-			case v2N_USE_TRANSPORT_MODE:
-				DBG(DBG_CONTROL, DBG_log("received USE_TRANSPORT_MODE"));
-				cst->st_seen_use_transport = TRUE;
-				break;
-			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-				DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
-				cst->st_seen_no_tfc = TRUE;
-				break;
-			case v2N_MOBIKE_SUPPORTED:
-				DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED"));
-				cst->st_seen_mobike = pst->st_seen_mobike = TRUE;
-				break;
-			case v2N_INITIAL_CONTACT:
-				DBG(DBG_CONTROL, DBG_log("received v2N_INITIAL_CONTACT"));
-				cst->st_seen_initialc = pst->st_seen_initialc = TRUE;
-				break;
-			case v2N_REKEY_SA:
-				DBG(DBG_CONTROL, DBG_log("received REKEY_SA already proceesd"));
-				break;
-			case v2N_PPK_IDENTITY:
-				DBG(DBG_CONTROL, DBG_log("received PPK_IDENTITY already processed"));
-				break;
-			case v2N_NO_PPK_AUTH:
-				DBG(DBG_CONTROL, DBG_log("received NO_PPK_AUTH already processed"));
-				break;
-			default:
-				libreswan_log("received unsupported NOTIFY %s ",
-					enum_name(&ikev2_notify_names,
+	/*
+	 * Paul: This is the second time we are processing NOTIFY's I
+	 * suspect we are only interested in those related to the
+	 * Child SA and mark those on the child state. But this code
+	 * is used in IKE_AUTH as well as CREATE_CHILD_SA, so we end
+	 * up double logging bad payloads on the responder.
+	 */
+	/* Process all NOTIFY payloads */
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+	     ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_NAT_DETECTION_SOURCE_IP:
+		case v2N_NAT_DETECTION_DESTINATION_IP:
+		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
+		case v2N_COOKIE:
+		case v2N_USE_PPK:
+			DBG(DBG_CONTROL, DBG_log("received %s which is not valid for current exchange",
+						 enum_name(&ikev2_notify_names,
+							   ntfy->payload.v2n.isan_type)));
+			break;
+		case v2N_USE_TRANSPORT_MODE:
+			DBG(DBG_CONTROL, DBG_log("received USE_TRANSPORT_MODE"));
+			cst->st_seen_use_transport = TRUE;
+			break;
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
+			cst->st_seen_no_tfc = TRUE;
+			break;
+		case v2N_MOBIKE_SUPPORTED:
+			DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED"));
+			cst->st_seen_mobike = pst->st_seen_mobike = TRUE;
+			break;
+		case v2N_INITIAL_CONTACT:
+			DBG(DBG_CONTROL, DBG_log("received v2N_INITIAL_CONTACT"));
+			cst->st_seen_initialc = pst->st_seen_initialc = TRUE;
+			break;
+		case v2N_REKEY_SA:
+			DBG(DBG_CONTROL, DBG_log("received REKEY_SA already proceesd"));
+			break;
+		case v2N_PPK_IDENTITY:
+			DBG(DBG_CONTROL, DBG_log("received PPK_IDENTITY already processed"));
+			break;
+		case v2N_NO_PPK_AUTH:
+			DBG(DBG_CONTROL, DBG_log("received NO_PPK_AUTH already processed"));
+			break;
+		default:
+			libreswan_log("received unsupported NOTIFY %s ",
+				      enum_name(&ikev2_notify_names,
 						ntfy->payload.v2n.isan_type));
-			}
 		}
 	}
 
@@ -322,39 +281,37 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return ret;	/* should we delete_state cst? */
 	}
 
-	if (role == ORIGINAL_RESPONDER) {
-		if (cst->st_seen_use_transport) {
-			if (c->policy & POLICY_TUNNEL) {
-				libreswan_log("Local policy is tunnel mode - ignoring request for transport mode");
-			} else {
-				DBG(DBG_CONTROL, DBG_log("Local policy is transport mode and received USE_TRANSPORT_MODE"));
-				if (cst->st_esp.present) {
-					cst->st_esp.attrs.encapsulation =
-						ENCAPSULATION_MODE_TRANSPORT;
-				}
-				if (cst->st_ah.present) {
-					cst->st_ah.attrs.encapsulation =
-						ENCAPSULATION_MODE_TRANSPORT;
-				}
-				/* In v2, for parent, protoid must be 0 and SPI must be empty */
-				if (!ship_v2Ns(c->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
-				      v2N_USE_TRANSPORT_MODE, outpbs))
-					return STF_INTERNAL_ERROR;
-			}
+	if (cst->st_seen_use_transport) {
+		if (c->policy & POLICY_TUNNEL) {
+			libreswan_log("Local policy is tunnel mode - ignoring request for transport mode");
 		} else {
-			/* the peer wants tunnel mode */
-			if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
-				libreswan_log("Local policy is transport mode, but peer did not request that");
-				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			DBG(DBG_CONTROL, DBG_log("Local policy is transport mode and received USE_TRANSPORT_MODE"));
+			if (cst->st_esp.present) {
+				cst->st_esp.attrs.encapsulation =
+					ENCAPSULATION_MODE_TRANSPORT;
 			}
-		}
-
-		if (c->send_no_esp_tfc) {
-			DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
-			if (!ship_v2Ns(ISAKMP_NEXT_v2NONE,
-			      v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
+			if (cst->st_ah.present) {
+				cst->st_ah.attrs.encapsulation =
+					ENCAPSULATION_MODE_TRANSPORT;
+			}
+			/* In v2, for parent, protoid must be 0 and SPI must be empty */
+			if (!ship_v2Ns(c->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
+				       v2N_USE_TRANSPORT_MODE, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
+	} else {
+		/* the peer wants tunnel mode */
+		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
+			libreswan_log("Local policy is transport mode, but peer did not request that");
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+	}
+
+	if (c->send_no_esp_tfc) {
+		DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
+		if (!ship_v2Ns(ISAKMP_NEXT_v2NONE,
+			       v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
+			return STF_INTERNAL_ERROR;
 	}
 
 	ikev2_derive_child_keys(pexpect_child_sa(cst));

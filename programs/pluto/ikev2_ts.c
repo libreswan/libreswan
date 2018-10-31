@@ -643,13 +643,19 @@ static int ikev2_evaluate_connection_fit(const struct connection *d,
 }
 
 /*
- * find the best connection and, if it is AUTH exchange, create the child state
+ * find the best connection and, if it is AUTH exchange, create the
+ * child state
+ *
+ * XXX: creating child as a side effect is pretty messed up.
  */
-stf_status ikev2_resp_accept_child_ts(
-	const struct msg_digest *md,
-	struct state **ret_cst,	/* where to return child state */
-	enum original_role role, enum isakmp_xchg_types isa_xchg)
+bool v2_process_ts_request_create_child(const struct msg_digest *md,
+					struct state **ret_cst	/* where to return child state */,
+					enum isakmp_xchg_types isa_xchg)
 {
+	passert(v2_msg_role(md) == MESSAGE_REQUEST);
+	passert(*ret_cst == NULL || (*ret_cst)->st_sa_role == SA_RESPONDER);
+
+	/* XXX: md->st here is parent???? */
 	struct connection *c = md->st->st_connection;
 
 	DBG(DBG_CONTROLMORE,
@@ -679,21 +685,25 @@ stf_status ikev2_resp_accept_child_ts(
 
 	/* ??? not very clear diagnostic for our user */
 	if (tsi_n < 0 || tsr_n < 0)
-		return STF_FAIL + v2N_TS_UNACCEPTABLE;
+		return false;
 
 	/* find best spd in c */
 	const struct spd_route *sra;
 
 	for (sra = &c->spd; sra != NULL; sra = sra->spd_next) {
-		int bfit_n = ikev2_evaluate_connection_fit(c, sra, role, tsi,
-				tsr, tsi_n, tsr_n);
+		int bfit_n = ikev2_evaluate_connection_fit(c, sra,
+							   ORIGINAL_RESPONDER,
+							   tsi, tsr,
+							   tsi_n, tsr_n);
 
 		if (bfit_n > bestfit_n) {
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("prefix fitness found a better match c %s",
 				    c->name));
-			int bfit_p = ikev2_evaluate_connection_port_fit(
-				    c, sra, role, tsi, tsr, tsi_n, tsr_n,
+			int bfit_p = ikev2_evaluate_connection_port_fit(c, sra,
+									ORIGINAL_RESPONDER,
+									tsi, tsr,
+									tsi_n, tsr_n,
 				    &best_tsi_i, &best_tsr_i);
 
 			if (bfit_p > bestfit_p) {
@@ -701,10 +711,11 @@ stf_status ikev2_resp_accept_child_ts(
 				    DBG_log("port fitness found better match c %s, tsi[%d],tsr[%d]",
 					    c->name, best_tsi_i, best_tsr_i));
 				int bfit_pr =
-					ikev2_evaluate_connection_protocol_fit(
-						c, sra, role,
-						tsi, tsr, tsi_n, tsr_n,
-						&best_tsi_i, &best_tsr_i);
+					ikev2_evaluate_connection_protocol_fit(c, sra,
+									       ORIGINAL_RESPONDER,
+									       tsi, tsr,
+									       tsi_n, tsr_n,
+									       &best_tsi_i, &best_tsr_i);
 
 				if (bfit_pr > bestfit_pr) {
 					DBG(DBG_CONTROLMORE,
@@ -808,8 +819,10 @@ stf_status ikev2_resp_accept_child_ts(
 			const struct spd_route *sr;
 
 			for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
-				int newfit = ikev2_evaluate_connection_fit(
-					d, sr, role, tsi, tsr, tsi_n, tsr_n);
+				int newfit = ikev2_evaluate_connection_fit(d, sr,
+									   ORIGINAL_RESPONDER,
+									   tsi, tsr,
+									   tsi_n, tsr_n);
 
 				if (newfit > bestfit_n) {
 					/* ??? what does this comment mean? */
@@ -818,12 +831,12 @@ stf_status ikev2_resp_accept_child_ts(
 					    DBG_log("prefix fitness found a better match d %s",
 						    d->name));
 					int bfit_p =
-						ikev2_evaluate_connection_port_fit(
-							d, sr, role,
-							tsi, tsr,
-							tsi_n, tsr_n,
-							&best_tsi_i,
-							&best_tsr_i);
+						ikev2_evaluate_connection_port_fit(d, sr,
+										   ORIGINAL_RESPONDER,
+										   tsi, tsr,
+										   tsi_n, tsr_n,
+										   &best_tsi_i,
+										   &best_tsr_i);
 
 					if (bfit_p > bestfit_p) {
 						DBG(DBG_CONTROLMORE, DBG_log(
@@ -832,12 +845,12 @@ stf_status ikev2_resp_accept_child_ts(
 							    best_tsi_i,
 							    best_tsr_i));
 						int bfit_pr =
-							ikev2_evaluate_connection_protocol_fit(
-								d, sr, role,
-								tsi, tsr,
-								tsi_n, tsr_n,
-								&best_tsi_i,
-								&best_tsr_i);
+							ikev2_evaluate_connection_protocol_fit(d, sr,
+											       ORIGINAL_RESPONDER,
+											       tsi, tsr,
+											       tsi_n, tsr_n,
+											       &best_tsi_i,
+											       &best_tsr_i);
 
 						if (bfit_pr > bestfit_pr) {
 							DBG(DBG_CONTROLMORE,
@@ -925,7 +938,7 @@ stf_status ikev2_resp_accept_child_ts(
 
 		if (bsr == NULL) {
 			/* nothing to instantiate from other group templates either */
-				return STF_FAIL + v2N_TS_UNACCEPTABLE;
+			return false;
 		}
 	}
 
@@ -949,20 +962,14 @@ stf_status ikev2_resp_accept_child_ts(
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
 
-	if (role == ORIGINAL_INITIATOR) {
-		pexpect(best_tsi_i >= 0);
-		pexpect(best_tsr_i >= 0);	/* ??? Coverity thinks that this might fail */
-		cst->st_ts_this = tsi[best_tsi_i];
-		cst->st_ts_that = tsr[best_tsr_i];
-	} else {
-		cst->st_ts_this = ikev2_end_to_ts(&bsr->this);
-		cst->st_ts_that = ikev2_end_to_ts(&bsr->that);
-	}
+	cst->st_ts_this = ikev2_end_to_ts(&bsr->this);
+	cst->st_ts_that = ikev2_end_to_ts(&bsr->that);
+
 	ikev2_print_ts(&cst->st_ts_this);
 	ikev2_print_ts(&cst->st_ts_that);
 
-	*ret_cst = cst;	/* success! */
-	return STF_OK;	/* ignored because *ret_cst is not NULL */
+	*ret_cst = cst;
+	return true;
 }
 
 /* check TS payloads, response */

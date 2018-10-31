@@ -40,15 +40,14 @@ void ikev2_print_ts(const struct traffic_selector *ts);
 bool v2_process_ts_response(struct child_sa *child,
 			    struct msg_digest *md);
 
+bool v2_process_ts_request_create_child(const struct msg_digest *md,
+					struct state **ret_cst,
+					enum isakmp_xchg_types isa_xchg);
+
 struct traffic_selector ikev2_end_to_ts(const struct end *e);
 
 stf_status v2_emit_ts_payloads(const struct child_sa *cst,
 			       pb_stream *outpbs,
 			       const struct connection *c);
-
-stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
-				      struct state **ret_cst,
-				      enum original_role role, enum
-				      isakmp_xchg_types isa_xchg);
 
 #endif
