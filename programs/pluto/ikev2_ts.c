@@ -419,33 +419,33 @@ static int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
  * If subset_ok, narrowing our port range to ts port range is OK (initiator narrowing).
  * Returns 0 if no match; otherwise number of ports within match
  */
-static int ikev2_match_port_range(uint16_t port, struct traffic_selector ts,
-	bool superset_ok, bool subset_ok, const char *which, int index)
+static int ikev2_match_port_range(uint16_t port, const struct traffic_selector *ts,
+				  bool superset_ok, bool subset_ok,
+				  const char *which, int index)
 {
 	uint16_t low = port;
 	uint16_t high = port == 0 ? 65535 : port;
 	int f = 0;	/* strength of match */
 	const char *m = "no";
 
-	if (ts.startport > ts.endport) {
+	if (ts->startport > ts->endport) {
 		m = "invalid range in";
-	} else if (ts.startport == low && ts.endport == high) {
+	} else if (ts->startport == low && ts->endport == high) {
 		f = 1 + (high - low);
 		m = "exact";
-	} else if (superset_ok && ts.startport <= low && high <= ts.endport) {
+	} else if (superset_ok && ts->startport <= low && high <= ts->endport) {
 		f = 1 + (high - low);
 		m = "superset";
-	} else if (subset_ok && low <= ts.startport && ts.endport <= high) {
-		f = 1 + (ts.endport - ts.startport);
+	} else if (subset_ok && low <= ts->startport && ts->endport <= high) {
+		f = 1 + (ts->endport - ts->startport);
 		m = "subset";
 	}
-	DBG(DBG_CONTROL,
-	    DBG_log("   %s[%d] %u-%u: %s port match with %u.  fitness %d",
-		    which, index,
-		    ts.startport, ts.endport,
-		    m,
-		    port,
-		    f));
+	DBGF(DBG_MASK, "   %s[%d] %u..%u %s %u..%u: %s  fitness %d",
+	     which, index,
+	     ts->startport, ts->endport,
+	     superset_ok ? ">=" : subset_ok ? "<=" : "==",
+	     low, high,
+	     m, f);
 	return f;
 }
 
@@ -482,7 +482,7 @@ static int ikev2_evaluate_connection_port_fit(const struct connection *d,
 	for (tsi_ni = 0; tsi_ni < tsi_n; tsi_ni++) {
 		int tsr_ni;
 
-		int fitrange_i = ikev2_match_port_range(ei->port, tsi[tsi_ni],
+		int fitrange_i = ikev2_match_port_range(ei->port, &tsi[tsi_ni],
 			role == ORIGINAL_RESPONDER && narrowing,
 			role == ORIGINAL_INITIATOR && narrowing,
 			"tsi", tsi_ni);
@@ -491,7 +491,7 @@ static int ikev2_evaluate_connection_port_fit(const struct connection *d,
 			continue;	/* save effort! */
 
 		for (tsr_ni = 0; tsr_ni < tsr_n; tsr_ni++) {
-			int fitrange_r = ikev2_match_port_range(er->port, tsr[tsr_ni],
+			int fitrange_r = ikev2_match_port_range(er->port, &tsr[tsr_ni],
 				role == ORIGINAL_RESPONDER && narrowing,
 				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
