@@ -47,6 +47,22 @@ struct ends {
 	const struct end *r;
 };
 
+enum narrowing {
+	END_EQUALS_TS = 1,
+	END_NARROWER_THAN_TS,
+	END_WIDER_THAN_TS,
+};
+
+static const char *narrowing_string(enum narrowing narrowing)
+{
+	switch (narrowing) {
+	case END_EQUALS_TS: return "==";
+	case END_NARROWER_THAN_TS: return "(end)<=(TS)";
+	case END_WIDER_THAN_TS: return "(end)>=(TS)";
+	default: bad_case(narrowing);
+	}
+}
+
 void ikev2_print_ts(const struct traffic_selector *ts)
 {
 	DBG(DBG_CONTROLMORE, {
@@ -358,37 +374,46 @@ static bool v2_parse_tss(const struct msg_digest *md,
 	return true;
 }
 
-
+#define MATCH_PREFIX "        "
 
 /*
- * Check if our policy's protocol (proto) matches
- * the Traffic Selector protocol (ts_proto).
- * If superset_ok, narrowing ts_proto 0 to our proto is OK (responder narrowing)
- * If subset_ok, narrowing our proto 0 to ts_proto is OK (initiator narrowing).
- * Returns 0 for no match, 1 for narrowed match, 255 for exact match.
+ * Check if our policy's protocol (proto) matches the Traffic Selector
+ * protocol (ts_proto).
  */
-static int ikev2_match_protocol(uint8_t proto, uint8_t ts_proto,
-	bool superset_ok, bool subset_ok, const char *which, int index)
+static int ikev2_match_protocol(uint8_t end_proto, uint8_t ts_proto,
+				enum narrowing narrowing,
+				const char *which, int index)
 {
 	int f = 0;	/* strength of match */
 	const char *m = "no";
 
-	if (proto == ts_proto) {
-		f = 255;	/* ??? odd value */
-		m = "exact";
-	} else if (superset_ok && ts_proto == 0) {
-		f = 1;
-		m = "superset";
-	} else if (subset_ok && proto == 0) {
-		f = 1;
-		m = "subset";
+	switch (narrowing) {
+	case END_EQUALS_TS:
+		if (end_proto == ts_proto) {
+			f = 255;	/* ??? odd value */
+			m = "exact";
+		}
+		break;
+	case END_NARROWER_THAN_TS:
+		if (ts_proto == 0) { /* wild-card */
+			f = 1;
+			m = "superset";
+		}
+		break;
+	case END_WIDER_THAN_TS:
+		if (end_proto == 0) { /* wild-card */
+			f = 1;
+			m = "subset";
+		}
+		break;
+	default:
+		bad_case(narrowing);
 	}
-	DBG(DBG_CONTROL,
-	    DBG_log("protocol %d and %s[%d].ipprotoid %d: %s match",
-		    proto,
-		    which, index,
-		    ts_proto,
-		    m));
+	DBGF(DBG_MASK, MATCH_PREFIX "protocol %s%d %s %s[%d].ipprotoid %s%d: %s fitness %d",
+	     end_proto == 0 ? "*" : "", end_proto,
+	     narrowing_string(narrowing),
+	     which, index, ts_proto == 0 ? "*" : "", ts_proto,
+	     m, f);
 	return f;
 }
 
@@ -398,15 +423,13 @@ static int ikev2_match_protocol(uint8_t proto, uint8_t ts_proto,
  * Almost identical to ikev2_evaluate_connection_port_fit:
  * any change should be done to both.
  */
-static int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
-						  enum original_role role,
+static int ikev2_evaluate_connection_protocol_fit(enum narrowing narrowing,
 						  const struct ends *e,
 						  const struct traffic_selectors *ts,
 						  int *best_tsi_i,
 						  int *best_tsr_i)
 {
 	int bestfit_pr = -1;
-	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY;
 
 	/* compare tsi/r array to this/that, evaluating protocol how well it fits */
 	/* ??? stupid n**2 algorithm */
@@ -414,9 +437,7 @@ static int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 		const struct traffic_selector *tni = &ts->i[tsi_ni];
 
 		int fitrange_i = ikev2_match_protocol(e->i->protocol, tni->ipprotoid,
-			role == ORIGINAL_RESPONDER && narrowing,
-			role == ORIGINAL_INITIATOR && narrowing,
-			"tsi", tsi_ni);
+						      narrowing, "tsi", tsi_ni);
 
 		if (fitrange_i == 0)
 			continue;	/* save effort! */
@@ -425,9 +446,7 @@ static int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 			const struct traffic_selector *tnr = &ts->i[tsr_ni];
 
 			int fitrange_r = ikev2_match_protocol(e->r->protocol, tnr->ipprotoid,
-				role == ORIGINAL_RESPONDER && narrowing,
-				role == ORIGINAL_INITIATOR && narrowing,
-				"tsr", tsr_ni);
+							      narrowing, "tsr", tsr_ni);
 
 			if (fitrange_r == 0)
 				continue;	/* save effort! */
@@ -459,32 +478,44 @@ static int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
  * If subset_ok, narrowing our port range to ts port range is OK (initiator narrowing).
  * Returns 0 if no match; otherwise number of ports within match
  */
-static int ikev2_match_port_range(uint16_t port, const struct traffic_selector *ts,
-				  bool superset_ok, bool subset_ok,
+static int ikev2_match_port_range(uint16_t end_port, const struct traffic_selector *ts,
+				  enum narrowing narrowing,
 				  const char *which, int index)
 {
-	uint16_t low = port;
-	uint16_t high = port == 0 ? 65535 : port;
+	uint16_t end_low = end_port;
+	uint16_t end_high = end_port == 0 ? 65535 : end_port;
 	int f = 0;	/* strength of match */
 	const char *m = "no";
 
 	if (ts->startport > ts->endport) {
-		m = "invalid range in";
-	} else if (ts->startport == low && ts->endport == high) {
-		f = 1 + (high - low);
-		m = "exact";
-	} else if (superset_ok && ts->startport <= low && high <= ts->endport) {
-		f = 1 + (high - low);
-		m = "superset";
-	} else if (subset_ok && low <= ts->startport && ts->endport <= high) {
-		f = 1 + (ts->endport - ts->startport);
-		m = "subset";
+		libreswan_log("traffic selector %s %d has an invalid port range",
+			      which, index);
+		return 0;
 	}
-	DBGF(DBG_MASK, "   %s[%d] %u..%u %s %u..%u: %s  fitness %d",
-	     which, index,
-	     ts->startport, ts->endport,
-	     superset_ok ? ">=" : subset_ok ? "<=" : "==",
-	     low, high,
+
+	switch (narrowing) {
+	case END_EQUALS_TS:
+		if (end_low == ts->startport && end_high == ts->endport) {
+			f = 1 + (end_high - end_low);
+		}
+		break;
+	case END_NARROWER_THAN_TS:
+		if (end_low >= ts->startport && end_high <= ts->endport) {
+			f = 1 + (end_high - end_low);
+		}
+		break;
+	case END_WIDER_THAN_TS:
+		if (end_low <= ts->startport && end_high >= ts->endport) {
+			f = 1 + (ts->endport - ts->startport);
+		}
+		break;
+	default:
+		bad_case(narrowing);
+	}
+	DBGF(DBG_MASK, MATCH_PREFIX "port %u..%u %s %s[%d] %u..%u: %s fitness %d",
+	     end_low, end_high,
+	     narrowing_string(narrowing),
+	     which, index, ts->startport, ts->endport,
 	     m, f);
 	return f;
 }
@@ -495,25 +526,21 @@ static int ikev2_match_port_range(uint16_t port, const struct traffic_selector *
  * Almost identical to ikev2_evaluate_connection_protocol_fit:
  * any change should be done to both.
  */
-static int ikev2_evaluate_connection_port_fit(const struct connection *d,
-					      enum original_role role,
+static int ikev2_evaluate_connection_port_fit(enum narrowing narrowing,
 					      const struct ends *e,
 					      const struct traffic_selectors *ts,
 					      int *best_tsi_i,
 					      int *best_tsr_i)
 {
 	int bestfit_p = -1;
-	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY;
 
 	/* compare tsi/r array to this/that, evaluating how well each port range fits */
 	/* ??? stupid n**2 algorithm */
 	for (unsigned tsi_ni = 0; tsi_ni < ts->nr; tsi_ni++) {
 		const struct traffic_selector *tni = &ts->i[tsi_ni];
 
-		int fitrange_i = ikev2_match_port_range(e->i->port, tni,
-			role == ORIGINAL_RESPONDER && narrowing,
-			role == ORIGINAL_INITIATOR && narrowing,
-			"tsi", tsi_ni);
+		int fitrange_i = ikev2_match_port_range(e->i->port, tni, narrowing,
+							"tsi", tsi_ni);
 
 		if (fitrange_i == 0)
 			continue;	/* save effort! */
@@ -521,10 +548,8 @@ static int ikev2_evaluate_connection_port_fit(const struct connection *d,
 		for (unsigned tsr_ni = 0; tsr_ni < ts->nr; tsr_ni++) {
 			const struct traffic_selector *tnr = &ts->r[tsr_ni];
 
-			int fitrange_r = ikev2_match_port_range(e->r->port, tnr,
-				role == ORIGINAL_RESPONDER && narrowing,
-				role == ORIGINAL_INITIATOR && narrowing,
-				"tsr", tsr_ni);
+			int fitrange_r = ikev2_match_port_range(e->r->port, tnr, narrowing,
+								"tsr", tsr_ni);
 
 			if (fitrange_r == 0)
 				continue;	/* no match */
@@ -706,8 +731,13 @@ bool v2_process_ts_request(struct child_sa *child,
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("prefix fitness found a better match c %s",
 				    c->name));
-			int bfit_p = ikev2_evaluate_connection_port_fit(c,
-									ORIGINAL_RESPONDER,
+
+			/* responder */
+			enum narrowing responder_narrowing =
+				(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
+				? END_NARROWER_THAN_TS
+				: END_EQUALS_TS;
+			int bfit_p = ikev2_evaluate_connection_port_fit(responder_narrowing,
 									&e, &tss,
 									&best_tsi_i,
 									&best_tsr_i);
@@ -717,8 +747,7 @@ bool v2_process_ts_request(struct child_sa *child,
 				    DBG_log("port fitness found better match c %s, tsi[%d],tsr[%d]",
 					    c->name, best_tsi_i, best_tsr_i));
 				int bfit_pr =
-					ikev2_evaluate_connection_protocol_fit(c,
-									       ORIGINAL_RESPONDER,
+					ikev2_evaluate_connection_protocol_fit(responder_narrowing,
 									       &e, &tss,
 									       &best_tsi_i,
 									       &best_tsr_i);
@@ -840,9 +869,13 @@ bool v2_process_ts_request(struct child_sa *child,
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("prefix fitness found a better match d %s",
 						    d->name));
+					/* responder -- note D! */
+					enum narrowing responder_narrowing =
+						(d->policy & POLICY_IKEV2_ALLOW_NARROWING)
+						? END_NARROWER_THAN_TS
+						: END_EQUALS_TS;
 					int bfit_p =
-						ikev2_evaluate_connection_port_fit(d,
-										   ORIGINAL_RESPONDER,
+						ikev2_evaluate_connection_port_fit(responder_narrowing,
 										   &e, &tss,
 										   &best_tsi_i,
 										   &best_tsr_i);
@@ -854,8 +887,7 @@ bool v2_process_ts_request(struct child_sa *child,
 							    best_tsi_i,
 							    best_tsr_i));
 						int bfit_pr =
-							ikev2_evaluate_connection_protocol_fit(d,
-											       ORIGINAL_RESPONDER,
+							ikev2_evaluate_connection_protocol_fit(responder_narrowing,
 											       &e, &tss,
 											       &best_tsi_i,
 											       &best_tsr_i);
@@ -1020,7 +1052,12 @@ bool v2_process_ts_response(struct child_sa *child,
 				    DBG_log("prefix fitness found a better match c %s",
 					    c->name));
 
-				int bfit_p = ikev2_evaluate_connection_port_fit(c, ORIGINAL_INITIATOR,
+				/* initiator */
+				enum narrowing initiator_widening =
+					(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
+					? END_WIDER_THAN_TS
+					: END_EQUALS_TS;
+				int bfit_p = ikev2_evaluate_connection_port_fit(initiator_widening,
 										&e, &tss,
 										&best_tsi_i,
 										&best_tsr_i);
@@ -1030,7 +1067,7 @@ bool v2_process_ts_response(struct child_sa *child,
 					    DBG_log("port fitness found better match c %s, tsi[%d],tsr[%d]",
 						    c->name, best_tsi_i, best_tsr_i));
 
-					int bfit_pr = ikev2_evaluate_connection_protocol_fit(c, ORIGINAL_INITIATOR,
+					int bfit_pr = ikev2_evaluate_connection_protocol_fit(initiator_widening,
 											     &e, &tss,
 											     &best_tsi_i,
 											     &best_tsr_i);
