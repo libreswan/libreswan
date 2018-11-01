@@ -42,6 +42,11 @@ struct traffic_selectors {
 	struct traffic_selector r[16];
 };
 
+struct ends {
+	const struct end *i;
+	const struct end *r;
+};
+
 void ikev2_print_ts(const struct traffic_selector *ts)
 {
 	DBG(DBG_CONTROLMORE, {
@@ -394,29 +399,21 @@ static int ikev2_match_protocol(uint8_t proto, uint8_t ts_proto,
  * any change should be done to both.
  */
 static int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
-						  const struct spd_route *sr,
 						  enum original_role role,
+						  const struct ends *e,
 						  const struct traffic_selectors *ts,
 						  int *best_tsi_i,
 						  int *best_tsr_i)
 {
 	int bestfit_pr = -1;
-	const struct end *ei, *er;
 	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY;
 
-	if (role == ORIGINAL_INITIATOR) {
-		ei = &sr->this;
-		er = &sr->that;
-	} else {
-		ei = &sr->that;
-		er = &sr->this;
-	}
 	/* compare tsi/r array to this/that, evaluating protocol how well it fits */
 	/* ??? stupid n**2 algorithm */
 	for (unsigned tsi_ni = 0; tsi_ni < ts->nr; tsi_ni++) {
 		const struct traffic_selector *tni = &ts->i[tsi_ni];
 
-		int fitrange_i = ikev2_match_protocol(ei->protocol, tni->ipprotoid,
+		int fitrange_i = ikev2_match_protocol(e->i->protocol, tni->ipprotoid,
 			role == ORIGINAL_RESPONDER && narrowing,
 			role == ORIGINAL_INITIATOR && narrowing,
 			"tsi", tsi_ni);
@@ -427,7 +424,7 @@ static int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 		for (unsigned tsr_ni = 0; tsr_ni < ts->nr; tsr_ni++) {
 			const struct traffic_selector *tnr = &ts->i[tsr_ni];
 
-			int fitrange_r = ikev2_match_protocol(er->protocol, tnr->ipprotoid,
+			int fitrange_r = ikev2_match_protocol(e->r->protocol, tnr->ipprotoid,
 				role == ORIGINAL_RESPONDER && narrowing,
 				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
@@ -499,29 +496,21 @@ static int ikev2_match_port_range(uint16_t port, const struct traffic_selector *
  * any change should be done to both.
  */
 static int ikev2_evaluate_connection_port_fit(const struct connection *d,
-					      const struct spd_route *sr,
 					      enum original_role role,
+					      const struct ends *e,
 					      const struct traffic_selectors *ts,
 					      int *best_tsi_i,
 					      int *best_tsr_i)
 {
 	int bestfit_p = -1;
-	const struct end *ei, *er;
 	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY;
 
-	if (role == ORIGINAL_INITIATOR) {
-		ei = &sr->this;
-		er = &sr->that;
-	} else {
-		ei = &sr->that;
-		er = &sr->this;
-	}
 	/* compare tsi/r array to this/that, evaluating how well each port range fits */
 	/* ??? stupid n**2 algorithm */
 	for (unsigned tsi_ni = 0; tsi_ni < ts->nr; tsi_ni++) {
 		const struct traffic_selector *tni = &ts->i[tsi_ni];
 
-		int fitrange_i = ikev2_match_port_range(ei->port, tni,
+		int fitrange_i = ikev2_match_port_range(e->i->port, tni,
 			role == ORIGINAL_RESPONDER && narrowing,
 			role == ORIGINAL_INITIATOR && narrowing,
 			"tsi", tsi_ni);
@@ -532,7 +521,7 @@ static int ikev2_evaluate_connection_port_fit(const struct connection *d,
 		for (unsigned tsr_ni = 0; tsr_ni < ts->nr; tsr_ni++) {
 			const struct traffic_selector *tnr = &ts->r[tsr_ni];
 
-			int fitrange_r = ikev2_match_port_range(er->port, tnr,
+			int fitrange_r = ikev2_match_port_range(e->r->port, tnr,
 				role == ORIGINAL_RESPONDER && narrowing,
 				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
@@ -563,31 +552,21 @@ static int ikev2_evaluate_connection_port_fit(const struct connection *d,
  * Future: section 2.19 "Requesting an Internal Address on a Remote Network"
  */
 static int ikev2_evaluate_connection_fit(const struct connection *d,
-					 const struct spd_route *sr,
-					 enum original_role role,
+					 const struct ends *e,
 					 const struct traffic_selectors *ts)
 {
 	int bestfit = -1;
-	const struct end *ei, *er;
-
-	if (role == ORIGINAL_INITIATOR) {
-		ei = &sr->this;
-		er = &sr->that;
-	} else {
-		ei = &sr->that;
-		er = &sr->this;
-	}
 
 	DBG(DBG_CONTROLMORE, {
 		char ei3[SUBNETTOT_BUF];
 		char er3[SUBNETTOT_BUF];
 		char cib[CONN_INST_BUF];
-		subnettot(&ei->client,  0, ei3, sizeof(ei3));
-		subnettot(&er->client,  0, er3, sizeof(er3));
+		subnettot(&e->i->client,  0, ei3, sizeof(ei3));
+		subnettot(&e->r->client,  0, er3, sizeof(er3));
 		DBG_log("  ikev2_evaluate_connection_fit evaluating our conn=\"%s\"%s I=%s:%d/%d R=%s:%d/%d %s to their:",
 			d->name, fmt_conn_instance(d, cib),
-			ei3, ei->protocol, ei->port,
-			er3, er->protocol, er->port,
+			ei3, e->i->protocol, e->i->port,
+			er3, e->r->protocol, e->r->port,
 			is_virtual_connection(d) ? "(virt)" : "");
 	});
 
@@ -624,22 +603,22 @@ static int ikev2_evaluate_connection_fit(const struct connection *d,
 			 * NOTE: Our parser/config only allows 1 CIDR, however IKEv2 ranges can be non-CIDR
 			 *       for now we really support/limit ourselves to a single CIDR
 			 */
-			if (addrinsubnet(&tni->net.start, &ei->client) &&
-			    addrinsubnet(&tni->net.end, &ei->client) &&
-			    addrinsubnet(&tnr->net.start,  &er->client) &&
-			    addrinsubnet(&tnr->net.end, &er->client)) {
+			if (addrinsubnet(&tni->net.start, &e->i->client) &&
+			    addrinsubnet(&tni->net.end, &e->i->client) &&
+			    addrinsubnet(&tnr->net.start,  &e->r->client) &&
+			    addrinsubnet(&tnr->net.end, &e->r->client)) {
 				/*
 				 * now, how good a fit is it? --- sum of bits gives
 				 * how good a fit this is.
 				 */
 				int ts_range1 = iprange_bits(
 					tni->net.start, tni->net.end);
-				int maskbits1 = ei->client.maskbits;
+				int maskbits1 = e->i->client.maskbits;
 				int fitbits1 = maskbits1 + ts_range1;
 
 				int ts_range2 = iprange_bits(
 					tnr->net.start, tnr->net.end);
-				int maskbits2 = er->client.maskbits;
+				int maskbits2 = e->r->client.maskbits;
 				int fitbits2 = maskbits2 + ts_range2;
 
 				/* ??? this objective function is odd and arbitrary */
@@ -651,19 +630,19 @@ static int ikev2_evaluate_connection_fit(const struct connection *d,
 				 */
 				/* ??? arbitrary modification to objective function */
 				DBG(DBG_CONTROL,
-				    DBG_log("ei->port %d tsi->startport %d  tsi->endport %d",
-					    ei->port,
+				    DBG_log("e->i->port %d tsi->startport %d  tsi->endport %d",
+					    e->i->port,
 					    tni->startport,
 					    tni->endport));
 
-				if (ei->port != 0 &&
-				    tni->startport == ei->port &&
-				    tni->endport == ei->port)
+				if (e->i->port != 0 &&
+				    tni->startport == e->i->port &&
+				    tni->endport == e->i->port)
 					fitbits = fitbits << 1;
 
-				if (er->port != 0 &&
-				    tnr->startport == er->port &&
-				    tnr->endport == er->port)
+				if (e->r->port != 0 &&
+				    tnr->startport == e->r->port &&
+				    tnr->endport == e->r->port)
 					fitbits = fitbits << 1;
 
 				DBG(DBG_CONTROLMORE,
@@ -714,17 +693,22 @@ bool v2_process_ts_request(struct child_sa *child,
 	const struct spd_route *sra;
 
 	for (sra = &c->spd; sra != NULL; sra = sra->spd_next) {
-		int bfit_n = ikev2_evaluate_connection_fit(c, sra,
-							   ORIGINAL_RESPONDER,
-							   &tss);
+
+		/* responder */
+		const struct ends e = {
+			.i = &sra->that,
+			.r = &sra->this,
+		};
+
+		int bfit_n = ikev2_evaluate_connection_fit(c, &e, &tss);
 
 		if (bfit_n > bestfit_n) {
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("prefix fitness found a better match c %s",
 				    c->name));
-			int bfit_p = ikev2_evaluate_connection_port_fit(c, sra,
+			int bfit_p = ikev2_evaluate_connection_port_fit(c,
 									ORIGINAL_RESPONDER,
-									&tss,
+									&e, &tss,
 									&best_tsi_i,
 									&best_tsr_i);
 
@@ -733,9 +717,9 @@ bool v2_process_ts_request(struct child_sa *child,
 				    DBG_log("port fitness found better match c %s, tsi[%d],tsr[%d]",
 					    c->name, best_tsi_i, best_tsr_i));
 				int bfit_pr =
-					ikev2_evaluate_connection_protocol_fit(c, sra,
+					ikev2_evaluate_connection_protocol_fit(c,
 									       ORIGINAL_RESPONDER,
-									       &tss,
+									       &e, &tss,
 									       &best_tsi_i,
 									       &best_tsr_i);
 
@@ -841,9 +825,14 @@ bool v2_process_ts_request(struct child_sa *child,
 			const struct spd_route *sr;
 
 			for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
-				int newfit = ikev2_evaluate_connection_fit(d, sr,
-									   ORIGINAL_RESPONDER,
-									   &tss);
+
+				/* responder */
+				const struct ends e = {
+					.i = &sr->that,
+					.r = &sr->this,
+				};
+
+				int newfit = ikev2_evaluate_connection_fit(d, &e, &tss);
 
 				if (newfit > bestfit_n) {
 					/* ??? what does this comment mean? */
@@ -852,9 +841,9 @@ bool v2_process_ts_request(struct child_sa *child,
 					    DBG_log("prefix fitness found a better match d %s",
 						    d->name));
 					int bfit_p =
-						ikev2_evaluate_connection_port_fit(d, sr,
+						ikev2_evaluate_connection_port_fit(d,
 										   ORIGINAL_RESPONDER,
-										   &tss,
+										   &e, &tss,
 										   &best_tsi_i,
 										   &best_tsr_i);
 
@@ -865,9 +854,9 @@ bool v2_process_ts_request(struct child_sa *child,
 							    best_tsi_i,
 							    best_tsr_i));
 						int bfit_pr =
-							ikev2_evaluate_connection_protocol_fit(d, sr,
+							ikev2_evaluate_connection_protocol_fit(d,
 											       ORIGINAL_RESPONDER,
-											       &tss,
+											       &e, &tss,
 											       &best_tsi_i,
 											       &best_tsr_i);
 
@@ -1018,16 +1007,21 @@ bool v2_process_ts_response(struct child_sa *child,
 
 		{
 			const struct spd_route *sra = &c->spd;
-			int bfit_n = ikev2_evaluate_connection_fit(c, sra, ORIGINAL_INITIATOR,
-								   &tss);
+			/* initiator */
+			const struct ends e = {
+				.i = &sra->this,
+				.r = &sra->that,
+			};
+
+			int bfit_n = ikev2_evaluate_connection_fit(c, &e, &tss);
 
 			if (bfit_n > bestfit_n) {
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("prefix fitness found a better match c %s",
 					    c->name));
 
-				int bfit_p = ikev2_evaluate_connection_port_fit(c, sra, ORIGINAL_INITIATOR,
-										&tss,
+				int bfit_p = ikev2_evaluate_connection_port_fit(c, ORIGINAL_INITIATOR,
+										&e, &tss,
 										&best_tsi_i,
 										&best_tsr_i);
 
@@ -1036,8 +1030,8 @@ bool v2_process_ts_response(struct child_sa *child,
 					    DBG_log("port fitness found better match c %s, tsi[%d],tsr[%d]",
 						    c->name, best_tsi_i, best_tsr_i));
 
-					int bfit_pr = ikev2_evaluate_connection_protocol_fit(c, sra, ORIGINAL_INITIATOR,
-											     &tss,
+					int bfit_pr = ikev2_evaluate_connection_protocol_fit(c, ORIGINAL_INITIATOR,
+											     &e, &tss,
 											     &best_tsi_i,
 											     &best_tsr_i);
 
