@@ -16,13 +16,10 @@ initdone
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name westnet-eastnet-ipv4-psk-ikev1 --initiate
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: initiating Main Mode
-002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 104 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I1: initiate
-002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 106 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: I am sending my cert
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: I am sending a certificate request
-002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 108 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -31,17 +28,13 @@ road #
 041 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Username:
 040 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Password:
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Answering XAUTH challenge with user='use3'
-002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Successfully Authenticated
-002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Received IP address 192.0.2.1/32
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: setting ip source address to 192.0.2.1/32
-002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-002 "westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 117 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #

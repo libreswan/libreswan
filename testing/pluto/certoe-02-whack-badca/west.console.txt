@@ -28,8 +28,6 @@ west #
  ipsec whack --oppohere 192.1.2.45 --oppothere 192.1.2.23
 002 initiate on demand from 192.1.2.45:0 to 192.1.2.23:0 proto=0 because: whack
 133 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiate
-002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: IMPAIR: suppressing retransmits; scheduling timeout in 10 seconds
-002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: IMPAIR: suppressing retransmits; scheduling timeout in 10 seconds
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 000 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: scheduling retry attempt 1 of an unlimited number, but releasing whack
 west #

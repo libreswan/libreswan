@@ -21,11 +21,8 @@ road #
 road #
  ipsec whack --xauthname 'baduser' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
 002 "xauth-road-eastnet" #1: initiating Main Mode
-002 "xauth-road-eastnet" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 104 "xauth-road-eastnet" #1: STATE_MAIN_I1: initiate
-002 "xauth-road-eastnet" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 106 "xauth-road-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-002 "xauth-road-eastnet" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 108 "xauth-road-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "xauth-road-eastnet" #1: Peer ID is ID_FQDN: '@east'
 003 "xauth-road-eastnet" #1: Authenticated using RSA
@@ -33,7 +30,6 @@ road #
 041 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Username:
 040 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Password:
 002 "xauth-road-eastnet" #1: XAUTH: Answering XAUTH challenge with user='baduser'
-002 "xauth-road-eastnet" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 004 "xauth-road-eastnet" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "xauth-road-eastnet" #1: Received Cisco XAUTH status: FAIL
 002 "xauth-road-eastnet" #1: xauth: xauth_client_ackstatus() returned STF_OK
@@ -42,11 +38,8 @@ road #
 road #
  ipsec whack --xauthname 'gooduser' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
 002 "xauth-road-eastnet" #2: initiating Main Mode
-002 "xauth-road-eastnet" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 104 "xauth-road-eastnet" #2: STATE_MAIN_I1: initiate
-002 "xauth-road-eastnet" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 106 "xauth-road-eastnet" #2: STATE_MAIN_I2: sent MI2, expecting MR2
-002 "xauth-road-eastnet" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 108 "xauth-road-eastnet" #2: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "xauth-road-eastnet" #2: Peer ID is ID_FQDN: '@east'
 003 "xauth-road-eastnet" #2: Authenticated using RSA
@@ -54,13 +47,11 @@ road #
 041 "xauth-road-eastnet" #2: xauth-road-eastnet prompt for Username:
 040 "xauth-road-eastnet" #2: xauth-road-eastnet prompt for Password:
 002 "xauth-road-eastnet" #2: XAUTH: Answering XAUTH challenge with user='gooduser'
-002 "xauth-road-eastnet" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 004 "xauth-road-eastnet" #2: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "xauth-road-eastnet" #2: XAUTH: Successfully Authenticated
 002 "xauth-road-eastnet" #2: XAUTH completed; ModeCFG skipped as per configuration
 004 "xauth-road-eastnet" #2: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "xauth-road-eastnet" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-002 "xauth-road-eastnet" #3: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 117 "xauth-road-eastnet" #3: STATE_QUICK_I1: initiate
 004 "xauth-road-eastnet" #3: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive username=gooduser}
 road #

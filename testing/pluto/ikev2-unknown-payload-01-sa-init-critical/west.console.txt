@@ -15,7 +15,6 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating v2 parent SA
 133 "westnet-eastnet-ipv4-psk-ikev2" #1: initiate
 133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 003 "westnet-eastnet-ipv4-psk-ikev2" #1: message response contained an unknown critical payload type (255??)
 031 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 000 "westnet-eastnet-ipv4-psk-ikev2" #1: starting keying attempt 2 of an unlimited number, but releasing whack

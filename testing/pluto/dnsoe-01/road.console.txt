@@ -32,8 +32,6 @@ road #
  ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.23
 002 initiate on demand from 192.1.3.209:0 to 192.1.2.23:0 proto=0 because: whack
 133 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiate
-002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
-002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: Authenticated using RSA
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 road #

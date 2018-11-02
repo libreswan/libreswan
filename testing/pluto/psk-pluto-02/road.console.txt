@@ -41,7 +41,6 @@ road #
 002 "road-eastnet-psk" #1: initiating Aggressive Mode
 003 "road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-002 "road-eastnet-psk" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 112 "road-eastnet-psk" #1: STATE_AGGR_I1: initiate
 002 "road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
 002 "road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'

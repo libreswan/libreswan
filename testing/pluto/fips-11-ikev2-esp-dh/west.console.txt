@@ -31,9 +31,7 @@ west #
 002 "ikev2-base" #1: initiating v2 parent SA
 133 "ikev2-base" #1: initiate
 133 "ikev2-base" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ikev2-base" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ikev2-base" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "ikev2-base" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ikev2-base" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ikev2-base" #2: Authenticated using authby=secret
 002 "ikev2-base" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -52,7 +50,6 @@ west #
  ../bin/libreswan-up-down.sh ikev2-esp=aes-sha1-modp4096 -I 192.0.100.254 192.0.200.254
 002 added connection description "ikev2-esp=aes-sha1-modp4096"
 139 "ikev2-esp=aes-sha1-modp4096" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
-002 "ikev2-esp=aes-sha1-modp4096" #3: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ikev2-esp=aes-sha1-modp4096" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
 004 "ikev2-esp=aes-sha1-modp4096" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96-MODP4096 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.100.254 192.0.200.254 is alive

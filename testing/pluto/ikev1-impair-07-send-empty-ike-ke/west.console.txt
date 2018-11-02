@@ -33,9 +33,7 @@ west #
 west #
  ipsec auto --up  westnet-eastnet-ipv4-psk
 002 "westnet-eastnet-ipv4-psk" #2: initiating Main Mode
-002 "westnet-eastnet-ipv4-psk" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 104 "westnet-eastnet-ipv4-psk" #2: STATE_MAIN_I1: initiate
-002 "westnet-eastnet-ipv4-psk" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 106 "westnet-eastnet-ipv4-psk" #2: STATE_MAIN_I2: sent MI2, expecting MR2
 003 "westnet-eastnet-ipv4-psk" #2: KE has 0 byte DH public value; 256 required
 217 "westnet-eastnet-ipv4-psk" #2: STATE_MAIN_I2: INVALID_KEY_INFORMATION

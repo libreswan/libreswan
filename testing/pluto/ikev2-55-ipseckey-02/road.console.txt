@@ -28,9 +28,7 @@ road #
 002 "road-east-1" #1: initiating v2 parent SA
 133 "road-east-1" #1: initiate
 133 "road-east-1" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "road-east-1" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "road-east-1" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "road-east-1" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "road-east-1" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "road-east-1" #2: Authenticated using RSA
 002 "road-east-1" #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
@@ -83,7 +81,6 @@ road #
 002 "road-east-2" #1: initiating v2 parent SA
 133 "road-east-2" #1: initiate
 133 "road-east-2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "road-east-2" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 003 "road-east-2" #1: Can't find the certificate or private key from the NSS CKA_ID
 003 "road-east-2" #1: Failed to find our RSA key
 031 "road-east-2" #1: STATE_PARENT_I2: max number of retransmissions (0) reached after 57.587 seconds.  Possible authentication failure: no acceptable response to our first encrypted message

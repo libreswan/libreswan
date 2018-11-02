@@ -24,9 +24,7 @@ west #
 002 "nss-cert" #1: initiating v2 parent SA
 133 "nss-cert" #1: initiate
 133 "nss-cert" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "nss-cert" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "nss-cert" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "nss-cert" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 003 "nss-cert" #2: Certificate E=testing@libreswan.org,CN=notyetvalid.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA failed verification
 003 "nss-cert" #2: ERROR: Peer's Certificate has expired.
 002 "nss-cert" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=notyetvalid.testing.libreswan.org, E=testing@libreswan.org'

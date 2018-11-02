@@ -32,9 +32,7 @@ west #
 002 "ike=chacha20poly1305-sha2-dh19" #1: initiating v2 parent SA
 133 "ike=chacha20poly1305-sha2-dh19" #1: initiate
 133 "ike=chacha20poly1305-sha2-dh19" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ike=chacha20poly1305-sha2-dh19" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ike=chacha20poly1305-sha2-dh19" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=CHACHA20_POLY1305_256 integ=n/a prf=HMAC_SHA2_256 group=DH19}
-002 "ike=chacha20poly1305-sha2-dh19" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ike=chacha20poly1305-sha2-dh19" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=chacha20poly1305-sha2-dh19" #2: Authenticated using authby=secret
 002 "ike=chacha20poly1305-sha2-dh19" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -51,9 +49,7 @@ west #
 002 "ike=aes128-sha2-dh19" #3: initiating v2 parent SA
 133 "ike=aes128-sha2-dh19" #3: initiate
 133 "ike=aes128-sha2-dh19" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ike=aes128-sha2-dh19" #3: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ike=aes128-sha2-dh19" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
-002 "ike=aes128-sha2-dh19" #4: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ike=aes128-sha2-dh19" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha2-dh19" #4: Authenticated using authby=secret
 002 "ike=aes128-sha2-dh19" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -70,9 +66,7 @@ west #
 002 "ike=aes128-sha2-dh20" #5: initiating v2 parent SA
 133 "ike=aes128-sha2-dh20" #5: initiate
 133 "ike=aes128-sha2-dh20" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ike=aes128-sha2-dh20" #5: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ike=aes128-sha2-dh20" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH20}
-002 "ike=aes128-sha2-dh20" #6: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ike=aes128-sha2-dh20" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha2-dh20" #6: Authenticated using authby=secret
 002 "ike=aes128-sha2-dh20" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -89,9 +83,7 @@ west #
 002 "ike=aes128-sha2-dh21" #7: initiating v2 parent SA
 133 "ike=aes128-sha2-dh21" #7: initiate
 133 "ike=aes128-sha2-dh21" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ike=aes128-sha2-dh21" #7: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ike=aes128-sha2-dh21" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH21}
-002 "ike=aes128-sha2-dh21" #8: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ike=aes128-sha2-dh21" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha2-dh21" #8: Authenticated using authby=secret
 002 "ike=aes128-sha2-dh21" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -108,9 +100,7 @@ west #
 002 "ike=aes128-sha1-dh19" #9: initiating v2 parent SA
 133 "ike=aes128-sha1-dh19" #9: initiate
 133 "ike=aes128-sha1-dh19" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ike=aes128-sha1-dh19" #9: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ike=aes128-sha1-dh19" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
-002 "ike=aes128-sha1-dh19" #10: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ike=aes128-sha1-dh19" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha1-dh19" #10: Authenticated using authby=secret
 002 "ike=aes128-sha1-dh19" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -127,9 +117,7 @@ west #
 002 "ike=aes128-sha1-dh20" #11: initiating v2 parent SA
 133 "ike=aes128-sha1-dh20" #11: initiate
 133 "ike=aes128-sha1-dh20" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ike=aes128-sha1-dh20" #11: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ike=aes128-sha1-dh20" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH20}
-002 "ike=aes128-sha1-dh20" #12: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ike=aes128-sha1-dh20" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha1-dh20" #12: Authenticated using authby=secret
 002 "ike=aes128-sha1-dh20" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -146,9 +134,7 @@ west #
 002 "ike=aes128-sha1-dh21" #13: initiating v2 parent SA
 133 "ike=aes128-sha1-dh21" #13: initiate
 133 "ike=aes128-sha1-dh21" #13: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ike=aes128-sha1-dh21" #13: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ike=aes128-sha1-dh21" #14: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
-002 "ike=aes128-sha1-dh21" #14: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ike=aes128-sha1-dh21" #14: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-sha1-dh21" #14: Authenticated using authby=secret
 002 "ike=aes128-sha1-dh21" #14: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -165,9 +151,7 @@ west #
 002 "ike=aes_ctr128-sha1-dh21" #15: initiating v2 parent SA
 133 "ike=aes_ctr128-sha1-dh21" #15: initiate
 133 "ike=aes_ctr128-sha1-dh21" #15: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ike=aes_ctr128-sha1-dh21" #15: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ike=aes_ctr128-sha1-dh21" #16: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CTR_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
-002 "ike=aes_ctr128-sha1-dh21" #16: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ike=aes_ctr128-sha1-dh21" #16: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes_ctr128-sha1-dh21" #16: Authenticated using authby=secret
 002 "ike=aes_ctr128-sha1-dh21" #16: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -184,9 +168,7 @@ west #
 002 "ike=3des-sha2-modp2048" #17: initiating v2 parent SA
 133 "ike=3des-sha2-modp2048" #17: initiate
 133 "ike=3des-sha2-modp2048" #17: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ike=3des-sha2-modp2048" #17: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ike=3des-sha2-modp2048" #18: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
-002 "ike=3des-sha2-modp2048" #18: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ike=3des-sha2-modp2048" #18: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=3des-sha2-modp2048" #18: Authenticated using authby=secret
 002 "ike=3des-sha2-modp2048" #18: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -203,9 +185,7 @@ west #
 002 "ike=aes128-aes_xcbc-modp2048" #19: initiating v2 parent SA
 133 "ike=aes128-aes_xcbc-modp2048" #19: initiate
 133 "ike=aes128-aes_xcbc-modp2048" #19: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "ike=aes128-aes_xcbc-modp2048" #19: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ike=aes128-aes_xcbc-modp2048" #20: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=AES_XCBC_96 prf=AES_XCBC group=MODP2048}
-002 "ike=aes128-aes_xcbc-modp2048" #20: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "ike=aes128-aes_xcbc-modp2048" #20: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike=aes128-aes_xcbc-modp2048" #20: Authenticated using authby=secret
 002 "ike=aes128-aes_xcbc-modp2048" #20: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]

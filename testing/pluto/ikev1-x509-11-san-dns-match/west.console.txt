@@ -20,20 +20,16 @@ west #
 west #
  ipsec auto --up san
 002 "san" #1: initiating Main Mode
-002 "san" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 104 "san" #1: STATE_MAIN_I1: initiate
-002 "san" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 106 "san" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 002 "san" #1: I am sending my cert
 002 "san" #1: I am sending a certificate request
-002 "san" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 108 "san" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "san" #1: Peer ID is ID_FQDN: '@east.testing.libreswan.org'
 002 "san" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "san" #1: Authenticated using RSA
 004 "san" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "san" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-002 "san" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 117 "san" #2: STATE_QUICK_I1: initiate
 004 "san" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #

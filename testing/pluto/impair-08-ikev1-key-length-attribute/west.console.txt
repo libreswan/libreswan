@@ -17,16 +17,12 @@ west #
  ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 added connection description "aes128"
 002 "aes128" #1: initiating Main Mode
-002 "aes128" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 104 "aes128" #1: STATE_MAIN_I1: initiate
-002 "aes128" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 106 "aes128" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-002 "aes128" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 108 "aes128" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "aes128" #1: Peer ID is ID_FQDN: '@east'
 004 "aes128" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-002 "aes128" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 117 "aes128" #2: STATE_QUICK_I1: initiate
 004 "aes128" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -229,16 +225,12 @@ west #
  ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 002 added connection description "3des"
 002 "3des" #17: initiating Main Mode
-002 "3des" #17: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 104 "3des" #17: STATE_MAIN_I1: initiate
-002 "3des" #17: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 106 "3des" #17: STATE_MAIN_I2: sent MI2, expecting MR2
-002 "3des" #17: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 108 "3des" #17: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "3des" #17: Peer ID is ID_FQDN: '@east'
 004 "3des" #17: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "3des" #18: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-002 "3des" #18: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 117 "3des" #18: STATE_QUICK_I1: initiate
 004 "3des" #18: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive

@@ -22,10 +22,8 @@ west #
 133 "westnet-eastnet-ipv4-psk-ikev2" #1: initiate
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: adding an unknown payload of type 255 to SA_INIT request
 133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 000 "westnet-eastnet-ipv4-psk-ikev2" #1: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
 134 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ipv4-psk-ikev2" #2: Authenticated using authby=secret
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]

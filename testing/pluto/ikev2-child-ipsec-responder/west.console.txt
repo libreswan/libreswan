@@ -48,7 +48,6 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec auto --up westnet-eastnet-ikev2b
 139 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
-002 "westnet-eastnet-ikev2b" #3: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "westnet-eastnet-ikev2b" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
 004 "westnet-eastnet-ikev2b" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #

@@ -20,9 +20,7 @@ road #
 002 "road1" #1: initiating v2 parent SA
 133 "road1" #1: initiate
 133 "road1" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "road1" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "road1" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "road1" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "road1" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "road1" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "road1" #2: Authenticated using RSA
@@ -45,9 +43,7 @@ road #
 002 "road2" #1: initiating v2 parent SA
 133 "road2" #1: initiate
 133 "road2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "road2" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "road2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "road2" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 002 "road2" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "road2" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "road2" #2: Authenticated using RSA
