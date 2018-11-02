@@ -33,13 +33,13 @@
 #include "ikev2.h"		/* for v2_msg_role() */
 
 /*
- * It's assumed that traffic selectors come in pairs.
+ * While the RFC seems to suggest that the traffic selectors come in
+ * pairs, strongswan, at least, doesn't.
  */
 struct traffic_selectors {
 	unsigned nr;
 	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
-	struct traffic_selector i[16];
-	struct traffic_selector r[16];
+	struct traffic_selector ts[16];
 };
 
 struct ends {
@@ -267,109 +267,92 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 }
 
 /* return number of traffic selectors found; -1 for error */
-static int v2_parse_ts(struct payload_digest *const ts_pd,
-		       struct traffic_selector *array,
-		       const unsigned array_roof)
+static bool v2_parse_ts(const char *role,
+			struct payload_digest *const ts_pd,
+			struct traffic_selectors *tss)
 {
-	unsigned int i;
+	DBGF(DBG_MASK, "TS: parsing %u %s traffic selectors",
+	     ts_pd->payload.v2ts.isat_num, role);
 
-	if (ts_pd->payload.v2ts.isat_num >= array_roof) {
-		libreswan_log("TS contains %d entries which exceeds hardwired max of %d",
-			      ts_pd->payload.v2ts.isat_num, array_roof);
+	if (ts_pd->payload.v2ts.isat_num >= elemsof(tss->ts)) {
+		libreswan_log("TS contains %d entries which exceeds hardwired max of %zu",
+			      ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
 		return false;	/* won't fit in array */
 	}
 
-	for (i = 0; i < ts_pd->payload.v2ts.isat_num; i++) {
+	for (tss->nr = 0; tss->nr < ts_pd->payload.v2ts.isat_num; tss->nr++) {
+		struct traffic_selector *ts = &tss->ts[tss->nr];
+
 		pb_stream addr;
 		struct ikev2_ts1 ts1;
-
 		if (!in_struct(&ts1, &ikev2_ts1_desc, &ts_pd->pbs, &addr))
-			return -1;
+			return false;
 
-		zero(&array[i]);	/* OK: no pointer fields */
 		switch (ts1.isat1_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
-			array[i].ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-			SET_V4(array[i].net.start);
-			if (!in_raw(&array[i].net.start.u.v4.sin_addr.s_addr,
-				    sizeof(array[i].net.start.u.v4.sin_addr.s_addr),
+			ts->ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
+			SET_V4(ts->net.start);
+			if (!in_raw(&ts->net.start.u.v4.sin_addr.s_addr,
+				    sizeof(ts->net.start.u.v4.sin_addr.s_addr),
 				    &addr, "ipv4 ts low"))
-				return -1;
+				return false;
 
-			SET_V4(array[i].net.end);
+			SET_V4(ts->net.end);
 
-			if (!in_raw(&array[i].net.end.u.v4.sin_addr.s_addr,
-				    sizeof(array[i].net.end.u.v4.sin_addr.s_addr),
+			if (!in_raw(&ts->net.end.u.v4.sin_addr.s_addr,
+				    sizeof(ts->net.end.u.v4.sin_addr.s_addr),
 				    &addr, "ipv4 ts high"))
-				return -1;
+				return false;
 
 			break;
 
 		case IKEv2_TS_IPV6_ADDR_RANGE:
-			array[i].ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-			SET_V6(array[i].net.start);
+			ts->ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
+			SET_V6(ts->net.start);
 
-			if (!in_raw(&array[i].net.start.u.v6.sin6_addr.s6_addr,
-				    sizeof(array[i].net.start.u.v6.sin6_addr.s6_addr),
+			if (!in_raw(&ts->net.start.u.v6.sin6_addr.s6_addr,
+				    sizeof(ts->net.start.u.v6.sin6_addr.s6_addr),
 				    &addr, "ipv6 ts low"))
-				return -1;
+				return false;
 
-			SET_V6(array[i].net.end);
+			SET_V6(ts->net.end);
 
-			if (!in_raw(&array[i].net.end.u.v6.sin6_addr.s6_addr,
-				    sizeof(array[i].net.end.u.v6.sin6_addr.s6_addr),
+			if (!in_raw(&ts->net.end.u.v6.sin6_addr.s6_addr,
+				    sizeof(ts->net.end.u.v6.sin6_addr.s6_addr),
 				    &addr, "ipv6 ts high"))
-				return -1;
+				return false;
 
 			break;
 
 		default:
-			return -1;
+			return false;
 		}
 
 		if (pbs_left(&addr) != 0)
-			return -1;
+			return false;
 
-		array[i].ipprotoid = ts1.isat1_ipprotoid;
+		ts->ipprotoid = ts1.isat1_ipprotoid;
 
 		/* should be converted to host byte order for local processing */
-		array[i].startport = ts1.isat1_startport;
-		array[i].endport = ts1.isat1_endport;
+		ts->startport = ts1.isat1_startport;
+		ts->endport = ts1.isat1_endport;
 	}
 
-	DBGF(DBG_MASK, "TS: parsed %d TS payloads", i);
-	return i;
+	DBGF(DBG_MASK, "TS: parsed %d %s TS payloads", tss->nr, role);
+	return true;
 }
 
 static bool v2_parse_tss(const struct msg_digest *md,
-			 struct traffic_selectors *tss)
+			 struct traffic_selectors *tsi,
+			 struct traffic_selectors *tsr)
 {
-	DBGF(DBG_MASK, "TS: parse initiator traffic selectors");
-	const int tsi_n = v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi],
-				      tss->i, elemsof(tss->i));
-	if (tsi_n < 0) {
+	if (!v2_parse_ts("initiator", md->chain[ISAKMP_NEXT_v2TSi], tsi)) {
 		return false;
 	}
 
-	DBGF(DBG_MASK, "TS: parse responder traffic selectors");
-	const int tsr_n = v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr],
-				      tss->r, elemsof(tss->r));
-	if (tsr_n < 0) {
+	if (!v2_parse_ts("responder", md->chain[ISAKMP_NEXT_v2TSr], tsr)) {
 		return false;
 	}
-
-	if (tsi_n != tsr_n) {
-		return false;
-	}
-
-	if (tsi_n != tsr_n) {
-		libreswan_log("traffic selectors are not paired; initiator has %d, responder has %d",
-			      tsi_n, tsr_n);
-		return false;
-	}
-
-	/* XXX: check protocols match et.al.? */
-	tss->nr = tsi_n;
 
 	return true;
 }
@@ -425,7 +408,8 @@ static int ikev2_match_protocol(uint8_t end_proto, uint8_t ts_proto,
  */
 static int ikev2_evaluate_connection_protocol_fit(enum narrowing narrowing,
 						  const struct ends *e,
-						  const struct traffic_selectors *ts,
+						  const struct traffic_selectors *tsi,
+						  const struct traffic_selectors *tsr,
 						  int *best_tsi_i,
 						  int *best_tsr_i)
 {
@@ -433,8 +417,8 @@ static int ikev2_evaluate_connection_protocol_fit(enum narrowing narrowing,
 
 	/* compare tsi/r array to this/that, evaluating protocol how well it fits */
 	/* ??? stupid n**2 algorithm */
-	for (unsigned tsi_ni = 0; tsi_ni < ts->nr; tsi_ni++) {
-		const struct traffic_selector *tni = &ts->i[tsi_ni];
+	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
+		const struct traffic_selector *tni = &tsi->ts[tsi_ni];
 
 		int fitrange_i = ikev2_match_protocol(e->i->protocol, tni->ipprotoid,
 						      narrowing, "tsi", tsi_ni);
@@ -442,8 +426,8 @@ static int ikev2_evaluate_connection_protocol_fit(enum narrowing narrowing,
 		if (fitrange_i == 0)
 			continue;	/* save effort! */
 
-		for (unsigned tsr_ni = 0; tsr_ni < ts->nr; tsr_ni++) {
-			const struct traffic_selector *tnr = &ts->i[tsr_ni];
+		for (unsigned tsr_ni = 0; tsr_ni < tsr->nr; tsr_ni++) {
+			const struct traffic_selector *tnr = &tsr->ts[tsr_ni];
 
 			int fitrange_r = ikev2_match_protocol(e->r->protocol, tnr->ipprotoid,
 							      narrowing, "tsr", tsr_ni);
@@ -478,7 +462,8 @@ static int ikev2_evaluate_connection_protocol_fit(enum narrowing narrowing,
  * If subset_ok, narrowing our port range to ts port range is OK (initiator narrowing).
  * Returns 0 if no match; otherwise number of ports within match
  */
-static int ikev2_match_port_range(uint16_t end_port, const struct traffic_selector *ts,
+static int ikev2_match_port_range(uint16_t end_port,
+				  const struct traffic_selector *ts,
 				  enum narrowing narrowing,
 				  const char *which, int index)
 {
@@ -528,7 +513,8 @@ static int ikev2_match_port_range(uint16_t end_port, const struct traffic_select
  */
 static int ikev2_evaluate_connection_port_fit(enum narrowing narrowing,
 					      const struct ends *e,
-					      const struct traffic_selectors *ts,
+					      const struct traffic_selectors *tsi,
+					      const struct traffic_selectors *tsr,
 					      int *best_tsi_i,
 					      int *best_tsr_i)
 {
@@ -536,8 +522,8 @@ static int ikev2_evaluate_connection_port_fit(enum narrowing narrowing,
 
 	/* compare tsi/r array to this/that, evaluating how well each port range fits */
 	/* ??? stupid n**2 algorithm */
-	for (unsigned tsi_ni = 0; tsi_ni < ts->nr; tsi_ni++) {
-		const struct traffic_selector *tni = &ts->i[tsi_ni];
+	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
+		const struct traffic_selector *tni = &tsi->ts[tsi_ni];
 
 		int fitrange_i = ikev2_match_port_range(e->i->port, tni, narrowing,
 							"tsi", tsi_ni);
@@ -545,8 +531,8 @@ static int ikev2_evaluate_connection_port_fit(enum narrowing narrowing,
 		if (fitrange_i == 0)
 			continue;	/* save effort! */
 
-		for (unsigned tsr_ni = 0; tsr_ni < ts->nr; tsr_ni++) {
-			const struct traffic_selector *tnr = &ts->r[tsr_ni];
+		for (unsigned tsr_ni = 0; tsr_ni < tsr->nr; tsr_ni++) {
+			const struct traffic_selector *tnr = &tsr->ts[tsr_ni];
 
 			int fitrange_r = ikev2_match_port_range(e->r->port, tnr, narrowing,
 								"tsr", tsr_ni);
@@ -578,7 +564,8 @@ static int ikev2_evaluate_connection_port_fit(enum narrowing narrowing,
  */
 static int ikev2_evaluate_connection_fit(const struct connection *d,
 					 const struct ends *e,
-					 const struct traffic_selectors *ts)
+					 const struct traffic_selectors *tsi,
+					 const struct traffic_selectors *tsr)
 {
 	int bestfit = -1;
 
@@ -596,11 +583,11 @@ static int ikev2_evaluate_connection_fit(const struct connection *d,
 	});
 
 	/* compare tsi/r array to this/that, evaluating how well it fits */
-	for (unsigned tsi_ni = 0; tsi_ni < ts->nr; tsi_ni++) {
-		const struct traffic_selector *tni = &ts->i[tsi_ni];
+	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
+		const struct traffic_selector *tni = &tsi->ts[tsi_ni];
 
-		for (unsigned tsr_ni = 0; tsr_ni < ts->nr; tsr_ni++) {
-			const struct traffic_selector *tnr = &ts->r[tsr_ni];
+		for (unsigned tsr_ni = 0; tsr_ni < tsr->nr; tsr_ni++) {
+			const struct traffic_selector *tnr = &tsr->ts[tsr_ni];
 
 			/* does it fit at all? */
 
@@ -700,8 +687,9 @@ bool v2_process_ts_request(struct child_sa *child,
 	/* XXX: md->st here is parent???? */
 	struct connection *c = md->st->st_connection;
 
-	struct traffic_selectors tss = { .nr = 0, };
-	if (!v2_parse_tss(md, &tss)) {
+	struct traffic_selectors tsi = { .nr = 0, };
+	struct traffic_selectors tsr = { .nr = 0, };
+	if (!v2_parse_tss(md, &tsi, &tsr)) {
 		return false;
 	}
 
@@ -725,7 +713,7 @@ bool v2_process_ts_request(struct child_sa *child,
 			.r = &sra->this,
 		};
 
-		int bfit_n = ikev2_evaluate_connection_fit(c, &e, &tss);
+		int bfit_n = ikev2_evaluate_connection_fit(c, &e, &tsi, &tsr);
 
 		if (bfit_n > bestfit_n) {
 			DBG(DBG_CONTROLMORE,
@@ -738,7 +726,7 @@ bool v2_process_ts_request(struct child_sa *child,
 				? END_NARROWER_THAN_TS
 				: END_EQUALS_TS;
 			int bfit_p = ikev2_evaluate_connection_port_fit(responder_narrowing,
-									&e, &tss,
+									&e, &tsi, &tsr,
 									&best_tsi_i,
 									&best_tsr_i);
 
@@ -748,7 +736,7 @@ bool v2_process_ts_request(struct child_sa *child,
 					    c->name, best_tsi_i, best_tsr_i));
 				int bfit_pr =
 					ikev2_evaluate_connection_protocol_fit(responder_narrowing,
-									       &e, &tss,
+									       &e, &tsi, &tsr,
 									       &best_tsi_i,
 									       &best_tsr_i);
 
@@ -861,7 +849,7 @@ bool v2_process_ts_request(struct child_sa *child,
 					.r = &sr->this,
 				};
 
-				int newfit = ikev2_evaluate_connection_fit(d, &e, &tss);
+				int newfit = ikev2_evaluate_connection_fit(d, &e, &tsi, &tsr);
 
 				if (newfit > bestfit_n) {
 					/* ??? what does this comment mean? */
@@ -876,7 +864,7 @@ bool v2_process_ts_request(struct child_sa *child,
 						: END_EQUALS_TS;
 					int bfit_p =
 						ikev2_evaluate_connection_port_fit(responder_narrowing,
-										   &e, &tss,
+										   &e, &tsi, &tsr,
 										   &best_tsi_i,
 										   &best_tsr_i);
 
@@ -888,7 +876,7 @@ bool v2_process_ts_request(struct child_sa *child,
 							    best_tsr_i));
 						int bfit_pr =
 							ikev2_evaluate_connection_protocol_fit(responder_narrowing,
-											       &e, &tss,
+											       &e, &tsi, &tsr,
 											       &best_tsi_i,
 											       &best_tsr_i);
 
@@ -954,19 +942,19 @@ bool v2_process_ts_request(struct child_sa *child,
 				 * nice if the purpose of this block
 				 * of code were documented.
 				 */
-				pexpect(tss.nr == 1);
+				pexpect(tsi.nr == 1);
 				int t_sport =
-					tss.i[0].startport == tss.i[0].endport ? tss.i[0].startport :
-					tss.i[0].startport == 0 && tss.i[0].endport == 65535 ? 0 : -1;
-				pexpect(tss.nr == 1);
+					tsi.ts[0].startport == tsi.ts[0].endport ? tsi.ts[0].startport :
+					tsi.ts[0].startport == 0 && tsi.ts[0].endport == 65535 ? 0 : -1;
+				pexpect(tsr.nr == 1);
 				int t_dport =
-					tss.r[0].startport == tss.r[0].endport ? tss.r[0].startport :
-					tss.r[0].startport == 0 && tss.r[0].endport == 65535 ? 0 : -1;
+					tsr.ts[0].startport == tsr.ts[0].endport ? tsr.ts[0].startport :
+					tsr.ts[0].startport == 0 && tsr.ts[0].endport == 65535 ? 0 : -1;
 
 				if (t_sport == -1 || t_dport == -1)
 					continue;
 
-				if ((t->spd.that.protocol != tss.i[0].ipprotoid) ||
+				if ((t->spd.that.protocol != tsi.ts[0].ipprotoid) ||
 					(best->spd.this.port != t_sport) ||
 					(best->spd.that.port != t_dport))
 						continue;
@@ -1016,8 +1004,9 @@ bool v2_process_ts_response(struct child_sa *child,
 
 	struct connection *c = child->sa.st_connection;
 
-	struct traffic_selectors tss = { .nr = 0, };
-	if (!v2_parse_tss(md, &tss)) {
+	struct traffic_selectors tsi = { .nr = 0, };
+	struct traffic_selectors tsr = { .nr = 0, };
+	if (!v2_parse_tss(md, &tsi, &tsr)) {
 		return false;
 	}
 
@@ -1034,8 +1023,8 @@ bool v2_process_ts_response(struct child_sa *child,
 		    DBG_log("TS: check narrowing - we are responding to I2"));
 
 
-		DBGF(DBG_MASK, "Checking %d TSi)/TSr selectors, looking for exact match",
-		     tss.nr);
+		DBGF(DBG_MASK, "Checking %u TSi and %u TSr selectors, looking for exact match",
+		     tsi.nr, tsr.nr);
 
 		{
 			const struct spd_route *sra = &c->spd;
@@ -1045,7 +1034,7 @@ bool v2_process_ts_response(struct child_sa *child,
 				.r = &sra->that,
 			};
 
-			int bfit_n = ikev2_evaluate_connection_fit(c, &e, &tss);
+			int bfit_n = ikev2_evaluate_connection_fit(c, &e, &tsi, &tsr);
 
 			if (bfit_n > bestfit_n) {
 				DBG(DBG_CONTROLMORE,
@@ -1058,7 +1047,7 @@ bool v2_process_ts_response(struct child_sa *child,
 					? END_WIDER_THAN_TS
 					: END_EQUALS_TS;
 				int bfit_p = ikev2_evaluate_connection_port_fit(initiator_widening,
-										&e, &tss,
+										&e, &tsi, &tsr,
 										&best_tsi_i,
 										&best_tsr_i);
 
@@ -1068,7 +1057,7 @@ bool v2_process_ts_response(struct child_sa *child,
 						    c->name, best_tsi_i, best_tsr_i));
 
 					int bfit_pr = ikev2_evaluate_connection_protocol_fit(initiator_widening,
-											     &e, &tss,
+											     &e, &tsi, &tsr,
 											     &best_tsi_i,
 											     &best_tsr_i);
 
@@ -1100,9 +1089,9 @@ bool v2_process_ts_response(struct child_sa *child,
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("found an acceptable TSi/TSr Traffic Selector"));
 			struct state *st = &child->sa;
-			memcpy(&st->st_ts_this, &tss.i[best_tsi_i],
+			memcpy(&st->st_ts_this, &tsi.ts[best_tsi_i],
 			       sizeof(struct traffic_selector));
-			memcpy(&st->st_ts_that, &tss.r[best_tsr_i],
+			memcpy(&st->st_ts_that, &tsr.ts[best_tsr_i],
 			       sizeof(struct traffic_selector));
 			ikev2_print_ts(&st->st_ts_this);
 			ikev2_print_ts(&st->st_ts_that);
