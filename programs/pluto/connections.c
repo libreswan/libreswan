@@ -3453,7 +3453,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 		if (wcpip) {
 			/* been around twice already */
-			DBG(DBG_CONTROL, DBG_log("returning since no better match then original best_found"));
+			DBG(DBG_CONTROL, DBG_log("returning since no better match than original best_found"));
 			return best_found;
 		}
 
