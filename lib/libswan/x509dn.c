@@ -289,8 +289,22 @@ static err_t dn_parse(chunk_t dn, chunk_t *str)
 		else
 			format_chunk(str, "%s", oid_names[oid_code].name);
 
-		/* print value */
-		format_chunk(str, "=%.*s", (int)value.len, value.ptr);
+		format_chunk(str, "=");
+		/* print value, doubling any ',' and '/' */
+		unsigned char *p = value.ptr;
+		size_t l = value.len;
+		for (size_t i = 0; i<l; ) {
+			if (p[i] == ',' || p[i] == '/') {
+				/* character p[i] must be doubled */
+				format_chunk(str, "%.*s%c", (int)(i + 1), p, p[i]);
+				l -= i + 1;
+				p += i + 1;
+				i = 0;
+			} else {
+				i++;
+			}
+		}
+		format_chunk(str, "%.*s", (int)l, p);
 	}
 	return NULL;
 }
