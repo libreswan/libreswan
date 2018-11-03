@@ -81,5 +81,5 @@ chunk_t clone_bytes_as_chunk(void *bytes, size_t sizeof_bytes, const char *name)
 
 bool chunk_eq(chunk_t a, chunk_t b)
 {
-	return (a.len == b.len && memeq(a.ptr, b.ptr, b.len));
+	return a.len == b.len && memeq(a.ptr, b.ptr, b.len);
 }

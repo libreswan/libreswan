@@ -605,8 +605,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		}
 
 		/* OIDs must agree */
-		if (oid_a.len != oid_b.len ||
-		    !memeq(oid_a.ptr, oid_b.ptr, oid_b.len))
+		if (!chunk_eq(oid_a, oid_b))
 			return FALSE;
 
 		/* does rdn_b contain a wildcard? */

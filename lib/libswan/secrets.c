@@ -467,11 +467,8 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						same = TRUE;
 						break;
 					case PKK_PSK:
-						same = s->pks.u.preshared_secret.len ==
-						       best->pks.u.preshared_secret.len &&
-						       memeq(s->pks.u.preshared_secret.ptr,
-							     best->pks.u.preshared_secret.ptr,
-							     s->pks.u.preshared_secret.len);
+						same = chunk_eq(s->pks.u.preshared_secret,
+							best->pks.u.preshared_secret);
 						break;
 					case PKK_RSA:
 						/*
@@ -498,11 +495,8 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						 */
 						break;
 					case PKK_PPK:
-						same = s->pks.ppk.len ==
-						       best->pks.ppk.len &&
-						       memeq(s->pks.ppk.ptr,
-							     best->pks.ppk.ptr,
-							     s->pks.ppk.len);
+						same = chunk_eq(s->pks.ppk,
+							best->pks.ppk);
 						break;
 					default:
 						bad_case(kind);
