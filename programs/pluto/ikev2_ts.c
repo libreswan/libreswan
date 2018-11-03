@@ -336,6 +336,11 @@ static bool v2_parse_ts(const char *role,
 		/* should be converted to host byte order for local processing */
 		ts->startport = ts1.isat1_startport;
 		ts->endport = ts1.isat1_endport;
+		if (ts->startport > ts->endport) {
+			libreswan_log("%s traffic selector %d has an invalid port range",
+				      role, tss->nr);
+			return false;
+		}
 	}
 
 	DBGF(DBG_MASK, "TS: parsed %d %s TS payloads", tss->nr, role);
@@ -471,12 +476,6 @@ static int ikev2_match_port_range(uint16_t end_port,
 	uint16_t end_high = end_port == 0 ? 65535 : end_port;
 	int f = 0;	/* strength of match */
 	const char *m = "no";
-
-	if (ts->startport > ts->endport) {
-		libreswan_log("traffic selector %s %d has an invalid port range",
-			      which, index);
-		return 0;
-	}
 
 	switch (narrowing) {
 	case END_EQUALS_TS:
