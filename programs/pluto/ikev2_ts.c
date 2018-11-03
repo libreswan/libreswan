@@ -368,7 +368,9 @@ static bool v2_parse_tss(const struct msg_digest *md,
  * Check if our policy's protocol (proto) matches the Traffic Selector
  * protocol (ts_proto).
  */
-static int ikev2_match_protocol(uint8_t end_proto, uint8_t ts_proto,
+
+static int ikev2_match_protocol(const struct end *end,
+				const struct traffic_selector *ts,
 				enum narrowing narrowing,
 				const char *which, int index)
 {
@@ -377,19 +379,19 @@ static int ikev2_match_protocol(uint8_t end_proto, uint8_t ts_proto,
 
 	switch (narrowing) {
 	case END_EQUALS_TS:
-		if (end_proto == ts_proto) {
+		if (end->protocol == ts->ipprotoid) {
 			f = 255;	/* ??? odd value */
 			m = "exact";
 		}
 		break;
 	case END_NARROWER_THAN_TS:
-		if (ts_proto == 0) { /* wild-card */
+		if (ts->ipprotoid == 0) { /* wild-card */
 			f = 1;
 			m = "superset";
 		}
 		break;
 	case END_WIDER_THAN_TS:
-		if (end_proto == 0) { /* wild-card */
+		if (end->protocol == 0) { /* wild-card */
 			f = 1;
 			m = "subset";
 		}
@@ -398,9 +400,9 @@ static int ikev2_match_protocol(uint8_t end_proto, uint8_t ts_proto,
 		bad_case(narrowing);
 	}
 	DBGF(DBG_MASK, MATCH_PREFIX "protocol %s%d %s %s[%d].ipprotoid %s%d: %s fitness %d",
-	     end_proto == 0 ? "*" : "", end_proto,
+	     end->protocol == 0 ? "*" : "", end->protocol,
 	     narrowing_string(narrowing),
-	     which, index, ts_proto == 0 ? "*" : "", ts_proto,
+	     which, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
 	     m, f);
 	return f;
 }
@@ -412,7 +414,7 @@ static int ikev2_match_protocol(uint8_t end_proto, uint8_t ts_proto,
  * any change should be done to both.
  */
 static int ikev2_evaluate_connection_protocol_fit(enum narrowing narrowing,
-						  const struct ends *e,
+						  const struct ends *end,
 						  const struct traffic_selectors *tsi,
 						  const struct traffic_selectors *tsr,
 						  int *best_tsi_i,
@@ -425,8 +427,8 @@ static int ikev2_evaluate_connection_protocol_fit(enum narrowing narrowing,
 	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
 		const struct traffic_selector *tni = &tsi->ts[tsi_ni];
 
-		int fitrange_i = ikev2_match_protocol(e->i->protocol, tni->ipprotoid,
-						      narrowing, "tsi", tsi_ni);
+		int fitrange_i = ikev2_match_protocol(end->i, tni, narrowing,
+						      "TSi", tsi_ni);
 
 		if (fitrange_i == 0)
 			continue;	/* save effort! */
@@ -434,8 +436,8 @@ static int ikev2_evaluate_connection_protocol_fit(enum narrowing narrowing,
 		for (unsigned tsr_ni = 0; tsr_ni < tsr->nr; tsr_ni++) {
 			const struct traffic_selector *tnr = &tsr->ts[tsr_ni];
 
-			int fitrange_r = ikev2_match_protocol(e->r->protocol, tnr->ipprotoid,
-							      narrowing, "tsr", tsr_ni);
+			int fitrange_r = ikev2_match_protocol(end->r, tnr, narrowing,
+							      "TSr", tsr_ni);
 
 			if (fitrange_r == 0)
 				continue;	/* save effort! */
@@ -467,13 +469,13 @@ static int ikev2_evaluate_connection_protocol_fit(enum narrowing narrowing,
  * If subset_ok, narrowing our port range to ts port range is OK (initiator narrowing).
  * Returns 0 if no match; otherwise number of ports within match
  */
-static int ikev2_match_port_range(uint16_t end_port,
+static int ikev2_match_port_range(const struct end *end,
 				  const struct traffic_selector *ts,
 				  enum narrowing narrowing,
 				  const char *which, int index)
 {
-	uint16_t end_low = end_port;
-	uint16_t end_high = end_port == 0 ? 65535 : end_port;
+	uint16_t end_low = end->port;
+	uint16_t end_high = end->port == 0 ? 65535 : end->port;
 	int f = 0;	/* strength of match */
 	const char *m = "no";
 
@@ -511,7 +513,7 @@ static int ikev2_match_port_range(uint16_t end_port,
  * any change should be done to both.
  */
 static int ikev2_evaluate_connection_port_fit(enum narrowing narrowing,
-					      const struct ends *e,
+					      const struct ends *end,
 					      const struct traffic_selectors *tsi,
 					      const struct traffic_selectors *tsr,
 					      int *best_tsi_i,
@@ -524,8 +526,8 @@ static int ikev2_evaluate_connection_port_fit(enum narrowing narrowing,
 	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
 		const struct traffic_selector *tni = &tsi->ts[tsi_ni];
 
-		int fitrange_i = ikev2_match_port_range(e->i->port, tni, narrowing,
-							"tsi", tsi_ni);
+		int fitrange_i = ikev2_match_port_range(end->i, tni, narrowing,
+							"TSi", tsi_ni);
 
 		if (fitrange_i == 0)
 			continue;	/* save effort! */
@@ -533,8 +535,8 @@ static int ikev2_evaluate_connection_port_fit(enum narrowing narrowing,
 		for (unsigned tsr_ni = 0; tsr_ni < tsr->nr; tsr_ni++) {
 			const struct traffic_selector *tnr = &tsr->ts[tsr_ni];
 
-			int fitrange_r = ikev2_match_port_range(e->r->port, tnr, narrowing,
-								"tsr", tsr_ni);
+			int fitrange_r = ikev2_match_port_range(end->r, tnr, narrowing,
+								"TSr", tsr_ni);
 
 			if (fitrange_r == 0)
 				continue;	/* no match */
