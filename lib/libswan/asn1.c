@@ -232,15 +232,25 @@ void code_asn1_length(size_t length, chunk_t *code)
  */
 bool is_printablestring(chunk_t str)
 {
+	/*
+	 * The most effective test uses strspn(3) but it requires
+	 * a NUL-terminated string.
+	 * So we temporarily jam NUL over last char in str
+	 * (but only if there is a last char).
+	 */
+	if (str.len == 0)
+		return TRUE;
+
 	const char printablestring_charset[] =
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 '()+,-./:=?";
-	unsigned i;
 
-	for (i = 0; i < str.len; i++) {
-		if (strchr(printablestring_charset, str.ptr[i]) == NULL)
-			return FALSE;
-	}
-	return TRUE;
+	unsigned char t = str.ptr[str.len - 1];
+	str.ptr[str.len - 1] = '\0';
+	size_t good = strspn((const char *)str.ptr, printablestring_charset);
+	str.ptr[str.len - 1] = t;
+
+	return good == str.len - 1 &&
+		strchr(printablestring_charset, t) != NULL;
 }
 
 /*
