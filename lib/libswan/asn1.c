@@ -228,29 +228,46 @@ void code_asn1_length(size_t length, chunk_t *code)
 }
 
 /*
- * determines if a character string is of type ASN.1 printableString
+ * Determines if a character string is of type ASN.1 printableString.
+ * See https://en.wikipedia.org/w/index.php?title=PrintableString
  */
 bool is_printablestring(chunk_t str)
 {
 	/*
-	 * The most effective test uses strspn(3) but it requires
-	 * a NUL-terminated string.
-	 * So we temporarily jam NUL over last char in str
-	 * (but only if there is a last char).
+	 * printable string character set:
+	 * "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 '()+,-./:=?"
 	 */
-	if (str.len == 0)
-		return TRUE;
+	static const unsigned char printable_set[] = {
+		0201u,	/* 0x20        '  (first is the real SPACE) */
+		0373u,	/* 0x28 () +,-./ */
+		0377u,	/* 0x30 01234567 */
+		0247u,	/* 0x38 89:  = ? */
+		0376u,	/* 0x40  ABCDEFG */
+		0377u,	/* 0x48 HIJKLMNO */
+		0377u,	/* 0x50 PQRSTUVW */
+		0007u,	/* 0x58 XYZ      */
+		0376u,	/* 0x60  abcdefg */
+		0377u,	/* 0x68 hijklmno */
+		0377u,	/* 0x70 pqrstuvw */
+		0007u,	/* 0x78 xyz      */
+	};
 
-	const char printablestring_charset[] =
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 '()+,-./:=?";
-
-	unsigned char t = str.ptr[str.len - 1];
-	str.ptr[str.len - 1] = '\0';
-	size_t good = strspn((const char *)str.ptr, printablestring_charset);
-	str.ptr[str.len - 1] = t;
-
-	return good == str.len - 1 &&
-		strchr(printablestring_charset, t) != NULL;
+	for (unsigned i = 0; i < str.len; i++) {
+		/*
+		 * Tricky test.
+		 * The first part checks if the current character is
+		 * within the range of graphical characters (0x20 - 0x7f).
+		 * It saves a branch instruction by exploiting the way
+		 * underflow of unsigned subtraction yields a large number.
+		 * If the character is in range, we check it by subscripting
+		 * its bit within printable_set[].
+		 */
+		unsigned u = (unsigned)str.ptr[i] - 0x20u;
+		if (!(u <= 0x7fU - 0x20u &&
+		      (printable_set[u / 8u] & 1u << (u % 8u))))
+			return FALSE;
+	}
+	return TRUE;
 }
 
 /*
