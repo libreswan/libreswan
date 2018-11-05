@@ -411,7 +411,8 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
 	return TRUE;
 }
 
-static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af)
+static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af,
+			 bool *seen_an_address)
 {
 	ip_address ip;
 	ipstr_buf ip_str;
@@ -432,15 +433,21 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af)
 		return FALSE;
 	}
 
-	libreswan_log("received INTERNAL_IP%s_ADDRESS %s",
-		af == AF_INET ? "4" : "6",
-		ipstr(&ip, &ip_str));
+	libreswan_log("received INTERNAL_IP%s_ADDRESS %s%s",
+		      af == AF_INET ? "4" : "6",
+		      ipstr(&ip, &ip_str),
+		      *seen_an_address ? "; discarded" : "");
 
 	if (responder) {
 		libreswan_log("bogus responder CP ignored");
 		return TRUE;
 	}
 
+	if (*seen_an_address) {
+		return true;
+	}
+
+	*seen_an_address = true;
 	c->spd.this.has_client = TRUE;
 	c->spd.this.has_internal_address = TRUE;
 
@@ -499,6 +506,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		return FALSE;
 	}
 
+	bool seen_internal_address = false;
 	while (pbs_left(attrs) > 0) {
 		struct ikev2_cp_attribute cp_a;
 		pb_stream cp_a_pbs;
@@ -511,7 +519,8 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 
 		switch (cp_a.type) {
 		case IKEv2_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_ia(&cp_a_pbs, st, AF_INET)) {
+			if (!ikev2_set_ia(&cp_a_pbs, st, AF_INET,
+					  &seen_internal_address)) {
 				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
 				return FALSE;
 			}
@@ -525,7 +534,8 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 			break;
 
 		case IKEv2_INTERNAL_IP6_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_ia(&cp_a_pbs, st, AF_INET6)) {
+			if (!ikev2_set_ia(&cp_a_pbs, st, AF_INET6,
+						 &seen_internal_address)) {
 				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
 				return FALSE;
 			}

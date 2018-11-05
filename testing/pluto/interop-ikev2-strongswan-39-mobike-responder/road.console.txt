@@ -40,7 +40,7 @@ road #
 002 "road-eastnet"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "road-eastnet"[1] 192.1.2.23 #2: Authenticated using authby=secret
 002 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.1
-002 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.2
+002 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.2; discarded
 002 "road-eastnet"[1] 192.1.2.23 #2: negotiated connection [192.0.3.1-192.0.3.1:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "road-eastnet"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 road #
