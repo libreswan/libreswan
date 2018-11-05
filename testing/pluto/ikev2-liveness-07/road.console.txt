@@ -9,6 +9,8 @@ road #
  ipsec auto --add road-east-x509-ipv4
 002 added connection description "road-east-x509-ipv4"
 road #
+ ipsec whack --impair suppress-retransmits
+road #
  echo "initdone"
 initdone
 road #
@@ -66,13 +68,9 @@ road #
  # Tunnel should be back up now even without triggering traffic
 road #
  ipsec whack --trafficstatus
-006 #4: "road-east-x509-ipv4"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
  ping -q -n -c 4 -I 192.0.2.100 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+bind: Cannot assign requested address
 road #
  echo done
 done

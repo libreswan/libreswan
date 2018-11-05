@@ -10,6 +10,8 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

@@ -2,4 +2,5 @@
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add v6-tunnel
+ipsec whack --impair suppress-retransmits
 echo "initdone"

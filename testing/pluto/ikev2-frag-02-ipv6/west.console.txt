@@ -9,6 +9,8 @@ west #
  ipsec auto --add v6-tunnel
 002 added connection description "v6-tunnel"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #
