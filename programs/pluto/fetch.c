@@ -222,7 +222,7 @@ static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob)
 
 			if (values != NULL) {
 				if (values[0] != NULL) {
-					*blog = clone_bytes_as_chunk(
+					*blob = clone_bytes_as_chunk(
 						values[0]->bv_val,
 						values[0]->bv_len,
 						"ldap blob");
