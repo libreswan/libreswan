@@ -260,7 +260,7 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 	int msgid;
 	int rc;
 
-	char *ldap_url = str_from_chunk(url, "ldap query");
+	char *ldap_url = clone_chunk_as_string(url, "ldap query");
 
 	DBG(DBG_X509,
 	    DBG_log("Trying LDAP URL '%s'", ldap_url));
