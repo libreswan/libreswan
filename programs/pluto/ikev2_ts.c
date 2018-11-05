@@ -689,6 +689,128 @@ static int ikev2_evaluate_connection_fit(const struct connection *d,
 	return bestfit;
 }
 
+struct score {
+	bool ok;
+	int address;
+	int port;
+	int protocol;
+};
+
+static struct score score_end(const struct end *end,
+			      const struct traffic_selector *ts,
+			      enum fit fit,
+			      const char *what, int index)
+{
+	DBG(DBG_CONTROLMORE,
+	    char ts_net[RANGETOT_BUF];
+	    rangetot(&ts->net, 0, ts_net, sizeof(ts_net));
+	    DBG_log("    %s[%u] .net=%s .iporotoid=%d .{start,end}port=%d..%d",
+		    what, index,
+		    ts_net,
+		    ts->ipprotoid,
+		    ts->startport,
+		    ts->endport));
+
+	struct score score = { .ok = false, };
+	score.address = match_address_range(end, ts, END_WIDER_THAN_TS,
+					    what, index);
+	if (score.address <= 0) {
+		return score;
+	}
+	score.port = ikev2_match_port_range(end, ts, fit, what, index);
+	if (score.port <= 0) {
+		return score;
+	}
+	score.protocol = ikev2_match_protocol(end, ts, fit, what, index);
+	if (score.protocol <= 0) {
+		return score;
+	}
+	score.ok = true;
+	return score;
+}
+
+struct best_score {
+	bool ok;
+	int address;
+	int port;
+	int protocol;
+	const struct traffic_selector *tsi;
+	const struct traffic_selector *tsr;
+};
+
+static struct best_score score_ends(enum fit fit,
+				    const struct connection *d,
+				    const struct ends *ends,
+				    const struct traffic_selectors *tsi,
+				    const struct traffic_selectors *tsr)
+{
+	DBG(DBG_CONTROLMORE, {
+		char ei3[SUBNETTOT_BUF];
+		char er3[SUBNETTOT_BUF];
+		char cib[CONN_INST_BUF];
+		subnettot(&ends->i->client,  0, ei3, sizeof(ei3));
+		subnettot(&ends->r->client,  0, er3, sizeof(er3));
+		DBG_log("evaluating our conn=\"%s\"%s I=%s:%d/%d R=%s:%d/%d%s to their:",
+			d->name, fmt_conn_instance(d, cib),
+			ei3, ends->i->protocol, ends->i->port,
+			er3, ends->r->protocol, ends->r->port,
+			is_virtual_connection(d) ? " (virt)" : "");
+	});
+
+	struct best_score best_score = {
+		.ok = false,
+		.address = -1,
+		.port = -1,
+		.protocol = -1,
+	};
+
+	/* compare tsi/r array to this/that, evaluating how well it fits */
+	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
+		const struct traffic_selector *tni = &tsi->ts[tsi_ni];
+
+		/* choice hardwired! */
+		struct score score_i = score_end(ends->i, tni, fit, "TSi", tsi_ni);
+		if (!score_i.ok) {
+			continue;
+		}
+
+		for (unsigned tsr_ni = 0; tsr_ni < tsr->nr; tsr_ni++) {
+			const struct traffic_selector *tnr = &tsr->ts[tsr_ni];
+
+			struct score score_r = score_end(ends->r, tnr, fit, "TSr", tsr_ni);
+			if (!score_r.ok) {
+				continue;
+			}
+
+			struct best_score score = {
+				.ok = true,
+				/* ??? this objective function is odd and arbitrary */
+				.address = (score_i.address << 8) + score_r.address,
+				/* ??? arbitrary objective function */
+				.port = score_i.port + score_r.port,
+				/* ??? arbitrary objective function */
+				.protocol = score_i.protocol + score_r.protocol,
+				/* which one */
+				.tsi = tni, .tsr = tnr,
+			};
+
+			/* score >= best_score? */
+			if (score.address > best_score.address ||
+			    (score.address == best_score.address &&
+			     score.port > best_score.port) ||
+			    (score.address == best_score.address &&
+			     score.port == best_score.port &&
+			     score.protocol > best_score.protocol)) {
+				best_score = score;
+				DBGF(DBG_MASK, "best fit so far: TSi[%d] TSr[%d]",
+				     tsi_ni, tsr_ni);
+			}
+		}
+	}
+
+	return best_score;
+}
+
 /*
  * find the best connection and, if it is AUTH exchange, create the
  * child state
@@ -1027,130 +1149,68 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	/* check TS payloads */
-	{
-		int bestfit_n, bestfit_p, bestfit_pr;
-		int best_tsi_i, best_tsr_i;
-		bestfit_n = -1;
-		bestfit_p = -1;
-		bestfit_pr = -1;
+	/* initiator */
+	const struct spd_route *sra = &c->spd;
+	const struct ends e = {
+		.i = &sra->this,
+		.r = &sra->that,
+	};
+	enum fit initiator_widening =
+		(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
+		? END_WIDER_THAN_TS
+		: END_EQUALS_TS;
 
-		/* Check TSi/TSr https://tools.ietf.org/html/rfc5996#section-2.9 */
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("TS: check fit - we are responding to I2"));
+	struct best_score best = score_ends(initiator_widening, c, &e, &tsi, &tsr);
 
-
-		DBGF(DBG_MASK, "Checking %u TSi and %u TSr selectors, looking for exact match",
-		     tsi.nr, tsr.nr);
-
-		{
-			const struct spd_route *sra = &c->spd;
-			/* initiator */
-			const struct ends e = {
-				.i = &sra->this,
-				.r = &sra->that,
-			};
-
-			int bfit_n = ikev2_evaluate_connection_fit(c, &e, &tsi, &tsr);
-
-			if (bfit_n > bestfit_n) {
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("prefix fitness found a better match c %s",
-					    c->name));
-
-				/* initiator */
-				enum fit initiator_widening =
-					(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
-					? END_WIDER_THAN_TS
-					: END_EQUALS_TS;
-				int bfit_p = ikev2_evaluate_connection_port_fit(initiator_widening,
-										&e, &tsi, &tsr,
-										&best_tsi_i,
-										&best_tsr_i);
-
-				if (bfit_p > bestfit_p) {
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("port fitness found better match c %s, tsi[%d],tsr[%d]",
-						    c->name, best_tsi_i, best_tsr_i));
-
-					int bfit_pr = ikev2_evaluate_connection_protocol_fit(initiator_widening,
-											     &e, &tsi, &tsr,
-											     &best_tsi_i,
-											     &best_tsr_i);
-
-					if (bfit_pr > bestfit_pr) {
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("protocol fitness found better match c %s, tsi[%d], tsr[%d]",
-							    c->name, best_tsi_i,
-							    best_tsr_i));
-						bestfit_p = bfit_p;
-						bestfit_n = bfit_n;
-					} else {
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("protocol fitness rejected c %s",
-							    c->name));
-					}
-				} else {
-					DBG(DBG_CONTROLMORE,
-							DBG_log("port fitness rejected c %s",
-								c->name));
-				}
-			} else {
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("prefix fitness rejected c %s",
-					    c->name));
-			}
-		}
-
-		if (bestfit_n > 0 && bestfit_p > 0) {
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("found an acceptable TSi/TSr Traffic Selector"));
-			struct state *st = &child->sa;
-			memcpy(&st->st_ts_this, &tsi.ts[best_tsi_i],
-			       sizeof(struct traffic_selector));
-			memcpy(&st->st_ts_that, &tsr.ts[best_tsr_i],
-			       sizeof(struct traffic_selector));
-			ikev2_print_ts(&st->st_ts_this);
-			ikev2_print_ts(&st->st_ts_that);
-
-			ip_subnet tmp_subnet_i;
-			ip_subnet tmp_subnet_r;
-			rangetosubnet(&st->st_ts_this.net.start,
-				      &st->st_ts_this.net.end, &tmp_subnet_i);
-			rangetosubnet(&st->st_ts_that.net.start,
-				      &st->st_ts_that.net.end, &tmp_subnet_r);
-
-			c->spd.this.client = tmp_subnet_i;
-			c->spd.this.port = st->st_ts_this.startport;
-			c->spd.this.protocol = st->st_ts_this.ipprotoid;
-			setportof(htons(c->spd.this.port),
-				  &c->spd.this.host_addr);
-			setportof(htons(c->spd.this.port),
-				  &c->spd.this.client.addr);
-
-			c->spd.this.has_client =
-				!(subnetishost(&c->spd.this.client) &&
-				addrinsubnet(&c->spd.this.host_addr,
-					  &c->spd.this.client));
-
-			c->spd.that.client = tmp_subnet_r;
-			c->spd.that.port = st->st_ts_that.startport;
-			c->spd.that.protocol = st->st_ts_that.ipprotoid;
-			setportof(htons(c->spd.that.port),
-				  &c->spd.that.host_addr);
-			setportof(htons(c->spd.that.port),
-				  &c->spd.that.client.addr);
-
-			c->spd.that.has_client =
-				!(subnetishost(&c->spd.that.client) &&
-				addrinsubnet(&c->spd.that.host_addr,
-					  &c->spd.that.client));
-		} else {
+	if (!best.ok) {
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("reject responder TSi/TSr Traffic Selector"));
 			/* prevents parent from going to I3 */
 			return false;
-		}
-	} /* end of TS check block */
+	}
+
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("found an acceptable TSi/TSr Traffic Selector"));
+	struct state *st = &child->sa;
+	memcpy(&st->st_ts_this, best.tsi,
+	       sizeof(struct traffic_selector));
+	memcpy(&st->st_ts_that, best.tsr,
+	       sizeof(struct traffic_selector));
+	ikev2_print_ts(&st->st_ts_this);
+	ikev2_print_ts(&st->st_ts_that);
+
+	ip_subnet tmp_subnet_i;
+	ip_subnet tmp_subnet_r;
+	rangetosubnet(&st->st_ts_this.net.start,
+		      &st->st_ts_this.net.end, &tmp_subnet_i);
+	rangetosubnet(&st->st_ts_that.net.start,
+		      &st->st_ts_that.net.end, &tmp_subnet_r);
+
+	c->spd.this.client = tmp_subnet_i;
+	c->spd.this.port = st->st_ts_this.startport;
+	c->spd.this.protocol = st->st_ts_this.ipprotoid;
+	setportof(htons(c->spd.this.port),
+		  &c->spd.this.host_addr);
+	setportof(htons(c->spd.this.port),
+		  &c->spd.this.client.addr);
+
+	c->spd.this.has_client =
+		!(subnetishost(&c->spd.this.client) &&
+		  addrinsubnet(&c->spd.this.host_addr,
+			       &c->spd.this.client));
+
+	c->spd.that.client = tmp_subnet_r;
+	c->spd.that.port = st->st_ts_that.startport;
+	c->spd.that.protocol = st->st_ts_that.ipprotoid;
+	setportof(htons(c->spd.that.port),
+		  &c->spd.that.host_addr);
+	setportof(htons(c->spd.that.port),
+		  &c->spd.that.client.addr);
+
+	c->spd.that.has_client =
+		!(subnetishost(&c->spd.that.client) &&
+		  addrinsubnet(&c->spd.that.host_addr,
+			       &c->spd.that.client));
+
 	return true;
 }
