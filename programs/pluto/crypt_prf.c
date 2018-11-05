@@ -42,8 +42,8 @@ size_t crypt_prf_fips_key_size_min(const struct prf_desc *prf)
 	 * >= "L/2" (where L is the block-size in bytes of the hash
 	 * function).
 	 *
-	 * FIPS 198-1 Section 3 instead cites SP 800-107.  Good luck
-	 * reading the latter.
+	 * FIPS 198-1 Section 3 instead cites SP 800-107 which dictates
+	 * requirements in Section 5.4.3
 	 */
 	return prf->prf_key_size / 2;
 }
