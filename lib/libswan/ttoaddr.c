@@ -14,8 +14,12 @@
  * License for more details.
  *
  */
-#include "internal.h"
-#include "libreswan.h"
+
+#include <string.h>
+
+#include "internal.h"		/* for MALLOC()!! */
+#include "ip_address.h"
+#include "libreswan.h"		/* for ttoul() */
 
 /*
  * Legal ASCII characters in a domain name.  Underscore technically is not,

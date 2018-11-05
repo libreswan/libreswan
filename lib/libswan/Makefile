@@ -59,12 +59,12 @@ ifeq ($(USE_NETKEY),true)
 OBJS += addr_lookup.o
 endif
 
+OBJS += af_info.o
 OBJS += fd.o
 OBJS += kernel_alg.o
 OBJS += kernel_sadb.o
 OBJS += role.o
 
-# These get pulled in from the klips kernel code.
 OBJS += addrtot.o
 OBJS += addrtypeof.o
 OBJS += anyaddr.o
@@ -82,7 +82,7 @@ OBJS += shunk.o
 
 OBJS += ip_address.o
 OBJS += ip_range.o
-
+OBJS += ip_subnet.o
 
 OBJS += lmod.o
 OBJS += lset.o

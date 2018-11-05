@@ -13,8 +13,8 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-#include "internal.h"
-#include "libreswan.h"
+
+#include "ip_said.h"
 
 static struct satype {
 	char *prefix;

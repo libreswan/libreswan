@@ -86,6 +86,7 @@
 #include <ocsp.h>
 #include "crypt_hash.h"
 #include "crl_queue.h"
+#include "af_info.h"
 
 bool crl_strict = FALSE;
 bool ocsp_strict = FALSE;

@@ -27,6 +27,7 @@
 #define _IETF_CONSTANTS_H
 
 #include <sys/types.h>
+#include <stdint.h>		/* XXX: needed but should it? */
 
 /* Group parameters from draft-ietf-ike-01.txt section 6 */
 

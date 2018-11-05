@@ -22,6 +22,7 @@
 #include <event2/event_struct.h>
 #include "timer.h"
 #include "err.h"
+#include "ip_address.h"
 
 struct state;
 struct msg_digest;

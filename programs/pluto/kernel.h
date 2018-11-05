@@ -25,6 +25,7 @@
 #include "monotime.h"
 #include "reqid.h"
 #include "connections.h"	/* for policy_prio_t et.al. */
+#include "ip_said.h"		/* for SA_AH et.al. */
 
 struct sa_marks;
 struct spd_route;

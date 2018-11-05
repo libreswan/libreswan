@@ -65,6 +65,7 @@
 #include "ikev1_xauth.h"
 #include "nat_traversal.h"
 #include "ip_address.h"
+#include "af_info.h"
 
 #include "virtual.h"	/* needs connections.h */
 

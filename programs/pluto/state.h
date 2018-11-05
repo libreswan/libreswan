@@ -48,6 +48,7 @@
 #include "list_entry.h"
 #include "retransmit.h"
 #include "ikev2_ts.h"		/* for struct traffic_selector */
+#include "ip_subnet.h"
 
 /* msgid_t defined in defs.h */
 

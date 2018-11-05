@@ -13,9 +13,11 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-#include "internal.h"
-#include "libreswan.h"
-#include "ip_address.h"
+
+#include <string.h>
+
+#include "ip_subnet.h"
+#include "libreswan.h"		/* for ttoulb() */
 
 #ifndef DEFAULTSUBNET
 #define DEFAULTSUBNET "%default"

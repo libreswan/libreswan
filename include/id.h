@@ -18,6 +18,7 @@
 #include "ietf_constants.h"	/* for enum ike_id_type */
 #include "chunk.h"
 #include "err.h"
+#include "ip_address.h"
 
 struct id {
 	enum ike_id_type kind;

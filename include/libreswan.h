@@ -82,66 +82,8 @@ enum {
 #define ESPINUDP_WITH_NON_ESP   2       /* draft-ietf-ipsec-nat-t-ike-02    */
 #endif
 
-#include "ip_address.h"
-
-#ifdef NEED_SIN_LEN
-#define SET_V4(a)	{ (a).u.v4.sin_family = AF_INET; (a).u.v4.sin_len = sizeof(struct sockaddr_in); }
-#define SET_V6(a)	{ (a).u.v6.sin6_family = AF_INET6; (a).u.v6.sin6_len = sizeof(struct sockaddr_in6); }
-#else
-#define SET_V4(a)	{ (a).u.v4.sin_family = AF_INET; }
-#define SET_V6(a)	{ (a).u.v6.sin6_family = AF_INET6; }
-#endif
-
-/* then the main types */
-typedef struct {
-	ip_address addr;
-	int maskbits;
-} ip_subnet;
-
-/* for use in KLIPS.  Userland should use addrtypeof() */
-#define ip_address_family(a)    ((a)->u.v4.sin_family)
-
-/*
- * ip_address_eq: test two ip_address values for equality.
- *
- * For use in KLIPS.  Userland should use sameaddr().
- */
-#define ip_address_eq(a, b) \
-	(ip_address_family((a)) == ip_address_family((b)) && \
-	 (ip_address_family((a)) == AF_INET ? \
-	  ((a)->u.v4.sin_addr.s_addr == (b)->u.v4.sin_addr.s_addr) : \
-	  (0 == memcmp((a)->u.v6.sin6_addr.s6_addr32, \
-		      (b)->u.v6.sin6_addr.s6_addr32, sizeof(u_int32_t) * 4)) \
-	 ))
-
-/* For use in KLIPS.  Userland should use isanyaddr() */
-#define ip_address_isany(a) \
-	(ip_address_family((a)) == AF_INET6 ? \
-	 ((a)->u.v6.sin6_addr.s6_addr[0] == 0 && \
-	  (a)->u.v6.sin6_addr.s6_addr[1] == 0 && \
-	  (a)->u.v6.sin6_addr.s6_addr[2] == 0 && \
-	  (a)->u.v6.sin6_addr.s6_addr[3] == 0) : \
-	 ((a)->u.v4.sin_addr.s_addr == 0))
-
 /* and the SA ID stuff */
 typedef uint32_t ipsec_spi_t;
-
-typedef struct {                                /* to identify an SA, we need: */
-	ip_address dst;                         /* A. destination host */
-	ipsec_spi_t spi;                        /* B. 32-bit SPI, assigned by dest. host */
-#               define  SPI_PASS        256     /* magic values... */
-#               define  SPI_DROP        257     /* ...for use... */
-#               define  SPI_REJECT      258     /* ...with SA_INT */
-#               define  SPI_HOLD        259
-#               define  SPI_TRAP        260
-#               define  SPI_TRAPSUBNET  261
-	int proto;                      /* C. protocol */
-#               define  SA_ESP  50      /* IPPROTO_ESP */
-#               define  SA_AH   51      /* IPPROTO_AH */
-#               define  SA_IPIP 4       /* IPPROTO_IPIP */
-#               define  SA_COMP 108     /* IPPROTO_COMP */
-#               define  SA_INT  61      /* IANA reserved for internal use */
-} ip_said;
 
 /* misc */
 struct prng {                   /* pseudo-random-number-generator guts */
@@ -193,26 +135,10 @@ extern err_t ttoulb(const char *src, size_t srclen, int format,
 extern size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
 #define ULTOT_BUF       (22 + 1)  /* holds 64 bits in octal */
 
-/* looks up names in DNS */
-extern err_t ttoaddr(const char *src, size_t srclen, int af, ip_address *dst);
-
-/* does not look up names in DNS */
-extern err_t ttoaddr_num(const char *src, size_t srclen, int af, ip_address *dst);
-
-extern err_t tnatoaddr(const char *src, size_t srclen, int af, ip_address *dst);
-extern size_t addrtot(const ip_address *src, int format, char *buf, size_t buflen);
 extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
 		    size_t buflen);
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
-extern err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
-extern size_t subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
-#define SUBNETTOT_BUF   (ADDRTOT_BUF + 1 + 3)
-extern size_t subnetporttot(const ip_subnet *src, int format, char *buf,
-		     size_t buflen);
 #define SUBNETPROTOTOT_BUF      (SUBNETTOTO_BUF + ULTOT_BUF)
-extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
-extern size_t satot(const ip_said *src, int format, char *bufptr, size_t buflen);
-#define SATOT_BUF       (5 + ULTOT_BUF + 1 + ADDRTOT_BUF)
 #define SAMIGTOT_BUF    (16 + SATOT_BUF + ADDRTOT_BUF)
 extern err_t ttodata(const char *src, size_t srclen, int base, char *buf,
 	      size_t buflen, size_t *needed);
@@ -233,46 +159,6 @@ extern size_t splitkeytoid(const unsigned char *e, size_t elen,
 #define KEYID_BUF       10      /* up to 9 text digits plus NUL */
 extern err_t ttoprotoport(char *src, size_t src_len, u_int8_t *proto, u_int16_t *port,
 			  bool *has_port_wildcard);
-
-/* initializations */
-extern void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,
-	      ip_said *dst);
-extern err_t loopbackaddr(int af, ip_address *dst);
-extern err_t unspecaddr(int af, ip_address *dst);
-extern err_t anyaddr(int af, ip_address *dst);
-extern err_t initaddr(const unsigned char *src, size_t srclen, int af,
-	       ip_address *dst);
-extern err_t add_port(int af, ip_address *addr, unsigned short port);
-extern err_t initsubnet(const ip_address *addr, int maskbits, int clash,
-		 ip_subnet *dst);
-extern err_t addrtosubnet(const ip_address *addr, ip_subnet *dst);
-
-/* misc. conversions and related */
-extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
-		    ip_subnet *dst);
-extern int addrtypeof(const ip_address *src);
-extern int subnettypeof(const ip_subnet *src);
-extern size_t addrlenof(const ip_address *src);
-extern size_t addrbytesptr_read(const ip_address *src, const unsigned char **dst);
-extern size_t addrbytesptr_write(ip_address *src, unsigned char **dst);
-extern size_t addrbytesof(const ip_address *src, unsigned char *dst, size_t dstlen);
-extern int masktocount(const ip_address *src);
-extern void networkof(const ip_subnet *src, ip_address *dst);
-extern void maskof(const ip_subnet *src, ip_address *dst);
-
-/* tests */
-extern bool sameaddr(const ip_address *a, const ip_address *b);
-extern int addrcmp(const ip_address *a, const ip_address *b);
-extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);
-extern bool addrinsubnet(const ip_address *a, const ip_subnet *s);
-extern bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b);
-extern bool subnetishost(const ip_subnet *s);
-extern bool samesaid(const ip_said *a, const ip_said *b);
-extern bool sameaddrtype(const ip_address *a, const ip_address *b);
-extern bool samesubnettype(const ip_subnet *a, const ip_subnet *b);
-extern int isanyaddr(const ip_address *src);
-extern int isunspecaddr(const ip_address *src);
-extern int isloopbackaddr(const ip_address *src);
 
 /* PRNG */
 extern void prng_init(struct prng *prng, const unsigned char *key, size_t keylen);

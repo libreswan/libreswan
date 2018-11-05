@@ -39,6 +39,7 @@
 #include "x509.h"
 #include <cert.h>
 #include "certs.h"
+#include "af_info.h"
 
 /*
  * Note that there may be as many as six IDs that are temporary at

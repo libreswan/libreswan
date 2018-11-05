@@ -77,6 +77,7 @@
 #include "ip_address.h"
 #include "send.h"		/* for send without recording */
 #include "ikev1_send.h"
+#include "af_info.h"
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,

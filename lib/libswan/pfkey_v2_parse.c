@@ -55,6 +55,7 @@ extern int debug_pfkey;
 
 # include <libreswan.h>
 # include "constants.h"
+# include "ip_said.h"
 
 #endif /* __KERNEL__ */
 

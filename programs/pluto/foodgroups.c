@@ -37,6 +37,7 @@
 #include "lex.h"
 #include "log.h"
 #include "whack.h"
+#include "af_info.h"
 
 #include <errno.h>
 

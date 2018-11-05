@@ -42,6 +42,7 @@
 #include "connections.h"
 #include "packet.h"
 #include "whack.h"
+#include "af_info.h"
 
 /*
  * Build an ID payload

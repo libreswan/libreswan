@@ -14,7 +14,10 @@
  * License for more details.
  *
  */
-#include "libreswan.h"
+
+#include <string.h>
+
+#include "ip_address.h"
 
 err_t add_port(int af, ip_address *addr, unsigned short port)
 {

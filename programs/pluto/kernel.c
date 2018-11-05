@@ -78,6 +78,7 @@
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
 #include "ip_address.h"
+#include "af_info.h"
 #include "lswfips.h" /* for libreswan_fipsmode() */
 
 /* which kernel interface to use */

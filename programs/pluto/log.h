@@ -24,6 +24,7 @@
 #include "lswcdefs.h"
 #include "lswlog.h"
 #include "fd.h"
+#include "ip_address.h"
 
 struct state;
 struct connection;

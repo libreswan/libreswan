@@ -12,7 +12,10 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-#include "libreswan.h"
+
+#include <string.h>
+
+#include "ip_address.h"
 
 /*
    - addrtypeof - get the type of an ip_address

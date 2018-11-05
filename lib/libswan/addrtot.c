@@ -15,15 +15,10 @@
  *
  */
 
-#if defined(__KERNEL__) && defined(__HAVE_ARCH_STRSTR)
-#include <linux/string.h>
-#endif
+#include <string.h>
 
-#if !defined(__KERNEL__)
-# include <stdlib.h>
-#endif
-
-#include "libreswan.h"
+#include "ip_address.h"
+#include "libreswan.h"		/* for inet_addrtot() */
 
 #define IP4BYTES        4       /* bytes in an IPv4 address */
 #define PERBYTE         4       /* three digits plus a dot or NUL */
@@ -35,33 +30,6 @@ static size_t normal6(const unsigned char *s, size_t len, char *b, char **dp,
 		      int squish);
 static size_t reverse4(const unsigned char *s, size_t len, char *b, char **dp);
 static size_t reverse6(const unsigned char *s, size_t len, char *b, char **dp);
-
-#if defined(__KERNEL__) && !defined(__HAVE_ARCH_STRSTR)
-#define strstr ipsec_strstr
-/*
- * Find the first occurrence of find in s.
- * (from NetBSD 1.6's /src/lib/libc/string/strstr.c)
- */
-
-static char *ipsec_strstr(const char *s, const char *find)
-{
-	char c, sc;
-	size_t len;
-
-	if ((c = *find++) != 0) {
-		len = strlen(find);
-		do {
-			do {
-				if ((sc = *s++) == 0)
-					return NULL;
-			} while (sc != c);
-		} while (strncmp(s, find, len) != 0);
-		s--;
-	}
-	/* LINTED interface specification */
-	return (char *)s;
-}
-#endif
 
 /*
    - addrtot - convert binary address to text (dotted decimal or IPv6 string)

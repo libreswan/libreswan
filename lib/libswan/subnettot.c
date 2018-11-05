@@ -13,10 +13,10 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-#include "internal.h"
-#include "libreswan.h"
-#include "constants.h"
-#include "ip_address.h"
+
+#include "ip_subnet.h"
+
+#include "libreswan.h"		/* for ultot() */
 
 /*
  * subnettot - convert subnet to text "addr/bitcount"

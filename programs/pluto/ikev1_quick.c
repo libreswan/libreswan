@@ -80,6 +80,7 @@
 #include "pluto_x509.h"
 #include "alg_info.h"
 #include "ip_address.h"
+#include "af_info.h"
 
 #include <blapit.h>
 

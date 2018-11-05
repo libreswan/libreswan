@@ -61,6 +61,7 @@
 #include "state_db.h"	/* for init_state_db() */
 #include "nat_traversal.h"
 #include "ike_alg.h"
+#include "af_info.h"		/* for init_af_info() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1498,6 +1499,7 @@ int main(int argc, char **argv)
 		passert(log_to_stderr || dup2(0, 2) == 2);
 	}
 
+	init_af_info();
 	init_constants();
 	init_pluto_constants();
 

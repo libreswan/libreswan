@@ -1,7 +1,10 @@
-/* Libreswan interfaces management (interfaces.h)
- * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
- * Copyright (C) 2005 Michael Richardson <mcr@marajade.sandelman.ca>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+/* ip subnet, for libreswan
+ *
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
+ * Copyright (C) 2016-2017 Andrew Cagney
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,12 +17,12 @@
  * for more details.
  */
 
-#ifndef _STARTER_INTERFACES_H_
-#define _STARTER_INTERFACES_H_
+#include "ip_subnet.h"
 
-#include "ip_address.h"
+bool subnetisnone(const ip_subnet *sn)
+{
+	ip_address base;
 
-bool starter_iface_find(const char *iface, int af, ip_address *dst, ip_address *nh);
-
-#endif /* _STARTER_INTERFACES_H_ */
-
+	networkof(sn, &base);
+	return isanyaddr(&base) && subnetishost(sn);
+}

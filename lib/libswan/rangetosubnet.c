@@ -13,8 +13,8 @@
  * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Library General Public
  * License for more details.
  */
-#include "internal.h"
-#include "libreswan.h"
+
+#include "ip_subnet.h"
 
 /*
  * rangetosubnet - turn an address range into a subnet, if possible

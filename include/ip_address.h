@@ -19,6 +19,7 @@
 #define IP_ADDRESS_H
 
 #include "chunk.h"
+#include "err.h"
 
 /*
  * Hack around this file being sucked into linux kernel module builds.
@@ -26,6 +27,14 @@
 #include <netinet/in.h>		/* for struct sockaddr_in */
 #ifdef HAVE_INET6_IN6_H
 #include <netinet6/in6.h>	/* for struct sockaddr_in6 */
+#endif
+
+#ifdef NEED_SIN_LEN
+#define SET_V4(a)	{ (a).u.v4.sin_family = AF_INET; (a).u.v4.sin_len = sizeof(struct sockaddr_in); }
+#define SET_V6(a)	{ (a).u.v6.sin6_family = AF_INET6; (a).u.v6.sin6_len = sizeof(struct sockaddr_in6); }
+#else
+#define SET_V4(a)	{ (a).u.v4.sin_family = AF_INET; }
+#define SET_V6(a)	{ (a).u.v6.sin6_family = AF_INET6; }
 #endif
 
 struct lswlog;
@@ -106,5 +115,42 @@ size_t lswlog_sensitive_ip(struct lswlog *buf, const ip_address *ip);
  * address :-(
  */
 chunk_t same_ip_address_as_chunk(const ip_address *address);
+
+/*
+ * Old style.
+ */
+
+/* looks up names in DNS */
+extern err_t ttoaddr(const char *src, size_t srclen, int af, ip_address *dst);
+
+/* does not look up names in DNS */
+extern err_t ttoaddr_num(const char *src, size_t srclen, int af, ip_address *dst);
+
+extern err_t tnatoaddr(const char *src, size_t srclen, int af, ip_address *dst);
+extern size_t addrtot(const ip_address *src, int format, char *buf, size_t buflen);
+
+/* initializations */
+extern err_t loopbackaddr(int af, ip_address *dst);
+extern err_t unspecaddr(int af, ip_address *dst);
+extern err_t anyaddr(int af, ip_address *dst);
+extern err_t initaddr(const unsigned char *src, size_t srclen, int af,
+	       ip_address *dst);
+extern err_t add_port(int af, ip_address *addr, unsigned short port);
+
+/* misc. conversions and related */
+extern int addrtypeof(const ip_address *src);
+extern size_t addrlenof(const ip_address *src);
+extern size_t addrbytesptr_read(const ip_address *src, const unsigned char **dst);
+extern size_t addrbytesptr_write(ip_address *src, unsigned char **dst);
+extern size_t addrbytesof(const ip_address *src, unsigned char *dst, size_t dstlen);
+extern int masktocount(const ip_address *src);
+
+/* tests */
+extern bool sameaddr(const ip_address *a, const ip_address *b);
+extern int addrcmp(const ip_address *a, const ip_address *b);
+extern bool sameaddrtype(const ip_address *a, const ip_address *b);
+extern int isanyaddr(const ip_address *src);
+extern int isunspecaddr(const ip_address *src);
+extern int isloopbackaddr(const ip_address *src);
 
 #endif

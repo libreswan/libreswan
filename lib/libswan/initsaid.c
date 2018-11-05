@@ -13,8 +13,7 @@
  * License for more details.
  */
 
-#include "internal.h"
-#include "libreswan.h"
+#include "ip_said.h"
 
 /*
  * initsaid - initialize SA ID from bits
