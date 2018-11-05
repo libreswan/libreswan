@@ -228,6 +228,7 @@ v2SK_payload_t open_v2SK_payload(pb_stream *container,
 	v2SK_payload_t sk = {
 		.ike = ike,
 		.payload.ptr = container->cur,
+		.payload.len = 0,	/* computed at end; set here to silence GCC 6.10 */
 	};
 
 	/* emit Encryption Payload header */
