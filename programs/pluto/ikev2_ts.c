@@ -7,7 +7,7 @@
  * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012,2016-2017 Antony Antony <appu@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2014-2015 Andrew cagney <cagney@gnu.org>
+ * Copyright (C) 2014-2015, 2018 Andrew cagney <cagney@gnu.org>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -57,8 +57,8 @@ static const char *fit_string(enum fit fit)
 {
 	switch (fit) {
 	case END_EQUALS_TS: return "==";
-	case END_NARROWER_THAN_TS: return "(end)<=(TS)";
-	case END_WIDER_THAN_TS: return "(end)>=(TS)";
+	case END_NARROWER_THAN_TS: return "<=";
+	case END_WIDER_THAN_TS: return ">=";
 	default: bad_case(fit);
 	}
 }
@@ -374,35 +374,37 @@ static int ikev2_match_protocol(const struct end *end,
 				const char *which, int index)
 {
 	int f = 0;	/* strength of match */
-	const char *m = "no";
 
 	switch (fit) {
 	case END_EQUALS_TS:
 		if (end->protocol == ts->ipprotoid) {
 			f = 255;	/* ??? odd value */
-			m = "exact";
 		}
 		break;
 	case END_NARROWER_THAN_TS:
 		if (ts->ipprotoid == 0) { /* wild-card */
 			f = 1;
-			m = "superset";
 		}
 		break;
 	case END_WIDER_THAN_TS:
 		if (end->protocol == 0) { /* wild-card */
 			f = 1;
-			m = "subset";
 		}
 		break;
 	default:
 		bad_case(fit);
 	}
-	DBGF(DBG_MASK, MATCH_PREFIX "protocol %s%d %s %s[%d].ipprotoid %s%d: %s fitness %d",
-	     end->protocol == 0 ? "*" : "", end->protocol,
-	     fit_string(fit),
-	     which, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
-	     m, f);
+	LSWDBGP(DBG_MASK, buf) {
+		lswlogf(buf, MATCH_PREFIX "match end->protocol=%s%d %s %s[%d].ipprotoid=%s%d: ",
+			end->protocol == 0 ? "*" : "", end->protocol,
+			fit_string(fit),
+			which, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid);
+		if (f > 0) {
+			lswlogf(buf, "YES fitness %d", f);
+		} else {
+			lswlogf(buf, "NO");
+		}
+	}
 	return f;
 }
 
@@ -422,7 +424,6 @@ static int ikev2_match_port_range(const struct end *end,
 	uint16_t end_low = end->port;
 	uint16_t end_high = end->port == 0 ? 65535 : end->port;
 	int f = 0;	/* strength of match */
-	const char *m = "no";
 
 	switch (fit) {
 	case END_EQUALS_TS:
@@ -443,11 +444,17 @@ static int ikev2_match_port_range(const struct end *end,
 	default:
 		bad_case(fit);
 	}
-	DBGF(DBG_MASK, MATCH_PREFIX "port %u..%u %s %s[%d] %u..%u: %s fitness %d",
-	     end_low, end_high,
-	     fit_string(fit),
-	     which, index, ts->startport, ts->endport,
-	     m, f);
+	LSWDBGP(DBG_MASK, buf) {
+		lswlogf(buf, MATCH_PREFIX "match port end->port=%u..%u %s %s[%d].{start,end}port=%u..%u: ",
+			end_low, end_high,
+			fit_string(fit),
+			which, index, ts->startport, ts->endport);
+		if (f > 0) {
+			lswlogf(buf, "YES fitness %d", f);
+		} else {
+			lswlogf(buf, "NO");
+		}
+	}
 	return f;
 }
 
@@ -478,7 +485,6 @@ static int match_address_range(const struct end *end,
 	int fitbits = maskbits + ts_range;
 
 	int f = 0;
-	const char *m = "no";
 
 	/*
 	 * NOTE: Our parser/config only allows 1 CIDR, however IKEv2
@@ -495,7 +501,6 @@ static int match_address_range(const struct end *end,
 		/* i.e., TS <= END */
 		if (addrinsubnet(&ts->net.start, &end->client) &&
 		    addrinsubnet(&ts->net.end, &end->client)) {
-			m = "yes";
 			f = fitbits;
 		}
 		break;
@@ -509,16 +514,26 @@ static int match_address_range(const struct end *end,
 	 * XXX: why do this?
 	 */
 	/* ??? arbitrary modification to objective function */
-	DBGF(DBG_MASK, MATCH_PREFIX "end->port %d ts->startport %d ts->endport %d",
-	     end->port, ts->startport, ts->endport);
 	if (end->port != 0 &&
 	    ts->startport == end->port &&
 	    ts->endport == end->port)
 		f = f << 1;
 
-	DBGF(DBG_MASK, MATCH_PREFIX "maskbits=%u addr=? %s %s[%u] ts_range=%u: %s fitness %d",
-	     maskbits, fit_string(fit),
-	     which, index, ts_range, m, f);
+	LSWDBGP(DBG_MASK, buf) {
+	    char end_client[SUBNETTOT_BUF];
+	    subnettot(&end->client,  0, end_client, sizeof(end_client));
+	    char ts_net[RANGETOT_BUF];
+	    rangetot(&ts->net, 0, ts_net, sizeof(ts_net));
+	    lswlogf(buf, MATCH_PREFIX "match address end->client=%s %s %s[%u]net=%s: ",
+		    end_client,
+		    fit_string(fit),
+		    which, index, ts_net);
+	    if (f > 0) {
+		    lswlogf(buf, "YES fitness %d", f);
+	    } else {
+		    lswlogf(buf, "NO");
+	    }
+	}
 	return f;
 }
 
