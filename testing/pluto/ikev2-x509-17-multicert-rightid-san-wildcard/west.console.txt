@@ -11,6 +11,8 @@ west #
  ipsec auto --add main
 002 added connection description "main"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

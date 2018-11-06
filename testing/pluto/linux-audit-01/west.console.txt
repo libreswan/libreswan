@@ -14,6 +14,8 @@ west #
  ipsec auto --add ikev2
 002 added connection description "ikev2"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

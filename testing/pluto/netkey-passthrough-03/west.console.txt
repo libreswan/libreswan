@@ -41,6 +41,8 @@ west #
 west #
  ipsec auto --route west-east-passthrough-b
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

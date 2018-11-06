@@ -130,6 +130,8 @@ west #
 000 Bare Shunt list:
 000  
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

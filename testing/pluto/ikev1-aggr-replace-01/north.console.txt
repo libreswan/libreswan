@@ -9,6 +9,8 @@ north #
  ipsec auto --add north-east
 002 added connection description "north-east"
 north #
+ ipsec whack --impair suppress-retransmits
+north #
  echo "initdone"
 initdone
 north #

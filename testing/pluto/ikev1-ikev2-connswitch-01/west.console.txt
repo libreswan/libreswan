@@ -11,6 +11,8 @@ west #
  ipsec auto --add westnet-eastnet2
 002 added connection description "westnet-eastnet2"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

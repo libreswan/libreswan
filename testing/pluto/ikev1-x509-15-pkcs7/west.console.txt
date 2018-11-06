@@ -13,6 +13,8 @@ west #
  ipsec auto --add westnet-eastnet-x509
 002 added connection description "westnet-eastnet-x509"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

@@ -13,4 +13,5 @@ ipsec start
 ipsec auto --add badkeysize-shouldnotload
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-ccm-a
 ipsec auto --status
+ipsec whack --impair suppress-retransmits
 echo "initdone"

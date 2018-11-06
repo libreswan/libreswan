@@ -144,6 +144,8 @@ north #
 000 Bare Shunt list:
 000  
 north #
+ ipsec whack --impair suppress-retransmits
+north #
  echo "initdone"
 initdone
 north #

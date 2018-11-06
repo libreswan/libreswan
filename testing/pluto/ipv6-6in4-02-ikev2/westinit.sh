@@ -10,4 +10,5 @@ ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-6in4
 ipsec status | grep westnet-eastnet-6in4
+ipsec whack --impair suppress-retransmits
 echo "initdone"

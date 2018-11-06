@@ -25,6 +25,8 @@ west #
  ipsec auto --add westnet-eastnet-aes_ctr
 002 added connection description "westnet-eastnet-aes_ctr"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

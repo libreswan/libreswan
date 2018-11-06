@@ -45,6 +45,8 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms: AES_CBC-AES_XCBC-MODP2048
 000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms: AES_CBC-AES_XCBC_96
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

@@ -109,6 +109,8 @@ west #
 000 "nss-cert":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

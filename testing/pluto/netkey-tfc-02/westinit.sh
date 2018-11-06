@@ -10,4 +10,5 @@ ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add tfc
 ipsec auto --status | grep tfc
+ipsec whack --impair suppress-retransmits
 echo "initdone"

@@ -32,6 +32,8 @@ west #
  ipsec auto --add TUNNEL-B
 002 added connection description "TUNNEL-B"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

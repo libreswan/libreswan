@@ -4,4 +4,5 @@ ipsec start
 ipsec auto --add ikev1
 ipsec auto --add ikev1-aggr
 ipsec auto --add ikev2
+ipsec whack --impair suppress-retransmits
 echo "initdone"

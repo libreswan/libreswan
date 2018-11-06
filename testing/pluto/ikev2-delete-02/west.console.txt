@@ -31,6 +31,8 @@ west #
  ipsec auto --add west-east-delete1
 002 added connection description "west-east-delete1"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #
