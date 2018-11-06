@@ -407,60 +407,6 @@ static int ikev2_match_protocol(const struct end *end,
 }
 
 /*
- * returns -1 on no match; otherwise a weight of how great the match was.
- * *best_tsi_i and *best_tsr_i are set if there was a match.
- * Almost identical to ikev2_evaluate_connection_port_fit:
- * any change should be done to both.
- */
-static int ikev2_evaluate_connection_protocol_fit(enum fit fit,
-						  const struct ends *end,
-						  const struct traffic_selectors *tsi,
-						  const struct traffic_selectors *tsr,
-						  int *best_tsi_i,
-						  int *best_tsr_i)
-{
-	int bestfit_pr = -1;
-
-	/* compare tsi/r array to this/that, evaluating protocol how well it fits */
-	/* ??? stupid n**2 algorithm */
-	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
-		const struct traffic_selector *tni = &tsi->ts[tsi_ni];
-
-		int fitrange_i = ikev2_match_protocol(end->i, tni, fit,
-						      "TSi", tsi_ni);
-
-		if (fitrange_i == 0)
-			continue;	/* save effort! */
-
-		for (unsigned tsr_ni = 0; tsr_ni < tsr->nr; tsr_ni++) {
-			const struct traffic_selector *tnr = &tsr->ts[tsr_ni];
-
-			int fitrange_r = ikev2_match_protocol(end->r, tnr, fit,
-							      "TSr", tsr_ni);
-
-			if (fitrange_r == 0)
-				continue;	/* save effort! */
-
-			int matchiness = fitrange_i + fitrange_r;	/* ??? arbitrary objective function */
-
-			if (matchiness > bestfit_pr) {
-				*best_tsi_i = tsi_ni;
-				*best_tsr_i = tsr_ni;
-				bestfit_pr = matchiness;
-				DBG(DBG_CONTROL,
-				    DBG_log("    best protocol fit so far: tsi[%d] fitrange_i %d, tsr[%d] fitrange_r %d, matchiness %d",
-					    *best_tsi_i, fitrange_i,
-					    *best_tsr_i, fitrange_r,
-					    matchiness));
-			}
-		}
-	}
-	DBG(DBG_CONTROL, DBG_log("    protocol_fitness %d", bestfit_pr));
-	return bestfit_pr;
-}
-
-
-/*
  * Check if our policy's port (port) matches
  * the Traffic Selector port range (ts.startport to ts.endport)
  * Note port == 0 means port range 0 to 65535.
@@ -503,59 +449,6 @@ static int ikev2_match_port_range(const struct end *end,
 	     which, index, ts->startport, ts->endport,
 	     m, f);
 	return f;
-}
-
-/*
- * returns -1 on no match; otherwise a weight of how great the match was.
- * *best_tsi_i and *best_tsr_i are set if there was a match.
- * Almost identical to ikev2_evaluate_connection_protocol_fit:
- * any change should be done to both.
- */
-static int ikev2_evaluate_connection_port_fit(enum fit fit,
-					      const struct ends *end,
-					      const struct traffic_selectors *tsi,
-					      const struct traffic_selectors *tsr,
-					      int *best_tsi_i,
-					      int *best_tsr_i)
-{
-	int bestfit_p = -1;
-
-	/* compare tsi/r array to this/that, evaluating how well each port range fits */
-	/* ??? stupid n**2 algorithm */
-	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
-		const struct traffic_selector *tni = &tsi->ts[tsi_ni];
-
-		int fitrange_i = ikev2_match_port_range(end->i, tni, fit,
-							"TSi", tsi_ni);
-
-		if (fitrange_i == 0)
-			continue;	/* save effort! */
-
-		for (unsigned tsr_ni = 0; tsr_ni < tsr->nr; tsr_ni++) {
-			const struct traffic_selector *tnr = &tsr->ts[tsr_ni];
-
-			int fitrange_r = ikev2_match_port_range(end->r, tnr, fit,
-								"TSr", tsr_ni);
-
-			if (fitrange_r == 0)
-				continue;	/* no match */
-
-			int matchiness = fitrange_i + fitrange_r;	/* ??? arbitrary objective function */
-
-			if (matchiness > bestfit_p) {
-				*best_tsi_i = tsi_ni;
-				*best_tsr_i = tsr_ni;
-				bestfit_p = matchiness;
-				DBG(DBG_CONTROL,
-				    DBG_log("    best ports fit so far: tsi[%d] fitrange_i %d, tsr[%d] fitrange_r %d, matchiness %d",
-					    *best_tsi_i, fitrange_i,
-					    *best_tsr_i, fitrange_r,
-					    matchiness));
-			}
-		}
-	}
-	DBG(DBG_CONTROL, DBG_log("    port_fitness %d", bestfit_p));
-	return bestfit_p;
 }
 
 /*
@@ -629,66 +522,6 @@ static int match_address_range(const struct end *end,
 	return f;
 }
 
-/*
- * RFC 5996 section 2.9 "Traffic Selector Negotiation"
- * Future: section 2.19 "Requesting an Internal Address on a Remote Network"
- */
-static int ikev2_evaluate_connection_fit(const struct connection *d,
-					 const struct ends *e,
-					 const struct traffic_selectors *tsi,
-					 const struct traffic_selectors *tsr)
-{
-	int bestfit = -1;
-
-	DBG(DBG_CONTROLMORE, {
-		char ei3[SUBNETTOT_BUF];
-		char er3[SUBNETTOT_BUF];
-		char cib[CONN_INST_BUF];
-		subnettot(&e->i->client,  0, ei3, sizeof(ei3));
-		subnettot(&e->r->client,  0, er3, sizeof(er3));
-		DBG_log("  ikev2_evaluate_connection_fit evaluating our conn=\"%s\"%s I=%s:%d/%d R=%s:%d/%d %s to their:",
-			d->name, fmt_conn_instance(d, cib),
-			ei3, e->i->protocol, e->i->port,
-			er3, e->r->protocol, e->r->port,
-			is_virtual_connection(d) ? "(virt)" : "");
-	});
-
-	/* compare tsi/r array to this/that, evaluating how well it fits */
-	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
-		const struct traffic_selector *tni = &tsi->ts[tsi_ni];
-
-		/* choice hardwired! */
-		int fit_i = match_address_range(e->i, tni,
-						END_WIDER_THAN_TS,
-						"TSi", tsi_ni);
-		if (fit_i <= 0) {
-			continue;
-		}
-
-		for (unsigned tsr_ni = 0; tsr_ni < tsr->nr; tsr_ni++) {
-			const struct traffic_selector *tnr = &tsr->ts[tsr_ni];
-
-			/* do addresses fit into the policy? */
-
-			/* choice hardwired! */
-			int fit_r = match_address_range(e->r, tnr,
-							END_WIDER_THAN_TS,
-							"TSr", tsr_ni);
-			if (fit_r <= 0) {
-				continue;
-			}
-
-			/* ??? this objective function is odd and arbitrary */
-			int fitbits = (fit_i << 8) + fit_r;
-
-			if (fitbits > bestfit)
-				bestfit = fitbits;
-		}
-	}
-
-	return bestfit;
-}
-
 struct score {
 	bool ok;
 	int address;
@@ -737,6 +570,16 @@ struct best_score {
 	const struct traffic_selector *tsi;
 	const struct traffic_selector *tsr;
 };
+
+static bool score_gt(const struct best_score *score, const struct best_score *best)
+{
+	return (score->address > best->address ||
+		(score->address == best->address &&
+		 score->port > best->port) ||
+		(score->address == best->address &&
+		 score->port == best->port &&
+		 score->protocol > best->protocol));
+}
 
 static struct best_score score_ends(enum fit fit,
 				    const struct connection *d,
@@ -795,12 +638,7 @@ static struct best_score score_ends(enum fit fit,
 			};
 
 			/* score >= best_score? */
-			if (score.address > best_score.address ||
-			    (score.address == best_score.address &&
-			     score.port > best_score.port) ||
-			    (score.address == best_score.address &&
-			     score.port == best_score.port &&
-			     score.protocol > best_score.protocol)) {
+			if (score_gt(&score, &best_score)) {
 				best_score = score;
 				DBGF(DBG_MASK, "best fit so far: TSi[%d] TSr[%d]",
 				     tsi_ni, tsr_ni);
@@ -833,74 +671,37 @@ bool v2_process_ts_request(struct child_sa *child,
 	}
 
 	/* best so far */
-	int bestfit_n = -1;
-	int bestfit_p = -1;
-	int bestfit_pr = -1;
+	struct best_score best_score = {
+		.ok = false,
+		.address = -1,
+		.protocol = -1,
+		.port = -1,
+	};
 	const struct spd_route *bsr = NULL;	/* best spd_route so far */
 
-	int best_tsi_i = -1;
-	int best_tsr_i = -1;
-
 	/* find best spd in c */
-	const struct spd_route *sra;
 
-	for (sra = &c->spd; sra != NULL; sra = sra->spd_next) {
+	for (const struct spd_route *sra = &c->spd; sra != NULL; sra = sra->spd_next) {
 
 		/* responder */
-		const struct ends e = {
+		const struct ends ends = {
 			.i = &sra->that,
 			.r = &sra->this,
 		};
+		enum fit responder_fit =
+			(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
+			? END_NARROWER_THAN_TS
+			: END_EQUALS_TS;
 
-		int bfit_n = ikev2_evaluate_connection_fit(c, &e, &tsi, &tsr);
-
-		if (bfit_n > bestfit_n) {
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("prefix fitness found a better match c %s",
-				    c->name));
-
-			/* responder */
-			enum fit responder_fit =
-				(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
-				? END_NARROWER_THAN_TS
-				: END_EQUALS_TS;
-			int bfit_p = ikev2_evaluate_connection_port_fit(responder_fit,
-									&e, &tsi, &tsr,
-									&best_tsi_i,
-									&best_tsr_i);
-
-			if (bfit_p > bestfit_p) {
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("port fitness found better match c %s, tsi[%d],tsr[%d]",
-					    c->name, best_tsi_i, best_tsr_i));
-				int bfit_pr =
-					ikev2_evaluate_connection_protocol_fit(responder_fit,
-									       &e, &tsi, &tsr,
-									       &best_tsi_i,
-									       &best_tsr_i);
-
-				if (bfit_pr > bestfit_pr) {
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("protocol fitness found better match c %s, tsi[%d],tsr[%d]",
-						    c->name,
-						    best_tsi_i,
-						    best_tsr_i));
-
-					bestfit_p = bfit_p;
-					bestfit_n = bfit_n;
-					bsr = sra;
-				} else {
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("protocol fitness rejected c %s c->name",
-						    c->name));
-				}
-			} else {
-				DBG(DBG_CONTROLMORE,
-						DBG_log("port fitness rejected c %s c->name", c->name));
-			}
-		} else {
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("prefix fitness rejected c %s c->name", c->name));
+		struct best_score score = score_ends(responder_fit, c, &ends, &tsi, &tsr);
+		if (!score.ok) {
+			continue;
+		}
+		if (score_gt(&score, &best_score)) {
+			DBGF(DBG_MASK, "found better match c %s, TSi[%zu],TSr[%zu]",
+			     c->name, score.tsi - tsi.ts, score.tsr - tsr.ts);
+			best_score = score;
+			bsr = sra;
 		}
 	}
 
@@ -919,9 +720,8 @@ bool v2_process_ts_request(struct child_sa *child,
 	struct connection *best = c;	/* best connection so far */
 	const struct host_pair *hp = NULL;
 
-	for (sra = &c->spd; hp == NULL && sra != NULL;
-	     sra = sra->spd_next)
-	{
+	for (const struct spd_route *sra = &c->spd;
+	     hp == NULL && sra != NULL; sra = sra->spd_next) {
 		hp = find_host_pair(&sra->this.host_addr,
 				    sra->this.host_port,
 				    &sra->that.host_addr,
@@ -983,68 +783,28 @@ bool v2_process_ts_request(struct child_sa *child,
 			for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 
 				/* responder */
-				const struct ends e = {
+				const struct ends ends = {
 					.i = &sr->that,
 					.r = &sr->this,
 				};
+				/* responder -- note D! */
+				enum fit responder_fit =
+					(d->policy & POLICY_IKEV2_ALLOW_NARROWING)
+					? END_NARROWER_THAN_TS
+					: END_EQUALS_TS;
 
-				int newfit = ikev2_evaluate_connection_fit(d, &e, &tsi, &tsr);
-
-				if (newfit > bestfit_n) {
-					/* ??? what does this comment mean? */
-					/* will complicated this with fit */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("prefix fitness found a better match d %s",
-						    d->name));
-					/* responder -- note D! */
-					enum fit responder_fit =
-						(d->policy & POLICY_IKEV2_ALLOW_NARROWING)
-						? END_NARROWER_THAN_TS
-						: END_EQUALS_TS;
-					int bfit_p =
-						ikev2_evaluate_connection_port_fit(responder_fit,
-										   &e, &tsi, &tsr,
-										   &best_tsi_i,
-										   &best_tsr_i);
-
-					if (bfit_p > bestfit_p) {
-						DBG(DBG_CONTROLMORE, DBG_log(
-							    "port fitness found better match d %s, tsi[%d],tsr[%d]",
-							    d->name,
-							    best_tsi_i,
-							    best_tsr_i));
-						int bfit_pr =
-							ikev2_evaluate_connection_protocol_fit(responder_fit,
-											       &e, &tsi, &tsr,
-											       &best_tsi_i,
-											       &best_tsr_i);
-
-						if (bfit_pr > bestfit_pr) {
-							DBG(DBG_CONTROLMORE,
-							    DBG_log("protocol fitness found better match d %s, tsi[%d],tsr[%d]",
-								    d->name,
-								    best_tsi_i,
-								    best_tsr_i));
-
-							bestfit_p = bfit_p;
-							bestfit_n = newfit;
-							best = d;
-							bsr = sr;
-						} else {
-							DBG(DBG_CONTROLMORE,
-							    DBG_log("protocol fitness rejected d %s",
-								    d->name));
-						}
-					} else {
-						DBG(DBG_CONTROLMORE,
-							DBG_log("port fitness rejected d %s",
-								d->name));
-					}
-
-				} else {
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("prefix fitness rejected d %s",
-						    d->name));
+				struct best_score score = score_ends(responder_fit, d/*note D*/,
+								     &ends, &tsi, &tsr);
+				if (!score.ok) {
+					continue;
+				}
+				if (score_gt(&score, &best_score)) {
+					DBGF(DBG_MASK, "protocol fitness found better match d %s, TSi[%zu],TSr[%zu]",
+					     d->name,
+					     score.tsi - tsi.ts, score.tsr - tsr.ts);
+					best = d;
+					best_score = score;
+					bsr = sr;
 				}
 			}
 		}
