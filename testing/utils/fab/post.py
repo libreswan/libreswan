@@ -260,7 +260,7 @@ class TestResult:
         self.output_directory = output_directory or test.output_directory
         # times
         self._start_time = None
-        self._end_time = None
+        self._stop_time = None
         self._runtime = None
         self._boot_time = None
         self._script_time = None
@@ -477,12 +477,12 @@ class TestResult:
                                    cast=jsonutil.ptime)
         return self._start_time
 
-    def end_time(self):
-        if not self._end_time:
+    def stop_time(self):
+        if not self._stop_time:
             # ending debug log at 2018-08-15 13:01:31.602533
-            self._end_time = self.grub("debug.log", r"ending debug log at (.*)$",
-                                 cast=jsonutil.ptime)
-        return self._end_time
+            self._stop_time = self.grub("debug.log", r"ending debug log at (.*)$",
+                                        cast=jsonutil.ptime)
+        return self._stop_time
 
     def runtime(self):
         if not self._runtime:

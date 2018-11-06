@@ -35,9 +35,12 @@ class Print(argutil.List):
     test_scripts = "test-scripts"
     test_status = "test-status"
     # results
+    start_time = "start-time"
+    stop_time = "stop-time"
     boot_time = "boot-time"
+    script_time = "script-time"
+    runtime = "runtime"
     diffs = "diffs"
-    end_time = "end-time"
     issues = "errors"                      # for historic reasons
     expected_result = "expected-result"    # test_status
     host_names = "host-names"              # test_host_names
@@ -45,11 +48,8 @@ class Print(argutil.List):
     output_directory = "output-directory"
     path = "path"
     result = "result"
-    runtime = "runtime"
     saved_output_directory = "saved-output-directory"
-    script_time = "script-time"
     scripts = "scripts"                    # test_scripts
-    start_time = "start-time"
     testing_directory = "testing-directory"
     baseline_directory = "baseline-directory"
     baseline_output_directory = "baseline-output-directory"
@@ -150,8 +150,8 @@ def build_result(logger, result, baseline, args, what_to_print, b):
             b.add(p, baseline and result.test.name in baseline and baseline[result.test.name].output_directory or None)
         elif p is Print.start_time:
             b.add(p, result.start_time())
-        elif p is Print.end_time:
-            b.add(p, result.end_time())
+        elif p is Print.stop_time:
+            b.add(p, result.stop_time())
         elif p is Print.runtime:
             b.add(p, result.runtime())
         elif p is Print.boot_time:

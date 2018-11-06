@@ -81,8 +81,8 @@ def main():
     test_stats.log_summary(logger.info, header="final test stats:", prefix="  ")
     result_stats.log_summary(logger.info, header="final test results:", prefix="  ")
 
-    end_time = datetime.now()
-    logger.info("run finished at %s after %s", end_time, end_time - timing.START_TIME)
+    stop_time = datetime.now()
+    logger.info("run finished at %s after %s", stop_time, stop_time - timing.START_TIME)
 
     return exit_code
 

@@ -57,7 +57,7 @@ results_to_print = printer.Print(printer.Print.test_name,
                                  printer.Print.test_status,
                                  printer.Print.test_host_names,
                                  printer.Print.start_time,
-                                 printer.Print.end_time,
+                                 printer.Print.stop_time,
                                  printer.Print.result,
                                  printer.Print.issues,
                                  printer.Print.runtime,
@@ -200,7 +200,7 @@ def json_result(logger, args, result):
             _add(JSON_SUMMARY, "errors", issue)
     # extend the times
     _update_time(min, "start_time", json_result)
-    _update_time(max, "end_time", json_result)
+    _update_time(max, "stop_time", json_result)
 
 
 def json_results(logger, args):
@@ -218,10 +218,11 @@ def json_summary(logger, args):
         return
     # times
     start_time = JSON_SUMMARY.get("start_time")
-    end_time = JSON_SUMMARY.get("end_time")
-    if start_time and end_time:
-        runtime = (end_time - start_time).total_seconds()
-        JSON_SUMMARY["runtime"] = datetime.utcfromtimestamp(runtime).strftime("%H:%M")
+    stop_time = JSON_SUMMARY.get("stop_time")
+    if start_time and stop_time:
+        # in minutes
+        runtime = round((stop_time - start_time).total_seconds() / 60.0)
+        JSON_SUMMARY["runtime"] = "%d:%02d" % (runtime / 60, runtime % 60)
     # other stuff
     JSON_SUMMARY["total"] = len(JSON_RESULTS)
     if args.publish_hash:

@@ -166,7 +166,7 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 	    return false
 	}
 	// Validate the contents
-	if (!lsw_cleanup_dates(test_run, ["start_time", "end_time"])) {
+	if (!lsw_cleanup_dates(test_run, ["start_time", "stop_time"])) {
 	    console.warn("discarding test run", test_run, "at", index, "with invalid dates")
 	    return false
 	}
