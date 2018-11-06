@@ -13,7 +13,7 @@
 # for more details.
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 class result:
     directory = "directory"
@@ -47,7 +47,16 @@ def default(obj):
         return obj.json()
     if hasattr(obj, "isoformat") and callable(getattr(obj, "isoformat")):
         # date/time objects
-        return obj.isoformat()
+        if not obj.utcoffset():
+            # add local timezone to "naive" local time
+            # https://stackoverflow.com/questions/2720319/python-figure-out-local-timezone
+            tzinfo = datetime.now(timezone.utc).astimezone().tzinfo
+            obj = obj.replace(tzinfo=tzinfo)
+        # convert to UTC
+        obj = obj.astimezone(timezone.utc)
+        # strip the UTC offset
+        obj = obj.replace(tzinfo=None)
+        return obj.isoformat() + "Z"
     elif hasattr(obj, "__str__") and callable(getattr(obj, "__str__")):
         return str(obj)
     else:
@@ -65,7 +74,7 @@ def ftime(t):
     return t.strftime("%Y-%m-%d %H:%M")
 
 def ptime(s):
-    """Tries to parse the time"""
+    """Tries to parse what is assumed to be local time"""
     # print(s)
     for hms in ["%H:%M", "%H:%M:%S", "%H:%M:%S.%f"]:
         for t in [" ", "T"]:
