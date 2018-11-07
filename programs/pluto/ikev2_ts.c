@@ -493,14 +493,26 @@ static int match_address_range(const struct end *end,
 	 *
 	 * XXX: so what is CIDR?
 	 */
+	ip_address floor = ip_subnet_floor(&end->client);
+	ip_address ceiling = ip_subnet_ceiling(&end->client);
+	passert(addrcmp(&floor, &ceiling) <= 0);
+	passert(addrcmp(&ts->net.start, &ts->net.end) <= 0);
 	switch (fit) {
 	case END_EQUALS_TS:
+		if (addrcmp(&floor, &ts->net.start) == 0 &&
+		    addrcmp(&ceiling, &ts->net.end) == 0) {
+			f = fitbits;
+		}
+		break;
 	case END_NARROWER_THAN_TS:
-		PASSERT_FAIL("%s", "what should happen here?");
+		if (addrcmp(&floor, &ts->net.start) >= 0 &&
+		    addrcmp(&ceiling, &ts->net.end) <= 0) {
+			f = fitbits;
+		}
+		break;
 	case END_WIDER_THAN_TS:
-		/* i.e., TS <= END */
-		if (addrinsubnet(&ts->net.start, &end->client) &&
-		    addrinsubnet(&ts->net.end, &end->client)) {
+		if (addrcmp(&floor, &ts->net.start) <= 0 &&
+		    addrcmp(&ceiling, &ts->net.end) >= 0) {
 			f = fitbits;
 		}
 		break;
@@ -560,8 +572,7 @@ static struct score score_end(const struct end *end,
 		    ts->endport));
 
 	struct score score = { .ok = false, };
-	score.address = match_address_range(end, ts, END_WIDER_THAN_TS,
-					    what, index);
+	score.address = match_address_range(end, ts, fit, what, index);
 	if (score.address <= 0) {
 		return score;
 	}

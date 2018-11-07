@@ -17,14 +17,24 @@
 #ifndef IP_SUBNET_H
 #define IP_SUBNET_H
 
-#include "err.h"
 #include "ip_address.h"
+
+struct lswlog;
 
 /* then the main types */
 typedef struct {
 	ip_address addr;
 	int maskbits;
 } ip_subnet;
+
+/* [floor..ceiling] vs [floor..roof) */
+ip_address ip_subnet_floor(const ip_subnet *subnet);
+ip_address ip_subnet_ceiling(const ip_subnet *subnet);
+
+/*
+ * old
+ */
+#include "err.h"
 
 extern err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
 extern size_t subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
