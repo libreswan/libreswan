@@ -61,7 +61,7 @@ enum keyword_string_config_field {
 	KSF_LISTEN,
 	KSF_OCSP_URI,
 	KSF_OCSP_TRUSTNAME,
-	KSF_MAX
+	KSF_ROOF
 };
 
 /* Numeric fields also include boolean fields */
@@ -170,7 +170,7 @@ enum keyword_numeric_config_field {
 	KBF_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KBF_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
 	KBF_NIC_OFFLOAD,	/* xfrm offload to network device */
-	KBF_MAX
+	KBF_ROOF
 };
 
 /*
@@ -215,7 +215,7 @@ enum keyword_string_conn_field {
 	KSCF_CONN_MARK_IN,
 	KSCF_CONN_MARK_OUT,
 	KSCF_VTI_IFACE,
-	KSCF_MAX
+	KSCF_ROOF
 };
 
 enum keyword_numeric_conn_field {
@@ -235,16 +235,18 @@ enum keyword_numeric_conn_field {
 	KNCF_ESPREPLAYWINDOW,
 	KNCF_SENDCERT,
 	KNCF_AUTH,
-	KNCF_MAX
+	KNCF_ROOF
 };
 
-/* ??? seems a little funny that KEY_STRINGS_MAX is really +1 */
-#define KEY_STRINGS_MAX (((int)KSF_MAX > \
-			  (int)KSCF_MAX ? (int)KSF_MAX : (int)KSCF_MAX) + 1)
+/*
+ * comparing members of two different enums draws warnings from GCC
+ * so we cast one to int
+ */
+#define KEY_STRINGS_ROOF ((int)KSF_ROOF > KSCF_ROOF ? \
+				KSF_ROOF : KSCF_ROOF)
 
-/* ??? seems a little funny that KEY_NUMERIC_MAX is really +1 */
-#define KEY_NUMERIC_MAX (((int)KBF_MAX > \
-			  (int)KNCF_MAX ? (int)KBF_MAX : (int)KNCF_MAX) + 1)
+#define KEY_NUMERIC_ROOF ((int)KBF_ROOF > KNCF_ROOF ? \
+				KBF_ROOF : KNCF_ROOF)
 
 /* these are bits set in a word */
 enum keyword_valid {

@@ -43,10 +43,10 @@ enum keyword_set {
 	k_set     = TRUE,
 	k_default = 2
 };
-typedef char *ksf[KEY_STRINGS_MAX];
-typedef int knf[KEY_NUMERIC_MAX];
-typedef enum keyword_set str_set[KEY_STRINGS_MAX];
-typedef enum keyword_set int_set[KEY_NUMERIC_MAX];
+typedef char *ksf[KEY_STRINGS_ROOF];
+typedef int knf[KEY_NUMERIC_ROOF];
+typedef enum keyword_set str_set[KEY_STRINGS_ROOF];
+typedef enum keyword_set int_set[KEY_NUMERIC_ROOF];
 
 struct starter_end {
 	sa_family_t addr_family;

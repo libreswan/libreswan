@@ -804,7 +804,7 @@ static bool translate_conn(struct starter_conn *conn,
 		case kt_subnet:
 		case kt_idtype:
 			/* all treated as strings for now */
-			assert(kw->keyword.keydef->field < KEY_STRINGS_MAX);
+			assert(kw->keyword.keydef->field < KEY_STRINGS_ROOF);
 			if ((*set_strings)[field] == k_set) {
 				char tmp_err[512];
 
@@ -843,16 +843,15 @@ static bool translate_conn(struct starter_conn *conn,
 		case kt_appendstring:
 		case kt_appendlist:
 			/* implicitly, this field can have multiple values */
-			assert(kw->keyword.keydef->field < KEY_STRINGS_MAX);
+			assert(kw->keyword.keydef->field < KEY_STRINGS_ROOF);
 			if ((*the_strings)[field] == NULL) {
 				(*the_strings)[field] = clone_str(kw->string, "kt_appendlist kw->string");
 			} else {
 				char *s = (*the_strings)[field];
 				size_t old_len = strlen(s);	/* excludes '\0' */
 				size_t new_len = strlen(kw->string);
-				char *n;
+				char *n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
 
-				n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
 				memcpy(n, s, old_len);
 				n[old_len] = ' ';
 				memcpy(n + old_len + 1, kw->string, new_len + 1);	/* includes '\0' */
@@ -864,8 +863,8 @@ static bool translate_conn(struct starter_conn *conn,
 
 		case kt_rsakey:
 		case kt_loose_enum:
-			assert(field < KEY_STRINGS_MAX);
-			assert(field < KEY_NUMERIC_MAX);
+			assert(field < KEY_STRINGS_ROOF);
+			assert(field < KEY_NUMERIC_ROOF);
 
 			if ((*set_options)[field] == k_set) {
 				char tmp_err[512];
@@ -913,7 +912,7 @@ static bool translate_conn(struct starter_conn *conn,
 		case kt_time:
 		case kt_percent:
 			/* all treated as a number for now */
-			assert(field < KEY_NUMERIC_MAX);
+			assert(field < KEY_NUMERIC_ROOF);
 
 			if ((*set_options)[field] == k_set) {
 				char tmp_err[512];
@@ -1460,17 +1459,17 @@ static void conn_default(struct starter_conn *conn,
 #undef CLR
 #undef C
 
-	for (i = 0; i < KSCF_MAX; i++) {
+	for (i = 0; i < KSCF_ROOF; i++) {
 		conn->left.strings[i] = clone_str(def->left.strings[i], "conn default left item");
 		conn->right.strings[i] = clone_str(def->right.strings[i], "conn default right item");
 	}
-	for (i = 0; i < KNCF_MAX; i++) {
+	for (i = 0; i < KNCF_ROOF; i++) {
 		conn->left.options[i] = def->left.options[i];
 		conn->right.options[i] = def->right.options[i];
 	}
-	for (i = 0; i < KSF_MAX; i++)
+	for (i = 0; i < KSF_ROOF; i++)
 		conn->strings[i] = clone_str(def->strings[i], "conn default string item");
-	for (i = 0; i < KBF_MAX; i++)
+	for (i = 0; i < KBF_ROOF; i++)
 		conn->options[i] = def->options[i];
 
 	conn->esp = clone_str(def->esp, "conn default esp");
@@ -1618,11 +1617,11 @@ static void confread_free_conn(struct starter_conn *conn)
 	pfreeany(conn->right.id);
 	pfreeany(conn->right.rsakey1);
 	pfreeany(conn->right.rsakey2);
-	for (i = 0; i < KSCF_MAX; i++) {
+	for (i = 0; i < KSCF_ROOF; i++) {
 		pfreeany(conn->left.strings[i]);
 		pfreeany(conn->right.strings[i]);
 	}
-	for (i = 0; i < KSF_MAX; i++)
+	for (i = 0; i < KSF_ROOF; i++)
 		pfreeany(conn->strings[i]);
 
 	pfreeany(conn->connalias);
@@ -1644,7 +1643,7 @@ void confread_free(struct starter_config *cfg)
 
 	int i;
 
-	for (i = 0; i < KSF_MAX; i++)
+	for (i = 0; i < KSF_ROOF; i++)
 		pfreeany(cfg->setup.strings[i]);
 
 	confread_free_conn(&cfg->conn_default);
