@@ -21,5 +21,4 @@ jq --null-input \
    '{
   start_time: $start,
   stop_time: (now|todateiso8601),
-  runtime: 
 }'
