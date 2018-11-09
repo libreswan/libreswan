@@ -95,7 +95,7 @@ size_t dstlen;
 /*
    - inet_addrtot - convert binary inet address to text (dotted decimal or IPv6 string)
  */
-size_t                  /* space needed for full conversion */
+static size_t                  /* space needed for full conversion */
 inet_addrtot(t, src, format, dst, dstlen)
 int t;                  /* AF_INET/AF_INET6 */
 const void *src;

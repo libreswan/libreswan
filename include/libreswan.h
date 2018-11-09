@@ -135,8 +135,6 @@ extern err_t ttoulb(const char *src, size_t srclen, int format,
 extern size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
 #define ULTOT_BUF       (22 + 1)  /* holds 64 bits in octal */
 
-extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
-		    size_t buflen);
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
 #define SUBNETPROTOTOT_BUF      (SUBNETTOTO_BUF + ULTOT_BUF)
 #define SAMIGTOT_BUF    (16 + SATOT_BUF + ADDRTOT_BUF)
