@@ -59,6 +59,7 @@ ifeq ($(USE_NETKEY),true)
 OBJS += addr_lookup.o
 endif
 
+OBJS += log_ip.o
 OBJS += af_info.o
 OBJS += fd.o
 OBJS += kernel_alg.o

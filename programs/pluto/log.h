@@ -34,8 +34,7 @@ struct connection;
 
 extern bool
 	log_with_timestamp,     /* prefix timestamp */
-	log_append,
-	log_ip;
+	log_append;
 
 extern bool log_to_syslog;          /* should log go to syslog? */
 extern char *pluto_log_file;

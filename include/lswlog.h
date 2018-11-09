@@ -30,6 +30,8 @@
 #include "libreswan/passert.h"
 #include "constants.h"		/* for DBG_... */
 
+extern bool log_ip; /* false -> redact ip addresses */
+
 /* Build up a diagnostic in a static buffer -- NOT RE-ENTRANT.
  * Although this would be a generally useful function, it is very
  * hard to come up with a discipline that prevents different uses
