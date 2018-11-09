@@ -26,6 +26,6 @@ extern const struct af_info
 
 extern const struct af_info *aftoinfo(int af);
 
-void init_af_info(void);
+extern void init_af_info(void);
 
 #endif
