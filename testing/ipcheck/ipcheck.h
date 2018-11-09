@@ -18,6 +18,7 @@
 #include <stdbool.h>
 
 extern void ip_address_check(void);
+extern void ip_endpoint_check(void);
 
 /* https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html */
 /* fallback is ,##__VA_ARGS__ */

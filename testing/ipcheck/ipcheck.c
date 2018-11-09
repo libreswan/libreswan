@@ -30,6 +30,7 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 {
 	log_ip = false; /* force sensitive */
 	ip_address_check();
+	ip_endpoint_check();
 	if (fails > 0) {
 		return 1;
 	} else {

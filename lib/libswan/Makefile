@@ -82,6 +82,7 @@ OBJS += chunk.o
 OBJS += shunk.o
 
 OBJS += ip_address.o
+OBJS += ip_endpoint.o
 OBJS += ip_range.o
 OBJS += ip_subnet.o
 

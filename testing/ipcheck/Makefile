@@ -19,6 +19,7 @@ PROGRAM = ipcheck
 
 OBJS += ipcheck.o
 OBJS += ip_address_check.o
+OBJS += ip_endpoint_check.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
