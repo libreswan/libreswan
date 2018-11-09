@@ -175,37 +175,29 @@ static void unlocked_open_peerlog(struct connection *c)
 	/* syslog(LOG_INFO, "opening log file for conn %s", c->name); */
 
 	if (c->log_file_name == NULL) {
-		char peername[ADDRTOT_BUF], dname[ADDRTOT_BUF];
-		size_t peernamelen = addrtot(&c->spd.that.host_addr, 'Q', peername,
-			sizeof(peername)) - 1;
-		int lf_len;
-
-
-		/* copy IP address, turning : and . into / */
-		{
-			char ch, *p, *q;
-
-			p = peername;
-			q = dname;
-			do {
-				ch = *p++;
-				if (ch == '.' || ch == ':')
-					ch = '/';
-				*q++ = ch;
-			} while (ch != '\0');
+		const char suffix[] = ".log";
+		/* slight over allocate - NNNN vs N */
+		size_t lf_len = (strlen(peerlog_basedir) +
+				 1 /* '/' */ +
+				 sizeof(ip_address_buf) /* peer path */ +
+				 1 /* '/' */ +
+				 sizeof(ip_address_buf) /* peer name */ +
+				 strlen(suffix) +
+				 1 /* '\0' */ +
+				 1 /* cookie */ +
+				 1 /* deliberately over allocate */);
+		c->log_file_name = alloc_bytes(lf_len, "per-peer log file name");
+		LSWBUF_ARRAY(c->log_file_name, lf_len, buf) {
+			lswlogs(buf, peerlog_basedir);
+			lswlogs(buf, "/");
+			fmt_address_raw(buf, &c->spd.that.host_addr, '/');
+			lswlogs(buf, "/");
+			fmt_address_raw(buf, &c->spd.that.host_addr,
+					0/*':' or '.'*/);
+			lswlogs(buf, suffix);
 		}
-
-		lf_len = peernamelen * 2 +
-			 strlen(peerlog_basedir) +
-			 sizeof("//.log") +
-			 1;
-		c->log_file_name =
-			alloc_bytes(lf_len, "per-peer log file name");
-
-		snprintf(c->log_file_name, lf_len, "%s/%s/%s.log",
-			 peerlog_basedir, dname, peername);
-
-		/* syslog(LOG_DEBUG, "conn %s logfile is %s", c->name, c->log_file_name); */
+		/* remember, it was over allocated */
+		pexpect(lf_len > strlen(c->log_file_name) + 1);
 	}
 
 	/* now open the file, creating directories if necessary */
