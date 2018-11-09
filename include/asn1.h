@@ -78,5 +78,7 @@ extern size_t asn1_length(chunk_t *blob);
 extern void code_asn1_length(size_t length, chunk_t *code);
 extern bool is_printablestring(chunk_t str);
 extern bool is_asn1(chunk_t blob);
+
+/* ??? asn1_length_signature and is_asn1_der_encoded_signature are not yet used */
 extern size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val);
 extern bool is_asn1_der_encoded_signature(chunk_t blob, chunk_t *sig_val);
