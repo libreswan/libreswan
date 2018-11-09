@@ -51,6 +51,8 @@ road #
 000 "v6-tunnel-east-road":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "v6-tunnel-east-road":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 road #
+ ipsec whack --impair suppress-retransmits
+road #
  echo "initdone"
 initdone
 road #

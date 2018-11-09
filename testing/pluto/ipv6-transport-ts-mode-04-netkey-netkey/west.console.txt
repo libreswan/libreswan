@@ -20,6 +20,8 @@ west #
  ipsec auto --add v6-transport
 002 added connection description "v6-transport"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

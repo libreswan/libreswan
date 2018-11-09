@@ -37,6 +37,8 @@ west #
  ipsec auto --add westnet-eastnet-6in6
 002 added connection description "westnet-eastnet-6in6"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

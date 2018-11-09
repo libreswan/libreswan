@@ -8,6 +8,8 @@ west #
  ipsec auto --add west-east
 002 added connection description "west-east"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #
