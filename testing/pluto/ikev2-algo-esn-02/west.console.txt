@@ -13,6 +13,8 @@ west #
  ipsec auto --add replay
 002 added connection description "replay"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

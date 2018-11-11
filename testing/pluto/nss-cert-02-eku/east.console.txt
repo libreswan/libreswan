@@ -33,6 +33,8 @@ east #
 000 "nss-cert":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 east #
+ ipsec whack --impair suppress-retransmits
+east #
  echo "initdone"
 initdone
 east #

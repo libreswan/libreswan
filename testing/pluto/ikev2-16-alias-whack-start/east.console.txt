@@ -50,6 +50,8 @@ east #
 000 "northnet-eastnets/0x2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "northnet-eastnets/0x2":   aliases: northnet-eastnets
 east #
+ ipsec whack --impair suppress-retransmits
+east #
  echo "initdone"
 initdone
 east #

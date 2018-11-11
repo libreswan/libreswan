@@ -16,6 +16,8 @@ west #
  ipsec auto --add nss-cert-correct
 002 added connection description "nss-cert-correct"
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  echo "initdone"
 initdone
 west #

@@ -11,6 +11,8 @@ east #
  ipsec auto --add x509
 002 added connection description "x509"
 east #
+ ipsec whack --impair suppress-retransmits
+east #
  echo "initdone"
 initdone
 east #

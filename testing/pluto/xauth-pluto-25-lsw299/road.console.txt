@@ -10,6 +10,8 @@ road #
  ipsec auto --add road-east
 002 added connection description "road-east"
 road #
+ ipsec whack --impair suppress-retransmits
+road #
  echo initdone
 initdone
 road #

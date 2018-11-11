@@ -43,6 +43,8 @@ north #
  ipsec whack --trafficstatus
 006 #2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
 north #
+ ipsec whack --impair suppress-retransmits
+north #
  echo initdone
 initdone
 north #

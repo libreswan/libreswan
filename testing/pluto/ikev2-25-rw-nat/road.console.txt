@@ -8,6 +8,8 @@ road #
  ipsec auto --add road-eastnet-ikev2
 002 added connection description "road-eastnet-ikev2"
 road #
+ ipsec whack --impair suppress-retransmits
+road #
  echo "initdone"
 initdone
 road #

@@ -8,6 +8,8 @@ east #
  ipsec auto --add east-any
 002 added connection description "east-any"
 east #
+ ipsec whack --impair suppress-retransmits
+east #
  echo initdone
 initdone
 east #

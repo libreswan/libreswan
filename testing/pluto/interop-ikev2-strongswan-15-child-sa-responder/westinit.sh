@@ -11,4 +11,5 @@ ipsec whack --impair suppress-retransmits
 ipsec auto --add westnet-eastnet-ikev2a
 ipsec auto --add westnet-eastnet-ikev2b
 ipsec auto --add westnet-eastnet-ikev2c
+ipsec whack --impair suppress-retransmits
 echo "initdone"

@@ -8,6 +8,8 @@ east #
  ipsec auto --add westnet-eastnet-propnum
 002 added connection description "westnet-eastnet-propnum"
 east #
+ ipsec whack --impair suppress-retransmits
+east #
  echo "initdone"
 initdone
 east #

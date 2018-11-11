@@ -13,6 +13,8 @@ north #
  ipsec auto --add northnet-eastnet-nonat
 002 added connection description "northnet-eastnet-nonat"
 north #
+ ipsec whack --impair suppress-retransmits
+north #
  echo "initdone"
 initdone
 north #
