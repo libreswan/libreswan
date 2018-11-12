@@ -256,6 +256,7 @@ static enum categories categorize_state(struct state *st,
 		return CAT_IGNORE;
 
 	case STATE_PARENT_I1:
+	case STATE_PARENT_R0:
 	case STATE_PARENT_R1:
 	case STATE_AGGR_R0:
 	case STATE_AGGR_I1:
