@@ -154,8 +154,6 @@ if test -r /proc/net/ipsec_eroute
 then
 	sort -sg -k 3 /proc/net/ipsec_eroute || cat /proc/net/ipsec_eroute
 fi
-_________________________ netstat-rn
-netstat -nr|head -n $maxlines
 _________________________ /proc/net/ipsec_spi
 if test -r /proc/net/ipsec_spi
 then
@@ -216,8 +214,6 @@ then
 fi
 _________________________ ipsec/status
 ipsec whack --status
-_________________________ ifconfig-a
-ifconfig -a
 _________________________ ip-addr-list
 ip addr list
 _________________________ ip-route-list
@@ -226,16 +222,6 @@ _________________________ ip-rule-list
 ip rule list
 _________________________ ipsec_verify
 ipsec verify --nocolour
-_________________________ mii-tool
-if [ -x /sbin/mii-tool ]
-then
-    /sbin/mii-tool -v
-elif [ -x /usr/sbin/mii-tool ]
-then
-    /usr/sbin/mii-tool -v
-else
-    mii-tool -v
-fi
 _________________________ ipsec/directory
 ipsec --directory
 _________________________ hostname/fqdn
