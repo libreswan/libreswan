@@ -1,2 +1,1 @@
 debian/90-libreswan.preset lib/systemd/system-preset
-debian/tmpfiles/libreswan.conf usr/lib/tmpfiles.d

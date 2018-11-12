@@ -140,10 +140,6 @@ install -d %{buildroot}%{_sysconfdir}/sysctl.d
 install -m 0644 packaging/rhel/libreswan-sysctl.conf \
     %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
 
-install -d %{buildroot}%{_tmpfilesdir}
-install -m 0644 packaging/rhel/libreswan-tmpfiles.conf  \
-    %{buildroot}%{_tmpfilesdir}/libreswan.conf
-
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
 install -m644 packaging/rhel/libreswan-prelink.conf \

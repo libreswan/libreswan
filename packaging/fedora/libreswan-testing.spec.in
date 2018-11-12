@@ -132,10 +132,6 @@ install -d %{buildroot}%{_sysconfdir}/sysctl.d
 install -m 0644 packaging/fedora/libreswan-sysctl.conf \
     %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
 
-install -d %{buildroot}%{_tmpfilesdir}
-install -m 0644 packaging/fedora/libreswan-tmpfiles.conf  \
-    %{buildroot}%{_tmpfilesdir}/libreswan.conf
-
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 
 echo "include %{_sysconfdir}/ipsec.d/*.secrets" \

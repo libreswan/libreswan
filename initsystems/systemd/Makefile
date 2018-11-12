@@ -5,6 +5,9 @@ endif
 SYSTEMUNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
 UNITFILE=ipsec.service
 UNITDIR=$(DESTDIR)$(SYSTEMUNITDIR)
+SYSTEMTMPFILESDIR=$(shell pkg-config systemd --variable=tmpfilesdir)
+TMPFILESCONFIG=libreswan.conf
+TMPFILESDIR=$(DESTDIR)$(SYSTEMTMPFILESDIR)
 
 include $(top_srcdir)/Makefile.inc
 
@@ -15,9 +18,16 @@ include $(top_srcdir)/Makefile.inc
 # like local-base and installsystemdservice are allowed to run in
 # parallel)
 
-local-base: $(builddir)/$(UNITFILE)
+local-base: $(builddir)/$(UNITFILE) $(builddir)/$(TMPFILESCONFIG)
 
 local-install-base: installsystemdservice oldinitdcheck postcheck
+
+installtmpfilesconfig: local-base | $(TMPFILESDIR)
+	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(TMPFILESCONFIG) $(TMPFILESDIR)
+	@if test $(TMPFILESDIR) = $(SYSTEMTMPFILESDIR) ; then \
+		echo running: systemd-tmpfiles --create $(TMPFILESDIR)/$(TMPFILESCONFIG); \
+		systemd-tmpfiles --create $(TMPFILESDIR)/$(TMPFILESCONFIG); \
+	fi
 
 installsystemdservice: local-base | $(UNITDIR)
 	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(UNITFILE) $(UNITDIR)
@@ -33,6 +43,9 @@ installsystemdservice: local-base | $(UNITDIR)
 $(UNITDIR):
 	mkdir -p $(UNITDIR)
 
+$(TMPFILESDIR):
+	mkdir -p $(TMPFILESDIR)
+
 oldinitdcheck: installsystemdservice
 	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \
 		if egrep -i '(openswan|libreswan)' $(DESTDIR)/etc/init.d/ipsec* > /dev/null 2>&1 ; then \
@@ -46,7 +59,7 @@ oldinitdcheck: installsystemdservice
 		fi ; \
 	fi
 
-postcheck: installsystemdservice oldinitdcheck
+postcheck: installsystemdservice installtmpfilesconfig oldinitdcheck
 	@if test -z "$(DESTDIR)" -a $(UNITDIR) = $(SYSTEMUNITDIR) -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
 		echo "DESTDIR='$(DESTDIR)'" ; \
 		echo "************************** WARNING ***********************************" ; \
