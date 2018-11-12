@@ -591,10 +591,8 @@ enum state_kind {
 	 */
 	STATE_IKEv2_FLOOR,
 
-	STATE_IKEv2_BASE = STATE_IKEv2_FLOOR,	/* state when faking a state */
-
 	/* INITIATOR states */
-	/* STATE_PARENT_I0,	** waiting for KE to finish */
+	STATE_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
 	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
 	STATE_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
 	STATE_PARENT_I3,        /* IKE_AUTH done: received auth response */
@@ -634,7 +632,6 @@ enum state_kind {
 	 * number as part of the message!) add new states here.
 	 */
 	STATE_PARENT_R0,
-	STATE_PARENT_I0,	/* waiting for KE to finish */
 
 	STATE_IKEv2_ROOF	/* not a state! */
 };

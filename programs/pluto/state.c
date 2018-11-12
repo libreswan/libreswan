@@ -237,7 +237,6 @@ static enum categories categorize_state(struct state *st,
 	 */
 	switch (state) {
 	case STATE_UNDEFINED:
-	case STATE_IKEv2_BASE:
 		/*
 		 * When a state object is created by new_state()
 		 * it starts out in STATE_UNDEFINED.

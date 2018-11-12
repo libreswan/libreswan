@@ -201,7 +201,6 @@ static const char *const state_name[] = {
 	S(STATE_IKEv1_ROOF),
 
 	/* v2 */
-	S(STATE_IKEv2_BASE),
 	S(STATE_PARENT_I0),
 	S(STATE_PARENT_I1),
 	S(STATE_PARENT_I2),
@@ -276,7 +275,6 @@ static const char *const state_story[] = {
 	[STATE_XAUTH_I1] = "XAUTH client - possibly awaiting CFG_set",
 
 	[STATE_IKEv1_ROOF] = "invalid state - IKE roof",
-	[STATE_IKEv2_FLOOR] = "invalid state - IKEv2 base",
 
 	[STATE_PARENT_I0] = "waiting for KE to finish",
 	[STATE_PARENT_I1] = "sent v2I1, expected v2R1",
