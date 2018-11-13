@@ -565,7 +565,7 @@ void init_ikev2(void)
 	static struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
 	for (unsigned k = 0; k < elemsof(v2_states); k++) {
 		struct finite_state *fs = &v2_states[k];
-		fs->fs_state = k + STATE_IKEv2_BASE;
+		fs->fs_state = k + STATE_IKEv2_FLOOR;
 		fs->fs_name = enum_name(&state_names, fs->fs_state);
 		fs->fs_short_name = enum_short_name(&state_names, fs->fs_state);
 		fs->fs_story = enum_name(&state_stories, fs->fs_state);
@@ -584,8 +584,8 @@ void init_ikev2(void)
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("Processing IKEv2 state %s (microcode %s)",
 			    name, t->story));
-		passert(STATE_IKEv2_FLOOR <= t->state &&
-			t->state < STATE_IKEv2_ROOF);
+		passert(t->state >= STATE_IKEv2_FLOOR);
+		passert(t->state < STATE_IKEv2_ROOF);
 		struct finite_state *fs = &v2_states[t->state - STATE_IKEv2_FLOOR];
 		/*
 		 * Point .fs_v2_transitions at the first entry in
@@ -611,9 +611,9 @@ void init_ikev2(void)
 		 * structure (aka microcode), is for the target
 		 * state, .next_state is used.
 		 */
-		passert(STATE_IKEv2_BASE <= t->next_state &&
-			t->next_state < STATE_IKEv2_ROOF);
-		struct finite_state *fs = &v2_states[t->next_state - STATE_IKEv2_BASE];
+		passert(t->next_state >= STATE_IKEv2_FLOOR);
+		passert(t->next_state < STATE_IKEv2_ROOF);
+		struct finite_state *fs = &v2_states[t->next_state - STATE_IKEv2_FLOOR];
 		if (fs->fs_timeout_event == 0) {
 			fs->fs_timeout_event = t->timeout_event;
 		} else if (fs->fs_timeout_event != t->timeout_event) {
@@ -661,7 +661,7 @@ void init_ikev2(void)
 	 * Finally list the states.
 	 */
 	DBG(DBG_CONTROLMORE,
-	    for (unsigned s = STATE_IKEv2_BASE; s < STATE_IKEv2_ROOF; s++) {
+	    for (unsigned s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
 		    const struct finite_state *fs = finite_states[s];
 		    LSWLOG_DEBUG(buf) {
 			    lswlog_finite_state(buf, fs);
@@ -2665,7 +2665,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 
 	/* tell whack and log of progress, if we are actually advancing */
 	if (from_state != svm->next_state) {
-		passert(st->st_state >= STATE_IKEv2_BASE);
+		passert(st->st_state >= STATE_IKEv2_FLOOR);
 		passert(st->st_state <  STATE_IKEv2_ROOF);
 
 		void (*log_details)(struct lswlog *buf, struct state *st);
