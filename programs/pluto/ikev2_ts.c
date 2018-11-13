@@ -596,6 +596,7 @@ struct best_score {
 	const struct traffic_selector *tsi;
 	const struct traffic_selector *tsr;
 };
+#define  NO_SCORE { .ok = false, .address = -1, .port = -1, .protocol = -1, }
 
 static bool score_gt(const struct best_score *score, const struct best_score *best)
 {
@@ -626,12 +627,7 @@ static struct best_score score_ends(enum fit fit,
 			is_virtual_connection(d) ? " (virt)" : "");
 	});
 
-	struct best_score best_score = {
-		.ok = false,
-		.address = -1,
-		.port = -1,
-		.protocol = -1,
-	};
+	struct best_score best_score = NO_SCORE;
 
 	/* compare tsi/r array to this/that, evaluating how well it fits */
 	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
@@ -697,12 +693,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	}
 
 	/* best so far */
-	struct best_score best_score = {
-		.ok = false,
-		.address = -1,
-		.protocol = -1,
-		.port = -1,
-	};
+	struct best_score best_score = NO_SCORE;
 	const struct spd_route *bsr = NULL;	/* best spd_route so far */
 
 	/* find best spd in c */
