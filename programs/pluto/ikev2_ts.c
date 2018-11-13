@@ -689,7 +689,16 @@ bool v2_process_ts_request(struct child_sa *child,
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 
-	/* XXX: md->st here is parent???? */
+	/*
+	 * XXX: md->st here is parent????  Lets find out.
+	 */
+	if (md->st == &child->sa) {
+		dbg("Child SA TS Request has child->sa == md->st; so using child connection");
+	} else if (md->st == &ike_sa(&child->sa)->sa) {
+		dbg("Child SA TS Request has ike->sa == md->st; so using parent connection");
+	} else {
+		dbg("Child SA TS Request has an unknown md->st; so using unknown connection");
+	}
 	struct connection *c = md->st->st_connection;
 
 	struct traffic_selectors tsi = { .nr = 0, };
@@ -698,12 +707,14 @@ bool v2_process_ts_request(struct child_sa *child,
 		return false;
 	}
 
-	/* best so far */
+	/* best so far; start with state's connection */
 	struct best_score best_score = NO_SCORE;
-	const struct spd_route *bsr = NULL;	/* best spd_route so far */
+	const struct spd_route *best_spd_route = NULL;
+	struct connection *best_connection = c;
 
 	/* find best spd in c */
 
+	dbg("looking for best SPD in current connection");
 	for (const struct spd_route *sra = &c->spd; sra != NULL; sra = sra->spd_next) {
 
 		/* responder */
@@ -721,10 +732,11 @@ bool v2_process_ts_request(struct child_sa *child,
 			continue;
 		}
 		if (score_gt(&score, &best_score)) {
-			DBGF(DBG_MASK, "found better match c %s, TSi[%zu],TSr[%zu]",
-			     c->name, score.tsi - tsi.ts, score.tsr - tsr.ts);
+			dbg("    found better spd route for TSi[%zu],TSr[%zu]",
+			    score.tsi - tsi.ts, score.tsr - tsr.ts);
 			best_score = score;
-			bsr = sra;
+			best_spd_route = sra;
+			passert(best_connection == c);
 		}
 	}
 
@@ -740,9 +752,8 @@ bool v2_process_ts_request(struct child_sa *child,
 	 * nested loop structure but not what it actually does.
 	 */
 
-	struct connection *best = c;	/* best connection so far */
+	dbg("looking for better host pair");
 	const struct host_pair *hp = NULL;
-
 	for (const struct spd_route *sra = &c->spd;
 	     hp == NULL && sra != NULL; sra = sra->spd_next) {
 		hp = find_host_pair(&sra->this.host_addr,
@@ -767,12 +778,13 @@ bool v2_process_ts_request(struct child_sa *child,
 		if (hp == NULL)
 			continue;
 
-		struct connection *d;
-
-		for (d = hp->connections; d != NULL; d = d->hp_next) {
+		for (struct connection *d = hp->connections;
+		     d != NULL; d = d->hp_next) {
 			/* groups are templates instantiated as GROUPINSTANCE */
-			if (d->policy & POLICY_GROUP)
+			if (d->policy & POLICY_GROUP) {
 				continue;
+			}
+			dbg("  investigating connection \"%s\" as a better match", d->name);
 
 			/*
 			 * ??? same_id && match_id seems redundant.
@@ -793,13 +805,11 @@ bool v2_process_ts_request(struct child_sa *child,
 			      match_id(&c->spd.that.id,
 				       &d->spd.that.id, &wildcards) &&
 			      trusted_ca_nss(c->spd.that.ca,
-					 d->spd.that.ca, &pathlen)))
-			{
-				DBG(DBG_CONTROLMORE, DBG_log("connection \"%s\" does not match IDs or CA of current connection \"%s\"",
-					d->name, c->name));
+					 d->spd.that.ca, &pathlen))) {
+				dbg("    connection \"%s\" does not match IDs or CA of current connection \"%s\"",
+				    d->name, c->name);
 				continue;
 			}
-			DBG(DBG_CONTROLMORE, DBG_log("investigating connection \"%s\" as a better match", d->name));
 
 			const struct spd_route *sr;
 
@@ -822,78 +832,119 @@ bool v2_process_ts_request(struct child_sa *child,
 					continue;
 				}
 				if (score_gt(&score, &best_score)) {
-					DBGF(DBG_MASK, "protocol fitness found better match d %s, TSi[%zu],TSr[%zu]",
-					     d->name,
-					     score.tsi - tsi.ts, score.tsr - tsr.ts);
-					best = d;
+					dbg("    protocol fitness found better match d %s, TSi[%zu],TSr[%zu]",
+					    d->name,
+					    score.tsi - tsi.ts, score.tsr - tsr.ts);
+					best_connection = d;
 					best_score = score;
-					bsr = sr;
+					best_spd_route = sr;
 				}
 			}
 		}
 	}
 
-	if (best == c) {
-		DBG(DBG_CONTROLMORE, DBG_log("we did not switch connection"));
+	if (best_connection == c) {
+		dbg("  did not find a better connection using host pair");
 	}
 
-	if (bsr == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("failed to find anything; can we instantiate another template?"));
+	if (best_spd_route == NULL) {
+		LSWDBGP(DBG_MASK, buf) {
+			lswlogf(buf, "can the current %s connection \"%s\"",
+				enum_name(&connection_kind_names, c->kind), c->name);
+			if (c->foodgroup != NULL) {
+				lswlogf(buf, " with food-group \"%s\"", c->foodgroup);
+			}
+			lswlogs(buf, " be overwritten with something better?");
+		}
+		/* since an SPD_ROUTE wasn't found */
+		passert(best_connection == c);
 
 		for (struct connection *t = connections; t != NULL; t = t->ac_next) {
-			if (LIN(POLICY_GROUPINSTANCE, t->policy) && (t->kind == CK_TEMPLATE)) {
-				/* ??? clang 6.0.0 thinks best might be NULL but I don't see how */
-				if (!streq(t->foodgroup, best->foodgroup) ||
-				    streq(best->name, t->name) ||
-				    !subnetinsubnet(&best->spd.that.client, &t->spd.that.client) ||
-				    !sameaddr(&best->spd.this.client.addr, &t->spd.this.client.addr))
-					continue;
-
-				/* ??? why require best->name and t->name to be different */
-
-				DBG(DBG_CONTROLMORE,
-					DBG_log("investigate %s which is another group instance of %s with different protoports",
-						t->name, t->foodgroup));
-				/*
-				 * ??? this code seems to assume that
-				 * tsi and tsr contain exactly one
-				 * element.  Any fewer and the code
-				 * references an uninitialized value.
-				 * Any more would be ignored, and
-				 * that's surely wrong.  It would be
-				 * nice if the purpose of this block
-				 * of code were documented.
-				 */
-				pexpect(tsi.nr == 1);
-				int t_sport =
-					tsi.ts[0].startport == tsi.ts[0].endport ? tsi.ts[0].startport :
-					tsi.ts[0].startport == 0 && tsi.ts[0].endport == 65535 ? 0 : -1;
-				pexpect(tsr.nr == 1);
-				int t_dport =
-					tsr.ts[0].startport == tsr.ts[0].endport ? tsr.ts[0].startport :
-					tsr.ts[0].startport == 0 && tsr.ts[0].endport == 65535 ? 0 : -1;
-
-				if (t_sport == -1 || t_dport == -1)
-					continue;
-
-				if ((t->spd.that.protocol != tsi.ts[0].ipprotoid) ||
-					(best->spd.this.port != t_sport) ||
-					(best->spd.that.port != t_dport))
-						continue;
-
-				DBG(DBG_CONTROLMORE, DBG_log("updating connection of group instance for protoports"));
-				best->spd.that.protocol = t->spd.that.protocol;
-				best->spd.this.port = t->spd.this.port;
-				best->spd.that.port = t->spd.that.port;
-				pfreeany(best->name);
-				best->name = clone_str(t->name, "hidden switch template name update");
-				bsr = &best->spd;
-				break;
+			/* require a template */
+			if (t->kind != CK_TEMPLATE) {
+				continue;
 			}
+			LSWDBGP(DBG_MASK, buf) {
+				lswlogf(buf, "  investigating template connection \"%s\"",
+					t->name);
+				if (t->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+					lswlogs(buf, "; has narrowing");
+				}
+				if (t->foodgroup != NULL) {
+					lswlogf(buf, "; has food-group \"%s\"", t->foodgroup);
+				}
+			}
+			/* XXX: why does this matter; does it imply t->foodgroup != NULL? */
+			if (!LIN(POLICY_GROUPINSTANCE, t->policy)) {
+				dbg("    skipping template; isn't a group instance");
+				continue;
+			}
+			/* when OE, don't change food groups? */
+			if (!streq(c->foodgroup, t->foodgroup)) {
+				dbg("    skipping template; wrong foodgroup name");
+				continue;
+			}
+			/* ??? why require current connection->name and t->name to be different */
+			/* XXX: don't re-instantiate the same connection template???? */
+			if (streq(c->name, t->name)) {
+				dbg("    skipping template; name same as current connection");
+				continue;
+			}
+			/* require initiator's subnet <= T; why? */
+			if (!subnetinsubnet(&c->spd.that.client, &t->spd.that.client)) {
+				dbg("    skipping template; current connection's initiator subnet is not <= template");
+				continue;
+			}
+			/* require responder address match; why? */
+			if (!sameaddr(&c->spd.this.client.addr, &t->spd.this.client.addr)) {
+				dbg("    skipping template; responder addresses don't match");
+				continue;
+			}
+
+			/*
+			 * ??? this code seems to assume that tsi and
+			 * tsr contain exactly one element.  Any fewer
+			 * and the code references an uninitialized
+			 * value.  Any more would be ignored, and
+			 * that's surely wrong.  It would be nice if
+			 * the purpose of this block of code were
+			 * documented.
+			 *
+			 * XXX: parse_ts() checks that there is at
+			 * least one element, and the RFC says to go
+			 * out of your way to match the first TS[ir]
+			 * as a pair.
+			 */
+			pexpect(tsi.nr == 1);
+			int t_sport =
+				tsi.ts[0].startport == tsi.ts[0].endport ? tsi.ts[0].startport :
+				tsi.ts[0].startport == 0 && tsi.ts[0].endport == 65535 ? 0 : -1;
+			pexpect(tsr.nr == 1);
+			int t_dport =
+				tsr.ts[0].startport == tsr.ts[0].endport ? tsr.ts[0].startport :
+				tsr.ts[0].startport == 0 && tsr.ts[0].endport == 65535 ? 0 : -1;
+
+			if (t_sport == -1 || t_dport == -1)
+				continue;
+
+			if ((t->spd.that.protocol != tsi.ts[0].ipprotoid) ||
+			    (c->spd.this.port != t_sport) ||
+			    (c->spd.that.port != t_dport))
+				continue;
+
+			dbg("  overwriting connection of group instance for protoports");
+			passert(best_connection == c);
+			c->spd.that.protocol = t->spd.that.protocol;
+			c->spd.this.port = t->spd.this.port;
+			c->spd.that.port = t->spd.that.port;
+			pfreeany(c->name);
+			c->name = clone_str(t->name, "hidden switch template name update");
+			best_spd_route = &c->spd;
+			break;
 		}
 
-		if (bsr == NULL) {
-			/* nothing to instantiate from other group templates either */
+		if (best_spd_route == NULL) {
+			dbg("nothing to instantiate from other group templates either");
 			return false;
 		}
 	}
@@ -905,11 +956,15 @@ bool v2_process_ts_request(struct child_sa *child,
 	 * XXX: but this is responder code, there probably isn't a
 	 * current-connection - it would have gone straight to current
 	 * state>
+	 *
+	 * update_state_connection(), if the connection changes,
+	 * de-references the old connection; which is what really
+	 * matters
 	 */
-	update_state_connection(&child->sa, best);
+	update_state_connection(&child->sa, best_connection);
 
-	child->sa.st_ts_this = ikev2_end_to_ts(&bsr->this);
-	child->sa.st_ts_that = ikev2_end_to_ts(&bsr->that);
+	child->sa.st_ts_this = ikev2_end_to_ts(&best_spd_route->this);
+	child->sa.st_ts_that = ikev2_end_to_ts(&best_spd_route->that);
 
 	ikev2_print_ts(&child->sa.st_ts_this);
 	ikev2_print_ts(&child->sa.st_ts_that);
