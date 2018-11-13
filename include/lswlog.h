@@ -297,6 +297,8 @@ void libreswan_exit_log_errno(int e, const char *message, ...) PRINTF_LIKE(2) NE
 
 extern lset_t cur_debugging;	/* current debugging level */
 
+void dbg(const char *fmt, ...) PRINTF_LIKE(1);
+
 #define DBGP(cond)	(cur_debugging & (cond))
 
 #define DEBUG_PREFIX "| "
