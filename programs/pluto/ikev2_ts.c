@@ -266,17 +266,23 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 	return STF_OK;
 }
 
-/* return number of traffic selectors found; -1 for error */
-static bool v2_parse_ts(const char *role,
-			struct payload_digest *const ts_pd,
-			struct traffic_selectors *tss)
+/* return success */
+static bool v2_parse_ts(struct payload_digest *const ts_pd,
+			struct traffic_selectors *tss,
+			const char *which)
 {
-	DBGF(DBG_MASK, "TS: parsing %u %s traffic selectors",
-	     ts_pd->payload.v2ts.isat_num, role);
+	DBGF(DBG_MASK, "%s: parsing %u traffic selectors",
+	     which, ts_pd->payload.v2ts.isat_num);
+
+	if (ts_pd->payload.v2ts.isat_num == 0) {
+		libreswan_log("%s payload contains no entries when at least one is expected",
+			      which);
+		return false;
+	}
 
 	if (ts_pd->payload.v2ts.isat_num >= elemsof(tss->ts)) {
-		libreswan_log("TS contains %d entries which exceeds hardwired max of %zu",
-			      ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
+		libreswan_log("%s contains %d entries which exceeds hardwired max of %zu",
+			      which, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
 		return false;	/* won't fit in array */
 	}
 
@@ -337,12 +343,12 @@ static bool v2_parse_ts(const char *role,
 		ts->endport = ts1.isat1_endport;
 		if (ts->startport > ts->endport) {
 			libreswan_log("%s traffic selector %d has an invalid port range",
-				      role, tss->nr);
+				      which, tss->nr);
 			return false;
 		}
 	}
 
-	DBGF(DBG_MASK, "TS: parsed %d %s TS payloads", tss->nr, role);
+	DBGF(DBG_MASK, "%s: parsed %d traffic selectors", which, tss->nr);
 	return true;
 }
 
@@ -350,11 +356,11 @@ static bool v2_parse_tss(const struct msg_digest *md,
 			 struct traffic_selectors *tsi,
 			 struct traffic_selectors *tsr)
 {
-	if (!v2_parse_ts("initiator", md->chain[ISAKMP_NEXT_v2TSi], tsi)) {
+	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi], tsi, "TSi")) {
 		return false;
 	}
 
-	if (!v2_parse_ts("responder", md->chain[ISAKMP_NEXT_v2TSr], tsr)) {
+	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr], tsr, "TSr")) {
 		return false;
 	}
 
