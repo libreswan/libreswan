@@ -2910,8 +2910,9 @@ void complete_v2_state_transition(struct state *st,
 	struct msg_digest *md = (mdp != NULL ? (*mdp) /*NULL?*/ : NULL);
 	set_cur_state(st); /* might have changed */ /* XXX: huh? */
 	/* get the from state */
-	const char *from_state_name = (st != NULL ? st->st_finite_state
-				       : finite_states[STATE_UNDEFINED])->fs_name;
+	const struct finite_state *from_state = (st != NULL ? st->st_finite_state
+						 : finite_states[STATE_UNDEFINED]);
+	const char *from_state_name = from_state->fs_name;
 
 	/*
 	 * XXX/SML:  There is no need to abort here in all cases where st is
@@ -2936,9 +2937,24 @@ void complete_v2_state_transition(struct state *st,
 	 */
 
 	LSWDBGP(DBG_CONTROL, buf) {
-		lswlogf(buf, "#%lu complete v2 state transition from %s with ",
+		lswlogf(buf, "#%lu complete v2 state transition from %s",
 			(st == NULL ? SOS_NOBODY : st->st_serialno),
-			from_state_name);
+			from_state->fs_short_name);
+		if (md != NULL) {
+			if (md->from_state != from_state->fs_state) {
+				lswlogs(buf, " md.from_state=");
+				lswlog_enum_short(buf, &state_names, md->from_state);
+			}
+			if (md->svm != NULL) {
+				if (md->svm->state != from_state->fs_state) {
+					lswlogs(buf, " svm.state=");
+					lswlog_enum_short(buf, &state_names, md->svm->state);
+				}
+				lswlogs(buf, " to ");
+				lswlog_enum_short(buf, &state_names, md->svm->next_state);
+			}
+		}
+		lswlogf(buf, " with status ");
 		lswlog_v2_stf_status(buf, result);
 	}
 
