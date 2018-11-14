@@ -21,7 +21,7 @@ east #
  # should show retransmits on west and replies on east
 east #
  grep sending /tmp/pluto.log |grep through
-| sending 432 bytes for STATE_IKEv2_BASE through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 432 bytes for STATE_PARENT_R0 through eth1:500 to 192.1.2.45:500 (using #1)
 | sending 225 bytes for STATE_PARENT_R1 through eth1:500 to 192.1.2.45:500 (using #1)
 | sending 177 bytes for STATE_V2_CREATE_R through eth1:500 to 192.1.2.45:500 (using #1)
 | sending 177 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)

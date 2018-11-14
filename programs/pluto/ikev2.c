@@ -2701,8 +2701,26 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		 * STATE_IKEv2_BASE is used when an md is invented
 		 * for an initial outbound message that is not a response.
 		 * ??? why should STATE_PARENT_I1 be excluded?
+		 *
+		 * from=STATE_PARENT_R0 (IKE_SA_INIT responder):
+		 *
+		 * The commit "pluto: various fixups associated with
+		 * RFC 7383 code" added a guard so that nat was not
+		 * updated when an "initial outbound message".  The
+		 * guard tested for MD with STATE_IKEv2_BASE which
+		 * happend when MD was faked (since the initial
+		 * initiator doesn't have an MD response).  However,
+		 * since for almost forever, the initial responder's
+		 * MD was also being set toto STATE_IKEv2_BASE.  That
+		 * value's since been replaced by STATE_PARENT_R0, but
+		 * this puzzling behaviour is preserved.
+		 *
+		 * Strangely, from=STATE_PARENT_R1 (AUTH responder)
+		 * which calls nat*() explicitly, isn't excluded.
+		 * Should it?  Perhaps multiple calls are benign?
 		 */
 		if (nat_traversal_enabled &&
+		    from_state != STATE_PARENT_R0 &&
 		    from_state != STATE_IKEv2_BASE &&
 		    from_state != STATE_PARENT_I1) {
 			/* adjust our destination port if necessary */

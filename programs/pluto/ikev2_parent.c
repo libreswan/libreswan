@@ -1306,7 +1306,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	initialize_new_state(st, c, policy, 0, null_fd);
 	update_ike_endpoints(st, md);
 	st->st_ikev2 = TRUE;
-	change_state(st, STATE_PARENT_R1);
+	change_state(st, STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
 	st->st_sa_role = SA_RESPONDER;
 	st->st_msgid_lastack = v2_INVALID_MSGID;
@@ -1318,7 +1318,9 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	st->st_gi = accepted_gi;
 
 	md->st = st;
-	md->from_state = STATE_IKEv2_BASE;
+	/* set by caller */
+	pexpect(md->from_state == STATE_PARENT_R0);
+	pexpect(md->svm == finite_states[STATE_PARENT_R0]->fs_v2_transitions);
 
 	bool seen_nat = FALSE;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
