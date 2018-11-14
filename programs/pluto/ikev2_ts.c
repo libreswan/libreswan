@@ -847,7 +847,31 @@ bool v2_process_ts_request(struct child_sa *child,
 		dbg("  did not find a better connection using host pair");
 	}
 
-	if (best_spd_route == NULL) {
+	if (best_spd_route == NULL && c->kind != CK_INSTANCE) {
+		/*
+		 * Don't try to look for something else to
+		 * 'instantiate' when the current connection is
+		 * permanent.
+		 *
+		 * XXX: Is this missing an opportunity?  Could there
+		 * be a better connection to instantiate when the
+		 * current one is permanent?
+		 *
+		 * XXX: 'instantiate', not really?  The code below
+		 * blats the current instance with new values -
+		 * something that should not be done to a permanent
+		 * connection.
+		 */
+		pexpect(c->kind == CK_PERMANENT);
+		dbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE",
+		    enum_name(&connection_kind_names, c->kind), c->name);
+	} else if (best_spd_route == NULL) {
+		/*
+		 * Rather than overwrite the current INSTANCE; would
+		 * it be better to instantiate a new instance, and
+		 * then replace it?  Would also address the above.
+		 */
+		pexpect(c->kind == CK_INSTANCE);
 		LSWDBGP(DBG_MASK, buf) {
 			lswlogf(buf, "can the current %s connection \"%s\"",
 				enum_name(&connection_kind_names, c->kind), c->name);
@@ -868,12 +892,16 @@ bool v2_process_ts_request(struct child_sa *child,
 		 POLICY_OVERLAPIP |					\
 		 POLICY_IKEV2_ALLOW_NARROWING)
 			lswlogf(buf, "; %s", prettypolicy(c->policy & BP_MASK));
-			lswlogs(buf, " be overwritten with something better?");
+			lswlogs(buf, " be overwritten with a better instantiation?");
 		}
 		/* since an SPD_ROUTE wasn't found */
 		passert(best_connection == c);
 
 		for (struct connection *t = connections; t != NULL; t = t->ac_next) {
+			/* require a template */
+			if (t->kind != CK_TEMPLATE) {
+				continue;
+			}
 			LSWDBGP(DBG_MASK, buf) {
 				lswlogf(buf, "  investigating %s connection \"%s\"",
 					enum_name(&connection_kind_names, t->kind), t->name);
@@ -881,11 +909,6 @@ bool v2_process_ts_request(struct child_sa *child,
 					lswlogf(buf, "; food-group: \"%s\"", t->foodgroup);
 				}
 				lswlogf(buf, "; %s", prettypolicy(t->policy & BP_MASK));
-			}
-			/* require a template */
-			if (t->kind != CK_TEMPLATE) {
-				dbg("    skipping; not a template");
-				continue;
 			}
 			/* XXX: why does this matter; does it imply t->foodgroup != NULL? */
 			if (!LIN(POLICY_GROUPINSTANCE, t->policy)) {
