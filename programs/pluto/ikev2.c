@@ -2696,32 +2696,45 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	/* if requested, send the new reply packet */
 	if (svm->flags & SMF2_SEND) {
 		/*
-		 * Adjust NAT but not for initial state
+		 * Adjust NAT but not for initial state (initial
+		 * outbound message?).
 		 *
-		 * STATE_IKEv2_BASE is used when an md is invented
-		 * for an initial outbound message that is not a response.
-		 * ??? why should STATE_PARENT_I1 be excluded?
+		 * ??? why should STATE_PARENT_I1 be excluded?  XXX:
+		 * and why, for that state, does ikev2_natd_lookup()
+		 * call it.
 		 *
-		 * from=STATE_PARENT_R0 (IKE_SA_INIT responder):
+		 * XXX: The "initial outbound message" check was first
+		 * added by commit "pluto: various fixups associated
+		 * with RFC 7383 code".  At the time a fake MD
+		 * (created when an initiator initiates) had the magic
+		 * state STATE_IKEv2_BASE and so it checked for that.
+		 * What isn't clear is if the check was intended to
+		 * block just an IKE SA initiating, or also block a
+		 * CHILD SA initiate.
 		 *
-		 * The commit "pluto: various fixups associated with
-		 * RFC 7383 code" added a guard so that nat was not
-		 * updated when an "initial outbound message".  The
-		 * guard tested for MD with STATE_IKEv2_BASE which
-		 * happend when MD was faked (since the initial
-		 * initiator doesn't have an MD response).  However,
-		 * since for almost forever, the initial responder's
-		 * MD was also being set toto STATE_IKEv2_BASE.  That
-		 * value's since been replaced by STATE_PARENT_R0, but
-		 * this puzzling behaviour is preserved.
+		 * XXX: STATE_PARENT_R1 (AUTH responder), in addition
+		 * to the below, will also call nat*() explicitly.
+		 * Perhaps multiple calls are benign?
 		 *
-		 * Strangely, from=STATE_PARENT_R1 (AUTH responder)
-		 * which calls nat*() explicitly, isn't excluded.
-		 * Should it?  Perhaps multiple calls are benign?
+		 * XXX: This is getting silly:
+		 *
+		 * - check for MD != NULL - while initial initiators
+		 * don't have an incomming message it gets twarted by
+		 * fake_md()
+		 *
+		 * - delete the call - IKE state transition code is
+		 * already somewhat doing this and why would nat need
+		 * to be updated during a child exchange
+		 *
+		 * - or what about an STF flag on the state?
 		 */
+		bool new_request = (from_state == STATE_PARENT_I0 ||
+				    from_state == STATE_V2_CREATE_I0 ||
+				    from_state == STATE_V2_REKEY_CHILD_I0 ||
+				    from_state == STATE_V2_REKEY_IKE_I0);
 		if (nat_traversal_enabled &&
+		    !new_request &&
 		    from_state != STATE_PARENT_R0 &&
-		    from_state != STATE_IKEv2_BASE &&
 		    from_state != STATE_PARENT_I1) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, pst);
@@ -2730,7 +2743,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		DBG(DBG_CONTROL, {
 			    ipstr_buf b;
 			    DBG_log("sending V2 %s packet to %s:%u (from port %u)",
-				    from_state == STATE_IKEv2_BASE ? "new request" :
+				    new_request ? "new request" :
 				    "reply", ipstr(&st->st_remoteaddr, &b),
 				    st->st_remoteport,
 				    st->st_interface->port);
