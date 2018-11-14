@@ -852,52 +852,65 @@ bool v2_process_ts_request(struct child_sa *child,
 			lswlogf(buf, "can the current %s connection \"%s\"",
 				enum_name(&connection_kind_names, c->kind), c->name);
 			if (c->foodgroup != NULL) {
-				lswlogf(buf, " with food-group \"%s\"", c->foodgroup);
+				lswlogf(buf, "; food-group: \"%s\"", c->foodgroup);
 			}
+#define BP_MASK (POLICY_NEGO_PASS |					\
+		 POLICY_DONT_REKEY |					\
+		 POLICY_REAUTH |					\
+		 POLICY_OPPORTUNISTIC |					\
+		 POLICY_GROUP |						\
+		 POLICY_GROUTED |					\
+		 POLICY_GROUPINSTANCE |					\
+		 POLICY_UP |						\
+		 POLICY_XAUTH |						\
+		 POLICY_MODECFG_PULL |					\
+		 POLICY_AGGRESSIVE |					\
+		 POLICY_OVERLAPIP |					\
+		 POLICY_IKEV2_ALLOW_NARROWING)
+			lswlogf(buf, "; %s", prettypolicy(c->policy & BP_MASK));
 			lswlogs(buf, " be overwritten with something better?");
 		}
 		/* since an SPD_ROUTE wasn't found */
 		passert(best_connection == c);
 
 		for (struct connection *t = connections; t != NULL; t = t->ac_next) {
+			LSWDBGP(DBG_MASK, buf) {
+				lswlogf(buf, "  investigating %s connection \"%s\"",
+					enum_name(&connection_kind_names, t->kind), t->name);
+				if (t->foodgroup != NULL) {
+					lswlogf(buf, "; food-group: \"%s\"", t->foodgroup);
+				}
+				lswlogf(buf, "; %s", prettypolicy(t->policy & BP_MASK));
+			}
 			/* require a template */
 			if (t->kind != CK_TEMPLATE) {
+				dbg("    skipping; not a template");
 				continue;
-			}
-			LSWDBGP(DBG_MASK, buf) {
-				lswlogf(buf, "  investigating template connection \"%s\"",
-					t->name);
-				if (t->policy & POLICY_IKEV2_ALLOW_NARROWING) {
-					lswlogs(buf, "; has narrowing");
-				}
-				if (t->foodgroup != NULL) {
-					lswlogf(buf, "; has food-group \"%s\"", t->foodgroup);
-				}
 			}
 			/* XXX: why does this matter; does it imply t->foodgroup != NULL? */
 			if (!LIN(POLICY_GROUPINSTANCE, t->policy)) {
-				dbg("    skipping template; isn't a group instance");
+				dbg("    skipping; not a group instance");
 				continue;
 			}
 			/* when OE, don't change food groups? */
 			if (!streq(c->foodgroup, t->foodgroup)) {
-				dbg("    skipping template; wrong foodgroup name");
+				dbg("    skipping; wrong foodgroup name");
 				continue;
 			}
 			/* ??? why require current connection->name and t->name to be different */
 			/* XXX: don't re-instantiate the same connection template???? */
 			if (streq(c->name, t->name)) {
-				dbg("    skipping template; name same as current connection");
+				dbg("    skipping; name same as current connection");
 				continue;
 			}
 			/* require initiator's subnet <= T; why? */
 			if (!subnetinsubnet(&c->spd.that.client, &t->spd.that.client)) {
-				dbg("    skipping template; current connection's initiator subnet is not <= template");
+				dbg("    skipping; current connection's initiator subnet is not <= template");
 				continue;
 			}
 			/* require responder address match; why? */
 			if (!sameaddr(&c->spd.this.client.addr, &t->spd.this.client.addr)) {
-				dbg("    skipping template; responder addresses don't match");
+				dbg("    skipping; responder addresses don't match");
 				continue;
 			}
 
@@ -942,11 +955,12 @@ bool v2_process_ts_request(struct child_sa *child,
 			best_spd_route = &c->spd;
 			break;
 		}
+	}
 
-		if (best_spd_route == NULL) {
-			dbg("nothing to instantiate from other group templates either");
-			return false;
-		}
+
+	if (best_spd_route == NULL) {
+		dbg("giving up");
+		return false;
 	}
 
 	/*
