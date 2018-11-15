@@ -7,6 +7,7 @@ ifconfig eth0 192.1.3.210 netmask 255.255.255.0
 route add default gw 192.1.3.254
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
+ipsec whack --impair suppress-retransmits
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 # should not fail to ping
