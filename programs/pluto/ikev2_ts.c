@@ -374,11 +374,12 @@ static bool v2_parse_tss(const struct msg_digest *md,
  * protocol (ts_proto).
  */
 
-static int ikev2_match_protocol(const struct end *end,
-				const struct traffic_selector *ts,
-				enum fit fit,
-				const char *which, int index)
+static int score_protocol(const struct end *end,
+			  const struct traffic_selectors *tss,
+			  enum fit fit,
+			  const char *which, unsigned index)
 {
+	const struct traffic_selector *ts = &tss->ts[index];
 	int f = 0;	/* strength of match */
 
 	switch (fit) {
@@ -401,7 +402,7 @@ static int ikev2_match_protocol(const struct end *end,
 		bad_case(fit);
 	}
 	LSWDBGP(DBG_MASK, buf) {
-		lswlogf(buf, MATCH_PREFIX "match end->protocol=%s%d %s %s[%d].ipprotoid=%s%d: ",
+		lswlogf(buf, MATCH_PREFIX "match end->protocol=%s%d %s %s[%u].ipprotoid=%s%d: ",
 			end->protocol == 0 ? "*" : "", end->protocol,
 			fit_string(fit),
 			which, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid);
@@ -415,51 +416,86 @@ static int ikev2_match_protocol(const struct end *end,
 }
 
 /*
- * Check if our policy's port (port) matches
- * the Traffic Selector port range (ts.startport to ts.endport)
- * Note port == 0 means port range 0 to 65535.
- * If superset_ok, fit ts port range to our port range is OK (responder fit)
- * If subset_ok, fit our port range to ts port range is OK (initiator fit).
- * Returns 0 if no match; otherwise number of ports within match
+ * Narrow the END/TS ports according to FIT.
+ *
+ * Returns 0 (all ports), a specific port number, or -1 (no luck).
+ *
+ * Since 'struct end' only describes all-ports or a single port; only
+ * narrow to that.
  */
-static int ikev2_match_port_range(const struct end *end,
-				  const struct traffic_selector *ts,
-				  enum fit fit,
-				  const char *which, int index)
+
+static int narrow_port(const struct end *end,
+		       const struct traffic_selectors *tss,
+		       enum fit fit,
+		       const char *which, unsigned index)
 {
-	uint16_t end_low = end->port;
-	uint16_t end_high = end->port == 0 ? 65535 : end->port;
-	int f = 0;	/* strength of match */
+	passert(index < tss->nr);
+	const struct traffic_selector *ts = &tss->ts[index];
+
+	int end_low = end->port;
+	int end_high = end->port == 0 ? 65535 : end->port;
+	int port = -1;
 
 	switch (fit) {
 	case END_EQUALS_TS:
-		if (end_low == ts->startport && end_high == ts->endport) {
-			f = 1 + (end_high - end_low);
+		if (end_low == ts->startport && ts->endport == end_high) {
+			/* end=ts=0-65535 || end=ts=N-N */
+			port = end_low;
 		}
 		break;
 	case END_NARROWER_THAN_TS:
-		if (end_low >= ts->startport && end_high <= ts->endport) {
-			f = 1 + (end_high - end_low);
+		if (ts->startport <= end_low && end_high <= ts->endport) {
+			/* end=ts=0-65535 || ts=N<=end<=M */
+			port = end_low;
 		}
 		break;
 	case END_WIDER_THAN_TS:
-		if (end_low <= ts->startport && end_high >= ts->endport) {
-			f = 1 + (ts->endport - ts->startport);
+		if (end_low < ts->startport && ts->endport < end_high &&
+		    ts->startport == ts->endport) {
+			/*ts=0<N-N<65535*/
+			port = ts->startport;
+		} else if (end_low == ts->startport && ts->endport == end_high) {
+			/* end=ts=0-65535 || end=ts=N-N */
+			port = ts->startport;
 		}
 		break;
 	default:
 		bad_case(fit);
 	}
-	LSWDBGP(DBG_MASK, buf) {
-		lswlogf(buf, MATCH_PREFIX "match port end->port=%u..%u %s %s[%d].{start,end}port=%u..%u: ",
-			end_low, end_high,
-			fit_string(fit),
-			which, index, ts->startport, ts->endport);
-		if (f > 0) {
-			lswlogf(buf, "YES fitness %d", f);
-		} else {
-			lswlogf(buf, "NO");
-		}
+	dbg(MATCH_PREFIX "narrow port end=%u..%u %s %s[%u]=%u..%u: %d",
+	    end_low, end_high,
+	    fit_string(fit),
+	    which, index, ts->startport, ts->endport,
+	    port);
+	return port;
+}
+
+/*
+ * Assign a score to the narrowed port, rationale for score lost in
+ * time?
+ */
+
+static int score_narrow_port(const struct end *end,
+			     const struct traffic_selectors *tss,
+			     enum fit fit,
+			     const char *which, unsigned index)
+{
+	int f;	/* strength of match */
+
+	int port = narrow_port(end, tss, fit, which, index);
+	if (port > 0) {
+		f = 1;
+	} else if (port == 0) {
+		f = 65536; /* from 1 + 65535-0 */
+	} else {
+		f = 0;
+	}
+	if (f > 0) {
+		dbg(MATCH_PREFIX "  %s[%u] port match: YES fitness %d",
+		    which, index, f);
+	} else {
+		dbg(MATCH_PREFIX "  %s[%u] port match: NO",
+		    which, index);
 	}
 	return f;
 }
@@ -477,11 +513,12 @@ static int ikev2_match_port_range(const struct end *end,
  * XXX: what exactly is CIDR?
  */
 
-static int match_address_range(const struct end *end,
-			       const struct traffic_selector *ts,
+static int score_address_range(const struct end *end,
+			       const struct traffic_selectors *tss,
 			       enum fit fit,
-			       const char *which, int index)
+			       const char *which, unsigned index)
 {
+	const struct traffic_selector *ts = &tss->ts[index];
 	/*
 	 * Pre-compute possible fit --- sum of bits gives how good a
 	 * fit this is.
@@ -563,10 +600,11 @@ struct score {
 };
 
 static struct score score_end(const struct end *end,
-			      const struct traffic_selector *ts,
+			      const struct traffic_selectors *tss,
 			      enum fit fit,
-			      const char *what, int index)
+			      const char *what, unsigned index)
 {
+	const struct traffic_selector *ts = &tss->ts[index];
 	DBG(DBG_CONTROLMORE,
 	    char ts_net[RANGETOT_BUF];
 	    rangetot(&ts->net, 0, ts_net, sizeof(ts_net));
@@ -578,15 +616,15 @@ static struct score score_end(const struct end *end,
 		    ts->endport));
 
 	struct score score = { .ok = false, };
-	score.address = match_address_range(end, ts, fit, what, index);
+	score.address = score_address_range(end, tss, fit, what, index);
 	if (score.address <= 0) {
 		return score;
 	}
-	score.port = ikev2_match_port_range(end, ts, fit, what, index);
+	score.port = score_narrow_port(end, tss, fit, what, index);
 	if (score.port <= 0) {
 		return score;
 	}
-	score.protocol = ikev2_match_protocol(end, ts, fit, what, index);
+	score.protocol = score_protocol(end, tss, fit, what, index);
 	if (score.protocol <= 0) {
 		return score;
 	}
@@ -636,19 +674,19 @@ static struct best_score score_ends(enum fit fit,
 	struct best_score best_score = NO_SCORE;
 
 	/* compare tsi/r array to this/that, evaluating how well it fits */
-	for (unsigned tsi_ni = 0; tsi_ni < tsi->nr; tsi_ni++) {
-		const struct traffic_selector *tni = &tsi->ts[tsi_ni];
+	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
+		const struct traffic_selector *tni = &tsi->ts[tsi_n];
 
 		/* choice hardwired! */
-		struct score score_i = score_end(ends->i, tni, fit, "TSi", tsi_ni);
+		struct score score_i = score_end(ends->i, tsi, fit, "TSi", tsi_n);
 		if (!score_i.ok) {
 			continue;
 		}
 
-		for (unsigned tsr_ni = 0; tsr_ni < tsr->nr; tsr_ni++) {
-			const struct traffic_selector *tnr = &tsr->ts[tsr_ni];
+		for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
+			const struct traffic_selector *tnr = &tsr->ts[tsr_n];
 
-			struct score score_r = score_end(ends->r, tnr, fit, "TSr", tsr_ni);
+			struct score score_r = score_end(ends->r, tsr, fit, "TSr", tsr_n);
 			if (!score_r.ok) {
 				continue;
 			}
@@ -669,7 +707,7 @@ static struct best_score score_ends(enum fit fit,
 			if (score_gt(&score, &best_score)) {
 				best_score = score;
 				DBGF(DBG_MASK, "best fit so far: TSi[%d] TSr[%d]",
-				     tsi_ni, tsr_ni);
+				     tsi_n, tsr_n);
 			}
 		}
 	}
