@@ -55,6 +55,15 @@ void fill_ike_initiator_spi(struct ike_sa *ike)
 	} while (is_zero_cookie(ike->sa.st_icookie)); /* probably never loops */
 }
 
+void ikev2_fill_ike_rekey_initiator_spi(uint8_t spi[IKE_SA_SPI_SIZE])
+{
+	do {
+		/* not sizeof(spi) as a pointer */
+		get_rnd_bytes(spi, IKE_SA_SPI_SIZE);
+	} while (is_zero_cookie(spi)); /* probably never loops */
+}
+
+
 /*
  * Generate the IKE Responder's SPI.
  *

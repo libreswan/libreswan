@@ -47,6 +47,7 @@ bool is_zero_cookie(const uint8_t ike_spi[IKE_SA_SPI_SIZE]); /* use ike_spi_is_z
  */
 
 void fill_ike_initiator_spi(struct ike_sa *ike);
+void ikev2_fill_ike_rekey_initiator_spi(uint8_t spi[IKE_SA_SPI_SIZE]);
 void fill_ike_responder_spi(struct ike_sa *ike, const ip_address *addr);
 
 void refresh_ike_spi_secret(void);

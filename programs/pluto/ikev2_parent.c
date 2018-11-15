@@ -5660,7 +5660,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 	} else {
 		st = ikev2_duplicate_state(ike, IKE_SA, SA_INITIATOR);
 		st->st_oakley = ike->sa.st_oakley;
-		fill_ike_initiator_spi(ike_sa(st));
+		ikev2_fill_ike_rekey_initiator_spi(st->st_icookie);
 		st->st_ike_pred = ike->sa.st_serialno;
 	}
 
