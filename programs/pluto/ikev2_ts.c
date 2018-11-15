@@ -847,6 +847,23 @@ bool v2_process_ts_request(struct child_sa *child,
 		dbg("  did not find a better connection using host pair");
 	}
 
+#define CONNECTION_POLICIES (POLICY_NEGO_PASS |				\
+			     POLICY_DONT_REKEY |			\
+			     POLICY_REAUTH |				\
+			     POLICY_OPPORTUNISTIC |			\
+			     POLICY_GROUP |				\
+			     POLICY_GROUTED |				\
+			     POLICY_GROUPINSTANCE |			\
+			     POLICY_UP |				\
+			     POLICY_XAUTH |				\
+			     POLICY_MODECFG_PULL |			\
+			     POLICY_AGGRESSIVE |			\
+			     POLICY_OVERLAPIP |				\
+			     POLICY_IKEV2_ALLOW_NARROWING)
+
+	/*
+	 * Try instantiating something better.
+	 */
 	if (best_spd_route == NULL && c->kind != CK_INSTANCE) {
 		/*
 		 * Don't try to look for something else to
@@ -865,37 +882,21 @@ bool v2_process_ts_request(struct child_sa *child,
 		pexpect(c->kind == CK_PERMANENT);
 		dbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE",
 		    enum_name(&connection_kind_names, c->kind), c->name);
-	} else if (best_spd_route == NULL) {
+	} else if (best_spd_route == NULL && (c->policy & POLICY_GROUPINSTANCE)) {
 		/*
+		 * When current connection is a group instance, only
+		 * consider other group instances.
+		 *
 		 * Rather than overwrite the current INSTANCE; would
 		 * it be better to instantiate a new instance, and
 		 * then replace it?  Would also address the above.
 		 */
 		pexpect(c->kind == CK_INSTANCE);
-		LSWDBGP(DBG_MASK, buf) {
-			lswlogf(buf, "can the current %s connection \"%s\"",
-				enum_name(&connection_kind_names, c->kind), c->name);
-			if (c->foodgroup != NULL) {
-				lswlogf(buf, "; food-group: \"%s\"", c->foodgroup);
-			}
-#define BP_MASK (POLICY_NEGO_PASS |					\
-		 POLICY_DONT_REKEY |					\
-		 POLICY_REAUTH |					\
-		 POLICY_OPPORTUNISTIC |					\
-		 POLICY_GROUP |						\
-		 POLICY_GROUTED |					\
-		 POLICY_GROUPINSTANCE |					\
-		 POLICY_UP |						\
-		 POLICY_XAUTH |						\
-		 POLICY_MODECFG_PULL |					\
-		 POLICY_AGGRESSIVE |					\
-		 POLICY_OVERLAPIP |					\
-		 POLICY_IKEV2_ALLOW_NARROWING)
-			lswlogf(buf, "; %s", prettypolicy(c->policy & BP_MASK));
-			lswlogs(buf, " be overwritten with a better instantiation?");
-		}
+		pexpect(c->foodgroup != NULL);
 		/* since an SPD_ROUTE wasn't found */
 		passert(best_connection == c);
+		dbg("looking to instantiate a better connection than \"%s\" with food group '%s' and policy %s",
+		    c->name, c->foodgroup, prettypolicy(c->policy & CONNECTION_POLICIES));
 
 		for (struct connection *t = connections; t != NULL; t = t->ac_next) {
 			/* require a template */
@@ -903,12 +904,12 @@ bool v2_process_ts_request(struct child_sa *child,
 				continue;
 			}
 			LSWDBGP(DBG_MASK, buf) {
-				lswlogf(buf, "  investigating %s connection \"%s\"",
-					enum_name(&connection_kind_names, t->kind), t->name);
+				lswlogf(buf, "  investigating template \"%s\"",
+					t->name);
 				if (t->foodgroup != NULL) {
-					lswlogf(buf, "; food-group: \"%s\"", t->foodgroup);
+					lswlogf(buf, " food-group=\"%s\"", t->foodgroup);
 				}
-				lswlogf(buf, "; %s", prettypolicy(t->policy & BP_MASK));
+				lswlogf(buf, " policy=%s", prettypolicy(t->policy & CONNECTION_POLICIES));
 			}
 			/* XXX: why does this matter; does it imply t->foodgroup != NULL? */
 			if (!LIN(POLICY_GROUPINSTANCE, t->policy)) {
@@ -948,25 +949,41 @@ bool v2_process_ts_request(struct child_sa *child,
 			 *
 			 * XXX: parse_ts() checks that there is at
 			 * least one element, and the RFC says to go
-			 * out of your way to match the first TS[ir]
+			 * out of your way to match TS[ir][0]
 			 * as a pair.
 			 */
-			pexpect(tsi.nr == 1);
-			int t_sport =
-				tsi.ts[0].startport == tsi.ts[0].endport ? tsi.ts[0].startport :
-				tsi.ts[0].startport == 0 && tsi.ts[0].endport == 65535 ? 0 : -1;
-			pexpect(tsr.nr == 1);
-			int t_dport =
-				tsr.ts[0].startport == tsr.ts[0].endport ? tsr.ts[0].startport :
-				tsr.ts[0].startport == 0 && tsr.ts[0].endport == 65535 ? 0 : -1;
-
-			if (t_sport == -1 || t_dport == -1)
+			passert(tsi.nr >= 1);
+			int tsi_port = tsi.ts[0].startport;
+			if (tsi.ts[0].startport != tsi.ts[0].endport &&
+			    tsi.ts[0].startport != 0 && tsi.ts[0].endport != 65535) {
+				dbg("    skipping; unsupported TSi[0] port range %d-%d",
+				    tsi.ts[0].startport, tsi.ts[0].endport);
 				continue;
-
-			if ((t->spd.that.protocol != tsi.ts[0].ipprotoid) ||
-			    (c->spd.this.port != t_sport) ||
-			    (c->spd.that.port != t_dport))
+			}
+			passert(tsr.nr >= 1);
+			int tsr_port = tsr.ts[0].startport;
+			if (tsr.ts[0].startport != tsr.ts[0].endport &&
+			    tsr.ts[0].startport != 0 && tsr.ts[0].endport != 65535) {
+				dbg("    skipping; unsupported TSr[0] port range %d-%d",
+				    tsr.ts[0].startport, tsr.ts[0].endport);
 				continue;
+			}
+			pexpect(t->spd.this.protocol == t->spd.that.protocol);
+			if (t->spd.that.protocol != tsi.ts[0].ipprotoid ||
+			    t->spd.that.protocol != tsr.ts[0].ipprotoid) {
+				dbg("    skipping; TS[ir][0] has wrong protocol");
+				continue;
+			}
+			/*
+			 * XXX: is this test backwards?  Here "this"
+			 * is the responder while tsi_port is for the
+			 * initiator.
+			 */
+			if ((c->spd.this.port != tsi_port) ||
+			    (c->spd.that.port != tsr_port)) {
+				dbg("    skipping; ports do not match");
+				continue;
+			}
 
 			dbg("  overwriting connection of group instance for protoports");
 			passert(best_connection == c);
@@ -979,7 +996,6 @@ bool v2_process_ts_request(struct child_sa *child,
 			break;
 		}
 	}
-
 
 	if (best_spd_route == NULL) {
 		dbg("giving up");
