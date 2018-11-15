@@ -1723,11 +1723,9 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				 */
 				const struct oakley_group_desc *new_group = ikev2_get_dh_desc(sg.sg_group);
 				passert(new_group);
-				DBG(DBG_CONTROLMORE, {
-					DBG_log("Received unauthenticated INVALID_KE rejected our group %s suggesting group %s; resending with updated modp group",
-						st->st_oakley.ta_dh->common.name,
-						new_group->common.name);
-				});
+				libreswan_log("Received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",
+					      st->st_oakley.ta_dh->common.name,
+					      new_group->common.name);
 				st->st_oakley.ta_dh = new_group;
 				/* wipe our mismatched KE */
 				free_dh_secret(&st->st_dh_secret);
@@ -1746,14 +1744,14 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 						     st->st_oakley.ta_dh,
 						     ikev2_parent_outI1_continue);
 				/* let caller delete current MD */
+				/* XXX: shouldn't this be STF_SUSPEND?!? */
 				return STF_IGNORE;
 			} else {
-				DBG(DBG_CONTROLMORE, {
-					struct esb_buf esb;
-					DBG_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
-						enum_show_shortb(&oakley_group_names,
-								 sg.sg_group, &esb));
-				});
+				struct esb_buf esb;
+				libreswan_log("Discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
+					      st->st_oakley.ta_dh->common.name,
+					      enum_show_shortb(&oakley_group_names,
+							       sg.sg_group, &esb));
 				return STF_IGNORE;
 			}
 		}
