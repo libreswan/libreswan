@@ -764,7 +764,7 @@ static void quick_outI1_continue(struct state *st, struct msg_digest **mdp UNUSE
 	if (e == STF_INTERNAL_ERROR) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
-		       __FUNCTION__);
+		       __func__);
 	}
 }
 

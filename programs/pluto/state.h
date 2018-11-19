@@ -242,7 +242,7 @@ struct msg_digest *unsuspend_md(struct state *st);
 		passert((ST)->st_suspended_md == NULL);			\
 		(ST)->st_suspended_md = *(MDP);				\
 		*(MDP) = NULL; /* take ownership */			\
-		(ST)->st_suspended_md_func = __FUNCTION__;		\
+		(ST)->st_suspended_md_func = __func__;		\
 		(ST)->st_suspended_md_line = __LINE__;			\
 		passert(state_is_busy(ST));				\
 	}

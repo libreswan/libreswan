@@ -1164,7 +1164,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				     st, ORIGINAL_RESPONDER, st->st_oakley.ta_dh);
 
 		/* we are calculating in the background, so it doesn't count */
-		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__));
 		st->st_v1_offloaded_task_in_background = true;
 	}
 	return STF_OK;

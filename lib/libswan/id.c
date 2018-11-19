@@ -540,7 +540,7 @@ static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wild
 	dntoa(bbuf, ASN1_BUF_LEN, b);
 
 	DBG(DBG_CONTROL,
-	    DBG_log("%s A: %s, B: %s", __FUNCTION__, abuf, bbuf));
+	    DBG_log("%s A: %s, B: %s", __func__, abuf, bbuf));
 
 	CERTName *const a_name = CERT_AsciiToName(abuf);
 	CERTName *const b_name = CERT_AsciiToName(bbuf);
@@ -573,7 +573,7 @@ static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wild
 	CERT_DestroyName(b_name);
 	DBG(DBG_CONTROL,
 	    DBG_log("%s matched: %d, rdn_num: %d, wc %d",
-		    __FUNCTION__,
+		    __func__,
 		    matched,
 		    rdn_num,
 		    wildcards ? *wildcards : 0));
@@ -588,7 +588,7 @@ bool same_dn_any_order(chunk_t a, chunk_t b)
 	if (!ret) {
 		DBG(DBG_CONTROL, {
 			DBG_log("%s: not an exact match, now checking any RDN order",
-				 __FUNCTION__);
+				 __func__);
 			// DBG_dump_chunk("a", a);
 			// DBG_dump_chunk("b", b);
 		});
@@ -605,7 +605,7 @@ static bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards)
 	if (!ret) {
 		DBG(DBG_CONTROL,
 		    DBG_log("%s: not an exact match, now checking any RDN order with %d wildcards",
-				 __FUNCTION__, *wildcards));
+				 __func__, *wildcards));
 		/* recount wildcards */
 		*wildcards = 0;
 		ret = match_dn_unordered(a, b, wildcards);

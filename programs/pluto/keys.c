@@ -1351,8 +1351,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 			break;
 		}
 		default:
-			DBGF(DBG_CONTROL, "ignoring key with unsupported alg %d",
-			     key->alg);
+			dbg("ignoring key with unsupported alg %d", key->alg);
 		}
 		p = p->next;
 	}
@@ -1376,7 +1375,7 @@ err_t load_nss_cert_secret(CERTCertificate *cert)
 static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t buflen)
 {
 	if (pubkey->u.rsa.n.ptr == NULL) {
-		DBGF(DBG_CONTROL, "RSA pubkey with NULL modulus");
+		dbg("RSA pubkey with NULL modulus");
 		return FALSE;
 	}
 	SECItem modulus = {
@@ -1386,7 +1385,7 @@ static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t bu
 	};
 	SECItem *pubkey_ckaid = PK11_MakeIDFromPubKey(&modulus);
 	if (pubkey_ckaid == NULL) {
-		DBGF(DBG_CONTROL, "RSA pubkey incomputable CKAID");
+		dbg("RSA pubkey incomputable CKAID");
 		return FALSE;
 	}
 	LSWDBGP(DBG_CONTROL, buf) {
@@ -1421,7 +1420,7 @@ struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid)
 		switch (key->alg) {
 		case PUBKEY_ALG_RSA: {
 			if (rsa_pubkey_ckaid_matches(key, bin, binlen)) {
-				DBGF(DBG_CONTROL, "ckaid matching pubkey");
+				dbg("ckaid matching pubkey");
 				pfree(bin);
 				return key;
 			}

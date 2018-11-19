@@ -1485,7 +1485,7 @@ static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 	if (pubk == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: should not happen: cert public key not found [%d]",
-		       __FUNCTION__, PR_GetError());
+		       __func__, PR_GetError());
 		return "NSS: cert public key not found";
 	}
 
@@ -1504,7 +1504,7 @@ static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 	if (certCKAID == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: no key ID - slot or DB error [%d]",
-		       __FUNCTION__, PR_GetError());
+		       __func__, PR_GetError());
 		ugh = "NSS: key ID not found";
 		goto out;
 	}
@@ -1556,7 +1556,7 @@ static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 	if (pubk == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: should not happen: cert public key not found [%d]",
-		       __FUNCTION__, PR_GetError());
+		       __func__, PR_GetError());
 		return "NSS: cert public key not found";
 	}
 
@@ -1575,7 +1575,7 @@ static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 	if (certCKAID == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: no key ID - slot or DB error [%d]",
-		       __FUNCTION__, PR_GetError());
+		       __func__, PR_GetError());
 		ugh = "NSS: key ID not found";
 		goto out;
 	}

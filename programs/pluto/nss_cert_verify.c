@@ -70,8 +70,8 @@ static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 	if (handle == NULL || cert == NULL)
 		return false;
 
-	DBGF(DBG_X509, "%s : looking for a CRL issued by %s",
-	     __FUNCTION__, cert->issuerName);
+	dbg("%s: looking for a CRL issued by %s",
+	    __func__, cert->issuerName);
 
 	/*
 	 * Use SEC_LookupCrls method instead of SEC_FindCrlByName.
@@ -93,7 +93,7 @@ static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 				SECITEM_ItemsAreEqual(&cert->derIssuer,
 						 &crl_node->crl->crl.derName)) {
 			crl = crl_node->crl;
-			DBGF(DBG_X509, "%s : CRL found", __FUNCTION__);
+			DBGF(DBG_X509, "%s : CRL found", __func__);
 			break;
 		}
 	}

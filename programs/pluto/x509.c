@@ -212,7 +212,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		if (a.ptr != NULL) {
 			char abuf[ASN1_BUF_LEN];
 			dntoa(abuf, ASN1_BUF_LEN, a);
-	    		DBG_log("%s: trustee A = '%s'", __FUNCTION__, abuf);
+	    		DBG_log("%s: trustee A = '%s'", __func__, abuf);
 		}
 	});
 
@@ -220,7 +220,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		if (b.ptr != NULL) {
 			char bbuf[ASN1_BUF_LEN];
 			dntoa(bbuf, ASN1_BUF_LEN, b);
-	    		DBG_log("%s: trustor B = '%s'", __FUNCTION__, bbuf);
+	    		DBG_log("%s: trustor B = '%s'", __func__, bbuf);
 		}
 	});
 
@@ -276,7 +276,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 			/* we have a match: exit the loop */
 			DBG(DBG_X509 | DBG_CONTROLMORE,
 			    DBG_log("%s: A is a subordinate of B",
-				    __FUNCTION__));
+				    __func__));
 			break;
 		}
 
@@ -288,7 +288,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 	DBG(DBG_X509 | DBG_CONTROLMORE,
 		DBG_log("%s: returning %s at pathlen %d",
-			__FUNCTION__,
+			__func__,
 			match ? "trusted" : "untrusted",
 			*pathlen));
 
@@ -463,7 +463,7 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 				alloc_thing(generalName_t,
 					    "get_pluto_gn_from_nss_cert: converted gn");
 			DBG(DBG_X509, DBG_log("%s: allocated pluto_gn %p",
-						__FUNCTION__, pluto_gn));
+						__func__, pluto_gn));
 			same_nss_gn_as_pluto_gn(cur_nss_gn, pluto_gn);
 			pluto_gn->next = pgn_list;
 			pgn_list = pluto_gn;
@@ -644,7 +644,7 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 				       CERTCertificate *cert)
 {
 	if (dn == NULL) {
-		DBG(DBG_X509, DBG_log("%s invalid use", __FUNCTION__));
+		DBG(DBG_X509, DBG_log("%s invalid use", __func__));
 		return FALSE;
 	}
 
