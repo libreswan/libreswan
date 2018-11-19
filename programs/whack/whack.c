@@ -2191,6 +2191,15 @@ int main(int argc, char **argv)
 		break;
 	}
 
+	/* fixup old to new style IKEv1/IKEv2 settings */
+	if (msg.policy & POLICY_IKEV2_ALLOW) {
+		/* IKEv2 now always has ALLOW+PROPOSE */
+		msg.policy |= POLICY_IKEV2_PROPOSE;
+
+		if (msg.policy & POLICY_IKEV1_ALLOW) {
+			diag("connection can no longer have --ikev1-allow and --ikev2-allow");
+		}
+	}
 
 	if (oppo_dport != 0)
 		setportof(htons(oppo_dport), &msg.oppo_peer_client);
@@ -2267,11 +2276,10 @@ int main(int argc, char **argv)
 				diag("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
 
 			/*
-			 * If neither v1 nor v2, default to v1
-			 * (backward compatibility)
+			 * If neither v1 nor v2, default to v2
 			 */
 			if (!(msg.policy & POLICY_IKEV2_MASK))
-				msg.policy |= POLICY_IKEV1_ALLOW;
+				msg.policy |= POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
 
 			/*
 			 * ??? this test can never fail:
