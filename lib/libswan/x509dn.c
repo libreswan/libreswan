@@ -244,7 +244,7 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
 	case ASN1_BMPSTRING:
 		break;
 	default:
-		DBGF(DBG_X509, "unexpected ASN1 string type 0x%x", *val_ty);
+		dbg("unexpected ASN1 string type 0x%x", *val_ty);
 		return "unexpected ASN1 string type";
 	}
 
@@ -403,7 +403,7 @@ int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
  */
 err_t atodn(const char *src, chunk_t *dn)
 {
-	DBGF(DBG_X509, "ASCII to DN <= \"%s\"", src);
+	dbg("ASCII to DN <= \"%s\"", src);
 
 	/* stack of unfilled lengths */
 	unsigned char *(patchpoint[5]);	/* only 4 are actually needed */
@@ -462,7 +462,7 @@ err_t atodn(const char *src, chunk_t *dn)
 
 		for (op = x501rdns; ; op++) {
 			if (op == &x501rdns[elemsof(x501rdns)]) {
-				DBGF(DBG_X509, "unknown OID: \"%.*s\"",
+				dbg("unknown OID: \"%.*s\"",
 					(int)ol, src);
 				return "unknown OID in ID_DER_ASN1_DN";
 			}
@@ -567,13 +567,13 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 	{
 		err_t ua = init_rdn(a, &rdn_a, &attribute_a, &more_a);
 		if (ua != NULL) {
-			DBGF(DBG_X509, "match_dn bad a: %s", ua);
+			dbg("match_dn bad a: %s", ua);
 			return FALSE;
 		}
 
 		err_t ub = init_rdn(b, &rdn_b, &attribute_b, &more_b);
 		if (ub != NULL) {
-			DBGF(DBG_X509, "match_dn bad b: %s", ub);
+			dbg("match_dn bad b: %s", ub);
 			return FALSE;
 		}
 	}
@@ -592,14 +592,14 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			err_t ua = get_next_rdn(&rdn_a, &attribute_a, &oid_a,
 				 &type_a, &value_a, &more_a);
 			if (ua != NULL) {
-				DBGF(DBG_X509, "match_dn bad a[%d]: %s", n, ua);
+				dbg("match_dn bad a[%d]: %s", n, ua);
 				return FALSE;
 			}
 
 			err_t ub = get_next_rdn(&rdn_b, &attribute_b, &oid_b,
 				 &type_b, &value_b, &more_b);
 			if (ub != NULL) {
-				DBGF(DBG_X509, "match_dn bad b[%d]: %s", n, ub);
+				dbg("match_dn bad b[%d]: %s", n, ub);
 				return FALSE;
 			}
 		}

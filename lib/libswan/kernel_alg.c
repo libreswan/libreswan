@@ -48,7 +48,7 @@ static size_t encrypt_num = 0;
  */
 void kernel_alg_init(void)
 {
-	DBGF(DBG_KERNEL, "kernel_alg_init()");
+	dbg("kernel_alg_init()");
 	/* ??? do these zero calls do anything useful? */
 	zero(&integ_by_fqn);
 	zero(&encrypt_by_fqn);
@@ -60,16 +60,15 @@ void kernel_alg_init(void)
  */
 
 #define ADD(ALG, DESC)							\
-	DBGF(DBG_KERNEL, "adding %s to kernel algorithm db",		\
+	dbg("adding %s to kernel algorithm db",				\
 	     alg->common.fqn);						\
 	size_t i;							\
 	for (i = 0; i < DESC##_num; i++) {				\
 		int cmp = strcmp(DESC##_by_fqn[i]->common.fqn,		\
 				 alg->common.fqn);			\
 		if (cmp == 0) {						\
-			DBGF(DBG_KERNEL,				\
-			     "dropping %s kernel algorithm db duplicate found at %zu", \
-			     alg->common.fqn, i);			\
+			dbg("dropping %s kernel algorithm db duplicate found at %zu", \
+			    alg->common.fqn, i);			\
 			return;						\
 		} else if (cmp > 0) {					\
 			break; /* insertion point found */		\
