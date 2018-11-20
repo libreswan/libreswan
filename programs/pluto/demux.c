@@ -570,6 +570,42 @@ void schedule_md_event(const char *name, struct msg_digest *md)
 }
 
 /*
+ * Map the IKEv2 MSG_R bit onto the ENUM message_role.
+ *
+ * Several reasons:
+ *
+ * - makes passing a role parameter clearer vis:
+ *     foo(true) VS foo(MESSAGE_RESPONSE)
+ *
+ * - never zero (and never matches other roles) so accidental value
+ *   less likely
+ *
+ * - encourages the coding style making it easier to find where
+     REQUEST / RESPONSE code lives:
+ *
+ *   switch(role) {
+ *   case MESSAGE_REQUEST: ...; break;
+ *   case MESSAGE_RESPONSE: ...; break;
+ *   default: bad_case(role);
+ *   }
+ */
+enum message_role msg_role(const struct msg_digest *md)
+{
+	/*
+	 * Only IKEv2 - short of parsing the payload contents it
+	 * probably isn't possible to determine if an IKEv1 message is
+	 * a request or response.
+	 */
+	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
+	passert(vmaj == IKEv2_MAJOR_VERSION);
+	if ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0) {
+		return MESSAGE_RESPONSE;
+	} else {
+		return MESSAGE_REQUEST;
+	}
+}
+
+/*
  * cisco_stringify()
  *
  * Auxiliary function for modecfg_inR1()

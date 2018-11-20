@@ -87,8 +87,8 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 		update_state_connection(cst, c);
 	} else {
 		cst = ikev2_duplicate_state(pexpect_ike_sa(md->st), IPSEC_SA,
-					    v2_msg_role(md) == MESSAGE_REQUEST ? SA_RESPONDER :
-					    v2_msg_role(md) == MESSAGE_RESPONSE ? SA_INITIATOR :
+					    msg_role(md) == MESSAGE_REQUEST ? SA_RESPONDER :
+					    msg_role(md) == MESSAGE_RESPONSE ? SA_INITIATOR :
 					    0);
 		cst->st_connection = c;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */

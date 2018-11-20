@@ -39,7 +39,6 @@
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
-#include "ikev2.h"	/* for v2_msg_role() */
 
 bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
 				const char *what)

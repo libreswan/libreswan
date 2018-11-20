@@ -38,7 +38,6 @@
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
-#include "ikev2.h"	/* for v2_msg_role() */
 #include "crypto.h"
 #include "send.h"	/* record_outbound_ike_message() */
 
@@ -143,7 +142,7 @@ pb_stream open_v2_message(pb_stream *reply,
 	 * been faking MDs), which is pretty messed up.
 	 */
 	if (md != NULL) {
-		switch (v2_msg_role(md)) {
+		switch (msg_role(md)) {
 		case MESSAGE_REQUEST:
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
 			break;
@@ -151,7 +150,7 @@ pb_stream open_v2_message(pb_stream *reply,
 			PEXPECT_LOG("trying to respond to a message response%s", "");
 			return empty_pbs;
 		default:
-			bad_case(v2_msg_role(md));
+			bad_case(msg_role(md));
 		}
 	}
 

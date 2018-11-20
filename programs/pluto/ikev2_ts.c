@@ -30,7 +30,6 @@
 #include "demux.h"
 #include "virtual.h"
 #include "hostpair.h"
-#include "ikev2.h"		/* for v2_msg_role() */
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -724,7 +723,7 @@ static struct best_score score_ends(enum fit fit,
 bool v2_process_ts_request(struct child_sa *child,
 			   const struct msg_digest *md)
 {
-	passert(v2_msg_role(md) == MESSAGE_REQUEST);
+	passert(msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 
 	/*
@@ -1072,7 +1071,7 @@ bool v2_process_ts_response(struct child_sa *child,
 			    struct msg_digest *md)
 {
 	passert(child->sa.st_sa_role == SA_INITIATOR);
-	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
+	passert(msg_role(md) == MESSAGE_RESPONSE);
 
 	struct connection *c = child->sa.st_connection;
 
