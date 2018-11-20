@@ -920,21 +920,21 @@ bool v2_process_ts_request(struct child_sa *child,
 		pexpect(c->kind == CK_PERMANENT);
 		dbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE",
 		    enum_name(&connection_kind_names, c->kind), c->name);
-	} else if (best_spd_route == NULL && (c->policy & POLICY_GROUPINSTANCE)) {
+	} else if (best_spd_route == NULL &&
+		   ((c->policy & POLICY_GROUPINSTANCE) ||
+		    c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		/*
-		 * When current connection is a group instance, only
-		 * consider other group instances.
+		 * Is there something better than the current
+		 * connection?
 		 *
 		 * Rather than overwrite the current INSTANCE; would
 		 * it be better to instantiate a new instance, and
 		 * then replace it?  Would also address the above.
 		 */
 		pexpect(c->kind == CK_INSTANCE);
-		pexpect(c->foodgroup != NULL);
 		/* since an SPD_ROUTE wasn't found */
 		passert(best_connection == c);
-		dbg("looking to instantiate a better connection than \"%s\" with food group '%s' and policy %s",
-		    c->name, c->foodgroup, prettypolicy(c->policy & CONNECTION_POLICIES));
+		dbg("no best spd route; looking for a better template connection to instantiate");
 
 		for (struct connection *t = connections; t != NULL; t = t->ac_next) {
 			/* require a template */
@@ -942,29 +942,49 @@ bool v2_process_ts_request(struct child_sa *child,
 				continue;
 			}
 			LSWDBGP(DBG_MASK, buf) {
-				lswlogf(buf, "  investigating template \"%s\"",
+				lswlogf(buf, "  investigating template \"%s\";",
 					t->name);
 				if (t->foodgroup != NULL) {
 					lswlogf(buf, " food-group=\"%s\"", t->foodgroup);
 				}
 				lswlogf(buf, " policy=%s", prettypolicy(t->policy & CONNECTION_POLICIES));
 			}
-			/* XXX: why does this matter; does it imply t->foodgroup != NULL? */
-			if (!LIN(POLICY_GROUPINSTANCE, t->policy)) {
-				dbg("    skipping; not a group instance");
-				continue;
+
+			/*
+			 * Is it worth looking at the template.  XXX:
+			 * Are these two cases really mutually
+			 * exclusive?!?
+			 */
+			switch (c->policy & (POLICY_GROUPINSTANCE |
+					     POLICY_IKEV2_ALLOW_NARROWING)) {
+			case POLICY_GROUPINSTANCE:
+				/* XXX: why does this matter; does it imply t->foodgroup != NULL? */
+				if (!LIN(POLICY_GROUPINSTANCE, t->policy)) {
+					dbg("    skipping; not a group instance");
+					continue;
+				}
+				/* when OE, don't change food groups? */
+				if (!streq(c->foodgroup, t->foodgroup)) {
+					dbg("    skipping; wrong foodgroup name");
+					continue;
+				}
+				/* ??? why require current connection->name and t->name to be different */
+				/* XXX: don't re-instantiate the same connection template???? */
+				if (streq(c->name, t->name)) {
+					dbg("    skipping; name same as current connection");
+					continue;
+				}
+				break;
+			case POLICY_IKEV2_ALLOW_NARROWING:
+				if (!LIN(POLICY_IKEV2_ALLOW_NARROWING, t->policy)) {
+					dbg("    skipping; can not narrow");
+					continue;
+				}
+				break;
+			default:
+				bad_case(c->policy); /* not quite true */
 			}
-			/* when OE, don't change food groups? */
-			if (!streq(c->foodgroup, t->foodgroup)) {
-				dbg("    skipping; wrong foodgroup name");
-				continue;
-			}
-			/* ??? why require current connection->name and t->name to be different */
-			/* XXX: don't re-instantiate the same connection template???? */
-			if (streq(c->name, t->name)) {
-				dbg("    skipping; name same as current connection");
-				continue;
-			}
+
 			/* require initiator's subnet <= T; why? */
 			if (!subnetinsubnet(&c->spd.that.client, &t->spd.that.client)) {
 				dbg("    skipping; current connection's initiator subnet is not <= template");
@@ -976,58 +996,42 @@ bool v2_process_ts_request(struct child_sa *child,
 				continue;
 			}
 
-			/*
-			 * ??? this code seems to assume that tsi and
-			 * tsr contain exactly one element.  Any fewer
-			 * and the code references an uninitialized
-			 * value.  Any more would be ignored, and
-			 * that's surely wrong.  It would be nice if
-			 * the purpose of this block of code were
-			 * documented.
-			 *
-			 * XXX: parse_ts() checks that there is at
-			 * least one element, and the RFC says to go
-			 * out of your way to match TS[ir][0]
-			 * as a pair.
-			 */
+			/* require a valid narrowed port? */
+			enum fit port_fit;
+			switch (c->policy & (POLICY_GROUPINSTANCE |
+					     POLICY_IKEV2_ALLOW_NARROWING)) {
+			case POLICY_GROUPINSTANCE:
+				/* exact match; XXX: 'cos that is what old code did */
+				port_fit = END_EQUALS_TS;
+				break;
+			case POLICY_IKEV2_ALLOW_NARROWING:
+				/* narrow END's port to TS port */
+				port_fit = END_WIDER_THAN_TS;
+				break;
+			default:
+				bad_case(c->policy);
+			}
 			passert(tsi.nr >= 1);
-			int tsi_port = tsi.ts[0].startport;
-			if (tsi.ts[0].startport != tsi.ts[0].endport &&
-			    tsi.ts[0].startport != 0 && tsi.ts[0].endport != 65535) {
-				dbg("    skipping; unsupported TSi[0] port range %d-%d",
-				    tsi.ts[0].startport, tsi.ts[0].endport);
+			int tsi_port = narrow_port(&t->spd.that, &tsi,
+						   port_fit, "TSi", 0);
+			if (tsi_port < 0) {
+				dbg("    skipping; TSi port too wide");
 				continue;
 			}
 			passert(tsr.nr >= 1);
-			int tsr_port = tsr.ts[0].startport;
-			if (tsr.ts[0].startport != tsr.ts[0].endport &&
-			    tsr.ts[0].startport != 0 && tsr.ts[0].endport != 65535) {
-				dbg("    skipping; unsupported TSr[0] port range %d-%d",
-				    tsr.ts[0].startport, tsr.ts[0].endport);
-				continue;
-			}
-			pexpect(t->spd.this.protocol == t->spd.that.protocol);
-			if (t->spd.that.protocol != tsi.ts[0].ipprotoid ||
-			    t->spd.that.protocol != tsr.ts[0].ipprotoid) {
-				dbg("    skipping; TS[ir][0] has wrong protocol");
-				continue;
-			}
-			/*
-			 * XXX: is this test backwards?  Here "this"
-			 * is the responder while tsi_port is for the
-			 * initiator.
-			 */
-			if ((c->spd.this.port != tsi_port) ||
-			    (c->spd.that.port != tsr_port)) {
-				dbg("    skipping; ports do not match");
+			int tsr_port = narrow_port(&t->spd.this, &tsr,
+						   port_fit, "TRi", 0);
+			if (tsr_port < 0) {
+				dbg("    skipping; TSr port too wide");
 				continue;
 			}
 
-			dbg("  overwriting connection of group instance for protoports");
+			dbg("  overwriting connection with instance for protoports");
 			passert(best_connection == c);
 			c->spd.that.protocol = t->spd.that.protocol;
-			c->spd.this.port = t->spd.this.port;
-			c->spd.that.port = t->spd.that.port;
+			/* this is responder */
+			c->spd.this.port = tsr_port;
+			c->spd.that.port = tsi_port;
 			pfreeany(c->name);
 			c->name = clone_str(t->name, "hidden switch template name update");
 			best_spd_route = &c->spd;
