@@ -15,6 +15,7 @@
  */
 
 #ifndef IKE_SPI_H
+#define IKE_SPI_H
 
 #include <stdint.h>
 #include <stdbool.h>

@@ -49,6 +49,7 @@
 #include "retransmit.h"
 #include "ikev2_ts.h"		/* for struct traffic_selector */
 #include "ip_subnet.h"
+#include "ike_spi.h"
 
 /* msgid_t defined in defs.h */
 
@@ -410,13 +411,15 @@ struct state {
 	/* symmetric stuff */
 
 	/* initiator stuff */
+	ike_spi_t st_ike_initiator_spi;
+#define st_icookie st_ike_initiator_spi.ike_spi
 	chunk_t st_gi;                          /* Initiator public value */
-	uint8_t st_icookie[COOKIE_SIZE];       /* Initiator Cookie */
 	chunk_t st_ni;                          /* Ni nonce */
 
 	/* responder stuff */
+	ike_spi_t st_ike_responder_spi;
+#define st_rcookie st_ike_responder_spi.ike_spi
 	chunk_t st_gr;                          /* Responder public value */
-	uint8_t st_rcookie[COOKIE_SIZE];       /* Responder Cookie */
 	chunk_t st_nr;                          /* Nr nonce */
 	chunk_t st_dcookie;                     /* DOS cookie of responder - v2 only */
 
