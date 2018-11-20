@@ -2007,7 +2007,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/* update state */
-	DBGF(DBG_MASK, "Message ID: received INIT response");
+	dbg("Message ID: received INIT response");
 	v2_msgid_update_counters(md->st, md);
 
 	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and
@@ -5573,7 +5573,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			pstats_ike_dpd_recv++;
 	}
 
-	DBGF(DBG_MASK, "Message ID: processing a informational");
+	dbg("Message ID: processing a informational");
 	v2_msgid_update_counters(md->st, md);
 	return STF_OK;
 }

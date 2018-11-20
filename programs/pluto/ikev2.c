@@ -1186,8 +1186,8 @@ static bool processed_retransmit(struct state *st,
 	 *
 	 * Beware of unsigned arrithmetic.
 	 */
-	DBGF(DBG_MASK, "#%lu st.st_msgid_lastrecv %d md.hdr.isa_msgid %08x",
-	     st->st_serialno, st->st_msgid_lastrecv, md->hdr.isa_msgid);
+	dbg("#%lu st.st_msgid_lastrecv %d md.hdr.isa_msgid %08x",
+	    st->st_serialno, st->st_msgid_lastrecv, md->hdr.isa_msgid);
 	if (st->st_msgid_lastrecv != v2_INVALID_MSGID &&
 	    st->st_msgid_lastrecv > md->hdr.isa_msgid) {
 		/* this is an OLD retransmit. we can't do anything */
@@ -1959,12 +1959,12 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 */
 		if (drop_new_exchanges()) {
 			/* only log for debug to prevent disk filling up */
-			DBGF(DBG_MASK, "pluto is overloaded with half-open IKE SAs; dropping new exchange");
+			dbg("pluto is overloaded with half-open IKE SAs; dropping new exchange");
 			return;
 		}
 		if (v2_reject_cookie(md, require_ddos_cookies())) {
 			/* only log for debug to prevent disk filling up */
-			DBGF(DBG_MASK, "pluto is overloaded and demanding cookies; dropping new exchange");
+			dbg("pluto is overloaded and demanding cookies; dropping new exchange");
 			return;
 		}
 	}
@@ -2003,8 +2003,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		}
 
 		md->st = st;
-		DBGF(DBG_MASK, "Message ID: why update IKE #%lu and not CHILD #%lu?",
-		     st->st_serialno, cst->st_serialno);
+		dbg("Message ID: why update IKE #%lu and not CHILD #%lu?",
+		    st->st_serialno, cst->st_serialno);
 		v2_msgid_update_counters(st, md);
 
 		/* switch from parent state to child state */
@@ -2362,7 +2362,7 @@ static void schedule_next_send(struct state *st)
 
 void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
 {
-	DBGF(DBG_MASK, "restarting Message ID of state #%lu", st->st_serialno);
+	dbg("restarting Message ID of state #%lu", st->st_serialno);
 	/* Ok? */
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
@@ -2406,7 +2406,7 @@ void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
 void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 {
 	if (st == NULL) {
-		DBGF(DBG_MASK, "Message ID: current processor deleted the state nothing to update");
+		dbg("Message ID: current processor deleted the state nothing to update");
 		return;
 	}
 	struct ike_sa *ike = ike_sa(st);
@@ -2650,14 +2650,14 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 
 	if (from_state == STATE_V2_REKEY_IKE_R ||
 	    from_state == STATE_V2_REKEY_IKE_I) {
-		DBGF(DBG_MASK, "Message ID: updating counters for #%lu before emancipating",
-		     md->st->st_serialno);
+		dbg("Message ID: updating counters for #%lu before emancipating",
+		    md->st->st_serialno);
 		v2_msgid_update_counters(md->st, md);
 		ikev2_child_emancipate(md);
 	} else  {
 		change_state(st, svm->next_state);
-		DBGF(DBG_MASK, "Message ID: updating counters for #%lu after switching state",
-		     md->st->st_serialno);
+		dbg("Message ID: updating counters for #%lu after switching state",
+		    md->st->st_serialno);
 		v2_msgid_update_counters(md->st, md);
 	}
 
@@ -3224,8 +3224,8 @@ struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_ms
 			}
 		}
 	};
-	DBGF(DBG_MASK, "no waiting child responder state matching pst #%lu msg id %u",
-	     ike->sa.st_serialno, st_msgid);
+	dbg("no waiting child responder state matching pst #%lu msg id %u",
+	    ike->sa.st_serialno, st_msgid);
 	return NULL;
 }
 
@@ -3267,7 +3267,7 @@ struct state *v2_child_sa_initiator_with_msgid(struct ike_sa *ike, msgid_t st_ms
 			}
 		}
 	};
-	DBGF(DBG_MASK, "no waiting child initiator state matching pst #%lu msg id %u",
-	     ike->sa.st_serialno, st_msgid);
+	dbg("no waiting child initiator state matching pst #%lu msg id %u",
+	    ike->sa.st_serialno, st_msgid);
 	return NULL;
 }

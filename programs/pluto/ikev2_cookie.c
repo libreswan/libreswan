@@ -88,7 +88,7 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 		 * If this were a DDOS, we cannot afford to log.  We
 		 * do log if we are debugging.
 		 */
-		DBGF(DBG_MASK, "Dropping message with insufficient length Nonce");
+		dbg("Dropping message with insufficient length Nonce");
 		return false;
 	}
 

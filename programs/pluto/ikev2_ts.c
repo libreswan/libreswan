@@ -271,8 +271,8 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			struct traffic_selectors *tss,
 			const char *which)
 {
-	DBGF(DBG_MASK, "%s: parsing %u traffic selectors",
-	     which, ts_pd->payload.v2ts.isat_num);
+	dbg("%s: parsing %u traffic selectors",
+	    which, ts_pd->payload.v2ts.isat_num);
 
 	if (ts_pd->payload.v2ts.isat_num == 0) {
 		libreswan_log("%s payload contains no entries when at least one is expected",
@@ -348,7 +348,7 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 		}
 	}
 
-	DBGF(DBG_MASK, "%s: parsed %d traffic selectors", which, tss->nr);
+	dbg("%s: parsed %d traffic selectors", which, tss->nr);
 	return true;
 }
 
@@ -706,8 +706,8 @@ static struct best_score score_ends(enum fit fit,
 			/* score >= best_score? */
 			if (score_gt(&score, &best_score)) {
 				best_score = score;
-				DBGF(DBG_MASK, "best fit so far: TSi[%d] TSr[%d]",
-				     tsi_n, tsr_n);
+				dbg("best fit so far: TSi[%d] TSr[%d]",
+				    tsi_n, tsr_n);
 			}
 		}
 	}

@@ -2371,8 +2371,8 @@ struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, cons
 				       ? c->v2_create_child_proposals_default_dh->common.fqn
 				       : "no-PFS");
 		const char *new_fqn = default_dh != NULL ? default_dh->common.fqn : "no-PFS";
-		DBGF(DBG_MASK, "create child proposal's DH changed from %s to %s, flushing",
-		     old_fqn, new_fqn);
+		dbg("create child proposal's DH changed from %s to %s, flushing",
+		    old_fqn, new_fqn);
 		free_ikev2_proposals(&c->v2_create_child_proposals);
 		c->v2_create_child_proposals_default_dh = default_dh;
 	}
