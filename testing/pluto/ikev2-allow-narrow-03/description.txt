@@ -1,8 +1,6 @@
 Basic pluto with IKEv2 on the initiator (west), and on the responder.
 
-However, this test checks to see if the responder rejects a single port
-when it is configured for all ports, even if narrowing=yes.
+However, this test checks to see if the responder accepts a single port
+when it is configured for all ports, when configured with narrowing=yes.
 
-The initiator asks for all protocols and a single ports. The responder only allows
-all protocols and all ports, and despite any narrowing=yes should reject the connection.
-
+This scenario is supported on version v3.28 and up.
