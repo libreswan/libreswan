@@ -58,21 +58,17 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
 		passert(st->st_ikev2);
 		passert(st->st_tpacket.ptr == NULL);
 		unsigned nr_frags = 0;
-		DBGF(DBG_CONTROL|DBG_RETRANSMITS,
-		     "sending fragments ...");
+		dbg("sending fragments ...");
 		for (struct v2_ike_tfrag *frag = st->st_v2_tfrags;
 		     frag != NULL; frag = frag->next) {
 			if (!send_chunk_using_state(st, where, frag->cipher)) {
-				DBGF(DBG_CONTROL|DBG_RETRANSMITS,
-				     "send of fragment %u failed",
-				     nr_frags);
+				dbg("send of fragment %u failed", nr_frags);
 				return false;
 			}
 			nr_frags++;
 
 		}
-		DBGF(DBG_CONTROL|DBG_RETRANSMITS,
-		     "sent %u fragments", nr_frags);
+		dbg("sent %u fragments", nr_frags);
 		return true;
 	} else {
 		return send_chunk_using_state(st, where, st->st_tpacket);

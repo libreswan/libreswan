@@ -216,8 +216,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 			     const struct trans_attrs *ta)
 {
 	if (!(c->policy & POLICY_ENCRYPT)) {
-		DBGF(DBG_PARSING,
-		     "ignoring ESP proposal as POLICY_ENCRYPT unset");
+		dbg("ignoring ESP proposal as POLICY_ENCRYPT unset");
 		return false;       /* try another */
 	}
 
@@ -234,7 +233,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 		 * because it was NULLed to force the proposal's
 		 * rejection.
 		 */
-		DBGF(DBG_PARSING,
+		dbg(
 		     "ignoring ESP proposal with NULLed or unknown encryption");
 		return false;       /* try another */
 	}
@@ -244,9 +243,8 @@ static bool ikev1_verify_esp(const struct connection *c,
 		 * will act as a wild card.  XXX: but is ALG_INFO ever
 		 * NULL?
 		 */
-		DBGF(DBG_KERNEL|DBG_PARSING,
-		     "ignoring ESP proposal with alg %s not present in kernel",
-		     ta->ta_encrypt->common.fqn);
+		dbg("ignoring ESP proposal with alg %s not present in kernel",
+		    ta->ta_encrypt->common.fqn);
 		return false;
 	}
 	if (!encrypt_has_key_bit_length(ta->ta_encrypt, ta->enckeylen)) {
@@ -271,7 +269,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 		 * NULL), a NULL here must indicate that integrity was
 		 * present but the lookup failed.
 		 */
-		DBGF(DBG_PARSING, "ignoring ESP proposal with unknown integrity");
+		dbg("ignoring ESP proposal with unknown integrity");
 		return false;       /* try another */
 	}
 	if (ta->ta_integ != &ike_alg_integ_none && !kernel_alg_integ_ok(ta->ta_integ)) {
@@ -284,9 +282,8 @@ static bool ikev1_verify_esp(const struct connection *c,
 		 * XXX: check for NONE comes from old code just
 		 * assumed NONE was supported.
 		 */
-		DBGF(DBG_KERNEL|DBG_PARSING,
-		     "ignoring ESP proposal with alg %s not present in kernel",
-		     ta->ta_integ->common.fqn);
+		dbg("ignoring ESP proposal with alg %s not present in kernel",
+		    ta->ta_integ->common.fqn);
 		return false;
 	}
 
@@ -306,7 +303,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 	}
 
 	if (c->alg_info_esp== NULL) {
-		DBGF(DBG_CONTROL, "ESP IPsec Transform verified unconditionally; no alg_info to check against");
+		dbg("ESP IPsec Transform verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
@@ -328,8 +325,7 @@ static bool ikev1_verify_ah(const struct connection *c,
 			    const struct trans_attrs *ta)
 {
 	if (!(c->policy & POLICY_AUTHENTICATE)) {
-		DBGF(DBG_PARSING,
-		     "ignoring AH proposal as POLICY_AUTHENTICATE unset");
+		dbg("ignoring AH proposal as POLICY_AUTHENTICATE unset");
 		return false;       /* try another */
 	}
 	if (ta->ta_encrypt != NULL) {

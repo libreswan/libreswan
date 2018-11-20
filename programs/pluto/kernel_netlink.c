@@ -264,7 +264,7 @@ static void init_netlink(void)
 	 * it supports.  OTOH, the query might happen before the
 	 * crypto module gets loaded.
 	 */
-	DBGF(DBG_KERNEL, "Hard-wiring algorithms");
+	dbg("Hard-wiring algorithms");
 	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
 	     algp != NULL; algp = next_encrypt_desc(algp)) {
 		const struct encrypt_desc *alg = *algp;

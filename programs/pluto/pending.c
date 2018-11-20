@@ -150,7 +150,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	 */
 	struct stat stst;
 	if (!fd_p(st->st_whack_sock)) {
-		DBGF(DBG_CONTROL, "%s: state #%lu has no whack fd",
+		dbg("%s: state #%lu has no whack fd",
 		     __func__, st->st_serialno);
 		zero(&stst);
 	} else if (fstat(st->st_whack_sock.fd, &stst) != 0) {
@@ -164,7 +164,7 @@ void release_pending_whacks(struct state *st, err_t story)
 		st->st_whack_sock = null_fd;
 		zero(&stst);
 	} else {
-		DBGF(DBG_CONTROL, "%s: state #%lu "PRI_FD" .st_dev=%lu .st_ino=%lu",
+		dbg("%s: state #%lu "PRI_FD" .st_dev=%lu .st_ino=%lu",
 		     __func__, st->st_serialno, PRI_fd(st->st_whack_sock),
 		     (unsigned long)stst.st_dev, (unsigned long)stst.st_ino);
 		release_whack(st);
@@ -206,11 +206,10 @@ void release_pending_whacks(struct state *st, err_t story)
 	if (pp == NULL)
 		return;
 	for (struct pending *p = *pp; p != NULL; p = p->next) {
-		DBGF(DBG_CONTROL,
-		     "%s: IKE SA #%lu "PRI_FD" has pending CHILD SA with socket "PRI_FD,
-		     __func__, p->isakmp_sa->st_serialno,
-		     PRI_fd(p->isakmp_sa->st_whack_sock),
-		     PRI_fd(p->whack_sock));
+		dbg("%s: IKE SA #%lu "PRI_FD" has pending CHILD SA with socket "PRI_FD,
+		    __func__, p->isakmp_sa->st_serialno,
+		    PRI_fd(p->isakmp_sa->st_whack_sock),
+		    PRI_fd(p->whack_sock));
 		if (p->isakmp_sa == st && fd_p(p->whack_sock)) {
 			if (!same_fd(&stst, p->whack_sock)) {
 				passert(!fd_p(whack_log_fd));

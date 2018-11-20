@@ -504,9 +504,9 @@ void initialize_new_state(struct state *st,
 void send_delete(struct state *st)
 {
 	if (IMPAIR(SEND_NO_DELETE)) {
-		DBGF(DBG_CONTROL, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		dbg("IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
 	} else {
-		DBGF(DBG_CONTROL, "#%lu send %s delete notification for %s",
+		dbg("#%lu send %s delete notification for %s",
 		     st->st_serialno, st->st_ikev2 ? "IKEv2": "IKEv1",
 		     st->st_state_name);
 		st->st_ikev2 ? send_v2_delete(st) : send_v1_delete(st);
@@ -543,10 +543,10 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
 
 		if (nat)
-			DBGF(DBG_NATT, "NAT-T: NAT Traversal detected - their IKE port is '%d'",
+			dbg("NAT-T: NAT Traversal detected - their IKE port is '%d'",
 			     c->spd.that.host_port);
 
-		DBGF(DBG_NATT, "NAT-T: encaps is '%s'",
+		dbg("NAT-T: encaps is '%s'",
 		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
 
 		lswlogf(buf, "%sESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",

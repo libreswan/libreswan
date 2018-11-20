@@ -195,7 +195,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		if (!ikev2_emit_sa_proposal(outpbs,
 					cst->st_accepted_esp_or_ah_proposal,
 					&local_spi)) {
-			DBGF(DBG_CONTROL, "problem emitting accepted proposal");
+			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}
 	}

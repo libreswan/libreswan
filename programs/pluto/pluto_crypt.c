@@ -332,7 +332,7 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 static void *pluto_crypto_helper_thread(void *arg)
 {
 	struct pluto_crypto_worker *w = arg;
-	DBGF(DBG_CONTROL, "starting up helper thread %d", w->pcw_helpernum);
+	dbg("starting up helper thread %d", w->pcw_helpernum);
 
 #ifdef HAVE_SECCOMP
 	switch (pluto_seccomp_mode) {
@@ -406,7 +406,7 @@ static void *pluto_crypto_helper_thread(void *arg)
 		pluto_event_now("sending helper answer", w->pcw_pcrc_serialno,
 				handle_helper_answer, cn);
 	}
-	DBGF(DBG_CONTROL, "shutting down helper thread %d", w->pcw_helpernum);
+	dbg("shutting down helper thread %d", w->pcw_helpernum);
 	return NULL;
 }
 

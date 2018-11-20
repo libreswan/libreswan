@@ -552,7 +552,7 @@ void add_pubkey_from_nss_cert(const struct id *keyid, CERTCertificate *cert)
 {
 	struct pubkey *pk = create_cert_subjectdn_pubkey(cert);
 	if (pk == NULL) {
-		DBGF(DBG_X509, "failed to create subjectdn_pubkey from cert");
+		dbg("failed to create subjectdn_pubkey from cert");
 		return;
 	}
 
@@ -819,7 +819,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 		if (find_fetch_dn(&fdn, c, end_cert)) {
 			add_crl_fetch_requests(crl_fetch_request(&fdn, end_cert_dp, NULL));
 		}
-		DBGF(DBG_X509, "releasing end_cert_dp sent to crl fetch");
+		dbg("releasing end_cert_dp sent to crl fetch");
 		free_generalNames(end_cert_dp, false/*shallow*/);
 	}
 #endif
@@ -860,7 +860,7 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 	}
 
 	/* accumulate the known certificates */
-	DBGF(DBG_X509, "checking for known CERT payloads");
+	dbg("checking for known CERT payloads");
 	struct cert_payload *certs = alloc_things(struct cert_payload,
 						  nr_cert_payloads,
 						  "cert payloads");
@@ -880,7 +880,7 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 			loglog(RC_LOG_SERIOUS, "ignoring certificate with unknown type %d",
 			       cert_type);
 		} else {
-			DBGF(DBG_X509, "saving certificate of type '%s' in %d",
+			dbg("saving certificate of type '%s' in %d",
 			     cert_name, nr_certs);
 			certs[nr_certs++] = (struct cert_payload) {
 				.type = cert_type,
@@ -893,12 +893,12 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 	/* Process the known certificates */
 	lsw_cert_ret ret = LSW_CERT_NONE;
 	if (nr_certs > 0) {
-		DBGF(DBG_X509, "CERT payloads found: %d; calling pluto_process_certs()",
+		dbg("CERT payloads found: %d; calling pluto_process_certs()",
 		     nr_certs);
 		ret = pluto_process_certs(st, certs, nr_certs);
 		switch (ret) {
 		case LSW_CERT_NONE:
-			DBGF(DBG_X509, "X509: all certs discarded");
+			dbg("X509: all certs discarded");
 			break;
 		case LSW_CERT_BAD:
 			libreswan_log("X509: Certificate rejected for this connection");
@@ -1633,7 +1633,7 @@ static void crl_detail_list(void)
 			crl_detail_to_whacklog(&crl_node->crl->crl);
 		}
 	}
-	DBGF(DBG_X509, "releasing crl list in %s", __func__);
+	dbg("releasing crl list in %s", __func__);
 	PORT_FreeArena(crl_list->arena, PR_FALSE);
 }
 

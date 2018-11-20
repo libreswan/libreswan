@@ -753,7 +753,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 	/* HASH_I or SIG_I out */
 	{
-		DBGF(DBG_EMITTING, "next payload chain: creating a fake payload for hashing identity");
+		dbg("next payload chain: creating a fake payload for hashing identity");
 
 		/* first build an ID payload as a raw material */
 		struct isakmp_ipsec_id id_hd;
@@ -873,7 +873,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 	/* Reconstruct the peer ID so the peer hash can be authenticated */
 	{
-		DBGF(DBG_EMITTING, "next payload chain: creating a fake payload for hashing identity");
+		dbg("next payload chain: creating a fake payload for hashing identity");
 
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;

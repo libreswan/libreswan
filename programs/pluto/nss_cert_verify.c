@@ -93,13 +93,13 @@ static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 				SECITEM_ItemsAreEqual(&cert->derIssuer,
 						 &crl_node->crl->crl.derName)) {
 			crl = crl_node->crl;
-			DBGF(DBG_X509, "%s : CRL found", __func__);
+			dbg("%s : CRL found", __func__);
 			break;
 		}
 	}
 
 	bool res = crl != NULL && crl_is_current(crl);
-	DBGF(DBG_X509, "releasing crl list in %s with result %s",
+	dbg("releasing crl list in %s with result %s",
 	     __func__, res ? "true" : "false");
 	PORT_FreeArena(crl_list->arena, PR_FALSE);
 	return res;
@@ -405,7 +405,7 @@ static bool import_der_cert(CERTCertDBHandle *handle,
 	 * problem?).
 	 */
 	if (CERT_IsRootDERCert(&der_cert)) {
-		DBGF(DBG_X509, "ignoring root certificate");
+		dbg("ignoring root certificate");
 		return true;
 	}
 
@@ -447,7 +447,7 @@ static bool import_der_cert(CERTCertDBHandle *handle,
 	}
 	CERTCertificate *cert = *chain;
 	PORT_Free(chain);
-	DBGF(DBG_X509, "decoded %s", cert->subjectName);
+	dbg("decoded %s", cert->subjectName);
 
 	/* extra verification */
 #ifdef FIPS_CHECK

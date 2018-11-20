@@ -333,9 +333,8 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 		struct db_sa *sadb;
 		lset_t pm = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 
-		DBGF(DBG_CONTROL,
-		     "empty esp_info, returning defaults for %s",
-		     bitnamesof(sa_policy_bit_names, pm));
+		dbg("empty esp_info, returning defaults for %s",
+		    bitnamesof(sa_policy_bit_names, pm));
 
 		sadb = &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT];
 

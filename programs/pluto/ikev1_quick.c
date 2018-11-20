@@ -934,7 +934,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		lset_t pm = st->st_policy & (POLICY_ENCRYPT |
 					     POLICY_AUTHENTICATE |
 					     can_do_IPcomp ? POLICY_COMPRESS : 0);
-		DBGF(DBG_CONTROL, "emitting quick defaults using policy %s",
+		dbg("emitting quick defaults using policy %s",
 		     bitnamesof(sa_policy_bit_names, pm));
 
 		if (!ikev1_out_sa(&rbody,

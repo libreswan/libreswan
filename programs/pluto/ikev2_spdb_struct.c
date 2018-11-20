@@ -1348,7 +1348,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 						      propnum, what);
 					continue;
 				} else if (exclude_transform_none) {
-					DBGF(DBG_CONTROL, "discarding INTEG=NONE");
+					dbg("discarding INTEG=NONE");
 					continue;
 				}
 			}
@@ -1363,7 +1363,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			 */
 			if (type == IKEv2_TRANS_TYPE_DH &&
 			    transform->id == OAKLEY_GROUP_NONE) {
-				DBGF(DBG_CONTROL, "discarding DH=NONE");
+				dbg("discarding DH=NONE");
 				continue;
 #if 0
 				if (IMPAIR(IKEv2_INCLUDE_DH_NONE)) {
@@ -2014,12 +2014,12 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 
 	const char *notes;
 	if (c->alg_info_ike == NULL) {
-		DBGF(DBG_CONTROL, "selecting default constructed local IKE proposals for connection %s (%s)",
+		dbg("selecting default constructed local IKE proposals for connection %s (%s)",
 		     c->name, why);
 		c->v2_ike_proposals = &default_ikev2_ike_proposals;
 		notes = " (default)";
 	} else {
-		DBGF(DBG_CONTROL, "constructing local IKE proposals for %s (%s)",
+		dbg("constructing local IKE proposals for %s (%s)",
 		     c->name, why);
 		struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 		int proposals_roof = c->alg_info_ike->ai.alg_info_cnt + 1;
@@ -2161,7 +2161,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 
 	const char *notes;
 	if (c->alg_info_esp == NULL) {
-		DBGF(DBG_CONTROL, "selecting default local ESP/AH proposals for %s (%s)",
+		dbg("selecting default local ESP/AH proposals for %s (%s)",
 		     c->name, why);
 		lset_t esp_ah = c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 		struct ikev2_proposals *default_proposals_missing_esn;
@@ -2220,7 +2220,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 			add_esn_transforms(proposal, c->policy);
 		}
 		if (default_dh != NULL && default_dh != &unset_group) {
-			DBGF(DBG_CONTROL, "adding dh %s to default proposals",
+			dbg("adding dh %s to default proposals",
 			     default_dh->common.name);
 			FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
 				append_transform(proposal,
@@ -2435,7 +2435,7 @@ const struct oakley_group_desc *ikev2_proposals_first_dh(const struct ikev2_prop
 				 */
 				PEXPECT_LOG("proposals include unsupported group %d", groupnum);
 			} else if (group == &ike_alg_dh_none) {
-				DBGF(DBG_CONTROL, "ignoring DH=none when looking for first DH");
+				dbg("ignoring DH=none when looking for first DH");
 			} else {
 				return group;
 			}

@@ -2259,7 +2259,7 @@ void send_v1_delete(struct state *st)
 		p1st = find_phase1_state(st->st_connection,
 					ISAKMP_SA_ESTABLISHED_STATES);
 		if (p1st == NULL) {
-			DBGF(DBG_CONTROL, "no Phase 1 state for Delete");
+			dbg("no Phase 1 state for Delete");
 			return;
 		}
 

@@ -1511,7 +1511,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 * A reply for an unknown request (or
 				 * request we've not yet sent)? Huh!
 				 */
-				DBGF(DBG_CONTROL, "dropping unasked response with msgid %u from peer (our last used msgid is %u)",
+				dbg("dropping unasked response with msgid %u from peer (our last used msgid is %u)",
 				     md->hdr.isa_msgid,
 				     st->st_msgid_nextuse - 1);
 				return;
@@ -1532,7 +1532,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 *
 			 * The log line lets find out.
 			 */
-			DBGF(DBG_CONTROL, "using IKE SA #%lu for response with msgid %u (nextuse: %u, lastack: %u)",
+			dbg("using IKE SA #%lu for response with msgid %u (nextuse: %u, lastack: %u)",
 			     st->st_serialno, md->hdr.isa_msgid,
 			     st->st_msgid_nextuse, st->st_msgid_lastack);
 		}
@@ -1630,7 +1630,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	 */
 	const struct finite_state *from_state =
 		st == NULL ? finite_states[STATE_PARENT_R0] : st->st_finite_state;
-	DBGF(DBG_CONTROL, "#%lu in state %s: %s",
+	dbg("#%lu in state %s: %s",
 	     st != NULL ? st->st_serialno : 0,
 	     from_state->fs_short_name, from_state->fs_story);
 
@@ -1901,11 +1901,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * from_state, and then later, forcing MD's
 			 * from state to values in the table.
 			 */
-			DBGF(DBG_CONTROL,
-			     "state #%lu forced to match CREATE_CHILD_SA from %s->%s by ignoring from state",
-			     st->st_serialno,
-			     enum_short_name(&state_names, svm->state),
-			     enum_short_name(&state_names, svm->next_state));
+			dbg("state #%lu forced to match CREATE_CHILD_SA from %s->%s by ignoring from state",
+			    st->st_serialno,
+			    enum_short_name(&state_names, svm->state),
+			    enum_short_name(&state_names, svm->next_state));
 		}
 
 		/* must be the right state machine entry */
@@ -2008,9 +2007,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		v2_msgid_update_counters(st, md);
 
 		/* switch from parent state to child state */
-		DBGF(DBG_CONTROL,
-		     "switching from parent? #%lu to child #%lu in FSM processor",
-		     st->st_serialno, cst->st_serialno);
+		dbg("switching from parent? #%lu to child #%lu in FSM processor",
+		    st->st_serialno, cst->st_serialno);
 		st = cst;
 	}
 
@@ -2765,9 +2763,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		switch (kind) {
 		case EVENT_v2_RETRANSMIT:
 			delete_event(st);
-			DBGF(DBG_LIFECYCLE,
-			     "success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%jdms",
-			     deltamillisecs(c->r_interval));
+			dbg("success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%jdms",
+			    deltamillisecs(c->r_interval));
 			start_retransmits(st, EVENT_v2_RETRANSMIT);
 			break;
 

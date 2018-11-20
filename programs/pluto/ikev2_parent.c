@@ -415,7 +415,7 @@ static void ikev2_rekey_dh_continue(struct state *st,
 	pexpect(st->st_state == STATE_V2_CREATE_R ||
 		st->st_state == STATE_V2_REKEY_CHILD_R ||
 		st->st_state == STATE_V2_REKEY_IKE_R);
-	DBGF(DBG_CONTROLMORE, "%s calling ikev2_crypto_continue for #%lu %s",
+	dbg("%s calling ikev2_crypto_continue for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 	ikev2_crypto_continue(st, mdp, r);
 }
@@ -439,7 +439,7 @@ static void ikev2_crypto_continue(struct state *st,
 	stf_status e = STF_OK;
 	bool only_shared = FALSE;
 
-	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
+	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 
 	/* and a parent? */
@@ -3501,7 +3501,7 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	 * re-key?
 	 */
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && st->st_pfs_group != NULL) {
-		DBGF(DBG_CONTROLMORE, "updating #%lu's .st_oakley with preserved PRF, but why update?",
+		dbg("updating #%lu's .st_oakley with preserved PRF, but why update?",
 			st->st_serialno);
 		struct trans_attrs accepted_oakley = proto_info->attrs.transattrs;
 		pexpect(accepted_oakley.ta_prf == NULL);
@@ -4386,7 +4386,7 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 	pexpect(v2_msg_role(*mdp) == MESSAGE_RESPONSE);
 	pexpect((*mdp)->st == st);
 
-	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
+	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 
 	/* and a parent? */
@@ -4467,7 +4467,7 @@ static void ikev2_child_inR_continue(struct state *st,
 	pexpect((*mdp)->st == st);
 	pexpect(v2_msg_role(*mdp) == MESSAGE_RESPONSE);
 
-	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
+	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 
 	/* and a parent? */
@@ -4588,7 +4588,7 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 	pexpect(*mdp != NULL);
 	pexpect((*mdp)->st == st);
 
-	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
+	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 
 	/* and a parent? */
@@ -4638,7 +4638,7 @@ static void ikev2_child_inIoutR_continue_continue(struct state *st,
 	passert(v2_msg_role(*mdp) == MESSAGE_REQUEST);
 	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
 
-	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
+	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 
 	/* didn't loose parent? */
@@ -4708,7 +4708,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	pexpect((*mdp)->st == st);
 	pexpect(v2_msg_role(*mdp) == MESSAGE_REQUEST);
 
-	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
+	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 
 	/* and a parent? */
@@ -4748,7 +4748,7 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 	passert(v2_msg_role(*mdp) == MESSAGE_REQUEST);
 	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
 
-	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
+	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 
 	/* didn't loose parent? */
@@ -5831,7 +5831,7 @@ static void ikev2_child_outI_continue(struct state *st,
 		*mdp = fake_md(st);
 	}
 
-	DBGF(DBG_CRYPT | DBG_CONTROL, "%s for #%lu %s",
+	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
 
 	/* and a parent? */

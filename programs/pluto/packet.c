@@ -1610,7 +1610,7 @@ pb_stream open_out_pbs(const char *name, uint8_t *buffer, size_t sizeof_buffer)
 {
 	pb_stream out_pbs;
 	init_out_pbs(&out_pbs, buffer, sizeof_buffer, name);
-	DBGF(DBG_EMITTING, "Opening output PBS %s", name);
+	dbg("Opening output PBS %s", name);
 	return out_pbs;
 }
 
@@ -1879,7 +1879,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 			passert(outp - (cur - ins->cur) == struct_ptr);
 
 #if 0
-			DBGF(DBG_PARSING, "%td (%td) '%s'.'%s' %d bytes ",
+			dbg("%td (%td) '%s'.'%s' %d bytes ",
 			     (cur - ins->cur), (cur - ins->start),
 			     sd->name, fp->name,
 			     fp->size);
@@ -2095,7 +2095,7 @@ static void update_last_substructure(pb_stream *outs,
 	 */
 	if (outs->last_substructure.loc != NULL) {
 		struct esb_buf ssb;
-		DBGF(DBG_EMITTING, "last substructure: checking '%s'.'%s'.'%s' is %s (0x%x)",
+		dbg("last substructure: checking '%s'.'%s'.'%s' is %s (0x%x)",
 		     outs->desc->name,
 		     outs->last_substructure.sd->name,
 		     outs->last_substructure.fp->name,
@@ -2107,7 +2107,7 @@ static void update_last_substructure(pb_stream *outs,
 	/*
 	 * Now save the location of this Last Substructure.
 	 */
-	DBGF(DBG_EMITTING, "last substructure: saving location '%s'.'%s'.'%s'",
+	dbg("last substructure: saving location '%s'.'%s'.'%s'",
 	     outs->desc->name, sd->name, fp->name);
 	outs->last_substructure.loc = cur;
 	outs->last_substructure.sd = sd;
@@ -2117,7 +2117,7 @@ static void update_last_substructure(pb_stream *outs,
 static void close_last_substructure(pb_stream *pbs)
 {
 	if (pbs->last_substructure.loc != NULL) {
-		DBGF(DBG_EMITTING, "last substructure: checking '%s'.'%s'.'%s' is 0",
+		dbg("last substructure: checking '%s'.'%s'.'%s' is 0",
 		     pbs->desc->name,
 		     pbs->last_substructure.sd->name,
 		     pbs->last_substructure.fp->name);
@@ -2140,7 +2140,7 @@ static void start_next_payload_chain(pb_stream *message,
 				     const uint8_t *inp, uint8_t *cur)
 {
 	passert(fp->size == 1);
-	DBGF(DBG_EMITTING, "next payload chain: saving message location '%s'.'%s'",
+	dbg("next payload chain: saving message location '%s'.'%s'",
 	     sd->name, fp->name);
 	message->next_payload_chain.loc = cur;
 	message->next_payload_chain.sd = sd;
@@ -2148,7 +2148,7 @@ static void start_next_payload_chain(pb_stream *message,
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
 		struct esb_buf npb;
-		DBGF(DBG_EMITTING, "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
+		dbg("next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 		     sd->name, fp->name, n,
 		     enum_showb(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
@@ -2170,9 +2170,8 @@ static void update_next_payload_chain(pb_stream *outs,
 	 */
 	if (outs->container == NULL) {
 		struct esb_buf npb;
-		DBGF(DBG_EMITTING,
-		     "next payload chain: no previous for current %s (%d:%s); assumed to be fake",
-		     sd->name, sd->pt, enum_showb(fp->desc, sd->pt, &npb));
+		dbg("next payload chain: no previous for current %s (%d:%s); assumed to be fake",
+		    sd->name, sd->pt, enum_showb(fp->desc, sd->pt, &npb));
 		return;
 	}
 
@@ -2206,12 +2205,12 @@ static void update_next_payload_chain(pb_stream *outs,
 	uint8_t n = *inp;
 	if (sd->pt == ISAKMP_NEXT_v2SKF) {
 		struct esb_buf npb;
-		DBGF(DBG_EMITTING, "next payload chain: using supplied v2SKF '%s'.'%s' value %d:%s",
+		dbg("next payload chain: using supplied v2SKF '%s'.'%s' value %d:%s",
 		     sd->name, fp->name, n,
 		     enum_showb(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
 		struct esb_buf npb;
-		DBGF(DBG_EMITTING, "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
+		dbg("next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 		     sd->name, fp->name, n,
 		     enum_showb(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
@@ -2220,16 +2219,15 @@ static void update_next_payload_chain(pb_stream *outs,
 
 	/* update previous struct's next payload type field */
 	struct esb_buf npb;
-	DBGF(DBG_EMITTING, "next payload chain: setting previous '%s'.'%s' to current %s (%d:%s)",
+	dbg("next payload chain: setting previous '%s'.'%s' to current %s (%d:%s)",
 	     message->next_payload_chain.sd->name,
 	     message->next_payload_chain.fp->name,
 	     sd->name, sd->pt, enum_showb(fp->desc, sd->pt, &npb));
 	*message->next_payload_chain.loc = sd->pt;
 
 	/* save new */
-	DBGF(DBG_EMITTING,
-	     "next payload chain: saving location '%s'.'%s' in '%s'",
-	     sd->name, fp->name, message->name);
+	dbg("next payload chain: saving location '%s'.'%s' in '%s'",
+	    sd->name, fp->name, message->name);
 	message->next_payload_chain.loc = cur;
 	message->next_payload_chain.sd = sd;
 	message->next_payload_chain.fp = fp;

@@ -260,8 +260,7 @@ bool ikev2_schedule_retry(struct state *st)
 	unsigned long try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
 	if (try_limit > 0 && try >= try_limit) {
-		DBGF(DBG_CONTROL|DBG_RETRANSMITS,
-		     "maximum number of retries reached - deleting state");
+		dbg("maximum number of retries reached - deleting state");
 		return false;
 	}
 	LSWLOG_RC(RC_COMMENT, buf) {
