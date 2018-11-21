@@ -2661,32 +2661,34 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 
 	w = RC_NEW_STATE + st->st_state;
 
-	/* tell whack and log of progress, if we are actually advancing */
-	if (from_state != svm->next_state) {
-		passert(st->st_state >= STATE_IKEv2_FLOOR);
-		passert(st->st_state <  STATE_IKEv2_ROOF);
+	/*
+	 * tell whack and log of progress; successful state
+	 * transitions always advance (even when they go round to the
+	 * same state).
+	 */
+	passert(st->st_state >= STATE_IKEv2_FLOOR);
+	passert(st->st_state <  STATE_IKEv2_ROOF);
 
-		void (*log_details)(struct lswlog *buf, struct state *st);
-		if (IS_CHILD_SA_ESTABLISHED(st)) {
-			log_ipsec_sa_established("negotiated connection", st);
-			log_details = lswlog_child_sa_established;
-			/* log our success and trigger detach */
-			w = RC_SUCCESS;
-		} else if (st->st_state == STATE_PARENT_I2 || st->st_state == STATE_PARENT_R1) {
-			log_details = lswlog_ike_sa_established;
-		} else {
-			log_details = NULL;
-		}
+	void (*log_details)(struct lswlog *buf, struct state *st);
+	if (IS_CHILD_SA_ESTABLISHED(st)) {
+		log_ipsec_sa_established("negotiated connection", st);
+		log_details = lswlog_child_sa_established;
+		/* log our success and trigger detach */
+		w = RC_SUCCESS;
+	} else if (st->st_state == STATE_PARENT_I2 || st->st_state == STATE_PARENT_R1) {
+		log_details = lswlog_ike_sa_established;
+	} else {
+		log_details = NULL;
+	}
 
-		/* tell whack and logs our progress - unless OE, then be quiet*/
-		if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			LSWLOG_RC(w, buf) {
-				lswlogf(buf, "%s: %s", st->st_finite_state->fs_name,
-					st->st_finite_state->fs_story);
-				/* document SA details for admin's pleasure */
-				if (log_details != NULL) {
-					log_details(buf, st);
-				}
+	/* tell whack and logs our progress - unless OE, then be quiet*/
+	if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		LSWLOG_RC(w, buf) {
+			lswlogf(buf, "%s: %s", st->st_finite_state->fs_name,
+				st->st_finite_state->fs_story);
+			/* document SA details for admin's pleasure */
+			if (log_details != NULL) {
+				log_details(buf, st);
 			}
 		}
 	}
