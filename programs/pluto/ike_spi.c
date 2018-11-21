@@ -50,8 +50,9 @@ void refresh_ike_spi_secret(void)
 void fill_ike_initiator_spi(struct state *st)
 {
 	do {
-		get_rnd_bytes(st->st_icookie, IKE_SA_SPI_SIZE);
-	} while (is_zero_cookie(st->st_icookie)); /* probably never loops */
+		get_rnd_bytes(st->st_ike_initiator_spi.ike_spi,
+			      sizeof(st->st_ike_initiator_spi));
+	} while (ike_spi_is_zero(&st->st_ike_initiator_spi)); /* probably never loops */
 }
 
 /*
@@ -89,7 +90,9 @@ void fill_ike_responder_spi(struct state *st, const ip_address *addr)
 		crypt_hash_final_bytes(&ctx, buffer, SHA2_256_DIGEST_SIZE);
 		/* cookie size is smaller than hash output size */
 		passert(IKE_SA_SPI_SIZE <= SHA2_256_DIGEST_SIZE);
-		memcpy(st->st_rcookie, buffer, IKE_SA_SPI_SIZE);
+		passert(IKE_SA_SPI_SIZE == sizeof(st->st_ike_responder_spi));
+		memcpy(&st->st_ike_responder_spi, buffer,
+		       sizeof(st->st_ike_responder_spi));
 
-	} while (is_zero_cookie(st->st_rcookie)); /* probably never loops */
+	} while (ike_spi_is_zero(&st->st_ike_responder_spi)); /* probably never loops */
 }
