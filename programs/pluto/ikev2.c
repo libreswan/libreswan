@@ -76,6 +76,8 @@
 #include "pluto_stats.h"
 #include "keywords.h"
 
+static bool is_msg_request(const struct msg_digest *md);
+
 enum smf2_flags {
 	/*
 	 * Check the value of the I(Initiator) (IKE_I) flag in the
