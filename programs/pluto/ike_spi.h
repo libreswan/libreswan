@@ -22,7 +22,7 @@
 #include "ietf_constants.h"	/* for IKE_SA_SPI_SIZE */
 #include "ip_address.h"
 
-struct ike_sa;
+struct state;
 
 /*
  * New and old.
@@ -43,12 +43,16 @@ extern const uint8_t zero_cookie[IKE_SA_SPI_SIZE]; /* use zero_ike_spi */
 bool is_zero_cookie(const uint8_t ike_spi[IKE_SA_SPI_SIZE]); /* use ike_spi_is_zero() */
 
 /*
- * Since these work on IKE SA's they take that as a parameter.
+ * Need to handle two cases:
+ *
+ * - new IKE SA - and ST is the IKE SA
+ *
+ * - rekeying old IKE SA - and ST has not yet been emancipated so it
+ *   still looks like a child
  */
 
-void fill_ike_initiator_spi(struct ike_sa *ike);
-void ikev2_fill_ike_rekey_initiator_spi(uint8_t spi[IKE_SA_SPI_SIZE]);
-void fill_ike_responder_spi(struct ike_sa *ike, const ip_address *addr);
+void fill_ike_initiator_spi(struct state *st);
+void fill_ike_responder_spi(struct state *st, const ip_address *addr);
 
 void refresh_ike_spi_secret(void);
 

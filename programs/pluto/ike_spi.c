@@ -47,22 +47,12 @@ void refresh_ike_spi_secret(void)
 /*
  * Generate the IKE Initiator's SPI.
  */
-void fill_ike_initiator_spi(struct ike_sa *ike)
+void fill_ike_initiator_spi(struct state *st)
 {
 	do {
-		/* not sizeof(spi) as a pointer */
-		get_rnd_bytes(ike->sa.st_icookie, IKE_SA_SPI_SIZE);
-	} while (is_zero_cookie(ike->sa.st_icookie)); /* probably never loops */
+		get_rnd_bytes(st->st_icookie, IKE_SA_SPI_SIZE);
+	} while (is_zero_cookie(st->st_icookie)); /* probably never loops */
 }
-
-void ikev2_fill_ike_rekey_initiator_spi(uint8_t spi[IKE_SA_SPI_SIZE])
-{
-	do {
-		/* not sizeof(spi) as a pointer */
-		get_rnd_bytes(spi, IKE_SA_SPI_SIZE);
-	} while (is_zero_cookie(spi)); /* probably never loops */
-}
-
 
 /*
  * Generate the IKE Responder's SPI.
@@ -73,7 +63,7 @@ void ikev2_fill_ike_rekey_initiator_spi(uint8_t spi[IKE_SA_SPI_SIZE])
  * it will prevent an attacker from depleting our random pool
  * or entropy.
  */
-void fill_ike_responder_spi(struct ike_sa *ike, const ip_address *addr)
+void fill_ike_responder_spi(struct state *st, const ip_address *addr)
 {
 	do {
 		static uint32_t counter = 0; /* STATIC */
@@ -99,7 +89,7 @@ void fill_ike_responder_spi(struct ike_sa *ike, const ip_address *addr)
 		crypt_hash_final_bytes(&ctx, buffer, SHA2_256_DIGEST_SIZE);
 		/* cookie size is smaller than hash output size */
 		passert(IKE_SA_SPI_SIZE <= SHA2_256_DIGEST_SIZE);
-		memcpy(ike->sa.st_rcookie, buffer, IKE_SA_SPI_SIZE);
+		memcpy(st->st_rcookie, buffer, IKE_SA_SPI_SIZE);
 
-	} while (is_zero_cookie(ike->sa.st_rcookie)); /* probably never loops */
+	} while (is_zero_cookie(st->st_rcookie)); /* probably never loops */
 }

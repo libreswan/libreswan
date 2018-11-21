@@ -214,7 +214,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-	fill_ike_responder_spi(ike_sa(st), &md->sender);
+	fill_ike_responder_spi(st, &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
@@ -1032,7 +1032,7 @@ void aggr_outI1(fd_t whack_sock,
 	st->st_try = try;
 	change_state(st, STATE_AGGR_I1);
 
-	fill_ike_initiator_spi(ike_sa(st));
+	fill_ike_initiator_spi(st);
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {

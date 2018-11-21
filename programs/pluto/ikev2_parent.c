@@ -809,7 +809,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	st = new_state();
 
 	/* set up new state */
-	fill_ike_initiator_spi(ike_sa(st));
+	fill_ike_initiator_spi(st);
 	initialize_new_state(st, c, policy, try, whack_sock);
 	st->st_ikev2 = TRUE;
 	change_state(st, STATE_PARENT_I0);
@@ -1300,7 +1300,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	/* set up new state */
 	/* initialize_new_state expects valid icookie/rcookie values, so create it now */
 	memcpy(st->st_icookie, md->hdr.isa_icookie, IKE_SA_SPI_SIZE);
-	fill_ike_responder_spi(ike_sa(st), &md->sender);
+	fill_ike_responder_spi(st, &md->sender);
 
 	initialize_new_state(st, c, policy, 0, null_fd);
 	update_ike_endpoints(st, md);
@@ -4347,7 +4347,7 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 	st->st_accepted_ike_proposal = accepted_ike_proposal;
 
 	ikev2_copy_cookie_from_sa(accepted_ike_proposal, st->st_icookie);
-	fill_ike_responder_spi(ike_sa(st), &md->sender);
+	fill_ike_responder_spi(st, &md->sender);
 	insert_state(st); /* needed for delete - we are duplicating early */
 
 	return STF_OK;
@@ -5665,7 +5665,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 	} else {
 		st = ikev2_duplicate_state(ike, IKE_SA, SA_INITIATOR);
 		st->st_oakley = ike->sa.st_oakley;
-		ikev2_fill_ike_rekey_initiator_spi(st->st_icookie);
+		fill_ike_initiator_spi(st);
 		st->st_ike_pred = ike->sa.st_serialno;
 	}
 
