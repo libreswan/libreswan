@@ -1618,7 +1618,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				free_dh_secret(&st->st_dh_secret);
 				/* wipe out any saved RCOOKIE */
 				DBG(DBG_CONTROLMORE, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
-				rehash_state(st, NULL, zero_cookie);
+				rehash_state(st, &zero_ike_spi);
 				/*
 				 * get a new KE
 				 */

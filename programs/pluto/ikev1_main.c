@@ -939,7 +939,7 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
-	rehash_state(st, NULL, md->hdr.isa_rcookie);
+	rehash_state(st, &md->hdr.isa_ike_responder_spi);
 
 	return STF_OK;
 }

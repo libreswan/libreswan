@@ -1443,7 +1443,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * case the cookie shouldn't be updated at
 			 * all.
 			 */
-			rehash_state(st, NULL, md->hdr.isa_rcookie);
+			rehash_state(st, &md->hdr.isa_ike_responder_spi);
 		}
 	} else if (v2_msg_role(md) == MESSAGE_REQUEST) {
 		/*

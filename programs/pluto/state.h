@@ -702,8 +702,8 @@ extern struct state *new_rstate(struct msg_digest *md);
 
 extern void init_states(void);
 extern void insert_state(struct state *st);
-extern void rehash_state(struct state *st, const u_char *icookie,
-		const u_char *rcookie);
+extern void rehash_state(struct state *st,
+			 const ike_spi_t *ike_responder_spi);
 extern void release_whack(struct state *st);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			       unsigned long count, monotime_t nw);
