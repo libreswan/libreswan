@@ -28,7 +28,7 @@
 
 /* dump raw bytes in hex to stderr (for lack of any better destination) */
 
-void libreswan_DBG_dump(const char *label, const void *p, size_t len)
+void DBG_dump(const char *label, const void *p, size_t len)
 {
 #define DUMP_LABEL_WIDTH 20  /* arbitrary modest boundary */
 #define DUMP_WIDTH   (4 * (1 + 4 * 3) + 1)

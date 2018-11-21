@@ -310,8 +310,7 @@ void dbg(const char *fmt, ...) PRINTF_LIKE(1);
 #define DBG_log libreswan_DBG_log
 int libreswan_DBG_log(const char *message, ...) PRINTF_LIKE(1);
 
-#define DBG_dump libreswan_DBG_dump
-extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
+void DBG_dump(const char *label, const void *p, size_t len);
 
 #define DBG_cond_dump(cond, label, p, len) DBG(cond, DBG_dump(label, p, len))
 
