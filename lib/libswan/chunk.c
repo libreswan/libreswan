@@ -16,6 +16,7 @@
 
 #include "chunk.h"
 #include "lswalloc.h"
+#include "lswlog.h"	/* for DBG_dump() */
 
 const chunk_t empty_chunk = { NULL, 0 };
 
@@ -82,4 +83,9 @@ chunk_t clone_bytes_as_chunk(void *bytes, size_t sizeof_bytes, const char *name)
 bool chunk_eq(chunk_t a, chunk_t b)
 {
 	return a.len == b.len && memeq(a.ptr, b.ptr, b.len);
+}
+
+void DBG_dump_chunk(const char *prefix, chunk_t chunk)
+{
+	DBG_dump(prefix, chunk.ptr, chunk.len);
 }

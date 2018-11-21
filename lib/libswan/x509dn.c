@@ -519,7 +519,9 @@ err_t atodn(const char *src, chunk_t *dn)
 
 	END_OBJ(ASN1_SEQUENCE);	/* 0 */
 	dn->len = dn_ptr - dn->ptr;
-	DBG_cond_dump_chunk(DBG_X509, "ASCII to DN =>", *dn);
+	if (DBGP(DBG_MASK)) {
+		DBG_dump_chunk("ASCII to DN =>", *dn);
+	}
 	return NULL;
 
 #	undef START_OBJ

@@ -313,11 +313,8 @@ int libreswan_DBG_log(const char *message, ...) PRINTF_LIKE(1);
 #define DBG_dump libreswan_DBG_dump
 extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
 
-#define DBG_dump_chunk(label, ch) DBG_dump(label, (ch).ptr, (ch).len)
-
 #define DBG_cond_dump(cond, label, p, len) DBG(cond, DBG_dump(label, p, len))
-#define DBG_cond_dump_chunk(cond, label, ch) DBG(cond, DBG_dump_chunk(label, \
-								      ch))
+
 void lswlog_dbg_pre(struct lswlog *buf);
 
 #define LSWDBG_(PREDICATE, BUF)						\

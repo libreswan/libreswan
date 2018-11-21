@@ -151,7 +151,9 @@ notification_t accept_KE(chunk_t *dest, const char *val_name,
 	}
 	free_chunk_contents(dest); /* XXX: ever needed? */
 	*dest = clone_in_pbs_left_as_chunk(pbs, val_name);
-	DBG_cond_dump_chunk(DBG_CRYPT, "DH public value received:\n", *dest);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_chunk("DH public value received:\n", *dest);
+	}
 	return NOTHING_WRONG;
 }
 
