@@ -1354,7 +1354,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 		case v2N_NAT_DETECTION_DESTINATION_IP:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 			if (!seen_nat) {
-				ikev2_natd_lookup(md, zero_cookie);
+				ikev2_natd_lookup(md, &zero_ike_spi);
 				seen_nat = TRUE; /* only do it once */
 			}
 			break;
@@ -2013,7 +2013,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 	 * v2N_NAT_DETECTION_SOURCE_IP
 	 */
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
-		ikev2_natd_lookup(md, st->st_rcookie);
+		ikev2_natd_lookup(md, &st->st_ike_responder_spi);
 	}
 
 	/* initiate calculation of g^xy */

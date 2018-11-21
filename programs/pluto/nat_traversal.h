@@ -81,7 +81,8 @@ extern bool nat_traversal_support_port_floating;
  */
 extern bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 				   const struct msg_digest *md);
-extern void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie);
+extern void ikev2_natd_lookup(struct msg_digest *md,
+			      const ike_spi_t *ike_responder_spi);
 
 /**
  * NAT-OA
