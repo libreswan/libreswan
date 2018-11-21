@@ -4220,13 +4220,14 @@ static notification_t accept_child_sa_KE(struct msg_digest *md,
 			freeanychunk(accepted_g);
 			return v2N_INVALID_KE_PAYLOAD;
 		}
-		/* st->st_g[st->st_sa_role] = accepted_g */
 		switch (st->st_sa_role) {
 		case SA_INITIATOR:
-			st->st_gi = accepted_g;
+			/* got responder's KE */
+			st->st_gr = accepted_g;
 			break;
 		case SA_RESPONDER:
-			st->st_gr = accepted_g;
+			/* got initiator's KE */
+			st->st_gi = accepted_g;
 			break;
 		default:
 			bad_case(st->st_sa_role);
