@@ -2029,8 +2029,10 @@ static void send_notification(struct state *sndst, notification_t type,
 		}
 
 		if (sndst->st_iv_len != 0) {
-			libreswan_DBG_dump("payload malformed.  IV:", sndst->st_iv,
-					sndst->st_iv_len);
+			LSWLOG(buf) {
+				lswlogf(buf, "payload malformed.  IV: ");
+				lswlog_bytes(buf, sndst->st_iv, sndst->st_iv_len);
+			}
 		}
 
 		/*
