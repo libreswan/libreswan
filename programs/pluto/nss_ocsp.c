@@ -105,8 +105,10 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 		return FALSE;
 	}
 
-	if (ocsp_post)
+	if (ocsp_post) {
 		rv = CERT_ForcePostMethodForOCSP(TRUE);
+		DBG(DBG_X509, DBG_log("OCSP will use POST method"));		
+	}
 	else
 		rv = CERT_ForcePostMethodForOCSP(FALSE);
 

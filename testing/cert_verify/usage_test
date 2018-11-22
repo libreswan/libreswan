@@ -90,6 +90,7 @@ parser.add_argument('--retry', '-x', action='store_true', default='', help='use 
 parser.add_argument('--ocsp', '-O', action='store_true', default='', help='ocsp checking')
 parser.add_argument('--crl', '-L', action='store_true', default='', help='ocsp checking')
 parser.add_argument('--strict', '-z', action='store_true', default='', help='strict checks')
+parser.add_argument('--forcepost', '-P', action='store_true', default='', help='force POST method for ocsp')
 args = parser.parse_args()
 
 ADD_CERT_FMT = "%s -A -d sql:%s -n '%s' -t '%s' -i %s"
@@ -234,6 +235,8 @@ class usageTest:
 			cmd = cmd + " -c"
 		if args.strict:
 			cmd = cmd + " -S"
+		if args.forcepost:
+			cmd = cmd + " -P"
 		if args.retry:
 			cmd = cmd + " -r"
 		if args.use_sub:

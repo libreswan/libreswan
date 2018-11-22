@@ -91,6 +91,7 @@
 bool crl_strict = FALSE;
 bool ocsp_strict = FALSE;
 bool ocsp_enable = FALSE;
+bool ocsp_post = FALSE;
 char *curl_iface = NULL;
 long curl_timeout = -1;
 
@@ -688,6 +689,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 
 	rev_opts[RO_OCSP] = ocsp_enable;
 	rev_opts[RO_OCSP_S] = ocsp_strict;
+	rev_opts[RO_OCSP_P] = ocsp_post;
 	rev_opts[RO_CRL_S] = crl_strict;
 
 	CERTCertificate *end_cert = NULL;
