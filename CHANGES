@@ -5,6 +5,7 @@ v3.28 (unreleased)
 * KLIPS: Disable KLIPS userland support per default [Paul]
 * pluto: metric= value should accept values > 255 [Tuomo]
 * x509: Support for NSS IPsec profiles mbz#1252891 [Kai Engbert]
+* X509: Fix ocsp-method=get|post to actually skip get when asked) [Steve Broz]
 * IKEv2: initialize daily secret used for DCOOKIES [Paul/Andrew]
 * libswan: Fix leaks in badly formed secrets/ppk_id [Vukasin Karadzic]
 * building: sort all wildcarded object files for build reproducibility [dkg]
