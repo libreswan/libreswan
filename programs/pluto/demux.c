@@ -8,7 +8,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013,2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2015 Antony Antony <antony@phenome.org>
- * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017-2018  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -574,23 +574,30 @@ void schedule_md_event(const char *name, struct msg_digest *md)
  *
  * Several reasons:
  *
- * - makes passing a role parameter clearer vis:
- *     foo(true) VS foo(MESSAGE_RESPONSE)
+ * - makes passing a role parameter clearer, that is:
+ *       foo(MESSAGE_RESPONSE)
+ *   is better than:
+ *       foo(true)
  *
- * - never zero (and never matches other roles) so accidental value
- *   less likely
+ * - zero is 'reserved' for no MD and/or default value so won't match
+ *   either of the initiator and/or responder values
  *
- * - encourages the coding style making it easier to find where
-     REQUEST / RESPONSE code lives:
+ * - encourages the coding style where the two cases - REQUEST and
+ *   RESPONSE - are clearly labled, that is:
  *
- *   switch(role) {
- *   case MESSAGE_REQUEST: ...; break;
- *   case MESSAGE_RESPONSE: ...; break;
- *   default: bad_case(role);
- *   }
+ *       switch(role) {
+ *       case MESSAGE_REQUEST: ...; break;
+ *       case MESSAGE_RESPONSE: ...; break;
+ *       default: bad_case(role);
+ *       }
+ *
  */
 enum message_role v2_msg_role(const struct msg_digest *md)
 {
+	if (!pexpect(md != NULL)) {
+		/* should cause caller to trigger bad_case() */
+		return 0; /* reserved */
+	}
 	/*
 	 * Only IKEv2 - short of parsing the payload contents it
 	 * probably isn't possible to determine if an IKEv1 message is
@@ -598,11 +605,10 @@ enum message_role v2_msg_role(const struct msg_digest *md)
 	 */
 	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
 	passert(vmaj == IKEv2_MAJOR_VERSION);
-	if ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0) {
-		return MESSAGE_RESPONSE;
-	} else {
-		return MESSAGE_REQUEST;
-	}
+	enum message_role role =
+		(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) ? MESSAGE_RESPONSE : MESSAGE_REQUEST;
+	passert(role > 0); /* not reserved */
+	return role;
 }
 
 /*
