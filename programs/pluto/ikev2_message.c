@@ -142,7 +142,7 @@ pb_stream open_v2_message(pb_stream *reply,
 	 * been faking MDs), which is pretty messed up.
 	 */
 	if (md != NULL) {
-		switch (msg_role(md)) {
+		switch (v2_msg_role(md)) {
 		case MESSAGE_REQUEST:
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
 			break;
@@ -150,7 +150,7 @@ pb_stream open_v2_message(pb_stream *reply,
 			PEXPECT_LOG("trying to respond to a message response%s", "");
 			return empty_pbs;
 		default:
-			bad_case(msg_role(md));
+			bad_case(v2_msg_role(md));
 		}
 	}
 

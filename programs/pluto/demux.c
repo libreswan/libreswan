@@ -589,7 +589,7 @@ void schedule_md_event(const char *name, struct msg_digest *md)
  *   default: bad_case(role);
  *   }
  */
-enum message_role msg_role(const struct msg_digest *md)
+enum message_role v2_msg_role(const struct msg_digest *md)
 {
 	/*
 	 * Only IKEv2 - short of parsing the payload contents it

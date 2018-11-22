@@ -4388,7 +4388,7 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
 	pexpect(st->st_sa_role == SA_INITIATOR);
 	pexpect(*mdp != NULL);
-	pexpect(msg_role(*mdp) == MESSAGE_RESPONSE);
+	pexpect(v2_msg_role(*mdp) == MESSAGE_RESPONSE);
 	pexpect((*mdp)->st == st);
 
 	dbg("%s for #%lu %s",
@@ -4470,7 +4470,7 @@ static void ikev2_child_inR_continue(struct state *st,
 	pexpect(st->st_sa_role == SA_INITIATOR);
 	pexpect(*mdp != NULL);
 	pexpect((*mdp)->st == st);
-	pexpect(msg_role(*mdp) == MESSAGE_RESPONSE);
+	pexpect(v2_msg_role(*mdp) == MESSAGE_RESPONSE);
 
 	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
@@ -4640,7 +4640,7 @@ static void ikev2_child_inIoutR_continue_continue(struct state *st,
 	passert(*mdp != NULL);
 	pexpect((*mdp)->st == st);
 	passert(st->st_sa_role == SA_RESPONDER);
-	passert(msg_role(*mdp) == MESSAGE_REQUEST);
+	passert(v2_msg_role(*mdp) == MESSAGE_REQUEST);
 	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
 
 	dbg("%s for #%lu %s",
@@ -4711,7 +4711,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	pexpect(st->st_sa_role == SA_RESPONDER);
 	pexpect(*mdp != NULL);
 	pexpect((*mdp)->st == st);
-	pexpect(msg_role(*mdp) == MESSAGE_REQUEST);
+	pexpect(v2_msg_role(*mdp) == MESSAGE_REQUEST);
 
 	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
@@ -4750,7 +4750,7 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 	passert(*mdp != NULL);
 	pexpect((*mdp)->st == st);
 	passert(st->st_sa_role == SA_RESPONDER);
-	passert(msg_role(*mdp) == MESSAGE_REQUEST);
+	passert(v2_msg_role(*mdp) == MESSAGE_REQUEST);
 	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
 
 	dbg("%s for #%lu %s",
