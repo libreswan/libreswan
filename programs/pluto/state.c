@@ -2764,7 +2764,14 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 	 * Find all CHILD SAs belonging to FROM.
 	 *
 	 * Since they all have FROM's IKE SPIs, they will hash to the
-	 * same slot.
+	 * same slot and have FROM's .st_serialno in .st_clonedfrom.
+	 * Since TO, still a child of FROM, is on the same slot it is
+	 * explicitly excluded.
+	 *
+	 * XXX: While TO should have the same slot as FROM (because it
+	 * is still a child) as of 2018-11-22 it probably doesn't.
+	 * Instead it is being was hashed using the new SPIs (making
+	 * it hard to find should something go wrong with FROM).
 	 *
 	 * The rehash_state_cookies_in_db(st) function is used for the
 	 * update.  It deletes the old IKE_SPI hash entries (both for
@@ -2783,7 +2790,8 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 	struct list_head *slot = cookies_slot(from->sa.st_ike_initiator_spi.ike_spi,
 					      from->sa.st_ike_responder_spi.ike_spi);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
-		if (st->st_clonedfrom == from->sa.st_serialno) {
+		if (st->st_clonedfrom == from->sa.st_serialno &&
+		    st->st_serialno != to->sa.st_serialno) {
 			/*
 			 * Migrate the CHILD SA to TO.
 			 *
