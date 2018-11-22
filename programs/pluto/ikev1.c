@@ -762,28 +762,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			return dpd_inR(st, n, n_pbs);
 
 		case PAYLOAD_MALFORMED:
-			if (st != NULL) {
-				st->hidden_variables.st_malformed_received++;
-
-				libreswan_log(
-					"received %u malformed payload notifies",
-					st->hidden_variables.st_malformed_received);
-
-				if (st->hidden_variables.st_malformed_sent >
-				    MAXIMUM_MALFORMED_NOTIFY / 2 &&
-				    ((st->hidden_variables.st_malformed_sent +
-				      st->hidden_variables.
-				      st_malformed_received) >
-				     MAXIMUM_MALFORMED_NOTIFY)) {
-					libreswan_log(
-						"too many malformed payloads (we sent %u and received %u",
-						st->hidden_variables.st_malformed_sent,
-						st->hidden_variables.st_malformed_received);
-					delete_state(st);
-					md->st = st = NULL;
-				}
-			}
-
+			libreswan_log( "received PAYLOAD_MALFORMED");
 			return STF_IGNORE;
 
 		case ISAKMP_N_CISCO_LOAD_BALANCE:
