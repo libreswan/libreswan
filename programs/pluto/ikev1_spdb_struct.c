@@ -1024,10 +1024,11 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 				loglog(RC_LOG_SERIOUS,
 				       "You should NOT use insecure/broken IKE algorithms (%s)!",
 				       ta->ta_encrypt->common.fqn);
+			} else {
+				DBG(DBG_CONTROL,
+					DBG_log("OAKLEY proposal verified; matching alg_info found"));
+				return true;
 			}
-			DBG(DBG_CONTROL,
-			    DBG_log("OAKLEY proposal verified; matching alg_info found"));
-			return true;
 		}
 	}
 	libreswan_log("Oakley Transform [%s (%d), %s, %s] refused%s",
