@@ -1,5 +1,4 @@
-/*
- * routines for state objects
+/* routines for state objects, for libreswan
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001, 2013-2017 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -2738,14 +2737,6 @@ bool dpd_active_locally(const struct state *st)
 		deltasecs(st->st_connection->dpd_timeout) != 0;
 }
 
-static void  set_st_clonedfrom(struct state *st, so_serial_t nsn)
-{
-	/* add debug line  too */
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu inherit #%lu from parent #%lu",
-		nsn, st->st_serialno, st->st_clonedfrom));
-	st->st_clonedfrom = nsn;
-}
-
 /* Kick the IPsec SA, when the parent is already replaced, to replace now */
 void ikev2_repl_est_ipsec(struct state *st, void *data)
 {
@@ -2767,19 +2758,48 @@ void ikev2_repl_est_ipsec(struct state *st, void *data)
 	event_force(ev_type, st);
 }
 
-void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
-		const u_char *icookie, const u_char *rcookie)
+void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 {
-	/* new sn, IKE parent, Inherit IPSEC SA from previous IKE with osn. */
-
-	passert(nsn >= SOS_FIRST);
-
-	FOR_EACH_COOKIED_STATE(st, {
-		if (st->st_clonedfrom == osn) {
-			set_st_clonedfrom(st, nsn);
-			rehash_state(st, icookie, rcookie);
+	/*
+	 * Find all CHILD SAs belonging to FROM.
+	 *
+	 * Since they all have FROM's IKE SPIs, they will hash to the
+	 * same slot.
+	 *
+	 * The rehash_state_cookies_in_db(st) function is used for the
+	 * update.  It deletes the old IKE_SPI hash entries (both for
+	 * I and I+R and), and then inserts new ones using ST's
+	 * current IKE SPI values.  The serialno tables are not
+	 * touched.
+	 *
+	 * The ..._NEW2OLD() is used to iterate over the slot.  Since
+	 * this macro maintains a "cursor" that is one ahead of ST it
+	 * is safe for rehash_state_cookies_in_db(st) to delete the
+	 * old hash entries.  Similarly, since the table is walked
+	 * NEW2OLD, insert will happen at the front of the table
+	 * which, the cursor is past (this odds of this are very low).
+	 */
+	struct state *st = NULL;
+	struct list_head *slot = cookies_slot(from->sa.st_ike_initiator_spi.ike_spi,
+					      from->sa.st_ike_responder_spi.ike_spi);
+	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
+		if (st->st_clonedfrom == from->sa.st_serialno) {
+			/*
+			 * Migrate the CHILD SA to TO.
+			 *
+			 * Just the IKE_SPIrehash the SPIs without moving entry.
+			 *
+			 * XXX: this should also wipe message counters
+			 * but first need evidence.
+			 */
+			dbg("#%lu migrated from IKE SA #%lu to IKE SA #%lu",
+			    st->st_serialno, from->sa.st_serialno, to->sa.st_serialno);
+			st->st_clonedfrom = to->sa.st_serialno;
+			st->st_ike_initiator_spi = to->sa.st_ike_initiator_spi;
+			st->st_ike_responder_spi = to->sa.st_ike_responder_spi;
+			rehash_state_cookies_in_db(st);
 		}
-	});
+	}
 }
 
 void delete_my_family(struct state *pst, bool v2_responder_state)

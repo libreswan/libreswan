@@ -2613,13 +2613,11 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	/* st grow up to be an IKE parent. not child anymore.  */
 
 	struct state *st = md->st;
-	so_serial_t osn = st->st_clonedfrom;
+	struct ike_sa *from = ike_sa(st);
+
+	/* Child SA from parent */
+	v2_migrate_children(from, pexpect_child_sa(st));
 	st->st_clonedfrom = SOS_NOBODY;
-
-	/* And inherit. Child SA from parent */
-	ikev2_inherit_ipsec_sa(osn, st->st_serialno, st->st_icookie,
-			st->st_rcookie);
-
 
 	/* initialze the the new IKE SA. reset and message ID */
 	st->st_msgid_lastack = v2_INVALID_MSGID;
