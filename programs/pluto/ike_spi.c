@@ -2,6 +2,7 @@
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 2018  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -34,7 +35,12 @@ const ike_spi_t zero_ike_spi;  /* guaranteed 0 */
 
 bool ike_spi_is_zero(const ike_spi_t *spi)
 {
-	return memeq(spi, &zero_ike_spi, IKE_SA_SPI_SIZE);
+	return ike_spi_eq(spi, &zero_ike_spi);
+}
+
+bool ike_spi_eq(const ike_spi_t *lhs, const ike_spi_t *rhs)
+{
+	return memeq(lhs, rhs, sizeof(*lhs));
 }
 
 static uint8_t ike_spi_secret[SHA2_256_DIGEST_SIZE];
