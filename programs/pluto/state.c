@@ -2758,42 +2758,39 @@ void ikev2_repl_est_ipsec(struct state *st, void *data)
 	event_force(ev_type, st);
 }
 
+/*
+ * Find all CHILD SAs belonging to FROM and migrate them to TO.
+ */
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 {
 	/*
-	 * Find all CHILD SAs belonging to FROM.
+	 * TO is in the process of being emancipated.  It's
+	 * .st_clonedfrom has been zapped and the new IKE_SPIs
+	 * installed (a true child would have FROM's IKE SPIs).
 	 *
-	 * Since they all have FROM's IKE SPIs, they will hash to the
-	 * same slot and have FROM's .st_serialno in .st_clonedfrom.
-	 * Since TO, still a child of FROM, is on the same slot it is
-	 * explicitly excluded.
-	 *
-	 * XXX: While TO should have the same slot as FROM (because it
-	 * is still a child) as of 2018-11-22 it probably doesn't.
-	 * Instead it is being was hashed using the new SPIs (making
-	 * it hard to find should something go wrong with FROM).
-	 *
-	 * The rehash_state_cookies_in_db(st) function is used for the
-	 * update.  It deletes the old IKE_SPI hash entries (both for
-	 * I and I+R and), and then inserts new ones using ST's
-	 * current IKE SPI values.  The serialno tables are not
-	 * touched.
-	 *
-	 * The ..._NEW2OLD() is used to iterate over the slot.  Since
-	 * this macro maintains a "cursor" that is one ahead of ST it
-	 * is safe for rehash_state_cookies_in_db(st) to delete the
-	 * old hash entries.  Similarly, since the table is walked
+	 * While FROM and TO should have different IKE_SPIs there's
+	 * nothing to force them both being different - relying on
+	 * luck.
+	 */
+	passert(to->sa.st_clonedfrom == SOS_NOBODY);
+	/* passert(SPIs should be different) */
+
+	/*
+	 * Use ..._NEW2OLD() to iterate over the slot.  Since this
+	 * macro maintains a "cursor" that is one ahead of ST it is
+	 * safe for rehash_state_cookies_in_db(st) to delete the old
+	 * hash entries.  Similarly, since the table is walked
 	 * NEW2OLD, insert will happen at the front of the table
 	 * which, the cursor is past (this odds of this are very low).
 	 */
 	struct state *st = NULL;
-	struct list_head *slot = cookies_slot(from->sa.st_ike_initiator_spi.ike_spi,
-					      from->sa.st_ike_responder_spi.ike_spi);
+	struct list_head *slot = ike_spi_slot(&from->sa.st_ike_initiator_spi,
+					      &from->sa.st_ike_responder_spi);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
-		if (st->st_clonedfrom == from->sa.st_serialno &&
-		    st->st_serialno != to->sa.st_serialno) {
+		if (st->st_clonedfrom == from->sa.st_serialno) {
+			passert(st->st_serialno != to->sa.st_serialno);
 			/*
-			 * Migrate the CHILD SA to TO.
+			 * Migrate the CHILD SA.
 			 *
 			 * Just the IKE_SPIrehash the SPIs without moving entry.
 			 *
@@ -2805,6 +2802,12 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 			st->st_clonedfrom = to->sa.st_serialno;
 			st->st_ike_initiator_spi = to->sa.st_ike_initiator_spi;
 			st->st_ike_responder_spi = to->sa.st_ike_responder_spi;
+			/*
+			 * Delete the old IKE_SPI hash entries (both
+			 * for I and I+R and), and then inserts new
+			 * ones using ST's current IKE SPI values.
+			 * The serialno tables are not touched.
+			 */
 			rehash_state_cookies_in_db(st);
 		}
 	}

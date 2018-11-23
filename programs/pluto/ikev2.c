@@ -2612,20 +2612,25 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 {
 	/* st grow up to be an IKE parent. not child anymore.  */
 
-	struct state *st = md->st;
-	struct ike_sa *from = ike_sa(st);
-
-	/* Child SA from parent */
-	v2_migrate_children(from, pexpect_child_sa(st));
-	st->st_clonedfrom = SOS_NOBODY;
+	struct child_sa *to = pexpect_child_sa(md->st);
+	struct ike_sa *from = ike_sa(md->st);
 
 	/* initialze the the new IKE SA. reset and message ID */
-	st->st_msgid_lastack = v2_INVALID_MSGID;
-	st->st_msgid_lastrecv = v2_INVALID_MSGID;
-	st->st_msgid_nextuse = v2_INITIAL_MSGID;
+	to->sa.st_clonedfrom = SOS_NOBODY;
+	to->sa.st_msgid_lastack = v2_INVALID_MSGID;
+	to->sa.st_msgid_lastrecv = v2_INVALID_MSGID;
+	to->sa.st_msgid_nextuse = v2_INITIAL_MSGID;
+
+	/*
+	 * XXX: should be setting TO's IKE_SPIs to the values from the
+	 * exchange; but instead they were installed very early :-(
+	 */
+
+	/* TO has correct IKE_SPI so can migrate */
+	v2_migrate_children(from, to);
 
 	/* child is now a parent */
-	ikev2_ike_sa_established(pexpect_ike_sa(st), md->svm,
+	ikev2_ike_sa_established(pexpect_ike_sa(&to->sa), md->svm,
 				 md->svm->next_state);
 }
 
