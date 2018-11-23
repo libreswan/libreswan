@@ -4074,17 +4074,27 @@ static notification_t accept_child_sa_KE(struct msg_digest *md,
 	return NOTHING_WRONG;
 }
 
+/*
+ * initiator received Rekey IKE SA (RFC 7296 1.3.3) response
+ */
 
-static notification_t process_ike_rekey_sa_pl_response(struct msg_digest *md,
-		struct state *pst, struct state *st)
+static crypto_req_cont_func ikev2_child_ike_inR_continue;
+
+stf_status ikev2_child_ike_inR(struct state *st /* child state */,
+				   struct msg_digest *md)
 {
+	struct state *pst = state_with_serialno(st->st_clonedfrom);
+	passert(pst != NULL);
 	struct connection *c = st->st_connection;
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+
+	/* Ni in */
+	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA accept response to rekey");
 
+	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 						  &sa_pd->pbs,
 						  /*expect_ike*/ TRUE,
@@ -4094,12 +4104,12 @@ static notification_t process_ike_rekey_sa_pl_response(struct msg_digest *md,
 						  &st->st_accepted_ike_proposal,
 						  ike_proposals);
 	if (ret != STF_OK) {
-		DBG(DBG_CONTROLMORE, DBG_log("failed to accept IKE SA, REKEY, response, in process_ike_rekey_sa_pl_response"));
+		dbg("failed to accept IKE SA, REKEY, response, in process_ike_rekey_sa_pl_response");
 		return ret;
 	}
 
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
-				st->st_accepted_ike_proposal));
+						st->st_accepted_ike_proposal));
 	if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
 					   &st->st_oakley)) {
 		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
@@ -4116,96 +4126,6 @@ static notification_t process_ike_rekey_sa_pl_response(struct msg_digest *md,
 
 	ikev2_copy_cookie_from_sa(st->st_accepted_ike_proposal, st->st_rcookie);
 	rehash_state(st, st->st_icookie, st->st_rcookie);
-
-	return STF_OK;
-}
-
-static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct state *pst,
-		struct state *st)
-{
-	struct connection *c = st->st_connection;
-	struct trans_attrs accepted_oakley;
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
-
-	/* Get the proposals ready.  */
-	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA responding to rekey");
-
-	struct ikev2_proposal *accepted_ike_proposal = NULL;
-	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
-			&sa_pd->pbs,
-			/*expect_ike*/ TRUE,
-			/*expect_spi*/ TRUE,
-			/*expect_accepted*/ FALSE,
-			LIN(POLICY_OPPORTUNISTIC, c->policy),
-			&accepted_ike_proposal,
-			ike_proposals);
-	if (ret != STF_OK)
-		return ret;
-
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
-				accepted_ike_proposal));
-	/*
-	 * Early return must free: accepted_ike_proposal
-	 */
-	if (!ikev2_proposal_to_trans_attrs(accepted_ike_proposal,
-			&accepted_oakley)) {
-		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
-		/* free early return items */
-		free_ikev2_proposal(&accepted_ike_proposal);
-		md->st = pst;
-		return STF_IGNORE;
-	}
-
-	if (v2_reject_wrong_ke_for_proposal(md, accepted_oakley.ta_dh)) {
-		free_ikev2_proposal(&accepted_ike_proposal);
-		md->st = pst;
-		/*
-		 * XXX; where is 'st' freed?  Should the code instead
-		 * tunnel back md.st==st and return STF_FATAL which
-		 * will delete the child state?
-		 */
-		return STF_FAIL; /* XXX; STF_FATAL? */
-	}
-
-	/*
-	 * Check and read the KE contents.
-	 */
-
-	/* KE in with new accepted_oakley for IKE */
-	notification_t res = accept_child_sa_KE(md, st, accepted_oakley);
-	if (res != NOTHING_WRONG) {
-		free_ikev2_proposal(&accepted_ike_proposal);
-		return STF_FAIL + res;
-	}
-
-	/* save the proposal information */
-	st->st_oakley = accepted_oakley;
-	st->st_accepted_ike_proposal = accepted_ike_proposal;
-
-	ikev2_copy_cookie_from_sa(accepted_ike_proposal, st->st_icookie);
-	fill_ike_responder_spi(st, &md->sender);
-	insert_state(st); /* needed for delete - we are duplicating early */
-
-	return STF_OK;
-}
-
-/*
- * initiator received Rekey IKE SA (RFC 7296 1.3.3) response
- */
-
-static crypto_req_cont_func ikev2_child_ike_inR_continue;
-
-stf_status ikev2_child_ike_inR(struct state *st /* child state */,
-				   struct msg_digest *md)
-{
-	struct state *pst = state_with_serialno(st->st_clonedfrom);
-
-	passert(pst != NULL);
-
-	/* Ni in */
-	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
-	RETURN_STF_FAILURE_STATUS(process_ike_rekey_sa_pl_response(md, pst, st));
 
 	/* initiate calculation of g^xy for rekey */
 	start_dh_v2(st, "DHv2 for IKE sa rekey initiator",
@@ -4513,8 +4433,8 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 				   struct msg_digest *md)
 {
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
-
 	passert(pst != NULL);
+	struct connection *c = st->st_connection;
 
 	/* child's role could be different from original ike role, of pst; */
 	st->st_original_role = ORIGINAL_RESPONDER;
@@ -4525,7 +4445,68 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
-	RETURN_STF_FAILURE_STATUS(process_ike_rekey_sa_pl(md, pst, st));
+	/* Get the proposals ready.  */
+	struct ikev2_proposals *ike_proposals =
+		get_v2_ike_proposals(c, "IKE SA responding to rekey");
+
+	struct trans_attrs accepted_oakley;
+	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+	struct ikev2_proposal *accepted_ike_proposal = NULL;
+	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
+						  &sa_pd->pbs,
+						  /*expect_ike*/ TRUE,
+						  /*expect_spi*/ TRUE,
+						  /*expect_accepted*/ FALSE,
+						  LIN(POLICY_OPPORTUNISTIC, c->policy),
+						  &accepted_ike_proposal,
+						  ike_proposals);
+	if (ret != STF_OK)
+		return ret;
+
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
+						accepted_ike_proposal));
+	/*
+	 * Early return must free: accepted_ike_proposal
+	 */
+	if (!ikev2_proposal_to_trans_attrs(accepted_ike_proposal,
+					   &accepted_oakley)) {
+		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
+		/* free early return items */
+		/* XXX: where is ST freed? */
+		free_ikev2_proposal(&accepted_ike_proposal);
+		md->st = pst;
+		return STF_IGNORE;
+	}
+
+	if (v2_reject_wrong_ke_for_proposal(md, accepted_oakley.ta_dh)) {
+		free_ikev2_proposal(&accepted_ike_proposal);
+		md->st = pst;
+		/*
+		 * XXX; where is 'st' freed?  Should the code instead
+		 * tunnel back md.st==st and return STF_FATAL which
+		 * will delete the child state?
+		 */
+		return STF_FAIL; /* XXX; STF_FATAL? */
+	}
+
+	/*
+	 * Check and read the KE contents.
+	 */
+
+	/* KE in with new accepted_oakley for IKE */
+	notification_t res = accept_child_sa_KE(md, st, accepted_oakley);
+	if (res != NOTHING_WRONG) {
+		free_ikev2_proposal(&accepted_ike_proposal);
+		return STF_FAIL + res;
+	}
+
+	/* save the proposal information */
+	st->st_oakley = accepted_oakley;
+	st->st_accepted_ike_proposal = accepted_ike_proposal;
+
+	ikev2_copy_cookie_from_sa(accepted_ike_proposal, st->st_icookie);
+	fill_ike_responder_spi(st, &md->sender);
+	insert_state(st); /* needed for delete - we are duplicating early */
 
 	request_ke_and_nonce("IKE rekey KE response gir", st,
 			     st->st_oakley.ta_dh,
