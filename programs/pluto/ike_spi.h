@@ -50,6 +50,9 @@ bool ike_spi_eq(const ike_spi_t *lhs, const ike_spi_t *rhs);
 void fill_ike_initiator_spi(struct state *st);
 void fill_ike_responder_spi(struct state *st, const ip_address *addr);
 
+ike_spi_t ike_initiator_spi(void);
+ike_spi_t ike_responder_spi(const ip_address *addr);
+
 void refresh_ike_spi_secret(void);
 
 /*

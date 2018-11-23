@@ -53,7 +53,7 @@ void refresh_ike_spi_secret(void)
 /*
  * Generate the IKE Initiator's SPI.
  */
-static ike_spi_t ike_initiator_spi(void)
+ike_spi_t ike_initiator_spi(void)
 {
 	ike_spi_t spi;
 	do {
@@ -71,7 +71,7 @@ static ike_spi_t ike_initiator_spi(void)
  * it will prevent an attacker from depleting our random pool
  * or entropy.
  */
-static ike_spi_t ike_responder_spi(const ip_address *addr)
+ike_spi_t ike_responder_spi(const ip_address *addr)
 {
 	ike_spi_t spi;
 	do {

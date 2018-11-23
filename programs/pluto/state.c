@@ -1443,9 +1443,9 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 			 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
 
 	nst->st_connection = st->st_connection;
+	nst->st_ike_spis = st->st_ike_spis;
+
 	if (sa_type == IPSEC_SA) {
-		memcpy(nst->st_icookie, st->st_icookie, COOKIE_SIZE);
-		memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
 		nst->st_oakley = st->st_oakley;
 	}
 

@@ -4117,20 +4117,20 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 }
 
 static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
-				  pb_stream *outpbs)
+					       pb_stream *outpbs)
 {
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
-	chunk_t local_spi;
 	chunk_t local_nonce;
 	chunk_t *local_g;
 
 	switch (st->st_state) {
 	case STATE_V2_REKEY_IKE_R:
+	{
 		local_g = &st->st_gr;
-		setchunk(local_spi, st->st_rcookie,
-				sizeof(st->st_rcookie));
 		local_nonce = st->st_nr;
+		chunk_t local_spi = chunk(st->st_ike_rekey_spis.responder.bytes,
+					  sizeof(st->st_ike_rekey_spis.responder));
 
 		/* send selected v2 IKE SA */
 		if (!ikev2_emit_sa_proposal(outpbs, st->st_accepted_ike_proposal,
@@ -4139,11 +4139,13 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 		}
 		break;
+	}
 	case STATE_V2_REKEY_IKE_I0:
+	{
 		local_g = &st->st_gi;
-		setchunk(local_spi, st->st_icookie,
-				sizeof(st->st_icookie));
 		local_nonce = st->st_ni;
+		chunk_t local_spi = chunk(st->st_ike_rekey_spis.initiator.bytes,
+					  sizeof(st->st_ike_rekey_spis.initiator));
 
 		struct ikev2_proposals *ike_proposals =
 			get_v2_ike_proposals(c, "IKE SA initiating rekey");
@@ -4155,6 +4157,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 		}
 		break;
+	}
 	default:
 		bad_case(st->st_state);
 	}
@@ -4259,15 +4262,18 @@ stf_status ikev2_child_ike_inR(struct state *st /* child state */,
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
 				     &md->chain[ISAKMP_NEXT_v2KE]->pbs));
 
-	ikev2_copy_cookie_from_sa(st->st_accepted_ike_proposal, st->st_rcookie);
-	rehash_state(st, st->st_icookie, st->st_rcookie);
+	/* fill in the missing responder SPI */
+	passert(!ike_spi_is_zero(&st->st_ike_rekey_spis.initiator));
+	passert(ike_spi_is_zero(&st->st_ike_rekey_spis.responder));
+	ikev2_copy_cookie_from_sa(st->st_accepted_ike_proposal,
+				  st->st_ike_rekey_spis.responder.bytes);
 
 	/* initiate calculation of g^xy for rekey */
 	start_dh_v2(st, "DHv2 for IKE sa rekey initiator",
 		    ORIGINAL_INITIATOR,
 		    pst->st_skey_d_nss, /* only IKE has SK_d */
 		    pst->st_oakley.ta_prf, /* for IKE/ESP/AH */
-		    &st->st_ike_spis,
+		    &st->st_ike_rekey_spis,
 		    ikev2_child_ike_inR_continue);
 	return STF_SUSPEND;
 }
@@ -4643,10 +4649,6 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 	st->st_oakley = accepted_oakley;
 	st->st_accepted_ike_proposal = accepted_ike_proposal;
 
-	ikev2_copy_cookie_from_sa(accepted_ike_proposal, st->st_icookie);
-	fill_ike_responder_spi(st, &md->sender);
-	insert_state(st); /* needed for delete - we are duplicating early */
-
 	request_ke_and_nonce("IKE rekey KE response gir", st,
 			     st->st_oakley.ta_dh,
 			     ikev2_child_ike_inIoutR_continue);
@@ -4689,10 +4691,15 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	unpack_KE_from_helper(st, r, &st->st_gr);
 
 	/* initiate calculation of g^xy */
+	passert(ike_spi_is_zero(&st->st_ike_rekey_spis.initiator));
+	passert(ike_spi_is_zero(&st->st_ike_rekey_spis.responder));
+	ikev2_copy_cookie_from_sa(st->st_accepted_ike_proposal,
+				  st->st_ike_rekey_spis.initiator.bytes);
+	st->st_ike_rekey_spis.responder = ike_responder_spi(&(*mdp)->sender);
 	start_dh_v2(st, "DHv2 for REKEY IKE SA", ORIGINAL_RESPONDER,
 		    ike->sa.st_skey_d_nss, /* only IKE has SK_d */
 		    ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
-		    &st->st_ike_spis, /* XXX: wrong! */
+		    &st->st_ike_rekey_spis,
 		    ikev2_child_ike_inIoutR_continue_continue);
 
 	complete_v2_state_transition(st, mdp, STF_SUSPEND);
@@ -5650,7 +5657,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 	} else {
 		st = ikev2_duplicate_state(ike, IKE_SA, SA_INITIATOR);
 		st->st_oakley = ike->sa.st_oakley;
-		fill_ike_initiator_spi(st);
+		st->st_ike_rekey_spis.initiator = ike_initiator_spi();
 		st->st_ike_pred = ike->sa.st_serialno;
 	}
 

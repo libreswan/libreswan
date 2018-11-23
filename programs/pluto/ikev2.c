@@ -1109,7 +1109,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
 			st->st_msgid = md->hdr.isa_msgid;
-			/* can not call insert_state yet. no IKE cookies yet */
+			insert_state(st); /* needed for delete - we are duplicating early */
 		}
 	} else  {
 		/* this a response */
@@ -2621,10 +2621,9 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	to->sa.st_msgid_lastrecv = v2_INVALID_MSGID;
 	to->sa.st_msgid_nextuse = v2_INITIAL_MSGID;
 
-	/*
-	 * XXX: should be setting TO's IKE_SPIs to the values from the
-	 * exchange; but instead they were installed very early :-(
-	 */
+	/* Switch to the new IKE SPIs */
+	to->sa.st_ike_spis = to->sa.st_ike_rekey_spis;
+	rehash_state_cookies_in_db(&to->sa);
 
 	/* TO has correct IKE_SPI so can migrate */
 	v2_migrate_children(from, to);
