@@ -149,6 +149,11 @@ struct list_head *icookie_slot(const u_char *icookie)
 	return slot;
 }
 
+struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
+{
+	return icookie_slot(initiator->ike_spi); /* XXX: for now */
+}
+
 /*
  * Hash table indexed by both ICOOKIE and RCOOKIE.
  */
@@ -215,6 +220,12 @@ struct list_head *cookies_slot(const u_char *icookie,
 		lswlogf(buf, " to %zu slot %p", hash, slot);
 	};
 	return slot;
+}
+
+struct list_head *ike_spi_slot(const ike_spi_t *initiator,
+			       const ike_spi_t *responder)
+{
+	return cookies_slot(initiator->ike_spi, responder->ike_spi);
 }
 
 /*
