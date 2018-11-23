@@ -1850,7 +1850,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 	 * v2N_NAT_DETECTION_SOURCE_IP
 	 */
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
-		ikev2_natd_lookup(md, &st->st_ike_responder_spi);
+		ikev2_natd_lookup(md, &st->st_ike_spis.responder);
 	}
 
 	/* initiate calculation of g^xy */

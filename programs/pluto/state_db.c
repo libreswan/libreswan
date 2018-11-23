@@ -151,7 +151,7 @@ struct list_head *icookie_slot(const u_char *icookie)
 
 struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
 {
-	return icookie_slot(initiator->ike_spi); /* XXX: for now */
+	return icookie_slot(initiator->bytes); /* XXX: for now */
 }
 
 /*
@@ -225,7 +225,12 @@ struct list_head *cookies_slot(const u_char *icookie,
 struct list_head *ike_spi_slot(const ike_spi_t *initiator,
 			       const ike_spi_t *responder)
 {
-	return cookies_slot(initiator->ike_spi, responder->ike_spi);
+	return cookies_slot(initiator->bytes, responder->bytes);
+}
+
+struct list_head *ike_spis_slot(const ike_spis_t *ir)
+{
+	return ike_spi_slot(&ir->initiator, &ir->responder);
 }
 
 /*

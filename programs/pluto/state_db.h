@@ -55,6 +55,7 @@ struct list_head *cookies_slot(const uint8_t *icookie,
 
 
 struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator);
+struct list_head *ike_spis_slot(const ike_spis_t *spis);
 struct list_head *ike_spi_slot(const ike_spi_t *initiator,
 			       const ike_spi_t *responder);
 

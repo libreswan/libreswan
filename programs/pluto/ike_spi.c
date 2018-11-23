@@ -53,12 +53,13 @@ void refresh_ike_spi_secret(void)
 /*
  * Generate the IKE Initiator's SPI.
  */
-void fill_ike_initiator_spi(struct state *st)
+static ike_spi_t ike_initiator_spi(void)
 {
+	ike_spi_t spi;
 	do {
-		get_rnd_bytes(st->st_ike_initiator_spi.ike_spi,
-			      sizeof(st->st_ike_initiator_spi));
-	} while (ike_spi_is_zero(&st->st_ike_initiator_spi)); /* probably never loops */
+		get_rnd_bytes(spi.bytes, sizeof(spi));
+	} while (ike_spi_is_zero(&spi)); /* probably never loops */
+	return spi;
 }
 
 /*
@@ -70,8 +71,9 @@ void fill_ike_initiator_spi(struct state *st)
  * it will prevent an attacker from depleting our random pool
  * or entropy.
  */
-void fill_ike_responder_spi(struct state *st, const ip_address *addr)
+static ike_spi_t ike_responder_spi(const ip_address *addr)
 {
+	ike_spi_t spi;
 	do {
 		static uint32_t counter = 0; /* STATIC */
 
@@ -96,9 +98,31 @@ void fill_ike_responder_spi(struct state *st, const ip_address *addr)
 		crypt_hash_final_bytes(&ctx, buffer, SHA2_256_DIGEST_SIZE);
 		/* cookie size is smaller than hash output size */
 		passert(IKE_SA_SPI_SIZE <= SHA2_256_DIGEST_SIZE);
-		passert(IKE_SA_SPI_SIZE == sizeof(st->st_ike_responder_spi));
-		memcpy(&st->st_ike_responder_spi, buffer,
-		       sizeof(st->st_ike_responder_spi));
+		passert(IKE_SA_SPI_SIZE == sizeof(spi));
+		memcpy(&spi, buffer, sizeof(spi));
 
-	} while (ike_spi_is_zero(&st->st_ike_responder_spi)); /* probably never loops */
+	} while (ike_spi_is_zero(&spi)); /* probably never loops */
+	return spi;
+}
+
+/*
+ * Generate the IKE Initiator's SPI.
+ */
+void fill_ike_initiator_spi(struct state *st)
+{
+	st->st_ike_spis.initiator = ike_initiator_spi();
+}
+
+/*
+ * Generate the IKE Responder's SPI.
+ *
+ * As responder, we use a hashing method to get a pseudo random
+ * value instead of using our own random pool. It will prevent
+ * an attacker from gaining raw data from our random pool and
+ * it will prevent an attacker from depleting our random pool
+ * or entropy.
+ */
+void fill_ike_responder_spi(struct state *st, const ip_address *addr)
+{
+	st->st_ike_spis.responder = ike_responder_spi(addr);
 }

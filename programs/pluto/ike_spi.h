@@ -25,24 +25,18 @@
 
 struct state;
 
-/*
- * New and old.
- *
- * Switching from spi[IKE_SA_SPI_SIZE] to ike_spi_t will take time as
- * it churns the code.  First with a cookie->ike_spi rename and second
- * with a switch to an explicit reference parameter (old code worked
- * without '&' because parameter was passed by array reference).
- */
+typedef struct {
+	uint8_t bytes[IKE_SA_SPI_SIZE];
+} ike_spi_t;
 
 typedef struct {
-	uint8_t ike_spi[IKE_SA_SPI_SIZE];
-} ike_spi_t;
+	ike_spi_t initiator;
+	ike_spi_t responder;
+} ike_spis_t;
+
 extern const ike_spi_t zero_ike_spi;
 bool ike_spi_is_zero(const ike_spi_t *ike_spi);
 bool ike_spi_eq(const ike_spi_t *lhs, const ike_spi_t *rhs);
-
-extern const uint8_t zero_cookie[IKE_SA_SPI_SIZE]; /* use zero_ike_spi */
-bool is_zero_cookie(const uint8_t ike_spi[IKE_SA_SPI_SIZE]); /* use ike_spi_is_zero() */
 
 /*
  * Need to handle two cases:
@@ -57,5 +51,12 @@ void fill_ike_initiator_spi(struct state *st);
 void fill_ike_responder_spi(struct state *st, const ip_address *addr);
 
 void refresh_ike_spi_secret(void);
+
+/*
+ * Old; being deleted.
+ */
+
+extern const uint8_t zero_cookie[IKE_SA_SPI_SIZE]; /* use zero_ike_spi */
+bool is_zero_cookie(const uint8_t ike_spi[IKE_SA_SPI_SIZE]); /* use ike_spi_is_zero() */
 
 #endif

@@ -410,15 +410,15 @@ struct state {
 
 	/* symmetric stuff */
 
+	ike_spis_t st_ike_spis;
+#define st_icookie st_ike_spis.initiator.bytes
+#define st_rcookie st_ike_spis.responder.bytes
+
 	/* initiator stuff */
-	ike_spi_t st_ike_initiator_spi;
-#define st_icookie st_ike_initiator_spi.ike_spi
 	chunk_t st_gi;                          /* Initiator public value */
 	chunk_t st_ni;                          /* Ni nonce */
 
 	/* responder stuff */
-	ike_spi_t st_ike_responder_spi;
-#define st_rcookie st_ike_responder_spi.ike_spi
 	chunk_t st_gr;                          /* Responder public value */
 	chunk_t st_nr;                          /* Nr nonce */
 	chunk_t st_dcookie;                     /* DOS cookie of responder - v2 only */

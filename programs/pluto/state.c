@@ -2784,8 +2784,7 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 	 * which, the cursor is past (this odds of this are very low).
 	 */
 	struct state *st = NULL;
-	struct list_head *slot = ike_spi_slot(&from->sa.st_ike_initiator_spi,
-					      &from->sa.st_ike_responder_spi);
+	struct list_head *slot = ike_spis_slot(&from->sa.st_ike_spis);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
 		if (st->st_clonedfrom == from->sa.st_serialno) {
 			passert(st->st_serialno != to->sa.st_serialno);
@@ -2800,8 +2799,7 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 			dbg("#%lu migrated from IKE SA #%lu to IKE SA #%lu",
 			    st->st_serialno, from->sa.st_serialno, to->sa.st_serialno);
 			st->st_clonedfrom = to->sa.st_serialno;
-			st->st_ike_initiator_spi = to->sa.st_ike_initiator_spi;
-			st->st_ike_responder_spi = to->sa.st_ike_responder_spi;
+			st->st_ike_spis = to->sa.st_ike_spis;
 			/*
 			 * Delete the old IKE_SPI hash entries (both
 			 * for I and I+R and), and then inserts new

@@ -1050,7 +1050,7 @@ void show_setup_natt(void)
 void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi)
 {
 	struct state *st = md->st;
-	const uint8_t *rcookie = ike_responder_spi->ike_spi; /* XXX */
+	const uint8_t *rcookie = ike_responder_spi->bytes; /* XXX */
 
 	passert(st != NULL);
 	passert(md->iface != NULL);
