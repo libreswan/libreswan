@@ -39,6 +39,7 @@
 
 #include "crypto.h"
 #include "chunk.h"
+#include "ike_spi.h"
 
 struct state;
 struct msg_digest;
@@ -210,8 +211,7 @@ struct pcr_dh_v2 {
 	wire_chunk_t gr;
 	wire_chunk_t ni;
 	wire_chunk_t nr;
-	wire_chunk_t icookie;
-	wire_chunk_t rcookie;
+	ike_spis_t ike_spis;
 	struct dh_secret *secret;
 	PK11SymKey *skey_d_old;
 	const struct prf_desc *old_prf;
@@ -356,6 +356,7 @@ extern void start_dh_v2(struct state *st,
 			enum original_role role,
 			PK11SymKey *skey_d_old,
 			const struct prf_desc *old_prf,
+			const ike_spis_t *ike_spis,
 			crypto_req_cont_func pcrc_func);
 
 extern bool finish_dh_v2(struct state *st,

@@ -1930,8 +1930,9 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 
 	/* initiate calculation of g^xy */
 	start_dh_v2(st, "ikev2_inR1outI2 KE",
-		    ORIGINAL_INITIATOR, NULL,
-		    NULL, ikev2_parent_inR1outI2_continue);
+		    ORIGINAL_INITIATOR,
+		    NULL, NULL, &st->st_ike_spis,
+		    ikev2_parent_inR1outI2_continue);
 	return STF_SUSPEND;
 }
 
@@ -2766,8 +2767,9 @@ stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct state *st,
 
 	/* initiate calculation of g^xy */
 	start_dh_v2(st, "ikev2_inI2outR2 KE",
-		    ORIGINAL_RESPONDER, NULL,
-		    NULL, ikev2_ike_sa_process_auth_request_no_skeyid_continue);
+		    ORIGINAL_RESPONDER,
+		    NULL, NULL, &st->st_ike_spis,
+		    ikev2_ike_sa_process_auth_request_no_skeyid_continue);
 	return STF_SUSPEND;
 }
 
@@ -4265,6 +4267,7 @@ stf_status ikev2_child_ike_inR(struct state *st /* child state */,
 		    ORIGINAL_INITIATOR,
 		    pst->st_skey_d_nss, /* only IKE has SK_d */
 		    pst->st_oakley.ta_prf, /* for IKE/ESP/AH */
+		    &st->st_ike_spis,
 		    ikev2_child_ike_inR_continue);
 	return STF_SUSPEND;
 }
@@ -4331,11 +4334,13 @@ stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 	case STATE_V2_CREATE_I:
 		start_dh_v2(st, "ikev2 Child SA initiator pfs=yes",
 			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
+			    &st->st_ike_spis, /* ignored */
 			    ikev2_child_inR_continue);
 		return STF_SUSPEND;
 	case STATE_V2_REKEY_CHILD_I:
 		start_dh_v2(st, "ikev2 Child Rekey SA initiator pfs=yes",
 			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
+			    &st->st_ike_spis, /* ignored */
 			    ikev2_child_inR_continue);
 		return STF_SUSPEND;
 	default:
@@ -4504,6 +4509,7 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 		start_dh_v2(st, "DHv2 for child sa", ORIGINAL_RESPONDER,
 			    ike->sa.st_skey_d_nss, /* only IKE has SK_d */
 			    ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
+			    &st->st_ike_spis, /* ignored */
 			    ikev2_child_inIoutR_continue_continue);
 		e = STF_SUSPEND;
 	}
@@ -4686,6 +4692,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	start_dh_v2(st, "DHv2 for REKEY IKE SA", ORIGINAL_RESPONDER,
 		    ike->sa.st_skey_d_nss, /* only IKE has SK_d */
 		    ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
+		    &st->st_ike_spis, /* XXX: wrong! */
 		    ikev2_child_ike_inIoutR_continue_continue);
 
 	complete_v2_state_transition(st, mdp, STF_SUSPEND);

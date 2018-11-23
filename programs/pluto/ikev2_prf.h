@@ -20,6 +20,8 @@
 #ifndef _IKEV2_PRF_H
 #define _IKEV2_PRF_H
 
+#include "ike_spi.h"
+
 /*
  * IKE SA
  */
@@ -39,7 +41,7 @@ PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyseed,
 				const chunk_t Ni, const chunk_t Nr,
-				const chunk_t SPIi, const chunk_t SPIr,
+				const ike_spis_t *ike_spis,
 				size_t required_bytes);
 
 /*
