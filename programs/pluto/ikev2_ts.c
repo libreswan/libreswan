@@ -950,13 +950,16 @@ bool v2_process_ts_request(struct child_sa *child,
 			}
 
 			/*
-			 * Is it worth looking at the template.  XXX:
-			 * Are these two cases really mutually
-			 * exclusive?!?
+			 * Is it worth looking at the template.
+			 *
+			 * XXX: treat the combination the same as
+			 * group instance, like the old code did; is
+			 * this valid?
 			 */
 			switch (c->policy & (POLICY_GROUPINSTANCE |
 					     POLICY_IKEV2_ALLOW_NARROWING)) {
 			case POLICY_GROUPINSTANCE:
+			case POLICY_GROUPINSTANCE | POLICY_IKEV2_ALLOW_NARROWING: /* XXX: true */
 				/* XXX: why does this matter; does it imply t->foodgroup != NULL? */
 				if (!LIN(POLICY_GROUPINSTANCE, t->policy)) {
 					dbg("    skipping; not a group instance");
@@ -1000,6 +1003,7 @@ bool v2_process_ts_request(struct child_sa *child,
 			switch (c->policy & (POLICY_GROUPINSTANCE |
 					     POLICY_IKEV2_ALLOW_NARROWING)) {
 			case POLICY_GROUPINSTANCE:
+			case POLICY_GROUPINSTANCE | POLICY_IKEV2_ALLOW_NARROWING: /* XXX: true */
 				/* exact match; XXX: 'cos that is what old code did */
 				port_fit = END_EQUALS_TS;
 				break;
