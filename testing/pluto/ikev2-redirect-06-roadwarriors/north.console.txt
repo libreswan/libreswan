@@ -1,0 +1,92 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+north #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+north #
+ /testing/pluto/bin/wait-until-pluto-started
+north #
+ ipsec auto --add north-east
+002 added connection description "north-east"
+north #
+ echo initdone
+initdone
+north #
+ ipsec auto --up north-east
+002 "north-east" #1: initiating v2 parent SA
+133 "north-east" #1: initiate
+133 "north-east" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "north-east" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "north-east" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "north-east" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+003 "north-east" #2: Authenticated using RSA
+002 "north-east" #2: received INTERNAL_IP4_ADDRESS 192.0.2.102
+002 "north-east" #2: received INTERNAL_IP4_DNS 1.2.3.4
+002 "north-east" #2: received INTERNAL_IP4_DNS 5.6.7.8
+002 "north-east" #2: up-client output: updating resolvconf
+002 "north-east" #2: negotiated connection [192.0.2.102-192.0.2.102:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
+004 "north-east" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+north #
+ sleep 3
+north #
+ ipsec whack --trafficstatus
+006 #4: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
+north #
+north NOW
+XFRM state:
+src 192.1.2.45 dst 192.1.3.33
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.3.33 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+XFRM policy:
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir fwd priority 1040383 ptype main
+	tmpl src 192.1.2.45 dst 192.1.3.33
+		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir in priority 1040383 ptype main
+	tmpl src 192.1.2.45 dst 192.1.3.33
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir out priority 1040383 ptype main
+	tmpl src 192.1.3.33 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.102/32 dst 0.0.0.0/0
+	dir out priority 1040383 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+0.0.0.0/1 via 192.1.3.254 dev eth1 src 192.0.2.102
+default via 192.1.3.254 dev eth1
+128.0.0.0/1 via 192.1.3.254 dev eth1 src 192.0.2.102
+192.0.1.0/24 via 192.1.3.254 dev eth1
+192.0.2.0/24 via 192.1.3.254 dev eth1
+192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254
+192.1.2.0/24 via 192.1.3.254 dev eth1
+192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+east                                                         P,,  
+east-ec                                                      P,,  
+hashsha2                                                     P,,  
+nic                                                          P,,  
+north                                                        u,u,u
+road                                                         P,,  
+west                                                         P,,  
+west-ec                                                      P,,  
+north #
+ : ==== tuc ====
+north #
+ ../bin/check-for-core.sh
+north #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

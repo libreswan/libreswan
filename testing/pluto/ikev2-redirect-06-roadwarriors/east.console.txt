@@ -1,0 +1,88 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ip route del 192.0.1.0/24
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add east-any
+002 added connection description "east-any"
+east #
+ echo initdone
+initdone
+east #
+ sleep 2
+east #
+ # both clients should be connected now
+east #
+ ipsec whack --trafficstatus
+006 #2: "east-any"[1] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.101/32
+006 #4: "east-any"[2] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.102/32
+east #
+ # send REDIRECT in informational to north
+east #
+ ipsec whack --redirect --peer-ip 192.1.3.33 --gateway 192.1.2.45
+002 redirecting of peer 192.1.3.33 successful
+east #
+ # give north time to be redirected
+east #
+ sleep 2
+east #
+ # only road should be left connected to east. north has gone to west
+east #
+ ipsec whack --trafficstatus
+006 #2: "east-any"[1] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.101/32
+east #
+east NOW
+XFRM state:
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+XFRM policy:
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir out priority 1048543 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir fwd priority 1048543 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir in priority 1048543 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.0.2.101 dev eth1 scope link
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+east                                                         u,u,u
+hashsha2                                                     P,,  
+nic                                                          P,,  
+north                                                        P,,  
+road                                                         P,,  
+west                                                         P,,  
+west-ec                                                      P,,  
+east #
+ : ==== tuc ====
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
