@@ -406,6 +406,10 @@ extern bool route_and_eroute(struct connection *c,
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
 extern bool migrate_ipsec_sa(struct state *st);
+extern bool del_spi(ipsec_spi_t spi,
+		    int proto,
+		    const ip_address *src,
+		    const ip_address *dest);
 
 
 extern bool eroute_connection(const struct spd_route *sr,

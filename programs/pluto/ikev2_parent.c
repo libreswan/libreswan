@@ -14,7 +14,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015-2018 Andrew Cagney
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
- * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -73,6 +73,7 @@
 #include "crypt_hash.h"
 #include "ikev2_ipseckey.h"
 #include "ikev2_ppk.h"
+#include "ikev2_redirect.h"
 #include "xauth.h"
 #include "crypt_dh.h"
 #include "ietf_constants.h"
@@ -664,7 +665,6 @@ void ikev2_parent_outI1(fd_t whack_sock,
 			libreswan_log(
 				"Labeled ipsec is not supported with ikev2 yet");
 #endif
-
 		add_pending(dup_any(whack_sock), st, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno
 #ifdef HAVE_LABELED_IPSEC
@@ -878,6 +878,31 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	/* Send USE_PPK Notify payload */
 	if (LIN(POLICY_PPK_ALLOW, c->policy)) {
 		if (!ship_v2Ns(ISAKMP_NEXT_v2N, v2N_USE_PPK, &rbody))
+			return STF_INTERNAL_ERROR;
+	}
+
+	/* first check if this IKE_SA_INIT came from redirect
+	 * instruction.
+	 * - if yes, send the v2N_REDIRECTED_FROM
+	 * with the identity of previous gateway
+	 * - if not, check if we support redirect mechanism
+	 *   and send v2N_REDIRECT_SUPPORTED if we do
+	 */
+	if (!isanyaddr(&c->temp_vars.redirect_ip)) {
+		chunk_t old_gateway_data;
+		err_t e;
+
+		e = build_redirected_from_notify_data(c->temp_vars.old_gw_address, &old_gateway_data);
+		if (e != NULL) {
+			loglog(RC_LOG_SERIOUS, "not sending REDIRECTED_FROM Notify payload because %s", e);
+		} else {
+			if (!ship_v2Nsp(ISAKMP_NEXT_v2N, v2N_REDIRECTED_FROM,
+					&old_gateway_data, &rbody))
+				return STF_INTERNAL_ERROR;
+			freeanychunk(old_gateway_data);
+		}
+	} else if (LIN(POLICY_ACCEPT_REDIRECT_YES, c->policy)) {
+		if (!ship_v2Ns(ISAKMP_NEXT_v2N, v2N_REDIRECT_SUPPORTED, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1188,6 +1213,11 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 			st->st_seen_ppk = TRUE;
 			break;
 
+		case v2N_REDIRECTED_FROM:	/* currently we don't check address in this payload */
+		case v2N_REDIRECT_SUPPORTED:
+			st->st_seen_redirect_sup = TRUE;
+			break;
+
 		case v2N_NAT_DETECTION_DESTINATION_IP:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 			if (!seen_nat) {
@@ -1367,6 +1397,27 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 		if (!ship_v2Ns(np, v2N_USE_PPK, &rbody))
 			return STF_INTERNAL_ERROR;
 	 }
+
+	if (st->st_seen_redirect_sup && (global_redirect == GLOBAL_REDIRECT_ON ||
+					(global_redirect == GLOBAL_REDIRECT_AUTO &&
+					 require_ddos_cookies()))) {
+		if (global_redirect_to == NULL) {
+			loglog(RC_LOG_SERIOUS, "global-redirect-to is not specified, can't redirect requests");
+		} else {
+			chunk_t data;
+			err_t e;
+
+			e = build_redirect_notify_data(global_redirect_to, TRUE, &st->st_ni, &data);
+			if (e != NULL) {
+				loglog(RC_LOG_SERIOUS, "not sending REDIRECT Payload because %s", e);
+			} else {
+				if (!ship_v2Nsp(ISAKMP_NEXT_v2N, v2N_REDIRECT, &data, &rbody))
+					return STF_INTERNAL_ERROR;
+				freeanychunk(data);
+			}
+		}
+	}
+
 
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
 	if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
@@ -1721,6 +1772,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 {
 	struct connection *c = st->st_connection;
 	struct payload_digest *ntfy;
+	ip_address redirect_ip;
 
 	/* for testing only */
 	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
@@ -1773,6 +1825,29 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 			st->st_seen_ppk = TRUE;
 			break;
 
+		case v2N_REDIRECT:
+		{
+			DBG(DBG_CONTROL, DBG_log("received v2N_REDIRECT in IKE_SA_INIT reply"));
+
+			if (!LIN(POLICY_ACCEPT_REDIRECT_YES, st->st_connection->policy)) {
+				DBG(DBG_CONTROL, DBG_log("ignoring v2N_REDIRECT, we don't allow to be redirected"));
+				break;
+			}
+
+			err_t e = parse_redirect_payload(&ntfy->pbs,
+							   c->accept_redirect_to,
+							   TRUE,
+							   &st->st_ni,
+							   &redirect_ip);
+			if (e != NULL) {
+				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", e);
+			} else {
+				st->st_connection->temp_vars.redirect_ip = redirect_ip;
+				event_force(EVENT_v2_REDIRECT, st);
+				return STF_SUSPEND;
+			}
+			break;
+		}
 		case v2N_SIGNATURE_HASH_ALGORITHMS:
 			if (!IMPAIR(IGNORE_HASH_NOTIFY_RESPONSE)) {
 				st->st_seen_hashnotify = TRUE;
@@ -3024,6 +3099,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	/* send response */
 	{
 		int notifies = 0;
+		bool send_redirect = FALSE;
+		chunk_t redirect_data;
+		err_t ugh = NULL;
 
 		if (LIN(POLICY_MOBIKE, c->policy) && st->st_seen_mobike) {
 			if (c->spd.that.host_type == KH_ANY) {
@@ -3043,6 +3121,19 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		}
 		if (st->st_ppk_used) {
 			notifies++; /* send USE_PPK */
+		}
+		if (st->st_seen_redirect_sup && (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
+						 (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
+						  require_ddos_cookies()))) {
+			if (c->redirect_to == NULL) {
+				loglog(RC_LOG_SERIOUS, "redirect-to is not specified, can't redirect requests");
+			} else {
+				ugh = build_redirect_notify_data(c->redirect_to, FALSE, NULL, &redirect_data);
+				if (ugh == NULL) {
+					notifies++; /* send REDIRECT */
+					send_redirect = TRUE;
+				} /* else log error but later, see below */
+			}
 		}
 
 		/* make sure HDR is at start of a clean buffer */
@@ -3090,6 +3181,17 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
 			if (!ship_v2Ns(np, v2N_PPK_IDENTITY, &sk.pbs))
 				return STF_INTERNAL_ERROR;
+		}
+
+		if (send_redirect) {
+			notifies--;
+			if (!ship_v2Nsp((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr,
+					v2N_REDIRECT, &redirect_data, &sk.pbs))
+				return STF_INTERNAL_ERROR;
+			st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
+			freeanychunk(redirect_data);
+		} else if (ugh != NULL) {
+			loglog(RC_LOG_SERIOUS, "not sending REDIRECT Payload because %s", ugh);
 		}
 
 		if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
@@ -3533,6 +3635,8 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	struct payload_digest *ntfy;
 	struct state *pst = st;
 	bool got_transport = FALSE;
+	ip_address redirect_ip;
+	bool initiate_redirect = FALSE;
 
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
@@ -3560,9 +3664,32 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 			st->st_seen_mobike = pst->st_seen_mobike = TRUE;
 			break;
 		case v2N_PPK_IDENTITY:
-			ppk_seen_identity = TRUE;
 			DBG(DBG_CONTROL, DBG_log("received v2N_PPK_IDENTITY, responder used PPK"));
+			ppk_seen_identity = TRUE;
 			break;
+		case v2N_REDIRECT:
+		{
+			DBG(DBG_CONTROL, DBG_log("received v2N_REDIRECT in IKE_AUTH reply"));
+
+			if (!LIN(POLICY_ACCEPT_REDIRECT_YES, st->st_connection->policy)) {
+				DBG(DBG_CONTROL, DBG_log("ignoring v2N_REDIRECT, we don't allow to be redirected"));
+				break;
+			}
+
+			err_t e = parse_redirect_payload(&ntfy->pbs,
+							   st->st_connection->accept_redirect_to,
+							   FALSE,
+							   NULL,
+							   &redirect_ip);
+			if (e != NULL) {
+				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", e);
+			} else {
+				/* initiate later, because we need to wait for AUTH succees */
+				initiate_redirect = TRUE;
+				st->st_connection->temp_vars.redirect_ip = redirect_ip;
+			}
+			break;
+		}
 		default:
 			DBG(DBG_CONTROLMORE, DBG_log("Received %s notify - ignored",
 				enum_name(&ikev2_notify_names,
@@ -3672,6 +3799,12 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 			loglog(RC_LOG_SERIOUS, "local policy requires Transport Mode but peer requires required Tunnel Mode");
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN; /* applies only to Child SA */
 		}
+	}
+
+	if (initiate_redirect) {
+		st->st_redirected_in_auth = TRUE;
+		event_force(EVENT_v2_REDIRECT, st);
+		return STF_SUSPEND;
 	}
 
 	/* See if there is a child SA available */
@@ -4819,16 +4952,33 @@ static bool process_mobike_resp(struct msg_digest *md)
 	return ret;
 }
 
-static bool process_mobike_req(struct msg_digest *md, bool *ntfy_natd,
+/* currently we support only MOBIKE notifies and v2N_REDIRECT notify */
+static void process_informational_notify_req(struct msg_digest *md, bool *redirect, bool *ntfy_natd,
 		chunk_t *cookie2)
 {
 	struct payload_digest *ntfy;
 	struct state *st = md->st;
 	bool may_mobike = mobike_check_established(st);
 	bool ntfy_update_sa = FALSE;
+	ip_address redirect_ip;
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_REDIRECT:
+			DBG(DBG_CONTROLMORE, DBG_log("received v2N_REDIRECT in informational"));
+			err_t e = parse_redirect_payload(&ntfy->pbs,
+							 st->st_connection->accept_redirect_to,
+							 FALSE,
+							 NULL,
+							 &redirect_ip);
+			if (e != NULL) {
+				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", e);
+			} else {
+				*redirect = TRUE;
+				st->st_connection->temp_vars.redirect_ip = redirect_ip;
+			}
+			return;
+
 		case v2N_UPDATE_SA_ADDRESSES:
 			if (may_mobike) {
 				ntfy_update_sa = TRUE;
@@ -4908,7 +5058,12 @@ static bool process_mobike_req(struct msg_digest *md, bool *ntfy_natd,
 		set_mobike_remote_addr(md, st);
 	}
 
-	return ntfy_update_sa;
+	if (ntfy_update_sa)
+		libreswan_log("MOBIKE request: updating IPsec SA by request");
+	else
+		DBG(DBG_CONTROL, DBG_log("MOBIKE request: not updating IPsec SA"));
+
+	return;
 }
 
 static void mobike_reset_remote(struct state *st, struct mobike *est_remote)
@@ -4988,7 +5143,15 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	struct payload_digest *p;
 	int ndp = 0;	/* number Delete payloads for IPsec protocols */
 	bool del_ike = FALSE;	/* any IKE SA Deletions? */
-
+	bool seen_and_parsed_redirect = FALSE;
+	/*
+	 * we need connection and boolean below
+	 * in a separate variables because we
+	 * do something with them after we delete
+	 * the state.
+	 */
+	struct connection *c = st->st_connection;
+	bool do_unroute = st->st_sent_redirect && c->kind == CK_PERMANENT;
 	chunk_t cookie2 = empty_chunk;
 
 	/* Are we responding (as opposed to processing a response)? */
@@ -5024,17 +5187,13 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	}
 
 	/*
-	 * Process NOTITY payloads - ignore MOBIKE when deleting
+	 * Process NOTIFY payloads - ignore MOBIKE when deleting
 	 */
 	bool send_mobike_resp = FALSE;	/* only if responding */
 
 	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
 		if (responding) {
-			if (process_mobike_req(md, &send_mobike_resp, &cookie2)) {
-				libreswan_log("MOBIKE request: updating IPsec SA by request");
-			} else {
-				DBG(DBG_CONTROL, DBG_log("MOBIKE request: not updating IPsec SA"));
-			}
+			process_informational_notify_req(md, &seen_and_parsed_redirect, &send_mobike_resp, &cookie2);
 		} else {
 			if (process_mobike_resp(md)) {
 				libreswan_log("MOBIKE response: updating IPsec SA");
@@ -5106,7 +5265,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	}
 
 	/*
-	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive)
+	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive/REDIRECT)
 	 *
 	 * There can be at most one Delete Payload for an IKE SA.
 	 * It means that this very SA is to be deleted.
@@ -5172,6 +5331,14 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 				return e;
 		}
 	}
+
+	/*
+	 * This happens when we are original initiator,
+	 * and we received REDIRECT payload during the active
+	 * session.
+	 */
+	if (seen_and_parsed_redirect)
+		event_force(EVENT_v2_REDIRECT, st);
 
 	/*
 	 * Do the actual deletion.
@@ -5323,8 +5490,10 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		/*
 		 * We've now build up the content (if any) of the Response:
 		 *
-		 * - empty, if there were no Delete Payloads.  Treat as a check
-		 *   for liveness.  Correct response is this empty Response.
+		 * - empty, if there were no Delete Payloads or if we are
+		 *   responding to v2N_REDIRECT payload (RFC 5685 Chapter 5).
+		 *   Treat as a check for liveness.  Correct response is this
+		 *   empty Response.
 		 *
 		 * - if an ISAKMP SA is mentioned in input message,
 		 *   we are sending an empty Response, as per standard.
@@ -5363,6 +5532,20 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			delete_my_family(st, TRUE);
 			md->st = st = NULL;
 		}
+	}
+
+	/*
+	 * This is a special case. When we have site to site connection
+	 * and one site redirects other in IKE_AUTH reply, he doesn't
+	 * unroute. It seems like it was easier to add here this part
+	 * than in delete_ipsec_sa() in kernel.c where it should be
+	 * (at least it seems like it should be there).
+	 *
+	 * The need for this special case was discovered by running
+	 * various test cases.
+	 */
+	if (do_unroute) {
+		unroute_connection(c);
 	}
 
 	/* count as DPD/liveness only if there was no Delete */

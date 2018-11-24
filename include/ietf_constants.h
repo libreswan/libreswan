@@ -1594,6 +1594,20 @@ enum ppk_id_type {
 	/* 128 - 255    Private Use */
 };
 
+/* IKEv2 Redirect Mechanism - RFC 5685 */
+enum gw_identity_type {
+	/* 0 - reserved */
+	GW_IPV4 = 1,
+	GW_IPV6 = 2,
+	GW_FQDN = 3,
+
+	/* 4 - 240	Unassigned */
+	/* 241 - 255	Private Use */
+};
+
+#define MAX_REDIRECTS 5
+#define REDIRECT_LOOP_DETECT_PERIOD 300
+
 /* Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4 */
 enum pubkey_alg {
 	PUBKEY_ALG_DSA = 1,

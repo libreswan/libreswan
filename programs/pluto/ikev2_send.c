@@ -13,7 +13,6 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015-2017 Andrew Cagney
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
- * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

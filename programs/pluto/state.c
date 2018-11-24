@@ -69,6 +69,7 @@
 #include "spdb.h"
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
+#include "ikev2_redirect.h"
 #include "secrets.h"    /* unreference_key() */
 #include "enum_names.h"
 #include "crypt_dh.h"
@@ -1176,6 +1177,7 @@ void delete_state(struct state *st)
 	pfreeany(st->st_seen_cfg_domains);
 	pfreeany(st->st_seen_cfg_banner);
 
+	pfreeany(st->st_active_redirect_gw);
 	freeanychunk(st->st_no_ppk_auth);
 
 #ifdef HAVE_LABELED_IPSEC
@@ -1461,6 +1463,8 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_seen_fragvid = st->st_seen_fragvid;
 	nst->st_seen_fragments = st->st_seen_fragments;
 	nst->st_seen_ppk = st->st_seen_ppk;
+	nst->st_seen_redirect_sup = st->st_seen_redirect_sup;
+	nst->st_sent_redirect = st->st_sent_redirect;
 	nst->st_event = NULL;
 
 
@@ -1766,6 +1770,56 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 }
 
 /*
+ * Find a state object(s) with specific conn name/remote ip
+ * and send IKEv2 informational.
+ * Used for active redirect mechanism (RFC 5685)
+ */
+void find_states_and_redirect(const char *conn_name,
+			      ip_address remote_ip,
+			      char *redirect_gw)
+{
+	struct state *redirect_state = NULL;
+	ipstr_buf b;
+
+	if (conn_name == NULL) {
+		FOR_EACH_COOKIED_STATE(st, {
+			if (sameaddr(&st->st_remoteaddr, &remote_ip) &&
+			    IS_CHILD_SA(st))
+			{
+				redirect_state = st;
+				/* we must clone it, because of pointer magic when free'ing it */
+				st->st_active_redirect_gw = clone_str(redirect_gw, "redirect_gw address state clone");
+				DBG_log("successfully found a state (#%lu) with remote ip address: %s",
+					st->st_serialno, sensitive_ipstr(&remote_ip, &b));
+				send_active_redirect_in_informational(st);
+			}
+		});
+
+		if (redirect_state == NULL)
+			loglog(RC_LOG_SERIOUS, "no active tunnel with remote ip address %s",
+				sensitive_ipstr(&remote_ip, &b));
+	} else {
+		FOR_EACH_COOKIED_STATE(st, {
+			if (streq(conn_name, st->st_connection->name) &&
+			    IS_CHILD_SA(st))
+			{
+				redirect_state = st;
+				/* we must clone it, because of pointer magic when free'ing it */
+				st->st_active_redirect_gw = clone_str(redirect_gw, "redirect_gw address state clone");
+				DBG_log("successfully found a state (#%lu) with connection name \"%s\"",
+					st->st_serialno, conn_name);
+				send_active_redirect_in_informational(st);
+			}
+		});
+
+		if (redirect_state == NULL)
+			loglog(RC_LOG_SERIOUS, "no active tunnel for connection \"%s\"",
+				conn_name);
+	}
+	pfree(redirect_gw);
+}
+
+/*
  * Find a state object.
  */
 struct state *ikev1_find_info_state(const u_char *icookie,
@@ -1932,6 +1986,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 		    st->st_ikev2 == is_ikev2 &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
+		    sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
 		    IS_PARENT_SA(st) &&
 		    (best == NULL || best->st_serialno < st->st_serialno))
 		{

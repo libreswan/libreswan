@@ -2038,6 +2038,24 @@ enum_names ikev2_ppk_id_type_names = {
 	NULL
 };
 
+/* IKEv2 Redirect Mechanism - RFC 5685 */
+static const char *const ikev2_redirect_gw_name[] = {
+	/* 0 - Reserved */
+	"GW_IPv4",
+	"GW_IPv6",
+	"GW_FQDN",
+	/* 4 - 240	Unassigned */
+	/* 241 - 255	Private Use */
+};
+
+enum_names ikev2_redirect_gw_names = {
+	GW_IPV4,
+	GW_FQDN,
+	ARRAY_REF(ikev2_redirect_gw_name),
+	"GW_",	/* prefix */
+	NULL
+};
+
 /* magic SPI values (specific to Libreswan: see <libreswan.h>) */
 static const char *const spi_name[] = {
 	"%pass",
@@ -2420,6 +2438,7 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_attr_descs,
 	&pkk_names,
 	&ikev2_ppk_id_type_names,
+	&ikev2_redirect_gw_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)

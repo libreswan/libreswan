@@ -402,6 +402,8 @@ struct state {
 	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
 
+	char *st_active_redirect_gw;	/* needed for sending of REDIRECT in informational */
+
 	/** end of IKEv2-only things **/
 
 	char *st_seen_cfg_dns; /* obtained internal nameserver IP's */
@@ -640,6 +642,9 @@ struct state {
 	bool st_sent_mobike;			/* sent MOBIKE notify */
 	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
 	bool st_seen_initialc;			/* did we receive INITIAL_CONTACT */
+	bool st_seen_redirect_sup;		/* did we receive IKEv2_REDIRECT_SUPPORTED */
+	bool st_sent_redirect;			/* did we send IKEv2_REDIRECT in IKE_AUTH (response) */
+	bool st_redirected_in_auth;		/* were we redirected in IKE_AUTH */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
@@ -735,6 +740,10 @@ extern struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 						      const u_char *rcookie,
 						      uint8_t protoid,
 						      ipsec_spi_t spi);
+
+extern void find_states_and_redirect(const char *conn_name,
+				     ip_address remote_ip,
+				     char *redirect_gw);
 
 extern struct state *ikev1_find_info_state(const u_char *icookie,
 				     const u_char *rcookie,

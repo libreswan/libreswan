@@ -1155,6 +1155,13 @@ struct suggested_group {
 
 extern struct_desc suggested_group_desc;
 
+struct ikev2_redirect_part {
+	u_int8_t gw_identity_type;
+	u_int8_t gw_identity_len;
+};
+
+extern struct_desc ikev2_redirect_desc;
+
 #ifdef HAVE_LABELED_IPSEC
 extern struct_desc sec_ctx_desc;
 #endif

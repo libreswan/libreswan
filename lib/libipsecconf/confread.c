@@ -13,7 +13,7 @@
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013,2018 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
- * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1240,6 +1240,9 @@ static bool load_conn(
 
 	str_to_conn(connalias, KSCF_CONNALIAS);
 
+	str_to_conn(redirect_to, KSCF_REDIRECT_TO);
+	str_to_conn(accept_redirect_to, KSCF_ACCEPT_REDIRECT_TO);
+
 #	undef str_to_conn
 
 	if (conn->options_set[KBF_PHASE2]) {
@@ -1269,6 +1272,48 @@ static bool load_conn(
 			break;
 		}
 		conn->policy = (conn->policy & ~POLICY_IKEV2_MASK) | pv2;
+	}
+
+	if (conn->options_set[KBF_SEND_REDIRECT]) {
+		if (!LIN(POLICY_IKEV1_ALLOW, conn->policy)) {
+			switch (conn->options[KBF_SEND_REDIRECT]) {
+			case yna_yes:
+				conn->policy |= POLICY_SEND_REDIRECT_ALWAYS;
+				if (conn->redirect_to == NULL) {
+					starter_log(LOG_LEVEL_INFO,
+					"redirect-to is not specified, although send-redirect is set to yes");
+				}
+				break;
+
+			case yna_no:
+				conn->policy |= POLICY_SEND_REDIRECT_NEVER;
+				break;
+
+			case yna_auto:
+				break;
+			}
+		}
+	}
+
+	if (conn->options_set[KBF_ACCEPT_REDIRECT]) {
+		if (!LIN(POLICY_IKEV1_ALLOW, conn->policy)) {
+			switch (conn->options[KBF_ACCEPT_REDIRECT]) {
+			case yna_yes:
+				conn->policy |= POLICY_ACCEPT_REDIRECT_YES;
+				break;
+
+			/* default policy is no, so there is no POLICY_ACCEPT_REDIRECT_YES
+			 * in policy.
+			 *
+			 * technically the values for this option are yes/no,
+			 * although we use yna option set (we do not want to
+			 * make new yes-no enum)
+			 */
+			case yna_auto:
+			case yna_no:
+				break;
+			}
+		}
 	}
 
 	if (conn->options_set[KBF_PPK]) {

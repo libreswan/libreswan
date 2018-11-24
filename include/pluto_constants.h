@@ -95,6 +95,12 @@ enum keyword_xauthby {
 	XAUTHBY_ALWAYSOK = 2,
 };
 
+enum allow_global_redirect {
+	GLOBAL_REDIRECT_OFF	= 0,
+	GLOBAL_REDIRECT_ON	= 1,
+	GLOBAL_REDIRECT_AUTO	= 2,
+};
+
 enum keyword_xauthfail {
 	XAUTHFAIL_HARD = 0,
 	XAUTHFAIL_SOFT = 1,
@@ -176,6 +182,7 @@ enum event_type {
 	EVENT_v2_INITIATE_CHILD,	/* initiate a IPsec child */
 	EVENT_v2_SEND_NEXT_IKE,		/* send next IKE message using parent */
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
+	EVENT_v2_REDIRECT,		/* initiate new IKE exchange on new address */
 	EVENT_RETAIN,			/* don't change the previous event */
 };
 
@@ -1025,6 +1032,11 @@ enum sa_policy_bits {
 
 	POLICY_IKEV2_ALLOW_NARROWING_IX,	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
 	POLICY_IKEV2_PAM_AUTHORIZE_IX,
+	POLICY_SEND_REDIRECT_ALWAYS_IX,		/* next three policies are for RFC 5685 */
+	POLICY_SEND_REDIRECT_NEVER_IX,
+#define POLICY_SEND_REDIRECT_MASK \
+	LRANGE(POLICY_SEND_REDIRECT_ALWAYS_IX, POLICY_SEND_REDIRECT_NEVER_IX)
+	POLICY_ACCEPT_REDIRECT_YES_IX,
 
 	POLICY_SAREF_TRACK_IX,	/* Saref tracking via _updown */
 	POLICY_SAREF_TRACK_CONNTRACK_IX,	/* use conntrack optimization */
@@ -1077,7 +1089,10 @@ enum sa_policy_bits {
 #define POLICY_IKEV2_ALLOW	LELEM(POLICY_IKEV2_ALLOW_IX)	/* accept IKEv2?   0x0200 0000 */
 #define POLICY_IKEV2_PROPOSE	LELEM(POLICY_IKEV2_PROPOSE_IX)	/* propose IKEv2?  0x0400 0000 */
 #define POLICY_IKEV2_ALLOW_NARROWING	LELEM(POLICY_IKEV2_ALLOW_NARROWING_IX)	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
-#define POLICY_IKEV2_PAM_AUTHORIZE     LELEM(POLICY_IKEV2_PAM_AUTHORIZE_IX)    /* non-standard, custom PAM authorize call on ID */
+#define POLICY_IKEV2_PAM_AUTHORIZE	LELEM(POLICY_IKEV2_PAM_AUTHORIZE_IX)    /* non-standard, custom PAM authorize call on ID */
+#define POLICY_SEND_REDIRECT_ALWAYS	LELEM(POLICY_SEND_REDIRECT_ALWAYS_IX)
+#define POLICY_SEND_REDIRECT_NEVER	LELEM(POLICY_SEND_REDIRECT_NEVER_IX)
+#define POLICY_ACCEPT_REDIRECT_YES	LELEM(POLICY_ACCEPT_REDIRECT_YES_IX)
 #define POLICY_SAREF_TRACK	LELEM(POLICY_SAREF_TRACK_IX)	/* Saref tracking via _updown */
 #define POLICY_SAREF_TRACK_CONNTRACK	LELEM(POLICY_SAREF_TRACK_CONNTRACK_IX)	/* use conntrack optimization */
 #define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)

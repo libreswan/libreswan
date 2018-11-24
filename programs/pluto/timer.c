@@ -54,6 +54,7 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev1_dpd.h"
 #include "ikev2.h"
+#include "ikev2_redirect.h"
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
 #include "xauth.h"
@@ -351,6 +352,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_v2_SA_REPLACE_IF_USED:
 	case EVENT_v2_SA_REPLACE_IF_USED_IKE:
 	case EVENT_v2_RESPONDER_TIMEOUT:
+	case EVENT_v2_REDIRECT:
 	case EVENT_SA_EXPIRE:
 	case EVENT_SO_DISCARD:
 	case EVENT_CRYPTO_TIMEOUT:
@@ -598,6 +600,12 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 			ikev2_expire_unused_parent(pst);
 		}
+		break;
+	}
+
+	case EVENT_v2_REDIRECT:
+	{
+		initiate_redirect(st);
 		break;
 	}
 

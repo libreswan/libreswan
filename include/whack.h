@@ -332,6 +332,14 @@ struct whack_message {
 	bool vti_routing; /* perform routing into vti device or not */
 	bool vti_shared; /* use remote %any and skip cleanup on down? */
 
+	/* for RFC 5685 - IKEv2 Redirect mechanism */
+	char *redirect_to;
+	char *accept_redirect_to;
+
+	bool active_redirect;
+	ip_address active_redirect_peer;
+	ip_address active_redirect_gw;
+
 	/* what metric to put on ipsec routes */
 	int metric;
 
@@ -373,6 +381,8 @@ struct whack_message {
 	 * 26 dnshostname
 	 * 27 policy_label if compiled with with LABELED_IPSEC
 	 * 28 remote_host
+	 * 29 redirect_to
+	 * 30 accept_redirect_to
 	 * plus keyval (limit: 8K bits + overhead), a chunk.
 	 */
 	size_t str_size;

@@ -2007,6 +2007,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 
 	req.spi.min = min;
 	req.spi.max = max;
+
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp, "Get SPI",
 				text_said)) {
 		return 0;

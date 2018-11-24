@@ -695,6 +695,13 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KBF_VTI_SHARED])
 		msg.vti_shared = conn->options[KBF_VTI_SHARED];
 
+	msg.redirect_to = conn->redirect_to;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" redirect-to=%s",
+		conn->name, msg.redirect_to);
+	msg.accept_redirect_to = conn->accept_redirect_to;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" accept-redirect-to=%s",
+		conn->name, msg.accept_redirect_to);
+
 	if (conn->options_set[KBF_XAUTHBY])
 		msg.xauthby = conn->options[KBF_XAUTHBY];
 	if (conn->options_set[KBF_XAUTHFAIL])

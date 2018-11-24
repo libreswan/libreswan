@@ -1474,6 +1474,40 @@ struct_desc ikev2_skf_desc = {
 	.pt = ISAKMP_NEXT_v2SKF,
 };
 
+/*
+ * IKEv2 REDIRECT Payload - variable part
+ *
+ *                         1                   2                   3
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    | GW Ident Type |  GW Ident Len |                               |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               ~
+ *    ~                   New Responder GW Identity                   ~
+ *    |                                                               |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                                                               |
+ *    ~                        Nonce Data                             ~
+ *    |                                                               |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *
+ * This is actually Notify Data in IKEv2 Notify payload (see RFC 5685)
+ *
+ * This struct_desc will be used for checking GW Ident Type and GW Ident Len
+ * fields, the rest when using in_struct will be stored in separate pb_stream
+ */
+static field_desc ikev2redirect_fields[] = {
+	{ ft_enum, 8 / BITS_PER_BYTE, "GW Identity type", &ikev2_redirect_gw_names },
+	{ ft_nat,  8 / BITS_PER_BYTE, "GW Identity length", NULL },	/* this can not be ft_len,
+									   because of the Nonce Data */
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2_redirect_desc = {
+	.name = "IKEv2 Redirect Notify Data",
+	.fields = ikev2redirect_fields,
+	.size = sizeof(struct ikev2_redirect_part),
+};
+
 static field_desc suggested_group_fields[] = {
 	{ ft_enum, 16 / BITS_PER_BYTE, "suggested DH Group", &oakley_group_names },
 	{ ft_end,  0, NULL, NULL }

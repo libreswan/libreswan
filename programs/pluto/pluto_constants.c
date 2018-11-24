@@ -147,6 +147,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_v2_INITIATE_CHILD",
 	"EVENT_v2_SEND_NEXT_IKE",
 	"EVENT_v2_ADDR_CHANGE",
+	"EVENT_v2_REDIRECT",
 	"EVENT_RETAIN",
 };
 
@@ -408,6 +409,9 @@ const char *const sa_policy_bit_names[] = {
 	"IKEV2_PROPOSE",
 	"IKEV2_ALLOW_NARROWING",
 	"IKEV2_PAM_AUTHORIZE",
+	"SEND_REDIRECT_ALWAYS",
+	"SEND_REDIRECT_NEVER",
+	"ACCEPT_REDIRECT_YES",
 	"SAREF_TRACK",
 	"SAREF_TRACK_CONNTRACK",
 	"IKE_FRAG_ALLOW",
@@ -434,6 +438,20 @@ enum_names ikev2_asym_auth_name = {
 	AUTH_UNSET, AUTH_NULL,
 	ARRAY_REF(ikev2_asym_auth_names),
 	NULL, /* prefix */
+	NULL
+};
+
+static const char *const allow_global_redirect_name[] = {
+	"off",
+	"on",
+	"auto",
+};
+
+enum_names allow_global_redirect_names = {
+	GLOBAL_REDIRECT_OFF,
+	GLOBAL_REDIRECT_AUTO,
+	ARRAY_REF(allow_global_redirect_name),
+	NULL,
 	NULL
 };
 

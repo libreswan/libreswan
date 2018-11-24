@@ -418,6 +418,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "uniqueids",  kv_config,  kt_bool,  KBF_UNIQUEIDS, NULL, NULL, },
   { "shuntlifetime",  kv_config,  kt_time,  KBF_SHUNTLIFETIME, NULL, NULL, },
   { "overridemtu",  kv_config,  kt_number,  KBF_OVERRIDEMTU, NULL, NULL, },
+  { "global-redirect", kv_config, kt_string, KSF_GLOBAL_REDIRECT, NULL, NULL },
+  { "global-redirect-to", kv_config, kt_string, KSF_GLOBAL_REDIRECT_TO, NULL, NULL, },
 
   { "crl-strict",  kv_config,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },
   { "crl_strict",  kv_config | kv_alias,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },  /* obsolete _ */
@@ -537,6 +539,10 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "mobike",  kv_conn,  kt_bool,  KBF_MOBIKE, NULL, NULL, },
   { "narrowing",  kv_conn,  kt_bool,  KBF_IKEv2_ALLOW_NARROWING, NULL, NULL, },
   { "pam-authorize",  kv_conn,  kt_bool,  KBF_IKEv2_PAM_AUTHORIZE, NULL, NULL, },
+  { "send-redirect",  kv_conn,  kt_enum,  KBF_SEND_REDIRECT, &kw_yna_list, NULL, },
+  { "redirect-to",  kv_conn,  kt_string,  KSCF_REDIRECT_TO, NULL, NULL, },
+  { "accept-redirect",  kv_conn,  kt_enum, KBF_ACCEPT_REDIRECT, &kw_yna_list, NULL, },
+  { "accept-redirect-to",  kv_conn,  kt_string, KSCF_ACCEPT_REDIRECT_TO, NULL, NULL, },
   { "sareftrack",  kv_conn | kv_processed,  kt_enum,  KBF_SAREFTRACK,  &kw_sareftrack_list, NULL, },
   { "pfs",  kv_conn,  kt_bool,  KBF_PFS, NULL, NULL, },
 

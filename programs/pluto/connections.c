@@ -324,6 +324,8 @@ void delete_connection(struct connection *c, bool relations)
 	pfreeany(c->policy_label);
 #endif
 	pfreeany(c->dnshostname);
+	pfreeany(c->redirect_to);
+	pfreeany(c->accept_redirect_to);
 
 	/* deal with top spd_route and then the rest */
 
@@ -801,6 +803,11 @@ static void unshare_connection(struct connection *c)
 	c->connalias = clone_str(c->connalias, "connection alias");
 
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
+
+	c->redirect_to = clone_str(c->redirect_to,\
+					"connection redirect_to");
+	c->accept_redirect_to = clone_str(c->accept_redirect_to,\
+					"connection accept_redirect_to");
 
 	struct spd_route *sr;
 
@@ -1742,6 +1749,10 @@ void add_connection(const struct whack_message *wm)
 		c->modecfg_domains = wm->modecfg_domains;
 		c->modecfg_banner = wm->modecfg_banner;
 
+		/* RFC 5685 - IKEv2 Redirect mechanism */
+		c->redirect_to = wm->redirect_to;
+		c->accept_redirect_to = wm->accept_redirect_to;
+
 		/*
 		 * parse mark and mask values form the mark/mask string
 		 * acceptable string formats are
@@ -1884,6 +1895,7 @@ void add_connection(const struct whack_message *wm)
 	c->newest_isakmp_sa = SOS_NOBODY;
 	c->newest_ipsec_sa = SOS_NOBODY;
 	c->spd.eroute_owner = SOS_NOBODY;
+	c->temp_vars.num_redirects = 0;
 	/*
 	 * is spd.reqid necessary for all c? CK_INSTANCE or CK_PERMANENT
 	 * need one. Does CK_TEMPLATE need one?

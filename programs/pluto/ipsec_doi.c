@@ -343,6 +343,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 
 		if (!st->st_ikev2)
 			passert(HAS_IPSEC_POLICY(policy));
+
 		ipsecdoi_initiate(dup_any(st->st_whack_sock), st->st_connection,
 			policy, try, st->st_serialno
 #ifdef HAVE_LABELED_IPSEC
