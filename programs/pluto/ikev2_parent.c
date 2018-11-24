@@ -4266,7 +4266,7 @@ stf_status ikev2_child_ike_inR(struct state *st /* child state */,
 	passert(!ike_spi_is_zero(&st->st_ike_rekey_spis.initiator));
 	passert(ike_spi_is_zero(&st->st_ike_rekey_spis.responder));
 	ikev2_copy_cookie_from_sa(st->st_accepted_ike_proposal,
-				  st->st_ike_rekey_spis.responder.bytes);
+				  &st->st_ike_rekey_spis.responder);
 
 	/* initiate calculation of g^xy for rekey */
 	start_dh_v2(st, "DHv2 for IKE sa rekey initiator",
@@ -4694,7 +4694,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	passert(ike_spi_is_zero(&st->st_ike_rekey_spis.initiator));
 	passert(ike_spi_is_zero(&st->st_ike_rekey_spis.responder));
 	ikev2_copy_cookie_from_sa(st->st_accepted_ike_proposal,
-				  st->st_ike_rekey_spis.initiator.bytes);
+				  &st->st_ike_rekey_spis.initiator);
 	st->st_ike_rekey_spis.responder = ike_responder_spi(&(*mdp)->sender);
 	start_dh_v2(st, "DHv2 for REKEY IKE SA", ORIGINAL_RESPONDER,
 		    ike->sa.st_skey_d_nss, /* only IKE has SK_d */

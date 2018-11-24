@@ -255,8 +255,8 @@ struct state_v2_microcode {
 	ikev2_state_transition_fn *const processor;
 };
 
-void ikev2_copy_cookie_from_sa(struct ikev2_proposal *accepted_ike_proposal,
-				uint8_t *cookie);
+void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposal,
+				ike_spi_t *cookie);
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
 			      const struct state_v2_microcode *svm,
