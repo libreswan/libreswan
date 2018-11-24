@@ -65,6 +65,7 @@ d.ipsec.conf/encapsulation.xml
 d.ipsec.conf/nat-keepalive.xml
 d.ipsec.conf/initial-contact.xml
 d.ipsec.conf/cisco-unity.xml
+d.ipsec.conf/redirect.xml
 d.ipsec.conf/fake-strongswan.xml
 d.ipsec.conf/send-vendorid.xml
 d.ipsec.conf/overlapip.xml
@@ -136,6 +137,7 @@ d.ipsec.conf/logtime.xml
 d.ipsec.conf/force-busy.xml
 d.ipsec.conf/ddos-mode.xml
 d.ipsec.conf/ddos-ike-threshold.xml
+d.ipsec.conf/global-redirect.xml
 d.ipsec.conf/max-halfopen-ike.xml
 d.ipsec.conf/shuntlifetime.xml
 d.ipsec.conf/xfrmlifetime.xml

@@ -1,0 +1,23 @@
+  <varlistentry>
+  <term><emphasis remap='B'>accept-redirect</emphasis></term>
+  <listitem>
+<para>Whether requests of the remote peer to redirect IKE/IPsec SA's during IKE_AUTH are accepted. Valid options are
+<emphasis remap='B'>no</emphasis> (the default) and <emphasis remap='B'>yes</emphasis>. See also redirect-to= and the config setup global-redirect and global-redirect-to options. Runtime redirects can be triggered via the ipsec whack --redirect command.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>send-redirect</emphasis></term>
+  <listitem>
+<para>Whether to send requests for the remote peer to redirect IKE/IPsec SA's during IKE_AUTH. Valid options are
+<emphasis remap='B'>no</emphasis> (the default) and <emphasis remap='B'>yes</emphasis>. If set, the option <emphasis remap='B'>redirect-to=</emphasis> must also be set to indicate where to redirect peers to.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>redirect-to</emphasis></term>
+  <listitem>
+<para>Where to send remote peers to via the send-redirect option. This can be an IP address or hostname (FQDN).
+</para>
+  </listitem>
+  </varlistentry>
