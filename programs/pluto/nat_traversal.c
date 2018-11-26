@@ -115,15 +115,15 @@ void init_nat_traversal(deltatime_t keep_alive_period)
 }
 
 static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
-		const uint8_t *icookie, const uint8_t *rcookie,
-		const ip_address *ip,
-		uint16_t port /* host order */)
+		      const ike_spis_t *spis,
+		      const ip_address *ip, uint16_t port /* host order */)
 {
-	pexpect(!is_zero_cookie(icookie));
+	/* only responder's IKE SPI can be zero */
+	pexpect(!ike_spi_is_zero(&spis->initiator));
 
-	if (is_zero_cookie(rcookie)) {
-		/* seems to be common */
-		DBG(DBG_NATT, DBG_log("natd_hash: rcookie is zero"));
+	if (ike_spi_is_zero(&spis->responder)) {
+		/* IKE_SA_INIT exchange */
+		dbg("natd_hash: rcookie is zero");
 	}
 
 	/*
@@ -134,8 +134,11 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 	 * All values in network order
 	 */
 	struct crypt_hash *ctx = crypt_hash_init(hasher, "NATD", DBG_CRYPT);
-	crypt_hash_digest_bytes(ctx, "ICOOKIE", icookie, COOKIE_SIZE);
-	crypt_hash_digest_bytes(ctx, "RCOOKIE", rcookie, COOKIE_SIZE);
+
+	crypt_hash_digest_bytes(ctx, "ICOOKIE/IKE SPIi",
+				&spis->initiator, sizeof(spis->initiator));
+	crypt_hash_digest_bytes(ctx, "RCOOKIE/IKE SPIr",
+				&spis->responder, sizeof(spis->responder));
 
 	const unsigned char *ab;
 	size_t al = addrbytesptr_read(ip, &ab);
@@ -147,16 +150,16 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 					&netorder_port, sizeof(netorder_port));
 	}
 	crypt_hash_final_bytes(&ctx, hash, hasher->hash_digest_size);
-	DBG(DBG_NATT, {
-			DBG_log("natd_hash: hasher=%p(%d)", hasher,
-				(int)hasher->hash_digest_size);
-			DBG_dump("natd_hash: icookie=", icookie, COOKIE_SIZE);
-			DBG_dump("natd_hash: rcookie=", rcookie, COOKIE_SIZE);
-			DBG_dump("natd_hash: ip=", ab, al);
-			DBG_log("natd_hash: port=%d", port);
-			DBG_dump("natd_hash: hash=", hash,
-				hasher->hash_digest_size);
-		});
+	if (DBGP(DBG_MASK)) {
+		DBG_log("natd_hash: hasher=%p(%d)", hasher,
+			(int)hasher->hash_digest_size);
+		DBG_dump("natd_hash: icookie=", &spis->initiator, sizeof(spis->initiator));
+		DBG_dump("natd_hash: rcookie=", &spis->responder, sizeof(spis->responder));
+		DBG_dump("natd_hash: ip=", ab, al);
+		DBG_log("natd_hash: port=%d", port);
+		DBG_dump("natd_hash: hash=", hash,
+			 hasher->hash_digest_size);
+	}
 }
 
 /*
@@ -201,12 +204,9 @@ bool ikev2_out_natd(const ip_address *localaddr, uint16_t localport,
 		DBG_log(" NAT-Traversal support %s add v2N payloads.",
 			nat_traversal_enabled ? " [enabled]" : " [disabled]"));
 
-	/*
-	 * First: one with local (source) IP & port
-	 * TODO: This use of SHA1 should be allowed even with USE_SHA1=false
-	 */
-	natd_hash(&ike_alg_hash_sha1, hb,
-		  ike_spis->initiator.bytes, ike_spis->responder.bytes,
+	/* First: one with local (source) IP & port */
+
+	natd_hash(&ike_alg_hash_sha1, hb, ike_spis,
 		  localaddr, localport);
 
 	if (!ship_v2Nsp(0/*auto np*/, v2N_NAT_DETECTION_SOURCE_IP,
@@ -215,8 +215,7 @@ bool ikev2_out_natd(const ip_address *localaddr, uint16_t localport,
 
 	/* Second: one with remote (destination) IP & port */
 
-	natd_hash(&ike_alg_hash_sha1, hb,
-		  ike_spis->initiator.bytes, ike_spis->responder.bytes,
+	natd_hash(&ike_alg_hash_sha1, hb, ike_spis,
 		  remoteaddr, remoteport);
 
 	return ship_v2Nsp(0/*auto np*/, v2N_NAT_DETECTION_DESTINATION_IP,
@@ -401,8 +400,7 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 
 	unsigned char hash_me[MAX_DIGEST_LEN];
 
-	natd_hash(hasher, hash_me,
-		  st->st_icookie, st->st_rcookie,
+	natd_hash(hasher, hash_me, &st->st_ike_spis,
 		  &md->iface->ip_addr, md->iface->port);
 
 	/* Second: one with sender IP & port */
@@ -410,7 +408,7 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	unsigned char hash_him[MAX_DIGEST_LEN];
 
 	natd_hash(hasher, hash_him,
-		  st->st_icookie, st->st_rcookie,
+		  &st->st_ike_spis,
 		  &md->sender, hportof(&md->sender));
 
 	DBG(DBG_NATT, {
@@ -445,8 +443,17 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 			const struct msg_digest *md)
 {
 	const struct state *st = md->st;
-	const uint8_t *rcookie = is_zero_cookie(st->st_rcookie) ?
-			md->hdr.isa_rcookie : st->st_rcookie;
+	/*
+	 * XXX: This seems to be a very convoluted way of coming up
+	 * with the RCOOKIE.  It would probably be easier to just pass
+	 * in the RCOOKIE - the callers should know if it is zero, or
+	 * found in the MD.
+	 */
+	ike_spis_t ike_spis = {
+		.initiator = st->st_ike_spis.initiator,
+		.responder = ike_spi_is_zero(&st->st_ike_spis.responder) ?
+		md->hdr.isa_ike_responder_spi : st->st_ike_spis.responder,
+	};
 
 	passert(st->st_oakley.ta_prf != NULL);
 
@@ -473,8 +480,7 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 	/* first: emit payload with hash of sender IP & port */
 
 	natd_hash(st->st_oakley.ta_prf->hasher, hash,
-		  st->st_icookie, rcookie,
-		  first, firstport);
+		  &ike_spis, first, firstport);
 
 	if (!ikev1_out_generic_raw(nat_np, pd, outs, hash,
 				   st->st_oakley.ta_prf->hasher->hash_digest_size,
@@ -484,8 +490,7 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 	/* second: emit payload with hash of my IP & port */
 
 	natd_hash(st->st_oakley.ta_prf->hasher, hash,
-		  st->st_icookie, rcookie,
-		  second, secondport);
+		  &ike_spis, second, secondport);
 
 	return ikev1_out_generic_raw(np, pd, outs, hash,
 		st->st_oakley.ta_prf->hasher->hash_digest_size,
@@ -1056,16 +1061,14 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
 
 	unsigned char hash_me[IKEV2_NATD_HASH_SIZE];
 
-	natd_hash(&ike_alg_hash_sha1, hash_me,
-		  ike_spis.initiator.bytes, ike_spis.responder.bytes,
+	natd_hash(&ike_alg_hash_sha1, hash_me, &ike_spis,
 		  &md->iface->ip_addr, md->iface->port);
 
 	/* Second: one with sender IP & port */
 
 	unsigned char hash_him[IKEV2_NATD_HASH_SIZE];
 
-	natd_hash(&ike_alg_hash_sha1, hash_him,
-		  ike_spis.initiator.bytes, ike_spis.responder.bytes,
+	natd_hash(&ike_alg_hash_sha1, hash_him, &ike_spis,
 		  &md->sender, hportof(&md->sender));
 
 	bool found_me = FALSE;

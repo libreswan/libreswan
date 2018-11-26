@@ -24,10 +24,9 @@
 #include "rnd.h"
 #include "crypt_hash.h"
 
-const uint8_t zero_cookie[IKE_SA_SPI_SIZE];  /* guaranteed 0 */
-
 bool is_zero_cookie(const uint8_t spi[IKE_SA_SPI_SIZE])
 {
+	static const uint8_t zero_cookie[IKE_SA_SPI_SIZE];  /* guaranteed 0 */
 	return memeq(spi, zero_cookie, IKE_SA_SPI_SIZE);
 }
 

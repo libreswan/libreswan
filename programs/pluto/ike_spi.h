@@ -59,7 +59,6 @@ void refresh_ike_spi_secret(void);
  * Old; being deleted.
  */
 
-extern const uint8_t zero_cookie[IKE_SA_SPI_SIZE]; /* use zero_ike_spi */
 bool is_zero_cookie(const uint8_t ike_spi[IKE_SA_SPI_SIZE]); /* use ike_spi_is_zero() */
 
 #endif
