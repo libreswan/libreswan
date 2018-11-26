@@ -55,10 +55,4 @@ ike_spi_t ike_responder_spi(const ip_address *addr);
 
 void refresh_ike_spi_secret(void);
 
-/*
- * Old; being deleted.
- */
-
-bool is_zero_cookie(const uint8_t ike_spi[IKE_SA_SPI_SIZE]); /* use ike_spi_is_zero() */
-
 #endif

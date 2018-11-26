@@ -1164,14 +1164,14 @@ void process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
-		if (is_zero_cookie(md->hdr.isa_icookie)) {
+		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
 			libreswan_log(
 				"Initiator Cookie must not be zero in phase 1 message");
 			SEND_NOTIFICATION(INVALID_COOKIE);
 			return;
 		}
 
-		if (is_zero_cookie(md->hdr.isa_rcookie)) {
+		if (ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
 			/*
 			 * initial message from initiator
 			 */
@@ -1321,14 +1321,14 @@ void process_v1_packet(struct msg_digest **mdp)
 
 	case ISAKMP_XCHG_QUICK: /* part of a Quick Mode exchange */
 
-		if (is_zero_cookie(md->hdr.isa_icookie)) {
+		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
 			DBG(DBG_CONTROL, DBG_log(
 				"Quick Mode message is invalid because it has an Initiator Cookie of 0"));
 			SEND_NOTIFICATION(INVALID_COOKIE);
 			return;
 		}
 
-		if (is_zero_cookie(md->hdr.isa_rcookie)) {
+		if (ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
 			DBG(DBG_CONTROL, DBG_log(
 				"Quick Mode message is invalid because it has a Responder Cookie of 0"));
 			SEND_NOTIFICATION(INVALID_COOKIE);
@@ -1415,13 +1415,13 @@ void process_v1_packet(struct msg_digest **mdp)
 		break;
 
 	case ISAKMP_XCHG_MODE_CFG:
-		if (is_zero_cookie(md->hdr.isa_icookie)) {
+		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
 			DBG(DBG_CONTROL, DBG_log("Mode Config message is invalid because it has an Initiator Cookie of 0"));
 			/* XXX Could send notification back */
 			return;
 		}
 
-		if (is_zero_cookie(md->hdr.isa_rcookie)) {
+		if (ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
 			DBG(DBG_CONTROL, DBG_log("Mode Config message is invalid because it has a Responder Cookie of 0"));
 			/* XXX Could send notification back */
 			return;
