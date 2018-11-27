@@ -2602,7 +2602,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				if (agreed_time &&
 				    (c->policy & POLICY_DONT_REKEY)) {
 					kind = (smc->flags & SMF_INITIATOR) ?
-					       EVENT_SA_REPLACE_IF_USED :
+					       EVENT_v1_SA_REPLACE_IF_USED :
 					       EVENT_SA_EXPIRE;
 				}
 				if (kind != EVENT_SA_EXPIRE) {

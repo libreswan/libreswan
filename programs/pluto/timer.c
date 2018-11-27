@@ -348,7 +348,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_v1_RETRANSMIT:
 	case EVENT_v2_RETRANSMIT:
 	case EVENT_SA_REPLACE:
-	case EVENT_SA_REPLACE_IF_USED:
+	case EVENT_v1_SA_REPLACE_IF_USED:
 	case EVENT_v2_SA_REPLACE_IF_USED:
 	case EVENT_v2_SA_REPLACE_IF_USED_IKE:
 	case EVENT_v2_RESPONDER_TIMEOUT:
@@ -466,7 +466,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_SA_REPLACE:
-	case EVENT_SA_REPLACE_IF_USED:
+	case EVENT_v1_SA_REPLACE_IF_USED:
 	case EVENT_v2_SA_REPLACE_IF_USED:
 	case EVENT_v2_SA_REPLACE_IF_USED_IKE:
 	{
@@ -517,7 +517,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					ipsecdoi_replace(st, 1);
 				}
 
-		} else if (type == EVENT_SA_REPLACE_IF_USED &&
+		} else if (type == EVENT_v1_SA_REPLACE_IF_USED &&
 				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin)))
 		{
 			/*
