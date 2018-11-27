@@ -583,11 +583,97 @@ void init_ikev2(void)
 	static struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
 	for (unsigned k = 0; k < elemsof(v2_states); k++) {
 		struct finite_state *fs = &v2_states[k];
-		fs->fs_state = k + STATE_IKEv2_FLOOR;
+		fs->fs_state = STATE_IKEv2_FLOOR + k;
+		finite_states[fs->fs_state] = fs;
+
 		fs->fs_name = enum_name(&state_names, fs->fs_state);
 		fs->fs_short_name = enum_short_name(&state_names, fs->fs_state);
 		fs->fs_story = enum_name(&state_stories, fs->fs_state);
-		finite_states[fs->fs_state] = fs;
+
+		/*
+		 * Initialize .fs_category
+		 *
+		 * If/when struct finite_state is converted to a static
+		 * structure, this all goes away.
+		 */
+		enum state_category cat;
+		switch (fs->fs_state) {
+
+		case STATE_PARENT_I0:
+			/*
+			 * IKEv2 IKE SA initiator, while the the SA_INIT
+			 * packet is being constructed, are in state.  Only
+			 * once the packet has been sent out does it
+			 * transition to STATE_PARENT_I1 and start being
+			 * counted as half-open.
+			 */
+			cat = CAT_IGNORE;
+			break;
+
+		case STATE_PARENT_I1:
+		case STATE_PARENT_R0:
+		case STATE_PARENT_R1:
+			/*
+			 * Count I1 as half-open too because with ondemand,
+			 * a plaintext packet (that is spoofed) will
+			 * trigger an outgoing IKE SA.
+			 */
+			cat = CAT_HALF_OPEN_IKE_SA;
+			break;
+
+		case STATE_PARENT_I2:
+			/*
+			 * All IKEv1 MAIN modes except the first
+			 * (half-open) and last ones are not
+			 * authenticated.
+			 */
+			cat = CAT_OPEN_IKE_SA;
+			break;
+
+		case STATE_V2_CREATE_I0: /* isn't this an ipsec state */
+		case STATE_V2_CREATE_I: /* isn't this an ipsec state */
+		case STATE_V2_REKEY_IKE_I0:
+		case STATE_V2_REKEY_IKE_I:
+		case STATE_V2_REKEY_CHILD_I0: /* isn't this an ipsec state */
+		case STATE_V2_REKEY_CHILD_I: /* isn't this an ipsec state */
+		case STATE_V2_CREATE_R:
+		case STATE_V2_REKEY_IKE_R:
+		case STATE_V2_REKEY_CHILD_R:
+			/*
+			 * IKEv1 established states.
+			 *
+			 * XAUTH, seems to a second level of authentication
+			 * performed after the connection is established and
+			 * authenticated.
+			 */
+			cat = CAT_ESTABLISHED_IKE_SA;
+			break;
+
+		case STATE_PARENT_I3:
+		case STATE_PARENT_R2:
+			/*
+			 * IKEv2 established states.
+			 */
+			cat = CAT_ESTABLISHED_IKE_SA;
+			break;
+
+		case STATE_V2_IPSEC_I:
+		case STATE_V2_IPSEC_R:
+			cat = CAT_ESTABLISHED_CHILD_SA;
+			break;
+
+		case STATE_IKESA_DEL:
+			cat = CAT_ESTABLISHED_IKE_SA;
+			break;
+
+		case STATE_CHILDSA_DEL:
+			cat = CAT_INFORMATIONAL;
+			break;
+
+		default:
+			bad_case(fs->fs_state);
+		}
+		fs->fs_category = cat;
 	}
 
 	/* fill ike_microcode_index:

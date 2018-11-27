@@ -85,9 +85,6 @@
 
 bool uniqueIDs = FALSE;
 
-static void update_state_stats(struct state *st, enum state_kind old_state,
-			       enum state_kind new_state);
-
 /*
  * Global variables: had to go somewhere, might as well be this file.
  */
@@ -120,6 +117,7 @@ struct finite_state state_undefined = {
 	.fs_name = "STATE_UNDEFINED",
 	.fs_short_name = "UNDEFINED",
 	.fs_story = "not defined - either very new or dead (internal)",
+	.fs_category = CAT_IGNORE,
 };
 
 const struct finite_state *finite_states[STATE_IKE_ROOF] = {
@@ -135,6 +133,152 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 		lswlog_enum_short(buf, &timer_event_names, fs->fs_timeout_event);
 		/* no enum_name available? */
 		lswlogf(buf, " flags: %" PRIxLSET ")", fs->fs_flags);
+#if 0
+		lswlogf(buf, " category: ");
+		lswlog_enum_short(buf, &state_category_names, fs->fs_category);
+#endif
+	}
+}
+
+/* state categories */
+
+static const char *const cat_name[] = {
+	[CAT_UNKNOWN] = "unknown",
+	[CAT_HALF_OPEN_IKE_SA] = "half-open IKE SA",
+	[CAT_OPEN_IKE_SA] = "open IKE SA",
+	[CAT_ESTABLISHED_IKE_SA] = "established IKE SA",
+	[CAT_ESTABLISHED_CHILD_SA] = "established CHILD SA",
+	[CAT_INFORMATIONAL] = "informational",
+	[CAT_IGNORE] = "ignore",
+};
+
+enum_names state_category_names = {
+	0, elemsof(cat_name) - 1,
+	ARRAY_REF(cat_name),
+	"",
+	NULL
+};
+
+/*
+ * Track the categories and for ESTABLISHED, also track if the SA was
+ * AUTHENTICATED or ANONYMOUS.  Among other things used for DDoS
+ * tracking.
+ *
+ * A "signed" long is used so that should a counter underflow
+ * (presumably a bug) then its value is displayed as -ve.  CAT_T
+ * PRI_CAT are terrible but short names.
+ */
+
+typedef long cat_t;
+#define PRI_CAT "%ld"
+
+static cat_t cat_count[elemsof(cat_name)] = { 0 };
+
+/* see .st_ikev2_anon, enum would be better */
+#define CAT_AUTHENTICATED false
+#define CAT_ANONYMOUS true
+static cat_t cat_count_ike_sa[2];
+static cat_t cat_count_child_sa[2];
+static cat_t state_count[STATE_IKE_ROOF];
+
+static cat_t total_ike_sa(void)
+{
+	return (cat_count[CAT_HALF_OPEN_IKE_SA] +
+		cat_count[CAT_OPEN_IKE_SA] +
+		cat_count[CAT_ESTABLISHED_IKE_SA]);
+}
+
+static cat_t total_sa(void)
+{
+	return total_ike_sa() + cat_count[CAT_ESTABLISHED_CHILD_SA];
+}
+
+/*
+ * Count everything except STATE_UNDEFINED (CAT_IGNORE) et.al. All
+ * states start and end in those states.
+ */
+static void update_state_stat(struct state *st,
+			      const struct finite_state *state,
+			      int delta)
+{
+	if (state->fs_category != CAT_IGNORE) {
+		state_count[state->fs_state] += delta;
+		cat_count[state->fs_category] += delta;
+		/*
+		 * When deleting, st->st_connection can be NULL, so we
+		 * cannot look at the policy to determine
+		 * anonimity. We therefor use a scratchpad at
+		 * st->st_ikev2_anon (a bool) which is copied from
+		 * parent to child states
+		 */
+		switch (state->fs_category) {
+		case CAT_ESTABLISHED_IKE_SA:
+			cat_count_ike_sa[st->st_ikev2_anon] += delta;
+			break;
+		case CAT_ESTABLISHED_CHILD_SA:
+			cat_count_child_sa[st->st_ikev2_anon] += delta;
+			break;
+		default: /* ignore */
+			break;
+		}
+	}
+}
+
+static void update_state_stats(struct state *st,
+			       const struct finite_state *old_state,
+			       const struct finite_state *new_state)
+{
+	/* catch / log unexpected cases */
+	pexpect(old_state->fs_category != CAT_UNKNOWN);
+	pexpect(new_state->fs_category != CAT_UNKNOWN);
+
+	update_state_stat(st, old_state, -1);
+	update_state_stat(st, new_state, +1);
+
+	/*
+	 * ??? this seems expensive: on each state change we do this
+	 * whole rigamarole.
+	 *
+	 * XXX: It's an assertion check only executed when debugging.
+	 */
+	if (DBGP(DBG_MASK)) {
+		DBG_log("%s state #%lu: %s(%s) => %s(%s)",
+			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+			old_state->fs_short_name,
+			enum_name(&state_category_names, old_state->fs_category),
+			new_state->fs_short_name,
+			enum_name(&state_category_names, new_state->fs_category));
+
+		cat_t category_states = 0;
+		for (unsigned cat = 0; cat < elemsof(cat_count); cat++) {
+			category_states += cat_count[cat];
+		}
+
+		cat_t count_states = 0;
+		for (unsigned s = 0; s < elemsof(state_count); s++) {
+			count_states += state_count[s];
+		}
+
+		if (category_states != count_states) {
+			PEXPECT_LOG("category states: "PRI_CAT" != count states: "PRI_CAT,
+				    category_states, count_states);
+		}
+
+		if (cat_count[CAT_ESTABLISHED_IKE_SA] !=
+		    (cat_count_ike_sa[CAT_AUTHENTICATED] + cat_count_ike_sa[CAT_ANONYMOUS])) {
+			PEXPECT_LOG("established IKE SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
+				    cat_count[CAT_ESTABLISHED_IKE_SA],
+				    cat_count_ike_sa[CAT_AUTHENTICATED],
+				    cat_count_ike_sa[CAT_ANONYMOUS]);
+		}
+
+		if (cat_count[CAT_ESTABLISHED_CHILD_SA] !=
+		    (cat_count_child_sa[CAT_AUTHENTICATED] + cat_count_child_sa[CAT_ANONYMOUS])) {
+			PEXPECT_LOG("established CHILD SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
+				    cat_count[CAT_ESTABLISHED_CHILD_SA],
+				    cat_count_child_sa[CAT_AUTHENTICATED],
+				    cat_count_child_sa[CAT_ANONYMOUS]);
+		}
 	}
 }
 
@@ -143,282 +287,16 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
  * state hash table and the Message ID list.
  */
 
-/* for DDoS tracking, used in change_state */
-static unsigned state_count[STATE_IKE_ROOF];
-
-void change_state(struct state *st, enum state_kind new_state)
+void change_state(struct state *st, enum state_kind new_state_kind)
 {
-	enum state_kind old_state = st->st_state;
-
+	const struct finite_state *old_state = st->st_finite_state;
+	const struct finite_state *new_state = finite_states[new_state_kind];
+	passert(new_state != NULL);
 	if (new_state != old_state) {
 		update_state_stats(st, old_state, new_state);
-		log_state(st, new_state);
-		st->st_finite_state = finite_states[new_state];
-		passert(st->st_finite_state != NULL);
+		log_state(st, new_state_kind /* XXX */);
+		st->st_finite_state = new_state;
 	}
-}
-
-/* non-intersecting state categories */
-enum categories {
-	CAT_IGNORE,
-	CAT_HALF_OPEN_IKE,
-	CAT_OPEN_IKE,
-	CAT_ANONYMOUS_IKE,
-	CAT_AUTHENTICATED_IKE,
-	CAT_ANONYMOUS_IPSEC,
-	CAT_AUTHENTICATED_IPSEC,
-	CAT_INFORMATIONAL,
-	CAT_UNKNOWN,
-	CAT_roof
-};
-
-static const char *const cat_name[CAT_roof] = {
-	[CAT_IGNORE] = "ignore",
-	[CAT_HALF_OPEN_IKE] = "half-open-ike",
-	[CAT_OPEN_IKE] = "open-ike",
-	[CAT_ANONYMOUS_IKE] = "established-anonymous-ike",
-	[CAT_AUTHENTICATED_IKE] = "established-authenticated-ike",
-	[CAT_ANONYMOUS_IPSEC] = "anonymous-ipsec",
-	[CAT_AUTHENTICATED_IPSEC] = "authenticated-ipsec",
-	[CAT_INFORMATIONAL] = "informational",
-	[CAT_UNKNOWN] = "unknown",
-};
-
-static enum_names cat_names = {
-	CAT_IGNORE, CAT_UNKNOWN,
-	cat_name, CAT_roof,
-	"",
-	NULL
-};
-
-static unsigned cat_count[CAT_roof] = { 0 };
-
-/* space for unknown as well */
-static unsigned total_established_ike(void)
-{
-	return cat_count[CAT_ANONYMOUS_IKE] + cat_count[CAT_AUTHENTICATED_IKE];
-}
-
-static unsigned total_ike(void)
-{
-	return cat_count[CAT_HALF_OPEN_IKE] +
-		cat_count[CAT_OPEN_IKE] +
-		total_established_ike();
-}
-
-static unsigned total_ipsec(void)
-{
-	return cat_count[CAT_AUTHENTICATED_IPSEC] +
-		cat_count[CAT_ANONYMOUS_IPSEC];
-}
-
-static unsigned total(void)
-{
-	return total_ike() + total_ipsec() + cat_count[CAT_UNKNOWN];
-}
-
-/*
- * When deleting, st->st_connection can be NULL, so we cannot look
- * at the policy to determine anonimity. We therefor use a scratchpad
- * at st->st_ikev2_anon which is copied from parent to child states
- */
-static enum categories categorize_state(struct state *st,
-					enum state_kind state)
-{
-	enum categories established_ike = st->st_ikev2_anon ?
-		CAT_ANONYMOUS_IKE : CAT_AUTHENTICATED_IKE;
-	enum categories established_ipsec = st->st_ikev2_anon ?
-		CAT_ANONYMOUS_IPSEC : CAT_AUTHENTICATED_IPSEC;
-
-	/*
-	 * Use a switch with no default so that missing and extra
-	 * states get a -Wswitch diagnostic
-	 */
-	switch (state) {
-	case STATE_UNDEFINED:
-		/*
-		 * When a state object is created by new_state()
-		 * it starts out in STATE_UNDEFINED.
-		 * ??? this representation does not robustly detect errors.
-		 */
-		return CAT_IGNORE;
-
-	case STATE_PARENT_I0:
-		/*
-		 * IKEv2 IKE SA initiator, while the the SA_INIT
-		 * packet is being constructed, are in state.  Only
-		 * once the packet has been sent out does it
-		 * transition to STATE_PARENT_I1 and start being
-		 * counted as half-open.
-		 */
-		return CAT_IGNORE;
-
-	case STATE_PARENT_I1:
-	case STATE_PARENT_R0:
-	case STATE_PARENT_R1:
-	case STATE_AGGR_R0:
-	case STATE_AGGR_I1:
-	case STATE_MAIN_R0:
-	case STATE_MAIN_I1:
-		/*
-		 * Count I1 as half-open too because with ondemand,
-		 * a plaintext packet (that is spoofed) will
-		 * trigger an outgoing IKE SA.
-		 */
-		return CAT_HALF_OPEN_IKE;
-
-	case STATE_PARENT_I2:
-	case STATE_MAIN_R1:
-	case STATE_MAIN_R2:
-	case STATE_MAIN_I2:
-	case STATE_MAIN_I3:
-	case STATE_AGGR_R1:
-		/*
-		 * All IKEv1 MAIN modes except the first
-		 * (half-open) and last ones are not
-		 * authenticated.
-		 */
-		return CAT_OPEN_IKE;
-
-	case STATE_MAIN_I4:
-	case STATE_MAIN_R3:
-	case STATE_AGGR_I2:
-	case STATE_AGGR_R2:
-	case STATE_XAUTH_I0:
-	case STATE_XAUTH_I1:
-	case STATE_XAUTH_R0:
-	case STATE_XAUTH_R1:
-	case STATE_V2_CREATE_I0: /* isn't this an ipsec state */
-	case STATE_V2_CREATE_I: /* isn't this an ipsec state */
-	case STATE_V2_REKEY_IKE_I0:
-	case STATE_V2_REKEY_IKE_I:
-	case STATE_V2_REKEY_CHILD_I0: /* isn't this an ipsec state */
-	case STATE_V2_REKEY_CHILD_I: /* isn't this an ipsec state */
-	case STATE_V2_CREATE_R:
-	case STATE_V2_REKEY_IKE_R:
-	case STATE_V2_REKEY_CHILD_R:
-		/*
-		 * IKEv1 established states.
-		 *
-		 * XAUTH, seems to a second level of authentication
-		 * performed after the connection is established and
-		 * authenticated.
-		 */
-		return established_ike;
-
-	case STATE_PARENT_I3:
-	case STATE_PARENT_R2:
-		/*
-		 * IKEv2 established states.
-		 */
-		return established_ike;
-
-	case STATE_V2_IPSEC_I:
-	case STATE_V2_IPSEC_R:
-		return established_ipsec;
-
-	case STATE_IKESA_DEL:
-		return established_ike;
-
-	case STATE_QUICK_I1: /* this is not established yet? */
-	case STATE_QUICK_I2:
-	case STATE_QUICK_R0: /* shouldn't we cat_ignore this? */
-	case STATE_QUICK_R1:
-	case STATE_QUICK_R2:
-		/*
-		 * IKEv1: QUICK is for child connections children.
-		 * Probably won't occur as a parent?
-		 */
-		return established_ipsec;
-
-	case STATE_MODE_CFG_I1:
-	case STATE_MODE_CFG_R1:
-	case STATE_MODE_CFG_R2:
-		/*
-		 * IKEv1: Post established negotiation.
-		 */
-		return established_ike;
-
-	case STATE_INFO:
-	case STATE_INFO_PROTECTED:
-	case STATE_MODE_CFG_R0:
-	case STATE_CHILDSA_DEL:
-		return CAT_INFORMATIONAL;
-
-	default:
-		loglog(RC_LOG_SERIOUS, "Unexpected state in categorize_state");
-		return CAT_UNKNOWN;
-	}
-}
-
-static void update_state_stats(struct state *st, enum state_kind old_state,
-			enum state_kind new_state)
-{
-	/*
-	 * "??? this seems expensive: on each state change we do this
-	 * whole rigamarole."
-	 *
-	 * XXX: Part of the problem is with categorize_state().  It
-	 * doesn't implement a simple mapping from state to category.
-	 * If there was, struct finite_state' could be used to do the
-	 * mapping.
-	 */
-	enum categories old_category = categorize_state(st, old_state);
-	enum categories new_category = categorize_state(st, new_state);
-
-	/*
-	 * Count everything except STATE_UNDEFINED et.al. All states
-	 * start and end in those states.
-	 */
-	if (old_category != CAT_IGNORE) {
-		pexpect(state_count[old_state] != 0);
-		pexpect(cat_count[old_category] != 0);
-		state_count[old_state]--;
-		cat_count[old_category]--;
-	}
-	if (new_category != CAT_IGNORE) {
-		state_count[new_state]++;
-		cat_count[new_category]++;
-	}
-
-	/*
-	 * ??? this seems expensive: on each state change we do this
-	 * whole rigamarole.
-	 */
-	DBG(DBG_CONTROLMORE, {
-		DBG_log("%s state #%lu: %s(%s) => %s(%s)",
-			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-			enum_name(&state_names, old_state), enum_name(&cat_names, old_category),
-			enum_name(&state_names, new_state), enum_name(&cat_names, new_category));
-
-		unsigned category_states = 0;
-
-		for (enum categories cat = CAT_IGNORE; cat != CAT_roof; cat++) {
-			DBG_log("%s states: %u",
-				enum_name(&cat_names, cat),
-				cat_count[cat]);
-			category_states += cat_count[cat];
-		}
-
-		unsigned count_states = 0;
-
-		for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
-			count_states += state_count[s];
-		}
-
-		for (enum state_kind s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
-			count_states += state_count[s];
-		}
-
-		DBG_log("category states: %u count states: %u",
-			category_states, count_states);
-		pexpect(category_states == count_states);
-	});
-
-	/* catch / log unexpected cases */
-	pexpect(old_category != CAT_UNKNOWN);
-	pexpect(new_category != CAT_UNKNOWN);
-
 }
 
 /*
@@ -565,12 +443,6 @@ struct state *new_state(void)
 
 	DBG(DBG_CONTROL, DBG_log("creating state object #%lu at %p",
 				 st->st_serialno, (void *) st));
-	DBG(DBG_CONTROLMORE, {
-		enum categories cg = categorize_state(st, st->st_state);
-		DBG_log("%s state #%lu: new => %s(%s)",
-			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-			st->st_state_name, enum_name(&cat_names, cg));
-	});
 
 	return st;
 }
@@ -865,12 +737,10 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 			del_notify ? "" : "NOT ");
 	}
 
-	DBG(DBG_CONTROLMORE, {
-		enum categories cg = categorize_state(st, st->st_state);
-		DBG_log("%s state #%lu: %s(%s) => delete",
-			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-			st->st_state_name, enum_name(&cat_names, cg));
-	});
+	dbg("%s state #%lu: %s(%s) => delete",
+	    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+	    st->st_finite_state->fs_short_name,
+	    enum_name(&state_category_names, st->st_finite_state->fs_category));
 }
 
 /* delete a state object */
@@ -2475,15 +2345,16 @@ void show_states_status(void)
 		  require_ddos_cookies() ? "REQUIRED" : "not required",
 		  drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
 
-	whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), open(%u), authenticated(%u), anonymous(%u)",
-		  total_ike(),
-		  cat_count[CAT_HALF_OPEN_IKE],
-		  cat_count[CAT_OPEN_IKE],
-		  cat_count[CAT_AUTHENTICATED_IKE],
-		  cat_count[CAT_ANONYMOUS_IKE]);
-	whack_log(RC_COMMENT, "IPsec SAs: total(%u), authenticated(%u), anonymous(%u)",
-		  total_ipsec(),
-		  cat_count[CAT_AUTHENTICATED_IPSEC], cat_count[CAT_ANONYMOUS_IPSEC]);
+	whack_log(RC_COMMENT, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
+		  total_ike_sa(),
+		  cat_count[CAT_HALF_OPEN_IKE_SA],
+		  cat_count[CAT_OPEN_IKE_SA],
+		  cat_count_ike_sa[CAT_AUTHENTICATED],
+		  cat_count_ike_sa[CAT_ANONYMOUS]);
+	whack_log(RC_COMMENT, "IPsec SAs: total("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
+		  cat_count[CAT_ESTABLISHED_CHILD_SA],
+		  cat_count_child_sa[CAT_AUTHENTICATED],
+		  cat_count_child_sa[CAT_ANONYMOUS]);
 	whack_log(RC_COMMENT, " ");             /* spacer */
 
 	struct state **array = sort_states(state_compare_connection);
@@ -2972,12 +2843,12 @@ bool require_ddos_cookies(void)
 {
 	return pluto_ddos_mode == DDOS_FORCE_BUSY ||
 		(pluto_ddos_mode == DDOS_AUTO &&
-		 cat_count[CAT_HALF_OPEN_IKE] >= pluto_ddos_threshold);
+		 cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_ddos_threshold);
 }
 
 bool drop_new_exchanges(void)
 {
-	return cat_count[CAT_HALF_OPEN_IKE] >= pluto_max_halfopen;
+	return cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_max_halfopen;
 }
 
 void show_globalstate_status(void)
@@ -2988,24 +2859,24 @@ void show_globalstate_status(void)
 	whack_log_comment("config.setup.ike.max_halfopen=%u", pluto_max_halfopen);
 
 	/* technically shunts are not a struct state's - but makes it easier to group */
-	whack_log_comment("current.states.all=%u", shunts + total());
-	whack_log_comment("current.states.ipsec=%u", total_ipsec());
-	whack_log_comment("current.states.ike=%u", total_ike());
+	whack_log_comment("current.states.all="PRI_CAT, shunts + total_sa());
+	whack_log_comment("current.states.ipsec="PRI_CAT, cat_count[CAT_ESTABLISHED_CHILD_SA]);
+	whack_log_comment("current.states.ike="PRI_CAT, total_ike_sa());
 	whack_log_comment("current.states.shunts=%u", shunts);
-	whack_log_comment("current.states.iketype.anonymous=%u",
-		  cat_count[CAT_ANONYMOUS_IKE]);
-	whack_log_comment("current.states.iketype.authenticated=%u",
-		  cat_count[CAT_AUTHENTICATED_IKE]);
-	whack_log_comment("current.states.iketype.halfopen=%u",
-		  cat_count[CAT_HALF_OPEN_IKE]);
-	whack_log_comment("current.states.iketype.open=%u",
-		  cat_count[CAT_OPEN_IKE]);
+	whack_log_comment("current.states.iketype.anonymous="PRI_CAT,
+			  cat_count_ike_sa[CAT_ANONYMOUS]);
+	whack_log_comment("current.states.iketype.authenticated="PRI_CAT,
+			  cat_count_ike_sa[CAT_AUTHENTICATED]);
+	whack_log_comment("current.states.iketype.halfopen="PRI_CAT,
+			  cat_count[CAT_HALF_OPEN_IKE_SA]);
+	whack_log_comment("current.states.iketype.open="PRI_CAT,
+			  cat_count[CAT_OPEN_IKE_SA]);
 	for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
-		whack_log_comment("current.states.enumerate.%s=%u",
+		whack_log_comment("current.states.enumerate.%s="PRI_CAT,
 			enum_name(&state_names, s), state_count[s]);
 	}
 	for (enum state_kind s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
-		whack_log_comment("current.states.enumerate.%s=%u",
+		whack_log_comment("current.states.enumerate.%s="PRI_CAT,
 			enum_name(&state_names, s), state_count[s]);
 	}
 }

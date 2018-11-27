@@ -249,6 +249,24 @@ struct msg_digest *unsuspend_md(struct state *st);
 	}
 
 /*
+ * For auditing, different categories of a state.  Of most interest is
+ * half-open states which suggest libreswan being under attack.
+ *
+ * "half-open" is where only one packet was received.
+ */
+enum state_category {
+	CAT_UNKNOWN = 0,
+	CAT_HALF_OPEN_IKE_SA,
+	CAT_OPEN_IKE_SA,
+	CAT_ESTABLISHED_IKE_SA,
+	CAT_ESTABLISHED_CHILD_SA,
+	CAT_INFORMATIONAL,
+	CAT_IGNORE,
+};
+
+extern enum_names state_category_names;
+
+/*
  * Abstract state machine that drives the parent and child SA.
  *
  * IKEv1 and IKEv2 construct states using this as a base.
@@ -260,6 +278,7 @@ struct finite_state {
 	const char *fs_story;
 	lset_t fs_flags;
 	enum event_type fs_timeout_event;
+	enum state_category fs_category;
 	const struct state_v1_microcode *fs_v1_transitions;
 	const struct state_v2_microcode *fs_v2_transitions;
 	size_t fs_nr_transitions;

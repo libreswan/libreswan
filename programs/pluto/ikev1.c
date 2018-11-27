@@ -611,11 +611,96 @@ void init_ikev1(void)
 	static struct finite_state v1_states[STATE_IKEv1_ROOF - STATE_IKEv1_FLOOR];
 	for (unsigned k = 0; k < elemsof(v1_states); k++) {
 		struct finite_state *fs = &v1_states[k];
-		fs->fs_state = k + STATE_IKEv1_FLOOR;
+		fs->fs_state = STATE_IKEv1_FLOOR + k;
+		finite_states[fs->fs_state] = fs;
+
 		fs->fs_name = enum_name(&state_names, fs->fs_state);
 		fs->fs_short_name = enum_short_name(&state_names, fs->fs_state);
 		fs->fs_story = enum_name(&state_stories, fs->fs_state);
-		finite_states[fs->fs_state] = fs;
+
+		/*
+		 * Initialize .fs_category
+		 *
+		 * If/when struct finite_state is converted to a static
+		 * structure, this all goes away.
+		 */
+		enum state_category cat;
+		switch (fs->fs_state) {
+
+		case STATE_AGGR_R0:
+		case STATE_AGGR_I1:
+		case STATE_MAIN_R0:
+		case STATE_MAIN_I1:
+			/*
+			 * Count I1 as half-open too because with ondemand,
+			 * a plaintext packet (that is spoofed) will
+			 * trigger an outgoing IKE SA.
+			 */
+			cat = CAT_HALF_OPEN_IKE_SA;
+			break;
+
+		case STATE_MAIN_R1:
+		case STATE_MAIN_R2:
+		case STATE_MAIN_I2:
+		case STATE_MAIN_I3:
+		case STATE_AGGR_R1:
+			/*
+			 * All IKEv1 MAIN modes except the first
+			 * (half-open) and last ones are not
+			 * authenticated.
+			 */
+			cat = CAT_OPEN_IKE_SA;
+			break;
+
+		case STATE_MAIN_I4:
+		case STATE_MAIN_R3:
+		case STATE_AGGR_I2:
+		case STATE_AGGR_R2:
+		case STATE_XAUTH_I0:
+		case STATE_XAUTH_I1:
+		case STATE_XAUTH_R0:
+		case STATE_XAUTH_R1:
+			/*
+			 * IKEv1 established states.
+			 *
+			 * XAUTH, seems to a second level of authentication
+			 * performed after the connection is established and
+			 * authenticated.
+			 */
+			cat = CAT_ESTABLISHED_IKE_SA;
+			break;
+
+		case STATE_QUICK_I1: /* this is not established yet? */
+		case STATE_QUICK_I2:
+		case STATE_QUICK_R0: /* shouldn't we cat_ignore this? */
+		case STATE_QUICK_R1:
+		case STATE_QUICK_R2:
+			/*
+			 * IKEv1: QUICK is for child connections children.
+			 * Probably won't occur as a parent?
+			 */
+			cat = CAT_ESTABLISHED_CHILD_SA;
+			break;
+
+		case STATE_MODE_CFG_I1:
+		case STATE_MODE_CFG_R1:
+		case STATE_MODE_CFG_R2:
+			/*
+			 * IKEv1: Post established negotiation.
+			 */
+			cat = CAT_ESTABLISHED_IKE_SA;
+			break;
+
+		case STATE_INFO:
+		case STATE_INFO_PROTECTED:
+		case STATE_MODE_CFG_R0:
+			cat = CAT_INFORMATIONAL;
+			break;
+
+		default:
+			bad_case(fs->fs_state);
+		}
+		fs->fs_category = cat;
 	}
 
 	/*
