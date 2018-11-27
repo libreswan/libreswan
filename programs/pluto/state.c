@@ -223,9 +223,8 @@ static unsigned total(void)
  * at st->st_ikev2_anon which is copied from parent to child states
  */
 static enum categories categorize_state(struct state *st,
-					       enum state_kind state)
+					enum state_kind state)
 {
-	bool is_parent = IS_PARENT_SA(st);
 	enum categories established_ike = st->st_ikev2_anon ?
 		CAT_ANONYMOUS_IKE : CAT_AUTHENTICATED_IKE;
 	enum categories established_ipsec = st->st_ikev2_anon ?
@@ -312,11 +311,7 @@ static enum categories categorize_state(struct state *st,
 		/*
 		 * IKEv2 established states.
 		 */
-		if (is_parent) {
-			return established_ike;
-		} else {
-			return established_ipsec;
-		}
+		return established_ike;
 
 	case STATE_V2_IPSEC_I:
 	case STATE_V2_IPSEC_R:
@@ -334,7 +329,6 @@ static enum categories categorize_state(struct state *st,
 		 * IKEv1: QUICK is for child connections children.
 		 * Probably won't occur as a parent?
 		 */
-		pexpect(!is_parent);
 		return established_ipsec;
 
 	case STATE_MODE_CFG_I1:
@@ -349,7 +343,6 @@ static enum categories categorize_state(struct state *st,
 	case STATE_INFO_PROTECTED:
 	case STATE_MODE_CFG_R0:
 	case STATE_CHILDSA_DEL:
-		pexpect(!is_parent);
 		return CAT_INFORMATIONAL;
 
 	default:
