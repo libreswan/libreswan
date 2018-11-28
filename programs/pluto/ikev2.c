@@ -374,6 +374,14 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .encrypted_payloads = { .required = P(N), .notification = v2N_UNSUPPORTED_CRITICAL_PAYLOAD, },
 	  .processor  = ikev2_auth_initiator_process_failure_notification,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
+	/*
+	 * XXX: Danger! This state transition mashes the IKE SA's
+	 * initial state and the CHILD SA's final state.  There should
+	 * instead be two separate state transitions: IKE SA:
+	 * STATE_PARENT_I2 -> STATE_PARENT_I3; CHILD SA: ??? ->
+	 * STATE_V2_IPSEC_I->???.  The IKE SA could then initiate the
+	 * CHILD SA's transaction.
+	 */
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_V2_IPSEC_I,
@@ -424,6 +432,14 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor  = ikev2_ike_sa_process_auth_request_no_skeyid,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
+	/*
+	 * XXX: Danger! This state transition mashes the IKE SA's
+	 * initial state and the CHILD SA's final state.  There should
+	 * instead be two separate state transitions: IKE SA:
+	 * STATE_PARENT_R1->STATE_PARENT_R2; CHILD SA::
+	 * ???->STATE_V2_IPSEC_R.  The IKE SA could then initiate the
+	 * CHILD SA's transaction.
+	 */
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_V2_IPSEC_R,
