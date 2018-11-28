@@ -470,44 +470,44 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_v1_SA_REPLACE_IF_USED:
 	case EVENT_v2_SA_REPLACE_IF_USED:
 	case EVENT_v2_SA_REPLACE_IF_USED_IKE:
-	{
-		struct connection *c = st->st_connection;
-		so_serial_t newest;
-		deltatime_t last_used_age;
+		if (st->st_ikev2) {
+			pexpect(type == EVENT_SA_REPLACE ||
+				type == EVENT_v2_SA_REPLACE_IF_USED ||
+				type == EVENT_v2_SA_REPLACE_IF_USED_IKE);
+			struct connection *c = st->st_connection;
+			so_serial_t newest;
+			deltatime_t last_used_age;
 
-		if (IS_IKE_SA(st)) {
-			newest = c->newest_isakmp_sa;
-			DBG(DBG_LIFECYCLE,
-				DBG_log("%s picked newest_isakmp_sa #%lu",
-					enum_name(&timer_event_names, type),
-					newest));
-		} else {
-			newest = c->newest_ipsec_sa;
-			DBG(DBG_LIFECYCLE,
-				DBG_log("%s picked newest_ipsec_sa #%lu",
-					enum_name(&timer_event_names, type),
-					newest));
-		}
+			if (IS_IKE_SA(st)) {
+				newest = c->newest_isakmp_sa;
+				dbg("%s picked newest_isakmp_sa #%lu",
+				    enum_name(&timer_event_names, type),
+				    newest);
+			} else {
+				newest = c->newest_ipsec_sa;
+				dbg("%s picked newest_ipsec_sa #%lu",
+				    enum_name(&timer_event_names, type),
+				    newest);
+			}
 
-		if (newest != SOS_NOBODY && newest > st->st_serialno) {
-			/* not very interesting: no need to replace */
-			DBG(DBG_LIFECYCLE,
-				DBG_log("not replacing stale %s SA: #%lu will do",
-					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-					newest));
-		} else if (type == EVENT_v2_SA_REPLACE_IF_USED &&
-				get_sa_info(st, TRUE, &last_used_age) &&
-				deltaless(c->sa_rekey_margin, last_used_age)) {
-			ikev2_expire_parent(st, last_used_age);
-			break;
-		} else if (type == EVENT_v2_SA_REPLACE_IF_USED_IKE) {
+			if (newest != SOS_NOBODY && newest > st->st_serialno) {
+				/* not very interesting: no need to replace */
+				dbg("not replacing stale %s SA: #%lu will do",
+				    IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+				    newest);
+			} else if (type == EVENT_v2_SA_REPLACE_IF_USED &&
+				   get_sa_info(st, TRUE, &last_used_age) &&
+				   deltaless(c->sa_rekey_margin, last_used_age)) {
+				ikev2_expire_parent(st, last_used_age);
+				break;
+			} else if (type == EVENT_v2_SA_REPLACE_IF_USED_IKE) {
 				struct state *cst = state_with_serialno(c->newest_ipsec_sa);
 				if (cst == NULL)
 					break;
-				DBG(DBG_LIFECYCLE, DBG_log("#%lu check last used on newest IPsec SA #%lu",
-							st->st_serialno, cst->st_serialno));
+				dbg("#%lu check last used on newest IPsec SA #%lu",
+				    st->st_serialno, cst->st_serialno);
 				if (get_sa_info(cst, TRUE, &last_used_age) &&
-					deltaless(c->sa_rekey_margin, last_used_age))
+				    deltaless(c->sa_rekey_margin, last_used_age))
 				{
 					delete_liveness_event(cst);
 					event_force(EVENT_SA_EXPIRE, cst);
@@ -517,41 +517,68 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					dbg_sa_expired(st, type);
 					ipsecdoi_replace(st, 1);
 				}
+			} else {
+				ikev2_log_initiate_child_fail(st);
+				dbg_sa_expired(st, type);
+				ipsecdoi_replace(st, 1);
+			}
 
-		} else if (type == EVENT_v1_SA_REPLACE_IF_USED &&
-				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin)))
-		{
-			/*
-			 * we observed no recent use: no need to replace
-			 *
-			 * The sampling effects mean that st_outbound_time
-			 * could be up to SHUNT_SCAN_INTERVAL more recent
-			 * than actual traffic because the sampler looks at
-			 * change over that interval.
-			 * st_outbound_time could also not yet reflect traffic
-			 * in the last SHUNT_SCAN_INTERVAL.
-			 * We expect that SHUNT_SCAN_INTERVAL is smaller than
-			 * c->sa_rekey_margin so that the effects of this will
-			 * be unimportant.
-			 * This is just an optimization: correctness is not
-			 * at stake.
-			 */
-			DBG(DBG_LIFECYCLE, DBG_log(
-					"not replacing stale %s SA: inactive for %jds",
-					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-					deltasecs(monotimediff(mononow(),
-							       st->st_outbound_time))));
-		} else {
-			ikev2_log_initiate_child_fail(st);
-			dbg_sa_expired(st, type);
-			ipsecdoi_replace(st, 1);
+			delete_liveness_event(st);
+			delete_dpd_event(st);
+			event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
+		} else { /* IKEv1 */
+			pexpect(type == EVENT_SA_REPLACE ||
+				type == EVENT_v1_SA_REPLACE_IF_USED);
+			struct connection *c = st->st_connection;
+			so_serial_t newest;
+
+			if (IS_IKE_SA(st)) {
+				newest = c->newest_isakmp_sa;
+				dbg("%s picked newest_isakmp_sa #%lu",
+				    enum_name(&timer_event_names, type),
+				    newest);
+			} else {
+				newest = c->newest_ipsec_sa;
+				dbg("%s picked newest_ipsec_sa #%lu",
+				    enum_name(&timer_event_names, type),
+				    newest);
+			}
+
+			if (newest != SOS_NOBODY && newest > st->st_serialno) {
+				/* not very interesting: no need to replace */
+				dbg("not replacing stale %s SA: #%lu will do",
+				    IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+				    newest);
+			} else if (type == EVENT_v1_SA_REPLACE_IF_USED &&
+				   !monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
+				/*
+				 * we observed no recent use: no need to replace
+				 *
+				 * The sampling effects mean that st_outbound_time
+				 * could be up to SHUNT_SCAN_INTERVAL more recent
+				 * than actual traffic because the sampler looks at
+				 * change over that interval.
+				 * st_outbound_time could also not yet reflect traffic
+				 * in the last SHUNT_SCAN_INTERVAL.
+				 * We expect that SHUNT_SCAN_INTERVAL is smaller than
+				 * c->sa_rekey_margin so that the effects of this will
+				 * be unimportant.
+				 * This is just an optimization: correctness is not
+				 * at stake.
+				 */
+				dbg("not replacing stale %s SA: inactive for %jds",
+				    IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+				    deltasecs(monotimediff(mononow(), st->st_outbound_time)));
+			} else {
+				dbg_sa_expired(st, type);
+				ipsecdoi_replace(st, 1);
+			}
+
+			delete_liveness_event(st);
+			delete_dpd_event(st);
+			event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
 		}
-
-		delete_liveness_event(st);
-		delete_dpd_event(st);
-		event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
-	}
-	break;
+		break;
 
 	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_SA_EXPIRE:
