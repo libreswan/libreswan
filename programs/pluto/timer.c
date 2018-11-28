@@ -278,6 +278,31 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
 }
 
 /*
+ * If the connection contains a newer SA, return it.
+ */
+static so_serial_t get_newer_sa(struct state *st)
+{
+	struct connection *c = st->st_connection;
+	so_serial_t newest;
+
+	if (IS_IKE_SA(st)) {
+		newest = c->newest_isakmp_sa;
+		dbg("picked newest_isakmp_sa #%lu for #%lu",
+		    newest, st->st_serialno);
+	} else {
+		newest = c->newest_ipsec_sa;
+		dbg("picked newest_ipsec_sa #%lu for #%lu",
+		    newest, st->st_serialno);
+	}
+
+	if (newest != SOS_NOBODY && newest > st->st_serialno) {
+		return newest;
+	} else {
+		return SOS_NOBODY;
+	}
+}
+
+/*
  * Delete a state backlinked event.
  */
 void delete_state_event(struct state *st, struct pluto_event **evp)
@@ -475,26 +500,14 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				type == EVENT_v2_SA_REPLACE_IF_USED ||
 				type == EVENT_v2_SA_REPLACE_IF_USED_IKE);
 			struct connection *c = st->st_connection;
-			so_serial_t newest;
 			deltatime_t last_used_age;
+			const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
-			if (IS_IKE_SA(st)) {
-				newest = c->newest_isakmp_sa;
-				dbg("%s picked newest_isakmp_sa #%lu",
-				    enum_name(&timer_event_names, type),
-				    newest);
-			} else {
-				newest = c->newest_ipsec_sa;
-				dbg("%s picked newest_ipsec_sa #%lu",
-				    enum_name(&timer_event_names, type),
-				    newest);
-			}
-
-			if (newest != SOS_NOBODY && newest > st->st_serialno) {
+			so_serial_t newer_sa = get_newer_sa(st);
+			if (newer_sa != SOS_NOBODY) {
 				/* not very interesting: no need to replace */
-				dbg("not replacing stale %s SA: #%lu will do",
-				    IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-				    newest);
+				dbg("not replacing stale %s SA #%lu; newer #%lu will do",
+				    satype, st->st_serialno, newer_sa);
 			} else if (type == EVENT_v2_SA_REPLACE_IF_USED &&
 				   get_sa_info(st, TRUE, &last_used_age) &&
 				   deltaless(c->sa_rekey_margin, last_used_age)) {
@@ -530,25 +543,13 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			pexpect(type == EVENT_SA_REPLACE ||
 				type == EVENT_v1_SA_REPLACE_IF_USED);
 			struct connection *c = st->st_connection;
-			so_serial_t newest;
+			const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
-			if (IS_IKE_SA(st)) {
-				newest = c->newest_isakmp_sa;
-				dbg("%s picked newest_isakmp_sa #%lu",
-				    enum_name(&timer_event_names, type),
-				    newest);
-			} else {
-				newest = c->newest_ipsec_sa;
-				dbg("%s picked newest_ipsec_sa #%lu",
-				    enum_name(&timer_event_names, type),
-				    newest);
-			}
-
-			if (newest != SOS_NOBODY && newest > st->st_serialno) {
+			so_serial_t newer_sa = get_newer_sa(st);
+			if (newer_sa != SOS_NOBODY) {
 				/* not very interesting: no need to replace */
-				dbg("not replacing stale %s SA: #%lu will do",
-				    IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-				    newest);
+				dbg("not replacing stale %s SA %lu; #%lu will do",
+				    satype, st->st_serialno, newer_sa);
 			} else if (type == EVENT_v1_SA_REPLACE_IF_USED &&
 				   !monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
 				/*
@@ -567,8 +568,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				 * at stake.
 				 */
 				dbg("not replacing stale %s SA: inactive for %jds",
-				    IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-				    deltasecs(monotimediff(mononow(), st->st_outbound_time)));
+				    satype, deltasecs(monotimediff(mononow(), st->st_outbound_time)));
 			} else {
 				dbg_sa_expired(st, type);
 				ipsecdoi_replace(st, 1);
@@ -583,38 +583,24 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_SA_EXPIRE:
 	{
-		const char *satype;
-		so_serial_t latest;
-		struct connection *c;
-
 		passert(st != NULL);
-		c = st->st_connection;
+		struct connection *c = st->st_connection;
+		const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
-		if (IS_IKE_SA(st)) {
-			satype = "ISAKMP";
-			latest = c->newest_isakmp_sa;
-			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_EXPIRE picked newest_isakmp_sa"));
-		} else {
-			satype = "IPsec";
-			latest = c->newest_ipsec_sa;
-			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_EXPIRE picked newest_ipsec_sa"));
-		}
-
-		if (st->st_serialno < latest) {
+		so_serial_t newer_sa = get_newer_sa(st);
+		if (newer_sa != SOS_NOBODY) {
 			/* not very interesting: already superseded */
-			DBG(DBG_LIFECYCLE, DBG_log(
-				"%s SA expired (superseded by #%lu)",
-					satype, latest));
+			dbg("%s SA expired (superseded by #%lu)",
+			    satype, newer_sa);
 		} else if (!IS_IKE_SA_ESTABLISHED(st)) {
 			/* not very interesting: failed IKE attempt */
-			DBG(DBG_LIFECYCLE, DBG_log(
-				"un-established partial ISAKMP SA timeout (%s)",
-					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout"));
+			dbg("un-established partial CHILD SA timeout (%s)",
+			    type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout");
 		} else {
-				libreswan_log("%s %s (%s)", satype,
-					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
-					(c->policy & POLICY_DONT_REKEY) ?
-						"--dontrekey" : "LATEST!");
+			libreswan_log("%s %s (%s)", satype,
+				      type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
+				      (c->policy & POLICY_DONT_REKEY) ?
+				      "--dontrekey" : "LATEST!");
 		}
 		/* Delete this state object.  It must be in the hash table. */
 		if (st->st_ikev2) {
