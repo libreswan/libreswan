@@ -724,26 +724,35 @@ void release_fragments(struct state *st)
 		release_v2fragments(st);
 }
 
-void ikev2_expire_unused_parent(struct state *pst)
+void v2_expire_unused_ike_sa(struct ike_sa *ike)
 {
-	struct state *st;
+	passert(ike->sa.st_ikev2);
+	passert(ike != NULL);
 
-	if (pst == NULL || !IS_PARENT_SA_ESTABLISHED(pst))
+	if (!IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
+		dbg("can't expire unused IKE SA #%lu; not established - strange",
+		    ike->sa.st_serialno);
 		return; /* only deal with established parent SA */
+	}
 
-	FOR_EACH_STATE_WITH_COOKIES(st, pst->st_icookie, pst->st_rcookie, {
-		if (st->st_clonedfrom == pst->st_serialno)
+	/* Any children? */
+	struct state *st;
+	struct list_head *slot = ike_spis_slot(&ike->sa.st_ike_spis);
+	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
+		if (st->st_clonedfrom == ike->sa.st_serialno) {
+			dbg("can't expire unused IKE SA #%lu; it has the child #%lu",
+			    ike->sa.st_serialno, st->st_serialno);
 			return;
-	});
+		}
+	}
 
 	{
 		char cib[CONN_INST_BUF];
-		struct connection *c = pst->st_connection;
-
-		loglog(RC_INFORMATIONAL, "expire unused parent SA #%lu \"%s\"%s",
-				pst->st_serialno, c->name,
-				fmt_conn_instance(c, cib));
-		event_force(EVENT_SA_EXPIRE, pst);
+		struct connection *c = ike->sa.st_connection;
+		loglog(RC_INFORMATIONAL, "expire unused IKE SA #%lu \"%s\"%s",
+		       ike->sa.st_serialno, c->name,
+		       fmt_conn_instance(c, cib));
+		event_force(EVENT_SA_EXPIRE, &ike->sa);
 	}
 }
 

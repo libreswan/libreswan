@@ -590,16 +590,23 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 						"--dontrekey" : "LATEST!");
 		}
 		/* Delete this state object.  It must be in the hash table. */
-		if (st->st_ikev2 && IS_IKE_SA(st)) {
-			/* IKEv2 parent, delete children too */
-			delete_my_family(st, FALSE);
-			/* note: no md->st to clear */
+		if (st->st_ikev2) {
+			if (IS_IKE_SA(st)) {
+				/* IKEv2 parent, delete children too */
+				delete_my_family(st, FALSE);
+				/* note: no md->st to clear */
+			} else {
+				struct ike_sa *ike = ike_sa(st);
+				passert(ike != NULL || &ike->sa != st);
+				delete_state(st);
+				/* st = NULL; */
+				/* note: no md->st to clear */
+				v2_expire_unused_ike_sa(ike);
+			}
 		} else {
-			struct state *pst = state_with_serialno(st->st_clonedfrom);
 			delete_state(st);
 			/* note: no md->st to clear */
-
-			ikev2_expire_unused_parent(pst);
+			/* st = NULL; */
 		}
 		break;
 	}

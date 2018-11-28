@@ -811,7 +811,7 @@ extern void show_globalstate_status(void);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
 extern bool update_mobike_endpoints(struct state *st, const struct msg_digest *md);
-extern void ikev2_expire_unused_parent(struct state *pst);
+extern void v2_expire_unused_ike_sa(struct ike_sa *ike);
 
 bool shared_phase1_connection(const struct connection *c);
 
