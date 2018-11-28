@@ -2308,16 +2308,26 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	insert_state(cst);
 	md->st = cst;
 
-	/* parent had crypto failed, replace it with rekey! */
-	/* ??? seems wrong: not conditional at all */
-	delete_event(pst);
-	{
-		enum event_type x = md->svm->timeout_event;
-		deltatime_t delay = ikev2_replace_delay(pst, &x);
-		event_schedule(x, delay, pst);
-	}
+	/*
+	 * XXX: Danger!
+	 *
+	 * Because the code above has blatted MD->ST with the child
+	 * state (CST) and this function's caller is going to try to
+	 * complete the V2 state transition on MD->ST (i.e., CST) and
+	 * using the state-transition MD->SVM the IKE SA (PST) will
+	 * never get to complete its state transition.
+	 *
+	 * Get around this by forcing the state transition here.
+	 *
+	 * But what should happen?  A guess is to just leave MD->ST
+	 * alone.  The CHILD SA doesn't really exist until after the
+	 * IKE SA has processed and approved of the response to this
+	 * IKE_AUTH request.
+	 */
 
-	/* need to force parent state to I2 */
+	pexpect(md->svm->timeout_event == EVENT_v2_RETRANSMIT); /* for CST */
+	delete_event(pst);
+	event_schedule(EVENT_SA_EXPIRE, deltatime(PLUTO_HALFOPEN_SA_LIFE), pst);
 	change_state(pst, STATE_PARENT_I2);
 
 	/*

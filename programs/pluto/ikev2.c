@@ -2532,6 +2532,7 @@ bool v2_only_replace_sa_when_used(struct state *st)
 deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind)
 {
 	enum event_type kind = *pkind;
+	pexpect(kind == EVENT_SA_REPLACE);
 	intmax_t delay;   /* unwrapped deltatime_t in seconds */
 	struct connection *c = st->st_connection;
 
