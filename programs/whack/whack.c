@@ -101,6 +101,8 @@ static void help(void)
 		"	[--reykeymargin <seconds>] [--reykeyfuzz <percentage>] \\\n"
 		"	[--retransmit-timeout <seconds>] \\\n"
 		"	[--retransmit-interval <msecs>] \\\n"
+		"	[--send-redirect] [--redirect-to] \\\n"
+		"	[--accept-redirect] [--accept-redirect-to] \\\n"
 		"	[--keyingtries <count>] \\\n"
 		"	[--replay-window <num>] \\\n"
 		"	[--esp <esp-algos>] \\\n"
@@ -147,6 +149,9 @@ static void help(void)
 		"initiation: whack (--initiate [--remote-host <ip or hostname>] | --terminate) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
 		"	[--username <name>] [--xauthpass <pass>]\n"
+		"\n"
+		"active redirect: whack --redirect [--name <connection_name> | --peer-ip <ip-address>] \\\n"
+		"	--gateway <ip-address>\n"
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
 		"	--oppohere <ip-address> --oppothere <ip-address> \\\n"
@@ -289,6 +294,10 @@ enum option_enums {
 	OPT_IKEBUF,
 	OPT_IKE_MSGERR,
 
+	OPT_ACTIVE_REDIRECT,
+	OPT_ACTIVE_REDIRECT_PEER,
+	OPT_ACTIVE_REDIRECT_GW,
+
 	OPT_DDOS_BUSY,
 	OPT_DDOS_UNLIMITED,
 	OPT_DDOS_AUTO,
@@ -416,6 +425,10 @@ enum option_enums {
 	CD_DPDDELAY,
 	CD_DPDTIMEOUT,
 	CD_DPDACTION,
+	CD_SEND_REDIRECT,
+	CD_REDIRECT_TO,
+	CD_ACCEPT_REDIRECT,
+	CD_ACCEPT_REDIRECT_TO,
 	CD_FORCEENCAPS,
 	CD_ENCAPS,
 	CD_NO_NAT_KEEPALIVE,
@@ -522,6 +535,10 @@ static const struct option long_opts[] = {
 	{ "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
 	{ "ike-socket-bufsize", required_argument, NULL, OPT_IKEBUF + OO + NUMERIC_ARG},
 	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
+
+	{ "redirect", no_argument, NULL, OPT_ACTIVE_REDIRECT + OO },
+	{ "peer-ip", required_argument, NULL, OPT_ACTIVE_REDIRECT_PEER + OO },
+	{ "gateway", required_argument, NULL, OPT_ACTIVE_REDIRECT_GW + OO },
 
 	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
 	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED + OO },
@@ -651,6 +668,10 @@ static const struct option long_opts[] = {
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
 	{ "dpdaction", required_argument, NULL, CD_DPDACTION + OO },
+	{ "send-redirect", required_argument, NULL, CD_SEND_REDIRECT + OO },
+	{ "redirect-to", required_argument, NULL, CD_REDIRECT_TO + OO },
+	{ "accept-redirect", required_argument, NULL, CD_ACCEPT_REDIRECT + OO },
+	{ "accept-redirect-to", required_argument, NULL, CD_ACCEPT_REDIRECT_TO + OO },
 
 	{ "xauth", no_argument, NULL, END_XAUTHSERVER + OO },
 	{ "xauthserver", no_argument, NULL, END_XAUTHSERVER + OO },
@@ -1237,6 +1258,30 @@ int main(int argc, char **argv)
 			msg.whack_deleteuser = TRUE;
 			continue;
 
+		case OPT_ACTIVE_REDIRECT:	/* --redirect */
+			msg.active_redirect = TRUE;
+			continue;
+
+		case OPT_ACTIVE_REDIRECT_PEER:	/* --peer-ip */
+			if (!msg.active_redirect)
+				diag("missing --redirect before --peer-ip");
+			diagq(ttoaddr(optarg, 0, msg.addr_family,
+				      &msg.active_redirect_peer), optarg);
+			if (isanyaddr(&msg.active_redirect_peer)) {
+				diagq("peer address isn't valid",
+					optarg);
+			}
+			continue;
+
+		case OPT_ACTIVE_REDIRECT_GW:	/* --gateway */
+			diagq(ttoaddr(optarg, 0, msg.addr_family,
+				      &msg.active_redirect_gw), optarg);
+			if (isanyaddr(&msg.active_redirect_gw)) {
+				diagq("gateway address isn't valid",
+					optarg);
+			}
+			continue;
+
 		case OPT_DDOS_BUSY:	/* --ddos-busy */
 			msg.whack_ddos = DDOS_FORCE_BUSY;
 			continue;
@@ -1812,6 +1857,50 @@ int main(int argc, char **argv)
 				msg.dpd_action = DPD_ACTION_RESTART;
 			continue;
 
+		case CD_SEND_REDIRECT:	/* --send-redirect */
+		{
+			lset_t new_policy = LEMPTY;
+
+			if (streq(optarg, "yes"))
+				new_policy |= POLICY_SEND_REDIRECT_ALWAYS;
+			else if (streq(optarg, "no"))
+				new_policy |= POLICY_SEND_REDIRECT_NEVER;
+			else if (streq(optarg, "auto"))
+				new_policy = LEMPTY;	/* avoid compiler error for no expression */
+			else
+				diag("--send-redirect options are 'yes', 'no' or 'auto'");
+
+			msg.policy = msg.policy & ~(POLICY_SEND_REDIRECT_MASK);
+			msg.policy |= new_policy;
+		}
+			continue;
+
+		case CD_REDIRECT_TO:	/* --redirect-to */
+			msg.redirect_to = strdup(optarg);
+			continue;
+
+		case CD_ACCEPT_REDIRECT:
+		{
+			lset_t new_policy = LEMPTY;
+
+			if (streq(optarg, "yes"))
+				new_policy |= POLICY_ACCEPT_REDIRECT_YES;
+			else if (streq(optarg, "no"))
+				new_policy |= LEMPTY;
+			else
+				diag("--accept-redirect options are 'yes' and 'no'");
+
+			if (new_policy != LEMPTY)
+				msg.policy |= new_policy;
+			else
+				msg.policy = msg.policy & ~POLICY_ACCEPT_REDIRECT_YES;
+		}
+			continue;
+
+		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
+			msg.accept_redirect_to = strdup(optarg);
+			continue;
+
 		case CD_IKE:	/* --ike <ike_alg1,ike_alg2,...> */
 			msg.ike = optarg;
 			continue;
@@ -2311,7 +2400,7 @@ int main(int argc, char **argv)
 
 	if (!(msg.whack_connection || msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
-	      msg.whack_deleteuser ||
+	      msg.whack_deleteuser || msg.active_redirect ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
@@ -2322,6 +2411,27 @@ int main(int argc, char **argv)
 	      msg.whack_fips_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest))
 		diag("no action specified; try --help for hints");
+
+	/* do the logic for --redirect command */
+	if (msg.active_redirect) {
+		bool redirect_peer_spec = !isanyaddr(&msg.active_redirect_peer);
+		bool redirect_gw_spec = !isanyaddr(&msg.active_redirect_gw);
+		msg.active_redirect = FALSE;	/* if we pass all the 'tests' we set it back to TRUE */
+		if (msg.name != NULL)
+			if (redirect_peer_spec)
+				diag("can not use both --name <connection_name> and --peer-ip <ip_address>");
+			else if (!redirect_gw_spec)
+				diag("missing --gateway <ip-address>");
+			else
+				msg.active_redirect = TRUE;
+		else
+			if (!redirect_peer_spec)
+				diag("missing [--name <connection_name> | --peer-ip <ip_address>]");
+			else if (!redirect_gw_spec)
+				diag("missing --gateway <ip-address>");
+			else
+				msg.active_redirect = TRUE;
+	}
 
 	if (msg.policy & POLICY_AGGRESSIVE) {
 		if (msg.ike == NULL)
