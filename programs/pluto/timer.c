@@ -549,7 +549,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 		delete_liveness_event(st);
 		delete_dpd_event(st);
-		event_schedule(EVENT_SA_EXPIRE, st->st_margin, st);
+		event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
 	}
 	break;
 

@@ -1959,12 +1959,12 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 
 	if (lifetime > PARENT_MIN_LIFE)
 		/* in case st_margin == 0, insist minimum life */
-		if (lifetime > deltasecs(ike->sa.st_margin))
+		if (lifetime > deltasecs(ike->sa.st_replace_margin))
 			return TRUE;
 
 		loglog(RC_LOG_SERIOUS, "no new CREATE_CHILD_SA exchange using #%lu. Parent lifetime %ld < st_margin %jd",
 				ike->sa.st_serialno, lifetime,
-				deltasecs(ike->sa.st_margin));
+				deltasecs(ike->sa.st_replace_margin));
 
 	return FALSE;
 }

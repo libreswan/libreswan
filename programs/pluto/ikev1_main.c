@@ -2587,7 +2587,7 @@ bool accept_delete(struct msg_digest *md,
 						loglog(RC_LOG_SERIOUS,
 							"received Delete SA payload: replace IPSEC State #%lu now",
 							dst->st_serialno);
-						dst->st_margin = deltatime(0);
+						dst->st_replace_margin = deltatime(0);
 						event_force(EVENT_SA_REPLACE, dst);
 					}
 				} else {

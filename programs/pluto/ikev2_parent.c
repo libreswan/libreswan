@@ -4889,7 +4889,7 @@ static void delete_or_replace_state(struct state *st) {
 		 */
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: replace IPSEC State #%lu now",
 				st->st_serialno);
-		st->st_margin = deltatime(0);
+		st->st_replace_margin = deltatime(0);
 		event_force(EVENT_SA_REPLACE, st);
 	} else {
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu now",

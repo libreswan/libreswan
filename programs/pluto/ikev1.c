@@ -2621,7 +2621,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 					if (delay_ms > marg * 1000) {
 						delay_ms -= marg * 1000;
-						st->st_margin = deltatime(marg);
+						st->st_replace_margin = deltatime(marg);
 					} else {
 						kind = EVENT_SA_EXPIRE;
 					}

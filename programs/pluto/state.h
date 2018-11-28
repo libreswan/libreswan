@@ -510,7 +510,13 @@ struct state {
 	unsigned long st_try;		/* Number of times rekeying attempted.
 					 * 0 means the only time.
 					 */
-	deltatime_t st_margin;		/* life after EVENT_SA_REPLACE*/
+	/*
+	 * How much time to allow the replace attempt (i.e., re-key)
+	 * before the SA must be killed and then re-started from
+	 * scratch.
+	 */
+	deltatime_t st_replace_margin;
+
 	unsigned long st_outbound_count;	/* traffic through eroute */
 	monotime_t st_outbound_time;	/* time of last change to
 					 * st_outbound_count

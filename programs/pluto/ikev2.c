@@ -2566,7 +2566,7 @@ deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind)
 
 		if (delay > marg) {
 			delay -= marg;
-			st->st_margin = deltatime(marg);
+			st->st_replace_margin = deltatime(marg);
 		} else {
 			*pkind = kind = EVENT_SA_EXPIRE;
 		}
