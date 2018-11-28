@@ -329,7 +329,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor = ikev2_IKE_SA_process_SA_INIT_response_notification,
-	  .recv_type  = ISAKMP_v2_SA_INIT,
+	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
 	  .timeout_event = EVENT_RETAIN, },
 
 	/* STATE_PARENT_I1: R1 --> I2
@@ -345,7 +345,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = ikev2_parent_inR1outI2,
-	  .recv_type  = ISAKMP_v2_SA_INIT,
+	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
 	  .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* STATE_PARENT_I2: R2 -->
@@ -359,21 +359,21 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .message_payloads = { .required = P(SK), },
 	  .encrypted_payloads = { .required = P(N), .notification = v2N_INVALID_SYNTAX, },
 	  .processor  = ikev2_auth_initiator_process_failure_notification,
-	  .recv_type  = ISAKMP_v2_AUTH, },
+	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
 	{ .story      = "Initiator: process AUTHENTICATION_FAILED AUTH notification",
 	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
 	  .message_payloads = { .required = P(SK), },
 	  .encrypted_payloads = { .required = P(N), .notification = v2N_AUTHENTICATION_FAILED, },
 	  .processor  = ikev2_auth_initiator_process_failure_notification,
-	  .recv_type  = ISAKMP_v2_AUTH, },
+	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
 	{ .story      = "Initiator: process UNSUPPORTED_CRITICAL_PAYLOAD AUTH notification",
 	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
 	  .message_payloads = { .required = P(SK), },
 	  .encrypted_payloads = { .required = P(N), .notification = v2N_UNSUPPORTED_CRITICAL_PAYLOAD, },
 	  .processor  = ikev2_auth_initiator_process_failure_notification,
-	  .recv_type  = ISAKMP_v2_AUTH, },
+	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_V2_IPSEC_I,
@@ -382,15 +382,15 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT)|P(CP),
 	  .processor  = ikev2_parent_inR2,
-	  .recv_type  = ISAKMP_v2_AUTH,
+	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
-	{ .story      = "IKE SA: process AUTH response containing unknown notification",
+	{ .story      = "IKE SA: process IKE_AUTH response containing unknown notification",
 	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
 	  .message_payloads = { .required = P(SK), },
 	  .encrypted_payloads = { .required = P(N), },
 	  .processor  = ikev2_auth_initiator_process_unknown_notification,
-	  .recv_type  = ISAKMP_v2_AUTH, },
+	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
 
 	/* no state: none I1 --> R1
 	 *                <-- HDR, SAi1, KEi, Ni
@@ -402,7 +402,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_NEW_EXCHANGE,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2_parent_inI1outR1,
-	  .recv_type  = ISAKMP_v2_SA_INIT,
+	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
 	  .timeout_event = EVENT_v2_RESPONDER_TIMEOUT, },
 
 	/* STATE_PARENT_R1: I2 --> R2
@@ -414,7 +414,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 *
 	 * [Parent SA established]
 	 */
-	{ .story      = "Responder: process AUTH request (no SKEYSEED)",
+	{ .story      = "Responder: process IKE_AUTH request (no SKEYSEED)",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R1,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_NO_SKEYSEED,
@@ -422,9 +422,9 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = LEMPTY,
 	  .opt_enc_payloads = LEMPTY,
 	  .processor  = ikev2_ike_sa_process_auth_request_no_skeyid,
-	  .recv_type  = ISAKMP_v2_AUTH,
+	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
-	{ .story      = "Responder: process AUTH request",
+	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_V2_IPSEC_R,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
@@ -432,7 +432,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
 	  .processor  = ikev2_ike_sa_process_auth_request,
-	  .recv_type  = ISAKMP_v2_AUTH,
+	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/*
@@ -1339,7 +1339,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 */
 
 	struct state *st;
-	if (ix == ISAKMP_v2_SA_INIT) {
+	if (ix == ISAKMP_v2_IKE_SA_INIT) {
 		/*
 		 * The message ID of the initial exchange is always
 		 * zero.
@@ -1705,7 +1705,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				 * SK payload has been verified,
 				 * things must simply be dropped.
 				 */
-				if (ix == ISAKMP_v2_SA_INIT && v2_msg_role(md) == MESSAGE_REQUEST) {
+				if (ix == ISAKMP_v2_IKE_SA_INIT &&
+				    v2_msg_role(md) == MESSAGE_REQUEST) {
 					chunk_t data = chunk(md->message_payloads.data,
 							     md->message_payloads.data_size);
 					send_v2_notification_from_md(md, md->message_payloads.n,
@@ -3081,7 +3082,7 @@ void complete_v2_state_transition(struct state *st,
 				} else {
 					send_v2_notification_from_state(pst, md,
 									notification, NULL);
-					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
+					if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
 						delete_state(st);
 					} else {
 						delete_event(st);

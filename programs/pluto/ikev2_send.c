@@ -262,7 +262,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	 * For encrypted messages, the EXCHANGE TYPE can't be SA_INIT.
 	 */
 	switch (exchange_type) {
-	case ISAKMP_v2_SA_INIT:
+	case ISAKMP_v2_IKE_SA_INIT:
 		PEXPECT_LOG("exchange type %s invalid for encrypted notification",
 			    exchange_name);
 		return;
@@ -352,8 +352,8 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	 * response).
 	 */
 	switch (exchange_type) {
-	case ISAKMP_v2_SA_INIT:
-	case ISAKMP_v2_AUTH:
+	case ISAKMP_v2_IKE_SA_INIT:
+	case ISAKMP_v2_IKE_AUTH:
 		break;
 	default:
 		PEXPECT_LOG("exchange type %s invalid for unencrypted notification",

@@ -816,7 +816,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
 					  NULL /* request */,
-					  ISAKMP_v2_SA_INIT);
+					  ISAKMP_v2_IKE_SA_INIT);
 	if (!pbs_ok(&rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -928,7 +928,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	/* something the other end won't like */
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT)) {
-		if (!ship_v2UNKNOWN(&rbody, "SA_INIT request")) {
+		if (!ship_v2UNKNOWN(&rbody, "IKE_SA_INIT request")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1319,7 +1319,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* HDR out */
 	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
 					  md /* response */,
-					  ISAKMP_v2_SA_INIT);
+					  ISAKMP_v2_IKE_SA_INIT);
 	if (!pbs_ok(&rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -1446,7 +1446,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* something the other end won't like */
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT)) {
-		if (!ship_v2UNKNOWN(&rbody, "SA_INIT reply")) {
+		if (!ship_v2UNKNOWN(&rbody, "IKE_SA_INIT reply")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1722,17 +1722,17 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st UN
 			/* just log */
 			pstat(ikev2_recv_notifies_s, n);
 			if (name == NULL) {
-				rate_log("AUTH response contained an unknown status notification (%d)", n);
+				rate_log("IKE_AUTH response contained an unknown status notification (%d)", n);
 			} else {
-				rate_log("AUTH response contained the status notification %s", name);
+				rate_log("IKE_AUTH response contained the status notification %s", name);
 			}
 		} else {
 			pstat(ikev2_recv_notifies_e, n);
 			ignore = false;
 			if (name == NULL) {
-				libreswan_log("AUTH response contained an unknown error notification (%d)", n);
+				libreswan_log("IKE_AUTH response contained an unknown error notification (%d)", n);
 			} else {
-				libreswan_log("AUTH response contained the error notification %s", name);
+				libreswan_log("IKE_AUTH response contained the error notification %s", name);
 			}
 		}
 	}
@@ -2355,13 +2355,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(pst),
 					  NULL /* request */,
-					  ISAKMP_v2_AUTH);
+					  ISAKMP_v2_IKE_AUTH);
 	if (!pbs_ok(&rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
-		if (!ship_v2UNKNOWN(&rbody, "AUTH request")) {
+		if (!ship_v2UNKNOWN(&rbody, "IKE_AUTH request")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2435,7 +2435,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
-		if (!ship_v2UNKNOWN(&sk.pbs, "AUTH's SK request")) {
+		if (!ship_v2UNKNOWN(&sk.pbs, "IKE_AUTH's SK request")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2678,7 +2678,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	 */
 	return record_outbound_v2SK_msg(&sk.ike->sa, md,
 					&reply_stream, &sk,
-					"sending AUTH request");
+					"sending IKE_AUTH request");
 }
 
 #ifdef XAUTH_HAVE_PAM
@@ -2781,7 +2781,7 @@ static void ikev2_ike_sa_process_auth_request_no_skeyid_continue(struct state *s
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
 			st->st_serialno));
 
-	passert(*mdp != NULL); /* AUTH request */
+	passert(*mdp != NULL); /* IKE_AUTH request */
 
 	/* extract calculated values from r */
 
@@ -3146,10 +3146,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
 						  md /* response */,
-						  ISAKMP_v2_AUTH);
+						  ISAKMP_v2_IKE_AUTH);
 
 		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
-			if (!ship_v2UNKNOWN(&rbody, "AUTH reply")) {
+			if (!ship_v2UNKNOWN(&rbody, "IKE_AUTH reply")) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -3165,7 +3165,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		}
 
 		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
-			if (!ship_v2UNKNOWN(&sk.pbs, "AUTH's SK reply")) {
+			if (!ship_v2UNKNOWN(&sk.pbs, "IKE_AUTH's SK reply")) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -3307,7 +3307,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 			/* must have enough to build an CHILD_SA */
 			stf_status ret = ikev2_child_sa_respond(md, &sk.pbs,
-								ISAKMP_v2_AUTH);
+								ISAKMP_v2_IKE_AUTH);
 
 			/* note: st: parent; md->st: child */
 			if (ret != STF_OK) {
@@ -3332,7 +3332,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		 */
 		return record_outbound_v2SK_msg(&sk.ike->sa, md,
 						&reply_stream, &sk,
-						"replying to AUTH request");
+						"replying to IKE_AUTH request");
 	}
 }
 

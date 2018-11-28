@@ -50,7 +50,7 @@ Certificate Nickname                                         Trust Attributes
 east #
  grep retransmits: /tmp/pluto.log | sed -e 's/current time is [.0-9]*/current time is .../'
 | #1 STATE_PARENT_R1: retransmits: duplicate IKE_INIT_I message received, retransmiting previous packet
-| #1 STATE_PARENT_R2: retransmits: retransmit response for message ID: 1 exchange ISAKMP_v2_AUTH
+| #1 STATE_PARENT_R2: retransmits: retransmit response for message ID: 1 exchange ISAKMP_v2_IKE_AUTH
 east #
 east #
  ../bin/check-for-core.sh

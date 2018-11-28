@@ -1662,8 +1662,8 @@ static bool ikev2_ix_state_match(const struct state *st,
 	bool ret = FALSE;
 
 	switch (ix) {
-	case ISAKMP_v2_SA_INIT:
-	case ISAKMP_v2_AUTH:
+	case ISAKMP_v2_IKE_SA_INIT:
+	case ISAKMP_v2_IKE_AUTH:
 	case ISAKMP_v2_INFORMATIONAL:
 		ret = TRUE; /* good enough, strict check could be double work */
 		break;

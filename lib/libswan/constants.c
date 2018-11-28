@@ -367,8 +367,8 @@ static const char *const exchange_name_doi[] = {
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
 static const char *const exchange_name_ikev2[] = {
-	"ISAKMP_v2_SA_INIT", /* RFC 7296 */
-	"ISAKMP_v2_AUTH",
+	"ISAKMP_v2_IKE_SA_INIT", /* RFC 7296 */
+	"ISAKMP_v2_IKE_AUTH",
 	"ISAKMP_v2_CREATE_CHILD_SA",
 	"ISAKMP_v2_INFORMATIONAL",
 	"ISAKMP_v2_IKE_SESSION_RESUME", /* RFC 5753 */
@@ -409,7 +409,7 @@ enum_names ikev1_exchange_names = {
 };
 
 enum_names ikev2_exchange_names = {
-	ISAKMP_v2_SA_INIT,
+	ISAKMP_v2_IKE_SA_INIT,
 	ISAKMP_v2_IKE_SESSION_RESUME,
 	ARRAY_REF(exchange_name_ikev2),
 	"ISAKMP_v2_", /* prefix */

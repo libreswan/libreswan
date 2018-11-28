@@ -131,8 +131,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		cst = md->st;
 	} else {
 		/* ??? is this only for AUTH exchange? */
-		pexpect(isa_xchg == ISAKMP_v2_AUTH); /* see calls */
-		pexpect(md->hdr.isa_xchg == ISAKMP_v2_AUTH); /* redundant */
+		pexpect(isa_xchg == ISAKMP_v2_IKE_AUTH); /* see calls */
+		pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
 		/*
 		 * While this function is called with MD->ST pointing
 		 * at either an IKE SA or CHILD SA, this code path

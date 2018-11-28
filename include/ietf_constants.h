@@ -789,8 +789,8 @@ enum isakmp_xchg_types {
 	ISAKMP_XCHG_NGRP = 33, /* Oakley New Group Mode */
 
 	/* IKEv2 things */
-	ISAKMP_v2_SA_INIT = 34,
-	ISAKMP_v2_AUTH = 35,
+	ISAKMP_v2_IKE_SA_INIT = 34,
+	ISAKMP_v2_IKE_AUTH = 35,
 	ISAKMP_v2_CREATE_CHILD_SA = 36,
 	ISAKMP_v2_INFORMATIONAL = 37,
 	ISAKMP_v2_IKE_SESSION_RESUME = 38, /* RFC 5723 */
