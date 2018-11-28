@@ -1151,15 +1151,15 @@ int main(int argc, char **argv)
 
 		case 'Q':	/* --global-redirect */
 		{
-			if (streq(optarg, "on")) {
-				global_redirect = GLOBAL_REDIRECT_ON;
-			} else if (streq(optarg, "off")) {
-				global_redirect = GLOBAL_REDIRECT_OFF;
+			if (streq(optarg, "yes")) {
+				global_redirect = GLOBAL_REDIRECT_YES;
+			} else if (streq(optarg, "no")) {
+				global_redirect = GLOBAL_REDIRECT_NO;
 			} else if (streq(optarg, "auto")) {
 				global_redirect = GLOBAL_REDIRECT_AUTO;
 			} else {
 				libreswan_log(
-					"invalid option argument for global-redirect (allowed arguments: on, off, auto)");
+					"invalid option argument for global-redirect (allowed arguments: yes, no, auto)");
 			}
 		}
 			continue;
@@ -1235,24 +1235,17 @@ int main(int argc, char **argv)
 			set_cfg_string(&ocsp_trust_name,
 				       cfg->setup.strings[KSF_OCSP_TRUSTNAME]);
 
-			if (cfg->setup.strings[KSF_GLOBAL_REDIRECT]) {
-				char *tmp_str;
-				set_cfg_string(&tmp_str,
-					       cfg->setup.strings[KSF_GLOBAL_REDIRECT]);
-				if (streq(tmp_str, "on")) {
-					global_redirect = GLOBAL_REDIRECT_ON;
-				} else if (streq(tmp_str, "off")) {
-					global_redirect = GLOBAL_REDIRECT_OFF;
-				} else if (streq(tmp_str, "auto")) {
-					global_redirect = GLOBAL_REDIRECT_AUTO;
-				} else {
-					global_redirect = GLOBAL_REDIRECT_OFF;
-					libreswan_log("unknown argument for global-redirect option");
-				}
-				pfreeany(tmp_str);
+			char *tmp_global_redirect = cfg->setup.strings[KSF_GLOBAL_REDIRECT];
+			if (tmp_global_redirect == NULL || streq(tmp_global_redirect, "no")) {
+				/* NULL means it is not specified so default is no */
+				global_redirect = GLOBAL_REDIRECT_NO;
+			} else if (streq(tmp_global_redirect, "yes")) {
+				global_redirect = GLOBAL_REDIRECT_YES;
+			} else if (streq(tmp_global_redirect, "auto")) {
+				global_redirect = GLOBAL_REDIRECT_AUTO;
 			} else {
-				/* default */
-				global_redirect = GLOBAL_REDIRECT_OFF;
+				global_redirect = GLOBAL_REDIRECT_NO;
+				libreswan_log("unknown argument for global-redirect option");
 			}
 
 			crl_check_interval = deltatime(

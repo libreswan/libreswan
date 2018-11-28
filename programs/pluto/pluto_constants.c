@@ -446,13 +446,13 @@ enum_names ikev2_asym_auth_name = {
 };
 
 static const char *const allow_global_redirect_name[] = {
-	"off",
-	"on",
+	"no",
+	"yes",
 	"auto",
 };
 
 enum_names allow_global_redirect_names = {
-	GLOBAL_REDIRECT_OFF,
+	GLOBAL_REDIRECT_NO,
 	GLOBAL_REDIRECT_AUTO,
 	ARRAY_REF(allow_global_redirect_name),
 	NULL,
