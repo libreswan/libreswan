@@ -516,6 +516,13 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 	return 0;
 }
 
+static void conn_log_val(const struct starter_conn *conn,
+			 const char *name, const char *value)
+{
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" %s=%s",
+		    conn->name, name, value == NULL ? "<unset>" : value);
+}
+
 static int starter_whack_basic_add_conn(struct starter_config *cfg,
 					const struct starter_conn *conn)
 {
@@ -661,46 +668,30 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 #endif
 
 	msg.modecfg_dns = conn->modecfg_dns;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdns=%s",
-		conn->name, msg.modecfg_dns == NULL ? "<unset>" :
-			msg.modecfg_dns);
+	conn_log_val(conn, "modecfgdns", msg.modecfg_dns);
 	msg.modecfg_domains = conn->modecfg_domains;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomains=%s",
-		conn->name, msg.modecfg_domains == NULL ? "<unset>" :
-			msg.modecfg_domains);
+	conn_log_val(conn, "modecfgdomains", msg.modecfg_domains);
 	msg.modecfg_banner = conn->modecfg_banner;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
-		conn->name, msg.modecfg_banner == NULL ? "<unset>" :
-			msg.modecfg_banner);
+	conn_log_val(conn, "modecfgbanner", msg.modecfg_banner);
 
 	msg.conn_mark_both = conn->conn_mark_both;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark=%s",
-		conn->name, msg.conn_mark_both == NULL ? "<unset>" :
-			msg.conn_mark_both);
+	conn_log_val(conn, "mark", msg.conn_mark_both);
 	msg.conn_mark_in = conn->conn_mark_in;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-in=%s",
-		conn->name, msg.conn_mark_in == NULL ? "<unset>" :
-			msg.conn_mark_in);
+	conn_log_val(conn, "mark-in", msg.conn_mark_in);
 	msg.conn_mark_out = conn->conn_mark_out;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-out=%s",
-		conn->name, msg.conn_mark_out == NULL ? "<unset>" :
-			msg.conn_mark_out);
+	conn_log_val(conn, "mark-out", msg.conn_mark_out);
 
 	msg.vti_iface = conn->vti_iface;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" vti_iface=%s",
-		conn->name, msg.vti_iface == NULL ? "<unset>" :
-			msg.vti_iface);
+	conn_log_val(conn, "vti_iface", msg.vti_iface);
 	if (conn->options_set[KBF_VTI_ROUTING])
 		msg.vti_routing = conn->options[KBF_VTI_ROUTING];
 	if (conn->options_set[KBF_VTI_SHARED])
 		msg.vti_shared = conn->options[KBF_VTI_SHARED];
 
 	msg.redirect_to = conn->redirect_to;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" redirect-to=%s",
-		conn->name, msg.redirect_to);
+	conn_log_val(conn, "redirect-to", msg.redirect_to);
 	msg.accept_redirect_to = conn->accept_redirect_to;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" accept-redirect-to=%s",
-		conn->name, msg.accept_redirect_to);
+	conn_log_val(conn, "accept-redirect-to", msg.accept_redirect_to);
 
 	if (conn->options_set[KBF_XAUTHBY])
 		msg.xauthby = conn->options[KBF_XAUTHBY];
@@ -715,7 +706,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 	msg.esp = conn->esp;
 	msg.ike = conn->ike;
-
 
 	r = send_whack_msg(&msg, cfg->ctlsocket);
 	if (r != 0)
