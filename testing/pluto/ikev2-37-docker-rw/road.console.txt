@@ -33,7 +33,7 @@ ipsec auto --status
 000 nhelpers=-1, uniqueids=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=300s
 000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
 000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
-000 global-redirect=off, global-redirect-to=<unset>
+000 global-redirect=no, global-redirect-to=<unset>
 000 secctx-attr-type=XXXX
 000 debug ...
 000  
