@@ -233,30 +233,31 @@ static void ikev2_log_initiate_child_fail(const struct state *st)
 	}
 }
 
-static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
+static void dbg_sa_expired(struct state *st, enum event_type type)
 {
-	DBG(DBG_LIFECYCLE, {
+	if (DBGP(DBG_MASK)) {
 		struct connection *c = st->st_connection;
 		char story[80] = "";
 		if (type == EVENT_v2_SA_REPLACE_IF_USED) {
+			pexpect(IS_CHILD_SA(st));
+			pexpect(c->policy & POLICY_OPPORTUNISTIC);
 			deltatime_t last_used_age;
 			/* why do we only care about inbound traffic? */
 			/* because we cannot tell the difference sending out to a dead SA? */
 			if (get_sa_info(st, TRUE, &last_used_age)) {
 				snprintf(story, sizeof(story),
-					 "last used %jds ago < %jd ",
+					 " last used %jds ago < %jd ",
 					 deltasecs(last_used_age),
 					 deltasecs(c->sa_rekey_margin));
 			} else {
 				snprintf(story, sizeof(story),
-					"unknown usage - get_sa_info() failed");
+					" unknown usage - get_sa_info() failed");
 			}
-
-			DBG_log("replacing stale %s SA %s",
-				IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-				story);
 		}
-	});
+		DBG_log("replacing stale %s SA%s",
+			IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+			story);
+	}
 }
 
 static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
@@ -513,7 +514,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					ikev2_expire_parent(cst, last_used_age);
 					break;
 				} else {
-					ikev2_log_v2_sa_expired(st, type);
+					dbg_sa_expired(st, type);
 					ipsecdoi_replace(st, 1);
 				}
 
@@ -542,7 +543,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 							       st->st_outbound_time))));
 		} else {
 			ikev2_log_initiate_child_fail(st);
-			ikev2_log_v2_sa_expired(st, type);
+			dbg_sa_expired(st, type);
 			ipsecdoi_replace(st, 1);
 		}
 
