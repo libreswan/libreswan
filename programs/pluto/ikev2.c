@@ -2508,10 +2508,31 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 	}
 }
 
+/*
+ * Only replace the SA when it's been in use (checking for in-use is a
+ * separate operation).
+ */
+bool v2_only_replace_sa_when_used(struct state *st)
+{
+	passert(st->st_ikev2);
+	struct connection *c = st->st_connection;
+	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
+		/* this is an opportunistic thing */
+		return false;
+	}
+	if (st->st_connection->spd.that.has_lease) {
+		/* don't hang onto a lease; why? */
+		return false;
+	}
+	/* need to have been established */
+	return (IS_PARENT_SA_ESTABLISHED(st) ||
+		IS_CHILD_SA_ESTABLISHED(st));
+}
+
 deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind)
 {
 	enum event_type kind = *pkind;
-	time_t delay;   /* unwrapped deltatime_t */
+	intmax_t delay;   /* unwrapped deltatime_t in seconds */
 	struct connection *c = st->st_connection;
 
 	if (IS_PARENT_SA(st)) {
@@ -2564,8 +2585,8 @@ deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind)
 	 * time stand (implemented by earlier logic).
 	 */
 	if (kind != EVENT_SA_EXPIRE) {
-		/* unwrapped deltatime_t */
-		time_t marg = deltasecs(c->sa_rekey_margin);
+		/* unwrapped deltatime_t in seconds */
+		intmax_t marg = deltasecs(c->sa_rekey_margin);
 
 		switch (st->st_sa_role) {
 		case SA_INITIATOR:
@@ -2584,19 +2605,29 @@ deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind)
 			delay -= marg;
 			st->st_replace_margin = deltatime(marg);
 		} else {
-			*pkind = kind = EVENT_SA_EXPIRE;
+			*pkind = EVENT_SA_EXPIRE;
 		}
 
 		if (c->policy & POLICY_OPPORTUNISTIC) {
 			if (st->st_connection->spd.that.has_lease) {
-				*pkind = kind = EVENT_SA_EXPIRE;
-			} else if (IS_PARENT_SA_ESTABLISHED(st)) {
-				*pkind = kind = EVENT_v2_SA_REPLACE_IF_USED_IKE;
-			} else if (IS_CHILD_SA_ESTABLISHED(st)) {
-				*pkind = kind = EVENT_v2_SA_REPLACE_IF_USED;
+				*pkind = EVENT_SA_EXPIRE;
+			} else if (v2_only_replace_sa_when_used(st)) {
+				/* XXX: is this even needed? */
+				*pkind = EVENT_SA_REPLACE;
+				pexpect(*pkind == kind);
 			}
 		} else if (c->policy & POLICY_DONT_REKEY) {
-			*pkind = kind = EVENT_SA_EXPIRE;
+			*pkind = EVENT_SA_EXPIRE;
+		}
+	}
+	LSWDBGP(DBG_MASK, buf) {
+		lswlogf(buf, "#%lu replace event %s in %ju seconds with margin %ju seconds",
+			st->st_serialno,
+			enum_short_name(&timer_event_names, *pkind),
+			delay, deltasecs(st->st_replace_margin));
+		if (*pkind != kind) {
+			lswlogf(buf, " (original event was %s)",
+				enum_short_name(&timer_event_names, kind));
 		}
 	}
 	return deltatime(delay);

@@ -233,14 +233,13 @@ static void ikev2_log_initiate_child_fail(const struct state *st)
 	}
 }
 
-static void dbg_sa_expired(struct state *st, enum event_type type)
+static void dbg_sa_expired(struct state *st)
 {
 	if (DBGP(DBG_MASK)) {
 		struct connection *c = st->st_connection;
 		char story[80] = "";
-		if (type == EVENT_v2_SA_REPLACE_IF_USED) {
-			pexpect(IS_CHILD_SA(st));
-			pexpect(c->policy & POLICY_OPPORTUNISTIC);
+		if (IS_CHILD_SA(st) && st->st_ikev2 &&
+		    v2_only_replace_sa_when_used(st)) {
 			deltatime_t last_used_age;
 			/* why do we only care about inbound traffic? */
 			/* because we cannot tell the difference sending out to a dead SA? */
@@ -258,23 +257,6 @@ static void dbg_sa_expired(struct state *st, enum event_type type)
 			IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
 			story);
 	}
-}
-
-static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
-{
-	struct connection *c = st->st_connection;
-	struct state *pst = state_with_serialno(st->st_clonedfrom);
-	passert(pst != NULL); /* no orphan child allowed */
-
-	/* we observed no traffic, let IPSEC SA and IKE SA expire */
-	DBG(DBG_LIFECYCLE,
-		DBG_log("not replacing unused IPSEC SA #%lu: last used %jds ago > %jd let it and the parent #%lu expire",
-			st->st_serialno,
-			deltasecs(last_used_age),
-			deltasecs(c->sa_rekey_margin),
-			pst->st_serialno));
-
-	event_force(EVENT_SA_EXPIRE, pst);
 }
 
 /*
@@ -375,8 +357,6 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_v2_RETRANSMIT:
 	case EVENT_SA_REPLACE:
 	case EVENT_v1_SA_REPLACE_IF_USED:
-	case EVENT_v2_SA_REPLACE_IF_USED:
-	case EVENT_v2_SA_REPLACE_IF_USED_IKE:
 	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_v2_REDIRECT:
 	case EVENT_SA_EXPIRE:
@@ -493,14 +473,9 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_SA_REPLACE:
 	case EVENT_v1_SA_REPLACE_IF_USED:
-	case EVENT_v2_SA_REPLACE_IF_USED:
-	case EVENT_v2_SA_REPLACE_IF_USED_IKE:
 		if (st->st_ikev2) {
-			pexpect(type == EVENT_SA_REPLACE ||
-				type == EVENT_v2_SA_REPLACE_IF_USED ||
-				type == EVENT_v2_SA_REPLACE_IF_USED_IKE);
+			pexpect(type == EVENT_SA_REPLACE);
 			struct connection *c = st->st_connection;
-			deltatime_t last_used_age;
 			const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
 			so_serial_t newer_sa = get_newer_sa(st);
@@ -508,31 +483,47 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				/* not very interesting: no need to replace */
 				dbg("not replacing stale %s SA #%lu; newer #%lu will do",
 				    satype, st->st_serialno, newer_sa);
-			} else if (type == EVENT_v2_SA_REPLACE_IF_USED &&
-				   get_sa_info(st, TRUE, &last_used_age) &&
-				   deltaless(c->sa_rekey_margin, last_used_age)) {
-				ikev2_expire_parent(st, last_used_age);
-				break;
-			} else if (type == EVENT_v2_SA_REPLACE_IF_USED_IKE) {
-				struct state *cst = state_with_serialno(c->newest_ipsec_sa);
-				if (cst == NULL)
-					break;
-				dbg("#%lu check last used on newest IPsec SA #%lu",
-				    st->st_serialno, cst->st_serialno);
+			} else if (v2_only_replace_sa_when_used(st)) {
+				/* see of (most recent) child is busy */
+				struct state *cst;
+				struct ike_sa *ike;
+				if (IS_IKE_SA(st)) {
+					ike = pexpect_ike_sa(st);
+					cst = state_with_serialno(c->newest_ipsec_sa);
+					if (cst == NULL) {
+						dbg("can't check usage as IKE SA #%lu has no newest child",
+						    ike->sa.st_serialno);
+						break;
+					}
+				} else {
+					cst = st;
+					ike = ike_sa(st);
+				}
+				dbg("#%lu check last used on newest CHILD SA #%lu",
+				    ike->sa.st_serialno, cst->st_serialno);
+				deltatime_t last_used_age;
 				if (get_sa_info(cst, TRUE, &last_used_age) &&
-				    deltaless(c->sa_rekey_margin, last_used_age))
-				{
-					delete_liveness_event(cst);
-					event_force(EVENT_SA_EXPIRE, cst);
-					ikev2_expire_parent(cst, last_used_age);
+				    deltaless(c->sa_rekey_margin, last_used_age)) {
+					/* we observed no traffic, let IPSEC SA and IKE SA expire */
+					dbg("not replacing IPSEC SA #%lu as last used %jds ago > %jd; let it and the parent #%lu expire",
+					    cst->st_serialno,
+					    deltasecs(last_used_age),
+					    deltasecs(c->sa_rekey_margin),
+					    ike->sa.st_serialno);
+					if (st == &ike->sa) {
+						/* XXX: why conditional? */
+						delete_liveness_event(cst);
+						event_force(EVENT_SA_EXPIRE, cst);
+					}
+					event_force(EVENT_SA_EXPIRE, &ike->sa);
 					break;
 				} else {
-					dbg_sa_expired(st, type);
+					dbg_sa_expired(st);
 					ipsecdoi_replace(st, 1);
 				}
 			} else {
 				ikev2_log_initiate_child_fail(st);
-				dbg_sa_expired(st, type);
+				dbg_sa_expired(st);
 				ipsecdoi_replace(st, 1);
 			}
 
@@ -570,7 +561,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				dbg("not replacing stale %s SA: inactive for %jds",
 				    satype, deltasecs(monotimediff(mononow(), st->st_outbound_time)));
 			} else {
-				dbg_sa_expired(st, type);
+				dbg_sa_expired(st);
 				ipsecdoi_replace(st, 1);
 			}
 
