@@ -2799,27 +2799,6 @@ bool dpd_active_locally(const struct state *st)
 		deltasecs(st->st_connection->dpd_timeout) != 0;
 }
 
-/* Kick the IPsec SA, when the parent is already replaced, to replace now */
-void ikev2_repl_est_ipsec(struct state *st, void *data)
-{
-	so_serial_t predecessor = *(so_serial_t *)data;
-
-	if (st->st_clonedfrom != predecessor)
-		return;
-
-	if (predecessor != st->st_connection->newest_isakmp_sa) {
-		DBG(DBG_CONTROLMORE,
-			DBG_log("#%lu, replacing #%lu. #%lu is not the newest IKE SA of %s",
-				predecessor, st->st_serialno,
-				predecessor, st->st_connection->name));
-	}
-
-	enum event_type ev_type = st->st_event->ev_type;
-
-	passert(st->st_event != NULL);
-	event_force(ev_type, st);
-}
-
 /*
  * Find all CHILD SAs belonging to FROM and migrate them to TO.
  */

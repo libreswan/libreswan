@@ -317,10 +317,6 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	 * authenticated properly.
 	 */
 	change_state(&ike->sa, new_state);
-
-	if (ike->sa.st_ike_pred != SOS_NOBODY) {
-		for_each_state(ikev2_repl_est_ipsec, &ike->sa.st_ike_pred);
-	}
 	c->newest_isakmp_sa = ike->sa.st_serialno;
 	deltatime_t delay = ikev2_replace_delay(&ike->sa, &kind);
 	delete_event(&ike->sa);

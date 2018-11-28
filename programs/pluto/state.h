@@ -766,8 +766,6 @@ extern void initialize_new_state(struct state *st,
 extern void show_traffic_status(const char *name);
 extern void show_states_status(void);
 
-extern void ikev2_repl_est_ipsec(struct state *st, void *data);
-
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
 
 void for_each_state(void (*f)(struct state *, void *data), void *data);
