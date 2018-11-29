@@ -162,47 +162,37 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 /*
  * Add  NAT-Traversal IKEv2 Notify payload (v2N)
  */
-bool ikev2_out_nat_v2n(uint8_t np, pb_stream *outs, const struct msg_digest *md)
+bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
+		       const ike_spi_t *ike_responder_spi)
 {
 	/*
-	 * XXX: This seems to be a very convoluted way of coming up
-	 * with the RCOOKIE.
-	 *
-	 * When building an SA_INIT request, both ST's rcookie and
-	 * MD's rcookie are zero (MD is fake, it really should be
-	 * null).
-	 *
-	 * When building an SA_INIT response, MD is valid and should
-	 * contain the correct rcookie.  ST may also contain that
-	 * cookie, but it really depends on when it is updated.
-	 *
-	 * Either way, it would probably be easier to just pass in the
-	 * RCOOKIE - the callers know which case they are dealing
-	 * with.
+	 * IKE SA INIT exchange can have responder's SPI still zero.
+	 * While .st_ike_spis.responder should also be zero it often
+	 * isn't - code likes to install the responder's SPI before
+	 * everything is ready (only to have to the remove it).
 	 */
-	struct state *st = md->st;
-	const uint8_t *rcookie = is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie;
+	ike_spis_t ike_spis = {
+		.initiator = st->st_ike_spis.initiator,
+		.responder = *ike_responder_spi,
+	};
 	uint16_t lport = st->st_localport;
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
 	if (st->st_connection->encaps == yna_yes) {
-		DBG(DBG_NATT, DBG_log("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection"));
+		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		lport = 0;
 	}
 
-	bool e = ikev2_out_natd(st, np,
-		&st->st_localaddr, lport,
-		&st->st_remoteaddr, st->st_remoteport,
-		rcookie, outs);
+	bool e = ikev2_out_natd(&st->st_localaddr, lport,
+				&st->st_remoteaddr, st->st_remoteport,
+				&ike_spis, outs);
 	return e;
 }
 
-bool ikev2_out_natd(const struct state *st,
-		uint8_t np,
-		const ip_address *localaddr, uint16_t localport,
-		const ip_address *remoteaddr, uint16_t remoteport,
-		const uint8_t *rcookie,
-		pb_stream *outs)
+bool ikev2_out_natd(const ip_address *localaddr, uint16_t localport,
+		    const ip_address *remoteaddr, uint16_t remoteport,
+		    const ike_spis_t *ike_spis,
+		    pb_stream *outs)
 {
 	unsigned char hb[IKEV2_NATD_HASH_SIZE];
 	chunk_t hch = { hb, sizeof(hb) };
@@ -216,20 +206,21 @@ bool ikev2_out_natd(const struct state *st,
 	 * TODO: This use of SHA1 should be allowed even with USE_SHA1=false
 	 */
 	natd_hash(&ike_alg_hash_sha1, hb,
-		  st->st_icookie, rcookie,
+		  ike_spis->initiator.bytes, ike_spis->responder.bytes,
 		  localaddr, localport);
 
-	if (!ship_v2Nsp(ISAKMP_NEXT_v2N, v2N_NAT_DETECTION_SOURCE_IP,
+	if (!ship_v2Nsp(0/*auto np*/, v2N_NAT_DETECTION_SOURCE_IP,
 			&hch, outs))
 		return FALSE;
 
 	/* Second: one with remote (destination) IP & port */
 
 	natd_hash(&ike_alg_hash_sha1, hb,
-		  st->st_icookie, rcookie,
+		  ike_spis->initiator.bytes, ike_spis->responder.bytes,
 		  remoteaddr, remoteport);
 
-	return ship_v2Nsp(np, v2N_NAT_DETECTION_DESTINATION_IP, &hch, outs);
+	return ship_v2Nsp(0/*auto np*/, v2N_NAT_DETECTION_DESTINATION_IP,
+			  &hch, outs);
 }
 
 /*
@@ -1050,7 +1041,10 @@ void show_setup_natt(void)
 void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi)
 {
 	struct state *st = md->st;
-	const uint8_t *rcookie = ike_responder_spi->bytes; /* XXX */
+	ike_spis_t ike_spis = {
+		.initiator = st->st_ike_spis.initiator,
+		.responder = *ike_responder_spi,
+	};
 
 	passert(st != NULL);
 	passert(md->iface != NULL);
@@ -1062,14 +1056,16 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
 
 	unsigned char hash_me[IKEV2_NATD_HASH_SIZE];
 
-	natd_hash(&ike_alg_hash_sha1, hash_me, st->st_icookie, rcookie,
+	natd_hash(&ike_alg_hash_sha1, hash_me,
+		  ike_spis.initiator.bytes, ike_spis.responder.bytes,
 		  &md->iface->ip_addr, md->iface->port);
 
 	/* Second: one with sender IP & port */
 
 	unsigned char hash_him[IKEV2_NATD_HASH_SIZE];
 
-	natd_hash(&ike_alg_hash_sha1, hash_him, st->st_icookie, rcookie,
+	natd_hash(&ike_alg_hash_sha1, hash_him,
+		  ike_spis.initiator.bytes, ike_spis.responder.bytes,
 		  &md->sender, hportof(&md->sender));
 
 	bool found_me = FALSE;

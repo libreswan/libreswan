@@ -914,12 +914,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	}
 
 	/* Send NAT-T Notify payloads */
-	{
-		int np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT) ? ISAKMP_NEXT_v2UNKNOWN :
-			(vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		if (!ikev2_out_nat_v2n(np, &rbody, md))
-			return STF_INTERNAL_ERROR;
-	}
+	if (!ikev2_out_nat_v2n(&rbody, st, &zero_ike_spi/*responder unknown*/))
+		return STF_INTERNAL_ERROR;
 
 	/* something the other end won't like */
 
@@ -1217,6 +1213,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 		case v2N_NAT_DETECTION_DESTINATION_IP:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 			if (!seen_nat) {
+				/* they used zero - our (the responder) SPI was unknown */
 				ikev2_natd_lookup(md, &zero_ike_spi);
 				seen_nat = TRUE; /* only do it once */
 			}
@@ -1427,16 +1424,8 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	}
 
 	/* Send NAT-T Notify payloads */
-	{
-		struct ikev2_generic in;
-		int np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT) ? ISAKMP_NEXT_v2UNKNOWN :
-			send_certreq ? ISAKMP_NEXT_v2CERTREQ :
-			(vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		zero(&in);	/* OK: no pointers */
-		in.isag_np = np;
-		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (!ikev2_out_nat_v2n(np, &rbody, md))
-			return STF_INTERNAL_ERROR;
+	if (!ikev2_out_nat_v2n(&rbody, st, &st->st_ike_spis.responder)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	/* something the other end won't like */
@@ -5138,17 +5127,20 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 }
 
 static stf_status add_mobike_response_payloads(
-		int np,
 		chunk_t *cookie2,	/* freed by us */
 		struct msg_digest *md,
 		pb_stream *pbs)
 {
-	DBG(DBG_CONTROLMORE, DBG_log("adding NATD%s payloads to MOBIKE response",
-				cookie2->len != 0 ? " and cookie2" : ""));
+	dbg("adding NATD%s payloads to MOBIKE response",
+	    cookie2->len != 0 ? " and cookie2" : "");
 
 	stf_status r = STF_INTERNAL_ERROR;
 
-	if (ikev2_out_nat_v2n(np, pbs, md) &&
+	struct state *st = md->st;
+	/* assumptions from ikev2_out_nat_v2n() and caller */
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
+	pexpect(!ike_spi_is_zero(&st->st_ike_spis.responder));
+	if (ikev2_out_nat_v2n(pbs, st, &st->st_ike_spis.responder) &&
 	    (cookie2->len == 0 || ship_v2Nsp(ISAKMP_NEXT_v2NONE, v2N_COOKIE2, cookie2, pbs)))
 		r = STF_OK;
 
@@ -5357,8 +5349,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		}
 
 		if (send_mobike_resp) {
-			int np = (cookie2.len != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
-			stf_status e = add_mobike_response_payloads(np,
+			stf_status e = add_mobike_response_payloads(
 				&cookie2,	/* will be freed */
 				md, &sk.pbs);
 			if (e != STF_OK)
@@ -5625,11 +5616,9 @@ static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 	if (!ship_v2Ns(ISAKMP_NEXT_v2N, v2N_UPDATE_SA_ADDRESSES, pbs))
 		return STF_INTERNAL_ERROR;
 
-	if (!ikev2_out_natd(st, ISAKMP_NEXT_v2NONE,
-				&st->st_mobike_localaddr,
-				st->st_mobike_localport,
-				&st->st_remoteaddr, st->st_remoteport,
-				st->st_rcookie, pbs))
+	if (!ikev2_out_natd(&st->st_mobike_localaddr, st->st_mobike_localport,
+			    &st->st_remoteaddr, st->st_remoteport,
+			    &st->st_ike_spis, pbs))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
