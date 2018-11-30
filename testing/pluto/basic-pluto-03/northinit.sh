@@ -8,6 +8,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ping -c 4 -n -I 192.0.3.254 192.0.2.254
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
+ipsec whack --impair suppress-retransmits
 ipsec auto --add northnet-eastnet-nonat
 ipsec auto --status
 echo "initdone"

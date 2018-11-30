@@ -5,6 +5,8 @@ Redirecting to: systemctl start ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
+ ipsec whack --impair suppress-retransmits
+north #
  ipsec auto --add northnet-westnet-ipv4-psk
 002 added connection description "northnet-westnet-ipv4-psk"
 north #
@@ -144,8 +146,6 @@ north #
 000  
 000 Bare Shunt list:
 000  
-north #
- ipsec whack --impair suppress-retransmits
 north #
  echo "initdone"
 initdone

@@ -8,13 +8,13 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  ipsec auto --add san
 002 added connection description "san"
 west #
  echo "initdone"
 initdone
-west #
- ipsec whack --impair delete-on-retransmit
 west #
  # this should fail
 west #
@@ -33,8 +33,8 @@ west #
 002 "san" #1: X509: CERT payload does not match connection ID
 218 "san" #1: STATE_MAIN_I3: INVALID_ID_INFORMATION
 002 "san" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
-002 "san" #1: IMPAIR: retransmit so deleting SA
-002 "san" #1: deleting state (STATE_MAIN_I3) and NOT sending notification
+031 "san" #1: STATE_MAIN_I3: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
+000 "san" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  echo "done"
 done
@@ -42,6 +42,7 @@ west #
  # confirm the right ID types were sent/received
 west #
  grep "ID type" /tmp/pluto.log
+|    ID type: ID_USER_FQDN (0x3)
 |    ID type: ID_USER_FQDN (0x3)
 |    ID type: ID_USER_FQDN (0x3)
 west #

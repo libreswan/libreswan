@@ -25,6 +25,8 @@ Redirecting to: systemctl start ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
+ ipsec whack --impair suppress-retransmits
+north #
  ipsec auto --add northnet-eastnet-nonat
 002 added connection description "northnet-eastnet-nonat"
 north #
