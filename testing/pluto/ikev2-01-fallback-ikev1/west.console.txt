@@ -98,7 +98,7 @@ west #
  sleep 15
 west #
  ipsec auto --status |grep STATE_MAIN_I4
-000 #3: "westnet-eastnet-ikev2-fallback":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #3: "westnet-eastnet-ikev2-fallback":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
