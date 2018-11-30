@@ -21,7 +21,7 @@ east #
 east #
  ipsec status |grep west-east |grep STATE_
 000 #5: "west-east-auto":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
-000 #6: "west-east-auto":500 STATE_QUICK_I1 (sent QI1, expecting QR1); EVENT_v1_RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
+000 #6: "west-east-auto":500 STATE_QUICK_I1 (sent QI1, expecting QR1); EVENT_RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
 000 #2: "west-east-auto2":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 east #
 east #

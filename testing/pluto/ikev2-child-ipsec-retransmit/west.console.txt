@@ -53,11 +53,11 @@ west #
 | sending 780 bytes for STATE_PARENT_I0 through eth1:500 to 192.1.2.23:500 (using #1)
 | sending 405 bytes for STATE_PARENT_I1 through eth1:500 to 192.1.2.23:500 (using #1)
 | sending 345 bytes for STATE_V2_CREATE_I0 through eth1:500 to 192.1.2.23:500 (using #1)
-| sending 345 bytes for EVENT_v2_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
-| sending 345 bytes for EVENT_v2_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
-| sending 345 bytes for EVENT_v2_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
-| sending 345 bytes for EVENT_v2_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
-| sending 345 bytes for EVENT_v2_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for EVENT_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for EVENT_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for EVENT_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for EVENT_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for EVENT_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
 west #
 west #
  ../bin/check-for-core.sh

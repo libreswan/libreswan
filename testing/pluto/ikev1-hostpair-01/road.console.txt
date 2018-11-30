@@ -127,7 +127,7 @@ road #
 000 "westnet-eastnet-ipv4-psk-ikev1":   newest ISAKMP SA: #1; newest IPsec SA: #2;
 000 "westnet-eastnet-ipv4-psk-ikev1":   IKE algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #1: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_v1_RETRANSMIT in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #1: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_RETRANSMIT in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 000 #2: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "westnet-eastnet-ipv4-psk-ikev1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.210 tun.0@192.1.2.23 tun.0@192.1.3.210 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B username=use3
 road #

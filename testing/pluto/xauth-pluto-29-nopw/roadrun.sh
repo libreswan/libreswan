@@ -5,6 +5,6 @@ ipsec whack --xauthname 'nopw' --xauthpass '' --name xauth-road-eastnet-psk --in
 sleep 5
 ping -n -c 4 192.0.2.254
 ipsec whack --trafficstatus
-# note there should NOT be any incomplete IKE SA attempting to do ModeCFG or EVENT_v1_RETRANSMIT
+# note there should NOT be any incomplete IKE SA attempting to do ModeCFG or EVENT_RETRANSMIT
 ipsec status |grep STATE
 echo done

@@ -162,7 +162,8 @@ enum event_type {
 	/* events associated with states */
 
 	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
-	EVENT_v1_RETRANSMIT,		/* v1 Retransmit IKE packet */
+	EVENT_RETRANSMIT,		/* v1/v2 retransmit IKE packet */
+
 	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
 	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
 	EVENT_v1_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
@@ -173,7 +174,6 @@ enum event_type {
 	EVENT_CRYPTO_TIMEOUT,		/* v1/v2 after some time, give up on crypto helper */
 	EVENT_PAM_TIMEOUT,		/* v1/v2 give up on PAM helper */
 
-	EVENT_v2_RETRANSMIT,		/* v2 Initiator: Retransmit IKE packet */
 	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */

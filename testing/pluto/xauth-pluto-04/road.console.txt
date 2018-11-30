@@ -48,7 +48,7 @@ road #
  ipsec whack --trafficstatus
 006 #2: "xauth-road-eastnet-psk", username=use2, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
 road #
- # note there should NOT be any incomplete IKE SA attempting to do ModeCFG or EVENT_v1_RETRANSMIT
+ # note there should NOT be any incomplete IKE SA attempting to do ModeCFG or EVENT_RETRANSMIT
 road #
  ipsec status |grep STATE
 000 #1: "xauth-road-eastnet-psk":500 STATE_AGGR_I2 (sent AI2, ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;

@@ -286,7 +286,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_V2_REKEY_IKE_I,
 	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
-	  .timeout_event = EVENT_v2_RETRANSMIT, },
+	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* no state:   --> CREATE IPsec Rekey Request
 	 * HDR, SAi1, N(REKEY_SA), {KEi,} Ni TSi TSr -->
@@ -296,7 +296,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_V2_REKEY_CHILD_I,
 	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
-	  .timeout_event = EVENT_v2_RETRANSMIT, },
+	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* no state:   --> CREATE IPsec Child Request
 	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
@@ -306,7 +306,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_V2_CREATE_I,
 	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
-	  .timeout_event = EVENT_v2_RETRANSMIT, },
+	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
@@ -316,7 +316,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_PARENT_I1,
 	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
-	  .timeout_event = EVENT_v2_RETRANSMIT, },
+	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* STATE_PARENT_I1: R1B --> I1B
 	 *                     <--  HDR, N
@@ -346,7 +346,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = ikev2_parent_inR1outI2,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  .timeout_event = EVENT_v2_RETRANSMIT, },
+	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* STATE_PARENT_I2: R2 -->
 	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
@@ -2915,11 +2915,11 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		struct connection *c = st->st_connection;
 
 		switch (kind) {
-		case EVENT_v2_RETRANSMIT:
+		case EVENT_RETRANSMIT:
 			delete_event(st);
-			dbg("success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%jdms",
+			dbg("success_v2_state_transition scheduling EVENT_RETRANSMIT of c->r_interval=%jdms",
 			    deltamillisecs(c->r_interval));
-			start_retransmits(st, EVENT_v2_RETRANSMIT);
+			start_retransmits(st);
 			break;
 
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */

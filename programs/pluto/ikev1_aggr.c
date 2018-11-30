@@ -1223,7 +1223,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 
 	/* Set up a retransmission event, half a minute hence */
 	delete_event(st);
-	start_retransmits(st, EVENT_v1_RETRANSMIT);
+	start_retransmits(st);
 
 	whack_log(RC_NEW_STATE + STATE_AGGR_I1,
 		  "%s: initiate", st->st_state_name);

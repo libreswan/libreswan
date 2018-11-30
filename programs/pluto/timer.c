@@ -353,8 +353,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_v2_SEND_NEXT_IKE:
 	case EVENT_v2_INITIATE_CHILD:
-	case EVENT_v1_RETRANSMIT:
-	case EVENT_v2_RETRANSMIT:
+	case EVENT_RETRANSMIT:
 	case EVENT_SA_REPLACE:
 	case EVENT_v1_SA_REPLACE_IF_USED:
 	case EVENT_v2_RESPONDER_TIMEOUT:
@@ -445,18 +444,19 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		release_pending_whacks(st, "release whack");
 		break;
 
-	case EVENT_v1_RETRANSMIT:
-		DBG(DBG_RETRANSMITS, DBG_log("IKEv1 retransmit event"));
-		retransmit_v1_msg(st);
+	case EVENT_RETRANSMIT:
+		passert(st != NULL);
+		if (st->st_ikev2) {
+			DBG(DBG_RETRANSMITS, DBG_log("IKEv2 retransmit event"));
+			retransmit_v2_msg(st);
+		} else {
+			DBG(DBG_RETRANSMITS, DBG_log("IKEv1 retransmit event"));
+			retransmit_v1_msg(st);
+		}
 		break;
 
 	case EVENT_v1_SEND_XAUTH:
 		xauth_send_request(st);
-		break;
-
-	case EVENT_v2_RETRANSMIT:
-		DBG(DBG_RETRANSMITS, DBG_log("IKEv2 retransmit event"));
-		retransmit_v2_msg(st);
 		break;
 
 	case EVENT_v2_SEND_NEXT_IKE:
@@ -684,21 +684,15 @@ void delete_event(struct state *st)
 {
 	/* ??? isn't this a bug?  Should we not passert? */
 	if (st->st_event == NULL) {
-		DBG(DBG_CONTROLMORE,
-				DBG_log("state #%lu requesting to delete non existing event",
-					st->st_serialno));
+		dbg("state #%lu requesting to delete non existing event",
+		    st->st_serialno);
 		return;
 	}
-	if (DBGP(DBG_CONTROL) ||
-	    (DBGP(DBG_RETRANSMITS) && (st->st_event->ev_type == EVENT_v1_RETRANSMIT ||
-				       st->st_event->ev_type == EVENT_v2_RETRANSMIT))) {
-		DBG_log("state #%lu requesting %s to be deleted",
-			st->st_serialno,
-			enum_show(&timer_event_names,
-				  st->st_event->ev_type));
-	}
-	if (st->st_event->ev_type == EVENT_v1_RETRANSMIT ||
-	    st->st_event->ev_type == EVENT_v2_RETRANSMIT) {
+	dbg("state #%lu requesting %s to be deleted",
+	    st->st_serialno, enum_show(&timer_event_names,
+				       st->st_event->ev_type));
+
+	if (st->st_event->ev_type == EVENT_RETRANSMIT) {
 		clear_retransmits(st);
 	}
 	delete_pluto_event(&st->st_event);
@@ -774,21 +768,15 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 		}
 	}
 
-	if (DBGP(DBG_CONTROL) || DBGP(DBG_LIFECYCLE) ||
-	    (DBGP(DBG_RETRANSMITS) && (ev->ev_type == EVENT_v1_RETRANSMIT ||
-				       ev->ev_type == EVENT_v2_RETRANSMIT))) {
-			if (st == NULL) {
-				DBG_log("inserting event %s, timeout in %jd.%03jd seconds",
-					en,
-					deltasecs(delay),
-					(deltamillisecs(delay) % 1000));
-			} else {
-				DBG_log("inserting event %s, timeout in %jd.%03jd seconds for #%lu",
-					en,
-					deltasecs(delay),
-					(deltamillisecs(delay) % 1000),
-					ev->ev_state->st_serialno);
-			}
+	if (st == NULL) {
+		dbg("inserting event %s, timeout in %jd.%03jd seconds",
+		    en, deltasecs(delay),
+		    (deltamillisecs(delay) % 1000));
+	} else {
+		dbg("inserting event %s, timeout in %jd.%03jd seconds for #%lu",
+		    en, deltasecs(delay),
+		    (deltamillisecs(delay) % 1000),
+		    ev->ev_state->st_serialno);
 	}
 
 	timer_private_pluto_event_new(&ev->ev,

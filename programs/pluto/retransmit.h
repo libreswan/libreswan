@@ -29,14 +29,13 @@ typedef struct {
 	unsigned long nr_retransmits;
 	unsigned long nr_duplicate_replies;
 	unsigned long limit;
-	enum event_type type;
 } retransmit_t;
 
 unsigned long retransmit_count(struct state *st);
 
 bool count_duplicate(struct state *st, unsigned long limit);
 
-void start_retransmits(struct state *st, enum event_type event);
+void start_retransmits(struct state *st);
 
 void clear_retransmits(struct state *st);
 

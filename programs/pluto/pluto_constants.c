@@ -129,7 +129,8 @@ static const char *const timer_event_name[] = {
 	E(EVENT_CHECK_CRLS),
 
 	E(EVENT_SO_DISCARD),
-	E(EVENT_v1_RETRANSMIT),
+	E(EVENT_RETRANSMIT),
+
 	E(EVENT_v1_SEND_XAUTH),
 	E(EVENT_SA_REPLACE),
 	E(EVENT_v1_SA_REPLACE_IF_USED),
@@ -140,7 +141,6 @@ static const char *const timer_event_name[] = {
 	E(EVENT_CRYPTO_TIMEOUT),
 	E(EVENT_PAM_TIMEOUT),
 
-	E(EVENT_v2_RETRANSMIT),
 	E(EVENT_v2_RESPONDER_TIMEOUT),
 	E(EVENT_v2_LIVENESS),
 	E(EVENT_v2_RELEASE_WHACK),

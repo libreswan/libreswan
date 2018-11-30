@@ -205,7 +205,7 @@ void main_outI1(fd_t whack_sock,
 		"reply packet for main_outI1");
 
 	delete_event(st);
-	start_retransmits(st, EVENT_v1_RETRANSMIT);
+	start_retransmits(st);
 
 	if (predecessor != NULL) {
 		update_pending(predecessor, st);
