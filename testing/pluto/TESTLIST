@@ -994,4 +994,10 @@ kvmplutotest	ikev2-ppk-static-08-no_ppk-responder		good
 kvmplutotest	ikev2-ppk-static-09-no_ppk-initiator		good
 kvmplutotest	ikev2-ppk-static-10-yes-no			good
 
+# REDIRECT
+kvmplutotest	ikev2-redirect-01-global			good
+kvmplutotest	ikev2-redirect-02-auth				good
+kvmplutotest	ikev2-redirect-03-auth-loop			good
+kvmplutotest	ikev2-redirect-06-roadwarriors			good
+
 kvmplutotest	bad-nexthop-01		wip

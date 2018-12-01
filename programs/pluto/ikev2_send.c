@@ -13,7 +13,6 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015-2017 Andrew Cagney
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
- * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,7 +38,6 @@
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
-#include "ikev2.h"	/* for v2_msg_role() */
 
 bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
 				const char *what)
@@ -58,21 +56,17 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
 		passert(st->st_ikev2);
 		passert(st->st_tpacket.ptr == NULL);
 		unsigned nr_frags = 0;
-		DBGF(DBG_CONTROL|DBG_RETRANSMITS,
-		     "sending fragments ...");
+		dbg("sending fragments ...");
 		for (struct v2_ike_tfrag *frag = st->st_v2_tfrags;
 		     frag != NULL; frag = frag->next) {
 			if (!send_chunk_using_state(st, where, frag->cipher)) {
-				DBGF(DBG_CONTROL|DBG_RETRANSMITS,
-				     "send of fragment %u failed",
-				     nr_frags);
+				dbg("send of fragment %u failed", nr_frags);
 				return false;
 			}
 			nr_frags++;
 
 		}
-		DBGF(DBG_CONTROL|DBG_RETRANSMITS,
-		     "sent %u fragments", nr_frags);
+		dbg("sent %u fragments", nr_frags);
 		return true;
 	} else {
 		return send_chunk_using_state(st, where, st->st_tpacket);
@@ -161,13 +155,13 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	case v2N_CHILD_SA_NOT_FOUND:
 		/* must have SPI. XXX: ??? this is checking protoid! */
 		if (protoid == PROTO_v2_RESERVED) {
-			DBGF(DBG_MASK, "XXX: type and protoid mismatch");
+			dbg("XXX: type and protoid mismatch");
 		}
 		break;
 	default:
 		/* must not have SPI. XXX: ??? this is checking protoid! */
 		if (protoid != PROTO_v2_RESERVED) {
-			DBGF(DBG_MASK, "XXX: type and protoid mismatch");
+			dbg("XXX: type and protoid mismatch");
 		}
 		break;
 	}
@@ -268,7 +262,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	 * For encrypted messages, the EXCHANGE TYPE can't be SA_INIT.
 	 */
 	switch (exchange_type) {
-	case ISAKMP_v2_SA_INIT:
+	case ISAKMP_v2_IKE_SA_INIT:
 		PEXPECT_LOG("exchange type %s invalid for encrypted notification",
 			    exchange_name);
 		return;
@@ -298,7 +292,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	case v2N_INVALID_SELECTORS:	/* ??? we never actually generate this */
 	case v2N_REKEY_SA:	/* never follows this path */
 	case v2N_CHILD_SA_NOT_FOUND:
-		DBGF(DBG_MASK, "notification %s needs SPI!", notify_name);
+		dbg("notification %s needs SPI!", notify_name);
 		/* ??? how can we figure out the protocol and SPI? */
 		if (!ship_v2N(ISAKMP_NEXT_v2NONE,
 			      build_ikev2_critical(false),
@@ -358,8 +352,8 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	 * response).
 	 */
 	switch (exchange_type) {
-	case ISAKMP_v2_SA_INIT:
-	case ISAKMP_v2_AUTH:
+	case ISAKMP_v2_IKE_SA_INIT:
+	case ISAKMP_v2_IKE_AUTH:
 		break;
 	default:
 		PEXPECT_LOG("exchange type %s invalid for unencrypted notification",

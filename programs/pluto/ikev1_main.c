@@ -110,7 +110,7 @@ void main_outI1(fd_t whack_sock,
 	st = new_state();
 
 	/* set up new state */
-	fill_ike_initiator_spi(ike_sa(st));
+	fill_ike_initiator_spi(st);
 	initialize_new_state(st, c, policy, try, whack_sock);
 	change_state(st, STATE_MAIN_I1);
 
@@ -205,7 +205,7 @@ void main_outI1(fd_t whack_sock,
 		"reply packet for main_outI1");
 
 	delete_event(st);
-	start_retransmits(st, EVENT_v1_RETRANSMIT);
+	start_retransmits(st);
 
 	if (predecessor != NULL) {
 		update_pending(predecessor, st);
@@ -672,7 +672,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 	change_state(st, STATE_MAIN_R0);
 
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-	fill_ike_responder_spi(ike_sa(st), &md->sender);
+	fill_ike_responder_spi(st, &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
@@ -939,7 +939,7 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
-	rehash_state(st, NULL, md->hdr.isa_rcookie);
+	rehash_state(st, &md->hdr.isa_ike_responder_spi);
 
 	return STF_OK;
 }
@@ -1164,7 +1164,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				     st, ORIGINAL_RESPONDER, st->st_oakley.ta_dh);
 
 		/* we are calculating in the background, so it doesn't count */
-		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __func__, __LINE__));
 		st->st_v1_offloaded_task_in_background = true;
 	}
 	return STF_OK;
@@ -2029,8 +2029,10 @@ static void send_notification(struct state *sndst, notification_t type,
 		}
 
 		if (sndst->st_iv_len != 0) {
-			libreswan_DBG_dump("payload malformed.  IV:", sndst->st_iv,
-					sndst->st_iv_len);
+			LSWLOG(buf) {
+				lswlogf(buf, "payload malformed.  IV: ");
+				lswlog_bytes(buf, sndst->st_iv, sndst->st_iv_len);
+			}
 		}
 
 		/*
@@ -2259,7 +2261,7 @@ void send_v1_delete(struct state *st)
 		p1st = find_phase1_state(st->st_connection,
 					ISAKMP_SA_ESTABLISHED_STATES);
 		if (p1st == NULL) {
-			DBGF(DBG_CONTROL, "no Phase 1 state for Delete");
+			dbg("no Phase 1 state for Delete");
 			return;
 		}
 
@@ -2585,7 +2587,7 @@ bool accept_delete(struct msg_digest *md,
 						loglog(RC_LOG_SERIOUS,
 							"received Delete SA payload: replace IPSEC State #%lu now",
 							dst->st_serialno);
-						dst->st_margin = deltatime(0);
+						dst->st_replace_margin = deltatime(0);
 						event_force(EVENT_SA_REPLACE, dst);
 					}
 				} else {

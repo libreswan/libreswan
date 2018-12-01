@@ -49,6 +49,7 @@
 #include "retransmit.h"
 #include "ikev2_ts.h"		/* for struct traffic_selector */
 #include "ip_subnet.h"
+#include "ike_spi.h"
 
 /* msgid_t defined in defs.h */
 
@@ -242,10 +243,28 @@ struct msg_digest *unsuspend_md(struct state *st);
 		passert((ST)->st_suspended_md == NULL);			\
 		(ST)->st_suspended_md = *(MDP);				\
 		*(MDP) = NULL; /* take ownership */			\
-		(ST)->st_suspended_md_func = __FUNCTION__;		\
+		(ST)->st_suspended_md_func = __func__;		\
 		(ST)->st_suspended_md_line = __LINE__;			\
 		passert(state_is_busy(ST));				\
 	}
+
+/*
+ * For auditing, different categories of a state.  Of most interest is
+ * half-open states which suggest libreswan being under attack.
+ *
+ * "half-open" is where only one packet was received.
+ */
+enum state_category {
+	CAT_UNKNOWN = 0,
+	CAT_HALF_OPEN_IKE_SA,
+	CAT_OPEN_IKE_SA,
+	CAT_ESTABLISHED_IKE_SA,
+	CAT_ESTABLISHED_CHILD_SA,
+	CAT_INFORMATIONAL,
+	CAT_IGNORE,
+};
+
+extern enum_names state_category_names;
 
 /*
  * Abstract state machine that drives the parent and child SA.
@@ -259,6 +278,7 @@ struct finite_state {
 	const char *fs_story;
 	lset_t fs_flags;
 	enum event_type fs_timeout_event;
+	enum state_category fs_category;
 	const struct state_v1_microcode *fs_v1_transitions;
 	const struct state_v2_microcode *fs_v2_transitions;
 	size_t fs_nr_transitions;
@@ -401,6 +421,8 @@ struct state {
 	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
 
+	char *st_active_redirect_gw;	/* needed for sending of REDIRECT in informational */
+
 	/** end of IKEv2-only things **/
 
 	char *st_seen_cfg_dns; /* obtained internal nameserver IP's */
@@ -409,14 +431,17 @@ struct state {
 
 	/* symmetric stuff */
 
+	ike_spis_t st_ike_spis;
+#define st_icookie st_ike_spis.initiator.bytes
+#define st_rcookie st_ike_spis.responder.bytes
+	ike_spis_t st_ike_rekey_spis;		/* what was exchanged */
+
 	/* initiator stuff */
 	chunk_t st_gi;                          /* Initiator public value */
-	uint8_t st_icookie[COOKIE_SIZE];       /* Initiator Cookie */
 	chunk_t st_ni;                          /* Ni nonce */
 
 	/* responder stuff */
 	chunk_t st_gr;                          /* Responder public value */
-	uint8_t st_rcookie[COOKIE_SIZE];       /* Responder Cookie */
 	chunk_t st_nr;                          /* Nr nonce */
 	chunk_t st_dcookie;                     /* DOS cookie of responder - v2 only */
 
@@ -504,7 +529,13 @@ struct state {
 	unsigned long st_try;		/* Number of times rekeying attempted.
 					 * 0 means the only time.
 					 */
-	deltatime_t st_margin;		/* life after EVENT_SA_REPLACE*/
+	/*
+	 * How much time to allow the replace attempt (i.e., re-key)
+	 * before the SA must be killed and then re-started from
+	 * scratch.
+	 */
+	deltatime_t st_replace_margin;
+
 	unsigned long st_outbound_count;	/* traffic through eroute */
 	monotime_t st_outbound_time;	/* time of last change to
 					 * st_outbound_count
@@ -637,6 +668,9 @@ struct state {
 	bool st_sent_mobike;			/* sent MOBIKE notify */
 	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
 	bool st_seen_initialc;			/* did we receive INITIAL_CONTACT */
+	bool st_seen_redirect_sup;		/* did we receive IKEv2_REDIRECT_SUPPORTED */
+	bool st_sent_redirect;			/* did we send IKEv2_REDIRECT in IKE_AUTH (response) */
+	bool st_redirected_in_auth;		/* were we redirected in IKE_AUTH */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
@@ -687,8 +721,8 @@ extern struct state *new_rstate(struct msg_digest *md);
 
 extern void init_states(void);
 extern void insert_state(struct state *st);
-extern void rehash_state(struct state *st, const u_char *icookie,
-		const u_char *rcookie);
+extern void rehash_state(struct state *st,
+			 const ike_spi_t *ike_responder_spi);
 extern void release_whack(struct state *st);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			       unsigned long count, monotime_t nw);
@@ -733,6 +767,10 @@ extern struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 						      uint8_t protoid,
 						      ipsec_spi_t spi);
 
+extern void find_states_and_redirect(const char *conn_name,
+				     ip_address remote_ip,
+				     char *redirect_gw);
+
 extern struct state *ikev1_find_info_state(const u_char *icookie,
 				     const u_char *rcookie,
 				     const ip_address *peer,
@@ -747,10 +785,7 @@ extern void initialize_new_state(struct state *st,
 extern void show_traffic_status(const char *name);
 extern void show_states_status(void);
 
-extern void ikev2_repl_est_ipsec(struct state *st, void *data);
-extern void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
-				const u_char *icookie,
-				const u_char *rcookie);
+void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
 
 void for_each_state(void (*f)(struct state *, void *data), void *data);
 
@@ -793,7 +828,7 @@ extern void show_globalstate_status(void);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
 extern bool update_mobike_endpoints(struct state *st, const struct msg_digest *md);
-extern void ikev2_expire_unused_parent(struct state *pst);
+extern void v2_expire_unused_ike_sa(struct ike_sa *ike);
 
 bool shared_phase1_connection(const struct connection *c);
 

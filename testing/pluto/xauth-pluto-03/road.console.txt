@@ -46,8 +46,8 @@ road #
  # note there should NOT be any incomplete IKE SA attempting to do ModeCFG
 road #
  ipsec status |grep STATE
-000 #1: "xauth-road-eastnet":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
-000 #2: "xauth-road-eastnet":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "xauth-road-eastnet":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #2: "xauth-road-eastnet":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 road #
  echo done
 done

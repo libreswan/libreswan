@@ -86,6 +86,7 @@ void start_dh_v2(struct state *st,
 		 const char *name, enum original_role role,
 		 PK11SymKey *skey_d_old, /* SKEYSEED IKE Rekey */
 		 const struct prf_desc *old_prf, /* IKE Rekey */
+		 const ike_spis_t *new_ike_spis,
 		 crypto_req_cont_func pcrc_func)
 {
 	struct pluto_crypto_req_cont *dh = new_pcrc(pcrc_func, name);
@@ -121,13 +122,7 @@ void start_dh_v2(struct state *st,
 
 	transfer_dh_secret_to_helper(st, "IKEv2 DH", &dhq->secret);
 
-	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
-	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
-	       st->st_icookie, COOKIE_SIZE);
-
-	ALLOC_WIRE_CHUNK(*dhq, rcookie, COOKIE_SIZE);
-	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
-	       st->st_rcookie, COOKIE_SIZE);
+	dhq->ike_spis = *new_ike_spis;
 
 	send_crypto_helper_request(st, dh);
 }

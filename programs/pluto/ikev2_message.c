@@ -38,7 +38,6 @@
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
-#include "ikev2.h"	/* for v2_msg_role() */
 #include "crypto.h"
 #include "send.h"	/* record_outbound_ike_message() */
 

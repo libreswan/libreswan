@@ -75,10 +75,10 @@ struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
 		free_generalNames(cert_dps, false /*shallow*/);
 	} else {
 		if (end_dps == NULL) {
-			DBGF(DBG_X509, "no distribution point available for new fetch request");
+			dbg("no distribution point available for new fetch request");
 			return next;
 		}
-		DBGF(DBG_X509, "no CA crl DP available; using provided DP");
+		dbg("no CA crl DP available; using provided DP");
 		request_dps = deep_clone_general_names(end_dps);
 	}
 	CERT_DestroyCertificate(ca);
@@ -139,7 +139,7 @@ void add_crl_fetch_requests(struct crl_fetch_request *requests)
 		pthread_cond_signal(&crl_queue_cond);
 	}
 	pthread_mutex_unlock(&crl_queue_mutex);
-	DBGF(DBG_X509, "crl fetch request sent");
+	dbg("crl fetch request sent");
 }
 
 struct crl_fetch_request *get_crl_fetch_requests(void)
@@ -148,7 +148,7 @@ struct crl_fetch_request *get_crl_fetch_requests(void)
 	pthread_mutex_lock(&crl_queue_mutex);
 	{
 		while (crl_fetch_requests == NULL) {
-			DBGF(DBG_X509, "waiting for crl_queue to fill");
+			dbg("waiting for crl_queue to fill");
 			int status = pthread_cond_wait(&crl_queue_cond,
 							    &crl_queue_mutex);
 			if (status != 0) {

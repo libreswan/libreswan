@@ -1,0 +1,71 @@
+/testing/guestbin/swan-prep --x509 --x509name east
+Preparing X.509 files
+west #
+ ip route del 192.0.2.0/24
+west #
+ ifconfig eth0:1 192.0.2.254/24
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add east-any
+002 added connection description "east-any"
+west #
+ echo initdone
+initdone
+west #
+ ipsec whack --trafficstatus
+006 #2: "east-any"[1] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.101/32
+west #
+west NOW
+XFRM state:
+src 192.1.3.33 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.45 dst 192.1.3.33
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+XFRM policy:
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir out priority 1048543 ptype main
+	tmpl src 192.1.2.45 dst 192.1.3.33
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir fwd priority 1048543 ptype main
+	tmpl src 192.1.3.33 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir in priority 1048543 ptype main
+	tmpl src 192.1.3.33 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.0.2.101 dev eth1 scope link
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+east                                                         Pu,u,u
+east-ec                                                      P,,  
+hashsha2                                                     P,,  
+nic                                                          P,,  
+north                                                        P,,  
+road                                                         P,,  
+west #
+ : ==== tuc ====
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -95,7 +95,8 @@ OBJS += debug.o
 OBJS += impair.o
 OBJS += keywords.o
 
-OBJS += libreswan_DBG_dump.o
+OBJS += dbg.o
+OBJS += DBG_dump.o
 OBJS += libreswan_DBG_log.o
 OBJS += libreswan_exit_log_errno.o
 OBJS += libreswan_log_errno.o

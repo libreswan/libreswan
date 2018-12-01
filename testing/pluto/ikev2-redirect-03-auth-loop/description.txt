@@ -1,0 +1,9 @@
+IKEv2 REDIRECT mechanism with redirection loop.
+
+west wants to connect to east but is redirected to north instead. but
+north is configured to redirect west to east, and west falls into a redirect
+loop. (redirect is done in IKE_AUTH replies)
+
+normally west has a hardcoded route for eastnet (unrelated to libreswan)
+to make testing blocking of unencrypted packets easier. But we cannot have
+this route now because we need to send those packets to north instead.

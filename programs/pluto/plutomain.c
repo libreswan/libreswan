@@ -62,6 +62,7 @@
 #include "nat_traversal.h"
 #include "ike_alg.h"
 #include "af_info.h"		/* for init_af_info() */
+#include "ikev2_redirect.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -127,6 +128,7 @@ static void free_pluto_main(void)
 	pfreeany(ocsp_uri);
 	pfreeany(ocsp_trust_name);
 	pfreeany(peerlog_basedir);
+	pfreeany(global_redirect_to);
 	pfreeany(curl_iface);
 	pfreeany(pluto_log_file);
 	pfreeany(pluto_dnssec_rootfile);
@@ -541,6 +543,8 @@ static const struct option long_opts[] = {
 	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
 	{ "perpeerlogbase\0<path>", required_argument, NULL, 'P' },
 	{ "perpeerlog\0", no_argument, NULL, 'l' },
+	{ "global-redirect\0", required_argument, NULL, 'Q'},
+	{ "global-redirect-to\0", required_argument, NULL, 'y'},
 	{ "coredir\0>dumpdir", required_argument, NULL, 'C' },	/* redundant spelling */
 	{ "dumpdir\0<dirname>", required_argument, NULL, 'C' },
 	{ "statsbin\0<filename>", required_argument, NULL, 'S' },
@@ -1006,6 +1010,7 @@ int main(int argc, char **argv)
 		case 'B':	/* --ocsp-method get|post */
 			if (streq(optarg, "post")) {
 				ocsp_method = OCSP_METHOD_POST;
+				ocsp_post = TRUE;
 			} else {
 				if (streq(optarg, "get")) {
 					ocsp_method = OCSP_METHOD_GET;
@@ -1126,6 +1131,39 @@ int main(int argc, char **argv)
 			log_to_perpeer = TRUE;
 			continue;
 
+		case 'y':	/* --global-redirect-to */
+		{
+			ip_address rip;
+			ugh = ttoaddr(optarg, 0, AF_UNSPEC, &rip);
+
+			if (ugh != NULL) {
+				break;
+			} else {
+				pfreeany(global_redirect_to);
+				global_redirect_to =
+					clone_str(optarg, "global_redirect_to");
+				libreswan_log(
+					"all IKE_SA_INIT requests will from now on be redirected to: %s\n",
+					 global_redirect_to);
+			}
+		}
+			continue;
+
+		case 'Q':	/* --global-redirect */
+		{
+			if (streq(optarg, "yes")) {
+				global_redirect = GLOBAL_REDIRECT_YES;
+			} else if (streq(optarg, "no")) {
+				global_redirect = GLOBAL_REDIRECT_NO;
+			} else if (streq(optarg, "auto")) {
+				global_redirect = GLOBAL_REDIRECT_AUTO;
+			} else {
+				libreswan_log(
+					"invalid option argument for global-redirect (allowed arguments: yes, no, auto)");
+			}
+		}
+			continue;
+
 		case '2':	/* --keep-alive <delay_secs> */
 			ugh = ttoulb(optarg, 0, 10, secs_per_day, &u);
 			if (ugh != NULL)
@@ -1187,6 +1225,7 @@ int main(int argc, char **argv)
 			ocsp_strict = cfg->setup.options[KBF_OCSP_STRICT];
 			ocsp_timeout = cfg->setup.options[KBF_OCSP_TIMEOUT];
 			ocsp_method = cfg->setup.options[KBF_OCSP_METHOD];
+			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->setup.options[KBF_OCSP_CACHE_SIZE];
 			ocsp_cache_min_age = cfg->setup.options[KBF_OCSP_CACHE_MIN];
 			ocsp_cache_max_age = cfg->setup.options[KBF_OCSP_CACHE_MAX];
@@ -1195,6 +1234,19 @@ int main(int argc, char **argv)
 				       cfg->setup.strings[KSF_OCSP_URI]);
 			set_cfg_string(&ocsp_trust_name,
 				       cfg->setup.strings[KSF_OCSP_TRUSTNAME]);
+
+			char *tmp_global_redirect = cfg->setup.strings[KSF_GLOBAL_REDIRECT];
+			if (tmp_global_redirect == NULL || streq(tmp_global_redirect, "no")) {
+				/* NULL means it is not specified so default is no */
+				global_redirect = GLOBAL_REDIRECT_NO;
+			} else if (streq(tmp_global_redirect, "yes")) {
+				global_redirect = GLOBAL_REDIRECT_YES;
+			} else if (streq(tmp_global_redirect, "auto")) {
+				global_redirect = GLOBAL_REDIRECT_AUTO;
+			} else {
+				global_redirect = GLOBAL_REDIRECT_NO;
+				libreswan_log("unknown argument for global-redirect option");
+			}
 
 			crl_check_interval = deltatime(
 				cfg->setup.options[KBF_CRL_CHECKINTERVAL]);
@@ -1298,6 +1350,9 @@ int main(int argc, char **argv)
 
 			set_cfg_string(&virtual_private,
 				cfg->setup.strings[KSF_VIRTUALPRIVATE]);
+
+			set_cfg_string(&global_redirect_to,
+				cfg->setup.strings[KSF_GLOBAL_REDIRECT_TO]);
 
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
 #ifdef HAVE_LABELED_IPSEC
@@ -1875,10 +1930,15 @@ void show_setup_plutomain(void)
 		ocsp_method == OCSP_METHOD_GET ? "get" : "post"
 		);
 
+	whack_log(RC_COMMENT,
+		"global-redirect=%s, global-redirect-to=%s",
+		enum_name(&allow_global_redirect_names, global_redirect),
+		global_redirect_to != NULL ? global_redirect_to : "<unset>"
+		);
+
 #ifdef HAVE_LABELED_IPSEC
 	whack_log(RC_COMMENT, "secctx-attr-type=%d", secctx_attr_type);
 #else
 	whack_log(RC_COMMENT, "secctx-attr-type=<unsupported>");
 #endif
 }
-

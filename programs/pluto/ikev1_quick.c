@@ -764,7 +764,7 @@ static void quick_outI1_continue(struct state *st, struct msg_digest **mdp UNUSE
 	if (e == STF_INTERNAL_ERROR) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
-		       __FUNCTION__);
+		       __func__);
 	}
 }
 
@@ -934,7 +934,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		lset_t pm = st->st_policy & (POLICY_ENCRYPT |
 					     POLICY_AUTHENTICATE |
 					     can_do_IPcomp ? POLICY_COMPRESS : 0);
-		DBGF(DBG_CONTROL, "emitting quick defaults using policy %s",
+		dbg("emitting quick defaults using policy %s",
 		     bitnamesof(sa_policy_bit_names, pm));
 
 		if (!ikev1_out_sa(&rbody,
@@ -1020,7 +1020,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		"reply packet from quick_outI1");
 
 	delete_event(st);
-	start_retransmits(st, EVENT_v1_RETRANSMIT);
+	start_retransmits(st);
 
 	if (st->st_ipsec_pred == SOS_NOBODY) {
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,

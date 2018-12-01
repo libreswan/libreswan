@@ -95,6 +95,12 @@ enum keyword_xauthby {
 	XAUTHBY_ALWAYSOK = 2,
 };
 
+enum allow_global_redirect {
+	GLOBAL_REDIRECT_NO	= 0,
+	GLOBAL_REDIRECT_YES	= 1,
+	GLOBAL_REDIRECT_AUTO	= 2,
+};
+
 enum keyword_xauthfail {
 	XAUTHFAIL_HARD = 0,
 	XAUTHFAIL_SOFT = 1,
@@ -156,12 +162,11 @@ enum event_type {
 	/* events associated with states */
 
 	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
-	EVENT_v1_RETRANSMIT,		/* v1 Retransmit IKE packet */
+	EVENT_RETRANSMIT,		/* v1/v2 retransmit IKE packet */
+
 	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
 	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
-	EVENT_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
-	EVENT_v2_SA_REPLACE_IF_USED_IKE, /* v2 IKE SA, replace if IPsec SA is in use */
-	EVENT_v2_SA_REPLACE_IF_USED,    /* v2 IPSEC SA, replace if used */
+	EVENT_v1_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
 	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
 	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
 	EVENT_DPD,			/* v1 dead peer detection */
@@ -169,13 +174,13 @@ enum event_type {
 	EVENT_CRYPTO_TIMEOUT,		/* v1/v2 after some time, give up on crypto helper */
 	EVENT_PAM_TIMEOUT,		/* v1/v2 give up on PAM helper */
 
-	EVENT_v2_RETRANSMIT,		/* v2 Initiator: Retransmit IKE packet */
 	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */
 	EVENT_v2_INITIATE_CHILD,	/* initiate a IPsec child */
 	EVENT_v2_SEND_NEXT_IKE,		/* send next IKE message using parent */
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
+	EVENT_v2_REDIRECT,		/* initiate new IKE exchange on new address */
 	EVENT_RETAIN,			/* don't change the previous event */
 };
 
@@ -591,10 +596,8 @@ enum state_kind {
 	 */
 	STATE_IKEv2_FLOOR,
 
-	STATE_IKEv2_BASE = STATE_IKEv2_FLOOR,	/* state when faking a state */
-
 	/* INITIATOR states */
-	/* STATE_PARENT_I0,	** waiting for KE to finish */
+	STATE_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
 	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
 	STATE_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
 	STATE_PARENT_I3,        /* IKE_AUTH done: received auth response */
@@ -634,7 +637,6 @@ enum state_kind {
 	 * number as part of the message!) add new states here.
 	 */
 	STATE_PARENT_R0,
-	STATE_PARENT_I0,	/* waiting for KE to finish */
 
 	STATE_IKEv2_ROOF	/* not a state! */
 };
@@ -1028,6 +1030,11 @@ enum sa_policy_bits {
 
 	POLICY_IKEV2_ALLOW_NARROWING_IX,	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
 	POLICY_IKEV2_PAM_AUTHORIZE_IX,
+	POLICY_SEND_REDIRECT_ALWAYS_IX,		/* next three policies are for RFC 5685 */
+	POLICY_SEND_REDIRECT_NEVER_IX,
+#define POLICY_SEND_REDIRECT_MASK \
+	LRANGE(POLICY_SEND_REDIRECT_ALWAYS_IX, POLICY_SEND_REDIRECT_NEVER_IX)
+	POLICY_ACCEPT_REDIRECT_YES_IX,
 
 	POLICY_SAREF_TRACK_IX,	/* Saref tracking via _updown */
 	POLICY_SAREF_TRACK_CONNTRACK_IX,	/* use conntrack optimization */
@@ -1080,7 +1087,10 @@ enum sa_policy_bits {
 #define POLICY_IKEV2_ALLOW	LELEM(POLICY_IKEV2_ALLOW_IX)	/* accept IKEv2?   0x0200 0000 */
 #define POLICY_IKEV2_PROPOSE	LELEM(POLICY_IKEV2_PROPOSE_IX)	/* propose IKEv2?  0x0400 0000 */
 #define POLICY_IKEV2_ALLOW_NARROWING	LELEM(POLICY_IKEV2_ALLOW_NARROWING_IX)	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
-#define POLICY_IKEV2_PAM_AUTHORIZE     LELEM(POLICY_IKEV2_PAM_AUTHORIZE_IX)    /* non-standard, custom PAM authorize call on ID */
+#define POLICY_IKEV2_PAM_AUTHORIZE	LELEM(POLICY_IKEV2_PAM_AUTHORIZE_IX)    /* non-standard, custom PAM authorize call on ID */
+#define POLICY_SEND_REDIRECT_ALWAYS	LELEM(POLICY_SEND_REDIRECT_ALWAYS_IX)
+#define POLICY_SEND_REDIRECT_NEVER	LELEM(POLICY_SEND_REDIRECT_NEVER_IX)
+#define POLICY_ACCEPT_REDIRECT_YES	LELEM(POLICY_ACCEPT_REDIRECT_YES_IX)
 #define POLICY_SAREF_TRACK	LELEM(POLICY_SAREF_TRACK_IX)	/* Saref tracking via _updown */
 #define POLICY_SAREF_TRACK_CONNTRACK	LELEM(POLICY_SAREF_TRACK_CONNTRACK_IX)	/* use conntrack optimization */
 #define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)

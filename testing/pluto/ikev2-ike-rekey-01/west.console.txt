@@ -59,8 +59,8 @@ west #
 006 #2: "west", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
 west #
  ipsec status |grep STATE_
-000 #2: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#3; idle;
-000 #3: "west":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
+000 #2: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
+000 #3: "west":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; idle;
 west #
  echo "sleep 31"
 sleep 31
@@ -84,8 +84,8 @@ west #
 006 #2: "west", type=ESP, add_time=1234567890, inBytes=1008, outBytes=1008, id='@east'
 west #
  ipsec status |grep STATE_
-000 #2: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#4; idle;
-000 #4: "west":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
+000 #2: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#4; idle;
+000 #4: "west":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; idle;
 west #
 west #
  ../bin/check-for-core.sh

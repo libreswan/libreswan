@@ -168,7 +168,7 @@ road #
 done
 road #
  ipsec status | grep STATE_
-000 #8: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #8: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
 road #
  ip xfrm policy
 src 192.0.2.1/32 dst 192.1.2.23/32 

@@ -30,7 +30,7 @@
 static void cavp_acvp_ikev2(const struct prf_desc *prf,
 			    chunk_t ni, chunk_t nr,
 			    PK11SymKey *g_ir, PK11SymKey *g_ir_new,
-			    chunk_t spi_i, chunk_t spi_r,
+			    const ike_spis_t *spi_ir,
 			    signed long nr_ike_sa_dkm_bytes,
 			    signed long nr_child_sa_dkm_bytes)
 {
@@ -46,8 +46,7 @@ static void cavp_acvp_ikev2(const struct prf_desc *prf,
 
 	/* prf+(SKEYSEED, Ni | Nr | SPIi | SPIr) */
 	PK11SymKey *dkm = ikev2_ike_sa_keymat(prf, skeyseed,
-					      ni, nr,
-					      spi_i, spi_r,
+					      ni, nr, spi_ir,
 					      nr_ike_sa_dkm_bytes);
 	print_symkey("DKM", "derivedKeyingMaterial", dkm, nr_ike_sa_dkm_bytes);
 
@@ -152,13 +151,27 @@ static void ikev2_run_test(void)
 	print_chunk("SPIi", NULL, spi_i, 0);
 	print_chunk("SPIr", NULL, spi_r, 0);
 
+	ike_spis_t spi_ir;
+	if (sizeof(spi_ir.initiator) != spi_i.len) {
+		fprintf(stderr, "WARNING: ignoring test with invalid SPIi length %zu\n", spi_i.len);
+		print_line(prf_entry->key);
+		return;
+	}
+	memcpy(spi_ir.initiator.bytes, spi_i.ptr, spi_i.len);
+	if (sizeof(spi_ir.responder) != spi_r.len) {
+		fprintf(stderr, "WARNING: ignoring test with invalid SPIr length %zu\n", spi_r.len);
+		print_line(prf_entry->key);
+		return;
+	}
+	memcpy(spi_ir.responder.bytes, spi_r.ptr, spi_r.len);
+
 	if (prf_entry->prf == NULL) {
 		fprintf(stderr, "WARNING: ignoring test with PRF %s\n", prf_entry->key);
 		print_line(prf_entry->key);
 		return;
 	}
 	cavp_acvp_ikev2(prf_entry->prf, ni, nr,
-			g_ir, g_ir_new, spi_i, spi_r,
+			g_ir, g_ir_new, &spi_ir,
 			nr_ike_sa_dkm_bits / 8,
 			(nr_child_sa_dkm_bits > 0
 			 ? nr_child_sa_dkm_bits

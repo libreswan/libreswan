@@ -83,8 +83,8 @@ west #
  # Expecting the IKE SA of west-east and the IPsec SA of westnet-eastnet
 west #
  ipsec status |grep STATE
-000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
-000 #3: "westnet-eastnet":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #3: "westnet-eastnet":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
 west #
  ../bin/check-for-core.sh

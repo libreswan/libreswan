@@ -1,5 +1,4 @@
-/*
- * routines for state objects
+/* routines for state objects, for libreswan
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001, 2013-2017 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -70,6 +69,7 @@
 #include "spdb.h"
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
+#include "ikev2_redirect.h"
 #include "secrets.h"    /* unreference_key() */
 #include "enum_names.h"
 #include "crypt_dh.h"
@@ -84,9 +84,6 @@
 #include "ip_address.h"
 
 bool uniqueIDs = FALSE;
-
-static void update_state_stats(struct state *st, enum state_kind old_state,
-			       enum state_kind new_state);
 
 /*
  * Global variables: had to go somewhere, might as well be this file.
@@ -120,6 +117,7 @@ struct finite_state state_undefined = {
 	.fs_name = "STATE_UNDEFINED",
 	.fs_short_name = "UNDEFINED",
 	.fs_story = "not defined - either very new or dead (internal)",
+	.fs_category = CAT_IGNORE,
 };
 
 const struct finite_state *finite_states[STATE_IKE_ROOF] = {
@@ -135,6 +133,152 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 		lswlog_enum_short(buf, &timer_event_names, fs->fs_timeout_event);
 		/* no enum_name available? */
 		lswlogf(buf, " flags: %" PRIxLSET ")", fs->fs_flags);
+#if 0
+		lswlogf(buf, " category: ");
+		lswlog_enum_short(buf, &state_category_names, fs->fs_category);
+#endif
+	}
+}
+
+/* state categories */
+
+static const char *const cat_name[] = {
+	[CAT_UNKNOWN] = "unknown",
+	[CAT_HALF_OPEN_IKE_SA] = "half-open IKE SA",
+	[CAT_OPEN_IKE_SA] = "open IKE SA",
+	[CAT_ESTABLISHED_IKE_SA] = "established IKE SA",
+	[CAT_ESTABLISHED_CHILD_SA] = "established CHILD SA",
+	[CAT_INFORMATIONAL] = "informational",
+	[CAT_IGNORE] = "ignore",
+};
+
+enum_names state_category_names = {
+	0, elemsof(cat_name) - 1,
+	ARRAY_REF(cat_name),
+	"",
+	NULL
+};
+
+/*
+ * Track the categories and for ESTABLISHED, also track if the SA was
+ * AUTHENTICATED or ANONYMOUS.  Among other things used for DDoS
+ * tracking.
+ *
+ * A "signed" long is used so that should a counter underflow
+ * (presumably a bug) then its value is displayed as -ve.  CAT_T
+ * PRI_CAT are terrible but short names.
+ */
+
+typedef long cat_t;
+#define PRI_CAT "%ld"
+
+static cat_t cat_count[elemsof(cat_name)] = { 0 };
+
+/* see .st_ikev2_anon, enum would be better */
+#define CAT_AUTHENTICATED false
+#define CAT_ANONYMOUS true
+static cat_t cat_count_ike_sa[2];
+static cat_t cat_count_child_sa[2];
+static cat_t state_count[STATE_IKE_ROOF];
+
+static cat_t total_ike_sa(void)
+{
+	return (cat_count[CAT_HALF_OPEN_IKE_SA] +
+		cat_count[CAT_OPEN_IKE_SA] +
+		cat_count[CAT_ESTABLISHED_IKE_SA]);
+}
+
+static cat_t total_sa(void)
+{
+	return total_ike_sa() + cat_count[CAT_ESTABLISHED_CHILD_SA];
+}
+
+/*
+ * Count everything except STATE_UNDEFINED (CAT_IGNORE) et.al. All
+ * states start and end in those states.
+ */
+static void update_state_stat(struct state *st,
+			      const struct finite_state *state,
+			      int delta)
+{
+	if (state->fs_category != CAT_IGNORE) {
+		state_count[state->fs_state] += delta;
+		cat_count[state->fs_category] += delta;
+		/*
+		 * When deleting, st->st_connection can be NULL, so we
+		 * cannot look at the policy to determine
+		 * anonimity. We therefor use a scratchpad at
+		 * st->st_ikev2_anon (a bool) which is copied from
+		 * parent to child states
+		 */
+		switch (state->fs_category) {
+		case CAT_ESTABLISHED_IKE_SA:
+			cat_count_ike_sa[st->st_ikev2_anon] += delta;
+			break;
+		case CAT_ESTABLISHED_CHILD_SA:
+			cat_count_child_sa[st->st_ikev2_anon] += delta;
+			break;
+		default: /* ignore */
+			break;
+		}
+	}
+}
+
+static void update_state_stats(struct state *st,
+			       const struct finite_state *old_state,
+			       const struct finite_state *new_state)
+{
+	/* catch / log unexpected cases */
+	pexpect(old_state->fs_category != CAT_UNKNOWN);
+	pexpect(new_state->fs_category != CAT_UNKNOWN);
+
+	update_state_stat(st, old_state, -1);
+	update_state_stat(st, new_state, +1);
+
+	/*
+	 * ??? this seems expensive: on each state change we do this
+	 * whole rigamarole.
+	 *
+	 * XXX: It's an assertion check only executed when debugging.
+	 */
+	if (DBGP(DBG_MASK)) {
+		DBG_log("%s state #%lu: %s(%s) => %s(%s)",
+			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+			old_state->fs_short_name,
+			enum_name(&state_category_names, old_state->fs_category),
+			new_state->fs_short_name,
+			enum_name(&state_category_names, new_state->fs_category));
+
+		cat_t category_states = 0;
+		for (unsigned cat = 0; cat < elemsof(cat_count); cat++) {
+			category_states += cat_count[cat];
+		}
+
+		cat_t count_states = 0;
+		for (unsigned s = 0; s < elemsof(state_count); s++) {
+			count_states += state_count[s];
+		}
+
+		if (category_states != count_states) {
+			PEXPECT_LOG("category states: "PRI_CAT" != count states: "PRI_CAT,
+				    category_states, count_states);
+		}
+
+		if (cat_count[CAT_ESTABLISHED_IKE_SA] !=
+		    (cat_count_ike_sa[CAT_AUTHENTICATED] + cat_count_ike_sa[CAT_ANONYMOUS])) {
+			PEXPECT_LOG("established IKE SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
+				    cat_count[CAT_ESTABLISHED_IKE_SA],
+				    cat_count_ike_sa[CAT_AUTHENTICATED],
+				    cat_count_ike_sa[CAT_ANONYMOUS]);
+		}
+
+		if (cat_count[CAT_ESTABLISHED_CHILD_SA] !=
+		    (cat_count_child_sa[CAT_AUTHENTICATED] + cat_count_child_sa[CAT_ANONYMOUS])) {
+			PEXPECT_LOG("established CHILD SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
+				    cat_count[CAT_ESTABLISHED_CHILD_SA],
+				    cat_count_child_sa[CAT_AUTHENTICATED],
+				    cat_count_child_sa[CAT_ANONYMOUS]);
+		}
 	}
 }
 
@@ -143,290 +287,16 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
  * state hash table and the Message ID list.
  */
 
-/* for DDoS tracking, used in change_state */
-static unsigned state_count[STATE_IKE_ROOF];
-
-void change_state(struct state *st, enum state_kind new_state)
+void change_state(struct state *st, enum state_kind new_state_kind)
 {
-	enum state_kind old_state = st->st_state;
-
+	const struct finite_state *old_state = st->st_finite_state;
+	const struct finite_state *new_state = finite_states[new_state_kind];
+	passert(new_state != NULL);
 	if (new_state != old_state) {
 		update_state_stats(st, old_state, new_state);
-		log_state(st, new_state);
-		st->st_finite_state = finite_states[new_state];
-		passert(st->st_finite_state != NULL);
+		log_state(st, new_state_kind /* XXX */);
+		st->st_finite_state = new_state;
 	}
-}
-
-/* non-intersecting state categories */
-enum categories {
-	CAT_IGNORE,
-	CAT_HALF_OPEN_IKE,
-	CAT_OPEN_IKE,
-	CAT_ANONYMOUS_IKE,
-	CAT_AUTHENTICATED_IKE,
-	CAT_ANONYMOUS_IPSEC,
-	CAT_AUTHENTICATED_IPSEC,
-	CAT_INFORMATIONAL,
-	CAT_UNKNOWN,
-	CAT_roof
-};
-
-static const char *const cat_name[CAT_roof] = {
-	[CAT_IGNORE] = "ignore",
-	[CAT_HALF_OPEN_IKE] = "half-open-ike",
-	[CAT_OPEN_IKE] = "open-ike",
-	[CAT_ANONYMOUS_IKE] = "established-anonymous-ike",
-	[CAT_AUTHENTICATED_IKE] = "established-authenticated-ike",
-	[CAT_ANONYMOUS_IPSEC] = "anonymous-ipsec",
-	[CAT_AUTHENTICATED_IPSEC] = "authenticated-ipsec",
-	[CAT_INFORMATIONAL] = "informational",
-	[CAT_UNKNOWN] = "unknown",
-};
-
-static enum_names cat_names = {
-	CAT_IGNORE, CAT_UNKNOWN,
-	cat_name, CAT_roof,
-	"",
-	NULL
-};
-
-static unsigned cat_count[CAT_roof] = { 0 };
-
-/* space for unknown as well */
-static unsigned total_established_ike(void)
-{
-	return cat_count[CAT_ANONYMOUS_IKE] + cat_count[CAT_AUTHENTICATED_IKE];
-}
-
-static unsigned total_ike(void)
-{
-	return cat_count[CAT_HALF_OPEN_IKE] +
-		cat_count[CAT_OPEN_IKE] +
-		total_established_ike();
-}
-
-static unsigned total_ipsec(void)
-{
-	return cat_count[CAT_AUTHENTICATED_IPSEC] +
-		cat_count[CAT_ANONYMOUS_IPSEC];
-}
-
-static unsigned total(void)
-{
-	return total_ike() + total_ipsec() + cat_count[CAT_UNKNOWN];
-}
-
-/*
- * When deleting, st->st_connection can be NULL, so we cannot look
- * at the policy to determine anonimity. We therefor use a scratchpad
- * at st->st_ikev2_anon which is copied from parent to child states
- */
-static enum categories categorize_state(struct state *st,
-					       enum state_kind state)
-{
-	bool is_parent = IS_PARENT_SA(st);
-	enum categories established_ike = st->st_ikev2_anon ?
-		CAT_ANONYMOUS_IKE : CAT_AUTHENTICATED_IKE;
-	enum categories established_ipsec = st->st_ikev2_anon ?
-		CAT_ANONYMOUS_IPSEC : CAT_AUTHENTICATED_IPSEC;
-
-	/*
-	 * Use a switch with no default so that missing and extra
-	 * states get a -Wswitch diagnostic
-	 */
-	switch (state) {
-	case STATE_UNDEFINED:
-	case STATE_IKEv2_BASE:
-		/*
-		 * When a state object is created by new_state()
-		 * it starts out in STATE_UNDEFINED.
-		 * ??? this representation does not robustly detect errors.
-		 */
-		return CAT_IGNORE;
-
-	case STATE_PARENT_I0:
-		/*
-		 * IKEv2 IKE SA initiator, while the the SA_INIT
-		 * packet is being constructed, are in state.  Only
-		 * once the packet has been sent out does it
-		 * transition to STATE_PARENT_I1 and start being
-		 * counted as half-open.
-		 */
-		return CAT_IGNORE;
-
-	case STATE_PARENT_I1:
-	case STATE_PARENT_R0:
-	case STATE_PARENT_R1:
-	case STATE_AGGR_R0:
-	case STATE_AGGR_I1:
-	case STATE_MAIN_R0:
-	case STATE_MAIN_I1:
-		/*
-		 * Count I1 as half-open too because with ondemand,
-		 * a plaintext packet (that is spoofed) will
-		 * trigger an outgoing IKE SA.
-		 */
-		return CAT_HALF_OPEN_IKE;
-
-	case STATE_PARENT_I2:
-	case STATE_MAIN_R1:
-	case STATE_MAIN_R2:
-	case STATE_MAIN_I2:
-	case STATE_MAIN_I3:
-	case STATE_AGGR_R1:
-		/*
-		 * All IKEv1 MAIN modes except the first
-		 * (half-open) and last ones are not
-		 * authenticated.
-		 */
-		return CAT_OPEN_IKE;
-
-	case STATE_MAIN_I4:
-	case STATE_MAIN_R3:
-	case STATE_AGGR_I2:
-	case STATE_AGGR_R2:
-	case STATE_XAUTH_I0:
-	case STATE_XAUTH_I1:
-	case STATE_XAUTH_R0:
-	case STATE_XAUTH_R1:
-	case STATE_V2_CREATE_I0: /* isn't this an ipsec state */
-	case STATE_V2_CREATE_I: /* isn't this an ipsec state */
-	case STATE_V2_REKEY_IKE_I0:
-	case STATE_V2_REKEY_IKE_I:
-	case STATE_V2_REKEY_CHILD_I0: /* isn't this an ipsec state */
-	case STATE_V2_REKEY_CHILD_I: /* isn't this an ipsec state */
-	case STATE_V2_CREATE_R:
-	case STATE_V2_REKEY_IKE_R:
-	case STATE_V2_REKEY_CHILD_R:
-		/*
-		 * IKEv1 established states.
-		 *
-		 * XAUTH, seems to a second level of authentication
-		 * performed after the connection is established and
-		 * authenticated.
-		 */
-		return established_ike;
-
-	case STATE_PARENT_I3:
-	case STATE_PARENT_R2:
-		/*
-		 * IKEv2 established states.
-		 */
-		if (is_parent) {
-			return established_ike;
-		} else {
-			return established_ipsec;
-		}
-
-	case STATE_V2_IPSEC_I:
-	case STATE_V2_IPSEC_R:
-		return established_ipsec;
-
-	case STATE_IKESA_DEL:
-		return established_ike;
-
-	case STATE_QUICK_I1: /* this is not established yet? */
-	case STATE_QUICK_I2:
-	case STATE_QUICK_R0: /* shouldn't we cat_ignore this? */
-	case STATE_QUICK_R1:
-	case STATE_QUICK_R2:
-		/*
-		 * IKEv1: QUICK is for child connections children.
-		 * Probably won't occur as a parent?
-		 */
-		pexpect(!is_parent);
-		return established_ipsec;
-
-	case STATE_MODE_CFG_I1:
-	case STATE_MODE_CFG_R1:
-	case STATE_MODE_CFG_R2:
-		/*
-		 * IKEv1: Post established negotiation.
-		 */
-		return established_ike;
-
-	case STATE_INFO:
-	case STATE_INFO_PROTECTED:
-	case STATE_MODE_CFG_R0:
-	case STATE_CHILDSA_DEL:
-		pexpect(!is_parent);
-		return CAT_INFORMATIONAL;
-
-	default:
-		loglog(RC_LOG_SERIOUS, "Unexpected state in categorize_state");
-		return CAT_UNKNOWN;
-	}
-}
-
-static void update_state_stats(struct state *st, enum state_kind old_state,
-			enum state_kind new_state)
-{
-	/*
-	 * "??? this seems expensive: on each state change we do this
-	 * whole rigamarole."
-	 *
-	 * XXX: Part of the problem is with categorize_state().  It
-	 * doesn't implement a simple mapping from state to category.
-	 * If there was, struct finite_state' could be used to do the
-	 * mapping.
-	 */
-	enum categories old_category = categorize_state(st, old_state);
-	enum categories new_category = categorize_state(st, new_state);
-
-	/*
-	 * Count everything except STATE_UNDEFINED et.al. All states
-	 * start and end in those states.
-	 */
-	if (old_category != CAT_IGNORE) {
-		pexpect(state_count[old_state] != 0);
-		pexpect(cat_count[old_category] != 0);
-		state_count[old_state]--;
-		cat_count[old_category]--;
-	}
-	if (new_category != CAT_IGNORE) {
-		state_count[new_state]++;
-		cat_count[new_category]++;
-	}
-
-	/*
-	 * ??? this seems expensive: on each state change we do this
-	 * whole rigamarole.
-	 */
-	DBG(DBG_CONTROLMORE, {
-		DBG_log("%s state #%lu: %s(%s) => %s(%s)",
-			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-			enum_name(&state_names, old_state), enum_name(&cat_names, old_category),
-			enum_name(&state_names, new_state), enum_name(&cat_names, new_category));
-
-		unsigned category_states = 0;
-
-		for (enum categories cat = CAT_IGNORE; cat != CAT_roof; cat++) {
-			DBG_log("%s states: %u",
-				enum_name(&cat_names, cat),
-				cat_count[cat]);
-			category_states += cat_count[cat];
-		}
-
-		unsigned count_states = 0;
-
-		for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
-			count_states += state_count[s];
-		}
-
-		for (enum state_kind s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
-			count_states += state_count[s];
-		}
-
-		DBG_log("category states: %u count states: %u",
-			category_states, count_states);
-		pexpect(category_states == count_states);
-	});
-
-	/* catch / log unexpected cases */
-	pexpect(old_category != CAT_UNKNOWN);
-	pexpect(new_category != CAT_UNKNOWN);
-
 }
 
 /*
@@ -473,14 +343,6 @@ static char *readable_humber(uint64_t num,
 /*
  * Some macros to ease iterating over the above table
  */
-
-#define FOR_EACH_COOKIED_STATE(ST, CODE)				\
-	do {								\
-		struct state *ST = NULL;				\
-		FOR_EACH_STATE_NEW2OLD(ST) {				\
-			CODE;						\
-		}							\
-	} while (false)
 
 /*
  * Iterate through all the states in a slot in new-to-old order.
@@ -581,12 +443,6 @@ struct state *new_state(void)
 
 	DBG(DBG_CONTROL, DBG_log("creating state object #%lu at %p",
 				 st->st_serialno, (void *) st));
-	DBG(DBG_CONTROLMORE, {
-		enum categories cg = categorize_state(st, st->st_state);
-		DBG_log("%s state #%lu: new => %s(%s)",
-			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-			st->st_state_name, enum_name(&cat_names, cg));
-	});
 
 	return st;
 }
@@ -666,16 +522,11 @@ void insert_state(struct state *st)
  *
  * ICOOKIE is only updated if icookie != NULL
  */
-void rehash_state(struct state *st, const u_char *icookie,
-		const u_char *rcookie)
+void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
 {
-	DBG(DBG_CONTROL,
-	    DBG_log("rehashing state object #%lu",
-		    st->st_serialno));
-	/* update the cookie */
-	memcpy(st->st_rcookie, rcookie, COOKIE_SIZE);
-	if (icookie != NULL)
-		memcpy(st->st_icookie, icookie, COOKIE_SIZE);
+	dbg("rehashing state object #%lu", st->st_serialno);
+	/* update the responder's SPI */
+	st->st_ike_spis.responder = *ike_responder_spi;
 	/* now, update the state */
 	rehash_state_cookies_in_db(st);
 	/* just logs change */
@@ -740,26 +591,35 @@ void release_fragments(struct state *st)
 		release_v2fragments(st);
 }
 
-void ikev2_expire_unused_parent(struct state *pst)
+void v2_expire_unused_ike_sa(struct ike_sa *ike)
 {
-	struct state *st;
+	passert(ike->sa.st_ikev2);
+	passert(ike != NULL);
 
-	if (pst == NULL || !IS_PARENT_SA_ESTABLISHED(pst))
+	if (!IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
+		dbg("can't expire unused IKE SA #%lu; not established - strange",
+		    ike->sa.st_serialno);
 		return; /* only deal with established parent SA */
+	}
 
-	FOR_EACH_STATE_WITH_COOKIES(st, pst->st_icookie, pst->st_rcookie, {
-		if (st->st_clonedfrom == pst->st_serialno)
+	/* Any children? */
+	struct state *st;
+	struct list_head *slot = ike_spis_slot(&ike->sa.st_ike_spis);
+	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
+		if (st->st_clonedfrom == ike->sa.st_serialno) {
+			dbg("can't expire unused IKE SA #%lu; it has the child #%lu",
+			    ike->sa.st_serialno, st->st_serialno);
 			return;
-	});
+		}
+	}
 
 	{
 		char cib[CONN_INST_BUF];
-		struct connection *c = pst->st_connection;
-
-		loglog(RC_INFORMATIONAL, "expire unused parent SA #%lu \"%s\"%s",
-				pst->st_serialno, c->name,
-				fmt_conn_instance(c, cib));
-		event_force(EVENT_SA_EXPIRE, pst);
+		struct connection *c = ike->sa.st_connection;
+		loglog(RC_INFORMATIONAL, "expire unused IKE SA #%lu \"%s\"%s",
+		       ike->sa.st_serialno, c->name,
+		       fmt_conn_instance(c, cib));
+		event_force(EVENT_SA_EXPIRE, &ike->sa);
 	}
 }
 
@@ -807,12 +667,13 @@ static void flush_pending_children(struct state *pst)
 	if (IS_CHILD_SA(pst))
 		return;
 
-	FOR_EACH_COOKIED_STATE(st, {
-			if (st->st_clonedfrom == pst->st_serialno) {
-				flush_pending_child(pst, st);
-				delete_cryptographic_continuation(st);
-			}
-		});
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
+		if (st->st_clonedfrom == pst->st_serialno) {
+			flush_pending_child(pst, st);
+			delete_cryptographic_continuation(st);
+		}
+	}
 }
 
 static bool send_delete_check(const struct state *st)
@@ -876,12 +737,10 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 			del_notify ? "" : "NOT ");
 	}
 
-	DBG(DBG_CONTROLMORE, {
-		enum categories cg = categorize_state(st, st->st_state);
-		DBG_log("%s state #%lu: %s(%s) => delete",
-			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-			st->st_state_name, enum_name(&cat_names, cg));
-	});
+	dbg("%s state #%lu: %s(%s) => delete",
+	    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+	    st->st_finite_state->fs_short_name,
+	    enum_name(&state_category_names, st->st_finite_state->fs_category));
 }
 
 /* delete a state object */
@@ -1178,6 +1037,7 @@ void delete_state(struct state *st)
 	pfreeany(st->st_seen_cfg_domains);
 	pfreeany(st->st_seen_cfg_banner);
 
+	pfreeany(st->st_active_redirect_gw);
 	freeanychunk(st->st_no_ppk_auth);
 
 #ifdef HAVE_LABELED_IPSEC
@@ -1193,10 +1053,11 @@ void delete_state(struct state *st)
 bool states_use_connection(const struct connection *c)
 {
 	/* are there any states still using it? */
-	FOR_EACH_COOKIED_STATE(st, {
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
 		if (st->st_connection == c)
 			return TRUE;
-	});
+	};
 
 	return FALSE;
 }
@@ -1208,10 +1069,11 @@ bool shared_phase1_connection(const struct connection *c)
 	if (serial_us == SOS_NOBODY)
 		return FALSE;
 
-	FOR_EACH_COOKIED_STATE(st, {
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
 		if (st->st_connection != c && st->st_clonedfrom == serial_us)
 			return TRUE;
-	});
+	}
 
 	return FALSE;
 }
@@ -1235,7 +1097,8 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 	 */
 	for (int pass = 0; pass != 2; pass++) {
 		DBG(DBG_CONTROL, DBG_log("pass %d", pass));
-		FOR_EACH_COOKIED_STATE(this, {
+		struct state *this = NULL;
+		FOR_EACH_STATE_NEW2OLD(this) {
 			DBG(DBG_CONTROL,
 			    DBG_log("state #%lu",
 				this->st_serialno));
@@ -1257,7 +1120,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 				delete_state(this);
 				pop_cur_state(old_serialno);
 			}
-		});
+		}
 	}
 }
 
@@ -1268,7 +1131,8 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 void delete_states_dead_interfaces(void)
 {
-	FOR_EACH_COOKIED_STATE(this, {
+	struct state *this = NULL;
+	FOR_EACH_STATE_NEW2OLD(this) {
 		if (this->st_interface &&
 		    this->st_interface->change == IFN_DELETE) {
 			libreswan_log(
@@ -1278,7 +1142,7 @@ void delete_states_dead_interfaces(void)
 			delete_state(this);
 			/* note: no md->st to clear */
 		}
-	});
+	}
 }
 
 /*
@@ -1387,8 +1251,8 @@ void delete_states_by_peer(const ip_address *peer)
 
 	/* first restart the phase1s */
 	for (int ph1 = 0; ph1 < 2; ph1++) {
-		/* For each hash chain... */
-		FOR_EACH_COOKIED_STATE(this, {
+		struct state *this;
+		FOR_EACH_STATE_NEW2OLD(this) {
 			const struct connection *c = this->st_connection;
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
@@ -1408,7 +1272,7 @@ void delete_states_by_peer(const ip_address *peer)
 					event_force(EVENT_SA_REPLACE, this);
 				}
 			}
-		});
+		}
 	}
 }
 
@@ -1443,9 +1307,9 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 			 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
 
 	nst->st_connection = st->st_connection;
+	nst->st_ike_spis = st->st_ike_spis;
+
 	if (sa_type == IPSEC_SA) {
-		memcpy(nst->st_icookie, st->st_icookie, COOKIE_SIZE);
-		memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
 		nst->st_oakley = st->st_oakley;
 	}
 
@@ -1463,6 +1327,8 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_seen_fragvid = st->st_seen_fragvid;
 	nst->st_seen_fragments = st->st_seen_fragments;
 	nst->st_seen_ppk = st->st_seen_ppk;
+	nst->st_seen_redirect_sup = st->st_seen_redirect_sup;
+	nst->st_sent_redirect = st->st_sent_redirect;
 	nst->st_event = NULL;
 
 
@@ -1525,7 +1391,8 @@ struct state *ikev2_duplicate_state(struct ike_sa *ike,
 
 void for_each_state(void (*f)(struct state *, void *data), void *data)
 {
-	FOR_EACH_COOKIED_STATE(st, {
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
 		/*
 		 * Since OLD_STATE might be deleted by f();
 		 * save/restore using serialno.
@@ -1533,7 +1400,7 @@ void for_each_state(void (*f)(struct state *, void *data), void *data)
 		so_serial_t old_serialno = push_cur_state(st);
 		(*f)(st, data);
 		pop_cur_state(old_serialno);
-	});
+	}
 }
 
 /*
@@ -1669,8 +1536,8 @@ static bool ikev2_ix_state_match(const struct state *st,
 	bool ret = FALSE;
 
 	switch (ix) {
-	case ISAKMP_v2_SA_INIT:
-	case ISAKMP_v2_AUTH:
+	case ISAKMP_v2_IKE_SA_INIT:
+	case ISAKMP_v2_IKE_AUTH:
 	case ISAKMP_v2_INFORMATIONAL:
 		ret = TRUE; /* good enough, strict check could be double work */
 		break;
@@ -1768,6 +1635,58 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 }
 
 /*
+ * Find a state object(s) with specific conn name/remote ip
+ * and send IKEv2 informational.
+ * Used for active redirect mechanism (RFC 5685)
+ */
+void find_states_and_redirect(const char *conn_name,
+			      ip_address remote_ip,
+			      char *redirect_gw)
+{
+	struct state *redirect_state = NULL;
+	ipstr_buf b;
+
+	if (conn_name == NULL) {
+		struct state *st = NULL;
+		FOR_EACH_STATE_NEW2OLD(st) {
+			if (sameaddr(&st->st_remoteaddr, &remote_ip) &&
+			    IS_CHILD_SA(st))
+			{
+				redirect_state = st;
+				/* we must clone it, because of pointer magic when free'ing it */
+				st->st_active_redirect_gw = clone_str(redirect_gw, "redirect_gw address state clone");
+				DBG_log("successfully found a state (#%lu) with remote ip address: %s",
+					st->st_serialno, sensitive_ipstr(&remote_ip, &b));
+				send_active_redirect_in_informational(st);
+			}
+		}
+
+		if (redirect_state == NULL)
+			loglog(RC_LOG_SERIOUS, "no active tunnel with remote ip address %s",
+				sensitive_ipstr(&remote_ip, &b));
+	} else {
+		struct state *st = NULL;
+		FOR_EACH_STATE_NEW2OLD(st) {
+			if (streq(conn_name, st->st_connection->name) &&
+			    IS_CHILD_SA(st))
+			{
+				redirect_state = st;
+				/* we must clone it, because of pointer magic when free'ing it */
+				st->st_active_redirect_gw = clone_str(redirect_gw, "redirect_gw address state clone");
+				DBG_log("successfully found a state (#%lu) with connection name \"%s\"",
+					st->st_serialno, conn_name);
+				send_active_redirect_in_informational(st);
+			}
+		}
+
+		if (redirect_state == NULL)
+			loglog(RC_LOG_SERIOUS, "no active tunnel for connection \"%s\"",
+				conn_name);
+	}
+	pfree(redirect_gw);
+}
+
+/*
  * Find a state object.
  */
 struct state *ikev1_find_info_state(const u_char *icookie,
@@ -1809,14 +1728,15 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 struct state *find_likely_sender(size_t packet_len, u_char *packet)
 {
 	if (packet_len >= sizeof(struct isakmp_hdr)) {
-		FOR_EACH_COOKIED_STATE(st, {
+		struct state *st = NULL;
+		FOR_EACH_STATE_NEW2OLD(st) {
 			if (st->st_tpacket.ptr != NULL &&
 			    st->st_tpacket.len >= packet_len &&
 			    memeq(st->st_tpacket.ptr, packet, packet_len))
 			{
 				return st;
 			}
-		});
+		}
 	}
 	return NULL;
 }
@@ -1837,7 +1757,8 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 	struct state  *bogusst = NULL;
 
 	*bogus = FALSE;
-	FOR_EACH_COOKIED_STATE(st, {
+	struct state *st;
+	FOR_EACH_STATE_NEW2OLD(st) {
 		const struct connection *c = st->st_connection;
 		if (IS_IPSEC_SA_ESTABLISHED(st) &&
 		    p1c->host_pair == c->host_pair &&
@@ -1860,7 +1781,7 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 				}
 			}
 		}
-	});
+	}
 	return bogusst;
 }
 
@@ -1872,7 +1793,8 @@ bool find_pending_phase2(const so_serial_t psn,
 
 	passert(psn >= SOS_FIRST);
 
-	FOR_EACH_COOKIED_STATE(st, {
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
 		if (LHAS(ok_states, st->st_state) &&
 		    IS_CHILD_SA(st) &&
 		    st->st_clonedfrom == psn &&
@@ -1882,7 +1804,7 @@ bool find_pending_phase2(const so_serial_t psn,
 			if (best == NULL || best->st_serialno < st->st_serialno)
 				best = st;
 		}
-	});
+	}
 
 	if (n > 0) {
 		DBG(DBG_CONTROL,
@@ -1911,12 +1833,12 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 
 	if (lifetime > PARENT_MIN_LIFE)
 		/* in case st_margin == 0, insist minimum life */
-		if (lifetime > deltasecs(ike->sa.st_margin))
+		if (lifetime > deltasecs(ike->sa.st_replace_margin))
 			return TRUE;
 
 		loglog(RC_LOG_SERIOUS, "no new CREATE_CHILD_SA exchange using #%lu. Parent lifetime %ld < st_margin %jd",
 				ike->sa.st_serialno, lifetime,
-				deltasecs(ike->sa.st_margin));
+				deltasecs(ike->sa.st_replace_margin));
 
 	return FALSE;
 }
@@ -1929,17 +1851,19 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 	struct state *best = NULL;
 	bool is_ikev2 = (c->policy & POLICY_IKEV1_ALLOW) == LEMPTY;
 
-	FOR_EACH_COOKIED_STATE(st, {
+	struct state *st;
+	FOR_EACH_STATE_NEW2OLD(st) {
 		if (LHAS(ok_states, st->st_state) &&
 		    st->st_ikev2 == is_ikev2 &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
+		    sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
 		    IS_PARENT_SA(st) &&
 		    (best == NULL || best->st_serialno < st->st_serialno))
 		{
 			best = st;
 		}
-	});
+	}
 
 	return best;
 }
@@ -1947,7 +1871,8 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			unsigned long count, monotime_t nw)
 {
-	FOR_EACH_COOKIED_STATE(st, {
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
 		struct connection *c = st->st_connection;
 
 		/* XXX spd-enum */
@@ -1962,7 +1887,7 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			}
 			return;
 		}
-	});
+	}
 	DBG(DBG_CONTROL, {
 		char ourst[SUBNETTOT_BUF];
 		char hist[SUBNETTOT_BUF];
@@ -2334,10 +2259,12 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *))
 {
 	/* COUNT the number of states. */
 	int count = 0;
-
-	FOR_EACH_COOKIED_STATE(st, {
-		count++;
-	});
+	{
+		struct state *st;
+		FOR_EACH_STATE_NEW2OLD(st) {
+			count++;
+		}
+	}
 
 	if (count == 0) {
 		return NULL;
@@ -2350,10 +2277,11 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *))
 	{
 		int p = 0;
 
-		FOR_EACH_COOKIED_STATE(st, {
+		struct state *st;
+		FOR_EACH_STATE_NEW2OLD(st) {
 			passert(st != NULL);
 			array[p++] = st;
-		});
+		}
 		passert(p == count);
 		array[p] = NULL;
 	}
@@ -2417,15 +2345,16 @@ void show_states_status(void)
 		  require_ddos_cookies() ? "REQUIRED" : "not required",
 		  drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
 
-	whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), open(%u), authenticated(%u), anonymous(%u)",
-		  total_ike(),
-		  cat_count[CAT_HALF_OPEN_IKE],
-		  cat_count[CAT_OPEN_IKE],
-		  cat_count[CAT_AUTHENTICATED_IKE],
-		  cat_count[CAT_ANONYMOUS_IKE]);
-	whack_log(RC_COMMENT, "IPsec SAs: total(%u), authenticated(%u), anonymous(%u)",
-		  total_ipsec(),
-		  cat_count[CAT_AUTHENTICATED_IPSEC], cat_count[CAT_ANONYMOUS_IPSEC]);
+	whack_log(RC_COMMENT, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
+		  total_ike_sa(),
+		  cat_count[CAT_HALF_OPEN_IKE_SA],
+		  cat_count[CAT_OPEN_IKE_SA],
+		  cat_count_ike_sa[CAT_AUTHENTICATED],
+		  cat_count_ike_sa[CAT_ANONYMOUS]);
+	whack_log(RC_COMMENT, "IPsec SAs: total("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
+		  cat_count[CAT_ESTABLISHED_CHILD_SA],
+		  cat_count_child_sa[CAT_AUTHENTICATED],
+		  cat_count_child_sa[CAT_ANONYMOUS]);
 	whack_log(RC_COMMENT, " ");             /* spacer */
 
 	struct state **array = sort_states(state_compare_connection);
@@ -2470,7 +2399,8 @@ void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi)
 
 startover:
 	closest = ~0;   /* not close at all */
-	FOR_EACH_COOKIED_STATE(st, {
+	struct state *st;
+	FOR_EACH_STATE_NEW2OLD(st) {
 		if (st->st_ipcomp.present) {
 			cpi_t c = ntohl(st->st_ipcomp.our_spi) - base;
 
@@ -2496,7 +2426,7 @@ startover:
 				closest = c;
 			}
 		}
-	});
+	}
 	*latest_cpi = base;	/* base is first in next free range */
 	*first_busy_cpi = closest + base;	/* and this is the roof */
 }
@@ -2523,7 +2453,8 @@ startover:
 	 * Make sure that the result is unique.
 	 * Hard work.  If there is no unique value, we'll loop forever!
 	 */
-	FOR_EACH_COOKIED_STATE(s, {
+	struct state *s = NULL;
+	FOR_EACH_STATE_NEW2OLD(s) {
 		if (s->st_ipcomp.present &&
 		    sameaddr(&s->st_connection->spd.that.host_addr,
 			     &st->st_connection->spd.that.host_addr) &&
@@ -2534,7 +2465,7 @@ startover:
 
 			goto startover;
 		}
-	});
+	}
 	return cpi;
 }
 
@@ -2739,48 +2670,57 @@ bool dpd_active_locally(const struct state *st)
 		deltasecs(st->st_connection->dpd_timeout) != 0;
 }
 
-static void  set_st_clonedfrom(struct state *st, so_serial_t nsn)
+/*
+ * Find all CHILD SAs belonging to FROM and migrate them to TO.
+ */
+void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 {
-	/* add debug line  too */
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu inherit #%lu from parent #%lu",
-		nsn, st->st_serialno, st->st_clonedfrom));
-	st->st_clonedfrom = nsn;
-}
+	/*
+	 * TO is in the process of being emancipated.  It's
+	 * .st_clonedfrom has been zapped and the new IKE_SPIs
+	 * installed (a true child would have FROM's IKE SPIs).
+	 *
+	 * While FROM and TO should have different IKE_SPIs there's
+	 * nothing to force them both being different - relying on
+	 * luck.
+	 */
+	passert(to->sa.st_clonedfrom == SOS_NOBODY);
+	/* passert(SPIs should be different) */
 
-/* Kick the IPsec SA, when the parent is already replaced, to replace now */
-void ikev2_repl_est_ipsec(struct state *st, void *data)
-{
-	so_serial_t predecessor = *(so_serial_t *)data;
-
-	if (st->st_clonedfrom != predecessor)
-		return;
-
-	if (predecessor != st->st_connection->newest_isakmp_sa) {
-		DBG(DBG_CONTROLMORE,
-			DBG_log("#%lu, replacing #%lu. #%lu is not the newest IKE SA of %s",
-				predecessor, st->st_serialno,
-				predecessor, st->st_connection->name));
-	}
-
-	enum event_type ev_type = st->st_event->ev_type;
-
-	passert(st->st_event != NULL);
-	event_force(ev_type, st);
-}
-
-void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
-		const u_char *icookie, const u_char *rcookie)
-{
-	/* new sn, IKE parent, Inherit IPSEC SA from previous IKE with osn. */
-
-	passert(nsn >= SOS_FIRST);
-
-	FOR_EACH_COOKIED_STATE(st, {
-		if (st->st_clonedfrom == osn) {
-			set_st_clonedfrom(st, nsn);
-			rehash_state(st, icookie, rcookie);
+	/*
+	 * Use ..._NEW2OLD() to iterate over the slot.  Since this
+	 * macro maintains a "cursor" that is one ahead of ST it is
+	 * safe for rehash_state_cookies_in_db(st) to delete the old
+	 * hash entries.  Similarly, since the table is walked
+	 * NEW2OLD, insert will happen at the front of the table
+	 * which, the cursor is past (this odds of this are very low).
+	 */
+	struct state *st = NULL;
+	struct list_head *slot = ike_spis_slot(&from->sa.st_ike_spis);
+	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
+		if (st->st_clonedfrom == from->sa.st_serialno) {
+			passert(st->st_serialno != to->sa.st_serialno);
+			/*
+			 * Migrate the CHILD SA.
+			 *
+			 * Just the IKE_SPIrehash the SPIs without moving entry.
+			 *
+			 * XXX: this should also wipe message counters
+			 * but first need evidence.
+			 */
+			dbg("#%lu migrated from IKE SA #%lu to IKE SA #%lu",
+			    st->st_serialno, from->sa.st_serialno, to->sa.st_serialno);
+			st->st_clonedfrom = to->sa.st_serialno;
+			st->st_ike_spis = to->sa.st_ike_spis;
+			/*
+			 * Delete the old IKE_SPI hash entries (both
+			 * for I and I+R and), and then inserts new
+			 * ones using ST's current IKE SPI values.
+			 * The serialno tables are not touched.
+			 */
+			rehash_state_cookies_in_db(st);
 		}
-	});
+	}
 }
 
 void delete_my_family(struct state *pst, bool v2_responder_state)
@@ -2903,12 +2843,12 @@ bool require_ddos_cookies(void)
 {
 	return pluto_ddos_mode == DDOS_FORCE_BUSY ||
 		(pluto_ddos_mode == DDOS_AUTO &&
-		 cat_count[CAT_HALF_OPEN_IKE] >= pluto_ddos_threshold);
+		 cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_ddos_threshold);
 }
 
 bool drop_new_exchanges(void)
 {
-	return cat_count[CAT_HALF_OPEN_IKE] >= pluto_max_halfopen;
+	return cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_max_halfopen;
 }
 
 void show_globalstate_status(void)
@@ -2919,24 +2859,24 @@ void show_globalstate_status(void)
 	whack_log_comment("config.setup.ike.max_halfopen=%u", pluto_max_halfopen);
 
 	/* technically shunts are not a struct state's - but makes it easier to group */
-	whack_log_comment("current.states.all=%u", shunts + total());
-	whack_log_comment("current.states.ipsec=%u", total_ipsec());
-	whack_log_comment("current.states.ike=%u", total_ike());
+	whack_log_comment("current.states.all="PRI_CAT, shunts + total_sa());
+	whack_log_comment("current.states.ipsec="PRI_CAT, cat_count[CAT_ESTABLISHED_CHILD_SA]);
+	whack_log_comment("current.states.ike="PRI_CAT, total_ike_sa());
 	whack_log_comment("current.states.shunts=%u", shunts);
-	whack_log_comment("current.states.iketype.anonymous=%u",
-		  cat_count[CAT_ANONYMOUS_IKE]);
-	whack_log_comment("current.states.iketype.authenticated=%u",
-		  cat_count[CAT_AUTHENTICATED_IKE]);
-	whack_log_comment("current.states.iketype.halfopen=%u",
-		  cat_count[CAT_HALF_OPEN_IKE]);
-	whack_log_comment("current.states.iketype.open=%u",
-		  cat_count[CAT_OPEN_IKE]);
+	whack_log_comment("current.states.iketype.anonymous="PRI_CAT,
+			  cat_count_ike_sa[CAT_ANONYMOUS]);
+	whack_log_comment("current.states.iketype.authenticated="PRI_CAT,
+			  cat_count_ike_sa[CAT_AUTHENTICATED]);
+	whack_log_comment("current.states.iketype.halfopen="PRI_CAT,
+			  cat_count[CAT_HALF_OPEN_IKE_SA]);
+	whack_log_comment("current.states.iketype.open="PRI_CAT,
+			  cat_count[CAT_OPEN_IKE_SA]);
 	for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
-		whack_log_comment("current.states.enumerate.%s=%u",
+		whack_log_comment("current.states.enumerate.%s="PRI_CAT,
 			enum_name(&state_names, s), state_count[s]);
 	}
 	for (enum state_kind s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
-		whack_log_comment("current.states.enumerate.%s=%u",
+		whack_log_comment("current.states.enumerate.%s="PRI_CAT,
 			enum_name(&state_names, s), state_count[s]);
 	}
 }

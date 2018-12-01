@@ -1,4 +1,4 @@
-egrep '(inserting|handling) event (EVENT_v1_SEND_XAUTH|EVENT_v1_RETRANSMIT)' OUTPUT/east.pluto.log
+egrep '(inserting|handling) event (EVENT_v1_SEND_XAUTH|EVENT_RETRANSMIT)' OUTPUT/east.pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

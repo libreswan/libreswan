@@ -120,6 +120,8 @@ struct starter_conn {
 	char *conn_mark_in;
 	char *conn_mark_out;
 	char *vti_iface;
+	char *redirect_to;
+	char *accept_redirect_to;
 	bool vti_routing;
 	bool vti_shared;
 };

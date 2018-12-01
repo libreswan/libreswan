@@ -568,10 +568,10 @@ static stf_status modecfg_send_set(struct state *st)
 	/* Transmit */
 	record_and_send_v1_ike_msg(st, &reply, "ModeCfg set");
 
-	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT &&
+	if (st->st_event->ev_type != EVENT_RETRANSMIT &&
 	    st->st_event->ev_type != EVENT_NULL) {
 		delete_event(st);
-		start_retransmits(st, EVENT_v1_RETRANSMIT);
+		start_retransmits(st);
 	}
 
 	return STF_OK;
@@ -701,9 +701,9 @@ stf_status xauth_send_request(struct state *st)
 		}
 	}
 
-	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
+	if (st->st_event->ev_type != EVENT_RETRANSMIT) {
 		delete_event(st);
-		start_retransmits(st, EVENT_v1_RETRANSMIT);
+		start_retransmits(st);
 	}
 
 	return STF_OK;
@@ -799,9 +799,9 @@ stf_status modecfg_send_request(struct state *st)
 	/* Transmit */
 	record_and_send_v1_ike_msg(st, &reply, "modecfg: req");
 
-	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
+	if (st->st_event->ev_type != EVENT_RETRANSMIT) {
 		delete_event(st);
-		start_retransmits(st, EVENT_v1_RETRANSMIT);
+		start_retransmits(st);
 	}
 	st->hidden_variables.st_modecfg_started = TRUE;
 
@@ -887,7 +887,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with master thread */
 	delete_event(st);
-	start_retransmits(st, EVENT_v1_RETRANSMIT);
+	start_retransmits(st);
 
 	/* Transmit */
 	record_and_send_v1_ike_msg(st, &reply, "XAUTH: status");

@@ -773,20 +773,20 @@ IETF registry enum_names:
          lswlog_enum_short 245: OK
 
   ikev2_exchange_names:
-   34 -> ISAKMP_v2_SA_INIT
+   34 -> ISAKMP_v2_IKE_SA_INIT
          lswlog_enum 34: OK
-         search ISAKMP_v2_SA_INIT: OK
-         match ISAKMP_v2_SA_INIT: OK
+         search ISAKMP_v2_IKE_SA_INIT: OK
+         match ISAKMP_v2_IKE_SA_INIT: OK
          short_name 34:  OK
          lswlog_enum_short 34: OK
-         match SA_INIT [short]: OK
-   35 -> ISAKMP_v2_AUTH
+         match IKE_SA_INIT [short]: OK
+   35 -> ISAKMP_v2_IKE_AUTH
          lswlog_enum 35: OK
-         search ISAKMP_v2_AUTH: OK
-         match ISAKMP_v2_AUTH: OK
+         search ISAKMP_v2_IKE_AUTH: OK
+         match ISAKMP_v2_IKE_AUTH: OK
          short_name 35:  OK
          lswlog_enum_short 35: OK
-         match AUTH [short]: OK
+         match IKE_AUTH [short]: OK
    36 -> ISAKMP_v2_CREATE_CHILD_SA
          lswlog_enum 36: OK
          search ISAKMP_v2_CREATE_CHILD_SA: OK
@@ -888,16 +888,16 @@ IETF registry enum_names:
          match ISAKMP_XCHG_NGRP: OK
          short_name 33:  OK
          lswlog_enum_short 33: OK
-   34 -> ISAKMP_v2_SA_INIT
+   34 -> ISAKMP_v2_IKE_SA_INIT
          lswlog_enum 34: OK
-         search ISAKMP_v2_SA_INIT: OK
-         match ISAKMP_v2_SA_INIT: OK
+         search ISAKMP_v2_IKE_SA_INIT: OK
+         match ISAKMP_v2_IKE_SA_INIT: OK
          short_name 34:  OK
          lswlog_enum_short 34: OK
-   35 -> ISAKMP_v2_AUTH
+   35 -> ISAKMP_v2_IKE_AUTH
          lswlog_enum 35: OK
-         search ISAKMP_v2_AUTH: OK
-         match ISAKMP_v2_AUTH: OK
+         search ISAKMP_v2_IKE_AUTH: OK
+         match ISAKMP_v2_IKE_AUTH: OK
          short_name 35:  OK
          lswlog_enum_short 35: OK
    36 -> ISAKMP_v2_CREATE_CHILD_SA

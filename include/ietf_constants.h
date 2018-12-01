@@ -789,8 +789,8 @@ enum isakmp_xchg_types {
 	ISAKMP_XCHG_NGRP = 33, /* Oakley New Group Mode */
 
 	/* IKEv2 things */
-	ISAKMP_v2_SA_INIT = 34,
-	ISAKMP_v2_AUTH = 35,
+	ISAKMP_v2_IKE_SA_INIT = 34,
+	ISAKMP_v2_IKE_AUTH = 35,
 	ISAKMP_v2_CREATE_CHILD_SA = 36,
 	ISAKMP_v2_INFORMATIONAL = 37,
 	ISAKMP_v2_IKE_SESSION_RESUME = 38, /* RFC 5723 */
@@ -1593,6 +1593,20 @@ enum ppk_id_type {
 	/* 3 - 127      Reserved for IANA */
 	/* 128 - 255    Private Use */
 };
+
+/* IKEv2 Redirect Mechanism - RFC 5685 */
+enum gw_identity_type {
+	/* 0 - reserved */
+	GW_IPV4 = 1,
+	GW_IPV6 = 2,
+	GW_FQDN = 3,
+
+	/* 4 - 240	Unassigned */
+	/* 241 - 255	Private Use */
+};
+
+#define MAX_REDIRECTS 5
+#define REDIRECT_LOOP_DETECT_PERIOD 300
 
 /* Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4 */
 enum pubkey_alg {

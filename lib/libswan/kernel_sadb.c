@@ -105,7 +105,7 @@ void kernel_add_sadb_algs(const struct sadb_msg *const msg, size_t sizeof_msg)
 		uint16_t supp_exttype = supp->sadb_supported_exttype;
 		size_t supp_size = supp->sadb_supported_len * KERNEL_SADB_WORD_SIZE;
 
-		DBGF(DBG_KERNEL, "kernel_alg_register_pfkey(): SADB_SATYPE_%s: sadb_msg_len=%u sadb_supported_len=%zd",
+		dbg("kernel_alg_register_pfkey(): SADB_SATYPE_%s: sadb_msg_len=%u sadb_supported_len=%zd",
 		     (satype == SADB_SATYPE_ESP ? "ESP" :
 		      satype == SADB_SATYPE_AH ? "AH" : "???"),
 		     msg->sadb_msg_len,

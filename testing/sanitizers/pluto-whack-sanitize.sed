@@ -10,12 +10,9 @@ s,\(instance with peer .*\) {isakmp=#.*/ipsec=#.*},\1,
 s,\(initiating Quick Mode .*\) {using isakmp#.*},\1,
 s,\(initiating Quick Mode .* to replace #.*\) {using isakmp#.*},\1,
 s,{msgid.*},,
-s,\( EVENT_SA_REPLACE in \)[0-9]\+s,\1 XXs,g
-s,\( EVENT_SA_REPLACE_IF_USED in \)[0-9]\+s,\1 XXs,g
-s,\( EVENT_v1_RETRANSMIT in \)[0-9]\+s,\1 XXs,g
-s,\( EVENT_v2_RETRANSMIT in \)[0-9]\+s,\1 XXs,g
-s,\( EVENT_SA_EXPIRE in \)[0-9]\+s,\1 XXs,g
-s,\( EVENT_v2_RESPONDER_TIMEOUT in \)[0-9]\+s,\1 XXs,g
+
+s,\( EVENT_[a-z0-9A-Z_]\+ in \)[0-9]\+s,\1XXs,g
+
 s,\(003 .* received Vendor ID payload \[Libreswan \).*,\1,
 /WARNING: calc_dh_shared(): for OAKLEY_GROUP_MODP/d
 s/add_time=[0-9]*,/add_time=1234567890,/

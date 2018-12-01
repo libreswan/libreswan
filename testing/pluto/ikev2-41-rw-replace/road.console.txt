@@ -62,6 +62,7 @@ road #
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
+000 global-redirect=no, global-redirect-to=<unset>
 000 secctx-attr-type=XXXX
 000 debug ...
 000  
@@ -173,8 +174,8 @@ road #
 000 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
 000 IPsec SAs: total(1), authenticated(1), anonymous(0)
 000  
-000 #1: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
-000 #2: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; idle;
+000 #2: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "road-east-x509-ipv4"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
 000  
 000 Bare Shunt list:
@@ -191,7 +192,7 @@ PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  grep -E  'EVENT_SA_EXPIRE|EVENT_SA_REPLACE' OUTPUT/road.pluto.log | grep -v pe@ | head -9
-| ignoring microcode for XAUTH_I1 (timeout: EVENT_v1_RETRANSMIT flags: 0) -> MAIN_I4 (timeout: EVENT_SA_REPLACE flags: 0) with event EVENT_v1_RETRANSMIT
+| ignoring microcode for XAUTH_I1 (timeout: EVENT_RETRANSMIT flags: 0) -> MAIN_I4 (timeout: EVENT_SA_REPLACE flags: 0) with event EVENT_RETRANSMIT
 | MAIN_R3 (timeout: EVENT_SA_REPLACE flags: 200)
 | MAIN_I4 (timeout: EVENT_SA_REPLACE flags: 0)
 | AGGR_I2 (timeout: EVENT_SA_REPLACE flags: 200)
@@ -228,6 +229,7 @@ road #
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
+000 global-redirect=no, global-redirect-to=<unset>
 000 secctx-attr-type=XXXX
 000 debug ...
 000  
@@ -339,9 +341,9 @@ road #
 000 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
 000 IPsec SAs: total(1), authenticated(1), anonymous(0)
 000  
-000 #2: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#3; idle;
+000 #2: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
 000 #2: "road-east-x509-ipv4"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 ref=0 refhim=0 Traffic: ESPin=672B ESPout=672B! ESPmax=0B 
-000 #3: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
+000 #3: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; idle;
 000  
 000 Bare Shunt list:
 000  

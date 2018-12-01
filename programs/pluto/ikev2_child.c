@@ -131,8 +131,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		cst = md->st;
 	} else {
 		/* ??? is this only for AUTH exchange? */
-		pexpect(isa_xchg == ISAKMP_v2_AUTH); /* see calls */
-		pexpect(md->hdr.isa_xchg == ISAKMP_v2_AUTH); /* redundant */
+		pexpect(isa_xchg == ISAKMP_v2_IKE_AUTH); /* see calls */
+		pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
 		/*
 		 * While this function is called with MD->ST pointing
 		 * at either an IKE SA or CHILD SA, this code path
@@ -195,7 +195,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		if (!ikev2_emit_sa_proposal(outpbs,
 					cst->st_accepted_esp_or_ah_proposal,
 					&local_spi)) {
-			DBGF(DBG_CONTROL, "problem emitting accepted proposal");
+			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}
 	}

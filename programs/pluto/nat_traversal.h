@@ -21,6 +21,7 @@
 #include "demux.h"
 #include "lswalloc.h"
 #include "state.h"
+#include "ike_spi.h"
 
 /*
  *  NAT-Traversal defines for nat_traversal type from nat_traversal.h
@@ -81,7 +82,8 @@ extern bool nat_traversal_support_port_floating;
  */
 extern bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 				   const struct msg_digest *md);
-extern void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie);
+extern void ikev2_natd_lookup(struct msg_digest *md,
+			      const ike_spi_t *ike_responder_spi);
 
 /**
  * NAT-OA
@@ -126,14 +128,13 @@ bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 			      bool in);
 /* NAT-T IKEv2 v2N */
 
-bool ikev2_out_nat_v2n(uint8_t np, pb_stream *outs, const struct msg_digest *md);
+bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
+		       const ike_spi_t *ike_resonder_spi);
 
-bool ikev2_out_natd(const struct state *st,
-		uint8_t np,
-		const ip_address *localaddr, uint16_t localport,
-		const ip_address *remoteaddr, uint16_t remoteport,
-		const uint8_t *rcookie,
-		pb_stream *outs);
+bool ikev2_out_natd(const ip_address *localaddr, uint16_t localport,
+		    const ip_address *remoteaddr, uint16_t remoteport,
+		    const ike_spis_t *ike_spis,
+		    pb_stream *outs);
 
 /**
  * Encapsulation mode macro (see demux.c)

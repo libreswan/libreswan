@@ -1,0 +1,8 @@
+IKEv2 REDIRECT Mechanism with active redirect with
+roadwarriors.
+
+two road warriors, north and road connect to east, shortly after
+that north is redirected to west with --redirect whack command.
+
+note: there is one lingering XFRM state left on north from
+the tunnel with east.

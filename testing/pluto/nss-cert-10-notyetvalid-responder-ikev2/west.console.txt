@@ -31,7 +31,7 @@ west #
 003 "nss-cert" #2: no RSA public key known for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=notyetvalid.testing.libreswan.org, E=testing@libreswan.org'
 002 "nss-cert" #2: RSA authentication failed
 224 "nss-cert" #2: STATE_PARENT_I2: v2N_AUTHENTICATION_FAILED
-003 "nss-cert" #2: EXPECTATION FAILED: st != NULL && st->st_event != NULL && st->st_event->ev_type == EVENT_v2_RETRANSMIT (in complete_v2_state_transition at /source/programs/pluto/ikev2.c:1827)
+003 "nss-cert" #2: EXPECTATION FAILED: st != NULL && st->st_event != NULL && st->st_event->ev_type == EVENT_RETRANSMIT (in complete_v2_state_transition at /source/programs/pluto/ikev2.c:1827)
 west #
  echo done
 done

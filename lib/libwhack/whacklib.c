@@ -138,6 +138,8 @@ err_t pack_whack_msg(struct whackpacker *wp)
 	    !pack_str(wp, &wp->msg->conn_mark_out) ||		/* string 32 */
 	    !pack_str(wp, &wp->msg->vti_iface) ||		/* string 33 */
 	    !pack_str(wp, &wp->msg->remote_host) ||		/* string 33 */
+	    !pack_str(wp, &wp->msg->redirect_to) ||		/* string 34 */
+	    !pack_str(wp, &wp->msg->accept_redirect_to) ||	/* string 35 */
 	    wp->str_roof - wp->str_next < (ptrdiff_t)wp->msg->keyval.len)	/* key */
 	{
 		return "too many bytes of strings or key to fit in message to pluto";
@@ -207,6 +209,8 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 	    !unpack_str(wp, &wp->msg->conn_mark_out) ||		/* string 32 */
 	    !unpack_str(wp, &wp->msg->vti_iface) ||		/* string 33 */
 	    !unpack_str(wp, &wp->msg->remote_host) ||		/* string 33 */
+	    !unpack_str(wp, &wp->msg->redirect_to) ||		/* string 34 */
+	    !unpack_str(wp, &wp->msg->accept_redirect_to) ||	/* string 35 */
 	    wp->str_roof - wp->str_next != (ptrdiff_t)wp->msg->keyval.len)
 	{
 		ugh = "message from whack contains bad string or key";

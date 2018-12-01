@@ -91,10 +91,10 @@ west #
 006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
  ipsec status |grep STATE_
-000 #1: "westnet-eastnet-ikev2a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
-000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "westnet-eastnet-ikev2a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; idle;
+000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  echo "sleep 23"
 sleep 23
@@ -137,10 +137,10 @@ west #
 006 #7: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
  ipsec status |grep STATE_
-000 #1: "westnet-eastnet-ikev2a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
-000 #5: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #6: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #7: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "westnet-eastnet-ikev2a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; idle;
+000 #5: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #6: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #7: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  echo "sleep 25"
 sleep 25
@@ -186,10 +186,10 @@ west #
 006 #14: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
 west #
  ipsec status |grep STATE_ | sort
-000 #11: "westnet-eastnet-ikev2a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
-000 #12: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#11; idle;
-000 #13: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#11; idle;
-000 #14: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#11; idle;
+000 #11: "westnet-eastnet-ikev2a":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; idle;
+000 #12: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
+000 #13: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
+000 #14: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
 west #
  # there should be only one IKE_INIT exchange created
 west #

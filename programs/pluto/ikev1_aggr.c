@@ -214,7 +214,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-	fill_ike_responder_spi(ike_sa(st), &md->sender);
+	fill_ike_responder_spi(st, &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
@@ -584,7 +584,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	/* moved the following up as we need Rcookie for hash, skeyids */
 	/* Reinsert the state, using the responder cookie we just received */
-	rehash_state(st, NULL, md->hdr.isa_rcookie);
+	rehash_state(st, &md->hdr.isa_ike_responder_spi);
 
 	ikev1_natd_init(st, md);
 
@@ -753,7 +753,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 	/* HASH_I or SIG_I out */
 	{
-		DBGF(DBG_EMITTING, "next payload chain: creating a fake payload for hashing identity");
+		dbg("next payload chain: creating a fake payload for hashing identity");
 
 		/* first build an ID payload as a raw material */
 		struct isakmp_ipsec_id id_hd;
@@ -873,7 +873,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 	/* Reconstruct the peer ID so the peer hash can be authenticated */
 	{
-		DBGF(DBG_EMITTING, "next payload chain: creating a fake payload for hashing identity");
+		dbg("next payload chain: creating a fake payload for hashing identity");
 
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
@@ -1032,7 +1032,7 @@ void aggr_outI1(fd_t whack_sock,
 	st->st_try = try;
 	change_state(st, STATE_AGGR_I1);
 
-	fill_ike_initiator_spi(ike_sa(st));
+	fill_ike_initiator_spi(st);
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
@@ -1223,7 +1223,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 
 	/* Set up a retransmission event, half a minute hence */
 	delete_event(st);
-	start_retransmits(st, EVENT_v1_RETRANSMIT);
+	start_retransmits(st);
 
 	whack_log(RC_NEW_STATE + STATE_AGGR_I1,
 		  "%s: initiate", st->st_state_name);

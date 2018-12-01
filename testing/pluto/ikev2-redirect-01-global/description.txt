@@ -1,0 +1,7 @@
+IKEv2 REDIRECT mechanism with redirection is IKE_INIT
+
+west wants to connect to east but is redirected to north instead.
+
+normally west has a hardcoded route for eastnet (unrelated to libreswan)
+to make testing blocking of unencrypted packets easier. But we cannot have
+this route now because we need to send those packets to north instead.

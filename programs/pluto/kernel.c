@@ -1749,7 +1749,7 @@ ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective)
 		fail_spi[(c->policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT];
 }
 
-static bool del_spi(ipsec_spi_t spi, int proto,
+bool del_spi(ipsec_spi_t spi, int proto,
 		const ip_address *src, const ip_address *dest)
 {
 	char text_said[SATOT_BUF];
@@ -2512,6 +2512,23 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 		struct ipsec_proto_info *info;
 	} protos[4];
 	int i = 0;
+	bool redirected = FALSE;
+	ip_address tmp_ip;
+
+	/*
+	 * If we are the initiator, were redirected and
+	 * now are trying to remove 'old' stuff, we
+	 * are going to temporary hack c->spd.that.host_addr,
+	 * because we changed it when we were redirected
+	 * and it has now the new address (but we need
+	 * the old one).
+	 */
+	if (!sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
+			!isanyaddr(&c->temp_vars.redirect_ip)) {
+		redirected = TRUE;
+		tmp_ip = c->spd.that.host_addr;
+		c->spd.that.host_addr = st->st_remoteaddr;
+	}
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (kernel_ops->inbound_eroute && inbound &&
@@ -2589,6 +2606,10 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 		result &= del_spi(spi, proto, src, dst);
 	}
+
+	if (redirected)
+		c->spd.that.host_addr = tmp_ip;
+
 	return result;
 }
 
@@ -3444,7 +3465,7 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
  */
 bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 {
-	const struct connection *const c = st->st_connection;
+	struct connection *const c = st->st_connection;
 
 	if (kernel_ops->get_sa == NULL || (!st->st_esp.present && !st->st_ah.present)) {
 		return FALSE;
@@ -3465,6 +3486,21 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	const ip_address *src, *dst;
 	ipsec_spi_t spi;
+	bool redirected = FALSE;
+	ip_address tmp_ip;
+
+	/*
+	 * if we were redirected (using the REDIRECT
+	 * mechanism), change
+	 * spd.that.host_addr temporarily, we reset
+	 * it back later
+	 */
+	if (!sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
+			!isanyaddr(&c->temp_vars.redirect_ip)) {
+		redirected = TRUE;
+		tmp_ip = c->spd.that.host_addr;
+		c->spd.that.host_addr = st->st_remoteaddr;
+	}
 
 	if (inbound) {
 		src = &c->spd.that.host_addr;
@@ -3518,6 +3554,10 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 		if (ago != NULL)
 			*ago = monotimediff(mononow(), p2->peer_lastused);
 	}
+
+	if (redirected)
+		c->spd.that.host_addr = tmp_ip;
+
 	return TRUE;
 }
 

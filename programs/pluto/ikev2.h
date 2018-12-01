@@ -55,9 +55,6 @@ extern ikev2_state_transition_fn ikev2_ike_sa_process_auth_request;
 extern ikev2_state_transition_fn ikev2_parent_inR1outI2;
 extern ikev2_state_transition_fn ikev2_parent_inR2;
 
-extern crypto_transition_fn ikev2_child_out_cont;
-extern crypto_transition_fn ikev2_child_inR_tail;
-extern crypto_transition_fn ikev2_child_ike_rekey_tail;
 extern void ikev2_initiate_child_sa(struct pending *p);
 
 void ikev2_rekey_ike_start(struct state *st);
@@ -258,8 +255,8 @@ struct state_v2_microcode {
 	ikev2_state_transition_fn *const processor;
 };
 
-void ikev2_copy_cookie_from_sa(struct ikev2_proposal *accepted_ike_proposal,
-				uint8_t *cookie);
+void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposal,
+				ike_spi_t *cookie);
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
 			      const struct state_v2_microcode *svm,
@@ -272,9 +269,7 @@ extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 
 extern bool emit_v2KE(chunk_t *g, const struct oakley_group_desc *group, pb_stream *outs);
 
-enum message_role v2_msg_role(const struct msg_digest *md);
 extern bool is_msg_response(const struct msg_digest *md);
-extern bool is_msg_request(const struct msg_digest *md);
 
 extern bool need_this_intiator(struct state *st);
 
@@ -288,3 +283,5 @@ void lswlog_v2_stf_status(struct lswlog *buf, unsigned ret);
 
 struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_msgid);
 struct state *v2_child_sa_initiator_with_msgid(struct ike_sa *ike, msgid_t st_msgid);
+
+bool v2_only_replace_sa_when_used(struct state *st);

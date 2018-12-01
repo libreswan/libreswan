@@ -82,4 +82,7 @@ extern const chunk_t empty_chunk;
 #define clonetochunk(ch, addr, size, name) \
 	{ (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
 
+/* unconditional */
+void DBG_dump_chunk(const char *prefix, chunk_t chunk);
+
 #endif

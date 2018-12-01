@@ -15,13 +15,13 @@ east #
 initdone
 east #
  ipsec status | grep STATE_
-000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; isakmp#1; idle;
-000 #3: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; lastdpd=-1s(seq in:0 out:0); idle;
-000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; isakmp#3; idle;
-000 #5: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; lastdpd=-1s(seq in:0 out:0); idle;
-000 #6: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; isakmp#5; idle;
-000 #7: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
-000 #8: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in XXs; isakmp#1; idle;
+000 #3: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in XXs; lastdpd=-1s(seq in:0 out:0); idle;
+000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in XXs; isakmp#3; idle;
+000 #5: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in XXs; lastdpd=-1s(seq in:0 out:0); idle;
+000 #6: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in XXs; isakmp#5; idle;
+000 #7: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #8: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
 east #
  ip xfrm policy
 src 192.1.2.23/32 dst 192.0.2.1/32 

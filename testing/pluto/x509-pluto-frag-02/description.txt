@@ -6,3 +6,6 @@ should cause road to not use fragmentation.
 
 It will show up as one less packet blocked in the firewall
 compared to x509-pluto-frag-01
+
+Keep in mind that the first IKEv1 packet isn't fragmented, only the
+re-transmit, so don't suppress re-transmits here.

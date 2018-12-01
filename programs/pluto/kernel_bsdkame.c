@@ -695,7 +695,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 
 		/* XXX need to fix this for v6 */
 #if 1
-		DBGF(DBG_MASK, "blatting mine/his sin_len");
+		dbg("blatting mine/his sin_len");
 #else
 		mine->addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
 		his->addr.u.v4.sin_len   = sizeof(struct sockaddr_in);
@@ -717,7 +717,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 
 			/* should be already filled in */
 #if 1
-			DBGF(DBG_MASK, "blatting me/him sin_len");
+			dbg("blatting me/him sin_len");
 #else
 			me->u.v4.sin_len  = sizeof(struct sockaddr_in);
 			him->u.v4.sin_len  = sizeof(struct sockaddr_in);
@@ -804,7 +804,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 
 		/* XXX need to fix this for v6 */
 #if 1
-		DBGF(DBG_MASK, "blatting mine/his sin_len");
+		dbg("blatting mine/his sin_len");
 #else
 		mine->addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
 		his->addr.u.v4.sin_len   = sizeof(struct sockaddr_in);
@@ -877,7 +877,7 @@ static bool bsdkame_sag_eroute(const struct state *st,
 		proto = IPPROTO_COMP;
 
 #if 1
-	DBGF(DBG_MASK, "sr->*.port = ...");
+	dbg("sr->*.port = ...");
 #else
 	if (!sr->this.has_port_wildcard)
 		setportof(htons(sr->this.port), &sr->this.client.addr);

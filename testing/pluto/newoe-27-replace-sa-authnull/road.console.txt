@@ -157,7 +157,7 @@ road #
  # additional 'authenticated' partial state lingers
 road #
  ipsec status | grep STATE_
-000 #1: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_EXPIRE in  XXs; idle;
+000 #1: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_EXPIRE in XXs; idle;
 road #
  # verify no packets were dropped due to missing SPD policies
 road #

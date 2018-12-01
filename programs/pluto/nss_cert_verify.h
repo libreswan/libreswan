@@ -38,8 +38,10 @@ extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *n
 /* rev_opts index */
 #define RO_OCSP 0
 #define RO_OCSP_S 1
-#define RO_CRL_S 2
-#define RO_SZ 3
+#define RO_OCSP_P 2
+#define RO_CRL_S 3
+#define RO_SZ 4
+
 
 #define VERIFY_RET_OK       0x0001
 #define VERIFY_RET_REVOKED  0x0002

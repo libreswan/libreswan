@@ -54,6 +54,7 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev1_dpd.h"
 #include "ikev2.h"
+#include "ikev2_redirect.h"
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
 #include "xauth.h"
@@ -232,47 +233,55 @@ static void ikev2_log_initiate_child_fail(const struct state *st)
 	}
 }
 
-static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
+static void dbg_sa_expired(struct state *st)
 {
-	DBG(DBG_LIFECYCLE, {
+	if (DBGP(DBG_MASK)) {
 		struct connection *c = st->st_connection;
 		char story[80] = "";
-		if (type == EVENT_v2_SA_REPLACE_IF_USED) {
+		if (IS_CHILD_SA(st) && st->st_ikev2 &&
+		    v2_only_replace_sa_when_used(st)) {
 			deltatime_t last_used_age;
 			/* why do we only care about inbound traffic? */
 			/* because we cannot tell the difference sending out to a dead SA? */
 			if (get_sa_info(st, TRUE, &last_used_age)) {
 				snprintf(story, sizeof(story),
-					 "last used %jds ago < %jd ",
+					 " last used %jds ago < %jd ",
 					 deltasecs(last_used_age),
 					 deltasecs(c->sa_rekey_margin));
 			} else {
 				snprintf(story, sizeof(story),
-					"unknown usage - get_sa_info() failed");
+					" unknown usage - get_sa_info() failed");
 			}
-
-			DBG_log("replacing stale %s SA %s",
-				IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-				story);
 		}
-	});
+		DBG_log("replacing stale %s SA%s",
+			IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+			story);
+	}
 }
 
-static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
+/*
+ * If the connection contains a newer SA, return it.
+ */
+static so_serial_t get_newer_sa(struct state *st)
 {
 	struct connection *c = st->st_connection;
-	struct state *pst = state_with_serialno(st->st_clonedfrom);
-	passert(pst != NULL); /* no orphan child allowed */
+	so_serial_t newest;
 
-	/* we observed no traffic, let IPSEC SA and IKE SA expire */
-	DBG(DBG_LIFECYCLE,
-		DBG_log("not replacing unused IPSEC SA #%lu: last used %jds ago > %jd let it and the parent #%lu expire",
-			st->st_serialno,
-			deltasecs(last_used_age),
-			deltasecs(c->sa_rekey_margin),
-			pst->st_serialno));
+	if (IS_IKE_SA(st)) {
+		newest = c->newest_isakmp_sa;
+		dbg("picked newest_isakmp_sa #%lu for #%lu",
+		    newest, st->st_serialno);
+	} else {
+		newest = c->newest_ipsec_sa;
+		dbg("picked newest_ipsec_sa #%lu for #%lu",
+		    newest, st->st_serialno);
+	}
 
-	event_force(EVENT_SA_EXPIRE, pst);
+	if (newest != SOS_NOBODY && newest > st->st_serialno) {
+		return newest;
+	} else {
+		return SOS_NOBODY;
+	}
 }
 
 /*
@@ -344,13 +353,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_v2_SEND_NEXT_IKE:
 	case EVENT_v2_INITIATE_CHILD:
-	case EVENT_v1_RETRANSMIT:
-	case EVENT_v2_RETRANSMIT:
+	case EVENT_RETRANSMIT:
 	case EVENT_SA_REPLACE:
-	case EVENT_SA_REPLACE_IF_USED:
-	case EVENT_v2_SA_REPLACE_IF_USED:
-	case EVENT_v2_SA_REPLACE_IF_USED_IKE:
+	case EVENT_v1_SA_REPLACE_IF_USED:
 	case EVENT_v2_RESPONDER_TIMEOUT:
+	case EVENT_v2_REDIRECT:
 	case EVENT_SA_EXPIRE:
 	case EVENT_SO_DISCARD:
 	case EVENT_CRYPTO_TIMEOUT:
@@ -437,18 +444,19 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		release_pending_whacks(st, "release whack");
 		break;
 
-	case EVENT_v1_RETRANSMIT:
-		DBG(DBG_RETRANSMITS, DBG_log("IKEv1 retransmit event"));
-		retransmit_v1_msg(st);
+	case EVENT_RETRANSMIT:
+		passert(st != NULL);
+		if (st->st_ikev2) {
+			DBG(DBG_RETRANSMITS, DBG_log("IKEv2 retransmit event"));
+			retransmit_v2_msg(st);
+		} else {
+			DBG(DBG_RETRANSMITS, DBG_log("IKEv1 retransmit event"));
+			retransmit_v1_msg(st);
+		}
 		break;
 
 	case EVENT_v1_SEND_XAUTH:
 		xauth_send_request(st);
-		break;
-
-	case EVENT_v2_RETRANSMIT:
-		DBG(DBG_RETRANSMITS, DBG_log("IKEv2 retransmit event"));
-		retransmit_v2_msg(st);
 		break;
 
 	case EVENT_v2_SEND_NEXT_IKE:
@@ -464,140 +472,152 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_SA_REPLACE:
-	case EVENT_SA_REPLACE_IF_USED:
-	case EVENT_v2_SA_REPLACE_IF_USED:
-	case EVENT_v2_SA_REPLACE_IF_USED_IKE:
-	{
-		struct connection *c = st->st_connection;
-		so_serial_t newest;
-		deltatime_t last_used_age;
+	case EVENT_v1_SA_REPLACE_IF_USED:
+		if (st->st_ikev2) {
+			pexpect(type == EVENT_SA_REPLACE);
+			struct connection *c = st->st_connection;
+			const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
-		if (IS_IKE_SA(st)) {
-			newest = c->newest_isakmp_sa;
-			DBG(DBG_LIFECYCLE,
-				DBG_log("%s picked newest_isakmp_sa #%lu",
-					enum_name(&timer_event_names, type),
-					newest));
-		} else {
-			newest = c->newest_ipsec_sa;
-			DBG(DBG_LIFECYCLE,
-				DBG_log("%s picked newest_ipsec_sa #%lu",
-					enum_name(&timer_event_names, type),
-					newest));
-		}
-
-		if (newest != SOS_NOBODY && newest > st->st_serialno) {
-			/* not very interesting: no need to replace */
-			DBG(DBG_LIFECYCLE,
-				DBG_log("not replacing stale %s SA: #%lu will do",
-					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-					newest));
-		} else if (type == EVENT_v2_SA_REPLACE_IF_USED &&
-				get_sa_info(st, TRUE, &last_used_age) &&
-				deltaless(c->sa_rekey_margin, last_used_age)) {
-			ikev2_expire_parent(st, last_used_age);
-			break;
-		} else if (type == EVENT_v2_SA_REPLACE_IF_USED_IKE) {
-				struct state *cst = state_with_serialno(c->newest_ipsec_sa);
-				if (cst == NULL)
-					break;
-				DBG(DBG_LIFECYCLE, DBG_log("#%lu check last used on newest IPsec SA #%lu",
-							st->st_serialno, cst->st_serialno));
+			so_serial_t newer_sa = get_newer_sa(st);
+			if (newer_sa != SOS_NOBODY) {
+				/* not very interesting: no need to replace */
+				dbg("not replacing stale %s SA #%lu; newer #%lu will do",
+				    satype, st->st_serialno, newer_sa);
+			} else if (v2_only_replace_sa_when_used(st)) {
+				/* see of (most recent) child is busy */
+				struct state *cst;
+				struct ike_sa *ike;
+				if (IS_IKE_SA(st)) {
+					ike = pexpect_ike_sa(st);
+					cst = state_with_serialno(c->newest_ipsec_sa);
+					if (cst == NULL) {
+						dbg("can't check usage as IKE SA #%lu has no newest child",
+						    ike->sa.st_serialno);
+						break;
+					}
+				} else {
+					cst = st;
+					ike = ike_sa(st);
+				}
+				dbg("#%lu check last used on newest CHILD SA #%lu",
+				    ike->sa.st_serialno, cst->st_serialno);
+				deltatime_t last_used_age;
 				if (get_sa_info(cst, TRUE, &last_used_age) &&
-					deltaless(c->sa_rekey_margin, last_used_age))
-				{
-					delete_liveness_event(cst);
-					event_force(EVENT_SA_EXPIRE, cst);
-					ikev2_expire_parent(cst, last_used_age);
+				    deltaless(c->sa_rekey_margin, last_used_age)) {
+					/* we observed no traffic, let IPSEC SA and IKE SA expire */
+					dbg("not replacing IPSEC SA #%lu as last used %jds ago > %jd; let it and the parent #%lu expire",
+					    cst->st_serialno,
+					    deltasecs(last_used_age),
+					    deltasecs(c->sa_rekey_margin),
+					    ike->sa.st_serialno);
+					if (st == &ike->sa) {
+						/* XXX: why conditional? */
+						delete_liveness_event(cst);
+						event_force(EVENT_SA_EXPIRE, cst);
+					}
+					event_force(EVENT_SA_EXPIRE, &ike->sa);
 					break;
 				} else {
-					ikev2_log_v2_sa_expired(st, type);
+					dbg_sa_expired(st);
 					ipsecdoi_replace(st, 1);
 				}
+			} else {
+				ikev2_log_initiate_child_fail(st);
+				dbg_sa_expired(st);
+				ipsecdoi_replace(st, 1);
+			}
 
-		} else if (type == EVENT_SA_REPLACE_IF_USED &&
-				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin)))
-		{
-			/*
-			 * we observed no recent use: no need to replace
-			 *
-			 * The sampling effects mean that st_outbound_time
-			 * could be up to SHUNT_SCAN_INTERVAL more recent
-			 * than actual traffic because the sampler looks at
-			 * change over that interval.
-			 * st_outbound_time could also not yet reflect traffic
-			 * in the last SHUNT_SCAN_INTERVAL.
-			 * We expect that SHUNT_SCAN_INTERVAL is smaller than
-			 * c->sa_rekey_margin so that the effects of this will
-			 * be unimportant.
-			 * This is just an optimization: correctness is not
-			 * at stake.
-			 */
-			DBG(DBG_LIFECYCLE, DBG_log(
-					"not replacing stale %s SA: inactive for %jds",
-					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-					deltasecs(monotimediff(mononow(),
-							       st->st_outbound_time))));
-		} else {
-			ikev2_log_initiate_child_fail(st);
-			ikev2_log_v2_sa_expired(st, type);
-			ipsecdoi_replace(st, 1);
+			delete_liveness_event(st);
+			delete_dpd_event(st);
+			event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
+		} else { /* IKEv1 */
+			pexpect(type == EVENT_SA_REPLACE ||
+				type == EVENT_v1_SA_REPLACE_IF_USED);
+			struct connection *c = st->st_connection;
+			const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
+
+			so_serial_t newer_sa = get_newer_sa(st);
+			if (newer_sa != SOS_NOBODY) {
+				/* not very interesting: no need to replace */
+				dbg("not replacing stale %s SA %lu; #%lu will do",
+				    satype, st->st_serialno, newer_sa);
+			} else if (type == EVENT_v1_SA_REPLACE_IF_USED &&
+				   !monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
+				/*
+				 * we observed no recent use: no need to replace
+				 *
+				 * The sampling effects mean that st_outbound_time
+				 * could be up to SHUNT_SCAN_INTERVAL more recent
+				 * than actual traffic because the sampler looks at
+				 * change over that interval.
+				 * st_outbound_time could also not yet reflect traffic
+				 * in the last SHUNT_SCAN_INTERVAL.
+				 * We expect that SHUNT_SCAN_INTERVAL is smaller than
+				 * c->sa_rekey_margin so that the effects of this will
+				 * be unimportant.
+				 * This is just an optimization: correctness is not
+				 * at stake.
+				 */
+				dbg("not replacing stale %s SA: inactive for %jds",
+				    satype, deltasecs(monotimediff(mononow(), st->st_outbound_time)));
+			} else {
+				dbg_sa_expired(st);
+				ipsecdoi_replace(st, 1);
+			}
+
+			delete_liveness_event(st);
+			delete_dpd_event(st);
+			event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
 		}
-
-		delete_liveness_event(st);
-		delete_dpd_event(st);
-		event_schedule(EVENT_SA_EXPIRE, st->st_margin, st);
-	}
-	break;
+		break;
 
 	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_SA_EXPIRE:
 	{
-		const char *satype;
-		so_serial_t latest;
-		struct connection *c;
-
 		passert(st != NULL);
-		c = st->st_connection;
+		struct connection *c = st->st_connection;
+		const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
-		if (IS_IKE_SA(st)) {
-			satype = "ISAKMP";
-			latest = c->newest_isakmp_sa;
-			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_EXPIRE picked newest_isakmp_sa"));
-		} else {
-			satype = "IPsec";
-			latest = c->newest_ipsec_sa;
-			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_EXPIRE picked newest_ipsec_sa"));
-		}
-
-		if (st->st_serialno < latest) {
+		so_serial_t newer_sa = get_newer_sa(st);
+		if (newer_sa != SOS_NOBODY) {
 			/* not very interesting: already superseded */
-			DBG(DBG_LIFECYCLE, DBG_log(
-				"%s SA expired (superseded by #%lu)",
-					satype, latest));
+			dbg("%s SA expired (superseded by #%lu)",
+			    satype, newer_sa);
 		} else if (!IS_IKE_SA_ESTABLISHED(st)) {
 			/* not very interesting: failed IKE attempt */
-			DBG(DBG_LIFECYCLE, DBG_log(
-				"un-established partial ISAKMP SA timeout (%s)",
-					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout"));
+			dbg("un-established partial CHILD SA timeout (%s)",
+			    type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout");
 		} else {
-				libreswan_log("%s %s (%s)", satype,
-					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
-					(c->policy & POLICY_DONT_REKEY) ?
-						"--dontrekey" : "LATEST!");
+			libreswan_log("%s %s (%s)", satype,
+				      type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
+				      (c->policy & POLICY_DONT_REKEY) ?
+				      "--dontrekey" : "LATEST!");
 		}
 		/* Delete this state object.  It must be in the hash table. */
-		if (st->st_ikev2 && IS_IKE_SA(st)) {
-			/* IKEv2 parent, delete children too */
-			delete_my_family(st, FALSE);
-			/* note: no md->st to clear */
+		if (st->st_ikev2) {
+			if (IS_IKE_SA(st)) {
+				/* IKEv2 parent, delete children too */
+				delete_my_family(st, FALSE);
+				/* note: no md->st to clear */
+			} else {
+				struct ike_sa *ike = ike_sa(st);
+				passert(ike != NULL || &ike->sa != st);
+				delete_state(st);
+				/* st = NULL; */
+				/* note: no md->st to clear */
+				v2_expire_unused_ike_sa(ike);
+			}
 		} else {
-			struct state *pst = state_with_serialno(st->st_clonedfrom);
 			delete_state(st);
 			/* note: no md->st to clear */
-
-			ikev2_expire_unused_parent(pst);
+			/* st = NULL; */
 		}
+		break;
+	}
+
+	case EVENT_v2_REDIRECT:
+	{
+		initiate_redirect(st);
 		break;
 	}
 
@@ -664,21 +684,15 @@ void delete_event(struct state *st)
 {
 	/* ??? isn't this a bug?  Should we not passert? */
 	if (st->st_event == NULL) {
-		DBG(DBG_CONTROLMORE,
-				DBG_log("state #%lu requesting to delete non existing event",
-					st->st_serialno));
+		dbg("state #%lu requesting to delete non existing event",
+		    st->st_serialno);
 		return;
 	}
-	if (DBGP(DBG_CONTROL) ||
-	    (DBGP(DBG_RETRANSMITS) && (st->st_event->ev_type == EVENT_v1_RETRANSMIT ||
-				       st->st_event->ev_type == EVENT_v2_RETRANSMIT))) {
-		DBG_log("state #%lu requesting %s to be deleted",
-			st->st_serialno,
-			enum_show(&timer_event_names,
-				  st->st_event->ev_type));
-	}
-	if (st->st_event->ev_type == EVENT_v1_RETRANSMIT ||
-	    st->st_event->ev_type == EVENT_v2_RETRANSMIT) {
+	dbg("state #%lu requesting %s to be deleted",
+	    st->st_serialno, enum_show(&timer_event_names,
+				       st->st_event->ev_type));
+
+	if (st->st_event->ev_type == EVENT_RETRANSMIT) {
 		clear_retransmits(st);
 	}
 	delete_pluto_event(&st->st_event);
@@ -754,21 +768,15 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 		}
 	}
 
-	if (DBGP(DBG_CONTROL) || DBGP(DBG_LIFECYCLE) ||
-	    (DBGP(DBG_RETRANSMITS) && (ev->ev_type == EVENT_v1_RETRANSMIT ||
-				       ev->ev_type == EVENT_v2_RETRANSMIT))) {
-			if (st == NULL) {
-				DBG_log("inserting event %s, timeout in %jd.%03jd seconds",
-					en,
-					deltasecs(delay),
-					(deltamillisecs(delay) % 1000));
-			} else {
-				DBG_log("inserting event %s, timeout in %jd.%03jd seconds for #%lu",
-					en,
-					deltasecs(delay),
-					(deltamillisecs(delay) % 1000),
-					ev->ev_state->st_serialno);
-			}
+	if (st == NULL) {
+		dbg("inserting event %s, timeout in %jd.%03jd seconds",
+		    en, deltasecs(delay),
+		    (deltamillisecs(delay) % 1000));
+	} else {
+		dbg("inserting event %s, timeout in %jd.%03jd seconds for #%lu",
+		    en, deltasecs(delay),
+		    (deltamillisecs(delay) % 1000),
+		    ev->ev_state->st_serialno);
 	}
 
 	timer_private_pluto_event_new(&ev->ev,

@@ -15,6 +15,7 @@
  */
 
 #ifndef IKE_SPI_H
+#define IKE_SPI_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -22,33 +23,43 @@
 #include "ietf_constants.h"	/* for IKE_SA_SPI_SIZE */
 #include "ip_address.h"
 
-struct ike_sa;
-
-/*
- * New and old.
- *
- * Switching from spi[IKE_SA_SPI_SIZE] to ike_spi_t will take time as
- * it churns the code.  First with a cookie->ike_spi rename and second
- * with a switch to an explicit reference parameter (old code worked
- * without '&' because parameter was passed by array reference).
- */
+struct state;
 
 typedef struct {
-	uint8_t ike_spi[IKE_SA_SPI_SIZE];
+	uint8_t bytes[IKE_SA_SPI_SIZE];
 } ike_spi_t;
+
+typedef struct {
+	ike_spi_t initiator;
+	ike_spi_t responder;
+} ike_spis_t;
+
 extern const ike_spi_t zero_ike_spi;
 bool ike_spi_is_zero(const ike_spi_t *ike_spi);
+bool ike_spi_eq(const ike_spi_t *lhs, const ike_spi_t *rhs);
+
+/*
+ * Need to handle two cases:
+ *
+ * - new IKE SA - and ST is the IKE SA
+ *
+ * - rekeying old IKE SA - and ST has not yet been emancipated so it
+ *   still looks like a child
+ */
+
+void fill_ike_initiator_spi(struct state *st);
+void fill_ike_responder_spi(struct state *st, const ip_address *addr);
+
+ike_spi_t ike_initiator_spi(void);
+ike_spi_t ike_responder_spi(const ip_address *addr);
+
+void refresh_ike_spi_secret(void);
+
+/*
+ * Old; being deleted.
+ */
 
 extern const uint8_t zero_cookie[IKE_SA_SPI_SIZE]; /* use zero_ike_spi */
 bool is_zero_cookie(const uint8_t ike_spi[IKE_SA_SPI_SIZE]); /* use ike_spi_is_zero() */
-
-/*
- * Since these work on IKE SA's they take that as a parameter.
- */
-
-void fill_ike_initiator_spi(struct ike_sa *ike);
-void fill_ike_responder_spi(struct ike_sa *ike, const ip_address *addr);
-
-void refresh_ike_spi_secret(void);
 
 #endif

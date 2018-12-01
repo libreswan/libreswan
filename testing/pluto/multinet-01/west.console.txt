@@ -219,7 +219,7 @@ west #
 000 "westnet-eastnet-subnets/2x2":   newest ISAKMP SA: #1; newest IPsec SA: #0;
 000 "westnet-eastnet-subnets/2x2":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/2x2":   IKE algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
-000 #1: "westnet-eastnet-subnets/2x2":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #1: "westnet-eastnet-subnets/2x2":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 west #
  echo done
 done

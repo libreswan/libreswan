@@ -27,7 +27,7 @@ west #
 133 "replay" #1: initiate
 133 "replay" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "replay" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "replay" #2: AUTH response contained the error notification NO_PROPOSAL_CHOSEN
+002 "replay" #2: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
 000 "replay" #2: scheduling retry attempt 1 of an unlimited number, but releasing whack
 west #
  echo done

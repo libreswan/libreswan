@@ -367,8 +367,8 @@ static const char *const exchange_name_doi[] = {
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
 static const char *const exchange_name_ikev2[] = {
-	"ISAKMP_v2_SA_INIT", /* RFC 7296 */
-	"ISAKMP_v2_AUTH",
+	"ISAKMP_v2_IKE_SA_INIT", /* RFC 7296 */
+	"ISAKMP_v2_IKE_AUTH",
 	"ISAKMP_v2_CREATE_CHILD_SA",
 	"ISAKMP_v2_INFORMATIONAL",
 	"ISAKMP_v2_IKE_SESSION_RESUME", /* RFC 5753 */
@@ -409,7 +409,7 @@ enum_names ikev1_exchange_names = {
 };
 
 enum_names ikev2_exchange_names = {
-	ISAKMP_v2_SA_INIT,
+	ISAKMP_v2_IKE_SA_INIT,
 	ISAKMP_v2_IKE_SESSION_RESUME,
 	ARRAY_REF(exchange_name_ikev2),
 	"ISAKMP_v2_", /* prefix */
@@ -2038,6 +2038,24 @@ enum_names ikev2_ppk_id_type_names = {
 	NULL
 };
 
+/* IKEv2 Redirect Mechanism - RFC 5685 */
+static const char *const ikev2_redirect_gw_name[] = {
+	/* 0 - Reserved */
+	"GW_IPv4",
+	"GW_IPv6",
+	"GW_FQDN",
+	/* 4 - 240	Unassigned */
+	/* 241 - 255	Private Use */
+};
+
+enum_names ikev2_redirect_gw_names = {
+	GW_IPV4,
+	GW_FQDN,
+	ARRAY_REF(ikev2_redirect_gw_name),
+	"GW_",	/* prefix */
+	NULL
+};
+
 /* magic SPI values (specific to Libreswan: see <libreswan.h>) */
 static const char *const spi_name[] = {
 	"%pass",
@@ -2420,6 +2438,7 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_attr_descs,
 	&pkk_names,
 	&ikev2_ppk_id_type_names,
+	&ikev2_redirect_gw_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)

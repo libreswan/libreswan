@@ -91,6 +91,7 @@
 bool crl_strict = FALSE;
 bool ocsp_strict = FALSE;
 bool ocsp_enable = FALSE;
+bool ocsp_post = FALSE;
 char *curl_iface = NULL;
 long curl_timeout = -1;
 
@@ -212,7 +213,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		if (a.ptr != NULL) {
 			char abuf[ASN1_BUF_LEN];
 			dntoa(abuf, ASN1_BUF_LEN, a);
-	    		DBG_log("%s: trustee A = '%s'", __FUNCTION__, abuf);
+	    		DBG_log("%s: trustee A = '%s'", __func__, abuf);
 		}
 	});
 
@@ -220,7 +221,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		if (b.ptr != NULL) {
 			char bbuf[ASN1_BUF_LEN];
 			dntoa(bbuf, ASN1_BUF_LEN, b);
-	    		DBG_log("%s: trustor B = '%s'", __FUNCTION__, bbuf);
+	    		DBG_log("%s: trustor B = '%s'", __func__, bbuf);
 		}
 	});
 
@@ -276,7 +277,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 			/* we have a match: exit the loop */
 			DBG(DBG_X509 | DBG_CONTROLMORE,
 			    DBG_log("%s: A is a subordinate of B",
-				    __FUNCTION__));
+				    __func__));
 			break;
 		}
 
@@ -288,7 +289,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 	DBG(DBG_X509 | DBG_CONTROLMORE,
 		DBG_log("%s: returning %s at pathlen %d",
-			__FUNCTION__,
+			__func__,
 			match ? "trusted" : "untrusted",
 			*pathlen));
 
@@ -463,7 +464,7 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 				alloc_thing(generalName_t,
 					    "get_pluto_gn_from_nss_cert: converted gn");
 			DBG(DBG_X509, DBG_log("%s: allocated pluto_gn %p",
-						__FUNCTION__, pluto_gn));
+						__func__, pluto_gn));
 			same_nss_gn_as_pluto_gn(cur_nss_gn, pluto_gn);
 			pluto_gn->next = pgn_list;
 			pgn_list = pluto_gn;
@@ -552,7 +553,7 @@ void add_pubkey_from_nss_cert(const struct id *keyid, CERTCertificate *cert)
 {
 	struct pubkey *pk = create_cert_subjectdn_pubkey(cert);
 	if (pk == NULL) {
-		DBGF(DBG_X509, "failed to create subjectdn_pubkey from cert");
+		dbg("failed to create subjectdn_pubkey from cert");
 		return;
 	}
 
@@ -644,7 +645,7 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 				       CERTCertificate *cert)
 {
 	if (dn == NULL) {
-		DBG(DBG_X509, DBG_log("%s invalid use", __FUNCTION__));
+		DBG(DBG_X509, DBG_log("%s invalid use", __func__));
 		return FALSE;
 	}
 
@@ -688,6 +689,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 
 	rev_opts[RO_OCSP] = ocsp_enable;
 	rev_opts[RO_OCSP_S] = ocsp_strict;
+	rev_opts[RO_OCSP_P] = ocsp_post;
 	rev_opts[RO_CRL_S] = crl_strict;
 
 	CERTCertificate *end_cert = NULL;
@@ -819,7 +821,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 		if (find_fetch_dn(&fdn, c, end_cert)) {
 			add_crl_fetch_requests(crl_fetch_request(&fdn, end_cert_dp, NULL));
 		}
-		DBGF(DBG_X509, "releasing end_cert_dp sent to crl fetch");
+		dbg("releasing end_cert_dp sent to crl fetch");
 		free_generalNames(end_cert_dp, false/*shallow*/);
 	}
 #endif
@@ -860,7 +862,7 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 	}
 
 	/* accumulate the known certificates */
-	DBGF(DBG_X509, "checking for known CERT payloads");
+	dbg("checking for known CERT payloads");
 	struct cert_payload *certs = alloc_things(struct cert_payload,
 						  nr_cert_payloads,
 						  "cert payloads");
@@ -880,7 +882,7 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 			loglog(RC_LOG_SERIOUS, "ignoring certificate with unknown type %d",
 			       cert_type);
 		} else {
-			DBGF(DBG_X509, "saving certificate of type '%s' in %d",
+			dbg("saving certificate of type '%s' in %d",
 			     cert_name, nr_certs);
 			certs[nr_certs++] = (struct cert_payload) {
 				.type = cert_type,
@@ -893,12 +895,12 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 	/* Process the known certificates */
 	lsw_cert_ret ret = LSW_CERT_NONE;
 	if (nr_certs > 0) {
-		DBGF(DBG_X509, "CERT payloads found: %d; calling pluto_process_certs()",
+		dbg("CERT payloads found: %d; calling pluto_process_certs()",
 		     nr_certs);
 		ret = pluto_process_certs(st, certs, nr_certs);
 		switch (ret) {
 		case LSW_CERT_NONE:
-			DBGF(DBG_X509, "X509: all certs discarded");
+			dbg("X509: all certs discarded");
 			break;
 		case LSW_CERT_BAD:
 			libreswan_log("X509: Certificate rejected for this connection");
@@ -948,7 +950,9 @@ void ikev1_decode_cr(struct msg_digest *md)
 		ca_name.len = pbs_left(&p->pbs);
 		ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
 
-		DBG_cond_dump_chunk(DBG_X509, "CR", ca_name);
+		if (DBGP(DBG_MASK)) {
+			DBG_dump_chunk("CR", ca_name);
+		}
 
 		if (cr->isacr_type == CERT_X509_SIGNATURE) {
 			if (ca_name.len > 0) {
@@ -1003,7 +1007,9 @@ void ikev2_decode_cr(struct msg_digest *md)
 
 			ca_name.len = pbs_left(&p->pbs);
 			ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
-			DBG_cond_dump_chunk(DBG_X509, "CERT_X509_SIGNATURE CR:", ca_name);
+			if (DBGP(DBG_MASK)) {
+				DBG_dump_chunk("CERT_X509_SIGNATURE CR:", ca_name);
+			}
 
 			if (ca_name.len > 0) {
 				generalName_t *gn;
@@ -1633,7 +1639,7 @@ static void crl_detail_list(void)
 			crl_detail_to_whacklog(&crl_node->crl->crl);
 		}
 	}
-	DBGF(DBG_X509, "releasing crl list in %s", __func__);
+	dbg("releasing crl list in %s", __func__);
 	PORT_FreeArena(crl_list->arena, PR_FALSE);
 }
 

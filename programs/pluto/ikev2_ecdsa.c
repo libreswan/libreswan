@@ -339,7 +339,7 @@ static err_t try_ECDSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
 		return "1" "NSS error: Not able to verify";
 	}
 
-	DBGF(DBG_CONTROL, "NSS: verified signature");
+	dbg("NSS: verified signature");
 
 	SECITEM_FreeItem(raw_signature, PR_TRUE);
 	unreference_key(&st->st_peer_pubkey);

@@ -59,8 +59,8 @@ west #
 006 #4: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  ipsec status | grep "STATE_"
-000 #3: "west":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle;
-000 #4: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#3; idle;
+000 #3: "west":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; idle;
+000 #4: "west":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
 west #
 west #
  ../bin/check-for-core.sh
