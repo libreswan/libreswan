@@ -4682,3 +4682,28 @@ uint32_t calculate_sa_prio(const struct connection *c)
 		c->name, prio));
 	return prio;
 }
+
+/*
+ * If the connection contains a newer SA, return it.
+ */
+so_serial_t get_newer_sa_from_connection(struct state *st)
+{
+	struct connection *c = st->st_connection;
+	so_serial_t newest;
+
+	if (IS_IKE_SA(st)) {
+		newest = c->newest_isakmp_sa;
+		dbg("picked newest_isakmp_sa #%lu for #%lu",
+		    newest, st->st_serialno);
+	} else {
+		newest = c->newest_ipsec_sa;
+		dbg("picked newest_ipsec_sa #%lu for #%lu",
+		    newest, st->st_serialno);
+	}
+
+	if (newest != SOS_NOBODY && newest > st->st_serialno) {
+		return newest;
+	} else {
+		return SOS_NOBODY;
+	}
+}

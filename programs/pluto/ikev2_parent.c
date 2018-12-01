@@ -6163,3 +6163,111 @@ void v2_schedule_replace_event(struct state *st)
 	delete_event(st);
 	event_schedule(kind, deltatime(delay), st);
 }
+
+static void ikev2_log_initiate_child_fail(const struct state *st)
+{
+	const struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+	if (pst == NULL)
+		return;
+
+	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
+
+	if (st->st_state == STATE_V2_REKEY_IKE_I0 ||
+	    st->st_state == STATE_V2_REKEY_CHILD_I0 ||
+	    st->st_state == STATE_V2_CREATE_I0) {
+		if (unack < st->st_connection->ike_window) {
+			loglog(RC_LOG_SERIOUS, "expiring %s state. Possible message id dealock? parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
+					st->st_state_name,
+					pst->st_serialno, unack,
+					pst->st_msgid_nextuse,
+					pst->st_connection->ike_window);
+		}
+	}
+}
+
+static void dbg_sa_expired(struct state *st)
+{
+	if (DBGP(DBG_MASK)) {
+		struct connection *c = st->st_connection;
+		char story[80] = "";
+		if (IS_CHILD_SA(st) && st->st_ikev2 &&
+		    v2_only_replace_sa_when_used(st)) {
+			deltatime_t last_used_age;
+			/* why do we only care about inbound traffic? */
+			/* because we cannot tell the difference sending out to a dead SA? */
+			if (get_sa_info(st, TRUE, &last_used_age)) {
+				snprintf(story, sizeof(story),
+					 " last used %jds ago < %jd ",
+					 deltasecs(last_used_age),
+					 deltasecs(c->sa_rekey_margin));
+			} else {
+				snprintf(story, sizeof(story),
+					" unknown usage - get_sa_info() failed");
+			}
+		}
+		DBG_log("replacing stale %s SA%s",
+			IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+			story);
+	}
+}
+
+void v2_event_sa_replace(struct state *st)
+{
+	struct connection *c = st->st_connection;
+	const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
+
+	so_serial_t newer_sa = get_newer_sa_from_connection(st);
+	if (newer_sa != SOS_NOBODY) {
+		/* not very interesting: no need to replace */
+		dbg("not replacing stale %s SA #%lu; newer #%lu will do",
+		    satype, st->st_serialno, newer_sa);
+	} else if (v2_only_replace_sa_when_used(st)) {
+		/* see of (most recent) child is busy */
+		struct state *cst;
+		struct ike_sa *ike;
+		if (IS_IKE_SA(st)) {
+			ike = pexpect_ike_sa(st);
+			cst = state_with_serialno(c->newest_ipsec_sa);
+			if (cst == NULL) {
+				dbg("can't check usage as IKE SA #%lu has no newest child",
+				    ike->sa.st_serialno);
+				return;
+			}
+		} else {
+			cst = st;
+			ike = ike_sa(st);
+		}
+		dbg("#%lu check last used on newest CHILD SA #%lu",
+		    ike->sa.st_serialno, cst->st_serialno);
+		deltatime_t last_used_age;
+		if (get_sa_info(cst, TRUE, &last_used_age) &&
+		    deltaless(c->sa_rekey_margin, last_used_age)) {
+			/* we observed no traffic, let IPSEC SA and IKE SA expire */
+			dbg("not replacing IPSEC SA #%lu as last used %jds ago > %jd; let it and the parent #%lu expire",
+			    cst->st_serialno,
+			    deltasecs(last_used_age),
+			    deltasecs(c->sa_rekey_margin),
+			    ike->sa.st_serialno);
+			if (st == &ike->sa) {
+				/* XXX: why conditional? */
+				delete_liveness_event(cst);
+				event_force(EVENT_SA_EXPIRE, cst);
+			}
+			event_force(EVENT_SA_EXPIRE, &ike->sa);
+			return;
+		} else {
+			dbg_sa_expired(st);
+			ipsecdoi_replace(st, 1);
+		}
+	} else {
+		ikev2_log_initiate_child_fail(st);
+		dbg_sa_expired(st);
+		ipsecdoi_replace(st, 1);
+	}
+
+	delete_liveness_event(st);
+	delete_dpd_event(st);
+	event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
+}
+

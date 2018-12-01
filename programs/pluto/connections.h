@@ -580,4 +580,6 @@ extern bool idr_wildmatch(const struct connection *c, const struct id *b);
 
 extern uint32_t calculate_sa_prio(const struct connection *c);
 
+so_serial_t get_newer_sa_from_connection(struct state *st);
+
 #endif
