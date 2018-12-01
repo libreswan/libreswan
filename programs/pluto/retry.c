@@ -117,17 +117,6 @@ void retransmit_v1_msg(struct state *st)
 			loglog(RC_COMMENT, "%s", story);
 		}
 
-		if (try % 3 == 0 &&
-		    LIN(POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE,
-			c->policy)) {
-			/*
-			 * so, let's retry with IKEv2, alternating
-			 * every three messages
-			 */
-			c->failed_ikev2 = FALSE;
-			loglog(RC_COMMENT,
-			       "next attempt will be IKEv2");
-		}
 		ipsecdoi_replace(st, try);
 	}
 
@@ -217,14 +206,6 @@ void retransmit_v2_msg(struct state *st)
 			libreswan_log("%s", story);
 		}
 
-		if (try % 3 == 0 && (c->policy & POLICY_IKEV1_ALLOW)) {
-			/*
-			 * so, let's retry with IKEv1, alternating every
-			 * three messages
-			 */
-			c->failed_ikev2 = TRUE;
-			loglog(RC_COMMENT, "next attempt will be IKEv1");
-		}
 		ipsecdoi_replace(st, try);
 	} else {
 		DBG(DBG_CONTROL|DBG_RETRANSMITS,

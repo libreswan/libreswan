@@ -1748,11 +1748,6 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	if (c->policy & POLICY_IKEV2_ALLOW) {
-		if (!out_vid(ISAKMP_NEXT_NONE, &rbody, VID_MISC_IKEv2))
-			return STF_INTERNAL_ERROR;
-	}
-
 	/* encrypt message, sans fixed part of header */
 
 	if (!ikev1_encrypt_message(&rbody, st))
@@ -1850,27 +1845,6 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	set_ph1_iv_from_new(st);
 
 	update_iv(st); /* finalize our Phase 1 IV */
-
-	if (md->ikev2) {
-		/*
-		 * We cannot use POLICY_IKEV2_ALLOW here, since this will
-		 * cause two IKEv2 capable but not ikev2= configured endpoints
-		 * to falsely detect a bid down attack.
-		 * Also, only the side that proposed IKEv2 can figure out there
-		 * was a bid down attack to begin with. The side that did not propose
-		 * cannot distinguish attack from regular ikev1 operation.
-		 */
-		if (st->st_connection->policy & POLICY_IKEV2_PROPOSE) {
-			libreswan_log(
-				"Bid-down to IKEv1 attack detected, attempting to rekey connection with IKEv2");
-			st->st_connection->failed_ikev2 = FALSE;
-
-			/* schedule an event to do this as soon as possible */
-			md->event_already_set = TRUE;
-			st->st_rekeytov2 = TRUE;
-			event_force(EVENT_SA_REPLACE, st);
-		}
-	}
 
 	return STF_OK;
 }

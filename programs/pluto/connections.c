@@ -1324,15 +1324,15 @@ void add_connection(const struct whack_message *wm)
 		}
 	}
 
-	if ((wm->policy & (POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW)) == POLICY_IKEV2_PROPOSE) {
-		loglog(RC_FATAL, "Failed to add connection \"%s\": cannot insist on IKEv2 while forbidding it",
+	if (LIN(POLICY_IKEV2_ALLOW, wm->policy) && LIN(POLICY_IKEV1_ALLOW, wm->policy)) {
+		loglog(RC_FATAL, "Failed to add connection \"%s\": connection can only be ikev2=yes or ikev2=no",
 			wm->name);
 		return;
 	}
 
 	if (wm->policy & POLICY_OPPORTUNISTIC) {
-		if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
-			loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2=insist",
+		if ((wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
+			loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2=yes",
 				wm->name);
 			return;
 		}
@@ -1385,7 +1385,7 @@ void add_connection(const struct whack_message *wm)
 	} else {
 		/* reject all bad combinations of authby with leftauth=/rightauth= */
 		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
-			if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
+			if ((wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
 				loglog(RC_FATAL,
 					"Failed to add connection \"%s\": leftauth= and rightauth= require ikev2=insist",
 						wm->name);
@@ -1576,7 +1576,7 @@ void add_connection(const struct whack_message *wm)
 				 * magic into pluto proper and instead pass a
 				 * simple boolean.
 				 */
-				.ikev2 = LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW, wm->policy),
+				.ikev2 = LIN(POLICY_IKEV2_ALLOW, wm->policy),
 				.alg_is_ok = ike_alg_is_ike,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.warning = libreswan_log,
@@ -1627,7 +1627,7 @@ void add_connection(const struct whack_message *wm)
 				 * magic into pluto proper and instead pass a
 				 * simple boolean.
 				 */
-				.ikev2 = LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW, wm->policy),
+				.ikev2 = LIN(POLICY_IKEV2_ALLOW, wm->policy),
 				.alg_is_ok = kernel_alg_is_ok,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.warning = libreswan_log,
@@ -2902,10 +2902,12 @@ stf_status ikev2_find_host_connection(struct connection **cp,
 			return STF_DROP; /* technically, this violates the IKEv2 spec that states we must answer */
 		}
 		/* only allow opportunistic for IKEv2 connections */
-		if (LIN(POLICY_OPPORTUNISTIC | POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW, c->policy)) {
+		if (LIN(POLICY_OPPORTUNISTIC | POLICY_IKEV2_ALLOW, c->policy)) {
+			DBG(DBG_CONTROL, DBG_log("oppo_instantiate"));
 			c = oppo_instantiate(c, him, &c->spd.that.id, &c->spd.this.host_addr, him);
 		} else {
 			/* regular roadwarrior */
+			DBG(DBG_CONTROL, DBG_log("rw_instantiate"));
 			c = rw_instantiate(c, him, NULL, NULL);
 		}
 	} else {

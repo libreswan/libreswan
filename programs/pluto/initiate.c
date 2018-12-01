@@ -279,7 +279,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 		}
 	}
 
-	if (LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
+	if (LIN(POLICY_IKEV2_ALLOW | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
 		c->kind == CK_TEMPLATE) {
 			c = instantiate(c, NULL, NULL);
 	}
