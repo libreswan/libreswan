@@ -202,8 +202,7 @@ extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
 void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md);
 void v2_msgid_update_counters(struct state *st, struct msg_digest *md);
 
-extern deltatime_t ikev2_replace_delay(struct state *st,
-				       enum event_type *pkind);
+void v2_schedule_replace_event(struct state *st);
 
 stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 		pb_stream *outpbs);

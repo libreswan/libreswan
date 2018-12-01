@@ -2594,132 +2594,6 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 	}
 }
 
-/*
- * Only replace the SA when it's been in use (checking for in-use is a
- * separate operation).
- */
-bool v2_only_replace_sa_when_used(struct state *st)
-{
-	passert(st->st_ikev2);
-	struct connection *c = st->st_connection;
-	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
-		/* this is an opportunistic thing */
-		return false;
-	}
-	if (st->st_connection->spd.that.has_lease) {
-		/* don't hang onto a lease; why? */
-		return false;
-	}
-	/* need to have been established */
-	return (IS_PARENT_SA_ESTABLISHED(st) ||
-		IS_CHILD_SA_ESTABLISHED(st));
-}
-
-deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind)
-{
-	enum event_type kind = *pkind;
-	pexpect(kind == EVENT_SA_REPLACE);
-	intmax_t delay;   /* unwrapped deltatime_t in seconds */
-	struct connection *c = st->st_connection;
-
-	if (IS_PARENT_SA(st)) {
-		/*
-		 * workaround for child appearing as parent
-		 *
-		 * Note: we will defer to the "negotiated" (dictated)
-		 * lifetime if we are POLICY_DONT_REKEY.  This allows
-		 * the other side to dictate a time we would not
-		 * otherwise accept but it prevents us from having to
-		 * initiate rekeying.  The negative consequences seem
-		 * minor.
-		 *
-		 * We cleanup halfopen IKE SAs fast, could be spoofed
-		 * packets
-		 */
-		if (IS_IKE_SA_ESTABLISHED(st)) {
-			delay = deltasecs(c->sa_ike_life_seconds);
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estblished ike_life:%jd", (intmax_t) delay));
-		} else {
-			delay = PLUTO_HALFOPEN_SA_LIFE;
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ike_life:%jd", (intmax_t) delay));
-		}
-	} else {
-		/* Delay is what the user said, no negotiation. */
-		delay = deltasecs(c->sa_ipsec_life_seconds);
-		DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up salifetime=%jd", (intmax_t) delay));
-	}
-
-	/* By default, we plan to rekey.
-	 *
-	 * If there isn't enough time to rekey, plan to
-	 * expire.
-	 *
-	 * If we are --dontrekey, a lot more rules apply.
-	 * If we are the Initiator, use REPLACE_IF_USED.
-	 * If we are the Responder, and the dictated time
-	 * was unacceptable (too large), plan to REPLACE
-	 * (the only way to ratchet down the time).
-	 * If we are the Responder, and the dictated time
-	 * is acceptable, plan to EXPIRE.
-	 *
-	 * Important policy lies buried here.
-	 * For example, we favour the initiator over the
-	 * responder by making the initiator start rekeying
-	 * sooner.  Also, fuzz is only added to the
-	 * initiator's margin.
-	 *
-	 * Note: for ISAKMP SA, we let the negotiated
-	 * time stand (implemented by earlier logic).
-	 */
-	if (kind != EVENT_SA_EXPIRE) {
-		/* unwrapped deltatime_t in seconds */
-		intmax_t marg = deltasecs(c->sa_rekey_margin);
-
-		switch (st->st_sa_role) {
-		case SA_INITIATOR:
-			marg += marg *
-				c->sa_rekey_fuzz / 100.E0 *
-				(rand() / (RAND_MAX + 1.E0));
-			break;
-		case SA_RESPONDER:
-			marg /= 2;
-			break;
-		default:
-			bad_case(st->st_sa_role);
-		}
-
-		if (delay > marg) {
-			delay -= marg;
-			st->st_replace_margin = deltatime(marg);
-		} else {
-			*pkind = EVENT_SA_EXPIRE;
-		}
-
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			if (st->st_connection->spd.that.has_lease) {
-				*pkind = EVENT_SA_EXPIRE;
-			} else if (v2_only_replace_sa_when_used(st)) {
-				/* XXX: is this even needed? */
-				*pkind = EVENT_SA_REPLACE;
-				pexpect(*pkind == kind);
-			}
-		} else if (c->policy & POLICY_DONT_REKEY) {
-			*pkind = EVENT_SA_EXPIRE;
-		}
-	}
-	LSWDBGP(DBG_MASK, buf) {
-		lswlogf(buf, "#%lu replace event %s in %ju seconds with margin %ju seconds",
-			st->st_serialno,
-			enum_short_name(&timer_event_names, *pkind),
-			delay, deltasecs(st->st_replace_margin));
-		if (*pkind != kind) {
-			lswlogf(buf, " (original event was %s)",
-				enum_short_name(&timer_event_names, kind));
-		}
-	}
-	return deltatime(delay);
-}
-
 void log_ipsec_sa_established(const char *m, const struct state *st)
 {
 	/* log Child SA Traffic Selector details for admin's pleasure */
@@ -2923,15 +2797,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 			break;
 
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
-		{
-			deltatime_t delay = ikev2_replace_delay(st, &kind);
-			DBG(DBG_LIFECYCLE,
-			    DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %jdms",
-				    IS_IKE_SA(st) ? "parent" : "child", deltamillisecs(delay)));
-			delete_event(st);
-			event_schedule(kind, delay, st);
+			v2_schedule_replace_event(st);
 			break;
-		}
 
 		case EVENT_SO_DISCARD:
 			delete_event(st);

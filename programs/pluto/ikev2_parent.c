@@ -309,8 +309,14 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	 * taking it current from current state I2/R1. The parent has advanced but not the svm???
 	 * Ideally this should be timeout of I3/R2 state svm. how to find that svm
 	 * ??? I wonder what this comment means?  Needs rewording.
+	 *
+	 * XXX: .timeout_event is tied to a state transition.  Does
+	 * that mean it applies to the transition or to the final
+	 * state?  It is kind of treated as all three (the third case
+	 * is where a transition gets shared between the parent and
+	 * child).
 	 */
-	enum event_type kind = svm->timeout_event;
+	pexpect(svm->timeout_event == EVENT_SA_REPLACE);
 
 	/*
 	 * update the parent state to make sure that it knows we have
@@ -318,9 +324,7 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	 */
 	change_state(&ike->sa, new_state);
 	c->newest_isakmp_sa = ike->sa.st_serialno;
-	deltatime_t delay = ikev2_replace_delay(&ike->sa, &kind);
-	delete_event(&ike->sa);
-	event_schedule(kind, delay, &ike->sa);
+	v2_schedule_replace_event(&ike->sa);
 	ike->sa.st_viable_parent = TRUE;
 }
 
@@ -6073,4 +6077,89 @@ void ikev2_addr_change(struct state *st)
 	libreswan_log("without NETKEY we cannot ikev2_addr_change()");
 
 #endif
+}
+
+/*
+ * Only replace the SA when it's been in use (checking for in-use is a
+ * separate operation).
+ */
+bool v2_only_replace_sa_when_used(struct state *st)
+{
+	passert(st->st_ikev2);
+	struct connection *c = st->st_connection;
+	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
+		/* this is an opportunistic thing */
+		return false;
+	}
+	if (st->st_connection->spd.that.has_lease) {
+		/* don't hang onto a lease; why? */
+		return false;
+	}
+	/* need to have been established */
+	return (IS_PARENT_SA_ESTABLISHED(st) ||
+		IS_CHILD_SA_ESTABLISHED(st));
+}
+
+void v2_schedule_replace_event(struct state *st)
+{
+	struct connection *c = st->st_connection;
+
+	/* unwrapped deltatime_t in seconds */
+	intmax_t delay = deltasecs(IS_PARENT_SA(st) ? c->sa_ike_life_seconds
+				   : c->sa_ipsec_life_seconds);
+
+	/*
+	 * Important policy lies buried here.  For example, we favour
+	 * the initiator over the responder by making the initiator
+	 * start rekeying sooner.  Also, fuzz is only added to the
+	 * initiator's margin.
+	 */
+
+	enum event_type kind;
+	if ((c->policy & POLICY_OPPORTUNISTIC) &&
+	    st->st_connection->spd.that.has_lease) {
+		kind = EVENT_SA_EXPIRE;
+		dbg("#%lu will expire in %jd seconds (opportunistic with lease)",
+		    st->st_serialno, delay);
+	} else if (c->policy & POLICY_DONT_REKEY) {
+		kind = EVENT_SA_EXPIRE;
+		dbg("#%lu will expire in %jd seconds (don't rekey)",
+		    st->st_serialno, delay);
+	} else {
+		/* unwrapped deltatime_t in seconds */
+		intmax_t marg = deltasecs(c->sa_rekey_margin);
+
+		switch (st->st_sa_role) {
+		case SA_INITIATOR:
+			marg += marg *
+				c->sa_rekey_fuzz / 100.E0 *
+				(rand() / (RAND_MAX + 1.E0));
+			break;
+		case SA_RESPONDER:
+			marg /= 2;
+			break;
+		default:
+			bad_case(st->st_sa_role);
+		}
+
+		if (delay > marg) {
+			delay -= marg;
+			kind = EVENT_SA_REPLACE;
+			dbg("#%lu will start replacing in %jd seconds with margin of %jd seconds",
+			    st->st_serialno, delay, marg);
+		} else {
+			/*
+			 * XXX: wrong!  Should still be a replace but
+			 * with no margin.
+			 */
+			marg = 0;
+			kind = EVENT_SA_EXPIRE;
+			dbg("#%lu will expire in %jd seconds (margin to small for replace)",
+			    st->st_serialno, delay);
+		}
+		st->st_replace_margin = deltatime(marg);
+	}
+
+	delete_event(st);
+	event_schedule(kind, deltatime(delay), st);
 }
