@@ -411,7 +411,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2_parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  .timeout_event = EVENT_v2_RESPONDER_TIMEOUT, },
+	  .timeout_event = EVENT_SO_DISCARD, },
 
 	/* STATE_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -2933,7 +2933,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 			break;
 		}
 
-		case EVENT_v2_RESPONDER_TIMEOUT:
+		case EVENT_SO_DISCARD:
 			delete_event(st);
 			event_schedule_s(kind, MAXIMUM_RESPONDER_WAIT, st);
 			break;
@@ -3219,8 +3219,10 @@ void complete_v2_state_transition(struct state *st,
 					if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
 						delete_state(st);
 					} else {
+						dbg("forcing #%lu to a discard event",
+						    st->st_serialno);
 						delete_event(st);
-						event_schedule_s(EVENT_v2_RESPONDER_TIMEOUT,
+						event_schedule_s(EVENT_SO_DISCARD,
 								 MAXIMUM_RESPONDER_WAIT,
 								 st);
 					}

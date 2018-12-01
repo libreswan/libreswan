@@ -174,7 +174,6 @@ enum event_type {
 	EVENT_CRYPTO_TIMEOUT,		/* v1/v2 after some time, give up on crypto helper */
 	EVENT_PAM_TIMEOUT,		/* v1/v2 give up on PAM helper */
 
-	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */
 	EVENT_v2_INITIATE_CHILD,	/* initiate a IPsec child */

@@ -87,4 +87,8 @@ struct timeval deltatimeval(deltatime_t);
 /* output as "smart" seconds */
 size_t lswlog_deltatime(struct lswlog *buf, deltatime_t d);
 
+/* But what about -ve? */
+#define PRI_DELTATIME "%jd.%03jd"
+#define pri_deltatime(D) (deltamillisecs(D) / 1000), (deltamillisecs(D) % 1000)
+
 #endif

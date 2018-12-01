@@ -356,7 +356,6 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_RETRANSMIT:
 	case EVENT_SA_REPLACE:
 	case EVENT_v1_SA_REPLACE_IF_USED:
-	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_v2_REDIRECT:
 	case EVENT_SA_EXPIRE:
 	case EVENT_SO_DISCARD:
@@ -571,7 +570,6 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		}
 		break;
 
-	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_SA_EXPIRE:
 	{
 		passert(st != NULL);
@@ -615,27 +613,30 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 	}
 
-	case EVENT_v2_REDIRECT:
-	{
-		initiate_redirect(st);
-		break;
-	}
-
 	case EVENT_SO_DISCARD:
-	{
-		passert(st != NULL);
-		struct connection *c = st->st_connection;
 		/*
-		 * If there is a screw-up because code forgot to
-		 * update the default event, this log message will be
-		 * wrong.  See hack in insert_state().
+		 * The state failed to complete within a reasonable
+		 * time, or the state failed but was left to live for
+		 * a while so re-transmits could work.  Either way,
+		 * time to delete it.
 		 */
-		libreswan_log("deleting incomplete state after %jd.%03jd seconds",
-			      deltasecs(c->r_timeout),
-			      deltamillisecs(c->r_timeout) % 1000);
+		passert(st != NULL);
+		deltatime_t timeout = st->st_ikev2 ? deltatime(MAXIMUM_RESPONDER_WAIT) : st->st_connection->r_timeout;
+
+		libreswan_log("deleting incomplete state after "PRI_DELTATIME" seconds",
+			      pri_deltatime(timeout));
+		/*
+		 * XXX: this is scary overkill - delete_state() likes
+		 * to resurect things and/or send messages.  What's
+		 * needed is a lower-level discard_state() that just
+		 * does its job.
+		 */
 		delete_state(st);
 		break;
-	}
+
+	case EVENT_v2_REDIRECT:
+		initiate_redirect(st);
+		break;
 
 	case EVENT_DPD:
 		dpd_event(st);
