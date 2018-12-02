@@ -174,10 +174,6 @@ conn northnet-eastnet-ipv4
 	also=northnet-ipv4
 	also=eastnet-ipv4
 
-conn rad-eastnet-fqdn-ikev2
-	also=rad-eastnet-fqdn
-	ikev2=insist
-
 conn road-eastnet
 	also=road-east-base
 	also=road-east-base-id-nss
@@ -187,10 +183,6 @@ conn rad-eastnet-fqdn
 	also=road-east-base-fqdn-default-route
 	also=road-east-base-id-nss
 	also=eastnet-ipv4
-
-conn westnet-eastnet-fqdn-ikev2
-	also=westnet-eastnet-fqdn
-	ikev2=insist
 
 conn westnet-eastnet-fqdn
 	also=west-east-base-fqdn
