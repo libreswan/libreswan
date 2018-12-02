@@ -36,7 +36,7 @@ west #
 000 "westnet-eastnet-dh15":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-dh15":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-dh15":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-dh15":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-dh15":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-dh15":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-dh15":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-dh15":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -58,7 +58,7 @@ west #
 002 "westnet-eastnet-dh15" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-dh15" #1: Authenticated using RSA
 004 "westnet-eastnet-dh15" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP3072}
-002 "westnet-eastnet-dh15" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-dh15" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "westnet-eastnet-dh15" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-dh15" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #

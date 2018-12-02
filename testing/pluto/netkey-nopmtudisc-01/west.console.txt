@@ -26,7 +26,7 @@ west #
 002 added connection description "netkey"
 west #
  ipsec auto --status | grep NOPMTUDISC
-000 "netkey":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+NOPMTUDISC+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "netkey":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+NOPMTUDISC+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 west #
  ipsec whack --impair suppress-retransmits
 west #
