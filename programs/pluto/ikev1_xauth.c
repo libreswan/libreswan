@@ -534,8 +534,8 @@ static stf_status modecfg_send_set(struct state *st)
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
-		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
@@ -630,8 +630,8 @@ stf_status xauth_send_request(struct state *st)
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
-		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
@@ -744,8 +744,8 @@ stf_status modecfg_send_request(struct state *st)
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
-		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
@@ -842,8 +842,8 @@ static stf_status xauth_send_status(struct state *st, int status)
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
-		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;

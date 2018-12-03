@@ -213,7 +213,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	st->st_try = 0;                                 /* Not our job to try again from start */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
-	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
+	st->st_ike_spis.initiator = md->hdr.isa_ike_initiator_spi;
 	fill_ike_responder_spi(st, &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
@@ -348,7 +348,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		struct isakmp_hdr hdr = md->hdr;
 
 		hdr.isa_flags = 0; /* clear reserved fields */
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 		hdr.isa_np = ISAKMP_NEXT_SA;
 
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
@@ -697,7 +697,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		struct isakmp_hdr hdr = md->hdr;
 
 		hdr.isa_flags = 0; /* clear reserved fields */
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 		hdr.isa_np = ISAKMP_NEXT_NONE,	/* rewritten */
 		hdr.isa_flags |= ISAKMP_FLAGS_v1_ENCRYPTION;
 
@@ -1142,7 +1142,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 			.isa_np = ISAKMP_NEXT_SA,
 			.isa_xchg = ISAKMP_XCHG_AGGR,
 		};
-		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
 		/* R-cookie, flags and MessageID are left zero */
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,

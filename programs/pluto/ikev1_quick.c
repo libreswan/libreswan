@@ -913,8 +913,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 			.isa_msgid = st->st_msgid,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
 		};
-		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
 			reset_cur_state();

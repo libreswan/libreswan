@@ -1074,7 +1074,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	struct state *st = new_state();
 	/* set up new state */
 	/* initialize_new_state expects valid icookie/rcookie values, so create it now */
-	memcpy(st->st_icookie, md->hdr.isa_icookie, IKE_SA_SPI_SIZE);
+	st->st_ike_spis.initiator = md->hdr.isa_ike_initiator_spi;
 	fill_ike_responder_spi(st, &md->sender);
 
 	initialize_new_state(st, c, policy, 0, null_fd);

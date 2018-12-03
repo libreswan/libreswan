@@ -148,7 +148,7 @@ void main_outI1(fd_t whack_sock,
 			.isa_np = ISAKMP_NEXT_SA,
 			.isa_xchg = ISAKMP_XCHG_IDPROT,
 		};
-		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
 		/* R-cookie, flags and MessageID are left zero */
 
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
@@ -671,7 +671,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK;
 	change_state(st, STATE_MAIN_R0);
 
-	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
+	st->st_ike_spis.initiator = md->hdr.isa_ike_initiator_spi;
 	fill_ike_responder_spi(st, &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
@@ -716,7 +716,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 		struct isakmp_hdr hdr = md->hdr;
 
 		hdr.isa_flags = 0; /* clear all flags */
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 		hdr.isa_np = ISAKMP_NEXT_SA;
 
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
@@ -1900,8 +1900,8 @@ stf_status send_isakmp_notification(struct state *st,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
 			.isa_msgid = msgid,
 		};
-		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
 		passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody));
 	}
 	/* HASH -- create and note space to be filled later */
@@ -2301,8 +2301,8 @@ void send_v1_delete(struct state *st)
 			.isa_msgid = msgid,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
 		};
-		memcpy(hdr.isa_icookie, p1st->st_icookie, COOKIE_SIZE);
-		memcpy(hdr.isa_rcookie, p1st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = p1st->st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = p1st->st_ike_spis.responder;
 		passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_pbs,
 				   &r_hdr_pbs));
 	}
