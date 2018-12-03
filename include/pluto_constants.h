@@ -164,10 +164,16 @@ enum event_type {
 	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
 	EVENT_RETRANSMIT,		/* v1/v2 retransmit IKE packet */
 
-	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
+	/*
+	 * For IKEv2 'replace' is really either a re-key a full
+	 * replace, or expire.  IKEv1 should be the same but isn't.
+	 */
+	EVENT_SA_REKEY,			/* v2 SA rekey event */
 	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
-	EVENT_v1_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
 	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
+
+	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
+	EVENT_v1_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
 	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
 	EVENT_DPD,			/* v1 dead peer detection */
 	EVENT_DPD_TIMEOUT,		/* v1 dead peer detection timeout */

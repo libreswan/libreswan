@@ -285,12 +285,7 @@ void ipsecdoi_initiate(fd_t whack_sock,
  */
 void ipsecdoi_replace(struct state *st, unsigned long try)
 {
-	if (IS_PARENT_SA_ESTABLISHED(st) &&
-	    !LIN(POLICY_REAUTH, st->st_connection->policy)) {
-		libreswan_log("initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
-		/* ??? why does this not need whack socket fd? */
-		ikev2_rekey_ike_start(st);
-	} else if (IS_IKE_SA(st)) {
+	if (IS_IKE_SA(st)) {
 		/* start from policy in connection */
 
 		struct connection *c = st->st_connection;

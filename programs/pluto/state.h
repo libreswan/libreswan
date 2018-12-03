@@ -535,6 +535,7 @@ struct state {
 	 * scratch.
 	 */
 	deltatime_t st_replace_margin;
+	monotime_t st_replace_by;
 
 	unsigned long st_outbound_count;	/* traffic through eroute */
 	monotime_t st_outbound_time;	/* time of last change to

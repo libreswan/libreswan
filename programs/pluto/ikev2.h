@@ -286,6 +286,7 @@ void lswlog_v2_stf_status(struct lswlog *buf, unsigned ret);
 struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_msgid);
 struct state *v2_child_sa_initiator_with_msgid(struct ike_sa *ike, msgid_t st_msgid);
 
+void v2_event_sa_rekey(struct state *st);
 void v2_event_sa_replace(struct state *st);
 
 #endif

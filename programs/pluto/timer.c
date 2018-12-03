@@ -279,13 +279,14 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		st->st_send_xauth_event = NULL;
 		break;
 
+	case EVENT_SA_REKEY:
+	case EVENT_SA_REPLACE:
+	case EVENT_SA_EXPIRE:
 	case EVENT_v2_SEND_NEXT_IKE:
 	case EVENT_v2_INITIATE_CHILD:
 	case EVENT_RETRANSMIT:
-	case EVENT_SA_REPLACE:
 	case EVENT_v1_SA_REPLACE_IF_USED:
 	case EVENT_v2_REDIRECT:
-	case EVENT_SA_EXPIRE:
 	case EVENT_SO_DISCARD:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_PAM_TIMEOUT:
@@ -396,6 +397,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_v2_LIVENESS:
 		liveness_check(st);
+		break;
+
+	case EVENT_SA_REKEY:
+		pexpect(st->st_ikev2);
+		v2_event_sa_rekey(st);
 		break;
 
 	case EVENT_SA_REPLACE:
