@@ -398,8 +398,10 @@ static bool v2_reject_wrong_ke_for_proposal(struct msg_digest *md,
 			      accepted_dh->common.name);
 		pstats(invalidke_sent_u, ke_group);
 		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
-		send_v2_notification_invalid_ke(md, accepted_dh);
-		pexpect(md->st == NULL);
+		/* convert group to a raw buffer */
+		uint16_t gr = htons(accepted_dh->group);
+		chunk_t nd = chunk(&gr, sizeof(gr));
+		send_v2_notification_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
 		return true;
 	} else {
 		return false;

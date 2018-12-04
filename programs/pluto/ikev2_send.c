@@ -393,21 +393,6 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	pstat(ikev2_sent_notifies_e, ntype);
 }
 
-void send_v2_notification_invalid_ke(struct msg_digest *md,
-				     const struct oakley_group_desc *group)
-{
-	DBG(DBG_CONTROL, {
-		DBG_log("sending INVALID_KE back with %s(%d)",
-			group->common.name, group->group);
-	});
-	/* convert group to a raw buffer */
-	const uint16_t gr = htons(group->group);
-	chunk_t nd;
-	setchunk(nd, (void*)&gr, sizeof(gr));
-
-	send_v2_notification_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
-}
-
 /*
  * Send an Informational Exchange announcing a deletion.
  *

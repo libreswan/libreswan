@@ -36,8 +36,6 @@ void send_v2_notification_from_state(struct state *st, struct msg_digest *md,
 void send_v2_notification_from_md(struct msg_digest *md,
 				  v2_notification_t type,
 				  const chunk_t *data);
-void send_v2_notification_invalid_ke(struct msg_digest *md,
-				     const struct oakley_group_desc *group);
 void send_v2_delete(struct state *st);
 
 extern stf_status send_v2_informational_request(const char *name,
