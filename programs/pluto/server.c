@@ -696,7 +696,7 @@ void find_ifaces(bool rm_dead)
 					ifp->ip_dev->id_rname, ifp->port);
 			ifp->pev = pluto_event_add(ifp->fd,
 					EV_READ | EV_PERSIST, comm_handle_cb,
-					ifp, NULL, ifp_str);
+					ifp, NULL, "ethX");
 			DBG_log("setup callback for interface %s fd %d",
 					ifp_str, ifp->fd);
 		}
