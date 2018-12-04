@@ -6083,7 +6083,7 @@ void ikev2_addr_change(struct state *st)
  * Only replace the SA when it's been in use (checking for in-use is a
  * separate operation).
  */
-bool v2_only_replace_sa_when_used(struct state *st)
+static bool v2_only_replace_sa_when_used(struct state *st)
 {
 	passert(st->st_ikev2);
 	struct connection *c = st->st_connection;
