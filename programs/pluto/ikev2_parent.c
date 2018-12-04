@@ -6190,16 +6190,21 @@ static void ikev2_log_initiate_child_fail(const struct state *st)
 
 	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
 
-	if (st->st_state == STATE_V2_REKEY_IKE_I0 ||
-	    st->st_state == STATE_V2_REKEY_CHILD_I0 ||
-	    st->st_state == STATE_V2_CREATE_I0) {
+	switch (st->st_state) {
+	case STATE_V2_REKEY_IKE_I0:
+	case STATE_V2_REKEY_CHILD_I0:
+	case STATE_V2_CREATE_I0:
 		if (unack < st->st_connection->ike_window) {
-			loglog(RC_LOG_SERIOUS, "expiring %s state. Possible message id dealock? parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
-					st->st_state_name,
-					pst->st_serialno, unack,
-					pst->st_msgid_nextuse,
-					pst->st_connection->ike_window);
+			loglog(RC_LOG_SERIOUS,
+				"expiring %s state. Possible Message Id deadlock?  Parent #%lu unacknowledged %u next Message Id=%u IKE exchange window %u",
+				st->st_state_name,
+				pst->st_serialno, unack,
+				pst->st_msgid_nextuse,
+				pst->st_connection->ike_window);
 		}
+		break;
+	default:
+		break;
 	}
 }
 
