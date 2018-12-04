@@ -243,7 +243,7 @@ bool ship_v2Ns(enum next_payload_types_ikev2 np,
 
 void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 				     v2_notification_t ntype,
-				     chunk_t *ndata)
+				     const chunk_t *ndata)
 {
 	passert(md != NULL); /* always a reply */
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
@@ -331,7 +331,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 
 void send_v2_notification_from_md(struct msg_digest *md,
 				  v2_notification_t ntype,
-				  chunk_t *ndata)
+				  const chunk_t *ndata)
 {
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
 

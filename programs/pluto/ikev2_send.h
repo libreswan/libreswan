@@ -32,10 +32,10 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where);
 
 void send_v2_notification_from_state(struct state *st, struct msg_digest *md,
 				     v2_notification_t type,
-				     chunk_t *data);
+				     const chunk_t *data);
 void send_v2_notification_from_md(struct msg_digest *md,
 				  v2_notification_t type,
-				  chunk_t *data);
+				  const chunk_t *data);
 void send_v2_notification_invalid_ke(struct msg_digest *md,
 				     const struct oakley_group_desc *group);
 void send_v2_delete(struct state *st);
