@@ -6116,18 +6116,24 @@ void v2_schedule_replace_event(struct state *st)
 	 */
 
 	enum event_type kind;
+	const char *story;
+	intmax_t marg;
 	if ((c->policy & POLICY_OPPORTUNISTIC) &&
 	    st->st_connection->spd.that.has_lease) {
+		marg = 0;
 		kind = EVENT_SA_EXPIRE;
-		dbg("#%lu will expire in %jd seconds (opportunistic with lease)",
-		    st->st_serialno, delay);
+		story = "always expire opportunistic SA with lease";
 	} else if (c->policy & POLICY_DONT_REKEY) {
+		marg = 0;
 		kind = EVENT_SA_EXPIRE;
-		dbg("#%lu will expire in %jd seconds (don't rekey)",
-		    st->st_serialno, delay);
+		story = "policy doesn't allow re-key";
+	} else if (IS_IKE_SA(st) && LIN(POLICY_REAUTH, st->st_connection->policy)) {
+		marg = 0;
+		kind = EVENT_SA_REPLACE;
+		story = "IKE SA with policy re-authenticate";
 	} else {
 		/* unwrapped deltatime_t in seconds */
-		intmax_t marg = deltasecs(c->sa_rekey_margin);
+		marg = deltasecs(c->sa_rekey_margin);
 
 		switch (st->st_sa_role) {
 		case SA_INITIATOR:
@@ -6145,8 +6151,7 @@ void v2_schedule_replace_event(struct state *st)
 		if (delay > marg) {
 			delay -= marg;
 			kind = EVENT_SA_REPLACE;
-			dbg("#%lu will start replacing in %jd seconds with margin of %jd seconds",
-			    st->st_serialno, delay, marg);
+			story = "attempting re-key";
 		} else {
 			/*
 			 * XXX: wrong!  Should still be a replace but
@@ -6154,10 +6159,20 @@ void v2_schedule_replace_event(struct state *st)
 			 */
 			marg = 0;
 			kind = EVENT_SA_EXPIRE;
-			dbg("#%lu will expire in %jd seconds (margin to small for replace)",
-			    st->st_serialno, delay);
+			story = "margin to small for re-key";
 		}
-		st->st_replace_margin = deltatime(marg);
+	}
+
+	st->st_replace_margin = deltatime(marg);
+	if (marg > 0) {
+		passert(kind == EVENT_SA_REPLACE);
+		dbg("#%lu will start replacing in %jd seconds with margin of %jd seconds (%s)",
+		    st->st_serialno, delay, marg, story);
+	} else {
+		dbg("#%lu will %s in %jd seconds (%s)",
+		    st->st_serialno,
+		    kind == EVENT_SA_EXPIRE ? "expire" : "be replaced",
+		    delay, story);
 	}
 
 	delete_event(st);
