@@ -1071,86 +1071,6 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE);
 	}
 
-	/* Get the proposals ready.  */
-	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA responder matching remote proposals");
-
-	/*
-	 * Select the proposal.
-	 */
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
-	struct ikev2_proposal *accepted_ike_proposal = NULL;
-	stf_status ret = ikev2_process_sa_payload("IKE responder",
-						  &sa_pd->pbs,
-						  /*expect_ike*/ TRUE,
-						  /*expect_spi*/ FALSE,
-						  /*expect_accepted*/ FALSE,
-						  LIN(POLICY_OPPORTUNISTIC, c->policy),
-						  &accepted_ike_proposal,
-						  ike_proposals);
-	if (ret != STF_OK)
-		return ret;
-
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal", accepted_ike_proposal));
-
-	/*
-	 * Early return must free: accepted_ike_proposal
-	 */
-
-	/*
-	 * Convert what was accepted to internal form and apply some
-	 * basic validation.  If this somehow fails (it shouldn't but
-	 * ...), drop everything.
-	 */
-	struct trans_attrs accepted_oakley;
-	if (!ikev2_proposal_to_trans_attrs(accepted_ike_proposal, &accepted_oakley)) {
-		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
-		/* free early return items */
-		free_ikev2_proposal(&accepted_ike_proposal);
-		return STF_IGNORE;
-	}
-
-	/*
-	 * Early return must free: accepted_ike_proposal
-	 */
-
-	/*
-	 * Check the MODP group in the payload matches the accepted
-	 * proposal.
-	 */
-	if (v2_reject_wrong_ke_for_proposal(md, accepted_oakley.ta_dh)) {
-		free_ikev2_proposal(&accepted_ike_proposal);
-		/*
-		 * If there was a state then this could return
-		 * STF_FATAL and let the caller clean up the mess.
-		 */
-		return STF_FAIL; /* XXX: STF_FATAL? */
-	}
-
-	/*
-	 * Check and read the KE contents.
-	 */
-	chunk_t accepted_gi = empty_chunk;
-	{
-		/* note: v1 notification! */
-		if (accept_KE(&accepted_gi, "Gi",
-			      accepted_oakley.ta_dh,
-			      &md->chain[ISAKMP_NEXT_v2KE]->pbs)
-		    != NOTHING_WRONG) {
-			/*
-			 * A KE with the incorrect number of bytes is
-			 * a syntax error and not a wrong modp group.
-			 */
-			freeanychunk(accepted_gi);
-			free_ikev2_proposal(&accepted_ike_proposal);
-			/* lower-layer will generate a notify.  */
-			return STF_FAIL + v2N_INVALID_SYNTAX;
-		}
-	}
-
-	/*
-	 * Early return must free: accepted_ike_proposal, accepted_gi.
-	 */
 
 	/*
 	 * We've committed to creating a state and, presumably,
@@ -1171,15 +1091,67 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
 
-	/* save the proposal information */
-	st->st_oakley = accepted_oakley;
-	st->st_accepted_ike_proposal = accepted_ike_proposal;
-	st->st_gi = accepted_gi;
-
 	md->st = st;
 	/* set by caller */
 	pexpect(md->from_state == STATE_PARENT_R0);
 	pexpect(md->svm == finite_states[STATE_PARENT_R0]->fs_v2_transitions);
+
+	/* Get the proposals ready.  */
+	struct ikev2_proposals *ike_proposals =
+		get_v2_ike_proposals(c, "IKE SA responder matching remote proposals");
+
+	/*
+	 * Select the proposal.
+	 */
+	stf_status ret = ikev2_process_sa_payload("IKE responder",
+						  &md->chain[ISAKMP_NEXT_v2SA]->pbs,
+						  /*expect_ike*/ TRUE,
+						  /*expect_spi*/ FALSE,
+						  /*expect_accepted*/ FALSE,
+						  LIN(POLICY_OPPORTUNISTIC, c->policy),
+						  &st->st_accepted_ike_proposal,
+						  ike_proposals);
+	if (ret != STF_OK) {
+		if (pexpect(ret > STF_FAIL)) {
+			send_v2_notification_from_md(md, ret - STF_FAIL, &empty_chunk);
+		}
+		return STF_FATAL;
+	}
+
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
+						st->st_accepted_ike_proposal));
+
+	/*
+	 * Convert what was accepted to internal form and apply some
+	 * basic validation.  If this somehow fails (it shouldn't but
+	 * ...), drop everything.
+	 */
+	if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
+					   &st->st_oakley)) {
+		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
+		/* STF_INTERNAL_ERROR doesn't delete ST */
+		return STF_FATAL;
+	}
+
+	/*
+	 * Check the MODP group in the payload matches the accepted
+	 * proposal.
+	 */
+	if (v2_reject_wrong_ke_for_proposal(md, st->st_oakley.ta_dh)) {
+		/* already replied */
+		return STF_FATAL;
+	}
+
+	/*
+	 * Check and read the KE contents.
+	 */
+	/* note: v1 notification! */
+	if (accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+		      &md->chain[ISAKMP_NEXT_v2KE]->pbs)
+	    != NOTHING_WRONG) {
+		send_v2_notification_from_md(md, v2N_INVALID_SYNTAX, &empty_chunk);
+		return STF_FATAL;
+	}
 
 	bool seen_nat = FALSE;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
