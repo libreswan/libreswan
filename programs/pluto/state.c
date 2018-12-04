@@ -164,12 +164,13 @@ enum_names state_category_names = {
  * AUTHENTICATED or ANONYMOUS.  Among other things used for DDoS
  * tracking.
  *
- * A "signed" long is used so that should a counter underflow
- * (presumably a bug) then its value is displayed as -ve.  CAT_T
- * PRI_CAT are terrible but short names.
+ * Hack: CAT_T is unsigned (like values it gets compared against), and
+ * assumed to be implemented using 2's complement.  However, the value
+ * is printed as a "signed" value - so that should underflow occure it
+ * is diplayed as -ve (rather than a huge positive).
  */
 
-typedef long cat_t;
+typedef unsigned long cat_t;
 #define PRI_CAT "%ld"
 
 static cat_t cat_count[elemsof(cat_name)] = { 0 };
