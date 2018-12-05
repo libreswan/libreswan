@@ -28,14 +28,9 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 #include <libreswan.h>
-#include <errno.h>
 
 #include "sysdep.h"
 #include "constants.h"
