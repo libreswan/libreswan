@@ -60,9 +60,9 @@ extern void send_notification_from_state(struct state *st,
 					 notification_t type);
 extern void send_notification_from_md(struct msg_digest *md, notification_t type);
 
-extern notification_t accept_KE(chunk_t *dest, const char *val_name,
-				const struct oakley_group_desc *gr,
-				pb_stream *pbs);
+extern bool accept_KE(chunk_t *dest, const char *val_name,
+		      const struct oakley_group_desc *gr,
+		      struct payload_digest *ke_pd);
 
 /* START_HASH_PAYLOAD_NO_HASH_START
  *

@@ -1141,9 +1141,8 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	 * Check and read the KE contents.
 	 */
 	/* note: v1 notification! */
-	if (accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
-		      &md->chain[ISAKMP_NEXT_v2KE]->pbs)
-	    != NOTHING_WRONG) {
+	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE])) {
 		send_v2_notification_from_md(md, v2N_INVALID_SYNTAX, &empty_chunk);
 		return STF_FATAL;
 	}
@@ -1833,8 +1832,15 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 	    DBG_log("ikev2 parent inR1: calculating g^{xy} in order to send I2"));
 
 	/* KE in */
-	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-				     &md->chain[ISAKMP_NEXT_v2KE]->pbs));
+	if (!accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE])) {
+		/*
+		 * XXX: Initiator - so this code will not trigger a
+		 * notify.  Since packet isn't trusted, should it be
+		 * ignored?
+		 */
+		return STF_FAIL + v2N_INVALID_SYNTAX;
+	}
 
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Ni"));
@@ -4171,38 +4177,6 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 	return STF_OK;
 }
 
-static notification_t accept_child_sa_KE(struct msg_digest *md,
-		struct state *st, struct trans_attrs accepted_oakley)
-{
-	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-		chunk_t accepted_g = empty_chunk;
-		if (accept_KE(&accepted_g, "Gi", accepted_oakley.ta_dh,
-			      &md->chain[ISAKMP_NEXT_v2KE]->pbs)
-		    != NOTHING_WRONG) {
-			/*
-			 * A KE with the incorrect number of bytes is
-			 * a syntax error and not a wrong modp group.
-			 */
-			freeanychunk(accepted_g);
-			return v2N_INVALID_KE_PAYLOAD;
-		}
-		switch (st->st_sa_role) {
-		case SA_INITIATOR:
-			/* got responder's KE */
-			st->st_gr = accepted_g;
-			break;
-		case SA_RESPONDER:
-			/* got initiator's KE */
-			st->st_gi = accepted_g;
-			break;
-		default:
-			bad_case(st->st_sa_role);
-		}
-	}
-
-	return NOTHING_WRONG;
-}
-
 /*
  * initiator received Rekey IKE SA (RFC 7296 1.3.3) response
  */
@@ -4250,8 +4224,16 @@ stf_status ikev2_child_ike_inR(struct state *st /* child state */,
 	}
 
 	 /* KE in */
-	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-				     &md->chain[ISAKMP_NEXT_v2KE]->pbs));
+	if (!accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE])) {
+		/*
+		 * XXX: Initiator so returning this notification will
+		 * go no where.  Need to check RFC for what to do
+		 * next.  The packet is trusted but the re-key has
+		 * failed.
+		 */
+		return STF_FAIL + v2N_INVALID_SYNTAX;
+	}
 
 	/* fill in the missing responder SPI */
 	passert(!ike_spi_is_zero(&st->st_ike_rekey_spis.initiator));
@@ -4319,10 +4301,26 @@ stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, TRUE));
 
+	/* XXX: only for rekey child? */
 	if (st->st_pfs_group == NULL)
 		return ikev2_process_ts_and_rest(md);
 
-	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
+	/*
+	 * This is the initiator, accept responder's KE.
+	 *
+	 * XXX: Above checks st_pfs_group but this uses
+	 * st_oakley.ta_dh, presumably they are the same? Lets find
+	 * out.
+	 */
+	pexpect(st->st_oakley.ta_dh == st->st_pfs_group);
+	if (!accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE])) {
+		/*
+		 * XXX: Initiator so this notification result is going
+		 * no where.  What should happen?
+		 */
+		return STF_FAIL + v2N_INVALID_SYNTAX; /* XXX: STF_FATAL? */
+	}
 
 	/*
 	 * XXX: other than logging, these two cases are identical.
@@ -4409,8 +4407,23 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
 
-	/* KE in with old(pst) and matching accepted_oakley from proposals */
-	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
+	/*
+	 * KE in with old(pst) and matching accepted_oakley from
+	 * proposals
+	 *
+	 * XXX: does this code need to insist that the IKE SA
+	 * replacement has KE or has SA processor handled that by only
+	 * accepting a proposal with KE?
+	 */
+ 	if (st->st_pfs_group != NULL) {
+		pexpect(st->st_oakley.ta_dh == st->st_pfs_group);
+		if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+			       md->chain[ISAKMP_NEXT_v2KE])) {
+			send_v2_notification_from_state(st, md, v2N_INVALID_SYNTAX,
+							&empty_chunk);
+			return STF_FATAL;
+		}
+	}
 
 	/* check N_REKEY_SA in the negotation */
 	RETURN_STF_FAILURE_STATUS(ikev2_rekey_child_resp(md));
@@ -4585,60 +4598,59 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA responding to rekey");
 
-	struct trans_attrs accepted_oakley;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
-	struct ikev2_proposal *accepted_ike_proposal = NULL;
 	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
 						  &sa_pd->pbs,
 						  /*expect_ike*/ TRUE,
 						  /*expect_spi*/ TRUE,
 						  /*expect_accepted*/ FALSE,
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
-						  &accepted_ike_proposal,
+						  &st->st_accepted_ike_proposal,
 						  ike_proposals);
 	if (ret != STF_OK)
 		return ret;
 
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
-						accepted_ike_proposal));
-	/*
-	 * Early return must free: accepted_ike_proposal
-	 */
-	if (!ikev2_proposal_to_trans_attrs(accepted_ike_proposal,
-					   &accepted_oakley)) {
+						st->st_accepted_ike_proposal));
+
+	if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
+					   &st->st_oakley)) {
 		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
-		/* free early return items */
-		/* XXX: where is ST freed? */
-		free_ikev2_proposal(&accepted_ike_proposal);
+		/*
+		 * XXX; where is 'st' freed?  Should the code instead
+		 * tunnel back md.st==st and return STF_FATAL which
+		 * will delete the child state?  Or perhaps there a
+		 * lurking SO_DISPOSE to clean it up?
+		 */
 		md->st = pst;
 		return STF_IGNORE;
 	}
 
-	if (v2_reject_wrong_ke_for_proposal(md, accepted_oakley.ta_dh)) {
-		free_ikev2_proposal(&accepted_ike_proposal);
-		md->st = pst;
+	if (v2_reject_wrong_ke_for_proposal(md, st->st_oakley.ta_dh)) {
 		/*
 		 * XXX; where is 'st' freed?  Should the code instead
 		 * tunnel back md.st==st and return STF_FATAL which
-		 * will delete the child state?
+		 * will delete the child state?  Or perhaps there a
+		 * lurking SO_DISPOSE to clean it up?
 		 */
+		md->st = pst;
 		return STF_FAIL; /* XXX; STF_FATAL? */
 	}
 
 	/*
 	 * Check and read the KE contents.
+	 *
+	 * responder, so accept initiator's KE in with new
+	 * accepted_oakley for IKE.
 	 */
-
-	/* KE in with new accepted_oakley for IKE */
-	notification_t res = accept_child_sa_KE(md, st, accepted_oakley);
-	if (res != NOTHING_WRONG) {
-		free_ikev2_proposal(&accepted_ike_proposal);
-		return STF_FAIL + res;
+	pexpect(st->st_oakley.ta_dh != NULL);
+	pexpect(st->st_pfs_group == NULL);
+	if (!accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE])) {
+		send_v2_notification_from_state(st, md, v2N_INVALID_SYNTAX,
+						&empty_chunk);
+		return STF_FATAL;
 	}
-
-	/* save the proposal information */
-	st->st_oakley = accepted_oakley;
-	st->st_accepted_ike_proposal = accepted_ike_proposal;
 
 	request_ke_and_nonce("IKE rekey KE response gir", st,
 			     st->st_oakley.ta_dh,

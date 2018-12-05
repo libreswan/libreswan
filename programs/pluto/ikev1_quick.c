@@ -126,8 +126,10 @@ static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
 			       msg_name);
 			return INVALID_KEY_INFORMATION; /* ??? */
 		}
-		return accept_KE(dest, val_name, st->st_pfs_group,
-				 &ke_pd->pbs);
+		if (!accept_KE(dest, val_name, st->st_pfs_group, ke_pd)) {
+			return INVALID_KEY_INFORMATION;
+		}
+		return NOTHING_WRONG;
 	}
 }
 

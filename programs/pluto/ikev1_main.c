@@ -978,8 +978,10 @@ static void main_inI2_outR2_continue1(struct state *st,
 stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 {
 	/* KE in */
-	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
-				     &md->chain[ISAKMP_NEXT_KE]->pbs));
+	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE])) {
+		return STF_FAIL + INVALID_KEY_INFORMATION;
+	}
 
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
@@ -1463,9 +1465,11 @@ static void main_inR2_outI3_continue(struct state *st,
 stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 {
 	/* KE in */
-	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr",
-				     st->st_oakley.ta_dh,
-				     &md->chain[ISAKMP_NEXT_KE]->pbs));
+	if (!accept_KE(&st->st_gr, "Gr",
+		       st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE])) {
+		return STF_FAIL + INVALID_KEY_INFORMATION;
+	}
 
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));

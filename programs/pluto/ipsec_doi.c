@@ -138,23 +138,28 @@ void unpack_KE_from_helper(struct state *st,
  *  Diffie-Hellman group enforced, if necessary, by pre-pending the
  *  value with zeros.
  */
-notification_t accept_KE(chunk_t *dest, const char *val_name,
-			 const struct oakley_group_desc *gr,
-			 pb_stream *pbs)
+bool accept_KE(chunk_t *dest, const char *val_name,
+	       const struct oakley_group_desc *gr,
+	       struct payload_digest *ke_pd)
 {
+	if (ke_pd == NULL) {
+		loglog(RC_LOG_SERIOUS, "KE missing");
+		return false;
+	}
+	pb_stream *pbs = &ke_pd->pbs;
 	if (pbs_left(pbs) != gr->bytes) {
 		loglog(RC_LOG_SERIOUS,
 		       "KE has %u byte DH public value; %u required",
 		       (unsigned) pbs_left(pbs), (unsigned) gr->bytes);
 		/* XXX Could send notification back */
-		return INVALID_KEY_INFORMATION;
+		return false;
 	}
 	free_chunk_contents(dest); /* XXX: ever needed? */
 	*dest = clone_in_pbs_left_as_chunk(pbs, val_name);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_chunk("DH public value received:\n", *dest);
 	}
-	return NOTHING_WRONG;
+	return true;
 }
 
 void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)

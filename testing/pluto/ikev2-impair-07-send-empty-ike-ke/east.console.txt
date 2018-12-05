@@ -13,7 +13,8 @@ east #
  echo "initdone"
 initdone
 east #
- grep v2N_INVALID_KE_PAYLOAD /tmp/pluto.log
+ grep -e v2N_INVALID_KE_PAYLOAD -e v2N_INVALID_SYNTAX /tmp/pluto.log
+|    Notify Message Type: v2N_INVALID_SYNTAX (0x7)
 east #
 east #
  ../bin/check-for-core.sh
