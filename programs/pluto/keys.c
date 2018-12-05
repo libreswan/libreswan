@@ -49,7 +49,6 @@
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
-#include "lex.h"
 #include "keys.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
