@@ -867,14 +867,8 @@ void delete_state(struct state *st)
 	}
 #endif
 
-	/* If DPD is enabled on this state object, clear any pending events */
-	if (st->st_dpd_event != NULL)
-		delete_dpd_event(st);
-
-	/* clear any ikev2 liveness events */
-	if (st->st_ikev2)
-		delete_liveness_event(st);
-
+	delete_dpd_event(st);
+	delete_liveness_event(st);
 	delete_state_event(st, &st->st_rel_whack_event);
 	delete_state_event(st, &st->st_send_xauth_event);
 	delete_state_event(st, &st->st_addr_change_event);

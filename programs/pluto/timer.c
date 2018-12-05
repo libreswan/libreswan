@@ -212,17 +212,18 @@ static void liveness_check(struct state *st)
 }
 
 /*
- * Delete a state backlinked event.
+ * Delete a state backlinked event (if any); leave *evp == NULL.
  */
 void delete_state_event(struct state *st, struct pluto_event **evp)
 {
 	struct pluto_event *ev = *evp;
-	DBG(DBG_DPD | DBG_CONTROL,
-	    const char *en = ev ? enum_name(&timer_event_names, ev->ev_type) : "N/A";
-	    DBG_log("state #%lu requesting %s-pe@%p be deleted",
-		    st->st_serialno, en, ev));
-	pexpect(*evp == NULL || st == (*evp)->ev_state);
-	delete_pluto_event(evp);
+	if (ev != NULL) {
+		DBG(DBG_DPD | DBG_CONTROL,
+		    DBG_log("state #%lu requesting %s-pe@%p be deleted",
+			    st->st_serialno, enum_name(&timer_event_names, ev->ev_type), ev));
+		pexpect(st == ev->ev_state);
+		delete_pluto_event(evp);
+	};
 }
 
 static event_callback_routine timer_event_cb;
@@ -553,24 +554,20 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 }
 
 /*
- * Delete an event.
+ * Delete an event (if any); leave st->st_event == NULL.
  */
 void delete_event(struct state *st)
 {
-	/* ??? isn't this a bug?  Should we not passert? */
-	if (st->st_event == NULL) {
-		dbg("state #%lu requesting to delete non existing event",
-		    st->st_serialno);
-		return;
-	}
-	dbg("state #%lu requesting %s to be deleted",
-	    st->st_serialno, enum_show(&timer_event_names,
-				       st->st_event->ev_type));
+	if (st->st_event != NULL) {
+		dbg("state #%lu requesting %s to be deleted",
+		    st->st_serialno, enum_show(&timer_event_names,
+					       st->st_event->ev_type));
 
-	if (st->st_event->ev_type == EVENT_RETRANSMIT) {
-		clear_retransmits(st);
+		if (st->st_event->ev_type == EVENT_RETRANSMIT)
+			clear_retransmits(st);
+
+		delete_pluto_event(&st->st_event);
 	}
-	delete_pluto_event(&st->st_event);
 }
 
 /*

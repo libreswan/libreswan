@@ -327,7 +327,7 @@ static stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ik
 {
 	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
 	stf_status e = STF_OK;
-	char  *what;
+	const char  *what;
 
 	if (unack < st->st_connection->ike_window) {
 		what  =  "send new exchange now";
@@ -5901,10 +5901,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 		migration_down(cst->st_connection, cst);
 		unroute_connection(st->st_connection);
 
-		if (cst->st_liveness_event != NULL) {
-			delete_liveness_event(cst);
-			cst->st_liveness_event = NULL;
-		}
+		delete_liveness_event(cst);
 
 		if (st->st_addr_change_event == NULL) {
 			event_schedule_s(EVENT_v2_ADDR_CHANGE, 0, st);

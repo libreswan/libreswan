@@ -1203,10 +1203,8 @@ static void xauth_launch_authent(struct state *st,
 
 	/*
 	 * For XAUTH, we're flipping between retransmitting the packet
-	 * in the retransmit slot, and the XAUTH packet, two
-	 * alternative events can be outstanding.
-	 *
-	 * Cancel both.
+	 * in the retransmit slot, and the XAUTH packet.
+	 * Two alternative events can be outstanding. Cancel both.
 	 */
 	delete_event(st);
 	delete_state_event(st, &st->st_send_xauth_event);

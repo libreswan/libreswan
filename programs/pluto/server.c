@@ -253,20 +253,11 @@ static void free_dead_ifaces(void)
 		delete_states_dead_interfaces();
 		for (pp = &interfaces; (p = *pp) != NULL; ) {
 			if (p->change == IFN_DELETE) {
-				struct iface_dev *id;
-
 				*pp = p->next; /* advance *pp */
-
-				if (p->pev != NULL) {
-					delete_pluto_event(&p->pev);
-				}
-
+				delete_pluto_event(&p->pev);
 				close(p->fd);
-
-				id = p->ip_dev;
+				free_dead_iface_dev(p->ip_dev);
 				pfree(p);
-
-				free_dead_iface_dev(id);
 			} else {
 				pp = &p->next; /* advance pp */
 			}
@@ -445,19 +436,6 @@ static struct pluto_event *free_event_entry(struct pluto_event **evp)
 	return next;
 }
 
-static void unlink_pluto_event_list(struct pluto_event **evp) {
-	struct pluto_event **pp;
-	struct pluto_event *p;
-	struct pluto_event *e = *evp;
-
-	for (pp = &pluto_events_head; (p = *pp) != NULL; pp = &p->next) {
-		if (p == e) {
-			*pp = free_event_entry(evp); /* unlink this entry from the list */
-			return;
-		}
-	}
-}
-
 void free_pluto_event_list(void)
 {
 	struct pluto_event **head = &pluto_events_head;
@@ -471,14 +449,24 @@ void link_pluto_event_list(struct pluto_event *e) {
 	pluto_events_head = e;
 }
 
+/* delete pluto event (if any); leave *evp == NULL */
 void delete_pluto_event(struct pluto_event **evp)
 {
-	if (*evp == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
-		return;
-	}
+	if (*evp != NULL) {
+		for (struct pluto_event **pp = &pluto_events_head; ; ) {
+			struct pluto_event *p = *pp;
 
-	unlink_pluto_event_list(evp);
+			passert(p != NULL);
+
+			if (p == *evp) {
+				/* found it; unlink this from the list */
+				*pp = free_event_entry(evp);
+				break;
+			}
+			pp = &p->next;
+		}
+		*evp = NULL;
+	}
 }
 
 /*
@@ -614,7 +602,7 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 		e->ev_time = monotimesum(mononow(), *delay);
 	}
 	fire_event_photon_torpedo(&e->ev, fd, events, cb, arg, delay);
-	return e; /* compaitable with pluto_event_new for the time being */
+	return e; /* compatible with pluto_event_new for the time being */
 }
 
 /*
@@ -663,8 +651,6 @@ void timer_list(void)
 
 void find_ifaces(bool rm_dead)
 {
-	struct iface_port *ifp;
-
 	if (rm_dead)
 		mark_ifaces_dead();
 
@@ -681,24 +667,15 @@ void find_ifaces(bool rm_dead)
 		loglog(RC_LOG_SERIOUS, "no public interfaces found");
 
 	if (listening) {
+		struct iface_port *ifp;
+
 		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
-			if (ifp->pev != NULL) {
-				delete_pluto_event(&ifp->pev);
-				DBG_log("refresh. setup callback for interface %s:%u %d",
-						ifp->ip_dev->id_rname, ifp->port,
-						ifp->fd);
-			}
-			char prefix[] ="INTERFACE_FD-";
-			char ifp_str[sizeof(prefix) +
-				strlen(ifp->ip_dev->id_rname) +
-				5 + 1 + 1 /* : + NUL */];
-			snprintf(ifp_str, sizeof(ifp_str), "%s:%u",
-					ifp->ip_dev->id_rname, ifp->port);
+			delete_pluto_event(&ifp->pev);
 			ifp->pev = pluto_event_add(ifp->fd,
 					EV_READ | EV_PERSIST, comm_handle_cb,
 					ifp, NULL, "ethX");
-			DBG_log("setup callback for interface %s fd %d",
-					ifp_str, ifp->fd);
+			DBG_log("setup callback for interface %s:%u fd %d",
+				ifp->ip_dev->id_rname, ifp->port, ifp->fd);
 		}
 	}
 }
@@ -1013,7 +990,7 @@ void call_server(void)
 			"PLUTO_SIGTERM");
 
 	pluto_event_add(SIGHUP, EV_SIGNAL|EV_PERSIST, huphandler_cb, NULL,
-			NULL,  "PLUTO_SIGHUP");
+			NULL, "PLUTO_SIGHUP");
 
 #ifdef HAVE_SECCOMP
 	pluto_event_add(SIGSYS, EV_SIGNAL, syshandler_cb, NULL, NULL,
