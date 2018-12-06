@@ -752,8 +752,8 @@ extern bool find_pending_phase2(const so_serial_t psn,
 					const struct connection *c,
 					lset_t ok_states);
 
-extern struct state *find_state_ikev2_parent(const u_char *icookie,
-					     const u_char *rcookie);
+extern struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
+				    const ike_spi_t *ike_responder_spi);
 
 extern struct state *ikev2_find_state_in_init(const u_char *icookie,
 						  enum state_kind expected_state);

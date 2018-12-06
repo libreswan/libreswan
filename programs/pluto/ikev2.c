@@ -1544,10 +1544,13 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		}
 	} else if (v2_msg_role(md) == MESSAGE_REQUEST) {
 		/*
-		 * A request; send it to the IKE SA.
+		 * A (possibly new) request; start with the IKE SA
+		 * with matching SPIs.  If it is a new CHILD SA
+		 * request then the state machine will will morph ST
+		 * into a child state before dispatching.
 		 */
-		st = find_state_ikev2_parent(md->hdr.isa_icookie,
-					     md->hdr.isa_rcookie);
+		st = find_v2_ike_sa(&md->hdr.isa_ike_initiator_spi,
+				    &md->hdr.isa_ike_responder_spi);
 		if (st == NULL) {
 			struct esb_buf ixb;
 			rate_log("%s message request has no corresponding IKE SA",
@@ -1562,24 +1565,24 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		/* update lastrecv later on */
 	} else if (v2_msg_role(md) == MESSAGE_RESPONSE) {
 		/*
-		 * A response; find the child that made the request
-		 * and send it to that.
+		 * A response; find the IKE SA or CHILD SA that
+		 * initiated the request.
 		 *
-		 * XXX: which of these two lookups find the parent of
-		 * an AUTH exchange.  Hmm, perhaps, because the code
-		 * commits to creating a child early, it finds that.
+		 * XXX: Why are two lookups needed?  Surely only one
+		 * state has a matching Message ID - the one that sent
+		 * the request?
 		 */
 		st = find_state_ikev2_child(ix, md->hdr.isa_icookie,
 				md->hdr.isa_rcookie,
-				md->hdr.isa_msgid); /* message ID in NW order */
+				md->hdr.isa_msgid);
 
 		if (st == NULL) {
 			/*
 			 * Didn't find a child waiting on that message
 			 * ID so presumably it isn't valid.
 			 */
-			st = find_state_ikev2_parent(md->hdr.isa_icookie,
-						     md->hdr.isa_rcookie);
+			st = find_v2_ike_sa(&md->hdr.isa_ike_initiator_spi,
+					    &md->hdr.isa_ike_responder_spi);
 			if (st == NULL) {
 				rate_log("%s message response has no matching IKE SA",
 					 enum_name(&ikev2_exchange_names, ix));

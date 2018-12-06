@@ -377,6 +377,8 @@ static char *readable_humber(uint64_t num,
 		}							\
 	})								\
 
+#define FOR_EACH_STATE_WITH_IKE_SPIS(ST, I, R)
+	
 
 /*
  * Get the IKE SA managing the security association.
@@ -1462,34 +1464,26 @@ struct state *find_state_ikev1_init(const uint8_t *icookie,
 }
 
 /*
- * Find a state object for an IKEv2 state.
- * Note: only finds parent states.
+ * Find the IKEv2 IKE SA with the specified SPIs.
  */
-struct state *find_state_ikev2_parent(const u_char *icookie,
-				      const u_char *rcookie)
+struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
+			      const ike_spi_t *ike_responder_spi)
 {
-	struct state *st;
-	FOR_EACH_STATE_WITH_COOKIES(st, icookie, rcookie, {
+	struct state *st = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
+						 ike_responder_spi), st) {
 		if (st->st_ikev2 &&
-		    !IS_CHILD_SA(st)) {
-			DBG(DBG_CONTROL,
-			    DBG_log("parent v2 peer and cookies match on #%lu",
-				    st->st_serialno));
-			break;
+		    IS_IKE_SA(st) &&
+		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
+		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
+			dbg("v2 IKE SA #%lu found, in state %s",
+			    st->st_serialno,
+			    st->st_state_name);
+			return st;
 		}
-	});
-
-	DBG(DBG_CONTROL, {
-		if (st == NULL) {
-			DBG_log("parent v2 state object not found");
-		} else {
-			DBG_log("v2 state object #%lu found, in %s",
-				st->st_serialno,
-				st->st_state_name);
-		}
-	});
-
-	return st;
+	}
+	dbg("parent v2 state object not found");
+	return NULL;
 }
 
 /*
