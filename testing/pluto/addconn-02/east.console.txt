@@ -451,6 +451,8 @@ conn: "test" mark=<unset>
 conn: "test" mark-in=<unset>
 conn: "test" mark-out=<unset>
 conn: "test" vti_iface=<unset>
+conn: "test" redirect-to=<unset>
+conn: "test" accept-redirect-to=<unset>
 002 added connection description "test"
 east #
  echo "initdone"
