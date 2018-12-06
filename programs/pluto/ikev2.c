@@ -1442,25 +1442,29 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * zero.
 		 */
 		if (md->hdr.isa_msgid != 0) {
-			libreswan_log("dropping IKE_SA_INIT packet containing non-zero message ID");
-			return;
-		}
-		/*
-		 * The initiator must send: IKE_I && !MSG_R
-		 * The responder must send: !IKE_I && MSG_R.
-		 */
-		if (sent_by_ike_initiator && v2_msg_role(md) != MESSAGE_REQUEST) {
-			libreswan_log("dropping IKE_SA_INIT request with conflicting message response flag");
-			return;
-		}
-		if (!sent_by_ike_initiator && v2_msg_role(md) != MESSAGE_RESPONSE) {
-			libreswan_log("dropping IKE_SA_INIT response with conflicting message response flag");
+			libreswan_log("dropping IKE_SA_INIT message containing non-zero message ID");
 			return;
 		}
 		/*
 		 * Now try to find the state
 		 */
-		if (sent_by_ike_initiator) {
+		switch (v2_msg_role(md)) {
+		case MESSAGE_REQUEST:
+			/* The initiator must send: IKE_I && !MSG_R */
+			if (!sent_by_ike_initiator) {
+				libreswan_log("dropping IKE_SA_INIT request with conflicting IKE initiator flag");
+				return;
+			}
+			/*
+			 * 3.1.  The IKE Header: This [SPIr] value
+			 * MUST be zero in the first message of an IKE
+			 * initial exchange (including repeats of that
+			 * message including a cookie).
+			 */
+			if (!ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
+				libreswan_log("dropping IKE_SA_INIT request with non-zero SPIr");
+				return;
+			}
 			/*
 			 * Sent by the IKE initiator; look for the IKE
 			 * responder's state.
@@ -1507,7 +1511,27 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				return;
 			}
 			/* update lastrecv later on */
-		} else {
+			break;
+		case MESSAGE_RESPONSE:
+			/* The responder must send: !IKE_I && MSG_R. */
+			if (sent_by_ike_initiator) {
+				libreswan_log("dropping IKE_SA_INIT response with conflicting IKE initiator flag");
+				return;
+			}
+			/*
+			 * 2.6.  IKE SA SPIs and Cookies: When the
+			 * IKE_SA_INIT exchange does not result in the
+			 * creation of an IKE SA due to
+			 * INVALID_KE_PAYLOAD, NO_PROPOSAL_CHOSEN, or
+			 * COOKIE, the responder's SPI will be zero
+			 * also in the response message.  However, if
+			 * the responder sends a non-zero responder
+			 * SPI, the initiator should not reject the
+			 * response for only that reason.
+			 *
+			 * i.e., can't check response for non-zero
+			 * SPIr.
+			 */
 			/*
 			 * Sent by IKE responder; look for the IKE
 			 * initiator's state.
@@ -1541,6 +1565,9 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * all.
 			 */
 			rehash_state(st, &md->hdr.isa_ike_responder_spi);
+			break;
+		default:
+			bad_case(v2_msg_role(md));
 		}
 	} else if (v2_msg_role(md) == MESSAGE_REQUEST) {
 		/*
