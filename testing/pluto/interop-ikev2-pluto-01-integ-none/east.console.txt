@@ -21,11 +21,11 @@ east #
  # integ=none excluded
 east #
  grep 'proposal .* chosen from' /tmp/pluto.log | sed -e 's/SPI=[^;]*/SPI=X/'
-packet from 192.1.2.45:500: proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+"westnet-eastnet-ipv4-psk-ikev2" #1: proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
 "westnet-eastnet-ipv4-psk-ikev2" #1: proposal 1:ESP:SPI=X;ENCR=AES_GCM_C_128;ESN=DISABLED chosen from remote proposals 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
-packet from 192.1.2.45:500: proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match]
+"westnet-eastnet-ipv4-psk-ikev2" #3: proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match]
 "westnet-eastnet-ipv4-psk-ikev2" #3: proposal 1:ESP:SPI=X;ENCR=AES_GCM_C_128;INTEG=NONE;ESN=DISABLED chosen from remote proposals 1:ESP:ENCR=AES_GCM_C_128;INTEG=NONE;ESN=DISABLED[first-match]
-packet from 192.1.2.45:500: proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+"westnet-eastnet-ipv4-psk-ikev2" #5: proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
 "westnet-eastnet-ipv4-psk-ikev2" #5: proposal 1:ESP:SPI=X;ENCR=AES_GCM_C_128;ESN=DISABLED chosen from remote proposals 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
 east #
  # west shows what came back, expect two lines for each of the three
