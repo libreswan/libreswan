@@ -36,6 +36,12 @@ bool ike_spi_eq(const ike_spi_t *lhs, const ike_spi_t *rhs)
 	return memeq(lhs, rhs, sizeof(*lhs));
 }
 
+bool ike_spis_eq(const ike_spis_t *lhs, const ike_spis_t *rhs)
+{
+	return (ike_spi_eq(&lhs->initiator, &rhs->initiator) &&
+		ike_spi_eq(&lhs->responder, &rhs->responder));
+}
+
 static uint8_t ike_spi_secret[SHA2_256_DIGEST_SIZE];
 
 void refresh_ike_spi_secret(void)

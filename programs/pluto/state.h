@@ -763,10 +763,8 @@ extern struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
 					    const u_char *rcookie,
 					    const msgid_t msgid);
 
-extern struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
-						      const u_char *rcookie,
-						      uint8_t protoid,
-						      ipsec_spi_t spi);
+struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
+					       uint8_t protoid, ipsec_spi_t spi);
 
 extern void find_states_and_redirect(const char *conn_name,
 				     ip_address remote_ip,

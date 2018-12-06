@@ -3848,8 +3848,16 @@ static struct state *find_state_to_rekey(struct payload_digest *p,
 			ntohl((uint32_t) spi),
 			enum_show(&ikev2_protocol_names, ntfy.isan_protoid)));
 
-	st = find_state_ikev2_child_to_delete(pst->st_icookie, pst->st_rcookie,
-			ntfy.isan_protoid, spi);
+	/*
+	 * From 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
+	 * Exchange: The SA being rekeyed is identified by the SPI
+	 * field in the [REKEY_SA] Notify payload; this is the SPI the
+	 * exchange initiator would expect in inbound ESP or AH
+	 * packets.
+	 *
+	 * From our POV, that's the outbound SPI.
+	 */
+	st = find_v2_child_sa_by_outbound_spi(&pst->st_ike_spis, ntfy.isan_protoid, spi);
 	if (st == NULL) {
 		libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
 			ntohl((uint32_t) spi),
@@ -5405,12 +5413,22 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 						    ntohl((uint32_t)
 							  spi)));
 
-					struct state *dst =
-						find_state_ikev2_child_to_delete(
-							st->st_icookie,
-							st->st_rcookie,
-							v2del->isad_protoid,
-							spi);
+					/*
+					 * From 3.11.  Delete Payload:
+					 * [the delete payload will]
+					 * contain the IPsec protocol
+					 * ID of that protocol (2 for
+					 * AH, 3 for ESP), and the SPI
+					 * is the SPI the sending
+					 * endpoint would expect in
+					 * inbound ESP or AH packets.
+					 *
+					 * From our POV, that's the
+					 * outbound SPI.
+					 */
+					struct state *dst = find_v2_child_sa_by_outbound_spi(&st->st_ike_spis,
+											     v2del->isad_protoid,
+											     spi);
 
 					passert(dst != st);	/* st is an IKE SA */
 					if (dst == NULL) {

@@ -29,14 +29,16 @@ typedef struct {
 	uint8_t bytes[IKE_SA_SPI_SIZE];
 } ike_spi_t;
 
+extern const ike_spi_t zero_ike_spi;
+bool ike_spi_is_zero(const ike_spi_t *ike_spi);
+bool ike_spi_eq(const ike_spi_t *lhs, const ike_spi_t *rhs);
+
 typedef struct {
 	ike_spi_t initiator;
 	ike_spi_t responder;
 } ike_spis_t;
 
-extern const ike_spi_t zero_ike_spi;
-bool ike_spi_is_zero(const ike_spi_t *ike_spi);
-bool ike_spi_eq(const ike_spi_t *lhs, const ike_spi_t *rhs);
+bool ike_spis_eq(const ike_spis_t *lhs, const ike_spis_t *rhs);
 
 /*
  * Need to handle two cases:

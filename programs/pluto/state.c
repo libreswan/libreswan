@@ -1576,19 +1576,32 @@ struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
 }
 
 /*
- * Find a state object for an IKEv2 child state to delete.
- * In IKEv2, child states can only be distingusihed based on protocols and SPIs
+ * Find an IKEv2 CHILD SA using the protocol and the (from our POV)
+ * 'outbound' SPI.
+ *
+ * The remote end, when identifing a CHILD SA in a Delete or REKEY_SA
+ * notification, sends its end's inbound SPI, which from our
+ * point-of-view is the outbound SPI aka 'attrs.spi'.
+ *
+ * From 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA Exchange:
+ * The SA being rekeyed is identified by the SPI field in the
+ * [REKEY_SA] Notify payload; this is the SPI the exchange initiator
+ * would expect in inbound ESP or AH packets.
+ *
+ * From 3.11.  Delete Payload: [the delete payload will] contain the
+ * IPsec protocol ID of that protocol (2 for AH, 3 for ESP), and the
+ * SPI is the SPI the sending endpoint would expect in inbound ESP or
+ * AH packets.
  */
-struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
-					       const u_char *rcookie,
-					       uint8_t protoid,
-					       ipsec_spi_t spi)
+struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
+					       uint8_t protoid, ipsec_spi_t spi)
 {
-	struct state *st;
-	FOR_EACH_STATE_WITH_COOKIES(st, icookie, rcookie, {
-		if (st->st_ikev2 && IS_CHILD_SA(st)) {
-			struct ipsec_proto_info *pr;
+	struct state *st = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(ike_spis), st) {
+		if (st->st_ikev2 && IS_CHILD_SA(st) &&
+		    ike_spis_eq(&st->st_ike_spis, ike_spis)) {
 
+			struct ipsec_proto_info *pr;
 			switch (protoid) {
 			case PROTO_IPSEC_AH:
 				pr = &st->st_ah;
@@ -1601,26 +1614,27 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 			}
 
 			if (pr->present) {
-				if (pr->attrs.spi == spi)
-					break;
-				if (pr->our_spi == spi)
-					break;
+				if (pr->attrs.spi == spi) {
+					dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
+					    st->st_serialno,
+					    st->st_state_name);
+					return st;
+				}
+#if 0
+				/* see function description above */
+				if (pr->our_spi == spi) {
+					dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
+					    st->st_serialno,
+					    st->st_state_name);
+					return st;
+				}
+#endif
 			}
 
 		}
-	});
-
-	DBG(DBG_CONTROL, {
-		    if (st == NULL) {
-			    DBG_log("v2 child state object not found");
-		    } else {
-			    DBG_log("v2 child state object #%lu found, in %s",
-				    st->st_serialno,
-				    st->st_state_name);
-		    }
-	    });
-
-	return st;
+	}
+	dbg("v2 CHILD SA not found");
+	return NULL;
 }
 
 /*
