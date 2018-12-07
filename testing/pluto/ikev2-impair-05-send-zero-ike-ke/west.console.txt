@@ -11,9 +11,11 @@ west #
  echo "initdone"
 initdone
 west #
- # should fail fast
+ # send KE:0
 west #
- ipsec whack --impair ke-payload:0 --impair delete-on-retransmit
+ ipsec whack --impair ke-payload:0
+west #
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating v2 parent SA
@@ -25,7 +27,7 @@ west #
 west #
  ipsec whack --impair none
 west #
- # expected to fail with a timeout
+ # receive KE:0
 west #
  ipsec whack --impair suppress-retransmits
 west #
