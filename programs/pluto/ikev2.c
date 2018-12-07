@@ -1276,8 +1276,6 @@ static bool processed_retransmit(struct state *st,
 				 struct msg_digest *md,
 				 const enum isakmp_xchg_types ix)
 {
-	set_cur_state(st);
-
 	/*
 	 * XXX: This solution is broken. If two exchanges (after the
 	 * initial exchange) are interleaved, we ignore the first.
@@ -1299,16 +1297,6 @@ static bool processed_retransmit(struct state *st,
 	if (st->st_msgid_lastrecv != md->hdr.isa_msgid) {
 		/* presumably not a re-transmit */
 		return false;
-	}
-
-	/*
-	 * XXX: Necessary?  Only when the message IDs match should a
-	 * re-transmit occure - if they don't then the above should
-	 * have rejected the packet.
-	 */
-	if (state_is_busy(st)) {
-		libreswan_log("retransmission ignored: we're still working on the previous one");
-		return true;
 	}
 
 	/* this should never happen */
@@ -1486,29 +1474,10 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 * Must be a duplicate!  Only question
 				 * is: should a re re-transmit be sent
 				 * back, or should it simply be
-				 * dropped.
-				 *
-				 * XXX: STATE_PARENT_R1 is unique in
-				 * that when the crypto finishes,
-				 * there isn't a state transition to
-				 * the next state.  For all other
-				 * cases, things go OLD -> OLD+BUSY ->
-				 * NEW?
+				 * dropped.  Decide that further down.
 				 */
-				pexpect(st->st_msgid_lastrecv == 0); /* since state R1 */
-				so_serial_t old_state = push_cur_state(st);
-				if (state_is_busy(st)) {
-					libreswan_log("IKE_SA_INIT retransmission ignored: we're still working on the previous one");
-				} else {
-					/* XXX: Safe to assume there is a reply? */
-					LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
-						lswlog_retransmit_prefix(buf, st);
-						lswlogf(buf, "duplicate IKE_INIT_I message received, retransmiting previous packet");
-					}
-					send_recorded_v2_ike_msg(st, "ikev2-responder-retransmit IKE_SA_INIT");
-				}
-				pop_cur_state(old_state);
-				return;
+				dbg("received duplicate IKE_SA_INIT for #%lu",
+				    st->st_serialno);
 			}
 			/* update lastrecv later on */
 			break;
@@ -1583,10 +1552,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			rate_log("%s message request has no corresponding IKE SA",
 				 enum_show_shortb(&ikev2_exchange_names,
 						  ix, &ixb));
-			return;
-		}
-		/* was this is a recent retransmit. */
-		if (processed_retransmit(st, md, ix)) {
 			return;
 		}
 		/* update lastrecv later on */
@@ -1737,6 +1702,12 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 */
 	if (verbose_state_busy(st))
 		return;
+
+	/* was this is a recent retransmit. */
+	if (st != NULL && v2_msg_role(md) == MESSAGE_REQUEST &&
+	    processed_retransmit(st, md, ix)) {
+		return;
+	}
 
 	ikev2_process_state_packet(ike, st, mdp);
 }
