@@ -23,7 +23,7 @@ You can load this machine definition into libvirt using:
   <on_crash>restart</on_crash>
   <devices>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2' cache='unsafe'/>
+      <driver name='qemu' type='qcow2' cache='writeback'/>
       <source file='@@POOLSPACE@@/@@NAME@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
     </disk>
