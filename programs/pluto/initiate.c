@@ -638,7 +638,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 		 */
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
-			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
 
 		cannot_oppo(NULL, b, "no routed template covers this pair");
@@ -648,7 +647,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 	}  else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
-			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
 		loglog(RC_NOPEERIP,
 		       "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
@@ -715,7 +713,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
-			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
 
 		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,

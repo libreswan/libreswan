@@ -26,14 +26,7 @@
  *
  */
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 #include <unistd.h>
-#include <errno.h>
-#include <time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -49,7 +42,6 @@
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
-#include "lex.h"
 #include "keys.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */

@@ -36,7 +36,7 @@ static size_t log_state(struct lswlog *buf, void *data)
  * A table ordered by serialno.
  */
 
-struct list_info serialno_list_info = {
+static const struct list_info serialno_list_info = {
 	.debug = DBG_CONTROLMORE,
 	.name = "serialno list",
 	.log = log_state,

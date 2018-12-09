@@ -164,12 +164,13 @@ enum_names state_category_names = {
  * AUTHENTICATED or ANONYMOUS.  Among other things used for DDoS
  * tracking.
  *
- * A "signed" long is used so that should a counter underflow
- * (presumably a bug) then its value is displayed as -ve.  CAT_T
- * PRI_CAT are terrible but short names.
+ * Hack: CAT_T is unsigned (like values it gets compared against), and
+ * assumed to be implemented using 2's complement.  However, the value
+ * is printed as a "signed" value - so that should underflow occure it
+ * is diplayed as -ve (rather than a huge positive).
  */
 
-typedef long cat_t;
+typedef unsigned long cat_t;
 #define PRI_CAT "%ld"
 
 static cat_t cat_count[elemsof(cat_name)] = { 0 };
@@ -376,6 +377,8 @@ static char *readable_humber(uint64_t num,
 		}							\
 	})								\
 
+#define FOR_EACH_STATE_WITH_IKE_SPIS(ST, I, R)
+	
 
 /*
  * Get the IKE SA managing the security association.
@@ -865,14 +868,8 @@ void delete_state(struct state *st)
 	}
 #endif
 
-	/* If DPD is enabled on this state object, clear any pending events */
-	if (st->st_dpd_event != NULL)
-		delete_dpd_event(st);
-
-	/* clear any ikev2 liveness events */
-	if (st->st_ikev2)
-		delete_liveness_event(st);
-
+	delete_dpd_event(st);
+	delete_liveness_event(st);
 	delete_state_event(st, &st->st_rel_whack_event);
 	delete_state_event(st, &st->st_send_xauth_event);
 	delete_state_event(st, &st->st_addr_change_event);
@@ -1466,34 +1463,26 @@ struct state *find_state_ikev1_init(const uint8_t *icookie,
 }
 
 /*
- * Find a state object for an IKEv2 state.
- * Note: only finds parent states.
+ * Find the IKEv2 IKE SA with the specified SPIs.
  */
-struct state *find_state_ikev2_parent(const u_char *icookie,
-				      const u_char *rcookie)
+struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
+			      const ike_spi_t *ike_responder_spi)
 {
-	struct state *st;
-	FOR_EACH_STATE_WITH_COOKIES(st, icookie, rcookie, {
+	struct state *st = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
+						 ike_responder_spi), st) {
 		if (st->st_ikev2 &&
-		    !IS_CHILD_SA(st)) {
-			DBG(DBG_CONTROL,
-			    DBG_log("parent v2 peer and cookies match on #%lu",
-				    st->st_serialno));
-			break;
+		    IS_IKE_SA(st) &&
+		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
+		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
+			dbg("v2 IKE SA #%lu found, in state %s",
+			    st->st_serialno,
+			    st->st_state_name);
+			return st;
 		}
-	});
-
-	DBG(DBG_CONTROL, {
-		if (st == NULL) {
-			DBG_log("parent v2 state object not found");
-		} else {
-			DBG_log("v2 state object #%lu found, in %s",
-				st->st_serialno,
-				st->st_state_name);
-		}
-	});
-
-	return st;
+	}
+	dbg("parent v2 state object not found");
+	return NULL;
 }
 
 /*
@@ -1586,19 +1575,32 @@ struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
 }
 
 /*
- * Find a state object for an IKEv2 child state to delete.
- * In IKEv2, child states can only be distingusihed based on protocols and SPIs
+ * Find an IKEv2 CHILD SA using the protocol and the (from our POV)
+ * 'outbound' SPI.
+ *
+ * The remote end, when identifing a CHILD SA in a Delete or REKEY_SA
+ * notification, sends its end's inbound SPI, which from our
+ * point-of-view is the outbound SPI aka 'attrs.spi'.
+ *
+ * From 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA Exchange:
+ * The SA being rekeyed is identified by the SPI field in the
+ * [REKEY_SA] Notify payload; this is the SPI the exchange initiator
+ * would expect in inbound ESP or AH packets.
+ *
+ * From 3.11.  Delete Payload: [the delete payload will] contain the
+ * IPsec protocol ID of that protocol (2 for AH, 3 for ESP), and the
+ * SPI is the SPI the sending endpoint would expect in inbound ESP or
+ * AH packets.
  */
-struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
-					       const u_char *rcookie,
-					       uint8_t protoid,
-					       ipsec_spi_t spi)
+struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
+					       uint8_t protoid, ipsec_spi_t spi)
 {
-	struct state *st;
-	FOR_EACH_STATE_WITH_COOKIES(st, icookie, rcookie, {
-		if (st->st_ikev2 && IS_CHILD_SA(st)) {
-			struct ipsec_proto_info *pr;
+	struct state *st = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(ike_spis), st) {
+		if (st->st_ikev2 && IS_CHILD_SA(st) &&
+		    ike_spis_eq(&st->st_ike_spis, ike_spis)) {
 
+			struct ipsec_proto_info *pr;
 			switch (protoid) {
 			case PROTO_IPSEC_AH:
 				pr = &st->st_ah;
@@ -1611,26 +1613,27 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 			}
 
 			if (pr->present) {
-				if (pr->attrs.spi == spi)
-					break;
-				if (pr->our_spi == spi)
-					break;
+				if (pr->attrs.spi == spi) {
+					dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
+					    st->st_serialno,
+					    st->st_state_name);
+					return st;
+				}
+#if 0
+				/* see function description above */
+				if (pr->our_spi == spi) {
+					dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
+					    st->st_serialno,
+					    st->st_state_name);
+					return st;
+				}
+#endif
 			}
 
 		}
-	});
-
-	DBG(DBG_CONTROL, {
-		    if (st == NULL) {
-			    DBG_log("v2 child state object not found");
-		    } else {
-			    DBG_log("v2 child state object #%lu found, in %s",
-				    st->st_serialno,
-				    st->st_state_name);
-		    }
-	    });
-
-	return st;
+	}
+	dbg("v2 CHILD SA not found");
+	return NULL;
 }
 
 /*

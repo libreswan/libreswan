@@ -298,9 +298,7 @@ void suppress_retransmits(struct state *st)
 	 * event_schedule() doesn't just wipe the old event
 	 * automatically?
 	 */
-	if (st->st_event != NULL) {
-		delete_pluto_event(&st->st_event);
-	}
+	delete_pluto_event(&st->st_event);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
 	LSWLOG_RC(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: suppressing retransmits; will wait ",

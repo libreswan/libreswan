@@ -535,6 +535,7 @@ struct state {
 	 * scratch.
 	 */
 	deltatime_t st_replace_margin;
+	monotime_t st_replace_by;
 
 	unsigned long st_outbound_count;	/* traffic through eroute */
 	monotime_t st_outbound_time;	/* time of last change to
@@ -751,8 +752,8 @@ extern bool find_pending_phase2(const so_serial_t psn,
 					const struct connection *c,
 					lset_t ok_states);
 
-extern struct state *find_state_ikev2_parent(const u_char *icookie,
-					     const u_char *rcookie);
+extern struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
+				    const ike_spi_t *ike_responder_spi);
 
 extern struct state *ikev2_find_state_in_init(const u_char *icookie,
 						  enum state_kind expected_state);
@@ -762,10 +763,8 @@ extern struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
 					    const u_char *rcookie,
 					    const msgid_t msgid);
 
-extern struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
-						      const u_char *rcookie,
-						      uint8_t protoid,
-						      ipsec_spi_t spi);
+struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
+					       uint8_t protoid, ipsec_spi_t spi);
 
 extern void find_states_and_redirect(const char *conn_name,
 				     ip_address remote_ip,

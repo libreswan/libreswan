@@ -24,13 +24,6 @@
 #include "rnd.h"
 #include "crypt_hash.h"
 
-const uint8_t zero_cookie[IKE_SA_SPI_SIZE];  /* guaranteed 0 */
-
-bool is_zero_cookie(const uint8_t spi[IKE_SA_SPI_SIZE])
-{
-	return memeq(spi, zero_cookie, IKE_SA_SPI_SIZE);
-}
-
 const ike_spi_t zero_ike_spi;  /* guaranteed 0 */
 
 bool ike_spi_is_zero(const ike_spi_t *spi)
@@ -41,6 +34,12 @@ bool ike_spi_is_zero(const ike_spi_t *spi)
 bool ike_spi_eq(const ike_spi_t *lhs, const ike_spi_t *rhs)
 {
 	return memeq(lhs, rhs, sizeof(*lhs));
+}
+
+bool ike_spis_eq(const ike_spis_t *lhs, const ike_spis_t *rhs)
+{
+	return (ike_spi_eq(&lhs->initiator, &rhs->initiator) &&
+		ike_spi_eq(&lhs->responder, &rhs->responder));
 }
 
 static uint8_t ike_spi_secret[SHA2_256_DIGEST_SIZE];

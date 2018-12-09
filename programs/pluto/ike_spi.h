@@ -29,14 +29,16 @@ typedef struct {
 	uint8_t bytes[IKE_SA_SPI_SIZE];
 } ike_spi_t;
 
+extern const ike_spi_t zero_ike_spi;
+bool ike_spi_is_zero(const ike_spi_t *ike_spi);
+bool ike_spi_eq(const ike_spi_t *lhs, const ike_spi_t *rhs);
+
 typedef struct {
 	ike_spi_t initiator;
 	ike_spi_t responder;
 } ike_spis_t;
 
-extern const ike_spi_t zero_ike_spi;
-bool ike_spi_is_zero(const ike_spi_t *ike_spi);
-bool ike_spi_eq(const ike_spi_t *lhs, const ike_spi_t *rhs);
+bool ike_spis_eq(const ike_spis_t *lhs, const ike_spis_t *rhs);
 
 /*
  * Need to handle two cases:
@@ -54,12 +56,5 @@ ike_spi_t ike_initiator_spi(void);
 ike_spi_t ike_responder_spi(const ip_address *addr);
 
 void refresh_ike_spi_secret(void);
-
-/*
- * Old; being deleted.
- */
-
-extern const uint8_t zero_cookie[IKE_SA_SPI_SIZE]; /* use zero_ike_spi */
-bool is_zero_cookie(const uint8_t ike_spi[IKE_SA_SPI_SIZE]); /* use ike_spi_is_zero() */
 
 #endif

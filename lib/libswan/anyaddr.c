@@ -14,6 +14,7 @@
  */
 
 #include <string.h>
+#include <arpa/inet.h>		/* for ntohl() */
 
 #include "ip_address.h"
 

@@ -18,11 +18,6 @@
 # error this file should only be compiled when DNSSEC is defined
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <arpa/inet.h> /* for inet_ntop */
 #include <arpa/nameser.h>
 #include <ldns/ldns.h>	/* from ldns-devel */

@@ -1,8 +1,11 @@
 IKEv2: send zero KE during the IKE exchange breaking the DH calculation
 
-Interop #1: initiator sends zero KE, should get back quick response?
+Interop #1: initiator sends zero KE
 
-Interop #2: responder sends zero KE, should bail?
+Interop #2: responder sends zero KE
 
-regardless should not dump core
+In both cases, since the initiator performs DH before the responder,
+it is the initiator that will detect that DH failed and logged.
+
+Also should not dump core.
 

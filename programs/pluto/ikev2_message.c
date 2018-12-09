@@ -163,8 +163,8 @@ pb_stream open_v2_message(pb_stream *reply,
 		 * SA_INIT request, the still zero RCOOKIE will be
 		 * copied.
 		 */
-		memcpy(hdr.isa_icookie, ike->sa.st_icookie, COOKIE_SIZE);
-		memcpy(hdr.isa_rcookie, ike->sa.st_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
 	} else {
 		/*
 		 * Not that when responding to an SA_INIT with an
@@ -172,8 +172,8 @@ pb_stream open_v2_message(pb_stream *reply,
 		 * RCOOKIE will (should be?).
 		 */
 		passert(md != NULL);
-		memcpy(hdr.isa_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-		memcpy(hdr.isa_rcookie, md->hdr.isa_rcookie, COOKIE_SIZE);
+		hdr.isa_ike_initiator_spi = md->hdr.isa_ike_initiator_spi;
+		hdr.isa_ike_responder_spi = md->hdr.isa_ike_responder_spi;
 	}
 
 	/*

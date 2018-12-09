@@ -243,7 +243,7 @@ bool ship_v2Ns(enum next_payload_types_ikev2 np,
 
 void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 				     v2_notification_t ntype,
-				     chunk_t *ndata)
+				     const chunk_t *ndata)
 {
 	passert(md != NULL); /* always a reply */
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
@@ -331,7 +331,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 
 void send_v2_notification_from_md(struct msg_digest *md,
 				  v2_notification_t ntype,
-				  chunk_t *ndata)
+				  const chunk_t *ndata)
 {
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
 
@@ -391,21 +391,6 @@ void send_v2_notification_from_md(struct msg_digest *md,
 		   same_out_pbs_as_chunk(&reply));
 
 	pstat(ikev2_sent_notifies_e, ntype);
-}
-
-void send_v2_notification_invalid_ke(struct msg_digest *md,
-				     const struct oakley_group_desc *group)
-{
-	DBG(DBG_CONTROL, {
-		DBG_log("sending INVALID_KE back with %s(%d)",
-			group->common.name, group->group);
-	});
-	/* convert group to a raw buffer */
-	const uint16_t gr = htons(group->group);
-	chunk_t nd;
-	setchunk(nd, (void*)&gr, sizeof(gr));
-
-	send_v2_notification_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
 }
 
 /*

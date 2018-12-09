@@ -118,7 +118,7 @@ static size_t log_backlog(struct lswlog *buf, void *data)
 	return size;
 }
 
-struct list_info backlog_info = {
+static const struct list_info backlog_info = {
 	.debug = DBG_CONTROLMORE,
 	.name = "backlog",
 	.log = log_backlog,

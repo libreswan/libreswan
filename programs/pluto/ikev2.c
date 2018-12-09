@@ -27,12 +27,7 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
 #include <unistd.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -411,7 +406,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2_parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  .timeout_event = EVENT_v2_RESPONDER_TIMEOUT, },
+	  .timeout_event = EVENT_SO_DISCARD, },
 
 	/* STATE_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -1281,8 +1276,6 @@ static bool processed_retransmit(struct state *st,
 				 struct msg_digest *md,
 				 const enum isakmp_xchg_types ix)
 {
-	set_cur_state(st);
-
 	/*
 	 * XXX: This solution is broken. If two exchanges (after the
 	 * initial exchange) are interleaved, we ignore the first.
@@ -1304,16 +1297,6 @@ static bool processed_retransmit(struct state *st,
 	if (st->st_msgid_lastrecv != md->hdr.isa_msgid) {
 		/* presumably not a re-transmit */
 		return false;
-	}
-
-	/*
-	 * XXX: Necessary?  Only when the message IDs match should a
-	 * re-transmit occure - if they don't then the above should
-	 * have rejected the packet.
-	 */
-	if (state_is_busy(st)) {
-		libreswan_log("retransmission ignored: we're still working on the previous one");
-		return true;
 	}
 
 	/* this should never happen */
@@ -1447,25 +1430,29 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * zero.
 		 */
 		if (md->hdr.isa_msgid != 0) {
-			libreswan_log("dropping IKE_SA_INIT packet containing non-zero message ID");
-			return;
-		}
-		/*
-		 * The initiator must send: IKE_I && !MSG_R
-		 * The responder must send: !IKE_I && MSG_R.
-		 */
-		if (sent_by_ike_initiator && v2_msg_role(md) != MESSAGE_REQUEST) {
-			libreswan_log("dropping IKE_SA_INIT request with conflicting message response flag");
-			return;
-		}
-		if (!sent_by_ike_initiator && v2_msg_role(md) != MESSAGE_RESPONSE) {
-			libreswan_log("dropping IKE_SA_INIT response with conflicting message response flag");
+			libreswan_log("dropping IKE_SA_INIT message containing non-zero message ID");
 			return;
 		}
 		/*
 		 * Now try to find the state
 		 */
-		if (sent_by_ike_initiator) {
+		switch (v2_msg_role(md)) {
+		case MESSAGE_REQUEST:
+			/* The initiator must send: IKE_I && !MSG_R */
+			if (!sent_by_ike_initiator) {
+				libreswan_log("dropping IKE_SA_INIT request with conflicting IKE initiator flag");
+				return;
+			}
+			/*
+			 * 3.1.  The IKE Header: This [SPIr] value
+			 * MUST be zero in the first message of an IKE
+			 * initial exchange (including repeats of that
+			 * message including a cookie).
+			 */
+			if (!ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
+				libreswan_log("dropping IKE_SA_INIT request with non-zero SPIr");
+				return;
+			}
 			/*
 			 * Sent by the IKE initiator; look for the IKE
 			 * responder's state.
@@ -1487,32 +1474,33 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 * Must be a duplicate!  Only question
 				 * is: should a re re-transmit be sent
 				 * back, or should it simply be
-				 * dropped.
-				 *
-				 * XXX: STATE_PARENT_R1 is unique in
-				 * that when the crypto finishes,
-				 * there isn't a state transition to
-				 * the next state.  For all other
-				 * cases, things go OLD -> OLD+BUSY ->
-				 * NEW?
+				 * dropped.  Decide that further down.
 				 */
-				pexpect(st->st_msgid_lastrecv == 0); /* since state R1 */
-				so_serial_t old_state = push_cur_state(st);
-				if (state_is_busy(st)) {
-					libreswan_log("IKE_SA_INIT retransmission ignored: we're still working on the previous one");
-				} else {
-					/* XXX: Safe to assume there is a reply? */
-					LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
-						lswlog_retransmit_prefix(buf, st);
-						lswlogf(buf, "duplicate IKE_INIT_I message received, retransmiting previous packet");
-					}
-					send_recorded_v2_ike_msg(st, "ikev2-responder-retransmit IKE_SA_INIT");
-				}
-				pop_cur_state(old_state);
-				return;
+				dbg("received duplicate IKE_SA_INIT for #%lu",
+				    st->st_serialno);
 			}
 			/* update lastrecv later on */
-		} else {
+			break;
+		case MESSAGE_RESPONSE:
+			/* The responder must send: !IKE_I && MSG_R. */
+			if (sent_by_ike_initiator) {
+				libreswan_log("dropping IKE_SA_INIT response with conflicting IKE initiator flag");
+				return;
+			}
+			/*
+			 * 2.6.  IKE SA SPIs and Cookies: When the
+			 * IKE_SA_INIT exchange does not result in the
+			 * creation of an IKE SA due to
+			 * INVALID_KE_PAYLOAD, NO_PROPOSAL_CHOSEN, or
+			 * COOKIE, the responder's SPI will be zero
+			 * also in the response message.  However, if
+			 * the responder sends a non-zero responder
+			 * SPI, the initiator should not reject the
+			 * response for only that reason.
+			 *
+			 * i.e., can't check response for non-zero
+			 * SPIr.
+			 */
 			/*
 			 * Sent by IKE responder; look for the IKE
 			 * initiator's state.
@@ -1546,13 +1534,19 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * all.
 			 */
 			rehash_state(st, &md->hdr.isa_ike_responder_spi);
+			break;
+		default:
+			bad_case(v2_msg_role(md));
 		}
 	} else if (v2_msg_role(md) == MESSAGE_REQUEST) {
 		/*
-		 * A request; send it to the IKE SA.
+		 * A (possibly new) request; start with the IKE SA
+		 * with matching SPIs.  If it is a new CHILD SA
+		 * request then the state machine will will morph ST
+		 * into a child state before dispatching.
 		 */
-		st = find_state_ikev2_parent(md->hdr.isa_icookie,
-					     md->hdr.isa_rcookie);
+		st = find_v2_ike_sa(&md->hdr.isa_ike_initiator_spi,
+				    &md->hdr.isa_ike_responder_spi);
 		if (st == NULL) {
 			struct esb_buf ixb;
 			rate_log("%s message request has no corresponding IKE SA",
@@ -1560,31 +1554,27 @@ void ikev2_process_packet(struct msg_digest **mdp)
 						  ix, &ixb));
 			return;
 		}
-		/* was this is a recent retransmit. */
-		if (processed_retransmit(st, md, ix)) {
-			return;
-		}
 		/* update lastrecv later on */
 	} else if (v2_msg_role(md) == MESSAGE_RESPONSE) {
 		/*
-		 * A response; find the child that made the request
-		 * and send it to that.
+		 * A response; find the IKE SA or CHILD SA that
+		 * initiated the request.
 		 *
-		 * XXX: which of these two lookups find the parent of
-		 * an AUTH exchange.  Hmm, perhaps, because the code
-		 * commits to creating a child early, it finds that.
+		 * XXX: Why are two lookups needed?  Surely only one
+		 * state has a matching Message ID - the one that sent
+		 * the request?
 		 */
 		st = find_state_ikev2_child(ix, md->hdr.isa_icookie,
 				md->hdr.isa_rcookie,
-				md->hdr.isa_msgid); /* message ID in NW order */
+				md->hdr.isa_msgid);
 
 		if (st == NULL) {
 			/*
 			 * Didn't find a child waiting on that message
 			 * ID so presumably it isn't valid.
 			 */
-			st = find_state_ikev2_parent(md->hdr.isa_icookie,
-						     md->hdr.isa_rcookie);
+			st = find_v2_ike_sa(&md->hdr.isa_ike_initiator_spi,
+					    &md->hdr.isa_ike_responder_spi);
 			if (st == NULL) {
 				rate_log("%s message response has no matching IKE SA",
 					 enum_name(&ikev2_exchange_names, ix));
@@ -1712,6 +1702,12 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 */
 	if (verbose_state_busy(st))
 		return;
+
+	/* was this is a recent retransmit. */
+	if (st != NULL && v2_msg_role(md) == MESSAGE_REQUEST &&
+	    processed_retransmit(st, md, ix)) {
+		return;
+	}
 
 	ikev2_process_state_packet(ike, st, mdp);
 }
@@ -2335,7 +2331,6 @@ static bool ikev2_decode_peer_id_and_certs_counted(struct msg_digest *md, int de
 				}
 
 				update_state_connection(md->st, r);
-				c = r;	/* c not subsequently used */
 				/* redo from scratch so we read and check CERT payload */
 				DBG(DBG_X509, DBG_log("retrying ikev2_decode_peer_id_and_certs() with new conn"));
 				return ikev2_decode_peer_id_and_certs_counted(md, depth + 1);
@@ -2594,132 +2589,6 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 	}
 }
 
-/*
- * Only replace the SA when it's been in use (checking for in-use is a
- * separate operation).
- */
-bool v2_only_replace_sa_when_used(struct state *st)
-{
-	passert(st->st_ikev2);
-	struct connection *c = st->st_connection;
-	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
-		/* this is an opportunistic thing */
-		return false;
-	}
-	if (st->st_connection->spd.that.has_lease) {
-		/* don't hang onto a lease; why? */
-		return false;
-	}
-	/* need to have been established */
-	return (IS_PARENT_SA_ESTABLISHED(st) ||
-		IS_CHILD_SA_ESTABLISHED(st));
-}
-
-deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind)
-{
-	enum event_type kind = *pkind;
-	pexpect(kind == EVENT_SA_REPLACE);
-	intmax_t delay;   /* unwrapped deltatime_t in seconds */
-	struct connection *c = st->st_connection;
-
-	if (IS_PARENT_SA(st)) {
-		/*
-		 * workaround for child appearing as parent
-		 *
-		 * Note: we will defer to the "negotiated" (dictated)
-		 * lifetime if we are POLICY_DONT_REKEY.  This allows
-		 * the other side to dictate a time we would not
-		 * otherwise accept but it prevents us from having to
-		 * initiate rekeying.  The negative consequences seem
-		 * minor.
-		 *
-		 * We cleanup halfopen IKE SAs fast, could be spoofed
-		 * packets
-		 */
-		if (IS_IKE_SA_ESTABLISHED(st)) {
-			delay = deltasecs(c->sa_ike_life_seconds);
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estblished ike_life:%jd", (intmax_t) delay));
-		} else {
-			delay = PLUTO_HALFOPEN_SA_LIFE;
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ike_life:%jd", (intmax_t) delay));
-		}
-	} else {
-		/* Delay is what the user said, no negotiation. */
-		delay = deltasecs(c->sa_ipsec_life_seconds);
-		DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up salifetime=%jd", (intmax_t) delay));
-	}
-
-	/* By default, we plan to rekey.
-	 *
-	 * If there isn't enough time to rekey, plan to
-	 * expire.
-	 *
-	 * If we are --dontrekey, a lot more rules apply.
-	 * If we are the Initiator, use REPLACE_IF_USED.
-	 * If we are the Responder, and the dictated time
-	 * was unacceptable (too large), plan to REPLACE
-	 * (the only way to ratchet down the time).
-	 * If we are the Responder, and the dictated time
-	 * is acceptable, plan to EXPIRE.
-	 *
-	 * Important policy lies buried here.
-	 * For example, we favour the initiator over the
-	 * responder by making the initiator start rekeying
-	 * sooner.  Also, fuzz is only added to the
-	 * initiator's margin.
-	 *
-	 * Note: for ISAKMP SA, we let the negotiated
-	 * time stand (implemented by earlier logic).
-	 */
-	if (kind != EVENT_SA_EXPIRE) {
-		/* unwrapped deltatime_t in seconds */
-		intmax_t marg = deltasecs(c->sa_rekey_margin);
-
-		switch (st->st_sa_role) {
-		case SA_INITIATOR:
-			marg += marg *
-				c->sa_rekey_fuzz / 100.E0 *
-				(rand() / (RAND_MAX + 1.E0));
-			break;
-		case SA_RESPONDER:
-			marg /= 2;
-			break;
-		default:
-			bad_case(st->st_sa_role);
-		}
-
-		if (delay > marg) {
-			delay -= marg;
-			st->st_replace_margin = deltatime(marg);
-		} else {
-			*pkind = EVENT_SA_EXPIRE;
-		}
-
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			if (st->st_connection->spd.that.has_lease) {
-				*pkind = EVENT_SA_EXPIRE;
-			} else if (v2_only_replace_sa_when_used(st)) {
-				/* XXX: is this even needed? */
-				*pkind = EVENT_SA_REPLACE;
-				pexpect(*pkind == kind);
-			}
-		} else if (c->policy & POLICY_DONT_REKEY) {
-			*pkind = EVENT_SA_EXPIRE;
-		}
-	}
-	LSWDBGP(DBG_MASK, buf) {
-		lswlogf(buf, "#%lu replace event %s in %ju seconds with margin %ju seconds",
-			st->st_serialno,
-			enum_short_name(&timer_event_names, *pkind),
-			delay, deltasecs(st->st_replace_margin));
-		if (*pkind != kind) {
-			lswlogf(buf, " (original event was %s)",
-				enum_short_name(&timer_event_names, kind));
-		}
-	}
-	return deltatime(delay);
-}
-
 void log_ipsec_sa_established(const char *m, const struct state *st)
 {
 	/* log Child SA Traffic Selector details for admin's pleasure */
@@ -2923,17 +2792,10 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 			break;
 
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
-		{
-			deltatime_t delay = ikev2_replace_delay(st, &kind);
-			DBG(DBG_LIFECYCLE,
-			    DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %jdms",
-				    IS_IKE_SA(st) ? "parent" : "child", deltamillisecs(delay)));
-			delete_event(st);
-			event_schedule(kind, delay, st);
+			v2_schedule_replace_event(st);
 			break;
-		}
 
-		case EVENT_v2_RESPONDER_TIMEOUT:
+		case EVENT_SO_DISCARD:
 			delete_event(st);
 			event_schedule_s(kind, MAXIMUM_RESPONDER_WAIT, st);
 			break;
@@ -3219,8 +3081,10 @@ void complete_v2_state_transition(struct state *st,
 					if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
 						delete_state(st);
 					} else {
+						dbg("forcing #%lu to a discard event",
+						    st->st_serialno);
 						delete_event(st);
-						event_schedule_s(EVENT_v2_RESPONDER_TIMEOUT,
+						event_schedule_s(EVENT_SO_DISCARD,
 								 MAXIMUM_RESPONDER_WAIT,
 								 st);
 					}

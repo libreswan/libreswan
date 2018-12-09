@@ -28,14 +28,9 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 #include <libreswan.h>
-#include <errno.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -309,8 +304,14 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	 * taking it current from current state I2/R1. The parent has advanced but not the svm???
 	 * Ideally this should be timeout of I3/R2 state svm. how to find that svm
 	 * ??? I wonder what this comment means?  Needs rewording.
+	 *
+	 * XXX: .timeout_event is tied to a state transition.  Does
+	 * that mean it applies to the transition or to the final
+	 * state?  It is kind of treated as all three (the third case
+	 * is where a transition gets shared between the parent and
+	 * child).
 	 */
-	enum event_type kind = svm->timeout_event;
+	pexpect(svm->timeout_event == EVENT_SA_REPLACE);
 
 	/*
 	 * update the parent state to make sure that it knows we have
@@ -318,9 +319,7 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	 */
 	change_state(&ike->sa, new_state);
 	c->newest_isakmp_sa = ike->sa.st_serialno;
-	deltatime_t delay = ikev2_replace_delay(&ike->sa, &kind);
-	delete_event(&ike->sa);
-	event_schedule(kind, delay, &ike->sa);
+	v2_schedule_replace_event(&ike->sa);
 	ike->sa.st_viable_parent = TRUE;
 }
 
@@ -328,7 +327,7 @@ static stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ik
 {
 	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
 	stf_status e = STF_OK;
-	char  *what;
+	const char  *what;
 
 	if (unack < st->st_connection->ike_window) {
 		what  =  "send new exchange now";
@@ -394,8 +393,10 @@ static bool v2_reject_wrong_ke_for_proposal(struct msg_digest *md,
 			      accepted_dh->common.name);
 		pstats(invalidke_sent_u, ke_group);
 		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
-		send_v2_notification_invalid_ke(md, accepted_dh);
-		pexpect(md->st == NULL);
+		/* convert group to a raw buffer */
+		uint16_t gr = htons(accepted_dh->group);
+		chunk_t nd = chunk(&gr, sizeof(gr));
+		send_v2_notification_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
 		return true;
 	} else {
 		return false;
@@ -1065,86 +1066,6 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE);
 	}
 
-	/* Get the proposals ready.  */
-	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA responder matching remote proposals");
-
-	/*
-	 * Select the proposal.
-	 */
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
-	struct ikev2_proposal *accepted_ike_proposal = NULL;
-	stf_status ret = ikev2_process_sa_payload("IKE responder",
-						  &sa_pd->pbs,
-						  /*expect_ike*/ TRUE,
-						  /*expect_spi*/ FALSE,
-						  /*expect_accepted*/ FALSE,
-						  LIN(POLICY_OPPORTUNISTIC, c->policy),
-						  &accepted_ike_proposal,
-						  ike_proposals);
-	if (ret != STF_OK)
-		return ret;
-
-	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal", accepted_ike_proposal));
-
-	/*
-	 * Early return must free: accepted_ike_proposal
-	 */
-
-	/*
-	 * Convert what was accepted to internal form and apply some
-	 * basic validation.  If this somehow fails (it shouldn't but
-	 * ...), drop everything.
-	 */
-	struct trans_attrs accepted_oakley;
-	if (!ikev2_proposal_to_trans_attrs(accepted_ike_proposal, &accepted_oakley)) {
-		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
-		/* free early return items */
-		free_ikev2_proposal(&accepted_ike_proposal);
-		return STF_IGNORE;
-	}
-
-	/*
-	 * Early return must free: accepted_ike_proposal
-	 */
-
-	/*
-	 * Check the MODP group in the payload matches the accepted
-	 * proposal.
-	 */
-	if (v2_reject_wrong_ke_for_proposal(md, accepted_oakley.ta_dh)) {
-		free_ikev2_proposal(&accepted_ike_proposal);
-		/*
-		 * If there was a state then this could return
-		 * STF_FATAL and let the caller clean up the mess.
-		 */
-		return STF_FAIL; /* XXX: STF_FATAL? */
-	}
-
-	/*
-	 * Check and read the KE contents.
-	 */
-	chunk_t accepted_gi = empty_chunk;
-	{
-		/* note: v1 notification! */
-		if (accept_KE(&accepted_gi, "Gi",
-			      accepted_oakley.ta_dh,
-			      &md->chain[ISAKMP_NEXT_v2KE]->pbs)
-		    != NOTHING_WRONG) {
-			/*
-			 * A KE with the incorrect number of bytes is
-			 * a syntax error and not a wrong modp group.
-			 */
-			freeanychunk(accepted_gi);
-			free_ikev2_proposal(&accepted_ike_proposal);
-			/* lower-layer will generate a notify.  */
-			return STF_FAIL + v2N_INVALID_SYNTAX;
-		}
-	}
-
-	/*
-	 * Early return must free: accepted_ike_proposal, accepted_gi.
-	 */
 
 	/*
 	 * We've committed to creating a state and, presumably,
@@ -1153,7 +1074,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	struct state *st = new_state();
 	/* set up new state */
 	/* initialize_new_state expects valid icookie/rcookie values, so create it now */
-	memcpy(st->st_icookie, md->hdr.isa_icookie, IKE_SA_SPI_SIZE);
+	st->st_ike_spis.initiator = md->hdr.isa_ike_initiator_spi;
 	fill_ike_responder_spi(st, &md->sender);
 
 	initialize_new_state(st, c, policy, 0, null_fd);
@@ -1165,15 +1086,67 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
 
-	/* save the proposal information */
-	st->st_oakley = accepted_oakley;
-	st->st_accepted_ike_proposal = accepted_ike_proposal;
-	st->st_gi = accepted_gi;
-
 	md->st = st;
 	/* set by caller */
 	pexpect(md->from_state == STATE_PARENT_R0);
 	pexpect(md->svm == finite_states[STATE_PARENT_R0]->fs_v2_transitions);
+
+	/* Get the proposals ready.  */
+	struct ikev2_proposals *ike_proposals =
+		get_v2_ike_proposals(c, "IKE SA responder matching remote proposals");
+
+	/*
+	 * Select the proposal.
+	 */
+	stf_status ret = ikev2_process_sa_payload("IKE responder",
+						  &md->chain[ISAKMP_NEXT_v2SA]->pbs,
+						  /*expect_ike*/ TRUE,
+						  /*expect_spi*/ FALSE,
+						  /*expect_accepted*/ FALSE,
+						  LIN(POLICY_OPPORTUNISTIC, c->policy),
+						  &st->st_accepted_ike_proposal,
+						  ike_proposals);
+	if (ret != STF_OK) {
+		if (pexpect(ret > STF_FAIL)) {
+			send_v2_notification_from_md(md, ret - STF_FAIL, &empty_chunk);
+		}
+		return STF_FATAL;
+	}
+
+	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
+						st->st_accepted_ike_proposal));
+
+	/*
+	 * Convert what was accepted to internal form and apply some
+	 * basic validation.  If this somehow fails (it shouldn't but
+	 * ...), drop everything.
+	 */
+	if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
+					   &st->st_oakley)) {
+		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
+		/* STF_INTERNAL_ERROR doesn't delete ST */
+		return STF_FATAL;
+	}
+
+	/*
+	 * Check the MODP group in the payload matches the accepted
+	 * proposal.
+	 */
+	if (v2_reject_wrong_ke_for_proposal(md, st->st_oakley.ta_dh)) {
+		/* already replied */
+		return STF_FATAL;
+	}
+
+	/*
+	 * Check and read the KE contents.
+	 */
+	/* note: v1 notification! */
+	if (accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+		      &md->chain[ISAKMP_NEXT_v2KE]->pbs)
+	    != NOTHING_WRONG) {
+		send_v2_notification_from_md(md, v2N_INVALID_SYNTAX, &empty_chunk);
+		return STF_FATAL;
+	}
 
 	bool seen_nat = FALSE;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
@@ -3875,8 +3848,16 @@ static struct state *find_state_to_rekey(struct payload_digest *p,
 			ntohl((uint32_t) spi),
 			enum_show(&ikev2_protocol_names, ntfy.isan_protoid)));
 
-	st = find_state_ikev2_child_to_delete(pst->st_icookie, pst->st_rcookie,
-			ntfy.isan_protoid, spi);
+	/*
+	 * From 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
+	 * Exchange: The SA being rekeyed is identified by the SPI
+	 * field in the [REKEY_SA] Notify payload; this is the SPI the
+	 * exchange initiator would expect in inbound ESP or AH
+	 * packets.
+	 *
+	 * From our POV, that's the outbound SPI.
+	 */
+	st = find_v2_child_sa_by_outbound_spi(&pst->st_ike_spis, ntfy.isan_protoid, spi);
 	if (st == NULL) {
 		libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
 			ntohl((uint32_t) spi),
@@ -5431,12 +5412,22 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 						    ntohl((uint32_t)
 							  spi)));
 
-					struct state *dst =
-						find_state_ikev2_child_to_delete(
-							st->st_icookie,
-							st->st_rcookie,
-							v2del->isad_protoid,
-							spi);
+					/*
+					 * From 3.11.  Delete Payload:
+					 * [the delete payload will]
+					 * contain the IPsec protocol
+					 * ID of that protocol (2 for
+					 * AH, 3 for ESP), and the SPI
+					 * is the SPI the sending
+					 * endpoint would expect in
+					 * inbound ESP or AH packets.
+					 *
+					 * From our POV, that's the
+					 * outbound SPI.
+					 */
+					struct state *dst = find_v2_child_sa_by_outbound_spi(&st->st_ike_spis,
+											     v2del->isad_protoid,
+											     spi);
 
 					passert(dst != st);	/* st is an IKE SA */
 					if (dst == NULL) {
@@ -5927,10 +5918,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 		migration_down(cst->st_connection, cst);
 		unroute_connection(st->st_connection);
 
-		if (cst->st_liveness_event != NULL) {
-			delete_liveness_event(cst);
-			cst->st_liveness_event = NULL;
-		}
+		delete_liveness_event(cst);
 
 		if (st->st_addr_change_event == NULL) {
 			event_schedule_s(EVENT_v2_ADDR_CHANGE, 0, st);
@@ -6072,4 +6060,267 @@ void ikev2_addr_change(struct state *st)
 	libreswan_log("without NETKEY we cannot ikev2_addr_change()");
 
 #endif
+}
+
+/*
+ * Only replace the SA when it's been in use (checking for in-use is a
+ * separate operation).
+ */
+
+static bool expire_ike_because_child_not_used(struct state *st)
+{
+	if (!(IS_PARENT_SA_ESTABLISHED(st) ||
+	      IS_CHILD_SA_ESTABLISHED(st))) {
+		/* for instance, too many retransmits trigger replace */
+		return false;
+	}
+
+	struct connection *c = st->st_connection;
+	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
+		/* this is an opportunistic thing */
+		return false;
+	}
+
+	if (c->spd.that.has_lease) {
+		PEXPECT_LOG("#%lu has lease; should not be trying to replace",
+			    st->st_serialno);
+		return true;
+	}
+
+	/* see of (most recent) child is busy */
+	struct state *cst;
+	struct ike_sa *ike;
+	if (IS_IKE_SA(st)) {
+		ike = pexpect_ike_sa(st);
+		cst = state_with_serialno(c->newest_ipsec_sa);
+		if (cst == NULL) {
+			PEXPECT_LOG("can't check usage as IKE SA #%lu has no newest child",
+				    ike->sa.st_serialno);
+			return true;
+		}
+	} else {
+		cst = st;
+		ike = ike_sa(st);
+	}
+
+	dbg("#%lu check last used on newest CHILD SA #%lu",
+	    ike->sa.st_serialno, cst->st_serialno);
+	deltatime_t last_used_age;
+	if (get_sa_info(cst, TRUE, &last_used_age) &&
+	    deltaless(c->sa_rekey_margin, last_used_age)) {
+		/* we observed no traffic, let IPSEC SA and IKE SA expire */
+		dbg("expiring IKE SA #%lu as CHILD SA #%lu has used %jds ago > %jd",
+		    ike->sa.st_serialno,
+		    ike->sa.st_serialno,
+		    deltasecs(last_used_age),
+		    deltasecs(c->sa_rekey_margin));
+		return true;
+	}
+	return false;
+}
+
+void v2_schedule_replace_event(struct state *st)
+{
+	struct connection *c = st->st_connection;
+
+	/* unwrapped deltatime_t in seconds */
+	intmax_t delay = deltasecs(IS_PARENT_SA(st) ? c->sa_ike_life_seconds
+				   : c->sa_ipsec_life_seconds);
+	st->st_replace_by = monotimesum(mononow(), deltatime(delay));
+
+	/*
+	 * Important policy lies buried here.  For example, we favour
+	 * the initiator over the responder by making the initiator
+	 * start rekeying sooner.  Also, fuzz is only added to the
+	 * initiator's margin.
+	 */
+
+	enum event_type kind;
+	const char *story;
+	intmax_t marg;
+	if ((c->policy & POLICY_OPPORTUNISTIC) &&
+	    st->st_connection->spd.that.has_lease) {
+		marg = 0;
+		kind = EVENT_SA_EXPIRE;
+		story = "always expire opportunistic SA with lease";
+	} else if (c->policy & POLICY_DONT_REKEY) {
+		marg = 0;
+		kind = EVENT_SA_EXPIRE;
+		story = "policy doesn't allow re-key";
+	} else if (IS_IKE_SA(st) && LIN(POLICY_REAUTH, st->st_connection->policy)) {
+		marg = 0;
+		kind = EVENT_SA_REPLACE;
+		story = "IKE SA with policy re-authenticate";
+	} else {
+		/* unwrapped deltatime_t in seconds */
+		marg = deltasecs(c->sa_rekey_margin);
+
+		switch (st->st_sa_role) {
+		case SA_INITIATOR:
+			marg += marg *
+				c->sa_rekey_fuzz / 100.E0 *
+				(rand() / (RAND_MAX + 1.E0));
+			break;
+		case SA_RESPONDER:
+			marg /= 2;
+			break;
+		default:
+			bad_case(st->st_sa_role);
+		}
+
+		if (delay > marg) {
+			delay -= marg;
+			kind = EVENT_SA_REKEY;
+			story = "attempting re-key";
+		} else {
+			marg = 0;
+			kind = EVENT_SA_REPLACE;
+			story = "margin to small for re-key";
+		}
+	}
+
+	st->st_replace_margin = deltatime(marg);
+	if (marg > 0) {
+		passert(kind == EVENT_SA_REKEY);
+		dbg("#%lu will start re-keying in %jd seconds with margin of %jd seconds (%s)",
+		    st->st_serialno, delay, marg, story);
+	} else {
+		passert(kind == EVENT_SA_REPLACE || kind == EVENT_SA_EXPIRE);
+		dbg("#%lu will %s in %jd seconds (%s)",
+		    st->st_serialno,
+		    kind == EVENT_SA_EXPIRE ? "expire" : "be replaced",
+		    delay, story);
+	}
+
+	delete_event(st);
+	event_schedule(kind, deltatime(delay), st);
+}
+
+static void ikev2_log_initiate_child_fail(const struct state *st)
+{
+	const struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+	if (pst == NULL)
+		return;
+
+	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
+
+	switch (st->st_state) {
+	case STATE_V2_REKEY_IKE_I0:
+	case STATE_V2_REKEY_CHILD_I0:
+	case STATE_V2_CREATE_I0:
+		if (unack < st->st_connection->ike_window) {
+			loglog(RC_LOG_SERIOUS,
+				"expiring %s state. Possible Message Id deadlock?  Parent #%lu unacknowledged %u next Message Id=%u IKE exchange window %u",
+				st->st_state_name,
+				pst->st_serialno, unack,
+				pst->st_msgid_nextuse,
+				pst->st_connection->ike_window);
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+void v2_event_sa_rekey(struct state *st)
+{
+	monotime_t now = mononow();
+	const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
+
+	so_serial_t newer_sa = get_newer_sa_from_connection(st);
+	if (newer_sa != SOS_NOBODY) {
+		/* implies a double re-key? */
+		PEXPECT_LOG("not replacing stale %s SA #%lu; as already got a newer #%lu",
+			    satype, st->st_serialno, newer_sa);
+		event_force(EVENT_SA_EXPIRE, st);
+		return;
+	}
+
+	if (expire_ike_because_child_not_used(st)) {
+		struct ike_sa *ike = ike_sa(st);
+		event_force(EVENT_SA_EXPIRE, &ike->sa);
+		return;
+	}
+
+	if (monobefore(st->st_replace_by, now)) {
+		dbg("#%lu has no time to re-key, will replace",
+		    st->st_serialno);
+		event_force(EVENT_SA_REPLACE, st);
+	}
+
+	ikev2_log_initiate_child_fail(st);
+	dbg("rekeying stale %s SA", satype);
+	if (IS_IKE_SA(st)) {
+		pexpect(IS_IKE_SA(st));
+		libreswan_log("initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
+		/* ??? why does this not need whack socket fd? */
+		ikev2_log_initiate_child_fail(st);
+		ikev2_rekey_ike_start(st);
+	} else {
+		/*
+		 * XXX: Don't be fooled, ipsecdoi_replace() is magic -
+		 * if the old state still exists it morphs things into
+		 * a child re-key.
+		 */
+		ipsecdoi_replace(st, 1);
+	}
+	/*
+	 * Should the rekey go into the weeds this replace will kick
+	 * in.
+	 *
+	 * XXX: should the next event be SA_EXPIRE instead of
+	 * SA_REPLACE?  For an IKE SA it breaks ikev2-32-nat-rw-rekey.
+	 * For a CHILD SA perhaps - there is a mystery around what
+	 * happens to the new child if the old one disappears.
+	 */
+	dbg("scheduling drop-dead replace event for #%lu", st->st_serialno);
+	delete_liveness_event(st);
+	delete_dpd_event(st);
+	event_schedule(EVENT_SA_REPLACE, monotimediff(st->st_replace_by, now), st);
+}
+
+void v2_event_sa_replace(struct state *st)
+{
+	const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
+
+	so_serial_t newer_sa = get_newer_sa_from_connection(st);
+	if (newer_sa != SOS_NOBODY) {
+		/*
+		 * For some reason the rekey, above, hasn't completed.
+		 * For an IKE SA blow away the entire family
+		 * (including the in-progress rekey).  For a CHILD SA
+		 * this will delete the old SA but leave the rekey
+		 * alone.  Confusing.
+		 */
+		if (IS_IKE_SA(st)) {
+			dbg("replacing entire stale IKE SA #%lu family; rekey #%lu will be deleted",
+			    st->st_serialno, newer_sa);
+			ipsecdoi_replace(st, 1);
+		} else {
+			dbg("expiring stale CHILD SA #%lu; newer #%lu will replace?",
+			    st->st_serialno, newer_sa);
+		}
+		/* XXX: are these calls needed? it's about to die */
+		delete_liveness_event(st);
+		delete_dpd_event(st);
+		event_force(EVENT_SA_EXPIRE, st);
+		return;
+	}
+
+	if (expire_ike_because_child_not_used(st)) {
+		struct ike_sa *ike = ike_sa(st);
+		event_force(EVENT_SA_EXPIRE, &ike->sa);
+		return;
+	}
+
+	/*
+	 * XXX: For a CHILD SA, will this result in a re-key attempt?
+	 */
+	ikev2_log_initiate_child_fail(st);
+	dbg("replacing stale %s SA", satype);
+	ipsecdoi_replace(st, 1);
+	delete_liveness_event(st);
+	delete_dpd_event(st);
+	event_force(EVENT_SA_EXPIRE, st);
 }
