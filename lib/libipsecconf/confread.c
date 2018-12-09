@@ -148,7 +148,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.policy =
 		POLICY_TUNNEL |
 		POLICY_ENCRYPT | POLICY_PFS |
-		POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |	/* ikev2=permit */
+		POLICY_IKEV2_ALLOW |
 		POLICY_SAREF_TRACK |         /* sareftrack=yes */
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      	     /* esn=no */
@@ -1250,28 +1250,27 @@ static bool load_conn(
 		conn->policy |= conn->options[KBF_PHASE2];
 	}
 
+	/*
+	 * This option has really been turned into a boolean, but
+	 * we need the keywords for backwards compatibility for now
+	 */
 	if (conn->options_set[KBF_IKEv2]) {
-		lset_t pv2 = LEMPTY;
 
 		switch (conn->options[KBF_IKEv2]) {
 		case fo_never:
-			pv2 = POLICY_IKEV1_ALLOW;
-			break;
-
 		case fo_permit:
-			/* this is the default for now */
-			pv2 = POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW;
+			conn->policy |= POLICY_IKEV1_ALLOW;
+			/* clear any inherited default */
+			conn->policy &= ~POLICY_IKEV2_ALLOW;
 			break;
 
 		case fo_propose:
-			pv2 = POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
-			break;
-
 		case fo_insist:
-			pv2 =                      POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
+			conn->policy |= POLICY_IKEV2_ALLOW;
+			/* clear any inherited default */
+			conn->policy &= ~POLICY_IKEV1_ALLOW;
 			break;
 		}
-		conn->policy = (conn->policy & ~POLICY_IKEV2_MASK) | pv2;
 	}
 
 	if (conn->options_set[KBF_SEND_REDIRECT]) {
@@ -1458,8 +1457,7 @@ static bool load_conn(
 			POLICY_NOPMTUDISC | POLICY_SAREF_TRACK_CONNTRACK) &
 			/* remove IKE related options */
 			~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
-			POLICY_IKEV2_PROPOSE | POLICY_IKE_FRAG_ALLOW |
-			POLICY_IKE_FRAG_FORCE);
+			POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE);
 	}
 
 	err |= validate_end(conn, &conn->left, "left", perrl);

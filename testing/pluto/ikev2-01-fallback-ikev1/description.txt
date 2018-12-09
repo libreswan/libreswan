@@ -1,9 +1,0 @@
-Basic pluto with IKEv2 on the initiator (west).
-
-This test does not actually do IKEv2, it just *tries*.
-
-The responder (east) does not speak IKEv2 (has been told not to)
-and it replies with an invalid version.  The initiator must fall
-back to IKEv1.
-
-Additionally, we shutdown pluto to get a leak report for all these rare events

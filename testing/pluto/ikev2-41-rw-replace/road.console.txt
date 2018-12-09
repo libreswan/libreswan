@@ -142,7 +142,7 @@ road #
 000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-east-x509-ipv4":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "road-east-x509-ipv4":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-east-x509-ipv4":   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-east-x509-ipv4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-east-x509-ipv4":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
@@ -159,7 +159,7 @@ road #
 000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4"[1]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-east-x509-ipv4"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "road-east-x509-ipv4"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-east-x509-ipv4"[1]:   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-east-x509-ipv4"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-east-x509-ipv4"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
@@ -309,7 +309,7 @@ road #
 000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-east-x509-ipv4":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "road-east-x509-ipv4":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-east-x509-ipv4":   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-east-x509-ipv4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-east-x509-ipv4":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
@@ -326,7 +326,7 @@ road #
 000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-east-x509-ipv4"[1]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-east-x509-ipv4"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "road-east-x509-ipv4"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-east-x509-ipv4"[1]:   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-east-x509-ipv4"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-east-x509-ipv4"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org

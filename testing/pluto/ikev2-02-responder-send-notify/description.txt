@@ -1,6 +1,0 @@
-Basic pluto with IKEv2 on the responder (east).
-
-This test does not actually do IKEv2, as the initiator doesn't ask for it,
-but the responder, being able to do it, should send an appropriate NOTIFY.
-
-

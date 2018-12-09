@@ -206,7 +206,7 @@ road #
 000 "clear-or-private":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "clear-or-private":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "clear-or-private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "clear-or-private":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+OPPORTUNISTIC+GROUP+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+failurePASS;
+000 "clear-or-private":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+OPPORTUNISTIC+GROUP+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+failurePASS;
 000 "clear-or-private":   conn_prio: 32,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "clear-or-private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear-or-private":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
@@ -222,7 +222,7 @@ road #
 000 "private":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "private":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "private":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUP+GROUTED+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+failureDROP;
+000 "private":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUP+GROUTED+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+failureDROP;
 000 "private":   conn_prio: 32,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "private":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
@@ -238,7 +238,7 @@ road #
 000 "private-or-clear":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "private-or-clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "private-or-clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "private-or-clear":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+OPPORTUNISTIC+GROUP+GROUTED+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+failurePASS;
+000 "private-or-clear":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+OPPORTUNISTIC+GROUP+GROUTED+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+failurePASS;
 000 "private-or-clear":   conn_prio: 32,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "private-or-clear":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
@@ -254,7 +254,7 @@ road #
 000 "private-or-clear#192.1.2.0/24":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "private-or-clear#192.1.2.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "private-or-clear#192.1.2.0/24":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "private-or-clear#192.1.2.0/24":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+OPPORTUNISTIC+GROUPINSTANCE+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+failurePASS;
+000 "private-or-clear#192.1.2.0/24":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+OPPORTUNISTIC+GROUPINSTANCE+IKEV2_ALLOW+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+failurePASS;
 000 "private-or-clear#192.1.2.0/24":   conn_prio: 32,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "private-or-clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "private-or-clear#192.1.2.0/24":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL

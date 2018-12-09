@@ -74,7 +74,7 @@ static const struct keyword_enum_value kw_keyexchange_values[] = {
 static const struct keyword_enum_values kw_keyexchange_list = VALUES_INITIALIZER(kw_keyexchange_values);
 
 /*
- * Values for Four-State options, such as ikev2
+ * Values for Four-State options, used for ppk=
  */
 static const struct keyword_enum_value kw_fourvalued_values[] = {
 	{ "never",     fo_never  },

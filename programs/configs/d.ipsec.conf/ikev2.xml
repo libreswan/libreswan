@@ -1,25 +1,13 @@
   <varlistentry>
   <term><emphasis remap='B'>ikev2</emphasis></term>
   <listitem>
-<para>IKEv2 (RFC 7296) settings to be used. Currently the accepted
-values are <emphasis remap='B'>permit</emphasis>(the default),
-signifying IKEv2 will be accepted if received, but IKEv1 will be used
-when initiating; <emphasis remap='B'>never</emphasis> or <emphasis
-remap='B'>no</emphasis> signifying no IKEv2 negotiation should be
-transmitted or accepted; <emphasis remap='B'>propose</emphasis> or
-<emphasis remap='B'>yes</emphasis> signifying that we permit IKEv1
-and IKEv2, and use IKEv2 as the default to initiate; and <emphasis
-remap='B'>insist</emphasis>signifying we only accept and receive IKEv2 -
-IKEv1 negotiations will be rejected.
-</para><para>
-If the ikev2= setting is set to <emphasis remap='B'>permit</emphasis>
-or <emphasis remap='B'>propose</emphasis>, Libreswan will try and detect a
-"bid down" attack from IKEv2 to IKEv1.  Since there is no standard for
-transmitting the IKEv2 capability with IKEv1, Libreswan uses a special
-Vendor ID "CAN-IKEv2". If a fall back from IKEv2 to IKEv1 was detected,
-and the IKEv1 negotiation contains Vendor ID "CAN-IKEv2", Libreswan will
-immediately attempt and IKEv2 rekey and refuse to use the IKEv1 connection.
-With an ikev2= setting of <emphasis remap='B'>insist</emphasis>, no IKEv1
-negotiation is allowed, and no bid down attack is possible.</para>
+<para>Wether to use IKEv1 (RFC 4301) or IKEv2 (RFC 7296) settings to be used.
+Currently the accepted values are <emphasis remap='B'>no</emphasis>(the default),
+signifying only IKEv1 is accepted, or <emphasis remap='B'>yes</emphasis>,
+signifying only IKEv2 is accepted. Previous versions allowed the keywords
+<emphasis remap='B'>propose</emphasis> or <emphasis remap='B'>permit</emphasis>
+that would allow either IKEv1 or IKEv2, but this is no longer supported. The
+permit option is interpreted as no and the propose option is interpreted as yes.
+</para>
   </listitem>
   </varlistentry>

@@ -110,7 +110,7 @@ static void help(void)
 		"	[--mtu <mtu>] \\\n"
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
 		"	[--tfc <size>] [--send-no-esp-tfc] \\\n"
-		"	[--ikev1-allow | --ikev2-allow | --ikev2-propose] \\\n"
+		"	[--ikev1-allow | --ikev2-allow] \\\n"
 		"	[--allow-narrowing] [--sareftrack] [--sarefconntrack] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
 		"	[--esn ] [--no-esn] [--decap-dscp] [--nopmtudisc] [--mobike] \\\n"
@@ -732,7 +732,7 @@ static const struct option long_opts[] = {
 
 	PS("ikev1-allow", IKEV1_ALLOW),
 	PS("ikev2-allow", IKEV2_ALLOW),
-	PS("ikev2-propose", IKEV2_PROPOSE),
+	PS("ikev2-propose", IKEV2_ALLOW), /* map onto allow */
 
 	PS("allow-narrowing", IKEV2_ALLOW_NARROWING),
 #ifdef XAUTH_HAVE_PAM
@@ -1670,10 +1670,8 @@ int main(int argc, char **argv)
 
 		/* --ikev1-allow */
 		case CDP_SINGLETON + POLICY_IKEV1_ALLOW_IX:
-		/* --ikev2-allow */
+		/* --ikev2-allow (now also --ikev2-propose) */
 		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_IX:
-		/* --ikev2-propose */
-		case CDP_SINGLETON + POLICY_IKEV2_PROPOSE_IX:
 
 		/* --allow-narrowing */
 		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_NARROWING_IX:
@@ -2280,6 +2278,11 @@ int main(int argc, char **argv)
 		break;
 	}
 
+	if (msg.policy & POLICY_IKEV2_ALLOW) {
+		if (msg.policy & POLICY_IKEV1_ALLOW) {
+			diag("connection can no longer have --ikev1-allow and --ikev2-allow");
+		}
+	}
 
 	if (oppo_dport != 0)
 		setportof(htons(oppo_dport), &msg.oppo_peer_client);
@@ -2356,11 +2359,11 @@ int main(int argc, char **argv)
 				diag("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
 
 			/*
-			 * If neither v1 nor v2, default to v1
-			 * (backward compatibility)
+			 * If neither v1 nor v2, default to v2
 			 */
-			if (!(msg.policy & POLICY_IKEV2_MASK))
-				msg.policy |= POLICY_IKEV1_ALLOW;
+			if (!LIN(POLICY_IKEV1_ALLOW, msg.policy) &&
+				!LIN(POLICY_IKEV2_ALLOW, msg.policy))
+					msg.policy |= POLICY_IKEV2_ALLOW;
 
 			/*
 			 * ??? this test can never fail:

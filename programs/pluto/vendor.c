@@ -378,8 +378,8 @@ static struct vid_struct vid_tab[] = {
 	  "\x3b\x90\x31\xdc\xe4\xfc\xf8\x8b\x48\x9a\x92\x39\x63\xdd\x0c\x49",
 	  16 },
 
-	/* Used by libreswan and openswan to detect bid-down attacks */
-	{ VID_MISC_IKEv2, VID_STRING | VID_KEEP, "IKEv2", "CAN-IKEv2", NULL,
+	/* Obsolete: Was used by libreswan and openswan to detect bid-down attacks */
+	{ VID_MISC_IKEv2, VID_STRING | VID_KEEP, "IKEv2", "CAN-IKEv2(obsolete)", NULL,
 	  0 },
 
 	/* VID is ASCII "HeartBeat_Notify" plus a few bytes (version?) */

@@ -409,7 +409,6 @@ const char *const sa_policy_bit_names[] = {
 	"OVERLAPIP",
 	"IKEV1_ALLOW",
 	"IKEV2_ALLOW",
-	"IKEV2_PROPOSE",
 	"IKEV2_ALLOW_NARROWING",
 	"IKEV2_PAM_AUTHORIZE",
 	"SEND_REDIRECT_ALWAYS",

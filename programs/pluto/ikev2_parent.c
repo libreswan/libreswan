@@ -4825,7 +4825,6 @@ static stf_status ikev2_start_new_exchange(struct state *st)
 	if (IS_CHILD_SA_INITIATOR(st)) {
 		struct ike_sa *ike = ike_sa(st);
 		if (!ike->sa.st_viable_parent) {
-			st->st_connection->failed_ikev2 = FALSE; /* give it a fresh start */
 			st->st_policy = st->st_connection->policy; /* for pick_initiator */
 
 			loglog(RC_LOG_SERIOUS, "no viable to parent to initiate CREATE_CHILD_EXCHANGE %s; trying replace",

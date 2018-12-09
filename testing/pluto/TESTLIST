@@ -93,7 +93,6 @@ kvmplutotest	whack-02-globalstatus			good
 #################################################################
 # IKEv2 tests
 #################################################################
-kvmplutotest	ikev2-02-responder-send-notify		good
 kvmplutotest	ikev2-03-basic-rawrsa			good
 kvmplutotest	ikev2-03-basic-rawrsa-ckaid		good
 kvmplutotest	ikev2-04-basic-x509			good
@@ -107,7 +106,6 @@ kvmplutotest	ikev2-05-basic-psk-oneconf-namespaces	good
 kvmplutotest	ikev2-dcookie-01			good
 kvmplutotest	ikev2-dcookie-02			good
 kvmplutotest	ikev2-dcookie-03			good
-kvmplutotest	ikev2-01-fallback-ikev1			good
 
 kvmplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-delete-01				good

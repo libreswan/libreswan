@@ -466,7 +466,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			(conn->policy &
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
 		lset_t shunt_policy = (conn->policy & POLICY_SHUNT_MASK);
-		lset_t ikev2_policy = (conn->policy & POLICY_IKEV2_MASK);
 		lset_t ppk_policy = (conn->policy & (POLICY_PPK_ALLOW | POLICY_PPK_INSIST));
 		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
@@ -542,23 +541,12 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			{
 				const char *v2ps = "UNKNOWN";
 
-				switch (ikev2_policy) {
-				case POLICY_IKEV1_ALLOW:
-					v2ps = "never";
-					break;
+				if (conn->policy & POLICY_IKEV2_ALLOW)
+					v2ps = "yes";
 
-				case POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW:
-					v2ps = "permit";
-					break;
+				if (conn->policy & POLICY_IKEV2_ALLOW)
+					v2ps = "no";
 
-				case POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
-					v2ps = "propose";
-					break;
-
-				case                      POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
-					v2ps = "insist";
-					break;
-				}
 				cwf("ikev2", v2ps);
 			}
 

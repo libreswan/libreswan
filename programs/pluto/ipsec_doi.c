@@ -182,23 +182,11 @@ bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 static initiator_function *pick_initiator(struct connection *c,
 					  lset_t policy)
 {
-	if ((policy & POLICY_IKEV2_PROPOSE) &&
-	    (policy & c->policy & POLICY_IKEV2_ALLOW) &&
-	    !c->failed_ikev2) {
-		/* we may try V2, and we haven't failed */
+	if (policy & c->policy & POLICY_IKEV2_ALLOW) {
 		return ikev2_parent_outI1;
-	} else if (policy & c->policy & POLICY_IKEV1_ALLOW) {
+	} else {
 		/* we may try V1; Aggressive or Main Mode? */
 		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-	} else {
-		libreswan_log("Neither IKEv1 nor IKEv2 allowed: %s%s",
-			c->failed_ikev2? "previous V2 failure, " : "",
-			bitnamesof(sa_policy_bit_names, policy & c->policy));
-		/*
-		 * tried IKEv2, if allowed, and failed,
-		 * and tried IKEv1, if allowed, and got nowhere.
-		 */
-		return NULL;
 	}
 }
 

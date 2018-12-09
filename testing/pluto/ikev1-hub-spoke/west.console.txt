@@ -115,7 +115,7 @@ west #
 000 "westnet-northnet-ipv4-psk":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-northnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-northnet-ipv4-psk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-northnet-ipv4-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-northnet-ipv4-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-northnet-ipv4-psk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-northnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-northnet-ipv4-psk":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -145,7 +145,7 @@ west #
 108 "westnet-northnet-ipv4-psk" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-northnet-ipv4-psk" #1: Peer ID is ID_FQDN: '@east'
 004 "westnet-northnet-ipv4-psk" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-northnet-ipv4-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-northnet-ipv4-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "westnet-northnet-ipv4-psk" #2: STATE_QUICK_I1: initiate
 004 "westnet-northnet-ipv4-psk" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #

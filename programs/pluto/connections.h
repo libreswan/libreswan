@@ -317,8 +317,6 @@ struct connection {
 
 	struct ephemeral_variables temp_vars;
 
-	bool failed_ikev2;	/* tried ikev2, but failed */
-
 	so_serial_t		/* state object serial number */
 		newest_isakmp_sa,
 		newest_ipsec_sa;

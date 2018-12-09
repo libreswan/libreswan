@@ -651,7 +651,6 @@ static void flush_pending_child(struct state *pst, struct state *st)
 					st->st_serialno, st->st_state_name,
 					c->name, fmt_conn_instance(c, cib));
 
-			c->failed_ikev2 = FALSE; /* give it a fresh start */
 			st->st_policy = c->policy; /* for pick_initiator */
 			event_force(EVENT_SA_REPLACE, st);
 		} else {
