@@ -501,7 +501,7 @@ static size_t log_replay_entry(struct lswlog *buf, void *data)
 
 static struct list_head replay_packets;
 
-static struct list_info replay_info = {
+static const struct list_info replay_info = {
 	.debug = DBG_CONTROLMORE,
 	.name = "replay list",
 	.log = log_replay_entry,
