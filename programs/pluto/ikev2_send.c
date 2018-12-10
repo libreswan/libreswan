@@ -241,9 +241,15 @@ bool ship_v2Ns(enum next_payload_types_ikev2 np,
  *
  */
 
-void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
-				     v2_notification_t ntype,
-				     const chunk_t *ndata)
+/*
+ * This short/sharp notification is always tied to the IKE SA.
+ *
+ * For a CREATE_CHILD_SA, things have presumably screwed up so bad
+ * that the larval child state is deleted.
+ */
+void send_v2N_response_from_state(struct ike_sa *ike, struct msg_digest *md,
+				  v2_notification_t ntype,
+				  const chunk_t *ndata)
 {
 	passert(md != NULL); /* always a reply */
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
@@ -254,8 +260,8 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	ipstr_buf b;
 	libreswan_log("responding to %s message (ID %u) from %s:%u with encrypted notification %s",
 		      exchange_name, md->hdr.isa_msgid,
-		      sensitive_ipstr(&pst->st_remoteaddr, &b),
-		      pst->st_remoteport,
+		      sensitive_ipstr(&ike->sa.st_remoteaddr, &b),
+		      ike->sa.st_remoteport,
 		      notify_name);
 
 	/*
@@ -274,24 +280,50 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	pb_stream reply = open_out_pbs("encrypted notification",
 				       buf, sizeof(buf));
 
-	pb_stream rbody = open_v2_message(&reply, ike_sa(pst), md,
+	pb_stream rbody = open_v2_message(&reply, ike, md,
 					  exchange_type);
 	if (!pbs_ok(&rbody)) {
 		libreswan_log("error initializing hdr for encrypted notification");
 		return;
 	}
 
-	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(pst));
+	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return;
 	}
 
 	/* actual data */
 
+	/*
+	 * 3.10.  Notify Payload: Of the notifications defined in this
+	 * document, the SPI is included only with INVALID_SELECTORS,
+	 * REKEY_SA, and CHILD_SA_NOT_FOUND.
+	*/
 	switch (ntype) {
-	case v2N_INVALID_SELECTORS:	/* ??? we never actually generate this */
-	case v2N_REKEY_SA:	/* never follows this path */
+	case v2N_INVALID_SELECTORS:
+		/*
+		 * MAY be sent in an IKE INFORMATIONAL exchange when a
+		 * node receives an ESP or AH packet whose selectors
+		 * do not match those of the SA on which it was
+		 * delivered (and that caused the packet to be
+		 * dropped).  The Notification Data contains the start
+		 * of the offending packet (as in ICMP messages) and
+		 * the SPI field of the notification is set to match
+		 * the SPI of the Child SA.
+		*/
+		PEXPECT_LOG("trying to send inimplemented %s notifiation",
+			    notify_name);
+		return;
+	case v2N_REKEY_SA:
+		PEXPECT_LOG("%s notification is never part of a response",
+			    notify_name);
+		return;
 	case v2N_CHILD_SA_NOT_FOUND:
+		/*
+		 * Response to REKEY_SA(SPI) when SPI is unknown.
+		 * Presumably an unknown SPI in an Delete(SPI,...)
+		 * payload is ignored.
+		 */
 		dbg("notification %s needs SPI!", notify_name);
 		/* ??? how can we figure out the protocol and SPI? */
 		if (!ship_v2N(ISAKMP_NEXT_v2NONE,
@@ -324,14 +356,20 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	 * state.  This notification is fire-and-forget (not a proper
 	 * exchange, one with retrying).  So we need not preserve the
 	 * packet we are sending.
+	 *
+	 * XXX: this sounds wrong!  Integrity has been established so
+	 * the outgoing packet should be retained and message counters
+	 * updated.  If ST is going to be 'deleted', then, wouldn't it
+	 * be better to have it linger a little so it can handle
+	 * duplicates cleanly.
 	 */
-	send_chunk_using_state(pst, "v2 notify", same_out_pbs_as_chunk(&reply));
+	send_chunk_using_state(&ike->sa, "v2 notify", same_out_pbs_as_chunk(&reply));
 	pstat(ikev2_sent_notifies_e, ntype);
 }
 
-void send_v2_notification_from_md(struct msg_digest *md,
-				  v2_notification_t ntype,
-				  const chunk_t *ndata)
+void send_v2N_response_from_md(struct msg_digest *md,
+			       v2_notification_t ntype,
+			       const chunk_t *ndata)
 {
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
 

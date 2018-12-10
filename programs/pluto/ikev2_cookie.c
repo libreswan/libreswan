@@ -186,7 +186,7 @@ bool v2_reject_cookie(struct msg_digest *md, bool require_dcookie)
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("busy mode on. received I1 without a valid dcookie");
 			    DBG_log("send a dcookie and forget this state"));
-			send_v2_notification_from_md(md, v2N_COOKIE, &dc);
+			send_v2N_response_from_md(md, v2N_COOKIE, &dc);
 			return true; /* reject cookie */
 		}
 	} else {

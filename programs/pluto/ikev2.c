@@ -1825,25 +1825,26 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 				/*
 				 * Only respond if the message is an
-				 * SA_INIT request.
+				 * IKE_SA_INIT request.
 				 *
-				 * An SA_INIT response, like any other
-				 * response, should never trigger a
-				 * further response (ignoring an
-				 * exception that doesn't apply here).
+				 * An IKE_SA_INIT response, like any
+				 * other response, should never
+				 * trigger a further response
+				 * (ignoring an exception that doesn't
+				 * apply here).
 				 *
-				 * For any other request (AUTH,
-				 * CHILD_SA, ..), since this end is
-				 * only allowed to respond after the
-				 * SK payload has been verified,
+				 * For any other request (IKE_AUTH,
+				 * CHILD_SA_..., ...), since this end
+				 * is only allowed to respond after
+				 * the SK payload has been verified,
 				 * things must simply be dropped.
 				 */
 				if (ix == ISAKMP_v2_IKE_SA_INIT &&
 				    v2_msg_role(md) == MESSAGE_REQUEST) {
 					chunk_t data = chunk(md->message_payloads.data,
 							     md->message_payloads.data_size);
-					send_v2_notification_from_md(md, md->message_payloads.n,
-								     &data);
+					send_v2N_response_from_md(md, md->message_payloads.n,
+								  &data);
 				}
 				/* replace (*mdp)->st with st ... */
 				complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL);
@@ -1994,9 +1995,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				{
 					chunk_t data = chunk(md->encrypted_payloads.data,
 							     md->encrypted_payloads.data_size);
-					send_v2_notification_from_state(st, *mdp,
-									md->encrypted_payloads.n,
-									&data);
+					send_v2N_response_from_state(ike_sa(st), *mdp,
+								     md->encrypted_payloads.n,
+								     &data);
 					break;
 				}
 				case MESSAGE_RESPONSE:
@@ -2070,15 +2071,17 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * We are the responder to this message so
 			 * return something.
 			 *
-			 * XXX: Returning INVALID_MESSAGE_ID seems
-			 * pretty bogus.
+			 * XXX: For an encrypted response, wouldn't
+			 * syntax error be better?  The IKE SPI is
+			 * valid!
 			 */
 			if (st != NULL)
-				send_v2_notification_from_state(st, md,
-								v2N_INVALID_IKE_SPI,
-								NULL);
+				send_v2N_response_from_state(ike_sa(st), md,
+							     v2N_INVALID_IKE_SPI,
+							     NULL/*no data*/);
 			else
-				send_v2_notification_from_md(md, v2N_INVALID_IKE_SPI, NULL);
+				send_v2N_response_from_md(md, v2N_INVALID_IKE_SPI,
+							  NULL/*no data*/);
 		}
 		return;
 	}
@@ -3109,10 +3112,11 @@ void complete_v2_state_transition(struct state *st,
 				}
 
 				if (st == NULL) {
-					send_v2_notification_from_md(md, notification, NULL);
+					send_v2N_response_from_md(md, notification, NULL);
 				} else {
-					send_v2_notification_from_state(pst, md,
-									notification, NULL);
+					send_v2N_response_from_state(ike_sa(pst), md,
+								     notification,
+								     NULL/*no data*/);
 					if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
 						delete_state(st);
 					} else {

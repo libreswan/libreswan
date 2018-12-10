@@ -29,13 +29,14 @@ bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
 
 bool send_recorded_v2_ike_msg(struct state *st, const char *where);
 
-
-void send_v2_notification_from_state(struct state *st, struct msg_digest *md,
-				     v2_notification_t type,
-				     const chunk_t *data);
-void send_v2_notification_from_md(struct msg_digest *md,
+void send_v2N_response_from_state(struct ike_sa *st,
+				  struct msg_digest *md,
 				  v2_notification_t type,
 				  const chunk_t *data);
+void send_v2N_response_from_md(struct msg_digest *md,
+			       v2_notification_t type,
+			       const chunk_t *data);
+
 void send_v2_delete(struct state *st);
 
 extern stf_status send_v2_informational_request(const char *name,
