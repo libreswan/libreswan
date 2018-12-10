@@ -1454,31 +1454,51 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				return;
 			}
 			/*
-			 * Sent by the IKE initiator; look for the IKE
-			 * responder's state.
+			 * Look for a pre-existing IKE SA responder
+			 * state using just the SPIi (SPIr in the
+			 * message is zero so can't be used).
 			 *
-			 * If this is a new request, there will be no
-			 * state.  For a re-transmit, the request will
-			 * have RCOOKIE=0, but the state will have
-			 * RCOOKIE set for the previous reply so can't
-			 * match.  Hence, search the ICOOKIE table.
+			 * If the lookup succeeds then there are
+			 * several possibilities:
 			 *
-			 * XXX: Is this too strict?  If a a duplicate
-			 * appears after SA is established, the
-			 * duplicate will trigger a new IKE SA.
+			 * State has Message ID == 0:
+			 *
+			 * Either it really is a duplicate; or it's a
+			 * second (fake?) intiator sending the same
+			 * SPIi at exactly the same time as the first
+			 * (wow, what are the odds, it must be our
+			 * lucky day!).
+			 *
+			 * Either way, the duplicate code needs to
+			 * compare packets and decide if a retransmit
+			 * or drop is required.  If the second
+			 * initiator is real, then it will timeout and
+			 * then retry with a new SPIi.
+			 *
+			 * State has Message ID > 0:
+			 *
+			 * Either it is an old duplicate; or, again,
+			 * it's a second intiator sending the same
+			 * SPIi only slightly later (again, what are
+			 * the odds!).
+			 *
+			 * Several choices: let the duplicate code
+			 * drop the packet, which is correct for an
+			 * old duplicate message; or ignore the
+			 * existing state and create a new one, which
+			 * is good for the second initiator but not so
+			 * good for an old duplicate.  Given an old
+			 * duplicate is far more likely, handle that
+			 * cleenly - let the duplicate code drop the
+			 * packet.
 			 */
-			st = ikev2_find_state_in_init(md->hdr.isa_icookie,
-						      STATE_PARENT_R1);
+			st = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
 			if (st != NULL) {
-				/*
-				 * Must be a duplicate!  Only question
-				 * is: should a re re-transmit be sent
-				 * back, or should it simply be
-				 * dropped.  Decide that further down.
-				 */
-				dbg("received duplicate IKE_SA_INIT for #%lu",
+				/* duplicate code below will decide what to do */
+				dbg("received what looks like a duplicate IKE_SA_INIT for #%lu",
 				    st->st_serialno);
 			}
+			/* else - create a draft state here? */
 			/* update lastrecv later on */
 			break;
 		case MESSAGE_RESPONSE:
@@ -1502,18 +1522,19 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * SPIr.
 			 */
 			/*
-			 * Sent by IKE responder; look for the IKE
-			 * initiator's state.
+			 * Look for a pre-existing IKE SA responder
+			 * state using just the SPIi (SPIr in the
+			 * message isn't known so can't be used).
 			 *
-			 * An INIT-response contains an as yet unknown
-			 * non-zero RCOOKIE (let's ignore INVALID_KE)
+			 * An IKE_SA_INIT error notification response
+			 * (INVALID_KE, COOKIE) should contain a zero
+			 * SPIr (it must be ignored).
+			 *
+			 * An IKE_SA_INIT success response will
+			 * contain an as yet unknown but non-zero SPIr
 			 * so looking for it won't work.
-			 *
-			 * Search for the state in the ICOOKIE table
-			 * and require the initial initiator state.
 			 */
-			st = ikev2_find_state_in_init(md->hdr.isa_icookie,
-						      STATE_PARENT_I1);
+			st = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
 			if (st == NULL) {
 				/*
 				 * There should be a state matching
@@ -1521,17 +1542,31 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 * Since there isn't someone's playing
 				 * games.  Drop the packet.
 				 */
-				libreswan_log("no matching state for IKE_SA_INIT response");
+				libreswan_log("no matching state for IKE_SA_INIT response; discarding packet");
 				return;
+			}
+			/*
+			 * Check that this is the first response seen
+			 * by the state.  Which only happens when it
+			 * is in the inital state.
+			 *
+			 * XXX: this is a simplified version of the
+			 * more general Message ID check performed in
+			 * the MESSAGE_RESPONSE path below.  It should
+			 * be merged.
+			 */
+			if (st->st_msgid_lastack != v2_INVALID_MSGID) {
+				libreswan_log("already processed IKE_SA_INIT response for state #%lu; discarding packet",
+					      st->st_serialno);
 			}
 			/*
 			 * Responder provided a cookie, record it.
 			 *
 			 * XXX: This is being done far too early.  The
 			 * packet should first get some validation.
-			 * It also might be an INVALID_KE in which
-			 * case the cookie shouldn't be updated at
-			 * all.
+			 * It might also be an INVALID_KE or COOKIE
+			 * response in which case SPIr shouldn't be
+			 * updated at all.
 			 */
 			rehash_state(st, &md->hdr.isa_ike_responder_spi);
 			break;

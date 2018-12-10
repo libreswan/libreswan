@@ -377,9 +377,6 @@ static char *readable_humber(uint64_t num,
 		}							\
 	})								\
 
-#define FOR_EACH_STATE_WITH_IKE_SPIS(ST, I, R)
-	
-
 /*
  * Get the IKE SA managing the security association.
  */
@@ -1486,31 +1483,25 @@ struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
 }
 
 /*
- * Find a state object for an IKEv2 state, looking by icookie only and
- * matching "struct state" objects in the correct state and IS_CHILD.
+ * Find an IKEv2 IKE SA with a matching SPIi.
  *
- * Note: only finds parent states (this is ok as only interested in
- * state objects in the initial state).
+ * This is used doring the IKE_SA_INIT exchange where SPIr is either
+ * zero (message request) or not-yet-known (message response).
  */
-struct state *ikev2_find_state_in_init(const u_char *icookie,
-				       enum state_kind expected_state)
+struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *initiator_spi)
 {
 	struct state *st;
-	FOR_EACH_STATE_WITH_ICOOKIE(st, icookie, {
-			if (st->st_ikev2 &&
-			    st->st_state == expected_state &&
-			    !IS_CHILD_SA(st)) {
-				DBG(DBG_CONTROL,
-				    DBG_log("parent_init v2 peer and cookies match on #%lu",
-					    st->st_serialno);
-				    DBG_log("v2 state object #%lu found, in %s",
-					    st->st_serialno,
-					    st->st_state_name));
-				return st;
-			}
-		});
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(initiator_spi), st) {
+		if (st->st_ikev2 &&
+		    IS_IKE_SA(st) &&
+		    ike_spi_eq(&st->st_ike_spis.initiator, initiator_spi)) {
+			dbg("v2 IKE SA by SPi found #%lu, in %s",
+			    st->st_serialno, st->st_state_name);
+			return st;
+		}
+	}
 
-	DBG(DBG_CONTROL, DBG_log("parent_init v2 state object not found"));
+	dbg("v2 IKE SA by SPi not found");
 	return NULL;
 }
 
