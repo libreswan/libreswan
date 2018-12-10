@@ -787,10 +787,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	 */
 	if (st->st_dcookie.ptr != NULL) {
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
-		if (!emit_v2N(build_ikev2_critical(IMPAIR(SEND_BOGUS_ISAKMP_FLAG)),
-			      PROTO_v2_RESERVED, NULL,
-			      v2N_COOKIE, &st->st_dcookie, &rbody))
-		{
+		if (!emit_v2Ntd(v2N_COOKIE, &st->st_dcookie, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
