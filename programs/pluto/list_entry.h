@@ -83,20 +83,16 @@ bool remove_list_entry(struct list_entry *entry);
 
 #define FOR_EACH_LIST_ENTRY_(HEAD, DATA, NEXT)				\
 									\
-	/* set head_ = HEAD (evaluate once) */				\
-	for (struct list_head *head_ = HEAD;				\
-	     head_ != NULL; head_ = NULL)				\
+	/* entry = either first entry or back at head */		\
+	for (struct list_entry *entry_ = (HEAD)->head.NEXT;		\
+	     entry_ != NULL; entry_ = NULL)				\
 									\
-		/* set entry = head.NEXT; skip empty */			\
-		for (struct list_entry *entry_ = head_->head.NEXT;	\
-		     entry_ != &head_->head; entry_ = &head_->head)	\
-									\
-			/* DATA = ENTRY->data; ENTRY = ENTRY->NEXT */	\
-			for (DATA = (typeof(DATA))entry_->data,		\
-				     entry_ = entry_->NEXT;		\
-			     DATA != NULL;				\
-			     DATA = (typeof(DATA))entry_->data,		\
-				     entry_ = entry_->NEXT)
+		/* DATA = ENTRY->data; ENTRY = ENTRY->NEXT */		\
+		for (DATA = (typeof(DATA))entry_->data,			\
+			     entry_ = entry_->NEXT;			\
+		     DATA != NULL;					\
+		     DATA = (typeof(DATA))entry_->data,			\
+			     entry_ = entry_->NEXT)
 
 #define FOR_EACH_LIST_ENTRY_OLD2NEW(HEAD, DATA)		\
 	FOR_EACH_LIST_ENTRY_(HEAD, DATA, newer)
