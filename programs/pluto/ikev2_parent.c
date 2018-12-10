@@ -376,7 +376,8 @@ static struct msg_digest *fake_md(struct state *st)
  * Check that the bundled keying material (KE) matches the accepted
  * proposal and if it doesn't send out a notification returning true.
  */
-static bool v2_reject_wrong_ke_for_proposal(struct msg_digest *md,
+static bool v2_reject_wrong_ke_for_proposal(struct state *st,
+					    struct msg_digest *md,
 					    const struct oakley_group_desc *accepted_dh)
 {
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
@@ -392,7 +393,11 @@ static bool v2_reject_wrong_ke_for_proposal(struct msg_digest *md,
 		/* convert group to a raw buffer */
 		uint16_t gr = htons(accepted_dh->group);
 		chunk_t nd = chunk(&gr, sizeof(gr));
-		send_v2_notification_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
+		if (st != NULL) {
+			send_v2_notification_from_state(st, md, v2N_INVALID_KE_PAYLOAD, &nd);
+		} else {
+			send_v2_notification_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
+		}
 		return true;
 	} else {
 		return false;
@@ -1128,7 +1133,8 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	 * Check the MODP group in the payload matches the accepted
 	 * proposal.
 	 */
-	if (v2_reject_wrong_ke_for_proposal(md, st->st_oakley.ta_dh)) {
+	if (v2_reject_wrong_ke_for_proposal(NULL /*not encrypted*/, md,
+					    st->st_oakley.ta_dh)) {
 		/* already replied */
 		return STF_FATAL;
 	}
@@ -4622,7 +4628,7 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 		return STF_IGNORE;
 	}
 
-	if (v2_reject_wrong_ke_for_proposal(md, st->st_oakley.ta_dh)) {
+	if (v2_reject_wrong_ke_for_proposal(st/*encrypt*/, md, st->st_oakley.ta_dh)) {
 		/*
 		 * XXX; where is 'st' freed?  Should the code instead
 		 * tunnel back md.st==st and return STF_FATAL which
