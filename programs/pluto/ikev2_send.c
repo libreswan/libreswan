@@ -232,6 +232,42 @@ bool emit_v2Nt(v2_notification_t ntype, pb_stream *outs)
 			ntype, NULL, outs);
 }
 
+bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
+					pb_stream *outs)
+{
+	/*
+	 * XXX: can this share code with emit_v2N() above?
+	 */
+	struct ikev2_notify n = {
+		.isan_critical = build_ikev2_critical(false),
+		.isan_protoid = PROTO_v2_RESERVED,
+		.isan_type = v2N_SIGNATURE_HASH_ALGORITHMS,
+	};
+
+	pb_stream n_pbs;
+	if (!out_struct(&n, &ikev2_notify_desc, outs, &n_pbs)) {
+		libreswan_log("error initializing notify payload for notify message");
+		return false;
+	}
+
+#define H(POLICY, ID)							\
+	if (sighash_policy & POLICY) {					\
+		uint16_t hash_id = htons(ID);				\
+		passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
+		if (!out_raw(&hash_id, sizeof(hash_id), &n_pbs,		\
+			     "hash algorithm identifier "#ID)) {	\
+			return false;					\
+		}							\
+	}
+	H(POL_SIGHASH_SHA2_256, IKEv2_AUTH_HASH_SHA2_256);
+	H(POL_SIGHASH_SHA2_384, IKEv2_AUTH_HASH_SHA2_384);
+	H(POL_SIGHASH_SHA2_512, IKEv2_AUTH_HASH_SHA2_512);
+#undef H
+
+	close_output_pbs(&n_pbs);
+	return true;
+}
+
 /*
  *
  ***************************************************************

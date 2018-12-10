@@ -105,48 +105,20 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md);
 static bool asn1_hash_in(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs,
 		   uint8_t size, uint8_t asn1_blob_len);
 
-static bool ikev2_out_hash_v2n(uint8_t np UNUSED, pb_stream *rbody, lset_t sighash_policy)
-{
-	uint16_t hash_algo_to_send[SUPPORTED_NUM_HASH];
-	chunk_t hash;
-	uint8_t index = 0;
-	hash.ptr = (void*)&hash_algo_to_send;
-
-	if (sighash_policy & POL_SIGHASH_SHA2_256) {
-		hash_algo_to_send[index] = htons(IKEv2_AUTH_HASH_SHA2_256);
-		index += 1;
-	}
-	if (sighash_policy & POL_SIGHASH_SHA2_384) {
-		hash_algo_to_send[index] = htons(IKEv2_AUTH_HASH_SHA2_384);
-		index += 1;
-	}
-	if (sighash_policy & POL_SIGHASH_SHA2_512) {
-		hash_algo_to_send[index] = htons(IKEv2_AUTH_HASH_SHA2_512);
-		index += 1;
-	}
-
-	hash.len = index * RFC_7427_HASH_ALGORITHM_VALUE;
-
-	return emit_v2Ntd(v2N_SIGNATURE_HASH_ALGORITHMS, &hash, rbody);
-}
-
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
 {
-	uint16_t h_value[IKEv2_AUTH_HASH_ROOF];
 	lset_t sighash_policy = st->st_connection->sighash_policy;
-	unsigned char num_of_hash_algo = pbs_left(&p->pbs) / RFC_7427_HASH_ALGORITHM_VALUE;
 
-	if (num_of_hash_algo > IKEv2_AUTH_HASH_ROOF) {
-		libreswan_log("Too many hash algorithms specified (%u)",
-			num_of_hash_algo);
-		return FALSE;
-	}
+	while (pbs_left(&p->pbs) > 0) {
 
-	if (!in_raw(h_value, pbs_left(&p->pbs), (&p->pbs), "hash value"))
-		return FALSE;
+		uint16_t nh_value;
+		passert(sizeof(nh_value) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE);
+		if (!in_raw(&nh_value, sizeof(nh_value), &p->pbs,
+			    "hash algorithm identifier (network ordered)"))
+			return false;
+		uint16_t h_value = ntohs(nh_value);
 
-	for (unsigned char i = 0; i < num_of_hash_algo; i++) {
-		switch (ntohs(h_value[i]))  {
+		switch (h_value)  {
 		/* We no longer support SHA1 (as per RFC8247) */
 		case IKEv2_AUTH_HASH_SHA2_256:
 			if (sighash_policy & POL_SIGHASH_SHA2_256) {
@@ -167,10 +139,11 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 			st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_IDENTITY;
 			break;
 		default:
-			libreswan_log("Received and ignored hash algorithm %d", ntohs(h_value[i]));
+			libreswan_log("Received and ignored hash algorithm %d", h_value);
 		}
+
 	}
-	return TRUE;
+	return true;
 }
 
 static const struct asn1_hash_blob *blob_for_hash_algo(enum notify_payload_hash_algorithms hash_algo,
@@ -893,7 +866,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	if (!IMPAIR(OMIT_HASH_NOTIFY_REQUEST)) {
 		if (((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
 			&& (c->sighash_policy != POL_SIGHASH_NONE)) {
-			if (!ikev2_out_hash_v2n(ISAKMP_NEXT_v2N, &rbody, c->sighash_policy))
+			if (!emit_v2N_signature_hash_algorithms(c->sighash_policy, &rbody))
 				return STF_INTERNAL_ERROR;
 		}
 	} else {
@@ -1348,12 +1321,11 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 		}
 	}
 
-
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
 	if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
 		if (st->st_seen_hashnotify && ((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
 			&& (c->sighash_policy != POL_SIGHASH_NONE)) {
-			if (!ikev2_out_hash_v2n(ISAKMP_NEXT_v2N, &rbody, c->sighash_policy))
+			if (!emit_v2N_signature_hash_algorithms(c->sighash_policy, &rbody))
 				return STF_INTERNAL_ERROR;
 		}
 	} else {

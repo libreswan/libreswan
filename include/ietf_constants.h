@@ -1811,14 +1811,14 @@ enum notify_payload_hash_algorithms {
 };
 
 /*
- * RFC 7427 Hash Algorithm Identifiers (mentioned in
- * notify_payload_hash_algorithms) that are sent in the Notify
- * payload of the hash algorithm notification are 2 bytes each.
+ * RFC 7427: 4.  Hash Algorithm Notification
+ *
+ * The Notification Data field contains the list of 16-bit hash
+ * algorithm identifiers from the Hash Algorithm Identifiers of IANA's
+ * "Internet Key Exchange Version 2 (IKEv2) Parameters" registry.
+ * There is no padding between the hash algorithm identifiers.
  */
-#define RFC_7427_HASH_ALGORITHM_VALUE 2
-
-/* Currently 3 hashes are supported for negotiation : SHA2_256, SHA2_384 and SHA2_512 */
-#define SUPPORTED_NUM_HASH 3
+#define RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE 2
 
 /*
  * RFC 7427 , section 3 describes the Authentication data format for

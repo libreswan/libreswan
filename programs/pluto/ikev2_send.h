@@ -76,4 +76,7 @@ bool emit_v2Nt(v2_notification_t ntype,
 
 bool emit_v2V(const char *string, pb_stream *outs);
 
+bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
+					pb_stream *outs);
+
 #endif
