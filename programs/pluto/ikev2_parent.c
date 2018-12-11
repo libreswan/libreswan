@@ -301,9 +301,11 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 {
 	struct connection *c = ike->sa.st_connection;
 	/*
-	 * taking it current from current state I2/R1. The parent has advanced but not the svm???
-	 * Ideally this should be timeout of I3/R2 state svm. how to find that svm
-	 * ??? I wonder what this comment means?  Needs rewording.
+	 * Taking it (what???) current from current state I2/R1.
+	 * The parent has advanced but not the svm???
+	 * Ideally this should be timeout of I3/R2 state svm.
+	 * How to find that svm???
+	 * I wonder what this comment means?  Needs rewording.
 	 *
 	 * XXX: .timeout_event is tied to a state transition.  Does
 	 * that mean it applies to the transition or to the final
