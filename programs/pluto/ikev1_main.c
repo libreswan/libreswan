@@ -242,13 +242,13 @@ static void main_mode_hash_body(struct state *st,
 	if (hashi) {
 		hmac_update_chunk(ctx, st->st_gi);
 		hmac_update_chunk(ctx, st->st_gr);
-		hmac_update(ctx, st->st_icookie, COOKIE_SIZE);
-		hmac_update(ctx, st->st_rcookie, COOKIE_SIZE);
+		hmac_update(ctx, st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
+		hmac_update(ctx, st->st_ike_spis.responder.bytes, COOKIE_SIZE);
 	} else {
 		hmac_update_chunk(ctx, st->st_gr);
 		hmac_update_chunk(ctx, st->st_gi);
-		hmac_update(ctx, st->st_rcookie, COOKIE_SIZE);
-		hmac_update(ctx, st->st_icookie, COOKIE_SIZE);
+		hmac_update(ctx, st->st_ike_spis.responder.bytes, COOKIE_SIZE);
+		hmac_update(ctx, st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
 	}
 
 	DBG(DBG_CRYPT,
@@ -694,7 +694,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 		libreswan_log("responding to Main Mode from unknown peer %s on port %u",
 			sensitive_ipstr(&c->spd.that.host_addr, &b),
 			hportof(&md->sender));
-		DBG(DBG_CONTROL, DBG_dump("  ICOOKIE-DUMP:", st->st_icookie, COOKIE_SIZE));
+		DBG(DBG_CONTROL, DBG_dump("  ICOOKIE-DUMP:", st->st_ike_spis.initiator.bytes, COOKIE_SIZE));
 	} else {
 		libreswan_log("responding to Main Mode");
 	}
@@ -1421,9 +1421,9 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 
 		if (!out_struct(&isan, &isakmp_notification_desc, rbody,
 					&notify_pbs) ||
-		    !out_raw(st->st_icookie, COOKIE_SIZE, &notify_pbs,
+		    !out_raw(st->st_ike_spis.initiator.bytes, COOKIE_SIZE, &notify_pbs,
 				"notify icookie") ||
-		    !out_raw(st->st_rcookie, COOKIE_SIZE, &notify_pbs,
+		    !out_raw(st->st_ike_spis.responder.bytes, COOKIE_SIZE, &notify_pbs,
 				"notify rcookie"))
 			return STF_INTERNAL_ERROR;
 
@@ -1897,9 +1897,9 @@ stf_status send_isakmp_notification(struct state *st,
 		};
 		if (!out_struct(&isan, &isakmp_notification_desc, &rbody,
 					&notify_pbs) ||
-		    !out_raw(st->st_icookie, COOKIE_SIZE, &notify_pbs,
+		    !out_raw(st->st_ike_spis.initiator.bytes, COOKIE_SIZE, &notify_pbs,
 				"notify icookie") ||
-		    !out_raw(st->st_rcookie, COOKIE_SIZE, &notify_pbs,
+		    !out_raw(st->st_ike_spis.responder.bytes, COOKIE_SIZE, &notify_pbs,
 				"notify rcookie"))
 			return STF_INTERNAL_ERROR;
 
@@ -2059,9 +2059,9 @@ static void send_notification(struct state *sndst, notification_t type,
 			.isa_flags = encst ? ISAKMP_FLAGS_v1_ENCRYPTION : 0,
 		};
 		if (icookie != NULL)
-			memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
+			memcpy(hdr.isa_ike_initiator_spi.bytes, icookie, COOKIE_SIZE);
 		if (rcookie != NULL)
-			memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
+			memcpy(hdr.isa_ike_responder_spi.bytes, rcookie, COOKIE_SIZE);
 		passert(out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs));
 	}
 
@@ -2156,16 +2156,16 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 			return;
 		}
 		send_notification(st, type, p1st, generate_msgid(p1st),
-				st->st_icookie, st->st_rcookie,
+				st->st_ike_spis.initiator.bytes, st->st_ike_spis.responder.bytes,
 				PROTO_ISAKMP);
 	} else if (IS_ISAKMP_ENCRYPTED(from_state)) {
 		send_notification(st, type, st, generate_msgid(st),
-				st->st_icookie, st->st_rcookie,
+				st->st_ike_spis.initiator.bytes, st->st_ike_spis.responder.bytes,
 				PROTO_ISAKMP);
 	} else {
 		/* no ISAKMP SA established - don't encrypt notification */
 		send_notification(st, type, NULL, v1_MAINMODE_MSGID,
-				st->st_icookie, st->st_rcookie,
+				st->st_ike_spis.initiator.bytes, st->st_ike_spis.responder.bytes,
 				PROTO_ISAKMP);
 	}
 }
@@ -2204,7 +2204,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 
 	update_ike_endpoints(&fake_state, md);
 	send_notification(&fake_state, type, NULL, 0,
-			md->hdr.isa_icookie, md->hdr.isa_rcookie,
+			md->hdr.isa_ike_initiator_spi.bytes, md->hdr.isa_ike_responder_spi.bytes,
 			PROTO_ISAKMP);
 }
 
@@ -2310,8 +2310,8 @@ void send_v1_delete(struct state *st)
 		};
 		u_char isakmp_spi[2 * COOKIE_SIZE];
 
-		memcpy(isakmp_spi, st->st_icookie, COOKIE_SIZE);
-		memcpy(isakmp_spi + COOKIE_SIZE, st->st_rcookie, COOKIE_SIZE);
+		memcpy(isakmp_spi, st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
+		memcpy(isakmp_spi + COOKIE_SIZE, st->st_ike_spis.responder.bytes, COOKIE_SIZE);
 
 		passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
 				   &del_pbs));
