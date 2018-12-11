@@ -598,13 +598,13 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 
 	/* ??? ev_time lacks required precision */
 	ev->ev_time = monotimesum(mononow(), delay);
-	link_pluto_event_list(ev); /* add to global ist to track */
+	link_pluto_event_list(ev); /* add to global list to track */
 
 	/*
 	 * If the event is associated with a state, put a backpointer to the
 	 * event in the state object, so we can find and delete the event
 	 * if we need to (for example, if we receive a reply).
-	 * (There are actually three classes of event associated
+	 * (There are actually six classes of event associated
 	 * with a state.)
 	 */
 	if (st != NULL) {
