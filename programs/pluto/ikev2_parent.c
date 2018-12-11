@@ -329,18 +329,12 @@ static stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ik
 {
 	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
 	stf_status e = STF_OK;
-	const char  *what;
+	const char *what;
 
 	if (unack < st->st_connection->ike_window) {
 		what  =  "send new exchange now";
 	} else  {
-		struct initiate_list *n = alloc_thing(struct initiate_list,
-				"struct initiate_list");
-		struct initiate_list *p;
-
 		e = STF_SUSPEND;
-		n->st_serialno = st->st_serialno;
-
 		what = "wait sending, add to send next list";
 		delete_event(st);
 		event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, st);
@@ -348,15 +342,15 @@ static stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ik
 			what, ike->sa.st_serialno, unack,
 			ike->sa.st_msgid_nextuse,
 			ike->sa.st_connection->ike_window);
-		for (p = ike->sa.send_next_ix; (p != NULL && p->next != NULL);
-				p = p->next) {
-		}
 
-		if (p == NULL) {
-			ike->sa.send_next_ix = n;
-		} else {
-			p->next = n;
-		}
+		struct initiate_list **pp = &ike->sa.send_next_ix;
+		while (*pp != NULL)
+			pp = &(*pp)->next;
+		*pp = alloc_thing(struct initiate_list, "struct initiate_list");
+		**pp = (struct initiate_list) {
+			.st_serialno = st->st_serialno,
+			.next = NULL };
+
 	}
 	DBG(DBG_CONTROLMORE,
 		DBG_log("#%lu %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
