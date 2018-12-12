@@ -3834,7 +3834,9 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	return ikev2_process_ts_and_rest(md);
 }
 
-static bool ikev2_rekey_child_req(struct state *st, chunk_t *spi)
+static bool ikev2_rekey_child_req(struct state *st,
+				  enum ikev2_sec_proto_id *rekey_protoid,
+				  ipsec_spi_t *rekey_spi)
 {
 	struct state *rst = state_with_serialno(st->st_ipsec_pred);
 
@@ -3847,12 +3849,18 @@ static bool ikev2_rekey_child_req(struct state *st, chunk_t *spi)
 		return FALSE;
 	}
 
-	struct ipsec_proto_info *p2;
-
+	/*
+	 * 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
+	 * Exchange: The SA being rekeyed is identified by the SPI
+	 * field in the Notify payload; this is the SPI the exchange
+	 * initiator would expect in inbound ESP or AH packets.
+	 */
 	if (rst->st_esp.present) {
-		p2 = &rst->st_esp;
+		*rekey_spi = rst->st_esp.our_spi;
+		*rekey_protoid = PROTO_IPSEC_ESP;
 	} else if (rst->st_ah.present) {
-		p2 = &rst->st_ah;
+		*rekey_spi = rst->st_ah.our_spi;
+		*rekey_protoid = PROTO_IPSEC_AH;
 	} else {
 		libreswan_log("Child SA to rekey #%lu is not ESP/AH can't rekey",
 				st->st_ipsec_pred);
@@ -3864,17 +3872,14 @@ static bool ikev2_rekey_child_req(struct state *st, chunk_t *spi)
 
 	char cib[CONN_INST_BUF];
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu initiate rekey request for \"%s\"%s #%lu SPI 0x%x TSi TSr",
-				st->st_serialno,
-				rst->st_connection->name,
-				fmt_conn_instance(rst->st_connection, cib),
-				rst->st_serialno, ntohl(p2->attrs.spi)));
+	dbg("#%lu initiate rekey request for \"%s\"%s #%lu SPI 0x%x TSi TSr",
+	    st->st_serialno,
+	    rst->st_connection->name,
+	    fmt_conn_instance(rst->st_connection, cib),
+	    rst->st_serialno, ntohl(*rekey_spi));
 
 	ikev2_print_ts(&st->st_ts_this);
 	ikev2_print_ts(&st->st_ts_that);
-
-	clonetochunk(*spi, &p2->our_spi, sizeof(p2->our_spi),
-			"rekey child spi");
 
 	return TRUE;
 }
@@ -4051,7 +4056,6 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 	/* child connection */
 	struct state *cst = md->st;
 	struct connection *cc = cst->st_connection;
-	chunk_t rekey_spi = empty_chunk;
 
 	send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
 
@@ -4075,10 +4079,12 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 	if (!ikev2_emit_sa_proposals(outpbs, cc->v2_create_child_proposals, &local_spi))
 		return STF_INTERNAL_ERROR;
 
+	ipsec_spi_t rekey_spi = 0;
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* send NONCE */
 
-		if (!ikev2_rekey_child_req(cst, &rekey_spi))
+		enum ikev2_sec_proto_id rekey_protoid = PROTO_v2_RESERVED;
+		if (!ikev2_rekey_child_req(cst, &rekey_protoid, &rekey_spi))
 			return STF_INTERNAL_ERROR;
 
 		struct ikev2_generic in = {
@@ -4096,24 +4102,21 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			}
 		}
 
-		if (rekey_spi.len > 0) {
-			/* ??? how do we know that the protocol is ESP and not AH? */
-			if (!ship_v2N(ISAKMP_NEXT_v2TSi,
-				      build_ikev2_critical(false),
-				      PROTO_v2_ESP, &rekey_spi,
+		if (rekey_spi != 0) {
+			if (!emit_v2N(build_ikev2_critical(false),
+				      rekey_protoid, &rekey_spi,
 				      v2N_REKEY_SA, &empty_chunk, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
 	}
 
-	if (rekey_spi.len == 0) {
+	if (rekey_spi == 0) {
+		/* not rekey */
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
 	}
 
 	v2_emit_ts_payloads(pexpect_child_sa(cst), outpbs, cc);
-
-	freeanychunk(rekey_spi);
 
 	if (send_use_transport) {
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
