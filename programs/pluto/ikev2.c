@@ -1558,6 +1558,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			if (st->st_msgid_lastack != v2_INVALID_MSGID) {
 				libreswan_log("already processed IKE_SA_INIT response for state #%lu; discarding packet",
 					      st->st_serialno);
+				return;
 			}
 			/*
 			 * Responder provided a cookie, record it.
