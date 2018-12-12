@@ -80,17 +80,11 @@ ike_spi_t ike_responder_spi(const ip_address *addr)
 							 "IKE Responder SPI",
 							 DBG_CRYPT);
 
-		const unsigned char *addr_ptr;
-		size_t addr_length = addrbytesptr_read(addr, &addr_ptr);
-		crypt_hash_digest_bytes(ctx, "addr",
-					addr_ptr, addr_length);
-
-		crypt_hash_digest_bytes(ctx, "sod",
-					ike_spi_secret,
+		crypt_hash_digest_bytes(ctx, "addr", addr, sizeof(*addr));
+		crypt_hash_digest_bytes(ctx, "sod", ike_spi_secret,
 					sizeof(ike_spi_secret));
 		counter++;
-		crypt_hash_digest_bytes(ctx, "counter",
-					(const void *) &counter,
+		crypt_hash_digest_bytes(ctx, "counter", &counter,
 					sizeof(counter));
 
 		u_char buffer[SHA2_256_DIGEST_SIZE];
