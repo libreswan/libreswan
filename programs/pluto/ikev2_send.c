@@ -137,19 +137,39 @@ bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
  *    notification concerning the IKE SA, the SPI Size MUST be zero and
  *    the field must be empty.
  */
+
+bool emit_v2N(uint8_t critical,
+	      enum ikev2_sec_proto_id protoid, const ipsec_spi_t *spi,
+	      v2_notification_t ntype, const chunk_t *ndata,
+	      pb_stream *outs)
+{
+	if (spi != NULL) {
+		chunk_t spi_chunk = chunk(&spi, sizeof(*spi));
+		return ship_v2N(0, critical,
+				protoid, &spi_chunk,
+				ntype, ndata, outs);
+	} else {
+		return ship_v2N(0, critical,
+				protoid, &empty_chunk,
+				ntype, ndata, outs);
+	}
+}
+
 bool ship_v2N(enum next_payload_types_ikev2 np,
 	      uint8_t critical,
 	      enum ikev2_sec_proto_id protoid,
 	      const chunk_t *spi,
-	      v2_notification_t type,
-	      const chunk_t *n_data,
+	      v2_notification_t ntype,
+	      const chunk_t *ndata,
 	      pb_stream *rbody)
 {
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
+	passert(spi != NULL);
 	passert((protoid == PROTO_v2_RESERVED) == (spi->len == 0));
+	passert((protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP) == (spi->len > 0));
 
-	switch (type) {
+	switch (ntype) {
 	case v2N_INVALID_SELECTORS:
 	case v2N_REKEY_SA:
 	case v2N_CHILD_SA_NOT_FOUND:
@@ -173,7 +193,7 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 		.isan_critical = critical,
 		.isan_protoid = protoid,
 		.isan_spisize = spi->len,
-		.isan_type = type,
+		.isan_type = ntype,
 	};
 	pb_stream n_pbs;
 
@@ -189,8 +209,8 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 			return FALSE;
 		}
 	}
-	if (n_data != NULL) {
-		if (!out_chunk(*n_data, &n_pbs, "Notify data")) {
+	if (ndata != NULL) {
+		if (!out_chunk(*ndata, &n_pbs, "Notify data")) {
 			libreswan_log(
 				"error writing notify payload for notify message");
 			return FALSE;
@@ -247,11 +267,15 @@ bool ship_v2Ns(enum next_payload_types_ikev2 np,
  * For a CREATE_CHILD_SA, things have presumably screwed up so bad
  * that the larval child state is deleted.
  */
-void send_v2N_response_from_state(struct ike_sa *ike, struct msg_digest *md,
-				  v2_notification_t ntype,
-				  const chunk_t *ndata)
+
+void send_v2N_spi_response_from_state(struct ike_sa *ike,
+				      struct msg_digest *md,
+				      enum ikev2_sec_proto_id protoid,
+				      ipsec_spi_t *spi,
+				      v2_notification_t ntype,
+				      const chunk_t *ndata)
 {
-	passert(md != NULL); /* always a reply */
+	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* always responding */
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
 
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
@@ -318,25 +342,14 @@ void send_v2N_response_from_state(struct ike_sa *ike, struct msg_digest *md,
 		PEXPECT_LOG("%s notification is never part of a response",
 			    notify_name);
 		return;
-	case v2N_CHILD_SA_NOT_FOUND:
-		/*
-		 * Response to REKEY_SA(SPI) when SPI is unknown.
-		 * Presumably an unknown SPI in an Delete(SPI,...)
-		 * payload is ignored.
-		 */
-		dbg("notification %s needs SPI!", notify_name);
-		/* ??? how can we figure out the protocol and SPI? */
-		if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-			      build_ikev2_critical(false),
-			      PROTO_v2_RESERVED, &empty_chunk,
-			      ntype, ndata, &sk.pbs)) {
-			return;
-		}
-		break;
 	default:
-		if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE, ntype, ndata, &sk.pbs))
-			return;
 		break;
+	}
+
+	if (!emit_v2N(build_ikev2_critical(false),
+		      protoid, spi,
+		      ntype, ndata, &sk.pbs)) {
+		return;
 	}
 
 	if (!close_v2SK_payload(&sk)) {
@@ -365,6 +378,15 @@ void send_v2N_response_from_state(struct ike_sa *ike, struct msg_digest *md,
 	 */
 	send_chunk_using_state(&ike->sa, "v2 notify", same_out_pbs_as_chunk(&reply));
 	pstat(ikev2_sent_notifies_e, ntype);
+}
+
+void send_v2N_response_from_state(struct ike_sa *ike,
+				  struct msg_digest *md,
+				  v2_notification_t ntype,
+				  const chunk_t *ndata)
+{
+	send_v2N_spi_response_from_state(ike, md, PROTO_v2_RESERVED, NULL/*SPI*/,
+					 ntype, ndata);
 }
 
 void send_v2N_response_from_md(struct msg_digest *md,

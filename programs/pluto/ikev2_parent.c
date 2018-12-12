@@ -3834,59 +3834,6 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	return ikev2_process_ts_and_rest(md);
 }
 
-static struct state *find_state_to_rekey(struct payload_digest *p,
-		struct state *pst)
-{
-	struct state *st;
-	ipsec_spi_t spi;
-	struct ikev2_notify ntfy = p->payload.v2n;
-
-	if (ntfy.isan_protoid != PROTO_IPSEC_ESP &&
-	    ntfy.isan_protoid != PROTO_IPSEC_AH) {
-		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
-				enum_show(&ikev2_protocol_names,
-					ntfy.isan_protoid));
-		return NULL;
-	}
-
-	DBG(DBG_CONTROLMORE,
-		DBG_log("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
-			enum_show(&ikev2_protocol_names,
-				ntfy.isan_protoid)));
-
-	if (ntfy.isan_spisize != sizeof(ipsec_spi_t)) {
-		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
-			ntfy.isan_spisize);
-		return NULL;
-	}
-
-	if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
-		return NULL;      /* cannot happen */
-
-	DBG(DBG_CONTROLMORE,
-		DBG_log("CREATE_CHILD_S to rekey IPsec SA(0x%08" PRIx32 ") Protocol %s",
-			ntohl((uint32_t) spi),
-			enum_show(&ikev2_protocol_names, ntfy.isan_protoid)));
-
-	/*
-	 * From 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
-	 * Exchange: The SA being rekeyed is identified by the SPI
-	 * field in the [REKEY_SA] Notify payload; this is the SPI the
-	 * exchange initiator would expect in inbound ESP or AH
-	 * packets.
-	 *
-	 * From our POV, that's the outbound SPI.
-	 */
-	st = find_v2_child_sa_by_outbound_spi(&pst->st_ike_spis, ntfy.isan_protoid, spi);
-	if (st == NULL) {
-		libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
-			ntohl((uint32_t) spi),
-			enum_show(&ikev2_protocol_names, ntfy.isan_protoid));
-	}
-
-	return st;
-}
-
 static bool ikev2_rekey_child_req(struct state *st, chunk_t *spi)
 {
 	struct state *rst = state_with_serialno(st->st_ipsec_pred);
@@ -3932,63 +3879,123 @@ static bool ikev2_rekey_child_req(struct state *st, chunk_t *spi)
 	return TRUE;
 }
 
-static stf_status ikev2_rekey_child_resp(const struct msg_digest *md)
+static stf_status ikev2_rekey_child_resp(struct msg_digest *md)
 {
 	struct state *st = md->st;  /* new child state */
-	struct state *rst = NULL; /* old child state being rekeyed */
-	struct payload_digest *ntfy;
-	struct state *pst = state_with_serialno(st->st_clonedfrom);
-	stf_status ret = STF_OK; /* no v2N_REKEY_SA return OK */
 
-	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		char cib[CONN_INST_BUF];
-
+	struct payload_digest *rekey_sa_payload = NULL;
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_REKEY_SA:
-			DBG(DBG_CONTROL, DBG_log("received v2N_REKEY_SA "));
-			if (rst != NULL) {
+			if (rekey_sa_payload != NULL) {
 				/* will tolerate multiple */
-				loglog(RC_LOG_SERIOUS, "duplicate v2N_REKEY_SA in exchange");
+				loglog(RC_LOG_SERIOUS, "ignoring duplicate v2N_REKEY_SA in exchange");
+				break;
 			}
-
-			/*
-			 * in case of a failure the response is
-			 * a v2N_CHILD_SA_NOT_FOUND with  with SPI and type
-			 * {AH|ESP} in the notify  do we support that yet?
-			 * RFC 7296 3.10 return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
-			 */
-			change_state(st, STATE_V2_REKEY_CHILD_R);
-			rst = find_state_to_rekey(ntfy, pst);
-			if (rst == NULL) {
-				/* ??? RFC 7296 3.10: this notify requires protocol and SPI! */
-				libreswan_log("no valid IPsec SA SPI to rekey");
-				ret = STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
-			} else {
-				st->st_ipsec_pred = rst->st_serialno;
-
-				DBG(DBG_CONTROLMORE, DBG_log("#%lu rekey request for \"%s\"%s #%lu TSi TSr",
-							st->st_serialno,
-							rst->st_connection->name,
-							fmt_conn_instance(rst->st_connection, cib),
-							rst->st_serialno));
-				ikev2_print_ts(&rst->st_ts_this);
-				ikev2_print_ts(&rst->st_ts_that);
-				st->st_connection = rst->st_connection;
-
-				ret = STF_OK;
-			}
+			dbg("received v2N_REKEY_SA");
+			rekey_sa_payload = ntfy;
 			break;
-
 		default:
 			/*
-			 * there is another pass of notify payloads after this
-			 * that will handle all other but REKEY
+			 * there is another pass of notify payloads
+			 * after this that will handle all other but
+			 * REKEY
 			 */
 			break;
 		}
 	}
 
-	return ret;
+	if (rekey_sa_payload != NULL) {
+		struct ike_sa *ike = ike_sa(st);
+		struct ikev2_notify *rekey_notify = &rekey_sa_payload->payload.v2n;
+		/*
+		 * Magically switch to re-keying a CHILD SA.  XXX:
+		 * Should state machine split cases based on REKEY_SA?
+		 */
+		change_state(st, STATE_V2_REKEY_CHILD_R);
+		/*
+		 * find old state to rekey
+		 */
+		dbg("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
+		    enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+
+		if (rekey_notify->isan_spisize != sizeof(ipsec_spi_t)) {
+			libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
+				      rekey_notify->isan_spisize);
+			send_v2N_response_from_state(ike, md,
+						     v2N_INVALID_SYNTAX,
+						     NULL/*empty data*/);
+			return STF_FATAL;
+		}
+
+		ipsec_spi_t spi = 0;
+		if (!in_raw(&spi, sizeof(spi), &rekey_sa_payload->pbs, "SPI")) {
+			send_v2N_response_from_state(ike, md,
+						     v2N_INVALID_SYNTAX,
+						     NULL/*empty data*/);
+			return STF_INTERNAL_ERROR; /* cannot happen */
+		}
+
+		if (spi == 0) {
+			libreswan_log("CREATE_CHILD_SA IPsec SA rekey contains zero SPI");
+			send_v2N_response_from_state(ike, md,
+						     v2N_INVALID_SYNTAX,
+						     NULL/*empty data*/);
+			return STF_FATAL;
+		}
+
+		if (rekey_notify->isan_protoid != PROTO_IPSEC_ESP &&
+		    rekey_notify->isan_protoid != PROTO_IPSEC_AH) {
+			libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
+				      enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+			send_v2N_spi_response_from_state(ike, md,
+							 rekey_notify->isan_protoid, &spi,
+							 v2N_CHILD_SA_NOT_FOUND,
+							 NULL/*empty data*/);
+			return STF_FATAL;
+		}
+
+		dbg("CREATE_CHILD_S to rekey IPsec SA(0x%08" PRIx32 ") Protocol %s",
+		    ntohl((uint32_t) spi),
+		    enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+
+		/*
+		 * From 1.3.3.  Rekeying Child SAs with the
+		 * CREATE_CHILD_SA Exchange: The SA being rekeyed is
+		 * identified by the SPI field in the [REKEY_SA]
+		 * Notify payload; this is the SPI the exchange
+		 * initiator would expect in inbound ESP or AH
+		 * packets.
+		 *
+		 * From our POV, that's the outbound SPI.
+		 */
+		struct state *rst = find_v2_child_sa_by_outbound_spi(&ike->sa.st_ike_spis,
+								     rekey_notify->isan_protoid, spi);
+		if (rst == NULL) {
+			libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
+				      ntohl((uint32_t) spi),
+				      enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+			send_v2N_spi_response_from_state(ike, md,
+							 rekey_notify->isan_protoid, &spi,
+							 v2N_CHILD_SA_NOT_FOUND,
+							 NULL/*empty data*/);
+			return STF_FATAL;
+		}
+
+		st->st_ipsec_pred = rst->st_serialno;
+
+		char cib[CONN_INST_BUF];
+		dbg("#%lu rekey request for \"%s\"%s #%lu TSi TSr",
+		    st->st_serialno,
+		    rst->st_connection->name,
+		    fmt_conn_instance(rst->st_connection, cib),
+		    rst->st_serialno);
+		ikev2_print_ts(&rst->st_ts_this);
+		ikev2_print_ts(&rst->st_ts_that);
+		st->st_connection = rst->st_connection;
+	}
+
+	return STF_OK;
 }
 
 static stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
