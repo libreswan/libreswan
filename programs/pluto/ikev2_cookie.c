@@ -66,9 +66,6 @@ void refresh_v2_cookie_secret(void)
 static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 				      struct msg_digest *md)
 {
-	chunk_t SPIi = chunk(md->hdr.isa_icookie, IKE_SA_SPI_SIZE);
-	chunk_t Ni = same_in_pbs_left_as_chunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
-
 	/*
 	 * RFC 5996 Section 2.10 Nonces used in IKEv2 MUST be randomly
 	 * chosen, MUST be at least 128 bits in size, and MUST be at
@@ -83,6 +80,7 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 	 * here and reject.
 	 */
 
+	chunk_t Ni = same_in_pbs_left_as_chunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
 		/*
 		 * If this were a DDOS, we cannot afford to log.  We
@@ -100,7 +98,8 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 	chunk_t IPi = same_ip_address_as_chunk(&md->sender);
 	crypt_hash_digest_chunk(ctx, "IPi", IPi);
 
-	crypt_hash_digest_chunk(ctx, "SPIi", SPIi);
+	crypt_hash_digest_bytes(ctx, "SPIi", &md->hdr.isa_ike_initiator_spi,
+				sizeof(md->hdr.isa_ike_initiator_spi));
 
 	crypt_hash_digest_bytes(ctx, "<secret>", v2_cookie_secret,
 				sizeof(v2_cookie_secret));
