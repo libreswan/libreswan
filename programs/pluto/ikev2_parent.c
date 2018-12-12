@@ -2222,7 +2222,11 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	setchunk(null_auth, NULL, 0);	/* additional NULL_AUTH payload */
 
 	if (!finish_dh_v2(pst, r, FALSE))
-		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
+		/*
+		 * XXX: this is the initiator so returning a
+		 * notification is kind of useless.
+		 */
+		return STF_FAIL + v2N_INVALID_SYNTAX; /* STF_FATAL? */
 
 	/*
 	 * If we and responder are willing to use a PPK,
@@ -4303,7 +4307,11 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 	stf_status e = STF_OK;
 	bool only_shared_false = false;
 	if (!finish_dh_v2(st, r, only_shared_false)) {
-		e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
+		/*
+		 * XXX: this is the initiator so returning a
+		 * notification is kind of useless.
+		 */
+		e = STF_FAIL + v2N_INVALID_SYNTAX;
 	}
 	if (e == STF_OK) {
 		ikev2_rekey_expire_pred(st, st->st_ike_pred);
@@ -4400,7 +4408,11 @@ static void ikev2_child_inR_continue(struct state *st,
 	stf_status e = STF_OK;
 	bool only_shared_true = true;
 	if (!finish_dh_v2(st, r, only_shared_true)) {
-		e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
+		/*
+		 * XXX: this is the initiator so returning a
+		 * notification is kind of useless.
+		 */
+		e = STF_FAIL + v2N_INVALID_SYNTAX;
 	}
 
 	if (e == STF_OK) {
@@ -4589,7 +4601,9 @@ static void ikev2_child_inIoutR_continue_continue(struct state *st,
 	bool only_shared_true = true;
 	pexpect(r->pcr_type == pcr_compute_dh_v2);
 	if (!finish_dh_v2(st, r, only_shared_true)) {
-		e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
+		send_v2N_response_from_state(ike_sa(st), *mdp,
+					     v2N_INVALID_SYNTAX, NULL);
+		e = STF_FATAL;
 	}
 	if (e == STF_OK) {
 		e = ikev2_child_out_tail(*mdp);
@@ -4762,7 +4776,9 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 	pexpect(r->pcr_type == pcr_compute_dh_v2);
 	bool only_shared_false = false;
 	if (!finish_dh_v2(st, r, only_shared_false)) {
-		e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
+		send_v2N_response_from_state(ike_sa(st), *mdp,
+					     v2N_INVALID_SYNTAX, NULL);
+		e = STF_FATAL;
 	}
 	if (e == STF_OK) {
 		e = ikev2_child_out_tail(*mdp);
