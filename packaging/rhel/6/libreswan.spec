@@ -26,6 +26,7 @@
     USE_NM=true \\\
     USE_SECCOMP=false \\\
     USE_XAUTHPAM=true \\\
+    NSS_HAS_IPSEC_PROFILE=false \\\
 %{nil}
 
 #global prever rc1
