@@ -52,15 +52,12 @@ extern stf_status send_v2_informational_request(const char *name,
 								       pb_stream *pbs));
 
 /*
- * XXX: Where does the name ship_v2*() come from?  Is for when a
- * function writes an entire payload into the PBS?  emit_v2*() might
- * be more meaningful?
+ * Emit an IKEv2 payload.
  */
-#if 0
+
 bool emit_v2UNKNOWN(const char *victim, pb_stream *outs);
-#else
+/* to be deleted */
 bool ship_v2UNKNOWN(pb_stream *outs, const char *victim);
-#endif
 
 bool emit_v2N(uint8_t critical,
 	      enum ikev2_sec_proto_id protoid,
@@ -69,39 +66,25 @@ bool emit_v2N(uint8_t critical,
 	      const chunk_t *ndata,
 	      pb_stream *outs);
 
-bool ship_v2N(enum next_payload_types_ikev2 np,
-	      uint8_t critical,
-	      enum ikev2_sec_proto_id protoid,
-	      const chunk_t *spi,
-	      v2_notification_t type,
-	      const chunk_t *n_data,
-	      pb_stream *rbody);
-
-#if 0
-bool emit_v2Nsp(v2_notification_t ntype,
+bool emit_v2Ntd(v2_notification_t ntype,
 		const chunk_t *ndata,
 		pb_stream *outs);
-#else
+/* to be deleted */
 bool ship_v2Nsp(enum next_payload_types_ikev2 np,
 	      v2_notification_t type,
 	      const chunk_t *n_data,
 	      pb_stream *rbody);
-#endif
 
-#if 0
-bool emit_v2Ns(v2_notification_t ntype,
+bool emit_v2Nt(v2_notification_t ntype,
 	       pb_stream *outs);
-#else
+/* to be deleted */
 bool ship_v2Ns(enum next_payload_types_ikev2 np,
 	      v2_notification_t type,
 	      pb_stream *rbody);
-#endif
 
-#if 0
 bool emit_v2V(const char *string, pb_stream *outs);
-#else
+/* to be deleted */
 bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
 	      const char *string);
-#endif
 
 #endif

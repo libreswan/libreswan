@@ -143,31 +143,10 @@ bool emit_v2N(uint8_t critical,
 	      v2_notification_t ntype, const chunk_t *ndata,
 	      pb_stream *outs)
 {
-	if (spi != NULL) {
-		chunk_t spi_chunk = chunk(&spi, sizeof(*spi));
-		return ship_v2N(0, critical,
-				protoid, &spi_chunk,
-				ntype, ndata, outs);
-	} else {
-		return ship_v2N(0, critical,
-				protoid, &empty_chunk,
-				ntype, ndata, outs);
-	}
-}
-
-bool ship_v2N(enum next_payload_types_ikev2 np,
-	      uint8_t critical,
-	      enum ikev2_sec_proto_id protoid,
-	      const chunk_t *spi,
-	      v2_notification_t ntype,
-	      const chunk_t *ndata,
-	      pb_stream *rbody)
-{
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
-	passert(spi != NULL);
-	passert((protoid == PROTO_v2_RESERVED) == (spi->len == 0));
-	passert((protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP) == (spi->len > 0));
+	passert((protoid == PROTO_v2_RESERVED) == (spi == NULL));
+	passert((protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP) == (spi != NULL));
 
 	switch (ntype) {
 	case v2N_INVALID_SELECTORS:
@@ -189,31 +168,29 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	DBG(DBG_CONTROLMORE, DBG_log("Adding a v2N Payload"));
 
 	struct ikev2_notify n = {
-		.isan_np = np,
 		.isan_critical = critical,
 		.isan_protoid = protoid,
-		.isan_spisize = spi->len,
+		.isan_spisize = spi != NULL ? sizeof(spi) : 0,
 		.isan_type = ntype,
 	};
 	pb_stream n_pbs;
 
-	if (!out_struct(&n, &ikev2_notify_desc, rbody, &n_pbs)) {
+	if (!out_struct(&n, &ikev2_notify_desc, outs, &n_pbs)) {
 		libreswan_log(
 			"error initializing notify payload for notify message");
-		return FALSE;
+		return false;
 	}
 
-	if (spi->len > 0) {
-		if (!out_chunk(*spi, &n_pbs, "SPI")) {
+	if (spi != NULL) {
+		if (!out_raw(spi, sizeof(*spi), &n_pbs, "SPI")) {
 			libreswan_log("error writing SPI to notify payload");
-			return FALSE;
+			return false;
 		}
 	}
 	if (ndata != NULL) {
 		if (!out_chunk(*ndata, &n_pbs, "Notify data")) {
-			libreswan_log(
-				"error writing notify payload for notify message");
-			return FALSE;
+			libreswan_log("error writing notify payload for notify message");
+			return false;
 		}
 	}
 
@@ -222,30 +199,52 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 }
 
 /*
- * ship_v2Nsp: partially parameterized shipv2N
+ * Wrappers for common cases:
  *
- * - critical: ISAKMP_PAYLOAD_NONCRITICAL
- * - protoid: IKEv2_SEC_PROTO_NONE
- * - spi: none
- * pass through: all params
+ * emit_v2Ntd: emit_v2N(..., T[YPE], D[ATA], ...)
+ * emit_v2Nt(): emit_v2N(..., T[YPE], ...)
  *
- * This case is common since
+ * where remaining fields are defaulted to:
+ *
+ * - C+RESERVED: ISAKMP_PAYLOAD_NONCRITICAL
+ * - Protocol ID: IKEv2_SEC_PROTO_NONE
+ * - SPI: none
+ * - Notification Data: empty
+ *
+ * These cases are common since
  *
  * - almost all notifications are non-critical
  * - only a specified few include protocol or SPI
  */
 
-bool ship_v2Nsp(enum next_payload_types_ikev2 np,
+bool emit_v2Ntd(v2_notification_t ntype,
+		const chunk_t *ndata,
+		pb_stream *outs)
+{
+	return emit_v2N(build_ikev2_critical(false),
+			PROTO_v2_RESERVED, NULL,
+			ntype, ndata, outs);
+}
+
+bool emit_v2Nt(v2_notification_t ntype, pb_stream *outs)
+{
+	return emit_v2N(build_ikev2_critical(false),
+			PROTO_v2_RESERVED, NULL,
+			ntype, NULL, outs);
+}
+
+/* delete */
+bool ship_v2Nsp(enum next_payload_types_ikev2 np UNUSED,
 		v2_notification_t type,
 		const chunk_t *n_data,
 		pb_stream *rbody)
 {
-	return ship_v2N(np, build_ikev2_critical(false),
-			PROTO_v2_RESERVED, &empty_chunk, type, n_data, rbody);
+	return emit_v2N(build_ikev2_critical(false),
+			PROTO_v2_RESERVED, NULL,
+			type, n_data, rbody);
 }
 
-/* ship_v2Ns: like ship_v2Nsp except n_data is &empty_chunk */
-
+/* delete */
 bool ship_v2Ns(enum next_payload_types_ikev2 np,
 	      v2_notification_t type,
 	      pb_stream *rbody)

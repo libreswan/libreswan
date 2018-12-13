@@ -105,7 +105,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md);
 static bool asn1_hash_in(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs,
 		   uint8_t size, uint8_t asn1_blob_len);
 
-static bool ikev2_out_hash_v2n(uint8_t np, pb_stream *rbody, lset_t sighash_policy)
+static bool ikev2_out_hash_v2n(uint8_t np UNUSED, pb_stream *rbody, lset_t sighash_policy)
 {
 	uint16_t hash_algo_to_send[SUPPORTED_NUM_HASH];
 	chunk_t hash;
@@ -127,10 +127,7 @@ static bool ikev2_out_hash_v2n(uint8_t np, pb_stream *rbody, lset_t sighash_poli
 
 	hash.len = index * RFC_7427_HASH_ALGORITHM_VALUE;
 
-	return ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-			PROTO_v2_RESERVED, &empty_chunk,
-			v2N_SIGNATURE_HASH_ALGORITHMS, &hash,
-			rbody);
+	return emit_v2Ntd(v2N_SIGNATURE_HASH_ALGORITHMS, &hash, rbody);
 }
 
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
@@ -826,10 +823,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	 */
 	if (st->st_dcookie.ptr != NULL) {
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
-		if (!ship_v2N(ISAKMP_NEXT_v2SA,
-			      build_ikev2_critical(IMPAIR(SEND_BOGUS_ISAKMP_FLAG)),
-			      PROTO_v2_RESERVED,
-			      &empty_chunk,
+		if (!emit_v2N(build_ikev2_critical(IMPAIR(SEND_BOGUS_ISAKMP_FLAG)),
+			      PROTO_v2_RESERVED, NULL,
 			      v2N_COOKIE, &st->st_dcookie, &rbody))
 		{
 			return STF_INTERNAL_ERROR;
