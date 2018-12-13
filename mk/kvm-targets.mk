@@ -1081,10 +1081,10 @@ define kvmsh-DOMAIN
 	$$(KVMSH) $$(KVMSH_FLAGS) $(1) $(KVMSH_COMMAND)
 endef
 
-$(foreach domain,  $(KVM_BASE_DOMAIN), \
+$(foreach domain,  $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN), \
 	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_POOLDIR)/$$(KVM_BASE_DOMAIN).ks)))
 
-$(foreach domain,  $(KVM_LOCAL_DOMAINS), \
+$(foreach domain,  $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS), \
 	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_LOCALDIR)/$(domain).xml)))
 
 $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOSTS)), \
