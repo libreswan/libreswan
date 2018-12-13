@@ -52,13 +52,8 @@ typedef struct { intmax_t ms; } deltatime_t;
 
 #define DELTATIME_INIT(S) { (intmax_t)((S) * 1000) }
 
-static inline deltatime_t deltatime(time_t secs) {
-	return (deltatime_t) DELTATIME_INIT(secs);
-}
-
-static inline deltatime_t deltatime_ms(intmax_t ms) {
-	return (deltatime_t) { ms };
-}
+deltatime_t deltatime(time_t secs);
+deltatime_t deltatime_ms(intmax_t ms);
 
 /* sign(a - b) */
 int deltatime_cmp(deltatime_t a, deltatime_t b);

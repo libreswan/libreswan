@@ -17,6 +17,16 @@
 
 #include "deltatime.h"
 
+deltatime_t deltatime(time_t secs)
+{
+	return (deltatime_t) DELTATIME_INIT(secs);
+}
+
+deltatime_t deltatime_ms(intmax_t ms)
+{
+	return (deltatime_t) { ms };
+}
+
 int deltatime_cmp(deltatime_t a, deltatime_t b)
 {
 	/*
