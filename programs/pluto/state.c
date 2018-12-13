@@ -1536,33 +1536,28 @@ static bool ikev2_ix_state_match(const struct state *st,
 }
 
 struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
-				     const u_char *icookie,
-				     const u_char *rcookie,
+				     const ike_spi_t *ike_initiator_spi,
+				     const ike_spi_t *ike_responder_spi,
 				     const msgid_t msgid)
 {
-	struct state *st;
-	FOR_EACH_STATE_WITH_COOKIES(st, icookie, rcookie, {
+	struct state *st = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
+						 ike_responder_spi), st) {
 		if (st->st_ikev2 &&
+		    IS_CHILD_SA(st) &&
 		    st->st_msgid == msgid &&
-		    ikev2_ix_state_match(st, ix)) {
-			DBG(DBG_CONTROL,
-			    DBG_log("v2 peer, cookies and msgid match on #%lu",
-				    st->st_serialno));
-			break;
+		    ikev2_ix_state_match(st, ix) &&
+		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
+		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
+			dbg("v2 state object #%lu found, in %s",
+			    st->st_serialno,
+			    st->st_state_name);
+			return st;
 		}
-	});
+	}
 
-	DBG(DBG_CONTROL, {
-		if (st == NULL) {
-			DBG_log("v2 state object not found");
-		} else {
-			DBG_log("v2 state object #%lu found, in %s",
-				st->st_serialno,
-				st->st_state_name);
-		}
-	});
-
-	return st;
+	DBG_log("v2 state object not found");
+	return NULL;
 }
 
 /*

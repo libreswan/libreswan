@@ -1600,9 +1600,10 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * state has a matching Message ID - the one that sent
 		 * the request?
 		 */
-		st = find_state_ikev2_child(ix, md->hdr.isa_icookie,
-				md->hdr.isa_rcookie,
-				md->hdr.isa_msgid);
+		st = find_state_ikev2_child(ix,
+					    &md->hdr.isa_ike_initiator_spi,
+					    &md->hdr.isa_ike_responder_spi,
+					    md->hdr.isa_msgid);
 
 		if (st == NULL) {
 			/*

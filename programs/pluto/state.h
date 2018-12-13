@@ -757,8 +757,8 @@ extern struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
 extern struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi);
 
 extern struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
-					    const u_char *icookie,
-					    const u_char *rcookie,
+					    const ike_spi_t *ike_initiator_spi,
+					    const ike_spi_t *ike_responder_spi,
 					    const msgid_t msgid);
 
 struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
