@@ -768,6 +768,10 @@ extern struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
 				    const ike_spi_t *ike_responder_spi);
 extern struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi);
 
+struct state *DBG_v2_sa_by_message_id(const ike_spi_t *ike_initiator_spi,
+				      const ike_spi_t *ike_responder_spi,
+				      msgid_t msgid);
+
 extern struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
 					    const ike_spi_t *ike_initiator_spi,
 					    const ike_spi_t *ike_responder_spi,

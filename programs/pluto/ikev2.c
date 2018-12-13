@@ -1597,14 +1597,44 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * A response; find the IKE SA or CHILD SA that
 		 * initiated the request.
 		 *
-		 * XXX: Why are two lookups needed?  Surely only one
-		 * state has a matching Message ID - the one that sent
-		 * the request?
+		 * XXX: Why is the exchange type needed?  Surely state
+		 * machine will figure out if the state X exchange is
+		 * valid?
+		 *
+		 * Lets find out.
+		 *
+		 * XXX: Why is a CHILD SA specific and then an IKE SA
+		 * specific lookup needed?  Surely a Message ID
+		 * uniquely identifies the IKE or CHILD that sent the
+		 * request?
+		 *
+		 * Lets find out.
+		 *
+		 * XXX: What happens when a duplicate response is
+		 * received?  For instance, IKE SAs send requests with
+		 * no state change.  Unless the state's Message ID is
+		 * being thwacked, it will match and, potentially
+		 * cause a re-processing of the state.  Perhaps that
+		 * is why the IX parameter is needed?
+		 *
+		 * Lets find out.
+		 *
+		 * XXX: Why is an IKE SA lookup needed?  If there is
+		 * no Message ID match then just log it - the IKE SA
+		 * is being used to make the error message "pretty".
 		 */
 		st = find_state_ikev2_child(ix,
 					    &md->hdr.isa_ike_initiator_spi,
 					    &md->hdr.isa_ike_responder_spi,
 					    md->hdr.isa_msgid);
+		if (DBGP(DBG_BASE)) {
+			struct state *msgid_st = DBG_v2_sa_by_message_id(&md->hdr.isa_ike_initiator_spi,
+									 &md->hdr.isa_ike_responder_spi,
+									 md->hdr.isa_msgid);
+			if (st != msgid_st) {
+				DBG_log("state and msgid search mismatch");
+			}
+		}
 
 		if (st == NULL) {
 			/*
@@ -1664,9 +1694,19 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 *
 			 * The log line lets find out.
 			 */
-			dbg("using IKE SA #%lu for response with msgid %u (nextuse: %u, lastack: %u)",
-			     st->st_serialno, md->hdr.isa_msgid,
-			     st->st_msgid_nextuse, st->st_msgid_lastack);
+			dbg("using IKE SA #%lu for response with msgid %u (msgid: %u; nextuse: %u, lastack: %u; lastrecv: %u, lastreplied: %u)",
+			    st->st_serialno, md->hdr.isa_msgid, st->st_msgid,
+			    st->st_msgid_nextuse, st->st_msgid_lastack,
+			    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
+
+			if (DBGP(DBG_BASE)) {
+				struct state *msgid_st = DBG_v2_sa_by_message_id(&md->hdr.isa_ike_initiator_spi,
+										 &md->hdr.isa_ike_responder_spi,
+										 md->hdr.isa_msgid);
+				if (st != msgid_st) {
+					DBG_log("state and msgid search mismatch");
+				}
+			}
 		}
 	} else {
 		PASSERT_FAIL("message role %d invalid", v2_msg_role(md));

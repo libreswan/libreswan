@@ -1599,6 +1599,55 @@ struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
 	return NULL;
 }
 
+struct state *DBG_v2_sa_by_message_id(const ike_spi_t *ike_initiator_spi,
+				      const ike_spi_t *ike_responder_spi,
+				      const msgid_t msgid)
+{
+	/*
+	 * XXX: For moment, don't trust Message ID to be unique -
+	 * diagnose anything that happens.
+	 */
+	struct state *st = NULL;
+	struct state *found = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
+						 ike_responder_spi), st) {
+		if (st->st_ike_version == IKEv2 &&
+		    st->st_msgid == msgid &&
+		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
+		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
+			/* try to diagnose problems */
+			if (found == NULL) {
+				found = st; /* log below */
+			} else if (IS_CHILD_SA(st)) {
+				/* prefer child */
+				const char *type = IS_IKE_SA(found) ? "IKE" : "CHILD";
+				DBG_log("v2 SA by Message ID %u: ignoring %s SA #%lu, in state %s; have child #%lu",
+					msgid, type, found->st_serialno,
+					found->st_state_name,
+					st->st_serialno);
+				found = st;
+			} else {
+				const char *type = IS_IKE_SA(st) ? "IKE" : "CHILD";
+				DBG_log("v2 SA by Message ID %u: ignoring %s SA #%lu, in state %s; have #%lu",
+					msgid, type, st->st_serialno,
+					found->st_state_name,
+					st->st_serialno);
+			}
+		}
+	}
+
+	if (found != NULL) {
+		const char *type = IS_IKE_SA(found) ? "IKE" : "CHILD";
+		DBG_log("v2 SA by Message ID %u: found %s SA #%lu, in state %s",
+			msgid, type, found->st_serialno,
+			found->st_state_name);
+		return found;
+	}
+
+	DBG_log("v2 SA by Message ID %u: no matching SA found", msgid);
+	return NULL;
+}
+
 /*
  * Find an IKEv2 CHILD SA using the protocol and the (from our POV)
  * 'outbound' SPI.
