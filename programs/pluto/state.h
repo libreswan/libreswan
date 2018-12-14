@@ -828,6 +828,7 @@ extern bool update_mobike_endpoints(struct state *st, const struct msg_digest *m
 extern void v2_expire_unused_ike_sa(struct ike_sa *ike);
 
 bool shared_phase1_connection(const struct connection *c);
+bool v2_child_connection_probably_shared(struct child_sa *child);
 
 extern void record_deladdr(ip_address *ip, char *a_type);
 extern void record_newaddr(ip_address *ip, char *a_type);

@@ -1071,6 +1071,41 @@ bool shared_phase1_connection(const struct connection *c)
 	return FALSE;
 }
 
+bool v2_child_connection_probably_shared(struct child_sa *child)
+{
+	struct connection *c = child->sa.st_connection;
+
+	if (in_pending_use(c)) {
+		dbg("#%lu connection is also pending; but what about pending for this state???",
+		    child->sa.st_serialno);
+		return true;
+	}
+
+	struct ike_sa *ike = ike_sa(&child->sa);
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
+		if (st->st_connection != c) {
+			continue;
+		}
+		if (st == &child->sa) {
+			dbg("ignoring ourselves #%lu sharing connection %s",
+			    st->st_serialno, c->name);
+			continue;
+		}
+		if (st == &ike->sa) {
+			dbg("ignoring IKE SA #%lu sharing connection %s with #%lu",
+			    st->st_serialno, c->name, child->sa.st_serialno);
+			continue;
+		}
+		dbg("#%lu and #%lu share connection %s",
+		    child->sa.st_serialno, st->st_serialno,
+		    c->name);
+		return true;
+	}
+
+	return false;
+}
+
 /*
  * delete all states that were created for a given connection,
  * additionally delete any states for which func(st, c)

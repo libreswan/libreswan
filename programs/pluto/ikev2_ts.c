@@ -1071,6 +1071,13 @@ bool v2_process_ts_request(struct child_sa *child,
 
 			passert(best_connection == c); /* aka st->st_connection, no leak */
 
+			bool shared = v2_child_connection_probably_shared(child);
+			if (shared) {
+				/* instantiate it, filling in peer's ID */
+				best_connection = instantiate(t, &c->spd.that.host_addr,
+							      NULL);
+			}
+
 			/* "this" == responder; see function name */
 			best_connection->spd.this.port = tsr_port;
 			best_connection->spd.that.port = tsi_port;
@@ -1078,9 +1085,17 @@ bool v2_process_ts_request(struct child_sa *child,
 			best_connection->spd.that.protocol = tsi_protocol;
 			best_spd_route = &best_connection->spd;
 
-			char cib[CONN_INST_BUF];
-			dbg("  overwrote connection with instance %s%s",
-			    best_connection->name, fmt_conn_instance(best_connection, cib));
+			if (shared) {
+				char old[CONN_INST_BUF];
+				char new[CONN_INST_BUF];
+				dbg("switching from \"%s\"%s to \"%s\"%s",
+				    c->name, fmt_conn_instance(c, old),
+				    best_connection->name, fmt_conn_instance(best_connection, new));
+			} else {
+				char cib[CONN_INST_BUF];
+				dbg("  overwrote connection with instance %s%s",
+				    best_connection->name, fmt_conn_instance(best_connection, cib));
+			}
 			break;
 		}
 	}
