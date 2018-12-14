@@ -26,7 +26,7 @@
 
 #include "lset.h"
 #include "lswcdefs.h"
-
+#include "fmtbuf.h"
 #include "libreswan/passert.h"
 #include "constants.h"		/* for DBG_... */
 
@@ -646,54 +646,7 @@ void lswlog_errno_suffix(struct lswlog *buf, int e);
 		lswlog_log_prefix(BUF),		\
 		lswlog_to_error_stream(buf))
 
-/*
- * ARRAY, a previously allocated array, containing the accumulated
- * NUL-terminated output.
- *
- * The following offsets into ARRAY are maintained:
- *
- *    0 <= LEN <= BOUND < ROOF < sizeof(ARRAY)
- *
- * ROOF < sizeof(ARRAY); ARRAY[ROOF]==CANARY
- *
- * The offset to the last character in the array.  It contains a
- * canary intended to catch overflows.  When sizeof(ARRAY) is needed,
- * ROOF should be used as otherwise the canary may be corrupted.
- *
- * BOUND < ROOF; ARRAY[BOUND]=='\0'
- *
- * Limit on how many characters can be appended.
- *
- * LEN < BOUND; ARRAY[LEN]=='\0'
- *
- * Equivalent to strlen(BUF).  BOUND-LEN is always the amount of
- * unused space in the array.
- *
- * When LEN<BOUND, space for BOUND-LEN characters, including the
- * terminating NUL, is still available (when BOUND-LEN==1, a single
- * NUL (empty string) write is possible).
- *
- * When LEN==BOUND, the array is full and writes are discarded.
- *
- * When the ARRAY fills, the last few characters are overwritten with
- * DOTS.
- */
-
-struct lswlog {
-	char *array;
-	/* 0 <= LEN < BOUND < ROOF */
-	size_t len;
-	size_t bound;
-	size_t roof;
-	const char *dots;
-};
-
 struct lswlog *lswlog(struct lswlog *buf, char *array, size_t sizeof_array);
-
-/*
- * To debug, set this to printf or similar.
- */
-extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
 
 /*
  * Since 'char' can be unsigned need to cast -2 onto a char sized

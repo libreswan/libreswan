@@ -114,6 +114,7 @@ OBJS += rate_log.o
 OBJS += libreswan_log.o
 OBJS += libreswan_log_rc.o
 
+OBJS += fmtbuf.o
 OBJS += lswlog.o
 OBJS += lswlog_dbg.o
 OBJS += lswlog_nss_error.o
