@@ -2,4 +2,15 @@
 west #
  PATH/libexec/ipsec/enumcheck | diff -u ../../enumcheck/OUTPUT.enumcheck.txt -
 enumcheck: leak detective found no leaks
+--- ../../enumcheck/OUTPUT.enumcheck.txt	2018-11-28 12:29:52.006226422 -0500
++++ -	2018-12-20 21:26:25.799685642 -0500
+@@ -4126,6 +4126,6 @@
+ 
+ lswlog_enum_lset_short:
+ 
+-  debug 18000:
+-	<<crypt+crypt-low>>
++  debug 4:
++	<<crypt>>
+ 
 

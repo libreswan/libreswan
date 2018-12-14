@@ -43,27 +43,12 @@ static struct double_double debug = {
 	.name[N##_IX - DBG_floor_IX] = A "\0", \
 	.help[N##_IX - DBG_floor_IX] = H
 
-	D(DBG_ADD_PREFIX, "debug-add-prefix", "add the log+state prefix to debug lines"),
-	D(DBG_CONTROL, "debug-control", "control flow within Pluto"),
-	D(DBG_CONTROLMORE, "debug-controlmore", "more detailed debugging"),
-	D(DBG_CRYPT, "debug-crypt", "high-level encryption/decryption of messages"),
-	D(DBG_CRYPT_LOW, "debug-crypt-low", "low-level encryption/decryption implementation details"),
-	D(DBG_DNS, "debug-dns", "DNS activity"),
-	D(DBG_DPD, "debug-dpd", "DPD items"),
-	D(DBG_EMITTING, "debug-emitting", "show encoding of messages"),
-	D(DBG_KERNEL, "debug-kernel", "messages with the kernel"),
-	D(DBG_LIFECYCLE, "debug-lifecycle", "SA lifecycle"),
-	D(DBG_NATT, "debug-nattraversal", "debugging of NAT-traversal"),
-	D(DBG_OPPO, "debug-oppo", "opportunism"),
-	D(DBG_OPPOINFO, "debug-oppoinfo", "log various informational things about oppo/%trap-keying"),
-	D(DBG_PARSING, "debug-parsing", "show decoding of messages"),
+	D(DBG_TMI, "debug-tmi", "far too much information"),
+	D(DBG_CRYPT, "debug-crypt", "encryption/decryption of messages: DANGER!"),
 	D(DBG_PRIVATE, "debug-private", "displays private information: DANGER!"),
-	D(DBG_PROPOSAL_PARSER, "debug-proposal-parser", "parsing ike=... et.al."),
-	D(DBG_RAW, "debug-raw", "raw packet I/O"),
-	D(DBG_RETRANSMITS, "debug-retransmits", "Retransmitting packets"),
 	D(DBG_WHACKWATCH, "debug-whackwatch", "never let WHACK go"),
-	D(DBG_X509, "debug-x509", "X.509/pkix verify, cert retrival"),
-	D(DBG_XAUTH, "debug-xauth", "XAUTH aka PAM"),
+	D(DBG_ADD_PREFIX, "debug-add-prefix", "add the log+state prefix to debug lines"),
+#undef D
 };
 
 const enum_names debug_names = {
@@ -76,6 +61,26 @@ const enum_names debug_names = {
 struct lmod_compat debug_compat[] = {
 	{ "klips",    DBG_KERNEL },
 	{ "netkey",    DBG_KERNEL },
+
+	{ "control", DBG_BASE, },
+	{ "controlmore", DBG_BASE, },
+	{ "dns", DBG_BASE, },
+	{ "dpd", DBG_BASE, },
+	{ "emitting", DBG_BASE, },
+	{ "kernel", DBG_BASE, },
+	{ "lifecycle", DBG_BASE, },
+	{ "nattraversal", DBG_BASE, },
+	{ "oppo", DBG_BASE, },
+	{ "oppoinfo", DBG_BASE, },
+	{ "parsing", DBG_BASE, },
+	{ "proposal-parser", DBG_BASE, },
+	{ "raw", DBG_BASE, },
+	{ "retransmits", DBG_BASE, },
+	{ "x509", DBG_BASE, },
+	{ "xauth", DBG_BASE, },
+
+	{ "crypt-low", DBG_CRYPT, },
+
 	{ NULL, LEMPTY, },
 };
 

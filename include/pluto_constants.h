@@ -337,28 +337,12 @@ typedef enum {
 enum {
 	DBG_floor_IX = 0,
 
-	DBG_RAW_IX = DBG_floor_IX,
-	DBG_PARSING_IX,
-	DBG_EMITTING_IX,
-	DBG_CONTROL_IX,
-	DBG_LIFECYCLE_IX,
-	DBG_KERNEL_IX,
-	DBG_DNS_IX,
-	DBG_OPPO_IX,
-	DBG_CONTROLMORE_IX,
+	DBG_BASE_IX = DBG_floor_IX, /* aka debug=all */
 
-	DBG_NATT_IX,
-	DBG_X509_IX,
-	DBG_DPD_IX,
-	DBG_XAUTH_IX,
-	DBG_RETRANSMITS_IX,
-	DBG_OPPOINFO_IX,
-
-	/* below are excluded from debug=all */
+	/* below are excluded from debug=base */
+	DBG_TMI_IX,
 	DBG_CRYPT_IX,
-	DBG_CRYPT_LOW_IX,
 	DBG_PRIVATE_IX,
-	DBG_PROPOSAL_PARSER_IX,
 
 	DBG_WHACKWATCH_IX,
 	DBG_ADD_PREFIX_IX,
@@ -370,31 +354,37 @@ enum {
 
 #define DBG_MASK	LRANGE(DBG_floor_IX, DBG_roof_IX - 1)
 #define DBG_NONE        0                                       /* no options on, including impairments */
-#define DBG_ALL         LRANGES(DBG_RAW, DBG_OPPOINFO)          /* all but some exceptions (see below) */
+#define DBG_ALL         DBG_BASE
 
 /* singleton sets: must be kept in sync with the items! */
 
-#define DBG_RAW		LELEM(DBG_RAW_IX)
-#define DBG_PARSING	LELEM(DBG_PARSING_IX)
-#define DBG_EMITTING	LELEM(DBG_EMITTING_IX)
-#define DBG_CONTROL	LELEM(DBG_CONTROL_IX)
-#define DBG_LIFECYCLE	LELEM(DBG_LIFECYCLE_IX)
-#define DBG_KERNEL	LELEM(DBG_KERNEL_IX)
-#define DBG_DNS		LELEM(DBG_DNS_IX)
-#define DBG_OPPO	LELEM(DBG_OPPO_IX)
-#define DBG_CONTROLMORE	LELEM(DBG_CONTROLMORE_IX)
-#define DBG_NATT	LELEM(DBG_NATT_IX)
-#define DBG_X509	LELEM(DBG_X509_IX)
-#define DBG_DPD		LELEM(DBG_DPD_IX)
-#define DBG_XAUTH	LELEM(DBG_XAUTH_IX)
-#define DBG_RETRANSMITS	LELEM(DBG_RETRANSMITS_IX)
-#define DBG_OPPOINFO	LELEM(DBG_OPPOINFO_IX)
+#define DBG_BASE        LELEM(DBG_BASE_IX)
+
+/* so things don't break */
+#define DBG_RAW		DBG_BASE
+#define DBG_PARSING	DBG_BASE
+#define DBG_EMITTING	DBG_BASE
+#define DBG_CONTROL	DBG_BASE
+#define DBG_LIFECYCLE	DBG_BASE
+#define DBG_KERNEL	DBG_BASE
+#define DBG_DNS		DBG_BASE
+#define DBG_OPPO	DBG_BASE
+#define DBG_CONTROLMORE	DBG_BASE
+#define DBG_NATT	DBG_BASE
+#define DBG_X509	DBG_BASE
+#define DBG_DPD		DBG_BASE
+#define DBG_XAUTH	DBG_BASE
+#define DBG_RETRANSMITS	DBG_BASE
+#define DBG_OPPOINFO	DBG_BASE
 
 /* These are not part of "all" debugging */
+#define DBG_TMI		LELEM(DBG_TMI_IX)
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
-#define DBG_CRYPT_LOW	LELEM(DBG_CRYPT_LOW_IX)
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
-#define DBG_PROPOSAL_PARSER	LELEM(DBG_PROPOSAL_PARSER_IX)
+
+/* so things don't break */
+#define DBG_CRYPT_LOW	DBG_CRYPT
+#define DBG_PROPOSAL_PARSER	DBG_TMI
 
 #define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
 #define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)
