@@ -373,34 +373,60 @@ static bool v2_parse_tss(const struct msg_digest *md,
  * protocol (ts_proto).
  */
 
-static int score_protocol(const struct end *end,
-			  const struct traffic_selectors *tss,
-			  enum fit fit,
-			  const char *which, unsigned index)
+static int narrow_protocol(const struct end *end,
+			   const struct traffic_selectors *tss,
+			   enum fit fit,
+			   const char *which, unsigned index)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
-	int f = 0;	/* strength of match */
+	int protocol = -1;
 
 	switch (fit) {
 	case END_EQUALS_TS:
 		if (end->protocol == ts->ipprotoid) {
-			f = 255;	/* ??? odd value */
+			protocol = end->protocol;
 		}
 		break;
 	case END_NARROWER_THAN_TS:
-		if (ts->ipprotoid == 0) { /* wild-card */
-			f = 1;
+		if (ts->ipprotoid == 0 /* wild-card */ ||
+		    ts->ipprotoid == end->protocol) {
+			protocol = end->protocol;
 		}
 		break;
 	case END_WIDER_THAN_TS:
-		if (end->protocol == 0) { /* wild-card */
-			f = 1;
+		if (end->protocol == 0 /* wild-card */ ||
+		    end->protocol == ts->ipprotoid) {
+			protocol = ts->ipprotoid;
 		}
 		break;
 	default:
 		bad_case(fit);
 	}
+	dbg(MATCH_PREFIX "narrow protocol end=%s%d %s %s[%u]=%s%d: %d",
+	    end->protocol == 0 ? "*" : "", end->protocol,
+	    fit_string(fit),
+	    which, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
+	    protocol);
+	return protocol;
+}
+
+static int score_narrow_protocol(const struct end *end,
+				 const struct traffic_selectors *tss,
+				 enum fit fit,
+				 const char *which, unsigned index)
+{
+	int f;	/* strength of match */
+
+	int protocol = narrow_protocol(end, tss, fit, which, index);
+	if (protocol == 0) {
+		f = 255;	/* ??? odd value */
+	} else if (protocol > 0) {
+		f = 1;
+	} else {
+		f = 0;
+	}
 	LSWDBGP(DBG_MASK, buf) {
+		const struct traffic_selector *ts = &tss->ts[index];
 		lswlogf(buf, MATCH_PREFIX "match end->protocol=%s%d %s %s[%u].ipprotoid=%s%d: ",
 			end->protocol == 0 ? "*" : "", end->protocol,
 			fit_string(fit),
@@ -623,7 +649,7 @@ static struct score score_end(const struct end *end,
 	if (score.port <= 0) {
 		return score;
 	}
-	score.protocol = score_protocol(end, tss, fit, what, index);
+	score.protocol = score_narrow_protocol(end, tss, fit, what, index);
 	if (score.protocol <= 0) {
 		return score;
 	}
@@ -999,45 +1025,62 @@ bool v2_process_ts_request(struct child_sa *child,
 			}
 
 			/* require a valid narrowed port? */
-			enum fit port_fit;
+			enum fit fit;
 			switch (c->policy & (POLICY_GROUPINSTANCE |
 					     POLICY_IKEV2_ALLOW_NARROWING)) {
 			case POLICY_GROUPINSTANCE:
 			case POLICY_GROUPINSTANCE | POLICY_IKEV2_ALLOW_NARROWING: /* XXX: true */
 				/* exact match; XXX: 'cos that is what old code did */
-				port_fit = END_EQUALS_TS;
+				fit = END_EQUALS_TS;
 				break;
 			case POLICY_IKEV2_ALLOW_NARROWING:
 				/* narrow END's port to TS port */
-				port_fit = END_WIDER_THAN_TS;
+				fit = END_WIDER_THAN_TS;
 				break;
 			default:
 				bad_case(c->policy);
 			}
+
 			passert(tsi.nr >= 1);
 			int tsi_port = narrow_port(&t->spd.that, &tsi,
-						   port_fit, "TSi", 0);
+						   fit, "TSi", 0);
 			if (tsi_port < 0) {
 				dbg("    skipping; TSi port too wide");
 				continue;
 			}
+			int tsi_protocol = narrow_protocol(&t->spd.that, &tsi,
+							   fit, "TSi", 0);
+			if (tsi_protocol < 0) {
+				dbg("    skipping; TSi protocol too wide");
+				continue;
+			}
+
 			passert(tsr.nr >= 1);
 			int tsr_port = narrow_port(&t->spd.this, &tsr,
-						   port_fit, "TRi", 0);
+						   fit, "TRi", 0);
 			if (tsr_port < 0) {
 				dbg("    skipping; TSr port too wide");
 				continue;
 			}
+			int tsr_protocol = narrow_protocol(&t->spd.this, &tsr,
+							   fit, "TSr", 0);
+			if (tsr_protocol < 0) {
+				dbg("    skipping; TSr protocol too wide");
+				continue;
+			}
 
-			dbg("  overwriting connection with instance for protoports");
-			passert(best_connection == c);
-			c->spd.that.protocol = t->spd.that.protocol;
-			/* this is responder */
-			c->spd.this.port = tsr_port;
-			c->spd.that.port = tsi_port;
-			pfreeany(c->name);
-			c->name = clone_str(t->name, "hidden switch template name update");
-			best_spd_route = &c->spd;
+			passert(best_connection == c); /* aka st->st_connection, no leak */
+
+			/* "this" == responder; see function name */
+			best_connection->spd.this.port = tsr_port;
+			best_connection->spd.that.port = tsi_port;
+			best_connection->spd.this.protocol = tsr_protocol;
+			best_connection->spd.that.protocol = tsi_protocol;
+			best_spd_route = &best_connection->spd;
+
+			char cib[CONN_INST_BUF];
+			dbg("  overwrote connection with instance %s%s",
+			    best_connection->name, fmt_conn_instance(best_connection, cib));
 			break;
 		}
 	}
@@ -1053,7 +1096,10 @@ bool v2_process_ts_request(struct child_sa *child,
 	 *
 	 * XXX: but this is responder code, there probably isn't a
 	 * current-connection - it would have gone straight to current
-	 * state>
+	 * state.
+	 *
+	 * XXX: ah, but the state code does: set-state; set-connection
+	 * (yes order is wrong).  Why does it bother?
 	 *
 	 * update_state_connection(), if the connection changes,
 	 * de-references the old connection; which is what really

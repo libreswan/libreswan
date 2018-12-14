@@ -531,6 +531,7 @@ extern void flush_pending_by_state(struct state *st);
 
 extern void connection_discard(struct connection *c);
 extern void update_state_connection(struct state *st, struct connection *c);
+extern bool is_my_connection_shared(struct state *st);
 
 /* A template connection's eroute can be eclipsed by
  * either a %hold or an eroute for an instance iff
