@@ -309,8 +309,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					ENCAPSULATION_MODE_TRANSPORT;
 			}
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			if (!ship_v2Ns(c->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
-				       v2N_USE_TRANSPORT_MODE, outpbs))
+			if (!emit_v2Nt(v2N_USE_TRANSPORT_MODE, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
 	} else {
@@ -323,8 +322,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	if (c->send_no_esp_tfc) {
 		DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
-		if (!ship_v2Ns(ISAKMP_NEXT_v2NONE,
-			       v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
+		if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
 			return STF_INTERNAL_ERROR;
 	}
 

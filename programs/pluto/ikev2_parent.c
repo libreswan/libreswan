@@ -863,15 +863,13 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		if (!ship_v2Ns(ISAKMP_NEXT_v2N,
-			       v2N_IKEV2_FRAGMENTATION_SUPPORTED,
-			       &rbody))
+		if (!emit_v2Nt(v2N_IKEV2_FRAGMENTATION_SUPPORTED, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	/* Send USE_PPK Notify payload */
 	if (LIN(POLICY_PPK_ALLOW, c->policy)) {
-		if (!ship_v2Ns(ISAKMP_NEXT_v2N, v2N_USE_PPK, &rbody))
+		if (!emit_v2Nt(v2N_USE_PPK, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -896,7 +894,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 			freeanychunk(old_gateway_data);
 		}
 	} else if (LIN(POLICY_ACCEPT_REDIRECT_YES, c->policy)) {
-		if (!ship_v2Ns(ISAKMP_NEXT_v2N, v2N_REDIRECT_SUPPORTED, &rbody))
+		if (!emit_v2Nt(v2N_REDIRECT_SUPPORTED, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1347,17 +1345,13 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		int np = ISAKMP_NEXT_v2N;
-
-		if (!ship_v2Ns(np, v2N_IKEV2_FRAGMENTATION_SUPPORTED, &rbody))
+		if (!emit_v2Nt(v2N_IKEV2_FRAGMENTATION_SUPPORTED, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	/* Send USE_PPK Notify payload */
 	if (st->st_seen_ppk) {
-		int np = ISAKMP_NEXT_v2N;
-
-		if (!ship_v2Ns(np, v2N_USE_PPK, &rbody))
+		if (!emit_v2Nt(v2N_USE_PPK, &rbody))
 			return STF_INTERNAL_ERROR;
 	 }
 
@@ -2479,8 +2473,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	if (ic) {
 		libreswan_log("sending INITIAL_CONTACT");
-		if (!ship_v2Ns(ISAKMP_NEXT_v2AUTH, v2N_INITIAL_CONTACT,
-				&sk.pbs))
+		if (!emit_v2Nt(v2N_INITIAL_CONTACT, &sk.pbs))
 			return STF_INTERNAL_ERROR;
 	} else {
 		DBG(DBG_CONTROL, DBG_log("not sending INITIAL_CONTACT"));
@@ -2514,8 +2507,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	{
 		lset_t policy = pc->policy;
 		int notifies = 0;
-		enum next_payload_types_ikev2 ia_np = (pc->modecfg_domains != NULL ||
-			pc->modecfg_dns != NULL) ?  ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2NONE;
 
 		/* child connection */
 		struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
@@ -2581,8 +2572,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 			notifies--;
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
-			if (!ship_v2Ns(np, v2N_USE_TRANSPORT_MODE, &sk.pbs))
+			if (!emit_v2Nt(v2N_USE_TRANSPORT_MODE, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		} else {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
@@ -2590,17 +2580,14 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		if (cc->send_no_esp_tfc) {
 			notifies--;
-			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
-			if (!ship_v2Ns(np, v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-					&sk.pbs))
+			if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (LIN(POLICY_MOBIKE, cc->policy)) {
 			notifies--;
-			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
 			cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
-			if (!ship_v2Ns(np, v2N_MOBIKE_SUPPORTED, &sk.pbs))
+			if (!emit_v2Nt(v2N_MOBIKE_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 		if (pst->st_seen_ppk) {
@@ -3165,15 +3152,13 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		/* send any NOTIFY payloads */
 		if (st->st_sent_mobike) {
 			notifies--;
-			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
-			if (!ship_v2Ns(np, v2N_MOBIKE_SUPPORTED, &sk.pbs))
+			if (!emit_v2Nt(v2N_MOBIKE_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (st->st_ppk_used) {
 			notifies--;
-			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
-			if (!ship_v2Ns(np, v2N_PPK_IDENTITY, &sk.pbs))
+			if (!emit_v2Nt(v2N_PPK_IDENTITY, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -3190,17 +3175,13 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
 			notifies--;
-			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
-			if (!ship_v2Ns(np, v2N_USE_TRANSPORT_MODE,
-					&sk.pbs))
+			if (!emit_v2Nt(v2N_USE_TRANSPORT_MODE, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (c->send_no_esp_tfc) {
 			notifies--;
-			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
-			if (!ship_v2Ns(np, v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-					&sk.pbs))
+			if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -4119,18 +4100,14 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 
 	if (send_use_transport) {
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
-		if (!ship_v2Ns(cc->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
-				v2N_USE_TRANSPORT_MODE,
-				outpbs))
+		if (!emit_v2Nt(v2N_USE_TRANSPORT_MODE, outpbs))
 			return STF_INTERNAL_ERROR;
 	} else {
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
 	}
 
 	if (cc->send_no_esp_tfc) {
-		if (!ship_v2Ns(ISAKMP_NEXT_v2NONE,
-				v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-				outpbs))
+		if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
 			return STF_INTERNAL_ERROR;
 	}
 	return STF_OK;
@@ -5652,7 +5629,7 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 #ifdef NETKEY_SUPPORT
 static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
-	if (!ship_v2Ns(ISAKMP_NEXT_v2N, v2N_UPDATE_SA_ADDRESSES, pbs))
+	if (!emit_v2Nt(v2N_UPDATE_SA_ADDRESSES, pbs))
 		return STF_INTERNAL_ERROR;
 
 	if (!ikev2_out_natd(&st->st_mobike_localaddr, st->st_mobike_localport,

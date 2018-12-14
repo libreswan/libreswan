@@ -244,14 +244,6 @@ bool ship_v2Nsp(enum next_payload_types_ikev2 np UNUSED,
 			type, n_data, rbody);
 }
 
-/* delete */
-bool ship_v2Ns(enum next_payload_types_ikev2 np,
-	      v2_notification_t type,
-	      pb_stream *rbody)
-{
-	return ship_v2Nsp(np, type, &empty_chunk, rbody);
-}
-
 /*
  *
  ***************************************************************
