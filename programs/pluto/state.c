@@ -1712,36 +1712,30 @@ void find_states_and_redirect(const char *conn_name,
 /*
  * Find a state object.
  */
-struct state *ikev1_find_info_state(const u_char *icookie,
-			      const u_char *rcookie,
-			      const ip_address *peer UNUSED,
-			      msgid_t /* network order */ msgid)
+struct state *ikev1_find_info_state(const ike_spi_t *ike_initiator_spi,
+				    const ike_spi_t *ike_responder_spi,
+				    msgid_t msgid)
 {
-	struct state *st;
-	FOR_EACH_STATE_WITH_COOKIES(st, icookie, rcookie, {
-		DBG(DBG_CONTROL,
-		    DBG_log("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
-			    st->st_serialno,
-			    msgid,
-			    st->st_msgid,
-			    st->st_msgid_phase15));
-		if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
-		     msgid == st->st_msgid_phase15) ||
-		    msgid == st->st_msgid)
-			break;
-	});
-
-	DBG(DBG_CONTROL, {
-		if (st == NULL) {
-			DBG_log("p15 state object not found");
-		} else {
-			DBG_log("p15 state object #%lu found, in %s",
-				st->st_serialno,
-				st->st_state_name);
+	struct state *st = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
+						 ike_responder_spi), st) {
+		if (!st->st_ikev2 &&
+		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
+		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
+			dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
+			    st->st_serialno, msgid,
+			    st->st_msgid, st->st_msgid_phase15);
+			if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
+			     msgid == st->st_msgid_phase15) ||
+			    msgid == st->st_msgid) {
+				dbg("p15 state object #%lu found, in %s",
+				    st->st_serialno, st->st_state_name);
+				return st;
+			}
 		}
-	});
-
-	return st;
+	}
+	dbg("p15 state object not found");
+	return NULL;
 }
 
 /*
