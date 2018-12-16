@@ -1186,7 +1186,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * this ICOOKIE, asssume it is some sort of
 			 * re-transmit.
 			 */
-			st = find_state_ikev1_init(md->hdr.isa_icookie,
+			st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
 						   md->hdr.isa_msgid);
 			if (st != NULL) {
 				so_serial_t old_state = push_cur_state(st);
@@ -1223,7 +1223,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				 * responder cookie that we've not yet
 				 * seen.
 				 */
-				st = find_state_ikev1_init(md->hdr.isa_icookie,
+				st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
 							   md->hdr.isa_msgid);
 
 				if (st == NULL) {
@@ -1249,7 +1249,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * first message, in which case, we don't know
 			 * the rcookie yet.
 			 */
-			st = find_state_ikev1_init(md->hdr.isa_icookie,
+			st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
 						   v1_MAINMODE_MSGID);
 		}
 

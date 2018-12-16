@@ -746,7 +746,8 @@ extern struct state
 
 struct state *find_state_ikev1(const uint8_t *icookie, const uint8_t *rcookie,
 			       msgid_t msgid);
-struct state *find_state_ikev1_init(const uint8_t *icookie, msgid_t msgid);
+struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
+				    msgid_t msgid);
 
 extern bool find_pending_phase2(const so_serial_t psn,
 					const struct connection *c,

@@ -1465,33 +1465,26 @@ struct state *find_state_ikev1(const uint8_t *icookie,
 	return st;
 }
 
-struct state *find_state_ikev1_init(const uint8_t *icookie,
-				    msgid_t /*network order*/ msgid)
+struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
+				    msgid_t msgid)
 {
 	struct state *st = NULL;
-	FOR_EACH_STATE_WITH_ICOOKIE(st, icookie, {
-		if (!st->st_ikev2) {
-			DBG(DBG_CONTROL,
-			    DBG_log("v1 peer and icookie match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
-				    st->st_serialno,
-				    msgid,
-				    st->st_msgid));
-			if (msgid == st->st_msgid)
-				break;
-		}
-	});
-
-	DBG(DBG_CONTROL, {
-		    if (st == NULL) {
-			    DBG_log("v1 state object not found");
-		    } else {
-			    DBG_log("v1 state object #%lu found, in %s",
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(ike_initiator_spi), st) {
+		if (!st->st_ikev2 &&
+		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
+			dbg("v1 peer and icookie match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
+			    st->st_serialno, msgid, st->st_msgid);
+			if (msgid == st->st_msgid) {
+				dbg("v1 state object #%lu found, in %s",
 				    st->st_serialno,
 				    st->st_state_name);
-		    }
-	    });
+				return st;
+			}
+		}
+	}
 
-	return st;
+	dbg("v1 state object not found");
+	return NULL;
 }
 
 /*
