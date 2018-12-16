@@ -402,7 +402,7 @@ static stf_status add_redirect_payload(struct state *st, pb_stream *pbs)
 		loglog(RC_LOG_SERIOUS, "build of REDIRECT Payload failed: %s", e);
 		return STF_INTERNAL_ERROR;
 	} else {
-		if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE, v2N_REDIRECT, &notify_data, pbs))
+		if (!emit_v2Ntd(v2N_REDIRECT, &notify_data, pbs))
 			return STF_INTERNAL_ERROR;
 		freeanychunk(notify_data);
 	}

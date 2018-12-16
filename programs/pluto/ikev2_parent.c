@@ -888,7 +888,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 		if (e != NULL) {
 			loglog(RC_LOG_SERIOUS, "not sending REDIRECTED_FROM Notify payload because %s", e);
 		} else {
-			if (!ship_v2Nsp(ISAKMP_NEXT_v2N, v2N_REDIRECTED_FROM,
+			if (!emit_v2Ntd(v2N_REDIRECTED_FROM,
 					&old_gateway_data, &rbody))
 				return STF_INTERNAL_ERROR;
 			freeanychunk(old_gateway_data);
@@ -1368,7 +1368,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 			if (e != NULL) {
 				loglog(RC_LOG_SERIOUS, "not sending REDIRECT Payload because %s", e);
 			} else {
-				if (!ship_v2Nsp(ISAKMP_NEXT_v2N, v2N_REDIRECT, &data, &rbody))
+				if (!emit_v2Ntd(v2N_REDIRECT, &data, &rbody))
 					return STF_INTERNAL_ERROR;
 				freeanychunk(data);
 			}
@@ -2592,31 +2592,24 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 		if (pst->st_seen_ppk) {
 			chunk_t notify_data = create_unified_ppk_id(&ppk_id_p);
-			int np = LIN(POLICY_PPK_INSIST, cc->policy) && null_auth.ptr == NULL ?
-				ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N;
-
 			notifies--; /* used for one or two payloads */
-			if (!ship_v2Nsp(np, v2N_PPK_IDENTITY, &notify_data,
-					&sk.pbs))
+			if (!emit_v2Ntd(v2N_PPK_IDENTITY,
+					&notify_data, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 			freeanychunk(notify_data);
 
-			np = null_auth.ptr == NULL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N;
 			if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
 				ikev2_calc_no_ppk_auth(cc, pst, idhash_npa, &pst->st_no_ppk_auth);
-				if (!ship_v2Nsp(np,
-					v2N_NO_PPK_AUTH, &pst->st_no_ppk_auth,
-					&sk.pbs))
+				if (!emit_v2Ntd(v2N_NO_PPK_AUTH,
+						&pst->st_no_ppk_auth, &sk.pbs))
 						return STF_INTERNAL_ERROR;
 			}
 		}
 
 		if (null_auth.ptr != NULL) {
 			notifies--;
-			if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE,
-				v2N_NULL_AUTH, &null_auth,
-				&sk.pbs))
-					return STF_INTERNAL_ERROR;
+			if (!emit_v2Ntd(v2N_NULL_AUTH, &null_auth, &sk.pbs))
+				return STF_INTERNAL_ERROR;
 			freeanychunk(null_auth);
 		}
 
@@ -3164,8 +3157,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		if (send_redirect) {
 			notifies--;
-			if (!ship_v2Nsp((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr,
-					v2N_REDIRECT, &redirect_data, &sk.pbs))
+			if (!emit_v2Ntd(v2N_REDIRECT, &redirect_data, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 			st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
 			freeanychunk(redirect_data);
@@ -5147,7 +5139,7 @@ static stf_status add_mobike_response_payloads(
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(!ike_spi_is_zero(&st->st_ike_spis.responder));
 	if (ikev2_out_nat_v2n(pbs, st, &st->st_ike_spis.responder) &&
-	    (cookie2->len == 0 || ship_v2Nsp(ISAKMP_NEXT_v2NONE, v2N_COOKIE2, cookie2, pbs)))
+	    (cookie2->len == 0 || emit_v2Ntd(v2N_COOKIE2, cookie2, pbs)))
 		r = STF_OK;
 
 	freeanychunk(*cookie2);

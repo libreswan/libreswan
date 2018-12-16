@@ -233,17 +233,6 @@ bool emit_v2Nt(v2_notification_t ntype, pb_stream *outs)
 			ntype, NULL, outs);
 }
 
-/* delete */
-bool ship_v2Nsp(enum next_payload_types_ikev2 np UNUSED,
-		v2_notification_t type,
-		const chunk_t *n_data,
-		pb_stream *rbody)
-{
-	return emit_v2N(build_ikev2_critical(false),
-			PROTO_v2_RESERVED, NULL,
-			type, n_data, rbody);
-}
-
 /*
  *
  ***************************************************************
@@ -423,7 +412,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	}
 
 	/* build and add v2N payload to the packet */
-	if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE, ntype, ndata, &rbody)) {
+	if (!emit_v2Ntd(ntype, ndata, &rbody)) {
 		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->hdr.isa_msgid);
 		return;

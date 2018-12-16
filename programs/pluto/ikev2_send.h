@@ -53,6 +53,9 @@ extern stf_status send_v2_informational_request(const char *name,
 
 /*
  * Emit an IKEv2 payload.
+ *
+ * Like the out_*() primitives, these have the pb_stream as the last
+ * parameter.
  */
 
 bool emit_v2UNKNOWN(const char *victim, pb_stream *outs);
@@ -69,11 +72,6 @@ bool emit_v2N(uint8_t critical,
 bool emit_v2Ntd(v2_notification_t ntype,
 		const chunk_t *ndata,
 		pb_stream *outs);
-/* to be deleted */
-bool ship_v2Nsp(enum next_payload_types_ikev2 np,
-	      v2_notification_t type,
-	      const chunk_t *n_data,
-	      pb_stream *rbody);
 
 bool emit_v2Nt(v2_notification_t ntype,
 	       pb_stream *outs);
