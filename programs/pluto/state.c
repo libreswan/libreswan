@@ -342,42 +342,6 @@ static char *readable_humber(uint64_t num,
 }
 
 /*
- * Some macros to ease iterating over the above table
- */
-
-/*
- * Iterate through all the states in a slot in new-to-old order.
- */
-#define FOR_EACH_STATE_ENTRY(ST, SLOT, CODE)			\
-	do {							\
-		/* ST##entry is private to this macro */	\
-		struct list_head *(ST##slot) = (SLOT);		\
-		ST = NULL;					\
-		FOR_EACH_LIST_ENTRY_NEW2OLD(ST##slot, ST) {	\
-			CODE;					\
-		}						\
-	} while (false)
-
-/*
- * Iterate over all entries with matching cookies.
- */
-
-#define FOR_EACH_STATE_WITH_COOKIES(ST, ICOOKIE, RCOOKIE, CODE)		\
-	FOR_EACH_STATE_ENTRY(ST, cookies_slot((ICOOKIE), (RCOOKIE)), {	\
-		if (memeq((ICOOKIE), ST->st_icookie, COOKIE_SIZE) &&	\
-		    memeq((RCOOKIE), ST->st_rcookie, COOKIE_SIZE)) {	\
-			CODE;						\
-		}							\
-	})								\
-
-#define FOR_EACH_STATE_WITH_ICOOKIE(ST, ICOOKIE, CODE)			\
-	FOR_EACH_STATE_ENTRY(ST, icookie_slot((ICOOKIE)), {		\
-		if (memeq((ICOOKIE), ST->st_icookie, COOKIE_SIZE)) {	\
-			CODE;						\
-		}							\
-	})								\
-
-/*
  * Get the IKE SA managing the security association.
  */
 

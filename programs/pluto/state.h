@@ -433,8 +433,6 @@ struct state {
 	/* symmetric stuff */
 
 	ike_spis_t st_ike_spis;
-#define st_icookie st_ike_spis.initiator.bytes
-#define st_rcookie st_ike_spis.responder.bytes
 	ike_spis_t st_ike_rekey_spis;		/* what was exchanged */
 
 	/* initiator stuff */

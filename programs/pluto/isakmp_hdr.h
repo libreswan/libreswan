@@ -49,8 +49,6 @@
 struct isakmp_hdr {
 	ike_spi_t isa_ike_initiator_spi;
 	ike_spi_t isa_ike_responder_spi;
-#define isa_icookie isa_ike_initiator_spi.bytes
-#define isa_rcookie isa_ike_responder_spi.bytes
 	uint8_t isa_np;	/* Next payload */
 	uint8_t isa_version;	/* high-order 4 bits: Major; low order 4: Minor */
 	uint8_t isa_xchg;	/* Exchange type */
