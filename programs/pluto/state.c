@@ -2736,21 +2736,34 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	 * Our children will be on the same hash chain
 	 * because we share IKE SPIs.
 	 */
-	struct state *st;
 
 	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
-	FOR_EACH_STATE_WITH_COOKIES(st, pst->st_icookie, pst->st_rcookie, {
+
+	struct state *st = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(&pst->st_ike_spis), st) {
+		/* XXX: bother with ike_spi_eq()? */
+		/* XXX: bother with IKEv1 vs IKEv2? */
 		if (st->st_clonedfrom == pst->st_serialno) {
 			if (v2_responder_state)
+				/*
+				 * XXX: Suspect forcing the state to
+				 * ..._DEL is a secret code for do-not
+				 * send a delete notification?
+				 */
 				change_state(st, STATE_CHILDSA_DEL);
 			delete_state(st);
 		}
 		/* note: no md->st to clear */
-	});
+	}
 
 	/* delete self */
-	if (v2_responder_state)
+	if (v2_responder_state) {
+		/*
+		 * XXX: Suspect forcing the state to ..._DEL is a
+		 * secret code for do-not send a delete notification?
+		 */
 		change_state(pst, STATE_IKESA_DEL);
+	}
 	delete_state(pst);
 	/* note: no md->st to clear */
 }
