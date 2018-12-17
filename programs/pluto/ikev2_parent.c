@@ -613,7 +613,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 		}
 	}
 
-	st = new_state();
+	st = new_v2_state();
 
 	/* set up new state */
 	fill_ike_initiator_spi(st);
@@ -1018,7 +1018,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
 	 */
-	struct state *st = new_state();
+	struct state *st = new_v2_state();
 	/* set up new state */
 	/* initialize_new_state expects valid icookie/rcookie values, so create it now */
 	st->st_ike_spis.initiator = md->hdr.isa_ike_initiator_spi;

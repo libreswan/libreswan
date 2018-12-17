@@ -387,7 +387,8 @@ union sas { struct child_sa child; struct ike_sa ike; struct state st; };
  * Caller must schedule an event for this object so that it doesn't leak.
  * Caller must insert_state().
  */
-struct state *new_state(void)
+
+static struct state *new_state(void)
 {
 	static so_serial_t next_so = SOS_FIRST;
 
@@ -412,13 +413,24 @@ struct state *new_state(void)
 	return st;
 }
 
-struct state *new_rstate(struct msg_digest *md)
+struct state *new_v1_state(void)
+{
+	return new_state();
+}
+
+struct state *new_v1_rstate(struct msg_digest *md)
 {
 	struct state *st = new_state();
 	update_ike_endpoints(st, md);
 
 	return st;
 }
+
+struct state *new_v2_state(void)
+{
+	return new_state();
+}
+
 /*
  * Initialize the state table
  *

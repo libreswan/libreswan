@@ -177,7 +177,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 
 	/* Set up state */
 	pexpect(st == NULL);
-	st = new_rstate(md);
+	st = new_v1_rstate(md);
 
 	md->st = st;  /* (caller will reset cur_state) */
 	set_cur_state(st);
@@ -1020,7 +1020,7 @@ void aggr_outI1(fd_t whack_sock,
 	}
 
 	/* set up new state */
-	st = new_state();
+	st = new_v1_state();
 	set_cur_state(st);
 	st->st_connection = c;	/* safe: from new_state */
 

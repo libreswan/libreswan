@@ -721,8 +721,9 @@ extern bool states_use_connection(const struct connection *c);
 
 /* state functions */
 
-extern struct state *new_state(void);
-extern struct state *new_rstate(struct msg_digest *md);
+struct state *new_v1_state(void);
+struct state *new_v1_rstate(struct msg_digest *md);
+struct state *new_v2_state(void);
 
 extern void init_states(void);
 extern void insert_state(struct state *st);

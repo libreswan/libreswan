@@ -107,7 +107,7 @@ void main_outI1(fd_t whack_sock,
 {
 	struct state *st;
 
-	st = new_state();
+	st = new_v1_state();
 
 	/* set up new state */
 	fill_ike_initiator_spi(st);
@@ -659,7 +659,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 
 	/* Set up state */
 	pexpect(st == NULL);
-	md->st = st = new_rstate(md);
+	md->st = st = new_v1_rstate(md);
 
 	passert(!st->st_oakley.doing_xauth);
 
