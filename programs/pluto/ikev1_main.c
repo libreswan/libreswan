@@ -2460,18 +2460,18 @@ bool accept_delete(struct msg_digest *md,
 			/*
 			 * ISAKMP
 			 */
-			uint8_t icookie[COOKIE_SIZE];
-			uint8_t rcookie[COOKIE_SIZE];
+			ike_spi_t icookie;
+			ike_spi_t rcookie;
 			struct state *dst;
 
-			if (!in_raw(icookie, COOKIE_SIZE, &p->pbs, "iCookie"))
+			if (!in_raw(&icookie, COOKIE_SIZE, &p->pbs, "iCookie"))
 				return FALSE;
 
-			if (!in_raw(rcookie, COOKIE_SIZE, &p->pbs, "rCookie"))
+			if (!in_raw(&rcookie, COOKIE_SIZE, &p->pbs, "rCookie"))
 				return FALSE;
 
-			dst = find_state_ikev1(icookie, rcookie,
-					v1_MAINMODE_MSGID);
+			dst = find_state_ikev1(&icookie, &rcookie,
+					       v1_MAINMODE_MSGID);
 
 			if (dst == NULL) {
 				loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
