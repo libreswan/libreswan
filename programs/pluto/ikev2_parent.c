@@ -785,19 +785,10 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 					    struct state *st)
 {
 	struct connection *c = st->st_connection;
-	int vids = 0;
 
 	/* set up reply */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
-
-	/* remember how many VID's we are going to send */
-	if (c->policy & POLICY_AUTH_NULL)
-		vids++;
-	if (c->send_vendorid)
-		vids++;
-	if (c->fake_strongswan)
-		vids++;
 
 	if (IMPAIR(SEND_BOGUS_DCOOKIE)) {
 		/* add or mangle a dcookie so what we will send is bogus */
@@ -923,24 +914,19 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
-		vids--;
 		if (!emit_v2V(pluto_vendorid, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
-		vids--;
 		if (!emit_v2V("strongSwan", &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->policy & POLICY_AUTH_NULL) {
-		vids--;
 		if (!emit_v2V("Opportunistic IPsec", &rbody))
 			return STF_INTERNAL_ERROR;
 	}
-
-	passert(vids == 0); /* Ensure we built a valid chain */
 
 	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
@@ -1236,7 +1222,6 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 {
 	struct connection *c = st->st_connection;
 	bool send_certreq = FALSE;
-	int vids = 0;
 
 	/* note that we don't update the state here yet */
 
@@ -1264,14 +1249,6 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		     "reply packet");
-
-	/* remember how many VID's we are going to send */
-	if (c->policy & POLICY_AUTH_NULL)
-		vids++;
-	if (c->send_vendorid)
-		vids++;
-	if (c->fake_strongswan)
-		vids++;
 
 	/* HDR out */
 	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
@@ -1402,26 +1379,20 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 		ikev2_send_certreq(st, md, &rbody);
 	}
 
-	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
-		vids--;
 		if (!emit_v2V(pluto_vendorid, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
-		vids--;
 		if (!emit_v2V("strongSwan", &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->policy & POLICY_AUTH_NULL) {
-		vids--;
 		if (!emit_v2V("Opportunistic IPsec", &rbody))
 			return STF_INTERNAL_ERROR;
 	}
-
-	passert(vids == 0); /* Ensure we built a valid chain */
 
 	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
@@ -2499,7 +2470,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	{
 		lset_t policy = pc->policy;
-		int notifies = 0;
 
 		/* child connection */
 		struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
@@ -2521,21 +2491,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 		/* ??? this seems very late to change the connection */
 		cst->st_connection = cc;	/* safe: from duplicate_state */
-
-		if ((cc->policy & POLICY_TUNNEL) == LEMPTY)
-			notifies++;
-
-		if (cc->send_no_esp_tfc)
-			notifies++;
-
-		if (LIN(POLICY_MOBIKE, cc->policy))
-			notifies++;
-
-		if (pst->st_seen_ppk)
-			notifies++; /* used for one or two payloads */
-
-		if (null_auth.ptr != NULL)
-			notifies++;
 
 		/* code does not support AH + ESP, not recommend rfc8221 section-4 */
 		struct ipsec_proto_info *proto_info
@@ -2563,7 +2518,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
-			notifies--;
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
 			if (!emit_v2Nt(v2N_USE_TRANSPORT_MODE, &sk.pbs))
 				return STF_INTERNAL_ERROR;
@@ -2572,20 +2526,17 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 
 		if (cc->send_no_esp_tfc) {
-			notifies--;
 			if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (LIN(POLICY_MOBIKE, cc->policy)) {
-			notifies--;
 			cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
 			if (!emit_v2Nt(v2N_MOBIKE_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 		if (pst->st_seen_ppk) {
 			chunk_t notify_data = create_unified_ppk_id(&ppk_id_p);
-			notifies--; /* used for one or two payloads */
 			if (!emit_v2Ntd(v2N_PPK_IDENTITY,
 					&notify_data, &sk.pbs))
 				return STF_INTERNAL_ERROR;
@@ -2600,13 +2551,10 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 
 		if (null_auth.ptr != NULL) {
-			notifies--;
 			if (!emit_v2Ntd(v2N_NULL_AUTH, &null_auth, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 			freeanychunk(null_auth);
 		}
-
-		passert(notifies == 0);
 
 		/* send CP payloads */
 		if (pc->modecfg_domains != NULL || pc->modecfg_dns != NULL) {
@@ -3065,7 +3013,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	/* send response */
 	{
-		int notifies = 0;
 		bool send_redirect = FALSE;
 		chunk_t redirect_data;
 		err_t ugh = NULL;
@@ -3073,22 +3020,12 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		if (LIN(POLICY_MOBIKE, c->policy) && st->st_seen_mobike) {
 			if (c->spd.that.host_type == KH_ANY) {
 				/* only allow %any connection to mobike */
-				notifies++;
 				st->st_sent_mobike = TRUE;
 			} else {
 				libreswan_log("not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
 			}
 		}
 
-		if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
-			notifies++; /* send USE_TRANSPORT */
-		}
-		if (c->send_no_esp_tfc) {
-			notifies++; /* send ESP_TFC_PADDING_NOT_SUPPORTED */
-		}
-		if (st->st_ppk_used) {
-			notifies++; /* send USE_PPK */
-		}
 		if (st->st_seen_redirect_sup && (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
 						 (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
 						  require_ddos_cookies()))) {
@@ -3097,7 +3034,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			} else {
 				ugh = build_redirect_notify_data(c->redirect_to, FALSE, NULL, &redirect_data);
 				if (ugh == NULL) {
-					notifies++; /* send REDIRECT */
 					send_redirect = TRUE;
 				} /* else log error but later, see below */
 			}
@@ -3137,19 +3073,16 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		/* send any NOTIFY payloads */
 		if (st->st_sent_mobike) {
-			notifies--;
 			if (!emit_v2Nt(v2N_MOBIKE_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (st->st_ppk_used) {
-			notifies--;
 			if (!emit_v2Nt(v2N_PPK_IDENTITY, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (send_redirect) {
-			notifies--;
 			if (!emit_v2Ntd(v2N_REDIRECT, &redirect_data, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 			st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
@@ -3159,18 +3092,14 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		}
 
 		if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
-			notifies--;
 			if (!emit_v2Nt(v2N_USE_TRANSPORT_MODE, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (c->send_no_esp_tfc) {
-			notifies--;
 			if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
-
-		passert(notifies == 0);
 
 		/* send out the IDr payload */
 		{
