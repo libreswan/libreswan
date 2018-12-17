@@ -2,12 +2,24 @@
 See also https://libreswan.org/
 
 v3.28 (unreleased)
-* KLIPS: Disable KLIPS userland support per default [Paul]
 * pluto: metric= value should accept values > 255 [Tuomo]
 * x509: Support for NSS IPsec profiles mbz#1252891 [Kai Engbert]
 * X509: Fix ocsp-method=get|post to actually skip get when asked) [Steve Broz]
+* IKEv2: ikev2= keyword changed to only accept "yes" or "no" [Paul]
 * IKEv2: Support for REDIRECT (RFC 5685) [Vukasin Karadzic/GSoC]
+         (new keywords redirect-to, accept-redirect, global-redirect=
+          global-redirect-to and new ipsec whack --redirect command
 * IKEv2: initialize daily secret used for DCOOKIES [Paul/Andrew]
+* IKEv2: Extend narrowing code to support protoports [Andrew/Paul]
+* IKEv2: Fix bug that prevented AH from rekeying [Andrew]
+* IKEv2: IKE SA rekey could lead to losing track of Child SA [Andrew/Antony]
+* IKEv2: A spurious DH calculation was performed and disgarded [Andrew]
+* IKEv1: Reject key sizes <= 0 properly instead of crashing [Paul]
+* pluto: Simplify state lookups and SPI passing [Andrew]
+* pluto: Speed up state lookups by only looking at proper hash chain [Andrew]
+* FIPS: also force IKE maximum lifetime of 24h (default is 1h) [Paul/Vukasin]
+* KLIPS: Disable KLIPS userland support per default [Paul]
+         WARNING: Support for KLIPS will be removed in 2019
 * libswan: Fix leaks in badly formed secrets/ppk_id [Vukasin Karadzic]
 * building: sort all wildcarded object files for build reproducibility [dkg]
 
