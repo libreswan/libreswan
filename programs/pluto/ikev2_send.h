@@ -59,8 +59,6 @@ extern stf_status send_v2_informational_request(const char *name,
  */
 
 bool emit_v2UNKNOWN(const char *victim, pb_stream *outs);
-/* to be deleted */
-bool ship_v2UNKNOWN(pb_stream *outs, const char *victim);
 
 bool emit_v2N(uint8_t critical,
 	      enum ikev2_sec_proto_id protoid,

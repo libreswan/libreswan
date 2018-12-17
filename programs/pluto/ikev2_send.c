@@ -77,7 +77,7 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
  * Send a payload.
  */
 
-bool ship_v2UNKNOWN(pb_stream *outs, const char *victim)
+bool emit_v2UNKNOWN(const char *victim, pb_stream *outs)
 {
 	libreswan_log("IMPAIR: adding an unknown payload of type %d to %s",
 		      ikev2_unknown_payload_desc.pt, victim);

@@ -907,7 +907,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	/* something the other end won't like */
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT)) {
-		if (!ship_v2UNKNOWN(&rbody, "IKE_SA_INIT request")) {
+		if (!emit_v2UNKNOWN("IKE_SA_INIT request", &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1368,7 +1368,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* something the other end won't like */
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT)) {
-		if (!ship_v2UNKNOWN(&rbody, "IKE_SA_INIT reply")) {
+		if (!emit_v2UNKNOWN("IKE_SA_INIT reply", &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2295,7 +2295,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
-		if (!ship_v2UNKNOWN(&rbody, "IKE_AUTH request")) {
+		if (!emit_v2UNKNOWN("IKE_AUTH request", &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2369,7 +2369,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
-		if (!ship_v2UNKNOWN(&sk.pbs, "IKE_AUTH's SK request")) {
+		if (!emit_v2UNKNOWN("IKE_AUTH's SK request", &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -3050,7 +3050,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						  ISAKMP_v2_IKE_AUTH);
 
 		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
-			if (!ship_v2UNKNOWN(&rbody, "IKE_AUTH reply")) {
+			if (!emit_v2UNKNOWN("IKE_AUTH reply", &rbody)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -3066,7 +3066,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		}
 
 		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
-			if (!ship_v2UNKNOWN(&sk.pbs, "IKE_AUTH's SK reply")) {
+			if (!emit_v2UNKNOWN("IKE_AUTH's SK reply", &sk.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
