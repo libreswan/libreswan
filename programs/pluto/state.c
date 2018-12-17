@@ -388,7 +388,8 @@ union sas { struct child_sa child; struct ike_sa ike; struct state st; };
  * Caller must insert_state().
  */
 
-static struct state *new_state(enum ike_version ike_version)
+static struct state *new_state(enum ike_version ike_version,
+			       const struct finite_state *fs)
 {
 	static so_serial_t next_so = SOS_FIRST;
 
@@ -398,7 +399,7 @@ static struct state *new_state(enum ike_version ike_version)
 	struct state *st = &sas->st;
 	*st = (struct state) {
 		.st_whack_sock = null_fd,	/* note: not 0 */
-		.st_finite_state = &state_undefined,
+		.st_finite_state = fs,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
 		.st_ike_version = ike_version,
@@ -409,28 +410,37 @@ static struct state *new_state(enum ike_version ike_version)
 	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
-	DBG(DBG_CONTROL, DBG_log("creating state object #%lu at %p",
-				 st->st_serialno, (void *) st));
+	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
 
 	return st;
 }
 
 struct state *new_v1_state(void)
 {
-	return new_state(IKEv1);
+	return new_state(IKEv1, &state_undefined);
 }
 
 struct state *new_v1_rstate(struct msg_digest *md)
 {
-	struct state *st = new_state(IKEv1);
+	struct state *st = new_state(IKEv1, &state_undefined);
 	update_ike_endpoints(st, md);
 
 	return st;
 }
 
-struct state *new_v2_state(void)
+struct state *new_v2_state(enum state_kind kind)
 {
-	return new_state(IKEv2);
+	struct state *st = new_state(IKEv2, &state_undefined);
+	const struct finite_state *fs = finite_states[kind];
+	change_state(st, fs->fs_kind);
+	/*
+	 * New states are never standing still - they are always in
+	 * transition to the next state.
+	 */
+	pexpect(fs->fs_v2_transitions != NULL);
+	pexpect(fs->fs_nr_transitions == 1);
+	/* st->st_v2_transition = fs->fs_state_transitions[0] */
+	return st;
 }
 
 /*
@@ -1288,7 +1298,8 @@ void delete_states_by_peer(const ip_address *peer)
  * Caller must schedule an event for this object so that it doesn't leak.
  * Caller must insert_state().
  */
-static struct state *duplicate_state(struct state *st, sa_t sa_type)
+static struct state *duplicate_state(struct state *st, sa_t sa_type,
+				     const struct finite_state *fs)
 {
 	struct state *nst;
 	char cib[CONN_INST_BUF];
@@ -1299,7 +1310,7 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 		st->st_outbound_time = mononow();
 	}
 
-	nst = new_state(st->st_ike_version);
+	nst = new_state(st->st_ike_version, fs);
 
 	DBG(DBG_CONTROL,
 		DBG_log("duplicating state object #%lu \"%s\"%s as #%lu for %s",
@@ -1387,13 +1398,13 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 
 struct state *ikev1_duplicate_state(struct state *st)
 {
-	return duplicate_state(st, IPSEC_SA);
+	return duplicate_state(st, IPSEC_SA, &state_undefined);
 }
 
 struct state *ikev2_duplicate_state(struct ike_sa *ike,
 				    sa_t sa_type, enum sa_role role)
 {
-	struct state *cst = duplicate_state(&ike->sa, sa_type);
+	struct state *cst = duplicate_state(&ike->sa, sa_type, &state_undefined);
 	cst->st_sa_role = role;
 	return cst;
 }

@@ -613,13 +613,13 @@ void ikev2_parent_outI1(fd_t whack_sock,
 		}
 	}
 
-	st = new_v2_state();
+	st = new_v2_state(STATE_PARENT_I0);
 
 	/* set up new state */
 	fill_ike_initiator_spi(st);
 	initialize_new_state(st, c, policy, try, whack_sock);
 	passert(st->st_ike_version == IKEv2);
-	change_state(st, STATE_PARENT_I0);
+	passert(st->st_state_kind == STATE_PARENT_I0);
 	st->st_original_role = ORIGINAL_INITIATOR;
 	st->st_sa_role = SA_INITIATOR;
 	st->st_msgid_lastack = v2_INVALID_MSGID;
@@ -1013,12 +1013,12 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE);
 	}
 
-
 	/*
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
 	 */
-	struct state *st = new_v2_state();
+	pexpect(md->svm == finite_states[STATE_PARENT_R0]->fs_v2_transitions);
+	struct state *st = new_v2_state(STATE_PARENT_R0);
 	/* set up new state */
 	/* initialize_new_state expects valid icookie/rcookie values, so create it now */
 	st->st_ike_spis.initiator = md->hdr.isa_ike_initiator_spi;
@@ -1027,7 +1027,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	initialize_new_state(st, c, policy, 0, null_fd);
 	update_ike_endpoints(st, md);
 	passert(st->st_ike_version == IKEv2);
-	change_state(st, STATE_PARENT_R0);
+	passert(st->st_state_kind == STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
 	st->st_sa_role = SA_RESPONDER;
 	st->st_msgid_lastack = v2_INVALID_MSGID;

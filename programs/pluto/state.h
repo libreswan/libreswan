@@ -726,7 +726,7 @@ extern bool states_use_connection(const struct connection *c);
 
 struct state *new_v1_state(void);
 struct state *new_v1_rstate(struct msg_digest *md);
-struct state *new_v2_state(void);
+struct state *new_v2_state(enum state_kind kind);
 
 extern void init_states(void);
 extern void insert_state(struct state *st);
