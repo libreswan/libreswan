@@ -77,8 +77,5 @@ bool emit_v2Nt(v2_notification_t ntype,
 	       pb_stream *outs);
 
 bool emit_v2V(const char *string, pb_stream *outs);
-/* to be deleted */
-bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
-	      const char *string);
 
 #endif

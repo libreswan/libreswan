@@ -924,23 +924,19 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
 		vids--;
-		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		if (!ship_v2V(&rbody, np, pluto_vendorid))
+		if (!emit_v2V(pluto_vendorid, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
 		vids--;
-		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		if (!ship_v2V(&rbody, np, "strongSwan"))
+		if (!emit_v2V("strongSwan", &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->policy & POLICY_AUTH_NULL) {
 		vids--;
-		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ship_v2V(&rbody, np, "Opportunistic IPsec"))
+		if (!emit_v2V("Opportunistic IPsec", &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1409,22 +1405,19 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
 		vids--;
-		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		if (!ship_v2V(&rbody, np, pluto_vendorid))
+		if (!emit_v2V(pluto_vendorid, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
 		vids--;
-		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		if (!ship_v2V(&rbody, np, "strongSwan"))
+		if (!emit_v2V("strongSwan", &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->policy & POLICY_AUTH_NULL) {
 		vids--;
-		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		if (!ship_v2V(&rbody, np, "Opportunistic IPsec"))
+		if (!emit_v2V("Opportunistic IPsec", &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 

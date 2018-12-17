@@ -99,11 +99,10 @@ bool ship_v2UNKNOWN(pb_stream *outs, const char *victim)
  * XXX: Perhaps someday STRING will be replaced by enum
  * known_vendorid.
  */
-bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
-	      const char *string)
+bool emit_v2V(const char *string, pb_stream *outs)
 {
 	struct ikev2_generic gen = {
-		.isag_np = np,
+		.isag_np = 0,
 	};
 	pb_stream pbs = open_output_struct_pbs(outs, &gen,
 					       &ikev2_vendor_id_desc);
