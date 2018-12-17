@@ -1702,14 +1702,10 @@ void add_connection(const struct whack_message *wm)
 		}
 
 		{
-			time_t max_ike = IKE_SA_LIFETIME_MAXIMUM;
-			time_t max_ipsec = IPSEC_SA_LIFETIME_MAXIMUM;
-#ifdef FIPS_CHECK
-			if (libreswan_fipsmode()) {
-				/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
-				max_ipsec = FIPS_IPSEC_SA_LIFETIME_MAXIMUM;
-			}
-#endif
+			/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
+			time_t max_ike = libreswan_fipsmode() ? FIPS_IKE_SA_LIFETIME_MAXIMUM : IKE_SA_LIFETIME_MAXIMUM;
+			time_t max_ipsec = libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM : IPSEC_SA_LIFETIME_MAXIMUM;
+
 			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
 				loglog(RC_LOG_SERIOUS,
 					"IKE lifetime limited to the maximum allowed %jds",
