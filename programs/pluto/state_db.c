@@ -93,10 +93,10 @@ struct state *state_by_serialno(so_serial_t serialno)
 }
 
 /*
- * Hash table indexed by just the ICOOKIE.
+ * Hash table indexed by just the IKE SPIi.
  */
 
-static size_t icookie_hasher(const uint8_t *icookie)
+static size_t ike_initiator_spi_hasher(const ike_spi_t *ike_initiator_spi)
 {
 	/*
 	 * 251 is a prime close to 256 (so like <<8).
@@ -104,66 +104,63 @@ static size_t icookie_hasher(const uint8_t *icookie)
 	 * There's no real rationale for doing this.
 	 */
 	size_t hash = 0;
-	for (unsigned j = 0; j < COOKIE_SIZE; j++) {
-		hash = hash * 251 + icookie[j];
+	for (unsigned j = 0; j < sizeof(ike_initiator_spi->bytes); j++) {
+		hash = hash * 251 + ike_initiator_spi->bytes[j];
 	}
 	return hash;
 }
 
-static size_t icookie_hash(void *data)
+static size_t ike_initiator_spi_hash(void *data)
 {
 	struct state *st = (struct state*) data;
-	return icookie_hasher(st->st_icookie);
+	return ike_initiator_spi_hasher(&st->st_ike_spis.initiator);
 }
 
-static size_t icookie_log(struct lswlog *buf, void *data)
+static size_t ike_initiator_spi_log(struct lswlog *buf, void *data)
 {
 	struct state *st = (struct state *) data;
 	size_t size = 0;
 	size += log_state(buf, st);
 	size += lswlogs(buf, ": ");
-	size += lswlog_bytes(buf, st->st_icookie, COOKIE_SIZE);
+	size += lswlog_bytes(buf, st->st_ike_spis.initiator.bytes,
+			     sizeof(st->st_ike_spis.initiator.bytes));
 	return size;
 }
 
-static struct list_head icookie_hash_slots[STATE_TABLE_SIZE];
-static struct hash_table icookie_hash_table = {
+static struct list_head ike_initiator_spi_hash_slots[STATE_TABLE_SIZE];
+static struct hash_table ike_initiator_spi_hash_table = {
 	.info = {
-		.name = "icookie table",
-		.log = icookie_log,
+		.name = "IKE SPIi table",
+		.log = ike_initiator_spi_log,
 	},
-	.hash = icookie_hash,
+	.hash = ike_initiator_spi_hash,
 	.nr_slots = STATE_TABLE_SIZE,
-	.slots = icookie_hash_slots,
+	.slots = ike_initiator_spi_hash_slots,
 };
 
-struct list_head *icookie_slot(const u_char *icookie)
+struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
 {
-	size_t hash = icookie_hasher(icookie);
-	struct list_head *slot = hash_table_slot_by_hash(&icookie_hash_table, hash);
+	size_t hash = ike_initiator_spi_hasher(initiator);
+	struct list_head *slot = hash_table_slot_by_hash(&ike_initiator_spi_hash_table, hash);
 	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
-		lswlogf(buf, "%s: hash icookie ", icookie_hash_table.info.name);
-		lswlog_bytes(buf, icookie, COOKIE_SIZE);
+		lswlogf(buf, "%s: hash IKE SPIi ", ike_initiator_spi_hash_table.info.name);
+		lswlog_bytes(buf, initiator->bytes,
+			     sizeof(initiator->bytes));
 		lswlogf(buf, " to %zu slot %p", hash, slot);
 	};
 	return slot;
 }
 
-struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
-{
-	return icookie_slot(initiator->bytes); /* XXX: for now */
-}
-
 /*
- * Hash table indexed by both ICOOKIE and RCOOKIE.
+ * Hash table indexed by both IKE_INITIATOR_SPI and IKE_RESPONDER_SPI.
  */
 
 /*
- * A table hashed by icookie+rcookie.
+ * A table hashed by IKE SPIi+SPIr.
  */
 
-static size_t cookies_hasher(const uint8_t *icookie,
-			     const uint8_t *rcookie)
+static size_t ike_spi_hasher(const ike_spi_t *ike_initiator_spi,
+			     const ike_spi_t *ike_responder_spi)
 {
 	/*
 	 * 251 is a prime close to 256 aka <<8.  65521 is a prime
@@ -172,60 +169,59 @@ static size_t cookies_hasher(const uint8_t *icookie,
 	 * There's no real rationale for doing this.
 	 */
 	size_t hash = 0;
-	for (unsigned j = 0; j < COOKIE_SIZE; j++) {
-		hash = hash * 65521 + icookie[j] * 251 + rcookie[j];
+	for (unsigned j = 0; j < sizeof(ike_initiator_spi->bytes); j++) {
+		hash = (hash * 65521 +
+			ike_initiator_spi->bytes[j] * 251 +
+			ike_responder_spi->bytes[j]);
 	}
 	return hash;
 }
 
-static size_t cookies_hash(void *data)
+static size_t ike_spis_hash(void *data)
 {
 	struct state *st = (struct state *)data;
-	return cookies_hasher(st->st_icookie, st->st_rcookie);
+	return ike_spi_hasher(&st->st_ike_spis.initiator,
+			      &st->st_ike_spis.responder);
 }
 
-static size_t cookies_log(struct lswlog *buf, void *data)
+static size_t ike_spis_log(struct lswlog *buf, void *data)
 {
 	struct state *st = (struct state *) data;
 	size_t size = 0;
 	size += log_state(buf, st);
 	size += lswlogs(buf, ": ");
-	size += lswlog_bytes(buf, st->st_icookie, COOKIE_SIZE);
+	size += lswlog_bytes(buf, st->st_ike_spis.initiator.bytes,
+			     sizeof(st->st_ike_spis.initiator.bytes));
 	size += lswlogs(buf, "  ");
-	size += lswlog_bytes(buf, st->st_rcookie, COOKIE_SIZE);
+	size += lswlog_bytes(buf, st->st_ike_spis.responder.bytes,
+			     sizeof(st->st_ike_spis.responder.bytes));
 	return size;
 }
 
-static struct list_head cookies_hash_slots[STATE_TABLE_SIZE];
-static struct hash_table cookies_hash_table = {
+static struct list_head ike_spis_hash_slots[STATE_TABLE_SIZE];
+static struct hash_table ike_spis_hash_table = {
 	.info = {
-		.name = "cookies table",
-		.log = cookies_log,
+		.name = "IKE SPIi:SPIr table",
+		.log = ike_spis_log,
 	},
-	.hash = cookies_hash,
+	.hash = ike_spis_hash,
 	.nr_slots = STATE_TABLE_SIZE,
-	.slots = cookies_hash_slots,
+	.slots = ike_spis_hash_slots,
 };
-
-struct list_head *cookies_slot(const u_char *icookie,
-			       const u_char *rcookie)
-{
-	size_t hash = cookies_hasher(icookie, rcookie);
-	struct list_head *slot = hash_table_slot_by_hash(&cookies_hash_table, hash);
-	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
-		lswlogf(buf, "%s: hash icookie ", cookies_hash_table.info.name);
-		lswlog_bytes(buf, icookie, COOKIE_SIZE);
-		lswlogs(buf, " rcookie ");
-		lswlog_bytes(buf, rcookie, COOKIE_SIZE);
-		lswlogf(buf, " to %zu slot %p", hash, slot);
-	};
-	return slot;
-}
 
 struct list_head *ike_spi_slot(const ike_spi_t *initiator,
 			       const ike_spi_t *responder)
 {
-	return cookies_slot(initiator->bytes, responder->bytes);
+	size_t hash = ike_spi_hasher(initiator, responder);
+	struct list_head *slot = hash_table_slot_by_hash(&ike_spis_hash_table, hash);
+	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
+		lswlogf(buf, "%s: hash IKE SPIi ", ike_spis_hash_table.info.name);
+		lswlog_bytes(buf, initiator->bytes, sizeof(initiator->bytes));
+		lswlogs(buf, " SPIr ");
+		lswlog_bytes(buf, responder->bytes, sizeof(responder->bytes));
+		lswlogf(buf, " to %zu slot %p", hash, slot);
+	};
+	return slot;
 }
 
 struct list_head *ike_spis_slot(const ike_spis_t *ir)
@@ -234,41 +230,42 @@ struct list_head *ike_spis_slot(const ike_spis_t *ir)
 }
 
 /*
- * Add/remove just the cookie tables.  Unlike serialno, these can
+ * Add/remove just the SPI[ir] tables.  Unlike serialno, these can
  * change over time.
  */
 
-static void add_to_cookie_tables(struct state *st)
+static void add_to_ike_spi_tables(struct state *st)
 {
-	add_hash_table_entry(&cookies_hash_table, st,
-			     &st->st_cookies_hash_entry);
-	add_hash_table_entry(&icookie_hash_table, st,
-			     &st->st_icookie_hash_entry);
+	add_hash_table_entry(&ike_spis_hash_table, st,
+			     &st->st_ike_spis_hash_entry);
+	add_hash_table_entry(&ike_initiator_spi_hash_table, st,
+			     &st->st_ike_initiator_spi_hash_entry);
 }
 
-static void del_from_cookie_tables(struct state *st)
+static void del_from_ike_spi_tables(struct state *st)
 {
-	del_hash_table_entry(&cookies_hash_table,
-			     &st->st_cookies_hash_entry);
-	del_hash_table_entry(&icookie_hash_table,
-			     &st->st_icookie_hash_entry);
+	del_hash_table_entry(&ike_spis_hash_table,
+			     &st->st_ike_spis_hash_entry);
+	del_hash_table_entry(&ike_initiator_spi_hash_table,
+			     &st->st_ike_initiator_spi_hash_entry);
 }
 
 /*
  * State Table Functions
  *
  * The statetable is organized as a hash table.
- * The hash is purely based on the icookie and rcookie.
- * Each has chain is a doubly linked list.
  *
- * The IKEv2 initial initiator not know the responder's cookie, so the
+ * The hash is purely based on the SPIi and SPIr.  Each has chain is a
+ * doubly linked list.
+ *
+ * The IKEv2 initial initiator not know the responder's SPIr, so the
  * state will have to be rehashed when that becomes known.
  *
- * In IKEv2, cookies are renamed IKE SA SPIs.
+ * In IKEv2, all CHILD SAs have the same SPIi:SPIr as their parent IKE
+ * SA.  This means that you can look along that single chain for your
+ * relatives.
  *
- * In IKEv2, all children have the same cookies as their parent.
- * This means that you can look along that single chain for
- * your relatives.
+ * In IKEv1, SPIs are renamed cookies.
  */
 
 void add_state_to_db(struct state *st)
@@ -283,17 +280,18 @@ void add_state_to_db(struct state *st)
 	add_hash_table_entry(&serialno_hash_table, st,
 			     &st->st_serialno_hash_entry);
 
-	add_to_cookie_tables(st);
+	add_to_ike_spi_tables(st);
 }
 
 void rehash_state_cookies_in_db(struct state *st)
 {
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("%s: %s: re-hashing state #%lu cookies",
-		    icookie_hash_table.info.name, cookies_hash_table.info.name,
+	    DBG_log("%s: %s: re-hashing state #%lu SPIs",
+		    ike_initiator_spi_hash_table.info.name,
+		    ike_spis_hash_table.info.name,
 		    st->st_serialno));
-	del_from_cookie_tables(st);
-	add_to_cookie_tables(st);
+	del_from_ike_spi_tables(st);
+	add_to_ike_spi_tables(st);
 }
 
 void del_state_from_db(struct state *st)
@@ -301,13 +299,13 @@ void del_state_from_db(struct state *st)
 	remove_list_entry(&st->st_serialno_list_entry);
 	del_hash_table_entry(&serialno_hash_table,
 			     &st->st_serialno_hash_entry);
-	del_from_cookie_tables(st);
+	del_from_ike_spi_tables(st);
 }
 
 void init_state_db(void)
 {
 	init_list(&serialno_list_info, &serialno_list_head);
 	init_hash_table(&serialno_hash_table);
-	init_hash_table(&cookies_hash_table);
-	init_hash_table(&icookie_hash_table);
+	init_hash_table(&ike_spis_hash_table);
+	init_hash_table(&ike_initiator_spi_hash_table);
 }
