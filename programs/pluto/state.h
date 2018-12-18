@@ -587,29 +587,33 @@ struct state {
 	const char        *st_suspended_md_func;
 	int st_suspended_md_line;
 
-	chunk_t st_p1isa;	/* Phase 1 initiator SA (Payload) for HASH */
+	chunk_t st_p1isa;	/* v1 Phase 1 initiator SA (Payload) for HASH */
 
-	/* IKEv1 only */
-	PK11SymKey *st_skeyid_nss;	/* Key material */
+	PK11SymKey *st_skeyid_nss;	/* v1 Key material */
 
 	/* v1 names are aliases for subset of v2 fields (#define) */
-#define st_skeyid_d_nss st_skey_d_nss
-	PK11SymKey *st_skey_d_nss;	/* KM for non-ISAKMP key derivation */
-#define st_skeyid_a_nss st_skey_ai_nss
-	PK11SymKey *st_skey_ai_nss;	/* KM for ISAKMP authentication */
-	PK11SymKey *st_skey_ar_nss;	/* KM for ISAKMP authentication */
-#define st_skeyid_e_nss st_skey_ei_nss
-	PK11SymKey *st_skey_ei_nss;	/* KM for ISAKMP encryption */
-	PK11SymKey *st_skey_er_nss;	/* KM for ISAKMP encryption */
-	PK11SymKey *st_skey_pi_nss;	/* KM for ISAKMP encryption */
-	PK11SymKey *st_skey_pr_nss;	/* KM for ISAKMP encryption */
-	chunk_t st_skey_initiator_salt;
-	chunk_t st_skey_responder_salt;
-	chunk_t st_skey_chunk_SK_pi;
-	chunk_t st_skey_chunk_SK_pr;
+
+#define st_skeyid_d_nss st_skey_d_nss	/* v1 KM for non-ISAKMP key derivation */
+	PK11SymKey *st_skey_d_nss;	/* v2 KM for non-ISAKMP key derivation */
+
+#define st_skeyid_a_nss st_skey_ai_nss	/* v1 ISAKMP authentication KM */
+	PK11SymKey *st_skey_ai_nss;	/* v2 ISAKMP authentication key for initiator */
+	PK11SymKey *st_skey_ar_nss;	/* v2 ISAKMP authentication key for responder */
+
+#define st_skeyid_e_nss st_skey_ei_nss	/* v1 ISAKMP encryption KM */
+	PK11SymKey *st_skey_ei_nss;	/* v2 ISAKMP encryption key for initiator */
+	PK11SymKey *st_skey_er_nss;	/* v2 ISAKMP encryption key for responder */
+
+	PK11SymKey *st_skey_pi_nss;	/* v2 PPK for initiator */
+	PK11SymKey *st_skey_pr_nss;	/* v2 PPK for responder */
+
+	chunk_t st_skey_initiator_salt;	/* v2 */
+	chunk_t st_skey_responder_salt;	/* v2 */
+	chunk_t st_skey_chunk_SK_pi;	/* v2 */
+	chunk_t st_skey_chunk_SK_pr;	/* v2 */
 
 	/*
-	 * Post-quantum preshared key variables
+	 * Post-quantum Preshared Key variables (v2)
 	 */
 	bool st_ppk_used;			/* both ends agreed on PPK ID and PPK */
 	bool st_seen_ppk;			/* does remote peer support PPK? */
@@ -619,7 +623,7 @@ struct state {
 	PK11SymKey *st_sk_pi_no_ppk;
 	PK11SymKey *st_sk_pr_no_ppk;
 
-	/* connection included in AUTH */
+	/* connection included in AUTH (v2) */
 	struct traffic_selector st_ts_this;
 	struct traffic_selector st_ts_that;
 
