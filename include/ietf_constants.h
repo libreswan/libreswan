@@ -356,9 +356,9 @@
 /* Various IETF defined key lengths */
 
 /* AES-CBC RFC 3602 The _only_ valid values are 128, 192 and 256 bits */
-#define  AES_KEY_MIN_LEN        128
-#define  AES_KEY_DEF_LEN        128
-#define  AES_KEY_MAX_LEN        256
+#define  AES_KEY_MIN_LEN        128 /* bits */
+#define  AES_KEY_DEF_LEN        128 /* bits */
+#define  AES_KEY_MAX_LEN        256 /* bits */
 
 /*
  * https://tools.ietf.org/html/rfc3566#section-4.1
@@ -368,42 +368,42 @@
 
 /* AES-CTR RFC 3686 The _only_ valid values are 128, 192 and 256 bits */
 #define AES_CTR_SALT_BYTES 4
-#define  AES_CTR_KEY_MIN_LEN 128
-#define  AES_CTR_KEY_DEF_LEN 128
-#define  AES_CTR_KEY_MAX_LEN 256
+#define  AES_CTR_KEY_MIN_LEN 128 /* bits */
+#define  AES_CTR_KEY_DEF_LEN 128 /* bits */
+#define  AES_CTR_KEY_MAX_LEN 256 /* bits */
 
 /*
  * RFC 4106 AES GCM
  * https://tools.ietf.org/html/rfc4106#section-8.1
  */
 #define AES_GCM_SALT_BYTES 4
-#define AES_GCM_KEY_MIN_LEN 128
-#define AES_GCM_KEY_DEF_LEN 128
-#define AES_GCM_KEY_MAX_LEN 256
+#define AES_GCM_KEY_MIN_LEN 128 /* bits */
+#define AES_GCM_KEY_DEF_LEN 128 /* bits */
+#define AES_GCM_KEY_MAX_LEN 256 /* bits */
 
 /*
  * RFC 4309 AES CCM
  * https://tools.ietf.org/html/rfc4309#section-7.1
  */
 #define AES_CCM_SALT_BYTES 3
-#define AES_CCM_KEY_MIN_LEN 128
-#define AES_CCM_KEY_DEF_LEN 128
-#define AES_CCM_KEY_MAX_LEN 256
+#define AES_CCM_KEY_MIN_LEN 128 /* bits */
+#define AES_CCM_KEY_DEF_LEN 128 /* bits */
+#define AES_CCM_KEY_MAX_LEN 256 /* bits */
 
 /* The _only_ valid values are 128, 192 and 256 bits */
-#define  AEAD_AES_KEY_MIN_LEN       128
-#define  AEAD_AES_KEY_DEF_LEN       128
-#define  AEAD_AES_KEY_MAX_LEN       256
+#define  AEAD_AES_KEY_MIN_LEN       128 /* bits */
+#define  AEAD_AES_KEY_DEF_LEN       128 /* bits */
+#define  AEAD_AES_KEY_MAX_LEN       256 /* bits */
 
 /* AES-GMAC RFC 4543 The _only_ valid values are 128, 192 and 256 bits */
-#define  AES_GMAC_KEY_MIN_LEN 128
-#define  AES_GMAC_KEY_DEF_LEN 128
-#define  AES_GMAC_KEY_MAX_LEN 256
+#define  AES_GMAC_KEY_MIN_LEN 128 /* bits */
+#define  AES_GMAC_KEY_DEF_LEN 128 /* bits */
+#define  AES_GMAC_KEY_MAX_LEN 256 /* bits */
 
 /* SEED-CBC RFC 4196 The _only_ valid value is 128 */
-#define  SEED_KEY_MIN_LEN 128
-#define  SEED_KEY_DEF_LEN 128
-#define  SEED_KEY_MAX_LEN 128
+#define  SEED_KEY_MIN_LEN 128 /* bits */
+#define  SEED_KEY_DEF_LEN 128 /* bits */
+#define  SEED_KEY_MAX_LEN 128 /* bits */
 
 
 /*
@@ -411,7 +411,7 @@
  * ESP_CAST is the cast5 algorithm, not cast6
  * We avoid cast-128 padding by enforcing a minimum of 128
  */
-#define  CAST_KEY_DEF_LEN        128
+#define  CAST_KEY_DEF_LEN        128 /* bits */
 
 /*
  * RFC 2451 - Blowfish accepts key sizes 40-448, default is 128
@@ -422,28 +422,28 @@
  * TWOFISH-CBC is a 128-bit block cipher with variable-length key up to 256 bits
  * default is 128. 128, 192 and 256 are the only commonly used ones
  */
-#define  TWOFISH_KEY_MIN_LEN 128
-#define  TWOFISH_KEY_DEF_LEN 128
-#define  TWOFISH_KEY_MAX_LEN 256
+#define  TWOFISH_KEY_MIN_LEN 128 /* bits */
+#define  TWOFISH_KEY_DEF_LEN 128 /* bits */
+#define  TWOFISH_KEY_MAX_LEN 256 /* bits */
 
 /*
  * SERPENT default 128, 128, 192 and 256 are the only commonly used ones
  */
-#define  SERPENT_KEY_MIN_LEN 128
-#define  SERPENT_KEY_DEF_LEN 128
-#define  SERPENT_KEY_MAX_LEN 256
+#define  SERPENT_KEY_MIN_LEN 128 /* bits */
+#define  SERPENT_KEY_DEF_LEN 128 /* bits */
+#define  SERPENT_KEY_MAX_LEN 256 /* bits */
 
 /*
  * Camellia CBC and CTR - RFC 5529
  * 128 (default), 192 and 256
  */
-#define  CAMELLIA_KEY_MIN_LEN 128
-#define  CAMELLIA_KEY_DEF_LEN 128
-#define  CAMELLIA_KEY_MAX_LEN 256
+#define  CAMELLIA_KEY_MIN_LEN 128 /* bits */
+#define  CAMELLIA_KEY_DEF_LEN 128 /* bits */
+#define  CAMELLIA_KEY_MAX_LEN 256 /* bits */
 
-#define  CAMELLIA_CTR_KEY_MIN_LEN 128
-#define  CAMELLIA_CTR_KEY_DEF_LEN 128
-#define  CAMELLIA_CTR_KEY_MAX_LEN 256
+#define  CAMELLIA_CTR_KEY_MIN_LEN 128 /* bits */
+#define  CAMELLIA_CTR_KEY_DEF_LEN 128 /* bits */
+#define  CAMELLIA_CTR_KEY_MAX_LEN 256 /* bits */
 
 
  /* ought to be supplied by md5.h */
@@ -482,13 +482,13 @@
  * Needs to be a compile-time constant for array allocation.
  * To avoid combinatorial explosion, we cheat.
  */
-#define MAX_DIGEST_LEN SHA2_512_DIGEST_SIZE
+#define MAX_DIGEST_LEN SHA2_512_DIGEST_SIZE	/* bytes */
 
 /* RFC 2404 "HMAC-SHA-1-96" section 3 */
-#define HMAC_SHA1_KEY_LEN SHA1_DIGEST_SIZE
+#define HMAC_SHA1_KEY_LEN SHA1_DIGEST_SIZE	/* bytes */
 
 /* RFC 2403 "HMAC-MD5-96" section 3 */
-#define HMAC_MD5_KEY_LEN MD5_DIGEST_SIZE
+#define HMAC_MD5_KEY_LEN MD5_DIGEST_SIZE	/* bytes */
 
 #define IKE_UDP_PORT 500
 #define NAT_IKE_UDP_PORT 4500 /* RFC-3947 */
