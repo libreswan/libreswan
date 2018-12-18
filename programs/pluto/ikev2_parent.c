@@ -5274,7 +5274,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		/*
 		 * A liveness update response is handled here
 		 */
-		DBG(DBG_DPD, DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
+		DBG(DBG_DPD, DBG_log("Received an INFORMATIONAL non-delete request; updating liveness, no longer pending."));
 		st->st_last_liveness = mononow();
 		st->st_pend_liveness = FALSE;
 	} else if (del_ike) {
