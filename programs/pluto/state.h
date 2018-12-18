@@ -596,13 +596,13 @@ struct state {
 #define st_skeyid_d_nss st_skey_d_nss	/* v1 KM for non-ISAKMP key derivation */
 	PK11SymKey *st_skey_d_nss;	/* v2 KM for non-ISAKMP key derivation */
 
-#define st_skeyid_a_nss st_skey_ai_nss	/* v1 ISAKMP authentication KM */
-	PK11SymKey *st_skey_ai_nss;	/* v2 ISAKMP authentication key for initiator */
-	PK11SymKey *st_skey_ar_nss;	/* v2 ISAKMP authentication key for responder */
+#define st_skeyid_a_nss st_skey_ai_nss	/* v1 IKE authentication KM */
+	PK11SymKey *st_skey_ai_nss;	/* v2 IKE authentication key for initiator */
+	PK11SymKey *st_skey_ar_nss;	/* v2 IKE authentication key for responder */
 
-#define st_skeyid_e_nss st_skey_ei_nss	/* v1 ISAKMP encryption KM */
-	PK11SymKey *st_skey_ei_nss;	/* v2 ISAKMP encryption key for initiator */
-	PK11SymKey *st_skey_er_nss;	/* v2 ISAKMP encryption key for responder */
+#define st_skeyid_e_nss st_skey_ei_nss	/* v1 IKE encryption KM */
+	PK11SymKey *st_skey_ei_nss;	/* v2 IKE encryption key for initiator */
+	PK11SymKey *st_skey_er_nss;	/* v2 IKE encryption key for responder */
 
 	PK11SymKey *st_skey_pi_nss;	/* v2 PPK for initiator */
 	PK11SymKey *st_skey_pr_nss;	/* v2 PPK for responder */
