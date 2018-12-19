@@ -579,12 +579,12 @@ void init_ikev2(void)
 	static struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
 	for (unsigned k = 0; k < elemsof(v2_states); k++) {
 		struct finite_state *fs = &v2_states[k];
-		fs->fs_state = STATE_IKEv2_FLOOR + k;
-		finite_states[fs->fs_state] = fs;
+		fs->fs_kind = STATE_IKEv2_FLOOR + k;
+		finite_states[fs->fs_kind] = fs;
 
-		fs->fs_name = enum_name(&state_names, fs->fs_state);
-		fs->fs_short_name = enum_short_name(&state_names, fs->fs_state);
-		fs->fs_story = enum_name(&state_stories, fs->fs_state);
+		fs->fs_name = enum_name(&state_names, fs->fs_kind);
+		fs->fs_short_name = enum_short_name(&state_names, fs->fs_kind);
+		fs->fs_story = enum_name(&state_stories, fs->fs_kind);
 
 		/*
 		 * Initialize .fs_category
@@ -593,7 +593,7 @@ void init_ikev2(void)
 		 * structure, this all goes away.
 		 */
 		enum state_category cat;
-		switch (fs->fs_state) {
+		switch (fs->fs_kind) {
 
 		case STATE_PARENT_I0:
 			/*
@@ -667,7 +667,7 @@ void init_ikev2(void)
 			break;
 
 		default:
-			bad_case(fs->fs_state);
+			bad_case(fs->fs_kind);
 		}
 		fs->fs_category = cat;
 	}
@@ -697,7 +697,7 @@ void init_ikev2(void)
 		do {
 			fs->fs_nr_transitions++;
 			t++;
-		} while (t->state == fs->fs_state);
+		} while (t->state == fs->fs_kind);
 	} while (t->state < STATE_IKEv2_ROOF);
 
 	/*
@@ -1784,7 +1784,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * For CREATE_CHILD_SA exchanges, the from_state is
 		 * ignored.  See further down.
 		 */
-		if (svm->state != from_state->fs_state && ix != ISAKMP_v2_CREATE_CHILD_SA)
+		if (svm->state != from_state->fs_kind && ix != ISAKMP_v2_CREATE_CHILD_SA)
 			continue;
 		if (svm->recv_type != ix)
 			continue;
@@ -2029,7 +2029,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			continue;
 		}
 
-		if (svm->state != from_state->fs_state && ix == ISAKMP_v2_CREATE_CHILD_SA) {
+		if (svm->state != from_state->fs_kind && ix == ISAKMP_v2_CREATE_CHILD_SA) {
 			/*
 			 * The IKE SA is receiving a CREATE_CHILD_SA
 			 * request.  Unlike STATE_PARENT_R0 (and the
@@ -3034,12 +3034,12 @@ void complete_v2_state_transition(struct state *st,
 			(st == NULL ? SOS_NOBODY : st->st_serialno),
 			from_state->fs_short_name);
 		if (md != NULL) {
-			if (md->from_state != from_state->fs_state) {
+			if (md->from_state != from_state->fs_kind) {
 				lswlogs(buf, " md.from_state=");
 				lswlog_enum_short(buf, &state_names, md->from_state);
 			}
 			if (md->svm != NULL) {
-				if (md->svm->state != from_state->fs_state) {
+				if (md->svm->state != from_state->fs_kind) {
 					lswlogs(buf, " svm.state=");
 					lswlog_enum_short(buf, &state_names, md->svm->state);
 				}

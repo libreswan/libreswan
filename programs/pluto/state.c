@@ -113,7 +113,7 @@ uint16_t pluto_xfrmlifetime = 300;
  * better.
  */
 struct finite_state state_undefined = {
-	.fs_state = STATE_UNDEFINED,
+	.fs_kind = STATE_UNDEFINED,
 	.fs_name = "STATE_UNDEFINED",
 	.fs_short_name = "UNDEFINED",
 	.fs_story = "not defined - either very new or dead (internal)",
@@ -203,7 +203,7 @@ static void update_state_stat(struct state *st,
 			      int delta)
 {
 	if (state->fs_category != CAT_IGNORE) {
-		state_count[state->fs_state] += delta;
+		state_count[state->fs_kind] += delta;
 		cat_count[state->fs_category] += delta;
 		/*
 		 * When deleting, st->st_connection can be NULL, so we
