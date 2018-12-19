@@ -8,6 +8,8 @@ KVM_PACKAGE_UPGRADE = dnf upgrade -y
 KVM_DEBUGINFO_INSTALL = dnf debuginfo-install -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 
+NSS_VERSION = -3.36.0-1.0.fc28.x86_64
+
 KVM_PACKAGES = \
     ElectricFence \
     audit-libs-devel \
@@ -37,10 +39,14 @@ KVM_PACKAGES = \
     nc \
     net-tools \
     nsd \
+    nspr \
     nspr-devel \
-    nss-devel \
-    nss-tools \
-    ocspd\
+    nss$(NSS_VERSION) \
+    nss-devel$(NSS_VERSION) \
+    nss-tools$(NSS_VERSION) \
+    nss-softokn$(NSS_VERSION) \
+    nss-softokn-freebl$(NSS_VERSION) \
+    ocspd \
     openldap-devel \
     pam-devel \
     patch \
@@ -90,10 +96,10 @@ KVM_DEBUGINFO = \
     libselinux \
     libssh2 \
     nspr \
-    nss \
-    nss-softokn \
-    nss-softokn-freebl \
-    nss-util \
+    nss$(NSS_VERSION) \
+    nss-softokn$(NSS_VERSION) \
+    nss-softokn-freebl$(NSS_VERSION) \
+    nss-util$(NSS_VERSION) \
     ocspd \
     openldap \
     openssl-libs \
