@@ -435,6 +435,7 @@ struct state *new_state(void)
 		.st_whack_sock = null_fd,	/* note: not 0 */
 		.st_finite_state = &state_undefined,
 		.st_serialno = next_so++,
+		.st_inception = realnow(),
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 
@@ -706,11 +707,12 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 		DBG(DBG_LIFECYCLE, {
 			char cib[CONN_INST_BUF];
 
-			DBG_log("deleting state #%lu (%s) \"%s\"%s and %ssending notification",
+			DBG_log("deleting state #%lu (%s) \"%s\"%s aged "PRI_DELTATIME"s and %ssending notification",
 				st->st_serialno,
 				st->st_state_name,
 				c->name,
 				fmt_conn_instance(c, cib),
+				pri_deltatime(realtimediff(realnow(), st->st_inception)),
 				del_notify ? "" : "NOT ");
 	});
 	} else if (cur_state != NULL && cur_state == st) {
@@ -718,21 +720,24 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 		* Don't log state and connection if it is the same as
 		* the message prefix.
 		*/
-		libreswan_log("deleting state (%s) and %ssending notification",
+		libreswan_log("deleting state (%s) aged "PRI_DELTATIME"s and %ssending notification",
 			st->st_state_name,
+			pri_deltatime(realtimediff(realnow(), st->st_inception)),
 			del_notify ? "" : "NOT ");
 	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
-		libreswan_log("deleting other state #%lu (%s) and %ssending notification",
+		libreswan_log("deleting other state #%lu (%s) aged "PRI_DELTATIME"s and %ssending notification",
 			st->st_serialno,
 			st->st_state_name,
+			pri_deltatime(realtimediff(realnow(), st->st_inception)),
 			del_notify ? "" : "NOT ");
 	} else {
 		char cib[CONN_INST_BUF];
-		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s and %ssending notification",
+		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s aged "PRI_DELTATIME"s and %ssending notification",
 			st->st_serialno,
 			st->st_state_name,
 			c->name,
 			fmt_conn_instance(c, cib),
+			pri_deltatime(realtimediff(realnow(), st->st_inception)),
 			del_notify ? "" : "NOT ");
 	}
 
@@ -1330,6 +1335,7 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	}
 
 	nst = new_state();
+	nst->st_inception = realnow();
 
 	DBG(DBG_CONTROL,
 		DBG_log("duplicating state object #%lu \"%s\"%s as #%lu for %s",

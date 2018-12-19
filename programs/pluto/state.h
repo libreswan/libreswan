@@ -301,6 +301,7 @@ extern const struct finite_state *finite_states[STATE_IKE_ROOF];
  *   This prevents leaks.
  */
 struct state {
+	realtime_t st_inception;		/* time state is created, for logging */
 	so_serial_t st_serialno;                /* serial number (for seniority)*/
 	so_serial_t st_clonedfrom;              /* serial number of parent */
 	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */
