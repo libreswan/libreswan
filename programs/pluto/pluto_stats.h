@@ -31,6 +31,8 @@ extern unsigned long pstats_ikev1_sa;
 extern unsigned long pstats_ikev2_sa;
 extern unsigned long pstats_ikev1_fail;
 extern unsigned long pstats_ikev2_fail;
+extern unsigned long pstats_ikev1_completed;
+extern unsigned long pstats_ikev2_completed;
 extern unsigned long pstats_ikev1_encr[OAKLEY_ENCR_PSTATS_ROOF];
 extern unsigned long pstats_ikev2_encr[IKEv2_ENCR_PSTATS_ROOF];
 extern unsigned long pstats_ikev1_integ[OAKLEY_HASH_PSTATS_ROOF];

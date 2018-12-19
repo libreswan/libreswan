@@ -751,12 +751,17 @@ void delete_state(struct state *st)
 	 * statistics for IKE SA failures. We cannot do the same for IPsec SA
 	 * because those failures could happen before we cloned a state
 	 */
-	if (st->st_clonedfrom == SOS_NOBODY) {
-		if (!IS_IKE_SA_ESTABLISHED(st)) {
+	if (IS_IKE_SA(st)) {
+		if (!IS_IKE_SA_ESTABLISHED(st) && st->st_state != STATE_IKESA_DEL) {
 			if (st->st_ikev2)
 				pstats_ikev2_fail++;
 			else
 				pstats_ikev1_fail++;
+		} else {
+			if (st->st_ikev2)
+				pstats_ikev2_completed++;
+			else
+				pstats_ikev1_completed++;
 		}
 	}
 

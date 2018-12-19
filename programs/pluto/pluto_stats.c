@@ -42,6 +42,8 @@ unsigned long pstats_ikev1_sa;
 unsigned long pstats_ikev2_sa;
 unsigned long pstats_ikev1_fail;
 unsigned long pstats_ikev2_fail;
+unsigned long pstats_ikev1_completed;
+unsigned long pstats_ikev2_completed;
 unsigned long pstats_ikev1_encr[OAKLEY_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev2_encr[IKEv2_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev1_integ[OAKLEY_HASH_PSTATS_ROOF];
@@ -179,8 +181,10 @@ void show_pluto_stats()
 
 	whack_log_comment("total.ike.ikev2.established=%lu", pstats_ikev2_sa);
 	whack_log_comment("total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
+	whack_log_comment("total.ike.ikev2.completed=%lu", pstats_ikev2_completed);
 	whack_log_comment("total.ike.ikev1.established=%lu", pstats_ikev1_sa);
 	whack_log_comment("total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
+	whack_log_comment("total.ike.ikev1.completed=%lu", pstats_ikev1_completed);
 
 	whack_log_comment("total.ike.dpd.sent=%lu", pstats_ike_dpd_sent);
 	whack_log_comment("total.ike.dpd.recv=%lu", pstats_ike_dpd_recv);
@@ -234,6 +238,7 @@ void clear_pluto_stats()
 
 	pstats_ipsec_sa = pstats_ikev1_sa = pstats_ikev2_sa = 0;
 	pstats_ikev1_fail = pstats_ikev2_fail = 0;
+	pstats_ikev1_completed = pstats_ikev2_completed = 0;
 	pstats_ipsec_in_bytes = pstats_ipsec_out_bytes = 0;
 	pstats_ike_in_bytes = pstats_ike_out_bytes = 0;
 	pstats_ipsec_esp = pstats_ipsec_ah = pstats_ipsec_ipcomp = 0;
