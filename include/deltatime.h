@@ -80,6 +80,13 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
 struct timeval deltatimeval(deltatime_t);
 
 /* output as "smart" seconds */
+
+typedef struct {
+	char buf[100]; /* true length ???? */
+} deltatime_buf;
+const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
+
+/* fmt_deltatime() */
 size_t lswlog_deltatime(struct lswlog *buf, deltatime_t d);
 
 /* But what about -ve? */

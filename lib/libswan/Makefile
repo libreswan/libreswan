@@ -122,7 +122,6 @@ OBJS += lswlog_errno.o
 OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o
 OBJS += lswlog_realtime.o
-OBJS += lswlog_deltatime.o
 OBJS += lswlog_monotime.o
 OBJS += lswlog_ip.o
 OBJS += lswlog_sensitive_ip.o
