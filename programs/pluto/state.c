@@ -388,7 +388,7 @@ union sas { struct child_sa child; struct ike_sa ike; struct state st; };
  * Caller must insert_state().
  */
 
-static struct state *new_state(void)
+static struct state *new_state(enum ike_version ike_version)
 {
 	static so_serial_t next_so = SOS_FIRST;
 
@@ -401,6 +401,8 @@ static struct state *new_state(void)
 		.st_finite_state = &state_undefined,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
+		.st_ike_version = ike_version,
+		.st_ikev2 = (ike_version == IKEv2),
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 
@@ -415,12 +417,12 @@ static struct state *new_state(void)
 
 struct state *new_v1_state(void)
 {
-	return new_state();
+	return new_state(IKEv1);
 }
 
 struct state *new_v1_rstate(struct msg_digest *md)
 {
-	struct state *st = new_state();
+	struct state *st = new_state(IKEv1);
 	update_ike_endpoints(st, md);
 
 	return st;
@@ -428,7 +430,7 @@ struct state *new_v1_rstate(struct msg_digest *md)
 
 struct state *new_v2_state(void)
 {
-	return new_state();
+	return new_state(IKEv2);
 }
 
 /*
@@ -1297,8 +1299,7 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 		st->st_outbound_time = mononow();
 	}
 
-	nst = new_state();
-	nst->st_inception = realnow();
+	nst = new_state(st->st_ike_version);
 
 	DBG(DBG_CONTROL,
 		DBG_log("duplicating state object #%lu \"%s\"%s as #%lu for %s",
@@ -1323,7 +1324,7 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_localport = st->st_localport;
 	nst->st_interface = st->st_interface;
 	nst->st_clonedfrom = st->st_serialno;
-	nst->st_ikev2 = st->st_ikev2;
+	passert(nst->st_ikev2 == st->st_ikev2);
 	nst->st_ikev2_anon = st->st_ikev2_anon;
 	nst->st_original_role = st->st_original_role;
 	nst->st_seen_fragvid = st->st_seen_fragvid;
