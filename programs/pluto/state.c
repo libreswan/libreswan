@@ -702,20 +702,7 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 	struct connection *const c = st->st_connection;
 	bool del_notify = !IMPAIR(SEND_NO_DELETE) && send_delete_check(st);
 
-	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
-		/* reduced logging of OE failures */
-		DBG(DBG_LIFECYCLE, {
-			char cib[CONN_INST_BUF];
-
-			DBG_log("deleting state #%lu (%s) \"%s\"%s aged "PRI_DELTATIME"s and %ssending notification",
-				st->st_serialno,
-				st->st_state_name,
-				c->name,
-				fmt_conn_instance(c, cib),
-				pri_deltatime(realtimediff(realnow(), st->st_inception)),
-				del_notify ? "" : "NOT ");
-	});
-	} else if (cur_state != NULL && cur_state == st) {
+	if (cur_state != NULL && cur_state == st) {
 		/*
 		* Don't log state and connection if it is the same as
 		* the message prefix.
