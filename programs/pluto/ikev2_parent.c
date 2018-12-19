@@ -4539,7 +4539,7 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 	 */
 	pexpect(st->st_oakley.ta_dh != NULL);
 	pexpect(st->st_pfs_group == NULL);
-	if (!accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
 		       md->chain[ISAKMP_NEXT_v2KE])) {
 		send_v2N_response_from_state(ike_sa(st), md,
 					     v2N_INVALID_SYNTAX,
