@@ -1410,9 +1410,7 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 	 */
 	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
 
-	/*
-	DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
-	*/
+	/* DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa)); */
 
 	pk->alg = PUBKEY_ALG_RSA;
 	pk->id  = empty_id;

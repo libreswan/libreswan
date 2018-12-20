@@ -48,6 +48,7 @@
 #include "state.h"
 #include "packet.h"
 #include "crypto.h"
+#include "crypt_symkey.h"
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
@@ -2413,74 +2414,79 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 }
 
 /*
- * this logs to the main log (including peerlog!) the authentication
+ * This logs to the main log (including peerlog!) the authentication
  * and encryption keys for an IKEv2 SA.  This is done in a format that
  * is compatible with tcpdump 4.0's -E option.
  *
- * The peerlog will be perfect, the syslog will require that a cut
+ * The peerlog will be perfect.  The syslog will require that a cut
  * command is used to remove the initial text.
+ * DANGER: this intentionally leaks cryptographic secrets.
  */
 void ikev2_log_parentSA(const struct state *st)
 {
 	DBG(DBG_PRIVATE,
 	{
-		const char *authalgo;
-		char encalgo[128];
-
 		if (st->st_oakley.ta_integ == NULL ||
 		    st->st_oakley.ta_encrypt == NULL)
 			return;
 
-		authalgo = st->st_oakley.ta_integ->integ_tcpdump_name;
+		/* format initiator SPI */
+		char tispi[3 + 2*IKE_SA_SPI_SIZE];
+		(void)datatot(st->st_ike_spis.initiator.bytes, sizeof(st->st_ike_spis.initiator.bytes),
+			'x',
+			tispi, sizeof(tispi));
 
-		if (st->st_oakley.enckeylen != 0) {
-			/* 3des will use '3des', while aes becomes 'aes128' */
-			snprintf(encalgo, sizeof(encalgo), "%s%u",
-				 st->st_oakley.ta_encrypt->encrypt_tcpdump_name,
+		/* format responder SPI */
+		char trspi[3 + 2*IKE_SA_SPI_SIZE];
+		(void)datatot(st->st_ike_spis.responder.bytes, sizeof(st->st_ike_spis.responder.bytes),
+			'x',
+			trspi, sizeof(trspi));
+
+		const char *authalgo = st->st_oakley.ta_integ->integ_tcpdump_name;
+		const char *encalgo = st->st_oakley.ta_encrypt->encrypt_tcpdump_name;
+
+		/*
+		 * Text of encryption key length (suffix for encalgo).
+		 * No more than 3 digits, but compiler fears it might be 5.
+		 */
+		char tekl[6] = "";
+		if (st->st_oakley.enckeylen != 0)
+			snprintf(tekl, sizeof(tekl), "%u",
 				 st->st_oakley.enckeylen);
-		} else {
-			snprintf(encalgo, sizeof(encalgo), "%s",
-				st->st_oakley.ta_encrypt->encrypt_tcpdump_name);
-		}
-		DBG_log("ikev2 I 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s %s",
-			st->st_ike_spis.initiator.bytes[0],
-			st->st_ike_spis.initiator.bytes[1],
-			st->st_ike_spis.initiator.bytes[2],
-			st->st_ike_spis.initiator.bytes[3],
-			st->st_ike_spis.initiator.bytes[4],
-			st->st_ike_spis.initiator.bytes[5],
-			st->st_ike_spis.initiator.bytes[6],
-			st->st_ike_spis.initiator.bytes[7],
-			st->st_ike_spis.responder.bytes[0],
-			st->st_ike_spis.responder.bytes[1],
-			st->st_ike_spis.responder.bytes[2],
-			st->st_ike_spis.responder.bytes[3],
-			st->st_ike_spis.responder.bytes[4],
-			st->st_ike_spis.responder.bytes[5],
-			st->st_ike_spis.responder.bytes[6],
-			st->st_ike_spis.responder.bytes[7],
-			authalgo,
-			encalgo);
 
-		DBG_log("ikev2 R 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s %s",
-			st->st_ike_spis.initiator.bytes[0],
-			st->st_ike_spis.initiator.bytes[1],
-			st->st_ike_spis.initiator.bytes[2],
-			st->st_ike_spis.initiator.bytes[3],
-			st->st_ike_spis.initiator.bytes[4],
-			st->st_ike_spis.initiator.bytes[5],
-			st->st_ike_spis.initiator.bytes[6],
-			st->st_ike_spis.initiator.bytes[7],
-			st->st_ike_spis.responder.bytes[0],
-			st->st_ike_spis.responder.bytes[1],
-			st->st_ike_spis.responder.bytes[2],
-			st->st_ike_spis.responder.bytes[3],
-			st->st_ike_spis.responder.bytes[4],
-			st->st_ike_spis.responder.bytes[5],
-			st->st_ike_spis.responder.bytes[6],
-			st->st_ike_spis.responder.bytes[7],
-			authalgo,
-			encalgo);
+		/* v2 IKE authentication key for initiator (256 bit bound) */
+		chunk_t ai = chunk_from_symkey("ai", st->st_skey_ai_nss);
+		char tai[3 + 2 * BYTES_FOR_BITS(256)] = "";
+		(void)datatot(ai.ptr, ai.len, 'x', tai, sizeof(tai));
+		free_chunk_contents(&ai);
+
+		/* v2 IKE encryption key for initiator (256 bit bound) */
+		chunk_t ei = chunk_from_symkey("ei", st->st_skey_ei_nss);
+		char tei[3 + 2 * BYTES_FOR_BITS(256)] = "";
+		(void)datatot(ei.ptr, ei.len, 'x', tei, sizeof(tei));
+		free_chunk_contents(&ei);
+
+		DBG_log("ikev2 I %s %s %s:%s %s%s:%s",
+			tispi, trspi,
+			authalgo, tai,
+			encalgo, tekl, tei);
+
+		/* v2 IKE authentication key for responder (256 bit bound) */
+		chunk_t ar = chunk_from_symkey("ar", st->st_skey_ar_nss);
+		char tar[3 + 2 * BYTES_FOR_BITS(256)] = "";
+		(void)datatot(ar.ptr, ar.len, 'x', tar, sizeof(tar));
+		free_chunk_contents(&ar);
+
+		/* v2 IKE encryption key for responder (256 bit bound) */
+		chunk_t er = chunk_from_symkey("er", st->st_skey_er_nss);
+		char ter[3 + 2 * BYTES_FOR_BITS(256)] = "";
+		(void)datatot(er.ptr, er.len, 'x', ter, sizeof(ter));
+		free_chunk_contents(&er);
+
+		DBG_log("ikev2 R %s %s %s:%s %s%s:%s",
+			tispi, trspi,
+			authalgo, tar,
+			encalgo, tekl, ter);
 	}
 	);
 }

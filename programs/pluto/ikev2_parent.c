@@ -4650,9 +4650,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 
 	passert(pst != NULL);
 
-	/* ??? this is kind of odd: regular control flow only selecting DBG  output */
-	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
-		ikev2_log_parentSA(st);
+	ikev2_log_parentSA(st);
 
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
