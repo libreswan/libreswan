@@ -105,11 +105,11 @@ void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
-	       st->st_icookie, COOKIE_SIZE);
+	       st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
 
 	ALLOC_WIRE_CHUNK(*dhq, rcookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
-	       st->st_rcookie, COOKIE_SIZE);
+	       st->st_ike_spis.responder.bytes, COOKIE_SIZE);
 
 	send_crypto_helper_request(st, dh);
 }
@@ -169,11 +169,11 @@ void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
-	       st->st_icookie, COOKIE_SIZE);
+	       st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
 
 	ALLOC_WIRE_CHUNK(*dhq, rcookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
-	       st->st_rcookie, COOKIE_SIZE);
+	       st->st_ike_spis.responder.bytes, COOKIE_SIZE);
 
 	send_crypto_helper_request(st, cn);
 }
