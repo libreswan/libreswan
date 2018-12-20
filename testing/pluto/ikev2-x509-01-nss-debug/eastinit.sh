@@ -1,0 +1,16 @@
+/testing/guestbin/swan-prep --x509
+certutil -D -n west -d sql:/etc/ipsec.d
+ipsec _stackmanager start
+mkdir /tmp/tmpnss
+export NSS_DISABLE_UNLOAD=no
+export NSS_SDB_USE_CACHE=yes
+export TMPDIR=/tmp/tmpnss
+export NSS_DEBUG_PKCS11_MODULE="NSS Internal PKCS #11 Module"
+export LOGGING=1
+export SOCKETTRACE=1
+export NSPR_LOG_FILE=/tmp/nspr.log
+# 2 3 and 4 are more verbose
+export NSPR_LOG_MODULES="nss_mod_log:4"
+/testing/pluto/bin/wait-until-pluto-started
+ipsec auto --add ikev2-westnet-eastnet-x509-cr
+echo "initdone"
