@@ -20,8 +20,31 @@ west #
 [ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
 down
 west #
- ipsec start
-Redirecting to: systemctl start ipsec.service
+ ipsec _stackmanager start
+west #
+ mkdir /tmp/tmpnss
+west #
+ export NSS_DISABLE_UNLOAD=no
+west #
+ export NSS_SDB_USE_CACHE=yes
+west #
+ export TMPDIR=/tmp/tmpnss
+west #
+ export NSS_DEBUG_PKCS11_MODULE="NSS Internal PKCS #11 Module"
+west #
+ export LOGGING=1
+west #
+ export SOCKETTRACE=1
+west #
+ export NSPR_LOG_FILE=/tmp/nspr.log
+west #
+ export NSS_OUTPUT_FILE=/tmp/nss.log
+west #
+ # 2 3 and 4 are more verbose
+west #
+ export NSPR_LOG_MODULES="nss_mod_log:4"
+west #
+ ipsec pluto --config /etc/ipsec.conf
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
@@ -57,33 +80,96 @@ west #
  ipsec whack --trafficstatus
 006 #2: "ikev2-westnet-eastnet-x509-cr", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
+ ipsec auto --down ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+005 "ikev2-westnet-eastnet-x509-cr" #2: ESP traffic information: in=336B out=336B
+west #
+ ipsec auto --up ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr" #3: initiating v2 parent SA
+133 "ikev2-westnet-eastnet-x509-cr" #3: initiate
+133 "ikev2-westnet-eastnet-x509-cr" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "ikev2-westnet-eastnet-x509-cr" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "ikev2-westnet-eastnet-x509-cr" #4: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "ikev2-westnet-eastnet-x509-cr" #4: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+003 "ikev2-westnet-eastnet-x509-cr" #4: Authenticated using RSA
+002 "ikev2-westnet-eastnet-x509-cr" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ikev2-westnet-eastnet-x509-cr" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --down ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+005 "ikev2-westnet-eastnet-x509-cr" #4: ESP traffic information: in=0B out=0B
+west #
+ ipsec auto --up ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr" #5: initiating v2 parent SA
+133 "ikev2-westnet-eastnet-x509-cr" #5: initiate
+133 "ikev2-westnet-eastnet-x509-cr" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "ikev2-westnet-eastnet-x509-cr" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "ikev2-westnet-eastnet-x509-cr" #6: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "ikev2-westnet-eastnet-x509-cr" #6: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+003 "ikev2-westnet-eastnet-x509-cr" #6: Authenticated using RSA
+002 "ikev2-westnet-eastnet-x509-cr" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ikev2-westnet-eastnet-x509-cr" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --down ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+005 "ikev2-westnet-eastnet-x509-cr" #6: ESP traffic information: in=0B out=0B
+west #
+ ipsec auto --up ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr" #7: initiating v2 parent SA
+133 "ikev2-westnet-eastnet-x509-cr" #7: initiate
+133 "ikev2-westnet-eastnet-x509-cr" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "ikev2-westnet-eastnet-x509-cr" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "ikev2-westnet-eastnet-x509-cr" #8: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "ikev2-westnet-eastnet-x509-cr" #8: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+003 "ikev2-westnet-eastnet-x509-cr" #8: Authenticated using RSA
+002 "ikev2-westnet-eastnet-x509-cr" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ikev2-westnet-eastnet-x509-cr" #8: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --down ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+005 "ikev2-westnet-eastnet-x509-cr" #8: ESP traffic information: in=0B out=0B
+west #
+ ipsec auto --up ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr" #9: initiating v2 parent SA
+133 "ikev2-westnet-eastnet-x509-cr" #9: initiate
+133 "ikev2-westnet-eastnet-x509-cr" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "ikev2-westnet-eastnet-x509-cr" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "ikev2-westnet-eastnet-x509-cr" #10: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "ikev2-westnet-eastnet-x509-cr" #10: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+003 "ikev2-westnet-eastnet-x509-cr" #10: Authenticated using RSA
+002 "ikev2-westnet-eastnet-x509-cr" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ikev2-westnet-eastnet-x509-cr" #10: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --down ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+005 "ikev2-westnet-eastnet-x509-cr" #10: ESP traffic information: in=0B out=0B
+west #
+ ipsec auto --up ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr" #11: initiating v2 parent SA
+133 "ikev2-westnet-eastnet-x509-cr" #11: initiate
+133 "ikev2-westnet-eastnet-x509-cr" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "ikev2-westnet-eastnet-x509-cr" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "ikev2-westnet-eastnet-x509-cr" #12: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "ikev2-westnet-eastnet-x509-cr" #12: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+003 "ikev2-westnet-eastnet-x509-cr" #12: Authenticated using RSA
+002 "ikev2-westnet-eastnet-x509-cr" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ikev2-westnet-eastnet-x509-cr" #12: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --down ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
+005 "ikev2-westnet-eastnet-x509-cr" #12: ESP traffic information: in=0B out=0B
+west #
  echo "done"
 done
 west #
  ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority 1042407 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir fwd priority 1042407 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir in priority 1042407 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -103,6 +189,49 @@ nic                                                          P,,
 north                                                        P,,  
 road                                                         P,,  
 west                                                         u,u,u
+west #
+west #
+ cat /tmp/nss.log | grep C_ | sort -n -r -k 5
+C_Sign                             6         34ms    5666.67us     40.48%
+C_GetAttributeValue              912         20ms      21.93us     23.81%
+C_GenerateKeyPair                  6       5000us     833.33us      5.95%
+C_FindObjectsInit                237       4000us      16.88us      4.76%
+C_Initialize                       1       3000us    3000.00us      3.57%
+C_DestroyObject                  818       3000us       3.67us      3.57%
+C_CreateObject                   316       3000us       9.49us      3.57%
+C_VerifyRecover                    7       2000us     285.71us      2.38%
+C_SignInit                        66       2000us      30.30us      2.38%
+C_DeriveKey                      504       2000us       3.97us      2.38%
+C_WrapKey                        157       1000us       6.37us      1.19%
+C_SignFinal                       60       1000us      16.67us      1.19%
+C_FindObjectsFinal               237       1000us       4.22us      1.19%
+C_FindObjects                    237       1000us       4.22us      1.19%
+C_Encrypt                        261       1000us       3.83us      1.19%
+C_DigestUpdate                   371       1000us       2.70us      1.19%
+C_VerifyRecoverInit                7          0 z       0.00us      0.00%
+C_SignUpdate                     132          0 z       0.00us      0.00%
+C_SetAttributeValue                6          0 z       0.00us      0.00%
+C_OpenSession                    993          0 z       0.00us      0.00%
+C_GetTokenInfo                     2          0 z       0.00us      0.00%
+C_GetSlotList                      2          0 z       0.00us      0.00%
+C_GetSlotInfo                      2          0 z       0.00us      0.00%
+C_GetSessionInfo                   1          0 z       0.00us      0.00%
+C_GetMechanismList                 4          0 z       0.00us      0.00%
+C_GetMechanismInfo                 7          0 z       0.00us      0.00%
+C_GetInfo                          1          0 z       0.00us      0.00%
+C_GenerateRandom                  62          0 z       0.00us      0.00%
+C_GenerateKey                      1          0 z       0.00us      0.00%
+C_EncryptUpdate                    8          0 z       0.00us      0.00%
+C_EncryptInit                    269          0 z       0.00us      0.00%
+C_DigestInit                     275          0 z       0.00us      0.00%
+C_DigestFinal                    275          0 z       0.00us      0.00%
+C_DecryptUpdate                    8          0 z       0.00us      0.00%
+C_DecryptInit                    202          0 z       0.00us      0.00%
+C_Decrypt                        194          0 z       0.00us      0.00%
+C_CloseSession                   977          0 z       0.00us      0.00%
+west #
+ echo "for nspr logs, look at the verbose console log in OUTPUT"
+for nspr logs, look at the verbose console log in OUTPUT
 west #
 west #
  ../bin/check-for-core.sh

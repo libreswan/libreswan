@@ -3,8 +3,31 @@ Preparing X.509 files
 east #
  certutil -D -n west -d sql:/etc/ipsec.d
 east #
- ipsec start
-Redirecting to: systemctl start ipsec.service
+ ipsec _stackmanager start
+east #
+ mkdir /tmp/tmpnss
+east #
+ export NSS_DISABLE_UNLOAD=no
+east #
+ export NSS_SDB_USE_CACHE=yes
+east #
+ export TMPDIR=/tmp/tmpnss
+east #
+ export NSS_DEBUG_PKCS11_MODULE="NSS Internal PKCS #11 Module"
+east #
+ export LOGGING=1
+east #
+ export SOCKETTRACE=1
+east #
+ export NSPR_LOG_FILE=/tmp/nspr.log
+east #
+ export NSS_OUTPUT_FILE=/tmp/nss.log
+east #
+ # 2 3 and 4 are more verbose
+east #
+ export NSPR_LOG_MODULES="nss_mod_log:4"
+east #
+ ipsec pluto --config /etc/ipsec.conf
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -17,27 +40,11 @@ east #
  ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir fwd priority 1042407 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir in priority 1042407 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24
 	dir out priority 1042407 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -57,6 +64,49 @@ nic                                                          P,,
 north                                                        P,,  
 road                                                         P,,  
 west-ec                                                      P,,  
+east #
+east #
+ cat /tmp/nss.log | grep C_ | sort -n -r -k 5
+C_Sign                             6         35ms    5833.33us     41.67%
+C_GetAttributeValue              924         19ms      20.56us     22.62%
+C_FindObjectsInit                237       6000us      25.32us      7.14%
+C_DeriveKey                      504       4000us       7.94us      4.76%
+C_GenerateKeyPair                  6       3000us     500.00us      3.57%
+C_DestroyObject                  818       3000us       3.67us      3.57%
+C_CloseSession                   995       3000us       3.02us      3.57%
+C_VerifyRecover                    7       2000us     285.71us      2.38%
+C_OpenSession                   1011       2000us       1.98us      2.38%
+C_Initialize                       1       2000us    2000.00us      2.38%
+C_SignInit                        66       1000us      15.15us      1.19%
+C_GenerateRandom                  50       1000us      20.00us      1.19%
+C_EncryptInit                    263       1000us       3.80us      1.19%
+C_Encrypt                        255       1000us       3.92us      1.19%
+C_CreateObject                   316       1000us       3.16us      1.19%
+C_WrapKey                        157          0 z       0.00us      0.00%
+C_VerifyRecoverInit                7          0 z       0.00us      0.00%
+C_SignUpdate                     132          0 z       0.00us      0.00%
+C_SignFinal                       60          0 z       0.00us      0.00%
+C_SetAttributeValue                6          0 z       0.00us      0.00%
+C_GetTokenInfo                     2          0 z       0.00us      0.00%
+C_GetSlotList                      2          0 z       0.00us      0.00%
+C_GetSlotInfo                      2          0 z       0.00us      0.00%
+C_GetSessionInfo                   1          0 z       0.00us      0.00%
+C_GetMechanismList                 4          0 z       0.00us      0.00%
+C_GetMechanismInfo                 7          0 z       0.00us      0.00%
+C_GetInfo                          1          0 z       0.00us      0.00%
+C_GenerateKey                      1          0 z       0.00us      0.00%
+C_FindObjectsFinal               237          0 z       0.00us      0.00%
+C_FindObjects                    237          0 z       0.00us      0.00%
+C_EncryptUpdate                    8          0 z       0.00us      0.00%
+C_DigestUpdate                   389          0 z       0.00us      0.00%
+C_DigestInit                     281          0 z       0.00us      0.00%
+C_DigestFinal                    281          0 z       0.00us      0.00%
+C_DecryptUpdate                    8          0 z       0.00us      0.00%
+C_DecryptInit                    220          0 z       0.00us      0.00%
+C_Decrypt                        212          0 z       0.00us      0.00%
+east #
+ echo "for nspr logs, look at the verbose console log in OUTPUT"
+for nspr logs, look at the verbose console log in OUTPUT
 east #
 east #
  ../bin/check-for-core.sh
