@@ -2515,7 +2515,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				ikev2_calc_no_ppk_auth(cc, pst, idhash_npa, &pst->st_no_ppk_auth);
 				if (!emit_v2Ntd(v2N_NO_PPK_AUTH,
 						&pst->st_no_ppk_auth, &sk.pbs))
-						return STF_INTERNAL_ERROR;
+					return STF_INTERNAL_ERROR;
 			}
 		}
 
