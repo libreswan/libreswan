@@ -99,15 +99,7 @@
  *
  * The above is the basic idea, but things are a bit more complicated because
  * multiple phase 2s can share the same phase 1 ISAKMP SA. Each phase 2 state
- * has its own DPD_EVENT. Further, we start a DPD_EVENT for phase 1 when it
- * gets established. This is because the phase 2 may never actually succeed
- * (usually due to authorization issues, which may be DNS or otherwise related)
- * and if the responding end dies (gets restarted, or the conn gets reloaded
- * with the right policy), then we may have a bum phase 1 SA, and we cannot
- * re-negotiate. (This happens WAY too often)
- *
- * The phase 2 dpd_init() will attempt to kill the phase 1 DPD_EVENT, if it
- * can, to reduce the amount of work.
+ * has its own DPD_EVENT.
  *
  * The st_last_dpd member that is used is always the one from the phase 1.
  * So, if there are multiple phase 2s, then if any of them receive DPD data
@@ -165,24 +157,13 @@ stf_status dpd_init(struct state *st)
 			loglog(RC_LOG_SERIOUS, "could not find phase 1 state for DPD");
 			return STF_FAIL;
 		}
-	}
 
-	/*
-	 * Doesn't this only apply to IPsec SA states?
-	 * It would explain the below check for pilling phase 1 SA's
-	 */
-	if (st->st_dpd_event == NULL || ev_before(st->st_dpd_event,
-		st->st_connection->dpd_delay))
-	{
-		delete_dpd_event(st);
-		event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
-	}
-
-	if (p1st != st) {
-		/* st was not a phase 1 SA, so kill the DPD_EVENT on the phase 1 */
-		if (p1st->st_dpd_event != NULL &&
-		    p1st->st_dpd_event->ev_type == EVENT_DPD)
-			delete_dpd_event(p1st);
+		if (st->st_dpd_event == NULL || ev_before(st->st_dpd_event,
+			st->st_connection->dpd_delay))
+		{
+			delete_dpd_event(st);
+			event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
+		}
 	}
 	return STF_OK;
 }
