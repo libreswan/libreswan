@@ -12,8 +12,8 @@ east #
 initdone
 east #
  grep INVALID_MAJOR_VERSION /tmp/pluto.log
-packet from 192.1.2.45:500: sending notification INVALID_MAJOR_VERSION to 192.1.2.45:500
-|    Notify Message Type: INVALID_MAJOR_VERSION (0x5)
+packet from 192.1.2.45:500: responding to IKE_SA_INIT (34) message (Message ID 0) from 192.1.2.45:500 with unencrypted notification INVALID_MAJOR_VERSION
+|    Notify Message Type: v2N_INVALID_MAJOR_VERSION (0x5)
 east #
  grep "INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo payload found
 payload found
