@@ -130,38 +130,52 @@ stf_status dpd_init(struct state *st)
 	 * Used to store the 1st state
 	 */
 	struct state *p1st;
+	bool peer_supports_dpd = st->hidden_variables.st_peer_supports_dpd;
+	bool want_dpd = dpd_active_locally(st);
 
-	/* find the related Phase 1 state */
-	p1st = find_state_ikev1(&st->st_ike_spis.initiator,
+	if (IS_IKE_SA(st)) { /* so we log this only once */
+		DBG(DBG_DPD, DBG_log("DPD: dpd_init() called on ISAKMP SA"));
+
+		if (!peer_supports_dpd) {
+			DBG(DBG_DPD, DBG_log("DPD: Peer does not support Dead Peer Detection"));
+			if (want_dpd)
+				loglog(RC_LOG_SERIOUS,
+					"Configured DPD (RFC 3706) support not enabled because remote peer did not advertise DPD support");
+			return STF_OK;
+		} else {
+			DBG(DBG_DPD, DBG_log("DPD: Peer supports Dead Peer Detection"));
+		}
+
+		if (!want_dpd) {
+			DBG(DBG_DPD, DBG_log("DPD: not initializing DPD because DPD is disabled locally"));
+			return STF_OK;
+		}
+		p1st = st;
+	} else {
+		DBG(DBG_DPD, DBG_log("DPD: dpd_init() called on IPsec SA"));
+		if (!peer_supports_dpd || !want_dpd) {
+			DBG(DBG_DPD, DBG_log("DPD: Peer does not support Dead Peer Detection"));
+			return STF_OK;
+		}
+
+		/* find the IKE SA */
+		p1st = find_state_ikev1(&st->st_ike_spis.initiator,
 				&st->st_ike_spis.responder, 0);
-
-	if (p1st == NULL) {
-		loglog(RC_LOG_SERIOUS, "could not find phase 1 state for DPD");
-
-		/*
-		 * if the phase 1 state has gone away, it really should have
-		 * deleted all of its children.
-		 * Why would this happen? because a quick mode SA can take
-		 * some time to create (DNS lookups for instance), and the phase 1
-		 * might have been taken down for some reason in the meantime.
-		 * We really cannot do anything here --- attempting to invoke
-		 * the DPD action would be a good idea, but we really should
-		 * do that outside this function.
-		 */
-		return STF_FAIL;
+		if (p1st == NULL) {
+			loglog(RC_LOG_SERIOUS, "could not find phase 1 state for DPD");
+			return STF_FAIL;
+		}
 	}
 
-	/* if it was enabled, and we haven't turned it on already */
-	if (p1st->hidden_variables.st_peer_supports_dpd) {
-		DBG(DBG_DPD, DBG_log("Dead Peer Detection (RFC 3706): enabled"));
-		if (st->st_dpd_event == NULL || ev_before(st->st_dpd_event,
-					st->st_connection->dpd_delay)) {
-			delete_dpd_event(st);
-			event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
-		}
-	} else {
-		loglog(RC_LOG_SERIOUS,
-			"Configured DPD (RFC 3706) support not enabled because remote peer did not advertise DPD support");
+	/*
+	 * Doesn't this only apply to IPsec SA states?
+	 * It would explain the below check for pilling phase 1 SA's
+	 */
+	if (st->st_dpd_event == NULL || ev_before(st->st_dpd_event,
+		st->st_connection->dpd_delay))
+	{
+		delete_dpd_event(st);
+		event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
 	}
 
 	if (p1st != st) {

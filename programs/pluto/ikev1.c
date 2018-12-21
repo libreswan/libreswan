@@ -2470,26 +2470,27 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* accept info from VID because we accept this message */
 
-		/* If state has FRAGMENTATION support, import it */
+		/*
+		 * Most of below VIDs only appear Main/Aggr mode, not Quick mode,
+		 * so why are we checking them for each state transition?
+		 */
+
 		if (md->fragvid) {
-			DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
+			DBG(DBG_CONTROLMORE, DBG_log("Peer supports fragmentation"));
 			st->st_seen_fragvid = TRUE;
 		}
 
-		/* If state has DPD support, import it */
-		if (md->dpd &&
-		    st->hidden_variables.st_peer_supports_dpd != md->dpd) {
-			DBG(DBG_DPD, DBG_log("peer supports dpd"));
-			st->hidden_variables.st_peer_supports_dpd = md->dpd;
-
+		if (md->dpd) {
+			DBG(DBG_DPD, DBG_log("Peer supports DPD"));
+			st->hidden_variables.st_peer_supports_dpd = TRUE;
 			if (dpd_active_locally(st)) {
-				DBG(DBG_DPD, DBG_log("dpd is active locally"));
+				DBG(DBG_DPD, DBG_log("DPD is configured locally"));
 			}
 		}
 
 		/* If state has VID_NORTEL, import it to activate workaround */
 		if (md->nortel) {
-			DBG(DBG_CONTROLMORE, DBG_log("peer requires Nortel Contivity workaround"));
+			DBG(DBG_CONTROLMORE, DBG_log("Peer requires Nortel Contivity workaround"));
 			st->st_seen_nortel_vid = TRUE;
 		}
 
@@ -2759,20 +2760,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/*
 		 * make sure that a DPD event gets created for a new phase 1
 		 * SA.
+		 * Why do we need a DPD event on an IKE SA???
 		 */
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-			if (deltasecs(st->st_connection->dpd_delay) > 0 &&
-			    deltasecs(st->st_connection->dpd_timeout) > 0) {
-				/* don't ignore failure */
-				/* ??? in fact, we do ignore this:
-				 * result is NEVER used
-				 * (clang 3.4 noticed this)
-				 */
-				stf_status s = dpd_init(st);
-
-				if (!pexpect(s != STF_FAIL))
-					result = STF_FAIL; /* ??? fall through !?! */
-				/* ??? result not subsequently used. Looks bad! */
+			if (dpd_init(st) != STF_OK) {
+		                loglog(RC_LOG_SERIOUS, "DPD initialization failed - continuing without DPD");
 			}
 		}
 

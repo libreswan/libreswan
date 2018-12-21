@@ -1968,14 +1968,9 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 
 	set_newest_ipsec_sa("inR1_outI2", st);
 
-	/* If we have dpd delay and dpdtimeout set, then we are doing DPD
-	    on this conn, so initialize it */
-	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
-	    deltasecs(st->st_connection->dpd_timeout) != 0) {
-		if (dpd_init(st) != STF_OK) {
-			delete_ipsec_sa(st);
-			return STF_FAIL;
-		}
+	if (dpd_init(st) != STF_OK) {
+		delete_ipsec_sa(st);
+		return STF_FAIL;
 	}
 
 	return STF_OK;
@@ -2009,12 +2004,9 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md)
 	 * If we have dpd delay and dpdtimeout set, then we are doing DPD
 	 * on this conn, so initialize it
 	 */
-	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
-	    deltasecs(st->st_connection->dpd_timeout) != 0) {
-		if (dpd_init(st) != STF_OK) {
-			delete_ipsec_sa(st);
-			return STF_FAIL;
-		}
+	if (dpd_init(st) != STF_OK) {
+		delete_ipsec_sa(st);
+		return STF_FAIL;
 	}
 
 	return STF_OK;
