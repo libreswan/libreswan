@@ -135,6 +135,9 @@ bool emit_v2V(const char *string, pb_stream *outs)
  *    IPsec protocol ID or zero if no SPI is applicable.  For a
  *    notification concerning the IKE SA, the SPI Size MUST be zero and
  *    the field must be empty.
+ *
+ *    Since all IKEv2 implementations MUST implement the NOTIFY type
+ *    payload, these payloads NEVER have the Critical Flag set.
  */
 
 bool emit_v2N(enum ikev2_sec_proto_id protoid, const ipsec_spi_t *spi,
