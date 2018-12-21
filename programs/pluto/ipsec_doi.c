@@ -624,7 +624,8 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		lswlogs(buf, oa);
 	}
 
-	lswlogf(buf, dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
+	lswlogf(buf, (!st->st_ikev2 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :
+			dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
 	if (st->st_xauth_username[0] != '\0') {
 		lswlogs(buf, " username=");
