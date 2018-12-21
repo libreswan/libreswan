@@ -137,7 +137,8 @@ bool emit_v2V(const char *string, pb_stream *outs)
  *    the field must be empty.
  */
 
-bool emit_v2N(enum ikev2_sec_proto_id protoid, const ipsec_spi_t *spi,
+bool emit_v2N(uint8_t critical,
+	      enum ikev2_sec_proto_id protoid, const ipsec_spi_t *spi,
 	      v2_notification_t ntype, const chunk_t *ndata,
 	      pb_stream *outs)
 {
@@ -166,7 +167,7 @@ bool emit_v2N(enum ikev2_sec_proto_id protoid, const ipsec_spi_t *spi,
 	DBG(DBG_CONTROLMORE, DBG_log("Adding a v2N Payload"));
 
 	struct ikev2_notify n = {
-		.isan_critical = build_ikev2_critical(false),
+		.isan_critical = critical,
 		.isan_protoid = protoid,
 		.isan_spisize = spi != NULL ? sizeof(*spi) : 0,
 		.isan_type = ntype,
@@ -219,13 +220,15 @@ bool emit_v2Ntd(v2_notification_t ntype,
 		const chunk_t *ndata,
 		pb_stream *outs)
 {
-	return emit_v2N(PROTO_v2_RESERVED, NULL,
+	return emit_v2N(build_ikev2_critical(false),
+			PROTO_v2_RESERVED, NULL,
 			ntype, ndata, outs);
 }
 
 bool emit_v2Nt(v2_notification_t ntype, pb_stream *outs)
 {
-	return emit_v2N(PROTO_v2_RESERVED, NULL,
+	return emit_v2N(build_ikev2_critical(false),
+			PROTO_v2_RESERVED, NULL,
 			ntype, NULL, outs);
 }
 
@@ -358,7 +361,8 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 		break;
 	}
 
-	if (!emit_v2N(protoid, spi,
+	if (!emit_v2N(build_ikev2_critical(false),
+		      protoid, spi,
 		      ntype, ndata, &sk.pbs)) {
 		return;
 	}
