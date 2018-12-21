@@ -60,8 +60,7 @@ extern stf_status send_v2_informational_request(const char *name,
 
 bool emit_v2UNKNOWN(const char *victim, pb_stream *outs);
 
-bool emit_v2N(uint8_t critical,
-	      enum ikev2_sec_proto_id protoid,
+bool emit_v2N(enum ikev2_sec_proto_id protoid,
 	      const ipsec_spi_t *spi,
 	      v2_notification_t ntype,
 	      const chunk_t *ndata,
