@@ -168,7 +168,7 @@ bool emit_v2N(enum ikev2_sec_proto_id protoid, const ipsec_spi_t *spi,
 	struct ikev2_notify n = {
 		.isan_critical = build_ikev2_critical(false),
 		.isan_protoid = protoid,
-		.isan_spisize = spi != NULL ? sizeof(spi) : 0,
+		.isan_spisize = spi != NULL ? sizeof(*spi) : 0,
 		.isan_type = ntype,
 	};
 	pb_stream n_pbs;
