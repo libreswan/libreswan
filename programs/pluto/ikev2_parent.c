@@ -2442,114 +2442,111 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* so far child's connection is same as parent's */
 	passert(pc == cst->st_connection);
 
-	{
-		lset_t policy = pc->policy;
+	lset_t policy = pc->policy;
 
-		/* child connection */
-		struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
+	/* child connection */
+	struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
 
-		if (cc == NULL) {
-			cc = pc;
-			DBG(DBG_CONTROL, DBG_log("no pending CHILD SAs found for %s Reauthentication so use the original policy",
-				cc->name));
-		}
+	if (cc == NULL) {
+		cc = pc;
+		DBG(DBG_CONTROL, DBG_log("no pending CHILD SAs found for %s Reauthentication so use the original policy",
+			cc->name));
+	}
 
-		if (cc != cst->st_connection) {
-			/* ??? DBG_long not conditional on some DBG selector */
-			char cib[CONN_INST_BUF];
-			DBG_log("Switching Child connection for #%lu to \"%s\"%s from \"%s\"%s",
-					cst->st_serialno, cc->name,
-					fmt_conn_instance(cc, cib),
-					pc->name, fmt_conn_instance(pc, cib));
+	if (cc != cst->st_connection) {
+		/* ??? DBG_long not conditional on some DBG selector */
+		char cib[CONN_INST_BUF];
+		DBG_log("Switching Child connection for #%lu to \"%s\"%s from \"%s\"%s",
+				cst->st_serialno, cc->name,
+				fmt_conn_instance(cc, cib),
+				pc->name, fmt_conn_instance(pc, cib));
 
-		}
-		/* ??? this seems very late to change the connection */
-		cst->st_connection = cc;	/* safe: from duplicate_state */
+	}
+	/* ??? this seems very late to change the connection */
+	cst->st_connection = cc;	/* safe: from duplicate_state */
 
-		/* code does not support AH + ESP, not recommend rfc8221 section-4 */
-		struct ipsec_proto_info *proto_info
-			= ikev2_child_sa_proto_info(cst, cc->policy);
-		proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
-		chunk_t local_spi;
-		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
-			 sizeof(proto_info->our_spi));
+	/* code does not support AH + ESP, not recommend rfc8221 section-4 */
+	struct ipsec_proto_info *proto_info
+		= ikev2_child_sa_proto_info(cst, cc->policy);
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
+	chunk_t local_spi;
+	setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
+		 sizeof(proto_info->our_spi));
 
-		/*
-		 * A CHILD_SA established during an AUTH exchange does
-		 * not propose DH - the IKE SA's SKEYSEED is always
-		 * used.
-		 */
-		struct ikev2_proposals *child_proposals =
-			get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals");
-		if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals,
-					     &local_spi)) {
+	/*
+	 * A CHILD_SA established during an AUTH exchange does
+	 * not propose DH - the IKE SA's SKEYSEED is always
+	 * used.
+	 */
+	struct ikev2_proposals *child_proposals =
+		get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals");
+	if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals,
+				     &local_spi)) {
+		freeanychunk(null_auth);
+		return STF_INTERNAL_ERROR;
+	}
+
+	cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
+	cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
+
+	v2_emit_ts_payloads(pexpect_child_sa(cst), &sk.pbs, cc);
+
+	if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
+		DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
+		/* In v2, for parent, protoid must be 0 and SPI must be empty */
+		if (!emit_v2Nt(v2N_USE_TRANSPORT_MODE, &sk.pbs)) {
 			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
 		}
+	} else {
+		DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
+	}
 
-		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
-		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
-
-		v2_emit_ts_payloads(pexpect_child_sa(cst), &sk.pbs, cc);
-
-		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
-			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
-			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			if (!emit_v2Nt(v2N_USE_TRANSPORT_MODE, &sk.pbs)) {
-				freeanychunk(null_auth);
-				return STF_INTERNAL_ERROR;
-			}
-		} else {
-			DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
-		}
-
-		if (cc->send_no_esp_tfc) {
-			if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs)) {
-				freeanychunk(null_auth);
-				return STF_INTERNAL_ERROR;
-			}
-		}
-
-		if (LIN(POLICY_MOBIKE, cc->policy)) {
-			cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
-			if (!emit_v2Nt(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
-				freeanychunk(null_auth);
-				return STF_INTERNAL_ERROR;
-			}
-		}
-		if (pst->st_seen_ppk) {
-			chunk_t notify_data = create_unified_ppk_id(&ppk_id_p);
-			if (!emit_v2Ntd(v2N_PPK_IDENTITY,
-					&notify_data, &sk.pbs)) {
-				freeanychunk(null_auth);
-				freeanychunk(notify_data);
-				return STF_INTERNAL_ERROR;
-			}
-			freeanychunk(notify_data);
-
-			if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
-				ikev2_calc_no_ppk_auth(cc, pst, idhash_npa, &pst->st_no_ppk_auth);
-				if (!emit_v2Ntd(v2N_NO_PPK_AUTH,
-						&pst->st_no_ppk_auth, &sk.pbs)) {
-					freeanychunk(null_auth);
-					return STF_INTERNAL_ERROR;
-				}
-			}
-		}
-
-		if (null_auth.ptr != NULL) {
-			if (!emit_v2Ntd(v2N_NULL_AUTH, &null_auth, &sk.pbs)) {
-				freeanychunk(null_auth);
-				return STF_INTERNAL_ERROR;
-			}
+	if (cc->send_no_esp_tfc) {
+		if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs)) {
 			freeanychunk(null_auth);
+			return STF_INTERNAL_ERROR;
 		}
+	}
 
-		/* send CP payloads */
-		if (pc->modecfg_domains != NULL || pc->modecfg_dns != NULL) {
-			ikev2_send_cp(pst, ISAKMP_NEXT_v2NONE,
-				&sk.pbs);
+	if (LIN(POLICY_MOBIKE, cc->policy)) {
+		cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
+		if (!emit_v2Nt(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
+			freeanychunk(null_auth);
+			return STF_INTERNAL_ERROR;
 		}
+	}
+	if (pst->st_seen_ppk) {
+		chunk_t notify_data = create_unified_ppk_id(&ppk_id_p);
+		if (!emit_v2Ntd(v2N_PPK_IDENTITY, &notify_data, &sk.pbs)) {
+			freeanychunk(null_auth);
+			freeanychunk(notify_data);
+			return STF_INTERNAL_ERROR;
+		}
+		freeanychunk(notify_data);
+
+		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
+			ikev2_calc_no_ppk_auth(cc, pst, idhash_npa,
+				&pst->st_no_ppk_auth);
+			if (!emit_v2Ntd(v2N_NO_PPK_AUTH, &pst->st_no_ppk_auth,
+					&sk.pbs)) {
+				freeanychunk(null_auth);
+				return STF_INTERNAL_ERROR;
+			}
+		}
+	}
+
+	if (null_auth.ptr != NULL) {
+		if (!emit_v2Ntd(v2N_NULL_AUTH, &null_auth, &sk.pbs)) {
+			freeanychunk(null_auth);
+			return STF_INTERNAL_ERROR;
+		}
+		freeanychunk(null_auth);
+	}
+
+	/* send CP payloads */
+	if (pc->modecfg_domains != NULL || pc->modecfg_dns != NULL) {
+		ikev2_send_cp(pst, ISAKMP_NEXT_v2NONE, &sk.pbs);
 	}
 
 	if (!close_v2SK_payload(&sk)) {
