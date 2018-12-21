@@ -3966,8 +3966,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 		}
 
 		if (rekey_spi != 0) {
-			if (!emit_v2N(build_ikev2_critical(false),
-				      rekey_protoid, &rekey_spi,
+			if (!emit_v2N(rekey_protoid, &rekey_spi,
 				      v2N_REKEY_SA, &empty_chunk, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
