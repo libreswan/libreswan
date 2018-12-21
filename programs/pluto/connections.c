@@ -89,7 +89,7 @@
 #include "kernel_netlink.h"
 #include "ip_address.h"
 #include "af_info.h"
-#include "key.h" /* for SECKEY_DestroyPublicKey */
+#include "keyhi.h" /* for SECKEY_DestroyPublicKey */
 
 struct connection *connections = NULL;
 

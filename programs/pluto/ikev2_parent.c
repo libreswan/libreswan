@@ -63,7 +63,7 @@
 #include "kernel.h"
 #include "nat_traversal.h"
 #include "alg_info.h" /* for ike_info / esp_info */
-#include "key.h" /* for SECKEY_DestroyPublicKey */
+#include "keyhi.h" /* for SECKEY_DestroyPublicKey */
 #include "vendor.h"
 #include "crypt_hash.h"
 #include "ikev2_ipseckey.h"
