@@ -28,6 +28,11 @@
 #  define DEFAULT_DNSSEC_ROOTKEY_FILE "<unused>"
 # endif
 
+enum ike_version {
+	IKEv1 = 1,
+	IKEv2 = 2,
+};
+
 /*
  * IETF has no recommendations
  * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h

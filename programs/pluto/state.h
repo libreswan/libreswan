@@ -311,6 +311,8 @@ struct state {
 	struct xauth *st_xauth;			/* per state xauth/pam thread */
 #endif
 
+	enum ike_version st_ike_version;	/* IKEv1, IKEv2, ... */
+
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
 	bool st_suppress_del_notify;            /* suppress sending DELETE - eg replaced conn */
@@ -721,8 +723,9 @@ extern bool states_use_connection(const struct connection *c);
 
 /* state functions */
 
-extern struct state *new_state(void);
-extern struct state *new_rstate(struct msg_digest *md);
+struct state *new_v1_state(void);
+struct state *new_v1_rstate(struct msg_digest *md);
+struct state *new_v2_state(void);
 
 extern void init_states(void);
 extern void insert_state(struct state *st);

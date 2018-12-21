@@ -613,12 +613,12 @@ void ikev2_parent_outI1(fd_t whack_sock,
 		}
 	}
 
-	st = new_state();
+	st = new_v2_state();
 
 	/* set up new state */
 	fill_ike_initiator_spi(st);
 	initialize_new_state(st, c, policy, try, whack_sock);
-	st->st_ikev2 = TRUE;
+	passert(st->st_ikev2);
 	change_state(st, STATE_PARENT_I0);
 	st->st_original_role = ORIGINAL_INITIATOR;
 	st->st_sa_role = SA_INITIATOR;
@@ -1018,7 +1018,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
 	 */
-	struct state *st = new_state();
+	struct state *st = new_v2_state();
 	/* set up new state */
 	/* initialize_new_state expects valid icookie/rcookie values, so create it now */
 	st->st_ike_spis.initiator = md->hdr.isa_ike_initiator_spi;
@@ -1026,7 +1026,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 
 	initialize_new_state(st, c, policy, 0, null_fd);
 	update_ike_endpoints(st, md);
-	st->st_ikev2 = TRUE;
+	passert(st->st_ikev2);
 	change_state(st, STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
 	st->st_sa_role = SA_RESPONDER;
