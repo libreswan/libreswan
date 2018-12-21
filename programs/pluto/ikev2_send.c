@@ -53,7 +53,7 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
 		return false;
 	} else if (st->st_v2_tfrags != NULL) {
 		/* if a V2 packet needs fragmenting it would have already happened */
-		passert(st->st_ikev2);
+		passert(st->st_ike_version == IKEv2);
 		passert(st->st_tpacket.ptr == NULL);
 		unsigned nr_frags = 0;
 		dbg("sending fragments ...");

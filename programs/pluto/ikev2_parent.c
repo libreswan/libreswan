@@ -618,7 +618,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	/* set up new state */
 	fill_ike_initiator_spi(st);
 	initialize_new_state(st, c, policy, try, whack_sock);
-	passert(st->st_ikev2);
+	passert(st->st_ike_version == IKEv2);
 	change_state(st, STATE_PARENT_I0);
 	st->st_original_role = ORIGINAL_INITIATOR;
 	st->st_sa_role = SA_INITIATOR;
@@ -1026,7 +1026,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 
 	initialize_new_state(st, c, policy, 0, null_fd);
 	update_ike_endpoints(st, md);
-	passert(st->st_ikev2);
+	passert(st->st_ike_version == IKEv2);
 	change_state(st, STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
 	st->st_sa_role = SA_RESPONDER;

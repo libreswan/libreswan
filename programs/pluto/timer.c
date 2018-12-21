@@ -103,12 +103,12 @@ static bool parent_vanished(struct state *st)
 /* note: this mutates *st by calling get_sa_info */
 static void liveness_check(struct state *st)
 {
+	passert(st->st_ike_version == IKEv2);
+
 	struct state *pst = NULL;
 	deltatime_t last_msg_age;
 
 	struct connection *c = st->st_connection;
-
-	passert(st->st_ikev2);
 
 	set_cur_state(st);
 
@@ -400,7 +400,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_SA_REKEY:
-		pexpect(st->st_ikev2);
+		pexpect(st->st_ike_version == IKEv2);
 		v2_event_sa_rekey(st);
 		break;
 

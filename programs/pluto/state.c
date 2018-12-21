@@ -523,7 +523,7 @@ void release_whack(struct state *st)
 
 static void release_v2fragments(struct state *st)
 {
-	passert(st->st_ikev2);
+	passert(st->st_ike_version == IKEv2);
 
 	if (st->st_v2_rfrags != NULL) {
 		for (unsigned i = 0; i < elemsof(st->st_v2_rfrags->frags); i++) {
@@ -545,9 +545,9 @@ static void release_v2fragments(struct state *st)
 
 static void release_v1fragments(struct state *st)
 {
-	struct ike_frag *frag = st->st_v1_rfrags;
+	passert(st->st_ike_version == IKEv1);
 
-	passert(!st->st_ikev2);
+	struct ike_frag *frag = st->st_v1_rfrags;
 	while (frag != NULL) {
 		struct ike_frag *this = frag;
 
@@ -572,8 +572,8 @@ void release_fragments(struct state *st)
 
 void v2_expire_unused_ike_sa(struct ike_sa *ike)
 {
-	passert(ike->sa.st_ikev2);
 	passert(ike != NULL);
+	passert(ike->sa.st_ike_version == IKEv2);
 
 	if (!IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
 		dbg("can't expire unused IKE SA #%lu; not established - strange",
@@ -1324,7 +1324,7 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_localport = st->st_localport;
 	nst->st_interface = st->st_interface;
 	nst->st_clonedfrom = st->st_serialno;
-	passert(nst->st_ikev2 == st->st_ikev2);
+	passert(nst->st_ike_version == st->st_ike_version);
 	nst->st_ikev2_anon = st->st_ikev2_anon;
 	nst->st_original_role = st->st_original_role;
 	nst->st_seen_fragvid = st->st_seen_fragvid;

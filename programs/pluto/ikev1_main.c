@@ -481,7 +481,7 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
  */
 bool ikev1_close_message(pb_stream *pbs, const struct state *st)
 {
-	passert(!st->st_ikev2);
+	passert(st->st_ike_version == IKEv1);
 	size_t padding = pad_up(pbs_offset(pbs), 4);
 
 	if (padding == 0) {
