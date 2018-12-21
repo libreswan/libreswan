@@ -1976,13 +1976,15 @@ static stf_status ikev2_send_auth(struct connection *c,
 				  enum next_payload_types_ikev2 np,
 				  unsigned char *idhash_out,
 				  pb_stream *outpbs,
-				  chunk_t *null_auth)
+				  chunk_t *null_auth /* out */)
 {
 	pb_stream a_pbs;
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
 	enum keyword_authby authby = c->spd.this.authby;
 	enum notify_payload_hash_algorithms hash_algo;
+
+	*null_auth = empty_chunk;
 
 	if (st->st_peer_wants_null) {
 		/* we allow authby=null and IDr payload told us to use it */
@@ -2139,9 +2141,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 {
 	struct connection *const pc = pst->st_connection;	/* parent connection */
 	struct ppk_id_payload ppk_id_p;
-	chunk_t null_auth;
-
-	setchunk(null_auth, NULL, 0);	/* additional NULL_AUTH payload */
 
 	if (!finish_dh_v2(pst, r, FALSE))
 		/*
@@ -2413,16 +2412,22 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	/* send out the AUTH payload */
+	chunk_t null_auth;	/* we must free this */
+
 	stf_status authstat = ikev2_send_auth(pc, cst, ORIGINAL_INITIATOR, 0,
 					      idhash, &sk.pbs, &null_auth);
-	if (authstat != STF_OK)
+	if (authstat != STF_OK) {
+		freeanychunk(null_auth);
 		return authstat;
+	}
 
 	if (need_configuration_payload(pc, pst->hidden_variables.st_nat_traversal)) {
 		stf_status cpstat = ikev2_send_cp(pst, ISAKMP_NEXT_v2SA,
 						  &sk.pbs);
-		if (cpstat != STF_OK)
+		if (cpstat != STF_OK) {
+			freeanychunk(null_auth);
 			return cpstat;
+		}
 	}
 
 	/*
@@ -2477,8 +2482,10 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		struct ikev2_proposals *child_proposals =
 			get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals");
 		if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals,
-					     &local_spi))
+					     &local_spi)) {
+			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
+		}
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
@@ -2488,40 +2495,53 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			if (!emit_v2Nt(v2N_USE_TRANSPORT_MODE, &sk.pbs))
+			if (!emit_v2Nt(v2N_USE_TRANSPORT_MODE, &sk.pbs)) {
+				freeanychunk(null_auth);
 				return STF_INTERNAL_ERROR;
+			}
 		} else {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
 		}
 
 		if (cc->send_no_esp_tfc) {
-			if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
+			if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs)) {
+				freeanychunk(null_auth);
 				return STF_INTERNAL_ERROR;
+			}
 		}
 
 		if (LIN(POLICY_MOBIKE, cc->policy)) {
 			cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
-			if (!emit_v2Nt(v2N_MOBIKE_SUPPORTED, &sk.pbs))
+			if (!emit_v2Nt(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
+				freeanychunk(null_auth);
 				return STF_INTERNAL_ERROR;
+			}
 		}
 		if (pst->st_seen_ppk) {
 			chunk_t notify_data = create_unified_ppk_id(&ppk_id_p);
 			if (!emit_v2Ntd(v2N_PPK_IDENTITY,
-					&notify_data, &sk.pbs))
+					&notify_data, &sk.pbs)) {
+				freeanychunk(null_auth);
+				freeanychunk(notify_data);
 				return STF_INTERNAL_ERROR;
+			}
 			freeanychunk(notify_data);
 
 			if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
 				ikev2_calc_no_ppk_auth(cc, pst, idhash_npa, &pst->st_no_ppk_auth);
 				if (!emit_v2Ntd(v2N_NO_PPK_AUTH,
-						&pst->st_no_ppk_auth, &sk.pbs))
+						&pst->st_no_ppk_auth, &sk.pbs)) {
+					freeanychunk(null_auth);
 					return STF_INTERNAL_ERROR;
+				}
 			}
 		}
 
 		if (null_auth.ptr != NULL) {
-			if (!emit_v2Ntd(v2N_NULL_AUTH, &null_auth, &sk.pbs))
+			if (!emit_v2Ntd(v2N_NULL_AUTH, &null_auth, &sk.pbs)) {
+				freeanychunk(null_auth);
 				return STF_INTERNAL_ERROR;
+			}
 			freeanychunk(null_auth);
 		}
 
