@@ -830,6 +830,12 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		pstats(ikev1_recv_notifies_e, n->isan_type);
 
 		switch (n->isan_type) {
+		/*
+		 * We anser DPD probes even if they claimed to not support DPD.
+		 * We would have to send some kind of reply anyway to prevent a
+		 * retransmit, so rather then send an error, we might as well just
+		 * send a DPD reply
+		 */
 		case R_U_THERE:
 			if (st == NULL) {
 				loglog(RC_LOG_SERIOUS,
