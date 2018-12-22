@@ -304,12 +304,12 @@ void process_packet(struct msg_digest **mdp)
 
 	if (!in_struct(&md->hdr, &isakmp_hdr_desc, &md->packet_pbs,
 		       &md->message_pbs)) {
-		/* The packet was very badly mangled. We can't be sure of any
-		 * content - not even to look for major version number!
-		 * So we'll just drop it.
+		/*
+		 * The packet was very badly mangled. We can't be sure
+		 * of any content - not even to look for major version
+		 * number!  So we'll just drop it.
 		 */
 		libreswan_log("Received packet with mangled IKE header - dropped");
-		send_notification_from_md(md, PAYLOAD_MALFORMED);
 		return;
 	}
 
@@ -594,17 +594,19 @@ void schedule_md_event(const char *name, struct msg_digest *md)
  */
 enum message_role v2_msg_role(const struct msg_digest *md)
 {
+	/*
+	 * When something bogus, such as no MD, or MD having the wrong
+	 * version number, return 0.  Calling code can then either
+	 * trigger a bad_case() or other assertion.
+	 */
 	if (!pexpect(md != NULL)) {
-		/* should cause caller to trigger bad_case() */
 		return 0; /* reserved */
 	}
-	/*
-	 * Only IKEv2 - short of parsing the payload contents it
-	 * probably isn't possible to determine if an IKEv1 message is
-	 * a request or response.
-	 */
 	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
-	passert(vmaj == IKEv2_MAJOR_VERSION);
+	if (!pexpect(vmaj == IKEv2_MAJOR_VERSION)) {
+		return 0; /* reserved */
+	}
+	/* determine the role */
 	enum message_role role =
 		(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) ? MESSAGE_RESPONSE : MESSAGE_REQUEST;
 	passert(role > 0); /* not reserved */
