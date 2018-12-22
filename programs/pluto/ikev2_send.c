@@ -319,7 +319,8 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 	pb_stream reply = open_out_pbs("encrypted notification",
 				       buf, sizeof(buf));
 
-	pb_stream rbody = open_v2_message(&reply, ike, md,
+	pb_stream rbody = open_v2_message(&reply, ike,
+					  md /* response */,
 					  exchange_type);
 	if (!pbs_ok(&rbody)) {
 		libreswan_log("error initializing hdr for encrypted notification");
@@ -439,7 +440,9 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	pb_stream reply = open_out_pbs("unencrypted notification",
 				       buf, sizeof(buf));
-	pb_stream rbody = open_v2_message(&reply, NULL, md, exchange_type);
+	pb_stream rbody = open_v2_message(&reply, NULL/*no state*/,
+					  md /* response */,
+					  exchange_type);
 	if (!pbs_ok(&rbody)) {
 		PEXPECT_LOG("error building header for unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->hdr.isa_msgid);
@@ -490,7 +493,8 @@ void send_v2_delete(struct state *const st)
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	pb_stream packet = open_out_pbs("informational exchange delete request",
 					buf, sizeof(buf));
-	pb_stream rbody = open_v2_message(&packet, ike, NULL,
+	pb_stream rbody = open_v2_message(&packet, ike,
+					  NULL /* request */,
 					  ISAKMP_v2_INFORMATIONAL);
 	if (!pbs_ok(&packet)) {
 		return;
@@ -584,7 +588,8 @@ stf_status send_v2_informational_request(const char *name,
 		return STF_INTERNAL_ERROR;
 	}
 
-	pb_stream message = open_v2_message(&packet, ike, NULL,
+	pb_stream message = open_v2_message(&packet, ike,
+					    NULL /* request */,
 					    ISAKMP_v2_INFORMATIONAL);
 	if (!pbs_ok(&message)) {
 		return STF_INTERNAL_ERROR;
