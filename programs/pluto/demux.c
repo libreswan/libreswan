@@ -68,6 +68,7 @@
 #include "ip_address.h"
 #include "af_info.h"
 #include "pluto_stats.h"
+#include "ikev2_send.h"
 
 /* This file does basic header checking and demux of
  * incoming packets.
@@ -300,7 +301,6 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 void process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	int vmaj, vmin;
 
 	if (!in_struct(&md->hdr, &isakmp_hdr_desc, &md->packet_pbs,
 		       &md->message_pbs)) {
@@ -327,10 +327,18 @@ void process_packet(struct msg_digest **mdp)
 		});
 	}
 
-	vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
-	vmin = md->hdr.isa_version & ISA_MIN_MASK;
+	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
+	unsigned vmin = md->hdr.isa_version & ISA_MIN_MASK;
 
 	switch (vmaj) {
+	case 0:
+		/*
+		 * IKEv2 doesn't say what to do with low versions,
+		 * just drop them.
+		 */
+		libreswan_log("ignoring packet with IKE major version '%d'", vmaj);
+		return;
+
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 		if (vmin > ISAKMP_MINOR_VERSION) {
 			/* RFC2408 3.1 ISAKMP Header Format:
@@ -377,8 +385,46 @@ void process_packet(struct msg_digest **mdp)
 		break;
 
 	default:
-		libreswan_log("Unexpected IKE major '%d'", vmaj);
-		send_notification_from_md(md, INVALID_MAJOR_VERSION);
+		libreswan_log("message contains unsupported IKE major version '%d'", vmaj);
+		/*
+		 * According to 1.5.  Informational Messages outside
+		 * of an IKE SA, [...] the message is always sent
+		 * without cryptographic protection (outside of an IKE
+		 * SA), and includes either an INVALID_IKE_SPI or an
+		 * INVALID_MAJOR_VERSION notification (with no
+		 * notification data).  The message is a response
+		 * message, and thus it is sent to the IP address and
+		 * port from whence it came with the same IKE SPIs and
+		 * the Message ID and Exchange Type are copied from
+		 * the request.  The Response flag is set to 1, and
+		 * the version flags are set in the normal fashion.
+		 *
+		 * XXX: But this this doesn't specify the I
+		 * (Initiator) flag.  Normally the MD's I flag can be
+		 * flipped.  But does IKEv++ even have an I
+		 * (Initiator) flag?  Presumably it's an initial
+		 * response so the flag should be clear.
+		 *
+		 * XXX: According to 2.5. Version Numbers and Forward
+		 * Compatibility, it "SHOULD send an unauthenticated
+		 * Notify message of type INVALID_MAJOR_VERSION
+		 * containing the highest (closest) version number it
+		 * supports".  Does the INVALID_MAJOR_VERSION
+		 * notification contain the version or is it implied
+		 * by the message header.  Presumably the latter -
+		 * nothing describes the Notification Data for this
+		 * notification.
+		 *
+		 * XXX: According to 3.1. The IKE Header,
+		 * implementations "MUST reject or ignore messages
+		 * containing a version number greater than 2 with an
+		 * INVALID_MAJOR_VERSION".  Does this mean reject
+		 * IKEv++ messages that contain INVALID_MAJOR_VERSION,
+		 * or reject IKEv++ messages by responding with an
+		 * INVALID_MAJOR_VERSION.  Presumably the latter.
+		 */
+		send_v2N_response_from_md(md, v2N_INVALID_MAJOR_VERSION,
+					  NULL/*no data*/);
 		return;
 	}
 }
