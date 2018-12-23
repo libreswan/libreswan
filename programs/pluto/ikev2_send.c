@@ -405,36 +405,49 @@ void send_v2N_response_from_state(struct ike_sa *ike,
 					 ntype, ndata);
 }
 
+/*
+ * This is called with a pretty messed up MD so trust nothing.  For
+ * instance when the version number is wrong.
+ */
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t ntype,
 			       const chunk_t *ndata)
 {
-	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
-
 	passert(md != NULL); /* always a response */
+
+	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
+	passert(notify_name != NULL); /* must be known */
+
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
-	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
+	const char *exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
+	if (exchange_name == NULL) {
+		/* when responding to crud, name may not be known */
+		exchange_name = "UNKNOWN";
+		dbg("message request contains unknown exchange type %d",
+		    exchange_type);
+	}
 
 	ipstr_buf b;
-	libreswan_log("responding to %s message (ID %u) from %s:%u with unencrypted notification %s",
-		      exchange_name, md->hdr.isa_msgid,
+	libreswan_log("responding to %s (%d) message (Message ID %u) from %s:%u with unencrypted notification %s",
+		      exchange_name, exchange_type,
+		      md->hdr.isa_msgid,
 		      sensitive_ipstr(&md->sender, &b),
 		      hportof(&md->sender),
 		      notify_name);
 
 	/*
-	 * For unencrypted messages, the EXCHANGE TYPE can only be
-	 * INIT or AUTH (if DH fails, AUTH gets an unencrypted
-	 * response).
+	 * Normally an unencrypted response is only valid for
+	 * IKE_SA_INIT or IKE_AUTH (when DH fails).  However "1.5.
+	 * Informational Messages outside of an IKE SA" says to
+	 * respond to other crud using the initiator's exchange type
+	 * and Message ID and an unencrypted response.
 	 */
 	switch (exchange_type) {
 	case ISAKMP_v2_IKE_SA_INIT:
 	case ISAKMP_v2_IKE_AUTH:
 		break;
 	default:
-		PEXPECT_LOG("exchange type %s invalid for unencrypted notification",
-			    exchange_name);
-		return;
+		dbg("normally exchange type %s is encrypted", exchange_name);
 	}
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
@@ -460,10 +473,8 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	close_output_pbs(&reply);
 
 	/*
-	 * The notification is piggybacked on the existing parent state.
-	 * This notification is fire-and-forget (not a proper exchange,
-	 * one with retrying).  So we need not preserve the packet we
-	 * are sending.
+	 * This notification is fire-and-forget (not a proper
+	 * exchange, one with retrying) so it is not saved.
 	 */
 	send_chunk("v2 notify", SOS_NOBODY, md->iface, md->sender,
 		   same_out_pbs_as_chunk(&reply));
