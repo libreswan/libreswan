@@ -814,11 +814,11 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 
 	if (!c->nat_keepalive) {
 		DBG(DBG_NATT,
-			DBG_log("Suppressing sending of NAT-T KEEP-ALIVE by per-conn configuration (nat_keepalive=no)"));
+			DBG_log("Suppressing sending of NAT-T KEEP-ALIVE by per-conn configuration (nat-keepalive=no)"));
 		return;
 	}
 	DBG(DBG_NATT,
-		DBG_log("Sending of NAT-T KEEP-ALIVE enabled by per-conn configuration (nat_keepalive=yes)"));
+		DBG_log("Sending of NAT-T KEEP-ALIVE enabled by per-conn configuration (nat-keepalive=yes)"));
 
 	if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
 	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
