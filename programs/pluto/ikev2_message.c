@@ -82,13 +82,13 @@ uint8_t build_ikev2_critical(bool impair)
 /*
  * Open an IKEv2 message.
  *
- * At least one of the IKE SA and/or MD must be specified.
+ * Request: IKE, which must be non-NULL, is used to determine the IKE
+ * SA Initiator / Responder role; MD must be NULL (after all a request
+ * has no response).
  *
- * XXX: is this sufficient for handing child SAs?
- *
- * The opened PBS is put into next-payload back-patch mode so
- * containing payloads should not specify their payload-type.  It will
- * instead be taken from the payload struct descriptor.
+ * Response: If IKE is non-NULL then it is used to determine the IKE
+ * SA Initiator / Responder role (NULL implies IKE SA Initiator); MD
+ * must be non-NULL (the message being responded to).
  */
 
 pb_stream open_v2_message(pb_stream *reply,
@@ -107,15 +107,22 @@ pb_stream open_v2_message(pb_stream *reply,
 	};
 
 	/*
-	 * I(Initiator) flag
+	 * I (Initiator) flag
 	 *
-	 * If there was no IKE SA then this must be the original
-	 * responder (the only time that pluto constructs a packet
-	 * with no state is when replying to an SA_INIT or AUTH
-	 * request with an unencrypted response), else just use the
-	 * IKE SA's role.
+	 * If there is an IKE SA, the sa_role can be used.
+	 *
+	 * If there is no IKE SA, then, presumably, this is a response
+	 * to an initial exchange and the flag should be clear.
+	 *
+	 * The other possability is that this is a response to an
+	 * IKEv++ message, just assume this is the initial exchange
+	 * and the I flag should be clear (see 1.5.  Informational
+	 * Messages outside of an IKE SA).  The other option would be
+	 * to flip MD's I bit, but since this is IKEv++, there may not
+	 * even be an I bit.
 	 */
 	if (ike != NULL) {
+		/* easy */
 		switch (ike->sa.st_sa_role) {
 		case SA_INITIATOR:
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
@@ -128,30 +135,22 @@ pb_stream open_v2_message(pb_stream *reply,
 	}
 
 	/*
-	 * R(Responder) flag
+	 * R (Response) flag
 	 *
 	 * If there's no MD, then this must be a new request -
 	 * R(Responder) flag clear.
 	 *
-	 * If there is an MD, and it contains a message request, then
-	 * this end must be sending a response - R(Responder) flag
-	 * set.
+	 * If there is an MD, then this must be a response -
+	 * R(Responder) flag set.
 	 *
-	 * If there is an MD, and it contains a message response, then
-	 * the caller is trying to respond to a response (or someone's
-	 * been faking MDs), which is pretty messed up.
+	 * Note that when MD!= NULL, v2_msg_role() can't be called (as
+	 * a cross check) as this code used to force a response to a
+	 * message that is close to bogus requests (1.5.
+	 * Informational Messages outside of an IKE SA - where the
+	 * response is forced.
 	 */
 	if (md != NULL) {
-		switch (v2_msg_role(md)) {
-		case MESSAGE_REQUEST:
-			hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
-			break;
-		case MESSAGE_RESPONSE:
-			PEXPECT_LOG("trying to respond to a message response%s", "");
-			return empty_pbs;
-		default:
-			bad_case(v2_msg_role(md));
-		}
+		hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
 	}
 
 	/*
@@ -160,16 +159,16 @@ pb_stream open_v2_message(pb_stream *reply,
 	if (ike != NULL) {
 		/*
 		 * Note that when the original initiator sends the
-		 * SA_INIT request, the still zero RCOOKIE will be
+		 * IKE_SA_INIT request, the still zero SPIr will be
 		 * copied.
 		 */
 		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
 		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
 	} else {
 		/*
-		 * Not that when responding to an SA_INIT with an
-		 * error notification (hence no state), the copied
-		 * RCOOKIE will (should be?).
+		 * Either error response notification to IKE_SA_INIT
+		 * or "Informational Messages outside of an IKE SA".
+		 * Use the IKE SPIs from the request.
 		 */
 		passert(md != NULL);
 		hdr.isa_ike_initiator_spi = md->hdr.isa_ike_initiator_spi;
@@ -183,7 +182,8 @@ pb_stream open_v2_message(pb_stream *reply,
 	 * message request) then this must be a response - use the
 	 * message digest's message ID.  A better choice should be
 	 * .st_msgid_lastrecv (or .st_msgid_lastrecv+1), but it isn't
-	 * clear if/when that value is updated.
+	 * clear if/when that value is updated and the IKE SA isn't
+	 * always available.
 	 *
 	 * If it isn't a response then use the IKE SA's
 	 * .st_msgid_nextuse.  The caller still needs to both

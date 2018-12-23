@@ -319,7 +319,8 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 	pb_stream reply = open_out_pbs("encrypted notification",
 				       buf, sizeof(buf));
 
-	pb_stream rbody = open_v2_message(&reply, ike, md,
+	pb_stream rbody = open_v2_message(&reply, ike,
+					  md /* response */,
 					  exchange_type);
 	if (!pbs_ok(&rbody)) {
 		libreswan_log("error initializing hdr for encrypted notification");
@@ -403,42 +404,57 @@ void send_v2N_response_from_state(struct ike_sa *ike,
 					 ntype, ndata);
 }
 
+/*
+ * This is called with a pretty messed up MD so trust nothing.  For
+ * instance when the version number is wrong.
+ */
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t ntype,
 			       const chunk_t *ndata)
 {
-	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
-
 	passert(md != NULL); /* always a response */
+
+	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
+	passert(notify_name != NULL); /* must be known */
+
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
-	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
+	const char *exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
+	if (exchange_name == NULL) {
+		/* when responding to crud, name may not be known */
+		exchange_name = "UNKNOWN";
+		dbg("message request contains unknown exchange type %d",
+		    exchange_type);
+	}
 
 	ipstr_buf b;
-	libreswan_log("responding to %s message (ID %u) from %s:%u with unencrypted notification %s",
-		      exchange_name, md->hdr.isa_msgid,
+	libreswan_log("responding to %s (%d) message (Message ID %u) from %s:%u with unencrypted notification %s",
+		      exchange_name, exchange_type,
+		      md->hdr.isa_msgid,
 		      sensitive_ipstr(&md->sender, &b),
 		      hportof(&md->sender),
 		      notify_name);
 
 	/*
-	 * For unencrypted messages, the EXCHANGE TYPE can only be
-	 * INIT or AUTH (if DH fails, AUTH gets an unencrypted
-	 * response).
+	 * Normally an unencrypted response is only valid for
+	 * IKE_SA_INIT or IKE_AUTH (when DH fails).  However "1.5.
+	 * Informational Messages outside of an IKE SA" says to
+	 * respond to other crud using the initiator's exchange type
+	 * and Message ID and an unencrypted response.
 	 */
 	switch (exchange_type) {
 	case ISAKMP_v2_IKE_SA_INIT:
 	case ISAKMP_v2_IKE_AUTH:
 		break;
 	default:
-		PEXPECT_LOG("exchange type %s invalid for unencrypted notification",
-			    exchange_name);
-		return;
+		dbg("normally exchange type %s is encrypted", exchange_name);
 	}
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	pb_stream reply = open_out_pbs("unencrypted notification",
 				       buf, sizeof(buf));
-	pb_stream rbody = open_v2_message(&reply, NULL, md, exchange_type);
+	pb_stream rbody = open_v2_message(&reply, NULL/*no state*/,
+					  md /* response */,
+					  exchange_type);
 	if (!pbs_ok(&rbody)) {
 		PEXPECT_LOG("error building header for unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->hdr.isa_msgid);
@@ -456,10 +472,8 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	close_output_pbs(&reply);
 
 	/*
-	 * The notification is piggybacked on the existing parent state.
-	 * This notification is fire-and-forget (not a proper exchange,
-	 * one with retrying).  So we need not preserve the packet we
-	 * are sending.
+	 * This notification is fire-and-forget (not a proper
+	 * exchange, one with retrying) so it is not saved.
 	 */
 	send_chunk("v2 notify", SOS_NOBODY, md->iface, md->sender,
 		   same_out_pbs_as_chunk(&reply));
@@ -489,7 +503,8 @@ void send_v2_delete(struct state *const st)
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	pb_stream packet = open_out_pbs("informational exchange delete request",
 					buf, sizeof(buf));
-	pb_stream rbody = open_v2_message(&packet, ike, NULL,
+	pb_stream rbody = open_v2_message(&packet, ike,
+					  NULL /* request */,
 					  ISAKMP_v2_INFORMATIONAL);
 	if (!pbs_ok(&packet)) {
 		return;
@@ -583,7 +598,8 @@ stf_status send_v2_informational_request(const char *name,
 		return STF_INTERNAL_ERROR;
 	}
 
-	pb_stream message = open_v2_message(&packet, ike, NULL,
+	pb_stream message = open_v2_message(&packet, ike,
+					    NULL /* request */,
 					    ISAKMP_v2_INFORMATIONAL);
 	if (!pbs_ok(&message)) {
 		return STF_INTERNAL_ERROR;
