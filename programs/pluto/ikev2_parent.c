@@ -1984,7 +1984,8 @@ static stf_status ikev2_send_auth(struct connection *c,
 	enum keyword_authby authby = c->spd.this.authby;
 	enum notify_payload_hash_algorithms hash_algo;
 
-	*null_auth = empty_chunk;
+	if (null_auth != NULL)
+		*null_auth = empty_chunk;
 
 	if (st->st_peer_wants_null) {
 		/* we allow authby=null and IDr payload told us to use it */
@@ -2110,12 +2111,14 @@ static stf_status ikev2_send_auth(struct connection *c,
 		bad_case(a.isaa_type);
 	}
 
-	/* we sent normal IKEv2_AUTH_RSA but if the policy also allows
+	/* We sent normal IKEv2_AUTH_RSA but if the policy also allows
 	 * AUTH_NULL, we will send a Notify with NULL_AUTH in separate
 	 * chunk. This is only done on the initiator in IKE_AUTH, and
-	 * not repeated in rekeys. We already changed state to STATE_PARENT_I2.
+	 * not repeated in rekeys.
 	 */
-	if (pst->st_state == STATE_PARENT_I2 && authby == AUTH_RSASIG && c->policy & POLICY_AUTH_NULL) {
+	if (null_auth != NULL &&
+	    authby == AUTH_RSASIG &&
+	    c->policy & POLICY_AUTH_NULL) {
 		/* store in null_auth */
 		if (!ikev2_create_psk_auth(AUTH_NULL, pst, idhash_out, NULL,
 			null_auth))
