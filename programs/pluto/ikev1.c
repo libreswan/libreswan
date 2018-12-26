@@ -2483,21 +2483,21 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 */
 
 		if (md->fragvid) {
-			DBG(DBG_CONTROLMORE, DBG_log("Peer supports fragmentation"));
+			dbg("peer supports fragmentation");
 			st->st_seen_fragvid = TRUE;
 		}
 
 		if (md->dpd) {
-			DBG(DBG_DPD, DBG_log("Peer supports DPD"));
+			dbg("peer supports DPD");
 			st->hidden_variables.st_peer_supports_dpd = TRUE;
 			if (dpd_active_locally(st)) {
-				DBG(DBG_DPD, DBG_log("DPD is configured locally"));
+				dbg("DPD is configured locally");
 			}
 		}
 
 		/* If state has VID_NORTEL, import it to activate workaround */
 		if (md->nortel) {
-			DBG(DBG_CONTROLMORE, DBG_log("Peer requires Nortel Contivity workaround"));
+			dbg("peer requires Nortel Contivity workaround");
 			st->st_seen_nortel_vid = TRUE;
 		}
 
