@@ -4126,6 +4126,6 @@ IKEv2 transforms:
 
 lswlog_enum_lset_short:
 
-  debug 18000:
-	<<crypt+crypt-low>>
+  debug 4:
+	<<crypt>>
 
