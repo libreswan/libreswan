@@ -1,4 +1,4 @@
-grep v2N_INVALID_KE_PAYLOAD /tmp/pluto.log
+grep -e v2N_INVALID_KE_PAYLOAD -e v2N_INVALID_SYNTAX /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
