@@ -2420,12 +2420,8 @@ startover:
  * If we can't find one easily, return 0 (a bad SPI,
  * no matter what order) indicating failure.
  */
-ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st)
+ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st, int tries)
 {
-	int tries = 0;
-
-startover:
-
 	/* network order makes first two bytes our target */
 	get_rnd_bytes((u_char *)&cpi, 2);
 
@@ -2442,8 +2438,8 @@ startover:
 		{
 			if (++tries == 20)
 				return 0; /* FAILURE */
+			return uniquify_his_cpi(cpi, st, tries);
 
-			goto startover;
 		}
 	}
 	return cpi;

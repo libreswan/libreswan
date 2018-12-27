@@ -795,7 +795,7 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
 void for_each_state(void (*f)(struct state *, void *data), void *data);
 
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
-extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st);
+extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st, int tries);
 
 extern void fmt_list_traffic(struct state *st, char *state_buf,
 			     const size_t state_buf_len);
