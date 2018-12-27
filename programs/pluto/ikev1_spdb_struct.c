@@ -621,8 +621,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					 * CPI is stored in network low order end of an
 					 * ipsec_spi_t.  So we start a couple of bytes in.
 					 */
-					if (!out_raw((u_char *)&st->st_ipcomp.
-						     our_spi +
+					if (!out_raw((u_char *)&st->st_ipcomp.our_spi +
 						     IPSEC_DOI_SPI_SIZE -
 						     IPCOMP_CPI_SIZE,
 						     IPCOMP_CPI_SIZE,
@@ -2431,8 +2430,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				switch (ntohl(next_spi)) {
 				case IPCOMP_DEFLATE:
 					well_known_cpi = ntohl(next_spi);
-					next_spi = uniquify_his_cpi(next_spi,
-								    st);
+					next_spi = uniquify_his_cpi(next_spi, st);
 					if (next_spi == 0) {
 						loglog(RC_LOG_SERIOUS,
 						       "IPsec Proposal contains well-known CPI that I cannot uniquify");
