@@ -14,6 +14,7 @@ v3.28 (unreleased)
 * IKEv2: Fix bug that prevented AH from rekeying [Andrew]
 * IKEv2: IKE SA rekey could lead to losing track of Child SA [Andrew/Antony]
 * IKEv2: A spurious DH calculation was performed and disgarded [Andrew]
+* IKEv2: Support for IPCOMP (compress=yes) [Paul]
 * IKEv1: Do not activate DPD when peer does not support it [Paul]
 * IKEv1: Reject key sizes <= 0 properly instead of crashing [Paul]
 * pluto: Simplify state lookups and SPI passing [Andrew]
