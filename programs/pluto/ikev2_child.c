@@ -157,13 +157,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	md->st = cst;
 	c = cst->st_connection;
 
-	/*
-	 * The notifies have not yet been processed here, so we cannot
-	 * look at st_seen_use_transport in either st or pst.  If we
-	 * change to comply to RFC style transport mode negotiation,
-	 * reading ntfy's will have to be done here.
-	 */
-
 	if (c->spd.that.has_lease &&
 	    md->chain[ISAKMP_NEXT_v2CP] != NULL &&
 	    cst->st_state != STATE_V2_REKEY_IKE_R) {

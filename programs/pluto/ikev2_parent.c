@@ -1142,6 +1142,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 		/* These are not supposed to appear in IKE_INIT */
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 		case v2N_USE_TRANSPORT_MODE:
+		case v2N_IPCOMP_SUPPORTED:
 		case v2N_PPK_IDENTITY:
 		case v2N_NO_PPK_AUTH:
 		case v2N_MOBIKE_SUPPORTED:
@@ -1685,11 +1686,12 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 
 		case v2N_MOBIKE_SUPPORTED:
 		case v2N_USE_TRANSPORT_MODE:
+		case v2N_IPCOMP_SUPPORTED:
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 		case v2N_PPK_IDENTITY:
 		case v2N_NO_PPK_AUTH:
 		case v2N_INITIAL_CONTACT:
-			DBG(DBG_CONTROL, DBG_log("%s: received %s which is not valid for IKE_INIT - ignoring it",
+			DBG(DBG_CONTROL, DBG_log("%s: received %s which is not valid in the IKE_SA_INIT Exchange - ignoring it",
 				st->st_state_name,
 				enum_name(&ikev2_notify_names,
 					ntfy->payload.v2n.isan_type)));
@@ -2438,7 +2440,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	 * ??? Why so late in this game?
 	 *
 	 * Then emit SA2i, TSi and TSr and
-	 * (v2N_USE_TRANSPORT_MODE notification in transport mode)
+	 * v2N_USE_TRANSPORT_MODE notification in transport mode
+	 * v2N_IPCOMP_SUPPORTED for compression
 	 * for it.
 	 */
 
@@ -2463,12 +2466,11 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				cst->st_serialno, cc->name,
 				fmt_conn_instance(cc, cib),
 				pc->name, fmt_conn_instance(pc, cib));
-
 	}
 	/* ??? this seems very late to change the connection */
 	cst->st_connection = cc;	/* safe: from duplicate_state */
 
-	/* code does not support AH + ESP, not recommend rfc8221 section-4 */
+	/* code does not support AH+ESP, which not recommended as per RFC 8247 */
 	struct ipsec_proto_info *proto_info
 		= ikev2_child_sa_proto_info(cst, cc->policy);
 	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
@@ -2762,6 +2764,11 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	chunk_t null_auth;	setchunk(null_auth, NULL, 0);
 	struct payload_digest *ntfy;
 
+	/*
+	 * The NOTIFY payloads we receive in the IKE_AUTH request are either
+	 * related to the IKE SA, or the Child SA. Here we only process the
+	 * ones related to the IKE SA.
+	 */
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_PPK_IDENTITY:
@@ -2800,6 +2807,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			}
 			break;
 		}
+
 		case v2N_NO_PPK_AUTH:
 		{
 			pb_stream pbs = ntfy->pbs;
@@ -2827,12 +2835,14 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			st->st_no_ppk_auth = no_ppk_auth;
 			break;
 		}
+
 		case v2N_MOBIKE_SUPPORTED:
 			DBG(DBG_CONTROLMORE, DBG_log("received v2N_MOBIKE_SUPPORTED %s",
-						st->st_sent_mobike ?
-						"and sent" : "while it did not sent"));
+				st->st_sent_mobike ?
+					"and sent" : "while it did not sent"));
 			st->st_seen_mobike = TRUE;
 			break;
+
 		case v2N_NULL_AUTH:
 		{
 			pb_stream pbs = ntfy->pbs;
@@ -2850,6 +2860,13 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			DBG(DBG_CONTROLMORE, DBG_log("received v2N_INITIAL_CONTACT"));
 			st->st_seen_initialc = TRUE;
 			break;
+
+		/* Child SA related NOTIFYs are processed later in ikev2_process_ts_and_rest() */
+		case v2N_USE_TRANSPORT_MODE:
+		case v2N_IPCOMP_SUPPORTED:
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			break;
+
 		default:
 			DBG(DBG_CONTROLMORE, DBG_log("Received unknown/unsupported notify %s - ignored",
 				enum_name(&ikev2_notify_names,
@@ -3430,7 +3447,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 				return STF_FATAL;
 			}
 
-			/* check for status notify messages */
+			/* check for Child SA related NOTIFY payloads */
 			switch (ntfy->payload.v2n.isan_type) {
 			case v2N_USE_TRANSPORT_MODE:
 			{
@@ -3458,7 +3475,6 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 				st->st_seen_no_tfc = TRUE;
 				break;
 			}
-			/* MOBIKE check done in caller */
 			default:
 				DBG(DBG_CONTROLMORE,
 					DBG_log("ignored received NOTIFY (%d): %s ",
@@ -3520,20 +3536,11 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	bool ppk_seen_identity = FALSE;
-	/* Process NOTIFY payloads before AUTH so we can log any error notifies */
+	/* Process NOTIFY payloads related to IKE SA */
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_COOKIE:
 			DBG(DBG_CONTROLMORE, DBG_log("Ignoring bogus COOKIE notify in IKE_AUTH rpely"));
-			break;
-		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-			DBG(DBG_CONTROLMORE, DBG_log("Received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC"));
-			st->st_seen_no_tfc = TRUE; /* Technically, this should be only on the child sa */
-			break;
-		case v2N_USE_TRANSPORT_MODE:
-			DBG(DBG_CONTROLMORE, DBG_log("Received v2N_USE_TRANSPORT_MODE in IKE_AUTH reply"));
-			st->st_seen_use_transport = TRUE; /* might be useful at rekey time */
-			got_transport = TRUE;
 			break;
 		case v2N_MOBIKE_SUPPORTED:
 			DBG(DBG_CONTROLMORE, DBG_log("received v2N_MOBIKE_SUPPORTED %s",
@@ -3568,6 +3575,15 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 			}
 			break;
 		}
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			DBG(DBG_CONTROLMORE, DBG_log("Received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC"));
+			st->st_seen_no_tfc = TRUE; /* Technically, this should be only on the child state */
+			break;
+		case v2N_USE_TRANSPORT_MODE:
+			DBG(DBG_CONTROLMORE, DBG_log("Received v2N_USE_TRANSPORT_MODE in IKE_AUTH reply"));
+			st->st_seen_use_transport = TRUE; /* should be on child state, might be useful at rekey time */
+			got_transport = TRUE;
+			break;
 		default:
 			DBG(DBG_CONTROLMORE, DBG_log("Received %s notify - ignored",
 				enum_name(&ikev2_notify_names,
