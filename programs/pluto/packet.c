@@ -1520,6 +1520,31 @@ struct_desc suggested_group_desc = {
 	.pt = ISAKMP_NEXT_v2NONE,
 };
 
+/*
+ * IPcomp Notify as per RFC 7296:
+ *
+ * The data associated with this Notify message includes a two-octet
+ * IPComp CPI followed by a one-octet Transform ID optionally followed
+ * by attributes whose length and format are defined by that Transform
+ * ID.
+ *
+ * Currently, we only support one Transform ID (2, IPCOMP_DEFLATE) which has
+ * no further attributes.
+ */ 
+static field_desc ikev2notify_ipcomp_fields[] = {
+	{ ft_nat, 16 / BITS_PER_BYTE, "IPcomp SPI (CPI)", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 Notification IPCOMP Transform IDs", &ipcomp_transformid_names },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2notify_ipcomp_data_desc = {
+	.name = "IKEv2 IPcomp Notify Data",
+	.fields = ikev2notify_ipcomp_fields,
+	//.size = sizeof(struct ikev2_notify_ipcomp_data),
+	.size = 3,
+};
+
+
 #ifdef HAVE_LABELED_IPSEC
 
 /*
