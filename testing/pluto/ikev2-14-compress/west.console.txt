@@ -94,7 +94,7 @@ lifetime current:\	  32848(bytes), 4(packets)\
 lifetime current:\	  33184(bytes), 8(packets)\	  
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ipcomp", type=ESP, add_time=1234567890, inBytes=661, outBytes=661, id='@east'
+006 #2: "westnet-eastnet-ipcomp", type=ESP, add_time=1234567890, inBytes=657, outBytes=661, id='@east'
 west #
  echo done
 done
