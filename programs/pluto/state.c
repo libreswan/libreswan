@@ -1331,9 +1331,15 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_seen_fragments = st->st_seen_fragments;
 	nst->st_seen_ppk = st->st_seen_ppk;
 	nst->st_seen_redirect_sup = st->st_seen_redirect_sup;
+	nst->st_seen_use_ipcomp = st->st_seen_use_ipcomp;
 	nst->st_sent_redirect = st->st_sent_redirect;
 	nst->st_event = NULL;
 
+	/* these were set while we didn't have client state yet */
+	/* we should really split the NOTIFY loop in two cleaner ones */
+	nst->st_ipcomp.attrs = st->st_ipcomp.attrs;
+	nst->st_ipcomp.present = st->st_ipcomp.present;
+	nst->st_ipcomp.our_spi = st->st_ipcomp.our_spi;
 
 	if (sa_type == IPSEC_SA) {
 #   define clone_nss_symkey_field(field) nst->field = reference_symkey(__func__, #field, st->field)

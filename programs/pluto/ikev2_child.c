@@ -234,6 +234,42 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			DBG(DBG_CONTROL, DBG_log("received USE_TRANSPORT_MODE"));
 			cst->st_seen_use_transport = TRUE;
 			break;
+		case v2N_IPCOMP_SUPPORTED:
+		{
+			pb_stream pbs = ntfy->pbs;
+			size_t len = pbs_left(&pbs);
+			struct ikev2_notify_ipcomp_data n_ipcomp;
+
+			DBG(DBG_CONTROLMORE, DBG_log("received v2N_IPCOMP_SUPPORTED of length %zd", len));
+
+			if (!in_struct(&n_ipcomp, &ikev2notify_ipcomp_data_desc, &pbs, NULL)) {
+				return STF_FATAL;
+			}
+
+			if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
+				loglog(RC_LOG_SERIOUS, "Unsupported IPCOMP compression method %d",
+					n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
+				return STF_FATAL;
+			}
+			if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
+				loglog(RC_LOG_SERIOUS, "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
+				return STF_FATAL;
+			}
+			if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
+				DBG(DBG_CONTROLMORE, DBG_log("Ignored IPCOMP request as connection has compres=no"));
+				cst->st_ipcomp.present = FALSE;
+				break;
+			}
+			DBG(DBG_CONTROL, DBG_log("Received compression CPI=%d", htonl(n_ipcomp.ikev2_cpi)));
+
+			//cst->st_ipcomp.attrs.spi = uniquify_his_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
+			cst->st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
+			cst->st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
+			cst->st_ipcomp.attrs.encapsulation = ENCAPSULATION_MODE_TUNNEL; /* always? */
+			cst->st_ipcomp.present = TRUE;
+			cst->st_seen_use_ipcomp = TRUE;
+			break;
+		}
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 			DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
 			cst->st_seen_no_tfc = TRUE;
@@ -277,6 +313,16 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			}
 		}
 
+		if (c->policy & POLICY_COMPRESS) {
+			if (!cst->st_seen_use_ipcomp) {
+				DBG(DBG_CONTROLMORE, DBG_log("policy suggested compression, but peer did not offer support"));
+			}
+		} else {
+			if (cst->st_seen_use_ipcomp) {
+				DBG(DBG_CONTROLMORE, DBG_log("policy did not allow compression, ignoring peer's request");
+			}
+		}
+
 		/*
 		 * XXX: see above notes on 'role' - this must be the
 		 * SA_RESPONDER.
@@ -317,6 +363,38 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
 		if (!emit_v2Nt(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
 			return STF_INTERNAL_ERROR;
+	}
+
+	if ((c->policy & POLICY_COMPRESS) && cst->st_seen_use_ipcomp) {
+		uint16_t c_spi;
+
+		DBG(DBG_CONTROL, DBG_log("Responder child policy is compress and initiator indicated support, sending v2N_IPCOMP_SUPPORTED for DEFLATE"));
+
+		/* calculate and keep our CPI */
+		if (cst->st_ipcomp.our_spi == 0) {
+			cst->st_ipcomp.our_spi = get_my_cpi(&c->spd, LIN(POLICY_TUNNEL, c->policy));
+			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
+			if (c_spi < IPCOMP_FIRST_NEGOTIATED) { /* get_my_cpi() failed */
+				loglog(RC_LOG_SERIOUS, "kernel failed to calculate compression CPI (CPI=%d)",
+					c_spi);
+				return STF_INTERNAL_ERROR;
+			}
+			DBG(DBG_CONTROL, DBG_log("Calculated compression CPI=%d", c_spi));
+		} else {
+			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
+		}
+		unsigned char gunk[] = { c_spi / 256, c_spi % 256, IPCOMP_DEFLATE };
+		chunk_t ipcompN;
+
+		ipcompN.len = IPCOMP_CPI_SIZE + 1;
+		ipcompN.ptr = gunk;
+
+		if (!emit_v2Ntd(v2N_IPCOMP_SUPPORTED, &ipcompN, outpbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+		DBG(DBG_CONTROL, DBG_log("Sending v2N_IPCOMP_SUPPORTED for DEFLATE algorithm"));
+	} else {
+		DBG(DBG_CONTROL, DBG_log("Not sending v2N_IPCOMP_SUPPORTED"));
 	}
 
 	ikev2_derive_child_keys(pexpect_child_sa(cst));
