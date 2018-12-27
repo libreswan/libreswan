@@ -1977,8 +1977,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 	if (st->st_ipcomp.present) {
 		ipsec_spi_t ipcomp_spi =
-			inbound ? st->st_ipcomp.our_spi : st->st_ipcomp.attrs.
-			spi;
+			inbound ? st->st_ipcomp.our_spi : st->st_ipcomp.attrs.spi;
 		unsigned compalg;
 
 		switch (st->st_ipcomp.attrs.transattrs.ta_comp) {
