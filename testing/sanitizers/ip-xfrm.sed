@@ -1,6 +1,3 @@
-# XXX: can this optional sanitizer be merged into guest-ip*.sed which
-# is always run
-
 # this an aggressive sanitizer for "ip xfrm state" esp
 # careful when mxixing this with "ipsec look"
 # "ipsec look" sanitizer are similar
