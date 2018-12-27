@@ -14,13 +14,13 @@ west #
 west #
  # whack testing
 west #
- ipsec whack --name testmanual1 --encrypt --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.4 --authby=psk --to --host 2.3.4.5 --authby=rsasig
+ ipsec whack --name testmanual1 --encrypt --ikev2-allow --ipv4 --host 1.2.3.4 --authby=psk --to --host 2.3.4.5 --authby=rsasig
 002 added connection description "testmanual1"
 west #
- ipsec whack --name testmanual2 --encrypt --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
+ ipsec whack --name testmanual2 --encrypt --ikev2-allow --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
 002 added connection description "testmanual2"
 west #
- ipsec whack --name testmanual3 --psk --encrypt --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.6 --authby=psk --to --host 2.3.4.7 --authby=psk
+ ipsec whack --name testmanual3 --psk --encrypt --ikev2-allow --ipv4 --host 1.2.3.6 --authby=psk --to --host 2.3.4.7 --authby=psk
 002 added connection description "testmanual3"
 west #
  # parser testing
@@ -90,16 +90,16 @@ all remaining tests should fail
 west #
  # whack testing
 west #
- ipsec whack --name failtestmanual1 --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
+ ipsec whack --name failtestmanual1 --ikev2-allow --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
 036 Failed to add connection "failtestmanual1": non-shunt connection must have AH or ESP
 west #
- ipsec whack --name failtestmanual2 --encrypt --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
+ ipsec whack --name failtestmanual2 --ikev1-allow --encrypt --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
 036 Failed to add connection "failtestmanual2": leftauth= and rightauth= require ikev2=insist
 west #
- ipsec whack --name failtestmanual3 --psk --encrypt --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
+ ipsec whack --name failtestmanual3 --psk --encrypt --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
 036 Failed to add connection "failtestmanual3": leftauth=null is unequal to rightauth=rsasig so authby=PSK must not be set
 west #
- ipsec whack --name failtestmanual4 --rsasig --encrypt --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
+ ipsec whack --name failtestmanual4 --rsasig --encrypt --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
 036 Failed to add connection "failtestmanual4": leftauth=null is unequal to rightauth=rsasig so authby=RSASIG must not be set
 west #
  # parser testing
@@ -168,9 +168,9 @@ west #
 000 "test-passthrough":   our auth:unset, their auth:unset
 000 "test-passthrough":   policy: AUTH_NEVER+PASS+NEVER_NEGOTIATE;
 000 "test-v1-rsasig":   our auth:rsasig, their auth:rsasig
-000 "test-v1-rsasig":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "test-v1-rsasig":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "test-v1-secret":   our auth:secret, their auth:secret
-000 "test-v1-secret":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "test-v1-secret":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "test1":   our auth:secret, their auth:secret
 000 "test1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "test2":   our auth:rsasig, their auth:rsasig
