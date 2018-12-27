@@ -319,7 +319,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			}
 		} else {
 			if (cst->st_seen_use_ipcomp) {
-				DBG(DBG_CONTROLMORE, DBG_log("policy did not allow compression, ignoring peer's request");
+				DBG(DBG_CONTROLMORE, DBG_log("policy did not allow compression, ignoring peer's request"));
 			}
 		}
 
