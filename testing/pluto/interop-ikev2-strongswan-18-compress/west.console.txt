@@ -1,0 +1,172 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
+down
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA
+133 "westnet-eastnet-ikev2" #1: initiate
+133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-ikev2" #2: Authenticated using authby=secret
+002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ikev2" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP NATOA=none NATD=none DPD=passive}
+west #
+ # first pings hit regular ESP since pings too small to compress
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # this oddly shows up as 0 packets and 4 packets on ipcomp
+west #
+ ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
+lifetime current:\	  0(bytes), 0(packets)\	  
+lifetime current:\	  336(bytes), 4(packets)\	  
+west #
+ # test compression via large pings that can be compressed on IPCOMP SA
+west #
+ ping -n -c 4 -s 8184  -p ff -I 192.0.1.254 192.0.2.254
+PATTERN: 0xff
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 8184(8212) bytes of data.
+8192 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+8192 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+8192 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+8192 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # this then  shows up as 4 packets and 8 packets on ipcomp
+west #
+ ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
+lifetime current:\	  32848(bytes), 4(packets)\	  
+lifetime current:\	  33184(bytes), 8(packets)\	  
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=658, outBytes=657, id='@east'
+west #
+ echo done
+done
+west #
+ # should see ipcomp entries
+west #
+ ip xfrm state
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.23 dst 192.1.2.45
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+src 192.1.2.23 dst 192.1.2.45
+	proto 4 spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.45 dst 192.1.2.23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+src 192.1.2.45 dst 192.1.2.23
+	proto 4 spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+west #
+ ip xfrm pol
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir out priority 1042407 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto comp reqid 16390 mode tunnel
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 16389 mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir fwd priority 1042407 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid 16390 mode tunnel
+		level use 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 16389 mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir in priority 1042407 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid 16390 mode tunnel
+		level use 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 16389 mode transport
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

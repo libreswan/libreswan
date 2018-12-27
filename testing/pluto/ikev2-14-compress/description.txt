@@ -1,5 +1,4 @@
-Basic pluto with IKEv2 using PSK on the initiator (west), and Strongswan on
-the responder testing COMPRESSION
+IKEv2 test using IPCOMP
 
 The IPCOMP ip xfrm output is a little odd. It contains proto esp, proto comp
 and proto 4 (ipip) entries. It also changes the outer ESP as transport mode,

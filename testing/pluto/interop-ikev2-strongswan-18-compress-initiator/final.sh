@@ -1,6 +1,7 @@
-# should see ipcomp entries
+if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 ip xfrm state
-ip xfrm pol
+ip xfrm policy
 : ==== cut ====
 if [ -f /var/run/pluto/pluto.pid ]; then ipsec auto --status ; fi
 if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi

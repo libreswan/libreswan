@@ -1,0 +1,2 @@
+IKEv2 test where both ends do not agree on IPCOMP and neither side should use it
+

@@ -5,26 +5,26 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-compress
-002 added connection description "westnet-eastnet-compress"
+ ipsec auto --add westnet-eastnet-ipcomp
+002 added connection description "westnet-eastnet-ipcomp"
 east #
- ipsec auto --status | grep westnet-eastnet-compress
-000 "westnet-eastnet-compress": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-compress":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
-000 "westnet-eastnet-compress":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-compress":   our auth:rsasig, their auth:rsasig
-000 "westnet-eastnet-compress":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-compress":   labeled_ipsec:no;
-000 "westnet-eastnet-compress":   policy_label:unset;
-000 "westnet-eastnet-compress":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "westnet-eastnet-compress":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "westnet-eastnet-compress":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-compress":   policy: RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
-000 "westnet-eastnet-compress":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-compress":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "westnet-eastnet-compress":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
-000 "westnet-eastnet-compress":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-compress":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+ ipsec auto --status | grep westnet-eastnet-ipcomp
+000 "westnet-eastnet-ipcomp": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ipcomp":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-ipcomp":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-ipcomp":   our auth:rsasig, their auth:rsasig
+000 "westnet-eastnet-ipcomp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-ipcomp":   labeled_ipsec:no;
+000 "westnet-eastnet-ipcomp":   policy_label:unset;
+000 "westnet-eastnet-ipcomp":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipcomp":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-ipcomp":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-ipcomp":   policy: RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-ipcomp":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-ipcomp":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-ipcomp":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "westnet-eastnet-ipcomp":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-ipcomp":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 east #
  echo "initdone"
 initdone
@@ -35,8 +35,7 @@ XFRM state:
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.45 dst 192.1.2.23
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
@@ -48,8 +47,7 @@ src 192.1.2.45 dst 192.1.2.23
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.23 dst 192.1.2.45
 	proto comp spi 0xSPISPI reqid REQID mode tunnel

@@ -1,4 +1,4 @@
-ipsec auto --up westnet-eastnet-ikev2
+ipsec auto --up westnet-eastnet-ipcomp
 # first pings hit regular ESP since pings too small to compress
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 # this oddly shows up as 0 packets and 4 packets on ipcomp

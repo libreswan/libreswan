@@ -746,6 +746,7 @@ kvmplutotest	interop-ikev1-strongswan-x509-aggr-13-san-dn-match-responder good
 kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512		good
 kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256		good
 kvmplutotest	interop-ikev2-strongswan-18-compress			good
+kvmplutotest	interop-ikev2-strongswan-18-compress-initiator		good
 kvmplutotest	interop-ikev2-strongswan-20-strongswan-eap		good
 kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk		wip
 kvmplutotest	interop-ikev2-strongswan-23-initiator-cp		good
@@ -757,10 +758,11 @@ kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
 # Selinux / secure labeling tests (require netkey and selinux)
 kvmplutotest    labeled-ipsec-01		wip
 
-# compress tests, some use netkey
+# compress tests
 kvmplutotest    compress-pluto-01		good
 kvmplutotest    compress-pluto-02		good
-kvmplutotest    compress-pluto-netkey-03	good
+kvmplutotest    ikev2-14-compress		good
+kvmplutotest    ikev2-14-compress-mismatch	good
 kvmplutotest	sourceip-01			good
 
 #################################################################
