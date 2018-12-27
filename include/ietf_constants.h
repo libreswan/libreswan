@@ -1777,15 +1777,17 @@ enum ipsec_cipher_algo {
 	ESP_ID255 = 255,
 };
 
-/* IPCOMP transform values
- * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.4.5
+/*
+ * IPCOMP transform values are (currently) identical for IKEv1 and IKEv2
+ * IKEv1: RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.4.5
+ * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-17
  */
 
 enum ipsec_comp_algo {
 	IPCOMP_NONE=0,
-	IPCOMP_OUI=1,
+	IPCOMP_OUI=1, /* unspecified */
 	IPCOMP_DEFLATE=2,
-	IPCOMP_LZS=3,
+	IPCOMP_LZS=3, /* RFC 2395 */
 	IPCOMP_LZJH=4, /* RFC 3051 */
 	/* 5-47 Reserved for approved algorithms */
 	/* 48-63 Reserved for private use */
