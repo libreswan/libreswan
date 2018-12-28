@@ -153,6 +153,18 @@ enum_names version_names = {
 	&version_names_1
 };
 
+static const char *const ike_version_name[] = {
+	"IKEv1",
+	"IKEv2",
+};
+
+enum_names ike_version_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(ike_version_name),
+	"IKE", /* prefix */
+	NULL,
+};
+
 /* Domain of Interpretation */
 static const char *const doi_name[] = {
 	"ISAKMP_DOI_ISAKMP",

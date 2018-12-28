@@ -498,8 +498,9 @@ void send_delete(struct state *st)
 		dbg("IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
 	} else {
 		dbg("#%lu send %s delete notification for %s",
-		     st->st_serialno, st->st_ikev2 ? "IKEv2": "IKEv1",
-		     st->st_state_name);
+		    st->st_serialno,
+		    enum_name(&ike_version_names, st->st_ike_version),
+		    st->st_state_name);
 		st->st_ikev2 ? send_v2_delete(st) : send_v1_delete(st);
 	}
 }

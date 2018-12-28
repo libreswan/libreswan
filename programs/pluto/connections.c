@@ -3113,7 +3113,7 @@ struct connection *refine_host_connection(const struct state *st,
 	DBG(DBG_CONTROLMORE, {
 		char cib[CONN_INST_BUF];
 		DBG_log("refine_host_connection for %s: starting with \"%s\"%s",
-			ikev1 ? "IKEv1" : "IKEv2",
+			enum_name(&ike_version_names, st->st_ike_version),
 			c->name, fmt_conn_instance(c, cib));
 	});
 

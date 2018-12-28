@@ -258,7 +258,7 @@ enum retransmit_status retransmit(struct state *st)
 				break;
 			default:
 				lswlogf(buf, ".  No response (or no acceptable response) to our %s message",
-					st->st_ikev2 ? "IKEv2" : "IKEv1");
+					enum_name(&ike_version_names, st->st_ike_version));
 				break;
 			}
 		}

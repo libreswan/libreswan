@@ -97,11 +97,11 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 			.integ = st->st_oakley.ta_integ,
 			.dh = st->st_oakley.ta_dh,
 		};
-		const char *v = st->st_ikev2 ? "IKEv2" : "IKE";
 		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlogf(buf,
 				"\"%s\"%s:   %s algorithm newest: ",
-				c->name, instance, v);
+				c->name, instance,
+				enum_name(&ike_version_names, st->st_ike_version));
 			lswlog_proposal_info(buf, &p);
 		}
 	}

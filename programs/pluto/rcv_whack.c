@@ -409,7 +409,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 		} else {
 			set_cur_state(st);
 			DBG_log("received whack to delete %s state #%lu %s",
-				st->st_ikev2 ? "IKEv2" : "IKEv1",
+				enum_name(&ike_version_names, st->st_ike_version),
 				st->st_serialno,
 				st->st_state_name);
 

@@ -2885,7 +2885,7 @@ static void log_newest_sa_change(const char *f, so_serial_t old_ipsec_sa,
 			DBG_log("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",
 				f, st->st_connection->name,
 				st->st_connection->instance_serial,
-				st->st_ikev2 ? "IKEv2" : "IKEv1",
+				enum_name(&ike_version_names, st->st_ike_version),
 				st->st_connection->newest_ipsec_sa, old_ipsec_sa,
 				st->st_connection->spd.eroute_owner,
 				st->st_clonedfrom));
