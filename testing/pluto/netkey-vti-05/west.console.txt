@@ -83,9 +83,9 @@ west #
 west #
  # there should be no vti0 device left
 west #
- ip tun
-vti0: ip/ip remote 192.1.2.23 local 192.1.2.45 ttl inherit key 20
+ ip tun | sort
 ip_vti0: ip/ip remote any local any ttl inherit nopmtudisc key 0
+vti0: ip/ip remote 192.1.2.23 local 192.1.2.45 ttl inherit key 20
 west #
 west #
  ../bin/check-for-core.sh
