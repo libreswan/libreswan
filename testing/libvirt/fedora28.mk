@@ -8,7 +8,12 @@ KVM_PACKAGE_UPGRADE = dnf upgrade -y
 KVM_DEBUGINFO_INSTALL = dnf debuginfo-install -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 
-NSS_VERSION = -3.36.0-1.0.fc28.x86_64
+# Force the NSS version - version 3.40 caused pluto to dump core while
+# loading the NSS DB.  Versions 3.36 and 3.41 (current at time of
+# writing) seem to work.
+
+# NSS_VERSION = -3.36.0-1.0.fc28.x86_64
+NSS_VERSION =
 
 KVM_PACKAGES = \
     ElectricFence \
