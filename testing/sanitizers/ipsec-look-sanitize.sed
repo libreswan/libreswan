@@ -20,7 +20,8 @@ b end
   s/\(eth[0-9]\)  proto kernel  scope link  src/\1 proto kernel scope link src/g
 
   # due to a kernel difference? Just ignore the error code in the routing table
-  s/metric 1024 error -.*/metric 1024 error -XXXX/g
+  s/metric 1024 error -[0-9]*/metric 1024 error -XXXX/g
+  s/metric 1024 error [0-9]*/metric 1024 error -XXXX/g
 
   # fix up keys and other magic numbers; see also ip xfrm state
   s/ spi 0x[^ ]* / spi 0xSPISPI /g
