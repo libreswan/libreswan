@@ -2425,17 +2425,20 @@ startover:
  * Kludge!!!  So I name it with the non-English word "uniquify".
  * If we can't find one easily, return 0 (a bad SPI,
  * no matter what order) indicating failure.
+ *
+ * v1-only.
+ * cpi is in network order.
  */
 ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st, int tries)
 {
-	/* network order makes first two bytes our target */
+	/* cpi is in network order so first two bytes are the high order ones */
 	get_rnd_bytes((u_char *)&cpi, 2);
 
 	/*
 	 * Make sure that the result is unique.
 	 * Hard work.  If there is no unique value, we'll loop forever!
 	 */
-	struct state *s = NULL;
+	struct state *s;
 	FOR_EACH_STATE_NEW2OLD(s) {
 		if (s->st_ipcomp.present &&
 		    sameaddr(&s->st_connection->spd.that.host_addr,
@@ -2445,7 +2448,6 @@ ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st, int tries)
 			if (++tries == 20)
 				return 0; /* FAILURE */
 			return uniquify_his_cpi(cpi, st, tries);
-
 		}
 	}
 	return cpi;
