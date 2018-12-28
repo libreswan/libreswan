@@ -32,7 +32,7 @@ typedef void xauth_callback_t(struct state *st,
  */
 void xauth_pam_abort(struct state *st);
 
-void xauth_start_pam_thread(struct state *st,
+void xauth_fork_pam_process(struct state *st,
 			    const char *name,
 			    const char *password,
 			    const char *atype,

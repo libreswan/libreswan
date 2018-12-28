@@ -155,11 +155,11 @@ static int pam_child(void *arg)
 	return success ? 0 : 1;
 }
 
-void xauth_start_pam_thread(struct state *st,
-			    const char *name,
-			    const char *password,
-			    const char *atype,
-			    xauth_callback_t *callback)
+void xauth_fork_pam_process(struct state *st,
+			     const char *name,
+			     const char *password,
+			     const char *atype,
+			     xauth_callback_t *callback)
 {
 	so_serial_t serialno = st->st_serialno;
 

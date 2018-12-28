@@ -1214,7 +1214,7 @@ static void xauth_launch_authent(struct state *st,
 	case XAUTHBY_PAM:
 		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
 			      arg_name);
-		xauth_start_pam_thread(st,
+		xauth_fork_pam_process(st,
 				       arg_name, arg_password,
 				       "XAUTH",
 				       ikev1_xauth_callback);
