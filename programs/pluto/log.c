@@ -39,7 +39,7 @@
 #include "state.h"
 #include "kernel.h"	/* for kernel_ops */
 #include "timer.h"
-#include "ip_address.h"
+#include "ip_endpoint.h"
 
 bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
@@ -158,11 +158,11 @@ static void log_processing(enum processing processing, bool current,
 		if (st != NULL && (c == NULL || !(c->policy & POLICY_OPPORTUNISTIC))) {
 			/* fmt_conn_instance() include the same if POLICY_OPPORTUNISTIC */
 			lswlogf(buf, " ");
-			lswlog_ip(buf, &st->st_remoteaddr);
+			fmt_endpoint(buf, &st->st_remoteaddr);
 		}
 		if (from != NULL) {
 			lswlogf(buf, " from ");
-			lswlog_ip(buf, from);
+			fmt_endpoint(buf, from);
 		}
 		if (!current) {
 			lswlogs(buf, " (BACKGROUND)");
@@ -249,7 +249,7 @@ void log_pexpect_reset_globals(const char *func, const char *file, long line)
 	if (isvalidaddr(&cur_from)) {
 		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
 			lswlogs(buf, "processing: unexpected cur_from ");
-			lswlog_sensitive_ip(buf, &cur_from);
+			fmt_sensitive_endpoint(buf, &cur_from);
 			lswlogs(buf, " should be NULL");
 		}
 		zero(&cur_from);
@@ -560,7 +560,7 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 	} else if (cur_from != NULL && isvalidaddr(cur_from)) {
 		/* peer's IP address */
 		lswlogs(buf, "packet from ");
-		lswlog_sensitive_ip(buf, cur_from);
+		fmt_sensitive_endpoint(buf, cur_from);
 		lswlogs(buf, ": ");
 	}
 }

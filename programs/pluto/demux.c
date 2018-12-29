@@ -66,6 +66,7 @@
 #include "udpfromto.h"
 
 #include "ip_address.h"
+#include "ip_endpoint.h"
 #include "af_info.h"
 #include "pluto_stats.h"
 #include "ikev2_send.h"
@@ -186,7 +187,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 			LSWLOG_ERRNO(errno, buf) {
 				lswlogf(buf, "recvfrom on %s from ",
 					ifp->ip_dev->id_rname);
-				lswlog_ip(buf, &sender);
+				fmt_endpoint(buf, &sender); /* sensitive? */
 				lswlogs(buf, " failed");
 			}
 		}
@@ -205,7 +206,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		if (packet_len < (int)sizeof(uint32_t)) {
 			LSWLOG(buf) {
 				lswlogs(buf, "recvfrom ");
-				lswlog_ip(buf, &sender); /* sensitive? */
+				fmt_endpoint(buf, &sender); /* sensitive? */
 				lswlogf(buf, " too small packet (%d)",
 					packet_len);
 			}
@@ -215,7 +216,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		if (non_esp != 0) {
 			LSWLOG(buf) {
 				lswlogs(buf, "recvfrom ");
-				lswlog_ip(buf, &sender);
+				fmt_endpoint(buf, &sender); /* sensitive? */
 				lswlogs(buf, " has no Non-ESP marker");
 			}
 			return NULL;
@@ -237,7 +238,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 			   NON_ESP_MARKER_SIZE)) {
 			LSWLOG(buf) {
 				lswlogs(buf, "Mangled packet with potential spurious non-esp marker ignored. Sender: ");
-				lswlog_ip(buf, &sender); /* sensitiv? */
+				fmt_endpoint(buf, &sender); /* sensitiv? */
 			}
 			return NULL;
 		}
@@ -252,7 +253,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		 */
 		LSWDBGP(DBG_NATT, buf) {
 			lswlogs(buf, "NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: ");
-			lswlog_ip(buf, &sender);
+			fmt_endpoint(buf, &sender); /* sensitive? */
 		};
 		return NULL;
 	}
@@ -273,7 +274,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	LSWDBGP(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL, buf) {
 		lswlogf(buf, "*received %d bytes from ",
 			(int) pbs_room(&md->packet_pbs));
-		lswlog_ip(buf, &sender);
+		fmt_endpoint(buf, &sender);
 		lswlogf(buf, " on %s (port=%d)",
 			ifp->ip_dev->id_rname, ifp->port);
 	};

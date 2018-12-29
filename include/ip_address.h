@@ -114,10 +114,6 @@ typedef struct {
 const char *ipstr(const ip_address *src, ipstr_buf *b);
 const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 
-/* See: ipstr() / sensitive_ipstr() */
-size_t lswlog_ip(struct lswlog *buf, const ip_address *ip);
-size_t lswlog_sensitive_ip(struct lswlog *buf, const ip_address *ip);
-
 /*
  * isvalidaddr(): true when ADDR contains some sort of IPv4 or IPv6
  * address.
