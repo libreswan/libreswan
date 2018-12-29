@@ -104,13 +104,7 @@ const char *str_address_raw(const ip_address *src, char sepc, ip_address_buf *ds
 const char *str_address_cooked(const ip_address *src, ip_address_buf *dst);
 const char *str_address_sensitive(const ip_address *src, ip_address_buf *dst);
 
-/* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
-
-#define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
-typedef struct {
-	char private_buf[ADDRTOT_BUF]; /* defined in libreswan.h */
-} ipstr_buf;
-
+typedef ip_address_buf ipstr_buf; /* compat */
 const char *ipstr(const ip_address *src, ipstr_buf *b);
 const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 
@@ -147,6 +141,8 @@ extern err_t ttoaddr(const char *src, size_t srclen, int af, ip_address *dst);
 /* does not look up names in DNS */
 extern err_t ttoaddr_num(const char *src, size_t srclen, int af, ip_address *dst);
 
+/* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
+#define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
 extern err_t tnatoaddr(const char *src, size_t srclen, int af, ip_address *dst);
 extern size_t addrtot(const ip_address *src, int format, char *buf, size_t buflen);
 

@@ -52,11 +52,6 @@ static FILE *pluto_log_fp = NULL;
 
 char *pluto_stats_binary = NULL;
 
-const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b)
-{
-	return log_ip ? ipstr(src, b) : "<ip address>";
-}
-
 /*
  * If valid, wack and log_whack streams write to this.
  *

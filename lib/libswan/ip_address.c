@@ -2,6 +2,7 @@
  * low-level ip_address ugliness
  *
  * Copyright (C) 2000  Henry Spencer.
+ * Copyright (C) 2018  Andrew Cagney.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -120,8 +121,12 @@ size_t sockaddrlenof(const ip_address * src)
 
 const char *ipstr(const ip_address *src, ipstr_buf *b)
 {
-	addrtot(src, 0, b->private_buf, sizeof(b->private_buf));
-	return b->private_buf;
+	return str_address_cooked(src, b);
+}
+
+const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b)
+{
+	return str_address_sensitive(src, b);
 }
 
 chunk_t same_ip_address_as_chunk(const ip_address *address)
