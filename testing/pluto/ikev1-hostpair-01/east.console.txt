@@ -49,7 +49,7 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev1"[2]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
 000 "roadnet-eastnet-ipv4-psk-ikev1"[2]:   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "roadnet-eastnet-ipv4-psk-ikev1"[2]:   newest ISAKMP SA: #3; newest IPsec SA: #4;
-000 "roadnet-eastnet-ipv4-psk-ikev1"[2]:   IKE algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
+000 "roadnet-eastnet-ipv4-psk-ikev1"[2]:   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "roadnet-eastnet-ipv4-psk-ikev1"[2]:   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #3: "roadnet-eastnet-ipv4-psk-ikev1"[2] 192.1.2.63:4500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[2] 192.1.2.63:4500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#3; idle;

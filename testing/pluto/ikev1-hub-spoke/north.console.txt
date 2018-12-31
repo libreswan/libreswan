@@ -130,7 +130,7 @@ north #
 000 "northnet-westnet-ipv4-psk":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id=@east
 000 "northnet-westnet-ipv4-psk":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "northnet-westnet-ipv4-psk":   newest ISAKMP SA: #1; newest IPsec SA: #2;
-000 "northnet-westnet-ipv4-psk":   IKE algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
+000 "northnet-westnet-ipv4-psk":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "northnet-westnet-ipv4-psk":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000  
 000 Total IPsec connections: loaded 1, active 1
