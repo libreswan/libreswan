@@ -22,6 +22,8 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
+ ipsec whack --impair suppress-retransmits
+west #
  ipsec auto --add westnet-eastnet-ipcomp
 002 added connection description "westnet-eastnet-ipcomp"
 west #
