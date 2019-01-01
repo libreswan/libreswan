@@ -316,6 +316,16 @@ kvm-results:
 kvm-diffs:
 	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) --print diffs
 
+.PHONY: kvm-test-modified kvm-check-modified
+KVM_MODIFIED_TESTS = $$(git status testing/pluto | awk '/modified:/ { print $$2 }' | cut -d/ -f1-3 | sort -u)
+kvm-test-modified kvm-check-modified:
+	$(MAKE) kvm-test KVM_TESTS="$(KVM_MODIFIED_TESTS)"
+.PHONY: kvm-diff-modified
+kvm-diff-modified:
+	./testing/utils/kvmresults.py --print diffs $(KVM_MODIFIED_TESTS)
+
+
+
 #
 # Build the KVM keys using the KVM.
 #
@@ -1381,8 +1391,12 @@ Standard targets and operations:
 
   To analyze test results:
 
-    kvm-results           list the tests and their results
-    kvm-diffs             list the tests and their differences
+    kvm-results       - list the tests and their results
+    kvm-diffs         - list the tests and their differences
+    kvm-check-modified
+                      - run any tests with modified files
+    kvm-diff-modified
+                      - list any modified tests and their differences
 
   To print make variables:
 
