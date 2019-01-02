@@ -15,6 +15,7 @@ v3.28 (unreleased)
 * IKEv2: IKE SA rekey could lead to losing track of Child SA [Andrew/Antony]
 * IKEv2: A spurious DH calculation was performed and disgarded [Andrew]
 * IKEv2: Support for IPCOMP (compress=yes) [Paul]
+* IKEv2: Initialize NAT keepalives check on IKE SA establishment [Paul]
 * IKEv2: Only sent NAT keepalives for IKE states (supresses IPsec dups) [Paul]
 * IKEv1: Only sent NAT keepalives for IPsec states (supresses 1 dup) [Paul]
 * IKEv1: Do not activate DPD when peer does not support it [Paul]
