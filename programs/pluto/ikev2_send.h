@@ -34,11 +34,13 @@ void send_v2N_spi_response_from_state(struct ike_sa *st,
 				      enum ikev2_sec_proto_id protoid,
 				      ipsec_spi_t *spi,
 				      v2_notification_t type,
-				      const chunk_t *data);
+				      const chunk_t *data /* optional */);
+
 void send_v2N_response_from_state(struct ike_sa *st,
 				  struct msg_digest *md,
 				  v2_notification_t type,
 				  const chunk_t *data);
+
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t type,
 			       const chunk_t *data);
@@ -60,17 +62,20 @@ extern stf_status send_v2_informational_request(const char *name,
 
 bool emit_v2UNKNOWN(const char *victim, pb_stream *outs);
 
-bool emit_v2N(enum ikev2_sec_proto_id protoid,
-	      const ipsec_spi_t *spi,
-	      v2_notification_t ntype,
-	      const chunk_t *ndata,
-	      pb_stream *outs);
+/* output a v2 Notification payload, with optional SA and optional sub-payload */
+bool out_v2Nsa_pl(v2_notification_t ntype,
+		enum ikev2_sec_proto_id protoid,
+		const ipsec_spi_t *spi, /* optional */
+		pb_stream *outs,
+		pb_stream *payload_pbs /* optional */);
 
-bool emit_v2Ntd(v2_notification_t ntype,
-		const chunk_t *ndata,
+/* output a v2 Notification payload, with optional chunk as sub-payload */
+bool out_v2Nchunk(v2_notification_t ntype,
+		const chunk_t *ndata, /* optional */
 		pb_stream *outs);
 
-bool emit_v2Nt(v2_notification_t ntype,
+/* output a v2 simple Notification payload */
+bool out_v2N(v2_notification_t ntype,
 	       pb_stream *outs);
 
 bool emit_v2V(const char *string, pb_stream *outs);

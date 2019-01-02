@@ -401,23 +401,26 @@ static stf_status add_redirect_payload(struct state *st, pb_stream *pbs)
 	if (e != NULL) {
 		loglog(RC_LOG_SERIOUS, "build of REDIRECT Payload failed: %s", e);
 		return STF_INTERNAL_ERROR;
-	} else {
-		if (!emit_v2Ntd(v2N_REDIRECT, &notify_data, pbs))
-			return STF_INTERNAL_ERROR;
-		freeanychunk(notify_data);
 	}
 
+	if (!out_v2Nchunk(v2N_REDIRECT, &notify_data, pbs)) {
+		freeanychunk(notify_data);
+		return STF_INTERNAL_ERROR;
+	}
+
+	freeanychunk(notify_data);
 	return STF_OK;
 }
 
 void send_active_redirect_in_informational(struct state *st)
 {
-	ipstr_buf b;
 	stf_status e = send_v2_informational_request("active REDIRECT informational request",
 					st, ike_sa(st), add_redirect_payload);
-	if (e == STF_OK)
+	if (e == STF_OK) {
+		ipstr_buf b;
 		libreswan_log("redirecting of peer %s successful",
 				sensitive_ipstr(&st->st_remoteaddr, &b));
-	else
+	} else {
 		libreswan_log("redirect not successful");
+	}
 }

@@ -140,28 +140,28 @@ bool emit_v2V(const char *string, pb_stream *outs)
  *    payload, these payloads NEVER have the Critical Flag set.
  */
 
-bool emit_v2N(enum ikev2_sec_proto_id protoid, const ipsec_spi_t *spi,
-	      v2_notification_t ntype, const chunk_t *ndata,
-	      pb_stream *outs)
+
+/* output a v2 Notification payload, with optional SA and optional sub-payload */
+bool out_v2Nsa_pl(v2_notification_t ntype,
+		enum ikev2_sec_proto_id protoid,
+		const ipsec_spi_t *spi, /* optional */
+		pb_stream *outs,
+		pb_stream *payload_pbs /* optional */)
 {
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
-	passert((protoid == PROTO_v2_RESERVED) == (spi == NULL));
-	passert((protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP) == (spi != NULL));
 
 	switch (ntype) {
 	case v2N_INVALID_SELECTORS:
 	case v2N_REKEY_SA:
 	case v2N_CHILD_SA_NOT_FOUND:
-		/* must have SPI. XXX: ??? this is checking protoid! */
-		if (protoid == PROTO_v2_RESERVED) {
-			dbg("XXX: type and protoid mismatch");
+		if (protoid == PROTO_v2_RESERVED || spi == NULL) {
+			dbg("XXX: type requires SA; missing");
 		}
 		break;
 	default:
-		/* must not have SPI. XXX: ??? this is checking protoid! */
-		if (protoid != PROTO_v2_RESERVED) {
-			dbg("XXX: type and protoid mismatch");
+		if (protoid != PROTO_v2_RESERVED || spi != NULL) {
+			dbg("XXX: type forbids SA but SA present");
 		}
 		break;
 	}
@@ -174,78 +174,57 @@ bool emit_v2N(enum ikev2_sec_proto_id protoid, const ipsec_spi_t *spi,
 		.isan_spisize = spi != NULL ? sizeof(*spi) : 0,
 		.isan_type = ntype,
 	};
-	pb_stream n_pbs;
 
-	if (!out_struct(&n, &ikev2_notify_desc, outs, &n_pbs)) {
-		libreswan_log(
-			"error initializing notify payload for notify message");
+	pb_stream pls;
+
+	if (!out_struct(&n, &ikev2_notify_desc, outs, &pls) ||
+	    (spi != NULL && !out_raw(spi, sizeof(*spi), &pls, "SPI"))) {
 		return false;
 	}
 
-	if (spi != NULL) {
-		if (!out_raw(spi, sizeof(*spi), &n_pbs, "SPI")) {
-			libreswan_log("error writing SPI to notify payload");
-			return false;
-		}
-	}
-	if (ndata != NULL) {
-		if (!out_chunk(*ndata, &n_pbs, "Notify data")) {
-			libreswan_log("error writing notify payload for notify message");
-			return false;
-		}
-	}
-
-	close_output_pbs(&n_pbs);
-	return TRUE;
+	if (payload_pbs == NULL)
+		close_output_pbs(&pls);
+	else
+		*payload_pbs = pls;
+	return true;
 }
 
-/*
- * Wrappers for common cases:
- *
- * emit_v2Ntd: emit_v2N(..., T[YPE], D[ATA], ...)
- * emit_v2Nt(): emit_v2N(..., T[YPE], ...)
- *
- * where remaining fields are defaulted to:
- *
- * - C+RESERVED: ISAKMP_PAYLOAD_NONCRITICAL
- * - Protocol ID: IKEv2_SEC_PROTO_NONE
- * - SPI: none
- * - Notification Data: empty
- *
- * These cases are common since
- *
- * - almost all notifications are non-critical
- * - only a specified few include protocol or SPI
- */
+/* output a v2 Notification payload, with sub-payload */
+static bool out_v2Npl(v2_notification_t ntype,
+		pb_stream *outs,
+		pb_stream *payload_pbs)
+{
+	return out_v2Nsa_pl(ntype, PROTO_v2_RESERVED, NULL, outs, payload_pbs);
+}
 
-bool emit_v2Ntd(v2_notification_t ntype,
-		const chunk_t *ndata,
+/* output a v2 Notification payload, with optional chunk as sub-payload */
+bool out_v2Nchunk(v2_notification_t ntype,
+		const chunk_t *ndata, /* optional */
 		pb_stream *outs)
 {
-	return emit_v2N(PROTO_v2_RESERVED, NULL,
-			ntype, ndata, outs);
+	pb_stream pl;
+
+	if (!out_v2Npl(ntype, outs, &pl) ||
+	    (ndata != NULL && !out_chunk(*ndata, &pl, "Notify data")))
+		return false;
+
+	close_output_pbs(&pl);
+	return true;
 }
 
-bool emit_v2Nt(v2_notification_t ntype, pb_stream *outs)
+/* output a v2 simple Notification payload */
+bool out_v2N(v2_notification_t ntype,
+	       pb_stream *outs)
 {
-	return emit_v2N(PROTO_v2_RESERVED, NULL,
-			ntype, NULL, outs);
+	return out_v2Nchunk(ntype, NULL, outs);
 }
 
 bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 					pb_stream *outs)
 {
-	/*
-	 * XXX: can this share code with emit_v2N() above?
-	 */
-	struct ikev2_notify n = {
-		.isan_critical = build_ikev2_critical(false),
-		.isan_protoid = PROTO_v2_RESERVED,
-		.isan_type = v2N_SIGNATURE_HASH_ALGORITHMS,
-	};
-
 	pb_stream n_pbs;
-	if (!out_struct(&n, &ikev2_notify_desc, outs, &n_pbs)) {
+
+	if (!out_v2Npl(v2N_SIGNATURE_HASH_ALGORITHMS, outs, &n_pbs)) {
 		libreswan_log("error initializing notify payload for notify message");
 		return false;
 	}
@@ -288,7 +267,7 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 				      enum ikev2_sec_proto_id protoid,
 				      ipsec_spi_t *spi,
 				      v2_notification_t ntype,
-				      const chunk_t *ndata)
+				      const chunk_t *ndata /* optional */)
 {
 	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* always responding */
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
@@ -362,10 +341,12 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 		break;
 	}
 
-	if (!emit_v2N(protoid, spi,
-		      ntype, ndata, &sk.pbs)) {
+	pb_stream n_pbs;
+	if (!out_v2Nsa_pl(ntype, protoid, spi, &sk.pbs, &n_pbs) ||
+	    (ndata != NULL && !out_chunk(*ndata, &n_pbs, "Notify data"))) {
 		return;
 	}
+	close_output_pbs(&n_pbs);
 
 	if (!close_v2SK_payload(&sk)) {
 		return;
@@ -462,7 +443,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	}
 
 	/* build and add v2N payload to the packet */
-	if (!emit_v2Ntd(ntype, ndata, &rbody)) {
+	if (!out_v2Nchunk(ntype, ndata, &rbody)) {
 		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->hdr.isa_msgid);
 		return;
