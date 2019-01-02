@@ -3044,6 +3044,12 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	linux_audit_conn(st, LAK_PARENT_START);
 #endif
 
+	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
+		/* ensure we run keepalives if needed */
+		if (c->nat_keepalive)
+			nat_traversal_ka_event();
+	}
+
 	/* send response */
 	{
 		bool send_redirect = FALSE;
@@ -3784,6 +3790,12 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
 #endif
+
+	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
+		/* ensure we run keepalives if needed */
+		if (c->nat_keepalive)
+			nat_traversal_ka_event();
+	}
 
 	/* AUTH is ok, we can trust the notify payloads */
 	if (got_transport) { /* FIXME: use new RFC logic turning this into a request, not requirement */
