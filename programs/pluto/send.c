@@ -237,6 +237,7 @@ void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 	release_fragments(st);
 	freeanychunk(st->st_tpacket);
 	st->st_tpacket = clone_out_pbs_as_chunk(pbs, what);
+	st->st_last_liveness = mononow();
 }
 
 /*
