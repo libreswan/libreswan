@@ -20,6 +20,7 @@ v3.28 (unreleased)
 * IKEv1: Only sent NAT keepalives for IPsec states (supresses 1 dup) [Paul]
 * IKEv1: Do not activate DPD when peer does not support it [Paul]
 * IKEv1: Reject key sizes <= 0 properly instead of crashing [Paul]
+* IKEv1: Fix Aggressive Mode interop with Volans Technology [wuwei29]
 * pluto: Use any sent IKE message to reset the DPD/liveness counter [Paul]
 * pluto: Simplify state lookups and SPI passing [Andrew]
 * pluto: Speed up state lookups by only looking at proper hash chain [Andrew]
