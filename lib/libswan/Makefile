@@ -82,6 +82,7 @@ OBJS += chunk.o
 OBJS += shunk.o
 
 OBJS += ip_address.o
+OBJS += ip_endpoint.o
 OBJS += ip_range.o
 OBJS += ip_subnet.o
 
@@ -123,8 +124,6 @@ OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o
 OBJS += lswlog_realtime.o
 OBJS += lswlog_monotime.o
-OBJS += lswlog_ip.o
-OBJS += lswlog_sensitive_ip.o
 OBJS += lswlog_to_file_stream.o
 OBJS += lswlog_pexpect.o
 OBJS += lswlog_passert.o

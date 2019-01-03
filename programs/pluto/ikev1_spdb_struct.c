@@ -56,7 +56,7 @@
 #include "lswfips.h" /* for libreswan_fipsmode */
 #include "crypt_prf.h"
 
-#include "ip_address.h"
+#include "ip_endpoint.h"
 #include "nat_traversal.h"
 
 #ifdef HAVE_LABELED_IPSEC
@@ -251,11 +251,11 @@ static bool ikev1_verify_esp(const struct connection *c,
 		loglog(RC_LOG_SERIOUS,
 		       "kernel algorithm does not like: %s key_len %u is incorrect",
 		       ta->ta_encrypt->common.fqn, ta->enckeylen);
-		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
-			lswlogf(buf, "unsupported ESP Transform %s from ",
-				ta->ta_encrypt->common.fqn);
-			lswlog_ip(buf, &c->spd.that.host_addr);
-		}
+		ip_endpoint_buf epb;
+		loglog(RC_LOG_SERIOUS,
+		       "unsupported ESP Transform %s from %s",
+		       ta->ta_encrypt->common.fqn,
+		       str_sensitive_endpoint(&c->spd.that.host_addr, &epb));
 		return false; /* try another */
 	}
 
@@ -2662,7 +2662,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					    !ah_seen) {
 						LSWDBGP(DBG_PARSING, buf) {
 							lswlogs(buf, "ESP from ");
-							lswlog_ip(buf, &c->spd.that.host_addr);
+							fmt_endpoint(buf, &c->spd.that.host_addr);
 							lswlogs(buf, " must either have AUTH or be combined with AH");
 						};
 						continue; /* try another */

@@ -138,3 +138,152 @@ chunk_t same_ip_address_as_chunk(const ip_address *address)
 		return empty_chunk;
 	}
 }
+
+/*
+ * Implement https://tools.ietf.org/html/rfc5952
+ */
+
+static void fmt_raw_ipv4_address(struct lswlog *buf, chunk_t a, char sepc)
+{
+	const char seps[2] = { sepc == 0 ? '.' : sepc, 0, };
+	const char *sep = "";
+	for (size_t i = 0; i < a.len; i++) {
+		lswlogf(buf, "%s%"PRIu8, sep, a.ptr[i]);
+		sep = seps;
+	}
+}
+
+static void fmt_raw_ipv6_address(struct lswlog *buf, chunk_t a, char sepc,
+				 chunk_t skip)
+{
+	const char seps[2] = { sepc == 0 ? ':' : sepc, 0, };
+	const uint8_t *ptr = a.ptr;
+	const char *sep = "";
+	const uint8_t *last = a.ptr + a.len - 2;
+	while (ptr <= last) {
+		if (ptr == skip.ptr) {
+			/* skip zero run */
+			lswlogf(buf, "%s%s", seps, seps);
+			sep = "";
+			ptr += skip.len;
+		} else {
+			/* suppress zeros */
+			unsigned ia = (ptr[0] << 8) + ptr[1];
+			lswlogf(buf, "%s%x", sep, ia);
+			sep = seps;
+			ptr += 2;
+		}
+	}
+}
+
+void fmt_address_raw(struct lswlog *buf, const ip_address *address, char sepc)
+{
+	chunk_t a = same_ip_address_as_chunk(address);
+	if (a.len == 0) {
+		lswlogs(buf, "<invalid-length>");
+		return;
+	}
+	int type = addrtypeof(address);
+	switch (type) {
+	case AF_INET: /* N.N.N.N */
+		fmt_raw_ipv4_address(buf, a, sepc);
+		break;
+	case AF_INET6: /* N:N:...:N */
+		fmt_raw_ipv6_address(buf, a, sepc, empty_chunk);
+		break;
+	case 0:
+		lswlogf(buf, "<invalid-address>");
+		break;
+	default:
+		lswlogf(buf, "<invalid-type-%d>", type);
+		break;
+	}
+}
+
+/*
+ * Find longest run of zero pairs that should be suppressed (need at
+ * least two).
+ */
+static chunk_t zeros_to_skip(chunk_t a)
+{
+	chunk_t zero = empty_chunk;
+	uint8_t *ptr = a.ptr;
+	uint8_t *last = a.ptr + a.len - 2;
+	while (ptr <= last) {
+		unsigned l = 0;
+		for (l = 0; ptr + l <= last; l += 2) {
+			unsigned ia = (ptr[l+0] << 8) + ptr[l+1];
+			if (ia != 0) {
+				break;
+			}
+		}
+		if (l > 2 && l > zero.len) {
+			zero.ptr = ptr;
+			zero.len = l;
+			ptr += l;
+		} else {
+			ptr += 2;
+		}
+	}
+	return zero;
+}
+
+void fmt_address_cooked(struct lswlog *buf, const ip_address *address)
+{
+	chunk_t a = same_ip_address_as_chunk(address);
+	if (a.len == 0) {
+		lswlogs(buf, "<invalid-length>");
+		return;
+	}
+	int type = addrtypeof(address);
+	switch (type) {
+	case AF_INET: /* N.N.N.N */
+		fmt_raw_ipv4_address(buf, a, 0);
+		break;
+	case AF_INET6: /* N:N:...:N */
+		fmt_raw_ipv6_address(buf, a, 0, zeros_to_skip(a));
+		break;
+	case 0:
+		lswlogf(buf, "<invalid-address>");
+		break;
+	default:
+		lswlogf(buf, "<invalid-type-%d>", type);
+		break;
+	}
+}
+
+void fmt_address_sensitive(struct lswlog *buf, const ip_address *address)
+{
+	if (log_ip) {
+		fmt_address_cooked(buf, address);
+	} else {
+		lswlogs(buf, "<ip-address>");
+	}
+}
+
+const char *str_address_raw(const ip_address *src, char sep,
+			    ip_address_buf *dst)
+{
+	LSWBUF_ARRAY(dst->buf, sizeof(dst->buf), buf) {
+		fmt_address_raw(buf, src, sep);
+	}
+	return dst->buf;
+}
+
+const char *str_address_cooked(const ip_address *src,
+			       ip_address_buf *dst)
+{
+	LSWBUF_ARRAY(dst->buf, sizeof(dst->buf), buf) {
+		fmt_address_cooked(buf, src);
+	}
+	return dst->buf;
+}
+
+const char *str_address_sensitive(const ip_address *src,
+			       ip_address_buf *dst)
+{
+	LSWBUF_ARRAY(dst->buf, sizeof(dst->buf), buf) {
+		fmt_address_sensitive(buf, src);
+	}
+	return dst->buf;
+}

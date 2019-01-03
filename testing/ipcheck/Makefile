@@ -1,6 +1,6 @@
-# Testing root makefile, for libreswan
+# ip tests Makefile, for libreswan
 #
-# Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2018 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,11 +12,23 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-SUBDIRS = pluto
-SUBDIRS += enumcheck
-SUBDIRS += ipcheck
+# XXX: Hack to suppress the man page.  Should one be added?
+PROGRAM_MANPAGE =
 
-ifndef top_srcdir
-include ../mk/dirs.mk
+PROGRAM = ipcheck
+
+OBJS += ipcheck.o
+OBJS += ip_address_check.o
+OBJS += ip_endpoint_check.o
+
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWTOOLLIBS)
+
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../mk/program.mk
 endif
-include $(top_srcdir)/mk/subdirs.mk
+
+#local-selfcheck:
+#	$(builddir)/$(PROGRAM) | diff -u $(srcdir)/OUTPUT.$(PROGRAM).txt -

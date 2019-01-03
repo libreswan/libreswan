@@ -79,6 +79,31 @@ ip_address hsetportof(int port, const ip_address dst);
 struct sockaddr *sockaddrof(const ip_address *src);
 size_t sockaddrlenof(const ip_address *src);
 
+
+/*
+ * Converting to a string.
+ */
+
+typedef struct {
+	char buf[(4+1)*8/*0000:...*/ + 1/*\0*/ + 1/*CANARY*/];
+} ip_address_buf;
+
+/*
+ * address as a string:
+ *
+ * raw: IPv6 zeros like :0:..:0: not suppressed; no port; when SEPC !=
+ * '\0' use it as the separator instead of the default (. or :).
+ *
+ * cooked: IPv6 zeros like :0:..:0: suppressed; no port
+ */
+void fmt_address_raw(struct lswlog *buf, const ip_address *src, char sepc);
+void fmt_address_cooked(struct lswlog *buf, const ip_address *src);
+void fmt_address_sensitive(struct lswlog *buf, const ip_address *src);
+
+const char *str_address_raw(const ip_address *src, char sepc, ip_address_buf *dst);
+const char *str_address_cooked(const ip_address *src, ip_address_buf *dst);
+const char *str_address_sensitive(const ip_address *src, ip_address_buf *dst);
+
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 
 #define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
@@ -88,10 +113,6 @@ typedef struct {
 
 const char *ipstr(const ip_address *src, ipstr_buf *b);
 const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
-
-/* See: ipstr() / sensitive_ipstr() */
-size_t lswlog_ip(struct lswlog *buf, const ip_address *ip);
-size_t lswlog_sensitive_ip(struct lswlog *buf, const ip_address *ip);
 
 /*
  * isvalidaddr(): true when ADDR contains some sort of IPv4 or IPv6
