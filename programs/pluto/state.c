@@ -388,11 +388,16 @@ union sas { struct child_sa child; struct ike_sa ike; struct state st; };
  * Caller must insert_state().
  */
 
+static so_serial_t next_so = SOS_FIRST;
+
+so_serial_t next_so_serialno(void)
+{
+	return next_so;
+}
+
 static struct state *new_state(enum ike_version ike_version,
 			       const struct finite_state *fs)
 {
-	static so_serial_t next_so = SOS_FIRST;
-
 	union sas *sas = alloc_thing(union sas, "struct state in new_state()");
 	passert(&sas->st == &sas->child.sa);
 	passert(&sas->st == &sas->ike.sa);
