@@ -870,12 +870,17 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 	for (struct payload_digest *p = md->chain[np]; p != NULL; p = p->next) {
 		enum ike_cert_type cert_type;
 		const char *cert_name;
-		if (st->st_ikev2) {
+		switch (st->st_ike_version) {
+		case IKEv2:
 			cert_type = p->payload.v2cert.isac_enc;
 			cert_name = enum_short_name(&ikev2_cert_type_names, cert_type);
-		} else {
+			break;
+		case IKEv1:
 			cert_type = p->payload.cert.isacert_type;
 			cert_name = enum_short_name(&ike_cert_type_names, cert_type);
+			break;
+		default:
+			bad_case(st->st_ike_version);
 		}
 
 		if (cert_name == NULL) {

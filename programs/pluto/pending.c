@@ -295,10 +295,21 @@ void unpend(struct state *st, struct connection *cc)
 	{
 		if (p->isakmp_sa == st) {
 			p->pend_time = mononow();
-			if (st->st_ikev2 && cc != p->connection) {
-				ikev2_initiate_child_sa(p);
-
-			} else if (!st->st_ikev2) {
+			switch (st->st_ike_version) {
+			case IKEv2:
+				if (cc != p->connection) {
+					ikev2_initiate_child_sa(p);
+				} else {
+					/*
+					 * IKEv2 AUTH negotiation
+					 * include child.  nothing to
+					 * upend, like in IKEv1,
+					 * delete it
+					 */
+					what = "delete from";
+				}
+				break;
+			case IKEv1:
 				quick_outI1(p->whack_sock, st, p->connection,
 					    p->policy,
 					    p->try, p->replacing
@@ -306,12 +317,9 @@ void unpend(struct state *st, struct connection *cc)
 					    , p->uctx
 #endif
 					    );
-			} else {
-				/*
-				 * IKEv2 AUTH negotiation include child.
-				 * nothing to upend, like in IKEv1, delete it
-				 */
-				 what = "delete from";
+				break;
+			default:
+				bad_case(st->st_ike_version);
 			}
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;

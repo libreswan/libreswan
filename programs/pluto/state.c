@@ -574,10 +574,16 @@ static void release_v1fragments(struct state *st)
  */
 void release_fragments(struct state *st)
 {
-	if (!st->st_ikev2)
+	switch (st->st_ike_version) {
+	case IKEv1:
 		release_v1fragments(st);
-	else
+		break;
+	case IKEv2:
 		release_v2fragments(st);
+		break;
+	default:
+		bad_case(st->st_ike_version);
+	}
 }
 
 void v2_expire_unused_ike_sa(struct ike_sa *ike)

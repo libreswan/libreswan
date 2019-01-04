@@ -374,12 +374,17 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_RETRANSMIT:
 		passert(st != NULL);
-		if (st->st_ikev2) {
+		switch (st->st_ike_version) {
+		case IKEv2:
 			DBG(DBG_RETRANSMITS, DBG_log("IKEv2 retransmit event"));
 			retransmit_v2_msg(st);
-		} else {
+			break;
+		case IKEv1:
 			DBG(DBG_RETRANSMITS, DBG_log("IKEv1 retransmit event"));
 			retransmit_v1_msg(st);
+			break;
+		default:
+			bad_case(st->st_ike_version);
 		}
 		break;
 
@@ -406,10 +411,12 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_SA_REPLACE:
 	case EVENT_v1_SA_REPLACE_IF_USED:
-		if (st->st_ikev2) {
+		switch (st->st_ike_version) {
+		case IKEv2:
 			pexpect(type == EVENT_SA_REPLACE);
 			v2_event_sa_replace(st);
-		} else { /* IKEv1 */
+			break;
+		case IKEv1:
 			pexpect(type == EVENT_SA_REPLACE ||
 				type == EVENT_v1_SA_REPLACE_IF_USED);
 			struct connection *c = st->st_connection;
@@ -448,6 +455,9 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			delete_liveness_event(st);
 			delete_dpd_event(st);
 			event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
+			break;
+		default:
+			bad_case(st->st_ike_version);
 		}
 		break;
 
@@ -473,7 +483,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				      "--dontrekey" : "LATEST!");
 		}
 		/* Delete this state object.  It must be in the hash table. */
-		if (st->st_ikev2) {
+		switch (st->st_ike_version) {
+		case IKEv2:
 			if (IS_IKE_SA(st)) {
 				/* IKEv2 parent, delete children too */
 				delete_my_family(st, FALSE);
@@ -486,10 +497,14 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				/* note: no md->st to clear */
 				v2_expire_unused_ike_sa(ike);
 			}
-		} else {
+			break;
+		case IKEv1:
 			delete_state(st);
 			/* note: no md->st to clear */
 			/* st = NULL; */
+			break;
+		default:
+			bad_case(st->st_ike_version);
 		}
 		break;
 	}
