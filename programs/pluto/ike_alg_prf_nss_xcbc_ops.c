@@ -175,22 +175,22 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 	 * Need to turn the key into something of the right size.
 	 */
 	PK11SymKey *key;
-	if (sizeof_symkey(draft_key) < prf_desc->prf_key_size) {
+	size_t dkey_sz = sizeof_symkey(draft_key);
+	if (dkey_sz < prf_desc->prf_key_size) {
 		DBGF(DBG_CRYPT_LOW, "XCBC: Key %zd<%zd too small, padding with zeros",
-		     sizeof_symkey(draft_key), prf_desc->prf_key_size);
+		     dkey_sz, prf_desc->prf_key_size);
 		/*
 		 * right pad with zeros
 		 */
-		chunk_t zeros = alloc_chunk(prf_desc->prf_key_size - sizeof_symkey(draft_key),
-					    "zeros");
+		chunk_t zeros = alloc_chunk(prf_desc->prf_key_size - dkey_sz, "zeros");
 		PK11SymKey *tmp = concat_symkey_chunk(draft_key, zeros);
 		freeanychunk(zeros);
 		key = prf_key_from_symkey_bytes(name, prf_desc,
 						0, prf_desc->prf_key_size, tmp);
 		release_symkey(name, "tmp", &tmp);
-	} else if (sizeof_symkey(draft_key) > prf_desc->prf_key_size) {
+	} else if (dkey_sz > prf_desc->prf_key_size) {
 		DBGF(DBG_CRYPT_LOW, "XCBC: Key %zd>%zd too big, rehashing to size",
-		     sizeof_symkey(draft_key), prf_desc->prf_key_size);
+		     dkey_sz, prf_desc->prf_key_size);
 		/*
 		 * put the key through the mac with a zero key
 		 */
@@ -206,7 +206,7 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		freeanychunk(key_chunk);
 	} else {
 		DBGF(DBG_CRYPT_LOW, "XCBC: Key %zd=%zd just right",
-		     sizeof_symkey(draft_key), prf_desc->prf_key_size);
+		     dkey_sz, prf_desc->prf_key_size);
 		key = prf_key_from_symkey_bytes(key_name, prf_desc,
 						0, prf_desc->prf_key_size,
 						draft_key);
