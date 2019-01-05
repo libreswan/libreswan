@@ -4522,7 +4522,7 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 	return NULL;
 }
 
-void liveness_clear_connection(struct connection *c, char *v)
+void liveness_clear_connection(struct connection *c, const char *v)
 {
 	/*
 	 * For CK_INSTANCE, delete_states_by_connection() will clear
