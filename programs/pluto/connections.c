@@ -4567,10 +4567,11 @@ void suppress_delete(struct connection *c)
 	}
 }
 
-void liveness_action(struct connection *c, const bool ikev2)
+void liveness_action(struct connection *c, enum ike_version ike_version)
 {
 	char cib[CONN_INST_BUF];
-	char *ikev = ikev2 ? "IKEv2 liveness:" : "IKEv1 DPD:";
+	const char *ikev = enum_name(&ike_version_liveness_names, ike_version);
+	passert(ikev != NULL);
 
 	fmt_conn_instance(c, cib);
 

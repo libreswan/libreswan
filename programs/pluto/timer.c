@@ -115,7 +115,7 @@ static void liveness_check(struct state *st)
 	/* this should be called on a child sa */
 	if (IS_CHILD_SA(st)) {
 		if (parent_vanished(st)) {
-			liveness_action(c, st->st_ikev2);
+			liveness_action(c, st->st_ike_version);
 			return;
 		} else {
 			pst = state_with_serialno(st->st_clonedfrom);
@@ -184,7 +184,7 @@ static void liveness_check(struct state *st)
 				lswlogf(buf, ", taking %s",
 					enum_name(&dpd_action_names, c->dpd_action));
 			}
-			liveness_action(c, st->st_ikev2);
+			liveness_action(c, st->st_ike_version);
 			return;
 		} else {
 			stf_status ret = ikev2_send_livenss_probe(st);

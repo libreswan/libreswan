@@ -153,6 +153,18 @@ enum_names version_names = {
 	&version_names_1
 };
 
+static const char *const ike_version_liveness_name[] = {
+	"IKEv1 DPD",
+	"IKEv2 liveness",
+};
+
+enum_names ike_version_liveness_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(ike_version_liveness_name),
+	"IKE", /* prefix */
+	NULL,
+};
+
 static const char *const ike_version_name[] = {
 	"IKEv1",
 	"IKEv2",

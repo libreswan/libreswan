@@ -572,7 +572,7 @@ extern void unshare_connection_end(struct end *e);
 
 extern void liveness_clear_connection(struct connection *c, const char *v);
 
-extern void liveness_action(struct connection *c, const bool ikev2);
+extern void liveness_action(struct connection *c, enum ike_version ike_version);
 
 extern bool idr_wildmatch(const struct connection *c, const struct id *b);
 
