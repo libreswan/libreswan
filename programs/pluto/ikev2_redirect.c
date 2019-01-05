@@ -260,8 +260,7 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 err_t build_redirected_from_notify_data(ip_address old_gw_address, chunk_t *data)
 {
 	int gw_identity_type = 0;
-	size_t gw_identity_len = 0, data_len = 0;
-	char *tmp = NULL;
+	size_t gw_identity_len = 0;
 
 	switch (addrtypeof(&old_gw_address)) {
 	case AF_INET:
@@ -276,20 +275,20 @@ err_t build_redirected_from_notify_data(ip_address old_gw_address, chunk_t *data
 		return "address of the gateway that redirected us is deformed";
 	}
 
-	data_len = GW_PAYLOAD_INFO_SIZE + gw_identity_len;
+	size_t data_len = GW_PAYLOAD_INFO_SIZE + gw_identity_len;
 	/*
 	 * we free this data in calling function or here
 	 * (when len != gw_identity_len)
 	 */
 	*data = alloc_chunk(data_len, "data for REDIRECTED_FROM Notify payload");
 
-	tmp = (char *) data->ptr;
+	char *tmp = (char *) data->ptr;
 	*tmp++ = gw_identity_type;
 	*tmp++ = gw_identity_len;
 
 	/* write values of IPv4/IPv6 address */
-	unsigned char *addr_bytes;
-	size_t len = addrbytesptr_write(&old_gw_address, &addr_bytes);
+	const unsigned char *addr_bytes;
+	size_t len = addrbytesptr_read(&old_gw_address, &addr_bytes);
 
 	if (len != gw_identity_len) {
 		freeanychunk(*data);

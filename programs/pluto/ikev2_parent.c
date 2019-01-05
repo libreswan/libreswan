@@ -843,15 +843,16 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	 */
 	if (!isanyaddr(&c->temp_vars.redirect_ip)) {
 		chunk_t old_gateway_data;
-		err_t e;
-
-		e = build_redirected_from_notify_data(c->temp_vars.old_gw_address, &old_gateway_data);
+		err_t e = build_redirected_from_notify_data(
+				c->temp_vars.old_gw_address, &old_gateway_data);
 		if (e != NULL) {
 			loglog(RC_LOG_SERIOUS, "not sending REDIRECTED_FROM Notify payload because %s", e);
 		} else {
 			if (!out_v2Nchunk(v2N_REDIRECTED_FROM,
-					&old_gateway_data, &rbody))
+					&old_gateway_data, &rbody)) {
+				freeanychunk(old_gateway_data);
 				return STF_INTERNAL_ERROR;
+			}
 			freeanychunk(old_gateway_data);
 		}
 	} else if (LIN(POLICY_ACCEPT_REDIRECT_YES, c->policy)) {
