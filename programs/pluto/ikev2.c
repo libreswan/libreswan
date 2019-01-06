@@ -2169,11 +2169,22 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 	DBG(DBG_CONTROL,
 	    DBG_log("calling processor %s", svm->story));
+
 	/*
-	 * Processor may screw around with md->st, hence use that
-	 * version for now.
+	 * XXX: the initial responder has ST==NULL!  But that's ok as
+	 * statetime_start() will fudge up a statetime_t for the
+	 * not-yet-created state.
 	 */
+	statetime_t start = statetime_start(st);
 	stf_status e = svm->processor(st, md);
+	statetime_stop(&start, "processing: %s", svm->story);
+
+	/*
+	 * Processor may screw around with md->st, for instance
+	 * switching it to the CHILD SA, or a newly created state.
+	 * Hence use that version for now.
+	 */
+
 	/* replace (*mdp)->st with st ... */
 	complete_v2_state_transition((*mdp)->st, mdp, e);
 	/* our caller with release_any_md(mdp) */

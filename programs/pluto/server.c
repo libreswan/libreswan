@@ -84,6 +84,7 @@
 #include "whack.h"              /* for RC_LOG_SERIOUS */
 #include "pluto_crypt.h"        /* cryptographic helper functions */
 #include "udpfromto.h"
+#include "monotime.h"
 
 #include "nat_traversal.h"
 
@@ -770,6 +771,7 @@ struct pid_entry {
 	pluto_fork_cb *callback;
 	so_serial_t serialno;
 	const char *name;
+	monotime_t start_time;
 };
 
 static size_t log_pid_entry(struct lswlog *buf, void *data)
@@ -820,6 +822,7 @@ static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
 	new_pid->context = context;
 	new_pid->serialno = serialno;
 	new_pid->name = name;
+	new_pid->start_time = mononow();
 	add_hash_table_entry(&pids_hash_table,
 			     new_pid, &new_pid->hash_entry);
 }
@@ -936,8 +939,17 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 				} else {
 					so_serial_t old_state = push_cur_state(st);
 					struct msg_digest *md = unsuspend_md(st);
+					if (DBGP(DBG_CPU_USAGE)) {
+						deltatime_t took = monotimediff(mononow(), pid_entry->start_time);
+						DBG_log("#%lu waited "PRI_DELTATIME" for '%s' fork()",
+							st->st_serialno, pri_deltatime(took),
+							pid_entry->name);
+					}
+					statetime_t start = statetime_start(st);
 					pid_entry->callback(st, &md, status,
 							    pid_entry->context);
+					statetime_stop(&start, "callback for %s",
+						       pid_entry->name);
 					release_any_md(&md);
 					pop_cur_state(old_state);
 				}

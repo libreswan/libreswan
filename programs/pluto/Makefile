@@ -228,6 +228,7 @@ OBJS += packet.o pluto_constants.o readwhackmsg.o
 OBJS += nss_cert_load.o pem.o nss_cert_verify.o
 OBJS += nss_ocsp.o nss_crl_import.o
 OBJS += nss_err.o
+OBJS += pluto_timing.o
 
 # Archives
 OBJS += $(LIBRESWANLIB)

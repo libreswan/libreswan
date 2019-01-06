@@ -222,11 +222,18 @@ void ipsecdoi_initiate(fd_t whack_sock,
 		initiator_function *initiator = pick_initiator(c, policy);
 
 		if (initiator != NULL) {
+			/*
+			 * initiator will create a state (and that in
+			 * turn will start its timing it), need a way
+			 * to stop it.
+			 */
+			statetime_t start = statetime_start(NULL);
 			initiator(whack_sock, c, NULL, policy, try
 #ifdef HAVE_LABELED_IPSEC
 				  , uctx
 #endif
 				  );
+			statetime_stop(&start, "initiator");
 		} else {
 			/* fizzle: whack_sock will be unused */
 			close_any(&whack_sock);
@@ -291,12 +298,19 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		initiator_function *initiator = pick_initiator(c, policy);
 
 		if (initiator != NULL) {
+			/*
+			 * initiator will create a state (and that in
+			 * turn will start its timing it), need a way
+			 * to stop it.
+			 */
+			statetime_t start = statetime_start(NULL);
 			(void) initiator(dup_any(st->st_whack_sock),
 				c, st, policy, try
 #ifdef HAVE_LABELED_IPSEC
 				, st->sec_ctx
 #endif
 				);
+			statetime_stop(&start, "initiator");
 		}
 	} else {
 		/*

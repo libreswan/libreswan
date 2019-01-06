@@ -411,6 +411,7 @@ static struct state *new_state(enum ike_version ike_version,
 		.st_ikev2 = (ike_version == IKEv2),
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
+	statetime_start(st);
 
 	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
@@ -754,6 +755,19 @@ void delete_state(struct state *st)
 			else
 				pstats_ikev1_completed++;
 		}
+	}
+
+	/*
+	 * Even though code tries to always track CPU time, only log
+	 * it when debugging - values range from very approximate to
+	 * (in the case of IKEv1) simply wrong.
+	 */
+	if (DBGP(DBG_CPU_USAGE|DBG_BASE) &&
+	    st->st_ike_version == IKEv2 &&
+	    st->st_timing.approx_seconds > 0) {
+		DBG_log("#%lu "PRI_CPU_USAGE" in total",
+			st->st_serialno,
+			pri_cpu_usage(st->st_timing.approx_seconds));
 	}
 
 	so_serial_t old_serialno = push_cur_state(st);

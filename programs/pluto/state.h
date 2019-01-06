@@ -50,6 +50,7 @@
 #include "ikev2_ts.h"		/* for struct traffic_selector */
 #include "ip_subnet.h"
 #include "ike_spi.h"
+#include "pluto_timing.h"	/* for statetime_t */
 
 /* msgid_t defined in defs.h */
 
@@ -302,6 +303,7 @@ extern const struct finite_state *finite_states[STATE_IKE_ROOF];
  */
 struct state {
 	realtime_t st_inception;		/* time state is created, for logging */
+	struct timing st_timing;		/* accumulative cpu time */
 	so_serial_t st_serialno;                /* serial number (for seniority)*/
 	so_serial_t st_clonedfrom;              /* serial number of parent */
 	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */

@@ -91,6 +91,7 @@ struct pluto_crypto_req_cont {
 	struct pluto_crypto_req pcrc_pcr;
 	pcr_req_id pcrc_id;
 	int pcrc_helpernum;
+	double pcrc_threadtime_used;
 };
 
 /*
@@ -278,6 +279,7 @@ static int crypto_helper_delay;
 static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 {
 	realtime_t tv0 = realnow();
+	threadtime_t start = threadtime_start();
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 
 	DBG(DBG_CONTROL,
@@ -326,6 +328,12 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 		lswlogs(buf, " seconds");
 	}
 
+	cn->pcrc_threadtime_used =
+		threadtime_stop(&start, cn->pcrc_serialno,
+				"crypto helper computing work-order %u: %s",
+				cn->pcrc_id,
+				enum_show(&pluto_cryptoop_names,
+					  cn->pcrc_pcr.pcr_type));
 }
 
 /* IN A HELPER THREAD */
@@ -577,7 +585,14 @@ static void handle_helper_answer(struct state *st,
 	} else {
 		st->st_offloaded_task = NULL;
 		st->st_v1_offloaded_task_in_background = false;
+		/* bill the thread time */
+		st->st_timing.approx_seconds += cn->pcrc_threadtime_used;
+		statetime_t start = statetime_start(st);
 		(*cn->pcrc_func)(st, mdp, &cn->pcrc_pcr);
+		statetime_stop(&start, "callback for work-order %u: %s",
+			       cn->pcrc_id,
+			       enum_show(&pluto_cryptoop_names,
+					 cn->pcrc_pcr.pcr_type));
 	}
 
 	/* now free up the continuation */
