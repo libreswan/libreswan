@@ -337,7 +337,10 @@ typedef enum {
 enum {
 	DBG_floor_IX = 0,
 
-	DBG_BASE_IX = DBG_floor_IX, /* aka debug=all */
+	DBG_BASE_IX = DBG_floor_IX,
+
+	/* below are also enabled by debug=all */
+	DBG_CPU_USAGE_IX,
 
 	/* below are excluded from debug=base */
 	DBG_TMI_IX,
@@ -354,11 +357,12 @@ enum {
 
 #define DBG_MASK	LRANGE(DBG_floor_IX, DBG_roof_IX - 1)
 #define DBG_NONE        0                                       /* no options on, including impairments */
-#define DBG_ALL         DBG_BASE
-
-/* singleton sets: must be kept in sync with the items! */
 
 #define DBG_BASE        LELEM(DBG_BASE_IX)
+#define DBG_CPU_USAGE	LELEM(DBG_CPU_USAGE_IX)
+#define DBG_ALL         (DBG_BASE | DBG_CPU_USAGE)
+
+/* singleton sets: must be kept in sync with the items! */
 
 /* so things don't break */
 #define DBG_RAW		DBG_BASE
@@ -377,7 +381,7 @@ enum {
 #define DBG_RETRANSMITS	DBG_BASE
 #define DBG_OPPOINFO	DBG_BASE
 
-/* These are not part of "all" debugging */
+/* These are not part of "base" debugging */
 #define DBG_TMI		LELEM(DBG_TMI_IX)
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
