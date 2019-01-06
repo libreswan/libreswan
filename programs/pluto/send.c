@@ -37,6 +37,7 @@
 #include "server.h"
 #include "demux.h"
 #include "pluto_stats.h"
+#include "ip_endpoint.h"
 
 /* send_ike_msg logic is broken into layers.
  * The rest of the system thinks it is simple.
@@ -99,7 +100,9 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	 */
 	if (isanyaddr(&remote_endpoint)) {
 		/* not asserting, who knows what nonsense a user can generate */
-		libreswan_log("Will not send packet to bogus address 0.0.0.0");
+		ip_endpoint_buf b;
+		libreswan_log("Will not send packet to bogus address %s",
+			      str_sensitive_endpoint(&remote_endpoint, &b));
 		return FALSE;
 	}
 
@@ -133,18 +136,19 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		ptr = a.ptr;
 	}
 
-	DBG(DBG_CONTROL | DBG_RAW, {
-		ipstr_buf b;
-		DBG_log("sending %zu bytes for %s through %s:%d to %s:%u (using #%lu)",
+	if (DBGP(DBG_MASK)) {
+		ip_endpoint_buf b;
+		DBG_log("sending %zu bytes for %s through %s:%d to %s (using #%lu)",
 			len,
 			where,
 			interface->ip_dev->id_rname,
 			interface->port,
-			sensitive_ipstr(&remote_endpoint, &b),
-			hportof(&remote_endpoint),
+			str_endpoint(&remote_endpoint, &b),
 			serialno);
-	});
-	DBG(DBG_RAW, DBG_dump(NULL, ptr, len));
+		if (DBGP(DBG_TMI)) {
+			DBG_dump(NULL, ptr, len);
+		}
+	}
 
 	check_outgoing_msg_errqueue(interface, "sending a packet");
 
@@ -156,11 +160,10 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 
 	if (wlen != (ssize_t)len) {
 		if (!just_a_keepalive) {
-			ipstr_buf b;
-			LOG_ERRNO(errno, "sendto on %s to %s:%u failed in %s",
+			ip_endpoint_buf b;
+			LOG_ERRNO(errno, "sendto on %s to %s failed in %s",
 				  interface->ip_dev->id_rname,
-				  sensitive_ipstr(&remote_endpoint, &b),
-				  hportof(&remote_endpoint),
+				  str_sensitive_endpoint(&remote_endpoint, &b),
 				  where);
 		}
 		return FALSE;
@@ -172,15 +175,14 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	if (IMPAIR(JACOB_TWO_TWO)) {
 		/* sleep for half a second, and second another packet */
 		usleep(500000);
-		ipstr_buf b;
+		ip_endpoint_buf b;
 
-		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s:%d to %s:%u:",
+		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s:%d to %s:",
 			len,
 			where,
 			interface->ip_dev->id_rname,
 			interface->port,
-			ipstr(&remote_endpoint, &b),
-			hportof(&remote_endpoint));
+			str_endpoint(&remote_endpoint, &b));
 
 		wlen = sendto(interface->fd,
 			      ptr,
@@ -190,10 +192,9 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		if (wlen != (ssize_t)len) {
 			if (!just_a_keepalive) {
 				LOG_ERRNO(errno,
-					  "sendto on %s to %s:%u failed in %s",
+					  "sendto on %s to %s failed in %s",
 					  interface->ip_dev->id_rname,
-					  ipstr(&remote_endpoint, &b),
-					  hportof(&remote_endpoint),
+					  str_endpoint(&remote_endpoint, &b),
 					  where);
 			}
 			return FALSE;
