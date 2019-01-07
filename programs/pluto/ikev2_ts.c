@@ -425,7 +425,7 @@ static int score_narrow_protocol(const struct end *end,
 	} else {
 		f = 0;
 	}
-	LSWDBGP(DBG_MASK, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		const struct traffic_selector *ts = &tss->ts[index];
 		lswlogf(buf, MATCH_PREFIX "match end->protocol=%s%d %s %s[%u].ipprotoid=%s%d: ",
 			end->protocol == 0 ? "*" : "", end->protocol,
@@ -599,7 +599,7 @@ static int score_address_range(const struct end *end,
 	    ts->endport == end->port)
 		f = f << 1;
 
-	LSWDBGP(DBG_MASK, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 	    char end_client[SUBNETTOT_BUF];
 	    subnettot(&end->client,  0, end_client, sizeof(end_client));
 	    char ts_net[RANGETOT_BUF];
@@ -966,7 +966,7 @@ bool v2_process_ts_request(struct child_sa *child,
 			if (t->kind != CK_TEMPLATE) {
 				continue;
 			}
-			LSWDBGP(DBG_MASK, buf) {
+			LSWDBGP(DBG_BASE, buf) {
 				lswlogf(buf, "  investigating template \"%s\";",
 					t->name);
 				if (t->foodgroup != NULL) {

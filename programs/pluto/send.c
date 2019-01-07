@@ -136,7 +136,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		ptr = a.ptr;
 	}
 
-	if (DBGP(DBG_MASK)) {
+	if (DBGP(DBG_BASE)) {
 		ip_endpoint_buf b;
 		DBG_log("sending %zu bytes for %s through %s:%d to %s (using #%lu)",
 			len,

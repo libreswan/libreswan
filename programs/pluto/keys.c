@@ -324,7 +324,7 @@ int sign_hash_ECDSA(const struct ECDSA_private_key *k,
 
 	CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(k->pub.ckaid);
 
-	LSWDBGP(DBG_MASK, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		lswlogf(buf, "got cert form ckaid");
 		lswlog_nss_error(buf);
 	}

@@ -2619,7 +2619,7 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	LSWDBGP(DBG_MASK, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		lswlogf(buf, "Message ID: '%s' IKE #%lu %s",
 			st->st_connection->name,
 			ike->sa.st_serialno, ike->sa.st_finite_state->fs_short_name);
@@ -3265,7 +3265,7 @@ struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_ms
 				 * XXX: seemingly an IKE rekey can
 				 * cause this?
 				 */
-				LSWDBGP(DBG_MASK, buf) {
+				LSWDBGP(DBG_BASE, buf) {
 					lswlogf(buf, "child state #%lu has an unexpected SA role ",
 						st->st_serialno);
 					lswlog_keyname(buf, &sa_role_names, st->st_sa_role);
@@ -3308,7 +3308,7 @@ struct state *v2_child_sa_initiator_with_msgid(struct ike_sa *ike, msgid_t st_ms
 				 * XXX: seemingly an IKE rekey can
 				 * cause this?
 				 */
-				LSWDBGP(DBG_MASK, buf) {
+				LSWDBGP(DBG_BASE, buf) {
 					lswlogf(buf, "child state #%lu has an unexpected SA role ",
 						st->st_serialno);
 					lswlog_keyname(buf, &sa_role_names, st->st_sa_role);

@@ -116,7 +116,7 @@ void log_prefix(struct lswlog *buf, bool debug,
 
 #define LSWLOG_CONNECTION(CONNECTION, BUF)				\
 	LSWLOG_(true, BUF,						\
-		log_prefix(BUF, true, NULL, CONNECTION),		\
+		log_prefix(BUF, false, NULL, CONNECTION),		\
 		lswlog_to_default_streams(BUF, RC_LOG))
 
 bool log_debugging(struct state *st, struct connection *c, lset_t predicate);
