@@ -150,7 +150,7 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 					&netorder_port, sizeof(netorder_port));
 	}
 	crypt_hash_final_bytes(&ctx, hash, hasher->hash_digest_size);
-	if (DBGP(DBG_MASK)) {
+	if (DBGP(DBG_BASE)) {
 		DBG_log("natd_hash: hasher=%p(%d)", hasher,
 			(int)hasher->hash_digest_size);
 		DBG_dump("natd_hash: icookie=", &spis->initiator, sizeof(spis->initiator));

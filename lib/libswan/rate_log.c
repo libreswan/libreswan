@@ -30,7 +30,7 @@ void rate_log(const char *fmt, ...)
 			libreswan_log("rate limited log exceed %d entries",
 				      RATE_LIMIT);
 		}
-		LSWDBGP(DBG_MASK, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			va_list ap;
 			va_start(ap, fmt);
 			lswlogvf(buf, fmt, ap);

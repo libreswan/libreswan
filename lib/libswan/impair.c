@@ -386,7 +386,7 @@ void process_impair(const struct whack_impair *wc)
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
 			if (non_zero(cr->value, cr->sizeof_value)) {
-				LSWDBGP(DBG_MASK, buf) {
+				LSWDBGP(DBG_BASE, buf) {
 					lswlogf(buf, "%s: ", cr->what);
 					lswlogs(buf, " disabled");
 				}
@@ -427,7 +427,7 @@ void process_impair(const struct whack_impair *wc)
 		default:
 			bad_case(cr->sizeof_value);
 	}
-	LSWDBGP(DBG_MASK, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		lswlogf(buf, "%s: ", cr->what);
 		lswlog_impairment(buf, cr);
 	}

@@ -242,7 +242,7 @@ static void update_state_stats(struct state *st,
 	 *
 	 * XXX: It's an assertion check only executed when debugging.
 	 */
-	if (DBGP(DBG_MASK)) {
+	if (DBGP(DBG_BASE)) {
 		DBG_log("%s state #%lu: %s(%s) => %s(%s)",
 			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
 			old_state->fs_short_name,

@@ -955,7 +955,7 @@ void ikev1_decode_cr(struct msg_digest *md)
 		ca_name.len = pbs_left(&p->pbs);
 		ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
 
-		if (DBGP(DBG_MASK)) {
+		if (DBGP(DBG_BASE)) {
 			DBG_dump_chunk("CR", ca_name);
 		}
 
@@ -1012,7 +1012,7 @@ void ikev2_decode_cr(struct msg_digest *md)
 
 			ca_name.len = pbs_left(&p->pbs);
 			ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
-			if (DBGP(DBG_MASK)) {
+			if (DBGP(DBG_BASE)) {
 				DBG_dump_chunk("CERT_X509_SIGNATURE CR:", ca_name);
 			}
 

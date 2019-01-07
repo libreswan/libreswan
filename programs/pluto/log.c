@@ -131,7 +131,7 @@ static void log_processing(enum processing processing, bool current,
 			   const char *func, const char *file, long line)
 {
 	pexpect(((st != NULL) + (c != NULL) + (from != NULL)) == 1);	/* only 1 */
-	LSWDBGP(DBG_MASK, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		lswlogs(buf, "processing: ");
 		switch (processing) {
 		case START: lswlogs(buf, "start"); break;
@@ -185,7 +185,7 @@ static void log_processing(enum processing processing, bool current,
 void log_reset_globals(const char *func, const char *file, long line)
 {
 	if (fd_p(whack_log_fd)) {
-		LSWDBGP(DBG_MASK, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			lswlogf(buf, "processing: RESET whack log_fd (was "PRI_FD")",
 				PRI_fd(whack_log_fd));
 			lswlog_source_line(buf, func, file, line);
@@ -209,7 +209,7 @@ void log_reset_globals(const char *func, const char *file, long line)
 		zero(&cur_from);
 	}
 	if (cur_debugging != base_debugging) {
-		LSWDBGP(DBG_MASK, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			lswlogf(buf, "processing: RESET cur_debugging (was %"PRIxLSET")",
 				cur_debugging);
 			lswlog_source_line(buf, func, file, line);
@@ -275,7 +275,7 @@ struct connection *log_push_connection(struct connection *new_connection, const 
 	update_debugging();
 
 	if (new_connection == NULL) {
-		LSWDBGP(DBG_MASK, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			lswlogf(buf, "start processing: connection NULL");
 			lswlog_source_line(buf, func, file, line);
 		}
@@ -301,7 +301,7 @@ void log_pop_connection(struct connection *c, const char *func,
 			       NULL, cur_connection, NULL,
 			       func, file, line);
 	} else {
-		LSWDBGP(DBG_MASK, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			lswlogf(buf, "processing: STOP connection NULL");
 			lswlog_source_line(buf, func, file, line);
 		}
@@ -336,7 +336,7 @@ so_serial_t log_push_state(struct state *new_state, const char *func,
 	update_debugging();
 
 	if (new_state == NULL) {
-		LSWDBGP(DBG_MASK, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			lswlogf(buf, "skip start processing: state #0");
 			lswlog_source_line(buf, func, file, line);
 		}
@@ -360,7 +360,7 @@ void log_pop_state(so_serial_t serialno, const char *func,
 			       cur_state, NULL, NULL,
 			       func, file, line);
 	} else {
-		LSWDBGP(DBG_MASK, buf) {
+		LSWDBGP(DBG_BASE, buf) {
 			lswlogf(buf, "processing: STOP state #0");
 			lswlog_source_line(buf, func, file, line);
 		}

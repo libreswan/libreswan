@@ -21,7 +21,7 @@
 
 void dbg(const char *fmt, ...)
 {
-	LSWDBGP(DBG_MASK, buf) {
+	LSWDBGP(DBG_BASE, buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		lswlogvf(buf, fmt, ap);

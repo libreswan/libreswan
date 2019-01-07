@@ -519,7 +519,7 @@ err_t atodn(const char *src, chunk_t *dn)
 
 	END_OBJ(ASN1_SEQUENCE);	/* 0 */
 	dn->len = dn_ptr - dn->ptr;
-	if (DBGP(DBG_MASK)) {
+	if (DBGP(DBG_BASE)) {
 		DBG_dump_chunk("ASCII to DN =>", *dn);
 	}
 	return NULL;
