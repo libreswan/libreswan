@@ -161,8 +161,6 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		return;
 	}
 
-	char raddr[ADDRTOT_BUF];
-	char laddr[ADDRTOT_BUF];
 	char audit_str[AUDIT_LOG_SIZE];
 	char cipher_str[AUDIT_LOG_SIZE];
 	char spi_str[AUDIT_LOG_SIZE];
@@ -292,8 +290,11 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	}
 	free(conn_encode); /* allocated by audit_encode_nv_string() */
 
-	addrtot(&c->spd.this.host_addr, 0, laddr, sizeof(laddr));
-	addrtot(&c->spd.that.host_addr, 0, raddr, sizeof(raddr));
+	ip_address_buf laddr_buf;
+	const char *laddr = ipstr(&c->spd.this.host_addr, &laddr_buf);
+
+	ip_address_buf raddr_buf;
+	const char *raddr = ipstr(&c->spd.that.host_addr, &raddr_buf);
 
 	snprintf(audit_str, sizeof(audit_str), "%s %s %s laddr=%s",
 		head,

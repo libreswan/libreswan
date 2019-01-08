@@ -547,7 +547,6 @@ size_t format_end(char *buf,
 	bool dohost_name = FALSE;
 	char host_port[sizeof(":65535")];
 	char host_id[IDTOA_BUF + 2];
-	char hop[ADDRTOT_BUF];
 	char endopts[sizeof("MS+MC+XS+XC+Sxx+CAT") + 1] = "";
 	const char *hop_sep = "";
 	const char *open_brackets  = "";
@@ -710,10 +709,11 @@ size_t format_end(char *buf,
 	}
 
 	/* [---hop] */
-	hop[0] = '\0';
+	ip_address_buf hop_buf; /* must be at same scope as HOP */
+	const char *hop = "";
 	hop_sep = "";
 	if (that != NULL && !filter_rnh && !sameaddr(&this->host_nexthop, &that->host_addr)) {
-		addrtot(&this->host_nexthop, 0, hop, sizeof(hop));
+		hop = ipstr(&this->host_nexthop, &hop_buf);
 		hop_sep = "---";
 	}
 

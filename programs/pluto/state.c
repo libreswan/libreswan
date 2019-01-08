@@ -1280,9 +1280,8 @@ void delete_p2states_by_connection(struct connection *c)
  */
 void delete_states_by_peer(const ip_address *peer)
 {
-	char peerstr[ADDRTOT_BUF];
-
-	addrtot(peer, 0, peerstr, sizeof(peerstr));
+	ip_address_buf peer_buf;
+	const char *peerstr = ipstr(peer, &peer_buf);
 
 	whack_log(RC_COMMENT, "restarting peer %s\n", peerstr);
 

@@ -1813,7 +1813,6 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
-				char ipstr[SUBNETTOT_BUF];
 
 				uint32_t *ap =
 					(uint32_t *)(strattr.cur);
@@ -1823,11 +1822,12 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				memcpy(&a.u.v4.sin_addr.s_addr, ap,
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
-				addrtot(&a, 0, ipstr, sizeof(ipstr));
+				ip_address_buf a_buf;
+				const char *a_str = ipstr(&a, &a_buf);
 				loglog(RC_INFORMATIONAL, "Received DNS server %s",
-					ipstr);
+				       a_str);
 
-				append_st_cfg_dns(st, ipstr);
+				append_st_cfg_dns(st, a_str);
 
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;

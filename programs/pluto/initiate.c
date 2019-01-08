@@ -466,11 +466,10 @@ static void cannot_oppo(struct connection *c,
 			struct find_oppo_bundle *b,
 			err_t ughmsg)
 {
-	char pcb[ADDRTOT_BUF];
-	char ocb[ADDRTOT_BUF];
-
-	addrtot(&b->peer_client, 0, pcb, sizeof(pcb));
-	addrtot(&b->our_client, 0, ocb, sizeof(ocb));
+	ip_address_buf ocb_buf;
+	const char *ocb = ipstr(&b->our_client, &ocb_buf);
+	ip_address_buf pcb_buf;
+	const char *pcb = ipstr(&b->peer_client, &pcb_buf);
 
 	DBG(DBG_OPPO,
 	    libreswan_log("Cannot opportunistically initiate for %s to %s: %s",
@@ -582,8 +581,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 {
 	struct connection *c = NULL;
 	struct spd_route *sr;
-	char ours[ADDRTOT_BUF];
-	char his[ADDRTOT_BUF];
 	int ourport, hisport;
 	char demandbuf[256];
 	bool loggedit = FALSE;
@@ -592,8 +589,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 	 * First try for one that explicitly handles the clients.
 	 */
 
-	addrtot(&b->our_client, 0, ours, sizeof(ours));
-	addrtot(&b->peer_client, 0, his, sizeof(his));
+	ip_address_buf ourb;
+	const char *ours = ipstr(&b->our_client, &ourb);
+	ip_address_buf hisb;
+	const char *his = ipstr(&b->peer_client, &hisb);
+
 	ourport = ntohs(portof(&b->our_client));
 	hisport = ntohs(portof(&b->peer_client));
 

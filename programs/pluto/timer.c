@@ -125,11 +125,10 @@ static void liveness_check(struct state *st)
 		pst = st;
 	}
 
-	char this_ip[ADDRTOT_BUF];
-	char that_ip[ADDRTOT_BUF];
-
-	addrtot(&st->st_localaddr, 0, this_ip, sizeof(this_ip));
-	addrtot(&st->st_remoteaddr, 0, that_ip, sizeof(that_ip));
+	ip_address_buf this_buf;
+	const char *this_ip = ipstr(&st->st_localaddr, &this_buf);
+	ip_address_buf that_buf;
+	const char *that_ip = ipstr(&st->st_remoteaddr, &that_buf);
 
 	/*
 	 * If we are a lingering (replaced) IPsec SA, don't do liveness

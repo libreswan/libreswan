@@ -437,7 +437,6 @@ static void ikev2_set_domain(pb_stream *cp_a_pbs, struct state *st)
 static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
 {
 	ip_address ip;
-	char ip_str[ADDRTOT_BUF];
 	struct connection *c = st->st_connection;
 	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), af, &ip);
 	bool responder = (st->st_state != STATE_PARENT_I2);
@@ -448,7 +447,8 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
 		return TRUE;
 	}
 
-	addrtot(&ip, 0, ip_str, sizeof(ip_str));
+	ip_address_buf ip_buf;
+	const char *ip_str = ipstr(&ip, &ip_buf);
 
 	if ((ugh != NULL && st->st_state == STATE_PARENT_I2)) {
 		libreswan_log("ERROR INTERNAL_IP%s_DNS malformed: %s",
