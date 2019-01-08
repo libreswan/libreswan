@@ -1313,8 +1313,10 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 			if (e != NULL) {
 				loglog(RC_LOG_SERIOUS, "not sending REDIRECT Payload because %s", e);
 			} else {
-				if (!emit_v2Nchunk(v2N_REDIRECT, &data, &rbody))
+				if (!emit_v2Nchunk(v2N_REDIRECT, &data, &rbody)) {
+					freeanychunk(data);
 					return STF_INTERNAL_ERROR;
+				}
 				freeanychunk(data);
 			}
 		}
@@ -2518,6 +2520,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
 			if (c_spi < IPCOMP_FIRST_NEGOTIATED) { /* get_my_cpi() failed */
 				loglog(RC_LOG_SERIOUS, "failed to calculate compression CPI (CPI=%d)", c_spi);
+				freeanychunk(null_auth);
 				return STF_INTERNAL_ERROR;
 			}
 			DBG(DBG_CONTROL, DBG_log("Calculated compression CPI=%d", c_spi));
@@ -2531,6 +2534,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		ipcompN.ptr = gunk;
 
 		if (!emit_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, &sk.pbs)) {
+			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
 		}
 	} else {
@@ -2538,8 +2542,10 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (cc->send_no_esp_tfc) {
-		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
+		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs)) {
+			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	if (LIN(POLICY_MOBIKE, cc->policy)) {
@@ -3053,10 +3059,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	/* send response */
 	{
-		bool send_redirect = FALSE;
-		chunk_t redirect_data;
-		err_t ugh = NULL;
-
 		if (LIN(POLICY_MOBIKE, c->policy) && st->st_seen_mobike) {
 			if (c->spd.that.host_type == KH_ANY) {
 				/* only allow %any connection to mobike */
@@ -3066,14 +3068,19 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			}
 		}
 
-		if (st->st_seen_redirect_sup && (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
-						 (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
-						  require_ddos_cookies()))) {
+		err_t redirect_ugh = NULL;
+		bool send_redirect = FALSE;
+		chunk_t redirect_data = empty_chunk;
+
+		if (st->st_seen_redirect_sup &&
+		    (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
+		     (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
+		      require_ddos_cookies()))) {
 			if (c->redirect_to == NULL) {
 				loglog(RC_LOG_SERIOUS, "redirect-to is not specified, can't redirect requests");
 			} else {
-				ugh = build_redirect_notify_data(c->redirect_to, FALSE, NULL, &redirect_data);
-				if (ugh == NULL) {
+				redirect_ugh = build_redirect_notify_data(c->redirect_to, FALSE, NULL, &redirect_data);
+				if (redirect_ugh == NULL) {
 					send_redirect = TRUE;
 				} /* else log error but later, see below */
 			}
@@ -3091,6 +3098,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
 			if (!emit_v2UNKNOWN("IKE_AUTH reply", &rbody)) {
+				freeanychunk(redirect_data);
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -3102,11 +3110,13 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(st));
 		if (!pbs_ok(&sk.pbs)) {
+			freeanychunk(redirect_data);
 			return STF_INTERNAL_ERROR;
 		}
 
 		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
 			if (!emit_v2UNKNOWN("IKE_AUTH's SK reply", &sk.pbs)) {
+				freeanychunk(redirect_data);
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -3114,21 +3124,25 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		/* send any NOTIFY payloads */
 		if (st->st_sent_mobike) {
 			if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs))
+				freeanychunk(redirect_data);
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (st->st_ppk_used) {
 			if (!emit_v2N(v2N_PPK_IDENTITY, &sk.pbs))
+				freeanychunk(redirect_data);
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (send_redirect) {
-			if (!emit_v2Nchunk(v2N_REDIRECT, &redirect_data, &sk.pbs))
+			if (!emit_v2Nchunk(v2N_REDIRECT, &redirect_data, &sk.pbs)) {
+				freeanychunk(redirect_data);
 				return STF_INTERNAL_ERROR;
+			}
 			st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
 			freeanychunk(redirect_data);
-		} else if (ugh != NULL) {
-			loglog(RC_LOG_SERIOUS, "not sending REDIRECT Payload because %s", ugh);
+		} else if (redirect_ugh != NULL) {
+			loglog(RC_LOG_SERIOUS, "not sending REDIRECT Payload because %s", redirect_ugh);
 		}
 
 		if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
