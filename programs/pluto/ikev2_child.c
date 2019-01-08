@@ -348,7 +348,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					ENCAPSULATION_MODE_TRANSPORT;
 			}
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			if (!out_v2N(v2N_USE_TRANSPORT_MODE, outpbs))
+			if (!emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
 	} else {
@@ -361,7 +361,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	if (c->send_no_esp_tfc) {
 		DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
-		if (!out_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
+		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -389,7 +389,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		ipcompN.len = IPCOMP_CPI_SIZE + 1;
 		ipcompN.ptr = gunk;
 
-		if (!out_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, outpbs)) {
+		if (!emit_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, outpbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 		DBG(DBG_CONTROL, DBG_log("Sending v2N_IPCOMP_SUPPORTED for DEFLATE algorithm"));

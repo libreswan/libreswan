@@ -141,8 +141,8 @@ bool emit_v2V(const char *string, pb_stream *outs)
  */
 
 
-/* output a v2 Notification payload, with optional SA and optional sub-payload */
-bool out_v2Nsa_pl(v2_notification_t ntype,
+/* emit a v2 Notification payload, with optional SA and optional sub-payload */
+bool emit_v2Nsa_pl(v2_notification_t ntype,
 		enum ikev2_sec_proto_id protoid,
 		const ipsec_spi_t *spi, /* optional */
 		pb_stream *outs,
@@ -189,22 +189,22 @@ bool out_v2Nsa_pl(v2_notification_t ntype,
 	return true;
 }
 
-/* output a v2 Notification payload, with sub-payload */
-static bool out_v2Npl(v2_notification_t ntype,
+/* emit a v2 Notification payload, with optional sub-payload */
+static bool emit_v2Npl(v2_notification_t ntype,
 		pb_stream *outs,
-		pb_stream *payload_pbs)
+		pb_stream *payload_pbs /* optional */)
 {
-	return out_v2Nsa_pl(ntype, PROTO_v2_RESERVED, NULL, outs, payload_pbs);
+	return emit_v2Nsa_pl(ntype, PROTO_v2_RESERVED, NULL, outs, payload_pbs);
 }
 
-/* output a v2 Notification payload, with optional chunk as sub-payload */
-bool out_v2Nchunk(v2_notification_t ntype,
+/* emit a v2 Notification payload, with optional chunk as sub-payload */
+bool emit_v2Nchunk(v2_notification_t ntype,
 		const chunk_t *ndata, /* optional */
 		pb_stream *outs)
 {
 	pb_stream pl;
 
-	if (!out_v2Npl(ntype, outs, &pl) ||
+	if (!emit_v2Npl(ntype, outs, &pl) ||
 	    (ndata != NULL && !out_chunk(*ndata, &pl, "Notify data")))
 		return false;
 
@@ -213,10 +213,10 @@ bool out_v2Nchunk(v2_notification_t ntype,
 }
 
 /* output a v2 simple Notification payload */
-bool out_v2N(v2_notification_t ntype,
+bool emit_v2N(v2_notification_t ntype,
 	       pb_stream *outs)
 {
-	return out_v2Nchunk(ntype, NULL, outs);
+	return emit_v2Nchunk(ntype, NULL, outs);
 }
 
 bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
@@ -224,7 +224,7 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 {
 	pb_stream n_pbs;
 
-	if (!out_v2Npl(v2N_SIGNATURE_HASH_ALGORITHMS, outs, &n_pbs)) {
+	if (!emit_v2Npl(v2N_SIGNATURE_HASH_ALGORITHMS, outs, &n_pbs)) {
 		libreswan_log("error initializing notify payload for notify message");
 		return false;
 	}
@@ -342,7 +342,7 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 	}
 
 	pb_stream n_pbs;
-	if (!out_v2Nsa_pl(ntype, protoid, spi, &sk.pbs, &n_pbs) ||
+	if (!emit_v2Nsa_pl(ntype, protoid, spi, &sk.pbs, &n_pbs) ||
 	    (ndata != NULL && !out_chunk(*ndata, &n_pbs, "Notify data"))) {
 		return;
 	}
@@ -443,7 +443,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	}
 
 	/* build and add v2N payload to the packet */
-	if (!out_v2Nchunk(ntype, ndata, &rbody)) {
+	if (!emit_v2Nchunk(ntype, ndata, &rbody)) {
 		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->hdr.isa_msgid);
 		return;

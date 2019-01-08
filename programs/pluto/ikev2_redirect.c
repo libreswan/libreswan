@@ -402,7 +402,7 @@ static stf_status add_redirect_payload(struct state *st, pb_stream *pbs)
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!out_v2Nchunk(v2N_REDIRECT, &notify_data, pbs)) {
+	if (!emit_v2Nchunk(v2N_REDIRECT, &notify_data, pbs)) {
 		freeanychunk(notify_data);
 		return STF_INTERNAL_ERROR;
 	}

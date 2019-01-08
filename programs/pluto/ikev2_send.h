@@ -56,26 +56,27 @@ extern stf_status send_v2_informational_request(const char *name,
 /*
  * Emit an IKEv2 payload.
  *
- * Like the out_*() primitives, these have the pb_stream as the last
- * parameter.
+ * Like the out_*() primitives, these have the pb_stream for emission as
+ * the last parameter (or second last if the last one is the pb_stream
+ * for the sub-payload).
  */
 
 bool emit_v2UNKNOWN(const char *victim, pb_stream *outs);
 
-/* output a v2 Notification payload, with optional SA and optional sub-payload */
-bool out_v2Nsa_pl(v2_notification_t ntype,
+/* emit a v2 Notification payload, with optional SA and optional sub-payload */
+bool emit_v2Nsa_pl(v2_notification_t ntype,
 		enum ikev2_sec_proto_id protoid,
 		const ipsec_spi_t *spi, /* optional */
 		pb_stream *outs,
 		pb_stream *payload_pbs /* optional */);
 
-/* output a v2 Notification payload, with optional chunk as sub-payload */
-bool out_v2Nchunk(v2_notification_t ntype,
+/* emit a v2 Notification payload, with optional chunk as sub-payload */
+bool emit_v2Nchunk(v2_notification_t ntype,
 		const chunk_t *ndata, /* optional */
 		pb_stream *outs);
 
 /* output a v2 simple Notification payload */
-bool out_v2N(v2_notification_t ntype,
+bool emit_v2N(v2_notification_t ntype,
 	       pb_stream *outs);
 
 bool emit_v2V(const char *string, pb_stream *outs);

@@ -787,7 +787,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	 */
 	if (st->st_dcookie.ptr != NULL) {
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
-		if (!out_v2Nchunk(v2N_COOKIE, &st->st_dcookie, &rbody)) {
+		if (!emit_v2Nchunk(v2N_COOKIE, &st->st_dcookie, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -824,13 +824,13 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		if (!out_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, &rbody))
+		if (!emit_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	/* Send USE_PPK Notify payload */
 	if (LIN(POLICY_PPK_ALLOW, c->policy)) {
-		if (!out_v2N(v2N_USE_PPK, &rbody))
+		if (!emit_v2N(v2N_USE_PPK, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -848,7 +848,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 		if (e != NULL) {
 			loglog(RC_LOG_SERIOUS, "not sending REDIRECTED_FROM Notify payload because %s", e);
 		} else {
-			if (!out_v2Nchunk(v2N_REDIRECTED_FROM,
+			if (!emit_v2Nchunk(v2N_REDIRECTED_FROM,
 					&old_gateway_data, &rbody)) {
 				freeanychunk(old_gateway_data);
 				return STF_INTERNAL_ERROR;
@@ -856,7 +856,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 			freeanychunk(old_gateway_data);
 		}
 	} else if (LIN(POLICY_ACCEPT_REDIRECT_YES, c->policy)) {
-		if (!out_v2N(v2N_REDIRECT_SUPPORTED, &rbody))
+		if (!emit_v2N(v2N_REDIRECT_SUPPORTED, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1290,13 +1290,13 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		if (!out_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, &rbody))
+		if (!emit_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	/* Send USE_PPK Notify payload */
 	if (st->st_seen_ppk) {
-		if (!out_v2N(v2N_USE_PPK, &rbody))
+		if (!emit_v2N(v2N_USE_PPK, &rbody))
 			return STF_INTERNAL_ERROR;
 	 }
 
@@ -1313,7 +1313,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 			if (e != NULL) {
 				loglog(RC_LOG_SERIOUS, "not sending REDIRECT Payload because %s", e);
 			} else {
-				if (!out_v2Nchunk(v2N_REDIRECT, &data, &rbody))
+				if (!emit_v2Nchunk(v2N_REDIRECT, &data, &rbody))
 					return STF_INTERNAL_ERROR;
 				freeanychunk(data);
 			}
@@ -2411,7 +2411,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	if (ic) {
 		libreswan_log("sending INITIAL_CONTACT");
-		if (!out_v2N(v2N_INITIAL_CONTACT, &sk.pbs))
+		if (!emit_v2N(v2N_INITIAL_CONTACT, &sk.pbs))
 			return STF_INTERNAL_ERROR;
 	} else {
 		DBG(DBG_CONTROL, DBG_log("not sending INITIAL_CONTACT"));
@@ -2498,7 +2498,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
-		if (!out_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs)) {
+		if (!emit_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs)) {
 			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
 		}
@@ -2530,7 +2530,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		ipcompN.len = IPCOMP_CPI_SIZE + 1;
 		ipcompN.ptr = gunk;
 
-		if (!out_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, &sk.pbs)) {
+		if (!emit_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	} else {
@@ -2538,20 +2538,20 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (cc->send_no_esp_tfc) {
-		if (!out_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
+		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (LIN(POLICY_MOBIKE, cc->policy)) {
 		cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
-		if (!out_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
+		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
 			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
 		}
 	}
 	if (pst->st_seen_ppk) {
 		chunk_t notify_data = create_unified_ppk_id(&ppk_id_p);
-		if (!out_v2Nchunk(v2N_PPK_IDENTITY, &notify_data, &sk.pbs)) {
+		if (!emit_v2Nchunk(v2N_PPK_IDENTITY, &notify_data, &sk.pbs)) {
 			freeanychunk(null_auth);
 			freeanychunk(notify_data);
 			return STF_INTERNAL_ERROR;
@@ -2561,7 +2561,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
 			ikev2_calc_no_ppk_auth(cc, pst, idhash_npa,
 				&pst->st_no_ppk_auth);
-			if (!out_v2Nchunk(v2N_NO_PPK_AUTH, &pst->st_no_ppk_auth,
+			if (!emit_v2Nchunk(v2N_NO_PPK_AUTH, &pst->st_no_ppk_auth,
 					&sk.pbs)) {
 				freeanychunk(null_auth);
 				return STF_INTERNAL_ERROR;
@@ -2570,7 +2570,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (null_auth.ptr != NULL) {
-		if (!out_v2Nchunk(v2N_NULL_AUTH, &null_auth, &sk.pbs)) {
+		if (!emit_v2Nchunk(v2N_NULL_AUTH, &null_auth, &sk.pbs)) {
 			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
 		}
@@ -3113,17 +3113,17 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		/* send any NOTIFY payloads */
 		if (st->st_sent_mobike) {
-			if (!out_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs))
+			if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (st->st_ppk_used) {
-			if (!out_v2N(v2N_PPK_IDENTITY, &sk.pbs))
+			if (!emit_v2N(v2N_PPK_IDENTITY, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (send_redirect) {
-			if (!out_v2Nchunk(v2N_REDIRECT, &redirect_data, &sk.pbs))
+			if (!emit_v2Nchunk(v2N_REDIRECT, &redirect_data, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 			st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
 			freeanychunk(redirect_data);
@@ -3132,7 +3132,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		}
 
 		if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
-			if (!out_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs))
+			if (!emit_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -3160,7 +3160,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			ipcompN.len = IPCOMP_CPI_SIZE + 1;
 			ipcompN.ptr = gunk;
 
-			if (!out_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, &sk.pbs)) {
+			if (!emit_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, &sk.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 		} else {
@@ -3168,7 +3168,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		}
 
 		if (c->send_no_esp_tfc) {
-			if (!out_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
+			if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -4108,7 +4108,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 		}
 
 		if (rekey_spi != 0) {
-			if (!out_v2Nsa_pl(v2N_REKEY_SA,
+			if (!emit_v2Nsa_pl(v2N_REKEY_SA,
 					rekey_protoid, &rekey_spi,
 					outpbs, NULL))
 				return STF_INTERNAL_ERROR;
@@ -4125,14 +4125,14 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 
 	if (send_use_transport) {
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
-		if (!out_v2N(v2N_USE_TRANSPORT_MODE, outpbs))
+		if (!emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs))
 			return STF_INTERNAL_ERROR;
 	} else {
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
 	}
 
 	if (cc->send_no_esp_tfc) {
-		if (!out_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
+		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
 			return STF_INTERNAL_ERROR;
 	}
 	return STF_OK;
@@ -5170,7 +5170,7 @@ static stf_status add_mobike_response_payloads(
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(!ike_spi_is_zero(&st->st_ike_spis.responder));
 	if (ikev2_out_nat_v2n(pbs, st, &st->st_ike_spis.responder) &&
-	    (cookie2->len == 0 || out_v2Nchunk(v2N_COOKIE2, cookie2, pbs)))
+	    (cookie2->len == 0 || emit_v2Nchunk(v2N_COOKIE2, cookie2, pbs)))
 		r = STF_OK;
 
 	freeanychunk(*cookie2);
@@ -5652,7 +5652,7 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 #ifdef NETKEY_SUPPORT
 static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
-	if (!out_v2N(v2N_UPDATE_SA_ADDRESSES, pbs))
+	if (!emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs))
 		return STF_INTERNAL_ERROR;
 
 	if (!ikev2_out_natd(&st->st_mobike_localaddr, st->st_mobike_localport,
