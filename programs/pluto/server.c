@@ -1241,13 +1241,14 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 			sender = find_likely_sender((size_t) packet_len, buffer);
 		}
 
-		if (packet_len > 0) {
-			DBG_cond_dump(DBG_ALL, "rejected packet:\n", buffer,
-			      packet_len);
+		if (DBGP(DBG_BASE)) {
+			if (packet_len > 0) {
+				DBG_dump("rejected packet:\n", buffer,
+					  packet_len);
+			}
+			DBG_dump("control:\n", emh.msg_control,
+				 emh.msg_controllen);
 		}
-
-		DBG_cond_dump(DBG_ALL, "control:\n", emh.msg_control,
-			      emh.msg_controllen);
 
 		/* ??? Andi Kleen <ak@suse.de> and misc documentation
 		 * suggests that name will have the original destination
@@ -1256,8 +1257,9 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 		 * Perhaps in 2.2.18/2.4.0.
 		 */
 		passert(emh.msg_name == &from.sa);
-		DBG_cond_dump(DBG_ALL, "name:\n", emh.msg_name,
-			      emh.msg_namelen);
+		if (DBGP(DBG_BASE)) {
+			DBG_dump("name:\n", emh.msg_name, emh.msg_namelen);
+		}
 
 		fromstr[0] = '\0'; /* usual case :-( */
 		switch (from.sa.sa_family) {

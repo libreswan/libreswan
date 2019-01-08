@@ -313,10 +313,7 @@ void dbg(const char *fmt, ...) PRINTF_LIKE(1);
  * printf() can be passed to some functions
  */
 int DBG_log(const char *message, ...) PRINTF_LIKE(1);
-
 void DBG_dump(const char *label, const void *p, size_t len);
-
-#define DBG_cond_dump(cond, label, p, len) DBG(cond, DBG_dump(label, p, len))
 
 void lswlog_dbg_pre(struct lswlog *buf);
 

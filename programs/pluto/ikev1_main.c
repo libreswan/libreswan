@@ -416,12 +416,11 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 	uint8_t *enc_start = pbs->start + sizeof(struct isakmp_hdr);
 	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
 
-	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "encrypting:", enc_start,
-		enc_len);
-	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "IV:",
-		st->st_new_iv,
-		st->st_new_iv_len);
-	DBG(DBG_CRYPT, DBG_log("unpadded size is: %u", (unsigned int)enc_len));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("encrypting:", enc_start, enc_len);
+		DBG_dump("IV:", st->st_new_iv, st->st_new_iv_len);
+		DBG_log("unpadded size is: %u", (unsigned int)enc_len);
+	}
 
 	/*
 	 * Pad up to multiple of encryption blocksize.
@@ -455,7 +454,9 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 				 st->st_new_iv, TRUE);
 
 	update_iv(st);
-	DBG_cond_dump(DBG_CRYPT, "next IV:", st->st_iv, st->st_iv_len);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("next IV:", st->st_iv, st->st_iv_len);
+	}
 
 	return TRUE;
 }
@@ -1533,10 +1534,19 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	{
 		pb_stream *const hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
 
+		/*
+		 * XXX: looks a lot like the hack CHECK_QUICK_HASH(),
+		 * except this one doesn't return.  Strong indicator
+		 * that CHECK_QUICK_HASH should be changed to a
+		 * function and also not magically force caller to
+		 * return.
+		 */
 		if (pbs_left(hash_pbs) != hash_len ||
 			!memeq(hash_pbs->cur, hash_val, hash_len)) {
-			DBG_cond_dump(DBG_CRYPT, "received HASH:",
-				hash_pbs->cur, pbs_left(hash_pbs));
+			if (DBGP(DBG_CRYPT)) {
+				DBG_dump("received HASH:",
+					 hash_pbs->cur, pbs_left(hash_pbs));
+			}
 			loglog(RC_LOG_SERIOUS,
 				"received Hash Payload does not match computed value");
 			/* XXX Could send notification back */
@@ -1758,8 +1768,10 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	/* Last block of Phase 1 (R3), kept for Phase 2 IV generation */
-	DBG_cond_dump(DBG_CRYPT, "last encrypted block of Phase 1:",
-		st->st_new_iv, st->st_new_iv_len);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("last encrypted block of Phase 1:",
+			 st->st_new_iv, st->st_new_iv_len);
+	}
 
 	set_ph1_iv_from_new(st);
 

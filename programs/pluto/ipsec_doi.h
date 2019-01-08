@@ -105,19 +105,20 @@ extern bool accept_KE(chunk_t *dest, const char *val_name,
  */
 #define CHECK_QUICK_HASH(md, do_hash, hash_name, msg_name) { \
 		pb_stream *const hash_pbs = &(md)->chain[ISAKMP_NEXT_HASH]->pbs; \
-		u_char hash_val[MAX_DIGEST_LEN]; \
-		size_t hash_len = (do_hash); \
-		if (pbs_left(hash_pbs) != hash_len || \
-		    !memeq(hash_pbs->cur, hash_val, hash_len)) \
-		{ \
-			DBG_cond_dump(DBG_CRYPT, "received " hash_name ":", \
-				      hash_pbs->cur, pbs_left(hash_pbs)); \
-			loglog(RC_LOG_SERIOUS, \
+		u_char hash_val[MAX_DIGEST_LEN];			\
+		size_t hash_len = (do_hash);				\
+		if (pbs_left(hash_pbs) != hash_len ||			\
+		    !memeq(hash_pbs->cur, hash_val, hash_len)) {	\
+			if (DBGP(DBG_CRYPT)) {				\
+				DBG_dump("received " hash_name ":",	\
+					 hash_pbs->cur, pbs_left(hash_pbs)); \
+			}						\
+			loglog(RC_LOG_SERIOUS,				\
 			       "received " hash_name " does not match computed value in " msg_name); \
-			/* XXX Could send notification back */ \
-			return STF_FAIL + INVALID_HASH_INFORMATION; \
-		} \
-}
+			/* XXX Could send notification back */		\
+			return STF_FAIL + INVALID_HASH_INFORMATION;	\
+		}							\
+	}
 
 extern stf_status send_isakmp_notification(struct state *st,
 					   uint16_t type, const void *data,

@@ -1904,11 +1904,6 @@ void process_packet_tail(struct msg_digest **mdp)
 		/* Mark as encrypted */
 		md->encrypted = TRUE;
 
-		DBG(DBG_CRYPT,
-		    DBG_log("decrypting %u bytes using algorithm %s",
-			    (unsigned) pbs_left(&md->message_pbs),
-			    st->st_oakley.ta_encrypt->common.fqn));
-
 		/* do the specified decryption
 		 *
 		 * IV is from st->st_iv or (if new_iv_set) st->st_new_iv.
@@ -1950,20 +1945,25 @@ void process_packet_tail(struct msg_digest **mdp)
 		passert(st->st_new_iv_len >= e->enc_blocksize);
 		st->st_new_iv_len = e->enc_blocksize;   /* truncate */
 
-		DBG_cond_dump(DBG_CRYPT, "IV before:",
-			      st->st_new_iv, st->st_new_iv_len);
+		if (DBGP(DBG_CRYPT)) {
+			DBG_log("decrypting %u bytes using algorithm %s",
+				(unsigned) pbs_left(&md->message_pbs),
+				st->st_oakley.ta_encrypt->common.fqn);
+			DBG_dump("IV before:",
+				 st->st_new_iv, st->st_new_iv_len);
+		}
 		e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
 					 pbs_left(&md->message_pbs),
 					 st->st_enc_key_nss,
 					 st->st_new_iv, FALSE);
-		DBG_cond_dump(DBG_CRYPT, "IV after:",
-			      st->st_new_iv, st->st_new_iv_len);
-
-		DBG(DBG_CRYPT,
-		    DBG_log("decrypted payload (starts at offset %td):",
-			    md->message_pbs.cur - md->message_pbs.roof);
-		    DBG_dump("", md->message_pbs.start,
-			     md->message_pbs.roof - md->message_pbs.start));
+		if (DBGP(DBG_CRYPT)) {
+			DBG_dump("IV after:",
+				 st->st_new_iv, st->st_new_iv_len);
+			DBG_log("decrypted payload (starts at offset %td):",
+				md->message_pbs.cur - md->message_pbs.roof);
+			DBG_dump("", md->message_pbs.start,
+				 md->message_pbs.roof - md->message_pbs.start);
+		}
 	} else {
 		/* packet was not encryped -- should it have been? */
 
@@ -2331,8 +2331,10 @@ void process_packet_tail(struct msg_digest **mdp)
 					DBG_dump_pbs(&p->pbs);
 				}
 			}
-			DBG_cond_dump(DBG_PARSING, "info:", p->pbs.cur, pbs_left(
-					      &p->pbs));
+			if (DBGP(DBG_BASE)) {
+				DBG_dump("info:", p->pbs.cur,
+					 pbs_left(&p->pbs));
+			}
 
 			p = p->next;
 		}
@@ -2340,8 +2342,10 @@ void process_packet_tail(struct msg_digest **mdp)
 		p = md->chain[ISAKMP_NEXT_D];
 		while (p != NULL) {
 			self_delete |= accept_delete(md, p);
-			DBG_cond_dump(DBG_PARSING, "del:", p->pbs.cur, pbs_left(
-					      &p->pbs));
+			if (DBGP(DBG_BASE)) {
+				DBG_dump("del:", p->pbs.cur,
+					 pbs_left(&p->pbs));
+			}
 			p = p->next;
 		}
 

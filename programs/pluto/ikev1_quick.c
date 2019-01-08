@@ -714,8 +714,10 @@ static size_t quick_mode_hash3(u_char *dest, struct state *st)
 	hmac_update_chunk(&ctx, st->st_ni);
 	hmac_update_chunk(&ctx, st->st_nr);
 	hmac_final(dest, &ctx);
-	DBG_cond_dump(DBG_CRYPT, "HASH(3) computed:", dest,
-		      ctx.hmac_digest_len);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("HASH(3) computed:", dest,
+			 ctx.hmac_digest_len);
+	}
 	return ctx.hmac_digest_len;
 }
 
@@ -727,14 +729,18 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	const struct hash_desc *h = st->st_oakley.ta_prf->hasher;
 	passert(h);
 
-	DBG_cond_dump(DBG_CRYPT, "last Phase 1 IV:",
-		      st->st_ph1_iv, st->st_ph1_iv_len);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("last Phase 1 IV:",
+			 st->st_ph1_iv, st->st_ph1_iv_len);
+	}
 
 	st->st_new_iv_len = h->hash_digest_size;
 	passert(st->st_new_iv_len <= sizeof(st->st_new_iv));
 
-	DBG_cond_dump(DBG_CRYPT, "current Phase 1 IV:",
-		      st->st_iv, st->st_iv_len);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("current Phase 1 IV:",
+			 st->st_iv, st->st_iv_len);
+	}
 
 	struct crypt_hash *ctx = crypt_hash_init(h, "IV", DBG_CRYPT);
 	crypt_hash_digest_bytes(ctx, "PH1_IV", st->st_ph1_iv, st->st_ph1_iv_len);
@@ -744,8 +750,10 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	crypt_hash_digest_bytes(ctx, "MSGID", (void*) &raw_msgid, sizeof(raw_msgid));
 	crypt_hash_final_bytes(&ctx, st->st_new_iv, st->st_new_iv_len);
 
-	DBG_cond_dump(DBG_CRYPT, "computed Phase 2 IV:",
-		      st->st_new_iv, st->st_new_iv_len);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("computed Phase 2 IV:",
+			 st->st_new_iv, st->st_new_iv_len);
+	}
 }
 
 static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
