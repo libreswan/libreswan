@@ -48,6 +48,7 @@
 #include "libreswan/ipsec_ah.h"
 
 #include "ip_address.h"
+#include "ip_said.h"
 
 const char *progname;
 

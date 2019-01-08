@@ -66,6 +66,7 @@
 #include "kernel_sadb.h"
 #include "pfkey_help.h"
 #include "ip_address.h"
+#include "ip_said.h"
 
 struct encap_msghdr *em;
 

@@ -47,6 +47,8 @@
 #include "pfkey_help.h"
 #include "libreswan/pfkey_debug.h"
 #include "ip_address.h"
+#include "ip_said.h"
+#include "ip_subnet.h"
 
 const char *progname;
 static const char me[] = "ipsec eroute";
