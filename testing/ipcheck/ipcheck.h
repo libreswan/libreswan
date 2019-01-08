@@ -20,17 +20,21 @@
 extern void ip_address_check(void);
 extern void ip_endpoint_check(void);
 
-/* https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html */
-/* fallback is ,##__VA_ARGS__ */
+/*
+ * See: https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
+ *
+ * Unfortunately common compilers don't support __VA_OPT__(,), so
+ * forced to use ,##__VA_ARGS__.
+ */
 
 extern unsigned fails;
 
 #define IPRINT(FILE, FMT, ...)						\
 	fprintf(FILE, "%s[%zu]: '%s' " FMT "\n",			\
-		__func__, ti, t->input __VA_OPT__(,) __VA_ARGS__);
+		__func__, ti, t->input ,##__VA_ARGS__);
 #define IFAIL(FMT, ...) {						\
 		fails++;						\
-		IPRINT(stderr, FMT __VA_OPT__(,) __VA_ARGS__);		\
+		IPRINT(stderr, FMT ,##__VA_ARGS__);			\
 	}
 
 #endif
