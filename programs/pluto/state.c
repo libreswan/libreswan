@@ -2519,16 +2519,6 @@ void update_ike_endpoints(struct state *st,
 			  const struct msg_digest *md)
 {
 	/* caller must ensure we are not behind NAT */
-
-	if (!sameaddr(&st->st_remoteaddr, &md->sender) ||
-		st->st_remoteport != hportof(&md->sender)) {
-		char oldip[ADDRTOT_BUF];
-		char newip[ADDRTOT_BUF];
-
-		addrtot(&st->st_remoteaddr, 0, oldip, sizeof(oldip));
-		addrtot(&md->sender, 0, newip, sizeof(newip));
-	} // why is below not part of this statement????
-
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = hportof(&md->sender);
 	st->st_localaddr = md->iface->ip_addr;
