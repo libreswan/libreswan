@@ -293,6 +293,9 @@ void libreswan_exit_log_errno(int e, const char *message, ...) PRINTF_LIKE(2) NE
  * If it does, they will be interpreted by the C preprocesser
  * as macro argument separators.  This happens accidentally if
  * multiple variables are declared in one declaration.
+ *
+ * Naming: All DBG_*() prefixed functions send stuff to the debug
+ * stream unconditionally.  Hence they should be wrapped in DBGP().
  */
 
 extern lset_t cur_debugging;	/* current debugging level */
@@ -305,10 +308,11 @@ void dbg(const char *fmt, ...) PRINTF_LIKE(1);
 
 #define DBG(cond, action)	{ if (DBGP(cond)) { action; } }
 #define DBGF(cond, ...) { if (DBGP(cond)) { DBG_log(__VA_ARGS__); } }
-
-/* signature needs to match printf() */
-#define DBG_log libreswan_DBG_log
-int libreswan_DBG_log(const char *message, ...) PRINTF_LIKE(1);
+/*
+ * XXX: signature needs to match printf() so that either it or
+ * printf() can be passed to some functions
+ */
+int DBG_log(const char *message, ...) PRINTF_LIKE(1);
 
 void DBG_dump(const char *label, const void *p, size_t len);
 

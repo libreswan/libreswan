@@ -20,7 +20,7 @@
 
 #include "lswlog.h"
 
-int libreswan_DBG_log(const char *message, ...)
+int DBG_log(const char *message, ...)
 {
 	LSWLOG_DEBUG(buf) {
 		va_list args;
