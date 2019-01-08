@@ -20,7 +20,7 @@
 
 #include "lswlog.h"
 
-int DBG_log(const char *message, ...)
+void DBG_log(const char *message, ...)
 {
 	LSWLOG_DEBUG(buf) {
 		va_list args;
@@ -28,5 +28,4 @@ int DBG_log(const char *message, ...)
 		lswlogvf(buf, message, args);
 		va_end(args);
 	}
-	return 0;
 }
