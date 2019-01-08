@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 			fprintf(stdout, "\"--debug\" option requested.\n");
 		argv += 1;
 		argc -= 1;
-		pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
+		cur_debugging = DBG_BASE;
 	}
 
 	if (debug) {

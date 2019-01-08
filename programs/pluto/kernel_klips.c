@@ -343,7 +343,6 @@ const struct kernel_ops klips_kernel_ops = {
 	.init = init_pfkey,
 	.exceptsocket = NULL,
 	.docommand = klips_do_command,
-	.set_debug = pfkey_set_debug,
 	.remove_orphaned_holds = pfkey_remove_orphaned_holds,
 	.process_ifaces = klips_process_raw_ifaces,
 	.kern_name = "klips",

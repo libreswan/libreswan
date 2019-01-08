@@ -180,7 +180,7 @@ int main(int argc, char **argv)
 		switch (c) {
 		case 'g':
 			debug = 1;
-			pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
+			cur_debugging = DBG_BASE;
 			argcount--;
 			break;
 		case 'a':

@@ -18,6 +18,8 @@
 #ifndef _FREESWAN_PFKEY_DEBUG_H
 #define _FREESWAN_PFKEY_DEBUG_H
 
+#include "lswlog.h"
+
 /*
  * Debugging levels for pfkey_lib_debug
  */
@@ -28,36 +30,11 @@
 #define PF_KEY_DEBUG_BUILD         8
 #define PF_KEY_DEBUG_PARSE_MAX    15
 
-extern unsigned int pfkey_lib_debug;  /* bits selecting what to report */
+#define DEBUGGING(level, args ...) dbg(args)
 
-#ifdef __KERNEL__
-
-/* note, kernel version ignores pfkey levels */
-# define DEBUGGING(level, args ...) \
-	KLIPS_PRINT(debug_pfkey, "klips_debug:" args)
-
-# define ERROR(args ...) printk(KERN_ERR "klips:" args)
-
-#else
-
-extern libreswan_keying_debug_func_t pfkey_debug_func;
-extern libreswan_keying_debug_func_t pfkey_error_func;
-
-#define DEBUGGING(level, args ...)  { if (pfkey_lib_debug & (level)) { \
-		if (pfkey_debug_func != NULL) { \
-			(*pfkey_debug_func)("pfkey_lib_debug:" args); \
-		} else { \
-			printf("pfkey_lib_debug:" args); \
-		} } }
-
-#define ERROR(args ...)      { \
-		if (pfkey_error_func != NULL) \
-			(*pfkey_error_func)("pfkey_lib_debug:" args); \
-	}
+#define ERROR(args ...)      libreswan_log("pfkey_lib_debug:" args)
 
 # define MALLOC(size) malloc(size)
 # define FREE(obj) free(obj)
-
-#endif
 
 #endif

@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
 	/* force pfkey logging */
-	pfkey_error_func = pfkey_debug_func = printf;
+	cur_debugging = DBG_BASE;
 
 	struct ifreq ifr;
 	struct ipsectunnelconf shc;

@@ -2875,7 +2875,6 @@ const struct kernel_ops netkey_kernel_ops = {
 	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,
 	.migrate_sa = netlink_migrate_sa,
-	.set_debug = NULL,	/* pfkey_set_debug, */
 	/*
 	 * We should implement netlink_remove_orphaned_holds
 	 * if netlink  specific changes are needed.

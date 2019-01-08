@@ -773,10 +773,6 @@ lset_t base_debugging = DBG_NONE; /* default to reporting nothing */
 void set_debugging(lset_t deb)
 {
 	cur_debugging = deb;
-
-	if (kernel_ops != NULL && kernel_ops->set_debug != NULL)
-		(*kernel_ops->set_debug)(cur_debugging, DBG_log,
-					 libreswan_log);
 }
 
 void reset_debugging(void)

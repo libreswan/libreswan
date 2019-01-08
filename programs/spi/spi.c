@@ -540,7 +540,7 @@ int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
 	/* force pfkey logging */
-	pfkey_error_func = pfkey_debug_func = printf;
+	cur_debugging = DBG_BASE;
 
 	__u32 spi = 0;
 	int c;
@@ -606,7 +606,7 @@ int main(int argc, char *argv[])
 
 		case 'g':
 			debug = TRUE;
-			pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
+			cur_debugging = DBG_BASE;
 			/* paul: this is a plutoism? cur_debugging = 0xffffffff; */
 			argcount--;
 			break;
