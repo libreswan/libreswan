@@ -196,7 +196,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			 st->st_oakley.ta_prf->prf_ike_audit_name);
 
 		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
-			if (!st->st_ikev2) {
+			if (st->st_ike_version == IKEv1) {
 				/* IKE takes integ from prf, except of course gcm */
 				/* but IANA doesn't define gcm for IKE, only for ESP */
 				jam_str(integname, sizeof(integname), prfname);
@@ -212,7 +212,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			/*
 			 * XXX: dead code path?
 			 */
-			if (!st->st_ikev2) {
+			if (st->st_ike_version == IKEv1) {
 				/* IKE takes integ from prf, except of course gcm */
 				/* but IANA doesn't define gcm for IKE, only for ESP */
 				jam_str(integname, sizeof(integname), prfname);

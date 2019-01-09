@@ -877,7 +877,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 	 * for IKEv1, there can be orphan IPsec SA's. We still are not checking
 	 * the kernel, so we just have to always send the keepalive.
 	 */
-	if (!st->st_ikev2 && IS_IPSEC_SA_ESTABLISHED(st) &&
+	if (st->st_ike_version == IKEv1 && IS_IPSEC_SA_ESTABLISHED(st) &&
 		c->newest_ipsec_sa == st->st_serialno)
 	{
 		nat_traversal_send_ka(st);

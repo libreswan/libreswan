@@ -1459,7 +1459,7 @@ struct state *find_state_ikev1(const ike_spi_t *ike_initiator_spi,
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
 						 ike_responder_spi), st) {
-		if (!st->st_ikev2 &&
+		if (st->st_ike_version == IKEv1 &&
 		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
 		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
 			dbg("v1 peer and cookies match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
@@ -1482,7 +1482,7 @@ struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 {
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(ike_initiator_spi), st) {
-		if (!st->st_ikev2 &&
+		if (st->st_ike_version == IKEv1 &&
 		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
 			dbg("v1 peer and icookie match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
 			    st->st_serialno, msgid, st->st_msgid);
@@ -1724,7 +1724,7 @@ struct state *ikev1_find_info_state(const ike_spi_t *ike_initiator_spi,
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
 						 ike_responder_spi), st) {
-		if (!st->st_ikev2 &&
+		if (st->st_ike_version == IKEv1 &&
 		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
 		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
 			dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
@@ -2047,7 +2047,7 @@ void fmt_state(struct state *st, const monotime_t now,
 				}
 			}
 		} else {
-			if (!st->st_ikev2)
+			if (st->st_ike_version == IKEv1)
 				snprintf(dpdbuf, sizeof(dpdbuf), "; nodpd");
 		}
 	}

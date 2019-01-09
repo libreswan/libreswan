@@ -343,7 +343,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 				policy |= POLICY_TUNNEL;
 		}
 
-		if (!st->st_ikev2)
+		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));
 
 		ipsecdoi_initiate(dup_any(st->st_whack_sock), st->st_connection,
@@ -639,7 +639,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		lswlogs(buf, oa);
 	}
 
-	lswlogf(buf, (!st->st_ikev2 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :
+	lswlogf(buf, (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :
 			dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
 	if (st->st_xauth_username[0] != '\0') {
