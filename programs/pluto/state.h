@@ -315,7 +315,6 @@ struct state {
 
 	enum ike_version st_ike_version;	/* IKEv1, IKEv2, ... */
 
-	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
 	bool st_suppress_del_notify;            /* suppress sending DELETE - eg replaced conn */
 	bool st_rekeytov2;                      /* true if this IKEv1 is about

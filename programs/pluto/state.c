@@ -408,7 +408,6 @@ static struct state *new_state(enum ike_version ike_version,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
 		.st_ike_version = ike_version,
-		.st_ikev2 = (ike_version == IKEv2),
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	statetime_start(st);
