@@ -1,6 +1,5 @@
 Basic pluto with IKEv2 on the initiator (west), and on the responder.
-It uses certificates, and it includes a configuration that should work
-against racoon2. Note that this test no longer needs to be the model
+It uses certificates. Note that this test no longer needs to be the model
 for a racoon2 test, as we have interop-ikev2-racoon-* tests now.
 
 This also tests having public keys loaded from certificates, but not
