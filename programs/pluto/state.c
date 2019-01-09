@@ -2744,6 +2744,24 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 			  v2_migrate_predicate, &filter);
 }
 
+struct delete_filter {
+	bool v2_responder_state;
+};
+
+static bool delete_predicate(struct state *st, void *context)
+{
+	struct delete_filter *filter = context;
+	if (filter->v2_responder_state) {
+		/*
+		 * XXX: Suspect forcing the state to ..._DEL is a
+		 * secret code for do-not send a delete notification?
+		 */
+		change_state(st, STATE_CHILDSA_DEL);
+	}
+	delete_state(st);
+	return false; /* keep going */
+}
+
 void delete_my_family(struct state *pst, bool v2_responder_state)
 {
 	/*
@@ -2752,26 +2770,13 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	 * Our children will be on the same hash chain
 	 * because we share IKE SPIs.
 	 */
-
 	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
-
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(&pst->st_ike_spis), st) {
-		/* XXX: bother with ike_spi_eq()? */
-		/* XXX: bother with IKEv1 vs IKEv2? */
-		if (st->st_clonedfrom == pst->st_serialno) {
-			if (v2_responder_state)
-				/*
-				 * XXX: Suspect forcing the state to
-				 * ..._DEL is a secret code for do-not
-				 * send a delete notification?
-				 */
-				change_state(st, STATE_CHILDSA_DEL);
-			delete_state(st);
-		}
-		/* note: no md->st to clear */
-	}
-
+	struct delete_filter delete_filter = {
+		.v2_responder_state = v2_responder_state,
+	};
+	state_by_ike_spis(pst->st_ike_version, pst->st_serialno,
+			  NULL /* ignore MSGID */, &pst->st_ike_spis,
+			  delete_predicate, &delete_filter);
 	/* delete self */
 	if (v2_responder_state) {
 		/*
