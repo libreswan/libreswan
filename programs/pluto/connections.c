@@ -3106,7 +3106,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 	*fromcert = FALSE;
 
-	passert(ikev1 != ikev2 && ikev2 == st->st_ikev2);
+	passert(ikev1 != ikev2 && ikev2 == (st->st_ike_version == IKEv2));
 	passert(this_authby != AUTH_NEVER);
 
 	/*
@@ -3331,7 +3331,7 @@ struct connection *refine_host_connection(const struct state *st,
 					continue;
 			}
 
-			if ((d->policy & (st->st_ikev2 ? POLICY_IKEV2_ALLOW : POLICY_IKEV1_ALLOW)) == LEMPTY) {
+			if ((d->policy & ((st->st_ike_version == IKEv2) ? POLICY_IKEV2_ALLOW : POLICY_IKEV1_ALLOW)) == LEMPTY) {
 				/* IKE version has to match */
 				DBG(DBG_CONTROL, DBG_log("skipping because mismatching IKE version"));
 				continue;
@@ -3401,7 +3401,7 @@ struct connection *refine_host_connection(const struct state *st,
 				 * If we initiated, the key we used and the key
 				 * we would have used with d must match.
 				 */
-				if (!(st->st_ikev2 || (auth_policy & POLICY_AGGRESSIVE))) {
+				if (!((st->st_ike_version == IKEv2) || (auth_policy & POLICY_AGGRESSIVE))) {
 					if (dpsk == NULL)
 						continue; /* no secret */
 

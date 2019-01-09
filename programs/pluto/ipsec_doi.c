@@ -247,7 +247,7 @@ void ipsecdoi_initiate(fd_t whack_sock,
 				    , uctx
 #endif
 				    );
-		} else if (st->st_ikev2) {
+		} else if (st->st_ike_version == IKEv2) {
 			struct pending p;
 			p.whack_sock = whack_sock;
 			p.isakmp_sa = st;
@@ -343,7 +343,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 				policy |= POLICY_TUNNEL;
 		}
 
-		if (!st->st_ikev2)
+		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));
 
 		ipsecdoi_initiate(dup_any(st->st_whack_sock), st->st_connection,
@@ -515,7 +515,7 @@ void send_delete(struct state *st)
 		    st->st_serialno,
 		    enum_name(&ike_version_names, st->st_ike_version),
 		    st->st_state_name);
-		st->st_ikev2 ? send_v2_delete(st) : send_v1_delete(st);
+		(st->st_ike_version == IKEv2) ? send_v2_delete(st) : send_v1_delete(st);
 	}
 }
 
@@ -571,7 +571,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		}
 		lswlogf(buf, "-%s", st->st_esp.attrs.transattrs.ta_integ->common.fqn);
 
-		if (st->st_ikev2 && st->st_pfs_group != NULL)  {
+		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL)  {
 			lswlogs(buf, "-");
 			lswlogs(buf, st->st_pfs_group->common.name);
 		}
@@ -579,10 +579,10 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		ini = " ";
 
 		pstats_ipsec_esp++;
-		pstatsv(ipsec_encrypt, st->st_ikev2,
+		pstatsv(ipsec_encrypt, (st->st_ike_version == IKEv2),
 			st->st_esp.attrs.transattrs.ta_encrypt->common.id[IKEv1_ESP_ID],
 			st->st_esp.attrs.transattrs.ta_encrypt->common.id[IKEv2_ALG_ID]);
-		pstatsv(ipsec_integ, st->st_ikev2,
+		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
 			st->st_esp.attrs.transattrs.ta_integ->common.id[IKEv1_ESP_ID],
 			st->st_esp.attrs.transattrs.ta_integ->common.id[IKEv2_ALG_ID]);
 		pstats_sa(nat, tfc, esn);
@@ -601,7 +601,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		ini = " ";
 
 		pstats_ipsec_ah++;
-		pstatsv(ipsec_integ, st->st_ikev2,
+		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
 			st->st_ah.attrs.transattrs.ta_integ->common.id[IKEv1_ESP_ID],
 			st->st_ah.attrs.transattrs.ta_integ->common.id[IKEv2_ALG_ID]);
 		pstats_sa(FALSE, FALSE, esn);
@@ -639,7 +639,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		lswlogs(buf, oa);
 	}
 
-	lswlogf(buf, (!st->st_ikev2 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :
+	lswlogf(buf, (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :
 			dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
 	if (st->st_xauth_username[0] != '\0') {
@@ -657,7 +657,7 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 	passert(st->st_oakley.ta_dh != NULL);
 
 	lswlogs(buf, " {auth=");
-	if (st->st_ikev2) {
+	if (st->st_ike_version == IKEv2) {
 		lswlogs(buf, "IKEv2");
 	} else {
 		lswlog_enum_short(buf, &oakley_auth_names, st->st_oakley.auth);
@@ -674,7 +674,7 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 	 * st->st_oakley.ta_integ is 'none'!
 	 */
 	lswlogs(buf, " integ=");
-	if (st->st_ikev2) {
+	if (st->st_ike_version == IKEv2) {
 		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
 			lswlogs(buf, "n/a");
 		} else {
@@ -689,14 +689,14 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 		lswlogs(buf, st->st_oakley.ta_prf->common.fqn);
 	}
 
-	if (st->st_ikev2) {
+	if (st->st_ike_version == IKEv2) {
 		lswlogf(buf, " prf=%s", st->st_oakley.ta_prf->common.fqn);
 	}
 
 	lswlogf(buf, " group=%s}", st->st_oakley.ta_dh->common.fqn);
 
 	/* keep IKE SA statistics */
-	if (st->st_ikev2) {
+	if (st->st_ike_version == IKEv2) {
 		pstats_ikev2_sa++;
 		pstats(ikev2_encr, st->st_oakley.ta_encrypt->common.id[IKEv2_ALG_ID]);
 		if (st->st_oakley.ta_integ != NULL)

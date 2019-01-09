@@ -849,7 +849,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	const int np = st->st_ikev2 ? ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_CERT;
+	const int np = (st->st_ike_version == IKEv2) ? ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_CERT;
 
 	/* count the total cert paylaods */
 	unsigned nr_cert_payloads = 0;
