@@ -64,16 +64,14 @@
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
-err_t build_redirect_notify_data(char *destination,
-				 bool global_red,
-				 chunk_t *nonce,
-				 chunk_t *data)
+void build_redirect_notify_data(const char *destination,
+				 chunk_t *nonce, /* optional */
+				 chunk_t *data /* caller must free*/)
 {
 	ip_address ip_addr;
-	uint8_t redir_gw_type = 0, gw_identity_len = 0;	/* exactly one byte as per RFC */
-	size_t data_len = 0;
-	unsigned char *tmp = NULL;
-	err_t ugh = NULL;
+	uint8_t redir_gw_type;	/* exactly one byte as per RFC */
+	uint8_t gw_identity_len;	/* exactly one byte as per RFC */
+	const unsigned char *gw_identity_bytes;
 
 	passert(destination != NULL);
 
@@ -82,11 +80,12 @@ err_t build_redirect_notify_data(char *destination,
 	 * ship destination (as a FQDN, although
 	 * it may be a bogus string)
 	 */
-	ugh = ttoaddr_num(destination, 0, AF_UNSPEC, &ip_addr);
+	err_t ugh = ttoaddr_num(destination, 0, AF_UNSPEC, &ip_addr);
 	if (ugh != NULL) {
 		DBG(DBG_CONTROL, DBG_log("REDIRECT destination is not IPv4/IPv6 address, we are going to send it as FQDN"));
 		redir_gw_type = GW_FQDN;
 		gw_identity_len = strlen(destination);
+		gw_identity_bytes = (const unsigned char *)destination;
 	} else {
 		switch (addrtypeof(&ip_addr)) {
 		case AF_INET:
@@ -98,40 +97,26 @@ err_t build_redirect_notify_data(char *destination,
 			gw_identity_len = 16;
 			break;
 		default:
-			break;
+			bad_case(addrtypeof(&ip_addr));
 		}
+		gw_identity_len = addrbytesptr_read(&ip_addr, &gw_identity_bytes);
 	}
 
-	data_len = GW_PAYLOAD_INFO_SIZE + gw_identity_len + (global_red == TRUE ? nonce->len : 0);
-	*data = alloc_chunk(data_len, "data for REDIRECT Notify payload");	/* we free this in calling function
-										   or here (when len != gw_identity_len) */
-	tmp = data->ptr;
+	*data = alloc_chunk(GW_PAYLOAD_INFO_SIZE + gw_identity_len + (nonce != NULL ? nonce->len : 0),
+			"data for REDIRECT Notify payload");	/* caller must free this */
+
+	unsigned char *tmp = data->ptr;
 	*tmp++ = redir_gw_type;
 	*tmp++ = gw_identity_len;
+	memcpy(tmp, gw_identity_bytes, gw_identity_len);
+	tmp += gw_identity_len;
 
-	if (redir_gw_type == GW_FQDN) {
-		/* write string - FQDN - to tmp (chunk_t data) */
-		memcpy(tmp, destination, gw_identity_len);
-		tmp += gw_identity_len;
-	} else {
-		/* write values of IPv4/IPv6 address */
-		unsigned char *addr_bytes;
-		size_t len = addrbytesptr_write(&ip_addr, &addr_bytes);
-		if (len != gw_identity_len) {
-			freeanychunk(*data);
-			return "GW identity length doesn't match address bytes length";
-		}
-		/* write ip_address bytes to tmp (chunk_t data) */
-		memcpy(tmp, addr_bytes, len);
-		tmp += len;
-	}
-
-	if (global_red) {
+	if (nonce != NULL) {
 		memcpy(tmp, nonce->ptr, nonce->len);
 		tmp += nonce->len;
 	}
 
-	return NULL;
+	passert(tmp == data->ptr + data->len);
 }
 
 /*
@@ -395,12 +380,8 @@ static stf_status add_redirect_payload(struct state *st, pb_stream *pbs)
 {
 	chunk_t notify_data;
 
-	err_t e = build_redirect_notify_data(st->st_active_redirect_gw, FALSE,
-						NULL, &notify_data);
-	if (e != NULL) {
-		loglog(RC_LOG_SERIOUS, "build of REDIRECT Payload failed: %s", e);
-		return STF_INTERNAL_ERROR;
-	}
+	build_redirect_notify_data(st->st_active_redirect_gw,
+					NULL, &notify_data);
 
 	if (!emit_v2Nchunk(v2N_REDIRECT, &notify_data, pbs)) {
 		freeanychunk(notify_data);

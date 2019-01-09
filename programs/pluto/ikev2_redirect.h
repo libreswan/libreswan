@@ -30,18 +30,12 @@ char *global_redirect_to;
  * fields in Notify Data of REDIRECT payload.
  *
  * @param destination string of IPv4/IPv6/FQDN address.
- * @param global_red bool that indicates whether payload
- * 	  will be sent in IKE_SA_INIT
- * @param nonce data containing nonce, only being sent if
- * 	  global_red is true
+ * @param optional nonce data containing nonce
  * @param data Notify data we built.
- * @return err_t NULL if everything went right,
- * 		 otherwise (not-NULL) what went wrong
  */
-extern err_t build_redirect_notify_data(char *destination,
-					bool global_red,
-					chunk_t *nonce,
-					chunk_t *data);
+extern void build_redirect_notify_data(const char *destination,
+					chunk_t *nonce, /* optional */
+					chunk_t *data /* caller must free */);
 
 /*
  * Extract needed information from IKEv2 Notify Redirect

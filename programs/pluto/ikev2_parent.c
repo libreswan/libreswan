@@ -1307,18 +1307,13 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 			loglog(RC_LOG_SERIOUS, "global-redirect-to is not specified, can't redirect requests");
 		} else {
 			chunk_t data;
-			err_t e;
 
-			e = build_redirect_notify_data(global_redirect_to, TRUE, &st->st_ni, &data);
-			if (e != NULL) {
-				loglog(RC_LOG_SERIOUS, "not sending REDIRECT Payload because %s", e);
-			} else {
-				if (!emit_v2Nchunk(v2N_REDIRECT, &data, &rbody)) {
-					freeanychunk(data);
-					return STF_INTERNAL_ERROR;
-				}
+			build_redirect_notify_data(global_redirect_to, &st->st_ni, &data);
+			if (!emit_v2Nchunk(v2N_REDIRECT, &data, &rbody)) {
 				freeanychunk(data);
+				return STF_INTERNAL_ERROR;
 			}
+			freeanychunk(data);
 		}
 	}
 
@@ -3018,7 +3013,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						   bool pam_status)
 {
 	struct connection *const c = st->st_connection;
-	unsigned char idhash_out[MAX_DIGEST_LEN];
 
 	if (!pam_status) {
 		/*
@@ -3058,254 +3052,243 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	}
 
 	/* send response */
-	{
-		if (LIN(POLICY_MOBIKE, c->policy) && st->st_seen_mobike) {
-			if (c->spd.that.host_type == KH_ANY) {
-				/* only allow %any connection to mobike */
-				st->st_sent_mobike = TRUE;
-			} else {
-				libreswan_log("not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
-			}
-		}
-
-		err_t redirect_ugh = NULL;
-		bool send_redirect = FALSE;
-		chunk_t redirect_data = empty_chunk;
-
-		if (st->st_seen_redirect_sup &&
-		    (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
-		     (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
-		      require_ddos_cookies()))) {
-			if (c->redirect_to == NULL) {
-				loglog(RC_LOG_SERIOUS, "redirect-to is not specified, can't redirect requests");
-			} else {
-				redirect_ugh = build_redirect_notify_data(c->redirect_to, FALSE, NULL, &redirect_data);
-				if (redirect_ugh == NULL) {
-					send_redirect = TRUE;
-				} /* else log error but later, see below */
-			}
-		}
-
-		/* make sure HDR is at start of a clean buffer */
-		init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-			 "reply packet");
-
-		/* HDR out */
-
-		pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
-						  md /* response */,
-						  ISAKMP_v2_IKE_AUTH);
-
-		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
-			if (!emit_v2UNKNOWN("IKE_AUTH reply", &rbody)) {
-				freeanychunk(redirect_data);
-				return STF_INTERNAL_ERROR;
-			}
-		}
-
-		/* decide to send CERT payload before we generate IDr */
-		bool send_cert = ikev2_send_cert_decision(st);
-
-		/* insert an Encryption payload header */
-
-		v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(st));
-		if (!pbs_ok(&sk.pbs)) {
-			freeanychunk(redirect_data);
-			return STF_INTERNAL_ERROR;
-		}
-
-		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
-			if (!emit_v2UNKNOWN("IKE_AUTH's SK reply", &sk.pbs)) {
-				freeanychunk(redirect_data);
-				return STF_INTERNAL_ERROR;
-			}
-		}
-
-		/* send any NOTIFY payloads */
-		if (st->st_sent_mobike) {
-			if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs))
-				freeanychunk(redirect_data);
-				return STF_INTERNAL_ERROR;
-		}
-
-		if (st->st_ppk_used) {
-			if (!emit_v2N(v2N_PPK_IDENTITY, &sk.pbs))
-				freeanychunk(redirect_data);
-				return STF_INTERNAL_ERROR;
-		}
-
-		if (send_redirect) {
-			if (!emit_v2Nchunk(v2N_REDIRECT, &redirect_data, &sk.pbs)) {
-				freeanychunk(redirect_data);
-				return STF_INTERNAL_ERROR;
-			}
-			st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
-			freeanychunk(redirect_data);
-		} else if (redirect_ugh != NULL) {
-			loglog(RC_LOG_SERIOUS, "not sending REDIRECT Payload because %s", redirect_ugh);
-		}
-
-		if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
-			if (!emit_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs))
-				return STF_INTERNAL_ERROR;
-		}
-
-		if (LIN(POLICY_COMPRESS, c->policy) && st->st_seen_use_ipcomp) {
-			uint16_t c_spi;
-
-			DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress, sending v2N_IPCOMP_SUPPORTED for DEFLATE"));
-
-			/* calculate and keep our CPI */
-			if (st->st_ipcomp.our_spi == 0) {
-				st->st_ipcomp.our_spi = get_my_cpi(&c->spd, LIN(POLICY_TUNNEL, c->policy));
-				c_spi = (uint16_t)ntohl(st->st_ipcomp.our_spi);
-				if (c_spi < IPCOMP_FIRST_NEGOTIATED) { /* get_my_cpi() failed */
-					loglog(RC_LOG_SERIOUS, "kernel failed to calculate compression CPI (CPI=%d)",
-						c_spi);
-					return STF_INTERNAL_ERROR;
-				}
-				DBG(DBG_CONTROL, DBG_log("Calculated compression CPI=%d", c_spi));
-			} else {
-				c_spi = (uint16_t)ntohl(st->st_ipcomp.our_spi);
-			}
-			unsigned char gunk[] = { c_spi / 256, c_spi % 256, IPCOMP_DEFLATE };
-			chunk_t ipcompN;
-
-			ipcompN.len = IPCOMP_CPI_SIZE + 1;
-			ipcompN.ptr = gunk;
-
-			if (!emit_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, &sk.pbs)) {
-				return STF_INTERNAL_ERROR;
-			}
+	if (LIN(POLICY_MOBIKE, c->policy) && st->st_seen_mobike) {
+		if (c->spd.that.host_type == KH_ANY) {
+			/* only allow %any connection to mobike */
+			st->st_sent_mobike = TRUE;
 		} else {
-			DBG(DBG_CONTROL, DBG_log("Initiator child policy is not compress, NOT sending v2N_IPCOMP_SUPPORTED"));
+			libreswan_log("not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
 		}
-
-		if (c->send_no_esp_tfc) {
-			if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
-				return STF_INTERNAL_ERROR;
-		}
-
-		/* send out the IDr payload */
-		{
-			struct ikev2_id r_id = {
-				.isai_np = ISAKMP_NEXT_v2NONE,
-				.isai_type = ID_NULL,
-				/* critical bit zero */
-			};
-			pb_stream r_id_pbs;
-			chunk_t id_b;
-			struct hmac_ctx id_ctx;
-			unsigned char *id_start;
-			unsigned int id_len;
-
-			hmac_init(&id_ctx, st->st_oakley.ta_prf, st->st_skey_pr_nss);
-			if (st->st_peer_wants_null) {
-				/* make it the Null ID */
-				/* r_id already set */
-				id_b = empty_chunk;
-			} else {
-				v2_build_id_payload(&r_id,
-						 &id_b,
-						 &c->spd.this);
-			}
-
-			id_start = sk.pbs.cur + NSIZEOF_isakmp_generic;
-
-			if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
-					&r_id_pbs) ||
-			    !out_chunk(id_b, &r_id_pbs, "my identity"))
-				return STF_INTERNAL_ERROR;
-
-			close_output_pbs(&r_id_pbs);
-
-			/* calculate hash of IDi for AUTH below */
-			id_len = sk.pbs.cur - id_start;
-			DBG(DBG_CRYPT,
-			    DBG_dump("idhash calc R2", id_start, id_len));
-			hmac_update(&id_ctx, id_start, id_len);
-			hmac_final(idhash_out, &id_ctx);
-		}
-
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("assembled IDr payload"));
-
-		/*
-		 * send CERT payload RFC 4306 3.6, 1.2:([CERT,] )
-		 * upon which our received I2 CERTREQ is ignored,
-		 * but ultimately should go into the CERT decision
-		 */
-		if (send_cert) {
-			stf_status certstat = ikev2_send_cert(st, &sk.pbs);
-			if (certstat != STF_OK)
-				return certstat;
-		}
-
-		/* authentication good, see if there is a child SA being proposed */
-		unsigned int auth_np;
-
-		if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
-		    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
-		    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
-			/* initiator didn't propose anything. Weird. Try unpending our end. */
-			/* UNPEND XXX */
-			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				libreswan_log("No CHILD SA proposals received.");
-			} else {
-				DBG(DBG_CONTROLMORE, DBG_log("No CHILD SA proposals received"));
-			}
-			auth_np = ISAKMP_NEXT_v2NONE;
-		} else {
-			DBG(DBG_CONTROLMORE, DBG_log("CHILD SA proposals received"));
-			auth_np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
-				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
-		}
-
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("going to assemble AUTH payload"));
-
-		/* now send AUTH payload */
-		{
-			stf_status authstat = ikev2_send_auth(c, st,
-							      ORIGINAL_RESPONDER, auth_np,
-							      idhash_out,
-							      &sk.pbs, NULL);
-							      /* ??? NULL - don't calculate additional NULL_AUTH ??? */
-
-			if (authstat != STF_OK)
-				return authstat;
-		}
-
-		if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
-			/* must have enough to build an CHILD_SA */
-			stf_status ret = ikev2_child_sa_respond(md, &sk.pbs,
-								ISAKMP_v2_IKE_AUTH);
-
-			/* note: st: parent; md->st: child */
-			if (ret != STF_OK) {
-				LSWDBGP(DBG_CONTROL, buf) {
-					lswlogs(buf, "ikev2_child_sa_respond returned ");
-					lswlog_v2_stf_status(buf, ret);
-				}
-				return ret; /* we should continue building a valid reply packet */
-			}
-		}
-
-		if (!close_v2SK_payload(&sk)) {
-			return STF_INTERNAL_ERROR;
-		}
-		close_output_pbs(&rbody);
-		close_output_pbs(&reply_stream);
-
-		/*
-		 * For AUTH exchange, store the message in the IKE SA.
-		 * The attempt to create the CHILD SA could have
-		 * failed.
-		 */
-		return record_outbound_v2SK_msg(&sk.ike->sa, md,
-						&reply_stream, &sk,
-						"replying to IKE_AUTH request");
 	}
+
+	bool send_redirect = FALSE;
+
+	if (st->st_seen_redirect_sup &&
+	    (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
+	     (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
+	      require_ddos_cookies()))) {
+		if (c->redirect_to == NULL) {
+			loglog(RC_LOG_SERIOUS, "redirect-to is not specified, can't redirect requests");
+		} else {
+			send_redirect = TRUE;
+		}
+	}
+
+	/* make sure HDR is at start of a clean buffer */
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+		 "reply packet");
+
+	/* HDR out */
+
+	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
+					  md /* response */,
+					  ISAKMP_v2_IKE_AUTH);
+
+	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
+		if (!emit_v2UNKNOWN("IKE_AUTH reply", &rbody)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
+	/* decide to send CERT payload before we generate IDr */
+	bool send_cert = ikev2_send_cert_decision(st);
+
+	/* insert an Encryption payload header */
+
+	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(st));
+	if (!pbs_ok(&sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
+		if (!emit_v2UNKNOWN("IKE_AUTH's SK reply", &sk.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
+	/* send any NOTIFY payloads */
+	if (st->st_sent_mobike) {
+		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if (st->st_ppk_used) {
+		if (!emit_v2N(v2N_PPK_IDENTITY, &sk.pbs))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if (send_redirect) {
+		chunk_t redirect_data;
+		build_redirect_notify_data(c->redirect_to, NULL, &redirect_data);
+		if (!emit_v2Nchunk(v2N_REDIRECT, &redirect_data, &sk.pbs)) {
+			freeanychunk(redirect_data);
+			return STF_INTERNAL_ERROR;
+		}
+		st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
+		freeanychunk(redirect_data);
+	}
+
+	if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
+		if (!emit_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if (LIN(POLICY_COMPRESS, c->policy) && st->st_seen_use_ipcomp) {
+		uint16_t c_spi;
+
+		DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress, sending v2N_IPCOMP_SUPPORTED for DEFLATE"));
+
+		/* calculate and keep our CPI */
+		if (st->st_ipcomp.our_spi == 0) {
+			st->st_ipcomp.our_spi = get_my_cpi(&c->spd, LIN(POLICY_TUNNEL, c->policy));
+			c_spi = (uint16_t)ntohl(st->st_ipcomp.our_spi);
+			if (c_spi < IPCOMP_FIRST_NEGOTIATED) { /* get_my_cpi() failed */
+				loglog(RC_LOG_SERIOUS, "kernel failed to calculate compression CPI (CPI=%d)",
+					c_spi);
+				return STF_INTERNAL_ERROR;
+			}
+			DBG(DBG_CONTROL, DBG_log("Calculated compression CPI=%d", c_spi));
+		} else {
+			c_spi = (uint16_t)ntohl(st->st_ipcomp.our_spi);
+		}
+		unsigned char gunk[] = { c_spi / 256, c_spi % 256, IPCOMP_DEFLATE };
+		chunk_t ipcompN;
+
+		ipcompN.len = IPCOMP_CPI_SIZE + 1;
+		ipcompN.ptr = gunk;
+
+		if (!emit_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, &sk.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	} else {
+		DBG(DBG_CONTROL, DBG_log("Initiator child policy is not compress, NOT sending v2N_IPCOMP_SUPPORTED"));
+	}
+
+	if (c->send_no_esp_tfc) {
+		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
+			return STF_INTERNAL_ERROR;
+	}
+
+	/* send out the IDr payload */
+	unsigned char idhash_out[MAX_DIGEST_LEN];
+	{
+		struct ikev2_id r_id = {
+			.isai_np = ISAKMP_NEXT_v2NONE,
+			.isai_type = ID_NULL,
+			/* critical bit zero */
+		};
+		pb_stream r_id_pbs;
+		chunk_t id_b;
+		struct hmac_ctx id_ctx;
+		unsigned char *id_start;
+		unsigned int id_len;
+
+		hmac_init(&id_ctx, st->st_oakley.ta_prf, st->st_skey_pr_nss);
+		if (st->st_peer_wants_null) {
+			/* make it the Null ID */
+			/* r_id already set */
+			id_b = empty_chunk;
+		} else {
+			v2_build_id_payload(&r_id,
+					 &id_b,
+					 &c->spd.this);
+		}
+
+		id_start = sk.pbs.cur + NSIZEOF_isakmp_generic;
+
+		if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
+				&r_id_pbs) ||
+		    !out_chunk(id_b, &r_id_pbs, "my identity"))
+			return STF_INTERNAL_ERROR;
+
+		close_output_pbs(&r_id_pbs);
+
+		/* calculate hash of IDi for AUTH below */
+		id_len = sk.pbs.cur - id_start;
+		DBG(DBG_CRYPT,
+		    DBG_dump("idhash calc R2", id_start, id_len));
+		hmac_update(&id_ctx, id_start, id_len);
+		hmac_final(idhash_out, &id_ctx);
+	}
+
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("assembled IDr payload"));
+
+	/*
+	 * send CERT payload RFC 4306 3.6, 1.2:([CERT,] )
+	 * upon which our received I2 CERTREQ is ignored,
+	 * but ultimately should go into the CERT decision
+	 */
+	if (send_cert) {
+		stf_status certstat = ikev2_send_cert(st, &sk.pbs);
+		if (certstat != STF_OK)
+			return certstat;
+	}
+
+	/* authentication good, see if there is a child SA being proposed */
+	unsigned int auth_np;
+
+	if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
+	    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
+	    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
+		/* initiator didn't propose anything. Weird. Try unpending our end. */
+		/* UNPEND XXX */
+		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			libreswan_log("No CHILD SA proposals received.");
+		} else {
+			DBG(DBG_CONTROLMORE, DBG_log("No CHILD SA proposals received"));
+		}
+		auth_np = ISAKMP_NEXT_v2NONE;
+	} else {
+		DBG(DBG_CONTROLMORE, DBG_log("CHILD SA proposals received"));
+		auth_np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
+			ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
+	}
+
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("going to assemble AUTH payload"));
+
+	/* now send AUTH payload */
+	{
+		stf_status authstat = ikev2_send_auth(c, st,
+						      ORIGINAL_RESPONDER, auth_np,
+						      idhash_out,
+						      &sk.pbs, NULL);
+						      /* ??? NULL - don't calculate additional NULL_AUTH ??? */
+
+		if (authstat != STF_OK)
+			return authstat;
+	}
+
+	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
+		/* must have enough to build an CHILD_SA */
+		stf_status ret = ikev2_child_sa_respond(md, &sk.pbs,
+							ISAKMP_v2_IKE_AUTH);
+
+		/* note: st: parent; md->st: child */
+		if (ret != STF_OK) {
+			LSWDBGP(DBG_CONTROL, buf) {
+				lswlogs(buf, "ikev2_child_sa_respond returned ");
+				lswlog_v2_stf_status(buf, ret);
+			}
+			return ret; /* we should continue building a valid reply packet */
+		}
+	}
+
+	if (!close_v2SK_payload(&sk)) {
+		return STF_INTERNAL_ERROR;
+	}
+	close_output_pbs(&rbody);
+	close_output_pbs(&reply_stream);
+
+	/*
+	 * For AUTH exchange, store the message in the IKE SA.
+	 * The attempt to create the CHILD SA could have
+	 * failed.
+	 */
+	return record_outbound_v2SK_msg(&sk.ike->sa, md,
+					&reply_stream, &sk,
+					"replying to IKE_AUTH request");
 }
 
 stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
