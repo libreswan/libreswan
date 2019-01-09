@@ -2320,6 +2320,14 @@ static size_t fmt_client(const ip_subnet *client, const ip_address *gw,
  */
 char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 {
+#if 0
+	/* not sizeof(buf), as BUF is an address */
+	fmtbuf_t p = array_as_fmtbuf(buf, CONN_INST_BUF);
+	if (c->kind == CK_INSTANCE) {
+		fmt_connection_instance(&p, c);
+	}
+	return buf;
+#else
 	char *p = buf;
 
 	*p = '\0';
@@ -2358,9 +2366,15 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 				sensitive_ipstr(&c->spd.that.host_addr, &b));
 #endif
 		}
+
+		char test[CONN_INST_BUF];
+		fmtbuf_t testbuf = ARRAY_AS_FMTBUF(test);
+		fmt_connection_instance(&testbuf, c);
+		passert(streq(buf, test));
 	}
 
 	return buf;
+#endif
 }
 
 /*
