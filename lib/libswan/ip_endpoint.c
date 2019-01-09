@@ -43,17 +43,15 @@ int endpoint_type(const ip_endpoint *endpoint)
 
 const char *str_endpoint(const ip_endpoint *endpoint, ip_endpoint_buf *dst)
 {
-	LSWBUF_ARRAY(dst->buf, sizeof(dst->buf), buf) {
-		fmt_endpoint(buf, endpoint);
-	}
+	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
+	fmt_endpoint(&buf, endpoint);
 	return dst->buf;
 }
 
 const char *str_sensitive_endpoint(const ip_endpoint *endpoint, ip_endpoint_buf *dst)
 {
-	LSWBUF_ARRAY(dst->buf, sizeof(dst->buf), buf) {
-		fmt_sensitive_endpoint(buf, endpoint);
-	}
+	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
+	fmt_sensitive_endpoint(&buf, endpoint);
 	return dst->buf;
 }
 

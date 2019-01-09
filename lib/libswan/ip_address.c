@@ -269,26 +269,23 @@ void fmt_address_sensitive(struct lswlog *buf, const ip_address *address)
 const char *str_address_raw(const ip_address *src, char sep,
 			    ip_address_buf *dst)
 {
-	LSWBUF_ARRAY(dst->buf, sizeof(dst->buf), buf) {
-		fmt_address_raw(buf, src, sep);
-	}
+	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
+	fmt_address_raw(&buf, src, sep);
 	return dst->buf;
 }
 
 const char *str_address_cooked(const ip_address *src,
 			       ip_address_buf *dst)
 {
-	LSWBUF_ARRAY(dst->buf, sizeof(dst->buf), buf) {
-		fmt_address_cooked(buf, src);
-	}
+	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
+	fmt_address_cooked(&buf, src);
 	return dst->buf;
 }
 
 const char *str_address_sensitive(const ip_address *src,
 			       ip_address_buf *dst)
 {
-	LSWBUF_ARRAY(dst->buf, sizeof(dst->buf), buf) {
-		fmt_address_sensitive(buf, src);
-	}
+	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
+	fmt_address_sensitive(&buf, src);
 	return dst->buf;
 }

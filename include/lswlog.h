@@ -404,27 +404,6 @@ size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 		LSWBUF_ARRAY_(lswbuf, sizeof(lswbuf), BUF)
 
 /*
- * Create an LSWLOG using an existing array.
- *
- * Useful when a function passed an array wants to use lswlog routines
- * or wants to capture the output for later use.  For instance:
- */
-
-#if 0
-void lswbuf_array(char *array, size_t sizeof_array)
-{
-	LSWBUF_ARRAY(array, sizeof_array, buf) {
-		lswlogf(buf, "written to the array");
-	}
-}
-#endif
-
-#define LSWBUF_ARRAY(ARRAY, SIZEOF_ARRAY, BUF)				\
-	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
-		LSWBUF_ARRAY_(ARRAY, SIZEOF_ARRAY, BUF)
-
-
-/*
  * Scratch buffer for accumulating extra output.
  *
  * XXX: case should be expanded to illustrate how to stuff a truncated
