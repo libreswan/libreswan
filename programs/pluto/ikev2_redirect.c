@@ -125,35 +125,29 @@ static bool allow_to_be_redirected(char *allowed_targets_list, ip_address *dest_
 	if (allowed_targets_list == NULL || streq(allowed_targets_list, "%any"))
 		return TRUE;
 
-	char *tok;
 	ip_address ip_addr;
-	err_t ugh;
 
-	tok = strtok(allowed_targets_list, ", ");
-	while (tok != NULL) {
-		if (strchr(tok, ':') != NULL)
-			ugh = ttoaddr_num(tok, 0, AF_INET6, &ip_addr);
-		else
-			/* IPv4 and FQDN are left as possible options,
-			 * try with AF_UNSPECIFIED, ttoaddr should do the rest */
-			ugh = ttoaddr(tok, 0, AF_UNSPEC, &ip_addr);
+	for (char *tok = strtok(allowed_targets_list, ", ");
+	     tok != NULL;
+	     tok = strtok(NULL, ", "))
+	{
+		err_t ugh = ttoaddr_num(tok, 0, AF_UNSPEC, &ip_addr);
 
 		if (ugh != NULL) {
-			DBG(DBG_CONTROLMORE, DBG_log("address %s isn't a valid address", tok));
+			DBGF(DBG_CONTROLMORE, "address %s isn't a valid address", tok);
 		} else {
 			if (sameaddr(dest_ip, &ip_addr)) {
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("address %s is a match to received GW identity", tok));
+				DBGF(DBG_CONTROLMORE,
+					"address %s is a match to received GW identity", tok);
 				return TRUE;
 			} else {
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("address %s is not a match to received GW identity", tok));
+				DBGF(DBG_CONTROLMORE,
+					"address %s is not a match to received GW identity", tok);
 			}
 		}
-		tok = strtok(NULL, ", ");
 	}
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("we did not find suitable address in the list specified by accept-redirect-to option"));
+	DBGF(DBG_CONTROLMORE,
+		"we did not find suitable address in the list specified by accept-redirect-to option");
 	return FALSE;
 }
 
