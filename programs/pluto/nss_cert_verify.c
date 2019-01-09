@@ -460,9 +460,10 @@ static bool import_der_cert(CERTCertDBHandle *handle,
 	if (libreswan_fipsmode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
-		if (pk->u.rsa.modulus.len < FIPS_MIN_RSA_KEY_SIZE) {
-			libreswan_log("FIPS: Rejecting cert with key size under %d",
-				      FIPS_MIN_RSA_KEY_SIZE);
+		if ((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE) {
+			libreswan_log("FIPS: Rejecting peer cert with key size %d under %d",
+					pk->u.rsa.modulus.len * BITS_PER_BYTE,
+					FIPS_MIN_RSA_KEY_SIZE);
 			SECKEY_DestroyPublicKey(pk);
 			/*
 			 * XXX: Since the certificate isn't added to

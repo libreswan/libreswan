@@ -846,9 +846,10 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 	if (libreswan_fipsmode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
-		if (pk->u.rsa.modulus.len < FIPS_MIN_RSA_KEY_SIZE) {
+		if (pk->u.rsa.modulus.len * BITS_PER_BYTE < FIPS_MIN_RSA_KEY_SIZE) {
 			whack_log(RC_FATAL,
-				"FIPS: Rejecting cert with key size under %d",
+				"FIPS: Rejecting cert with key size %d which is under %d",
+				pk->u.rsa.modulus.len * BITS_PER_BYTE,
 				FIPS_MIN_RSA_KEY_SIZE);
 			SECKEY_DestroyPublicKey(pk);
 			return;
