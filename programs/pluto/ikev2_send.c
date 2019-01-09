@@ -216,7 +216,7 @@ bool emit_v2Nchunk(v2_notification_t ntype,
 bool emit_v2N(v2_notification_t ntype,
 	       pb_stream *outs)
 {
-	return emit_v2Nchunk(ntype, NULL, outs);
+	return emit_v2Npl(ntype, outs, NULL);
 }
 
 bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
