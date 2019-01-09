@@ -517,7 +517,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		 * time to delete it.
 		 */
 		passert(st != NULL);
-		deltatime_t timeout = st->st_ikev2 ? deltatime(MAXIMUM_RESPONDER_WAIT) : st->st_connection->r_timeout;
+		deltatime_t timeout = (st->st_ike_version == IKEv2) ? deltatime(MAXIMUM_RESPONDER_WAIT) : st->st_connection->r_timeout;
 
 		libreswan_log("deleting incomplete state after "PRI_DELTATIME" seconds",
 			      pri_deltatime(timeout));

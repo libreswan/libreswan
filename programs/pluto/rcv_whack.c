@@ -413,7 +413,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 				st->st_serialno,
 				st->st_state_name);
 
-			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
+			if ((st->st_ike_version == IKEv2) && !IS_CHILD_SA(st)) {
 				DBG_log("Also deleting any corresponding CHILD_SAs");
 				delete_my_family(st, FALSE);
 				/* note: no md->st to clear */

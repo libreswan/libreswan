@@ -476,7 +476,7 @@ void delete_state_by_id_name(struct state *st, void *name)
 void v1_delete_state_by_username(struct state *st, void *name)
 {
 	/* only support deleting ikev1 with XAUTH username */
-	if (st->st_ikev2)
+	if (st->st_ike_version == IKEv2)
 		return;
 
 	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
@@ -684,7 +684,7 @@ static bool send_delete_check(const struct state *st)
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||
 			IS_ISAKMP_SA_ESTABLISHED(st->st_state))
 	{
-		if (st->st_ikev2 &&
+		if ((st->st_ike_version == IKEv2) &&
 				IS_CHILD_SA(st) &&
 				state_with_serialno(st->st_clonedfrom) == NULL) {
 			/* ??? in v2, there must be a parent */
@@ -745,12 +745,12 @@ void delete_state(struct state *st)
 	 */
 	if (IS_IKE_SA(st)) {
 		if (!IS_IKE_SA_ESTABLISHED(st) && st->st_state != STATE_IKESA_DEL) {
-			if (st->st_ikev2)
+			if (st->st_ike_version == IKEv2)
 				pstats_ikev2_fail++;
 			else
 				pstats_ikev1_fail++;
 		} else {
-			if (st->st_ikev2)
+			if (st->st_ike_version == IKEv2)
 				pstats_ikev2_completed++;
 			else
 				pstats_ikev1_completed++;
@@ -1508,7 +1508,7 @@ struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
 						 ike_responder_spi), st) {
-		if (st->st_ikev2 &&
+		if ((st->st_ike_version == IKEv2) &&
 		    IS_IKE_SA(st) &&
 		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
 		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
@@ -1532,7 +1532,7 @@ struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *initiator_spi)
 {
 	struct state *st;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(initiator_spi), st) {
-		if (st->st_ikev2 &&
+		if ((st->st_ike_version == IKEv2) &&
 		    IS_IKE_SA(st) &&
 		    ike_spi_eq(&st->st_ike_spis.initiator, initiator_spi)) {
 			dbg("v2 IKE SA by SPi found #%lu, in %s",
@@ -1583,7 +1583,7 @@ struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
 						 ike_responder_spi), st) {
-		if (st->st_ikev2 &&
+		if ((st->st_ike_version == IKEv2) &&
 		    IS_CHILD_SA(st) &&
 		    st->st_msgid == msgid &&
 		    ikev2_ix_state_match(st, ix) &&
@@ -1623,7 +1623,7 @@ struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
 {
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(ike_spis), st) {
-		if (st->st_ikev2 && IS_CHILD_SA(st) &&
+		if ((st->st_ike_version == IKEv2) && IS_CHILD_SA(st) &&
 		    ike_spis_eq(&st->st_ike_spis, ike_spis)) {
 
 			struct ipsec_proto_info *pr;
@@ -1844,7 +1844,7 @@ bool find_pending_phase2(const so_serial_t psn,
 bool ikev2_viable_parent(const struct ike_sa *ike)
 {
 	/* this check is defined only for an IKEv2 parent */
-	if (!ike->sa.st_ikev2)
+	if (ike->sa.st_ike_version != IKEv2)
 		return TRUE;
 
 	monotime_t now = mononow();
@@ -1876,7 +1876,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 	struct state *st;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (LHAS(ok_states, st->st_state) &&
-		    st->st_ikev2 == is_ikev2 &&
+		    (st->st_ike_version == IKEv2) == is_ikev2 &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
 		    sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
@@ -2033,7 +2033,7 @@ void fmt_state(struct state *st, const monotime_t now,
 					deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (intmax_t)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
-		} else if (dpd_active_locally(st) && st->st_ikev2) {
+		} else if (dpd_active_locally(st) && (st->st_ike_version == IKEv2)) {
 			/* stats are on parent sa */
 			if (IS_CHILD_SA(st)) {
 				struct state *pst = state_with_serialno(st->st_clonedfrom);

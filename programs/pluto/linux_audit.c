@@ -187,8 +187,8 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			initiator ? "initiator" : "responder",
 			conn_encode,
 			st->st_serialno,
-			st->st_ikev2 ? "2.0" : "1",
-			st->st_ikev2 ? ((c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG") :
+			(st->st_ike_version == IKEv2) ? "2.0" : "1",
+			(st->st_ike_version == IKEv2) ? ((c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG") :
 				enum_show_shortb(&oakley_auth_names,
 					st->st_oakley.auth, &esb));
 
