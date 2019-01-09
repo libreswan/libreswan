@@ -24,6 +24,7 @@ v3.28 (unreleased)
 * pluto: Use any sent IKE message to reset the DPD/liveness counter [Paul]
 * pluto: Simplify state lookups and SPI passing [Andrew]
 * pluto: Speed up state lookups by only looking at proper hash chain [Andrew]
+* FIPS: X.509 minimum public key size check was rejecting valid keys [Paul]
 * FIPS: also force IKE maximum lifetime of 24h (default is 1h) [Paul/Vukasin]
 * KLIPS: Disable KLIPS userland support per default [Paul]
          WARNING: Support for KLIPS will be removed in 2019
