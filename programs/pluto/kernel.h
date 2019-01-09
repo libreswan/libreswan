@@ -264,8 +264,10 @@ extern struct raw_iface *find_raw_ifaces4(void);
 extern struct raw_iface *find_raw_ifaces6(void);
 
 /* helper for invoking call outs */
-extern int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
-				const struct spd_route *sr, struct state *st);
+extern bool fmt_common_shell_out(char *buf, size_t blen,
+				 const struct connection *c,
+				 const struct spd_route *sr,
+				 struct state *st);
 
 /* many bits reach in to use this, but maybe shouldn't */
 extern bool do_command(const struct connection *c, const struct spd_route *sr,

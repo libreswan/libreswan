@@ -253,9 +253,9 @@ static bool bsdkame_do_command(const struct connection *c, const struct spd_rout
 	char cmd[1536]; /* arbitrary limit on shell command length */
 	char common_shell_out_str[1024];
 
-	if (fmt_common_shell_out(common_shell_out_str,
-				 sizeof(common_shell_out_str), c, sr,
-				 st) == -1) {
+	if (!fmt_common_shell_out(common_shell_out_str,
+				  sizeof(common_shell_out_str), c, sr,
+				  st)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;

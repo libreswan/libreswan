@@ -432,8 +432,8 @@ static char *clean_xauth_username(const char *src, char *dst, size_t dstlen)
  *
  * note: this mutates *st by calling fmt_traffic_str
  */
-int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
-			const struct spd_route *sr, struct state *st)
+bool fmt_common_shell_out(char *buf, size_t blen, const struct connection *c,
+			  const struct spd_route *sr, struct state *st)
 {
 #define MAX_DISPLAY_BYTES 13
 	int result;
@@ -698,11 +698,8 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 			st->st_ah.present ? ntohl(st->st_ah.our_spi) :
 			st->st_ipcomp.present ? ntohl(st->st_ipcomp.our_spi) : 0
 		);
-	/*
-	 * works for both old and new way of snprintf() returning
-	 * either -1 or the output length  -- by Carsten Schlote
-	 */
-	return (result >= blen || result < 0) ? -1 : result;
+	/* need space for NUL */
+	return (result >= 0 && (size_t)result < blen);
 }
 
 bool do_command(const struct connection *c,

@@ -296,9 +296,9 @@ static bool klips_do_command(const struct connection *c, const struct spd_route 
 	char cmd[2048]; /* arbitrary limit on shell command length */
 	char common_shell_out_str[2048];
 
-	if (fmt_common_shell_out(common_shell_out_str,
-				 sizeof(common_shell_out_str), c, sr,
-				 st) == -1) {
+	if (!fmt_common_shell_out(common_shell_out_str,
+				  sizeof(common_shell_out_str), c, sr,
+				  st)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;
