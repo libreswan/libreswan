@@ -882,10 +882,10 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 	}
 }
 
-static bool extract_end(struct end *dst, const struct whack_end *src,
+static int extract_end(struct end *dst, const struct whack_end *src,
 			const char *which)
 {
-	bool same_ca = FALSE;
+	bool same_ca = 0;
 
 	/* decode id, if any */
 	if (src->id == NULL) {
@@ -905,7 +905,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	/* decode CA distinguished name, if any */
 	if (src->ca != NULL) {
 		if (streq(src->ca, "%same")) {
-			same_ca = TRUE;
+			same_ca = 1;
 		} else if (!streq(src->ca, "%any")) {
 			err_t ugh;
 
@@ -922,6 +922,11 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	switch (src->pubkey_type) {
 	case WHACK_PUBKEY_CERTIFICATE_NICKNAME: {
 		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->pubkey);
+		if (cert == NULL) {
+			loglog(RC_LOG_SERIOUS, "failed to find certificate named '%s' in the NSS database",
+				src->pubkey);
+			return -1;
+		}
 		load_end_nss_certificate(which, cert, dst, "nickname",
 					 src->pubkey);
 		break;
@@ -940,6 +945,11 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 			dst->id = key->id;
 		} else {
 			CERTCertificate *cert = get_cert_by_ckaid_from_nss(src->pubkey);
+			if (cert == NULL) {
+				loglog(RC_LOG_SERIOUS, "failed to find certificate ckaid '%s' in the NSS database",
+					src->pubkey);
+				return -1;
+			}
 			load_end_nss_certificate(which, cert, dst, "CKAID", src->pubkey);
 		}
 		break;
@@ -1495,7 +1505,7 @@ void add_connection(const struct whack_message *wm)
 	 * destroyed.
 	 */
 
-	bool same_rightca, same_leftca;
+	int same_rightca, same_leftca;
 	struct connection *c = alloc_thing(struct connection,
 					"struct connection");
 
@@ -1803,9 +1813,13 @@ void add_connection(const struct whack_message *wm)
 	same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 	same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
-	if (same_rightca) {
+	if (same_rightca == -1 || same_leftca == -1) {
+		loglog(RC_LOG_SERIOUS, "extract_end() as failed - ID or certificate might be unset and cause failure");
+	}
+
+	if (same_rightca == 1) {
 		c->spd.that.ca = c->spd.this.ca;
-	} else if (same_leftca) {
+	} else if (same_leftca == 1) {
 		c->spd.this.ca = c->spd.that.ca;
 	}
 
