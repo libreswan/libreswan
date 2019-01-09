@@ -1300,20 +1300,15 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 			return STF_INTERNAL_ERROR;
 	 }
 
-	if (st->st_seen_redirect_sup && (global_redirect == GLOBAL_REDIRECT_YES ||
-					(global_redirect == GLOBAL_REDIRECT_AUTO &&
-					 require_ddos_cookies()))) {
+	if (st->st_seen_redirect_sup &&
+	    (global_redirect == GLOBAL_REDIRECT_YES ||
+	     (global_redirect == GLOBAL_REDIRECT_AUTO && require_ddos_cookies())))
+	{
 		if (global_redirect_to == NULL) {
-			loglog(RC_LOG_SERIOUS, "global-redirect-to is not specified, can't redirect requests");
+			loglog(RC_LOG_SERIOUS, "global-redirect-to is not specified; can't redirect requests");
 		} else {
-			chunk_t data;
-
-			build_redirect_notify_data(global_redirect_to, &st->st_ni, &data);
-			if (!emit_v2Nchunk(v2N_REDIRECT, &data, &rbody)) {
-				freeanychunk(data);
+			if (!emit_redirect_notification(global_redirect_to, &st->st_ni, &rbody))
 				return STF_INTERNAL_ERROR;
-			}
-			freeanychunk(data);
 		}
 	}
 
@@ -3118,14 +3113,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	}
 
 	if (send_redirect) {
-		chunk_t redirect_data;
-		build_redirect_notify_data(c->redirect_to, NULL, &redirect_data);
-		if (!emit_v2Nchunk(v2N_REDIRECT, &redirect_data, &sk.pbs)) {
-			freeanychunk(redirect_data);
+		if (!emit_redirect_notification(c->redirect_to, NULL, &sk.pbs))
 			return STF_INTERNAL_ERROR;
-		}
+
 		st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
-		freeanychunk(redirect_data);
 	}
 
 	if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {

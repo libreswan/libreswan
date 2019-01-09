@@ -70,6 +70,11 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 		pb_stream *outs,
 		pb_stream *payload_pbs /* optional */);
 
+/* emit a v2 Notification payload, with optional sub-payload */
+bool emit_v2Npl(v2_notification_t ntype,
+		pb_stream *outs,
+		pb_stream *payload_pbs /* optional */);
+
 /* emit a v2 Notification payload, with optional chunk as sub-payload */
 bool emit_v2Nchunk(v2_notification_t ntype,
 		const chunk_t *ndata, /* optional */

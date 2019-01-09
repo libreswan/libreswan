@@ -33,9 +33,9 @@ char *global_redirect_to;
  * @param optional nonce data containing nonce
  * @param data Notify data we built.
  */
-extern void build_redirect_notify_data(const char *destination,
-					chunk_t *nonce, /* optional */
-					chunk_t *data /* caller must free */);
+extern bool emit_redirect_notification(const char *destination,
+			   chunk_t *nonce, /* optional */
+			   pb_stream *pbs);
 
 /*
  * Extract needed information from IKEv2 Notify Redirect

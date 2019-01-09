@@ -190,7 +190,7 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 }
 
 /* emit a v2 Notification payload, with optional sub-payload */
-static bool emit_v2Npl(v2_notification_t ntype,
+bool emit_v2Npl(v2_notification_t ntype,
 		pb_stream *outs,
 		pb_stream *payload_pbs /* optional */)
 {
