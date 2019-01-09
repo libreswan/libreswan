@@ -39,7 +39,7 @@ void send_v2N_spi_response_from_state(struct ike_sa *st,
 void send_v2N_response_from_state(struct ike_sa *st,
 				  struct msg_digest *md,
 				  v2_notification_t type,
-				  const chunk_t *data);
+				  const chunk_t *data /* optional */);
 
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t type,

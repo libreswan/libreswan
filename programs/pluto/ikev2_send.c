@@ -258,7 +258,7 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 /*
  * This short/sharp notification is always tied to the IKE SA.
  *
- * For a CREATE_CHILD_SA, things have presumably screwed up so bad
+ * For a CREATE_CHILD_SA, things have presumably screwed up so badly
  * that the larval child state is deleted.
  */
 
@@ -330,11 +330,11 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 		 * the SPI field of the notification is set to match
 		 * the SPI of the Child SA.
 		*/
-		PEXPECT_LOG("trying to send inimplemented %s notifiation",
+		PEXPECT_LOG("trying to send unimplemented %s notification",
 			    notify_name);
 		return;
 	case v2N_REKEY_SA:
-		PEXPECT_LOG("%s notification is never part of a response",
+		PEXPECT_LOG("%s notification cannot be part of a response",
 			    notify_name);
 		return;
 	default:
@@ -379,7 +379,7 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 void send_v2N_response_from_state(struct ike_sa *ike,
 				  struct msg_digest *md,
 				  v2_notification_t ntype,
-				  const chunk_t *ndata)
+				  const chunk_t *ndata /* optional */)
 {
 	send_v2N_spi_response_from_state(ike, md, PROTO_v2_RESERVED, NULL/*SPI*/,
 					 ntype, ndata);
