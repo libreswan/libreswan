@@ -2511,7 +2511,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	if (cc->policy & POLICY_COMPRESS) {
 		uint16_t c_spi;
 
-		DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress, sending v2N_IPCOMP_SUPPORTED for DEFLATE"));
+		DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE"));
 
 		/* calculate and keep our CPI */
 		if (cst->st_ipcomp.our_spi == 0) {
@@ -2538,7 +2538,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			return STF_INTERNAL_ERROR;
 		}
 	} else {
-		DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress, NOT sending v2N_IPCOMP_SUPPORTED"));
+		DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress=no, NOT sending v2N_IPCOMP_SUPPORTED"));
 	}
 
 	if (cc->send_no_esp_tfc) {
