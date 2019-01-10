@@ -65,7 +65,7 @@
  */
 
 bool emit_redirect_notification(const char *destination,
-			   chunk_t *nonce, /* optional */
+			   const chunk_t *nonce, /* optional */
 			   pb_stream *pbs)
 {
 	uint8_t gwid_type;	/* exactly one byte as per RFC */
@@ -120,31 +120,32 @@ bool emit_redirect_notification(const char *destination,
  * specified addresses matches the one from REDIRECT
  * payload, return FALSE
  */
-static bool allow_to_be_redirected(char *allowed_targets_list, ip_address *dest_ip)
+static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address *dest_ip)
 {
 	if (allowed_targets_list == NULL || streq(allowed_targets_list, "%any"))
 		return TRUE;
 
 	ip_address ip_addr;
 
-	for (char *tok = strtok(allowed_targets_list, ", ");
-	     tok != NULL;
-	     tok = strtok(NULL, ", "))
-	{
-		err_t ugh = ttoaddr_num(tok, 0, AF_UNSPEC, &ip_addr);
+	for (const char *t = allowed_targets_list;; ) {
+		t += strspn(t, ", ");	/* skip leading separator */
+		int len = strcspn(t, ", ");	/* length of name */
+		if (len == 0)
+			break;	/* no more */
+
+		err_t ugh = ttoaddr_num(t, len, AF_UNSPEC, &ip_addr);
 
 		if (ugh != NULL) {
-			DBGF(DBG_CONTROLMORE, "address %s isn't a valid address", tok);
+			DBGF(DBG_CONTROLMORE, "address %.*s isn't a valid address", len, t);
+		} else if (sameaddr(dest_ip, &ip_addr)) {
+			DBGF(DBG_CONTROLMORE,
+				"address %.*s is a match to received GW identity", len, t);
+			return TRUE;
 		} else {
-			if (sameaddr(dest_ip, &ip_addr)) {
-				DBGF(DBG_CONTROLMORE,
-					"address %s is a match to received GW identity", tok);
-				return TRUE;
-			} else {
-				DBGF(DBG_CONTROLMORE,
-					"address %s is not a match to received GW identity", tok);
-			}
+			DBGF(DBG_CONTROLMORE,
+				"address %.*s is not a match to received GW identity", len, t);
 		}
+		t += len;	/* skip name */
 	}
 	DBGF(DBG_CONTROLMORE,
 		"we did not find suitable address in the list specified by accept-redirect-to option");
@@ -152,18 +153,16 @@ static bool allow_to_be_redirected(char *allowed_targets_list, ip_address *dest_
 }
 
 err_t parse_redirect_payload(pb_stream *input_pbs,
-			     char *allowed_targets_list,
-			     bool global_red,
-			     chunk_t *nonce,
-			     ip_address *redirect_ip)
+			     const char *allowed_targets_list,
+			     const chunk_t *nonce,
+			     ip_address *redirect_ip /* result */)
 {
 	struct ikev2_redirect_part gw_info;
-	chunk_t gw_identity;
-	int af = AF_UNSPEC;
-	err_t ugh = NULL;
 
 	if (!in_struct(&gw_info, &ikev2_redirect_desc, input_pbs, NULL))
 		return "received deformed REDIRECT payload";
+
+	int af;
 
 	switch (gw_info.gw_identity_type) {
 	case GW_IPV4:
@@ -173,66 +172,83 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 		af = AF_INET6;
 		break;
 	case GW_FQDN:
+		af  = AF_UNSPEC;
 		break;
 	default:
 		return "bad GW Ident Type";
 	}
 
 	/* in_raw() actual GW Identity */
-	if (af != AF_INET && af != AF_INET6) {
-		if (!in_raw(&gw_identity.ptr, gw_info.gw_identity_len, input_pbs, "GW Identity"))
+	switch (af) {
+	case AF_UNSPEC:
+	{
+		/* note: the FQDN string isn't NUL-terminated */
+		passert(gw_info.gw_identity_len <= 0xFF);
+		unsigned char gw_str[0xFF];
+
+		if (!in_raw(&gw_str, gw_info.gw_identity_len, input_pbs, "GW Identity"))
 			return "error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload";
 
-		ugh = ttoaddr((char *) gw_identity.ptr, 0, AF_UNSPEC, redirect_ip);
-		if (ugh != NULL) {
+		err_t ugh = ttoaddr((char *) gw_str, gw_info.gw_identity_len,
+					AF_UNSPEC, redirect_ip);
+		if (ugh != NULL)
 			return ugh;
-		}
-	} else {
-		/* GW is either IPv4 or IPv6 */
+		break;
+	}
+	case AF_INET:
+	case AF_INET6:
+	{
 		if (pbs_left(input_pbs) < gw_info.gw_identity_len)
 			return "variable part of payload is smaller than transfered GW Identity Length";
 
 		/* parse address directly to redirect_ip */
-		ugh = initaddr(input_pbs->cur, gw_info.gw_identity_len, af, redirect_ip);
-		if (ugh != NULL)
-			return ugh;
-
+		{
+			err_t ugh = initaddr(input_pbs->cur, gw_info.gw_identity_len, af, redirect_ip);
+			if (ugh != NULL)
+				return ugh;
+		}
 		input_pbs->cur += gw_info.gw_identity_len;
+		break;
+	}
 	}
 
-	/* now check the list of allowed targets to
-	 * see if parsed address matches any in the list */
+	/*
+	 * now check the list of allowed targets to
+	 * see if parsed address matches any in the list
+	 */
 	if (!allow_to_be_redirected(allowed_targets_list, redirect_ip))
 		return "received GW Identity is not listed in accept-redirect-to conn option";
 
 	size_t len = pbs_left(input_pbs);
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("there are %zu bytes left to parse, and we do%s need to parse nonce",
-		     len, global_red ? "" : " NOT"));
+	DBGF(DBG_CONTROLMORE,
+		"there are %zu bytes left to parse, and we do%s need to parse nonce",
+		len, nonce == NULL ? " NOT" : "");
 
-	if (global_red) {
+	if (nonce == NULL) {
+		if (len > 0)
+			return "unexpected extra bytes in Notify data";
+	} else {
 		if (len < IKEv2_MINIMUM_NONCE_SIZE)
 			return "expected nonce is smaller than IKEv2 minimum nonce size";
 		else if (len > IKEv2_MAXIMUM_NONCE_SIZE)
 			return "expected nonce is bigger than IKEv2 maximum nonce size";
 
 		if (!memeq(nonce->ptr, input_pbs->cur, len)) {
-			chunk_t dump_nonce;
+			DBG(DBG_CONTROL, {
+				chunk_t dump_nonce;
 
-			setchunk(dump_nonce, input_pbs->cur, len);
-			DBG(DBG_CONTROL, DBG_dump_chunk("received nonce", dump_nonce));
+				setchunk(dump_nonce, input_pbs->cur, len);
+				DBG_dump_chunk("received nonce", dump_nonce);
+			});
 			return "received nonce is not the same as Ni";
 		}
-	} else {
-		if (len > 0)
-			return "there exists extra (unexpected) bytes in Notify data";
 	}
 
 	return NULL;
 }
 
-err_t build_redirected_from_notify_data(ip_address old_gw_address, chunk_t *data)
+err_t build_redirected_from_notify_data(ip_address old_gw_address, chunk_t *data /* result */)
 {
 	int gw_identity_type = 0;
 	size_t gw_identity_len = 0;

@@ -1713,7 +1713,6 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 
 			err_t e = parse_redirect_payload(&ntfy->pbs,
 							   c->accept_redirect_to,
-							   TRUE,
 							   &st->st_ni,
 							   &redirect_ip);
 			if (e != NULL) {
@@ -3652,7 +3651,6 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 
 			err_t e = parse_redirect_payload(&ntfy->pbs,
 							   st->st_connection->accept_redirect_to,
-							   FALSE,
 							   NULL,
 							   &redirect_ip);
 			if (e != NULL) {
@@ -5008,7 +5006,6 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 			DBG(DBG_CONTROLMORE, DBG_log("received v2N_REDIRECT in informational"));
 			err_t e = parse_redirect_payload(&ntfy->pbs,
 							 st->st_connection->accept_redirect_to,
-							 FALSE,
 							 NULL,
 							 &redirect_ip);
 			if (e != NULL) {

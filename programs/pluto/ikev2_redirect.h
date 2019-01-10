@@ -34,7 +34,7 @@ char *global_redirect_to;
  * @param data Notify data we built.
  */
 extern bool emit_redirect_notification(const char *destination,
-			   chunk_t *nonce, /* optional */
+			   const chunk_t *nonce, /* optional */
 			   pb_stream *pbs);
 
 /*
@@ -44,21 +44,18 @@ extern bool emit_redirect_notification(const char *destination,
  * @param data that was transferred in v2_REDIRECT Notify
  * @param char* list of addresses we allow to be redirected
  * 	  to, specified with conn option accept-redirect-to
- * @param global_red bool that indicates whether
- * 	  payload was sent in IKE_SA_INIT response
  * @param nonce that was send in IKE_SA_INIT request,
  * 	  we need to compare it with nonce data sent
  * 	  in Notify data. We do all that only if
- * 	  global_red is true
+ * 	  nonce isn't NULL.
  * @param redirect_ip ip address we need to redirect to
  * @return err_t NULL if everything went right,
  * 		 otherwise (non-NULL)  what went wrong
  */
 extern err_t parse_redirect_payload(pb_stream *input,
-				    char *allowed_targets_list,
-				    bool in_ike_sa_init,
-				    chunk_t *nonce,
-				    ip_address *redirect_ip);
+				    const char *allowed_targets_list,
+				    const chunk_t *nonce,
+				    ip_address *redirect_ip /* result */);
 
 /*
  * Build Notify data for IKEv2 Notify REDIRECTED_FROM payload.
@@ -71,7 +68,7 @@ extern err_t parse_redirect_payload(pb_stream *input,
  * @param data Notify data we built
  */
 extern err_t build_redirected_from_notify_data(ip_address old_gw_address,
-					   chunk_t *data);
+					   chunk_t *data /* result */);
 
 /*
  * Initiate via initiate_connection new IKE_SA_INIT exchange
