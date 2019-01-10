@@ -182,8 +182,15 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 	switch (af) {
 	case AF_UNSPEC:
 	{
-		/* note: the FQDN string isn't NUL-terminated */
-		passert(gw_info.gw_identity_len <= 0xFF);
+		/*
+		 * The FQDN string isn't NUL-terminated.
+		 *
+		 * The length is stored in a byte so it cannot be
+		 * larger than 0xFF.
+		 * Some helpful compilers moan about this test being always true
+		 * so I eliminated it:
+		 *	passert(gw_info.gw_identity_len <= 0xFF);
+		 */
 		unsigned char gw_str[0xFF];
 
 		if (!in_raw(&gw_str, gw_info.gw_identity_len, input_pbs, "GW Identity"))
