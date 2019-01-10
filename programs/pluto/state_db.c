@@ -304,6 +304,35 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 	return NULL;
 }
 
+struct state *state_by_ike_spis(enum ike_version ike_version,
+				so_serial_t clonedfrom,
+				const msgid_t *msgid,
+				const ike_spis_t *ike_spis,
+				state_by_predicate *predicate,
+				void *predicate_context)
+{
+	struct state *st = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(ike_spis), st) {
+		if (!state_plausable(st, ike_version, clonedfrom, msgid)) {
+			continue;
+		}
+		if (!ike_spis_eq(&st->st_ike_spis, ike_spis)) {
+			continue;
+		}
+		if (predicate != NULL) {
+			if (!predicate(st, predicate_context)) {
+				continue;
+			}
+		}
+		dbg("%s state object #%lu found, in %s",
+		    enum_name(&ike_version_names, ike_version),
+		    st->st_serialno, st->st_state_name);
+		return st;
+	}
+	dbg("%s state object not found", enum_name(&ike_version_names, ike_version));
+	return NULL;
+}
+
 /*
  * State Table Functions
  *
