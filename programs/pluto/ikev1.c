@@ -1219,8 +1219,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		} else {
 			/* not an initial message */
 
-			st = find_state_ikev1(&md->hdr.isa_ike_initiator_spi,
-					      &md->hdr.isa_ike_responder_spi,
+			st = find_state_ikev1(&md->hdr.isa_ike_spis,
 					      md->hdr.isa_msgid);
 
 			if (st == NULL) {
@@ -1350,8 +1349,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
-		st = find_state_ikev1(&md->hdr.isa_ike_initiator_spi,
-				      &md->hdr.isa_ike_responder_spi,
+		st = find_state_ikev1(&md->hdr.isa_ike_spis,
 				      md->hdr.isa_msgid);
 
 		if (st == NULL) {
@@ -1359,8 +1357,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * See if we have a Main Mode state.
 			 * ??? what if this is a duplicate of another message?
 			 */
-			st = find_state_ikev1(&md->hdr.isa_ike_initiator_spi,
-					      &md->hdr.isa_ike_responder_spi,
+			st = find_state_ikev1(&md->hdr.isa_ike_spis,
 					      v1_MAINMODE_MSGID);
 
 			if (st == NULL) {

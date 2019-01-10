@@ -754,9 +754,7 @@ extern struct state
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
 	*find_likely_sender(size_t packet_len, u_char * packet);
 
-struct state *find_state_ikev1(const ike_spi_t *ike_responder_spi,
-			       const ike_spi_t *ike_initiator_spi,
-			       msgid_t msgid);
+struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid);
 struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 				    msgid_t msgid);
 
