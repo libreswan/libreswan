@@ -68,9 +68,9 @@ bool emit_redirect_notification(const char *destination,
 			   const chunk_t *nonce, /* optional */
 			   pb_stream *pbs)
 {
-	uint8_t gwid_type;	/* exactly one byte as per RFC */
-	uint8_t gwid_len;	/* exactly one byte as per RFC */
-	const unsigned char *gwid_bytes;
+	struct ikev2_redirect_part gwi;
+	size_t id_len;
+	const unsigned char *id_bytes;
 
 	/*
 	 * try ttoaddr_num, if it fails just
@@ -81,36 +81,35 @@ bool emit_redirect_notification(const char *destination,
 	err_t ugh = ttoaddr_num(destination, 0, AF_UNSPEC, &ip_addr);
 	if (ugh != NULL) {
 		DBG(DBG_CONTROL, DBG_log("REDIRECT destination is not IPv4/IPv6 address, we are going to send it as FQDN"));
-		gwid_type = GW_FQDN;
-		size_t sl = strlen(destination);
-		if (sl > 0xFF) {
-			/* ??? what should we do? */
-			loglog(RC_LOG_SERIOUS, "redirect destination longer than 255 octets; ignoring");
-			return false;
-		}
-		gwid_len = sl;
-		gwid_bytes = (const unsigned char *)destination;
+		gwi.gw_identity_type = GW_FQDN;
+		id_len = strlen(destination);
+		id_bytes = (const unsigned char *)destination;
 	} else {
 		switch (addrtypeof(&ip_addr)) {
 		case AF_INET:
-			gwid_type = GW_IPV4;
+			gwi.gw_identity_type = GW_IPV4;
 			break;
 		case AF_INET6:
-			gwid_type = GW_IPV6;
+			gwi.gw_identity_type = GW_IPV6;
 			break;
 		default:
 			bad_case(addrtypeof(&ip_addr));
 		}
-		gwid_len = addrbytesptr_read(&ip_addr, &gwid_bytes);
+		id_len = addrbytesptr_read(&ip_addr, &id_bytes);
 	}
 
-	/* ??? we should use out_struct */
+	if (id_len > 0xFF) {
+		/* ??? what should we do? */
+		loglog(RC_LOG_SERIOUS, "redirect destination longer than 255 octets; ignoring");
+		return false;
+	}
+	gwi.gw_identity_len = id_len;
+
 	pb_stream gwid_pbs;
 	return
 -		emit_v2Npl(v2N_REDIRECT, pbs, &gwid_pbs) &&
-		out_raw(&gwid_type, sizeof(gwid_type), &gwid_pbs, "redirect ID type") &&
-		out_raw(&gwid_len, sizeof(gwid_len), &gwid_pbs, "redirect ID len") &&
-		out_raw(gwid_bytes, gwid_len, &gwid_pbs, "redirect ID") &&
+		out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL) &&
+		out_raw(id_bytes, id_len , &gwid_pbs, "redirect ID") &&
 		(nonce == NULL || out_chunk(*nonce, &gwid_pbs, "redirect ID len")) &&
 		(close_output_pbs(&gwid_pbs), true);
 }
