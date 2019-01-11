@@ -336,6 +336,7 @@ kvmplutotest	ikev2-x509-20-multicert-rightid-san-wildcard	good
 kvmplutotest	ikev2-x509-21-shared-ip			good
 kvmplutotest	ikev2-x509-22-pkcs7			good
 kvmplutotest	ikev2-x509-23-no-ca			good
+kvmplutotest	ikev2-x509-24-fakewest			good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 
