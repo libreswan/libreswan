@@ -19,7 +19,7 @@
 
 #include "packet.h"
 
-int global_redirect;
+enum allow_global_redirect global_redirect;
 char *global_redirect_to;
 
 /*

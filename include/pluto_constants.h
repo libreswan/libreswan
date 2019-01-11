@@ -102,9 +102,9 @@ enum keyword_xauthby {
 };
 
 enum allow_global_redirect {
-	GLOBAL_REDIRECT_NO	= 0,
-	GLOBAL_REDIRECT_YES	= 1,
-	GLOBAL_REDIRECT_AUTO	= 2,
+	GLOBAL_REDIRECT_NO,
+	GLOBAL_REDIRECT_YES,
+	GLOBAL_REDIRECT_AUTO,
 };
 
 enum keyword_xauthfail {
