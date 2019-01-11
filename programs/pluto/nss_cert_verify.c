@@ -150,7 +150,7 @@ static void new_vfy_log(CERTVerifyLog *log)
 	log->arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 }
 
-static CERTCertList *get_all_root_certs(void)
+static CERTCertList *get_all_ca_certs(void)
 {
 	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
 
@@ -173,11 +173,15 @@ static CERTCertList *get_all_root_certs(void)
 
 	CERTCertListNode *node;
 
+	/*
+	 * XXX: would a better call be:
+	 * CERT_FilterCertListByUsage(allcerts, certUsageAnyCA, PR_TRUE)
+	 */
 	for (node = CERT_LIST_HEAD(allcerts); !CERT_LIST_END(node, allcerts);
 						node = CERT_LIST_NEXT(node)) {
 		if (CERT_IsCACert(node->cert, NULL) && node->cert->isRoot) {
-			CERT_DupCertificate(node->cert);
-			CERT_AddCertToListTail(roots, node->cert);
+			CERTCertificate *cert = CERT_DupCertificate(node->cert);
+			CERT_AddCertToListTail(roots, cert);
 		}
 	}
 
@@ -240,7 +244,7 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 						   bool *rev_opts)
 {
 	CERTCertificate *end_cert = NULL;
-	CERTCertList *trustcl = get_all_root_certs();
+	CERTCertList *trustcl = get_all_ca_certs();
 
 	if (trustcl == NULL) {
 		DBG(DBG_X509, DBG_log("X509: no trust anchor available for verification"));
