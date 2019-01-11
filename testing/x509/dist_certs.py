@@ -343,7 +343,7 @@ def create_mainca_end_certs(mainca_end_certs):
 		else:
 			common_name = name + '.testing.libreswan.org'
 
-		if name == 'hashsha2':
+		if name == 'hashsha1':
 			alg = 'sha1'
 		else:
 			alg = 'sha256'
@@ -619,7 +619,7 @@ def run_dist_certs():
 						'japan','bigkey', 'key4096',
 						'notyetvalid','notvalidanymore',
 						'signedbyother','otherwest','othereast','wrongdnorg',
-						'unwisechar','spaceincn','hashsha2',
+						'unwisechar','spaceincn','hashsha1',
 						'cnofca','revoked', 'badwest', 'badeast')
 	# Add chain roots here
 	chain_ca_roots =   ('east_chain', 'west_chain')
