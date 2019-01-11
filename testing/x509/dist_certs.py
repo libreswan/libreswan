@@ -39,11 +39,15 @@ ca_certs = {}
 end_certs = {}
 endrev_name = ""
 top_caname=""
+dirbase=""
 
 def reset_files():
-	for dir in ['keys/', 'cacerts/', 'certs/', 'pkcs12/',
+	for dir in ['fake', 'keys/', 'cacerts/', 'certs/', 'pkcs12/',
 			    'pkcs12/curveca', 'pkcs12/mainca',
-				'pkcs12/otherca', 'pkcs12/badca', 'crls/']:
+				'pkcs12/otherca', 'pkcs12/badca', 'crls/',
+			    'fake/keys/', 'fake/cacerts/', 'fake/certs/', 'fake/pkcs12/',
+			    'fake/pkcs12/curveca', 'fake/pkcs12/mainca',
+				'fake/pkcs12/otherca', 'fake/pkcs12/badca', 'fake/crls/' ]:
 		if os.path.isdir(dir):
 			shutil.rmtree(dir)
 		os.mkdir(dir)
@@ -53,13 +57,16 @@ def reset_files():
 
 def writeout_cert(filename, item,
 				  type=crypto.FILETYPE_PEM):
-	with open(filename, "w") as f:
+	global dirbase
+	print "PAUL:%s"%(dirbase + filename)
+	with open(dirbase + filename, "w") as f:
 		f.write(crypto.dump_certificate(type, item))
 
 
 def writeout_privkey(filename, item,
 					 type=crypto.FILETYPE_PEM):
-	with open(filename, "w") as f:
+	global dirbase
+	with open(dirbase + filename, "w") as f:
 		f.write(crypto.dump_privatekey(type, item))
 
 
@@ -284,7 +291,7 @@ def create_pkcs12(path, name, cert, key, ca_cert):
 	p12.set_privatekey(key)
 	p12.set_friendlyname(name)
 	p12.set_ca_certificates([ca_cert])
-	with open(path + name + ".p12", "wb") as f:
+	with open(dirbase + path + name + ".p12", "wb") as f:
 		f.write(p12.export(passphrase="foobar"))
 
 
@@ -468,7 +475,7 @@ def create_leading_zero_crl():
 		if good:
 			print nl
 			print "found after %d signatures!" % (days)
-			with open("crls/crl-leading-zero-byte.crl", "wb") as f:
+			with open(dirbase + "crls/crl-leading-zero-byte.crl", "wb") as f:
 				f.write(der)
 			break
 
@@ -500,7 +507,7 @@ def create_crlsets():
 	needupdate = crypto.CRL()
 	needupdate.add_revoked(revoked)
 	needupdate.add_revoked(chainrev)
-	with open("crls/needupdate.crl", "wb") as f:
+	with open(dirbase + "crls/needupdate.crl", "wb") as f:
 		f.write(needupdate.export(ca_certs['mainca'][0],
 								  ca_certs['mainca'][1],
 								  type=crypto.FILETYPE_ASN1,
@@ -511,7 +518,7 @@ def create_crlsets():
 	validcrl = crypto.CRL()
 	validcrl.add_revoked(revoked)
 	validcrl.add_revoked(chainrev)
-	with open("crls/cacrlvalid.crl", "wb") as f:
+	with open(dirbase + "crls/cacrlvalid.crl", "wb") as f:
 		f.write(validcrl.export(ca_certs['mainca'][0],
 								ca_certs['mainca'][1],
 								type=crypto.FILETYPE_ASN1,
@@ -520,7 +527,7 @@ def create_crlsets():
 	othercrl = crypto.CRL()
 	othercrl.add_revoked(revoked)
 	othercrl.add_revoked(chainrev)
-	with open("crls/othercacrl.crl", "wb") as f:
+	with open(dirbase + "crls/othercacrl.crl", "wb") as f:
 		f.write(othercrl.export(ca_certs['otherca'][0],
 								ca_certs['otherca'][1],
 								type=crypto.FILETYPE_ASN1,
@@ -528,7 +535,7 @@ def create_crlsets():
 
 	notyet = crypto.CRL()
 	notyet.add_revoked(future_revoked)
-	with open("crls/futurerevoke.crl", "wb") as f:
+	with open(dirbase + "crls/futurerevoke.crl", "wb") as f:
 		f.write(notyet.export(ca_certs['mainca'][0],
 							  ca_certs['mainca'][1],
 							  type=crypto.FILETYPE_ASN1,
@@ -541,6 +548,10 @@ def create_ec_certs():
 	""" The OpenSSL module doesn't appear to have
 	support for curves so we do it with pexpect
 	"""
+	# skip for non-base for now
+	if dirbase != '':
+		return
+
 	print "creating EC certs"
 	#create CA
 	pexpect.run('openssl ecparam -out keys/curveca.key '
@@ -644,6 +655,7 @@ def main():
 	cwd = os.getcwd()
 	os.chdir(outdir)
 	global dates
+	global dirbase
 	reset_files()
 	dates = gen_gmtime_dates()
 	print "format dates being used for this run:"
@@ -651,6 +663,11 @@ def main():
 	for n, s in dates.iteritems():
 		print "%s : %s" % (n, s)
 
+	dirbase = ""
+	run_dist_certs()
+
+	# create identical set to act as forged with identical parameters
+	dirbase = "fake/"
 	run_dist_certs()
 
 	create_nss_pw()
