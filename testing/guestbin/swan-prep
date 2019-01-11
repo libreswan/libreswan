@@ -396,7 +396,7 @@ if userland in ("libreswan", "openswan"):
             # is pw needed?
             shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'%s" % (util_pw))
 
-            for certname in ("west", "east", "road", "north", "hashsha2", "west-ec", "east-ec", "nic"):
+            for certname in ("west", "east", "road", "north", "hashsha1", "west-ec", "east-ec", "nic"):
                 if not hostname in certname:
                     shell("/usr/bin/certutil -A -n %s -t 'P,,' -d sql:/etc/ipsec.d -a -i /testing/x509/certs/%s.crt%s" %
                           (certname, certname, util_pw))
@@ -415,7 +415,7 @@ if userland == "strongswan" and args.x509:
     shutil.copy("/testing/x509/keys/%s.key" %
                 key, "/etc/strongswan/ipsec.d/private/")
 
-    for certname in ("west", "east", "road", "north", "hashsha2", "west-ec", "east-ec"):
+    for certname in ("west", "east", "road", "north", "hashsha1", "west-ec", "east-ec"):
         shutil.copy("/testing/x509/certs/%s.crt" %
                     certname, "/etc/strongswan/ipsec.d/certs/")
 
