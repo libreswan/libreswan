@@ -128,6 +128,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 			      chunk_t *no_ppk_auth,
 			      enum notify_payload_hash_algorithms hash_algo)
 {
+	statetime_t start = statetime_start(st);
 	const struct connection *c = st->st_connection;
 	const struct RSA_private_key *k = get_RSA_private_key(c);
 
@@ -207,6 +208,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 		}
 	}
 
+	statetime_stop(&start, "%s()", __func__);
 	return TRUE;
 }
 

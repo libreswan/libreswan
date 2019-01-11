@@ -694,8 +694,11 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 
 	CERTCertificate *end_cert = NULL;
 
+	statetime_t start = statetime_start(st);
 	int ret = verify_and_cache_chain(certs, nr_certs,
 					 &end_cert, rev_opts);
+	statetime_stop(&start, "%s() decoding and verifying certs", __func__);
+
 	if (ret == -1) {
 		libreswan_log("cert verify failed with internal error");
 		return LSW_CERT_BAD;
