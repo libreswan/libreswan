@@ -58,7 +58,6 @@ def reset_files():
 def writeout_cert(filename, item,
 				  type=crypto.FILETYPE_PEM):
 	global dirbase
-	print "PAUL:%s"%(dirbase + filename)
 	with open(dirbase + filename, "w") as f:
 		f.write(crypto.dump_certificate(type, item))
 
