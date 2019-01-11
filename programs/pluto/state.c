@@ -132,7 +132,7 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 		lswlogf(buf, "%s (timeout: ", fs->fs_short_name);
 		lswlog_enum_short(buf, &timer_event_names, fs->fs_timeout_event);
 		/* no enum_name available? */
-		lswlogf(buf, " flags: %" PRIxLSET ")", fs->fs_flags);
+		lswlogf(buf, " flags: "PRI_LSET")", fs->fs_flags);
 #if 0
 		lswlogf(buf, " category: ");
 		lswlog_enum_short(buf, &state_category_names, fs->fs_category);

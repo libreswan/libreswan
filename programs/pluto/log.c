@@ -210,7 +210,7 @@ void log_reset_globals(const char *func, const char *file, long line)
 	}
 	if (cur_debugging != base_debugging) {
 		LSWDBGP(DBG_BASE, buf) {
-			lswlogf(buf, "processing: RESET cur_debugging (was %"PRIxLSET")",
+			lswlogf(buf, "processing: RESET cur_debugging (was "PRI_LSET")",
 				cur_debugging);
 			lswlog_source_line(buf, func, file, line);
 		}
@@ -251,7 +251,7 @@ void log_pexpect_reset_globals(const char *func, const char *file, long line)
 	}
 	if (cur_debugging != base_debugging) {
 		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
-			lswlogf(buf, "processing: unexpected cur_debugging %"PRIxLSET" should be %"PRIxLSET,
+			lswlogf(buf, "processing: unexpected cur_debugging "PRI_LSET" should be "PRI_LSET,
 				cur_debugging, base_debugging);
 		}
 		cur_debugging = base_debugging;

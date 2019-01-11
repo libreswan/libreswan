@@ -31,6 +31,7 @@ struct lswlog;
  */
 
 typedef uint_fast64_t lset_t;
+#define PRI_LSET "%"PRIxLSET
 #define PRIxLSET    PRIxFAST64
 #define LELEM_ROOF  64	/* all elements must be less than this */
 #define LEMPTY ((lset_t)0)
