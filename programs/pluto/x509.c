@@ -67,6 +67,7 @@
 #include "ip_address.h"
 #include "ikev2_message.h"	/* for build_ikev2_critical() */
 #include "ike_alg_hash.h"
+#include "certs.h"
 
 /* new NSS code */
 #include "pluto_x509.h"
@@ -674,7 +675,7 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 #endif
 
 static lsw_cert_ret pluto_process_certs(struct state *st,
-					struct cert_payload *certs,
+					struct cert_payload *cert_payloads,
 					unsigned nr_certs)
 {
 	struct connection *c = st->st_connection;
@@ -692,12 +693,17 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 	rev_opts[RO_OCSP_P] = ocsp_post;
 	rev_opts[RO_CRL_S] = crl_strict;
 
-	CERTCertificate *end_cert = NULL;
-
+	/*
+	 * XXX: should be NULL except calling code repeatedly decodes
+	 * the certs.
+	 */
+	release_certs(&st->st_remote_certs.verified);
 	statetime_t start = statetime_start(st);
-	int ret = verify_and_cache_chain(certs, nr_certs,
-					 &end_cert, rev_opts);
+	int ret = verify_and_cache_chain(cert_payloads, nr_certs,
+					 &st->st_remote_certs.verified,
+					 rev_opts);
 	statetime_stop(&start, "%s() decoding and verifying certs", __func__);
+	CERTCertificate *end_cert = st->st_remote_certs.verified != NULL ? st->st_remote_certs.verified->cert : NULL;
 
 	if (ret == -1) {
 		libreswan_log("cert verify failed with internal error");
@@ -806,7 +812,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 
 		if (st->st_peer_alt_id) {
 			DBG(DBG_X509, DBG_log("SAN ID matched, updating that.cert"));
-			c->spd.that.cert.u.nss_cert = end_cert;
+			c->spd.that.cert.u.nss_cert = CERT_DupCertificate(end_cert);
 			c->spd.that.cert.ty = CERT_X509_SIGNATURE;
 			return LSW_CERT_ID_OK;
 		}

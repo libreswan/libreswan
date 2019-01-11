@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef _CERTS_H
-#define _CERTS_H
+#ifndef CERTS_H
+#define CERTS_H
 
 /* workaround for NSS/NSPR bug on MIPS with cert.h */
 #ifndef _ABIO32
@@ -62,4 +62,18 @@ typedef struct {
 const char *cert_nickname(const cert_t *cert);
 
 extern void list_certs(void);
-#endif /* _CERTS_H */
+
+/*
+ * Maintain a list of certificates.
+ */
+
+struct certs {
+	CERTCertificate *cert;
+	struct certs *next;
+};
+
+void release_certs(struct certs **head);
+void add_cert(struct certs **head, CERTCertificate *cert);
+CERTCertificate *make_end_cert_first(struct certs **head);
+
+#endif

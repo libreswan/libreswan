@@ -28,9 +28,11 @@ struct cert_payload {
 	const char *name;
 };
 
+struct certs;
+
 extern int verify_and_cache_chain(struct cert_payload *certs,
 				  unsigned nr_certs,
-				  CERTCertificate **ee_out,
+				  struct certs **certs_out,
 				  bool *rev_opts);
 
 extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name);

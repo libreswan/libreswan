@@ -55,6 +55,8 @@ OBJS += constants.o \
 	lsw_passert_fail.o \
 	alg_byname.o
 
+OBJS += certs.o
+
 ifeq ($(USE_NETKEY),true)
 OBJS += addr_lookup.o
 endif
