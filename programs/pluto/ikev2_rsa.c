@@ -246,6 +246,7 @@ stf_status ikev2_verify_rsa_hash(struct state *st,
 				 pb_stream *sig_pbs,
 				 enum notify_payload_hash_algorithms hash_algo)
 {
+	statetime_t start = statetime_start(st);
 	unsigned int hash_len;
 	stf_status retstat;
 	enum original_role invertrole;
@@ -279,5 +280,6 @@ stf_status ikev2_verify_rsa_hash(struct state *st,
 	retstat = RSA_check_signature_gen(st, calc_hash, hash_len,
 					  sig_pbs, hash_algo, try_RSA_signature_v2);
 	pfree(calc_hash);
+	statetime_stop(&start, "%s()", __func__);
 	return retstat;
 }
