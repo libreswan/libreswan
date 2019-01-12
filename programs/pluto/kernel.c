@@ -3225,6 +3225,7 @@ bool route_and_eroute(struct connection *c,
 
 bool install_ipsec_sa(struct state *st, bool inbound_also)
 {
+	statetime_t start = statetime_start(&ike_sa(st)->sa); /* bill parent */
 	DBG(DBG_CONTROL, DBG_log("install_ipsec_sa() for #%lu: %s",
 					st->st_serialno,
 					inbound_also ?
@@ -3316,6 +3317,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_CHILD_START);
 #endif
+	statetime_stop(&start, "%s()", __func__);
 
 	return TRUE;
 }
