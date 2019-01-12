@@ -56,7 +56,7 @@ Libreswan test CA for mainca - Libreswan                     CT,,
 east                                                         P,,  
 road                                                         P,,  
 north                                                        P,,  
-hashsha2                                                     P,,  
+hashsha1                                                     P,,  
 east-ec                                                      P,,  
 nic                                                          P,,  
 west #

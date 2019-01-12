@@ -74,7 +74,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         P,,  
 east-ec                                                      P,,  
-hashsha2                                                     P,,  
+hashsha1                                                     P,,  
 nic                                                          P,,  
 north                                                        P,,  
 road                                                         P,,  

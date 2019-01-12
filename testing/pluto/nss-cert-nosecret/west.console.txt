@@ -58,8 +58,8 @@ west #
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "hashsha2" - SN: 0xXX
-000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha2.testing.libreswan.org, E=user-hashsha2@testing.libreswan.org
+000 End certificate "hashsha1" - SN: 0xXX
+000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha1.testing.libreswan.org, E=user-hashsha1@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
@@ -139,7 +139,7 @@ west                                                         u,u,u
 Libreswan test CA for mainca - Libreswan                     CT,, 
 road                                                         P,,  
 north                                                        P,,  
-hashsha2                                                     P,,  
+hashsha1                                                     P,,  
 east-ec                                                      P,,  
 nic                                                          P,,  
 west #
@@ -205,8 +205,8 @@ west #
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "hashsha2" - SN: 0xXX
-000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha2.testing.libreswan.org, E=user-hashsha2@testing.libreswan.org
+000 End certificate "hashsha1" - SN: 0xXX
+000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha1.testing.libreswan.org, E=user-hashsha1@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP

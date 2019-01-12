@@ -79,7 +79,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 Libreswan test CA for otherca - Libreswan                    ,,   
 east                                                         P,,  
-hashsha2                                                     P,,  
+hashsha1                                                     P,,  
 nic                                                          P,,  
 north                                                        Pu,u,u
 otherwest                                                    u,u,u

@@ -127,7 +127,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 Libreswan test CA for otherca - Libreswan                    CT,, 
 east                                                         P,,  
-hashsha2                                                     P,,  
+hashsha1                                                     P,,  
 nic                                                          P,,  
 north                                                        P,,  
 otherwest                                                    u,u,u

@@ -58,7 +58,7 @@ Certificate Nickname                                         Trust Attributes
 Libreswan test CA for mainca - Libreswan                     CT,, 
 east                                                         Pu,u,u
 east-ec                                                      P,,  
-hashsha2                                                     P,,  
+hashsha1                                                     P,,  
 nic                                                          P,,  
 north                                                        P,,  
 road                                                         P,,  
