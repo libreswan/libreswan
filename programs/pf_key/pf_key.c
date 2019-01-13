@@ -317,15 +317,15 @@ int main(int argc, char *argv[])
 	ssize_t readlen;
 	unsigned char pfkey_buf[256];
 	struct sadb_msg *msg;
-	int fork_after_register;
-	char *pidfilename;
-	char *infilename;
-	char *outfilename;
+	int fork_after_register = 0;
+	char *pidfilename = NULL;
+	char *infilename = NULL;
+	char *outfilename = NULL;
 
-	static int ah_register;
-	static int esp_register;
-	static int ipip_register;
-	static int ipcomp_register;
+	int ah_register = 0;
+	int esp_register = 0;
+	int ipip_register = 0;
+	int ipcomp_register = 0;
 
 	static const struct option long_options[] =
 	{
@@ -339,16 +339,7 @@ int main(int argc, char *argv[])
 		{ "ipcomp",      no_argument, &ipcomp_register, 1 },
 	};
 
-	ah_register   = 0;
-	esp_register  = 0;
-	ipip_register = 0;
-	ipcomp_register = 0;
 	dienow = 0;
-	fork_after_register = 0;
-
-	pidfilename = NULL;
-	infilename  = NULL;
-	outfilename = NULL;
 
 	progname = argv[0];
 	if (strrchr(progname, '/'))

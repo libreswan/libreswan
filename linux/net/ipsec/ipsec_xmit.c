@@ -425,6 +425,7 @@ DEBUG_NO_STATIC u_int8_t ipsec_adjust_mss(struct sk_buff *skb,
 }
 #endif  /* MSS_HACK_DELETE_ME_PLEASE */
 
+/* NOTE: may return a pointer to a static buffer */
 DEBUG_NO_STATIC const char *ipsec_xmit_err(int err)
 {
 	static char tmp[32];

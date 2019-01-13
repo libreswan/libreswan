@@ -25,7 +25,7 @@
 static unsigned long sd_secs = 0;
 
 void pluto_sd_init(void) {
-	static uint64_t sd_usecs;
+	uint64_t sd_usecs;
 	int ret = sd_watchdog_enabled(0, &sd_usecs);
 
 	if (ret == 0) {

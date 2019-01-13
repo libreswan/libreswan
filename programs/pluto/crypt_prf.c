@@ -50,8 +50,8 @@ size_t crypt_prf_fips_key_size_min(const struct prf_desc *prf)
 
 size_t crypt_prf_fips_key_size_floor(void)
 {
-	static size_t key_size_floor;
-	if (!key_size_floor) {
+	static size_t key_size_floor = 0;
+	if (key_size_floor == 0) {
 		key_size_floor = SIZE_MAX;
 		for (const struct prf_desc **prfp = next_prf_desc(NULL);
 		     prfp != NULL; prfp = next_prf_desc(prfp)) {

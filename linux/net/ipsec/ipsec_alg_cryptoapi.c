@@ -881,7 +881,7 @@ unsetup_digest_list (struct ipsec_alg_capi_digest* dlist)
 /*
  *      test loop for registered algos
  */
- static int test_digest_list (struct ipsec_alg_capi_digest* dlist)
+static int test_digest_list (struct ipsec_alg_capi_digest* dlist)
 {
 	int test_ret;
 	struct ipsec_alg_capi_digest *dptr;

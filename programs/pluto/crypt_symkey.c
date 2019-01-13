@@ -27,10 +27,10 @@
 
 static PK11SymKey *ephemeral_symkey(void)
 {
-	static int tried;
-	static PK11SymKey *ephemeral_key;
+	static bool tried = false;
+	static PK11SymKey *ephemeral_key = NULL;
 	if (!tried) {
-		tried = 1;
+		tried = true;
 		/* get a secret key */
 		PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
 						      lsw_return_nss_password_file_info());

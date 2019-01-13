@@ -480,7 +480,7 @@ void send_crypto_helper_request(struct state *st,
 	cn->pcrc_serialno = st->st_serialno;
 
 	/* set up the id */
-	static pcr_req_id pcw_id;	/* counter for generating unique request IDs */
+	static pcr_req_id pcw_id = 0;	/* counter for generating unique request IDs */
 	cn->pcrc_id = ++pcw_id;
 
 	/*

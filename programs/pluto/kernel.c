@@ -293,36 +293,38 @@ static reqid_t get_proto_reqid(reqid_t base, int proto)
  * check if the number was previously used (assuming that no
  * SPI lives longer than 4G of its successors).
  */
-ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid, int proto, const struct spd_route *sr,
+ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
+			int proto,
+			const struct spd_route *sr,
 			bool tunnel)
 {
-	static ipsec_spi_t spi = 0; /* host order, so not returned directly! */
-	char text_said[SATOT_BUF];
-
 	passert(proto == IPPROTO_AH || proto == IPPROTO_ESP);
-	set_text_said(text_said, &sr->this.host_addr, 0, proto);
 
 	if (kernel_ops->get_spi != NULL) {
+		char text_said[SATOT_BUF];
+		set_text_said(text_said, &sr->this.host_addr, 0, proto);
 		return kernel_ops->get_spi(&sr->that.host_addr,
 					&sr->this.host_addr, proto, tunnel,
 					get_proto_reqid(sr->reqid, proto),
 					IPSEC_DOI_SPI_OUR_MIN, 0xffffffff,
 					text_said);
+	} else {
+		static ipsec_spi_t spi = 0; /* host order, so not returned directly! */
+
+		spi++;
+		while (spi < IPSEC_DOI_SPI_OUR_MIN || spi == ntohl(avoid))
+			get_rnd_bytes((u_char *)&spi, sizeof(spi));
+
+		DBG(DBG_CONTROL,
+			{
+				ipsec_spi_t spi_net = htonl(spi);
+
+				DBG_dump("generate SPI:", (u_char *)&spi_net,
+					sizeof(spi_net));
+			});
+
+		return htonl(spi);
 	}
-
-	spi++;
-	while (spi < IPSEC_DOI_SPI_OUR_MIN || spi == ntohl(avoid))
-		get_rnd_bytes((u_char *)&spi, sizeof(spi));
-
-	DBG(DBG_CONTROL,
-		{
-			ipsec_spi_t spi_net = htonl(spi);
-
-			DBG_dump("generate SPI:", (u_char *)&spi_net,
-				sizeof(spi_net));
-		});
-
-	return htonl(spi);
 }
 
 /* Generate Unique CPI numbers.
@@ -335,14 +337,9 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid, int proto, const struct spd_route *
  */
 ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
 {
-	static cpi_t
-		first_busy_cpi = 0,
-		latest_cpi;
-	char text_said[SATOT_BUF];
-
-	set_text_said(text_said, &sr->this.host_addr, 0, IPPROTO_COMP);
-
 	if (kernel_ops->get_spi != NULL) {
+		char text_said[SATOT_BUF];
+		set_text_said(text_said, &sr->this.host_addr, 0, IPPROTO_COMP);
 		return kernel_ops->get_spi(&sr->that.host_addr,
 					&sr->this.host_addr, IPPROTO_COMP,
 					tunnel,
@@ -351,24 +348,27 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
 					IPCOMP_FIRST_NEGOTIATED,
 					IPCOMP_LAST_NEGOTIATED,
 					text_said);
+	} else {
+		static cpi_t first_busy_cpi = 0;
+		static cpi_t latest_cpi = 0;
+
+		while (!(IPCOMP_FIRST_NEGOTIATED <= first_busy_cpi &&
+				first_busy_cpi < IPCOMP_LAST_NEGOTIATED)) {
+			get_rnd_bytes((u_char *)&first_busy_cpi,
+				sizeof(first_busy_cpi));
+			latest_cpi = first_busy_cpi;
+		}
+
+		latest_cpi++;
+
+		if (latest_cpi == first_busy_cpi)
+			find_my_cpi_gap(&latest_cpi, &first_busy_cpi);
+
+		if (latest_cpi > IPCOMP_LAST_NEGOTIATED)
+			latest_cpi = IPCOMP_FIRST_NEGOTIATED;
+
+		return htonl((ipsec_spi_t)latest_cpi);
 	}
-
-	while (!(IPCOMP_FIRST_NEGOTIATED <= first_busy_cpi &&
-			first_busy_cpi < IPCOMP_LAST_NEGOTIATED)) {
-		get_rnd_bytes((u_char *)&first_busy_cpi,
-			sizeof(first_busy_cpi));
-		latest_cpi = first_busy_cpi;
-	}
-
-	latest_cpi++;
-
-	if (latest_cpi == first_busy_cpi)
-		find_my_cpi_gap(&latest_cpi, &first_busy_cpi);
-
-	if (latest_cpi > IPCOMP_LAST_NEGOTIATED)
-		latest_cpi = IPCOMP_FIRST_NEGOTIATED;
-
-	return htonl((ipsec_spi_t)latest_cpi);
 }
 
 /* note: this mutates *st by calling get_sa_info */

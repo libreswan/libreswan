@@ -37,8 +37,8 @@ static DEFINE_SPINLOCK(ratelimit_lock);
 int __printk_ratelimit(int ratelimit_jiffies, int ratelimit_burst)
 {
 	static unsigned long toks = 10 * 5 * HZ;
-	static unsigned long last_msg;
-	static int missed;
+	static unsigned long last_msg = 0;
+	static int missed = 0;
 	unsigned long flags;
 	unsigned long now = jiffies;
 

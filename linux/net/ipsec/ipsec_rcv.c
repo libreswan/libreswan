@@ -247,6 +247,7 @@ static inline void ipsec_rcv_redodebug(struct ipsec_rcv_state *irs)
 	}
 }
 
+/* NOTE: may return a pointer to a static buffer */
 DEBUG_NO_STATIC char *ipsec_rcv_err(int err)
 {
 	static char tmp[32];

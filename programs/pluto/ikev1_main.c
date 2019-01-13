@@ -1985,7 +1985,7 @@ static void send_notification(struct state *sndst, notification_t type,
 
 	pb_stream r_hdr_pbs;
 	u_char *r_hashval, *r_hash_start;
-	static monotime_t last_malformed;
+	static monotime_t last_malformed = MONOTIME_EPOCH;
 	monotime_t n = mononow();
 
 	r_hashval = NULL;
