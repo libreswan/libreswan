@@ -2316,19 +2316,17 @@ void send_v1_delete(struct state *st)
 		struct isakmp_delete isad = {
 			.isad_doi = ISAKMP_DOI_IPSEC,
 			.isad_np = ISAKMP_NEXT_NONE,
-			.isad_spisize = (2 * COOKIE_SIZE),
+			.isad_spisize = 2 * COOKIE_SIZE,
 			.isad_protoid = PROTO_ISAKMP,
 			.isad_nospi = 1,
 		};
-		u_char isakmp_spi[2 * COOKIE_SIZE];
-
-		memcpy(isakmp_spi, st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
-		memcpy(isakmp_spi + COOKIE_SIZE, st->st_ike_spis.responder.bytes, COOKIE_SIZE);
 
 		passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
 				   &del_pbs));
-		passert(out_raw(&isakmp_spi, (2 * COOKIE_SIZE), &del_pbs,
-				"delete payload"));
+		passert(out_raw(st->st_ike_spis.initiator.bytes, COOKIE_SIZE,
+				&del_pbs, "initiator SPI"));
+		passert(out_raw(st->st_ike_spis.responder.bytes, COOKIE_SIZE,
+				&del_pbs, "responder SPI"));
 		close_output_pbs(&del_pbs);
 	} else {
 		while (ns != said) {
@@ -2342,11 +2340,10 @@ void send_v1_delete(struct state *st)
 				.isad_protoid = ns->proto,
 				.isad_nospi = 1,
 			};
-			passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
-					   &del_pbs));
+			passert(out_struct(&isad, &isakmp_delete_desc,
+					   &r_hdr_pbs, &del_pbs));
 			passert(out_raw(&ns->spi, sizeof(ipsec_spi_t),
-					&del_pbs,
-					"delete payload"));
+					&del_pbs, "delete payload"));
 			close_output_pbs(&del_pbs);
 		}
 	}
