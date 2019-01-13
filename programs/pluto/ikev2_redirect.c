@@ -358,8 +358,6 @@ void initiate_redirect(struct state *st)
 	 */
 	if (st->st_redirected_in_auth)
 		del_spi_trick(st);
-
-	return;
 }
 
 /* helper function for send_v2_informational_request() */
