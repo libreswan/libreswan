@@ -240,12 +240,11 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 		else if (len > IKEv2_MAXIMUM_NONCE_SIZE)
 			return "expected nonce is bigger than IKEv2 maximum nonce size";
 
-		if (!memeq(nonce->ptr, input_pbs->cur, len)) {
+		if (nonce->len != len ||
+		    !memeq(nonce->ptr, input_pbs->cur, len)) {
 			DBG(DBG_CONTROL, {
-				chunk_t dump_nonce;
-
-				setchunk(dump_nonce, input_pbs->cur, len);
-				DBG_dump_chunk("received nonce", dump_nonce);
+				DBG_dump_chunk("expected nonce", *nonce);
+				DBG_dump("received nonce", input_pbs->cur, len);
 			});
 			return "received nonce is not the same as Ni";
 		}
