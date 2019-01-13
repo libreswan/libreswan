@@ -22,16 +22,11 @@
 #include "defs.h"
 #include "chunk.h"
 
-struct cert_payload {
-	enum ike_cert_type type;
-	chunk_t payload;
-	const char *name;
-};
-
 struct certs;
+struct payload_digest;
 
-extern int verify_and_cache_chain(struct cert_payload *certs,
-				  unsigned nr_certs,
+extern int verify_and_cache_chain(enum ike_version ike_version,
+				  struct payload_digest *cert_payloads,
 				  struct certs **certs_out,
 				  bool *rev_opts);
 

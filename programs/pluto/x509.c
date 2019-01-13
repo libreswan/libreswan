@@ -675,8 +675,7 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 #endif
 
 static lsw_cert_ret pluto_process_certs(struct state *st,
-					struct cert_payload *cert_payloads,
-					unsigned nr_certs)
+					struct payload_digest *cert_payloads)
 {
 	struct connection *c = st->st_connection;
 #if defined(LIBCURL) || defined(LIBLDAP)
@@ -699,7 +698,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 	 */
 	release_certs(&st->st_remote_certs.verified);
 	statetime_t start = statetime_start(st);
-	int ret = verify_and_cache_chain(cert_payloads, nr_certs,
+	int ret = verify_and_cache_chain(st->st_ike_version, cert_payloads,
 					 &st->st_remote_certs.verified,
 					 rev_opts);
 	statetime_stop(&start, "%s() decoding and verifying certs", __func__);
@@ -859,78 +858,29 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	const int np = (st->st_ike_version == IKEv2) ? ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_CERT;
-
-	/* count the total cert paylaods */
-	unsigned nr_cert_payloads = 0;
-	for (struct payload_digest *p = md->chain[np];
-	     p != NULL; p = p->next) {
-		nr_cert_payloads++;
-	}
-	if (nr_cert_payloads == 0) {
+	struct payload_digest *cert_payloads = md->chain[np];
+	if (cert_payloads == NULL) {
 		return LSW_CERT_NONE;
 	}
 
-	/* accumulate the known certificates */
-	dbg("checking for known CERT payloads");
-	struct cert_payload *certs = alloc_things(struct cert_payload,
-						  nr_cert_payloads,
-						  "cert payloads");
-	unsigned nr_certs = 0;
-	for (struct payload_digest *p = md->chain[np]; p != NULL; p = p->next) {
-		enum ike_cert_type cert_type;
-		const char *cert_name;
-		switch (st->st_ike_version) {
-		case IKEv2:
-			cert_type = p->payload.v2cert.isac_enc;
-			cert_name = enum_short_name(&ikev2_cert_type_names, cert_type);
-			break;
-		case IKEv1:
-			cert_type = p->payload.cert.isacert_type;
-			cert_name = enum_short_name(&ike_cert_type_names, cert_type);
-			break;
-		default:
-			bad_case(st->st_ike_version);
-		}
-
-		if (cert_name == NULL) {
-			loglog(RC_LOG_SERIOUS, "ignoring certificate with unknown type %d",
-			       cert_type);
-		} else {
-			dbg("saving certificate of type '%s' in %d",
-			     cert_name, nr_certs);
-			certs[nr_certs++] = (struct cert_payload) {
-				.type = cert_type,
-				.name = cert_name,
-				.payload = chunk(p->pbs.cur, pbs_left(&p->pbs)),
-			};
-		}
+	dbg("CERT payloads found; calling pluto_process_certs()");
+	lsw_cert_ret ret = pluto_process_certs(st, cert_payloads);
+	switch (ret) {
+	case LSW_CERT_NONE:
+		dbg("X509: all certs discarded");
+		break;
+	case LSW_CERT_BAD:
+		libreswan_log("X509: Certificate rejected for this connection");
+		break;
+	case LSW_CERT_MISMATCHED_ID:
+		libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
+		break;
+	case LSW_CERT_ID_OK:
+		DBG(DBG_X509, DBG_log("Peer public key SubjectAltName matches peer ID for this connection"));
+		break;
+	default:
+		bad_case(ret);
 	}
-
-	/* Process the known certificates */
-	lsw_cert_ret ret = LSW_CERT_NONE;
-	if (nr_certs > 0) {
-		dbg("CERT payloads found: %d; calling pluto_process_certs()",
-		     nr_certs);
-		ret = pluto_process_certs(st, certs, nr_certs);
-		switch (ret) {
-		case LSW_CERT_NONE:
-			dbg("X509: all certs discarded");
-			break;
-		case LSW_CERT_BAD:
-			libreswan_log("X509: Certificate rejected for this connection");
-			break;
-		case LSW_CERT_MISMATCHED_ID:
-			libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
-			break;
-		case LSW_CERT_ID_OK:
-			DBG(DBG_X509, DBG_log("Peer public key SubjectAltName matches peer ID for this connection"));
-			break;
-		default:
-			bad_case(ret);
-		}
-	}
-
-	pfree(certs);
 	return ret;
 }
 

@@ -40,6 +40,7 @@
 #include <certdb.h>
 #include <keyhi.h>
 #include <secpkcs7.h>
+#include "demux.h"
 
 /*
  * set up the slot/handle/trust things that NSS needs
@@ -445,22 +446,45 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
  * Decode the cert payloads creating a list of temp certificates.
  */
 static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
-					  struct cert_payload *cert_payloads,
-					  const unsigned nr_cert_payloads)
+					  enum ike_version ike_version,
+					  struct payload_digest *cert_payloads)
 {
 	struct certs *certs = NULL;
-	for (unsigned i = 0; i < nr_cert_payloads; i++) {
-		switch (cert_payloads[i].type) {
+	/* accumulate the known certificates */
+	dbg("checking for known CERT payloads");
+	for (struct payload_digest *p = cert_payloads; p != NULL; p = p->next) {
+		enum ike_cert_type cert_type;
+		const char *cert_name;
+		switch (ike_version) {
+		case IKEv2:
+			cert_type = p->payload.v2cert.isac_enc;
+			cert_name = enum_short_name(&ikev2_cert_type_names, cert_type);
+			break;
+		case IKEv1:
+			cert_type = p->payload.cert.isacert_type;
+			cert_name = enum_short_name(&ike_cert_type_names, cert_type);
+			break;
+		default:
+			bad_case(ike_version);
+		}
+		if (cert_name == NULL) {
+			loglog(RC_LOG_SERIOUS, "ignoring certificate with unknown type %d",
+			       cert_type);
+			continue;
+		}
+
+		dbg("saving certificate of type '%s'", cert_name);
+		/* convert remaining buffer to something nss  likes */
+		chunk_t payload_chunk = same_in_pbs_left_as_chunk(&p->pbs);
+		SECItem payload = same_chunk_as_secitem(payload_chunk, siDERCertBuffer);
+
+		switch (cert_type) {
 		case CERT_X509_SIGNATURE:
-			add_decoded_cert(handle, &certs,
-					 same_chunk_as_secitem(cert_payloads[i].payload,
-							       siDERCertBuffer));
+			add_decoded_cert(handle, &certs, payload);
 			break;
 		case CERT_PKCS7_WRAPPED_X509:
 		{
-			SECItem der = same_chunk_as_secitem(cert_payloads[i].payload,
-							    siDERCertBuffer);
-			SEC_PKCS7ContentInfo *contents = SEC_PKCS7DecodeItem(&der, NULL, NULL, NULL, NULL,
+			SEC_PKCS7ContentInfo *contents = SEC_PKCS7DecodeItem(&payload, NULL, NULL, NULL, NULL,
 									     NULL, NULL, NULL);
 			if (contents == NULL) {
 				loglog(RC_LOG_SERIOUS, "Wrapped PKCS7 certificate payload could not be decoded");
@@ -479,8 +503,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			break;
 		}
 		default:
-			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
-			       cert_payloads[i].name);
+			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload", cert_name);
 			break;
 		}
 	}
@@ -491,11 +514,12 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
  * Decode and verify the chain received by pluto.
  * ee_out is the resulting end cert
  */
-int verify_and_cache_chain(struct cert_payload *cert_payloads, unsigned nr_cert_payloads,
+int verify_and_cache_chain(enum ike_version ike_version,
+			   struct payload_digest *cert_payloads,
 			   struct certs **certs_out, bool *rev_opts)
 {
 	pexpect(*certs_out == NULL);
-	if (!pexpect(nr_cert_payloads > 0)) {
+	if (!pexpect(cert_payloads != NULL)) {
 		return -1;
 	}
 
@@ -529,8 +553,8 @@ int verify_and_cache_chain(struct cert_payload *cert_payloads, unsigned nr_cert_
 	 * This routine populates certs[] with the imported
 	 * certificates.  For details read CERT_ImportCerts().
 	 */
-	struct certs *certs = decode_cert_payloads(handle, cert_payloads,
-						   nr_cert_payloads);
+	struct certs *certs = decode_cert_payloads(handle, ike_version,
+						   cert_payloads);
 	if (certs == NULL) {
 		CERT_DestroyCertList(trustcl);
 		return -1;
