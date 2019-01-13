@@ -25,20 +25,20 @@
 struct certs;
 struct payload_digest;
 
+/* rev_opts index */
+struct rev_opts {
+	bool ocsp;
+	bool ocsp_strict;
+	bool ocsp_post;
+	bool crl_strict;
+};
+
 extern int verify_and_cache_chain(enum ike_version ike_version,
 				  struct payload_digest *cert_payloads,
 				  struct certs **certs_out,
-				  bool *rev_opts);
+				  const struct rev_opts *rev_opts);
 
 extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name);
-
-/* rev_opts index */
-#define RO_OCSP 0
-#define RO_OCSP_S 1
-#define RO_OCSP_P 2
-#define RO_CRL_S 3
-#define RO_SZ 4
-
 
 #define VERIFY_RET_OK       0x0001
 #define VERIFY_RET_REVOKED  0x0002

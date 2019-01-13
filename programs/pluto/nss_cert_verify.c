@@ -200,15 +200,14 @@ static unsigned int rev_val_flags(PRBool strict, PRBool post)
 	return flags;
 }
 
-static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
-						     bool ocsp,
-						     bool ocsp_strict,
-						     bool ocsp_post)
+static void set_rev_params(CERTRevocationFlags *rev,
+			   const struct rev_opts *rev_opts)
 {
 	CERTRevocationTests *rt = &rev->leafTests;
 	PRUint64 *rf = rt->cert_rev_flags_per_method;
-	DBG(DBG_X509, DBG_log("crl_strict: %d, ocsp: %d, ocsp_strict: %d, ocsp_post: %d",
-				crl_strict, ocsp, ocsp_strict, ocsp_post));
+	dbg("crl_strict: %d, ocsp: %d, ocsp_strict: %d, ocsp_post: %d",
+	    rev_opts->crl_strict, rev_opts->ocsp,
+	    rev_opts->ocsp_strict, rev_opts->ocsp_post);
 
 	rt->number_of_defined_methods = cert_revocation_method_count;
 	rt->number_of_preferred_methods = 0;
@@ -216,15 +215,17 @@ static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
 	rf[cert_revocation_method_crl] |= CERT_REV_M_TEST_USING_THIS_METHOD;
 	rf[cert_revocation_method_crl] |= CERT_REV_M_FORBID_NETWORK_FETCHING;
 
-	if (ocsp) {
-		rf[cert_revocation_method_ocsp] = rev_val_flags(ocsp_strict, ocsp_post);
+	if (rev_opts->ocsp) {
+		rf[cert_revocation_method_ocsp] = rev_val_flags(rev_opts->ocsp_strict,
+								rev_opts->ocsp_post);
 	}
 }
 
 #define RETRYABLE_TYPE(err) ((err) == SEC_ERROR_INADEQUATE_CERT_TYPE || \
 			      (err) == SEC_ERROR_INADEQUATE_KEY_USAGE)
 
-static lset_t verify_end_cert(CERTCertList *trustcl, bool *rev_opts,
+static lset_t verify_end_cert(CERTCertList *trustcl,
+			      const struct rev_opts *rev_opts,
 			      CERTCertificate *end_cert)
 {
 	CERTVerifyLog *cur_log = NULL;
@@ -241,9 +242,8 @@ static lset_t verify_end_cert(CERTCertList *trustcl, bool *rev_opts,
 	PRUint64 revFlagsChain[2] = { 0, 0 };
 
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
-	set_rev_params(&rev, rev_opts[RO_CRL_S], rev_opts[RO_OCSP],
-						 rev_opts[RO_OCSP_S],
-						 rev_opts[RO_OCSP_P]);
+	set_rev_params(&rev, rev_opts);
+
 	int in_idx = 0;
 	CERTValInParam cvin[7];
 	CERTValOutParam cvout[3];
@@ -254,7 +254,7 @@ static lset_t verify_end_cert(CERTCertList *trustcl, bool *rev_opts,
 	cvin[in_idx++].value.pointer.revocation = &rev;
 
 	cvin[in_idx].type = cert_pi_useAIACertFetch;
-	cvin[in_idx++].value.scalar.b = rev_opts[RO_OCSP];
+	cvin[in_idx++].value.scalar.b = rev_opts->ocsp ? PR_TRUE : PR_FALSE;
 
 	cvin[in_idx].type = cert_pi_trustAnchors;
 	cvin[in_idx++].value.pointer.chain = trustcl;
@@ -516,7 +516,8 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
  */
 int verify_and_cache_chain(enum ike_version ike_version,
 			   struct payload_digest *cert_payloads,
-			   struct certs **certs_out, bool *rev_opts)
+			   struct certs **certs_out,
+			   const struct rev_opts *rev_opts)
 {
 	pexpect(*certs_out == NULL);
 	if (!pexpect(cert_payloads != NULL)) {
@@ -568,7 +569,7 @@ int verify_and_cache_chain(enum ike_version ike_version,
 	int ret = 0;
 
 	if (crl_update_check(handle, certs)) {
-		if (rev_opts[RO_CRL_S]) {
+		if (rev_opts->crl_strict) {
 			libreswan_log("missing or expired CRL in strict mode, failing pending update");
 			CERT_DestroyCertList(trustcl);
 			release_certs(&certs);

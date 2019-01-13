@@ -682,15 +682,16 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 	SECItem fdn = { siBuffer, NULL, 0 };
 #endif
 	lsw_cert_ret cont = LSW_CERT_BAD;
-	bool rev_opts[RO_SZ];
 	char namebuf[IDTOA_BUF];
 	char ipstr[IDTOA_BUF];
 	char sbuf[ASN1_BUF_LEN];
 
-	rev_opts[RO_OCSP] = ocsp_enable;
-	rev_opts[RO_OCSP_S] = ocsp_strict;
-	rev_opts[RO_OCSP_P] = ocsp_post;
-	rev_opts[RO_CRL_S] = crl_strict;
+	const struct rev_opts rev_opts = {
+		.ocsp = ocsp_enable,
+		.ocsp_strict = ocsp_strict,
+		.ocsp_post = ocsp_post,
+		.crl_strict = crl_strict,
+	};
 
 	/*
 	 * XXX: should be NULL except calling code repeatedly decodes
@@ -700,7 +701,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 	statetime_t start = statetime_start(st);
 	int ret = verify_and_cache_chain(st->st_ike_version, cert_payloads,
 					 &st->st_remote_certs.verified,
-					 rev_opts);
+					 &rev_opts);
 	statetime_stop(&start, "%s() decoding and verifying certs", __func__);
 	CERTCertificate *end_cert = st->st_remote_certs.verified != NULL ? st->st_remote_certs.verified->cert : NULL;
 
