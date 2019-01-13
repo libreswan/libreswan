@@ -1892,7 +1892,8 @@ stf_status send_isakmp_notification(struct state *st,
 		};
 		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
 		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
-		passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody));
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
+			return STF_INTERNAL_ERROR;
 	}
 	/* HASH -- create and note space to be filled later */
 	START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_N);
