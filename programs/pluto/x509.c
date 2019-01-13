@@ -678,9 +678,6 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 					struct payload_digest *cert_payloads)
 {
 	struct connection *c = st->st_connection;
-	char namebuf[IDTOA_BUF];
-	char ipstr[IDTOA_BUF];
-	char sbuf[ASN1_BUF_LEN];
 
 	const struct rev_opts rev_opts = {
 		.ocsp = ocsp_enable,
@@ -748,95 +745,119 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 	add_pubkey_from_nss_cert(&c->spd.that.id, end_cert);
 	st->st_remote_certs.verified = certs;
 
-	lsw_cert_ret cont;
-	switch (c->spd.that.id.kind) {
+	if (!match_certs_id(certs, &c->spd.that.id, c/*update*/)) {
+		return LSW_CERT_MISMATCHED_ID;
+	}
+
+	dbg("SAN ID matched, updating that.cert");
+	st->st_peer_alt_id = true;
+	if (c->spd.that.cert.ty == CERT_X509_SIGNATURE &&
+	    c->spd.that.cert.u.nss_cert != NULL) {
+		CERT_DestroyCertificate(c->spd.that.cert.u.nss_cert);
+	}
+	c->spd.that.cert.u.nss_cert = CERT_DupCertificate(certs->cert);
+	c->spd.that.cert.ty = CERT_X509_SIGNATURE;
+	return LSW_CERT_ID_OK;
+}
+
+/*
+ * XXX: This sometimes update's the connection ID as a side effect.
+ */
+bool match_certs_id(struct certs *certs, const struct id *peer_id,
+		    struct connection *update)
+{
+	char sbuf[ASN1_BUF_LEN];
+	char namebuf[IDTOA_BUF];
+	char ipstr[IDTOA_BUF];
+
+	if (certs == NULL) {
+		dbg("no cert to verify ID against");
+		return false;
+	}
+	CERTCertificate *end_cert = certs->cert;
+
+	bool cont;
+	switch (peer_id->kind) {
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		idtoa(&c->spd.that.id, ipstr, sizeof(ipstr));
+		idtoa(peer_id, ipstr, sizeof(ipstr));
 		if (cert_VerifySubjectAltName(end_cert, ipstr)) {
 			dbg("ID_IP '%s' matched", ipstr);
-			cont = LSW_CERT_ID_OK;
+			cont = true;
 		} else {
 			loglog(RC_LOG_SERIOUS,
 			       "certificate does not contain ID_IP subjectAltName=%s",
 			       ipstr);
-			cont = LSW_CERT_MISMATCHED_ID; /* signal connswitch */
+			cont = false; /* signal connswitch */
 		}
 		break;
 
 	case ID_FQDN:
 		/* We need to skip the "@" prefix from our configured FQDN */
-		idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
+		idtoa(peer_id, namebuf, sizeof(namebuf));
 		if (cert_VerifySubjectAltName(end_cert, namebuf + 1)) {
 			dbg("ID_FQDN '%s' matched", namebuf+1);
-			cont = LSW_CERT_ID_OK;
+			cont = true;
 		} else {
 			loglog(RC_LOG_SERIOUS,
 			       "certificate does not contain subjectAltName=%s",
 			       namebuf + 1);
-			cont = LSW_CERT_MISMATCHED_ID; /* signal conn switch */
+			cont = false; /* signal conn switch */
 		}
 		break;
 
 	case ID_USER_FQDN:
-		idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
+		idtoa(peer_id, namebuf, sizeof(namebuf));
 		if (cert_VerifySubjectAltName(end_cert, namebuf)) {
 			dbg("ID_USER_FQDN '%s' matched", namebuf);
-			cont = LSW_CERT_ID_OK;
+			cont = true;
 		} else {
 			loglog(RC_LOG_SERIOUS, "certificate does not contain ID_USER_FQDN subjectAltName=%s",
 			       namebuf);
-			cont = LSW_CERT_MISMATCHED_ID; /* signal conn switch */
+			cont = false; /* signal conn switch */
 		}
 		break;
 
 	case ID_FROMCERT:
 		/* We are committed to accept any ID as long as the CERT verified */
-		idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
+		idtoa(peer_id, namebuf, sizeof(namebuf));
 		dbg("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf);
-		cont = LSW_CERT_ID_OK;
-		struct id peer_id = {
-			.kind = ID_DER_ASN1_DN,
-			.name = same_secitem_as_chunk(end_cert->derSubject),
-		};
-		duplicate_id(&c->spd.that.id, &peer_id);
+		cont = true;
+		if (update != NULL) {
+			dbg("stomping on connection's that.id");
+			struct id id = {
+				.kind = ID_DER_ASN1_DN,
+				/* safe as duplicate_id() will clone this */
+				.name = same_secitem_as_chunk(end_cert->derSubject),
+			};
+			duplicate_id(&update->spd.that.id, &id);
+		}
 		break;
 
 	case ID_DER_ASN1_DN:
-		idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
+		idtoa(peer_id, namebuf, sizeof(namebuf));
 		dntoasi(sbuf, sizeof(sbuf), end_cert->derSubject);
 		dbg("ID_DER_ASN1_DN '%s' needs further ID comparison against '%s'",
 		    sbuf, namebuf);
 
 		chunk_t certdn = same_secitem_as_chunk(end_cert->derSubject);
 
-		if (same_dn_any_order(c->spd.that.id.name, certdn)) {
+		if (same_dn_any_order(peer_id->name, certdn)) {
 			dbg("ID_DER_ASN1_DN '%s' matched our ID", namebuf);
-			cont = LSW_CERT_ID_OK;
+			cont = true;
 		} else {
 			loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
 			       end_cert->subjectName, namebuf);
-			cont = LSW_CERT_MISMATCHED_ID; /* signal conn switch */
+			cont = false; /* signal conn switch */
 		}
 		break;
 
 	default:
 		loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
-		       c->spd.that.id.kind,
-		       enum_show(&ike_idtype_names, c->spd.that.id.kind));
-		cont = LSW_CERT_BAD;
-	}
-
-	pexpect(!st->st_peer_alt_id);
-	if (cont == LSW_CERT_ID_OK) {
-		dbg("SAN ID matched, blatting that.cert");
-		st->st_peer_alt_id = true;
-		if (c->spd.that.cert.ty == CERT_X509_SIGNATURE &&
-		    c->spd.that.cert.u.nss_cert != NULL) {
-			CERT_DestroyCertificate(c->spd.that.cert.u.nss_cert);
-		}
-		c->spd.that.cert.u.nss_cert = CERT_DupCertificate(end_cert);
-		c->spd.that.cert.ty = CERT_X509_SIGNATURE;
+		       peer_id->kind,
+		       enum_show(&ike_idtype_names, peer_id->kind));
+		cont = false;
+		break;
 	}
 
 	return cont;
