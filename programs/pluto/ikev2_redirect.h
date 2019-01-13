@@ -23,20 +23,32 @@ enum allow_global_redirect global_redirect;
 char *global_redirect_to;
 
 /*
- * Build Notify data for IKEv2 Notify Redirect notification.
- * We don't use out_struct, because we pass chunk_t to
- * ship_v2N method, and not a pb_stream. Luckily, only
- * two bytes (GW Ident Type, GW Ident Len) are static
- * fields in Notify Data of REDIRECT payload.
+ * Emit IKEv2 Notify Redirect payload.
  *
  * @param destination string of IPv4/IPv6/FQDN address.
  * @param optional nonce data containing nonce
- * @param data Notify data we built.
+ * @param pbs output stream
  */
-extern bool emit_redirect_notification(const char *destination,
-			   const chunk_t *nonce, /* optional */
-			   pb_stream *pbs);
+extern bool emit_redirect_notification(
+		const char *destination,
+		const chunk_t *nonce, /* optional */
+		pb_stream *pbs);
 
+/*
+ * Emit IKEv2 Notify Redirect payload given an already decoded destination.
+ *
+ * @param ntype type of notification (v2N_REDIRECT or v2N_REDIRECTED_FROM)
+ * @param dest_ip IPv4/IPv6 address of destination.
+ * @param dest_str string of FQDN address of destination.
+ * @param optional nonce data containing nonce
+ * @param pbs output stream
+ */
+extern bool emit_redirect_notification_decoded_dest(
+		v2_notification_t ntype,
+		const ip_address *dest_ip,
+		const char *dest_str,
+		const chunk_t *nonce, /* optional */
+		pb_stream *pbs);
 /*
  * Extract needed information from IKEv2 Notify Redirect
  * notification.
@@ -56,19 +68,6 @@ extern err_t parse_redirect_payload(pb_stream *input,
 				    const char *allowed_targets_list,
 				    const chunk_t *nonce,
 				    ip_address *redirect_ip /* result */);
-
-/*
- * Build Notify data for IKEv2 Notify REDIRECTED_FROM payload.
- *
- * REDIRECTED_FROM has the same structure as REDIRECT payload,
- * except there is no nonce sending in any case, and GW_FQDN
- * is not valid as GW_Ident_Type.
- *
- * @param old_gw_address ip_address of the gateway that sent us here
- * @param data Notify data we built
- */
-extern err_t build_redirected_from_notify_data(ip_address old_gw_address,
-					   chunk_t *data /* result */);
 
 /*
  * Initiate via initiate_connection new IKE_SA_INIT exchange

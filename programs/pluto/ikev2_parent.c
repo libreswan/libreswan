@@ -837,24 +837,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	/* first check if this IKE_SA_INIT came from redirect
 	 * instruction.
 	 * - if yes, send the v2N_REDIRECTED_FROM
-	 * with the identity of previous gateway
+	 *   with the identity of previous gateway
 	 * - if not, check if we support redirect mechanism
 	 *   and send v2N_REDIRECT_SUPPORTED if we do
 	 */
 	if (!isanyaddr(&c->temp_vars.redirect_ip)) {
-		chunk_t old_gateway_data;
-		err_t e = build_redirected_from_notify_data(
-				c->temp_vars.old_gw_address, &old_gateway_data);
-		if (e != NULL) {
-			loglog(RC_LOG_SERIOUS, "not sending REDIRECTED_FROM Notify payload because %s", e);
-		} else {
-			if (!emit_v2Nchunk(v2N_REDIRECTED_FROM,
-					&old_gateway_data, &rbody)) {
-				freeanychunk(old_gateway_data);
-				return STF_INTERNAL_ERROR;
-			}
-			freeanychunk(old_gateway_data);
-		}
+		if (!emit_redirect_notification_decoded_dest(v2N_REDIRECTED_FROM,
+				&c->temp_vars.old_gw_address, NULL, NULL, &rbody))
+			return STF_INTERNAL_ERROR;
 	} else if (LIN(POLICY_ACCEPT_REDIRECT_YES, c->policy)) {
 		if (!emit_v2N(v2N_REDIRECT_SUPPORTED, &rbody))
 			return STF_INTERNAL_ERROR;
