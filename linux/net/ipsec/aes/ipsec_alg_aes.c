@@ -278,7 +278,6 @@ IPSEC_ALG_MODULE_EXIT_STATIC( ipsec_aes_fini )
 		unregister_ipsec_alg_auth(&ipsec_alg_AES_MAC);
 #endif  /* CONFIG_KLIPS_ENC_AES_MAC */
 	unregister_ipsec_alg_enc(&ipsec_alg_AES);
-	return;
 }
 #ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");

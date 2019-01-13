@@ -5089,8 +5089,6 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 		libreswan_log("MOBIKE request: updating IPsec SA by request");
 	else
 		DBG(DBG_CONTROL, DBG_log("MOBIKE request: not updating IPsec SA"));
-
-	return;
 }
 
 static void mobike_reset_remote(struct state *st, struct mobike *est_remote)
