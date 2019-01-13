@@ -107,24 +107,23 @@ static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 	return res;
 }
 
-static int nss_err_to_revfail(CERTVerifyLogNode *node)
+static void log_bad_cert(CERTVerifyLogNode *node)
 {
-	int ret = VERIFY_RET_FAIL;
-
-	if (node == NULL || node->cert == NULL) {
-		return ret;
-	}
-
 	loglog(RC_LOG_SERIOUS, "Certificate %s failed verification",
-		    node->cert->subjectName);
+	       node->cert->subjectName);
 	loglog(RC_LOG_SERIOUS, "ERROR: %s",
-		    nss_err_str(node->error));
-
+	       nss_err_str(node->error));
+	/*
+	 * XXX: this redundant log message is to keep tests happy -
+	 * the above ERROR: line will have already explained the the
+	 * problem.
+	 *
+	 * Two things should change - drop the below, and prefix the
+	 * above with "NSS ERROR: ".
+	 */
 	if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
-		ret = VERIFY_RET_REVOKED;
+		libreswan_log("certificate revoked!");
 	}
-
-	return ret;
 }
 
 static void new_vfy_log(CERTVerifyLog *log)
@@ -224,9 +223,10 @@ static void set_rev_params(CERTRevocationFlags *rev,
 #define RETRYABLE_TYPE(err) ((err) == SEC_ERROR_INADEQUATE_CERT_TYPE || \
 			      (err) == SEC_ERROR_INADEQUATE_KEY_USAGE)
 
-static lset_t verify_end_cert(CERTCertList *trustcl,
-			      const struct rev_opts *rev_opts,
-			      CERTCertificate *end_cert)
+static bool verify_end_cert(CERTCertList *trustcl,
+			    const struct rev_opts *rev_opts,
+			    CERTCertificate *end_cert,
+			    bool *bad)
 {
 	CERTVerifyLog *cur_log = NULL;
 	CERTVerifyLog vfy_log;
@@ -270,25 +270,27 @@ static lset_t verify_end_cert(CERTCertList *trustcl,
 	cvout[1].value.pointer.chain = NULL;
 	cvout[2].type = cert_po_end;
 
-	int fin;
+	bool fin;
 
 #ifdef NSS_IPSEC_PROFILE
 	SECStatus rv = CERT_PKIXVerifyCert(end_cert, certificateUsageIPsec,
 						cvin, cvout, NULL);
 	if (rv != SECSuccess || cur_log->count > 0) {
 		if (cur_log->count > 0 && cur_log->head != NULL) {
-			fin = nss_err_to_revfail(cur_log->head);
+			log_bad_cert(cur_log->head);
+			*bad = true;
+			fin = false;
 		} else {
 			/*
 			 * An rv != SECSuccess without CERTVerifyLog
 			 * results should not * happen, but catch it anyway
 			 */
 			loglog(RC_LOG_SERIOUS, "X509: unspecified NSS verification failure");
-			fin = VERIFY_RET_FAIL;
+			fin = false;
 		}
 	} else {
 		DBG(DBG_X509, DBG_log("certificate is valid"));
-		fin = VERIFY_RET_OK;
+		fin = true;
 	}
 #else
 	/* kludge alert!!
@@ -297,6 +299,11 @@ static lset_t verify_end_cert(CERTCertList *trustcl,
 	 * detail and not related to IKE. In the absence of a real
 	 * IKE profile being available for NSS, this covers more
 	 * KU/EKU combinations
+	 *
+	 * double kludge alert!!  What was a simple goto was converted
+	 * to a for loop that, while appearing to be infinite,
+	 * typically executes once and very occasionally twice.  Look
+	 * very carefully for "continue" and "break".
 	 */
 
 	SECCertificateUsage usage;
@@ -314,7 +321,9 @@ static lset_t verify_end_cert(CERTCertList *trustcl,
 					cvout[1].value.pointer.chain = NULL;
 					continue;
 				} else {
-					fin = nss_err_to_revfail(cur_log->head);
+					log_bad_cert(cur_log->head);
+					*bad = true;
+					fin = false;
 				}
 			} else {
 				/*
@@ -322,17 +331,15 @@ static lset_t verify_end_cert(CERTCertList *trustcl,
 				 * happen, but catch it anyway
 				 */
 				libreswan_log("X509: unspecified NSS verification failure");
-				fin = VERIFY_RET_FAIL;
+				fin = false;
 			}
 		} else {
 			DBG(DBG_X509, DBG_log("certificate is valid"));
-			fin = VERIFY_RET_OK;
+			fin = true;
 		}
 		break;
 	}
 #endif
-	pexpect(fin != 0);
-
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
 	PORT_FreeArena(vfy_log2.arena, PR_FALSE);
 
@@ -514,24 +521,29 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
  * Decode and verify the chain received by pluto.
  * ee_out is the resulting end cert
  */
-int verify_and_cache_chain(enum ike_version ike_version,
-			   struct payload_digest *cert_payloads,
-			   struct certs **certs_out,
-			   const struct rev_opts *rev_opts)
+struct certs *find_and_verify_certs(enum ike_version ike_version,
+				    struct payload_digest *cert_payloads,
+				    const struct rev_opts *rev_opts,
+				    bool *crl_needed, bool *bad)
 {
-	pexpect(*certs_out == NULL);
+	*crl_needed = false;
+	*bad = false;
+
 	if (!pexpect(cert_payloads != NULL)) {
-		return -1;
+		/* logged by pexpect() */
+		return NULL;
 	}
 
 	PK11SlotInfo *slot = NULL;
-	if (!prepare_nss_import(&slot))
-		return -1;
+	if (!prepare_nss_import(&slot)) {
+		/* logged by above */
+		return NULL;
+	}
 
 	CERTCertList *trustcl = get_all_ca_certs(); /* must free trustcl */
 	if (trustcl == NULL) {
-		DBG(DBG_X509, DBG_log("X509: no trust anchor available for verification"));
-		return VERIFY_RET_SKIP;
+		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
+		return NULL;
 	}
 
 	/*
@@ -558,36 +570,36 @@ int verify_and_cache_chain(enum ike_version ike_version,
 						   cert_payloads);
 	if (certs == NULL) {
 		CERT_DestroyCertList(trustcl);
-		return -1;
+		return NULL;
 	}
 	CERTCertificate *end_cert = make_end_cert_first(&certs);
 	if (end_cert == NULL) {
 		libreswan_log("X509: no EE-cert in chain!");
-		return VERIFY_RET_FAIL;
+		release_certs(&certs);
+		CERT_DestroyCertList(trustcl);
+		return NULL;
 	}
 
-	int ret = 0;
-
 	if (crl_update_check(handle, certs)) {
+		*crl_needed = true;
 		if (rev_opts->crl_strict) {
+			*bad = true;
 			libreswan_log("missing or expired CRL in strict mode, failing pending update");
 			CERT_DestroyCertList(trustcl);
 			release_certs(&certs);
-			return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
+			return NULL;
 		}
 		DBG(DBG_X509, DBG_log("missing or expired CRL"));
-		ret |= VERIFY_RET_CRL_NEED;
 	}
 
-	ret |= verify_end_cert(trustcl, rev_opts, end_cert);
-	if (!(ret & VERIFY_RET_OK)) {
+	if (!verify_end_cert(trustcl, rev_opts, end_cert, bad)) {
 		release_certs(&certs);
-	};
-	*certs_out = certs;
+		CERT_DestroyCertList(trustcl);
+		return NULL;
+	}
 
-	pexpect(ret != 0);
 	CERT_DestroyCertList(trustcl);
-	return ret;
+	return certs;
 }
 
 bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)

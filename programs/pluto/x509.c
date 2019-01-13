@@ -678,10 +678,6 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 					struct payload_digest *cert_payloads)
 {
 	struct connection *c = st->st_connection;
-#if defined(LIBCURL) || defined(LIBLDAP)
-	SECItem fdn = { siBuffer, NULL, 0 };
-#endif
-	lsw_cert_ret cont = LSW_CERT_BAD;
 	char namebuf[IDTOA_BUF];
 	char ipstr[IDTOA_BUF];
 	char sbuf[ASN1_BUF_LEN];
@@ -698,142 +694,150 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 	 * the certs.
 	 */
 	release_certs(&st->st_remote_certs.verified);
+	bool crl_needed = false;
+	bool bad = false;
 	statetime_t start = statetime_start(st);
-	int ret = verify_and_cache_chain(st->st_ike_version, cert_payloads,
-					 &st->st_remote_certs.verified,
-					 &rev_opts);
+	struct certs *certs = find_and_verify_certs(st->st_ike_version, cert_payloads,
+						    &rev_opts, &crl_needed, &bad);
 	statetime_stop(&start, "%s() decoding and verifying certs", __func__);
-	CERTCertificate *end_cert = st->st_remote_certs.verified != NULL ? st->st_remote_certs.verified->cert : NULL;
 
-	if (ret == -1) {
-		libreswan_log("cert verify failed with internal error");
+	/* either something went wrong, or there were no certs */
+	if (certs == NULL) {
+#if defined(LIBCURL) || defined(LIBLDAP)
+		if (crl_needed && deltasecs(crl_check_interval) > 0) {
+			/*
+			 * When a strict crl check fails, the certs
+			 * are deleted and CRL_NEEDED is set.
+			 *
+			 * When a non-strict crl check fails, it is
+			 * left to the crl fetch job to do a refresh.
+			 *
+			 * Trigger a refresh.
+			 */
+			SECItem fdn = { siBuffer, NULL, 0 };
+			if (find_fetch_dn(&fdn, c, NULL)) {
+				add_crl_fetch_requests(crl_fetch_request(&fdn, NULL, NULL));
+			}
+		}
+#endif
+		if (bad) {
+			/* For instance, revoked */
+			return LSW_CERT_BAD;
+		} else {
+			/* For instance, no CA, unknown certs, ... */
+			return LSW_CERT_NONE;
+		}
+	}
+
+	CERTCertificate *end_cert = certs != NULL ? certs->cert : NULL;
+	if (!pexpect(!CERT_IsCACert(end_cert, NULL))) {
+		/* utter screwup */
+		release_certs(&certs);
 		return LSW_CERT_BAD;
-	} else if (ret == 0) {
-		/* nothing found?!? */
-		return LSW_CERT_NONE;
-	} else if (ret & VERIFY_RET_SKIP) {
-		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
-		return LSW_CERT_NONE;
-	} else if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
-		libreswan_log("certificate verified OK: %s", end_cert->subjectName);
-		add_pubkey_from_nss_cert(&c->spd.that.id, end_cert);
+	}
+	libreswan_log("certificate verified OK: %s", end_cert->subjectName);
 
-		/* if we already verified ID, no need to do it again */
-		if (st->st_peer_alt_id) {
-			DBG(DBG_X509, DBG_log("Peer ID was already confirmed"));
-			return LSW_CERT_ID_OK;
-		}
+	/* if we already verified ID, no need to do it again */
+	if (st->st_peer_alt_id) {
+		dbg("Peer ID was already confirmed");
+		return LSW_CERT_ID_OK;
+	}
 
-		DBG(DBG_X509, DBG_log("Verifying configured ID matches certificate"));
+	dbg("Verifying configured ID matches certificate");
 
-		switch (c->spd.that.id.kind) {
-		case ID_IPV4_ADDR:
-		case ID_IPV6_ADDR:
-			idtoa(&c->spd.that.id, ipstr, sizeof(ipstr));
-			if (cert_VerifySubjectAltName(end_cert, ipstr)) {
-				st->st_peer_alt_id = TRUE;
-				cont = LSW_CERT_ID_OK;
-				DBG(DBG_X509, DBG_log("ID_IP '%s' matched", ipstr));
-			} else {
-				loglog(RC_LOG_SERIOUS, "certificate does not contain ID_IP subjectAltName=%s",
-						ipstr);
-				return LSW_CERT_MISMATCHED_ID; /* signal connswitch */
-			}
-			break;
+	add_pubkey_from_nss_cert(&c->spd.that.id, end_cert);
+	st->st_remote_certs.verified = certs;
 
-		case ID_FQDN:
-			/* We need to skip the "@" prefix from our configured FQDN */
-			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-
-			 if (cert_VerifySubjectAltName(end_cert, namebuf + 1)) {
-				st->st_peer_alt_id = TRUE;
-				cont = LSW_CERT_ID_OK;
-				DBG(DBG_X509, DBG_log("ID_FQDN '%s' matched", namebuf+1));
-			} else {
-				loglog(RC_LOG_SERIOUS, "certificate does not contain subjectAltName=%s",
-					namebuf + 1);
-				return LSW_CERT_MISMATCHED_ID; /* signal conn switch */
-			}
-			break;
-
-		case ID_USER_FQDN:
-			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			if (cert_VerifySubjectAltName(end_cert, namebuf)) {
-				st->st_peer_alt_id = TRUE;
-				cont = LSW_CERT_ID_OK;
-				DBG(DBG_X509, DBG_log("ID_USER_FQDN '%s' matched", namebuf));
-			} else {
-				loglog(RC_LOG_SERIOUS, "certificate does not contain ID_USER_FQDN subjectAltName=%s",
-					namebuf);
-				return LSW_CERT_MISMATCHED_ID; /* signal conn switch */
-			}
-			break;
-
-		case ID_FROMCERT:
-			/* We are committed to accept any ID as long as the CERT verified */
-			st->st_peer_alt_id = TRUE;
+	lsw_cert_ret cont;
+	switch (c->spd.that.id.kind) {
+	case ID_IPV4_ADDR:
+	case ID_IPV6_ADDR:
+		idtoa(&c->spd.that.id, ipstr, sizeof(ipstr));
+		if (cert_VerifySubjectAltName(end_cert, ipstr)) {
+			dbg("ID_IP '%s' matched", ipstr);
 			cont = LSW_CERT_ID_OK;
-			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf));
-
-			{
-				struct id peer_id;
-				memset(&peer_id, 0x00, sizeof(struct id)); /* rhbz#1392191 */
-				peer_id.kind = ID_DER_ASN1_DN;
-				peer_id.name = same_secitem_as_chunk(end_cert->derSubject);
-				duplicate_id(&c->spd.that.id, &peer_id);
-			}
-			break;
-
-		case ID_DER_ASN1_DN:
-			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			dntoasi(sbuf, sizeof(sbuf), end_cert->derSubject);
-			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' needs further ID comparison against '%s'",
-				sbuf, namebuf));
-
-			chunk_t certdn = same_secitem_as_chunk(end_cert->derSubject);
-
-			if (same_dn_any_order(c->spd.that.id.name, certdn)) {
-				DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' matched our ID", namebuf));
-				st->st_peer_alt_id = TRUE;
-				cont = LSW_CERT_ID_OK;
-			} else {
-				loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
-					end_cert->subjectName, namebuf);
-				return LSW_CERT_MISMATCHED_ID; /* signal conn switch */
-			}
-			break;
-		default:
-			loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
-				c->spd.that.id.kind,
-				enum_show(&ike_idtype_names, c->spd.that.id.kind));
-				return LSW_CERT_BAD;
+		} else {
+			loglog(RC_LOG_SERIOUS,
+			       "certificate does not contain ID_IP subjectAltName=%s",
+			       ipstr);
+			cont = LSW_CERT_MISMATCHED_ID; /* signal connswitch */
 		}
+		break;
 
-		if (st->st_peer_alt_id) {
-			DBG(DBG_X509, DBG_log("SAN ID matched, updating that.cert"));
-			c->spd.that.cert.u.nss_cert = CERT_DupCertificate(end_cert);
-			c->spd.that.cert.ty = CERT_X509_SIGNATURE;
-			return LSW_CERT_ID_OK;
+	case ID_FQDN:
+		/* We need to skip the "@" prefix from our configured FQDN */
+		idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
+		if (cert_VerifySubjectAltName(end_cert, namebuf + 1)) {
+			dbg("ID_FQDN '%s' matched", namebuf+1);
+			cont = LSW_CERT_ID_OK;
+		} else {
+			loglog(RC_LOG_SERIOUS,
+			       "certificate does not contain subjectAltName=%s",
+			       namebuf + 1);
+			cont = LSW_CERT_MISMATCHED_ID; /* signal conn switch */
 		}
-	} else if (ret & VERIFY_RET_REVOKED) {
-		libreswan_log("certificate revoked!");
+		break;
+
+	case ID_USER_FQDN:
+		idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
+		if (cert_VerifySubjectAltName(end_cert, namebuf)) {
+			dbg("ID_USER_FQDN '%s' matched", namebuf);
+			cont = LSW_CERT_ID_OK;
+		} else {
+			loglog(RC_LOG_SERIOUS, "certificate does not contain ID_USER_FQDN subjectAltName=%s",
+			       namebuf);
+			cont = LSW_CERT_MISMATCHED_ID; /* signal conn switch */
+		}
+		break;
+
+	case ID_FROMCERT:
+		/* We are committed to accept any ID as long as the CERT verified */
+		idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
+		dbg("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf);
+		cont = LSW_CERT_ID_OK;
+		struct id peer_id = {
+			.kind = ID_DER_ASN1_DN,
+			.name = same_secitem_as_chunk(end_cert->derSubject),
+		};
+		duplicate_id(&c->spd.that.id, &peer_id);
+		break;
+
+	case ID_DER_ASN1_DN:
+		idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
+		dntoasi(sbuf, sizeof(sbuf), end_cert->derSubject);
+		dbg("ID_DER_ASN1_DN '%s' needs further ID comparison against '%s'",
+		    sbuf, namebuf);
+
+		chunk_t certdn = same_secitem_as_chunk(end_cert->derSubject);
+
+		if (same_dn_any_order(c->spd.that.id.name, certdn)) {
+			dbg("ID_DER_ASN1_DN '%s' matched our ID", namebuf);
+			cont = LSW_CERT_ID_OK;
+		} else {
+			loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
+			       end_cert->subjectName, namebuf);
+			cont = LSW_CERT_MISMATCHED_ID; /* signal conn switch */
+		}
+		break;
+
+	default:
+		loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
+		       c->spd.that.id.kind,
+		       enum_show(&ike_idtype_names, c->spd.that.id.kind));
 		cont = LSW_CERT_BAD;
 	}
-#if defined(LIBCURL) || defined(LIBLDAP)
-	if ((ret & VERIFY_RET_CRL_NEED) && deltasecs(crl_check_interval) > 0) {
-		generalName_t *end_cert_dp = NULL;
 
-		if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
-			end_cert_dp = gndp_from_nss_cert(end_cert);
+	pexpect(!st->st_peer_alt_id);
+	if (cont == LSW_CERT_ID_OK) {
+		dbg("SAN ID matched, blatting that.cert");
+		st->st_peer_alt_id = true;
+		if (c->spd.that.cert.ty == CERT_X509_SIGNATURE &&
+		    c->spd.that.cert.u.nss_cert != NULL) {
+			CERT_DestroyCertificate(c->spd.that.cert.u.nss_cert);
 		}
-		if (find_fetch_dn(&fdn, c, end_cert)) {
-			add_crl_fetch_requests(crl_fetch_request(&fdn, end_cert_dp, NULL));
-		}
-		dbg("releasing end_cert_dp sent to crl fetch");
-		free_generalNames(end_cert_dp, false/*shallow*/);
+		c->spd.that.cert.u.nss_cert = CERT_DupCertificate(end_cert);
+		c->spd.that.cert.ty = CERT_X509_SIGNATURE;
 	}
-#endif
 
 	return cont;
 }
