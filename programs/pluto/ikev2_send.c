@@ -565,8 +565,7 @@ void send_v2_delete(struct state *const st)
 stf_status send_v2_informational_request(const char *name,
 					 struct state *st,
 					 struct ike_sa *ike,
-					 stf_status (*payloads)(struct state *st,
-								pb_stream *pbs))
+					 payload_master_t *payloads)
 {
 	/*
 	 * Buffer in which to marshal our informational message.  We
@@ -587,18 +586,9 @@ stf_status send_v2_informational_request(const char *name,
 	}
 
 	v2SK_payload_t sk = open_v2SK_payload(&message, ike);
-	if (!pbs_ok(&sk.pbs)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	if (payloads != NULL) {
-		stf_status e = payloads(st, &sk.pbs);
-		if (e != STF_OK) {
-			return  e;
-		}
-	}
-
-	if (!close_v2SK_payload(&sk)) {
+	if (!pbs_ok(&sk.pbs) ||
+	    (payloads != NULL && !payloads(st, &sk.pbs)) ||
+	    !close_v2SK_payload(&sk)) {
 		return STF_INTERNAL_ERROR;
 	}
 	close_output_pbs(&message);

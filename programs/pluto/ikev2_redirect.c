@@ -358,12 +358,10 @@ void initiate_redirect(struct state *st)
 }
 
 /* helper function for send_v2_informational_request() */
-static stf_status add_redirect_payload(struct state *st, pb_stream *pbs)
+static payload_master_t add_redirect_payload;
+static bool add_redirect_payload(struct state *st, pb_stream *pbs)
 {
-	if (!emit_redirect_notification(st->st_active_redirect_gw, NULL, pbs))
-		return STF_INTERNAL_ERROR;
-
-	return STF_OK;
+	return emit_redirect_notification(st->st_active_redirect_gw, NULL, pbs);
 }
 
 void send_active_redirect_in_informational(struct state *st)

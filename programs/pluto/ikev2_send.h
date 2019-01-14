@@ -47,11 +47,12 @@ void send_v2N_response_from_md(struct msg_digest *md,
 
 void send_v2_delete(struct state *st);
 
+typedef bool payload_master_t(struct state *st, pb_stream *pbs);
+
 extern stf_status send_v2_informational_request(const char *name,
 						struct state *st,
 						struct ike_sa *ike,
-						stf_status (*payloads)(struct state *st,
-								       pb_stream *pbs));
+						payload_master_t *payloads);
 
 /*
  * Emit an IKEv2 payload.

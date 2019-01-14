@@ -5617,17 +5617,13 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 }
 
 #ifdef NETKEY_SUPPORT
-static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
+static payload_master_t add_mobike_payloads;
+static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
-	if (!emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs))
-		return STF_INTERNAL_ERROR;
-
-	if (!ikev2_out_natd(&st->st_mobike_localaddr, st->st_mobike_localport,
+	return emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs) &&
+		ikev2_out_natd(&st->st_mobike_localaddr, st->st_mobike_localport,
 			    &st->st_remoteaddr, st->st_remoteport,
-			    &st->st_ike_spis, pbs))
-		return STF_INTERNAL_ERROR;
-
-	return STF_OK;
+			    &st->st_ike_spis, pbs);
 }
 #endif
 
