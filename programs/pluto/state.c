@@ -1478,23 +1478,8 @@ struct state *find_state_ikev1(const ike_spi_t *ike_initiator_spi,
 struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 				    msgid_t msgid)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(ike_initiator_spi), st) {
-		if (st->st_ike_version == IKEv1 &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
-			dbg("v1 peer and icookie match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
-			    st->st_serialno, msgid, st->st_msgid);
-			if (msgid == st->st_msgid) {
-				dbg("v1 state object #%lu found, in %s",
-				    st->st_serialno,
-				    st->st_state_name);
-				return st;
-			}
-		}
-	}
-
-	dbg("v1 state object not found");
-	return NULL;
+	return state_by_ike_initiator_spi(IKEv1, SOS_IGNORE, &msgid,
+					  ike_initiator_spi);
 }
 
 /*
