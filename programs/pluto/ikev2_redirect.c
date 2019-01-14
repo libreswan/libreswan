@@ -35,9 +35,6 @@
 
 #include "ikev2_redirect.h"
 
-/* two bytes for GW Ident Type and GW Ident Len */
-#define GW_PAYLOAD_INFO_SIZE 2
-
 /*
  * Structure of REDIRECT Notify payload from RFC 5685.
  * The second part (Notification data) is interesting to us.
