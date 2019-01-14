@@ -1,12 +1,11 @@
 # Libreswan
 The Libreswan Project   https://libreswan.org/
 
-Libreswan is an IPsec implementation for Linux. It has support for most
-of the extensions (RFC + IETF drafts) related to IPsec, including
-IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
-Libreswan uses the native Linux IPsec stack (NETKEY/XFRM) per default.
-For more information about the alternative Libreswan kernel IPsec stack,
-see README.KLIPS.
+Libreswan is an Internet Key Exchange (IKE) implementation for Linux.
+It supports IKEv1 and IKEv2 and has support for most of the extensions
+(RFC + IETF drafts) related to IPsec, including IKEv2, X.509 Digital
+Certificates, NAT Traversal, and many others.  Libreswan uses the native
+Linux IPsec stack (NETKEY/XFRM) per default.
 
 Libreswan was forked from Openswan 2.6.38, which was forked from
 FreeS/WAN 2.04. See the CREDITS files for contributor acknowledgments.
@@ -180,3 +179,7 @@ The most up to date documentation consists of the man pages that come
 with the software. Further documentation can be found at https://libreswan.org/
 and the wiki at https://libreswan.org/wiki/
 
+## KLIPS IPsec stack
+The KLIPS IPsec stack is no longer actively maintained or supported. Please
+migreate to using the Linux native netlink/XFRM stack. If you wish to have
+network interfaces like KLIPS has, please use the XFRMi (VTI) interfaces.
