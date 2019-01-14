@@ -3265,7 +3265,7 @@ struct connection *refine_host_connection(const struct state *st,
 				char b1[CONN_INST_BUF];
 				char b2[CONN_INST_BUF];
 
-				DBG_log("refine_host_connection: checking \"%s\"%s against \"%s\"%s, best=%s with match=%d(id=%d/ca=%d/reqca=%d)",
+				DBG_log("refine_host_connection: checking \"%s\"%s against \"%s\"%s, best=%s with match=%d(id=%d(%d)/ca=%d(%d)/reqca=%d(%d))",
 					c->name,
 					fmt_conn_instance(c, b1),
 					d->name,
@@ -3273,7 +3273,9 @@ struct connection *refine_host_connection(const struct state *st,
 					best_found != NULL ?
 						best_found->name : "(none)",
 					matching_peer_id && matching_peer_ca && matching_requested_ca,
-					matching_peer_id, matching_peer_ca, matching_requested_ca);});
+					matching_peer_id, wildcards,
+					matching_peer_ca, peer_pathlen,
+					matching_requested_ca, our_pathlen);});
 
 			DBG(DBG_CONTROL, DBG_log("Warning: not switching back to template of current instance"));
 
