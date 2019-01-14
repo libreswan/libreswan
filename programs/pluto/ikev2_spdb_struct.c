@@ -1269,7 +1269,7 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
 			break;
 		case SEND_EMPTY:
 			libreswan_log("IMPAIR: emitting variable-size key-length attribute with no key");
-			if (!v2_out_attr_variable(IKEv2_KEY_LENGTH, empty_chunk, &trans_pbs)) {
+			if (!v2_out_attr_variable(IKEv2_KEY_LENGTH, EMPTY_CHUNK, &trans_pbs)) {
 				return false;
 			}
 			break;

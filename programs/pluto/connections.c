@@ -900,7 +900,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 		}
 	}
 
-	dst->ca = empty_chunk;
+	dst->ca = EMPTY_CHUNK;
 
 	/* decode CA distinguished name, if any */
 	if (src->ca != NULL) {
@@ -914,7 +914,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 				libreswan_log(
 					"bad CA string '%s': %s (ignored)",
 					src->ca, ugh);
-				dst->ca = empty_chunk;
+				dst->ca = EMPTY_CHUNK;
 			}
 		}
 	}
@@ -3025,7 +3025,7 @@ static chunk_t get_peer_ca(const struct id *peer_id)
 		if (key->alg == PUBKEY_ALG_RSA && same_id(peer_id, &key->id))
 			return key->issuer;
 	}
-	return empty_chunk;
+	return EMPTY_CHUNK;
 }
 
 /*

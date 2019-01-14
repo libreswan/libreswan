@@ -41,7 +41,12 @@ typedef struct /*chunk*/ {
 } chunk_t;
 
 chunk_t chunk(void *ptr, size_t len);
-#define CHUNK(OBJECT) { .ptr = (OBJECT), .len = sizeof(OBJECT), }
+
+/*
+ * CHUNKO: create a chunk that encompasses an object
+ * Warning: the cast can mask some type errors (eg. loosing const attribute).
+ */
+#define CHUNKO(OBJECT) ((chunk_t) { .ptr = (void *)&(OBJECT), .len = sizeof(OBJECT) })
 
 chunk_t alloc_chunk(size_t count, const char *name);
 void free_chunk_contents(chunk_t *chunk); /* blats *CHUNK */
@@ -59,6 +64,7 @@ chunk_t clone_bytes_as_chunk(void *bytes, size_t sizeof_bytes, const char *name)
 bool chunk_eq(chunk_t a, chunk_t b);
 
 extern const chunk_t empty_chunk;
+#define EMPTY_CHUNK ((chunk_t) { .ptr = NULL, .len = 0 })
 
 #define PRI_CHUNK "%p@%zu"
 #define pri_chunk(CHUNK) (CHUNK).ptr, (CHUNK).len
@@ -72,7 +78,7 @@ extern const chunk_t empty_chunk;
 #define freeanychunk(CH) {					\
 		chunk_t *chp_ = &(CH); /*eval once */		\
 		pfreeany(chp_->ptr);				\
-		*chp_ = (chunk_t) { .len = 0, .ptr = NULL, };	\
+		*chp_ = EMPTY_CHUNK;	\
 	}
 
 /* replaced by chunk() */

@@ -458,8 +458,7 @@ bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id
 			setchunk(peer->name, id_pbs->cur, left);
 			DBG(DBG_PARSING,
 				DBG_dump_chunk("unauthenticated NULL ID:", peer->name));
-			peer->name.ptr = NULL;
-			peer->name.len = 0;
+			peer->name = EMPTY_CHUNK;
 		}
 		peer->kind = ID_NULL;
 		break;

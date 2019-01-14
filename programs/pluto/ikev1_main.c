@@ -843,7 +843,7 @@ bool ikev1_justship_KE(chunk_t *g,
 	case SEND_EMPTY:
 		libreswan_log("IMPAIR: sending empty KE (g^x)");
 		return ikev1_out_generic_chunk(0, &isakmp_keyex_desc, outs,
-					       empty_chunk, "empty KE");
+					       EMPTY_CHUNK, "empty KE");
 	case SEND_ROOF:
 	default:
 	{
@@ -1127,7 +1127,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 				free_generalNames(ca, FALSE);
 			} else {
 				if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
-							empty_chunk,
+							EMPTY_CHUNK,
 							&rbody,
 							ISAKMP_NEXT_NONE))
 					return STF_INTERNAL_ERROR;

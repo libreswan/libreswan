@@ -18,7 +18,7 @@
 #include "lswalloc.h"
 #include "lswlog.h"	/* for DBG_dump() */
 
-const chunk_t empty_chunk = { NULL, 0 };
+const chunk_t empty_chunk = EMPTY_CHUNK;
 
 chunk_t chunk(void *ptr, size_t len)
 {
@@ -34,13 +34,13 @@ chunk_t alloc_chunk(size_t count, const char *name)
 void free_chunk_contents(chunk_t *chunk)
 {
 	pfreeany(chunk->ptr);
-	*chunk = empty_chunk;
+	*chunk = EMPTY_CHUNK;
 }
 
 chunk_t clone_chunk(chunk_t chunk, const char *name)
 {
 	if (chunk.ptr == NULL) {
-		return empty_chunk;
+		return EMPTY_CHUNK;
 	} else {
 		chunk_t clone = {
 			.ptr = clone_bytes(chunk.ptr, chunk.len, name),

@@ -1044,7 +1044,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 
 			s->ids = NULL;
 			s->pks.kind = PKK_PSK;	/* default */
-			setchunk(s->pks.u.preshared_secret, NULL, 0);
+			s->pks.u.preshared_secret = EMPTY_CHUNK;
 			s->pks.line = flp->lino;
 			s->next = NULL;
 
@@ -1414,7 +1414,7 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 
 	pk->alg = PUBKEY_ALG_RSA;
 	pk->id  = empty_id;
-	pk->issuer = empty_chunk;
+	pk->issuer = EMPTY_CHUNK;
 
 	return pk;
 }
@@ -1470,7 +1470,7 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 
 	pk->alg = PUBKEY_ALG_ECDSA;
 	pk->id  = empty_id;
-	pk->issuer = empty_chunk;
+	pk->issuer = EMPTY_CHUNK;
 
 	return pk;
 }

@@ -187,7 +187,7 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 {
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
 	struct id keyid = st->st_connection->spd.that.id;
-	chunk_t keyval = empty_chunk;
+	chunk_t keyval = EMPTY_CHUNK;
 	err_t ugh = NULL;
 	char thatidbuf[IDTOA_BUF];
 	char ttl_buf[ULTOT_BUF + 32]; /* 32 is aribitary */

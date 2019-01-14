@@ -209,7 +209,7 @@ bool send_chunk(const char *where, so_serial_t serialno, /* can be SOS_NOBODY */
 {
 	return send_chunks(where, FALSE, serialno,
 			   interface, remote_endpoint,
-			   packet, empty_chunk);
+			   packet, EMPTY_CHUNK);
 }
 
 bool send_chunks_using_state(struct state *st, const char *where,
@@ -223,7 +223,7 @@ bool send_chunks_using_state(struct state *st, const char *where,
 
 bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet)
 {
-	return send_chunks_using_state(st, where, packet, empty_chunk);
+	return send_chunks_using_state(st, where, packet, EMPTY_CHUNK);
 }
 
 bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
@@ -253,6 +253,6 @@ bool send_keepalive(struct state *st, const char *where)
 	return send_chunks(where, TRUE,
 			   st->st_serialno, st->st_interface,
 			   hsetportof(st->st_remoteport, st->st_remoteaddr),
-			   chunk(&ka_payload, sizeof(ka_payload)),
-			   empty_chunk);
+			   CHUNKO(ka_payload),
+			   EMPTY_CHUNK);
 }

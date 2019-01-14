@@ -32,7 +32,7 @@
 
 static err_t rsa_pubkey_to_rfc_resource_record(chunk_t exponent, chunk_t modulus, chunk_t *rr)
 {
-	*rr = empty_chunk;
+	*rr = EMPTY_CHUNK;
 
 	/*
 	 * Since exponent length field is either 1 or 3 bytes in size,
@@ -68,8 +68,8 @@ static err_t rsa_pubkey_to_rfc_resource_record(chunk_t exponent, chunk_t modulus
 
 static err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *n)
 {
-	*e = empty_chunk;
-	*n = empty_chunk;
+	*e = EMPTY_CHUNK;
+	*n = EMPTY_CHUNK;
 
 	/*
 	 * Step 1: find the bounds of the exponent and modulus within

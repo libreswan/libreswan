@@ -1791,8 +1791,8 @@ static void process_addr_chage(struct nlmsghdr *n)
 	struct ifaddrmsg *nl_msg = NLMSG_DATA(n);
 	struct rtattr *rta = IFLA_RTA(nl_msg);
 	size_t msg_size = IFA_PAYLOAD (n);
-	chunk_t local_addr = empty_chunk;
-	chunk_t addr = empty_chunk;
+	chunk_t local_addr = EMPTY_CHUNK;
+	chunk_t addr = EMPTY_CHUNK;
 	ip_address ip;
 	ipstr_buf ip_str;
 

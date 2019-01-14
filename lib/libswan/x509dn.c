@@ -188,7 +188,7 @@ static err_t init_rdn(chunk_t dn, /* input (copy) */
 		chunk_t *attribute, /* output */
 		bool *more) /* output */
 {
-	*attribute = empty_chunk;
+	*attribute = EMPTY_CHUNK;
 
 	/* a DN is a SEQUENCE OF RDNs */
 	RETURN_IF_ERR(unwrap(ASN1_SEQUENCE, &dn, rdn));

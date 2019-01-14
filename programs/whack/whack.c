@@ -912,7 +912,6 @@ int main(int argc, char **argv)
 
 	clear_end(&msg.right);	/* left set from this after --to */
 
-	/* msg was zero'd - setting to NULL is not needed */
 	msg.name = NULL;
 	msg.remote_host = NULL;
 	msg.dnshostname = NULL;

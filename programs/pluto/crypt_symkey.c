@@ -285,7 +285,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 	SECStatus status;
 	if (symkey == NULL) {
 		DBGF(DBG_CRYPT_LOW, "%s NULL key has no bytes", name);
-		return empty_chunk;
+		return EMPTY_CHUNK;
 	}
 
 	size_t sizeof_bytes = sizeof_symkey(symkey);
@@ -297,7 +297,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 	PK11SymKey *ephemeral_key = ephemeral_symkey();
 	if (ephemeral_key == NULL) {
 		loglog(RC_LOG_SERIOUS, "%s NSS: ephemeral error", name);
-		return empty_chunk;
+		return EMPTY_CHUNK;
 	}
 
 	/*
@@ -313,7 +313,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 		PK11_FreeSlot(slot); /* reference counted */
 		if (slot_key == NULL) {
 			loglog(RC_LOG_SERIOUS, "%s NSS: slot error", name);
-			return empty_chunk;
+			return EMPTY_CHUNK;
 		}
 	}
 	if (DBGP(DBG_CRYPT_LOW)) {
@@ -338,7 +338,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 		       name, status);
 		pfreeany(wrapped_key.data);
 		release_symkey(name, "slot-key", &slot_key);
-		return empty_chunk;
+		return EMPTY_CHUNK;
 	}
 	LSWDBGP(DBG_CRYPT_LOW, buf) {
 		lswlogs(buf, "wrapper: ");
@@ -355,7 +355,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 	if (status != SECSuccess) {
 		loglog(RC_LOG_SERIOUS, "%s NSS: error calculating contents (%d)",
 		       name, status);
-		return empty_chunk;
+		return EMPTY_CHUNK;
 	}
 	passert(out_len >= sizeof_bytes);
 

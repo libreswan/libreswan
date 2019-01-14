@@ -1222,7 +1222,7 @@ err_t add_public_key(const struct id *id, /* ASKK */
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;
 	pk->until_time = realtime_epoch;
-	pk->issuer = empty_chunk;
+	pk->issuer = EMPTY_CHUNK;
 
 	install_public_key(pk, head);
 	return NULL;
@@ -1269,7 +1269,7 @@ err_t add_ipseckey(const struct id *id,
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;
-	pk->issuer = empty_chunk; /* ipseckey has no issuer */
+	pk->issuer = EMPTY_CHUNK; /* ipseckey has no issuer */
 
 	install_public_key(pk, head);
 	return NULL;

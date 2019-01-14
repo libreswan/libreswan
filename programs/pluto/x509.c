@@ -260,7 +260,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 	while ((*pathlen)++ < MAX_CA_PATH_LEN) {
 		SECItem a_dn = same_chunk_as_dercert_secitem(a);
-		chunk_t i_dn = empty_chunk;
+		chunk_t i_dn = EMPTY_CHUNK;
 
 		cacert = CERT_FindCertByName(handle, &a_dn);
 
@@ -443,7 +443,7 @@ static void gntoid(struct id *id, const generalName_t *gn)
 		break;
 	default:
 		id->kind = ID_NONE;
-		id->name = empty_chunk;
+		id->name = EMPTY_CHUNK;
 	}
 }
 
@@ -1059,7 +1059,7 @@ static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
 {
 	unsigned char combined_hash[SHA1_DIGEST_SIZE * 8 /*max path len*/];
 	x509cert_t *ca;
-	chunk_t result = empty_chunk;
+	chunk_t result = EMPTY_CHUNK;
 	size_t sz = 0;
 
 	zero(&combined_hash);
@@ -1090,7 +1090,7 @@ static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
 static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert)
 {
 	unsigned char sighash[SHA1_DIGEST_SIZE];
-	chunk_t result = empty_chunk;
+	chunk_t result = EMPTY_CHUNK;
 
 	zero(&sighash);
 
@@ -1298,7 +1298,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 			DBG(DBG_X509,
 			    DBG_log("Not a roadwarrior instance, sending empty CA in CERTREQ"));
 			if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
-					       empty_chunk,
+					       EMPTY_CHUNK,
 					       outpbs))
 				return STF_INTERNAL_ERROR;
 		}

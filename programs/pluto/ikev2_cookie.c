@@ -151,7 +151,7 @@ bool v2_reject_cookie(struct msg_digest *md, bool require_dcookie)
 			return true; /* reject cookie */
 		}
 		/* easier to manipulate */
-		chunk_t dc = chunk(&cookie, sizeof(cookie));
+		chunk_t dc = CHUNKO(cookie);
 
 		if (seen_dcookie != NULL) {
 			/* we received a dcookie: verify that it is the one we sent */

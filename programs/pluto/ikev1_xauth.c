@@ -1274,8 +1274,8 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 	 * references to parts of the input packet.
 	 */
 	static unsigned char unknown[] = "<unknown>";	/* never written to */
-	chunk_t name,
-		password = empty_chunk;
+	chunk_t name;
+	chunk_t password = EMPTY_CHUNK;
 	bool gotname = FALSE,
 		gotpassword = FALSE;
 
@@ -1908,16 +1908,16 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 								"remote subnets policies");
 							sr->spd_next = NULL;
 
-							sr->this.id.name = empty_chunk;
-							sr->that.id.name = empty_chunk;
+							sr->this.id.name = EMPTY_CHUNK;
+							sr->that.id.name = EMPTY_CHUNK;
 
 							sr->this.host_addr_name = NULL;
 							sr->that.client = subnet;
 							sr->this.cert.ty = CERT_NONE;
 							sr->that.cert.ty = CERT_NONE;
 
-							sr->this.ca.ptr = NULL;
-							sr->that.ca.ptr = NULL;
+							sr->this.ca = EMPTY_CHUNK;
+							sr->that.ca = EMPTY_CHUNK;
 
 							sr->this.virt = NULL;
 							sr->that.virt = NULL;

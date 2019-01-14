@@ -132,15 +132,15 @@ const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b)
 chunk_t same_ip_address_as_chunk(const ip_address *address)
 {
 	if (address == NULL) {
-		return empty_chunk;
+		return EMPTY_CHUNK;
 	}
 	switch (address->u.v4.sin_family) {
 	case AF_INET:
-		return chunk((void*)&address->u.v4.sin_addr.s_addr, 4); /* strip const */
+		return CHUNKO(address->u.v4.sin_addr.s_addr); /* strip const */
 	case AF_INET6:
-		return chunk((void*)&address->u.v6.sin6_addr, 16); /* strip const */
+		return CHUNKO(address->u.v6.sin6_addr); /* strip const */
 	default:
-		return empty_chunk;
+		return EMPTY_CHUNK;
 	}
 }
 
@@ -194,7 +194,7 @@ void fmt_address_raw(struct lswlog *buf, const ip_address *address, char sepc)
 		fmt_raw_ipv4_address(buf, a, sepc);
 		break;
 	case AF_INET6: /* N:N:...:N */
-		fmt_raw_ipv6_address(buf, a, sepc, empty_chunk);
+		fmt_raw_ipv6_address(buf, a, sepc, EMPTY_CHUNK);
 		break;
 	case 0:
 		lswlogf(buf, "<invalid-address>");
@@ -211,7 +211,7 @@ void fmt_address_raw(struct lswlog *buf, const ip_address *address, char sepc)
  */
 static chunk_t zeros_to_skip(chunk_t a)
 {
-	chunk_t zero = empty_chunk;
+	chunk_t zero = EMPTY_CHUNK;
 	uint8_t *ptr = a.ptr;
 	uint8_t *last = a.ptr + a.len - 2;
 	while (ptr <= last) {

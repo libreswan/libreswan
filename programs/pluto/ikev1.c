@@ -2382,7 +2382,7 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 		if (md->raw_packet.ptr != NULL) {
 			pfreeany(st->st_rpacket.ptr);
 			st->st_rpacket = md->raw_packet;
-			md->raw_packet.ptr = NULL;
+			md->raw_packet = EMPTY_CHUNK;
 		}
 	} else {
 		/* this may be a repeat, but it will work */

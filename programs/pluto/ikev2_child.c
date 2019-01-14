@@ -177,9 +177,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
 		}
 		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy);
-		chunk_t local_spi;
-		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
-				sizeof(proto_info->our_spi));
+		chunk_t local_spi = CHUNKO(proto_info->our_spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
 					cst->st_accepted_esp_or_ah_proposal,
 					&local_spi)) {

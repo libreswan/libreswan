@@ -133,7 +133,7 @@ static err_t fetch_curl(chunk_t url,
 {
 	char errorbuffer[CURL_ERROR_SIZE] = "";
 	char *uri;
-	chunk_t response = empty_chunk;	/* managed by realloc/free */
+	chunk_t response = EMPTY_CHUNK;	/* managed by realloc/free */
 	long timeout = FETCH_CMD_TIMEOUT;
 	CURLcode res;
 
@@ -347,7 +347,7 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 {
 	err_t ugh = NULL;
 
-	*blob = empty_chunk;
+	*blob = EMPTY_CHUNK;
 	if (url.len >= 5 && strncaseeq((const char *)url.ptr, "ldap:", 5))
 		ugh = fetch_ldap_url(url, blob);
 	else
