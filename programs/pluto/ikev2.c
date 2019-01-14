@@ -1582,8 +1582,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * request then the state machine will will morph ST
 		 * into a child state before dispatching.
 		 */
-		st = find_v2_ike_sa(&md->hdr.isa_ike_initiator_spi,
-				    &md->hdr.isa_ike_responder_spi);
+		st = find_v2_ike_sa(&md->hdr.isa_ike_spis);
 		if (st == NULL) {
 			struct esb_buf ixb;
 			rate_log("%s message request has no corresponding IKE SA",
@@ -1641,8 +1640,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * Didn't find a child waiting on that message
 			 * ID so presumably it isn't valid.
 			 */
-			st = find_v2_ike_sa(&md->hdr.isa_ike_initiator_spi,
-					    &md->hdr.isa_ike_responder_spi);
+			st = find_v2_ike_sa(&md->hdr.isa_ike_spis);
 			if (st == NULL) {
 				rate_log("%s message response has no matching IKE SA",
 					 enum_name(&ikev2_exchange_names, ix));

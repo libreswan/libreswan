@@ -1466,24 +1466,11 @@ struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 /*
  * Find the IKEv2 IKE SA with the specified SPIs.
  */
-struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
-			      const ike_spi_t *ike_responder_spi)
+struct state *find_v2_ike_sa(const ike_spis_t *ike_spis)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
-						 ike_responder_spi), st) {
-		if ((st->st_ike_version == IKEv2) &&
-		    IS_IKE_SA(st) &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
-		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
-			dbg("v2 IKE SA #%lu found, in state %s",
-			    st->st_serialno,
-			    st->st_state_name);
-			return st;
-		}
-	}
-	dbg("parent v2 state object not found");
-	return NULL;
+	return state_by_ike_spis(IKEv2, SOS_NOBODY/*clonedfrom*/,
+				 NULL/*ignore msgid*/,
+				 ike_spis, NULL, NULL);
 }
 
 /*

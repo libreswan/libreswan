@@ -762,8 +762,7 @@ extern bool find_pending_phase2(const so_serial_t psn,
 					const struct connection *c,
 					lset_t ok_states);
 
-extern struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
-				    const ike_spi_t *ike_responder_spi);
+extern struct state *find_v2_ike_sa(const ike_spis_t *ike_spis);
 extern struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi);
 
 struct state *DBG_v2_sa_by_message_id(const ike_spi_t *ike_initiator_spi,
