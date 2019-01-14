@@ -153,7 +153,7 @@ struct ipsec_proto_info *ikev2_child_sa_proto_info(struct state *st, lset_t poli
 
 ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy);
 
-extern bool ikev2_decode_peer_id_and_certs(struct msg_digest *md);
+extern bool ikev2_decode_peer_id(struct msg_digest *md);
 
 extern void ikev2_log_parentSA(const struct state *st);
 

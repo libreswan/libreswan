@@ -3063,7 +3063,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	}
 
 	/* check for certificates */
-	lsw_cert_ret ret = ike_decode_cert(md);
+	lsw_cert_ret ret = v1_process_certs(md);
 	switch (ret) {
 	case LSW_CERT_NONE:
 		DBG(DBG_X509, DBG_log("X509: no CERT payloads to process"));

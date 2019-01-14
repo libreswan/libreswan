@@ -32,8 +32,11 @@
 struct connection;
 struct msg_digest;
 struct certs;
+struct ike_sa;
 
-extern lsw_cert_ret ike_decode_cert(struct msg_digest *md);
+extern bool v2_decode_certs(struct ike_sa *ike, struct msg_digest *md);
+
+extern lsw_cert_ret v1_process_certs(struct msg_digest *md);
 
 bool match_certs_id(struct certs *certs, const struct id *peer_id,
 		    struct connection *c /* non-NULL->update */);

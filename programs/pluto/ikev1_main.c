@@ -1509,7 +1509,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	 * process any CERT payloads if aggrmode
 	 */
 	if (!st->st_peer_alt_id) {
-		ret = ike_decode_cert(md);
+		ret = v1_process_certs(md);
 
 		if (ret != LSW_CERT_NONE && ret != LSW_CERT_ID_OK)
 			return STF_FAIL + INVALID_ID_INFORMATION;
