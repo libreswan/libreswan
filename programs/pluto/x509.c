@@ -706,8 +706,8 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 		/* nothing found?!? */
 		return LSW_CERT_NONE;
 	} else if (ret & VERIFY_RET_SKIP) {
-		libreswan_log("No Certificate Authority available! Certificate accepted without verification.");
-		return LSW_CERT_ID_OK;
+		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
+		return LSW_CERT_NONE;
 	} else if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
 		libreswan_log("certificate verified OK: %s", end_cert->subjectName);
 		add_pubkey_from_nss_cert(&c->spd.that.id, end_cert);
