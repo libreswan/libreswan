@@ -15,9 +15,6 @@ for i in `seq 2 $num`; do ./netns.sh $i >/dev/null & done
 # give namespaces time to start up plutos. run one in foreground for rough timing
 ./netns.sh 1
 sleep 5
-# for some weird reason doing this in the host doesn't work - see netns.sh
-ip -all netns exec ip route add default via 192.168.0.254
-sleep 5
 # some network tests to east from within namespace
 ip netns exec space1 ping -c 2 192.1.2.23
 ip netns exec space5 ping -c 2 192.1.2.23
