@@ -97,6 +97,10 @@ Some things could work better:
 
 Automated testing uses the following:
 
+- make certain that the machine is set up, see:
+
+      https://libreswan.org/wiki/Test_Suite_-_KVM#Preparing_the_host_machine
+
 - the html directory containing the published results
 
   For instance, to set up results/:
@@ -111,19 +115,20 @@ Automated testing uses the following:
   Create a top-level Makefile.inc.local file in this directory to
   configure KVM_WORKERS and KVM_PREFIXES as required.
 
-  For instance, to set up libreswan-web-slave/:
+  For instance, to set up libreswan-web-slave/ so that two tests run
+  in parallel (KVM_PREFIXES) and two threads are used to boot KVMs
+  (KVM_WORKERS):
 
-      $ git clone git@github.com:libreswan/libreswan.git libreswan-web-slave
+      $ git clone https://github.com/libreswan/libreswan.git libreswan-web-slave
       $ echo 'KVM_PREFIXES=w1. w2.' >> libreswan-web-slave/Makefile.inc.local
       $ echo 'KVM_WORKERS=2' >> libreswan-web-slave/Makefile.inc.local
-      $ echo 'KVM_BUILD_HOST=build' >> libreswan-web-slave/Makefile.inc.local
 
 - the repository containing the web sources and scripts (aka master),
   for instance libreswan-web-master/
 
   For instance, to set up libreswan-web-master/:
 
-      $ git clone git@github.com:libreswan/libreswan.git libreswan-web-master
+      $ git clone https://github.com/libreswan/libreswan.git libreswan-web-master
 
 - the repository for rebuilding the web site (aka scratch) - optional
 
@@ -134,7 +139,7 @@ Automated testing uses the following:
 
   For instance, to set up libreswan-web-scratch/:
 
-      $ git clone git@github.com:libreswan/libreswan.git libreswan-web-scratch
+      $ git clone https://github.com/libreswan/libreswan.git libreswan-web-scratch
 
 - create the base domain (creating the base domain requires a TTY;
   blame kvm):
