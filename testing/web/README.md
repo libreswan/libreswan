@@ -107,6 +107,13 @@ Automated testing uses the following:
 
       $ mkdir -p results/
 
+- the pool directory
+
+  For instance, assuming building and testing is being run from the
+  sub-directory libreswan-web/:
+
+      $ mkdir -p libreswan-web/pool
+
 - the repository under test (aka slave)
 
   In addition to regular updates using "git fetch", this repository is
@@ -115,20 +122,22 @@ Automated testing uses the following:
   Create a top-level Makefile.inc.local file in this directory to
   configure KVM_WORKERS and KVM_PREFIXES as required.
 
-  For instance, to set up libreswan-web-slave/ so that two tests run
+  For instance, to set up libreswan-web/slave/ so that two tests run
   in parallel (KVM_PREFIXES) and two threads are used to boot KVMs
   (KVM_WORKERS):
 
-      $ git clone https://github.com/libreswan/libreswan.git libreswan-web-slave
-      $ echo 'KVM_PREFIXES=w1. w2.' >> libreswan-web-slave/Makefile.inc.local
-      $ echo 'KVM_WORKERS=2' >> libreswan-web-slave/Makefile.inc.local
+      $ mkdir -p libreswan-web
+      $ git clone https://github.com/libreswan/libreswan.git libreswan-web/slave
+      $ echo 'KVM_PREFIXES=w1. w2.' >> libreswan-web/slave/Makefile.inc.local
+      $ echo 'KVM_WORKERS=2' >> libreswan-web/slave/Makefile.inc.local
 
 - the repository containing the web sources and scripts (aka master),
-  for instance libreswan-web-master/
+  for instance libreswan-web/master/
 
-  For instance, to set up libreswan-web-master/:
+  For instance, to set up libreswan-web/master/:
 
-      $ git clone https://github.com/libreswan/libreswan.git libreswan-web-master
+      $ mkdir -p libreswan-web
+      $ git clone https://github.com/libreswan/libreswan.git libreswan-web/master
 
 - the repository for rebuilding the web site (aka scratch) - optional
 
@@ -137,14 +146,15 @@ Automated testing uses the following:
   repository is "git reset --hard" to the original commit used to
   generate those results.
 
-  For instance, to set up libreswan-web-scratch/:
+  For instance, to set up libreswan-web/scratch/:
 
-      $ git clone https://github.com/libreswan/libreswan.git libreswan-web-scratch
+      $ mkdir -p libreswan-web
+      $ git clone https://github.com/libreswan/libreswan.git libreswan-web/scratch
 
 - create the base domain (creating the base domain requires a TTY;
   blame kvm):
 
-      $ ( cd libreswan-web-slave/ && make kvm-install-base-domain )
+      $ ( cd libreswan-web/slave/ && make kvm-install-base-domain )
 
 
 ## Running
@@ -154,7 +164,7 @@ Assuming results are to be published in the directory results/ (see
 above), the testing script is invoked as:
 
     $ rm -f nohup.out
-    $ nohub ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave results/ &
+    $ nohup ./libreswan-web/master/testing/web/tester.sh libreswan-web/slave ../results/ &
     $ tail -f nohup.out
 
 
@@ -200,7 +210,7 @@ end with "restart":
   while killing runner.sh et.al. works, it is easier/quicker to just
   crash it by running the following a few times:
 
-      $ ( cd libreswan-web-slave && make kvm-uninstall )
+      $ ( cd libreswan-web/slave && make kvm-uninstall )
 
 - (recommended, but optional) upgrade and reboot the test machine:
 
@@ -210,15 +220,15 @@ end with "restart":
 - (optional) cleanup and update the slave (tester.sh will do this
   anyway)
 
-      $ ( cd libreswan-web-slave && git clean -f )
-      $ ( cd libreswan-web-slave && git pull --ff-only )
+      $ ( cd libreswan-web/slave && git clean -f )
+      $ ( cd libreswan-web/slave && git pull --ff-only )
 
 - (optional) update the master repository:
 
   Remember to first check for local changes:
 
-      $ ( cd libreswan-web-master && git status )
-      $ ( cd libreswan-web-master && git pull --ff-only )
+      $ ( cd libreswan-web/master && git status )
+      $ ( cd libreswan-web/master && git pull --ff-only )
 
 - (optional) examine (and perhaps delete) any test runs where tests
   have 'missing-output':
@@ -236,7 +246,7 @@ end with "restart":
     a list of test runs along with their commit and "interest" level
     (see below):
 
-        $ ./libreswan-web-master/testing/web/gime-work.sh results libreswan-web-slave 2>&1 | tee commits.tmp
+        $ ./libreswan-web/master/testing/web/gime-work.sh results libreswan-web/slave 2>&1 | tee commits.tmp
 
   - strip the raw list of everything but test runs; also exclude the
     most recent test run (so the latest result isn't deleted):
@@ -262,12 +272,12 @@ end with "restart":
 
   - (optional) live update the summary directory
 
-    	$ ( cd libreswan-web-master && make web-summarydir )
+    	$ ( cd libreswan-web/master && make web-summarydir )
 
 - restart <tt>tester.sh</tt>:
 
       $ rm -f nohup.out
-      $ nohup ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave results/ &
+      $ nohup ./libreswan-web/master/testing/web/tester.sh libreswan-web/slave results/ &
       $ tail -f nohup.out
 
 
@@ -280,7 +290,7 @@ For HTML (.html, .css and .js) files, the process is straight forward.
 However, for the .json files, the process can be slow (and in the case
 of the results, a dedicated git repository is needed).
 
-- `make web [WEB_SCRATCH_REPODIR=.../libreswan-web-scratch]`
+- `make web [WEB_SCRATCH_REPODIR=.../libreswan-web/scratch]`
 
   Update the web site.
 
@@ -305,7 +315,7 @@ of the results, a dedicated git repository is needed).
   create the files, will force an update.  So too will deleting the
   .../commits/ directory.
 
-- `make web-results-json WEB_SCRATCH_REPODIR=.../libreswan-web-scratch`
+- `make web-results-json WEB_SCRATCH_REPODIR=.../libreswan-web/scratch`
 
   Update the `results.json` file in each test run's sub-directory.
   Very slow.  Requires a dedicated git repository.
@@ -313,7 +323,7 @@ of the results, a dedicated git repository is needed).
   Touching the script `testing/utils/kvmresults.py`, which is used to
   generate results.json, will force an update.
 
-- `make '$(WEB_SUMMARYDIR)/<run>/results.json' WEB_SCRATCH_REPODIR=.../libreswan-web-scratch`
+- `make '$(WEB_SUMMARYDIR)/<run>/results.json' WEB_SCRATCH_REPODIR=.../libreswan-web/scratch`
 
   Update an individual test run's `results.json` file.  Slow.
   Requires a dedicated git repository.
