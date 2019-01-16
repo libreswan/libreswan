@@ -2,7 +2,6 @@
 See also https://libreswan.org/
 
 v3.28 (unreleased)
-* pluto: metric= value should accept values > 255 [Tuomo]
 * x509: Support for NSS IPsec profiles mbz#1252891 [Kai Engbert]
 * X509: Fix ocsp-method=get|post to actually skip get when asked) [Steve Broz]
 * IKEv2: ikev2= keyword changed to only accept "yes" or "no" [Paul]
@@ -24,6 +23,8 @@ v3.28 (unreleased)
 * pluto: Use any sent IKE message to reset the DPD/liveness counter [Paul]
 * pluto: Simplify state lookups and SPI passing [Andrew]
 * pluto: Speed up state lookups by only looking at proper hash chain [Andrew]
+* pluto: metric= value should accept values > 255 [Tuomo]
+* ipsec: add "ipsec ts" as shorthand for "ipsec trafficstatus" [Paul]
 * FIPS: X.509 minimum public key size check was rejecting valid keys [Paul]
 * FIPS: also force IKE maximum lifetime of 24h (default is 1h) [Paul/Vukasin]
 * KLIPS: Disable KLIPS userland support per default [Paul]
