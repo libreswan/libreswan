@@ -675,12 +675,10 @@ void init_crypto_helpers(int nhelpers)
 		ncpu_online = sysctl(mib, 2, &numcpu, &len, NULL, 0);
 #endif
 
-		/* magic numbers from experience */
-		if (ncpu_online > 2) {
+		if (ncpu_online < 4)
+			nhelpers = ncpu_online;
+		else
 			nhelpers = ncpu_online - 1;
-		} else {
-			nhelpers = ncpu_online * 2;
-		}
 	}
 
 	if (nhelpers > 0) {
