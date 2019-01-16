@@ -485,6 +485,7 @@ struct state {
 	bool st_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
 	struct {
 		struct certs *verified;
+		struct pubkey_list *pubkey_db;
 	} st_remote_certs;
 
 	/*

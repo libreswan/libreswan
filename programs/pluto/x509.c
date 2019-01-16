@@ -739,7 +739,8 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 	}
 	libreswan_log("certificate verified OK: %s", end_cert->subjectName);
 
-	add_pubkey_from_nss_cert(&pluto_pubkeys, &c->spd.that.id, end_cert);
+	add_pubkey_from_nss_cert(&st->st_remote_certs.pubkey_db,
+				 &c->spd.that.id, end_cert);
 	st->st_remote_certs.verified = certs;
 
 	return true;

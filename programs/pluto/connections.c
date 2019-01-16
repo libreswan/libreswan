@@ -3022,7 +3022,6 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 
 	for (p = *pubkey_db; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
-
 		if (key->alg == PUBKEY_ALG_RSA && same_id(peer_id, &key->id))
 			return key->issuer;
 	}
@@ -3133,7 +3132,14 @@ struct connection *refine_host_connection(const struct state *st,
 			c->name, fmt_conn_instance(c, cib));
 	});
 
-	chunk_t peer_ca = get_peer_ca(&pluto_pubkeys, peer_id);
+	/*
+	 * Find the PEER's CA, check the per-state DB first.
+	 */
+	chunk_t peer_ca = get_peer_ca(&st->st_remote_certs.pubkey_db,
+				      peer_id);
+	if (chunk_eq(peer_ca, empty_chunk)) {
+		peer_ca = get_peer_ca(&pluto_pubkeys, peer_id);
+	}
 
 	{
 		int opl;
