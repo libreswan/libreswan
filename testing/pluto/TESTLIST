@@ -801,6 +801,7 @@ kvmplutotest	interop-ikev2-strongswan-01-ah-algo-responder	good
 kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
 kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
 kvmplutotest    interop-ikev2-strongswan-04-x509-responder	good
+kvmplutotest    interop-ikev2-strongswan-04-x509-responder-certreq	good
 kvmplutotest	interop-ikev2-strongswan-05-psk-aes		good
 kvmplutotest	interop-ikev2-strongswan-05-psk-md5		good
 kvmplutotest	interop-ikev2-strongswan-06-aes192		good

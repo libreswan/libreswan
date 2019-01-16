@@ -1,0 +1,6 @@
+Same as interop-ikev2-strongswan-04-x509-responder, but now we let strongswan only
+send CERT payloads if/when it receives libreswan's CERTREQ payload.
+
+We better be sending one or we won't get a CERT to authenticate :P
+
+This test currently fails :/
