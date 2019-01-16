@@ -239,17 +239,12 @@ static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
 #define RETRYABLE_TYPE(err) ((err) == SEC_ERROR_INADEQUATE_CERT_TYPE || \
 			      (err) == SEC_ERROR_INADEQUATE_KEY_USAGE)
 
-static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
-						   CERTCertificate **end_out,
-						   bool *rev_opts)
+static int vfy_chain_pkix(CERTCertList *trustcl,
+			  CERTCertificate **chain, int chain_len,
+			  CERTCertificate **end_out,
+			  bool *rev_opts)
 {
 	CERTCertificate *end_cert = NULL;
-	CERTCertList *trustcl = get_all_ca_certs();
-
-	if (trustcl == NULL) {
-		DBG(DBG_X509, DBG_log("X509: no trust anchor available for verification"));
-		return VERIFY_RET_SKIP;
-	}
 
 	int i;
 
@@ -350,11 +345,6 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 					/* try again, after some adjustments */
 					DBG(DBG_X509,
 					    DBG_log("retrying verification with the NSS serverAuth profile"));
-					/* ??? since we are about to overwrite cvout[1],
-					 * should we be doing:
-					 * if (cvout[1].value.pointer.chain != NULL)
-					 *	CERT_DestroyCertList(cvout[1].value.pointer.chain);
-					 */
 					cvout[0].value.pointer.log = cur_log = &vfy_log2;
 					cvout[1].value.pointer.chain = NULL;
 					continue;
@@ -379,7 +369,6 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 #endif
 	pexpect(fin != 0);
 
-	CERT_DestroyCertList(trustcl);
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
 	PORT_FreeArena(vfy_log2.arena, PR_FALSE);
 
@@ -560,6 +549,12 @@ int verify_and_cache_chain(struct cert_payload *cert_payloads, unsigned nr_cert_
 	if (!prepare_nss_import(&slot))
 		return -1;
 
+	CERTCertList *trustcl = get_all_ca_certs(); /* must free trustcl */
+	if (trustcl == NULL) {
+		DBG(DBG_X509, DBG_log("X509: no trust anchor available for verification"));
+		return VERIFY_RET_SKIP;
+	}
+
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
 	 * static variable set by NSS_Initialize().  It doesn't check
@@ -589,11 +584,13 @@ int verify_and_cache_chain(struct cert_payload *cert_payloads, unsigned nr_cert_
 	if (!import_cert_payloads(handle, cert_payloads, nr_cert_payloads,
 				  certs, &nr_certs)) {
 		/* what about the certs? */
+		CERT_DestroyCertList(trustcl);
 		return 0;
 	}
 
 	if (nr_certs < 1) {
 		libreswan_log("X509: temporary cert import operation failed");
+		CERT_DestroyCertList(trustcl);
 		return -1;
 	}
 
@@ -602,15 +599,17 @@ int verify_and_cache_chain(struct cert_payload *cert_payloads, unsigned nr_cert_
 	if (crl_update_check(handle, certs, nr_certs)) {
 		if (rev_opts[RO_CRL_S]) {
 			libreswan_log("missing or expired CRL in strict mode, failing pending update");
+			CERT_DestroyCertList(trustcl);
 			return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
 		}
 		DBG(DBG_X509, DBG_log("missing or expired CRL"));
 		ret |= VERIFY_RET_CRL_NEED;
 	}
 
-	ret |= vfy_chain_pkix(certs, nr_certs, ee_out, rev_opts);
+	ret |= vfy_chain_pkix(trustcl, certs, nr_certs, ee_out, rev_opts);
 
 	pexpect(ret != 0);
+	CERT_DestroyCertList(trustcl);
 	return ret;
 }
 
