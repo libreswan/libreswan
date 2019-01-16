@@ -51,7 +51,6 @@ extern struct list_head serialno_list_head;
  * XXX: being replace by ...
  */
 
-struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator);
 struct list_head *ike_spis_slot(const ike_spis_t *spis);
 struct list_head *ike_spi_slot(const ike_spi_t *initiator,
 			       const ike_spi_t *responder);

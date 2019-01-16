@@ -138,11 +138,11 @@ static struct hash_table ike_initiator_spi_hash_table = {
 	.slots = ike_initiator_spi_hash_slots,
 };
 
-struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
+static struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
 {
 	size_t hash = ike_initiator_spi_hasher(initiator);
 	struct list_head *slot = hash_table_slot_by_hash(&ike_initiator_spi_hash_table, hash);
-	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
+	LSWDBGP(DBG_TMI, buf) {
 		lswlogf(buf, "%s: hash IKE SPIi ", ike_initiator_spi_hash_table.info.name);
 		lswlog_bytes(buf, initiator->bytes,
 			     sizeof(initiator->bytes));
