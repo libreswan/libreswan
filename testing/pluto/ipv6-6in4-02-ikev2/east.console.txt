@@ -14,6 +14,90 @@ east #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-6in4", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, id='@west'
 east #
+ ip xfrm state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+east #
+ ip xfrm policy
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
+	dir out priority 1032127 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
+	dir fwd priority 1032127 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
+	dir in priority 1032127 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir out priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir fwd priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir in priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir out priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir fwd priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir in priority 1 ptype main 
+east #
 east #
  ../bin/check-for-core.sh
 east #
