@@ -479,11 +479,12 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 	*gn_out = pgn_list;
 }
 
-static void replace_public_key(struct pubkey *pk)
+static void replace_public_key(struct pubkey_list **pubkey_db,
+			       struct pubkey *pk)
 {
 	/* ??? clang 3.5 thinks pk might be NULL */
-	delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-	install_public_key(pk, &pluto_pubkeys);
+	delete_public_keys(pubkey_db, &pk->id, pk->alg);
+	install_public_key(pk, pubkey_db);
 }
 
 static struct pubkey *create_cert_pubkey(const struct id *id,
@@ -518,7 +519,8 @@ static struct pubkey *create_cert_subjectdn_pubkey(CERTCertificate *cert)
 	return create_cert_pubkey(&id, cert);
 }
 
-static void add_cert_san_pubkeys(CERTCertificate *cert)
+static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
+				 CERTCertificate *cert)
 {
 	generalName_t *gn = NULL;
 	generalName_t *gnt;
@@ -533,7 +535,7 @@ static void add_cert_san_pubkeys(CERTCertificate *cert)
 		if (id.kind != ID_NONE) {
 			struct pubkey *pk = create_cert_pubkey(&id, cert);
 			if (pk != NULL) {
-				replace_public_key(pk);
+				replace_public_key(pubkey_db, pk);
 			}
 		}
 	}
@@ -550,7 +552,8 @@ static void add_cert_san_pubkeys(CERTCertificate *cert)
  * with subjectAltNames
  * @keyid provides an id for a secondary entry
  */
-void add_pubkey_from_nss_cert(const struct id *keyid, CERTCertificate *cert)
+void add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
+			      const struct id *keyid, CERTCertificate *cert)
 {
 	struct pubkey *pk = create_cert_subjectdn_pubkey(cert);
 	if (pk == NULL) {
@@ -558,8 +561,8 @@ void add_pubkey_from_nss_cert(const struct id *keyid, CERTCertificate *cert)
 		return;
 	}
 
-	replace_public_key(pk);
-	add_cert_san_pubkeys(cert);
+	replace_public_key(pubkey_db, pk);
+	add_cert_san_pubkeys(pubkey_db, cert);
 
 	if (keyid != NULL && keyid->kind != ID_DER_ASN1_DN &&
 			     keyid->kind != ID_NONE &&
@@ -567,7 +570,7 @@ void add_pubkey_from_nss_cert(const struct id *keyid, CERTCertificate *cert)
 	{
 		struct pubkey *pk2 = create_cert_pubkey(keyid, cert);
 		if (pk2 != NULL) {
-			replace_public_key(pk2);
+			replace_public_key(pubkey_db, pk2);
 		}
 	}
 }
@@ -736,7 +739,7 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 	}
 	libreswan_log("certificate verified OK: %s", end_cert->subjectName);
 
-	add_pubkey_from_nss_cert(&c->spd.that.id, end_cert);
+	add_pubkey_from_nss_cert(&pluto_pubkeys, &c->spd.that.id, end_cert);
 	st->st_remote_certs.verified = certs;
 
 	return true;

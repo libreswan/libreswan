@@ -871,7 +871,7 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 	}
 
 	DBG(DBG_X509, DBG_log("loaded %s certificate \'%s\'", which, name));
-	add_pubkey_from_nss_cert(&d_end->id, cert);
+	add_pubkey_from_nss_cert(&pluto_pubkeys, &d_end->id, cert);
 
 	d_end->cert.ty = CERT_X509_SIGNATURE;
 	d_end->cert.u.nss_cert = cert;
@@ -3015,11 +3015,12 @@ struct connection *find_next_host_connection(
 /*
  * Extracts the peer's ca from the chained list of public keys.
  */
-static chunk_t get_peer_ca(const struct id *peer_id)
+static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
+			   const struct id *peer_id)
 {
 	struct pubkey_list *p;
 
-	for (p = pluto_pubkeys; p != NULL; p = p->next) {
+	for (p = *pubkey_db; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
 
 		if (key->alg == PUBKEY_ALG_RSA && same_id(peer_id, &key->id))
@@ -3132,7 +3133,7 @@ struct connection *refine_host_connection(const struct state *st,
 			c->name, fmt_conn_instance(c, cib));
 	});
 
-	chunk_t peer_ca = get_peer_ca(peer_id);
+	chunk_t peer_ca = get_peer_ca(&pluto_pubkeys, peer_id);
 
 	{
 		int opl;
