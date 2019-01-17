@@ -603,14 +603,14 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 	}
 
 	/* Any children? */
-	struct state *st;
-	struct list_head *slot = ike_spis_slot(&ike->sa.st_ike_spis);
-	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
-		if (st->st_clonedfrom == ike->sa.st_serialno) {
-			dbg("can't expire unused IKE SA #%lu; it has the child #%lu",
-			    ike->sa.st_serialno, st->st_serialno);
-			return;
-		}
+	struct state *st = state_by_ike_spis(IKEv2, ike->sa.st_serialno,
+					     NULL /* ignore msgid */,
+					     &ike->sa.st_ike_spis,
+					     NULL, NULL /* no predicate */);
+	if (st != NULL) {
+		dbg("can't expire unused IKE SA #%lu; it has the child #%lu",
+		    ike->sa.st_serialno, st->st_serialno);
+		return;
 	}
 
 	{
