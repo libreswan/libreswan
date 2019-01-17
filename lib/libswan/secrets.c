@@ -55,7 +55,7 @@
 #include <pk11pub.h>
 #include <prerror.h>
 #include <cert.h>
-#include <key.h>
+#include <keyhi.h>
 #include "lswconf.h"
 #include "lswnss.h"
 
