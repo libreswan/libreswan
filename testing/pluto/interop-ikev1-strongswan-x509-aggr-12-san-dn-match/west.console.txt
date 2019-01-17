@@ -27,6 +27,7 @@ received DPD vendor ID
 received NAT-T (RFC 3947) vendor ID
 ignoring certificate request without data
 received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_1536
   using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
@@ -46,7 +47,7 @@ scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 sending end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org"
 generating AGGRESSIVE request 0 [ CERT NAT-D NAT-D SIG ]
-splitting IKE message with length of 1708 bytes into 2 fragments
+splitting IKE message (XXX bytes) into 2 fragments
 generating AGGRESSIVE request 0 [ FRAG(1) ]
 generating AGGRESSIVE request 0 [ FRAG(2/2) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
@@ -55,6 +56,7 @@ generating QUICK_MODE request 0123456789 [ HASH SA No KE ID ID ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed QUICK_MODE response 0123456789 [ HASH SA No KE ID ID ]
+selected proposal: ESP:AES_CBC_128/HMAC_SHA1_96/MODP_1536/NO_EXT_SEQ
 CHILD_SA san{1} established with SPIs SPISPI_i SPISPI_o and TS 192.1.2.45/32 === 192.1.2.23/32
 connection 'san' established successfully
 west #
