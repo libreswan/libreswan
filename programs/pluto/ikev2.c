@@ -1627,9 +1627,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 					    &md->hdr.isa_ike_responder_spi,
 					    md->hdr.isa_msgid);
 		if (DBGP(DBG_BASE)) {
-			struct state *msgid_st = DBG_v2_sa_by_message_id(&md->hdr.isa_ike_initiator_spi,
-									 &md->hdr.isa_ike_responder_spi,
-									 md->hdr.isa_msgid);
+			struct state *msgid_st = DBG_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
+								    md->hdr.isa_msgid);
 			if (st != msgid_st) {
 				DBG_log("state and msgid search mismatch");
 			}
@@ -1698,9 +1697,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
 
 			if (DBGP(DBG_BASE)) {
-				struct state *msgid_st = DBG_v2_sa_by_message_id(&md->hdr.isa_ike_initiator_spi,
-										 &md->hdr.isa_ike_responder_spi,
-										 md->hdr.isa_msgid);
+				struct state *msgid_st = DBG_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
+									    md->hdr.isa_msgid);
 				if (st != msgid_st) {
 					DBG_log("state and msgid search mismatch");
 				}
