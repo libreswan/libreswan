@@ -42,19 +42,6 @@ extern struct list_head serialno_list_head;
 #define FOR_EACH_STATE_OLD2NEW(ST)				\
 	FOR_EACH_LIST_ENTRY_OLD2NEW(&serialno_list_head, ST)
 
-
-/*
- * Return the slot for the given hash value.  It will contain may
- * entries, not just the specified value.  Extra filtering is
- * required!
- *
- * XXX: being replace by ...
- */
-
-struct list_head *ike_spis_slot(const ike_spis_t *spis);
-struct list_head *ike_spi_slot(const ike_spi_t *initiator,
-			       const ike_spi_t *responder);
-
 /*
  * Lookup and generic search functions.
  */
