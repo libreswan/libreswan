@@ -983,6 +983,9 @@ void delete_state(struct state *st)
 	/* from here on logging is for the wrong state */
 	pop_cur_state(old_serialno);
 
+	release_certs(&st->st_remote_certs.verified);
+	free_public_keys(&st->st_remote_certs.pubkey_db);
+
 	free_generalNames(st->st_requested_ca, TRUE);
 
 	freeanychunk(st->st_firstpacket_me);

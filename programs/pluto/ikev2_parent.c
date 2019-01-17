@@ -2737,6 +2737,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct state *st,
 static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 						       struct msg_digest *md)
 {
+	struct ike_sa *ike = ike_sa(st);
 	stf_status ret;
 	enum ikev2_auth_method atype;
 
@@ -2750,8 +2751,19 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 
 	nat_traversal_change_port_lookup(md, st);
 
+	if (!v2_decode_certs(ike, md)) {
+		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
+		pexpect(ike->sa.st_remote_certs.verified == NULL);
+		/*
+		 * The 'end-cert' was bad so all the certs have been
+		 * tossed.  However, since this is the responder
+		 * stumble on.  There might be a connection that still
+		 * authenticates (after a switch?).
+		 */
+		dbg("X509: CERT payload bogus or revoked");
+	}
 	/* this call might update connection in md->st */
-	if (!ikev2_decode_peer_id_and_certs(md))
+	if (!ikev2_decode_peer_id(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
@@ -3601,6 +3613,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 
 stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 {
+	struct ike_sa *ike = ike_sa(st);
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 	struct payload_digest *ntfy;
 	struct state *pst = st;
@@ -3665,8 +3678,19 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 		}
 	}
 
+	if (!v2_decode_certs(ike, md)) {
+		pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+		pexpect(ike->sa.st_remote_certs.verified == NULL);
+		/*
+		 * One of the certs was bad; no point switching
+		 * initiator.
+		 */
+		libreswan_log("X509: CERT payload bogus or revoked");
+		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+	}
+
 	/* XXX this call might change connection in md->st! */
-	if (!ikev2_decode_peer_id_and_certs(md))
+	if (!ikev2_decode_peer_id(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	struct connection *c = st->st_connection;

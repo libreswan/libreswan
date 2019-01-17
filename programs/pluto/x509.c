@@ -67,6 +67,7 @@
 #include "ip_address.h"
 #include "ikev2_message.h"	/* for build_ikev2_critical() */
 #include "ike_alg_hash.h"
+#include "certs.h"
 
 /* new NSS code */
 #include "pluto_x509.h"
@@ -478,11 +479,12 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 	*gn_out = pgn_list;
 }
 
-static void replace_public_key(struct pubkey *pk)
+static void replace_public_key(struct pubkey_list **pubkey_db,
+			       struct pubkey *pk)
 {
 	/* ??? clang 3.5 thinks pk might be NULL */
-	delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-	install_public_key(pk, &pluto_pubkeys);
+	delete_public_keys(pubkey_db, &pk->id, pk->alg);
+	install_public_key(pk, pubkey_db);
 }
 
 static struct pubkey *create_cert_pubkey(const struct id *id,
@@ -517,7 +519,8 @@ static struct pubkey *create_cert_subjectdn_pubkey(CERTCertificate *cert)
 	return create_cert_pubkey(&id, cert);
 }
 
-static void add_cert_san_pubkeys(CERTCertificate *cert)
+static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
+				 CERTCertificate *cert)
 {
 	generalName_t *gn = NULL;
 	generalName_t *gnt;
@@ -532,7 +535,7 @@ static void add_cert_san_pubkeys(CERTCertificate *cert)
 		if (id.kind != ID_NONE) {
 			struct pubkey *pk = create_cert_pubkey(&id, cert);
 			if (pk != NULL) {
-				replace_public_key(pk);
+				replace_public_key(pubkey_db, pk);
 			}
 		}
 	}
@@ -549,7 +552,8 @@ static void add_cert_san_pubkeys(CERTCertificate *cert)
  * with subjectAltNames
  * @keyid provides an id for a secondary entry
  */
-void add_pubkey_from_nss_cert(const struct id *keyid, CERTCertificate *cert)
+void add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
+			      const struct id *keyid, CERTCertificate *cert)
 {
 	struct pubkey *pk = create_cert_subjectdn_pubkey(cert);
 	if (pk == NULL) {
@@ -557,8 +561,8 @@ void add_pubkey_from_nss_cert(const struct id *keyid, CERTCertificate *cert)
 		return;
 	}
 
-	replace_public_key(pk);
-	add_cert_san_pubkeys(cert);
+	replace_public_key(pubkey_db, pk);
+	add_cert_san_pubkeys(pubkey_db, cert);
 
 	if (keyid != NULL && keyid->kind != ID_DER_ASN1_DN &&
 			     keyid->kind != ID_NONE &&
@@ -566,7 +570,7 @@ void add_pubkey_from_nss_cert(const struct id *keyid, CERTCertificate *cert)
 	{
 		struct pubkey *pk2 = create_cert_pubkey(keyid, cert);
 		if (pk2 != NULL) {
-			replace_public_key(pk2);
+			replace_public_key(pubkey_db, pk2);
 		}
 	}
 }
@@ -673,161 +677,192 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 }
 #endif
 
-static lsw_cert_ret pluto_process_certs(struct state *st,
-					struct cert_payload *certs,
-					unsigned nr_certs)
+/*
+ * Decode any certs into *certs, return true.
+ *
+ * Only when something nasty happens, namely a bad cert, will false be
+ * return.
+ */
+static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 {
+	pexpect(st->st_remote_certs.verified == NULL);
 	struct connection *c = st->st_connection;
-#if defined(LIBCURL) || defined(LIBLDAP)
-	SECItem fdn = { siBuffer, NULL, 0 };
-#endif
-	lsw_cert_ret cont = LSW_CERT_BAD;
-	bool rev_opts[RO_SZ];
-	char namebuf[IDTOA_BUF];
-	char ipstr[IDTOA_BUF];
-	char sbuf[ASN1_BUF_LEN];
 
-	rev_opts[RO_OCSP] = ocsp_enable;
-	rev_opts[RO_OCSP_S] = ocsp_strict;
-	rev_opts[RO_OCSP_P] = ocsp_post;
-	rev_opts[RO_CRL_S] = crl_strict;
+	const struct rev_opts rev_opts = {
+		.ocsp = ocsp_enable,
+		.ocsp_strict = ocsp_strict,
+		.ocsp_post = ocsp_post,
+		.crl_strict = crl_strict,
+	};
 
-	CERTCertificate *end_cert = NULL;
-
+	bool crl_needed = false;
+	bool bad = false;
 	statetime_t start = statetime_start(st);
-	int ret = verify_and_cache_chain(certs, nr_certs,
-					 &end_cert, rev_opts);
+	struct certs *certs = find_and_verify_certs(st->st_ike_version, cert_payloads,
+						    &rev_opts, &crl_needed, &bad);
 	statetime_stop(&start, "%s() decoding and verifying certs", __func__);
 
-	if (ret == -1) {
-		libreswan_log("cert verify failed with internal error");
-		return LSW_CERT_BAD;
-	} else if (ret == 0) {
-		/* nothing found?!? */
-		return LSW_CERT_NONE;
-	} else if (ret & VERIFY_RET_SKIP) {
-		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
-		return LSW_CERT_NONE;
-	} else if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
-		libreswan_log("certificate verified OK: %s", end_cert->subjectName);
-		add_pubkey_from_nss_cert(&c->spd.that.id, end_cert);
-
-		/* if we already verified ID, no need to do it again */
-		if (st->st_peer_alt_id) {
-			DBG(DBG_X509, DBG_log("Peer ID was already confirmed"));
-			return LSW_CERT_ID_OK;
-		}
-
-		DBG(DBG_X509, DBG_log("Verifying configured ID matches certificate"));
-
-		switch (c->spd.that.id.kind) {
-		case ID_IPV4_ADDR:
-		case ID_IPV6_ADDR:
-			idtoa(&c->spd.that.id, ipstr, sizeof(ipstr));
-			if (cert_VerifySubjectAltName(end_cert, ipstr)) {
-				st->st_peer_alt_id = TRUE;
-				cont = LSW_CERT_ID_OK;
-				DBG(DBG_X509, DBG_log("ID_IP '%s' matched", ipstr));
-			} else {
-				loglog(RC_LOG_SERIOUS, "certificate does not contain ID_IP subjectAltName=%s",
-						ipstr);
-				return LSW_CERT_MISMATCHED_ID; /* signal connswitch */
-			}
-			break;
-
-		case ID_FQDN:
-			/* We need to skip the "@" prefix from our configured FQDN */
-			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-
-			 if (cert_VerifySubjectAltName(end_cert, namebuf + 1)) {
-				st->st_peer_alt_id = TRUE;
-				cont = LSW_CERT_ID_OK;
-				DBG(DBG_X509, DBG_log("ID_FQDN '%s' matched", namebuf+1));
-			} else {
-				loglog(RC_LOG_SERIOUS, "certificate does not contain subjectAltName=%s",
-					namebuf + 1);
-				return LSW_CERT_MISMATCHED_ID; /* signal conn switch */
-			}
-			break;
-
-		case ID_USER_FQDN:
-			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			if (cert_VerifySubjectAltName(end_cert, namebuf)) {
-				st->st_peer_alt_id = TRUE;
-				cont = LSW_CERT_ID_OK;
-				DBG(DBG_X509, DBG_log("ID_USER_FQDN '%s' matched", namebuf));
-			} else {
-				loglog(RC_LOG_SERIOUS, "certificate does not contain ID_USER_FQDN subjectAltName=%s",
-					namebuf);
-				return LSW_CERT_MISMATCHED_ID; /* signal conn switch */
-			}
-			break;
-
-		case ID_FROMCERT:
-			/* We are committed to accept any ID as long as the CERT verified */
-			st->st_peer_alt_id = TRUE;
-			cont = LSW_CERT_ID_OK;
-			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf));
-
-			{
-				struct id peer_id;
-				memset(&peer_id, 0x00, sizeof(struct id)); /* rhbz#1392191 */
-				peer_id.kind = ID_DER_ASN1_DN;
-				peer_id.name = same_secitem_as_chunk(end_cert->derSubject);
-				duplicate_id(&c->spd.that.id, &peer_id);
-			}
-			break;
-
-		case ID_DER_ASN1_DN:
-			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
-			dntoasi(sbuf, sizeof(sbuf), end_cert->derSubject);
-			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' needs further ID comparison against '%s'",
-				sbuf, namebuf));
-
-			chunk_t certdn = same_secitem_as_chunk(end_cert->derSubject);
-
-			if (same_dn_any_order(c->spd.that.id.name, certdn)) {
-				DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' matched our ID", namebuf));
-				st->st_peer_alt_id = TRUE;
-				cont = LSW_CERT_ID_OK;
-			} else {
-				loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
-					end_cert->subjectName, namebuf);
-				return LSW_CERT_MISMATCHED_ID; /* signal conn switch */
-			}
-			break;
-		default:
-			loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
-				c->spd.that.id.kind,
-				enum_show(&ike_idtype_names, c->spd.that.id.kind));
-				return LSW_CERT_BAD;
-		}
-
-		if (st->st_peer_alt_id) {
-			DBG(DBG_X509, DBG_log("SAN ID matched, updating that.cert"));
-			c->spd.that.cert.u.nss_cert = end_cert;
-			c->spd.that.cert.ty = CERT_X509_SIGNATURE;
-			return LSW_CERT_ID_OK;
-		}
-	} else if (ret & VERIFY_RET_REVOKED) {
-		libreswan_log("certificate revoked!");
-		cont = LSW_CERT_BAD;
-	}
+	/* either something went wrong, or there were no certs */
+	if (certs == NULL) {
 #if defined(LIBCURL) || defined(LIBLDAP)
-	if ((ret & VERIFY_RET_CRL_NEED) && deltasecs(crl_check_interval) > 0) {
-		generalName_t *end_cert_dp = NULL;
-
-		if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
-			end_cert_dp = gndp_from_nss_cert(end_cert);
+		if (crl_needed && deltasecs(crl_check_interval) > 0) {
+			/*
+			 * When a strict crl check fails, the certs
+			 * are deleted and CRL_NEEDED is set.
+			 *
+			 * When a non-strict crl check fails, it is
+			 * left to the crl fetch job to do a refresh.
+			 *
+			 * Trigger a refresh.
+			 */
+			SECItem fdn = { siBuffer, NULL, 0 };
+			if (find_fetch_dn(&fdn, c, NULL)) {
+				add_crl_fetch_requests(crl_fetch_request(&fdn, NULL, NULL));
+			}
 		}
-		if (find_fetch_dn(&fdn, c, end_cert)) {
-			add_crl_fetch_requests(crl_fetch_request(&fdn, end_cert_dp, NULL));
-		}
-		dbg("releasing end_cert_dp sent to crl fetch");
-		free_generalNames(end_cert_dp, false/*shallow*/);
-	}
 #endif
+		if (bad) {
+			libreswan_log("X509: Certificate rejected for this connection");
+			/* For instance, revoked */
+			return false;
+		} else {
+			/* For instance, no CA, unknown certs, ... */
+			return true;
+		}
+	}
+
+	CERTCertificate *end_cert = certs != NULL ? certs->cert : NULL;
+	if (!pexpect(!CERT_IsCACert(end_cert, NULL))) {
+		/* utter screwup */
+		release_certs(&certs);
+		return LSW_CERT_BAD;
+	}
+	libreswan_log("certificate verified OK: %s", end_cert->subjectName);
+
+	add_pubkey_from_nss_cert(&st->st_remote_certs.pubkey_db,
+				 &c->spd.that.id, end_cert);
+	st->st_remote_certs.verified = certs;
+
+	return true;
+}
+
+/*
+ * Just decode an IKEv2 cert payload.
+ */
+bool v2_decode_certs(struct ike_sa *ike, struct msg_digest *md)
+{
+	passert(ike->sa.st_ike_version == IKEv2);
+	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
+	if (cert_payloads == NULL) {
+		return true;
+	}
+	/* Process the known certificates */
+	return decode_certs(&ike->sa, cert_payloads);
+}
+
+/*
+ * XXX: This sometimes update's the connection ID as a side effect.
+ */
+bool match_certs_id(struct certs *certs, const struct id *peer_id,
+		    struct connection *update)
+{
+	char sbuf[ASN1_BUF_LEN];
+	char namebuf[IDTOA_BUF];
+	char ipstr[IDTOA_BUF];
+
+	if (certs == NULL) {
+		dbg("no cert to verify ID against");
+		return false;
+	}
+	CERTCertificate *end_cert = certs->cert;
+
+	bool cont;
+	switch (peer_id->kind) {
+	case ID_IPV4_ADDR:
+	case ID_IPV6_ADDR:
+		idtoa(peer_id, ipstr, sizeof(ipstr));
+		if (cert_VerifySubjectAltName(end_cert, ipstr)) {
+			dbg("ID_IP '%s' matched", ipstr);
+			cont = true;
+		} else {
+			loglog(RC_LOG_SERIOUS,
+			       "certificate does not contain ID_IP subjectAltName=%s",
+			       ipstr);
+			cont = false; /* signal connswitch */
+		}
+		break;
+
+	case ID_FQDN:
+		/* We need to skip the "@" prefix from our configured FQDN */
+		idtoa(peer_id, namebuf, sizeof(namebuf));
+		if (cert_VerifySubjectAltName(end_cert, namebuf + 1)) {
+			dbg("ID_FQDN '%s' matched", namebuf+1);
+			cont = true;
+		} else {
+			loglog(RC_LOG_SERIOUS,
+			       "certificate does not contain subjectAltName=%s",
+			       namebuf + 1);
+			cont = false; /* signal conn switch */
+		}
+		break;
+
+	case ID_USER_FQDN:
+		idtoa(peer_id, namebuf, sizeof(namebuf));
+		if (cert_VerifySubjectAltName(end_cert, namebuf)) {
+			dbg("ID_USER_FQDN '%s' matched", namebuf);
+			cont = true;
+		} else {
+			loglog(RC_LOG_SERIOUS, "certificate does not contain ID_USER_FQDN subjectAltName=%s",
+			       namebuf);
+			cont = false; /* signal conn switch */
+		}
+		break;
+
+	case ID_FROMCERT:
+		/* We are committed to accept any ID as long as the CERT verified */
+		idtoa(peer_id, namebuf, sizeof(namebuf));
+		dbg("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf);
+		cont = true;
+		if (update != NULL) {
+			dbg("stomping on connection's that.id");
+			struct id id = {
+				.kind = ID_DER_ASN1_DN,
+				/* safe as duplicate_id() will clone this */
+				.name = same_secitem_as_chunk(end_cert->derSubject),
+			};
+			duplicate_id(&update->spd.that.id, &id);
+		}
+		break;
+
+	case ID_DER_ASN1_DN:
+		idtoa(peer_id, namebuf, sizeof(namebuf));
+		dntoasi(sbuf, sizeof(sbuf), end_cert->derSubject);
+		dbg("ID_DER_ASN1_DN '%s' needs further ID comparison against '%s'",
+		    sbuf, namebuf);
+
+		chunk_t certdn = same_secitem_as_chunk(end_cert->derSubject);
+
+		if (same_dn_any_order(peer_id->name, certdn)) {
+			dbg("ID_DER_ASN1_DN '%s' matched our ID", namebuf);
+			cont = true;
+		} else {
+			loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
+			       end_cert->subjectName, namebuf);
+			cont = false; /* signal conn switch */
+		}
+		break;
+
+	default:
+		loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
+		       peer_id->kind,
+		       enum_show(&ike_idtype_names, peer_id->kind));
+		cont = false;
+		break;
+	}
+
+	if (!cont) {
+		libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
+	}
 
 	return cont;
 }
@@ -849,85 +884,48 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
  *  contain a single certificate.
  *
  */
-lsw_cert_ret ike_decode_cert(struct msg_digest *md)
+
+lsw_cert_ret v1_process_certs(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	const int np = (st->st_ike_version == IKEv2) ? ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_CERT;
+	struct ike_sa *ike = ike_sa(st);
+	struct connection *c = st->st_connection;
+	passert(st->st_ike_version == IKEv1);
 
-	/* count the total cert paylaods */
-	unsigned nr_cert_payloads = 0;
-	for (struct payload_digest *p = md->chain[np];
-	     p != NULL; p = p->next) {
-		nr_cert_payloads++;
+	/* if we already verified ID, no need to do it again */
+	if (st->st_peer_alt_id) {
+		dbg("Peer ID was already confirmed");
+		return LSW_CERT_ID_OK;
 	}
-	if (nr_cert_payloads == 0) {
+
+	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_CERT];
+	if (cert_payloads == NULL) {
 		return LSW_CERT_NONE;
 	}
 
-	/* accumulate the known certificates */
-	dbg("checking for known CERT payloads");
-	struct cert_payload *certs = alloc_things(struct cert_payload,
-						  nr_cert_payloads,
-						  "cert payloads");
-	unsigned nr_certs = 0;
-	for (struct payload_digest *p = md->chain[np]; p != NULL; p = p->next) {
-		enum ike_cert_type cert_type;
-		const char *cert_name;
-		switch (st->st_ike_version) {
-		case IKEv2:
-			cert_type = p->payload.v2cert.isac_enc;
-			cert_name = enum_short_name(&ikev2_cert_type_names, cert_type);
-			break;
-		case IKEv1:
-			cert_type = p->payload.cert.isacert_type;
-			cert_name = enum_short_name(&ike_cert_type_names, cert_type);
-			break;
-		default:
-			bad_case(st->st_ike_version);
-		}
-
-		if (cert_name == NULL) {
-			loglog(RC_LOG_SERIOUS, "ignoring certificate with unknown type %d",
-			       cert_type);
-		} else {
-			dbg("saving certificate of type '%s' in %d",
-			     cert_name, nr_certs);
-			certs[nr_certs++] = (struct cert_payload) {
-				.type = cert_type,
-				.name = cert_name,
-				.payload = chunk(p->pbs.cur, pbs_left(&p->pbs)),
-			};
-		}
+	release_certs(&st->st_remote_certs.verified);
+	if (!decode_certs(st, cert_payloads)) {
+		return LSW_CERT_BAD;
+	}
+	struct certs *certs = ike->sa.st_remote_certs.verified;
+	if (certs == NULL) {
+		return LSW_CERT_NONE;
 	}
 
-	/* Process the known certificates */
-	lsw_cert_ret ret = LSW_CERT_NONE;
-	if (nr_certs > 0) {
-		dbg("CERT payloads found: %d; calling pluto_process_certs()",
-		     nr_certs);
-		ret = pluto_process_certs(st, certs, nr_certs);
-		switch (ret) {
-		case LSW_CERT_NONE:
-			dbg("X509: all certs discarded");
-			break;
-		case LSW_CERT_BAD:
-			libreswan_log("X509: Certificate rejected for this connection");
-			break;
-		case LSW_CERT_MISMATCHED_ID:
-			libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
-			break;
-		case LSW_CERT_ID_OK:
-			DBG(DBG_X509, DBG_log("Peer public key SubjectAltName matches peer ID for this connection"));
-			break;
-		default:
-			bad_case(ret);
-		}
+	if (!match_certs_id(certs, &c->spd.that.id, c /*update*/)) {
+		return LSW_CERT_MISMATCHED_ID;
 	}
 
-	pfree(certs);
-	return ret;
+	dbg("SAN ID matched, updating that.cert");
+	st->st_peer_alt_id = true;
+	if (c->spd.that.cert.ty == CERT_X509_SIGNATURE &&
+	    c->spd.that.cert.u.nss_cert != NULL) {
+		CERT_DestroyCertificate(c->spd.that.cert.u.nss_cert);
+	}
+	c->spd.that.cert.u.nss_cert = CERT_DupCertificate(certs->cert);
+	c->spd.that.cert.ty = CERT_X509_SIGNATURE;
+	return LSW_CERT_ID_OK;
 }
-
 
 /*
  * Decode the CR payload of Phase 1.

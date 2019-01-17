@@ -22,33 +22,30 @@
 #include "defs.h"
 #include "chunk.h"
 
-struct cert_payload {
-	enum ike_cert_type type;
-	chunk_t payload;
-	const char *name;
-};
+struct certs;
+struct payload_digest;
 
-extern int verify_and_cache_chain(struct cert_payload *certs,
-				  unsigned nr_certs,
-				  CERTCertificate **ee_out,
-				  bool *rev_opts);
-
-extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name);
+/*
+ * Try to find and verify the end cert.  Sets CRL_NEEDED and BAD (for
+ * instance, revoked) when required.  Logs then returns NULL if the
+ * certs were discarded.
+ */
 
 /* rev_opts index */
-#define RO_OCSP 0
-#define RO_OCSP_S 1
-#define RO_OCSP_P 2
-#define RO_CRL_S 3
-#define RO_SZ 4
+struct rev_opts {
+	bool ocsp;
+	bool ocsp_strict;
+	bool ocsp_post;
+	bool crl_strict;
+};
 
+extern struct certs *find_and_verify_certs(enum ike_version ike_version,
+					   struct payload_digest *cert_payloads,
+					   const struct rev_opts *rev_opts,
+					   bool *crl_needed,
+					   bool *bad);
 
-#define VERIFY_RET_OK       0x0001
-#define VERIFY_RET_REVOKED  0x0002
-#define VERIFY_RET_FAIL     0x0004
-#define VERIFY_RET_SKIP     0x0008
-
-#define VERIFY_RET_CRL_NEED 0x1000
+extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name);
 
 extern SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain);
 

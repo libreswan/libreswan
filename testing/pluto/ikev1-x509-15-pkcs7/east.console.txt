@@ -37,7 +37,7 @@ initdone
 east #
  grep PKCS7 /tmp/pluto.log
 |    cert encoding: CERT_PKCS7_WRAPPED_X509 (0x1)
-| saving certificate of type 'PKCS7_WRAPPED_X509' in 0
+| saving certificate of type 'PKCS7_WRAPPED_X509'
 |    cert encoding: CERT_PKCS7_WRAPPED_X509 (0x1)
 east #
  ../../pluto/bin/ipsec-look.sh

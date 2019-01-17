@@ -2230,7 +2230,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	/* our caller with release_any_md(mdp) */
 }
 
-static bool ikev2_decode_peer_id_and_certs_counted(struct msg_digest *md, int depth)
+static bool decode_peer_id_counted(struct ike_sa *ike,
+				   struct msg_digest *md, int depth)
 {
 	if (depth > 10) {
 		/* should not happen, but it would be nice to survive */
@@ -2238,7 +2239,7 @@ static bool ikev2_decode_peer_id_and_certs_counted(struct msg_digest *md, int de
 		return FALSE;
 	}
 	bool initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
-	struct connection *c = md->st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 
 	struct payload_digest *const id_him = initiator ?
 		md->chain[ISAKMP_NEXT_v2IDr] : md->chain[ISAKMP_NEXT_v2IDi];
@@ -2278,34 +2279,25 @@ static bool ikev2_decode_peer_id_and_certs_counted(struct msg_digest *md, int de
 		tip = &tarzan_id;
 	}
 
-	lsw_cert_ret ret = ike_decode_cert(md);
-	switch (ret) {
-	case LSW_CERT_NONE:
-		DBG(DBG_X509, DBG_log("X509: no CERT payloads to process"));
-		break;
-	case LSW_CERT_BAD:
-		if (initiator) {
-			/* cannot switch connection so fail */
-			libreswan_log("X509: CERT payload bogus or revoked");
-			return FALSE;
+	/*
+	 * If there ar certs, try re-running the id check
+	 */
+	if (!ike->sa.st_peer_alt_id &&
+	    ike->sa.st_remote_certs.verified != NULL) {
+		if (match_certs_id(ike->sa.st_remote_certs.verified,
+				   &c->spd.that.id,
+				   c/*update-connection*/)) {
+			dbg("X509: CERT and ID matches current connection");
+			ike->sa.st_peer_alt_id = true;
 		} else {
-			DBG(DBG_X509, DBG_log("X509: CERT payload bogus or revoked"));
+			if (initiator) {
+				/* cannot switch connection so fail */
+				libreswan_log("X509: CERT payload does not match connection ID");
+				return FALSE;
+			} else {
+				dbg("X509: CERT payload does not match connection ID");
+			}
 		}
-		break;
-	case LSW_CERT_MISMATCHED_ID:
-		if (initiator) {
-			/* cannot switch connection so fail */
-			libreswan_log("X509: CERT payload does not match connection ID");
-			return FALSE;
-		} else {
-			DBG(DBG_X509, DBG_log("X509: CERT payload does not match connection ID"));
-		}
-		break;
-	case LSW_CERT_ID_OK:
-		DBG(DBG_X509, DBG_log("X509: CERT and ID matches current connection"));
-		break;
-	default:
-		bad_case(ret);
 	}
 
 	/* process any CERTREQ payloads */
@@ -2319,7 +2311,7 @@ static bool ikev2_decode_peer_id_and_certs_counted(struct msg_digest *md, int de
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
 	if (initiator) {
-		if (!md->st->st_peer_alt_id &&
+		if (!ike->sa.st_peer_alt_id &&
 		    !same_id(&c->spd.that.id, &peer_id) &&
 		    c->spd.that.id.kind != ID_FROMCERT) {
 			char expect[IDTOA_BUF],
@@ -2385,14 +2377,14 @@ static bool ikev2_decode_peer_id_and_certs_counted(struct msg_digest *md, int de
 				DBG(DBG_CONTROL, DBG_log(
 					"no suitable connection for peer '%s'", buf));
 				/* can we continue with what we had? */
-				if (!md->st->st_peer_alt_id &&
+				if (!ike->sa.st_peer_alt_id &&
 				    !same_id(&c->spd.that.id, &peer_id) &&
 				    c->spd.that.id.kind != ID_FROMCERT)
 				{
 					if (LIN(POLICY_AUTH_NULL, c->policy) && tarzan_pld != NULL && tarzan_id.kind == ID_NULL) {
 						libreswan_log("Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
 							buf);
-						md->st->st_peer_wants_null = TRUE;
+						ike->sa.st_peer_wants_null = TRUE;
 						r = c;
 					} else {
 						libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
@@ -2425,7 +2417,7 @@ static bool ikev2_decode_peer_id_and_certs_counted(struct msg_digest *md, int de
 				update_state_connection(md->st, r);
 				/* redo from scratch so we read and check CERT payload */
 				DBG(DBG_X509, DBG_log("retrying ikev2_decode_peer_id_and_certs() with new conn"));
-				return ikev2_decode_peer_id_and_certs_counted(md, depth + 1);
+				return decode_peer_id_counted(ike, md, depth + 1);
 
 			} else if (c->spd.that.has_id_wildcards) {
 				duplicate_id(&c->spd.that.id, &peer_id);
@@ -2459,9 +2451,9 @@ static bool ikev2_decode_peer_id_and_certs_counted(struct msg_digest *md, int de
 	return TRUE;
 }
 
-bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
+bool ikev2_decode_peer_id(struct msg_digest *md)
 {
-	return ikev2_decode_peer_id_and_certs_counted(md, 0);
+	return decode_peer_id_counted(ike_sa(md->st), md, 0);
 }
 
 /*
