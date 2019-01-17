@@ -1,6 +1,6 @@
 /* State table indexed by serialno, for libreswan
  *
- * Copyright (C) 2017-2018 Andrew Cagney
+ * Copyright (C) 2017-2019 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,11 +47,21 @@ extern struct list_head serialno_list_head;
  * Return the slot for the given hash value.  It will contain may
  * entries, not just the specified value.  Extra filtering is
  * required!
+ *
+ * XXX: being replace by ...
  */
 
-struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator);
 struct list_head *ike_spis_slot(const ike_spis_t *spis);
 struct list_head *ike_spi_slot(const ike_spi_t *initiator,
 			       const ike_spi_t *responder);
+
+/*
+ * Lookup and generic search functions.
+ */
+
+struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
+					 so_serial_t clonedfrom,
+					 const msgid_t *msgid, /* optional */
+					 const ike_spi_t *ike_initiator_spi);
 
 #endif

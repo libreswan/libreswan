@@ -1478,23 +1478,8 @@ struct state *find_state_ikev1(const ike_spi_t *ike_initiator_spi,
 struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 				    msgid_t msgid)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(ike_initiator_spi), st) {
-		if (st->st_ike_version == IKEv1 &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
-			dbg("v1 peer and icookie match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
-			    st->st_serialno, msgid, st->st_msgid);
-			if (msgid == st->st_msgid) {
-				dbg("v1 state object #%lu found, in %s",
-				    st->st_serialno,
-				    st->st_state_name);
-				return st;
-			}
-		}
-	}
-
-	dbg("v1 state object not found");
-	return NULL;
+	return state_by_ike_initiator_spi(IKEv1, SOS_IGNORE, &msgid,
+					  ike_initiator_spi);
 }
 
 /*
@@ -1526,21 +1511,10 @@ struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
  * This is used doring the IKE_SA_INIT exchange where SPIr is either
  * zero (message request) or not-yet-known (message response).
  */
-struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *initiator_spi)
+struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi)
 {
-	struct state *st;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(initiator_spi), st) {
-		if ((st->st_ike_version == IKEv2) &&
-		    IS_IKE_SA(st) &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, initiator_spi)) {
-			dbg("v2 IKE SA by SPi found #%lu, in %s",
-			    st->st_serialno, st->st_state_name);
-			return st;
-		}
-	}
-
-	dbg("v2 IKE SA by SPi not found");
-	return NULL;
+	return state_by_ike_initiator_spi(IKEv2, SOS_NOBODY/*IKE_SA*/,
+					  NULL/*msgid*/, ike_initiator_spi);
 }
 
 /*

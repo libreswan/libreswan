@@ -138,11 +138,11 @@ static struct hash_table ike_initiator_spi_hash_table = {
 	.slots = ike_initiator_spi_hash_slots,
 };
 
-struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
+static struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
 {
 	size_t hash = ike_initiator_spi_hasher(initiator);
 	struct list_head *slot = hash_table_slot_by_hash(&ike_initiator_spi_hash_table, hash);
-	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
+	LSWDBGP(DBG_TMI, buf) {
 		lswlogf(buf, "%s: hash IKE SPIi ", ike_initiator_spi_hash_table.info.name);
 		lswlog_bytes(buf, initiator->bytes,
 			     sizeof(initiator->bytes));
@@ -248,6 +248,60 @@ static void del_from_ike_spi_tables(struct state *st)
 			     &st->st_ike_spis_hash_entry);
 	del_hash_table_entry(&ike_initiator_spi_hash_table,
 			     &st->st_ike_initiator_spi_hash_entry);
+}
+
+static bool state_plausable(struct state *st, enum ike_version ike_version,
+			    so_serial_t clonedfrom, const msgid_t *msgid)
+{
+	if (st->st_ike_version != ike_version) {
+		return false;
+	}
+	if (msgid != NULL && st->st_msgid != *msgid) {
+		return false;
+	}
+	switch (clonedfrom) {
+	case SOS_NOBODY:
+		if (!IS_IKE_SA(st)) {
+			return false;
+		}
+		break;
+	case SOS_IGNORE:
+		break;
+	case SOS_SOMEBODY:
+		if (!IS_CHILD_SA(st)) {
+			return false;
+		}
+		break;
+	default:
+		if (st->st_clonedfrom != clonedfrom) {
+			return false;
+		}
+		break;
+	}
+	return true;
+}
+
+struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
+					 so_serial_t clonedfrom,
+					 const msgid_t *msgid,
+					 const ike_spi_t *ike_initiator_spi)
+{
+	struct state *st = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(ike_initiator_spi),
+				    st) {
+		if (!state_plausable(st, ike_version, clonedfrom, msgid)) {
+			continue;
+		}
+		if (!ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
+			continue;
+		}
+		dbg("%s state object #%lu found, in %s",
+		    enum_name(&ike_version_names, ike_version),
+		    st->st_serialno, st->st_state_name);
+		return st;
+	}
+	dbg("%s state object not found", enum_name(&ike_version_names, ike_version));
+	return NULL;
 }
 
 /*

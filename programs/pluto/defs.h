@@ -23,12 +23,18 @@
 #include "lswalloc.h"
 #include "realtime.h"
 
-/* type of serial number of a state object
- * Needed in connections.h and state.h; here to simplify dependencies.
+/*
+ * Type of serial number of a state object.
+ *
+ * Used everywhere as a safe proxy for a state object.  Needed in
+ * connections.h and state.h; here to simplify dependencies.
  */
 typedef unsigned long so_serial_t;
 #define SOS_NOBODY      0       /* null serial number */
 #define SOS_FIRST       1       /* first normal serial number */
+/* for wildcards */
+#define SOS_SOMEBODY	((unsigned long) -1)
+#define SOS_IGNORE	((unsigned long) -2)
 
 typedef enum {
 		IKE_SA,
