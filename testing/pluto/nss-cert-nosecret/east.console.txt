@@ -48,21 +48,6 @@ east #
 000  
 000 List of Public Keys:
 000  
-000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
-000        ID_DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
-000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
-000        ID_USER_FQDN 'user-west@testing.libreswan.org'
-000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
-000        ID_FQDN '@west.testing.libreswan.org'
-000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
-000        ID_USER_FQDN 'west@testing.libreswan.org'
-000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
-000        ID_IPV4_ADDR '192.1.2.45'
-000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
