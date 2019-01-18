@@ -698,7 +698,7 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 	bool crl_needed = false;
 	bool bad = false;
 	statetime_t start = statetime_start(st);
-	struct certs *certs = find_and_verify_certs(st->st_ike_version, cert_payloads,
+	struct certs *certs = find_and_verify_certs(st, cert_payloads,
 						    &rev_opts, &crl_needed, &bad);
 	statetime_stop(&start, "%s() decoding and verifying certs", __func__);
 

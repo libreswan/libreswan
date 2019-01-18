@@ -688,7 +688,10 @@ static bool try_all_RSA_keys(const char *pubkey_description,
 				continue; /* continue with next public key */
 			}
 
-			if (take_a_crack_RSA(s, key, pubkey_description)) {
+			statetime_t try_time = statetime_start(s->st);
+			bool ok =take_a_crack_RSA(s, key, pubkey_description);
+			statetime_stop(&try_time, "%s() trying a pubkey", __func__);
+			if (ok) {
 				return true;
 			}
 		}
@@ -831,7 +834,10 @@ static bool try_all_ECDSA_keys(const char *pubkey_description,
 				continue; /* continue with next public key */
 			}
 
-			if (take_a_crack_ECDSA(s, key, pubkey_description)) {
+			statetime_t try_time = statetime_start(s->st);
+			bool ok = take_a_crack_ECDSA(s, key, pubkey_description);
+			statetime_stop(&try_time, "%s() trying a pubkey", __func__);
+			if (ok) {
 				return true;
 			}
 		}

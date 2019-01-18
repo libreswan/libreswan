@@ -41,6 +41,8 @@
 #include <keyhi.h>
 #include <secpkcs7.h>
 #include "demux.h"
+#include "state.h"
+#include "pluto_timing.h"
 
 /*
  * set up the slot/handle/trust things that NSS needs
@@ -521,7 +523,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
  * Decode and verify the chain received by pluto.
  * ee_out is the resulting end cert
  */
-struct certs *find_and_verify_certs(enum ike_version ike_version,
+struct certs *find_and_verify_certs(struct state *st,
 				    struct payload_digest *cert_payloads,
 				    const struct rev_opts *rev_opts,
 				    bool *crl_needed, bool *bad)
@@ -540,7 +542,9 @@ struct certs *find_and_verify_certs(enum ike_version ike_version,
 		return NULL;
 	}
 
+	statetime_t trustcl_time = statetime_start(st);
 	CERTCertList *trustcl = get_all_ca_certs(); /* must free trustcl */
+	statetime_stop(&trustcl_time, "%s() calling get_all_ca_certs()", __func__);
 	if (trustcl == NULL) {
 		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
 		return NULL;
@@ -566,8 +570,10 @@ struct certs *find_and_verify_certs(enum ike_version ike_version,
 	 * This routine populates certs[] with the imported
 	 * certificates.  For details read CERT_ImportCerts().
 	 */
-	struct certs *certs = decode_cert_payloads(handle, ike_version,
+	statetime_t decode_time = statetime_start(st);
+	struct certs *certs = decode_cert_payloads(handle, st->st_ike_version,
 						   cert_payloads);
+	statetime_stop(&decode_time, "%s() calling decode_cert_payloads()", __func__);
 	if (certs == NULL) {
 		CERT_DestroyCertList(trustcl);
 		return NULL;
@@ -580,8 +586,10 @@ struct certs *find_and_verify_certs(enum ike_version ike_version,
 		return NULL;
 	}
 
-	if (crl_update_check(handle, certs)) {
-		*crl_needed = true;
+	statetime_t crl_time = statetime_start(st);
+	*crl_needed = crl_update_check(handle, certs);
+	statetime_stop(&crl_time, "%s() calling crl_update_check()", __func__);
+	if (*crl_needed) {
 		if (rev_opts->crl_strict) {
 			*bad = true;
 			libreswan_log("missing or expired CRL in strict mode, failing pending update");
@@ -592,7 +600,10 @@ struct certs *find_and_verify_certs(enum ike_version ike_version,
 		DBG(DBG_X509, DBG_log("missing or expired CRL"));
 	}
 
-	if (!verify_end_cert(trustcl, rev_opts, end_cert, bad)) {
+	statetime_t verify_time = statetime_start(st);
+	bool end_ok = verify_end_cert(trustcl, rev_opts, end_cert, bad);
+	statetime_stop(&verify_time, "%s() calling verify_end_cert()", __func__);
+	if (!end_ok) {
 		release_certs(&certs);
 		CERT_DestroyCertList(trustcl);
 		return NULL;

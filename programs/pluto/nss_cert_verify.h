@@ -39,7 +39,7 @@ struct rev_opts {
 	bool crl_strict;
 };
 
-extern struct certs *find_and_verify_certs(enum ike_version ike_version,
+extern struct certs *find_and_verify_certs(struct state *st,
 					   struct payload_digest *cert_payloads,
 					   const struct rev_opts *rev_opts,
 					   bool *crl_needed,
