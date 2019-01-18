@@ -18,7 +18,11 @@
 #include "lswalloc.h"
 #include "lswlog.h"	/* for DBG_dump() */
 
-const chunk_t empty_chunk = EMPTY_CHUNK;
+/*
+ * Compiler note: some older versions of GCC claim that EMPTY_CHUNK
+ * isn't a constant so we cannot use it as an initializer for empty_chunk.
+ */
+const chunk_t empty_chunk = { .ptr = NULL, .len = 0 };
 
 chunk_t chunk(void *ptr, size_t len)
 {

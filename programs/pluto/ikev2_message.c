@@ -226,8 +226,10 @@ v2SK_payload_t open_v2SK_payload(pb_stream *container,
 	static const v2SK_payload_t empty_sk;
 	v2SK_payload_t sk = {
 		.ike = ike,
-		.payload.ptr = container->cur,
-		.payload.len = 0,	/* computed at end; set here to silence GCC 6.10 */
+		.payload = {
+		    .ptr = container->cur,
+		    .len = 0,	/* computed at end; set here to silence GCC 6.10 */
+		}
 	};
 
 	/* emit Encryption Payload header */
@@ -848,7 +850,10 @@ static stf_status v2_record_outbound_fragment(struct ike_sa *ike,
 
 	v2SK_payload_t skf = {
 		.ike = ike,
-		.payload.ptr = rbody.cur,
+		.payload = {
+		    .ptr = rbody.cur,
+		    .len = 0 /* computed at end; set here to silence GCC 4.8.5 */
+		}
 	};
 
 	/* emit SKF header, save location */
