@@ -1601,48 +1601,58 @@ struct state *DBG_v2_sa_by_msgid(const ike_spis_t *ike_spis, const msgid_t msgid
  * SPI is the SPI the sending endpoint would expect in inbound ESP or
  * AH packets.
  */
+
+struct v2_spi_filter {
+	uint8_t protoid;
+	ipsec_spi_t spi;
+};
+
+static bool v2_spi_predicate(struct state *st, void *context)
+{
+	struct v2_spi_filter *filter = context;
+
+	struct ipsec_proto_info *pr;
+	switch (filter->protoid) {
+	case PROTO_IPSEC_AH:
+		pr = &st->st_ah;
+		break;
+	case PROTO_IPSEC_ESP:
+		pr = &st->st_esp;
+		break;
+	default:
+		bad_case(filter->protoid);
+	}
+
+	if (pr->present) {
+		if (pr->attrs.spi == filter->spi) {
+			dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
+			    st->st_serialno,
+			    st->st_state_name);
+			return true;
+		}
+#if 0
+		/* see function description above */
+		if (pr->our_spi == filter->spi) {
+			dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
+			    st->st_serialno,
+			    st->st_state_name);
+			return true;
+		}
+#endif
+	}
+	return false;
+}
+
 struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
 					       uint8_t protoid, ipsec_spi_t spi)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(ike_spis), st) {
-		if ((st->st_ike_version == IKEv2) && IS_CHILD_SA(st) &&
-		    ike_spis_eq(&st->st_ike_spis, ike_spis)) {
-
-			struct ipsec_proto_info *pr;
-			switch (protoid) {
-			case PROTO_IPSEC_AH:
-				pr = &st->st_ah;
-				break;
-			case PROTO_IPSEC_ESP:
-				pr = &st->st_esp;
-				break;
-			default:
-				bad_case(protoid);
-			}
-
-			if (pr->present) {
-				if (pr->attrs.spi == spi) {
-					dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
-					    st->st_serialno,
-					    st->st_state_name);
-					return st;
-				}
-#if 0
-				/* see function description above */
-				if (pr->our_spi == spi) {
-					dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
-					    st->st_serialno,
-					    st->st_state_name);
-					return st;
-				}
-#endif
-			}
-
-		}
-	}
-	dbg("v2 CHILD SA not found");
-	return NULL;
+	struct v2_spi_filter filter = {
+		.protoid = protoid,
+		.spi = spi,
+	};
+	return state_by_ike_spis(IKEv2, SOS_SOMEBODY,
+				 NULL /* ignore MSGID */,
+				 ike_spis, v2_spi_predicate, &filter);
 }
 
 /*
