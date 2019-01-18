@@ -1622,9 +1622,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * no Message ID match then just log it - the IKE SA
 		 * is being used to make the error message "pretty".
 		 */
-		st = find_state_ikev2_child(ix,
-					    &md->hdr.isa_ike_initiator_spi,
-					    &md->hdr.isa_ike_responder_spi,
+		st = find_state_ikev2_child(ix, &md->hdr.isa_ike_spis,
 					    md->hdr.isa_msgid);
 		if (DBGP(DBG_BASE)) {
 			struct state *msgid_st = DBG_v2_sa_by_msgid(&md->hdr.isa_ike_spis,

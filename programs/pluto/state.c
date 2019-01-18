@@ -1489,55 +1489,42 @@ struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi
  * Find a state object for an IKEv2 state, a response that includes a msgid.
  */
 
-static bool ikev2_ix_state_match(const struct state *st,
-		const enum isakmp_xchg_types ix)
-{
-	bool ret = FALSE;
+struct v2_ix_filter {
+	enum isakmp_xchg_types ix;
+};
 
-	switch (ix) {
+static bool v2_ix_predicate(struct state *st, void *context)
+{
+	const struct v2_ix_filter *filter = context;
+	switch (filter->ix) {
 	case ISAKMP_v2_IKE_SA_INIT:
 	case ISAKMP_v2_IKE_AUTH:
 	case ISAKMP_v2_INFORMATIONAL:
-		ret = TRUE; /* good enough, strict check could be double work */
+		return true; /* good enough, strict check could be double work */
 		break;
 
 	case ISAKMP_v2_CREATE_CHILD_SA:
 		if (IS_CHILD_IPSECSA_RESPONSE(st))
-			ret = TRUE;
+			return true;
 		break;
 
 	default:
 		DBG(DBG_CONTROLMORE, DBG_log("unsolicited response? did we send %s request? ",
-					enum_name(&ikev2_exchange_names, ix)));
+					enum_name(&ikev2_exchange_names, filter->ix)));
 		break;
 	}
-
-	return ret;
+	return false;
 }
 
 struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
-				     const ike_spi_t *ike_initiator_spi,
-				     const ike_spi_t *ike_responder_spi,
+				     const ike_spis_t *ike_spis,
 				     const msgid_t msgid)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
-						 ike_responder_spi), st) {
-		if ((st->st_ike_version == IKEv2) &&
-		    IS_CHILD_SA(st) &&
-		    st->st_msgid == msgid &&
-		    ikev2_ix_state_match(st, ix) &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
-		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
-			dbg("v2 state object #%lu found, in %s",
-			    st->st_serialno,
-			    st->st_state_name);
-			return st;
-		}
-	}
-
-	DBG_log("v2 state object not found");
-	return NULL;
+	struct v2_ix_filter filter = {
+		.ix = ix,
+	};
+	return state_by_ike_spis(IKEv2, SOS_SOMEBODY, &msgid,
+				 ike_spis, v2_ix_predicate, &filter);
 }
 
 struct sa_by_msgid_filter {
