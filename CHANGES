@@ -25,6 +25,7 @@ v3.28 (unreleased)
 * pluto: Simplify state lookups and SPI passing [Andrew]
 * pluto: Speed up state lookups by only looking at proper hash chain [Andrew]
 * pluto: metric= value should accept values > 255 [Tuomo]
+* pluto: New "cpu-usage" plutodebug option displaying timing info [Andrew/Paul]
 * ipsec: add "ipsec ts" as shorthand for "ipsec trafficstatus" [Paul]
 * FIPS: X.509 minimum public key size check was rejecting valid keys [Paul]
 * FIPS: also force IKE maximum lifetime of 24h (default is 1h) [Paul/Vukasin]
