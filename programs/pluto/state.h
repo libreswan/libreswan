@@ -778,9 +778,8 @@ extern void find_states_and_redirect(const char *conn_name,
 				     ip_address remote_ip,
 				     char *redirect_gw);
 
-extern struct state *ikev1_find_info_state(const ike_spi_t *ike_initiator_spi,
-					   const ike_spi_t *ike_responder_spi,
-					   msgid_t msgid);
+extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
+					msgid_t msgid);
 
 extern void initialize_new_state(struct state *st,
 				 struct connection *c,

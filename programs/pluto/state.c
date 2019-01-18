@@ -1710,30 +1710,34 @@ void find_states_and_redirect(const char *conn_name,
 /*
  * Find a state object.
  */
-struct state *ikev1_find_info_state(const ike_spi_t *ike_initiator_spi,
-				    const ike_spi_t *ike_responder_spi,
-				    msgid_t msgid)
+struct v1_msgid_filter {
+	msgid_t msgid;
+};
+
+static bool v1_msgid_predicate(struct state *st, void *context)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
-						 ike_responder_spi), st) {
-		if (st->st_ike_version == IKEv1 &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
-		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
-			dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
-			    st->st_serialno, msgid,
-			    st->st_msgid, st->st_msgid_phase15);
-			if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
-			     msgid == st->st_msgid_phase15) ||
-			    msgid == st->st_msgid) {
-				dbg("p15 state object #%lu found, in %s",
-				    st->st_serialno, st->st_state_name);
-				return st;
-			}
-		}
+	struct v1_msgid_filter *filter = context;
+	dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
+	    st->st_serialno, filter->msgid,
+	    st->st_msgid, st->st_msgid_phase15);
+	if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
+	     filter->msgid == st->st_msgid_phase15) ||
+	    filter->msgid == st->st_msgid) {
+		dbg("p15 state object #%lu found, in %s",
+		    st->st_serialno, st->st_state_name);
+		return true;
 	}
-	dbg("p15 state object not found");
-	return NULL;
+	return false;
+}
+
+struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
+{
+	struct v1_msgid_filter filter = {
+		.msgid = msgid,
+	};
+	return state_by_ike_spis(IKEv1, SOS_IGNORE,
+				 NULL/* check MSGID in msgid_predicate() */,
+				 ike_spis, v1_msgid_predicate, &filter);
 }
 
 /*
