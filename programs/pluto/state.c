@@ -2680,6 +2680,38 @@ bool dpd_active_locally(const struct state *st)
 /*
  * Find all CHILD SAs belonging to FROM and migrate them to TO.
  */
+
+struct v2_migrate_filter {
+	struct ike_sa *from;
+	struct child_sa *to;
+};
+
+static bool v2_migrate_predicate(struct state *st, void *context)
+{
+	struct v2_migrate_filter *filter = context;
+	passert(st->st_serialno != filter->to->sa.st_serialno);
+	/*
+	 * Migrate the CHILD SA.
+	 *
+	 * Just the IKE_SPIrehash the SPIs without moving entry.
+	 *
+	 * XXX: this should also wipe message counters but first need
+	 * evidence.
+	 */
+	dbg("#%lu migrated from IKE SA #%lu to IKE SA #%lu",
+	    st->st_serialno, filter->from->sa.st_serialno,
+	    filter->to->sa.st_serialno);
+	st->st_clonedfrom = filter->to->sa.st_serialno;
+	st->st_ike_spis = filter->to->sa.st_ike_spis;
+	/*
+	 * Delete the old IKE_SPI hash entries (both for I and I+R
+	 * and), and then inserts new ones using ST's current IKE SPI
+	 * values.  The serialno tables are not touched.
+	 */
+	rehash_state_cookies_in_db(st);
+	return false; /* keep going */
+}
+
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 {
 	/*
@@ -2702,32 +2734,14 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 	 * NEW2OLD, insert will happen at the front of the table
 	 * which, the cursor is past (this odds of this are very low).
 	 */
-	struct state *st = NULL;
-	struct list_head *slot = ike_spis_slot(&from->sa.st_ike_spis);
-	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
-		if (st->st_clonedfrom == from->sa.st_serialno) {
-			passert(st->st_serialno != to->sa.st_serialno);
-			/*
-			 * Migrate the CHILD SA.
-			 *
-			 * Just the IKE_SPIrehash the SPIs without moving entry.
-			 *
-			 * XXX: this should also wipe message counters
-			 * but first need evidence.
-			 */
-			dbg("#%lu migrated from IKE SA #%lu to IKE SA #%lu",
-			    st->st_serialno, from->sa.st_serialno, to->sa.st_serialno);
-			st->st_clonedfrom = to->sa.st_serialno;
-			st->st_ike_spis = to->sa.st_ike_spis;
-			/*
-			 * Delete the old IKE_SPI hash entries (both
-			 * for I and I+R and), and then inserts new
-			 * ones using ST's current IKE SPI values.
-			 * The serialno tables are not touched.
-			 */
-			rehash_state_cookies_in_db(st);
-		}
-	}
+	struct v2_migrate_filter filter = {
+		.from = from,
+		.to = to,
+	};
+	state_by_ike_spis(IKEv2, from->sa.st_serialno,
+			  NULL /* ignore MSGID */,
+			  &from->sa.st_ike_spis,
+			  v2_migrate_predicate, &filter);
 }
 
 void delete_my_family(struct state *pst, bool v2_responder_state)
