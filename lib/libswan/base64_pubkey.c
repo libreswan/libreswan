@@ -113,7 +113,7 @@ static err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *
 	/*
 	 * What is left over forms the modulus.
 	 */
-	chunk_t modulus = (chunk_t) {
+	chunk_t modulus = {
 		.ptr = exponent_end,
 		.len = rr_end - exponent_end,
 	};

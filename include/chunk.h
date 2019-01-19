@@ -46,7 +46,7 @@ chunk_t chunk(void *ptr, size_t len);
  * CHUNKO: create a chunk that encompasses an object
  * Warning: the cast can mask some type errors (eg. loosing const attribute).
  */
-#define CHUNKO(OBJECT) ((chunk_t) { .ptr = (void *)&(OBJECT), .len = sizeof(OBJECT) })
+#define CHUNKO(OBJECT) ((const chunk_t) { .ptr = (void *)&(OBJECT), .len = sizeof(OBJECT) })
 
 chunk_t alloc_chunk(size_t count, const char *name);
 void free_chunk_contents(chunk_t *chunk); /* blats *CHUNK */
