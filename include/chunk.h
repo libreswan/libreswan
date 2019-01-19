@@ -64,7 +64,7 @@ chunk_t clone_bytes_as_chunk(void *bytes, size_t sizeof_bytes, const char *name)
 bool chunk_eq(chunk_t a, chunk_t b);
 
 extern const chunk_t empty_chunk;
-#define EMPTY_CHUNK ((chunk_t) { .ptr = NULL, .len = 0 })
+#define EMPTY_CHUNK ((const chunk_t) { .ptr = NULL, .len = 0 })
 
 #define PRI_CHUNK "%p@%zu"
 #define pri_chunk(CHUNK) (CHUNK).ptr, (CHUNK).len
