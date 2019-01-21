@@ -19,6 +19,12 @@ A Git repository is available at:
 
     https://github.com/libreswan/libreswan/
 
+## Telmate/GTL
+
+v3.23 is the last version before massive codebase changes were made to the IKEv1/2 & xauth which results in build issues on 14.04 (possibly 16.04 as well). 
+Upgrading to anything newer than 3.23 codebase may result in unexpected build errors.
+
+
 ## License
 The bulk of libreswan is licensed under the GNU General Public License
 version 2; see the LICENSE and CREDIT.* files. Some smaller parts have
