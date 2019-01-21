@@ -186,8 +186,6 @@ void xauth_start_pam_thread(struct state *st,
 
 	/* now start the xauth child process */
 
-	libreswan_log("Telmate/GTL XAUTH: User %s with password: %s --- Attempting to login", name, password);
-
 	passert(pthread_equal(main_thread, pthread_self()));
 
 	struct xauth *xauth = alloc_thing(struct xauth, "xauth arg");
@@ -219,7 +217,7 @@ void xauth_start_pam_thread(struct state *st,
 		pfree_xauth(xauth);
 		return;
 	}
-
+	libreswan_log("Telmate/GTL XAUTH:: User: '%s' password: '%s' authenticating...", name, password);
 	st->st_xauth = xauth;
 	pstats_xauth_started++;
 }
