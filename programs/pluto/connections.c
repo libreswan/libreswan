@@ -4576,18 +4576,20 @@ void suppress_delete(struct connection *c)
 
 	if (pst != NULL) {
 		pst->st_suppress_del_notify = TRUE;
-		DBG(DBG_CONTROL, DBG_log("Marked IKE state #%lu to suppress sending delete notify",
-			c->newest_isakmp_sa));
+		dbg("Marked IKE state #%lu to suppress sending delete notify",
+		    c->newest_isakmp_sa);
 	} else {
-		libreswan_log("did not find old IKE state to mark for suppressing delete");
+		libreswan_log("did not find old IKE state #%lu to mark for suppressing delete",
+			      c->newest_isakmp_sa);
 	}
 
 	if (cst != NULL) {
 		cst->st_suppress_del_notify = TRUE;
-		DBG(DBG_CONTROL, DBG_log("Marked IPSEC state #%lu to suppress sending delete notify",
-			c->newest_ipsec_sa));
+		dbg("Marked IPSEC state #%lu to suppress sending delete notify",
+		    c->newest_ipsec_sa);
 	} else {
-		libreswan_log("did not find old IPsec state to mark for suppressing delete");
+		libreswan_log("did not find old IPsec state #%lu to mark for suppressing delete",
+			      c->newest_ipsec_sa);
 	}
 }
 
