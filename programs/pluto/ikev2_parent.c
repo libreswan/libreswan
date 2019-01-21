@@ -1996,8 +1996,9 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	switch (authby) {
 	case AUTH_RSASIG:
-		a.isaa_type = (pst->st_seen_hashnotify && (c->sighash_policy != POL_SIGHASH_NONE)) ?
-			IKEv2_AUTH_DIGSIG : IKEv2_AUTH_RSA;
+		a.isaa_type = pst->st_seen_hashnotify &&
+			c->sighash_policy != POL_SIGHASH_NONE ?
+				IKEv2_AUTH_DIGSIG : IKEv2_AUTH_RSA;
 		break;
 	case AUTH_ECDSA:
 		a.isaa_type = IKEv2_AUTH_DIGSIG;
@@ -2014,7 +2015,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	}
 
 	if (!out_struct(&a, &ikev2_a_desc, outpbs, &a_pbs)) {
-		loglog(RC_LOG_SERIOUS, "Failed to emit IKE_AUTH payload");
+		/* loglog(RC_LOG_SERIOUS, "Failed to emit IKE_AUTH payload"); */
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -2533,13 +2534,14 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 	}
 	if (pst->st_seen_ppk) {
-		chunk_t notify_data = create_unified_ppk_id(&ppk_id_p);
-		if (!emit_v2Nchunk(v2N_PPK_IDENTITY, &notify_data, &sk.pbs)) {
+		pb_stream ppks;
+
+		if (!emit_v2Npl(v2N_PPK_IDENTITY, &sk.pbs, &ppks) ||
+		    !emit_unified_ppk_id(&ppk_id_p, &ppks)) {
 			freeanychunk(null_auth);
-			freeanychunk(notify_data);
 			return STF_INTERNAL_ERROR;
 		}
-		freeanychunk(notify_data);
+		close_output_pbs(&ppks);
 
 		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
 			ikev2_calc_no_ppk_auth(cc, pst, idhash_npa,

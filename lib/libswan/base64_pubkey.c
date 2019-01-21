@@ -66,6 +66,7 @@ static err_t rsa_pubkey_to_rfc_resource_record(chunk_t exponent, chunk_t modulus
 	return NULL;
 }
 
+/* Note: e and n will point int rr */
 static err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *n)
 {
 	*e = EMPTY_CHUNK;
@@ -73,7 +74,7 @@ static err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *
 
 	/*
 	 * Step 1: find the bounds of the exponent and modulus within
-	 * the recource record and verify that they are sane.
+	 * the resource record and verify that they are sane.
 	 */
 
 	chunk_t exponent;
@@ -129,10 +130,10 @@ static err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *
 	}
 
 	/*
-	 * Step 2: all looks good, clone the bits
+	 * Step 2: all looks good, export the slices
 	 */
-	*e = clone_chunk(exponent, "e");
-	*n = clone_chunk(modulus, "n");
+	*e = exponent;
+	*n = modulus;
 	return NULL;
 }
 
@@ -142,7 +143,7 @@ err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **base64_rr)
 
 	chunk_t rr_chunk;
 	err_t err = rsa_pubkey_to_rfc_resource_record(exponent, modulus, &rr_chunk);
-	if (err) {
+	if (err != NULL) {
 		return err;
 	}
 
@@ -180,28 +181,24 @@ err_t pack_RSA_public_key(const struct RSA_public_key *rsa, chunk_t *rr)
 
 err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 {
-	err_t err;
-
 	/* unpack */
 	chunk_t exponent;
 	chunk_t modulus;
-	err = rfc_resource_record_to_rsa_pubkey(*pubkey, &exponent, &modulus);
-	if (err) {
-		return err;
+	err_t rrerr = rfc_resource_record_to_rsa_pubkey(*pubkey, &exponent, &modulus);
+	if (rrerr != NULL) {
+		return rrerr;
 	}
 
 	ckaid_t ckaid;
-	err = form_ckaid_rsa(modulus, &ckaid);
-	if (err) {
-		freeanychunk(exponent);
-		freeanychunk(modulus);
-		return err;
+	err_t ckerr = form_ckaid_rsa(modulus, &ckaid);
+	if (ckerr != NULL) {
+		return ckerr;
 	}
 
 	keyblobtoid(pubkey->ptr, pubkey->len, rsa->keyid, sizeof(rsa->keyid));
 	rsa->k = modulus.len;
-	rsa->e = exponent;
-	rsa->n = modulus;
+	rsa->e = clone_chunk(exponent, "e");
+	rsa->n = clone_chunk(modulus, "n");
 	rsa->ckaid = ckaid;
 
 	DBG(DBG_PRIVATE, DBG_log_RSA_public_key(rsa));
@@ -211,23 +208,23 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 
 err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pubkey)
 {
-	err_t err;
+	/* ??? can this be cloned later, after form_ckaid_ecdsa has succeeded? */
 	ecdsa->pub = clone_chunk(*pubkey, "public value");
 
 	ckaid_t ckaid;
-	err = form_ckaid_ecdsa(ecdsa->pub, &ckaid);
-	if (err) {
+	err_t err = form_ckaid_ecdsa(ecdsa->pub, &ckaid);
+	if (err != NULL) {
 		freeanychunk(ecdsa->pub);
 		return err;
 	}
 
-	memset(ecdsa->keyid,0,KEYID_BUF);
 	memcpy(ecdsa->keyid, pubkey->ptr, KEYID_BUF-1);
+	ecdsa->keyid[KEYID_BUF-1] = '\0';
 
 	ecdsa->k = pubkey->len;
 	ecdsa->ckaid = ckaid;
 
 	DBG(DBG_PRIVATE, DBG_log_ECDSA_public_key(ecdsa));
-	/* generate the CKAID */
+	/* generate the CKAID */ /* ??? really? Not done above? */
        return NULL;
 }

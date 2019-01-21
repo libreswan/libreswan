@@ -107,7 +107,7 @@ static bool ECDSA_calculate_sighash(const struct state *st,
 		break;
 #endif
 	default:
-		return FALSE;
+		return false;
 	}
 
 	struct crypt_hash *ctx = crypt_hash_init(hd, "sighash", DBG_CRYPT);
@@ -121,12 +121,12 @@ static bool ECDSA_calculate_sighash(const struct state *st,
 
 	crypt_hash_final_bytes(&ctx, sig_octets, hd->hash_digest_size);
 
-	return TRUE;
+	return true;
 }
 
 bool ikev2_calculate_ecdsa_hash(struct state *st,
 			      enum original_role role,
-			      unsigned char *idhash,
+			      const unsigned char *idhash,
 			      pb_stream *a_pbs,
 			      bool calc_no_ppk_auth,
 			      chunk_t *no_ppk_auth,
@@ -141,7 +141,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 
 	DBGF(DBG_CRYPT, "ikev2_calculate_ecdsa_hash get_ECDSA_private_key");
 	/* XXX: use struct hash_desc and a lookup? */
-	unsigned int hash_digest_size;
+	size_t hash_digest_size;
  	switch (hash_algo) {
 #ifdef USE_SHA2
 	case IKEv2_AUTH_HASH_SHA2_256:
@@ -156,11 +156,12 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 #endif
 	default:
 		libreswan_log("Unknown or unsupported hash algorithm %d for ECDSA operation", hash_algo);
-		return FALSE;
+		return false;
 	}
 
 	/* hash the packet et.al. */
-	uint8_t *hash = alloc_bytes(hash_digest_size, "signed octets size");
+	passert(hash_digest_size <= SHA2_512_DIGEST_SIZE);
+	uint8_t hash[SHA2_512_DIGEST_SIZE];
 	ECDSA_calculate_sighash(st, role, idhash,
 				st->st_firstpacket_me,
 				hash, hash_algo);
@@ -170,24 +171,24 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	 * Sign the hash.
 	 *
 	 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
-	 * where 1056 is comming from should be constant in struct
-	 * hash_desc.
+	 * where 1056 is coming from.
+	 * It is the largest of the signature lengths amongst
+	 * ECDSA 256, 384, and 521.
 	 */
 	uint8_t sig_val[BYTES_FOR_BITS(1056)];
 	statetime_t sign_time = statetime_start(st);
 	size_t shr = sign_hash_ECDSA(k, hash, hash_digest_size,
 				     sig_val, sizeof(sig_val), hash_algo);
 	statetime_stop(&sign_time, "%s() calling sign_hash_ECDSA()", __func__);
+
 	if (shr == 0) {
-		DBGF(DBG_CRYPT, "sign_hash_ECDSA failed\n");
-		pfree(hash);
+		DBGF(DBG_CRYPT, "sign_hash_ECDSA failed");
 		return false;
 	}
 
 	if (calc_no_ppk_auth) {
 		clonetochunk(*no_ppk_auth, sig_val, shr, "NO_PPK_AUTH chunk");
 		DBG(DBG_PRIVATE, DBG_dump_chunk("NO_PPK_AUTH payload", *no_ppk_auth));
-		pfree(hash);
 		return true;
 	}
 
@@ -199,7 +200,6 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	};
 	if (DSAU_EncodeDerSigWithLen(&der_signature, &raw_signature,
 				     raw_signature.len) != SECSuccess) {
-		pfree(hash);
 		LSWLOG(buf) {
 			lswlogs(buf, "NSS: constructing DER encoded ECDSA signature using DSAU_EncodeDerSigWithLen() failed:");
 			lswlog_nss_error(buf);
@@ -215,14 +215,12 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	if (!out_raw(der_signature.data, der_signature.len, a_pbs, "ecdsa signature")) {
 
 		SECITEM_FreeItem(&der_signature, PR_FALSE);
-		pfree(hash);
-		return FALSE;
+		return false;
 	}
 
 	SECITEM_FreeItem(&der_signature, PR_FALSE);
-	pfree(hash);
 
-	return TRUE;
+	return true;
 }
 
 static err_t try_ECDSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
@@ -351,7 +349,7 @@ stf_status ikev2_verify_ecdsa_hash(struct state *st,
 				 pb_stream *sig_pbs,
 				 enum notify_payload_hash_algorithms hash_algo)
 {
-	unsigned int hash_len;
+	size_t hash_len;
 	stf_status retstat;
 	enum original_role invertrole;
 
@@ -372,7 +370,8 @@ stf_status ikev2_verify_ecdsa_hash(struct state *st,
 		return STF_FATAL;
 	}
 
-	unsigned char *calc_hash = alloc_bytes(hash_len, "hash size");
+	passert(hash_len <= SHA2_512_DIGEST_SIZE);
+	unsigned char calc_hash[SHA2_512_DIGEST_SIZE];
 
 	invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 
@@ -383,6 +382,5 @@ stf_status ikev2_verify_ecdsa_hash(struct state *st,
 
 	retstat = ECDSA_check_signature_gen(st, calc_hash, hash_len,
 					  sig_pbs, hash_algo, try_ECDSA_signature_v2);
-	pfree(calc_hash);
 	return retstat;
 }

@@ -49,16 +49,11 @@ bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl)
  * used by initiator to make chunk_t from ppk_id payload
  * for sending it in PPK_ID Notify Payload over the wire
  */
-chunk_t create_unified_ppk_id(struct ppk_id_payload *payl)
+bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *pbs)
 {
-	u_char type = PPK_ID_FIXED;	/* PPK_ID_FIXED */
-	const chunk_t *ppk_id = &payl->ppk_id;
-
-	/* unified is free'd in ikev2_parent.c */
-	chunk_t unified = alloc_chunk(ppk_id->len + 1, "Unified PPK_ID");
-	unified.ptr[0] = type;
-	memcpy(&unified.ptr[1], ppk_id->ptr, ppk_id->len);
-	return unified;
+	u_char type = PPK_ID_FIXED;
+	return out_raw(&type, sizeof(type), pbs, "PPK_ID_FIXED") &&
+		out_chunk(payl->ppk_id, pbs, "PPK_ID");
 }
 
 /*

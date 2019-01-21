@@ -622,7 +622,6 @@ void init_vendorid(void)
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
 			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID (ignore)");
-			int i;
 
 			vid->vid = vidm;
 
@@ -640,7 +639,7 @@ void init_vendorid(void)
 			memset(vidm + 2 + MD5_DIGEST_SIZE, '\0',
 			       FSWAN_VID_SIZE - (2 + MD5_DIGEST_SIZE));	/* pad hash */
 #endif
-			for (i = 2; i < FSWAN_VID_SIZE; i++) {
+			for (int i = 2; i < FSWAN_VID_SIZE; i++) {
 				vidm[i] &= 0x7f;
 				vidm[i] |= 0x40;
 			}

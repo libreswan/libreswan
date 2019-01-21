@@ -31,7 +31,8 @@ struct crypt_hash {
 };
 
 struct crypt_hash *crypt_hash_init(const struct hash_desc *hash_desc,
-				   const char *name, lset_t debug)
+				   const char *name,
+				   lset_t debug)
 {
 	DBG(debug, DBG_log("%s hash %s init",
 			   name, hash_desc->common.name));
@@ -78,7 +79,8 @@ void crypt_hash_digest_byte(struct crypt_hash *hash,
 }
 
 void crypt_hash_digest_bytes(struct crypt_hash *hash,
-			     const char *name, const void *bytes,
+			     const char *name,
+			     const void *bytes,
 			     size_t sizeof_bytes)
 {
 	DBG(hash->debug, DBG_log("%s hash %s digest %s-bytes@%p (length %zu)",

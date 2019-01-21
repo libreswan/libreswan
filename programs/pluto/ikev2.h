@@ -159,7 +159,7 @@ extern void ikev2_log_parentSA(const struct state *st);
 
 extern bool ikev2_calculate_rsa_hash(struct state *st,
 				     enum original_role role,
-				     unsigned char *idhash,
+				     const unsigned char *idhash,
 				     pb_stream *a_pbs,
 				     bool calc_no_ppk_auth,
 				     chunk_t *no_ppk_auth,
@@ -167,7 +167,7 @@ extern bool ikev2_calculate_rsa_hash(struct state *st,
 
 extern bool ikev2_calculate_ecdsa_hash(struct state *st,
 					enum original_role role,
-					unsigned char *idhash,
+					const unsigned char *idhash,
 					pb_stream *a_pbs,
 					bool calc_no_ppk_auth,
 					chunk_t *no_ppk_auth,

@@ -727,7 +727,7 @@ static size_t quick_mode_hash3(u_char *dest, struct state *st)
 void init_phase2_iv(struct state *st, const msgid_t *msgid)
 {
 	const struct hash_desc *h = st->st_oakley.ta_prf->hasher;
-	passert(h);
+	passert(h != NULL);
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump("last Phase 1 IV:",

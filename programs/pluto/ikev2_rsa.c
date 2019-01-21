@@ -63,7 +63,7 @@ static bool RSA_ikev2_calculate_sighash(const struct state *st,
 				    enum original_role role,
 				    const unsigned char *idhash,
 				    const chunk_t firstpacket,
-				    unsigned char *sig_octets,
+				    unsigned char *sig_octets, /* output */
 				    enum notify_payload_hash_algorithms hash_algo)
 {
 	const chunk_t *nonce;
@@ -122,7 +122,7 @@ static bool RSA_ikev2_calculate_sighash(const struct state *st,
 
 bool ikev2_calculate_rsa_hash(struct state *st,
 			      enum original_role role,
-			      unsigned char *idhash,
+			      const unsigned char *idhash,
 			      pb_stream *a_pbs,
 			      bool calc_no_ppk_auth,
 			      chunk_t *no_ppk_auth,
