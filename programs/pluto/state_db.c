@@ -345,6 +345,7 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 
 void add_state_to_db(struct state *st)
 {
+	dbg("adding state object #%lu to DB", st->st_serialno);
 	passert(st->st_serialno != SOS_NOBODY);
 	/* serial NR list, entries are only added */
 	st->st_serialno_list_entry = list_entry(&serialno_list_info, st);

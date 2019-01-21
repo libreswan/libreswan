@@ -513,12 +513,7 @@ struct state *state_with_serialno(so_serial_t sn)
  */
 void insert_state(struct state *st)
 {
-	DBG(DBG_CONTROL,
-	    DBG_log("inserting state object #%lu",
-		    st->st_serialno))
-
 	add_state_to_db(st);
-	refresh_state(st);
 }
 
 /*

@@ -1201,6 +1201,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 			change_state(st, STATE_V2_CREATE_R);
 			st->st_msgid = md->hdr.isa_msgid;
 			insert_state(st); /* needed for delete - we are duplicating early */
+			refresh_state(st);
 		} else {
 			what = "IKE Rekey Request";
 			st = ikev2_duplicate_state(ike, IKE_SA,
@@ -1208,6 +1209,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
 			st->st_msgid = md->hdr.isa_msgid;
 			insert_state(st); /* needed for delete - we are duplicating early */
+			refresh_state(st);
 		}
 	} else  {
 		/* this a response */

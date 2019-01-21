@@ -2188,6 +2188,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	cst->st_msgid = pst->st_msgid_nextuse;
 	insert_state(cst);
+	refresh_state(cst);
 	md->st = cst;
 
 	/*
@@ -5743,7 +5744,8 @@ void ikev2_initiate_child_sa(struct pending *p)
 #endif
 	change_state(st, new_state); /* from STATE_UNDEFINED */
 
-	insert_state(st); /* needs cookies, connection, and msgid */
+	insert_state(st);
+	refresh_state(st);
 
 	replacestr[0] = '\0';
 	if (p->replacing != SOS_NOBODY) {

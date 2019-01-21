@@ -816,7 +816,8 @@ void quick_outI1(fd_t whack_sock,
 	st->st_msgid = generate_msgid(isakmp_sa);
 	change_state(st, STATE_QUICK_I1); /* from STATE_UNDEFINED */
 
-	insert_state(st); /* needs cookies, connection, and msgid */
+	insert_state(st);
+	refresh_state(st);
 
 	/* figure out PFS group, if any */
 
@@ -1422,7 +1423,8 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		change_state(st, STATE_QUICK_R0);
 
-		insert_state(st); /* needs cookies, connection, and msgid */
+		insert_state(st);
+		refresh_state(st);
 
 		/* copy hidden variables (possibly with changes) */
 		st->hidden_variables = hv;
