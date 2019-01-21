@@ -282,7 +282,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- grep "Message ID:" /tmp/pluto.log
+ egrep "Message ID: [0-9] " /tmp/pluto.log
 |    Message ID: 0 (0x0)
 |    Message ID: 0 (0x0)
 |    Message ID: 1 (0x1)
