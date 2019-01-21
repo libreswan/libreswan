@@ -49,9 +49,6 @@ bool ike_spis_eq(const ike_spis_t *lhs, const ike_spis_t *rhs);
  *   still looks like a child
  */
 
-void fill_ike_initiator_spi(struct state *st);
-void fill_ike_responder_spi(struct state *st, const ip_address *addr);
-
 ike_spi_t ike_initiator_spi(void);
 ike_spi_t ike_responder_spi(const ip_address *addr);
 

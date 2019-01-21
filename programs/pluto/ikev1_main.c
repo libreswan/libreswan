@@ -107,10 +107,9 @@ void main_outI1(fd_t whack_sock,
 {
 	struct state *st;
 
-	st = new_v1_state();
+	st = new_v1_istate();
 
 	/* set up new state */
-	fill_ike_initiator_spi(st);
 	initialize_new_state(st, c, policy, try, whack_sock);
 	change_state(st, STATE_MAIN_I1);
 
@@ -671,9 +670,6 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 	/* only as accurate as connection */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK;
 	change_state(st, STATE_MAIN_R0);
-
-	st->st_ike_spis.initiator = md->hdr.isa_ike_initiator_spi;
-	fill_ike_responder_spi(st, &md->sender);
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 

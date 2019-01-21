@@ -396,7 +396,9 @@ so_serial_t next_so_serialno(void)
 }
 
 static struct state *new_state(enum ike_version ike_version,
-			       const struct finite_state *fs)
+			       const struct finite_state *fs,
+			       const ike_spi_t ike_initiator_spi,
+			       const ike_spi_t ike_responder_spi)
 {
 	union sas *sas = alloc_thing(union sas, "struct state in new_state()");
 	passert(&sas->st == &sas->child.sa);
@@ -408,6 +410,10 @@ static struct state *new_state(enum ike_version ike_version,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
 		.st_ike_version = ike_version,
+		.st_ike_spis = {
+			.initiator = ike_initiator_spi,
+			.responder = ike_responder_spi,
+		},
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	statetime_start(st);
@@ -420,22 +426,27 @@ static struct state *new_state(enum ike_version ike_version,
 	return st;
 }
 
-struct state *new_v1_state(void)
+struct state *new_v1_istate(void)
 {
-	return new_state(IKEv1, &state_undefined);
+	return new_state(IKEv1, &state_undefined, ike_initiator_spi(),
+			 zero_ike_spi);
 }
 
 struct state *new_v1_rstate(struct msg_digest *md)
 {
-	struct state *st = new_state(IKEv1, &state_undefined);
+	struct state *st = new_state(IKEv1, &state_undefined,
+				     md->hdr.isa_ike_spis.initiator,
+				     ike_responder_spi(&md->sender));
 	update_ike_endpoints(st, md);
-
 	return st;
 }
 
-struct state *new_v2_state(enum state_kind kind)
+struct state *new_v2_state(enum state_kind kind,
+			   const ike_spi_t ike_initiator_spi,
+			   const ike_spi_t ike_responder_spi)
 {
-	struct state *st = new_state(IKEv2, &state_undefined);
+	struct state *st = new_state(IKEv2, &state_undefined,
+				     ike_initiator_spi, ike_responder_spi);
 	const struct finite_state *fs = finite_states[kind];
 	change_state(st, fs->fs_kind);
 	/*
@@ -1336,7 +1347,9 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type,
 		st->st_outbound_time = mononow();
 	}
 
-	nst = new_state(st->st_ike_version, fs);
+	nst = new_state(st->st_ike_version, fs,
+			st->st_ike_spis.initiator,
+			st->st_ike_spis.responder);
 
 	DBG(DBG_CONTROL,
 		DBG_log("duplicating state object #%lu \"%s\"%s as #%lu for %s",
@@ -1347,7 +1360,6 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type,
 			 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
 
 	nst->st_connection = st->st_connection;
-	nst->st_ike_spis = st->st_ike_spis;
 
 	if (sa_type == IPSEC_SA) {
 		nst->st_oakley = st->st_oakley;

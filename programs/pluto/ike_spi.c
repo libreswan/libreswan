@@ -97,25 +97,3 @@ ike_spi_t ike_responder_spi(const ip_address *addr)
 	} while (ike_spi_is_zero(&spi)); /* probably never loops */
 	return spi;
 }
-
-/*
- * Generate the IKE Initiator's SPI.
- */
-void fill_ike_initiator_spi(struct state *st)
-{
-	st->st_ike_spis.initiator = ike_initiator_spi();
-}
-
-/*
- * Generate the IKE Responder's SPI.
- *
- * As responder, we use a hashing method to get a pseudo random
- * value instead of using our own random pool. It will prevent
- * an attacker from gaining raw data from our random pool and
- * it will prevent an attacker from depleting our random pool
- * or entropy.
- */
-void fill_ike_responder_spi(struct state *st, const ip_address *addr)
-{
-	st->st_ike_spis.responder = ike_responder_spi(addr);
-}

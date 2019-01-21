@@ -213,9 +213,6 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	st->st_try = 0;                                 /* Not our job to try again from start */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
-	st->st_ike_spis.initiator = md->hdr.isa_ike_initiator_spi;
-	fill_ike_responder_spi(st, &md->sender);
-
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
 	{
@@ -1020,7 +1017,7 @@ void aggr_outI1(fd_t whack_sock,
 	}
 
 	/* set up new state */
-	st = new_v1_state();
+	st = new_v1_istate();
 	set_cur_state(st);
 	st->st_connection = c;	/* safe: from new_state */
 
@@ -1035,8 +1032,6 @@ void aggr_outI1(fd_t whack_sock,
 	st->st_whack_sock = whack_sock;
 	st->st_try = try;
 	change_state(st, STATE_AGGR_I1);
-
-	fill_ike_initiator_spi(st);
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
