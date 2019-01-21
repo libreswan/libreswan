@@ -151,8 +151,7 @@ stf_status dpd_init(struct state *st)
 		}
 
 		/* find the IKE SA */
-		p1st = find_state_ikev1(&st->st_ike_spis.initiator,
-				&st->st_ike_spis.responder, 0);
+		p1st = find_state_ikev1(&st->st_ike_spis, 0);
 		if (p1st == NULL) {
 			loglog(RC_LOG_SERIOUS, "could not find phase 1 state for DPD");
 			return STF_FAIL;

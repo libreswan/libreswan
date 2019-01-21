@@ -766,9 +766,7 @@ extern struct state
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
 	*find_likely_sender(size_t packet_len, u_char * packet);
 
-struct state *find_state_ikev1(const ike_spi_t *ike_responder_spi,
-			       const ike_spi_t *ike_initiator_spi,
-			       msgid_t msgid);
+struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid);
 struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 				    msgid_t msgid);
 
@@ -776,17 +774,13 @@ extern bool find_pending_phase2(const so_serial_t psn,
 					const struct connection *c,
 					lset_t ok_states);
 
-extern struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
-				    const ike_spi_t *ike_responder_spi);
+extern struct state *find_v2_ike_sa(const ike_spis_t *ike_spis);
 extern struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi);
 
-struct state *DBG_v2_sa_by_message_id(const ike_spi_t *ike_initiator_spi,
-				      const ike_spi_t *ike_responder_spi,
-				      msgid_t msgid);
+struct state *DBG_v2_sa_by_msgid(const ike_spis_t *ike_spis, msgid_t msgid);
 
 extern struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
-					    const ike_spi_t *ike_initiator_spi,
-					    const ike_spi_t *ike_responder_spi,
+					    const ike_spis_t *ike_spis,
 					    const msgid_t msgid);
 
 struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
@@ -796,9 +790,8 @@ extern void find_states_and_redirect(const char *conn_name,
 				     ip_address remote_ip,
 				     char *redirect_gw);
 
-extern struct state *ikev1_find_info_state(const ike_spi_t *ike_initiator_spi,
-					   const ike_spi_t *ike_responder_spi,
-					   msgid_t msgid);
+extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
+					msgid_t msgid);
 
 extern void initialize_new_state(struct state *st,
 				 struct connection *c,

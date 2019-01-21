@@ -159,8 +159,7 @@ static struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
  * A table hashed by IKE SPIi+SPIr.
  */
 
-static size_t ike_spi_hasher(const ike_spi_t *ike_initiator_spi,
-			     const ike_spi_t *ike_responder_spi)
+static size_t ike_spis_hasher(const ike_spis_t *ike_spis)
 {
 	/*
 	 * 251 is a prime close to 256 aka <<8.  65521 is a prime
@@ -169,10 +168,10 @@ static size_t ike_spi_hasher(const ike_spi_t *ike_initiator_spi,
 	 * There's no real rationale for doing this.
 	 */
 	size_t hash = 0;
-	for (unsigned j = 0; j < sizeof(ike_initiator_spi->bytes); j++) {
+	for (unsigned j = 0; j < sizeof(ike_spis->initiator.bytes); j++) {
 		hash = (hash * 65521 +
-			ike_initiator_spi->bytes[j] * 251 +
-			ike_responder_spi->bytes[j]);
+			ike_spis->initiator.bytes[j] * 251 +
+			ike_spis->responder.bytes[j]);
 	}
 	return hash;
 }
@@ -180,8 +179,7 @@ static size_t ike_spi_hasher(const ike_spi_t *ike_initiator_spi,
 static size_t ike_spis_hash(void *data)
 {
 	struct state *st = (struct state *)data;
-	return ike_spi_hasher(&st->st_ike_spis.initiator,
-			      &st->st_ike_spis.responder);
+	return ike_spis_hasher(&st->st_ike_spis);
 }
 
 static size_t ike_spis_log(struct lswlog *buf, void *data)
@@ -209,24 +207,18 @@ static struct hash_table ike_spis_hash_table = {
 	.slots = ike_spis_hash_slots,
 };
 
-struct list_head *ike_spi_slot(const ike_spi_t *initiator,
-			       const ike_spi_t *responder)
+static struct list_head *ike_spis_slot(const ike_spis_t *ike_spis)
 {
-	size_t hash = ike_spi_hasher(initiator, responder);
+	size_t hash = ike_spis_hasher(ike_spis);
 	struct list_head *slot = hash_table_slot_by_hash(&ike_spis_hash_table, hash);
-	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
+	LSWDBGP(DBG_TMI, buf) {
 		lswlogf(buf, "%s: hash IKE SPIi ", ike_spis_hash_table.info.name);
-		lswlog_bytes(buf, initiator->bytes, sizeof(initiator->bytes));
+		lswlog_bytes(buf, ike_spis->initiator.bytes, sizeof(ike_spis->initiator.bytes));
 		lswlogs(buf, " SPIr ");
-		lswlog_bytes(buf, responder->bytes, sizeof(responder->bytes));
+		lswlog_bytes(buf, ike_spis->responder.bytes, sizeof(ike_spis->responder.bytes));
 		lswlogf(buf, " to %zu slot %p", hash, slot);
 	};
 	return slot;
-}
-
-struct list_head *ike_spis_slot(const ike_spis_t *ir)
-{
-	return ike_spi_slot(&ir->initiator, &ir->responder);
 }
 
 /*
@@ -294,6 +286,35 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 		}
 		if (!ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
 			continue;
+		}
+		dbg("%s state object #%lu found, in %s",
+		    enum_name(&ike_version_names, ike_version),
+		    st->st_serialno, st->st_state_name);
+		return st;
+	}
+	dbg("%s state object not found", enum_name(&ike_version_names, ike_version));
+	return NULL;
+}
+
+struct state *state_by_ike_spis(enum ike_version ike_version,
+				so_serial_t clonedfrom,
+				const msgid_t *msgid,
+				const ike_spis_t *ike_spis,
+				state_by_predicate *predicate,
+				void *predicate_context)
+{
+	struct state *st = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(ike_spis), st) {
+		if (!state_plausable(st, ike_version, clonedfrom, msgid)) {
+			continue;
+		}
+		if (!ike_spis_eq(&st->st_ike_spis, ike_spis)) {
+			continue;
+		}
+		if (predicate != NULL) {
+			if (!predicate(st, predicate_context)) {
+				continue;
+			}
 		}
 		dbg("%s state object #%lu found, in %s",
 		    enum_name(&ike_version_names, ike_version),

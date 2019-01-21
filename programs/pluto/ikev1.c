@@ -1219,8 +1219,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		} else {
 			/* not an initial message */
 
-			st = find_state_ikev1(&md->hdr.isa_ike_initiator_spi,
-					      &md->hdr.isa_ike_responder_spi,
+			st = find_state_ikev1(&md->hdr.isa_ike_spis,
 					      md->hdr.isa_msgid);
 
 			if (st == NULL) {
@@ -1246,9 +1245,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		break;
 
 	case ISAKMP_XCHG_INFO:  /* an informational exchange */
-		st = ikev1_find_info_state(&md->hdr.isa_ike_initiator_spi,
-					   &md->hdr.isa_ike_responder_spi,
-					   v1_MAINMODE_MSGID);
+		st = find_v1_info_state(&md->hdr.isa_ike_spis,
+					v1_MAINMODE_MSGID);
 
 		if (st == NULL) {
 			/*
@@ -1350,8 +1348,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
-		st = find_state_ikev1(&md->hdr.isa_ike_initiator_spi,
-				      &md->hdr.isa_ike_responder_spi,
+		st = find_state_ikev1(&md->hdr.isa_ike_spis,
 				      md->hdr.isa_msgid);
 
 		if (st == NULL) {
@@ -1359,8 +1356,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * See if we have a Main Mode state.
 			 * ??? what if this is a duplicate of another message?
 			 */
-			st = find_state_ikev1(&md->hdr.isa_ike_initiator_spi,
-					      &md->hdr.isa_ike_responder_spi,
+			st = find_state_ikev1(&md->hdr.isa_ike_spis,
 					      v1_MAINMODE_MSGID);
 
 			if (st == NULL) {
@@ -1442,9 +1438,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
-		st = ikev1_find_info_state(&md->hdr.isa_ike_initiator_spi,
-					   &md->hdr.isa_ike_responder_spi,
-					   md->hdr.isa_msgid);
+		st = find_v1_info_state(&md->hdr.isa_ike_spis, md->hdr.isa_msgid);
 
 		if (st == NULL) {
 			/* No appropriate Mode Config state.
@@ -1454,9 +1448,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			DBG(DBG_CONTROL, DBG_log(
 				"No appropriate Mode Config state yet. See if we have a Main Mode state"));
 
-			st = ikev1_find_info_state(&md->hdr.isa_ike_initiator_spi,
-						   &md->hdr.isa_ike_responder_spi,
-						   0);
+			st = find_v1_info_state(&md->hdr.isa_ike_spis, 0);
 
 			if (st == NULL) {
 				DBG(DBG_CONTROL, DBG_log(

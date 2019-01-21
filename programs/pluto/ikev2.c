@@ -1582,8 +1582,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * request then the state machine will will morph ST
 		 * into a child state before dispatching.
 		 */
-		st = find_v2_ike_sa(&md->hdr.isa_ike_initiator_spi,
-				    &md->hdr.isa_ike_responder_spi);
+		st = find_v2_ike_sa(&md->hdr.isa_ike_spis);
 		if (st == NULL) {
 			struct esb_buf ixb;
 			rate_log("%s message request has no corresponding IKE SA",
@@ -1623,14 +1622,11 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * no Message ID match then just log it - the IKE SA
 		 * is being used to make the error message "pretty".
 		 */
-		st = find_state_ikev2_child(ix,
-					    &md->hdr.isa_ike_initiator_spi,
-					    &md->hdr.isa_ike_responder_spi,
+		st = find_state_ikev2_child(ix, &md->hdr.isa_ike_spis,
 					    md->hdr.isa_msgid);
 		if (DBGP(DBG_BASE)) {
-			struct state *msgid_st = DBG_v2_sa_by_message_id(&md->hdr.isa_ike_initiator_spi,
-									 &md->hdr.isa_ike_responder_spi,
-									 md->hdr.isa_msgid);
+			struct state *msgid_st = DBG_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
+								    md->hdr.isa_msgid);
 			if (st != msgid_st) {
 				DBG_log("state and msgid search mismatch");
 			}
@@ -1641,8 +1637,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * Didn't find a child waiting on that message
 			 * ID so presumably it isn't valid.
 			 */
-			st = find_v2_ike_sa(&md->hdr.isa_ike_initiator_spi,
-					    &md->hdr.isa_ike_responder_spi);
+			st = find_v2_ike_sa(&md->hdr.isa_ike_spis);
 			if (st == NULL) {
 				rate_log("%s message response has no matching IKE SA",
 					 enum_name(&ikev2_exchange_names, ix));
@@ -1700,9 +1695,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
 
 			if (DBGP(DBG_BASE)) {
-				struct state *msgid_st = DBG_v2_sa_by_message_id(&md->hdr.isa_ike_initiator_spi,
-										 &md->hdr.isa_ike_responder_spi,
-										 md->hdr.isa_msgid);
+				struct state *msgid_st = DBG_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
+									    md->hdr.isa_msgid);
 				if (st != msgid_st) {
 					DBG_log("state and msgid search mismatch");
 				}

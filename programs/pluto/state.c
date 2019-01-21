@@ -603,14 +603,14 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 	}
 
 	/* Any children? */
-	struct state *st;
-	struct list_head *slot = ike_spis_slot(&ike->sa.st_ike_spis);
-	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
-		if (st->st_clonedfrom == ike->sa.st_serialno) {
-			dbg("can't expire unused IKE SA #%lu; it has the child #%lu",
-			    ike->sa.st_serialno, st->st_serialno);
-			return;
-		}
+	struct state *st = state_by_ike_spis(IKEv2, ike->sa.st_serialno,
+					     NULL /* ignore msgid */,
+					     &ike->sa.st_ike_spis,
+					     NULL, NULL /* no predicate */);
+	if (st != NULL) {
+		dbg("can't expire unused IKE SA #%lu; it has the child #%lu",
+		    ike->sa.st_serialno, st->st_serialno);
+		return;
 	}
 
 	{
@@ -1453,29 +1453,10 @@ void for_each_state(void (*f)(struct state *, void *data), void *data)
  * Find a state object for an IKEv1 state
  */
 
-struct state *find_state_ikev1(const ike_spi_t *ike_initiator_spi,
-			       const ike_spi_t *ike_responder_spi,
-			       msgid_t msgid)
+struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
-						 ike_responder_spi), st) {
-		if (st->st_ike_version == IKEv1 &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
-		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
-			dbg("v1 peer and cookies match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
-			    st->st_serialno, msgid, st->st_msgid);
-			if (msgid == st->st_msgid) {
-				dbg("v1 state object #%lu found, in %s",
-				    st->st_serialno,
-				    st->st_state_name);
-				return st;
-			}
-		}
-	}
-
-	dbg("v1 state object not found");
-	return NULL;
+	return state_by_ike_spis(IKEv1, SOS_IGNORE/*clonedfrom*/, &msgid,
+				 ike_spis, NULL, NULL);
 }
 
 struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
@@ -1488,24 +1469,11 @@ struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 /*
  * Find the IKEv2 IKE SA with the specified SPIs.
  */
-struct state *find_v2_ike_sa(const ike_spi_t *ike_initiator_spi,
-			      const ike_spi_t *ike_responder_spi)
+struct state *find_v2_ike_sa(const ike_spis_t *ike_spis)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
-						 ike_responder_spi), st) {
-		if ((st->st_ike_version == IKEv2) &&
-		    IS_IKE_SA(st) &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
-		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
-			dbg("v2 IKE SA #%lu found, in state %s",
-			    st->st_serialno,
-			    st->st_state_name);
-			return st;
-		}
-	}
-	dbg("parent v2 state object not found");
-	return NULL;
+	return state_by_ike_spis(IKEv2, SOS_NOBODY/*clonedfrom*/,
+				 NULL/*ignore msgid*/,
+				 ike_spis, NULL, NULL);
 }
 
 /*
@@ -1524,104 +1492,98 @@ struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi
  * Find a state object for an IKEv2 state, a response that includes a msgid.
  */
 
-static bool ikev2_ix_state_match(const struct state *st,
-		const enum isakmp_xchg_types ix)
-{
-	bool ret = FALSE;
+struct v2_ix_filter {
+	enum isakmp_xchg_types ix;
+};
 
-	switch (ix) {
+static bool v2_ix_predicate(struct state *st, void *context)
+{
+	const struct v2_ix_filter *filter = context;
+	switch (filter->ix) {
 	case ISAKMP_v2_IKE_SA_INIT:
 	case ISAKMP_v2_IKE_AUTH:
 	case ISAKMP_v2_INFORMATIONAL:
-		ret = TRUE; /* good enough, strict check could be double work */
+		return true; /* good enough, strict check could be double work */
 		break;
 
 	case ISAKMP_v2_CREATE_CHILD_SA:
 		if (IS_CHILD_IPSECSA_RESPONSE(st))
-			ret = TRUE;
+			return true;
 		break;
 
 	default:
 		DBG(DBG_CONTROLMORE, DBG_log("unsolicited response? did we send %s request? ",
-					enum_name(&ikev2_exchange_names, ix)));
+					enum_name(&ikev2_exchange_names, filter->ix)));
 		break;
 	}
-
-	return ret;
+	return false;
 }
 
 struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
-				     const ike_spi_t *ike_initiator_spi,
-				     const ike_spi_t *ike_responder_spi,
+				     const ike_spis_t *ike_spis,
 				     const msgid_t msgid)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
-						 ike_responder_spi), st) {
-		if ((st->st_ike_version == IKEv2) &&
-		    IS_CHILD_SA(st) &&
-		    st->st_msgid == msgid &&
-		    ikev2_ix_state_match(st, ix) &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
-		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
-			dbg("v2 state object #%lu found, in %s",
-			    st->st_serialno,
-			    st->st_state_name);
-			return st;
-		}
-	}
-
-	DBG_log("v2 state object not found");
-	return NULL;
+	struct v2_ix_filter filter = {
+		.ix = ix,
+	};
+	return state_by_ike_spis(IKEv2, SOS_SOMEBODY, &msgid,
+				 ike_spis, v2_ix_predicate, &filter);
 }
 
-struct state *DBG_v2_sa_by_message_id(const ike_spi_t *ike_initiator_spi,
-				      const ike_spi_t *ike_responder_spi,
-				      const msgid_t msgid)
+struct sa_by_msgid_filter {
+	struct state *found;
+	msgid_t msgid;
+};
+
+static bool sa_by_msgid_predicate(struct state *st, void *context)
 {
 	/*
 	 * XXX: For moment, don't trust Message ID to be unique -
 	 * diagnose anything that happens.
 	 */
-	struct state *st = NULL;
-	struct state *found = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
-						 ike_responder_spi), st) {
-		if (st->st_ike_version == IKEv2 &&
-		    st->st_msgid == msgid &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
-		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
-			/* try to diagnose problems */
-			if (found == NULL) {
-				found = st; /* log below */
-			} else if (IS_CHILD_SA(st)) {
-				/* prefer child */
-				const char *type = IS_IKE_SA(found) ? "IKE" : "CHILD";
-				DBG_log("v2 SA by Message ID %u: ignoring %s SA #%lu, in state %s; have child #%lu",
-					msgid, type, found->st_serialno,
-					found->st_state_name,
-					st->st_serialno);
-				found = st;
-			} else {
-				const char *type = IS_IKE_SA(st) ? "IKE" : "CHILD";
-				DBG_log("v2 SA by Message ID %u: ignoring %s SA #%lu, in state %s; have #%lu",
-					msgid, type, st->st_serialno,
-					found->st_state_name,
-					st->st_serialno);
-			}
+	struct sa_by_msgid_filter *filter = context;
+	if (st->st_msgid == filter->msgid) {
+		/* try to diagnose problems */
+		if (filter->found == NULL) {
+			filter->found = st; /* log below */
+		} else if (IS_CHILD_SA(st)) {
+			/* prefer child */
+			const char *type = IS_IKE_SA(filter->found) ? "IKE" : "CHILD";
+			DBG_log("v2 SA by Message ID %u: ignoring %s SA #%lu, in state %s; have child #%lu",
+				filter->msgid, type, filter->found->st_serialno,
+				filter->found->st_state_name,
+				st->st_serialno);
+			filter->found = st;
+		} else {
+			const char *type = IS_IKE_SA(st) ? "IKE" : "CHILD";
+			DBG_log("v2 SA by Message ID %u: ignoring %s SA #%lu, in state %s; have #%lu",
+				filter->msgid, type, st->st_serialno,
+				filter->found->st_state_name,
+				st->st_serialno);
 		}
 	}
+	return false;
+}
 
-	if (found != NULL) {
-		const char *type = IS_IKE_SA(found) ? "IKE" : "CHILD";
+struct state *DBG_v2_sa_by_msgid(const ike_spis_t *ike_spis, const msgid_t msgid)
+{
+	struct sa_by_msgid_filter filter = {
+		.found = NULL,
+		.msgid = msgid,
+	};
+	state_by_ike_spis(IKEv2, SOS_IGNORE,
+			  NULL /* let id_predicate do filtering of msgid */,
+			  ike_spis, sa_by_msgid_predicate, &filter);
+	if (filter.found != NULL) {
+		const char *type = IS_IKE_SA(filter.found) ? "IKE" : "CHILD";
 		DBG_log("v2 SA by Message ID %u: found %s SA #%lu, in state %s",
-			msgid, type, found->st_serialno,
-			found->st_state_name);
-		return found;
+			msgid, type, filter.found->st_serialno,
+			filter.found->st_state_name);
+		return filter.found;
+	} else {
+		DBG_log("v2 SA by Message ID %u: no matching SA found", msgid);
+		return NULL;
 	}
-
-	DBG_log("v2 SA by Message ID %u: no matching SA found", msgid);
-	return NULL;
 }
 
 /*
@@ -1642,48 +1604,58 @@ struct state *DBG_v2_sa_by_message_id(const ike_spi_t *ike_initiator_spi,
  * SPI is the SPI the sending endpoint would expect in inbound ESP or
  * AH packets.
  */
+
+struct v2_spi_filter {
+	uint8_t protoid;
+	ipsec_spi_t spi;
+};
+
+static bool v2_spi_predicate(struct state *st, void *context)
+{
+	struct v2_spi_filter *filter = context;
+
+	struct ipsec_proto_info *pr;
+	switch (filter->protoid) {
+	case PROTO_IPSEC_AH:
+		pr = &st->st_ah;
+		break;
+	case PROTO_IPSEC_ESP:
+		pr = &st->st_esp;
+		break;
+	default:
+		bad_case(filter->protoid);
+	}
+
+	if (pr->present) {
+		if (pr->attrs.spi == filter->spi) {
+			dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
+			    st->st_serialno,
+			    st->st_state_name);
+			return true;
+		}
+#if 0
+		/* see function description above */
+		if (pr->our_spi == filter->spi) {
+			dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
+			    st->st_serialno,
+			    st->st_state_name);
+			return true;
+		}
+#endif
+	}
+	return false;
+}
+
 struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
 					       uint8_t protoid, ipsec_spi_t spi)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(ike_spis), st) {
-		if ((st->st_ike_version == IKEv2) && IS_CHILD_SA(st) &&
-		    ike_spis_eq(&st->st_ike_spis, ike_spis)) {
-
-			struct ipsec_proto_info *pr;
-			switch (protoid) {
-			case PROTO_IPSEC_AH:
-				pr = &st->st_ah;
-				break;
-			case PROTO_IPSEC_ESP:
-				pr = &st->st_esp;
-				break;
-			default:
-				bad_case(protoid);
-			}
-
-			if (pr->present) {
-				if (pr->attrs.spi == spi) {
-					dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
-					    st->st_serialno,
-					    st->st_state_name);
-					return st;
-				}
-#if 0
-				/* see function description above */
-				if (pr->our_spi == spi) {
-					dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
-					    st->st_serialno,
-					    st->st_state_name);
-					return st;
-				}
-#endif
-			}
-
-		}
-	}
-	dbg("v2 CHILD SA not found");
-	return NULL;
+	struct v2_spi_filter filter = {
+		.protoid = protoid,
+		.spi = spi,
+	};
+	return state_by_ike_spis(IKEv2, SOS_SOMEBODY,
+				 NULL /* ignore MSGID */,
+				 ike_spis, v2_spi_predicate, &filter);
 }
 
 /*
@@ -1741,30 +1713,34 @@ void find_states_and_redirect(const char *conn_name,
 /*
  * Find a state object.
  */
-struct state *ikev1_find_info_state(const ike_spi_t *ike_initiator_spi,
-				    const ike_spi_t *ike_responder_spi,
-				    msgid_t msgid)
+struct v1_msgid_filter {
+	msgid_t msgid;
+};
+
+static bool v1_msgid_predicate(struct state *st, void *context)
 {
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spi_slot(ike_initiator_spi,
-						 ike_responder_spi), st) {
-		if (st->st_ike_version == IKEv1 &&
-		    ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi) &&
-		    ike_spi_eq(&st->st_ike_spis.responder, ike_responder_spi)) {
-			dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
-			    st->st_serialno, msgid,
-			    st->st_msgid, st->st_msgid_phase15);
-			if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
-			     msgid == st->st_msgid_phase15) ||
-			    msgid == st->st_msgid) {
-				dbg("p15 state object #%lu found, in %s",
-				    st->st_serialno, st->st_state_name);
-				return st;
-			}
-		}
+	struct v1_msgid_filter *filter = context;
+	dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
+	    st->st_serialno, filter->msgid,
+	    st->st_msgid, st->st_msgid_phase15);
+	if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
+	     filter->msgid == st->st_msgid_phase15) ||
+	    filter->msgid == st->st_msgid) {
+		dbg("p15 state object #%lu found, in %s",
+		    st->st_serialno, st->st_state_name);
+		return true;
 	}
-	dbg("p15 state object not found");
-	return NULL;
+	return false;
+}
+
+struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
+{
+	struct v1_msgid_filter filter = {
+		.msgid = msgid,
+	};
+	return state_by_ike_spis(IKEv1, SOS_IGNORE,
+				 NULL/* check MSGID in msgid_predicate() */,
+				 ike_spis, v1_msgid_predicate, &filter);
 }
 
 /*
@@ -2707,6 +2683,38 @@ bool dpd_active_locally(const struct state *st)
 /*
  * Find all CHILD SAs belonging to FROM and migrate them to TO.
  */
+
+struct v2_migrate_filter {
+	struct ike_sa *from;
+	struct child_sa *to;
+};
+
+static bool v2_migrate_predicate(struct state *st, void *context)
+{
+	struct v2_migrate_filter *filter = context;
+	passert(st->st_serialno != filter->to->sa.st_serialno);
+	/*
+	 * Migrate the CHILD SA.
+	 *
+	 * Just the IKE_SPIrehash the SPIs without moving entry.
+	 *
+	 * XXX: this should also wipe message counters but first need
+	 * evidence.
+	 */
+	dbg("#%lu migrated from IKE SA #%lu to IKE SA #%lu",
+	    st->st_serialno, filter->from->sa.st_serialno,
+	    filter->to->sa.st_serialno);
+	st->st_clonedfrom = filter->to->sa.st_serialno;
+	st->st_ike_spis = filter->to->sa.st_ike_spis;
+	/*
+	 * Delete the old IKE_SPI hash entries (both for I and I+R
+	 * and), and then inserts new ones using ST's current IKE SPI
+	 * values.  The serialno tables are not touched.
+	 */
+	rehash_state_cookies_in_db(st);
+	return false; /* keep going */
+}
+
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 {
 	/*
@@ -2729,32 +2737,32 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 	 * NEW2OLD, insert will happen at the front of the table
 	 * which, the cursor is past (this odds of this are very low).
 	 */
-	struct state *st = NULL;
-	struct list_head *slot = ike_spis_slot(&from->sa.st_ike_spis);
-	FOR_EACH_LIST_ENTRY_NEW2OLD(slot, st) {
-		if (st->st_clonedfrom == from->sa.st_serialno) {
-			passert(st->st_serialno != to->sa.st_serialno);
-			/*
-			 * Migrate the CHILD SA.
-			 *
-			 * Just the IKE_SPIrehash the SPIs without moving entry.
-			 *
-			 * XXX: this should also wipe message counters
-			 * but first need evidence.
-			 */
-			dbg("#%lu migrated from IKE SA #%lu to IKE SA #%lu",
-			    st->st_serialno, from->sa.st_serialno, to->sa.st_serialno);
-			st->st_clonedfrom = to->sa.st_serialno;
-			st->st_ike_spis = to->sa.st_ike_spis;
-			/*
-			 * Delete the old IKE_SPI hash entries (both
-			 * for I and I+R and), and then inserts new
-			 * ones using ST's current IKE SPI values.
-			 * The serialno tables are not touched.
-			 */
-			rehash_state_cookies_in_db(st);
-		}
+	struct v2_migrate_filter filter = {
+		.from = from,
+		.to = to,
+	};
+	state_by_ike_spis(IKEv2, from->sa.st_serialno,
+			  NULL /* ignore MSGID */,
+			  &from->sa.st_ike_spis,
+			  v2_migrate_predicate, &filter);
+}
+
+struct delete_filter {
+	bool v2_responder_state;
+};
+
+static bool delete_predicate(struct state *st, void *context)
+{
+	struct delete_filter *filter = context;
+	if (filter->v2_responder_state) {
+		/*
+		 * XXX: Suspect forcing the state to ..._DEL is a
+		 * secret code for do-not send a delete notification?
+		 */
+		change_state(st, STATE_CHILDSA_DEL);
 	}
+	delete_state(st);
+	return false; /* keep going */
 }
 
 void delete_my_family(struct state *pst, bool v2_responder_state)
@@ -2765,26 +2773,13 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	 * Our children will be on the same hash chain
 	 * because we share IKE SPIs.
 	 */
-
 	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
-
-	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(&pst->st_ike_spis), st) {
-		/* XXX: bother with ike_spi_eq()? */
-		/* XXX: bother with IKEv1 vs IKEv2? */
-		if (st->st_clonedfrom == pst->st_serialno) {
-			if (v2_responder_state)
-				/*
-				 * XXX: Suspect forcing the state to
-				 * ..._DEL is a secret code for do-not
-				 * send a delete notification?
-				 */
-				change_state(st, STATE_CHILDSA_DEL);
-			delete_state(st);
-		}
-		/* note: no md->st to clear */
-	}
-
+	struct delete_filter delete_filter = {
+		.v2_responder_state = v2_responder_state,
+	};
+	state_by_ike_spis(pst->st_ike_version, pst->st_serialno,
+			  NULL /* ignore MSGID */, &pst->st_ike_spis,
+			  delete_predicate, &delete_filter);
 	/* delete self */
 	if (v2_responder_state) {
 		/*
