@@ -170,39 +170,6 @@ extern const char *ipsec_version_vendorid(void);
 extern const char *ipsec_version_string(void);
 extern const char libreswan_vendorid[];
 
-/*
- * obsolete functions, to be deleted eventually
- */
-
-/* Internet addresses */
-/* obsolete (replaced by addrtot) but still in use */
-extern size_t                   /* space needed for full conversion */
-addrtoa(struct in_addr addr,
-	int format,             /* character; 0 means default */
-	char *dst,
-	size_t dstlen
-	);
-#define ADDRTOA_BUF     ADDRTOT_BUF
-
-/* subnets */
-/* obsolete (replaced by subnettot) but still in use */
-extern size_t                          /* space needed for full conversion */
-subnettoa(struct in_addr addr,
-	  struct in_addr mask,
-	  int format,           /* character; 0 means default */
-	  char *dst,
-	  size_t dstlen
-	  );
-/* obsolete (replaced by subnettot) but still in use; no manpage */
-extern size_t                          /* space needed for full conversion */
-subnet6toa(struct in6_addr *addr,
-	   struct in6_addr *mask,
-	   int format,          /* character; 0 means default */
-	   char *dst,
-	   size_t dstlen
-	   );
-#define SUBNETTOA_BUF SUBNETTOT_BUF     /* large enough for worst case result */
-
 /* end of obsolete functions */
 
 /* data types for SA conversion functions */
