@@ -53,33 +53,3 @@ size_t dstlen;
 
 	return len;
 }
-
-size_t subnetporttot(sub, format, dst, dstlen)
-const ip_subnet * sub;
-int format;
-char *dst;
-size_t dstlen;
-{
-	size_t len, alen;
-	char *end;
-
-	len = subnettot(sub, format, dst, dstlen);
-
-	/* if port is zero, then return */
-	if (portof(&sub->addr) == 0)
-		return len;
-
-	/* else, append to the format, decimal representation */
-	alen = strlen(dst);
-	end = dst + alen;
-	if ((alen + ULTOT_BUF) > dstlen) {
-		/* we failed to find enough space, let caller know */
-		return len + ULTOT_BUF;
-	}
-
-	/* base = 10 */
-	*end++ = ':';
-	len += ultot(ntohs(portof(&sub->addr)), 10, end, dstlen - (alen + 1));
-
-	return len;
-}

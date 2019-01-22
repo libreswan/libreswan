@@ -39,8 +39,6 @@ ip_address ip_subnet_ceiling(const ip_subnet *subnet);
 extern err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
 extern size_t subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
 #define SUBNETTOT_BUF   (ADDRTOT_BUF + 1 + 3)
-extern size_t subnetporttot(const ip_subnet *src, int format, char *buf,
-		     size_t buflen);
 extern err_t initsubnet(const ip_address *addr, int maskbits, int clash,
 		 ip_subnet *dst);
 extern err_t addrtosubnet(const ip_address *addr, ip_subnet *dst);
