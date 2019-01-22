@@ -52,6 +52,7 @@ west #
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.disable_policy = 1
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.rp_filter = 0
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.forwarding = 1
+002 "westnet-eastnet-vti-01" #2: up-client output: done ip route
 002 "westnet-eastnet-vti-01" #2: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
 002 "westnet-eastnet-vti-01" #2: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
 002 "westnet-eastnet-vti-01" #2: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 2
@@ -71,9 +72,11 @@ west #
 002 "westnet-eastnet-vti-02" #4: up-client output: vti interface "ipsec0" already exists with conflicting setting
 002 "westnet-eastnet-vti-02" #4: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
 002 "westnet-eastnet-vti-02" #4: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 2
+002 "westnet-eastnet-vti-02" #4: up-client output: done ip route
 002 "westnet-eastnet-vti-02" #4: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
 002 "westnet-eastnet-vti-02" #4: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
 002 "westnet-eastnet-vti-02" #4: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 2
+002 "westnet-eastnet-vti-02" #4: route-client output: RTNETLINK answers: File exists
 002 "westnet-eastnet-vti-02" #4: route-client output: done ip route
 004 "westnet-eastnet-vti-02" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
@@ -85,6 +88,7 @@ default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
 192.0.2.0/24 dev ipsec0 scope link
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.1.2.254 dev eth1 scope link
 192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
@@ -124,8 +128,8 @@ west #
  # show how our tunnel interface looks
 west #
  ip tun
-ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
 ip_vti0: ip/ip remote any local any ttl inherit nopmtudisc key 0
+ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
 west #
  echo done
 done
@@ -195,6 +199,7 @@ default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
 192.0.2.0/24 dev ipsec0 scope link
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.1.2.254 dev eth1 scope link
 192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes

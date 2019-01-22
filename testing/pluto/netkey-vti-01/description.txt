@@ -9,3 +9,6 @@ encrypted. Note that east uses no marks and encrypts everything back.
 This test case uses a single mark for input and output. Two separate
 marks could be used to separate incoming and outgoing traffic. In
 that case, the ip tunnel command uses okey and ikey instead of key.
+
+Because of the asymmetry, it can cause some stray packets hitting the
+XFRM without a poicy.
