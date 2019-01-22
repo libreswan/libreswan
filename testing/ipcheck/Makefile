@@ -20,6 +20,7 @@ PROGRAM = ipcheck
 OBJS += ipcheck.o
 OBJS += ip_address_check.o
 OBJS += ip_endpoint_check.o
+OBJS += ip_range_check.o
 OBJS += ip_subnet_check.o
 
 OBJS += $(LIBRESWANLIB)

@@ -17,6 +17,7 @@
 
 extern void ip_address_check(void);
 extern void ip_endpoint_check(void);
+extern void ip_range_check(void);
 extern void ip_subnet_check(void);
 
 /*
