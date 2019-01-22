@@ -14,3 +14,4 @@ rsa-sha2_512,rsa-sha2_384,rsa-sha2_256.
 
 In this case Digital signature authentication is successful through rsa-sha2_512
 
+Note: test seems setup to not use a Certificate Agency?
