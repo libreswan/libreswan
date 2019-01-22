@@ -80,7 +80,7 @@ west #
 west #
  hostname | grep west > /dev/null || ipsec whack --trafficstatus
 west #
- grep "Message ID:" /tmp/pluto.log
+ grep "Message ID: [0-9][0-9]* " /tmp/pluto.log
 |    Message ID: 0 (0x0)
 |    Message ID: 0 (0x0)
 |    Message ID: 1 (0x1)

@@ -14,10 +14,10 @@ parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N
 selected proposal: IKE:3DES_CBC/HMAC_MD5_96/PRF_HMAC_MD5/MODP_2048
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2{1}
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH N(IPCOMP_SUP) SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr N(AUTH_LFT) N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) ]
+parsed IKE_AUTH response 1 [ IDr AUTH N(IPCOMP_SUP) SA TSi TSr N(AUTH_LFT) N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) ]
 authentication of 'east' with pre-shared key successful
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
 scheduling reauthentication in XXXs
@@ -38,6 +38,72 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  echo done
 done
+west #
+ ip xfrm pol
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir out priority 375423 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto comp spi 0x00000ebf reqid 1 mode tunnel
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp spi 0xc87bde6c reqid 1 mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir fwd priority 375423 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid 1 mode tunnel
+		level use 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 1 mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir in priority 375423 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid 1 mode tunnel
+		level use 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 1 mode transport
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+west #
+ ip xfrm state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha512) 0xHASHKEY 256
+	enc cbc(aes) 0xENCKEY
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.45 dst 192.1.2.23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag noecn nopmtudisc af-unspec
+	comp deflate 
+src 192.1.2.45 dst 192.1.2.23
+	proto 4 spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag noecn nopmtudisc af-unspec
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha512) 0xHASHKEY 256
+	enc cbc(aes) 0xENCKEY
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.23 dst 192.1.2.45
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag noecn nopmtudisc af-unspec
+	comp deflate 
+src 192.1.2.23 dst 192.1.2.45
+	proto 4 spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag noecn nopmtudisc af-unspec
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west #

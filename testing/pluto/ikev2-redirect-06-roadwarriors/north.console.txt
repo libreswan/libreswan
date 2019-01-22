@@ -32,59 +32,6 @@ north #
  ipsec whack --trafficstatus
 006 #4: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
 north #
-north NOW
-XFRM state:
-src 192.1.2.45 dst 192.1.3.33
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.3.33 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-XFRM policy:
-src 0.0.0.0/0 dst 192.0.2.101/32
-	dir fwd priority 1040383 ptype main
-	tmpl src 192.1.2.45 dst 192.1.3.33
-		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 192.0.2.101/32
-	dir in priority 1040383 ptype main
-	tmpl src 192.1.2.45 dst 192.1.3.33
-		proto esp reqid REQID mode tunnel
-src 192.0.2.101/32 dst 0.0.0.0/0
-	dir out priority 1040383 ptype main
-	tmpl src 192.1.3.33 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.2.102/32 dst 0.0.0.0/0
-	dir out priority 1040383 ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
-XFRM done
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
-ROUTING TABLES
-0.0.0.0/1 via 192.1.3.254 dev eth1 src 192.0.2.102
-default via 192.1.3.254 dev eth1
-128.0.0.0/1 via 192.1.3.254 dev eth1 src 192.0.2.102
-192.0.1.0/24 via 192.1.3.254 dev eth1
-192.0.2.0/24 via 192.1.3.254 dev eth1
-192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254
-192.1.2.0/24 via 192.1.3.254 dev eth1
-192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     CT,, 
-east                                                         P,,  
-east-ec                                                      P,,  
-hashsha1                                                     P,,  
-nic                                                          P,,  
-north                                                        u,u,u
-road                                                         P,,  
-west                                                         P,,  
-west-ec                                                      P,,  
-north #
- : ==== tuc ====
 north #
  ../bin/check-for-core.sh
 north #

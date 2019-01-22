@@ -45,6 +45,7 @@ west #
 |    ID type: ID_USER_FQDN (0x3)
 |    ID type: ID_USER_FQDN (0x3)
 |    ID type: ID_USER_FQDN (0x3)
+|    ID type: ID_USER_FQDN (0x3)
 west #
 west #
  ../bin/check-for-core.sh

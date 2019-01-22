@@ -76,7 +76,7 @@ done
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then grep "Message ID:" /tmp/pluto.log  ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then egrep "Message ID: [0-9] " /tmp/pluto.log  ; fi
 west #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 Security Associations (0 up, 0 connecting):

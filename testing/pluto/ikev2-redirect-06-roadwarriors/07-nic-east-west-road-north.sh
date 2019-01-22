@@ -1,7 +1,8 @@
 ipsec whack --trafficstatus
 : ==== cut ====
 ipsec auto --status
-../../pluto/bin/ipsec-look.sh
+ip xfrm state
+ip xfrm policy
 : ==== tuc ====
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

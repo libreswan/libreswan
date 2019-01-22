@@ -32,7 +32,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then grep "Message ID:" /tmp/pluto.log  ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then egrep "Message ID: [0-9] " /tmp/pluto.log  ; fi
 |    Message ID: 0 (0x0)
 |    Message ID: 0 (0x0)
 |    Message ID: 0 (0x0)

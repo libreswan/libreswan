@@ -33,7 +33,7 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "roadnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[2]: 192.1.2.23/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...192.1.2.63[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]===192.0.2.1/32; erouted; eroute owner: #4
-000 "roadnet-eastnet-ipv4-psk-ikev2"[2]:     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=road; my_updown=ipsec _updown;
+000 "roadnet-eastnet-ipv4-psk-ikev2"[2]:     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[2]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "roadnet-eastnet-ipv4-psk-ikev2"[2]:   our auth:rsasig, their auth:rsasig
 000 "roadnet-eastnet-ipv4-psk-ikev2"[2]:   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, domains:unset, banner:unset, cat:unset;

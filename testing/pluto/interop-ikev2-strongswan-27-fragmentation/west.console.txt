@@ -100,8 +100,6 @@ west #
 |    fragment number: 1 (0x1)
 |    fragment number: 2 (0x2)
 |    fragment number: 3 (0x3)
-|    fragment number: 4 (0x4)
-|    fragment number: 5 (0x5)
 west #
  echo done
 done

@@ -8,6 +8,8 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
+ ipsec whack --impair suppress-retransmits
+east #
  ipsec auto --add san
 002 added connection description "san"
 east #
@@ -17,6 +19,7 @@ east #
  # confirm the right ID types were sent/received
 east #
  grep "ID type" /tmp/pluto.log
+|    ID type: ID_USER_FQDN (0x3)
 |    ID type: ID_USER_FQDN (0x3)
 |    ID type: ID_USER_FQDN (0x3)
 east #
