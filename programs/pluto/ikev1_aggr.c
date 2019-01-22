@@ -213,7 +213,6 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	st->st_try = 0;                                 /* Not our job to try again from start */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
-	insert_state(st);
 	refresh_state(st);
 
 	{
@@ -1045,7 +1044,6 @@ void aggr_outI1(fd_t whack_sock,
 		}
 	}
 
-	insert_state(st);
 	refresh_state(st);
 
 	if (!init_aggr_st_oakley(st, policy)) {

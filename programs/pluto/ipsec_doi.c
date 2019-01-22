@@ -500,7 +500,6 @@ void initialize_new_state(struct state *st,
 		}
 	}
 
-	insert_state(st);
 	refresh_state(st);
 
 	set_cur_state(st);

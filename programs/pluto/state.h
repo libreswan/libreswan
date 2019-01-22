@@ -744,7 +744,6 @@ struct state *new_v2_state(enum state_kind kind, ike_spi_t ike_initiator_spi,
 			   ike_spi_t ike_responder_spi);
 
 extern void init_states(void);
-extern void insert_state(struct state *st);
 extern void rehash_state(struct state *st,
 			 const ike_spi_t *ike_responder_spi);
 extern void release_whack(struct state *st);

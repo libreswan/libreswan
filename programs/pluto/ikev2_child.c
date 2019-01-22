@@ -86,7 +86,6 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 					    v2_msg_role(md) == MESSAGE_RESPONSE ? SA_INITIATOR :
 					    0);
 		cst->st_connection = c;	/* safe: from duplicate_state */
-		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 		refresh_state(cst);
 	}
 
@@ -141,7 +140,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		pexpect(md->st != NULL);
 		pexpect(md->st == &ike->sa); /* passed in parent */
 		cst = ikev2_duplicate_state(ike, IPSEC_SA, SA_RESPONDER);
-		insert_state(cst); /* needed for delete */
 		refresh_state(cst);
 		if (!v2_process_ts_request(pexpect_child_sa(cst), md)) {
 			/*

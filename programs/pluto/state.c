@@ -422,6 +422,7 @@ static struct state *new_state(enum ike_version ike_version,
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
+	add_state_to_db(st);
 
 	return st;
 }
@@ -504,16 +505,6 @@ void v1_delete_state_by_username(struct state *st, void *name)
 struct state *state_with_serialno(so_serial_t sn)
 {
 	return state_by_serialno(sn);
-}
-
-/*
- * Insert a state object in the hash table. The object is inserted
- * at the beginning of list.
- * Needs cookies, connection, and msgid.
- */
-void insert_state(struct state *st)
-{
-	add_state_to_db(st);
 }
 
 /*
