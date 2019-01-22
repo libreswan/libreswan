@@ -14,42 +14,20 @@
  * License for more details.
  */
 
+#include "lswlog.h"
 #include "ip_subnet.h"
 
-#include "libreswan.h"		/* for ultot() */
-
 /*
- * subnettot - convert subnet to text "addr/bitcount"
+ * subnettot - convert subnet to text "addr/bitcount".
+ *
+ * This is to prop up old code.  New code can call str_subnet()
+ * et.al. directly.
  */
-size_t	/* space needed for full conversion */
-subnettot(sub, format, dst, dstlen)
-const ip_subnet * sub;
-int format;	/* character */
-char *dst;	/* need not be valid if dstlen is 0 */
-size_t dstlen;
+void subnettot(const ip_subnet *sub, int format,
+	       char *dst, size_t dstlen)
 {
-	size_t len;
-	size_t rest;
-	char *p;
-
-	switch (format) {
-	case 0:
-		break;
-	default:
-		return 0;
-	}
-
-	len = addrtot(&sub->addr, format, dst, dstlen);
-	if (len < dstlen) {
-		dst[len - 1] = '/';
-		p = dst + len;
-		rest = dstlen - len;
-	} else {
-		p = NULL;
-		rest = 0;
-	}
-
-	len += ultot((unsigned long)sub->maskbits, 10, p, rest);
-
-	return len;
+	passert(format == 0);
+	passert(dst != NULL);
+	fmtbuf_t buf = array_as_fmtbuf(dst, dstlen);
+	fmt_subnet(&buf, sub);
 }

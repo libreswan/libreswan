@@ -56,3 +56,16 @@ ip_address ip_subnet_ceiling(const ip_subnet *subnet)
 	initaddr(buf, base.len, addrtypeof(&subnet->addr), &mask);
 	return mask;
 }
+
+void fmt_subnet(fmtbuf_t *buf, const ip_subnet *subnet)
+{
+	fmt_address_cooked(buf, &subnet->addr); /* sensitive? */
+	fmt(buf, "/%u", subnet->maskbits);
+}
+
+const char *str_subnet(const ip_subnet *subnet, ip_subnet_buf *out)
+{
+	fmtbuf_t buf = ARRAY_AS_FMTBUF(out->buf);
+	fmt_subnet(&buf, subnet);
+	return out->buf;
+}

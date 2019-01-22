@@ -31,14 +31,20 @@ typedef struct {
 ip_address ip_subnet_floor(const ip_subnet *subnet);
 ip_address ip_subnet_ceiling(const ip_subnet *subnet);
 
+typedef struct {
+	char buf[sizeof(ip_address_buf) + 4/*/NNN*/];
+} ip_subnet_buf;
+const char *str_subnet(const ip_subnet *subnet, ip_subnet_buf *out);
+void fmt_subnet(struct lswlog *buf, const ip_subnet *subnet);
+
 /*
  * old
  */
 #include "err.h"
 
 extern err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
-extern size_t subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
-#define SUBNETTOT_BUF   (ADDRTOT_BUF + 1 + 3)
+extern void subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
+#define SUBNETTOT_BUF   sizeof(ip_subnet_buf)
 extern err_t initsubnet(const ip_address *addr, int maskbits, int clash,
 		 ip_subnet *dst);
 extern err_t addrtosubnet(const ip_address *addr, ip_subnet *dst);

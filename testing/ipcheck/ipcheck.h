@@ -1,6 +1,6 @@
 /* test ip addresses, for libreswan
  *
- * Copyright (C) 2018  Andrew Cagney
+ * Copyright (C) 2018-2019  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,10 +15,9 @@
 
 #ifndef IPCHECK_H
 
-#include <stdbool.h>
-
 extern void ip_address_check(void);
 extern void ip_endpoint_check(void);
+extern void ip_subnet_check(void);
 
 /*
  * See: https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
@@ -29,12 +28,33 @@ extern void ip_endpoint_check(void);
 
 extern unsigned fails;
 
+/* t->input */
 #define IPRINT(FILE, FMT, ...)						\
 	fprintf(FILE, "%s[%zu]: '%s' " FMT "\n",			\
 		__func__, ti, t->input ,##__VA_ARGS__);
 #define IFAIL(FMT, ...) {						\
 		fails++;						\
 		IPRINT(stderr, FMT ,##__VA_ARGS__);			\
+	}
+
+/* t->start, t->stop */
+#define SSPRINT(FILE, FMT, ...) \
+	fprintf(FILE, "%s[%zu]: '%s'-'%s' " FMT "\n",			\
+		__func__, ti, t->start, t->stop __VA_OPT__(,)		\
+		__VA_ARGS__);
+#define SSFAIL(FMT, ...) {						\
+		fails++;						\
+		SSPRINT(stderr, FMT __VA_OPT__(,) __VA_ARGS__);		\
+	}
+
+/* t->low, t->high */
+#define LHPRINT(FILE, FMT, ...)						\
+	fprintf(FILE, "%s[%zu]: '%s'-'%s' " FMT "\n",			\
+		__func__, ti, t->low, t->high __VA_OPT__(,)		\
+		__VA_ARGS__)
+#define LHFAIL(FMT, ...) {						\
+		fails++;						\
+		LHPRINT(stderr, FMT __VA_OPT__(,) __VA_ARGS__);		\
 	}
 
 #endif
