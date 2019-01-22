@@ -2,3 +2,6 @@ Interop IKEv2 aes-gcm (AEAD) signed fragmentation with strongswan
 
 Basic pluto with IKEv2 using X.509 on the initiator (west), and
 Strongswan on the responder (east).
+
+strongswan seems to no longer like our ID, despite it seemingly matching up ?
+
