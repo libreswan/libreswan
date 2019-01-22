@@ -59,13 +59,87 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ah=sha1" #3: deleting state (STATE_PARENT_I3) and sending notification
 002 "ah=sha1": deleting non-instance connection
 west #
+ # Test rekey
+west #
+ ipsec auto --add ah=sha1
+002 added connection description "ah=sha1"
+west #
+ ipsec auto --up ah=sha1
+002 "ah=sha1" #5: initiating v2 parent SA
+133 "ah=sha1" #5: initiate
+133 "ah=sha1" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "ah=sha1" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "ah=sha1" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ah=sha1" #6: Authenticated using authby=secret
+002 "ah=sha1" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ah=sha1" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+west #
+ ping -c2 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ sleep 1
+west #
+ ipsec auto --up ah=sha1
+139 "ah=sha1" #7: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "ah=sha1" #7: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ah=sha1" #7: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+west #
+ sleep 1
+west #
+ ping -c2 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # since bofh AH tunnels are still there, check if they all got traffic, meaning new ones was used
+west #
+ # use weird spacing to avoid sanitizer
+west #
+ ip xfrm     s | grep anti-replay
+west #
  echo done
 done
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west NOW
 XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec align4
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+src 192.1.2.45 dst 192.1.2.23
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec align4
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+src 192.1.2.23 dst 192.1.2.45
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec align4
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+src 192.1.2.45 dst 192.1.2.23
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec align4
+	auth-trunc hmac(sha1) 0xHASHKEY 96
 XFRM policy:
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto ah reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority 1042407 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto ah reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority 1042407 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto ah reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
