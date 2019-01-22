@@ -96,7 +96,8 @@ void start_dh_v2(struct state *st,
 	    DBG_log("offloading IKEv2 SKEYSEED using prf=%s integ=%s cipherkey=%s",
 		    st->st_oakley.ta_prf->common.fqn,
 		    st->st_oakley.ta_integ->common.fqn,
-		    st->st_oakley.ta_encrypt->common.fqn));
+		    st->st_oakley.ta_encrypt != NULL ?
+			st->st_oakley.ta_encrypt->common.fqn : "N/A"));
 
 	/* convert appropriate data to dhq */
 	dhq->prf = st->st_oakley.ta_prf;
@@ -105,7 +106,8 @@ void start_dh_v2(struct state *st,
 	dhq->encrypt = st->st_oakley.ta_encrypt;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
-	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
+	dhq->salt_size = st->st_oakley.ta_encrypt != NULL ?
+		st->st_oakley.ta_encrypt->salt_size : 0;
 
 	passert(dhq->dh != NULL && dhq->dh != &unset_group);
 

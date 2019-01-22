@@ -104,7 +104,6 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	const struct prf_desc *prf = sk->prf;
 
 	const struct encrypt_desc *encrypter = sk->encrypt;
-	passert(encrypter != NULL);
 
 	if (sk->skey_d_old == NULL) {
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
@@ -148,10 +147,15 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	next_byte += integ_size;
 
 	/* The encryption key and salt are extracted together. */
-	SK_ei_k = encrypt_key_from_symkey_bytes("SK_ei_k",
+
+	if (encrypter != NULL)
+		SK_ei_k = encrypt_key_from_symkey_bytes("SK_ei_k",
 						encrypter,
 						next_byte, key_size,
 						finalkey);
+	else
+		SK_ei_k = NULL;
+
 	next_byte += key_size;
 	PK11SymKey *initiator_salt_key = key_from_symkey_bytes(finalkey, next_byte,
 							       salt_size);
@@ -162,10 +166,14 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	next_byte += salt_size;
 
 	/* The encryption key and salt are extracted together. */
-	SK_er_k = encrypt_key_from_symkey_bytes("SK_er_k",
+	if (encrypter != NULL)
+		SK_er_k = encrypt_key_from_symkey_bytes("SK_er_k",
 						encrypter,
 						next_byte, key_size,
 						finalkey);
+	else
+		SK_er_k = NULL;
+
 	next_byte += key_size;
 	PK11SymKey *responder_salt_key = key_from_symkey_bytes(finalkey, next_byte,
 							       salt_size);
