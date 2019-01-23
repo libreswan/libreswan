@@ -2209,7 +2209,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	pexpect(md->svm->timeout_event == EVENT_RETRANSMIT); /* for CST */
 	delete_event(pst);
-	event_schedule(EVENT_SA_EXPIRE, deltatime(PLUTO_HALFOPEN_SA_LIFE), pst);
+	event_schedule(EVENT_SA_REPLACE, deltatime(PLUTO_HALFOPEN_SA_LIFE), pst);
 	change_state(pst, STATE_PARENT_I2);
 
 	/*
