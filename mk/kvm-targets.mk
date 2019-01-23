@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015-2018 Andrew Cagney
+# Copyright (C) 2015-2019 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -957,7 +957,7 @@ kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-clean-keys kvm-clean-tests
 define kvm-DOMAIN-build
   #(info kvm-DOMAIN-build domain=$(1))
   .PHONY: kvm-$(1)-build
-  kvm-$(1)-build: kvm-shutdown-local-domains | $$(KVM_LOCALDIR)/$(1).xml
+  kvm-$(1)-build: | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-build domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR)'
@@ -975,9 +975,11 @@ $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_LOCAL_HOSTS)), \
 	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-build)))
 
 .PHONY: kvm-build
-kvm-build: kvm-$(KVM_BUILD_DOMAIN)-build
+kvm-build: $(foreach domain, $(KVM_INSTALL_DOMAINS), uninstall-kvm-domain-$(domain))
+	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-build
 
 
+#
 # kvm-install and kvm-HOST|DOMAIN-install
 #
 # "kvm-DOMAIN-install" can't start until the common
@@ -993,7 +995,7 @@ kvm-build: kvm-$(KVM_BUILD_DOMAIN)-build
 define kvm-DOMAIN-install
   #(info kvm-DOMAIN-install domain=$(1))
   .PHONY: kvm-$(1)-install
-  kvm-$(1)-install: kvm-shutdown-local-domains kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
+  kvm-$(1)-install: kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-install domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) install-base'
@@ -1016,42 +1018,17 @@ $(foreach domain, $(KVM_LOCAL_DOMAINS), \
 $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_LOCAL_HOSTS)), \
 	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-install)))
 
-# By default, install where needed.
-.PHONY: kvm-install-all
-kvm-all-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-install)
-
-# This is trying to work-around even more broken F26 hosts where the
-# build hangs.
 #
-# - tried OBJDIR=/var/tmp but things still hang so using $(KVM_OBJDIR)
-#   for how; pointing KVM_OBJDIR=/var/tmp/KVM.OBJ is still a speed up
+# kvm-install
 #
-# - best way to recover from a hang is to uninstall the build domain
-#   (should this always do that?)
+# So that all the INSTALL domains are deleted before the build domain
+# is booted, this is done using a series of sub-makes (without this,
+# things barf because the build domain things its disk is in use).
 
-define kvm-DOMAIN-hive
-  #(info kvm-DOMAIN-hive domain=$(1))
-  .PHONY: kvm-$(1)-hive
-  kvm-$(1)-hive: kvm-$$(KVM_BUILD_DOMAIN)-install uninstall-kvm-domain-$(1)
-	$(MAKE) install-kvm-domain-$(1)
-endef
-
-$(foreach domain, $(KVM_INSTALL_DOMAINS), \
-	$(eval $(call kvm-DOMAIN-hive,$(domain))))
-$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_INSTALL_HOSTS)), \
-	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-hive)))
-
-.PHONY: kvm-install-hive
-kvm-hive-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-hive)
-
-# If BUILD is defined, assume the HIVE install should be used.
 .PHONY: kvm-install
-kvm-install: kvm-hive-install
-
-# Since the install domains list isn't exhaustive (for instance, nic
-# is missing), add an explicit dependency on all the domains so that
-# they still get created.
-kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_LOCALDIR)/$(domain).xml)
+kvm-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), uninstall-kvm-domain-$(domain))
+	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
+	$(MAKE) $(foreach domain, $(KVM_TEST_DOMAINS), install-kvm-domain-$(domain))
 
 #
 # kvm-uninstall
@@ -1059,16 +1036,8 @@ kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_LOCALDIR)/$(domain).xm
 # Rather than just removing libreswan from the all the test (install)
 # domains, this removes the test and build domains completely.  This
 # way, in addition to giving kvm-install a 100% fresh start (no
-# depdenence on 'make uninstall'), any broken test domains (including
-# NIC) are rebuilt.  For instance:
-#
-#     - a domain hanging because of KVM breakage
-#
-#     - a domain (including the basic domain NIC) having a wrong
-#       directory mount point
-#
-# Think of this as the make target to use when trying to dig ones way
-# out of a hole.
+# depdenence on 'make uninstall') the test run also gets entirely new
+# domains.
 
 .PHONY: kvm-uninstall
 kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_INSTALL_DOMAINS))
