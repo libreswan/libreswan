@@ -42,8 +42,8 @@
 #include <prinit.h>
 #include <prmem.h>
 #include <plstr.h>
-#include <key.h>
-#include <keyt.h>
+#include <keyhi.h>
+#include <keythi.h>
 #include <nss.h>
 #include <pk11pub.h>
 #include <seccomon.h>
