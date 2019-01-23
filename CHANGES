@@ -17,6 +17,7 @@ v3.28 (unreleased)
 * IKEv2: Support for IPCOMP (compress=yes) [Paul]
 * IKEv2: Initialize NAT keepalives check on IKE SA establishment [Paul]
 * IKEv2: Only sent NAT keepalives for IKE states (supresses IPsec dups) [Paul]
+* IKEv2: Timeout in receiving IKE_AUTH reply would abort connection [Paul]
 * IKEv1: Only sent NAT keepalives for IPsec states (supresses 1 dup) [Paul]
 * IKEv1: Do not activate DPD when peer does not support it [Paul]
 * IKEv1: Reject key sizes <= 0 properly instead of crashing [Paul]
