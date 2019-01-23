@@ -30,8 +30,6 @@
 static size_t normal4(const unsigned char *s, size_t len, char *b, const char **dp);
 static size_t normal6(const unsigned char *s, size_t len, char *b, const char **dp,
 		      int squish);
-static size_t reverse4(const unsigned char *s, size_t len, char *b, const char **dp);
-static size_t reverse6(const unsigned char *s, size_t len, char *b, const char **dp);
 
 /*
    - inet_addrtot - convert binary inet address to text (dotted decimal or IPv6 string)
@@ -57,9 +55,6 @@ size_t dstlen;
 		case 'Q':
 			n = normal4(src, IP4BYTES, buf, &p);
 			break;
-		case 'r':
-			n = reverse4(src, IP4BYTES, buf, &p);
-			break;
 		}
 		break;
 
@@ -70,9 +65,6 @@ size_t dstlen;
 			break;
 		case 'Q':
 			n = normal6(src, IP6BYTES, buf, &p, 0);
-			break;
-		case 'r':
-			n = reverse6(src, IP6BYTES, buf, &p);
 			break;
 		}
 		break;
@@ -195,61 +187,4 @@ int squish;                     /* whether to squish out 0:0 */
 	}
 	*dstp = p;
 	return q - p + 1;
-}
-
-/*
-   - reverse4 - IPv4 reverse-lookup conversion
- */
-static size_t                   /* size of text, including NUL */
-reverse4(srcp, srclen, buf, dstp)
-const unsigned char *srcp;
-size_t srclen;
-char *buf;	/* guaranteed large enough */
-const char **dstp;	/* where to put result pointer */
-{
-	int i;
-	char *p;
-
-	if (srclen != IP4BYTES) /* "can't happen" */
-		return 0;
-
-	p = buf;
-	for (i = IP4BYTES - 1; i >= 0; i--) {
-		p += ultot(srcp[i], 10, p, PERBYTE);
-		*(p - 1) = '.';   /* overwrites the NUL */
-	}
-	strcpy(p, "IN-ADDR.ARPA.");
-	*dstp = buf;
-	return strlen(buf) + 1;
-}
-
-/*
-   - reverse6 - IPv6 reverse-lookup conversion (RFC 1886)
- * A trifle inefficient, really shouldn't use ultot...
- */
-static size_t                   /* size of text, including NUL */
-reverse6(srcp, srclen, buf, dstp)
-const unsigned char *srcp;
-size_t srclen;
-char *buf;	/* guaranteed large enough */
-const char **dstp;	/* where to put result pointer */
-{
-	int i;
-	unsigned long piece;
-	char *p;
-
-	if (srclen != IP6BYTES) /* "can't happen" */
-		return 0;
-
-	p = buf;
-	for (i = IP6BYTES - 1; i >= 0; i--) {
-		piece = srcp[i];
-		p += ultot(piece & 0xf, 16, p, 2);
-		*(p - 1) = '.';
-		p += ultot(piece >> 4, 16, p, 2);
-		*(p - 1) = '.';
-	}
-	strcpy(p, "IP6.ARPA.");
-	*dstp = buf;
-	return strlen(buf) + 1;
 }
