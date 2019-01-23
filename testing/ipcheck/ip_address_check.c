@@ -158,9 +158,152 @@ static void check_str_address_sensitive(void)
 	}
 }
 
+
+/*
+ * From addrtot.c
+ */
+
+#ifdef NOT_YET
+int main(int argc, char *argv[])
+{
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s {addr|net/mask|begin...end|-r}\n",
+			argv[0]);
+		exit(2);
+	}
+
+	if (streq(argv[1], "-r")) {
+		regress();
+		fprintf(stderr, "regress() returned?!?\n");
+		exit(1);
+	}
+	exit(0);
+}
+#endif
+
+static void check_str_address_reversed(void)
+{
+	struct test {
+		const char *input;
+		const char *output;                   /* NULL means error expected */
+	};
+	static const struct test tests[] = {
+
+		{ "1.2.3.4", "4.3.2.1.IN-ADDR.ARPA." },
+		/* 0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3 4 5 6 7 8 9 a b c d e f */
+		{ "0123:4567:89ab:cdef:1234:5678:9abc:def0",
+		  "0.f.e.d.c.b.a.9.8.7.6.5.4.3.2.1.f.e.d.c.b.a.9.8.7.6.5.4.3.2.1.0.IP6.ARPA.", }
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		IPRINT(stdout, "-> '%s", t->output);
+
+		/* convert it *to* internal format */
+		ip_address a;
+		err_t err = ttoaddr(t->input, strlen(t->input), AF_UNSPEC, &a);
+		if (err != NULL) {
+			IFAIL("%s", err);
+			continue;
+		}
+
+		address_reversed_buf buf;
+		const char *out = str_address_reversed(&a, &buf);
+		if (!strcaseeq(t->output, out)) {
+			IFAIL("str_address_reversed returned '%s', expected '%s'",
+			      out, t->output);
+		}
+	}
+}
+
+/*
+ * From ttoaddr.c
+ */
+
+#ifdef NOT_YET
+int main(int argc, char *argv[])
+{
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s {addr|net/mask|begin...end|-r}\n",
+			argv[0]);
+		exit(2);
+	}
+
+	if (streq(argv[1], "-r")) {
+		regress();
+		fprintf(stderr, "regress() returned?!?\n");
+		exit(1);
+	}
+	exit(0);
+}
+#endif
+
+static void check_ttoaddr_dns(void)
+{
+	struct test {
+		const char *input;
+		bool numonly;
+		int af;
+		bool expectfailure;
+		const char *output;	/* NULL means error expected */
+	};
+
+	static const struct test tests[] = {
+		{ "www.libreswan.org", false, 4, false, "188.127.201.229" },
+		{ "www.libreswan.org", true, 0, true, "1.2.3.4" },
+	};
+
+	const char *oops;
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		IPRINT(stdout, "%s%s -> '%s",
+		       t->numonly ? "" : " DNS",
+		       t->expectfailure ? " fail" : "",
+		       t->output);
+		int af = (t->af == 0 ? AF_UNSPEC :
+			  t->af == 4 ? AF_INET :
+			  t->af == 6 ? AF_INET6 :
+			  -1);
+
+		ip_address a;
+		memset(&a, 0, sizeof(a));
+
+		if (t->numonly) {
+			/* convert it *to* internal format (no DNS) */
+			oops = ttoaddr_num(t->input, strlen(t->input), af, &a);
+		} else {
+			/* convert it *to* internal format */
+			oops = ttoaddr(t->input, strlen(t->input), af, &a);
+		}
+
+		if (t->expectfailure && oops == NULL) {
+			IFAIL("expected failure, but it succeeded");
+			continue;
+		}
+
+		if (oops != NULL) {
+			if (!t->expectfailure) {
+				IFAIL("failed to parse: %s", oops);
+			}
+			continue;
+		}
+
+		/* now convert it back */
+		ip_address_buf buf;
+		const char *out = str_address_cooked(&a, &buf);
+		if (!strcaseeq(t->output, out)) {
+			IFAIL("addrtoc returned '%s', expected '%s'",
+			      out, t->output);
+		}
+	}
+}
+
 void ip_address_check(void)
 {
 	check_str_address_raw();
 	check_str_address_cooked();
 	check_str_address_sensitive();
+	check_str_address_reversed();
+	check_ttoaddr_dns();
 }
