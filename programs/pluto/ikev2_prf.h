@@ -20,7 +20,10 @@
 #ifndef _IKEV2_PRF_H
 #define _IKEV2_PRF_H
 
+#include "lswnss.h"
 #include "ike_spi.h"
+
+struct prf_desc;
 
 /*
  * IKE SA
@@ -52,13 +55,5 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  PK11SymKey *new_dh_secret,
 				  const chunk_t Ni, const chunk_t Nr,
 				  size_t required_bytes);
-
-/*
- * Old way ...
- */
-
-struct pluto_crypto_req;
-
-void calc_dh_v2(struct pluto_crypto_req *r);
 
 #endif

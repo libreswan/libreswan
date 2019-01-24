@@ -343,8 +343,9 @@ extern void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
 
+/* internal */
 extern void calc_dh(struct pcr_v1_dh *dh);
-
+extern void calc_dh_iv(struct pcr_v1_dh *dh);
 extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
 
 /*
@@ -362,6 +363,8 @@ extern void start_dh_v2(struct state *st,
 extern bool finish_dh_v2(struct state *st,
 			 struct pluto_crypto_req *r, bool only_shared);
 
+/* internal */
+extern void calc_dh_v2(struct pluto_crypto_req *r);
 extern void cancelled_dh_v2(struct pcr_dh_v2 *dh);
 
 /*

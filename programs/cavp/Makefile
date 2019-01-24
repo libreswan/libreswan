@@ -44,12 +44,10 @@ CFLAGS += -I$(top_srcdir)/programs/pluto
 PLUTOOBJS += $(patsubst %.c,%.o,$(notdir $(sort $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c))))
 PLUTOOBJS += crypt_symkey.o
 PLUTOOBJS += crypt_hash.o
+PLUTOOBJS += crypt_prf.o
 PLUTOOBJS += test_buffer.o
 PLUTOOBJS += ikev1_prf.o
 PLUTOOBJS += ikev2_prf.o
-PLUTOOBJS += crypt_prf.o
-PLUTOOBJS += crypt_dh.o
-PLUTOOBJS += crypt_utils.o
 # Need absolute path as 'make' (check dependencies) and 'ld' (do link)
 # are run from different directories.
 OBJS += $(addprefix $(abs_top_builddir)/programs/pluto/, $(PLUTOOBJS))
