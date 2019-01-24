@@ -1743,11 +1743,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		DBG(DBG_CONTROL,
 		    DBG_log("found state #%lu", st->st_serialno));
 		set_cur_state(st);
-		/*
-		 * XXX: why redundantly set cur connection? And why
-		 * set it after (over the top of) state.
-		 */
-		set_cur_connection(st->st_connection);
 	}
 
 	/*
