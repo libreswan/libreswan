@@ -158,7 +158,7 @@ stf_status ikev2_calc_no_ppk_auth(struct connection *c, struct state *st, unsign
 	}
 	case AUTH_PSK:
 		/* store in no_ppk_auth */
-		if (ikev2_create_psk_auth(AUTH_PSK, st, id_hash, NULL, no_ppk_auth))
+		if (ikev2_create_psk_auth(AUTH_PSK, st, id_hash, no_ppk_auth))
 			return STF_OK;
 		break;
 	default:

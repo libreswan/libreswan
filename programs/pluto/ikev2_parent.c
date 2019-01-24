@@ -2032,8 +2032,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
 		/* emit */
-		if (!ikev2_create_psk_auth(authby, pst, idhash_out, &a_pbs,
-			NULL))
+		if (!ikev2_emit_psk_auth(authby, pst, idhash_out, &a_pbs))
 		{
 			loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
 			return STF_FATAL;
@@ -2103,7 +2102,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	    authby == AUTH_RSASIG &&
 	    c->policy & POLICY_AUTH_NULL) {
 		/* store in null_auth */
-		if (!ikev2_create_psk_auth(AUTH_NULL, pst, idhash_out, NULL,
+		if (!ikev2_create_psk_auth(AUTH_NULL, pst, idhash_out,
 			null_auth))
 		{
 			loglog(RC_LOG_SERIOUS, "Failed to calculate additional NULL_AUTH");

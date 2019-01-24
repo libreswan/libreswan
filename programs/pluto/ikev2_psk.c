@@ -240,10 +240,30 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 	return TRUE;
 }
 
+bool ikev2_emit_psk_auth(enum keyword_authby authby,
+			   const struct state *st,
+			   const unsigned char *idhash,
+			   pb_stream *a_pbs)
+{
+	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
+	unsigned char signed_octets[MAX_DIGEST_LEN];
+
+	if (!ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
+					 st->st_firstpacket_me,
+					 signed_octets))
+	{
+		return FALSE;
+	}
+
+	DBG(DBG_PRIVATE,
+	    DBG_dump("PSK auth octets", signed_octets, hash_len));
+
+	return out_raw(signed_octets, hash_len, a_pbs, "PSK auth");
+}
+
 bool ikev2_create_psk_auth(enum keyword_authby authby,
 			   const struct state *st,
 			   const unsigned char *idhash,
-			   pb_stream *a_pbs,
 			   chunk_t *additional_auth)
 {
 	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
@@ -259,15 +279,9 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 	DBG(DBG_PRIVATE,
 	    DBG_dump("PSK auth octets", signed_octets, hash_len));
 
-	if (additional_auth == NULL) {
-		if (!out_raw(signed_octets, hash_len, a_pbs, "PSK auth"))
-			return FALSE;
-	} else {
-		passert(a_pbs == NULL);
-		const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
-		clonetochunk(*additional_auth, signed_octets, hash_len, chunk_n);
-		DBG(DBG_PRIVATE, DBG_dump_chunk(chunk_n, *additional_auth));
-	}
+	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
+	clonetochunk(*additional_auth, signed_octets, hash_len, chunk_n);
+	DBG(DBG_PRIVATE, DBG_dump_chunk(chunk_n, *additional_auth));
 
 	return TRUE;
 }
