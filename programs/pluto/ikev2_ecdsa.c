@@ -160,8 +160,8 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	}
 
 	/* hash the packet et.al. */
-	passert(hash_digest_size <= SHA2_512_DIGEST_SIZE);
-	uint8_t hash[SHA2_512_DIGEST_SIZE];
+	passert(hash_digest_size <= MAX_DIGEST_LEN);
+	uint8_t hash[MAX_DIGEST_LEN];
 	ECDSA_calculate_sighash(st, role, idhash,
 				st->st_firstpacket_me,
 				hash, hash_algo);
@@ -370,8 +370,8 @@ stf_status ikev2_verify_ecdsa_hash(struct state *st,
 		return STF_FATAL;
 	}
 
-	passert(hash_len <= SHA2_512_DIGEST_SIZE);
-	unsigned char calc_hash[SHA2_512_DIGEST_SIZE];
+	passert(hash_len <= MAX_DIGEST_LEN);
+	unsigned char calc_hash[MAX_DIGEST_LEN];
 
 	invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 
