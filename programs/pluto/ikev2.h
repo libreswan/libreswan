@@ -289,4 +289,9 @@ struct state *v2_child_sa_initiator_with_msgid(struct ike_sa *ike, msgid_t st_ms
 void v2_event_sa_rekey(struct state *st);
 void v2_event_sa_replace(struct state *st);
 
+/* used by parent and child to emit v2N_IPCOMP_SUPPORTED if appropriate */
+bool emit_v2N_compression(struct state *cst,
+			bool OK,
+			pb_stream *s);
+
 #endif

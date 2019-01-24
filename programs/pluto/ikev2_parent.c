@@ -2484,37 +2484,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
 	}
 
-	if (cc->policy & POLICY_COMPRESS) {
-		uint16_t c_spi;
-
-		DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE"));
-
-		/* calculate and keep our CPI */
-		if (cst->st_ipcomp.our_spi == 0) {
-			/* CPI is stored in network low order end of an ipsec_spi_t */
-			cst->st_ipcomp.our_spi = get_my_cpi(&cc->spd, LIN(POLICY_TUNNEL, cc->policy));
-			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
-			if (c_spi < IPCOMP_FIRST_NEGOTIATED) { /* get_my_cpi() failed */
-				loglog(RC_LOG_SERIOUS, "failed to calculate compression CPI (CPI=%d)", c_spi);
-				freeanychunk(null_auth);
-				return STF_INTERNAL_ERROR;
-			}
-			DBG(DBG_CONTROL, DBG_log("Calculated compression CPI=%d", c_spi));
-		} else {
-			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
-		}
-		unsigned char gunk[] = { c_spi / 256, c_spi % 256, IPCOMP_DEFLATE };
-		chunk_t ipcompN;
-
-		ipcompN.len = IPCOMP_CPI_SIZE + 1;
-		ipcompN.ptr = gunk;
-
-		if (!emit_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, &sk.pbs)) {
-			freeanychunk(null_auth);
-			return STF_INTERNAL_ERROR;
-		}
-	} else {
-		DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress=no, NOT sending v2N_IPCOMP_SUPPORTED"));
+	if (!emit_v2N_compression(cst, true, &sk.pbs)) {
+		freeanychunk(null_auth);
+		return STF_INTERNAL_ERROR;
 	}
 
 	if (cc->send_no_esp_tfc) {
@@ -3123,36 +3095,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (LIN(POLICY_COMPRESS, c->policy) && st->st_seen_use_ipcomp) {
-		uint16_t c_spi;
-
-		DBG(DBG_CONTROL, DBG_log("Initiator child policy is compress, sending v2N_IPCOMP_SUPPORTED for DEFLATE"));
-
-		/* calculate and keep our CPI */
-		if (st->st_ipcomp.our_spi == 0) {
-			st->st_ipcomp.our_spi = get_my_cpi(&c->spd, LIN(POLICY_TUNNEL, c->policy));
-			c_spi = (uint16_t)ntohl(st->st_ipcomp.our_spi);
-			if (c_spi < IPCOMP_FIRST_NEGOTIATED) { /* get_my_cpi() failed */
-				loglog(RC_LOG_SERIOUS, "kernel failed to calculate compression CPI (CPI=%d)",
-					c_spi);
-				return STF_INTERNAL_ERROR;
-			}
-			DBG(DBG_CONTROL, DBG_log("Calculated compression CPI=%d", c_spi));
-		} else {
-			c_spi = (uint16_t)ntohl(st->st_ipcomp.our_spi);
-		}
-		unsigned char gunk[] = { c_spi / 256, c_spi % 256, IPCOMP_DEFLATE };
-		chunk_t ipcompN;
-
-		ipcompN.len = IPCOMP_CPI_SIZE + 1;
-		ipcompN.ptr = gunk;
-
-		if (!emit_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, &sk.pbs)) {
-			return STF_INTERNAL_ERROR;
-		}
-	} else {
-		DBG(DBG_CONTROL, DBG_log("Initiator child policy is not compress, NOT sending v2N_IPCOMP_SUPPORTED"));
-	}
+	if (!emit_v2N_compression(st, st->st_seen_use_ipcomp, &sk.pbs))
+		return STF_INTERNAL_ERROR;
 
 	if (c->send_no_esp_tfc) {
 		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))

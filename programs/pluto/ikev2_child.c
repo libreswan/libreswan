@@ -362,37 +362,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if ((c->policy & POLICY_COMPRESS) && cst->st_seen_use_ipcomp) {
-		uint16_t c_spi;
-
-		DBG(DBG_CONTROL, DBG_log("Responder child policy is compress and initiator indicated support, sending v2N_IPCOMP_SUPPORTED for DEFLATE"));
-
-		/* calculate and keep our CPI */
-		if (cst->st_ipcomp.our_spi == 0) {
-			cst->st_ipcomp.our_spi = get_my_cpi(&c->spd, LIN(POLICY_TUNNEL, c->policy));
-			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
-			if (c_spi < IPCOMP_FIRST_NEGOTIATED) { /* get_my_cpi() failed */
-				loglog(RC_LOG_SERIOUS, "kernel failed to calculate compression CPI (CPI=%d)",
-					c_spi);
-				return STF_INTERNAL_ERROR;
-			}
-			DBG(DBG_CONTROL, DBG_log("Calculated compression CPI=%d", c_spi));
-		} else {
-			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
-		}
-		unsigned char gunk[] = { c_spi / 256, c_spi % 256, IPCOMP_DEFLATE };
-		chunk_t ipcompN;
-
-		ipcompN.len = IPCOMP_CPI_SIZE + 1;
-		ipcompN.ptr = gunk;
-
-		if (!emit_v2Nchunk(v2N_IPCOMP_SUPPORTED, &ipcompN, outpbs)) {
-			return STF_INTERNAL_ERROR;
-		}
-		DBG(DBG_CONTROL, DBG_log("Sending v2N_IPCOMP_SUPPORTED for DEFLATE algorithm"));
-	} else {
-		DBG(DBG_CONTROL, DBG_log("Not sending v2N_IPCOMP_SUPPORTED"));
-	}
+	if (!emit_v2N_compression(cst, cst->st_seen_use_ipcomp, outpbs))
+		return STF_INTERNAL_ERROR;
 
 	ikev2_derive_child_keys(pexpect_child_sa(cst));
 
