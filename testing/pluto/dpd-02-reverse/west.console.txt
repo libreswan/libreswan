@@ -97,7 +97,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../pluto/bin/ipsec-look.sh | sed "s/udp sport [0-9]* /udp sport XXXXX /"
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -113,7 +113,7 @@ src 192.1.2.45 dst 192.1.2.23
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto udp sport 39697 dport 1025 dev eth1 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto udp sport XXXXX dport 1025 dev eth1 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir fwd priority 1040351 ptype main

@@ -16,7 +16,7 @@ Listening IP addresses:
   192.1.2.23
   192.9.2.23
 Connections:
-westnet-eastnet-ikev1:  192.1.2.23...192.1.2.45  IKEv1
+westnet-eastnet-ikev1:  192.1.2.23...192.1.2.45  IKEv1/2
 westnet-eastnet-ikev1:   local:  [east] uses pre-shared key authentication
 westnet-eastnet-ikev1:   remote: [west] uses pre-shared key authentication
 westnet-eastnet-ikev1:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL

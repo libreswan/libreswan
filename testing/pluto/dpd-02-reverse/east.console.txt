@@ -11,7 +11,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../pluto/bin/ipsec-look.sh | sed "s/udp sport [0-9]* /udp sport XXXXX /"
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23

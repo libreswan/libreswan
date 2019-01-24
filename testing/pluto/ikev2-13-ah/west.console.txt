@@ -53,12 +53,27 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=AH, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
+ # test rekey
+west #
+ ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
+139 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+west #
  echo done
 done
 west #
  ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec align4
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+src 192.1.2.45 dst 192.1.2.23
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec align4
+	auth-trunc hmac(sha1) 0xHASHKEY 96
 src 192.1.2.23 dst 192.1.2.45
 	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec align4

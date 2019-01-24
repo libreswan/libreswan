@@ -1,4 +1,4 @@
-../../pluto/bin/ipsec-look.sh
+../../pluto/bin/ipsec-look.sh | sed "s/udp sport [0-9]* /udp sport XXXXX /"
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
