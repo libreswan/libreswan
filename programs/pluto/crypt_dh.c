@@ -170,3 +170,54 @@ void free_dh_secret(struct dh_secret **secret)
 		*secret = NULL;
 	}
 }
+
+struct crypto_task {
+	chunk_t remote_ke;
+	struct dh_secret *local_secret;
+	PK11SymKey *shared_secret;
+	dh_callback *callback;
+};
+
+static void compute_dh(struct crypto_task *task, int thread UNUSED)
+{
+	task->shared_secret = calc_dh_shared(task->local_secret,
+					     task->remote_ke);
+}
+
+static void cancel_dh(struct crypto_task **task)
+{
+	free_dh_secret(&(*task)->local_secret); /* must own */
+	freeanychunk((*task)->remote_ke);
+	release_symkey("DH", "secret", &(*task)->shared_secret);
+	pfreeany(*task);
+}
+
+static stf_status complete_dh(struct state *st, struct msg_digest *md,
+			      struct crypto_task **task)
+{
+	transfer_dh_secret_to_state("IKEv2 DH", &(*task)->local_secret, st);
+	freeanychunk((*task)->remote_ke);
+	pexpect(st->st_shared_nss == NULL);
+	release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);
+	st->st_shared_nss = (*task)->shared_secret;
+	stf_status status = (*task)->callback(st, md);
+	pfreeany(*task);
+	return status;
+}
+
+static const struct crypto_handler dh_handler = {
+	.cancelled_callback = cancel_dh,
+	.compute = compute_dh,
+	.completed_callback = complete_dh,
+};
+
+void submit_dh(struct state *st, chunk_t remote_ke,
+	       dh_callback *callback,
+	       const char *name)
+{
+	struct crypto_task *task = alloc_thing(struct crypto_task, "dh");
+	task->remote_ke = clone_chunk(remote_ke, "DH crypto");
+	transfer_dh_secret_to_helper(st, "DH", &task->local_secret);
+	task->callback = callback;
+	submit_crypto(st, task, &dh_handler, name);
+}
