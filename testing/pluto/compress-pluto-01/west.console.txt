@@ -58,6 +58,8 @@ west #
 117 "westnet-eastnet-compress" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-compress" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP NATOA=none NATD=none DPD=passive}
 west #
+ # this ping wont be compressed
+west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
@@ -68,13 +70,89 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
+ # test compression via large pings that can be compressed on IPCOMP SA
+west #
+ ping -n -c 4 -s 8184  -p ff -I 192.0.1.254 192.0.2.254
+PATTERN: 0xff
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 8184(8212) bytes of data.
+8192 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+8192 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+8192 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+8192 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=649, outBytes=652, id='@east'
+west #
+ ../../pluto/bin/ipsec-look.sh
+west NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.23 dst 192.1.2.45
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+src 192.1.2.23 dst 192.1.2.45
+	proto 4 spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.45 dst 192.1.2.23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+src 192.1.2.45 dst 192.1.2.23
+	proto 4 spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+XFRM policy:
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto comp reqid REQID mode tunnel
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority 1042407 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority 1042407 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
 west #
  ipsec auto --down westnet-eastnet-compress
 002 "westnet-eastnet-compress": terminating SAs using this connection
 002 "westnet-eastnet-compress" #2: deleting state (STATE_QUICK_I2) and sending notification
-005 "westnet-eastnet-compress" #2: ESP traffic information: in=336B out=336B
+005 "westnet-eastnet-compress" #2: ESP traffic information: in=649B out=652B
 005 "westnet-eastnet-compress" #2:  IPCOMP traffic information: in=0B out=0B
 002 "westnet-eastnet-compress" #1: deleting state (STATE_MAIN_I4) and sending notification
 west #
@@ -83,12 +161,9 @@ done
 west #
  ../../pluto/bin/ipsec-look.sh
 west NOW
+!!!! There should be no XFRM state/policy left here !!!
 XFRM state:
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir out priority 1042407 ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
