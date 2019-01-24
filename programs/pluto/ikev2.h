@@ -13,7 +13,10 @@
 
 #include "fd.h"
 
+struct pending;
 struct pluto_crypto_req;
+struct spd_route;
+
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
 

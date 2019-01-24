@@ -6,6 +6,8 @@
 #include "packet.h"		/* for pb_stream */
 #include "fd.h"
 
+struct alg_info_esp;
+
 /* ikev1.c */
 
 extern void init_ikev1(void);
