@@ -17,6 +17,7 @@ generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
+selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/MODP_2048
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2{1}
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
@@ -27,6 +28,7 @@ authentication of 'east' with pre-shared key successful
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
 scheduling rekeying in 10790s
 maximum IKE_SA lifetime XXXs
+selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev2' established successfully
 west #
@@ -64,7 +66,7 @@ west #
  strongswan status
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{3}:  DELETING, TUNNEL, reqid 1
+westnet-eastnet-ikev2{3}:  DELETED, TUNNEL, reqid 1
 westnet-eastnet-ikev2{3}:   192.0.1.0/24 === 192.0.2.0/24
 westnet-eastnet-ikev2{4}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{4}:   192.0.1.0/24 === 192.0.2.0/24
@@ -98,7 +100,7 @@ west #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{6}:  DELETING, TUNNEL, reqid 1
+westnet-eastnet-ikev2{6}:  DELETED, TUNNEL, reqid 1
 westnet-eastnet-ikev2{6}:   192.0.1.0/24 === 192.0.2.0/24
 westnet-eastnet-ikev2{7}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{7}:   192.0.1.0/24 === 192.0.2.0/24

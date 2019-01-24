@@ -43,6 +43,10 @@ west #
  ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
+src 192.1.2.45 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	sel src 192.1.2.45/32 dst 192.1.2.254/32 proto udp sport 42672 dport 53 dev eth1 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
@@ -86,6 +90,8 @@ src 192.1.2.45/32 dst 192.1.2.0/24
 	dir out priority 2088935 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.254/32
+	dir out priority 2088935 ptype main
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

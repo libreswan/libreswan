@@ -128,8 +128,8 @@ west #
  # show how our tunnel interface looks
 west #
  ip tun
-ip_vti0: ip/ip remote any local any ttl inherit nopmtudisc key 0
 ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
+ip_vti0: ip/ip remote any local any ttl inherit nopmtudisc key 0
 west #
  echo done
 done

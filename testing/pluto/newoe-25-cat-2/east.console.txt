@@ -110,6 +110,8 @@ src 192.1.2.23/32 dst 192.1.2.0/24
 	dir out priority 2088935 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
+src 192.1.2.23/32 dst 192.1.2.254/32
+	dir out priority 2088935 ptype main
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

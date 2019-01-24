@@ -19,7 +19,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
+006 #3: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
 east #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)
@@ -44,6 +44,10 @@ src 192.1.2.23 dst 192.1.2.254
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport 2500 addr 0.0.0.0
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	sel src 192.1.2.23/32 dst 192.1.2.254/32 proto udp sport 45009 dport 53 dev eth1 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.253/32
 	dir out priority 1564639 ptype main
@@ -79,6 +83,8 @@ src 192.1.2.23/32 dst 192.1.2.0/24
 	dir out priority 2088935 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
+src 192.1.2.23/32 dst 192.1.2.254/32
+	dir out priority 2088935 ptype main
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
