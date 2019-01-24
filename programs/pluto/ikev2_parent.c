@@ -613,15 +613,15 @@ void ikev2_parent_outI1(fd_t whack_sock,
 		}
 	}
 
-	st = new_v2_state(STATE_PARENT_I0, ike_initiator_spi(),
-			  zero_ike_spi);
+	st = new_v2_state(STATE_PARENT_I0, SA_INITIATOR,
+			  ike_initiator_spi(), zero_ike_spi);
 
 	/* set up new state */
 	initialize_new_state(st, c, policy, try, whack_sock);
 	passert(st->st_ike_version == IKEv2);
 	passert(st->st_state_kind == STATE_PARENT_I0);
 	st->st_original_role = ORIGINAL_INITIATOR;
-	st->st_sa_role = SA_INITIATOR;
+	passert(st->st_sa_role == SA_INITIATOR);
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
@@ -1009,7 +1009,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	 * dedicating real resources to the connection.
 	 */
 	pexpect(md->svm == finite_states[STATE_PARENT_R0]->fs_v2_transitions);
-	struct state *st = new_v2_state(STATE_PARENT_R0,
+	struct state *st = new_v2_state(STATE_PARENT_R0, SA_RESPONDER,
 					md->hdr.isa_ike_spis.initiator,
 					ike_responder_spi(&md->sender));
 	/* set up new state */
@@ -1018,7 +1018,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	passert(st->st_ike_version == IKEv2);
 	passert(st->st_state_kind == STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
-	st->st_sa_role = SA_RESPONDER;
+	passert(st->st_sa_role == SA_RESPONDER);
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
 

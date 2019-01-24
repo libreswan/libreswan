@@ -442,12 +442,13 @@ struct state *new_v1_rstate(struct msg_digest *md)
 	return st;
 }
 
-struct state *new_v2_state(enum state_kind kind,
+struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 			   const ike_spi_t ike_initiator_spi,
 			   const ike_spi_t ike_responder_spi)
 {
 	struct state *st = new_state(IKEv2, &state_undefined,
 				     ike_initiator_spi, ike_responder_spi);
+	st->st_sa_role = sa_role;
 	const struct finite_state *fs = finite_states[kind];
 	change_state(st, fs->fs_kind);
 	/*
