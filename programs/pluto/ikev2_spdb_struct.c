@@ -1904,6 +1904,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 #define DH_ECP256   { .id = OAKLEY_GROUP_ECP_256, .valid = TRUE, }
 #define DH_ECP384   { .id = OAKLEY_GROUP_ECP_384, .valid = TRUE, }
 #define DH_ECP521   { .id = OAKLEY_GROUP_ECP_521, .valid = TRUE, }
+#define DH_CURVE25519   { .id = OAKLEY_GROUP_CURVE25519, .valid = TRUE, }
 
 #define TR(T, ...) { .transform = { T, __VA_ARGS__ } }
 
@@ -1912,8 +1913,9 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	/*
 	 * AES_GCM_16/C[256]
 	 * NONE
-	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
-	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256
+	 * SHA2_512, SHA2_256
+	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256, DH_ECP384,
+	 *    DH_ECP521, DH_CURVE25519
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1924,15 +1926,17 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
-			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
+			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096,
+				DH_MODP8192, DH_ECP256, DH_ECP384, DH_ECP521, DH_CURVE25519),
 		},
 	},
 	/*
 	 * AES_GCM_16/C[128]
 	 * NONE
-	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
-	 * MODP2048, DH_MODP3072, MODP4096, MODP8192, DH_ECP256
+	 * SHA2_512, SHA2_256
+	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256, DH_ECP384,
+	 *    DH_ECP521, DH_CURVE25519
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1943,15 +1947,17 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
-			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
+			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096,
+				DH_MODP8192, DH_ECP256, DH_ECP384, DH_ECP521, DH_CURVE25519),
 		},
 	},
 	/*
 	 * AES_CBC[256]
-	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
-	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256
+	 * SHA2_512, SHA2_256
+	 * SHA2_512, SHA2_256
+	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256, DH_ECP384,
+	 *    DH_ECP521, DH_CURVE25519
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1961,16 +1967,18 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 		.protoid = IKEv2_SEC_PROTO_IKE,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_256),
-			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128),
+			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096,
+				DH_MODP8192, DH_ECP256, DH_ECP384, DH_ECP521, DH_CURVE25519),
 		},
 	},
 	/*
 	 * AES_CBC[128]
-	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
-	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
-	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256
+	 * SHA2_512, SHA2_256
+	 * SHA2_512, SHA2_256
+	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256, DH_ECP384,
+	 *    DH_ECP521, DH_CURVE25519
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1980,9 +1988,10 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 		.protoid = IKEv2_SEC_PROTO_IKE,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_128),
-			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
-			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
+			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128),
+			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096,
+				DH_MODP8192, DH_ECP256, DH_ECP384, DH_ECP521, DH_CURVE25519),
 		},
 	},
 };
