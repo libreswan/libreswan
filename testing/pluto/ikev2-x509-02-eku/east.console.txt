@@ -1,6 +1,4 @@
-ipsec pluto --version |grep 'IPsec profile' > /dev/null || exit "pluto not compiled with HAS_NSS_IPSEC_PROFILE"
-east #
- /testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
  ipsec start
