@@ -104,57 +104,75 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 	return TRUE;
 }
 
-stf_status ikev2_calc_no_ppk_auth(struct connection *c, struct state *st, unsigned char *id_hash, chunk_t *no_ppk_auth)
+stf_status ikev2_calc_no_ppk_auth(struct connection *c,
+			struct state *st,
+			unsigned char *id_hash,
+			chunk_t *no_ppk_auth)
 {
 	enum keyword_authby authby = c->spd.this.authby;
+
+	freeanychunk(*no_ppk_auth);	/* in case it was occupied */
+
 	switch (authby) {
 	case AUTH_RSASIG:
 	{
 		enum notify_payload_hash_algorithms hash_algo;
-		uint8_t sha2_rsa_oid_blob[ASN1_SHA2_RSA_PSS_SIZE];
+		const uint8_t *sha2_rsa_oid_blob = NULL;
 
 		if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_512;
-			uint8_t sha2_rsa_512_oid_blob[ASN1_SHA2_RSA_PSS_SIZE] = RSA_PSS_SHA512_BLOB;
-
-			memcpy(sha2_rsa_oid_blob, sha2_rsa_512_oid_blob, ASN1_SHA2_RSA_PSS_SIZE);
+			static const uint8_t sha2_rsa_512_oid_blob[ASN1_SHA2_RSA_PSS_SIZE] =
+				RSA_PSS_SHA512_BLOB;
+			sha2_rsa_oid_blob = sha2_rsa_512_oid_blob;
 		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_384;
-			uint8_t sha2_rsa_384_oid_blob[ASN1_SHA2_RSA_PSS_SIZE] = RSA_PSS_SHA512_BLOB;
-
-			memcpy(sha2_rsa_oid_blob, sha2_rsa_384_oid_blob, ASN1_SHA2_RSA_PSS_SIZE);
+			static const uint8_t sha2_rsa_384_oid_blob[ASN1_SHA2_RSA_PSS_SIZE] =
+				RSA_PSS_SHA512_BLOB;
+			sha2_rsa_oid_blob = sha2_rsa_384_oid_blob;
 		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_256;
-			uint8_t sha2_rsa_256_oid_blob[ASN1_SHA2_RSA_PSS_SIZE] = RSA_PSS_SHA512_BLOB;
-
-			memcpy(sha2_rsa_oid_blob, sha2_rsa_256_oid_blob, ASN1_SHA2_RSA_PSS_SIZE);
-		} else if (c->sighash_policy == POL_SIGHASH_NONE) { /* RSA with SHA1 without Digsig */
+			static const uint8_t sha2_rsa_256_oid_blob[ASN1_SHA2_RSA_PSS_SIZE] =
+				RSA_PSS_SHA512_BLOB;
+			sha2_rsa_oid_blob = sha2_rsa_256_oid_blob;
+		} else if (c->sighash_policy == POL_SIGHASH_NONE) {
+			/* RSA with SHA1 without Digsig: no oid blob appended */
 			hash_algo = IKEv2_AUTH_HASH_SHA1;
 		} else {
 			loglog(RC_LOG_SERIOUS, "No compatible hash algo");
 			return STF_FAIL;
 		}
 
-		if (ikev2_calculate_rsa_hash(st, st->st_original_role, id_hash, NULL, TRUE, no_ppk_auth, hash_algo)) {
-			if(st->st_seen_hashnotify && (c->sighash_policy != POL_SIGHASH_NONE)) {
-				/* make blobs separately, and somehow combine them and no_ppk_auth
-				 * to get an actual no_ppk_auth */
-				int len = ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA2_RSA_PSS_SIZE + no_ppk_auth->len;
-				u_char *blobs = alloc_bytes(len, "bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
-				u_char *ret = blobs;
-				const uint8_t len_sha2_rsa_oid_blob[ASN1_LEN_ALGO_IDENTIFIER] = LEN_RSA_PSS_SHA2_BLOB;
+		if (ikev2_calculate_rsa_hash(st, st->st_original_role, id_hash,
+				NULL, TRUE, no_ppk_auth, hash_algo)) {
+			if (st->st_seen_hashnotify &&
+			    sha2_rsa_oid_blob != NULL) {
+				/*
+				 * make blobs separately, then combine them
+				 * and no_ppk_auth to get a final no_ppk_auth
+				 */
+				int len = ASN1_LEN_ALGO_IDENTIFIER +
+					ASN1_SHA2_RSA_PSS_SIZE +
+					no_ppk_auth->len;
+				u_char *blobs = alloc_bytes(len,
+					"bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
 
-				memcpy(blobs, len_sha2_rsa_oid_blob, ASN1_LEN_ALGO_IDENTIFIER);
-				blobs += ASN1_LEN_ALGO_IDENTIFIER;
+				/* note: ASN1_LEN_ALGO_IDENTIFIER == 1 */
+				blobs[0] = ASN1_SHA2_RSA_PSS_SIZE;
 
-				memcpy(blobs, sha2_rsa_oid_blob, ASN1_SHA2_RSA_PSS_SIZE);
-				blobs += ASN1_SHA2_RSA_PSS_SIZE;
-				memcpy(blobs, no_ppk_auth->ptr, no_ppk_auth->len);
-				setchunk(*no_ppk_auth, ret, len);
+				memcpy(&blobs[ASN1_LEN_ALGO_IDENTIFIER],
+					sha2_rsa_oid_blob,
+					ASN1_SHA2_RSA_PSS_SIZE);
+
+				memcpy(&blobs[ASN1_LEN_ALGO_IDENTIFIER +
+						ASN1_SHA2_RSA_PSS_SIZE],
+					no_ppk_auth->ptr,
+					no_ppk_auth->len);
+				freeanychunk(*no_ppk_auth);
+
+				setchunk(*no_ppk_auth, blobs, len);
 			}
 		}
 		return STF_OK;
-		break;
 	}
 	case AUTH_PSK:
 		/* store in no_ppk_auth */
