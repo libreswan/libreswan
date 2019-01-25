@@ -1,7 +1,6 @@
-A regular authnull OE tunnel, but now the initiator
-is "crashed" and restarts and attempts to bring up
-the tunnel again. The connection should establish
-and east should clean up the old connection.
+A regular authenticated IPsec tunnel, is established. Then
+the initiator is crashed and restarted, and it is configured
+to do authnull. The responder should NOT replace the
+authenticated session with the anonymous session.
 
-New code checks for authby=null and if there is no
-NAT involved will delete the old connection.
+Note: what does XfrmOutNoStates show 1 here ??

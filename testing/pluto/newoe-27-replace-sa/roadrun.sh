@@ -1,5 +1,6 @@
-# setup static conn
-ipsec auto --up authenticated
+ping -n -c 1 -I 192.1.3.209 192.1.2.23
+# wait on OE retransmits and rekeying
+sleep 5
 # should show established tunnel and no bare shunts
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
@@ -13,7 +14,9 @@ ipsec restart
 # give OE policies time to load
 sleep 5
 ping -n -c 1 -I 192.1.3.209 192.1.2.23
-# there should be no partial or established states, and a fail shunt
+# give OE time to establish
+sleep 5
 ipsec whack --trafficstatus
-ipsec whack --shuntstatus
+# test the new tunnel works properly
+ping -n -c 3 -I 192.1.3.209 192.1.2.23
 echo done
