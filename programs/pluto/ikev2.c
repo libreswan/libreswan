@@ -121,12 +121,6 @@ enum smf2_flags {
 	 * encryption can occur.
 	 */
 	SMF2_NO_SKEYSEED = LELEM(7),
-
-	/*
-	 * Is this a new exchange (and should only be started when
-	 * non-busy?).
-	 */
-	SMF2_NEW_EXCHANGE = LELEM(8),
 };
 
 /*
@@ -403,7 +397,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .state      = STATE_PARENT_R0,
 	  .next_state = STATE_PARENT_R1,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_NEW_EXCHANGE,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2_parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
@@ -1498,8 +1492,43 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				/* duplicate code below will decide what to do */
 				dbg("received what looks like a duplicate IKE_SA_INIT for #%lu",
 				    st->st_serialno);
+			} else if (drop_new_exchanges()) {
+				/* only log for debug to prevent disk filling up */
+				dbg("pluto is overloaded with half-open IKE SAs; dropping new exchange");
+				return;
+			} else {
+				/*
+				 * Always check for cookies! XXX: why?
+				 *
+				 * Because the v2N_COOKIE payload is
+				 * first, parsing and verifying it
+				 * should be relatively quick and
+				 * cheap, right?
+				 *
+				 * No.  The equation uses v2Ni forcing
+				 * the entire payload to be parsed.
+				 */
+				pexpect(!md->message_payloads.parsed);
+				md->message_payloads = ikev2_decode_payloads(md,
+									     &md->message_pbs,
+									     md->hdr.isa_np);
+				if (md->message_payloads.n != v2N_NOTHING_WRONG) {
+					if (require_ddos_cookies()) {
+						dbg("DDOS so not responding to invalid packet");
+					} else {
+						chunk_t data = chunk(md->message_payloads.data,
+								     md->message_payloads.data_size);
+						send_v2N_response_from_md(md, md->message_payloads.n,
+									  &data);
+					}
+					return;
+				}
+				if (v2_rejected_initiator_cookie(md, require_ddos_cookies())) {
+					dbg("pluto is overloaded and demanding cookies; dropping new exchange");
+					return;
+				}
+				/* else - create a draft state here? */
 			}
-			/* else - create a draft state here? */
 			/* update lastrecv later on */
 			break;
 		case MESSAGE_RESPONSE:
@@ -2121,27 +2150,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 							  NULL/*no data*/);
 		}
 		return;
-	}
-
-	/*
-	 * Does this start a new exchange, and hence, should it be
-	 * dropped or given special treatment.  Since some of this
-	 * proceessing requires a decoded payload, do it late.
-	 */
-	if (svm->flags & SMF2_NEW_EXCHANGE) {
-		/*
-		 * Too busy to process packet.
-		 */
-		if (drop_new_exchanges()) {
-			/* only log for debug to prevent disk filling up */
-			dbg("pluto is overloaded with half-open IKE SAs; dropping new exchange");
-			return;
-		}
-		if (v2_reject_cookie(md, require_ddos_cookies())) {
-			/* only log for debug to prevent disk filling up */
-			dbg("pluto is overloaded and demanding cookies; dropping new exchange");
-			return;
-		}
 	}
 
 	md->from_state = svm->state;

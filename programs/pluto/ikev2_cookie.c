@@ -64,32 +64,9 @@ void refresh_v2_cookie_secret(void)
  * until the peer restarts from scratch.
  */
 static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
-				      struct msg_digest *md)
+				      struct msg_digest *md,
+				      chunk_t Ni)
 {
-	/*
-	 * RFC 5996 Section 2.10 Nonces used in IKEv2 MUST be randomly
-	 * chosen, MUST be at least 128 bits in size, and MUST be at
-	 * least half the key size of the negotiated pseudorandom
-	 * function (PRF).  (We can check for minimum 128bit length)
-	 */
-
-	/*
-	 * XXX: Note that we check the nonce size in accept_v2_nonce()
-	 * so this check is extra. I guess since we need to extract
-	 * the nonce to calculate the cookie, it is cheap to check
-	 * here and reject.
-	 */
-
-	chunk_t Ni = same_in_pbs_left_as_chunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
-	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
-		/*
-		 * If this were a DDOS, we cannot afford to log.  We
-		 * do log if we are debugging.
-		 */
-		dbg("Dropping message with insufficient length Nonce");
-		return false;
-	}
-
 	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
 						 "IKEv2 cookie", DBG_CRYPT);
 
@@ -115,82 +92,103 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 	return true;
 }
 
-bool v2_reject_cookie(struct msg_digest *md, bool require_dcookie)
+bool v2_rejected_initiator_cookie(struct msg_digest *md,
+				  bool me_want_cookie)
 {
-	struct payload_digest *seen_dcookie = NULL;
-
-	/* Process NOTIFY payloads, including checking for a DCOOKIE */
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		if (ntfy->payload.v2n.isan_type == v2N_COOKIE) {
-			if (seen_dcookie == NULL) {
-				DBG(DBG_CONTROLMORE,
-					DBG_log("Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
-				seen_dcookie = ntfy;
-				if (ntfy != md->chain[ISAKMP_NEXT_v2N]) {
-					/* ??? Should this error be logged?  Might make DDOS worse. */
-					DBG(DBG_CONTROL, DBG_log("ERROR: NOTIFY payload of type COOKIE is not the first payload"));
-					/* accept dcookie anyway */
-				}
-			} else {
-				/* ??? Should this error be logged?  Might make DDOS worse. */
-				DBG(DBG_CONTROL,
-					DBG_log("ignoring second NOTIFY payload of type COOKIE"));
-			}
-		}
+	/* establish some home truths, but don't barf */
+	if (!pexpect(md->hdr.isa_msgid == 0) ||
+	    !pexpect(v2_msg_role(md) == MESSAGE_REQUEST) ||
+	    !pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) ||
+	    !pexpect(md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I)) {
+		return true; /* reject cookie */
 	}
 
 	/*
-	 * The RFC states we should ignore unexpected cookies. We
-	 * purposefully violate the RFC and validate the cookie
-	 * anyway. This prevents an attacker from being able to inject
-	 * a lot of data used later to HMAC
+	 * Expect the cookie notification to be first, and don't
+	 * bother checking for things like duplicates.
 	 */
-	if (seen_dcookie != NULL || require_dcookie) {
-		v2_cookie_t cookie;
-		if (!compute_v2_cookie_from_md(&cookie, md)) {
-			return true; /* reject cookie */
-		}
-		/* easier to manipulate */
-		chunk_t dc = CHUNKO(cookie);
-
-		if (seen_dcookie != NULL) {
-			/* we received a dcookie: verify that it is the one we sent */
-
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("received a DOS cookie in I1 verify it"));
-			if (seen_dcookie->payload.v2n.isan_spisize != 0) {
-				DBG(DBG_CONTROLMORE, DBG_log(
-					"DOS cookie contains non-zero length SPI - message discarded"
-				));
-				return true; /* reject cookie */
-			}
-
-			const pb_stream *dc_pbs = &seen_dcookie->pbs;
-			chunk_t idc = {.ptr = dc_pbs->cur, .len = pbs_left(dc_pbs)};
-
-			DBG(DBG_CONTROLMORE,
-			    DBG_dump_chunk("received cookie", idc);
-			    DBG_dump_chunk("computed cookie", dc));
-
-			if (!chunk_eq(idc, dc)) {
-				DBG(DBG_CONTROLMORE, DBG_log(
-					"mismatch in DOS v2N_COOKIE: dropping message (possible attack)"
-				));
-				return true; /* reject cookie */
-			}
-			DBG(DBG_CONTROLMORE, DBG_log(
-				"dcookie received matched computed one"));
-		} else {
-			/* we are under DOS attack and I1 contains no COOKIE */
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("busy mode on. received I1 without a valid dcookie");
-			    DBG_log("send a dcookie and forget this state"));
-			send_v2N_response_from_md(md, v2N_COOKIE, &dc);
-			return true; /* reject cookie */
-		}
-	} else {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("anti-DDoS cookies not required (and no cookie received)"));
+	struct payload_digest *cookie_digest = NULL;
+	if (md->hdr.isa_np == ISAKMP_NEXT_v2N &&
+	    pexpect(md->chain[ISAKMP_NEXT_v2N] != NULL) &&
+	    md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type == v2N_COOKIE) {
+		cookie_digest = md->chain[ISAKMP_NEXT_v2N];
 	}
+	if (!me_want_cookie && cookie_digest == NULL) {
+		dbg("DDOS disabled and no cookie sent, continuing");
+		return false; /* all ok!?! */
+	}
+	pexpect(me_want_cookie || cookie_digest != NULL);
+
+	/*
+	 * Paranoid mode is on - either DDOS or there's a cookie (or
+	 * both).  So need to compute a cookie, but to do that v2Ni is
+	 * needed ...
+	 *
+	 * Annoyingly this is the only reason why the payload needs to
+	 * be parsed - the cookie is first so parsing the full packet
+	 * shouldn't be needed.
+	 *
+	 * RFC 5996 Section 2.10 Nonces used in IKEv2 MUST be randomly
+	 * chosen, MUST be at least 128 bits in size, and MUST be at
+	 * least half the key size of the negotiated pseudorandom
+	 * function (PRF) (We can check for minimum 128bit length).
+	 */
+	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
+		rate_log("DDOS cookie requires Ni paylod - dropping message");
+		return true; /* reject cookie */
+	}
+	chunk_t Ni = same_in_pbs_left_as_chunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
+	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
+		rate_log("DOS cookie failed as Ni payload invalid  - dropping message");
+		return true; /* reject cookie */
+	}
+
+	/* Most code paths require our cookie, compute it. */
+	v2_cookie_t my_cookie;
+	if (!compute_v2_cookie_from_md(&my_cookie, md, Ni)) {
+		return true; /* reject cookie */
+	}
+	chunk_t local_cookie = chunk(&my_cookie, sizeof(my_cookie));
+
+	/* No cookie? demand one */
+	if (me_want_cookie && cookie_digest == NULL) {
+		rate_log("DOS mode on; responding to IKE_SA_INIT with cookie notification request");
+		send_v2N_response_from_md(md, v2N_COOKIE, &local_cookie);
+		return true; /* reject cookie */
+	}
+
+	/* done: !me_want_cookie && cookie_digest == NULL */
+	/* done: me_want_cookie && cookie_digest == NULL */
+	if (!pexpect(cookie_digest != NULL)) {
+		return true; /* reject cookie */
+	}
+
+	/*
+	 * Check that the cookie notification is well constructed.
+	 * Mainly for own sanity.
+	 *
+	 * Since they payload is understood ISAKMP_PAYLOAD_CRITICAL
+	 * should be ignored.
+	 */
+	struct ikev2_notify *cookie_header = &cookie_digest->payload.v2n;
+	if (cookie_header->isan_protoid != 0 ||
+	    cookie_header->isan_spisize != 0 ||
+	    cookie_header->isan_length != sizeof(v2_cookie_t) + sizeof(struct ikev2_notify)) {
+		rate_log("DOS cookie notification corrupt, or invalid - dropping message");
+		return true; /* reject cookie */
+	}
+	chunk_t remote_cookie = same_in_pbs_left_as_chunk(&cookie_digest->pbs);
+
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_chunk("received cookie", remote_cookie);
+		DBG_dump_chunk("computed cookie", local_cookie);
+	}
+
+	if (!chunk_eq(local_cookie, remote_cookie)) {
+		rate_log("DOS cookies do not match - dropping message");
+		return true; /* reject cookie */
+	}
+	dbg("cookies match");
+
 	return false; /* love the cookie */
 }

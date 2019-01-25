@@ -23,6 +23,7 @@ struct msg_digest;
 
 void refresh_v2_cookie_secret(void);
 
-bool v2_reject_cookie(struct msg_digest *md, bool require_cookie);
+bool v2_rejected_initiator_cookie(struct msg_digest *md,
+				  bool me_want_cookies);
 
 #endif
