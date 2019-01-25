@@ -459,9 +459,8 @@ kvmplutotest	newoe-25-cat-3-4-way			good
 kvmplutotest	newoe-25-cat-4				good
 kvmplutotest 	newoe-25-cat-5				good
 kvmplutotest 	newoe-26-poc-poc-host			good
-kvmplutotest 	newoe-27-replace-sa			good
-kvmplutotest 	newoe-27-replace-sa-authnull		good
-
+kvmplutotest 	newoe-27-replace-sa-auth-authnull	good
+kvmplutotest 	newoe-27-replace-sa-authnull-authnull	good
 
 kvmplutotest 	certoe-01-whack				good
 kvmplutotest 	certoe-02-whack-badca			good
