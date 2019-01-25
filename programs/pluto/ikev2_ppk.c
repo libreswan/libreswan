@@ -104,6 +104,8 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 	return TRUE;
 }
 
+#include "ike_alg_hash.h"
+
 stf_status ikev2_calc_no_ppk_auth(struct connection *c,
 			struct state *st,
 			unsigned char *id_hash,
@@ -116,73 +118,67 @@ stf_status ikev2_calc_no_ppk_auth(struct connection *c,
 	switch (authby) {
 	case AUTH_RSASIG:
 	{
-		enum notify_payload_hash_algorithms hash_algo;
-		const uint8_t *sha2_rsa_oid_blob = NULL;
+		const struct asn1_hash_blob *h = NULL;
 
 		if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
-			hash_algo = IKEv2_AUTH_HASH_SHA2_512;
-			static const uint8_t sha2_rsa_512_oid_blob[ASN1_SHA2_RSA_PSS_SIZE] =
-				RSA_PSS_SHA512_BLOB;
-			sha2_rsa_oid_blob = sha2_rsa_512_oid_blob;
+			h = &asn1_rsa_pss_sha2_512;
 		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
-			hash_algo = IKEv2_AUTH_HASH_SHA2_384;
-			static const uint8_t sha2_rsa_384_oid_blob[ASN1_SHA2_RSA_PSS_SIZE] =
-				RSA_PSS_SHA512_BLOB;
-			sha2_rsa_oid_blob = sha2_rsa_384_oid_blob;
+			h = &asn1_rsa_pss_sha2_384;
 		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
-			hash_algo = IKEv2_AUTH_HASH_SHA2_256;
-			static const uint8_t sha2_rsa_256_oid_blob[ASN1_SHA2_RSA_PSS_SIZE] =
-				RSA_PSS_SHA512_BLOB;
-			sha2_rsa_oid_blob = sha2_rsa_256_oid_blob;
-		} else if (c->sighash_policy == POL_SIGHASH_NONE) {
+			h = &asn1_rsa_pss_sha2_256;
+		} else if (c->sighash_policy & POL_SIGHASH_NONE) {
 			/* RSA with SHA1 without Digsig: no oid blob appended */
-			hash_algo = IKEv2_AUTH_HASH_SHA1;
+			if (!ikev2_calculate_rsa_hash(st, st->st_original_role, id_hash,
+					NULL, TRUE, no_ppk_auth, IKEv2_AUTH_HASH_SHA1)) {
+				/* ??? what diagnostic? */
+				return STF_FAIL;
+			}
+			return STF_OK;
 		} else {
 			loglog(RC_LOG_SERIOUS, "No compatible hash algo");
 			return STF_FAIL;
 		}
 
-		if (ikev2_calculate_rsa_hash(st, st->st_original_role, id_hash,
-				NULL, TRUE, no_ppk_auth, hash_algo)) {
-			if (st->st_seen_hashnotify &&
-			    sha2_rsa_oid_blob != NULL) {
-				/*
-				 * make blobs separately, then combine them
-				 * and no_ppk_auth to get a final no_ppk_auth
-				 */
-				int len = ASN1_LEN_ALGO_IDENTIFIER +
-					ASN1_SHA2_RSA_PSS_SIZE +
-					no_ppk_auth->len;
-				u_char *blobs = alloc_bytes(len,
-					"bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
+		if (!ikev2_calculate_rsa_hash(st, st->st_original_role, id_hash,
+				NULL, TRUE, no_ppk_auth, h->hash_algo)) {
+			/* ??? what diagnostic? */
+			return STF_FAIL;
+		}
 
-				/* note: ASN1_LEN_ALGO_IDENTIFIER == 1 */
-				blobs[0] = ASN1_SHA2_RSA_PSS_SIZE;
+		if (st->st_seen_hashnotify) {
+			/*
+			 * make blobs separately, then combine them
+			 * and no_ppk_auth to get a final no_ppk_auth
+			 */
+			int len = h->size +
+				h->asn1_blob_len +
+				no_ppk_auth->len;
+			u_char *blobs = alloc_bytes(len,
+				"bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
 
-				memcpy(&blobs[ASN1_LEN_ALGO_IDENTIFIER],
-					sha2_rsa_oid_blob,
-					ASN1_SHA2_RSA_PSS_SIZE);
+			memcpy(&blobs[0], h->size_blob, h->size);
 
-				memcpy(&blobs[ASN1_LEN_ALGO_IDENTIFIER +
-						ASN1_SHA2_RSA_PSS_SIZE],
-					no_ppk_auth->ptr,
-					no_ppk_auth->len);
-				freeanychunk(*no_ppk_auth);
+			memcpy(&blobs[h->size], h->asn1_blob, h->asn1_blob_len);
 
-				setchunk(*no_ppk_auth, blobs, len);
-			}
+			memcpy(&blobs[h->size + h->asn1_blob_len],
+				no_ppk_auth->ptr, no_ppk_auth->len);
+			freeanychunk(*no_ppk_auth);
+
+			setchunk(*no_ppk_auth, blobs, len);
 		}
 		return STF_OK;
 	}
 	case AUTH_PSK:
 		/* store in no_ppk_auth */
-		if (ikev2_create_psk_auth(AUTH_PSK, st, id_hash, no_ppk_auth))
-			return STF_OK;
-		break;
+		if (!ikev2_create_psk_auth(AUTH_PSK, st, id_hash, no_ppk_auth)) {
+			/* ??? what diagnostic? */
+			return STF_INTERNAL_ERROR;
+		}
+		return STF_OK;
+
 	default:
-		break;
+		bad_case(authby);
 	}
-	return STF_INTERNAL_ERROR;
 }
 
 /* in X_no_ppk keys are stored keys that go into PRF, and we store result in sk_X */
