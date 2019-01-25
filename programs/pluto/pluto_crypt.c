@@ -54,6 +54,9 @@
 #include "ikev1_prf.h"
 #include "state_db.h"
 
+#include "ikev1.h"	/* for complete_v1_state_transition() */
+#include "ikev2.h"	/* for complete_v2_state_transition() */
+
 #ifdef HAVE_SECCOMP
 # include "pluto_seccomp.h"
 #endif
@@ -230,6 +233,10 @@ static void pcr_release(struct pluto_crypto_req *r)
 	case pcr_compute_dh:
 		cancelled_v1_dh(&r->pcr_d.v1_dh);
 		break;
+	case pcr_crypto:
+		r->pcr_d.crypto.handler->cancelled_callback(&r->pcr_d.crypto.task);
+		pexpect(r->pcr_d.crypto.task == NULL);
+		break;
 	}
 }
 
@@ -314,6 +321,11 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 
 	case pcr_compute_dh_v2:
 		calc_dh_v2(r);
+		break;
+
+	case pcr_crypto:
+		r->pcr_d.crypto.handler->compute(r->pcr_d.crypto.task,
+						 helpernum);
 		break;
 	}
 
@@ -694,4 +706,42 @@ void init_crypto_helpers(int nhelpers)
 		libreswan_log(
 			"no crypto helpers will be started; all cryptographic operations will be done inline");
 	}
+}
+
+/*
+ * This function is called when a helper passes work back to the main
+ * thread using the event loop.
+ */
+static crypto_req_cont_func crypto_finished;
+
+static void crypto_finished(struct state *st,
+			    struct msg_digest **mdp,
+			    struct pluto_crypto_req *r)
+{
+	stf_status status = r->pcr_d.crypto.handler->completed_callback(st, *mdp,
+									&r->pcr_d.crypto.task);
+	pexpect(r->pcr_d.crypto.task == NULL);
+	switch (st->st_ike_version) {
+	case IKEv1:
+		complete_v1_state_transition(mdp, status);
+		break;
+	case IKEv2:
+		complete_v2_state_transition(st, mdp, status);
+		break;
+	default:
+		bad_case(st->st_ike_version);
+	}
+}
+
+void submit_crypto(struct state *st,
+		   struct crypto_task *crypto_task,
+		   const struct crypto_handler *crypto_handler,
+		   const char *name)
+{
+	struct pluto_crypto_req_cont *cn = new_pcrc(crypto_finished, name);
+	struct pluto_crypto_req *r = &cn->pcrc_pcr;
+	pcr_init(r, pcr_crypto);
+	r->pcr_d.crypto.task = crypto_task;
+	r->pcr_d.crypto.handler = crypto_handler;
+	send_crypto_helper_request(st, cn);
 }

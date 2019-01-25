@@ -34,6 +34,7 @@
 
 struct oakley_group_desc;
 struct state;
+struct msg_digest;
 
 /*
  * The DH secret (opaque, but we all know it is implemented using
@@ -54,5 +55,13 @@ void transfer_dh_secret_to_helper(struct state *st,
 				  const char *helper, struct dh_secret **secret);
 
 void free_dh_secret(struct dh_secret **secret);
+
+/*
+ * Compute dh storing result in .st_shared_nss.
+ */
+typedef stf_status (dh_callback)(struct state *st, struct msg_digest *md);
+
+extern void submit_dh(struct state *st, chunk_t remote_ke,
+		      dh_callback *callback, const char *name);
 
 #endif

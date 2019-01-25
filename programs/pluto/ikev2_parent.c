@@ -4259,7 +4259,7 @@ static void ikev2_child_ike_inR_continue(struct state *st,
  * initiator received a create Child SA Response (RFC 7296 1.3.1, 1.3.2)
  */
 
-static crypto_req_cont_func ikev2_child_inR_continue;
+static dh_callback ikev2_child_inR_continue;
 
 stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 {
@@ -4287,31 +4287,28 @@ stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 		 */
 		return STF_FAIL + v2N_INVALID_SYNTAX; /* XXX: STF_FATAL? */
 	}
+	chunk_t remote_ke = st->st_gr;
 
 	/*
 	 * XXX: other than logging, these two cases are identical.
 	 */
+	const char *desc;
 	switch (st->st_state) {
 	case STATE_V2_CREATE_I:
-		start_dh_v2(st, "ikev2 Child SA initiator pfs=yes",
-			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
-			    &st->st_ike_spis, /* ignored */
-			    ikev2_child_inR_continue);
-		return STF_SUSPEND;
+		desc = "ikev2 Child SA initiator pfs=yes";
+		break;
 	case STATE_V2_REKEY_CHILD_I:
-		start_dh_v2(st, "ikev2 Child Rekey SA initiator pfs=yes",
-			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
-			    &st->st_ike_spis, /* ignored */
-			    ikev2_child_inR_continue);
-		return STF_SUSPEND;
+		desc = "ikev2 Child Rekey SA initiator pfs=yes";
+		break;
 	default:
 		bad_case(st->st_state);
 	}
+	submit_dh(st, remote_ke, ikev2_child_inR_continue, desc);
+	return STF_SUSPEND;
 }
 
-static void ikev2_child_inR_continue(struct state *st,
-				     struct msg_digest **mdp,
-				     struct pluto_crypto_req *r)
+static stf_status ikev2_child_inR_continue(struct state *st,
+					   struct msg_digest *md)
 {
 	/*
 	 * XXX: Should this routine be split so that each instance
@@ -4324,9 +4321,9 @@ static void ikev2_child_inR_continue(struct state *st,
 	/* initiator getting back an answer */
 	pexpect(IS_CHILD_SA(st));
 	pexpect(st->st_sa_role == SA_INITIATOR);
-	pexpect(*mdp != NULL);
-	pexpect((*mdp)->st == st);
-	pexpect(v2_msg_role(*mdp) == MESSAGE_RESPONSE);
+	pexpect(md != NULL);
+	pexpect(md->st == st);
+	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
 
 	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state_name);
@@ -4336,24 +4333,18 @@ static void ikev2_child_inR_continue(struct state *st,
 		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
 			    st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
-		return;
+		return STF_FATAL;
 	}
 
-	stf_status e = STF_OK;
-	bool only_shared_true = true;
-	if (!finish_dh_v2(st, r, only_shared_true)) {
+	if (st->st_shared_nss == NULL) {
 		/*
 		 * XXX: this is the initiator so returning a
 		 * notification is kind of useless.
 		 */
-		e = STF_FAIL + v2N_INVALID_SYNTAX;
+		return STF_FAIL + v2N_INVALID_SYNTAX;
 	}
 
-	if (e == STF_OK) {
-		e = ikev2_process_ts_and_rest(*mdp);
-	}
-
-	complete_v2_state_transition(st, mdp, e);
+	return ikev2_process_ts_and_rest(md);
 }
 
 /*
