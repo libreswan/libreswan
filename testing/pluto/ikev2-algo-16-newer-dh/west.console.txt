@@ -35,6 +35,9 @@ west #
  ipsec auto --add westnet-eastnet-ikev2-dh19
 002 added connection description "westnet-eastnet-ikev2-dh19"
 west #
+ ipsec auto --add westnet-eastnet-ikev2-dh31
+002 added connection description "westnet-eastnet-ikev2-dh31"
+west #
  ipsec auto --add westnet-eastnet-ikev2-dh20-fallback
 002 added connection description "westnet-eastnet-ikev2-dh20-fallback"
 west #
@@ -118,27 +121,33 @@ west #
 005 "westnet-eastnet-ikev2-dh19" #10: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-ikev2-dh19" #9: deleting state (STATE_PARENT_I3) and sending notification
 west #
+ ipsec auto --up westnet-eastnet-ikev2-dh31
+002 "westnet-eastnet-ikev2-dh31" #11: initiating v2 parent SA
+133 "westnet-eastnet-ikev2-dh31" #11: initiate
+133 "westnet-eastnet-ikev2-dh31" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "westnet-eastnet-ikev2-dh31" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH31}
+002 "westnet-eastnet-ikev2-dh31" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-ikev2-dh31" #12: Authenticated using RSA
+002 "westnet-eastnet-ikev2-dh31" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ikev2-dh31" #12: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --delete westnet-eastnet-ikev2-dh31
+002 "westnet-eastnet-ikev2-dh31": deleting non-instance connection
+002 "westnet-eastnet-ikev2-dh31" #12: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "westnet-eastnet-ikev2-dh31" #12: ESP traffic information: in=0B out=0B
+002 "westnet-eastnet-ikev2-dh31" #11: deleting state (STATE_PARENT_I3) and sending notification
+west #
+ # NOTE: we cannot do this test anymore as we support everything now in the default proposal list
+west #
  # Next one should work after INVALID_KE suggestion by east to change dh20 to modp2048
 west #
- ipsec auto --up westnet-eastnet-ikev2-dh20-fallback
-002 "westnet-eastnet-ikev2-dh20-fallback" #11: initiating v2 parent SA
-133 "westnet-eastnet-ikev2-dh20-fallback" #11: initiate
-133 "westnet-eastnet-ikev2-dh20-fallback" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "westnet-eastnet-ikev2-dh20-fallback" #11: Received unauthenticated INVALID_KE_PAYLOAD response to DH DH20; resending with suggested DH MODP2048
-133 "westnet-eastnet-ikev2-dh20-fallback" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2-dh20-fallback" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-ikev2-dh20-fallback" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2-dh20-fallback" #12: Authenticated using RSA
-002 "westnet-eastnet-ikev2-dh20-fallback" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-dh20-fallback" #12: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+ # ipsec auto --up westnet-eastnet-ikev2-dh20-fallback
 west #
- ipsec auto --delete westnet-eastnet-ikev2-dh20-fallback
-002 "westnet-eastnet-ikev2-dh20-fallback": deleting non-instance connection
-002 "westnet-eastnet-ikev2-dh20-fallback" #12: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "westnet-eastnet-ikev2-dh20-fallback" #12: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-ikev2-dh20-fallback" #11: deleting state (STATE_PARENT_I3) and sending notification
+ # ipsec auto --delete westnet-eastnet-ikev2-dh20-fallback
 west #
- # the last one is no longer in the default list and should fail
+ #
+west #
+ # MODP1536 is no longer in the default list and should fail
 west #
  ipsec whack --impair delete-on-retransmit
 west #
