@@ -449,6 +449,9 @@ struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 	struct state *st = new_state(IKEv2, &state_undefined,
 				     ike_initiator_spi, ike_responder_spi);
 	st->st_sa_role = sa_role;
+	st->st_msgid_lastack = v2_INVALID_MSGID;
+	st->st_msgid_lastrecv = v2_INVALID_MSGID;
+	st->st_msgid_nextuse = 0;
 	const struct finite_state *fs = finite_states[kind];
 	change_state(st, fs->fs_kind);
 	/*

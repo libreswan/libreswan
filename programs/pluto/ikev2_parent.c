@@ -622,9 +622,9 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	passert(st->st_state_kind == STATE_PARENT_I0);
 	st->st_original_role = ORIGINAL_INITIATOR;
 	passert(st->st_sa_role == SA_INITIATOR);
-	st->st_msgid_lastack = v2_INVALID_MSGID;
-	st->st_msgid_lastrecv = v2_INVALID_MSGID;
-	st->st_msgid_nextuse = 0;
+	passert(st->st_msgid_lastack == v2_INVALID_MSGID);
+	passert(st->st_msgid_lastrecv == v2_INVALID_MSGID);
+	passert(st->st_msgid_nextuse == 0);
 	st->st_try = try;
 
 	if (HAS_IPSEC_POLICY(policy)) {
@@ -1019,8 +1019,8 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	passert(st->st_state_kind == STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
 	passert(st->st_sa_role == SA_RESPONDER);
-	st->st_msgid_lastack = v2_INVALID_MSGID;
-	st->st_msgid_nextuse = 0;
+	passert(st->st_msgid_lastack == v2_INVALID_MSGID);
+	passert(st->st_msgid_nextuse == 0);
 
 	md->st = st;
 	/* set by caller */
