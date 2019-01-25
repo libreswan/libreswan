@@ -2,16 +2,13 @@
   <term><emphasis remap='B'>left</emphasis></term>
   <listitem>
 <para>(required)
-the IP address of the left participant's public-network interface,
-Currently, IPv4 and IPv6 IP addresses are supported.
+the IP address or DNS hostname of the left participant's public-network interface,
+Currently, IPv4 and IPv6 IP addresses are supported. If a DNS hostname is used,
+it will be resolved to an IP address on load time, and whenever a connection is
+rekeying or restarting (such as when restarted via a DPD failure detection). This
+allows one to use a DNS hostname when the endpoint is on a dynamic IP address.</para>
+<para>
 There are several magic values.  If it is
-<emphasis remap='B'>%defaultroute</emphasis>,
-and
-the
-<emphasis remap='B'>config setup</emphasis>
-section's,
-<emphasis remap='B'>interfaces</emphasis>
-specification contains
 <emphasis remap='B'>%defaultroute</emphasis>,
 <emphasis remap='B'>left</emphasis>
 will be filled in automatically with the local address
@@ -40,11 +37,9 @@ are to be filled in (by automatic keying) from DNS data for
 client.
 The value can also contain the interface name, which will then later be
 used to obtain the IP address from to fill in. For example
-<emphasis remap='B'>%ppp0</emphasis>
+<emphasis remap='B'>%ppp0</emphasis>.
 
-The values
-<emphasis remap='B'>%group</emphasis>
-and
+The values <emphasis remap='B'>%group</emphasis> and
 <emphasis remap='B'>%opportunisticgroup</emphasis>
 makes this a policy group conn: one that will be instantiated
 into a regular or opportunistic conn for each CIDR block listed in the
