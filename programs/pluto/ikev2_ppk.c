@@ -128,8 +128,10 @@ stf_status ikev2_calc_no_ppk_auth(struct connection *c,
 			h = &asn1_rsa_pss_sha2_256;
 		} else if (c->sighash_policy & POL_SIGHASH_NONE) {
 			/* RSA with SHA1 without Digsig: no oid blob appended */
-			if (!ikev2_calculate_rsa_hash(st, st->st_original_role, id_hash,
-					NULL, TRUE, no_ppk_auth, IKEv2_AUTH_HASH_SHA1)) {
+			if (!ikev2_calculate_rsa_hash(st,
+					st->st_original_role, id_hash, NULL,
+					TRUE, no_ppk_auth, IKEv2_AUTH_HASH_SHA1))
+			{
 				/* ??? what diagnostic? */
 				return STF_FAIL;
 			}
@@ -139,30 +141,36 @@ stf_status ikev2_calc_no_ppk_auth(struct connection *c,
 			return STF_FAIL;
 		}
 
-		if (!ikev2_calculate_rsa_hash(st, st->st_original_role, id_hash,
-				NULL, TRUE, no_ppk_auth, h->hash_algo)) {
+		chunk_t hashval;
+
+		if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
+				id_hash, NULL, TRUE, &hashval,
+				h->hash_algo)) {
 			/* ??? what diagnostic? */
 			return STF_FAIL;
 		}
 
 		if (st->st_seen_hashnotify) {
 			/*
-			 * make blobs separately, then combine them
-			 * and no_ppk_auth to get a final no_ppk_auth
+			 * combine blobs to create no_ppk_auth:
+			 * - ASN.1 length of algo blob
+			 * - ASN.1 algo blob
+			 * - hashval
 			 */
 			int len = h->size +
 				h->asn1_blob_len +
-				no_ppk_auth->len;
+				hashval.len;
 			u_char *blobs = alloc_bytes(len,
 				"bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
 
 			memcpy(&blobs[0], h->size_blob, h->size);
 
-			memcpy(&blobs[h->size], h->asn1_blob, h->asn1_blob_len);
+			memcpy(&blobs[h->size], h->asn1_blob,
+				h->asn1_blob_len);
 
 			memcpy(&blobs[h->size + h->asn1_blob_len],
-				no_ppk_auth->ptr, no_ppk_auth->len);
-			freeanychunk(*no_ppk_auth);
+				hashval.ptr, hashval.len);
+			freeanychunk(hashval);
 
 			setchunk(*no_ppk_auth, blobs, len);
 		}
