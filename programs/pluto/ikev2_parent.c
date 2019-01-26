@@ -2720,7 +2720,7 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 	if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
 		update_ike_endpoints(pst, md);
 
-	nat_traversal_change_port_lookup(md, st);
+	nat_traversal_change_port_lookup(md, st); /* shouldn't this be pst? */
 
 	if (!v2_decode_certs(ike, md)) {
 		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
