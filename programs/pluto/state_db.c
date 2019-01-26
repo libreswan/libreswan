@@ -276,7 +276,8 @@ static bool state_plausable(struct state *st, enum ike_version ike_version,
 struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 					 so_serial_t clonedfrom,
 					 const msgid_t *msgid,
-					 const ike_spi_t *ike_initiator_spi)
+					 const ike_spi_t *ike_initiator_spi,
+					 const char *name)
 {
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(ike_initiator_spi),
@@ -287,12 +288,13 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 		if (!ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
 			continue;
 		}
-		dbg("%s state object #%lu found, in %s",
+		dbg("%s state object #%lu found, in %s (%s)",
 		    enum_name(&ike_version_names, ike_version),
-		    st->st_serialno, st->st_state_name);
+		    st->st_serialno, st->st_state_name, name);
 		return st;
 	}
-	dbg("%s state object not found", enum_name(&ike_version_names, ike_version));
+	dbg("%s state object not found (%s)",
+	    enum_name(&ike_version_names, ike_version), name);
 	return NULL;
 }
 
@@ -301,7 +303,8 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				const msgid_t *msgid,
 				const ike_spis_t *ike_spis,
 				state_by_predicate *predicate,
-				void *predicate_context)
+				void *predicate_context,
+				const char *name)
 {
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(ike_spis), st) {
@@ -316,12 +319,13 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				continue;
 			}
 		}
-		dbg("%s state object #%lu found, in %s",
+		dbg("%s state object #%lu found, in %s (%s)",
 		    enum_name(&ike_version_names, ike_version),
-		    st->st_serialno, st->st_state_name);
+		    st->st_serialno, st->st_state_name, name);
 		return st;
 	}
-	dbg("%s state object not found", enum_name(&ike_version_names, ike_version));
+	dbg("%s state object not found (%s)",
+	    enum_name(&ike_version_names, ike_version), name);
 	return NULL;
 }
 
