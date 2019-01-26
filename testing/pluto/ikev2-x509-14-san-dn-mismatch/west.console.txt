@@ -28,8 +28,8 @@ west #
 002 "san" #2: Peer public key SubjectAltName does not match peer ID for this connection
 002 "san" #2: X509: CERT payload does not match connection ID
 224 "san" #2: STATE_PARENT_I2: v2N_AUTHENTICATION_FAILED
-002 "san" #2: deleting other state #2 (STATE_PARENT_I2) and NOT sending notification
-002 "san" #1: deleting state (STATE_PARENT_I2) and NOT sending notification
+031 "san" #2: STATE_PARENT_I2: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
+000 "san" #2: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  echo "done"
 done
