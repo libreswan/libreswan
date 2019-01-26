@@ -2734,8 +2734,10 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 		dbg("X509: CERT payload bogus or revoked");
 	}
 	/* this call might update connection in md->st */
-	if (!ikev2_decode_peer_id(md))
+	if (!ikev2_decode_peer_id(md)) {
+		event_force(EVENT_SA_EXPIRE, st);
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+	}
 
 	atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, atype)) {
@@ -3633,8 +3635,10 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	}
 
 	/* XXX this call might change connection in md->st! */
-	if (!ikev2_decode_peer_id(md))
+	if (!ikev2_decode_peer_id(md)) {
+		event_force(EVENT_SA_EXPIRE, st);
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+	}
 
 	struct connection *c = st->st_connection;
 	enum keyword_authby that_authby = c->spd.that.authby;
