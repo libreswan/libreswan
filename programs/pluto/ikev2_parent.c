@@ -2695,7 +2695,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct state *st,
 	if (e >= STF_FAIL &&
 	    (st->st_connection->policy & POLICY_OPPORTUNISTIC)) {
 		DBG(DBG_OPPO,
-			DBG_log("Deleting opportunistic Parent with no Child SA"));
+			DBG_log("(pretending?) Deleting opportunistic Parent with no Child SA"));
 		e = STF_FATAL;
 		send_v2N_response_from_state(ike_sa(st), md,
 					     v2N_AUTHENTICATION_FAILED,
