@@ -1921,7 +1921,8 @@ static bool netlink_get(int fd)
 			return FALSE;
 
 		if (errno != EINTR) {
-			LOG_ERRNO(errno, "recvfrom() failed in netlink_get");
+			LOG_ERRNO(errno, "recvfrom() failed in netlink_get: errno(%d): %s",
+				errno, strerror(errno));
 		}
 		return TRUE;
 	} else if ((size_t)r < sizeof(rsp.n)) {
