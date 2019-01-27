@@ -152,6 +152,7 @@ d.ipsec.conf/fragicmp.xml
 d.ipsec.conf/hidetos.xml
 d.ipsec.conf/overridemtu.xml
 d.ipsec.conf/seccomp.xml
+d.ipsec.conf/dnssec.xml
 d.ipsec.conf/configsectionsend.xml
 d.ipsec.conf/implicitconns.xml
 d.ipsec.conf/obsolete.xml
