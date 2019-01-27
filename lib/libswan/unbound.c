@@ -186,9 +186,6 @@ bool unbound_event_init(struct event_base *eb, bool do_dnssec,
 void unbound_sync_init(bool do_dnssec, const char *rootfile,
 			const char *trusted)
 {
-	if (!do_dnssec)
-		return;
-
 	passert(dns_ctx == NULL); /* block re-entry to the function */
 	dns_ctx = ub_ctx_create();
 	passert(dns_ctx != NULL);
