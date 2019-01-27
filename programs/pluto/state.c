@@ -708,8 +708,7 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 		* Don't log state and connection if it is the same as
 		* the message prefix.
 		*/
-		libreswan_log("deleting state #%lu (%s) aged "PRI_DELTATIME"s and %ssending notification",
-			st->st_serialno,
+		libreswan_log("deleting state (%s) aged "PRI_DELTATIME"s and %ssending notification",
 			st->st_state_name,
 			pri_deltatime(realtimediff(realnow(), st->st_inception)),
 			del_notify ? "" : "NOT ");
