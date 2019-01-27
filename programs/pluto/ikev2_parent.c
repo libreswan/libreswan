@@ -2848,6 +2848,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			null_auth = alloc_chunk(len, "NULL_AUTH");
 			if (!in_raw(null_auth.ptr, len, &pbs, "NULL_AUTH extract")) {
 				loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NULL_AUTH from Notify payload", len);
+				freeanychunk(null_auth);
 				return STF_FATAL;
 			}
 			break;
@@ -2880,6 +2881,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 
 	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
 		loglog(RC_LOG_SERIOUS, "Requested PPK_ID not found and connection requires a valid PPK");
+		freeanychunk(null_auth);
 		return STF_FATAL;
 	}
 
@@ -2928,6 +2930,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			send_v2N_response_from_state(ike_sa(st), md,
 						     v2N_AUTHENTICATION_FAILED,
 						     NULL/*no data*/);
+			freeanychunk(null_auth);	/* ??? necessary? */
 			return STF_FATAL;
 		}
 		DBG(DBG_CONTROL, DBG_log("NO_PPK_AUTH verified"));
@@ -2951,6 +2954,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				send_v2N_response_from_state(ike_sa(st), md,
 							     v2N_AUTHENTICATION_FAILED,
 							     NULL/*no data*/);
+				freeanychunk(null_auth);
 				return STF_FATAL;
 			}
 			DBG(DBG_CONTROL, DBG_log("NULL_AUTH verified"));
@@ -2961,12 +2965,15 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				send_v2N_response_from_state(ike_sa(st), md,
 							     v2N_AUTHENTICATION_FAILED,
 							     NULL/*no data*/);
+				freeanychunk(null_auth);
 				return STF_FATAL;
 			}
 		}
 	}
 
 	/* AUTH succeeded */
+
+	freeanychunk(null_auth);
 
 #ifdef XAUTH_HAVE_PAM
 	if (st->st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
