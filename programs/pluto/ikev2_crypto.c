@@ -137,13 +137,6 @@ void ikev2_derive_child_keys(struct child_sa *child)
 
 	release_symkey(__func__, "keymat", &keymat);
 
-	if (child->sa.st_sa_role == 0) {
-		PEXPECT_LOG("unset child sa in state #%lu",
-			    child->sa.st_serialno);
-		child->sa.st_sa_role = (ike_sa(&child->sa)->sa.st_original_role == ORIGINAL_INITIATOR)
-			? SA_INITIATOR : SA_RESPONDER;
-	}
-
 	/*
 	 * The initiator stores outgoing initiator-to-responder keymat
 	 * in PEER, and incomming responder-to-initiator keymat in
