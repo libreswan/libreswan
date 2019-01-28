@@ -505,10 +505,8 @@ struct hash_desc {
  */
 struct asn1_hash_blob {
 	enum notify_payload_hash_algorithms hash_algo;
-	const uint8_t size;
-	const uint8_t *size_blob;
-	const uint8_t asn1_blob_len;
-	const uint8_t *asn1_blob;
+	const uint8_t *blob;
+	size_t blob_sz;
 };
 
 /*

@@ -19,7 +19,7 @@
 extern const struct hash_desc ike_alg_hash_sha1;
 #endif
 
-extern const struct hash_desc ike_alg_hash_sha2_256;
+extern const struct hash_desc ike_alg_hash_sha2_256;	/* also used for cookies */
 #ifdef USE_SHA2
 extern const struct hash_desc ike_alg_hash_sha2_384;
 extern const struct hash_desc ike_alg_hash_sha2_512;

@@ -102,13 +102,11 @@ const struct integ_desc ike_alg_integ_sha1 = {
 	.integ_kernel_audit_name = "HMAC_SHA1",
 };
 
-static const uint8_t size_blob_ecdsa_sha1[ASN1_LEN_ALGO_IDENTIFIER] = LEN_ECDSA_SHA1_BLOB;
-static const uint8_t asn1_blob_ecdsa_sha1[ASN1_SHA1_ECDSA_SIZE] = ECDSA_SHA1_BLOB;
+static const uint8_t asn1_blob_ecdsa_sha1[ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA1_ECDSA_SIZE] =
+	{ LEN_ECDSA_SHA1_BLOB, ECDSA_SHA1_BLOB };
 
 const struct asn1_hash_blob asn1_ecdsa_sha1 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA1,
-	.size = ASN1_LEN_ALGO_IDENTIFIER,
-	.size_blob = size_blob_ecdsa_sha1,
-	.asn1_blob_len = ASN1_SHA1_ECDSA_SIZE,
-	.asn1_blob = asn1_blob_ecdsa_sha1,
+	.blob = asn1_blob_ecdsa_sha1,
+	.blob_sz = sizeof(asn1_blob_ecdsa_sha1)
 };
