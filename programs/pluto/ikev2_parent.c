@@ -102,6 +102,9 @@ static stf_status ikev2_start_new_exchange(struct state *st);
 
 static stf_status ikev2_child_out_tail(struct msg_digest *md);
 
+static bool asn1_hash_in(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs,
+		   uint8_t size, uint8_t asn1_blob_len);
+
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
 {
 	lset_t sighash_policy = st->st_connection->sighash_policy;
@@ -184,7 +187,13 @@ static stf_status ikev2_send_asn1_hash_blob(enum notify_payload_hash_algorithms 
 
 	passert(b != NULL);
 
-	if (!out_raw(b->blob, b->blob_sz, a_pbs,
+	if (!out_raw(b->size_blob, b->size, a_pbs,
+	    "Length of the ASN.1 Algorithm Identifier")) {
+		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit ASN.1 Algorithm Identifier length");
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (!out_raw(b->asn1_blob, b->asn1_blob_len, a_pbs,
 	    "OID of ASN.1 Algorithm Identifier")) {
 		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
 		return STF_INTERNAL_ERROR;
@@ -204,18 +213,56 @@ static stf_status ikev2_check_asn1_hash_blob(enum notify_payload_hash_algorithms
 		return STF_FAIL;
 	}
 
-	uint8_t in_blob[ASN1_LEN_ALGO_IDENTIFIER +
-		PMAX(ASN1_SHA1_ECDSA_SIZE,
-			PMAX(ASN1_SHA2_RSA_PSS_SIZE, ASN1_SHA2_ECDSA_SIZE))];
-	passert(b->blob_sz < sizeof(in_blob));
+	/*
+	 * ???
+	 * b->size == ASN1_LEN_ALGO_IDENTIFIER; b->asn1_blob_len == ASN1_SHA2_RSA_PSS_SIZE
+	 * Why pass these separately to asn1_hash_in?
+	 * If these are universal, they could be wired into asn1_hash_in thus avoiding
+	 * an array bound that isn't a compile-time constant.
+	 * This is the only call to asn1_hash_in: why not inline it?
+	 */
+	if (!asn1_hash_in(b, a_pbs, ASN1_LEN_ALGO_IDENTIFIER,
+		authby == AUTH_RSASIG ? ASN1_SHA2_RSA_PSS_SIZE :
+			ASN1_SHA2_ECDSA_SIZE))
+		{
+			return STF_FAIL;
+		}
+	return STF_OK;
+}
 
-	if (!in_raw(in_blob, b->blob_sz, a_pbs, "ASN.1 blob for hash algo") ||
-	    !memeq(in_blob, b->blob, b->blob_sz)) {
-		loglog(RC_LOG_SERIOUS, "ASN.1 blob for expected hash algorithm %d missing", hash_algo);
-		return STF_FAIL;
+static bool asn1_hash_in(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs,
+		   uint8_t size, uint8_t asn1_blob_len)
+{
+	/* ??? dynamic array bounds are deprecated */
+	uint8_t check_size[size];
+	/* ??? dynamic array bounds are deprecated */
+	uint8_t check_blob[asn1_blob_len];
+
+	if (!in_raw(check_size, size, a_pbs,
+	    "Algorithm Identifier length"))
+		return FALSE;
+	/*
+	 * ??? The following seems to assume asn1_hash_blob->size == size
+	 * This is true, but not self-evident.
+	 */
+	if (!memeq(check_size, asn1_hash_blob->size_blob, asn1_hash_blob->size)) {
+		loglog(RC_LOG_SERIOUS, " Received incorrect size of ASN.1 Algorithm Identifier");
+		return FALSE;
 	}
 
-	return STF_OK;
+	if (!in_raw(check_blob, asn1_blob_len, a_pbs,
+	    "Algorithm Identifier value"))
+		return FALSE;
+	/*
+	 * ??? The following seems to assume asn1_hash_blob->asn1_blob_len == asn1_blob_len
+	 * This is true, but not self-evident.
+	 */
+	if (!memeq(check_blob, asn1_hash_blob->asn1_blob, asn1_hash_blob->asn1_blob_len)) {
+		loglog(RC_LOG_SERIOUS, " Received incorrect bytes of ASN.1 Algorithm Identifier");
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
