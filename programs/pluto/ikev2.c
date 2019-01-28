@@ -94,8 +94,6 @@ enum smf2_flags {
 	SMF2_IKE_I_SET = LELEM(1),
 	SMF2_IKE_I_CLEAR = LELEM(2),
 
-	SMF2_SEND = LELEM(3),
-
 	/*
 	 * Is the MSG_R bit set.
 	 *
@@ -274,7 +272,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiate CREATE_CHILD_SA IKE Rekey",
 	  .state      = STATE_V2_REKEY_IKE_I0,
 	  .next_state = STATE_V2_REKEY_IKE_I,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
@@ -284,7 +283,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiate CREATE_CHILD_SA IPsec Rekey SA",
 	  .state      = STATE_V2_REKEY_CHILD_I0,
 	  .next_state = STATE_V2_REKEY_CHILD_I,
-	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
@@ -294,7 +294,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiate CREATE_CHILD_SA IPsec SA",
 	  .state      = STATE_V2_CREATE_I0,
 	  .next_state = STATE_V2_CREATE_I,
-	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
@@ -304,7 +305,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "initiate IKE_SA_INIT",
 	  .state      = STATE_PARENT_I0,
 	  .next_state = STATE_PARENT_I1,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
@@ -315,7 +317,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process SA_INIT reply notification",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .send = MESSAGE_REQUEST,
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor = ikev2_IKE_SA_process_SA_INIT_response_notification,
@@ -331,7 +334,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .send = MESSAGE_REQUEST,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = ikev2_parent_inR1outI2,
@@ -397,7 +401,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .state      = STATE_PARENT_R0,
 	  .next_state = STATE_PARENT_R1,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR,
+	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2_parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
@@ -415,7 +420,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Responder: process IKE_AUTH request (no SKEYSEED)",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R1,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_NO_SKEYSEED,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_NO_SKEYSEED,
+	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = LEMPTY,
 	  .opt_enc_payloads = LEMPTY,
@@ -433,7 +439,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_V2_IPSEC_R,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR,
+	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
@@ -460,7 +467,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to CREATE_CHILD_SA IKE Rekey",
 	  .state      = STATE_V2_REKEY_IKE_R,
 	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_MSG_R_CLEAR | SMF2_SEND,
+	  .flags      = SMF2_MSG_R_CLEAR,
+	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
 	  .opt_enc_payloads = P(N),
@@ -493,7 +501,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
 	  .state      = STATE_V2_CREATE_R,
 	  .next_state = STATE_V2_IPSEC_R,
-	  .flags      = SMF2_MSG_R_CLEAR | SMF2_SEND,
+	  .flags      = SMF2_MSG_R_CLEAR,
+	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N),
@@ -750,10 +759,17 @@ void init_ikev2(void)
 			for (unsigned ti = 0; ti < from->fs_nr_transitions; ti++) {
 				const struct state_v2_microcode *t = &from->fs_v2_transitions[ti];
 				const struct finite_state *to = finite_states[t->next_state];
-				DBG_log("    -> %s %s (%s)", to->fs_short_name,
+				const char *send;
+				switch (t->send) {
+				case NO_MESSAGE: send = ""; break;
+				case MESSAGE_REQUEST: send = " send-request"; break;
+				case MESSAGE_RESPONSE: send = " send-request"; break;
+				default: bad_case(t->send);
+				}
+				DBG_log("    -> %s %s%s (%s)", to->fs_short_name,
 					enum_short_name(&timer_event_names,
 							t->timeout_event),
-					t->story);
+					send, t->story);
 			}
 		}
 	}
@@ -2794,7 +2810,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	}
 
 	/* if requested, send the new reply packet */
-	if (svm->flags & SMF2_SEND) {
+	if (svm->send != NO_MESSAGE) {
 		/*
 		 * Adjust NAT but not for initial state (initial
 		 * outbound message?).

@@ -240,6 +240,21 @@ struct state_v2_microcode {
 	const enum state_kind next_state;
 	const enum isakmp_xchg_types recv_type;
 	const lset_t flags;
+	/*
+	 * During a successful state transition is an out going
+	 * message expected and, if so, is it a request or response.
+	 *
+	 * Old code had a simple flag (SMF2_SEND) and then tried to
+	 * reverse engineer this value from the incomming message.
+	 * While in theory possible, it didn't seem to go well.  For
+	 * instance, because the code didn't clearly differentiate
+	 * between a FAKE_MD (created because old code insisted on
+	 * there always being an incomming message) and a real request
+	 * or response it ended up trying to use STATE_KIND to figure
+	 * things out.  While perhaps it is possible to make all this
+	 * work, spelling it out seems clearer.
+	 */
+	enum message_role send;
 
 	const lset_t req_clear_payloads;  /* required unencrypted payloads (allows just one) for received packet */
 	const lset_t opt_clear_payloads;  /* optional unencrypted payloads (none or one) for received packet */
