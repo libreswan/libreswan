@@ -23,6 +23,7 @@
 #include <stddef.h>		/* for size_t */
 
 #include "lswcdefs.h"		/* for PRINTF_LIKE */
+#include "chunk.h"
 
 /*
  * fmtbuf_t provides a mechanism for accumulating formatted strings
@@ -44,40 +45,38 @@
  * ARRAY, a previously allocated array, containing the accumulated
  * NUL-terminated + CANARY-terminated output.
  *
- * The following offsets into ARRAY are maintained:
+ * ROOF:
  *
- *    0 <= LEN <= BOUND < ROOF < sizeof(ARRAY)
- *
- * ROOF < sizeof(ARRAY); ARRAY[ROOF]==CANARY
- *
- * The offset to the last character in the array.  It contains a
+ * The offset of the the last character in the array.  It contains a
  * canary intended to catch overflows.  When sizeof(ARRAY) is needed,
  * ROOF should be used as otherwise the canary may be corrupted.
  *
- * BOUND < ROOF; ARRAY[BOUND]=='\0'
+ *   ROOF < sizeof(ARRAY)
+ *   ARRAY[ROOF-0] = CANARY
+ *   ARRAY[ROOF-1] == '\0'
  *
- * Limit on how many characters can be appended.
+ * TOTAL:
  *
- * LEN < BOUND; ARRAY[LEN]=='\0'
+ * The number of characters that should have been written to the
+ * ARRAY.
  *
- * Equivalent to strlen(BUF).  BOUND-LEN is always the amount of
- * unused space in the array.
+ * When TOTAL<ROOF it is also strlen(ARRAY) and the index of the next
+ * location vis:
  *
- * When LEN<BOUND, space for BOUND-LEN characters, including the
- * terminating NUL, is still available (when BOUND-LEN==1, a single
- * NUL (empty string) write is possible).
+ *   TOTAL < ROOF => ARRAY[TOTAL] == '\0'
  *
- * When LEN==BOUND, the array is full and writes are discarded.
+ * When TOTAL>=ROOF, overflow has occured and no futher characters are
+ * written.
  *
- * When the ARRAY fills, the last few characters are overwritten with
- * DOTS.
+ * When TOTAL==ROOF-1 the buffer is full.  Technically there is still
+ * space for a string of length 0.  However any larger string will
+ * trigger the overflow code and the last few characters will be
+ * overwritten with DOTS.
  */
 
 typedef struct lswlog {
 	char *array;
-	/* 0 <= LEN < BOUND < ROOF */
-	size_t len;
-	size_t bound;
+	size_t total;
 	size_t roof;
 	const char *dots;
 } fmtbuf_t;
@@ -98,6 +97,8 @@ bool fmtbuf_ok(fmtbuf_t *buf);
 
 fmtbuf_t array_as_fmtbuf(char *array, size_t sizeof_array);
 #define ARRAY_AS_FMTBUF(ARRAY) array_as_fmtbuf((ARRAY), sizeof(ARRAY));
+/* includes '\0' */
+chunk_t fmtbuf_as_chunk(fmtbuf_t *buf);
 
 /*
  * Routines for accumulating output in the fmtbuf buffer.

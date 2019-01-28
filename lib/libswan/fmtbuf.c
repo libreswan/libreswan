@@ -39,14 +39,10 @@ static void assert_fmtbuf(fmtbuf_t *buf)
 {
 #define A(ASSERTION) if (!(ASSERTION)) abort()
 	A(buf->dots != NULL);
-	/* LEN/BOUND well defined */
-	A(buf->len <= buf->bound);
-	A(buf->bound < buf->roof);
-	/* always NUL terminated */
-	A(buf->array[buf->len] == '\0');
-	A(buf->array[buf->bound] == '\0');
-	/* overflow? */
-	A(buf->array[buf->roof] == FMTBUF_CANARY);
+	/* termination */
+	A(buf->total >= buf->roof || buf->array[buf->total] == '\0');
+	A(buf->array[buf->roof-1] == '\0');
+	A(buf->array[buf->roof-0] == FMTBUF_CANARY);
 #undef A
 }
 
@@ -63,17 +59,20 @@ int (*fmtbuf_debugf)(const char *format, ...) = fmtbuf_debugf_nop;
 
 fmtbuf_t array_as_fmtbuf(char *array, size_t sizeof_array)
 {
+	fmtbuf_debugf("%s(array=%p,sizeof_array=%zu)\n",
+		      __func__, array, sizeof_array);
 	/* pointers back at buf */
 	fmtbuf_t buf = {
 		.array = array,
-		.len = 0,
-		.bound = sizeof_array - 2,
+		.total = 0,
 		.roof = sizeof_array - 1,
 		.dots = "...",
 	};
-	buf.array[buf.bound] = buf.array[buf.len] = '\0';
-	buf.array[buf.roof] = FMTBUF_CANARY;
+	buf.array[buf.roof-1] = buf.array[buf.total] = '\0';
+	buf.array[buf.roof-0] = FMTBUF_CANARY;
 	assert_fmtbuf(&buf);
+	fmtbuf_debugf("\t->{.array=%p,.total=%zu,.roof=%zu,.dots='%s'}\n",
+		      buf.array, buf.total, buf.roof, buf.dots);
 	return buf;
 }
 
@@ -88,42 +87,24 @@ struct dest {
 
 static struct dest dest(fmtbuf_t *buf)
 {
-	fmtbuf_debugf("dest(.buf=%p)\n", buf);
-	fmtbuf_debugf("\tbbound=%zu\n", buf->bound);
-	assert_fmtbuf(buf);
-
 	/*
 	 * Where will the next message be written?
 	 */
-	passert(buf->bound < buf->roof);
-	passert(buf->len <= buf->bound);
-	char *start = buf->array + buf->len;
-	fmtbuf_debugf("\tstart=%p\n", start);
-	passert(start < buf->array + buf->roof);
-	passert(start[0] == '\0');
-
-	/*
-	 * How much space remains?
-	 *
-	 * If the buffer is full (LEN==BOUND-1) then size=1 - a string
-	 * of length 0 (but size 1 - the NUL) will still fit.
-	 *
-	 * If the buffer has overflowed (LEN==BOUND) (output has
-	 * already been truncated) then size=0.
-	 */
-	passert(buf->bound < buf->roof);
-	passert(buf->len <= buf->bound);
-	size_t size = buf->bound - buf->len;
-	fmtbuf_debugf("\tsize=%zd\n", size);
-	passert(buf->len + size < buf->roof);
-
 	struct dest d = {
-		.start = start,
-		.size = size,
+		.start = NULL,
+		.size = 0,
 	};
-
-	fmtbuf_debugf("\t->{.start=%p,.size=%zd}\n",
-		      d.start, d.size);
+	if (buf->total < buf->roof) {
+		d.start = buf->array + buf->total;
+		d.size = buf->roof - buf->total;
+	} else {
+		/* point start somewhere */
+		d.start = buf->array + buf->roof - 1;
+		d.size = 0;
+	}
+	passert(d.start[0] == '\0');
+	fmtbuf_debugf("%s(buf=%p)->{.start=%p,.size=%zd}\n",
+		      __func__, buf, d.start, d.size);
 	return d;
 }
 
@@ -134,23 +115,19 @@ static struct dest dest(fmtbuf_t *buf)
 static void truncate_buf(fmtbuf_t *buf)
 {
 	fmtbuf_debugf("truncate_buf(.buf=%p)\n", buf);
-	fmtbuf_debugf("\tblen=%zu\n", buf->len);
-	fmtbuf_debugf("\tbbound=%zu\n", buf->bound);
-	fmtbuf_debugf("\tbdots=%s\n", buf->dots);
-	assert_fmtbuf(buf);
-
+	fmtbuf_debugf("\tlength=%zu\n", buf->total);
+	fmtbuf_debugf("\tdots=%s\n", buf->dots);
 	/*
-	 * Transition from "full" to overfull (truncated).
+	 * buffer is full to overflowing
 	 */
-	passert(buf->len == buf->bound - 1);
-	buf->len = buf->bound;
-
+	passert(buf->total >= buf->roof);
+	passert(buf->array[buf->roof - 1] == '\0');
+	passert(buf->array[buf->roof - 2] != '\0');
 	/*
 	 * Backfill with DOTS.
 	 */
-	passert(buf->bound < buf->roof);
-	passert(buf->bound >= strlen(buf->dots));
-	char *dest = buf->array + buf->bound - strlen(buf->dots);
+	passert(buf->roof > strlen(buf->dots));
+	char *dest = buf->array + buf->roof - strlen(buf->dots) - 1;
 	fmtbuf_debugf("\tdest=%p\n", dest);
 	memcpy(dest, buf->dots, strlen(buf->dots) + 1);
 }
@@ -176,13 +153,13 @@ static size_t concat(fmtbuf_t *buf, const char *string)
 	 */
 	size_t n = strlen(string);
 
+	buf->total += n;
 	if (d.size > n) {
 		/*
 		 * There is space for all N characters and a trailing
 		 * NUL, copy everything over.
 		 */
 		memcpy(d.start, string, n + 1);
-		buf->len += n;
 	} else if (d.size > 0) {
 		/*
 		 * Not enough space, perform a partial copy of the
@@ -190,73 +167,53 @@ static size_t concat(fmtbuf_t *buf, const char *string)
 		 */
 		memcpy(d.start, string, d.size - 1);
 		d.start[d.size - 1] = '\0';
-		buf->len += d.size - 1;
-		passert(buf->len == buf->bound - 1);
 		/*
 		 * ... and then go back and blat the end with DOTS.
 		 */
 		truncate_buf(buf);
 	}
-	/* already overflowed */
-
-	assert_fmtbuf(buf);
 	return n;
 }
 
 size_t fmt_va_list(fmtbuf_t *buf, const char *format, va_list ap)
 {
+	assert_fmtbuf(buf);
 	struct dest d = dest(buf);
 
 	/*
-	 * N (the return value) is the number of characters, not not
+	 * N (the return value) is the number of characters, not
 	 * including the trailing NUL, that should have been written
 	 * to the buffer.
-	 *
-	 * If N is negative than an "output error" (will that happen?)
-	 * occurred (that or a very old, non-compliant, s*printf()
-	 * implementation that returns -1 instead of the required
-	 * size).
 	 */
 	int sn = vsnprintf(d.start, d.size, format, ap);
 	if (sn < 0) {
 		/*
-		 * Return something "HUGE" so callers can assume all
-		 * values are unsigned.
-		 *
-		 * Calling PEXPECT_LOG() here is recursive; is this a
-		 * problem? (if it is then we hope things crash).
+		 * A negative return value indicates an "output
+		 * error", but there is no output so it can't happen
+		 * (that or a very old, non-compliant, s*printf()
+		 * implementation that returns -1 instead of the
+		 * required size).
 		 */
-		PEXPECT_LOG("vsnprintf() unexpectedly returned the -ve value %d", sn);
-		return buf->roof;
+		abort();
 	}
 	size_t n = sn;
 
-	if (d.size > n) {
+	buf->total += n;
+	if (d.size > 0 && n >= d.size) {
 		/*
-		 * Everything, including the trailing NUL, fitted.
-		 * Update the length.
-		 */
-		buf->len += n;
-	} else if (d.size > 0) {
-		/*
-		 * The message didn't fit so only d.size-1 characters
-		 * of the message were written.  Update things ...
-		 */
-		buf->len += d.size - 1;
-		passert(buf->len == buf->bound - 1);
-		/*
-		 * ... and then mark the buffer as truncated.
+		 * There was some space but the entire message didn't
+		 * fit - d.size-1 characters were written.  Truncate
+		 * the buffer.
 		 */
 		truncate_buf(buf);
 	}
-	/* already overflowed */
-
 	assert_fmtbuf(buf);
 	return n;
 }
 
 size_t fmt(fmtbuf_t *buf, const char *format, ...)
 {
+	/* fmt_va_list does assert */
 	va_list ap;
 	va_start(ap, format);
 	size_t n = fmt_va_list(buf, format, ap);
@@ -266,16 +223,32 @@ size_t fmt(fmtbuf_t *buf, const char *format, ...)
 
 size_t fmt_string(fmtbuf_t *buf, const char *string)
 {
-	return concat(buf, string);
+	assert_fmtbuf(buf);
+	size_t n = concat(buf, string);
+	assert_fmtbuf(buf);
+	return n;
 }
 
 size_t fmt_fmtbuf(fmtbuf_t *buf, fmtbuf_t *fmtbuf)
 {
-	return concat(buf, fmtbuf->array);
+	assert_fmtbuf(buf);
+	size_t n = concat(buf, fmtbuf->array);
+	assert_fmtbuf(buf);
+	return n;
 }
 
 bool fmtbuf_ok(fmtbuf_t *buf)
 {
-	struct dest d = dest(buf);
-	return d.size > 0; /* no overflow */
+	assert_fmtbuf(buf);
+	return buf->total < buf->roof;
+}
+
+chunk_t fmtbuf_as_chunk(fmtbuf_t *buf)
+{
+	assert_fmtbuf(buf);
+	if (buf->total >= buf->roof) {
+		return chunk(buf->array, buf->roof);
+	} else {
+		return chunk(buf->array, buf->total + 1);
+	}
 }
