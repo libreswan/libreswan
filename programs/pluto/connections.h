@@ -500,12 +500,23 @@ extern struct connection *build_outgoing_opportunistic_connection(
 		const ip_address *peer_client,
 		const int transport_proto);
 
-/* worst case: "[" serial "] " myclient "=== ..." peer "===" hisclient '\0' */
+/* worst case: "[" serial "] " myclient "=== ..." peer "===" hisclient '\0' <cookie> */
 #define CONN_INST_BUF \
-	(2 + 10 + 1 + SUBNETTOT_BUF + 7 + ADDRTOT_BUF + 3 + SUBNETTOT_BUF + 1)
+	(2 + 10 + 1 + SUBNETTOT_BUF + 7 + ADDRTOT_BUF + 3 + SUBNETTOT_BUF + 1 + 1)
 
+void fmt_connection_instance(struct lswlog *buf, const struct connection *c);
+/* str_connection_instance() */
 extern char *fmt_conn_instance(const struct connection *c,
 			       char buf[CONN_INST_BUF]);
+
+typedef struct {
+	char buf[CONN_INST_BUF + 1/*COOKIE*/];
+} connection_buf;
+
+const char *str_connection(const struct connection *c,
+			   connection_buf *buf);
+
+void fmt_connection(struct lswlog *buf, const struct connection *c);
 
 /* operations on "pending", the structure representing Quick Mode
  * negotiations delayed until a Keying Channel has been negotiated.
