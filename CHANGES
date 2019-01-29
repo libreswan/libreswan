@@ -20,6 +20,7 @@ v3.28 (unreleased)
 * IKEv2: Timeout in receiving IKE_AUTH reply would abort connection [Paul]
 * IKEv2: Add ECP384, ECP521 and CURVE25519 to default IKEv2 proposal [Paul]
 * IKEv2: Remove SHA1 from default IKEv2 proposal [Paul]
+* IKEv1: Don't leave a dangling pointer after IKE SA delete [Paul/Hugh]
 * IKEv1: Only sent NAT keepalives for IPsec states (supresses 1 dup) [Paul]
 * IKEv1: Do not activate DPD when peer does not support it [Paul]
 * IKEv1: Reject key sizes <= 0 properly instead of crashing [Paul]
