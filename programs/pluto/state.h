@@ -278,7 +278,6 @@ struct finite_state {
 	const char *fs_short_name;
 	const char *fs_story;
 	lset_t fs_flags;
-	enum event_type fs_timeout_event;
 	enum state_category fs_category;
 	const struct state_v1_microcode *fs_v1_transitions;
 	const struct state_v2_microcode *fs_v2_transitions;

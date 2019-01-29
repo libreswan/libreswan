@@ -129,8 +129,7 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 	if (fs == NULL) {
 		lswlogs(buf, "NULL-FINITE_STATE");
 	} else {
-		lswlogf(buf, "%s (timeout: ", fs->fs_short_name);
-		lswlog_enum_short(buf, &timer_event_names, fs->fs_timeout_event);
+		lswlogf(buf, "%s:", fs->fs_short_name);
 		/* no enum_name available? */
 		lswlogf(buf, " flags: "PRI_LSET")", fs->fs_flags);
 #if 0

@@ -707,31 +707,6 @@ void init_ikev2(void)
 		 */
 		passert(t->next_state >= STATE_IKEv2_FLOOR);
 		passert(t->next_state < STATE_IKEv2_ROOF);
-		struct finite_state *fs = &v2_states[t->next_state - STATE_IKEv2_FLOOR];
-		if (fs->fs_timeout_event == 0) {
-			fs->fs_timeout_event = t->timeout_event;
-		} else if (fs->fs_timeout_event != t->timeout_event) {
-			/*
-			 * Annoyingly, a state can seemingly have
-			 * multiple and inconsistent timeout_events.
-			 *
-			 * For instance, EVENT_RETAIN is used to
-			 * indicate that the previously scheduled
-			 * event should be left in place.  Arguably
-			 * this is a bug; instead a flag should mark
-			 * this, and the code check that before/after
-			 * states are identical.
-			 */
-			LSWDBGP(DBG_CONTROLMORE, buf) {
-				lswlogs(buf, "ignoring microcode for ");
-				lswlog_finite_state(buf, finite_states[t->state]);
-				lswlogs(buf, " -> ");
-				lswlog_finite_state(buf, fs);
-				lswlogs(buf, " with event ");
-				lswlog_enum_short(buf, &timer_event_names,
-						  t->timeout_event);
-			}
-		}
 		/*
 		 * Pack expected payloads et.al. into a structure.
 		 *

@@ -744,43 +744,6 @@ void init_ikev1(void)
 	} while (t->state < STATE_IKEv1_ROOF);
 
 	/*
-	 * Try to fill in .fs_timeout_event.
-	 *
-	 * Since the timeout event, stored in the edge structure (aka
-	 * microcode), is for the target state, .next_state is used.
-	 */
-	for (t = v1_state_microcode_table; t->state < STATE_IKEv1_ROOF; t++) {
-		if (t->next_state != STATE_UNDEFINED) {
-			passert(STATE_IKEv1_FLOOR <= t->next_state &&
-				t->next_state < STATE_IKEv1_ROOF);
-			struct finite_state *fs = &v1_states[t->next_state - STATE_IKEv1_FLOOR];
-			if (fs->fs_timeout_event == 0) {
-				fs->fs_timeout_event = t->timeout_event;
-			} else if (fs->fs_timeout_event != t->timeout_event) {
-				/*
-				 * Annoyingly, a state can seemingly
-				 * have multiple and inconsistent
-				 * timeout_events.
-				 *
-				 * For instance, MAIN_I3->MAIN_I4 has
-				 * SA_REPLACE while XAUTH_I1->MAIN_I4
-				 * has RETRANSMIT.  This is arguably a
-				 * bug caused by a skipped state.
-				 */
-				LSWDBGP(DBG_CONTROLMORE, buf) {
-					lswlogs(buf, "ignoring microcode for ");
-					lswlog_finite_state(buf, finite_states[t->state]);
-					lswlogs(buf, " -> ");
-					lswlog_finite_state(buf, fs);
-					lswlogs(buf, " with event ");
-					lswlog_enum_short(buf, &timer_event_names,
-							  t->timeout_event);
-				}
-			}
-		}
-	}
-
-	/*
 	 * Finally list the states.
 	 */
 	DBG(DBG_CONTROLMORE,
@@ -1094,8 +1057,8 @@ void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, uint8_t np,
 /*
  * Recognise and, if necesssary, respond to an IKEv1 duplicate.
  *
- * Use .st_finite_state, which is the real current state, and not
- * FROM_STATE (which is derived from some convoluted magic) when
+ * Use .st_finite_state, which is the true current state, and not MD
+ * .FROM_STATE (which is derived from some convoluted magic) when
  * determining if the duplicate should or should not get a response.
  */
 static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
@@ -1121,10 +1084,11 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 			(st->st_finite_state->fs_flags & SMF_RETRANSMIT_ON_DUPLICATE);
 		if (replied && retransmit_on_duplicate) {
 			/*
-			 * States with EVENT_SO_DISCARD always respond
-			 * to re-transmits; else cap.
+			 * Transitions with EVENT_SO_DISCARD should
+			 * always respond to re-transmits (why?); else
+			 * cap.
 			 */
-			if (st->st_finite_state->fs_timeout_event == EVENT_SO_DISCARD ||
+			if (st->st_v1_last_transition->timeout_event == EVENT_SO_DISCARD ||
 			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
 				loglog(RC_RETRANSMISSION,
 				       "retransmitting in response to duplicate packet; already %s",
