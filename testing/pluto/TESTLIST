@@ -568,6 +568,7 @@ kvmplutotest	ikev2-ike-rekey-04		wip
 kvmplutotest	ikev2-ike-rekey-05		wip
 
 kvmplutotest	delete-sa-01			good
+kvmplutotest	delete-sa-02			good
 kvmplutotest	delete-sa-03			good
 kvmplutotest	delete-sa-04			good
 kvmplutotest	delete-sa-05			good

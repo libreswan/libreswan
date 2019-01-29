@@ -1,0 +1,20 @@
+Test a bug found by Codenomicon where the md->st pointer was not cleared
+after delete_state()
+
+The issue happens when an IKEv1 Delete is received that contains another
+Notify payload afterwards on libreswan < 3.25 that contained the support
+for IMPAIR_DIE_ONINFO, since that code tried to read the deleted state.
+This test is added in case there is regression and use on a deleted
+state pointer would happen again - even if unlikely
+
+This is replicated with the --impair impair-ikev1-del-with-notify
+
+east should not crash on processing the Delete + Notify with:
+
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x000055b615fd8966 in informational (st=<optimized out>, md=0x55b616cad768) at /source/programs/pluto/ikev1.c:923
+923				if (st != NULL &&
+#0  0x000055b615fd8966 in informational (st=<optimized out>, md=0x55b616cad768) at /source/programs/pluto/ikev1.c:923
+#1  0x000055b615fdb450 in process_packet_tail (mdp=mdp@entry=0x7ffcaa030988) at /source/programs/pluto/ikev1.c:2212
+#2  0x000055b615fdbca7 in process_v1_packet (mdp=mdp@entry=0x7ffcaa030988) at /source/programs/pluto/ikev1.c:1728
+
