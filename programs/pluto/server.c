@@ -801,7 +801,6 @@ static struct list_head pid_entry_slots[23];
 
 static struct hash_table pids_hash_table = {
 	.info = {
-		.debug = DBG_CONTROLMORE,
 		.name = "pid table",
 		.log = log_pid_entry,
 	},

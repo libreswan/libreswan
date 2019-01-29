@@ -1,6 +1,6 @@
 /* double linked list, for libreswan
  *
- * Copyright (C) 2015, 2017 Andrew Cagney
+ * Copyright (C) 2015, 2017, 2019 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,15 +13,14 @@
  * for more details.
  */
 
-#ifndef _list_entry_h_
-#define _list_entry_h_
+#ifndef LIST_ENTRY_H
+#define LIST_ENTRY_H
 
 /*
  * Description of a list entry, used for logging.
  */
 
 struct list_info {
-	lset_t debug;
 	const char *name;
 	size_t (*log)(struct lswlog *buf, void *data);
 };

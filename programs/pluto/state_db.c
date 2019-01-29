@@ -37,7 +37,6 @@ static size_t log_state(struct lswlog *buf, void *data)
  */
 
 static const struct list_info serialno_list_info = {
-	.debug = DBG_CONTROLMORE,
 	.name = "serialno list",
 	.log = log_state,
 };
@@ -57,7 +56,6 @@ static size_t serialno_hash(void *data)
 static struct list_head serialno_hash_slots[STATE_TABLE_SIZE];
 static struct hash_table serialno_hash_table = {
 	.info = {
-		.debug = DBG_CONTROLMORE,
 		.name = "serialno table",
 		.log = log_state,
 	},

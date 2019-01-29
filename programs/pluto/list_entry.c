@@ -23,16 +23,18 @@
 static void log_entry(const char *op, struct list_entry *entry)
 {
 	passert(entry != NULL);
-	LSWDBGP(entry->info->debug, buf) {
-		lswlogf(buf, "%s: %s ", entry->info->name, op);
-		if (entry->data == NULL) {
-			lswlogf(buf, "entry %p is HEAD (older %p newer %p)",
-				entry, entry->older, entry->newer);
-		} else {
-			lswlogf(buf, " object %p (", entry->data);
-			entry->info->log(buf, entry->data);
-			lswlogf(buf, ") entry %p (older %p newer %p)",
-				entry, entry->older, entry->newer);
+	if (DBGP(DBG_TMI)) {
+		LSWLOG_DEBUG(buf) {
+			lswlogf(buf, "%s: %s ", entry->info->name, op);
+			if (entry->data == NULL) {
+				lswlogf(buf, "entry %p is HEAD (older %p newer %p)",
+					entry, entry->older, entry->newer);
+			} else {
+				lswlogf(buf, " object %p (", entry->data);
+				entry->info->log(buf, entry->data);
+				lswlogf(buf, ") entry %p (older %p newer %p)",
+					entry, entry->older, entry->newer);
+			}
 		}
 	}
 	if (entry->newer != NULL || entry->older != NULL) {
@@ -68,12 +70,14 @@ void insert_list_entry(struct list_head *list,
 		       struct list_entry *entry)
 {
 	passert(entry->info != NULL);
-	LSWDBGP(entry->info->debug, buf) {
-		lswlogf(buf, "%s: inserting object %p (",
-			entry->info->name, entry->data);
-		entry->info->log(buf, entry->data);
-		lswlogf(buf, ") entry %p into list %p (older %p newer %p)",
-			entry, list, list->head.older, list->head.newer);
+	if (DBGP(DBG_TMI)) {
+		LSWLOG_DEBUG(buf) {
+			lswlogf(buf, "%s: inserting object %p (",
+				entry->info->name, entry->data);
+			entry->info->log(buf, entry->data);
+			lswlogf(buf, ") entry %p into list %p (older %p newer %p)",
+				entry, list, list->head.older, list->head.newer);
+		}
 	}
 	passert(list->head.info == entry->info);
 	passert(entry->data != NULL);
@@ -109,7 +113,7 @@ bool remove_list_entry(struct list_entry *entry)
 		 */
 		older->newer = newer;
 		if (older == newer) {
-			DBG(entry->info->debug, DBG_log("%s: empty", entry->info->name));
+			DBGF(DBG_TMI, "%s: empty", entry->info->name);
 		} else {
 			log_entry("updated older", older);
 			log_entry("updated newer ", newer);
