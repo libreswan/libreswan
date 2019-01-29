@@ -4,7 +4,7 @@ See also https://libreswan.org/
 v3.28 (unreleased)
 * X509: Do not keep received CERTs beyond the connection lifetime [Andrew]
 * X509: Support for NSS IPsec profiles mbz#1252891 [Kai Engbert]
-* X509: Fix ocsp-method=get|post to actually skip get when asked) [Steve Broz]
+* X509: Fix ocsp-method=get|post to actually skip get when asked) [Stepan Broz]
 * IKEv2: ikev2= keyword changed to only accept "yes" or "no" [Paul]
 * IKEv2: Support for REDIRECT (RFC 5685) [Vukasin Karadzic/GSoC]
          (new keywords redirect-to, accept-redirect, global-redirect=
@@ -30,6 +30,7 @@ v3.28 (unreleased)
 * pluto: Speed up state lookups by only looking at proper hash chain [Andrew]
 * pluto: metric= value should accept values > 255 [Tuomo]
 * pluto: New "cpu-usage" plutodebug option displaying timing info [Andrew/Paul]
+* addconn: Fix crash on startup with dnssec-enable=no [Stepan Broz]
 * ipsec: add "ipsec ts" as shorthand for "ipsec trafficstatus" [Paul]
 * FIPS: X.509 minimum public key size check was rejecting valid keys [Paul]
 * FIPS: also force IKE maximum lifetime of 24h (default is 1h) [Paul/Vukasin]
