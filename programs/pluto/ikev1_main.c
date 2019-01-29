@@ -2337,11 +2337,35 @@ void send_v1_delete(struct state *st)
 				.isad_protoid = ns->proto,
 				.isad_nospi = 1,
 			};
+
+			if (DBGP(IMPAIR_IKEv1_DEL_WITH_NOTIFY))
+				isad.isad_np = ISAKMP_NEXT_N; /* Notify */
+
 			passert(out_struct(&isad, &isakmp_delete_desc,
 					   &r_hdr_pbs, &del_pbs));
 			passert(out_raw(&ns->spi, sizeof(ipsec_spi_t),
 					&del_pbs, "delete payload"));
 			close_output_pbs(&del_pbs);
+
+			if (DBGP(IMPAIR_IKEv1_DEL_WITH_NOTIFY)) {
+				pb_stream cruft_pbs;
+
+				libreswan_log("IMPAIR: adding bogus Notify payload after IKE Delete payload");
+				struct isakmp_notification isan = {
+					.isan_np = ISAKMP_NEXT_NONE,
+					.isan_doi = ISAKMP_DOI_IPSEC,
+					.isan_protoid = PROTO_ISAKMP,
+					.isan_spisize = COOKIE_SIZE * 2,
+					.isan_type = INVALID_PAYLOAD_TYPE,
+				};
+
+				passert(out_struct(&isan, &isakmp_notification_desc, &r_hdr_pbs,
+					&cruft_pbs));
+				passert(out_raw(&ns->spi, sizeof(ipsec_spi_t), &cruft_pbs,
+					"notify payload"));
+				close_output_pbs(&cruft_pbs);
+			}
+
 		}
 	}
 

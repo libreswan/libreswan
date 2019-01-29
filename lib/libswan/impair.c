@@ -1,6 +1,8 @@
-/* impair constants, for libreswan
+/*
+ * impair constants, for libreswan
  *
  * Copyright (C) 2017-2018 Andrew Cagney
+ * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -87,6 +89,7 @@ static struct double_double impair = {
        S(IMPAIR_SUPPRESS_RETRANSMITS, "impair-suppress-retransmits", "causes pluto to never send retransmits (wait the full timeout)"),
        S(IMPAIR_TIMEOUT_ON_RETRANSMIT, "impair-timeout-on-retransmit", "causes pluto to 'retry' (switch protocol) on the first retransmit"),
        S(IMPAIR_UNKNOWN_PAYLOAD_CRITICAL, "impair-unknown-payload-critical", "mark the unknown payload as critical"),
+       S(IMPAIR_IKEv1_DEL_WITH_NOTIFY, "impair-ikev1-del-with-notify", "causes pluto send send IKE Delete with additional bogus Notify payload"),
 
 #undef S
 };

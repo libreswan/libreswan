@@ -2,7 +2,7 @@
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
@@ -454,6 +454,8 @@ enum {
 
 	IMPAIR_SEND_PKCS7_THINGIE_IX,
 
+	IMPAIR_IKEv1_DEL_WITH_NOTIFY_IX,
+
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
 
@@ -496,6 +498,7 @@ enum {
 #define IMPAIR_REPLAY_DUPLICATES 	LELEM(IMPAIR_REPLAY_DUPLICATES_IX)
 #define IMPAIR_REPLAY_FORWARD	 	LELEM(IMPAIR_REPLAY_FORWARD_IX)
 #define IMPAIR_REPLAY_BACKWARD 		LELEM(IMPAIR_REPLAY_BACKWARD_IX)
+#define IMPAIR_IKEv1_DEL_WITH_NOTIFY 	LELEM(IMPAIR_IKEv1_DEL_WITH_NOTIFY_IX)
 
 #define IMPAIR_REPLAY_ENCRYPTED			LELEM(IMPAIR_REPLAY_ENCRYPTED_IX)
 #define IMPAIR_CORRUPT_ENCRYPTED		LELEM(IMPAIR_CORRUPT_ENCRYPTED_IX)
@@ -511,6 +514,7 @@ enum {
 
 #define IMPAIR_SEND_PKCS7_THINGIE		LELEM(IMPAIR_SEND_PKCS7_THINGIE_IX)
 
+#define IMPAIR_IKEv1_DEL_WITH_NOTIFY		LELEM(IMPAIR_IKEv1_DEL_WITH_NOTIFY_IX)
 /* State of exchanges
  *
  * The name of the state describes the last message sent, not the
