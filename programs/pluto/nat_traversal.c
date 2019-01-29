@@ -133,7 +133,7 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 	 *
 	 * All values in network order
 	 */
-	struct crypt_hash *ctx = crypt_hash_init(hasher, "NATD", DBG_CRYPT);
+	struct crypt_hash *ctx = crypt_hash_init("NATD", hasher);
 
 	crypt_hash_digest_bytes(ctx, "ICOOKIE/IKE SPIi",
 				&spis->initiator, sizeof(spis->initiator));

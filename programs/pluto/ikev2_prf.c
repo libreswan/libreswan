@@ -41,10 +41,10 @@ PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 	/* T1(prfplus) = prf(KEY, SEED|1) */
 	PK11SymKey *prfplus;
 	{
-		struct crypt_prf *prf = crypt_prf_init_symkey("prf+0", DBG_CRYPT,
-							      prf_desc, "key", key);
-		crypt_prf_update_symkey("seed", prf, seed);
-		crypt_prf_update_byte("1++", prf, count++);
+		struct crypt_prf *prf = crypt_prf_init_symkey("prf+0", prf_desc,
+							      "key", key);
+		crypt_prf_update_symkey(prf, "seed", seed);
+		crypt_prf_update_byte(prf, "1++", count++);
 		prfplus = crypt_prf_final_symkey(&prf);
 	}
 
@@ -52,11 +52,11 @@ PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 	PK11SymKey *old_t = reference_symkey(__func__, "old_t[1]", prfplus);
 	while (sizeof_symkey(prfplus) < required_keymat) {
 		/* Tn = prf(KEY, Tn-1|SEED|n) */
-		struct crypt_prf *prf = crypt_prf_init_symkey("prf+N", DBG_CRYPT,
-							      prf_desc, "key", key);
-		crypt_prf_update_symkey("old_t", prf, old_t);
-		crypt_prf_update_symkey("seed", prf, seed);
-		crypt_prf_update_byte("N++", prf, count++);
+		struct crypt_prf *prf = crypt_prf_init_symkey("prf+N", prf_desc,
+							      "key", key);
+		crypt_prf_update_symkey(prf, "old_t", old_t);
+		crypt_prf_update_symkey(prf, "seed", seed);
+		crypt_prf_update_byte(prf, "N++", count++);
 		PK11SymKey *new_t = crypt_prf_final_symkey(&prf);
 		append_symkey_symkey(&prfplus, new_t);
 		release_symkey(__func__, "old_t[N]", &old_t);
@@ -104,7 +104,7 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 		break;
 	}
 	struct crypt_prf *prf = crypt_prf_init_chunk("SKEYSEED = prf(Ni | Nr, g^ir)",
-						     DBG_CRYPT, prf_desc,
+						     prf_desc,
 						     key_name, key);
 	freeanychunk(key);
 	if (prf == NULL) {
@@ -112,7 +112,7 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 		return NULL;
 	}
 	/* seed = g^ir */
-	crypt_prf_update_symkey("g^ir", prf, dh_secret);
+	crypt_prf_update_symkey(prf, "g^ir", dh_secret);
 	/* generate */
 	return crypt_prf_final_symkey(&prf);
 }
@@ -126,8 +126,7 @@ PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					const chunk_t Ni, const chunk_t Nr)
 {
 	/* key = SK_d (old) */
-	struct crypt_prf *prf = crypt_prf_init_symkey("ike sa rekey skeyseed",
-						      DBG_CRYPT, prf_desc,
+	struct crypt_prf *prf = crypt_prf_init_symkey("ike sa rekey skeyseed", prf_desc,
 						      "SK_d (old)", SK_d_old);
 	if (prf == NULL) {
 		libreswan_log("failed to create IKEv2 PRF for computing SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
@@ -135,9 +134,9 @@ PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 	}
 
 	/* seed: g^ir (new) | Ni | Nr) */
-	crypt_prf_update_symkey("g^ir (new)", prf, new_dh_secret);
-	crypt_prf_update_chunk("Ni", prf, Ni);
-	crypt_prf_update_chunk("Nr", prf, Nr);
+	crypt_prf_update_symkey(prf, "g^ir (new)", new_dh_secret);
+	crypt_prf_update_chunk(prf, "Ni", Ni);
+	crypt_prf_update_chunk(prf, "Nr", Nr);
 	/* generate */
 	return crypt_prf_final_symkey(&prf);
 }

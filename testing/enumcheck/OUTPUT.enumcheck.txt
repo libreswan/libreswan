@@ -4126,6 +4126,6 @@ IKEv2 transforms:
 
 lswlog_enum_lset_short:
 
-  debug 8:
-	<<crypt>>
+  debug a:
+	<<cpu-usage+crypt>>
 

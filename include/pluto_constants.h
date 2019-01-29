@@ -387,7 +387,6 @@ enum {
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
 
 /* so things don't break */
-#define DBG_CRYPT_LOW	DBG_CRYPT
 #define DBG_PROPOSAL_PARSER	DBG_TMI
 
 #define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)

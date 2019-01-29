@@ -126,10 +126,9 @@ const struct prf_test_vectors aes_xcbc_prf_tests = {
 };
 
 static bool test_prf_vector(const struct prf_desc *prf,
-			    const struct prf_test_vector *test,
-			    lset_t debug)
+			    const struct prf_test_vector *test)
 {
-	DBG(debug, DBG_log("%s: %s", __func__, test->description));
+	DBGF(DBG_CRYPT, "%s: %s", __func__, test->description);
 
 	chunk_t chunk_key = decode_to_chunk(__func__, test->key);
 	passert(chunk_key.len == test->key_size);
@@ -140,26 +139,25 @@ static bool test_prf_vector(const struct prf_desc *prf,
 
 
 	/* chunk interface */
-	struct crypt_prf *chunk_prf = crypt_prf_init_chunk(__func__, debug,
-							   prf, "key", chunk_key);
-	crypt_prf_update_chunk(__func__, chunk_prf, chunk_message);
+	struct crypt_prf *chunk_prf = crypt_prf_init_chunk("PRF chunk interface", prf,
+							   "key", chunk_key);
+	crypt_prf_update_chunk(chunk_prf, "message", chunk_message);
 	chunk_t chunk_output = crypt_prf_final_chunk(&chunk_prf);
-	DBG(debug, DBG_dump_chunk("chunk output", chunk_output));
+	DBG(DBG_CRYPT, DBG_dump_chunk("chunk output", chunk_output));
 	bool ok = verify_chunk(test->description, prf_output, chunk_output);
 	freeanychunk(chunk_output);
 
 	/* symkey interface */
 	PK11SymKey *symkey_key = symkey_from_chunk("key symkey", chunk_key);
-	struct crypt_prf *symkey_prf = crypt_prf_init_symkey(__func__, debug,
-							    prf, "key symkey", symkey_key);
+	struct crypt_prf *symkey_prf = crypt_prf_init_symkey("PRF symkey interface", prf,
+							     "key symkey", symkey_key);
 	PK11SymKey *symkey_message = symkey_from_chunk("message symkey",
 						       chunk_message);
-	crypt_prf_update_symkey(__func__, symkey_prf, symkey_message);
+	crypt_prf_update_symkey(symkey_prf, "symkey message", symkey_message);
 	PK11SymKey *symkey_output = crypt_prf_final_symkey(&symkey_prf);
-	DBG(debug, DBG_symkey("output", "symkey", symkey_output));
+	DBG(DBG_CRYPT, DBG_symkey("output", "symkey", symkey_output));
 	ok = verify_symkey(test->description, prf_output, symkey_output);
-	DBG(debug, DBG_log("%s: %s %s", __func__,
-			   test->description, ok ? "passed" : "failed"));
+	DBGF(DBG_CRYPT, "%s: %s %s", __func__, test->description, ok ? "passed" : "failed");
 	release_symkey(__func__, "symkey", &symkey_output);
 
 	freeanychunk(chunk_message);
@@ -182,7 +180,7 @@ bool test_prf_vectors(const struct prf_test_vectors *tests)
 	bool ok = TRUE;
 	for (const struct prf_test_vector *test = tests->tests;
 	     test->description != NULL; test++) {
-		if (!test_prf_vector(tests->prf, test, DBG_CRYPT)) {
+		if (!test_prf_vector(tests->prf, test)) {
 			ok = FALSE;
 		}
 	}

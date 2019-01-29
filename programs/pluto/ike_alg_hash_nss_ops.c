@@ -41,8 +41,6 @@ static struct hash_context *init(const struct hash_desc *hash_desc,
 		.name = name,
 		.desc = hash_desc,
 	};
-	DBGF(DBG_CRYPT_LOW, "%s %s hasher: context %p",
-	     name, hash_desc->common.name, hash->context);
 	passert(hash->context);
 	SECStatus rc = PK11_DigestBegin(hash->context);
 	passert(rc == SECSuccess);
@@ -78,7 +76,6 @@ static void final_bytes(struct hash_context **hashp,
 	passert(rc == SECSuccess);
 	passert(out_len <= sizeof_bytes);
 	PK11_DestroyContext((*hashp)->context, PR_TRUE);
-	DBG(DBG_CRYPT_LOW, DBG_dump((*hashp)->name, bytes, sizeof_bytes));
 	pfree(*hashp);
 	*hashp = NULL;
 }
@@ -93,7 +90,7 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
 	int key_size = 0;
 
-	if DBGP(DBG_CRYPT_LOW) {
+	if DBGP(DBG_CRYPT) {
 		LSWLOG_DEBUG(buf) {
 			lswlogf(buf, "%s hash(%s) symkey %s(%p) to symkey - derive:",
 				name, hash_desc->common.name,
@@ -104,7 +101,9 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 	}
 	PK11SymKey *result = PK11_Derive(symkey, derive, param, target,
 					 operation, key_size);
-	DBG(DBG_CRYPT_LOW, DBG_symkey("    result: ", name, result));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_symkey("    result: ", name, result);
+	}
 	return result;
 }
 

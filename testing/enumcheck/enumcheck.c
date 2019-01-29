@@ -324,7 +324,7 @@ int main(int argc UNUSED, char *argv[])
 	printf("\n");
 
 	printf("lswlog_enum_lset_short:\n\n");
-	test_enum_lset("debug", &debug_names, DBG_CRYPT|DBG_CRYPT_LOW);
+	test_enum_lset("debug", &debug_names, DBG_CRYPT|DBG_CPU_USAGE);
 	printf("\n");
 
 	report_leaks();

@@ -61,7 +61,7 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		}
 		return NULL;
 	}
-	DBGF(DBG_CRYPT_LOW, "%s prf: created %s context %p from %s-key@%p",
+	DBGF(DBG_CRYPT, "%s prf: created %s context %p from %s-key@%p",
 	     name, prf_desc->common.name,
 	     context, key_name, key);
 
@@ -72,7 +72,7 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		PK11_DestroyContext(context, PR_TRUE);
 		return NULL;
 	}
-	DBGF(DBG_CRYPT_LOW, "%s prf: begin %s with context %p from %s-key@%p",
+	DBGF(DBG_CRYPT, "%s prf: begin %s with context %p from %s-key@%p",
 	     name, prf_desc->common.name,
 	     context, key_name, key);
 

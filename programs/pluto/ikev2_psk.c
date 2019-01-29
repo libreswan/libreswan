@@ -183,7 +183,6 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 	{
 		struct crypt_prf *prf =
 			crypt_prf_init_chunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
-					     DBG_CRYPT,
 					     st->st_oakley.ta_prf,
 					     "shared secret", *pss);
 		if (prf == NULL) {
@@ -199,8 +198,7 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 
 		static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* RFC 4306  2:15 */
 
-		crypt_prf_update_bytes(psk_key_pad_str, /* name */
-				       prf,
+		crypt_prf_update_bytes(prf, psk_key_pad_str, /* name */
 				       psk_key_pad_str,
 				       sizeof(psk_key_pad_str) - 1);
 		prf_psk = crypt_prf_final_symkey(&prf);
@@ -210,7 +208,7 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 	{
 		struct crypt_prf *prf =
 			crypt_prf_init_symkey("<signed-octets> = prf(<prf-psk>, <msg octets>)",
-					      DBG_CRYPT, st->st_oakley.ta_prf,
+					      st->st_oakley.ta_prf,
 					      "<prf-psk>", prf_psk);
 		/*
 		 * For the responder, the octets to be signed start
@@ -225,9 +223,9 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 		 * neither the nonce Ni nor the value prf(SK_pr,IDr')
 		 * are transmitted.
 		 */
-		crypt_prf_update_chunk("first-packet", prf, firstpacket);
-		crypt_prf_update_chunk("nonce", prf, *nonce);
-		crypt_prf_update_bytes("hash", prf, idhash, hash_len);
+		crypt_prf_update_chunk(prf, "first-packet", firstpacket);
+		crypt_prf_update_chunk(prf, "nonce", *nonce);
+		crypt_prf_update_bytes(prf, "hash", idhash, hash_len);
 		crypt_prf_final_bytes(&prf, signed_octets, hash_len);
 	}
 	release_symkey(__func__, "prf-psk", &prf_psk);

@@ -364,8 +364,8 @@ static void compute_proto_keymat(struct state *st,
 
 		for (i = 0;; ) {
 			if (st->st_shared_nss != NULL) {
-				crypt_prf_update_symkey("g^xy", ctx_me.prf, st->st_shared_nss);
-				crypt_prf_update_symkey("g^xy", ctx_peer.prf, st->st_shared_nss);
+				crypt_prf_update_symkey(ctx_me.prf, "g^xy", st->st_shared_nss);
+				crypt_prf_update_symkey(ctx_peer.prf, "g^xy", st->st_shared_nss);
 			}
 			hmac_update(&ctx_me, &protoid, sizeof(protoid));
 			hmac_update(&ctx_peer, &protoid, sizeof(protoid));
@@ -742,18 +742,13 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 			 st->st_iv, st->st_iv_len);
 	}
 
-	struct crypt_hash *ctx = crypt_hash_init(h, "IV", DBG_CRYPT);
+	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h);
 	crypt_hash_digest_bytes(ctx, "PH1_IV", st->st_ph1_iv, st->st_ph1_iv_len);
 	passert(*msgid != 0);
 	passert(sizeof(msgid_t) == sizeof(uint32_t));
 	msgid_t raw_msgid = htonl(*msgid);
 	crypt_hash_digest_bytes(ctx, "MSGID", (void*) &raw_msgid, sizeof(raw_msgid));
 	crypt_hash_final_bytes(&ctx, st->st_new_iv, st->st_new_iv_len);
-
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("computed Phase 2 IV:",
-			 st->st_new_iv, st->st_new_iv_len);
-	}
 }
 
 static stf_status quick_outI1_tail(struct pluto_crypto_req *r,

@@ -45,7 +45,9 @@ static PK11SymKey *ephemeral_symkey(void)
 					    NULL, 128/8, NULL);
 		PK11_FreeSlot(slot); /* reference counted */
 	}
-	DBG(DBG_CRYPT_LOW, DBG_symkey(SPACES, "ephemeral", ephemeral_key));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_symkey(SPACES, "ephemeral", ephemeral_key);
+	}
 	return ephemeral_key;
 }
 
@@ -53,12 +55,12 @@ void release_symkey(const char *prefix, const char *name,
 		    PK11SymKey **key)
 {
 	if (*key != NULL) {
-		DBG(DBG_CRYPT_LOW, DBG_log("%s: release %s-key@%p",
-				       prefix, name, *key));
+		DBGF(DBG_CRYPT, "%s: release %s-key@%p",
+		     prefix, name, *key);
 		PK11_FreeSymKey(*key);
 	} else {
-		DBG(DBG_CRYPT_LOW, DBG_log("%s: release %s-key@NULL",
-				       prefix, name));
+		DBGF(DBG_CRYPT, "%s: release %s-key@NULL",
+		     prefix, name);
 	}
 	*key = NULL;
 }
@@ -67,12 +69,12 @@ PK11SymKey *reference_symkey(const char *prefix, const char *name,
 			     PK11SymKey *key)
 {
 	if (key != NULL) {
-		DBG(DBG_CRYPT_LOW, DBG_log("%s: reference %s-key@%p",
-				       prefix, name, key));
+		DBGF(DBG_CRYPT, "%s: reference %s-key@%p",
+		     prefix, name, key);
 		PK11_ReferenceSymKey(key);
 	} else {
-		DBG(DBG_CRYPT_LOW, DBG_log("%s: reference %s-key@NULL",
-				       prefix, name));
+		DBGF(DBG_CRYPT, "%s: reference %s-key@NULL",
+		     prefix, name);
 	}
 	return key;
 }
@@ -139,20 +141,21 @@ static PK11SymKey *merge_symkey_bytes(const char *result_name,
 	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
 	int key_size = 0;
 
-	DBG(DBG_CRYPT_LOW,
-	    LSWLOG_DEBUG(buf) {
-		    lswlog_nss_ckm(buf, derive);
-		    lswlogs(buf, ":");
-	    }
-	    DBG_symkey(SPACES, "base", base_key);
-	    /* NULL suppresses the prefix */
-	    DBG_log(SPACES "data-bytes@%p (%zd bytes)",
-		    data, sizeof_data);
-	    DBG_dump(SPACES, data, sizeof_data);
-	    LSWLOG_DEBUG(buf) {
-		    lswlogf(buf, SPACES "-> target: ");
-		    lswlog_nss_ckm(buf, target);
-	    })
+	if (DBGP(DBG_CRYPT)) {
+		LSWLOG_DEBUG(buf) {
+			lswlog_nss_ckm(buf, derive);
+			lswlogs(buf, ":");
+		}
+		DBG_symkey(SPACES, "base", base_key);
+		/* NULL suppresses the prefix */
+		DBG_log(SPACES "data-bytes@%p (%zd bytes)",
+			data, sizeof_data);
+		DBG_dump(SPACES, data, sizeof_data);
+		LSWLOG_DEBUG(buf) {
+			lswlogf(buf, SPACES "-> target: ");
+			lswlog_nss_ckm(buf, target);
+		}
+	}
 	PK11SymKey *result = PK11_Derive(base_key, derive, &data_param, target,
 					 operation, key_size);
 	/*
@@ -168,7 +171,9 @@ static PK11SymKey *merge_symkey_bytes(const char *result_name,
 			lswlog_nss_error(buf);
 		}
 	}
-	DBG(DBG_CRYPT_LOW, DBG_symkey(SPACES "result: ", result_name, result))
+	if (DBGP(DBG_CRYPT)) {
+		DBG_symkey(SPACES "result: ", result_name, result);
+	}
 	return result;
 }
 
@@ -192,17 +197,18 @@ static PK11SymKey *merge_symkey_symkey(const char *result_name,
 	};
 	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
 	int key_size = 0;
-	DBG(DBG_CRYPT_LOW,
-	    LSWLOG_DEBUG(buf) {
-		    lswlog_nss_ckm(buf, derive);
-		    lswlogs(buf, ":");
-	    }
-	    DBG_symkey(SPACES, "base", base_key);
-	    DBG_symkey(SPACES, "key", key);
-	    LSWLOG_DEBUG(buf) {
-	      lswlogf(buf, SPACES "-> target: ");
-		    lswlog_nss_ckm(buf, target);
-	    })
+	if (DBGP(DBG_CRYPT)) {
+		LSWLOG_DEBUG(buf) {
+			lswlog_nss_ckm(buf, derive);
+			lswlogs(buf, ":");
+		}
+		DBG_symkey(SPACES, "base", base_key);
+		DBG_symkey(SPACES, "key", key);
+		LSWLOG_DEBUG(buf) {
+			lswlogf(buf, SPACES "-> target: ");
+			lswlog_nss_ckm(buf, target);
+		}
+	}
 	PK11SymKey *result = PK11_Derive(base_key, derive, &key_param, target,
 					 operation, key_size);
 	/*
@@ -218,7 +224,9 @@ static PK11SymKey *merge_symkey_symkey(const char *result_name,
 			lswlog_nss_error(buf);
 		}
 	}
-	DBG(DBG_CRYPT_LOW, DBG_symkey(SPACES "result: ", result_name, result));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_symkey(SPACES "result: ", result_name, result);
+	}
 	return result;
 }
 
@@ -240,20 +248,21 @@ static PK11SymKey *symkey_from_symkey(const char *result_name,
 	CK_MECHANISM_TYPE derive = CKM_EXTRACT_KEY_FROM_KEY;
 	CK_ATTRIBUTE_TYPE operation = CKA_FLAGS_ONLY;
 
-	DBG(DBG_CRYPT_LOW,
-	    LSWLOG_DEBUG(buf) {
-		    lswlog_nss_ckm(buf, derive);
-		    lswlogs(buf, ":");
-	    }
-	    DBG_symkey(SPACES, "key", base_key);
-	    DBG_log(SPACES "key-offset: %zd, key-size: %zd",
-		    key_offset, key_size);
-	    LSWLOG_DEBUG(buf) {
-		    lswlogs(buf, SPACES "-> flags: ");
-		    lswlog_nss_ckf(buf, flags);
-		    lswlogf(buf, " target: ");
-		    lswlog_nss_ckm(buf, target);
-	    })
+	if (DBGP(DBG_CRYPT)) {
+		LSWLOG_DEBUG(buf) {
+			lswlog_nss_ckm(buf, derive);
+			lswlogs(buf, ":");
+		}
+		DBG_symkey(SPACES, "key", base_key);
+		DBG_log(SPACES "key-offset: %zd, key-size: %zd",
+			key_offset, key_size);
+		LSWLOG_DEBUG(buf) {
+			lswlogs(buf, SPACES "-> flags: ");
+			lswlog_nss_ckf(buf, flags);
+			lswlogf(buf, " target: ");
+			lswlog_nss_ckm(buf, target);
+		}
+	}
 	PK11SymKey *result = PK11_DeriveWithFlags(base_key, derive, &param,
 						  target, operation,
 						  key_size, flags);
@@ -272,7 +281,9 @@ static PK11SymKey *symkey_from_symkey(const char *result_name,
 			lswlog_nss_error(buf);
 		}
 	}
-	DBG(DBG_CRYPT_LOW, DBG_symkey(SPACES "result: ", result_name, result));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_symkey(SPACES "result: ", result_name, result);
+	}
 	return result;
 }
 
@@ -284,14 +295,16 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 {
 	SECStatus status;
 	if (symkey == NULL) {
-		DBGF(DBG_CRYPT_LOW, "%s NULL key has no bytes", name);
+		DBGF(DBG_CRYPT, "%s NULL key has no bytes", name);
 		return EMPTY_CHUNK;
 	}
 
 	size_t sizeof_bytes = sizeof_symkey(symkey);
-	DBGF(DBG_CRYPT_LOW, "%s extracting all %zd bytes of key@%p",
-	     name, sizeof_bytes, symkey);
-	DBG(DBG_CRYPT_LOW, DBG_symkey(name, "symkey", symkey));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s extracting all %zd bytes of key@%p",
+			name, sizeof_bytes, symkey);
+		DBG_symkey(name, "symkey", symkey);
+	}
 
 	/* get a secret key */
 	PK11SymKey *ephemeral_key = ephemeral_symkey();
@@ -316,7 +329,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 			return EMPTY_CHUNK;
 		}
 	}
-	if (DBGP(DBG_CRYPT_LOW)) {
+	if (DBGP(DBG_CRYPT)) {
 	    if (slot_key == symkey) {
 		    /* output should mimic reference_symkey() */
 		    DBG_log("%s: slot-key@%p: reference sym-key@%p",
@@ -330,7 +343,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 	/* Round up the wrapped key length to a 16-byte boundary.  */
 	wrapped_key.len = (sizeof_bytes + 15) & ~15;
 	wrapped_key.data = alloc_bytes(wrapped_key.len, name);
-	DBG(DBG_CRYPT_LOW, DBG_log("sizeof bytes %d", wrapped_key.len));
+	DBGF(DBG_CRYPT, "sizeof bytes %d", wrapped_key.len);
 	status = PK11_WrapSymKey(CKM_AES_ECB, NULL, ephemeral_key, slot_key,
 				 &wrapped_key);
 	if (status != SECSuccess) {
@@ -340,9 +353,11 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 		release_symkey(name, "slot-key", &slot_key);
 		return EMPTY_CHUNK;
 	}
-	LSWDBGP(DBG_CRYPT_LOW, buf) {
-		lswlogs(buf, "wrapper: ");
-		lswlog_nss_secitem(buf, &wrapped_key);
+	if (DBGP(DBG_CRYPT)) {
+		LSWLOG_DEBUG(buf) {
+			lswlogs(buf, "wrapper: ");
+			lswlog_nss_secitem(buf, &wrapped_key);
+		}
 	}
 
 	void *bytes = alloc_bytes(wrapped_key.len, name);
@@ -359,8 +374,10 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 	}
 	passert(out_len >= sizeof_bytes);
 
-	DBG(DBG_CRYPT_LOW, DBG_log("%s extracted len %d bytes at %p", name, out_len, bytes));
-	DBG(DBG_CRYPT_LOW, DBG_dump("unwrapped:", bytes, out_len));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s extracted len %d bytes at %p", name, out_len, bytes);
+		DBG_dump("unwrapped:", bytes, out_len);
+	}
 
 	return (chunk_t) {
 		.ptr = bytes,

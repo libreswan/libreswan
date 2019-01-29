@@ -67,8 +67,8 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 				      struct msg_digest *md,
 				      chunk_t Ni)
 {
-	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
-						 "IKEv2 cookie", DBG_CRYPT);
+	struct crypt_hash *ctx = crypt_hash_init("IKEv2 COOKIE",
+						 &ike_alg_hash_sha2_256);
 
 	crypt_hash_digest_chunk(ctx, "Ni", Ni);
 
@@ -84,10 +84,6 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 	/* happy coincidence? */
 	pexpect(sizeof(cookie->bytes) == SHA2_256_DIGEST_SIZE);
 	crypt_hash_final_bytes(&ctx, cookie->bytes, sizeof(cookie->bytes));
-
-	DBG(DBG_CRYPT,
-	    DBG_dump("computed dcookie: HASH(Ni | IPi | SPIi | <secret>)",
-		     cookie->bytes, sizeof(cookie->bytes)));
 
 	return true;
 }

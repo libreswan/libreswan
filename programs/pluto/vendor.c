@@ -612,8 +612,8 @@ void init_vendorid(void)
 			vid->vid = (char *)vidm;
 
 			/* TODO: This use must allowed even with USE_MD5=false */
-			struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_md5,
-								 "vendor id", DBG_CRYPT);
+			struct crypt_hash *ctx = crypt_hash_init("vendor id",
+								 &ike_alg_hash_md5);
 			crypt_hash_digest_bytes(ctx, "data", d, strlen(vid->data));
 			crypt_hash_final_bytes(&ctx, vidm, MD5_DIGEST_SIZE);
 			vid->vid_len = MD5_DIGEST_SIZE;
@@ -625,8 +625,8 @@ void init_vendorid(void)
 
 			vid->vid = vidm;
 
-			struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_md5,
-								 "vendor id", DBG_CRYPT);
+			struct crypt_hash *ctx = crypt_hash_init("vendor id",
+								 &ike_alg_hash_md5);
 			crypt_hash_digest_bytes(ctx, "data", vid->data, strlen(vid->data));
 			crypt_hash_final_bytes(&ctx, hash, MD5_DIGEST_SIZE);
 
