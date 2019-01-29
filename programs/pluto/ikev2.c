@@ -566,15 +566,30 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 
 void init_ikev2(void)
 {
+	dbg("checking IKEv2 state table");
+
 	/*
-	 * Fill in the states.  This is a hack until each finite-state
-	 * is object with corresponding edges (aka microcodes).
+	 * Fill in the states.
+	 *
+	 * This is a hack until each finite-state is a separate object
+	 * with corresponding edges (aka microcodes).
+	 *
+	 * XXX: Long term goal is to have a constant finite_states[]
+	 * contain constant pointers and this writeable array to just
+	 * go away.
 	 */
 	static struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
-	for (unsigned k = 0; k < elemsof(v2_states); k++) {
-		struct finite_state *fs = &v2_states[k];
-		fs->fs_kind = STATE_IKEv2_FLOOR + k;
-		finite_states[fs->fs_kind] = fs;
+	for (enum state_kind kind = STATE_IKEv2_FLOOR; kind < STATE_IKEv2_ROOF; kind++) {
+
+		/* skip hardwired states */
+		if (finite_states[kind] != NULL) {
+			continue;
+		}
+
+		/* fill in using static struct */
+		struct finite_state *fs = &v2_states[kind - STATE_IKEv2_FLOOR];
+		fs->fs_kind = kind;
+		finite_states[kind] = fs;
 
 		fs->fs_name = enum_name(&state_names, fs->fs_kind);
 		fs->fs_short_name = enum_short_name(&state_names, fs->fs_kind);
@@ -666,47 +681,38 @@ void init_ikev2(void)
 		fs->fs_category = cat;
 	}
 
-	/* fill ike_microcode_index:
-	 * make ike_microcode_index[s] point to first entry in
-	 * v1_state_microcode_table for state s (backward scan makes this easier).
-	 * Check that table is in order -- catch coding errors.
-	 * For what it's worth, this routine is idempotent.
+	/*
+	 * Iterate over the state transitions filling in missing bits
+	 * and checking for consistency.
 	 */
-	/*const*/ struct state_v2_microcode *t = v2_state_microcode_table;
-	do {
-		const char *name = enum_short_name(&state_names, t->state);
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("Processing IKEv2 state %s (microcode %s)",
-			    name, t->story));
+	for (struct state_v2_microcode *t = v2_state_microcode_table;
+	     t->state < STATE_IKEv2_ROOF; t++) {
+
 		passert(t->state >= STATE_IKEv2_FLOOR);
 		passert(t->state < STATE_IKEv2_ROOF);
-		struct finite_state *fs = &v2_states[t->state - STATE_IKEv2_FLOOR];
-		/*
-		 * Point .fs_v2_transitions at the first entry in
-		 * v1_state_microcode_table for that state.  All other
-		 * microcodes for that state should follow immediately
-		 * after.
-		 */
-		fs->fs_v2_transitions = t;
-		do {
-			fs->fs_nr_transitions++;
-			t++;
-		} while (t->state == fs->fs_kind);
-	} while (t->state < STATE_IKEv2_ROOF);
+		struct finite_state *from = &v2_states[t->state - STATE_IKEv2_FLOOR];
 
-	/*
-	 * Try to fill in some missing fields.
-	 */
-	for (t = v2_state_microcode_table; t->state < STATE_IKEv2_ROOF; t++) {
-		/*
-		 * .fs_timeout_event.
-		 *
-		 * Since the timeout event, stored in the edge
-		 * structure (aka microcode), is for the target
-		 * state, .next_state is used.
-		 */
 		passert(t->next_state >= STATE_IKEv2_FLOOR);
 		passert(t->next_state < STATE_IKEv2_ROOF);
+		const struct finite_state *to = finite_states[t->next_state];
+		passert(to != NULL);
+
+		DBGF(DBG_TMI, "processing IKEv2 state transition %s -> %s (%s)",
+		     from->fs_short_name, to->fs_short_name, t->story);
+
+		/*
+		 * Point .fs_v2_microcode at the first transition.
+		 * All other microcodes for that state should follow
+		 * immediately after (or to put it another way,
+		 * previous should match).
+		 */
+		if (from->fs_v2_transitions == NULL) {
+			from->fs_v2_transitions = t;
+		} else {
+			passert(t[-1].state == t->state);
+		}
+		from->fs_nr_transitions++;
+
 		/*
 		 * Pack expected payloads et.al. into a structure.
 		 *
@@ -727,15 +733,30 @@ void init_ikev2(void)
 	}
 
 	/*
-	 * Finally list the states.
+	 * Finally list/verify the states.
 	 */
-	DBG(DBG_CONTROLMORE,
-	    for (unsigned s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
-		    const struct finite_state *fs = finite_states[s];
-		    LSWLOG_DEBUG(buf) {
-			    lswlog_finite_state(buf, fs);
-		    }
-	    });
+	if (DBGP(DBG_BASE)) {
+		for (enum state_kind kind = STATE_IKEv2_FLOOR; kind < STATE_IKEv2_ROOF; kind++) {
+			const struct finite_state *from = finite_states[kind];
+			passert(from != NULL);
+			LSWLOG_DEBUG(buf) {
+				fmt(buf, "  ");
+				lswlog_finite_state(buf, from);
+				fmt(buf, ":");
+				if (from->fs_nr_transitions == 0) {
+					lswlogs(buf, " <none>");
+				}
+			}
+			for (unsigned ti = 0; ti < from->fs_nr_transitions; ti++) {
+				const struct state_v2_microcode *t = &from->fs_v2_transitions[ti];
+				const struct finite_state *to = finite_states[t->next_state];
+				DBG_log("    -> %s %s (%s)", to->fs_short_name,
+					enum_short_name(&timer_event_names,
+							t->timeout_event),
+					t->story);
+			}
+		}
+	}
 }
 
 /*

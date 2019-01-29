@@ -603,16 +603,31 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 
 void init_ikev1(void)
 {
+	DBGF(DBG_CONTROL, "checking IKEv1 state table");
+
 	/*
-	 * Fill in the states.  This is a hack until each finite-state
-	 * is a stand-alone object with corresponding edges (aka
+	 * Fill in the states.
+	 *
+	 * This is a hack until each finite-state is a stand-alone
+	 * object with corresponding state transitions (aka edges or
 	 * microcodes).
+	 *
+	 * XXX: Long term goal is to have a constant finite_states[]
+	 * contain constant pointers and this writeable array to just
+	 * go away.
 	 */
 	static struct finite_state v1_states[STATE_IKEv1_ROOF - STATE_IKEv1_FLOOR];
-	for (unsigned k = 0; k < elemsof(v1_states); k++) {
-		struct finite_state *fs = &v1_states[k];
-		fs->fs_kind = STATE_IKEv1_FLOOR + k;
-		finite_states[fs->fs_kind] = fs;
+	for (enum state_kind kind = STATE_IKEv1_FLOOR; kind < STATE_IKEv1_ROOF; kind++) {
+
+		/* skip hardwired states */
+		if (finite_states[kind] != NULL) {
+			continue;
+		}
+
+		/* fill in using static struct */
+		struct finite_state *fs = &v1_states[kind - STATE_IKEv1_FLOOR];
+		fs->fs_kind = kind;
+		finite_states[kind] = fs;
 
 		fs->fs_name = enum_name(&state_names, fs->fs_kind);
 		fs->fs_short_name = enum_short_name(&state_names, fs->fs_kind);
@@ -704,55 +719,103 @@ void init_ikev1(void)
 	}
 
 	/*
-	 * Fill in .fs_microcode and .fs_flags; check that table is in
-	 * order -- catch coding errors.
+	 * Go through the state transition table filling in details
+	 * and checking for inconsistencies.
 	 */
-	const struct state_v1_microcode *t = v1_state_microcode_table;
-	do {
-		passert(STATE_IKEv1_FLOOR <= t->state &&
-			t->state < STATE_IKEv1_ROOF);
-		struct finite_state *fs = &v1_states[t->state - STATE_IKEv1_FLOOR];
+	for (const struct state_v1_microcode *t = v1_state_microcode_table;
+	     t->state < STATE_IKEv1_ROOF; t++) {
+
+		passert(t->state >= STATE_IKEv1_FLOOR);
+		passert(t->state < STATE_IKEv1_ROOF);
+		struct finite_state *from = &v1_states[t->state - STATE_IKEv1_FLOOR];
+
+		/*
+		 * Deal with next_state == STATE_UNDEFINED.
+		 *
+		 * XXX: STATE_UNDEFINED is used when a state
+		 * transitions back to the same state; such
+		 * transitions should instead explicitly specify that
+		 * same state.
+		 */
+		enum state_kind next_state = (t->next_state == STATE_UNDEFINED ?
+					      t->state : t->next_state);
+		passert(STATE_IKEv1_FLOOR <= next_state &&
+			next_state < STATE_IKEv1_ROOF);
+		const struct finite_state *to = finite_states[next_state];
+		passert(to != NULL);
+
+		DBGF(DBG_TMI, "processing IKEv1 state transition %s -> %s",
+		     from->fs_short_name, to->fs_short_name);
+
 		/*
 		 * Point .fs_v1_transitions at to the first entry in
 		 * v1_state_microcode_table for that state.  All other
-		 * microcodes for that state should follow immediately
-		 * after.
+		 * transitions for that state should follow
+		 * immediately after (or to put it another way, the
+		 * previous transition's state should be the same as
+		 * this).
 		 */
-		fs->fs_v1_transitions = t;
-		/*
-		 * Copy over the flags that apply to the state; and
-		 * not the edge.
-		 *
-		 * Expect all states to have the same bits set.
-		 */
-		if ((t->flags & fs->fs_flags) != fs->fs_flags) {
-			LSWDBGP(DBG_CONTROLMORE, buf) {
-				lswlogs(buf, "microcode for ");
-				lswlog_finite_state(buf, finite_states[t->state]);
-				lswlogs(buf, " -> ");
-				lswlog_finite_state(buf, fs);
-				lswlogf(buf, " missing flags 0x%"PRIxLSET,
-					fs->fs_flags);
-			}
+		if (from->fs_v1_transitions == NULL) {
+			from->fs_v1_transitions = t;
+		} else {
+			passert(t[-1].state == t->state);
 		}
-		fs->fs_flags |= t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
-		do {
-			fs->fs_nr_transitions++;
-			t++;
-		} while (t->state == fs->fs_kind);
-		passert(t->state > fs->fs_kind);
-	} while (t->state < STATE_IKEv1_ROOF);
+		from->fs_nr_transitions++;
+
+		/*
+		 * Copy (actually merge) the flags that apply to the
+		 * state; and not the state transition.
+		 *
+		 * The original code used something like state
+		 * .microcode .flags after the state transition had
+		 * completed.  I.e., use the flags from a
+		 * not-yet-taken potential future state transition and
+		 * not the previous one.
+		 *
+		 * This is just trying to extact extract them and
+		 * check they are consistent.
+		 *
+		 * XXX: this is confusing
+		 *
+		 * Should fs_flags and SMF_RETRANSMIT_ON_DUPLICATE
+		 * should be replaced by SMF_RESPONDING in the
+		 * transition flags?
+		 *
+		 * Or is this more like .fs_timeout_event which is
+		 * always true of a state?
+		 */
+		if ((t->flags & from->fs_flags) != from->fs_flags) {
+			DBGF(DBG_BASE, "transition %s -> %s missing flags 0x%"PRIxLSET,
+			     from->fs_short_name, to->fs_short_name, from->fs_flags);
+		}
+		from->fs_flags |= t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
+	}
 
 	/*
 	 * Finally list the states.
 	 */
-	DBG(DBG_CONTROLMORE,
-	    for (unsigned s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
-		    const struct finite_state *fs = finite_states[s];
-		    LSWLOG_DEBUG(buf) {
-			    lswlog_finite_state(buf, fs);
-		    }
-	    });
+	if (DBGP(DBG_BASE)) {
+		for (enum state_kind kind = STATE_IKEv1_FLOOR; kind < STATE_IKEv1_ROOF; kind++) {
+			const struct finite_state *from = finite_states[kind];
+			passert(from != NULL);
+			LSWLOG_DEBUG(buf) {
+				lswlogs(buf, "  ");
+				lswlog_finite_state(buf, from);
+				lswlogs(buf, ":");
+				if (from->fs_nr_transitions == 0) {
+					lswlogs(buf, " <none>");
+				}
+			}
+			for (unsigned ti = 0; ti < from->fs_nr_transitions; ti++) {
+				const struct state_v1_microcode *t = &from->fs_v1_transitions[ti];
+				const struct finite_state *to = finite_states[t->next_state];
+				DBG_log("    -> %s %s", to->fs_short_name,
+					enum_short_name(&timer_event_names,
+							t->timeout_event));
+			}
+
+		}
+	}
 }
 
 static stf_status unexpected(struct state *st, struct msg_digest *md UNUSED)

@@ -130,12 +130,10 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 		lswlogs(buf, "NULL-FINITE_STATE");
 	} else {
 		lswlogf(buf, "%s:", fs->fs_short_name);
-		/* no enum_name available? */
-		lswlogf(buf, " flags: "PRI_LSET")", fs->fs_flags);
-#if 0
 		lswlogf(buf, " category: ");
 		lswlog_enum_short(buf, &state_category_names, fs->fs_category);
-#endif
+		/* no enum_name available? */
+		lswlogf(buf, " flags: "PRI_LSET, fs->fs_flags);
 	}
 }
 
