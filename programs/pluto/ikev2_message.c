@@ -1043,6 +1043,11 @@ stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 	 * XXX: when initiating an exchange there is no MD (or only a
 	 * badly faked up MD).
 	 */
+	dbg("Message ID: forcing IKE #%lu lastreplied "PRI_MSGID"->"PRI_MSGID" for #%lu",
+	    sk->ike->sa.st_serialno,
+	    sk->ike->sa.st_msgid_lastreplied,
+	    md->hdr.isa_msgid,
+	    msg_sa->st_serialno);
 	sk->ike->sa.st_msgid_lastreplied = md->hdr.isa_msgid;
 	return ret;
 }

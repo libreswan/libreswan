@@ -2587,12 +2587,14 @@ static void schedule_next_send(struct state *st)
 
 void v2_msgid_restart_init_request(struct state *st)
 {
-	dbg("restarting Message ID of state #%lu", st->st_serialno);
-	/* Ok? */
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
 	st->st_msgid = 0;
+	dbg("Message ID: restart #%lu: msgid="PRI_MSGID" lastack="PRI_MSGID" lastrecv="PRI_MSGID" nextuse="PRI_MSGID,
+	    st->st_serialno, st->st_msgid,
+	    st->st_msgid_lastack, st->st_msgid_lastrecv,
+	    st->st_msgid_nextuse);
 }
 
 /*
@@ -2732,6 +2734,11 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	to->sa.st_msgid_lastack = v2_INVALID_MSGID;
 	to->sa.st_msgid_lastrecv = v2_INVALID_MSGID;
 	to->sa.st_msgid_nextuse = v2_FIRST_MSGID;
+	dbg("Message ID: emancipate #%lu: msgid="PRI_MSGID" lastack="PRI_MSGID" lastrecv="PRI_MSGID" nextuse="PRI_MSGID,
+	    to->sa.st_serialno, to->sa.st_msgid,
+	    to->sa.st_msgid_lastack,
+	    to->sa.st_msgid_lastrecv,
+	    to->sa.st_msgid_nextuse);
 
 	/* Switch to the new IKE SPIs */
 	to->sa.st_ike_spis = to->sa.st_ike_rekey_spis;
@@ -2761,17 +2768,26 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 			      enum_name(&state_names, svm->next_state)));
 	}
 
-
 	if (from_state == STATE_V2_REKEY_IKE_R ||
 	    from_state == STATE_V2_REKEY_IKE_I) {
-		dbg("Message ID: updating counters for #%lu before emancipating",
-		    md->st->st_serialno);
+		/*
+		 * XXX: need to update ST's IKE SA's msgids before ST
+		 * itself becomes its own IKE SA (making the operation
+		 * futile).
+		 */
+		dbg("Message ID: updating counters for #%lu to "PRI_MSGID" before emancipating",
+		    md->st->st_serialno, md->hdr.isa_msgid);
 		v2_msgid_update_counters(md->st, md);
 		ikev2_child_emancipate(md);
 	} else  {
+		/*
+		 * XXX: need to change state before updating Message
+		 * IDs as that is what the update function expects
+		 * (this is not a good reason).
+		 */
 		change_state(st, svm->next_state);
-		dbg("Message ID: updating counters for #%lu after switching state",
-		    md->st->st_serialno);
+		dbg("Message ID: updating counters for #%lu to "PRI_MSGID" after switching state",
+		    md->st->st_serialno, md->hdr.isa_msgid);
 		v2_msgid_update_counters(md->st, md);
 	}
 

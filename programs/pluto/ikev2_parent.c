@@ -1473,6 +1473,10 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				st->st_msgid_lastrecv = v2_INVALID_MSGID;
 				st->st_msgid_nextuse = 0;
 				st->st_msgid = 0;
+				dbg("Message ID: reset for KE #%lu: msgid="PRI_MSGID" lastack="PRI_MSGID" nextuse="PRI_MSGID" lastrecv="PRI_MSGID" lastreplied="PRI_MSGID,
+				    st->st_serialno, st->st_msgid,
+				    st->st_msgid_lastack, st->st_msgid_nextuse,
+				    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
 				request_ke_and_nonce("rekey outI", st,
 						     st->st_oakley.ta_dh,
 						     ikev2_parent_outI1_continue);
@@ -2172,6 +2176,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
 	cst->st_try = pst->st_try;
 
+	dbg("Message ID: forcing CHILD #%lu msgid "PRI_MSGID"->"PRI_MSGID" from #%lu nextuse",
+	    cst->st_serialno, cst->st_msgid,
+	    pst->st_msgid_nextuse, pst->st_serialno);
 	cst->st_msgid = pst->st_msgid_nextuse;
 	refresh_state(cst);
 	md->st = cst;
@@ -4736,6 +4743,9 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 					  ISAKMP_v2_CREATE_CHILD_SA);
 	if (!IS_CHILD_SA_RESPONDER(st)) {
 		/* store it to match response */
+		dbg("Message ID: force CHILD #%lu msgid "PRI_MSGID"->"PRI_MSGID" from IKE #%lu nextuse",
+		    st->st_serialno, st->st_msgid,
+		    pst->st_msgid_nextuse, pst->st_serialno);
 		st->st_msgid = pst->st_msgid_nextuse;
 	}
 
@@ -4791,8 +4801,13 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	record_outbound_ike_msg(pst, &reply_stream,
 				"packet from ikev2_child_out_cont");
 
-	if (IS_CHILD_SA_RESPONDER(st))
+	if (IS_CHILD_SA_RESPONDER(st)) {
+		dbg("Message ID: forcing IKE #%lu last replied "PRI_MSGID"->"PRI_MSGID" for child #%lu",
+		    pst->st_serialno, pst->st_msgid_lastreplied,
+		    md->hdr.isa_msgid,
+		    st->st_serialno);
 		pst->st_msgid_lastreplied = md->hdr.isa_msgid;
+	}
 
 	if (st->st_state == STATE_V2_CREATE_R ||
 			st->st_state == STATE_V2_REKEY_CHILD_R) {
@@ -5518,6 +5533,9 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		record_outbound_ike_msg(st, &reply_stream, "reply packet for process_encrypted_informational_ikev2");
 		send_recorded_v2_ike_msg(st, "reply packet for process_encrypted_informational_ikev2");
 
+		dbg("Message ID: forcing #%lu lastreplied "PRI_MSGID"->"PRI_MSGID,
+		    st->st_serialno, st->st_msgid_lastreplied,
+		    md->hdr.isa_msgid);
 		st->st_msgid_lastreplied = md->hdr.isa_msgid;
 
 		mobike_reset_remote(st, &mobike_remote);
