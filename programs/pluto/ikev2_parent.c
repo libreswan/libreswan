@@ -12,7 +12,7 @@
  * Copyright (C) 2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2018 Andrew Cagney
+ * Copyright (C) 2015-2019 Andrew Cagney
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
@@ -337,6 +337,8 @@ static struct msg_digest *fake_md(struct state *st)
 	fake_md->st = st;
 	fake_md->from_state = st->st_finite_state->fs_kind;
 	fake_md->hdr.isa_msgid = v2_INVALID_MSGID;
+	fake_md->hdr.isa_version = (IKEv2_MAJOR_VERSION << ISA_MAJ_SHIFT);
+	fake_md->fake_dne = true;
 	/* asume first microcode is valid */
 	fake_md->svm = st->st_finite_state->fs_v2_transitions;
 	return fake_md;

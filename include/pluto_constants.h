@@ -695,6 +695,7 @@ enum original_role {
  */
 
 enum message_role {
+	NO_MESSAGE = 0,
 	MESSAGE_REQUEST = 3, /* MSG_R missing */
 	MESSAGE_RESPONSE = 4, /* MSR_R present */
 };
