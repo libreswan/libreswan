@@ -888,13 +888,14 @@ kvm-uninstall-local-networks:  kvm-uninstall-test-networks
 #
 # Get rid of (almost) everything
 #
-# XXX: don't depend on targets that trigger a KVM build.  After a
-# purge, there should be an upgrade.  Force this by deleting the
-# .upgraded file.
+# After a purge, there should be an upgrade.  Force this by deleting
+# the .upgraded file.
+#
+# XXX: don't depend on targets that trigger a KVM build.
 
 .PHONY: kvm-purge
 kvm-purge: kvm-clean kvm-uninstall-test-networks kvm-uninstall-local-domains
-	rm $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-purge kvm-uninstall-base-network kvm-uninstall-base-domain
