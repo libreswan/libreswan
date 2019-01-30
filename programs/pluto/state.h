@@ -52,14 +52,6 @@
 #include "ike_spi.h"
 #include "pluto_timing.h"	/* for statetime_t */
 
-/* msgid_t defined in defs.h */
-
-#define v1_MAINMODE_MSGID  ((msgid_t) 0)	/* network and host order */
-
-#define v2_INITIAL_MSGID  ((msgid_t) 0)	/* network and host order */
-
-#define v2_INVALID_MSGID  ((msgid_t) 0xffffffff)	/* network and host order */
-
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
 struct state;   /* forward declaration of tag */

@@ -2628,7 +2628,7 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 
 	if (is_msg_response(md)) {
 		/* we were initiator for this message exchange */
-		if (md->hdr.isa_msgid == v2_INITIAL_MSGID &&
+		if (md->hdr.isa_msgid == v2_FIRST_MSGID &&
 				ike->sa.st_msgid_lastack == v2_INVALID_MSGID) {
 			ike->sa.st_msgid_lastack = md->hdr.isa_msgid;
 		} else if (md->hdr.isa_msgid > ike->sa.st_msgid_lastack) {
@@ -2640,9 +2640,9 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 			ike->sa.st_msgid_lastrecv = md->hdr.isa_msgid;
 		}
 		/* first request from the other side */
-		if (md->hdr.isa_msgid == v2_INITIAL_MSGID &&
+		if (md->hdr.isa_msgid == v2_FIRST_MSGID &&
 				ike->sa.st_msgid_lastrecv == v2_INVALID_MSGID) {
-			ike->sa.st_msgid_lastrecv = v2_INITIAL_MSGID;
+			ike->sa.st_msgid_lastrecv = v2_FIRST_MSGID;
 		}
 	}
 
@@ -2721,7 +2721,7 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	to->sa.st_clonedfrom = SOS_NOBODY;
 	to->sa.st_msgid_lastack = v2_INVALID_MSGID;
 	to->sa.st_msgid_lastrecv = v2_INVALID_MSGID;
-	to->sa.st_msgid_nextuse = v2_INITIAL_MSGID;
+	to->sa.st_msgid_nextuse = v2_FIRST_MSGID;
 
 	/* Switch to the new IKE SPIs */
 	to->sa.st_ike_spis = to->sa.st_ike_rekey_spis;

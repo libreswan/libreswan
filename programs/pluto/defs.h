@@ -62,6 +62,11 @@ extern volatile bool exiting_pluto;
 extern void exit_pluto(int /*status*/) NEVER_RETURNS;
 
 typedef uint32_t msgid_t;      /* Host byte ordered */
+#define PRI_MSGID "%"PRIu32
+#define v1_MAINMODE_MSGID  ((msgid_t) 0)		/* network and host order */
+#define v2_FIRST_MSGID  ((msgid_t) 0)			/* network and host order */
+#define v2_INVALID_MSGID  ((msgid_t) 0xffffffff)	/* network and host order */
+
 
 /* are all bytes 0? */
 extern bool all_zero(const unsigned char *m, size_t len);
