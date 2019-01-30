@@ -1745,7 +1745,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 * Now that cur-state has been set for logging, log if this
 	 * packet is really bogus.
 	 */
-	if (md->fake) {
+	if (md->fake_clone) {
 		libreswan_log("IMPAIR: processing a fake (cloned) message");
 	}
 
