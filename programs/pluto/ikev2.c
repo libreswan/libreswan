@@ -71,6 +71,7 @@
 #include "ikev2_message.h"	/* for ikev2_decrypt_msg() */
 #include "pluto_stats.h"
 #include "keywords.h"
+#include "ikev2_msgid.h"
 
 static bool is_msg_request(const struct msg_digest *md);
 
@@ -1669,10 +1670,10 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			struct state *msgid_st = find_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
 								     md->hdr.isa_msgid);
 			if (st != msgid_st) {
-				DBG_log("WIP: Message ID: find_state_ikev2_child()->#%lu == sa_by_msgid("PRI_MSGID")->#%lu",
-					st != NULL ? st->st_serialno : 0,
-					md->hdr.isa_msgid,
-					msgid_st != NULL ? msgid_st->st_serialno : 0);
+				PEXPECT_LOG("Message ID: find_state_ikev2_child()->#%lu == sa_by_msgid("PRI_MSGID")->#%lu",
+					    st != NULL ? st->st_serialno : 0,
+					    md->hdr.isa_msgid,
+					    msgid_st != NULL ? msgid_st->st_serialno : 0);
 			}
 		}
 
@@ -1689,8 +1690,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 					struct state *msgid_st = find_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
 										     md->hdr.isa_msgid);
 					if (msgid_st != NULL) {
-						DBG_log("WIP: Message ID: find_state_ikev2_child()->NULL find_v2_ike_sa()->NULL == sa_by_msgid("PRI_MSGID")->#%lu",
-							md->hdr.isa_msgid, msgid_st->st_serialno);
+						PEXPECT_LOG("Message ID: find_state_ikev2_child()->NULL find_v2_ike_sa()->NULL == sa_by_msgid("PRI_MSGID")->#%lu",
+							    md->hdr.isa_msgid, msgid_st->st_serialno);
 					}
 				}
 				return;
@@ -1712,6 +1713,12 @@ void ikev2_process_packet(struct msg_digest **mdp)
 					lswlogf(buf, "dropping retransmitted response with msgid %u from peer - we already processed %u.",
 						md->hdr.isa_msgid, st->st_msgid_lastack);
 				}
+				if (DBGP(DBG_BASE) && st->st_v2_msgids.initiator.recv <= md->hdr.isa_msgid) {
+					PEXPECT_LOG("Message ID: #%lu initiator.recv %jd <= "PRI_MSGID" so new code would keep discarded message",
+						    st->st_serialno,
+						    st->st_v2_msgids.initiator.recv,
+						    md->hdr.isa_msgid);
+				}
 				return;
 			}
 			if (st->st_msgid_nextuse != v2_INVALID_MSGID &&
@@ -1723,6 +1730,12 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				dbg("dropping unasked response with msgid %u from peer (our last used msgid is %u)",
 				     md->hdr.isa_msgid,
 				     st->st_msgid_nextuse - 1);
+				if (DBGP(DBG_BASE) && st->st_v2_msgids.initiator.sent >= md->hdr.isa_msgid) {
+					PEXPECT_LOG("Message ID: #%lu initiator.sent %jd >= "PRI_MSGID" so new code would keep discarded message",
+						    st->st_serialno,
+						    st->st_v2_msgids.initiator.sent,
+						    md->hdr.isa_msgid);
+				}
 				return;
 			}
 			/*
@@ -1750,9 +1763,9 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				struct state *msgid_st = find_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
 									     md->hdr.isa_msgid);
 				if (st != msgid_st) {
-					DBG_log("WIP: Message ID: find_state_ikev2_child()->NULL find_v2_ike_sa()->#%lu == sa_by_msgid("PRI_MSGID")->#%lu",
-					    st->st_serialno, md->hdr.isa_msgid,
-					    msgid_st != NULL ? msgid_st->st_serialno : 0);
+					PEXPECT_LOG("Message ID: find_state_ikev2_child()->NULL find_v2_ike_sa()->#%lu == sa_by_msgid("PRI_MSGID")->#%lu",
+						    st->st_serialno, md->hdr.isa_msgid,
+						    msgid_st != NULL ? msgid_st->st_serialno : 0);
 				}
 			}
 		}
@@ -2739,6 +2752,7 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	    to->sa.st_msgid_lastack,
 	    to->sa.st_msgid_lastrecv,
 	    to->sa.st_msgid_nextuse);
+	v2_msgid_init(pexpect_ike_sa(&to->sa));
 
 	/* Switch to the new IKE SPIs */
 	to->sa.st_ike_spis = to->sa.st_ike_rekey_spis;
@@ -2778,6 +2792,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		dbg("Message ID: updating counters for #%lu to "PRI_MSGID" before emancipating",
 		    md->st->st_serialno, md->hdr.isa_msgid);
 		v2_msgid_update_counters(md->st, md);
+		v2_msgid_update_recv(ike_sa(st), md);
+		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
 		ikev2_child_emancipate(md);
 	} else  {
 		/*
@@ -2789,6 +2805,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		dbg("Message ID: updating counters for #%lu to "PRI_MSGID" after switching state",
 		    md->st->st_serialno, md->hdr.isa_msgid);
 		v2_msgid_update_counters(md->st, md);
+		v2_msgid_update_recv(ike_sa(st), md);
+		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
 	}
 
 	w = RC_NEW_STATE + st->st_state;

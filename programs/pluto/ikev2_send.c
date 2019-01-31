@@ -610,7 +610,7 @@ stf_status record_v2_informational_request(const char *name,
 	 */
 	msgid_t new_msgid = ike->sa.st_msgid_nextuse;
 	msgid_t new_nextuse = ike->sa.st_msgid_nextuse + 1;
-	dbg("Message ID: XXX: IKE #%lu sender #%lu in %s record 'n' send notify request so forcing IKE nextuse="PRI_MSGID"->"PRI_MSGID" and IKE msgid="PRI_MSGID"->"PRI_MSGID,
+	dbg("Message ID: IKE #%lu sender #%lu in %s record 'n' send notify request so forcing IKE nextuse="PRI_MSGID"->"PRI_MSGID" and IKE msgid="PRI_MSGID"->"PRI_MSGID,
 	    ike->sa.st_serialno, sender->st_serialno, __func__,
 	    ike->sa.st_msgid_nextuse, new_nextuse,
 	    ike->sa.st_msgid, new_msgid);
@@ -619,6 +619,5 @@ stf_status record_v2_informational_request(const char *name,
 
 	ike->sa.st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 	record_outbound_ike_msg(sender, &packet, name);
-
 	return STF_OK;
 }

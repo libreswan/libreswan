@@ -79,6 +79,7 @@
 #include <pk11pub.h>
 #include <keyhi.h>
 
+#include "ikev2_msgid.h"
 #include "pluto_stats.h"
 #include "ikev2_ipseckey.h"
 #include "ip_address.h"
@@ -453,6 +454,7 @@ struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 	    st->st_serialno, st->st_msgid,
 	    st->st_msgid_lastack, st->st_msgid_nextuse,
 	    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
+	v2_msgid_init(pexpect_ike_sa(st));
 	const struct finite_state *fs = finite_states[kind];
 	change_state(st, fs->fs_kind);
 	/*
@@ -1535,10 +1537,23 @@ struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
 				 v2_ix_predicate, &filter, __func__);
 }
 
+struct request_filter {
+	msgid_t msgid;
+};
+
+static bool request_predicate(struct state *st, void *context)
+{
+	const struct request_filter *filter = context;
+	return st->st_v2_msgids.current_request == filter->msgid;
+}
+
 struct state *find_v2_sa_by_msgid(const ike_spis_t *ike_spis, const msgid_t msgid)
 {
+	struct request_filter filter = {
+		.msgid = msgid,
+	};
 	return state_by_ike_spis(IKEv2, SOS_IGNORE, &msgid, ike_spis,
-				 NULL, NULL, __func__);
+				 request_predicate, &filter, __func__);
 }
 
 /*
