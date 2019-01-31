@@ -2625,7 +2625,13 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 	} else {
 		/* we were responder for this message exchange */
 		if (md->hdr.isa_msgid > ike->sa.st_msgid_lastrecv) {
-			ike->sa.st_msgid_lastrecv = md->hdr.isa_msgid;
+			if (md->fake_dne) {
+				dbg("Message ID: IKE #%lu in %s narrowly missing a forced update of lastrecv="PRI_MSGID"->"PRI_MSGID" when the message is fake!",
+				    ike->sa.st_serialno, __func__,
+				    ike->sa.st_msgid_lastrecv, md->hdr.isa_msgid);
+			} else {
+				ike->sa.st_msgid_lastrecv = md->hdr.isa_msgid;
+			}
 		}
 		/* first request from the other side */
 		if (md->hdr.isa_msgid == v2_FIRST_MSGID &&
