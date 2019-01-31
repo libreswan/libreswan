@@ -2556,7 +2556,7 @@ static void schedule_next_send(struct state *st)
  * new init request.
  */
 
-void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
+void v2_msgid_restart_init_request(struct state *st)
 {
 	dbg("restarting Message ID of state #%lu", st->st_serialno);
 	/* Ok? */
@@ -2564,31 +2564,6 @@ void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
 	st->st_msgid = 0;
-	/*
-	 * XXX: Why?!?
-	 *
-	 * Shouldn't the state transitions STATE_PARENT_I0 ->
-	 * STATE_PARENT_I1 and STATE_PARENT_I1 -> STATE_PARENT_I1 be
-	 * functionally 'identical'.
-	 *
-	 * Yes.  Unfortunately the code below does all sorts of magic
-	 * involving the state's magic number and assumed attributes.
-	 */
-	md->svm = finite_states[STATE_PARENT_I0]->fs_v2_transitions;
-	change_state(st, STATE_PARENT_I0);
-	/*
-	 * XXX: Why?!?
-	 *
-	 * Shouldn't MD be ignored!  After all it could be NULL.
-	 *
-	 * Yes.  unfortunately the code below still assumes that
-	 * there's always an MD (the initiator does not have an MD so
-	 * fake_md() and tries to use MD attributes to make decisions
-	 * that belong in the state transition.
-	 */
-	if (md != NULL) {
-		md->hdr.isa_flags &= ~ISAKMP_FLAGS_v2_MSG_R;
-	}
 }
 
 /*
