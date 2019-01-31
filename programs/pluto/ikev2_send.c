@@ -540,11 +540,6 @@ void record_v2_delete(struct state *const st)
 	}
 
 	record_outbound_ike_msg(st, &packet, "packet for ikev2 delete informational");
-
-	/* increase message ID for next delete message */
-	/* ikev2_update_msgid_counters need an md */
-	ike->sa.st_msgid_nextuse++;
-	st->st_msgid = ike->sa.st_msgid_nextuse;
 }
 
 /*

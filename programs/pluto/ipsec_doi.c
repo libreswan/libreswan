@@ -521,6 +521,31 @@ void send_delete(struct state *st)
 		case IKEv2:
 			record_v2_delete(st);
 			send_recorded_v2_ike_msg(st, "delete notification");
+			struct ike_sa *ike = ike_sa(st);
+			/*
+			 * increase message ID for next delete message
+			 * ikev2_update_msgid_counters need an md
+			 *
+			 * Since this is a request, this ends st_msgid
+			 * needs an update so that there is somewhere
+			 * for the reply to go.  If ST is a CHILD SA
+			 * then the next thing that happens is that it
+			 * gets deleted so no point trying to route
+			 * the message to that (hacks in the event
+			 * loop redirect this to the IKE SA, but lets
+			 * make the hack more transparent).
+			 *
+			 * Save the nextuse' value used by this
+			 * message and not the next.
+			 */
+			msgid_t new_msgid = ike->sa.st_msgid_nextuse;
+			msgid_t new_nextuse = ike->sa.st_msgid_nextuse + 1;
+			dbg("Message ID: IKE #%lu sender #%lu in %s record 'n' sending delete request so forcing IKE nextuse="PRI_MSGID"->"PRI_MSGID" and sender msgid="PRI_MSGID"->"PRI_MSGID,
+			    ike->sa.st_serialno, st->st_serialno, __func__,
+			    ike->sa.st_msgid_nextuse, new_nextuse,
+			    st->st_msgid, new_msgid);
+			ike->sa.st_msgid = new_msgid;
+			ike->sa.st_msgid_nextuse = new_nextuse;
 			break;
 		default:
 			bad_case(st->st_ike_version);
