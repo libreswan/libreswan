@@ -68,10 +68,11 @@ static struct list_head *serialno_chain(so_serial_t serialno)
 {
 	struct list_head *head = hash_table_slot_by_hash(&serialno_hash_table,
 							 serialno);
-	DBG(DBG_RAW | DBG_CONTROL,
-	    DBG_log("%s: hash serialno #%lu to head %p",
-		    serialno_hash_table.info.name,
-		    serialno, head));
+	if (DBGP(DBG_TMI)) {
+		DBG_log("%s: hash serialno #%lu to head %p",
+			serialno_hash_table.info.name,
+			serialno, head);
+	}
 	return head;
 }
 
@@ -140,12 +141,14 @@ static struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
 {
 	size_t hash = ike_initiator_spi_hasher(initiator);
 	struct list_head *slot = hash_table_slot_by_hash(&ike_initiator_spi_hash_table, hash);
-	LSWDBGP(DBG_TMI, buf) {
-		lswlogf(buf, "%s: hash IKE SPIi ", ike_initiator_spi_hash_table.info.name);
-		lswlog_bytes(buf, initiator->bytes,
-			     sizeof(initiator->bytes));
-		lswlogf(buf, " to %zu slot %p", hash, slot);
-	};
+	if (DBGP(DBG_TMI)) {
+		LSWLOG_DEBUG(buf) {
+			lswlogf(buf, "%s: hash IKE SPIi ", ike_initiator_spi_hash_table.info.name);
+			lswlog_bytes(buf, initiator->bytes,
+				     sizeof(initiator->bytes));
+			lswlogf(buf, " to %zu slot %p", hash, slot);
+		}
+	}
 	return slot;
 }
 
@@ -209,13 +212,15 @@ static struct list_head *ike_spis_slot(const ike_spis_t *ike_spis)
 {
 	size_t hash = ike_spis_hasher(ike_spis);
 	struct list_head *slot = hash_table_slot_by_hash(&ike_spis_hash_table, hash);
-	LSWDBGP(DBG_TMI, buf) {
-		lswlogf(buf, "%s: hash IKE SPIi ", ike_spis_hash_table.info.name);
-		lswlog_bytes(buf, ike_spis->initiator.bytes, sizeof(ike_spis->initiator.bytes));
-		lswlogs(buf, " SPIr ");
-		lswlog_bytes(buf, ike_spis->responder.bytes, sizeof(ike_spis->responder.bytes));
-		lswlogf(buf, " to %zu slot %p", hash, slot);
-	};
+	if (DBGP(DBG_TMI)) {
+		LSWLOG_DEBUG(buf) {
+			lswlogf(buf, "%s: hash IKE SPIi ", ike_spis_hash_table.info.name);
+			lswlog_bytes(buf, ike_spis->initiator.bytes, sizeof(ike_spis->initiator.bytes));
+			lswlogs(buf, " SPIr ");
+			lswlog_bytes(buf, ike_spis->responder.bytes, sizeof(ike_spis->responder.bytes));
+			lswlogf(buf, " to %zu slot %p", hash, slot);
+		}
+	}
 	return slot;
 }
 
@@ -286,12 +291,12 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 		if (!ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
 			continue;
 		}
-		dbg("%s state object #%lu found, in %s (%s)",
+		dbg("State DB: %s state object #%lu found, in %s (%s)",
 		    enum_name(&ike_version_names, ike_version),
 		    st->st_serialno, st->st_state_name, name);
 		return st;
 	}
-	dbg("%s state object not found (%s)",
+	dbg("State DB: %s state object not found (%s)",
 	    enum_name(&ike_version_names, ike_version), name);
 	return NULL;
 }
@@ -317,12 +322,12 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				continue;
 			}
 		}
-		dbg("%s state object #%lu found, in %s (%s)",
+		dbg("State DB: %s state object #%lu found, in %s (%s)",
 		    enum_name(&ike_version_names, ike_version),
 		    st->st_serialno, st->st_state_name, name);
 		return st;
 	}
-	dbg("%s state object not found (%s)",
+	dbg("State DB: %s state object not found (%s)",
 	    enum_name(&ike_version_names, ike_version), name);
 	return NULL;
 }
@@ -347,7 +352,7 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 
 void add_state_to_db(struct state *st)
 {
-	dbg("adding state object #%lu to DB", st->st_serialno);
+	dbg("State DB: adding state object #%lu", st->st_serialno);
 	passert(st->st_serialno != SOS_NOBODY);
 	/* serial NR list, entries are only added */
 	st->st_serialno_list_entry = list_entry(&serialno_list_info, st);
@@ -363,11 +368,8 @@ void add_state_to_db(struct state *st)
 
 void rehash_state_cookies_in_db(struct state *st)
 {
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("%s: %s: re-hashing state #%lu SPIs",
-		    ike_initiator_spi_hash_table.info.name,
-		    ike_spis_hash_table.info.name,
-		    st->st_serialno));
+	dbg("State DB: re-hashing state #%lu SPIs",
+	    st->st_serialno);
 	del_from_ike_spi_tables(st);
 	add_to_ike_spi_tables(st);
 }
