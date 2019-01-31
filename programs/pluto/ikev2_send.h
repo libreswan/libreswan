@@ -1,6 +1,6 @@
 /* IKEv2 send packet routines, for Libreswan
  *
- * Copyright (C) 2018 Andrew Cagney
+ * Copyright (C) 2018-2019 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,10 +49,10 @@ void record_v2_delete(struct state *st);
 
 typedef bool payload_master_t(struct state *st, pb_stream *pbs);
 
-extern stf_status send_v2_informational_request(const char *name,
-						struct state *st,
-						struct ike_sa *ike,
-						payload_master_t *payloads);
+extern stf_status record_v2_informational_request(const char *name,
+						  struct ike_sa *owner,
+						  struct state *sender,
+						  payload_master_t *payloads);
 
 /*
  * Emit an IKEv2 payload.

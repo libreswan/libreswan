@@ -5608,14 +5608,18 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 
 	/*
 	 * XXX: What does it mean to send a liveness probe for a CHILD
-	 * SA?  Since the packet contents are empty there's nothing to
-	 * identify the CHILD, just the IKE SA!?!
+	 * SA?  Since the packet contents are empty there's nothing
+	 * for the other end to identify which child this is for!
+	 *
+	 * XXX: See record 'n'_send for how screwed up all this is:
+	 * need to pass in the CHILD SA so that it's liveness
+	 * timestamp (and not the IKE) gets updated.
 	 */
-	stf_status e = send_v2_informational_request("liveness probe informational request",
-						     st, ike, NULL);
-
+	stf_status e = record_v2_informational_request("liveness probe informational request",
+						       ike, st/*sender*/,
+						       NULL /* beast master */);
+	send_recorded_v2_ike_msg(st, "liveness probe informational request");
 	pstats_ike_dpd_sent++;
-
 	return e;
 }
 
@@ -5967,8 +5971,10 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	const struct iface_port *o_iface = st->st_interface;
 	st->st_interface = iface;
 
-	send_v2_informational_request("mobike informational request",
-				      st, ike_sa(st), add_mobike_payloads);
+	record_v2_informational_request("mobike informational request",
+					ike_sa(st), st/*sender*/,
+					add_mobike_payloads);
+	send_recorded_v2_ike_msg(st, "mobike informational request");
 
 	st->st_interface = o_iface;
 }

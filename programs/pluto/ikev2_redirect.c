@@ -366,9 +366,10 @@ static bool add_redirect_payload(struct state *st, pb_stream *pbs)
 
 void send_active_redirect_in_informational(struct state *st)
 {
-	stf_status e = send_v2_informational_request("active REDIRECT informational request",
-					st, ike_sa(st), add_redirect_payload);
+	stf_status e = record_v2_informational_request("active REDIRECT informational request",
+						       ike_sa(st), st, add_redirect_payload);
 	if (e == STF_OK) {
+		send_recorded_v2_ike_msg(st, "active REDIRECT informational request");
 		ipstr_buf b;
 		libreswan_log("redirecting of peer %s successful",
 				sensitive_ipstr(&st->st_remoteaddr, &b));

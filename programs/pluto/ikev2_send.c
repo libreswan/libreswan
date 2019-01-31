@@ -557,14 +557,14 @@ void record_v2_delete(struct state *const st)
 /*
  * Construct and send an informational request.
  *
- * XXX: This and send_v2_delete() should be merged.  However, there
- * are annoying differences.  For instance, send_v2_delete() updates
+ * XXX: This and record_v2_delete() should be merged.  However, there
+ * are annoying differences.  For instance, record_v2_delete() updates
  * st->st_msgid but the below doesn't.
  */
-stf_status send_v2_informational_request(const char *name,
-					 struct state *st,
-					 struct ike_sa *ike,
-					 payload_master_t *payloads)
+stf_status record_v2_informational_request(const char *name,
+					   struct ike_sa *ike,
+					   struct state *sender,
+					   payload_master_t *payloads)
 {
 	/*
 	 * Buffer in which to marshal our informational message.  We
@@ -586,7 +586,7 @@ stf_status send_v2_informational_request(const char *name,
 
 	v2SK_payload_t sk = open_v2SK_payload(&message, ike);
 	if (!pbs_ok(&sk.pbs) ||
-	    (payloads != NULL && !payloads(st, &sk.pbs)) ||
+	    (payloads != NULL && !payloads(sender, &sk.pbs)) ||
 	    !close_v2SK_payload(&sk)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -598,12 +598,39 @@ stf_status send_v2_informational_request(const char *name,
 		return ret;
 	}
 
-	/* cannot use ikev2_update_msgid_counters - no md here */
-	/* But we know we are the initiator for thie exchange */
-	ike->sa.st_msgid_nextuse += 1;
+	/*
+	 * cannot use ikev2_update_msgid_counters - no md here
+	 *
+	 * XXX: Record the outbound message in the CHILD SA.  There's
+	 * code in record_outbound_ike_msg() that updates
+	 * .st_last_liveness and if that's IKE then the IKE SA never
+	 * times out - any message updates the IKE timer making the
+	 * logic conclude that all is well!  Surely this is wrong!  Or
+	 * perhaps this some sort of variable abuse where for CHILD SA
+	 * it is last outgoing, and for IKE it is last incomming?
+	 *
+	 * XXX: If this is the IKE SA responder sending out a request
+	 * (so Message ID is 0) things get really screwed up.  The
+	 * first response (Message ID is 0) will be dropped because
+	 * the message routing code will find the CHILD SA (it has a
+	 * default msgid==0) and then discover that there's no
+	 * handler.  The second and further responses will make it
+	 * through, but only because there's fall back logic to route
+	 * the message to the IKE SA when there's no child.
+	 * Hopefully, by the time you read this, these bugs will have
+	 * been fixed.
+	 */
+	msgid_t new_msgid = ike->sa.st_msgid_nextuse;
+	msgid_t new_nextuse = ike->sa.st_msgid_nextuse + 1;
+	dbg("Message ID: XXX: IKE #%lu sender #%lu in %s record 'n' send notify request so forcing IKE nextuse="PRI_MSGID"->"PRI_MSGID" and IKE msgid="PRI_MSGID"->"PRI_MSGID,
+	    ike->sa.st_serialno, sender->st_serialno, __func__,
+	    ike->sa.st_msgid_nextuse, new_nextuse,
+	    ike->sa.st_msgid, new_msgid);
+	ike->sa.st_msgid_nextuse = new_nextuse;
+	ike->sa.st_msgid = new_msgid;
 
 	ike->sa.st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
-	record_and_send_v2_ike_msg(st, &packet, name);
+	record_outbound_ike_msg(sender, &packet, name);
 
 	return STF_OK;
 }
