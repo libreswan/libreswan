@@ -407,7 +407,7 @@ static char *clean_xauth_username(const char *src, char *dst, size_t dstlen)
  *
  * note: this mutates *st by calling get_sa_info().
  */
-static bool jam_common_shell_out(jambuf_t *buf, const struct connection *c,
+static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 				 const struct spd_route *sr, struct state *st,
 				 bool inbytes, bool outbytes)
 {
@@ -575,121 +575,68 @@ static bool jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 		}
 	}
 
-	jam(buf,
-		/* change VERSION when interface spec changes */
-		"PLUTO_VERSION='2.0' "
-		"PLUTO_CONNECTION='%s' "
-		"PLUTO_INTERFACE='%s' "
-		"%s" /* possible PLUTO_NEXT_HOP */
-		"PLUTO_ME='%s' "
-		"PLUTO_MY_ID='%s' "	/* 5 */
-		"PLUTO_MY_CLIENT='%s' "
-		"PLUTO_MY_CLIENT_NET='%s' "
-		"PLUTO_MY_CLIENT_MASK='%s' "
-		"%s" /* VTI_IP */
-		"PLUTO_MY_PORT='%u' "
-		"PLUTO_MY_PROTOCOL='%u' "	/* 10 */
-		"PLUTO_SA_REQID='%u' "
-		"PLUTO_SA_TYPE='%s' "
-		"PLUTO_PEER='%s' "
-		"PLUTO_PEER_ID='%s' "
-		"PLUTO_PEER_CLIENT='%s' "	/* 15 */
-		"PLUTO_PEER_CLIENT_NET='%s' "
-		"PLUTO_PEER_CLIENT_MASK='%s' "
-		"PLUTO_PEER_PORT='%u' "
-		"PLUTO_PEER_PROTOCOL='%u' "
-		"PLUTO_PEER_CA='%s' "		/* 20 */
-		"PLUTO_STACK='%s' "
-		"%s"		/* optional metric */
-		"%s"		/* optional mtu */
-		"PLUTO_ADDTIME='%" PRIu64 "' "
-		"PLUTO_CONN_POLICY='%s%s' "	/* 25,26 */
-		"PLUTO_CONN_KIND='%s' "
-		"PLUTO_CONN_ADDRFAMILY='ipv%d' "
-		"XAUTH_FAILED=%d "
-		"%s"		/* XAUTH username - if any */	/* 30 */
-		"%s"		/* PLUTO_MY_SRCIP - if any */
-		"PLUTO_IS_PEER_CISCO='%u' "
-		"PLUTO_PEER_DNS_INFO='%s' "
-		"PLUTO_PEER_DOMAIN_INFO='%s' "
-		"PLUTO_PEER_BANNER='%s' "	/* 35 */
-		"PLUTO_CFG_SERVER='%u' "
-		"PLUTO_CFG_CLIENT='%u' "
+ 	/* change VERSION when interface spec changes */
+	jam(buf, "PLUTO_VERSION='2.0' ");
+	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
+	jam(buf, "PLUTO_INTERFACE='%s' ", (c->interface == NULL ? "NULL" :
+					  c->interface->ip_dev->id_vname));
+	jam(buf, "%s" /* possible PLUTO_NEXT_HOP */, nexthop_str);
+	jam(buf, "PLUTO_ME='%s' ", ipstr(&sr->this.host_addr, &bme));
+	jam(buf, "PLUTO_MY_ID='%s' ", secure_myid_str);
+	jam(buf, "PLUTO_MY_CLIENT='%s' ", myclient_str);
+	jam(buf, "PLUTO_MY_CLIENT_NET='%s' ", myclientnet_str);
+	jam(buf, "PLUTO_MY_CLIENT_MASK='%s' ", myclientmask_str);
+	jam(buf, "%s" /* VTI_IP */, vticlient_str);
+	jam(buf, "PLUTO_MY_PORT='%u' ", sr->this.port);
+	jam(buf, "PLUTO_MY_PROTOCOL='%u' ", sr->this.protocol);
+	jam(buf, "PLUTO_SA_REQID='%u' ", sr->reqid);
+	jam(buf, "PLUTO_SA_TYPE='%s' ", (st == NULL ? "none" :
+					st->st_esp.present ? "ESP" :
+					st->st_ah.present ? "AH" :
+					st->st_ipcomp.present ? "IPCOMP" :
+					"unknown?"));
+	jam(buf, "PLUTO_PEER='%s' ", ipstr(&sr->that.host_addr, &bpeer));
+	jam(buf, "PLUTO_PEER_ID='%s' ", secure_peerid_str);
+	jam(buf, "PLUTO_PEER_CLIENT='%s' ", peerclient_str);
+	jam(buf, "PLUTO_PEER_CLIENT_NET='%s' ", peerclientnet_str);
+	jam(buf, "PLUTO_PEER_CLIENT_MASK='%s' ", peerclientmask_str);
+	jam(buf, "PLUTO_PEER_PORT='%u' ", sr->that.port);
+	jam(buf, "PLUTO_PEER_PROTOCOL='%u' ", sr->that.protocol);
+	jam(buf, "PLUTO_PEER_CA='%s' ", secure_peerca_str);
+	jam(buf, "PLUTO_STACK='%s' ", kernel_ops->kern_name);
+	jam(buf, "%s" /* optional metric */, metric_str);
+	jam(buf, "%s" /* optional mtu */, connmtu_str);
+	jam(buf, "PLUTO_ADDTIME='%" PRIu64 "' ", st == NULL ? (uint64_t)0 : st->st_esp.add_time);
+	jam(buf, "PLUTO_CONN_POLICY='%s%s' ", prettypolicy(c->policy), NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
+	jam(buf, "PLUTO_CONN_KIND='%s' ", enum_show(&connection_kind_names, c->kind));
+	jam(buf, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", (c->addr_family == AF_INET) ? 4 : 6);
+	jam(buf, "XAUTH_FAILED=%d ", (st != NULL && st->st_xauth_soft) ? 1 : 0);
+	jam(buf, "%s" /* XAUTH username - if any */, secure_xauth_username_str);
+	jam(buf, "%s" /* PLUTO_MY_SRCIP - if any */, srcip_str);
+	jam(buf, "PLUTO_IS_PEER_CISCO='%u' ", c->remotepeertype /* ??? kind of odd printing an enum with %u */);
+	jam(buf, "PLUTO_PEER_DNS_INFO='%s' ", (st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "");
+	jam(buf, "PLUTO_PEER_DOMAIN_INFO='%s' ", (st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "");
+	jam(buf, "PLUTO_PEER_BANNER='%s' ", (st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "");
+	jam(buf, "PLUTO_CFG_SERVER='%u' ", sr->this.modecfg_server);
+	jam(buf, "PLUTO_CFG_CLIENT='%u' ", sr->this.modecfg_client);
 #ifdef HAVE_NM
-		"PLUTO_NM_CONFIGURED='%u' "
+	jam(buf, "PLUTO_NM_CONFIGURED='%u' ", c->nmconfigured);
 #endif
-		"%s" /* traffic in stats - if any */
-		"%s" /* traffic out stats - if any */	/* 40 */
-		"%s" /* nflog-group - if any */
-		"%s" /* conn-mark - if any */
-		"VTI_IFACE='%s' "
-		"VTI_ROUTING='%s' "
-		"VTI_SHARED='%s' "
-		"%s" /* CAT=yes if set */	/* 45 */
-		"SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */
-
-		, c->name,
-		c->interface == NULL ? "NULL" : c->interface->ip_dev->id_vname,
-		nexthop_str,
-		ipstr(&sr->this.host_addr, &bme),
-		secure_myid_str,		/* 5 */
-		myclient_str,
-		myclientnet_str,
-		myclientmask_str,
-		vticlient_str,
-		sr->this.port,
-		sr->this.protocol,		/* 10 */
-		sr->reqid,
-		(st == NULL ? "none" :
-			st->st_esp.present ? "ESP" :
-			st->st_ah.present ? "AH" :
-			st->st_ipcomp.present ? "IPCOMP" :
-			"unknown?"),
-		ipstr(&sr->that.host_addr, &bpeer),
-		secure_peerid_str,
-		peerclient_str,			/* 15 */
-		peerclientnet_str,
-		peerclientmask_str,
-		sr->that.port,
-		sr->that.protocol,
-		secure_peerca_str,		/* 20 */
-		kernel_ops->kern_name,
-		metric_str,
-		connmtu_str,
-		st == NULL ? (uint64_t)0 : st->st_esp.add_time,
-		prettypolicy(c->policy),	/* 25 */
-		NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",	/* 26 */
-		enum_show(&connection_kind_names, c->kind),
-		(c->addr_family == AF_INET) ? 4 : 6,
-		(st != NULL && st->st_xauth_soft) ? 1 : 0,
-		secure_xauth_username_str,	/* 30 */
-		srcip_str,
-		c->remotepeertype, /* ??? kind of odd printing an enum with %u */
-		(st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "",
-		(st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "",
-		(st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "",	/* 35 */
-		sr->this.modecfg_server,
-		sr->this.modecfg_client,
-#ifdef HAVE_NM
-		c->nmconfigured,
-#endif
-		traffic_in_str,
-		traffic_out_str,	/* 40 */
-		nflogstr,
-		connmarkstr,
-		c->vti_iface ? c->vti_iface : "",
-		bool_str(c->vti_routing),
-		bool_str(c->vti_shared),	/* 45 */
-		catstr,
-		st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.attrs.spi) :
-			st->st_ah.present ? ntohl(st->st_ah.attrs.spi) :
-			st->st_ipcomp.present ? ntohl(st->st_ipcomp.attrs.spi) : 0,
-		st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.our_spi) :
-			st->st_ah.present ? ntohl(st->st_ah.our_spi) :
-			st->st_ipcomp.present ? ntohl(st->st_ipcomp.our_spi) : 0
-		);
-	/* need space for NUL */
-	return jambuf_ok(buf);
+	jam(buf, "%s" /* traffic in stats - if any */, traffic_in_str);
+	jam(buf, "%s" /* traffic out stats - if any */, traffic_out_str);
+	jam(buf, "%s" /* nflog-group - if any */, nflogstr);
+	jam(buf, "%s" /* conn-mark - if any */, connmarkstr);
+	jam(buf, "VTI_IFACE='%s' ", c->vti_iface ? c->vti_iface : "");
+	jam(buf, "VTI_ROUTING='%s' ", bool_str(c->vti_routing));
+	jam(buf, "VTI_SHARED='%s' ", bool_str(c->vti_shared));
+	jam(buf, "%s" /* CAT=yes if set */, catstr);
+	jam(buf, "SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */,
+	    (st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.attrs.spi) :
+	     st->st_ah.present ? ntohl(st->st_ah.attrs.spi) :
+	     st->st_ipcomp.present ? ntohl(st->st_ipcomp.attrs.spi) : 0),
+	    (st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.our_spi) :
+	     st->st_ah.present ? ntohl(st->st_ah.our_spi) :
+	     st->st_ipcomp.present ? ntohl(st->st_ipcomp.our_spi) : 0));
 }
 
 /*
