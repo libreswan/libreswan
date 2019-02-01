@@ -99,10 +99,17 @@ typedef struct {
 void fmt_address_raw(struct lswlog *buf, const ip_address *src, char sepc);
 void fmt_address_cooked(struct lswlog *buf, const ip_address *src);
 void fmt_address_sensitive(struct lswlog *buf, const ip_address *src);
+void fmt_address_reversed(struct lswlog *buf, const ip_address *src);
 
 const char *str_address_raw(const ip_address *src, char sepc, ip_address_buf *dst);
 const char *str_address_cooked(const ip_address *src, ip_address_buf *dst);
 const char *str_address_sensitive(const ip_address *src, ip_address_buf *dst);
+
+typedef struct {
+	/* string includes NUL, add 1 for canary */
+	char buf[sizeof("4.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.2.0.0.0.1.0.0.0.IP6.ARPA.") + 1];
+}  address_reversed_buf;
+const char *str_address_reversed(const ip_address *src, address_reversed_buf *buf);
 
 typedef ip_address_buf ipstr_buf; /* compat */
 const char *ipstr(const ip_address *src, ipstr_buf *b);
@@ -142,7 +149,7 @@ extern err_t ttoaddr(const char *src, size_t srclen, int af, ip_address *dst);
 extern err_t ttoaddr_num(const char *src, size_t srclen, int af, ip_address *dst);
 
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
-#define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
+#define ADDRTOT_BUF     sizeof(address_reversed_buf)
 extern err_t tnatoaddr(const char *src, size_t srclen, int af, ip_address *dst);
 extern size_t addrtot(const ip_address *src, int format, char *buf, size_t buflen);
 

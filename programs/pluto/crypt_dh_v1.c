@@ -269,11 +269,10 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 			    DBG_dump_chunk("DH_i:", gi);
 			    DBG_dump_chunk("DH_r:", gr);
 		    });
-		struct crypt_hash *ctx = crypt_hash_init(hasher, "IV", DBG_CRYPT);
+		struct crypt_hash *ctx = crypt_hash_init("new IV", hasher);
 		crypt_hash_digest_chunk(ctx, "GI", gi);
 		crypt_hash_digest_chunk(ctx, "GR", gr);
-		*new_iv = crypt_hash_final_chunk(&ctx, "calculated new iv");
-		DBG(DBG_CRYPT, DBG_log("end of IV generation"));
+		*new_iv = crypt_hash_final_chunk(&ctx);
 	}
 }
 

@@ -12,7 +12,7 @@
  * Copyright (C) 2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2018 Andrew Cagney
+ * Copyright (C) 2015-2019 Andrew Cagney
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
@@ -337,6 +337,8 @@ static struct msg_digest *fake_md(struct state *st)
 	fake_md->st = st;
 	fake_md->from_state = st->st_finite_state->fs_kind;
 	fake_md->hdr.isa_msgid = v2_INVALID_MSGID;
+	fake_md->hdr.isa_version = (IKEv2_MAJOR_VERSION << ISA_MAJ_SHIFT);
+	fake_md->fake_dne = true;
 	/* asume first microcode is valid */
 	fake_md->svm = st->st_finite_state->fs_v2_transitions;
 	return fake_md;
@@ -1434,7 +1436,37 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			 * the Message ID counter code thinks this is
 			 * an initial outgoing message.
 			 */
-			v2_msgid_restart_init_request(st, md);
+			v2_msgid_restart_init_request(st);
+			/*
+			 * XXX: Why?!?
+			 *
+			 * Shouldn't the state transitions
+			 * STATE_PARENT_I0 -> STATE_PARENT_I1 and
+			 * STATE_PARENT_I1 -> STATE_PARENT_I1 be
+			 * functionally 'identical'.
+			 *
+			 * Yes.  Unfortunately the code below does all
+			 * sorts of magic involving the state's magic
+			 * number and assumed attributes.
+			 */
+			md->svm = finite_states[STATE_PARENT_I0]->fs_v2_transitions;
+			change_state(st, STATE_PARENT_I0);
+			/*
+			 * XXX: Why?!?
+			 *
+			 * Shouldn't MD be ignored!  After all it
+			 * could be NULL.
+			 *
+			 * Yes.  unfortunately the code below still
+			 * assumes that there's always an MD (the
+			 * initiator does not have an MD so fake_md()
+			 * and tries to use MD attributes to make
+			 * decisions that belong in the state
+			 * transition.
+			 */
+			if (md != NULL) {
+				md->hdr.isa_flags &= ~ISAKMP_FLAGS_v2_MSG_R;
+			}
 			/* re-send the SA_INIT request with cookies added */
 			return ikev2_parent_outI1_common(md, st);
 		}

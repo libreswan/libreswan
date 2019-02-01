@@ -1093,17 +1093,12 @@ static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert)
 	zero(&sighash);
 
 /* TODO: This should use SHA1 even if USE_SHA1 is disabled for IKE/IPsec */
-	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha1,
-						 "cert key", DBG_CRYPT);
+	struct crypt_hash *ctx = crypt_hash_init("SHA-1 of Certificate Public Key",
+						 &ike_alg_hash_sha1);
 	crypt_hash_digest_bytes(ctx, "pubkey",
 				cert->derPublicKey.data,
 				cert->derPublicKey.len);
 	crypt_hash_final_bytes(&ctx, sighash, sizeof(sighash));
-
-	DBG(DBG_CRYPT, DBG_dump("SHA-1 of Certificate Public Key",
-						sighash,
-						SHA1_DIGEST_SIZE));
-
 	clonetochunk(result, sighash, SHA1_DIGEST_SIZE, "pkey hash");
 
 	return result;

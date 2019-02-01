@@ -76,9 +76,8 @@ ike_spi_t ike_responder_spi(const ip_address *addr)
 	do {
 		static uint32_t counter = 0; /* STATIC */
 
-		struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
-							 "IKE Responder SPI",
-							 DBG_CRYPT);
+		struct crypt_hash *ctx = crypt_hash_init("IKE SPIr",
+							 &ike_alg_hash_sha2_256);
 
 		crypt_hash_digest_bytes(ctx, "addr", addr, sizeof(*addr));
 		crypt_hash_digest_bytes(ctx, "sod", ike_spi_secret,

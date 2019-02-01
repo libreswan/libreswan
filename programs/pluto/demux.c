@@ -640,22 +640,19 @@ void schedule_md_event(const char *name, struct msg_digest *md)
  */
 enum message_role v2_msg_role(const struct msg_digest *md)
 {
-	/*
-	 * When something bogus, such as no MD, or MD having the wrong
-	 * version number, return 0.  Calling code can then either
-	 * trigger a bad_case() or other assertion.
-	 */
-	if (!pexpect(md != NULL)) {
-		return 0; /* reserved */
+	if (md == NULL) {
+		return NO_MESSAGE;
 	}
 	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
 	if (!pexpect(vmaj == IKEv2_MAJOR_VERSION)) {
-		return 0; /* reserved */
+		return NO_MESSAGE;
+	}
+	if (md->fake_dne) {
+		return NO_MESSAGE;
 	}
 	/* determine the role */
 	enum message_role role =
 		(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) ? MESSAGE_RESPONSE : MESSAGE_REQUEST;
-	passert(role > 0); /* not reserved */
 	return role;
 }
 

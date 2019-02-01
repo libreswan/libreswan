@@ -17,6 +17,7 @@
 
 extern void ip_address_check(void);
 extern void ip_endpoint_check(void);
+extern void ip_range_check(void);
 extern void ip_subnet_check(void);
 
 /*
@@ -40,21 +41,19 @@ extern unsigned fails;
 /* t->start, t->stop */
 #define SSPRINT(FILE, FMT, ...) \
 	fprintf(FILE, "%s[%zu]: '%s'-'%s' " FMT "\n",			\
-		__func__, ti, t->start, t->stop __VA_OPT__(,)		\
-		__VA_ARGS__);
+		__func__, ti, t->start, t->stop ,##__VA_ARGS__);
 #define SSFAIL(FMT, ...) {						\
 		fails++;						\
-		SSPRINT(stderr, FMT __VA_OPT__(,) __VA_ARGS__);		\
+		SSPRINT(stderr, FMT ,##__VA_ARGS__);			\
 	}
 
 /* t->low, t->high */
 #define LHPRINT(FILE, FMT, ...)						\
 	fprintf(FILE, "%s[%zu]: '%s'-'%s' " FMT "\n",			\
-		__func__, ti, t->low, t->high __VA_OPT__(,)		\
-		__VA_ARGS__)
+		__func__, ti, t->low, t->high ,##__VA_ARGS__)
 #define LHFAIL(FMT, ...) {						\
 		fails++;						\
-		LHPRINT(stderr, FMT __VA_OPT__(,) __VA_ARGS__);		\
+		LHPRINT(stderr, FMT ,##__VA_ARGS__);			\
 	}
 
 #endif

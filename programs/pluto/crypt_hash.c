@@ -26,16 +26,13 @@
 struct crypt_hash {
 	struct hash_context *context;
 	const char *name;
-	lset_t debug;
 	const struct hash_desc *desc;
 };
 
-struct crypt_hash *crypt_hash_init(const struct hash_desc *hash_desc,
-				   const char *name,
-				   lset_t debug)
+struct crypt_hash *crypt_hash_init(const char *name, const struct hash_desc *hash_desc)
 {
-	DBG(debug, DBG_log("%s hash %s init",
-			   name, hash_desc->common.name));
+	DBGF(DBG_CRYPT, "%s hash %s init",
+	     name, hash_desc->common.name);
 	struct hash_context *context =
 		hash_desc->hash_ops->init(hash_desc, name);
 	if (context == NULL) {
@@ -45,7 +42,6 @@ struct crypt_hash *crypt_hash_init(const struct hash_desc *hash_desc,
 	*hash = (struct crypt_hash) {
 		.context = context,
 		.name = name,
-		.debug = debug,
 		.desc = hash_desc,
 	};
 	return hash;
@@ -54,27 +50,36 @@ struct crypt_hash *crypt_hash_init(const struct hash_desc *hash_desc,
 void crypt_hash_digest_chunk(struct crypt_hash *hash,
 			     const char *name, chunk_t chunk)
 {
-	DBG(hash->debug, DBG_log("%s hash %s digest %s-chunk@%p (length %zu)",
-				 hash->name, hash->desc->common.name,
-				 name, chunk.ptr, chunk.len));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s hash %s digest %s-chunk@%p (length %zu)",
+			hash->name, hash->desc->common.name,
+			name, chunk.ptr, chunk.len);
+		DBG_dump_chunk(NULL, chunk);
+	}
 	hash->desc->hash_ops->digest_bytes(hash->context, name, chunk.ptr, chunk.len);
 }
 
 void crypt_hash_digest_symkey(struct crypt_hash *hash,
 			      const char *name, PK11SymKey *symkey)
 {
-	DBG(hash->debug, DBG_log("%s hash %s digest %s-key@%p (size %zu)",
-				 hash->name, hash->desc->common.name,
-				 name, symkey, sizeof_symkey(symkey)));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s hash %s digest %s-key@%p (size %zu)",
+			hash->name, hash->desc->common.name,
+			name, symkey, sizeof_symkey(symkey));
+		DBG_symkey(hash->name, name, symkey);
+	}
 	hash->desc->hash_ops->digest_symkey(hash->context, name, symkey);
 }
 
 void crypt_hash_digest_byte(struct crypt_hash *hash,
 			    const char *name, uint8_t byte)
 {
-	DBG(hash->debug, DBG_log("%s hash %s digest %s-byte@0x%x (%d)",
-				 hash->name, hash->desc->common.name,
-				 name, byte, byte));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s hash %s digest %s-byte@0x%x (%d)",
+			hash->name, hash->desc->common.name,
+			name, byte, byte);
+		DBG_dump(NULL, &byte, sizeof(byte));
+	}
 	hash->desc->hash_ops->digest_bytes(hash->context, name, &byte, 1);
 }
 
@@ -83,9 +88,12 @@ void crypt_hash_digest_bytes(struct crypt_hash *hash,
 			     const void *bytes,
 			     size_t sizeof_bytes)
 {
-	DBG(hash->debug, DBG_log("%s hash %s digest %s-bytes@%p (length %zu)",
-				 hash->name, hash->desc->common.name,
-				 name, bytes, sizeof_bytes));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s hash %s digest %s-bytes@%p (length %zu)",
+			hash->name, hash->desc->common.name,
+			name, bytes, sizeof_bytes);
+		DBG_dump(NULL, bytes, sizeof_bytes);
+	}
 	hash->desc->hash_ops->digest_bytes(hash->context, name, bytes, sizeof_bytes);
 }
 
@@ -93,36 +101,41 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 			    uint8_t *bytes, size_t sizeof_bytes)
 {
 	struct crypt_hash *hash = *hashp;
-	DBG(hash->debug, DBG_log("%s hash %s final bytes@%p (length %zu)",
-				 hash->name, hash->desc->common.name,
-				 bytes, sizeof_bytes));
 	/* Must be correct, else hash code can crash. */
 	passert(sizeof_bytes == hash->desc->hash_digest_size);
 	hash->desc->hash_ops->final_bytes(&hash->context, bytes, sizeof_bytes);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s hash %s final bytes@%p (length %zu)",
+			hash->name, hash->desc->common.name,
+			bytes, sizeof_bytes);
+		DBG_dump(NULL, bytes, sizeof_bytes);
+	}
 	pfree(*hashp);
 	*hashp = hash = NULL;
 }
 
-chunk_t crypt_hash_final_chunk(struct crypt_hash **hashp, const char *name)
+chunk_t crypt_hash_final_chunk(struct crypt_hash **hashp)
 {
 	struct crypt_hash *hash = *hashp;
-	chunk_t chunk = alloc_chunk(hash->desc->hash_digest_size, name);
-	DBG(hash->debug, DBG_log("%s hash %s final chunk@%p (length %zu)",
-				 hash->name, hash->desc->common.name,
-				 chunk.ptr, chunk.len));
+	chunk_t chunk = alloc_chunk(hash->desc->hash_digest_size, hash->name);
 	hash->desc->hash_ops->final_bytes(&hash->context, chunk.ptr, chunk.len);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s hash %s final chunk@%p (length %zu)",
+			hash->name, hash->desc->common.name,
+			chunk.ptr, chunk.len);
+		DBG_dump_chunk(NULL, chunk);
+	}
 	pfree(*hashp);
 	*hashp = hash = NULL;
 	return chunk;
 }
 
-PK11SymKey *crypt_hash_symkey(const struct hash_desc *hash_desc,
-			      const char *name, lset_t debug,
+PK11SymKey *crypt_hash_symkey(const char *name, const struct hash_desc *hash_desc,
 			      const char *symkey_name, PK11SymKey *symkey)
 {
-	DBG(debug, DBG_log("%s hash %s %s-key@%p (size %zu)",
-			   name, hash_desc->common.name,
-			   symkey_name, symkey, sizeof_symkey(symkey)));
+	DBGF(DBG_CRYPT, "%s hash %s %s-key@%p (size %zu)",
+	     name, hash_desc->common.name,
+	     symkey_name, symkey, sizeof_symkey(symkey));
 	return hash_desc->hash_ops->symkey_to_symkey(hash_desc, name,
 						     symkey_name, symkey);
 }

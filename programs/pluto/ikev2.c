@@ -1745,7 +1745,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 * Now that cur-state has been set for logging, log if this
 	 * packet is really bogus.
 	 */
-	if (md->fake) {
+	if (md->fake_clone) {
 		libreswan_log("IMPAIR: processing a fake (cloned) message");
 	}
 
@@ -2556,7 +2556,7 @@ static void schedule_next_send(struct state *st)
  * new init request.
  */
 
-void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
+void v2_msgid_restart_init_request(struct state *st)
 {
 	dbg("restarting Message ID of state #%lu", st->st_serialno);
 	/* Ok? */
@@ -2564,31 +2564,6 @@ void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md)
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
 	st->st_msgid = 0;
-	/*
-	 * XXX: Why?!?
-	 *
-	 * Shouldn't the state transitions STATE_PARENT_I0 ->
-	 * STATE_PARENT_I1 and STATE_PARENT_I1 -> STATE_PARENT_I1 be
-	 * functionally 'identical'.
-	 *
-	 * Yes.  Unfortunately the code below does all sorts of magic
-	 * involving the state's magic number and assumed attributes.
-	 */
-	md->svm = finite_states[STATE_PARENT_I0]->fs_v2_transitions;
-	change_state(st, STATE_PARENT_I0);
-	/*
-	 * XXX: Why?!?
-	 *
-	 * Shouldn't MD be ignored!  After all it could be NULL.
-	 *
-	 * Yes.  unfortunately the code below still assumes that
-	 * there's always an MD (the initiator does not have an MD so
-	 * fake_md() and tries to use MD attributes to make decisions
-	 * that belong in the state transition.
-	 */
-	if (md != NULL) {
-		md->hdr.isa_flags &= ~ISAKMP_FLAGS_v2_MSG_R;
-	}
 }
 
 /*
@@ -2628,7 +2603,7 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 
 	if (is_msg_response(md)) {
 		/* we were initiator for this message exchange */
-		if (md->hdr.isa_msgid == v2_INITIAL_MSGID &&
+		if (md->hdr.isa_msgid == v2_FIRST_MSGID &&
 				ike->sa.st_msgid_lastack == v2_INVALID_MSGID) {
 			ike->sa.st_msgid_lastack = md->hdr.isa_msgid;
 		} else if (md->hdr.isa_msgid > ike->sa.st_msgid_lastack) {
@@ -2640,9 +2615,9 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 			ike->sa.st_msgid_lastrecv = md->hdr.isa_msgid;
 		}
 		/* first request from the other side */
-		if (md->hdr.isa_msgid == v2_INITIAL_MSGID &&
+		if (md->hdr.isa_msgid == v2_FIRST_MSGID &&
 				ike->sa.st_msgid_lastrecv == v2_INVALID_MSGID) {
-			ike->sa.st_msgid_lastrecv = v2_INITIAL_MSGID;
+			ike->sa.st_msgid_lastrecv = v2_FIRST_MSGID;
 		}
 	}
 
@@ -2721,7 +2696,7 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	to->sa.st_clonedfrom = SOS_NOBODY;
 	to->sa.st_msgid_lastack = v2_INVALID_MSGID;
 	to->sa.st_msgid_lastrecv = v2_INVALID_MSGID;
-	to->sa.st_msgid_nextuse = v2_INITIAL_MSGID;
+	to->sa.st_msgid_nextuse = v2_FIRST_MSGID;
 
 	/* Switch to the new IKE SPIs */
 	to->sa.st_ike_spis = to->sa.st_ike_rekey_spis;

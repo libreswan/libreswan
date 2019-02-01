@@ -107,9 +107,9 @@ static void hmac_run_test(void)
 	if (prf_alg == NULL) {
 		return;
 	}
-	struct crypt_prf *prf = crypt_prf_init_chunk("run", DBG_CRYPT,
-						     prf_alg, "key", key);
-	crypt_prf_update_chunk("msg", prf, msg);
+	struct crypt_prf *prf = crypt_prf_init_chunk("run", prf_alg,
+						     "key", key);
+	crypt_prf_update_chunk(prf, "msg", msg);
 	chunk_t bytes = alloc_chunk(prf_alg->prf_output_size, "bytes");
 	crypt_prf_final_bytes(&prf, bytes.ptr, bytes.len);
 	print_chunk("Mac", NULL, bytes, tlen);

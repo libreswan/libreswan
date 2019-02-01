@@ -619,7 +619,8 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 	SECStatus rv = CERT_FindCertExtension(cert, SEC_OID_X509_SUBJECT_ALT_NAME,
 			&subAltName);
 	if (rv != SECSuccess) {
-		DBG(DBG_X509, DBG_log("certificate contains no subjectAltName extension"));
+		loglog(RC_LOG_SERIOUS, "certificate contains no subjectAltName extension matching '%s'",
+			name);
 		return FALSE;
 	}
 
@@ -632,7 +633,8 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
 
 	if (nameList == NULL) {
-		loglog(RC_LOG_SERIOUS, "certificate subjectAltName extension failed to decode");
+		loglog(RC_LOG_SERIOUS, "certificate subjectAltName extension failed to decode while looking for '%s'",
+			name);
 		PORT_FreeArena(arena, PR_FALSE);
 		return FALSE;
 	}
@@ -724,7 +726,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 		current = CERT_GetNextGeneralName(current);
 	} while (current != nameList);
 
-	loglog(RC_LOG_SERIOUS, "No matching subjectAltName found");
+	loglog(RC_LOG_SERIOUS, "No matching subjectAltName found for '%s'", name);
 	/* Don't free nameList, it's part of the arena. */
 	PORT_FreeArena(arena, PR_FALSE);
 	return FALSE;

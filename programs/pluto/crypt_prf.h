@@ -52,24 +52,25 @@ size_t crypt_prf_fips_key_size_floor(void);
 /*
  * Using KEY, create a PRF.
  */
-struct crypt_prf *crypt_prf_init_symkey(const char *name, lset_t debug,
+struct crypt_prf *crypt_prf_init_symkey(const char *prf_name,
 					const struct prf_desc *prf_desc,
 					const char *key_name, PK11SymKey *key);
 
-struct crypt_prf *crypt_prf_init_chunk(const char *name, lset_t debug,
+struct crypt_prf *crypt_prf_init_chunk(const char *prf_name,
 				       const struct prf_desc *prf_desc,
 				       const char *key_name, chunk_t key);
 
 /*
  * Call these to accumulate the seed/data/text.
  */
-void crypt_prf_update_chunk(const char *name, struct crypt_prf *prf,
-			    chunk_t update);
-void crypt_prf_update_symkey(const char *name, struct crypt_prf *prf,
-			     PK11SymKey *update);
-void crypt_prf_update_byte(const char *name, struct crypt_prf *prf, uint8_t byte);
-void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
-			    const void *bytes, size_t count);
+void crypt_prf_update_chunk(struct crypt_prf *prf,
+			    const char *update_name, chunk_t update);
+void crypt_prf_update_symkey(struct crypt_prf *prf,
+			     const char *update_name, PK11SymKey *update);
+void crypt_prf_update_byte(struct crypt_prf *prf,
+			   const char *update_name, uint8_t update);
+void crypt_prf_update_bytes(struct crypt_prf *prf,
+			    const char *update_name, const void *update, size_t update_size);
 
 /*
  * Finally ...

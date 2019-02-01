@@ -2236,6 +2236,63 @@ void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
  * Road Warrior: peer's IP address
  * Opportunistic: [" " myclient "==="] " ..." peer ["===" hisclient] '\0'
  */
+
+static void fmt_connection_client(fmtbuf_t *b,
+				  const char *prefix, const char *suffix,
+				  const ip_subnet *client, const ip_address *gw)
+{
+	if (subnetisaddr(client, gw)) {
+		/* compact denotation for "self" */
+	} else {
+		fmt_string(b, prefix);
+		if (subnetisnone(client)) {
+			fmt_string(b, "?"); /* unknown */
+		} else {
+			fmt_subnet(b, client);
+		}
+		fmt_string(b, suffix);
+	}
+}
+
+void fmt_connection_instance(fmtbuf_t *buf, const struct connection *c)
+{
+	if (!pexpect(c->kind == CK_INSTANCE)) {
+		return;
+	}
+	if (c->instance_serial != 0) {
+		fmt(buf, "[%lu]", c->instance_serial);
+	}
+	if (c->policy & POLICY_OPPORTUNISTIC) {
+		fmt_connection_client(buf, " ", "===",
+				      &c->spd.this.client,
+				      &c->spd.this.host_addr);
+		fmt_string(buf, " ...");
+		fmt_address_cooked(buf, &c->spd.that.host_addr);
+		fmt_connection_client(buf, "===", "",
+				      &c->spd.that.client,
+				      &c->spd.that.host_addr);
+	} else {
+		fmt_string(buf, " ");
+		fmt_address_sensitive(buf, &c->spd.that.host_addr);
+	}
+}
+
+void fmt_connection(struct lswlog *buf, const struct connection *c)
+{
+	fmt(buf, "\"%s\"", c->name);
+	if (c->kind == CK_INSTANCE) {
+		fmt_connection_instance(buf, c);
+	}
+}
+
+const char *str_connection(const struct connection *c,
+			   connection_buf *out)
+{
+	fmtbuf_t buf = ARRAY_AS_FMTBUF(out->buf);
+	fmt_connection(&buf, c);
+	return out->buf;
+}
+
 static size_t fmt_client(const ip_subnet *client, const ip_address *gw,
 			const char *prefix, char buf[ADDRTOT_BUF])
 {
@@ -2254,6 +2311,13 @@ static size_t fmt_client(const ip_subnet *client, const ip_address *gw,
 	return strlen(buf);
 }
 
+/*
+ * This function is called using the convention:
+ *
+ *    printf("\"%s\"%s", c->name, fmt_conn_instance(c, &buf));
+ *
+ * The CK_INSTANCE check is so it returns "" when false.
+ */
 char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 {
 	char *p = buf;
@@ -4576,18 +4640,20 @@ void suppress_delete(struct connection *c)
 
 	if (pst != NULL) {
 		pst->st_suppress_del_notify = TRUE;
-		DBG(DBG_CONTROL, DBG_log("Marked IKE state #%lu to suppress sending delete notify",
-			c->newest_isakmp_sa));
+		dbg("Marked IKE state #%lu to suppress sending delete notify",
+		    c->newest_isakmp_sa);
 	} else {
-		libreswan_log("did not find old IKE state to mark for suppressing delete");
+		libreswan_log("did not find old IKE state #%lu to mark for suppressing delete",
+			      c->newest_isakmp_sa);
 	}
 
 	if (cst != NULL) {
 		cst->st_suppress_del_notify = TRUE;
-		DBG(DBG_CONTROL, DBG_log("Marked IPSEC state #%lu to suppress sending delete notify",
-			c->newest_ipsec_sa));
+		dbg("Marked IPSEC state #%lu to suppress sending delete notify",
+		    c->newest_ipsec_sa);
 	} else {
-		libreswan_log("did not find old IPsec state to mark for suppressing delete");
+		libreswan_log("did not find old IPsec state #%lu to mark for suppressing delete",
+			      c->newest_ipsec_sa);
 	}
 }
 

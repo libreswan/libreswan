@@ -146,9 +146,8 @@ static void log_processing(enum processing processing, bool current,
 			c = st->st_connection;
 		}
 		if (c != NULL) {
-			char b1[CONN_INST_BUF];
-			lswlogf(buf, " connection \"%s\"%s",
-				c->name, fmt_conn_instance(c, b1));
+			fmt_string(buf, " connection ");
+			fmt_connection(buf, c);
 		}
 		if (st != NULL && (c == NULL || !(c->policy & POLICY_OPPORTUNISTIC))) {
 			/* fmt_conn_instance() include the same if POLICY_OPPORTUNISTIC */
@@ -536,11 +535,7 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 		cur_connection;
 
 	if (c != NULL) {
-		lswlogf(buf, "\"%s\"", c->name);
-		/* if it fits, put in any connection instance information */
-		char inst[CONN_INST_BUF];
-		fmt_conn_instance(c, inst);
-		lswlogs(buf, inst);
+		fmt_connection(buf, c);
 		if (cur_state != NULL) {
 			/* state number */
 			lswlogf(buf, " #%lu", cur_state->st_serialno);

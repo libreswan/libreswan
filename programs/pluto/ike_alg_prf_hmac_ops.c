@@ -90,8 +90,8 @@ static void prf_update(struct prf_context *prf)
 
 	/* If the key is too big, re-hash it down to size. */
 	if (sizeof_symkey(prf->key) > prf->desc->hasher->hash_block_size) {
-		replace_key(prf, crypt_hash_symkey(prf->desc->hasher,
-						   "prf hash to size:", DBG_CRYPT_LOW,
+		replace_key(prf, crypt_hash_symkey("prf hash to size:",
+						   prf->desc->hasher,
 						   "raw key", prf->key));
 	}
 
@@ -140,8 +140,8 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 {
 	passert(prf->inner != NULL);
 	/* run that through hasher */
-	PK11SymKey *hashed_inner = crypt_hash_symkey(prf->desc->hasher,
-						     "prf inner hash:", DBG_CRYPT_LOW,
+	PK11SymKey *hashed_inner = crypt_hash_symkey("PRF HMAC inner hash",
+						     prf->desc->hasher,
 						     "inner", prf->inner);
 	release_symkey(prf->name, "inner", &prf->inner);
 
@@ -163,12 +163,13 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 	passert(final_symkey == (*prfp)->desc->prf_ops->final_symkey);
 	PK11SymKey *outer = compute_outer(*prfp);
 	/* Finally hash that */
-	PK11SymKey *hashed_outer = crypt_hash_symkey((*prfp)->desc->hasher,
-						     "prf outer hash",
-						     DBG_CRYPT_LOW,
+	PK11SymKey *hashed_outer = crypt_hash_symkey("PRF HMAC outer hash",
+						     (*prfp)->desc->hasher,
 						     "outer", outer);
 	release_symkey((*prfp)->name, "outer", &outer);
-	DBG(DBG_CRYPT_LOW, DBG_symkey("    ", " hashed-outer", hashed_outer));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_symkey("    ", " hashed-outer", hashed_outer);
+	}
 	pfree(*prfp);
 	*prfp = NULL;
 	return hashed_outer;
@@ -180,13 +181,11 @@ static void final_bytes(struct prf_context **prfp,
 	passert(final_bytes == (*prfp)->desc->prf_ops->final_bytes);
 	PK11SymKey *outer = compute_outer(*prfp);
 	/* Finally hash that */
-	struct crypt_hash *hash = crypt_hash_init((*prfp)->desc->hasher,
-						  "prf outer hash",
-						  DBG_CRYPT_LOW);
+	struct crypt_hash *hash = crypt_hash_init("PRF HMAC outer hash",
+						  (*prfp)->desc->hasher);
 	crypt_hash_digest_symkey(hash, "outer", outer);
 	crypt_hash_final_bytes(&hash, bytes, sizeof_bytes);
 	release_symkey((*prfp)->name, "outer", &outer);
-	DBG(DBG_CRYPT_LOW, DBG_dump("prf final bytes", bytes, sizeof_bytes));
 	pfree(*prfp);
 	*prfp = NULL;
 }

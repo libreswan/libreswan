@@ -106,7 +106,7 @@ static bool RSA_ikev2_calculate_sighash(const struct state *st,
 		return FALSE;
 	}
 
-	struct crypt_hash *ctx = crypt_hash_init(hd, "sighash", DBG_CRYPT);
+	struct crypt_hash *ctx = crypt_hash_init("sighash", hd);
 
 	crypt_hash_digest_chunk(ctx, "first packet", firstpacket);
 	crypt_hash_digest_chunk(ctx, "nonce", *nonce);

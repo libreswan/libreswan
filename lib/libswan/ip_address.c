@@ -266,6 +266,34 @@ void fmt_address_sensitive(struct lswlog *buf, const ip_address *address)
 	}
 }
 
+void fmt_address_reversed(struct lswlog *buf, const ip_address *address)
+{
+	chunk_t bytes = same_ip_address_as_chunk(address);
+	int type = addrtypeof(address);
+	switch (type) {
+	case AF_INET:
+		for (int i = bytes.len - 1; i >= 0; i--) {
+			uint8_t byte = bytes.ptr[i];
+			fmt(buf, "%d.", byte);
+		}
+		fmt(buf, "IN-ADDR.ARPA.");
+		break;
+	case AF_INET6:
+		for (int i = bytes.len - 1; i >= 0; i--) {
+			uint8_t byte = bytes.ptr[i];
+			fmt(buf, "%x.%x.", byte & 0xf, byte >> 4);
+		}
+		fmt(buf, "IP6.ARPA.");
+		break;
+	case 0:
+		fmt(buf, "<invalid-address>");
+		break;
+	default:
+		fmt(buf, "<invalid-type-%d>", type);
+		break;
+	}
+}
+
 const char *str_address_raw(const ip_address *src, char sep,
 			    ip_address_buf *dst)
 {
@@ -287,5 +315,13 @@ const char *str_address_sensitive(const ip_address *src,
 {
 	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
 	fmt_address_sensitive(&buf, src);
+	return dst->buf;
+}
+
+const char *str_address_reversed(const ip_address *src,
+				 address_reversed_buf *dst)
+{
+	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
+	fmt_address_reversed(&buf, src);
 	return dst->buf;
 }

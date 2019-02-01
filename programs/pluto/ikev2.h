@@ -209,7 +209,7 @@ extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					 pb_stream *outpbs,
 					 enum isakmp_xchg_types isa_xchg);
 
-void v2_msgid_restart_init_request(struct state *st, struct msg_digest *md);
+void v2_msgid_restart_init_request(struct state *st);
 void v2_msgid_update_counters(struct state *st, struct msg_digest *md);
 
 void v2_schedule_replace_event(struct state *st);

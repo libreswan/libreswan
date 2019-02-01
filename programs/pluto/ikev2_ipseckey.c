@@ -703,38 +703,22 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 	dnsr->cb(dnsr);
 }
 
-static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
-		const struct id *id)
+static err_t build_dns_name(fmtbuf_t *name_buf, const struct id *id)
 {
-	/* note: all end in "." to suppress relative searches */
-
-	if (id->name.len >= SWAN_MAX_DOMAIN_LEN)
-		return "ID is too long >= SWAN_MAX_DOMAIN_LEN";
-
 	switch (id->kind) {
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		addrtot(&id->ip_addr, 'r', name_buf, SWAN_MAX_DOMAIN_LEN);
+		fmt_address_reversed(name_buf, &id->ip_addr);
 		break;
 
 	case ID_FQDN:
 		{
-			/* expected len of name_buf */
-			size_t buf_len = SWAN_MAX_DOMAIN_LEN;
-			size_t il;
-
 			/* idtoa() will have an extra @ as prefix */
-
-			il = snprintf(name_buf, buf_len, "%.*s", (int)id->name.len, id->name.ptr);
-
 			/* strip trailing "." characters, then add one */
-			while (il > 0 && name_buf[il - 1] == '.')
-				il--;
-
-			if (il > SWAN_MAX_DOMAIN_LEN)
-				return "FQDN is too long for domain name";
-
-			add_str(name_buf, buf_len, (name_buf + il), ".");
+			unsigned len = id->name.len;
+			while (len > 0 && id->name.ptr[len - 1] == '.')
+				len--;
+			fmt(name_buf, "%.*s.", len, id->name.ptr);
 		}
 		break;
 
@@ -742,6 +726,9 @@ static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
 		return "can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR";
 	}
 
+	if (!fmtbuf_ok(name_buf)) {
+		return "FQDN is too long for domain name";
+	}
 	return NULL;
 }
 
@@ -756,11 +743,11 @@ static struct p_dns_req *qry_st_init(struct state *st,
 	char dbg_buf[512] ;  /* Arbitrary length. It is local */
 	struct p_dns_req *p;
 	char log_buf[SWAN_MAX_DOMAIN_LEN * 2]; /* this is local */
+
+
 	char qname[SWAN_MAX_DOMAIN_LEN];
-	err_t err;
-
-
-	err = build_dns_name(qname, &id);
+	fmtbuf_t qbuf = ARRAY_AS_FMTBUF(qname);
+	err_t err = build_dns_name(&qbuf, &id);
 	if (err !=  NULL) {
 		/* is there qtype to name lookup function  */
 		loglog(RC_LOG_SERIOUS, "could not build dns query name %s %d",
