@@ -472,7 +472,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
  * Deleting an IKE SA is a bigger deal than deleting an IPsec SA.
  */
 
-void send_v2_delete(struct state *const st)
+void record_v2_delete(struct state *const st)
 {
 	struct ike_sa *ike = ike_sa(st);
 	if (ike == NULL) {
@@ -546,8 +546,7 @@ void send_v2_delete(struct state *const st)
 		return;
 	}
 
-	record_and_send_v2_ike_msg(st, &packet,
-				   "packet for ikev2 delete informational");
+	record_outbound_ike_msg(st, &packet, "packet for ikev2 delete informational");
 
 	/* increase message ID for next delete message */
 	/* ikev2_update_msgid_counters need an md */

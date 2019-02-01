@@ -514,7 +514,17 @@ void send_delete(struct state *st)
 		    st->st_serialno,
 		    enum_name(&ike_version_names, st->st_ike_version),
 		    st->st_state_name);
-		(st->st_ike_version == IKEv2) ? send_v2_delete(st) : send_v1_delete(st);
+		switch (st->st_ike_version) {
+		case IKEv1:
+			send_v1_delete(st);
+			break;
+		case IKEv2:
+			record_v2_delete(st);
+			send_recorded_v2_ike_msg(st, "delete notification");
+			break;
+		default:
+			bad_case(st->st_ike_version);
+		}
 	}
 }
 

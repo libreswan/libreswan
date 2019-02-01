@@ -45,7 +45,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t type,
 			       const chunk_t *data);
 
-void send_v2_delete(struct state *st);
+void record_v2_delete(struct state *st);
 
 typedef bool payload_master_t(struct state *st, pb_stream *pbs);
 
