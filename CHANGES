@@ -31,6 +31,7 @@ v3.28 (unreleased)
 * pluto: metric= value should accept values > 255 [Tuomo]
 * pluto: New "cpu-usage" plutodebug option displaying timing info [Andrew/Paul]
 * addconn: Fix crash on startup with dnssec-enable=no [Stepan Broz]
+* libswan: only use valid ephemeral ports for libunbound context [Stepan Broz]
 * ipsec: add "ipsec ts" as shorthand for "ipsec trafficstatus" [Paul]
 * FIPS: X.509 minimum public key size check was rejecting valid keys [Paul]
 * FIPS: also force IKE maximum lifetime of 24h (default is 1h) [Paul/Vukasin]
