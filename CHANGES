@@ -30,6 +30,7 @@ v3.28 (unreleased)
 * pluto: Speed up state lookups by only looking at proper hash chain [Andrew]
 * pluto: metric= value should accept values > 255 [Tuomo]
 * pluto: New "cpu-usage" plutodebug option displaying timing info [Andrew/Paul]
+* pluto: Refuse to load connections with TFC and AH or Transport Mode [Paul]
 * addconn: Fix crash on startup with dnssec-enable=no [Stepan Broz]
 * libswan: only use valid ephemeral ports for libunbound context [Stepan Broz]
 * ipsec: add "ipsec ts" as shorthand for "ipsec trafficstatus" [Paul]
