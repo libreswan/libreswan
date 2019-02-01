@@ -120,12 +120,17 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	if (!do_dnssec) {
 		/* No DNSSEC - nothing more to configure */
 		DBG(DBG_DNS, DBG_log("dnssec validation disabled by configuration"));
+		return;
 	}
 
+	/* Only DNSSEC related configuration from here */
 	if (rootfile == NULL) {
-		if (trusted != NULL) {
+		if (trusted == NULL) {
 			loglog(RC_LOG_SERIOUS, "dnssec-enable=yes but no dnssec-rootkey-file or trust anchors specified.");
 			loglog(RC_LOG_SERIOUS, "WARNING: DNSSEC validation disabled");
+			return;
+		} else {
+			loglog(RC_LOG_SERIOUS, "dnssec-enable=yes but no dnssec-rootkey-file specified. Additional trust anchor file MUST include a root trust anchor or DNSSEC validation will be disabled");
 		}
 	} else {
 		DBG(DBG_DNS, DBG_log("Loading dnssec root key from:%s", rootfile));
@@ -136,7 +141,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 
 			loglog(RC_LOG_SERIOUS, "error adding dnssec root key: %s [errno: %s]",
 				ub_strerror(ugh), strerror(e));
-			loglog(RC_LOG_SERIOUS, "WARNING: DNSSEC validation likely broken!");
+			loglog(RC_LOG_SERIOUS, "WARNING: DNSSEC validation disabled");
 		}
 	}
 
