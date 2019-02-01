@@ -1302,6 +1302,23 @@ void add_connection(const struct whack_message *wm)
 		return;
 	}
 
+	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
+		if (wm->sa_tfcpad != 0) {
+			loglog(RC_FATAL,
+				"Failed to add connection \"%s\", connection with type=transport can not specify tfc=",
+				wm->name);
+			return;
+		}
+	}
+	if (LIN(POLICY_AUTHENTICATE, wm->policy)) {
+		if (wm->sa_tfcpad != 0) {
+			loglog(RC_FATAL,
+				"Failed to add connection \"%s\", connection with phase2=ah cannot specify tfc=",
+				wm->name);
+			return;
+		}
+	}
+
 	if (LIN(POLICY_AUTH_NEVER, wm->policy)) {
 		if ((wm->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP) {
 			loglog(RC_FATAL,
