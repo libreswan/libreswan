@@ -2763,7 +2763,7 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 		 * stumble on.  There might be a connection that still
 		 * authenticates (after a switch?).
 		 */
-		dbg("X509: CERT payload bogus or revoked");
+		loglog(RC_LOG_SERIOUS, "X509: CERT payload bogus or revoked");
 	}
 	/* this call might update connection in md->st */
 	if (!ikev2_decode_peer_id(md)) {
@@ -2774,8 +2774,10 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 	atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, atype)) {
 		ret = idi_ipseckey_fetch(md);
-		if (ret != STF_OK)
+		if (ret != STF_OK) {
+			loglog(RC_LOG_SERIOUS, "DNS: IPSECKEY not found or usable");
 			return ret;
+		}
 	}
 
 	return ikev2_parent_inI2outR2_id_tail(md);
