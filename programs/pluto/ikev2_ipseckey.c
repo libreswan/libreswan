@@ -868,14 +868,13 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 {
 	stf_status ret_idi;
 	stf_status ret_a = STF_OK;
-	stf_status ret = STF_FAIL;
 	struct state *st = md->st;
 	struct p_dns_req *dnsr_a = NULL;
 	struct p_dns_req *dnsr_idi = ipseckey_qry_st_init(st,
 			idi_ipseckey_fetch_continue);
 
 	if (dnsr_idi == NULL) {
-		return ret;
+		return STF_FAIL;
 	}
 
 	ret_idi = dns_qry_start(dnsr_idi);
@@ -891,7 +890,7 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 
 			if (dnsr_a == NULL) {
 				free_ipseckey_dns(dnsr_idi);
-				return ret;
+				return STF_FAIL;
 			}
 
 			ret_a = dns_qry_start(dnsr_a);
@@ -904,8 +903,8 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 		/* all success */
 		st->ipseckey_dnsr = dnsr_idi;
 		st->ipseckey_fwd_dnsr = dnsr_a;
-		ret = STF_SUSPEND;
+		return STF_SUSPEND;
 	}
 
-	return ret;
+	return STF_FAIL;
 }
