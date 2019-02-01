@@ -5540,6 +5540,17 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 
 	dbg("Message ID: processing a informational");
 	v2_msgid_update_counters(md->st, md);
+	if (st == NULL) {
+		dbg("Message ID: pointlessly tried to update counters as state deleted mid-transition!");
+	} else if (v2_msg_role(md) == MESSAGE_RESPONSE &&
+		   (st->st_msgid_lastack == v2_INVALID_MSGID ||
+		    (st->st_msgid_lastack != v2_INVALID_MSGID &&
+		     st->st_msgid_lastack < md->hdr.isa_msgid))) {
+		dbg("Message ID: IKE #%lu sender #%lu in %s botched lastack="PRI_MSGID"->"PRI_MSGID,
+		    ike->sa.st_serialno, st->st_serialno, __func__,
+		    st->st_msgid_lastack, md->hdr.isa_msgid);
+		ike->sa.st_msgid_lastack = md->hdr.isa_msgid;
+	}
 	return STF_OK;
 }
 
