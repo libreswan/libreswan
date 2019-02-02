@@ -675,6 +675,7 @@ enum state_kind {
  */
 
 enum original_role {
+	/* values follow after enum message_role */
 	ORIGINAL_INITIATOR = 5, /* IKE_I present */
 	ORIGINAL_RESPONDER = 6, /* IKE_I missing */
 };
@@ -696,8 +697,10 @@ enum original_role {
 
 enum message_role {
 	NO_MESSAGE = 0,
+	/* values follow after enum sa_role */
 	MESSAGE_REQUEST = 3, /* MSG_R missing */
 	MESSAGE_RESPONSE = 4, /* MSR_R present */
+	/* followed by enum original_role */
 };
 
 extern struct keywords message_role_names;
@@ -724,6 +727,7 @@ extern struct keywords message_role_names;
 enum sa_role {
 	SA_INITIATOR = 1,
 	SA_RESPONDER = 2,
+	/* followed by enum message_role */
 };
 
 extern struct keywords sa_role_names;
