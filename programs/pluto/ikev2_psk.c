@@ -126,7 +126,7 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 	if (authby != AUTH_NULL) {
 		pss = get_psk(c);
 		if (pss == NULL) {
-			libreswan_log("No matching PSK found for connection:%s",
+			libreswan_log("No matching PSK found for connection: %s",
 			      st->st_connection->name);
 			return FALSE; /* failure: no PSK to use */
 		}
