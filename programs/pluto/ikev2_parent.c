@@ -4456,7 +4456,7 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 	 */
 	switch (st->st_state) {
 	case STATE_V2_CREATE_R:
-		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
+		if (st->st_pfs_group != NULL) {
 			request_ke_and_nonce("Child Responder KE and nonce nr",
 					     st, st->st_oakley.ta_dh,
 					     ikev2_child_inIoutR_continue);
@@ -4466,7 +4466,7 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 		}
 		return STF_SUSPEND;
 	case STATE_V2_REKEY_CHILD_R:
-		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
+		if (st->st_pfs_group != NULL) {
 			request_ke_and_nonce("Child Rekey Responder KE and nonce nr",
 					     st, st->st_oakley.ta_dh,
 					     ikev2_child_inIoutR_continue);
