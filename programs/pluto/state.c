@@ -1531,60 +1531,10 @@ struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
 				 v2_ix_predicate, &filter, __func__);
 }
 
-struct sa_by_msgid_filter {
-	struct state *found;
-	msgid_t msgid;
-};
-
-static bool sa_by_msgid_predicate(struct state *st, void *context)
+struct state *find_v2_sa_by_msgid(const ike_spis_t *ike_spis, const msgid_t msgid)
 {
-	/*
-	 * XXX: For moment, don't trust Message ID to be unique -
-	 * diagnose anything that happens.
-	 */
-	struct sa_by_msgid_filter *filter = context;
-	if (st->st_msgid == filter->msgid) {
-		/* try to diagnose problems */
-		if (filter->found == NULL) {
-			filter->found = st; /* log below */
-		} else if (IS_CHILD_SA(st)) {
-			/* prefer child */
-			const char *type = IS_IKE_SA(filter->found) ? "IKE" : "CHILD";
-			DBG_log("v2 SA by Message ID %u: ignoring %s SA #%lu, in state %s; have child #%lu",
-				filter->msgid, type, filter->found->st_serialno,
-				filter->found->st_state_name,
-				st->st_serialno);
-			filter->found = st;
-		} else {
-			const char *type = IS_IKE_SA(st) ? "IKE" : "CHILD";
-			DBG_log("v2 SA by Message ID %u: ignoring %s SA #%lu, in state %s; have #%lu",
-				filter->msgid, type, st->st_serialno,
-				filter->found->st_state_name,
-				st->st_serialno);
-		}
-	}
-	return false;
-}
-
-struct state *DBG_v2_sa_by_msgid(const ike_spis_t *ike_spis, const msgid_t msgid)
-{
-	struct sa_by_msgid_filter filter = {
-		.found = NULL,
-		.msgid = msgid,
-	};
-	state_by_ike_spis(IKEv2, SOS_IGNORE,
-			  NULL /* let id_predicate do filtering of msgid */,
-			  ike_spis, sa_by_msgid_predicate, &filter, __func__);
-	if (filter.found != NULL) {
-		const char *type = IS_IKE_SA(filter.found) ? "IKE" : "CHILD";
-		DBG_log("v2 SA by Message ID %u: found %s SA #%lu, in state %s",
-			msgid, type, filter.found->st_serialno,
-			filter.found->st_state_name);
-		return filter.found;
-	} else {
-		DBG_log("v2 SA by Message ID %u: no matching SA found", msgid);
-		return NULL;
-	}
+	return state_by_ike_spis(IKEv2, SOS_IGNORE, &msgid, ike_spis,
+				 NULL, NULL, __func__);
 }
 
 /*

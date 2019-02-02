@@ -1649,11 +1649,14 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 */
 		st = find_state_ikev2_child(ix, &md->hdr.isa_ike_spis,
 					    md->hdr.isa_msgid);
-		if (DBGP(DBG_BASE)) {
-			struct state *msgid_st = DBG_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
-								    md->hdr.isa_msgid);
+		if (DBGP(DBG_BASE) && st != NULL) {
+			struct state *msgid_st = find_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
+								     md->hdr.isa_msgid);
 			if (st != msgid_st) {
-				DBG_log("state and msgid search mismatch");
+				DBG_log("WIP: Message ID: find_state_ikev2_child()->#%lu == sa_by_msgid("PRI_MSGID")->#%lu",
+					st != NULL ? st->st_serialno : 0,
+					md->hdr.isa_msgid,
+					msgid_st != NULL ? msgid_st->st_serialno : 0);
 			}
 		}
 
@@ -1666,6 +1669,14 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			if (st == NULL) {
 				rate_log("%s message response has no matching IKE SA",
 					 enum_name(&ikev2_exchange_names, ix));
+				if (DBGP(DBG_BASE)) {
+					struct state *msgid_st = find_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
+										     md->hdr.isa_msgid);
+					if (msgid_st != NULL) {
+						DBG_log("WIP: Message ID: find_state_ikev2_child()->NULL find_v2_ike_sa()->NULL == sa_by_msgid("PRI_MSGID")->#%lu",
+							md->hdr.isa_msgid, msgid_st->st_serialno);
+					}
+				}
 				return;
 			}
 			/*
@@ -1714,16 +1725,18 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 *
 			 * The log line lets find out.
 			 */
-			dbg("using IKE SA #%lu for response with msgid %u (msgid: %u; nextuse: %u, lastack: %u; lastrecv: %u, lastreplied: %u)",
+			dbg("Message ID: using IKE SA #%lu for response with msgid "PRI_MSGID" (msgid: "PRI_MSGID"; nextuse: "PRI_MSGID", lastack: "PRI_MSGID"; lastrecv: "PRI_MSGID", lastreplied: "PRI_MSGID")",
 			    st->st_serialno, md->hdr.isa_msgid, st->st_msgid,
 			    st->st_msgid_nextuse, st->st_msgid_lastack,
 			    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
 
 			if (DBGP(DBG_BASE)) {
-				struct state *msgid_st = DBG_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
-									    md->hdr.isa_msgid);
+				struct state *msgid_st = find_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
+									     md->hdr.isa_msgid);
 				if (st != msgid_st) {
-					DBG_log("state and msgid search mismatch");
+					DBG_log("WIP: Message ID: find_state_ikev2_child()->NULL find_v2_ike_sa()->#%lu == sa_by_msgid("PRI_MSGID")->#%lu",
+					    st->st_serialno, md->hdr.isa_msgid,
+					    msgid_st != NULL ? msgid_st->st_serialno : 0);
 				}
 			}
 		}
