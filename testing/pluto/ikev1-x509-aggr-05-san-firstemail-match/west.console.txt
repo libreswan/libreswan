@@ -24,7 +24,7 @@ west #
 112 "san" #1: STATE_AGGR_I1: initiate
 002 "san" #1: Peer ID is ID_USER_FQDN: 'user-east@testing.libreswan.org'
 002 "san" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "san" #1: No matching subjectAltName found
+003 "san" #1: No matching subjectAltName found for 'user-east@testing.libreswan.org'
 003 "san" #1: certificate does not contain ID_USER_FQDN subjectAltName=user-east@testing.libreswan.org
 002 "san" #1: Peer public key SubjectAltName does not match peer ID for this connection
 002 "san" #1: X509: CERT payload does not match connection ID
