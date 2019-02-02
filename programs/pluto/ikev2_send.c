@@ -39,13 +39,6 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
 
-bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
-				const char *what)
-{
-	record_outbound_ike_msg(st, pbs, what);
-	return send_recorded_v2_ike_msg(st, what);
-}
-
 bool send_recorded_v2_ike_msg(struct state *st, const char *where)
 {
 	if (st->st_interface == NULL) {

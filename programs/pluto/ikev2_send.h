@@ -24,9 +24,6 @@ struct msg_digest;
 struct oakley_group_desc;
 struct ike_sa;
 
-bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
-				const char *what);
-
 bool send_recorded_v2_ike_msg(struct state *st, const char *where);
 
 void send_v2N_spi_response_from_state(struct ike_sa *st,

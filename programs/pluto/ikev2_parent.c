@@ -5505,8 +5505,9 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		mobike_switch_remote(md, &mobike_remote);
 
 		/* ??? should we support fragmenting?  Maybe one day. */
-		record_and_send_v2_ike_msg(st, &reply_stream,
-					   "reply packet for process_encrypted_informational_ikev2");
+		record_outbound_ike_msg(st, &reply_stream, "reply packet for process_encrypted_informational_ikev2");
+		send_recorded_v2_ike_msg(st, "reply packet for process_encrypted_informational_ikev2");
+
 		st->st_msgid_lastreplied = md->hdr.isa_msgid;
 
 		mobike_reset_remote(st, &mobike_remote);
