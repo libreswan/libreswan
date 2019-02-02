@@ -4480,9 +4480,8 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 	}
 }
 
-static void ikev2_child_inIoutR_continue_continue(struct state *st,
-						  struct msg_digest **mdp,
-						  struct pluto_crypto_req *r);
+static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
+							struct msg_digest *mdp);
 
 static void ikev2_child_inIoutR_continue(struct state *st,
 					 struct msg_digest **mdp,
@@ -4523,11 +4522,8 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 		pexpect((*mdp)->chain[ISAKMP_NEXT_v2KE] != NULL);
 		unpack_KE_from_helper(st, r, &st->st_gr);
 		/* initiate calculation of g^xy */
-		start_dh_v2(st, "DHv2 for child sa", ORIGINAL_RESPONDER,
-			    ike->sa.st_skey_d_nss, /* only IKE has SK_d */
-			    ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
-			    &st->st_ike_spis, /* ignored */
-			    ikev2_child_inIoutR_continue_continue);
+		submit_dh(st, st->st_gi, ikev2_child_inIoutR_continue_continue,
+			  "DHv2 for child sa");
 		e = STF_SUSPEND;
 	}
 	if (e == STF_OK) {
@@ -4537,9 +4533,8 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 	complete_v2_state_transition(st, mdp, e);
 }
 
-static void ikev2_child_inIoutR_continue_continue(struct state *st,
-						  struct msg_digest **mdp,
-						  struct pluto_crypto_req *r)
+static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
+							struct msg_digest *md)
 {
 	/*
 	 * XXX: Should this routine be split so that each instance
@@ -4550,10 +4545,10 @@ static void ikev2_child_inIoutR_continue_continue(struct state *st,
 		st->st_state == STATE_V2_REKEY_CHILD_R);
 
 	/* 'child' responding to request */
-	passert(*mdp != NULL);
-	pexpect((*mdp)->st == st);
+	passert(md != NULL);
+	pexpect(md->st == st);
 	passert(st->st_sa_role == SA_RESPONDER);
-	passert(v2_msg_role(*mdp) == MESSAGE_REQUEST);
+	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
 
 	dbg("%s for #%lu %s",
@@ -4564,21 +4559,19 @@ static void ikev2_child_inIoutR_continue_continue(struct state *st,
 		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
 			    st->st_serialno, st->st_clonedfrom);
 		/* XXX: release child? */
-		return;
+		return STF_FATAL;
 	}
 
-	stf_status e = STF_OK;
-	bool only_shared_true = true;
-	pexpect(r->pcr_type == pcr_compute_dh_v2);
-	if (!finish_dh_v2(st, r, only_shared_true)) {
-		send_v2N_response_from_state(ike_sa(st), *mdp,
+	if (st->st_shared_nss == NULL) {
+		/*
+		 * XXX: this is the initiator so returning a
+		 * notification is kind of useless.
+		 */
+		send_v2N_response_from_state(ike_sa(st), md,
 					     v2N_INVALID_SYNTAX, NULL);
-		e = STF_FATAL;
+		return STF_FATAL;
 	}
-	if (e == STF_OK) {
-		e = ikev2_child_out_tail(*mdp);
-	}
-	complete_v2_state_transition(st, mdp, e);
+	return ikev2_child_out_tail(md);
 }
 
 /*
