@@ -25,7 +25,7 @@ ipsec whack --impair ike-key-length-attribute:duplicate
 ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 ipsec whack --impair none
 
-ipsec whack --impair suppress-retransmit
+ipsec whack --impair suppress-retransmits
 ipsec whack --impair child-key-length-attribute:duplicate
 ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 ipsec whack --impair none

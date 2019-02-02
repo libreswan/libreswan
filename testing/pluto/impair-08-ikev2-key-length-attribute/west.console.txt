@@ -93,8 +93,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec whack --impair none
 west #
- ipsec whack --impair suppress-retransmit
-whack: option '--impair suppress-retransmit' not recognized
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec whack --impair child-key-length-attribute:duplicate
 west #
