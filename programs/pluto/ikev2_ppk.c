@@ -153,23 +153,15 @@ stf_status ikev2_calc_no_ppk_auth(struct connection *c,
 		if (st->st_seen_hashnotify) {
 			/*
 			 * combine blobs to create no_ppk_auth:
-			 * - ASN.1 length of algo blob
 			 * - ASN.1 algo blob
 			 * - hashval
 			 */
-			int len = h->size +
-				h->asn1_blob_len +
-				hashval.len;
+			int len = h->blob_sz + hashval.len;
 			u_char *blobs = alloc_bytes(len,
 				"bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
 
-			memcpy(&blobs[0], h->size_blob, h->size);
-
-			memcpy(&blobs[h->size], h->asn1_blob,
-				h->asn1_blob_len);
-
-			memcpy(&blobs[h->size + h->asn1_blob_len],
-				hashval.ptr, hashval.len);
+			memcpy(&blobs[0], h->blob, h->blob_sz);
+			memcpy(&blobs[h->blob_sz], hashval.ptr, hashval.len);
 			freeanychunk(hashval);
 
 			setchunk(*no_ppk_auth, blobs, len);

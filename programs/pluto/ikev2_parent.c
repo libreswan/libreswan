@@ -102,9 +102,6 @@ static stf_status ikev2_start_new_exchange(struct state *st);
 
 static stf_status ikev2_child_out_tail(struct msg_digest *md);
 
-static bool asn1_hash_in(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs,
-		   uint8_t size, uint8_t asn1_blob_len);
-
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
 {
 	lset_t sighash_policy = st->st_connection->sighash_policy;
@@ -180,89 +177,38 @@ static const struct asn1_hash_blob *blob_for_hash_algo(enum notify_payload_hash_
 	}
 }
 
-static stf_status ikev2_send_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo,
+static bool ikev2_send_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo,
 		pb_stream *a_pbs, enum keyword_authby authby)
 {
 	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo, authby);
 
 	passert(b != NULL);
 
-	if (!out_raw(b->size_blob, b->size, a_pbs,
-	    "Length of the ASN.1 Algorithm Identifier")) {
-		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit ASN.1 Algorithm Identifier length");
-		return STF_INTERNAL_ERROR;
-	}
-
-	if (!out_raw(b->asn1_blob, b->asn1_blob_len, a_pbs,
+	if (!out_raw(b->blob, b->blob_sz, a_pbs,
 	    "OID of ASN.1 Algorithm Identifier")) {
 		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
-		return STF_INTERNAL_ERROR;
-	}
-
-	return STF_OK;
-}
-
-static stf_status ikev2_check_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs,
-	enum keyword_authby authby)
-{
-	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo, authby);
-
-	if (b == NULL) {
-		/* TODO display both enum names */
-		loglog(RC_LOG_SERIOUS, "Non-negotiable Hash algorithm %d received", hash_algo);
-		return STF_FAIL;
-	}
-
-	/*
-	 * ???
-	 * b->size == ASN1_LEN_ALGO_IDENTIFIER; b->asn1_blob_len == ASN1_SHA2_RSA_PSS_SIZE
-	 * Why pass these separately to asn1_hash_in?
-	 * If these are universal, they could be wired into asn1_hash_in thus avoiding
-	 * an array bound that isn't a compile-time constant.
-	 * This is the only call to asn1_hash_in: why not inline it?
-	 */
-	if (!asn1_hash_in(b, a_pbs, ASN1_LEN_ALGO_IDENTIFIER,
-		authby == AUTH_RSASIG ? ASN1_SHA2_RSA_PSS_SIZE :
-			ASN1_SHA2_ECDSA_SIZE))
-		{
-			return STF_FAIL;
-		}
-	return STF_OK;
-}
-
-static bool asn1_hash_in(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs,
-		   uint8_t size, uint8_t asn1_blob_len)
-{
-	/* ??? dynamic array bounds are deprecated */
-	uint8_t check_size[size];
-	/* ??? dynamic array bounds are deprecated */
-	uint8_t check_blob[asn1_blob_len];
-
-	if (!in_raw(check_size, size, a_pbs,
-	    "Algorithm Identifier length"))
-		return FALSE;
-	/*
-	 * ??? The following seems to assume asn1_hash_blob->size == size
-	 * This is true, but not self-evident.
-	 */
-	if (!memeq(check_size, asn1_hash_blob->size_blob, asn1_hash_blob->size)) {
-		loglog(RC_LOG_SERIOUS, " Received incorrect size of ASN.1 Algorithm Identifier");
-		return FALSE;
-	}
-
-	if (!in_raw(check_blob, asn1_blob_len, a_pbs,
-	    "Algorithm Identifier value"))
-		return FALSE;
-	/*
-	 * ??? The following seems to assume asn1_hash_blob->asn1_blob_len == asn1_blob_len
-	 * This is true, but not self-evident.
-	 */
-	if (!memeq(check_blob, asn1_hash_blob->asn1_blob, asn1_hash_blob->asn1_blob_len)) {
-		loglog(RC_LOG_SERIOUS, " Received incorrect bytes of ASN.1 Algorithm Identifier");
 		return FALSE;
 	}
 
 	return TRUE;
+}
+
+/* check for ASN.1 blob; if found, consume it */
+static bool ikev2_try_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs,
+	enum keyword_authby authby)
+{
+	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo, authby);
+
+	uint8_t in_blob[ASN1_LEN_ALGO_IDENTIFIER +
+		PMAX(ASN1_SHA1_ECDSA_SIZE,
+			PMAX(ASN1_SHA2_RSA_PSS_SIZE, ASN1_SHA2_ECDSA_SIZE))];
+	DBGF(DBG_CONTROLMORE, "looking for ASN.1 blob for %d, %d", authby, hash_algo);
+	return
+		pexpect(b != NULL) &&	/* we know this hash */
+		pbs_left(a_pbs) >= b->blob_sz && /* the stream has enough octets */
+		memeq(a_pbs->cur, b->blob, b->blob_sz) && /* they are the right octets */
+		pexpect(b->blob_sz <= sizeof(in_blob)) && /* enough space in in_blob[] */
+		pexpect(in_raw(in_blob, b->blob_sz, a_pbs, "ASN.1 blob for hash algo")); /* can eat octets */
 }
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
@@ -386,14 +332,16 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	const enum original_role role,
 	unsigned char idhash_in[MAX_DIGEST_LEN],
 	pb_stream *pbs,
-	const enum keyword_authby that_authby)
+	const enum keyword_authby that_authby,
+	const char *context)
 {
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
 	{
 		if (that_authby != AUTH_RSASIG) {
-			libreswan_log("Peer attempted RSA authentication but we want %s",
-				enum_name(&ikev2_asym_auth_name, that_authby));
+			libreswan_log("Peer attempted RSA authentication but we want %s in %s",
+				enum_name(&ikev2_asym_auth_name, that_authby),
+				context);
 			return FALSE;
 		}
 
@@ -405,7 +353,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 				IKEv2_AUTH_HASH_SHA1);
 
 		if (authstat != STF_OK) {
-			libreswan_log("RSA authentication failed");
+			libreswan_log("RSA authentication of %s failed", context);
 			return FALSE;
 		}
 		return TRUE;
@@ -414,8 +362,9 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	case IKEv2_AUTH_PSK:
 	{
 		if (that_authby != AUTH_PSK) {
-			libreswan_log("Peer attempted PSK authentication but we want %s",
-				enum_name(&ikev2_asym_auth_name, that_authby));
+			libreswan_log("Peer attempted PSK authentication but we want %s in %s",
+				enum_name(&ikev2_asym_auth_name, that_authby),
+				context);
 			return FALSE;
 		}
 
@@ -423,7 +372,8 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			AUTH_PSK, st, idhash_in, pbs);
 
 		if (authstat != STF_OK) {
-			libreswan_log("PSK Authentication failed: AUTH mismatch!");
+			libreswan_log("PSK Authentication failed: AUTH mismatch in %s!",
+				context);
 			return FALSE;
 		}
 		return TRUE;
@@ -433,8 +383,9 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	{
 		if (!(that_authby == AUTH_NULL ||
 		      (that_authby == AUTH_RSASIG && LIN(POLICY_AUTH_NULL, st->st_connection->policy)))) {
-			libreswan_log("Peer attempted NULL authentication but we want %s",
-				enum_name(&ikev2_asym_auth_name, that_authby));
+			libreswan_log("Peer attempted NULL authentication but we want %s in %s",
+				enum_name(&ikev2_asym_auth_name, that_authby),
+				context);
 			return FALSE;
 		}
 
@@ -443,7 +394,8 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 				pbs);
 
 		if (authstat != STF_OK) {
-			libreswan_log("NULL Authentication failed: AUTH mismatch! (implementation bug?)");
+			libreswan_log("NULL Authentication failed: AUTH mismatch in %s! (implementation bug?)",
+				context);
 			return FALSE;
 		}
 		st->st_ikev2_anon = TRUE;
@@ -452,59 +404,61 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		enum notify_payload_hash_algorithms hash_algo;
-		bool hash_check = FALSE;
-		stf_status authstat;
-
 		if (that_authby != AUTH_ECDSA && that_authby != AUTH_RSASIG) {
-			libreswan_log("Peer attempted Authentication through Digital Signature but we want %s",
-				enum_name(&ikev2_asym_auth_name, that_authby));
+			libreswan_log("Peer attempted Authentication through Digital Signature but we want %s in %s",
+				enum_name(&ikev2_asym_auth_name, that_authby),
+				context);
 			return FALSE;
 		}
 
-		if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
-			hash_algo = IKEv2_AUTH_HASH_SHA2_512;
-		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
-			hash_check = TRUE;
-			hash_algo = IKEv2_AUTH_HASH_SHA2_384;
-		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
-			hash_check = TRUE;
-			hash_algo = IKEv2_AUTH_HASH_SHA2_256;
-		} else {
-			libreswan_log(" Digsig: No valid hash algorithm is negotiated between peers");
-			return FALSE;
+		/* try to match ASN.1 blob designating the hash algorithm */
+
+		lset_t hn = st->st_hash_negotiated;
+
+		struct hash_alts {
+			lset_t neg;
+			enum notify_payload_hash_algorithms algo;
+		};
+
+		static const struct hash_alts ha[] = {
+			{ NEGOTIATE_AUTH_HASH_SHA2_512, IKEv2_AUTH_HASH_SHA2_512 },
+			{ NEGOTIATE_AUTH_HASH_SHA2_384, IKEv2_AUTH_HASH_SHA2_384 },
+			{ NEGOTIATE_AUTH_HASH_SHA2_256, IKEv2_AUTH_HASH_SHA2_256 },
+		};
+			
+		const struct hash_alts *hap;
+
+		for (hap = ha; ; hap++) {
+			if (hap == &ha[elemsof(ha)]) {
+				libreswan_log("No acceptible ASN.1 hash blob found for %d in %s",
+					that_authby, context);
+				DBG(DBG_BASE, {
+					size_t dl = min(pbs_left(pbs),
+						(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
+							PMAX(ASN1_SHA1_ECDSA_SIZE,
+							PMAX(ASN1_SHA2_RSA_PSS_SIZE,
+								ASN1_SHA2_ECDSA_SIZE))));
+					DBG_dump("offered blob", pbs->cur, dl);
+				});
+				return FALSE;	/* none recognized */
+			}
+
+			if ((hn & hap->neg) && ikev2_try_asn1_hash_blob(hap->algo, pbs, that_authby))
+				break;
 		}
 
-		stf_status checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs, that_authby);
+		/* try to match the hash */
 
-		if ((checkstat != STF_OK) && (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) &&
-					!hash_check) {
-			hash_algo = IKEv2_AUTH_HASH_SHA2_384;
-			checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs, that_authby);
-		}
-
-		if ((checkstat != STF_OK) && (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) &&
-					(!hash_check)) {
-			hash_algo = IKEv2_AUTH_HASH_SHA2_256;
-			checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs, that_authby);
-		}
-
-		if (checkstat != STF_OK ) {
-			return FALSE;
-		}
+		stf_status authstat;
 
 		switch (that_authby) {
 		case AUTH_RSASIG:
-		{
-			authstat = ikev2_verify_rsa_hash(st, role, idhash_in, pbs, hash_algo);
+			authstat = ikev2_verify_rsa_hash(st, role, idhash_in, pbs, hap->algo);
 			break;
-		}
 
 		case AUTH_ECDSA:
-		{
-			authstat = ikev2_verify_ecdsa_hash(st, role, idhash_in, pbs, hash_algo);
+			authstat = ikev2_verify_ecdsa_hash(st, role, idhash_in, pbs, hap->algo);
 			break;
-		}
 
 		default:
 			bad_case(that_authby);
@@ -512,20 +466,19 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		}
 
 		if (authstat != STF_OK) {
-			libreswan_log("Digital Signature authentication using %s failed",
-				enum_name(&ikev2_asym_auth_name, that_authby));
+			libreswan_log("Digital Signature authentication using %s failed in %s",
+				enum_name(&ikev2_asym_auth_name, that_authby),
+				context);
 			return FALSE;
 		}
 		return TRUE;
 	}
 
 	default:
-	{
-		libreswan_log("authentication method: %s not supported",
-				enum_name(&ikev2_auth_names, recv_auth));
+		libreswan_log("authentication method: %s not supported in %s",
+				enum_name(&ikev2_auth_names, recv_auth),
+				context);
 		return FALSE;
-	}
-
 	}
 }
 
@@ -2084,10 +2037,8 @@ static stf_status ikev2_send_auth(struct connection *c,
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 
-		stf_status sendstat =ikev2_send_asn1_hash_blob(hash_algo, &a_pbs, authby);
-		if (sendstat != STF_OK ) {
-			return STF_FAIL;
-		}
+		if (!ikev2_send_asn1_hash_blob(hash_algo, &a_pbs, authby))
+			return STF_INTERNAL_ERROR;
 
 		switch (authby) {
 		case AUTH_ECDSA:
@@ -2958,8 +2909,9 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		init_pbs(&pbs_no_ppk_auth, st->st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
 		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
-			st, ORIGINAL_RESPONDER, idhash_in, &pbs_no_ppk_auth,
-			st->st_connection->spd.that.authby))
+				st, ORIGINAL_RESPONDER, idhash_in,
+				&pbs_no_ppk_auth,
+				st->st_connection->spd.that.authby, "no-PPK-auth"))
 		{
 			send_v2N_response_from_state(ike_sa(st), md,
 						     v2N_AUTHENTICATION_FAILED,
@@ -2972,8 +2924,10 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		bool policy_null = LIN(POLICY_AUTH_NULL, st->st_connection->policy);
 		bool policy_rsasig = LIN(POLICY_RSASIG, st->st_connection->policy);
 
-		/* if received NULL_AUTH in Notify payload and we only allow NULL Authentication,
-		 * proceed with verifying that payload, else verify AUTH normally */
+		/*
+		 * if received NULL_AUTH in Notify payload and we only allow NULL Authentication,
+		 * proceed with verifying that payload, else verify AUTH normally
+		 */
 		if (null_auth.ptr != NULL && policy_null && !policy_rsasig) {
 			/* making a dummy pb_stream so we could pass it to v2_check_auth */
 			pb_stream pbs_null_auth;
@@ -2981,9 +2935,9 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 
 			DBG(DBG_CONTROL, DBG_log("going to try to verify NULL_AUTH from Notify payload"));
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
-			if (!v2_check_auth(IKEv2_AUTH_NULL,
-				st, ORIGINAL_RESPONDER, idhash_in, &pbs_null_auth,
-				AUTH_NULL))
+			if (!v2_check_auth(IKEv2_AUTH_NULL, st,
+					ORIGINAL_RESPONDER, idhash_in,
+					&pbs_null_auth, AUTH_NULL, "NULL_auth from Notify Payload"))
 			{
 				send_v2N_response_from_state(ike_sa(st), md,
 							     v2N_AUTHENTICATION_FAILED,
@@ -2993,9 +2947,11 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			}
 			DBG(DBG_CONTROL, DBG_log("NULL_AUTH verified"));
 		} else {
+			DBGF(DBG_CONTROL, "verifying AUTH payload");
 			if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
-				st, ORIGINAL_RESPONDER, idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-				st->st_connection->spd.that.authby)) {
+					st, ORIGINAL_RESPONDER, idhash_in,
+					&md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+					st->st_connection->spd.that.authby, "I2 Auth Payload")) {
 				send_v2N_response_from_state(ike_sa(st), md,
 							     v2N_AUTHENTICATION_FAILED,
 							     NULL/*no data*/);
@@ -3743,9 +3699,10 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 
 	/* process AUTH payload */
 
+	DBGF(DBG_CONTROL, "verifying AUTH payload");
 	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
-		pst, ORIGINAL_INITIATOR, idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-		that_authby))
+			pst, ORIGINAL_INITIATOR, idhash_in,
+			&md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby, "R2 Auth Payload"))
 	{
 		/*
 		 * We cannot send a response as we are processing IKE_AUTH reply

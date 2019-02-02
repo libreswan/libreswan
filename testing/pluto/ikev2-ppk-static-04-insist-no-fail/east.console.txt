@@ -33,7 +33,7 @@ east #
  # east should fail PSK because it refuses PPK
 east #
  hostname | grep east > /dev/null && grep "PSK Authentication failed" /tmp/pluto.log
-"westnet-eastnet-ipv4-psk-ppk" #1: PSK Authentication failed: AUTH mismatch!
+"westnet-eastnet-ipv4-psk-ppk" #1: PSK Authentication failed: AUTH mismatch in I2 Auth Payload!
 east #
  ipsec whack --shutdown
 002 shutting down

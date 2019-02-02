@@ -135,26 +135,22 @@ const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_256 = {
 	.sLen = SHA2_256_DIGEST_SIZE,
 };
 
-static const uint8_t size_blob_256[ASN1_LEN_ALGO_IDENTIFIER] = LEN_RSA_PSS_SHA2_BLOB;
-static const uint8_t asn1_blob_256[ASN1_SHA2_RSA_PSS_SIZE] = RSA_PSS_SHA256_BLOB;
+static const uint8_t asn1_blob_256[ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA2_RSA_PSS_SIZE] =
+	{ LEN_RSA_PSS_SHA2_BLOB, RSA_PSS_SHA256_BLOB };
 
 const struct asn1_hash_blob asn1_rsa_pss_sha2_256 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA2_256,
-	.size = ASN1_LEN_ALGO_IDENTIFIER,
-	.size_blob = size_blob_256,
-	.asn1_blob_len = ASN1_SHA2_RSA_PSS_SIZE,
-	.asn1_blob = asn1_blob_256,
+	.blob = asn1_blob_256,
+	.blob_sz = sizeof(asn1_blob_256)
 };
 
-static const uint8_t size_blob_ecdsa_256[ASN1_LEN_ALGO_IDENTIFIER] = LEN_ECDSA_SHA2_BLOB;
-static const uint8_t asn1_blob_ecdsa_256[ASN1_SHA2_ECDSA_SIZE] = ECDSA_SHA256_BLOB;
+static const uint8_t asn1_blob_ecdsa_256[ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA2_ECDSA_SIZE] =
+	{ LEN_ECDSA_SHA2_BLOB, ECDSA_SHA256_BLOB };
 
 const struct asn1_hash_blob asn1_ecdsa_sha2_256 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA2_256,
-	.size = ASN1_LEN_ALGO_IDENTIFIER,
-	.size_blob = size_blob_ecdsa_256,
-	.asn1_blob_len = ASN1_SHA2_ECDSA_SIZE,
-	.asn1_blob = asn1_blob_ecdsa_256,
+	.blob = asn1_blob_ecdsa_256,
+	.blob_sz = sizeof(asn1_blob_ecdsa_256)
 };
 
 const struct hash_desc ike_alg_hash_sha2_384 = {
@@ -237,26 +233,22 @@ const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_384 = {
 	.sLen = SHA2_384_DIGEST_SIZE,
 };
 
-static const uint8_t size_blob_384[ASN1_LEN_ALGO_IDENTIFIER] = LEN_RSA_PSS_SHA2_BLOB;
-static const uint8_t asn1_blob_384[ASN1_SHA2_RSA_PSS_SIZE] = RSA_PSS_SHA384_BLOB;
+static const uint8_t asn1_blob_384[ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA2_RSA_PSS_SIZE] =
+	{ LEN_RSA_PSS_SHA2_BLOB, RSA_PSS_SHA384_BLOB };
 
 const struct asn1_hash_blob asn1_rsa_pss_sha2_384 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA2_384,
-	.size = ASN1_LEN_ALGO_IDENTIFIER,
-	.size_blob = size_blob_384,
-	.asn1_blob_len = ASN1_SHA2_RSA_PSS_SIZE,
-	.asn1_blob = asn1_blob_384,
+	.blob = asn1_blob_384,
+	.blob_sz = sizeof(asn1_blob_384)
 };
 
-static const uint8_t size_blob_ecdsa_384[ASN1_LEN_ALGO_IDENTIFIER] = LEN_ECDSA_SHA2_BLOB;
-static const uint8_t asn1_blob_ecdsa_384[ASN1_SHA2_ECDSA_SIZE] = ECDSA_SHA384_BLOB;
+static const uint8_t asn1_blob_ecdsa_384[ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA2_ECDSA_SIZE] =
+	{ LEN_ECDSA_SHA2_BLOB, ECDSA_SHA384_BLOB };
 
 const struct asn1_hash_blob asn1_ecdsa_sha2_384 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA2_384,
-	.size = ASN1_LEN_ALGO_IDENTIFIER,
-	.size_blob = size_blob_ecdsa_384,
-	.asn1_blob_len = ASN1_SHA2_ECDSA_SIZE,
-	.asn1_blob = asn1_blob_ecdsa_384,
+	.blob = asn1_blob_ecdsa_384,
+	.blob_sz = sizeof(asn1_blob_ecdsa_384),
 };
 
 const struct hash_desc ike_alg_hash_sha2_512 = {
@@ -339,24 +331,20 @@ const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_512 = {
 	.sLen = SHA2_512_DIGEST_SIZE,
 };
 
-static const uint8_t size_blob_512[ASN1_LEN_ALGO_IDENTIFIER] = LEN_RSA_PSS_SHA2_BLOB;
-static const uint8_t asn1_blob_512[ASN1_SHA2_RSA_PSS_SIZE] = RSA_PSS_SHA512_BLOB;
+static const uint8_t asn1_blob_512[ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA2_RSA_PSS_SIZE] =
+	{ LEN_RSA_PSS_SHA2_BLOB, RSA_PSS_SHA512_BLOB };
 
 const struct asn1_hash_blob asn1_rsa_pss_sha2_512 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA2_512,
-	.size = ASN1_LEN_ALGO_IDENTIFIER,
-	.size_blob = size_blob_512,
-	.asn1_blob_len = ASN1_SHA2_RSA_PSS_SIZE,
-	.asn1_blob = asn1_blob_512,
+	.blob = asn1_blob_512,
+	.blob_sz = sizeof(asn1_blob_512),
 };
 
-static const uint8_t size_blob_ecdsa_512[ASN1_LEN_ALGO_IDENTIFIER] = LEN_ECDSA_SHA2_BLOB;
-static const uint8_t asn1_blob_ecdsa_512[ASN1_SHA2_ECDSA_SIZE] = ECDSA_SHA512_BLOB;
+static const uint8_t asn1_blob_ecdsa_512[ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA2_ECDSA_SIZE] =
+	{ LEN_ECDSA_SHA2_BLOB, ECDSA_SHA512_BLOB };
 
 const struct asn1_hash_blob asn1_ecdsa_sha2_512 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA2_512,
-	.size = ASN1_LEN_ALGO_IDENTIFIER,
-	.size_blob = size_blob_ecdsa_512,
-	.asn1_blob_len = ASN1_SHA2_ECDSA_SIZE,
-	.asn1_blob = asn1_blob_ecdsa_512,
+	.blob = asn1_blob_ecdsa_512,
+	.blob_sz = sizeof(asn1_blob_ecdsa_512)
 };
