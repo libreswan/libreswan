@@ -36,6 +36,8 @@ func find(pattern,  n, fields, nr_fields, field, name, value) {
     # Look for name/values, map each to a unique constant.
     find("(CKAID) ([0-9a-f]+)")
     find("(CKAID) '([0-9a-f]+)'")
+    find("(ckaid) ([0-9a-f]+)")
+    find("(ckaid) '([0-9a-f]+)'")
     find("(ckaid): ([0-9a-f]+)")
     find("(rsasigkey)=(0s[+=0-9a-zA-Z/]+)")
     find("(keyid): ([+=0-9a-zA-Z/]+)")
