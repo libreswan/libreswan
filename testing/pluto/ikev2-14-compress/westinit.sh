@@ -8,6 +8,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
+ipsec whack --impair suppress-retransmits
 ipsec auto --add westnet-eastnet-ipcomp
 ipsec auto --status | grep westnet-eastnet-ipcomp
 echo "initdone"
