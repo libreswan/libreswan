@@ -193,10 +193,11 @@ static const char *const pluto_cryptoop_strings[] = {
 	"compute dh+iv (V1 Phase 1)",	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
 	"compute dh (V1 Phase 2 PFS)",	/* calculate (g^x)(g^y) for Phase 2 PFS */
 	"compute dh (V2)",	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
+	"computation",		/* generic crypto */
 };
 
 static enum_names pluto_cryptoop_names = {
-	pcr_build_ke_and_nonce, pcr_compute_dh_v2,
+	pcr_build_ke_and_nonce, pcr_crypto,
 	ARRAY_REF(pluto_cryptoop_strings),
 	NULL, /* prefix */
 	NULL
@@ -288,11 +289,9 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 	threadtime_t start = threadtime_start();
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 
-	DBG(DBG_CONTROL,
-	    DBG_log("crypto helper %d doing %s; request ID %u",
-		    helpernum,
-		    enum_show(&pluto_cryptoop_names, r->pcr_type),
-		    cn->pcrc_id));
+	dbg("crypto helper %d doing %s (%s); request ID %u",
+	    helpernum, enum_show(&pluto_cryptoop_names, r->pcr_type),
+	    cn->pcrc_name, cn->pcrc_id);
 	if (crypto_helper_delay > 0) {
 		DBG_log("crypto helper is pausing for %u seconds",
 			crypto_helper_delay);
@@ -331,20 +330,18 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 	LSWDBGP(DBG_CONTROL, buf) {
 		realtime_t tv1 = realnow();
 		deltatime_t tv_diff = realtimediff(tv1, tv0);
-		lswlogf(buf, "crypto helper %d finished %s; request ID %u time elapsed ",
-			helpernum,
-			enum_show(&pluto_cryptoop_names, r->pcr_type),
-			cn->pcrc_id);
+		lswlogf(buf, "crypto helper %d finished %s (%s); request ID %u time elapsed ",
+			helpernum, enum_show(&pluto_cryptoop_names, r->pcr_type),
+			cn->pcrc_name, cn->pcrc_id);
 		lswlog_deltatime(buf, tv_diff);
 		lswlogs(buf, " seconds");
 	}
 
 	cn->pcrc_threadtime_used =
 		threadtime_stop(&start, cn->pcrc_serialno,
-				"crypto helper computing work-order %u: %s",
-				cn->pcrc_id,
-				enum_show(&pluto_cryptoop_names,
-					  cn->pcrc_pcr.pcr_type));
+				"crypto helper computing work-order %u: %s (%s)",
+				cn->pcrc_id, enum_show(&pluto_cryptoop_names, r->pcr_type),
+				cn->pcrc_name);
 }
 
 /* IN A HELPER THREAD */
@@ -566,6 +563,7 @@ static void handle_helper_answer(struct state *st,
 				 void *arg)
 {
 	struct pluto_crypto_req_cont *cn = arg;
+ 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 
 	DBG(DBG_CONTROL,
 		DBG_log("crypto helper %d replies to request ID %u",
@@ -600,10 +598,10 @@ static void handle_helper_answer(struct state *st,
 		st->st_timing.approx_seconds += cn->pcrc_threadtime_used;
 		statetime_t start = statetime_start(st);
 		(*cn->pcrc_func)(st, mdp, &cn->pcrc_pcr);
-		statetime_stop(&start, "callback for work-order %u: %s",
+		statetime_stop(&start, "callback for work-order %u: %s (%s)",
 			       cn->pcrc_id,
-			       enum_show(&pluto_cryptoop_names,
-					 cn->pcrc_pcr.pcr_type));
+			       enum_show(&pluto_cryptoop_names, r->pcr_type),
+			       cn->pcrc_name);
 	}
 
 	/* now free up the continuation */
