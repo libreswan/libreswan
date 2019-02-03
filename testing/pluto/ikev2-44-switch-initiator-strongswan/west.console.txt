@@ -47,7 +47,7 @@ west #
 west #
  grep hdr.isa_msgid /tmp/pluto.log
 | #1 st.st_msgid_lastrecv -1 md.hdr.isa_msgid 00000000
-| #1 st.st_msgid_lastrecv -1 md.hdr.isa_msgid 00000001
-| #1 st.st_msgid_lastrecv -1 md.hdr.isa_msgid 00000002
+| #1 st.st_msgid_lastrecv 0 md.hdr.isa_msgid 00000001
+| #1 st.st_msgid_lastrecv 1 md.hdr.isa_msgid 00000002
 west #
  
