@@ -128,8 +128,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 			      enum original_role role,
 			      const unsigned char *idhash,
 			      pb_stream *a_pbs,
-			      bool calc_no_ppk_auth,
-			      chunk_t *no_ppk_auth,
+			      chunk_t *no_ppk_auth /* optional output */,
 			      enum notify_payload_hash_algorithms hash_algo)
 {
 	const struct connection *c = st->st_connection;
@@ -186,7 +185,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 		return false;
 	}
 
-	if (calc_no_ppk_auth) {
+	if (no_ppk_auth != NULL) {
 		clonetochunk(*no_ppk_auth, sig_val, shr, "NO_PPK_AUTH chunk");
 		DBG(DBG_PRIVATE, DBG_dump_chunk("NO_PPK_AUTH payload", *no_ppk_auth));
 		return true;

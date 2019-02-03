@@ -1934,40 +1934,46 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 	return STF_OK;
 }
 
-static stf_status ikev2_send_auth(struct connection *c,
-				  struct state *st,
+static stf_status ikev2_send_auth(struct state *st,
 				  enum original_role role,
 				  enum next_payload_types_ikev2 np,
-				  unsigned char *idhash_out,
+				  const unsigned char *idhash_out,
 				  pb_stream *outpbs,
-				  chunk_t *null_auth /* out */)
+				  chunk_t *null_auth /* optional out */)
 {
-	pb_stream a_pbs;
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
+
+	/* ??? should c be based on pst?  Does it matter? */
+	// might fire: pexpect(st->st_connection == pst->st_connection);
+	const struct connection *c = st->st_connection;
+
 	enum keyword_authby authby = c->spd.this.authby;
-	enum notify_payload_hash_algorithms hash_algo;
 
 	if (null_auth != NULL)
 		*null_auth = EMPTY_CHUNK;
 
+	/* ??? this is the last use of st.  Could/should it be pst? */
 	if (st->st_peer_wants_null) {
 		/* we allow authby=null and IDr payload told us to use it */
 		authby = AUTH_NULL;
 	} else if (authby == AUTH_UNSET) {
-		/* asymmetric policy unset, pick up from symmetric policy */
-		/* in order of preference! */
+		/*
+		 * Asymmetric policy unset.
+		 * Pick up from symmetric policy, in order of preference!
+		 */
+		/* ??? what about POLICY_ECDSA? */
 		if (c->policy & POLICY_RSASIG) {
 			authby = AUTH_RSASIG;
 		} else if (c->policy & POLICY_PSK) {
 			authby = AUTH_PSK;
 		} else if (c->policy & POLICY_AUTH_NULL) {
 			authby = AUTH_NULL;
+		} else {
+			/* leave authby == AUTH_UNSET */
+			/* ??? we will surely crash with bad_case */
 		}
 	}
-
-	/* ??? isn't c redundant? */
-	pexpect(c == st->st_connection);
 
 	struct ikev2_a a = {
 		.isaa_np = np,
@@ -1994,6 +2000,8 @@ static stf_status ikev2_send_auth(struct connection *c,
 		bad_case(authby);
 	}
 
+	pb_stream a_pbs;
+
 	if (!out_struct(&a, &ikev2_a_desc, outpbs, &a_pbs)) {
 		/* loglog(RC_LOG_SERIOUS, "Failed to emit IKE_AUTH payload"); */
 		return STF_INTERNAL_ERROR;
@@ -2002,8 +2010,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	switch (a.isaa_type) {
 	case IKEv2_AUTH_RSA:
 		if (!ikev2_calculate_rsa_hash(pst, role, idhash_out, &a_pbs,
-			FALSE, /* store-only not set */
-			NULL /* store-only chunk unused */,
+			NULL /* we don't keep no_ppk_auth */,
 			IKEv2_AUTH_HASH_SHA1))
 		{
 			loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
@@ -2023,6 +2030,8 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
+		enum notify_payload_hash_algorithms hash_algo;
+
 		if (pst->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_512;
 		} else if (pst->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
@@ -2041,8 +2050,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 		case AUTH_ECDSA:
 		{
 			if (!ikev2_calculate_ecdsa_hash(pst, role, idhash_out, &a_pbs,
-				FALSE, /* store-only not set */
-				NULL /* store-only chunk unused */,
+				NULL /* don't grab value */,
 				hash_algo))
 			{
 				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our ECDSA key");
@@ -2053,8 +2061,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 		case AUTH_RSASIG:
 		{
 			if (!ikev2_calculate_rsa_hash(pst, role, idhash_out, &a_pbs,
-				FALSE, /* store-only not set */
-				NULL /* store-only chunk unused */,
+				NULL /* we don't keep no_ppk_auth */,
 				hash_algo))
 			{
 				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our RSA key");
@@ -2379,7 +2386,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* send out the AUTH payload */
 	chunk_t null_auth;	/* we must free this */
 
-	stf_status authstat = ikev2_send_auth(pc, cst, ORIGINAL_INITIATOR, 0,
+	stf_status authstat = ikev2_send_auth(cst, ORIGINAL_INITIATOR, 0,
 					      idhash, &sk.pbs, &null_auth);
 	if (authstat != STF_OK) {
 		freeanychunk(null_auth);
@@ -2493,8 +2500,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		close_output_pbs(&ppks);
 
 		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
-			ikev2_calc_no_ppk_auth(pst, idhash_npa,
+			stf_status s = ikev2_calc_no_ppk_auth(pst, idhash_npa,
 				&pst->st_no_ppk_auth);
+			if (s != STF_OK) {
+				freeanychunk(null_auth);
+				return s;
+			}
+
 			if (!emit_v2Nchunk(v2N_NO_PPK_AUTH,
 					&pst->st_no_ppk_auth, &sk.pbs)) {
 				freeanychunk(null_auth);
@@ -2810,6 +2822,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				freeanychunk(no_ppk_auth);
 				return STF_FATAL;
 			}
+			freeanychunk(st->st_no_ppk_auth);	/* in case this was already occupied */
 			st->st_no_ppk_auth = no_ppk_auth;
 			break;
 		}
@@ -3179,7 +3192,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	/* now send AUTH payload */
 	{
-		stf_status authstat = ikev2_send_auth(c, st,
+		stf_status authstat = ikev2_send_auth(st,
 						      ORIGINAL_RESPONDER, auth_np,
 						      idhash_out,
 						      &sk.pbs, NULL);

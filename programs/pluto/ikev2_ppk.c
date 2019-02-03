@@ -108,7 +108,7 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 
 stf_status ikev2_calc_no_ppk_auth(struct state *st,
 			unsigned char *id_hash,
-			chunk_t *no_ppk_auth)
+			chunk_t *no_ppk_auth /* output */)
 {
 	struct connection *c = st->st_connection;
 	enum keyword_authby authby = c->spd.this.authby;
@@ -130,7 +130,7 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 			/* RSA with SHA1 without Digsig: no oid blob appended */
 			if (!ikev2_calculate_rsa_hash(st,
 					st->st_original_role, id_hash, NULL,
-					TRUE, no_ppk_auth, IKEv2_AUTH_HASH_SHA1))
+					no_ppk_auth, IKEv2_AUTH_HASH_SHA1))
 			{
 				/* ??? what diagnostic? */
 				return STF_FAIL;
@@ -144,7 +144,7 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 		chunk_t hashval;
 
 		if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
-				id_hash, NULL, TRUE, &hashval,
+				id_hash, NULL, &hashval,
 				h->hash_algo)) {
 			/* ??? what diagnostic? */
 			return STF_FAIL;

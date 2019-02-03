@@ -164,16 +164,14 @@ extern bool ikev2_calculate_rsa_hash(struct state *st,
 				     enum original_role role,
 				     const unsigned char *idhash,
 				     pb_stream *a_pbs,
-				     bool calc_no_ppk_auth,
-				     chunk_t *no_ppk_auth,
+				     chunk_t *no_ppk_auth /* optional output */,
 				     enum notify_payload_hash_algorithms hash_algo);
 
 extern bool ikev2_calculate_ecdsa_hash(struct state *st,
 					enum original_role role,
 					const unsigned char *idhash,
 					pb_stream *a_pbs,
-					bool calc_no_ppk_auth,
-					chunk_t *no_ppk_auth,
+					chunk_t *no_ppk_auth /* optional output */,
 					enum notify_payload_hash_algorithms hash_algo);
 
 extern bool ikev2_emit_psk_auth(enum keyword_authby authby,
@@ -184,7 +182,7 @@ extern bool ikev2_emit_psk_auth(enum keyword_authby authby,
 extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 				  const struct state *st,
 				  const unsigned char *idhash,
-				  chunk_t *additional_auth);
+				  chunk_t *additional_auth /* output */);
 
 extern stf_status ikev2_verify_rsa_hash(struct state *st,
 					enum original_role role,

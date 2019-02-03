@@ -262,7 +262,7 @@ bool ikev2_emit_psk_auth(enum keyword_authby authby,
 bool ikev2_create_psk_auth(enum keyword_authby authby,
 			   const struct state *st,
 			   const unsigned char *idhash,
-			   chunk_t *additional_auth)
+			   chunk_t *additional_auth /* output */)
 {
 	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
 	unsigned char signed_octets[MAX_DIGEST_LEN];
