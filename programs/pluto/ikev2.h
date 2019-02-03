@@ -198,7 +198,7 @@ extern stf_status ikev2_verify_ecdsa_hash(struct state *st,
 					pb_stream *sig_pbs,
 					enum notify_payload_hash_algorithms hash_algo);
 
-extern stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
+extern bool ikev2_verify_psk_auth(enum keyword_authby authby,
 					const struct state *st,
 					const unsigned char *idhash,
 					pb_stream *sig_pbs);

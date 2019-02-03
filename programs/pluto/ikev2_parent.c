@@ -368,10 +368,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return FALSE;
 		}
 
-		stf_status authstat = ikev2_verify_psk_auth(
-			AUTH_PSK, st, idhash_in, pbs);
-
-		if (authstat != STF_OK) {
+		if (!ikev2_verify_psk_auth(AUTH_PSK, st, idhash_in, pbs)) {
 			libreswan_log("PSK Authentication failed: AUTH mismatch in %s!",
 				context);
 			return FALSE;
@@ -389,11 +386,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return FALSE;
 		}
 
-		stf_status authstat = ikev2_verify_psk_auth(
-				AUTH_NULL, st, idhash_in,
-				pbs);
-
-		if (authstat != STF_OK) {
+		if (!ikev2_verify_psk_auth(AUTH_NULL, st, idhash_in, pbs)) {
 			libreswan_log("NULL Authentication failed: AUTH mismatch in %s! (implementation bug?)",
 				context);
 			return FALSE;
