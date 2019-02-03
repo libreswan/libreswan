@@ -327,6 +327,10 @@ static bool v2_reject_wrong_ke_for_proposal(struct state *st,
  * Called by ikev2_parent_inI2outR2_tail() and ikev2_parent_inR2()
  * Do the actual AUTH payload verification
  */
+/*
+ * ??? Several verify routines return an stf_status and yet we just return a bool.
+ *     We perhaps should return an stf_status so distinction don't get lost.
+ */
 static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	struct state *st,
 	const enum original_role role,
