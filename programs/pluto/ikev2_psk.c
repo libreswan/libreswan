@@ -296,11 +296,9 @@ stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
 	if (sig_len != hash_len) {
-		libreswan_log("negotiated prf: %s ",
-			      st->st_oakley.ta_prf->common.name);
 		libreswan_log(
-			"I2 hash length: %zu does not match with PRF hash len %zu",
-			sig_len, hash_len);
+			"hash length in I2 packet (%zu) does not equal hash length (%zu) of negotiated PRF (%s)",
+			sig_len, hash_len, st->st_oakley.ta_prf->common.name);
 		return STF_FAIL;
 	}
 
