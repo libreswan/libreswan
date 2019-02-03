@@ -2496,10 +2496,10 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		close_output_pbs(&ppks);
 
 		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
-			ikev2_calc_no_ppk_auth(cc, pst, idhash_npa,
+			ikev2_calc_no_ppk_auth(pst, idhash_npa,
 				&pst->st_no_ppk_auth);
-			if (!emit_v2Nchunk(v2N_NO_PPK_AUTH, &pst->st_no_ppk_auth,
-					&sk.pbs)) {
+			if (!emit_v2Nchunk(v2N_NO_PPK_AUTH,
+					&pst->st_no_ppk_auth, &sk.pbs)) {
 				freeanychunk(null_auth);
 				return STF_INTERNAL_ERROR;
 			}

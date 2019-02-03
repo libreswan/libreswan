@@ -106,14 +106,11 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 
 #include "ike_alg_hash.h"
 
-stf_status ikev2_calc_no_ppk_auth(struct connection *c,
-			struct state *st,
+stf_status ikev2_calc_no_ppk_auth(struct state *st,
 			unsigned char *id_hash,
 			chunk_t *no_ppk_auth)
 {
-	/* ??? do we need c as a parameter? */
-	pexpect(c == st->st_connection);
-
+	struct connection *c = st->st_connection;
 	enum keyword_authby authby = c->spd.this.authby;
 
 	freeanychunk(*no_ppk_auth);	/* in case it was occupied */
