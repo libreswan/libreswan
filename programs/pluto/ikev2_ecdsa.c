@@ -354,7 +354,7 @@ stf_status ikev2_verify_ecdsa_hash(struct state *st,
 	enum original_role invertrole;
 
 	switch (hash_algo) {
-	/* We don't suppor tecdsa-sha1 */
+	/* We don't support ecdsa-sha1 */
 #ifdef USE_SHA2
 	case IKEv2_AUTH_HASH_SHA2_256:
 		hash_len = SHA2_256_DIGEST_SIZE;
