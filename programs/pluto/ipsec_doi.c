@@ -546,6 +546,23 @@ void send_delete(struct state *st)
 			    st->st_msgid, new_msgid);
 			ike->sa.st_msgid = new_msgid;
 			ike->sa.st_msgid_nextuse = new_nextuse;
+			/*
+			 * XXX: The record 'n' send call shouldn't be
+			 * needed.  Instead, as part of this
+			 * transition (live -> being-deleted) the
+			 * standard success_v2_transition() code path
+			 * should get to do the right thing.
+			 *
+			 * XXX: The record 'n' send call leads to an
+			 * RFC violation.  The lack of a state
+			 * transition means there's nothing set up to
+			 * wait for the ack.  And that in turn means
+			 * that the next packet will be sent before
+			 * this one has had a response.
+			 */
+			dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record ' send",
+			    ike->sa.st_serialno, st->st_serialno, __func__);
+			v2_msgid_update_sent(ike, &ike->sa, NULL/*new exchange*/, MESSAGE_REQUEST);
 			break;
 		default:
 			bad_case(st->st_ike_version);

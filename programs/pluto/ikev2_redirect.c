@@ -366,10 +366,19 @@ static bool add_redirect_payload(struct state *st, pb_stream *pbs)
 
 void send_active_redirect_in_informational(struct state *st)
 {
+	struct ike_sa *ike = ike_sa(st);
 	stf_status e = record_v2_informational_request("active REDIRECT informational request",
-						       ike_sa(st), st, add_redirect_payload);
+						       ike, st, add_redirect_payload);
 	if (e == STF_OK) {
 		send_recorded_v2_ike_msg(st, "active REDIRECT informational request");
+		/*
+		 * XXX: record 'n' send violates the RFC.  This code
+		 * should instead let success_v2_state_transition()
+		 * deal with things.
+		 */
+		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
+		    ike->sa.st_serialno, st->st_serialno, __func__);
+		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
 		ipstr_buf b;
 		libreswan_log("redirecting of peer %s successful",
 				sensitive_ipstr(&st->st_remoteaddr, &b));

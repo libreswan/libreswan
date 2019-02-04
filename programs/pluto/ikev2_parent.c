@@ -83,6 +83,7 @@
 #include "impair.h"
 #include "ikev2_message.h"
 #include "ikev2_ts.h"
+#include "ikev2_msgid.h"
 
 #include "crypt_symkey.h" /* for release_symkey */
 struct mobike {
@@ -244,6 +245,12 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 static stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ike)
 {
 	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
+	intmax_t unack2 = ike->sa.st_v2_msgids.initiator.sent - ike->sa.st_v2_msgids.initiator.recv;
+	if (unack != unack2) {
+		dbg("WIP:Message ID: IKE #%lu expecting unack "PRI_MSGID", got %jd for #%lu",
+		    ike->sa.st_serialno, unack, unack2,
+		    st->st_serialno);
+	}
 	stf_status e = STF_OK;
 	const char *what;
 
@@ -1387,6 +1394,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			 * an initial outgoing message.
 			 */
 			v2_msgid_restart_init_request(st);
+			v2_msgid_init(pexpect_ike_sa(st));
 			/*
 			 * XXX: Why?!?
 			 *
@@ -1466,7 +1474,10 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				DBG(DBG_CONTROLMORE, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
 				rehash_state(st, &zero_ike_spi);
 				/*
-				 * get a new KE
+				 * Need to wind things back to the
+				 * point that the Message ID counter
+				 * code thinks this is an initial
+				 * message request.
 				 */
 				/* if we received INVALID_KE, msgid was incremented */
 				st->st_msgid_lastack = v2_INVALID_MSGID;
@@ -1477,6 +1488,10 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				    st->st_serialno, st->st_msgid,
 				    st->st_msgid_lastack, st->st_msgid_nextuse,
 				    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
+				v2_msgid_init(pexpect_ike_sa(st));
+				/*
+				 * get a new KE
+				 */
 				request_ke_and_nonce("rekey outI", st,
 						     st->st_oakley.ta_dh,
 						     ikev2_parent_outI1_continue);
@@ -5538,6 +5553,19 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		    md->hdr.isa_msgid);
 		st->st_msgid_lastreplied = md->hdr.isa_msgid;
 
+		/*
+		 * XXX: This code should be neither using record 'n'
+		 * send (which leads to RFC violations because it
+		 * doesn't wait for an ACK) and/or be deleting the
+		 * state midway through a state transition.
+		 *
+		 * When DEL_IKE, the update isn't needed but what
+		 * ever.
+		 */
+		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send hacking around delete_my_family()",
+		    ike->sa.st_serialno, st->st_serialno, __func__);
+		v2_msgid_update_sent(ike, st, md, MESSAGE_RESPONSE);
+
 		mobike_reset_remote(st, &mobike_remote);
 
 		/* Now we can delete the IKE SA if we want to */
@@ -5608,8 +5636,17 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 	stf_status e = record_v2_informational_request("liveness probe informational request",
 						       ike, st/*sender*/,
 						       NULL /* beast master */);
-	send_recorded_v2_ike_msg(st, "liveness probe informational request");
 	pstats_ike_dpd_sent++;
+	if (e == STF_OK) {
+		send_recorded_v2_ike_msg(st, "liveness probe informational request");
+		/*
+		 * XXX: record 'n' send violates the RFC.  This code should
+		 * instead let success_v2_state_transition() deal with things.
+		 */
+		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
+		    ike->sa.st_serialno, st->st_serialno, __func__);
+		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
+	}
 	return e;
 }
 
@@ -5945,6 +5982,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 		const struct iface_port *iface)
 {
+	struct ike_sa *ike = ike_sa(st);
 	/*
 	 * caveat: could a CP initiator find an address received
 	 * from the pool as a new source address?
@@ -5961,11 +5999,19 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	const struct iface_port *o_iface = st->st_interface;
 	st->st_interface = iface;
 
-	record_v2_informational_request("mobike informational request",
-					ike_sa(st), st/*sender*/,
-					add_mobike_payloads);
-	send_recorded_v2_ike_msg(st, "mobike informational request");
-
+	stf_status e = record_v2_informational_request("mobike informational request",
+						       ike, st/*sender*/,
+						       add_mobike_payloads);
+	if (e == STF_OK) {
+		send_recorded_v2_ike_msg(st, "mobike informational request");
+		/*
+		 * XXX: record 'n' send violates the RFC.  This code should
+		 * instead let success_v2_state_transition() deal with things.
+		 */
+		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
+		    ike->sa.st_serialno, st->st_serialno, __func__);
+		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
+	}
 	st->st_interface = o_iface;
 }
 #endif
@@ -6215,6 +6261,13 @@ static void ikev2_log_initiate_child_fail(const struct state *st)
 		return;
 
 	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
+	if (DBGP(DBG_BASE)) {
+		intmax_t unack2 = pst->st_v2_msgids.initiator.sent - pst->st_v2_msgids.initiator.recv;
+		if (unack != unack2) {
+			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu initiator.sent-initiator.recv %jd == st_msgid_nextuse-st_msgid_lastack-1 "PRI_MSGID,
+				    pst->st_serialno, st->st_serialno, unack2, unack);
+		}
+	}
 
 	switch (st->st_state) {
 	case STATE_V2_REKEY_IKE_I0:
