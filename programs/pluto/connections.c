@@ -2293,24 +2293,6 @@ const char *str_connection(const struct connection *c,
 	return out->buf;
 }
 
-static size_t fmt_client(const ip_subnet *client, const ip_address *gw,
-			const char *prefix, char buf[ADDRTOT_BUF])
-{
-	if (subnetisaddr(client, gw)) {
-		buf[0] = '\0'; /* compact denotation for "self" */
-	} else {
-		char *ap;
-
-		strcpy(buf, prefix);
-		ap = buf + strlen(prefix);
-		if (subnetisnone(client))
-			strcpy(ap, "?"); /* unknown */
-		else
-			subnettot(client, 0, ap, SUBNETTOT_BUF);
-	}
-	return strlen(buf);
-}
-
 /*
  * This function is called using the convention:
  *
@@ -2320,61 +2302,12 @@ static size_t fmt_client(const ip_subnet *client, const ip_address *gw,
  */
 char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 {
-#if 0
 	/* not sizeof(buf), as BUF is an address */
 	fmtbuf_t p = array_as_fmtbuf(buf, CONN_INST_BUF);
 	if (c->kind == CK_INSTANCE) {
 		fmt_connection_instance(&p, c);
 	}
 	return buf;
-#else
-	char *p = buf;
-
-	*p = '\0';
-
-	if (c->kind == CK_INSTANCE) {
-		if (c->instance_serial != 0) {
-			snprintf(p, CONN_INST_BUF, "[%lu]",
-				c->instance_serial);
-			p += strlen(p);
-		}
-
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			size_t w = fmt_client(&c->spd.this.client,
-					&c->spd.this.host_addr, " ", p);
-
-			p += w;
-
-			strcpy(p, w == 0 ? " ..." : "=== ...");
-			p += strlen(p);
-
-			p += addrtot(&c->spd.that.host_addr, 0, p, ADDRTOT_BUF) - 1;
-
-			(void) fmt_client(&c->spd.that.client,
-					&c->spd.that.host_addr, "===", p);
-		} else {
-			ipstr_buf b;
-
-			*p++ = ' ';
-			/* p not subsequently used */
-#if 0
-			p = jam_str(p, &buf[CONN_INST_BUF] - p,
-				sensitive_ipstr(&c->spd.that.host_addr, &b));
-#else
-			/* attempt to calm Coverity Scan */
-			p = jam_str(p, buf + CONN_INST_BUF - p,
-				sensitive_ipstr(&c->spd.that.host_addr, &b));
-#endif
-		}
-
-		char test[CONN_INST_BUF];
-		fmtbuf_t testbuf = ARRAY_AS_FMTBUF(test);
-		fmt_connection_instance(&testbuf, c);
-		passert(streq(buf, test));
-	}
-
-	return buf;
-#endif
 }
 
 /*
