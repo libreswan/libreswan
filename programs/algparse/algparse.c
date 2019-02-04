@@ -16,8 +16,7 @@ static bool test_algs = false;
 static bool verbose = false;
 static bool debug = false;
 static bool impair = false;
-static bool ikev1 = false;
-static bool ikev2 = false;
+static enum ike_version version = 0;
 static bool fips = false;
 static bool pfs = false;
 static int failures = 0;
@@ -27,8 +26,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 
 #define CHECK(TYPE,PARSE,OK) {						\
 		struct proposal_policy policy = {			\
-			.ikev1 = ikev1,					\
-			.ikev2 = ikev2,					\
+			.version = version,				\
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
 			.warning = warning,				\
@@ -37,11 +35,10 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 		if (fips) {						\
 			printf("-fips ");				\
 		}							\
-		if (ikev1) {						\
-			printf("-v1 ");					\
-		}							\
-		if (ikev2) {						\
-			printf("-v2 ");					\
+		switch (version) {					\
+		case IKEv1: printf("-v1 "); break;			\
+		case IKEv2: printf("-v2 "); break;			\
+		default: break;						\
 		}							\
 		if (pfs) {						\
 			printf("-pfs ");				\
@@ -203,8 +200,8 @@ static void test(void)
 	esp(!fips, "3des-sha1;modp1024");
 	esp(!fips, "3des-sha1;modp1536");
 	esp(true, "3des-sha1;modp2048");
-	esp(!ikev1, "3des-sha1;dh21");
-	esp(!ikev1, "3des-sha1;ecp_521");
+	esp(version != IKEv1, "3des-sha1;dh21");
+	esp(version != IKEv1, "3des-sha1;ecp_521");
 	esp(false, "3des-sha1;dh23");
 	esp(false, "3des-sha1;dh24");
 	esp(true, "3des-sha1");
@@ -307,11 +304,11 @@ static void test(void)
 	esp(true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
 	esp(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
-	esp(!ikev1, "aes;none");
-	esp(!ikev1 && !pfs, "aes;none,aes");
-	esp(!ikev1, "aes;none,aes;modp2048");
-	esp(!ikev1, "aes-sha1-none");
-	esp(!ikev1, "aes-sha1;none");
+	esp(version != IKEv1, "aes;none");
+	esp(version != IKEv1 && !pfs, "aes;none,aes");
+	esp(version != IKEv1, "aes;none,aes;modp2048");
+	esp(version != IKEv1, "aes-sha1-none");
+	esp(version != IKEv1, "aes-sha1;none");
 
 	/*
 	 * should this be supported - for now man page says not
@@ -375,8 +372,8 @@ static void test(void)
 	ah(true, "sha2_384");
 	ah(true, "sha2_512");
 	ah(true, "aes_xcbc");
-	ah(!ikev1, "sha2-none");
-	ah(!ikev1, "sha2;none");
+	ah(version != IKEv1, "sha2-none");
+	ah(version != IKEv1, "sha2;none");
 	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 	ah(impair, "aes-sha1");
 	ah(false, "vanityhash1");
@@ -400,7 +397,7 @@ static void test(void)
 	ike(true, "3des;dh21");
 	ike(true, "3des-sha1;dh21");
 	ike(true, "3des-sha1-ecp_521");
-	ike(!ikev1, "aes_gcm");
+	ike(version != IKEv1, "aes_gcm");
 	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 	ike(false, "aes;none");
 	ike(false, "id2"); /* should be rejected; idXXX removed */
@@ -483,10 +480,12 @@ int main(int argc, char *argv[])
 			test_proposals = true;
 		} else if (streq(arg, "ta")) {
 			test_algs = true;
+		} else if (streq(arg, "v0") || streq(arg, "ikev0")) {
+			version = 0;
 		} else if (streq(arg, "v1") || streq(arg, "ikev1")) {
-			ikev1 = true;
+			version = IKEv1;
 		} else if (streq(arg, "v2") || streq(arg, "ikev2")) {
-			ikev2 = true;
+			version = IKEv2;
 		} else if (streq(arg, "pfs") || streq(arg, "pfs=yes") || streq(arg, "pfs=on")) {
 			pfs = true;
 		} else if (streq(arg, "pfs=no") || streq(arg, "pfs=off")) {

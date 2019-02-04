@@ -124,8 +124,10 @@ const struct proposal_protocol ike_proposal_protocol = {
 	.name = "IKE",
 	.ikev1_alg_id = IKEv1_OAKLEY_ID,
 	.protoid = PROTO_ISAKMP,
-	.ikev1_defaults = &ikev1_ike_defaults,
-	.ikev2_defaults = &ikev2_ike_defaults,
+	.defaults = {
+		[IKEv1] = &ikev1_ike_defaults,
+		[IKEv2] = &ikev2_ike_defaults,
+	},
 	.proposal_ok = ike_proposal_ok,
 	.encrypt_alg_byname = encrypt_alg_byname,
 	.prf_alg_byname = prf_alg_byname,

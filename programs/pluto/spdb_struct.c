@@ -86,7 +86,7 @@ static struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 static struct alg_info_ike *ikev1_default_ike_info(void)
 {
 	static const struct proposal_policy policy = {
-		.ikev1 = TRUE,
+		.version = IKEv1,
 		.alg_is_ok = ike_alg_is_ike,
 		.warning = libreswan_log,
 	};

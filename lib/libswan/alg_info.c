@@ -265,9 +265,9 @@ static bool merge_default_proposals(const struct proposal_parser *parser,
 	 * has ikev2=never then, in aggressive mode, things don't
 	 * work.
 	 */
-	const struct proposal_defaults *defaults = (parser->policy->ikev1
-						    ? proposal->protocol->ikev1_defaults
-						    : proposal->protocol->ikev2_defaults);
+	passert(parser->policy->version < elemsof(proposal->protocol->defaults));
+	const struct proposal_defaults *defaults =
+		proposal->protocol->defaults[parser->policy->version];
 	return add_proposal_defaults(parser, defaults,
 				     alg_info, proposal);
 }
@@ -835,10 +835,12 @@ bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 		}
 	}
 
-	/*
-	 * IKEv1 only allows one DH algorithm.
-	 */
-	if (parser->policy->ikev1) {
+	switch (parser->policy->version) {
+
+	case IKEv1:
+		/*
+		 * IKEv1 only allows one DH algorithm.
+		 */
 		if (first_dh != NULL && second_dh != NULL) {
 			snprintf(parser->err_buf, parser->err_buf_len,
 				 "more than one IKEv1 %s DH algorithm (%s, %s) is not allowed in quick mode",
@@ -849,12 +851,12 @@ bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 				return false;
 			}
 		}
-	}
+		break;
 
-	/*
-	 * IKEv2, only implements one DH algorithm.
-	 */
-	if (parser->policy->ikev2) {
+	case IKEv2:
+		/*
+		 * IKEv2, only implements one DH algorithm.
+		 */
 		if (first_dh != NULL && second_dh != NULL) {
 			snprintf(parser->err_buf, parser->err_buf_len,
 				 "more than one IKEv2 %s DH algorithm (%s, %s) requires unimplemented CHILD_SA INVALID_KE",
@@ -865,6 +867,11 @@ bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 				return false;
 			}
 		}
+		break;
+
+	default:
+		/* ignore */
+		break;
 	}
 
 	return true;

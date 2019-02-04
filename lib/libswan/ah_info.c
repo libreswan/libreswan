@@ -64,8 +64,10 @@ const struct proposal_protocol ah_proposal_protocol = {
 	.name = "AH",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_AH,
-	.ikev1_defaults = &ah_defaults,
-	.ikev2_defaults = &ah_defaults,
+	.defaults = {
+		[IKEv1] = &ah_defaults,
+		[IKEv2] = &ah_defaults,
+	},
 	.proposal_ok = ah_proposal_ok,
 	.integ_alg_byname = integ_alg_byname,
 	.dh_alg_byname = dh_alg_byname,

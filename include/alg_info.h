@@ -41,8 +41,7 @@ typedef const struct ike_alg *(alg_byname_fn)(const struct proposal_parser *pars
  */
 
 struct proposal_policy {
-	bool ikev1;
-	bool ikev2;
+	enum ike_version version;
 	bool pfs; /* For CHILD SA, use DH from IKE SA */
 	/*
 	 * According to current policy, is the algorithm ok
@@ -78,10 +77,9 @@ struct proposal_protocol {
 	enum ike_alg_key ikev1_alg_id;
 
 	/*
-	 * Lists of defaults.
+	 * Lists of defaults for each IKE version.
 	 */
-	const struct proposal_defaults *ikev1_defaults;
-	const struct proposal_defaults *ikev2_defaults;
+	const struct proposal_defaults *defaults[IKE_VERSION_ROOF];
 
 	/*
 	 * Is the proposal OK?

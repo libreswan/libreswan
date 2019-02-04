@@ -1595,7 +1595,6 @@ void add_connection(const struct whack_message *wm)
 			char err_buf[256] = "";	/* ??? big enough? */
 
 			const struct proposal_policy proposal_policy = {
-				.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
 				/*
 				 * logic needs to match pick_initiator()
 				 *
@@ -1604,7 +1603,7 @@ void add_connection(const struct whack_message *wm)
 				 * magic into pluto proper and instead pass a
 				 * simple boolean.
 				 */
-				.ikev2 = LIN(POLICY_IKEV2_ALLOW, wm->policy),
+				.version = LIN(POLICY_IKEV2_ALLOW, wm->policy) ? IKEv2 : IKEv1,
 				.alg_is_ok = ike_alg_is_ike,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.warning = libreswan_log,
@@ -1646,7 +1645,6 @@ void add_connection(const struct whack_message *wm)
 			char err_buf[256] = "";	/* ??? big enough? */
 
 			const struct proposal_policy proposal_policy = {
-				.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
 				/*
 				 * logic needs to match pick_initiator()
 				 *
@@ -1655,7 +1653,7 @@ void add_connection(const struct whack_message *wm)
 				 * magic into pluto proper and instead pass a
 				 * simple boolean.
 				 */
-				.ikev2 = LIN(POLICY_IKEV2_ALLOW, wm->policy),
+				.version = LIN(POLICY_IKEV2_ALLOW, wm->policy) ? IKEv2 : IKEv1,
 				.alg_is_ok = kernel_alg_is_ok,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.warning = libreswan_log,

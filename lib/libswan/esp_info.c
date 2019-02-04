@@ -71,8 +71,10 @@ static const struct proposal_protocol esp_proposal_protocol = {
 	.name = "ESP",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
-	.ikev1_defaults = &esp_defaults,
-	.ikev2_defaults = &esp_defaults,
+	.defaults = {
+		[IKEv1] = &esp_defaults,
+		[IKEv2] = &esp_defaults,
+	},
 	.proposal_ok = esp_proposal_ok,
 	.encrypt_alg_byname = encrypt_alg_byname,
 	.integ_alg_byname = integ_alg_byname,

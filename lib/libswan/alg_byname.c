@@ -30,19 +30,29 @@ bool alg_byname_ok(const struct proposal_parser *parser,
 	 * If the connection is IKEv1|IKEv2 then this code will
 	 * exclude anything not supported by both protocols.
 	 */
-	if (policy->ikev1 && alg->id[protocol->ikev1_alg_id] < 0) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv1",
-			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 PRI_shunk(print_name));
-		return false;
-	}
-	if (policy->ikev2 && alg->id[IKEv2_ALG_ID] < 0) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv2",
-			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 PRI_shunk(print_name));
-		return false;
+	switch (policy->version) {
+	case IKEv1:
+		/* IKEv1 has different IDs for ESP/IKE/AH */
+		if (alg->id[protocol->ikev1_alg_id] < 0) {
+			snprintf(parser->err_buf, parser->err_buf_len,
+				 "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv1",
+				 protocol->name, ike_alg_type_name(alg->algo_type),
+				 PRI_shunk(print_name));
+			return false;
+		}
+		break;
+	case IKEv2:
+		if (alg->id[IKEv2_ALG_ID] < 0) {
+			snprintf(parser->err_buf, parser->err_buf_len,
+				 "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv2",
+				 protocol->name, ike_alg_type_name(alg->algo_type),
+				 PRI_shunk(print_name));
+			return false;
+		}
+		break;
+	default:
+		/* ignore */
+		break;
 	}
 	/*
 	 * According to parser policy, is the algorithm "implemented"?

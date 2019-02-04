@@ -31,6 +31,7 @@
 enum ike_version {
 	IKEv1 = 1,
 	IKEv2 = 2,
+#define IKE_VERSION_ROOF 3
 };
 
 /*
