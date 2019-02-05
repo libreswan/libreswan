@@ -1309,6 +1309,12 @@ void add_connection(const struct whack_message *wm)
 				wm->name);
 			return;
 		}
+		if (wm->vti_iface != NULL) {
+			loglog(RC_FATAL,
+				"Failed to add connection \"%s\", VTI requires tunnel mode but connection specifies type=transport",
+				wm->name);
+			return;
+		}
 	}
 	if (LIN(POLICY_AUTHENTICATE, wm->policy)) {
 		if (wm->sa_tfcpad != 0) {
