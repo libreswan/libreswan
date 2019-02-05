@@ -202,7 +202,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		sender->st_v2_msgids.current_request = new->initiator.sent = msgid;
 		/* extend st_msgid */
 		if (DBGP(DBG_BASE) && sender->st_msgid != sender->st_v2_msgids.current_request) {
-			PEXPECT_LOG("Message ID: sender #%lu st_msgid "PRI_MSGID" == current_request %ld",
+			PEXPECT_LOG("Message ID: sender #%lu st_msgid "PRI_MSGID" == current_request %jd",
 				    sender->st_serialno,
 				    sender->st_msgid,
 				    sender->st_v2_msgids.current_request);
@@ -231,7 +231,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		new->responder.sent = msgid;
 		/* extend st_msgid_lastreplied */
 		if (DBGP(DBG_BASE) && ike->sa.st_msgid_lastreplied != new->responder.sent) {
-			PEXPECT_LOG("Message ID: IKE #%lu lastreplied "PRI_MSGID" == responder.sent %ld",
+			PEXPECT_LOG("Message ID: IKE #%lu lastreplied "PRI_MSGID" == responder.sent %jd",
 				    ike->sa.st_serialno,
 				    ike->sa.st_msgid_lastreplied,
 				    new->responder.sent);
