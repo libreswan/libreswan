@@ -17,11 +17,11 @@
 #include <stdlib.h>
 
 #include "lswlog.h"
-#include "alg_info.h"
+#include "proposals.h"
 #include "alg_byname.h"
 #include "ike_alg.h"
 
-bool alg_byname_ok(const struct proposal_parser *parser,
+bool alg_byname_ok(struct proposal_parser *parser,
 		   const struct ike_alg *alg, shunk_t print_name)
 {
 	const struct proposal_protocol *protocol = parser->protocol;
@@ -34,19 +34,17 @@ bool alg_byname_ok(const struct proposal_parser *parser,
 	case IKEv1:
 		/* IKEv1 has different IDs for ESP/IKE/AH */
 		if (alg->id[protocol->ikev1_alg_id] < 0) {
-			snprintf(parser->err_buf, parser->err_buf_len,
-				 "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv1",
-				 protocol->name, ike_alg_type_name(alg->algo_type),
-				 PRI_shunk(print_name));
+			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv1",
+				       protocol->name, ike_alg_type_name(alg->algo_type),
+				       PRI_shunk(print_name));
 			return false;
 		}
 		break;
 	case IKEv2:
 		if (alg->id[IKEv2_ALG_ID] < 0) {
-			snprintf(parser->err_buf, parser->err_buf_len,
-				 "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv2",
-				 protocol->name, ike_alg_type_name(alg->algo_type),
-				 PRI_shunk(print_name));
+			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv2",
+				       protocol->name, ike_alg_type_name(alg->algo_type),
+				       PRI_shunk(print_name));
 			return false;
 		}
 		break;
@@ -64,10 +62,9 @@ bool alg_byname_ok(const struct proposal_parser *parser,
 	 */
 	passert(policy->alg_is_ok != NULL);
 	if (!policy->alg_is_ok(alg)) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s %s algorithm '"PRI_SHUNK"' is not supported",
-			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 PRI_shunk(print_name));
+		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported",
+			       protocol->name, ike_alg_type_name(alg->algo_type),
+			       PRI_shunk(print_name));
 		return false;
 	}
 	/*
@@ -79,16 +76,15 @@ bool alg_byname_ok(const struct proposal_parser *parser,
 	 * Since it likely involves a lookup, it is left until last.
 	 */
 	if (!ike_alg_is_valid(alg)) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s %s algorithm '"PRI_SHUNK"' is not valid",
-			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 PRI_shunk(print_name));
+		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not valid",
+			       protocol->name, ike_alg_type_name(alg->algo_type),
+			       PRI_shunk(print_name));
 		return false;
 	}
 	return true;
 }
 
-static const struct ike_alg *alg_byname(const struct proposal_parser *parser,
+static const struct ike_alg *alg_byname(struct proposal_parser *parser,
 					const struct ike_alg_type *type,
 					shunk_t name, shunk_t print_name)
 {
@@ -101,15 +97,13 @@ static const struct ike_alg *alg_byname(const struct proposal_parser *parser,
 		 */
 		if (ike_alg_enum_match(type, protocol->ikev1_alg_id, name) >= 0 ||
 		    ike_alg_enum_match(type, IKEv2_ALG_ID, name) >= 0) {
-			snprintf(parser->err_buf, parser->err_buf_len,
-				 "%s %s algorithm '"PRI_SHUNK"' is not supported",
-				 protocol->name, ike_alg_type_name(type),
-				 PRI_shunk(print_name));
+			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported",
+				       protocol->name, ike_alg_type_name(type),
+				       PRI_shunk(print_name));
 		} else {
-			snprintf(parser->err_buf, parser->err_buf_len,
-				 "%s %s algorithm '"PRI_SHUNK"' is not recognized",
-				 protocol->name, ike_alg_type_name(type),
-				 PRI_shunk(print_name));
+			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not recognized",
+				       protocol->name, ike_alg_type_name(type),
+				       PRI_shunk(print_name));
 		}
 		return NULL;
 	}
@@ -118,14 +112,14 @@ static const struct ike_alg *alg_byname(const struct proposal_parser *parser,
 	 * Does it pass muster?
 	 */
 	if (!alg_byname_ok(parser, alg, print_name)) {
-		passert(parser->err_buf[0] != '\0');
+		passert(parser->error[0] != '\0');
 		return NULL;
 	}
 
 	return alg;
 }
 
-const struct ike_alg *encrypt_alg_byname(const struct proposal_parser *parser,
+const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
 					 shunk_t name, size_t key_bit_length,
 					 shunk_t print_name)
 {
@@ -137,10 +131,9 @@ const struct ike_alg *encrypt_alg_byname(const struct proposal_parser *parser,
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
 	if (!IMPAIR(SEND_KEY_SIZE_CHECK) && key_bit_length > 0) {
 		if (encrypt->keylen_omitted) {
-			snprintf(parser->err_buf, parser->err_buf_len,
-				 "%s does not take variable key lengths",
-				 enum_short_name(&ikev2_trans_type_encr_names,
-						 encrypt->common.id[IKEv2_ALG_ID]));
+			proposal_error(parser, "%s does not take variable key lengths",
+				       enum_short_name(&ikev2_trans_type_encr_names,
+						       encrypt->common.id[IKEv2_ALG_ID]));
 			if (!impair_proposal_errors(parser)) {
 				return NULL;
 			}
@@ -151,8 +144,7 @@ const struct ike_alg *encrypt_alg_byname(const struct proposal_parser *parser,
 			 * should instead generate a real list from
 			 * encrypt.
 			 */
-			snprintf(parser->err_buf, parser->err_buf_len,
-				 "wrong encryption key length - key size must be 128 (default), 192 or 256");
+			proposal_error(parser, "wrong encryption key length - key size must be 128 (default), 192 or 256");
 			if (!impair_proposal_errors(parser)) {
 				return NULL;
 			}
@@ -161,21 +153,21 @@ const struct ike_alg *encrypt_alg_byname(const struct proposal_parser *parser,
 	return alg;
 }
 
-const struct ike_alg *prf_alg_byname(const struct proposal_parser *parser,
+const struct ike_alg *prf_alg_byname(struct proposal_parser *parser,
 				     shunk_t name, size_t key_bit_length UNUSED,
 				     shunk_t print_name)
 {
 	return alg_byname(parser, IKE_ALG_PRF, name, print_name);
 }
 
-const struct ike_alg *integ_alg_byname(const struct proposal_parser *parser,
+const struct ike_alg *integ_alg_byname(struct proposal_parser *parser,
 				       shunk_t name, size_t key_bit_length UNUSED,
 				       shunk_t print_name)
 {
 	return alg_byname(parser, IKE_ALG_INTEG, name, print_name);
 }
 
-const struct ike_alg *dh_alg_byname(const struct proposal_parser *parser,
+const struct ike_alg *dh_alg_byname(struct proposal_parser *parser,
 				    shunk_t name, size_t key_bit_length UNUSED,
 				    shunk_t print_name)
 {

@@ -48,7 +48,7 @@
 #include "nat_traversal.h"
 #include "server.h"
 
-#include "alg_info.h"
+#include "proposals.h"
 #include "kernel_alg.h"
 #include "ip_address.h"
 

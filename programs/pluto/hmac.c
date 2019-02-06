@@ -27,7 +27,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "crypto.h"
-#include "alg_info.h"
+#include "proposals.h"
 #include "ike_alg.h"
 
 #include <nss.h>

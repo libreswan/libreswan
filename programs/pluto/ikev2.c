@@ -63,7 +63,7 @@
 #include "vendor.h"
 #include "ip_address.h"
 #include "ikev2_send.h"
-#include "alg_info.h" /* for ike_info / esp_info */
+#include "proposals.h" /* for ike_info / esp_info */
 #include "state_db.h"
 #include "ietf_constants.h"
 #include "ikev2_cookie.h"

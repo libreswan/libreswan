@@ -62,7 +62,7 @@
 #include "pending.h"
 #include "kernel.h"
 #include "nat_traversal.h"
-#include "alg_info.h" /* for ike_info / esp_info */
+#include "proposals.h" /* for ike_info / esp_info */
 #include "keyhi.h" /* for SECKEY_DestroyPublicKey */
 #include "vendor.h"
 #include "crypt_hash.h"

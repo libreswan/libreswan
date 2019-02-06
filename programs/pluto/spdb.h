@@ -21,6 +21,7 @@
 #define _SPDB_H_
 
 #include "packet.h"
+#include "proposals.h"
 
 /* database of SA properties */
 
@@ -171,12 +172,12 @@ extern void sa_log(struct db_sa *f);
 struct alg_info_ike;
 struct alg_info_esp;
 
-extern struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
+extern struct db_sa *oakley_alg_makedb(const struct ike_proposals proposals,
 				       enum ikev1_auth_method auth_method,
 				       bool single_dh);
 
 extern struct db_sa *kernel_alg_makedb(lset_t policy,
-				       struct alg_info_esp *ei,
+				       const struct child_proposals proposals,
 				       bool logit);
 
 #endif /*  _SPDB_H_ */

@@ -37,7 +37,7 @@
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
 #include "ike_alg_encrypt.h"
-#include "alg_info.h"
+#include "proposals.h"
 #include "ike_alg_prf.h"
 #include "ike_alg_prf_hmac_ops.h"
 #include "ike_alg_prf_nss_ops.h"

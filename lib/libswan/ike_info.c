@@ -27,10 +27,10 @@
 #include "ike_alg_integ.h"
 #include "ike_alg_prf.h"
 #include "ike_alg_dh.h"
-#include "alg_info.h"
+#include "proposals.h"
 
-static bool ike_proposal_ok(const struct proposal_parser *parser,
-			    const struct proposal_info *proposal)
+static bool ike_proposal_ok(struct proposal_parser *parser,
+			    const struct proposal *proposal)
 {
 	if (!proposal_aead_none_ok(parser, proposal)) {
 		if (!impair_proposal_errors(parser)) {
@@ -42,27 +42,42 @@ static bool ike_proposal_ok(const struct proposal_parser *parser,
 	 * Check that the ALG_INFO spec is implemented.
 	 */
 
-	impaired_passert(PROPOSAL_PARSER, proposal->encrypt != NULL);
-	passert(proposal->encrypt == NULL || ike_alg_is_ike(&(proposal->encrypt->common)));
-	passert(IMPAIR(PROPOSAL_PARSER) || proposal->enckeylen == 0 ||
-		encrypt_has_key_bit_length(proposal->encrypt,
-					   proposal->enckeylen));
+	impaired_passert(PROPOSAL_PARSER,
+			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) != NULL);
+	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
+		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
+		passert(ike_alg_is_ike(&encrypt->common));
+		passert(IMPAIR(PROPOSAL_PARSER) ||
+			alg->enckeylen == 0 ||
+			encrypt_has_key_bit_length(encrypt,
+						   alg->enckeylen));
+	}
 
-	impaired_passert(PROPOSAL_PARSER, proposal->prf != NULL);
-	passert(proposal->prf == NULL || ike_alg_is_ike(&(proposal->prf->common)));
+	impaired_passert(PROPOSAL_PARSER,
+			 next_algorithm(proposal, PROPOSAL_prf, NULL) != NULL);
+	FOR_EACH_ALGORITHM(proposal, prf, alg) {
+		const struct prf_desc *prf = prf_desc(alg->desc);
+		passert(ike_alg_is_ike(&prf->common));
+	}
 
-	impaired_passert(PROPOSAL_PARSER, proposal->integ != NULL);
-	passert(proposal->integ == &ike_alg_integ_none ||
-		proposal->integ == NULL ||
-		ike_alg_is_ike(&proposal->integ->common));
+	impaired_passert(PROPOSAL_PARSER,
+			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
+	FOR_EACH_ALGORITHM(proposal, integ, alg) {
+		const struct integ_desc *integ = integ_desc(alg->desc);
+		passert(integ == &ike_alg_integ_none ||
+			ike_alg_is_ike(&integ->common));
+	}
 
-	impaired_passert(PROPOSAL_PARSER, proposal->dh != NULL);
-	passert(proposal->dh == NULL || ike_alg_is_ike(&(proposal->dh->common)));
-	if (proposal->dh == &ike_alg_dh_none) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "IKE DH algorithm 'none' not permitted");
-		if (!impair_proposal_errors(parser)) {
-			return false;
+	impaired_passert(PROPOSAL_PARSER,
+			 next_algorithm(proposal, PROPOSAL_dh, NULL) != NULL);
+	FOR_EACH_ALGORITHM(proposal, dh, alg) {
+		const struct oakley_group_desc *dh = dh_desc(alg->desc);
+		passert(ike_alg_is_ike(&dh->common));
+		if (dh == &ike_alg_dh_none) {
+			proposal_error(parser, "IKE DH algorithm 'none' not permitted");
+			if (!impair_proposal_errors(parser)) {
+				return false;
+			}
 		}
 	}
 
@@ -135,25 +150,7 @@ const struct proposal_protocol ike_proposal_protocol = {
 	.dh_alg_byname = dh_alg_byname,
 };
 
-struct alg_info_ike *alg_info_ike_create_from_str(const struct proposal_policy *policy,
-						  const char *alg_str,
-						  char *err_buf, size_t err_buf_len)
+struct proposal_parser *ike_proposal_parser(const struct proposal_policy *policy)
 {
-	/*
-	 *      alg_info storage should be sized dynamically
-	 *      but this may require two passes to know
-	 *      transform count in advance.
-	 */
-	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
-	const struct proposal_parser parser = proposal_parser(policy,
-							      &ike_proposal_protocol,
-							      err_buf, err_buf_len);
-
-	if (!alg_info_parse_str(&parser, &alg_info_ike->ai, shunk1(alg_str))) {
-		passert(err_buf[0] != '\0');
-		alg_info_free(&alg_info_ike->ai);
-		return NULL;
-	}
-
-	return alg_info_ike;
+	return alloc_proposal_parser(policy, &ike_proposal_protocol);
 }

@@ -22,7 +22,7 @@
 
 #include "lswalloc.h"
 #include "lswlog.h"
-#include "alg_info.h"
+#include "proposals.h"
 #include "alg_byname.h"
 #include "lswfips.h"
 
@@ -33,8 +33,8 @@
 /*
  * Add ESP alg info _with_ logic (policy):
  */
-static bool esp_proposal_ok(const struct proposal_parser *parser,
-			    const struct proposal_info *proposal)
+static bool esp_proposal_ok(struct proposal_parser *parser,
+			    const struct proposal *proposal)
 {
 	if (!proposal_aead_none_ok(parser, proposal)) {
 		if (!impair_proposal_errors(parser)) {
@@ -42,9 +42,12 @@ static bool esp_proposal_ok(const struct proposal_parser *parser,
 		}
 	}
 
-	impaired_passert(PROPOSAL_PARSER, proposal->encrypt != NULL);
-	impaired_passert(PROPOSAL_PARSER, proposal->prf == NULL);
-	impaired_passert(PROPOSAL_PARSER, proposal->integ != NULL);
+	impaired_passert(PROPOSAL_PARSER,
+			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) != NULL);
+	impaired_passert(PROPOSAL_PARSER,
+			 next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
+	impaired_passert(PROPOSAL_PARSER,
+			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
 	return true;
 }
 
@@ -83,7 +86,7 @@ static const struct proposal_protocol esp_proposal_protocol = {
 
 /*
  * ??? the only difference between
- * alg_info_ah_create_from_str and alg_info_esp_create_from_str
+ * alg_info_ah_create_from_str and esp_proposals_create_from_str
  * is in the second argument to proposal_parser.
  *
  * XXX: On the other hand, since "struct ike_info" and "struct
@@ -93,33 +96,7 @@ static const struct proposal_protocol esp_proposal_protocol = {
 
 /* This function is tested in testing/algparse/algparse.c */
 
-struct alg_info_esp *alg_info_esp_create_from_str(const struct proposal_policy *policy,
-						  const char *alg_str,
-						  char *err_buf, size_t err_buf_len)
+struct proposal_parser *esp_proposal_parser(const struct proposal_policy *policy)
 {
-	shunk_t string = shunk1(alg_str);
-	const struct proposal_parser parser = proposal_parser(policy,
-							      &esp_proposal_protocol,
-							      err_buf, err_buf_len);
-
-	/*
-	 * alg_info storage should be sized dynamically
-	 * but this may require two passes to know
-	 * transform count in advance.
-	 */
-	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
-							"alg_info_esp");
-	if (!alg_info_parse_str(&parser, &alg_info_esp->ai, string)) {
-		passert(err_buf[0] != '\0');
-		alg_info_free(&alg_info_esp->ai);
-		return NULL;
-	}
-
-	if (!alg_info_pfs_vs_dh_check(&parser, alg_info_esp)) {
-		passert(err_buf[0] != '\0');
-		alg_info_free(&alg_info_esp->ai);
-		return NULL;
-	}
-
-	return alg_info_esp;
+	return alloc_proposal_parser(policy, &esp_proposal_protocol);
 }

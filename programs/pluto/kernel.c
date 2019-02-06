@@ -1177,7 +1177,7 @@ void unroute_connection(struct connection *c)
 	}
 }
 
-#include "alg_info.h"
+#include "proposals.h"
 #include "kernel_alg.h"
 
 void set_text_said(char *text_said, const ip_address *dst,

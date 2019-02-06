@@ -69,7 +69,7 @@
 #include "peerlog.h"
 #include "keys.h"
 #include "whack.h"
-#include "alg_info.h"
+#include "proposals.h"
 #include "spdb.h"
 #include "ike_alg.h"
 #include "kernel_alg.h"
@@ -355,16 +355,10 @@ void delete_connection(struct connection *c, bool relations)
 		sr = next_sr;
 	}
 
-	if (c->alg_info_ike != NULL) {
-		alg_info_delref(&c->alg_info_ike->ai);
-		c->alg_info_ike = NULL;
-	}
-	free_ikev2_proposals(&c->v2_ike_proposals);
+	proposals_delref(&c->ike_proposals.p);
+	proposals_delref(&c->child_proposals.p);
 
-	if (c->alg_info_esp != NULL) {
-		alg_info_delref(&c->alg_info_esp->ai);
-		c->alg_info_esp = NULL;
-	}
+	free_ikev2_proposals(&c->v2_ike_proposals);
 	free_ikev2_proposals(&c->v2_ike_auth_child_proposals);
 	free_ikev2_proposals(&c->v2_create_child_proposals);
 	c->v2_create_child_proposals_default_dh = NULL; /* static pointer */
@@ -823,11 +817,8 @@ static void unshare_connection(struct connection *c)
 	}
 
 	/* increment references to algo's, if any */
-	if (c->alg_info_ike != NULL)
-		alg_info_addref(&c->alg_info_ike->ai);
-
-	if (c->alg_info_esp != NULL)
-		alg_info_addref(&c->alg_info_esp->ai);
+	proposals_addref(&c->ike_proposals.p);
+	proposals_addref(&c->child_proposals.p);
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
@@ -1549,8 +1540,6 @@ void add_connection(const struct whack_message *wm)
 	c->connalias = wm->connalias;
 	c->dnshostname = wm->dnshostname;
 	c->policy = wm->policy;
-	c->alg_info_ike = NULL;
-	c->alg_info_esp = NULL;
 	c->sighash_policy = wm->sighash_policy;
 
 	if (NEVER_NEGOTIATE(c->policy)) {
@@ -1609,48 +1598,34 @@ void add_connection(const struct whack_message *wm)
 		/* IKE cipher suites */
 
 		if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
-			char err_buf[256] = "";	/* ??? big enough? */
-
 			const struct proposal_policy proposal_policy = {
-				/*
-				 * logic needs to match pick_initiator()
-				 *
-				 * XXX: Once pluto is changed to IKEv1 XOR
-				 * IKEv2 it should be possible to move this
-				 * magic into pluto proper and instead pass a
-				 * simple boolean.
-				 */
+				/* logic needs to match pick_initiator() */
 				.version = LIN(POLICY_IKEV2_ALLOW, wm->policy) ? IKEv2 : IKEv1,
 				.alg_is_ok = ike_alg_is_ike,
 				.pfs = LIN(POLICY_PFS, wm->policy),
+				.check_pfs_vs_dh = false,
 				.warning = libreswan_log,
 			};
 
-			c->alg_info_ike = alg_info_ike_create_from_str(&proposal_policy, wm->ike,
-								    err_buf, sizeof(err_buf));
+			struct proposal_parser *parser = ike_proposal_parser(&proposal_policy);
+			c->ike_proposals.p = proposals_from_str(parser, wm->ike);
 
-			if (c->alg_info_ike == NULL) {
-				pexpect(err_buf[0]); /* something */
+			if (c->ike_proposals.p == NULL) {
+				pexpect(parser->error[0]); /* something */
 				loglog(RC_FATAL, "Failed to add connection \"%s\": ike string error: %s",
-					wm->name, err_buf);
+					wm->name, parser->error);
+				free_proposal_parser(&parser);
 				pfree(c);
 				return;
 			}
+			free_proposal_parser(&parser);
 
-			/* from here on, error returns should alg_info_free(&c->alg_info_ike->ai); */
+			/* from here on, error returns should alg_info_free(&c->ike_proposals->ai); */
 
 			LSWDBGP(DBG_CRYPT | DBG_CONTROL, buf) {
 				lswlogs(buf, "ike (phase1) algorithm values: ");
-				lswlog_alg_info(buf, &c->alg_info_ike->ai);
+				fmt_proposals(buf, c->ike_proposals.p);
 			};
-			if (c->alg_info_ike->ai.alg_info_cnt == 0) {
-				loglog(RC_FATAL,
-					"Failed to add connection \"%s\": got 0 transforms for ike=\"%s\"",
-					wm->name, wm->ike);
-				alg_info_free(&c->alg_info_ike->ai);
-				pfree(c);
-				return;
-			}
 		}
 
 		/* ESP or AH cipher suites (but not both) */
@@ -1658,8 +1633,6 @@ void add_connection(const struct whack_message *wm)
 		if (wm->esp != NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log("from whack: got --esp=%s", wm->esp));
-
-			char err_buf[256] = "";	/* ??? big enough? */
 
 			const struct proposal_policy proposal_policy = {
 				/*
@@ -1673,8 +1646,13 @@ void add_connection(const struct whack_message *wm)
 				.version = LIN(POLICY_IKEV2_ALLOW, wm->policy) ? IKEv2 : IKEv1,
 				.alg_is_ok = kernel_alg_is_ok,
 				.pfs = LIN(POLICY_PFS, wm->policy),
+				.check_pfs_vs_dh = true,
 				.warning = libreswan_log,
 			};
+			struct proposal_parser *(*fn)(const struct proposal_policy *policy) =
+				(c->policy & POLICY_ENCRYPT ? esp_proposal_parser :
+				 ah_proposal_parser);
+			struct proposal_parser *parser = fn(&proposal_policy);
 
 			/*
 			 * We checked above that exactly one of
@@ -1683,42 +1661,22 @@ void add_connection(const struct whack_message *wm)
 			 * function is called (and those functions are
 			 * almost identical).
 			 */
-			c->alg_info_esp =
-				/* function: */
-					(c->policy & POLICY_ENCRYPT ?
-					 alg_info_esp_create_from_str :
-					 alg_info_ah_create_from_str)
-				/* arguments: */
-					(&proposal_policy,
-					 wm->esp, err_buf, sizeof(err_buf));
-
-			if (c->alg_info_esp == NULL) {
+			c->child_proposals.p = proposals_from_str(parser, wm->esp);
+			if (c->child_proposals.p == NULL) {
 				loglog(RC_FATAL,
 				       "Failed to add connection \"%s\", esp=\"%s\" is invalid: %s",
-				       wm->name, wm->esp, err_buf);
-				if (c->alg_info_ike != NULL)
-					alg_info_free(&c->alg_info_ike->ai);
+				       wm->name, wm->esp, parser->error);
+				free_proposal_parser(&parser);
 				pfree(c);
 				return;
 			}
+			free_proposal_parser(&parser);
 
-			/* from here on, error returns should alg_info_free(&c->alg_info_esp->ai); */
-
-			if (c->alg_info_esp->ai.alg_info_cnt == 0) {
-				loglog(RC_FATAL,
-				       "Failed to add connection \"%s\", esp=\"%s\" contained 0 valid transforms",
-				       wm->name, wm->esp);
-				if (c->alg_info_ike != NULL)
-					alg_info_free(&c->alg_info_ike->ai);
-				if (c->alg_info_esp != NULL) \
-					alg_info_free(&c->alg_info_esp->ai);
-				pfree(c);
-				return;
-			}
+			/* from here on, error returns should alg_info_free(&c->child_proposals->ai); */
 
 			LSWDBGP(DBG_CONTROL, buf) {
 				lswlogs(buf, "ESP/AH string values: ");
-				lswlog_alg_info(buf, &c->alg_info_esp->ai);
+				fmt_proposals(buf, c->child_proposals.p);
 			};
 		}
 
@@ -2043,13 +2001,6 @@ void add_connection(const struct whack_message *wm)
 		unshare_connection_end(&sr->this);
 		unshare_connection_end(&sr->that);
 	}
-
-	/* increment references to algo's, if any */
-	if (c->alg_info_ike != NULL)
-		alg_info_addref(&c->alg_info_ike->ai);
-
-	if (c->alg_info_esp != NULL)
-		alg_info_addref(&c->alg_info_esp->ai);
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c);

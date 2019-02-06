@@ -9,7 +9,7 @@
 #include "lswconf.h"
 
 #include "ike_alg.h"
-#include "alg_info.h"
+#include "proposals.h"
 
 static bool test_proposals = false;
 static bool test_algs = false;
@@ -24,12 +24,13 @@ static int failures = 0;
 enum status { PASSED = 0, FAILED = 1, ERROR = 126, };
 enum expect { FAIL = false, PASS = true, COUNT, };
 
-#define CHECK(TYPE,PARSE,OK) {						\
+#define CHECK(CHECK,PARSE,OK) {						\
 		struct proposal_policy policy = {			\
 			.version = version,				\
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
 			.warning = warning,				\
+			.check_pfs_vs_dh = CHECK,			\
 		};							\
 		printf("algparse ");					\
 		if (fips) {						\
@@ -49,21 +50,19 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			printf("'%s=%s'\n", #PARSE, algstr);		\
 		}							\
 		fflush(NULL);						\
-		char err_buf[512] = "";	/* ??? big enough? */		\
-		struct alg_info_##TYPE *e =				\
-			alg_info_##PARSE##_create_from_str(&policy,	\
-							   algstr,	\
-							   err_buf,	\
-							   sizeof(err_buf)); \
-		if (e != NULL) {					\
-			passert(err_buf[0] == '\0');			\
-			FOR_EACH_PROPOSAL_INFO(&e->ai, proposal) {	\
+		struct proposal_parser *parser =			\
+			PARSE##_proposal_parser(&policy);		\
+		struct proposals *proposals =				\
+			proposals_from_str(parser, algstr);		\
+		if (proposals != NULL) {				\
+			passert(parser->error[0] == '\0');		\
+			FOR_EACH_PROPOSAL(proposals, proposal) {	\
 				LSWLOG_FILE(stdout, log) {		\
 					lswlogf(log, "\t");		\
-					lswlog_proposal_info(log, proposal); \
+					fmt_proposal(log, proposal);	\
 				}					\
 			}						\
-			alg_info_free(&e->ai);				\
+			proposals_delref(&proposals);			\
 			if (expected == FAIL) {				\
 				failures++;				\
 				fprintf(stderr,				\
@@ -73,8 +72,8 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 					algstr == NULL ? "" : algstr);	\
 			}						\
 		} else {						\
-			passert(err_buf[0]);				\
-			printf("\tERROR: %s\n", err_buf);		\
+			pexpect(parser->error[0]);			\
+			printf("\tERROR: %s\n", parser->error);		\
 			if (expected == PASS) {				\
 				failures++;				\
 				fprintf(stderr,				\
@@ -86,6 +85,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 				failures++;				\
 			}						\
 		}							\
+		free_proposal_parser(&parser);				\
 		fflush(NULL);						\
 	}
 
@@ -119,17 +119,17 @@ static bool kernel_alg_is_ok(const struct ike_alg *alg)
 
 static void esp(enum expect expected, const char *algstr)
 {
-	CHECK(esp, esp, kernel_alg_is_ok);
+	CHECK(true, esp, kernel_alg_is_ok);
 }
 
 static void ah(enum expect expected, const char *algstr)
 {
-	CHECK(esp, ah, kernel_alg_is_ok);
+	CHECK(true, ah, kernel_alg_is_ok);
 }
 
 static void ike(enum expect expected, const char *algstr)
 {
-	CHECK(ike, ike, ike_alg_is_ike);
+	CHECK(false, ike, ike_alg_is_ike);
 }
 
 typedef void (protocol_t)(enum expect expected, const char *);

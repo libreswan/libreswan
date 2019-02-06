@@ -78,21 +78,23 @@
 #include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
-#include "alg_info.h"
+#include "proposals.h"
 #include "ip_address.h"
 #include "af_info.h"
 
 #include <blapit.h>
 
-const struct oakley_group_desc *ikev1_quick_pfs(struct alg_info_esp *aie)
+const struct oakley_group_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 {
-	if (aie == NULL) {
+	if (proposals.p == NULL) {
 		return NULL;
 	}
-	if (aie->ai.alg_info_cnt == 0) {
+	struct proposal *proposal = next_proposal(proposals.p, NULL);
+	struct algorithm *dh = next_algorithm(proposal, PROPOSAL_dh, NULL);
+	if (dh == NULL) {
 		return NULL;
 	}
-	return aie->ai.proposals[0].dh;
+	return dh_desc(dh->desc);
 }
 
 /* accept_PFS_KE
@@ -827,7 +829,7 @@ void quick_outI1(fd_t whack_sock,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		st->st_pfs_group = ikev1_quick_pfs(c->alg_info_esp);
+		st->st_pfs_group = ikev1_quick_pfs(c->child_proposals);
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
 		 * very likely supported.
@@ -843,8 +845,8 @@ void quick_outI1(fd_t whack_sock,
 		}
 		lswlogf(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
 			isakmp_sa->st_serialno, st->st_msgid);
-		if (st->st_connection->alg_info_esp != NULL) {
-			lswlog_alg_info(buf, &st->st_connection->alg_info_esp->ai);
+		if (st->st_connection->child_proposals.p != NULL) {
+			fmt_proposals(buf, st->st_connection->child_proposals.p);
 		} else {
 			lswlogf(buf, "defaults");
 		}

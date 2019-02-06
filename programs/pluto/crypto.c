@@ -33,7 +33,7 @@
 #include "state.h"
 #include "log.h"
 #include "crypto.h"
-#include "alg_info.h"
+#include "proposals.h"
 #include "ike_alg.h"
 #include "test_buffer.h"
 #include "connections.h"
@@ -47,7 +47,7 @@
  */
 void ike_alg_show_connection(const struct connection *c, const char *instance)
 {
-	if (c->alg_info_ike != NULL) {
+	if (c->ike_proposals.p != NULL) {
 		/*
 		 * List the algorithms as found in alg_info_ike and as
 		 * will be fed into the proposal code.
@@ -79,7 +79,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlogf(buf, "\"%s\"%s:   IKE algorithms: ",
 				c->name, instance);
-			lswlog_alg_info(buf, &c->alg_info_ike->ai);
+			fmt_proposals(buf, c->ike_proposals.p);
 		}
 	}
 

@@ -43,6 +43,8 @@ struct lswlog;
  * NOTE:For debugging purposes, constants.c has tables to map
  * numbers back to names.
  * Any changes here should be reflected there.
+ *
+ * elemsof() returns the unsgiend size_t.
  */
 
 #define elemsof(array) (sizeof(array) / sizeof(*(array)))	/* number of elements in an array */

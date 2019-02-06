@@ -47,7 +47,7 @@
 #include "crypto.h"
 
 #include "ikev1.h"
-#include "alg_info.h"
+#include "proposals.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
@@ -302,17 +302,18 @@ static bool ikev1_verify_esp(const struct connection *c,
 		return false;
 	}
 
-	if (c->alg_info_esp== NULL) {
+	if (c->child_proposals.p == NULL) {
 		dbg("ESP IPsec Transform verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
-	FOR_EACH_ESP_INFO(c->alg_info_esp, esp_info) {
-		if (esp_info->encrypt == ta->ta_encrypt &&
-		    (esp_info->enckeylen == 0 ||
+	FOR_EACH_PROPOSAL(c->child_proposals.p, proposal) {
+		struct v1_proposal algs = v1_proposal(proposal);
+		if (algs.encrypt == ta->ta_encrypt &&
+		    (algs.enckeylen == 0 ||
 		     ta->enckeylen == 0 ||
-		     esp_info->enckeylen == ta->enckeylen) &&
-		    esp_info->integ == ta->ta_integ) {
+		     algs.enckeylen == ta->enckeylen) &&
+		    algs.integ == ta->ta_integ) {
 			DBG(DBG_CONTROL,
 			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
 			return true;
@@ -347,14 +348,15 @@ static bool ikev1_verify_ah(const struct connection *c,
 			    ta->ta_dh->common.fqn);
 		return false;
 	}
-	if (c->alg_info_esp == NULL) {
+	if (c->child_proposals.p == NULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("AH IPsec Transform verified unconditionally; no alg_info to check against"));
 		return true;
 	}
 
-	FOR_EACH_ESP_INFO(c->alg_info_esp, esp_info) {	/* really AH */
-		if (esp_info->integ == ta->ta_integ) {
+	FOR_EACH_PROPOSAL(c->child_proposals.p, proposal) {	/* really AH */
+		struct v1_proposal algs = v1_proposal(proposal);
+		if (algs.integ == ta->ta_integ) {
 			DBG(DBG_CONTROL,
 			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
 			return true;
@@ -397,12 +399,12 @@ bool ikev1_out_sa(pb_stream *outs,
 		 * Aggr-Mode - Max transforms == 2 - Multiple
 		 * transforms, 1 DH group
 		 */
-		revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
+		revised_sadb = oakley_alg_makedb(st->st_connection->ike_proposals,
 						 auth_method,
 						 aggressive_mode);
 	} else {
 		revised_sadb = kernel_alg_makedb(st->st_connection->policy,
-						 st->st_connection->alg_info_esp,
+						 st->st_connection->child_proposals,
 						 TRUE);
 
 		/* add IPcomp proposal if policy asks for it */
@@ -979,7 +981,7 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 }
 
 static bool ikev1_verify_ike(const struct trans_attrs *ta,
-			     struct alg_info_ike *alg_info_ike)
+			     struct ike_proposals ike_proposals)
 {
 	if (ta->ta_encrypt == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1000,7 +1002,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		loglog(RC_LOG_SERIOUS, "OAKLEY proposal refused: missing DH");
 		return false;
 	}
-	if (alg_info_ike == NULL) {
+	if (ike_proposals.p == NULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("OAKLEY proposal verified unconditionally; no alg_info to check against"));
 		return true;
@@ -1012,13 +1014,14 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 	 */
 	bool ealg_insecure = (ta->enckeylen < 128);
 
-	FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
-		if (ike_info->encrypt == ta->ta_encrypt &&
-		    (ike_info->enckeylen == 0 ||
+	FOR_EACH_PROPOSAL(ike_proposals.p, proposal) {
+		struct v1_proposal algs = v1_proposal(proposal);
+		if (algs.encrypt == ta->ta_encrypt &&
+		    (algs.enckeylen == 0 ||
 		     ta->enckeylen == 0 ||
-		     ike_info->enckeylen == ta->enckeylen) &&
-		    ike_info->prf == ta->ta_prf &&
-		    ike_info->dh == ta->ta_dh) {
+		     algs.enckeylen == ta->enckeylen) &&
+		    algs.prf == ta->ta_prf &&
+		    algs.dh == ta->ta_dh) {
 			if (ealg_insecure) {
 				loglog(RC_LOG_SERIOUS,
 				       "You should NOT use insecure/broken IKE algorithms (%s)!",
@@ -1518,7 +1521,7 @@ rsasig_common:
 				}
 				/*
 				 * check if this keylen is compatible
-				 * with specified alg_info_ike.
+				 * with specified ike_proposals.
 				 */
 				if (!encrypt_has_key_bit_length(ta.ta_encrypt, val)) {
 					ugh = "peer proposed key_len not valid for encrypt algo setup specified";
@@ -1580,9 +1583,9 @@ rsasig_common:
 			}
 
 			/*
-			 * ML: at last check for allowed transforms in alg_info_ike
+			 * ML: at last check for allowed transforms in ike_proposals
 			 */
-			if (!ikev1_verify_ike(&ta, c->alg_info_ike)) {
+			if (!ikev1_verify_ike(&ta, c->ike_proposals)) {
 				/*
 				 * already logged; UGH acts as a skip
 				 * rest of checks flag
@@ -1711,7 +1714,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	const struct connection *c = st->st_connection;
 
 	/*
-	 * Construct the proposals by combining ALG_INFO_IKE with the
+	 * Construct the proposals by combining IKE_PROPOSALS with the
 	 * AUTH (proof of identity) extracted from the aggressive mode
 	 * SADB.  As if by magic, attrs[2] is always the
 	 * authentication method.
@@ -1729,7 +1732,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 		 * Max transforms == 2 - Multiple transforms, 1 DH
 		 * group
 		 */
-		revised_sadb = oakley_alg_makedb(c->alg_info_ike,
+		revised_sadb = oakley_alg_makedb(c->ike_proposals,
 						 auth_method, TRUE);
 	}
 

@@ -29,6 +29,7 @@
 #define CONNECTIONS_H
 
 #include "fd.h"
+#include "proposals.h"
 
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
@@ -331,8 +332,8 @@ struct connection {
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;
 
-	struct alg_info_esp *alg_info_esp;	/* ??? OK for AH too? */
-	struct alg_info_ike *alg_info_ike;
+	struct ike_proposals ike_proposals;
+	struct child_proposals child_proposals;
 
 	/*
 	 * The ALG_INFO converted to IKEv2 format.

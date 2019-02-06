@@ -61,7 +61,7 @@
 
 #include "lswlog.h"
 #include "lswtool.h"
-#include "alg_info.h"
+#include "proposals.h"
 #include "kernel_alg.h"
 #include "kernel_sadb.h"
 #include "pfkey_help.h"

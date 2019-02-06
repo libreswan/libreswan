@@ -76,7 +76,11 @@ OBJS += goodmask.o
 OBJS += satot.o
 OBJS += ultot.o
 
-OBJS += alg_info.o esp_info.o ike_info.o ah_info.o
+OBJS += proposals.o
+OBJS += v1_proposals.o
+OBJS += esp_info.o
+OBJS += ah_info.o
+OBJS += ike_info.o
 
 OBJS += ckaid.o
 

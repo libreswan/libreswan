@@ -553,7 +553,7 @@ void libreswan_pexpect_log(const char *func,
 #define PEXPECT_LOG(FMT, ...)						\
 	libreswan_pexpect_log(__func__,					\
 			      PASSERT_BASENAME, __LINE__,		\
-			      FMT, __VA_ARGS__)
+			      FMT,##__VA_ARGS__)
 
 
 /*

@@ -63,7 +63,7 @@
 #include "log.h"
 #include "keys.h"
 #include "whack.h"
-#include "alg_info.h"
+#include "proposals.h"
 #include "spdb.h"
 #include "ike_alg.h"
 #include "kernel_alg.h"
@@ -287,15 +287,12 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	/* We will only request an IPsec SA if policy isn't empty
 	 * (ignoring Main Mode items).
 	 * This is a fudge, but not yet important.
-	 * If we are to proceed asynchronously, whackfd will be NULL_FD.
 	 */
 
 	if (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-		struct alg_info_esp *alg = c->alg_info_esp;
-		struct db_sa *phase2_sa = kernel_alg_makedb(
-			c->policy, alg, TRUE);
-
-		if (alg != NULL && phase2_sa == NULL) {
+		struct db_sa *phase2_sa =
+			kernel_alg_makedb(c->policy, c->child_proposals, TRUE);
+		if (c->child_proposals.p != NULL && phase2_sa == NULL) {
 			whack_log(RC_LOG_SERIOUS,
 				  "cannot initiate: no acceptable kernel algorithms loaded");
 			reset_cur_connection();
