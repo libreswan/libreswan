@@ -782,7 +782,7 @@ void unshare_connection_end(struct end *e)
  * Think of this as converting a shallow copy to a deep copy
  *
  * XXX: unshare_connection() and the shallow clone should be merged
- * into a routine that allocates a new connection and then expalicitly
+ * into a routine that allocates a new connection and then explicitly
  * copy over the data.  Cloning pointers and then trying to fix them
  * up after the event, a guarenteed way to create use-after-free
  * problems.
