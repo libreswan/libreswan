@@ -136,12 +136,14 @@ static void schedule_next_send(struct ike_sa *ike)
 }
 #endif
 
-void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
+void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
+			  struct msg_digest *md)
 {
 	/* extend msgid */
 	intmax_t msgid = md->hdr.isa_msgid;
 	struct v2_msgids old = ike->sa.st_v2_msgids;
 	struct v2_msgids *new = &ike->sa.st_v2_msgids;
+	intmax_t old_receiver_request = receiver->st_v2_msgids.current_request;
 
 	enum message_role role = v2_msg_role(md);
 
@@ -167,6 +169,40 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
 				    ike->sa.st_msgid_lastack,
 				    new->initiator.recv);
 		}
+		/*
+		 * Since the response has been successfully processed,
+		 * clear CURRENT_REQUEST.  This way duplicate
+		 * responses get discarded as there is no receiving
+		 * state.
+		 *
+		 * XXX: Unfortunately the record 'n' send code throws
+		 * a spanner in the works.  It calls update_send()
+		 * before update_recv() breaking the assumption that
+		 * CURRENT_REQUEST is the old MSGID.
+		 */
+		if (old_receiver_request > msgid) {
+			/*
+			 * Hack around record 'n' send calling
+			 * update_sent() (setting CURRENT_REQUEST to
+			 * the next request) midway through
+			 * processing.
+			 *
+			 * Getting rid of record 'n' send will fix
+			 * this hack.
+			 */
+			dbg("Message ID: XXX: IKE #%lu receiver #%lu: expecting current_request %jd == msgid %jd but record 'n' called update_sent() before update_recv()",
+			    ike->sa.st_serialno, receiver->st_serialno,
+			    old_receiver_request, msgid);
+		} else {
+			if (DBGP(DBG_BASE) && old_receiver_request != msgid) {
+				PEXPECT_LOG("Message ID: IKE #%lu receiver #%lu: current_request %jd == msgid %jd",
+					    ike->sa.st_serialno, receiver->st_serialno,
+					    old_receiver_request, msgid);
+			}
+			receiver->st_v2_msgids.current_request = -1;
+		}
+		/* this is what matters */
+		pexpect(receiver->st_v2_msgids.current_request != msgid);
 		break;
 	case NO_MESSAGE:
 		dbg("Message ID: IKE #%lu skipping update_recv as MD is fake",
@@ -179,6 +215,11 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
 			fmt_msgids(buf, "receiving", role, msgid, ike, &old);
+			if (old_receiver_request != receiver->st_v2_msgids.current_request) {
+				fmt(buf, "; receiver #%lu current_request=%jd->%jd",
+				    receiver->st_serialno, old_receiver_request,
+				    receiver->st_v2_msgids.current_request);
+			}
 		}
 	}
 }
@@ -214,6 +255,24 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 				    ike->sa.st_msgid_nextuse,
 				    new->initiator.sent);
 		}
+#if 0
+		/*
+		 * XXX: The record 'n' send code calls update_send()
+		 * before update_recv() breaking CURRENT_REQUEST's
+		 * expected sequence OLD-MSGID -> -1 -> NEW-MSGID.
+		 */
+		if (DBGP(DBG_BASE) && old_sender_request != -1) {
+			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu current_request %jd == -1",
+				    ike->sa.st_serialno, sender->st_serialno,
+				    old_sender_request);
+		}
+#else
+		if (old_sender_request != -1) {
+			dbg("Message ID: XXX: IKE #%lu sender #%lu expecting current_request %jd == -1 but record 'n' send out-of-order",
+			    ike->sa.st_serialno, sender->st_serialno,
+			    old_sender_request);
+		}
+#endif
 		break;
 	case MESSAGE_RESPONSE:
 		/*
@@ -248,11 +307,10 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
 			fmt_msgids(buf, "sending", sending, msgid, ike, &old);
-			if (sender->st_v2_msgids.current_request != old_sender_request) {
+			if (old_sender_request != sender->st_v2_msgids.current_request) {
 				fmt(buf, "; sender #%lu current_request=%jd->%jd",
-				    sender->st_serialno,
-				    sender->st_v2_msgids.current_request,
-				    old_sender_request);
+				    sender->st_serialno, old_sender_request,
+				    sender->st_v2_msgids.current_request);
 			}
 		}
 	}

@@ -2792,7 +2792,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		dbg("Message ID: updating counters for #%lu to "PRI_MSGID" before emancipating",
 		    md->st->st_serialno, md->hdr.isa_msgid);
 		v2_msgid_update_counters(md->st, md);
-		v2_msgid_update_recv(ike_sa(st), md);
+		v2_msgid_update_recv(ike_sa(st), st, md);
 		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
 		ikev2_child_emancipate(md);
 	} else  {
@@ -2805,7 +2805,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		dbg("Message ID: updating counters for #%lu to "PRI_MSGID" after switching state",
 		    md->st->st_serialno, md->hdr.isa_msgid);
 		v2_msgid_update_counters(md->st, md);
-		v2_msgid_update_recv(ike_sa(st), md);
+		v2_msgid_update_recv(ike_sa(st), st, md);
 		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
 	}
 
