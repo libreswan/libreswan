@@ -1632,142 +1632,65 @@ void ikev2_process_packet(struct msg_digest **mdp)
 						  ix, &ixb));
 			return;
 		}
-		/* update lastrecv later on */
 	} else if (v2_msg_role(md) == MESSAGE_RESPONSE) {
 		/*
-		 * A response; find the IKE SA or CHILD SA that
+		 * A response; find the SA (IKE or CHILD) that
 		 * initiated the request.
-		 *
-		 * XXX: Why is the exchange type needed?  Surely state
-		 * machine will figure out if the state X exchange is
-		 * valid?
-		 *
-		 * Lets find out.
-		 *
-		 * XXX: Why is a CHILD SA specific and then an IKE SA
-		 * specific lookup needed?  Surely a Message ID
-		 * uniquely identifies the IKE or CHILD that sent the
-		 * request?
-		 *
-		 * Lets find out.
-		 *
-		 * XXX: What happens when a duplicate response is
-		 * received?  For instance, IKE SAs send requests with
-		 * no state change.  Unless the state's Message ID is
-		 * being thwacked, it will match and, potentially
-		 * cause a re-processing of the state.  Perhaps that
-		 * is why the IX parameter is needed?
-		 *
-		 * Lets find out.
-		 *
-		 * XXX: Why is an IKE SA lookup needed?  If there is
-		 * no Message ID match then just log it - the IKE SA
-		 * is being used to make the error message "pretty".
 		 */
-		st = find_state_ikev2_child(ix, &md->hdr.isa_ike_spis,
-					    md->hdr.isa_msgid);
-		if (DBGP(DBG_BASE) && st != NULL) {
-			struct state *msgid_st = find_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
-								     md->hdr.isa_msgid);
-			if (st != msgid_st) {
-				PEXPECT_LOG("Message ID: find_state_ikev2_child()->#%lu == sa_by_msgid("PRI_MSGID")->#%lu",
-					    st != NULL ? st->st_serialno : 0,
-					    md->hdr.isa_msgid,
-					    msgid_st != NULL ? msgid_st->st_serialno : 0);
-			}
-		}
-
+		st = find_v2_sa_by_request_msgid(&md->hdr.isa_ike_spis,
+						 md->hdr.isa_msgid);
 		if (st == NULL) {
 			/*
-			 * Didn't find a child waiting on that message
-			 * ID so presumably it isn't valid.
+			 * Since no SA is waiting for the Message ID,
+			 * the message isn't valid.  When there's an
+			 * IKE SA with matching SPIs log against that.
 			 */
-			st = find_v2_ike_sa(&md->hdr.isa_ike_spis);
-			if (st == NULL) {
+			struct state *ike = find_v2_ike_sa(&md->hdr.isa_ike_spis);
+			if (ike == NULL) {
+				/* technically IKE or CHILD SA */
 				rate_log("%s message response has no matching IKE SA",
 					 enum_name(&ikev2_exchange_names, ix));
-				if (DBGP(DBG_BASE)) {
-					struct state *msgid_st = find_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
-										     md->hdr.isa_msgid);
-					if (msgid_st != NULL) {
-						PEXPECT_LOG("Message ID: find_state_ikev2_child()->NULL find_v2_ike_sa()->NULL == sa_by_msgid("PRI_MSGID")->#%lu",
-							    md->hdr.isa_msgid, msgid_st->st_serialno);
-					}
-				}
-				return;
+			} else {
+				/* XXX: rate_log_state()? */
+				push_cur_state(ike);
+				rate_log("%s message response with Message ID "PRI_MSGID" has no matching SA",
+					 enum_name(&ikev2_exchange_names, ix), md->hdr.isa_msgid);
+				pop_cur_state(SOS_NOBODY);
 			}
+			return;
+		}
+		pexpect(st != NULL);
+		/*
+		 * Does the Message ID fall within the IKE SA's
+		 * sliding Message ID window?
+		 */
+		struct ike_sa *ike = ike_sa(st);
+		if (md->hdr.isa_msgid > ike->sa.st_v2_msgids.initiator.sent) {
 			/*
-			 * Check if it's an old packet being returned,
-			 * and if so, drop it.  NOTE: in_struct()
-			 * changed the byte order.
-			 *
-			 * Beware of unsigned arrithmetic.
+			 * There was a state waiting for a message
+			 * that, according to the IKE SA, has not even
+			 * been sent?!?
 			 */
-			if (st->st_msgid_lastack != v2_INVALID_MSGID &&
-			    st->st_msgid_lastack > md->hdr.isa_msgid) {
-				/*
-				 * An old response to our request?
-				 */
-				LSWDBGP(DBG_CONTROL|DBG_RETRANSMITS, buf) {
-					lswlog_retransmit_prefix(buf, st);
-					lswlogf(buf, "dropping retransmitted response with msgid %u from peer - we already processed %u.",
-						md->hdr.isa_msgid, st->st_msgid_lastack);
-				}
-				if (DBGP(DBG_BASE) && st->st_v2_msgids.initiator.recv <= md->hdr.isa_msgid) {
-					PEXPECT_LOG("Message ID: #%lu initiator.recv %jd <= "PRI_MSGID" so new code would keep discarded message",
-						    st->st_serialno,
-						    st->st_v2_msgids.initiator.recv,
-						    md->hdr.isa_msgid);
-				}
-				return;
-			}
-			if (st->st_msgid_nextuse != v2_INVALID_MSGID &&
-			    md->hdr.isa_msgid >= st->st_msgid_nextuse) {
-				/*
-				 * A reply for an unknown request (or
-				 * request we've not yet sent)? Huh!
-				 */
-				dbg("dropping unasked response with msgid %u from peer (our last used msgid is %u)",
-				     md->hdr.isa_msgid,
-				     st->st_msgid_nextuse - 1);
-				if (DBGP(DBG_BASE) && st->st_v2_msgids.initiator.sent >= md->hdr.isa_msgid) {
-					PEXPECT_LOG("Message ID: #%lu initiator.sent %jd >= "PRI_MSGID" so new code would keep discarded message",
-						    st->st_serialno,
-						    st->st_v2_msgids.initiator.sent,
-						    md->hdr.isa_msgid);
-				}
-				return;
-			}
+			PEXPECT_LOG("Message ID: IKE #%lu receiver #%lu waiting for a message "PRI_MSGID" which is from the future from the future - last message sent is %jd",
+				    ike->sa.st_serialno, st->st_serialno,
+				    md->hdr.isa_msgid,
+				    st->st_v2_msgids.initiator.sent);
+			return;
+		}
+		if (ike->sa.st_v2_msgids.initiator.recv > md->hdr.isa_msgid) {
 			/*
-			 * Assume the request was generated by the IKE
-			 * SA, for instance:
-			 *
- 			 * - as shown by ikev2-delete-02, the delete
-			 *   response
-			 *
-			 * - (in theory), when an AUTH exchange
-			 *   involves multiple messages (so the CHILD
-			 *   SA can't be created early), the AUTH
-			 *   response???
-			 *
-			 * - ???
-			 *
-			 * The log line lets find out.
+			 * A response that falls outside of the
+			 * Message ID window.  Could something like
+			 * MOBIKE where requests are lost trigger
+			 * this?
 			 */
-			dbg("Message ID: using IKE SA #%lu for response with msgid "PRI_MSGID" (msgid: "PRI_MSGID"; nextuse: "PRI_MSGID", lastack: "PRI_MSGID"; lastrecv: "PRI_MSGID", lastreplied: "PRI_MSGID")",
-			    st->st_serialno, md->hdr.isa_msgid, st->st_msgid,
-			    st->st_msgid_nextuse, st->st_msgid_lastack,
-			    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
-
 			if (DBGP(DBG_BASE)) {
-				struct state *msgid_st = find_v2_sa_by_msgid(&md->hdr.isa_ike_spis,
-									     md->hdr.isa_msgid);
-				if (st != msgid_st) {
-					PEXPECT_LOG("Message ID: find_state_ikev2_child()->NULL find_v2_ike_sa()->#%lu == sa_by_msgid("PRI_MSGID")->#%lu",
-						    st->st_serialno, md->hdr.isa_msgid,
-						    msgid_st != NULL ? msgid_st->st_serialno : 0);
-				}
+				dbg("Message ID: IKE #%lu receiver #%lu dropping response with Message ID "PRI_MSGID" from peer - we already processed %jd",
+				    ike->sa.st_serialno, st->st_serialno,
+				    md->hdr.isa_msgid,
+				    st->st_v2_msgids.initiator.recv);
 			}
+			return;
 		}
 	} else {
 		PASSERT_FAIL("message role %d invalid", v2_msg_role(md));
@@ -1825,9 +1748,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	/*
 	 * If the state is busy, presumably doing something like
 	 * crypto, skip further processing.
-	 *
-	 * For re-transmits, they should have been handled by the code
-	 * above.
 	 *
 	 * For fragments, things only go busy once all fragments have
 	 * been received (and re-transmitted fragments are ignored).

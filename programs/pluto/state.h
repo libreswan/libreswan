@@ -772,11 +772,7 @@ extern bool find_pending_phase2(const so_serial_t psn,
 extern struct state *find_v2_ike_sa(const ike_spis_t *ike_spis);
 extern struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi);
 
-struct state *find_v2_sa_by_msgid(const ike_spis_t *ike_spis, msgid_t msgid);
-
-extern struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
-					    const ike_spis_t *ike_spis,
-					    const msgid_t msgid);
+struct state *find_v2_sa_by_request_msgid(const ike_spis_t *ike_spis, msgid_t msgid);
 
 struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
 					       uint8_t protoid, ipsec_spi_t spi);
