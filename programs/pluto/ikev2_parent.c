@@ -1960,11 +1960,12 @@ static stf_status ikev2_send_auth(struct state *st,
 				  pb_stream *outpbs,
 				  chunk_t *null_auth /* optional out */)
 {
+	/* st could be parent or child */
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
 
 	/* ??? should c be based on pst?  Does it matter? */
-	// might fire: pexpect(st->st_connection == pst->st_connection);
+	pexpect(st->st_connection == pst->st_connection);
 	const struct connection *c = st->st_connection;
 
 	enum keyword_authby authby = c->spd.this.authby;
@@ -1973,6 +1974,8 @@ static stf_status ikev2_send_auth(struct state *st,
 		*null_auth = EMPTY_CHUNK;
 
 	/* ??? this is the last use of st.  Could/should it be pst? */
+	/* ??? I think that only a parent can have st->st_peer_wants_null set */
+	pexpect(st->st_peer_wants_null == pst->st_peer_wants_null);
 	if (st->st_peer_wants_null) {
 		/* we allow authby=null and IDr payload told us to use it */
 		authby = AUTH_NULL;
@@ -3135,6 +3138,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	/* send out the IDr payload */
 	unsigned char idhash_out[MAX_DIGEST_LEN];
+
 	{
 		struct ikev2_id r_id = {
 			.isai_np = ISAKMP_NEXT_v2NONE,

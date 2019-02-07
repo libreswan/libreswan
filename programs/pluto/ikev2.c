@@ -2274,7 +2274,6 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		return FALSE;
 	}
 	bool initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
-	struct connection *c = ike->sa.st_connection;
 
 	struct payload_digest *const id_him = initiator ?
 		md->chain[ISAKMP_NEXT_v2IDr] : md->chain[ISAKMP_NEXT_v2IDi];
@@ -2294,34 +2293,40 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 	}
 
 	/* You Tarzan, me Jane? */
-	struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
+	struct id tarzan_id;	/* may be unset */
+	struct id *tip = NULL;	/* tarzan ID pointer (or NULL) */
 
-	struct id tarzan_id;
-	struct id *tip = NULL;
+	{
+		const struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
 
-	if (!initiator && tarzan_pld != NULL) {
-		/*
-		 * ??? problem with diagnostics: what we're calling "peer ID"
-		 * is really our "peer's peer ID", in other words us!
-		 */
-		DBG(DBG_CONTROL, DBG_log("received IDr payload - extracting our alleged ID"));
-		if (!extract_peer_id(tarzan_pld->payload.v2id.isai_type,
-		     &tarzan_id, &tarzan_pld->pbs))
-		{
-			libreswan_log("Peer IDr payload extraction failed");
-			return FALSE;
+		if (!initiator && tarzan_pld != NULL) {
+			/*
+			 * ??? problem with diagnostics: what we're calling "peer ID"
+			 * is really our "peer's peer ID", in other words us!
+			 */
+			DBGF(DBG_CONTROL, "received IDr payload - extracting our alleged ID");
+			if (!extract_peer_id(tarzan_pld->payload.v2id.isai_type,
+					&tarzan_id, &tarzan_pld->pbs))
+			{
+				libreswan_log("Peer IDr payload extraction failed");
+				return FALSE;
+			}
+			tip = &tarzan_id;
 		}
-		tip = &tarzan_id;
 	}
 
+	/* start considering connection */
+
+	struct connection *c = ike->sa.st_connection;
+
 	/*
-	 * If there ar certs, try re-running the id check
+	 * If there are certs, try re-running the id check.
 	 */
 	if (!ike->sa.st_peer_alt_id &&
 	    ike->sa.st_remote_certs.verified != NULL) {
+		/* ??? only the first cert is considered.  Why? */
 		if (match_certs_id(ike->sa.st_remote_certs.verified,
-				   &c->spd.that.id,
-				   c/*update-connection*/)) {
+				   &c->spd.that.id /*ID_FROMCERT => updated*/)) {
 			dbg("X509: CERT and ID matches current connection");
 			ike->sa.st_peer_alt_id = true;
 		} else {
@@ -2406,6 +2411,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			}
 
 			if (r == NULL) {
+				/* no "improvement" on c found */
 				char buf[IDTOA_BUF];
 
 				idtoa(&peer_id, buf, sizeof(buf));
@@ -2416,27 +2422,24 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				    !same_id(&c->spd.that.id, &peer_id) &&
 				    c->spd.that.id.kind != ID_FROMCERT)
 				{
-					if (LIN(POLICY_AUTH_NULL, c->policy) && tarzan_pld != NULL && tarzan_id.kind == ID_NULL) {
+					if (LIN(POLICY_AUTH_NULL, c->policy) &&
+					    tip != NULL && tip->kind == ID_NULL) {
 						libreswan_log("Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
 							buf);
 						ike->sa.st_peer_wants_null = TRUE;
-						r = c;
 					} else {
 						libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
 							buf);
 						return FALSE;
 					}
 				} else {
-					DBG(DBG_CONTROL, DBG_log("Peer ID matches and no better connection found - continuing with existing connection"));
-					r = c;
+					DBGF(DBG_CONTROL, "Peer ID matches and no better connection found - continuing with existing connection");
 				}
-			}
+			} else if (r != c) {
+				/* r is an improvement on c -- replace */
 
-			if (r != c) {
 				char b1[CONN_INST_BUF];
 				char b2[CONN_INST_BUF];
-
-				/* apparently, r is an improvement on c -- replace */
 
 				libreswan_log("switched from \"%s\"%s to \"%s\"%s",
 					c->name,
@@ -2451,14 +2454,15 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 				update_state_connection(md->st, r);
 				/* redo from scratch so we read and check CERT payload */
-				DBG(DBG_X509, DBG_log("retrying ikev2_decode_peer_id_and_certs() with new conn"));
+				DBGF(DBG_X509, "retrying ikev2_decode_peer_id_and_certs() with new conn");
 				return decode_peer_id_counted(ike, md, depth + 1);
+			}
 
-			} else if (c->spd.that.has_id_wildcards) {
+			if (c->spd.that.has_id_wildcards) {
 				duplicate_id(&c->spd.that.id, &peer_id);
 				c->spd.that.has_id_wildcards = FALSE;
 			} else if (fromcert) {
-				DBG(DBG_X509, DBG_log("copying ID for fromcert"));
+				DBGF(DBG_X509, "copying ID for fromcert");
 				duplicate_id(&c->spd.that.id, &peer_id);
 			}
 		}

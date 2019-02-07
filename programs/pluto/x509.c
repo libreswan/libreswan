@@ -761,20 +761,25 @@ bool v2_decode_certs(struct ike_sa *ike, struct msg_digest *md)
 }
 
 /*
- * XXX: This sometimes update's the connection ID as a side effect.
+ * If peer_id->kind is ID_FROMCERT, there is a guaranteed match,
+ * and it will be updated to an id of kind ID_DER_ASN1_DN
+ * with the name taken from the cert's derSubject.
+ *
+ * Even though cert is an element of a linked list,
+ * only the first certificate is considered.
+ *
+ * ??? why should we only consider the first cert?
  */
-bool match_certs_id(struct certs *certs, const struct id *peer_id,
-		    struct connection *update)
+bool match_certs_id(const struct certs *cert,
+		struct id *peer_id /*ID_FROMCERT => updated*/)
 {
 	char sbuf[ASN1_BUF_LEN];
 	char namebuf[IDTOA_BUF];
 	char ipstr[IDTOA_BUF];
 
-	if (certs == NULL) {
-		dbg("no cert to verify ID against");
-		return false;
-	}
-	CERTCertificate *end_cert = certs->cert;
+	// fails!: pexpect(cert->next == NULL);
+
+	CERTCertificate *end_cert = cert->cert;
 
 	bool cont;
 	switch (peer_id->kind) {
@@ -823,14 +828,15 @@ bool match_certs_id(struct certs *certs, const struct id *peer_id,
 		idtoa(peer_id, namebuf, sizeof(namebuf));
 		dbg("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf);
 		cont = true;
-		if (update != NULL) {
-			dbg("stomping on connection's that.id");
+
+		{
+			dbg("stomping on peer_id");
 			struct id id = {
 				.kind = ID_DER_ASN1_DN,
 				/* safe as duplicate_id() will clone this */
 				.name = same_secitem_as_chunk(end_cert->derSubject),
 			};
-			duplicate_id(&update->spd.that.id, &id);
+			duplicate_id(peer_id, &id);
 		}
 		break;
 
@@ -907,12 +913,15 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 	if (!decode_certs(st, cert_payloads)) {
 		return LSW_CERT_BAD;
 	}
+
 	struct certs *certs = ike->sa.st_remote_certs.verified;
+
 	if (certs == NULL) {
 		return LSW_CERT_NONE;
 	}
 
-	if (!match_certs_id(certs, &c->spd.that.id, c /*update*/)) {
+	/* ??? only one cert is considered.  Why? */
+	if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/)) {
 		return LSW_CERT_MISMATCHED_ID;
 	}
 
