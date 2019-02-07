@@ -5,7 +5,7 @@
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016, 2019  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,7 +37,7 @@
 #include "ike_alg.h"
 #include "test_buffer.h"
 #include "connections.h"
-
+#include "ike_alg_integ.h"
 #include "kernel_alg.h"
 
 /*
@@ -86,23 +86,39 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 	const struct state *st = state_with_serialno(c->newest_isakmp_sa);
 
 	if (st != NULL) {
-		/*
-		 * Convert the crypt-suite into 'struct proposal_info'
-		 * so that the parser's print-alg code can be used.
-		 */
-		const struct proposal_info p = {
-			.encrypt = st->st_oakley.ta_encrypt,
-			.enckeylen = st->st_oakley.enckeylen,
-			.prf = st->st_oakley.ta_prf,
-			.integ = st->st_oakley.ta_integ,
-			.dh = st->st_oakley.ta_dh,
-		};
 		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlogf(buf,
 				"\"%s\"%s:   %s algorithm newest: ",
 				c->name, instance,
 				enum_name(&ike_version_names, st->st_ike_version));
-			lswlog_proposal_info(buf, &p);
+			const struct trans_attrs *ta = &st->st_oakley;
+			const char *sep = "";
+			if (ta->ta_encrypt != NULL) {
+				lswlogs(buf, sep); sep = "-";
+				lswlogs(buf, ta->ta_encrypt->common.fqn);
+				if (ta->enckeylen != 0) {
+					lswlogf(buf, "_%d", ta->enckeylen);
+				}
+			}
+			if (ta->ta_prf != NULL) {
+				lswlogs(buf, sep); sep = "-";
+				lswlogs(buf, ta->ta_prf->common.fqn);
+			}
+			/* XXX: should just print everything */
+			if (ta->ta_integ != NULL) {
+				if ((ta->ta_prf == NULL) ||
+				    (encrypt_desc_is_aead(ta->ta_encrypt) &&
+				     ta->ta_integ != &ike_alg_integ_none) ||
+				    (!encrypt_desc_is_aead(ta->ta_encrypt) &&
+				     ta->ta_integ->prf != ta->ta_prf)) {
+					lswlogs(buf, sep); sep = "-";
+					lswlogs(buf, ta->ta_integ->common.fqn);
+				}
+			}
+			if (ta->ta_dh != NULL) {
+				lswlogs(buf, sep); sep = "-";
+				lswlogs(buf, ta->ta_dh->common.fqn);
+			}
 		}
 	}
 }
