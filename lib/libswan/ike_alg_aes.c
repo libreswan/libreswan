@@ -323,7 +323,7 @@ const struct prf_desc ike_alg_prf_aes_xcbc = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_AES128_XCBC,
 		},
-		.fips = true,
+		.fips = false,
 	},
 	.nss = {
 		.mechanism = CKM_AES_ECB,
@@ -345,7 +345,7 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_AES_XCBC,
 			[IKEv2_ALG_ID] = IKEv2_AUTH_AES_XCBC_96,
 		},
-		.fips = TRUE,
+		.fips = false,
 	},
 	.integ_keymat_size = AES_XCBC_DIGEST_SIZE,
 	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
@@ -373,7 +373,7 @@ const struct integ_desc ike_alg_integ_aes_cmac = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_AES_CMAC_96,
 			[IKEv2_ALG_ID] = IKEv2_AUTH_AES_CMAC_96,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.integ_keymat_size = BYTES_FOR_BITS(128),
 	.integ_output_size = BYTES_FOR_BITS(96), /* truncated */
@@ -402,6 +402,7 @@ const struct encrypt_desc ike_alg_encrypt_null_integ_aes_gmac = {
 			[IKEv1_ESP_ID] = ESP_NULL_AUTH_AES_GMAC,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_NULL_AUTH_AES_GMAC,
 		},
+		.fips = true,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
