@@ -780,6 +780,12 @@ void unshare_connection_end(struct end *e)
  * are no longer shared.  Typically strings, but some other things too.
  *
  * Think of this as converting a shallow copy to a deep copy
+ *
+ * XXX: unshare_connection() and the shallow clone should be merged
+ * into a routine that allocates a new connection and then expalicitly
+ * copy over the data.  Cloning pointers and then trying to fix them
+ * up after the event, a guarenteed way to create use-after-free
+ * problems.
  */
 static void unshare_connection(struct connection *c)
 {
@@ -1523,11 +1529,16 @@ void add_connection(const struct whack_message *wm)
 
 	/*
 	 * Connection values are set using strings in the whack
-	 * message, unshare_connection() is responsible
-	 * for cloning the strings before the whack message is
-	 * destroyed.
+	 * message.  This code is responsible for cloning the strings
+	 * before the whack message is destroyed.
+	 *
+	 * XXX: at one point this code was using unshare_connection()
+	 * to duplicate pointers from the whack message - bad idea.
+	 * For instance, it duplicated the proposal pointers yet here
+	 * the pointer was freshy allocated so no duplication should
+	 * be needed (or at least shouldn't be) (look for strange
+	 * free() vs delref() sequence).
 	 */
-
 	int same_rightca, same_leftca;
 	struct connection *c = alloc_thing(struct connection,
 					"struct connection");
@@ -1996,8 +2007,52 @@ void add_connection(const struct whack_message *wm)
 			c->spd.that.has_client = TRUE;
 	}
 
-	/* ensure we allocate copies of all strings */
-	unshare_connection(c);
+	/*
+	 * ensure we allocate copies of all strings
+	 *
+	 * XXX: Should merge this into the above and then if things
+	 * barf call delete_connection().
+	 */
+	c->name = clone_str(c->name, "connection name");
+
+	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
+
+	c->modecfg_dns = clone_str(c->modecfg_dns,
+				"connection modecfg_dns");
+	c->modecfg_domains = clone_str(c->modecfg_domains,
+				"connection modecfg_domains");
+	c->modecfg_banner = clone_str(c->modecfg_banner,
+				"connection modecfg_banner");
+#ifdef HAVE_LABELED_IPSEC
+	c->policy_label = clone_str(c->policy_label,
+				    "connection policy_label");
+#endif
+	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
+
+	/* duplicate any alias, adding spaces to the beginning and end */
+	c->connalias = clone_str(c->connalias, "connection alias");
+
+	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
+
+	c->redirect_to = clone_str(c->redirect_to,\
+					"connection redirect_to");
+	c->accept_redirect_to = clone_str(c->accept_redirect_to,\
+					"connection accept_redirect_to");
+
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+		unshare_connection_end(&sr->this);
+		unshare_connection_end(&sr->that);
+	}
+
+	/* increment references to algo's, if any */
+	if (c->alg_info_ike != NULL)
+		alg_info_addref(&c->alg_info_ike->ai);
+
+	if (c->alg_info_esp != NULL)
+		alg_info_addref(&c->alg_info_esp->ai);
+
+	if (c->pool !=  NULL)
+		reference_addresspool(c);
 
 	(void)orient(c);
 
