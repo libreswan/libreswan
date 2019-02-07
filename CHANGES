@@ -36,6 +36,7 @@ v3.28 (unreleased)
 * ipsec: add "ipsec ts" as shorthand for "ipsec trafficstatus" [Paul]
 * FIPS: X.509 minimum public key size check was rejecting valid keys [Paul]
 * FIPS: also force IKE maximum lifetime of 24h (default is 1h) [Paul/Vukasin]
+* FIPS: Disallow AES-XCBC from PRF/INTEG, Allow AES-GMAC [Paul]
 * KLIPS: Disable KLIPS userland support per default [Paul]
          WARNING: Support for KLIPS will be removed in 2019
 * libswan: Fix leaks in badly formed secrets/ppk_id [Vukasin Karadzic]
