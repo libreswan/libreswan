@@ -50,7 +50,7 @@ west #
  # should show retransmits on west and replies on east
 west #
  grep sending /tmp/pluto.log |grep through
-| sending 780 bytes for STATE_PARENT_I0 through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 828 bytes for STATE_PARENT_I0 through eth1:500 to 192.1.2.23:500 (using #1)
 | sending 405 bytes for STATE_PARENT_I1 through eth1:500 to 192.1.2.23:500 (using #1)
 | sending 345 bytes for STATE_V2_CREATE_I0 through eth1:500 to 192.1.2.23:500 (using #1)
 | sending 345 bytes for EVENT_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
