@@ -55,15 +55,32 @@ shunk_t shunk1(const char *ptr); /* strlen() implied */
 shunk_t shunk2(const char *ptr, int len);
 
 /*
- * shunk version of strsep() (which is like strtok())
+ * A shunk version of strsep() (which is like strtok()) - split INPUT
+ * in two using a character from the DELIM set.
  *
- * Split SHUNK in two using the DELIM set.  Return a shunk of the
- * characters up to but not including DELIM (or the entire string if
- * DELIM isn't found.  Update SHUNK to be one past DELIM.
+ * If INPUT contains a character from the DELIM set, return the
+ * characters before the DELIM character as the next TOKEN, and set
+ * INPUT to the sub-string following the DELIM character.
  *
- * XXX: should this return the DELIM?
+ * If INPUT contains no character from the DELIM set, return INPUT as
+ * the next TOKEN (possibly empty), and set INPUT to the null_shunk.
+ *
+ * If INPUT is the null_shunk, return the null_shunk as the next
+ * TOKEN, string remains unchanged (still the null_shunk).
+ *
+ * One way to implement a simple parser is to use TOKEN.ptr==NULL as
+ * an end-of-input indicator:
+ *
+ *     shunk_t token = shunk_strsep(&input, ",");
+ *     while (token.ptr != NULL) {
+ *       ... process token ...
+ *       token = shunk_strsep(&input, ",");
+ *     }
+ *
+ * XXX: Provided INPUT.ptr is non-NULL, INPUT.ptr[-1] is the DELIM
+ * character; should this be made an explict parameter.
  */
-shunk_t shunk_strsep(shunk_t *shunk, const char *delim);
+shunk_t shunk_strsep(shunk_t *input, const char *delim);
 
 /*
  * shunk version of string compare functions (or at least libreswan's

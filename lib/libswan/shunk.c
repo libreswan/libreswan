@@ -46,21 +46,30 @@ shunk_t shunk2(const char *ptr, int len)
 	return (shunk_t) { .ptr = ptr, .len = len, };
 }
 
-shunk_t shunk_strsep(shunk_t *shunk, const char *delim)
+shunk_t shunk_strsep(shunk_t *input, const char *delim)
 {
-	shunk_t token = shunk2(shunk->ptr, 0);
-	while (shunk->len > 0) {
-		if (strchr(delim, *shunk->ptr) != NULL) {
+	/*
+	 * If INPUT is NULL, the loop is skipped and NULL is
+	 * returned.
+	 */
+	shunk_t token = shunk2(input->ptr, 0);
+	while (input->len > 0) {
+		if (strchr(delim, *input->ptr) != NULL) {
 			/* discard delim */
-			shunk->ptr++;
-			shunk->len--;
+			input->ptr++;
+			input->len--;
 			return token;
 		}
 		/* advance, transfering the char */
 		token.len++;
-		shunk->ptr++;
-		shunk->len--;
+		input->ptr++;
+		input->len--;
 	}
+	/*
+	 * Flag this as the last token by setting INPUT to NULL; next
+	 * call will return the NULL shunk.
+	 */
+	*input = null_shunk;
 	return token;
 }
 
