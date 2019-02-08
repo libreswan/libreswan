@@ -475,6 +475,7 @@ kvmplutotest	certoe-09-packet-host			good
 kvmplutotest	certoe-09-packet-host-2			good
 kvmplutotest	certoe-10-symmetric-cert-whack		good
 kvmplutotest	certoe-11-symmetric-cert-nat		good
+kvmplutotest	certoe-12-nat-server			good
 kvmplutotest	rawrsaoe-asymmetric-nat			good
 kvmplutotest	rawrsaoe-asymmetric-01			good
 

@@ -8,5 +8,5 @@ ipsec whack --trafficstatus
 # show packets went via ipsec0
 ifconfig ipsec0
 # show how our tunnel interface looks
-ip tun
+ip tun | sort
 echo done

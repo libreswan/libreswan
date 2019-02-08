@@ -21,6 +21,7 @@ east #
  hostname | grep east > /dev/null && egrep ": ERROR:|: X509:" /tmp/pluto.log
 "ikev2-westnet-eastnet-x509-cr" #1: ERROR: Peer's Certificate issuer is not recognized.
 "ikev2-westnet-eastnet-x509-cr" #1: X509: Certificate rejected for this connection
+"ikev2-westnet-eastnet-x509-cr" #1: X509: CERT payload bogus or revoked
 east #
 east #
  ../bin/check-for-core.sh
