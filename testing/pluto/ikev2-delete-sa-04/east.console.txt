@@ -1,0 +1,32 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # connection is loaded and initiated via auto=start
+east #
+ echo "initdone"
+initdone
+east #
+ # wait over one minute to ensure no EVENT_SA_REPLACE lingered and started something
+east #
+ sleep 45
+east #
+ sleep 30
+east #
+ # There should be no IKE SA and no IPsec SA
+east #
+ ipsec whack --trafficstatus
+east #
+ # east howvever, should be attempting to connect to west because it has auto=start
+east #
+ ipsec status |grep EVENT_RETRANSMIT | sed "s/EVENT_RETRANSMIT in .*$/EVENT_RETRANSMIT in .../"
+000 #5: "west-east-auto":500 STATE_MAIN_I1 (sent MI1, expecting MR1); EVENT_RETRANSMIT in ...
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
