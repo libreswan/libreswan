@@ -38,7 +38,7 @@ extern bool v2_decode_certs(struct ike_sa *ike, struct msg_digest *md);
 
 extern lsw_cert_ret v1_process_certs(struct msg_digest *md);
 
-bool match_certs_id(const struct certs *cert, struct id *peer_id /*ID_FROMCERT => updated*/);
+bool match_certs_id(const struct certs *certs, struct id *peer_id /*ID_FROMCERT => updated*/);
 
 extern void ikev1_decode_cr(struct msg_digest *md);
 extern void ikev2_decode_cr(struct msg_digest *md);

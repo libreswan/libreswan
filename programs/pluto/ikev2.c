@@ -2244,7 +2244,6 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 	 */
 	if (!ike->sa.st_peer_alt_id &&
 	    ike->sa.st_remote_certs.verified != NULL) {
-		/* ??? only the first cert is considered.  Why? */
 		if (match_certs_id(ike->sa.st_remote_certs.verified,
 				   &c->spd.that.id /*ID_FROMCERT => updated*/)) {
 			dbg("X509: CERT and ID matches current connection");

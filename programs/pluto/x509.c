@@ -765,61 +765,55 @@ bool v2_decode_certs(struct ike_sa *ike, struct msg_digest *md)
  * and it will be updated to an id of kind ID_DER_ASN1_DN
  * with the name taken from the cert's derSubject.
  *
- * Even though cert is an element of a linked list,
- * only the first certificate is considered.
- *
- * ??? why should we only consider the first cert?
+ * "certs" is a list, a certificate chain (I think).
+ * We only deal with the head.
  */
-bool match_certs_id(const struct certs *cert,
+bool match_certs_id(const struct certs *certs,
 		struct id *peer_id /*ID_FROMCERT => updated*/)
 {
 	char sbuf[ASN1_BUF_LEN];
 	char namebuf[IDTOA_BUF];
 	char ipstr[IDTOA_BUF];
 
-	// fails!: pexpect(cert->next == NULL);
+	CERTCertificate *end_cert = certs->cert;
 
-	CERTCertificate *end_cert = cert->cert;
+	bool m;
 
-	bool cont;
 	switch (peer_id->kind) {
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		idtoa(peer_id, ipstr, sizeof(ipstr));
-		if (cert_VerifySubjectAltName(end_cert, ipstr)) {
+		m = cert_VerifySubjectAltName(end_cert, ipstr);
+		if (m) {
 			dbg("ID_IP '%s' matched", ipstr);
-			cont = true;
 		} else {
 			loglog(RC_LOG_SERIOUS,
 			       "certificate does not contain ID_IP subjectAltName=%s",
 			       ipstr);
-			cont = false; /* signal connswitch */
 		}
 		break;
 
 	case ID_FQDN:
 		/* We need to skip the "@" prefix from our configured FQDN */
 		idtoa(peer_id, namebuf, sizeof(namebuf));
-		if (cert_VerifySubjectAltName(end_cert, namebuf + 1)) {
+		m = cert_VerifySubjectAltName(end_cert, namebuf + 1);
+		if (m) {
 			dbg("ID_FQDN '%s' matched", namebuf+1);
-			cont = true;
 		} else {
 			loglog(RC_LOG_SERIOUS,
 			       "certificate does not contain subjectAltName=%s",
 			       namebuf + 1);
-			cont = false; /* signal conn switch */
 		}
 		break;
 
 	case ID_USER_FQDN:
 		idtoa(peer_id, namebuf, sizeof(namebuf));
-		if (cert_VerifySubjectAltName(end_cert, namebuf)) {
+		m = cert_VerifySubjectAltName(end_cert, namebuf);
+		if (m) {
 			dbg("ID_USER_FQDN '%s' matched", namebuf);
-			cont = true;
 		} else {
 			loglog(RC_LOG_SERIOUS, "certificate does not contain ID_USER_FQDN subjectAltName=%s",
 			       namebuf);
-			cont = false; /* signal conn switch */
 		}
 		break;
 
@@ -827,7 +821,7 @@ bool match_certs_id(const struct certs *cert,
 		/* We are committed to accept any ID as long as the CERT verified */
 		idtoa(peer_id, namebuf, sizeof(namebuf));
 		dbg("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf);
-		cont = true;
+		m = true;
 
 		{
 			dbg("stomping on peer_id");
@@ -848,13 +842,12 @@ bool match_certs_id(const struct certs *cert,
 
 		chunk_t certdn = same_secitem_as_chunk(end_cert->derSubject);
 
-		if (same_dn_any_order(peer_id->name, certdn)) {
+		m = same_dn_any_order(peer_id->name, certdn);
+		if (m) {
 			dbg("ID_DER_ASN1_DN '%s' matched our ID", namebuf);
-			cont = true;
 		} else {
 			loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
 			       end_cert->subjectName, namebuf);
-			cont = false; /* signal conn switch */
 		}
 		break;
 
@@ -862,15 +855,15 @@ bool match_certs_id(const struct certs *cert,
 		loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
 		       peer_id->kind,
 		       enum_show(&ike_idtype_names, peer_id->kind));
-		cont = false;
+		m = false;
 		break;
 	}
 
-	if (!cont) {
+	if (!m) {
 		libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
 	}
 
-	return cont;
+	return m;
 }
 
 /*
@@ -920,7 +913,6 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 		return LSW_CERT_NONE;
 	}
 
-	/* ??? only one cert is considered.  Why? */
 	if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/)) {
 		return LSW_CERT_MISMATCHED_ID;
 	}
