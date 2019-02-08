@@ -294,37 +294,43 @@ void append_algorithm(struct proposal *proposal,
 void fmt_proposal(struct lswlog *log,
 		  const struct proposal *proposal)
 {
- 	const char *sep = "";
+ 	const char *ps = "";
 
+ 	const char *as = "";
+
+	as = ps;
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
-		lswlogs(log, sep); sep = "-";
+		lswlogs(log, as); ps = "-"; as = "+";
 		lswlogs(log, encrypt->common.fqn);
 		if (alg->enckeylen != 0) {
 			lswlogf(log, "_%d", alg->enckeylen);
 		}
 	}
 
+	as = ps;
 	FOR_EACH_ALGORITHM(proposal, prf, alg) {
 		const struct prf_desc *prf = prf_desc(alg->desc);
-		lswlogs(log, sep); sep = "-";
+		lswlogs(log, as); ps = "-"; as = "+";
 		lswlogs(log, prf->common.fqn);
 	}
 
+	as = ps;
 	if ((proposal->algorithms[PROPOSAL_prf] == NULL &&
 	     proposal->algorithms[PROPOSAL_integ] != NULL) ||
 	    (IMPAIR(PROPOSAL_PARSER) &&
 	     proposal->algorithms[PROPOSAL_integ] != NULL)) {
 		FOR_EACH_ALGORITHM(proposal, integ, alg) {
 			const struct integ_desc *integ = integ_desc(alg->desc);
-			lswlogs(log, sep); sep = "-";
+			lswlogs(log, as); ps = "-"; as = "+";
 			lswlogs(log, integ->common.fqn);
 		}
 	}
 
+	as = ps;
 	FOR_EACH_ALGORITHM(proposal, dh, alg) {
 		const struct oakley_group_desc *dh = dh_desc(alg->desc);
-		lswlogs(log, sep);
+		lswlogs(log, as); ps = "-"; as = "+";
 		lswlogs(log, dh->common.fqn);
 	}
 }
@@ -485,7 +491,16 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 				     const char *str)
 {
 	struct proposals *proposals = alloc_thing(struct proposals, "proposals");
-	if (!v1_proposals_parse_str(parser, proposals, shunk1(str))) {
+	unsigned parser_version = parser->policy->parser_version;
+	if (parser_version == 0) {
+		parser_version = parser->policy->version;
+	}
+	bool ok;
+	switch (parser_version) {
+	case 2: ok = v2_proposals_parse_str(parser, proposals, shunk1(str)); break;
+	default: ok = v1_proposals_parse_str(parser, proposals, shunk1(str)); break;
+	}
+	if (!ok) {
 		proposals_delref(&proposals);
 		return NULL;
 	}

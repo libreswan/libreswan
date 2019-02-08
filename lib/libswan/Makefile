@@ -78,6 +78,7 @@ OBJS += ultot.o
 
 OBJS += proposals.o
 OBJS += v1_proposals.o
+OBJS += v2_proposals.o
 OBJS += esp_info.o
 OBJS += ah_info.o
 OBJS += ike_info.o

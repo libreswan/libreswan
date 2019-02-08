@@ -61,6 +61,7 @@ struct proposal_parser {
 
 struct proposal_policy {
 	enum ike_version version;
+	unsigned parser_version;
 	bool pfs; /* For CHILD SA, use DH from IKE SA */
 	bool check_pfs_vs_dh;
 	/*
@@ -227,6 +228,9 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 				     const char *str);
 
 bool v1_proposals_parse_str(struct proposal_parser *parser,
+			    struct proposals *proposals,
+			    shunk_t alg_str);
+bool v2_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
 			    shunk_t alg_str);
 

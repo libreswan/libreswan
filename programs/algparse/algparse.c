@@ -16,7 +16,8 @@ static bool test_algs = false;
 static bool verbose = false;
 static bool debug = false;
 static bool impair = false;
-static enum ike_version version = IKEv2;
+static enum ike_version ike_version = IKEv2;
+static unsigned parser_version = 0;
 static bool fips = false;
 static bool pfs = false;
 static int failures = 0;
@@ -26,7 +27,8 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 
 #define CHECK(CHECK,PARSE,OK) {						\
 		struct proposal_policy policy = {			\
-			.version = version,				\
+			.version = ike_version,				\
+			.parser_version = parser_version,		\
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
 			.warning = warning,				\
@@ -36,7 +38,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 		if (fips) {						\
 			printf("-fips ");				\
 		}							\
-		switch (version) {					\
+		switch (ike_version) {					\
 		case IKEv1: printf("-v1 "); break;			\
 		case IKEv2: printf("-v2 "); break;			\
 		default: break;						\
@@ -55,7 +57,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 		struct proposals *proposals =				\
 			proposals_from_str(parser, algstr);		\
 		if (proposals != NULL) {				\
-			passert(parser->error[0] == '\0');		\
+			pexpect(parser->error[0] == '\0');		\
 			FOR_EACH_PROPOSAL(proposals, proposal) {	\
 				LSWLOG_FILE(stdout, log) {		\
 					lswlogf(log, "\t");		\
@@ -200,8 +202,8 @@ static void test(void)
 	esp(!fips, "3des-sha1;modp1024");
 	esp(!fips, "3des-sha1;modp1536");
 	esp(true, "3des-sha1;modp2048");
-	esp(version != IKEv1, "3des-sha1;dh21");
-	esp(version != IKEv1, "3des-sha1;ecp_521");
+	esp(ike_version == IKEv2, "3des-sha1;dh21");
+	esp(ike_version == IKEv2, "3des-sha1;ecp_521");
 	esp(false, "3des-sha1;dh23");
 	esp(false, "3des-sha1;dh24");
 	esp(true, "3des-sha1");
@@ -304,11 +306,11 @@ static void test(void)
 	esp(true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
 	esp(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
-	esp(version != IKEv1, "aes;none");
-	esp(version != IKEv1 && !pfs, "aes;none,aes");
-	esp(version != IKEv1, "aes;none,aes;modp2048");
-	esp(version != IKEv1, "aes-sha1-none");
-	esp(version != IKEv1, "aes-sha1;none");
+	esp(ike_version == IKEv2, "aes;none");
+	esp(ike_version == IKEv2 && !pfs, "aes;none,aes");
+	esp(ike_version == IKEv2, "aes;none,aes;modp2048");
+	esp(ike_version == IKEv2, "aes-sha1-none");
+	esp(ike_version == IKEv2, "aes-sha1;none");
 
 	/*
 	 * should this be supported - for now man page says not
@@ -372,8 +374,8 @@ static void test(void)
 	ah(true, "sha2_384");
 	ah(true, "sha2_512");
 	ah(!fips, "aes_xcbc");
-	ah(version != IKEv1, "sha2-none");
-	ah(version != IKEv1, "sha2;none");
+	ah(ike_version == IKEv2, "sha2-none");
+	ah(ike_version == IKEv2, "sha2;none");
 	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 	ah(impair, "aes-sha1");
 	ah(false, "vanityhash1");
@@ -397,7 +399,7 @@ static void test(void)
 	ike(true, "3des;dh21");
 	ike(true, "3des-sha1;dh21");
 	ike(true, "3des-sha1-ecp_521");
-	ike(version != IKEv1, "aes_gcm");
+	ike(ike_version == IKEv2, "aes_gcm");
 	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 	ike(false, "aes;none");
 	ike(false, "id2"); /* should be rejected; idXXX removed */
@@ -429,9 +431,8 @@ static void usage(void)
 		"\n"
 		"Additional options:\n"
 		"\n"
-		"    -v1 | -ikev1: require IKEv1 support\n"
-		"    -v2 | -ikev2: require IKEv2 support\n"
-		"         default: require either IKEv1 or IKEv2 support\n"
+		"    -v2 | -ikev2: configure for IKEv2 (default)\n"
+		"    -v1 | -ikev1: configure for IKEv1\n"
 		"    -pfs | -pfs=yes | -pfs=no: specify PFS (perfect forward privicy)\n"
 		"         default: no\n"
 		"    -fips | -fips=yes | -fips=no: force NSS's FIPS mode\n"
@@ -443,6 +444,8 @@ static void usage(void)
 		"    -v --verbose: be more verbose\n"
 		"    -d --debug: enable debug logging\n"
 		"    -i --impair: disable all algorithm parser checks\n"
+		"    -p1: simple parser\n"
+		"    -p2: complex parser\n"
 		"\n"
 		"Examples:\n"
 		"\n"
@@ -480,10 +483,14 @@ int main(int argc, char *argv[])
 			test_proposals = true;
 		} else if (streq(arg, "ta")) {
 			test_algs = true;
+		} else if (streq(arg, "p1")) {
+			parser_version = 1;
+		} else if (streq(arg, "p2")) {
+			parser_version = 2;
 		} else if (streq(arg, "v1") || streq(arg, "ikev1")) {
-			version = IKEv1;
+			ike_version = IKEv1;
 		} else if (streq(arg, "v2") || streq(arg, "ikev2")) {
-			version = IKEv2;
+			ike_version = IKEv2;
 		} else if (streq(arg, "pfs") || streq(arg, "pfs=yes") || streq(arg, "pfs=on")) {
 			pfs = true;
 		} else if (streq(arg, "pfs=no") || streq(arg, "pfs=off")) {
