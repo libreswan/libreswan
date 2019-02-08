@@ -48,8 +48,10 @@ struct v2_msgids {
 };
 
 void v2_msgid_init(struct ike_sa *ike);
-void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md);
+void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
+			  struct msg_digest *md);
 void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 			  struct msg_digest *md, enum message_role sending);
+bool v2_msgid_ok(struct ike_sa *ike, enum message_role incomming, msgid_t msgid);
 
 #endif

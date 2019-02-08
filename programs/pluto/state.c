@@ -1496,46 +1496,11 @@ struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi
 }
 
 /*
- * Find a state object for an IKEv2 state, a response that includes a msgid.
+ * Find a state object for an IKEv2 state, a response that includes a
+ * msgid.
+ *
+ * Can .st_msgid and .st_v2_msgids.current_request be merged?
  */
-
-struct v2_ix_filter {
-	enum isakmp_xchg_types ix;
-};
-
-static bool v2_ix_predicate(struct state *st, void *context)
-{
-	const struct v2_ix_filter *filter = context;
-	switch (filter->ix) {
-	case ISAKMP_v2_IKE_SA_INIT:
-	case ISAKMP_v2_IKE_AUTH:
-	case ISAKMP_v2_INFORMATIONAL:
-		return true; /* good enough, strict check could be double work */
-		break;
-
-	case ISAKMP_v2_CREATE_CHILD_SA:
-		if (IS_CHILD_IPSECSA_RESPONSE(st))
-			return true;
-		break;
-
-	default:
-		DBG(DBG_CONTROLMORE, DBG_log("unsolicited response? did we send %s request? ",
-					enum_name(&ikev2_exchange_names, filter->ix)));
-		break;
-	}
-	return false;
-}
-
-struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
-				     const ike_spis_t *ike_spis,
-				     const msgid_t msgid)
-{
-	struct v2_ix_filter filter = {
-		.ix = ix,
-	};
-	return state_by_ike_spis(IKEv2, SOS_SOMEBODY, &msgid, ike_spis,
-				 v2_ix_predicate, &filter, __func__);
-}
 
 struct request_filter {
 	msgid_t msgid;
@@ -1547,7 +1512,7 @@ static bool request_predicate(struct state *st, void *context)
 	return st->st_v2_msgids.current_request == filter->msgid;
 }
 
-struct state *find_v2_sa_by_msgid(const ike_spis_t *ike_spis, const msgid_t msgid)
+struct state *find_v2_sa_by_request_msgid(const ike_spis_t *ike_spis, const msgid_t msgid)
 {
 	struct request_filter filter = {
 		.msgid = msgid,
