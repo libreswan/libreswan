@@ -1,6 +1,6 @@
-/* string fragments, for libreswan
+/* Constant string (octet) fragments, for libreswan
  *
- * Copyright (C) 2018 Andrew Cagney
+ * Copyright (C) 2018-2019 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,12 +20,17 @@
 
 #include "shunk.h"
 
-const shunk_t empty_shunk;
+/*
+ * Don't mistake a NULL_SHUNK for an empty shunk - just like for
+ * strings they are different.
+ */
+
+const shunk_t null_shunk = NULL_SHUNK;
 
 shunk_t shunk1(const char *ptr)
 {
 	if (ptr == NULL) {
-		return empty_shunk;
+		return null_shunk;
 	} else {
 		return shunk2(ptr, strlen(ptr));
 	}
@@ -34,9 +39,9 @@ shunk_t shunk1(const char *ptr)
 shunk_t shunk2(const char *ptr, int len)
 {
 	/*
-	 * Since a zero length string and a NULL string pointer are
-	 * considered to be different, don't convert the former into
-	 * an empty_chunk.
+	 * Since a zero length string is not the same as a NULL
+	 * string, don't try to be smart and convert the former into
+	 * the latter.
 	 */
 	return (shunk_t) { .ptr = ptr, .len = len, };
 }
