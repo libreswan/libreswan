@@ -16,7 +16,7 @@ static bool test_algs = false;
 static bool verbose = false;
 static bool debug = false;
 static bool impair = false;
-static enum ike_version version = 0;
+static enum ike_version version = IKEv2;
 static bool fips = false;
 static bool pfs = false;
 static int failures = 0;
@@ -480,8 +480,6 @@ int main(int argc, char *argv[])
 			test_proposals = true;
 		} else if (streq(arg, "ta")) {
 			test_algs = true;
-		} else if (streq(arg, "v0") || streq(arg, "ikev0")) {
-			version = 0;
 		} else if (streq(arg, "v1") || streq(arg, "ikev1")) {
 			version = IKEv1;
 		} else if (streq(arg, "v2") || streq(arg, "ikev2")) {
