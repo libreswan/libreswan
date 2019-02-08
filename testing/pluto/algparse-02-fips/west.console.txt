@@ -7,8 +7,6 @@ west #
  ../bin/algparse.sh PATH/libexec/ipsec/algparse algparse*.txt
 PATH/libexec/ipsec/algparse -v1 -pfs -t # algparse.v1.pfs.txt
 PATH/libexec/ipsec/algparse -v1 -t # algparse.v1.txt
-PATH/libexec/ipsec/algparse -v1 -v2 -pfs -t # algparse.v1.v2.pfs.txt
-PATH/libexec/ipsec/algparse -v1 -v2 -t # algparse.v1.v2.txt
 PATH/libexec/ipsec/algparse -v2 -pfs -t # algparse.v2.pfs.txt
 PATH/libexec/ipsec/algparse -v2 -t # algparse.v2.txt
 PATH/libexec/ipsec/algparse -v # algparse.v.txt
@@ -50,6 +48,7 @@ FIPS Encryption algorithms:
   AES_GCM_8               IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aes_gcm_a
   AES_CTR                 IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aesctr
   AES_CBC                 IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aes
+  NULL_AUTH_AES_GMAC      IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  aes_gmac
 FIPS Hash algorithms:
   SHA1                    IKEv1: IKE         IKEv2:             FIPS  sha
   SHA2_256                IKEv1: IKE         IKEv2:             FIPS  sha2, sha256
@@ -60,13 +59,11 @@ FIPS PRF algorithms:
   HMAC_SHA2_256           IKEv1: IKE         IKEv2: IKE         FIPS  sha2, sha256, sha2_256
   HMAC_SHA2_384           IKEv1: IKE         IKEv2: IKE         FIPS  sha384, sha2_384
   HMAC_SHA2_512           IKEv1: IKE         IKEv2: IKE         FIPS  sha512, sha2_512
-  AES_XCBC                IKEv1:             IKEv2: IKE         FIPS  aes128_xcbc
 FIPS Integrity algorithms:
   HMAC_SHA1_96            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha, sha1, sha1_96, hmac_sha1
   HMAC_SHA2_512_256       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha512, sha2_512, hmac_sha2_512
   HMAC_SHA2_384_192       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha384, sha2_384, hmac_sha2_384
   HMAC_SHA2_256_128       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha2, sha256, sha2_256, hmac_sha2_256
-  AES_XCBC_96             IKEv1:     ESP AH  IKEv2: IKE ESP AH  FIPS  aes_xcbc, aes128_xcbc, aes128_xcbc_96
   AES_CMAC_96             IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  aes_cmac
   NONE                    IKEv1:     ESP     IKEv2:     ESP     FIPS  null
 FIPS DH algorithms:

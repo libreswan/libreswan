@@ -3,13 +3,14 @@ algparse: Encryption algorithm CAMELLIA_CBC disabled; not FIPS compliant
 algparse: Encryption algorithm SERPENT_CBC disabled; not FIPS compliant
 algparse: Encryption algorithm TWOFISH_CBC disabled; not FIPS compliant
 algparse: Encryption algorithm TWOFISH_SSH disabled; not FIPS compliant
-algparse: Encryption algorithm NULL_AUTH_AES_GMAC disabled; not FIPS compliant
 algparse: Encryption algorithm NULL disabled; not FIPS compliant
 algparse: Encryption algorithm CHACHA20_POLY1305 disabled; not FIPS compliant
 algparse: Hash algorithm MD5 disabled; not FIPS compliant
 algparse: PRF algorithm HMAC_MD5 disabled; not FIPS compliant
+algparse: PRF algorithm AES_XCBC disabled; not FIPS compliant
 algparse: Integrity algorithm HMAC_MD5_96 disabled; not FIPS compliant
 algparse: Integrity algorithm HMAC_SHA2_256_TRUNCBUG disabled; not FIPS compliant
+algparse: Integrity algorithm AES_XCBC_96 disabled; not FIPS compliant
 algparse: DH algorithm MODP1024 disabled; not FIPS compliant
 algparse: DH algorithm MODP1536 disabled; not FIPS compliant
 algparse: DH algorithm DH31 disabled; not FIPS compliant
@@ -23,6 +24,7 @@ algparse:   AES_GCM_12              IKEv1:     ESP     IKEv2: IKE ESP     FIPS  
 algparse:   AES_GCM_8               IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aes_gcm_a
 algparse:   AES_CTR                 IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aesctr
 algparse:   AES_CBC                 IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aes
+algparse:   NULL_AUTH_AES_GMAC      IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  aes_gmac
 algparse: FIPS Hash algorithms:
 algparse:   SHA1                    IKEv1: IKE         IKEv2:             FIPS  sha
 algparse:   SHA2_256                IKEv1: IKE         IKEv2:             FIPS  sha2, sha256
@@ -33,13 +35,11 @@ algparse:   HMAC_SHA1               IKEv1: IKE         IKEv2: IKE         FIPS  
 algparse:   HMAC_SHA2_256           IKEv1: IKE         IKEv2: IKE         FIPS  sha2, sha256, sha2_256
 algparse:   HMAC_SHA2_384           IKEv1: IKE         IKEv2: IKE         FIPS  sha384, sha2_384
 algparse:   HMAC_SHA2_512           IKEv1: IKE         IKEv2: IKE         FIPS  sha512, sha2_512
-algparse:   AES_XCBC                IKEv1:             IKEv2: IKE         FIPS  aes128_xcbc
 algparse: FIPS Integrity algorithms:
 algparse:   HMAC_SHA1_96            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha, sha1, sha1_96, hmac_sha1
 algparse:   HMAC_SHA2_512_256       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha512, sha2_512, hmac_sha2_512
 algparse:   HMAC_SHA2_384_192       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha384, sha2_384, hmac_sha2_384
 algparse:   HMAC_SHA2_256_128       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha2, sha256, sha2_256, hmac_sha2_256
-algparse:   AES_XCBC_96             IKEv1:     ESP AH  IKEv2: IKE ESP AH  FIPS  aes_xcbc, aes128_xcbc, aes128_xcbc_96
 algparse:   AES_CMAC_96             IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  aes_cmac
 algparse:   NONE                    IKEv1:     ESP     IKEv2:     ESP     FIPS  null
 algparse: FIPS DH algorithms:

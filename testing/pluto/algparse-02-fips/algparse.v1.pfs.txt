@@ -57,7 +57,7 @@ algparse -fips -v1 -pfs 'esp=aes-sha512'
 algparse -fips -v1 -pfs 'esp=aes128-sha1'
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 -pfs 'esp=aes128-aes_xcbc'
-	AES_CBC_128-AES_XCBC_96
+	ERROR: ESP integrity algorithm 'aes_xcbc' is not supported
 algparse -fips -v1 -pfs 'esp=aes192-sha1'
 	AES_CBC_192-HMAC_SHA1_96
 algparse -fips -v1 -pfs 'esp=aes256-sha1'
@@ -197,7 +197,7 @@ algparse -fips -v1 -pfs 'esp=twofish'
 algparse -fips -v1 -pfs 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192'
 	ERROR: ESP encryption algorithm 'camellia_cbc_256' is not supported
 algparse -fips -v1 -pfs 'esp=null_auth_aes_gmac_256-null;modp8192'
-	ERROR: ESP encryption algorithm 'null_auth_aes_gmac_256' is not supported
+	NULL_AUTH_AES_GMAC_256-NONE-MODP8192
 algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192'
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192'
@@ -318,7 +318,7 @@ algparse -fips -v1 -pfs 'ah=sha2_384'
 algparse -fips -v1 -pfs 'ah=sha2_512'
 	HMAC_SHA2_512_256
 algparse -fips -v1 -pfs 'ah=aes_xcbc'
-	AES_XCBC_96
+	ERROR: AH integrity algorithm 'aes_xcbc' is not supported
 algparse -fips -v1 -pfs 'ah=sha2-none'
 	ERROR: AH DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 -pfs 'ah=sha2;none'

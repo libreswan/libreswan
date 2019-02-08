@@ -13,7 +13,7 @@ algparse:   AES_CBC                 IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  
 algparse:   SERPENT_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  serpent
 algparse:   TWOFISH_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  twofish
 algparse:   TWOFISH_SSH             IKEv1: IKE         IKEv2: IKE ESP           {256,192,*128}  twofish_cbc_ssh
-algparse:   NULL_AUTH_AES_GMAC      IKEv1:     ESP     IKEv2:     ESP           {256,192,*128}  aes_gmac
+algparse:   NULL_AUTH_AES_GMAC      IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  aes_gmac
 algparse:   NULL                    IKEv1:     ESP     IKEv2:     ESP           []
 algparse:   CHACHA20_POLY1305       IKEv1:             IKEv2: IKE ESP           [*256]  chacha20poly1305
 algparse: Hash algorithms:
@@ -28,7 +28,7 @@ algparse:   HMAC_SHA1               IKEv1: IKE         IKEv2: IKE         FIPS  
 algparse:   HMAC_SHA2_256           IKEv1: IKE         IKEv2: IKE         FIPS  sha2, sha256, sha2_256
 algparse:   HMAC_SHA2_384           IKEv1: IKE         IKEv2: IKE         FIPS  sha384, sha2_384
 algparse:   HMAC_SHA2_512           IKEv1: IKE         IKEv2: IKE         FIPS  sha512, sha2_512
-algparse:   AES_XCBC                IKEv1:             IKEv2: IKE         FIPS  aes128_xcbc
+algparse:   AES_XCBC                IKEv1:             IKEv2: IKE               aes128_xcbc
 algparse: Integrity algorithms:
 algparse:   HMAC_MD5_96             IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        md5, hmac_md5
 algparse:   HMAC_SHA1_96            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha, sha1, sha1_96, hmac_sha1
@@ -36,7 +36,7 @@ algparse:   HMAC_SHA2_512_256       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  
 algparse:   HMAC_SHA2_384_192       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha384, sha2_384, hmac_sha2_384
 algparse:   HMAC_SHA2_256_128       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha2, sha256, sha2_256, hmac_sha2_256
 algparse:   HMAC_SHA2_256_TRUNCBUG  IKEv1:     ESP AH  IKEv2:         AH      
-algparse:   AES_XCBC_96             IKEv1:     ESP AH  IKEv2: IKE ESP AH  FIPS  aes_xcbc, aes128_xcbc, aes128_xcbc_96
+algparse:   AES_XCBC_96             IKEv1:     ESP AH  IKEv2: IKE ESP AH        aes_xcbc, aes128_xcbc, aes128_xcbc_96
 algparse:   AES_CMAC_96             IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  aes_cmac
 algparse:   NONE                    IKEv1:     ESP     IKEv2:     ESP     FIPS  null
 algparse: DH algorithms:

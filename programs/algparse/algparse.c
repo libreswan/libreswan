@@ -215,7 +215,7 @@ static void test(void)
 	esp(true, "aes-sha384");
 	esp(true, "aes-sha512");
 	esp(true, "aes128-sha1");
-	esp(true, "aes128-aes_xcbc");
+	esp(!fips, "aes128-aes_xcbc");
 	esp(true, "aes192-sha1");
 	esp(true, "aes256-sha1");
 	esp(true, "aes256-sha");
@@ -297,7 +297,7 @@ static void test(void)
 	esp(!fips, "twofish");
 
 	esp(!fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
-	esp(!fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
+	esp(true, "null_auth_aes_gmac_256-null;modp8192"); /* long */
 	esp(true, "3des-sha1;modp8192"); /* allow ';' when unambigious */
 	esp(true, "3des-sha1-modp8192"); /* allow '-' when unambigious */
 	esp(!pfs, "aes-sha1,3des-sha1;modp8192");
@@ -371,7 +371,7 @@ static void test(void)
 	ah(true, "sha2_256");
 	ah(true, "sha2_384");
 	ah(true, "sha2_512");
-	ah(true, "aes_xcbc");
+	ah(!fips, "aes_xcbc");
 	ah(version != IKEv1, "sha2-none");
 	ah(version != IKEv1, "sha2;none");
 	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
