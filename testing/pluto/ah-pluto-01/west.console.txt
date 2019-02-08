@@ -67,10 +67,6 @@ src 192.1.2.45 dst 192.1.2.23
 	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec align4
 	auth-trunc hmac(sha1) 0xHASHKEY 96
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority 1042407 ptype main
