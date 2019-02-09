@@ -522,13 +522,12 @@ static struct pubkey *create_cert_subjectdn_pubkey(CERTCertificate *cert)
 static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 				 CERTCertificate *cert)
 {
-	generalName_t *gn = NULL;
-	generalName_t *gnt;
-
 	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-	get_pluto_gn_from_nss_cert(cert, &gn, arena);
 
-	for (gnt = gn; gn != NULL; gn = gn->next) {
+	generalName_t *gnt;
+	get_pluto_gn_from_nss_cert(cert, &gnt, arena);
+
+	for (generalName_t *gn = gnt; gn != NULL; gn = gn->next) {
 		struct id id;
 
 		gntoid(&id, gn);
