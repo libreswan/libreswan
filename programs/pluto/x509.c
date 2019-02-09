@@ -1582,8 +1582,7 @@ typedef enum {
 
 static bool is_cert_of_type(CERTCertificate *cert, show_cert_t type)
 {
-	return cert != NULL &&
-		CERT_IsCACert(cert, NULL) == (type == CERT_TYPE_CA);
+	return CERT_IsCACert(cert, NULL) == (type == CERT_TYPE_CA);
 }
 
 static void crl_detail_to_whacklog(CERTCrl *crl)
@@ -1656,31 +1655,29 @@ CERTCertList *get_all_certificates(void)
 
 static void cert_detail_list(show_cert_t type)
 {
-	char *tstr = "";
+	char *tstr;
 
 	switch (type) {
 	case CERT_TYPE_END:
-		tstr = "End ";
+		tstr = "End";
 		break;
 	case CERT_TYPE_CA:
-		tstr = "CA ";
+		tstr = "CA";
 		break;
 	default:
-		break;
+		bad_case(type);
 	}
 
 	whack_log(RC_COMMENT, " ");
-	whack_log(RC_COMMENT, "List of X.509 %sCertificates:", tstr);
+	whack_log(RC_COMMENT, "List of X.509 %s Certificates:", tstr);
 
 	CERTCertList *certs = get_all_certificates();
 
 	if (certs == NULL)
 		return;
 
-	CERTCertListNode *node;
-
-	for (node = CERT_LIST_HEAD(certs); !CERT_LIST_END(node, certs);
-					 node = CERT_LIST_NEXT(node)) {
+	for (CERTCertListNode *node = CERT_LIST_HEAD(certs);
+	     !CERT_LIST_END(node, certs); node = CERT_LIST_NEXT(node)) {
 		if (is_cert_of_type(node->cert, type))
 			cert_detail_to_whacklog(node->cert);
 	}

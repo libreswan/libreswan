@@ -17,25 +17,26 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include "certs.h"
 
 #include "lswalloc.h"
+#include "libreswan/passert.h"
 
 void release_certs(struct certs **head)
 {
 	while (*head != NULL) {
-		struct certs *tmp = (*head);
-		*head = (*head)->next;
-		CERT_DestroyCertificate(tmp->cert);
-		pfree(tmp);
+		struct certs *old = *head;
+		*head = old->next;
+		CERT_DestroyCertificate(old->cert);
+		pfree(old);
 	}
 }
 
 void add_cert(struct certs **head, CERTCertificate *cert)
 {
+	passert(cert != NULL);
 	struct certs *new = alloc_thing(struct certs, __func__);
 	new->cert = cert;
 	new->next = *head;
@@ -47,7 +48,10 @@ CERTCertificate *make_end_cert_first(struct certs **head)
 	for (struct certs *entry = *head; entry != NULL;
 	     entry = entry->next) {
 		if (!CERT_IsCACert(entry->cert, NULL)) {
-			/* swap value with head */
+			/*
+			 * Swap .cert values of entry and *head.
+			 * This will work even if entry == *head.
+			 */
 			CERTCertificate *end_cert = entry->cert;
 			entry->cert = (*head)->cert;
 			(*head)->cert = end_cert;

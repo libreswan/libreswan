@@ -68,7 +68,7 @@ extern void list_certs(void);
  */
 
 struct certs {
-	CERTCertificate *cert;
+	CERTCertificate *cert;	/* never NULL */
 	struct certs *next;
 };
 

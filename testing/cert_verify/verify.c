@@ -152,30 +152,30 @@ static void set_usage(const char *ustr)
 static CERTCertList *get_trust_certlist(CERTCertDBHandle *handle,
 				     const char *name)
 {
-	CERTCertList *trustcl = NULL;
-	CERTCertList *tmpcl = NULL;
-	CERTCertificate *ca = NULL;
-	CERTCertListNode *node = NULL;
+	CERTCertificate *ca = CERT_FindCertByNickname(handle, name);
 
-	if ((ca = CERT_FindCertByNickname(handle, name)) == NULL) {
+	if (ca == NULL) {
 		printf("CERT_FindCertByNickname failed %d\n",
 				PORT_GetError());
 		return NULL;
 	}
+
+	CERTCertList *trustcl = NULL;
 
 	if (ca->isRoot) {
 		printf("trust anchor: %s\n",ca->subjectName);
 		trustcl = CERT_NewCertList();
 		CERT_AddCertToListTail(trustcl, ca);
 	} else {
-		tmpcl = CERT_GetCertChainFromCert(ca, PR_Now(), certUsageAnyCA);
+		CERTCertList *tmpcl =
+			CERT_GetCertChainFromCert(ca, PR_Now(), certUsageAnyCA);
 		if (tmpcl == NULL) {
 			printf("CERT_GetCertChainFromCert failed %d\n",
 					PORT_GetError());
 			return NULL;
 		}
-		for (node = CERT_LIST_HEAD(tmpcl); !CERT_LIST_END(node, tmpcl);
-				node = CERT_LIST_NEXT(node)) {
+		for (CERTCertListNode *node = CERT_LIST_HEAD(tmpcl);
+		     !CERT_LIST_END(node, tmpcl); node = CERT_LIST_NEXT(node)) {
 			printf("CERT list: %s\n", node->cert->subjectName);
 			if (node->cert->isRoot) {
 				trustcl = CERT_NewCertList();

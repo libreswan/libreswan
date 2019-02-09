@@ -157,14 +157,13 @@ static CERTCertList *get_all_ca_certs(void)
 
 	CERTCertList *roots = CERT_NewCertList();
 
-	CERTCertListNode *node;
-
 	/*
 	 * XXX: would a better call be:
 	 * CERT_FilterCertListByUsage(allcerts, certUsageAnyCA, PR_TRUE)
 	 */
-	for (node = CERT_LIST_HEAD(allcerts); !CERT_LIST_END(node, allcerts);
-						node = CERT_LIST_NEXT(node)) {
+	for (CERTCertListNode *node = CERT_LIST_HEAD(allcerts);
+	     !CERT_LIST_END(node, allcerts);
+	     node = CERT_LIST_NEXT(node)) {
 		if (CERT_IsCACert(node->cert, NULL) && node->cert->isRoot) {
 			CERTCertificate *cert = CERT_DupCertificate(node->cert);
 			CERT_AddCertToListTail(roots, cert);
