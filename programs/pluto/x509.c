@@ -765,8 +765,8 @@ bool v2_decode_certs(struct ike_sa *ike, struct msg_digest *md)
  * and it will be updated to an id of kind ID_DER_ASN1_DN
  * with the name taken from the cert's derSubject.
  *
- * "certs" is a list, a certificate chain (I think).
- * We only deal with the head.
+ * "certs" is a list, a certificate chain.
+ * We only deal with the head and it must be an endpoint cert.
  */
 bool match_certs_id(const struct certs *certs,
 		struct id *peer_id /*ID_FROMCERT => updated*/)
@@ -776,6 +776,12 @@ bool match_certs_id(const struct certs *certs,
 	char ipstr[IDTOA_BUF];
 
 	CERTCertificate *end_cert = certs->cert;
+
+	if (CERT_IsCACert(end_cert, NULL)) {
+		loglog(RC_LOG_SERIOUS,
+		       "cannot use CA certificate for endpoint");
+		return false;
+	}
 
 	bool m;
 
