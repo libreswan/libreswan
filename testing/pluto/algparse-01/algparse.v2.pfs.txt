@@ -345,12 +345,7 @@ algparse -v2 -pfs 'ah=aes_ccm'
 algparse -v2 -pfs 'ah=ripemd'
 	ERROR: AH integrity algorithm 'ripemd' is not recognized
 algparse -v2 -pfs 'ike'
-	AES_CBC-HMAC_SHA2_256-MODP2048
-	AES_CBC-HMAC_SHA2_512-MODP2048
-	AES_CBC-HMAC_SHA1-MODP2048
-	3DES_CBC-HMAC_SHA2_256-MODP2048
-	3DES_CBC-HMAC_SHA2_512-MODP2048
-	3DES_CBC-HMAC_SHA1-MODP2048
+	AES_CBC+3DES_CBC-HMAC_SHA2_256+HMAC_SHA2_512+HMAC_SHA1-MODP2048
 algparse -v2 -pfs 'ike='
 	ERROR: String ended with invalid char, just after ""
 algparse -v2 -pfs 'ike=3des-sha1'
@@ -360,17 +355,13 @@ algparse -v2 -pfs 'ike=3des-sha1'
 algparse -v2 -pfs 'ike=3des-sha1;modp1536'
 	3DES_CBC-HMAC_SHA1-MODP1536
 algparse -v2 -pfs 'ike=3des;dh21'
-	3DES_CBC-HMAC_SHA2_256-DH21
-	3DES_CBC-HMAC_SHA2_512-DH21
-	3DES_CBC-HMAC_SHA1-DH21
+	3DES_CBC-HMAC_SHA2_256+HMAC_SHA2_512+HMAC_SHA1-DH21
 algparse -v2 -pfs 'ike=3des-sha1;dh21'
 	3DES_CBC-HMAC_SHA1-DH21
 algparse -v2 -pfs 'ike=3des-sha1-ecp_521'
 	3DES_CBC-HMAC_SHA1-DH21
 algparse -v2 -pfs 'ike=aes_gcm'
-	AES_GCM_16-HMAC_SHA2_256-MODP2048
-	AES_GCM_16-HMAC_SHA2_512-MODP2048
-	AES_GCM_16-HMAC_SHA1-MODP2048
+	AES_GCM_16-HMAC_SHA2_256+HMAC_SHA2_512+HMAC_SHA1-MODP2048
 algparse -v2 -pfs 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -v2 -pfs 'ike=aes;none'
