@@ -1278,21 +1278,21 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 					     outpbs))
 			return STF_INTERNAL_ERROR;
 	} else {
-		generalName_t *ca = NULL;
-		generalName_t *gn = NULL;
 		DBG(DBG_X509,
 		    DBG_log("connection->kind is not CK_PERMANENT (instance), so collect CAs"));
 
-		if ((gn = collect_rw_ca_candidates(md)) != NULL) {
+		generalName_t *gn = collect_rw_ca_candidates(md);
+
+		if (gn != NULL) {
 			DBG(DBG_X509,
 			    DBG_log("connection is RW, lookup CA candidates"));
 
-			for (ca = gn; ca != NULL; ca = ca->next) {
+			for (generalName_t *ca = gn; ca != NULL; ca = ca->next) {
 				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 							     ca->name, outpbs))
 					return STF_INTERNAL_ERROR;
 			}
-			free_generalNames(ca, FALSE);
+			free_generalNames(gn, FALSE);
 		} else {
 			DBG(DBG_X509,
 			    DBG_log("Not a roadwarrior instance, sending empty CA in CERTREQ"));
