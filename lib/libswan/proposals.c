@@ -316,19 +316,34 @@ void free_proposal(struct proposal **proposals)
 	*proposals = NULL;
 }
 
-void append_algorithm(struct proposal *proposal,
+void append_algorithm(struct proposal_parser *parser,
+		      struct proposal *proposal,
 		      enum proposal_algorithm algorithm,
 		      const struct ike_alg *alg,
 		      int enckeylen)
 {
 	passert(algorithm < elemsof(proposal->algorithms));
 	struct algorithm **end = &proposal->algorithms[algorithm];
+	/* find end, and check for duplicates */
 	while ((*end) != NULL) {
+		/*
+		 * enckeylen=0 acts as a wildcard
+		 */
+		if (alg == (*end)->desc &&
+		    (alg->algo_type != IKE_ALG_ENCRYPT ||
+		     ((*end)->enckeylen == 0 ||
+		      enckeylen == (*end)->enckeylen))) {
+			parser->policy->warning("discarding duplicate algorithm '%s'",
+						alg->name);
+			return;
+		}
 		end = &(*end)->next;
 	}
-	*end = alloc_thing(struct algorithm, "alg");
-	(*end)->desc = alg;
-	(*end)->enckeylen = enckeylen;
+	struct algorithm new_algorithm = {
+		.desc = alg,
+		.enckeylen = enckeylen,
+	};
+	*end = clone_thing(new_algorithm, "alg");
 }
 
 void fmt_proposal(struct lswlog *log,

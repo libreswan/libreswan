@@ -417,3 +417,6 @@ algparse -v2 'ike=aes_ccm'
 	ERROR: IKE encryption algorithm 'aes_ccm' is not supported
 algparse -v2 'ike=aes_gcm-sha1-none-modp2048'
 	AES_GCM_16-HMAC_SHA1-MODP2048
+algparse -v2 'ike=aes_gcm+aes_gcm-sha1-none-modp2048'
+	WARNING: discarding duplicate algorithm 'aes_gcm_16'
+	AES_GCM_16-HMAC_SHA1-MODP2048

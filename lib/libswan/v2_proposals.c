@@ -31,7 +31,8 @@
  * there are defaults, add them.
  */
 
-static void merge_algorithms(struct proposal *proposal,
+static void merge_algorithms(struct proposal_parser *parser,
+			     struct proposal *proposal,
 			     enum proposal_algorithm algorithm,
 			     const struct ike_alg **defaults)
 {
@@ -42,7 +43,7 @@ static void merge_algorithms(struct proposal *proposal,
 		return;
 	}
 	for (const struct ike_alg **alg = defaults; (*alg) != NULL; alg++) {
-		append_algorithm(proposal, algorithm, *alg, 0);
+		append_algorithm(parser, proposal, algorithm, *alg, 0);
 	}
 }
 
@@ -52,20 +53,20 @@ static bool merge_defaults(struct proposal_parser *parser,
 	pexpect(parser->policy->version < elemsof(parser->protocol->defaults));
 	const struct proposal_defaults *defaults =
 		parser->protocol->defaults[parser->policy->version];
-	merge_algorithms(proposal, PROPOSAL_encrypt, defaults->encrypt);
-	merge_algorithms(proposal, PROPOSAL_prf, defaults->prf);
+	merge_algorithms(parser, proposal, PROPOSAL_encrypt, defaults->encrypt);
+	merge_algorithms(parser, proposal, PROPOSAL_prf, defaults->prf);
 	if (next_algorithm(proposal, PROPOSAL_integ, NULL) == NULL) {
 		if (proposal_encrypt_aead(proposal)) {
 			/*
 			 * Since AEAD, integrity is always 'none'.
 			 */
-			append_algorithm(proposal, PROPOSAL_integ,
+			append_algorithm(parser, proposal, PROPOSAL_integ,
 					 &ike_alg_integ_none.common, 0);
 		} else if (defaults->integ != NULL) {
 			/*
 			 * Merge in the defaults.
 			 */
-			merge_algorithms(proposal, PROPOSAL_integ,
+			merge_algorithms(parser, proposal, PROPOSAL_integ,
 					 defaults->integ);
 		} else if (next_algorithm(proposal, PROPOSAL_prf, NULL) != NULL &&
 			   proposal_encrypt_norm(proposal)) {
@@ -89,12 +90,12 @@ static bool merge_defaults(struct proposal_parser *parser,
 						       prf->desc->name);
 					return false;
 				}
-				append_algorithm(proposal, PROPOSAL_integ,
+				append_algorithm(parser, proposal, PROPOSAL_integ,
 						 &integ->common, 0);
 			}
 		}
 	}
-	merge_algorithms(proposal, PROPOSAL_dh, defaults->dh);
+	merge_algorithms(parser, proposal, PROPOSAL_dh, defaults->dh);
 	return true;
 }
 
@@ -125,7 +126,7 @@ static bool parse_alg(struct proposal_parser *parser,
 	}
 	DBGF(DBG_PROPOSAL_PARSER, "adding %s algorithm %s[_%d]",
 	     what, alg->name, enckeylen);
-	append_algorithm(proposal, algorithm, alg, enckeylen);
+	append_algorithm(parser, proposal, algorithm, alg, enckeylen);
 	return true;
 }
 
