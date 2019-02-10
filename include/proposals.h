@@ -159,7 +159,7 @@ extern struct proposal *alloc_proposal(struct proposal_parser *parser);
 extern void free_proposal(struct proposal **proposal);
 
 void free_algorithms(struct proposal *proposal, enum proposal_algorithm algorithm);
-void append_proposal(struct proposals *proposals, struct proposal *proposal);
+void append_proposal(struct proposals *proposals, struct proposal **proposal);
 void append_algorithm(struct proposal *proposal, enum proposal_algorithm algorithm,
 		      const struct ike_alg *alg, int enckeylen);
 

@@ -341,7 +341,7 @@ static bool parse_proposal(struct proposal_parser *parser,
 		free_proposal(&proposal);
 		return false;
 	}
-	append_proposal(proposals, proposal);
+	append_proposal(proposals, &proposal);
 	return true;
 }
 
@@ -356,8 +356,12 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 	/* use default if no string */
 	if (input.ptr == NULL) {
 		struct proposal *proposal = alloc_proposal(parser);
-		append_proposal(proposals, proposal);
-		return merge_defaults(parser, proposal);
+		if (!merge_defaults(parser, proposal)) {
+			free_proposal(&proposal);
+			return false;
+		}
+		append_proposal(proposals, &proposal);
+		return true;
 	}
 
 	if (input.len == 0) {

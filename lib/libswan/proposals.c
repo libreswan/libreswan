@@ -199,13 +199,53 @@ unsigned nr_proposals(struct proposals *proposals)
 	return nr;
 }
 
-void append_proposal(struct proposals *proposals, struct proposal *proposal)
+void append_proposal(struct proposals *proposals, struct proposal **proposal)
 {
 	struct proposal **end = &proposals->proposals;
+	/* check for duplicates */
 	while ((*end) != NULL) {
+		bool same = true;
+		for (enum proposal_algorithm pa = 0;
+		     same && pa < PROPOSAL_ALGORITHM_ROOF; pa++) {
+			struct algorithm *old = (*end)->algorithms[pa];
+			struct algorithm *new = (*proposal)->algorithms[pa];
+			while (same) {
+				if (new == NULL && old == NULL) {
+					break;
+				}
+				if (new == NULL || old == NULL) {
+					same = false;
+					break;
+				}
+				if (new->desc != old->desc) {
+					same = false;
+					break;
+				}
+				/*
+				 * If list already contains encryption
+				 * with ENCKEYLEN=0 then new is a
+				 * duplicate as 0 generates all keys.
+				 * Ignore reverse vis aes128,aes.
+				 */
+				if (old->desc->algo_type == IKE_ALG_ENCRYPT &&
+				    (old->enckeylen != 0 &&
+				     new->enckeylen != old->enckeylen)) {
+					same = false;
+					break;
+				}
+				new = new->next;
+				old = old->next;
+			}
+		}
+		if (same) {
+			/* parser->policy->warning("discarding duplicate proposal"); */
+			free_proposal(proposal);
+			return;
+		}
 		end = &(*end)->next;
 	}
-	*end = proposal;
+	*end = *proposal;
+	*proposal = NULL;
 }
 
 struct v1_proposal v1_proposal(const struct proposal *proposal)
