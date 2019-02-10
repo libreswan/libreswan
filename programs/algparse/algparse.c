@@ -405,6 +405,7 @@ static void test(void)
 	ike(false, "id2"); /* should be rejected; idXXX removed */
 	ike(false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(false, "aes_ccm"); /* ESP/AH only */
+	ike(ike_version == IKEv2, "aes_gcm-sha1-none-modp2048");
 }
 
 static void usage(void)
