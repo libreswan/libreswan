@@ -589,7 +589,7 @@ static void integ_desc_check(const struct ike_alg *alg)
 static bool integ_desc_is_ike(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = integ_desc(alg);
-	return integ->prf != NULL;
+	return integ->prf != NULL || integ == &ike_alg_integ_none;
 }
 
 static struct algorithm_table integ_algorithms = ALGORITHM_TABLE(integ_descriptors);

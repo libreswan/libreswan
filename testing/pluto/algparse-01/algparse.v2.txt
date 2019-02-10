@@ -415,3 +415,5 @@ algparse -v2 'ike=3des-id2'
 	ERROR: IKE PRF algorithm 'id2' is not recognized
 algparse -v2 'ike=aes_ccm'
 	ERROR: IKE encryption algorithm 'aes_ccm' is not supported
+algparse -v2 'ike=aes_gcm-sha1-none-modp2048'
+	AES_GCM_16-HMAC_SHA1-MODP2048
