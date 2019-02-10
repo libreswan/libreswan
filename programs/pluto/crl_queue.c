@@ -73,13 +73,13 @@ struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
 	if (cert_dps != NULL) {
 		request_dps = deep_clone_general_names(cert_dps);
 		free_generalNames(cert_dps, false /*shallow*/);
-	} else {
-		if (end_dps == NULL) {
-			dbg("no distribution point available for new fetch request");
-			return next;
-		}
+	} else if (end_dps != NULL) {
 		dbg("no CA crl DP available; using provided DP");
 		request_dps = deep_clone_general_names(end_dps);
+	} else {
+		dbg("no distribution point available for new fetch request");
+		CERT_DestroyCertificate(ca);
+		return next;
 	}
 	CERT_DestroyCertificate(ca);
 

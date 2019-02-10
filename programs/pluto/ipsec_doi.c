@@ -358,19 +358,18 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 /*
  * look for the existence of a non-expiring preloaded public key
  */
-bool has_preloaded_public_key(struct state *st)
+bool has_preloaded_public_key(const struct state *st)
 {
-	struct connection *c = st->st_connection;
+	const struct connection *c = st->st_connection;
 
 	/* do not consider rw connections since
 	 * the peer's identity must be known
 	 */
 	if (c->kind == CK_PERMANENT) {
-		struct pubkey_list *p;
-
 		/* look for a matching RSA public key */
-		for (p = pluto_pubkeys; p != NULL; p = p->next) {
-			struct pubkey *key = p->key;
+		for (const struct pubkey_list *p = pluto_pubkeys; p != NULL;
+		     p = p->next) {
+			const struct pubkey *key = p->key;
 
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&

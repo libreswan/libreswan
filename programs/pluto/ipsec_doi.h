@@ -124,7 +124,7 @@ extern stf_status send_isakmp_notification(struct state *st,
 					   uint16_t type, const void *data,
 					   size_t len);
 
-extern bool has_preloaded_public_key(struct state *st);
+extern bool has_preloaded_public_key(const struct state *st);
 
 extern bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs);
 
