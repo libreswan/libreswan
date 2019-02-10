@@ -32,9 +32,9 @@ algparse:   AES_XCBC                IKEv1:             IKEv2: IKE               
 algparse: Integrity algorithms:
 algparse:   HMAC_MD5_96             IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        md5, hmac_md5
 algparse:   HMAC_SHA1_96            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha, sha1, sha1_96, hmac_sha1
-algparse:   HMAC_SHA2_512_256       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha512, sha2_512, hmac_sha2_512
-algparse:   HMAC_SHA2_384_192       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha384, sha2_384, hmac_sha2_384
-algparse:   HMAC_SHA2_256_128       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha2, sha256, sha2_256, hmac_sha2_256
+algparse:   HMAC_SHA2_512_256       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha512, sha2_512, sha2_512_256, hmac_sha2_512
+algparse:   HMAC_SHA2_384_192       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha384, sha2_384, sha2_384_192, hmac_sha2_384
+algparse:   HMAC_SHA2_256_128       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha2, sha256, sha2_256, sha2_256_128, hmac_sha2_256
 algparse:   HMAC_SHA2_256_TRUNCBUG  IKEv1:     ESP AH  IKEv2:         AH      
 algparse:   AES_XCBC_96             IKEv1:     ESP AH  IKEv2: IKE ESP AH        aes_xcbc, aes128_xcbc, aes128_xcbc_96
 algparse:   AES_CMAC_96             IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  aes_cmac
@@ -48,8 +48,8 @@ algparse:   MODP3072                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  
 algparse:   MODP4096                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  dh16
 algparse:   MODP6144                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  dh17
 algparse:   MODP8192                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  dh18
-algparse:   DH19                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_256
-algparse:   DH20                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_384
-algparse:   DH21                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_521
+algparse:   DH19                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_256, ecp256
+algparse:   DH20                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_384, ecp384
+algparse:   DH21                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_521, ecp521
 algparse:   DH31                    IKEv1: IKE         IKEv2: IKE ESP AH        curve25519
 algparse: leak detective found no leaks

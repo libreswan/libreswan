@@ -252,7 +252,7 @@ struct ike_alg {
 	 * Easier to just require that this contain everything then
 	 * poke around in multiple places.
 	 */
-	const char *names[5];
+	const char *names[6];
 	/*
 	 * See above.
 	 *
