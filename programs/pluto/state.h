@@ -656,7 +656,7 @@ struct state {
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
 	bool st_pend_liveness;			/* Waiting on an informational response */
-	struct pluto_event *st_liveness_event;
+	struct pluto_event *st_liveness_event;	/* IKEv2 only event */
 	struct pluto_event *st_rel_whack_event;
 	struct pluto_event *st_send_xauth_event;
 	struct pluto_event *st_addr_change_event;
@@ -668,7 +668,7 @@ struct state {
 	uint32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK to receive */
 	uint32_t st_dpd_peerseqno;             /* global variables */
 	uint32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
-	struct pluto_event *st_dpd_event;	/* backpointer for DPD events */
+	struct pluto_event *st_dpd_event;	/* backpointer for IKEv1 DPD events */
 
 	bool st_seen_nortel_vid;                /* To work around a nortel bug */
 	struct isakmp_quirks quirks;            /* work arounds for faults in other products */
