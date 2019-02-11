@@ -261,13 +261,21 @@ struct ike_alg {
 	const char *name;
 	const char *fqn;
 	/*
-	 * List of all possible names that might be used to specify
-	 * this algorithm.  Must include NAME and enum names.
+	 * String containing a comma separated list of all names that
+	 * might be used to specify this algorithm.
+	 *
+	 * Must include NAME (above), FQN, and the enum_names table
+	 * name.
 	 *
 	 * Easier to just require that this contain everything then
 	 * poke around in multiple places.
+	 *
+	 * If this compact string is ever found to be a performance
+	 * bottleneck (unlikely as it is only searched during a
+	 * connection load and our problem is DH and signing), then it
+	 * can be parsed once and turned into a lookup table.
 	 */
-	const char *names[6];
+	const char *names;
 	/*
 	 * See above.
 	 *

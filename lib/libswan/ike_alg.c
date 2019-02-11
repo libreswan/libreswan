@@ -60,10 +60,10 @@ des*       - lookup
 	     (A) < (TYPE)->algorithms->end;				\
 	     (A)++)
 
-#define FOR_EACH_IKE_ALG_NAMEP(ALG, NAMEP)				\
-	for (const char *const *(NAMEP) = (ALG)->names;			\
-	     (NAMEP) < (ALG)->names + elemsof((ALG)->names) && *(NAMEP); \
-	     (NAMEP)++)
+#define FOR_EACH_IKE_ALG_NAME(ALG, NAME)				\
+	for (shunk_t NAME##input = shunk1((ALG)->names),		\
+		     NAME = shunk_strsep(&NAME##input, ",");		\
+	     NAME.len > 0; NAME = shunk_strsep(&NAME##input, ","))
 
 struct algorithm_table {
 	const struct ike_alg **start;
@@ -158,9 +158,8 @@ const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
 	passert(type != NULL);
 	for (const struct ike_alg **alg = next_alg(type, NULL);
 	     alg != NULL; alg = next_alg(type, alg)) {
-		FOR_EACH_IKE_ALG_NAMEP(*alg, namep) {
-			if (strlen(*namep) == name.len &&
-			    strncaseeq(*namep, name.ptr, name.len)) {
+		FOR_EACH_IKE_ALG_NAME(*alg, alg_name) {
+			if (shunk_caseeq(alg_name, name)) {
 				return *alg;
 			}
 		}
@@ -355,10 +354,10 @@ static void pexpect_ike_alg_base_in_table(const struct ike_alg *alg,
  * Check that name appears in alg->names
  */
 
-static bool ike_alg_has_name(const struct ike_alg *alg, const char *name)
+static bool ike_alg_has_name(const struct ike_alg *alg, shunk_t name)
 {
-	FOR_EACH_IKE_ALG_NAMEP(alg, namep) {
-		if (strcaseeq(name, *namep)) {
+	FOR_EACH_IKE_ALG_NAME(alg, alg_name) {
+		if (shunk_caseeq(alg_name, name)) {
 			return true;
 		}
 	}
@@ -375,7 +374,7 @@ static bool pexpect_ike_alg_has_name(const struct ike_alg *alg,
 			lswlogf(buf, " %s name is NULL", description);
 		}
 		return false;
-	} else if (!ike_alg_has_name(alg, name)) {
+	} else if (!ike_alg_has_name(alg, shunk1(name))) {
 		LSWLOG_PEXPECT(buf) {
 			lswlog_ike_alg(buf, alg);
 			lswlogf(buf, " missing %s name %s", description, name);
@@ -394,12 +393,12 @@ static bool pexpect_ike_alg_has_name(const struct ike_alg *alg,
 static void pexpect_ike_alg_has_base_names(const struct ike_alg *alg,
 					   const struct ike_alg *base_alg)
 {
-	FOR_EACH_IKE_ALG_NAMEP(base_alg, namep) {
-		const char *name = *namep;
-		if (!ike_alg_has_name(alg, name)) {
+	FOR_EACH_IKE_ALG_NAME(base_alg, alg_name) {
+		if (!ike_alg_has_name(alg, alg_name)) {
 			LSWLOG_PEXPECT(buf) {
 				lswlog_ike_alg(buf, alg);
-				lswlogf(buf, " missing name %s in base ", name);
+				lswlogf(buf, " missing name "PRI_SHUNK" in base ",
+					PRI_shunk(alg_name));
 				lswlog_ike_alg(buf, base_alg);
 			}
 		}
@@ -1120,11 +1119,10 @@ static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg
 	{
 		const char *sep = "  ";
 
-		FOR_EACH_IKE_ALG_NAMEP(alg, name) {
+		FOR_EACH_IKE_ALG_NAME(alg, alg_name) {
 			/* filter out NAME */
-			if (!strcaseeq(*name, alg->fqn)) {
-				lswlogs(buf, sep);
-				lswlogs(buf, *name);
+			if (!shunk_strcaseeq(alg_name, alg->fqn)) {
+				fmt(buf, "%s"PRI_SHUNK, sep, PRI_shunk(alg_name));
 				sep = ", ";
 			}
 		}
