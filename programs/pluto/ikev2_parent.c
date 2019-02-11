@@ -4886,8 +4886,7 @@ static void delete_or_replace_state(struct state *st) {
 				st->st_serialno);
 		event_force(EVENT_SA_EXPIRE, st);
 	} else if (c->newest_ipsec_sa == st->st_serialno &&
-		   (c->policy & POLICY_UP) &&
-		   st->st_event->ev_type == EVENT_SA_REPLACE) {
+			(c->policy & POLICY_UP)) {
 		/*
 		 * Last IPsec SA for a permanent  connection that we have initiated.
 		 * Replace it now.  Useful if the other peer is rebooting.
