@@ -238,7 +238,7 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 			}
 		}
 		if (same) {
-			/* parser->policy->warning("discarding duplicate proposal"); */
+			dbg("discarding duplicate proposal");
 			free_proposal(proposal);
 			return;
 		}
