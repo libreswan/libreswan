@@ -45,8 +45,14 @@ KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
 KVM_WORKERS ?= 1
 #KVM_WORKERS ?= $(shell awk 'BEGIN { c=1 } /cpu cores/ { c=$$4 } END { if (c>1) print c/2; }' /proc/cpuinfo)
 KVM_GROUP ?= qemu
+
+# Should these live in the OS.mk file?
 KVM_USE_EFENCE ?= true
-KVM_MAKEFLAGS ?= USE_EFENCE=$(KVM_USE_EFENCE) ALL_ALGS=false USE_SECCOMP=true USE_LABELED_IPSEC=true
+KVM_USE_NSS_IPSEC_PROFILE ?= true
+KVM_ALL_ALGS ?= false
+KVM_USE_SECCOMP ?= true
+KVM_USE_LABLED_IPSEC ?= true
+KVM_MAKEFLAGS ?= USE_EFENCE=$(KVM_USE_EFENCE) ALL_ALGS=$(KVM_ALL_ALGS) USE_SECCOMP=$(KVM_USE_SECCOMP) USE_LABELED_IPSEC=$(KVM_USE_LABELED_IPSEC) USE_NSS_IPSEC_PROFILE=$(KVM_USE_NSS_IPSEC_PROFILE)
 
 KVM_UID ?= $(shell id -u)
 KVM_GID ?= $(shell id -g $(KVM_GROUP))
