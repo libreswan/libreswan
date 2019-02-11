@@ -5,7 +5,6 @@
 %global with_cavstests 1
 # Libreswan config options
 %global libreswan_config \\\
-    USE_KLIPS=false \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
@@ -15,15 +14,16 @@
     NSS_REQ_AVA_COPY=false \\\
     USE_DNSSEC=true \\\
     USE_FIPSCHECK=true \\\
+    USE_KLIPS=false \\\
     USE_LABELED_IPSEC=true \\\
     USE_LDAP=true \\\
     USE_LIBCAP_NG=true \\\
     USE_LIBCURL=true \\\
     USE_LINUX_AUDIT=true \\\
     USE_NM=true \\\
+    USE_NSS_IPSEC_PROFILE=true \\\
     USE_SECCOMP=true \\\
     USE_XAUTHPAM=true \\\
-    NSS_HAS_IPSEC_PROFILE=true \\\
 %{nil}
 
 #global prever rc1
