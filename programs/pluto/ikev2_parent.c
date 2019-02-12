@@ -4206,7 +4206,7 @@ stf_status ikev2_child_ike_inR(struct state *st /* child state */,
 						  &st->st_accepted_ike_proposal,
 						  ike_proposals);
 	if (ret != STF_OK) {
-		dbg("failed to accept IKE SA, REKEY, response, in process_ike_rekey_sa_pl_response");
+		dbg("failed to accept IKE SA, REKEY, response, in ikev2_child_ike_inR");
 		return ret;
 	}
 
