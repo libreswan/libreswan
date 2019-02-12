@@ -183,25 +183,23 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 
 /* in X_no_ppk keys are stored keys that go into PRF, and we store result in sk_X */
 void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
-			PK11SymKey **sk_d, PK11SymKey **sk_pi, PK11SymKey **sk_pr,
-			PK11SymKey *sk_d_no_ppk,
-			PK11SymKey *sk_pi_no_ppk,
-			PK11SymKey *sk_pr_no_ppk)
+			PK11SymKey **sk_d,	/* output */
+			PK11SymKey **sk_pi,	/* output */
+			PK11SymKey **sk_pr,	/* output */
+			PK11SymKey *sk_d_no_ppk,	/* may alias *sk_d! */
+			PK11SymKey *sk_pi_no_ppk,	/* may alias *sk_pi! */
+			PK11SymKey *sk_pr_no_ppk)	/* may alias *sk_pr! */
 {
-	PK11SymKey *new_sk_pi, *new_sk_pr, *new_sk_d;
 	PK11SymKey *ppk_key = symkey_from_chunk("PPK Keying material", *ppk);
 
-	DBG(DBG_CRYPT, DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
-			 DBG_dump_chunk("PPK:", *ppk));
+	DBG(DBG_CRYPT, {
+		DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
+		DBG_dump_chunk("PPK:", *ppk);
+	});
 
-	new_sk_d = ikev2_prfplus(prf_desc, ppk_key, sk_d_no_ppk, prf_desc->prf_key_size);
-	*sk_d = new_sk_d;
-
-	new_sk_pi = ikev2_prfplus(prf_desc, ppk_key, sk_pi_no_ppk, prf_desc->prf_key_size);
-	*sk_pi = new_sk_pi;
-
-	new_sk_pr = ikev2_prfplus(prf_desc, ppk_key, sk_pr_no_ppk, prf_desc->prf_key_size);
-	*sk_pr = new_sk_pr;
+	*sk_d = ikev2_prfplus(prf_desc, ppk_key, sk_d_no_ppk, prf_desc->prf_key_size);
+	*sk_pi = ikev2_prfplus(prf_desc, ppk_key, sk_pi_no_ppk, prf_desc->prf_key_size);
+	*sk_pr = ikev2_prfplus(prf_desc, ppk_key, sk_pr_no_ppk, prf_desc->prf_key_size);
 
 	if (DBGP(DBG_PRIVATE)) {
 		/* declaring chunks for dumping them beneath */
