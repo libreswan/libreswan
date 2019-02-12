@@ -51,6 +51,10 @@ static bool esp_proposal_ok(struct proposal_parser *parser,
 	return true;
 }
 
+/*
+ * since esp= must have an encryption algorithm this is normally
+ * ignored.
+ */
 static const struct ike_alg *default_esp_encrypt[] = {
 #ifdef USE_AES
 	&ike_alg_encrypt_aes_cbc.common,
@@ -58,16 +62,29 @@ static const struct ike_alg *default_esp_encrypt[] = {
 	NULL,
 };
 
-static const struct ike_alg *default_esp_integ[] = {
+static const struct ike_alg *default_v1_esp_integ[] = {
 #ifdef USE_SHA1
 	&ike_alg_integ_sha1.common,
 #endif
 	NULL,
 };
 
-static const struct proposal_defaults esp_defaults = {
+static const struct ike_alg *default_v2_esp_integ[] = {
+#ifdef USE_SHA2
+	&ike_alg_integ_sha2_512.common,
+	&ike_alg_integ_sha2_256.common,
+#endif
+	NULL,
+};
+
+static const struct proposal_defaults v1_esp_defaults = {
 	.encrypt = default_esp_encrypt,
-	.integ = default_esp_integ,
+	.integ = default_v1_esp_integ,
+};
+
+static const struct proposal_defaults v2_esp_defaults = {
+	.encrypt = default_esp_encrypt,
+	.integ = default_v2_esp_integ,
 };
 
 static const struct proposal_protocol esp_proposal_protocol = {
@@ -75,8 +92,8 @@ static const struct proposal_protocol esp_proposal_protocol = {
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
 	.defaults = {
-		[IKEv1] = &esp_defaults,
-		[IKEv2] = &esp_defaults,
+		[IKEv1] = &v1_esp_defaults,
+		[IKEv2] = &v2_esp_defaults,
 	},
 	.proposal_ok = esp_proposal_ok,
 	.encrypt_alg_byname = encrypt_alg_byname,

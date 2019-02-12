@@ -56,15 +56,27 @@ static bool ah_proposal_ok(struct proposal_parser *parser,
 	return true;
 }
 
-static const struct ike_alg *default_ah_integ[] = {
+static const struct ike_alg *default_v1_ah_integ[] = {
 #ifdef USE_SHA1
 	&ike_alg_integ_sha1.common,
 #endif
 	NULL,
 };
 
-const struct proposal_defaults ah_defaults = {
-	.integ = default_ah_integ,
+static const struct ike_alg *default_v2_ah_integ[] = {
+#ifdef USE_SHA2
+	&ike_alg_integ_sha2_512.common,
+	&ike_alg_integ_sha2_256.common,
+#endif
+	NULL,
+};
+
+const struct proposal_defaults v1_ah_defaults = {
+	.integ = default_v1_ah_integ,
+};
+
+const struct proposal_defaults v2_ah_defaults = {
+	.integ = default_v2_ah_integ,
 };
 
 const struct proposal_protocol ah_proposal_protocol = {
@@ -72,8 +84,8 @@ const struct proposal_protocol ah_proposal_protocol = {
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_AH,
 	.defaults = {
-		[IKEv1] = &ah_defaults,
-		[IKEv2] = &ah_defaults,
+		[IKEv1] = &v1_ah_defaults,
+		[IKEv2] = &v2_ah_defaults,
 	},
 	.proposal_ok = ah_proposal_ok,
 	.integ_alg_byname = integ_alg_byname,

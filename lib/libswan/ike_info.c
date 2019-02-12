@@ -99,9 +99,20 @@ static const struct ike_alg *default_ikev1_groups[] = {
 };
 static const struct ike_alg *default_ikev2_groups[] = {
 	&oakley_group_modp2048.common,
+	&oakley_group_modp3072.common,
+	&oakley_group_modp4096.common,
+	&oakley_group_modp8192.common,
+	&oakley_group_dh19.common,
+	&oakley_group_dh20.common,
+	&oakley_group_dh21.common,
+	&oakley_group_dh31.common,
 	NULL,
 };
 
+/*
+ * since ike= must have an encryption algorithm this is normally
+ * ignored.
+ */
 static const struct ike_alg *default_ike_ealgs[] = {
 #ifdef USE_AES
 	&ike_alg_encrypt_aes_cbc.common,
@@ -112,7 +123,7 @@ static const struct ike_alg *default_ike_ealgs[] = {
 	NULL,
 };
 
-static const struct ike_alg *default_ike_aalgs[] = {
+static const struct ike_alg *default_v1_ike_prfs[] = {
 #ifdef USE_SHA2
 	&ike_alg_prf_sha2_256.common,
 	&ike_alg_prf_sha2_512.common,
@@ -123,16 +134,24 @@ static const struct ike_alg *default_ike_aalgs[] = {
 	NULL,
 };
 
+static const struct ike_alg *default_v2_ike_prfs[] = {
+#ifdef USE_SHA2
+	&ike_alg_prf_sha2_512.common,
+	&ike_alg_prf_sha2_256.common,
+#endif
+	NULL,
+};
+
 const struct proposal_defaults ikev1_ike_defaults = {
 	.dh = default_ikev1_groups,
 	.encrypt = default_ike_ealgs,
-	.prf = default_ike_aalgs,
+	.prf = default_v1_ike_prfs,
 };
 
 const struct proposal_defaults ikev2_ike_defaults = {
 	.dh = default_ikev2_groups,
 	.encrypt = default_ike_ealgs,
-	.prf = default_ike_aalgs,
+	.prf = default_v2_ike_prfs,
 };
 
 const struct proposal_protocol ike_proposal_protocol = {

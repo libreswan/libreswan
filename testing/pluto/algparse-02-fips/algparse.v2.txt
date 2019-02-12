@@ -1,12 +1,12 @@
 algparse -fips -v2 'esp'
-	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp='
 	ERROR: String ended with invalid char, just after ""
 algparse -fips -v2 'esp=aes'
-	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes;modp2048'
 	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
-	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes-sha1'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-sha1'
@@ -15,7 +15,7 @@ algparse -fips -v2 'esp=aes-sha1-modp2048'
 	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-128'
-	AES_CBC_128-HMAC_SHA1_96
+	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes-128-sha1'
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-128-sha1'
@@ -47,7 +47,7 @@ algparse -fips -v2 'esp=3des-sha1'
 algparse -fips -v2 'esp=null-sha1'
 	ERROR: ESP encryption algorithm 'null' is not supported
 algparse -fips -v2 'esp=aes_cbc'
-	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes-sha'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-sha1'
@@ -187,15 +187,15 @@ algparse -fips -v2 'esp=aes_gcm_12_192-null'
 algparse -fips -v2 'esp=aes_gcm_16_256-null'
 	AES_GCM_16_256-NONE
 algparse -fips -v2 'esp=aes_ctr'
-	AES_CTR-HMAC_SHA1_96
+	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aesctr'
-	AES_CTR-HMAC_SHA1_96
+	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes_ctr128'
-	AES_CTR_128-HMAC_SHA1_96
+	AES_CTR_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes_ctr192'
-	AES_CTR_192-HMAC_SHA1_96
+	AES_CTR_192-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes_ctr256'
-	AES_CTR_256-HMAC_SHA1_96
+	AES_CTR_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=serpent'
 	ERROR: ESP encryption algorithm 'serpent' is not supported
 algparse -fips -v2 'esp=twofish'
@@ -225,16 +225,16 @@ algparse -fips -v2 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes;none'
 	WARNING: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
-	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes;none,aes'
 	WARNING: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
-	AES_CBC-HMAC_SHA1_96
-	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes;none,aes;modp2048'
 	WARNING: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
 	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
-	AES_CBC-HMAC_SHA1_96
-	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes-sha1-none'
 	WARNING: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
@@ -329,7 +329,7 @@ algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v2 'ah'
-	HMAC_SHA1_96
+	HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'ah='
 	ERROR: String ended with invalid char, just after ""
 algparse -fips -v2 'ah=md5'
@@ -385,23 +385,23 @@ algparse -fips -v2 'ah=aes_ccm'
 algparse -fips -v2 'ah=ripemd'
 	ERROR: AH integrity algorithm 'ripemd' is not recognized
 algparse -fips -v2 'ike'
-	AES_CBC+3DES_CBC-HMAC_SHA2_256+HMAC_SHA2_512+HMAC_SHA1-MODP2048
+	AES_CBC+3DES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 algparse -fips -v2 'ike='
 	ERROR: String ended with invalid char, just after ""
 algparse -fips -v2 'ike=3des-sha1'
-	3DES_CBC-HMAC_SHA1-MODP2048
+	3DES_CBC-HMAC_SHA1-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 algparse -fips -v2 'ike=3des-sha1'
-	3DES_CBC-HMAC_SHA1-MODP2048
+	3DES_CBC-HMAC_SHA1-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 algparse -fips -v2 'ike=3des-sha1;modp1536'
 	ERROR: IKE DH algorithm 'modp1536' is not supported
 algparse -fips -v2 'ike=3des;dh21'
-	3DES_CBC-HMAC_SHA2_256+HMAC_SHA2_512+HMAC_SHA1-DH21
+	3DES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH21
 algparse -fips -v2 'ike=3des-sha1;dh21'
 	3DES_CBC-HMAC_SHA1-DH21
 algparse -fips -v2 'ike=3des-sha1-ecp_521'
 	3DES_CBC-HMAC_SHA1-DH21
 algparse -fips -v2 'ike=aes_gcm'
-	AES_GCM_16-HMAC_SHA2_256+HMAC_SHA2_512+HMAC_SHA1-MODP2048
+	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 algparse -fips -v2 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -fips -v2 'ike=aes;none'
