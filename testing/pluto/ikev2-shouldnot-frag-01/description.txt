@@ -1,0 +1,3 @@
+This demonstrates a large proposal that should NOT fragment the IKE_SA_INIT packet.
+
+tcpdump confirms we do not see a proto-17 fragment.
