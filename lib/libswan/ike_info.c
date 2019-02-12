@@ -165,10 +165,10 @@ const struct proposal_protocol ike_proposal_protocol = {
 		[IKEv2] = &ikev2_ike_defaults,
 	},
 	.proposal_ok = ike_proposal_ok,
-	.encrypt_alg_byname = encrypt_alg_byname,
-	.prf_alg_byname = prf_alg_byname,
-	.integ_alg_byname = integ_alg_byname,
-	.dh_alg_byname = dh_alg_byname,
+	.encrypt = true,
+	.prf = true,
+	.integ = true,
+	.dh = true,
 };
 
 struct proposal_parser *ike_proposal_parser(const struct proposal_policy *policy)

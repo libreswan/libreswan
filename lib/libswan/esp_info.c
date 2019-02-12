@@ -95,9 +95,9 @@ static const struct proposal_protocol esp_proposal_protocol = {
 		[IKEv2] = &v2_esp_defaults,
 	},
 	.proposal_ok = esp_proposal_ok,
-	.encrypt_alg_byname = encrypt_alg_byname,
-	.integ_alg_byname = integ_alg_byname,
-	.dh_alg_byname = dh_alg_byname,
+	.encrypt = true,
+	.integ = true,
+	.dh = true,
 };
 
 /*

@@ -87,8 +87,8 @@ const struct proposal_protocol ah_proposal_protocol = {
 		[IKEv2] = &v2_ah_defaults,
 	},
 	.proposal_ok = ah_proposal_ok,
-	.integ_alg_byname = integ_alg_byname,
-	.dh_alg_byname = dh_alg_byname,
+	.integ = true,
+	.dh = true,
 };
 
 /*

@@ -106,10 +106,6 @@ static bool parse_alg(struct proposal_parser *parser,
 		      shunk_t token, int enckeylen, shunk_t print,
 		      const char *what)
 {
-	if (alg_byname == NULL) {
-		/* n/a */
-		return false;
-	}
 	if (token.len == 0) {
 		/* will error at end */
 		return false;
@@ -189,10 +185,6 @@ static int parse_eklen(struct proposal_parser *parser, shunk_t buf)
 static bool parse_encrypt(struct proposal_parser *parser,
 			  struct proposal *proposal, struct token *token)
 {
-	alg_byname_fn *alg_byname = parser->protocol->encrypt_alg_byname;
-	if (alg_byname == NULL) {
-		return false;
-	}
 	if (token->alg.len == 0) {
 		return false;
 	}
@@ -212,7 +204,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		}
 		/* print "<ealg>-<eklen>" in errors */
 		shunk_t print_name = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
-		if (!parse_alg(parser, proposal, alg_byname,
+		if (!parse_alg(parser, proposal, encrypt_alg_byname,
 			       ealg, enckeylen, print_name, "encrypt")) {
 			return false;
 		}
@@ -221,7 +213,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 	}
 	/* try <ealg> (no key len) */
 	shunk_t print_name = token->alg;
-	if (!parse_alg(parser, proposal, alg_byname,
+	if (!parse_alg(parser, proposal, encrypt_alg_byname,
 		       ealg, 0, print_name, "encrypt")) {
 		/*
 		 * Could it be <ealg><eklen> or <ealg>_<eklen>?  Work
@@ -254,7 +246,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 			ealg.len -= 1;
 		}
 		/* try again */
-		if (!parse_alg(parser, proposal, alg_byname,
+		if (!parse_alg(parser, proposal, encrypt_alg_byname,
 			       ealg, enckeylen, print_name, "encrypt")) {
 			return false;
 		}
@@ -277,10 +269,9 @@ static bool parse_proposal(struct proposal_parser *parser,
 	};
 	next(&token);
 	/*
-	 * Encryption is not optional.
+	 * Encryption is expected, it isn't optional.
 	 */
-	bool lookup_encrypt = parser->protocol->encrypt_alg_byname != NULL;
-	if (lookup_encrypt) {
+	if (parser->protocol->encrypt) {
 		if (!parse_encrypt(parser, proposal, &token)) {
 			free_proposal(&proposal);
 			return false;
@@ -299,14 +290,13 @@ static bool parse_proposal(struct proposal_parser *parser,
 		DBGF(DBG_PROPOSAL_PARSER, "saved first error: %s", error); \
 	}								\
 	if (token.delim != STOP &&					\
-	    parse_alg(parser, proposal,					\
-		      parser->protocol->ALG##_alg_byname,		\
+	    parser->protocol->ALG &&					\
+	    parse_alg(parser, proposal,	ALG##_alg_byname,		\
 		      token.alg, 0, token.alg, #ALG)) {			\
 		error[0] = parser->error[0] = '\0';			\
 		next(&token);						\
 		while (token.delim == '+' &&				\
-		       parse_alg(parser, proposal,			\
-				 parser->protocol->ALG##_alg_byname,	\
+		       parse_alg(parser, proposal, ALG##_alg_byname,	\
 				 token.alg, 0, token.alg, #ALG)) {	\
 			error[0] = parser->error[0] = '\0';		\
 			next(&token);					\
@@ -325,8 +315,7 @@ static bool parse_proposal(struct proposal_parser *parser,
 	 * using sha1 as integrity.  ike-aes_gcm-none-sha1 would
 	 * clarify this but that makes for a fun parse.
 	 */
-	if (parser->protocol->prf_alg_byname == NULL ||
-	    IMPAIR(PROPOSAL_PARSER)) {
+	if (!parser->protocol->prf || IMPAIR(PROPOSAL_PARSER)) {
 		PARSE_ALG(';', integ);
 	}
 	PARSE_ALG('\0', dh);

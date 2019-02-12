@@ -116,13 +116,12 @@ struct proposal_protocol {
 			    const struct proposal *proposal);
 
 	/*
-	 * This lookup functions must set err and return null if NAME
-	 * isn't valid.
+	 * What algorithms are expected?
 	 */
-	alg_byname_fn *encrypt_alg_byname;
-	alg_byname_fn *prf_alg_byname;
-	alg_byname_fn *integ_alg_byname;
-	alg_byname_fn *dh_alg_byname;
+	bool encrypt;
+	bool prf;
+	bool integ;
+	bool dh;
 };
 
 /*

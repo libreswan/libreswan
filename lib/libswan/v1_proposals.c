@@ -399,7 +399,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		}
 	}
 
-	bool lookup_encrypt = parser->protocol->encrypt_alg_byname != NULL;
+	bool lookup_encrypt = parser->protocol->encrypt;
 	if (!lookup_encrypt && IMPAIR(PROPOSAL_PARSER)) {
 		/* Force lookup, will discard any error. */
 		lookup_encrypt = true;
@@ -416,7 +416,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		}
 	}
 
-	bool lookup_prf = parser->protocol->prf_alg_byname != NULL;
+	bool lookup_prf = parser->protocol->prf;
 	if (!lookup_prf && IMPAIR(PROPOSAL_PARSER)) {
 		/*
 		 * When impaired, only force PRF lookup when the the
@@ -456,8 +456,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	 * using sha1 as integrity.  ike-aes_gcm-none-sha1 would
 	 * clarify this but that makes for a fun parse.
 	 */
-	bool lookup_integ = (parser->protocol->prf_alg_byname == NULL &&
-			     parser->protocol->integ_alg_byname != NULL);
+	bool lookup_integ = (!parser->protocol->prf && parser->protocol->integ);
 	if (!lookup_integ && IMPAIR(PROPOSAL_PARSER)) {
 		/* force things */
 		lookup_integ = true;
@@ -478,7 +477,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 				return false;
 			}
 			if (tokens[1].alg.ptr == NULL &&
-			    parser->protocol->prf_alg_byname == NULL) {
+			    !parser->protocol->prf) {
 				/*
 				 * Only one arg, integrity is prefered
 				 * to DH (and no PRF); error applies.
@@ -493,7 +492,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		}
 	}
 
-	bool lookup_dh = parser->protocol->dh_alg_byname || IMPAIR(PROPOSAL_PARSER);
+	bool lookup_dh = parser->protocol->dh || IMPAIR(PROPOSAL_PARSER);
 	if (lookup_dh && tokens->alg.ptr != NULL) {
 		shunk_t dh = tokens[0].alg;
 		proposal.dh = dh_desc(lookup_byname(parser, dh_alg_byname,
