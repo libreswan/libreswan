@@ -65,13 +65,13 @@ PRF algorithms:
 Integrity algorithms:
   HMAC_MD5_96             IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        md5, hmac_md5
   HMAC_SHA1_96            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha, sha1, sha1_96, hmac_sha1
-  HMAC_SHA2_512_256       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha512, sha2_512, hmac_sha2_512
-  HMAC_SHA2_384_192       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha384, sha2_384, hmac_sha2_384
-  HMAC_SHA2_256_128       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha2, sha256, sha2_256, hmac_sha2_256
+  HMAC_SHA2_512_256       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha512, sha2_512, sha2_512_256, hmac_sha2_512
+  HMAC_SHA2_384_192       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha384, sha2_384, sha2_384_192, hmac_sha2_384
+  HMAC_SHA2_256_128       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  sha2, sha256, sha2_256, sha2_256_128, hmac_sha2_256
   HMAC_SHA2_256_TRUNCBUG  IKEv1:     ESP AH  IKEv2:         AH      
   AES_XCBC_96             IKEv1:     ESP AH  IKEv2: IKE ESP AH        aes_xcbc, aes128_xcbc, aes128_xcbc_96
   AES_CMAC_96             IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  aes_cmac
-  NONE                    IKEv1:     ESP     IKEv2:     ESP     FIPS  null
+  NONE                    IKEv1:     ESP     IKEv2: IKE ESP     FIPS  null
 DH algorithms:
   NONE                    IKEv1:             IKEv2: IKE ESP AH  FIPS  null, dh0
   MODP1024                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        dh2
@@ -81,9 +81,9 @@ DH algorithms:
   MODP4096                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  dh16
   MODP6144                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  dh17
   MODP8192                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  dh18
-  DH19                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_256
-  DH20                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_384
-  DH21                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_521
+  DH19                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_256, ecp256
+  DH20                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_384, ecp384
+  DH21                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  ecp_521, ecp521
   DH31                    IKEv1: IKE         IKEv2: IKE ESP AH        curve25519
 west #
  
