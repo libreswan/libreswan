@@ -832,7 +832,7 @@ static void update_ports(struct whack_message *m)
 }
 
 static void check_end(struct whack_end *this, struct whack_end *that,
-		      bool default_nexthop UNUSED, sa_family_t caf, sa_family_t taf)
+		      sa_family_t caf, sa_family_t taf)
 {
 	if (caf != addrtypeof(&this->host_addr))
 		diag("address family of host inconsistent");
@@ -882,8 +882,7 @@ int main(int argc, char **argv)
 		lst_seen = LEMPTY,
 		cd_seen = LEMPTY,
 		cdp_seen = LEMPTY,
-		end_seen = LEMPTY,
-		end_seen_before_to = LEMPTY;
+		end_seen = LEMPTY;
 	const char
 		*af_used_by = NULL,
 		*tunnel_af_used_by = NULL;
@@ -1632,7 +1631,6 @@ int main(int argc, char **argv)
 
 			msg.left = msg.right;
 			clear_end(&msg.right);
-			end_seen_before_to = end_seen;
 			end_seen = LEMPTY;
 			continue;
 
@@ -2336,11 +2334,9 @@ int main(int argc, char **argv)
 		}
 
 		check_end(&msg.left, &msg.right,
-			  !LHAS(end_seen_before_to, END_NEXTHOP - END_FIRST),
 			  msg.addr_family, msg.tunnel_addr_family);
 
 		check_end(&msg.right, &msg.left,
-			  !LHAS(end_seen, END_NEXTHOP - END_FIRST),
 			  msg.addr_family, msg.tunnel_addr_family);
 
 		if (subnettypeof(&msg.left.client) !=

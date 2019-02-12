@@ -177,7 +177,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	uint8_t sig_val[BYTES_FOR_BITS(1056)];
 	statetime_t sign_time = statetime_start(st);
 	size_t shr = sign_hash_ECDSA(k, hash, hash_digest_size,
-				     sig_val, sizeof(sig_val), hash_algo);
+				     sig_val, sizeof(sig_val));
 	statetime_stop(&sign_time, "%s() calling sign_hash_ECDSA()", __func__);
 
 	if (shr == 0) {

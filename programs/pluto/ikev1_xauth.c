@@ -2101,7 +2101,6 @@ static stf_status xauth_client_resp(struct state *st,
 					{
 						struct secret *s =
 							lsw_get_xauthsecret(
-								st->st_connection,
 								st->st_xauth_username);
 
 						DBG(DBG_CONTROLMORE,

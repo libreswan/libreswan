@@ -263,7 +263,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 }
 
 static bool parse_proposal(struct proposal_parser *parser,
-			   struct proposals *proposals UNUSED, shunk_t input)
+			   struct proposals *proposals, shunk_t input)
 {
 	if (DBGP(DBG_PROPOSAL_PARSER)) {
 		DBG_log("proposal: '"PRI_SHUNK"'", PRI_shunk(input));

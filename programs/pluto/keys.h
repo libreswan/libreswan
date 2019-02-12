@@ -42,8 +42,7 @@ extern int sign_hash_RSA(const struct RSA_private_key *k, const u_char *hash_val
 		      enum notify_payload_hash_algorithms hash_algo);
 
 extern int sign_hash_ECDSA(const struct ECDSA_private_key *k, const u_char *hash_val,
-		      size_t hash_len, u_char *sig_val, size_t sig_len,
-		      enum notify_payload_hash_algorithms hash_algo);
+		      size_t hash_len, u_char *sig_val, size_t sig_len);
 
 extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				      const u_char *hash_val, size_t hash_len,
@@ -67,8 +66,7 @@ extern void load_preshared_secrets(void);
 extern void free_preshared_secrets(void);
 extern err_t load_nss_cert_secret(CERTCertificate *cert);
 
-extern struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
-					  char *xauthname);
+extern struct secret *lsw_get_xauthsecret(char *xauthname);
 
 /* keys from ipsec.conf */
 extern struct pubkey_list *pluto_pubkeys;

@@ -295,8 +295,7 @@ int sign_hash_RSA(const struct RSA_private_key *k,
 
 int sign_hash_ECDSA(const struct ECDSA_private_key *k,
 		    const u_char *hash_val, size_t hash_len,
-		    u_char *sig_val, size_t sig_len,
-		    enum notify_payload_hash_algorithms hash_algo UNUSED)
+		    u_char *sig_val, size_t sig_len)
 {
 	SECKEYPrivateKey *privateKey = NULL;
 	PK11SlotInfo *slot = NULL;
@@ -1061,8 +1060,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 /*
  * find the struct secret associated with an XAUTH username.
  */
-struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
-				   char *xauthname)
+struct secret *lsw_get_xauthsecret(char *xauthname)
 {
 	struct secret *best = NULL;
 
