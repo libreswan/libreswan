@@ -47,7 +47,6 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "packet.h"     /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#include "proposals.h"
 #include "kernel_alg.h"
 #include "kernel_sadb.h"
 
