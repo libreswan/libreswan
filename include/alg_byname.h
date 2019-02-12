@@ -21,6 +21,7 @@
 
 struct ike_alg;
 struct proposal_parser;
+struct ike_alg_type;
 
 /*
  * Filter function to accept/reject an algorithm.
@@ -41,16 +42,8 @@ const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
 					 shunk_t name, size_t key_bit_length,
 					 shunk_t print_name);
 
-const struct ike_alg *prf_alg_byname(struct proposal_parser *parser,
-				     shunk_t name, size_t key_bit_length,
-				     shunk_t print_name);
-
-const struct ike_alg *integ_alg_byname(struct proposal_parser *parser,
-				       shunk_t name, size_t key_bit_length,
-				       shunk_t print_name);
-
-const struct ike_alg *dh_alg_byname(struct proposal_parser *parser,
-				    shunk_t name, size_t key_bit_length,
-				    shunk_t print_name);
+const struct ike_alg *alg_byname(struct proposal_parser *parser,
+				 const struct ike_alg_type *type,
+				 shunk_t name, shunk_t print_name);
 
 #endif

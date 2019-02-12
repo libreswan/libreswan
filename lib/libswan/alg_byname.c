@@ -84,9 +84,9 @@ bool alg_byname_ok(struct proposal_parser *parser,
 	return true;
 }
 
-static const struct ike_alg *alg_byname(struct proposal_parser *parser,
-					const struct ike_alg_type *type,
-					shunk_t name, shunk_t print_name)
+const struct ike_alg *alg_byname(struct proposal_parser *parser,
+				 const struct ike_alg_type *type,
+				 shunk_t name, shunk_t print_name)
 {
 	const struct proposal_protocol *protocol = parser->protocol;
 	const struct ike_alg *alg = ike_alg_byname(type, name);
@@ -105,6 +105,9 @@ static const struct ike_alg *alg_byname(struct proposal_parser *parser,
 				       protocol->name, ike_alg_type_name(type),
 				       PRI_shunk(print_name));
 		}
+		passert(parser->error[0] != '\0');
+		DBGF(DBG_PROPOSAL_PARSER, "ike_alg_byname() failed: %s",
+		     parser->error);
 		return NULL;
 	}
 
@@ -113,6 +116,8 @@ static const struct ike_alg *alg_byname(struct proposal_parser *parser,
 	 */
 	if (!alg_byname_ok(parser, alg, print_name)) {
 		passert(parser->error[0] != '\0');
+		DBGF(DBG_PROPOSAL_PARSER, "alg_byname_ok() failed: %s",
+		     parser->error);
 		return NULL;
 	}
 
@@ -151,25 +156,4 @@ const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
 		}
 	}
 	return alg;
-}
-
-const struct ike_alg *prf_alg_byname(struct proposal_parser *parser,
-				     shunk_t name, size_t key_bit_length UNUSED,
-				     shunk_t print_name)
-{
-	return alg_byname(parser, IKE_ALG_PRF, name, print_name);
-}
-
-const struct ike_alg *integ_alg_byname(struct proposal_parser *parser,
-				       shunk_t name, size_t key_bit_length UNUSED,
-				       shunk_t print_name)
-{
-	return alg_byname(parser, IKE_ALG_INTEG, name, print_name);
-}
-
-const struct ike_alg *dh_alg_byname(struct proposal_parser *parser,
-				    shunk_t name, size_t key_bit_length UNUSED,
-				    shunk_t print_name)
-{
-	return alg_byname(parser, IKE_ALG_DH, name, print_name);
 }

@@ -124,19 +124,19 @@ static bool merge_defaults(struct proposal_parser *parser,
 
 static bool parse_alg(struct proposal_parser *parser,
 		      struct proposal *proposal,
-		      alg_byname_fn *alg_byname,
-		      shunk_t token, int enckeylen, shunk_t print,
-		      const char *what)
+		      const struct ike_alg_type *alg_type,
+		      shunk_t token)
 {
 	if (token.len == 0) {
 		/* will error at end */
 		return false;
 	}
-	const struct ike_alg *alg = alg_byname(parser, token, enckeylen, print);
+	const struct ike_alg *alg = alg_byname(parser, alg_type, token,
+					       token/*print*/);
 	if (alg == NULL) {
-		return warning_or_false(parser, what, print);
+		return warning_or_false(parser, ike_alg_type_name(alg_type), token);
 	}
-	append_algorithm(parser, proposal, alg, enckeylen);
+	append_algorithm(parser, proposal, alg, 0/*enckeylen*/);
 	return true;
 }
 
@@ -334,13 +334,11 @@ static bool parse_proposal(struct proposal_parser *parser,
 	}								\
 	if (token.delim != STOP &&					\
 	    parser->protocol->ALG &&					\
-	    parse_alg(parser, proposal,	ALG##_alg_byname,		\
-		      token.alg, 0, token.alg, #ALG)) {			\
+	    parse_alg(parser, proposal,	&ike_alg_##ALG,	token.alg)) {	\
 		error[0] = parser->error[0] = '\0';			\
 		next(&token);						\
 		while (token.delim == '+' &&				\
-		       parse_alg(parser, proposal, ALG##_alg_byname,	\
-				 token.alg, 0, token.alg, #ALG)) {	\
+		       parse_alg(parser, proposal, &ike_alg_##ALG, token.alg)) { \
 			error[0] = parser->error[0] = '\0';		\
 			next(&token);					\
 		}							\

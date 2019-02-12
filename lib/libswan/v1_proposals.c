@@ -238,39 +238,6 @@ static bool merge_default_proposals(struct proposal_parser *parser,
 				     proposals, proposal);
 }
 
-static const struct ike_alg *lookup_byname(struct proposal_parser *parser,
-					   alg_byname_fn *alg_byname,
-					   shunk_t name,
-					   size_t key_bit_length,
-					   shunk_t print_name,
-					   const char *what)
-{
-	if (name.len > 0) {
-		if (alg_byname != NULL) {
-			const struct ike_alg *alg = alg_byname(parser, name, key_bit_length,
-							       print_name);
-			if (alg == NULL) {
-				DBG(DBG_PROPOSAL_PARSER,
-				    DBG_log("%s_byname('"PRI_SHUNK"') failed: %s",
-					    what, PRI_shunk(name),
-					    parser->error));
-				passert(parser->error[0] != '\0');
-				return NULL;
-			}
-			DBG(DBG_PROPOSAL_PARSER,
-			    DBG_log("%s_byname('"PRI_SHUNK"') returned '%s'",
-				    what, PRI_shunk(name), alg->name));
-			return alg;
-		} else {
-			DBG(DBG_PROPOSAL_PARSER,
-			    DBG_log("ignoring %s '"PRI_SHUNK"'",
-				    what, PRI_shunk(name)));
-			return NULL;
-		}
-	}
-	return NULL;
-}
-
 static int parse_eklen(struct proposal_parser *parser, shunk_t buf)
 {
 	/* convert -<eklen> if present */
@@ -322,10 +289,9 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		shunk_t print_name = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
 		proposal->enckeylen = enckeylen;
 		proposal->encrypt =
-			encrypt_desc(lookup_byname(parser,
-						   encrypt_alg_byname,
-						   ealg, proposal->enckeylen,
-						   print_name, "encryption"));
+			encrypt_desc(encrypt_alg_byname(parser,
+							ealg, proposal->enckeylen,
+							print_name));
 		/* Was <ealg>-<eklen> rejected? */
 		if (parser->error[0] != '\0') {
 			return false;
@@ -336,10 +302,9 @@ static bool parse_encrypt(struct proposal_parser *parser,
 	/* try <ealg> */
 	shunk_t print_name = ealg;
 	proposal->encrypt =
-		encrypt_desc(lookup_byname(parser,
-					   encrypt_alg_byname,
-					   ealg, proposal->enckeylen,
-					   print_name, "encryption"));
+		encrypt_desc(encrypt_alg_byname(parser,
+						ealg, proposal->enckeylen,
+						print_name));
 	if (parser->error[0] != '\0') {
 		/*
 		 * Could it be <ealg><eklen> or <ealg>_<eklen>?  Work
@@ -375,10 +340,9 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		/* try again */
 		parser->error[0] = '\0';
 		proposal->encrypt =
-			encrypt_desc(lookup_byname(parser,
-						   encrypt_alg_byname,
-						   ealg, proposal->enckeylen,
-						   print_name, "encryption"));
+			encrypt_desc(encrypt_alg_byname(parser,
+							ealg, proposal->enckeylen,
+							print_name));
 		if (parser->error[0] != '\0') {
 			return false;
 		}
@@ -428,17 +392,14 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		shunk_t prf = tokens[0].alg;
 		shunk_t integ = tokens[1].alg;
 		if (prf.ptr != NULL && integ.ptr != NULL) {
-			lookup_prf = (lookup_byname(parser, integ_alg_byname,
-						    integ, 0, integ, "integrity")
+			lookup_prf = (alg_byname(parser, IKE_ALG_INTEG, integ, integ)
 				      != NULL);
 			parser->error[0] = '\0';
 		}
 	}
 	if (lookup_prf && tokens->alg.ptr != NULL && tokens->sep != ';') {
 		shunk_t prf = tokens[0].alg;
-		proposal.prf = prf_desc(lookup_byname(parser,
-						      prf_alg_byname,
-						      prf, 0, prf, "PRF"));
+		proposal.prf = prf_desc(alg_byname(parser, IKE_ALG_PRF, prf, prf));
 		if (parser->error[0] != '\0') {
 			return false;
 		}
@@ -463,9 +424,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	}
 	if (lookup_integ && tokens->alg.ptr != NULL && tokens->sep != ';') {
 		shunk_t integ = tokens[0].alg;
-		proposal.integ = integ_desc(lookup_byname(parser,
-							  integ_alg_byname,
-							  integ, 0, integ, "integrity"));
+		proposal.integ = integ_desc(alg_byname(parser, IKE_ALG_INTEG, integ, integ));
 		if (parser->error[0] != '\0') {
 			if (tokens[1].alg.ptr != NULL) {
 				/*
@@ -495,8 +454,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	bool lookup_dh = parser->protocol->dh || IMPAIR(PROPOSAL_PARSER);
 	if (lookup_dh && tokens->alg.ptr != NULL) {
 		shunk_t dh = tokens[0].alg;
-		proposal.dh = dh_desc(lookup_byname(parser, dh_alg_byname,
-						    dh, 0, dh, "DH"));
+		proposal.dh = dh_desc(alg_byname(parser, IKE_ALG_DH, dh, dh));
 		if (parser->error[0] != '\0') {
 			return false;
 		}
