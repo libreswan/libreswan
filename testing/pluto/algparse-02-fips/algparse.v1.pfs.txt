@@ -382,3 +382,5 @@ algparse -fips -v1 -pfs 'ike=aes_gcm-sha1-none-modp2048'
 	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
 algparse -fips -v1 -pfs 'ike=aes_gcm+aes_gcm-sha1-none-modp2048'
 	ERROR: IKE encryption algorithm 'aes_gcm+aes_gcm' is not recognized
+algparse -fips -v1 -pfs 'ike=aes+aes_gcm'
+	ERROR: IKE encryption algorithm 'aes+aes_gcm' is not recognized

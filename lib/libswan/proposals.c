@@ -117,7 +117,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 	bool aead = proposal_encrypt_aead(proposal);
 	bool norm = proposal_encrypt_norm(proposal);
 
-	if (aead && norm) {
+	if (!aead && !norm) {
 		proposal_error(parser, "AEAD and non-AEAD %s encryption algorithm can not be combined",
 			       proposal->protocol->name);
 		return false;
