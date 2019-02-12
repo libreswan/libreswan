@@ -81,8 +81,13 @@ USE_KLIPS?=false
 # support BSD/KAME kernels (on *BSD and OSX)?
 USE_BSDKAME?=false
 
+USE_XFRM_INTERFACE?=true
+
 ifeq ($(USE_NETKEY),true)
 USERLAND_CFLAGS+=-DNETKEY_SUPPORT
+ifeq ($(USE_XFRM_INTERFACE), true)
+ USERLAND_CFLAGS+=-DUSE_XFRM_INTERFACE
+endif
 endif
 
 ifeq ($(USE_KLIPS),true)
@@ -94,6 +99,7 @@ ifeq ($(USE_BSDKAME),true)
 USE_NETKEY?=false
 USE_KLIPS?=false
 endif
+
 
 ifeq ($(USE_BSDKAME),true)
 USERLAND_CFLAGS += -DBSD_KAME
