@@ -5,9 +5,11 @@ if test $# -lt 1; then
 
 Usage:
 
-    $0 [ <test-files> ] [ | patch -p1 ]
+    $0 <path-to-alg-parse> [ <test-files> ] [ | patch -p1 ]
 
-Piping to patch will apply the reported differences.
+Piping to patch will apply the reported differences.  For instance:
+
+    $0 'ipsec algparse'
 
 EOF
     exit 1
@@ -15,6 +17,7 @@ fi
 
 export EF_DISABLE_BANNER=1
 
+algparse=$1 ; shift
 if test $# -eq 0 ; then
     dir=$(dirname $(dirname $0))
 
@@ -42,17 +45,19 @@ for file in "$@" ; do
     done
     flags="${flags} ${test}"
 
-    echo ipsec algparse ${flags} \# ${file} 1>&2
+    echo ${algparse} ${flags} \# ${file} 1>&2
 
     if test -r ${file} ; then
-	if ipsec algparse ${flags} 2>&1 \
+	if ${algparse} ${flags} 2>&1 \
+	       | sed -e "s;^${algparse};algparse;" \
 	       | diff -u ${file} - ; then
 	    :
 	else
 	    rc=1
 	fi
     else
-	ipsec algparse ${flags} 2>&1 \
+	${algparse} ${flags} 2>&1 \
+	    | sed -e "s;${algparse};algparse;" \
 	    | tee ${file}
 	echo created ${dir}/${file} 1>&2
 	rc=1

@@ -4,16 +4,16 @@ FIPS mode enabled.
 west #
  # run the parser tests
 west #
- ../bin/algparse.sh PATH/libexec/ipsec/algparse algparse*.txt
-PATH/libexec/ipsec/algparse -v1 -pfs -t # algparse.v1.pfs.txt
-PATH/libexec/ipsec/algparse -v1 -t # algparse.v1.txt
-PATH/libexec/ipsec/algparse -v2 -pfs -t # algparse.v2.pfs.txt
-PATH/libexec/ipsec/algparse -v2 -t # algparse.v2.txt
-PATH/libexec/ipsec/algparse -v # algparse.v.txt
+ ../bin/algparse.sh 'ipsec algparse' algparse*.txt
+ipsec algparse -v1 -pfs -t # algparse.v1.pfs.txt
+ipsec algparse -v1 -t # algparse.v1.txt
+ipsec algparse -v2 -pfs -t # algparse.v2.pfs.txt
+ipsec algparse -v2 -t # algparse.v2.txt
+ipsec algparse -v # algparse.v.txt
 west #
  # run the algorithm tests
 west #
- PATH/libexec/ipsec/algparse -ta
+ ipsec algparse -ta
 west #
  # check pluto is starting in the correct mode
 west #

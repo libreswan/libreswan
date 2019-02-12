@@ -1,7 +1,7 @@
 ../../guestbin/swan-prep --fips
 
 # run the parser tests
-../bin/algparse.sh algparse*.txt
+../bin/algparse.sh 'ipsec algparse' algparse*.txt
 
 # run the algorithm tests
 ipsec algparse -ta
