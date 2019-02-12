@@ -2449,7 +2449,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (cc != cst->st_connection) {
-		/* ??? DBG_long not conditional on some DBG selector */
+		/* ??? DBG_log not conditional on some DBG selector */
 		char cib[CONN_INST_BUF];
 		DBG_log("Switching Child connection for #%lu to \"%s\"%s from \"%s\"%s",
 				cst->st_serialno, cc->name,
