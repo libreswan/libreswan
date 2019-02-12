@@ -21,6 +21,7 @@
 #define _SPDB_H_
 
 #include "packet.h"
+#include "proposals.h"
 
 /* database of SA properties */
 
