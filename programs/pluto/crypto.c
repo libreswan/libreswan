@@ -33,7 +33,6 @@
 #include "state.h"
 #include "log.h"
 #include "crypto.h"
-#include "proposals.h"
 #include "ike_alg.h"
 #include "test_buffer.h"
 #include "connections.h"

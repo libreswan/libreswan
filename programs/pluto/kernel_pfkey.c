@@ -63,7 +63,6 @@
 #include "nat_traversal.h"
 
 #include "lsw_select.h"
-#include "proposals.h"
 #include "kernel_alg.h"
 #include "ip_address.h"
 #include "af_info.h"

@@ -78,7 +78,6 @@
 #include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
-#include "proposals.h"
 #include "ip_address.h"
 #include "af_info.h"
 

@@ -24,7 +24,6 @@
 
 #include "constants.h"		/* for dup_any()!?! ... */
 #include "lswlog.h"
-#include "proposals.h"
 
 #include "defs.h"
 #include "state.h"

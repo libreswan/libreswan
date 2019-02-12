@@ -47,7 +47,6 @@
 #include "crypto.h"
 
 #include "ikev1.h"
-#include "proposals.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"

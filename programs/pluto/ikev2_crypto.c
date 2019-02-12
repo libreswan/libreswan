@@ -45,7 +45,6 @@
 #include "ikev2.h"
 #include "ikev2_prf.h"
 #include "ike_alg.h"
-#include "proposals.h"
 #include "kernel_alg.h"
 #include "crypt_symkey.h"
 #include "ikev2_prf.h"

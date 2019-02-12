@@ -34,7 +34,6 @@
 #include "connections.h"
 #include "state.h"
 #include "kernel_alg.h"
-#include "proposals.h"
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
 #include "ike_alg_encrypt.h"

@@ -42,7 +42,6 @@
 
 #include "crypto.h"
 
-#include "proposals.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "db_ops.h"
