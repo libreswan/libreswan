@@ -44,7 +44,7 @@ static void merge_algorithms(struct proposal_parser *parser,
 		return;
 	}
 	for (const struct ike_alg **alg = defaults; (*alg) != NULL; alg++) {
-		append_algorithm(parser, proposal, algorithm, *alg, 0);
+		append_algorithm(parser, proposal, *alg, 0);
 	}
 }
 
@@ -61,7 +61,7 @@ static bool merge_defaults(struct proposal_parser *parser,
 			/*
 			 * Since AEAD, integrity is always 'none'.
 			 */
-			append_algorithm(parser, proposal, PROPOSAL_integ,
+			append_algorithm(parser, proposal,
 					 &ike_alg_integ_none.common, 0);
 		} else if (defaults->integ != NULL) {
 			/*
@@ -91,7 +91,7 @@ static bool merge_defaults(struct proposal_parser *parser,
 						       prf->desc->name);
 					return false;
 				}
-				append_algorithm(parser, proposal, PROPOSAL_integ,
+				append_algorithm(parser, proposal,
 						 &integ->common, 0);
 			}
 		}
@@ -102,7 +102,6 @@ static bool merge_defaults(struct proposal_parser *parser,
 
 static bool parse_alg(struct proposal_parser *parser,
 		      struct proposal *proposal,
-		      enum proposal_algorithm algorithm,
 		      alg_byname_fn *alg_byname,
 		      shunk_t token, int enckeylen, shunk_t print,
 		      const char *what)
@@ -127,7 +126,7 @@ static bool parse_alg(struct proposal_parser *parser,
 	}
 	DBGF(DBG_PROPOSAL_PARSER, "adding %s algorithm %s[_%d]",
 	     what, alg->name, enckeylen);
-	append_algorithm(parser, proposal, algorithm, alg, enckeylen);
+	append_algorithm(parser, proposal, alg, enckeylen);
 	return true;
 }
 
@@ -213,7 +212,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		}
 		/* print "<ealg>-<eklen>" in errors */
 		shunk_t print_name = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
-		if (!parse_alg(parser, proposal, PROPOSAL_encrypt, alg_byname,
+		if (!parse_alg(parser, proposal, alg_byname,
 			       ealg, enckeylen, print_name, "encrypt")) {
 			return false;
 		}
@@ -222,7 +221,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 	}
 	/* try <ealg> (no key len) */
 	shunk_t print_name = token->alg;
-	if (!parse_alg(parser, proposal, PROPOSAL_encrypt, alg_byname,
+	if (!parse_alg(parser, proposal, alg_byname,
 		       ealg, 0, print_name, "encrypt")) {
 		/*
 		 * Could it be <ealg><eklen> or <ealg>_<eklen>?  Work
@@ -255,7 +254,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 			ealg.len -= 1;
 		}
 		/* try again */
-		if (!parse_alg(parser, proposal, PROPOSAL_encrypt, alg_byname,
+		if (!parse_alg(parser, proposal, alg_byname,
 			       ealg, enckeylen, print_name, "encrypt")) {
 			return false;
 		}
@@ -300,13 +299,13 @@ static bool parse_proposal(struct proposal_parser *parser,
 		DBGF(DBG_PROPOSAL_PARSER, "saved first error: %s", error); \
 	}								\
 	if (token.delim != STOP &&					\
-	    parse_alg(parser, proposal, PROPOSAL_##ALG,			\
+	    parse_alg(parser, proposal,					\
 		      parser->protocol->ALG##_alg_byname,		\
 		      token.alg, 0, token.alg, #ALG)) {			\
 		error[0] = parser->error[0] = '\0';			\
 		next(&token);						\
 		while (token.delim == '+' &&				\
-		       parse_alg(parser, proposal, PROPOSAL_##ALG,	\
+		       parse_alg(parser, proposal,			\
 				 parser->protocol->ALG##_alg_byname,	\
 				 token.alg, 0, token.alg, #ALG)) {	\
 			error[0] = parser->error[0] = '\0';		\

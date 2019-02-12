@@ -116,14 +116,14 @@ static bool add_proposal(struct proposal_parser *parser,
 {
 	struct proposal *new = alloc_proposal(parser);
 	if (proposal->encrypt != NULL) {
-		append_algorithm(parser, new, PROPOSAL_encrypt,
+		append_algorithm(parser, new,
 				 &proposal->encrypt->common,
 				 proposal->enckeylen);
 	}
 #define A(NAME)								\
 	if (proposal->NAME != NULL) {					\
-		append_algorithm(parser, new, PROPOSAL_##NAME,		\
-				 &proposal->NAME->common, 0);		\
+		append_algorithm(parser, new, &proposal->NAME->common,	\
+				 0/*enckeylen*/);			\
 	}
 	A(prf);
 	A(integ);

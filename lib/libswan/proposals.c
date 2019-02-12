@@ -316,12 +316,33 @@ void free_proposal(struct proposal **proposals)
 	*proposals = NULL;
 }
 
+
+/*
+ * XXX: hack, need to come up with a type safe way of mapping an
+ * ike_alg onto an index.
+ */
+static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *alg)
+{
+	if (alg->algo_type == IKE_ALG_ENCRYPT) {
+		return PROPOSAL_encrypt;
+	} else if (alg->algo_type == IKE_ALG_PRF) {
+		return PROPOSAL_prf;
+	} else if (alg->algo_type == IKE_ALG_INTEG) {
+		return PROPOSAL_integ;
+	} else if (alg->algo_type == IKE_ALG_DH) {
+		return PROPOSAL_dh;
+	} else {
+		PASSERT_FAIL("unexpected algorithm type %s",
+			     ike_alg_type_name(alg->algo_type));
+	}
+}
+
 void append_algorithm(struct proposal_parser *parser,
 		      struct proposal *proposal,
-		      enum proposal_algorithm algorithm,
 		      const struct ike_alg *alg,
 		      int enckeylen)
 {
+	enum proposal_algorithm algorithm = ike_to_proposal_algorithm(alg);
 	passert(algorithm < elemsof(proposal->algorithms));
 	struct algorithm **end = &proposal->algorithms[algorithm];
 	/* find end, and check for duplicates */
@@ -343,6 +364,8 @@ void append_algorithm(struct proposal_parser *parser,
 		.desc = alg,
 		.enckeylen = enckeylen,
 	};
+	DBGF(DBG_PROPOSAL_PARSER, "appending %s algorithm %s[_%d]",
+	     ike_alg_type_name(alg->algo_type), alg->name, enckeylen);
 	*end = clone_thing(new_algorithm, "alg");
 }
 
