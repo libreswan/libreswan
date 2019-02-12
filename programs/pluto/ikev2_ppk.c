@@ -201,23 +201,21 @@ void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
 	*sk_pi = ikev2_prfplus(prf_desc, ppk_key, sk_pi_no_ppk, prf_desc->prf_key_size);
 	*sk_pr = ikev2_prfplus(prf_desc, ppk_key, sk_pr_no_ppk, prf_desc->prf_key_size);
 
-	if (DBGP(DBG_PRIVATE)) {
-		/* declaring chunks for dumping them beneath */
+	DBG(DBG_PRIVATE, {
+		DBG_log("PPK Finished recalculating SK_d, SK_pi, SK_pr");
+		DBG_log("PPK Recalculated pointers: SK_d-key@%p, SK_pi-key@%p, SK_pr-key@%p",
+			 *sk_d, *sk_pi, *sk_pr);
+
 		chunk_t chunk_sk_d = chunk_from_symkey("chunk_SK_d", *sk_d);
-		chunk_t chunk_sk_pi = chunk_from_symkey("chunk_SK_pi", *sk_pi);
-		chunk_t chunk_sk_pr = chunk_from_symkey("chunk_SK_pr", *sk_pr);
-
-		DBG(DBG_PRIVATE,
-		    DBG_log("PPK Finished recalculating SK_d, SK_pi, SK_pr");
-		    DBG_log("PPK Recalculated pointers: SK_d-key@%p, SK_pi-key@%p, SK_pr-key@%p",
-			     *sk_d, *sk_pi, *sk_pr);
-		    DBG_dump_chunk("new SK_d", chunk_sk_d);
-		    DBG_dump_chunk("new SK_pi", chunk_sk_pi);
-		    DBG_dump_chunk("new SK_pr", chunk_sk_pr));
-
+		DBG_dump_chunk("new SK_d", chunk_sk_d);
 		freeanychunk(chunk_sk_d);
-		freeanychunk(chunk_sk_pi);
-		freeanychunk(chunk_sk_pr);
-	}
 
+		chunk_t chunk_sk_pi = chunk_from_symkey("chunk_SK_pi", *sk_pi);
+		DBG_dump_chunk("new SK_pi", chunk_sk_pi);
+		freeanychunk(chunk_sk_pi);
+
+		chunk_t chunk_sk_pr = chunk_from_symkey("chunk_SK_pr", *sk_pr);
+		DBG_dump_chunk("new SK_pr", chunk_sk_pr);
+		freeanychunk(chunk_sk_pr);
+	});
 }
