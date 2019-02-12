@@ -18,6 +18,7 @@ static bool debug = false;
 static bool impair = false;
 static enum ike_version ike_version = IKEv2;
 static unsigned parser_version = 0;
+static bool ignore_parser_errors = false;
 static bool fips = false;
 static bool pfs = false;
 static int failures = 0;
@@ -33,6 +34,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			.pfs = pfs,					\
 			.warning = warning,				\
 			.check_pfs_vs_dh = CHECK,			\
+			.ignore_parser_errors = ignore_parser_errors,	\
 		};							\
 		printf("algparse ");					\
 		if (impair) {						\
@@ -452,7 +454,8 @@ static void usage(void)
 		"        <password> to unlock crypto database\n"
 		"    -v --verbose: be more verbose\n"
 		"    -d --debug: enable debug logging\n"
-		"    -i --impair: disable all algorithm parser checks\n"
+		"    --impair: disable all algorithm parser checks\n"
+		"    --ignore: ignore parser errors (or at least some)\n"
 		"    -p1: simple parser\n"
 		"    -p2: complex parser\n"
 		"\n"
@@ -514,6 +517,8 @@ int main(int argc, char *argv[])
 			verbose = true;
 		} else if (streq(arg, "debug")) {
 			debug = true;
+		} else if (streq(arg, "ignore")) {
+			ignore_parser_errors = true;
 		} else if (streq(arg, "impair")) {
 			impair = true;
 		} else if (streq(arg, "d") || streq(arg, "nssdir")) {

@@ -28,6 +28,28 @@
 #include "alg_byname.h"
 
 /*
+ * No questions hack to either return 'false' for parsing token
+ * failed, or 'true' and warn because forced parsing is enabled.
+ */
+static bool warning_or_false(struct proposal_parser *parser,
+			     const char *what, shunk_t print)
+{
+	pexpect(parser->error[0] != '\0');
+	bool result;
+	if (parser->policy->ignore_parser_errors) {
+		parser->policy->warning("ignoring unknown %s algorithm '"PRI_SHUNK"'",
+					what, PRI_shunk(print));
+		result = true;
+	} else {
+		DBGF(DBG_PROPOSAL_PARSER,
+		     "lookup for %s algorithm '"PRI_SHUNK"' failed",
+		     what, PRI_shunk(print));
+		result = false;
+	}
+	return result;
+}
+
+/*
  * For all the algorithms, when an algorithm is missing (NULL), and
  * there are defaults, add them.
  */
@@ -112,16 +134,8 @@ static bool parse_alg(struct proposal_parser *parser,
 	}
 	const struct ike_alg *alg = alg_byname(parser, token, enckeylen, print);
 	if (alg == NULL) {
-		if (DBGP(DBG_PROPOSAL_PARSER)) {
-			DBG_log("%s_byname('"PRI_SHUNK"') failed: %s",
-				what, PRI_shunk(token),
-				parser->error);
-		}
-		pexpect(parser->error[0] != '\0');
-		return false;
+		return warning_or_false(parser, what, print);
 	}
-	DBGF(DBG_PROPOSAL_PARSER, "adding %s algorithm %s[_%d]",
-	     what, alg->name, enckeylen);
 	append_algorithm(parser, proposal, alg, enckeylen);
 	return true;
 }
@@ -188,37 +202,63 @@ static bool parse_encrypt(struct proposal_parser *parser,
 	if (token->alg.len == 0) {
 		return false;
 	}
-	shunk_t ealg = token->alg;
-	/* try <ealg=token>-<eklen=lookahead> using look-ahead? */
-	struct token lookahead = *token;
-	next(&lookahead);
-	if (lookahead.delim == '-' &&
-	    lookahead.alg.len > 0 &&
-	    isdigit(lookahead.alg.ptr[0])) {
-		shunk_t eklen = lookahead.alg;
-		/* assume <ealg>-<eklen> */
-		int enckeylen = parse_eklen(parser, eklen);
-		if (enckeylen <= 0) {
-			pexpect(parser->error[0] != '\0');
-			return false;
+	/*
+	 * Does it match <ealg>-<eklen>?
+	 *
+	 * Use lookahead to check <eklen> first.  If it starts with a
+	 * digit then just assume <ealg>-<ealg> and error out if it is
+	 * not so.
+	 */
+	{
+		shunk_t ealg = token->alg;
+		struct token lookahead = *token;
+		next(&lookahead);
+		if (lookahead.delim == '-' &&
+		    lookahead.alg.len > 0 &&
+		    isdigit(lookahead.alg.ptr[0])) {
+			shunk_t eklen = lookahead.alg;
+			/* assume <ealg>-<eklen> */
+			int enckeylen = parse_eklen(parser, eklen);
+			if (enckeylen <= 0) {
+				pexpect(parser->error[0] != '\0');
+				return false;
+			}
+			/* print "<ealg>-<eklen>" in errors */
+			shunk_t print = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
+			const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
+								       enckeylen, print);
+			if (alg == NULL) {
+				DBGF(DBG_PROPOSAL_PARSER, "<ealg>byname('"PRI_SHUNK"') with <eklen>='"PRI_SHUNK"' failed: %s",
+				     PRI_shunk(ealg), PRI_shunk(eklen), parser->error);
+				return false;
+			}
+			*token = lookahead;
+			append_algorithm(parser, proposal, alg, enckeylen);
+			return true;
 		}
-		/* print "<ealg>-<eklen>" in errors */
-		shunk_t print_name = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
-		if (!parse_alg(parser, proposal, encrypt_alg_byname,
-			       ealg, enckeylen, print_name, "encrypt")) {
-			return false;
-		}
-		*token = lookahead;
-		return true;
 	}
-	/* try <ealg> (no key len) */
-	shunk_t print_name = token->alg;
-	if (!parse_alg(parser, proposal, encrypt_alg_byname,
-		       ealg, 0, print_name, "encrypt")) {
-		/*
-		 * Could it be <ealg><eklen> or <ealg>_<eklen>?  Work
-		 * backwards skipping any digits.
-		 */
+	/*
+	 * Does it match <ealg> (without any _<eklen> suffix?)
+	 */
+	const shunk_t print = token->alg;
+	{
+		shunk_t ealg = token->alg;
+		const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
+							       0/*enckeylen*/, print);
+		if (alg != NULL) {
+			append_algorithm(parser, proposal, alg, 0/*enckeylen*/);
+			return true;
+		}
+	}
+	/* buffer still contains error from <ealg> lookup */
+	pexpect(parser->error[0] != '\0');
+	/*
+	 * Does it match <ealg><eklen> or <ealg>_<eklen>?  Strip
+	 * trailing digits from <ealg> to form <eklen> and then try
+	 * doing a lookup.
+	 */
+	{
+		shunk_t ealg = token->alg;
 		shunk_t end = shunk2(ealg.ptr + ealg.len, 0);
 		while (end.ptr > ealg.ptr && isdigit(end.ptr[-1])) {
 			end.ptr--;
@@ -227,9 +267,10 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		if (end.len == 0) {
 			/*
 			 * no trailing <eklen> and <ealg> was rejected
+			 * by above); error still contains message
+			 * from not finding just <ealg>.
 			 */
-			pexpect(parser->error[0] != '\0');
-			return false;
+			return warning_or_false(parser, "encryption", print);
 		}
 		/* try to convert */
 		int enckeylen = parse_eklen(parser, end);
@@ -246,12 +287,14 @@ static bool parse_encrypt(struct proposal_parser *parser,
 			ealg.len -= 1;
 		}
 		/* try again */
-		if (!parse_alg(parser, proposal, encrypt_alg_byname,
-			       ealg, enckeylen, print_name, "encrypt")) {
-			return false;
+		const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
+							       enckeylen, print);
+		if (alg != NULL) {
+			append_algorithm(parser, proposal, alg, enckeylen);
+			return true;
 		}
 	}
-	return true;
+	return warning_or_false(parser, "encryption", print);
 }
 
 static bool parse_proposal(struct proposal_parser *parser,

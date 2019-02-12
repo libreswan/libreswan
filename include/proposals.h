@@ -64,6 +64,7 @@ struct proposal_policy {
 	unsigned parser_version;
 	bool pfs; /* For CHILD SA, use DH from IKE SA */
 	bool check_pfs_vs_dh;
+	bool ignore_parser_errors;
 	/*
 	 * According to current policy, is the algorithm ok
 	 * (supported)?  If it isn't return FALSE.
