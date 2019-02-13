@@ -33,8 +33,9 @@
  */
 
 PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
-				 PK11SymKey *key, PK11SymKey *seed,
-				 size_t required_keymat)
+			PK11SymKey *key,
+			PK11SymKey *seed,
+			size_t required_keymat)
 {
 	uint8_t count = 1;
 

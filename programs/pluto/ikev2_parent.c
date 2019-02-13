@@ -2153,12 +2153,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		if (ppk != NULL) {
 			DBG(DBG_CONTROL, DBG_log("found PPK and PPK_ID for our connection"));
 
-			pst->st_sk_d_no_ppk = pst->st_skey_d_nss;
-			pst->st_sk_pi_no_ppk = pst->st_skey_pi_nss;
-			pst->st_sk_pr_no_ppk = pst->st_skey_pr_nss;
-			pst->st_skey_d_nss = NULL;
-			pst->st_skey_pi_nss = NULL;
-			pst->st_skey_pr_nss = NULL;
+			pst->st_sk_d_no_ppk = reference_symkey(__func__, "sk_d_no_ppk", pst->st_skey_d_nss);
+			pst->st_sk_pi_no_ppk = reference_symkey(__func__, "sk_pi_no_ppk", pst->st_skey_pi_nss);
+			pst->st_sk_pr_no_ppk = reference_symkey(__func__, "sk_pr_no_ppk", pst->st_skey_pr_nss);
 
 			create_ppk_id_payload(ppk_id, &ppk_id_p);
 			DBG(DBG_CONTROL, DBG_log("ppk type: %d", (int) ppk_id_p.type));
@@ -2167,10 +2164,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			ppk_recalculate(ppk, pst->st_oakley.ta_prf,
 						&pst->st_skey_d_nss,
 						&pst->st_skey_pi_nss,
-						&pst->st_skey_pr_nss,
-						pst->st_sk_d_no_ppk,
-						pst->st_sk_pi_no_ppk,
-						pst->st_sk_pr_no_ppk);
+						&pst->st_skey_pr_nss);
 			libreswan_log("PPK AUTH calculated as initiator");
 		} else {
 			if (pc->policy & POLICY_PPK_INSIST) {
@@ -2810,10 +2804,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				ppk_recalculate(ppk, st->st_oakley.ta_prf,
 						&st->st_skey_d_nss,
 						&st->st_skey_pi_nss,
-						&st->st_skey_pr_nss,
-						st->st_skey_d_nss,
-						st->st_skey_pi_nss,
-						st->st_skey_pr_nss);
+						&st->st_skey_pr_nss);
 				st->st_ppk_used = TRUE;
 				libreswan_log("PPK AUTH calculated as responder");
 			} else {

@@ -182,13 +182,23 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 }
 
 /* in X_no_ppk keys are stored keys that go into PRF, and we store result in sk_X */
+
+static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key, const struct prf_desc *prf_desc, const char *name)
+{
+	PK11SymKey *t = ikev2_prfplus(prf_desc, ppk_key, *sk, prf_desc->prf_key_size);
+	release_symkey(__func__, name, sk);
+	*sk = t;
+	DBG(DBG_PRIVATE, {
+		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk);
+		DBG_dump_chunk(name, chunk_sk);
+		freeanychunk(chunk_sk);
+	});
+}
+
 void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
-			PK11SymKey **sk_d,	/* output */
-			PK11SymKey **sk_pi,	/* output */
-			PK11SymKey **sk_pr,	/* output */
-			PK11SymKey *sk_d_no_ppk,	/* may alias *sk_d! */
-			PK11SymKey *sk_pi_no_ppk,	/* may alias *sk_pi! */
-			PK11SymKey *sk_pr_no_ppk)	/* may alias *sk_pr! */
+			PK11SymKey **sk_d,	/* updated */
+			PK11SymKey **sk_pi,	/* updated */
+			PK11SymKey **sk_pr)	/* updated */
 {
 	PK11SymKey *ppk_key = symkey_from_chunk("PPK Keying material", *ppk);
 
@@ -197,25 +207,11 @@ void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
 		DBG_dump_chunk("PPK:", *ppk);
 	});
 
-	*sk_d = ikev2_prfplus(prf_desc, ppk_key, sk_d_no_ppk, prf_desc->prf_key_size);
-	*sk_pi = ikev2_prfplus(prf_desc, ppk_key, sk_pi_no_ppk, prf_desc->prf_key_size);
-	*sk_pr = ikev2_prfplus(prf_desc, ppk_key, sk_pr_no_ppk, prf_desc->prf_key_size);
+	DBGF(DBG_PRIVATE, "PPK recalculating SK_d, SK_pi, SK_pr");
 
-	DBG(DBG_PRIVATE, {
-		DBG_log("PPK Finished recalculating SK_d, SK_pi, SK_pr");
-		DBG_log("PPK Recalculated pointers: SK_d-key@%p, SK_pi-key@%p, SK_pr-key@%p",
-			 *sk_d, *sk_pi, *sk_pr);
+	ppk_recalc_one(sk_d, ppk_key, prf_desc, "sk_d");
+	ppk_recalc_one(sk_pi, ppk_key, prf_desc, "sk_pi");
+	ppk_recalc_one(sk_pr, ppk_key, prf_desc, "sk_pr");
 
-		chunk_t chunk_sk_d = chunk_from_symkey("chunk_SK_d", *sk_d);
-		DBG_dump_chunk("new SK_d", chunk_sk_d);
-		freeanychunk(chunk_sk_d);
-
-		chunk_t chunk_sk_pi = chunk_from_symkey("chunk_SK_pi", *sk_pi);
-		DBG_dump_chunk("new SK_pi", chunk_sk_pi);
-		freeanychunk(chunk_sk_pi);
-
-		chunk_t chunk_sk_pr = chunk_from_symkey("chunk_SK_pr", *sk_pr);
-		DBG_dump_chunk("new SK_pr", chunk_sk_pr);
-		freeanychunk(chunk_sk_pr);
-	});
+	release_symkey(__func__, "PPK chunk", &ppk_key);
 }
