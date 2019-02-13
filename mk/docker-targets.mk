@@ -1,13 +1,18 @@
 # docker make/start/stop targets, for Libreswan testing
 #
-# Copyright (C) 2016-2017 Antony Antony <antony@phenome.org>
-# 
-# make DISTRO=fedora DISTRO_REL=28 docker-image
-
-# These variable could be changed
+# Copyright (C) 2016-2019 Antony Antony <antony@phenome.org>
 #
+# make DISTRO=fedora DISTRO_REL=28 docker-image
+#
+# make DISTRO=fedora DISTRO_REL=28 DI_T=swanbase docker-image
+# 
+# The variables above could be set from command line.
+#
+
 DOCKER_CMD ?= sudo docker
 D ?= testing/docker
+
+DI_T ?= swanbase 	#docker image tag
 
 W1 = $(firstword $(subst -, ,$1))
 W2 = $(or $(word 2, $(subst -, ,$1)), $(value 2))
@@ -17,15 +22,9 @@ FIRST_TARGET ?=$@	# keep track of original target
 DISTRO ?= fedora	# default distro
 DISTRO_REL ?= 28 	# default release
 
-DI_T ?= swanbase 	#docker image tag
-
-# end of configurable variables 
+# end of configurable variables
 
 DI = $(DISTRO)-$(DISTRO_REL)
-DOCKER_BASE = $(DI)-base
-DOCKER_PACKAGES = $(DI)-packages
-DOCKER_SSH = $(DI)-ssh
-DOCKER_START = $(DI)-start
 DOCKERFILE ?= $(D)/dockerfile
 DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)-min-packages
 TWEAKS=
@@ -65,7 +64,6 @@ ifeq ($(TRAVIS_BANCH), travis)
 	DISTRO_REL = $(call W3, $(BRANCH),27)
 endif
 
-
 .PHONY: dcokerfile-remove-libreswan-spec
 dcokerfile-remove-libreswan-spec:
 	$(shell sed -i '/libreswan\.spec/d' testing/docker/dockerfile)
@@ -95,23 +93,26 @@ flip-glibc-kern-headers:
 #
 
 .PHONY: install-rpm-dep
-RPM_DEP = $$(dnf deplist libreswan | awk '/provider:/ {print $$2}' | sort -u)
+RUN_RPMS = $$(dnf deplist libreswan | awk '/provider:/ {print $$2}' | sort -u)
 install-rpm-dep:
 	$(if $(KVM_PACKAGES), $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
 	$(if $(KVM_PACKAGES), $(KVM_PACKAGE_UPGRADE) $(KVM_PACKAGES))
 	dnf builddep -y libreswan
 	dnf install -y \@development-tools
-	dnf install -y --skip-broken $(RPM_DEP)
+	dnf install -y --skip-broken $(RUN_RPMS)
 
 .PHONY: install-deb-dep
-RUN_DEBS = $$(apt-cache depends libreswan | awk '/Depends:/{print $$2}' | grep -v "<" | sort -u)
+RUN_DEBS = $$(test -f /usr/bin/apt-cache1 && apt-cache depends libreswan | awk '/Depends:/{print $$2}' | grep -v "<" | sort -u)
 install-deb-dep:
+	apt-get update
 	# development dependencies
-	apt-get install -y equivs devscripts
+	apt-get install -y equivs devscripts dh-systemd
 	# libreswan specific development dependencies
 	apt-get -y --no-install-recommends build-dep libreswan
 	# install libreswan runtime dependencies
-	apt-get install -y --no-install-recommends $(RUNTIME_DEBS)
+	apt-get install -y $(RUN_DEBS)
+	# give another kick
+	apt --fix-broken install -y 
 
 .PHONY: travis-docker-image
 travis-docker-image:
@@ -144,7 +145,7 @@ docker-build: dcokerfile
 
 .PHONY: docker-ssh-image
 docker-ssh-image: DOCKERFILE_SSH = $(D)/Dockerfile-swan-ssh
-docker-ssh-image: dcokerfile $(TWEAKS) docker-build
+docker-ssh-image: $(DOCKERFILE_SSH)
 	cat $(DOCKERFILE_SSH) >> $(DOCKERFILE)
 
 .PHONY: docker-min-image

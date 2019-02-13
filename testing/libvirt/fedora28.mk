@@ -31,7 +31,9 @@ KVM_PACKAGES = \
     glibc-devel \
     hping3 \
     ike-scan \
+    iproute \
     ipsec-tools \
+    iptables \
     ldns \
     ldns-devel \
     libcap-ng-devel \
