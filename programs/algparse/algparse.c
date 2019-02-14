@@ -35,6 +35,12 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			.check_pfs_vs_dh = CHECK,			\
 		};							\
 		printf("algparse ");					\
+		if (impair) {						\
+			printf("-impair ");				\
+		}							\
+		if (parser_version > 0) {				\
+			printf("-p%d ", parser_version);		\
+		}							\
 		if (fips) {						\
 			printf("-fips ");				\
 		}							\
