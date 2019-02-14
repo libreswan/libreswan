@@ -2153,8 +2153,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		if (ppk != NULL) {
 			DBG(DBG_CONTROL, DBG_log("found PPK and PPK_ID for our connection"));
 
+			pexpect(pst->st_sk_d_no_ppk == NULL);
 			pst->st_sk_d_no_ppk = reference_symkey(__func__, "sk_d_no_ppk", pst->st_skey_d_nss);
+
+			pexpect(pst->st_sk_pi_no_ppk == NULL);
 			pst->st_sk_pi_no_ppk = reference_symkey(__func__, "sk_pi_no_ppk", pst->st_skey_pi_nss);
+
+			pexpect(pst->st_sk_pr_no_ppk == NULL);
 			pst->st_sk_pr_no_ppk = reference_symkey(__func__, "sk_pr_no_ppk", pst->st_skey_pr_nss);
 
 			create_ppk_id_payload(ppk_id, &ppk_id_p);
@@ -3690,22 +3695,28 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	 * payload. We should revert our key material to NO_PPK versions.
 	 */
 	if (pst->st_seen_ppk && !ppk_seen_identity && LIN(POLICY_PPK_ALLOW, c->policy)) {
-		libreswan_log("Peer wants to continue without PPK - switching to NO_PPK");
-		/* destroy the PPK based calculations */
-		release_symkey(__func__, "st_skey_d_nss",  &pst->st_skey_d_nss);
-		release_symkey(__func__, "st_skey_pi_nss", &pst->st_skey_pi_nss);
-		release_symkey(__func__, "st_skey_pr_nss", &pst->st_skey_pr_nss);
+		/* discard the PPK based calculations */
 
-		pst->st_skey_d_nss = pst->st_sk_d_no_ppk;
-		pst->st_skey_pi_nss = pst->st_sk_pi_no_ppk;
-		pst->st_skey_pr_nss = pst->st_sk_pr_no_ppk;
+		libreswan_log("Peer wants to continue without PPK - switching to NO_PPK");
+
+		release_symkey(__func__, "st_skey_d_nss",  &pst->st_skey_d_nss);
+		pst->st_skey_d_nss = reference_symkey(__func__, "used sk_d from no ppk", pst->st_sk_d_no_ppk);
+
+		release_symkey(__func__, "st_skey_pi_nss", &pst->st_skey_pi_nss);
+		pst->st_skey_pi_nss = reference_symkey(__func__, "used sk_pi from no ppk", pst->st_sk_pi_no_ppk);
+
+		release_symkey(__func__, "st_skey_pr_nss", &pst->st_skey_pr_nss);
+		pst->st_skey_pr_nss = reference_symkey(__func__, "used sk_pr from no ppk", pst->st_sk_pr_no_ppk);
+
 		if (pst != st) {
 			release_symkey(__func__, "st_skey_d_nss",  &st->st_skey_d_nss);
+			st->st_skey_d_nss = reference_symkey(__func__, "used sk_d from no ppk", st->st_sk_d_no_ppk);
+
 			release_symkey(__func__, "st_skey_pi_nss", &st->st_skey_pi_nss);
+			st->st_skey_pi_nss = reference_symkey(__func__, "used sk_pi from no ppk", st->st_sk_pi_no_ppk);
+
 			release_symkey(__func__, "st_skey_pr_nss", &st->st_skey_pr_nss);
-			st->st_skey_d_nss = st->st_sk_d_no_ppk;
-			st->st_skey_pi_nss = st->st_sk_pi_no_ppk;
-			st->st_skey_pr_nss = st->st_sk_pr_no_ppk;
+			st->st_skey_pr_nss = reference_symkey(__func__, "used sk_pr from no ppk", st->st_sk_pr_no_ppk);
 		}
 	}
 

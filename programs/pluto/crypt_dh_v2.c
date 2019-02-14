@@ -133,13 +133,29 @@ bool finish_dh_v2(struct state *st,
 		freeanychunk(dhv2->skey_chunk_SK_pi);
 		freeanychunk(dhv2->skey_chunk_SK_pr);
 	} else {
+		pexpect(st->st_skey_d_nss == NULL);
 		st->st_skey_d_nss = dhv2->skeyid_d;
+
+		pexpect(st->st_skey_ai_nss == NULL);
+
+		pexpect(st->st_skey_ai_nss == NULL);
 		st->st_skey_ai_nss = dhv2->skeyid_ai;
+
+		pexpect(st->st_skey_ar_nss == NULL);
 		st->st_skey_ar_nss = dhv2->skeyid_ar;
+
+		pexpect(st->st_skey_pi_nss== NULL);
 		st->st_skey_pi_nss = dhv2->skeyid_pi;
+
+		pexpect(st->st_skey_pr_nss== NULL);
 		st->st_skey_pr_nss = dhv2->skeyid_pr;
+
+		pexpect(st->st_skey_ei_nss== NULL);
 		st->st_skey_ei_nss = dhv2->skeyid_ei;
+
+		pexpect(st->st_skey_er_nss== NULL);
 		st->st_skey_er_nss = dhv2->skeyid_er;
+
 		st->st_skey_initiator_salt = dhv2->skey_initiator_salt;
 		st->st_skey_responder_salt = dhv2->skey_responder_salt;
 		st->st_skey_chunk_SK_pi = dhv2->skey_chunk_SK_pi;
@@ -310,13 +326,15 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	*chunk_SK_pi_out = chunk_SK_pi;
 	*chunk_SK_pr_out = chunk_SK_pr;
 
-	DBG(DBG_CRYPT,
-	    DBG_log("calc_skeyseed_v2 pointers: shared-key@%p, SK_d-key@%p, SK_ai-key@%p, SK_ar-key@%p, SK_ei-key@%p, SK_er-key@%p, SK_pi-key@%p, SK_pr-key@%p",
-		    shared, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
-	    DBG_dump_chunk("calc_skeyseed_v2 initiator salt", initiator_salt);
-	    DBG_dump_chunk("calc_skeyseed_v2 responder salt", responder_salt);
-	    DBG_dump_chunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
-	    DBG_dump_chunk("calc_skeyseed_v2 SK_pr", chunk_SK_pr));
+	DBG(DBG_CRYPT, {
+		/* ??? this won't fire count-pointers.awk; should it? */
+		DBG_log("calc_skeyseed_v2 pointers: shared-key@%p, SK_d-key@%p, SK_ai-key@%p, SK_ar-key@%p, SK_ei-key@%p, SK_er-key@%p, SK_pi-key@%p, SK_pr-key@%p",
+			shared, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
+		DBG_dump_chunk("calc_skeyseed_v2 initiator salt", initiator_salt);
+		DBG_dump_chunk("calc_skeyseed_v2 responder salt", responder_salt);
+		DBG_dump_chunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
+		DBG_dump_chunk("calc_skeyseed_v2 SK_pr", chunk_SK_pr);
+	});
 }
 
 /* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
