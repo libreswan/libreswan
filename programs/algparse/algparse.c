@@ -411,8 +411,8 @@ static void test(void)
 	ike(false, "id2"); /* should be rejected; idXXX removed */
 	ike(false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(false, "aes_ccm"); /* ESP/AH only */
-	ike(ike_version == IKEv2, "aes_gcm-sha1-none-modp2048");
-	ike(ike_version == IKEv2, "aes_gcm+aes_gcm-sha1-none-modp2048");
+	ike(impair, "aes_gcm-sha1-none-modp2048");
+	ike(impair, "aes_gcm+aes_gcm-sha1-none-modp2048");
 	ike(false, "aes+aes_gcm"); /* mixing AEAD and NORM encryption */
 }
 

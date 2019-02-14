@@ -313,7 +313,22 @@ static bool parse_proposal(struct proposal_parser *parser,
 		}							\
 	}
 	PARSE_ALG(';', prf);
-	PARSE_ALG(';', integ);
+	/*
+	 * By default, don't allow ike=...-<prf>-<integ>-... but do
+	 * allow esp=...-<integ>.  In the case of IKE, when integrity
+	 * is required, it is filled in using the PRF.
+	 *
+	 * XXX: The parser and output isn't consistent in that for ESP
+	 * it parses <encry>-<integ> but for IKE it parses
+	 * <encr>-<prf>.  This seems to lead to confusion when
+	 * printing proposals - ike=aes_gcm-sha1 gets mis-read as as
+	 * using sha1 as integrity.  ike-aes_gcm-none-sha1 would
+	 * clarify this but that makes for a fun parse.
+	 */
+	if (parser->protocol->prf_alg_byname == NULL ||
+	    IMPAIR(PROPOSAL_PARSER)) {
+		PARSE_ALG(';', integ);
+	}
 	PARSE_ALG('\0', dh);
 	if (error[0] != '\0') {
 		DBGF(DBG_PROPOSAL_PARSER, "return first error: %s", error);
