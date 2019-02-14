@@ -370,11 +370,24 @@ void fmt_proposal(struct lswlog *log,
 		lswlogs(log, prf->common.fqn);
 	}
 
+	bool print_integ = (IMPAIR(PROPOSAL_PARSER) ||
+			    /* no PRF */
+			    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL ||
+			    /* AEAD should have NONE */
+			    (proposal_encrypt_aead(proposal) && !proposal_integ_none(proposal)));
+	if (!print_integ && proposal_encrypt_norm(proposal)) {
+		/* non-AEAD should have matching PRF and INTEG */
+		for (struct algorithm *integ = next_algorithm(proposal, PROPOSAL_integ, NULL),
+			     *prf = next_algorithm(proposal, PROPOSAL_prf, NULL);
+		     !print_integ && (integ != NULL || prf != NULL);
+		     integ = next_algorithm(proposal, PROPOSAL_integ, integ),
+			     prf = next_algorithm(proposal, PROPOSAL_prf, prf)) {
+			print_integ = (integ == NULL || prf == NULL ||
+				       &integ_desc(integ->desc)->prf->common != prf->desc);
+		}
+	}
 	as = ps;
-	if ((proposal->algorithms[PROPOSAL_prf] == NULL &&
-	     proposal->algorithms[PROPOSAL_integ] != NULL) ||
-	    (IMPAIR(PROPOSAL_PARSER) &&
-	     proposal->algorithms[PROPOSAL_integ] != NULL)) {
+	if (print_integ) {
 		FOR_EACH_ALGORITHM(proposal, integ, alg) {
 			const struct integ_desc *integ = integ_desc(alg->desc);
 			lswlogs(log, as); ps = "-"; as = "+";
