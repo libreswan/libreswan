@@ -980,9 +980,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		}
 
 		if (my_public_key == NULL) {
-			loglog(RC_LOG_SERIOUS, "Private key not found (missing or token locked?");
-			/* XXX: ??? */
-			free_public_key(my_public_key);
+			loglog(RC_LOG_SERIOUS, "private key not found (certificate missing from NSS DB or token locked?)");
 			return NULL;
 		}
 
