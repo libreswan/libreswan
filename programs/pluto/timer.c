@@ -233,7 +233,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	    DBG_log("%s: processing event@%p", __func__, ev));
 
 	enum event_type type = ev->ev_type;
-	struct state *const st = ev->ev_state;	/* note: *st might be changed */
+	struct state *st = ev->ev_state;	/* note: *st might be changed */
 	bool state_event = (st != NULL);
 
 	DBG(DBG_CONTROL,
@@ -490,11 +490,31 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				/* note: no md->st to clear */
 			} else {
 				struct ike_sa *ike = ike_sa(st);
-				passert(ike != NULL || &ike->sa != st);
-				delete_state(st);
-				/* st = NULL; */
-				/* note: no md->st to clear */
-				v2_expire_unused_ike_sa(ike);
+				if (ike == NULL) {
+					/*
+					 * XXX: SNAFU with IKE SA
+					 * replacing itself (but not
+					 * deleting its children?)
+					 * simultaneous to a CHILD SA
+					 * failing to establish and
+					 * attempting to delete /
+					 * replace itself?
+					 *
+					 * Because these things are
+					 * not serialized it is hard
+					 * to say.
+					 */
+					loglog(RC_LOG_SERIOUS, "CHILD SA #%lu lost its IKE SA",
+					       st->st_serialno);
+					delete_state(st);
+					st = NULL;
+				} else {
+					/* note: no md->st to clear */
+					passert(st != &ike->sa);
+					delete_state(st);
+					st = NULL;
+					v2_expire_unused_ike_sa(ike);
+				}
 			}
 			break;
 		case IKEv1:
