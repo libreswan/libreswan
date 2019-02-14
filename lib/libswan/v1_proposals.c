@@ -419,10 +419,11 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	bool lookup_prf = parser->protocol->prf_alg_byname != NULL;
 	if (!lookup_prf && IMPAIR(PROPOSAL_PARSER)) {
 		/*
-		 * Force PRF lookup when the folloing token looks like
-		 * an INTEG algorithm (i.e., its lookup succeeds).
+		 * When impaired, only force PRF lookup when the the
+		 * token after this one is a valid INTEG algorithm.
 		 * Otherwise something like ah=sha1 gets parsed as
-		 * ah=[encr]-sha1-[integ]-[dh].
+		 * ah=[encr]-sha1-[integ]-[dh] instead of
+		 * ah=[encr]-[prf]-sha1-[dh].
 		 */
 		shunk_t prf = tokens[0].alg;
 		shunk_t integ = tokens[1].alg;
@@ -444,7 +445,19 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		tokens += 1; /* consume one arg */
 	}
 
-	bool lookup_integ = parser->protocol->integ_alg_byname != NULL;
+	/*
+	 * By default, don't allow IKE's [...]-<prf>-<integ>-[....].
+	 * Instead fill in integrity using the above PRF.
+	 *
+	 * XXX: The parser and output isn't consistent in that for ESP
+	 * it parses <encry>-<integ> but for IKE it parses
+	 * <encr>-<prf>.  This seems to lead to confusion when
+	 * printing proposals - ike=aes_gcm-sha1 gets mis-read as as
+	 * using sha1 as integrity.  ike-aes_gcm-none-sha1 would
+	 * clarify this but that makes for a fun parse.
+	 */
+	bool lookup_integ = (parser->protocol->prf_alg_byname == NULL &&
+			     parser->protocol->integ_alg_byname != NULL);
 	if (!lookup_integ && IMPAIR(PROPOSAL_PARSER)) {
 		/* force things */
 		lookup_integ = true;
