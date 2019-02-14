@@ -3749,6 +3749,7 @@ void show_one_connection(struct fd *whackfd,
 			 const struct connection *c)
 {
 	const char *ifn;
+	char ifnstr[2 *  IFNAMSIZ + 2];  /* id_rname@id_vname\0 */
 	char instance[1 + 10 + 1];
 	char prio[POLICY_PRIO_BUF];
 	char mtustr[8];
@@ -3757,7 +3758,29 @@ void show_one_connection(struct fd *whackfd,
 	char nflogstr[8];
 	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
 
-	ifn = oriented(*c) ? c->interface->ip_dev->id_rname : "";
+	if (oriented(*c)) {
+		if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
+			char *n = jam_str(ifnstr, sizeof(ifnstr),
+					c->xfrmi->name);
+			add_str(ifnstr, sizeof(ifnstr), n, "@");
+			add_str(ifnstr, sizeof(ifnstr), n,
+					c->interface->ip_dev->id_rname);
+			ifn = ifnstr;
+		} else if (strcmp(c->interface->ip_dev->id_rname,
+					c->interface->ip_dev->id_vname) != 0) {
+			/* example ipsec0@eth1 KLIPS */
+			char *n = jam_str(ifnstr, sizeof(ifnstr),
+					c->interface->ip_dev->id_vname);
+			add_str(ifnstr, sizeof(ifnstr), n, "@");
+			add_str(ifnstr, sizeof(ifnstr), n,
+					c->interface->ip_dev->id_rname);
+			ifn = ifnstr;
+		} else {
+			ifn = c->interface->ip_dev->id_rname;
+		}
+	} else {
+		ifn = "";
+	};
 
 	instance[0] = '\0';
 	if (c->kind == CK_INSTANCE && c->instance_serial != 0)

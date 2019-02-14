@@ -29,6 +29,7 @@
 #include <linux/if_addr.h>
 #include <linux/if_link.h>
 
+#include "lswalloc.h"
 #include "netlink_attrib.h"
 #include "lswlog.h"
 #include "connections.h"
