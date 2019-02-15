@@ -23,6 +23,9 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
+ ipsec whack --suppress-retransmits
+PATH/libexec/ipsec/whack: unrecognized option '--suppress-retransmits'
+west #
  ipsec auto --add westnet-eastnet-ikev2
 002 added connection description "westnet-eastnet-ikev2"
 west #
