@@ -2846,15 +2846,6 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	{
-		msgid_t unack = ike->sa.st_msgid_nextuse -
-			ike->sa.st_msgid_lastack - 1;
-
-		if (unack < ike->sa.st_connection->ike_window) {
-			schedule_next_send(&ike->sa);
-		}
-	}
-
 	LSWDBGP(DBG_BASE, buf) {
 		lswlogf(buf, "Message ID: '%s' IKE #%lu %s",
 			st->st_connection->name,
@@ -2975,6 +2966,12 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		v2_msgid_update_counters(md->st, md);
 		v2_msgid_update_recv(ike_sa(st), st, md);
 		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
+		/*
+		 * XXX: should this be merged with the code sending
+		 * with transitions message?  And do this before ST
+		 * turns into its own IKE.
+		 */
+		schedule_next_send(ike_sa(st));
 		ikev2_child_emancipate(md);
 	} else  {
 		/*
@@ -2988,6 +2985,11 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		v2_msgid_update_counters(md->st, md);
 		v2_msgid_update_recv(ike_sa(st), st, md);
 		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
+		/*
+		 * XXX: should this be merged with the code sending
+		 * this transitions message?
+		 */
+		schedule_next_send(ike_sa(st));
 	}
 
 	w = RC_NEW_V2_STATE + st->st_state->kind;

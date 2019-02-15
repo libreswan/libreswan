@@ -5947,11 +5947,11 @@ static void ikev2_child_outI_continue(struct state *st,
 	unpack_nonce(&st->st_ni, r);
 	if (r->pcr_type == pcr_build_ke_and_nonce)
 		unpack_KE_from_helper(st, r, &st->st_gi);
-	stf_status e = add_st_to_ike_sa_send_list(st, ike);
-
-	if (e == STF_OK) {
-		e = ikev2_start_new_exchange(ike, child);
+	if (child_added_to_ike_send_list(child, ike)) {
+		complete_v2_state_transition(&child->sa, mdp, STF_SUSPEND);
 	}
+
+	stf_status e = ikev2_start_new_exchange(ike, child);
 	if (e == STF_OK) {
 		passert(*mdp != NULL);
 		e =ikev2_child_out_tail(*mdp);

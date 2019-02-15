@@ -529,95 +529,56 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 	}
 }
 
-#if 0
-static void schedule_next_send(struct ike_sa *ike)
+bool child_added_to_ike_send_list(struct child_sa *child, struct ike_sa *ike)
 {
-	msgid_t unack = (ike->sa.st_v2_msgid_windows.initiator.sent -
-			 ike->sa.st_v2_msgid_windows.initiator.recv);
-	while (unack < ike->sa.st_connection->ike_window) {
+	intmax_t unack = (ike->sa.st_v2_msgid_windows.initiator.sent -
+			  ike->sa.st_v2_msgid_windows.initiator.recv);
+	if (unack < ike->sa.st_connection->ike_window) {
+		dbg_v2_msgid(ike, &child->sa,
+			     "sending new exchange using IKE SA (unack %jd)",
+			     unack);
+		return false;
+	}
+
+	delete_event(&child->sa);
+	event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, &child->sa);
+	/* find the end; small list? */
+	struct initiate_list **pp = &ike->sa.send_next_ix;
+	while (*pp != NULL)
+		pp = &(*pp)->next;
+	/* append */
+	struct initiate_list new =  {
+		.st_serialno = child->sa.st_serialno,
+	};
+	*pp = clone_thing(new, "struct initiate_list");
+	return true;
+}
+
+void schedule_next_send(struct ike_sa *ike)
+{
+	for (intmax_t unack = (ike->sa.st_v2_msgid_windows.initiator.sent -
+			       ike->sa.st_v2_msgid_windows.initiator.recv);
+	     unack < ike->sa.st_connection->ike_window; unack++) {
 		if (ike->sa.send_next_ix == NULL) {
 			break;
 		}
-		/* get next from list */
+		/* remove next child so_serial_t from list */
 		so_serial_t child_so = ike->sa.send_next_ix->st_serialno;
 		{
 			struct initiate_list *p = ike->sa.send_next_ix;
 			ike->sa.send_next_ix = p->next;
 			pfree(p);
 		}
+		/* find that child */
 		struct state *child = state_with_serialno(child_so);
 		if (child == NULL) {
-			dbg("can't send for #%lu using parent #%lu as it disappeared",
-			    child_so, ike->sa.st_serialno);
+			dbg_v2_msgid(ike, NULL,
+				     "can't resume CHILD SA #%lu exchange as child disappeared (unack %jd)",
+				     child_so, unack);
 			continue;
 		}
-		dbg("Message ID: scheduling CHILD SA #%lu send using IKE SA #%lu next message id="PRI_MSGID", unack="PRI_MSGID,
-		    child->st_serialno, ike->sa.st_serialno,
-		    ike->sa.st_v2_msgid_windows.initiator.sent + 1,
-		    unack);
+		dbg_v2_msgid(ike, child, "scheduling CHILD SA send using IKE SA (unack %jd)", unack);
 		event_force(EVENT_v2_SEND_NEXT_IKE, child);
 		unack++;
 	}
-}
-#endif
-
-void schedule_next_send(struct state *st)
-{
-	struct initiate_list *p;
-	struct state *cst = NULL;
-	int i = 1;
-
-	if (st->send_next_ix != NULL) {
-		p = st->send_next_ix;
-		cst = state_with_serialno(p->st_serialno);
-		if (cst != NULL) {
-			event_force(EVENT_v2_SEND_NEXT_IKE, cst);
-			dbg("Message ID: #%lu send next using parent #%lu next message id=%u, waiting to send %d",
-			    cst->st_serialno, st->st_serialno,
-			    st->st_msgid_nextuse, i);
-		}
-		st->send_next_ix = st->send_next_ix->next;
-		pfree(p);
-	}
-}
-
-stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ike)
-{
-	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
-	intmax_t unack2 = ike->sa.st_v2_msgid_windows.initiator.sent - ike->sa.st_v2_msgid_windows.initiator.recv;
-	if (unack != unack2) {
-		dbg("Message ID: XXX: IKE #%lu expecting unack "PRI_MSGID", got %jd for #%lu",
-		    ike->sa.st_serialno, unack, unack2,
-		    st->st_serialno);
-	}
-	stf_status e = STF_OK;
-	const char *what;
-
-	if (unack < st->st_connection->ike_window) {
-		what  =  "send new exchange now";
-	} else  {
-		e = STF_SUSPEND;
-		what = "wait sending, add to send next list";
-		delete_event(st);
-		event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, st);
-		loglog(RC_LOG_SERIOUS, "message id deadlock? %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
-			what, ike->sa.st_serialno, unack,
-			ike->sa.st_msgid_nextuse,
-			ike->sa.st_connection->ike_window);
-
-		struct initiate_list **pp = &ike->sa.send_next_ix;
-		while (*pp != NULL)
-			pp = &(*pp)->next;
-		*pp = alloc_thing(struct initiate_list, "struct initiate_list");
-		**pp = (struct initiate_list) {
-			.st_serialno = st->st_serialno,
-			.next = NULL };
-
-	}
-	dbg("Message ID: #%lu %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
-	    st->st_serialno,
-	    what, ike->sa.st_serialno, unack,
-	    ike->sa.st_msgid_nextuse,
-	    ike->sa.st_connection->ike_window);
-	return e;
 }
