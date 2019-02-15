@@ -241,48 +241,6 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	ike->sa.st_viable_parent = TRUE;
 }
 
-static stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ike)
-{
-	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
-	intmax_t unack2 = ike->sa.st_v2_msgids.initiator.sent - ike->sa.st_v2_msgids.initiator.recv;
-	if (unack != unack2) {
-		dbg("WIP:Message ID: IKE #%lu expecting unack "PRI_MSGID", got %jd for #%lu",
-		    ike->sa.st_serialno, unack, unack2,
-		    st->st_serialno);
-	}
-	stf_status e = STF_OK;
-	const char *what;
-
-	if (unack < st->st_connection->ike_window) {
-		what  =  "send new exchange now";
-	} else  {
-		e = STF_SUSPEND;
-		what = "wait sending, add to send next list";
-		delete_event(st);
-		event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, st);
-		loglog(RC_LOG_SERIOUS, "message id deadlock? %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
-			what, ike->sa.st_serialno, unack,
-			ike->sa.st_msgid_nextuse,
-			ike->sa.st_connection->ike_window);
-
-		struct initiate_list **pp = &ike->sa.send_next_ix;
-		while (*pp != NULL)
-			pp = &(*pp)->next;
-		*pp = alloc_thing(struct initiate_list, "struct initiate_list");
-		**pp = (struct initiate_list) {
-			.st_serialno = st->st_serialno,
-			.next = NULL };
-
-	}
-	DBG(DBG_CONTROLMORE,
-		DBG_log("#%lu %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
-			st->st_serialno,
-			what, ike->sa.st_serialno, unack,
-			ike->sa.st_msgid_nextuse,
-			ike->sa.st_connection->ike_window));
-	return e;
-}
-
 static struct msg_digest *fake_md(struct state *st)
 {
 	struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");

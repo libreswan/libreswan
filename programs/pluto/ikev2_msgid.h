@@ -54,4 +54,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 			  struct msg_digest *md, enum message_role sending);
 bool v2_msgid_ok(struct ike_sa *ike, enum message_role incomming, msgid_t msgid);
 
+void schedule_next_send(struct state *st);
+stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ike);
+
 #endif

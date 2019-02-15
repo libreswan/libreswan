@@ -2491,27 +2491,6 @@ void ikev2_log_parentSA(const struct state *st)
 	);
 }
 
-static void schedule_next_send(struct state *st)
-{
-	struct initiate_list *p;
-	struct state *cst = NULL;
-	int i = 1;
-
-	if (st->send_next_ix != NULL) {
-		p = st->send_next_ix;
-		cst = state_with_serialno(p->st_serialno);
-		if (cst != NULL) {
-			event_force(EVENT_v2_SEND_NEXT_IKE, cst);
-			DBG(DBG_CONTROLMORE,
-				DBG_log("#%lu send next using parent #%lu next message id=%u, waiting to send %d",
-					cst->st_serialno, st->st_serialno,
-					st->st_msgid_nextuse, i));
-		}
-		st->send_next_ix = st->send_next_ix->next;
-		pfree(p);
-	}
-}
-
 /*
  * Maintain or reset Message IDs.
  *

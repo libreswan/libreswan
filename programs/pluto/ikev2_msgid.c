@@ -104,38 +104,6 @@ void v2_msgid_init(struct ike_sa *ike)
 	}
 }
 
-#if 0
-static void schedule_next_send(struct ike_sa *ike)
-{
-	msgid_t unack = (ike->sa.st_v2_msgids.initiator.sent -
-			 ike->sa.st_v2_msgids.initiator.recv);
-	while (unack < ike->sa.st_connection->ike_window) {
-		if (ike->sa.send_next_ix == NULL) {
-			break;
-		}
-		/* get next from list */
-		so_serial_t child_so = ike->sa.send_next_ix->st_serialno;
-		{
-			struct initiate_list *p = ike->sa.send_next_ix;
-			ike->sa.send_next_ix = p->next;
-			pfree(p);
-		}
-		struct state *child = state_with_serialno(child_so);
-		if (child == NULL) {
-			dbg("can't send for #%lu using parent #%lu as it disappeared",
-			    child_so, ike->sa.st_serialno);
-			continue;
-		}
-		dbg("scheduling CHILD SA #%lu send using IKE SA #%lu next message id="PRI_MSGID", unack="PRI_MSGID,
-		    child->st_serialno, ike->sa.st_serialno,
-		    ike->sa.st_v2_msgids.initiator.sent + 1,
-		    unack);
-		event_force(EVENT_v2_SEND_NEXT_IKE, child);
-		unack++;
-	}
-}
-#endif
-
 void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			  struct msg_digest *md)
 {
@@ -314,4 +282,99 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 			}
 		}
 	}
+}
+
+#if 0
+static void schedule_next_send(struct ike_sa *ike)
+{
+	msgid_t unack = (ike->sa.st_v2_msgids.initiator.sent -
+			 ike->sa.st_v2_msgids.initiator.recv);
+	while (unack < ike->sa.st_connection->ike_window) {
+		if (ike->sa.send_next_ix == NULL) {
+			break;
+		}
+		/* get next from list */
+		so_serial_t child_so = ike->sa.send_next_ix->st_serialno;
+		{
+			struct initiate_list *p = ike->sa.send_next_ix;
+			ike->sa.send_next_ix = p->next;
+			pfree(p);
+		}
+		struct state *child = state_with_serialno(child_so);
+		if (child == NULL) {
+			dbg("can't send for #%lu using parent #%lu as it disappeared",
+			    child_so, ike->sa.st_serialno);
+			continue;
+		}
+		dbg("scheduling CHILD SA #%lu send using IKE SA #%lu next message id="PRI_MSGID", unack="PRI_MSGID,
+		    child->st_serialno, ike->sa.st_serialno,
+		    ike->sa.st_v2_msgids.initiator.sent + 1,
+		    unack);
+		event_force(EVENT_v2_SEND_NEXT_IKE, child);
+		unack++;
+	}
+}
+#endif
+
+void schedule_next_send(struct state *st)
+{
+	struct initiate_list *p;
+	struct state *cst = NULL;
+	int i = 1;
+
+	if (st->send_next_ix != NULL) {
+		p = st->send_next_ix;
+		cst = state_with_serialno(p->st_serialno);
+		if (cst != NULL) {
+			event_force(EVENT_v2_SEND_NEXT_IKE, cst);
+			DBG(DBG_CONTROLMORE,
+				DBG_log("#%lu send next using parent #%lu next message id=%u, waiting to send %d",
+					cst->st_serialno, st->st_serialno,
+					st->st_msgid_nextuse, i));
+		}
+		st->send_next_ix = st->send_next_ix->next;
+		pfree(p);
+	}
+}
+
+stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ike)
+{
+	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
+	intmax_t unack2 = ike->sa.st_v2_msgids.initiator.sent - ike->sa.st_v2_msgids.initiator.recv;
+	if (unack != unack2) {
+		dbg("WIP:Message ID: IKE #%lu expecting unack "PRI_MSGID", got %jd for #%lu",
+		    ike->sa.st_serialno, unack, unack2,
+		    st->st_serialno);
+	}
+	stf_status e = STF_OK;
+	const char *what;
+
+	if (unack < st->st_connection->ike_window) {
+		what  =  "send new exchange now";
+	} else  {
+		e = STF_SUSPEND;
+		what = "wait sending, add to send next list";
+		delete_event(st);
+		event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, st);
+		loglog(RC_LOG_SERIOUS, "message id deadlock? %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
+			what, ike->sa.st_serialno, unack,
+			ike->sa.st_msgid_nextuse,
+			ike->sa.st_connection->ike_window);
+
+		struct initiate_list **pp = &ike->sa.send_next_ix;
+		while (*pp != NULL)
+			pp = &(*pp)->next;
+		*pp = alloc_thing(struct initiate_list, "struct initiate_list");
+		**pp = (struct initiate_list) {
+			.st_serialno = st->st_serialno,
+			.next = NULL };
+
+	}
+	DBG(DBG_CONTROLMORE,
+		DBG_log("#%lu %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
+			st->st_serialno,
+			what, ike->sa.st_serialno, unack,
+			ike->sa.st_msgid_nextuse,
+			ike->sa.st_connection->ike_window));
+	return e;
 }
