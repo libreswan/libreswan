@@ -2,7 +2,7 @@
 # MAINTAINER "Antony Antony" <antony@phenome.org>
 # ENV container docker
 RUN mkdir -p /home/build/libreswan
-VOLUME ["/home/build/libreswan:/home/build/libreswan"]
+VOLUME ["/home/build:/home/build"]
 RUN ln -s /home/build/libreswan/testing /testing
 #setup ssh
 RUN mkdir /root/.ssh
