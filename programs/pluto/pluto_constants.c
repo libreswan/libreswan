@@ -131,7 +131,7 @@ static const char *const timer_event_name[] = {
 	E(EVENT_SO_DISCARD),
 	E(EVENT_RETRANSMIT),
 
-	[EVENT_SA_REKEY] = "EVENT_SA_REPLACE", /*E(EVENT_SA_REKEY),*/
+	E(EVENT_SA_REKEY),
 	E(EVENT_SA_REPLACE),
 	E(EVENT_SA_EXPIRE),
 
