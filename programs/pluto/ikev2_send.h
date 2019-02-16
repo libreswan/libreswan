@@ -22,7 +22,7 @@
 #include "packet.h"		/* for pb_stream */
 
 struct msg_digest;
-struct oakley_group_desc;
+struct dh_desc;
 struct ike_sa;
 
 bool send_recorded_v2_ike_msg(struct state *st, const char *where);

@@ -755,6 +755,7 @@ void test_ike_alg(void);
 const struct encrypt_desc **next_encrypt_desc(const struct encrypt_desc **last);
 const struct prf_desc **next_prf_desc(const struct prf_desc **last);
 const struct integ_desc **next_integ_desc(const struct integ_desc **last);
+const struct dh_desc **next_dh_desc(const struct dh_desc **last);
 
 /*
  * Is the algorithm suitable for IKE (i.e., native)?
@@ -789,7 +790,7 @@ unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt_desc);
  * and "oakley_group" is too long.
  */
 
-struct oakley_group_desc {
+struct dh_desc {
 	struct ike_alg common;		/* must be first */
 	uint16_t group;
 	size_t bytes;
@@ -813,7 +814,7 @@ struct dh_ops {
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */
-	void (*const check)(const struct oakley_group_desc *alg);
+	void (*const check)(const struct dh_desc *alg);
 
 	/*
 	 * Create the local secret and KE for remote.
@@ -826,18 +827,17 @@ struct dh_ops {
 	 * SIZEOF_KE == .BYTES from above, but pass it in so both ends
 	 * can perform a sanity check.
 	 */
-	void (*calc_secret)(const struct oakley_group_desc *group,
+	void (*calc_secret)(const struct dh_desc *group,
 			    SECKEYPrivateKey **local_privk,
 			    SECKEYPublicKey **locak_pubk,
 			    uint8_t *ke, size_t sizeof_ke);
-	PK11SymKey *(*calc_shared)(const struct oakley_group_desc *group,
+	PK11SymKey *(*calc_shared)(const struct dh_desc *group,
 				   SECKEYPrivateKey *local_privk,
 				   const SECKEYPublicKey *local_pubk,
 				   uint8_t *remote_ke, size_t sizeof_remote_ke);
 };
 
-extern const struct oakley_group_desc unset_group;      /* magic signifier */
-const struct oakley_group_desc **next_oakley_group(const struct oakley_group_desc **);
+extern const struct dh_desc unset_group;      /* magic signifier */
 
 /*
  * Robustly cast struct ike_alg to underlying object.
@@ -849,8 +849,7 @@ const struct hash_desc *hash_desc(const struct ike_alg *alg);
 const struct prf_desc *prf_desc(const struct ike_alg *alg);
 const struct integ_desc *integ_desc(const struct ike_alg *alg);
 const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg);
-const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg);
-const struct oakley_group_desc *dh_desc(const struct ike_alg *alg);
+const struct dh_desc *dh_desc(const struct ike_alg *alg);
 
 /*
  * Find the ENCRYPT / PRF / INTEG / DH algorithm using the IKEv2 wire
@@ -865,7 +864,7 @@ const struct oakley_group_desc *dh_desc(const struct ike_alg *alg);
 const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr);
 const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf);
 const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ);
-const struct oakley_group_desc *ikev2_get_dh_desc(enum ike_trans_type_dh);
+const struct dh_desc *ikev2_get_dh_desc(enum ike_trans_type_dh);
 
 /*
  * Find the ENCRYPT / PRF / DH algorithm using IKEv1 IKE (aka OAKLEY)
@@ -878,7 +877,7 @@ const struct oakley_group_desc *ikev2_get_dh_desc(enum ike_trans_type_dh);
 
 const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute);
 const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
-const struct oakley_group_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh);
+const struct dh_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh);
 
 /*
  * Find the IKEv1 ENCRYPT / INTEG algorithm that will be fed into the

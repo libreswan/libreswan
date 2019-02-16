@@ -123,7 +123,7 @@ struct trans_attrs {
 	uint16_t enckeylen;			/* encryption key len (bits) */
 	const struct prf_desc *ta_prf;		/* package of prf routines */
 	const struct integ_desc *ta_integ;	/* package of integrity routines */
-	const struct oakley_group_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
+	const struct dh_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
 };
 
 /* IPsec (Phase 2 / Quick Mode) transform and attributes
@@ -353,7 +353,7 @@ struct state {
 
 	bool st_outbound_done;			/* if true, then outgoing SA already installed */
 
-	const struct oakley_group_desc *st_pfs_group;   /*group for Phase 2 PFS */
+	const struct dh_desc *st_pfs_group;   /*group for Phase 2 PFS */
 	lset_t st_hash_negotiated;              /* Saving the negotiated hash values here */
 	lset_t st_policy;                       /* policy for IPsec SA */
 

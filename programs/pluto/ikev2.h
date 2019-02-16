@@ -122,7 +122,7 @@ void free_ikev2_proposals(struct ikev2_proposals **proposals);
 struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *why);
 struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, const char *why);
 struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, const char *why,
-						      const struct oakley_group_desc *default_dh);
+						      const struct dh_desc *default_dh);
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
 			    const struct ikev2_proposal *proposal,
@@ -132,7 +132,7 @@ bool ikev2_emit_sa_proposals(pb_stream *outs,
 			     const struct ikev2_proposals *proposals,
 			     const chunk_t *local_spi);
 
-const struct oakley_group_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals);
+const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals);
 
 bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 				  oakley_group_t modp);
@@ -289,7 +289,7 @@ struct ikev2_ipseckey_dns;
 extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 					    bool expect_accepted);
 
-extern bool emit_v2KE(chunk_t *g, const struct oakley_group_desc *group, pb_stream *outs);
+extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
 
 extern bool is_msg_response(const struct msg_digest *md);
 

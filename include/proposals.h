@@ -249,7 +249,7 @@ struct v1_proposal {
 	const struct encrypt_desc *encrypt;
 	const struct prf_desc *prf;
 	const struct integ_desc *integ;
-	const struct oakley_group_desc *dh;
+	const struct dh_desc *dh;
 	const struct proposal_protocol *protocol;
 };
 

@@ -57,7 +57,7 @@ void cancelled_v1_dh(struct pcr_v1_dh *dh)
  */
 void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
 			  struct state *st, enum original_role role,
-			  const struct oakley_group_desc *oakley_group2)
+			  const struct dh_desc *oakley_group2)
 {
 	const chunk_t *pss = get_psk(st->st_connection);
 
@@ -125,7 +125,7 @@ bool finish_dh_secretiv(struct state *st,
 
 void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 			struct state *st, enum original_role role,
-			const struct oakley_group_desc *oakley_group2)
+			const struct dh_desc *oakley_group2)
 {
 	const chunk_t *pss = get_psk(st->st_connection);
 	struct pluto_crypto_req_cont *cn = new_pcrc(fn, name);
@@ -163,7 +163,7 @@ void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 /* MUST BE THREAD-SAFE */
 void calc_dh(struct pcr_v1_dh *dh)
 {
-	const struct oakley_group_desc *group = dh->oakley_group;
+	const struct dh_desc *group = dh->oakley_group;
 	passert(group != NULL);
 
 	/* now calculate the (g^x)(g^y) */
@@ -280,7 +280,7 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 /* MUST BE THREAD-SAFE */
 void calc_dh_iv(struct pcr_v1_dh *dh)
 {
-	const struct oakley_group_desc *group = dh->oakley_group;
+	const struct dh_desc *group = dh->oakley_group;
 	passert(group != NULL);
 
 	/*

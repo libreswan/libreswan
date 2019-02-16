@@ -359,7 +359,7 @@ struct connection {
 	struct ikev2_proposals *v2_ike_proposals;
 	struct ikev2_proposals *v2_ike_auth_child_proposals;
 	struct ikev2_proposals *v2_create_child_proposals;
-	const struct oakley_group_desc *v2_create_child_proposals_default_dh;
+	const struct dh_desc *v2_create_child_proposals_default_dh;
 
 	/* host_pair linkage */
 	struct host_pair *host_pair;

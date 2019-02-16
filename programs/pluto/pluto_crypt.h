@@ -181,7 +181,7 @@ extern void wire_clone_chunk(wire_arena_t *arena,
 /* query and response */
 struct pcr_kenonce {
 	/* inputs */
-	const struct oakley_group_desc *group;
+	const struct dh_desc *group;
 
 	/* outputs */
 	struct dh_secret *secret;
@@ -195,7 +195,7 @@ struct pcr_v1_dh {
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
 	/* query */
-	const struct oakley_group_desc *oakley_group;
+	const struct dh_desc *oakley_group;
 	oakley_auth_t auth; /*IKEv1 AUTH*/
 	const struct integ_desc *integ;
 	const struct prf_desc *prf;
@@ -229,7 +229,7 @@ struct pcr_dh_v2 {
 	/* incoming */
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
-	const struct oakley_group_desc *dh;
+	const struct dh_desc *dh;
 	const struct integ_desc *integ;
 	const struct prf_desc *prf;
 	const struct encrypt_desc *encrypt;
@@ -339,7 +339,7 @@ extern void send_crypto_helper_request(struct state *st,
 
 extern void request_ke_and_nonce(const char *name,
 				 struct state *st,
-				 const struct oakley_group_desc *group,
+				 const struct dh_desc *group,
 				 crypto_req_cont_func *callback);
 
 extern void request_nonce(const char *name,
@@ -357,18 +357,18 @@ extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
  */
 
 extern void compute_dh_shared(struct state *st, const chunk_t g,
-			      const struct oakley_group_desc *group);
+			      const struct dh_desc *group);
 
 extern void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
 				 struct state *st, enum original_role role,
-				 const struct oakley_group_desc *oakley_group2);
+				 const struct dh_desc *oakley_group2);
 
 extern bool finish_dh_secretiv(struct state *st,
 			       struct pluto_crypto_req *r);
 
 extern void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
 			       struct state *st, enum original_role role,
-			       const struct oakley_group_desc *oakley_group2);
+			       const struct dh_desc *oakley_group2);
 
 extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
@@ -407,7 +407,7 @@ extern void unpack_KE_from_helper(struct state *st,
 
 void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
 		      enum pluto_crypto_requests pcr_type,
-		      const struct oakley_group_desc *dh);
+		      const struct dh_desc *dh);
 
 struct pcr_v1_dh *pcr_v1_dh_init(struct pluto_crypto_req_cont *cn,
 				 enum pluto_crypto_requests pcr_type);

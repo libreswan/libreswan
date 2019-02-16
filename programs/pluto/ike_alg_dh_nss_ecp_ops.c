@@ -39,7 +39,7 @@
 #include "ike_alg_dh_nss_ecp_ops.h"
 #include "crypt_symkey.h"
 
-static void nss_ecp_calc_secret(const struct oakley_group_desc *group,
+static void nss_ecp_calc_secret(const struct dh_desc *group,
 				SECKEYPrivateKey **privk,
 				SECKEYPublicKey **pubk,
 				uint8_t *ke, size_t sizeof_ke)
@@ -117,7 +117,7 @@ static void nss_ecp_calc_secret(const struct oakley_group_desc *group,
 #endif
 }
 
-static PK11SymKey *nss_ecp_calc_shared(const struct oakley_group_desc *group,
+static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 				       SECKEYPrivateKey *local_privk,
 				       const SECKEYPublicKey *local_pubk,
 				       uint8_t *remote_ke, size_t sizeof_remote_ke)
@@ -200,7 +200,7 @@ static PK11SymKey *nss_ecp_calc_shared(const struct oakley_group_desc *group,
 	return g_ir;
 }
 
-static void nss_ecp_check(const struct oakley_group_desc *dhmke)
+static void nss_ecp_check(const struct dh_desc *dhmke)
 {
 	const struct ike_alg *alg = &dhmke->common;
 	pexpect_ike_alg(alg, dhmke->nss_oid > 0);

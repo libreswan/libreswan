@@ -32,7 +32,7 @@
 
 #include "chunk.h"
 
-struct oakley_group_desc;
+struct dh_desc;
 struct state;
 struct msg_digest;
 
@@ -42,7 +42,7 @@ struct msg_digest;
  */
 struct dh_secret;
 
-struct dh_secret *calc_dh_secret(const struct oakley_group_desc *group,
+struct dh_secret *calc_dh_secret(const struct dh_desc *group,
 				 chunk_t *ke);
 
 PK11SymKey *calc_dh_shared(struct dh_secret *secret,

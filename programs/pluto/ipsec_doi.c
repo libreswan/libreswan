@@ -139,7 +139,7 @@ void unpack_KE_from_helper(struct state *st,
  *  value with zeros.
  */
 bool accept_KE(chunk_t *dest, const char *val_name,
-	       const struct oakley_group_desc *gr,
+	       const struct dh_desc *gr,
 	       struct payload_digest *ke_pd)
 {
 	if (ke_pd == NULL) {

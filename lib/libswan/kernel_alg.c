@@ -93,7 +93,7 @@ void kernel_encrypt_add(const struct encrypt_desc *alg)
 	ADD(alg, encrypt);
 }
 
-bool kernel_alg_dh_ok(const struct oakley_group_desc *dh)
+bool kernel_alg_dh_ok(const struct dh_desc *dh)
 {
 	if (dh == NULL) {
 		PEXPECT_LOG("%s", "DH needs to be valid (non-NULL)");

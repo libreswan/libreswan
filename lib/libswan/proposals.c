@@ -397,7 +397,7 @@ void fmt_proposal(struct lswlog *log,
 
 	as = ps;
 	FOR_EACH_ALGORITHM(proposal, dh, alg) {
-		const struct oakley_group_desc *dh = dh_desc(alg->desc);
+		const struct dh_desc *dh = dh_desc(alg->desc);
 		lswlogs(log, as); ps = "-"; as = "+";
 		lswlogs(log, dh->common.fqn);
 	}

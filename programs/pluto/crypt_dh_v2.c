@@ -344,7 +344,7 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 {
 	struct pcr_dh_v2 *const sk = &r->pcr_d.dh_v2;
 
-	const struct oakley_group_desc *group = sk->dh;
+	const struct dh_desc *group = sk->dh;
 	passert(group != NULL);
 
 	/* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */

@@ -60,7 +60,7 @@
 /* MUST BE THREAD-SAFE */
 void calc_ke(struct pcr_kenonce *kn)
 {
-	const struct oakley_group_desc *group = kn->group;
+	const struct dh_desc *group = kn->group;
 
 	kn->secret = calc_dh_secret(kn->group, &kn->gi);
 
@@ -93,7 +93,7 @@ void cancelled_ke_and_nonce(struct pcr_kenonce *kn)
 /* Note: not all cn's are the same subtype */
 void request_ke_and_nonce(const char *name,
 			  struct state *st,
-			  const struct oakley_group_desc *group,
+			  const struct dh_desc *group,
 			  crypto_req_cont_func *callback)
 {
 	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);

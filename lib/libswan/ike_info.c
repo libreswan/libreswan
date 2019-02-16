@@ -72,7 +72,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 	impaired_passert(PROPOSAL_PARSER,
 			 next_algorithm(proposal, PROPOSAL_dh, NULL) != NULL);
 	FOR_EACH_ALGORITHM(proposal, dh, alg) {
-		const struct oakley_group_desc *dh = dh_desc(alg->desc);
+		const struct dh_desc *dh = dh_desc(alg->desc);
 		passert(ike_alg_is_ike(&dh->common));
 		if (dh == &ike_alg_dh_none) {
 			proposal_error(parser, "IKE DH algorithm 'none' not permitted");
@@ -94,20 +94,20 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
  */
 
 static const struct ike_alg *default_ikev1_groups[] = {
-	&oakley_group_modp2048.common,
-	&oakley_group_modp1536.common,
+	&ike_alg_dh_modp2048.common,
+	&ike_alg_dh_modp1536.common,
 	NULL,
 };
 static const struct ike_alg *default_ikev2_groups[] = {
-	&oakley_group_modp2048.common,
-	&oakley_group_modp3072.common,
-	&oakley_group_modp4096.common,
-	&oakley_group_modp8192.common,
-	&oakley_group_dh19.common,
-	&oakley_group_dh20.common,
-	&oakley_group_dh21.common,
+	&ike_alg_dh_modp2048.common,
+	&ike_alg_dh_modp3072.common,
+	&ike_alg_dh_modp4096.common,
+	&ike_alg_dh_modp8192.common,
+	&ike_alg_dh_dh19.common,
+	&ike_alg_dh_dh20.common,
+	&ike_alg_dh_dh21.common,
 #ifdef USE_DH31
-	&oakley_group_dh31.common,
+	&ike_alg_dh_dh31.common,
 #endif
 	NULL,
 };

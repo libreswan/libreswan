@@ -84,7 +84,7 @@
 
 #include <blapit.h>
 
-const struct oakley_group_desc *ikev1_quick_pfs(const struct child_proposals proposals)
+const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 {
 	if (proposals.p == NULL) {
 		return NULL;

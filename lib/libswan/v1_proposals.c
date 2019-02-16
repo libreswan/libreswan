@@ -37,7 +37,7 @@ typedef struct v1_proposal merge_alg_default_t(struct v1_proposal proposal,
 static struct v1_proposal merge_dh_default(struct v1_proposal proposal,
 					   const struct ike_alg *default_alg)
 {
-	proposal.dh = oakley_group_desc(default_alg);
+	proposal.dh = dh_desc(default_alg);
 	return proposal;
 }
 
@@ -496,10 +496,8 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	bool lookup_dh = parser->protocol->dh_alg_byname || IMPAIR(PROPOSAL_PARSER);
 	if (lookup_dh && tokens->alg.ptr != NULL) {
 		shunk_t dh = tokens[0].alg;
-		proposal.dh = oakley_group_desc(lookup_byname(parser,
-							      dh_alg_byname,
-							      dh, 0,
-							      dh, "DH"));
+		proposal.dh = dh_desc(lookup_byname(parser, dh_alg_byname,
+						    dh, 0, dh, "DH"));
 		if (parser->error[0] != '\0') {
 			return false;
 		}

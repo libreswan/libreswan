@@ -21,7 +21,7 @@
 #include "packet.h"		/* for pb_stream */
 
 struct msg_digest;
-struct oakley_group_desc;
+struct dh_desc;
 struct ike_sa;
 struct state;
 

@@ -1839,7 +1839,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	bool seen_secctx_attr = FALSE;
 #endif
 	uint16_t life_type = 0;	/* initialized to silence GCC */
-	const struct oakley_group_desc *pfs_group = NULL;
+	const struct dh_desc *pfs_group = NULL;
 
 	if (!in_struct(trans, trans_desc, prop_pbs, trans_pbs))
 		return FALSE;

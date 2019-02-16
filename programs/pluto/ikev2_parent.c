@@ -261,7 +261,7 @@ static struct msg_digest *fake_md(struct state *st)
  */
 static bool v2_reject_wrong_ke_for_proposal(struct state *st,
 					    struct msg_digest *md,
-					    const struct oakley_group_desc *accepted_dh)
+					    const struct dh_desc *accepted_dh)
 {
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
@@ -616,7 +616,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
  * package up the calculated KE value, and emit it as a KE payload.
  * used by IKEv2: parent, child (PFS)
  */
-bool emit_v2KE(chunk_t *g, const struct oakley_group_desc *group,
+bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	       pb_stream *outs)
 {
 	if (impair_ke_payload == SEND_OMIT) {
@@ -1436,7 +1436,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				 * local proposal groups, a lookup of
 				 * sg.sg_group must succeed.
 				 */
-				const struct oakley_group_desc *new_group = ikev2_get_dh_desc(sg.sg_group);
+				const struct dh_desc *new_group = ikev2_get_dh_desc(sg.sg_group);
 				passert(new_group);
 				libreswan_log("Received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",
 					      st->st_oakley.ta_dh->common.name,
@@ -3302,7 +3302,7 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		} else {
 			what = "CREATE_CHILD_SA responder matching remote ESP/AH proposals";
 		}
-		const struct oakley_group_desc *default_dh = (c->policy & POLICY_PFS) != LEMPTY
+		const struct dh_desc *default_dh = (c->policy & POLICY_PFS) != LEMPTY
 			? ike->sa.st_oakley.ta_dh
 			: &ike_alg_dh_none;
 		child_proposals = get_v2_create_child_proposals(c, what, default_dh);
@@ -3350,7 +3350,7 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	 * &ike_alg_dh_none, to indicate no-DH algorithm, the value
 	 * returned by the proposal parser needs to be patched up.
 	 */
-	const struct oakley_group_desc *accepted_dh =
+	const struct dh_desc *accepted_dh =
 		proto_info->attrs.transattrs.ta_dh == &ike_alg_dh_none ? NULL
 		: proto_info->attrs.transattrs.ta_dh;
 	switch (st->st_sa_role) {
@@ -5813,7 +5813,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 		 * proposals instead be somehow stored in state and
 		 * dragged around?
 		 */
-		const struct oakley_group_desc *default_dh =
+		const struct dh_desc *default_dh =
 			c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
 		struct ikev2_proposals *child_proposals =
 			get_v2_create_child_proposals(c,

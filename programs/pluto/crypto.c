@@ -166,9 +166,9 @@ void ike_alg_show_status(void)
 		}
 	}
 
-	for (const struct oakley_group_desc **gdescp = next_oakley_group(NULL);
-	     gdescp != NULL; gdescp = next_oakley_group(gdescp)) {
-		const struct oakley_group_desc *gdesc = *gdescp;
+	for (const struct dh_desc **gdescp = next_dh_desc(NULL);
+	     gdescp != NULL; gdescp = next_dh_desc(gdescp)) {
+		const struct dh_desc *gdesc = *gdescp;
 		if (gdesc->bytes > 0) {
 			/* nothing crazy like 'none' */
 			whack_log(RC_COMMENT,

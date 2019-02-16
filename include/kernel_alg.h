@@ -59,13 +59,13 @@ struct alg_info;	/* forward declaration */
 struct esp_info;	/* forward declaration */
 struct alg_info_ike;	/* forward declaration */
 struct alg_info_esp;	/* forward declaration */
-struct oakley_group_desc;
+struct dh_desc;
 struct encrypt_desc;
 struct integ_desc;
 
 extern bool kernel_alg_is_ok(const struct ike_alg *alg);
 
-extern bool kernel_alg_dh_ok(const struct oakley_group_desc *dh);
+extern bool kernel_alg_dh_ok(const struct dh_desc *dh);
 extern bool kernel_alg_encrypt_ok(const struct encrypt_desc *encrypt);
 extern bool kernel_alg_integ_ok(const struct integ_desc *integ);
 

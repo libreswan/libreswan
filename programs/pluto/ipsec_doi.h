@@ -50,7 +50,7 @@ extern void init_phase2_iv(struct state *st, const msgid_t *msgid);
 /*
  * forward
  */
-struct oakley_group_desc;
+struct dh_desc;
 extern void send_delete(struct state *st);
 extern bool accept_delete(struct msg_digest *md,
 			  struct payload_digest *p);
@@ -62,7 +62,7 @@ extern void send_notification_from_state(struct state *st,
 extern void send_notification_from_md(struct msg_digest *md, notification_t type);
 
 extern bool accept_KE(chunk_t *dest, const char *val_name,
-		      const struct oakley_group_desc *gr,
+		      const struct dh_desc *gr,
 		      struct payload_digest *ke_pd);
 
 /* START_HASH_PAYLOAD_NO_HASH_START

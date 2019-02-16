@@ -1568,7 +1568,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 				break;
 			}
 			case IKEv2_TRANS_TYPE_DH: {
-				const struct oakley_group_desc *group =
+				const struct dh_desc *group =
 					ikev2_get_dh_desc(transform->id);
 				if (group == NULL) {
 					/*
@@ -1806,7 +1806,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct proposal *proposal,
 								enum ikev2_sec_proto_id protoid,
 								struct ikev2_proposals *v2_proposals,
-								const struct oakley_group_desc *default_dh)
+								const struct dh_desc *default_dh)
 {
 	/*
 	 * Both initialize and empty this proposal (might
@@ -1864,7 +1864,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 				 ike_alg_dh_none.common.id[IKEv2_ALG_ID], 0);
 	} else if (next_algorithm(proposal, PROPOSAL_dh, NULL) != NULL) {
 		FOR_EACH_ALGORITHM(proposal, dh, alg) {
-			const struct oakley_group_desc *dh = dh_desc(alg->desc);
+			const struct dh_desc *dh = dh_desc(alg->desc);
 			/*
 			 * WHILE DH=NONE is included in the proposal it is
 			 * omitted when emitted.
@@ -2165,7 +2165,7 @@ static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
 static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **child_proposals,
 						      struct connection *c,
 						      const char *why,
-						      const struct oakley_group_desc *default_dh)
+						      const struct dh_desc *default_dh)
 {
 	if (*child_proposals != NULL) {
 		LSWDBGP(DBG_CONTROL, buf) {
@@ -2384,7 +2384,7 @@ struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, co
  * Horrible.
  */
 struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, const char *why,
-						      const struct oakley_group_desc *default_dh)
+						      const struct dh_desc *default_dh)
 {
 	if (c->v2_create_child_proposals_default_dh != default_dh) {
 		const char *old_fqn = (c->v2_create_child_proposals_default_dh != NULL
@@ -2435,7 +2435,7 @@ ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy)
 /*
  * Return the first valid DH proposal that is supported.
  */
-const struct oakley_group_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals)
+const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
@@ -2444,7 +2444,7 @@ const struct oakley_group_desc *ikev2_proposals_first_dh(const struct ikev2_prop
 		int t;
 		for (t = 0; t < transforms->transform[t].valid; t++) {
 			int groupnum = transforms->transform[t].id;
-			const struct oakley_group_desc *group =
+			const struct dh_desc *group =
 				ikev2_get_dh_desc(groupnum);
 			if (group == NULL) {
 				/*

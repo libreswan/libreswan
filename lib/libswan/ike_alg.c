@@ -146,10 +146,10 @@ const struct integ_desc **next_integ_desc(const struct integ_desc **last)
 						   (const struct ike_alg**)last);
 }
 
-const struct oakley_group_desc **next_oakley_group(const struct oakley_group_desc **last)
+const struct dh_desc **next_dh_desc(const struct dh_desc **last)
 {
-	return (const struct oakley_group_desc**)next_alg(&ike_alg_dh,
-							  (const struct ike_alg**)last);
+	return (const struct dh_desc**)next_alg(&ike_alg_dh,
+						(const struct ike_alg**)last);
 }
 
 const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
@@ -258,7 +258,7 @@ const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute id)
 	return prf_desc(ikev1_oakley_lookup(&ike_alg_prf, id));
 }
 
-const struct oakley_group_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh id)
+const struct dh_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh id)
 {
 	return dh_desc(ikev1_oakley_lookup(&ike_alg_dh, id));
 }
@@ -293,7 +293,7 @@ const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ id)
 	return integ_desc(ikev2_lookup(&ike_alg_integ, id));
 }
 
-const struct oakley_group_desc *ikev2_get_dh_desc(enum ike_trans_type_dh id)
+const struct dh_desc *ikev2_get_dh_desc(enum ike_trans_type_dh id)
 {
 	return dh_desc(ikev2_lookup(&ike_alg_dh, id));
 }
@@ -782,37 +782,37 @@ const struct ike_alg_type ike_alg_encrypt = {
  * DH group
  */
 
-static const struct oakley_group_desc *dh_descriptors[] = {
+static const struct dh_desc *dh_descriptors[] = {
 	&ike_alg_dh_none,
 #ifdef USE_DH2
-	&oakley_group_modp1024,
+	&ike_alg_dh_modp1024,
 #endif
-	&oakley_group_modp1536,
-	&oakley_group_modp2048,
-	&oakley_group_modp3072,
-	&oakley_group_modp4096,
-	&oakley_group_modp6144,
-	&oakley_group_modp8192,
-	&oakley_group_dh19,
-	&oakley_group_dh20,
-	&oakley_group_dh21,
+	&ike_alg_dh_modp1536,
+	&ike_alg_dh_modp2048,
+	&ike_alg_dh_modp3072,
+	&ike_alg_dh_modp4096,
+	&ike_alg_dh_modp6144,
+	&ike_alg_dh_modp8192,
+	&ike_alg_dh_dh19,
+	&ike_alg_dh_dh20,
+	&ike_alg_dh_dh21,
 #ifdef USE_DH22
-	&oakley_group_dh22,
+	&ike_alg_dh_dh22,
 #endif
 #ifdef USE_DH23
-	&oakley_group_dh23,
+	&ike_alg_dh_dh23,
 #endif
 #ifdef USE_DH24
-	&oakley_group_dh24,
+	&ike_alg_dh_dh24,
 #endif
 #ifdef USE_DH31
-	&oakley_group_dh31,
+	&ike_alg_dh_dh31,
 #endif
 };
 
 static void dh_desc_check(const struct ike_alg *alg)
 {
-	const struct oakley_group_desc *dh = oakley_group_desc(alg);
+	const struct dh_desc *dh = dh_desc(alg);
 	pexpect_ike_alg(alg, dh->group > 0);
 	pexpect_ike_alg(alg, dh->bytes > 0);
 	pexpect_ike_alg(alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
@@ -836,7 +836,7 @@ static void dh_desc_check(const struct ike_alg *alg)
 
 static bool dh_desc_is_ike(const struct ike_alg *alg)
 {
-	const struct oakley_group_desc *dh = oakley_group_desc(alg);
+	const struct dh_desc *dh = dh_desc(alg);
 	return dh->dh_ops != NULL;
 }
 

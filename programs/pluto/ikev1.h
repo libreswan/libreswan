@@ -13,7 +13,7 @@ struct ike_proposals;
 
 extern void init_ikev1(void);
 
-const struct oakley_group_desc *ikev1_quick_pfs(const struct child_proposals proposals);
+const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals);
 
 void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, uint8_t np,
 				 pb_stream *output_stream, uint8_t *output_buffer,

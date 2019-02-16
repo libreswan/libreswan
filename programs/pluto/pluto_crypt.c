@@ -251,7 +251,7 @@ static void pcrc_release_request(struct pluto_crypto_req_cont *cn)
 
 void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
 		      enum pluto_crypto_requests pcr_type,
-		      const struct oakley_group_desc *dh)
+		      const struct dh_desc *dh)
 {
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 	pcr_init(r, pcr_type);

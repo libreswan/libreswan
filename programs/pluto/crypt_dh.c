@@ -66,7 +66,7 @@
 #include "lswnss.h"
 
 struct dh_secret {
-	const struct oakley_group_desc *group;
+	const struct dh_desc *group;
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
 };
@@ -77,7 +77,7 @@ static void lswlog_dh_secret(struct lswlog *buf, struct dh_secret *secret)
 		secret->group->common.name, secret);
 }
 
-struct dh_secret *calc_dh_secret(const struct oakley_group_desc *group,
+struct dh_secret *calc_dh_secret(const struct dh_desc *group,
 				 chunk_t *local_ke)
 {
 	chunk_t ke = alloc_chunk(group->bytes, "local ke");
