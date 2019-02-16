@@ -10,7 +10,7 @@ east #
  echo "initdone"
 initdone
 east #
- # wait over one minute to ensure no EVENT_SA_REPLACE lingered and started something
+ # wait over one minute to ensure no EVENT_SA_REKEY lingered and started something
 east #
  sleep 45
 east #
