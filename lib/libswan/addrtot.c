@@ -25,72 +25,11 @@
 #define IP6BYTES        16      /* bytes in an IPv6 address */
 
 /* forwards */
-static size_t normal4(const unsigned char *s, size_t len, char *b, char **dp);
-static size_t normal6(const unsigned char *s, size_t len, char *b, char **dp,
+static size_t normal4(const unsigned char *s, size_t len, char *b, const char **dp);
+static size_t normal6(const unsigned char *s, size_t len, char *b, const char **dp,
 		      int squish);
-static size_t reverse4(const unsigned char *s, size_t len, char *b, char **dp);
-static size_t reverse6(const unsigned char *s, size_t len, char *b, char **dp);
-
-/*
-   - addrtot - convert binary address to text (dotted decimal or IPv6 string)
- */
-size_t                          /* space needed for full conversion */
-addrtot(src, format, dst, dstlen)
-const ip_address * src;
-int format;                     /* character */
-char *dst;                      /* need not be valid if dstlen is 0 */
-size_t dstlen;
-{
-	const unsigned char *b;
-	size_t n;
-	char buf[1 + ADDRTOT_BUF + 1];      /* :address: */
-	char *p;
-	int t = addrtypeof(src);
-#       define  TF(t, f)        (((t) << 8) | (f))
-
-	n = addrbytesptr_read(src, &b);
-	if (n == 0) {
-		dst[0] = '\0';
-		strncat(dst, "<invalid>", dstlen - 1); /* we hope possible truncation does not cause problems */
-		return sizeof("<invalid>");
-	}
-
-	switch (TF(t, format)) {
-	case TF(AF_INET, 0):
-		n = normal4(b, n, buf, &p);
-		break;
-	case TF(AF_INET6, 0):
-		n = normal6(b, n, buf, &p, 1);
-		break;
-	case TF(AF_INET, 'Q'):
-		n = normal4(b, n, buf, &p);
-		break;
-	case TF(AF_INET6, 'Q'):
-		n = normal6(b, n, buf, &p, 0);
-		break;
-	case TF(AF_INET, 'r'):
-		n = reverse4(b, n, buf, &p);
-		break;
-	case TF(AF_INET6, 'r'):
-		n = reverse6(b, n, buf, &p);
-		break;
-	default:                                        /* including (AF_INET, 'R') */
-		dst[0] = '\0';
-		strncat(dst, "<invalid>", dstlen - 1);  /* we hope possible truncation does not cause problems */
-		return sizeof("<invalid>");
-	}
-
-	if (dstlen > 0) {
-		if (dstlen < n)
-			p[dstlen - 1] = '\0';
-		/*
-		 * clang 3.4 thinks dst or p are uninitialized.
-		 * I don't see how -- DHR
-		 */
-		strcpy(dst, p);
-	}
-	return n;
-}
+static size_t reverse4(const unsigned char *s, size_t len, char *b, const char **dp);
+static size_t reverse6(const unsigned char *s, size_t len, char *b, const char **dp);
 
 /*
    - inet_addrtot - convert binary inet address to text (dotted decimal or IPv6 string)
@@ -103,54 +42,63 @@ int format;             /* character */
 char *dst;              /* need not be valid if dstlen is 0 */
 size_t dstlen;
 {
-	size_t n;
 	char buf[1 + ADDRTOT_BUF + 1];      /* :address: */
-	char *p;
 
-#       define  TF(t, f)        (((t) << 8) | (f))
+	/* initialize for cases not handled */
+	const char *p = "<invalid>";
+	size_t n = sizeof("<invalid>") - 1;
 
 	switch (t) {
-	case AF_INET: n = IP4BYTES;
+	case AF_INET:
+		switch (format) {
+		case 0:
+		case 'Q':
+			n = normal4(src, IP4BYTES, buf, &p);
+			break;
+		case 'r':
+			n = reverse4(src, IP4BYTES, buf, &p);
+			break;
+		}
 		break;
-	case AF_INET6: n = IP6BYTES;
-		break;
-	default:
-		dst[0] = '\0';
-		strncat(dst, "<invalid>", dstlen - 1); /* we hope possible truncation does not cause problems */
-		return sizeof("<invalid>");
-	}
 
-	switch (TF(t, format)) {
-	case TF(AF_INET, 0):
-		n = normal4(src, n, buf, &p);
+	case AF_INET6:
+		switch (format) {
+		case 0:
+			n = normal6(src, IP6BYTES, buf, &p, 1);
+			break;
+		case 'Q':
+			n = normal6(src, IP6BYTES, buf, &p, 0);
+			break;
+		case 'r':
+			n = reverse6(src, IP6BYTES, buf, &p);
+			break;
+		}
 		break;
-	case TF(AF_INET6, 0):
-		n = normal6(src, n, buf, &p, 1);
-		break;
-	case TF(AF_INET, 'Q'):
-		n = normal4(src, n, buf, &p);
-		break;
-	case TF(AF_INET6, 'Q'):
-		n = normal6(src, n, buf, &p, 0);
-		break;
-	case TF(AF_INET, 'r'):
-		n = reverse4(src, n, buf, &p);
-		break;
-	case TF(AF_INET6, 'r'):
-		n = reverse6(src, n, buf, &p);
-		break;
-	default:                                        /* including (AF_INET, 'R') */
-		dst[0] = '\0';
-		strncat(dst, "<invalid>", dstlen - 1);  /* we hope possible truncation does not cause problems */
-		return sizeof("<invalid>");
 	}
 
 	if (dstlen > 0) {
-		if (dstlen < n)
-			p[dstlen - 1] = '\0';
-		strcpy(dst, p);	/* clang 6.0.0 mistakenly thinks p is undefined */
+		/* make dstlen actual result length, including NUL */
+		if (dstlen > n)
+			dstlen = n + 1;
+		memcpy(dst, p, dstlen - 1);
+		dst[dstlen - 1] = '\0';
 	}
-	return n;
+	return n;	/* strlen(untruncated result) */
+}
+
+/*
+   - addrtot - convert binary address to text (dotted decimal or IPv6 string)
+ */
+size_t                          /* space needed for full conversion */
+addrtot(src, format, dst, dstlen)
+const ip_address *src;
+int format;                     /* character */
+char *dst;                      /* need not be valid if dstlen is 0 */
+size_t dstlen;
+{
+	const unsigned char *src_inet;
+	(void)addrbytesptr_read(src, &src_inet);
+	return inet_addrtot(addrtypeof(src), src_inet, format, dst, dstlen);
 }
 
 /*
@@ -193,7 +141,7 @@ normal4(srcp, srclen, buf, dstp)
 const unsigned char *srcp;
 size_t srclen;
 char *buf;                      /* guaranteed large enough */
-char **dstp;                    /* where to put result pointer */
+const char **dstp;                    /* where to put result pointer */
 {
 	int i;
 	char *p;
@@ -219,7 +167,7 @@ normal6(srcp, srclen, buf, dstp, squish)
 const unsigned char *srcp;
 size_t srclen;
 char *buf;                      /* guaranteed large enough, plus 2 */
-char **dstp;                    /* where to put result pointer */
+const char **dstp;                    /* where to put result pointer */
 int squish;                     /* whether to squish out 0:0 */
 {
 	int i;
@@ -269,8 +217,8 @@ static size_t                   /* size of text, including NUL */
 reverse4(srcp, srclen, buf, dstp)
 const unsigned char *srcp;
 size_t srclen;
-char *buf;                      /* guaranteed large enough */
-char **dstp;                    /* where to put result pointer */
+char *buf;	/* guaranteed large enough */
+const char **dstp;	/* where to put result pointer */
 {
 	int i;
 	char *p;
@@ -296,8 +244,8 @@ static size_t                   /* size of text, including NUL */
 reverse6(srcp, srclen, buf, dstp)
 const unsigned char *srcp;
 size_t srclen;
-char *buf;                      /* guaranteed large enough */
-char **dstp;                    /* where to put result pointer */
+char *buf;	/* guaranteed large enough */
+const char **dstp;	/* where to put result pointer */
 {
 	int i;
 	unsigned long piece;
