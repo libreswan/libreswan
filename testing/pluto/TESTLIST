@@ -157,6 +157,7 @@ kvmplutotest	ikev2-61-any-psk			good
 kvmplutotest	ikev2-62-host-ondemand			good
 kvmplutotest	ikev2-62-host-ondemand-instance		good
 kvmplutotest	ikev2-63-anyid-nat			good
+kvmplutotest	ikev2-64-same-route-twice		wip
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good

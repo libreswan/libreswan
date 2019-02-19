@@ -1,0 +1,10 @@
+north has two tunnels, with same rihgtsubnet and different leftsubnet.
+One goes to east and the other to west.
+
+Yes this test is special, configure same subnet behind east and the west!
+
+Since both tunnels have the same rightsubnet, pluto refuse to add the
+second tunnel.
+
+The limitiation is from the KLIPS days, where a route meant destination + next hop.
+Now a days source is also part of route, and more attributes with routing policy.
