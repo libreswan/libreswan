@@ -237,13 +237,10 @@ static void read_foodgroup(struct fg_groups *g)
 						if (r != 0)
 							break;
 
-						if (proto == (*pp)->proto && sport == (*pp)->sport && dport == (*pp)->dport) {
-							/* ??? we know that r == 0: why set it again? */
-							r = 0;
+						if (proto == (*pp)->proto &&
+						    sport == (*pp)->sport &&
+						    dport == (*pp)->dport) {
 							break;
-						} else {
-							/* ??? since we are looping, r's value won't be used */
-							r = 1;
 						}
 					}
 

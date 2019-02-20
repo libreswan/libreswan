@@ -264,8 +264,6 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 	while ((*pathlen)++ < MAX_CA_PATH_LEN) {
 		SECItem a_dn = same_chunk_as_dercert_secitem(a);
-		chunk_t i_dn = EMPTY_CHUNK;
-
 		cacert = CERT_FindCertByName(handle, &a_dn);
 
 		/* cacert not found or self-signed root cacert => exit */
@@ -274,7 +272,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		}
 
 		/* does the issuer of CA a match CA b? */
-		i_dn = same_secitem_as_chunk(cacert->derIssuer);
+		chunk_t i_dn = same_secitem_as_chunk(cacert->derIssuer);
 		match = same_dn_any_order(i_dn, b);
 
 		if (match) {

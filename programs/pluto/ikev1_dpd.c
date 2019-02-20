@@ -118,10 +118,6 @@
 
 stf_status dpd_init(struct state *st)
 {
-	/**
-	 * Used to store the 1st state
-	 */
-	struct state *p1st;
 	bool peer_supports_dpd = st->hidden_variables.st_peer_supports_dpd;
 	bool want_dpd = dpd_active_locally(st);
 
@@ -142,7 +138,6 @@ stf_status dpd_init(struct state *st)
 			DBG(DBG_DPD, DBG_log("DPD: not initializing DPD because DPD is disabled locally"));
 			return STF_OK;
 		}
-		p1st = st;
 	} else {
 		DBG(DBG_DPD, DBG_log("DPD: dpd_init() called on IPsec SA"));
 		if (!peer_supports_dpd || !want_dpd) {
@@ -151,7 +146,7 @@ stf_status dpd_init(struct state *st)
 		}
 
 		/* find the IKE SA */
-		p1st = find_state_ikev1(&st->st_ike_spis, 0);
+		struct state *p1st = find_state_ikev1(&st->st_ike_spis, 0);
 		if (p1st == NULL) {
 			loglog(RC_LOG_SERIOUS, "could not find phase 1 state for DPD");
 			return STF_FAIL;
