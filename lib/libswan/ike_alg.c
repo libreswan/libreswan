@@ -818,7 +818,8 @@ static void dh_desc_check(const struct ike_alg *alg)
 	pexpect_ike_alg(alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
 	pexpect_ike_alg(alg, dh->common.id[IKEv1_OAKLEY_ID] == dh->group);
 	/* always implemented */
-	if (pexpect_ike_alg(alg, dh->dh_ops != NULL)) {
+	pexpect_ike_alg(alg, dh->dh_ops != NULL);
+	if (dh->dh_ops != NULL) {
 		pexpect_ike_alg(alg, dh->dh_ops->check != NULL);
 		pexpect_ike_alg(alg, dh->dh_ops->calc_secret != NULL);
 		pexpect_ike_alg(alg, dh->dh_ops->calc_shared != NULL);
