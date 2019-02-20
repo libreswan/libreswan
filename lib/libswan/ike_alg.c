@@ -818,18 +818,19 @@ static void dh_desc_check(const struct ike_alg *alg)
 	pexpect_ike_alg(alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
 	pexpect_ike_alg(alg, dh->common.id[IKEv1_OAKLEY_ID] == dh->group);
 	/* always implemented */
-	pexpect_ike_alg(alg, dh->dh_ops != NULL);
-	pexpect_ike_alg(alg, dh->dh_ops->check != NULL);
-	pexpect_ike_alg(alg, dh->dh_ops->calc_secret != NULL);
-	pexpect_ike_alg(alg, dh->dh_ops->calc_shared != NULL);
-	/* more? */
-	dh->dh_ops->check(dh);
-	/* IKEv1 supports MODP groups but not ECC. */
-	pexpect_ike_alg(alg, (dh->dh_ops == &ike_alg_dh_nss_modp_ops
-			      ? dh->common.id[IKEv1_ESP_ID] == dh->group
-			      : dh->dh_ops == &ike_alg_dh_nss_ecp_ops
-			      ? dh->common.id[IKEv1_ESP_ID] < 0
-			      : FALSE));
+	if (pexpect_ike_alg(alg, dh->dh_ops != NULL)) {
+		pexpect_ike_alg(alg, dh->dh_ops->check != NULL);
+		pexpect_ike_alg(alg, dh->dh_ops->calc_secret != NULL);
+		pexpect_ike_alg(alg, dh->dh_ops->calc_shared != NULL);
+		/* more? */
+		dh->dh_ops->check(dh);
+		/* IKEv1 supports MODP groups but not ECC. */
+		pexpect_ike_alg(alg, (dh->dh_ops == &ike_alg_dh_nss_modp_ops
+				      ? dh->common.id[IKEv1_ESP_ID] == dh->group
+				      : dh->dh_ops == &ike_alg_dh_nss_ecp_ops
+				      ? dh->common.id[IKEv1_ESP_ID] < 0
+				      : FALSE));
+	}
 }
 
 static bool dh_desc_is_ike(const struct ike_alg *alg)
