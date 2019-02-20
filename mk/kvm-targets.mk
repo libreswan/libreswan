@@ -473,28 +473,38 @@ define destroy-kvm-network
 	fi
 endef
 
+
 #
-# Base gateway.
+# The Gateway
+#
+# Because the gateway is created directly from libvirt/swandefault and
+# that file contains hardwired IP addresses, only one is possible.
+#
+# XXX: Why?  Perhaps it is so that SSHing into the VMs is possible,
+# but with lots of VMs what address gets assigned stops being
+# predictable.
 #
 
-KVM_GATEWAY_FILE = $(KVM_POOLDIR)/$(KVM_GATEWAY).xml
+KVM_GATEWAY_FILE = $(KVM_POOLDIR)/$(KVM_GATEWAY).gw
+
 .PHONY: install-kvm-network-$(KVM_GATEWAY)
 install-kvm-network-$(KVM_GATEWAY): $(KVM_GATEWAY_FILE)
-$(KVM_GATEWAY_FILE): | testing/libvirt/net/$(KVM_GATEWAY) $(KVM_POOLDIR)
-	$(call destroy-kvm-network,$(KVM_GATEWAY))
-	cp testing/libvirt/net/$(KVM_GATEWAY) $@.tmp
-	$(call create-kvm-network,$(KVM_GATEWAY),$@.tmp)
-	mv $@.tmp $@
 
 .PHONY: uninstall-kvm-network-$(KVM_GATEWAY)
 uninstall-kvm-network-$(KVM_GATEWAY):
 	rm -f $(KVM_GATEWAY_FILE)
 	$(call destroy-kvm-network,$(KVM_GATEWAY))
 
+$(KVM_GATEWAY_FILE): | testing/libvirt/net/$(KVM_GATEWAY) $(KVM_POOLDIR)
+	$(call destroy-kvm-network,$(KVM_GATEWAY))
+	$(call create-kvm-network,$(KVM_GATEWAY),testing/libvirt/net/$(KVM_GATEWAY))
+	touch $@
+
 # zap dependent domains
 
 uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
 uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_BUILD_DOMAIN)
+
 
 #
 # Test networks.
