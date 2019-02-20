@@ -37,35 +37,35 @@ west #
 000  
 000 List of X.509 End Certificates:
 000  
-000 End certificate "west" - SN: 0xXX
+000 End certificate "west" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA: has private key
 000  
-000 End certificate "road" - SN: 0xXX
+000 End certificate "road" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "north" - SN: 0xXX
+000 End certificate "north" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "hashsha1" - SN: 0xXX
+000 End certificate "hashsha1" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha1.testing.libreswan.org, E=user-hashsha1@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "nic" - SN: 0xXX
+000 End certificate "nic" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
@@ -74,14 +74,14 @@ west #
 000  
 000 List of X.509 CA Certificates:
 000  
-000 Root CA certificate "Libreswan test CA for mainca - Libreswan" - SN: 0xXX
+000 Root CA certificate "Libreswan test CA for mainca - Libreswan" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   1024 bit RSA
 000  
-000 Root CA certificate "east-ec" - SN: 0xXX
+000 Root CA certificate "east-ec" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east-ec.testing.libreswan.org, E=testing@libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east-ec.testing.libreswan.org, E=testing@libreswan.org
 000   not before: TIMESTAMP
@@ -116,17 +116,17 @@ initdone
 west #
  ipsec auto --up nss-cert
 002 "nss-cert" #1: initiating Main Mode
-104 "nss-cert" #1: STATE_MAIN_I1: initiate
-106 "nss-cert" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "nss-cert" #1: STATE_MAIN_I1: initiate
+1v1 "nss-cert" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 002 "nss-cert" #1: I am sending my cert
 002 "nss-cert" #1: I am sending a certificate request
-108 "nss-cert" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+1v1 "nss-cert" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "nss-cert" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "nss-cert" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "nss-cert" #1: Authenticated using RSA
 004 "nss-cert" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "nss-cert" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-117 "nss-cert" #2: STATE_QUICK_I1: initiate
+1v1 "nss-cert" #2: STATE_QUICK_I1: initiate
 004 "nss-cert" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  echo done
@@ -169,35 +169,35 @@ west #
 000  
 000 List of X.509 End Certificates:
 000  
-000 End certificate "west" - SN: 0xXX
+000 End certificate "west" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA: has private key
 000  
-000 End certificate "road" - SN: 0xXX
+000 End certificate "road" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "north" - SN: 0xXX
+000 End certificate "north" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "hashsha1" - SN: 0xXX
+000 End certificate "hashsha1" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha1.testing.libreswan.org, E=user-hashsha1@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "nic" - SN: 0xXX
+000 End certificate "nic" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
@@ -206,14 +206,14 @@ west #
 000  
 000 List of X.509 CA Certificates:
 000  
-000 Root CA certificate "Libreswan test CA for mainca - Libreswan" - SN: 0xXX
+000 Root CA certificate "Libreswan test CA for mainca - Libreswan" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   1024 bit RSA
 000  
-000 Root CA certificate "east-ec" - SN: 0xXX
+000 Root CA certificate "east-ec" - SN: 0xXXXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east-ec.testing.libreswan.org, E=testing@libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east-ec.testing.libreswan.org, E=testing@libreswan.org
 000   not before: TIMESTAMP

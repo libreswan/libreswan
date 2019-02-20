@@ -15,13 +15,13 @@ initdone
 west #
  ipsec auto --up  westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: initiating Main Mode
-104 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I1: initiate
-106 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-108 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+1v1 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I1: initiate
+1v1 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-117 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I1: initiate
+1v1 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I1: initiate
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting state (STATE_QUICK_I1) and NOT sending notification
 west #

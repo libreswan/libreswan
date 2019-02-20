@@ -49,9 +49,9 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp2048
 002 "westnet-eastnet-ikev2-modp2048" #1: initiating v2 parent SA
-133 "westnet-eastnet-ikev2-modp2048" #1: initiate
-133 "westnet-eastnet-ikev2-modp2048" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2-modp2048" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
+1v2 "westnet-eastnet-ikev2-modp2048" #1: initiate
+1v2 "westnet-eastnet-ikev2-modp2048" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2-modp2048" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ikev2-modp2048" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp2048" #2: Authenticated using RSA
 002 "westnet-eastnet-ikev2-modp2048" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -65,9 +65,9 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp3072
 002 "westnet-eastnet-ikev2-modp3072" #3: initiating v2 parent SA
-133 "westnet-eastnet-ikev2-modp3072" #3: initiate
-133 "westnet-eastnet-ikev2-modp3072" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2-modp3072" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP3072}
+1v2 "westnet-eastnet-ikev2-modp3072" #3: initiate
+1v2 "westnet-eastnet-ikev2-modp3072" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2-modp3072" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP3072}
 002 "westnet-eastnet-ikev2-modp3072" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp3072" #4: Authenticated using RSA
 002 "westnet-eastnet-ikev2-modp3072" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -81,9 +81,9 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp4096
 002 "westnet-eastnet-ikev2-modp4096" #5: initiating v2 parent SA
-133 "westnet-eastnet-ikev2-modp4096" #5: initiate
-133 "westnet-eastnet-ikev2-modp4096" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2-modp4096" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP4096}
+1v2 "westnet-eastnet-ikev2-modp4096" #5: initiate
+1v2 "westnet-eastnet-ikev2-modp4096" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2-modp4096" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP4096}
 002 "westnet-eastnet-ikev2-modp4096" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp4096" #6: Authenticated using RSA
 002 "westnet-eastnet-ikev2-modp4096" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -97,9 +97,9 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp8192
 002 "westnet-eastnet-ikev2-modp8192" #7: initiating v2 parent SA
-133 "westnet-eastnet-ikev2-modp8192" #7: initiate
-133 "westnet-eastnet-ikev2-modp8192" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2-modp8192" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP8192}
+1v2 "westnet-eastnet-ikev2-modp8192" #7: initiate
+1v2 "westnet-eastnet-ikev2-modp8192" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2-modp8192" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP8192}
 002 "westnet-eastnet-ikev2-modp8192" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-modp8192" #8: Authenticated using RSA
 002 "westnet-eastnet-ikev2-modp8192" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -113,9 +113,9 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh19
 002 "westnet-eastnet-ikev2-dh19" #9: initiating v2 parent SA
-133 "westnet-eastnet-ikev2-dh19" #9: initiate
-133 "westnet-eastnet-ikev2-dh19" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2-dh19" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
+1v2 "westnet-eastnet-ikev2-dh19" #9: initiate
+1v2 "westnet-eastnet-ikev2-dh19" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2-dh19" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
 002 "westnet-eastnet-ikev2-dh19" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh19" #10: Authenticated using RSA
 002 "westnet-eastnet-ikev2-dh19" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -129,9 +129,9 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh20
 002 "westnet-eastnet-ikev2-dh20" #11: initiating v2 parent SA
-133 "westnet-eastnet-ikev2-dh20" #11: initiate
-133 "westnet-eastnet-ikev2-dh20" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2-dh20" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH20}
+1v2 "westnet-eastnet-ikev2-dh20" #11: initiate
+1v2 "westnet-eastnet-ikev2-dh20" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2-dh20" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH20}
 002 "westnet-eastnet-ikev2-dh20" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh20" #12: Authenticated using RSA
 002 "westnet-eastnet-ikev2-dh20" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -145,9 +145,9 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh21
 002 "westnet-eastnet-ikev2-dh21" #13: initiating v2 parent SA
-133 "westnet-eastnet-ikev2-dh21" #13: initiate
-133 "westnet-eastnet-ikev2-dh21" #13: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2-dh21" #14: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH21}
+1v2 "westnet-eastnet-ikev2-dh21" #13: initiate
+1v2 "westnet-eastnet-ikev2-dh21" #13: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2-dh21" #14: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH21}
 002 "westnet-eastnet-ikev2-dh21" #14: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh21" #14: Authenticated using RSA
 002 "westnet-eastnet-ikev2-dh21" #14: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -161,9 +161,9 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh31
 002 "westnet-eastnet-ikev2-dh31" #15: initiating v2 parent SA
-133 "westnet-eastnet-ikev2-dh31" #15: initiate
-133 "westnet-eastnet-ikev2-dh31" #15: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2-dh31" #16: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH31}
+1v2 "westnet-eastnet-ikev2-dh31" #15: initiate
+1v2 "westnet-eastnet-ikev2-dh31" #15: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2-dh31" #16: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH31}
 002 "westnet-eastnet-ikev2-dh31" #16: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2-dh31" #16: Authenticated using RSA
 002 "westnet-eastnet-ikev2-dh31" #16: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -191,8 +191,8 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp1536
 002 "westnet-eastnet-ikev2-modp1536" #17: initiating v2 parent SA
-133 "westnet-eastnet-ikev2-modp1536" #17: initiate
-133 "westnet-eastnet-ikev2-modp1536" #17: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2-modp1536" #17: initiate
+1v2 "westnet-eastnet-ikev2-modp1536" #17: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "westnet-eastnet-ikev2-modp1536" #17: STATE_PARENT_I1: received unauthenticated v2N_NO_PROPOSAL_CHOSEN - ignored
 002 "westnet-eastnet-ikev2-modp1536" #17: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ikev2-modp1536" #17: deleting state (STATE_PARENT_I1) and NOT sending notification

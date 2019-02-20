@@ -20,14 +20,14 @@ initdone
 west #
  ipsec auto --up  westnet-eastnet
 002 "westnet-eastnet" #1: initiating Main Mode
-104 "westnet-eastnet" #1: STATE_MAIN_I1: initiate
+1v1 "westnet-eastnet" #1: STATE_MAIN_I1: initiate
 002 "westnet-eastnet" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet" #1: deleting state (STATE_MAIN_I1) and NOT sending notification
 west #
  ipsec auto --up  westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2" #2: initiating v2 parent SA
-133 "westnet-eastnet-ikev2" #2: initiate
-133 "westnet-eastnet-ikev2" #2: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2" #2: initiate
+1v2 "westnet-eastnet-ikev2" #2: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "westnet-eastnet-ikev2" #2: STATE_PARENT_I1: received unauthenticated v2N_NO_PROPOSAL_CHOSEN - ignored
 002 "westnet-eastnet-ikev2" #2: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ikev2" #2: deleting state (STATE_PARENT_I1) and NOT sending notification
