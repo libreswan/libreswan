@@ -792,6 +792,7 @@ kvmplutotest	ikev2-ipv6-transport-mode-02-netkey-netkey	good
 #################################################################
 # Interop tests
 #################################################################
+kvmplutotest	interop-ikev1-strongswan-01-xauth		good
 kvmplutotest	interop-ikev1-strongswan-02-psk-responder	good
 kvmplutotest	interop-ikev1-strongswan-03-psk-initiator	good
 kvmplutotest	interop-ikev1-strongswan-04-psk-aes-gcm		good
