@@ -293,7 +293,12 @@ static bool verify_end_cert(CERTCertList *trustcl,
 		DBG(DBG_X509, DBG_log("certificate is valid"));
 		fin = true;
 	}
-#else
+
+	if (fin == false)
+
+#endif
+	{
+
 	/* kludge alert!!
 	 * verification may be performed twice: once with the
 	 * 'client' usage and once with 'server', which is an NSS
@@ -340,7 +345,8 @@ static bool verify_end_cert(CERTCertList *trustcl,
 		}
 		break;
 	}
-#endif
+	} /* end block or else clause */
+
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
 	PORT_FreeArena(vfy_log2.arena, PR_FALSE);
 
