@@ -67,10 +67,11 @@ print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
 #
 
 strip-prefix = $(subst '',,$(subst "",,$(1)))
-KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
-add-all-domain-prefixes = \
+# for-each-kvm-prefix = how?
+add-kvm-prefixes = \
 	$(foreach prefix, $(KVM_PREFIXES), \
 		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
+KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 
 
 # To avoid the problem where the host has no "default" KVM network
@@ -125,9 +126,9 @@ KVM_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BASE_HOST))
 
 KVM_BUILD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST))
 
-KVM_BASIC_DOMAINS = $(call add-all-domain-prefixes, $(KVM_BASIC_HOSTS))
-KVM_INSTALL_DOMAINS = $(call add-all-domain-prefixes, $(KVM_INSTALL_HOSTS))
-KVM_TEST_DOMAINS = $(call add-all-domain-prefixes, $(KVM_TEST_HOSTS))
+KVM_BASIC_DOMAINS = $(call add-kvm-prefixes, $(KVM_BASIC_HOSTS))
+KVM_INSTALL_DOMAINS = $(call add-kvm-prefixes, $(KVM_INSTALL_HOSTS))
+KVM_TEST_DOMAINS = $(call add-kvm-prefixes, $(KVM_TEST_HOSTS))
 
 KVM_LOCAL_DOMAINS = $(sort $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS))
 
@@ -462,9 +463,7 @@ define create-kvm-network
 endef
 
 define destroy-kvm-network
-	:
-        : destroy-kvm-network network=$(1)
-	:
+	: destroy-kvm-network network=$(1)
 	if $(VIRSH) net-info '$(1)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
 		$(VIRSH) net-destroy '$(1)' ; \
 	fi
@@ -509,62 +508,50 @@ uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_BUILD_DOMAIN)
 #
 # Test networks.
 #
+# Since networks survive across reboots and don't use any disk, they
+# are stored in $(KVM_POOLDIR) and not $(KVM_LOCALDIR).
+#
 
 KVM_TEST_SUBNETS = \
-	$(notdir $(wildcard testing/libvirt/net/192*))
+	$(notdir $(wildcard testing/libvirt/net/192_*))
 
 KVM_TEST_NETWORKS = \
-	$(foreach prefix, $(KVM_PREFIXES), \
-		$(addprefix $(call strip-prefix,$(prefix)), $(KVM_TEST_SUBNETS)))
+	$(call add-kvm-prefixes, $(KVM_TEST_SUBNETS))
 
-define install-kvm-test-network
-  #(info prefix=$(1) network=$(2))
-  .PHONY: install-kvm-network-$(1)$(2)
-  install-kvm-network-$(1)$(2): $$(KVM_POOLDIR)/$(1)$(2).xml
-  .PRECIOUS: $$(KVM_POOLDIR)/$(1)$(2).xml
-  $$(KVM_POOLDIR)/$(1)$(2).xml: | $$(KVM_POOLDIR)
-	:
-	: install-kvm-test-network prefix=$(1) network=$(2)
-	:
-	$$(call destroy-kvm-network,$(1)$(2))
-	rm -f '$$@.tmp'
-	echo "<network ipv6='yes'>"					>> '$$@.tmp'
-	echo "  <name>$(1)$(2)</name>"					>> '$$@.tmp'
-  ifeq ($(1),)
-	echo "  <bridge name='swan$(subst _,,$(patsubst 192_%,%,$(2)))' stp='on' delay='0'/>"		>> '$$@.tmp'
-  else
-	echo "  <bridge name='$(1)$(2)' stp='on' delay='0'/>"		>> '$$@.tmp'
-  endif
-  ifeq ($(1),)
-	echo "  <ip address='$(subst _,.,$(2)).253'/>"				>> '$$@.tmp'
-  else
-	echo "  <!-- <ip address='$(subst _,.,$(2)).253'> -->"			>> '$$@.tmp'
-  endif
-	echo "</network>"						>> '$$@.tmp'
-	$$(call create-kvm-network,$(1)$(2),$$@.tmp)
-	mv $$@.tmp $$@
-endef
+KVM_TEST_NETWORK_FILES = \
+	$(addsuffix .net, $(addprefix $(KVM_POOLDIR)/, $(KVM_TEST_NETWORKS)))
 
-$(foreach prefix, $(KVM_PREFIXES), \
-	$(foreach subnet, $(KVM_TEST_SUBNETS), \
-		$(eval $(call install-kvm-test-network,$(call strip-prefix,$(prefix)),$(subnet)))))
+.PRECIOUS: $(KVM_TEST_NETWORK_FILES)
 
-define uninstall-kvm-test-network
-  #(info  uninstall-kvm-test-network prefix=$(1) network=$(2))
-  .PHONY: uninstall-kvm-network-$(1)$(2)
-  uninstall-kvm-network-$(1)$(2):
-	:
-	: uninstall-kvm-test-network prefix=$(1) network=$(2)
-	:
-	rm -f $$(KVM_POOLDIR)/$(1)$(2).xml
-	$$(call destroy-kvm-network,$(1)$(2))
-  # zap dependent domains
-  uninstall-kvm-network-$(1)$(2): $$(addprefix uninstall-kvm-domain-, $$(addprefix $(1), $$(KVM_TEST_HOSTS)))
-endef
+# <prefix><network>.net; if <prefix> is blank call it swan<network>*
+KVM_BRIDGE_NAME = $(strip $(if $(patsubst 192_%,,$*), \
+			$*, \
+			swan$(subst _,,$(patsubst %192_,,$*))))
 
-$(foreach prefix, $(KVM_PREFIXES), \
-	$(foreach subnet, $(KVM_TEST_SUBNETS), \
-		$(eval $(call uninstall-kvm-test-network,$(call strip-prefix,$(prefix)),$(subnet)))))
+$(KVM_POOLDIR)/%.net: | $(KVM_POOLDIR)
+	$(call destroy-kvm-network,$*)
+	rm -f '$@.tmp'
+	echo "<network ipv6='yes'>" 					>> '$@.tmp'
+	echo "  <name>$*</name>"					>> '$@.tmp'
+	echo "  <bridge name='$(KVM_BRIDGE_NAME)'" >> '$@.tmp'
+	echo "          stp='on' delay='0'/>"				>> '$@.tmp'
+	$(if $(patsubst 192_%,, $*), \
+	echo "  <!--" 							>> '$@.tmp')
+	echo "  <ip address='$(subst _,.,$(patsubst %192_, 192_, $*)).253'/>" >> '$@.tmp'
+	$(if $(patsubst 192_%,, $*), \
+	echo "    -->" 							>> '$@.tmp')
+	echo "</network>"						>> '$@.tmp'
+	$(call create-kvm-network,$*,$@.tmp)
+	mv $@.tmp $@
+
+.PHONY: kvm-install-test-networks
+kvm-install-test-networks: $(KVM_TEST_NETWORK_FILES)
+.PHONY: kvm-uninstall-test-networks
+kvm-uninstall-test-networks: kvm-uninstall-test-domains
+	$(foreach network_file, $(KVM_TEST_NETWORK_FILES), \
+		$(call destroy-kvm-network,$(notdir $(basename $(network_file))))$(crlf) \
+		rm -f $(network_file)$(crlf))
+
 
 #
 # Build KVM domains from scratch
@@ -792,7 +779,8 @@ define install-kvm-test-domain
   install-kvm-domain-$(1)$(2): $$(KVM_LOCALDIR)/$(1)$(2).xml
   $$(KVM_LOCALDIR)/$(1)$(2).xml: \
 		| \
-		$$(foreach subnet,$$(KVM_TEST_SUBNETS), $$(KVM_POOLDIR)/$(1)$$(subnet).xml) \
+		$$(foreach subnet,$$(KVM_TEST_SUBNETS), \
+			$$(KVM_POOLDIR)/$(1)$$(subnet).net) \
 		testing/libvirt/vm/$(2) \
 		$(KVM_LOCALDIR)/$(1)$(2).qcow2
 	: install-kvm-test-domain prefix=$(1) host=$(2)
@@ -881,25 +869,6 @@ $(eval $(call kvm-hosts-domains,install))
 $(eval $(call kvm-hosts-domains,uninstall))
 
 $(eval $(call kvm-hosts-domains,shutdown))
-
-
-.PHONY: kvm-install-base-network
-kvm-install-base-network: $(addprefix install-kvm-network-, $(KVM_GATEWAY))
-
-.PHONY: kvm-install-test-networks
-kvm-install-test-networks: $(addprefix install-kvm-network-,$(KVM_TEST_NETWORKS))
-
-.PHONY: kvm-install-local-networks
-kvm-install-local-networks: kvm-install-test-networks
-
-.PHONY: kvm-uninstall-test-networks
-kvm-uninstall-test-networks: $(addprefix uninstall-kvm-network-, $(KVM_TEST_NETWORKS))
-
-.PHONY: kvm-uninstall-base-network
-kvm-uninstall-base-network: $(addprefix uninstall-kvm-network-, $(KVM_GATEWAY))
-
-.PHONY: kvm-uninstall-local-networks
-kvm-uninstall-local-networks:  kvm-uninstall-test-networks
 
 #
 # Get rid of (almost) everything
@@ -1114,7 +1083,7 @@ define crlf
 endef
 
 define kvm-var-value
-$(1)=$(value $(1)) [$($(1))]
+$(1)=$($(1)) [$(value $(1))]
 endef
 
 define kvm-value
@@ -1154,10 +1123,16 @@ Configuration:
 	when internet access is required
     $(call kvm-var-value,KVM_OS)
     $(call kvm-var-value,KVM_KICKSTART_FILE)
+    $(call kvm-var-value,KVM_GATEWAY)
     $(call kvm-var-value,KVM_BASE_HOST)
     $(call kvm-var-value,KVM_BASE_DOMAIN)
-    $(call kvm-var-value,KVM_GATEWAY)
-    $(call kvm-var-value,KVM_POOLDIR)
+    $(call kvm-var-value,KVM_BUILD_HOST)
+    $(call kvm-var-value,KVM_BUILD_DOMAIN)
+    $(call kvm-var-value,KVM_TEST_SUBNETS)
+    $(call kvm-var-value,KVM_TEST_NETWORKS)
+    $(call kvm-var-value,KVM_TEST_NETWORK_FILES)
+    $(call kvm-var-value,KVM_TEST_HOSTS)
+    $(call kvm-var-value,KVM_TEST_DOMAINS)
 
  KVM Domains:
 
@@ -1212,14 +1187,14 @@ Domains and networks:
 
   Networks:
 
-    kvm-install-base-gateway (kvm-uninstall-base-gateway)
+    kvm-install-gateway (kvm-uninstall-gateway)
         - (un)install the NATting base gateway used by the base
           and build domains
 	- uninstall dependencies: base domain
-    kvm-install-local-networks (kvm-uninstall-local-networks)
-        - (un)install the local gateway and test networks used by this
-          directory's build and test domains
-        - uninstall dependencies: build, and test domains
+    kvm-install-test-networks (kvm-uninstall-test-networks)
+        - (un)install the test networks used by this
+          directory's test domains
+        - uninstall dependencies: test domains
 
 Standard targets and operations:
 
