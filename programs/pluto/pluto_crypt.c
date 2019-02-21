@@ -537,14 +537,15 @@ void delete_cryptographic_continuation(struct state *st)
 	if (pc_workers != NULL) {
 		/* remove it from any queue */
 		pthread_mutex_lock(&backlog_mutex);
-		if (remove_list_entry(&cn->pcrc_backlog)) {
-			backlog_queue_len--;
-		} else {
+		if (detached_list_entry(&cn->pcrc_backlog)) {
 			/*
 			 * Already grabbed by the helper thread so
 			 * can't delete it here.
 			 */
 			cn = NULL;
+		} else {
+			remove_list_entry(&cn->pcrc_backlog);
+			backlog_queue_len--;
 		}
 		pthread_mutex_unlock(&backlog_mutex);
 		if (cn != NULL) {

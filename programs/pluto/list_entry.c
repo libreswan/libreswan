@@ -16,7 +16,7 @@
 #include <stdint.h>
 
 #include "lswlog.h"
-
+#include "libreswan/passert.h"
 #include "defs.h"
 #include "hash_table.h"
 
@@ -48,16 +48,27 @@ static void log_entry(const char *op, struct list_entry *entry)
 void init_list(const struct list_info *info,
 	       struct list_head *list)
 {
-	if (list->head.older == NULL || list->head.newer == NULL) {
+	if (list->head.older == NULL) {
+		passert(list->head.newer == NULL);
 		list->head.older = &list->head;
 		list->head.newer = &list->head;
 		list->head.info = info;
+		list->head.data = NULL;	/* sign of being head */
+	} else {
+		/* already initialized */
+		/* ??? does this ever happen? */
+		passert(list->head.newer != NULL);
+		passert(list->head.info == info);
+		passert(list->head.data == NULL);
 	}
 }
 
 struct list_entry list_entry(const struct list_info *info,
 			     void *data)
 {
+	passert(info != NULL);
+	passert(data != NULL);
+
 	return (struct list_entry) {
 		.older = NULL,
 		.newer = NULL,
@@ -66,10 +77,18 @@ struct list_entry list_entry(const struct list_info *info,
 	};
 }
 
+bool detached_list_entry(const struct list_entry *entry)
+{
+	passert(entry->data != NULL);	/* entry is not a list head */
+	passert((entry->newer == NULL) == (entry->newer == NULL));
+	return entry->newer == NULL;
+}
+
 void insert_list_entry(struct list_head *list,
 		       struct list_entry *entry)
 {
 	passert(entry->info != NULL);
+	passert(entry->data != NULL);
 	if (DBGP(DBG_TMI)) {
 		LSWLOG_DEBUG(buf) {
 			lswlogf(buf, "%s: inserting object %p (",
@@ -93,31 +112,27 @@ void insert_list_entry(struct list_head *list,
 	log_entry("list", &list->head);
 }
 
-bool remove_list_entry(struct list_entry *entry)
+void remove_list_entry(struct list_entry *entry)
 {
+	passert(entry->data != NULL);	/* entry is not a list head */
+
 	/* unlink: older - entry - newer */
 	struct list_entry *newer = entry->newer;
 	struct list_entry *older = entry->older;
-	if (older == NULL && newer == NULL) {
-		log_entry("can't remove", entry);
-		return false;
+
+	passert(older != NULL && newer != NULL);
+
+	log_entry("removing", entry);
+	entry->older = NULL;	/* detach from list */
+	entry->newer = NULL;
+
+	newer->older = older;	/* seal the rift */
+	older->newer = newer;
+
+	if (older == newer) {
+		DBGF(DBG_TMI, "%s: empty", entry->info->name);
 	} else {
-		log_entry("removing", entry);
-		entry->older = NULL;
-		entry->newer = NULL;
-		newer->older = older;
-		/*
-		 * ??? static analysis suggests either older or newer might be NULL.
-		 * (But not both.)
-		 * Perhaps an undocumented invariant saves us.
-		 */
-		older->newer = newer;
-		if (older == newer) {
-			DBGF(DBG_TMI, "%s: empty", entry->info->name);
-		} else {
-			log_entry("updated older", older);
-			log_entry("updated newer ", newer);
-		}
-		return true;
+		log_entry("updated older", older);
+		log_entry("updated newer ", newer);
 	}
 }
