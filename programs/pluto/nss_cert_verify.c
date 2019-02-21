@@ -284,7 +284,7 @@ static bool verify_end_cert(CERTCertList *trustcl,
 		} else {
 			/*
 			 * An rv != SECSuccess without CERTVerifyLog
-			 * results should not * happen, but catch it anyway
+			 * results should not happen, but catch it anyway
 			 */
 			loglog(RC_LOG_SERIOUS, "X509: unspecified NSS verification failure");
 			fin = false;
@@ -299,52 +299,52 @@ static bool verify_end_cert(CERTCertList *trustcl,
 #endif
 	{
 
-	/* kludge alert!!
-	 * verification may be performed twice: once with the
-	 * 'client' usage and once with 'server', which is an NSS
-	 * detail and not related to IKE. In the absence of a real
-	 * IKE profile being available for NSS, this covers more
-	 * KU/EKU combinations
-	 *
-	 * double kludge alert!!  What was a simple goto was converted
-	 * to a for loop that, while appearing to be infinite,
-	 * typically executes once and very occasionally twice.  Look
-	 * very carefully for "continue" and "break".
-	 */
+		/* kludge alert!!
+		 * verification may be performed twice: once with the
+		 * 'client' usage and once with 'server', which is an NSS
+		 * detail and not related to IKE. In the absence of a real
+		 * IKE profile being available for NSS, this covers more
+		 * KU/EKU combinations
+		 *
+		 * double kludge alert!!  What was a simple goto was converted
+		 * to a for loop that, while appearing to be infinite,
+		 * typically executes once and very occasionally twice.  Look
+		 * very carefully for "continue" and "break".
+		 */
 
-	SECCertificateUsage usage;
+		SECCertificateUsage usage;
 
-	for (usage = certificateUsageSSLClient; ; usage = certificateUsageSSLServer) {
-		SECStatus rv = CERT_PKIXVerifyCert(end_cert, usage, cvin, cvout, NULL);
-		if (rv != SECSuccess || cur_log->count > 0) {
-			if (cur_log->count > 0 && cur_log->head != NULL) {
-				if (usage == certificateUsageSSLClient &&
-				    RETRYABLE_TYPE(cur_log->head->error)) {
-					/* try again, after some adjustments */
-					DBG(DBG_X509,
-					    DBG_log("retrying verification with the NSS serverAuth profile"));
-					cvout[0].value.pointer.log = cur_log = &vfy_log2;
-					cvout[1].value.pointer.chain = NULL;
-					continue;
+		for (usage = certificateUsageSSLClient; ; usage = certificateUsageSSLServer) {
+			SECStatus rv = CERT_PKIXVerifyCert(end_cert, usage, cvin, cvout, NULL);
+			if (rv != SECSuccess || cur_log->count > 0) {
+				if (cur_log->count > 0 && cur_log->head != NULL) {
+					if (usage == certificateUsageSSLClient &&
+					    RETRYABLE_TYPE(cur_log->head->error)) {
+						/* try again, after some adjustments */
+						DBG(DBG_X509,
+						    DBG_log("retrying verification with the NSS serverAuth profile"));
+						cvout[0].value.pointer.log = cur_log = &vfy_log2;
+						cvout[1].value.pointer.chain = NULL;
+						continue;
+					} else {
+						log_bad_cert(cur_log->head);
+						*bad = true;
+						fin = false;
+					}
 				} else {
-					log_bad_cert(cur_log->head);
-					*bad = true;
+					/*
+					 * An rv != SECSuccess without CERTVerifyLog results should not
+					 * happen, but catch it anyway
+					 */
+					libreswan_log("X509: unspecified NSS verification failure");
 					fin = false;
 				}
 			} else {
-				/*
-				 * An rv != SECSuccess without CERTVerifyLog results should not
-				 * happen, but catch it anyway
-				 */
-				libreswan_log("X509: unspecified NSS verification failure");
-				fin = false;
+				DBG(DBG_X509, DBG_log("certificate is valid"));
+				fin = true;
 			}
-		} else {
-			DBG(DBG_X509, DBG_log("certificate is valid"));
-			fin = true;
+			break;
 		}
-		break;
-	}
 	} /* end block or else clause */
 
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
