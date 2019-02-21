@@ -4,6 +4,7 @@ See also https://libreswan.org/
 v3.28 (unreleased)
 * X509: Do not keep received CERTs beyond the connection lifetime [Andrew]
 * X509: Support for NSS IPsec profiles mbz#1252891 [Kai Engbert]
+* X509: Don't fail validation on critical flag in Key Usage payloads [Paul]
 * X509: Fix ocsp-method=get|post to actually skip get when asked) [Stepan Broz]
 * IKEv2: ikev2= keyword changed to only accept "yes" or "no" [Paul]
 * IKEv2: Support for REDIRECT (RFC 5685) [Vukasin Karadzic/GSoC]
