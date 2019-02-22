@@ -271,7 +271,7 @@ static bool verify_end_cert(CERTCertList *trustcl,
 	cvout[1].value.pointer.chain = NULL;
 	cvout[2].type = cert_po_end;
 
-	bool fin;
+	bool fin = false;
 
 #ifdef NSS_IPSEC_PROFILE
 	SECStatus rv = CERT_PKIXVerifyCert(end_cert, certificateUsageIPsec,
@@ -293,11 +293,9 @@ static bool verify_end_cert(CERTCertList *trustcl,
 		DBG(DBG_X509, DBG_log("certificate is valid"));
 		fin = true;
 	}
-
-	if (fin == false)
-
 #endif
-	{
+
+	if (!fin) {
 
 		/* kludge alert!!
 		 * verification may be performed twice: once with the
@@ -345,7 +343,7 @@ static bool verify_end_cert(CERTCertList *trustcl,
 			}
 			break;
 		}
-	} /* end block or else clause */
+	}
 
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
 	PORT_FreeArena(vfy_log2.arena, PR_FALSE);
