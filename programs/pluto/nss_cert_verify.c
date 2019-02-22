@@ -109,11 +109,11 @@ static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 	return res;
 }
 
-static void log_bad_cert(CERTVerifyLogNode *node)
+static void log_bad_cert(char *prefix, CERTVerifyLogNode *node)
 {
 	loglog(RC_LOG_SERIOUS, "Certificate %s failed verification",
 	       node->cert->subjectName);
-	loglog(RC_LOG_SERIOUS, "ERROR: %s",
+	loglog(RC_LOG_SERIOUS, "%s: %s", prefix,
 	       nss_err_str(node->error));
 	/*
 	 * XXX: this redundant log message is to keep tests happy -
@@ -124,7 +124,7 @@ static void log_bad_cert(CERTVerifyLogNode *node)
 	 * above with "NSS ERROR: ".
 	 */
 	if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
-		libreswan_log("certificate revoked!");
+		loglog(RC_LOG_SERIOUS, "certificate revoked!");
 	}
 }
 
@@ -278,9 +278,10 @@ static bool verify_end_cert(CERTCertList *trustcl,
 						cvin, cvout, NULL);
 	if (rv != SECSuccess || cur_log->count > 0) {
 		if (cur_log->count > 0 && cur_log->head != NULL) {
-			log_bad_cert(cur_log->head);
+			log_bad_cert("Warning", cur_log->head);
 			*bad = true;
 			fin = false;
+			loglog(RC_LOG_SERIOUS, "X509: verification failure using NSS IPsec profile validation");
 		} else {
 			/*
 			 * An rv != SECSuccess without CERTVerifyLog
@@ -325,9 +326,12 @@ static bool verify_end_cert(CERTCertList *trustcl,
 						cvout[1].value.pointer.chain = NULL;
 						continue;
 					} else {
-						log_bad_cert(cur_log->head);
+						log_bad_cert(usage == certificateUsageSSLClient ? "Warning" : "ERROR",
+								cur_log->head);
 						*bad = true;
 						fin = false;
+						loglog(RC_LOG_SERIOUS, "X509: verification failure using NSS TLS %s profile validation",
+							usage == certificateUsageSSLClient  ? "clientAuth" : "serverAut");
 					}
 				} else {
 					/*
