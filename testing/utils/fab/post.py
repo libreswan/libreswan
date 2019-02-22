@@ -24,11 +24,16 @@ from fab import logutil
 from fab import jsonutil
 
 # Strings used to mark up files; see also runner.py where it marks up
-# the file names.
-CUT = ">>>>>>>>>>cut>>>>>>>>>>"
-TUC = "<<<<<<<<<<tuc<<<<<<<<<<"
-DONE = CUT + " done " + TUC
+# the file names.  The sanitizer is hardwired to recognize CUT & TUC
+# so don't change those strings.
 
+RHS = "<<<<<<<<<<"
+LHS = ">>>>>>>>>>"
+CUT = LHS + "cut" + LHS
+TUC = RHS + "tuc" + RHS
+DONE = CUT + " done " + TUC
+TIMEOUT = "timeout while running test script"
+EXCEPTION = "exception while running test script"
 
 class Resolution:
     PASSED = "passed"
@@ -87,13 +92,17 @@ class Resolution:
 
 class Issues:
 
+    ABSENT = "absent"
+    SANITIZER_FAILED = "sanitizer-failed"
+
     ASSERTION = "ASSERTION"
     EXPECTATION = "EXPECTATION"
-
     CORE = "CORE"
     SEGFAULT = "SEGFAULT"
     GPFAULT = "GPFAULT"
     PRINTF_NULL = "%NULL"
+
+    TIMEOUT = "timeout"
 
     CRASHED = {ASSERTION, EXPECTATION, CORE, SEGFAULT, GPFAULT}
 
@@ -102,10 +111,6 @@ class Issues:
     OUTPUT_TRUNCATED = "output-truncated"
     OUTPUT_WHITESPACE = "output-whitespace"
     OUTPUT_DIFFERENT = "output-different"
-
-    ABSENT = "absent"
-
-    SANITIZER_FAILED = "sanitizer-failed"
 
     BASELINE_FAILED = "baseline-failed"
     BASELINE_PASSED = "baseline-passed"
@@ -329,32 +334,20 @@ class TestResult:
 
             # Check that the host's raw output is complete.
             #
-            # The output can become truncated for several reasons: the
-            # test is a work-in-progress; it crashed due to a timeout;
-            # or it is still being run.
-            #
-            # Don't try to match the prompt ("#").  If this is the
-            # first command in the script, the prompt will not appear
-            # in the output.
-            #
-            # When this happens, mark it as a FAIL.  The
-            # test-in-progress case was hopefully handled further back
-            # with the RESULT hack forcing the test to UNRESOLVED.
+            # The last thing written to the file should be the DONE
+            # marker.  If not then it could be: a timeout; an
+            # exception; or the test is still in-progress.
 
-            ending = ": ==== end ===="
-            logger.debug("host %s checking if raw console output contains '%s' (or '%s')",
-                         host_name, DONE, ending)
-            if self.grub(raw_output_filename, DONE) is None \
-            and self.grub(raw_output_filename, ending) is None:
-                # this is probably truncated output; but if the test
-                # is old it may not be the case. and an unresolved
-                # test, but need to first exclude other options.
+            logger.debug("host %s checking if raw console output is complete");
+
+            if self.grub(raw_output_filename, LHS + " " + TIMEOUT):
+                # One of the test scripts hung; all the
+                self.issues.add(Issues.TIMEOUT, host_name)
+                self.resolution.failed()
+
+            if self.grub(raw_output_filename, DONE) is None:
                 self.issues.add(Issues.OUTPUT_TRUNCATED, host_name)
-                result_file = os.path.join(self.output_directory, "RESULT")
-                if os.path.isfile(result_file):
-                    self.resolution.failed()
-                else:
-                    self.resolution.unresolved()
+                self.resolution.unresolved()
 
             # Sanitize what ever output there is and save it.
             #
