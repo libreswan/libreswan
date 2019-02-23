@@ -119,6 +119,14 @@ enum smf2_flags {
 	 * encryption can occur.
 	 */
 	SMF2_NO_SKEYSEED = LELEM(7),
+
+	/*
+	 * Suppress logging of a successful state transition.
+	 *
+	 * This is here simply to stop liveness check transitions
+	 * filling up the log file.
+	 */
+	SMF2_SUPPRESS_SUCCESS_LOG = LELEM(8),
 };
 
 /*
@@ -516,7 +524,34 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 *
 	 * HDR, SK {[N,] [D,] [CP,] ...}  -->
 	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
+	*
+	 * A liveness exchange is a special empty message.
+	 *
+	 * XXX: since these just generate an empty response, they
+	 * might as well have a dedicated liveness function.
+	 *
+	 * XXX: rather than all this transition duplication, the
+	 * established states should share common transition stored
+	 * outside of this table.
 	 */
+
+	{ .story      = "I3: Liveness Request",
+	  .state      = STATE_PARENT_I3,
+	  .next_state = STATE_PARENT_I3,
+	  .flags      = SMF2_IKE_I_SET | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .message_payloads.required = P(SK),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "I3: Liveness Response",
+	  .state      = STATE_PARENT_I3,
+	  .next_state = STATE_PARENT_I3,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .message_payloads.required = P(SK),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "I3: INFORMATIONAL Request",
 	  .state      = STATE_PARENT_I3,
@@ -534,6 +569,24 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags      = SMF2_IKE_I_CLEAR,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "R2: process Liveness Request",
+	  .state      = STATE_PARENT_R2,
+	  .next_state = STATE_PARENT_R2,
+	  .flags      = SMF2_IKE_I_SET | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .message_payloads.required = P(SK),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "R2: process Liveness Response",
+	  .state      = STATE_PARENT_R2,
+	  .next_state = STATE_PARENT_R2,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
@@ -2732,8 +2785,21 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		log_details = NULL;
 	}
 
-	/* tell whack and logs our progress - unless OE, then be quiet*/
-	if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+	/*
+	 * Tell whack and logs our progress - unless OE or a state
+	 * transition we're not telling anyone about, then be quiet.
+	 */
+	if ((svm->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
+	    (c != NULL && (c->policy & POLICY_OPPORTUNISTIC))) {
+		LSWDBGP(DBG_BASE, buf) {
+			lswlogf(buf, "%s: %s", st->st_finite_state->fs_name,
+				st->st_finite_state->fs_story);
+			/* document SA details for admin's pleasure */
+			if (log_details != NULL) {
+				log_details(buf, st);
+			}
+		}
+	} else {
 		LSWLOG_RC(w, buf) {
 			lswlogf(buf, "%s: %s", st->st_finite_state->fs_name,
 				st->st_finite_state->fs_story);
