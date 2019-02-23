@@ -325,7 +325,7 @@ endif
 # Where possible use daemon() instead of fork()+exit() to create a
 # daemon (detached) processes.
 #
-# Some system's don't suport daemon() and some systems don't support
+# Some system's don't support daemon() and some systems don't support
 # fork().  Since the daemon call can lead to a race it isn't the
 # preferred option.
 USE_DAEMON ?= false
