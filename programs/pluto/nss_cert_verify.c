@@ -247,8 +247,7 @@ static void set_rev_params(CERTRevocationFlags *rev,
 
 static bool verify_end_cert(CERTCertList *trustcl,
 			    const struct rev_opts *rev_opts,
-			    CERTCertificate *end_cert,
-			    bool *bad)
+			    CERTCertificate *end_cert)
 {
 	CERTRevocationFlags rev;
 	zero(&rev);	/* ??? are there pointer fields?  YES, and different for different union members! */
@@ -376,8 +375,6 @@ static bool verify_end_cert(CERTCertList *trustcl,
 		cvout[1].value.pointer.chain = NULL;
 	}
 
-	/* ??? is *bad supposed to mean something different from !verified? */
-	*bad = !verified;
 	return verified;
 }
 
@@ -630,7 +627,8 @@ struct certs *find_and_verify_certs(struct state *st,
 	}
 
 	statetime_t verify_time = statetime_start(st);
-	bool end_ok = verify_end_cert(trustcl, rev_opts, end_cert, bad);
+	bool end_ok = verify_end_cert(trustcl, rev_opts, end_cert);
+	*bad = !end_ok;
 	statetime_stop(&verify_time, "%s() calling verify_end_cert()", __func__);
 	if (!end_ok) {
 		release_certs(&certs);
