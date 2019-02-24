@@ -109,22 +109,41 @@ static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 	return res;
 }
 
-static void log_bad_cert(char *prefix, CERTVerifyLogNode *node)
+static void log_bad_cert(const char *prefix, const char *usage, CERTVerifyLogNode *head)
 {
-	loglog(RC_LOG_SERIOUS, "Certificate %s failed verification",
-	       node->cert->subjectName);
-	loglog(RC_LOG_SERIOUS, "%s: %s", prefix,
-	       nss_err_str(node->error));
 	/*
-	 * XXX: this redundant log message is to keep tests happy -
-	 * the above ERROR: line will have already explained the the
-	 * problem.
+	 * Usually there is only one error in the list, but sometimes
+	 * there are several.
 	 *
-	 * Two things should change - drop the below, and prefix the
-	 * above with "NSS ERROR: ".
+	 * ??? When there are several, they (often? always?) seem to be
+	 *     duplicates, so we filter.
 	 */
-	if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
-		loglog(RC_LOG_SERIOUS, "certificate revoked!");
+	const char *last_sn = NULL;
+	long last_error = 0;
+
+	for (CERTVerifyLogNode *node = head; node != NULL; node = node->next) {
+		if (last_sn != NULL && streq(last_sn, node->cert->subjectName) &&
+		    last_error == node->error)
+			continue;	/* duplicate error */
+
+		last_sn = node->cert->subjectName;
+		last_error = node->error;
+		loglog(RC_LOG_SERIOUS, "Certificate %s failed %s verification",
+		       node->cert->subjectName, usage);
+		/* ??? we ignore node->depth and node->arg */
+		loglog(RC_LOG_SERIOUS, "%s: %s", prefix,
+		       nss_err_str(node->error));
+		/*
+		 * XXX: this redundant log message is to keep tests happy -
+		 * the above ERROR: line will have already explained the the
+		 * problem.
+		 *
+		 * Two things should change - drop the below, and prefix the
+		 * above with "NSS ERROR: ".
+		 */
+		if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
+			loglog(RC_LOG_SERIOUS, "certificate revoked!");
+		}
 	}
 }
 
@@ -221,6 +240,8 @@ static void set_rev_params(CERTRevocationFlags *rev,
 	}
 }
 
+/* SEC_ERROR_INADEQUATE_CERT_TYPE etc.: /usr/include/nss3/secerr.h */
+
 #define RETRYABLE_TYPE(err) ((err) == SEC_ERROR_INADEQUATE_CERT_TYPE || \
 			      (err) == SEC_ERROR_INADEQUATE_KEY_USAGE)
 
@@ -229,13 +250,6 @@ static bool verify_end_cert(CERTCertList *trustcl,
 			    CERTCertificate *end_cert,
 			    bool *bad)
 {
-	CERTVerifyLog *cur_log = NULL;
-	CERTVerifyLog vfy_log;
-	CERTVerifyLog vfy_log2;
-
-	new_vfy_log(&vfy_log);
-	new_vfy_log(&vfy_log2);
-
 	CERTRevocationFlags rev;
 	zero(&rev);	/* ??? are there pointer fields?  YES, and different for different union members! */
 
@@ -245,118 +259,126 @@ static bool verify_end_cert(CERTCertList *trustcl,
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
 	set_rev_params(&rev, rev_opts);
 
-	int in_idx = 0;
-	CERTValInParam cvin[7];
-	CERTValOutParam cvout[3];
-	zero(&cvin);	/* ??? are there pointer fields?  YES, and different for different union members! */
-	zero(&cvout);	/* ??? are there pointer fields?  YES, and different for different union members! */
-
-	cvin[in_idx].type = cert_pi_revocationFlags;
-	cvin[in_idx++].value.pointer.revocation = &rev;
-
-	cvin[in_idx].type = cert_pi_useAIACertFetch;
-	cvin[in_idx++].value.scalar.b = rev_opts->ocsp ? PR_TRUE : PR_FALSE;
-
-	cvin[in_idx].type = cert_pi_trustAnchors;
-	cvin[in_idx++].value.pointer.chain = trustcl;
-
-	cvin[in_idx].type = cert_pi_useOnlyTrustAnchors;
-	cvin[in_idx++].value.scalar.b = PR_TRUE;
-
-	cvin[in_idx].type = cert_pi_end;
-
-	cvout[0].type = cert_po_errorLog;
-	cvout[0].value.pointer.log = cur_log = &vfy_log;
-	cvout[1].type = cert_po_certList;
-	cvout[1].value.pointer.chain = NULL;
-	cvout[2].type = cert_po_end;
-
-	bool fin = false;
-
-#ifdef NSS_IPSEC_PROFILE
-	SECStatus rv = CERT_PKIXVerifyCert(end_cert, certificateUsageIPsec,
-						cvin, cvout, NULL);
-	if (rv != SECSuccess || cur_log->count > 0) {
-		if (cur_log->count > 0 && cur_log->head != NULL) {
-			log_bad_cert("Warning", cur_log->head);
-			*bad = true;
-			fin = false;
-			loglog(RC_LOG_SERIOUS, "X509: verification failure using NSS IPsec profile validation");
-		} else {
-			/*
-			 * An rv != SECSuccess without CERTVerifyLog
-			 * results should not happen, but catch it anyway
-			 */
-			loglog(RC_LOG_SERIOUS, "X509: unspecified NSS verification failure");
-			fin = false;
+	CERTValInParam cvin[] = {
+		{
+			.type = cert_pi_revocationFlags,
+			.value = { .pointer = { .revocation = &rev } }
+		},
+		{
+			.type = cert_pi_useAIACertFetch,
+			.value = { .scalar = { .b = rev_opts->ocsp ? PR_TRUE : PR_FALSE } }
+		},
+		{
+			.type = cert_pi_trustAnchors,
+			.value = { .pointer = { .chain = trustcl } }
+		},
+		{
+			.type = cert_pi_useOnlyTrustAnchors,
+			.value = { .scalar = { .b = PR_TRUE } }
+		},
+		{
+			.type = cert_pi_end
 		}
-	} else {
-		DBG(DBG_X509, DBG_log("certificate is valid"));
-		fin = true;
-	}
-#endif
+	};
 
-	if (!fin) {
-
-		/* kludge alert!!
-		 * verification may be performed twice: once with the
-		 * 'client' usage and once with 'server', which is an NSS
-		 * detail and not related to IKE. In the absence of a real
-		 * IKE profile being available for NSS, this covers more
-		 * KU/EKU combinations
-		 *
-		 * double kludge alert!!  What was a simple goto was converted
-		 * to a for loop that, while appearing to be infinite,
-		 * typically executes once and very occasionally twice.  Look
-		 * very carefully for "continue" and "break".
-		 */
-
+	struct usage_desc {
 		SECCertificateUsage usage;
+		const char *usageName;
+	};
 
-		for (usage = certificateUsageSSLClient; ; usage = certificateUsageSSLServer) {
-			SECStatus rv = CERT_PKIXVerifyCert(end_cert, usage, cvin, cvout, NULL);
-			if (rv != SECSuccess || cur_log->count > 0) {
-				if (cur_log->count > 0 && cur_log->head != NULL) {
-					if (usage == certificateUsageSSLClient &&
-					    RETRYABLE_TYPE(cur_log->head->error)) {
-						/* try again, after some adjustments */
-						DBG(DBG_X509,
-						    DBG_log("retrying verification with the NSS serverAuth profile"));
-						cvout[0].value.pointer.log = cur_log = &vfy_log2;
-						cvout[1].value.pointer.chain = NULL;
-						continue;
-					} else {
-						log_bad_cert(usage == certificateUsageSSLClient ? "Warning" : "ERROR",
-								cur_log->head);
-						*bad = true;
-						fin = false;
-						loglog(RC_LOG_SERIOUS, "X509: verification failure using NSS TLS %s profile validation",
-							usage == certificateUsageSSLClient  ? "clientAuth" : "serverAut");
-					}
-				} else {
-					/*
-					 * An rv != SECSuccess without CERTVerifyLog results should not
-					 * happen, but catch it anyway
-					 */
-					libreswan_log("X509: unspecified NSS verification failure");
-					fin = false;
-				}
-			} else {
-				DBG(DBG_X509, DBG_log("certificate is valid"));
-				fin = true;
-			}
+	static const struct usage_desc usages[] = {
+#ifdef NSS_IPSEC_PROFILE
+		{ certificateUsageIPsec, "IPsec" },
+#endif
+		{ certificateUsageSSLClient, "TLS Client" },
+		{ certificateUsageSSLServer, "TLS Server" }
+	};
+
+	bool verified = false;	/* more ways to fail than succeed */
+
+	CERTVerifyLog vfy_log;
+
+	CERTValOutParam cvout[] = {
+		{
+			.type = cert_po_errorLog,
+			.value = { .pointer = { .log = &vfy_log } }
+		},
+		{
+			.type = cert_po_certList,
+			.value = { .pointer = { .chain = NULL } }
+		},
+		{
+			.type = cert_po_end
+		}
+	};
+
+	for (const struct usage_desc *p = usages; ; p++) {
+		DBGF(DBG_X509, "verify_end_cert trying profile %s", p->usageName);
+
+		new_vfy_log(&vfy_log);
+		SECStatus rv = CERT_PKIXVerifyCert(end_cert, p->usage, cvin, cvout, NULL);
+
+		if (rv == SECSuccess) {
+			/* success! */
+			pexpect(vfy_log.count == 0 && vfy_log.head == NULL);
+			DBGF(DBG_X509, "certificate is valid (profile %s)", p->usageName);
+			verified = true;
 			break;
+		}
+
+		pexpect(rv == SECFailure);
+
+		/* Failure.  Can we try again? */
+
+		/*
+		 * The (error) log can have more than one entry
+		 * but we only test the first with RETRYABLE_TYPE.
+		 */
+		passert(vfy_log.count > 0 && vfy_log.head != NULL);
+
+		if (p == &usages[elemsof(usages) - 1] ||
+		    !RETRYABLE_TYPE(vfy_log.head->error)) {
+			/* we are a conclusive failure */
+			log_bad_cert("ERROR", p->usageName, vfy_log.head);
+			break;
+		}
+
+		/* this usage failed: prepare to repeat for the next one */
+
+		log_bad_cert("warning", p->usageName,  vfy_log.head);
+
+		PORT_FreeArena(vfy_log.arena, PR_FALSE);
+
+		/*
+		 * ??? observed squirrelly behaviour:
+		 * CERT_DestroyCertList(NULL) does something very odd:
+		 * at least sometimes terminating execution without a core file.
+		 * testing/pluto/ikev2-x509-02-eku illustrates this.
+		 * So we must make sure not to do that.
+		 */
+		if (cvout[1].value.pointer.chain != NULL) {
+			CERT_DestroyCertList(cvout[1].value.pointer.chain);
+			cvout[1].value.pointer.chain = NULL;
 		}
 	}
 
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
-	PORT_FreeArena(vfy_log2.arena, PR_FALSE);
 
+	/*
+	 * ??? observed squirrelly behaviour:
+	 * CERT_DestroyCertList(NULL) does something very odd:
+	 * at least sometimes terminating execution without a core file.
+	 * testing/pluto/ikev2-x509-23-no-ca illustrates this.
+	 * So we must make sure not to do that.
+	 */
 	if (cvout[1].value.pointer.chain != NULL) {
 		CERT_DestroyCertList(cvout[1].value.pointer.chain);
+		cvout[1].value.pointer.chain = NULL;
 	}
 
-	return fin;
+	/* ??? is *bad supposed to mean something different from !verified? */
+	*bad = !verified;
+	return verified;
 }
 
 /*
@@ -758,4 +780,3 @@ SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain)
 	SEC_PKCS7DestroyContentInfo(content);
 	return pkcs7;
 }
-
