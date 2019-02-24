@@ -87,6 +87,7 @@ v3.26 (September 16, 2018)
 *_unbound-hook: Fixup adding IPv4 pubkey, unbound now quotes arg as 1 [Paul]
 * building: Fix listed patches for debian build [Paul]
 * building: enable DH31 (curve25519) per default [Paul]
+* building: disable DH23,DH24 per default [Paul]
 * testing: prepare to migrate from f22 to f28 [Andrew, Antony, Paul]
 * Bugtracker bugs fixed:
    #166 IPsec/XAuth reusing lease for multiple clients behind same NAT [Paul]
