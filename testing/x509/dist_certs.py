@@ -631,7 +631,7 @@ def run_dist_certs():
 					    'usage-server', 'usage-client',
 					    'usage-both', 'west-eku', 'west-critical',
 						'nic-noext', 'nic-nourl',
-						'japan','bigkey', 'key4096',
+						'japan','smallkey', 'key4096',
 						'notyetvalid','notvalidanymore',
 						'signedbyother','otherwest','othereast','wrongdnorg',
 						'unwisechar','spaceincn','hashsha1',
