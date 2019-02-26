@@ -1,0 +1,4 @@
+IKEv2 test X.509 where east has its CA removed, and it depends on PKIX
+for CA verification Additionally, it allows "any CA" but it has none.
+
+the connection should fail
