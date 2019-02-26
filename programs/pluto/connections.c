@@ -1275,10 +1275,8 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
 }
 
 /*
- * XXX: This function should be rewritten, with more careful distinction
- * between wm->policy and c->policy. It now jumps back and forth due to
- * implicit defaults. Also add checks from confread/whack should be moved
- * here so it is similar for all methods of loading a connection.
+ * Checks from confread/whack should be moved here so it is similar
+ * for all methods of loading a connection.
  */
 void add_connection(const struct whack_message *wm)
 {
