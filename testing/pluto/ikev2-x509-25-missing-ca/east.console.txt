@@ -1,16 +1,17 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
+command 'PATH/bin/certutil -A -n hashsha1 -t 'P,,' -d sql:/etc/ipsec.d -a -i /testing/x509/certs/hashsha1.crt' failed with status 255: certutil:  unable to open "/testing/x509/certs/hashsha1.crt" for reading (-5950, 2).
 east #
  certutil -D -n west -d sql:/etc/ipsec.d
-east #
- # remove CA cert
-east #
- certutil -D -d sql:/etc/ipsec.d -n "Libreswan test CA for mainca - Libreswan"
 east #
  ipsec start
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
+east #
+ # remove CA cert
+east #
+ certutil -D -d sql:/etc/ipsec.d -n "Libreswan test CA for mainca - Libreswan"
 east #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
 002 added connection description "ikev2-westnet-eastnet-x509-cr"
@@ -21,6 +22,7 @@ east #
  hostname | grep east > /dev/null && egrep ": ERROR:|: X509:" /tmp/pluto.log
 "ikev2-westnet-eastnet-x509-cr" #1: ERROR: Peer's Certificate issuer is not recognized.
 "ikev2-westnet-eastnet-x509-cr" #1: X509: Certificate rejected for this connection
+"ikev2-westnet-eastnet-x509-cr" #1: X509: CERT payload bogus or revoked
 east #
 east #
  ../bin/check-for-core.sh
