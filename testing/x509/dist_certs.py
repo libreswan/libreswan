@@ -151,6 +151,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 
         if cnstr == 'west-critical.testing.libreswan.org':
             cf = True
+            ku_str = ku_str + ',keyEncipherment'
             eku_str = "serverAuth, clientAuth"
         else:
             cf = False
