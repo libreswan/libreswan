@@ -19,9 +19,9 @@ west #
 west #
  ipsec auto --delete west-east-auto
 002 "west-east-auto": deleting non-instance connection
-002 "west-east-auto" #2: deleting state (STATE_QUICK_R2) and sending notification
+002 "west-east-auto" #2: deleting state (STATE_V2_IPSEC_R) and sending notification
 005 "west-east-auto" #2: ESP traffic information: in=0B out=0B
-002 "west-east-auto" #1: deleting state (STATE_MAIN_R3) and sending notification
+002 "west-east-auto" #1: deleting state (STATE_PARENT_R2) and sending notification
 west #
  # give Delete/Notify some time
 west #
@@ -33,7 +33,7 @@ west #
 west #
  ipsec status |grep west-east
 west #
- # wait over one minute to ensure no EVENT_SA_REKEY lingered and started something
+ # wait over one minute to ensure no EVENT_SA_REPLACE lingered and started something
 west #
  sleep 45
 west #
@@ -45,7 +45,7 @@ west #
 west #
  # east howvever, should be attempting to connect to west because it has auto=start
 west #
- ipsec status |grep EVENT_RETRANSMIT | sed "s/EVENT_RETRANSMIT in .*$/EVENT_RETRANSMIT in .../"
+ ipsec status |grep STATE_
 west #
 west #
  ../bin/check-for-core.sh
