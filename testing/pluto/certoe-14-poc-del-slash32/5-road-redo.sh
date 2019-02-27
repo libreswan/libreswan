@@ -1,10 +1,11 @@
 # confirm received delete was processed - should show no tunnel
 ipsec whack --trafficstatus
+# let the old acquire expire so it won't interfere with our new trigger
+sleep 5
 # try triggering again, ondemand policy should re-trigger OE
 ip xfrm state
 ip xfrm pol
-# we use a different trigger so we do not hit original left over larval state
-hping -c 1 --udp  192.1.2.23
+ping -n -c 1 -I 192.1.3.209 192.1.2.23
 # wait on OE to re-establish IPsec SA
 sleep 5
 ip xfrm state
