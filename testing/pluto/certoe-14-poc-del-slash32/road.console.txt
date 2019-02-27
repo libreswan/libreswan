@@ -1,6 +1,5 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
-command 'PATH/bin/certutil -A -n hashsha1 -t 'P,,' -d sql:/etc/ipsec.d -a -i /testing/x509/certs/hashsha1.crt' failed with status 255: certutil:  unable to open "/testing/x509/certs/hashsha1.crt" for reading (-5950, 2).
 road #
  certutil -D -n east -d sql:/etc/ipsec.d
 road #
@@ -13,7 +12,6 @@ road #
  echo "192.1.2.23/32"  >> /etc/ipsec.d/policies/private-or-clear
 road #
  ipsec start
-Paul: 3 
 Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
