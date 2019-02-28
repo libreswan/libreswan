@@ -140,12 +140,14 @@ startnetkey() {
     fi
     # Time before kernel ACQUIRE for ondemand/ Opportunistic expires
     # Also Time before reserved kernel SPI times out
-    if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
-	xcur=$(cat /proc/sys/net/core/xfrm_acq_expires 2>/dev/null)
-	if [ ${xfrmlifetime} -ne ${xcur} ]; then
-	    echo "changing /proc/sys/net/core/xfrm_acq_expires from ${xcur} to ${xfrmlifetime} "
+    xcur=$(cat /proc/sys/net/core/xfrm_acq_expires 2>/dev/null)
+    if [ -w /proc/sys/net/core/xfrm_acq_expires ]; then
+	if [ ${xfrmlifetime} -ne 0${xcur} ]; then
+	    echo "changing /proc/sys/net/core/xfrm_acq_expires from ${xcur} to ${xfrmlifetime}"
 	    echo ${xfrmlifetime} >/proc/sys/net/core/xfrm_acq_expires
 	fi
+    else
+	echo "WARNING: can not change /proc/sys/net/core/xfrm_acq_expires from ${xcur} to ${xfrmlifetime}" >&2
     fi
 
     # Fail on error in loading NETKEY/XFRM stack
