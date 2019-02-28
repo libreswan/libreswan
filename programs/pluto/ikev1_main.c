@@ -1925,7 +1925,9 @@ stf_status send_isakmp_notification(struct state *st,
 		struct hmac_ctx ctx;
 
 		hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
-		hmac_update(&ctx, (const u_char *) &msgid, sizeof(msgid_t));
+		passert(sizeof(msgid_t) == sizeof(uint32_t));
+		msgid_t raw_msgid = htonl(msgid);
+		hmac_update(&ctx, (const void *)&raw_msgid, sizeof(raw_msgid));
 		hmac_update(&ctx, r_hash_start, rbody.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
 
@@ -1968,6 +1970,7 @@ stf_status send_isakmp_notification(struct state *st,
  * destination, if we care to.
  * Note: some calls are from send_notification_from_md and
  * those calls pass a fake state as sndst.
+ * Note: msgid is in different order here from other calls :/
  */
 static void send_notification(struct state *sndst, notification_t type,
 			struct state *encst,
@@ -2113,7 +2116,13 @@ static void send_notification(struct state *sndst, notification_t type,
 
 		hmac_init(&ctx, encst->st_oakley.ta_prf,
 			  encst->st_skeyid_a_nss);
+		/* the caller has done a htonl(msgid) already?? */
 		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
+#if 0
+		passert(sizeof(msgid_t) == sizeof(uint32_t));
+		msgid_t raw_msgid = htonl(msgid);
+		hmac_update(&ctx, (const void *)&raw_msgid, sizeof(raw_msgid));
+#endif
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
 
@@ -2375,7 +2384,9 @@ void send_v1_delete(struct state *st)
 
 		hmac_init(&ctx, p1st->st_oakley.ta_prf,
 			  p1st->st_skeyid_a_nss);
-		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
+		passert(sizeof(msgid_t) == sizeof(uint32_t));
+		msgid_t raw_msgid = htonl(msgid);
+		hmac_update(&ctx, (const void *)&raw_msgid, sizeof(raw_msgid));
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
 
