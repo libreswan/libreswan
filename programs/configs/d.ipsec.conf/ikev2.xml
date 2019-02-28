@@ -1,7 +1,7 @@
   <varlistentry>
   <term><emphasis remap='B'>ikev2</emphasis></term>
   <listitem>
-<para>Wether to use IKEv1 (RFC 4301) or IKEv2 (RFC 7296) settings to be used.
+<para>Whether to use IKEv1 (RFC 4301) or IKEv2 (RFC 7296) settings to be used.
 Currently the accepted values are <emphasis remap='B'>no</emphasis>(the default),
 signifying only IKEv1 is accepted, or <emphasis remap='B'>yes</emphasis>,
 signifying only IKEv2 is accepted. Previous versions allowed the keywords
