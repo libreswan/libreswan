@@ -40,11 +40,11 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth1 scope link src 192.0.2.254 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth1 scope link src 192.0.2.254
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
@@ -59,8 +59,9 @@ west-ec                                                      P,,
 east #
  # on east, it should show it failed the NSS IPsec profile and used the NSS TLS profile
 east #
- hostname | grep east > /dev/null && grep "retrying verification" /tmp/pluto.log
-| retrying verification with the NSS serverAuth profile
+ hostname | grep east > /dev/null && grep "verify_end_cert trying profile" /tmp/pluto.log
+| verify_end_cert trying profile IPsec
+| verify_end_cert trying profile TLS Client
 east #
 east #
  ../bin/check-for-core.sh
