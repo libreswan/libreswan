@@ -71,7 +71,7 @@ static bool crl_is_current(CERTSignedCrl *crl)
 static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 					CERTCertificate *cert)
 {
-	if (handle == NULL || cert == NULL)
+	if (!pexpect(handle != NULL) || !pexpect(cert != NULL))
 		return false;
 
 	dbg("%s: looking for a CRL issued by %s",
@@ -89,24 +89,22 @@ static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 		return false;
 	}
 
-	CERTSignedCrl *crl = NULL;
+	bool current = false;
 
 	for (CERTCrlNode *crl_node = crl_list->first; crl_node != NULL;
 	     crl_node = crl_node->next) {
-		if (crl_node->crl != NULL &&
-				SECITEM_ItemsAreEqual(&cert->derIssuer,
-						 &crl_node->crl->crl.derName)) {
-			crl = crl_node->crl;
-			dbg("%s : CRL found", __func__);
+		CERTSignedCrl *crl = crl_node->crl;
+		if (crl != NULL &&
+		    SECITEM_ItemsAreEqual(&cert->derIssuer, &crl->crl.derName)) {
+			current = crl_is_current(crl);
+			dbg("%s: %s CRL found",
+				__func__, current ? "current" : "expired");
 			break;
 		}
 	}
 
-	bool res = crl != NULL && crl_is_current(crl);
-	dbg("releasing crl list in %s with result %s",
-	     __func__, res ? "true" : "false");
 	PORT_FreeArena(crl_list->arena, PR_FALSE);
-	return res;
+	return current;
 }
 
 static void log_bad_cert(const char *prefix, const char *usage, CERTVerifyLogNode *head)
@@ -191,8 +189,10 @@ static CERTCertList *get_all_ca_certs(void)
 
 	CERT_DestroyCertList(allcerts);
 
-	if (roots == NULL || CERT_LIST_EMPTY(roots))
-		return NULL;
+	if (pexpect(roots != NULL) && CERT_LIST_EMPTY(roots)) {
+		CERT_DestroyCertList(roots);
+		roots = NULL;
+	}
 
 	return roots;
 }
@@ -569,7 +569,7 @@ struct certs *find_and_verify_certs(struct state *st,
 	}
 
 	statetime_t trustcl_time = statetime_start(st);
-	CERTCertList *trustcl = get_all_ca_certs(); /* must free trustcl */
+	CERTCertList *trustcl = get_all_ca_certs(); /* we must free trustcl eventually */
 	statetime_stop(&trustcl_time, "%s() calling get_all_ca_certs()", __func__);
 	if (trustcl == NULL) {
 		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
