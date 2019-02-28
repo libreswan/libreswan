@@ -211,38 +211,41 @@ broken-kvm-qemu-directory:
 	:
 	false
 
+#
+# Don't create $(KVM_POOLDIR) - let the user do that as it lives
+# outside of the current directory tree.
+#
+# However, do create $(KVM_LOCALDIR) (but not using -p) if it is
+# unique and doesn't exist - convention seems to be to point it at
+# /tmp/pool which needs to be re-created everytime the host is
+# rebooted.
+#
 
-.PHONY: check-kvm-localdir check-kvm-basedir
-check-kvm-localdir check-kvm-basedir: | $(KVM_LOCALDIR) $(KVM_POOLDIR)
-ifeq ($(KVM_POOLDIR),$(KVM_LOCALDIR))
-  $(KVM_LOCALDIR):
-else
-  $(KVM_POOLDIR) $(KVM_LOCALDIR):
-endif
-	:
-	:  The directory:
-	:
-	:       "$@"
-	:
-	:  used to store domain disk images and other files, does not exist.
-	:
-	:  Three make variables determine the directory or directories used to store
-	:  domain disk images and files:
-	:
-	:      KVM_POOLDIR=$(KVM_POOLDIR)
-	:                  - the default location to store domain disk images and files
-	:                  - the default is ../pool
-	:
-	:      KVM_LOCALDIR=$(KVM_LOCALDIR)
-	:                  - used for store the test domain disk images and files
-	:                  - the default is KVM_POOLDIR
-	:
-	:  Either create the above directory or adjust its location by setting
-	:  one or more of the above make variables in the file:
-	:
-	:      Makefile.inc.local
-	:
+define kvm-pooldir-info
+
+  The directory:
+
+      "$(KVM_POOLDIR)"
+
+  specified by KVM_POOLDIR and used to store the base domain disk
+  and other files, does not exist.
+
+  Either create the directory or adjust its location by setting
+  KVM_POOLDIR in the file:
+
+      Makefile.inc.local
+
+endef
+
+$(KVM_POOLDIR):
+	$(info $(kvm-pooldir-info))
 	false
+
+ifneq ($(KVM_POOLDIR),$(KVM_LOCALDIR))
+$(KVM_LOCALDIR):
+	: not -p
+	mkdir $(KVM_LOCALDIR)
+endif
 
 
 #
