@@ -259,6 +259,7 @@ endif
 # old. Since we ship some not-yet merged ipsec-next offload code, this
 # is currently true for basically all distro's
 USE_XFRM_HEADER_COPY?=true
+XFRM_LIFETIME_DEFAULT?=30
 
 # Some systems have a bogus combination of glibc and kernel-headers which
 # causes a conflict in the IPv6 defines. Try enabling this option as a workaround

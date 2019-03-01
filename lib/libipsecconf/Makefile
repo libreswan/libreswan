@@ -18,6 +18,8 @@ LIBRARY=ipsecconf
 LIB=lib${LIBRARY}.a
 MANDIR=$(MANTREE)/man3
 
+CFLAGS += -DXFRM_LIFETIME_DEFAULT=$(XFRM_LIFETIME_DEFAULT)
+
 SRCS=confread.c confwrite.c starterwhack.c starterlog.c
 SRCS+=parser.tab.c lex.yy.c keywords.c
 SRCS+=interfaces.c

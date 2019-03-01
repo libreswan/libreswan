@@ -89,7 +89,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_IKEBUF] = IKE_BUF_AUTO;
 	cfg->setup.options[KBF_IKE_ERRQUEUE] = TRUE;
 	cfg->setup.options[KBF_NFLOG_ALL] = 0; /* disabled per default */
-	cfg->setup.options[KBF_XFRMLIFETIME] = 300; /* not used by pluto itself */
+	cfg->setup.options[KBF_XFRMLIFETIME] = XFRM_LIFETIME_DEFAULT; /* not used by pluto itself */
 	cfg->setup.options[KBF_NHELPERS] = -1; /* see also plutomain.c */
 
 	cfg->setup.options[KBF_KEEPALIVE] = 0;                  /* config setup */
