@@ -53,8 +53,6 @@ case "$1" in
 	# preliminaries
 	mkdir -p ${rundir}
 	chmod 700 ${rundir} > /dev/null 2>/dev/null
-	# starting a stack will unload any loaded stack first (same or different stack)
-	[ -f /proc/modules ] && ipsec _stackmanager start
 	# Finally start the pluto daemon in a restart loop
 	if [ ${initsystem} = systemd ]; then
 	    systemctl status ipsec.service > /dev/null
