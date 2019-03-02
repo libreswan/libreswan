@@ -78,6 +78,8 @@
 #include "send.h"		/* for send without recording */
 #include "ikev1_send.h"
 #include "af_info.h"
+#include "ikev1_hash.h"
+#include "impair.h"
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
@@ -217,6 +219,20 @@ static size_t xauth_mode_cfg_hash(u_char *dest,
 		DBG_dump("", dest, ctx.hmac_digest_len);
 	});
 	return ctx.hmac_digest_len;
+}
+
+static bool emit_xauth_hash(const char *what, struct state *st,
+			    struct v1_hash_fixup *hash_fixup, pb_stream *out)
+{
+	return emit_v1_HASH(V1_HASH_1, what, XAUTH_EXCHANGE,
+			    st, hash_fixup, out);
+}
+
+static void fixup_xauth_hash(struct state *st,
+			     struct v1_hash_fixup *hash_fixup,
+			     const uint8_t *roof)
+{
+	fixup_v1_HASH(st, hash_fixup, st->st_msgid_phase15, roof);
 }
 
 /**
@@ -383,23 +399,10 @@ static stf_status modecfg_resp(struct state *st,
 			bool use_modecfg_addr_as_client_addr,
 			uint16_t ap_id)
 {
-	unsigned char *r_hash_start, *r_hashval;
-
-	/* START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_MCFG_ATTR); */
-
-	{
-		pb_stream hash_pbs;
-
-		if (!ikev1_out_generic(ISAKMP_NEXT_MCFG_ATTR, &isakmp_hash_desc, rbody, &hash_pbs))
-			return STF_INTERNAL_ERROR;
-
-		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(st->st_oakley.ta_prf->prf_output_size,
-			      &hash_pbs, "HASH"))
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&hash_pbs);
-		r_hash_start = rbody->cur; /* hash from after HASH payload */
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_xauth_hash("XAUTH: mode config response",
+			     st, &hash_fixup, rbody)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	/* ATTR out */
@@ -497,7 +500,7 @@ static stf_status modecfg_resp(struct state *st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
+	fixup_xauth_hash(st, &hash_fixup, rbody->cur);
 
 	if (!ikev1_close_message(rbody, st) ||
 	    !ikev1_encrypt_message(rbody, st))
@@ -523,7 +526,6 @@ static stf_status modecfg_send_set(struct state *st)
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_HASH,
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
@@ -604,7 +606,6 @@ stf_status xauth_send_request(struct state *st)
 	pb_stream reply;
 	pb_stream rbody;
 	unsigned char buf[256];
-	u_char *r_hash_start, *r_hashval;
 	const enum state_kind p_state = st->st_state->kind;
 
 	/* set up reply */
@@ -620,7 +621,6 @@ stf_status xauth_send_request(struct state *st)
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_HASH,
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
@@ -638,7 +638,11 @@ stf_status xauth_send_request(struct state *st)
 			return STF_INTERNAL_ERROR;
 	}
 
-	START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_MCFG_ATTR);
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_xauth_hash("XAUTH: send request",
+			     st, &hash_fixup, &rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	/* ATTR out */
 	{
@@ -668,7 +672,7 @@ stf_status xauth_send_request(struct state *st)
 			return STF_INTERNAL_ERROR;
 	}
 
-	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody.cur, st);
+	fixup_xauth_hash(st, &hash_fixup, rbody.cur);
 
 	if (!ikev1_close_message(&rbody, st))
 			return STF_INTERNAL_ERROR;
@@ -719,7 +723,6 @@ stf_status modecfg_send_request(struct state *st)
 	pb_stream reply;
 	pb_stream rbody;
 	unsigned char buf[256];
-	u_char *r_hash_start, *r_hashval;
 
 	/* set up reply */
 	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
@@ -733,7 +736,6 @@ stf_status modecfg_send_request(struct state *st)
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_HASH,
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
@@ -752,7 +754,11 @@ stf_status modecfg_send_request(struct state *st)
 			return STF_INTERNAL_ERROR;
 	}
 
-	START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_MCFG_ATTR);
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_xauth_hash("XAUTH: mode config request",
+			     st, &hash_fixup, &rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	/* ATTR out */
 	{
@@ -785,7 +791,7 @@ stf_status modecfg_send_request(struct state *st)
 			return STF_INTERNAL_ERROR;
 	}
 
-	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody.cur, st);
+	fixup_xauth_hash(st, &hash_fixup, rbody.cur);
 
 	if (!ikev1_close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
@@ -821,7 +827,6 @@ static stf_status xauth_send_status(struct state *st, int status)
 	pb_stream reply;
 	pb_stream rbody;
 	unsigned char buf[256];
-	u_char *r_hash_start, *r_hashval;
 
 	/* set up reply */
 	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
@@ -832,7 +837,6 @@ static stf_status xauth_send_status(struct state *st, int status)
 	/* HDR out */
 	{
 		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_HASH,
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
@@ -850,7 +854,10 @@ static stf_status xauth_send_status(struct state *st, int status)
 			return STF_INTERNAL_ERROR;
 	}
 
-	START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_MCFG_ATTR);
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_xauth_hash("XAUTH: status", st, &hash_fixup, &rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	/* ATTR out */
 	{
@@ -873,7 +880,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 			return STF_INTERNAL_ERROR;
 	}
 
-	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody.cur, st);
+	fixup_xauth_hash(st, &hash_fixup, rbody.cur);
 
 	if (!ikev1_close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
@@ -1979,26 +1986,12 @@ static stf_status xauth_client_resp(struct state *st,
 			     pb_stream *rbody,
 			     uint16_t ap_id)
 {
-	unsigned char *r_hash_start, *r_hashval;
 	char xauth_username[MAX_XAUTH_USERNAME_LEN];
 	struct connection *c = st->st_connection;
 
-	/* START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_MCFG_ATTR); */
-
-	{
-		pb_stream hash_pbs;
-		int np = ISAKMP_NEXT_MCFG_ATTR;
-
-		if (!ikev1_out_generic(np, &isakmp_hash_desc, rbody, &hash_pbs))
-			return STF_INTERNAL_ERROR;
-
-		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(st->st_oakley.ta_prf->prf_output_size,
-			      &hash_pbs, "HASH"))
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&hash_pbs);
-		r_hash_start = (rbody)->cur; /* hash from after HASH payload */
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_xauth_hash("XAUTH: client response", st, &hash_fixup, rbody)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	/* MCFG_ATTR out */
@@ -2202,7 +2195,7 @@ static stf_status xauth_client_resp(struct state *st,
 	libreswan_log("XAUTH: Answering XAUTH challenge with user='%s'",
 		      st->st_xauth_username);
 
-	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
+	fixup_xauth_hash(st, &hash_fixup, rbody->cur);
 
 	if (!ikev1_close_message(rbody, st) ||
 	    !ikev1_encrypt_message(rbody, st))
@@ -2447,24 +2440,9 @@ static stf_status xauth_client_ackstatus(struct state *st,
 					 pb_stream *rbody,
 					 uint16_t ap_id)
 {
-	unsigned char *r_hash_start, *r_hashval;
-
-	/* START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_MCFG_ATTR); */
-
-	{
-		pb_stream hash_pbs;
-		int np = ISAKMP_NEXT_MCFG_ATTR;
-
-		if (!ikev1_out_generic(np, &isakmp_hash_desc, rbody, &hash_pbs))
-			return STF_INTERNAL_ERROR;
-
-		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(st->st_oakley.ta_prf->prf_output_size,
-			      &hash_pbs, "HASH"))
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&hash_pbs);
-		r_hash_start = (rbody)->cur; /* hash from after HASH payload */
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_xauth_hash("XAUTH: ack status", st, &hash_fixup, rbody)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	/* ATTR out */
@@ -2487,7 +2465,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
+	fixup_xauth_hash(st, &hash_fixup, rbody->cur);
 
 	if (!ikev1_close_message(rbody, st) ||
 	    !ikev1_encrypt_message(rbody, st))

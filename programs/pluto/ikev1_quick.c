@@ -81,6 +81,7 @@
 #include "pluto_x509.h"
 #include "ip_address.h"
 #include "af_info.h"
+#include "ikev1_hash.h"
 
 #include <blapit.h>
 
@@ -879,9 +880,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	struct state *isakmp_sa = state_with_serialno(st->st_clonedfrom);
 	struct connection *c = st->st_connection;
 	pb_stream rbody;
-	u_char          /* set by START_HASH_PAYLOAD: */
-		*r_hashval,     /* where in reply to jam hash value */
-		*r_hash_start;  /* start of what is to be hashed */
 	bool has_client = c->spd.this.has_client || c->spd.that.has_client ||
 			  c->spd.this.protocol != 0 || c->spd.that.protocol != 0 ||
 			  c->spd.this.port != 0 || c->spd.that.port != 0;
@@ -915,7 +913,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 					  ISAKMP_MINOR_VERSION,
-			.isa_np = ISAKMP_NEXT_HASH,
 			.isa_xchg = ISAKMP_XCHG_QUICK,
 			.isa_msgid = st->st_msgid,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
@@ -930,7 +927,11 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	}
 
 	/* HASH(1) -- create and note space to be filled later */
-	START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_SA);
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_v1_HASH(V1_HASH_1, "outI1", QUICK_EXCHANGE,
+			  st, &hash_fixup, &rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	/* SA out */
 
@@ -1010,8 +1011,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	}
 
 	/* finish computing  HASH(1), inserting it in output */
-	(void) quick_mode_hash12(r_hashval, r_hash_start, rbody.cur,
-				 st, &st->st_msgid, FALSE);
+	fixup_v1_HASH(st, &hash_fixup, st->st_msgid, rbody.cur);
 
 	/* encrypt message, except for fixed part of header */
 
@@ -1577,9 +1577,6 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	struct state *st = md->st;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
-	u_char          /* set by START_HASH_PAYLOAD: */
-		*r_hashval,     /* where in reply to jam hash value */
-		*r_hash_start;  /* from where to start hashing */
 
 	/* Start the output packet.
 	 *
@@ -1594,12 +1591,15 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 	/* HDR* out */
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+	ikev1_init_out_pbs_echo_hdr(md, TRUE, 0,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
-	/* HASH(2) out -- first pass */
-	START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_SA);
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_v1_HASH(V1_HASH_2, "quick inR1 outI2",
+			  QUICK_EXCHANGE, st, &hash_fixup, &rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	passert(st->st_connection != NULL);
 
@@ -1720,8 +1720,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	}
 
 	/* Compute reply HASH(2) and insert in output */
-	(void)quick_mode_hash12(r_hashval, r_hash_start, rbody.cur,
-				st, &st->st_msgid, TRUE);
+	fixup_v1_HASH(st, &hash_fixup, st->st_msgid, rbody.cur);
 
 	/* Derive new keying material */
 	compute_keymats(st);
@@ -1812,7 +1811,7 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 	struct connection *c = st->st_connection;
 
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+	ikev1_init_out_pbs_echo_hdr(md, TRUE, 0,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
@@ -1907,7 +1906,7 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 
 	/* HASH(3) out -- sometimes, we add more content */
 	{
-		u_char *r_hashval;	/* set by START_HASH_PAYLOAD */
+		struct v1_hash_fixup hash_fixup;
 
 #ifdef IMPAIR_UNALIGNED_I2_MSG
 		{
@@ -1945,12 +1944,13 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 			}
 		}
 #else
-		START_HASH_PAYLOAD_NO_R_HASH_START(rbody,
-						   ISAKMP_NEXT_NONE);
+		if (!emit_v1_HASH(V1_HASH_3, "quick_inR1_outI2",
+				  QUICK_EXCHANGE, st, &hash_fixup, &rbody)) {
+			return STF_INTERNAL_ERROR;
+		}
 #endif
 
-
-		(void)quick_mode_hash3(r_hashval, st);
+		fixup_v1_HASH(st, &hash_fixup, st->st_msgid, NULL);
 	}
 
 	/* Derive new keying material */

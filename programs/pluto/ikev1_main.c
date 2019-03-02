@@ -65,6 +65,7 @@
 #include "fetch.h"
 #include "asn1.h"
 #include "pending.h"
+#include "ikev1_hash.h"
 
 #include "crypto.h"
 #include "secrets.h"
@@ -1862,14 +1863,11 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 }
 
 stf_status send_isakmp_notification(struct state *st,
-				uint16_t type, const void *data,
-				size_t len)
+				    uint16_t type, const void *data,
+				    size_t len)
 {
 	msgid_t msgid;
 	pb_stream rbody;
-	u_char
-		*r_hashval, /* where in reply to jam hash value */
-		*r_hash_start; /* start of what is to be hashed */
 
 	msgid = generate_msgid(st);
 
@@ -1879,7 +1877,6 @@ stf_status send_isakmp_notification(struct state *st,
 	/* HDR* */
 	{
 		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_HASH,
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_INFO,
@@ -1891,8 +1888,13 @@ stf_status send_isakmp_notification(struct state *st,
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
-	/* HASH -- create and note space to be filled later */
-	START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_N);
+
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_v1_HASH(V1_HASH_1, "notification",
+			  NOTIFICATION_EXCHANGE,
+			  st, &hash_fixup, &rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	/* NOTIFY */
 	{
@@ -1919,23 +1921,8 @@ stf_status send_isakmp_notification(struct state *st,
 		close_output_pbs(&notify_pbs);
 	}
 
+	fixup_v1_HASH(st, &hash_fixup, msgid, rbody.cur);
 
-	{
-		/* finish computing HASH */
-		struct hmac_ctx ctx;
-
-		hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
-		passert(sizeof(msgid_t) == sizeof(uint32_t));
-		msgid_t raw_msgid = htonl(msgid);
-		hmac_update(&ctx, (const void *)&raw_msgid, sizeof(raw_msgid));
-		hmac_update(&ctx, r_hash_start, rbody.cur - r_hash_start);
-		hmac_final(r_hashval, &ctx);
-
-		DBG(DBG_CRYPT, {
-				DBG_log("HASH computed:");
-				DBG_dump("", r_hashval, ctx.hmac_digest_len);
-			});
-	}
 	/*
 	 * save old IV (this prevents from copying a whole new state object
 	 * for NOTIFICATION / DELETE messages we don't need to maintain a state
@@ -1984,12 +1971,8 @@ static void send_notification(struct state *sndst, notification_t type,
 	pb_stream pbs;
 
 	pb_stream r_hdr_pbs;
-	u_char *r_hashval, *r_hash_start;
 	static monotime_t last_malformed = MONOTIME_EPOCH;
 	monotime_t n = mononow();
-
-	r_hashval = NULL;
-	r_hash_start = NULL;
 
 	switch (type) {
 	case PAYLOAD_MALFORMED:
@@ -2065,7 +2048,6 @@ static void send_notification(struct state *sndst, notification_t type,
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				ISAKMP_MINOR_VERSION,
-			.isa_np = encst ? ISAKMP_NEXT_HASH : ISAKMP_NEXT_N,
 			.isa_xchg = ISAKMP_XCHG_INFO,
 			.isa_msgid = msgid,
 			.isa_flags = encst ? ISAKMP_FLAGS_v1_ENCRYPTION : 0,
@@ -2078,15 +2060,14 @@ static void send_notification(struct state *sndst, notification_t type,
 	}
 
 	/* HASH -- value to be filled later */
-	if (encst) {
-		pb_stream hash_pbs;
-		passert(ikev1_out_generic(ISAKMP_NEXT_N, &isakmp_hash_desc, &r_hdr_pbs,
-					  &hash_pbs));
-		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		passert(out_zero(encst->st_oakley.ta_prf->prf_output_size,
-				 &hash_pbs, "HASH(1)"));
-		close_output_pbs(&hash_pbs);
-		r_hash_start = r_hdr_pbs.cur; /* hash from after HASH(1) */
+	struct v1_hash_fixup hash_fixup;
+	if (encst != NULL) {
+		if (!emit_v1_HASH(V1_HASH_1, "send notification",
+				  NOTIFICATION_EXCHANGE,
+				  encst, &hash_fixup, &r_hdr_pbs)) {
+			/* return STF_INTERNAL_ERROR; */
+			return;
+		}
 	}
 
 	/* Notification Payload */
@@ -2111,21 +2092,8 @@ static void send_notification(struct state *sndst, notification_t type,
 	}
 
 	/* calculate hash value and patch into Hash Payload */
-	if (encst) {
-		struct hmac_ctx ctx;
-
-		hmac_init(&ctx, encst->st_oakley.ta_prf,
-			  encst->st_skeyid_a_nss);
-		passert(sizeof(msgid_t) == sizeof(uint32_t));
-		msgid_t raw_msgid = htonl(msgid);
-		hmac_update(&ctx, (const void *)&raw_msgid, sizeof(raw_msgid));
-		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
-		hmac_final(r_hashval, &ctx);
-
-		DBG(DBG_CRYPT, {
-				DBG_log("HASH(1) computed:");
-				DBG_dump("", r_hashval, ctx.hmac_digest_len);
-			});
+	if (encst != NULL) {
+		fixup_v1_HASH(encst, &hash_fixup, msgid, r_hdr_pbs.cur);
 	}
 
 	if (encst != NULL) {
@@ -2244,9 +2212,6 @@ void send_v1_delete(struct state *st)
 	struct state *p1st;
 	ip_said said[EM_MAXRELSPIS];
 	ip_said *ns = said;
-	u_char
-		*r_hashval, /* where in reply to jam hash value */
-		*r_hash_start; /* start of what is to be hashed */
 	bool isakmp_sa = FALSE;
 
 	/* If there are IPsec SA's related to this state struct... */
@@ -2290,7 +2255,6 @@ void send_v1_delete(struct state *st)
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				ISAKMP_MINOR_VERSION,
-			.isa_np = ISAKMP_NEXT_HASH,
 			.isa_xchg = ISAKMP_XCHG_INFO,
 			.isa_msgid = msgid,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
@@ -2302,16 +2266,10 @@ void send_v1_delete(struct state *st)
 	}
 
 	/* HASH -- value to be filled later */
-	{
-		pb_stream hash_pbs;
-
-		passert(ikev1_out_generic(ISAKMP_NEXT_D, &isakmp_hash_desc, &r_hdr_pbs,
-					  &hash_pbs));
-		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		passert(out_zero(p1st->st_oakley.ta_prf->prf_output_size,
-				 &hash_pbs, "HASH(1)"));
-		close_output_pbs(&hash_pbs);
-		r_hash_start = r_hdr_pbs.cur; /* hash from after HASH(1) */
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_v1_HASH(V1_HASH_1, "send delete", DELETE_EXCHANGE,
+			  p1st, &hash_fixup, &r_hdr_pbs)) {
+		return /* STF_INTERNAL_ERROR */;
 	}
 
 	/* Delete Payloads */
@@ -2377,22 +2335,7 @@ void send_v1_delete(struct state *st)
 	}
 
 	/* calculate hash value and patch into Hash Payload */
-	{
-		struct hmac_ctx ctx;
-
-		hmac_init(&ctx, p1st->st_oakley.ta_prf,
-			  p1st->st_skeyid_a_nss);
-		passert(sizeof(msgid_t) == sizeof(uint32_t));
-		msgid_t raw_msgid = htonl(msgid);
-		hmac_update(&ctx, (const void *)&raw_msgid, sizeof(raw_msgid));
-		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
-		hmac_final(r_hashval, &ctx);
-
-		DBG(DBG_CRYPT, {
-				DBG_log("HASH(1) computed:");
-				DBG_dump("", r_hashval, ctx.hmac_digest_len);
-			});
-	}
+	fixup_v1_HASH(p1st, &hash_fixup, msgid, r_hdr_pbs.cur);
 
 	/*
 	 * Do a dance to avoid needing a new state object.
