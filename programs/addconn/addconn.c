@@ -51,9 +51,9 @@ static int verbose = 0;
 /*
  * make options valid environment variables
  */
-char * environlize(char *str)
+static char *environlize(const char *str)
 {
-	char *cpy = strndup(str,strlen(str));
+	char *cpy = strndup(str, strlen(str));
 	char *cur = cpy;
 	while((cur = strchr(cur, '-')) != NULL) {
 		*cur++ = '_';
