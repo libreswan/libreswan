@@ -200,26 +200,6 @@ static bool get_internal_addresses(
  * @param st State structure
  * @return size_t Length of the HASH
  */
-static size_t xauth_mode_cfg_hash(u_char *dest,
-				  const u_char *start,
-				  const u_char *roof,
-				  const struct state *st)
-{
-	struct hmac_ctx ctx;
-
-	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
-	passert(sizeof(msgid_t) == sizeof(uint32_t));
-	msgid_t raw_msgid = htonl(st->st_msgid_phase15);
-	hmac_update(&ctx, (const void *)&raw_msgid, sizeof(raw_msgid));
-	hmac_update(&ctx, start, roof - start);
-	hmac_final(dest, &ctx);
-
-	DBG(DBG_CRYPT|DBG_XAUTH, {
-		DBG_log("XAUTH: HASH computed:");
-		DBG_dump("", dest, ctx.hmac_digest_len);
-	});
-	return ctx.hmac_digest_len;
-}
 
 static bool emit_xauth_hash(const char *what, struct state *st,
 			    struct v1_hash_fixup *hash_fixup, pb_stream *out)
@@ -1288,12 +1268,6 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 	bool gotname = FALSE,
 		gotpassword = FALSE;
 
-	CHECK_QUICK_HASH(md,
-			 xauth_mode_cfg_hash(hash_val, hash_pbs->roof,
-					     md->message_pbs.roof,
-					     st),
-			 "XAUTH-HASH", "XAUTH R0");
-
 	setchunk(name, unknown, sizeof(unknown) - 1);	/* to make diagnostics easier */
 
 	/* XXX This needs checking with the proper RFC's - ISAKMP_CFG_ACK got added for Cisco interop */
@@ -1477,11 +1451,6 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 	DBG(DBG_CONTROLMORE, DBG_log("arrived in modecfg_inR0"));
 
 	st->st_msgid_phase15 = md->hdr.isa_msgid;
-	CHECK_QUICK_HASH(md,
-			 xauth_mode_cfg_hash(hash_val,
-					     hash_pbs->roof,
-					     md->message_pbs.roof, st),
-			 "MODECFG-HASH", "MODE R0");
 
 	switch (ma->isama_type) {
 	default:
@@ -1567,12 +1536,6 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 	DBG(DBG_CONTROL, DBG_log("modecfg_inI2"));
 
 	st->st_msgid_phase15 = md->hdr.isa_msgid;
-	CHECK_QUICK_HASH(md,
-			 xauth_mode_cfg_hash(hash_val,
-					     hash_pbs->roof,
-					     md->message_pbs.roof,
-					     st),
-			 "MODECFG-HASH", "MODE R1");
 
 	/* CHECK that SET has been received. */
 
@@ -1698,11 +1661,6 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 	DBG(DBG_CONTROL, DBG_log("modecfg_inR1: received mode cfg reply"));
 
 	st->st_msgid_phase15 = md->hdr.isa_msgid;
-	CHECK_QUICK_HASH(md,
-			 xauth_mode_cfg_hash(hash_val, hash_pbs->roof,
-					     md->message_pbs.roof,
-					     st),
-			 "MODECFG-HASH", "MODE R1");
 
 	switch (ma->isama_type) {
 	default:
@@ -2246,10 +2204,6 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	}
 
 	st->st_msgid_phase15 = md->hdr.isa_msgid;
-	CHECK_QUICK_HASH(md, xauth_mode_cfg_hash(hash_val,
-						 hash_pbs->roof,
-						 md->message_pbs.roof, st),
-			 "MODECFG-HASH", "XAUTH I0");
 
 	switch (ma->isama_type) {
 	default:
@@ -2504,11 +2458,6 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 	DBG(DBG_CONTROLMORE, DBG_log("Continuing with xauth_inI1"));
 
 	st->st_msgid_phase15 = md->hdr.isa_msgid;
-	CHECK_QUICK_HASH(md,
-			 xauth_mode_cfg_hash(hash_val,
-					     hash_pbs->roof,
-					     md->message_pbs.roof, st),
-			 "MODECFG-HASH", "XAUTH I1");
 
 	switch (ma->isama_type) {
 	default:
