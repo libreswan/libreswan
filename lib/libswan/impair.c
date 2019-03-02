@@ -1,5 +1,4 @@
-/*
- * impair constants, for libreswan
+/* impair constants, for libreswan
  *
  * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019-2019 Paul Wouters <pwouters@redhat.com>
@@ -125,6 +124,19 @@ static const struct keyword send_impairment_value[] = {
 static const struct keywords send_impairment_keywords =
 	DIRECT_KEYWORDS("send impaired content", send_impairment_value);
 
+static const struct keyword exchange_impairment_value[] = {
+#define S(E, H) [E##_EXCHANGE] = { .name = "SEND_" #E, .sname = #E, .value = E##_EXCHANGE, .details = H, }
+	S(NO, "do not modify exchanges"),
+	S(QUICK, "modify IKEv1 QUICK exchanges"),
+	S(XAUTH, "modify IKEv1 XAUTH exchanges"),
+	S(NOTIFICATION, "modify notification (informational) exchanges"),
+	S(DELETE, "modify delete exchanges"),
+#undef S
+};
+
+static const struct keywords exchange_impairment_keywords =
+	DIRECT_KEYWORDS("impaire exchange content", exchange_impairment_value);
+
 struct impairment {
 	const char *what;
 	const char *help;
@@ -186,6 +198,27 @@ struct impairment impairments[] = {
 		.what = "log-rate-limit",
 		.help = "set the per-hour(?) cap on rate-limited log messages",
 		V(impair_log_rate_limit),
+	},
+
+	/*
+	 * IKEv1: hash payloads
+	 */
+	{
+		.what = "v1-hash-check",
+		.help = "disable check of incoming IKEv1 hash payload",
+		V(impair_emitting),
+	},
+	{
+		.what = "v1-hash-payload",
+		.help = "corrupt the outgoing HASH payload",
+		.how_keynum = &send_impairment_keywords,
+		V(impair_v1_hash_payload),
+	},
+	{
+		.what = "v1-hash-exchange",
+		.help = "the outgoing exchange that should contain the corrupted HASH payload",
+		.how_keynum = &exchange_impairment_keywords,
+		V(impair_v1_hash_exchange),
 	},
 };
 
@@ -537,8 +570,9 @@ void process_impair(const struct whack_impair *wc)
 }
 
 /*
- * declare these last so that all references are forced to use the
- * declaration in the header.
+ * XXX: define these at the end of the file so that all references are
+ * forced to use the declaration in the header (help stop code
+ * refering to the wrong variable?).
  */
 
 bool impair_revival;
@@ -546,4 +580,9 @@ bool impair_emitting;
 enum send_impairment impair_ke_payload;
 enum send_impairment impair_ike_key_length_attribute;
 enum send_impairment impair_child_key_length_attribute;
+
 unsigned impair_log_rate_limit;
+
+bool impair_v1_hash_check;
+enum send_impairment impair_v1_hash_payload;
+enum exchange_impairment impair_v1_hash_exchange;

@@ -1,6 +1,6 @@
-/* impair operation
+/* impair operation, for libreswan
  *
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2018-2019 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,9 +22,7 @@
 #include "lswcdefs.h"
 
 /*
- * How to impair something.  This is just the start ...
- *
- * Extra enums go here.
+ * Meddle with the contents of a payload.
  */
 
 enum send_impairment {
@@ -35,6 +33,21 @@ enum send_impairment {
 	SEND_ROOF, /* >= ROOF -> <number> */
 };
 
+/*
+ * Meddle with a specific exchange.
+ */
+
+enum exchange_impairment {
+	NO_EXCHANGE = 0,
+	NOTIFICATION_EXCHANGE,
+	QUICK_EXCHANGE,
+	XAUTH_EXCHANGE,
+	DELETE_EXCHANGE,
+};
+
+/*
+ * add more here
+ */
 #if 0
 enum xxx_impair ...;
 #endif
@@ -49,10 +62,16 @@ enum xxx_impair ...;
 
 extern bool impair_revival;
 extern bool impair_emitting;
+
 extern enum send_impairment impair_ke_payload;
 extern enum send_impairment impair_ike_key_length_attribute;
 extern enum send_impairment impair_child_key_length_attribute;
+
 extern unsigned impair_log_rate_limit;
+
+extern enum send_impairment impair_v1_hash_payload;
+extern enum exchange_impairment impair_v1_hash_exchange;
+extern bool impair_v1_hash_check;
 
 /*
  * What whack sends across the wire for a impair.
