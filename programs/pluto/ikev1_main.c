@@ -2116,13 +2116,9 @@ static void send_notification(struct state *sndst, notification_t type,
 
 		hmac_init(&ctx, encst->st_oakley.ta_prf,
 			  encst->st_skeyid_a_nss);
-		/* the caller has done a htonl(msgid) already?? */
-		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
-#if 0
 		passert(sizeof(msgid_t) == sizeof(uint32_t));
 		msgid_t raw_msgid = htonl(msgid);
 		hmac_update(&ctx, (const void *)&raw_msgid, sizeof(raw_msgid));
-#endif
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
 
