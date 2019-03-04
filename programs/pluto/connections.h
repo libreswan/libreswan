@@ -238,6 +238,7 @@ struct sa_marks {
  * .conf files.
  */
 struct ephemeral_variables {
+	int revive_delay;
 	/* RFC 5685 - IKEv2 Redirect Mechanism */
 	int num_redirects;
 	realtime_t first_redirect_time;

@@ -75,6 +75,8 @@
 #include "crypt_dh.h"
 #include "hostpair.h"
 
+#include "kernel.h"
+
 #include <nss.h>
 #include <pk11pub.h>
 #include <keyhi.h>
@@ -946,6 +948,25 @@ void delete_state(struct state *st)
 
 	if (c->newest_isakmp_sa == st->st_serialno)
 		c->newest_isakmp_sa = SOS_NOBODY;
+
+	if ((c->policy & POLICY_UP) && IS_IKE_SA(st)) {
+		int delay = c->temp_vars.revive_delay;
+
+		switch(delay) {
+		case 0:
+		case 20:
+		case 40:
+			c->temp_vars.revive_delay += 20;
+			break;
+		default:
+			break;
+		}
+
+		libreswan_log("IKE delete_state for %lu but connection '%s' is supposed to remain up. schedule EVENT_INIT_CONN",
+			       st == NULL ? 0 : st->st_serialno, c->name);
+		revive_conn = clone_str(c->name, "revive_conn");
+		event_schedule(EVENT_INIT_CONN, deltatime(delay), NULL);
+	}
 
 	/*
 	 * fake a state change here while we are still associated with a

@@ -165,6 +165,7 @@ enum event_type {
 	EVENT_SD_WATCHDOG,		/* update systemd's watchdog interval */
 	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
 	EVENT_CHECK_CRLS,		/* check/update CRLS */
+	EVENT_INIT_CONN,
 
 	/* events associated with states */
 

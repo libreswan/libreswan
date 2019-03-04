@@ -47,4 +47,6 @@ extern void delete_state_event(struct state *st, struct pluto_event **ev);
 #define delete_dpd_event(ST) delete_state_event((ST), &(ST)->st_dpd_event)
 
 extern void timer_list(void);
+extern char *revive_conn;
+
 #endif /* _TIMER_H */

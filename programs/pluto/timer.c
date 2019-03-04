@@ -64,6 +64,8 @@
 #include "retry.h"
 #include "fetch.h"		/* for check_crls() */
 
+char *revive_conn = NULL;
+
 /*
  * This file has the event handling routines. Events are
  * kept as a linked list of event structures. These structures
@@ -267,6 +269,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_SD_WATCHDOG:
 	case EVENT_NAT_T_KEEPALIVE:
 	case EVENT_CHECK_CRLS:
+	case EVENT_INIT_CONN:
 		passert(st == NULL);
 		break;
 
@@ -360,6 +363,13 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 #ifdef LIBCURL
 		check_crls();
 #endif
+		break;
+
+	case EVENT_INIT_CONN:
+		/* an IKEv2 conn with POLICY_UP just got deleted and needs to be initiated */
+		initiate_connection(revive_conn, null_fd, empty_lmod, empty_lmod, NULL);
+		pfree(revive_conn);
+		revive_conn = NULL;
 		break;
 
 	case EVENT_v2_RELEASE_WHACK:
