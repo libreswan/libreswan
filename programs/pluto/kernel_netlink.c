@@ -2159,6 +2159,11 @@ static bool netlink_shunt_eroute(const struct connection *c,
 		sr->this.protocol, ntohs(portof(&sr->this.client.addr)),
 		ntohs(portof(&sr->that.client.addr))));
 
+	if (op == ERO_DELETE && c->temp_vars.slash32_reshunt == TRUE) {
+		libreswan_log("Opportunistic Group/Instance: skip deleting trap eroute - parental groupinstance needs it");
+		return TRUE;
+	}
+
 	if (spi == 0) {
 		/*
 		 * we're supposed to end up with no eroute: rejig op and
