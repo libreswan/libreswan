@@ -121,6 +121,11 @@ extern bool accept_KE(chunk_t *dest, const char *val_name,
 		}							\
 	}
 
+size_t quick_mode_hash12(u_char *dest, const u_char *start,
+			 const u_char *roof,
+			 const struct state *st, const msgid_t *msgid,
+			 bool hash2);
+
 extern stf_status send_isakmp_notification(struct state *st,
 					   uint16_t type, const void *data,
 					   size_t len);

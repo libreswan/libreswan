@@ -666,10 +666,10 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
  * Used by: quick_outI1, quick_inI1_outR1 (twice), quick_inR1_outI2
  * (see RFC 2409 "IKE" 5.5, pg. 18 or draft-ietf-ipsec-ike-01.txt 6.2 pg 25)
  */
-static size_t quick_mode_hash12(u_char *dest, const u_char *start,
-				const u_char *roof,
-				const struct state *st, const msgid_t *msgid,
-				bool hash2)
+size_t quick_mode_hash12(u_char *dest, const u_char *start,
+			 const u_char *roof,
+			 const struct state *st, const msgid_t *msgid,
+			 bool hash2)
 {
 	struct hmac_ctx ctx;
 
