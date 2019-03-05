@@ -1548,6 +1548,10 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 				"received Hash Payload does not match computed value");
 			/* XXX Could send notification back */
 			r = STF_FAIL + INVALID_HASH_INFORMATION;
+		} else {
+			dbg("received '%s' message HASH_%s data ok",
+			    aggrmode ? "Aggr" : "Main",
+			    initiator ? "R" : "I" /*reverse*/);
 		}
 		break;
 	}
@@ -1556,6 +1560,11 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	{
 		r = RSA_check_signature(st, hash_val, hash_len,
 					&md->chain[ISAKMP_NEXT_SIG]->pbs, 0 /* for ikev2 only*/);
+		if (r != STF_OK) {
+			dbg("received '%s' message SIG_%s data did not match computed value",
+			    aggrmode ? "Aggr" : "Main",
+			    initiator ? "R" : "I" /*reverse*/);
+		}
 		break;
 	}
 	/* These are the only IKEv1 AUTH methods we support */

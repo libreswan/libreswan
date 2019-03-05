@@ -104,21 +104,28 @@ extern bool accept_KE(chunk_t *dest, const char *val_name,
  * - it declares local variables and expects the "do_hash" argument
  *   expression to reference them (hash_val, hash_pbs)
  */
-#define CHECK_QUICK_HASH(md, do_hash, hash_name, msg_name) { \
+#define CHECK_QUICK_HASH(md, do_hash, hash_name, msg_name)		\
+	{								\
 		pb_stream *const hash_pbs = &(md)->chain[ISAKMP_NEXT_HASH]->pbs; \
 		u_char hash_val[MAX_DIGEST_LEN];			\
 		size_t hash_len = (do_hash);				\
-		if (pbs_left(hash_pbs) != hash_len ||			\
-		    !memeq(hash_pbs->cur, hash_val, hash_len)) {	\
+		if (pbs_left(hash_pbs) != hash_len) {			\
+			loglog(RC_LOG_SERIOUS,				\
+			       "received '"msg_name"' message "hash_name" data is the wrong length (received %zu bytes but expected %zu)", \
+			       pbs_left(hash_pbs), hash_len);		\
+			return  STF_FAIL + INVALID_HASH_INFORMATION;	\
+		}							\
+		if (!memeq(hash_pbs->cur, hash_val, hash_len)) {	\
 			if (DBGP(DBG_CRYPT)) {				\
 				DBG_dump("received " hash_name ":",	\
 					 hash_pbs->cur, pbs_left(hash_pbs)); \
 			}						\
 			loglog(RC_LOG_SERIOUS,				\
-			       "received " hash_name " does not match computed value in " msg_name); \
+			       "received '"msg_name"' message "hash_name" data does not match computed value"); \
 			/* XXX Could send notification back */		\
 			return STF_FAIL + INVALID_HASH_INFORMATION;	\
 		}							\
+		dbg("received '"msg_name"' message "hash_name" data ok"); \
 	}
 
 extern stf_status send_isakmp_notification(struct state *st,
