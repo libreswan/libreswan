@@ -428,7 +428,7 @@ enum_names ikev1_exchange_names = {
 	ISAKMP_XCHG_NONE,
 	ISAKMP_XCHG_MODE_CFG,
 	ARRAY_REF(exchange_name_ikev1),
-	NULL, /* prefix */
+	"ISAKMP_XCHG_", /* prefix */
 	&exchange_names_doi
 };
 
