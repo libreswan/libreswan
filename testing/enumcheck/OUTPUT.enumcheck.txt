@@ -699,78 +699,91 @@ IETF registry enum_names:
          match ISAKMP_XCHG_NONE: OK
          short_name 0:  OK
          lswlog_enum_short 0: OK
+         match NONE [short]: OK
     1 -> ISAKMP_XCHG_BASE
          lswlog_enum 1: OK
          search ISAKMP_XCHG_BASE: OK
          match ISAKMP_XCHG_BASE: OK
          short_name 1:  OK
          lswlog_enum_short 1: OK
+         match BASE [short]: OK
     2 -> ISAKMP_XCHG_IDPROT
          lswlog_enum 2: OK
          search ISAKMP_XCHG_IDPROT: OK
          match ISAKMP_XCHG_IDPROT: OK
          short_name 2:  OK
          lswlog_enum_short 2: OK
+         match IDPROT [short]: OK
     3 -> ISAKMP_XCHG_AO
          lswlog_enum 3: OK
          search ISAKMP_XCHG_AO: OK
          match ISAKMP_XCHG_AO: OK
          short_name 3:  OK
          lswlog_enum_short 3: OK
+         match AO [short]: OK
     4 -> ISAKMP_XCHG_AGGR
          lswlog_enum 4: OK
          search ISAKMP_XCHG_AGGR: OK
          match ISAKMP_XCHG_AGGR: OK
          short_name 4:  OK
          lswlog_enum_short 4: OK
+         match AGGR [short]: OK
     5 -> ISAKMP_XCHG_INFO
          lswlog_enum 5: OK
          search ISAKMP_XCHG_INFO: OK
          match ISAKMP_XCHG_INFO: OK
          short_name 5:  OK
          lswlog_enum_short 5: OK
+         match INFO [short]: OK
     6 -> ISAKMP_XCHG_MODE_CFG
          lswlog_enum 6: OK
          search ISAKMP_XCHG_MODE_CFG: OK
          match ISAKMP_XCHG_MODE_CFG: OK
          short_name 6:  OK
          lswlog_enum_short 6: OK
+         match MODE_CFG [short]: OK
    30 -> ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST
          lswlog_enum 30: OK
          search ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST: OK
          match ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST: OK
          short_name 30:  OK
          lswlog_enum_short 30: OK
+         match STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST [short]: OK
    31 -> ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY
          lswlog_enum 31: OK
          search ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY: OK
          match ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY: OK
          short_name 31:  OK
          lswlog_enum_short 31: OK
+         match STOLEN_BY_OPENSWAN_FOR_ECHOREPLY [short]: OK
    32 -> ISAKMP_XCHG_QUICK
          lswlog_enum 32: OK
          search ISAKMP_XCHG_QUICK: OK
          match ISAKMP_XCHG_QUICK: OK
          short_name 32:  OK
          lswlog_enum_short 32: OK
+         match QUICK [short]: OK
    33 -> ISAKMP_XCHG_NGRP
          lswlog_enum 33: OK
          search ISAKMP_XCHG_NGRP: OK
          match ISAKMP_XCHG_NGRP: OK
          short_name 33:  OK
          lswlog_enum_short 33: OK
+         match NGRP [short]: OK
   244 -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE
          lswlog_enum 244: OK
          search ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
          match ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
          short_name 244:  OK
          lswlog_enum_short 244: OK
+         match ECHOREQUEST_PRIVATE [short]: OK
   245 -> ISAKMP_XCHG_ECHOREPLY_PRIVATE
          lswlog_enum 245: OK
          search ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
          match ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
          short_name 245:  OK
          lswlog_enum_short 245: OK
+         match ECHOREPLY_PRIVATE [short]: OK
 
   ikev2_exchange_names:
    34 -> ISAKMP_v2_IKE_SA_INIT
