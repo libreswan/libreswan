@@ -1,0 +1,39 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add west-east-delete1
+002 added connection description "west-east-delete1"
+east #
+ echo "initdone"
+initdone
+east #
+ ../../pluto/bin/ipsec-look.sh
+east NOW
+XFRM state:
+XFRM policy:
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1042407 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
