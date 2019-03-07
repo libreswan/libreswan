@@ -962,8 +962,11 @@ void delete_state(struct state *st)
 			break;
 		}
 
-		libreswan_log("IKE delete_state for %lu but connection '%s' is supposed to remain up. schedule EVENT_INIT_CONN",
-			       st == NULL ? 0 : st->st_serialno, c->name);
+		/* not whack */
+		LSWLOG_LOG(buf) {
+			lswlogf(buf, "IKE delete_state for %lu but connection '%s' is supposed to remain up. schedule EVENT_INIT_CONN",
+				st == NULL ? 0 : st->st_serialno, c->name);
+		}
 		revive_conn = clone_str(c->name, "revive_conn (ignore)");
 		event_schedule(EVENT_INIT_CONN, deltatime(delay), NULL);
 	}
