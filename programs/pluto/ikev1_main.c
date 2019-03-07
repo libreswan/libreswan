@@ -2580,13 +2580,13 @@ bool accept_delete(struct msg_digest *md,
 					 * rebooting.
 					 */
 					loglog(RC_LOG_SERIOUS,
-						"received Delete SA payload: replace IPSEC State #%lu now",
+						"received Delete SA payload: replace IPsec State #%lu now",
 						dst->st_serialno);
 					dst->st_replace_margin = deltatime(0);
 					event_force(EVENT_SA_REPLACE, dst);
 				} else {
 					loglog(RC_LOG_SERIOUS,
-						"received Delete SA(0x%08" PRIx32 ") payload: deleting IPSEC State #%lu",
+						"received Delete SA(0x%08" PRIx32 ") payload: deleting IPsec State #%lu",
 						ntohl(spi),
 						dst->st_serialno);
 					delete_state(dst);

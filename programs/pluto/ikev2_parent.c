@@ -4835,13 +4835,13 @@ static void delete_or_replace_state(struct state *st) {
 
 	if (st->st_event == NULL) {
 		/* ??? should this be an assert/expect? */
-		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu. st_event == NULL",
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPsec State #%lu. st_event == NULL",
 				st->st_serialno);
 		delete_state(st);
 	} else if (st->st_event->ev_type == EVENT_SA_EXPIRE) {
 		/* this state  was going to EXPIRE: hurry it along */
 		/* ??? why is this treated specially.  Can we not delete_state()? */
-		loglog(RC_LOG_SERIOUS, "received Delete SA payload: expire IPSEC State #%lu now",
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: expire IPsec State #%lu now",
 				st->st_serialno);
 		event_force(EVENT_SA_EXPIRE, st);
 	} else if (c->newest_ipsec_sa == st->st_serialno &&
@@ -4850,12 +4850,12 @@ static void delete_or_replace_state(struct state *st) {
 		 * Last IPsec SA for a permanent  connection that we have initiated.
 		 * Replace it now.  Useful if the other peer is rebooting.
 		 */
-		loglog(RC_LOG_SERIOUS, "received Delete SA payload: replace IPSEC State #%lu now",
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: replace IPsec State #%lu now",
 				st->st_serialno);
 		st->st_replace_margin = deltatime(0);
 		event_force(EVENT_SA_REPLACE, st);
 	} else {
-		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu now",
+		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPsec State #%lu now",
 				st->st_serialno);
 		delete_state(st);
 	}
