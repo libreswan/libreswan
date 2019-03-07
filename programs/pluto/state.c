@@ -2836,7 +2836,6 @@ bool verbose_state_busy(const struct state *st)
 	if (st->st_suspended_md != NULL) {
 		/* not whack */
 		LSWLOG_LOG(buf) {
-			lswlog_log_prefix(buf);
 			lswlogf(buf, "discarding packet received during asynchronous work (DNS or crypto) in %s",
 				st->st_state_name);
 		}
