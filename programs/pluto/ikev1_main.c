@@ -2579,30 +2579,11 @@ bool accept_delete(struct msg_digest *md,
 					 * Useful if the other peer is
 					 * rebooting.
 					 */
-					if (dst->st_event != NULL &&
-					    dst->st_event->ev_type ==
-						  EVENT_SA_REPLACE &&
-					    !monobefore(monotimesum(mononow(),
-						  deltatime(DELETE_SA_DELAY)),
-						dst->st_event->ev_time)) {
-						/*
-						 * Patch from Angus Lees to
-						 * ignore retransmitted
-						 * Delete SA.
-						 */
-						loglog(RC_LOG_SERIOUS,
-							"received Delete SA payload: already replacing IPSEC State #%lu in %ld seconds",
-							dst->st_serialno,
-							(long)deltasecs(monotimediff(
-								dst->st_event->ev_time,
-								mononow())));
-					} else {
-						loglog(RC_LOG_SERIOUS,
-							"received Delete SA payload: replace IPSEC State #%lu now",
-							dst->st_serialno);
-						dst->st_replace_margin = deltatime(0);
-						event_force(EVENT_SA_REPLACE, dst);
-					}
+					loglog(RC_LOG_SERIOUS,
+						"received Delete SA payload: replace IPSEC State #%lu now",
+						dst->st_serialno);
+					dst->st_replace_margin = deltatime(0);
+					event_force(EVENT_SA_REPLACE, dst);
 				} else {
 					loglog(RC_LOG_SERIOUS,
 						"received Delete SA(0x%08" PRIx32 ") payload: deleting IPSEC State #%lu",
