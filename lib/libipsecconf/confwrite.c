@@ -290,8 +290,7 @@ static void confwrite_side(FILE *out,
 		break;
 
 	case KH_IPHOSTNAME:
-		if (end->strings_set[KSCF_IP])
-			fprintf(out, "\t%s=%s\n", side, end->strings[KSCF_IP]);
+		fprintf(out, "\t%s=%s\n", side, end->strings[KSCF_IP]);
 		break;
 
 	case KH_IPADDR:
@@ -375,7 +374,6 @@ static void confwrite_side(FILE *out,
 		fprintf(out, "\t%ssourceip=%s\n",
 			side, ipstr(&end->sourceip, &as));
 	}
-
 	confwrite_int(out, side,
 		      kv_conn | kv_leftright,
 		      end->options, end->options_set, end->strings);
@@ -544,7 +542,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 				if (conn->policy & POLICY_IKEV2_ALLOW)
 					v2ps = "yes";
 
-				if (conn->policy & POLICY_IKEV2_ALLOW)
+				if (conn->policy & POLICY_IKEV1_ALLOW)
 					v2ps = "no";
 
 				cwf("ikev2", v2ps);
@@ -649,7 +647,7 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 		      kv_config,
 		      cfg->setup.strings, cfg->setup.strings_set);
 
-		fprintf(out, "\n\n");
+		fprintf(out, "\n");
 	}
 
 	/* output connections */

@@ -491,7 +491,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   /*
    * This is "left=" and "right="
    */
-  { "",  kv_conn | kv_leftright,  kt_loose_enum,  KSCF_IP,  &kw_host_list, NULL, },
+  { "",  kv_conn | kv_leftright| kv_processed,  kt_loose_enum,  KSCF_IP,  &kw_host_list, NULL, },
 
   { "ike",  kv_conn,  kt_string,  KSCF_IKE, NULL, NULL, },
 
