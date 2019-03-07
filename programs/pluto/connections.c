@@ -1353,30 +1353,30 @@ void add_connection(const struct whack_message *wm)
 	}
 
 	if (LIN(POLICY_IKEV2_ALLOW, wm->policy) && LIN(POLICY_IKEV1_ALLOW, wm->policy)) {
-		loglog(RC_FATAL, "Failed to add connection \"%s\": connection can only be ikev2=yes or ikev2=no",
+		loglog(RC_FATAL, "Failed to add connection \"%s\": connection can only be ikev1 or ikev2",
 			wm->name);
 		return;
 	}
 
 	if (wm->policy & POLICY_OPPORTUNISTIC) {
 		if ((wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
-			loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2=yes",
+			loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2",
 				wm->name);
 			return;
 		}
 	}
 	if (wm->sighash_policy != POL_SIGHASH_NONE && (wm->policy & POLICY_IKEV1_ALLOW)) {
-		loglog(RC_FATAL, "SIGHASH requires ikev2=insist");
+		loglog(RC_FATAL, "SIGHASH requires ikev2");
 		return;
 	}
 
 	if (wm->policy & POLICY_IKEV1_ALLOW) {
 		if (wm->policy & POLICY_MOBIKE) {
-			loglog(RC_FATAL, "MOBIKE requires ikev2=insist");
+			loglog(RC_FATAL, "MOBIKE requires ikev2");
 			return;
 		}
 		if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING) {
-			loglog(RC_FATAL, "narrowing=yes requires ikev2=insist");
+			loglog(RC_FATAL, "narrowing=yes requires ikev2");
 			return;
 		}
 	}
@@ -1415,7 +1415,7 @@ void add_connection(const struct whack_message *wm)
 		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
 			if ((wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
 				loglog(RC_FATAL,
-					"Failed to add connection \"%s\": leftauth= and rightauth= require ikev2=insist",
+					"Failed to add connection \"%s\": leftauth= and rightauth= require ikev2",
 						wm->name);
 				return;
 			}
