@@ -1,0 +1,11 @@
+Test for ikev1 delete/notify send from responder.
+
+This test uses auto=start on east and auto=add on west,
+so that west can become the "responder" to send the --down
+command.
+
+If a delete is received within a short margin of a replace timer,
+the delete is ignored as a "duplicate" delete, and there is a traffic
+flow issue for a while. About a minute later things re-establish.
+
+This looks to be a bug introduced in openswan-1.0.0, see the "Angus patch"

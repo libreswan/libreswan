@@ -1,0 +1,37 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ # east is within the last 60s of IPsec SA lifetime
+west #
+ sleep 5
+west #
+ ipsec auto --down west-east-auto
+002 "west-east-auto": terminating SAs using this connection
+002 "west-east-auto" #2: deleting state (STATE_QUICK_R2) and sending notification
+005 "west-east-auto" #2: ESP traffic information: in=0B out=0B
+002 "west-east-auto" #1: deleting state (STATE_MAIN_R3) and sending notification
+west #
+ sleep 5
+west #
+ # east should have brought up tunnel again
+west #
+ ipsec trafficstatus
+006 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ # confirm traffic flow over proper IPsec SA
+west #
+ ping -c4 -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ 
