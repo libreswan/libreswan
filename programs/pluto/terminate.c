@@ -68,6 +68,7 @@ static int terminate_a_connection(struct connection *c, void *arg UNUSED)
 {
 	set_cur_connection(c);
 	libreswan_log("terminating SAs using this connection");
+	dbg("connection '%s' -POLICY_UP", c->name);
 	c->policy &= ~POLICY_UP;
 	flush_pending_by_connection(c);
 

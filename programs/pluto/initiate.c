@@ -233,6 +233,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 					"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 					enum_show(&connection_kind_names,
 						 c->kind));
+				dbg("connection '%s' +POLICY_UP", c->name);
 				c->policy |= POLICY_UP;
 				reset_cur_connection();
 				return 1;
@@ -264,6 +265,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 				"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
 				enum_show(&connection_kind_names, c->kind),
 					bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
+			dbg("connection '%s' +POLICY_UP", c->name);
 			c->policy |= POLICY_UP;
 			reset_cur_connection();
 			return 1;
@@ -301,6 +303,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 		free_sa(&phase2_sa);
 	}
 
+	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
 	whackfd = dup_any(whackfd);
 	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY
