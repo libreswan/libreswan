@@ -949,26 +949,47 @@ void delete_state(struct state *st)
 	if (c->newest_isakmp_sa == st->st_serialno)
 		c->newest_isakmp_sa = SOS_NOBODY;
 
+	/*
+	 * Try to keep the connection alive.
+	 *
+	 * XXX: need more info from someone knowing what the problem
+	 * is.
+	 */
 	if ((c->policy & POLICY_UP) && IS_IKE_SA(st)) {
-		int delay = c->temp_vars.revive_delay;
+		/* XXX: break it down so it can be logged */
+		so_serial_t newer_sa = get_newer_sa_from_connection(st);
+		if (state_by_serialno(newer_sa) != NULL) {
+			/*
+			 * Presumably this is an old state that has
+			 * either been rekeyed or replaced.
+			 *
+			 * XXX: Should not even be here through!  The
+			 * old IKE SA should be going through delete
+			 * state transition that, at the end, cleanly
+			 * deletes it with none of this guff.
+			 */
+			dbg("IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
+			    st->st_serialno, c->name, newer_sa);
+		} else {
+			int delay = c->temp_vars.revive_delay;
+			switch(delay) {
+			case 0:
+			case 20:
+			case 40:
+				c->temp_vars.revive_delay += 20;
+				break;
+			default:
+				break;
+			}
 
-		switch(delay) {
-		case 0:
-		case 20:
-		case 40:
-			c->temp_vars.revive_delay += 20;
-			break;
-		default:
-			break;
+			/* not whack */
+			LSWLOG_LOG(buf) {
+				lswlogf(buf, "IKE delete_state for #%lu but connection '%s' is supposed to remain up. schedule EVENT_INIT_CONN",
+					st->st_serialno, c->name);
+			}
+			revive_conn = clone_str(c->name, "revive_conn (ignore)");
+			event_schedule(EVENT_INIT_CONN, deltatime(delay), NULL);
 		}
-
-		/* not whack */
-		LSWLOG_LOG(buf) {
-			lswlogf(buf, "IKE delete_state for %lu but connection '%s' is supposed to remain up. schedule EVENT_INIT_CONN",
-				st == NULL ? 0 : st->st_serialno, c->name);
-		}
-		revive_conn = clone_str(c->name, "revive_conn (ignore)");
-		event_schedule(EVENT_INIT_CONN, deltatime(delay), NULL);
 	}
 
 	/* should we re-instate the shunt from our groupinstance parent */
