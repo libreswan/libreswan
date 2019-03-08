@@ -2574,7 +2574,7 @@ bool accept_delete(struct msg_digest *md,
 					/*
 					 * Last IPsec SA for a permanent
 					 * connection that we have initiated.
-					 * Replace it in a few seconds.
+					 * Replace it.
 					 *
 					 * Useful if the other peer is
 					 * rebooting.
