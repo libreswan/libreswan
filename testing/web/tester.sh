@@ -88,24 +88,6 @@ run() {
 
 while true ; do
 
-    # Check that the test VMs are ok
-    #
-    # A result with output-missing is good sign that the VMs have
-    # become corrupt and need a rebuild.
-
-    status "checking KVMs"
-    if grep '"output-missing"' "${summarydir}"/*-g*/results.json ; then
-	status "corrupt domains detected, deleting old"
-	( cd ${repodir} && make kvm-purge )
-	status "corrupt domains detected, deleting bogus results"
-	grep '"output-missing"' "${summarydir}"/*-g*/results.json \
-	    | sed -e 's;/results.json.*;;' \
-	    | sort -u \
-	    | xargs --max-args=1 --verbose --no-run-if-empty rm -rf
-	status "corrupt domains detected, building fresh domains"
-	( cd ${repodir} && make kvm-install-test-domains )
-    fi
-
     # Update the repo.
     #
     # Time has passed (a run finished, woke up from sleep, or the
@@ -178,6 +160,19 @@ while true ; do
     run kvm-install
     run kvm-keys
     run kvm-test
+
+    # Check that the test VMs are ok
+    #
+    # A result with output-missing is good sign that the VMs have
+    # become corrupt and need a rebuild.
+
+    status "checking KVMs"
+    if grep '"output-missing"' "${resultsdir}/results.json" ; then
+	status "corrupt domains detected, deleting old"
+	( cd ${repodir} && make kvm-purge )
+	status "corrupt domains detected, building fresh domains"
+	( cd ${repodir} && make kvm-install-test-domains )
+    fi
 
     # loop back to code updating summary dir
 
