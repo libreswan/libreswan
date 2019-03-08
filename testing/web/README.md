@@ -131,6 +131,10 @@ Automated testing uses the following:
       $ echo 'KVM_PREFIXES=w1. w2.' >> libreswan-web/slave/Makefile.inc.local
       $ echo 'KVM_WORKERS=2' >> libreswan-web/slave/Makefile.inc.local
 
+  And, optionally, enable wip tests:
+
+      $ echo "KVM_TEST_FLAGS=--test-status 'good|wip'" >> libreswan-web/slave/Makefile.inc.local
+
 - the repository containing the web sources and scripts (aka master),
   for instance libreswan-web/master/
 
