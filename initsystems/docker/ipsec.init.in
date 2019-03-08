@@ -124,8 +124,6 @@ start() {
 
     # pluto searches the current directory, so this is required for making it selinux compliant
     cd /
-    # Create nss db or convert from old format to new sql format
-    ipsec --checknss
     # Enable nflog if configured
     ipsec --checknflog > /dev/null
     # Create lockfile
