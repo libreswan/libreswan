@@ -682,11 +682,6 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
 	$(MAKE) kvm-shutdown-base-domain
 	touch $@
 
-.PHONY: kvm-upgrade-base-domain
-kvm-upgrade-base-domain:
-	rm -f $($(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded)
-	$(MAKE) kvm-install-base-domain
-
 .PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
 install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 
@@ -880,19 +875,39 @@ $(eval $(call kvm-hosts-domains,shutdown))
 # the .upgraded file.
 #
 # XXX: don't depend on targets that trigger a KVM build.
+#
+# For kvm-uninstall, instead of trying to uninstall libreswan from the
+# $(KVM_INSTALL_DOMAINS), delete both $(KVM_INSTALL_DOMAINS) and
+# $(KVM_BUILD_DOMAIN) the install domains were cloned from.  This way,
+# in addition to giving kvm-install a 100% fresh start (no depdenence
+# on 'make uninstall') the next test run also gets entirely new
+# domains.
+
+.PHONY: kvm-clean
+kvm-clean: kvm-shutdown
+kvm-clean: kvm-keys-clean
+kvm-clean: kvm-test-clean
+	rm -rf $(KVM_OBJDIR)
+
+.PHONY: kvm-uninstall
+kvm-uninstall: kvm-uninstall-test-domains
+kvm-uninstall: kvm-uninstall-build-domain
+
+.PHONY: kvm-upgrade
+kvm-upgrade: kvm-uninstall
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+	$(MAKE) kvm-install-base-domain
 
 .PHONY: kvm-purge
-kvm-purge: kvm-clean kvm-uninstall-test-networks kvm-uninstall-local-domains
+kvm-purge: kvm-clean
+kvm-purge: kvm-uninstall
+kvm-purge: kvm-uninstall-test-networks
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 
 .PHONY: kvm-demolish
-kvm-demolish: kvm-purge kvm-uninstall-base-network kvm-uninstall-base-domain
-
-.PHONY: kvm-clean clean-kvm
-kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-clean-keys kvm-clean-tests
-	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
-	rm -rf $(KVM_OBJDIR)
-
+kvm-demolish: kvm-purge
+kvm-demolish: kvm-uninstall-base-domain
+kvm-demolish: kvm-uninstall-base-network
 
 #
 # Build targets
@@ -984,20 +999,6 @@ $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_LOCAL_HOSTS)), \
 kvm-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), uninstall-kvm-domain-$(domain))
 	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
 	$(MAKE) $(foreach domain, $(KVM_TEST_DOMAINS), install-kvm-domain-$(domain))
-
-#
-# kvm-uninstall
-#
-# Rather than just removing libreswan from the all the test (install)
-# domains, this removes the test and build domains completely.  This
-# way, in addition to giving kvm-install a 100% fresh start (no
-# depdenence on 'make uninstall') the test run also gets entirely new
-# domains.
-
-.PHONY: kvm-uninstall
-kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_INSTALL_DOMAINS))
-kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_BASIC_DOMAINS))
-kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN))
 
 
 #
@@ -1201,14 +1202,24 @@ Domains and networks:
 
 Standard targets and operations:
 
-  Try to delete (almost) everything:
+  Delete the installed KVMs and networks so that the next kvm-install
+  will create new versions:
 
-    kvm-purge
-        - delete build, and test domains, test networks, test results, and
-          test build
-        - force a base domain upgrade
-    kvm-demolish
+    kvm-uninstall: force clean test and build domains
+        - delete test domains
+        - delete build
+    kvm-upgrade: force OS upgrade
+        - also flag base domain as needing upgrade
+    kvm-purge: clean up a directory
+        - also delete test networks
+        - also delete test results
+        - also delete test build
+    kvm-demolish: wipe out a directory
         - also delete the base domain
+
+    Note that kvm-upgrade immediately upgrades the base domain while
+    kvm-purge and kvm-demolish leave the upgrade to the next
+    kvm-install.
 
   Manipulating and accessing (loging into) domains:
 
