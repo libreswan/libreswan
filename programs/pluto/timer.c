@@ -367,9 +367,13 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_INIT_CONN:
 		/* an IKEv2 conn with POLICY_UP just got deleted and needs to be initiated */
-		initiate_connection(revive_conn, null_fd, empty_lmod, empty_lmod, NULL);
-		pfree(revive_conn);
-		revive_conn = NULL;
+		if (revive_conn != NULL) {
+			initiate_connection(revive_conn, null_fd, empty_lmod, empty_lmod, NULL);
+			pfree(revive_conn);
+			revive_conn = NULL;
+		} else {
+			libreswan_log("not triggering connection revival - already in progress");
+		}
 		break;
 
 	case EVENT_v2_RELEASE_WHACK:
