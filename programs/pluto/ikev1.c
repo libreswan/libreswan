@@ -1203,12 +1203,6 @@ void process_v1_packet(struct msg_digest **mdp)
 			send_notification_from_md(md, t); }
 
 	switch (md->hdr.isa_xchg) {
-#ifdef NOTYET
-	case ISAKMP_XCHG_NONE:
-	case ISAKMP_XCHG_BASE:
-	case ISAKMP_XCHG_AO:
-#endif
-
 	case ISAKMP_XCHG_AGGR:
 	case ISAKMP_XCHG_IDPROT: /* part of a Main Mode exchange */
 		if (md->hdr.isa_msgid != v1_MAINMODE_MSGID) {
@@ -1648,6 +1642,9 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		break;
 
+	case ISAKMP_XCHG_NONE:
+	case ISAKMP_XCHG_BASE:
+	case ISAKMP_XCHG_AO:
 	case ISAKMP_XCHG_NGRP:
 	default:
 		DBG(DBG_CONTROL, DBG_log("unsupported exchange type %s in message",
