@@ -6215,19 +6215,21 @@ void v2_schedule_replace_event(struct state *st)
 	event_schedule(kind, deltatime(delay), st);
 }
 
-static void ikev2_log_initiate_child_fail(const struct state *st)
+static void ikev2_log_initiate_rekey_checks(struct state *st)
 {
-	const struct state *pst = state_with_serialno(st->st_clonedfrom);
+	const struct ike_sa *ike = ike_sa(st);
 
-	if (pst == NULL)
+	if (ike == NULL)
 		return;
 
-	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
+	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
 	if (DBGP(DBG_BASE)) {
-		intmax_t unack2 = pst->st_v2_msgids.initiator.sent - pst->st_v2_msgids.initiator.recv;
+		intmax_t unack2 = ike->sa.st_v2_msgids.initiator.sent - ike->sa.st_v2_msgids.initiator.recv;
 		if (unack != unack2) {
-			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu initiator.sent-initiator.recv %jd == st_msgid_nextuse-st_msgid_lastack-1 "PRI_MSGID,
-				    pst->st_serialno, st->st_serialno, unack2, unack);
+			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu %jd (ike.initiator.sent=%jd-ike.initiator.recv=%jd) == "PRI_MSGID" (ike.nextuse="PRI_MSGID"-ike.lastack="PRI_MSGID"-1)",
+				    ike->sa.st_serialno, st->st_serialno,
+				    unack2, ike->sa.st_v2_msgids.initiator.sent, ike->sa.st_v2_msgids.initiator.recv,
+				    unack, ike->sa.st_msgid_nextuse, ike->sa.st_msgid_lastack);
 		}
 	}
 
@@ -6239,9 +6241,9 @@ static void ikev2_log_initiate_child_fail(const struct state *st)
 			loglog(RC_LOG_SERIOUS,
 				"expiring %s state. Possible Message Id deadlock?  Parent #%lu unacknowledged %u next Message Id=%u IKE exchange window %u",
 				st->st_state_name,
-				pst->st_serialno, unack,
-				pst->st_msgid_nextuse,
-				pst->st_connection->ike_window);
+				ike->sa.st_serialno, unack,
+				ike->sa.st_msgid_nextuse,
+				ike->sa.st_connection->ike_window);
 		}
 		break;
 	default:
@@ -6275,13 +6277,10 @@ void v2_event_sa_rekey(struct state *st)
 		event_force(EVENT_SA_REPLACE, st);
 	}
 
-	ikev2_log_initiate_child_fail(st);
+	ikev2_log_initiate_rekey_checks(st);
 	dbg("rekeying stale %s SA", satype);
 	if (IS_IKE_SA(st)) {
-		pexpect(IS_IKE_SA(st));
 		libreswan_log("initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
-		/* ??? why does this not need whack socket fd? */
-		ikev2_log_initiate_child_fail(st);
 		ikev2_rekey_ike_start(st);
 	} else {
 		/*
@@ -6341,7 +6340,7 @@ void v2_event_sa_replace(struct state *st)
 	/*
 	 * XXX: For a CHILD SA, will this result in a re-key attempt?
 	 */
-	ikev2_log_initiate_child_fail(st);
+	ikev2_log_initiate_rekey_checks(st);
 	dbg("replacing stale %s SA", satype);
 	ipsecdoi_replace(st, 1);
 	delete_liveness_event(st);
