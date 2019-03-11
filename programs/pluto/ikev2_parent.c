@@ -6225,11 +6225,40 @@ static void ikev2_log_initiate_rekey_checks(struct state *st)
 	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
 	if (DBGP(DBG_BASE)) {
 		intmax_t unack2 = ike->sa.st_v2_msgids.initiator.sent - ike->sa.st_v2_msgids.initiator.recv;
+		/*
+		 * XXX: The old code updates response counters early
+		 * (as soon as the packet has been decoded) but the
+		 * new code updates counters late.  This can lead to
+		 * an off by one.  Probably the old code is better -
+		 * the response has been received and integrity
+		 * checked so presumably is valid (even if the
+		 * contents are not what was desired)?
+		 *
+		 * However, the message triggered during an
+		 * interesting scenario: given IKE#1, CHILD#2; CHILD#2
+		 * sends rekey request and gets response, but it
+		 * requires DH so state transition is suspended (old
+		 * MSGIDs are updated, new are not); IKE#1 decides it
+		 * is time to rekey so initiates its exchange - and
+		 * discovers its MSGIDs are off.  Question is, should
+		 * IKE#1 delay its rekey until the child really has
+		 * finished?
+		 */
 		if (unack != unack2) {
-			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu %jd (ike.initiator.sent=%jd-ike.initiator.recv=%jd) == "PRI_MSGID" (ike.nextuse="PRI_MSGID"-ike.lastack="PRI_MSGID"-1)",
+			if (unack == unack2 - 1) {
+				dbg("Message ID: XXX: IKE #%lu sender #%lu: %jd (ike.initiator.sent=%jd - ike.initiator.recv=%jd) == "PRI_MSGID" (ike.nextuse="PRI_MSGID" - ike.lastack="PRI_MSGID"-1) (IKE rekey while CHILD rekey in progress?)",
 				    ike->sa.st_serialno, st->st_serialno,
-				    unack2, ike->sa.st_v2_msgids.initiator.sent, ike->sa.st_v2_msgids.initiator.recv,
+				    unack2, ike->sa.st_v2_msgids.initiator.sent,
+				    ike->sa.st_v2_msgids.initiator.recv,
 				    unack, ike->sa.st_msgid_nextuse, ike->sa.st_msgid_lastack);
+			} else {
+				PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: %jd (ike.initiator.sent=%jd - ike.initiator.recv=%jd) == "PRI_MSGID" (ike.nextuse="PRI_MSGID" - ike.lastack="PRI_MSGID"-1)",
+					    ike->sa.st_serialno, st->st_serialno,
+					    unack2, ike->sa.st_v2_msgids.initiator.sent,
+					    ike->sa.st_v2_msgids.initiator.recv,
+					    unack, ike->sa.st_msgid_nextuse,
+					    ike->sa.st_msgid_lastack);
+			}
 		}
 	}
 

@@ -2190,6 +2190,20 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			return;
 		}
 
+		/*
+		 * XXX: This code path will update the old Message IDs
+		 * twice: first here, and then, assuming things
+		 * succeed, in success_v2_state_transition()
+		 * (presumably the latter does nothing).  The new code
+		 * currently only updates after success and in
+		 * success_v2_state_transition() which, when things
+		 * don't succeed, is a problem.
+		 *
+		 * On the other hand, can all code paths Message ID's
+		 * here?  If the message's integrity checks out then
+		 * probably yes.  But what of the initial exchanges
+		 * where things can't be trusted?
+		 */
 		md->st = st;
 		dbg("Message ID: why update IKE #%lu and not CHILD #%lu?",
 		    st->st_serialno, cst->st_serialno);
@@ -2643,7 +2657,7 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 				st->st_serialno, st->st_finite_state->fs_short_name);
 		}
 		lswlogf(buf, "; message-%s msgid=%u",
-			is_msg_response(md) ? "resonse" : "request",
+			is_msg_response(md) ? "response" : "request",
 			md->hdr.isa_msgid);
 
 		lswlogf(buf, "; initiator { lastack=%u", st_msgid_lastack);
@@ -2736,6 +2750,14 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 			      enum_name(&state_names, svm->next_state)));
 	}
 
+	/*
+	 * XXX: When should the Message IDs be updated when a response
+	 * is 'valid' (as in integrity checked out ok so wasn't
+	 * forged) but the contents aren't as desired?  For instance a
+	 * rekey response of INVALID_KE.  The old code updates early
+	 * (but redundantly when success), the new code updates late
+	 * (so will get this case wrong).
+	 */
 	if (from_state == STATE_V2_REKEY_IKE_R ||
 	    from_state == STATE_V2_REKEY_IKE_I) {
 		/*
