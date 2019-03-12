@@ -202,11 +202,12 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
  * Log to the main log stream, but _not_ the whack log stream.
  */
 
-#define LSWLOG_LOG(BUF)							\
+#define LOG_TO_LOG(BUF)							\
 	LSWLOG_(true, BUF,						\
 		lswlog_log_prefix(BUF),					\
 		lswlog_to_log_stream(BUF))
-
+void log_to_log(const char *message, ...) PRINTF_LIKE(1);
+/* to_all(), to_whack(), ... */
 
 /*
  * Log, at level RC, to the whack log (if attached).

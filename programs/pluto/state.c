@@ -983,10 +983,8 @@ void delete_state(struct state *st)
 			}
 
 			/* not whack */
-			LSWLOG_LOG(buf) {
-				lswlogf(buf, "IKE delete_state for #%lu but connection '%s' is supposed to remain up. schedule EVENT_INIT_CONN",
-					st->st_serialno, c->name);
-			}
+			log_to_log("IKE delete_state for #%lu but connection '%s' is supposed to remain up. schedule EVENT_INIT_CONN",
+				   st->st_serialno, c->name);
 			revive_conn = clone_str(c->name, "revive_conn (ignore)");
 			event_schedule(EVENT_INIT_CONN, deltatime(delay), NULL);
 		}
@@ -2859,10 +2857,8 @@ bool verbose_state_busy(const struct state *st)
 	}
 	if (st->st_suspended_md != NULL) {
 		/* not whack */
-		LSWLOG_LOG(buf) {
-			lswlogf(buf, "discarding packet received during asynchronous work (DNS or crypto) in %s",
-				st->st_state_name);
-		}
+		log_to_log("discarding packet received during asynchronous work (DNS or crypto) in %s",
+			   st->st_state_name);
 	} else if (st->st_offloaded_task != NULL) {
 		libreswan_log("message received while calculating. Ignored.");
 	}
