@@ -180,13 +180,13 @@ IMPAIR: start processing duplicate packet (792 bytes)
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R1
 IMPAIR: stop processing duplicate packet
 IMPAIR: start processing duplicate packet (396 bytes)
-"westnet-eastnet" #1: "westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_MAIN_R1
+"westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_MAIN_R1
 IMPAIR: stop processing duplicate packet
 IMPAIR: start processing duplicate packet (332 bytes)
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
 IMPAIR: stop processing duplicate packet
 IMPAIR: start processing duplicate packet (476 bytes)
-"westnet-eastnet" #2: "westnet-eastnet" #2: discarding packet received during asynchronous work (DNS or crypto) in STATE_QUICK_R0
+"westnet-eastnet" #2: discarding packet received during asynchronous work (DNS or crypto) in STATE_QUICK_R0
 IMPAIR: stop processing duplicate packet
 IMPAIR: start processing duplicate packet (76 bytes)
 IMPAIR: stop processing duplicate packet
