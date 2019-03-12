@@ -1,6 +1,4 @@
-
-/*
- * hack communicating routines
+/* whack communicating routines, for libreswan
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001,2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -12,6 +10,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2014-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2014-2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2019  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -165,7 +164,7 @@ static void do_whacklisten(void)
 
 static void key_add_request(const struct whack_message *msg)
 {
-	DBG_log("add keyid %s", msg->keyid);
+	log_to_log("add keyid %s", msg->keyid);
 	struct id keyid;
 	err_t ugh = atoid(msg->keyid, &keyid, FALSE);
 
@@ -388,14 +387,14 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 		delete_connections_by_name(m->name, !m->whack_connection);
 
 	if (m->whack_deleteuser) {
-		DBG_log("received whack to delete connection by user %s",
-				m->name);
+		log_to_log("received whack to delete connection by user %s",
+			   m->name);
 		for_each_state(v1_delete_state_by_username, m->name);
 	}
 
 	if (m->whack_deleteid) {
-		DBG_log("received whack to delete connection by id %s",
-				m->name);
+		log_to_log("received whack to delete connection by id %s",
+			   m->name);
 		for_each_state(delete_state_by_id_name, m->name);
 	}
 
@@ -408,13 +407,13 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 					m->whack_deletestateno);
 		} else {
 			set_cur_state(st);
-			DBG_log("received whack to delete %s state #%lu %s",
-				enum_name(&ike_version_names, st->st_ike_version),
-				st->st_serialno,
-				st->st_state_name);
+			log_to_log("received whack to delete %s state #%lu %s",
+				   enum_name(&ike_version_names, st->st_ike_version),
+				   st->st_serialno,
+				   st->st_state_name);
 
 			if ((st->st_ike_version == IKEv2) && !IS_CHILD_SA(st)) {
-				DBG_log("Also deleting any corresponding CHILD_SAs");
+				log_to_log("Also deleting any corresponding CHILD_SAs");
 				delete_my_family(st, FALSE);
 				/* note: no md->st to clear */
 			} else {
