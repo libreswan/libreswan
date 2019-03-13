@@ -165,7 +165,7 @@ enum event_type {
 	EVENT_SD_WATCHDOG,		/* update systemd's watchdog interval */
 	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
 	EVENT_CHECK_CRLS,		/* check/update CRLS */
-	EVENT_INIT_CONN,
+	EVENT_REVIVE_CONNS,
 
 	/* events associated with states */
 
@@ -220,6 +220,9 @@ enum event_type {
 #define DELETE_SA_DELAY			RETRANSMIT_TIMEOUT_DEFAULT /* wait until the other side giveup on us */
 #define EVENT_CRYPTO_TIMEOUT_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
 #define EVENT_PAM_TIMEOUT_DELAY		RETRANSMIT_TIMEOUT_DEFAULT /* wait until this side give up on PAM */
+
+#define REVIVE_CONN_DELAY	5 /* seconds */
+#define REVIVE_CONN_DELAY_MAX  300 /* Do not delay more than 5 minutes per attempt */
 
 /* is pluto automatically switching busy state or set manually */
 enum ddos_mode {

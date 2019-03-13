@@ -3265,6 +3265,14 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		DBG(DBG_KERNEL,
 			DBG_log("set up incoming SA, ref=%u/%u", st->st_ref,
 				st->st_refhim));
+
+		/*
+		 * We successfully installed an IPsec SA, meaning it is safe
+		 * to clear our revival back-off delay. This is based on the
+		 * assumption that an unwilling partner might complete an IKE
+		 * SA to us, but won't complete an IPsec SA to us.
+		 */
+		st->st_connection->temp_vars.revive_delay = 0;
 	}
 
 	if (rb == route_unnecessary)

@@ -127,6 +127,39 @@ const struct finite_state *finite_states[STATE_IKE_ROOF] = {
 	[STATE_UNDEFINED] = &state_undefined,
 };
 
+struct revival {
+	char *name;
+	struct revival *next;
+};
+static struct revival *revivals = NULL;
+
+static bool add_revival(const char *name)
+{
+	for (struct revival *p = revivals; p != NULL; p = p->next) {
+		if (streq(p->name, name))
+			return FALSE;
+	}
+	struct revival *r = alloc_thing(struct revival, "revival struct");
+
+	r->name = clone_str(name, "revival conn name");
+	r->next = revivals;
+	revivals = r;
+	return TRUE;
+}
+
+void revive_conns(void)
+{
+	while (revivals != NULL) {
+		libreswan_log("Initiating connection %s which received a Delete/Notify but must remain up per local policy",
+			revivals->name);
+		initiate_connection(revivals->name, null_fd, empty_lmod, empty_lmod, NULL);
+		struct revival *r = revivals->next;
+		pfree(revivals->name);
+		pfree(revivals);
+		revivals = r;
+	}
+}
+
 void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 {
 	if (fs == NULL) {
@@ -972,21 +1005,13 @@ void delete_state(struct state *st)
 			    st->st_serialno, c->name, newer_sa);
 		} else {
 			int delay = c->temp_vars.revive_delay;
-			switch(delay) {
-			case 0:
-			case 20:
-			case 40:
-				c->temp_vars.revive_delay += 20;
-				break;
-			default:
-				break;
-			}
 
-			/* not whack */
-			log_to_log("IKE delete_state for #%lu but connection '%s' is supposed to remain up. schedule EVENT_INIT_CONN",
-				   st->st_serialno, c->name);
-			revive_conn = clone_str(c->name, "revive_conn (ignore)");
-			event_schedule(EVENT_INIT_CONN, deltatime(delay), NULL);
+			c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
+				REVIVE_CONN_DELAY_MAX);
+			libreswan_log("IKE delete_state for %lu but connection '%s' is supposed to remain up. schedule EVENT_REVIVE_CONNS",
+			       st == NULL ? 0 : st->st_serialno, c->name);
+			if (add_revival(c->name))
+				event_schedule(EVENT_REVIVE_CONNS, deltatime(delay), NULL);
 		}
 	}
 
