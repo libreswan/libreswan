@@ -8,6 +8,4 @@ sleep 5
 # no IPsec SA should be there. No ISAKMP SA should be there either
 ipsec whack --trafficstatus
 ipsec status |grep west-east
-# wait over one minute to ensure no EVENT_SA_REPLACE lingered and started something
-sleep 45
-sleep 30
+echo done

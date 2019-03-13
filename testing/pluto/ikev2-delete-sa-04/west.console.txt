@@ -33,19 +33,20 @@ west #
 west #
  ipsec status |grep west-east
 west #
- # wait over one minute to ensure no EVENT_SA_REPLACE lingered and started something
+ echo done
+done
 west #
- sleep 45
-west #
- sleep 30
-west #
- # There should be no IKE SA and no IPsec SA
+ # There should be no established IKE SA and no established IPsec SA
 west #
  ipsec whack --trafficstatus
 west #
- # east howvever, should be attempting to connect to west because it has auto=start
+ # only on east, pluto should be attempting to connect to west because it has auto=start
 west #
  ipsec status |grep STATE_
+west #
+ # confirm the revive conn code triggered
+west #
+ hostname | grep east > /dev/null && grep EVENT_REVIVE_CONNS /tmp/pluto.log | sed "s/@.*$//"
 west #
 west #
  ../bin/check-for-core.sh

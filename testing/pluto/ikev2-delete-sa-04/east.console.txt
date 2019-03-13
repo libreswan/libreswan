@@ -10,14 +10,23 @@ east #
  echo "initdone"
 initdone
 east #
- # There should be no IKE SA and no IPsec SA
+ # There should be no established IKE SA and no established IPsec SA
 east #
  ipsec whack --trafficstatus
 east #
- # east howvever, should be attempting to connect to west because it has auto=start
+ # only on east, pluto should be attempting to connect to west because it has auto=start
 east #
  ipsec status |grep STATE_
-000 #5: "west-east-auto":500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_v2_RETRANSMIT in XXs; idle; import:admin initiate
+000 #4: "west-east-auto":500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_RETRANSMIT in XXs; idle;
+east #
+ # confirm the revive conn code triggered
+east #
+ hostname | grep east > /dev/null && grep EVENT_REVIVE_CONNS /tmp/pluto.log | sed "s/@.*$//"
+"west-east-auto" #1: IKE delete_state for 1 but connection 'west-east-auto' is supposed to remain up. schedule EVENT_REVIVE_CONNS
+| event_schedule: new EVENT_REVIVE_CONNS-pe
+| inserting event EVENT_REVIVE_CONNS, timeout in 0.000 seconds
+| handling event EVENT_REVIVE_CONNS
+| free_event_entry: release EVENT_REVIVE_CONNS-pe
 east #
 east #
  ../bin/check-for-core.sh
