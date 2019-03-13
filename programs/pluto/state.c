@@ -13,7 +13,7 @@
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2015-2017 Andrew Cagney
+ * Copyright (C) 2015-2019 Andrew Cagney
  * Copyright (C) 2015-2018 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
@@ -1005,11 +1005,11 @@ void delete_state(struct state *st)
 			    st->st_serialno, c->name, newer_sa);
 		} else {
 			int delay = c->temp_vars.revive_delay;
-
+			/* XXX: cur_state is probably ST */
+			log_to_log("IKE delete_state for #%lu but connection '%s' is supposed to remain up. schedule EVENT_REVIVE_CONNS",
+				   st->st_serialno, c->name);
 			c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
 				REVIVE_CONN_DELAY_MAX);
-			libreswan_log("IKE delete_state for %lu but connection '%s' is supposed to remain up. schedule EVENT_REVIVE_CONNS",
-			       st == NULL ? 0 : st->st_serialno, c->name);
 			if (add_revival(c->name))
 				event_schedule(EVENT_REVIVE_CONNS, deltatime(delay), NULL);
 		}
