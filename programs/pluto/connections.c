@@ -309,6 +309,8 @@ void delete_connection(struct connection *c, bool relations)
 		delete_oriented_hp(c);
 	}
 
+	flush_revival_by_connection(c);
+
 	/* any logging past this point is for the wrong connection */
 	pop_cur_connection(old_cur_connection);
 

@@ -133,6 +133,20 @@ struct revival {
 };
 static struct revival *revivals = NULL;
 
+void flush_revival_by_connection(const struct connection *c)
+{
+	for (struct revival **p = &revivals; *p != NULL; p = &(*p)->next) {
+		if (streq((*p)->name, c->name)) {
+			dbg("revive: flushing connection '%s'", c->name);
+			struct revival *tbd = *p;
+			*p = tbd->next;
+			pfree(tbd);
+			return;
+		}
+	}
+	dbg("revive: connection '%s' wasn't on the list", c->name);
+}
+
 static bool add_revival(const char *name)
 {
 	for (struct revival *p = revivals; p != NULL; p = p->next) {
@@ -144,6 +158,7 @@ static bool add_revival(const char *name)
 	r->name = clone_str(name, "revival conn name");
 	r->next = revivals;
 	revivals = r;
+	dbg("revive: connection '%s' added to the list", name);
 	return TRUE;
 }
 
