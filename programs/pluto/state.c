@@ -140,6 +140,7 @@ void flush_revival_by_connection(const struct connection *c)
 			dbg("revive: flushing connection '%s'", c->name);
 			struct revival *tbd = *p;
 			*p = tbd->next;
+			pfree(tbd->name);
 			pfree(tbd);
 			return;
 		}
