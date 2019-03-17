@@ -410,7 +410,7 @@ extern void initiate_connection(const char *name,
 				lmod_t more_impairing,
 				char *remote_host);
 extern void restart_connections_by_peer(struct connection *c);
-void flush_revival_by_connection(const struct connection *c);
+extern void flush_revival(const struct connection *c);
 
 #ifdef HAVE_LABELED_IPSEC
 struct xfrm_user_sec_ctx_ike; /* forward declaration */

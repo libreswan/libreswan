@@ -127,40 +127,66 @@ const struct finite_state *finite_states[STATE_IKE_ROOF] = {
 	[STATE_UNDEFINED] = &state_undefined,
 };
 
+/*
+ * Revival mechanism: keep track of connections
+ * that should be kept up, even though all their
+ * states have been deleted.
+ *
+ * We record the connection names.
+ * Each name is recorded only once.
+ */
+
 struct revival {
 	char *name;
 	struct revival *next;
 };
+
 static struct revival *revivals = NULL;
 
-void flush_revival_by_connection(const struct connection *c)
+static struct revival **find_revival(const struct connection *c)
 {
-	for (struct revival **p = &revivals; *p != NULL; p = &(*p)->next) {
-		if (streq((*p)->name, c->name)) {
-			dbg("revive: flushing connection '%s'", c->name);
-			struct revival *tbd = *p;
-			*p = tbd->next;
-			pfree(tbd->name);
-			pfree(tbd);
-			return;
+	for (struct revival **rp = &revivals; ; rp = &(*rp)->next) {
+		if (*rp == NULL || streq((*rp)->name, c->name)) {
+			return rp;
 		}
 	}
-	dbg("revive: connection '%s' wasn't on the list", c->name);
 }
 
-static bool add_revival(const char *name)
+static void free_revival(struct revival **rp)
 {
-	for (struct revival *p = revivals; p != NULL; p = p->next) {
-		if (streq(p->name, name))
-			return FALSE;
-	}
-	struct revival *r = alloc_thing(struct revival, "revival struct");
+	struct revival *r = *rp;
+	*rp = r->next;
+	pfree(r->name);
+	pfree(r);
+}
 
-	r->name = clone_str(name, "revival conn name");
-	r->next = revivals;
-	revivals = r;
-	dbg("revive: connection '%s' added to the list", name);
-	return TRUE;
+void flush_revival(const struct connection *c)
+{
+	struct revival **rp = find_revival(c);
+
+	if (*rp == NULL) {
+		dbg("flush revival: connection '%s' wasn't on the list",
+			c->name);
+	} else {
+		free_revival(rp);
+	}
+}
+
+static bool add_revival(const struct connection *c)
+{
+	if (*find_revival(c) == NULL) {
+		struct revival *r = alloc_thing(struct revival,
+			"revival struct");
+
+		r->name = clone_str(c->name, "revival conn name");
+		r->next = revivals;
+		revivals = r;
+		dbg("add_revival: connection '%s' added to the list", c->name);
+		return TRUE;
+	} else {
+		/* already in the table */
+		return FALSE;
+	}
 }
 
 void revive_conns(void)
@@ -169,12 +195,11 @@ void revive_conns(void)
 		libreswan_log("Initiating connection %s which received a Delete/Notify but must remain up per local policy",
 			revivals->name);
 		initiate_connection(revivals->name, null_fd, empty_lmod, empty_lmod, NULL);
-		struct revival *r = revivals->next;
-		pfree(revivals->name);
-		pfree(revivals);
-		revivals = r;
+		free_revival(&revivals);
 	}
 }
+
+/* end of revival mechanism */
 
 void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 {
@@ -1020,14 +1045,15 @@ void delete_state(struct state *st)
 			dbg("IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
 			    st->st_serialno, c->name, newer_sa);
 		} else {
-			int delay = c->temp_vars.revive_delay;
 			/* XXX: cur_state is probably ST */
-			log_to_log("IKE delete_state for #%lu but connection '%s' is supposed to remain up. schedule EVENT_REVIVE_CONNS",
+			log_to_log("IKE delete_state for #%lu but connection '%s' is supposed to remain up; schedule EVENT_REVIVE_CONNS",
 				   st->st_serialno, c->name);
-			c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
-				REVIVE_CONN_DELAY_MAX);
-			if (add_revival(c->name))
+			if (add_revival(c)) {
+				int delay = c->temp_vars.revive_delay;
+				c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
+					REVIVE_CONN_DELAY_MAX);
 				event_schedule(EVENT_REVIVE_CONNS, deltatime(delay), NULL);
+			}
 		}
 	}
 
