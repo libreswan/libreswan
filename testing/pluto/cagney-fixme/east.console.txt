@@ -1,0 +1,51 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add ikev1
+002 added connection description "ikev1"
+east #
+ # should show both keys but doesn't
+east #
+ ipsec whack --listpubkeys
+000  
+000 List of Public Keys:
+000  
+000 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
+000        ID_FQDN '@east-v1'
+000 TIMESTAMP, 2192 RSA Key AQOm9dY/4 (no private key), until --- -- --:--:-- ---- ok (expires never)
+000        ID_FQDN '@west-v1'
+east #
+ # rinse and repeat
+east #
+ ipsec auto --add ikev1
+002 "ikev1": deleting non-instance connection
+002 added connection description "ikev1"
+east #
+ # now it will show ??
+east #
+ ipsec whack --listpubkeys
+000  
+000 List of Public Keys:
+000  
+000 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
+000        ID_FQDN '@east-v1'
+000 TIMESTAMP, 2192 RSA Key AQOm9dY/4 (no private key), until --- -- --:--:-- ---- ok (expires never)
+000        ID_FQDN '@west-v1'
+east #
+ echo "initdone"
+initdone
+east #
+east #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+east #
+ egrep -i "IKE|ipsec-" /var/log/audit/audit.log
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
