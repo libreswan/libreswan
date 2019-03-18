@@ -383,19 +383,32 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 	 * To make this more useful, in only this combination,
 	 * delete will silently ignore the lack of the connection.
 	 */
-	if (m->whack_delete)
-		delete_connections_by_name(m->name, !m->whack_connection);
+	if (m->whack_delete) {
+		if (m->name == NULL ) {
+			whack_log(RC_FATAL, "received whack command to delete a connection, but did not receive the connection name - ignored");
+		} else {
+			delete_connections_by_name(m->name, !m->whack_connection);
+		}
+	}
 
 	if (m->whack_deleteuser) {
-		log_to_log("received whack to delete connection by user %s",
-			   m->name);
-		for_each_state(v1_delete_state_by_username, m->name);
+		if (m->name == NULL ) {
+			whack_log(RC_FATAL, "received whack command to delete a connection by username, but did not receive the username - ignored");
+		} else {
+			log_to_log("received whack to delete connection by user %s",
+				m->name);
+			for_each_state(v1_delete_state_by_username, m->name);
+		}
 	}
 
 	if (m->whack_deleteid) {
-		log_to_log("received whack to delete connection by id %s",
-			   m->name);
-		for_each_state(delete_state_by_id_name, m->name);
+		if (m->name == NULL ) {
+			whack_log(RC_FATAL, "received whack command to delete a connection by id, but did not receive the id - ignored");
+		} else {
+			log_to_log("received whack to delete connection by id %s",
+				m->name);
+			for_each_state(delete_state_by_id_name, m->name);
+		}
 	}
 
 	if (m->whack_deletestate) {
