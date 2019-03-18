@@ -134,6 +134,10 @@ const struct finite_state *finite_states[STATE_IKE_ROOF] = {
  *
  * We record the connection names.
  * Each name is recorded only once.
+ *
+ * XXX: This functionality totally overlaps both "initiate" and
+ * "pending" and should be merged (howerver, this simple code might
+ * prove to be a better starting point).
  */
 
 struct revival {
@@ -143,6 +147,12 @@ struct revival {
 
 static struct revival *revivals = NULL;
 
+/*
+ * XXX: Return connection C's revival object's link, if found.  If the
+ * connection C can't be found, then the address of the revival list's
+ * tail is returned.  Perhaps, exiting the loop and returning NULL
+ * would be more obvious.
+ */
 static struct revival **find_revival(const struct connection *c)
 {
 	for (struct revival **rp = &revivals; ; rp = &(*rp)->next) {
@@ -152,6 +162,11 @@ static struct revival **find_revival(const struct connection *c)
 	}
 }
 
+/*
+ * XXX: In addition to freeing RP (and killing the pointer), this
+ * "free" function has the side effect of unlinks RP from the revival
+ * list.  Perhaps free*() isn't the best name.
+ */
 static void free_revival(struct revival **rp)
 {
 	struct revival *r = *rp;
@@ -174,25 +189,41 @@ void flush_revival(const struct connection *c)
 	}
 }
 
-static bool add_revival(const struct connection *c)
+static void add_revival(struct connection *c)
 {
 	if (*find_revival(c) == NULL) {
 		struct revival *r = alloc_thing(struct revival,
-			"revival struct");
+						"revival struct");
 
 		r->name = clone_str(c->name, "revival conn name");
 		r->next = revivals;
 		revivals = r;
-		dbg("add_revival: connection '%s' added to the list", c->name);
-		return TRUE;
-	} else {
-		/* already in the table */
-		return FALSE;
+		int delay = c->temp_vars.revive_delay;
+		dbg("add revival: connection '%s' added to the list and scheduled for %d seconds",
+		    c->name, delay);
+		c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
+						REVIVE_CONN_DELAY_MAX);
+		/*
+		 * XXX: Schedule the next revival using this
+		 * connection's revival delay and not the most urgent
+		 * connection's revival delay.  Trying to fix this
+		 * here just is annoying and probably of marginal
+		 * benefit: it is something better handled with a
+		 * proper connection event so that the event loop deal
+		 * with all the math (this code would then be
+		 * deleted); and would encroach even further on
+		 * "initiate" and "pending" functionality.
+		 */
+		event_schedule(EVENT_REVIVE_CONNS, deltatime(delay), NULL);
 	}
 }
 
 void revive_conns(void)
 {
+	/*
+	 * XXX: Revive all listed connections regardless of their
+	 * DELAY.  See note above in add_revival().
+	 */
 	while (revivals != NULL) {
 		libreswan_log("Initiating connection %s which received a Delete/Notify but must remain up per local policy",
 			revivals->name);
@@ -1047,15 +1078,10 @@ void delete_state(struct state *st)
 			dbg("IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
 			    st->st_serialno, c->name, newer_sa);
 		} else {
-			/* XXX: cur_state is probably ST */
+			/* XXX: cur_state logging prefix is probably ST */
 			log_to_log("IKE delete_state for #%lu but connection '%s' is supposed to remain up; schedule EVENT_REVIVE_CONNS",
 				   st->st_serialno, c->name);
-			if (add_revival(c)) {
-				int delay = c->temp_vars.revive_delay;
-				c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
-					REVIVE_CONN_DELAY_MAX);
-				event_schedule(EVENT_REVIVE_CONNS, deltatime(delay), NULL);
-			}
+			add_revival(c);
 		}
 	}
 
