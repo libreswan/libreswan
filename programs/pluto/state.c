@@ -166,8 +166,10 @@ void flush_revival(const struct connection *c)
 
 	if (*rp == NULL) {
 		dbg("flush revival: connection '%s' wasn't on the list",
-			c->name);
+		    c->name);
 	} else {
+		dbg("flush revival: connection '%s' revival flushed",
+		    c->name);
 		free_revival(rp);
 	}
 }
