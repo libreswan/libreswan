@@ -284,7 +284,7 @@ void release_dead_interfaces(void)
 					 */
 					passert(p == *pp);
 
-					terminate_connection(p->name);
+					terminate_connection(p->name, FALSE);
 					p->interface = NULL; /* withdraw orientation */
 
 					*pp = p->hp_next; /* advance *pp */

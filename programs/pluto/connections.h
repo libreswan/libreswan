@@ -426,7 +426,7 @@ extern void initiate_ondemand(const ip_address *our_client,
 #endif
 			     err_t why);
 
-extern void terminate_connection(const char *name);
+extern void terminate_connection(const char *name, bool quiet);
 extern void release_connection(struct connection *c, bool relations);
 extern void delete_connection(struct connection *c, bool relations);
 extern void suppress_delete(struct connection *c);

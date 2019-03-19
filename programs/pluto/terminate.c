@@ -89,7 +89,7 @@ static int terminate_a_connection(struct connection *c, void *arg UNUSED)
 	return 1;
 }
 
-void terminate_connection(const char *name)
+void terminate_connection(const char *name, bool quiet)
 {
 	/*
 	 * Loop because more than one may match (master and instances)
@@ -111,8 +111,9 @@ void terminate_connection(const char *name)
 	} else {
 		int count = foreach_connection_by_alias(name, terminate_a_connection, NULL);
 		if (count == 0) {
-			loglog(RC_UNKNOWN_NAME,
-				  "no such connection or aliased connection named \"%s\"", name);
+			if (!quiet)
+				loglog(RC_UNKNOWN_NAME,
+					"no such connection or aliased connection named \"%s\"", name);
 		} else {
 			loglog(RC_COMMENT, "terminated %d connections from aliased connection \"%s\"",
 				count, name);

@@ -384,10 +384,10 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 	 * delete will silently ignore the lack of the connection.
 	 */
 	if (m->whack_delete) {
-		if (m->name == NULL ) {
-			whack_log(RC_FATAL, "received whack command to delete a connection, but did not receive the connection name - ignored");
+		if (m->name == NULL) {
+			whack_log(RC_FATAL, "received whack command to delete a connection, but did not receive the connection name - ignored"); 
 		} else {
-			terminate_connection(m->name);
+			terminate_connection(m->name, TRUE);
 			delete_connections_by_name(m->name, !m->whack_connection);
 		}
 	}
@@ -610,7 +610,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 
 	if (m->whack_terminate) {
 		passert(m->name != NULL);
-		terminate_connection(m->name);
+		terminate_connection(m->name, TRUE);
 	}
 
 	if (m->whack_status)

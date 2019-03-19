@@ -149,7 +149,7 @@ bool orient(struct connection *c)
 								c->interface->ip_dev->id_rname,
 								p->ip_dev->id_rname);
 							}
-						terminate_connection(c->name);
+						terminate_connection(c->name, FALSE);
 						c->interface = NULL; /* withdraw orientation */
 						return FALSE;
 					}
@@ -396,7 +396,7 @@ void restart_connections_by_peer(struct connection *const c)
 		{
 			/* This might delete c if CK_INSTANCE */
 			/* ??? is there a chance hp becomes dangling? */
-			terminate_connection(d->name);
+			terminate_connection(d->name, FALSE);
 		}
 		d = next;
 	}
