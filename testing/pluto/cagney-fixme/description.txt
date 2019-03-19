@@ -1,8 +1,0 @@
-A bug
-
-run --add on the connection that has left/rightrsakey= set. Run whack --listpubkeys to see the key.
-
-it is actually not there :/
-
-however, running an add AGAIN and then it is there :/
-
