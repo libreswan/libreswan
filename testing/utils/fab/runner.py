@@ -1,6 +1,6 @@
 # Test driver, for libreswan
 #
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2019  Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -388,11 +388,14 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                     try:
                         test_domains = _boot_test_domains(logger, test, domain_prefix, boot_executor)
                     except pexpect.TIMEOUT:
+                        # Bail.  Being unable to boot the domains is a
+                        # disaster.  The test is UNRESOLVED.
                         logger.exception("timeout while booting domains")
-                        # Bail.  The test is UNRESOLVED.
-                        #
-                        # Being unable to boot the domains is a
-                        # disaster.
+                        return
+                    except pexpect.EOF:
+                        # Bail.  Being unable to attach to the domains
+                        # is a disaster.  The test is UNRESOLVED.
+                        logger.exception("eof (disconnect) while booting domains")
                         return
 
                 # Run the scripts directly

@@ -1,6 +1,6 @@
 # Stuff to talk to virsh, for libreswan
 #
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2019  Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -186,24 +186,24 @@ def login(domain, console,
 
 def _start(domain, timeout):
     domain.logger.info("starting domain")
-    # Bring the machine up from scratch.
-    end_time = time.time() + timeout
     # Do not call this when the console is functional!
     console = domain.console()
     if console:
-        raise pexpect.TIMEOUT("console should not be open")
+        raise pexpect.EOF("console for domain %s already open", domain)
+    # Bring the machine up from scratch.
+    end_time = time.time() + timeout
     first_attempt = True
     while console == None:
         if time.time() > end_time:
-            pexpect.TIMEOUT("Trying to get a console")
+            raise pexpect.EOF("trying to start domain %s", domain)
         status, output = domain.start()
         if status and first_attempt:
             # The first attempt at starting the domain _must_ succeed.
             # Failing is a sign that the domain was running.  Further
             # attempts might fail as things get racey.
-            raise pexpect.TIMEOUT("failed to start domain: %s" % output)
+            raise pexpect.EOF("failed to start domain %s", output)
+        # give the VM time to start and then try opening the console.
         time.sleep(1)
-        # try opening the console again
         console = domain.console()
         first_attempt = False
     domain.logger.debug("got console")
