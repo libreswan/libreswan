@@ -1,0 +1,10 @@
+Install parallel Child SAs using alias/subnets to get N parallel SAs.
+
+RFC 7296 2.8
+"IKEv2 deliberately allows parallel SAs with the same
+Traffic Selectors between common endpoints."
+
+NOTE: rightsubnet is repeated inside the rightsubnets.
+rightsubnets=192.0.2.0/24,192.0.2.0/24
+
+This test need kernel/xfrm support to distribute traffic over parallel SA.

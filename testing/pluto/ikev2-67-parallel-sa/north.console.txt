@@ -1,0 +1,91 @@
+/testing/guestbin/swan-prep
+north #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+north #
+ /testing/pluto/bin/wait-until-pluto-started
+north #
+ ipsec auto --add northnet-eastnet
+002 added connection description "northnet-eastnet/0x1"
+002 added connection description "northnet-eastnet/0x2"
+north #
+ ipsec whack --impair suppress-retransmits
+north #
+ echo "initdone"
+initdone
+north #
+ ipsec auto --status | grep northnet-eastnets
+north #
+ ipsec auto --up northnet-eastnet
+000 initiating all conns with alias='northnet-eastnet'
+002 "northnet-eastnet/0x2" #1: initiating v2 parent SA
+1v2 "northnet-eastnet/0x2" #1: initiate
+1v2 "northnet-eastnet/0x2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "northnet-eastnet/0x1" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "northnet-eastnet/0x1" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "northnet-eastnet/0x1" #2: Authenticated using authby=secret
+002 "northnet-eastnet/0x1" #2: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "northnet-eastnet/0x1" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+1v2 "northnet-eastnet/0x2" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "northnet-eastnet/0x2" #3: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "northnet-eastnet/0x2" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+north #
+ taskset 0x1 ping -n -c 2 -I 192.0.3.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+north #
+ taskset 0x2 ping -n -c 2 -I 192.0.3.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+north #
+ ipsec whack --trafficstatus
+006 #2: "northnet-eastnet/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #3: "northnet-eastnet/0x2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+north #
+ echo done
+done
+north #
+ ipsec whack --trafficstatus
+006 #2: "northnet-eastnet/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #3: "northnet-eastnet/0x2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+north #
+ # policies and state should be multiple
+north #
+ ip xfrm state
+src 192.1.2.23 dst 192.1.3.33
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.3.33 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.3.33
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.3.33 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+north #
+ ip xfrm policy
+src 192.0.3.0/24 dst 192.0.2.0/24 
+	dir out priority 1042407 ptype main 
+	tmpl src 192.1.3.33 dst 192.1.2.23
+src 192.0.2.0/24 dst 192.0.3.0/24 
+	dir fwd priority 1042407 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.33
+src 192.0.2.0/24 dst 192.0.3.0/24 
+	dir in priority 1042407 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.33
+north #
+north #
+ ../bin/check-for-core.sh
+north #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
