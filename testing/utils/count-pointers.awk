@@ -65,7 +65,7 @@ func error(what) {
 END {
     for (key in counts) {
 	if (counts[key]) {
-	    print filename[key] ":" nr[key] ": " key " " counts[key] ":: " line[key]
+	    print filename[key] ":" nr[key] ": " key " " counts[key] ":: " line[key] | "sort -t: -k1,1 -k2,2n"
 	    status = 1
 	}
     }
