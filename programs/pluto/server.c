@@ -596,6 +596,7 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 				    const char *name)
 {
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
+	dbg("%s: new %s-pe@%p", __func__, name, e);
 	e->ev_type = EVENT_NULL;
 	e->ev_name = name;
 	link_pluto_event_list(e);
