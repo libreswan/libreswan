@@ -63,6 +63,7 @@
 #include "ike_alg.h"
 #include "af_info.h"		/* for init_af_info() */
 #include "ikev2_redirect.h"
+#include "root_certs.h"		/* for init_root_certs() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1745,6 +1746,7 @@ int main(int argc, char **argv)
 	init_virtual_ip(virtual_private);
 	/* obsoleted by nss code init_rnd_pool(); */
 	init_event_base();
+	init_root_certs();
 	init_secret();
 	init_states();
 	init_connections();
@@ -1814,6 +1816,7 @@ void exit_pluto(int status)
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, status);
  #endif
+	free_root_certs();
 	free_preshared_secrets();
 	free_remembered_public_keys();
 	delete_every_connection();

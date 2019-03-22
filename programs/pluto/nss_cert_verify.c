@@ -43,6 +43,7 @@
 #include "demux.h"
 #include "state.h"
 #include "pluto_timing.h"
+#include "root_certs.h"
 
 /*
  * set up the slot/handle/trust things that NSS needs
@@ -151,50 +152,6 @@ static void new_vfy_log(CERTVerifyLog *log)
 	log->head = NULL;
 	log->tail = NULL;
 	log->arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-}
-
-static CERTCertList *get_all_ca_certs(void)
-{
-	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
-
-	if (slot == NULL)
-		return NULL;
-
-	if (PK11_NeedLogin(slot)) {
-		SECStatus rv = PK11_Authenticate(slot, PR_TRUE,
-				lsw_return_nss_password_file_info());
-		if (rv != SECSuccess)
-			return NULL;
-	}
-
-	CERTCertList *allcerts = PK11_ListCertsInSlot(slot);
-
-	if (allcerts == NULL)
-		return NULL;
-
-	CERTCertList *roots = CERT_NewCertList();
-
-	/*
-	 * XXX: would a better call be:
-	 * CERT_FilterCertListByUsage(allcerts, certUsageAnyCA, PR_TRUE)
-	 */
-	for (CERTCertListNode *node = CERT_LIST_HEAD(allcerts);
-	     !CERT_LIST_END(node, allcerts);
-	     node = CERT_LIST_NEXT(node)) {
-		if (CERT_IsCACert(node->cert, NULL) && node->cert->isRoot) {
-			CERTCertificate *cert = CERT_DupCertificate(node->cert);
-			CERT_AddCertToListTail(roots, cert);
-		}
-	}
-
-	CERT_DestroyCertList(allcerts);
-
-	if (pexpect(roots != NULL) && CERT_LIST_EMPTY(roots)) {
-		CERT_DestroyCertList(roots);
-		roots = NULL;
-	}
-
-	return roots;
 }
 
 static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
@@ -568,10 +525,10 @@ struct certs *find_and_verify_certs(struct state *st,
 		return NULL;
 	}
 
-	statetime_t trustcl_time = statetime_start(st);
-	CERTCertList *trustcl = get_all_ca_certs(); /* we must free trustcl eventually */
-	statetime_stop(&trustcl_time, "%s() calling get_all_ca_certs()", __func__);
-	if (trustcl == NULL) {
+	statetime_t root_time = statetime_start(st);
+	CERTCertList *root_certs = get_root_certs(); 	/* must not free */
+	statetime_stop(&root_time, "%s() calling get_root_certs()", __func__);
+	if (!pexpect(root_certs != NULL) || CERT_LIST_EMPTY(root_certs)) {
 		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
 		return NULL;
 	}
@@ -601,14 +558,12 @@ struct certs *find_and_verify_certs(struct state *st,
 						   cert_payloads);
 	statetime_stop(&decode_time, "%s() calling decode_cert_payloads()", __func__);
 	if (certs == NULL) {
-		CERT_DestroyCertList(trustcl);
 		return NULL;
 	}
 	CERTCertificate *end_cert = make_end_cert_first(&certs);
 	if (end_cert == NULL) {
 		libreswan_log("X509: no EE-cert in chain!");
 		release_certs(&certs);
-		CERT_DestroyCertList(trustcl);
 		return NULL;
 	}
 
@@ -619,7 +574,6 @@ struct certs *find_and_verify_certs(struct state *st,
 		if (rev_opts->crl_strict) {
 			*bad = true;
 			libreswan_log("missing or expired CRL in strict mode, failing pending update");
-			CERT_DestroyCertList(trustcl);
 			release_certs(&certs);
 			return NULL;
 		}
@@ -627,16 +581,13 @@ struct certs *find_and_verify_certs(struct state *st,
 	}
 
 	statetime_t verify_time = statetime_start(st);
-	bool end_ok = verify_end_cert(trustcl, rev_opts, end_cert);
+	bool end_ok = verify_end_cert(root_certs, rev_opts, end_cert);
 	*bad = !end_ok;
 	statetime_stop(&verify_time, "%s() calling verify_end_cert()", __func__);
 	if (!end_ok) {
 		release_certs(&certs);
-		CERT_DestroyCertList(trustcl);
 		return NULL;
 	}
-
-	CERT_DestroyCertList(trustcl);
 	return certs;
 }
 

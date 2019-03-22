@@ -685,6 +685,8 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
  */
 static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 {
+	statetime_t start = statetime_start(st);
+
 	pexpect(st->st_remote_certs.verified == NULL);
 	struct connection *c = st->st_connection;
 
@@ -697,10 +699,8 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 
 	bool crl_needed = false;
 	bool bad = false;
-	statetime_t start = statetime_start(st);
 	struct certs *certs = find_and_verify_certs(st, cert_payloads,
 						    &rev_opts, &crl_needed, &bad);
-	statetime_stop(&start, "%s() decoding and verifying certs", __func__);
 
 	/* either something went wrong, or there were no certs */
 	if (certs == NULL) {
@@ -739,10 +739,14 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 	}
 	libreswan_log("certificate verified OK: %s", end_cert->subjectName);
 
+	statetime_t start_add = statetime_start(st);
 	add_pubkey_from_nss_cert(&st->st_remote_certs.pubkey_db,
 				 &c->spd.that.id, end_cert);
+	statetime_stop(&start_add, "%s() calling add_pubkey_from_nss_cert()", __func__);
+
 	st->st_remote_certs.verified = certs;
 
+	statetime_stop(&start, "%s()", __func__);
 	return true;
 }
 

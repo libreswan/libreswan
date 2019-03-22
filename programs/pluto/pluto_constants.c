@@ -128,6 +128,7 @@ static const char *const timer_event_name[] = {
 	E(EVENT_PENDING_PHASE2),
 	E(EVENT_CHECK_CRLS),
 	E(EVENT_REVIVE_CONNS),
+	E(EVENT_FREE_ROOT_CERTS),
 
 	E(EVENT_SO_DISCARD),
 	E(EVENT_RETRANSMIT),

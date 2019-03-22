@@ -170,6 +170,9 @@ enum event_type {
 	EVENT_CHECK_CRLS,		/* check/update CRLS */
 	EVENT_REVIVE_CONNS,
 
+	EVENT_FREE_ROOT_CERTS,
+#define FREE_ROOT_CERTS_TIMEOUT		deltatime(5 * secs_per_minute)
+
 	GLOBAL_TIMERS_ROOF,
 
 	/* events associated with connections */
