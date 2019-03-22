@@ -398,6 +398,7 @@ struct find_oppo_bundle {
 	struct logger *logger;	/* has whack attached */
 	bool background;
 	chunk_t sec_label;
+	uint32_t clone_cpu_id;
 };
 
 static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
@@ -818,6 +819,7 @@ void initiate_ondemand(const ip_endpoint *local_client,
 		       bool held, bool background,
 		       const chunk_t sec_label,
 		       const char *why,
+		       uint32_t clone_cpu_id,
 		       struct logger *logger)
 {
 	unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
@@ -837,6 +839,7 @@ void initiate_ondemand(const ip_endpoint *local_client,
 		.logger = logger, /*on-stack*/
 		.background = background,
 		.sec_label = sec_label
+		.clone_cpu_id = clone_cpu_id,
 	};
 
 	initiate_ondemand_body(&b);

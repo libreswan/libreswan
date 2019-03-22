@@ -740,6 +740,11 @@ enum connection_kind {
 	CK_GOING_AWAY   /* instance being deleted -- don't delete again */
 };
 
+enum ikev2_clone_sa_kind {
+	CLONE_SA_HEAD,
+	CLONE_SA_SUB,
+};
+
 /* routing status.
  * Note: routing ignores source address, but erouting does not!
  * Note: a connection can only be routed if it is NEVER_NEGOTIATE
@@ -800,6 +805,11 @@ enum yna_options {
 	yna_auto = 1, /* default */
 	yna_no = 2,
 	yna_yes = 3,
+};
+
+enum kw_ny_u32max_options {
+	ny_u32_no = 0,
+	ny_u32_yes = UINT32_MAX, /* default */
 };
 
 enum esn_options {

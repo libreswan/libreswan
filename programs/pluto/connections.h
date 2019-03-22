@@ -235,6 +235,8 @@ struct end {
 	bool cat;		/* IPv4 Client Address Translation */
 	bool has_cat;		/* add a CAT iptable rule when a valid INTERNAL_IP4_ADDRESS
 				   is received */
+	uint32_t sa_clone_id;
+	uint32_t sa_clones;
 };
 
 struct spd_route {
@@ -286,6 +288,8 @@ struct connection {
 	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
+	uint32_t sa_clones;
+	uint32_t sa_clone_id;
 	uint32_t sa_priority;
 	uint32_t sa_tfcpad;
 	bool send_no_esp_tfc;
@@ -460,6 +464,7 @@ extern void initiate_ondemand(const ip_endpoint *our_client,
 			      const ip_endpoint *peer_client,
 			      bool held, bool background,
 			      const chunk_t sec_label,
+			      uint32_t clone_cpu_id,
 			      const char *why,
 			      struct logger *logger);
 

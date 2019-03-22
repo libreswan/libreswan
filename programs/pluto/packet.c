@@ -1625,6 +1625,39 @@ struct_desc ikev2notify_ipcomp_data_desc = {
 	.size = 3,
 };
 
+static field_desc ikev2notify_clones_initiator_fields[] = {
+	{ ft_nat, 32 / BITS_PER_BYTE, "Clones Initiate", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2notify_clones_initiater = {
+	.name = "IKEv2 Notify Clones Initiate",
+	.fields = ikev2notify_clones_initiator_fields,
+	.size = 4,
+};
+
+static field_desc ikev2notify_clones_responder_fields[] = {
+	{ ft_nat, 32 / BITS_PER_BYTE, "Clones Respond", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2notify_clones_initiator = {
+	.name = "IKEv2 Notify Clones Respond",
+	.fields = ikev2notify_clones_responder_fields,
+	.size = 4,
+};
+
+static field_desc ikev2notify_clones_id_fields[] = {
+	{ ft_nat, 32 / BITS_PER_BYTE, "Clone ID", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2notify_clones_id = {
+	.name = "IKEv2 Notify ID",
+	.fields = ikev2notify_clones_id_fields,
+	.size = 4,
+};
+
 /*
  * Undocumented Security Context for Labeled IPsec
  *

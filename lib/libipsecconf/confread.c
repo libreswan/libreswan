@@ -173,6 +173,8 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_AUTO, STARTUP_IGNORE);
 	DOPT(KNCF_XFRM_IF_ID, UINT32_MAX);
 
+	DOPT(KNCF_SA_CLONES, 0);
+
 # undef DOPT
 
 	d->ike_version = IKEv2;

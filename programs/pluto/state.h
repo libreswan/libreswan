@@ -444,6 +444,13 @@ struct state {
 	chunk_t st_intermediate_packet_me;	/* calculated from my last Intermediate Exchange packet */
 	chunk_t st_intermediate_packet_peer;	/* calculated from peers last Intermediate Exchange packet */
 
+	struct {
+		bool	 sa_clones;   /* received clones support */
+		uint32_t sa_clones_i; /* optimal send clones announced by peer */
+		uint32_t sa_clones_r; /* optimal receive clones announced by peer */
+		uint32_t sa_clone_id; /* pcpu ID of this pair of IPsec SA */
+	} st_pcpu;
+
 	/** end of IKEv2-only things **/
 
 	/*

@@ -128,6 +128,9 @@ bool emit_v2Npl(v2_notification_t ntype,
 		pb_stream *outs,
 		pb_stream *payload_pbs /* optional */);
 
+bool emit_v2N_u32(v2_notification_t ntype, const uint32_t value,
+                    pb_stream *outs);
+
 /* emit a v2 Notification payload, with optional hunk as sub-payload */
 bool emit_v2N_bytes(v2_notification_t ntype,
 		   const void *bytes, size_t size,

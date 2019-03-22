@@ -1,0 +1,11 @@
+  <varlistentry>
+  <term><emphasis remap='B'>clones</emphasis></term>
+  <listitem>
+<para>The number of clones of an IPsec SA to bring up and install.
+This is only supported for IKEv2. This will improve the parallel
+processing as the crypto load is spread out over all the clones.
+A good value would be the number of CPUs on the system.
+</para>
+  </listitem>
+  </varlistentry>
+

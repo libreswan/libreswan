@@ -131,7 +131,8 @@ enum keyword_string_conn_field {
 	KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
 	KSCF_RSASIGKEY,	/* loose_enum */ /* left/right */
 	KSCF_XFRM_IF_ID,
-		KSCF_last_loose = KSCF_XFRM_IF_ID,
+	KNCF_SA_CLONES,
+		KSCF_last_loose = KNCF_SA_CLONES,
 
 	KSCF_UPDOWN,	/* left/right */
 	KSCF_ID,	/* left/right */

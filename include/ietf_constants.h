@@ -1625,6 +1625,9 @@ typedef enum {
 	/* 40960 - 65535 Private Use */
 
 	v2N_NULL_AUTH = 40960,
+	v2N_PCPU_I = 40961,
+	v2N_PCPU_R = 40962,
+	v2N_PCPU_ID = 40963,
 
 } v2_notification_t;
 

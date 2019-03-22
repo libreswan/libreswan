@@ -478,6 +478,27 @@ static void conn_log_val(const struct starter_conn *conn,
 		    conn->name, name, value == NULL ? "<unset>" : value);
 }
 
+static uint32_t compute_sa_clones(int sa_clones_config)
+{
+	uint32_t sa_clones = 0;
+	if ((uint32_t)sa_clones_config == ny_u32_yes) {
+		/* configured yes, use all cpus */
+#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
+		sa_clones = sysconf(_SC_NPROCESSORS_ONLN);
+#else
+		int mib[2] = {CTL_HW, HW_NCPU};
+		int numcpu;
+		size_t len;
+		len = sizeof(numcpu);
+		sa_clones = sysctl(mib, 2, &numcpu, &len, NULL, 0);
+		sa_clones =  4;
+#endif
+	} else {
+		sa_clones = sa_clones_config;
+	}
+	return sa_clones;
+}
+
 static int starter_whack_basic_add_conn(struct starter_config *cfg,
 					const struct starter_conn *conn)
 {
@@ -499,6 +520,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_keying_tries = conn->options[KNCF_KEYINGTRIES];
 	msg.sa_replay_window = conn->options[KNCF_REPLAY_WINDOW];
 	msg.xfrm_if_id = conn->options[KNCF_XFRM_IF_ID];
+	msg.sa_clones = compute_sa_clones(conn->options[KNCF_SA_CLONES]);
 
 	msg.r_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);
 	msg.r_timeout = deltatime(conn->options[KNCF_RETRANSMIT_TIMEOUT]);
@@ -507,7 +529,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.policy = conn->policy;
 	msg.sighash_policy = conn->sighash_policy;
 
+	if (conn->options_set[KNCF_SA_CLONES])
+		msg.policy |= POLICY_OVERLAPIP;
+
 	msg.connalias = conn->connalias;
+	msg.sa_clone_id = conn->sa_clone_id;
 
 	msg.metric = conn->options[KNCF_METRIC];
 
@@ -856,13 +882,37 @@ int starter_whack_add_conn(struct starter_config *cfg,
 			   const struct starter_conn *conn,
 			   struct logger *logger)
 {
-	/* basic case, nothing special to synthize! */
-	if (!conn->left.strings_set[KSCF_SUBNETS] &&
-	    !conn->right.strings_set[KSCF_SUBNETS])
-		return starter_whack_basic_add_conn(cfg, conn);
+	/* leftsubnets= / rightsubnets= */
+	if (conn->left.strings_set[KSCF_SUBNETS] ||
+	    conn->right.strings_set[KSCF_SUBNETS]) {
+		return starter_permutate_conns(starter_whack_basic_add_conn,
+				cfg, conn, logger);
+	}
 
-	return starter_permutate_conns(starter_whack_basic_add_conn,
-				       cfg, conn, logger);
+	/* clones= */
+	if (conn->options_set[KNCF_SA_CLONES]) {
+		uint32_t clone_id = CLONE_SA_HEAD;
+		int num = 0;
+		char tmpconnname[256];
+
+		uint32_t sa_clones = compute_sa_clones(conn->options[KNCF_SA_CLONES]);
+
+		while (clone_id < (sa_clones + 1)) {
+			/* copy conn  - borrow pointers, since this is a temporary copy */
+			struct starter_conn cc = *conn;
+
+			snprintf(tmpconnname, sizeof(tmpconnname), "%s-%d",
+				conn->name, clone_id);
+			cc.name = tmpconnname;
+			cc.connalias = conn->name;
+			cc.sa_clone_id = clone_id;
+			num += starter_whack_basic_add_conn(cfg, &cc);
+			clone_id++;
+		}
+		return num;
+	}
+
+	return starter_whack_basic_add_conn(cfg, conn);
 }
 
 static int starter_whack_basic_route_conn(struct starter_config *cfg,

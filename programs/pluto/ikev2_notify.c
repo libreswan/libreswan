@@ -64,6 +64,9 @@ enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t n)
 	C(TS_UNACCEPTABLE);
 	C(INTERMEDIATE_EXCHANGE_SUPPORTED);
 	C(UPDATE_SA_ADDRESSES);
+	C(PCPU_I);
+	C(PCPU_R);
+	C(PCPU_ID);
 	default: return PBS_v2_INVALID;
 	}
 #undef C

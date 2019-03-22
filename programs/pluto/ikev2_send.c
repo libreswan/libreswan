@@ -227,6 +227,26 @@ bool emit_v2Npl(v2_notification_t ntype,
 	return emit_v2Nsa_pl(ntype, PROTO_v2_RESERVED, NULL, outs, payload_pbs);
 }
 
+/* emit a v2 Notification payload, with uint32_t (network order) as sub-payload */
+bool emit_v2N_u32(v2_notification_t ntype, const uint32_t value,
+		    pb_stream *outs)
+{
+	pb_stream pl;
+
+	const uint32_t n_value = htonl(value);
+
+	if (!emit_v2Npl(ntype, outs, &pl)) {
+		return false;
+	}
+
+	if (!out_raw(&n_value, sizeof(uint32_t), &pl, "Notify data")) {
+		return false;
+	}
+
+	close_output_pbs(&pl);
+	return true;
+}
+
 /* emit a v2 Notification payload, with bytes as sub-payload */
 bool emit_v2N_bytes(v2_notification_t ntype,
 		    const void *bytes, size_t size, /* optional */

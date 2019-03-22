@@ -212,10 +212,10 @@ void add_bare_shunt(const ip_selector *our_client,
  * because we use it indefinitely without copying or pfreeing.
  * Simple rule: use a string literal.
  */
-
 void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 				       const ip_endpoint *remote_client,
 				       const chunk_t sec_label,
+				       uint32_t clone_cpu_id,
 				       const char *why)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
@@ -257,7 +257,7 @@ void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 	initiate_ondemand(local_client, remote_client,
 			  /*held*/ true,
 			  /*background*/ true,
-			  sec_label,
+			  sec_label, clone_cpu_id,
 			  "acquire", logger);
 
 	if (kernel_ops->remove_orphaned_holds != NULL) {
@@ -1853,7 +1853,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
-
+		.clone_id = (uint32_t)c->sa_clone_id,
 		.sec_label =
 			st->st_seen_sec_label.len != 0 ? st->st_seen_sec_label :
 			st->st_acquired_sec_label.len != 0 ? st->st_acquired_sec_label :

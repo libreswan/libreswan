@@ -1720,11 +1720,14 @@ enum_names ikev1_notify_names = {
 
 static const char *const ikev2_notify_name_private[] = {
 	"v2N_NULL_AUTH",	/* 40960, used for mixed OE */
+	"v2N_PCPU_I",		/* 40961 */
+	"v2N_PCPU_R",		/* 40962 */
+	"v2N_PCPU_ID",		/* 40964 */
 };
 
 static enum_names ikev2_notify_names_private = {
 	v2N_NULL_AUTH,
-	v2N_NULL_AUTH,
+	v2N_PCPU_ID,
 	ARRAY_REF(ikev2_notify_name_private),
 	"v2N_", /* prefix */
 	NULL

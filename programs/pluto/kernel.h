@@ -174,6 +174,7 @@ struct kernel_sa {
 	const char *nic_offload_dev;
 	uint32_t xfrm_if_id;
 	struct sa_mark mark_set; /* config keyword mark-out */
+	uint32_t clone_id;
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 };
@@ -353,6 +354,7 @@ struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
 extern void record_and_initiate_opportunistic(const ip_endpoint *our_client,
 					      const ip_endpoint *peer_client,
 					      const chunk_t sec_label,
+					      uint32_t clone_cpu_id,
 					      const char *why);
 extern void init_kernel(struct logger *logger);
 

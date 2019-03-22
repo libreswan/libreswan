@@ -35,7 +35,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
-
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -55,6 +54,8 @@
 
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sched.h>
+
 
 #include <linux/rtnetlink.h>
 #include <linux/if_addr.h>
@@ -1528,6 +1529,10 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 	}
 #endif
+	if (sa->clones > CLONE_SA_HEAD) {
+		// Antony's code to add XFRM payload
+		DBG_log("AA_2020 add  clone %u", sa->clone_id);
+	}
 
 	if (sa->nic_offload_dev) {
 		struct xfrm_user_offload xuo = {
@@ -1659,6 +1664,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		.ptr = NULL,
 		.len = 0
 	};
+	uint32_t cpu_id = -1;
 
 	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
 
@@ -1734,6 +1740,12 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			/* discard */
 			dbg("... xfrm policy type ignored");
 			break;
+
+		case XFRMA_SA_PCPU:
+			cpu_id = *((uint32_t *) RTA_DATA(attr));
+			lswlogf(buf, "%s XFRMA_SA_PCPU %u \n", acquire_log_p, cpu_id);
+			break;
+
 		case XFRMA_SEC_CTX:
 		{
 			struct xfrm_user_sec_ctx *xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
@@ -1788,10 +1800,8 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			    attr->rta_type);
 			break;
 		}
-		/* updates remaining too */
-		attr = RTA_NEXT(attr, remaining);
 	}
-	record_and_initiate_opportunistic(&local, &remote, sec_label,
+	record_and_initiate_opportunistic(&local, &remote, sec_label, cpu_id,
 					  "%acquire-netlink");
 }
 
