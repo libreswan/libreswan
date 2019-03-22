@@ -214,7 +214,7 @@ static void add_revival(struct connection *c)
 		 * deleted); and would encroach even further on
 		 * "initiate" and "pending" functionality.
 		 */
-		event_schedule(EVENT_REVIVE_CONNS, deltatime(delay), NULL);
+		schedule_oneshot_timer(EVENT_REVIVE_CONNS, deltatime(delay));
 	}
 }
 
@@ -577,12 +577,11 @@ struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 }
 
 /*
- * Initialize the state table
- *
- * Redundant.
+ * Initialize the state table.
  */
 void init_states(void)
 {
+	init_oneshot_timer(EVENT_REVIVE_CONNS, revive_conns);
 }
 
 void delete_state_by_id_name(struct state *st, void *name)
