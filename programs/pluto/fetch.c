@@ -45,7 +45,7 @@
 #include "nss_err.h"
 #include "keys.h"
 #include "crl_queue.h"
-#include "timer.h"
+#include "server.h"
 
 #define FETCH_CMD_TIMEOUT       5       /* seconds */
 
@@ -450,7 +450,7 @@ static void fetch_crls(void)
  */
 void check_crls(void)
 {
-	event_schedule(EVENT_CHECK_CRLS, crl_check_interval, NULL);
+	schedule_oneshot_timer(EVENT_CHECK_CRLS, crl_check_interval);
 	struct crl_fetch_request *requests = NULL;
 
 	/*
@@ -563,6 +563,13 @@ static void *fetch_thread(void *arg UNUSED)
  */
 void init_fetch(void)
 {
+	/*
+	 * XXX: CRT checking is probably really a periodic timer,
+	 * however: the first fetch 5 seconds after startup; and
+	 * further fetches are defined by the config(?) file (is that
+	 * loaded before this function was called?).
+	 */
+	init_oneshot_timer(EVENT_CHECK_CRLS, check_crls);
 	if (deltasecs(crl_check_interval) > 0) {
 		int status;
 
@@ -578,7 +585,7 @@ void init_fetch(void)
 			libreswan_log(
 				"could not start thread for fetching certificate, status = %d",
 				status);
-		event_schedule(EVENT_CHECK_CRLS, deltatime(5), NULL);
+		schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5));
 	}
 }
 
