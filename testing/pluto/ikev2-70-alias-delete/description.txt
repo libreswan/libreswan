@@ -1,0 +1,4 @@
+Install N  per CPU Child SAs and delete them
+
+NOTE: rightsubnet is repeated inside the rightsubnets.
+rightsubnets=192.0.2.0/24,192.0.2.0/24

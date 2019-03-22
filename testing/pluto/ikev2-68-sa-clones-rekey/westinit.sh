@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add eastnet
-ipsec auto --status | grep eastnet
-ipsec whack --impair suppress-retransmits
 ipsec whack --impair revival
+ipsec auto --add west
 echo "initdone"

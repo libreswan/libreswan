@@ -1,0 +1,199 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add west-east
+002 added connection description "west-east-0"
+002 added connection description "west-east-1"
+002 added connection description "west-east-2"
+002 added connection description "west-east-3"
+002 added connection description "west-east-4"
+east #
+ ipsec auto --status | grep west-east
+000 "west-east-0": 192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]; unrouted; eroute owner: #0
+000 "west-east-0":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "west-east-0":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "west-east-0":   our auth:secret, their auth:secret
+000 "west-east-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "west-east-0":   labeled_ipsec:no;
+000 "west-east-0":   policy_label:unset;
+000 "west-east-0":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 4s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
+000 "west-east-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "west-east-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "west-east-0":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+whack: log line missing NNN prefix: 
+000 "west-east-0":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "west-east-0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "west-east-0":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "west-east-0":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:yes; nat_keepalive:yes; ikev1_natt:both
+000 "west-east-0":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "west-east-0":   aliases: west-east
+east #
+ ipsec whack --impair suppress-retransmits
+east #
+ taskset 0x2 iperf3 -s -p 5002 &
+[x] PID
+east #
+ taskset 0x3 iperf3 -s -p 5003 &
+-----------------------------------------------------------
+Server listening on 5002
+-----------------------------------------------------------
+[x] PID
+east #
+ echo "initdone"
+-----------------------------------------------------------
+Server listening on 5003
+-----------------------------------------------------------
+initdone
+east #
+ ipsec whack --trafficstatus
+Accepted connection from 192.1.2.45, port 39048
+[  5] local 192.1.2.23 port 5002 connected to 192.1.2.45 port 39050
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-1.00   sec  87.2 MBytes   732 Mbits/sec                  
+[  5]   1.00-2.00   sec  86.7 MBytes   728 Mbits/sec                  
+[  5]   2.00-3.00   sec  87.1 MBytes   730 Mbits/sec                  
+[  5]   3.00-4.00   sec  87.1 MBytes   731 Mbits/sec                  
+[  5]   4.00-5.00   sec  87.3 MBytes   733 Mbits/sec                  
+[  5]   5.00-6.00   sec  87.1 MBytes   730 Mbits/sec                  
+[  5]   6.00-7.00   sec  86.9 MBytes   729 Mbits/sec                  
+[  5]   7.00-8.00   sec  87.6 MBytes   735 Mbits/sec                  
+[  5]   8.00-9.00   sec  87.4 MBytes   733 Mbits/sec                  
+[  5]   9.00-10.00  sec  86.8 MBytes   728 Mbits/sec                  
+[  5]  10.00-10.01  sec  1.13 MBytes   725 Mbits/sec                  
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-10.01  sec   872 MBytes   731 Mbits/sec                  receiver
+-----------------------------------------------------------
+Server listening on 5002
+-----------------------------------------------------------
+Accepted connection from 192.1.2.45, port 39052
+[  5] local 192.1.2.23 port 5002 connected to 192.1.2.45 port 39054
+Accepted connection from 192.1.2.45, port 34672
+[  5] local 192.1.2.23 port 5003 connected to 192.1.2.45 port 34674
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-1.00   sec  82.3 MBytes   691 Mbits/sec                  
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-1.00   sec  80.4 MBytes   674 Mbits/sec                  
+[  5]   1.00-2.00   sec  85.5 MBytes   717 Mbits/sec                  
+[  5]   1.00-2.00   sec  80.4 MBytes   674 Mbits/sec                  
+[  5]   2.00-3.00   sec  85.5 MBytes   718 Mbits/sec                  
+[  5]   2.00-3.00   sec  80.7 MBytes   677 Mbits/sec                  
+[  5]   3.00-4.00   sec  85.2 MBytes   715 Mbits/sec                  
+[  5]   3.00-4.00   sec  80.3 MBytes   674 Mbits/sec                  
+[  5]   4.00-5.00   sec  85.3 MBytes   715 Mbits/sec                  
+[  5]   4.00-5.00   sec  80.3 MBytes   674 Mbits/sec                  
+[  5]   5.00-6.00   sec  85.0 MBytes   713 Mbits/sec                  
+[  5]   5.00-6.00   sec  79.9 MBytes   670 Mbits/sec                  
+[  5]   6.00-7.00   sec  85.1 MBytes   714 Mbits/sec                  
+[  5]   6.00-7.00   sec  80.4 MBytes   675 Mbits/sec                  
+[  5]   7.00-8.00   sec  85.3 MBytes   715 Mbits/sec                  
+[  5]   7.00-8.00   sec  80.4 MBytes   674 Mbits/sec                  
+[  5]   8.00-9.00   sec  85.0 MBytes   713 Mbits/sec                  
+[  5]   8.00-9.00   sec  80.5 MBytes   675 Mbits/sec                  
+[  5]   9.00-10.00  sec  85.1 MBytes   714 Mbits/sec                  
+[  5]  10.00-10.01  sec   652 KBytes   715 Mbits/sec                  
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-10.01  sec   850 MBytes   712 Mbits/sec                  receiver
+-----------------------------------------------------------
+Server listening on 5002
+-----------------------------------------------------------
+[  5]   9.00-10.00  sec  82.8 MBytes   695 Mbits/sec                  
+[  5]  10.00-10.01  sec  1.29 MBytes  1.16 Gbits/sec                  
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-10.01  sec   808 MBytes   677 Mbits/sec                  receiver
+-----------------------------------------------------------
+Server listening on 5003
+-----------------------------------------------------------
+006 #2: "west-east-0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+006 #3: "west-east-1", type=ESP, add_time=1234567890, inBytes=0, outBytes=16139730, id='@west'
+006 #4: "west-east-2", type=ESP, add_time=1234567890, inBytes=1874248757, outBytes=34418368, id='@west'
+006 #5: "west-east-3", type=ESP, add_time=1234567890, inBytes=878639382, outBytes=0, id='@west'
+006 #6: "west-east-4", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+east #
+ # policies and state should be multiple
+east #
+ ip xfrm state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+east #
+ ip xfrm policy
+src 192.1.2.23/32 dst 192.1.2.45/32 
+	dir out priority 1040351 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+src 192.1.2.45/32 dst 192.1.2.23/32 
+	dir fwd priority 1040351 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+src 192.1.2.45/32 dst 192.1.2.23/32 
+	dir in priority 1040351 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+east #
+ ipsec auto --status | grep west-east
+000 "west-east-0": 192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]; erouted; eroute owner: #2
+000 "west-east-0":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "west-east-0":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "west-east-0":   our auth:secret, their auth:secret
+000 "west-east-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "west-east-0":   labeled_ipsec:no;
+000 "west-east-0":   policy_label:unset;
+000 "west-east-0":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 4s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
+000 "west-east-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "west-east-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "west-east-0":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "west-east-0":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "west-east-0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "west-east-0":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+whack: log line missing NNN prefix: 
+000 "west-east-0":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:yes; nat_keepalive:yes; ikev1_natt:both
+000 "west-east-0":   newest ISAKMP SA: #1; newest IPsec SA: #2;
+000 "west-east-0":   aliases: west-east
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
