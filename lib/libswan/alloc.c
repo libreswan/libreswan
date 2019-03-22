@@ -3,7 +3,7 @@
  * Header: "lswalloc.h"
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017,2019 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -176,7 +176,9 @@ void report_leaks(void)
 		pprev = p;
 		p = p->i.older;
 		n++;
-		if (p == NULL || pprev->i.name != p->i.name) {
+		if (p == NULL ||
+		    pprev->i.name != p->i.name ||
+		    pprev->i.size != p->i.size) {
 			/* filter out one-time leaks we prefer to not fix */
 			if (strstr(pprev->i.name, "(ignore)") == NULL) {
 				if (n != 1)
