@@ -442,7 +442,12 @@ void free_pluto_event_list(void)
 	struct pluto_event **head = &pluto_events_head;
 	while (*head != NULL)
 		*head = free_event_entry(head);
-
+	dbg("releasing event base");
+	event_base_free(pluto_eb);
+	pluto_eb = NULL;
+	dbg("releasing global event data");
+	/* this releases data allocated by evthread_use_pthreads() */
+	libevent_global_shutdown();
 }
 
 void link_pluto_event_list(struct pluto_event *e) {
@@ -963,7 +968,46 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 	}
 }
 
-void init_event_base(void) {
+#ifdef EVENT_SET_MEM_FUNCTIONS_IMPLEMENTED
+static void *libevent_malloc(size_t size)
+{
+	void *ptr = alloc_bytes(size, __func__);
+	dbg("%s: new ptr-libevent@%p size %zu", __func__, ptr, size);
+	return ptr;
+}
+static void *libevent_realloc(void *ptr, size_t size)
+{
+	if (ptr == NULL) {
+		ptr = alloc_bytes(size, __func__);
+		dbg("%s: new ptr-libevent@%p size %zu", __func__, ptr, size);
+		return ptr;
+	} else {
+		/* enough to keep count-pointers.awk happy */
+		dbg("%s: release ptr-libevent@%p", __func__, ptr);
+		resize_bytes(&ptr, size);
+		dbg("%s: new ptr-libevent@%p size %zu", __func__, ptr, size);
+		return ptr;
+	}
+}
+static void libevent_free(void *ptr)
+{
+	dbg("%s: release ptr-libevent@%p", __func__, ptr);
+	pfree(ptr);
+}
+#endif
+
+void init_event_base(void)
+{
+	/*
+	 * "... if you are going to call this function, you should do
+	 * so before any call to any Libevent function that does
+	 * allocation."
+	 */
+#ifdef EVENT_SET_MEM_FUNCTIONS_IMPLEMENTED
+	dbg("pointing libevent at pluto's memory allocator");
+	event_set_mem_functions(libevent_malloc, libevent_realloc,
+				libevent_free);
+#endif
 	libreswan_log("Initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
 		      LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
 		      event_get_version(), event_get_version_number());
@@ -974,10 +1018,12 @@ void init_event_base(void) {
 	int r = evthread_use_pthreads();
 	passert(r >= 0);
 	/* now do anything */
+	dbg("creating event base");
 	pluto_eb = event_base_new();
 	passert(pluto_eb != NULL);
 	int s = evthread_make_base_notifiable(pluto_eb);
 	passert(s >= 0);
+	dbg("libevent initialized");
 }
 
 /* call_server listens for incoming ISAKMP packets and Whack messages,

@@ -29,6 +29,7 @@ extern void pfree(void *ptr);
 extern void *alloc_bytes(size_t size, const char *name);
 extern void *clone_bytes(const void *orig, size_t size,
 			  const char *name);
+void resize_bytes(void **ptr, size_t new_size);
 
 extern bool leak_detective;
 extern void report_leaks(void);

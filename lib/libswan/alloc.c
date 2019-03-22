@@ -219,3 +219,30 @@ void *clone_bytes(const void *orig, size_t size, const char *name)
 	memcpy(p, orig, size);
 	return p;
 }
+
+/*
+ * Re-size something on the HEAP.
+ *
+ * Unlike the more traditional realloc() this code doesn't allow a
+ * NULL pointer.  The caller, which is presumably implementing some
+ * sort of realloc() wrapper, gets to handle this.  So as to avoid any
+ * confusion, give this a different name and function signature.
+ *
+ * Efficiency isn't this code's strong point.
+ */
+
+void resize_bytes(void **ptr, size_t new_size)
+{
+	void *old = *ptr;
+	passert(old != NULL);
+	if (leak_detective) {
+		const union mhdr *p = ((const union mhdr *)old) - 1;
+		passert(p->i.magic == LEAK_MAGIC);
+		void *new = alloc_bytes_raw(new_size, p->i.name);
+		memcpy(new, old, min(p->i.size, new_size));
+		pfree(old);
+		*ptr = new;
+	} else {
+		*ptr = realloc(old, new_size);
+	}
+}
