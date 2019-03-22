@@ -1578,8 +1578,6 @@ void pfkey_scan_shunts(void)
 
 	passert(kern_interface == USE_KLIPS);
 
-	event_schedule(EVENT_SHUNT_SCAN, bare_shunt_interval, NULL);
-
 	DBG(DBG_CONTROL,
 	    DBG_log("scanning for shunt eroutes"));
 
