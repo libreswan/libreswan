@@ -157,7 +157,10 @@ enum natt_method {
 enum event_type {
 	EVENT_NULL,			/* non-event */
 
-	/* events not associated with states */
+	/*
+	 * Timer events not associated with states (aka global
+	 * timers).
+	 */
 
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
@@ -166,6 +169,10 @@ enum event_type {
 	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
 	EVENT_CHECK_CRLS,		/* check/update CRLS */
 	EVENT_REVIVE_CONNS,
+
+	GLOBAL_TIMERS_ROOF,
+
+	/* events associated with connections */
 
 	/* events associated with states */
 
