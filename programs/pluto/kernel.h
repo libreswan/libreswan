@@ -175,6 +175,7 @@ struct kernel_sa {
 	uint32_t xfrm_if_id;
 	struct sa_mark mark_set; /* config keyword mark-out */
 	uint32_t clone_id;
+	uint32_t clones;
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 };
@@ -414,6 +415,8 @@ extern bool del_spi(ipsec_spi_t spi,
 		    const struct ip_protocol *proto,
 		    const ip_address *src,
 		    const ip_address *dest,
+		    uint32_t sa_clones,
+		    uint32_t sa_clone_id,
 		    struct logger *logger);
 
 extern bool eroute_connection(const struct spd_route *sr,

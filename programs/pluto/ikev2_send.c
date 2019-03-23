@@ -231,20 +231,10 @@ bool emit_v2Npl(v2_notification_t ntype,
 bool emit_v2N_u32(v2_notification_t ntype, const uint32_t value,
 		    pb_stream *outs)
 {
-	pb_stream pl;
-
 	const uint32_t n_value = htonl(value);
 
-	if (!emit_v2Npl(ntype, outs, &pl)) {
-		return false;
-	}
-
-	if (!out_raw(&n_value, sizeof(uint32_t), &pl, "Notify data")) {
-		return false;
-	}
-
-	close_output_pbs(&pl);
-	return true;
+	/* Paul: warning, sizeof() used to determine wire format */
+	return emit_v2N_bytes(ntype, &n_value, sizeof(uint32_t), outs);
 }
 
 /* emit a v2 Notification payload, with bytes as sub-payload */

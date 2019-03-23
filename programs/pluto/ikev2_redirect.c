@@ -440,6 +440,7 @@ static void del_spi_trick(struct state *st)
 	if (del_spi(st->st_esp.our_spi, &ip_protocol_esp,
 		    &st->st_connection->temp_vars.old_gw_address,
 		    &st->st_connection->spd.this.host_addr,
+		    0, 0 /* AA_2020 check would this be out SA? */,
 		    st->st_logger)) {
 		dbg("redirect: successfully deleted lingering SPI entry");
 	} else {

@@ -464,8 +464,8 @@ extern void initiate_ondemand(const ip_endpoint *our_client,
 			      const ip_endpoint *peer_client,
 			      bool held, bool background,
 			      const chunk_t sec_label,
-			      uint32_t clone_cpu_id,
 			      const char *why,
+			      uint32_t clone_cpu_id,
 			      struct logger *logger);
 
 extern void terminate_connection(const char *name, bool quiet,
