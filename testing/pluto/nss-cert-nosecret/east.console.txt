@@ -71,35 +71,35 @@ east #
 000  
 000 List of X.509 End Certificates:
 000  
-000 End certificate "east" - SN: 0xXXXX
+000 End certificate "east" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA: has private key
 000  
-000 End certificate "road" - SN: 0xXXXX
+000 End certificate "road" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "north" - SN: 0xXXXX
+000 End certificate "north" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "hashsha1" - SN: 0xXXXX
+000 End certificate "hashsha1" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha1.testing.libreswan.org, E=user-hashsha1@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA
 000  
-000 End certificate "nic" - SN: 0xXXXX
+000 End certificate "nic" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
@@ -108,14 +108,14 @@ east #
 000  
 000 List of X.509 CA Certificates:
 000  
-000 Root CA certificate "Libreswan test CA for mainca - Libreswan" - SN: 0xXXXX
+000 Root CA certificate "Libreswan test CA for mainca - Libreswan" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   1024 bit RSA
 000  
-000 Root CA certificate "west-ec" - SN: 0xXXXX
+000 Root CA certificate "west-ec" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-ec.testing.libreswan.org, E=testing@libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-ec.testing.libreswan.org, E=testing@libreswan.org
 000   not before: TIMESTAMP

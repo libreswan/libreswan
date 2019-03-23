@@ -32,11 +32,12 @@ west #
 004 "ikev1" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  ikev1
-002 "ikev1": deleting non-instance connection
+002 "ikev1": terminating SAs using this connection
 002 "ikev1" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "ikev1" #2: ESP traffic information: in=0B out=0B
 005 "ikev1" #2:  IPCOMP traffic information: in=0B out=0B
 002 "ikev1" #1: deleting state (STATE_MAIN_I4) and sending notification
+002 "ikev1": deleting non-instance connection
 west #
  ipsec auto --up  ikev1-aggr
 002 "ikev1-aggr" #3: initiating Aggressive Mode
@@ -50,11 +51,12 @@ west #
 004 "ikev1-aggr" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  ikev1-aggr
-002 "ikev1-aggr": deleting non-instance connection
+002 "ikev1-aggr": terminating SAs using this connection
 002 "ikev1-aggr" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "ikev1-aggr" #4: ESP traffic information: in=0B out=0B
 005 "ikev1-aggr" #4:  IPCOMP traffic information: in=0B out=0B
 002 "ikev1-aggr" #3: deleting state (STATE_AGGR_I2) and sending notification
+002 "ikev1-aggr": deleting non-instance connection
 west #
  ipsec auto --up  ikev2
 002 "ikev2" #5: initiating v2 parent SA
@@ -67,10 +69,11 @@ west #
 004 "ikev2" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  ikev2
-002 "ikev2": deleting non-instance connection
+002 "ikev2": terminating SAs using this connection
 002 "ikev2" #6: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "ikev2" #6: ESP traffic information: in=0B out=0B
 002 "ikev2" #5: deleting state (STATE_PARENT_I3) and sending notification
+002 "ikev2": deleting non-instance connection
 west #
  echo done
 done

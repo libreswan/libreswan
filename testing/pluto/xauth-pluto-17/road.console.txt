@@ -12,6 +12,7 @@ road #
 initdone
 road #
  ipsec auto --add xauth-road-eastnet-psk
+002 "xauth-road-eastnet-psk": terminating SAs using this connection
 002 "xauth-road-eastnet-psk": deleting non-instance connection
 002 added connection description "xauth-road-eastnet-psk"
 road #
