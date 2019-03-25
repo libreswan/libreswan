@@ -1011,5 +1011,3 @@ kvmplutotest	ikev2-redirect-03-auth-loop			good
 kvmplutotest	ikev2-redirect-06-roadwarriors			good
 
 kvmplutotest	bad-nexthop-01		wip
-
-kvmplutotest	cagney-fixme		wip
