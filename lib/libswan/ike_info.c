@@ -105,7 +105,9 @@ static const struct ike_alg *default_ikev2_groups[] = {
 	&oakley_group_dh19.common,
 	&oakley_group_dh20.common,
 	&oakley_group_dh21.common,
+#ifdef USE_DH31
 	&oakley_group_dh31.common,
+#endif
 	NULL,
 };
 
