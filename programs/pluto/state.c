@@ -1078,9 +1078,9 @@ void delete_state(struct state *st)
 			dbg("IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
 			    st->st_serialno, c->name, newer_sa);
 		} else {
-			/* XXX: cur_state logging prefix is probably ST */
-			log_to_log("IKE delete_state for #%lu but connection '%s' is supposed to remain up; schedule EVENT_REVIVE_CONNS",
-				   st->st_serialno, c->name);
+			/* 'cur' is ST; so #SO is in log prefix */
+			log_to_log("deleting IKE SA for connection '%s' but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
+				   c->name);
 			add_revival(c);
 		}
 	}
