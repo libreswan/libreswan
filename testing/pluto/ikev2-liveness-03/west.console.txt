@@ -57,7 +57,7 @@ west #
  ipsec whack --impair send-no-delete
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": deleting non-instance connection
+002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=336B out=336B
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I3) and NOT sending notification

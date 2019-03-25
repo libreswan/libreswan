@@ -178,7 +178,7 @@ west #
 000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
 west #
  ipsec auto --delete TUNNEL-B
-002 "TUNNEL-B": deleting non-instance connection
+002 "TUNNEL-B": terminating SAs using this connection
 west #
  #TUNNEL-A and TUNNEL-C IPsec states remain. TUNNEL-B should be gone.
 west #

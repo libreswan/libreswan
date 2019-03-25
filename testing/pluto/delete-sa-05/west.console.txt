@@ -19,7 +19,7 @@ west #
  # delete instead of down so it won't re-establish due to east auto=start
 west #
  ipsec auto --delete west-east-auto
-002 "west-east-auto": deleting non-instance connection
+002 "west-east-auto": terminating SAs using this connection
 002 "west-east-auto" #3: deleting state (STATE_QUICK_R2) and sending notification
 005 "west-east-auto" #3: ESP traffic information: in=0B out=0B
 west #

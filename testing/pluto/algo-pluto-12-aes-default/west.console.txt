@@ -31,7 +31,7 @@ west #
 004 "westnet-eastnet-aes-default" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-default
-002 "westnet-eastnet-aes-default": deleting non-instance connection
+002 "westnet-eastnet-aes-default": terminating SAs using this connection
 002 "westnet-eastnet-aes-default" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-aes-default" #2: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-default" #1: deleting state (STATE_MAIN_I4) and sending notification
@@ -54,7 +54,7 @@ west #
 004 "westnet-eastnet-aes-128" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-128
-002 "westnet-eastnet-aes-128": deleting non-instance connection
+002 "westnet-eastnet-aes-128": terminating SAs using this connection
 002 "westnet-eastnet-aes-128" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-aes-128" #4: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-128" #3: deleting state (STATE_MAIN_I4) and sending notification
@@ -77,7 +77,7 @@ west #
 004 "westnet-eastnet-aes-256" #6: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-256
-002 "westnet-eastnet-aes-256": deleting non-instance connection
+002 "westnet-eastnet-aes-256": terminating SAs using this connection
 002 "westnet-eastnet-aes-256" #6: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-aes-256" #6: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-256" #5: deleting state (STATE_MAIN_I4) and sending notification
@@ -100,7 +100,7 @@ west #
 004 "westnet-eastnet-aes-mix-1" #8: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-1
-002 "westnet-eastnet-aes-mix-1": deleting non-instance connection
+002 "westnet-eastnet-aes-mix-1": terminating SAs using this connection
 002 "westnet-eastnet-aes-mix-1" #8: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-aes-mix-1" #8: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-mix-1" #7: deleting state (STATE_MAIN_I4) and sending notification
@@ -123,7 +123,7 @@ west #
 004 "westnet-eastnet-aes-mix-2" #10: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-2
-002 "westnet-eastnet-aes-mix-2": deleting non-instance connection
+002 "westnet-eastnet-aes-mix-2": terminating SAs using this connection
 002 "westnet-eastnet-aes-mix-2" #10: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-aes-mix-2" #10: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-mix-2" #9: deleting state (STATE_MAIN_I4) and sending notification

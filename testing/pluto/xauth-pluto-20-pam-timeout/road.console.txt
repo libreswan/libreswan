@@ -39,7 +39,7 @@ road #
  # next one should succed and ping pass throguh
 road #
  ipsec auto --add xauth-road-eastnet
-002 "xauth-road-eastnet": deleting non-instance connection
+002 "xauth-road-eastnet": terminating SAs using this connection
 002 added connection description "xauth-road-eastnet"
 road #
  ipsec whack --xauthname 'gooduser' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
