@@ -285,8 +285,6 @@ void delete_connection(struct connection *c, bool relations)
 		c->kind = CK_GOING_AWAY;
 		if (c->pool != NULL)
 			rel_lease_addr(c);
-	} else {
-		libreswan_log("deleting non-instance connection");
 	}
 	release_connection(c, relations); /* won't delete c */
 
