@@ -80,7 +80,7 @@ west #
 002 "westnet-eastnet-ipv4-psk-ppk" #1: deleting state (STATE_PARENT_I3) and sending notification
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk-ppk
-002 "westnet-eastnet-ipv4-psk-ppk": deleting non-instance connection
+002 "westnet-eastnet-ipv4-psk-ppk": terminating SAs using this connection
 west #
  echo done
 done

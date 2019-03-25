@@ -54,7 +54,7 @@ road #
  ipsec whack --impair send-no-delete
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
-002 "westnet-eastnet-ipv4-psk-ikev1": deleting non-instance connection
+002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting state (STATE_QUICK_I2) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev1" #2: ESP traffic information: in=168B out=168B XAUTHuser=use3
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: down-client output: restoring resolvconf
@@ -86,7 +86,7 @@ road #
 004 "westnet-eastnet-ipv4-psk-ikev1" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
-002 "westnet-eastnet-ipv4-psk-ikev1": deleting non-instance connection
+002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev1" #4: deleting state (STATE_QUICK_I2) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev1" #4: ESP traffic information: in=0B out=0B XAUTHuser=use3
 002 "westnet-eastnet-ipv4-psk-ikev1" #4: down-client output: restoring resolvconf
@@ -119,7 +119,7 @@ road #
 004 "westnet-eastnet-ipv4-psk-ikev1" #6: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
-002 "westnet-eastnet-ipv4-psk-ikev1": deleting non-instance connection
+002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev1" #6: deleting state (STATE_QUICK_I2) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev1" #6: ESP traffic information: in=0B out=0B XAUTHuser=use3
 002 "westnet-eastnet-ipv4-psk-ikev1" #6: down-client output: restoring resolvconf

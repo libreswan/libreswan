@@ -84,7 +84,7 @@ west #
  # ensure no error on delete
 west #
  ipsec auto --delete westnet-eastnet-vti
-002 "westnet-eastnet-vti": deleting non-instance connection
+002 "westnet-eastnet-vti": terminating SAs using this connection
 002 "westnet-eastnet-vti" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-vti" #2: ESP traffic information: in=336B out=336B
 002 "westnet-eastnet-vti" #1: deleting state (STATE_MAIN_I4) and sending notification

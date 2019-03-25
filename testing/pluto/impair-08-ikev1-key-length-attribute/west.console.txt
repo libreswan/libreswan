@@ -30,7 +30,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "aes128" #2: ESP traffic information: in=84B out=84B
 002 "aes128" #1: deleting state (STATE_MAIN_I4) and sending notification
-002 "aes128": deleting non-instance connection
+002 "aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -138,7 +138,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128" #10: deleting state (STATE_QUICK_I2) and sending notification
 005 "aes128" #10: ESP traffic information: in=84B out=84B
 002 "aes128" #9: deleting state (STATE_MAIN_I4) and sending notification
-002 "aes128": deleting non-instance connection
+002 "aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -189,7 +189,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128" #14: deleting state (STATE_QUICK_I2) and sending notification
 005 "aes128" #14: ESP traffic information: in=84B out=84B
 002 "aes128" #13: deleting state (STATE_MAIN_I4) and sending notification
-002 "aes128": deleting non-instance connection
+002 "aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -238,7 +238,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des" #18: deleting state (STATE_QUICK_I2) and sending notification
 005 "3des" #18: ESP traffic information: in=84B out=84B
 002 "3des" #17: deleting state (STATE_MAIN_I4) and sending notification
-002 "3des": deleting non-instance connection
+002 "3des": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -283,7 +283,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des" #21: deleting state (STATE_QUICK_I2) and sending notification
 005 "3des" #21: ESP traffic information: in=84B out=84B
 002 "3des" #20: deleting state (STATE_MAIN_I4) and sending notification
-002 "3des": deleting non-instance connection
+002 "3des": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
