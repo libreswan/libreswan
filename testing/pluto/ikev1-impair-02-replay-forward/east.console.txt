@@ -1,0 +1,108 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec whack --impair replay-forward
+east #
+ ipsec auto --add westnet-eastnet
+002 added connection description "westnet-eastnet"
+east #
+ echo "initdone"
+initdone
+east #
+ ../../pluto/bin/ipsec-look.sh
+east NOW
+XFRM state:
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+XFRM policy:
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1042407 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ sed -n -e '/IMPAIR: start processing replay forward/,/IMPAIR: stop processing replay forward/ { /^[^|]/ p }' /tmp/pluto.log
+IMPAIR: start processing replay forward: packet 1 of 1 (792 bytes)
+"westnet-eastnet" #1: responding to Main Mode
+"westnet-eastnet" #1: STATE_MAIN_R1: sent MR1, expecting MI2
+IMPAIR: stop processing replay forward: packet 1 of 1
+IMPAIR: start processing replay forward: packet 1 of 2 (792 bytes)
+"westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R1
+IMPAIR: stop processing replay forward: packet 1 of 2
+IMPAIR: start processing replay forward: packet 2 of 2 (396 bytes)
+IMPAIR: stop processing replay forward: packet 2 of 2
+IMPAIR: start processing replay forward: packet 1 of 3 (792 bytes)
+"westnet-eastnet" #1: discarding initial packet; already STATE_MAIN_R2
+IMPAIR: stop processing replay forward: packet 1 of 3
+IMPAIR: start processing replay forward: packet 2 of 3 (396 bytes)
+IMPAIR: stop processing replay forward: packet 2 of 3
+IMPAIR: start processing replay forward: packet 3 of 3 (332 bytes)
+"westnet-eastnet" #1: Peer ID is ID_FQDN: '@west'
+"westnet-eastnet" #1: Authenticated using RSA
+"westnet-eastnet" #1: STATE_MAIN_R3: sent MR3, ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+IMPAIR: stop processing replay forward: packet 3 of 3
+IMPAIR: start processing replay forward: packet 1 of 4 (792 bytes)
+"westnet-eastnet" #1: discarding initial packet; already STATE_MAIN_R3
+IMPAIR: stop processing replay forward: packet 1 of 4
+IMPAIR: start processing replay forward: packet 2 of 4 (396 bytes)
+"westnet-eastnet" #1: packet rejected: should have been encrypted
+"westnet-eastnet" #1: sending notification INVALID_FLAGS to 192.1.2.45:500
+IMPAIR: stop processing replay forward: packet 2 of 4
+IMPAIR: start processing replay forward: packet 3 of 4 (332 bytes)
+"westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
+IMPAIR: stop processing replay forward: packet 3 of 4
+IMPAIR: start processing replay forward: packet 4 of 4 (476 bytes)
+"westnet-eastnet" #1: the peer proposed: 192.0.2.0/24:0/0 -> 192.0.1.0/24:0/0
+IMPAIR: stop processing replay forward: packet 4 of 4
+IMPAIR: start processing replay forward: packet 1 of 5 (792 bytes)
+"westnet-eastnet" #1: discarding initial packet; already STATE_MAIN_R3
+IMPAIR: stop processing replay forward: packet 1 of 5
+IMPAIR: start processing replay forward: packet 2 of 5 (396 bytes)
+"westnet-eastnet" #1: packet rejected: should have been encrypted
+"westnet-eastnet" #1: sending notification INVALID_FLAGS to 192.1.2.45:500
+IMPAIR: stop processing replay forward: packet 2 of 5
+IMPAIR: start processing replay forward: packet 3 of 5 (332 bytes)
+"westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
+IMPAIR: stop processing replay forward: packet 3 of 5
+IMPAIR: start processing replay forward: packet 4 of 5 (476 bytes)
+IMPAIR: stop processing replay forward: packet 4 of 5
+IMPAIR: start processing replay forward: packet 5 of 5 (76 bytes)
+"westnet-eastnet" #2: STATE_QUICK_R2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+IMPAIR: stop processing replay forward: packet 5 of 5
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
