@@ -527,9 +527,8 @@ static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
 				  void *arg)
 {
 	struct now_event *ne = (struct now_event *)arg;
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("executing now-event %s for %lu",
-		    ne->ne_name, ne->ne_serialno));
+	dbg("start executing now-event %s for #%lu",
+	    ne->ne_name, ne->ne_serialno);
 
 	/*
 	 * At one point, .ne_event was was being set after the event
@@ -550,7 +549,9 @@ static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
 		pop_cur_state(old_state);
 	}
 	passert(ne->ne_event != NULL);
-	event_del(ne->ne_event);
+	dbg("stop executing now-event %s for #%lu",
+	    ne->ne_name, ne->ne_serialno);
+	event_free(ne->ne_event);
 	pfree(ne);
 }
 
