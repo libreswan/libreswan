@@ -1,0 +1,11 @@
+IKEv1 pluto test with lots of duplicate packets
+
+When a machine is under load - taking time to get to each packet - the
+initator will timeout out and start sending duplicates for each
+request.
+
+This simulates the senario by overwhelming east's incoming queue with
+duplicates of all packets received.  The test then checks that the
+duplicates are detected and either replied-to or discarded.  Most
+important is the responder detecting duplicate initial requests (and
+not creating new states like was happening).

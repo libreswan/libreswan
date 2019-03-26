@@ -35,23 +35,23 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
  sed -n -e '/IMPAIR: start processing duplicate packet/,/IMPAIR: stop processing duplicate packet/ { /^[^|]/ p }' /tmp/pluto.log
-IMPAIR: start processing duplicate packet (792 bytes)
-"westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R1
+IMPAIR: start processing duplicate packet (828 bytes)
+"westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
+"westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_PARENT_R0
 IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (396 bytes)
-"westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_MAIN_R1
+IMPAIR: start processing duplicate packet (539 bytes)
+"westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (332 bytes)
-"westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
+IMPAIR: start processing duplicate packet (141 bytes)
+"westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
+"westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_PARENT_R1
 IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (476 bytes)
-"westnet-eastnet" #2: discarding packet received during asynchronous work (DNS or crypto) in STATE_QUICK_R0
+IMPAIR: start processing duplicate packet (69 bytes)
+"westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
+"westnet-eastnet" #1: received duplicate INFORMATIONAL message request (Message ID 2); retransmitting response
 IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (76 bytes)
-IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (92 bytes)
-IMPAIR: stop processing duplicate packet
-IMPAIR: start processing duplicate packet (92 bytes)
+IMPAIR: start processing duplicate packet (65 bytes)
+packet from 192.1.2.45:500: INFORMATIONAL message request has no corresponding IKE SA
 IMPAIR: stop processing duplicate packet
 east #
 east #

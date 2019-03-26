@@ -1394,9 +1394,9 @@ static bool processed_retransmit(struct state *st,
 	}
 
 	/*
-	 * XXX: IKEv1 saves the last received packet and compares.
-	 * Would doing that be doing that (and say only saving the
-	 * first fragment) be safer?
+	 * XXX: For IKEv2, is something similar to IKEv1 - save the
+	 * last received message and then compare that against the
+	 * duplicate - possible and safer?
 	 */
 	if (md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
 		struct ikev2_skf skf;
@@ -1404,25 +1404,25 @@ static bool processed_retransmit(struct state *st,
 		if (!in_struct(&skf, &ikev2_skf_desc, &in_pbs, NULL)) {
 			return true;
 		}
-		bool retransmit = skf.isaskf_number == 1;
-		LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
-			lswlog_retransmit_prefix(buf, st);
-			lswlogf(buf, "%s message ID %u exchange %s fragment %u",
-				retransmit ? "retransmitting response for" : "ignoring retransmit of",
-				st->st_msgid_lastrecv,
-				enum_name(&ikev2_exchange_names, ix),
-				skf.isaskf_number);
-		}
-		if (retransmit) {
-			send_recorded_v2_ike_msg(st, "ikev2-responder-retransmt (fragment 0)");
+		if (skf.isaskf_number == 1) {
+			libreswan_log("received duplicate %s message request (Message ID %u, fragment %u); retransmitting response",
+				      enum_short_name(&ikev2_exchange_names, ix),
+				      st->st_msgid_lastrecv,
+				      skf.isaskf_number);
+			send_recorded_v2_ike_msg(st, "ikev2-responder-retransmt (fragment 1)");
+		} else {
+			LSWDBGP(DBG_BASE, buf) {
+				lswlog_retransmit_prefix(buf, st);
+				lswlogf(buf, "received duplicate %s message request (Message ID %u, fragment %u); discarded as not fragment 1",
+					enum_short_name(&ikev2_exchange_names, ix),
+					st->st_msgid_lastrecv,
+					skf.isaskf_number);
+			}
 		}
 	} else {
-		LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
-			lswlog_retransmit_prefix(buf, st);
-			lswlogf(buf, "retransmit response for message ID: %u exchange %s",
-				st->st_msgid_lastrecv,
-				enum_name(&ikev2_exchange_names, ix));
-		}
+		libreswan_log("received duplicate %s message request (Message ID %u); retransmitting response",
+			      enum_short_name(&ikev2_exchange_names, ix),
+			      st->st_msgid_lastrecv);
 		send_recorded_v2_ike_msg(st, "ikev2-responder-retransmit");
 	}
 
