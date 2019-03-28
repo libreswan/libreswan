@@ -1032,6 +1032,27 @@ static struct best_score score_ends_iprange(enum fit fit,
 
 	return best_score;
 }
+struct connection * next_free_clone_slot(struct connection *r)
+{
+	uint32_t i;
+	struct connection *c;
+	char tmpconnname[256];
+	// AA_2020 works only alias explosion
+
+	for (i = 0; i <= (r->sa_clones); i++) {
+		snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", r->connalias, i);
+		DBG_log("AA_2020 %s %d conn_by_name('%s')  %u/%u\n", __func__, __LINE__, tmpconnname, i, r->sa_clones);
+		c = conn_by_name(tmpconnname, TRUE);
+		if (c->newest_ipsec_sa == SOS_NOBODY) {
+			DBG_log("AA_2020 %s %d use %s as clone conn %u/%u\n", __func__, __LINE__, r->name, i, r->sa_clones);
+			return c;
+		} else {
+			DBG_log("AA_2020 %s %d %s  %u/%u ignored\n", __func__, __LINE__, r->name, i, r->sa_clones);
+		}
+	}
+	libreswan_log("no free clone slot for connection %s clones %u", r->connalias, r->sa_clones);
+	return NULL;
+}
 
 /*
  * find the best connection and, if it is AUTH exchange, create the
@@ -1414,6 +1435,20 @@ bool v2_process_ts_request(struct child_sa *child,
 	if (best_spd_route == NULL) {
 		dbg("giving up");
 		return false;
+	}
+
+	if (c->sa_clones > 0) {
+		struct connection *free_clone = next_free_clone_slot(c);
+		if (free_clone == NULL)  {
+			libreswan_log("AA_2020 %s %d no free clone connection for clonse = %u", __func__, __LINE__, c->sa_clones);
+			return false;
+		} else {
+			dbg("AA_2020 %s %d switch connection from %s to %s",
+					__func__, __LINE__, c->name, free_clone->name);
+			md->st->st_connection = free_clone;
+			c = free_clone;
+			best_connection = free_clone;
+		}
 	}
 
 	/*
