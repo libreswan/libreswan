@@ -2114,6 +2114,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->src.encap_port = encap_sport;
 		said_next->dst.encap_port = encap_dport;
 		said_next->encap_type = encap_type;
+		DBG_log("AA_2020 %s %d Passed reqid %u",  __func__, __LINE__, said_next->reqid);
+
 		said_next->natt_oa = &natt_oa;
 		said_next->text_said = text_esp;
 
@@ -2291,6 +2293,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			proto_info[i].mode =
 				st->st_esp.attrs.mode;
 			proto_info[i].reqid = reqid_esp(c->spd.reqid);
+			DBG_log("AA_2020 %s %d Passed %d reqid %u",  __func__, __LINE__, i,  proto_info[i].reqid);
 			i++;
 		}
 
