@@ -536,8 +536,10 @@ static struct state *new_state(enum ike_version ike_version,
 
 struct state *new_v1_istate(void)
 {
-	return new_state(IKEv1, &state_undefined, ike_initiator_spi(),
-			 zero_ike_spi);
+	struct state *st = new_state(IKEv1, &state_undefined, ike_initiator_spi(),
+				     zero_ike_spi);
+	pstat_sa_started(st, IKE_SA);
+	return st;
 }
 
 struct state *new_v1_rstate(struct msg_digest *md)
@@ -546,6 +548,7 @@ struct state *new_v1_rstate(struct msg_digest *md)
 				     md->hdr.isa_ike_spis.initiator,
 				     ike_responder_spi(&md->sender));
 	update_ike_endpoints(st, md);
+	pstat_sa_started(st, IKE_SA);
 	return st;
 }
 
@@ -555,6 +558,7 @@ struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 {
 	struct state *st = new_state(IKEv2, &state_undefined,
 				     ike_initiator_spi, ike_responder_spi);
+	pstat_sa_started(st, IKE_SA);
 	st->st_sa_role = sa_role;
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
@@ -850,24 +854,7 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 void delete_state(struct state *st)
 {
 	struct connection *const c = st->st_connection;
-
-	/*
-	 * statistics for IKE SA failures. We cannot do the same for IPsec SA
-	 * because those failures could happen before we cloned a state
-	 */
-	if (IS_IKE_SA(st)) {
-		if (!IS_IKE_SA_ESTABLISHED(st) && st->st_state != STATE_IKESA_DEL) {
-			if (st->st_ike_version == IKEv2)
-				pstats_ikev2_fail++;
-			else
-				pstats_ikev1_fail++;
-		} else {
-			if (st->st_ike_version == IKEv2)
-				pstats_ikev2_completed++;
-			else
-				pstats_ikev1_completed++;
-		}
-	}
+	pstat_sa_deleted(st);
 
 	/*
 	 * Even though code tries to always track CPU time, only log
@@ -1489,6 +1476,7 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type,
 	nst = new_state(st->st_ike_version, fs,
 			st->st_ike_spis.initiator,
 			st->st_ike_spis.responder);
+	pstat_sa_started(nst, sa_type);
 
 	DBG(DBG_CONTROL,
 		DBG_log("duplicating state object #%lu \"%s\"%s as #%lu for %s",

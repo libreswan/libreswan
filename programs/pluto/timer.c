@@ -63,6 +63,7 @@
 #include "pluto_sd.h"
 #include "retry.h"
 #include "fetch.h"		/* for check_crls() */
+#include "pluto_stats.h"
 
 /*
  * This file has the event handling routines. Events are
@@ -480,6 +481,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			/* not very interesting: failed IKE attempt */
 			dbg("un-established partial CHILD SA timeout (%s)",
 			    type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout");
+			pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
 		} else {
 			libreswan_log("%s %s (%s)", satype,
 				      type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
@@ -546,6 +548,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		libreswan_log("deleting incomplete state after "PRI_DELTATIME" seconds",
 			      pri_deltatime(timeout));
 		/*
+		 * If no other reason has been given then this is a
+		 * timeout.
+		 */
+		pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
+		/*
 		 * XXX: this is scary overkill - delete_state() likes
 		 * to resurect things and/or send messages.  What's
 		 * needed is a lower-level discard_state() that just
@@ -570,6 +577,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		DBG(DBG_LIFECYCLE,
 			DBG_log("event crypto_failed on state #%lu, aborting",
 				st->st_serialno));
+		pstat_sa_failed(st, REASON_CRYPTO_TIMEOUT);
 		delete_state(st);
 		/* note: no md->st to clear */
 		break;

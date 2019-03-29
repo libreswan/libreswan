@@ -2782,9 +2782,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			void (*log_details)(struct lswlog *buf, struct state *st);
 
 			if (IS_IPSEC_SA_ESTABLISHED(st)) {
+				pstat_sa_established(st);
 				log_details = lswlog_child_sa_established;
 				w = RC_SUCCESS; /* log our success */
 			} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+				pstat_sa_established(st);
 				log_details = lswlog_ike_sa_established;
 				w = RC_SUCCESS; /* log our success */
 			} else {

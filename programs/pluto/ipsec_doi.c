@@ -566,29 +566,12 @@ void send_delete(struct state *st)
 	}
 }
 
-static void pstats_sa(bool nat, bool tfc, bool esn)
-{
-	if (nat)
-		pstats_ipsec_encap_yes++;
-	else
-		pstats_ipsec_encap_no++;
-	if (esn)
-		pstats_ipsec_esn++;
-	if (tfc)
-		pstats_ipsec_tfc++;
-}
-
 void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 {
 	struct connection *const c = st->st_connection;
 	const char *ini = " {";
 
 	lswlogs(buf, c->policy & POLICY_TUNNEL ? " tunnel mode" : " transport mode");
-
-	/* don't count IKEv1 half ipsec sa */
-	if (st->st_state == STATE_QUICK_R1) {
-		pstats_ipsec_sa++;
-	}
 
 	if (st->st_esp.present) {
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
@@ -624,20 +607,9 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		}
 
 		ini = " ";
-
-		pstats_ipsec_esp++;
-		pstatsv(ipsec_encrypt, (st->st_ike_version == IKEv2),
-			st->st_esp.attrs.transattrs.ta_encrypt->common.id[IKEv1_ESP_ID],
-			st->st_esp.attrs.transattrs.ta_encrypt->common.id[IKEv2_ALG_ID]);
-		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
-			st->st_esp.attrs.transattrs.ta_integ->common.id[IKEv1_ESP_ID],
-			st->st_esp.attrs.transattrs.ta_integ->common.id[IKEv2_ALG_ID]);
-		pstats_sa(nat, tfc, esn);
 	}
 
 	if (st->st_ah.present) {
-		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
-
 		lswlogf(buf, "%sAH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
 			ini,
 			st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
@@ -646,12 +618,6 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 			st->st_ah.attrs.transattrs.ta_integ->common.fqn);
 
 		ini = " ";
-
-		pstats_ipsec_ah++;
-		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
-			st->st_ah.attrs.transattrs.ta_integ->common.id[IKEv1_ESP_ID],
-			st->st_ah.attrs.transattrs.ta_integ->common.id[IKEv2_ALG_ID]);
-		pstats_sa(FALSE, FALSE, esn);
 	}
 
 	if (st->st_ipcomp.present) {
@@ -661,8 +627,6 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 			ntohl(st->st_ipcomp.our_spi));
 
 		ini = " ";
-
-		pstats_ipsec_ipcomp++;
 	}
 
 	lswlogs(buf, ini);
@@ -741,18 +705,4 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 	}
 
 	lswlogf(buf, " group=%s}", st->st_oakley.ta_dh->common.fqn);
-
-	/* keep IKE SA statistics */
-	if (st->st_ike_version == IKEv2) {
-		pstats_ikev2_sa++;
-		pstats(ikev2_encr, st->st_oakley.ta_encrypt->common.id[IKEv2_ALG_ID]);
-		if (st->st_oakley.ta_integ != NULL)
-			pstats(ikev2_integ, st->st_oakley.ta_integ->common.id[IKEv2_ALG_ID]);
-		pstats(ikev2_groups, st->st_oakley.ta_dh->group);
-	} else {
-		pstats_ikev1_sa++;
-		pstats(ikev1_encr, st->st_oakley.ta_encrypt->common.ikev1_oakley_id);
-		pstats(ikev1_integ, st->st_oakley.ta_prf->common.id[IKEv1_OAKLEY_ID]);
-		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
-	}
 }

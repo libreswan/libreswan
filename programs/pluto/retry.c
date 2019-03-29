@@ -33,6 +33,7 @@
 #include "demux.h"	/* for state_transition_fn used by ipsec_doi.h */
 #include "ipsec_doi.h"
 #include "ikev2.h"	/* for need_this_intiator() */
+#include "pluto_stats.h"
 
 /* Time to retransmit, or give up.
  *
@@ -121,6 +122,7 @@ void retransmit_v1_msg(struct state *st)
 	}
 
 	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
+	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
 	delete_state(st);
 	/* note: no md->st to clear */
 }
@@ -157,6 +159,7 @@ void retransmit_v2_msg(struct state *st)
 		});
 
 	if (need_this_intiator(st)) {
+		pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
 		delete_state(st);
 		return;
 	}
@@ -216,6 +219,7 @@ void retransmit_v2_msg(struct state *st)
 	if (pst != st) {
 		set_cur_state(pst);  /* now we are on pst */
 		if (pst->st_state == STATE_PARENT_I2) {
+			pstat_sa_failed(pst, REASON_TOO_MANY_RETRANSMITS);
 			delete_state(pst);
 		} else {
 			release_fragments(st);
@@ -230,6 +234,7 @@ void retransmit_v2_msg(struct state *st)
 	 * our CREATE_CHILD_SA request. But our code has moved from parent to child
 	 */
 
+	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
 	delete_state(st);
 
 	/* note: no md->st to clear */

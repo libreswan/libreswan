@@ -239,6 +239,7 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	c->newest_isakmp_sa = ike->sa.st_serialno;
 	v2_schedule_replace_event(&ike->sa);
 	ike->sa.st_viable_parent = TRUE;
+	pstat_sa_established(&ike->sa);
 }
 
 static struct msg_digest *fake_md(struct state *st)
@@ -1495,6 +1496,15 @@ stf_status ikev2_auth_initiator_process_failure_notification(struct state *st,
 	 */
 	libreswan_log("IKE SA authentication request rejected by peer: %s",
 		      enum_short_name(&ikev2_notify_names, n));
+
+	/*
+	 * XXX: ST here should be the IKE SA.  The state machine,
+	 * however, directs the AUTH response to the CHILD!  Find the
+	 * IKE SA and mark it as failing.
+	 */
+	struct ike_sa *ike = ike_sa(st);
+	pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+
 	/*
 	 * 2.21.2.  Error Handling in IKE_AUTH
 	 *
@@ -2093,12 +2103,14 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	struct connection *const pc = pst->st_connection;	/* parent connection */
 	struct ppk_id_payload ppk_id_p;
 
-	if (!finish_dh_v2(pst, r, FALSE))
+	if (!finish_dh_v2(pst, r, FALSE)) {
 		/*
 		 * XXX: this is the initiator so returning a
 		 * notification is kind of useless.
 		 */
+		pstat_sa_failed(pst, REASON_CRYPTO_FAILED);
 		return STF_FAIL + v2N_INVALID_SYNTAX; /* STF_FATAL? */
+	}
 
 	/*
 	 * If we and responder are willing to use a PPK,
@@ -2709,6 +2721,7 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 	/* this call might update connection in md->st */
 	if (!ikev2_decode_peer_id(md)) {
 		event_force(EVENT_SA_EXPIRE, st);
+		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
@@ -2901,10 +2914,12 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				&pbs_no_ppk_auth,
 				st->st_connection->spd.that.authby, "no-PPK-auth"))
 		{
-			send_v2N_response_from_state(ike_sa(st), md,
+			struct ike_sa *ike = ike_sa(st);
+			send_v2N_response_from_state(ike, md,
 						     v2N_AUTHENTICATION_FAILED,
 						     NULL/*no data*/);
 			freeanychunk(null_auth);	/* ??? necessary? */
+			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
 		DBG(DBG_CONTROL, DBG_log("NO_PPK_AUTH verified"));
@@ -2927,10 +2942,12 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 					ORIGINAL_RESPONDER, idhash_in,
 					&pbs_null_auth, AUTH_NULL, "NULL_auth from Notify Payload"))
 			{
-				send_v2N_response_from_state(ike_sa(st), md,
+				struct ike_sa *ike = ike_sa(st);
+				send_v2N_response_from_state(ike, md,
 							     v2N_AUTHENTICATION_FAILED,
 							     NULL/*no data*/);
 				freeanychunk(null_auth);
+				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 				return STF_FATAL;
 			}
 			DBG(DBG_CONTROL, DBG_log("NULL_AUTH verified"));
@@ -2940,10 +2957,12 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 					st, ORIGINAL_RESPONDER, idhash_in,
 					&md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 					st->st_connection->spd.that.authby, "I2 Auth Payload")) {
-				send_v2N_response_from_state(ike_sa(st), md,
+				struct ike_sa *ike = ike_sa(st);
+				send_v2N_response_from_state(ike, md,
 							     v2N_AUTHENTICATION_FAILED,
 							     NULL/*no data*/);
 				freeanychunk(null_auth);
+				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 				return STF_FATAL;
 			}
 		}
@@ -3617,12 +3636,14 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 		 * initiator.
 		 */
 		libreswan_log("X509: CERT payload bogus or revoked");
+		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
 	/* XXX this call might change connection in md->st! */
 	if (!ikev2_decode_peer_id(md)) {
 		event_force(EVENT_SA_EXPIRE, st);
+		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
@@ -3639,9 +3660,11 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	} else {
 		if (LIN(POLICY_PPK_INSIST, c->policy)) {
 			loglog(RC_LOG_SERIOUS, "Failed to receive PPK confirmation and connection has ppk=insist");
-			send_v2N_response_from_state(ike_sa(st), md,
+			struct ike_sa *ike = ike_sa(st);
+			send_v2N_response_from_state(ike, md,
 						     v2N_AUTHENTICATION_FAILED,
 						     NULL/*no data*/);
+			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
 	}

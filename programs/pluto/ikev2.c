@@ -127,6 +127,17 @@ enum smf2_flags {
 	 * filling up the log file.
 	 */
 	SMF2_SUPPRESS_SUCCESS_LOG = LELEM(8),
+
+	/*
+	 * If this state transition is successful then the SA is
+	 * encrypted and authenticated.
+	 *
+	 * XXX: The flag currently works for CHILD SAs but not IKE SAs
+	 * (but it should).  This is because IKE SAs currently bypass
+	 * the complete state transition code when establishing.  See
+	 * also danger note below.
+	 */
+	SMF2_ESTABLISHED = LELEM(9),
 };
 
 /*
@@ -387,7 +398,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_V2_IPSEC_I,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_ESTABLISHED,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT)|P(CP),
@@ -447,7 +458,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_V2_IPSEC_R,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_ESTABLISHED,
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
@@ -498,7 +509,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Process CREATE_CHILD_SA IPsec SA Response",
 	  .state      = STATE_V2_CREATE_I,
 	  .next_state = STATE_V2_IPSEC_I,
-	  .flags      = SMF2_MSG_R_SET,
+	  .flags      = SMF2_MSG_R_SET | SMF2_ESTABLISHED,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N),
@@ -509,7 +520,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
 	  .state      = STATE_V2_CREATE_R,
 	  .next_state = STATE_V2_IPSEC_R,
-	  .flags      = SMF2_MSG_R_CLEAR,
+	  .flags      = SMF2_MSG_R_CLEAR | SMF2_ESTABLISHED,
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
@@ -2699,8 +2710,6 @@ void log_ipsec_sa_established(const char *m, const struct state *st)
 			b->startport,
 			b->endport,
 			b->ipprotoid);
-
-	pstats_ipsec_sa++;
 }
 
 static void ikev2_child_emancipate(struct msg_digest *md)
@@ -2794,6 +2803,17 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	 */
 	passert(st->st_state >= STATE_IKEv2_FLOOR);
 	passert(st->st_state <  STATE_IKEv2_ROOF);
+
+	/*
+	 * Count successf transition into an established state.
+	 *
+	 * Because IKE SAs and CHILD SAs share some state transitions
+	 * this only works for CHILD SAs.  IKE SAs are accounted for
+	 * separately.
+	 */
+	if (svm->flags & SMF2_ESTABLISHED) {
+		pstat_sa_established(st);
+	}
 
 	void (*log_details)(struct lswlog *buf, struct state *st);
 	if (IS_CHILD_SA_ESTABLISHED(st)) {

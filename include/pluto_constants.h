@@ -29,6 +29,8 @@
 # endif
 
 enum ike_version {
+	/* 0 reserved */
+#define IKE_VERSION_FLOOR 1
 	IKEv1 = 1,
 	IKEv2 = 2,
 #define IKE_VERSION_ROOF 3

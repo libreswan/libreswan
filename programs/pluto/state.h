@@ -243,6 +243,21 @@ struct msg_digest *unsuspend_md(struct state *st);
 	}
 
 /*
+ * For auditing, why an SA is being deleted.
+ */
+enum delete_reason {
+#define DELETE_REASON_FLOOR 0
+	REASON_UNKNOWN = DELETE_REASON_FLOOR, /* aka other */
+	REASON_CRYPTO_TIMEOUT,
+	REASON_EXCHANGE_TIMEOUT,
+	REASON_TOO_MANY_RETRANSMITS,
+	REASON_CRYPTO_FAILED,
+	REASON_AUTH_FAILED,
+	REASON_COMPLETED,
+#define DELETE_REASON_ROOF (REASON_COMPLETED + 1)
+};
+
+/*
  * For auditing, different categories of a state.  Of most interest is
  * half-open states which suggest libreswan being under attack.
  *
@@ -533,6 +548,33 @@ struct state {
 #define st_state_name st_finite_state->fs_name
 #define st_state_story st_finite_state->fs_story
 	const struct finite_state *st_finite_state;	/* Current FSM state */
+
+	/*
+	 * Account for why an SA is is started, established, and
+	 * finished (deleted).
+	 *
+	 * SA_TYPE indicates the type of SA (IKE or CHILD) that will
+	 * eventually be established.  For instance, when re-keying an
+	 * IKE SA where the state is treated like a child until it is
+	 * emancipated (it has a parent), SA_TYPE=IKE_SA.  While it
+	 * might technically be possible to extract this information
+	 * from enum state_kind this is far more robust.
+	 *
+	 * DELETE_REASON, if the SA establishes it contains
+	 * REASON_COMPLETED, else it is explictly set to failure
+	 * indication (or defaults to REASON_UNKNOWN).  Note that the
+	 * information can't be reliably extracted from enum
+	 * state_kind in delete_state() because, by that point, state
+	 * may have further transitioned to STATE_IKESA_DEL etc.
+	 * Also, note that the information can't be reliably set in
+	 * complete*transition() as, at least in the case of IKEv2,
+	 * there can be two states involved where one success and one
+	 * fails.
+	 */
+	struct {
+		enum sa_type sa_type;
+		enum delete_reason delete_reason;
+	} st_pstats;
 
 	retransmit_t st_retransmit;	/* retransmit counters; opaque */
 	unsigned long st_try;		/* Number of times rekeying attempted.

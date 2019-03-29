@@ -2,6 +2,7 @@
  * IKE and IPsec Statistics for the pluto daemon
  *
  * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2019 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,6 +37,7 @@
 #include "whack.h"              /* for RC_LOG_SERIOUS */
 #include "ike_alg.h"
 #include "pluto_stats.h"
+#include "nat_traversal.h"
 
 unsigned long pstats_ipsec_sa;
 unsigned long pstats_ikev1_sa;
@@ -104,6 +106,210 @@ PLUTO_STAT(ikev2_sent_notifies_s, &ikev2_notify_names,
 PLUTO_STAT(ikev2_recv_notifies_s, &ikev2_notify_names,
 	   "ikev2.recv.notifies.status",
 	   v2N_STATUS_FLOOR, v2N_STATUS_PSTATS_ROOF);
+
+/*
+ * SAs.
+ *
+ * Re-keying is counted as a second SA.  States are counted:
+ *
+ *  started->failed
+ *  started->established->completed
+ */
+
+static unsigned long pstats_sa_started[IKE_VERSION_ROOF][SA_TYPE_ROOF];
+static unsigned long pstats_sa_finished[IKE_VERSION_ROOF][SA_TYPE_ROOF][DELETE_REASON_ROOF];
+static unsigned long pstats_sa_established[IKE_VERSION_ROOF][SA_TYPE_ROOF];
+
+static const char *pstats_sa_names[IKE_VERSION_ROOF][SA_TYPE_ROOF] = {
+	[IKEv1] = {
+		[IKE_SA] = "ikev1.isakmp",
+		[IPSEC_SA] = "ikev1.ipsec",
+	},
+	[IKEv2] = {
+		[IKE_SA] = "ikev2.ike",
+		[IPSEC_SA] = "ikev2.child",
+	},
+};
+
+static const char *pstats_sa_reasons[DELETE_REASON_ROOF] = {
+	[REASON_UNKNOWN] = "other",
+	[REASON_COMPLETED] = "completed",
+	[REASON_EXCHANGE_TIMEOUT] = "exchange-timeout",
+	[REASON_CRYPTO_TIMEOUT] = "crypto-timeout",
+	[REASON_TOO_MANY_RETRANSMITS] = "too-many-retransmits",
+	[REASON_AUTH_FAILED] = "auth-failed",
+	[REASON_CRYPTO_FAILED] = "crypto-failed",
+};
+
+void pstat_sa_started(struct state *st, enum sa_type sa_type)
+{
+	st->st_pstats.sa_type = sa_type;
+	st->st_pstats.delete_reason = REASON_UNKNOWN;
+
+	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	dbg("pstats #%lu %s started", st->st_serialno, name);
+
+	pstats_sa_started[st->st_ike_version][st->st_pstats.sa_type]++;
+}
+
+void pstat_sa_failed(struct state *st, enum delete_reason r)
+{
+	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	const char *reason = pstats_sa_reasons[r];
+	if (st->st_pstats.delete_reason == REASON_UNKNOWN) {
+		dbg("pstats #%lu %s failed %s", st->st_serialno, name, reason);
+		st->st_pstats.delete_reason = r;
+	} else {
+		dbg("pstats #%lu %s re-failed %s", st->st_serialno, name, reason);
+	}
+}
+
+void pstat_sa_deleted(struct state *st)
+{
+	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	const char *reason = pstats_sa_reasons[st->st_pstats.delete_reason];
+	dbg("pstats #%lu %s deleted %s", st->st_serialno, name, reason);
+
+	pstats_sa_finished[st->st_ike_version][st->st_pstats.sa_type][st->st_pstats.delete_reason]++;
+
+	/*
+	 * statistics for IKE SA failures. We cannot do the same for IPsec SA
+	 * because those failures could happen before we cloned a state
+	 *
+	 * XXX: ???
+	 *
+	 * XXX: the above should make this completely redundant.
+	 */
+	if (IS_IKE_SA(st)) {
+		bool fail = !IS_IKE_SA_ESTABLISHED(st) && st->st_state != STATE_IKESA_DEL;
+		if (fail) {
+			if (st->st_ike_version == IKEv2)
+				pstats_ikev2_fail++;
+			else
+				pstats_ikev1_fail++;
+		} else {
+			if (st->st_ike_version == IKEv2)
+				pstats_ikev2_completed++;
+			else
+				pstats_ikev1_completed++;
+		}
+#ifdef NOT_YET
+		/*
+		 * Only insist on IKEv2 IKE SAs correctly recording
+		 * the delete reason; and only when nothing crazy is
+		 * going on.
+		 */
+		pexpect(st->st_ike_version == IKEv1 || exiting_pluto ||
+			(st->st_pstats.delete_reason != REASON_UNKNOWN &&
+			 fail != (st->st_pstats.delete_reason == REASON_COMPLETED)));
+#endif
+	}
+}
+
+/*
+ * Established SAs.
+ */
+
+static void pstat_ike_sa_established(struct state *st)
+{
+	/* keep IKE SA statistics */
+	if (st->st_ike_version == IKEv2) {
+		pstats_ikev2_sa++;
+		pstats(ikev2_encr, st->st_oakley.ta_encrypt->common.id[IKEv2_ALG_ID]);
+		if (st->st_oakley.ta_integ != NULL)
+			pstats(ikev2_integ, st->st_oakley.ta_integ->common.id[IKEv2_ALG_ID]);
+		pstats(ikev2_groups, st->st_oakley.ta_dh->group);
+	} else {
+		pstats_ikev1_sa++;
+		pstats(ikev1_encr, st->st_oakley.ta_encrypt->common.ikev1_oakley_id);
+		pstats(ikev1_integ, st->st_oakley.ta_prf->common.id[IKEv1_OAKLEY_ID]);
+		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
+	}
+}
+
+static void pstats_sa(bool nat, bool tfc, bool esn)
+{
+	if (nat)
+		pstats_ipsec_encap_yes++;
+	else
+		pstats_ipsec_encap_no++;
+	if (esn)
+		pstats_ipsec_esn++;
+	if (tfc)
+		pstats_ipsec_tfc++;
+}
+
+#define pstatsv(TYPE, V2, INDEXv1, INDEXv2)				\
+	{								\
+		if (V2) {						\
+			pstats(ikev2_##TYPE, INDEXv2);			\
+		} else {						\
+			pstats(ikev1_##TYPE, INDEXv1);			\
+		}							\
+	}
+
+static void pstat_child_sa_established(struct state *st)
+{
+	struct connection *const c = st->st_connection;
+
+	/* don't count IKEv1 half ipsec sa */
+	if (st->st_state == STATE_QUICK_R1) {
+		pstats_ipsec_sa++;
+	}
+
+	if (st->st_esp.present) {
+		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
+		bool tfc = c->sa_tfcpad != 0 && !st->st_seen_no_tfc;
+		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
+
+		pstats_ipsec_esp++;
+		pstatsv(ipsec_encrypt, (st->st_ike_version == IKEv2),
+			st->st_esp.attrs.transattrs.ta_encrypt->common.id[IKEv1_ESP_ID],
+			st->st_esp.attrs.transattrs.ta_encrypt->common.id[IKEv2_ALG_ID]);
+		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
+			st->st_esp.attrs.transattrs.ta_integ->common.id[IKEv1_ESP_ID],
+			st->st_esp.attrs.transattrs.ta_integ->common.id[IKEv2_ALG_ID]);
+		pstats_sa(nat, tfc, esn);
+	}
+	if (st->st_ah.present) {
+		/* XXX: .st_esp? */
+		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
+		pstats_ipsec_ah++;
+		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
+			st->st_ah.attrs.transattrs.ta_integ->common.id[IKEv1_ESP_ID],
+			st->st_ah.attrs.transattrs.ta_integ->common.id[IKEv2_ALG_ID]);
+		pstats_sa(FALSE, FALSE, esn);
+	}
+	if (st->st_ipcomp.present) {
+		pstats_ipsec_ipcomp++;
+	}
+}
+
+void pstat_sa_established(struct state *st)
+{
+	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	dbg("pstats #%lu %s established", st->st_serialno, name);
+	pstats_sa_established[st->st_ike_version][st->st_pstats.sa_type]++;
+
+	/*
+	 * Check for double billing.  Only care that IKEv2 gets this
+	 * right (IKEv1 is known to be broken).
+	 */
+#ifdef NOT_YET
+	pexpect(st->st_ike_version == IKEv1 ||
+		st->st_pstats.delete_reason == REASON_UNKNOWN);
+#endif
+	st->st_pstats.delete_reason = REASON_COMPLETED;
+
+	switch (st->st_pstats.sa_type) {
+	case IKE_SA: pstat_ike_sa_established(st); break;
+	case IPSEC_SA: pstat_child_sa_established(st); break;
+	}
+}
+
+/*
+ * Output.
+ */
 
 static void whack_pluto_stat(const struct pluto_stat *stat)
 {
@@ -179,12 +385,38 @@ void show_pluto_stats()
 	whack_log_comment("total.ipsec.traffic.in=%" PRIu64, pstats_ipsec_in_bytes);
 	whack_log_comment("total.ipsec.traffic.out=%" PRIu64, pstats_ipsec_out_bytes);
 
+	/* old */
 	whack_log_comment("total.ike.ikev2.established=%lu", pstats_ikev2_sa);
 	whack_log_comment("total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
 	whack_log_comment("total.ike.ikev2.completed=%lu", pstats_ikev2_completed);
 	whack_log_comment("total.ike.ikev1.established=%lu", pstats_ikev1_sa);
 	whack_log_comment("total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
 	whack_log_comment("total.ike.ikev1.completed=%lu", pstats_ikev1_completed);
+
+	/* new */
+	for (enum ike_version v = IKE_VERSION_FLOOR; v < IKE_VERSION_ROOF; v++) {
+		for (enum sa_type t = SA_TYPE_FLOOR; t < SA_TYPE_ROOF; t++) {
+			const char *name = pstats_sa_names[v][t];
+			pexpect(name != NULL);
+			whack_log_comment("total.%s.started=%lu",
+					  name, pstats_sa_started[v][t]);
+			whack_log_comment("total.%s.established=%lu",
+					  name, pstats_sa_established[v][t]);
+			unsigned long finished = 0;
+			for (enum delete_reason r = DELETE_REASON_FLOOR; r < DELETE_REASON_ROOF; r++) {
+				const char *reason = pstats_sa_reasons[r];
+				pexpect(reason != NULL);
+				unsigned long count = pstats_sa_finished[v][t][r];
+				finished += count;
+				if (count > 0) {
+					whack_log_comment("total.%s.finished.%s=%lu",
+							  name, reason, count);
+				}
+			}
+			whack_log_comment("total.%s.finished=%lu",
+					  name, finished);
+		}
+	}
 
 	whack_log_comment("total.ike.dpd.sent=%lu", pstats_ike_dpd_sent);
 	whack_log_comment("total.ike.dpd.recv=%lu", pstats_ike_dpd_recv);
@@ -239,6 +471,11 @@ void clear_pluto_stats()
 	pstats_ipsec_sa = pstats_ikev1_sa = pstats_ikev2_sa = 0;
 	pstats_ikev1_fail = pstats_ikev2_fail = 0;
 	pstats_ikev1_completed = pstats_ikev2_completed = 0;
+
+	memset(pstats_sa_started, 0, sizeof pstats_sa_started);
+	memset(pstats_sa_finished, 0, sizeof pstats_sa_finished);
+	memset(pstats_sa_established, 0, sizeof pstats_sa_established);
+
 	pstats_ipsec_in_bytes = pstats_ipsec_out_bytes = 0;
 	pstats_ike_in_bytes = pstats_ike_out_bytes = 0;
 	pstats_ipsec_esp = pstats_ipsec_ah = pstats_ipsec_ipcomp = 0;

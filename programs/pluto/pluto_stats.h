@@ -26,28 +26,11 @@ struct pluto_stat {
 };
 
 /* All statistics are totals since pluto daemon startup */
-extern unsigned long pstats_ipsec_sa;
-extern unsigned long pstats_ikev1_sa;
-extern unsigned long pstats_ikev2_sa;
-extern unsigned long pstats_ikev1_fail;
-extern unsigned long pstats_ikev2_fail;
-extern unsigned long pstats_ikev1_completed;
-extern unsigned long pstats_ikev2_completed;
-extern unsigned long pstats_ikev1_encr[OAKLEY_ENCR_PSTATS_ROOF];
-extern unsigned long pstats_ikev2_encr[IKEv2_ENCR_PSTATS_ROOF];
-extern unsigned long pstats_ikev1_integ[OAKLEY_HASH_PSTATS_ROOF];
-extern unsigned long pstats_ikev2_integ[IKEv2_AUTH_PSTATS_ROOF];
-extern unsigned long pstats_ikev1_groups[OAKLEY_GROUP_PSTATS_ROOF];
-extern unsigned long pstats_ikev2_groups[OAKLEY_GROUP_PSTATS_ROOF];
+
 extern unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_PSTATS_ROOF];
-
-extern unsigned long pstats_ikev1_ipsec_encrypt[ESP_PSTATS_ROOF];
-extern unsigned long pstats_ikev2_ipsec_encrypt[IKEv2_ENCR_PSTATS_ROOF];
-extern unsigned long pstats_ikev1_ipsec_integ[AUTH_ALGORITHM_PSTATS_ROOF];
-extern unsigned long pstats_ikev2_ipsec_integ[IKEv2_AUTH_PSTATS_ROOF];
 
 extern uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
 extern uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
@@ -60,13 +43,6 @@ extern const struct pluto_stat pstats_ikev2_recv_notifies_e; /* types of NOTIFY 
 extern const struct pluto_stat pstats_ikev2_sent_notifies_s; /* types of NOTIFY STATUS */
 extern const struct pluto_stat pstats_ikev2_recv_notifies_s; /* types of NOTIFY STATUS */
 extern unsigned long pstats_ike_stf[10];	/* count state transitions */
-extern unsigned long pstats_ipsec_esp;
-extern unsigned long pstats_ipsec_ah;
-extern unsigned long pstats_ipsec_ipcomp;
-extern unsigned long pstats_ipsec_encap_yes;
-extern unsigned long pstats_ipsec_encap_no;
-extern unsigned long pstats_ipsec_esn;
-extern unsigned long pstats_ipsec_tfc;
 extern unsigned long pstats_ike_dpd_recv;
 extern unsigned long pstats_ike_dpd_sent;
 extern unsigned long pstats_ike_dpd_replied;
@@ -85,15 +61,6 @@ extern void clear_pluto_stats();
  * "unsigned" forces negative values to large positive ones,
  * presumably INDEX fits in "unsigned".  Is size_t better?
  */
-
-#define pstatsv(TYPE, V2, INDEXv1, INDEXv2)				\
-	{								\
-		if (V2) {						\
-			pstats(ikev2_##TYPE, INDEXv2);			\
-		} else {						\
-			pstats(ikev1_##TYPE, INDEXv1);			\
-		}							\
-	}
 
 #define pstats(TYPE,INDEX) {						\
 		const unsigned __pstat = (INDEX);			\
@@ -114,5 +81,10 @@ extern void clear_pluto_stats();
 			ps_->count[pstat_-ps_->floor]++;		\
 		}							\
 	}
+
+void pstat_sa_started(struct state *st, enum sa_type sa_type);
+void pstat_sa_failed(struct state *st, enum delete_reason reason);
+void pstat_sa_established(struct state *st);
+void pstat_sa_deleted(struct state *st);
 
 #endif /* _PLUTO_STATS_H */

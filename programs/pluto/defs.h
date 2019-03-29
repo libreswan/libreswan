@@ -36,10 +36,12 @@ typedef unsigned long so_serial_t;
 #define SOS_SOMEBODY	((unsigned long) -1)
 #define SOS_IGNORE	((unsigned long) -2)
 
-typedef enum {
-		IKE_SA,
-		IPSEC_SA
-	} sa_t;
+typedef enum sa_type {
+#define SA_TYPE_FLOOR 0
+	IKE_SA = SA_TYPE_FLOOR,
+	IPSEC_SA,
+#define SA_TYPE_ROOF (IPSEC_SA+1)
+} sa_t;
 
 /* warns a predefined interval before expiry */
 extern const char *check_expiry(realtime_t expiration_date,
