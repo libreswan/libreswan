@@ -856,7 +856,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	struct kernel_sa sa = {
 		.nk_dir = dir,
 		.proto = proto,
-		.reqid = c->spd.reqid + 1, /* why is reqid off by one ??? AA_2017 */
+		.reqid = reqid_esp(c->spd.reqid),
 		.natt_type = natt_type,
 	};
 
