@@ -29,10 +29,10 @@
 struct state;
 struct show;
 
+extern struct pending **host_pair_oldest_pending(const struct connection *c);
 /*
  * struct pending, the structure representing IPsec SA negotiations
  * delayed until a Keying Channel (IKE SA) has been negotiated.
- * Essentially, a pending call to quick_outI1 or ikev2 child initiate
  */
 
 struct pending {

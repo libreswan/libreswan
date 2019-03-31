@@ -315,7 +315,7 @@ struct connection *first_pending(const struct ike_sa *ike,
 
 	dbg("getting first pending from state #%lu", ike->sa.st_serialno);
 
-	for (pp = host_pair_first_pending(ike->sa.st_connection);
+	for (pp = host_pair_oldest_pending(ike->sa.st_connection);
 	     (p = *pp) != NULL; pp = &p->next)
 	{
 		if (p->ike == ike) {
@@ -325,6 +325,7 @@ struct connection *first_pending(const struct ike_sa *ike,
 			return p->connection;
 		}
 	}
+
 	return NULL;
 }
 
