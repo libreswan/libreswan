@@ -241,6 +241,28 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	return true;
 }
 
+static int initiate_clones(const char *name,  struct fd *whackfd, void *arg)
+{
+	char tmpconnname[256];
+	struct connection *c;
+	int count = 0;
+
+	snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", name, CLONE_SA_HEAD);
+	c = conn_by_name(tmpconnname, TRUE);
+	if (c != NULL && c->sa_clones > 0) {
+		uint32_t i = 0;
+		count += initiate_a_connection(c, arg);
+		for (i = 1; i <= c->sa_clones; i++) {
+			snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", name, i);
+			c = conn_by_name(tmpconnname, TRUE);
+			passert(c != NULL);
+			count += initiate_a_connection(c, whackfd, arg);
+		}
+	}
+
+	return count;
+}
+
 static int initiate_a_connection(struct connection *c, struct fd *whackfd, void *arg)
 {
 	const struct initiate_stuff *is = arg;
@@ -277,10 +299,16 @@ void initiate_connections_by_name(const char *name, const char *remote_host,
 		.background = background,
 		.remote_host = remote_host,
 	};
-	int count = foreach_connection_by_alias(name, whackfd, initiate_a_connection, &is);
+
+	inf count = initiate_clones(name, whackfd, &is); /* try as clones */
+	if (count == 0) {
+		/* try as simple alias */
+		loglog(RC_COMMENT, "try initiating all conns with alias='%s'", name);
+		count = foreach_connection_by_alias(name, whackfd, initiate_a_connection, &is);
+	}
 
 	if (count == 0) {
-		log_global(RC_UNKNOWN_NAME, whackfd, "no connection named \"%s\"", name);
+		log_global(RC_UNKNOWN_NAME, whackfd, "failed to initiaite, no connection named \"%s\"", name);
 	}
 }
 
