@@ -140,6 +140,7 @@ struct whack_message {
 	bool whack_traffic_status;
 	bool whack_shunt_status;
 	bool whack_fips_status;
+	bool whack_brief_status;
 	bool whack_seccomp_crashtest;
 
 	bool whack_shutdown;

@@ -631,6 +631,9 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 	if (m->whack_fips_status)
 		show_fips_status();
 
+	if (m->whack_brief_status)
+		show_states_status();
+
 #ifdef HAVE_SECCOMP
 	if (m->whack_seccomp_crashtest) {
 		/*

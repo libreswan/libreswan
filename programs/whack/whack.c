@@ -191,7 +191,7 @@ static void help(void)
 		"reread: whack [--rereadsecrets] [--fetchcrls] [--rereadall]\n"
 		"\n"
 		"status: whack [--status] | [--trafficstatus] | [--globalstatus] | \\\n"
-		"	[--clearstats] | [--shuntstatus] | [--fipsstatus]\n"
+		"	[--clearstats] | [--shuntstatus] | [--fipsstatus] | [--briefstatus] \n"
 		"\n"
 #ifdef HAVE_SECCOMP
 		"status: whack --seccomp-crashtest (CAREFUL!)\n"
@@ -316,6 +316,7 @@ enum option_enums {
 	OPT_TRAFFIC_STATUS,
 	OPT_SHUNT_STATUS,
 	OPT_FIPS_STATUS,
+	OPT_BRIEF_STATUS,
 
 #ifdef HAVE_SECCOMP
 	OPT_SECCOMP_CRASHTEST,
@@ -557,6 +558,7 @@ static const struct option long_opts[] = {
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
 	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS + OO },
+	{ "briefstatus", no_argument, NULL, OPT_BRIEF_STATUS + OO },
 #ifdef HAVE_SECCOMP
 	{ "seccomp-crashtest", no_argument, NULL, OPT_SECCOMP_CRASHTEST + OO },
 #endif
@@ -1340,6 +1342,11 @@ int main(int argc, char **argv)
 
 		case OPT_FIPS_STATUS:	/* --fipsstatus */
 			msg.whack_fips_status = TRUE;
+			ignore_errors = TRUE;
+			continue;
+
+		case OPT_BRIEF_STATUS:	/* --briefstatus */
+			msg.whack_brief_status = TRUE;
 			ignore_errors = TRUE;
 			continue;
 
@@ -2406,7 +2413,7 @@ int main(int argc, char **argv)
 	      msg.whack_ddos != DDOS_undefined ||
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
-	      msg.whack_fips_status || msg.whack_clear_stats || msg.whack_options ||
+	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest))
 		diag("no action specified; try --help for hints");
 
