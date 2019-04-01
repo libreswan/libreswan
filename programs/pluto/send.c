@@ -145,9 +145,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 			interface->port,
 			str_endpoint(&remote_endpoint, &b),
 			serialno);
-		if (DBGP(DBG_TMI)) {
 			DBG_dump(NULL, ptr, len);
-		}
 	}
 
 	check_outgoing_msg_errqueue(interface, "sending a packet");
