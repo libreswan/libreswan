@@ -1107,9 +1107,6 @@ void connection_check_ddns(void)
 	struct connection *c, *cnext;
 	realtime_t tv1 = realnow();
 
-	/* reschedule */
-	event_schedule_s(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
-
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
 		connection_check_ddns1(c);
@@ -1137,9 +1134,6 @@ void connection_check_ddns(void)
 void connection_check_phase2(void)
 {
 	struct connection *c, *cnext;
-
-	/* reschedule */
-	event_schedule_s(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
 
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
@@ -1207,6 +1201,8 @@ void connection_check_phase2(void)
 
 void init_connections(void)
 {
-	event_schedule_s(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
-	event_schedule_s(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
+	enable_periodic_timer(EVENT_PENDING_DDNS, connection_check_ddns,
+			      deltatime(PENDING_DDNS_INTERVAL));
+	enable_periodic_timer(EVENT_PENDING_PHASE2, connection_check_phase2,
+			      deltatime(PENDING_PHASE2_INTERVAL));
 }

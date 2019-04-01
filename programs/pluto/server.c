@@ -10,7 +10,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2019  Andrew Cagney
  * Copyright (C) 2017 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -417,6 +417,140 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	return fd;
 }
 
+/*
+ * Global timer events.
+ */
+
+struct global_timer {
+	struct event ev;
+	global_timer_cb *cb;
+	const char *name;
+};
+
+static struct global_timer global_timers[GLOBAL_TIMERS_ROOF];
+
+static void global_timer_event(evutil_socket_t fd UNUSED,
+			       const short event,
+			       void *arg)
+{
+	passert(in_main_thread());
+	struct global_timer *gt = arg;
+	passert(event & EV_TIMEOUT);
+	passert(gt >= global_timers);
+	passert(gt < global_timers + elemsof(global_timers));
+	dbg("global timer %s event", gt->name);
+	gt->cb();
+}
+
+void enable_periodic_timer(enum event_type type, global_timer_cb *cb,
+			   deltatime_t period)
+{
+	passert(in_main_thread());
+	passert(type < elemsof(global_timers));
+	struct global_timer *gt = &global_timers[type];
+	/* initialize */
+	passert(!event_initialized(&gt->ev));
+	event_assign(&gt->ev, pluto_eb, (evutil_socket_t)-1,
+		     EV_TIMEOUT|EV_PERSIST, global_timer_event, gt/*arg*/);
+	gt->name = enum_name(&timer_event_names, type);
+	gt->cb = cb;
+	passert(event_get_events(&gt->ev) == (EV_TIMEOUT|EV_PERSIST));
+	/* enable */
+	struct timeval t = deltatimeval(period);
+	passert(event_add(&gt->ev, &t) >= 0);
+	/* log */
+	deltatime_buf buf;
+	dbg("global periodic timer %s enabled with interval of %s seconds",
+	    gt->name, str_deltatime(period, &buf));
+}
+
+void init_oneshot_timer(enum event_type type, global_timer_cb *cb)
+{
+	passert(in_main_thread());
+	passert(type < elemsof(global_timers));
+	struct global_timer *gt = &global_timers[type];
+	passert(!event_initialized(&gt->ev));
+	event_assign(&gt->ev, pluto_eb, (evutil_socket_t)-1,
+		     EV_TIMEOUT, global_timer_event, gt/*arg*/);
+	gt->name = enum_name(&timer_event_names, type);
+	gt->cb = cb;
+	passert(event_get_events(&gt->ev) == (EV_TIMEOUT));
+	dbg("global one-shot timer %s initialized", gt->name);
+}
+
+void schedule_oneshot_timer(enum event_type type, deltatime_t delay)
+{
+	passert(type < elemsof(global_timers));
+	struct global_timer *gt = &global_timers[type];
+	passert(event_initialized(&gt->ev));
+	passert(event_get_events(&gt->ev) == (EV_TIMEOUT));
+	struct timeval t = deltatimeval(delay);
+	passert(event_add(&gt->ev, &t) >= 0);
+	deltatime_buf buf;
+	dbg("global one-shot timer %s scheduled in %s seconds",
+	    gt->name, str_deltatime(delay, &buf));
+}
+
+/* urban dictionary says deschedule is a word */
+void deschedule_oneshot_timer(enum event_type type)
+{
+	passert(type < elemsof(global_timers));
+	struct global_timer *gt = &global_timers[type];
+	passert(event_initialized(&gt->ev));
+	passert(event_del(&gt->ev) >= 0);
+	dbg("global one-shot timer %s disabled", gt->name);
+}
+
+static void free_global_timers(void)
+{
+	for (unsigned u = 0; u < elemsof(global_timers); u++) {
+		struct global_timer *gt = &global_timers[u];
+		if (event_initialized(&gt->ev)) {
+			/*
+			 * "If the event has already executed or has
+			 * never been added the [event_del()] call
+			 * will have no effect.
+			 */
+			event_del(&gt->ev);
+			/*
+			 * "When debugging mode is enabled, informs
+			 * Libevent that an event should no longer be
+			 * considered as assigned."
+			 */
+			event_debug_unassign(&gt->ev);
+			zero(&gt->ev);
+			dbg("global timer %s uninitialized", gt->name);
+		}
+	}
+}
+
+static void list_global_timers(monotime_t now)
+{
+	for (unsigned u = 0; u < elemsof(global_timers); u++) {
+		struct global_timer *gt = &global_timers[u];
+		/*
+		 * XXX: DUE.mt is "set to hold the time at which the
+		 * timeout will expire" which is presumably a time and
+		 * not a delay (event_add() takes a delay).
+		*/
+		monotime_t due = monotime_epoch;
+		if (event_initialized(&gt->ev) &&
+		    event_pending(&gt->ev, EV_TIMEOUT, &due.mt) > 0) {
+			const char *what = (event_get_events(&gt->ev) & EV_PERSIST) ? "periodic" : "one-shot";
+			deltatime_t delay = monotimediff(due, now);
+			deltatime_buf delay_buf;
+			whack_log(RC_LOG, "global %s timer %s is scheduled for %jd (in %s seconds)",
+				  what, gt->name,
+				  monosecs(due), /* XXX: useful? */
+				  str_deltatime(delay, &delay_buf));
+		}
+	}
+}
+
+/*
+ * Pluto events.
+ */
+
 static struct pluto_event *free_event_entry(struct pluto_event **evp)
 {
 	struct pluto_event *e = *evp;
@@ -442,6 +576,7 @@ void free_pluto_event_list(void)
 	struct pluto_event **head = &pluto_events_head;
 	while (*head != NULL)
 		*head = free_event_entry(head);
+	free_global_timers();
 	dbg("releasing event base");
 	event_base_free(pluto_eb);
 	pluto_eb = NULL;
@@ -631,6 +766,8 @@ void timer_list(void)
 
 	whack_log(RC_LOG, "It is now: %jd seconds since monotonic epoch",
 		  monosecs(nw));
+
+	list_global_timers(nw);
 
 	while (ev != NULL) {
 		struct state *st = ev->ev_state;

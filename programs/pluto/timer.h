@@ -49,4 +49,19 @@ extern void delete_state_event(struct state *st, struct pluto_event **ev);
 extern void timer_list(void);
 extern char *revive_conn;
 
+/*
+ * Since global timers (one-shot or periodic) rely on global state
+ * they don't need a context parameter.
+ *
+ * XXX: implementation can be found in server.c and not timer.c as it
+ * is just easier.
+ */
+typedef void (global_timer_cb)(void);
+void enable_periodic_timer(enum event_type type, global_timer_cb *cb,
+			   deltatime_t period);
+
+void init_oneshot_timer(enum event_type type, global_timer_cb *cb);
+void schedule_oneshot_timer(enum event_type type, deltatime_t delay);
+void deschedule_oneshot_timer(enum event_type type);
+
 #endif /* _TIMER_H */

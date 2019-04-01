@@ -2640,6 +2640,10 @@ static char kversion[256];
 const struct kernel_ops *kernel_ops = NULL;
 deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
 
+static void kernel_scan_shunts(void)
+{
+	kernel_ops->scan_shunts();
+}
 
 void init_kernel(void)
 {
@@ -2717,7 +2721,8 @@ void init_kernel(void)
 	if (kernel_ops->pfkey_register != NULL)
 		kernel_ops->pfkey_register();
 
-	event_schedule_s(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
+	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
+			      bare_shunt_interval);
 
 	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
 
@@ -3691,6 +3696,4 @@ void expire_bare_shunts(void)
 			bspp = &bsp->next;
 		}
 	}
-
-	event_schedule(EVENT_SHUNT_SCAN, bare_shunt_interval, NULL);
 }
