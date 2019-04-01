@@ -120,38 +120,6 @@ def plutocheck():
 	udp4500check()
 	ipsecsecretcheck()
 
-# This is pretty broken, as you can enable forwarding specificaly via iptables as well
-# It also won't find/exclude all kinds of interfaces. Also, lots of people have one
-# ethernet and one wifi interface, but don't want to bridge these.
-# So, mostly left here for historic reasons - candidate to be changed/removed
-def forwardcheck():
-	global retcode
-	try:
-		output = open("/proc/net/dev","r").read().strip()
-	except:
-		printfun("Checking for multiple interfaces")
-		retcode += 1
-		print_result("FAIL","UNEXPECTED KERNEL DEV LIST")
-	count = 0
-	for line in output.split("\n"):
-		if ":" in line:
-			if not "lo:" in line and not "ipsec" in line and not "mast" in line and not "virbr:" in line:
-				# let's count this as a real physical interface
-				count += 1
-	if count > 1:
-		printfun("Two or more interfaces found, checking IP forwarding")
-		try:
-			output = open("/proc/sys/net/ipv4/ip_forward","r").read().strip()
-		except:
-			print_result("FAIL","MISSING ip_forward proc file")
-			retcode += 1
-			return
-		if output == "1":
-			print_result("OK","OK")
-		else:
-			print_result("FAIL","FAILED")
-			retcode += 1
-
 def rpfiltercheck():
 	global retcode
 	fail = 0
@@ -410,7 +378,6 @@ def main():
 
 	installstartcheck()
 	ipsecconfcheck()
-	forwardcheck()
 	rpfiltercheck()
 	plutocheck()
 	cmdchecks()
