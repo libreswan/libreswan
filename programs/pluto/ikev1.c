@@ -2991,25 +2991,35 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		md->v1_note = result - STF_FAIL;
 		/* FALL THROUGH */
 	case STF_FAIL:
+	{
 		/* As it is, we act as if this message never happened:
 		 * whatever retrying was in place, remains in place.
 		 */
+		/*
+		 * Try to convert the notification into a non-NULL
+		 * string.  For NOTHING_WRONG, be vague (at the time
+		 * of writing the enum_names didn't contain
+		 * NOTHING_WRONG, and even if it did "nothing wrong"
+		 * wouldn't exactly help here :-).
+		 */
+		const char *notify_name = (md->v1_note == NOTHING_WRONG ? "failed" :
+					   enum_name(&ikev1_notify_names, md->v1_note));
+		if (notify_name == NULL) {
+			notify_name = "internal error";
+		}
 		/*
 		 * ??? why no call of remember_received_packet?
 		 * Perhaps because the message hasn't been authenticated?
 		 * But then then any duplicate would lose too, I would think.
 		 */
 		whack_log(RC_NOTIFICATION + md->v1_note,
-			  "%s: %s", st->st_state_name,
-			  enum_name(&ikev1_notify_names, md->v1_note));
+			  "%s: %s", st->st_state_name, notify_name);
 
 		if (md->v1_note != NOTHING_WRONG)
 			SEND_NOTIFICATION(md->v1_note);
 
-		DBG(DBG_CONTROL,
-		    DBG_log("state transition function for %s failed: %s",
-			    enum_name(&state_names, from_state),
-			    enum_name(&ikev1_notify_names, md->v1_note)));
+		dbg("state transition function for %s failed: %s",
+		    st->st_state_name, notify_name);
 
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
@@ -3027,6 +3037,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			md->st = NULL;
 		}
 		break;
+	}
 	}
 }
 
