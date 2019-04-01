@@ -5666,7 +5666,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 	struct state *st;
 	char replacestr[32];
 	enum state_kind new_state = STATE_UNDEFINED;
-	sa_t sa_type = IPSEC_SA;
+	enum sa_type sa_type = IPSEC_SA;
 	struct ike_sa *ike = ike_sa(p->isakmp_sa);
 	struct connection *c = p->connection;
 

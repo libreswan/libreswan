@@ -1461,7 +1461,8 @@ void delete_states_by_peer(const ip_address *peer)
  * Caller must schedule an event for this object so that it doesn't leak.
  * Caller must insert_state().
  */
-static struct state *duplicate_state(struct state *st, sa_t sa_type,
+static struct state *duplicate_state(struct state *st,
+				     enum sa_type sa_type,
 				     const struct finite_state *fs)
 {
 	struct state *nst;
@@ -1567,7 +1568,8 @@ struct state *ikev1_duplicate_state(struct state *st)
 }
 
 struct state *ikev2_duplicate_state(struct ike_sa *ike,
-				    sa_t sa_type, enum sa_role role)
+				    enum sa_type sa_type,
+				    enum sa_role role)
 {
 	struct state *cst = duplicate_state(&ike->sa, sa_type, &state_undefined);
 	cst->st_sa_role = role;
