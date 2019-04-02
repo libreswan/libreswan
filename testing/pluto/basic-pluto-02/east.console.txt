@@ -32,6 +32,8 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
+ ../../pluto/bin/xfrmcheck.sh
+east #
 east #
  ipsec whack --shutdown
 002 shutting down

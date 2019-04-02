@@ -5,18 +5,6 @@ west #
  ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # confirm clear text does not get through
-west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
-down
-west #
  # adding some routes to sow confusion on purpose
 west #
  ip route add 192.168.1.1 via 192.0.1.254 dev eth0
@@ -104,6 +92,9 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
+ ipsec trafficstatus
+006 #2: "westnet-all", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
  ip route list
 default via 192.1.2.254 dev eth1
 25.1.0.0/16 via 192.0.1.254 dev eth0
@@ -167,6 +158,8 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+west #
+ ../../pluto/bin/xfrmcheck.sh
 west #
 west #
  ipsec whack --shutdown
