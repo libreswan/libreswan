@@ -94,6 +94,25 @@ flip-glibc-kern-headers:
 # end  of Distribution tweaks
 #
 
+.PHONY: install-rpm-dep
+RPM_DEP = $$(dnf deplist libreswan | awk '/provider:/ {print $$2}' | sort -u)
+install-rpm-dep:
+	$(if $(KVM_PACKAGES), $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
+	$(if $(KVM_PACKAGES), $(KVM_PACKAGE_UPGRADE) $(KVM_PACKAGES))
+	dnf builddep -y libreswan
+	dnf install -y \@development-tools
+	dnf install -y --skip-broken $(RPM_DEP)
+
+.PHONY: install-deb-dep
+RUN_DEBS = $$(apt-cache depends libreswan | awk '/Depends:/{print $$2}' | grep -v "<" | sort -u)
+install-deb-dep:
+	# development dependencies
+	apt-get install -y equivs devscripts
+	# libreswan specific development dependencies
+	apt-get -y --no-install-recommends build-dep libreswan
+	# install libreswan runtime dependencies
+	apt-get install -y --no-install-recommends $(RUNTIME_DEBS)
+
 .PHONY: travis-docker-image
 travis-docker-image:
 	$(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) docker-image
