@@ -18,5 +18,5 @@ RUN chown -R root:root /root/.ssh
 RUN sed -i 's/UsePAM\syes/UsePAM no/' /etc/ssh/sshd_config
 RUN sed -i '/UseDNS/d' /etc/ssh/sshd_config
 RUN echo "UseDNS no" >> /etc/ssh/sshd_config
-RUN sed -i '/StrictModes/d' /etc/ssh/sshd_config 
+RUN sed -i '/StrictModes/d' /etc/ssh/sshd_config
 RUN echo "StrictModes no" >> /etc/ssh/sshd_config

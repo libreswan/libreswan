@@ -1530,7 +1530,7 @@ struct_desc suggested_group_desc = {
  *
  * Currently, we only support one Transform ID (2, IPCOMP_DEFLATE) which has
  * no further attributes.
- */ 
+ */
 static field_desc ikev2notify_ipcomp_fields[] = {
 	{ ft_nat, 16 / BITS_PER_BYTE, "IPcomp SPI (CPI)", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 Notification IPCOMP Transform IDs", &ipcomp_transformid_names },

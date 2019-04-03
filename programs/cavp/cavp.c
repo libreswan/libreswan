@@ -44,7 +44,7 @@ static void help(void)
 	printf(I"command line:\n");
 	printf("\n");
 	printf(II""OPT, "fips", "force FIPS mode; must be the first option");
-	printf(II""IOPT"by default NSS determines FIPS mode\n"); 
+	printf(II""IOPT"by default NSS determines FIPS mode\n");
 	printf(II""OPT, "json", "output each test result as a json record");
 	printf(II""OPT, "v", "verbose output");
 	printf(II"-h, -help, -?\n"II""IOPT"Print this help message\n");
