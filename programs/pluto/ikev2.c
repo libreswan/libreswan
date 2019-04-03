@@ -2804,14 +2804,14 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	passert(st->st_state >= STATE_IKEv2_FLOOR);
 	passert(st->st_state <  STATE_IKEv2_ROOF);
 
-	/*
-	 * Count successf transition into an established state.
-	 *
-	 * Because IKE SAs and CHILD SAs share some state transitions
-	 * this only works for CHILD SAs.  IKE SAs are accounted for
-	 * separately.
-	 */
 	if (svm->flags & SMF2_ESTABLISHED) {
+		/*
+		 * Count successful transition into an established state.
+		 *
+		 * Because IKE SAs and CHILD SAs share some state transitions
+		 * this only works for CHILD SAs.  IKE SAs are accounted for
+		 * separately.
+		 */
 		pstat_sa_established(st);
 	}
 
