@@ -14,6 +14,8 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+import signal
+import faulthandler
 import sys
 import argparse
 import logging
@@ -33,8 +35,12 @@ class Boot(Enum):
 
 def main():
 
+    # If SIGUSR1, backtrace all threads; hopefully this is early
+    # enough.
+    faulthandler.register(signal.SIGUSR1)
+
     parser = argparse.ArgumentParser(description="Connect to and run a shell command on a virtual machine domain",
-                                     epilog=("If no command or file is specified an interactive shell is created."))
+                                     epilog="If no command or file is specified an interactive shell is created.  SIGUSR1 will dump all thread stacks")
 
     parser.add_argument("--timeout", type=argutil.timeout, default=None,
                         help=("maximum runtime for the command"

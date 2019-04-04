@@ -14,6 +14,8 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+import signal
+import faulthandler
 import argparse
 import sys
 import os
@@ -42,8 +44,12 @@ class Stats(Enum):
 
 def main():
 
+    # If SIGUSR1, backtrace all threads; hopefully this is early
+    # enough.
+    faulthandler.register(signal.SIGUSR1)
+
     parser = argparse.ArgumentParser(description="list test results",
-                                     epilog="By default this tool uses 'sanitizer.sh' and 'diff' to generate up-to-the-minuite test results (the previously generated files 'OUTPUT/*.console.txt' and 'OUTPUT/*.console.diff' are ignored).  While this makes things a little slower, it has the benefit of always providing the most up-to-date and correct results (for instance, changes to known-good files are reflected immediately).")
+                                     epilog="By default this tool uses 'sanitizer.sh' and 'diff' to generate up-to-the-minuite test results (the previously generated files 'OUTPUT/*.console.txt' and 'OUTPUT/*.console.diff' are ignored).  While this makes things a little slower, it has the benefit of always providing the most up-to-date and correct results (for instance, changes to known-good files are reflected immediately).  SIGUSR1 will dump all thread stacks")
     parser.add_argument("--verbose", "-v", action="count", default=0)
 
     parser.add_argument("--quick", action="store_true",
