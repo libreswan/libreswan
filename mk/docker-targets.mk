@@ -108,7 +108,9 @@ install-deb-dep:
 	# development dependencies
 	apt-get install -y equivs devscripts dh-systemd
 	# libreswan specific development dependencies
-	apt-get -y --no-install-recommends build-dep libreswan
+	# apt-get -y --no-install-recommends build-dep libreswan
+	make deb 2>&1 > /dev/null || true
+	mk-build-deps --install --tool "apt-get -o Dpkg::Options::="--force-confold" -o Debug::pkgProblemResolver=yes -y --no-install-recommends" ./debian/control
 	# install libreswan runtime dependencies
 	apt-get install -y $(RUN_DEBS)
 	# give another kick
