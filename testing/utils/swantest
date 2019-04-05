@@ -1820,7 +1820,7 @@ def docker_stop_container(dname):
 
 def docker_start_container(dhost, dname, dimage):
 
-    cmd = "sudo docker run -h %s --privileged --net=none --name %s -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
+    cmd = "sudo docker run -h %s --privileged --net=none --name %s -v /home/build:/home/build -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
         dhost, dname, dimage)
     return (runcmd(cmd))
 
@@ -1833,9 +1833,7 @@ def docker_flush_eth0(dhost, dname):
 def docker_restart_network(test):
     for host in test["test_hosts"]:
         dname = host + "-" + test["name"]
-        runcmd("sudo docker exec -ti %s /etc/rc.local" % dname)
-        runcmd("sudo docker exec -ti %s systemctl restart network.service" % dname)
-
+        runcmd("sudo docker exec -ti %s /testing/guestbin/swan-transmogrify" % dname)
 
 def docker_add_route(test, dnamei, dnamer, dnamen):
 

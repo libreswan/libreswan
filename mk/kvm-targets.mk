@@ -448,7 +448,6 @@ kvm-rpm:
 	gzip -f ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar
 	rpmbuild -ba $(RPM_BUILD_CLEAN) ~/rpmbuild/SPECS/libreswan-testing.spec
 
-
 #
 # Build a pool of networks from scratch
 #
