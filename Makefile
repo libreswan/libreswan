@@ -171,7 +171,6 @@ deb:
 	debuild -i -us -uc -b
 	rm -fr debian
 	#debuild -S -sa
-	@echo "to build optional KLIPS kernel module, run make deb-klips"
 
 release:
 	packaging/utils/makerelease
