@@ -163,11 +163,18 @@ showobjdir:
 
 # these need to move elsewhere and get fixed not to use root
 
-deb:
+.PHONY: deb-prepare
+DEBIPSECBASEVERSION=$$(call -s showdebversion)
+deb-prepare:
 	cp -r packaging/debian .
+	cat debian/changelog
 	grep "IPSECBASEVERSION" debian/changelog && \
-		sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/changelog || \
+		sed -i "s/@IPSECBASEVERSION@/$(DEBIPSECBASEVERSION)/g" debian/changelog || \
 		echo "missing IPSECBASEVERSION in debian/changelog. This is not git repository?"
+	cat debian/changelog
+
+.PHONY: deb
+deb: deb-prepare
 	debuild -i -us -uc -b
 	rm -fr debian
 	#debuild -S -sa
