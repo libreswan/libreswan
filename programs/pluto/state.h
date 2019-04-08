@@ -833,7 +833,7 @@ extern void initialize_new_state(struct state *st,
 				 fd_t whack_sock);
 
 extern void show_traffic_status(const char *name);
-extern void show_states_status(void);
+extern void show_states_status(bool brief);
 
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
 

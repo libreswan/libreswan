@@ -4430,7 +4430,7 @@ void show_one_connection(const struct connection *c)
 	kernel_alg_show_connection(c, instance);
 }
 
-void show_connections_status(void)
+void show_connections_status()
 {
 	int count = 0;
 	int active = 0;

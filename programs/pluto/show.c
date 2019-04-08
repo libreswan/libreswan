@@ -88,7 +88,7 @@ void show_status(void)
 	ike_alg_show_status();
 	db_ops_show_status();
 	show_connections_status();
-	show_states_status();
+	show_states_status(FALSE);
 #if defined(NETKEY_SUPPORT) || defined(KLIPS)
 	show_shunt_status();
 #endif

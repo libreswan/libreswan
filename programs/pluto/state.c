@@ -2431,7 +2431,7 @@ void show_traffic_status(const char *name)
 	}
 }
 
-void show_states_status(void)
+void show_states_status(bool brief)
 {
 	whack_log(RC_COMMENT, " ");             /* spacer */
 	whack_log(RC_COMMENT, "State Information: DDoS cookies %s, %s new IKE connections",
@@ -2449,6 +2449,9 @@ void show_states_status(void)
 		  cat_count_child_sa[CAT_AUTHENTICATED],
 		  cat_count_child_sa[CAT_ANONYMOUS]);
 	whack_log(RC_COMMENT, " ");             /* spacer */
+
+	if (brief)
+		return;
 
 	struct state **array = sort_states(state_compare_connection);
 
