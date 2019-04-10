@@ -697,9 +697,9 @@ define shadow-kvm-disk
 	: shadow-kvm-disk from=$(1) to=$(2)
 	:
 	: Fix any disk modes - qemu changes them under the hood
-	: If this fails, the step:
-	:   https://libreswan.org/wiki/Test_Suite#Setting_Users_and_Groups
-	: was probably missed
+	: If this fails, the steps:
+	:   https://libreswan.org/wiki/Test_Suite_-_KVM#Setting_Users_and_Groups
+	: were probably missed
 	groups | grep $(KVM_GROUP)
 	test -r $(1) || sudo chgrp $(KVM_GROUP) $(1)
 	test -r $(1) || sudo chmod g+r          $(1)
@@ -719,8 +719,9 @@ $(KVM_BASE_DISK_CLONES): | $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded $(KVM_LOCA
 	$(MAKE) kvm-shutdown-base-domain
 	test -r $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	test -r $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r          $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
-	: if this test fails, user probably forgot this step:
-	: https://libreswan.org/wiki/Test_Suite#Setting_Users_and_Groups
+	: if this test fails, the steps:
+	:   https://libreswan.org/wiki/Test_Suite_-_KVM#Setting_Users_and_Groups
+	: were probably missed
 	test -r $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	$(call shadow-kvm-disk,$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2,$@.tmp)
 	mv $@.tmp $@
