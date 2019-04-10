@@ -119,6 +119,8 @@ static int ocsp_cache_size = OCSP_DEFAULT_CACHE_SIZE;
 static int ocsp_cache_min_age = OCSP_DEFAULT_CACHE_MIN_AGE;
 static int ocsp_cache_max_age = OCSP_DEFAULT_CACHE_MAX_AGE;
 
+static bool log_exchange_timeout_ip = FALSE;
+
 static void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
@@ -475,6 +477,7 @@ enum {
 	OPT_IMPAIR,
 	OPT_DNSSEC_ROOTKEY_FILE,
 	OPT_DNSSEC_TRUSTED,
+    OPT_LOG_EXCHANGE_TIMEOUT_IP,
 };
 
 static const struct option long_opts[] = {
@@ -494,6 +497,7 @@ static const struct option long_opts[] = {
 	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
 	{ "log-no-append\0", no_argument, NULL, '7' },
 	{ "log-no-ip\0", no_argument, NULL, '<' },
+	{ "log-exchange-timeout-ip\0", no_argument, NULL, OPT_LOG_EXCHANGE_TIMEOUT_IP },
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
 	{ "force-busy\0", no_argument, NULL, 'D' },
 	{ "force-unlimited\0", no_argument, NULL, 'U' },
@@ -839,6 +843,11 @@ int main(int argc, char **argv)
 			pluto_log_file = clone_str(optarg, "pluto_log_file");
 			log_to_file_desired = TRUE;
 			continue;
+
+        case OPT_LOG_EXCHANGE_TIMEOUT_IP:   /* --log-exchange-timeout-ip */
+            log_exchange_timeout_ip = TRUE;
+            continue;
+
 #ifdef USE_DNSSEC
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
 			if (optarg[0] != '\0') {

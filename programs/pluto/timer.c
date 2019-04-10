@@ -64,6 +64,7 @@
 #include "retry.h"
 #include "fetch.h"		/* for check_crls() */
 #include "pluto_stats.h"
+#include "ip_endpoint.h"
 
 /*
  * This file has the event handling routines. Events are
@@ -545,8 +546,19 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		passert(st != NULL);
 		deltatime_t timeout = (st->st_ike_version == IKEv2) ? deltatime(MAXIMUM_RESPONDER_WAIT) : st->st_connection->r_timeout;
 
-		libreswan_log("deleting incomplete state after "PRI_DELTATIME" seconds",
-			      pri_deltatime(timeout));
+        /*
+         * In some cases, logging the originating address from
+         * certain states may be beneficial for determining
+         * causes of connection failures or abuse.
+         */
+        if (log_exchange_timeout_ip && st->st_state == STATE_PARENT_R1) {
+            ip_endpoint_buf b;
+            libreswan_log("deleting incomplete state after "PRI_DELTATIME" seconds from address %s",
+                pri_deltatime(timeout), str_endpoint(st->st_remoteaddr,&b));
+        } else {
+            libreswan_log("deleting incomplete state after "PRI_DELTATIME" seconds",
+                pri_deltatime(timeout));
+        }
 		/*
 		 * If no other reason has been given then this is a
 		 * timeout.
