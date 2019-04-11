@@ -45,6 +45,7 @@ KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
 KVM_WORKERS ?= 1
 #KVM_WORKERS ?= $(shell awk 'BEGIN { c=1 } /cpu cores/ { c=$$4 } END { if (c>1) print c/2; }' /proc/cpuinfo)
 KVM_GROUP ?= qemu
+#KVM_PYTHON ?= PYTHONPATH=/home/python/pexpect:/home/python/ptyprocess /home/python/v3.8/bin/python3
 
 # Should these live in the OS.mk file?
 KVM_USE_EFENCE ?= true
@@ -145,10 +146,10 @@ KVM_BUILD_DOMAIN_CLONES = $(KVM_INSTALL_DOMAINS)
 # Other utilities and directories
 #
 
-KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
-KVMRUNNER ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
-KVMRESULTS ?= $(abs_top_srcdir)/testing/utils/kvmresults.py
-KVMTEST ?= $(abs_top_srcdir)/testing/utils/kvmtest.py
+KVMSH ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmsh.py
+KVMRUNNER ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmrunner.py
+KVMRESULTS ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmresults.py
+KVMTEST ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmtest.py
 
 KVM_OBJDIR = OBJ.kvm
 
@@ -331,7 +332,7 @@ kvm-test-modified kvm-check-modified:
 	$(MAKE) kvm-test KVM_TESTS="$(KVM_MODIFIED_TESTS)"
 .PHONY: kvm-diff-modified
 kvm-diff-modified:
-	./testing/utils/kvmresults.py --print diffs $(KVM_MODIFIED_TESTS)
+	$(KVM_RESULTS) --print diffs $(KVM_MODIFIED_TESTS)
 
 
 
