@@ -149,12 +149,18 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 		ku_str = ku_str + ',keyCertSign,cRLSign'
 		eku_str = ocspeku
 
+        cf = False
+
         if cnstr == 'west-critical.testing.libreswan.org':
             cf = True
             ku_str = ku_str + ',keyEncipherment'
             eku_str = "serverAuth, clientAuth"
-        else:
-            cf = False
+
+        if cnstr == 'west-critical-client.testing.libreswan.org':
+            cf = True
+            ku_str = ku_str + ',keyEncipherment'
+            eku_str = "clientAuth"
+
 	add_ext(cert, 'keyUsage', cf, ku_str)
 	if eku_str is not '':
 		add_ext(cert, 'extendedKeyUsage', cf, eku_str)
@@ -630,7 +636,7 @@ def run_dist_certs():
 						'sunrise','north','south',
 						'pole','park','beet','carrot',
 					    'usage-server', 'usage-client',
-					    'usage-both', 'west-eku', 'west-critical',
+					    'usage-both', 'west-eku', 'west-critical', 'west-critical-client',
 						'nic-noext', 'nic-nourl',
 						'japan','smallkey', 'key4096',
 						'notyetvalid','notvalidanymore',
