@@ -33,11 +33,11 @@ STATUS_GROUP = "status"
 DOLLAR_GROUP = "dollar"
 
 # Patterns for each part of the above prompt
-USERNAME_PATTERN = "[-\.a-z0-9]+"
-HOSTNAME_PATTERN = "[-a-z0-9]+"
-BASENAME_PATTERN = "[-+=:,\.a-z0-9A-Z_~]+"
-STATUS_PATTERN = "| [0-9]+"
-DOLLAR_PATTERN = "[#\$]"
+USERNAME_PATTERN = r'[-.a-z0-9]+'
+HOSTNAME_PATTERN = r'[-a-z0-9]+'
+BASENAME_PATTERN = r'[-+=:,\.a-z0-9A-Z_~]+'
+STATUS_PATTERN = r'| [0-9]+'
+DOLLAR_PATTERN = r'[#\$]'
 
 def compile_prompt(logger, username=None, hostname=None):
     """Create a regex that matches PS1.
@@ -54,12 +54,16 @@ def compile_prompt(logger, username=None, hostname=None):
             dollar = "#"
         else:
             dollar = "$"
-    prompt = "\[(?P<" + USERNAME_GROUP + ">" + (username or USERNAME_PATTERN) + ")" + \
-             "@(?P<" + HOSTNAME_GROUP + ">"  + (hostname or HOSTNAME_PATTERN) + ")" + \
-             " (?P<" + BASENAME_GROUP + ">"  + (BASENAME_PATTERN) + ")" + \
-             "(?P<" + STATUS_GROUP + ">" + (STATUS_PATTERN) + ")" + \
-             "\](?P<" + DOLLAR_GROUP + ">"  + (dollar or DOLLAR_PATTERN)  + ")" + \
-             " "
+    prompt = (r'\[' +
+              r'(?P<' + USERNAME_GROUP + r'>' + (username or USERNAME_PATTERN) + r')' +
+              r'@' +
+              r'(?P<' + HOSTNAME_GROUP + r'>'  + (hostname or HOSTNAME_PATTERN) + r')' +
+              r' ' +
+              r'(?P<' + BASENAME_GROUP + r'>'  + (BASENAME_PATTERN) + ")" +
+              r'(?P<' + STATUS_GROUP + r'>' + (STATUS_PATTERN) + r')' +
+              r'\]' +
+              r'(?P<' + DOLLAR_GROUP + r'>'  + (dollar or DOLLAR_PATTERN)  + r')' +
+              r' ')
     logger.debug("prompt '%s'", prompt)
     return re.compile(prompt)
 
@@ -160,7 +164,7 @@ class Remote:
         number = str(random.randrange(1000000, 100000000))
         sync = "sync=" + number + "=cnyc"
         self.sendline("echo " + sync)
-        self.expect(sync + "\s+" + self.prompt.pattern, timeout=timeout)
+        self.expect(sync + r'\s+' + self.prompt.pattern, timeout=timeout)
         # Fix the prompt
         self.run("PS1='" + PS1 + "'")
         # Set noecho the PTY inside the VM (not pexpect's PTY).
