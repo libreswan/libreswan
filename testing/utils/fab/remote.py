@@ -189,19 +189,19 @@ def _start(domain, timeout):
     # Do not call this when the console is functional!
     console = domain.console()
     if console:
-        raise pexpect.EOF("console for domain %s already open", domain)
+        raise pexpect.EOF("console for domain %s already open" % domain)
     # Bring the machine up from scratch.
     end_time = time.time() + timeout
     first_attempt = True
     while console == None:
         if time.time() > end_time:
-            raise pexpect.EOF("trying to start domain %s", domain)
+            raise pexpect.EOF("trying to start domain %s" % domain)
         status, output = domain.start()
         if status and first_attempt:
             # The first attempt at starting the domain _must_ succeed.
             # Failing is a sign that the domain was running.  Further
             # attempts might fail as things get racey.
-            raise pexpect.EOF("failed to start domain %s", output)
+            raise pexpect.EOF("failed to start domain %s" % output)
         # give the VM time to start and then try opening the console.
         time.sleep(1)
         console = domain.console()
