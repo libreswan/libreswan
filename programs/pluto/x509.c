@@ -509,7 +509,7 @@ static struct pubkey *create_cert_pubkey(const struct id *id,
 		return NULL;
 	}
 	if (pk == NULL) {
-		dbg("NSS: failed to create pubkey from cert '%s'", cert->nickname);
+		dbg("failed to allocate/extract pubkey from cert '%s'", cert->nickname);
 		return NULL;
 	}
 	pk->id = *id;
@@ -559,13 +559,13 @@ static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
  * with subjectAltNames
  * @keyid provides an id for a secondary entry
  */
-void add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
+bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 			      const struct id *keyid, CERTCertificate *cert)
 {
 	struct pubkey *pk = create_cert_subjectdn_pubkey(cert);
 	if (pk == NULL) {
 		dbg("failed to create subjectdn_pubkey from cert");
-		return;
+		return false;
 	}
 
 	replace_public_key(pubkey_db, pk);
@@ -580,6 +580,7 @@ void add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 			replace_public_key(pubkey_db, pk2);
 		}
 	}
+	return true;
 }
 
 /*
