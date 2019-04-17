@@ -580,9 +580,25 @@ void free_pluto_event_list(void)
 	dbg("releasing event base");
 	event_base_free(pluto_eb);
 	pluto_eb = NULL;
-	dbg("releasing global event data");
-	/* this releases data allocated by evthread_use_pthreads() */
+#if LIBEVENT_VERSION_NUMBER >= 0x02010100
+	/*
+	 * Release any global event data such as that allocated by
+	 * evthread_use_pthreads().
+	 *
+	 * The function was added to the code base in 2011 and was
+	 * first published in April 2012 as part of 2.1.1-alpha (aka
+	 * above magic number). The first stable release was
+	 * 2.1.8-stable in January 2017.
+	 *
+	 * As of 2019, the following OSs are known to not include the
+	 * function: RHEL 7.6 / CentOS 7.x (2.0.21-stable); Ubuntu
+	 * 16.04.6 LTS (Xenial Xerus) (2.0.21-stable).
+	 */
+	dbg("releasing global libevent data");
 	libevent_global_shutdown();
+#else
+	dbg("leaking global libevent data (libevent is old)");
+#endif
 }
 
 void link_pluto_event_list(struct pluto_event *e) {
@@ -1141,9 +1157,11 @@ void init_event_base(void)
 	 * allocation."
 	 */
 #ifdef EVENT_SET_MEM_FUNCTIONS_IMPLEMENTED
-	dbg("pointing libevent at pluto's memory allocator");
 	event_set_mem_functions(libevent_malloc, libevent_realloc,
 				libevent_free);
+	dbg("libevent is using pluto's memory allocator");
+#else
+	dbg("libevent is using its own memory allocator");
 #endif
 	libreswan_log("Initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
 		      LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
