@@ -36,7 +36,7 @@ ifeq ($(DISTRO), ubuntu)
 	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
 	TWEAKS = dcokerfile-ubuntu-cmd
 	ifeq ($(DISTRO_REL), xenial)
-		TWEAKS = flip-glibc-kern-headers
+		TWEAKS = flip-glibc-kern-headers use_unbound_event_h_copy enable-nss_ava_copy
 	endif
 endif
 
@@ -47,10 +47,10 @@ endif
 
 ifeq ($(DISTRO), centos)
 	ifeq ($(DISTRO_REL), 7)
-		TWEAKS = disable-dsnssec
+		TWEAKS = werror-no-missing-field-initializers
 	endif
 	ifeq ($(DISTRO_REL), 6)
-		TWEAKS = disable-dsnssec
+		TWEAKS = werror-no-missing-field-initializers disable-dsnssec enable-nss_ava_copy
 	endif
 endif
 
@@ -78,15 +78,28 @@ dcokerfile-ubuntu-cmd:
 
 .PHONY: disable-dsnssec
 disable-dsnssec:
-	$(shell (grep "^USE_DNSSEC=" Makefile.inc.local || echo "USE_DNSSEC=false" >> Makefile.inc.local))
+	$(shell (grep "^USE_DNSSEC" Makefile.inc.local || echo "USE_DNSSEC ?= false" >> Makefile.inc.local))
+
+.PHONY: enable_nss_ava_copy
+enable_nss_ava_copy:
+	$(shell (grep "^USE_NSS_AVA_COPY" Makefile.inc.local || echo "USE_NSS_AVA_COPY ?= true" >> Makefile.inc.local))
+
+
+.PHONY: werror-no-missing-field-initializers
+werror-no-missing-field-initializers:
+	 $(shell (grep "^WERROR_CFLAGS" Makefile.inc.local || echo "WERROR_CFLAGS ?= -Werror -Wno-missing-field-initializers" >> Makefile.inc.local))
 
 .PHONY: disable-seccomp
 disable-seccomp:
-	$(shell (grep "^USE_SECCOMP=" Makefile.inc.local || echo "USE_SECCOMP=false" >> Makefile.inc.local))
+	$(shell (grep "^USE_SECCOMP" Makefile.inc.local || echo "USE_SECCOMP ?= false" >> Makefile.inc.local))
 
 .PHONY: flip-glibc-kern-headers
 flip-glibc-kern-headers:
-	$(shell (grep "^USE_GLIBC_KERN_FLIP_HEADERS=" Makefile.inc.local || echo "USE_GLIBC_KERN_FLIP_HEADERS=true" >> Makefile.inc.local))
+	$(shell (grep "^USE_GLIBC_KERN_FLIP_HEADERS" Makefile.inc.local || echo "USE_GLIBC_KERN_FLIP_HEADERS ?= true" >> Makefile.inc.local))
+
+.PHONY: use_unbound_event_h_copy
+use_unbound_event_h_copy:
+	$(shell (grep "^USE_UNBOUND_EVENT_H_COPY" Makefile.inc.local || echo "USE_UNBOUND_EVENT_H_COPY ?= true" >> Makefile.inc.local))
 
 #
 # end  of Distribution tweaks
@@ -155,7 +168,7 @@ docker-min-image: dockerfile $(TWEAKS) docker-build
 	echo "done docker image tag $(DI_T) from $(DISTRO)-$(DISTRO_REL)"
 
 .PHONY: docker-image
-docker-image: dockerfile docker-ssh-image docker-build
+docker-image: dockerfile $(TWEAKS) docker-ssh-image docker-build
 	echo "done docker image tag $(DI_T) from $(DISTRO)-$(DISTRO_REL) with ssh"
 
 .PHONY: docker-start

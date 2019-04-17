@@ -3,7 +3,7 @@
 # ENV container docker
 #setup ssh
 RUN mkdir /root/.ssh
-RUN mkdir /var/run/sshd
+RUN mkdir -p /var/run/sshd
 # create ssh host keys
 RUN ssh-keygen -b 1024 -t rsa -f /etc/ssh/ssh_host_key
 # move public key to enable ssh keys login
