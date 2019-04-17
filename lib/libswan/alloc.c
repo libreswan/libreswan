@@ -239,7 +239,14 @@ void resize_bytes(void **ptr, size_t new_size)
 		const union mhdr *p = ((const union mhdr *)old) - 1;
 		passert(p->i.magic == LEAK_MAGIC);
 		void *new = alloc_bytes_raw(new_size, p->i.name);
-		memcpy(new, old, min(p->i.size, new_size));
+		/*
+		 * XXX: Use PMIN(unsigned long,size_t) and not
+		 * min(unsigned long,size_t) as the latter doesn't
+		 * always compile - 32-bit systems (i.e.,
+		 * sizeof(unsigned long)==4) can have
+		 * sizeof(size_t)==8.
+		 */
+		memcpy(new, old, PMIN(p->i.size, new_size));
 		pfree(old);
 		*ptr = new;
 	} else {
