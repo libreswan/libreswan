@@ -684,8 +684,14 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	}
 }
 
+#if !defined(UNBOUND_VERSION_MAJOR) || (UNBOUND_VERSION_MAJOR == 1 && UNBOUND_VERSION_MINOR > 8)
+static void ipseckey_ub_cb(void* mydata, int rcode,
+		void *wire, int wire_len, int secure, char* why_bogus,
+		int was_ratelimited UNUSED)
+#else
 static void ipseckey_ub_cb(void* mydata, int rcode,
 		void *wire, int wire_len, int secure, char* why_bogus)
+#endif
 {
 	struct p_dns_req *dnsr = (struct p_dns_req *)mydata;
 	ldns_lookup_table *rcode_txt;
