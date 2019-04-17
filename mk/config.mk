@@ -272,7 +272,7 @@ USE_NIC_OFFLOAD?=true
 # When compiling on a system where unbound is missing the required unbound-event.h
 # include file, enable this workaround option that will enable an included copy of
 # this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
-USE_UNBOUND_EVENT_H_COPY?=true
+USE_UNBOUND_EVENT_H_COPY?=false
 
 # Install the portexclude service for policies/portexcludes.conf policies
 # Disabled per default for now because it requires python[23]
