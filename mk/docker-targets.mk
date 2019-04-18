@@ -38,7 +38,7 @@ ifeq ($(DISTRO), ubuntu)
 	ifeq ($(DISTRO_REL), xenial)
 		TWEAKS = flip-glibc-kern-headers use_unbound_event_h_copy enable-nss_ava_copy disable-nss_ipsec_profile
 	endif
-	ifeq($(DISTRO_REL), cosmic)
+	ifeq ($(DISTRO_REL), cosmic)
 		TWEAKS = disable-nss_ipsec_profile
 	endif
 endif
