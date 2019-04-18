@@ -11,7 +11,6 @@
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_prefix} \\\
     INITSYSTEM=systemd \\\
-    NSS_REQ_AVA_COPY=false \\\
     USE_DNSSEC=true \\\
     USE_FIPSCHECK=true \\\
     USE_KLIPS=false \\\
