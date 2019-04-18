@@ -368,7 +368,7 @@ static void enum_stats(enum_names *names, unsigned long start,
 		}							\
 	}
 
-void show_pluto_stats()
+void show_pluto_stats(void)
 {
 	whack_log_comment("total.ipsec.type.all=%lu", pstats_ipsec_sa);
 	whack_log_comment("total.ipsec.type.esp=%lu", pstats_ipsec_esp);
@@ -464,7 +464,7 @@ void show_pluto_stats()
 	whack_pluto_stat(&pstats_ikev2_recv_notifies_s);
 }
 
-void clear_pluto_stats()
+void clear_pluto_stats(void)
 {
 	DBG(DBG_CONTROL, DBG_log("clearing pluto stats"));
 

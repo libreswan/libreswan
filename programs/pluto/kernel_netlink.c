@@ -2675,7 +2675,7 @@ static bool netlink_bypass_policy(int family, int proto, int port)
 	return TRUE;
 }
 
-static bool netlink_v6holes()
+static bool netlink_v6holes(void)
 {
 	/* this could be per interface specific too */
 	char proc_f[] = "/proc/sys/net/ipv6/conf/all/disable_ipv6";

@@ -51,8 +51,8 @@ extern unsigned long pstats_xauth_started;
 extern unsigned long pstats_xauth_stopped;
 extern unsigned long pstats_xauth_aborted;
 
-extern void show_pluto_stats();
-extern void clear_pluto_stats();
+extern void show_pluto_stats(void);
+extern void clear_pluto_stats(void);
 
 /*
  * This (assuming it works) is less evil then an array index

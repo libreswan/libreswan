@@ -148,7 +148,7 @@ void print_begin(void)
 	fprint_begin(stdout);
 }
 
-void print_end()
+void print_end(void)
 {
 	fprint_end(stdout);
 }
