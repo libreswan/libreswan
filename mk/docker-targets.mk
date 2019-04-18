@@ -36,7 +36,7 @@ ifeq ($(DISTRO), ubuntu)
 	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
 	TWEAKS = dcokerfile-ubuntu-cmd
 	ifeq ($(DISTRO_REL), xenial)
-		TWEAKS = flip-glibc-kern-headers use_unbound_event_h_copy enable-nss_ava_copy
+		TWEAKS = flip-glibc-kern-headers use_unbound_event_h_copy enable-nss_ava_copy disable-nss_ipsec_profile
 	endif
 endif
 
@@ -50,7 +50,7 @@ ifeq ($(DISTRO), centos)
 		TWEAKS = werror-no-missing-field-initializers
 	endif
 	ifeq ($(DISTRO_REL), 6)
-		TWEAKS = werror-no-missing-field-initializers disable-dsnssec enable-nss_ava_copy
+		TWEAKS = werror-no-missing-field-initializers disable-dsnssec disable-nss_ipsec_profile
 	endif
 endif
 
@@ -80,8 +80,12 @@ dcokerfile-ubuntu-cmd:
 disable-dsnssec:
 	$(shell (grep "^USE_DNSSEC" Makefile.inc.local || echo "USE_DNSSEC ?= false" >> Makefile.inc.local))
 
-.PHONY: enable_nss_ava_copy
-enable_nss_ava_copy:
+.PHONY: disable-nss_ipsec_profile
+disable-nss_ipsec_profile:
+	$(shell (grep "^USE_NSS_IPSEC_PROFILE" Makefile.inc.local || echo "USE_NSS_IPSEC_PROFILE ?= false" >>Makefile.inc.local))
+
+.PHONY: enable-nss_ava_copy
+enable-nss_ava_copy:
 	$(shell (grep "^USE_NSS_AVA_COPY" Makefile.inc.local || echo "USE_NSS_AVA_COPY ?= true" >> Makefile.inc.local))
 
 
