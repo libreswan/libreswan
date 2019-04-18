@@ -178,7 +178,7 @@ ifeq ($(USE_TWOFISH),true)
 OBJS += ike_alg_twofish.o
 endif
 
-ifeq ($(NSS_REQ_AVA_COPY),true)
+ifeq ($(USE_NSS_AVA_COPY),true)
 OBJS += nss_copies.o
 endif
 
