@@ -41,6 +41,9 @@ ifeq ($(DISTRO), ubuntu)
 	ifeq ($(DISTRO_REL), cosmic)
 		TWEAKS = disable-nss_ipsec_profile
 	endif
+	ifeq ($(DISTRO_REL), bionic)
+		TWEAKS = disable-nss_ipsec_profile
+	endif
 endif
 
 ifeq ($(DISTRO), debian)
