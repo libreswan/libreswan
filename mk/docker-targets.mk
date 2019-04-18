@@ -34,7 +34,7 @@ TWEAKS=
 #
 ifeq ($(DISTRO), ubuntu)
 	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
-	TWEAKS = dcokerfile-ubuntu-cmd
+	TWEAKS = dockerfile-ubuntu-cmd
 	ifeq ($(DISTRO_REL), xenial)
 		TWEAKS = flip-glibc-kern-headers use_unbound_event_h_copy enable-nss_ava_copy disable-nss_ipsec_profile
 	endif
@@ -45,7 +45,7 @@ endif
 
 ifeq ($(DISTRO), debian)
 	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
-	TWEAKS = dcokerfile-debian-cmd
+	TWEAKS = dockerfile-debian-cmd
 endif
 
 ifeq ($(DISTRO), centos)
