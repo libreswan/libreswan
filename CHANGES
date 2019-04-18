@@ -50,9 +50,10 @@ v3.28 (unreleased)
          WARNING: Support for KLIPS will be removed in 2019
 * libswan: Fix leaks in badly formed secrets/ppk_id [Vukasin Karadzic]
 * building: sort all wildcarded object files for build reproducibility [dkg]
-* building: USE_NSS_AVA_COPY=?false, only needed with NSS < 3.30 [Tuomo]
-* building: USE_UNBOUND_EVENT_H_COPY=?false, enable only for [Tuomo]
+* building: USE_NSS_AVA_COPY ?= false, only needed with NSS < 3.30 [Tuomo]
+* building: USE_UNBOUND_EVENT_H_COPY ?= false, enable only for [Tuomo]
             unbound <= 1.7.3 without unbound-event.h
+* building: USE_NSS_IPSEC_PROFILE ?= true, Requires nss >= 3.41 [Tuomo]
 
 v3.27 (October 7, 2018)
 * XFRM: SA marks must be included for delete operation [Tijs Van Buggenhout]
