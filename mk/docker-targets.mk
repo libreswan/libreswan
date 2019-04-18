@@ -64,16 +64,16 @@ ifeq ($(TRAVIS_BANCH), travis)
 	DISTRO_REL = $(call W3, $(BRANCH),27)
 endif
 
-.PHONY: dcokerfile-remove-libreswan-spec
-dcokerfile-remove-libreswan-spec:
+.PHONY: dockerfile-remove-libreswan-spec
+dockerfile-remove-libreswan-spec:
 	$(shell sed -i '/libreswan\.spec/d' testing/docker/dockerfile)
 
-.PHONY: dcokerfile-debian-cmd
-dcokerfile-debian-cmd:
+.PHONY: dockerfile-debian-cmd
+dockerfile-debian-cmd:
 	$(shell sed -i 's#CMD.*#CMD ["/lib/systemd/systemd"]#' testing/docker/dockerfile)
 
-.PHONY: dcokerfile-ubuntu-cmd
-dcokerfile-ubuntu-cmd:
+.PHONY: dockerfile-ubuntu-cmd
+dockerfile-ubuntu-cmd:
 	$(shell sed -i 's#CMD.*#CMD ["/sbin/init"]#' testing/docker/dockerfile)
 
 .PHONY: disable-dsnssec
@@ -143,7 +143,7 @@ define debian_exp_repo
 	fi
 endef
 
-.PHONY: dcokerfile
+.PHONY: dockerfile
 dockerfile: $(DOCKERFILE_PKG)
 	echo "FROM $(DISTRO):$(DISTRO_REL)" > $(DOCKERFILE)
 	echo "ENV container docker" >> $(DOCKERFILE)
@@ -159,7 +159,7 @@ travis-ubuntu-xenial: ubuntu-xenial-packages
 	$(DOCKER_CMD) ps -a
 
 .PHONY: docker-build
-docker-build: dcokerfile
+docker-build: dockerfile
 	$(DOCKER_CMD) build -t $(DI_T) -f $(DOCKERFILE) .
 
 .PHONY: docker-ssh-image
