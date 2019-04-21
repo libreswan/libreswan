@@ -2049,7 +2049,7 @@ static stf_status xauth_client_resp(struct state *st,
 						if (!fd_p(st->st_whack_sock)) {
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH username requested, but no file descriptor available for prompt");
-							return STF_FAIL;
+							return STF_FATAL;
 						}
 
 						if (!whack_prompt_for(st->
@@ -2062,7 +2062,7 @@ static stf_status xauth_client_resp(struct state *st,
 						{
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH username prompt failed.");
-							return STF_FAIL;
+							return STF_FATAL;
 						}
 						/* replace the first newline character with a string-terminating \0. */
 						char *cptr = memchr(
@@ -2133,7 +2133,7 @@ static stf_status xauth_client_resp(struct state *st,
 						if (!fd_p(st->st_whack_sock)) {
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH password requested, but no file descriptor available for prompt");
-							return STF_FAIL;
+							return STF_FATAL;
 						}
 
 						if (!whack_prompt_for(st->
@@ -2146,7 +2146,7 @@ static stf_status xauth_client_resp(struct state *st,
 						{
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH password prompt failed.");
-							return STF_FAIL;
+							return STF_FATAL;
 						}
 
 						/* replace the first newline character with a string-terminating \0. */
