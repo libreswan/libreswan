@@ -206,8 +206,7 @@ void update_host_pairs(struct connection *c)
 			}
 
 			d->spd.that.host_addr = new_addr;
-			list_rm(struct connection, hp_next, d,
-				d->host_pair->connections);
+			LIST_RM(hp_next, d, d->host_pair->connections, true);
 
 			d->hp_next = conn_list;
 			conn_list = d;
@@ -224,7 +223,7 @@ void update_host_pairs(struct connection *c)
 
 	if (hp->connections == NULL) {
 		passert(hp->pending == NULL); /* ??? must deal with this! */
-		list_rm(struct host_pair, next, hp, host_pairs);
+		LIST_RM(next, hp, host_pairs, true/*expected*/);
 		pfree(hp);
 	}
 }
@@ -255,8 +254,13 @@ static void delete_sr(struct spd_route *sr)
  *
  * @c - the connection pointer
  * @relations - whether to delete any instances as well.
+ * @connection_valid - apply sanity checks
  *
  */
+
+static void discard_connection(struct connection *c,
+			       struct connection *old_cur_connection,
+			       bool connection_valid);
 
 void delete_connection(struct connection *c, bool relations)
 {
@@ -287,7 +291,13 @@ void delete_connection(struct connection *c, bool relations)
 			rel_lease_addr(c);
 	}
 	release_connection(c, relations); /* won't delete c */
+	discard_connection(c, old_cur_connection, true/*connection_valid*/);
+}
 
+static void discard_connection(struct connection *c,
+			       struct connection *old_cur_connection,
+			       bool connection_valid)
+{
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
@@ -298,11 +308,13 @@ void delete_connection(struct connection *c, bool relations)
 	perpeer_logfree(c);
 
 	/* find and delete c from connections list */
-	list_rm(struct connection, ac_next, c, connections);
+	LIST_RM(ac_next, c, connections,
+		connection_valid);
 
 	/* find and delete c from the host pair list */
 	if (c->host_pair == NULL) {
-		list_rm(struct connection, hp_next, c, unoriented_connections);
+		LIST_RM(hp_next, c, unoriented_connections,
+			connection_valid);
 	} else {
 		delete_oriented_hp(c);
 	}
