@@ -464,37 +464,37 @@ void unroute_group(struct connection *c)
 
 void delete_group(const struct connection *c)
 {
-	struct fg_groups *g;
-
-	/* find and remove from groups */
-	{
-		struct fg_groups **pp;
-
-		for (pp = &groups; (g = *pp)->connection != c;
-		     pp = &(*pp)->next)
-			;
-
-		*pp = g->next;
+	/*
+	 * find and remove from groups
+	 */
+	struct fg_groups *g = NULL;
+	for (struct fg_groups **pp = &groups; *pp != NULL; pp = &(*pp)->next) {
+		if ((*pp)->connection == c) {
+			g = *pp;
+			*pp = g->next;
+			break;
+		}
 	}
 
-	/* find and remove from targets */
-	{
-		struct fg_targets **pp;
-
-		for (pp = &targets; *pp != NULL; ) {
+	/*
+	 * find and remove from targets
+	 */
+	if (pexpect(g != NULL)) {
+		struct fg_targets **pp = &targets;
+		while (*pp != NULL) {
 			struct fg_targets *t = *pp;
-
 			if (t->group == g) {
+				/* remove *PP but advance first */
 				*pp = t->next;
 				remove_group_instance(t->group->connection,
 						      t->name);
 				pfree(t);
 				/* pp is ready for next iteration */
 			} else {
+				/* advance PP */
 				pp = &t->next;
 			}
 		}
+		pfree(g);
 	}
-
-	pfree(g);
 }
