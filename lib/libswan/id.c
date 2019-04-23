@@ -42,30 +42,14 @@
 #include "af_info.h"
 
 /*
- * Note that there may be as many as six IDs that are temporary at
- * one time before unsharing the two ends of a connection. So we need
- * at least six temporary buffers for DER_ASN1_DN IDs.
- * We rotate them. Be careful!
- */
-#define MAX_BUF 6
-
-unsigned char *temporary_cyclic_buffer(void)
-{
-	/* MAX_BUF internal buffers */
-	static unsigned char buf[MAX_BUF][IDTOA_BUF];
-	static int counter;	/* cyclic counter */
-
-	if (++counter == MAX_BUF)
-		counter = 0;	/* next internal buffer */
-	return buf[counter];	/* assign temporary buffer */
-}
-
-/*
  * Convert textual form of id into a (temporary) struct id.
  *
  * Note that if the id is to be kept, unshare_id_content will be necessary.
  * This function should be split into parts so the boolean arguments can be
  * removed -- Paul
+ *
+ * XXX: since caller is almost immediately calling
+ * unshare_id_content() why not merge it.
  */
 err_t atoid(char *src, struct id *id, bool oe_only)
 {

@@ -380,9 +380,33 @@ int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
 }
 
 /*
+ * Note that there may be as many as six IDs that are temporary at
+ * one time before unsharing the two ends of a connection. So we need
+ * at least six temporary buffers for DER_ASN1_DN IDs.
+ * We rotate them. Be careful!
+ */
+#define MAX_BUF 6
+
+static unsigned char *temporary_cyclic_buffer(void)
+{
+	/* MAX_BUF internal buffers */
+	static unsigned char buf[MAX_BUF][IDTOA_BUF];
+	static int counter;	/* cyclic counter */
+
+	if (++counter == MAX_BUF)
+		counter = 0;	/* next internal buffer */
+	return buf[counter];	/* assign temporary buffer */
+}
+
+/*
  * Converts an LDAP-style human-readable ASCII-encoded
  * ASN.1 distinguished name into binary DER-encoded format.
- * *dn is the result, allocated by temporary_cyclic_buffer.
+ *
+ * (*DN) is the result, and points at static data allocated by
+ * temporary_cyclic_buffer.
+ *
+ * XXX: since caller is almost immediately calling clone_chunk() (or
+ * unshare_id_content()) why not do it here.
  *
  * Structure of the output:
  *
