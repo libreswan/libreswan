@@ -1819,16 +1819,34 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	c->tunnel_addr_family = wm->tunnel_addr_family;
 	c->sa_reqid = wm->sa_reqid;
 
-	int same_leftca = extract_end(&c->spd.this, &wm->left, "left");
-	int same_rightca = extract_end(&c->spd.that, &wm->right, "right");
-
-	if (same_rightca == -1 || same_leftca == -1) {
-		loglog(RC_LOG_SERIOUS, "extract_end() as failed - ID or certificate might be unset and cause failure");
+	/*
+	 * Since at this point 'this' and 'that' are disoriented their
+	 * names are pretty much meaningless.  Hence the strange
+	 * combination if 'this' and 'left' and 'that' and 'right.
+	 *
+	 * XXX: This is all too confusing - wouldn't it be simpler if
+	 * there was a '.left' and '.right' (or even .end[2] - this
+	 * code seems to be crying out for a for loop) and then having
+	 * orient() set up .local and .remote pointers or indexes
+	 * accordingly?
+	 */
+	int that_use_left_ca = extract_end(&c->spd.this, &wm->left, "left");
+	if (that_use_left_ca < 0) {
+		loglog(RC_FATAL, "Failed to add connection \"%s\" with invalid \"left\" certificate",
+		       c->name);
+		return false;
 	}
 
-	if (same_rightca == 1) {
+	int this_use_right_ca = extract_end(&c->spd.that, &wm->right, "right");
+	if (this_use_right_ca < 0) {
+		loglog(RC_FATAL, "Failed to add connection \"%s\" with invalid \"right\" certificate",
+		       c->name);
+		return false;
+	}
+
+	if (that_use_left_ca == 1) {
 		c->spd.that.ca = clone_chunk(c->spd.this.ca, "same rightca");
-	} else if (same_leftca == 1) {
+	} else if (this_use_right_ca == 1) {
 		c->spd.this.ca = clone_chunk(c->spd.that.ca, "same leftca");
 	}
 
