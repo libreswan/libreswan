@@ -874,6 +874,7 @@ extern struct keywords sa_role_names;
  */
 
 enum connection_kind {
+	CK_INVALID = 0,	/* better name? */
 	CK_GROUP,       /* policy group: instantiates to template */
 	CK_TEMPLATE,    /* abstract connection, with wildcard */
 	CK_PERMANENT,   /* normal connection */
