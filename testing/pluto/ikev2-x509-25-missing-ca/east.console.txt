@@ -1,6 +1,5 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
-command 'PATH/bin/certutil -A -n hashsha1 -t 'P,,' -d sql:/etc/ipsec.d -a -i /testing/x509/certs/hashsha1.crt' failed with status 255: certutil:  unable to open "/testing/x509/certs/hashsha1.crt" for reading (-5950, 2).
 east #
  certutil -D -n west -d sql:/etc/ipsec.d
 east #

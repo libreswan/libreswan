@@ -1,6 +1,9 @@
 /testing/guestbin/swan-prep --x509
+# add default route over "other" interface. road has only one so we fake one
 ip route del default
-ip route add default via 192.9.4.1
+ip tuntap add mode tun tun0
+ifconfig tun0 10.11.12.13/24
+ip route add default via 10.11.12.14
 certutil -D -n east -d sql:/etc/ipsec.d
 cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 cp policies/* /etc/ipsec.d/policies/

@@ -22,11 +22,10 @@ east #
  # confirm the revive conn code triggered
 east #
  hostname | grep east > /dev/null && grep EVENT_REVIVE_CONNS /tmp/pluto.log | sed "s/@.*$//"
+| global one-shot timer EVENT_REVIVE_CONNS initialized
 "west-east-auto" #1: deleting IKE SA for connection 'west-east-auto' but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
-| event_schedule: new EVENT_REVIVE_CONNS-pe
-| inserting event EVENT_REVIVE_CONNS, timeout in 0.000 seconds
-| handling event EVENT_REVIVE_CONNS
-| free_event_entry: release EVENT_REVIVE_CONNS-pe
+| global one-shot timer EVENT_REVIVE_CONNS scheduled in 0 seconds
+| global timer EVENT_REVIVE_CONNS event
 east #
 east #
  ../bin/check-for-core.sh

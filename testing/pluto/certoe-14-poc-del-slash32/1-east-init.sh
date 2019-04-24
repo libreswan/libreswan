@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep  --x509
 ip route del default
-ip route add default via 192.9.4.1
+ip route add default via 192.9.2.254
 certutil -D -n road -d sql:/etc/ipsec.d
 certutil -D -n east -d sql:/etc/ipsec.d
 cp east-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
