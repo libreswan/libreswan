@@ -243,16 +243,6 @@ kvmplutotest	ikev2-algo-esn-05			good
 kvmplutotest	ikev2-algo-esn-06			good
 kvmplutotest	interop-ikev2-strongswan-30-esn		good
 
-# MOBIKE tests
-kvmplutotest	ikev2-mobike-01				good
-kvmplutotest	ikev2-mobike-02				good
-kvmplutotest	ikev2-mobike-03				good
-kvmplutotest	ikev2-mobike-04				wip
-kvmplutotest	ikev2-mobike-05-gcm			wip
-kvmplutotest	ikev2-mobike-06				wip
-kvmplutotest	interop-ikev2-strongswan-38-mobike-pool		good
-kvmplutotest 	interop-ikev2-strongswan-38-mobike-initiator	good
-kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 
 # Various corner case tests for IKEv2
 kvmplutotest	ikev2-major-version-initiator		good
@@ -1017,5 +1007,16 @@ kvmplutotest	ikev2-redirect-01-global			good
 kvmplutotest	ikev2-redirect-02-auth				good
 kvmplutotest	ikev2-redirect-03-auth-loop			good
 kvmplutotest	ikev2-redirect-06-roadwarriors			good
+
+# MOBIKE tests
+kvmplutotest	ikev2-mobike-01				good
+kvmplutotest	ikev2-mobike-02				good
+kvmplutotest	ikev2-mobike-03				good
+kvmplutotest	ikev2-mobike-04				wip
+kvmplutotest	ikev2-mobike-05-gcm			wip
+kvmplutotest	ikev2-mobike-06				wip
+kvmplutotest	interop-ikev2-strongswan-38-mobike-pool		good
+kvmplutotest 	interop-ikev2-strongswan-38-mobike-initiator	good
+kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 
 kvmplutotest	bad-nexthop-01		wip
