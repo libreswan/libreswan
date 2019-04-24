@@ -31,6 +31,7 @@ done
 road #
  grep "fragment" /tmp/pluto.log
 | peer supports fragmentation
+| peer supports fragmentation
 road #
 road #
  ../bin/check-for-core.sh
