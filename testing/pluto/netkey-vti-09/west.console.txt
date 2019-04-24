@@ -99,7 +99,7 @@ west #
     link/ether 12:00:00:32:64:45 brd ff:ff:ff:ff:ff:ff
     inet 192.9.4.45/24 brd 192.9.4.255 scope global eth2
        valid_lft forever preferred_lft forever
-5: ip_vti0@NONE: <NOARP> mtu 1480 qdisc noop state DOWN group default
+5: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN group default
     link/ipip 0.0.0.0 brd 0.0.0.0
 6: ipsec0@NONE: <NOARP,UP,LOWER_UP> mtu 1480 qdisc noqueue state UNKNOWN group default
     link/ipip 192.1.2.45 brd 0.0.0.0
@@ -115,7 +115,7 @@ west #
     link/ether 12:00:00:64:64:45 brd ff:ff:ff:ff:ff:ff
 4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default
     link/ether 12:00:00:32:64:45 brd ff:ff:ff:ff:ff:ff
-5: ip_vti0@NONE: <NOARP> mtu 1480 qdisc noop state DOWN mode DEFAULT group default
+5: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN mode DEFAULT group default
     link/ipip 0.0.0.0 brd 0.0.0.0
 6: ipsec0@NONE: <NOARP,UP,LOWER_UP> mtu 1480 qdisc noqueue state UNKNOWN mode DEFAULT group default
     link/ipip 192.1.2.45 brd 0.0.0.0
