@@ -20,6 +20,11 @@ sleep 2
 ip addr show dev lo
 # let libreswan detect change and initiate MOBIKE update
 ifup eth0
+# restore config files while we wait
+sed -i '/IPADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0
+sed -i '/GATEWAY/d' /etc/sysconfig/network-scripts/ifcfg-eth0
+echo "IPADDR=192.1.3.209" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+echo "GATEWAY=192.1.3.254" >> /etc/sysconfig/network-scripts/ifcfg-eth0
 sleep 10
 # ip addr show scope global dev eth0 | grep -v -E '(valid_lft|ether|noqueue)'
 ip addr show scope global dev eth0 | grep -v valid_lft
