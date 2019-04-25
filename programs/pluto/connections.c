@@ -1996,24 +1996,11 @@ void add_connection(const struct whack_message *wm)
 
 	unshare_connection_end(&c->spd.this);
 	unshare_connection_end(&c->spd.that);
-
 	/*
-	 * XXX: Iterating over a list of SPD's (rather than just
-	 * c->spd) and unsharing each end dates back to when this code
-	 * used unshare_connection() to "unshare" whack message
-	 * strings.  Presumably, since .spd_next is still NULL, this
-	 * isn't needed (.spd_next gets modified when instantiating,
-	 * which isn't here).
-	 *
-	 * Lets find out.
+	 * XXX: Extra SPDs are added when instantiating so this should
+	 * still be NULL.
 	 */
-	if (!pexpect(c->spd.spd_next == NULL)) {
-		for (struct spd_route *sr = c->spd.spd_next; sr != NULL;
-		     sr = sr->spd_next) {
-			unshare_connection_end(&sr->this);
-			unshare_connection_end(&sr->that);
-		}
-	}
+	pexpect(c->spd.spd_next == NULL);
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
