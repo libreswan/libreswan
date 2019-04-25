@@ -645,7 +645,6 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 
 	/* ??? ev_time lacks required precision */
 	ev->ev_time = monotimesum(mononow(), delay);
-	link_pluto_event_list(ev); /* add to global list to track */
 
 	/*
 	 * If the event is associated with a state, put a backpointer to the
@@ -691,17 +690,15 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 			st->st_event = ev;
 			break;
 		}
-	}
-
-	if (st == NULL) {
-		dbg("inserting event %s, timeout in %jd.%03jd seconds",
-		    en, deltasecs(delay),
-		    (deltamillisecs(delay) % 1000));
-	} else {
 		dbg("inserting event %s, timeout in %jd.%03jd seconds for #%lu",
 		    en, deltasecs(delay),
 		    (deltamillisecs(delay) % 1000),
 		    ev->ev_state->st_serialno);
+	} else {
+		link_pluto_event_list(ev); /* add to global list to track */
+		dbg("inserting event %s, timeout in %jd.%03jd seconds",
+		    en, deltasecs(delay),
+		    (deltamillisecs(delay) % 1000));
 	}
 
 	timer_private_pluto_event_new(&ev->ev,

@@ -610,19 +610,24 @@ void link_pluto_event_list(struct pluto_event *e) {
 void delete_pluto_event(struct pluto_event **evp)
 {
 	if (*evp != NULL) {
-		for (struct pluto_event **pp = &pluto_events_head; ; ) {
-			struct pluto_event *p = *pp;
+		if ((*evp)->ev_state != NULL) {
+			pexpect((*evp)->next == NULL);
+			free_event_entry(evp);
+		} else {
+			for (struct pluto_event **pp = &pluto_events_head; ; ) {
+				struct pluto_event *p = *pp;
 
-			passert(p != NULL);
+				passert(p != NULL);
 
-			if (p == *evp) {
-				/* found it; unlink this from the list */
-				*pp = free_event_entry(evp);
-				break;
+				if (p == *evp) {
+					/* found it; unlink this from the list */
+					*pp = free_event_entry(evp);
+					break;
+				}
+				pp = &p->next;
 			}
-			pp = &p->next;
+			*evp = NULL;
 		}
-		*evp = NULL;
 	}
 }
 
@@ -769,24 +774,16 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
  */
 void timer_list(void)
 {
-	monotime_t nw;
-	struct pluto_event *ev = pluto_events_head;
-
-	if (ev == NULL) {
-		/* Just paranoid */
-		whack_log(RC_LOG, "no events are queued");
-		return;
-	}
-
-	nw = mononow();
+	monotime_t nw = mononow();
 
 	whack_log(RC_LOG, "It is now: %jd seconds since monotonic epoch",
 		  monosecs(nw));
 
 	list_global_timers(nw);
 
-	while (ev != NULL) {
-		struct state *st = ev->ev_state;
+	for (struct pluto_event *ev = pluto_events_head;
+	     ev != NULL; ev = ev->next) {
+		pexpect(ev->ev_state == NULL);
 		char buf[256] = "not timer based";
 
 		if (ev->ev_type != EVENT_NULL) {
@@ -794,20 +791,10 @@ void timer_list(void)
 				 monosecs(ev->ev_time),
 				 deltasecs(monotimediff(ev->ev_time, nw)));
 		}
-
-		if (st != NULL && st->st_connection != NULL) {
-			char cib[CONN_INST_BUF];
-			whack_log(RC_LOG, "event %s is %s \"%s\"%s #%lu",
-					ev->ev_name, buf,
-					st->st_connection->name,
-					fmt_conn_instance(st->st_connection, cib),
-					st->st_serialno);
-		} else {
-			whack_log(RC_LOG, "event %s is %s", ev->ev_name, buf);
-		}
-
-		ev = ev->next;
+		whack_log(RC_LOG, "event %s is %s", ev->ev_name, buf);
 	}
+
+	list_state_events(nw);
 }
 
 void find_ifaces(bool rm_dead)
