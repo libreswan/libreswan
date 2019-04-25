@@ -47,6 +47,7 @@ enum xxx_impair ...;
  * XXX: make this a structure so it can be copied?
  */
 
+extern bool impair_revival;
 extern bool impair_emitting;
 extern enum send_impairment impair_ke_payload;
 extern enum send_impairment impair_ike_key_length_attribute;

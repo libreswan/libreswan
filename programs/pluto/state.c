@@ -1063,6 +1063,9 @@ void delete_state(struct state *st)
 			 */
 			dbg("IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
 			    st->st_serialno, c->name, newer_sa);
+		} else if (impair_revival) {
+			libreswan_log("IMPAIR: skipping revival of connection '%s' that is supposed to remain up",
+				      c->name);
 		} else {
 			/* 'cur' is ST; so #SO is in log prefix */
 			log_to_log("deleting IKE SA for connection '%s' but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",

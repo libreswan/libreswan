@@ -142,6 +142,11 @@ struct impairment impairments[] = {
 #define V(V) .value = &V, .sizeof_value = sizeof(V)
 
 	{
+		.what = "revival",
+		.help = "disable code that revives a connection that is supposed to stay up",
+		V(impair_revival),
+	},
+	{
 		.what = "emitting",
 		.help = "disable correctness-checks when emitting a payload (let anything out)",
 		V(impair_emitting),
@@ -441,6 +446,7 @@ void process_impair(const struct whack_impair *wc)
  * declaration in the header.
  */
 
+bool impair_revival;
 bool impair_emitting;
 enum send_impairment impair_ke_payload;
 enum send_impairment impair_ike_key_length_attribute;
