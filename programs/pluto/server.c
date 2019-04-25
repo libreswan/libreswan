@@ -418,6 +418,25 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 }
 
 /*
+ * Static events.
+ */
+
+static void free_static_event(struct event *ev)
+{
+	/*
+	 * "If the event has already executed or has never been added
+	 * the [event_del()] call will have no effect.
+	 */
+	passert(event_del(ev) >= 0);
+	/*
+	 * "When debugging mode is enabled, informs Libevent that an
+	 * event should no longer be considered as assigned."
+	 */
+	event_debug_unassign(ev);
+	zero(ev);
+}
+
+/*
  * Global timer events.
  */
 
@@ -506,19 +525,7 @@ static void free_global_timers(void)
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
 		struct global_timer *gt = &global_timers[u];
 		if (event_initialized(&gt->ev)) {
-			/*
-			 * "If the event has already executed or has
-			 * never been added the [event_del()] call
-			 * will have no effect.
-			 */
-			event_del(&gt->ev);
-			/*
-			 * "When debugging mode is enabled, informs
-			 * Libevent that an event should no longer be
-			 * considered as assigned."
-			 */
-			event_debug_unassign(&gt->ev);
-			zero(&gt->ev);
+			free_static_event(&gt->ev);
 			dbg("global timer %s uninitialized", gt->name);
 		}
 	}
@@ -543,6 +550,81 @@ static void list_global_timers(monotime_t now)
 				  what, gt->name,
 				  monosecs(due), /* XXX: useful? */
 				  str_deltatime(delay, &delay_buf));
+		}
+	}
+}
+
+/*
+ * Global signal events.
+ */
+
+typedef void (signal_handler_cb)(void);
+
+struct signal_handler {
+	struct event ev;
+	signal_handler_cb *cb;
+	int signal;
+	bool persist;
+	const char *name;
+};
+
+static signal_handler_cb childhandler_cb;
+static signal_handler_cb termhandler_cb;
+static signal_handler_cb huphandler_cb;
+#ifdef HAVE_SECCOMP
+static signal_handler_cb syshandler_cb;
+#endif
+
+static struct signal_handler signal_handlers[] = {
+	{ .signal = SIGCHLD, .cb = childhandler_cb, .persist = true, .name = "PLUTO_SIGCHLD", },
+	{ .signal = SIGTERM, .cb = termhandler_cb, .persist = false, .name = "PLUTO_SIGTERM", },
+	{ .signal = SIGHUP, .cb = huphandler_cb, .persist = true, .name = "PLUTO_SIGHUP", },
+#ifdef HAVE_SECCOMP
+	{ .signal = SIGSYS, .cb = syshandler_cb, .persist = true, .name = "PLUTO_SIGSYS", },
+#endif
+};
+
+static void signal_handler_handler(evutil_socket_t fd UNUSED,
+				 const short event,
+				 void *arg)
+{
+	passert(in_main_thread());
+	struct signal_handler *se = arg;
+	passert(event & EV_SIGNAL);
+	dbg("signal %s event", se->name);
+	se->cb();
+}
+
+static void install_signal_handlers(void)
+{
+	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
+		struct signal_handler *se = &signal_handlers[i];
+		passert(!event_initialized(&se->ev));
+		event_assign(&se->ev, pluto_eb, (evutil_socket_t)se->signal,
+			     EV_SIGNAL | (se->persist ? EV_PERSIST : 0),
+			     signal_handler_handler, se);
+		passert(event_add(&se->ev, NULL) >= 0);
+		dbg("signal event handler %s installed", se->name);
+	}
+}
+
+static void free_signal_handlers(void)
+{
+	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
+		struct signal_handler *se = &signal_handlers[i];
+		passert(event_initialized(&se->ev));
+		free_static_event(&se->ev);
+		dbg("signal event handler %s uninstalled", se->name);
+	}
+}
+
+static void list_signal_handlers(void)
+{
+	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
+		struct signal_handler *se = &signal_handlers[i];
+		if (event_initialized(&se->ev) &&
+		    event_pending(&se->ev, EV_SIGNAL, NULL) > 0) {
+			whack_log(RC_LOG, "signal event handler %s", se->name);
 		}
 	}
 }
@@ -577,6 +659,8 @@ void free_pluto_event_list(void)
 	while (*head != NULL)
 		*head = free_event_entry(head);
 	free_global_timers();
+	free_signal_handlers();
+
 	dbg("releasing event base");
 	event_base_free(pluto_eb);
 	pluto_eb = NULL;
@@ -785,6 +869,7 @@ void timer_list(void)
 		  monosecs(nw));
 
 	list_global_timers(nw);
+	list_signal_handlers();
 
 	for (struct pluto_event *ev = pluto_events_head;
 	     ev != NULL; ev = ev->next) {
@@ -890,19 +975,19 @@ void show_fips_status(void)
 		IMPAIR(FORCE_FIPS) ? "enabled [forced]" : "enabled");
 }
 
-static void huphandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
+static void huphandler_cb(void)
 {
 	/* logging is probably not signal handling / threa safe */
 	libreswan_log("Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
 }
 
-static void termhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
+static void termhandler_cb(void)
 {
 	exit_pluto(PLUTO_EXIT_OK);
 }
 
 #ifdef HAVE_SECCOMP
-static void syshandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
+static void syshandler_cb(void)
 {
 	loglog(RC_LOG_SERIOUS, "pluto received SIGSYS - possible SECCOMP violation!");
 	if (pluto_seccomp_mode == SECCOMP_ENABLED) {
@@ -1035,7 +1120,7 @@ static void log_status(struct lswlog *buf, int status)
 	lswlogs(buf, ")");
 }
 
-static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
+static void childhandler_cb(void)
 {
 	while (true) {
 		int status;
@@ -1188,19 +1273,7 @@ void call_server(void)
 	pluto_event_add(ctl_fd, EV_READ | EV_PERSIST, whack_handle_cb, NULL,
 			NULL, "PLUTO_CTL_FD");
 
-	pluto_event_add(SIGCHLD, EV_SIGNAL | EV_PERSIST, childhandler_cb, NULL, NULL,
-			"PLUTO_SIGCHLD");
-
-	pluto_event_add(SIGTERM, EV_SIGNAL, termhandler_cb, NULL, NULL,
-			"PLUTO_SIGTERM");
-
-	pluto_event_add(SIGHUP, EV_SIGNAL|EV_PERSIST, huphandler_cb, NULL,
-			NULL, "PLUTO_SIGHUP");
-
-#ifdef HAVE_SECCOMP
-	pluto_event_add(SIGSYS, EV_SIGNAL, syshandler_cb, NULL, NULL,
-			"PLUTO_SIGSYS");
-#endif
+	install_signal_handlers();
 
 	/* do_whacklisten() is now done by the addconn fork */
 
