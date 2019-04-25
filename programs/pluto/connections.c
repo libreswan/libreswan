@@ -1994,10 +1994,13 @@ void add_connection(const struct whack_message *wm)
 	c->accept_redirect_to = clone_str(c->accept_redirect_to,\
 					"connection accept_redirect_to");
 
-	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		unshare_connection_end(&sr->this);
-		unshare_connection_end(&sr->that);
-	}
+	unshare_connection_end(&c->spd.this);
+	unshare_connection_end(&c->spd.that);
+	/*
+	 * XXX: Extra SPDs are added when instantiating so this should
+	 * still be NULL.
+	 */
+	pexpect(c->spd.spd_next == NULL);
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
