@@ -9,8 +9,7 @@ west #
 west #
  ! ipsec auto --add westnet-eastnet-ikev2
 003 failed to find certificate ckaid '<<CKAID#1>>' in the NSS database
-003 extract_end() as failed - ID or certificate might be unset and cause failure
-002 added connection description "westnet-eastnet-ikev2"
+036 Failed to add connection "westnet-eastnet-ikev2" with invalid "right" certificate
 west #
  ipsec auto --add westnet-eastnet-ipv4
 002 added connection description "westnet-eastnet-ipv4"
