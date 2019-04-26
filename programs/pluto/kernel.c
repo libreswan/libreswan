@@ -2623,14 +2623,13 @@ static void kernel_process_msg_cb(evutil_socket_t fd,
 	pexpect_reset_globals();
 }
 
-static event_callback_routine kernel_process_queue_cb;
+static global_timer_cb kernel_process_queue_cb;
 
-static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
-		const short event UNUSED, void *arg)
+static void kernel_process_queue_cb(void)
 {
-	const struct kernel_ops *kernel_ops = arg;
-
-	kernel_ops->process_queue();
+	if (pexpect(kernel_ops->process_queue != NULL)) {
+		kernel_ops->process_queue();
+	}
 	pexpect_reset_globals();
 }
 
@@ -2744,12 +2743,9 @@ void init_kernel(void)
 		 * call process_queue periodically.  Does the order
 		 * matter?
 		 */
-		static const deltatime_t delay = DELTATIME_INIT(KERNEL_PROCESS_Q_PERIOD);
-
-		/* Note: kernel_ops is read-only but pluto_event_add cannot know that */
-		pluto_event_add(NULL_FD, EV_TIMEOUT | EV_PERSIST,
-				kernel_process_queue_cb, (void *)kernel_ops,
-				&delay, "KERNEL_PROCESS_Q_FD");
+		enable_periodic_timer(EVENT_PROCESS_KERNEL_QUEUE,
+				      kernel_process_queue_cb,
+				      deltatime(KERNEL_PROCESS_Q_PERIOD));
 	}
 }
 

@@ -177,6 +177,8 @@ enum event_type {
 
 	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
 
+	EVENT_PROCESS_KERNEL_QUEUE,	/* non-netkey */
+
 	GLOBAL_TIMERS_ROOF,
 
 	/* events associated with connections */
