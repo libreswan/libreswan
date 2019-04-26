@@ -97,6 +97,10 @@ struct connection *unoriented_connections = NULL;
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
+static bool load_end_cert_and_preload_secret(const char *which, const char *pubkey,
+					     enum whack_pubkey_type pubkey_type,
+					     struct end *dst_end);
+
 /*
  * Find a connection by name.
  *
@@ -835,61 +839,6 @@ static void unshare_connection(struct connection *c)
 		reference_addresspool(c);
 }
 
-static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
-				     struct end *d_end, const char *source,
-				     const char *name)
-{
-	d_end->cert.ty = CERT_NONE;
-	d_end->cert.u.nss_cert = NULL;
-
-	if (cert == NULL) {
-		whack_log(RC_FATAL, "%s certificate with %s \'%s\' not found in NSS DB",
-			  which, source, name);
-		/* No cert, default to IP ID */
-		d_end->id.kind = ID_NONE;
-		return;
-	}
-
-#ifdef FIPS_CHECK
-	if (libreswan_fipsmode()) {
-		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
-		passert(pk != NULL);
-		if (pk->u.rsa.modulus.len * BITS_PER_BYTE < FIPS_MIN_RSA_KEY_SIZE) {
-			whack_log(RC_FATAL,
-				"FIPS: Rejecting cert with key size %d which is under %d",
-				pk->u.rsa.modulus.len * BITS_PER_BYTE,
-				FIPS_MIN_RSA_KEY_SIZE);
-			SECKEY_DestroyPublicKey(pk);
-			return;
-		}
-		/* TODO FORCE MINIMUM SIZE ECDSA KEY */
-		SECKEY_DestroyPublicKey(pk);
-	}
-#endif /* FIPS_CHECK */
-
-	select_nss_cert_id(cert, &d_end->id);
-
-	/* check validity of cert */
-	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
-			secCertTimeValid) {
-		loglog(RC_LOG_SERIOUS, "%s certificate \'%s\' is expired or not yet valid",
-		       which, name);
-		CERT_DestroyCertificate(cert);
-		return;
-	}
-
-	DBG(DBG_X509, DBG_log("loaded %s certificate \'%s\'", which, name));
-	add_pubkey_from_nss_cert(&pluto_pubkeys, &d_end->id, cert);
-
-	d_end->cert.ty = CERT_X509_SIGNATURE;
-	d_end->cert.u.nss_cert = cert;
-
-	/* if no CA is defined, use issuer as default */
-	if (d_end->ca.ptr == NULL) {
-		d_end->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
-	}
-}
-
 static int extract_end(struct end *dst, const struct whack_end *src,
 			const char *which)
 {
@@ -933,44 +882,9 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 		}
 	}
 
-	switch (src->pubkey_type) {
-	case WHACK_PUBKEY_CERTIFICATE_NICKNAME: {
-		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->pubkey);
-		if (cert == NULL) {
-			loglog(RC_LOG_SERIOUS, "failed to find certificate named '%s' in the NSS database",
-				src->pubkey);
-			return -1;
-		}
-		load_end_nss_certificate(which, cert, dst, "nickname",
-					 src->pubkey);
-		break;
-	}
-	case WHACK_PUBKEY_CKAID: {
-		/*
-		 * Perhaps it is already loaded?  Or perhaps it was
-		 * specified using an earlier rsasigkey=.
-		 */
-		struct pubkey *key = get_pubkey_with_matching_ckaid(src->pubkey);
-		if (key != NULL) {
-			/*
-			 * Convert the CKAID into the corresponding ID
-			 * so that a search will re-find it.
-			 */
-			dst->id = key->id;
-		} else {
-			CERTCertificate *cert = get_cert_by_ckaid_from_nss(src->pubkey);
-			if (cert == NULL) {
-				loglog(RC_LOG_SERIOUS, "failed to find certificate ckaid '%s' in the NSS database",
-					src->pubkey);
-				return -1;
-			}
-			load_end_nss_certificate(which, cert, dst, "CKAID", src->pubkey);
-		}
-		break;
-	}
-	default:
-		/* ignore */
-		break;
+	if (!load_end_cert_and_preload_secret(which/*side*/, src->pubkey,
+					      src->pubkey_type, dst)) {
+		return -1;
 	}
 
 	/* does id have wildcards? */
@@ -1165,55 +1079,104 @@ static reqid_t gen_reqid(void)
 
 }
 
-static bool preload_wm_cert_secret(const char *side, const char *pubkey,
-				   enum whack_pubkey_type pubkey_type)
+static bool load_end_cert_and_preload_secret(const char *which, const char *pubkey,
+					     enum whack_pubkey_type pubkey_type,
+					     struct end *dst_end)
 {
-	/*
-	 * Must free CERT.
-	 *
-	 * This function's caller - add_connection - can end up
-	 * loading the certificate twice.  First here, and then in
-	 * extract_end / load_end_nss_certificate.  It happens
-	 * because, at the point of this function's call, there is no
-	 * where to stash the certificate.  Caveat emptor.
-	 */
-	CERTCertificate *cert;
-	const char *cert_source;
+	dst_end->cert.ty = CERT_NONE;
+	dst_end->cert.u.nss_cert = NULL;
+
+	CERTCertificate *cert = NULL;
+	const char *cert_source = NULL;;
 	switch (pubkey_type) {
 	case WHACK_PUBKEY_CERTIFICATE_NICKNAME:
-		cert = get_cert_by_nickname_from_nss(pubkey);
+	{
 		cert_source = "nickname";
+		cert = get_cert_by_nickname_from_nss(pubkey);
 		if (cert == NULL) {
-			loglog(RC_COMMENT,
-			       "%s certificate with %s '%s' was not found in NSS DB",
-			       side, cert_source, pubkey);
-			return FALSE;
+			loglog(RC_LOG_SERIOUS, "failed to find certificate named '%s' in the NSS database",
+				pubkey);
+			return false;
 		}
 		break;
+	}
 	case WHACK_PUBKEY_CKAID:
+	{
 		/*
-		 * XXX: The pubkey might already be loaded and in
-		 * either &pluto_secrets or %pluto_pubkeys.  For now
-		 * ignore this (ipsec.secrets RSA pubkeys get put in
-		 * pluto_secrets, sigh).
+		 * Perhaps it is already loaded?  Or perhaps it was
+		 * specified using an earlier rsasigkey=.
 		 */
-		cert = get_cert_by_ckaid_from_nss(pubkey);
 		cert_source = "CKAID";
+		struct pubkey *key = get_pubkey_with_matching_ckaid(pubkey);
+		if (key != NULL) {
+			/*
+			 * Convert the CKAID into the corresponding ID
+			 * so that a search will re-find it.
+			 */
+			dst_end->id = key->id;
+			return true;
+		}
+		cert = get_cert_by_ckaid_from_nss(pubkey);
 		if (cert == NULL) {
-			DBG(DBG_CONTROL,
-			    DBG_log("preload %s certificate with %s '%s' failed - not found in NSS DB",
-				    side, cert_source, pubkey));
-			return TRUE;
+			loglog(RC_LOG_SERIOUS, "failed to find certificate ckaid '%s' in the NSS database",
+			       pubkey);
+			return false;
 		}
 		break;
+	}
 	case WHACK_PUBKEY_NONE:
 		pexpect(pubkey == NULL);
-		return TRUE;
+		return true;
 	default:
-		DBG(DBG_CONTROL,
-		    DBG_log("warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type));
+		libreswan_log("warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
 		/* recoverable screwup? */
-		return TRUE;
+		return true;
+	}
+
+	passert(cert != NULL);
+
+#ifdef FIPS_CHECK
+	if (libreswan_fipsmode()) {
+		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
+		passert(pk != NULL);
+		if (pk->u.rsa.modulus.len * BITS_PER_BYTE < FIPS_MIN_RSA_KEY_SIZE) {
+			whack_log(RC_FATAL,
+				"FIPS: Rejecting cert with key size %d which is under %d",
+				pk->u.rsa.modulus.len * BITS_PER_BYTE,
+				FIPS_MIN_RSA_KEY_SIZE);
+			SECKEY_DestroyPublicKey(pk);
+			CERT_DestroyCertificate(cert);
+			return false;
+		}
+		/* TODO FORCE MINIMUM SIZE ECDSA KEY */
+		SECKEY_DestroyPublicKey(pk);
+	}
+#endif /* FIPS_CHECK */
+
+	/* XXX: should this be after validity check? */
+	select_nss_cert_id(cert, &dst_end->id);
+
+	/* check validity of cert */
+	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
+			secCertTimeValid) {
+		loglog(RC_LOG_SERIOUS, "%s certificate \'%s\' is expired or not yet valid",
+		       which, pubkey);
+		CERT_DestroyCertificate(cert);
+		return false;
+	}
+
+	dbg("loading %s certificate \'%s\' pubkey", which, pubkey);
+	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &dst_end->id, cert)) {
+		CERT_DestroyCertificate(cert);
+		return false;
+	}
+
+	dst_end->cert.ty = CERT_X509_SIGNATURE;
+	dst_end->cert.u.nss_cert = cert;
+
+	/* if no CA is defined, use issuer as default */
+	if (dst_end->ca.ptr == NULL) {
+		dst_end->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
 
 	/*
@@ -1229,21 +1192,10 @@ static bool preload_wm_cert_secret(const char *side, const char *pubkey,
 	 */
 	err_t ugh = load_nss_cert_secret(cert);
 	if (ugh != NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("warning: no secret key loaded for %s certificate with %s %s: %s",
-			    side, cert_source, pubkey, ugh));
+		dbg("warning: no secret key loaded for %s certificate with %s %s: %s",
+		    which, cert_source, pubkey, ugh);
 	}
-
-	CERT_DestroyCertificate(cert);
-	return TRUE;
-}
-
-static bool preload_wm_cert_secrets(const struct whack_message *wm)
-{
-	return preload_wm_cert_secret("left", wm->left.pubkey,
-				      wm->left.pubkey_type) &&
-	       preload_wm_cert_secret("right", wm->right.pubkey,
-				      wm->right.pubkey_type);
+	return true;
 }
 
 /* only used by add_connection() */
@@ -1324,9 +1276,6 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 			wm->name);
 		return false;
 	}
-
-	if (!preload_wm_cert_secrets(wm))
-		return false;
 
 	if ((wm->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
 		loglog(RC_FATAL,
@@ -1819,16 +1768,34 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	c->tunnel_addr_family = wm->tunnel_addr_family;
 	c->sa_reqid = wm->sa_reqid;
 
-	int same_leftca = extract_end(&c->spd.this, &wm->left, "left");
-	int same_rightca = extract_end(&c->spd.that, &wm->right, "right");
-
-	if (same_rightca == -1 || same_leftca == -1) {
-		loglog(RC_LOG_SERIOUS, "extract_end() as failed - ID or certificate might be unset and cause failure");
+	/*
+	 * Since at this point 'this' and 'that' are disoriented their
+	 * names are pretty much meaningless.  Hence the strange
+	 * combination if 'this' and 'left' and 'that' and 'right.
+	 *
+	 * XXX: This is all too confusing - wouldn't it be simpler if
+	 * there was a '.left' and '.right' (or even .end[2] - this
+	 * code seems to be crying out for a for loop) and then having
+	 * orient() set up .local and .remote pointers or indexes
+	 * accordingly?
+	 */
+	int that_use_left_ca = extract_end(&c->spd.this, &wm->left, "left");
+	if (that_use_left_ca < 0) {
+		loglog(RC_FATAL, "Failed to add connection \"%s\" with invalid \"left\" certificate",
+		       c->name);
+		return false;
 	}
 
-	if (same_rightca == 1) {
+	int this_use_right_ca = extract_end(&c->spd.that, &wm->right, "right");
+	if (this_use_right_ca < 0) {
+		loglog(RC_FATAL, "Failed to add connection \"%s\" with invalid \"right\" certificate",
+		       c->name);
+		return false;
+	}
+
+	if (that_use_left_ca == 1) {
 		c->spd.that.ca = clone_chunk(c->spd.this.ca, "same rightca");
-	} else if (same_leftca == 1) {
+	} else if (this_use_right_ca == 1) {
 		c->spd.this.ca = clone_chunk(c->spd.that.ca, "same leftca");
 	}
 

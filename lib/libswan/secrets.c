@@ -1374,6 +1374,9 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 		SECItem *nss_ckaid = PK11_GetLowLevelKeyIDForCert(NULL, cert,
 								  lsw_return_nss_password_file_info());
 		if (nss_ckaid == NULL) {
+			/* someone deleted CERT from the NSS DB */
+			libreswan_log("NSS: could not extract CKAID from RSA certificate '%s'",
+				      cert->nickname);
 			return NULL;
 		}
 		err_t err = form_ckaid_nss(nss_ckaid, &ckaid);
@@ -1390,6 +1393,9 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 	{
 		SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
 		if (nsspk == NULL) {
+			/* someone deleted CERT from the NSS DB */
+			libreswan_log("NSS: could not extract public key from RSA certificate '%s'",
+				      cert->nickname);
 			freeanyckaid(&ckaid);
 			return NULL;
 		}
@@ -1428,6 +1434,13 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 	char keyid[KEYID_BUF];
 	{
 		SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
+		if (nsspk == NULL) {
+			/* someone deleted CERT from the NSS DB */
+			libreswan_log("NSS: could not extract public key from ECDSA certificate '%s'",
+				      cert->nickname);
+			freeanyckaid(&ckaid);
+			return NULL;
+		}
 
 		pub = clone_secitem_as_chunk(nsspk->u.ec.publicValue, "pub");
 		ecParams = clone_secitem_as_chunk(nsspk->u.ec.DEREncodedParams, "ecParams");
