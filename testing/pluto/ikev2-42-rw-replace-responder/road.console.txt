@@ -192,13 +192,13 @@ PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  grep -E  'EVENT_SA_EXPIRE|EVENT_SA_REPLACE' OUTPUT/road.pluto.log | grep -e '#[0-9]' | grep -v pe@
-| inserting event EVENT_SA_REPLACE, timeout in 60.000 seconds for #1
+| inserting event EVENT_SA_REPLACE, timeout in 60 seconds for #1
 | state #1 requesting EVENT_SA_REPLACE to be deleted
-| inserting event EVENT_SA_EXPIRE, timeout in 3600.000 seconds for #1
-| inserting event EVENT_SA_EXPIRE, timeout in 28800.000 seconds for #2
-| inserting event EVENT_SA_EXPIRE, timeout in 3600.000 seconds for #3
+| inserting event EVENT_SA_EXPIRE, timeout in 3600 seconds for #1
+| inserting event EVENT_SA_EXPIRE, timeout in 28800 seconds for #2
+| inserting event EVENT_SA_EXPIRE, timeout in 3600 seconds for #3
 | state #3 requesting EVENT_SA_EXPIRE to be deleted
-| inserting event EVENT_SA_EXPIRE, timeout in 3600.000 seconds for #3
+| inserting event EVENT_SA_EXPIRE, timeout in 3600 seconds for #3
 | state #1 requesting EVENT_SA_EXPIRE to be deleted
 road #
  ipsec status
