@@ -1,0 +1,78 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # list certs in NSS DB
+east #
+ ipsec whack --listcerts | grep east
+000 End certificate "east" - SN: 0xXX
+000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+east #
+ # add / remove 'test'
+east #
+ ipsec auto --add test
+002 added connection description "test"
+east #
+ ipsec auto --delete test
+east #
+ # delete certificate east
+east #
+ certutil -d sql:/etc/ipsec.d -D -n east
+east #
+ # whack should not show certificate
+east #
+ ipsec whack --listcerts | grep east
+east #
+ # try a load; should fail
+east #
+ ipsec auto --add test
+003 failed to find certificate named 'east' in the NSS database
+036 Failed to add connection "test" with invalid "right" certificate
+east #
+ ipsec auto --delete test
+east #
+ # put east back
+east #
+ certutil -A -i ../../x509/certs/east.crt -d sql:/etc/ipsec.d -n east -t "P,,"
+east #
+ # re-load should not dump core
+east #
+ ipsec auto --add test
+002 added connection description "test"
+east #
+ ipsec auto --delete test
+east #
+ ../../pluto/bin/ipsec-look.sh
+east NOW
+XFRM state:
+XFRM policy:
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+east                                                         Pu,u,u
+hashsha1                                                     P,,  
+nic                                                          P,,  
+north                                                        P,,  
+road                                                         P,,  
+west                                                         P,,  
+west-ec                                                      P,,  
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

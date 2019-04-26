@@ -1,0 +1,11 @@
+Bug 339: delete the cert in the NSS DB while pluto is trying to use it.
+
+- check that, provided pluto has no references, a deleted certificate
+  doesn't appear in the certificate list
+
+  a certificate leak in add_connection() meant it did still get listed
+
+- be prepared for a cert extraction to fail, and when it does, dump
+  the connection
+
+  better than a core dump
