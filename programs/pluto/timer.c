@@ -624,11 +624,11 @@ void delete_event(struct state *st)
 }
 
 /*
- * This routine places an event in the event list.
- * Delay should really be a deltatime_t but this is easier
+ * This routine schedules a state event.
  */
 void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 {
+	passert(st != NULL);
 	/*
 	 * Scheduling a month into the future is most likely a bug.
 	 * pexpect() causes us to flag this in our test cases
@@ -643,67 +643,56 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	ev->ev_name = en;
 	ev->ev_state = st;
 
-	/* ??? ev_time lacks required precision */
 	ev->ev_time = monotimesum(mononow(), delay);
 
 	/*
-	 * If the event is associated with a state, put a backpointer to the
-	 * event in the state object, so we can find and delete the event
-	 * if we need to (for example, if we receive a reply).
-	 * (There are actually six classes of event associated
-	 * with a state.)
+	 * Put a pointer to the event in the state object, so we can
+	 * find and delete the event if we need to (for example, if we
+	 * receive a reply).  (There are actually six classes of event
+	 * associated with a state.)
 	 */
-	if (st != NULL) {
-		switch (type) {
-		case EVENT_v2_ADDR_CHANGE:
-			passert(st->st_addr_change_event == NULL);
-			st->st_addr_change_event = ev;
-			break;
+	switch (type) {
+	case EVENT_v2_ADDR_CHANGE:
+		passert(st->st_addr_change_event == NULL);
+		st->st_addr_change_event = ev;
+		break;
 
-		case EVENT_DPD:
-		case EVENT_DPD_TIMEOUT:
-			passert(st->st_dpd_event == NULL);
-			st->st_dpd_event = ev;
-			break;
+	case EVENT_DPD:
+	case EVENT_DPD_TIMEOUT:
+		passert(st->st_dpd_event == NULL);
+		st->st_dpd_event = ev;
+		break;
 
-		case EVENT_v2_LIVENESS:
-			passert(st->st_liveness_event == NULL);
-			st->st_liveness_event = ev;
-			break;
+	case EVENT_v2_LIVENESS:
+		passert(st->st_liveness_event == NULL);
+		st->st_liveness_event = ev;
+		break;
 
-		case EVENT_RETAIN:
-			/* no new event */
-			break;
+	case EVENT_RETAIN:
+		/* no new event */
+		break;
 
-		case EVENT_v2_RELEASE_WHACK:
-			passert(st->st_rel_whack_event == NULL);
-			st->st_rel_whack_event = ev;
-			break;
+	case EVENT_v2_RELEASE_WHACK:
+		passert(st->st_rel_whack_event == NULL);
+		st->st_rel_whack_event = ev;
+		break;
 
-		case  EVENT_v1_SEND_XAUTH:
-			passert(st->st_send_xauth_event == NULL);
-			st->st_send_xauth_event = ev;
-			break;
+	case  EVENT_v1_SEND_XAUTH:
+		passert(st->st_send_xauth_event == NULL);
+		st->st_send_xauth_event = ev;
+		break;
 
-		default:
-			passert(st->st_event == NULL);
-			st->st_event = ev;
-			break;
-		}
-		dbg("inserting event %s, timeout in %jd.%03jd seconds for #%lu",
-		    en, deltasecs(delay),
-		    (deltamillisecs(delay) % 1000),
-		    ev->ev_state->st_serialno);
-	} else {
-		link_pluto_event_list(ev); /* add to global list to track */
-		dbg("inserting event %s, timeout in %jd.%03jd seconds",
-		    en, deltasecs(delay),
-		    (deltamillisecs(delay) % 1000));
+	default:
+		passert(st->st_event == NULL);
+		st->st_event = ev;
+		break;
 	}
+	deltatime_buf buf;
+	dbg("inserting event %s, timeout in %s seconds for #%lu",
+	    en, str_deltatime(delay, &buf),
+	    ev->ev_state->st_serialno);
 
-	timer_private_pluto_event_new(&ev->ev,
-				      NULL_FD, EV_TIMEOUT,
-				      timer_event_cb, ev, delay);
+	fire_timer_photon_torpedo(&ev->ev, timer_event_cb, ev, delay);
 }
 
 void event_schedule_s(enum event_type type, time_t delay_sec, struct state *st)

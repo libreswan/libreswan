@@ -664,6 +664,26 @@ static void fire_event_photon_torpedo(struct event **evp,
 	passert(r >= 0);
 }
 
+void fire_timer_photon_torpedo(struct event **evp,
+			       event_callback_fn cb, void *arg,
+			       const deltatime_t delay)
+{
+	struct event *ev = event_new(pluto_eb, (evutil_socket_t)-1,
+				     EV_TIMEOUT, cb, arg);
+	passert(ev != NULL);
+	/*
+	 * Because this code can run on the non-main thread, the EV
+	 * timer-event must be saved in its final destination before
+	 * the event is enabled.
+	 *
+	 * Otherwise the event on the main thread will try to use EV
+	 * before it has been saved by the helper thread.
+	 */
+	*evp = ev;
+	struct timeval t = deltatimeval(delay);
+	passert(event_add(ev, &t) >= 0);
+}
+
 /*
  * Schedule an event now.
  *
@@ -729,27 +749,12 @@ void pluto_event_now(const char *name, so_serial_t serialno,
 		    ne->ne_name, ne->ne_serialno));
 
 	/*
-	 * Everything set up; arm and fire torpedo.  Event may have
-	 * even run before the below function returns.
+	 * Everything set up; arm and fire the timer's photon torpedo.
+	 * Event may have even run on another thread before the below
+	 * call returns.
 	 */
-	static const deltatime_t no_delay = DELTATIME_INIT(0);
-	fire_event_photon_torpedo(&ne->ne_event,
-				  NULL_FD, EV_TIMEOUT,
-				  schedule_event_now_cb, ne,
-				  &no_delay);
-}
-
-/*
- * XXX: custom version of event new used only by timer.c.  If you're
- * looking for how to set up a timer, then don't look here and don't
- * look at timer.c.  Why?
- */
-void timer_private_pluto_event_new(struct event **evp,
-				   evutil_socket_t fd, short events,
-				   event_callback_fn cb, void *arg,
-				   deltatime_t delay)
-{
-	fire_event_photon_torpedo(evp, fd, events, cb, arg, &delay);
+	fire_timer_photon_torpedo(&ne->ne_event, schedule_event_now_cb, ne,
+				  deltatime(0)/*now*/);
 }
 
 struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
