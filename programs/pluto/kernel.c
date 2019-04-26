@@ -2735,14 +2735,12 @@ void init_kernel(void)
 	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
 
 	/* Note: kernel_ops is const but pluto_event_add cannot know that */
-	pluto_event_add(*kernel_ops->async_fdp, EV_READ | EV_PERSIST,
-			kernel_process_msg_cb, (void *)kernel_ops, NULL,
-			"KERNEL_XRM_FD");
+	add_fd_read_event_handler(*kernel_ops->async_fdp, kernel_process_msg_cb,
+				  (void *)kernel_ops, "KERNEL_XRM_FD");
 
 	if (kernel_ops->route_fdp != NULL && *kernel_ops->route_fdp  > NULL_FD) {
-		pluto_event_add(*kernel_ops->route_fdp, EV_READ | EV_PERSIST,
-				kernel_process_msg_cb, (void *)kernel_ops, NULL,
-				"KERNEL_ROUTE_FD");
+		add_fd_read_event_handler(*kernel_ops->route_fdp, kernel_process_msg_cb,
+					  (void *)kernel_ops, "KERNEL_ROUTE_FD");
 	}
 
 	if (kernel_ops->process_queue != NULL) {

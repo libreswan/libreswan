@@ -722,32 +722,6 @@ void delete_pluto_event(struct pluto_event **evp)
  * can fire before setting it up has finished.
  */
 
-static void fire_event_photon_torpedo(struct event **evp,
-				      evutil_socket_t fd, short events,
-				      event_callback_fn cb, void *arg,
-				      const deltatime_t *delay)
-{
-	struct event *ev = event_new(pluto_eb, fd, events, cb, arg);
-	passert(ev != NULL);
-	/*
-	 * EV must be saved in its final destination before the event
-	 * is enabled.
-	 *
-	 * Otherwise the event on the main thread will try to use the
-	 * saved EV before it has been saved by the helper thread.
-	 */
-	*evp = ev;
-
-	int r;
-	if (delay == NULL) {
-		r = event_add(ev, NULL);
-	} else {
-		struct timeval t = deltatimeval(*delay);
-		r = event_add(ev, &t);
-	}
-	passert(r >= 0);
-}
-
 void fire_timer_photon_torpedo(struct event **evp,
 			       event_callback_fn cb, void *arg,
 			       const deltatime_t delay)
@@ -841,20 +815,29 @@ void pluto_event_now(const char *name, so_serial_t serialno,
 				  deltatime(0)/*now*/);
 }
 
-struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
-				    event_callback_fn cb, void *arg,
-				    const deltatime_t *delay,
-				    const char *name)
+/*
+ * XXX: Some of the callers save the struct pluto_event reference but
+ * some do not.
+ */
+struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
+					      event_callback_fn cb, void *arg,
+					      const char *name)
 {
+	passert(in_main_thread());
+	pexpect(fd >= 0);
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
 	dbg("%s: new %s-pe@%p", __func__, name, e);
 	e->ev_type = EVENT_NULL;
 	e->ev_name = name;
 	link_pluto_event_list(e);
-	if (delay != NULL) {
-		e->ev_time = monotimesum(mononow(), *delay);
-	}
-	fire_event_photon_torpedo(&e->ev, fd, events, cb, arg, delay);
+	/*
+	 * Since this is on the main thread, and the event loop isn't
+	 * running, there can't be a race between the event being
+	 * added and the event firing.
+	 */
+	e->ev = event_new(pluto_eb, fd, EV_READ|EV_PERSIST, cb, arg);
+	passert(e->ev != NULL);
+	passert(event_add(e->ev, NULL) >= 0);
 	return e; /* compatible with pluto_event_new for the time being */
 }
 
@@ -909,9 +892,9 @@ void find_ifaces(bool rm_dead)
 
 		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 			delete_pluto_event(&ifp->pev);
-			ifp->pev = pluto_event_add(ifp->fd,
-					EV_READ | EV_PERSIST, comm_handle_cb,
-					ifp, NULL, "ethX");
+			ifp->pev = add_fd_read_event_handler(ifp->fd,
+							     comm_handle_cb,
+							     ifp, "ethX");
 			dbg("setup callback for interface %s:%u fd %d",
 			    ifp->ip_dev->id_rname, ifp->port, ifp->fd);
 		}
@@ -1266,8 +1249,7 @@ void call_server(void)
 
 	DBG(DBG_CONTROLMORE, DBG_log("Setting up events, loop start"));
 
-	pluto_event_add(ctl_fd, EV_READ | EV_PERSIST, whack_handle_cb, NULL,
-			NULL, "PLUTO_CTL_FD");
+	add_fd_read_event_handler(ctl_fd, whack_handle_cb, NULL, "PLUTO_CTL_FD");
 
 	install_signal_handlers();
 

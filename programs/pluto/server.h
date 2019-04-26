@@ -97,10 +97,9 @@ extern void init_event_base(void);
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
 void fire_timer_photon_torpedo(struct event **evp, event_callback_fn cb, void *arg,
 			       const deltatime_t delay);
-extern struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
-					   event_callback_fn cb, void *arg,
-					   const deltatime_t *delay,
-					   const char *name);
+extern struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
+						     event_callback_fn cb, void *arg,
+						     const char *name);
 extern void delete_pluto_event(struct pluto_event **evp);
 extern void link_pluto_event_list(struct pluto_event *e);
 extern void free_pluto_event_list(void);
