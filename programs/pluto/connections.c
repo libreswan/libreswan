@@ -17,7 +17,7 @@
  * Copyright (C) 2013,2018 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2018 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016-2017 Andrew Cagney
+ * Copyright (C) 2016-2019 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -206,8 +206,7 @@ void update_host_pairs(struct connection *c)
 			}
 
 			d->spd.that.host_addr = new_addr;
-			list_rm(struct connection, hp_next, d,
-				d->host_pair->connections);
+			LIST_RM(hp_next, d, d->host_pair->connections, true);
 
 			d->hp_next = conn_list;
 			conn_list = d;
@@ -224,7 +223,7 @@ void update_host_pairs(struct connection *c)
 
 	if (hp->connections == NULL) {
 		passert(hp->pending == NULL); /* ??? must deal with this! */
-		list_rm(struct host_pair, next, hp, host_pairs);
+		LIST_RM(next, hp, host_pairs, true/*expected*/);
 		pfree(hp);
 	}
 }
@@ -255,8 +254,13 @@ static void delete_sr(struct spd_route *sr)
  *
  * @c - the connection pointer
  * @relations - whether to delete any instances as well.
+ * @connection_valid - apply sanity checks
  *
  */
+
+static void discard_connection(struct connection *c,
+			       struct connection *old_cur_connection,
+			       bool connection_valid);
 
 void delete_connection(struct connection *c, bool relations)
 {
@@ -287,7 +291,13 @@ void delete_connection(struct connection *c, bool relations)
 			rel_lease_addr(c);
 	}
 	release_connection(c, relations); /* won't delete c */
+	discard_connection(c, old_cur_connection, true/*connection_valid*/);
+}
 
+static void discard_connection(struct connection *c,
+			       struct connection *old_cur_connection,
+			       bool connection_valid)
+{
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
@@ -298,11 +308,13 @@ void delete_connection(struct connection *c, bool relations)
 	perpeer_logfree(c);
 
 	/* find and delete c from connections list */
-	list_rm(struct connection, ac_next, c, connections);
+	LIST_RM(ac_next, c, connections,
+		connection_valid);
 
 	/* find and delete c from the host pair list */
 	if (c->host_pair == NULL) {
-		list_rm(struct connection, hp_next, c, unoriented_connections);
+		LIST_RM(hp_next, c, unoriented_connections,
+			connection_valid);
 	} else {
 		delete_oriented_hp(c);
 	}
@@ -874,7 +886,7 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 
 	/* if no CA is defined, use issuer as default */
 	if (d_end->ca.ptr == NULL) {
-		d_end->ca = same_secitem_as_chunk(cert->derIssuer);
+		d_end->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
 }
 
@@ -883,34 +895,40 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 {
 	bool same_ca = 0;
 
-	/* decode id, if any */
+	/*
+	 * decode id, if any
+	 *
+	 * For %fromcert, the load_end_cert*() call will update it.
+	 */
 	if (src->id == NULL) {
 		dst->id.kind = ID_NONE;
 	} else {
 		err_t ugh = atoid(src->id, &dst->id, FALSE);
-
 		if (ugh != NULL) {
 			loglog(RC_BADID, "bad %s --id: %s (ignored)", which,
 				ugh);
 			dst->id = empty_id; /* ignore bad one */
+		} else {
+			unshare_id_content(&dst->id);
 		}
 	}
 
-	dst->ca = EMPTY_CHUNK;
-
 	/* decode CA distinguished name, if any */
+	dst->ca = EMPTY_CHUNK;
 	if (src->ca != NULL) {
 		if (streq(src->ca, "%same")) {
 			same_ca = 1;
 		} else if (!streq(src->ca, "%any")) {
 			err_t ugh;
 
-			ugh = atodn(src->ca, &dst->ca);
+			ugh = atodn(src->ca, &dst->ca); /* static result! */
 			if (ugh != NULL) {
 				libreswan_log(
 					"bad CA string '%s': %s (ignored)",
 					src->ca, ugh);
 				dst->ca = EMPTY_CHUNK;
+			} else {
+				dst->ca = clone_chunk(dst->ca, "ca string");
 			}
 		}
 	}
@@ -961,7 +979,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 	/* the rest is simple copying of corresponding fields */
 	dst->host_type = src->host_type;
 	dst->host_addr = src->host_addr;
-	dst->host_addr_name = src->host_addr_name;
+	dst->host_addr_name = clone_str(src->host_addr_name, "host ip");
 	dst->host_nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
 	dst->host_vtiip = src->host_vtiip;
@@ -983,7 +1001,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 
 	dst->xauth_server = src->xauth_server;
 	dst->xauth_client = src->xauth_client;
-	dst->xauth_username = src->xauth_username;
+	dst->xauth_username = clone_str(src->xauth_username, "xauth username");
 
 	dst->authby = src->authby;
 
@@ -993,7 +1011,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	dst->has_client = src->has_client;
 	dst->has_client_wildcard = src->has_client_wildcard;
-	dst->updown = src->updown;
+	dst->updown = clone_str(src->updown, "updown");
 	dst->host_port = pluto_port;
 	if (src->host_port != pluto_port) {
 		dst->host_port = src->host_port;
@@ -1275,25 +1293,46 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
 }
 
 /*
+ * Extract the connection detail from the whack message WM and store
+ * them in the connection C.
+ *
+ * This code is responsible for cloning strings and other structures
+ * so that they out live the whack message.  When things go wrong,
+ * return false, the caller will then use delete_connection() to free
+ * the partially constructed connection.
+ *
  * Checks from confread/whack should be moved here so it is similar
  * for all methods of loading a connection.
+ *
+ * XXX: at one point this code was populating the connection with
+ * pointer's to the whack message's strings and then trying to use
+ * unshare_connection() to create local copies.  Bad idea.  For
+ * instance, it duplicated the proposal pointers yet here the pointer
+ * was freshy allocated so no duplication should be needed (or at
+ * least shouldn't be) (look for strange free() vs delref() sequence).
  */
-void add_connection(const struct whack_message *wm)
+static bool extract_connection(const struct whack_message *wm, struct connection *c)
 {
+	/*
+	 * Give the connection a name early so that all error paths
+	 * have something to log.
+	 */
+	c->name = clone_str(wm->name, "connection name");
+
 	if (conn_by_name(wm->name, FALSE, FALSE) != NULL) {
 		loglog(RC_DUPNAME, "attempt to redefine connection \"%s\"",
 			wm->name);
-		return;
+		return false;
 	}
 
 	if (!preload_wm_cert_secrets(wm))
-		return;
+		return false;
 
 	if ((wm->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
 		loglog(RC_FATAL,
 			"Failed to add connection \"%s\" with compress because kernel is not configured to do IPCOMP",
 			wm->name);
-		return;
+		return false;
 	}
 
 	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
@@ -1301,13 +1340,13 @@ void add_connection(const struct whack_message *wm)
 			loglog(RC_FATAL,
 				"Failed to add connection \"%s\", connection with type=transport can not specify tfc=",
 				wm->name);
-			return;
+			return false;
 		}
 		if (wm->vti_iface != NULL) {
 			loglog(RC_FATAL,
 				"Failed to add connection \"%s\", VTI requires tunnel mode but connection specifies type=transport",
 				wm->name);
-			return;
+			return false;
 		}
 	}
 	if (LIN(POLICY_AUTHENTICATE, wm->policy)) {
@@ -1315,7 +1354,7 @@ void add_connection(const struct whack_message *wm)
 			loglog(RC_FATAL,
 				"Failed to add connection \"%s\", connection with phase2=ah cannot specify tfc=",
 				wm->name);
-			return;
+			return false;
 		}
 	}
 
@@ -1324,7 +1363,7 @@ void add_connection(const struct whack_message *wm)
 			loglog(RC_FATAL,
 				"Failed to add connection \"%s\", connection with authby=never must specify shunt type via type=",
 				wm->name);
-			return;
+			return false;
 		}
 	}
 	if ((wm->policy & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP) {
@@ -1332,7 +1371,7 @@ void add_connection(const struct whack_message *wm)
 			loglog(RC_FATAL,
 				"Failed to add connection \"%s\": shunt connection cannot have authentication method other then authby=never",
 				wm->name);
-			return;
+			return false;
 		}
 	} else {
 		switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
@@ -1341,43 +1380,43 @@ void add_connection(const struct whack_message *wm)
 				loglog(RC_FATAL,
 					"Failed to add connection \"%s\": non-shunt connection must have AH or ESP",
 					wm->name);
-				return;
+				return false;
 			}
 			break;
 		case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
 			loglog(RC_FATAL,
 				"Failed to add connection \"%s\": non-shunt connection must not specify both AH and ESP",
 				wm->name);
-			return;
+			return false;
 		}
 	}
 
 	if (LIN(POLICY_IKEV2_ALLOW, wm->policy) && LIN(POLICY_IKEV1_ALLOW, wm->policy)) {
 		loglog(RC_FATAL, "Failed to add connection \"%s\": connection can only be ikev1 or ikev2",
 			wm->name);
-		return;
+		return false;
 	}
 
 	if (wm->policy & POLICY_OPPORTUNISTIC) {
 		if ((wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
 			loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2",
 				wm->name);
-			return;
+			return false;
 		}
 	}
 	if (wm->sighash_policy != POL_SIGHASH_NONE && (wm->policy & POLICY_IKEV1_ALLOW)) {
 		loglog(RC_FATAL, "SIGHASH requires ikev2");
-		return;
+		return false;
 	}
 
 	if (wm->policy & POLICY_IKEV1_ALLOW) {
 		if (wm->policy & POLICY_MOBIKE) {
 			loglog(RC_FATAL, "MOBIKE requires ikev2");
-			return;
+			return false;
 		}
 		if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING) {
 			loglog(RC_FATAL, "narrowing=yes requires ikev2");
-			return;
+			return false;
 		}
 	}
 
@@ -1385,7 +1424,7 @@ void add_connection(const struct whack_message *wm)
 		if (kernel_ops->migrate_sa_check == NULL) {
 			libreswan_log_rc(RC_FATAL, "MOBIKE not supported by %s interface",
 					 kernel_ops->kern_name);
-			return;
+			return false;
 		}
 		/* probe the interface */
 		err_t err = kernel_ops->migrate_sa_check();
@@ -1393,7 +1432,7 @@ void add_connection(const struct whack_message *wm)
 			libreswan_log_rc(RC_FATAL,
 					 "MOBIKE kernel support missing for %s interface: %s",
 					 kernel_ops->kern_name, err);
-			return;
+			return false;
 		}
 	}
 
@@ -1408,7 +1447,7 @@ void add_connection(const struct whack_message *wm)
 		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
 			loglog(RC_FATAL, "Failed to add connection \"%s\": leftauth= / rightauth= options are invalid for type=passthrough connection",
 				wm->name);
-			return;
+			return false;
 		}
 	} else {
 		/* reject all bad combinations of authby with leftauth=/rightauth= */
@@ -1417,13 +1456,13 @@ void add_connection(const struct whack_message *wm)
 				loglog(RC_FATAL,
 					"Failed to add connection \"%s\": leftauth= and rightauth= require ikev2",
 						wm->name);
-				return;
+				return false;
 			}
 			if (wm->left.authby == AUTH_UNSET || wm->right.authby == AUTH_UNSET) {
 				loglog(RC_FATAL,
 					"Failed to add connection \"%s\": leftauth= and rightauth= must both be set or both be unset",
 						wm->name);
-				return;
+				return false;
 			}
 			/* ensure no conflicts of set left/rightauth with (set or unset) authby= */
 			if (wm->left.authby == wm->right.authby) {
@@ -1471,7 +1510,7 @@ void add_connection(const struct whack_message *wm)
 							enum_name(&ikev2_asym_auth_name, wm->left.authby),
 							enum_name(&ikev2_asym_auth_name, wm->right.authby),
 							prettypolicy(wm->policy & POLICY_ID_AUTH_MASK));
-					return;
+					return false;
 				}
 			} else { /* leftauth != rightauth so authby MUST be unset */
 				if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
@@ -1481,7 +1520,7 @@ void add_connection(const struct whack_message *wm)
 							enum_name(&ikev2_asym_auth_name, wm->left.authby),
 							enum_name(&ikev2_asym_auth_name, wm->right.authby),
 							prettypolicy(wm->policy & POLICY_ID_AUTH_MASK));
-					return;
+					return false;
 				}
 				if ((wm->left.authby == AUTH_PSK && wm->right.authby == AUTH_NULL) ||
 				    (wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_PSK)) {
@@ -1490,7 +1529,7 @@ void add_connection(const struct whack_message *wm)
 							wm->name,
 							enum_name(&ikev2_asym_auth_name, wm->left.authby),
 							enum_name(&ikev2_asym_auth_name, wm->right.authby));
-					return;
+					return false;
 				}
 			}
 		}
@@ -1500,42 +1539,25 @@ void add_connection(const struct whack_message *wm)
 		loglog(RC_FATAL,
 			"Failed to add connection \"%s\": cannot have protoport with %%any on both sides",
 				wm->name);
-		return;
+		return false;
 	}
 	if (!check_connection_end(&wm->right, &wm->left, wm) ||
 	    !check_connection_end(&wm->left, &wm->right, wm)) {
 		loglog(RC_FATAL, "Failed to load connection \"%s\": attempt to load incomplete connection",
 			wm->name);
-		return;
+		return false;
 	}
 
 	if (addrtypeof(&wm->left.client.addr) != addrtypeof(&wm->right.client.addr)) {
 		loglog(RC_FATAL, "Failed to load connection \"%s\": subnets must have the same address family",
 			wm->name);
-		return;
+		return false;
 	}
 
-	/*
-	 * Connection values are set using strings in the whack
-	 * message.  This code is responsible for cloning the strings
-	 * before the whack message is destroyed.
-	 *
-	 * XXX: at one point this code was using unshare_connection()
-	 * to duplicate pointers from the whack message - bad idea.
-	 * For instance, it duplicated the proposal pointers yet here
-	 * the pointer was freshy allocated so no duplication should
-	 * be needed (or at least shouldn't be) (look for strange
-	 * free() vs delref() sequence).
-	 */
-	int same_rightca, same_leftca;
-	struct connection *c = alloc_thing(struct connection,
-					"struct connection");
+	/* duplicate any alias, adding spaces to the beginning and end */
+	c->connalias = clone_str(wm->connalias, "connection alias");
 
-	/* from here on, error returns must pfree(c); */
-
-	c->name = wm->name;
-	c->connalias = wm->connalias;
-	c->dnshostname = wm->dnshostname;
+	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
 	c->sighash_policy = wm->sighash_policy;
 
@@ -1612,8 +1634,8 @@ void add_connection(const struct whack_message *wm)
 				loglog(RC_FATAL, "Failed to add connection \"%s\": ike string error: %s",
 					wm->name, parser->error);
 				free_proposal_parser(&parser);
-				pfree(c);
-				return;
+				/* caller will free C */
+				return false;
 			}
 			free_proposal_parser(&parser);
 
@@ -1664,8 +1686,8 @@ void add_connection(const struct whack_message *wm)
 				       "Failed to add connection \"%s\", esp=\"%s\" is invalid: %s",
 				       wm->name, wm->esp, parser->error);
 				free_proposal_parser(&parser);
-				pfree(c);
-				return;
+				/* caller will free C */
+				return false;
 			}
 			free_proposal_parser(&parser);
 
@@ -1739,13 +1761,13 @@ void add_connection(const struct whack_message *wm)
 		c->xauthby = wm->xauthby;
 		c->xauthfail = wm->xauthfail;
 
-		c->modecfg_dns = wm->modecfg_dns;
-		c->modecfg_domains = wm->modecfg_domains;
-		c->modecfg_banner = wm->modecfg_banner;
+		c->modecfg_dns = clone_str(wm->modecfg_dns, "connection modecfg_dns");
+		c->modecfg_domains = clone_str(wm->modecfg_domains, "connection modecfg_domains");
+		c->modecfg_banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
 
 		/* RFC 5685 - IKEv2 Redirect mechanism */
-		c->redirect_to = wm->redirect_to;
-		c->accept_redirect_to = wm->accept_redirect_to;
+		c->redirect_to = clone_str(wm->redirect_to, "connection redirect_to");
+		c->accept_redirect_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
 
 		/*
 		 * parse mark and mask values form the mark/mask string
@@ -1776,7 +1798,7 @@ void add_connection(const struct whack_message *wm)
 		if (wm->conn_mark_out != NULL)
 			mark_parse(wm->name, wm->conn_mark_out, &c->sa_marks.out);
 
-		c->vti_iface = wm->vti_iface;
+		c->vti_iface = clone_str(wm->vti_iface, "connection vti_iface");
 		c->vti_routing = wm->vti_routing;
 		c->vti_shared = wm->vti_shared;
 	}
@@ -1787,7 +1809,7 @@ void add_connection(const struct whack_message *wm)
 
 #ifdef HAVE_LABELED_IPSEC
 	c->labeled_ipsec = wm->labeled_ipsec;
-	c->policy_label = wm->policy_label;
+	c->policy_label = clone_str(wm->policy_label, "connection policy_label");
 #endif
 	c->nflog_group = wm->nflog_group;
 	c->sa_priority = wm->sa_priority;
@@ -1797,17 +1819,17 @@ void add_connection(const struct whack_message *wm)
 	c->tunnel_addr_family = wm->tunnel_addr_family;
 	c->sa_reqid = wm->sa_reqid;
 
-	same_leftca = extract_end(&c->spd.this, &wm->left, "left");
-	same_rightca = extract_end(&c->spd.that, &wm->right, "right");
+	int same_leftca = extract_end(&c->spd.this, &wm->left, "left");
+	int same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
 	if (same_rightca == -1 || same_leftca == -1) {
 		loglog(RC_LOG_SERIOUS, "extract_end() as failed - ID or certificate might be unset and cause failure");
 	}
 
 	if (same_rightca == 1) {
-		c->spd.that.ca = c->spd.this.ca;
+		c->spd.that.ca = clone_chunk(c->spd.this.ca, "same rightca");
 	} else if (same_leftca == 1) {
-		c->spd.this.ca = c->spd.that.ca;
+		c->spd.this.ca = clone_chunk(c->spd.that.ca, "same leftca");
 	}
 
 	/*
@@ -1884,10 +1906,16 @@ void add_connection(const struct whack_message *wm)
 
 	c->spd.spd_next = NULL;
 
-	/* set internal fields */
-	c->instance_serial = 0;
+	/*
+	 * XXX: Install the connection.  Yes right in the middle of
+	 * the struct being constructed!  Why?  Because that's the way
+	 * it's always been done.
+	 */
 	c->ac_next = connections;
 	connections = c;
+
+	/* set internal fields */
+	c->instance_serial = 0;
 	c->interface = NULL;
 	c->spd.routing = RT_UNROUTED;
 	c->newest_isakmp_sa = SOS_NOBODY;
@@ -1962,75 +1990,46 @@ void add_connection(const struct whack_message *wm)
 			c->spd.that.has_client = TRUE;
 	}
 
-	/*
-	 * ensure we allocate copies of all strings
-	 *
-	 * XXX: Should merge this into the above and then if things
-	 * barf call delete_connection().
-	 */
-	c->name = clone_str(c->name, "connection name");
-
-	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
-
-	c->modecfg_dns = clone_str(c->modecfg_dns,
-				"connection modecfg_dns");
-	c->modecfg_domains = clone_str(c->modecfg_domains,
-				"connection modecfg_domains");
-	c->modecfg_banner = clone_str(c->modecfg_banner,
-				"connection modecfg_banner");
-#ifdef HAVE_LABELED_IPSEC
-	c->policy_label = clone_str(c->policy_label,
-				    "connection policy_label");
-#endif
-	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
-
-	/* duplicate any alias, adding spaces to the beginning and end */
-	c->connalias = clone_str(c->connalias, "connection alias");
-
-	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
-
-	c->redirect_to = clone_str(c->redirect_to,\
-					"connection redirect_to");
-	c->accept_redirect_to = clone_str(c->accept_redirect_to,\
-					"connection accept_redirect_to");
-
-	unshare_connection_end(&c->spd.this);
-	unshare_connection_end(&c->spd.that);
-	/*
-	 * XXX: Extra SPDs are added when instantiating so this should
-	 * still be NULL.
-	 */
-	pexpect(c->spd.spd_next == NULL);
-
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
 
 	(void)orient(c);
 
 	connect_to_host_pair(c);
-
-	/* log all about this connection */
-	libreswan_log("added connection description \"%s\"", c->name);
-	DBG(DBG_CONTROL, {
-		char topo[CONN_BUF_LEN];
-
-		DBG_log("%s",
-			format_connection(topo, sizeof(topo), c, &c->spd));
-	});
-
-	DBG(DBG_CONTROL,
-		DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
-			deltasecs(c->sa_ike_life_seconds),
-			deltasecs(c->sa_ipsec_life_seconds),
-			deltasecs(c->sa_rekey_margin),
-			c->sa_rekey_fuzz,
-			c->sa_keying_tries,
-			c->sa_replay_window,
-			prettypolicy(c->policy),
-			NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : ""));
-
 	/* non configurable */
 	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
+	return true;
+}
+
+void add_connection(const struct whack_message *wm)
+{
+	struct connection *c = alloc_thing(struct connection,
+					   "struct connection");
+	if (extract_connection(wm, c)) {
+		/* log all about this connection */
+		libreswan_log("added connection description \"%s\"", c->name);
+		DBG(DBG_CONTROL, {
+				DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
+					deltasecs(c->sa_ike_life_seconds),
+					deltasecs(c->sa_ipsec_life_seconds),
+					deltasecs(c->sa_rekey_margin),
+					c->sa_rekey_fuzz,
+					c->sa_keying_tries,
+					c->sa_replay_window,
+					prettypolicy(c->policy),
+					NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
+				char topo[CONN_BUF_LEN];
+				DBG_log("%s", format_connection(topo, sizeof(topo), c, &c->spd));
+			});
+	} else {
+		/*
+		 * Don't log here - it's assumed that
+		 * extract_connection() has already displayed an
+		 * RC_FATAL log message.
+		 */
+		discard_connection(c, NULL/*no previous connection*/,
+				   false/*not valid*/);
+	}
 }
 
 /*

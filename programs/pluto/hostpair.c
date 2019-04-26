@@ -182,7 +182,7 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 
 static void remove_host_pair(struct host_pair *hp)
 {
-	list_rm(struct host_pair, next, hp, host_pairs);
+	LIST_RM(next, hp, host_pairs, true/*expected*/);
 }
 
 /* find head of list of connections with this pair of hosts */
@@ -308,7 +308,7 @@ void delete_oriented_hp(struct connection *c)
 {
 	struct host_pair *hp = c->host_pair;
 
-	list_rm(struct connection, hp_next, c, hp->connections);
+	LIST_RM(hp_next, c, hp->connections, true/*expected*/);
 	c->host_pair = NULL; /* redundant, but safe */
 
 	/*
