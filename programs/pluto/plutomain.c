@@ -1740,12 +1740,12 @@ int main(int argc, char **argv)
 /* Initialize all of the various features */
 
 	init_state_db();
+	init_event_base();
 
 	init_nat_traversal(keep_alive);
 
 	init_virtual_ip(virtual_private);
-	/* obsoleted by nss code init_rnd_pool(); */
-	init_event_base();
+	/* obsoleted by nss code: init_rnd_pool(); */
 	init_root_certs();
 	init_secret();
 	init_states();
