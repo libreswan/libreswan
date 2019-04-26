@@ -482,13 +482,13 @@ void schedule_oneshot_timer(enum event_type type, deltatime_t delay)
 {
 	passert(type < elemsof(global_timers));
 	struct global_timer *gt = &global_timers[type];
+	deltatime_buf buf;
+	dbg("global one-shot timer %s scheduled in %s seconds",
+	    gt->name, str_deltatime(delay, &buf));
 	passert(event_initialized(&gt->ev));
 	passert(event_get_events(&gt->ev) == (EV_TIMEOUT));
 	struct timeval t = deltatimeval(delay);
 	passert(event_add(&gt->ev, &t) >= 0);
-	deltatime_buf buf;
-	dbg("global one-shot timer %s scheduled in %s seconds",
-	    gt->name, str_deltatime(delay, &buf));
 }
 
 /* urban dictionary says deschedule is a word */
@@ -496,9 +496,9 @@ void deschedule_oneshot_timer(enum event_type type)
 {
 	passert(type < elemsof(global_timers));
 	struct global_timer *gt = &global_timers[type];
+	dbg("global one-shot timer %s disabled", gt->name);
 	passert(event_initialized(&gt->ev));
 	passert(event_del(&gt->ev) >= 0);
-	dbg("global one-shot timer %s disabled", gt->name);
 }
 
 static void free_global_timers(void)

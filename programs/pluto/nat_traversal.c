@@ -112,6 +112,7 @@ void init_nat_traversal(deltatime_t keep_alive_period)
 	libreswan_log("NAT-Traversal support %s",
 		nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
+	init_oneshot_timer(EVENT_NAT_T_KEEPALIVE, nat_traversal_ka_event);
 }
 
 static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
@@ -779,7 +780,7 @@ void nat_traversal_new_ka_event(void)
 	if (nat_kap_event)
 		return;	/* Event already schedule */
 
-	event_schedule(EVENT_NAT_T_KEEPALIVE, nat_kap, NULL);
+	schedule_oneshot_timer(EVENT_NAT_T_KEEPALIVE, nat_kap);
 	nat_kap_event = TRUE;
 }
 
