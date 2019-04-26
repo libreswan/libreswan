@@ -175,6 +175,8 @@ enum event_type {
 	EVENT_FREE_ROOT_CERTS,
 #define FREE_ROOT_CERTS_TIMEOUT		deltatime(5 * secs_per_minute)
 
+	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
+
 	GLOBAL_TIMERS_ROOF,
 
 	/* events associated with connections */
@@ -194,7 +196,6 @@ enum event_type {
 
 	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
 	EVENT_v1_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
-	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
 	EVENT_DPD,			/* v1 dead peer detection */
 	EVENT_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
 	EVENT_CRYPTO_TIMEOUT,		/* v1/v2 after some time, give up on crypto helper */
