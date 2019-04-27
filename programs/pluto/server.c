@@ -610,19 +610,24 @@ void link_pluto_event_list(struct pluto_event *e) {
 void delete_pluto_event(struct pluto_event **evp)
 {
 	if (*evp != NULL) {
-		for (struct pluto_event **pp = &pluto_events_head; ; ) {
-			struct pluto_event *p = *pp;
+		if ((*evp)->ev_state != NULL) {
+			pexpect((*evp)->next == NULL);
+			free_event_entry(evp);
+		} else {
+			for (struct pluto_event **pp = &pluto_events_head; ; ) {
+				struct pluto_event *p = *pp;
 
-			passert(p != NULL);
+				passert(p != NULL);
 
-			if (p == *evp) {
-				/* found it; unlink this from the list */
-				*pp = free_event_entry(evp);
-				break;
+				if (p == *evp) {
+					/* found it; unlink this from the list */
+					*pp = free_event_entry(evp);
+					break;
+				}
+				pp = &p->next;
 			}
-			pp = &p->next;
+			*evp = NULL;
 		}
-		*evp = NULL;
 	}
 }
 
@@ -657,6 +662,26 @@ static void fire_event_photon_torpedo(struct event **evp,
 		r = event_add(ev, &t);
 	}
 	passert(r >= 0);
+}
+
+void fire_timer_photon_torpedo(struct event **evp,
+			       event_callback_fn cb, void *arg,
+			       const deltatime_t delay)
+{
+	struct event *ev = event_new(pluto_eb, (evutil_socket_t)-1,
+				     EV_TIMEOUT, cb, arg);
+	passert(ev != NULL);
+	/*
+	 * Because this code can run on the non-main thread, the EV
+	 * timer-event must be saved in its final destination before
+	 * the event is enabled.
+	 *
+	 * Otherwise the event on the main thread will try to use EV
+	 * before it has been saved by the helper thread.
+	 */
+	*evp = ev;
+	struct timeval t = deltatimeval(delay);
+	passert(event_add(ev, &t) >= 0);
 }
 
 /*
@@ -724,27 +749,12 @@ void pluto_event_now(const char *name, so_serial_t serialno,
 		    ne->ne_name, ne->ne_serialno));
 
 	/*
-	 * Everything set up; arm and fire torpedo.  Event may have
-	 * even run before the below function returns.
+	 * Everything set up; arm and fire the timer's photon torpedo.
+	 * Event may have even run on another thread before the below
+	 * call returns.
 	 */
-	static const deltatime_t no_delay = DELTATIME_INIT(0);
-	fire_event_photon_torpedo(&ne->ne_event,
-				  NULL_FD, EV_TIMEOUT,
-				  schedule_event_now_cb, ne,
-				  &no_delay);
-}
-
-/*
- * XXX: custom version of event new used only by timer.c.  If you're
- * looking for how to set up a timer, then don't look here and don't
- * look at timer.c.  Why?
- */
-void timer_private_pluto_event_new(struct event **evp,
-				   evutil_socket_t fd, short events,
-				   event_callback_fn cb, void *arg,
-				   deltatime_t delay)
-{
-	fire_event_photon_torpedo(evp, fd, events, cb, arg, &delay);
+	fire_timer_photon_torpedo(&ne->ne_event, schedule_event_now_cb, ne,
+				  deltatime(0)/*now*/);
 }
 
 struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
@@ -769,24 +779,16 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
  */
 void timer_list(void)
 {
-	monotime_t nw;
-	struct pluto_event *ev = pluto_events_head;
-
-	if (ev == NULL) {
-		/* Just paranoid */
-		whack_log(RC_LOG, "no events are queued");
-		return;
-	}
-
-	nw = mononow();
+	monotime_t nw = mononow();
 
 	whack_log(RC_LOG, "It is now: %jd seconds since monotonic epoch",
 		  monosecs(nw));
 
 	list_global_timers(nw);
 
-	while (ev != NULL) {
-		struct state *st = ev->ev_state;
+	for (struct pluto_event *ev = pluto_events_head;
+	     ev != NULL; ev = ev->next) {
+		pexpect(ev->ev_state == NULL);
 		char buf[256] = "not timer based";
 
 		if (ev->ev_type != EVENT_NULL) {
@@ -794,20 +796,10 @@ void timer_list(void)
 				 monosecs(ev->ev_time),
 				 deltasecs(monotimediff(ev->ev_time, nw)));
 		}
-
-		if (st != NULL && st->st_connection != NULL) {
-			char cib[CONN_INST_BUF];
-			whack_log(RC_LOG, "event %s is %s \"%s\"%s #%lu",
-					ev->ev_name, buf,
-					st->st_connection->name,
-					fmt_conn_instance(st->st_connection, cib),
-					st->st_serialno);
-		} else {
-			whack_log(RC_LOG, "event %s is %s", ev->ev_name, buf);
-		}
-
-		ev = ev->next;
+		whack_log(RC_LOG, "event %s is %s", ev->ev_name, buf);
 	}
+
+	list_state_events(nw);
 }
 
 void find_ifaces(bool rm_dead)

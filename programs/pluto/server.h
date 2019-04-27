@@ -94,12 +94,8 @@ extern void show_fips_status(void);
 extern void call_server(void);
 extern void init_event_base(void);
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
-extern void timer_private_pluto_event_new(struct event **evp,
-					  evutil_socket_t ft,
-					  short events,
-					  event_callback_fn cb,
-					  void *arg,
-					  deltatime_t delay);
+void fire_timer_photon_torpedo(struct event **evp, event_callback_fn cb, void *arg,
+			       const deltatime_t delay);
 extern struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 					   event_callback_fn cb, void *arg,
 					   const deltatime_t *delay,

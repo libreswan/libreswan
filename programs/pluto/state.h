@@ -894,4 +894,6 @@ extern bool uniqueIDs;  /* --uniqueids? */
 extern void ISAKMP_SA_established(const struct state *pst);
 extern void revive_conns(void);
 
+void list_state_events(monotime_t now);
+
 #endif /* _STATE_H */

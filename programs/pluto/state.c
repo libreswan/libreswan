@@ -3163,3 +3163,42 @@ void ISAKMP_SA_established(const struct state *pst)
 
 	c->newest_isakmp_sa = pst->st_serialno;
 }
+
+static void whack_log_state_event(struct state *st, struct pluto_event *pe,
+				  monotime_t now)
+{
+	if (pe != NULL) {
+		pexpect(st == pe->ev_state);
+		LSWLOG_WHACK(RC_LOG, buf) {
+			lswlogf(buf, "event %s is ", pe->ev_name);
+			if (pe->ev_type == EVENT_NULL) {
+				lswlogf(buf, "not timer based");
+			} else {
+				lswlogf(buf, "schd: %jd (in %jds)",
+					monosecs(pe->ev_time),
+					deltasecs(monotimediff(pe->ev_time, now)));
+			}
+			if (st->st_connection != NULL) {
+				/* fmt_connection(buf, st->st_connection); */
+				char cib[CONN_INST_BUF];
+				lswlogf(buf, " \"%s\"%s",
+					st->st_connection->name,
+					fmt_conn_instance(st->st_connection, cib));
+			}
+			lswlogf(buf, "  #%lu", st->st_serialno);
+		}
+	}
+}
+
+void list_state_events(monotime_t now)
+{
+	struct state *st = NULL;
+	FOR_EACH_STATE_OLD2NEW(st) {
+		whack_log_state_event(st, st->st_event, now);
+		whack_log_state_event(st, st->st_liveness_event, now);
+		whack_log_state_event(st, st->st_rel_whack_event, now);
+		whack_log_state_event(st, st->st_send_xauth_event, now);
+		whack_log_state_event(st, st->st_addr_change_event, now);
+		whack_log_state_event(st, st->st_dpd_event, now);
+	}
+}
