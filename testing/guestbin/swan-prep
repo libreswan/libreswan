@@ -270,12 +270,8 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
     shutil.copyfile(resolv, "/etc/resolv.conf")
 
 if args.fips:
-    fp = open("/etc/system-fips", "w")
-    fp.close()
-    shell("/testing/guestbin/fipson")
     # the test also requires using a modutil cmd which we cannot run here
-    shutil.copyfile(
-        "/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
+    shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
 else:
     shutil.copyfile(
         "/testing/baseconfigs/all/etc/sysconfig/pluto", "/etc/sysconfig/pluto")
@@ -400,6 +396,13 @@ if userland in ("libreswan", "openswan"):
                 if not hostname in certname:
                     shell("/usr/bin/certutil -A -n %s -t 'P,,' -d sql:/etc/ipsec.d -a -i /testing/x509/certs/%s.crt%s" %
                           (certname, certname, util_pw))
+
+# Don't enable FIPS mode until after NSS DBS are created.  See:
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1531267
+if args.fips:
+    fp = open("/etc/system-fips", "w")
+    fp.close()
+    shell("/testing/guestbin/fipson")
 
 # Strong swan has simple files.
 if userland == "strongswan" and args.x509:
