@@ -1779,23 +1779,22 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	 * orient() set up .local and .remote pointers or indexes
 	 * accordingly?
 	 */
-	int that_use_left_ca = extract_end(&c->spd.this, &wm->left, "left");
-	if (that_use_left_ca < 0) {
+	int same_leftca = extract_end(&c->spd.this, &wm->left, "left");
+	if (same_leftca < 0) {
 		loglog(RC_FATAL, "Failed to add connection \"%s\" with invalid \"left\" certificate",
 		       c->name);
 		return false;
 	}
-
-	int this_use_right_ca = extract_end(&c->spd.that, &wm->right, "right");
-	if (this_use_right_ca < 0) {
+	int same_rightca = extract_end(&c->spd.that, &wm->right, "right");
+	if (same_rightca < 0) {
 		loglog(RC_FATAL, "Failed to add connection \"%s\" with invalid \"right\" certificate",
 		       c->name);
 		return false;
 	}
 
-	if (that_use_left_ca == 1) {
+	if (same_rightca == 1) {
 		c->spd.that.ca = clone_chunk(c->spd.this.ca, "same rightca");
-	} else if (this_use_right_ca == 1) {
+	} else if (same_leftca == 1) {
 		c->spd.this.ca = clone_chunk(c->spd.that.ca, "same leftca");
 	}
 
