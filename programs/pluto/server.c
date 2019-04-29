@@ -855,7 +855,6 @@ void show_ifaces_status(void)
 			  p->ip_dev->id_vname, p->ip_dev->id_rname,
 			  ipstr(&p->ip_addr, &b), p->port);
 	}
-	whack_log(RC_COMMENT, " ");     /* spacer */
 }
 
 void show_debug_status(void)

@@ -79,6 +79,7 @@ void show_status(void)
 {
 	show_kernel_interface();
 	show_ifaces_status();
+	whack_log(RC_COMMENT, " ");     /* spacer */
 	show_system_security();
 	show_setup_plutomain();
 	show_debug_status();
