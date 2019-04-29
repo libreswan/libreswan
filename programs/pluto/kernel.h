@@ -238,7 +238,7 @@ struct kernel_ops {
 			  const char *verb,
 			  const char *verb_suffix,
 			  struct state *st);
-	void (*process_ifaces)(struct raw_iface *rifaces);
+	void (*process_raw_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);
 	err_t (*migrate_sa_check)(void);
 	bool (*migrate_sa)(struct state *st);

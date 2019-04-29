@@ -807,10 +807,10 @@ void find_ifaces(bool rm_dead)
 	if (rm_dead)
 		mark_ifaces_dead();
 
-	if (kernel_ops->process_ifaces != NULL) {
-		kernel_ops->process_ifaces(find_raw_ifaces4());
-		kernel_ops->process_ifaces(find_raw_ifaces6());
-		kernel_ops->process_ifaces(static_ifn);
+	if (kernel_ops->process_raw_ifaces != NULL) {
+		kernel_ops->process_raw_ifaces(find_raw_ifaces4());
+		kernel_ops->process_raw_ifaces(find_raw_ifaces6());
+		kernel_ops->process_raw_ifaces(static_ifn);
 	}
 
 	if (rm_dead)
