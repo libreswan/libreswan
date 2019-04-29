@@ -4523,6 +4523,7 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 
 	/* ??? this logic seems broken: it doesn't try all spd_routes of c */
 
+	/* XXX This logic also predates support for protoports, which isn't handled below */
 	struct connection *ue;
 
 	for (ue = connections; ue != NULL; ue = ue->ac_next) {
