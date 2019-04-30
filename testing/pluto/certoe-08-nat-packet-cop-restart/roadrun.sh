@@ -14,6 +14,7 @@ conntrack -F
 iptables -t nat -L 
 iptables -t nat -F 
 ipsec start
+sleep 5
 # packet trigger OE
 ping -n -c 1 -I 192.1.3.209 192.1.2.23
 sleep 1
