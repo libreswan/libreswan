@@ -265,6 +265,81 @@ struct raw_iface *find_raw_ifaces4(void)
 	return rifaces;
 }
 
+static int cmp_iface(const void *lv, const void *rv)
+{
+	const struct raw_iface *const *ll = lv;
+	const struct raw_iface *const *rr = rv;
+	const struct raw_iface *l = *ll;
+	const struct raw_iface *r = *rr;
+	/* return l - r */
+	int i;
+	/* protocol */
+	i = addrtypeof(&l->addr) - addrtypeof(&r->addr);
+	if (i != 0) {
+		return i;
+	}
+	/* loopback=0 < addr=1 < any=2 < ??? */
+#define SCORE(I) (isloopbackaddr(&I->addr) ? 0				\
+		  : isanyaddr(&I->addr) ? 2				\
+		  : 1)
+	i = SCORE(l) - SCORE(r);
+	if (i != 0) {
+		return i;
+	}
+#undef SCORE
+	/* name */
+	i = strcmp(l->name, r->name);
+	if (i != 0) {
+		return i;
+	}
+	/*
+	 * address
+	 */
+	i = addrcmp(&l->addr, &r->addr);
+	if (i != 0) {
+		return i;
+	}
+	/* port */
+	i = hportof(&l->addr) - hportof(&r->addr);
+	if (i != 0) {
+		return i;
+	}
+	/* what else */
+	dbg("interface sort not stable or duplicate");
+	return 0;
+}
+
+static void sort_ifaces(struct raw_iface **rifaces)
+{
+	/* how many? */
+	unsigned nr_ifaces = 0;
+	for (struct raw_iface *i = *rifaces; i != NULL; i = i->next) {
+		nr_ifaces++;
+	}
+	if (nr_ifaces == 0) {
+		dbg("no interfaces to sort");
+		return;
+	}
+	/* turn the list into an array */
+	struct raw_iface **ifaces = alloc_things(struct raw_iface *, nr_ifaces,
+						 "ifaces for sorting");
+	ifaces[0] = *rifaces;
+	for (unsigned i = 1; i < nr_ifaces; i++) {
+		ifaces[i] = ifaces[i-1]->next;
+	}
+	/* sort */
+	dbg("sorting %u interfaces", nr_ifaces);
+	qsort(ifaces, nr_ifaces, sizeof(ifaces[0]), cmp_iface);
+	/* turn the array back into a list */
+	for (unsigned i = 0; i < nr_ifaces - 1; i++) {
+		ifaces[i]->next = ifaces[i+1];
+	}
+	ifaces[nr_ifaces-1]->next = NULL;
+	/* clean up and return */
+	*rifaces = ifaces[0];
+	pfree(ifaces);
+}
+
 struct raw_iface *find_raw_ifaces6(void)
 {
 	/* Get list of interfaces with IPv6 addresses from system from /proc/net/if_inet6).
@@ -347,6 +422,16 @@ struct raw_iface *find_raw_ifaces6(void)
 			}
 		}
 		fclose(proc_sock);
+		/*
+		 * Sort the list by IPv6 address in assending order.
+		 *
+		 * XXX: The code then inserts these interfaces in
+		 * _reverse_ order (why I don't know) - the loop-back
+		 * interface ends up last.  Should the insert code
+		 * (scattered between kernel_*.c files) instead
+		 * maintain the "interfaces" structure?
+		 */
+		sort_ifaces(&rifaces);
 	}
 
 	return rifaces;
