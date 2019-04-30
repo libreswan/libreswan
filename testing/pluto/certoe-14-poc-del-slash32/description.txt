@@ -1,5 +1,2 @@
-road initiates on-demand to east.
-east deletes the connection
-road should go back to ondemand-ready
-
-NOTE: this requires a patch still being discussed
+Testing of OE over a non-default route interface on both initiator and responder
+It uses subnet routes and hardcoded IP's for the OE IP address
