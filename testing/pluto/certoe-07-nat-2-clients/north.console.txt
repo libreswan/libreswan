@@ -13,6 +13,8 @@ north #
 north #
  echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 north #
+ restorecon -R /etc/ipsec.d
+north #
  ipsec start
 Redirecting to: systemctl start ipsec.service
 north #
