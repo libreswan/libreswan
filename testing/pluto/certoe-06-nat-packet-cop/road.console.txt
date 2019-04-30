@@ -11,6 +11,8 @@ road #
 road #
  echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 road #
+ restorecon -R /etc/ipsec.d
+road #
  ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
