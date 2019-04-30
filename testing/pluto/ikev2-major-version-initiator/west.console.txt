@@ -14,6 +14,8 @@ west #
 west #
  ipsec whack --impair delete-on-retransmit
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --add westnet-eastnet-ikev2-major
 002 added connection description "westnet-eastnet-ikev2-major"
 west #
@@ -27,6 +29,7 @@ west #
 002 "westnet-eastnet-ikev2-major" #1: STATE_PARENT_I1: received unauthenticated v2N_INVALID_MAJOR_VERSION - ignored
 002 "westnet-eastnet-ikev2-major" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ikev2-major" #1: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "westnet-eastnet-ikev2-major" #1: IMPAIR: skipping revival of connection 'westnet-eastnet-ikev2-major' that is supposed to remain up
 west #
  echo done
 done
