@@ -1446,6 +1446,10 @@ static bool extract_connection(const struct whack_message *wm,
 			    "failed to add connection: MOBIKE requires IKEv2");
 		return false;
 	}
+	if (wm->sa_clones != 0 && c->ike_version == IKEv1) {
+		llog(RC_FATAL, c->logger, "clones= requires ikev2");
+		return false;
+	}
 
 	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
 	    c->ike_version == IKEv1) {
@@ -1458,11 +1462,6 @@ static bool extract_connection(const struct whack_message *wm,
 	    c->ike_version != IKEv2) {
 		llog(RC_FATAL, c->logger,
 			    "failed to add connection: enable-tcp= requires IKEv2");
-		return false;
-	}
-
-	if (wm->sa_clones != 0 &&  c->ike_version == IKEv1) {
-		llog(RC_FATAL, c->logger, "clones= requires ikev2");
 		return false;
 	}
 
@@ -2020,7 +2019,7 @@ static bool extract_connection(const struct whack_message *wm,
 			DBG_log("AA_2020 %s %d %s use head's reqid %u", __func__, __LINE__, c->name, c->spd.reqid);
 			if  (c->spd.reqid == 0) {
 				libreswan_log("AA_2020 can not find head reqid");
-				return;
+				return false;
 			}
 		}
 	} else {

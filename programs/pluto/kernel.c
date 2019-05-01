@@ -1785,6 +1785,38 @@ static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
 	sa->nic_offload_dev = c->interface->ip_dev->id_rname;
 }
 
+static uint16_t csum16(uint32_t *ptr)
+{
+	register long sum = 0;
+	register uint16_t ans;
+	register int nbytes = sizeof(uint32_t);
+
+	while (nbytes > 1) {
+                sum += *ptr++;
+                nbytes -= 2;
+        }
+
+	sum  = (sum >> 16) + (sum & 0xffff); /* add high-16 to low-16 */
+        sum += (sum >> 16); /* add carry */
+        ans = ~sum; /* ones-complement, then truncate to 16 bits */
+
+        return(ans);
+}
+
+static uint16_t perturb_clone_port(uint16_t port, uint32_t clone_id, uint32_t seed)
+{
+	if (clone_id <= CLONE_SA_HEAD)
+		return port;
+
+	uint16_t csum = csum16(&seed);
+	/* check for 16 bit wraping and offset it */
+	uint16_t new_port = port + csum > 65535 ? csum : port + csum;
+
+	DBG_log("AA_2020 %s %d clone_id %u port %u seed 0x%x csum %u new port %u", __func__, __LINE__, clone_id, port, ntohl(seed), csum, new_port);
+
+	return (new_port);
+}
+
 /*
  * Set up one direction of the SA bundle
  */
@@ -1962,11 +1994,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		    st->st_interface->protocol == &ip_protocol_tcp) {
 			encap_type = st->st_interface->protocol->encap_esp;
 			if (inbound) {
-				encap_sport = endpoint_hport(st->st_remote_endpoint);
+				encap_sport = perturb_clone_port(endpoint_hport(st->st_remote_endpoint), c->sa_clone_id, esp_spi);
 				encap_dport = endpoint_hport(st->st_interface->local_endpoint);
 			} else {
-				encap_sport = endpoint_hport(st->st_interface->local_endpoint);
-				encap_dport = endpoint_hport(st->st_remote_endpoint);
+				encap_sport  = perturb_clone_port(endpoint_hport(st->st_remote_endpoint), c->sa_clone_id, esp_spi);
+				encap_dport = endpoint_hport(st->st_interface->local_endpoint);
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
 			dbg("natt/tcp sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
