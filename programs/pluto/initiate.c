@@ -740,9 +740,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 				    fmt_conn_instance(c, cib));
 		    });
 
-		if (c->spd.that.client.maskbits == 32) {
-			libreswan_log("Opportunistic Instance has same bitmaks policy as Group Instance. Mark connection to re-instate trap policy on expire");
-			c->temp_vars.slash32_reshunt = TRUE;
+		if (sr->routing == RT_ROUTED_PROSPECTIVE && eclipsable(sr)) {
+			dbg("route is eclipsed");
+			sr->routing = RT_ROUTED_ECLIPSED;
+			eclipse_count++;
 		}
 
 		idtoa(&sr->this.id, mycredentialstr, sizeof(mycredentialstr));

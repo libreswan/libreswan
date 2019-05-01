@@ -1074,14 +1074,6 @@ void delete_state(struct state *st)
 		}
 	}
 
-	/* should we re-instate the shunt from our groupinstance parent */
-	if (c->temp_vars.slash32_reshunt) {
-		libreswan_log("Restoring Opportunistic parental /32 trap eroute");
-		bool res = route_and_eroute(c, &c->spd, NULL);
-		libreswan_log("Opportunistic: prospective route %s",
-			res ? "successfully" : "failed to install");
-	}
-
 	/*
 	 * fake a state change here while we are still associated with a
 	 * connection.  Without this the state logging (when enabled) cannot

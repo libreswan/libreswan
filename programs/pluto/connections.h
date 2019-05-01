@@ -239,7 +239,6 @@ struct sa_marks {
  */
 struct ephemeral_variables {
 	int revive_delay;
-	bool slash32_reshunt;
 	/* RFC 5685 - IKEv2 Redirect Mechanism */
 	int num_redirects;
 	realtime_t first_redirect_time;
