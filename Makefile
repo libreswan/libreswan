@@ -164,7 +164,7 @@ showobjdir:
 # these need to move elsewhere and get fixed not to use root
 
 .PHONY: deb-prepare
-DEBIPSECBASEVERSION=$$(call -s showdebversion)
+DEBIPSECBASEVERSION=$$(make -s showdebversion)
 deb-prepare:
 	cp -r packaging/debian .
 	cat debian/changelog
