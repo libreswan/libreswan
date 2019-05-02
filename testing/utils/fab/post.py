@@ -1,6 +1,6 @@
 # Perform post.mortem on a test result, for libreswan.
 #
-# Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2019 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -224,18 +224,6 @@ def _sanitize_output(logger, raw_path, test):
     return stdout.decode("utf-8")
 
 
-def _load_file(logger, filename):
-    """Load the specified file; return None if it does not exist"""
-
-    if os.path.exists(filename):
-        logger.debug("loading file: %s", filename)
-        with open(filename) as f:
-            return f.read()
-    else:
-        logger.debug("file %s does not exist", filename)
-    return None
-
-
 # The TestResult objects are almost, but not quite, an enum. It
 # carries around additional result details.
 
@@ -262,7 +250,7 @@ class TestResult:
         self.issues = Issues(self.logger)
         self.diffs = {}
         self.sanitized_output = {}
-        self.grub_cache = {}
+        self._file_contents_cache = {}
         self.output_directory = output_directory or test.output_directory
         # times
         self._start_time = None
@@ -362,8 +350,7 @@ class TestResult:
                               host_name, sanitized_output_path)
             sanitized_output = None
             if quick:
-                sanitized_output = _load_file(self.logger,
-                                              sanitized_output_path)
+                sanitized_output = self._file_contents(sanitized_output_path)
             if sanitized_output is None:
                 sanitized_output = _sanitize_output(self.logger,
                                                     os.path.join(self.output_directory, raw_output_filename),
@@ -383,7 +370,7 @@ class TestResult:
             self.logger.debug("host %s comparing against known-good output '%s'",
                               host_name, expected_output_path)
 
-            expected_output = _load_file(self.logger, expected_output_path)
+            expected_output = self._file_contents(expected_output_path)
             if expected_output is None:
                 self.issues.add(Issues.OUTPUT_UNCHECKED, host_name)
                 self.resolution.unresolved()
@@ -444,20 +431,25 @@ class TestResult:
                         f.write(line)
                         f.write("\n")
 
+    def _file_contents(self, path):
+        # Find/load the file, and uncompress when needed.
+        if not path in self._file_contents_cache:
+            self._file_contents_cache[path] = None
+            for suffix, open_op in [("", open), (".gz", gzip.open), (".bz2", bz2.open),]:
+                zippath = path + suffix
+                self.logger.debug("trying to load contents of '%s'", zippath)
+                if os.path.isfile(zippath):
+                    self.logger.debug("loading '%s' into cache", zippath)
+                    with open_op(path, "rt") as f:
+                        self._file_contents_cache[path] = f.read()
+                        break
+        return self._file_contents_cache[path]
+
     def grub(self, filename, regex=None, cast=lambda x: x):
         """Grub around FILENAME to find regex"""
         self.logger.debug("grubbing '%s' for '%s'", filename, regex)
-        # Find/load the file, and uncompress when needed.
-        if not filename in self.grub_cache:
-            self.grub_cache[filename] = None
-            for suffix, open_op in [("", open), (".gz", gzip.open), (".bz2", bz2.open),]:
-                path = os.path.join(self.output_directory, filename + suffix)
-                if os.path.isfile(path):
-                    self.logger.debug("loading '%s' into cache", path)
-                    with open_op(path, "rt") as f:
-                        self.grub_cache[filename] = f.read()
-                        break
-        contents = self.grub_cache[filename]
+        path = os.path.join(self.output_directory, filename)
+        contents = self._file_contents(path)
         return self.grep(contents, regex, cast)
 
     def grep(self, contents, regex=None, cast=lambda x: x):
