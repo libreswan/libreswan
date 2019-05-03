@@ -494,7 +494,7 @@ int main(int argc, char **argv)
 	if (argcount == 1) {
 		struct stat sts;
 
-		if (stat("/proc/net/pfkey", &sts) == 0) {
+		if (stat("/proc/net/xfrm_stat", &sts) == 0) {
 			fprintf(stderr,
 				"%s: NETKEY does not support eroute table.\n",
 				progname);

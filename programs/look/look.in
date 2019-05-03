@@ -71,8 +71,8 @@ if [ -f /proc/net/ipsec_spi ]; then
     sort /proc/net/ipsec_spi
 fi
 
-# xfrm for netkey
-if [ -f /proc/net/pfkey ]; then
+# xfrm
+if [ -f /proc/net/xfrm_stat ]; then
     echo "XFRM state:"
     ip xfrm state
     echo "XFRM policy:"

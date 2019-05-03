@@ -169,10 +169,6 @@ if test -r /proc/net/ipsec_tncfg
 then
 	cat /proc/net/ipsec_tncfg
 fi
-_________________________ /proc/net/pfkey
-if test -r /proc/net/pfkey
-then
-	cat /proc/net/pfkey
 _________________________ ip-xfrm-state
 	ip xfrm state
 _________________________ ip-xfrm-policy
@@ -291,7 +287,7 @@ if test -r /proc/net/ipsec_version
 then
 	cat /proc/net/ipsec_version
 else
-	if test -r /proc/net/pfkey
+	if test -r /proc/net/xfrm_stat
 	then
 		echo "NETKEY (`uname -r`) support detected "
 	else
