@@ -27,7 +27,7 @@ plutoctl=/var/run/pluto/pluto.ctl
 subsyslock=/var/lock/subsys/ipsec
 lock=/var/run/pluto/ipsec_setup.pid
 
-kamepfkey=/proc/net/pfkey
+xfrm_stat=/proc/net/xfrm_stat
 
 # defaults for "config setup" items
 IPSECuniqueids=${IPSECuniqueids:-yes}
@@ -183,7 +183,7 @@ case "$1" in
 	rm -f /var/run/pluto.pid
 
 	# When we exit we clean up (remove) the modules we are using, even the kame'ish ones
-	if test -e ${kamepfkey}; then
+	if test -e ${xfrm_stat}; then
 		lsmod 2>&1 | grep "^xfrm4_tunnel" > /dev/null && rmmod xfrm4_tunnel
 		lsmod 2>&1 | grep "^af_key" > /dev/null && rmmod af_key
 		# old name for xfrm4_tunnel

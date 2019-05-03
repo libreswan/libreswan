@@ -29,7 +29,7 @@ test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
 
 xfrm_stat=/proc/net/xfrm_stat
-ipsecpfkey=/proc/net/ipsec/version
+klipsstack=/proc/net/ipsec/version
 action="${1}"
 
 if [ -z "${action}" ]; then
@@ -114,10 +114,10 @@ startnetkey() {
 
     cryptomodules
 
-    if [ -f ${ipsecpfkey} ]; then
+    if [ -f ${klipsstack} ]; then
 	echo "Warning: found KLIPS stack loaded - attempting to unload..." >&2
 	stopklips
-	if [ -f ${ipsecpfkey} ]; then
+	if [ -f ${klipsstack} ]; then
 	    echo "FAILURE to unload KLIPS module" >&2
 	    exit 1
 	fi
@@ -158,7 +158,7 @@ startnetkey() {
 }
 
 stopklips() {
-    if [ -f ${ipsecpfkey} ]; then
+    if [ -f ${klipsstack} ]; then
 	# Bring down ipsecX and mast0 interfaces
 	ifl=$(grep -v NULL /proc/net/ipsec_tncfg 2>/dev/null | sed -n -e "/^ipsec/s/ .*//p")
 	if [ -n "${ifl}" ]; then
@@ -182,7 +182,7 @@ stopklips() {
 	    rmmod ipsec 2>/dev/null
 	fi
     fi
-    if [ -f ${ipsecpfkey} -o -n "$(lsmod | grep ^ipsec)" ]; then
+    if [ -f ${klipsstack} -o -n "$(lsmod | grep ^ipsec)" ]; then
 	echo "FAILURE to unload KLIPS module" >&2
 	exit 1
     fi
@@ -267,7 +267,7 @@ startklips() {
 	    exit 1
 	fi
     fi
-    if [ ! -f ${ipsecpfkey} ]; then
+    if [ ! -f ${klipsstack} ]; then
 	# KLIPS-related paths
 	bareversion=$(uname -r | sed -e 's/\.nptl//' | sed -e 's/^\(2\.[0-9]\.[1-9][0-9]*-[1-9][0-9]*\(\.[0-9][0-9]*\)*\(\.x\)*\).*$/\1/')
 	case ${bareversion} in
@@ -285,7 +285,7 @@ startklips() {
 	    ${MODPROBE} ${modulename}
 	fi
 
-	if [ ! -f ${ipsecpfkey} ]; then
+	if [ ! -f ${klipsstack} ]; then
 	    echo "FAILURE to load KLIPS module" >&2
 	    exit 1
 	fi
@@ -452,7 +452,7 @@ case ${action} in
     stop)
 	# We don't unload XFRM/IPsec on stop - only when we detect a stack
 	# change.
-	if [ -f ${ipsecpfkey} ]; then
+	if [ -f ${klipsstack} ]; then
 		ipsec eroute --clear
 		# this clears all IP addresses on ipsecX interfaces by
 		# unloading the module

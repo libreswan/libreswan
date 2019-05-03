@@ -81,7 +81,7 @@ plutoctl=${rundir}/pluto.ctl
 lockdir=@FINALVARDIR@/lock/subsys
 lockfile=${lockdir}/ipsec
 ipsecversion=/proc/net/ipsec_version
-kamepfkey=/proc/net/pfkey
+xfrm_stat=/proc/net/xfrm_stat
 
 # @FINALSYSCONFDIR@/resolv.conf related paths
 LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup

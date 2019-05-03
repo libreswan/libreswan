@@ -82,7 +82,7 @@ lockdir=/var/lock/subsys
 lockfile=ipsec
 lockpath=${lockdir}/${lockfile}
 ipsecversion=/proc/net/ipsec_version
-kamepfkey=/proc/net/pfkey
+xfrm_stat=/proc/net/xfrm_stat
 
 # /etc/resolv.conf related paths
 LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup
