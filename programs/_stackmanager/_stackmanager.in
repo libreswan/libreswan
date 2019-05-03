@@ -28,7 +28,7 @@ eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn  --configsetup | grep -v "#" | 
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
 
-kamepfkey=/proc/net/pfkey
+xfrm_stat=/proc/net/xfrm_stat
 ipsecpfkey=/proc/net/ipsec/version
 action="${1}"
 
@@ -44,11 +44,11 @@ stopnetkey() {
     # Validate wait option
     [ "${1}" = "--wait" -o "${1}" = "-w" ] && wait="${1}"
 
-    if [ -f ${kamepfkey} ]; then
+    if [ -f ${xfrm_stat} ]; then
 	ip xfrm state flush
 	ip xfrm policy flush
 	if [ -n "$(ip xfrm state)" -o -n "$(ip xfrm policy)" ]; then
-	    echo "NETKEY IPsec stack could not be cleared" >&2
+	    echo "XFRM/IPsec stack could not be cleared" >&2
 	fi
 
 	if [ -f /proc/modules ]; then
@@ -124,7 +124,7 @@ startnetkey() {
     fi
 
     if [ -f /proc/modules ]; then
-	# load all NETKEY modules
+	# load all XFRM modules
 	for mod in ipcomp6 xfrm_ipcomp ipcomp xfrm6_tunnel xfrm6_mode_tunnel \
 	    xfrm6_mode_beet xfrm6_mode_ro xfrm6_mode_transport \
 	    xfrm4_mode_transport xfrm4_mode_tunnel xfrm4_tunnel \
@@ -150,9 +150,9 @@ startnetkey() {
 	echo "WARNING: can not change /proc/sys/net/core/xfrm_acq_expires from ${xcur} to ${xfrmlifetime}" >&2
     fi
 
-    # Fail on error in loading NETKEY/XFRM stack
-    if [ ! -f ${kamepfkey} ]; then
-	echo "FAILURE in loading NETKEY/XFRM stack" >&2
+    # Fail on error in loading XFRM/IPsec stack
+    if [ ! -f ${xfrm_stat} ]; then
+	echo "FAILURE in loading XFRM/IPsec stack" >&2
 	exit 1
     fi
 }
@@ -209,7 +209,7 @@ stop() {
 
 cryptomodules() {
     # load any OCF and CryptoAPI modules we might need for acceleration
-    # (OCF works for NETKEY and KLIPS/MAST)
+    # (OCF works for XFRM/IPsec and KLIPS/MAST)
     # OCF cryptosoft is for kernel acceleration (ESP/AH)
     ${MODPROBE} cryptosoft 2>/dev/null
     # We skip cryptodev.ko because we no longer support /dev/crypto offloading
@@ -259,10 +259,10 @@ startmast() {
 
 startklips() {
     cryptomodules
-    if [ -f ${kamepfkey} ]; then
-	echo "Warning: found NETKEY/XFRM stack loaded - attempting to unload..." >&2
+    if [ -f ${xfrm_stat} ]; then
+	echo "Warning: found XFRM/IPsec stack loaded - attempting to unload..." >&2
 	stopnetkey --wait
-	if [ -f ${kamepfkey} ]; then
+	if [ -f ${xfrm_stat} ]; then
 	    echo "FAILURE to unload KLIPS/MAST module" >&2
 	    exit 1
 	fi
@@ -450,14 +450,14 @@ esac
 
 case ${action} in
     stop)
-	# We don't unload NETKEY/XFRM on stop - only when we detect a stack
+	# We don't unload XFRM/IPsec on stop - only when we detect a stack
 	# change.
 	if [ -f ${ipsecpfkey} ]; then
 		ipsec eroute --clear
 		# this clears all IP addresses on ipsecX interfaces by
 		# unloading the module
 		stopklips
-	elif [ -f ${kamepfkey} ]; then
+	elif [ -f ${xfrm_stat} ]; then
 		ip xfrm state flush
 		ip xfrm policy flush
 		# module unloading skipped on purpose - can hang for a long
