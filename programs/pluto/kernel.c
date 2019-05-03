@@ -2659,9 +2659,8 @@ void init_kernel(void)
 	switch (kern_interface) {
 #if defined(NETKEY_SUPPORT)
 	case USE_NETKEY:
-		if (stat("/proc/net/pfkey", &buf) != 0) {
-			libreswan_log(
-				"No XFRM/NETKEY kernel interface detected");
+		if (stat("/proc/net/xfrm_stat", &buf) != 0) {
+			libreswan_log("No XFRM kernel interface detected");
 			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 		}
 		libreswan_log(
