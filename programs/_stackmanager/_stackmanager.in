@@ -115,10 +115,10 @@ startnetkey() {
     cryptomodules
 
     if [ -f ${ipsecpfkey} ]; then
-	echo "Warning: found KLIPS/MAST stack loaded - attempting to unload..." >&2
+	echo "Warning: found KLIPS stack loaded - attempting to unload..." >&2
 	stopklips
 	if [ -f ${ipsecpfkey} ]; then
-	    echo "FAILURE to unload KLIPS/MAST module" >&2
+	    echo "FAILURE to unload KLIPS module" >&2
 	    exit 1
 	fi
     fi
@@ -183,7 +183,7 @@ stopklips() {
 	fi
     fi
     if [ -f ${ipsecpfkey} -o -n "$(lsmod | grep ^ipsec)" ]; then
-	echo "FAILURE to unload KLIPS/MAST module" >&2
+	echo "FAILURE to unload KLIPS module" >&2
 	exit 1
     fi
 }
@@ -209,7 +209,7 @@ stop() {
 
 cryptomodules() {
     # load any OCF and CryptoAPI modules we might need for acceleration
-    # (OCF works for XFRM/IPsec and KLIPS/MAST)
+    # (OCF works for XFRM/IPsec and KLIPS)
     # OCF cryptosoft is for kernel acceleration (ESP/AH)
     ${MODPROBE} cryptosoft 2>/dev/null
     # We skip cryptodev.ko because we no longer support /dev/crypto offloading
@@ -263,7 +263,7 @@ startklips() {
 	echo "Warning: found XFRM/IPsec stack loaded - attempting to unload..." >&2
 	stopnetkey --wait
 	if [ -f ${xfrm_stat} ]; then
-	    echo "FAILURE to unload KLIPS/MAST module" >&2
+	    echo "FAILURE to unload KLIPS module" >&2
 	    exit 1
 	fi
     fi
@@ -286,7 +286,7 @@ startklips() {
 	fi
 
 	if [ ! -f ${ipsecpfkey} ]; then
-	    echo "FAILURE to load KLIPS/MAST module" >&2
+	    echo "FAILURE to load KLIPS module" >&2
 	    exit 1
 	fi
 
