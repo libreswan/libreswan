@@ -8,7 +8,7 @@
 # Default-Start:
 # Default-Stop: 0 1 6
 # Short-Description: Start Libreswan IPsec at boot time
-# Description: Enable automatic key management for IPsec (KLIPS and NETKEY)
+# Description: Enable automatic key management for IPsec (KLIPS and XFRM
 ### END INIT INFO
 #
 ### see https://bugzilla.redhat.com/show_bug.cgi?id=636572
@@ -45,7 +45,7 @@
 #
 # chkconfig: - 47 76
 # description: IPsec provides encrypted and authenticated communications; \
-# NETKEY/KLIPS is the kernel half of it, Pluto is the user-level management daemon.
+# XFRM or KLIPS is the kernel half of it, Pluto is the user-level management daemon.
 
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 
@@ -79,8 +79,6 @@ plutoctl=${rundir}/pluto.ctl
 lockdir=/run/lock/subsys
 lockfile=ipsec
 lockpath=${lockdir}/${lockfile}
-ipsecversion=/proc/net/ipsec_version
-kamepfkey=/proc/net/pfkey
 
 # /etc/resolv.conf related paths
 LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup
