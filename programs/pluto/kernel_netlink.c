@@ -40,7 +40,6 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
-#include <linux/pfkeyv2.h>
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
 #include <unistd.h>
@@ -59,9 +58,6 @@
 # include "libreswan.h"
 # include "linux/xfrm.h" /* local (if configured) or system copy */
 #endif
-
-#include "libreswan/pfkeyv2.h"
-#include "libreswan/pfkey.h"
 
 #include "sysdep.h"
 #include "socketwrapper.h"
