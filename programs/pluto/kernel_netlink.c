@@ -2808,37 +2808,32 @@ static err_t netlink_migrate_sa_check(void)
 
 static bool netlink_poke_ipsec_policy_hole(struct raw_iface *ifp, int fd)
 {
-	struct sadb_x_policy policy;
-	int level, opt;
+	int opt, sol;
+	struct xfrm_userpolicy_info policy;
 
 	zero(&policy);
-	policy.sadb_x_policy_len = sizeof(policy) /
-		IPSEC_PFKEYv2_ALIGN;
-	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
-	policy.sadb_x_policy_type = IPSEC_POLICY_BYPASS;
-	policy.sadb_x_policy_dir = IPSEC_DIR_INBOUND;
-	policy.sadb_x_policy_id = 0;
+	policy.action = XFRM_POLICY_ALLOW;
+	policy.sel.family = addrtypeof(&ifp->addr);
 
 	if (addrtypeof(&ifp->addr) == AF_INET6) {
-		level = IPPROTO_IPV6;
-		opt = IPV6_IPSEC_POLICY;
+		sol = IPPROTO_IPV6;
+		opt = IPV6_XFRM_POLICY;
 	} else {
-		level = IPPROTO_IP;
-		opt = IP_IPSEC_POLICY;
+		sol = SOL_IP;
+		opt = IP_XFRM_POLICY;
 	}
 
-	if (setsockopt(fd, level, opt,
-		       &policy, sizeof(policy)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IPSEC_POLICY in process_raw_ifaces()");
+	policy.dir = XFRM_POLICY_IN;
+	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
+		LOG_ERRNO(errno, "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_raw_ifaces();");
 		close(fd);
 		return false;
 	}
 
-	policy.sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
+	policy.dir = XFRM_POLICY_OUT;
 
-	if (setsockopt(fd, level, opt,
-		       &policy, sizeof(policy)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IPSEC_POLICY in process_raw_ifaces()");
+	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
+		LOG_ERRNO(errno, "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_raw_ifaces() XFRM_POLICY_OUT");
 		close(fd);
 		return false;
 	}
