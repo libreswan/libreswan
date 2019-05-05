@@ -73,7 +73,6 @@ road #
  ipsec secrets > /dev/null
 road #
  ipsec auto --delete westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
 road #
  ipsec stop
 Redirecting to: systemctl stop ipsec.service
