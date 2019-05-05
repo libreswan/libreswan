@@ -37,7 +37,6 @@ north #
 002 "northnet-eastnet-nat" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "northnet-eastnet-nat" #2: ESP traffic information: in=0B out=0B
 002 "northnet-eastnet-nat" #1: deleting state (STATE_MAIN_I4) and sending notification
-002 "northnet-eastnet-nat": terminating SAs using this connection
 002 added connection description "northnet-eastnet-nat"
 north #
  ipsec auto --up northnet-eastnet-nat
