@@ -16,9 +16,7 @@ initdone
 east #
  # confirm the right ID types were sent/received
 east #
- grep "ID type" /tmp/pluto.log
-|    ID type: ID_FQDN (0x2)
-|    ID type: ID_FQDN (0x2)
+ grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_FQDN (0x2)
 east #
 east #

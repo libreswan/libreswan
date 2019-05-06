@@ -28,18 +28,13 @@ west #
 003 "san" #2: certificate does not contain ID_USER_FQDN subjectAltName=NOTeast@testing.libreswan.org
 002 "san" #2: Peer public key SubjectAltName does not match peer ID for this connection
 002 "san" #2: X509: CERT payload does not match connection ID
-224 "san" #2: STATE_PARENT_I2: v2N_AUTHENTICATION_FAILED
-002 "san" #2: deleting other state #2 (STATE_PARENT_I2) and NOT sending notification
-002 "san" #1: deleting state (STATE_PARENT_I2) and NOT sending notification
 west #
  echo "done"
 done
 west #
  # confirm the right ID types were sent/received
 west #
- grep "ID type" /tmp/pluto.log
-|    ID type: ID_USER_FQDN (0x3)
-|    ID type: ID_USER_FQDN (0x3)
+ grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_USER_FQDN (0x3)
 west #
 west #

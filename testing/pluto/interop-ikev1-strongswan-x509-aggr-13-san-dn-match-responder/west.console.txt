@@ -36,7 +36,6 @@ west #
 010 "san" #2: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
 010 "san" #2: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
 010 "san" #2: STATE_QUICK_I1: retransmission; will wait 2 seconds for response
-010 "san" #2: STATE_QUICK_I1: retransmission; will wait 4 seconds for response
 004 "san" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  echo "done"
@@ -44,13 +43,9 @@ done
 west #
  # confirm the right ID types were sent/received
 west #
- grep "ID type" /tmp/pluto.log
-|    ID type: ID_DER_ASN1_DN (0x9)
-|    ID type: ID_DER_ASN1_DN (0x9)
+ grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_DER_ASN1_DN (0x9)
 |    ID type: ID_IPV4_ADDR (0x1)
-|    ID type: ID_IPV4_ADDR (0x1)
-|    ID type: ID_DER_ASN1_DN (0x9)
 west #
 west #
  ../bin/check-for-core.sh

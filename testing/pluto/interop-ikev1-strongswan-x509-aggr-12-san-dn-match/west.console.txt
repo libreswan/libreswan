@@ -65,7 +65,7 @@ done
 west #
  # confirm the right ID types were sent/received
 west #
- grep "ID type" /tmp/pluto.log
+ grep "ID type" /tmp/pluto.log | sort | uniq
 grep: /tmp/pluto.log: No such file or directory
 west #
 west #
