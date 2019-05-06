@@ -108,19 +108,19 @@ east #
 000  
 000 List of X.509 CA Certificates:
 000  
-000 Root CA certificate "Libreswan test CA for mainca - Libreswan" - SN: 0xXX
-000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-000   not before: TIMESTAMP
-000   not after: TIMESTAMP
-000   1024 bit RSA
-000  
 000 Root CA certificate "west-ec" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-ec.testing.libreswan.org, E=testing@libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-ec.testing.libreswan.org, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   384 bit(other)
+000  
+000 Root CA certificate "Libreswan test CA for mainca - Libreswan" - SN: 0xXX
+000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
+000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
+000   not before: TIMESTAMP
+000   not after: TIMESTAMP
+000   1024 bit RSA
 000  
 000 List of CRLs:
 east #

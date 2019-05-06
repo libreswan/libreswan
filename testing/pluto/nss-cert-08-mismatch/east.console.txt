@@ -37,18 +37,4 @@ east #
  echo "initdone"
 initdone
 east #
- certutil -L -d sql:/etc/ipsec.d/
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-east                                                         u,u,u
-Libreswan test CA for mainca - Libreswan                     CT,, 
-north                                                        P,,  
-hashsha1                                                     P,,  
-west-ec                                                      P,,  
-nic                                                          P,,  
-east #
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -52,11 +52,11 @@ received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ EF(3/5) ]
 received fragment #3 of 5, waiting for complete IKE message
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ EF(5/5) ]
-received fragment #5 of 5, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ EF(4/5) ]
-received fragment #4 of 5, reassembled fragmented IKE message (XXX bytes)
+received fragment #4 of 5, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(5/5) ]
+received fragment #5 of 5, reassembled fragmented IKE message (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr CERT AUTH SA TSi TSr ]
 received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
