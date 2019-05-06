@@ -2446,7 +2446,7 @@ def check_host_netkey_stack():
     v_line = runcmd("ipsec version")
     if v_line.split()[3] != '(netkey)':
         logging.debug("no netkey stack found, try to load it %s", v_line)
-        runcmd("sudo /usr/local/sbin/ipsec _stackmanager start --netkey")
+        runcmd("sudo /usr/local/sbin/ipsec _stackmanager start --xfrm")
         v_line = runcmd("ipsec version")
         if v_line.split()[3] != '(netkey)':
             # give up
