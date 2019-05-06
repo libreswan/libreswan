@@ -2722,6 +2722,7 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 	if (!ikev2_decode_peer_id(md)) {
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+		release_pending_whacks(st, "Authentication failed");
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
@@ -3644,6 +3645,7 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	if (!ikev2_decode_peer_id(md)) {
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+		release_pending_whacks(st, "Authentication failed");
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
