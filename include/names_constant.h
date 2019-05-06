@@ -47,6 +47,7 @@ extern enum_names version_names;
 extern enum_names doi_names;
 extern enum_names ikev1_payload_names;
 extern enum_names ikev2_payload_names;
+extern enum_enum_names payload_type_names;
 extern enum_names ikev2_last_proposal_desc;
 extern enum_names ikev2_last_transform_desc;
 extern enum_names payload_names_ikev1orv2;
@@ -58,6 +59,7 @@ extern enum_names xauth_attr_names;
 extern enum_names ikev1_exchange_names;
 extern enum_names ikev2_exchange_names;
 extern enum_names exchange_names_ikev1orv2;
+extern enum_enum_names exchange_type_names;
 extern enum_names ikev1_protocol_names;
 extern enum_names ikev2_protocol_names;
 extern enum_names ikev2_del_protocol_names;	/* subset of protocol names accepted by IKEv2 Delete */
