@@ -40,8 +40,7 @@ done
 west #
  # confirm the right ID types were sent/received
 west #
- grep "ID type" /tmp/pluto.log
-|    ID type: ID_DER_ASN1_DN (0x9)
+ grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_DER_ASN1_DN (0x9)
 west #
 west #

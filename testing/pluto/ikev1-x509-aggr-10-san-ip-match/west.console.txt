@@ -35,9 +35,7 @@ done
 west #
  # confirm the right ID types were sent/received
 west #
- grep "ID type" /tmp/pluto.log
-|    ID type: ID_IPV4_ADDR (0x1)
-|    ID type: ID_IPV4_ADDR (0x1)
+ grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_IPV4_ADDR (0x1)
 west #
 west #
