@@ -496,7 +496,7 @@ void initialize_new_state(struct state *st,
 		}
 	}
 
-	refresh_state(st);
+	binlog_refresh_state(st);
 
 	set_cur_state(st);
 }

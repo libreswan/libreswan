@@ -671,7 +671,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK;
 	change_state(st, STATE_MAIN_R0);
 
-	refresh_state(st);
+	binlog_refresh_state(st);
 
 	merge_quirks(st, md);
 

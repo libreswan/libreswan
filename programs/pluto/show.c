@@ -203,7 +203,7 @@ static void connection_state(struct state *st, void *data)
 	}
 }
 
-void log_state(struct state *st, enum state_kind new_state)
+void binlog_state(struct state *st, enum state_kind new_state)
 {
 	if (pluto_stats_binary == NULL)
 		return;

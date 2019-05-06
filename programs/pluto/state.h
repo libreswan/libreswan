@@ -863,11 +863,10 @@ extern void delete_states_dead_interfaces(void);
 extern bool dpd_active_locally(const struct state *st);
 
 /*
- * use these to change state, this gives us a handle on all state changes
- * which is good for tracking bugs, logging and anything else you might like
+ * Use this to change state, this gives us a handle on all state
+ * changes which is good for tracking bugs, logging and anything else
+ * you might like.
  */
-#define refresh_state(st) log_state((st), (st)->st_state)
-#define fake_state(st, new_state) log_state((st), (new_state))
 extern void change_state(struct state *st, enum state_kind new_state);
 
 extern bool state_is_busy(const struct state *st);

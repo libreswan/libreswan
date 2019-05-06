@@ -212,7 +212,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	st->st_try = 0;                                 /* Not our job to try again from start */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
-	refresh_state(st);
+	binlog_refresh_state(st);
 
 	{
 		ipstr_buf b;
@@ -1043,7 +1043,7 @@ void aggr_outI1(fd_t whack_sock,
 		}
 	}
 
-	refresh_state(st);
+	binlog_refresh_state(st);
 
 	if (!init_aggr_st_oakley(st, policy)) {
 		/*

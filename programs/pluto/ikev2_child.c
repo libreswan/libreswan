@@ -86,7 +86,7 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 					    v2_msg_role(md) == MESSAGE_RESPONSE ? SA_INITIATOR :
 					    0);
 		cst->st_connection = c;	/* safe: from duplicate_state */
-		refresh_state(cst);
+		binlog_refresh_state(cst);
 	}
 
 	struct spd_route *spd = &md->st->st_connection->spd;
@@ -140,7 +140,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		pexpect(md->st != NULL);
 		pexpect(md->st == &ike->sa); /* passed in parent */
 		cst = ikev2_duplicate_state(ike, IPSEC_SA, SA_RESPONDER);
-		refresh_state(cst);
+		binlog_refresh_state(cst);
 		if (!v2_process_ts_request(pexpect_child_sa(cst), md)) {
 			/*
 			 * XXX: while the CHILD SA failed, the IKE SA

@@ -402,7 +402,7 @@ void change_state(struct state *st, enum state_kind new_state_kind)
 	passert(new_state != NULL);
 	if (new_state != old_state) {
 		update_state_stats(st, old_state, new_state);
-		log_state(st, new_state_kind /* XXX */);
+		binlog_state(st, new_state_kind /* XXX */);
 		st->st_finite_state = new_state;
 	}
 }
@@ -640,7 +640,7 @@ void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
 	/* now, update the state */
 	rehash_state_cookies_in_db(st);
 	/* just logs change */
-	refresh_state(st);
+	binlog_refresh_state(st);
 }
 
 /*
@@ -1079,7 +1079,7 @@ void delete_state(struct state *st)
 	 * connection.  Without this the state logging (when enabled) cannot
 	 * work out what happened.
 	 */
-	fake_state(st, STATE_UNDEFINED);
+	binlog_fake_state(st, STATE_UNDEFINED);
 
 	/* we might be about to free it */
 	st->st_connection = NULL;	/* c will be discarded */
