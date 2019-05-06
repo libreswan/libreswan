@@ -471,8 +471,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		passert(st != NULL);
 		struct connection *c = st->st_connection;
 		const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
-
 		so_serial_t newer_sa = get_newer_sa_from_connection(st);
+
 		if (newer_sa != SOS_NOBODY) {
 			/* not very interesting: already superseded */
 			dbg("%s SA expired (superseded by #%lu)",
@@ -488,6 +488,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				      (c->policy & POLICY_DONT_REKEY) ?
 				      "--dontrekey" : "LATEST!");
 		}
+
 		/* Delete this state object.  It must be in the hash table. */
 		switch (st->st_ike_version) {
 		case IKEv2:
