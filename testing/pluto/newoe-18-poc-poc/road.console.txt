@@ -144,8 +144,6 @@ road #
  sleep 10
 road #
  ipsec auto --delete private-or-clear
-002 "private-or-clear": terminating SAs using this connection
-002 "private-or-clear#192.1.2.0/24": terminating SAs using this connection
 road #
  sleep 5
 road #

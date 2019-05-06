@@ -1270,14 +1270,14 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_CREATE_R);
 			st->st_msgid = md->hdr.isa_msgid;
-			refresh_state(st);
+			binlog_refresh_state(st);
 		} else {
 			what = "IKE Rekey Request";
 			st = ikev2_duplicate_state(ike, IKE_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
 			st->st_msgid = md->hdr.isa_msgid;
-			refresh_state(st);
+			binlog_refresh_state(st);
 		}
 	} else  {
 		/* this a response */

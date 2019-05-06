@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep
 west #
  ipsec start
-while loading 'failtest10': connection allowing ikev1 must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: connection allowing ikev1 must use authby= of rsasig, secret or never
 Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
@@ -94,7 +92,7 @@ west #
 036 Failed to add connection "failtestmanual1": non-shunt connection must have AH or ESP
 west #
  ipsec whack --name failtestmanual2 --ikev1-allow --encrypt --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
-036 Failed to add connection "failtestmanual2": leftauth= and rightauth= require ikev2=insist
+036 Failed to add connection "failtestmanual2": leftauth= and rightauth= require ikev2
 west #
  ipsec whack --name failtestmanual3 --psk --encrypt --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
 036 Failed to add connection "failtestmanual3": leftauth=null is unequal to rightauth=rsasig so authby=PSK must not be set
@@ -112,7 +110,7 @@ west #
  ipsec auto --add failtest1
 while loading 'failtest10': connection allowing ikev1 must use authby= of rsasig, secret or never
 addconn, in config '/etc/ipsec.conf', ignoring: connection allowing ikev1 must use authby= of rsasig, secret or never
-036 Failed to add connection "failtest1": leftauth= and rightauth= require ikev2=insist
+036 Failed to add connection "failtest1": leftauth= and rightauth= require ikev2
 west #
  ipsec auto --add failtest2
 while loading 'failtest10': connection allowing ikev1 must use authby= of rsasig, secret or never
