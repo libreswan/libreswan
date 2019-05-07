@@ -90,6 +90,8 @@ void init_demux(void)
 
 static struct msg_digest *read_packet(const struct iface_port *ifp)
 {
+	realtime_t md_inception = realnow();
+
 	int packet_len;
 	/* ??? this buffer seems *way* too big */
 	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
@@ -265,6 +267,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	struct msg_digest *md = alloc_md("msg_digest in read_packet");
 	md->iface = ifp;
 	md->sender = sender;
+	md->md_inception = md_inception;
 
 	init_pbs(&md->packet_pbs
 		 , clone_bytes(_buffer, packet_len,

@@ -942,10 +942,17 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	/*
 	 * "cur_state" has been set (possibly repeatedly) so all
 	 * systems are go - emit a log record as early as possible.
+	 *
+	 * Include the "hidden" prep time that's already been sunk
+	 * into the the message.
 	 */
 	LSWLOG(buf) {
 		lswlogf(buf, "processing ");
 		lswlog_msg_digest(buf, md);
+		deltatime_t prep_time = realtimediff(realnow(), md->md_inception);
+		lswlogf(buf, " (message arrived ");
+		lswlog_deltatime(buf, prep_time);
+		lswlogf(buf, " seconds ago)");
 	}
 
 	md->st = st;
@@ -2624,6 +2631,10 @@ stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct state *st,
 	LSWLOG(buf) {
 		lswlogf(buf, "processing encrypted ");
 		lswlog_msg_digest(buf, md);
+		deltatime_t prep_time = realtimediff(realnow(), md->md_inception);
+		lswlogf(buf, " (message arrived ");
+		lswlog_deltatime(buf, prep_time);
+		lswlogf(buf, " seconds ago)");
 	}
 
 	/* for testing only */
