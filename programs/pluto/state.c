@@ -783,6 +783,7 @@ static void flush_pending_children(struct state *pst)
 	if (IS_CHILD_SA(pst))
 		return;
 
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (st->st_clonedfrom == pst->st_serialno) {
@@ -1190,6 +1191,7 @@ void delete_state(struct state *st)
 bool states_use_connection(const struct connection *c)
 {
 	/* are there any states still using it? */
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (st->st_connection == c)
@@ -1206,6 +1208,7 @@ bool shared_phase1_connection(const struct connection *c)
 	if (serial_us == SOS_NOBODY)
 		return FALSE;
 
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (st->st_connection != c && st->st_clonedfrom == serial_us)
@@ -1225,6 +1228,7 @@ bool v2_child_connection_probably_shared(struct child_sa *child)
 		return true;
 	}
 
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct ike_sa *ike = ike_sa(&child->sa);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
@@ -1269,6 +1273,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 	 */
 	for (int pass = 0; pass != 2; pass++) {
 		DBG(DBG_CONTROL, DBG_log("pass %d", pass));
+		dbg("FOR_EACH_STATE_... in %s", __func__);
 		struct state *this = NULL;
 		FOR_EACH_STATE_NEW2OLD(this) {
 			DBG(DBG_CONTROL,
@@ -1304,6 +1309,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 void delete_states_dead_interfaces(void)
 {
 	struct state *this = NULL;
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	FOR_EACH_STATE_NEW2OLD(this) {
 		if (this->st_interface &&
 		    this->st_interface->change == IFN_DELETE) {
@@ -1423,6 +1429,7 @@ void delete_states_by_peer(const ip_address *peer)
 	/* first restart the phase1s */
 	for (int ph1 = 0; ph1 < 2; ph1++) {
 		struct state *this;
+		dbg("FOR_EACH_STATE_... in %s", __func__);
 		FOR_EACH_STATE_NEW2OLD(this) {
 			const struct connection *c = this->st_connection;
 			DBG(DBG_CONTROL, {
@@ -1573,6 +1580,7 @@ struct state *ikev2_duplicate_state(struct ike_sa *ike,
 
 void for_each_state(void (*f)(struct state *, void *data), void *data)
 {
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		/*
@@ -1736,6 +1744,7 @@ void find_states_and_redirect(const char *conn_name,
 	ipstr_buf b;
 
 	if (conn_name == NULL) {
+		dbg("FOR_EACH_STATE_... in %s", __func__);
 		struct state *st = NULL;
 		FOR_EACH_STATE_NEW2OLD(st) {
 			if (sameaddr(&st->st_remoteaddr, &remote_ip) &&
@@ -1754,6 +1763,7 @@ void find_states_and_redirect(const char *conn_name,
 			loglog(RC_LOG_SERIOUS, "no active tunnel with remote ip address %s",
 				sensitive_ipstr(&remote_ip, &b));
 	} else {
+		dbg("FOR_EACH_STATE_... in %s", __func__);
 		struct state *st = NULL;
 		FOR_EACH_STATE_NEW2OLD(st) {
 			if (streq(conn_name, st->st_connection->name) &&
@@ -1816,6 +1826,7 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 struct state *find_likely_sender(size_t packet_len, u_char *packet)
 {
 	if (packet_len >= sizeof(struct isakmp_hdr)) {
+		dbg("FOR_EACH_STATE_... in %s", __func__);
 		struct state *st = NULL;
 		FOR_EACH_STATE_NEW2OLD(st) {
 			if (st->st_tpacket.ptr != NULL &&
@@ -1845,6 +1856,7 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 	struct state  *bogusst = NULL;
 
 	*bogus = FALSE;
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		const struct connection *c = st->st_connection;
@@ -1881,6 +1893,7 @@ bool find_pending_phase2(const so_serial_t psn,
 
 	passert(psn >= SOS_FIRST);
 
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (LHAS(ok_states, st->st_state) &&
@@ -1939,6 +1952,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 	struct state *best = NULL;
 	bool is_ikev2 = (c->policy & POLICY_IKEV1_ALLOW) == LEMPTY;
 
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (LHAS(ok_states, st->st_state) &&
@@ -1959,6 +1973,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			unsigned long count, monotime_t nw)
 {
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		struct connection *c = st->st_connection;
@@ -2348,6 +2363,7 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *))
 	/* COUNT the number of states. */
 	int count = 0;
 	{
+		dbg("FOR_EACH_STATE_... in %s", __func__);
 		struct state *st;
 		FOR_EACH_STATE_NEW2OLD(st) {
 			count++;
@@ -2365,6 +2381,7 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *))
 	{
 		int p = 0;
 
+		dbg("FOR_EACH_STATE_... in %s", __func__);
 		struct state *st;
 		FOR_EACH_STATE_NEW2OLD(st) {
 			passert(st != NULL);
@@ -2490,6 +2507,7 @@ void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi)
 
 startover:
 	closest = ~0;   /* not close at all */
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (st->st_ipcomp.present) {
@@ -2543,6 +2561,7 @@ ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st, int tries)
 	 * Make sure that the result is unique.
 	 * Hard work.  If there is no unique value, we'll loop forever!
 	 */
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *s;
 	FOR_EACH_STATE_NEW2OLD(s) {
 		if (s->st_ipcomp.present &&
@@ -3184,6 +3203,7 @@ static void whack_log_state_event(struct state *st, struct pluto_event *pe,
 
 void list_state_events(monotime_t now)
 {
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_OLD2NEW(st) {
 		whack_log_state_event(st, st->st_event, now);

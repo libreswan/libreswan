@@ -3342,6 +3342,7 @@ void lswlog_v2_stf_status(struct lswlog *buf, unsigned status)
 
 struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_msgid)
 {
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (IS_CHILD_SA(st) &&
@@ -3392,6 +3393,7 @@ struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_ms
 
 struct state *v2_child_sa_initiator_with_msgid(struct ike_sa *ike, msgid_t st_msgid)
 {
+	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (IS_CHILD_SA(st) &&
