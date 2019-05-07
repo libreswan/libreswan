@@ -135,7 +135,7 @@ void retransmit_v2_msg(struct state *st)
 	struct state *pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
 
 	passert(st != NULL);
-	passert(IS_PARENT_SA(pst));
+	passert(IS_IKE_SA(pst));
 
 	set_cur_state(st);
 	c = st->st_connection;

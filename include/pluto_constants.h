@@ -848,11 +848,7 @@ extern struct keywords sa_role_names;
     !IS_CHILD_SA(st))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
-
-#define IS_PARENT_SA(st) (!IS_CHILD_SA(st))
-
-#define IS_IKE_SA(st) ( ((st)->st_clonedfrom == SOS_NOBODY) && \
-	(IS_PHASE1((st)->st_state) || IS_PHASE15((st)->st_state) || IS_PARENT_SA(st)) )
+#define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)
 
 #define IS_CHILD_SA_INITIATOR(st) \
 	((st)->st_state == STATE_V2_CREATE_I0 || \

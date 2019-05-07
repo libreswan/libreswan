@@ -299,7 +299,8 @@ void initiate_redirect(struct state *st)
 	ipstr_buf b;
 	struct state *right_state;
 
-	if (IS_PARENT_SA(st))
+	/* XXX: just use ike_sa(st) */
+	if (IS_IKE_SA(st))
 		right_state = st;
 	else
 		right_state = state_with_serialno(st->st_clonedfrom);

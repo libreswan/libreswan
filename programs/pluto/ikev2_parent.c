@@ -6211,7 +6211,7 @@ void v2_schedule_replace_event(struct state *st)
 	struct connection *c = st->st_connection;
 
 	/* unwrapped deltatime_t in seconds */
-	intmax_t delay = deltasecs(IS_PARENT_SA(st) ? c->sa_ike_life_seconds
+	intmax_t delay = deltasecs(IS_IKE_SA(st) ? c->sa_ike_life_seconds
 				   : c->sa_ipsec_life_seconds);
 	st->st_replace_by = monotimesum(mononow(), deltatime(delay));
 

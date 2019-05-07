@@ -351,7 +351,7 @@ static void update_state_stats(struct state *st,
 	 */
 	if (DBGP(DBG_BASE)) {
 		DBG_log("%s state #%lu: %s(%s) => %s(%s)",
-			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+			IS_IKE_SA(st) ? "parent" : "child", st->st_serialno,
 			old_state->fs_short_name,
 			enum_name(&state_category_names, old_state->fs_category),
 			new_state->fs_short_name,
@@ -846,7 +846,7 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 	}
 
 	dbg("%s state #%lu: %s(%s) => delete",
-	    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+	    IS_IKE_SA(st) ? "parent" : "child", st->st_serialno,
 	    st->st_finite_state->fs_short_name,
 	    enum_name(&state_category_names, st->st_finite_state->fs_category));
 }
@@ -1960,7 +1960,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
 		    sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
-		    IS_PARENT_SA(st) &&
+		    IS_IKE_SA(st) &&
 		    (best == NULL || best->st_serialno < st->st_serialno))
 		{
 			best = st;
