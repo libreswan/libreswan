@@ -736,6 +736,7 @@ static bool ikev2_reassemble_fragments(struct state *st,
 	 */
 	struct payload_digest sk = {
 		.pbs = same_chunk_as_in_pbs(md->raw_packet, "decrypted SFK payloads"),
+		.payload_type = ISAKMP_NEXT_v2SK,
 		.payload.generic.isag_np = st->st_v2_rfrags->first_np,
 	};
 	struct payload_digest *skf = md->chain[ISAKMP_NEXT_v2SKF];

@@ -56,8 +56,10 @@ extern event_callback_routine comm_handle_cb;
 
 struct payload_digest {
 	pb_stream pbs;
+	/* Use IKEv2 term: "... the payload type" */
+	unsigned payload_type;
 	union payload payload;
-	struct payload_digest *next; /* of same kind */
+	struct payload_digest *next; /* of same type */
 };
 
 struct payload_summary {

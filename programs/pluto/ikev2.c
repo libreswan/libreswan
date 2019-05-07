@@ -949,6 +949,11 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 		summary.repeated |= (summary.present & LELEM(np));
 		summary.present |= LELEM(np);
 
+		/*
+		 * Read in the payload recording what type it should
+		 * be.
+		 */
+		pd->payload_type = np;
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
 			loglog(RC_LOG_SERIOUS, "malformed payload in packet");
 			summary.n = v2N_INVALID_SYNTAX;
