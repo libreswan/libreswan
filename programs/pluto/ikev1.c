@@ -2173,6 +2173,11 @@ void process_packet_tail(struct msg_digest **mdp)
 				needed &= ~s;
 			}
 
+			/*
+			 * Read in the payload recording what type it
+			 * should be
+			 */
+			pd->payload_type = np;
 			if (!in_struct(&pd->payload, sd, &md->message_pbs,
 				       &pd->pbs)) {
 				loglog(RC_LOG_SERIOUS,

@@ -56,8 +56,10 @@ extern event_callback_routine comm_handle_cb;
 
 struct payload_digest {
 	pb_stream pbs;
+	/* Use IKEv2 term: "... the payload type" */
+	unsigned payload_type;
 	union payload payload;
-	struct payload_digest *next; /* of same kind */
+	struct payload_digest *next; /* of same type */
 };
 
 struct payload_summary {
@@ -141,7 +143,9 @@ struct msg_digest {
 	struct isakmp_quirks quirks;
 };
 
+enum ike_version msg_ike_version(const struct msg_digest *md);
 enum message_role v2_msg_role(const struct msg_digest *md);
+
 extern struct msg_digest *alloc_md(const char *mdname);
 struct msg_digest *clone_md(struct msg_digest *md, const char *name);
 extern void release_md(struct msg_digest *md);
@@ -153,5 +157,7 @@ extern void free_md_pool(void);
 extern void process_packet(struct msg_digest **mdp);
 
 extern char *cisco_stringify(pb_stream *pbs, const char *attr_name);
+
+extern void lswlog_msg_digest(struct lswlog *log, const struct msg_digest *md);
 
 #endif /* _DEMUX_H */

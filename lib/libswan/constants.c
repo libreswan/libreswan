@@ -341,6 +341,15 @@ enum_names payload_names_ikev1orv2 = {
 	&payload_names_ikev2copy_main
 };
 
+static enum_names *const payload_type_names_table[] = {
+	[IKEv1 - IKEv1] = &ikev1_payload_names,
+	[IKEv2 - IKEv1] = &ikev2_payload_names,
+};
+
+enum_enum_names payload_type_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(payload_type_names_table)
+};
 
 static const char *const ikev2_last_proposal_names[] = {
 	"v2_PROPOSAL_LAST",
@@ -455,6 +464,16 @@ enum_names exchange_names_ikev1orv2 = {
 	ARRAY_REF(exchange_name_ikev1),
 	NULL, /* prefix */
 	&exchange_names_doi_and_v2
+};
+
+static enum_names *const exchange_type_names_table[] = {
+	[IKEv1 - IKEv1] = &ikev1_exchange_names,
+	[IKEv2 - IKEv1] = &ikev2_exchange_names,
+};
+
+enum_enum_names exchange_type_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(exchange_type_names_table),
 };
 
 /* Flag BITS */
