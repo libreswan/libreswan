@@ -238,6 +238,7 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		const struct finite_state *save_state = st->st_finite_state;
 
 		st->st_finite_state = finite_states[new_state];
+		dbg("FOR_EACH_STATE_... via for_each_state in %s", __func__);
 		for_each_state(connection_state, &lc);
 		st->st_finite_state = save_state;
 	}

@@ -398,6 +398,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 		} else {
 			log_to_log("received whack to delete connection by user %s",
 				m->name);
+			dbg("FOR_EACH_STATE_... via for_each_state in %s", __func__);
 			for_each_state(v1_delete_state_by_username, m->name);
 		}
 	}
@@ -408,6 +409,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 		} else {
 			log_to_log("received whack to delete connection by id %s",
 				m->name);
+			dbg("FOR_EACH_STATE_... via for_each_state in %s", __func__);
 			for_each_state(delete_state_by_id_name, m->name);
 		}
 	}
