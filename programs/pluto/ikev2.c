@@ -2415,15 +2415,12 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				/* no "improvement" on c found */
 				char buf[IDTOA_BUF];
 
-				/* if peer id was wrong before, it is still wrong */
-				if (!ike->sa.st_peer_alt_id)
-					return FALSE;
-
 				idtoa(&peer_id, buf, sizeof(buf));
 				DBG(DBG_CONTROL, DBG_log(
 					"no suitable connection for peer '%s'", buf));
 				/* can we continue with what we had? */
-				if (!same_id(&c->spd.that.id, &peer_id) &&
+				if (!ike->sa.st_peer_alt_id &&
+				    !same_id(&c->spd.that.id, &peer_id) &&
 				    c->spd.that.id.kind != ID_FROMCERT)
 				{
 					if (LIN(POLICY_AUTH_NULL, c->policy) &&
