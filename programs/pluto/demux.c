@@ -699,3 +699,42 @@ char *cisco_stringify(pb_stream *pbs, const char *attr_name)
 	loglog(RC_INFORMATIONAL, "Received %s: %s", attr_name, strbuf);
 	return clone_str(strbuf, attr_name);
 }
+
+/*
+ * list all the payload types
+ */
+void lswlog_msg_digest(struct lswlog *buf, const struct msg_digest *md)
+{
+	enum ike_version ike_version = msg_ike_version(md);
+	lswlog_enum_enum_short(buf, &exchange_type_names, ike_version,
+			       md->hdr.isa_xchg);
+	if (ike_version == IKEv2) {
+		switch (v2_msg_role(md)) {
+		case MESSAGE_REQUEST: lswlogs(buf, " request"); break;
+		case MESSAGE_RESPONSE: lswlogs(buf, " response"); break;
+		case NO_MESSAGE: break;
+		}
+	}
+	const char *sep = ": ";
+	const char *term = "";
+	for (unsigned d = 0; d < md->digest_roof; d++) {
+		const struct payload_digest *pd = &md->digest[d];
+		lswlogs(buf, sep);
+		if (ike_version == IKEv2 &&
+		    d+1 < md->digest_roof &&
+		    pd->payload_type == ISAKMP_NEXT_v2SK) {
+			/*
+			 * HACK to dump decrypted SK payload contents
+			 * (which come after the SK payload).
+			 */
+			sep = "{";
+			term = "}";
+		} else {
+			sep = ",";
+		}
+		lswlog_enum_enum_short(buf, &payload_type_names,
+				       ike_version,
+				       pd->payload_type);
+	}
+	lswlogs(buf, term);
+}

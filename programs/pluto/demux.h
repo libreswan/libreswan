@@ -158,4 +158,6 @@ extern void process_packet(struct msg_digest **mdp);
 
 extern char *cisco_stringify(pb_stream *pbs, const char *attr_name);
 
+extern void lswlog_msg_digest(struct lswlog *log, const struct msg_digest *md);
+
 #endif /* _DEMUX_H */

@@ -939,6 +939,15 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	passert(st->st_msgid_lastack == v2_INVALID_MSGID);
 	passert(st->st_msgid_nextuse == 0);
 
+	/*
+	 * "cur_state" has been set (possibly repeatedly) so all
+	 * systems are go - emit a log record as early as possible.
+	 */
+	LSWLOG(buf) {
+		lswlogf(buf, "processing ");
+		lswlog_msg_digest(buf, md);
+	}
+
 	md->st = st;
 	/* set by caller */
 	pexpect(md->from_state == STATE_PARENT_R0);
@@ -2605,6 +2614,18 @@ static crypto_req_cont_func ikev2_ike_sa_process_auth_request_no_skeyid_continue
 stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct state *st,
 						       struct msg_digest *md UNUSED)
 {
+	/*
+	 * This log line flags that a complete packet has been
+	 * received and processing as commenced - any further delay is
+	 * at our end.
+	 *
+	 * XXX: move this into ikev2.c?
+	 */
+	LSWLOG(buf) {
+		lswlogf(buf, "processing encrypted ");
+		lswlog_msg_digest(buf, md);
+	}
+
 	/* for testing only */
 	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
 		libreswan_log(
@@ -2663,6 +2684,17 @@ stf_status ikev2_ike_sa_process_auth_request(struct state *st,
 					     struct msg_digest *md)
 {
 	/* The connection is "up", start authenticating it */
+
+	/*
+	 * This log line establishes that the packet's been decrypted
+	 * and now it is being processed for real.
+	 *
+	 * XXX: move this into ikev2.c?
+	 */
+	LSWLOG(buf) {
+		lswlogf(buf, "processing decrypted ");
+		lswlog_msg_digest(buf, md);
+	}
 
 	stf_status e = ikev2_parent_inI2outR2_continue_tail(st, md);
 	LSWDBGP(DBG_CONTROL, buf) {
