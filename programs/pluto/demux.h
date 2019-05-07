@@ -141,7 +141,9 @@ struct msg_digest {
 	struct isakmp_quirks quirks;
 };
 
+enum ike_version msg_ike_version(const struct msg_digest *md);
 enum message_role v2_msg_role(const struct msg_digest *md);
+
 extern struct msg_digest *alloc_md(const char *mdname);
 struct msg_digest *clone_md(struct msg_digest *md, const char *name);
 extern void release_md(struct msg_digest *md);

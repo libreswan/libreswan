@@ -615,6 +615,19 @@ void schedule_md_event(const char *name, struct msg_digest *md)
 	pluto_event_now(name, SOS_NOBODY, handle_md_event, md);
 }
 
+enum ike_version msg_ike_version(const struct msg_digest *md)
+{
+	if (md == NULL) {
+		return 0; /* reserved */
+	}
+	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
+	switch (vmaj) {
+	case ISAKMP_MAJOR_VERSION: return IKEv1;
+	case IKEv2_MAJOR_VERSION: return IKEv2;
+	default: return 0;
+	}
+}
+
 /*
  * Map the IKEv2 MSG_R bit onto the ENUM message_role.
  *
@@ -643,8 +656,7 @@ enum message_role v2_msg_role(const struct msg_digest *md)
 	if (md == NULL) {
 		return NO_MESSAGE;
 	}
-	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
-	if (!pexpect(vmaj == IKEv2_MAJOR_VERSION)) {
+	if (!pexpect(msg_ike_version(md) == IKEv2)) {
 		return NO_MESSAGE;
 	}
 	if (md->fake_dne) {
