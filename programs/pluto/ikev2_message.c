@@ -729,15 +729,20 @@ static bool ikev2_reassemble_fragments(struct state *st,
 	}
 
 	/*
-	 * Fake up an SK payload, and then kill the SKF payload list
-	 * and fragments.
+	 * Fake up enough of an SK payload_digest to fool the caller
+	 * and then use that to scribble all over the SKF
+	 * payload_digest (remembering to also update the SK and SKF
+	 * chains).
 	 */
-	struct payload_digest *sk = &md->digest[md->digest_roof++];
-	md->chain[ISAKMP_NEXT_v2SK] = sk;
-	sk->payload.generic.isag_np = st->st_v2_rfrags->first_np;
-	sk->pbs = same_chunk_as_in_pbs(md->raw_packet, "decrypted SFK payloads");
-
+	struct payload_digest sk = {
+		.pbs = same_chunk_as_in_pbs(md->raw_packet, "decrypted SFK payloads"),
+		.payload.generic.isag_np = st->st_v2_rfrags->first_np,
+	};
+	struct payload_digest *skf = md->chain[ISAKMP_NEXT_v2SKF];
 	md->chain[ISAKMP_NEXT_v2SKF] = NULL;
+	md->chain[ISAKMP_NEXT_v2SK] = skf;
+	*skf = sk; /* scribble */
+
 	release_fragments(st);
 
 	return true;
