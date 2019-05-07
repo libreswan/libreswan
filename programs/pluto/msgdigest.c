@@ -95,6 +95,7 @@ struct msg_digest *clone_md(struct msg_digest *md, const char *name)
 {
 	struct msg_digest *clone = alloc_md(name);
 	clone->fake_clone = true;
+	clone->md_inception = realnow();
 	/* raw_packet */
 	clone->iface = md->iface; /* copy reference */
 	clone->sender = md->sender; /* copy value */
