@@ -979,21 +979,10 @@ static enum routability could_route(struct connection *c)
 	if (ro != NULL && !routes_agree(ro, c)) {
 		char cib[CONN_INST_BUF];
 		loglog(RC_LOG_SERIOUS,
-			"cannot route -- route already in use for \"%s\"%s",
+			"cannot route -- route already in use for \"%s\"%s - but allowing anyway",
 			ro->name, fmt_conn_instance(ro, cib));
-		/*
-		 * We ignore this if the stack supports overlapping, and this
-		 * connection was marked that overlapping is OK.  Below we will
-		 * check the other eroute, ero.
-		 */
-		if (!compatible_overlapping_connections(c, ero)) {
-			/*
-			 * Another connection is already using the eroute.
-			 * TODO: NETKEY can do this?
-			 */
-			return route_impossible;
-		}
 	}
+
 
 	/* if there is an eroute for another connection, there is a problem */
 	if (ero != NULL && ero != c) {
