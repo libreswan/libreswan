@@ -20,7 +20,7 @@ src 192.1.2.23 dst 191.1.2.250
 	enc cbc(aes) 0xENCKEY
 east #
  ipsec whack --trafficstatus
-006 #2: "east-any"[1] 191.1.2.250, type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='191.1.2.254', lease=192.0.3.10/32
+006 #2: "east-any"[2] 191.1.2.250, type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='192.1.3.209', lease=192.0.3.10/32
 east #
 east #
  ../bin/check-for-core.sh
