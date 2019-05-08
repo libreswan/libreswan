@@ -91,7 +91,5 @@ bool monobefore(monotime_t a, monotime_t b)
 
 deltatime_t monotimediff(monotime_t a, monotime_t b)
 {
-	struct timeval d;
-	timersub(&a.mt, &b.mt, &d);
-	return deltatime_ms((intmax_t)d.tv_sec * 1000 + d.tv_usec / 1000);
+	return deltatime_timevals_diff(a.mt, b.mt);
 }

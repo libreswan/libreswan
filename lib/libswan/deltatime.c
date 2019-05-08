@@ -21,6 +21,20 @@
 #include "deltatime.h"
 #include "lswlog.h"
 
+static const deltatime_t deltatime_zero;
+
+/*
+ * Rather than deal with the 'bias' in a -ve timeval, this code
+ * convers everything into +ve timevals.
+ */
+
+static deltatime_t negate_deltatime(deltatime_t d)
+{
+	deltatime_t res;
+	timersub(&deltatime_zero.dt, &d.dt, &res.dt);
+	return res;
+}
+
 deltatime_t deltatime(time_t secs)
 {
 	return (deltatime_t) DELTATIME_INIT(secs);
@@ -28,26 +42,48 @@ deltatime_t deltatime(time_t secs)
 
 deltatime_t deltatime_ms(intmax_t ms)
 {
-	return (deltatime_t) { ms };
+       /*
+        * C99 defines '%' thus:
+        *
+        * [...] the result of the % operator is the remainder. [...]
+        * If the quotient a/b is representable, the expression (a/b)*b
+        * + a%b shall equal a.
+        */
+	intmax_t ams = imaxabs(ms);
+	deltatime_t res = {
+		.dt = {
+			.tv_sec = ams / 1000,
+			.tv_usec = ams % 1000 * 1000,
+		},
+	};
+	if (ms < 0) {
+		res = negate_deltatime(res);
+	}
+	return res;
+}
+
+deltatime_t deltatime_timevals_diff(struct timeval a, struct timeval b)
+{
+	deltatime_t res;
+	timersub(&a, &b, &res.dt);
+	return res;
 }
 
 int deltatime_cmp(deltatime_t a, deltatime_t b)
 {
-	/*
-	 * return sign(a - b)
-	 *
-	 * Can't simply return d because it is larger than int;
-	 * instead embrace the stack overflow:
-	 *
-	 * https://stackoverflow.com/questions/14579920/fast-sign-of-integer-in-c#14612943
-	 */
-	intmax_t d = a.ms - b.ms;
-	return (d > 0) - (d < 0);
+	/* sign(l - r) */
+	if (timercmp(&a.dt, &b.dt, <)) {
+		return -1;
+	} else if (timercmp(&a.dt, &b.dt, >)) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 deltatime_t deltatime_max(deltatime_t a, deltatime_t b)
 {
-	if (deltatime_cmp(a, b) > 0) {
+	if (timercmp(&a.dt, &b.dt, >)) {
 		return a;
 	} else {
 		return b;
@@ -56,7 +92,9 @@ deltatime_t deltatime_max(deltatime_t a, deltatime_t b)
 
 deltatime_t deltatime_add(deltatime_t a, deltatime_t b)
 {
-	return deltatime_ms(deltamillisecs(a) + deltamillisecs(b));
+	deltatime_t res;
+	timeradd(&a.dt, &b.dt, &res.dt);
+	return res;
 }
 
 deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar)
@@ -71,12 +109,13 @@ deltatime_t deltatime_divu(deltatime_t a, unsigned scalar)
 
 intmax_t deltamillisecs(deltatime_t d)
 {
-	return d.ms;
+	return ((intmax_t) d.dt.tv_sec) * 1000 + d.dt.tv_usec / 1000;
 }
 
 intmax_t deltasecs(deltatime_t d)
 {
-	return d.ms / 1000;
+	/* XXX: ignore .tv_usec's bias, don't round */
+	return d.dt.tv_sec;
 }
 
 deltatime_t deltatimescale(int num, int denom, deltatime_t d)
@@ -87,74 +126,46 @@ deltatime_t deltatimescale(int num, int denom, deltatime_t d)
 
 bool deltaless(deltatime_t a, deltatime_t b)
 {
-	return deltatime_cmp(a, b) < 0;
+	return timercmp(&a.dt, &b.dt, <);
 }
 
 bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
 {
-	return a.tv_sec < deltasecs(b);
+	return timercmp(&a, &b.dt, <);
 }
 
 struct timeval deltatimeval(deltatime_t d)
 {
-	/*
-	 * C99 defines '%' thus:
-	 *
-	 * [...] the result of the % operator is the remainder. [...]
-	 * If the quotient a/b is representable, the expression
-	 * (a/b)*b + a%b shall equal a.
-	 */
-	intmax_t ms = deltamillisecs(d);
-	struct timeval e = {
-		.tv_sec = ms / 1000,
-		.tv_usec = ms % 1000 * 1000,
-	};
-	return e;
+	return d.dt;
 }
 
 /*
  * Try to be smart by only printing the precision necessary.  For
  * instance 1, 0.5, ...
  */
-
-static uintmax_t abs_ms(intmax_t ms, const char **sign)
+static size_t frac(struct lswlog *buf, intmax_t usec)
 {
-	if (ms == INTMAX_MIN) {
-		/*
-		 * imaxabs() is not defined when S or MS is the -ve
-		 * MIN (on two's complement machines which is all that
-		 * libreswan runs on).  This is arguably a "should
-		 * never happen", so anything would be valid.
-		 */
-		*sign = "-";
-		/* not cool but good enough */
-		return (uintmax_t)INTMAX_MAX + 1;
-	} else if (ms < 0) {
-		*sign = "-";
-		return imaxabs(ms);
-	} else {
-		/* don't update sign */
-		return ms;
+	int precision = 6;
+	while (usec % 10 == 0 && precision > 1) {
+		precision--;
+		usec = usec / 10;
 	}
+	return lswlogf(buf, ".%0*jd", precision, usec);
 }
 
 /* fmt_deltatime() */
 size_t lswlog_deltatime(struct lswlog *buf, deltatime_t d)
 {
-	const char *sign = "";
-	uintmax_t ms = abs_ms(deltamillisecs(d), &sign);
-	/* split ms -> s.ms */
-	uintmax_t s = ms / 1000;
-	ms = ms % 1000;
-	if (ms == 0) {
-		return lswlogf(buf, "%s%ju", sign, s);
-	} else if (ms % 100 == 0) {
-		return lswlogf(buf, "%s%ju.%01ju", sign, s, ms / 100);
-	} else if (ms % 10 == 0) {
-		return lswlogf(buf, "%s%ju.%02ju", sign, s, ms / 10);
-	} else {
-		return lswlogf(buf, "%s%ju.%03ju", sign, s, ms);
+	size_t s = 0;
+	if (d.dt.tv_sec < 0) {
+		s += lswlogf(buf, "-");
+		d = negate_deltatime(d);
 	}
+	s += lswlogf(buf, "%jd", (intmax_t)d.dt.tv_sec);
+	if (d.dt.tv_usec != 0) {
+		frac(buf, d.dt.tv_usec);
+	}
+	return s;
 }
 
 const char *str_deltatime(deltatime_t d, deltatime_buf *out)

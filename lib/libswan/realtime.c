@@ -49,9 +49,7 @@ bool realbefore(realtime_t a, realtime_t b)
 
 deltatime_t realtimediff(realtime_t a, realtime_t b)
 {
-	struct timeval d;
-	timersub(&a.rt, &b.rt, &d);
-	return deltatime_ms((intmax_t)d.tv_sec * 1000 + d.tv_usec / 1000);
+	return deltatime_timevals_diff(a.rt, b.rt);
 }
 
 clockid_t realtime_clockid(void)

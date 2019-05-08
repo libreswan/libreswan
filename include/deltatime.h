@@ -48,12 +48,14 @@ struct lswlog;
  * Sigh.
  */
 
-typedef struct { intmax_t ms; } deltatime_t;
+typedef struct { struct timeval dt; } deltatime_t;
 
-#define DELTATIME_INIT(S) { (intmax_t)((S) * 1000) }
+#define DELTATIME_INIT(S) { .dt = { .tv_sec = (S), } }
 
 deltatime_t deltatime(time_t secs);
 deltatime_t deltatime_ms(intmax_t ms);
+
+deltatime_t deltatime_timevals_diff(struct timeval l, struct timeval r);
 
 /* sign(a - b) */
 int deltatime_cmp(deltatime_t a, deltatime_t b);
