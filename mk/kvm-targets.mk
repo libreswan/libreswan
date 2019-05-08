@@ -492,8 +492,8 @@ KVM_GATEWAY_FILE = $(KVM_POOLDIR)/$(KVM_GATEWAY).gw
 .PHONY: install-kvm-network-$(KVM_GATEWAY)
 install-kvm-network-$(KVM_GATEWAY): $(KVM_GATEWAY_FILE)
 
-.PHONY: uninstall-kvm-network-$(KVM_GATEWAY)
-uninstall-kvm-network-$(KVM_GATEWAY):
+.PHONY: uninstall-kvm-network-$(KVM_GATEWAY) kvm-uninstall-base-network
+uninstall-kvm-network-$(KVM_GATEWAY) kvm-uninstall-base-network:
 	rm -f $(KVM_GATEWAY_FILE)
 	$(call destroy-kvm-network,$(KVM_GATEWAY))
 
