@@ -3041,7 +3041,9 @@ bool route_and_eroute(struct connection *c,
 		/* record unrouting */
 		if (route_installed) {
 			do {
-				passert(!erouted(rosr->routing));
+				dbg("installed route: ro name=%s, rosr->routing=%d", ro->name,
+					rosr->routing);
+				pexpect(!erouted(rosr->routing)); /* warn for now - requires fixing */
 				rosr->routing = RT_UNROUTED;
 
 				/* no need to keep old value */
