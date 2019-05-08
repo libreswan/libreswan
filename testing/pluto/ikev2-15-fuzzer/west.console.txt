@@ -10,6 +10,9 @@ done
 west #
  ../../pluto/bin/ipsec-look.sh
 west NOW
+XFRM state:
+XFRM policy:
+XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES

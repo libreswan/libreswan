@@ -15,17 +15,10 @@ east #
 initdone
 east #
  grep "retransmits:" /tmp/pluto.log | sed -e 's/current time .*/current time .../'
-| #1 STATE_PARENT_R1: retransmits: retransmit response for message ID: 0 exchange ISAKMP_v2_IKE_SA_INIT
-| #1 STATE_PARENT_R1: retransmits: retransmit response for message ID: 0 exchange ISAKMP_v2_IKE_SA_INIT
-| #1 STATE_PARENT_R1: retransmits: retransmit response for message ID: 0 exchange ISAKMP_v2_IKE_SA_INIT
-| #1 STATE_PARENT_R1: retransmits: retransmit response for message ID: 0 exchange ISAKMP_v2_IKE_SA_INIT
-| #1 STATE_PARENT_R1: retransmits: retransmit response for message ID: 0 exchange ISAKMP_v2_IKE_SA_INIT
-| #1 STATE_PARENT_R2: retransmits: retransmitting response for message ID 1 exchange ISAKMP_v2_IKE_AUTH fragment 1
-| #1 STATE_PARENT_R2: retransmits: ignoring retransmit of message ID 1 exchange ISAKMP_v2_IKE_AUTH fragment 2
-| #1 STATE_PARENT_R2: retransmits: ignoring retransmit of message ID 1 exchange ISAKMP_v2_IKE_AUTH fragment 3
-| #1 STATE_PARENT_R2: retransmits: ignoring retransmit of message ID 1 exchange ISAKMP_v2_IKE_AUTH fragment 4
-| #1 STATE_PARENT_R2: retransmits: ignoring retransmit of message ID 1 exchange ISAKMP_v2_IKE_AUTH fragment 5
-| #1 STATE_PARENT_R2: retransmits: retransmit response for message ID: 2 exchange ISAKMP_v2_INFORMATIONAL
+| #1 STATE_PARENT_R2: retransmits: received duplicate IKE_AUTH message request (Message ID 1, fragment 2); discarded as not fragment 1
+| #1 STATE_PARENT_R2: retransmits: received duplicate IKE_AUTH message request (Message ID 1, fragment 3); discarded as not fragment 1
+| #1 STATE_PARENT_R2: retransmits: received duplicate IKE_AUTH message request (Message ID 1, fragment 4); discarded as not fragment 1
+| #1 STATE_PARENT_R2: retransmits: received duplicate IKE_AUTH message request (Message ID 1, fragment 5); discarded as not fragment 1
 east #
  ../../pluto/bin/ipsec-look.sh
 east NOW

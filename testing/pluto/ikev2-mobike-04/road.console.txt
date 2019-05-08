@@ -190,7 +190,6 @@ road #
 006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23', lease=192.0.3.10/32
 road #
  grep "MOBIKE " /tmp/pluto.log
-| ignore EAGAIN in qry_xfrm_mirgrate_support assume MOBIKE migration is supported
 | #1 MOBIKE new source address 192.1.33.209 remote 192.1.2.23 and gateway 192.1.33.254
 | TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response 
 | TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response 

@@ -12,7 +12,7 @@ east #
 initdone
 east #
  grep -v -P "\t0$" /proc/net/xfrm_stat
-XfrmInTmplMismatch      	4
+XfrmInTmplMismatch      	6
 east #
  ipsec whack --shutdown
 002 shutting down

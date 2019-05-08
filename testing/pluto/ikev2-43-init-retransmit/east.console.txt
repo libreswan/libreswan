@@ -48,9 +48,9 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- grep retransmits: /tmp/pluto.log | sed -e 's/current time is [.0-9]*/current time is .../'
-| #1 STATE_PARENT_R1: retransmits: retransmit response for message ID: 0 exchange ISAKMP_v2_IKE_SA_INIT
-| #1 STATE_PARENT_R2: retransmits: retransmit response for message ID: 1 exchange ISAKMP_v2_IKE_AUTH
+ hostname | grep east > /dev/null && grep ikev2-responder-retransmit /tmp/pluto.log
+| sending 432 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 225 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
 east #
 east #
  ../bin/check-for-core.sh

@@ -5,6 +5,8 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
+ ipsec whack --impair revival
+east #
  ipsec auto --add westnet-eastnet-aggr
 002 added connection description "westnet-eastnet-aggr"
 east #

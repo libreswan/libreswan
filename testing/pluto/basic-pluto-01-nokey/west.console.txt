@@ -9,6 +9,8 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --add westnet-eastnet
 002 added connection description "westnet-eastnet"
 west #
@@ -48,6 +50,7 @@ west #
 224 "westnet-eastnet" #1: STATE_MAIN_I2: AUTHENTICATION_FAILED
 002 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
 002 "westnet-eastnet" #1: deleting state (STATE_MAIN_I2) and NOT sending notification
+002 "westnet-eastnet" #1: IMPAIR: skipping revival of connection 'westnet-eastnet' that is supposed to remain up
 west #
  # we should not see any leftover states
 west #

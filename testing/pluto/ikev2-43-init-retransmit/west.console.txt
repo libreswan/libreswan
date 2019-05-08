@@ -93,11 +93,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- grep retransmits: /tmp/pluto.log | sed -e 's/current time is [.0-9]*/current time is .../'
-| #1 STATE_PARENT_I1: retransmits: first event in 15 seconds; timeout in 60 seconds; limit of 12 retransmits; current time is ...
-| #1 STATE_PARENT_I1: retransmits: cleared
-| #2 STATE_PARENT_I2: retransmits: first event in 15 seconds; timeout in 60 seconds; limit of 12 retransmits; current time is ...
-| #2 STATE_PARENT_I2: retransmits: cleared
+ hostname | grep east > /dev/null && grep ikev2-responder-retransmit /tmp/pluto.log
 west #
 west #
  ../bin/check-for-core.sh

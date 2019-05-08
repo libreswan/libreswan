@@ -33,6 +33,8 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
+ ipsec whack --impair revival
+west #
  echo "initdone"
 initdone
 west #
@@ -331,6 +333,7 @@ sleeping a bit.. 2
 west #
  ipsec whack --deletestate 1
 002 "west-east-delete1" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "west-east-delete1" #1: IMPAIR: skipping revival of connection 'west-east-delete1' that is supposed to remain up
 west #
  sleep 2
 west #
