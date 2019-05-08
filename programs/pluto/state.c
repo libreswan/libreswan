@@ -740,57 +740,55 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 	}
 }
 
-static void flush_pending_child(struct state *pst, struct state *st)
-{
-	if (!IS_IKE_SA(pst))
-		return; /* we had better be a parent */
 
-	if (st->st_clonedfrom == pst->st_serialno) {
+static bool flush_incomplete_child(struct state *st, void *pst UNUSED)
+{
+	if (!IS_IPSEC_SA_ESTABLISHED(st)) {
+
 		char cib[CONN_INST_BUF];
 		struct connection *c = st->st_connection;
-
-		if (IS_IPSEC_SA_ESTABLISHED(st))
-			return;
 
 		so_serial_t newest_sa = c->newest_ipsec_sa;
 		if (IS_IKE_REKEY_INITIATOR(st))
 			newest_sa = c->newest_isakmp_sa;
 
 		if (st->st_serialno > newest_sa &&
-				(c->policy & POLICY_UP) &&
-				(c->policy & POLICY_DONT_REKEY) == LEMPTY)
-		{
+		    (c->policy & POLICY_UP) &&
+		    (c->policy & POLICY_DONT_REKEY) == LEMPTY) {
 			loglog(RC_LOG_SERIOUS, "reschedule pending child #%lu %s of "
-					"connection \"%s\"%s - the parent is going away",
-					st->st_serialno, st->st_state_name,
-					c->name, fmt_conn_instance(c, cib));
+			       "connection \"%s\"%s - the parent is going away",
+			       st->st_serialno, st->st_state_name,
+			       c->name, fmt_conn_instance(c, cib));
 
 			st->st_policy = c->policy; /* for pick_initiator */
 			event_force(EVENT_SA_REPLACE, st);
 		} else {
 			loglog(RC_LOG_SERIOUS, "expire pending child #%lu %s of "
-					"connection \"%s\"%s - the parent is going away",
-					st->st_serialno, st->st_state_name,
-					c->name, fmt_conn_instance(c, cib));
+			       "connection \"%s\"%s - the parent is going away",
+			       st->st_serialno, st->st_state_name,
+			       c->name, fmt_conn_instance(c, cib));
 
 			event_force(EVENT_SA_EXPIRE, st);
 		}
 	}
+	/*
+	 * XXX: why was this non-conditional?  probably doesn't matter
+	 * as it is idenpotent?
+	 */
+	delete_cryptographic_continuation(st);
+	return false; /* keep going */
 }
 
-static void flush_pending_children(struct state *pst)
+static void flush_incomplete_children(struct state *pst)
 {
 	if (IS_CHILD_SA(pst))
 		return;
 
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
-		if (st->st_clonedfrom == pst->st_serialno) {
-			flush_pending_child(pst, st);
-			delete_cryptographic_continuation(st);
-		}
-	}
+	state_by_ike_spis(pst->st_ike_version,
+			  pst->st_serialno,
+			  NULL /* ignore MSGID */,
+			  &pst->st_ike_spis,
+			  flush_incomplete_child, NULL/*arg*/, __func__);
 }
 
 static bool send_delete_check(const struct state *st)
@@ -1015,7 +1013,7 @@ void delete_state(struct state *st)
 	flush_pending_by_state(st);
 
 	/* flush unestablished child states */
-	flush_pending_children(st);
+	flush_incomplete_children(st);
 
 	/*
 	 * if there is anything in the cryptographic queue, then remove this
