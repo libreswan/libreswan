@@ -788,7 +788,6 @@ extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
 extern void delete_states_by_connection(struct connection *c, bool relations);
-extern void delete_p2states_by_connection(struct connection *c);
 extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 

@@ -1378,43 +1378,6 @@ void delete_states_by_connection(struct connection *c, bool relations)
 }
 
 /*
- * delete_p2states_by_connection - deletes only the phase 2 of conn
- *
- * @c - the connection whose states need to be removed.
- *
- * This is like delete_states_by_connection with relations=TRUE,
- * but it only deletes phase 2 states.
- */
-static bool same_phase1_no_phase2(struct state *this,
-				  struct connection *c)
-{
-	if (IS_ISAKMP_SA_ESTABLISHED(this->st_state))
-		return FALSE;
-	if (c->kind == CK_INSTANCE)
-		return same_phase1_sa_relations(this, c);
-	return FALSE;
-}
-
-void delete_p2states_by_connection(struct connection *c)
-{
-	enum connection_kind ck = c->kind;
-
-	/*
-	 * save this connection's isakmp SA,
-	 * since it will get set to later SOS_NOBODY
-	 */
-	if (ck == CK_INSTANCE)
-		c->kind = CK_GOING_AWAY;
-
-	foreach_state_by_connection_func_delete(c, same_phase1_no_phase2);
-
-	if (ck == CK_INSTANCE) {
-		c->kind = ck;
-		delete_connection(c, TRUE);
-	}
-}
-
-/*
  * Walk through the state table, and delete each state whose phase 1 (IKE)
  * peer is among those given.
  * This function is only called for ipsec whack --crash peer
