@@ -1,0 +1,270 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ ip route del default
+west #
+ ip route add default via 192.9.4.1
+west #
+ certutil -D -n east -d sql:/etc/ipsec.d
+west #
+ cp west-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
+west #
+ cp policies/* /etc/ipsec.d/policies/
+west #
+ # specific /32 to test replacement of /32 oppo-instance with oppo-group
+west #
+ echo "192.1.2.23/32"  >> /etc/ipsec.d/policies/private
+west #
+ restorecon -R /etc/ipsec.d
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ # give OE policies time to load
+west #
+ sleep 5
+west #
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out &
+[x] PID
+west #
+ echo "initdone"
+initdone
+west #
+ ping -n -c 5 -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=5 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+5 packets transmitted, 4 received, 20% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # wait on OE retransmits and rekeying
+west #
+ sleep 5
+west #
+ # should show established tunnel and no bare shunts
+west #
+ ipsec whack --trafficstatus
+006 #2: "private#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.2.23'
+west #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+west #
+ # ping should succeed through tunnel
+west #
+ ping -n -c 2 -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #2: "private#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, id='192.1.2.23'
+west #
+ echo "waiting on east to send delete for this IPsec SA"
+waiting on east to send delete for this IPsec SA
+west #
+ # confirm received delete was processed - should show no tunnel
+west #
+ ipsec whack --trafficstatus
+west #
+ # let the old acquire expire so it won't interfere with our new trigger
+west #
+ sleep 5
+west #
+ # try triggering again, ondemand policy should re-trigger OE
+west #
+ ip xfrm state
+west #
+ ip xfrm pol
+src 192.1.2.45/32 dst 192.1.2.23/32 
+	dir out priority 1564639 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.2.253/32 dst 192.1.2.45/32 
+	dir fwd priority 1564639 ptype main 
+src 192.1.2.253/32 dst 192.1.2.45/32 
+	dir in priority 1564639 ptype main 
+src 192.1.2.45/32 dst 192.1.2.253/32 
+	dir out priority 1564639 ptype main 
+src 192.1.3.253/32 dst 192.1.2.45/32 
+	dir fwd priority 1564639 ptype main 
+src 192.1.3.253/32 dst 192.1.2.45/32 
+	dir in priority 1564639 ptype main 
+src 192.1.2.45/32 dst 192.1.3.253/32 
+	dir out priority 1564639 ptype main 
+src 192.1.3.254/32 dst 192.1.2.45/32 
+	dir fwd priority 1564639 ptype main 
+src 192.1.3.254/32 dst 192.1.2.45/32 
+	dir in priority 1564639 ptype main 
+src 192.1.2.45/32 dst 192.1.3.254/32 
+	dir out priority 1564639 ptype main 
+src 192.1.2.254/32 dst 192.1.2.45/32 
+	dir fwd priority 1564639 ptype main 
+src 192.1.2.254/32 dst 192.1.2.45/32 
+	dir in priority 1564639 ptype main 
+src 192.1.2.45/32 dst 192.1.2.254/32 
+	dir out priority 1564639 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+west #
+ ping -n -c 1 -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
+--- 192.1.2.23 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ # wait on OE to re-establish IPsec SA
+west #
+ sleep 5
+west #
+ ip xfrm state
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+west #
+ ip xfrm pol
+src 192.1.2.45/32 dst 192.1.2.23/32 
+	dir out priority 1564639 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid 16441 mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32 
+	dir fwd priority 1564639 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 16441 mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32 
+	dir in priority 1564639 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 16441 mode tunnel
+src 192.1.2.253/32 dst 192.1.2.45/32 
+	dir fwd priority 1564639 ptype main 
+src 192.1.2.253/32 dst 192.1.2.45/32 
+	dir in priority 1564639 ptype main 
+src 192.1.2.45/32 dst 192.1.2.253/32 
+	dir out priority 1564639 ptype main 
+src 192.1.3.253/32 dst 192.1.2.45/32 
+	dir fwd priority 1564639 ptype main 
+src 192.1.3.253/32 dst 192.1.2.45/32 
+	dir in priority 1564639 ptype main 
+src 192.1.2.45/32 dst 192.1.3.253/32 
+	dir out priority 1564639 ptype main 
+src 192.1.3.254/32 dst 192.1.2.45/32 
+	dir fwd priority 1564639 ptype main 
+src 192.1.3.254/32 dst 192.1.2.45/32 
+	dir in priority 1564639 ptype main 
+src 192.1.2.45/32 dst 192.1.3.254/32 
+	dir out priority 1564639 ptype main 
+src 192.1.2.254/32 dst 192.1.2.45/32 
+	dir fwd priority 1564639 ptype main 
+src 192.1.2.254/32 dst 192.1.2.45/32 
+	dir in priority 1564639 ptype main 
+src 192.1.2.45/32 dst 192.1.2.254/32 
+	dir out priority 1564639 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+west #
+ # should show established tunnel and no bare shunts
+west #
+ ipsec whack --trafficstatus
+006 #4: "private#192.1.2.23/32"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='192.1.2.23'
+west #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+west #
+ # ping should succeed through tunnel
+west #
+ ping -n -c 2 -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #4: "private#192.1.2.23/32"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23'
+west #
+ # both ends should show a tunnel
+west #
+ ipsec whack --trafficstatus
+006 #4: "private#192.1.2.23/32"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23'
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

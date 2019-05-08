@@ -13,6 +13,8 @@ east #
 east #
  echo "192.1.2.45/32"  >> /etc/ipsec.d/policies/private
 east #
+ restorecon -R /etc/ipsec.d
+east #
  ipsec start
 Redirecting to: systemctl start ipsec.service
 east #
