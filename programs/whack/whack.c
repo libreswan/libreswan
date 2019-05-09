@@ -83,7 +83,7 @@ static void help(void)
 		"	[--groups <access control groups>] \\\n"
 		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
 		"	[--ca <distinguished name>] \\\n"
-		"	[--sendca no|issuer|all] [--sendcert] \\\n"
+		"	[--sendca no|issuer|all] [--sendcert yes|always|no|never|ifasked] \\\n"
 		"	[--nexthop <ip-address>] \\\n"
 		"	[--client <subnet> \\\n"
 		"	[--clientprotoport <protocol>/<port>] \\\n"
@@ -98,7 +98,7 @@ static void help(void)
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
 		"		dh22 | dh23 | dh24] \\\n"
 		"	[--ikelifetime <seconds>] [--ipseclifetime <seconds>] \\\n"
-		"	[--reykeymargin <seconds>] [--reykeyfuzz <percentage>] \\\n"
+		"	[--rekeymargin <seconds>] [--rekeyfuzz <percentage>] \\\n"
 		"	[--retransmit-timeout <seconds>] \\\n"
 		"	[--retransmit-interval <msecs>] \\\n"
 		"	[--send-redirect] [--redirect-to] \\\n"
@@ -124,7 +124,7 @@ static void help(void)
 		"	[--dontrekey] [--aggressive] \\\n"
 		"	[--initialcontact] [--cisco-unity] [--fake-strongswan] \\\n"
 		"	[--encaps <auto|yes|no>] [--no-nat-keepalive] \\\n"
-		"	[--ikev1-natt <both|rfc|drafts> \\\n"
+		"	[--ikev1-natt <both|rfc|drafts>] [--no-nat_keepalive] \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
 		"	[--dpdaction (clear|hold|restart)] \\\n"
 		"	[--xauthserver | --xauthclient] \\\n"
@@ -141,6 +141,8 @@ static void help(void)
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
+		"	[--donotrekey ] [--reauth ] \\\n"
+		"	[--disablearrivalcheck ] \\\n"
 		"	[--nic-offload ] \\\n"
 		"	--to\n"
 		"\n"
@@ -171,7 +173,9 @@ static void help(void)
 		"debug: whack [--name <connection_name>] \\\n"
 		"	[--debug-none] | [--debug-all] | \\\n"
 		"	[--debug <class>] | [--debug private] \\\n"
-		"	[--debug list]\n"
+		"	[--debug list] \\\n"
+		"	[--impair list|none|no] [--impair <behaviour>] \\\n"
+		"	[--no-impair <behaviour>]\n"
 		"\n"
 		"testcases: [--whackrecord <file>] [--whackstoprecord]\n"
 		"\n"
@@ -656,16 +660,17 @@ static const struct option long_opts[] = {
 
 	PS("negopass", NEGO_PASS),
 	PS("dontrekey", DONT_REKEY),
+	PS("reauth", REAUTH),
 	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO }, /* backwards compatibility */
 	{ "encaps", required_argument, NULL, CD_ENCAPS + OO },
-	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE + OO },
 	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT + OO },	/* obsolete _ */
 	{ "ikev1-natt", required_argument, NULL, CD_IKEV1_NATT + OO },
-	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT },
-	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
-	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY },
-	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN },
-	{ "mobike", no_argument, NULL, CD_MOBIKE },
+	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT + OO },
+	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY + OO },	/* obsolete _ */
+	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY + OO },
+	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN + OO },
+	PS("mobike", MOBIKE),
 
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
@@ -924,6 +929,7 @@ int main(int argc, char **argv)
 	msg.pfsgroup = NULL;
 
 	msg.remotepeertype = NON_CISCO;
+	msg.nat_keepalive = TRUE;
 
 	/* Network Manager support */
 #ifdef HAVE_NM
@@ -1312,7 +1318,7 @@ int main(int argc, char **argv)
 			msg.whack_reread = REREAD_ALL;
 			continue;
 
-		case OPT_PURGEOCSP:
+		case OPT_PURGEOCSP:	/* --purgeocsp */
 			msg.whack_purgeocsp = TRUE;
 			continue;
 
@@ -1388,7 +1394,7 @@ int main(int argc, char **argv)
 			oppo_dport = strtol(optarg, NULL, 0);
 			continue;
 
-		case OPT_ASYNC:
+		case OPT_ASYNC:	/* --asynchronous */
 			msg.whack_async = TRUE;
 			continue;
 
@@ -1505,7 +1511,7 @@ int main(int argc, char **argv)
 			msg.right.id = optarg;	/* decoded by Pluto */
 			continue;
 
-		case END_SENDCERT:
+		case END_SENDCERT:	/* --sendcert */
 			if (streq(optarg, "yes") || streq(optarg, "always")) {
 				msg.right.sendcert = CERT_ALWAYSSEND;
 			} else if (streq(optarg,
@@ -1644,7 +1650,7 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_PSK_IX:	/* --psk */
 		case CDP_SINGLETON + POLICY_RSASIG_IX:	/* --rsasig */
 		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
-		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --null */
+		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --auth-null */
 
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
 		/* --authenticate */
@@ -1706,6 +1712,8 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_MSDH_DOWNGRADE_IX:
 		/* --dns-match-id */
 		case CDP_SINGLETON + POLICY_DNS_MATCH_ID_IX:
+		/* --sha2-truncbug or --sha2_truncbug */
+		case CDP_SINGLETON + POLICY_SHA2_TRUNCBUG_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
@@ -1770,7 +1778,7 @@ int main(int argc, char **argv)
 			msg.sa_replay_window = opt_whole;
 			continue;
 
-		case CD_SEND_CA:
+		case CD_SEND_CA:	/* --sendca */
 			if (streq(optarg, "issuer"))
 				msg.send_ca = CA_SEND_ISSUER;
 			else if (streq(optarg, "all"))
@@ -1780,11 +1788,11 @@ int main(int argc, char **argv)
 			continue;
 
 		/* backwards compatibility */
-		case CD_FORCEENCAPS:
+		case CD_FORCEENCAPS:	/* --forceencaps */
 			msg.encaps = yna_yes;
 			continue;
 
-		case CD_ENCAPS:
+		case CD_ENCAPS:	/* --encaps */
 			if (streq(optarg, "auto"))
 				msg.encaps = yna_auto;
 			else if (streq(optarg, "yes"))
@@ -1810,7 +1818,7 @@ int main(int argc, char **argv)
 			msg.nat_keepalive = FALSE;
 			continue;
 
-		case CD_IKEV1_NATT:	/* --ikev1_natt */
+		case CD_IKEV1_NATT:	/* --ikev1-natt */
 			if (streq(optarg, "both"))
 				msg.ikev1_natt = NATT_BOTH;
 			else if (streq(optarg, "rfc"))
@@ -1835,15 +1843,15 @@ int main(int argc, char **argv)
 			msg.fake_strongswan = TRUE;
 			continue;
 
-		case CD_DPDDELAY:
+		case CD_DPDDELAY:	/* --dpddelay */
 			msg.dpd_delay = deltatime(opt_whole);
 			continue;
 
-		case CD_DPDTIMEOUT:
+		case CD_DPDTIMEOUT:	/* --dpdtimeout */
 			msg.dpd_timeout = deltatime(opt_whole);
 			continue;
 
-		case CD_DPDACTION:
+		case CD_DPDACTION:	/* --dpdaction */
 			msg.dpd_action = 255;
 			if (streq(optarg, "clear"))
 				msg.dpd_action = DPD_ACTION_CLEAR;
@@ -1881,7 +1889,7 @@ int main(int argc, char **argv)
 			msg.redirect_to = strdup(optarg);
 			continue;
 
-		case CD_ACCEPT_REDIRECT:
+		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
 		{
 			lset_t new_policy = LEMPTY;
 
@@ -1929,16 +1937,16 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-		case CD_LABELED_IPSEC:
+		case CD_LABELED_IPSEC:	/* --labeledipsec */
 			msg.labeled_ipsec = TRUE;
 			continue;
 
-		case CD_POLICY_LABEL:
+		case CD_POLICY_LABEL:	/* --policylabel */
 			msg.policy_label = optarg;
 			continue;
 #endif
 
-		case CD_CONNIPV4:
+		case CD_CONNIPV4:	/* --ipv4 */
 			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))
 				diag("--ipv4 conflicts with --ipv6");
 
@@ -1951,17 +1959,17 @@ int main(int argc, char **argv)
 			 */
 			continue;
 
-		case CD_RSA_SHA2_256:
+		case CD_RSA_SHA2_256:	/* --rsa-sha2, --rsa-sha2_256 */
 			msg.sighash_policy = POL_SIGHASH_SHA2_256;
 			continue;
-		case CD_RSA_SHA2_384:
+		case CD_RSA_SHA2_384:	/* --rsa-sha2_384 */
 			msg.sighash_policy = POL_SIGHASH_SHA2_384;
 			continue;
-		case CD_RSA_SHA2_512:
+		case CD_RSA_SHA2_512:	/* --rsa-sha2_512 */
 			msg.sighash_policy = POL_SIGHASH_SHA2_512;
 			continue;
 
-		case CD_CONNIPV6:
+		case CD_CONNIPV6:	/* --ipv6 */
 			if (LHAS(cd_seen, CD_CONNIPV4 - CD_FIRST))
 				diag("--ipv6 conflicts with --ipv4");
 
@@ -1983,7 +1991,7 @@ int main(int argc, char **argv)
 				msg.tunnel_addr_family = AF_INET6;
 			continue;
 
-		case CD_TUNNELIPV4:
+		case CD_TUNNELIPV4:	/* --tunnelipv4 */
 			if (LHAS(cd_seen, CD_TUNNELIPV6 - CD_FIRST))
 				diag("--tunnelipv4 conflicts with --tunnelipv6");
 
@@ -1993,7 +2001,7 @@ int main(int argc, char **argv)
 			msg.tunnel_addr_family = AF_INET;
 			continue;
 
-		case CD_TUNNELIPV6:
+		case CD_TUNNELIPV6:	/* --tunnelipv6 */
 			if (LHAS(cd_seen, CD_TUNNELIPV4 - CD_FIRST))
 				diag("--tunnelipv6 conflicts with --tunnelipv4");
 
@@ -2025,7 +2033,7 @@ int main(int argc, char **argv)
 				xauthusername + 1;
 			continue;
 
-		case OPT_XAUTHPASS:
+		case OPT_XAUTHPASS:	/* --xauthpass */
 			gotxauthpass = TRUE;
 			/* ??? why does this length include NUL? */
 			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass),
@@ -2033,15 +2041,15 @@ int main(int argc, char **argv)
 				xauthpass + 1;
 			continue;
 
-		case END_MODECFGCLIENT:
+		case END_MODECFGCLIENT:	/* --modeconfigclient */
 			msg.right.modecfg_client = TRUE;
 			continue;
 
-		case END_MODECFGSERVER:
+		case END_MODECFGSERVER:	/* --modeconfigserver */
 			msg.right.modecfg_server = TRUE;
 			continue;
 
-		case END_ADDRESSPOOL:
+		case END_ADDRESSPOOL:	/* --addresspool */
 			ttorange(optarg, 0, AF_INET, &msg.right.pool_range,
 					TRUE);
 			continue;
@@ -2080,7 +2088,7 @@ int main(int argc, char **argv)
 			msg.vti_shared = TRUE;
 			continue;
 
-		case CD_XAUTHBY:
+		case CD_XAUTHBY:	/* --xauthby */
 			if (streq(optarg, "file")) {
 				msg.xauthby = XAUTHBY_FILE;
 				continue;
@@ -2099,7 +2107,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case CD_XAUTHFAIL:
+		case CD_XAUTHFAIL:	/* --xauthfail */
 			if (streq(optarg, "hard")) {
 				msg.xauthfail = XAUTHFAIL_HARD;
 				continue;
@@ -2113,27 +2121,27 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case CD_METRIC:
+		case CD_METRIC:	/* --metric */
 			msg.metric = opt_whole;
 			continue;
 
-		case CD_CONNMTU:
+		case CD_CONNMTU:	/* --mtu */
 			msg.connmtu = opt_whole;
 			continue;
 
-		case CD_PRIORITY:
+		case CD_PRIORITY:	/* --priority */
 			msg.sa_priority = opt_whole;
 			continue;
 
-		case CD_TFCPAD:
+		case CD_TFCPAD:	/* --tfc */
 			msg.sa_tfcpad = opt_whole;
 			continue;
 
-		case CD_SEND_TFCPAD:
+		case CD_SEND_TFCPAD:	/* --send-no-esp-tfc */
 			msg.send_no_esp_tfc = TRUE;
 			continue;
 
-		case CD_NFLOG_GROUP:
+		case CD_NFLOG_GROUP:	/* --nflog-group */
 			if (opt_whole <= 0  ||
 			    opt_whole > 65535) {
 				char buf[120];
@@ -2146,7 +2154,7 @@ int main(int argc, char **argv)
 			msg.nflog_group = opt_whole;
 			continue;
 
-		case CD_REQID:
+		case CD_REQID:	/* --reqid */
 			if (opt_whole <= 0  ||
 			    opt_whole > IPSEC_MANUAL_REQID_MAX) {
 				char buf[120];
@@ -2161,13 +2169,13 @@ int main(int argc, char **argv)
 			msg.sa_reqid = opt_whole;
 			continue;
 
-		case OPT_WHACKRECORD:
+		case OPT_WHACKRECORD:	/* --whackrecord */
 			msg.string1 = strdup(optarg);
 			msg.whack_options = TRUE;
 			msg.opt_set = WHACK_STARTWHACKRECORD;
 			break;
 
-		case OPT_WHACKSTOPRECORD:
+		case OPT_WHACKSTOPRECORD:	/* --whackstoprecord */
 			msg.whack_options = TRUE;
 			msg.opt_set = WHACK_STOPWHACKRECORD;
 			break;
@@ -2209,7 +2217,7 @@ int main(int argc, char **argv)
 			msg.impairing = lmod_clr(msg.impairing, IMPAIR_MASK);
 			continue;
 
-		case DBGOPT_DEBUG:
+		case DBGOPT_DEBUG:	/* --debug */
 			if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
 				fprintf(stderr, "debug options (* included in 'all'):\n");
 				for (long e = next_enum(&debug_names, -1);
@@ -2235,7 +2243,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case DBGOPT_IMPAIR:
+		case DBGOPT_IMPAIR:	/* --impair */
 			if (streq(optarg, "help") || streq(optarg, "?")) {
 				fprintf(stderr, "impair options:\n");
 				for (long e = next_enum(&impair_names, -1);
@@ -2268,7 +2276,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case DBGOPT_NO_IMPAIR:
+		case DBGOPT_NO_IMPAIR:	/* --no-impair */
 			if (!parse_impair(optarg, &msg.impairment, false)) {
 				/* parse_impair() issued the error */
 				exit(1);
