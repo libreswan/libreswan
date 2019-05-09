@@ -1,0 +1,52 @@
+/* test *time_t code, for libreswan
+ *
+ * Copyright (C) 2019 Andrew Cagney
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Library General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <https://www.gnu.org/licenses/lgpl-2.1.txt>.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+ * License for more details.
+ *
+ */
+
+#include <stdio.h>
+#include <string.h>
+
+#include "constants.h"		/* for elemsof() */
+#include "monotime.h"
+#include "timecheck.h"
+
+void check_monotime(void)
+{
+	char what[1000];
+
+	static const struct test_monotimediff {
+		intmax_t l, r;
+		const char *diff;
+	} test_monotimediff[] = {
+		{ 1, 1, "0", },
+		{ 2, 1, "1", },
+		{ 1, 2, "-1", },
+	};
+	for (unsigned i = 0; i < elemsof(test_monotimediff); i++) {
+		const struct test_monotimediff *t = &test_monotimediff[i];
+		monotime_t l = monotime(t->l);
+		monotime_t r = monotime(t->r);
+		deltatime_t d = monotimediff(l, r);
+		deltatime_buf buf;
+		const char *str = str_deltatime(d, &buf);
+
+		snprintf(what, sizeof(what), "monotime(%jd) - monotime(%jd) = %s", t->l, t->r, t->diff);
+		if (strcmp(str, t->diff) != 0) {
+			fprintf(stderr, "FAIL: %s vs %s\n", what, str);
+			fail++;
+		} else {
+			printf("%s\n", what);
+		}
+	}
+}
