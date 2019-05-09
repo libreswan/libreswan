@@ -1044,13 +1044,15 @@ void delete_state(struct state *st)
 		c->newest_isakmp_sa = SOS_NOBODY;
 
 	/*
-	 * Try to keep the connection alive.
+	 * If policy dictates, try to keep the connection alive.
+	 * DONT_REKEY overrides UP.
 	 *
 	 * XXX: need more info from someone knowing what the problem
 	 * is.
+	 * ??? What problem is this refering to?
 	 */
-	if ((c->policy & POLICY_UP) && ((c->policy & POLICY_DONT_REKEY) == LEMPTY)
-		&& IS_IKE_SA(st)) {
+	if ((c->policy & (POLICY_UP | POLICY_DONT_REKEY)) == POLICY_UP &&
+	    IS_IKE_SA(st)) {
 		/* XXX: break it down so it can be logged */
 		so_serial_t newer_sa = get_newer_sa_from_connection(st);
 		if (state_by_serialno(newer_sa) != NULL) {
