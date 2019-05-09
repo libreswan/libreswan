@@ -53,7 +53,7 @@
 #
 
 # various self-check programs
-kvmplutotest	enumcheck-01			good
+kvmplutotest	check-01			good
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01			good

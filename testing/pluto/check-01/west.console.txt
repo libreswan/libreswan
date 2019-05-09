@@ -1,10 +1,16 @@
 /testing/guestbin/swan-prep
 west #
+ # Check the enum name tables
+west #
+ #
+west #
  # Use CMP not DIFF.  When there's a difference, the output from diff
 west #
  # mixed in with the output from comparing console.txt files looks too
 west #
  # much like console.txt needs updating when it doesn't.
+west #
+ #
 west #
  # To update OUTPUT.enumcheck.txt run something like:
 west #
@@ -12,6 +18,17 @@ west #
 west #
  # $ git diff
 west #
- PATH/libexec/ipsec/enumcheck | cmp ../../enumcheck/OUTPUT.enumcheck.txt - || echo "Does the file OUTPUT.enumcheck.txt need updating?"
+ ipsec enumcheck | cmp ../../enumcheck/OUTPUT.enumcheck.txt - || echo "Does the file OUTPUT.enumcheck.txt need updating?"
 enumcheck: leak detective found no leaks
-
+west #
+ # other checks
+west #
+ ipsec fmtcheck > /dev/null || echo failed
+west #
+ ipsec timecheck > /dev/null || echo failed
+west #
+ # XXX: Don't enable for now as ipcheck tries to talk to DNS :-(
+west #
+ #ipsec ipcheck > /dev/null || echo failed
+west #
+ 
