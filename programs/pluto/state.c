@@ -1049,7 +1049,8 @@ void delete_state(struct state *st)
 	 * XXX: need more info from someone knowing what the problem
 	 * is.
 	 */
-	if ((c->policy & POLICY_UP) && IS_IKE_SA(st)) {
+	if ((c->policy & POLICY_UP) && ((c->policy & POLICY_DONT_REKEY) == LEMPTY)
+		&& IS_IKE_SA(st)) {
 		/* XXX: break it down so it can be logged */
 		so_serial_t newer_sa = get_newer_sa_from_connection(st);
 		if (state_by_serialno(newer_sa) != NULL) {
