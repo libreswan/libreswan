@@ -22,6 +22,11 @@
 
 #include "monotime.h"
 
+monotime_t monotime(intmax_t seconds)
+{
+	return (monotime_t) { .mt = { .tv_sec = seconds, }, };
+}
+
 const monotime_t monotime_epoch = MONOTIME_EPOCH;
 
 bool is_monotime_epoch(monotime_t t)
