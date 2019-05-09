@@ -31,6 +31,11 @@ KVM_PACKAGES = \
     glibc-devel \
     hping3 \
     ike-scan \
+    kernel-core \
+    kernel-devel \
+    kernel-headers \
+    kernel-modules \
+    kernel-modules-extra \
     iproute \
     ipsec-tools \
     iptables \
@@ -41,6 +46,7 @@ KVM_PACKAGES = \
     libevent-devel \
     libseccomp-devel \
     libselinux-devel \
+    linux-firmware \
     lsof \
     mtr \
     nc \
@@ -57,6 +63,7 @@ KVM_PACKAGES = \
     openldap-devel \
     pam-devel \
     patch \
+    perf \
     pexpect \
     policycoreutils-python-utils \
     psmisc \
