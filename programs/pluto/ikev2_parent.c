@@ -2560,7 +2560,19 @@ static void ikev2_pam_continue(struct state *st,
 	if (success) {
 		stf = ikev2_parent_inI2outR2_auth_tail(st, *mdp, success);
 	} else {
-		stf = STF_FAIL + v2N_AUTHENTICATION_FAILED;
+		/*
+		 * XXX: better would be to record the message and
+		 * return STF_ZOMBIFY.
+		 *
+		 * That way compute_v2_state_transition() could send
+		 * the recorded message and then transition the state
+		 * to ZOMBIE (aka *_DEL*).  There it can linger while
+		 * dealing with any duplicate IKE_AUTH requests.
+		 */
+		struct ike_sa *ike = pexpect_ike_sa(st);
+		send_v2N_response_from_state(ike, *mdp, v2N_AUTHENTICATION_FAILED, NULL);
+		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+		stf = STF_FATAL;
 	}
 
 	/* replace (*mdp)->st with st ... */

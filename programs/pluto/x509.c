@@ -693,9 +693,23 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
  */
 static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 {
-	statetime_t start = statetime_start(st);
+	if (!pexpect(st->st_remote_certs.verified == NULL)) {
+		/*
+		 * Since the MITM has already failed their first
+		 * attempt at proving their credentials, there's no
+		 * point in giving them a second chance.
+		 *
+		 * Happens because code rejecting the first
+		 * authentication attempt leaves the state as-is
+		 * instead of zombifying (where the notification is
+		 * recorded and then sent, and then the state
+		 * transitions to zombie where it can linger while
+		 * dealing with duplicate packets) or deleting it.
+		 */
+		return false;
+	}
 
-	pexpect(st->st_remote_certs.verified == NULL);
+	statetime_t start = statetime_start(st);
 	struct connection *c = st->st_connection;
 
 	const struct rev_opts rev_opts = {
