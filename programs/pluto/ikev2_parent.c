@@ -1859,24 +1859,23 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 	pb_stream cp_pbs;
 	struct connection *c = st->st_connection;
 	bool cfg_reply = c->spd.that.has_lease;
-
-	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
-				cfg_reply ? "reply" : "request"));
 	struct ikev2_cp cp = {
 		.isacp_np = np,
 		.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL,
 		.isacp_type = cfg_reply ? IKEv2_CP_CFG_REPLY : IKEv2_CP_CFG_REQUEST,
 	};
 
+	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
+				cfg_reply ? "reply" : "request"));
+
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return STF_INTERNAL_ERROR;
 
-	ikev2_ship_cp_attr_ip(addrtypeof(&c->spd.that.client.addr) == AF_INET ?
-		IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
-		&c->spd.that.client.addr,
-		"Internal IP Address", &cp_pbs);
-
 	if (cfg_reply) {
+		ikev2_ship_cp_attr_ip(addrtypeof(&c->spd.that.client.addr) == AF_INET ?
+			IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
+			&c->spd.that.client.addr, "Internal IP Address", &cp_pbs);
+
 		if (c->modecfg_dns != NULL) {
 			char *ipstr;
 
@@ -1921,18 +1920,14 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 			}
 		}
 	} else { /* cfg request */
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_ADDRESS,
-			 NULL, "IPV4 Address", &cp_pbs);
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_ADDRESS, NULL, "IPV4 Address", &cp_pbs);
 		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, NULL, "DNSv4", &cp_pbs);
-
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_ADDRESS,
-			 NULL, "IPV6 Address", &cp_pbs);
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_ADDRESS, NULL, "IPV6 Address", &cp_pbs);
 		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, NULL, "DNSv6", &cp_pbs);
 		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_DNS_DOMAIN, NULL, "Domain", &cp_pbs);
 	}
 
 	close_output_pbs(&cp_pbs);
-
 	return STF_OK;
 }
 
