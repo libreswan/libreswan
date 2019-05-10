@@ -546,7 +546,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 * outside of this table.
 	 */
 
-	{ .story      = "I3: Liveness Request",
+	{ .story      = "I3: Informational Request",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags      = SMF2_IKE_I_SET | SMF2_SUPPRESS_SUCCESS_LOG,
@@ -555,7 +555,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "I3: Liveness Response",
+	{ .story      = "I3: Informational Response",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags      = SMF2_IKE_I_CLEAR | SMF2_SUPPRESS_SUCCESS_LOG,
@@ -584,7 +584,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "R2: process Liveness Request",
+	{ .story      = "R2: process Informational Request",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags      = SMF2_IKE_I_SET | SMF2_SUPPRESS_SUCCESS_LOG,
@@ -593,7 +593,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "R2: process Liveness Response",
+	{ .story      = "R2: process Informational Response",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags      = SMF2_IKE_I_CLEAR | SMF2_SUPPRESS_SUCCESS_LOG,
