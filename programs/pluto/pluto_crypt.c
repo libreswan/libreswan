@@ -684,7 +684,7 @@ void init_crypto_helpers(int nhelpers)
 		len = sizeof(numcpu);
 		ncpu_online = sysctl(mib, 2, &numcpu, &len, NULL, 0);
 #endif
-
+		libreswan_log("%d CPU cores online", ncpu_online);
 		if (ncpu_online < 4)
 			nhelpers = ncpu_online;
 		else
