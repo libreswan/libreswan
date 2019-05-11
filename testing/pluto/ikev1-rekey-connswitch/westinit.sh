@@ -12,4 +12,5 @@ ipsec auto --add TUNNEL-C
 ipsec auto --add TUNNEL-A
 ipsec auto --add TUNNEL-B
 ipsec whack --impair suppress-retransmits
+ipsec whack --impair revival
 echo "initdone"
