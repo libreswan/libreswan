@@ -1,0 +1,5 @@
+Test to see conn %default does not get ignored after another conn
+sets values.
+
+broken in 3.27
+
