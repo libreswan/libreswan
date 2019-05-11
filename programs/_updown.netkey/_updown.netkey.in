@@ -324,7 +324,7 @@ domain ${orig_domain}"
 search ${new_search}"
 	fi
 
-	orig_nameserver=$(grep --max-count 1 ^nameserver "${ETC_RESOLV_CONF}" | \
+	orig_nameserver=$(grep -m 1 ^nameserver "${ETC_RESOLV_CONF}" | \
 	    sed 's/^nameserver[[:space:]]\+//;s/[[:space:]]*\#.*//')
 	if [ -n "${orig_nameserver}" ]; then
 	    new_nameserver=$(echo $(echo "${PLUTO_PEER_DNS_INFO} ${orig_nameserver}" | tr [:space:] '\n' | awk '!a[$0]++'))
