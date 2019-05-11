@@ -6195,8 +6195,9 @@ static bool expire_ike_because_child_not_used(struct state *st)
 	dbg("#%lu check last used on newest CHILD SA #%lu",
 	    ike->sa.st_serialno, cst->st_serialno);
 	deltatime_t last_used_age;
-	if (get_sa_info(cst, TRUE, &last_used_age) &&
-	    deltaless(c->sa_rekey_margin, last_used_age)) {
+
+	/* not sure why idleness is set to rekey margin? */
+	if (was_eroute_idle(cst, c->sa_rekey_margin)) {
 		/* we observed no traffic, let IPSEC SA and IKE SA expire */
 		dbg("expiring IKE SA #%lu as CHILD SA #%lu has used %jds ago > %jd",
 		    ike->sa.st_serialno,
