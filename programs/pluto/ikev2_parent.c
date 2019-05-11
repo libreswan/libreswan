@@ -6145,6 +6145,12 @@ void ikev2_addr_change(struct state *st)
 }
 
 /*
+ * For opportunistic IPsec, we want to delete idle connections, so we
+ * are not gaining an infinite amount of unused IPsec SAs.
+ *
+ * NOTE: Soon we will accept an idletime= configuration option that
+ * replaces this check.
+ *
  * Only replace the SA when it's been in use (checking for in-use is a
  * separate operation).
  */
@@ -6158,8 +6164,9 @@ static bool expire_ike_because_child_not_used(struct state *st)
 	}
 
 	struct connection *c = st->st_connection;
+
 	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
-		/* this is an opportunistic thing */
+		/* killing idle IPsec SA's is only for opportunistic SA's */
 		return false;
 	}
 
