@@ -8,6 +8,8 @@ road #
 road #
  ipsec whack --impair delete-on-retransmit
 road #
+ ipsec whack --impair revival
+road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 added connection description "westnet-eastnet-ipv4-psk-ikev1"
 road #
