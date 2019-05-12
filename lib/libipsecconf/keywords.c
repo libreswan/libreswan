@@ -472,6 +472,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 #endif
 
   /* these options are obsoleted (and not old aliases) */
+
   { "plutorestartoncrash",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },
   { "forwardcontrol",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },
   { "rp_filter",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },
@@ -492,8 +493,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
    * This is "left=" and "right="
    */
   { "",  kv_conn | kv_leftright| kv_processed,  kt_loose_enum,  KSCF_IP,  &kw_host_list, NULL, },
-
-  { "ike",  kv_conn,  kt_string,  KSCF_IKE, NULL, NULL, },
 
   { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET, NULL, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, NULL, },
@@ -517,11 +516,15 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "xauthname",  kv_conn | kv_leftright | kv_alias,  kt_string,  KSCF_USERNAME, NULL, NULL, },  /* obsolete name */
   { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL, NULL, NULL, },
   { "auth",  kv_conn | kv_leftright, kt_enum,  KNCF_AUTH,  &kw_auth_lr_list, NULL, },
+  { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT, NULL, NULL, },
+  { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
 
   /* these are conn statements which are not left/right */
+
   { "auto",  kv_conn | kv_duplicateok,  kt_enum,  KBF_AUTO,  &kw_auto_list, NULL, },
   { "also",  kv_conn,  kt_appendstring,  KSCF_ALSO, NULL, NULL, },
   { "alsoflip",  kv_conn,  kt_string,  KSCF_ALSOFLIP, NULL, NULL, },
+  { "ike",  kv_conn,  kt_string,  KSCF_IKE, NULL, NULL, },
   { "hostaddrfamily",  kv_conn,  kt_enum,  KBF_HOSTADDRFAMILY,  &kw_addrfamily_list, NULL, },
   { "clientaddrfamily",  kv_conn,  kt_enum,  KBF_CLIENTADDRFAMILY,  &kw_addrfamily_list, NULL, },
   { "connaddrfamily",  kv_conn, kt_obsolete, KBF_WARNIGNORE, NULL, NULL, }, /* obsolete */
@@ -613,8 +616,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "encapsulation",  kv_conn,  kt_enum,  KBF_ENCAPS,  &kw_yna_list, NULL, },
   { "forceencaps",  kv_conn, kt_obsolete, KBF_WARNIGNORE, NULL, NULL, },
 
-  { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT, NULL, NULL, },
-
   { "overlapip",  kv_conn,  kt_bool,  KBF_OVERLAPIP, NULL, NULL, },
   { "reauth",  kv_conn,  kt_bool,  KBF_REAUTH, NULL, NULL, },
   { "rekey",  kv_conn,  kt_bool,  KBF_REKEY, NULL, NULL, },
@@ -629,10 +630,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "connalias",  kv_conn | kv_processed,  kt_appendstring,  KSCF_CONNALIAS, NULL, NULL, },
 
   /* attributes of the phase2 policy */
-  { "phase2alg",  kv_conn,  kt_string,  KSCF_ESP, NULL, NULL, },
-  { "esp",  kv_conn | kv_alias,  kt_string,  KSCF_ESP, NULL, NULL, },
-  { "ah",  kv_conn | kv_alias,  kt_string,  KSCF_ESP, NULL, NULL, },
-  { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
+  { "phase2alg",  kv_conn,  kt_string,  KSCF_ESP, NULL, NULL, },	/* synonyms: phase2alg, esp, ah */
+  { "esp",  kv_conn | kv_alias,  kt_string,  KSCF_ESP, NULL, NULL, },	/* synonyms: phase2alg, esp, ah */
+  { "ah",  kv_conn | kv_alias,  kt_string,  KSCF_ESP, NULL, NULL, },	/* synonyms: phase2alg, esp, ah */
 
   { "phase2",  kv_conn | kv_policy,  kt_enum,  KBF_PHASE2,  &kw_phase2types_list, NULL, },
 
