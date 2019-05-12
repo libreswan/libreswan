@@ -978,9 +978,23 @@ static enum routability could_route(struct connection *c)
 	 */
 	if (ro != NULL && !routes_agree(ro, c)) {
 		char cib[CONN_INST_BUF];
-		loglog(RC_LOG_SERIOUS,
-			"cannot route -- route already in use for \"%s\"%s - but allowing anyway",
-			ro->name, fmt_conn_instance(ro, cib));
+
+		if (!compatible_overlapping_connections(c, ero)) {
+			/*
+			 * Another connection is already using the eroute.
+			 * TODO: NETKEY can do this? For now excempt OE only
+			 */
+			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+				loglog(RC_LOG_SERIOUS,
+					"cannot route -- route already in use for \"%s\"%s",
+					ro->name, fmt_conn_instance(ro, cib));
+				return route_impossible;
+			} else {
+				loglog(RC_LOG_SERIOUS,
+					"cannot route -- route already in use for \"%s\"%s - but allowing anyway",
+					ro->name, fmt_conn_instance(ro, cib));
+			}
+		}
 	}
 
 

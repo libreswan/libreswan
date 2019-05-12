@@ -422,6 +422,14 @@ extern bool eroute_connection(const struct spd_route *sr,
 #endif
 			      );
 
+static inline bool compatible_overlapping_connections(const struct connection *a,
+						      const struct connection *b)
+{
+	return kernel_ops->overlap_supported &&
+	       a != NULL && b != NULL &&
+	       a != b &&
+	       LIN(POLICY_OVERLAPIP, a->policy & b->policy);
+}
 
 #ifdef KLIPS
 extern const struct kernel_ops klips_kernel_ops;
