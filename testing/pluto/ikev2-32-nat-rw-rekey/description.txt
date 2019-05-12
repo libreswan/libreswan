@@ -9,3 +9,10 @@ The initiator is behind NAT.
 4. Initiator keeps the tunnel up.
 4. initiator ike expires and rekey/reauthenticate, brings up the tunnel.
 
+
+Issue: recent libreswan's with revival code try to re-use the IKE SA to send a CREATE_CHILD_SA
+that east answers incorrectly:
+
+"road-east-x509-ipv4"[1] 192.1.2.23 #7: missing v2CP reply, not attempting to setup child SA
+
+This indicates a few bugs interacting with each other
