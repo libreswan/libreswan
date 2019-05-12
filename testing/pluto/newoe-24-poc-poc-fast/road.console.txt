@@ -2,6 +2,8 @@
 road #
  cp policies/* /etc/ipsec.d/policies/
 road #
+ cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
+road #
  echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 road #
  ipsec start
@@ -25,11 +27,8 @@ initdone
 road #
  ping -n -c 4 -i 0.05  -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=63 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=63 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
-4 packets transmitted, 2 received, 50% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
  # wait on OE retransmits and rekeying
 road #
@@ -38,8 +37,7 @@ road #
  # will show two established tunnels and no shunts
 road #
  ipsec whack --trafficstatus
-006 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
-006 #4: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
@@ -48,14 +46,6 @@ road #
  ../../pluto/bin/ipsec-look.sh
 road NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
@@ -135,8 +125,7 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-006 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=168, id='ID_NULL'
-006 #4: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=0, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
 road #
  echo done
 done
@@ -144,14 +133,6 @@ road #
  ../../pluto/bin/ipsec-look.sh
 road NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
@@ -218,8 +199,7 @@ road #
  # A tunnel should have established
 road #
  grep "negotiated connection" /tmp/pluto.log
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #4: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #3: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 road #
 road #
  ../bin/check-for-core.sh
