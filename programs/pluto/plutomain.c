@@ -161,6 +161,9 @@ static const char compile_time_interop_options[] = ""
 #ifdef KLIPS
 	" KLIPS"
 #endif
+#ifdef USE_NIC_OFFLOAD
+	" esp-hw-offload"
+#endif
 #if USE_FORK
 	" FORK"
 #endif

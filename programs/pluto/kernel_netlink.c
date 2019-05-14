@@ -1129,10 +1129,13 @@ static bool netlink_detect_offload(const char *ifname)
 	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNKNOWN)
 		netlink_find_offload_feature(ifname);
 
-	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNSUPPORTED)
+	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNSUPPORTED) {
+		libreswan_log("Kernel does not support NIC esp-hw-offload");
 		return FALSE;
+	}
 
 	/* Feature is supported by kernel. Query device features */
+	libreswan_log("Kernel supports NIC esp-hw-offload");
 	cmd = alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) *
 		netlink_esp_hw_offload.total_blocks,
 		"ethtool_gfeatures");
@@ -1495,7 +1498,12 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		req.n.nlmsg_len += attr->rta_len;
 		/* attr not subsequently used unless HAVE_LABELED_IPSEC */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+		DBG(DBG_KERNEL, DBG_log("netlink: esp-hw-offload set via interface %s for IPsec SA", sa->nic_offload_dev));
+	} else {
+		DBG(DBG_KERNEL, DBG_log("netlink: esp-hw-offload not set for IPsec SA"));
 	}
+#else
+		DBG(DBG_KERNEL, DBG_log("netlink: libreswan not compiled with esp-hw-offload support"));
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
@@ -2444,12 +2452,16 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				interfaces = q;
 
 				libreswan_log(
-					"adding interface %s/%s %s:%d",
+					"adding interface %s/%s (%s) %s:%d",
 					q->ip_dev->id_vname,
 					q->ip_dev->id_rname,
+#ifndef USE_NIC_OFFLOAD
+					"esp-hw-offload not supported by kernel",
+#else
+					id->id_nic_offload ? "esp-hw-offload=yes" : "esp-hw-offload=no",
+#endif
 					ipstr(&q->ip_addr, &b),
 					q->port);
-
 				/*
 				 * right now, we do not support NAT-T
 				 * on IPv6, because  the kernel did
