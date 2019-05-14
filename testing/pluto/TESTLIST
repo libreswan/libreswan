@@ -86,7 +86,7 @@ kvmplutotest	algparse-02-fips			good
 kvmplutotest	libipsecconf-01				good
 kvmplutotest	libipsecconf-02				good
 kvmplutotest	libipsecconf-03				good
-kvmplutotest	libipsecconf-04				wip
+kvmplutotest	libipsecconf-04				good
 
 #################################################################
 # Whack UI tests
