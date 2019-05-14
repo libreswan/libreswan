@@ -365,8 +365,8 @@ static void confwrite_side(FILE *out,
 			protostr, portstr);
 	}
 
-	if (end->cert != NULL)
-		fprintf(out, "\t%scert=%s\n", side, end->cert);
+	if (end->certx != NULL)
+		fprintf(out, "\t%scert=%s\n", side, end->certx);
 
 	if (!isanyaddr(&end->sourceip)) {
 		ipstr_buf as;

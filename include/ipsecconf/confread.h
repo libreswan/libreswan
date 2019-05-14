@@ -48,6 +48,11 @@ typedef int knf[KEY_NUMERIC_ROOF];
 typedef enum keyword_set str_set[KEY_STRINGS_ROOF];
 typedef enum keyword_set int_set[KEY_NUMERIC_ROOF];
 
+/*
+ * Note: string fields in struct starter_end and struct starter_conn
+ * should correspond to STR_FIELD calls in copy_conn_default() and confread_free_conn.
+ */
+
 struct starter_end {
 	sa_family_t addr_family;
 	enum keyword_host addrtype;
@@ -68,7 +73,7 @@ struct starter_end {
 	bool key_from_DNS_on_demand;
 	bool has_port_wildcard;
 	char *virt;
-	char *cert;
+	char *certx;
 	char *ckaid;
 	char *ca;
 	char *updown;
@@ -79,6 +84,11 @@ struct starter_end {
 	str_set strings_set;
 	int_set options_set;
 };
+
+/*
+ * Note: string fields in struct starter_end and struct starter_conn
+ * should correspond to STR_FIELD calls in copy_conn_default() and confread_free_conn.
+ */
 
 struct starter_conn {
 	TAILQ_ENTRY(starter_conn) link;
@@ -94,7 +104,7 @@ struct starter_conn {
 	lset_t policy;
 	lset_t sighash_policy;
 
-	char **alsos;
+	char **alsos;	/* pointer to NULL-terminated array of strings */
 
 	struct starter_end left, right;
 
@@ -110,8 +120,8 @@ struct starter_conn {
 		STATE_FAILED,
 	} state;
 
+	char *ike_crypto;
 	char *esp;
-	char *ike;
 	char *modecfg_dns;
 	char *modecfg_domains;
 	char *modecfg_banner;
@@ -163,10 +173,7 @@ extern struct starter_config *confread_load(const char *file,
 					    starter_errors_t *perrl,
 					    const char *ctlsocket,
 					    bool setuponly);
-extern struct starter_conn *alloc_add_conn(struct starter_config *cfg,
-					   const char *name);
-extern void confread_free(struct starter_config *cfg);
 
-extern void ipsecconf_default_values(struct starter_config *cfg);
+extern void confread_free(struct starter_config *cfg);
 
 #endif /* _IPSEC_CONFREAD_H_ */

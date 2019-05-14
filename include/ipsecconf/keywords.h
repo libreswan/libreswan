@@ -37,13 +37,12 @@
 #include <sys/queue.h>
 
 /*
- * these are global configuration parameters, and appear in
- * "config setup" stanza, and as non-left/right items in
- * the "conn foo" stanzas
+ * These are global configuration strings.
+ * They only appear in "config setup" section.
+ * Indices for .setup.strings[], .setup.strings_set[]
  */
 enum keyword_string_config_field {
-	KSF_INTERFACES    = 0, /* loose_enum eventually */
-	/* KSF_PACKETDEFAULT = 5, */
+	KSF_INTERFACES, /* loose_enum eventually */
 	KSF_CURLIFACE,
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,
@@ -63,18 +62,17 @@ enum keyword_string_config_field {
 	KSF_LISTEN,
 	KSF_OCSP_URI,
 	KSF_OCSP_TRUSTNAME,
+
 	KSF_ROOF
 };
 
-/* Numeric fields also include boolean fields */
-/* and do not come in right/left variants */
+/*
+ * These are global config Bools (or numbers).
+ * They only appear in "config setup" section.
+ * Indices for .setup.option[], .setup.options_set[]
+ */
 enum keyword_numeric_config_field {
-	KBF_DPDACTION,
-	KBF_FAILURESHUNT,
-	KBF_NEGOTIATIONSHUNT,
-	KBF_TYPE,
 	KBF_FRAGICMP,
-	KBF_MOBIKE,
 	KBF_HIDETOS,
 	KBF_UNIQUEIDS,
 	KBF_DO_DNSSEC,
@@ -86,10 +84,6 @@ enum keyword_numeric_config_field {
 	KBF_IKE_ERRQUEUE,
 	KBF_PERPEERLOG,
 	KBF_OVERRIDEMTU,
-	KBF_CONNMTU,
-	KBF_PRIORITY,
-	KBF_TFCPAD,
-	KBF_REQID,
 	KBF_XFRMLIFETIME,
 	KBF_CRL_STRICT,
 	KBF_CRL_CHECKINTERVAL,
@@ -101,7 +95,6 @@ enum keyword_numeric_config_field {
 	KBF_OCSP_CACHE_MAX,
 	KBF_OCSP_METHOD,
 	KBF_CURLTIMEOUT,
-	KBF_SEND_CA,
 	KBF_NATIKEPORT,
 	KBF_SEEDBITS,
 	KBF_DROP_OPPO_NULL,
@@ -109,107 +102,55 @@ enum keyword_numeric_config_field {
 	KBF_KLIPSDEBUG,
 	KBF_PLUTODEBUG,
 	KBF_NHELPERS,
-	KBF_DPDDELAY,
-	KBF_DPDTIMEOUT,
-	KBF_METRIC,
-	KBF_PHASE2,
-	KBF_KEYEXCHANGE,
-	KBF_AUTO,
-	KBF_PFS,
-	KBF_SHA2_TRUNCBUG,
-	KBF_MSDH_DOWNGRADE,
-	KBF_DNS_MATCH_ID,
-	KBF_SALIFETIME,
-	KBF_REKEY,
-	KBF_REAUTH,
-	KBF_REKEYMARGIN,
-	KBF_REKEYFUZZ,
-	KBF_COMPRESS,
-	KBF_KEYINGTRIES,
-	KBF_REPLAY_WINDOW,
-	KBF_ARRIVALCHECK,
-	KBF_IKELIFETIME,
 	KBF_SHUNTLIFETIME,
-	KBF_RETRANSMIT_TIMEOUT,
-	KBF_RETRANSMIT_INTERVAL_MS,
-	KBF_AGGRMODE,
-	KBF_MODECONFIGPULL,
-	KBF_ENCAPS,
-	KBF_IKEv2,
-	KBF_PPK,
-	KBF_ESN,
-	KBF_DECAP_DSCP,
-	KBF_NOPMTUDISC,
-	KBF_IKEv2_ALLOW_NARROWING,
-	KBF_IKEv2_PAM_AUTHORIZE,
-	KBF_SEND_REDIRECT,	/* this and next word are used for IKEv2 Redirect Mechanism */
-	KBF_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
-	KBF_HOSTADDRFAMILY,
-	KBF_CLIENTADDRFAMILY,
 	KBF_FORCEBUSY, 		/* obsoleted for KBF_DDOS_MODE */
 	KBF_DDOS_IKE_THRESHOLD,
 	KBF_MAX_HALFOPEN_IKE,
-	KBF_OVERLAPIP,		/* Allow overlapping IPsec policies */
-	KBF_REMOTEPEERTYPE,     /* Cisco interop: remote peer type */
-	KBF_NMCONFIGURED,       /* Network Manager support */
-	KBF_LABELED_IPSEC,
-	KBF_SAREFTRACK,         /* saref tracking parameter for _updown */
-	KBF_WARNIGNORE,         /* to ignore obsoleted keywords */
-	KBF_SECCTX,             /* security context attribute value for labeled ipsec */
-	KBF_XAUTHBY,            /* method of xauth user auth - file, pam or alwaysok */
-	KBF_XAUTHFAIL,          /* method of failing, soft or hard */
-	KBF_IKE_FRAG,		/* Enable support for IKE fragmentation */
-	KBF_NAT_KEEPALIVE,      /* per conn enabling/disabling of sending keep-alives */
-	KBF_INITIAL_CONTACT,	/* send initial contact VID */
-	KBF_CISCO_UNITY,	/* send cisco unity VID */
-	KBF_NO_ESP_TFC	,	/* send ESP_TFC_PADDING_NOT_SUPPORTED */
-	KBF_VID_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
-	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
-	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */
-	KBF_IKEV1_NATT,		/* ikev1 NAT-T payloads to send/process */
+	KBF_SECCTX,		/* security context attribute value for labeled ipsec */
 	KBF_NFLOG_ALL,		/* Enable global nflog device */
-	KBF_NFLOG_CONN,		/* Enable per-conn nflog device */
 	KBF_DDOS_MODE,		/* set DDOS mode */
 	KBF_SECCOMP,		/* set SECCOMP mode */
-	KBF_VTI_ROUTING,	/* let updown do routing into VTI device */
-	KBF_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
-	KBF_NIC_OFFLOAD,	/* xfrm offload to network device */
+
 	KBF_ROOF
 };
 
 /*
- * these are global configuration parameters, and appear in
- * normal conn sections, some of them come in left/right variants.
+ * These are conn strings.
+ * The initial ones come in left/right variants.
  *
- * NOTE: loose_enum values have both string and integer types,
- * and MUST have the same index for each.
+ * NOTE: loose_enum values have both string and integer types
+ * WITH THE SAME INDEX!  They come in left and right= variants.
  *
- * they come in left and right= variants.
- *
+ * Indices for .strings[], .strings_set[]
+ * or .{left|right}.strings[], .{left|right}.strings_set[]
  */
 
 enum keyword_string_conn_field {
-	KSCF_IP, /* loose_enum */
-	KSCF_SUBNET,
-	KSCF_NEXTHOP, /* loose_enum */
-	KSCF_UPDOWN,
-	KSCF_ID,
-	KSCF_AUTHBY, /* formerly enum */
-	KSCF_RSAKEY1, /* loose_enum */
-	KSCF_RSAKEY2, /* loose_enum */
-	KSCF_CERT,
-	KSCF_CKAID,
-	KSCF_CA,
-	KSCF_PROTOPORT,
-	KSCF_SOURCEIP,
-	KSCF_VTI_IP,
-	KSCF_USERNAME,
-	KSCF_SUBNETS,
-	KSCF_ADDRESSPOOL,
+	KSCF_IP,	/* loose_enum */ /* left/right */
+	KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
+	KSCF_RSAKEY1,	/* loose_enum */ /* left/right */
+	KSCF_RSAKEY2,	/* loose_enum */ /* left/right */
+		KSCF_last_loose = KSCF_RSAKEY2,
+
+	KSCF_UPDOWN,	/* left/right */
+	KSCF_ID,	/* left/right */
+	KSCF_CERT,	/* left/right */
+	KSCF_CKAID,	/* left/right */
+	KSCF_CA,	/* left/right */
+	KSCF_PROTOPORT,	/* left/right */
+	KSCF_SOURCEIP,	/* left/right */
+	KSCF_VTI_IP,	/* left/right */
+	KSCF_USERNAME,	/* left/right */
+	KSCF_ADDRESSPOOL,	/* left/right */
+	KSCF_SUBNET,	/* left/right */
+	KSCF_SUBNETS,	/* left/right */
+		KSCF_last_leftright = KSCF_SUBNETS,
+
+	KSCF_AUTHBY,
 	KSCF_MODECFGDNS,
 	KSCF_MODECFGDOMAINS,
-	KSCF_MODECFGBANNER,
 	KSCF_IKE,
+	KSCF_MODECFGBANNER,
 	KSCF_ESP,
 	KSCF_ALSO,
 	KSCF_ALSOFLIP,
@@ -221,26 +162,111 @@ enum keyword_string_conn_field {
 	KSCF_CONN_MARK_IN,
 	KSCF_CONN_MARK_OUT,
 	KSCF_VTI_IFACE,
+
 	KSCF_ROOF
 };
 
+/*
+ * conn numbers (or bool).
+ * The initial ones come in left/right variants.
+ *
+ * NOTE: loose_enum values have both string and integer types
+ * WITH THE SAME INDEX!  They come in left and right= variants.
+ *
+ * Indices for .option[], .options_set[]
+ * or .{left|right}.option[], .{left|right}.options_set[]
+ */
+
 enum keyword_numeric_conn_field {
-	KNCF_IP               = 0,      /* loose_enum */
-	KNCF_FIREWALL         = 1,
-	KNCF_NEXTHOP          = 2,      /* loose_enum */
-	KNCF_IDTYPE           = 3,
-	KNCF_SPIBASE          = 4,
-	KNCF_RSAKEY1          = 5,      /* loose_enum */
-	KNCF_RSAKEY2          = 6,      /* loose_enum */
-	KNCF_XAUTHSERVER      = 7,
-	KNCF_XAUTHCLIENT      = 8,
-	KNCF_MODECONFIGSERVER = 9,
-	KNCF_MODECONFIGCLIENT = 10,
-	KNCF_CAT              = 11,
+	KNCF_IP		= KSCF_IP,	/* loose_enum */ /* left/right */
+	KNCF_NEXTHOP	= KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
+	KNCF_RSAKEY1	= KSCF_RSAKEY1,	/* loose_enum */ /* left/right */
+	KNCF_RSAKEY2	= KSCF_RSAKEY2,	/* loose_enum */ /* left/right */
+
+	KNCF_XAUTHSERVER,	/* left/right */
+	KNCF_XAUTHCLIENT,	/* left/right */
+	KNCF_MODECONFIGSERVER,	/* left/right */
+	KNCF_MODECONFIGCLIENT,	/* left/right */
+	KNCF_CAT,	/* left/right */
+	KNCF_SENDCERT,	/* left/right */
+	KNCF_AUTH,	/* left/right */
+		KNCF_last_leftright = KNCF_AUTH,
+
+	KNCF_FIREWALL,
+	KNCF_IDTYPE,
+	KNCF_SPIBASE,
 	KNCF_SPI,
 	KNCF_ESPREPLAYWINDOW,
-	KNCF_SENDCERT,
-	KNCF_AUTH,
+
+	/* ??? these were once in keyword_numeric_config_field (KBF prefix) */
+	KNCF_DPDACTION,
+	KNCF_FAILURESHUNT,
+	KNCF_NEGOTIATIONSHUNT,
+	KNCF_TYPE,
+	KNCF_MOBIKE,
+	KNCF_CONNMTU,
+	KNCF_PRIORITY,
+	KNCF_TFCPAD,
+	KNCF_REQID,
+	KNCF_SEND_CA,
+	KNCF_DPDDELAY,
+	KNCF_DPDTIMEOUT,
+	KNCF_METRIC,
+	KNCF_PHASE2,
+	KNCF_KEYEXCHANGE,
+	KNCF_AUTO,
+	KNCF_PFS,
+	KNCF_SHA2_TRUNCBUG,
+	KNCF_MSDH_DOWNGRADE,
+	KNCF_DNS_MATCH_ID,
+	KNCF_SALIFETIME,
+	KNCF_REKEY,
+	KNCF_REAUTH,
+	KNCF_REKEYMARGIN,
+	KNCF_REKEYFUZZ,
+	KNCF_COMPRESS,
+	KNCF_KEYINGTRIES,
+	KNCF_REPLAY_WINDOW,
+	KNCF_ARRIVALCHECK,
+	KNCF_IKELIFETIME,
+	KNCF_RETRANSMIT_TIMEOUT,
+	KNCF_RETRANSMIT_INTERVAL_MS,
+	KNCF_AGGRMODE,
+	KNCF_MODECONFIGPULL,
+	KNCF_ENCAPS,
+	KNCF_IKEv2,
+	KNCF_PPK,
+	KNCF_ESN,
+	KNCF_DECAP_DSCP,
+	KNCF_NOPMTUDISC,
+	KNCF_IKEv2_ALLOW_NARROWING,
+	KNCF_IKEv2_PAM_AUTHORIZE,
+	KNCF_SEND_REDIRECT,	/* this and next word are used for IKEv2 Redirect Mechanism */
+	KNCF_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
+	KNCF_HOSTADDRFAMILY,
+	KNCF_CLIENTADDRFAMILY,
+	KNCF_OVERLAPIP,		/* Allow overlapping IPsec policies */
+	KNCF_REMOTEPEERTYPE,	/* Cisco interop: remote peer type */
+	KNCF_NMCONFIGURED,	/* Network Manager support */
+	KNCF_LABELED_IPSEC,
+	KNCF_SAREFTRACK,	/* saref tracking parameter for _updown */
+	KNCF_WARNIGNORE,	/* to ignore obsoleted keywords */
+	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
+	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
+	KNCF_IKE_FRAG,		/* Enable support for IKE fragmentation */
+	KNCF_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
+	KNCF_INITIAL_CONTACT,	/* send initial contact VID */
+	KNCF_CISCO_UNITY,	/* send cisco unity VID */
+	KNCF_NO_ESP_TFC,	/* send ESP_TFC_PADDING_NOT_SUPPORTED */
+	KNCF_VID_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
+	KNCF_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
+	KNCF_IKEPAD,		/* pad IKE packets to 4 bytes */
+	KNCF_IKEV1_NATT,	/* ikev1 NAT-T payloads to send/process */
+	KNCF_NFLOG_CONN,	/* Enable per-conn nflog device */
+	KNCF_VTI_ROUTING,	/* let updown do routing into VTI device */
+	KNCF_VTI_SHARED,	/* VTI device is shared - enable checks and disable cleanup */
+	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
+
 	KNCF_ROOF
 };
 
