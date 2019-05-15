@@ -11,7 +11,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2018 Andrew Cagney
+ * Copyright (C) 2015-2019 Andrew Cagney
  * Copyright (C) 2016-2018 Antony Antony <appu@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
@@ -2025,6 +2025,21 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				} else {
 					break;
 				}
+			}
+			/*
+			 * XXX: Shouldn't reach this point without
+			 * SKEYSEED so bail if somehow that hasn't
+			 * happened.  No point in even calling
+			 * ikev2_decrypt_msg() (it will also fail).
+			 *
+			 * Suspect it would be cleaner if the state
+			 * machine included an explicit SMF2_SKEYSEED
+			 * flag and all states requiring integrity
+			 * were marked with that. Currently P(SK) and
+			 * P(SKF) imply this.
+			 */
+			if (!pexpect(ike->sa.hidden_variables.st_skeyid_calculated)) {
+				return;
 			}
 			/*
 			 * Decrypt the packet, checking it for
