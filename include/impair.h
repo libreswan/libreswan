@@ -68,4 +68,6 @@ void process_impair(const struct whack_impair *whack_impair);
 
 void help_impair(const char *prefix);
 
+void lswlog_impairments(struct lswlog *buf, const char *prefix, const char *sep);
+
 #endif

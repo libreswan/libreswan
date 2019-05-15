@@ -392,6 +392,36 @@ static void lswlog_impairment(struct lswlog *buf, const struct impairment *cr)
        }
 }
 
+void lswlog_impairments(struct lswlog *buf, const char *prefix, const char *sep)
+{
+	/* is there anything enabled? */
+	lset_t cur_impairing = (cur_debugging & IMPAIR_MASK);
+	bool enabled = false;
+	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
+		const struct impairment *cr = &impairments[ci];
+		if (value_of(cr) != 0) {
+			enabled = true;
+			break;
+		}
+	}
+	if (!enabled && cur_impairing == LEMPTY) {
+		return;
+	}
+	lswlogs(buf, prefix);
+	if (cur_impairing != LEMPTY) {
+		/* avoid LEMPTY being printed as "none" */
+		lswlog_enum_lset_short(buf, &impair_names, sep, cur_impairing);
+	}
+	const char *s = "";
+	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
+		const struct impairment *cr = &impairments[ci];
+		if (value_of(cr) != 0) {
+			lswlogs(buf, s); s = sep;
+			lswlog_impairment(buf, cr);
+		}
+	}
+}
+
 void process_impair(const struct whack_impair *wc)
 {
 	if (wc->what == 0) {
