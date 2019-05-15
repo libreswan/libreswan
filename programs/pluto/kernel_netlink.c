@@ -1067,6 +1067,8 @@ static void netlink_find_offload_feature(const char *ifname)
 	char *str;
 	int err;
 
+	zero(&ifr);
+
 	netlink_esp_hw_offload.state = NIC_OFFLOAD_UNSUPPORTED;
 
 	/* Determine number of device-features */
@@ -1122,6 +1124,7 @@ static bool netlink_detect_offload(const char *ifname)
 	bool ret = false;
 	int block;
 
+	zero(&ifr);
 	/*
 	 * Kernel requires a real interface in order to query the kernel-wide
 	 * capability, so we do it here on first invocation.
