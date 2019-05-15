@@ -82,27 +82,6 @@
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
-      <arg choice="opt">--debug all</arg>
-      <arg choice="opt">--debug none</arg>
-      <arg choice="opt">--debug list</arg>
-      <arg choice="opt">--debug <replaceable>class</replaceable></arg>
-      <arg choice="opt">--debug no-<replaceable>class</replaceable></arg>
-
-      <arg choice="opt">--debug-all (obsolete)</arg>
-      <arg choice="opt">--debug-none (obsolete)</arg>
-
-      <arg choice="opt">--impair list</arg>
-      <arg choice="opt">--impair none</arg>
-      <arg choice="opt">--impair <replaceable>behaviour</replaceable></arg>
-      <arg choice="opt">--impair no-<replaceable>behaviour</replaceable></arg>
-
-    </cmdsynopsis>
-
-    <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
-
       <arg choice="plain">--name
       <replaceable>connection-name</replaceable></arg>
 
@@ -551,27 +530,44 @@
 
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
+
     <cmdsynopsis>
       <command>ipsec</command>
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
-      <arg choice="opt">--name
-      <replaceable>connection-name</replaceable></arg>
+      <arg choice="opt">
+	--name
+	<replaceable>connection-name</replaceable>
+      </arg>
 
-      <arg choice="opt">--debug all</arg>
-      <arg choice="opt">--debug none</arg>
-      <arg choice="opt">--debug list</arg>
-      <arg choice="opt">--debug <replaceable>class</replaceable></arg>
-      <arg choice="opt">--debug no-<replaceable>class</replaceable></arg>
-
-      <arg choice="opt">--debug-all (obsolete)</arg>
-      <arg choice="opt">--debug-none (obsolete)</arg>
-
-      <arg choice="opt">--impair list</arg>
-      <arg choice="opt">--impair none</arg>
-      <arg choice="opt">--impair <replaceable>behaviour</replaceable></arg>
-      <arg choice="opt">--impair no-<replaceable>behaviour</replaceable></arg>
+      <group choice="plain">
+	<arg choice="req">
+	  --debug
+	  <group choice="plain">
+	    <arg choice="plain">help</arg>
+	    <arg choice="plain">none</arg>
+	    <arg choice="plain">base</arg>
+	    <arg choice="plain">cpu-usage</arg>
+	    <arg choice="plain"><replaceable>class</replaceable></arg>
+	  </group>
+	</arg>
+	<arg choice="req">
+	  --no-debug <replaceable>class</replaceable>
+	</arg>
+	<arg choice="req">
+	  --impair
+	  <group choice="plain">
+	    <arg choice="plain">help</arg>
+	    <arg choice="plain">none</arg>
+	    <!-- <arg choice="plain">list|show?</arg> -->
+	    <arg choice="plain"><replaceable>behaviour</replaceable></arg>
+	  </group>
+	</arg>
+	<arg choice="req">
+	  --no-impair <replaceable>behaviour</replaceable>
+	</arg>
+      </group>
 
     </cmdsynopsis>
 
@@ -3182,12 +3178,11 @@
       <variablelist remap="TP">
 
         <varlistentry>
-          <term><option>--debug all</option></term>
+          <term><option>--debug help</option> (whack only)</term>
           <listitem>
             <para>
-	      enable logging of a standard set of debugging classes
-	      (this does not include debugging classes that may expose
-	      private information)
+	      list the debugging classes recognised by <emphasis
+	      remap="B">pluto</emphasis>
 	    </para>
           </listitem>
         </varlistentry>
@@ -3200,59 +3195,33 @@
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug list</option> (whack only)</term>
+          <term><option>--debug base</option></term>
           <listitem>
             <para>
-	      list the debugging classes recognised by <emphasis
-	      remap="B">pluto</emphasis>
+	      enable debug-logging
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--debug cpu-usage</option></term>
+          <listitem>
+            <para>
+	      enable cpu-usage logging
 	    </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term><option>--debug <replaceable>class</replaceable></option></term>
+          <term><option>--no-debug <replaceable>class</replaceable></option></term>
           <term><option>--debug no-<replaceable>class</replaceable></option></term>
           <listitem>
             <para>
 	      enable (disable) logging of the specified debugging
-	      <replaceable>class</replaceable>,
-	      <replaceable>class</replaceable> is one of:
-	    </para>
-	    <variablelist>
-              <varlistentry>
-		<term>private</term>
-		<listitem>
-		  <para>
-		    control logging of private information (this class
-		    is not included in all)
-		  </para>
-		</listitem>
-              </varlistentry>
-	    </variablelist>
-	    <para>
-	      use <option>--debug list</option> to list additional
-	      debugging classes recognized by <emphasis
-	      remap="B">pluto</emphasis>
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-all</option> (obsolete)</term>
-          <listitem>
-            <para>
-	      alias for <option>--debug all</option> <option>--impair
-	      none</option>
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-none</option> (obsolete)</term>
-          <listitem>
-            <para>
-	      alias for <option>--debug none</option> <option>--impair
-	      none</option>
+	      <replaceable>class</replaceable> (<option>--debug
+	      help</option> lists debugging classes supported by this
+	      version of <emphasis remap="B">pluto</emphasis>)
 	    </para>
           </listitem>
         </varlistentry>
@@ -3270,24 +3239,29 @@
       </para>
 
       <para>
-	For example, to start a <emphasis remap="B">pluto</emphasis>
-	with a display of the structure of input and output:
+	For example, to start <emphasis remap="B">pluto</emphasis>
+	with both <emphasis>base</emphasis> and
+	<emphasis>cpu-usage</emphasis> debug-logging enabled:
       </para>
 
-      <para>pluto --debug xauth --debug retransmits</para>
+      <programlisting>
+	pluto --debug base --debug cpu-usage
+      </programlisting>
 
       <para>
 	To later change this <emphasis remap="B">pluto</emphasis> to
-	disable the retransmits debug class use either of:
+	disable <emphasis>base</emphasis> debug-logging use either:
       </para>
 
+      <programlisting>
+	whack --no-debug base
+      </programlisting>
       <para>
-	whack --debug no-retransmits
+	or:
       </para>
-
-      <para>
-	whack --debug none --debug xauth
-      </para>
+      <programlisting>
+	whack --debug none --debug cpu-usage
+      </programlisting>
 
     </refsect2>
 
@@ -3307,10 +3281,19 @@
       <variablelist remap="TP">
 
         <varlistentry>
-          <term><option>--impair list</option> (whack only)</term>
+          <term><option>--impair help</option> (whack only)</term>
           <listitem>
             <para>
 	      list all the behaviours that can be altered (impaired)
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--impair list</option> (whack only)</term>
+          <listitem>
+            <para>
+	      list all the behaviours that are currently altered (impaired)
 	    </para>
           </listitem>
         </varlistentry>
@@ -3326,7 +3309,8 @@
 
         <varlistentry>
           <term><option>--impair <replaceable>behaviour</replaceable></option></term>
-          <term><option>--impair no-<replaceable>behaviour</replaceable></option></term>
+          <term><option>--impair <replaceable>behaviour</replaceable>:<replaceable>how</replaceable></option></term>
+          <term><option>--no-impair <replaceable>behaviour</replaceable></option></term>
           <listitem>
             <para>
 	      alter (impair) <emphasis remap="B">pluto</emphasis>
