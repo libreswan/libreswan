@@ -268,24 +268,31 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
 	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
 
+	if (!IS_IKE_SA_ESTABLISHED(md->st)) { /* XXX Andrew? how to dig into ike_sa ike ? */
+		loglog(RC_LOG_SERIOUS, "unable to respond to exchange type %s message with encrypted notification because there is no established IKE SA",
+			exchange_name);
+		return;
+	}
+	/*
+	 * For encrypted messages, the EXCHANGE TYPE can't be SA_INIT.
+	 * And the IKE SA must have been established
+	 */
+	switch (exchange_type) {
+	case ISAKMP_v2_IKE_SA_INIT:
+	case ISAKMP_v2_IKE_AUTH:
+		loglog(RC_LOG_SERIOUS, "exchange type %s invalid for encrypted notification",
+			    exchange_name);
+		return;
+	default:
+		break;
+	}
+
 	ipstr_buf b;
 	libreswan_log("responding to %s message (ID %u) from %s:%u with encrypted notification %s",
 		      exchange_name, md->hdr.isa_msgid,
 		      sensitive_ipstr(&ike->sa.st_remoteaddr, &b),
 		      ike->sa.st_remoteport,
 		      notify_name);
-
-	/*
-	 * For encrypted messages, the EXCHANGE TYPE can't be SA_INIT.
-	 */
-	switch (exchange_type) {
-	case ISAKMP_v2_IKE_SA_INIT:
-		PEXPECT_LOG("exchange type %s invalid for encrypted notification",
-			    exchange_name);
-		return;
-	default:
-		break;
-	}
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	pb_stream reply = open_out_pbs("encrypted notification",
