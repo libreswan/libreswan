@@ -2161,29 +2161,73 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
 		if (message_payload_status.bad) {
+			/*
+			 * A very messed up message.  Should only
+			 * consider replying when IKE_SA_INIT?  Code
+			 * above should have rejected any message with
+			 * invalid integrity.
+			 */
 			ikev2_log_payload_errors(st, md, &message_payload_status);
 			/* replace (*mdp)->st with st ... */
 			complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL + v2N_INVALID_SYNTAX);
 		} else if (encrypted_payload_status.bad) {
+			/*
+			 * Payload decrypted and integrity was ok but
+			 * contents weren't valid.
+			 *
+			 * XXX: According to "2.21.2.  Error Handling
+			 * in IKE_AUTH" and "2.21.3.  Error Handling
+			 * after IKE SA is Authenticated" this should
+			 * be fatal, killing the IKE SA.  Oops.
+			 */
 			ikev2_log_payload_errors(st, md, &encrypted_payload_status);
 			/* replace (*mdp)->st with st ... */
 			complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL + v2N_INVALID_SYNTAX);
-		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
+		} else if (v2_msg_role(md) == MESSAGE_REQUEST) {
 			/*
 			 * We are the responder to this message so
 			 * return something.
 			 *
-			 * XXX: For an encrypted response, wouldn't
-			 * syntax error be better?  The IKE SPI is
-			 * valid!
+			 * XXX: Er, why?
 			 */
-			if (st != NULL)
-				send_v2N_response_from_state(ike_sa(st), md,
-							     v2N_INVALID_IKE_SPI,
-							     NULL/*no data*/);
-			else
+			if (st == NULL &&
+			    md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT) {
+				rate_log("responding to message with unknown IKE SPI with INVALID_IKE_SPI");
+				/*
+				 * Lets assume "2.21.4.  Error
+				 * Handling Outside IKE SA" - we MAY
+				 * respond.
+				 */
 				send_v2N_response_from_md(md, v2N_INVALID_IKE_SPI,
 							  NULL/*no data*/);
+			} else {
+				/*
+				 * Presumably things are pretty messed
+				 * up.  While there might be a state
+				 * there probably isn't an established
+				 * IKE SA (so don't even consider
+				 * trying to send an encrypted
+				 * response), for instance:
+				 *
+				 * - instead of an IKE_AUTH request,
+				 * the initiator sends something
+				 * totally unexpected (such as an
+				 * informational) and things end up
+				 * here
+
+				 * - when an IKE_AUTH request's IKE SA
+				 * succeeeds but CHILD SA fails (and
+				 * pluto screws up the IKE SA by
+				 * updating its state but not its
+				 * Message ID and not responding), the
+				 * re-transmitted IKE_AUTH ends up
+				 * here
+				 *
+				 * Should it send a non-encrypted
+				 * v2N_INVALID_SYNTAX?
+				 */
+				rate_log("dropping message with no matching microcode");
+			}
 		}
 		return;
 	}
@@ -3233,6 +3277,15 @@ void complete_v2_state_transition(struct state *st,
 			  enum_name(&ikev2_notify_names, notification));
 
 		if (notification != v2N_NOTHING_WRONG) {
+			/*
+			 * XXX: For IKEv2, this code path isn't
+			 * sufficient - a message request can result
+			 * in a response that contains both a success
+			 * and a fail.  Better to respond directly; or
+			 * better still, record the response and send
+			 * using that - look for comments about
+			 * STF_ZOMBIFY.
+			 */
 			/* Only the responder sends a notification */
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 				struct state *pst = st;
