@@ -128,8 +128,10 @@ struct impairment {
 	const char *what;
 	const char *help;
 	/*
-	 * If non-null; HOW is either a keyword or an (unsigned)
+	 * If non-NULL, HOW is either a keyword or an (unsigned)
 	 * number encoded as keywords.nr_keywords+NUMBER.
+	 *
+	 * If NULL, HOW is assumed to be a boolean.
 	 */
 	const struct keywords *how_keynum;
 	void *value;
@@ -263,55 +265,68 @@ bool parse_impair(const char *optarg,
 	shunk_t arg = shunk1(optarg);
 	shunk_t what = shunk_strsep(&arg, ":=");
 	shunk_t how = arg;
-	/* look for WHAT */
+	/*
+	 * look for both WHAT and for compatability with the old
+	 * lset_t impair flags, no-WHAT.
+	 */
 	unsigned ci = 1;
+	shunk_t nowhat = what;
+	/* reject --no-impair no-... */
+	bool no = enable ? shunk_strcaseeat(&nowhat, "no-") : true;
 	while (true) {
 		if (ci >= elemsof(impairments)) {
 			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "option '--impair "PRI_SHUNK"' not recognized",
+				lswlogf(buf, "ignoring unrecognized option '-%s-impair "PRI_SHUNK"'",
+					enable ? "" : "-no",
 					PRI_shunk(what));
 			}
 			return false;
-		} else if (shunk_strcaseeq(what, impairments[ci].what)) {
+		} else if (shunk_strcaseeq(nowhat, impairments[ci].what)) {
 			break;
 		}
 		ci++;
 	}
 	const struct impairment *cr = &impairments[ci];
-	if (!enable) {
-		if (how.len > 0) {
+
+	/* --{,no-}impair WHAT:help always works */
+	if (shunk_strcaseeq(how, "help")) {
+		help("", cr);
+		return false;
+	}
+
+	/*
+	 * Ensure that --no-impair WHAT, --impair no-WHAT, --impair
+         * WHAT:no, all always work.
+	 */
+	if (no || shunk_strcaseeq(how, "no")) {
+		/* reject --no-impair WHAT:no and --impair no-WHAT:no */
+		if (no && how.len > 0) {
 			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "option '--no-impair "PRI_SHUNK"' has unexpeced parameter '"PRI_SHUNK"'",
-					PRI_shunk(what), PRI_shunk(how));
+				lswlogf(buf, "ignoring option '-%s-impair "PRI_SHUNK":"PRI_SHUNK"' with unexpected parameter '"PRI_SHUNK"'",
+					enable ? "" : "-no",
+					PRI_shunk(what), PRI_shunk(how), PRI_shunk(how));
 			}
 			return false;
 		}
 		*whack_impair = (struct whack_impair) {
 			.what = ci,
-			.how = false,
+			.how = 0,
 		};
 		return true;
-	} else if (shunk_strcaseeq(how, "no")) {
-		/* WHAT:none */
-		*whack_impair = (struct whack_impair) {
-			.what = ci,
-			.how = false,
-		};
-		return true;
-	} else if (cr->how_keynum != NULL) {
-		/* return on fail */
+	}
+
+	if (cr->how_keynum != NULL) {
+		/*
+		 * parse --impair WHAT:HOW
+		 */
 		if (how.len == 0) {
 			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "option --impair '"PRI_SHUNK"' requires a parameter",
+				lswlogf(buf, "ignoring option '--impair "PRI_SHUNK"' with missing parameter",
 					PRI_shunk(what));
 			}
 			return false;
 		}
-		if (shunk_strcaseeq(how, "help")) {
-			help("", cr);
-			return false;
-		}
-		/* return on success. */
+		/* try the keyword. */
 		const struct keyword *kw = keyword_by_sname(cr->how_keynum, how);
 		if (kw != NULL) {
 			*whack_impair = (struct whack_impair) {
@@ -330,23 +345,52 @@ bool parse_impair(const char *optarg,
 			return true;
 		}
 		LSWLOG_ERROR(buf) {
-			lswlogf(buf, "option '--impair "PRI_SHUNK"' parameter '"PRI_SHUNK"' invalid",
-				PRI_shunk(what), PRI_shunk(how));
-		}
-		return false;
-	} else if (how.len > 0) {
-		/* XXX: ignores "WHAT:" */
-		LSWLOG_ERROR(buf) {
-			lswlogf(buf, "option '--impair "PRI_SHUNK"' has unexpected parameter '"PRI_SHUNK"'",
-				PRI_shunk(what), PRI_shunk(how));
+			lswlogf(buf, "ignoring option '--impair "PRI_SHUNK":"PRI_SHUNK"' with unknown parameter '"PRI_SHUNK"'",
+				PRI_shunk(what), PRI_shunk(how),
+				PRI_shunk(how));
 		}
 		return false;
 	} else {
-		*whack_impair = (struct whack_impair) {
-			.what = ci,
-			.how = true,
-		};
-		return true;
+		/*
+		 * Only allow simple booleans for now (it could call
+		 * parse_piased_unsigned).
+		 *
+		 * Accept some common terms, and assume an empty WHAT
+		 * implies 'yes'.
+		 *
+		 * XXX: Yes, "no" was already handled above.  It's
+		 * also here so that the two if() clauses look
+		 * consistent.
+		 */
+		if (shunk_strcaseeq(how, "false") ||
+		    shunk_strcaseeq(how, "off") ||
+		    shunk_strcaseeq(how, "no") ||
+		    shunk_strcaseeq(how, "0")) {
+			/* --impair WHAT:nope */
+			*whack_impair = (struct whack_impair) {
+				.what = ci,
+				.how = 0,
+			};
+			return true;
+		} else if (how.len == 0 ||
+			   shunk_strcaseeq(how, "true") ||
+			   shunk_strcaseeq(how, "on") ||
+			   shunk_strcaseeq(how, "yes") ||
+			   shunk_strcaseeq(how, "1")) {
+			/* --impair WHAT:yes */
+			*whack_impair = (struct whack_impair) {
+				.what = ci,
+				.how = 1,
+			};
+			return true;
+		} else {
+			/* XXX: ignores "WHAT:" */
+			LSWLOG_ERROR(buf) {
+				lswlogf(buf, "ignoring option '--impair "PRI_SHUNK":"PRI_SHUNK"' with unexpected parameter '"PRI_SHUNK"'",
+					PRI_shunk(what), PRI_shunk(how), PRI_shunk(how));
+			}
+			return false;
+		}
 	}
 }
 
@@ -370,26 +414,26 @@ static uintmax_t value_of(const struct impairment *cr)
 
 static void lswlog_impairment(struct lswlog *buf, const struct impairment *cr)
 {
-       if (cr->how_keynum != NULL) {
-               lswlogf(buf, "%s:", cr->what);
-               unsigned value = value_of(cr);
-               const struct keyword *kw = keyword_by_value(cr->how_keynum, value);
-               if (kw != NULL) {
-                       lswlogs(buf, kw->sname);
+	if (cr->how_keynum != NULL) {
+		lswlogf(buf, "%s:", cr->what);
+		unsigned value = value_of(cr);
+		const struct keyword *kw = keyword_by_value(cr->how_keynum, value);
+		if (kw != NULL) {
+			lswlogs(buf, kw->sname);
 		} else if (value >= cr->how_keynum->nr_values) {
 			lswlogf(buf, "%zu", value - cr->how_keynum->nr_values);
 		} else {
 			lswlogf(buf, "?%u?", value);
 		}
-       } else {
-               /* only bool for now */
-               if (value_of(cr) != 0) {
-                       lswlogs(buf, cr->what);
-               } else {
-                       /* parser should accept this */
-                       lswlogf(buf, "%s:no", cr->what);
-               }
-       }
+	} else {
+		/* only bool for now */
+		if (value_of(cr) != 0) {
+			lswlogs(buf, cr->what);
+		} else {
+			/* parser accepts this */
+			lswlogf(buf, "%s:no", cr->what);
+		}
+	}
 }
 
 void lswlog_impairments(struct lswlog *buf, const char *prefix, const char *sep)
