@@ -68,23 +68,26 @@ bool lmod_is_clr(lmod_t mod, lset_t clr)
 }
 
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
-	      const char *args)
+	      const char *args, bool enable)
 {
 	char *list = clone_str(args, "list"); /* must free */
 	bool ok = true;
 	const char *delim = "+, \t";
 	for (char *tmp = list, *elem = strsep(&tmp, delim);
 	     elem != NULL; elem = strsep(&tmp, delim)) {
-		if (streq(elem, "all")) {
+		if (enable && streq(elem, "all")) {
+			/* excludes --no-... all */
 			mod->clr = LEMPTY;
 			mod->set = info->all;
-		} else if (streq(elem, "none")) {
+		} else if (enable && streq(elem, "none")) {
+			/* excludes --no-... none */
 			mod->clr = info->mask;
 			mod->set = LEMPTY;
 		} else if (*elem != '\0') {
 			/* non-empty */
 			const char *arg = elem;
-			bool no = eat(arg, "no-");
+			/* excludes --no-... no-... */
+			bool no = enable ? eat(arg, "no-") : true;
 			int ix = enum_match(info->names, shunk1(arg));
 			lset_t bit = LEMPTY;
 			if (ix >= 0) {

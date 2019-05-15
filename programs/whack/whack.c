@@ -171,10 +171,9 @@ static void help(void)
 		"pubkey: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
 		"\n"
 		"debug: whack [--name <connection_name>] \\\n"
-		"	[--debug-none] | [--debug-all] | \\\n"
-		"	[--debug <class>] | [--debug private] \\\n"
-		"	[--debug list] \\\n"
-		"	[--impair list|none|no] [--impair <behaviour>] \\\n"
+		"	[--debug help|none|<class>] \\\n"
+		"	[--no-debug <class>] \\\n"
+		"	[--impair help|list|none|<behaviour>]  \\\n"
 		"	[--no-impair <behaviour>]\n"
 		"\n"
 		"testcases: [--whackrecord <file>] [--whackstoprecord]\n"
@@ -488,6 +487,7 @@ enum option_enums {
 	DBGOPT_ALL,
 
 	DBGOPT_DEBUG,
+	DBGOPT_NO_DEBUG,
 	DBGOPT_IMPAIR,
 	DBGOPT_NO_IMPAIR,
 
@@ -772,6 +772,7 @@ static const struct option long_opts[] = {
 	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
 	{ "debug", required_argument, NULL, DBGOPT_DEBUG + OO, },
+	{ "no-debug", required_argument, NULL, DBGOPT_NO_DEBUG + OO, },
 	{ "impair", required_argument, NULL, DBGOPT_IMPAIR + OO, },
 	{ "no-impair", required_argument, NULL, DBGOPT_NO_IMPAIR + OO, },
 
@@ -2180,7 +2181,7 @@ int main(int argc, char **argv)
 			msg.opt_set = WHACK_STOPWHACKRECORD;
 			break;
 
-		case DBGOPT_NONE:	/* --debug-none */
+		case DBGOPT_NONE:	/* --debug-none (obsolete) */
 			/*
 			 * Clear all debug and impair options.
 			 *
@@ -2197,7 +2198,7 @@ int main(int argc, char **argv)
 			msg.impairing = lmod_clr(msg.impairing, IMPAIR_MASK);
 			continue;
 
-		case DBGOPT_ALL:	/* --debug-all */
+		case DBGOPT_ALL:	/* --debug-all (obsolete) */
 			/*
 			 * Set most debug options ('all' does not
 			 * include PRIVATE which is cleared) and clear
@@ -2218,6 +2219,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case DBGOPT_DEBUG:	/* --debug */
+		case DBGOPT_NO_DEBUG:	/* --no-debug */
+		{
+			bool enable = (c == DBGOPT_DEBUG);
 			if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
 				fprintf(stderr, "debug options (* included in 'all'):\n");
 				for (long e = next_enum(&debug_names, -1);
@@ -2237,13 +2241,17 @@ int main(int argc, char **argv)
 					}
 				}
 				exit(1);
-			} else if (!lmod_arg(&msg.debugging, &debug_lmod_info, optarg)) {
-				fprintf(stderr, "whack: unrecognized --debug '%s' option ignored\n",
-					optarg);
+			} else if (!lmod_arg(&msg.debugging, &debug_lmod_info, optarg, enable)) {
+				fprintf(stderr, "whack: unrecognized -%s-debug '%s' option ignored\n",
+					enable ? "" : "-no", optarg);
 			}
 			continue;
+		}
 
 		case DBGOPT_IMPAIR:	/* --impair */
+		case DBGOPT_NO_IMPAIR:	/* --no-impair */
+		{
+			bool enable = (c == DBGOPT_IMPAIR);
 			if (streq(optarg, "help") || streq(optarg, "?")) {
 				fprintf(stderr, "impair options:\n");
 				for (long e = next_enum(&impair_names, -1);
@@ -2260,28 +2268,22 @@ int main(int argc, char **argv)
 				}
 				help_impair("  ");
 				exit(1);
-			} else if (lmod_arg(&msg.impairing, &impair_lmod_info, optarg)) {
+			} else if (lmod_arg(&msg.impairing, &impair_lmod_info, optarg, enable)) {
 				if (lmod_is_set(msg.impairing, IMPAIR_FORCE_FIPS)) {
-					fprintf(stderr, "whack: invalid --impair '%s' option; must be passed directly to pluto\n",
-						optarg);
+					fprintf(stderr, "whack: invalid -%s-impair '%s' option; must be passed directly to pluto\n",
+						enable ? "" : "-no", optarg);
 					lmod_clr(msg.impairing, IMPAIR_FORCE_FIPS);
 				}
 				if (streq(optarg, "none")) {
 					/* hack to pass 'none' onto new code */
-					passert(parse_impair(optarg, &msg.impairment, true));
+					passert(parse_impair(optarg, &msg.impairment, enable));
 				}
-			} else if (!parse_impair(optarg, &msg.impairment, true)) {
+			} else if (!parse_impair(optarg, &msg.impairment, enable)) {
 				/* parse_impair() issued the error */
 				exit(1);
 			}
 			continue;
-
-		case DBGOPT_NO_IMPAIR:	/* --no-impair */
-			if (!parse_impair(optarg, &msg.impairment, false)) {
-				/* parse_impair() issued the error */
-				exit(1);
-			}
-			continue;
+		}
 
 		default:
 			bad_case(c);

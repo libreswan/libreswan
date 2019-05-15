@@ -817,7 +817,7 @@ lset_t parser_lset(const struct keyword_def *kd, const char *value)
 	 * separated list and can handle no-XXX (ex: all,no-xauth).
 	 * The final set of enabled bits is returned in .set.
 	 */
-	if (!lmod_arg(&result, kd->info, value)) {
+	if (!lmod_arg(&result, kd->info, value, true/*enable*/)) {
 		/*
 		 * If the lookup failed, complain (and exit!).
 		 *

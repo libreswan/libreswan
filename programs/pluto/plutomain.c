@@ -1394,7 +1394,7 @@ int main(int argc, char **argv)
 		case OPT_DEBUG:
 		{
 			lmod_t mod = empty_lmod;
-			if (lmod_arg(&mod, &debug_lmod_info, optarg)) {
+			if (lmod_arg(&mod, &debug_lmod_info, optarg, true/*enable*/)) {
 				base_debugging = lmod(base_debugging, mod);
 			} else {
 				libreswan_log("unrecognized --debug '%s' option ignored",
@@ -1406,7 +1406,7 @@ int main(int argc, char **argv)
 		case OPT_IMPAIR:
 		{
 			lmod_t mod = empty_lmod;
-			if (lmod_arg(&mod, &impair_lmod_info, optarg)) {
+			if (lmod_arg(&mod, &impair_lmod_info, optarg, true/*enable*/)) {
 				base_debugging = lmod(base_debugging, mod);
 			} else {
 				libreswan_log("unrecognized --impair '%s' option ignored",
