@@ -1,7 +1,7 @@
 /*
  * impair constants, for libreswan
  *
- * Copyright (C) 2017-2018 Andrew Cagney
+ * Copyright (C) 2017-2019 Andrew Cagney
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -350,39 +350,46 @@ bool parse_impair(const char *optarg,
 	}
 }
 
+/*
+ * Print something that can be fed back into --impair ARG.
+ */
+
+static uintmax_t value_of(const struct impairment *cr)
+{
+       switch (cr->sizeof_value) {
+#define L(T) case sizeof(uint##T##_t): return *(uint##T##_t*)cr->value
+               L(8);
+               L(16);
+               L(32);
+               L(64);
+#undef L
+       default:
+               bad_case(cr->sizeof_value);
+       }
+}
+
 static void lswlog_impairment(struct lswlog *buf, const struct impairment *cr)
 {
-	if (cr->how_keynum != NULL) {
-		passert(cr->sizeof_value == sizeof(unsigned));
-		unsigned value = *(unsigned*)cr->value;
-		const struct keyword *kw = keyword_by_value(cr->how_keynum, value);
-		if (kw != NULL) {
-			lswlogs(buf, kw->sname);
+       if (cr->how_keynum != NULL) {
+               lswlogf(buf, "%s:", cr->what);
+               unsigned value = value_of(cr);
+               const struct keyword *kw = keyword_by_value(cr->how_keynum, value);
+               if (kw != NULL) {
+                       lswlogs(buf, kw->sname);
 		} else if (value >= cr->how_keynum->nr_values) {
 			lswlogf(buf, "%zu", value - cr->how_keynum->nr_values);
 		} else {
 			lswlogf(buf, "?%u?", value);
 		}
-	} else switch (cr->sizeof_value) {
-#define L(T) case sizeof(uint##T##_t): lswlogf(buf, "%"PRIu##T, *(uint##T##_t*)cr->value); break
-			L(8);
-			L(16);
-			L(32);
-			L(64);
-#undef L
-		default:
-			bad_case(cr->sizeof_value);
-	}
-}
-
-static bool non_zero(const uint8_t *value, size_t sizeof_value)
-{
-	for (unsigned byte = 0; byte < sizeof_value; byte++) {
-		if (value[byte] != 0) {
-			return true;
-		}
-	}
-	return false;
+       } else {
+               /* only bool for now */
+               if (value_of(cr) != 0) {
+                       lswlogs(buf, cr->what);
+               } else {
+                       /* parser should accept this */
+                       lswlogf(buf, "%s:no", cr->what);
+               }
+       }
 }
 
 void process_impair(const struct whack_impair *wc)
@@ -393,7 +400,7 @@ void process_impair(const struct whack_impair *wc)
 	} else if (wc->what == IMPAIR_DISABLE) {
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
-			if (non_zero(cr->value, cr->sizeof_value)) {
+			if (value_of(cr) != 0) {
 				LSWDBGP(DBG_BASE, buf) {
 					lswlogf(buf, "%s: ", cr->what);
 					lswlogs(buf, " disabled");
@@ -405,10 +412,9 @@ void process_impair(const struct whack_impair *wc)
 	} else if (wc->what == IMPAIR_LIST) {
 		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 			const struct impairment *cr = &impairments[ci];
-			if (non_zero(cr->value, cr->sizeof_value)) {
+			if (value_of(cr) != 0) {
 				/* XXX: should be whack log? */
 				LSWLOG_INFO(buf) {
-					lswlogf(buf, "%s: ", cr->what);
 					lswlog_impairment(buf, cr);
 				}
 			}
@@ -436,7 +442,6 @@ void process_impair(const struct whack_impair *wc)
 			bad_case(cr->sizeof_value);
 	}
 	LSWDBGP(DBG_BASE, buf) {
-		lswlogf(buf, "%s: ", cr->what);
 		lswlog_impairment(buf, cr);
 	}
 }
