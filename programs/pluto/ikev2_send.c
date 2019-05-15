@@ -253,6 +253,11 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
  *
  * For a CREATE_CHILD_SA, things have presumably screwed up so badly
  * that the larval child state is deleted.
+ *
+ * XXX: suspect calls to this function should be replaced by something
+ * like record_v2N_spi_response_from_state() - so that the response is
+ * always saved in the state and re-transmits can be handled
+ * correctly.
  */
 
 void send_v2N_spi_response_from_state(struct ike_sa *ike,
@@ -262,30 +267,20 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 				      v2_notification_t ntype,
 				      const chunk_t *ndata /* optional */)
 {
+	/*
+	 * The caller must have computed DH and SKEYSEED; but may not
+	 * have authenticated (i.e., don't assume that the IKE SA has
+	 * "established").
+	 */
+	if (!pexpect(ike->sa.hidden_variables.st_skeyid_calculated)) {
+		return;
+	}
+
 	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* always responding */
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
 
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
 	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
-
-	if (!IS_IKE_SA_ESTABLISHED(md->st)) { /* XXX Andrew? how to dig into ike_sa ike ? */
-		loglog(RC_LOG_SERIOUS, "unable to respond to exchange type %s message with encrypted notification because there is no established IKE SA",
-			exchange_name);
-		return;
-	}
-	/*
-	 * For encrypted messages, the EXCHANGE TYPE can't be SA_INIT.
-	 * And the IKE SA must have been established
-	 */
-	switch (exchange_type) {
-	case ISAKMP_v2_IKE_SA_INIT:
-	case ISAKMP_v2_IKE_AUTH:
-		loglog(RC_LOG_SERIOUS, "exchange type %s invalid for encrypted notification",
-			    exchange_name);
-		return;
-	default:
-		break;
-	}
 
 	ipstr_buf b;
 	libreswan_log("responding to %s message (ID %u) from %s:%u with encrypted notification %s",
@@ -293,6 +288,18 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 		      sensitive_ipstr(&ike->sa.st_remoteaddr, &b),
 		      ike->sa.st_remoteport,
 		      notify_name);
+
+	/*
+	 * For encrypted messages, the EXCHANGE TYPE can't be SA_INIT.
+	 */
+	switch (exchange_type) {
+	case ISAKMP_v2_IKE_SA_INIT:
+		PEXPECT_LOG("exchange type %s invalid for encrypted notification",
+			    exchange_name);
+		return;
+	default:
+		break;
+	}
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	pb_stream reply = open_out_pbs("encrypted notification",
