@@ -951,11 +951,7 @@ void show_debug_status(void)
 			lswlog_enum_lset_short(buf, &debug_names,
 					       "+", cur_debugging & DBG_MASK);
 		}
-		if (cur_debugging & IMPAIR_MASK) {
-			lswlogs(buf, " impair: ");
-			lswlog_enum_lset_short(buf, &impair_names,
-					       "+", cur_debugging & IMPAIR_MASK);
-		}
+		lswlog_impairments(buf, " impair: "/*prefix*/, "+");
 	}
 }
 
