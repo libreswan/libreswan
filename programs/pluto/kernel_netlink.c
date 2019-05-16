@@ -1043,8 +1043,9 @@ static bool netlink_migrate_sa(struct state *st)
 }
 
 
-
 #ifdef USE_NIC_OFFLOAD
+
+/* see /usr/include/linux/ethtool.h */
 
 enum nic_offload_state {
 	NIC_OFFLOAD_UNKNOWN,
@@ -1058,73 +1059,66 @@ static struct {
 	enum nic_offload_state state;
 } netlink_esp_hw_offload;
 
+static bool siocethtool(const char *ifname, void *data, const char *action)
+{
+	struct ifreq ifr = { .ifr_data = data };
+	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
+	if (ioctl(nl_send_fd, SIOCETHTOOL, &ifr) != 0) {
+		LOG_ERRNO(errno, "can't offload to %s because SIOCETHTOOL %s failed", ifname, action);
+		return false;
+	} else {
+		return true;
+	}
+}
+
 static void netlink_find_offload_feature(const char *ifname)
 {
-	struct ethtool_sset_info *sset_info = NULL;
-	struct ethtool_gstrings *cmd = NULL;
-	struct ifreq ifr;
-	uint32_t sset_len, i;
-	char *str;
-	int err;
-
-	zero(&ifr);
-
 	netlink_esp_hw_offload.state = NIC_OFFLOAD_UNSUPPORTED;
 
 	/* Determine number of device-features */
-	sset_info = alloc_bytes(sizeof(*sset_info) + sizeof(sset_info->data[0]),
-			"ethtool_sset_info");
+
+	struct ethtool_sset_info *sset_info = alloc_bytes(
+		sizeof(*sset_info) + sizeof(sset_info->data[0]),
+		"ethtool_sset_info");
 	sset_info->cmd = ETHTOOL_GSSET_INFO;
 	sset_info->sset_mask = 1ULL << ETH_SS_FEATURES;
-	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
-	ifr.ifr_data = (void *)sset_info;
-	err = ioctl(nl_send_fd, SIOCETHTOOL, &ifr);
-	if (err != 0)
-		goto out;
 
-	if (sset_info->sset_mask != 1ULL << ETH_SS_FEATURES)
-		goto out;
-	sset_len = sset_info->data[0];
+	if (!siocethtool(ifname, sset_info, "ETHTOOL_GSSET_INFO") ||
+	    sset_info->sset_mask != 1ULL << ETH_SS_FEATURES) {
+		pfree(sset_info);
+		return;
+	}
+
+	uint32_t sset_len = sset_info->data[0];
+
+	pfree(sset_info);
 
 	/* Retrieve names of device-features */
-	cmd = alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len, "ethtool_gstrings");
+
+	struct ethtool_gstrings *cmd = alloc_bytes(
+		sizeof(*cmd) + ETH_GSTRING_LEN * sset_len, "ethtool_gstrings");
 	cmd->cmd = ETHTOOL_GSTRINGS;
 	cmd->string_set = ETH_SS_FEATURES;
-	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
-	ifr.ifr_data = (void *)cmd;
-	err = ioctl(nl_send_fd, SIOCETHTOOL, &ifr);
-	if (err)
-		goto out;
 
-	/* Look for the ESP_HW feature bit */
-	str = (char *)cmd->data;
-	for (i = 0; i < cmd->len; i++) {
-		if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN) == 1)
-			break;
-		str += ETH_GSTRING_LEN;
+	if (siocethtool(ifname, cmd, "ETHTOOL_GSTRINGS")) {
+		/* Look for the ESP_HW feature bit */
+		char *str = (char *)cmd->data;
+		for (uint32_t i = 0; i < cmd->len; i++) {
+			if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN)) {
+				netlink_esp_hw_offload.bit = i;
+				netlink_esp_hw_offload.total_blocks = (sset_len + 31) / 32;
+				netlink_esp_hw_offload.state = NIC_OFFLOAD_SUPPORTED;
+				break;
+			}
+			str += ETH_GSTRING_LEN;
+		}
 	}
-	if (i >= cmd->len)
-		goto out;
 
-	netlink_esp_hw_offload.bit = i;
-	netlink_esp_hw_offload.total_blocks = (sset_len + 31) / 32;
-	netlink_esp_hw_offload.state = NIC_OFFLOAD_SUPPORTED;
-
-out:
-	pfree(sset_info);
-	if (cmd != NULL)
-		pfree(cmd);
+	pfree(cmd);
 }
 
 static bool netlink_detect_offload(const char *ifname)
 {
-	struct ethtool_gfeatures *cmd;
-	uint32_t feature_bit;
-	struct ifreq ifr;
-	bool ret = false;
-	int block;
-
-	zero(&ifr);
 	/*
 	 * Kernel requires a real interface in order to query the kernel-wide
 	 * capability, so we do it here on first invocation.
@@ -1134,27 +1128,28 @@ static bool netlink_detect_offload(const char *ifname)
 
 	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNSUPPORTED) {
 		libreswan_log("Kernel does not support NIC esp-hw-offload");
-		return FALSE;
+		return false;
 	}
 
 	/* Feature is supported by kernel. Query device features */
+
 	libreswan_log("Kernel supports NIC esp-hw-offload");
-	cmd = alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) *
-		netlink_esp_hw_offload.total_blocks,
+
+	struct ethtool_gfeatures *cmd = alloc_bytes(
+		sizeof(*cmd) + sizeof(cmd->features[0]) * netlink_esp_hw_offload.total_blocks,
 		"ethtool_gfeatures");
-	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
-	ifr.ifr_data = (void *)cmd;
+
 	cmd->cmd = ETHTOOL_GFEATURES;
 	cmd->size = netlink_esp_hw_offload.total_blocks;
-	if (ioctl(nl_send_fd, SIOCETHTOOL, &ifr))
-		goto out;
 
-	block = netlink_esp_hw_offload.bit / 32;
-	feature_bit = 1U << (netlink_esp_hw_offload.bit % 32);
-	if (cmd->features[block].active & feature_bit)
-		ret = TRUE;
+	bool ret = false;
 
-out:
+	if (siocethtool(ifname, cmd, "ETHTOOL_GFEATURES")) {
+		int block = netlink_esp_hw_offload.bit / 32;
+		uint32_t feature_bit = 1U << (netlink_esp_hw_offload.bit % 32);
+		if (cmd->features[block].active & feature_bit)
+			ret = true;
+	}
 	pfree(cmd);
 	return ret;
 }
