@@ -203,6 +203,14 @@ pb_stream open_v2_message(pb_stream *reply,
 		}
 	}
 
+	if (IMPAIR(BAD_IKE_AUTH_XCHG)) {
+		libreswan_log("IMPAIR: Instead of replying with IKE_AUTH, forging an INFORMATIONAL reply");
+		if ((hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) && exchange_type == ISAKMP_v2_IKE_AUTH) {
+			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
+			hdr.isa_np = ISAKMP_NEXT_v2SK;
+		}
+	}
+
 	return open_output_struct_pbs(reply, &hdr, &isakmp_hdr_desc);
 }
 
