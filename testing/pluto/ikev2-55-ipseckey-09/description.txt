@@ -1,0 +1,18 @@
+IKEv2 responder fetch initiator key role over with two connections.
+
+east, the responder, does not initiator's public key locally.
+When AUTH exchange message arrives with IDi=road.testing.libreswan.org,
+east fetches the ipseckey RR for IDi and adds it to pluto's global keystore.
+And continue with authentication.
+
+Road publishes two IPSECKEYs in DNS.
+Road brings up first connection. It should establish and ping.
+
+Road restarts and another with the new key.
+Brings up second connection since east has both keys from DNS it will establish.
+
+Road, the initiator, has east's publickey locally configured.
+Note final.sh has ipsec auto --listpubkeys and east has road's key.
+
+ipsec is restart and road to ensure we are really using the one key we
+want to test without having both keys loaded

@@ -1,0 +1,20 @@
+#once unbound work properly replace the next lines
+nic #
+ sed -i 's/5353/53/' /etc/nsd/nsd.conf
+nic #
+ #/testing/guestbin/swan-prep --dnssec
+nic #
+ setenforce Permissive
+nic #
+ systemctl start nsd-keygen
+nic #
+ PATH/sbin/nsd > /dev/null 2> /dev/null
+nic #
+ dig +short  @127.0.0.1  road.testing.libreswan.org  IPSECKEY
+10 0 2 . AQPHFfpyJ3Ck4fMKcCH5DD/iZRKH2f0Sy6/U4MLj3Xeg76rH1qKyMPJk sMXmx6cnF1R6jjLJrP2/j7MzuXR0c90jgxFT1tSRDjZ+Z/yJHkis6dou Zp1uT+KYp9xBs6Q39QepnCNpg1SHe+oAp1urLUE00aMXHqdkLX//RXpd hVxz3WPnQK3rceZfIUOA9SNMPUoRLMqa1nnFwlFur8NumfUmHGfuij4w S8GTp5I0Noy/5tDT/ngLCmQERMqMg/3xLrUAdmGm3vFZZyttwlfg8n1r n9NGQYwxwv3EYHIIO7tW+wH8HVdOz3wPxG9ybyoO8zDboID5cMy7B6n5 13aZY0tqDxo3lcub6hf3VWJrioMF/0N4V929CIWc8WI1bmnHBAtLxBvS OImM3lbQyCxRVDIbfSfczTd6Tssa7NLOSO1DSJyK/DCfsVccqZjlhJNs 2k3MleP18qWznXCuJI0IOw+M6Vql8E2cPC9/vBCVNByWdCn8q/uPS3Gq Cya18DKYkGr9MfWr
+14 0 2 . AQPhNstk9P5SghfwUjHiuiS2NmMEGgZQLAXbvoojwGHMRT1lZ2o01Dam dyTmtBsCNVsFRkSTkOWhWOHxRi2Gwujr8XRfJ1k3UA23B/GSFaaNy8s9 xMEamxrlmsFOgym4ndsXBKMi7NZMH8czTU08hH48y9h62ojA+QYpPpAh Mwn3ehC2J60LDvjkPvae7jBYK8v57JhcChxmnVc8bzrTa3fKRV6Opv7K gXSVh128vWcn4Sw9BVz9r/VBEhkgj1iU9cN1LoL1YUCSFKqrG0Xwo0K0 7AgSvAFC3QJicckSW6TGRZWu5Nuh021SV9r6K53Z/zMNVFCSj31K+59y zdLLUtWJ77TexbTJXQ83YR6XkAfny8/wnv2xGq/6THBUP3fcFTEVHTvZ pnY/GX1CQY1RG761u07MXw0Qt63SkhEgvCWQqPlOJUNUhURioFWC63I8 s3KK3A7+H2JUL3jwIGAU0eDOO3AmVAky/NwRhJemWxen6RAqeOO9rcCy jFORqdU67lOLRtvji73E15xa5t2EuhjMMjix4zr3Agg9PZvXWg/tdpIc hpbvMvFDxsXdcbY+TLQDDgFwjkUmLgU3E08ynbB/cU4otAJQTXhCYjCy NIsZkw==
+nic #
+nic #
+ echo done
+done
+
