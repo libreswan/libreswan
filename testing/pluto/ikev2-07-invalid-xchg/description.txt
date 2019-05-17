@@ -1,0 +1,5 @@
+Test for handling a bad INFORMATIONAL before IKE_AUTH completed.
+west shows receiving a bad packet with no matching microcode
+
+This tests the fix for  https://github.com/libreswan/libreswan/issues/246
+

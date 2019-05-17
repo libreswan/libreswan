@@ -1,0 +1,34 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ echo "initdone"
+initdone
+west #
+ #expected to fail, since west is sending a impaired bad IKE_AUTH
+west #
+ ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating v2 parent SA
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiate
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: no useful state microcode entry found for incoming packet
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: retransmit so deleting SA
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I2) and NOT sending notification
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: reschedule pending child #2 STATE_PARENT_I2 of connection "westnet-eastnet-ipv4-psk-ikev2" - the parent is going away
+west #
+ echo done
+done
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

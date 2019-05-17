@@ -106,6 +106,7 @@ kvmplutotest	ikev2-04-basic-x509-no-ca-mismatch	good
 kvmplutotest	ikev2-04-basic-x509-no-ca-mismatch-02	good
 kvmplutotest	ikev2-05-basic-psk			good
 kvmplutotest	ikev2-05-basic-psk-oneconf-namespaces	good
+kvmplutotest	ikev2-07-invalid-xchg			good
 kvmplutotest	ikev2-dcookie-01			good
 kvmplutotest	ikev2-dcookie-02			good
 kvmplutotest	ikev2-dcookie-03			good
