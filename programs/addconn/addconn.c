@@ -4,6 +4,8 @@
  * Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2013 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

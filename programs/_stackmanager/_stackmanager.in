@@ -2,8 +2,9 @@
 # STACK startup script
 # Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
-# Copyright (C) 2008-2015 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2008-2019 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the

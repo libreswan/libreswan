@@ -5,7 +5,7 @@
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015, Andrew Cagney <cagney@gnu.org>
  *

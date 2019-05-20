@@ -10,7 +10,7 @@
  * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2014,2017 Andrew Cagney <cagney@gmail.com>
+ * Copyright (C) 2014-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017-2018 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it

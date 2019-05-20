@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

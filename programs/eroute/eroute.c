@@ -3,7 +3,8 @@
  * Copyright (C) 1996  John Ioannidis.
  * Copyright (C) 1997, 1998, 1999, 2000, 2001  Richard Guy Briggs.
  * Copyright (C) 2013 - 2017 D. Hugh Redelmeier
- * Copyright (C) 2017 Paul Wouters
+ * Copyright (C) 2017-2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

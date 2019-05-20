@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003  Michael Richardson <mcr@freeswan.org>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by

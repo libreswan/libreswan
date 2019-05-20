@@ -2,6 +2,7 @@
  * IKEv2 Redirect Mechanism (RFC 5685) related functions
  *
  * Copyright (C) 2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

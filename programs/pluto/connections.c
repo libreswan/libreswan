@@ -16,8 +16,8 @@
  * Copyright (C) 2013,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013,2018 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2015-2018 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016-2019 Andrew Cagney
+ * Copyright (C) 2015-2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

@@ -4,7 +4,7 @@
  * Copyright (C) 2001  Richard Guy Briggs  <rgb@freeswan.org>
  *                 and Michael Richardson  <mcr@freeswan.org>
  * Copyright (C) 2003 Michael Richardson <mcr@freeswan.org>
- * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2014-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

@@ -7,6 +7,7 @@
  * Copyright (C) 2013-2015 Matt Rogers, <mrogers@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015 Valeriu Goldberger <vgoldberger@ventusnetworks.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

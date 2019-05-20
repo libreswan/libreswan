@@ -1,6 +1,7 @@
 /* IKEv2 send packet routines, for Libreswan
  *
- * Copyright (C) 2018-2019 Andrew Cagney
+ * Copyright (C) 2018-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

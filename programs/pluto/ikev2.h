@@ -1,10 +1,10 @@
 /*
  * IKEv2 functions: that ikev2_parent.c/ikev2_child.c needs.
- * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2018 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
  */
 

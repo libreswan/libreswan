@@ -2,9 +2,9 @@
  * Use libunbound to use DNSSEC supported resolving.
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2019 Stepan Broz <stepan@izitra.cz>
+ * Copyright (C) 2019-2019 Stepan Broz <stepan@izitra.cz>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

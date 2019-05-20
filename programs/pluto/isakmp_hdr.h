@@ -1,5 +1,6 @@
 /* format of ISAKMP message header
  * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

@@ -2,6 +2,7 @@
  * convert from text form of subnet specification to binary
  *
  * Copyright (C) 2000  Henry Spencer.
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by

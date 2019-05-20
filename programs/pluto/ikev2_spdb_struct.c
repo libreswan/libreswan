@@ -6,8 +6,8 @@
  * Copyright (C) 2012,2107 Antony Antony <antony@phenome.org>
  * Copyright (C) 2012-2013,2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015-2018 Andrew Cagney
+ * Copyright (C) 2012-2019 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

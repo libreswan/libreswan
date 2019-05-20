@@ -5,6 +5,7 @@
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
  * Copyright (C) 2016-2017 Andrew Cagney
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

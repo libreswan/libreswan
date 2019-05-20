@@ -2,8 +2,9 @@
 # IPsec startup and shutdown command
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2013-2018 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013-2019 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2016 Kim B. Heino <b@bbbs.net>
+# Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
