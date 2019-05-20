@@ -101,8 +101,11 @@ sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/cert_verify/usage_test
 sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/pluto/ikev1-01-fuzzer/cve-2015-3204.py
 sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/pluto/ikev2-15-fuzzer/send_bad_packets.py
 sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/x509/dist_certs.py
+sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/_unbound-hook/_unbound-hook.in
 # enable crypto-policies support
 sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" programs/configs/ipsec.conf.in
+# linking to freebl is no longer needed
+sed -i "s/-lfreebl //" mk/config.mk
 
 %build
 %if 0%{with_efence}
