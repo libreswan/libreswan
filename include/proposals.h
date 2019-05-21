@@ -116,12 +116,6 @@ struct proposal_protocol {
 			    const struct proposal *proposal);
 
 	/*
-	 * XXX: Is the proto-id needed?  Parser should be protocol
-	 * agnostic.
-	 */
-	unsigned protoid;
-
-	/*
 	 * This lookup functions must set err and return null if NAME
 	 * isn't valid.
 	 */

@@ -160,7 +160,6 @@ const struct proposal_defaults ikev2_ike_defaults = {
 const struct proposal_protocol ike_proposal_protocol = {
 	.name = "IKE",
 	.ikev1_alg_id = IKEv1_OAKLEY_ID,
-	.protoid = PROTO_ISAKMP,
 	.defaults = {
 		[IKEv1] = &ikev1_ike_defaults,
 		[IKEv2] = &ikev2_ike_defaults,

@@ -90,7 +90,6 @@ static const struct proposal_defaults v2_esp_defaults = {
 static const struct proposal_protocol esp_proposal_protocol = {
 	.name = "ESP",
 	.ikev1_alg_id = IKEv1_ESP_ID,
-	.protoid = PROTO_IPSEC_ESP,
 	.defaults = {
 		[IKEv1] = &v1_esp_defaults,
 		[IKEv2] = &v2_esp_defaults,
