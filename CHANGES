@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.29 (unreleased)
+* packaging: fedora30 requires gcc to be listed as BuildRequires: [Paul]
 
 v3.28 (May 20, 2019)
 * KLIPS: Disable KLIPS userland support per default [Paul]
