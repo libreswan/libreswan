@@ -375,53 +375,58 @@ static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
  * @param c Connection structure (active)
  * @param peer_net IP Subnet the peer proposes
  * @param his_addr Peers IP Address
- * @return bool True if allowed
+ * @return err_t NULL if allowed, diagnostic otherwise
  */
 err_t check_virtual_net_allowed(const struct connection *c,
 			     const ip_subnet *peer_net,
 			     const ip_address *his_addr)
 {
 	const struct virtual_t *virt = c->spd.that.virt;
-	err_t why = NULL;
-
 	if (virt == NULL)
 		return NULL;
 
-	if (virt->flags & F_VIRTUAL_HOST) {
-		if (!subnetishost(peer_net)) {
-			return "only virtual host IPs are allowed";
-		}
+	if (virt->flags & F_VIRTUAL_HOST && !subnetishost(peer_net)) {
+		return "only virtual host IPs are allowed";
 	}
 
-	if (virt->flags & F_VIRTUAL_NO) {
-		if (subnetishost(peer_net) && addrinsubnet(his_addr, peer_net))
+	if (virt->flags & F_VIRTUAL_NO &&
+	    subnetishost(peer_net) &&
+	    addrinsubnet(his_addr, peer_net))
 			return NULL;
-	}
+
+	err_t why = NULL;
 
 	if (virt->flags & F_VIRTUAL_PRIVATE) {
-		if (net_in_list(peer_net, private_net_incl,
-				private_net_incl_len) &&
-		    !net_in_list(peer_net, private_net_excl,
-				private_net_excl_len))
+		if (!net_in_list(peer_net, private_net_incl,
+				private_net_incl_len)) {
+			why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=) since it is in use elsewhere";
+		} else if (net_in_list(peer_net, private_net_excl,
+				private_net_excl_len)) {
+			why = "a private network virtual IP was required, but our list (virtual-private=) excludes their IP (e.g. %v4!...) since it is in use elsewhere";
+		} else {
 			return NULL;
+		}
 
-		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=), or our list excludes their IP (e.g. %v4!...) since it is in use elsewhere";
+		/* ??? why don't we just return failure now? */
 	}
 
 	if (virt->n_net != 0) {
-		/* ??? if why is already set, is this behaviour correct? */
+		/* ??? if why is already set, is it correct to ignore it? */
 		if (net_in_list(peer_net, virt->net, virt->n_net))
 			return NULL;
 
 		why = "a specific network IP was required, but the proposed IP did not match our list (subnet=vhost:list)";
+		/* ??? why don't we just return failure now? */
 	}
 
 	if (virt->flags & F_VIRTUAL_ALL) {
-		/* ??? if why is already set, is this behaviour correct? */
+		/* ??? if why is already set, is it correct to ignore it? */
 		/* %all must only be used for testing - log it */
 		loglog(RC_LOG_SERIOUS, "Warning - v%s:%%all must only be used for testing",
 			(virt->flags & F_VIRTUAL_HOST) ? "host" : "net");
-		return NULL;
+
+		/* ??? why are we overriding/ignoring  "why"? */
+		return NULL;	/* ??? same as: why = NULL; */
 	}
 
 	return why;
