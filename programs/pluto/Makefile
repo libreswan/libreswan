@@ -153,6 +153,9 @@ LDFLAGS += -lpthread
 LDFLAGS += $(FIPSCHECK_LDFLAGS)
 LDFLAGS += $(LIBCAP_NG_LDFLAGS)
 
+# Add RT_LDFLAGS for glibc < 2.17
+LDFLAGS += $(RT_LDFLAGS)
+
 ifeq ($(USE_BSDKAME),true)
 OBJS += kernel_bsd.o
 else
