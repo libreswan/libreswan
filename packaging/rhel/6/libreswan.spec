@@ -8,7 +8,6 @@
 %{!?_rundir:%global _rundir %{_localstatedir}/run}
 # Libreswan config options
 %global libreswan_config \\\
-    WERROR_CFLAGS= \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     FINALRUNDIR=%{_rundir}/pluto \\\
@@ -25,7 +24,6 @@
     USE_LIBCURL=true \\\
     USE_LINUX_AUDIT=true \\\
     USE_NM=true \\\
-    USE_NSS_AVA_COPY=true \\\
     USE_NSS_IPSEC_PROFILE=false \\\
     USE_SECCOMP=false \\\
     USE_XAUTHPAM=true \\\
