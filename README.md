@@ -47,14 +47,12 @@ For Debian/Ubuntu
 	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
 	(unbound is build without event api, set USE_DNSSEC=false)
 
-For Fedora/RHEL7/CentOS7
+For Fedora/RHEL8/CentOS8/RHEL7/CentOS7
 
 	yum install audit-libs-devel bison curl-devel fipscheck-devel flex \
 		gcc ldns-devel libcap-ng-devel libevent-devel \
 		libseccomp-devel libselinux-devel make nspr-devel nss-devel \
 		pam-devel pkgconfig systemd-devel unbound-devel xmlto
-
-       (on rhel/centos unbound is too old, set USE_DNSSEC=false)
 
 For RHEL6/CentOS6
 
@@ -75,7 +73,16 @@ Runtime requirements (usually already present on the system)
 	Python is used for "ipsec verify", which helps debugging problems
 	python-ipaddress is used for "ipsec show", which shows tunnels
 
-## Compiling the userland and IKE daemon
+
+## Building for RPM based systems
+See packaging/ for an up to date spec file for your distribution. For example,
+to build for CentOS8, use: rpmbuild -ba packaging/centos/8/libreswan.spec
+
+## Building for DEB based systems
+The packaging/debian directly is used to build deb files. Simply issue the
+command: make deb
+
+## Compiling the userland and IKE daemon manually in /usr/local
 
     make programs
     sudo make install
@@ -93,16 +100,22 @@ the kernel sysctl values needs changing.
 ## Starting Libreswan
 The install will detect the init system used (systemd, upstart, sysvinit,
 openrc) and should integrate with the linux distribution. The service
-name is called "ipsec".  For example, on RHEL7, one would use:
+name is called "ipsec".  For example, on RHEL8, one would use:
 
     systemctl enable ipsec.service
     systemctl start ipsec.service
 
 If unsure of the specific init system used on the system, the "ipsec"
-command can also be used to start or stop the ipsec service:
+command can also be used to start or stop the ipsec service. This
+command will auto-detect the init system and invoke it:
 
     ipsec start
     ipsec stop
+
+## Status
+For a connection status overview, use: ipsec trafficstatus
+For a brief status overview, use: ipsec briefstatus
+For a machine readable global status, use: ipsec globalstatus
 
 ## Configuration
 Most of the libreswan configuration is stored in /etc/ipsec.conf and
