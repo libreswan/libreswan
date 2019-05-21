@@ -116,7 +116,7 @@ make %{?_smp_mflags} \
 %else
     USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %endif
-    USERLINK="-g -pie -lrt -Wl,-z,relro,-z,now %{?efence}" \
+    USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
     %{libreswan_config} \
     programs
 FS=$(pwd)
