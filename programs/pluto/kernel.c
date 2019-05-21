@@ -2832,12 +2832,11 @@ bool install_inbound_ipsec_sa(struct state *st)
 				 * intended, but am leaving it in to make it
 				 * behave like before
 				 */
-				if (!LIN(POLICY_TUNNEL, c->policy) &&
-					!LIN(POLICY_TUNNEL, o->policy))
+				if (!LIN(POLICY_TUNNEL, c->policy | o->policy))
 					break;
+
 				/* Both declared that overlapping is OK. */
-				if (LIN(POLICY_OVERLAPIP, c->policy) &&
-					LIN(POLICY_OVERLAPIP, o->policy))
+				if (LIN(POLICY_OVERLAPIP, c->policy & o->policy))
 					break;
 			}
 
