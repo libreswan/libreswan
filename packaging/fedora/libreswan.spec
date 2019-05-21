@@ -49,6 +49,7 @@ Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
 Provides: openswan-doc = %{version}-%{release}
 
+BuildRequires: gcc
 BuildRequires: pkgconfig hostname
 BuildRequires: bison flex
 BuildRequires: systemd-devel
