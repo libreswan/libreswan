@@ -2820,12 +2820,14 @@ static err_t netlink_migrate_sa_check(void)
 
 static bool netlink_poke_ipsec_policy_hole(struct raw_iface *ifp, int fd)
 {
-	int opt, sol;
-	struct xfrm_userpolicy_info policy;
+	struct xfrm_userpolicy_info policy = {
+		.action = XFRM_POLICY_ALLOW,
+		.sel = {
+			.family = addrtypeof(&ifp->addr)
+		}
+	};
 
-	zero(&policy);
-	policy.action = XFRM_POLICY_ALLOW;
-	policy.sel.family = addrtypeof(&ifp->addr);
+	int opt, sol;
 
 	if (addrtypeof(&ifp->addr) == AF_INET6) {
 		sol = IPPROTO_IPV6;
@@ -2837,16 +2839,13 @@ static bool netlink_poke_ipsec_policy_hole(struct raw_iface *ifp, int fd)
 
 	policy.dir = XFRM_POLICY_IN;
 	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_raw_ifaces();");
-		close(fd);
+		LOG_ERRNO(errno, "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_raw_ifaces()");
 		return false;
 	}
 
 	policy.dir = XFRM_POLICY_OUT;
-
 	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_raw_ifaces() XFRM_POLICY_OUT");
-		close(fd);
+		LOG_ERRNO(errno, "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_raw_ifaces()");
 		return false;
 	}
 

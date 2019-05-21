@@ -384,6 +384,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	 */
 	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
 	    !kernel_ops->poke_ipsec_policy_hole(ifp, fd)) {
+		close(fd);
 		return -1;
 	}
 
