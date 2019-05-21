@@ -167,6 +167,9 @@ ifeq ($(USE_NM),true)
 USERLAND_CFLAGS+=-DHAVE_NM
 endif
 
+# Link with -lrt (only for glibc versions before 2.17)
+RT_LDFLAGS ?= -lrt
+
 # include PAM support for XAUTH when available on the platform
 
 USE_XAUTHPAM?=true
