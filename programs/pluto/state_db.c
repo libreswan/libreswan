@@ -246,12 +246,12 @@ static void del_from_ike_spi_tables(struct state *st)
 }
 
 static bool state_plausable(struct state *st, enum ike_version ike_version,
-			    so_serial_t clonedfrom, const msgid_t *msgid)
+			    so_serial_t clonedfrom, const msgid_t *v1_msgid)
 {
 	if (st->st_ike_version != ike_version) {
 		return false;
 	}
-	if (msgid != NULL && st->st_msgid != *msgid) {
+	if (v1_msgid != NULL && st->st_msgid != *v1_msgid) {
 		return false;
 	}
 	switch (clonedfrom) {
@@ -278,14 +278,14 @@ static bool state_plausable(struct state *st, enum ike_version ike_version,
 
 struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 					 so_serial_t clonedfrom,
-					 const msgid_t *msgid,
+					 const msgid_t *v1_msgid,
 					 const ike_spi_t *ike_initiator_spi,
 					 const char *name)
 {
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(ike_initiator_spi),
 				    st) {
-		if (!state_plausable(st, ike_version, clonedfrom, msgid)) {
+		if (!state_plausable(st, ike_version, clonedfrom, v1_msgid)) {
 			continue;
 		}
 		if (!ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
@@ -303,7 +303,7 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 
 struct state *state_by_ike_spis(enum ike_version ike_version,
 				so_serial_t clonedfrom,
-				const msgid_t *msgid,
+				const msgid_t *v1_msgid,
 				const ike_spis_t *ike_spis,
 				state_by_predicate *predicate,
 				void *predicate_context,
@@ -311,7 +311,7 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 {
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(ike_spis), st) {
-		if (!state_plausable(st, ike_version, clonedfrom, msgid)) {
+		if (!state_plausable(st, ike_version, clonedfrom, v1_msgid)) {
 			continue;
 		}
 		if (!ike_spis_eq(&st->st_ike_spis, ike_spis)) {

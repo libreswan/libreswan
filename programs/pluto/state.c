@@ -720,7 +720,7 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 
 	/* Any children? */
 	struct state *st = state_by_ike_spis(IKEv2, ike->sa.st_serialno,
-					     NULL /* ignore msgid */,
+					     NULL/* ignore v1 msgid */,
 					     &ike->sa.st_ike_spis,
 					     NULL, NULL /* no predicate */,
 					     __func__);
@@ -1563,14 +1563,16 @@ void for_each_state(void (*f)(struct state *, void *data), void *data)
 
 struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 {
-	return state_by_ike_spis(IKEv1, SOS_IGNORE/*clonedfrom*/, &msgid,
+	return state_by_ike_spis(IKEv1, SOS_IGNORE/*clonedfrom*/,
+				 &msgid/*check v1 msgid*/,
 				 ike_spis, NULL, NULL, __func__);
 }
 
 struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 				    msgid_t msgid)
 {
-	return state_by_ike_initiator_spi(IKEv1, SOS_IGNORE, &msgid,
+	return state_by_ike_initiator_spi(IKEv1, SOS_IGNORE,
+					  &msgid/*check v1 msgid*/,
 					  ike_initiator_spi, __func__);
 }
 
@@ -1580,7 +1582,7 @@ struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 struct state *find_v2_ike_sa(const ike_spis_t *ike_spis)
 {
 	return state_by_ike_spis(IKEv2, SOS_NOBODY/*clonedfrom*/,
-				 NULL/*ignore msgid*/,
+				 NULL/*ignore v1 msgid*/,
 				 ike_spis, NULL, NULL, __func__);
 }
 
@@ -1593,8 +1595,8 @@ struct state *find_v2_ike_sa(const ike_spis_t *ike_spis)
 struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi)
 {
 	return state_by_ike_initiator_spi(IKEv2, SOS_NOBODY/*IKE_SA*/,
-					  NULL/*msgid*/, ike_initiator_spi,
-					  __func__);
+					  NULL/*ignore v2 msgid*/,
+					  ike_initiator_spi, __func__);
 }
 
 /*
@@ -1619,7 +1621,8 @@ struct state *find_v2_sa_by_request_msgid(const ike_spis_t *ike_spis, const msgi
 	struct request_filter filter = {
 		.msgid = msgid,
 	};
-	return state_by_ike_spis(IKEv2, SOS_IGNORE, &msgid, ike_spis,
+	return state_by_ike_spis(IKEv2, SOS_IGNORE,
+				 NULL/*ignore v1 msgid*/, ike_spis,
 				 request_predicate, &filter, __func__);
 }
 
@@ -1690,7 +1693,8 @@ struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
 		.protoid = protoid,
 		.spi = spi,
 	};
-	return state_by_ike_spis(IKEv2, SOS_SOMEBODY, NULL /* ignore MSGID */,
+	return state_by_ike_spis(IKEv2, SOS_SOMEBODY,
+				 NULL/* ignore v1 msgid*/,
 				 ike_spis, v2_spi_predicate,
 				 &filter, __func__);
 }
@@ -1778,7 +1782,7 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 		.msgid = msgid,
 	};
 	return state_by_ike_spis(IKEv1, SOS_IGNORE,
-				 NULL/* check MSGID in msgid_predicate() */,
+				 NULL/*ignore v1 msgid; see predicate*/,
 				 ike_spis, v1_msgid_predicate,
 				 &filter, __func__);
 }
@@ -2793,7 +2797,8 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 		.from = from,
 		.to = to,
 	};
-	state_by_ike_spis(IKEv2, from->sa.st_serialno, NULL /* ignore MSGID */,
+	state_by_ike_spis(IKEv2, from->sa.st_serialno,
+			  NULL/*ignore v1 msgid*/,
 			  &from->sa.st_ike_spis,
 			  v2_migrate_predicate, &filter, __func__);
 }
@@ -2829,7 +2834,7 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 		.v2_responder_state = v2_responder_state,
 	};
 	state_by_ike_spis(pst->st_ike_version, pst->st_serialno,
-			  NULL /* ignore MSGID */, &pst->st_ike_spis,
+			  NULL/*ignore v1 msgid*/, &pst->st_ike_spis,
 			  delete_predicate, &delete_filter,
 			  __func__);
 	/* delete self */
