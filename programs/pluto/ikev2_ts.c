@@ -796,10 +796,8 @@ bool v2_process_ts_request(struct child_sa *child,
 			continue;
 		}
 		if (score_gt(&score, &best_score)) {
-#if 0
-			dbg("    found better spd route for TSi[%zu],TSr[%zu]",
+			dbg("    found better spd route for TSi[%td],TSr[%td]",
 			    score.tsi - tsi.ts, score.tsr - tsr.ts);
-#endif
 			best_score = score;
 			best_spd_route = sra;
 			passert(best_connection == c);
@@ -898,11 +896,9 @@ bool v2_process_ts_request(struct child_sa *child,
 					continue;
 				}
 				if (score_gt(&score, &best_score)) {
-#if 0
-					dbg("    protocol fitness found better match d %s, TSi[%zu],TSr[%zu]",
+					dbg("    protocol fitness found better match d %s, TSi[%td],TSr[%td]",
 					    d->name,
 					    score.tsi - tsi.ts, score.tsr - tsr.ts);
-#endif
 					best_connection = d;
 					best_score = score;
 					best_spd_route = sr;
