@@ -98,8 +98,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
-static stf_status ikev2_start_new_exchange(struct state *st);
-
 static stf_status ikev2_child_out_tail(struct msg_digest *md);
 
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
@@ -4870,30 +4868,36 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	return STF_OK;
 }
 
-static stf_status ikev2_start_new_exchange(struct state *st)
+static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
+					   struct child_sa *child)
 {
-	if (IS_CHILD_SA_INITIATOR(st)) {
-		struct ike_sa *ike = ike_sa(st);
+	switch (child->sa.st_establishing_sa) { /* where we're going */
+	case IKE_SA:
+		return STF_OK;
+	case IPSEC_SA: /* CHILD_SA */
 		if (!ike->sa.st_viable_parent) {
-			st->st_policy = st->st_connection->policy; /* for pick_initiator */
+			child->sa.st_policy = child->sa.st_connection->policy; /* for pick_initiator */
 
 			loglog(RC_LOG_SERIOUS, "no viable to parent to initiate CREATE_CHILD_EXCHANGE %s; trying replace",
-					st->st_state_name);
-			delete_event(st);
-			event_schedule_s(EVENT_SA_REPLACE, REPLACE_ORPHAN, st);
+			       child->sa.st_state_name);
+			delete_event(&child->sa);
+			event_schedule_s(EVENT_SA_REPLACE, REPLACE_ORPHAN, &child->sa);
 			/* ??? surely this isn't yet a failure or a success */
 			return STF_FAIL;
 		}
+		return STF_OK;
+	default:
+		bad_case(child->sa.st_establishing_sa);
 	}
-
-	return STF_OK;
 }
 
 void ikev2_child_send_next(struct state *st)
 {
 	set_cur_state(st);
+	struct child_sa *child = pexpect_child_sa(st);
+	struct ike_sa *ike = ike_sa(&child->sa);
 
-	stf_status e = ikev2_start_new_exchange(st);
+	stf_status e = ikev2_start_new_exchange(ike, child);
 	if (e != STF_OK)
 		return;	/* ??? e lost?  probably should call complete_v2_state_transition */
 
@@ -5902,7 +5906,8 @@ static void ikev2_child_outI_continue(struct state *st,
 		st->st_state == STATE_V2_REKEY_IKE_I0);
 
 	/* child initiating exchange */
-	pexpect(IS_CHILD_SA(st));
+	struct child_sa *child = pexpect_child_sa(st);
+	struct ike_sa *ike = ike_sa(&child->sa);
 	pexpect(st->st_sa_role == SA_INITIATOR);
 
 	/* initiating, so *MDP should be NULL; later */
@@ -5914,7 +5919,6 @@ static void ikev2_child_outI_continue(struct state *st,
 	     __func__, st->st_serialno, st->st_state_name);
 
 	/* and a parent? */
-	struct ike_sa *ike = ike_sa(st);
 	if (ike == NULL) {
 		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
 			    st->st_serialno, st->st_clonedfrom);
@@ -5931,7 +5935,7 @@ static void ikev2_child_outI_continue(struct state *st,
 	stf_status e = add_st_to_ike_sa_send_list(st, ike);
 
 	if (e == STF_OK) {
-		e = ikev2_start_new_exchange(st);
+		e = ikev2_start_new_exchange(ike, child);
 	}
 	if (e == STF_OK) {
 		passert(*mdp != NULL);

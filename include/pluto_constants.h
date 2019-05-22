@@ -833,10 +833,6 @@ extern struct keywords sa_role_names;
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 #define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)
 
-#define IS_CHILD_SA_INITIATOR(st) \
-	((st)->st_state == STATE_V2_CREATE_I0 || \
-	  (st)->st_state == STATE_V2_REKEY_CHILD_I0)
-
 #define IS_IKE_REKEY_INITIATOR(st) \
 	((st)->st_state == STATE_V2_REKEY_IKE_I0 || \
 	 (st)->st_state == STATE_V2_REKEY_IKE_I)
