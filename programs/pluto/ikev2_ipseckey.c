@@ -710,12 +710,12 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 	dnsr->cb(dnsr);
 }
 
-static err_t build_dns_name(fmtbuf_t *name_buf, const struct id *id)
+static err_t build_dns_name(jambuf_t *name_buf, const struct id *id)
 {
 	switch (id->kind) {
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		fmt_address_reversed(name_buf, &id->ip_addr);
+		jam_address_reversed(name_buf, &id->ip_addr);
 		break;
 
 	case ID_FQDN:
@@ -725,7 +725,7 @@ static err_t build_dns_name(fmtbuf_t *name_buf, const struct id *id)
 			unsigned len = id->name.len;
 			while (len > 0 && id->name.ptr[len - 1] == '.')
 				len--;
-			fmt(name_buf, "%.*s.", len, id->name.ptr);
+			jam(name_buf, "%.*s.", len, id->name.ptr);
 		}
 		break;
 
@@ -733,7 +733,7 @@ static err_t build_dns_name(fmtbuf_t *name_buf, const struct id *id)
 		return "can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR";
 	}
 
-	if (!fmtbuf_ok(name_buf)) {
+	if (!jambuf_ok(name_buf)) {
 		return "FQDN is too long for domain name";
 	}
 	return NULL;
@@ -753,7 +753,7 @@ static struct p_dns_req *qry_st_init(struct state *st,
 
 
 	char qname[SWAN_MAX_DOMAIN_LEN];
-	fmtbuf_t qbuf = ARRAY_AS_FMTBUF(qname);
+	jambuf_t qbuf = ARRAY_AS_JAMBUF(qname);
 	err_t err = build_dns_name(&qbuf, &id);
 	if (err !=  NULL) {
 		/* is there qtype to name lookup function  */

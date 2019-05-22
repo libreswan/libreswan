@@ -88,7 +88,7 @@ typedef struct {
 } deltatime_buf;
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
 
-/* fmt_deltatime() */
+/* jam_deltatime() */
 size_t lswlog_deltatime(struct lswlog *buf, deltatime_t d);
 
 /* But what about -ve? */

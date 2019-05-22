@@ -43,25 +43,25 @@ int endpoint_type(const ip_endpoint *endpoint)
 
 const char *str_endpoint(const ip_endpoint *endpoint, ip_endpoint_buf *dst)
 {
-	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
-	fmt_endpoint(&buf, endpoint);
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_endpoint(&buf, endpoint);
 	return dst->buf;
 }
 
 const char *str_sensitive_endpoint(const ip_endpoint *endpoint, ip_endpoint_buf *dst)
 {
-	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
-	fmt_sensitive_endpoint(&buf, endpoint);
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_sensitive_endpoint(&buf, endpoint);
 	return dst->buf;
 }
 
-void fmt_sensitive_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
+void jam_sensitive_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
 {
 	if (!log_ip) {
 		lswlogs(buf, "<address:port>");
 		return;
 	}
-	fmt_endpoint(buf, endpoint);
+	jam_endpoint(buf, endpoint);
 }
 
 /*
@@ -74,7 +74,7 @@ void fmt_sensitive_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
  * cannot be used, while for UDP, the source port is optional
  * and a value of zero means no port.
  */
-void fmt_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
+void jam_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
 {
 	ip_address address = endpoint_address(endpoint);
 	int port = endpoint_port(endpoint);
@@ -82,7 +82,7 @@ void fmt_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
 
 	switch (type) {
 	case AF_INET: /* N.N.N.N[:PORT] */
-		fmt_address_cooked(buf, &address);
+		jam_address_cooked(buf, &address);
 		if (port > 0) {
 			lswlogf(buf, ":%d", port);
 		}
@@ -90,11 +90,11 @@ void fmt_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
 	case AF_INET6: /* [N:..:N]:PORT or N:..:N */
 		if (port > 0) {
 			lswlogf(buf, "[");
-			fmt_address_cooked(buf, &address);
+			jam_address_cooked(buf, &address);
 			lswlogf(buf, "]");
 			lswlogf(buf, ":%d", port);
 		} else {
-			fmt_address_cooked(buf, &address);
+			jam_address_cooked(buf, &address);
 		}
 		break;
 	case 0:

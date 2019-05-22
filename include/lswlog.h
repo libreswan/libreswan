@@ -26,7 +26,7 @@
 
 #include "lset.h"
 #include "lswcdefs.h"
-#include "fmtbuf.h"
+#include "jambuf.h"
 #include "libreswan/passert.h"
 #include "constants.h"		/* for DBG_... */
 

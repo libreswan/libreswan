@@ -149,7 +149,7 @@ chunk_t same_ip_address_as_chunk(const ip_address *address)
  * Implement https://tools.ietf.org/html/rfc5952
  */
 
-static void fmt_raw_ipv4_address(struct lswlog *buf, chunk_t a, char sepc)
+static void jam_raw_ipv4_address(struct lswlog *buf, chunk_t a, char sepc)
 {
 	const char seps[2] = { sepc == 0 ? '.' : sepc, 0, };
 	const char *sep = "";
@@ -159,7 +159,7 @@ static void fmt_raw_ipv4_address(struct lswlog *buf, chunk_t a, char sepc)
 	}
 }
 
-static void fmt_raw_ipv6_address(struct lswlog *buf, chunk_t a, char sepc,
+static void jam_raw_ipv6_address(struct lswlog *buf, chunk_t a, char sepc,
 				 chunk_t skip)
 {
 	const char seps[2] = { sepc == 0 ? ':' : sepc, 0, };
@@ -182,7 +182,7 @@ static void fmt_raw_ipv6_address(struct lswlog *buf, chunk_t a, char sepc,
 	}
 }
 
-void fmt_address_raw(struct lswlog *buf, const ip_address *address, char sepc)
+void jam_address_raw(struct lswlog *buf, const ip_address *address, char sepc)
 {
 	chunk_t a = same_ip_address_as_chunk(address);
 	if (a.len == 0) {
@@ -192,10 +192,10 @@ void fmt_address_raw(struct lswlog *buf, const ip_address *address, char sepc)
 	int type = addrtypeof(address);
 	switch (type) {
 	case AF_INET: /* N.N.N.N */
-		fmt_raw_ipv4_address(buf, a, sepc);
+		jam_raw_ipv4_address(buf, a, sepc);
 		break;
 	case AF_INET6: /* N:N:...:N */
-		fmt_raw_ipv6_address(buf, a, sepc, EMPTY_CHUNK);
+		jam_raw_ipv6_address(buf, a, sepc, EMPTY_CHUNK);
 		break;
 	case 0:
 		lswlogf(buf, "<invalid-address>");
@@ -234,7 +234,7 @@ static chunk_t zeros_to_skip(chunk_t a)
 	return zero;
 }
 
-void fmt_address_cooked(struct lswlog *buf, const ip_address *address)
+void jam_address_cooked(struct lswlog *buf, const ip_address *address)
 {
 	chunk_t a = same_ip_address_as_chunk(address);
 	if (a.len == 0) {
@@ -244,10 +244,10 @@ void fmt_address_cooked(struct lswlog *buf, const ip_address *address)
 	int type = addrtypeof(address);
 	switch (type) {
 	case AF_INET: /* N.N.N.N */
-		fmt_raw_ipv4_address(buf, a, 0);
+		jam_raw_ipv4_address(buf, a, 0);
 		break;
 	case AF_INET6: /* N:N:...:N */
-		fmt_raw_ipv6_address(buf, a, 0, zeros_to_skip(a));
+		jam_raw_ipv6_address(buf, a, 0, zeros_to_skip(a));
 		break;
 	case 0:
 		lswlogf(buf, "<invalid-address>");
@@ -258,16 +258,16 @@ void fmt_address_cooked(struct lswlog *buf, const ip_address *address)
 	}
 }
 
-void fmt_address_sensitive(struct lswlog *buf, const ip_address *address)
+void jam_address_sensitive(struct lswlog *buf, const ip_address *address)
 {
 	if (log_ip) {
-		fmt_address_cooked(buf, address);
+		jam_address_cooked(buf, address);
 	} else {
 		lswlogs(buf, "<ip-address>");
 	}
 }
 
-void fmt_address_reversed(struct lswlog *buf, const ip_address *address)
+void jam_address_reversed(struct lswlog *buf, const ip_address *address)
 {
 	chunk_t bytes = same_ip_address_as_chunk(address);
 	int type = addrtypeof(address);
@@ -275,22 +275,22 @@ void fmt_address_reversed(struct lswlog *buf, const ip_address *address)
 	case AF_INET:
 		for (int i = bytes.len - 1; i >= 0; i--) {
 			uint8_t byte = bytes.ptr[i];
-			fmt(buf, "%d.", byte);
+			jam(buf, "%d.", byte);
 		}
-		fmt(buf, "IN-ADDR.ARPA.");
+		jam(buf, "IN-ADDR.ARPA.");
 		break;
 	case AF_INET6:
 		for (int i = bytes.len - 1; i >= 0; i--) {
 			uint8_t byte = bytes.ptr[i];
-			fmt(buf, "%x.%x.", byte & 0xf, byte >> 4);
+			jam(buf, "%x.%x.", byte & 0xf, byte >> 4);
 		}
-		fmt(buf, "IP6.ARPA.");
+		jam(buf, "IP6.ARPA.");
 		break;
 	case 0:
-		fmt(buf, "<invalid-address>");
+		jam(buf, "<invalid-address>");
 		break;
 	default:
-		fmt(buf, "<invalid-type-%d>", type);
+		jam(buf, "<invalid-type-%d>", type);
 		break;
 	}
 }
@@ -298,31 +298,31 @@ void fmt_address_reversed(struct lswlog *buf, const ip_address *address)
 const char *str_address_raw(const ip_address *src, char sep,
 			    ip_address_buf *dst)
 {
-	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
-	fmt_address_raw(&buf, src, sep);
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_address_raw(&buf, src, sep);
 	return dst->buf;
 }
 
 const char *str_address_cooked(const ip_address *src,
 			       ip_address_buf *dst)
 {
-	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
-	fmt_address_cooked(&buf, src);
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_address_cooked(&buf, src);
 	return dst->buf;
 }
 
 const char *str_address_sensitive(const ip_address *src,
 			       ip_address_buf *dst)
 {
-	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
-	fmt_address_sensitive(&buf, src);
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_address_sensitive(&buf, src);
 	return dst->buf;
 }
 
 const char *str_address_reversed(const ip_address *src,
 				 address_reversed_buf *dst)
 {
-	fmtbuf_t buf = ARRAY_AS_FMTBUF(dst->buf);
-	fmt_address_reversed(&buf, src);
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_address_reversed(&buf, src);
 	return dst->buf;
 }

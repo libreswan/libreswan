@@ -187,12 +187,12 @@ static void unlocked_open_peerlog(struct connection *c)
 				 1 /* cookie */ +
 				 1 /* deliberately over allocate */);
 		c->log_file_name = alloc_bytes(lf_len, "per-peer log file name");
-		fmtbuf_t buf = array_as_fmtbuf(c->log_file_name, lf_len);
+		jambuf_t buf = array_as_jambuf(c->log_file_name, lf_len);
 		lswlogs(&buf, peerlog_basedir);
 		lswlogs(&buf, "/");
-		fmt_address_raw(&buf, &c->spd.that.host_addr, '/');
+		jam_address_raw(&buf, &c->spd.that.host_addr, '/');
 		lswlogs(&buf, "/");
-		fmt_address_raw(&buf, &c->spd.that.host_addr,
+		jam_address_raw(&buf, &c->spd.that.host_addr,
 				0/*':' or '.'*/);
 		lswlogs(&buf, suffix);
 		/* remember, it was over allocated */

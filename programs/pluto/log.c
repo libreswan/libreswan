@@ -146,17 +146,17 @@ static void log_processing(enum processing processing, bool current,
 			c = st->st_connection;
 		}
 		if (c != NULL) {
-			fmt_string(buf, " connection ");
-			fmt_connection(buf, c);
+			jam_string(buf, " connection ");
+			jam_connection(buf, c);
 		}
 		if (st != NULL && (c == NULL || !(c->policy & POLICY_OPPORTUNISTIC))) {
-			/* fmt_conn_instance() include the same if POLICY_OPPORTUNISTIC */
+			/* jam_conn_instance() include the same if POLICY_OPPORTUNISTIC */
 			lswlogf(buf, " ");
-			fmt_endpoint(buf, &st->st_remoteaddr);
+			jam_endpoint(buf, &st->st_remoteaddr);
 		}
 		if (from != NULL) {
 			lswlogf(buf, " from ");
-			fmt_endpoint(buf, from);
+			jam_endpoint(buf, from);
 		}
 		if (!current) {
 			lswlogs(buf, " (BACKGROUND)");
@@ -243,7 +243,7 @@ void log_pexpect_reset_globals(const char *func, const char *file, long line)
 	if (isvalidaddr(&cur_from)) {
 		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
 			lswlogs(buf, "processing: unexpected cur_from ");
-			fmt_sensitive_endpoint(buf, &cur_from);
+			jam_sensitive_endpoint(buf, &cur_from);
 			lswlogs(buf, " should be NULL");
 		}
 		zero(&cur_from);
@@ -535,7 +535,7 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 		cur_connection;
 
 	if (c != NULL) {
-		fmt_connection(buf, c);
+		jam_connection(buf, c);
 		if (cur_state != NULL) {
 			/* state number */
 			lswlogf(buf, " #%lu", cur_state->st_serialno);
@@ -550,7 +550,7 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 	} else if (cur_from != NULL && isvalidaddr(cur_from)) {
 		/* peer's IP address */
 		lswlogs(buf, "packet from ");
-		fmt_sensitive_endpoint(buf, cur_from);
+		jam_sensitive_endpoint(buf, cur_from);
 		lswlogs(buf, ": ");
 	}
 }
@@ -689,7 +689,7 @@ void lswlog_to_whack_stream(struct lswlog *buf)
 	passert(fd_p(wfd));
 
 	/* m includes '\0' */
-	chunk_t m = fmtbuf_as_chunk(buf);
+	chunk_t m = jambuf_as_chunk(buf);
 
 	/* don't need NUL, do need NL */
 	passert(m.ptr[m.len-1] == '\0');

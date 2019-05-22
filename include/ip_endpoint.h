@@ -56,8 +56,8 @@ typedef struct {
  * Always cooked.
  */
 const char *str_endpoint(const ip_endpoint *, ip_endpoint_buf *);
-void fmt_endpoint(struct lswlog *, const ip_endpoint*);
+void jam_endpoint(struct lswlog *, const ip_endpoint*);
 const char *str_sensitive_endpoint(const ip_endpoint *, ip_endpoint_buf *);
-void fmt_sensitive_endpoint(struct lswlog *, const ip_endpoint*);
+void jam_sensitive_endpoint(struct lswlog *, const ip_endpoint*);
 
 #endif

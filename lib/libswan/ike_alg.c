@@ -1122,7 +1122,7 @@ static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg
 		FOR_EACH_IKE_ALG_NAME(alg, alg_name) {
 			/* filter out NAME */
 			if (!shunk_strcaseeq(alg_name, alg->fqn)) {
-				fmt(buf, "%s"PRI_SHUNK, sep, PRI_shunk(alg_name));
+				jam(buf, "%s"PRI_SHUNK, sep, PRI_shunk(alg_name));
 				sep = ", ";
 			}
 		}

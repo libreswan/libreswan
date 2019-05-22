@@ -4,7 +4,7 @@
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2018 Andrew Cagney
+# Copyright (C) 2015-2019 Andrew Cagney
 # Copyright (C) 2019 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -121,7 +121,7 @@ OBJS += rate_log.o
 OBJS += libreswan_log.o
 OBJS += libreswan_log_rc.o
 
-OBJS += fmtbuf.o
+OBJS += jambuf.o
 OBJS += lswlog.o
 OBJS += lswlog_dbg.o
 OBJS += lswlog_nss_error.o

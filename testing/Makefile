@@ -15,7 +15,7 @@
 SUBDIRS = pluto
 SUBDIRS += enumcheck
 SUBDIRS += ipcheck
-SUBDIRS += fmtcheck
+SUBDIRS += jambufcheck
 SUBDIRS += timecheck
 
 ifndef top_srcdir

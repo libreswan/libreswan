@@ -15,9 +15,9 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = fmtcheck
+PROGRAM = jambufcheck
 
-OBJS += fmtcheck.o
+OBJS += jambufcheck.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)

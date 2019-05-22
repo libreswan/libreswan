@@ -36,7 +36,7 @@ typedef struct {
 	char buf[sizeof(ip_address_buf) + 4/*/NNN*/];
 } ip_subnet_buf;
 const char *str_subnet(const ip_subnet *subnet, ip_subnet_buf *out);
-void fmt_subnet(struct lswlog *buf, const ip_subnet *subnet);
+void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
 
 /*
  * old

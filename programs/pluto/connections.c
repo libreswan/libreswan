@@ -2229,59 +2229,59 @@ void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
  * Opportunistic: [" " myclient "==="] " ..." peer ["===" hisclient] '\0'
  */
 
-static void fmt_connection_client(fmtbuf_t *b,
+static void jam_connection_client(jambuf_t *b,
 				  const char *prefix, const char *suffix,
 				  const ip_subnet *client, const ip_address *gw)
 {
 	if (subnetisaddr(client, gw)) {
 		/* compact denotation for "self" */
 	} else {
-		fmt_string(b, prefix);
+		jam_string(b, prefix);
 		if (subnetisnone(client)) {
-			fmt_string(b, "?"); /* unknown */
+			jam_string(b, "?"); /* unknown */
 		} else {
-			fmt_subnet(b, client);
+			jam_subnet(b, client);
 		}
-		fmt_string(b, suffix);
+		jam_string(b, suffix);
 	}
 }
 
-void fmt_connection_instance(fmtbuf_t *buf, const struct connection *c)
+void jam_connection_instance(jambuf_t *buf, const struct connection *c)
 {
 	if (!pexpect(c->kind == CK_INSTANCE)) {
 		return;
 	}
 	if (c->instance_serial != 0) {
-		fmt(buf, "[%lu]", c->instance_serial);
+		jam(buf, "[%lu]", c->instance_serial);
 	}
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-		fmt_connection_client(buf, " ", "===",
+		jam_connection_client(buf, " ", "===",
 				      &c->spd.this.client,
 				      &c->spd.this.host_addr);
-		fmt_string(buf, " ...");
-		fmt_address_cooked(buf, &c->spd.that.host_addr);
-		fmt_connection_client(buf, "===", "",
+		jam_string(buf, " ...");
+		jam_address_cooked(buf, &c->spd.that.host_addr);
+		jam_connection_client(buf, "===", "",
 				      &c->spd.that.client,
 				      &c->spd.that.host_addr);
 	} else {
-		fmt_string(buf, " ");
-		fmt_address_sensitive(buf, &c->spd.that.host_addr);
+		jam_string(buf, " ");
+		jam_address_sensitive(buf, &c->spd.that.host_addr);
 	}
 }
 
-void fmt_connection(struct lswlog *buf, const struct connection *c)
+void jam_connection(struct lswlog *buf, const struct connection *c)
 {
-	fmt(buf, "\"%s\"", c->name);
+	jam(buf, "\"%s\"", c->name);
 	if (c->kind == CK_INSTANCE) {
-		fmt_connection_instance(buf, c);
+		jam_connection_instance(buf, c);
 	}
 }
 
 const char *str_connection(const struct connection *c,
 			   connection_buf *out)
 {
-	fmtbuf_t buf = ARRAY_AS_FMTBUF(out->buf);
-	fmt_connection(&buf, c);
+	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_connection(&buf, c);
 	return out->buf;
 }
 
@@ -2295,9 +2295,9 @@ const char *str_connection(const struct connection *c,
 char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 {
 	/* not sizeof(buf), as BUF is an address */
-	fmtbuf_t p = array_as_fmtbuf(buf, CONN_INST_BUF);
+	jambuf_t p = array_as_jambuf(buf, CONN_INST_BUF);
 	if (c->kind == CK_INSTANCE) {
-		fmt_connection_instance(&p, c);
+		jam_connection_instance(&p, c);
 	}
 	return buf;
 }

@@ -23,7 +23,7 @@ enumcheck: leak detective found no leaks
 west #
  # other checks
 west #
- ipsec fmtcheck > /dev/null || echo failed
+ ipsec jambufcheck > /dev/null || echo failed
 west #
  ipsec timecheck > /dev/null || echo failed
 west #

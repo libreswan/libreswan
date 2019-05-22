@@ -813,9 +813,9 @@ void init_ikev2(void)
 			const struct finite_state *from = finite_states[kind];
 			passert(from != NULL);
 			LSWLOG_DEBUG(buf) {
-				fmt(buf, "  ");
+				jam(buf, "  ");
 				lswlog_finite_state(buf, from);
-				fmt(buf, ":");
+				jam(buf, ":");
 				if (from->fs_nr_transitions == 0) {
 					lswlogs(buf, " <none>");
 				}

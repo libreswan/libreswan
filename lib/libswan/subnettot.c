@@ -29,6 +29,6 @@ void subnettot(const ip_subnet *sub, int format,
 {
 	passert(format == 0);
 	passert(dst != NULL);
-	fmtbuf_t buf = array_as_fmtbuf(dst, dstlen);
-	fmt_subnet(&buf, sub);
+	jambuf_t buf = array_as_jambuf(dst, dstlen);
+	jam_subnet(&buf, sub);
 }

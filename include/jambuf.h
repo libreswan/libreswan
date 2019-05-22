@@ -1,4 +1,4 @@
-/* string format buffer, for libreswan
+/* buffer for jamming strings into, for libreswan
  *
  * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
  *
@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef FMTBUF_H
-#define FMTBUF_H
+#ifndef JAMBUF_H
+#define JAMBUF_H
 
 #include <stdbool.h>
 #include <stdarg.h>		/* for va_list */
@@ -26,21 +26,21 @@
 #include "chunk.h"
 
 /*
- * fmtbuf_t provides a mechanism for accumulating formatted strings
+ * jambuf_t provides a mechanism for accumulating formatted strings
  * into a string buffer, vis:
  *
- *    fmtbuf_t buf = ...() -- see below
+ *    jambuf_t buf = ...() -- see below
  *    if (string != NULL)
- *      fmt(&buf, " string: %s", string);
+ *      jam(&buf, " string: %s", string);
  *    if (i > 100)
- *      fmt(&buf, " large i: %d", i);
+ *      jam(&buf, " large i: %d", i);
  *
  * Should there be too much output then it is truncated (leaving
  * "...").
  */
 
 /*
- * The format buffer:
+ * The jam buffer:
  *
  * ARRAY, a previously allocated array, containing the accumulated
  * NUL-terminated + CANARY-terminated output.
@@ -79,29 +79,29 @@ typedef struct lswlog {
 	size_t total;
 	size_t roof;
 	const char *dots;
-} fmtbuf_t;
+} jambuf_t;
 
-bool fmtbuf_ok(fmtbuf_t *buf);
+bool jambuf_ok(jambuf_t *buf);
 
 /*
- * Wrap a character array up in a fmtbuf_t so that it can be used to
+ * Wrap a character array up in a jambuf_t so that it can be used to
  * accumulate strings.  Simplify the common use:
  *
  * typedef struct { char buf[SIZE]; } TYPE_buf;
  * const char *str_TYPE(TYPE_t *t, TYPE_buf *out) {
- *   fmtbuf_t buf = ARRAY_AS_FMTBUF(out->buf);
- *   fmt_...(&buf, ...);
+ *   jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
+ *   jam_...(&buf, ...);
  *   return out->buf;
  * }
  */
 
-fmtbuf_t array_as_fmtbuf(char *array, size_t sizeof_array);
-#define ARRAY_AS_FMTBUF(ARRAY) array_as_fmtbuf((ARRAY), sizeof(ARRAY));
+jambuf_t array_as_jambuf(char *array, size_t sizeof_array);
+#define ARRAY_AS_JAMBUF(ARRAY) array_as_jambuf((ARRAY), sizeof(ARRAY));
 /* includes '\0' */
-chunk_t fmtbuf_as_chunk(fmtbuf_t *buf);
+chunk_t jambuf_as_chunk(jambuf_t *buf);
 
 /*
- * Routines for accumulating output in the fmtbuf buffer.
+ * Routines for accumulating output in the jambuf buffer.
  *
  * If there is insufficient space, the output is truncated and "..."
  * is appended.
@@ -116,30 +116,30 @@ chunk_t fmtbuf_as_chunk(fmtbuf_t *buf);
  * (void) cast).
  */
 
-size_t fmt(fmtbuf_t *buf, const char *format, ...) PRINTF_LIKE(2);
-size_t fmt_string(fmtbuf_t *buf, const char *string);
-size_t fmt_fmtbuf(fmtbuf_t *buf, fmtbuf_t *in);
+size_t jam(jambuf_t *buf, const char *format, ...) PRINTF_LIKE(2);
+size_t jam_string(jambuf_t *buf, const char *string);
+size_t jam_jambuf(jambuf_t *buf, jambuf_t *in);
 
-size_t fmt_va_list(fmtbuf_t *buf, const char *format, va_list ap);
+size_t jam_va_list(jambuf_t *buf, const char *format, va_list ap);
 
 /* _(in FUNC() at FILE:LINE) */
-size_t fmt_source_line(fmtbuf_t *buf, const char *func,
+size_t jam_source_line(jambuf_t *buf, const char *func,
 			  const char *file, unsigned long line);
 /* <string without binary characters> */
-size_t fmt_sanitized(fmtbuf_t *buf, const char *string);
+size_t jam_sanitized(jambuf_t *buf, const char *string);
 /* _Errno E: <strerror(E)> */
-size_t fmt_errno(fmtbuf_t *buf, int e);
+size_t jam_errno(jambuf_t *buf, int e);
 /* <hex-byte>:<hex-byte>... */
-size_t fmt_bytes(fmtbuf_t *buf, const uint8_t *bytes,
+size_t jam_bytes(jambuf_t *buf, const uint8_t *bytes,
 		 size_t sizeof_bytes);
 
 /*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
- * fmtbuf' buffer.
+ * jambuf' buffer.
  *
  * BUF (a C variable name) is declared locally as a pointer to a
- * per-thread 'struct fmtbuf' buffer.
+ * per-thread 'struct jambuf' buffer.
  *
  * Implementation notes:
  *
@@ -164,6 +164,6 @@ size_t fmt_bytes(fmtbuf_t *buf, const uint8_t *bytes,
 /*
  * To debug, set this to printf or similar.
  */
-extern int (*fmtbuf_debugf)(const char *format, ...) PRINTF_LIKE(1);
+extern int (*jambuf_debugf)(const char *format, ...) PRINTF_LIKE(1);
 
 #endif

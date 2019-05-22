@@ -170,7 +170,7 @@ size_t lswlog_deltatime(struct lswlog *buf, deltatime_t d)
 
 const char *str_deltatime(deltatime_t d, deltatime_buf *out)
 {
-	fmtbuf_t buf = ARRAY_AS_FMTBUF(out->buf);
+	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
 	lswlog_deltatime(&buf, d);
 	return out->buf;
 }

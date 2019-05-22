@@ -18,7 +18,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include "fmtbuf.h"
+#include "jambuf.h"
 #include "lswalloc.h"
 #include "lswlog.h"		/* for passert() */
 
@@ -29,49 +29,49 @@
  * The octal equivalent would be something like '\376' but who uses
  * octal :-)
  */
-#define FMTBUF_CANARY ((char) -2)
+#define JAMBUF_CANARY ((char) -2)
 
 /*
  * This is the one place where PASSERT() can't be used - it will
  * recursively end up back here!
  */
-static void assert_fmtbuf(fmtbuf_t *buf)
+static void assert_jambuf(jambuf_t *buf)
 {
 #define A(ASSERTION) if (!(ASSERTION)) abort()
 	A(buf->dots != NULL);
 	/* termination */
 	A(buf->total >= buf->roof || buf->array[buf->total] == '\0');
 	A(buf->array[buf->roof-1] == '\0');
-	A(buf->array[buf->roof-0] == FMTBUF_CANARY);
+	A(buf->array[buf->roof-0] == JAMBUF_CANARY);
 #undef A
 }
 
-static int fmtbuf_debugf_nop(const char *format UNUSED, ...)
+static int jambuf_debugf_nop(const char *format UNUSED, ...)
 {
 	return 0;
 }
 
-int (*fmtbuf_debugf)(const char *format, ...) = fmtbuf_debugf_nop;
+int (*jambuf_debugf)(const char *format, ...) = jambuf_debugf_nop;
 
 /*
  * Constructor
  */
 
-fmtbuf_t array_as_fmtbuf(char *array, size_t sizeof_array)
+jambuf_t array_as_jambuf(char *array, size_t sizeof_array)
 {
-	fmtbuf_debugf("%s(array=%p,sizeof_array=%zu)\n",
+	jambuf_debugf("%s(array=%p,sizeof_array=%zu)\n",
 		      __func__, array, sizeof_array);
 	/* pointers back at buf */
-	fmtbuf_t buf = {
+	jambuf_t buf = {
 		.array = array,
 		.total = 0,
 		.roof = sizeof_array - 1,
 		.dots = "...",
 	};
 	buf.array[buf.roof-1] = buf.array[buf.total] = '\0';
-	buf.array[buf.roof-0] = FMTBUF_CANARY;
-	assert_fmtbuf(&buf);
-	fmtbuf_debugf("\t->{.array=%p,.total=%zu,.roof=%zu,.dots='%s'}\n",
+	buf.array[buf.roof-0] = JAMBUF_CANARY;
+	assert_jambuf(&buf);
+	jambuf_debugf("\t->{.array=%p,.total=%zu,.roof=%zu,.dots='%s'}\n",
 		      buf.array, buf.total, buf.roof, buf.dots);
 	return buf;
 }
@@ -85,7 +85,7 @@ struct dest {
 	size_t size;
 };
 
-static struct dest dest(fmtbuf_t *buf)
+static struct dest dest(jambuf_t *buf)
 {
 	/*
 	 * Where will the next message be written?
@@ -103,7 +103,7 @@ static struct dest dest(fmtbuf_t *buf)
 		d.size = 0;
 	}
 	passert(d.start[0] == '\0');
-	fmtbuf_debugf("%s(buf=%p)->{.start=%p,.size=%zd}\n",
+	jambuf_debugf("%s(buf=%p)->{.start=%p,.size=%zd}\n",
 		      __func__, buf, d.start, d.size);
 	return d;
 }
@@ -112,11 +112,11 @@ static struct dest dest(fmtbuf_t *buf)
  * The output needs to be truncated, overwrite the end of the buffer
  * with DOTS.
  */
-static void truncate_buf(fmtbuf_t *buf)
+static void truncate_buf(jambuf_t *buf)
 {
-	fmtbuf_debugf("truncate_buf(.buf=%p)\n", buf);
-	fmtbuf_debugf("\tlength=%zu\n", buf->total);
-	fmtbuf_debugf("\tdots=%s\n", buf->dots);
+	jambuf_debugf("truncate_buf(.buf=%p)\n", buf);
+	jambuf_debugf("\tlength=%zu\n", buf->total);
+	jambuf_debugf("\tdots=%s\n", buf->dots);
 	/*
 	 * buffer is full to overflowing
 	 */
@@ -128,7 +128,7 @@ static void truncate_buf(fmtbuf_t *buf)
 	 */
 	passert(buf->roof > strlen(buf->dots));
 	char *dest = buf->array + buf->roof - strlen(buf->dots) - 1;
-	fmtbuf_debugf("\tdest=%p\n", dest);
+	jambuf_debugf("\tdest=%p\n", dest);
 	memcpy(dest, buf->dots, strlen(buf->dots) + 1);
 }
 
@@ -137,7 +137,7 @@ static void truncate_buf(fmtbuf_t *buf)
  * VPRINTF.
  */
 
-static size_t concat(fmtbuf_t *buf, const char *string)
+static size_t concat(jambuf_t *buf, const char *string)
 {
 	/* Just in case a NULL ends up here */
 	if (string == NULL) {
@@ -175,9 +175,9 @@ static size_t concat(fmtbuf_t *buf, const char *string)
 	return n;
 }
 
-size_t fmt_va_list(fmtbuf_t *buf, const char *format, va_list ap)
+size_t jam_va_list(jambuf_t *buf, const char *format, va_list ap)
 {
-	assert_fmtbuf(buf);
+	assert_jambuf(buf);
 	struct dest d = dest(buf);
 
 	/*
@@ -207,45 +207,45 @@ size_t fmt_va_list(fmtbuf_t *buf, const char *format, va_list ap)
 		 */
 		truncate_buf(buf);
 	}
-	assert_fmtbuf(buf);
+	assert_jambuf(buf);
 	return n;
 }
 
-size_t fmt(fmtbuf_t *buf, const char *format, ...)
+size_t jam(jambuf_t *buf, const char *format, ...)
 {
-	/* fmt_va_list does assert */
+	/* jam_va_list does assert */
 	va_list ap;
 	va_start(ap, format);
-	size_t n = fmt_va_list(buf, format, ap);
+	size_t n = jam_va_list(buf, format, ap);
 	va_end(ap);
 	return n;
 }
 
-size_t fmt_string(fmtbuf_t *buf, const char *string)
+size_t jam_string(jambuf_t *buf, const char *string)
 {
-	assert_fmtbuf(buf);
+	assert_jambuf(buf);
 	size_t n = concat(buf, string);
-	assert_fmtbuf(buf);
+	assert_jambuf(buf);
 	return n;
 }
 
-size_t fmt_fmtbuf(fmtbuf_t *buf, fmtbuf_t *fmtbuf)
+size_t jam_jambuf(jambuf_t *buf, jambuf_t *jambuf)
 {
-	assert_fmtbuf(buf);
-	size_t n = concat(buf, fmtbuf->array);
-	assert_fmtbuf(buf);
+	assert_jambuf(buf);
+	size_t n = concat(buf, jambuf->array);
+	assert_jambuf(buf);
 	return n;
 }
 
-bool fmtbuf_ok(fmtbuf_t *buf)
+bool jambuf_ok(jambuf_t *buf)
 {
-	assert_fmtbuf(buf);
+	assert_jambuf(buf);
 	return buf->total < buf->roof;
 }
 
-chunk_t fmtbuf_as_chunk(fmtbuf_t *buf)
+chunk_t jambuf_as_chunk(jambuf_t *buf)
 {
-	assert_fmtbuf(buf);
+	assert_jambuf(buf);
 	if (buf->total >= buf->roof) {
 		return chunk(buf->array, buf->roof);
 	} else {

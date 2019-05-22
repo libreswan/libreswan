@@ -97,10 +97,10 @@ typedef struct {
  *
  * cooked: IPv6 zeros like :0:..:0: suppressed; no port
  */
-void fmt_address_raw(struct lswlog *buf, const ip_address *src, char sepc);
-void fmt_address_cooked(struct lswlog *buf, const ip_address *src);
-void fmt_address_sensitive(struct lswlog *buf, const ip_address *src);
-void fmt_address_reversed(struct lswlog *buf, const ip_address *src);
+void jam_address_raw(struct lswlog *buf, const ip_address *src, char sepc);
+void jam_address_cooked(struct lswlog *buf, const ip_address *src);
+void jam_address_sensitive(struct lswlog *buf, const ip_address *src);
+void jam_address_reversed(struct lswlog *buf, const ip_address *src);
 
 const char *str_address_raw(const ip_address *src, char sepc, ip_address_buf *dst);
 const char *str_address_cooked(const ip_address *src, ip_address_buf *dst);

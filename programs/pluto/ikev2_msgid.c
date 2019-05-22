@@ -29,7 +29,7 @@
  * between calls.
  */
 
-static void fmt_msgids(struct lswlog *buf,
+static void jam_msgids(struct lswlog *buf,
 		       const char *what, enum message_role message, intmax_t msgid,
 		       struct ike_sa *ike, const struct v2_msgids *old)
 
@@ -95,10 +95,10 @@ void v2_msgid_init(struct ike_sa *ike)
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
 			/* pretend there's a sender */
-			fmt_msgids(buf, "initializing", NO_MESSAGE, -1, ike, &old);
-			fmt(buf, "; ike.current_request=%jd", old_request);
+			jam_msgids(buf, "initializing", NO_MESSAGE, -1, ike, &old);
+			jam(buf, "; ike.current_request=%jd", old_request);
 			if (old_request != ike->sa.st_v2_msgids.current_request) {
-				fmt(buf, "->%jd", ike->sa.st_v2_msgids.current_request);
+				jam(buf, "->%jd", ike->sa.st_v2_msgids.current_request);
 			}
 		}
 	}
@@ -182,9 +182,9 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
-			fmt_msgids(buf, "receiving", role, msgid, ike, &old);
+			jam_msgids(buf, "receiving", role, msgid, ike, &old);
 			if (old_receiver_request != receiver->st_v2_msgids.current_request) {
-				fmt(buf, "; receiver #%lu: receiver.current_request=%jd->%jd",
+				jam(buf, "; receiver #%lu: receiver.current_request=%jd->%jd",
 				    receiver->st_serialno, old_receiver_request,
 				    receiver->st_v2_msgids.current_request);
 			}
@@ -274,9 +274,9 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
-			fmt_msgids(buf, "sending", sending, msgid, ike, &old);
+			jam_msgids(buf, "sending", sending, msgid, ike, &old);
 			if (old_sender_request != sender->st_v2_msgids.current_request) {
-				fmt(buf, "; sender #%lu current_request=%jd->%jd",
+				jam(buf, "; sender #%lu current_request=%jd->%jd",
 				    sender->st_serialno, old_sender_request,
 				    sender->st_v2_msgids.current_request);
 			}

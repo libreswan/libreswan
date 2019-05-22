@@ -189,7 +189,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 			LSWLOG_ERRNO(errno, buf) {
 				lswlogf(buf, "recvfrom on %s from ",
 					ifp->ip_dev->id_rname);
-				fmt_endpoint(buf, &sender); /* sensitive? */
+				jam_endpoint(buf, &sender); /* sensitive? */
 				lswlogs(buf, " failed");
 			}
 		}
@@ -208,7 +208,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		if (packet_len < (int)sizeof(uint32_t)) {
 			LSWLOG(buf) {
 				lswlogs(buf, "recvfrom ");
-				fmt_endpoint(buf, &sender); /* sensitive? */
+				jam_endpoint(buf, &sender); /* sensitive? */
 				lswlogf(buf, " too small packet (%d)",
 					packet_len);
 			}
@@ -218,7 +218,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		if (non_esp != 0) {
 			LSWLOG(buf) {
 				lswlogs(buf, "recvfrom ");
-				fmt_endpoint(buf, &sender); /* sensitive? */
+				jam_endpoint(buf, &sender); /* sensitive? */
 				lswlogs(buf, " has no Non-ESP marker");
 			}
 			return NULL;
@@ -240,7 +240,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 			   NON_ESP_MARKER_SIZE)) {
 			LSWLOG(buf) {
 				lswlogs(buf, "Mangled packet with potential spurious non-esp marker ignored. Sender: ");
-				fmt_endpoint(buf, &sender); /* sensitiv? */
+				jam_endpoint(buf, &sender); /* sensitiv? */
 			}
 			return NULL;
 		}
@@ -255,7 +255,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		 */
 		LSWDBGP(DBG_NATT, buf) {
 			lswlogs(buf, "NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: ");
-			fmt_endpoint(buf, &sender); /* sensitive? */
+			jam_endpoint(buf, &sender); /* sensitive? */
 		};
 		return NULL;
 	}
@@ -277,7 +277,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	LSWDBGP(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL, buf) {
 		lswlogf(buf, "*received %d bytes from ",
 			(int) pbs_room(&md->packet_pbs));
-		fmt_endpoint(buf, &sender);
+		jam_endpoint(buf, &sender);
 		lswlogf(buf, " on %s (port=%d)",
 			ifp->ip_dev->id_rname, ifp->port);
 	};
