@@ -182,7 +182,7 @@ void pstat_sa_deleted(struct state *st)
 	 * XXX: the above should make this completely redundant.
 	 */
 	if (IS_IKE_SA(st)) {
-		bool fail = !IS_IKE_SA_ESTABLISHED(st) && st->st_state != STATE_IKESA_DEL;
+		bool fail = !IS_IKE_SA_ESTABLISHED(st) && st->st_state->kind != STATE_IKESA_DEL;
 		if (fail) {
 			if (st->st_ike_version == IKEv2)
 				pstats_ikev2_fail++;
@@ -254,7 +254,7 @@ static void pstat_child_sa_established(struct state *st)
 	struct connection *const c = st->st_connection;
 
 	/* don't count IKEv1 half ipsec sa */
-	if (st->st_state == STATE_QUICK_R1) {
+	if (st->st_state->kind == STATE_QUICK_R1) {
 		pstats_ipsec_sa++;
 	}
 

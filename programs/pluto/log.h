@@ -58,7 +58,7 @@ extern bool whack_prompt_for(fd_t whackfd,
 			     char *ansbuf, size_t ansbuf_len);
 
 /* for pushing state to other subsystems */
-#define binlog_refresh_state(st) binlog_state((st), (st)->st_state)
+#define binlog_refresh_state(st) binlog_state((st), (st)->st_state->kind)
 #define binlog_fake_state(st, new_state) binlog_state((st), (new_state))
 extern void binlog_state(struct state *st, enum state_kind state);
 

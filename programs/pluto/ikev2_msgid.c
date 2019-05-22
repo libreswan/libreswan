@@ -36,7 +36,7 @@ static void jam_msgids(struct lswlog *buf,
 {
 	lswlogf(buf, "Message ID: IKE #%lu %s",
 		ike->sa.st_serialno,
-		ike->sa.st_finite_state->fs_short_name);
+		ike->sa.st_state->short_name);
 
 	lswlogf(buf, "; %s ", what);
 	switch (message) {

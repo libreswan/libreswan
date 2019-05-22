@@ -1226,7 +1226,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 	start_retransmits(st);
 
 	whack_log(RC_NEW_STATE + STATE_AGGR_I1,
-		  "%s: initiate", st->st_state_name);
+		  "%s: initiate", st->st_state->name);
 	reset_cur_state();
 	return STF_IGNORE;
 }

@@ -244,12 +244,12 @@ static struct msg_digest *fake_md(struct state *st)
 {
 	struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
 	fake_md->st = st;
-	fake_md->from_state = st->st_finite_state->fs_kind;
+	fake_md->from_state = st->st_state->kind;
 	fake_md->hdr.isa_msgid = v2_INVALID_MSGID;
 	fake_md->hdr.isa_version = (IKEv2_MAJOR_VERSION << ISA_MAJ_SHIFT);
 	fake_md->fake_dne = true;
 	/* asume first microcode is valid */
-	fake_md->svm = st->st_finite_state->fs_v2_transitions;
+	fake_md->svm = st->st_state->v2_transitions;
 	return fake_md;
 }
 
@@ -534,7 +534,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	/* set up new state */
 	initialize_new_state(st, c, policy, try, whack_sock);
 	passert(st->st_ike_version == IKEv2);
-	passert(st->st_state_kind == STATE_PARENT_I0);
+	passert(st->st_state->kind == STATE_PARENT_I0);
 	st->st_original_role = ORIGINAL_INITIATOR;
 	passert(st->st_sa_role == SA_INITIATOR);
 	passert(st->st_msgid_lastack == v2_INVALID_MSGID);
@@ -571,7 +571,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 		update_pending(predecessor, st);
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1,
 			  "%s: initiate, replacing #%lu",
-			  st->st_state_name,
+			  st->st_state->name,
 			  predecessor->st_serialno);
 	} else {
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
@@ -923,7 +923,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
 	 */
-	pexpect(md->svm == finite_states[STATE_PARENT_R0]->fs_v2_transitions);
+	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
 	struct state *st = new_v2_state(STATE_PARENT_R0, SA_RESPONDER,
 					md->hdr.isa_ike_spis.initiator,
 					ike_responder_spi(&md->sender));
@@ -931,7 +931,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	initialize_new_state(st, c, policy, 0, null_fd);
 	update_ike_endpoints(st, md);
 	passert(st->st_ike_version == IKEv2);
-	passert(st->st_state_kind == STATE_PARENT_R0);
+	passert(st->st_state->kind == STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
 	passert(st->st_sa_role == SA_RESPONDER);
 	passert(st->st_msgid_lastack == v2_INVALID_MSGID);
@@ -956,7 +956,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	md->st = st;
 	/* set by caller */
 	pexpect(md->from_state == STATE_PARENT_R0);
-	pexpect(md->svm == finite_states[STATE_PARENT_R0]->fs_v2_transitions);
+	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =
@@ -1379,7 +1379,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			 * sorts of magic involving the state's magic
 			 * number and assumed attributes.
 			 */
-			md->svm = finite_states[STATE_PARENT_I0]->fs_v2_transitions;
+			md->svm = finite_states[STATE_PARENT_I0]->v2_transitions;
 			change_state(st, STATE_PARENT_I0);
 			/*
 			 * XXX: Why?!?
@@ -1489,7 +1489,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			 * Just log and forget.
 			 */
 			rate_log("%s: received unauthenticated %s - ignored",
-				 st->st_state_name,
+				 st->st_state->name,
 				 enum_name(&ikev2_notify_names,
 					   ntfy->payload.v2n.isan_type));
 		}
@@ -1655,7 +1655,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 		case v2N_NO_PPK_AUTH:
 		case v2N_INITIAL_CONTACT:
 			DBG(DBG_CONTROL, DBG_log("%s: received %s which is not valid in the IKE_SA_INIT Exchange - ignoring it",
-				st->st_state_name,
+				st->st_state->name,
 				enum_name(&ikev2_notify_names,
 					ntfy->payload.v2n.isan_type)));
 			break;
@@ -1706,7 +1706,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 
 		default:
 			DBG(DBG_CONTROL, DBG_log("%s: received %s but ignoring it",
-				st->st_state_name,
+				st->st_state->name,
 				enum_name(&ikev2_notify_names,
 					ntfy->payload.v2n.isan_type)));
 		}
@@ -3295,7 +3295,7 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	const char *what;
 	struct ikev2_proposals *child_proposals;
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		if (st->st_state == STATE_V2_CREATE_I) {
+		if (st->st_state->kind == STATE_V2_CREATE_I) {
 			what = "CREATE_CHILD_SA initiator accepting remote ESP/AH proposal";
 		} else {
 			what = "CREATE_CHILD_SA responder matching remote ESP/AH proposals";
@@ -3401,7 +3401,7 @@ static stf_status ikev2_process_cp_respnse(struct msg_digest *md)
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
 
-	if (st->st_state == STATE_V2_REKEY_CHILD_I)
+	if (st->st_state->kind == STATE_V2_REKEY_CHILD_I)
 		return STF_OK; /* CP response is  not allowed in a REKEY response */
 
 	if (need_configuration_payload(c, st->hidden_variables.st_nat_traversal)) {
@@ -3443,7 +3443,7 @@ static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 	}
 
 	libreswan_log("rekeyed #%lu %s %s remaining life %lds", pred,
-			st->st_state_name,
+			st->st_state->name,
 			rst ==  NULL ? "and the state is gone" : "and expire it",
 			lifetime);
 
@@ -3584,7 +3584,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	 */
 	delete_event(st);
 
-	if (st->st_state == STATE_V2_REKEY_CHILD_I)
+	if (st->st_state->kind == STATE_V2_REKEY_CHILD_I)
 		ikev2_rekey_expire_pred(st, st->st_ipsec_pred);
 
 	return STF_OK;
@@ -3856,7 +3856,7 @@ static bool ikev2_rekey_child_req(struct state *st,
 {
 	struct state *rst = state_with_serialno(st->st_ipsec_pred);
 
-	if (st->st_state != STATE_V2_REKEY_CHILD_I0)
+	if (st->st_state->kind != STATE_V2_REKEY_CHILD_I0)
 		return TRUE;
 
 	if (rst ==  NULL) {
@@ -4155,7 +4155,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 	chunk_t local_nonce;
 	chunk_t *local_g;
 
-	switch (st->st_state) {
+	switch (st->st_state->kind) {
 	case STATE_V2_REKEY_IKE_R:
 	{
 		local_g = &st->st_gr;
@@ -4188,7 +4188,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 		break;
 	}
 	default:
-		bad_case(st->st_state);
+		bad_case(st->st_state->kind);
 	}
 
 	/* send NONCE */
@@ -4287,7 +4287,7 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 					 struct msg_digest **mdp,
 					 struct pluto_crypto_req *r)
 {
-	pexpect(st->st_state == STATE_V2_REKEY_IKE_I);
+	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I);
 
 	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
 	pexpect(st->st_sa_role == SA_INITIATOR);
@@ -4296,7 +4296,7 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 	pexpect((*mdp)->st == st);
 
 	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state_name);
+	     __func__, st->st_serialno, st->st_state->name);
 
 	/* and a parent? */
 	struct ike_sa *ike = ike_sa(st);
@@ -4363,7 +4363,7 @@ stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 	 * XXX: other than logging, these two cases are identical.
 	 */
 	const char *desc;
-	switch (st->st_state) {
+	switch (st->st_state->kind) {
 	case STATE_V2_CREATE_I:
 		desc = "ikev2 Child SA initiator pfs=yes";
 		break;
@@ -4371,7 +4371,7 @@ stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 		desc = "ikev2 Child Rekey SA initiator pfs=yes";
 		break;
 	default:
-		bad_case(st->st_state);
+		bad_case(st->st_state->kind);
 	}
 	submit_dh(st, remote_ke, ikev2_child_inR_continue, desc);
 	return STF_SUSPEND;
@@ -4385,8 +4385,8 @@ static stf_status ikev2_child_inR_continue(struct state *st,
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(st->st_state == STATE_V2_CREATE_I ||
-		st->st_state == STATE_V2_REKEY_CHILD_I);
+	pexpect(st->st_state->kind == STATE_V2_CREATE_I ||
+		st->st_state->kind == STATE_V2_REKEY_CHILD_I);
 
 	/* initiator getting back an answer */
 	pexpect(IS_CHILD_SA(st));
@@ -4396,7 +4396,7 @@ static stf_status ikev2_child_inR_continue(struct state *st,
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
 
 	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state_name);
+	     __func__, st->st_serialno, st->st_state->name);
 
 	/* and a parent? */
 	if (ike_sa(st) == NULL) {
@@ -4479,7 +4479,7 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 	 * XXX: 'see above' is lost; this is a responder state
 	 * which _always_ has an MD.
 	 */
-	switch (st->st_state) {
+	switch (st->st_state->kind) {
 	case STATE_V2_CREATE_R:
 		if (st->st_pfs_group != NULL) {
 			request_ke_and_nonce("Child Responder KE and nonce nr",
@@ -4501,7 +4501,7 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 		}
 		return STF_SUSPEND;
 	default:
-		bad_case(st->st_state);
+		bad_case(st->st_state->kind);
 	}
 }
 
@@ -4520,8 +4520,8 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 	 * Instead of computing the entire DH as a single crypto task,
 	 * does a second continue. Yuck!
 	 */
-	pexpect(st->st_state == STATE_V2_CREATE_R ||
-		st->st_state == STATE_V2_REKEY_CHILD_R);
+	pexpect(st->st_state->kind == STATE_V2_CREATE_R ||
+		st->st_state->kind == STATE_V2_REKEY_CHILD_R);
 
 	/* responder processing request */
 	pexpect(IS_CHILD_SA(st));
@@ -4530,7 +4530,7 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 	pexpect((*mdp)->st == st);
 
 	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state_name);
+	     __func__, st->st_serialno, st->st_state->name);
 
 	/* and a parent? */
 	struct ike_sa *ike = ike_sa(st);
@@ -4566,8 +4566,8 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(st->st_state == STATE_V2_CREATE_R ||
-		st->st_state == STATE_V2_REKEY_CHILD_R);
+	pexpect(st->st_state->kind == STATE_V2_CREATE_R ||
+		st->st_state->kind == STATE_V2_REKEY_CHILD_R);
 
 	/* 'child' responding to request */
 	passert(md != NULL);
@@ -4577,7 +4577,7 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
 
 	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state_name);
+	     __func__, st->st_serialno, st->st_state->name);
 
 	/* didn't loose parent? */
 	if (ike_sa(st) == NULL) {
@@ -4694,7 +4694,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 					     struct msg_digest **mdp,
 					     struct pluto_crypto_req *r)
 {
-	pexpect(st->st_state == STATE_V2_REKEY_IKE_R);
+	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R);
 
 	/* responder processing request */
 	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
@@ -4704,7 +4704,7 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 	pexpect(v2_msg_role(*mdp) == MESSAGE_REQUEST);
 
 	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state_name);
+	     __func__, st->st_serialno, st->st_state->name);
 
 	/* and a parent? */
 	struct ike_sa *ike = ike_sa(st);
@@ -4740,7 +4740,7 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 						      struct msg_digest **mdp,
 						      struct pluto_crypto_req *r)
 {
-	pexpect(st->st_state == STATE_V2_REKEY_IKE_R);
+	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R);
 
 	/* 'child' responding to request */
 	passert(*mdp != NULL);
@@ -4750,7 +4750,7 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
 
 	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state_name);
+	     __func__, st->st_serialno, st->st_state->name);
 
 	/* didn't loose parent? */
 	if (ike_sa(st) == NULL) {
@@ -4807,7 +4807,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		return STF_INTERNAL_ERROR;
 	}
 
-	switch (st->st_state) {
+	switch (st->st_state->kind) {
 	case STATE_V2_REKEY_IKE_R:
 	case STATE_V2_REKEY_IKE_I0:
 		ret = ikev2_child_add_ike_payloads(md, &sk.pbs);
@@ -4860,8 +4860,8 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		pst->st_msgid_lastreplied = md->hdr.isa_msgid;
 	}
 
-	if (st->st_state == STATE_V2_CREATE_R ||
-			st->st_state == STATE_V2_REKEY_CHILD_R) {
+	if (st->st_state->kind == STATE_V2_CREATE_R ||
+			st->st_state->kind == STATE_V2_REKEY_CHILD_R) {
 		log_ipsec_sa_established("negotiated new IPsec SA", st);
 	}
 
@@ -4879,7 +4879,7 @@ static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
 			child->sa.st_policy = child->sa.st_connection->policy; /* for pick_initiator */
 
 			loglog(RC_LOG_SERIOUS, "no viable to parent to initiate CREATE_CHILD_EXCHANGE %s; trying replace",
-			       child->sa.st_state_name);
+			       child->sa.st_state->name);
 			delete_event(&child->sa);
 			event_schedule_s(EVENT_SA_REPLACE, REPLACE_ORPHAN, &child->sa);
 			/* ??? surely this isn't yet a failure or a success */
@@ -5400,7 +5400,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	 * If responding, build the body of the response.
 	 */
 
-	if (!responding && st->st_state == STATE_IKESA_DEL) {
+	if (!responding && st->st_state->kind == STATE_IKESA_DEL) {
 		/*
 		 * this must be a response to our IKE SA delete request
 		 * Even if there are are other Delete Payloads,
@@ -5857,7 +5857,7 @@ static crypto_req_cont_func ikev2_child_outI_continue;
 
 void ikev2_child_outI(struct state *st)
 {
-	switch (st->st_state) {
+	switch (st->st_state->kind) {
 
 	case STATE_V2_REKEY_CHILD_I0:
 		if (st->st_pfs_group == NULL) {
@@ -5888,7 +5888,7 @@ void ikev2_child_outI(struct state *st)
 		break; /* return STF_SUSPEND; */
 
 	default:
-		bad_case(st->st_state);
+		bad_case(st->st_state->kind);
 	}
 }
 
@@ -5901,9 +5901,9 @@ static void ikev2_child_outI_continue(struct state *st,
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(st->st_state == STATE_V2_CREATE_I0 ||
-		st->st_state == STATE_V2_REKEY_CHILD_I0 ||
-		st->st_state == STATE_V2_REKEY_IKE_I0);
+	pexpect(st->st_state->kind == STATE_V2_CREATE_I0 ||
+		st->st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
+		st->st_state->kind == STATE_V2_REKEY_IKE_I0);
 
 	/* child initiating exchange */
 	struct child_sa *child = pexpect_child_sa(st);
@@ -5916,7 +5916,7 @@ static void ikev2_child_outI_continue(struct state *st,
 	}
 
 	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state_name);
+	     __func__, st->st_serialno, st->st_state->name);
 
 	/* and a parent? */
 	if (ike == NULL) {
@@ -5927,7 +5927,7 @@ static void ikev2_child_outI_continue(struct state *st,
 	}
 
 	/* IKE SA => DH */
-	pexpect(st->st_state == STATE_V2_REKEY_IKE_I0 ? r->pcr_type == pcr_build_ke_and_nonce : true);
+	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I0 ? r->pcr_type == pcr_build_ke_and_nonce : true);
 
 	unpack_nonce(&st->st_ni, r);
 	if (r->pcr_type == pcr_build_ke_and_nonce)
@@ -5956,7 +5956,7 @@ bool need_this_intiator(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
-	if (st->st_state !=  STATE_PARENT_I1)
+	if (st->st_state->kind !=  STATE_PARENT_I1)
 		return FALSE; /* ignore STATE_V2_CREATE_I ??? */
 
 	if (c->newest_ipsec_sa > st->st_serialno) {
@@ -6347,14 +6347,14 @@ static void ikev2_log_initiate_rekey_checks(struct state *st)
 		}
 	}
 
-	switch (st->st_state) {
+	switch (st->st_state->kind) {
 	case STATE_V2_REKEY_IKE_I0:
 	case STATE_V2_REKEY_CHILD_I0:
 	case STATE_V2_CREATE_I0:
 		if (unack < st->st_connection->ike_window) {
 			loglog(RC_LOG_SERIOUS,
 				"expiring %s state. Possible Message Id deadlock?  Parent #%lu unacknowledged %u next Message Id=%u IKE exchange window %u",
-				st->st_state_name,
+				st->st_state->name,
 				ike->sa.st_serialno, unack,
 				ike->sa.st_msgid_nextuse,
 				ike->sa.st_connection->ike_window);

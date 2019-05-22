@@ -26,7 +26,7 @@
 size_t lswlog_retransmit_prefix(struct lswlog *buf, struct state *st)
 {
 	return lswlogf(buf, "#%ld %s: retransmits: ",
-		       st->st_serialno, st->st_state_name);
+		       st->st_serialno, st->st_state->name);
 }
 
 unsigned long retransmit_count(struct state *st)
@@ -225,7 +225,7 @@ enum retransmit_status retransmit(struct state *st)
 	    monotime_exceeds_limit ||
 	    deltatime_exceeds_limit) {
 		LSWLOG_RC(RC_NORETRANSMISSION, buf) {
-			lswlogf(buf, "%s: ", st->st_finite_state->fs_name);
+			lswlogf(buf, "%s: ", st->st_state->name);
 			if (retransmit_count_exceeded) {
 				lswlogf(buf, "max number of retransmissions (%lu) reached after ",
 					nr_retransmits);
@@ -236,7 +236,7 @@ enum retransmit_status retransmit(struct state *st)
 				lswlogf(buf, " second timeout exceeded after %lu retransmits",
 					nr_retransmits);
 			}
-			switch (st->st_state) {
+			switch (st->st_state->kind) {
 			case STATE_MAIN_I3:
 			case STATE_AGGR_I2:
 				lswlogs(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
@@ -271,7 +271,7 @@ enum retransmit_status retransmit(struct state *st)
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
 	LSWLOG_RC(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: retransmission; will wait ",
-			st->st_finite_state->fs_name);
+			st->st_state->name);
 		lswlog_deltatime(buf, rt->delay);
 		lswlogs(buf, " seconds for response");
 	}
@@ -302,7 +302,7 @@ void suppress_retransmits(struct state *st)
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
 	LSWLOG_RC(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: suppressing retransmits; will wait ",
-			st->st_finite_state->fs_name);
+			st->st_state->name);
 		lswlog_deltatime(buf, rt->delay);
 		lswlogs(buf, " seconds for retry");
 	}

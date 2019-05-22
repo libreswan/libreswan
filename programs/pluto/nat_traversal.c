@@ -996,9 +996,9 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	 * If we're initiator and NAT-T is detected, we
 	 * need to change port (MAIN_I3, QUICK_I1 or AGGR_I2)
 	 */
-	if ((st->st_state == STATE_MAIN_I3 ||
-	     st->st_state == STATE_QUICK_I1 ||
-	     st->st_state == STATE_AGGR_I2) &&
+	if ((st->st_state->kind == STATE_MAIN_I3 ||
+	     st->st_state->kind == STATE_QUICK_I1 ||
+	     st->st_state->kind == STATE_AGGR_I2) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    st->st_localport != pluto_nat_port) {
 		DBG(DBG_NATT,
@@ -1105,7 +1105,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
 
 	natd_lookup_common(st, &md->sender, found_me, found_him);
 
-	if (st->st_state == STATE_PARENT_I1 &&
+	if (st->st_state->kind == STATE_PARENT_I1 &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)) {
 		DBG(DBG_NATT, {
 			ipstr_buf b;

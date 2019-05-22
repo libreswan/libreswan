@@ -542,8 +542,7 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 			/* state name */
 			if (DBGP(DBG_ADD_PREFIX)) {
 				lswlogf(buf, " ");
-				lswlog_enum_short(buf, &state_names,
-						  cur_state->st_state);
+				lswlogs(buf, cur_state->st_state->short_name);
 			}
 		}
 		lswlogs(buf, ": ");

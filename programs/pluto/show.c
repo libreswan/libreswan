@@ -156,7 +156,7 @@ static void connection_state(struct state *st, void *data)
 	}
 
 	/* ignore undefined states (i.e. just deleted) */
-	if (st->st_state == STATE_UNDEFINED)
+	if (st->st_state->kind == STATE_UNDEFINED)
 		return;
 
 	if (IS_IKE_SA(st)) {
@@ -169,7 +169,7 @@ static void connection_state(struct state *st, void *data)
 		} else {
 			if (lc->phase1 < p1_init)
 				lc->phase1 = p1_init;
-			if (IS_ISAKMP_ENCRYPTED(st->st_state) &&
+			if (IS_ISAKMP_ENCRYPTED(st->st_state->kind) &&
 			    lc->phase1 < p1_encrypt)
 				lc->phase1 = p1_encrypt;
 			if (IS_ISAKMP_AUTHENTICATED(st->st_state) &&
@@ -184,7 +184,7 @@ static void connection_state(struct state *st, void *data)
 	if (st->st_connection != lc->conn)
 		return;
 
-	if (IS_PHASE15(st->st_state)) {
+	if (IS_PHASE15(st->st_state->kind)) {
 		if (lc->tunnel < tun_phase15)
 			lc->tunnel = tun_phase15;
 	}
@@ -235,12 +235,12 @@ void binlog_state(struct state *st, enum state_kind new_state)
 	};
 
 	{
-		const struct finite_state *save_state = st->st_finite_state;
+		const struct finite_state *save_state = st->st_state;
 
-		st->st_finite_state = finite_states[new_state];
+		st->st_state = finite_states[new_state];
 		dbg("FOR_EACH_STATE_... via for_each_state in %s", __func__);
 		for_each_state(connection_state, &lc);
-		st->st_finite_state = save_state;
+		st->st_state = save_state;
 	}
 
 	{

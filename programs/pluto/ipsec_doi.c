@@ -509,7 +509,7 @@ void send_delete(struct state *st)
 		dbg("#%lu send %s delete notification for %s",
 		    st->st_serialno,
 		    enum_name(&ike_version_names, st->st_ike_version),
-		    st->st_state_name);
+		    st->st_state->name);
 		switch (st->st_ike_version) {
 		case IKEv1:
 			send_v1_delete(st);

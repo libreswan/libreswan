@@ -627,12 +627,12 @@ void init_ikev1(void)
 
 		/* fill in using static struct */
 		struct finite_state *fs = &v1_states[kind - STATE_IKEv1_FLOOR];
-		fs->fs_kind = kind;
+		fs->kind = kind;
 		finite_states[kind] = fs;
 
-		fs->fs_name = enum_name(&state_names, fs->fs_kind);
-		fs->fs_short_name = enum_short_name(&state_names, fs->fs_kind);
-		fs->fs_story = enum_name(&state_stories, fs->fs_kind);
+		fs->name = enum_name(&state_names, fs->kind);
+		fs->short_name = enum_short_name(&state_names, fs->kind);
+		fs->story = enum_name(&state_stories, fs->kind);
 
 		/*
 		 * Initialize .fs_category
@@ -641,7 +641,7 @@ void init_ikev1(void)
 		 * structure, this all goes away.
 		 */
 		enum state_category cat;
-		switch (fs->fs_kind) {
+		switch (fs->kind) {
 
 		case STATE_AGGR_R0:
 		case STATE_AGGR_I1:
@@ -714,9 +714,9 @@ void init_ikev1(void)
 			break;
 
 		default:
-			bad_case(fs->fs_kind);
+			bad_case(fs->kind);
 		}
-		fs->fs_category = cat;
+		fs->category = cat;
 	}
 
 	/*
@@ -746,7 +746,7 @@ void init_ikev1(void)
 		passert(to != NULL);
 
 		DBGF(DBG_TMI, "processing IKEv1 state transition %s -> %s",
-		     from->fs_short_name, to->fs_short_name);
+		     from->short_name, to->short_name);
 
 		/*
 		 * Point .fs_v1_transitions at to the first entry in
@@ -756,12 +756,12 @@ void init_ikev1(void)
 		 * previous transition's state should be the same as
 		 * this).
 		 */
-		if (from->fs_v1_transitions == NULL) {
-			from->fs_v1_transitions = t;
+		if (from->v1_transitions == NULL) {
+			from->v1_transitions = t;
 		} else {
 			passert(t[-1].state == t->state);
 		}
-		from->fs_nr_transitions++;
+		from->nr_transitions++;
 
 		/*
 		 * Copy (actually merge) the flags that apply to the
@@ -785,11 +785,11 @@ void init_ikev1(void)
 		 * Or is this more like .fs_timeout_event which is
 		 * always true of a state?
 		 */
-		if ((t->flags & from->fs_flags) != from->fs_flags) {
+		if ((t->flags & from->flags) != from->flags) {
 			DBGF(DBG_BASE, "transition %s -> %s missing flags 0x%"PRIxLSET,
-			     from->fs_short_name, to->fs_short_name, from->fs_flags);
+			     from->short_name, to->short_name, from->flags);
 		}
-		from->fs_flags |= t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
+		from->flags |= t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
 	}
 
 	/*
@@ -803,14 +803,14 @@ void init_ikev1(void)
 				lswlogs(buf, "  ");
 				lswlog_finite_state(buf, from);
 				lswlogs(buf, ":");
-				if (from->fs_nr_transitions == 0) {
+				if (from->nr_transitions == 0) {
 					lswlogs(buf, " <none>");
 				}
 			}
-			for (unsigned ti = 0; ti < from->fs_nr_transitions; ti++) {
-				const struct state_v1_microcode *t = &from->fs_v1_transitions[ti];
+			for (unsigned ti = 0; ti < from->nr_transitions; ti++) {
+				const struct state_v1_microcode *t = &from->v1_transitions[ti];
 				const struct finite_state *to = finite_states[t->next_state];
-				DBG_log("    -> %s %s", to->fs_short_name,
+				DBG_log("    -> %s %s", to->short_name,
 					enum_short_name(&timer_event_names,
 							t->timeout_event));
 			}
@@ -822,7 +822,7 @@ void init_ikev1(void)
 static stf_status unexpected(struct state *st, struct msg_digest *md UNUSED)
 {
 	loglog(RC_LOG_SERIOUS, "unexpected message received in state %s",
-	       st->st_state_name);
+	       st->st_state->name);
 	return STF_IGNORE;
 }
 
@@ -1121,7 +1121,7 @@ void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, uint8_t np,
 /*
  * Recognise and, if necesssary, respond to an IKEv1 duplicate.
  *
- * Use .st_finite_state, which is the true current state, and not MD
+ * Use .st_state, which is the true current state, and not MD
  * .FROM_STATE (which is derived from some convoluted magic) when
  * determining if the duplicate should or should not get a response.
  */
@@ -1145,7 +1145,7 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 		bool replied = (st->st_v1_last_transition != NULL &&
 				(st->st_v1_last_transition->flags & SMF_REPLY));
 		bool retransmit_on_duplicate =
-			(st->st_finite_state->fs_flags & SMF_RETRANSMIT_ON_DUPLICATE);
+			(st->st_state->flags & SMF_RETRANSMIT_ON_DUPLICATE);
 		if (replied && retransmit_on_duplicate) {
 			/*
 			 * Transitions with EVENT_SO_DISCARD should
@@ -1156,18 +1156,18 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
 				loglog(RC_RETRANSMISSION,
 				       "retransmitting in response to duplicate packet; already %s",
-				       st->st_state_name);
+				       st->st_state->name);
 				resend_recorded_v1_ike_msg(st, "retransmit in response to duplicate");
 			} else {
 				loglog(RC_LOG_SERIOUS,
 				       "discarding duplicate packet -- exhausted retransmission; already %s",
-				       st->st_state_name);
+				       st->st_state->name);
 			}
 		} else {
 			LSWDBGP(DBG_CONTROLMORE, buf) {
 				lswlog_log_prefix(buf);
 				lswlogf(buf, "discarding duplicate packet; already %s;",
-					st->st_state_name);
+					st->st_state->name);
 				lswlogf(buf, " replied=%s", replied ? "T" : "F");
 				lswlogf(buf, " retransmit_on_duplicate=%s",
 					retransmit_on_duplicate ? "T" : "F");
@@ -1250,7 +1250,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					 * discarded.
 					 */
 					libreswan_log("discarding initial packet; already %s",
-						      st->st_state_name);
+						      st->st_state->name);
 				}
 				pop_cur_state(old_state);
 				return;
@@ -1283,7 +1283,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				}
 			}
 			set_cur_state(st);
-			from_state = st->st_state;
+			from_state = st->st_state->kind;
 		}
 		break;
 
@@ -1326,7 +1326,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
-			if (!IS_ISAKMP_ENCRYPTED(st->st_state)) {
+			if (!IS_ISAKMP_ENCRYPTED(st->st_state->kind)) {
 				if (!quiet) {
 					loglog(RC_LOG_SERIOUS, "encrypted Informational Exchange message is invalid because no key is known");
 				}
@@ -1416,14 +1416,14 @@ void process_v1_packet(struct msg_digest **mdp)
 			}
 
 			/* Have we just given an IP address to peer? */
-			if (st->st_state == STATE_MODE_CFG_R2) {
+			if (st->st_state->kind == STATE_MODE_CFG_R2) {
 				/* ISAKMP is up... */
 				change_state(st, STATE_MAIN_R3);
 			}
 
 #ifdef SOFTREMOTE_CLIENT_WORKAROUND
 			/* See: http://popoludnica.pl/?id=10100110 */
-			if (st->st_state == STATE_MODE_CFG_R1) {
+			if (st->st_state->kind == STATE_MODE_CFG_R1) {
 				libreswan_log(
 					"SoftRemote workaround: Cannot do Quick Mode until MODECFG done.");
 				return;
@@ -1457,7 +1457,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 			set_cur_state(st);
-			from_state = st->st_state;
+			from_state = st->st_state->kind;
 		}
 
 		break;
@@ -1525,7 +1525,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				DBG(DBG_CONTROLMORE, DBG_log(
 					"Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
-					st->st_state_name));
+					st->st_state->name));
 				/* XXX Could send notification back */
 				return;
 			}
@@ -1556,24 +1556,20 @@ void process_v1_packet(struct msg_digest **mdp)
 			const struct end *this = &st->st_connection->spd.this;
 
 			if (this->xauth_server &&
-			    st->st_state == STATE_XAUTH_R1 &&
+			    st->st_state->kind == STATE_XAUTH_R1 &&
 			    st->quirks.xauth_ack_msgid) {
 				from_state = STATE_XAUTH_R1;
 				DBG(DBG_CONTROLMORE, DBG_log(
 					" set from_state to %s state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
-					    enum_name(&state_names,
-						      st->st_state
-						      )));
+					st->st_state->name));
 			} else if (this->xauth_client &&
-				   IS_PHASE1(st->st_state)) {
+				   IS_PHASE1(st->st_state->kind)) {
 				from_state = STATE_XAUTH_I0;
 				DBG(DBG_CONTROLMORE, DBG_log(
 					" set from_state to %s this is xauthclient and IS_PHASE1() is TRUE",
-					    enum_name(&state_names,
-						      st->st_state
-						      )));
+					st->st_state->name));
 			} else if (this->xauth_client &&
-				   st->st_state == STATE_XAUTH_I1) {
+				   st->st_state->kind == STATE_XAUTH_I1) {
 				/*
 				 * in this case, we got a new MODECFG message after I0, maybe
 				 * because it wants to start over again.
@@ -1581,25 +1577,19 @@ void process_v1_packet(struct msg_digest **mdp)
 				from_state = STATE_XAUTH_I0;
 				DBG(DBG_CONTROLMORE, DBG_log(
 					" set from_state to %s this is xauthclient and state == STATE_XAUTH_I1",
-					    enum_name(&state_names,
-						      st->st_state
-						      )));
+					st->st_state->name));
 			} else if (this->modecfg_server &&
-				   IS_PHASE1(st->st_state)) {
+				   IS_PHASE1(st->st_state->kind)) {
 				from_state = STATE_MODE_CFG_R0;
 				DBG(DBG_CONTROLMORE, DBG_log(
 					" set from_state to %s this is modecfgserver and IS_PHASE1() is TRUE",
-					    enum_name(&state_names,
-						      st->st_state
-						      )));
+					st->st_state->name));
 			} else if (this->modecfg_client &&
-				   IS_PHASE1(st->st_state)) {
+				   IS_PHASE1(st->st_state->kind)) {
 				from_state = STATE_MODE_CFG_R1;
 				DBG(DBG_CONTROLMORE, DBG_log(
 					" set from_state to %s this is modecfgclient and IS_PHASE1() is TRUE",
-					    enum_name(&state_names,
-						      st->st_state
-						      )));
+					st->st_state->name));
 			} else {
 				DBG(DBG_CONTROLMORE, DBG_log(
 					"received isakmp_xchg_type %s",
@@ -1621,15 +1611,13 @@ void process_v1_packet(struct msg_digest **mdp)
 					    ->spd.this.modecfg_client  ?
 					    " modecfgclient" :
 					    "",
-					    enum_name(&
-						      state_names,
-						      st->st_state)
+					    st->st_state->name
 					    ));
 				return;
 			}
 		} else {
 			if (st->st_connection->spd.this.xauth_server &&
-			    IS_PHASE1(st->st_state)) {
+			    IS_PHASE1(st->st_state->kind)) {
 				/* Switch from Phase1 to Mode Config */
 				DBG(DBG_CONTROL, DBG_log(
 					"We were in phase 1, with no state, so we went to XAUTH_R0"));
@@ -1638,7 +1626,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			/* otherwise, this is fine, we continue in the state we are in */
 			set_cur_state(st);
-			from_state = st->st_state;
+			from_state = st->st_state->kind;
 		}
 
 		break;
@@ -1813,7 +1801,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	passert(STATE_IKEv1_FLOOR <= from_state && from_state < STATE_IKEv1_ROOF);
 	const struct finite_state *fs = finite_states[from_state];
 	passert(fs != NULL);
-	smc = fs->fs_v1_transitions;
+	smc = fs->v1_transitions;
 	passert(smc != NULL);
 
 	/*
@@ -2160,7 +2148,7 @@ void process_packet_tail(struct msg_digest **mdp)
 						"%smessage ignored because it contains a payload type (%s) unexpected by state %s",
 						excuse,
 						enum_show(&ikev1_payload_names, np),
-						st->st_state_name);
+						st->st_state->name);
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					}
@@ -2580,7 +2568,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		if (st->st_connection->spd.this.xauth_client &&
 		    st->hidden_variables.st_xauth_client_done &&
 		    !st->st_connection->spd.this.modecfg_client &&
-		    st->st_state == STATE_XAUTH_I1)
+		    st->st_state->kind == STATE_XAUTH_I1)
 		{
 			bool aggrmode = LHAS(st->st_connection->policy, POLICY_AGGRESSIVE_IX);
 
@@ -2628,7 +2616,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * should a duplicate packet trigger a retransmit
 		 * (else they get discarded).
 		 *
-		 * XXX: .st_finite_state .fs_flags & SMF_REPLY can't
+		 * XXX: .st_state .fs_flags & SMF_REPLY can't
 		 * be used because it contains flags for the new state
 		 * not the old-to-new state transition.
 		 */
@@ -2647,7 +2635,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
-			if (st->st_state == STATE_MAIN_R2 &&
+			if (st->st_state->kind == STATE_MAIN_R2 &&
 				IMPAIR(SEND_NO_MAIN_R2)) {
 				/* record-only so we propely emulate packet drop */
 				record_outbound_ike_msg(st, &reply_stream,
@@ -2671,7 +2659,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (c->spd.this.xauth_client &&
 			    st->hidden_variables.st_xauth_client_done &&
 			    !c->spd.this.modecfg_client &&
-			    (st->st_state == STATE_MAIN_I4 || st->st_state == STATE_AGGR_I2))
+			    (st->st_state->kind == STATE_MAIN_I4 || st->st_state->kind == STATE_AGGR_I2))
 			{
 				DBG(DBG_CONTROL, DBG_log("fixup XAUTH without ModeCFG event from EVENT_RETRANSMIT to EVENT_SA_REPLACE"));
 				kind = EVENT_SA_REPLACE;
@@ -2683,8 +2671,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				break;
 
 			case EVENT_SA_REPLACE: /* SA replacement event */
-				if (IS_PHASE1(st->st_state) ||
-				    IS_PHASE15(st->st_state )) {
+				if (IS_PHASE1(st->st_state->kind) ||
+				    IS_PHASE15(st->st_state->kind)) {
 					/* Note: we will defer to the "negotiated" (dictated)
 					 * lifetime if we are POLICY_DONT_REKEY.
 					 * This allows the other side to dictate
@@ -2797,15 +2785,15 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				w = RC_SUCCESS; /* log our success */
 			} else {
 				log_details = NULL;
-				w = RC_NEW_STATE + st->st_state;
+				w = RC_NEW_STATE + st->st_state->kind;
 			}
 
-			passert(st->st_state < STATE_IKEv1_ROOF);
+			passert(st->st_state->kind < STATE_IKEv1_ROOF);
 
 			/* tell whack and logs our progress */
 			LSWLOG_RC(w, buf) {
-				lswlogf(buf, "%s: %s", st->st_finite_state->fs_name,
-					st->st_finite_state->fs_story);
+				lswlogf(buf, "%s: %s", st->st_state->name,
+					st->st_state->story);
 				/* document SA details for admin's pleasure */
 				if (log_details != NULL) {
 					log_details(buf, st);
@@ -2841,7 +2829,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * for XAUTH client, we are also done, because we need to
 		 * stay in this state, and let the server query us
 		 */
-		if (!IS_QUICK(st->st_state) &&
+		if (!IS_QUICK(st->st_state->kind) &&
 		    st->st_connection->spd.this.xauth_client &&
 		    !st->hidden_variables.st_xauth_client_done) {
 			DBG(DBG_CONTROL,
@@ -2953,7 +2941,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		    IS_IPSEC_SA_ESTABLISHED(st))
 			release_whack(st);
 
-		if (IS_QUICK(st->st_state))
+		if (IS_QUICK(st->st_state->kind))
 			break;
 
 		break;
@@ -2965,7 +2953,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		whack_log(RC_INTERNALERR + md->v1_note,
 			  "%s: internal error",
-			  st->st_state_name);
+			  st->st_state->name);
 
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s had internal error",
@@ -2978,7 +2966,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		whack_log(RC_FATAL,
 			  "encountered fatal error in state %s",
-			  st->st_state_name);
+			  st->st_state->name);
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
 		    st->st_connection->nmconfigured) {
@@ -3021,13 +3009,13 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * But then then any duplicate would lose too, I would think.
 		 */
 		whack_log(RC_NOTIFICATION + md->v1_note,
-			  "%s: %s", st->st_state_name, notify_name);
+			  "%s: %s", st->st_state->name, notify_name);
 
 		if (md->v1_note != NOTHING_WRONG)
 			SEND_NOTIFICATION(md->v1_note);
 
 		dbg("state transition function for %s failed: %s",
-		    st->st_state_name, notify_name);
+		    st->st_state->name, notify_name);
 
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
@@ -3039,7 +3027,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
 		}
 #endif
-		if (IS_QUICK(st->st_state)) {
+		if (IS_QUICK(st->st_state->kind)) {
 			delete_state(st);
 			/* wipe out dangling pointer to st */
 			md->st = NULL;

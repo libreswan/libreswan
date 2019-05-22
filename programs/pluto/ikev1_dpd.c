@@ -360,7 +360,7 @@ void dpd_event(struct state *st)
 
 	set_cur_state(st);
 
-	if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state))
+	if (IS_PHASE1(st->st_state->kind) || IS_PHASE15(st->st_state->kind))
 		p1_dpd_outI1(st);
 	else
 		p2_dpd_outI1(st);

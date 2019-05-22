@@ -293,7 +293,7 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 		}
 		dbg("State DB: %s state object #%lu found, in %s (%s)",
 		    enum_name(&ike_version_names, ike_version),
-		    st->st_serialno, st->st_state_name, name);
+		    st->st_serialno, st->st_state->name, name);
 		return st;
 	}
 	dbg("State DB: %s state object not found (%s)",
@@ -324,7 +324,7 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 		}
 		dbg("State DB: %s state object #%lu found, in %s (%s)",
 		    enum_name(&ike_version_names, ike_version),
-		    st->st_serialno, st->st_state_name, name);
+		    st->st_serialno, st->st_state->name, name);
 		return st;
 	}
 	dbg("State DB: %s state object not found (%s)",

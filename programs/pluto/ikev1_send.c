@@ -169,7 +169,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 	 * ??? why can't we fragment in STATE_MAIN_I1?  XXX: something
 	 * to do with the attacks inital packet?
 	 */
-	if (st->st_state != STATE_MAIN_I1 &&
+	if (st->st_state->kind != STATE_MAIN_I1 &&
 	    should_fragment_ike_msg(st, len + natt_bonus, resending)) {
 		return send_v1_frags(st, where);
 	} else {
@@ -181,7 +181,7 @@ bool resend_recorded_v1_ike_msg(struct state *st, const char *where)
 {
 	bool ret = send_or_resend_v1_ike_msg_from_state(st, where, TRUE);
 
-	if (st->st_state == STATE_XAUTH_R0 &&
+	if (st->st_state->kind == STATE_XAUTH_R0 &&
 	    !LIN(POLICY_AGGRESSIVE, st->st_connection->policy)) {
 		/* Only for Main mode + XAUTH */
 		event_schedule(EVENT_v1_SEND_XAUTH, deltatime_ms(EVENT_v1_SEND_XAUTH_DELAY_MS), st);

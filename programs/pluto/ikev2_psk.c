@@ -71,7 +71,7 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
 	DBG(DBG_CONTROL, DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
-		st->st_state_name,
+		st->st_state->name,
 		verify ? "verify" : "create",
 		enum_name(&ikev2_asym_auth_name, authby)));
 
@@ -81,7 +81,7 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 	const char *nonce_name;
 	const chunk_t *nullauth_pss;
 
-	switch (st->st_state) {
+	switch (st->st_state->kind) {
 	case STATE_PARENT_I2:
 		if (!verify) {
 			/* we are initiator sending PSK */
@@ -116,7 +116,7 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 		break;
 
 	default:
-		bad_case(st->st_state);
+		bad_case(st->st_state->kind);
 	}
 
 	/* pick pss */

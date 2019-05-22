@@ -158,12 +158,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	if (c->spd.that.has_lease &&
 	    md->chain[ISAKMP_NEXT_v2CP] != NULL &&
-	    cst->st_state != STATE_V2_REKEY_IKE_R) {
+	    cst->st_state->kind != STATE_V2_REKEY_IKE_R) {
 		ikev2_send_cp(&ike->sa, ISAKMP_NEXT_v2SA, outpbs);
 	} else if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		DBG(DBG_CONTROL, DBG_log("#%lu %s ignoring unexpected v2CP payload",
-					cst->st_serialno,
-					enum_name(&state_names, cst->st_state)));
+					 cst->st_serialno,
+					 cst->st_state->name));
 	}
 
 	/* start of SA out */
@@ -392,7 +392,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 static void ikev2_set_domain(pb_stream *cp_a_pbs, struct state *st)
 {
-	bool responder = (st->st_state != STATE_PARENT_I2);
+	bool responder = (st->st_state->kind != STATE_PARENT_I2);
 
 	if (!responder) {
 		char *safestr = cisco_stringify(cp_a_pbs, "INTERNAL_DNS_DOMAIN");
@@ -407,7 +407,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
 	ip_address ip;
 	struct connection *c = st->st_connection;
 	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), af, &ip);
-	bool responder = (st->st_state != STATE_PARENT_I2);
+	bool responder = (st->st_state->kind != STATE_PARENT_I2);
 
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		libreswan_log("ignored INTERNAL_IP%s_DNS CP payload for Opportunistic IPsec",
@@ -418,7 +418,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
 	ip_address_buf ip_buf;
 	const char *ip_str = ipstr(&ip, &ip_buf);
 
-	if ((ugh != NULL && st->st_state == STATE_PARENT_I2)) {
+	if ((ugh != NULL && st->st_state->kind == STATE_PARENT_I2)) {
 		libreswan_log("ERROR INTERNAL_IP%s_DNS malformed: %s",
 			af == AF_INET ? "4" : "6", ugh);
 		return FALSE;
@@ -450,9 +450,9 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af,
 	ipstr_buf ip_str;
 	struct connection *c = st->st_connection;
 	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), af, &ip);
-	bool responder = st->st_state != STATE_PARENT_I2;
+	bool responder = st->st_state->kind != STATE_PARENT_I2;
 
-	if ((ugh != NULL && st->st_state == STATE_PARENT_I2) || isanyaddr(&ip)) {
+	if ((ugh != NULL && st->st_state->kind == STATE_PARENT_I2) || isanyaddr(&ip)) {
 		libreswan_log("ERROR INTERNAL_IP%s_ADDRESS malformed: %s",
 			af == AF_INET ? "4" : "6", ugh);
 		return FALSE;
@@ -526,13 +526,13 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s[%lu] parsing ISAKMP_NEXT_v2CP payload",
 				st->st_serialno, c->name, c->instance_serial));
 
-	if (st->st_state == STATE_PARENT_I2 && cp->isacp_type !=  IKEv2_CP_CFG_REPLY) {
+	if (st->st_state->kind == STATE_PARENT_I2 && cp->isacp_type !=  IKEv2_CP_CFG_REPLY) {
 		loglog(RC_LOG_SERIOUS, "ERROR expected IKEv2_CP_CFG_REPLY got a %s",
 			enum_name(&ikev2_cp_type_names, cp->isacp_type));
 		return FALSE;
 	}
 
-	if (st->st_state == STATE_PARENT_R1 && cp->isacp_type !=  IKEv2_CP_CFG_REQUEST) {
+	if (st->st_state->kind == STATE_PARENT_R1 && cp->isacp_type !=  IKEv2_CP_CFG_REQUEST) {
 		loglog(RC_LOG_SERIOUS, "ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
 			enum_name(&ikev2_cp_type_names, cp->isacp_type));
 		return FALSE;

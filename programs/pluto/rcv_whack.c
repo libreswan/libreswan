@@ -426,7 +426,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 			log_to_log("received whack to delete %s state #%lu %s",
 				   enum_name(&ike_version_names, st->st_ike_version),
 				   st->st_serialno,
-				   st->st_state_name);
+				   st->st_state->name);
 
 			if ((st->st_ike_version == IKEv2) && !IS_CHILD_SA(st)) {
 				log_to_log("Also deleting any corresponding CHILD_SAs");

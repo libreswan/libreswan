@@ -115,7 +115,7 @@ void ikev2_derive_child_keys(struct child_sa *child)
 	if (st->st_pfs_group != NULL) {
 		DBG(DBG_CRYPT, DBG_log("#%lu %s add g^ir to child key %p",
 					st->st_serialno,
-					st->st_state_name,
+					st->st_state->name,
 					st->st_shared_nss));
 		shared = st->st_shared_nss;
 	}

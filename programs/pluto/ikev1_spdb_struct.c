@@ -114,7 +114,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		return FALSE;
 	}
 
-	if (st->sec_ctx == NULL && st->st_state == STATE_QUICK_R0) {
+	if (st->sec_ctx == NULL && st->st_state->kind == STATE_QUICK_R0) {
 		DBG_log("Received sec ctx in responder state");
 
 		/*
@@ -137,11 +137,11 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		 * It would be reasonable to clone only the part that's used.
 		 */
 		st->sec_ctx = clone_thing(uctx, "struct xfrm_user_sec_ctx_ike");
-	} else if (st->st_state == STATE_QUICK_R0) {
+	} else if (st->st_state->kind == STATE_QUICK_R0) {
 		/* ??? can this happen? */
 		/* ??? should we check that this label and first one match? */
 		DBG_log("Received sec ctx in responder state again: ignoring this one");
-	} else if (st->st_state == STATE_QUICK_I1) {
+	} else if (st->st_state->kind == STATE_QUICK_I1) {
 		DBG(DBG_PARSING,
 		    DBG_log("Initiator state received security context from responder state, now verifying if both are same"));
 		if (streq(st->sec_ctx->sec_ctx_value, uctx.sec_ctx_value)) {

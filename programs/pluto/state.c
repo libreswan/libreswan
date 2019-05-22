@@ -116,11 +116,11 @@ uint16_t pluto_xfrmlifetime = 300;
  * better.
  */
 struct finite_state state_undefined = {
-	.fs_kind = STATE_UNDEFINED,
-	.fs_name = "STATE_UNDEFINED",
-	.fs_short_name = "UNDEFINED",
-	.fs_story = "not defined - either very new or dead (internal)",
-	.fs_category = CAT_IGNORE,
+	.kind = STATE_UNDEFINED,
+	.name = "STATE_UNDEFINED",
+	.short_name = "UNDEFINED",
+	.story = "not defined - either very new or dead (internal)",
+	.category = CAT_IGNORE,
 };
 
 const struct finite_state *finite_states[STATE_IKE_ROOF] = {
@@ -239,11 +239,11 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 	if (fs == NULL) {
 		lswlogs(buf, "NULL-FINITE_STATE");
 	} else {
-		lswlogf(buf, "%s:", fs->fs_short_name);
+		lswlogf(buf, "%s:", fs->short_name);
 		lswlogf(buf, " category: ");
-		lswlog_enum_short(buf, &state_category_names, fs->fs_category);
+		lswlog_enum_short(buf, &state_category_names, fs->category);
 		/* no enum_name available? */
-		lswlogf(buf, " flags: "PRI_LSET, fs->fs_flags);
+		lswlogf(buf, " flags: "PRI_LSET, fs->flags);
 	}
 }
 
@@ -309,9 +309,9 @@ static void update_state_stat(struct state *st,
 			      const struct finite_state *state,
 			      int delta)
 {
-	if (state->fs_category != CAT_IGNORE) {
-		state_count[state->fs_kind] += delta;
-		cat_count[state->fs_category] += delta;
+	if (state->category != CAT_IGNORE) {
+		state_count[state->kind] += delta;
+		cat_count[state->category] += delta;
 		/*
 		 * When deleting, st->st_connection can be NULL, so we
 		 * cannot look at the policy to determine
@@ -319,7 +319,7 @@ static void update_state_stat(struct state *st,
 		 * st->st_ikev2_anon (a bool) which is copied from
 		 * parent to child states
 		 */
-		switch (state->fs_category) {
+		switch (state->category) {
 		case CAT_ESTABLISHED_IKE_SA:
 			cat_count_ike_sa[st->st_ikev2_anon] += delta;
 			break;
@@ -337,8 +337,8 @@ static void update_state_stats(struct state *st,
 			       const struct finite_state *new_state)
 {
 	/* catch / log unexpected cases */
-	pexpect(old_state->fs_category != CAT_UNKNOWN);
-	pexpect(new_state->fs_category != CAT_UNKNOWN);
+	pexpect(old_state->category != CAT_UNKNOWN);
+	pexpect(new_state->category != CAT_UNKNOWN);
 
 	update_state_stat(st, old_state, -1);
 	update_state_stat(st, new_state, +1);
@@ -352,10 +352,10 @@ static void update_state_stats(struct state *st,
 	if (DBGP(DBG_BASE)) {
 		DBG_log("%s state #%lu: %s(%s) => %s(%s)",
 			IS_IKE_SA(st) ? "parent" : "child", st->st_serialno,
-			old_state->fs_short_name,
-			enum_name(&state_category_names, old_state->fs_category),
-			new_state->fs_short_name,
-			enum_name(&state_category_names, new_state->fs_category));
+			old_state->short_name,
+			enum_name(&state_category_names, old_state->category),
+			new_state->short_name,
+			enum_name(&state_category_names, new_state->category));
 
 		cat_t category_states = 0;
 		for (unsigned cat = 0; cat < elemsof(cat_count); cat++) {
@@ -397,13 +397,13 @@ static void update_state_stats(struct state *st,
 
 void change_state(struct state *st, enum state_kind new_state_kind)
 {
-	const struct finite_state *old_state = st->st_finite_state;
+	const struct finite_state *old_state = st->st_state;
 	const struct finite_state *new_state = finite_states[new_state_kind];
 	passert(new_state != NULL);
 	if (new_state != old_state) {
 		update_state_stats(st, old_state, new_state);
 		binlog_state(st, new_state_kind /* XXX */);
-		st->st_finite_state = new_state;
+		st->st_state = new_state;
 	}
 }
 
@@ -514,7 +514,7 @@ static struct state *new_state(enum ike_version ike_version,
 	struct state *st = &sas->st;
 	*st = (struct state) {
 		.st_whack_sock = null_fd,	/* note: not 0 */
-		.st_finite_state = fs,
+		.st_state = fs,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
 		.st_ike_version = ike_version,
@@ -571,14 +571,14 @@ struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 	    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
 	v2_msgid_init(pexpect_ike_sa(st));
 	const struct finite_state *fs = finite_states[kind];
-	change_state(st, fs->fs_kind);
+	change_state(st, fs->kind);
 	/*
 	 * New states are never standing still - they are always in
 	 * transition to the next state.
 	 */
-	pexpect(fs->fs_v2_transitions != NULL);
-	pexpect(fs->fs_nr_transitions == 1);
-	/* st->st_v2_transition = fs->fs_state_transitions[0] */
+	pexpect(fs->v2_transitions != NULL);
+	pexpect(fs->nr_transitions == 1);
+	/* st->st_v2_transition = fs->state_transitions[0] */
 	return st;
 }
 
@@ -762,7 +762,7 @@ static bool flush_incomplete_child(struct state *st, void *pst UNUSED)
 		    (c->policy & POLICY_DONT_REKEY) == LEMPTY) {
 			loglog(RC_LOG_SERIOUS, "reschedule pending child #%lu %s of "
 			       "connection \"%s\"%s - the parent is going away",
-			       st->st_serialno, st->st_state_name,
+			       st->st_serialno, st->st_state->name,
 			       c->name, fmt_conn_instance(c, cib));
 
 			st->st_policy = c->policy; /* for pick_initiator */
@@ -770,7 +770,7 @@ static bool flush_incomplete_child(struct state *st, void *pst UNUSED)
 		} else {
 			loglog(RC_LOG_SERIOUS, "expire pending child #%lu %s of "
 			       "connection \"%s\"%s - the parent is going away",
-			       st->st_serialno, st->st_state_name,
+			       st->st_serialno, st->st_state->name,
 			       c->name, fmt_conn_instance(c, cib));
 
 			event_force(EVENT_SA_EXPIRE, st);
@@ -828,20 +828,20 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 		* the message prefix.
 		*/
 		libreswan_log("deleting state (%s) aged "PRI_DELTATIME"s and %ssending notification",
-			st->st_state_name,
+			st->st_state->name,
 			pri_deltatime(realtimediff(realnow(), st->st_inception)),
 			del_notify ? "" : "NOT ");
 	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
 		libreswan_log("deleting other state #%lu (%s) aged "PRI_DELTATIME"s and %ssending notification",
 			st->st_serialno,
-			st->st_state_name,
+			st->st_state->name,
 			pri_deltatime(realtimediff(realnow(), st->st_inception)),
 			del_notify ? "" : "NOT ");
 	} else {
 		char cib[CONN_INST_BUF];
 		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s aged "PRI_DELTATIME"s and %ssending notification",
 			st->st_serialno,
-			st->st_state_name,
+			st->st_state->name,
 			c->name,
 			fmt_conn_instance(c, cib),
 			pri_deltatime(realtimediff(realnow(), st->st_inception)),
@@ -850,8 +850,8 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 
 	dbg("%s state #%lu: %s(%s) => delete",
 	    IS_IKE_SA(st) ? "parent" : "child", st->st_serialno,
-	    st->st_finite_state->fs_short_name,
-	    enum_name(&state_category_names, st->st_finite_state->fs_category));
+	    st->st_state->short_name,
+	    enum_name(&state_category_names, st->st_state->category));
 }
 
 /* delete a state object */
@@ -881,13 +881,14 @@ void delete_state(struct state *st)
 	 * only log parent state deletes, we log children in
 	 * ipsec_delete_sa()
 	 */
-	if (IS_IKE_SA_ESTABLISHED(st) || st->st_state == STATE_IKESA_DEL)
+	if (IS_IKE_SA_ESTABLISHED(st) || st->st_state->kind == STATE_IKESA_DEL)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 #endif
 
 	/* If we are failed OE initiator, make shunt bare */
 	if (IS_IKE_SA(st) && (c->policy & POLICY_OPPORTUNISTIC) &&
-	    (st->st_state == STATE_PARENT_I1 || st->st_state == STATE_PARENT_I2)) {
+	    (st->st_state->kind == STATE_PARENT_I1 ||
+	     st->st_state->kind == STATE_PARENT_I2)) {
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
 		ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);
 
@@ -1036,7 +1037,7 @@ void delete_state(struct state *st)
 	 */
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||
 		IS_CHILD_SA_ESTABLISHED(st) ||
-		st->st_state == STATE_CHILDSA_DEL) {
+		st->st_state->kind == STATE_CHILDSA_DEL) {
 			delete_ipsec_sa(st);
 	}
 
@@ -1675,7 +1676,7 @@ static bool v2_spi_predicate(struct state *st, void *context)
 		if (pr->attrs.spi == filter->spi) {
 			dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
 			    st->st_serialno,
-			    st->st_state_name);
+			    st->st_state->name);
 			return true;
 		}
 #if 0
@@ -1683,7 +1684,7 @@ static bool v2_spi_predicate(struct state *st, void *context)
 		if (pr->our_spi == filter->spi) {
 			dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
 			    st->st_serialno,
-			    st->st_state_name);
+			    st->st_state->name);
 			return true;
 		}
 #endif
@@ -1775,7 +1776,7 @@ static bool v1_msgid_predicate(struct state *st, void *context)
 	     filter->msgid == st->st_msgid_phase15) ||
 	    filter->msgid == st->st_msgid) {
 		dbg("p15 state object #%lu found, in %s",
-		    st->st_serialno, st->st_state_name);
+		    st->st_serialno, st->st_state->name);
 		return true;
 	}
 	return false;
@@ -1869,7 +1870,7 @@ bool find_pending_phase2(const so_serial_t psn,
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
-		if (LHAS(ok_states, st->st_state) &&
+		if (LHAS(ok_states, st->st_state->kind) &&
 		    IS_CHILD_SA(st) &&
 		    st->st_clonedfrom == psn &&
 		    streq(st->st_connection->name, c->name)) /* not instances */
@@ -1928,7 +1929,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st;
 	FOR_EACH_STATE_NEW2OLD(st) {
-		if (LHAS(ok_states, st->st_state) &&
+		if (LHAS(ok_states, st->st_state->kind) &&
 		    (st->st_ike_version == IKEv2) == is_ikev2 &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
@@ -2118,8 +2119,8 @@ void fmt_state(struct state *st, const monotime_t now,
 		 st->st_serialno,
 		 c->name, inst,
 		 st->st_remoteport,
-		 st->st_state_name,
-		 st->st_state_story,
+		 st->st_state->name,
+		 st->st_state->story,
 		 st->st_event == NULL ? "none" :
 			enum_name(&timer_event_names, st->st_event->ev_type),
 		 delta,
@@ -2933,7 +2934,7 @@ bool verbose_state_busy(const struct state *st)
 	if (st->st_suspended_md != NULL) {
 		/* not whack */
 		log_to_log("discarding packet received during asynchronous work (DNS or crypto) in %s",
-			   st->st_state_name);
+			   st->st_state->name);
 	} else if (st->st_offloaded_task != NULL) {
 		libreswan_log("message received while calculating. Ignored.");
 	}

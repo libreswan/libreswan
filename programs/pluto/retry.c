@@ -218,7 +218,7 @@ void retransmit_v2_msg(struct state *st)
 
 	if (pst != st) {
 		set_cur_state(pst);  /* now we are on pst */
-		if (pst->st_state == STATE_PARENT_I2) {
+		if (pst->st_state->kind == STATE_PARENT_I2) {
 			pstat_sa_failed(pst, REASON_TOO_MANY_RETRANSMITS);
 			delete_state(pst);
 		} else {

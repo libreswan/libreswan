@@ -662,12 +662,12 @@ void init_ikev2(void)
 
 		/* fill in using static struct */
 		struct finite_state *fs = &v2_states[kind - STATE_IKEv2_FLOOR];
-		fs->fs_kind = kind;
+		fs->kind = kind;
 		finite_states[kind] = fs;
 
-		fs->fs_name = enum_name(&state_names, fs->fs_kind);
-		fs->fs_short_name = enum_short_name(&state_names, fs->fs_kind);
-		fs->fs_story = enum_name(&state_stories, fs->fs_kind);
+		fs->name = enum_name(&state_names, fs->kind);
+		fs->short_name = enum_short_name(&state_names, fs->kind);
+		fs->story = enum_name(&state_stories, fs->kind);
 
 		/*
 		 * Initialize .fs_category
@@ -676,7 +676,7 @@ void init_ikev2(void)
 		 * structure, this all goes away.
 		 */
 		enum state_category cat;
-		switch (fs->fs_kind) {
+		switch (fs->kind) {
 
 		case STATE_PARENT_I0:
 			/*
@@ -750,9 +750,9 @@ void init_ikev2(void)
 			break;
 
 		default:
-			bad_case(fs->fs_kind);
+			bad_case(fs->kind);
 		}
-		fs->fs_category = cat;
+		fs->category = cat;
 	}
 
 	/*
@@ -772,7 +772,7 @@ void init_ikev2(void)
 		passert(to != NULL);
 
 		DBGF(DBG_TMI, "processing IKEv2 state transition %s -> %s (%s)",
-		     from->fs_short_name, to->fs_short_name, t->story);
+		     from->short_name, to->short_name, t->story);
 
 		/*
 		 * Point .fs_v2_microcode at the first transition.
@@ -780,12 +780,12 @@ void init_ikev2(void)
 		 * immediately after (or to put it another way,
 		 * previous should match).
 		 */
-		if (from->fs_v2_transitions == NULL) {
-			from->fs_v2_transitions = t;
+		if (from->v2_transitions == NULL) {
+			from->v2_transitions = t;
 		} else {
 			passert(t[-1].state == t->state);
 		}
-		from->fs_nr_transitions++;
+		from->nr_transitions++;
 
 		/*
 		 * Pack expected payloads et.al. into a structure.
@@ -817,12 +817,12 @@ void init_ikev2(void)
 				jam(buf, "  ");
 				lswlog_finite_state(buf, from);
 				jam(buf, ":");
-				if (from->fs_nr_transitions == 0) {
+				if (from->nr_transitions == 0) {
 					lswlogs(buf, " <none>");
 				}
 			}
-			for (unsigned ti = 0; ti < from->fs_nr_transitions; ti++) {
-				const struct state_v2_microcode *t = &from->fs_v2_transitions[ti];
+			for (unsigned ti = 0; ti < from->nr_transitions; ti++) {
+				const struct state_v2_microcode *t = &from->v2_transitions[ti];
 				const struct finite_state *to = finite_states[t->next_state];
 				const char *send;
 				switch (t->send) {
@@ -831,7 +831,7 @@ void init_ikev2(void)
 				case MESSAGE_RESPONSE: send = " send-request"; break;
 				default: bad_case(t->send);
 				}
-				DBG_log("    -> %s %s%s (%s)", to->fs_short_name,
+				DBG_log("    -> %s %s%s (%s)", to->short_name,
 					enum_short_name(&timer_event_names,
 							t->timeout_event),
 					send, t->story);
@@ -1305,7 +1305,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md, struct ike_sa *i
 				st->st_connection->name,
 				fmt_conn_instance(st->st_connection, cb),
 				st->st_serialno,
-				st->st_state_name,
+				st->st_state->name,
 				st_busy ? "is busy processing a response drop this message" :
 					"will process it further");
 		});
@@ -1376,7 +1376,7 @@ static bool processed_retransmit(struct state *st,
 			lswlog_retransmit_prefix(buf, st);
 			lswlogf(buf, "state #%lu %s is working on message ID: %u %s, retransmission ignored",
 				cst->st_serialno,
-				st->st_state_name,
+				st->st_state->name,
 				st->st_msgid_lastrecv,
 				enum_name(&ikev2_exchange_names, ix));
 		}
@@ -1825,10 +1825,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	 * constants can be used to generate cookies on the fly.
 	 */
 	const struct finite_state *from_state =
-		st == NULL ? finite_states[STATE_PARENT_R0] : st->st_finite_state;
+		st == NULL ? finite_states[STATE_PARENT_R0] : st->st_state;
 	dbg("#%lu in state %s: %s",
 	     st != NULL ? st->st_serialno : 0,
-	     from_state->fs_short_name, from_state->fs_story);
+	     from_state->short_name, from_state->story);
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
@@ -1842,7 +1842,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * For CREATE_CHILD_SA exchanges, the from_state is
 		 * ignored.  See further down.
 		 */
-		if (svm->state != from_state->fs_kind && ix != ISAKMP_v2_CREATE_CHILD_SA)
+		if (svm->state != from_state->kind && ix != ISAKMP_v2_CREATE_CHILD_SA)
 			continue;
 		if (svm->recv_type != ix)
 			continue;
@@ -2102,7 +2102,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			continue;
 		}
 
-		if (svm->state != from_state->fs_kind && ix == ISAKMP_v2_CREATE_CHILD_SA) {
+		if (svm->state != from_state->kind && ix == ISAKMP_v2_CREATE_CHILD_SA) {
 			/*
 			 * The IKE SA is receiving a CREATE_CHILD_SA
 			 * request.  Unlike STATE_PARENT_R0 (and the
@@ -2654,7 +2654,7 @@ void v2_msgid_restart_init_request(struct state *st)
  * message.  Hence, don't rely on md->st and instead explicitly pass
  * in ST.
  *
- * XXX: Should this looking at .st_state_transition->flags to decide
+ * XXX: Should this looking at .st_state->transition->flags to decide
  * what to do?
  */
 void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
@@ -2674,13 +2674,13 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 
 	/* update when sending a request */
 	if (is_msg_request(md) &&
-			(st->st_state == STATE_PARENT_I1 ||
-			 st->st_state == STATE_V2_REKEY_IKE_I ||
-			 st->st_state == STATE_V2_REKEY_CHILD_I ||
-			 st->st_state == STATE_V2_CREATE_I)) {
+			(st->st_state->kind == STATE_PARENT_I1 ||
+			 st->st_state->kind == STATE_V2_REKEY_IKE_I ||
+			 st->st_state->kind == STATE_V2_REKEY_CHILD_I ||
+			 st->st_state->kind == STATE_V2_CREATE_I)) {
 		ike->sa.st_msgid_nextuse += 1;
 		/* an informational exchange does its own increment */
-	} else if (st->st_state == STATE_PARENT_I2) {
+	} else if (st->st_state->kind == STATE_PARENT_I2) {
 		ike->sa.st_msgid_nextuse += 1;
 	}
 
@@ -2722,10 +2722,10 @@ void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
 	LSWDBGP(DBG_BASE, buf) {
 		lswlogf(buf, "Message ID: '%s' IKE #%lu %s",
 			st->st_connection->name,
-			ike->sa.st_serialno, ike->sa.st_finite_state->fs_short_name);
+			ike->sa.st_serialno, ike->sa.st_state->short_name);
 		if (&ike->sa != st) {
 			lswlogf(buf, "; CHILD #%lu %s",
-				st->st_serialno, st->st_finite_state->fs_short_name);
+				st->st_serialno, st->st_state->short_name);
 		}
 		lswlogf(buf, "; message-%s msgid=%u",
 			is_msg_response(md) ? "response" : "request",
@@ -2854,15 +2854,15 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
 	}
 
-	w = RC_NEW_STATE + st->st_state;
+	w = RC_NEW_STATE + st->st_state->kind;
 
 	/*
 	 * tell whack and log of progress; successful state
 	 * transitions always advance (even when they go round to the
 	 * same state).
 	 */
-	passert(st->st_state >= STATE_IKEv2_FLOOR);
-	passert(st->st_state <  STATE_IKEv2_ROOF);
+	passert(st->st_state->kind >= STATE_IKEv2_FLOOR);
+	passert(st->st_state->kind <  STATE_IKEv2_ROOF);
 
 	if (svm->flags & SMF2_ESTABLISHED) {
 		/*
@@ -2881,7 +2881,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		log_details = lswlog_child_sa_established;
 		/* log our success and trigger detach */
 		w = RC_SUCCESS;
-	} else if (st->st_state == STATE_PARENT_I2 || st->st_state == STATE_PARENT_R1) {
+	} else if (st->st_state->kind == STATE_PARENT_I2 || st->st_state->kind == STATE_PARENT_R1) {
 		log_details = lswlog_ike_sa_established;
 	} else {
 		log_details = NULL;
@@ -2894,8 +2894,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	if ((svm->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
 	    (c != NULL && (c->policy & POLICY_OPPORTUNISTIC))) {
 		LSWDBGP(DBG_BASE, buf) {
-			lswlogf(buf, "%s: %s", st->st_finite_state->fs_name,
-				st->st_finite_state->fs_story);
+			lswlogf(buf, "%s: %s", st->st_state->name,
+				st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (log_details != NULL) {
 				log_details(buf, st);
@@ -2903,8 +2903,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		}
 	} else {
 		LSWLOG_RC(w, buf) {
-			lswlogf(buf, "%s: %s", st->st_finite_state->fs_name,
-				st->st_finite_state->fs_story);
+			lswlogf(buf, "%s: %s", st->st_state->name,
+				st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (log_details != NULL) {
 				log_details(buf, st);
@@ -3031,8 +3031,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		 * start liveness checks if set, making sure we only
 		 * schedule once when moving from I2->I3 or R1->R2
 		 */
-		if (st->st_state != from_state &&
-			st->st_state != STATE_UNDEFINED &&
+		if (st->st_state->kind != from_state &&
+			st->st_state->kind != STATE_UNDEFINED &&
 			IS_CHILD_SA_ESTABLISHED(st) &&
 			dpd_active_locally(st)) {
 			DBG(DBG_DPD,
@@ -3053,7 +3053,7 @@ static void log_stf_suspend(struct state *st, stf_status result)
 	LSWDBGP(DBG_CONTROL, buf) {
 		lswlogf(buf, "\"%s\"%s #%lu complete v2 state %s transition with ",
 			st->st_connection->name, b, st->st_serialno,
-			st->st_state_name);
+			st->st_state->name);
 		lswlog_v2_stf_status(buf, result);
 		lswlogf(buf, " suspended from %s:%d",
 			st->st_suspended_md_func,
@@ -3152,9 +3152,9 @@ void complete_v2_state_transition(struct state *st,
 	struct msg_digest *md = (mdp != NULL ? (*mdp) /*NULL?*/ : NULL);
 	set_cur_state(st); /* might have changed */ /* XXX: huh? */
 	/* get the from state */
-	const struct finite_state *from_state = (st != NULL ? st->st_finite_state
+	const struct finite_state *from_state = (st != NULL ? st->st_state
 						 : finite_states[STATE_UNDEFINED]);
-	const char *from_state_name = from_state->fs_name;
+	const char *from_state_name = from_state->name;
 
 	/*
 	 * XXX/SML:  There is no need to abort here in all cases where st is
@@ -3181,14 +3181,14 @@ void complete_v2_state_transition(struct state *st,
 	LSWDBGP(DBG_CONTROL, buf) {
 		lswlogf(buf, "#%lu complete v2 state transition from %s",
 			(st == NULL ? SOS_NOBODY : st->st_serialno),
-			from_state->fs_short_name);
+			from_state->short_name);
 		if (md != NULL) {
-			if (md->from_state != from_state->fs_kind) {
+			if (md->from_state != from_state->kind) {
 				lswlogs(buf, " md.from_state=");
 				lswlog_enum_short(buf, &state_names, md->from_state);
 			}
 			if (md->svm != NULL) {
-				if (md->svm->state != from_state->fs_kind) {
+				if (md->svm->state != from_state->kind) {
 					lswlogs(buf, " svm.state=");
 					lswlog_enum_short(buf, &state_names, md->svm->state);
 				}

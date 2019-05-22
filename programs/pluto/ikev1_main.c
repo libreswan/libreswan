@@ -210,12 +210,12 @@ void main_outI1(fd_t whack_sock,
 		update_pending(predecessor, st);
 		whack_log(RC_NEW_STATE + STATE_MAIN_I1,
 			"%s: initiate, replacing #%lu",
-			st->st_state_name,
+			st->st_state->name,
 			predecessor->st_serialno);
 	} else {
 		whack_log(RC_NEW_STATE + STATE_MAIN_I1,
 			"%s: initiate",
-			st->st_state_name);
+			st->st_state->name);
 	}
 	reset_cur_state();
 }
@@ -2044,7 +2044,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		break;
 	}
 
-	if (encst != NULL && !IS_ISAKMP_ENCRYPTED(encst->st_state))
+	if (encst != NULL && !IS_ISAKMP_ENCRYPTED(encst->st_state->kind))
 		encst = NULL;
 
 	{
@@ -2158,7 +2158,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 	passert(st != NULL);
 
 	if (from_state == STATE_UNDEFINED)
-		from_state = st->st_state;
+		from_state = st->st_state->kind;
 
 	if (IS_QUICK(from_state)) {
 		p1st = find_phase1_state(st->st_connection,
@@ -2211,7 +2211,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	struct state fake_state = {
 		.st_serialno = SOS_NOBODY,
 		.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
-		.st_finite_state = finite_states[STATE_UNDEFINED],
+		.st_state = finite_states[STATE_UNDEFINED],
 	};
 
 	passert(md != NULL);

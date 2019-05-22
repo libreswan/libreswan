@@ -746,7 +746,7 @@ extern struct keywords sa_role_names;
 				  LELEM(STATE_MODE_CFG_I1))
 
 
-#define IS_PHASE1_INIT(s) ((LELEM(s) & PHASE1_INITIATOR_STATES) != LEMPTY)
+#define IS_PHASE1_INIT(s) ((LELEM(s->kind) & PHASE1_INITIATOR_STATES) != LEMPTY)
 
 #define IS_PHASE1(s) (STATE_MAIN_R0 <= (s) && (s) <= STATE_AGGR_R2)
 
@@ -763,9 +763,9 @@ extern struct keywords sa_role_names;
 #define IS_ISAKMP_ENCRYPTED(s) ((LELEM(s) & ISAKMP_ENCRYPTED_STATES) != LEMPTY)
 
 /* ??? Is this really authenticate?  Even in xauth case? In STATE_INFO case? */
-#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) && \
-				    STATE_AGGR_R0 != (s) && \
-				    STATE_AGGR_I1 != (s))
+#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s->kind) && \
+				    STATE_AGGR_R0 != (s->kind) && \
+				    STATE_AGGR_I1 != (s->kind))
 
 #define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
 				       LELEM(STATE_PARENT_I1) |	\
@@ -786,7 +786,7 @@ extern struct keywords sa_role_names;
 				       LELEM(STATE_PARENT_I3) | \
 				       LELEM(STATE_PARENT_R2))
 
-#define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
+#define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
 #define IPSECSA_PENDING_STATES (LELEM(STATE_V2_CREATE_I) | \
 				LELEM(STATE_V2_CREATE_I0) | \
@@ -796,21 +796,21 @@ extern struct keywords sa_role_names;
 
 /* IKEv1 or IKEv2 */
 #define IS_IPSEC_SA_ESTABLISHED(s) (IS_CHILD_SA(s) && \
-				    ((s->st_state) == STATE_QUICK_I2 || \
-				    (s->st_state) == STATE_QUICK_R1 || \
-				    (s->st_state) == STATE_QUICK_R2 || \
-				    (s->st_state) == STATE_V2_IPSEC_I || \
-				    (s->st_state) == STATE_V2_IPSEC_R))
+				    ((s->st_state->kind) == STATE_QUICK_I2 || \
+				    (s->st_state->kind) == STATE_QUICK_R1 || \
+				    (s->st_state->kind) == STATE_QUICK_R2 || \
+				    (s->st_state->kind) == STATE_V2_IPSEC_I || \
+				    (s->st_state->kind) == STATE_V2_IPSEC_R))
 
-#define IS_MODE_CFG_ESTABLISHED(s) ((s) == STATE_MODE_CFG_R2)
+#define IS_MODE_CFG_ESTABLISHED(s) ((s->kind) == STATE_MODE_CFG_R2)
 
 /* Only relevant to IKEv2 */
 
 /* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
 
-#define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || \
-		(s) == STATE_PARENT_I3 || (s) == STATE_V2_IPSEC_I || \
-		(s) == STATE_V2_IPSEC_R)
+#define IS_V2_ESTABLISHED(s) ((s->kind) == STATE_PARENT_R2 || \
+		(s->kind) == STATE_PARENT_I3 || (s->kind) == STATE_V2_IPSEC_I || \
+		(s->kind) == STATE_V2_IPSEC_R)
 
 #define IS_IKE_SA_ESTABLISHED(st) \
 	( IS_ISAKMP_SA_ESTABLISHED(st->st_state) || \
@@ -823,11 +823,11 @@ extern struct keywords sa_role_names;
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
 #define IS_CHILD_SA_ESTABLISHED(st) \
-    ((st->st_state == STATE_V2_IPSEC_I || st->st_state == STATE_V2_IPSEC_R) && \
+    ((st->st_state->kind == STATE_V2_IPSEC_I || st->st_state->kind == STATE_V2_IPSEC_R) && \
       IS_CHILD_SA(st))
 
 #define IS_PARENT_SA_ESTABLISHED(st) \
-    (((st)->st_state == STATE_PARENT_I3 || (st)->st_state == STATE_PARENT_R2) && \
+    (((st)->st_state->kind == STATE_PARENT_I3 || (st)->st_state->kind == STATE_PARENT_R2) && \
     !IS_CHILD_SA(st))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)

@@ -276,7 +276,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		passert(st != NULL && st->st_send_xauth_event == ev);
 		DBG(DBG_CONTROLMORE|DBG_XAUTH,
 		    DBG_log("XAUTH: event EVENT_v1_SEND_XAUTH #%lu %s",
-			    st->st_serialno, st->st_state_name));
+			    st->st_serialno, st->st_state->name));
 		st->st_send_xauth_event = NULL;
 		break;
 
@@ -304,7 +304,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		passert(st != NULL && st->st_rel_whack_event == ev);
 		DBG(DBG_CONTROL,
 			DBG_log("event EVENT_v2_RELEASE_WHACK st_rel_whack_event=NULL #%lu %s",
-				st->st_serialno, st->st_state_name));
+				st->st_serialno, st->st_state->name));
 		st->st_rel_whack_event = NULL;
 		break;
 
@@ -372,7 +372,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		DBG(DBG_CONTROL, DBG_log("%s releasing whack for #%lu %s (sock="PRI_FD")",
 					enum_show(&timer_event_names, type),
 					st->st_serialno,
-					st->st_state_name,
+					st->st_state->name,
 					 PRI_fd(st->st_whack_sock)));
 		release_pending_whacks(st, "release whack");
 		break;

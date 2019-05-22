@@ -605,13 +605,13 @@ stf_status xauth_send_request(struct state *st)
 	pb_stream rbody;
 	unsigned char buf[256];
 	u_char *r_hash_start, *r_hashval;
-	const enum state_kind p_state = st->st_state;
+	const enum state_kind p_state = st->st_state->kind;
 
 	/* set up reply */
 	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
 
 	libreswan_log("XAUTH: Sending Username/Password request (%s->XAUTH_R0)",
-		      enum_short_name(&state_names, st->st_state));
+		      st->st_state->short_name);
 
 	/* this is the beginning of a new exchange */
 	st->st_msgid_phase15 = generate_msgid(st);
