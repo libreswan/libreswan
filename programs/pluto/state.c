@@ -750,9 +750,12 @@ static bool flush_incomplete_child(struct state *st, void *pst UNUSED)
 		char cib[CONN_INST_BUF];
 		struct connection *c = st->st_connection;
 
-		so_serial_t newest_sa = c->newest_ipsec_sa;
-		if (IS_IKE_REKEY_INITIATOR(st))
-			newest_sa = c->newest_isakmp_sa;
+		so_serial_t newest_sa;
+		switch (st->st_establishing_sa) {
+		case IKE_SA: newest_sa = c->newest_isakmp_sa; break;
+		case IPSEC_SA: newest_sa = c->newest_ipsec_sa; break;
+		default: bad_case(st->st_establishing_sa);
+		}
 
 		if (st->st_serialno > newest_sa &&
 		    (c->policy & POLICY_UP) &&
