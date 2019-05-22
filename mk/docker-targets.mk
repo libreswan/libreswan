@@ -185,8 +185,12 @@ docker-image: dockerfile $(TWEAKS) docker-ssh-image docker-build
 .PHONY: docker-start
 docker-start:
 	$(DOCKER_CMD) run -h $(DI_T) --privileged --name $(DI_T) \
-	-v /home/build/libreswan:/home/build/libreswan  \
+	-v /home/build:/home/build \
 	-v /sys/fs/cgroup:/sys/fs/cgroup:ro -d $(DI_T)
+
+.PHONY: docker-exec
+docker-exec:
+	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash
 
 .PHONY: docker-stop
 docker-stop:
