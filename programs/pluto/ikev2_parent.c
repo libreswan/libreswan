@@ -4792,9 +4792,9 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	/* HDR out Start assembling respone message */
 
 	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
-					  IS_CHILD_SA_RESPONDER(st) ? md : NULL,
+					  st->st_sa_role == SA_RESPONDER ? md : NULL,
 					  ISAKMP_v2_CREATE_CHILD_SA);
-	if (!IS_CHILD_SA_RESPONDER(st)) {
+	if (st->st_sa_role == SA_INITIATOR) {
 		/* store it to match response */
 		dbg("Message ID: force CHILD #%lu msgid "PRI_MSGID"->"PRI_MSGID" from IKE #%lu nextuse",
 		    st->st_serialno, st->st_msgid,
@@ -4854,7 +4854,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	record_outbound_ike_msg(pst, &reply_stream,
 				"packet from ikev2_child_out_cont");
 
-	if (IS_CHILD_SA_RESPONDER(st)) {
+	if (st->st_sa_role == SA_RESPONDER) {
 		dbg("Message ID: forcing IKE #%lu last replied "PRI_MSGID"->"PRI_MSGID" for child #%lu",
 		    pst->st_serialno, pst->st_msgid_lastreplied,
 		    md->hdr.isa_msgid,

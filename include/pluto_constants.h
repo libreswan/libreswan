@@ -841,11 +841,6 @@ extern struct keywords sa_role_names;
 	((st)->st_state == STATE_V2_REKEY_IKE_I0 || \
 	 (st)->st_state == STATE_V2_REKEY_IKE_I)
 
-#define IS_CHILD_SA_RESPONDER(st) \
-	((st)->st_state == STATE_V2_REKEY_IKE_R || \
-	  (st)->st_state == STATE_V2_CREATE_R || \
-	  (st)->st_state == STATE_V2_REKEY_CHILD_R)
-
 #define IS_CHILD_IPSECSA_RESPONSE(st) \
 	(IS_CHILD_SA(st) && ((st)->st_state == STATE_V2_REKEY_IKE_I || \
 	 (st)->st_state == STATE_V2_CREATE_I || \

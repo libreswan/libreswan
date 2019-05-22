@@ -3401,8 +3401,8 @@ void lswlog_v2_stf_status(struct lswlog *buf, unsigned status)
  * it isn't clear of all the children get re-hashed to the parent's
  * new slot?
  *
- * XXX: Looking at IS_CHILD_SA_RESPONDER() suggets this is testing the
- * re-key CHILD SA role, should this be looking elsewhere?
+ * XXX: O(#STATES); uses .st_msgid
+ * ...
  */
 
 struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_msgid)
@@ -3410,24 +3410,24 @@ struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_ms
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
-		if (IS_CHILD_SA(st) &&
-		    st->st_clonedfrom == ike->sa.st_serialno &&
+		/*
+		 * XXX:
+		 *
+		 * st_msgid is clearly suspect - its kind of the last
+		 * outgoing request sent yet here it is being used to
+		 * match an incomming request.
+		 *
+		 * Unfortunately v2_msgids .current_request is clearly
+		 * wrong.  This points to it needing to look in
+		 * v2_msgids .responder when trying to match.
+		 * However, that is only updated after processing
+		 * completes.  Add .current_response?
+		 */
+		if (st->st_clonedfrom == ike->sa.st_serialno &&
 		    st->st_msgid == st_msgid) {
-			if (IS_CHILD_SA_RESPONDER(st)) {
-				pexpect(st->st_sa_role == SA_RESPONDER);
+			if (st->st_sa_role == SA_RESPONDER) {
 				return st;
-			} else if (st->st_sa_role != SA_INITIATOR) {
-				/*
-				 * XXX: seemingly an IKE rekey can
-				 * trigger this - the CHILD_SA created
-				 * during the initial exchange is in
-				 * state STATE_V2_IPSEC_R and that
-				 * isn't covered by the above.
-				 */
-				/*
-				 * XXX: seemingly an IKE rekey can
-				 * cause this?
-				 */
+			} else {
 				LSWDBGP(DBG_BASE, buf) {
 					lswlogf(buf, "child state #%lu has an unexpected SA role ",
 						st->st_serialno);
