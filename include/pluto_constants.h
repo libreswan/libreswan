@@ -833,11 +833,6 @@ extern struct keywords sa_role_names;
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 #define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)
 
-#define IS_CHILD_IPSECSA_RESPONSE(st) \
-	(IS_CHILD_SA(st) && ((st)->st_state == STATE_V2_REKEY_IKE_I || \
-	 (st)->st_state == STATE_V2_CREATE_I || \
-	 (st)->st_state == STATE_V2_REKEY_CHILD_I))
-
 /* kind of struct connection
  * Ordered (mostly) by concreteness.  Order is exploited.
  */

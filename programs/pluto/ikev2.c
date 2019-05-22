@@ -3451,9 +3451,7 @@ struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_ms
  * it isn't clear of all the children get re-hashed to the parent's
  * new slot?
  *
- * XXX: Looking at IS_CHILD_IPSECSA_RESPONSE() suggets this is
- * checking the rekey CHILD SA exchange role.  Should it be looking
- * elsewhere?
+ * XXX: O(#STATES); uses .st_msgid
  */
 
 struct state *v2_child_sa_initiator_with_msgid(struct ike_sa *ike, msgid_t st_msgid)
@@ -3461,13 +3459,14 @@ struct state *v2_child_sa_initiator_with_msgid(struct ike_sa *ike, msgid_t st_ms
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
-		if (IS_CHILD_SA(st) &&
-		    st->st_clonedfrom == ike->sa.st_serialno &&
+		/*
+		 * XXX: Use v2_msgids .current_request?
+		 */
+		if (st->st_clonedfrom == ike->sa.st_serialno &&
 		    st->st_msgid == st_msgid) {
-			if (IS_CHILD_IPSECSA_RESPONSE(st)) {
-				pexpect(st->st_sa_role == SA_INITIATOR);
+			if (st->st_sa_role == SA_INITIATOR) {
 				return st;
-			} else if (st->st_sa_role != SA_RESPONDER) {
+			} else {
 				/*
 				 * XXX: seemingly an IKE rekey can
 				 * cause this?
