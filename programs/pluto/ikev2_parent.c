@@ -98,7 +98,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 static stf_status ikev2_parent_outI1_common(struct state *st);
 
-static stf_status ikev2_child_out_tail(struct msg_digest *md);
+static stf_status ikev2_child_out_tail(struct ike_sa *ike,
+				       struct child_sa *child,
+				       struct msg_digest *request_md);
 
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
 {
@@ -4071,10 +4073,10 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	return STF_OK;
 }
 
-static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
+static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 					       pb_stream *outpbs)
 {
-	struct state *st = md->st;
+	struct state *st = &child->sa;
 	struct connection *c = st->st_connection;
 	chunk_t local_nonce;
 	chunk_t *local_g;
@@ -4450,7 +4452,9 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 		st->st_state->kind == STATE_V2_REKEY_CHILD_R);
 
 	/* responder processing request */
-	pexpect(IS_CHILD_SA(st));
+	struct child_sa *child = pexpect_child_sa(st);
+	struct ike_sa *ike = ike_sa(st);
+
 	pexpect(st->st_sa_role == SA_RESPONDER);
 	pexpect(*mdp != NULL);
 	pexpect((*mdp)->st == st);
@@ -4459,7 +4463,6 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 	     __func__, st->st_serialno, st->st_state->name);
 
 	/* and a parent? */
-	struct ike_sa *ike = ike_sa(st);
 	if (ike == NULL) {
 		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
 			    st->st_serialno, st->st_clonedfrom);
@@ -4478,7 +4481,7 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 		e = STF_SUSPEND;
 	}
 	if (e == STF_OK) {
-		e = ikev2_child_out_tail(*mdp);
+		e = ikev2_child_out_tail(ike, child, *mdp);
 	}
 
 	complete_v2_state_transition(st, mdp, e);
@@ -4501,7 +4504,8 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 	pexpect(md->st == st);
 	passert(st->st_sa_role == SA_RESPONDER);
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
-	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
+	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
+	struct ike_sa *ike = ike_sa(&child->sa);
 
 	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
@@ -4519,11 +4523,11 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 		 * XXX: this is the initiator so returning a
 		 * notification is kind of useless.
 		 */
-		send_v2N_response_from_state(ike_sa(st), md,
+		send_v2N_response_from_state(ike, md,
 					     v2N_INVALID_SYNTAX, NULL);
 		return STF_FATAL;
 	}
-	return ikev2_child_out_tail(md);
+	return ikev2_child_out_tail(ike, child, md);
 }
 
 /*
@@ -4674,11 +4678,13 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R);
 
 	/* 'child' responding to request */
+	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
+	struct ike_sa *ike = ike_sa(&child->sa);
+
 	passert(*mdp != NULL);
 	pexpect((*mdp)->st == st);
 	passert(st->st_sa_role == SA_RESPONDER);
 	passert(v2_msg_role(*mdp) == MESSAGE_REQUEST);
-	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
 
 	dbg("%s for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
@@ -4700,20 +4706,23 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 		e = STF_FATAL;
 	}
 	if (e == STF_OK) {
-		e = ikev2_child_out_tail(*mdp);
+		e = ikev2_child_out_tail(ike, child, *mdp);
 	}
 
 	complete_v2_state_transition(st, mdp, e);
 }
 
-static stf_status ikev2_child_out_tail(struct msg_digest *md)
+static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *child,
+				       struct msg_digest *request_md)
 {
-	struct child_sa *child = pexpect_child_sa(md->st);
-	struct state *st = md->st;
-	struct state *pst = state_with_serialno(st->st_clonedfrom);
+	struct state *st = &child->sa;
 	stf_status ret;
 
-	passert(pst != NULL);
+	passert(ike != NULL);
+	pexpect((request_md != NULL) == (child->sa.st_sa_role == SA_RESPONDER));
+	pexpect((request_md != NULL) == ((st)->st_state->kind == STATE_V2_REKEY_IKE_R ||
+					 (st)->st_state->kind == STATE_V2_CREATE_R ||
+					 (st)->st_state->kind == STATE_V2_REKEY_CHILD_R));
 
 	ikev2_log_parentSA(st);
 
@@ -4721,13 +4730,12 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 
 	/* HDR out Start assembling respone message */
 
-	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
-					  st->st_sa_role == SA_RESPONDER ? md : NULL,
+	pb_stream rbody = open_v2_message(&reply_stream, ike, request_md,
 					  ISAKMP_v2_CREATE_CHILD_SA);
 
 	/* insert an Encryption payload header */
 
-	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike_sa(pst));
+	v2SK_payload_t sk = open_v2SK_payload(&rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -4735,7 +4743,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	switch (st->st_state->kind) {
 	case STATE_V2_REKEY_IKE_R:
 	case STATE_V2_REKEY_IKE_I0:
-		ret = ikev2_child_add_ike_payloads(md, &sk.pbs);
+		ret = ikev2_child_add_ike_payloads(child, &sk.pbs);
 		break;
 	case STATE_V2_CREATE_I0:
 	case STATE_V2_REKEY_CHILD_I0:
@@ -4748,7 +4756,8 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 			/* Should "just work", not working is a screw up */
 			return STF_INTERNAL_ERROR;
 		}
-		ret = ikev2_child_sa_respond(md, &sk.pbs, ISAKMP_v2_CREATE_CHILD_SA);
+		ret = ikev2_child_sa_respond(request_md, &sk.pbs,
+					     ISAKMP_v2_CREATE_CHILD_SA);
 	}
 
 	/* note: pst: parent; md->st: child */
@@ -4776,7 +4785,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
 	 * ??? Should we support fragmenting?  Maybe one day.
 	 */
-	record_outbound_ike_msg(pst, &reply_stream,
+	record_outbound_ike_msg(&ike->sa, &reply_stream,
 				"packet from ikev2_child_out_cont");
 
 	if (st->st_state->kind == STATE_V2_CREATE_R ||
@@ -4808,6 +4817,7 @@ static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
 	default:
 		bad_case(child->sa.st_establishing_sa);
 	}
+
 }
 
 static void delete_or_replace_state(struct state *st) {
@@ -5787,7 +5797,7 @@ static void ikev2_child_outI_continue(struct state *st,
 	/* child initiating exchange */
 	struct child_sa *child = pexpect_child_sa(st);
 	struct ike_sa *ike = ike_sa(&child->sa);
-	pexpect(st->st_sa_role == SA_INITIATOR);
+	pexpect(child->sa.st_sa_role == SA_INITIATOR);
 
 	/* initiating, so *MDP should be NULL; later */
 	if (*mdp == NULL) {
@@ -5819,13 +5829,14 @@ static void ikev2_child_outI_continue(struct state *st,
 }
 
 stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *st,
-				       struct msg_digest **mdp)
+				       struct msg_digest **mdp UNUSED)
 {
-	stf_status e = ikev2_start_new_exchange(ike, pexpect_child_sa(st));
+	struct child_sa *child = pexpect_child_sa(st);
+	stf_status e = ikev2_start_new_exchange(ike, child);
 	if (e != STF_OK) {
 		return e;
 	}
-	return ikev2_child_out_tail(*mdp);
+	return ikev2_child_out_tail(ike, child, NULL);
 }
 
 void ikev2_record_newaddr(struct state *st, void *arg_ip)
