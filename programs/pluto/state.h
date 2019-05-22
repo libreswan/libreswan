@@ -320,7 +320,15 @@ struct state {
 	struct xauth *st_xauth;			/* per state xauth/pam thread */
 #endif
 
-	enum ike_version st_ike_version;	/* IKEv1, IKEv2, ... */
+	/*
+	 * XXX: Can these attributes be moved to struct finite_state?
+	 * Probably, but later.
+	 *
+	 * XXX: Can these attributes be made "const".  Probably,
+	 * new_state() could use clone_thing(const state on stack).
+	 */
+	/*const*/ enum ike_version st_ike_version;	/* IKEv1, IKEv2, ... */
+	/*const*/ enum sa_type st_establishing_sa;	/* where is this state going? */
 
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
 	bool st_suppress_del_notify;            /* suppress sending DELETE - eg replaced conn */

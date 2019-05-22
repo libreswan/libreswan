@@ -505,7 +505,8 @@ so_serial_t next_so_serialno(void)
 static struct state *new_state(enum ike_version ike_version,
 			       const struct finite_state *fs,
 			       const ike_spi_t ike_initiator_spi,
-			       const ike_spi_t ike_responder_spi)
+			       const ike_spi_t ike_responder_spi,
+			       enum sa_type sa_type)
 {
 	union sas *sas = alloc_thing(union sas, "struct state in new_state()");
 	passert(&sas->st == &sas->child.sa);
@@ -517,6 +518,7 @@ static struct state *new_state(enum ike_version ike_version,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
 		.st_ike_version = ike_version,
+		.st_establishing_sa = sa_type,
 		.st_ike_spis = {
 			.initiator = ike_initiator_spi,
 			.responder = ike_responder_spi,
@@ -530,6 +532,7 @@ static struct state *new_state(enum ike_version ike_version,
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
 	add_state_to_db(st);
+	pstat_sa_started(st, sa_type);
 
 	return st;
 }
@@ -537,8 +540,7 @@ static struct state *new_state(enum ike_version ike_version,
 struct state *new_v1_istate(void)
 {
 	struct state *st = new_state(IKEv1, &state_undefined, ike_initiator_spi(),
-				     zero_ike_spi);
-	pstat_sa_started(st, IKE_SA);
+				     zero_ike_spi, IKE_SA);
 	return st;
 }
 
@@ -546,9 +548,9 @@ struct state *new_v1_rstate(struct msg_digest *md)
 {
 	struct state *st = new_state(IKEv1, &state_undefined,
 				     md->hdr.isa_ike_spis.initiator,
-				     ike_responder_spi(&md->sender));
+				     ike_responder_spi(&md->sender),
+				     IKE_SA);
 	update_ike_endpoints(st, md);
-	pstat_sa_started(st, IKE_SA);
 	return st;
 }
 
@@ -557,8 +559,8 @@ struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 			   const ike_spi_t ike_responder_spi)
 {
 	struct state *st = new_state(IKEv2, &state_undefined,
-				     ike_initiator_spi, ike_responder_spi);
-	pstat_sa_started(st, IKE_SA);
+				     ike_initiator_spi, ike_responder_spi,
+				     IKE_SA);
 	st->st_sa_role = sa_role;
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
@@ -1442,8 +1444,8 @@ static struct state *duplicate_state(struct state *st,
 
 	nst = new_state(st->st_ike_version, fs,
 			st->st_ike_spis.initiator,
-			st->st_ike_spis.responder);
-	pstat_sa_started(nst, sa_type);
+			st->st_ike_spis.responder,
+			sa_type);
 
 	DBG(DBG_CONTROL,
 		DBG_log("duplicating state object #%lu \"%s\"%s as #%lu for %s",
