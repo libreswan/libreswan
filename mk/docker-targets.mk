@@ -21,6 +21,7 @@ W3 = $(or $(word 3, $(subst -, ,$1)), $(value 2))
 FIRST_TARGET ?=$@	# keep track of original target
 DISTRO ?= fedora	# default distro
 DISTRO_REL ?= 28 	# default release
+EXCLUDE_RPM_ARCH ?= --excludepkgs='*.i686'
 
 # end of configurable variables
 
@@ -116,7 +117,7 @@ use_unbound_event_h_copy:
 #
 
 .PHONY: install-rpm-dep
-RUN_RPMS = $$(dnf deplist libreswan | awk '/provider:/ {print $$2}' | sort -u)
+RUN_RPMS = $$(dnf deplist $(EXCLUDE_RPM_ARCH) libreswan | awk '/provider:/ {print $$2}' | sort -u)
 install-rpm-dep:
 	$(if $(KVM_PACKAGES), $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
 	$(if $(KVM_PACKAGES), $(KVM_PACKAGE_UPGRADE) $(KVM_PACKAGES))
