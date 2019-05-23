@@ -3518,10 +3518,7 @@ static bool is_virtual_net_used(struct connection *c,
 				const ip_subnet *peer_net,
 				const struct id *peer_id)
 {
-	struct connection *d;
-	char cbuf[CONN_INST_BUF];
-
-	for (d = connections; d != NULL; d = d->ac_next) {
+	for (struct connection *d = connections; d != NULL; d = d->ac_next) {
 		switch (d->kind) {
 		case CK_PERMANENT:
 		case CK_TEMPLATE:
@@ -3529,12 +3526,11 @@ static bool is_virtual_net_used(struct connection *c,
 			if ((subnetinsubnet(peer_net, &d->spd.that.client) ||
 					subnetinsubnet(&d->spd.that.client,
 						peer_net)) &&
-				!same_id(&d->spd.that.id, peer_id)) {
+				!same_id(&d->spd.that.id, peer_id))
+			{
 				char buf[IDTOA_BUF];
+				char cbuf[CONN_INST_BUF];
 				char client[SUBNETTOT_BUF];
-				const char *cname;
-				const char *doesnot = " does not";
-				const char *esses = "";
 
 				subnettot(peer_net, 0, client, sizeof(client));
 				idtoa(&d->spd.that.id, buf, sizeof(buf));
@@ -3552,9 +3548,9 @@ static bool is_virtual_net_used(struct connection *c,
 						"Kernel method '%s' does not support overlapping IP ranges",
 						kernel_ops->kern_name);
 					return TRUE;
+				}
 
-				} else if (LIN(POLICY_OVERLAPIP, c->policy) &&
-					LIN(POLICY_OVERLAPIP, d->policy)) {
+				if (LIN(POLICY_OVERLAPIP, c->policy & d->policy)) {
 					libreswan_log(
 						"overlap is okay by mutual consent");
 
@@ -3563,36 +3559,33 @@ static bool is_virtual_net_used(struct connection *c,
 					 * on.
 					 */
 					break;
-
-				} else if (LIN(POLICY_OVERLAPIP, c->policy) &&
-					!LIN(POLICY_OVERLAPIP, d->policy)) {
-					/* redundant */
-					cname = d->name;
-					fmt_conn_instance(d, cbuf);
-				} else if (!LIN(POLICY_OVERLAPIP, c->policy) &&
-					LIN(POLICY_OVERLAPIP, d->policy)) {
-					cname = c->name;
-					fmt_conn_instance(c, cbuf);
-				} else {
-					cbuf[0] = '\0';
-					doesnot = "";
-					esses = "s";
-					cname = "neither";
 				}
 
-				libreswan_log(
-					"overlap is forbidden (%s%s%s agree%s to overlap)",
-					cname,
-					cbuf,
-					doesnot,
-					esses);
+				/* We're not allowed to overlap.  Carefully report. */
 
+				const struct connection *x =
+					LIN(POLICY_OVERLAPIP, c->policy) ? d :
+					LIN(POLICY_OVERLAPIP, d->policy) ? c :
+					NULL;
+
+				if (x == NULL) {
+					libreswan_log(
+						"overlap is forbidden (neither agrees to overlap)");
+				} else {
+					libreswan_log(
+						"overlap is forbidden (%s%s does not agree to overlap)",
+						x->name,
+						fmt_conn_instance(x, cbuf));
+				}
+
+				/* ??? why is this a separate log line? */
 				idtoa(peer_id, buf, sizeof(buf));
 				libreswan_log("Your ID is '%s'", buf);
 
 				return TRUE; /* already used by another one */
 			}
 			break;
+
 		case CK_GOING_AWAY:
 		default:
 			break;
@@ -3691,8 +3684,6 @@ static struct connection *fc_try(const struct connection *c,
 		const struct spd_route *sr;
 
 		for (sr = &d->spd; best != d && sr != NULL; sr = sr->spd_next) {
-			policy_prio_t prio;
-
 			DBG(DBG_CONTROLMORE, {
 				char s3[SUBNETTOT_BUF];
 				char d3[SUBNETTOT_BUF];
@@ -3723,44 +3714,40 @@ static struct connection *fc_try(const struct connection *c,
 			}
 
 			if (sr->that.has_client) {
-				if (sr->that.has_client_wildcard) {
-					if (!subnetinsubnet(peer_net,
-							    &sr->that.client))
+				if (sr->that.has_client_wildcard &&
+				    !subnetinsubnet(peer_net, &sr->that.client))
 						continue;
-				} else {
-					if (!samesubnet(&sr->that.client,
-							 peer_net) &&
-					    !is_virtual_sr(sr)) {
-						DBG(DBG_CONTROLMORE, {
-							char d3[SUBNETTOT_BUF];
-							subnettot(&sr->that.client, 0, d3,
-								sizeof(d3));
-							DBG_log("   their client (%s) not in same peer_net (%s)",
-								d3, d1);
-						});
-						continue;
-					}
 
-					virtualwhy = check_virtual_net_allowed(
-							d,
-							peer_net,
-							&sr->that.host_addr);
+				if (!samesubnet(&sr->that.client, peer_net) &&
+				    !is_virtual_sr(sr)) {
+					DBG(DBG_CONTROLMORE, {
+						char d3[SUBNETTOT_BUF];
+						subnettot(&sr->that.client, 0, d3,
+							sizeof(d3));
+						DBG_log("   their client (%s) not in same peer_net (%s)",
+							d3, d1);
+					});
+					continue;
+				}
 
-					if (is_virtual_sr(sr) &&
-					    (virtualwhy != NULL ||
-					     is_virtual_net_used(
+				virtualwhy = check_virtual_net_allowed(
 						d,
 						peer_net,
-						&sr->that.id)))
-					{
-						DBG(DBG_CONTROLMORE,
-							DBG_log("   virtual net not allowed"));
-						continue;
-					}
-				}
-			} else {
-				if (!peer_net_is_host)
+						&sr->that.host_addr);
+
+				if (is_virtual_sr(sr) &&
+				    (virtualwhy != NULL ||
+				     is_virtual_net_used(
+					d,
+					peer_net,
+					&sr->that.id)))
+				{
+					DBG(DBG_CONTROLMORE,
+						DBG_log("   virtual net not allowed"));
 					continue;
+				}
+			} else if (!peer_net_is_host) {
+				continue;
 			}
 
 			/*
@@ -3776,7 +3763,8 @@ static struct connection *fc_try(const struct connection *c,
 			 * - given that, the shortest CA pathlength is preferred
 			 * - given that, not switching is preferred
 			 */
-			prio = PRIO_WEIGHT * routed(sr->routing) +
+			policy_prio_t prio =
+				PRIO_WEIGHT * routed(sr->routing) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen) +
 				(c == d ? 1 : 0) +
@@ -3795,12 +3783,10 @@ static struct connection *fc_try(const struct connection *c,
 		DBG_log("  fc_try concluding with %s [%" PRIu32 "]",
 			(best ? best->name : "none"), best_prio));
 
-	if (best == NULL) {
-		if (virtualwhy != NULL) {
-			libreswan_log(
-				"peer proposal was rejected in a virtual connection policy: %s",
-				virtualwhy);
-		}
+	if (best == NULL && virtualwhy != NULL) {
+		libreswan_log(
+			"peer proposal was rejected in a virtual connection policy: %s",
+			virtualwhy);
 	}
 
 	return best;
