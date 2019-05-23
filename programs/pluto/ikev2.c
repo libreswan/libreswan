@@ -73,6 +73,7 @@
 #include "ikev2_msgid.h"
 
 static bool is_msg_request(const struct msg_digest *md);
+static struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_msgid);
 
 enum smf2_flags {
 	/*
@@ -1251,64 +1252,37 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	return st->st_v2_rfrags->count == st->st_v2_rfrags->total;
 }
 
-static struct state *process_v2_child_ix(struct msg_digest *md,
-					 struct state *is_this_ike_or_child_sa)
+static struct state *process_v2_child_ix(struct msg_digest *md, struct ike_sa *ike)
 {
-	struct state *st; /* child state */
+	struct state *st; /* child state - to be determined */
 
 	/* for log */
 	const char *what;
 	const char *why = "";
 
-	/* force pst to be parent state */
-	/* ??? should we not already know whether this is a parent state? */
-	struct ike_sa *ike = ike_sa(is_this_ike_or_child_sa);
+	/* this an IKE request and not a response */
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
 
-	if (is_msg_request(md)) {
-		/* this an IKE request and not a response */
-		if (v2_child_sa_responder_with_msgid(ike, md->hdr.isa_msgid) != NULL) {
-			what = "CREATE_CHILD_SA Request retransmission ignored";
-			st = NULL;
-		} else if (md->from_state == STATE_V2_CREATE_R) {
-			what = "Child SA Request";
-			st = ikev2_duplicate_state(ike, IPSEC_SA,
-						   SA_RESPONDER);
-			change_state(st, STATE_V2_CREATE_R);
-			st->st_msgid = md->hdr.isa_msgid;
-			binlog_refresh_state(st);
-		} else {
-			what = "IKE Rekey Request";
-			st = ikev2_duplicate_state(ike, IKE_SA,
-						   SA_RESPONDER);
-			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
-			st->st_msgid = md->hdr.isa_msgid;
-			binlog_refresh_state(st);
-		}
-	} else  {
-		/* this a response */
-		what = "Child SA Response";
-		st = v2_child_sa_initiator_with_msgid(ike, md->hdr.isa_msgid);
-		if (st == NULL) {
-			switch (md->from_state) {
-			case STATE_V2_CREATE_I:
-				what = "IPsec Child Response";
-				why = " no matching IPsec child state for this response";
-				break;
-
-			case STATE_V2_REKEY_IKE_I:
-				what = "IKE Rekey Response";
-				why = " no matching IKE Rekey state for this response";
-				break;
-
-			case STATE_V2_REKEY_CHILD_I:
-				what = "IPsec Child Rekey Response";
-				why = " no matching rekey child state for this response";
-				break;
-			default:
-				/* ??? can this happen? */
-				break;
-			}
-		}
+	if (v2_child_sa_responder_with_msgid(ike, md->hdr.isa_msgid) != NULL) {
+		/*
+		 * XXX: why didn't the re-transmit code detected this?
+		 */
+		what = "CREATE_CHILD_SA Request retransmission ignored";
+		st = NULL;
+	} else if (md->from_state == STATE_V2_CREATE_R) {
+		what = "Child SA Request";
+		st = ikev2_duplicate_state(ike, IPSEC_SA,
+					   SA_RESPONDER);
+		change_state(st, STATE_V2_CREATE_R);
+		st->st_msgid = md->hdr.isa_msgid;
+		binlog_refresh_state(st);
+	} else {
+		what = "IKE Rekey Request";
+		st = ikev2_duplicate_state(ike, IKE_SA,
+					   SA_RESPONDER);
+		change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
+		st->st_msgid = md->hdr.isa_msgid;
+		binlog_refresh_state(st);
 	}
 
 	if (st == NULL) {
@@ -2245,24 +2219,46 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 *
 		 * XXX: Setting/clearing md->st is to preserve
 		 * existing behaviour (what ever that was).
+		 *
+		 * XXX: Suspect md->st assignment isn't needed here as
+		 * update_ike_endpoints() doesn't look at it?
 		 */
+		struct ike_sa *ike = ike_sa(st);
 		md->st = st;
-		struct state *pst = IS_CHILD_SA(md->st) ?
-			state_with_serialno(md->st->st_clonedfrom) : md->st;
 		/* going to switch to child st. before that update parent */
-		if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
-			update_ike_endpoints(pst, md);
+		if (!LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))
+			update_ike_endpoints(&ike->sa, md);
 		md->st = NULL;
 
 		/* bit further processing of create CREATE_CHILD_SA exchange */
 
-		/* let's get a child state either new or existing to proceed */
-		struct state *cst = process_v2_child_ix(md, st);
-		if (cst == NULL) {
-			/* no go. Could improve the status code? */
-			/* replace (*mdp)->st with st ... */
-			complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL);
-			return;
+		/*
+		 * let's get a child state either new or existing to
+		 * proceed
+		 */
+		struct state *cst;
+		if (v2_msg_role(md) == MESSAGE_RESPONSE) {
+			pexpect(IS_CHILD_SA(st));
+			/*
+			 * XXX: Since the above lookup-by-msgid code
+			 * has done its job - using .current_request
+			 * either the child initiator was found or the
+			 * message was discarded - there's no point in
+			 * trying to re-find it using
+			 * process_v2_child_ix() and .st_msgid as that
+			 * will likely screw up.
+			 */
+			cst = st;
+		} else {
+			pexpect(IS_IKE_SA(st));
+			cst = process_v2_child_ix(md, ike);
+			if (cst == NULL) {
+				/* no go. Could improve the status
+				 * code? */
+				/* replace (*mdp)->st with st ... */
+				complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL);
+				return;
+			}
 		}
 
 		/*
@@ -3437,49 +3433,6 @@ struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_ms
 		}
 	};
 	dbg("no waiting child responder state matching pst #%lu msg id %u",
-	    ike->sa.st_serialno, st_msgid);
-	return NULL;
-}
-
-/*
- * Find the state object that match the following:
- *	st_msgid (IKE/IPsec initiator state)
- *	parent duplicated from
- *	expected state
- *
- * XXX: can this use cookies?  Probably except after an IKE SA rekey
- * it isn't clear of all the children get re-hashed to the parent's
- * new slot?
- *
- * XXX: O(#STATES); uses .st_msgid
- */
-
-struct state *v2_child_sa_initiator_with_msgid(struct ike_sa *ike, msgid_t st_msgid)
-{
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
-		/*
-		 * XXX: Use v2_msgids .current_request?
-		 */
-		if (st->st_clonedfrom == ike->sa.st_serialno &&
-		    st->st_msgid == st_msgid) {
-			if (st->st_sa_role == SA_INITIATOR) {
-				return st;
-			} else {
-				/*
-				 * XXX: seemingly an IKE rekey can
-				 * cause this?
-				 */
-				LSWDBGP(DBG_BASE, buf) {
-					lswlogf(buf, "child state #%lu has an unexpected SA role ",
-						st->st_serialno);
-					lswlog_keyname(buf, &sa_role_names, st->st_sa_role);
-				}
-			}
-		}
-	};
-	dbg("no waiting child initiator state matching pst #%lu msg id %u",
 	    ike->sa.st_serialno, st_msgid);
 	return NULL;
 }
