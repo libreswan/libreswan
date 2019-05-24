@@ -170,6 +170,8 @@ if test -r /proc/net/ipsec_tncfg
 then
 	cat /proc/net/ipsec_tncfg
 fi
+if test -r /proc/net/xfrm_stat
+then
 _________________________ ip-xfrm-state
 	ip xfrm state
 _________________________ ip-xfrm-policy
