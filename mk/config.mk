@@ -345,7 +345,7 @@ USE_DNSSEC?=true
 # We only enable this by default if used INITSYSTEM is systemd
 ifeq ($(INITSYSTEM),systemd)
 USE_SYSTEMD_WATCHDOG?=true
-SD_RESTART_TYPE?="always"
+SD_RESTART_TYPE?="on-failure"
 SD_PLUTO_OPTIONS?="--leak-detective"
 else
 USE_SYSTEMD_WATCHDOG?=false
