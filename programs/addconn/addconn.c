@@ -690,10 +690,11 @@ int main(int argc, char *argv[])
 	unbound_ctx_free();
 #endif
 	/*
-	 * Only RC_ codes between RC_DUPNAME and RC_NEW_STATE are errors
-	 * Some starter code above can also return -1 which is not a valid RC_ code
+	 * Only RC_ codes between RC_EXIT_FLOOR (RC_DUPNAME) and
+	 * RC_EXIT_ROOF (RC_NEW_V1_STATE) are errors Some starter code
+	 * above can also return -1 which is not a valid RC_ code
 	 */
-	if (exit_status > 0 && (exit_status < RC_DUPNAME || exit_status >= RC_NEW_STATE))
+	if (exit_status > 0 && (exit_status < RC_EXIT_FLOOR || exit_status >= RC_EXIT_ROOF))
 		exit_status = 0;
 	exit(exit_status);
 }

@@ -208,12 +208,12 @@ void main_outI1(fd_t whack_sock,
 
 	if (predecessor != NULL) {
 		update_pending(predecessor, st);
-		whack_log(RC_NEW_STATE + STATE_MAIN_I1,
+		whack_log(RC_NEW_V1_STATE + STATE_MAIN_I1,
 			"%s: initiate, replacing #%lu",
 			st->st_state->name,
 			predecessor->st_serialno);
 	} else {
-		whack_log(RC_NEW_STATE + STATE_MAIN_I1,
+		whack_log(RC_NEW_V1_STATE + STATE_MAIN_I1,
 			"%s: initiate",
 			st->st_state->name);
 	}

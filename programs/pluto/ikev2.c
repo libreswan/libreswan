@@ -2854,7 +2854,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
 	}
 
-	w = RC_NEW_STATE + st->st_state->kind;
+	w = RC_NEW_V2_STATE + st->st_state->kind;
 
 	/*
 	 * tell whack and log of progress; successful state

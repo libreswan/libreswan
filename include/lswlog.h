@@ -76,7 +76,8 @@ enum rc_type {
 	RC_RETRANSMISSION = 10,
 
 	/* improper request */
-	RC_DUPNAME = 20,	/* attempt to reuse a connection name */
+	RC_EXIT_FLOOR = 20,
+	RC_DUPNAME = RC_EXIT_FLOOR,	/* attempt to reuse a connection name */
 	RC_UNKNOWN_NAME,	/* connection name unknown or state number */
 	RC_ORIENT,		/* cannot orient connection: neither end is us */
 	RC_CLASH,		/* clash between two Road Warrior connections OVERLOADED */
@@ -105,10 +106,14 @@ enum rc_type {
 	RC_ENTERSECRET = 40,
 	RC_USERPROMPT = 41,
 
-	/* progress: start of range for successful state transition.
-	 * Actual value is RC_NEW_STATE plus the new state code.
+	RC_EXIT_ROOF = 100,
+
+	/*
+	 * progress: start of range for successful state transition.
+	 * Actual value is RC_NEW_V[12]_STATE plus the new state code.
 	 */
-	RC_NEW_STATE = 100,
+	RC_NEW_V1_STATE = RC_EXIT_ROOF,
+	RC_NEW_V2_STATE = 150,
 
 	/* start of range for notification.
 	 * Actual value is RC_NOTIFICATION plus code for notification

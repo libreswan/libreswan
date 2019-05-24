@@ -2785,7 +2785,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				w = RC_SUCCESS; /* log our success */
 			} else {
 				log_details = NULL;
-				w = RC_NEW_STATE + st->st_state->kind;
+				w = RC_NEW_V1_STATE + st->st_state->kind;
 			}
 
 			passert(st->st_state->kind < STATE_IKEv1_ROOF);

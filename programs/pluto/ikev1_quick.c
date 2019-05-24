@@ -1030,11 +1030,11 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	start_retransmits(st);
 
 	if (st->st_ipsec_pred == SOS_NOBODY) {
-		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
+		whack_log(RC_NEW_V1_STATE + STATE_QUICK_I1,
 			  "%s: initiate",
 			  st->st_state->name);
 	} else {
-		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
+		whack_log(RC_NEW_V1_STATE + STATE_QUICK_I1,
 			  "%s: initiate to replace #%lu",
 			  st->st_state->name,
 			  st->st_ipsec_pred);

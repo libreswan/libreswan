@@ -24,11 +24,5 @@ s/ aged [0-9]*\.[0-9]*s / /
 # Suppress actual state number; if things get re-numbered this needs
 # to get updated.
 
-s/^10[3-9] /1v1 /
-s/^11[0-9] /1v1 /
-s/^12[0-9] /1v1 /
-s/^13[0-0] /1v1 /
-
-s/^13[2-9] /1v2 /
-s/^14[0-9] /1v2 /
-s/^15[0-1] /1v2 /
+s/^1[0-4][0-9] /1v1 /
+s/^1[5-9][0-9] /1v2 /
