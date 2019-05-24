@@ -3990,8 +3990,7 @@ static stf_status ikev2_rekey_child_resp(struct msg_digest *md)
 		 *
 		 * From our POV, that's the outbound SPI.
 		 */
-		struct state *rst = find_v2_child_sa_by_outbound_spi(&ike->sa.st_ike_spis,
-								     rekey_notify->isan_protoid, spi);
+		struct child_sa *rst = find_v2_child_sa_by_outbound_spi(ike, rekey_notify->isan_protoid, spi);
 		if (rst == NULL) {
 			libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
 				      ntohl((uint32_t) spi),
@@ -4003,17 +4002,17 @@ static stf_status ikev2_rekey_child_resp(struct msg_digest *md)
 			return STF_FATAL;
 		}
 
-		st->st_ipsec_pred = rst->st_serialno;
+		st->st_ipsec_pred = rst->sa.st_serialno;
 
 		char cib[CONN_INST_BUF];
 		dbg("#%lu rekey request for \"%s\"%s #%lu TSi TSr",
 		    st->st_serialno,
-		    rst->st_connection->name,
-		    fmt_conn_instance(rst->st_connection, cib),
-		    rst->st_serialno);
-		ikev2_print_ts(&rst->st_ts_this);
-		ikev2_print_ts(&rst->st_ts_that);
-		st->st_connection = rst->st_connection;
+		    rst->sa.st_connection->name,
+		    fmt_conn_instance(rst->sa.st_connection, cib),
+		    rst->sa.st_serialno);
+		ikev2_print_ts(&rst->sa.st_ts_this);
+		ikev2_print_ts(&rst->sa.st_ts_that);
+		st->st_connection = rst->sa.st_connection;
 	}
 
 	return STF_OK;
@@ -5475,11 +5474,10 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 					 * From our POV, that's the
 					 * outbound SPI.
 					 */
-					struct state *dst = find_v2_child_sa_by_outbound_spi(&st->st_ike_spis,
-											     v2del->isad_protoid,
-											     spi);
+					struct child_sa *dst = find_v2_child_sa_by_outbound_spi(ike,
+												v2del->isad_protoid,
+												spi);
 
-					passert(dst != st);	/* st is an IKE SA */
 					if (dst == NULL) {
 						libreswan_log(
 						    "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
@@ -5491,24 +5489,27 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 								enum_show(&ikev2_protocol_names,
 									v2del->isad_protoid),
 								ntohl((uint32_t)spi)));
+
 						/* we just received a delete, don't send another delete */
-						dst->st_suppress_del_notify = TRUE;
-						passert(dst != st);	/* st is a parent */
+						dst->sa.st_suppress_del_notify = TRUE;
+						/* st is a parent */
+						passert(&ike->sa != &dst->sa);
+						passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);
 						if (!del_ike && responding) {
 							struct ipsec_proto_info *pr =
 								v2del->isad_protoid == PROTO_IPSEC_AH ?
-									&dst->st_ah :
-									&dst->st_esp;
+								&dst->sa.st_ah :
+								&dst->sa.st_esp;
 
 							if (j < elemsof(spi_buf)) {
 								spi_buf[j] = pr->our_spi;
 								j++;
 							} else {
 								libreswan_log("too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
-									ntohl(spi));
+									      ntohl(spi));
 							}
 						}
-						delete_or_replace_state(dst);
+						delete_or_replace_state(&dst->sa);
 						/* note: md->st != dst */
 					}
 				} /* for each spi */

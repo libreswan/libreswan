@@ -753,11 +753,11 @@ struct state {
  *    struct ike_sa *ike; ike->sa.st_...
  *    struct child_sa *child; child->sa.st_...
  *
- * The function ike_sa() returns the IKE SA that the struct state
+ * The function get_ike_sa() returns the IKE SA that the struct state
  * belongs to (an IKE SA belongs to itself).
  *
- * pexpect_ike_sa() is similar, except it complains loudly when ST
- * isn't an IKE SA.
+ * pexpect_{ike,child}_sa() cast the SA (assuming it makes sense), or
+ * NULL.
  */
 
 struct ike_sa { struct state sa; };
@@ -814,13 +814,14 @@ extern bool find_pending_phase2(const so_serial_t psn,
 					const struct connection *c,
 					lset_t ok_states);
 
-extern struct state *find_v2_ike_sa(const ike_spis_t *ike_spis);
-extern struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi);
+extern struct ike_sa *find_v2_ike_sa(const ike_spis_t *ike_spis);
+extern struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi);
 
-struct state *find_v2_sa_by_request_msgid(const ike_spis_t *ike_spis, msgid_t msgid);
+struct state *find_v2_sa_by_initiator_mip(struct ike_sa *ike, msgid_t msgid);
 
-struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
-					       uint8_t protoid, ipsec_spi_t spi);
+struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
+						  uint8_t protoid,
+						  ipsec_spi_t outbound_spi);
 
 extern void find_states_and_redirect(const char *conn_name,
 				     ip_address remote_ip,

@@ -1589,11 +1589,12 @@ struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 /*
  * Find the IKEv2 IKE SA with the specified SPIs.
  */
-struct state *find_v2_ike_sa(const ike_spis_t *ike_spis)
+struct ike_sa *find_v2_ike_sa(const ike_spis_t *ike_spis)
 {
-	return state_by_ike_spis(IKEv2, SOS_NOBODY/*clonedfrom*/,
-				 NULL/*ignore v1 msgid*/,
-				 ike_spis, NULL, NULL, __func__);
+	struct state *st = state_by_ike_spis(IKEv2, SOS_NOBODY/*clonedfrom*/,
+					     NULL/*ignore v1 msgid*/,
+					     ike_spis, NULL, NULL, __func__);
+	return pexpect_ike_sa(st);
 }
 
 /*
@@ -1602,38 +1603,44 @@ struct state *find_v2_ike_sa(const ike_spis_t *ike_spis)
  * This is used doring the IKE_SA_INIT exchange where SPIr is either
  * zero (message request) or not-yet-known (message response).
  */
-struct state *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi)
+struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi)
 {
-	return state_by_ike_initiator_spi(IKEv2, SOS_NOBODY/*IKE_SA*/,
-					  NULL/*ignore v2 msgid*/,
-					  ike_initiator_spi, __func__);
+	struct state *st = state_by_ike_initiator_spi(IKEv2, SOS_NOBODY/*IKE_SA*/,
+						      NULL/*ignore v2 msgid*/,
+						      ike_initiator_spi, __func__);
+	return pexpect_ike_sa(st);
 }
 
 /*
- * Find a state object for an IKEv2 state, a response that includes a
- * msgid.
+ * Find the SA (IKE or CHILD), within IKE's family, that initiated a
+ * request using MSGID.
  *
- * Can .st_msgid and .st_v2_msgids.current_request be merged?
+ * Could use a linked list, but for now exploit hash table property
+ * that children share hash with parent.
  */
 
 struct request_filter {
 	msgid_t msgid;
 };
 
-static bool request_predicate(struct state *st, void *context)
+static bool v2_sa_by_initiator_mip_p(struct state *st, void *context)
 {
 	const struct request_filter *filter = context;
 	return st->st_v2_msgids.current_request == filter->msgid;
 }
 
-struct state *find_v2_sa_by_request_msgid(const ike_spis_t *ike_spis, const msgid_t msgid)
+struct state *find_v2_sa_by_initiator_mip(struct ike_sa *ike, const msgid_t msgid)
 {
 	struct request_filter filter = {
 		.msgid = msgid,
 	};
-	return state_by_ike_spis(IKEv2, SOS_IGNORE,
-				 NULL/*ignore v1 msgid*/, ike_spis,
-				 request_predicate, &filter, __func__);
+	struct state *st = state_by_ike_spis(IKEv2, SOS_IGNORE/*see predicate*/,
+					     NULL/*ignore v1 msgid*/, &ike->sa.st_ike_spis,
+					     v2_sa_by_initiator_mip_p, &filter, __func__);
+	pexpect(st == NULL ||
+		st->st_clonedfrom == SOS_NOBODY ||
+		st->st_clonedfrom == ike->sa.st_serialno);
+	return st;
 }
 
 /*
@@ -1657,7 +1664,7 @@ struct state *find_v2_sa_by_request_msgid(const ike_spis_t *ike_spis, const msgi
 
 struct v2_spi_filter {
 	uint8_t protoid;
-	ipsec_spi_t spi;
+	ipsec_spi_t outbound_spi;
 };
 
 static bool v2_spi_predicate(struct state *st, void *context)
@@ -1677,7 +1684,7 @@ static bool v2_spi_predicate(struct state *st, void *context)
 	}
 
 	if (pr->present) {
-		if (pr->attrs.spi == filter->spi) {
+		if (pr->attrs.spi == filter->outbound_spi) {
 			dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
 			    st->st_serialno,
 			    st->st_state->name);
@@ -1685,7 +1692,7 @@ static bool v2_spi_predicate(struct state *st, void *context)
 		}
 #if 0
 		/* see function description above */
-		if (pr->our_spi == filter->spi) {
+		if (pr->our_spi == filter->outbound_spi) {
 			dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
 			    st->st_serialno,
 			    st->st_state->name);
@@ -1696,17 +1703,19 @@ static bool v2_spi_predicate(struct state *st, void *context)
 	return false;
 }
 
-struct state *find_v2_child_sa_by_outbound_spi(const ike_spis_t *ike_spis,
-					       uint8_t protoid, ipsec_spi_t spi)
+struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
+						  uint8_t protoid,
+						  ipsec_spi_t outbound_spi)
 {
 	struct v2_spi_filter filter = {
 		.protoid = protoid,
-		.spi = spi,
+		.outbound_spi = outbound_spi,
 	};
-	return state_by_ike_spis(IKEv2, SOS_SOMEBODY,
-				 NULL/* ignore v1 msgid*/,
-				 ike_spis, v2_spi_predicate,
-				 &filter, __func__);
+	struct state *st = state_by_ike_spis(IKEv2, SOS_SOMEBODY/*child*/,
+					     NULL/* ignore v1 msgid*/,
+					     &ike->sa.st_ike_spis,
+					     v2_spi_predicate, &filter, __func__);
+	return pexpect_child_sa(st);
 }
 
 /*

@@ -1466,7 +1466,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	}
 
 	/*
-	 * Find the state that the packet is sent to.
+	 * Find the state that the packet is sent to and the state's
+	 * IKE SA.
 	 *
 	 * The only time there isn't a state is when the responder
 	 * first sees an SA_INIT request (or it's forgotten that it has
@@ -1474,6 +1475,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 */
 
 	struct state *st;
+	struct ike_sa *ike;
 	if (ix == ISAKMP_v2_IKE_SA_INIT) {
 		/*
 		 * The message ID of the initial exchange is always
@@ -1542,11 +1544,12 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * cleenly - let the duplicate code drop the
 			 * packet.
 			 */
-			st = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
-			if (st != NULL) {
+			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
+			if (ike != NULL) {
 				/* duplicate code below will decide what to do */
 				dbg("received what looks like a duplicate IKE_SA_INIT for #%lu",
-				    st->st_serialno);
+				    ike->sa.st_serialno);
+				st = &ike->sa;
 			} else if (drop_new_exchanges()) {
 				/* only log for debug to prevent disk filling up */
 				dbg("pluto is overloaded with half-open IKE SAs; dropping new exchange");
@@ -1563,6 +1566,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 * No.  The equation uses v2Ni forcing
 				 * the entire payload to be parsed.
 				 */
+				st = NULL;
 				pexpect(!md->message_payloads.parsed);
 				md->message_payloads = ikev2_decode_payloads(md,
 									     &md->message_pbs,
@@ -1619,8 +1623,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * contain an as yet unknown but non-zero SPIr
 			 * so looking for it won't work.
 			 */
-			st = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
-			if (st == NULL) {
+			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
+			if (ike == NULL) {
 				/*
 				 * There should be a state matching
 				 * the original initiator's cookie.
@@ -1640,9 +1644,9 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * the MESSAGE_RESPONSE path below.  It should
 			 * be merged.
 			 */
-			if (st->st_msgid_lastack != v2_INVALID_MSGID) {
+			if (ike->sa.st_msgid_lastack != v2_INVALID_MSGID) {
 				libreswan_log("already processed IKE_SA_INIT response for state #%lu; discarding packet",
-					      st->st_serialno);
+					      ike->sa.st_serialno);
 				return;
 			}
 			/*
@@ -1654,7 +1658,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * response in which case SPIr shouldn't be
 			 * updated at all.
 			 */
-			rehash_state(st, &md->hdr.isa_ike_responder_spi);
+			rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
+			st = &ike->sa;
 			break;
 		default:
 			bad_case(v2_msg_role(md));
@@ -1665,48 +1670,50 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * with matching SPIs.  If it is a new CHILD SA
 		 * request then the state machine will will morph ST
 		 * into a child state before dispatching.
+		 *
+		 * XXX: what about a request that's already
+		 * in-progress?
 		 */
-		st = find_v2_ike_sa(&md->hdr.isa_ike_spis);
-		if (st == NULL) {
+		ike = find_v2_ike_sa(&md->hdr.isa_ike_spis);
+		if (ike == NULL) {
 			struct esb_buf ixb;
 			rate_log("%s message request has no corresponding IKE SA",
 				 enum_show_shortb(&ikev2_exchange_names,
 						  ix, &ixb));
 			return;
 		}
+		st = &ike->sa;
 	} else if (v2_msg_role(md) == MESSAGE_RESPONSE) {
 		/*
-		 * A response; find the SA (IKE or CHILD) that
-		 * initiated the request.
+		 * A response to this ends request.  First find the
+		 * IKE SA and then, within that group, find the
+		 * initiator (it might also be the IKE SA but it might
+		 * not).
 		 */
-		st = find_v2_sa_by_request_msgid(&md->hdr.isa_ike_spis,
-						 md->hdr.isa_msgid);
+		ike = find_v2_ike_sa(&md->hdr.isa_ike_spis);
+		if (ike == NULL) {
+			/* technically IKE or CHILD SA */
+			rate_log("%s message response has no matching IKE SA",
+				 enum_name(&ikev2_exchange_names, ix));
+			return;
+		}
+		st = find_v2_sa_by_initiator_mip(ike, md->hdr.isa_msgid);
 		if (st == NULL) {
 			/*
 			 * Since no SA is waiting for the Message ID,
 			 * the message isn't valid.  When there's an
 			 * IKE SA with matching SPIs log against that.
 			 */
-			struct state *ike = find_v2_ike_sa(&md->hdr.isa_ike_spis);
-			if (ike == NULL) {
-				/* technically IKE or CHILD SA */
-				rate_log("%s message response has no matching IKE SA",
-					 enum_name(&ikev2_exchange_names, ix));
-			} else {
-				/* XXX: rate_log_state()? */
-				push_cur_state(ike);
-				rate_log("%s message response with Message ID "PRI_MSGID" has no matching SA",
-					 enum_name(&ikev2_exchange_names, ix), md->hdr.isa_msgid);
-				pop_cur_state(SOS_NOBODY);
-			}
+			push_cur_state(&ike->sa);
+			rate_log("%s message response with Message ID "PRI_MSGID" has no matching SA",
+				 enum_name(&ikev2_exchange_names, ix), md->hdr.isa_msgid);
+			pop_cur_state(SOS_NOBODY);
 			return;
 		}
-		pexpect(st != NULL);
 		/*
 		 * Does the Message ID fall within the IKE SA's
 		 * sliding Message ID window?
 		 */
-		struct ike_sa *ike = ike_sa(st);
 		if (md->hdr.isa_msgid > ike->sa.st_v2_msgids.initiator.sent) {
 			/*
 			 * There was a state waiting for a message
@@ -1738,6 +1745,9 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		PASSERT_FAIL("message role %d invalid", v2_msg_role(md));
 	}
 
+	/* both or none */
+	passert((st == NULL) == (ike == NULL));
+
 	/*
 	 * If there's a state, attribute all further logging to that
 	 * state.
@@ -1762,12 +1772,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 *
 	 * ST!=NULL IFF IKE!=NULL, and ike_sa(NULL) handles this.
 	 */
-	struct ike_sa *const ike = ike_sa(st);
-	if (st != NULL && ike == NULL) {
-		PEXPECT_LOG("lost IKE SA for #%lu; dropping packet", st->st_serialno);
-		/* XXX: should state be deleted? */
-		return;
-	}
 	if (st != NULL) {
 		switch (ike->sa.st_sa_role) {
 		case SA_INITIATOR:
