@@ -452,7 +452,7 @@ static char *readable_humber(uint64_t num,
  * Get the IKE SA managing the security association.
  */
 
-static struct ike_sa *get_ike_sa(struct state *st, bool verbose)
+struct ike_sa *ike_sa(struct state *st)
 {
 	if (st != NULL && IS_CHILD_SA(st)) {
 		struct state *pst = state_by_serialno(st->st_clonedfrom);
@@ -460,30 +460,34 @@ static struct ike_sa *get_ike_sa(struct state *st, bool verbose)
 			PEXPECT_LOG("child state #%lu missing parent state #%lu",
 				    st->st_serialno, st->st_clonedfrom);
 			/* about to crash with an NPE */
-		} else if (verbose) {
-			PEXPECT_LOG("child state #%lu is not an IKE SA; parent is #%lu",
-				    st->st_serialno, st->st_clonedfrom);
 		}
 		return (struct ike_sa*) pst;
 	}
 	return (struct ike_sa*) st;
 }
 
-struct ike_sa *ike_sa(struct state *st)
-{
-	return get_ike_sa(st, false);
-}
-
 struct ike_sa *pexpect_ike_sa(struct state *st)
 {
-	return get_ike_sa(st, true);
+	if (st == NULL) {
+		return NULL;
+	}
+	if (!IS_IKE_SA(st)) {
+		PEXPECT_LOG("state #%lu is not an IKE SA", st->st_serialno);
+		return NULL; /* kaboom */
+	}
+	return (struct ike_sa*) st;
 }
 
 struct child_sa *pexpect_child_sa(struct state *st)
 {
-	if (pexpect(st != NULL))
-		pexpect(IS_CHILD_SA(st));
-
+	if (st == NULL) {
+		return NULL;
+	}
+	if (!IS_CHILD_SA(st)) {
+		/* In IKEv2 a re-keying IKE SA starts life as a child */
+		PEXPECT_LOG("state #%lu is not a CHILD", st->st_serialno);
+		return NULL; /* kaboom */
+	}
 	return (struct child_sa*) st;
 }
 
