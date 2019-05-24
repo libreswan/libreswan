@@ -551,11 +551,6 @@ enum {
 enum state_kind {
 	STATE_UNDEFINED,
 
-	/* Hack so state numbers don't change */
-
-	STATE_UNUSED_1,
-	STATE_UNUSED_2,
-
 	/* IKE states */
 
 	STATE_IKEv1_FLOOR,
@@ -618,7 +613,7 @@ enum state_kind {
 	 * for all work states.
 	 * ??? what does that mean?
 	 */
-	/* STATE_PARENT_R0,	** just starting */
+	STATE_PARENT_R0,	/* just starting */
 	STATE_PARENT_R1,	/* IKE_SA_INIT: sent response */
 	STATE_PARENT_R2,	/* IKE_AUTH: sent response */
 
@@ -641,12 +636,6 @@ enum state_kind {
 	/* IKEv2 Delete States */
 	STATE_IKESA_DEL,
 	STATE_CHILDSA_DEL,
-
-	/*
-	 * Because state numbers can't change (whack logs include the
-	 * number as part of the message!) add new states here.
-	 */
-	STATE_PARENT_R0,
 
 	STATE_IKEv2_ROOF	/* not a state! */
 };

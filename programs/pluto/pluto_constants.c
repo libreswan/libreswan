@@ -167,8 +167,6 @@ enum_names timer_event_names = {
 #define S(STATE) [STATE] = #STATE
 static const char *const state_name[] = {
 	S(STATE_UNDEFINED),
-	S(STATE_UNUSED_1),
-	S(STATE_UNUSED_2),
 	S(STATE_MAIN_R0),
 	S(STATE_MAIN_I1),
 	S(STATE_MAIN_R1),
@@ -243,8 +241,6 @@ enum_names state_names = {
 
 static const char *const state_story[] = {
 	[STATE_UNDEFINED] = "not defined and probably dead (internal)",
-	[STATE_UNUSED_1] = "STATE_UNUSED_1",
-	[STATE_UNUSED_2] = "STATE_UNUSED_2",
 	[STATE_MAIN_R0] = "expecting MI1",
 	[STATE_MAIN_I1] = "sent MI1, expecting MR1",
 	[STATE_MAIN_R1] = "sent MR1, expecting MI2",
