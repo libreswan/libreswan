@@ -48,7 +48,7 @@ findlog() {		# findlog string fallbackstring possiblefile ...
 	t="$1"
 	shift
 	# try the suggested files first
-	for f in $*
+	for f
 	do
 		if test -s $LOGS/$f -a -f $LOGS/$f && egrep -q "$s" $LOGS/$f
 		then
@@ -59,7 +59,7 @@ findlog() {		# findlog string fallbackstring possiblefile ...
 			return 0
 		fi
 	done
-	for f in $*
+	for f
 	do
 		if test -s $LOGS/$f -a -f $LOGS/$f && egrep -q "$t" $LOGS/$f
 		then
