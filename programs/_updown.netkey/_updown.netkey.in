@@ -446,7 +446,7 @@ delsource() {
         return ${st}
     fi
     # Remove source ip if it's not used any more.
-    if [ $(ip -o route list src ${PLUTO_MY_SOURCEIP} | wc -l) -eq 0 ]; then
+    if [ -z $(ip -o route list src ${PLUTO_MY_SOURCEIP}) ]; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
 	    interface="${VTI_IFACE}"
 	fi

@@ -91,7 +91,7 @@ case "$1" in
 
 	# announcement
 	# (Warning, changes to this log message may affect barf.)
-	version="`ipsec --version | awk 'NR == 1 { print $(3) }' | sed -e 's/^U\(.*\)\/K(.*/\1/'`"
+	version="$(ipsec --version | awk 'NR == 1 { print $(3) }' | sed -e 's/^U\(.*\)\/K(.*/\1/')"
 	case "$1" in
 	start|--start)	perform echo "\"Starting Libreswan IPsec $version...\""	;;
 	_autostart)	perform echo "\"Restarting Libreswan IPsec $version...\""	;;
@@ -106,7 +106,7 @@ case "$1" in
 			echo "\"...unable to start Libreswan IPsec, no $f!\"" ";" \
 			exit 1 ";" \
 			"}"
-	    done
+	done
 
 	# the meaning of $$ at a different runtime is questionable!
 	perform echo '$$' ">" $lock
@@ -119,7 +119,7 @@ case "$1" in
 
 	# misc pre-Pluto setup
 
-	perform test -d `dirname $subsyslock` "&&" touch $subsyslock
+	perform test -d $(dirname $subsyslock) "&&" touch $subsyslock
 
 	# Pluto
 	case "$1" in
@@ -191,7 +191,7 @@ case "$1" in
 		lsmod 2>&1 | grep "^xfrm_user" > /dev/null && rmmod xfrm_user
 	fi
 
-	perform test -d `dirname $subsyslock` "&&" rm -f $subsyslock
+	perform test -d $(dirname $subsyslock) "&&" rm -f $subsyslock
 
 	perform rm -f $lock $plutopid
 	perform echo "...Libreswan IPsec stopped" "|" $LOGONLY
@@ -217,7 +217,7 @@ case "$1" in
 
 	if test -s $plutopid
 	then
-		if ps -p `cat $plutopid` >/dev/null
+		if ps -p $(cat $plutopid) >/dev/null
 		then
 			plutokind=normal
 		elif ps -C pluto >/dev/null
@@ -233,21 +233,21 @@ case "$1" in
 
 	if test -r /proc/net/ipsec_eroute
 	then
-		if test " `wc -l < /proc/net/ipsec_eroute 2> /dev/null `" -gt 0
+		if test " $(wc -l /proc/net/ipsec_eroute 2> /dev/null )" -gt 0
 		then
-			eroutes=`wc -l < /proc/net/ipsec_eroute 2> /dev/null | sed s/\ //g`
+			eroutes=$(wc -l /proc/net/ipsec_eroute 2> /dev/null | sed -e 's/ //g')
 		fi
 	else
-		eroutes=`ipsec eroute 2> /dev/null | wc -l | sed s/\ //g`
+		eroutes=$(ipsec eroute 2> /dev/null | wc -l | sed -e 's/\ //g')
 	fi
 
 	if test "$haslock"
 	then
-		echo "IPsec running"  " - pluto pid: `cat $plutopid`"
+		echo "IPsec running"  " - pluto pid: $(cat $plutopid)"
 		# might not be a subsystem lock dir, ignore that issue
 		if test "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \)
 		then
-			echo "pluto pid `cat $plutopid`"
+			echo "pluto pid $(cat $plutopid)"
                         case "$eroutes" in
                         0)      echo "No tunnels up"    ;;
                         *)      echo "$eroutes tunnels up"      ;;
@@ -257,7 +257,7 @@ case "$1" in
 		echo "but..."
 		if test "$plutokind" != "normal"
 		then
-			echo "$plutokind Pluto running" " - pluto pid: `cat $plutopid`"
+			echo "$plutokind Pluto running" " - pluto pid: $(cat $plutopid)"
 		fi
 		case $klips in
 		maybe)	echo "KLIPS module is not loaded!"	;;

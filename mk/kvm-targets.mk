@@ -423,7 +423,7 @@ $(KVM_KEYS_CLEAN_TARGETS):
 # For moment don't force keys to be re-built.
 .PHONY: kvm-keys-up-to-date
 kvm-keys-up-to-date:
-	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
+	@if [ -n $$($(KVM_KEYS_EXPIRED) ] ; then \
 		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
 		$(KVM_KEYS_EXPIRED) | sed -e 's/^/  /' ; \
 		echo "run 'make kvm-keys-clean kvm-keys' to force an update" ; \
