@@ -34,17 +34,30 @@ enum message_role;
  * MSGIDs.
  */
 
-struct v2_window {
+struct v2_msgid_window {
 	intmax_t sent;
 	intmax_t recv;
 };
 
-struct v2_msgids {
-	/* IKE and CHILD */
-	intmax_t current_request;
-	/* IKE only */
-	struct v2_window initiator;
-	struct v2_window responder;
+struct v2_msgid_windows {
+	struct v2_msgid_window initiator;
+	struct v2_msgid_window responder;
+};
+
+/*
+ * The Message ID for the state's in-progress exchanges.  If no
+ * exchange is in progress then it's value is -1.
+ *
+ * The INITIATOR Message ID is valid from the time the request is sent
+ * (earlier?) through to when the response is received.  Lookups then
+ * use this to route the response to the state waiting for it.
+ *
+ * The RESPONDER Message ID is valid for the period that the state is
+ * processing the request.
+ */
+struct v2_msgid_wip {
+	intmax_t initiator;
+	intmax_t responder;
 };
 
 void v2_msgid_init(struct ike_sa *ike);

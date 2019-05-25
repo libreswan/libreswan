@@ -426,7 +426,8 @@ struct state {
 	enum original_role st_original_role;
 	enum sa_role st_sa_role;
 
-	struct v2_msgids st_v2_msgids;
+	struct v2_msgid_wip st_v2_msgid_wip;		/* IKE and CHILD */
+	struct v2_msgid_windows st_v2_msgid_windows;	/* IKE */
 
 	/* message ID sequence for things we send (as initiator) */
 	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */

@@ -29,42 +29,60 @@
  * between calls.
  */
 
-static void jam_msgids(struct lswlog *buf,
-		       const char *what, enum message_role message, intmax_t msgid,
-		       struct ike_sa *ike, const struct v2_msgids *old)
+static void jam_msgids(struct lswlog *buf, const char *what,
+		       enum message_role message, intmax_t msgid,
+		       struct ike_sa *ike, const struct v2_msgid_windows *old_windows,
+		       struct state *wip, const struct v2_msgid_wip *old_wip)
 
 {
-	lswlogf(buf, "Message ID: IKE #%lu %s",
+	jam(buf, "Message ID: ike #%lu.%s",
 		ike->sa.st_serialno,
 		ike->sa.st_state->short_name);
+	if (ike->sa.st_serialno != wip->st_serialno) {
+		jam(buf, "%s #%lu.%s", what,
+			wip->st_serialno,
+			wip->st_state->short_name);
+	}
 
-	lswlogf(buf, "; %s ", what);
 	switch (message) {
-	case MESSAGE_REQUEST: lswlogf(buf, "request"); break;
-	case MESSAGE_RESPONSE: lswlogf(buf, "response"); break;
-	case NO_MESSAGE: lswlogf(buf, "no-message"); break;
+	case MESSAGE_REQUEST: jam(buf, " request %jd", msgid); break;
+	case MESSAGE_RESPONSE: jam(buf, " response %jd", msgid); break;
+	case NO_MESSAGE: jam(buf, " no-message"); break;
 	default: bad_case(message);
 	}
-	lswlogf(buf, " msgid=%jd", msgid);
 
-	lswlogf(buf, "; ike.initiator:");
-	lswlogf(buf, " sent=%jd", old->initiator.sent);
-	if (old->initiator.sent != ike->sa.st_v2_msgids.initiator.sent) {
-		lswlogf(buf, "->%jd", ike->sa.st_v2_msgids.initiator.sent);
+	jam(buf, "; ike.initiator:");
+	jam(buf, " sent=%jd", old_windows->initiator.sent);
+	if (old_windows->initiator.sent != ike->sa.st_v2_msgid_windows.initiator.sent) {
+		jam(buf, "->%jd", ike->sa.st_v2_msgid_windows.initiator.sent);
 	}
-	lswlogf(buf, " recv=%jd", old->initiator.recv);
-	if (old->initiator.recv != ike->sa.st_v2_msgids.initiator.recv) {
-		lswlogf(buf, "->%jd", ike->sa.st_v2_msgids.initiator.recv);
+	jam(buf, " recv=%jd", old_windows->initiator.recv);
+	if (old_windows->initiator.recv != ike->sa.st_v2_msgid_windows.initiator.recv) {
+		jam(buf, "->%jd", ike->sa.st_v2_msgid_windows.initiator.recv);
 	}
 
-	lswlogf(buf, "; ike.responder:");
-	lswlogf(buf, " sent=%jd", old->responder.sent);
-	if (old->responder.sent != ike->sa.st_v2_msgids.responder.sent) {
-		lswlogf(buf, "->%jd", ike->sa.st_v2_msgids.responder.sent);
+	jam(buf, "; ike.responder:");
+	jam(buf, " sent=%jd", old_windows->responder.sent);
+	if (old_windows->responder.sent != ike->sa.st_v2_msgid_windows.responder.sent) {
+		jam(buf, "->%jd", ike->sa.st_v2_msgid_windows.responder.sent);
 	}
-	lswlogf(buf, " recv=%jd", old->responder.recv);
-	if (old->responder.recv != ike->sa.st_v2_msgids.responder.recv) {
-		lswlogf(buf, "->%jd", ike->sa.st_v2_msgids.responder.recv);
+	jam(buf, " recv=%jd", old_windows->responder.recv);
+	if (old_windows->responder.recv != ike->sa.st_v2_msgid_windows.responder.recv) {
+		jam(buf, "->%jd", ike->sa.st_v2_msgid_windows.responder.recv);
+	}
+
+	if (ike->sa.st_serialno == wip->st_serialno) {
+		jam(buf, "; ike.wip:");
+	} else {
+		jam(buf, "; %s.wip:", what);
+	}
+	jam(buf, " initiator=%jd", old_wip->initiator);
+	if (old_wip->initiator != wip->st_v2_msgid_wip.initiator) {
+		jam(buf, "->%jd", wip->st_v2_msgid_wip.initiator);
+	}
+	jam(buf, " responder=%jd", old_wip->responder);
+	if (old_wip->responder != wip->st_v2_msgid_wip.responder) {
+		jam(buf, "->%jd", wip->st_v2_msgid_wip.responder);
 	}
 }
 
@@ -78,10 +96,7 @@ static void jam_msgids(struct lswlog *buf,
 
 void v2_msgid_init(struct ike_sa *ike)
 {
-	intmax_t old_request = ike->sa.st_v2_msgids.current_request;
-	struct v2_msgids old = ike->sa.st_v2_msgids;
-	static const struct v2_msgids empty_v2_msgids = {
-		.current_request = -1,
+	static const struct v2_msgid_windows empty_v2_msgid_windows = {
 		.initiator = {
 			.sent = -1,
 			.recv = -1,
@@ -91,15 +106,20 @@ void v2_msgid_init(struct ike_sa *ike)
 			.recv = -1,
 		},
 	};
-	ike->sa.st_v2_msgids = empty_v2_msgids;
+	struct v2_msgid_windows old_windows = ike->sa.st_v2_msgid_windows;
+	ike->sa.st_v2_msgid_windows = empty_v2_msgid_windows;
+	static const struct v2_msgid_wip empty_v2_msgid_wip = {
+		.initiator = -1,
+		.responder = -1,
+	};
+	struct v2_msgid_wip old_wip = ike->sa.st_v2_msgid_wip;
+	ike->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
 			/* pretend there's a sender */
-			jam_msgids(buf, "initializing", NO_MESSAGE, -1, ike, &old);
-			jam(buf, "; ike.current_request=%jd", old_request);
-			if (old_request != ike->sa.st_v2_msgids.current_request) {
-				jam(buf, "->%jd", ike->sa.st_v2_msgids.current_request);
-			}
+			jam_msgids(buf, "initializing", NO_MESSAGE, -1,
+				   ike, &old_windows,
+				   &ike->sa, &old_wip);
 		}
 	}
 }
@@ -109,9 +129,9 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 {
 	/* extend msgid */
 	intmax_t msgid = md->hdr.isa_msgid;
-	struct v2_msgids old = ike->sa.st_v2_msgids;
-	struct v2_msgids *new = &ike->sa.st_v2_msgids;
-	intmax_t old_receiver_request = receiver->st_v2_msgids.current_request;
+	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
+	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
+	const struct v2_msgid_wip old_receiver = receiver->st_v2_msgid_wip;
 
 	enum message_role role = v2_msg_role(md);
 
@@ -139,38 +159,38 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		}
 		/*
 		 * Since the response has been successfully processed,
-		 * clear CURRENT_REQUEST.  This way duplicate
+		 * clear INITIATOR_MIP.  This way duplicate
 		 * responses get discarded as there is no receiving
 		 * state.
 		 *
 		 * XXX: Unfortunately the record 'n' send code throws
 		 * a spanner in the works.  It calls update_send()
 		 * before update_recv() breaking the assumption that
-		 * CURRENT_REQUEST is the old MSGID.
+		 * INITIATOR_MIP is the old MSGID.
 		 */
-		if (old_receiver_request > msgid) {
+		if (old_receiver.initiator > msgid) {
 			/*
 			 * Hack around record 'n' send calling
-			 * update_sent() (setting CURRENT_REQUEST to
+			 * update_sent() (setting INITIATOR_MIP to
 			 * the next request) midway through
 			 * processing.
 			 *
 			 * Getting rid of record 'n' send will fix
 			 * this hack.
 			 */
-			dbg("Message ID: XXX: IKE #%lu receiver #%lu: receiver.current_request %jd != receiver.msgid %jd (record 'n' called update_sent() before update_recv()?)",
+			dbg("Message ID: XXX: IKE #%lu receiver #%lu: receiver.initiator_mip %jd != receiver.msgid %jd (record 'n' called update_sent() before update_recv()?)",
 			    ike->sa.st_serialno, receiver->st_serialno,
-			    old_receiver_request, msgid);
+			    old_receiver.initiator, msgid);
 		} else {
-			if (DBGP(DBG_BASE) && old_receiver_request != msgid) {
-				PEXPECT_LOG("Message ID: IKE #%lu receiver #%lu: receiver.current_request %jd == receiver.msgid %jd",
+			if (DBGP(DBG_BASE) && old_receiver.initiator != msgid) {
+				PEXPECT_LOG("Message ID: IKE #%lu receiver #%lu: receiver.initiator_mip %jd == receiver.msgid %jd",
 					    ike->sa.st_serialno, receiver->st_serialno,
-					    old_receiver_request, msgid);
+					    old_receiver.initiator, msgid);
 			}
-			receiver->st_v2_msgids.current_request = -1;
+			receiver->st_v2_msgid_wip.initiator = -1;
 		}
 		/* this is what matters */
-		pexpect(receiver->st_v2_msgids.current_request != msgid);
+		pexpect(receiver->st_v2_msgid_wip.initiator != msgid);
 		break;
 	case NO_MESSAGE:
 		dbg("Message ID: IKE #%lu skipping update_recv as MD is fake",
@@ -182,12 +202,8 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
-			jam_msgids(buf, "receiving", role, msgid, ike, &old);
-			if (old_receiver_request != receiver->st_v2_msgids.current_request) {
-				jam(buf, "; receiver #%lu: receiver.current_request=%jd->%jd",
-				    receiver->st_serialno, old_receiver_request,
-				    receiver->st_v2_msgids.current_request);
-			}
+			jam_msgids(buf, "receiver", role, msgid,
+				   ike, &old, receiver, &old_receiver);
 		}
 	}
 }
@@ -195,9 +211,9 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 			  struct msg_digest *md, enum message_role sending)
 {
-	struct v2_msgids old = ike->sa.st_v2_msgids;
-	struct v2_msgids *new = &ike->sa.st_v2_msgids;
-	intmax_t old_sender_request = sender->st_v2_msgids.current_request;
+	struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
+	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
+	struct v2_msgid_wip old_sender = sender->st_v2_msgid_wip;
 	intmax_t msgid;
 	switch (sending) {
 	case MESSAGE_REQUEST:
@@ -208,13 +224,13 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		 * used by the code emitting the message request)
 		 */
 		msgid = new->initiator.sent + 1;
-		sender->st_v2_msgids.current_request = new->initiator.sent = msgid;
+		sender->st_v2_msgid_wip.initiator = new->initiator.sent = msgid;
 		/* extend st_msgid */
-		if (DBGP(DBG_BASE) && sender->st_msgid != sender->st_v2_msgids.current_request) {
-			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: sender.msgid "PRI_MSGID" == sender.current_request %jd",
+		if (DBGP(DBG_BASE) && sender->st_msgid != sender->st_v2_msgid_wip.initiator) {
+			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: sender.msgid "PRI_MSGID" == sender.initiator_mip %jd",
 				    ike->sa.st_serialno, sender->st_serialno,
 				    sender->st_msgid,
-				    sender->st_v2_msgids.current_request);
+				    sender->st_v2_msgid_wip.initiator);
 		}
 		/* extend st_msgid_nextuse */
 		if (DBGP(DBG_BASE) && ike->sa.st_msgid_nextuse != new->initiator.sent + 1) {
@@ -226,19 +242,19 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 #if 0
 		/*
 		 * XXX: The record 'n' send code calls update_send()
-		 * before update_recv() breaking CURRENT_REQUEST's
+		 * before update_recv() breaking INITIATOR_MIP's
 		 * expected sequence OLD-MSGID -> -1 -> NEW-MSGID.
 		 */
-		if (DBGP(DBG_BASE) && old_sender_request != -1) {
-			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: sender.current_request %jd == -1",
+		if (DBGP(DBG_BASE) && old_sender.initiator != -1) {
+			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: sender.initiator_mip %jd == -1",
 				    ike->sa.st_serialno, sender->st_serialno,
-				    old_sender_request);
+				    old_sender.initiator);
 		}
 #else
-		if (old_sender_request != -1) {
-			dbg("Message ID: XXX: IKE #%lu sender #%lu: expecting sender.current_request %jd == -1 (record 'n' send out-of-order?)",
+		if (old_sender.initiator != -1) {
+			dbg("Message ID: XXX: IKE #%lu sender #%lu: expecting sender.initiator_mip %jd == -1 (record 'n' send out-of-order?)",
 			    ike->sa.st_serialno, sender->st_serialno,
-			    old_sender_request);
+			    old_sender.initiator);
 		}
 #endif
 		break;
@@ -274,12 +290,8 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
-			jam_msgids(buf, "sending", sending, msgid, ike, &old);
-			if (old_sender_request != sender->st_v2_msgids.current_request) {
-				jam(buf, "; sender #%lu current_request=%jd->%jd",
-				    sender->st_serialno, old_sender_request,
-				    sender->st_v2_msgids.current_request);
-			}
+			jam_msgids(buf, "sender", sending, msgid,
+				   ike, &old, sender, &old_sender);
 		}
 	}
 }
@@ -287,8 +299,8 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 #if 0
 static void schedule_next_send(struct ike_sa *ike)
 {
-	msgid_t unack = (ike->sa.st_v2_msgids.initiator.sent -
-			 ike->sa.st_v2_msgids.initiator.recv);
+	msgid_t unack = (ike->sa.st_v2_msgid_windows.initiator.sent -
+			 ike->sa.st_v2_msgid_windows.initiator.recv);
 	while (unack < ike->sa.st_connection->ike_window) {
 		if (ike->sa.send_next_ix == NULL) {
 			break;
@@ -308,7 +320,7 @@ static void schedule_next_send(struct ike_sa *ike)
 		}
 		dbg("Message ID: scheduling CHILD SA #%lu send using IKE SA #%lu next message id="PRI_MSGID", unack="PRI_MSGID,
 		    child->st_serialno, ike->sa.st_serialno,
-		    ike->sa.st_v2_msgids.initiator.sent + 1,
+		    ike->sa.st_v2_msgid_windows.initiator.sent + 1,
 		    unack);
 		event_force(EVENT_v2_SEND_NEXT_IKE, child);
 		unack++;
@@ -339,7 +351,7 @@ void schedule_next_send(struct state *st)
 stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ike)
 {
 	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
-	intmax_t unack2 = ike->sa.st_v2_msgids.initiator.sent - ike->sa.st_v2_msgids.initiator.recv;
+	intmax_t unack2 = ike->sa.st_v2_msgid_windows.initiator.sent - ike->sa.st_v2_msgid_windows.initiator.recv;
 	if (unack != unack2) {
 		dbg("Message ID: XXX: IKE #%lu expecting unack "PRI_MSGID", got %jd for #%lu",
 		    ike->sa.st_serialno, unack, unack2,

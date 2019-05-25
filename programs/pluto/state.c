@@ -1626,7 +1626,7 @@ struct request_filter {
 static bool v2_sa_by_initiator_mip_p(struct state *st, void *context)
 {
 	const struct request_filter *filter = context;
-	return st->st_v2_msgids.current_request == filter->msgid;
+	return st->st_v2_msgid_wip.initiator == filter->msgid;
 }
 
 struct state *find_v2_sa_by_initiator_mip(struct ike_sa *ike, const msgid_t msgid)

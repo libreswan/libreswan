@@ -1708,7 +1708,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * Does the Message ID fall within the IKE SA's
 		 * sliding Message ID window?
 		 */
-		if (md->hdr.isa_msgid > ike->sa.st_v2_msgids.initiator.sent) {
+		if (md->hdr.isa_msgid > ike->sa.st_v2_msgid_windows.initiator.sent) {
 			/*
 			 * There was a state waiting for a message
 			 * that, according to the IKE SA, has not even
@@ -1717,10 +1717,10 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			PEXPECT_LOG("Message ID: IKE #%lu receiver #%lu waiting for a message "PRI_MSGID" which is from the future from the future - last message sent is %jd",
 				    ike->sa.st_serialno, st->st_serialno,
 				    md->hdr.isa_msgid,
-				    st->st_v2_msgids.initiator.sent);
+				    st->st_v2_msgid_windows.initiator.sent);
 			return;
 		}
-		if (ike->sa.st_v2_msgids.initiator.recv > md->hdr.isa_msgid) {
+		if (ike->sa.st_v2_msgid_windows.initiator.recv > md->hdr.isa_msgid) {
 			/*
 			 * A response that falls outside of the
 			 * Message ID window.  Could something like
@@ -1731,7 +1731,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				dbg("Message ID: IKE #%lu receiver #%lu dropping response with Message ID "PRI_MSGID" from peer - we already processed %jd",
 				    ike->sa.st_serialno, st->st_serialno,
 				    md->hdr.isa_msgid,
-				    st->st_v2_msgids.initiator.recv);
+				    st->st_v2_msgid_windows.initiator.recv);
 			}
 			return;
 		}

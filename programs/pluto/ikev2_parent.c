@@ -6310,7 +6310,7 @@ static void ikev2_log_initiate_rekey_checks(struct state *st)
 
 	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
 	if (DBGP(DBG_BASE)) {
-		intmax_t unack2 = ike->sa.st_v2_msgids.initiator.sent - ike->sa.st_v2_msgids.initiator.recv;
+		intmax_t unack2 = ike->sa.st_v2_msgid_windows.initiator.sent - ike->sa.st_v2_msgid_windows.initiator.recv;
 		/*
 		 * XXX: The old code updates response counters early
 		 * (as soon as the packet has been decoded) but the
@@ -6334,14 +6334,14 @@ static void ikev2_log_initiate_rekey_checks(struct state *st)
 			if (unack == unack2 - 1) {
 				dbg("Message ID: XXX: IKE #%lu sender #%lu: %jd (ike.initiator.sent=%jd - ike.initiator.recv=%jd) == "PRI_MSGID" (ike.nextuse="PRI_MSGID" - ike.lastack="PRI_MSGID"-1) (IKE rekey while CHILD rekey in progress?)",
 				    ike->sa.st_serialno, st->st_serialno,
-				    unack2, ike->sa.st_v2_msgids.initiator.sent,
-				    ike->sa.st_v2_msgids.initiator.recv,
+				    unack2, ike->sa.st_v2_msgid_windows.initiator.sent,
+				    ike->sa.st_v2_msgid_windows.initiator.recv,
 				    unack, ike->sa.st_msgid_nextuse, ike->sa.st_msgid_lastack);
 			} else {
 				PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: %jd (ike.initiator.sent=%jd - ike.initiator.recv=%jd) == "PRI_MSGID" (ike.nextuse="PRI_MSGID" - ike.lastack="PRI_MSGID"-1)",
 					    ike->sa.st_serialno, st->st_serialno,
-					    unack2, ike->sa.st_v2_msgids.initiator.sent,
-					    ike->sa.st_v2_msgids.initiator.recv,
+					    unack2, ike->sa.st_v2_msgid_windows.initiator.sent,
+					    ike->sa.st_v2_msgid_windows.initiator.recv,
 					    unack, ike->sa.st_msgid_nextuse,
 					    ike->sa.st_msgid_lastack);
 			}
