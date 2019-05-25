@@ -5,4 +5,4 @@ awk 'BEGIN { FS = " *= *" }
 	NF != 2 { next }
 	$1 == "VERSION" { maj = $2 }
 	$1 == "PATCHLEVEL" { mid = $2 }
-	END { print maj "." mid }' $*
+	END { print maj "." mid }' "$@"

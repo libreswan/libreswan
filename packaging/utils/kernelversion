@@ -7,4 +7,4 @@ awk 'BEGIN { FS = " *= *" }
 	$1 == "PATCHLEVEL" { mid = $2 }
 	$1 == "SUBLEVEL" { min = $2 }
 	$1 == "EXTRAVERSION" { ext = $2 }
-	END { print maj "." mid "." min ext }' $*
+	END { print maj "." mid "." min ext }' "$@"

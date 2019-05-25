@@ -137,7 +137,7 @@ case $PLUTO_VERSION in
 esac
 
 if [ -x @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} ]; then
-    exec @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} $*
+    exec @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} "$@"
 else
     echo "FATAL: Could not execute @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} $*"
 fi
