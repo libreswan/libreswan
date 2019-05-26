@@ -1,4 +1,4 @@
-hostname | grep east > /dev/null && egrep ": ERROR:|: X509:" /tmp/pluto.log
+hostname | grep east > /dev/null && grep -E ": ERROR:|: X509:" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

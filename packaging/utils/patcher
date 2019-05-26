@@ -81,7 +81,7 @@ then
 		shift ; shift
 		need $patchfile
 
-		if egrep -q "$key" $it
+		if grep -E -q "$key" $it
 		then
 			# patched but no record of how
 			note "$it no longer needs patch $patchfile"
@@ -105,7 +105,7 @@ else
 		need $patchfile
 		md5sum $patchfile | awk '{print $1}' >>$tmp
 
-		if egrep -q "$key" $it.preipsec
+		if grep -E -q "$key" $it.preipsec
 		then
 			note "$it no longer needs patch $patchfile"
 		else

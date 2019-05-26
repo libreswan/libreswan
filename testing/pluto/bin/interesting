@@ -4,5 +4,5 @@
 
 for test
 do
-	egrep -n -v '^\||^Starting|^added|^listening|^adding|^loading|^shutting down|^forgetting|^leak: struct event in event_schedule' log/$test/p?-log
+    grep -E -n -v '^\||^Starting|^added|^listening|^adding|^loading|^shutting down|^forgetting|^leak: struct event in event_schedule' log/$test/p?-log
 done

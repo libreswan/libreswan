@@ -48,7 +48,7 @@ $(TMPFILESDIR):
 
 oldinitdcheck: installsystemdservice
 	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \
-		if egrep -i '(openswan|libreswan)' $(DESTDIR)/etc/init.d/ipsec* > /dev/null 2>&1 ; then \
+		if grep -E -i '(openswan|libreswan)' $(DESTDIR)/etc/init.d/ipsec* > /dev/null 2>&1 ; then \
 			echo "WARNING: removing older SYSV style init files" ; \
 			echo "removing: " $(DESTDIR)/etc/init.d/ipsec* $(DESTDIR)/etc/rc*.d/[KS][0-9][0-9]ipsec* ; \
 			rm -f $(DESTDIR)/etc/init.d/ipsec* $(DESTDIR)/etc/rc*.d/[KS][0-9][0-9]ipsec* ; \

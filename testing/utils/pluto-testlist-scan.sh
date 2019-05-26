@@ -101,9 +101,9 @@ commontest() {
 				notes="$notes,$i:missing-baseline"
 			else
 				# something is in $testname/OUTPUT/$i.console.diff
-				if egrep '^[+-]' "$testname/OUTPUT/$i.console.diff" | egrep -v '^(\+\+\+|---)' | LC_ALL=C sort -u | cmp -s - "$me.dumb-cert-fragment" ; then
+				if grep -E '^[+-]' "$testname/OUTPUT/$i.console.diff" | grep -E -v '^(\+\+\+|---)' | LC_ALL=C sort -u | cmp -s - "$me.dumb-cert-fragment" ; then
 					notes="$notes,$i:mainca-noise"
-				elif ! grep -v 'No test for authenc(' "$testname/OUTPUT/$i.console.diff" | egrep -v '^(\+\+\+|---)' | egrep '^[-+]' >/dev/null ; then
+				elif ! grep -v 'No test for authenc(' "$testname/OUTPUT/$i.console.diff" | grep -E -v '^(\+\+\+|---)' | grep -E '^[-+]' >/dev/null ; then
 					notes="$notes,$i:authenc-noise"
 				else
 					notes="$notes,$i:bad"

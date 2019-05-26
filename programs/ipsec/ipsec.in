@@ -112,7 +112,7 @@ ipsec_help() {
     echo ""
     GOTTWO=""
     for f in start stop restart status trafficstatus traffic globalstatus shuntstatus briefstatus fips import initnss checknss checknflog \
-	$(ls "${IPSEC_EXECDIR}" | egrep -v -i "${DONTMENTION}"); do
+	$(ls "${IPSEC_EXECDIR}" | grep -E -v -i "${DONTMENTION}"); do
 	if [ -z "${GOTTWO}" ]; then
 	    # first of two entries
 	    GOTTWO="${f}"

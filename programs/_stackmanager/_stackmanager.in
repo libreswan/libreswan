@@ -70,13 +70,13 @@ stopnetkey() {
 		xfrm_user xfrm_interface
 	    do
 		# first try and unload the modules without the 10s wait pause
-		if [ -n "$(egrep ^${mod} /proc/modules)" ]; then
+		if [ -n "$(grep ^${mod} /proc/modules)" ]; then
 		    # echo "unloading module ${mod}" >&2
 		    rmmod ${mod} 2>/dev/null
 		fi
 		# We only run rmmod again with --wait if requested
 		if [ -n "${wait}" -a \
-		    -n "$(egrep ^${mod} /proc/modules)" ]; then
+		    -n "$(grep ^${mod} /proc/modules)" ]; then
 		    # echo "unloading module ${mod} using --wait" >&2
 		    # we start rmmod to backgroud so unloading one module
 		    # won't block

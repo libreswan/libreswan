@@ -35,5 +35,5 @@ ipsec auto --add failtest8
 ipsec auto --add failtest9
 ipsec auto --add failtest10
 echo "Showing policies of all loaded connections"
-ipsec status | egrep 'policy: |our auth:'
+ipsec status | grep -E 'policy: |our auth:'
 echo done

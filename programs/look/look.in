@@ -62,7 +62,7 @@ done | awk '
 
 # tncfg (mostly as a divider line)
 if [ -f /proc/net/ipsec_tncfg ]; then
-    egrep -v 'NULL[ \t]+mtu=0\(0\)[ \t]+->[ \t]+0' /proc/net/ipsec_tncfg | \
+    grep -E -v 'NULL[ \t]+mtu=0\(0\)[ \t]+->[ \t]+0' /proc/net/ipsec_tncfg | \
 	paste -d % | sed 's/%/   /g' | sed 's/ -> /->/g'
 fi
 
@@ -145,10 +145,10 @@ if [ -f @IPSEC_NSSDIR@/cert9.db ]; then
     echo NSS_CERTIFICATES
     certutil -L -d sql:@IPSEC_NSSDIR@ | head -4
     certutil -L -d sql:@IPSEC_NSSDIR@ | \
-	egrep -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
+	grep -E -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
 elif [ -f @IPSEC_NSSDIR@/cert8.db ]; then
     echo NSS_CERTIFICATES
     certutil -L -d @IPSEC_NSSDIR@ | head -4
     certutil -L -d @IPSEC_NSSDIR@ | \
-	egrep -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
+	grep -E -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
 fi

@@ -457,7 +457,7 @@ doproxyarp() {
 	fi
 	# check if client is routeable
 	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
-	    egrep -q -s -v " via |^local"; then
+	    grep -E -q -s -v " via |^local"; then
 	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
 		awk '{print $3}')
 	    if [ -r /sys/class/net/${iface}/address ]; then

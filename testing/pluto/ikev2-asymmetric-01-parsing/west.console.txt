@@ -160,7 +160,7 @@ west #
  echo "Showing policies of all loaded connections"
 Showing policies of all loaded connections
 west #
- ipsec status | egrep 'policy: |our auth:'
+ ipsec status | grep -E 'policy: |our auth:'
 000 "test-default":   our auth:rsasig, their auth:rsasig
 000 "test-default":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "test-passthrough":   our auth:unset, their auth:unset

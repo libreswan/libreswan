@@ -31,7 +31,7 @@ road #
  echo done
 done
 road #
- egrep -i fragment /tmp/pluto.log
+ grep -E -i fragment /tmp/pluto.log
 road #
 road #
  ../bin/check-for-core.sh

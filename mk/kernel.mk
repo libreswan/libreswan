@@ -117,7 +117,7 @@ __patches2.4:
 klipsdefaults:
 	@KERNELDEFCONFIG=$(KERNELSRC)/arch/$(ARCH)/defconfig ; \
 	KERNELCONFIG=$(KCFILE) ; \
-	if ! egrep -q 'CONFIG_KLIPS' $$KERNELDEFCONFIG ; \
+	if ! grep -E -q 'CONFIG_KLIPS' $$KERNELDEFCONFIG ; \
 	then \
 		set -x ; \
 		cp -a $$KERNELDEFCONFIG $$KERNELDEFCONFIG.orig ; \
@@ -128,7 +128,7 @@ klipsdefaults:
 		cp -a $$KERNELDEFCONFIG.tmp $$KERNELDEFCONFIG ; \
 		rm -f $$KERNELDEFCONFIG.tmp ; \
 	fi ; \
-	if ! egrep -q 'CONFIG_KLIPS' $$KERNELCONFIG ; \
+	if ! grep -E -q 'CONFIG_KLIPS' $$KERNELCONFIG ; \
 	then \
 		set -x ; \
 		cp -a $$KERNELCONFIG $$KERNELCONFIG.orig ; \
@@ -203,21 +203,21 @@ confcheck:
 	@if test ! -f $(KCFILE) ; \
 	then echo '*** no kernel configuration file written!!' ; exit 1 ; \
 	fi
-	@if ! egrep -q '^CONFIG_KLIPS=[my]' $(KCFILE) ; \
+	@if ! grep -E -q '^CONFIG_KLIPS=[my]' $(KCFILE) ; \
 	then echo '*** IPsec not in kernel config ($(KCFILE))!!' ; exit 1 ; \
 	fi
-	@if ! egrep -q 'CONFIG_KLIPS[ 	]+1' $(ACFILE) && \
-		! egrep -q 'CONFIG_KLIPS_MODULE[ 	]+1' $(ACFILE) ; \
+	@if ! grep -E -q 'CONFIG_KLIPS[ 	]+1' $(ACFILE) && \
+		! grep -E -q 'CONFIG_KLIPS_MODULE[ 	]+1' $(ACFILE) ; \
 	then echo '*** IPsec in kernel config ($(KCFILE)),' ; \
 		echo '***	but not in config header file ($(ACFILE))!!' ; \
 		exit 1 ; \
 	fi
-	@if egrep -q '^CONFIG_KLIPS=m' $(KCFILE) && \
-		! egrep -q '^CONFIG_MODULES=y' $(KCFILE) ; \
+	@if grep -E -q '^CONFIG_KLIPS=m' $(KCFILE) && \
+		! grep -E -q '^CONFIG_MODULES=y' $(KCFILE) ; \
 	then echo '*** IPsec configured as module in kernel with no module support!!' ; exit 1 ; \
 	fi
-	@if ! egrep -q 'CONFIG_KLIPS_AH[ 	]+1' $(ACFILE) && \
-		! egrep -q 'CONFIG_KLIPS_ESP[ 	]+1' $(ACFILE) ; \
+	@if ! grep -E -q 'CONFIG_KLIPS_AH[ 	]+1' $(ACFILE) && \
+		! grep -E -q 'CONFIG_KLIPS_ESP[ 	]+1' $(ACFILE) ; \
 	then echo '*** IPsec configuration must include AH or ESP!!' ; exit 1 ; \
 	fi
 
@@ -230,7 +230,7 @@ kernel:
 	# see LKML thread "clean before or after dep?"
 	( cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) $(KERNCLEAN) $(KERNDEP) )
 	( cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) $(KERNEL) ) 2>&1 | tee out.kbuild
-	@if egrep -q '^CONFIG_MODULES=y' $(KCFILE) ; \
+	@if grep -E -q '^CONFIG_MODULES=y' $(KCFILE) ; \
 	then set -x ; \
 		( cd $(KERNELSRC) ; \
 		$(MAKE) $(KERNMAKEOPTS) modules 2>&1 ) | tee -a out.kbuild ; \
@@ -415,7 +415,7 @@ kinstall:
 	rm -f out.kinstall
 	>out.kinstall
 	# undocumented kernel folklore: modules_install must precede install (observed on RHL8.0)
-	@if egrep -q '^CONFIG_MODULES=y' $(KCFILE) ; \
+	@if grep -E -q '^CONFIG_MODULES=y' $(KCFILE) ; \
 	then set -x ; \
 		( cd $(KERNELSRC) ; \
 		$(MAKE) $(KERNMAKEOPTS) modules_install 2>&1 ) | tee -a out.kinstall ; \

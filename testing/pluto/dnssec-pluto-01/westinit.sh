@@ -12,5 +12,5 @@ echo 192.1.2.23 east-from-hosts-file.example.com east-from-hosts-file >> /etc/ho
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-etc-hosts
-ipsec auto --status | egrep "oriented|east-from-hosts"
+ipsec auto --status | grep -E "oriented|east-from-hosts"
 echo "initdone"
