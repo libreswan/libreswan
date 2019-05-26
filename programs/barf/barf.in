@@ -57,7 +57,7 @@ findlog() {	# findlog string fallbackstring possiblefile ...
 	    egrep -q "$s" ${LOGS}/${f} ]
 	then
 	    # aha, this one has it
-	    findlog_file=${LOGS}/$f
+	    findlog_file=${LOGS}/${f}
 	    findlog_startline=$(egrep -n "$s" ${LOGS}/${f} | \
 		sed -n '$s/:.*//p')
 	    return 0
@@ -70,7 +70,7 @@ findlog() {	# findlog string fallbackstring possiblefile ...
 	    egrep -q "$t" ${LOGS}/${f} ]
 	then
 	    # aha, this one has it
-	    findlog_file=${LOGS}/$f
+	    findlog_file=${LOGS}/${f}
 	    findlog_startline=$(egrep -n "$t" ${LOGS}/${f} | \
 		sed -n '1s/:.*//p')
 	    return 0
@@ -84,7 +84,7 @@ findlog() {	# findlog string fallbackstring possiblefile ...
 	    egrep -q "$s" ${LOGS}/${f} ]
 	then
 	    # found it
-	    findlog_file=${LOGS}/$f
+	    findlog_file=${LOGS}/${f}
 	    findlog_startline=$(egrep -n "$s" ${LOGS}/${f} | \
 		sed -n '$s/:.*//p')
 	    return 0
@@ -97,7 +97,7 @@ findlog() {	# findlog string fallbackstring possiblefile ...
 	    egrep -q "$t" ${LOGS}/${f} ]
 	then
 	    # found it
-	    findlog_file=${LOGS}/$f
+	    findlog_file=${LOGS}/${f}
 	    findlog_startline=$(egrep -n "$t" ${LOGS}/${f} | \
 		sed -n '1s/:.*//p')
 	    return 0
@@ -110,8 +110,8 @@ findlog() {	# findlog string fallbackstring possiblefile ...
 
 if [ ! -x /usr/bin/journalctl -a ! -x /bin/journalctl ]; then
     # no systemd, need to figure out log file location
-    findlog "$fstart" "klips" messages syslog auth.log daemon.log
-    if [ " ${findlog_file}" = " /dev/null" ]; then
+    findlog "${fstart}" "klips" messages syslog auth.log daemon.log
+    if [ "${findlog_file}" = "/dev/null" ]; then
 	echo "Unable to find KLIPS messages, typically found in /var/log/messages or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logwatch) or we do not understand your logging configuration."
     fi
     klog=${findlog_file}
@@ -123,7 +123,7 @@ if [ ! -x /usr/bin/journalctl -a ! -x /bin/journalctl ]; then
 	echo "Unable to find Pluto messages, typically found in /var/log/secure or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logwatch) or we do not understand your logging configuration."
 	fi
 	plog=${findlog_file}
-	pline=$findlog_startline
+	pline=${findlog_startline}
 fi
 
 # /lib/modules examiner
@@ -135,7 +135,7 @@ modulegoo() {
 	then
 	    f=/lib/modules/${d}/${1}
 	    if [ -f ${f} ]; then
-		nm -g ${f} | egrep "$2"
+		nm -g ${f} | egrep "${2}"
 	    else
 		echo
 	    fi | sed "s;^;${d}: ;"
@@ -342,10 +342,18 @@ elif [ -f /lib/modules/$(uname -r)/build/.config ]; then
 else
     echo "no .config file found, cannot list kernel properties"
 fi
-_________________________ etc/syslog.conf
-_________________________ etc/syslog-ng/syslog-ng.conf
-cat /etc/syslog-ng/syslog-ng.conf
-cat /etc/syslog.conf
+if [ -f /etc/syslog.conf ]; then
+    _________________________ etc/syslog.conf
+    cat /etc/syslog.conf
+fi
+if [ -f /etc/syslog-ng/syslog-ng.conf ]; then
+    _________________________ etc/syslog-ng/syslog-ng.conf
+    cat /etc/syslog-ng/syslog-ng.conf
+fi
+if [ -f /etc/rsyslog.conf ]; then
+    _________________________ etc/rsyslog.conf
+    cat /etc/rsyslog.conf
+fi
 _________________________ etc/resolv.conf
 cat /etc/resolv.conf
 _________________________ lib/modules-ls
@@ -373,7 +381,7 @@ _________________________ klog
 dmesg | egrep -i "klips|ipsec"
 _________________________ plog
 if [ -x /usr/bin/journalctl -o -x /bin/journalctl ]; then
-    journalctl -u ipsec.service --no-pager --since "1 hour ago" |
+    journalctl -u ipsec.service --no-pager --since "24 hours ago" | \
     case "${1}" in
 	--short)
 	    tail -500
