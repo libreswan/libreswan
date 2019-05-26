@@ -22,7 +22,7 @@
 <cmdsynopsis>
   <command>ipsec</command>
     <arg choice='plain'><replaceable>barf</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'>--short </arg><arg choice='plain'>--maxlines <replaceable>&lt;100&gt;</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--short </arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
