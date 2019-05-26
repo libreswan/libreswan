@@ -54,11 +54,11 @@ findlog() {	# findlog string fallbackstring possiblefile ...
     do
 	if [ -s ${LOGS}/${f} -a \
 	    -f ${LOGS}/${f} -a \
-	    egrep -q "$s" ${LOGS}/${f} ]
+	    grep -E -q "$s" ${LOGS}/${f} ]
 	then
 	    # aha, this one has it
 	    findlog_file=${LOGS}/${f}
-	    findlog_startline=$(egrep -n "$s" ${LOGS}/${f} | \
+	    findlog_startline=$(grep -E -n "$s" ${LOGS}/${f} | \
 		sed -n '$s/:.*//p')
 	    return 0
 	fi
@@ -67,38 +67,38 @@ findlog() {	# findlog string fallbackstring possiblefile ...
     do
 	if [ -s ${LOGS}/${f} -a \
 	    -f ${LOGS}/${f} -a \
-	    egrep -q "$t" ${LOGS}/${f} ]
+	    grep -E -q "$t" ${LOGS}/${f} ]
 	then
 	    # aha, this one has it
 	    findlog_file=${LOGS}/${f}
-	    findlog_startline=$(egrep -n "$t" ${LOGS}/${f} | \
+	    findlog_startline=$(grep -E -n "$t" ${LOGS}/${f} | \
 		sed -n '1s/:.*//p')
 	    return 0
 	fi
     done
     # nope, resort to a search, newest first, of uncompressed logs
-    for f in $(ls -t ${LOGS} | egrep -v 'lastlog|tmp|^mail|\.(gz|Z)$')
+    for f in $(ls -t ${LOGS} | grep -E -v 'lastlog|tmp|^mail|\.(gz|Z)$')
 	do
 	if [ -f ${LOGS}/${f} -a \
 	    ! -d ${LOGS}/${f} -a \
-	    egrep -q "$s" ${LOGS}/${f} ]
+	    grep -E -q "$s" ${LOGS}/${f} ]
 	then
 	    # found it
 	    findlog_file=${LOGS}/${f}
-	    findlog_startline=$(egrep -n "$s" ${LOGS}/${f} | \
+	    findlog_startline=$(grep -E -n "$s" ${LOGS}/${f} | \
 		sed -n '$s/:.*//p')
 	    return 0
 	fi
     done
-    for f in $(ls -t ${LOGS} | egrep -v 'lastlog|tmp|^mail|\.(gz|Z)$')
+    for f in $(ls -t ${LOGS} | grep -E -v 'lastlog|tmp|^mail|\.(gz|Z)$')
     do
 	if [ -s ${LOGS}/${f} -a \
 	    -f ${LOGS}/${f} -a \
-	    egrep -q "$t" ${LOGS}/${f} ]
+	    grep -E -q "$t" ${LOGS}/${f} ]
 	then
 	    # found it
 	    findlog_file=${LOGS}/${f}
-	    findlog_startline=$(egrep -n "$t" ${LOGS}/${f} | \
+	    findlog_startline=$(grep -E -n "$t" ${LOGS}/${f} | \
 		sed -n '1s/:.*//p')
 	    return 0
 	fi
@@ -135,7 +135,7 @@ modulegoo() {
 	then
 	    f=/lib/modules/${d}/${1}
 	    if [ -f ${f} ]; then
-		nm -g ${f} | egrep "${2}"
+		nm -g ${f} | grep -E "${2}"
 	    else
 		echo
 	    fi | sed "s;^;${d}: ;"
@@ -204,7 +204,7 @@ do
 done
 _________________________ /proc/sys/net/ipsec-star
 if [ -d /proc/sys/net/ipsec ]; then
-    ( cd /proc/sys/net/ipsec && egrep '^' * )
+    ( cd /proc/sys/net/ipsec && grep -E '^' * )
 fi
 _________________________ ipsec/status
 ipsec whack --status
@@ -226,7 +226,7 @@ _________________________ uptime
 uptime
 _________________________ ps
 # -i ppid picks up the header
-ps alxwf | egrep -i 'ppid|pluto|ipsec|klips'
+ps alxwf | grep -E -i 'ppid|pluto|ipsec|klips'
 _________________________ ipsec/conf
 ipsec readwriteconf --config @IPSEC_CONF@
 _________________________ ipsec/secrets
@@ -258,9 +258,9 @@ cat /proc/sys/net/ipv4/ip_forward
 _________________________ /proc/sys/net/ipv4/tcp_ecn
 cat /proc/sys/net/ipv4/tcp_ecn
 _________________________ /proc/sys/net/ipv4/conf/star-rp_filter
-( cd /proc/sys/net/ipv4/conf && egrep '^' */rp_filter )
+( cd /proc/sys/net/ipv4/conf && grep -E '^' */rp_filter )
 _________________________ /proc/sys/net/ipv4/conf/star-star-redirects
-( cd /proc/sys/net/ipv4/conf && egrep '^' */*redirects )
+( cd /proc/sys/net/ipv4/conf && grep -E '^' */*redirects )
 _________________________ /proc/sys/net/ipv4/tcp_window_scaling
 cat /proc/sys/net/ipv4/tcp_window_scaling
 _________________________ /proc/sys/net/ipv4/tcp_adv_win_scale
@@ -336,9 +336,9 @@ if [ -f /proc/net/ipsec_version ]; then
 fi
 _________________________ usr/src/linux/.config
 if [ -f /proc/config.gz ]; then
-    zcat /proc/config.gz | egrep 'CONFIG_IPSEC|CONFIG_KLIPS|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|CONFIG_HW_RANDOM|CONFIG_CRYPTO_DEV|_XFRM'
+    zcat /proc/config.gz | grep -E 'CONFIG_IPSEC|CONFIG_KLIPS|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|CONFIG_HW_RANDOM|CONFIG_CRYPTO_DEV|_XFRM'
 elif [ -f /lib/modules/$(uname -r)/build/.config ]; then
-    cat /lib/modules/$(uname -r)/build/.config | egrep 'CONFIG_IPSEC|CONFIG_KLIPS|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|CONFIG_HW_RANDOM|CONFIG_CRYPTO_DEV|_XFRM'
+    cat /lib/modules/$(uname -r)/build/.config | grep -E 'CONFIG_IPSEC|CONFIG_KLIPS|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|CONFIG_HW_RANDOM|CONFIG_CRYPTO_DEV|_XFRM'
 else
     echo "no .config file found, cannot list kernel properties"
 fi
@@ -362,10 +362,10 @@ _________________________ fipscheck
 cat /proc/sys/crypto/fips_enabled
 _________________________ /proc/ksyms-netif_rx
 if [ -r /proc/ksyms ]; then
-    egrep netif_rx /proc/ksyms
+    grep -E netif_rx /proc/ksyms
 else
     if [ -r /proc/kallsyms ]; then
-	egrep netif_rx /proc/kallsyms
+	grep -E netif_rx /proc/kallsyms
     else
 	echo "broken (redhat/fedora) 2.6 kernel without kallsyms"
     fi
@@ -378,7 +378,7 @@ if [ -f ${LOGS}/kern.debug ]; then
     tail -100 ${LOGS}/kern.debug
 fi
 _________________________ klog
-dmesg | egrep -i "klips|ipsec"
+dmesg | grep -E -i "klips|ipsec"
 _________________________ plog
 if [ -x /usr/bin/journalctl -o -x /bin/journalctl ]; then
     journalctl -u ipsec.service --no-pager --since "24 hours ago" | \
@@ -392,7 +392,7 @@ if [ -x /usr/bin/journalctl -o -x /bin/journalctl ]; then
     esac
 else
     sed -n ${pline},'$'p ${plog} | \
-	egrep -i 'pluto' | \
+	grep -E -i 'pluto' | \
 	case "${1}" in
 	    --short)
 		tail -500
