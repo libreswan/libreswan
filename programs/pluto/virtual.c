@@ -192,18 +192,16 @@ void init_virtual_ip(const char *private_list)
 
 /*
  * virtual string must be:
- *	{vhost,vnet}:[methods]
+ *	{vhost,vnet}:[method [, method]* ]
  *
  * vhost = accept only a host (/32)
  * vnet  = accept any network
  *
- * methods: method | methods "," method
- *
  * method:
- *	%no  (means no virtual IP (accept public IP of host))
+ *	%no  (means no virtual IP (accept IP of host/32))
  *	%priv  (means accept system-wide private net list)
- *	[%v4:]x  (means accept literal IPv4 address x)
- *	[%v6:]x  (means accept literal IPv6 address x)
+ *	[%v4:]x  (means accept literal IPv4 subnet x)
+ *	[%v6:]x  (means accept literal IPv6 subnet x)
  *	%all  (means accept all IPs [only for testing])
  *
  * examples:
