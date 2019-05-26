@@ -73,13 +73,13 @@ commontest() {
 
 	for i in "$testname"/OUTPUT/*.pluto.log ; do
 		if [ -f "$i" ] ; then
-			if fgrep 'ASSERTION FAILED' "$i" >/dev/null ; then
+			if grep -F 'ASSERTION FAILED' "$i" >/dev/null ; then
 				notes="$notes,ASSERT:`basename $i`"
 			fi
-			if fgrep 'EXPECTATION FAILED' "$i" >/dev/null ; then
+			if grep -F 'EXPECTATION FAILED' "$i" >/dev/null ; then
 				notes="$notes,EXPECT:`basename $i`"
 			fi
-			if fgrep 'SEGFAULT' "$i" >/dev/null ; then
+			if grep -F 'SEGFAULT' "$i" >/dev/null ; then
 				notes="$notes,SEGFAULT:`basename $i`"
 			fi
 		fi

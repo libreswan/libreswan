@@ -15,7 +15,7 @@ partof=$1 shift
 # seems to prime bind
 dig $item txt >/dev/null
 
-if (echo "txt 12334 $item" | ipsec lwdnsq --regress --serial --ignoreeof | fgrep "$partof" - >/dev/null)
+if (echo "txt 12334 $item" | ipsec lwdnsq --regress --serial --ignoreeof | grep -F "$partof" - >/dev/null)
 then
 	echo LOOK-FOR-TXT FOUND $partof
 else
