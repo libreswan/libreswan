@@ -1263,13 +1263,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md, struct ike_sa *i
 	/* this an IKE request and not a response */
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
 
-	if (v2_child_sa_responder_with_msgid(ike, md->hdr.isa_msgid) != NULL) {
-		/*
-		 * XXX: why didn't the re-transmit code detected this?
-		 */
-		what = "CREATE_CHILD_SA Request retransmission ignored";
-		st = NULL;
-	} else if (md->from_state == STATE_V2_CREATE_R) {
+	if (md->from_state == STATE_V2_CREATE_R) {
 		what = "Child SA Request";
 		st = ikev2_duplicate_state(ike, IPSEC_SA,
 					   SA_RESPONDER);
