@@ -71,6 +71,7 @@
 #include "pluto_stats.h"
 #include "keywords.h"
 #include "ikev2_msgid.h"
+#include "ip_endpoint.h"
 
 static bool is_msg_request(const struct msg_digest *md);
 static struct state *v2_child_sa_responder_with_msgid(struct ike_sa *ike, msgid_t st_msgid);
@@ -1254,8 +1255,6 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 
 static struct state *process_v2_child_ix(struct msg_digest *md, struct ike_sa *ike)
 {
-	struct state *st; /* child state - to be determined */
-
 	/* for log */
 	const char *what;
 	const char *why = "";
@@ -1268,50 +1267,30 @@ static struct state *process_v2_child_ix(struct msg_digest *md, struct ike_sa *i
 		what = "Child SA Request";
 		child = ikev2_duplicate_state(ike, IPSEC_SA,
 					      SA_RESPONDER);
-		st = &child->sa;
-		change_state(st, STATE_V2_CREATE_R);
-		st->st_msgid = md->hdr.isa_msgid;
-		binlog_refresh_state(st);
+		change_state(&child->sa, STATE_V2_CREATE_R);
 	} else {
 		what = "IKE Rekey Request";
 		child = ikev2_duplicate_state(ike, IKE_SA,
 					      SA_RESPONDER);
-		st = &child->sa;
-		change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
-		st->st_msgid = md->hdr.isa_msgid;
-		binlog_refresh_state(st);
+		change_state(&child->sa, STATE_V2_REKEY_IKE_R); /* start with this */
 	}
 
-	if (st == NULL) {
-		libreswan_log("rejecting %s CREATE_CHILD_SA%s hdr.isa_msgid: %u st_msgid_lastrecv %u",
-			      what, why,
-			      md->hdr.isa_msgid,
-			      ike->sa.st_msgid_lastrecv);
-	} else {
-		bool st_busy = st->st_suspended_md != NULL || st->st_suspended_md != NULL;
-		DBG(DBG_CONTROLMORE, {
-			ipstr_buf b;
-			char ca[CONN_INST_BUF];
-			char cb[CONN_INST_BUF];
-			DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA%s from %s:%u Child \"%s\"%s #%lu in %s %s",
-				ike->sa.st_connection->name,
-				fmt_conn_instance(ike->sa.st_connection, ca),
-				ike->sa.st_serialno,
-				what, why, ipstr(&md->sender, &b),
-				hportof(&md->sender),
-				st->st_connection->name,
-				fmt_conn_instance(st->st_connection, cb),
-				st->st_serialno,
-				st->st_state->name,
-				st_busy ? "is busy processing a response drop this message" :
-					"will process it further");
-		});
+	child->sa.st_msgid = md->hdr.isa_msgid;
+	binlog_refresh_state(&child->sa);
 
-		if (st_busy)
-			st = NULL; /* in the previous message */
+	LSWDBGP(DBG_BASE, buf) {
+		jam_connection(buf, ike->sa.st_connection);
+		jam(buf, " #%lu received %s CREATE_CHILD_SA%s from ",
+		    ike->sa.st_serialno,
+		    what, why);
+		jam_endpoint(buf, &md->sender);
+		jam(buf, " Child ");
+		jam_connection(buf, child->sa.st_connection);
+		jam(buf, " #%lu in %s will process it further",
+		    child->sa.st_serialno, child->sa.st_state->name);
 	}
 
-	return st;
+	return &child->sa;
 }
 
 /*
