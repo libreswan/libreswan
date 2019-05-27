@@ -62,9 +62,9 @@
 #include "ikev2_message.h"
 #include "ikev2_ts.h"
 
-static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
-	struct state **ret_cst,
-	enum isakmp_xchg_types isa_xchg)
+static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
+					     const struct msg_digest *md,
+					     enum isakmp_xchg_types isa_xchg)
 {
 	ip_address ipv4;
 	struct connection *c = md->st->st_connection;
@@ -72,43 +72,40 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 	err_t e = lease_an_address(c, md->st, &ipv4);
 	if (e != NULL) {
 		libreswan_log("ikev2 lease_an_address failure %s", e);
-		return STF_INTERNAL_ERROR;
+		return NULL;
 	}
 
 	struct child_sa *child;	/* to-be-determined */
-	struct state *cst;
-
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		cst = md->st;
-		update_state_connection(cst, c);
+		child = pexpect_child_sa(md->st);
+		update_state_connection(&child->sa, c);
 	} else {
-		child = ikev2_duplicate_state(pexpect_ike_sa(md->st), IPSEC_SA,
-					      v2_msg_role(md) == MESSAGE_REQUEST ? SA_RESPONDER :
-					      v2_msg_role(md) == MESSAGE_RESPONSE ? SA_INITIATOR :
-					      0);
-		cst = &child->sa;
-		cst->st_connection = c;	/* safe: from duplicate_state */
-		binlog_refresh_state(cst);
+		child = ikev2_duplicate_state(ike, IPSEC_SA,
+					      SA_RESPONDER);
+		child->sa.st_connection = c;	/* safe: from duplicate_state */
+		binlog_refresh_state(&child->sa);
 	}
 
+	/*
+	 * XXX: Per above if(), md->st could be either the IKE or the
+	 * CHILD!
+	 */
 	struct spd_route *spd = &md->st->st_connection->spd;
 	spd->that.has_lease = TRUE;
 	spd->that.client.addr = ipv4;
 	spd->that.client.maskbits = 32; /* export it as value */
 	spd->that.has_client = TRUE;
 
-	cst->st_ts_this = ikev2_end_to_ts(&spd->this);
-	cst->st_ts_that = ikev2_end_to_ts(&spd->that);
+	child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
+	child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
 
-	*ret_cst = cst;	/* success! */
-	return STF_OK;
+	return child;
 }
 
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
-	struct state *cst = NULL;	/* child state */
 	struct connection *c = md->st->st_connection;
 
 	/*
@@ -121,12 +118,18 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
 	    md->st->st_ipsec_pred != SOS_NOBODY) {
 		/* this is Child SA rekey we already have child state object */
-		cst = md->st;
+		child = pexpect_child_sa(md->st);
 	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		RETURN_STF_FAILURE_STATUS(ikev2_cp_reply_state(md, &cst,
-					isa_xchg));
+		/*
+		 * XXX: unlike above and below, this also screws
+		 * around with the connection.
+		 */
+		child = ikev2_cp_reply_state(ike, md, isa_xchg);
+		if (child == NULL) {
+			return STF_INTERNAL_ERROR;
+		}
 	} else if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		cst = md->st;
+		child = pexpect_child_sa(md->st);
 	} else {
 		/* ??? is this only for AUTH exchange? */
 		pexpect(isa_xchg == ISAKMP_v2_IKE_AUTH); /* see calls */
@@ -139,22 +142,21 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		 * XXX: this create-state code block should be moved
 		 * to the ISAKMP_v2_AUTH caller.
 		 */
-		passert(cst == NULL);
 		pexpect(md->st != NULL);
 		pexpect(md->st == &ike->sa); /* passed in parent */
 		child = ikev2_duplicate_state(ike, IPSEC_SA, SA_RESPONDER);
-		cst = &child->sa;
-		binlog_refresh_state(cst);
-		if (!v2_process_ts_request(pexpect_child_sa(cst), md)) {
+		binlog_refresh_state(&child->sa);
+		if (!v2_process_ts_request(child, md)) {
 			/*
 			 * XXX: while the CHILD SA failed, the IKE SA
 			 * should continue to exist.  This STF_FAIL
 			 * will blame MD->ST aka the IKE SA.
 			 */
-			delete_state(cst);
+			delete_state(&child->sa);
 			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 		}
 	}
+	struct state *cst = &child->sa;	/* child state */
 
 	/* switch to child */
 	md->st = cst;
