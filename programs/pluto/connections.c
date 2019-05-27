@@ -2694,12 +2694,6 @@ struct connection *route_owner(struct connection *c,
 				d->sa_marks.out.val, d->sa_marks.out.mask);
 		});
 
-		/*
-		 * bit-wise, ^ is the same as != so the following test could be used
-		 * if ( (c->sa_marks.in.val ^ d->sa_marks.in.val) & d->sa_marks.in.mask) |
-		 *      (c->sa_marks.out.val ^ d->sa_marks.out.val) & d->sa_marks.out.mask) )
-		 * This is more succinct and efficient, but apparently confusing.
-		 */
 		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
 		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
 			continue;
