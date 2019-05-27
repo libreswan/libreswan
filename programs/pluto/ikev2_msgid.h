@@ -60,7 +60,9 @@ struct v2_msgid_wip {
 	intmax_t responder;
 };
 
-void v2_msgid_init(struct ike_sa *ike);
+void v2_msgid_init_ike(struct ike_sa *ike);
+void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child);
+
 void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			  struct msg_digest *md);
 void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,

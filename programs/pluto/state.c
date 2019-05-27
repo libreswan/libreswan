@@ -573,7 +573,8 @@ struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 	    st->st_serialno, st->st_msgid,
 	    st->st_msgid_lastack, st->st_msgid_nextuse,
 	    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
-	v2_msgid_init(pexpect_ike_sa(st));
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	v2_msgid_init_ike(ike);
 	const struct finite_state *fs = finite_states[kind];
 	change_state(st, fs->kind);
 	/*
@@ -1549,7 +1550,9 @@ struct child_sa *ikev2_duplicate_state(struct ike_sa *ike,
 {
 	struct state *cst = duplicate_state(&ike->sa, sa_type, &state_undefined);
 	cst->st_sa_role = role;
-	return pexpect_child_sa(cst);
+	struct child_sa *child = pexpect_child_sa(cst);
+	v2_msgid_init_child(ike, child);
+	return child;
 }
 
 void for_each_state(void (*f)(struct state *, void *data), void *data)

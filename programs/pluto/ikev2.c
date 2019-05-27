@@ -2790,7 +2790,7 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	    to->sa.st_msgid_lastack,
 	    to->sa.st_msgid_lastrecv,
 	    to->sa.st_msgid_nextuse);
-	v2_msgid_init(pexpect_ike_sa(&to->sa));
+	v2_msgid_init_ike(pexpect_ike_sa(&to->sa));
 
 	/* Switch to the new IKE SPIs */
 	to->sa.st_ike_spis = to->sa.st_ike_rekey_spis;

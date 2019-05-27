@@ -35,11 +35,12 @@ static void jam_msgids(struct lswlog *buf, const char *what,
 		       struct state *wip, const struct v2_msgid_wip *old_wip)
 
 {
-	jam(buf, "Message ID: ike #%lu.%s",
-		ike->sa.st_serialno,
-		ike->sa.st_state->short_name);
-	if (ike->sa.st_serialno != wip->st_serialno) {
-		jam(buf, "%s #%lu.%s", what,
+	jam(buf, "Message ID: %s IKE #%lu.%s",
+	    what,
+	    ike->sa.st_serialno,
+	    ike->sa.st_state->short_name);
+	if (IS_CHILD_SA(wip)) {
+		jam(buf, " CHILD #%lu.%s",
 			wip->st_serialno,
 			wip->st_state->short_name);
 	}
@@ -71,10 +72,10 @@ static void jam_msgids(struct lswlog *buf, const char *what,
 		jam(buf, "->%jd", ike->sa.st_v2_msgid_windows.responder.recv);
 	}
 
-	if (ike->sa.st_serialno == wip->st_serialno) {
+	if (IS_IKE_SA(wip)) {
 		jam(buf, "; ike.wip:");
 	} else {
-		jam(buf, "; %s.wip:", what);
+		jam(buf, "; child.wip:");
 	}
 	jam(buf, " initiator=%jd", old_wip->initiator);
 	if (old_wip->initiator != wip->st_v2_msgid_wip.initiator) {
@@ -94,32 +95,49 @@ static void jam_msgids(struct lswlog *buf, const char *what,
  * new init request.
  */
 
-void v2_msgid_init(struct ike_sa *ike)
+static const struct v2_msgid_windows empty_v2_msgid_windows = {
+	.initiator = {
+		.sent = -1,
+		.recv = -1,
+	},
+	.responder = {
+		.sent = -1,
+		.recv = -1,
+	},
+};
+
+static const struct v2_msgid_wip empty_v2_msgid_wip = {
+	.initiator = -1,
+	.responder = -1,
+};
+
+void v2_msgid_init_ike(struct ike_sa *ike)
 {
-	static const struct v2_msgid_windows empty_v2_msgid_windows = {
-		.initiator = {
-			.sent = -1,
-			.recv = -1,
-		},
-		.responder = {
-			.sent = -1,
-			.recv = -1,
-		},
-	};
 	struct v2_msgid_windows old_windows = ike->sa.st_v2_msgid_windows;
 	ike->sa.st_v2_msgid_windows = empty_v2_msgid_windows;
-	static const struct v2_msgid_wip empty_v2_msgid_wip = {
-		.initiator = -1,
-		.responder = -1,
-	};
 	struct v2_msgid_wip old_wip = ike->sa.st_v2_msgid_wip;
 	ike->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
 			/* pretend there's a sender */
-			jam_msgids(buf, "initializing", NO_MESSAGE, -1,
+			jam_msgids(buf, "init_ike", NO_MESSAGE, -1,
 				   ike, &old_windows,
 				   &ike->sa, &old_wip);
+		}
+	}
+}
+
+void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child)
+{
+	child->sa.st_v2_msgid_windows = empty_v2_msgid_windows;
+	struct v2_msgid_wip old_child = ike->sa.st_v2_msgid_wip;
+	child->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
+	if (DBGP(DBG_BASE)) {
+		LSWLOG_DEBUG(buf) {
+			/* pretend there's a sender */
+			jam_msgids(buf, "init_child", NO_MESSAGE, -1,
+				   ike, &ike->sa.st_v2_msgid_windows, /* unchanged */
+				   &child->sa, &old_child);
 		}
 	}
 }
@@ -159,31 +177,31 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		}
 		/*
 		 * Since the response has been successfully processed,
-		 * clear INITIATOR_MIP.  This way duplicate
+		 * clear WIP.INITIATOR.  This way duplicate
 		 * responses get discarded as there is no receiving
 		 * state.
 		 *
 		 * XXX: Unfortunately the record 'n' send code throws
 		 * a spanner in the works.  It calls update_send()
 		 * before update_recv() breaking the assumption that
-		 * INITIATOR_MIP is the old MSGID.
+		 * WIP.INITIATOR is the old MSGID.
 		 */
 		if (old_receiver.initiator > msgid) {
 			/*
 			 * Hack around record 'n' send calling
-			 * update_sent() (setting INITIATOR_MIP to
+			 * update_sent() (setting WIP.INITIATOR to
 			 * the next request) midway through
 			 * processing.
 			 *
 			 * Getting rid of record 'n' send will fix
 			 * this hack.
 			 */
-			dbg("Message ID: XXX: IKE #%lu receiver #%lu: receiver.initiator_mip %jd != receiver.msgid %jd (record 'n' called update_sent() before update_recv()?)",
+			dbg("Message ID: XXX: IKE #%lu receiver #%lu: receiver.wip.initiator %jd != receiver.msgid %jd (record 'n' called update_sent() before update_recv()?)",
 			    ike->sa.st_serialno, receiver->st_serialno,
 			    old_receiver.initiator, msgid);
 		} else {
 			if (DBGP(DBG_BASE) && old_receiver.initiator != msgid) {
-				PEXPECT_LOG("Message ID: IKE #%lu receiver #%lu: receiver.initiator_mip %jd == receiver.msgid %jd",
+				PEXPECT_LOG("Message ID: IKE #%lu receiver #%lu: receiver.wip.initiator %jd == receiver.msgid %jd",
 					    ike->sa.st_serialno, receiver->st_serialno,
 					    old_receiver.initiator, msgid);
 			}
@@ -202,7 +220,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
-			jam_msgids(buf, "receiver", role, msgid,
+			jam_msgids(buf, "recv", role, msgid,
 				   ike, &old, receiver, &old_receiver);
 		}
 	}
@@ -227,7 +245,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		sender->st_v2_msgid_wip.initiator = new->initiator.sent = msgid;
 		/* extend st_msgid */
 		if (DBGP(DBG_BASE) && sender->st_msgid != sender->st_v2_msgid_wip.initiator) {
-			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: sender.msgid "PRI_MSGID" == sender.initiator_mip %jd",
+			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: sender.msgid "PRI_MSGID" == sender.wip.initiator %jd",
 				    ike->sa.st_serialno, sender->st_serialno,
 				    sender->st_msgid,
 				    sender->st_v2_msgid_wip.initiator);
@@ -242,17 +260,17 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 #if 0
 		/*
 		 * XXX: The record 'n' send code calls update_send()
-		 * before update_recv() breaking INITIATOR_MIP's
+		 * before update_recv() breaking WIP.INITIATOR's
 		 * expected sequence OLD-MSGID -> -1 -> NEW-MSGID.
 		 */
 		if (DBGP(DBG_BASE) && old_sender.initiator != -1) {
-			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: sender.initiator_mip %jd == -1",
+			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: sender.wip.initiator %jd == -1",
 				    ike->sa.st_serialno, sender->st_serialno,
 				    old_sender.initiator);
 		}
 #else
 		if (old_sender.initiator != -1) {
-			dbg("Message ID: XXX: IKE #%lu sender #%lu: expecting sender.initiator_mip %jd == -1 (record 'n' send out-of-order?)",
+			dbg("Message ID: XXX: IKE #%lu sender #%lu: expecting sender.wip.initiator %jd == -1 (record 'n' send out-of-order?)",
 			    ike->sa.st_serialno, sender->st_serialno,
 			    old_sender.initiator);
 		}
@@ -290,7 +308,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
-			jam_msgids(buf, "sender", sending, msgid,
+			jam_msgids(buf, "sent", sending, msgid,
 				   ike, &old, sender, &old_sender);
 		}
 	}

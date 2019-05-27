@@ -1366,7 +1366,8 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			 * an initial outgoing message.
 			 */
 			v2_msgid_restart_init_request(st);
-			v2_msgid_init(pexpect_ike_sa(st));
+			struct ike_sa *ike = pexpect_ike_sa(st);
+			v2_msgid_init_ike(ike);
 			/*
 			 * XXX: Why?!?
 			 *
@@ -1460,7 +1461,8 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				    st->st_serialno, st->st_msgid,
 				    st->st_msgid_lastack, st->st_msgid_nextuse,
 				    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
-				v2_msgid_init(pexpect_ike_sa(st));
+				struct ike_sa *ike = pexpect_ike_sa(st);
+				v2_msgid_init_ike(ike);
 				/*
 				 * get a new KE
 				 */
@@ -2173,10 +2175,16 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
 	cst->st_try = pst->st_try;
 
-	dbg("Message ID: forcing CHILD #%lu msgid "PRI_MSGID"->"PRI_MSGID" from #%lu nextuse",
-	    cst->st_serialno, cst->st_msgid,
-	    pst->st_msgid_nextuse, pst->st_serialno);
+	dbg("Message ID: forcing #%lu.#%lu msgid "PRI_MSGID"->"PRI_MSGID" from IKE nextuse",
+	    pst->st_serialno, cst->st_serialno, cst->st_msgid,
+	    pst->st_msgid_nextuse);
 	cst->st_msgid = pst->st_msgid_nextuse;
+
+	dbg("XXX: Message ID: forcing #%lu.#%lu wip.initiator %jd->"PRI_MSGID" from IKE nextuse",
+	    pst->st_serialno, cst->st_serialno,
+	    cst->st_v2_msgid_wip.initiator, pst->st_msgid_nextuse);
+	cst->st_v2_msgid_wip.initiator = pst->st_msgid_nextuse;
+
 	binlog_refresh_state(cst);
 	md->st = cst;
 
