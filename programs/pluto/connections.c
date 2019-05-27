@@ -2681,7 +2681,8 @@ struct connection *route_owner(struct connection *c,
 			continue;
 
 		/*
-		 * allow policies different by mark/mask
+		 * consider policies different if the either in or out marks
+		 * differ (after masking)
 		 */
 		DBG(DBG_PARSING, {
 			DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
@@ -2693,8 +2694,14 @@ struct connection *route_owner(struct connection *c,
 				d->sa_marks.out.val, d->sa_marks.out.mask);
 		});
 
-		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) &&
-		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask))
+		/*
+		 * bit-wise, ^ is the same as != so the following test could be used
+		 * if ( (c->sa_marks.in.val ^ d->sa_marks.in.val) & d->sa_marks.in.mask) |
+		 *      (c->sa_marks.out.val ^ d->sa_marks.out.val) & d->sa_marks.out.mask) )
+		 * This is more succinct and efficient, but apparently confusing.
+		 */
+		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
+		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
 			continue;
 
 		struct spd_route *srd;
