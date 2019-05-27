@@ -75,16 +75,18 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 		return STF_INTERNAL_ERROR;
 	}
 
+	struct child_sa *child;	/* to-be-determined */
 	struct state *cst;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		cst = md->st;
 		update_state_connection(cst, c);
 	} else {
-		cst = ikev2_duplicate_state(pexpect_ike_sa(md->st), IPSEC_SA,
-					    v2_msg_role(md) == MESSAGE_REQUEST ? SA_RESPONDER :
-					    v2_msg_role(md) == MESSAGE_RESPONSE ? SA_INITIATOR :
-					    0);
+		child = ikev2_duplicate_state(pexpect_ike_sa(md->st), IPSEC_SA,
+					      v2_msg_role(md) == MESSAGE_REQUEST ? SA_RESPONDER :
+					      v2_msg_role(md) == MESSAGE_RESPONSE ? SA_INITIATOR :
+					      0);
+		cst = &child->sa;
 		cst->st_connection = c;	/* safe: from duplicate_state */
 		binlog_refresh_state(cst);
 	}
@@ -114,6 +116,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	 * (CHILD_SA).
 	 */
 	struct ike_sa *ike = ike_sa(md->st);
+	struct child_sa *child; /* to-be-determined */
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
 	    md->st->st_ipsec_pred != SOS_NOBODY) {
@@ -139,7 +142,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		passert(cst == NULL);
 		pexpect(md->st != NULL);
 		pexpect(md->st == &ike->sa); /* passed in parent */
-		cst = ikev2_duplicate_state(ike, IPSEC_SA, SA_RESPONDER);
+		child = ikev2_duplicate_state(ike, IPSEC_SA, SA_RESPONDER);
+		cst = &child->sa;
 		binlog_refresh_state(cst);
 		if (!v2_process_ts_request(pexpect_child_sa(cst), md)) {
 			/*

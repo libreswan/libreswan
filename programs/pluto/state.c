@@ -1543,13 +1543,13 @@ struct state *ikev1_duplicate_state(struct state *st)
 	return duplicate_state(st, IPSEC_SA, &state_undefined);
 }
 
-struct state *ikev2_duplicate_state(struct ike_sa *ike,
-				    enum sa_type sa_type,
-				    enum sa_role role)
+struct child_sa *ikev2_duplicate_state(struct ike_sa *ike,
+				       enum sa_type sa_type,
+				       enum sa_role role)
 {
 	struct state *cst = duplicate_state(&ike->sa, sa_type, &state_undefined);
 	cst->st_sa_role = role;
-	return cst;
+	return pexpect_child_sa(cst);
 }
 
 void for_each_state(void (*f)(struct state *, void *data), void *data)

@@ -2165,8 +2165,10 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	ikev2_log_parentSA(pst);
 
 	/* XXX This is too early and many failures could lead to not needing a child state */
-	struct state *cst = ikev2_duplicate_state(pexpect_ike_sa(pst), IPSEC_SA,
-						  SA_INITIATOR);	/* child state */
+	struct child_sa *child = ikev2_duplicate_state(pexpect_ike_sa(pst),
+						       IPSEC_SA,
+						       SA_INITIATOR);	/* child state */
+	struct state *cst = &child->sa;
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
 	cst->st_try = pst->st_try;
@@ -5739,10 +5741,13 @@ void ikev2_initiate_child_sa(struct pending *p)
 
 	passert(c != NULL);
 
+	struct child_sa *child; /* to be determined */
 	if (sa_type == IPSEC_SA) {
-		st = ikev2_duplicate_state(ike, IPSEC_SA, SA_INITIATOR);
+		child = ikev2_duplicate_state(ike, IPSEC_SA, SA_INITIATOR);
+		st = &child->sa;
 	} else {
-		st = ikev2_duplicate_state(ike, IKE_SA, SA_INITIATOR);
+		child = ikev2_duplicate_state(ike, IKE_SA, SA_INITIATOR);
+		st = &child->sa;
 		st->st_oakley = ike->sa.st_oakley;
 		st->st_ike_rekey_spis.initiator = ike_initiator_spi();
 		st->st_ike_pred = ike->sa.st_serialno;

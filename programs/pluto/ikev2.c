@@ -1263,17 +1263,20 @@ static struct state *process_v2_child_ix(struct msg_digest *md, struct ike_sa *i
 	/* this an IKE request and not a response */
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
 
+	struct child_sa *child; /* to-be-determined */
 	if (md->from_state == STATE_V2_CREATE_R) {
 		what = "Child SA Request";
-		st = ikev2_duplicate_state(ike, IPSEC_SA,
-					   SA_RESPONDER);
+		child = ikev2_duplicate_state(ike, IPSEC_SA,
+					      SA_RESPONDER);
+		st = &child->sa;
 		change_state(st, STATE_V2_CREATE_R);
 		st->st_msgid = md->hdr.isa_msgid;
 		binlog_refresh_state(st);
 	} else {
 		what = "IKE Rekey Request";
-		st = ikev2_duplicate_state(ike, IKE_SA,
-					   SA_RESPONDER);
+		child = ikev2_duplicate_state(ike, IKE_SA,
+					      SA_RESPONDER);
+		st = &child->sa;
 		change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
 		st->st_msgid = md->hdr.isa_msgid;
 		binlog_refresh_state(st);
