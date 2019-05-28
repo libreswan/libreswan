@@ -5,14 +5,10 @@ if test $# -lt 2 -o $# -gt 3; then
 
 Usage:
 
-    $0 <repodir> <summarydir> [ <first-commit> ]
+    $0 <repodir> <summarydir>
 
 Track <repodir>'s current branch and test each "interesting" commit.
 Publish results under <summarydir>.
-
-If <first-commit> is specified, then only go back as far as that
-commit when looking for work.  Default is to use <repodir>s current
-HEAD as the earliest commit.
 
 XXX: Should this also look at and use things like WEB_PREFIXES and
 WEB_WORKERS in Makefile.inc.local?
@@ -29,14 +25,7 @@ summarydir=$(cd $1 && pwd) ; shift
 webdir=$(dirname $0)
 makedir=$(cd ${webdir}/../.. && pwd)
 utilsdir=${makedir}/testing/utils
-
-# By default, only test new commits.
-if test $# -gt 0 ; then
-    first_commit=$1 ; shift
-else
-    first_commit=HEAD
-fi
-first_commit=$(cd ${repodir} && git show --no-patch --format=%H ${first_commit})
+first_commit=
 
 status() {
     ${webdir}/json-status.sh --json ${summarydir}/status.json "$@"
@@ -51,7 +40,7 @@ status() {
 EOF
 }
 
-run() {
+run() (
     href="<a href=\"$(basename ${resultsdir})/$1.log\">$1</a>"
     ${status} "running 'make ${href}'"
 
@@ -83,8 +72,7 @@ run() {
 	${status} "'make ${href}' failed"
 	exit 1
     fi
-
-}
+)
 
 while true ; do
 
@@ -99,6 +87,11 @@ while true ; do
     status "updating repo"
     ( cd ${repodir} && git fetch || true )
     ( cd ${repodir} && git merge --ff-only )
+
+    # by default, only test new commits.
+    if test -z "${first_commit}" ; then
+	first_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
+    fi
 
     # Update the summary web page
     #
@@ -153,13 +146,20 @@ while true ; do
 	 WEB_RESULTSDIR=${resultsdir} \
 	 WEB_SUMMARYDIR=${summarydir}
 
+    #
     # run the testsuite
+    #
+    # This list should match results.html.  Should a table be
+    # generated?
 
-    run kvm-shutdown
-    run distclean
-    run kvm-install
-    run kvm-keys
-    run kvm-test
+    for target in kvm-shutdown distclean kvm-install kvm-keys kvm-test ; do
+	if ! run ${target} ; then
+	    # force the next run to test HEAD++; hopefully that will
+	    # contain the fix (or at least contain the damage).
+	    first_commit=
+	    break
+	fi
+    done
 
     # Check that the test VMs are ok
     #
