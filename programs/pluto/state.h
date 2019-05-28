@@ -819,6 +819,7 @@ extern struct ike_sa *find_v2_ike_sa(const ike_spis_t *ike_spis);
 extern struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi);
 
 struct state *find_v2_sa_by_initiator_mip(struct ike_sa *ike, msgid_t msgid);
+struct state *find_v2_sa_by_responder_mip(struct ike_sa *ike, msgid_t msgid);
 
 struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 						  uint8_t protoid,

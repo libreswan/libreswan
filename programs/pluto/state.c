@@ -1646,6 +1646,26 @@ struct state *find_v2_sa_by_initiator_mip(struct ike_sa *ike, const msgid_t msgi
 	return st;
 }
 
+static bool v2_sa_by_responder_mip_p(struct state *st, void *context)
+{
+	const struct request_filter *filter = context;
+	return st->st_v2_msgid_wip.responder == filter->msgid;
+}
+
+struct state *find_v2_sa_by_responder_mip(struct ike_sa *ike, const msgid_t msgid)
+{
+	struct request_filter filter = {
+		.msgid = msgid,
+	};
+	struct state *st = state_by_ike_spis(IKEv2, SOS_IGNORE/*see predicate*/,
+					     NULL/*ignore v1 msgid*/, &ike->sa.st_ike_spis,
+					     v2_sa_by_responder_mip_p, &filter, __func__);
+	pexpect(st == NULL ||
+		st->st_clonedfrom == SOS_NOBODY ||
+		st->st_clonedfrom == ike->sa.st_serialno);
+	return st;
+}
+
 /*
  * Find an IKEv2 CHILD SA using the protocol and the (from our POV)
  * 'outbound' SPI.

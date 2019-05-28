@@ -924,6 +924,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	struct ike_sa *ike = new_v2_state(STATE_PARENT_R0, SA_RESPONDER,
 					  md->hdr.isa_ike_spis.initiator,
 					  ike_responder_spi(&md->sender));
+	v2_msgid_start_responder(ike, &ike->sa, md);
 	struct state *st = &ike->sa;
 	/* set up new state */
 	initialize_new_state(st, c, policy, 0, null_fd);
@@ -2109,6 +2110,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 {
 	struct connection *const pc = pst->st_connection;	/* parent connection */
 	struct ppk_id_payload ppk_id_p;
+	struct ike_sa *ike = pexpect_ike_sa(pst);
 
 	if (!finish_dh_v2(pst, r, FALSE)) {
 		/*
@@ -2176,10 +2178,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	    pst->st_msgid_nextuse);
 	cst->st_msgid = pst->st_msgid_nextuse;
 
-	dbg("XXX: Message ID: forcing #%lu.#%lu wip.initiator %jd->"PRI_MSGID" from IKE nextuse",
-	    pst->st_serialno, cst->st_serialno,
-	    cst->st_v2_msgid_wip.initiator, pst->st_msgid_nextuse);
-	cst->st_v2_msgid_wip.initiator = pst->st_msgid_nextuse;
+	/*
+	 * XXX: This is so lame.  Need to move the current initiator
+	 * from IKE to the CHILD so that the post processor doesn't
+	 * get confused.  If the IKE->CHILD switch didn't happen this
+	 * wouldn't be needed.
+	 */
+	v2_msgid_switch_initiator(ike, child, md);
 
 	binlog_refresh_state(cst);
 	md->st = cst;

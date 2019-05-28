@@ -55,6 +55,7 @@ struct v2_msgid_windows {
  * The RESPONDER Message ID is valid for the period that the state is
  * processing the request.
  */
+
 struct v2_msgid_wip {
 	intmax_t initiator;
 	intmax_t responder;
@@ -63,10 +64,26 @@ struct v2_msgid_wip {
 void v2_msgid_init_ike(struct ike_sa *ike);
 void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child);
 
+void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
+			      const struct msg_digest *md);
+
+void v2_msgid_switch_responder(struct ike_sa *ike, struct child_sa *child,
+			       const struct msg_digest *md);
+void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
+			       const struct msg_digest *md);
+
+/*
+ * Processing has finished - recv's accepted or sent is on its way -
+ * update window.{recv,sent} and wip.{initiator,responder}.
+ *
+ * XXX: Should these interfaces be revamped so that they are more like
+ * the above?
+ */
 void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			  struct msg_digest *md);
 void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 			  struct msg_digest *md, enum message_role sending);
+
 bool v2_msgid_ok(struct ike_sa *ike, enum message_role incomming, msgid_t msgid);
 
 void schedule_next_send(struct state *st);

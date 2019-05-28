@@ -84,6 +84,14 @@ static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
 					      SA_RESPONDER);
 		child->sa.st_connection = c;	/* safe: from duplicate_state */
 		binlog_refresh_state(&child->sa);
+		/*
+		 * XXX: This is to hack around the broken responder
+		 * code that switches from the IKE SA to the CHILD SA
+		 * before sending the reply.  Instead, because the
+		 * CHILD SA can fail, the IKE SA should be the one
+		 * processing the message?
+		 */
+		v2_msgid_switch_responder(ike, child, md);
 	}
 
 	/*
@@ -146,6 +154,15 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		pexpect(md->st == &ike->sa); /* passed in parent */
 		child = ikev2_duplicate_state(ike, IPSEC_SA, SA_RESPONDER);
 		binlog_refresh_state(&child->sa);
+		/*
+		 * XXX: This is to hack around the broken responder
+		 * code that switches from the IKE SA to the CHILD SA
+		 * before sending the reply.  Instead, because the
+		 * CHILD SA can fail, the IKE SA should be the one
+		 * processing the message?
+		 */
+		v2_msgid_switch_responder(ike, child, md);
+
 		if (!v2_process_ts_request(child, md)) {
 			/*
 			 * XXX: while the CHILD SA failed, the IKE SA

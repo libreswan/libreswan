@@ -2190,6 +2190,19 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	md->from_state = svm->state;
 	md->svm = svm;
 
+	/*
+	 * Flag the state as responding to a request.
+	 *
+	 * The processing completes once the response has been sent
+	 * out (or things die and the state is deleted).
+	 *
+	 * XXX: but could it also die for other reasons leaving
+	 * wip.response in limbo?
+	 */
+	if (st != NULL && v2_msg_role(md) == MESSAGE_REQUEST) {
+		v2_msgid_start_responder(ike, st, md);
+	}
+
 	if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
 		/*
 		 * XXX: This code was embedded in the end of the FSM
@@ -2223,6 +2236,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		} else {
 			pexpect(IS_IKE_SA(st));
 			child = process_v2_child_ix(md, ike);
+			v2_msgid_switch_responder(ike, child, md);
 		}
 
 		/*
