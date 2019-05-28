@@ -1253,7 +1253,8 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	return st->st_v2_rfrags->count == st->st_v2_rfrags->total;
 }
 
-static struct state *process_v2_child_ix(struct msg_digest *md, struct ike_sa *ike)
+static struct child_sa *process_v2_child_ix(struct msg_digest *md,
+					    struct ike_sa *ike)
 {
 	/* for log */
 	const char *what;
@@ -1290,7 +1291,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md, struct ike_sa *i
 		    child->sa.st_serialno, child->sa.st_state->name);
 	}
 
-	return &child->sa;
+	return child;
 }
 
 /*
@@ -2196,19 +2197,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * state matches, move it out of the loop.  Suspect
 		 * this, and the code below, really belong in the
 		 * state transition function proper.
-		 *
-		 * XXX: Setting/clearing md->st is to preserve
-		 * existing behaviour (what ever that was).
-		 *
-		 * XXX: Suspect md->st assignment isn't needed here as
-		 * update_ike_endpoints() doesn't look at it?
 		 */
-		struct ike_sa *ike = ike_sa(st);
-		md->st = st;
 		/* going to switch to child st. before that update parent */
 		if (!LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))
 			update_ike_endpoints(&ike->sa, md);
-		md->st = NULL;
 
 		/* bit further processing of create CREATE_CHILD_SA exchange */
 
@@ -2216,9 +2208,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * let's get a child state either new or existing to
 		 * proceed
 		 */
-		struct state *cst;
+		struct child_sa *child;
 		if (v2_msg_role(md) == MESSAGE_RESPONSE) {
-			pexpect(IS_CHILD_SA(st));
 			/*
 			 * XXX: Since the above lookup-by-msgid code
 			 * has done its job - using .current_request
@@ -2228,17 +2219,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * process_v2_child_ix() and .st_msgid as that
 			 * will likely screw up.
 			 */
-			cst = st;
+			child = pexpect_child_sa(st);
 		} else {
 			pexpect(IS_IKE_SA(st));
-			cst = process_v2_child_ix(md, ike);
-			if (cst == NULL) {
-				/* no go. Could improve the status
-				 * code? */
-				/* replace (*mdp)->st with st ... */
-				complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL);
-				return;
-			}
+			child = process_v2_child_ix(md, ike);
 		}
 
 		/*
@@ -2255,15 +2239,17 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * probably yes.  But what of the initial exchanges
 		 * where things can't be trusted?
 		 */
-		md->st = st;
-		dbg("Message ID: why update IKE #%lu and not CHILD #%lu?",
-		    st->st_serialno, cst->st_serialno);
+		dbg("Message ID: why update ST #%lu and not CHILD #%lu.#%lu?",
+		    st->st_serialno, ike->sa.st_serialno, child->sa.st_serialno);
 		v2_msgid_update_counters(st, md);
 
-		/* switch from parent state to child state */
-		dbg("switching from parent? #%lu to child #%lu in FSM processor",
-		    st->st_serialno, cst->st_serialno);
-		st = cst;
+		/*
+		 * Switch to child state (possibly from the same child
+		 * state, see above)
+		 */
+		dbg("forcing ST #%lu to CHILD #%lu.#%lu in FSM processor",
+		    st->st_serialno, ike->sa.st_serialno, child->sa.st_serialno);
+		st = &child->sa;
 	}
 
 	md->st = st;
