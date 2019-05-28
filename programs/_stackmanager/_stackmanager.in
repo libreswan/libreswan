@@ -29,7 +29,7 @@ eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn  --configsetup | grep -v "#" | 
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
 
-xfrm_stat=/proc/net/xfrm_stat
+xfrm_stat=/proc/sys/net/core/xfrm_acq_expires
 klipsstack=/proc/net/ipsec/version
 action="${1}"
 

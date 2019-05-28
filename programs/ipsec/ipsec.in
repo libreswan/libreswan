@@ -61,7 +61,7 @@ fixversion() {
 	stack=" (klips)"
 	kv="$(awk '{print $NF}' /proc/net/ipsec_version)"
     else
-	if [ -f /proc/net/xfrm_stat ]; then
+	if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
 	    stack=" (netkey)"
 	    kv="${version}"
 	else
