@@ -95,8 +95,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						   struct msg_digest *md,
 						   bool pam_status);
 
-static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
-					    struct state *st);
+static stf_status ikev2_parent_outI1_common(struct state *st);
 
 static stf_status ikev2_child_out_tail(struct msg_digest *md);
 
@@ -659,17 +658,16 @@ void ikev2_parent_outI1_continue(struct state *st, struct msg_digest **mdp,
 
 	unpack_KE_from_helper(st, r, &st->st_gi);
 	unpack_nonce(&st->st_ni, r);
+	stf_status e = ikev2_parent_outI1_common(st);
 	/* needed by complete state transition */
 	if (*mdp == NULL) {
 		*mdp = fake_md(st);
 	}
-	stf_status e = ikev2_parent_outI1_common(*mdp, st);
 	/* replace (*mdp)->st with st ... */
 	complete_v2_state_transition((*mdp)->st, mdp, e);
 }
 
-static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
-					    struct state *st)
+static stf_status ikev2_parent_outI1_common(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
@@ -1385,21 +1383,19 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			/*
 			 * XXX: Why?!?
 			 *
-			 * Shouldn't MD be ignored!  After all it
-			 * could be NULL.
+			 * See complete_v2_state_transition() which
+			 * needs to be fooled into thinking that the
+			 * MD that contained the COOKIE response,
+			 * doesn't exist and, instead this is a "new"
+			 * exchange.
 			 *
-			 * Yes.  unfortunately the code below still
-			 * assumes that there's always an MD (the
-			 * initiator does not have an MD so fake_md()
-			 * and tries to use MD attributes to make
-			 * decisions that belong in the state
-			 * transition.
+			 * Would it be better to return something like
+			 * STF_FAIL?
 			 */
-			if (md != NULL) {
-				md->hdr.isa_flags &= ~ISAKMP_FLAGS_v2_MSG_R;
-			}
+			md->hdr.isa_flags &= ~ISAKMP_FLAGS_v2_MSG_R;
+			md->fake_dne = true;
 			/* re-send the SA_INIT request with cookies added */
-			return ikev2_parent_outI1_common(md, st);
+			return ikev2_parent_outI1_common(st);
 		}
 		case v2N_INVALID_KE_PAYLOAD:
 		{
