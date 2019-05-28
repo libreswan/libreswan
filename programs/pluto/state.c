@@ -558,9 +558,9 @@ struct state *new_v1_rstate(struct msg_digest *md)
 	return st;
 }
 
-struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
-			   const ike_spi_t ike_initiator_spi,
-			   const ike_spi_t ike_responder_spi)
+struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
+			    const ike_spi_t ike_initiator_spi,
+			    const ike_spi_t ike_responder_spi)
 {
 	struct state *st = new_state(IKEv2, &state_undefined,
 				     ike_initiator_spi, ike_responder_spi,
@@ -573,10 +573,10 @@ struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 	    st->st_serialno, st->st_msgid,
 	    st->st_msgid_lastack, st->st_msgid_nextuse,
 	    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
-	struct ike_sa *ike = pexpect_ike_sa(st);
-	v2_msgid_init_ike(ike);
 	const struct finite_state *fs = finite_states[kind];
 	change_state(st, fs->kind);
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	v2_msgid_init_ike(ike);
 	/*
 	 * New states are never standing still - they are always in
 	 * transition to the next state.
@@ -584,7 +584,7 @@ struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 	pexpect(fs->v2_transitions != NULL);
 	pexpect(fs->nr_transitions == 1);
 	/* st->st_v2_transition = fs->state_transitions[0] */
-	return st;
+	return ike;
 }
 
 /*

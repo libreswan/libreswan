@@ -781,9 +781,9 @@ extern bool states_use_connection(const struct connection *c);
 so_serial_t next_so_serialno(void);
 struct state *new_v1_istate(void);
 struct state *new_v1_rstate(struct msg_digest *md);
-struct state *new_v2_state(enum state_kind kind, enum sa_role sa_role,
-			   ike_spi_t ike_initiator_spi,
-			   ike_spi_t ike_responder_spi);
+struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
+			    ike_spi_t ike_initiator_spi,
+			    ike_spi_t ike_responder_spi);
 
 extern void init_states(void);
 extern void rehash_state(struct state *st,
