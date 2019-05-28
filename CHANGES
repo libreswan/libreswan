@@ -4,6 +4,7 @@ See also https://libreswan.org/
 v3.29 (unreleased)
 * IKEv2:  Message ID handling: remove a O(#STATES) lookup [Andrew]
 * packaging: fedora30 requires gcc to be listed as BuildRequires: [Paul]
+* programs: Change to /proc/sys/net/core/xfrm_acq_expires to detect XFRM [Paul]
 
 v3.28 (May 20, 2019)
 * KLIPS: Disable KLIPS userland support per default [Paul]
