@@ -151,7 +151,7 @@ int main(int argc, char **argv)
 	if (debug)
 		fprintf(stdout, "...After check for --label option.\n");
 
-	if (stat("/proc/net/xfrm_stat", &sts) == 0) {
+	if (stat("/proc/sys/net/core/xfrm_acq_expires", &sts) == 0) {
 		fprintf(stderr,
 			"%s: XFRM does not use the ipsec spigrp command. Use 'ip xfrm' instead.\n",
 			progname);

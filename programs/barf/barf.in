@@ -174,12 +174,12 @@ _________________________ /proc/net/ipsec_tncfg
 if [ -r /proc/net/ipsec_tncfg ]; then
     cat /proc/net/ipsec_tncfg
 fi
-if [ -r /proc/net/xfrm_stat ]; then
+if [ -r /proc/sys/net/core/xfrm_acq_expires ]; then
     _________________________ ip-xfrm-state
     ip xfrm state
     _________________________ ip-xfrm-policy
     ip xfrm policy
-    _________________________ ip-xfrm-stats
+    _________________________ cat-proc-net-xfrm_stat
     cat /proc/net/xfrm_stat
 fi
 _________________________ ip-l2tp-tunnel
@@ -283,7 +283,7 @@ _________________________ /proc/net/ipsec_version
 if [ -r /proc/net/ipsec_version ]; then
     cat /proc/net/ipsec_version
 else
-    if [ -r /proc/net/xfrm_stat ]; then
+    if [ -r /proc/sys/net/core/xfrm_acq_expires ]; then
 	echo "NETKEY ($(uname -r)) support detected "
     else
 	echo "no KLIPS or NETKEY support detected"

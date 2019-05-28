@@ -28,7 +28,7 @@ plutoctl=/var/run/pluto/pluto.ctl
 subsyslock=/var/lock/subsys/ipsec
 lock=/var/run/pluto/ipsec_setup.pid
 
-xfrm_stat=/proc/net/xfrm_stat
+xfrm_stat=/proc/sys/net/core/xfrm_acq_expires
 
 # defaults for "config setup" items
 IPSECuniqueids=${IPSECuniqueids:-yes}

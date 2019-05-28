@@ -72,7 +72,7 @@ if [ -f /proc/net/ipsec_spi ]; then
 fi
 
 # xfrm
-if [ -f /proc/net/xfrm_stat ]; then
+if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
     echo "XFRM state:"
     ip xfrm state
     echo "XFRM policy:"
