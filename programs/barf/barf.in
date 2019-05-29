@@ -210,8 +210,8 @@ _________________________ ipsec/status
 ipsec whack --status
 _________________________ ip-addr-list
 ip addr list
-_________________________ ip-route-list
-ip route list
+_________________________ ip-route-list-table-all
+ip route list table all
 _________________________ ip-rule-list
 ip rule list
 _________________________ ipsec_verify
