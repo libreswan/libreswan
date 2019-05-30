@@ -413,141 +413,95 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 {
 #define MAX_DISPLAY_BYTES 13
 
-	char nexthop_str[sizeof("PLUTO_NEXT_HOP='' ") + ADDRTOT_BUF];
-	nexthop_str[0] = '\0';
+
+ 	/* change VERSION when interface spec changes */
+	jam(buf, "PLUTO_VERSION='2.0' ");
+	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
+	jam(buf, "PLUTO_INTERFACE='%s' ", (c->interface == NULL ? "NULL" :
+					  c->interface->ip_dev->id_vname));
+
 	if (addrlenof(&sr->this.host_nexthop) != 0 &&
 		!isanyaddr(&sr->this.host_nexthop)) {
+		char nexthop_str[sizeof("PLUTO_NEXT_HOP='' ") + ADDRTOT_BUF];
+		nexthop_str[0] = '\0';
 		char *n = jam_str(nexthop_str, sizeof(nexthop_str),
 				"PLUTO_NEXT_HOP='");
 
 		addrtot(&sr->this.host_nexthop, 0,
 			n, sizeof(nexthop_str) - (n - nexthop_str));
 		add_str(nexthop_str, sizeof(nexthop_str), n, "' ");
+		jam(buf, "%s" /* possible PLUTO_NEXT_HOP */, nexthop_str);
 	}
+
+	ipstr_buf bme;
+	jam(buf, "PLUTO_ME='%s' ", ipstr(&sr->this.host_addr, &bme));
 
 	char myid_str2[IDTOA_BUF];
 	idtoa(&sr->this.id, myid_str2, sizeof(myid_str2));
 	char secure_myid_str[IDTOA_BUF] = "";
 	escape_metachar(myid_str2, secure_myid_str, sizeof(secure_myid_str));
+	jam(buf, "PLUTO_MY_ID='%s' ", secure_myid_str);
 
 	char myclient_str[SUBNETTOT_BUF];
 	subnettot(&sr->this.client, 0, myclient_str, sizeof(myclient_str));
+	jam(buf, "PLUTO_MY_CLIENT='%s' ", myclient_str);
+
 	ip_address ta;
 	networkof(&sr->this.client, &ta);
 	char myclientnet_str[ADDRTOT_BUF];
 	addrtot(&ta, 0, myclientnet_str, sizeof(myclientnet_str));
+	jam(buf, "PLUTO_MY_CLIENT_NET='%s' ", myclientnet_str);
+
 	maskof(&sr->this.client, &ta);
 	char myclientmask_str[ADDRTOT_BUF];
 	addrtot(&ta, 0, myclientmask_str, sizeof(myclientmask_str));
+	jam(buf, "PLUTO_MY_CLIENT_MASK='%s' ", myclientmask_str);
 
-	char vticlient_str[SUBNETTOT_BUF + sizeof("VTI_IP=''")];
-	vticlient_str[0] = '\0';
 	if (!isanyaddr(&sr->this.host_vtiip.addr)) {
+		char vticlient_str[SUBNETTOT_BUF + sizeof("VTI_IP=''")];
+		vticlient_str[0] = '\0';
 		char tmpvti[SUBNETTOT_BUF];
 		subnettot(&sr->this.host_vtiip, 0, tmpvti, sizeof(tmpvti));
 
 		snprintf(vticlient_str, sizeof(vticlient_str), "VTI_IP='%s' ", tmpvti);
+		jam(buf, "%s" /* VTI_IP */, vticlient_str);
 	}
+
+	jam(buf, "PLUTO_MY_PORT='%u' ", sr->this.port);
+	jam(buf, "PLUTO_MY_PROTOCOL='%u' ", sr->this.protocol);
+	jam(buf, "PLUTO_SA_REQID='%u' ", sr->reqid);
+	jam(buf, "PLUTO_SA_TYPE='%s' ", (st == NULL ? "none" :
+					st->st_esp.present ? "ESP" :
+					st->st_ah.present ? "AH" :
+					st->st_ipcomp.present ? "IPCOMP" :
+					"unknown?"));
+	ipstr_buf bpeer;
+	jam(buf, "PLUTO_PEER='%s' ", ipstr(&sr->that.host_addr, &bpeer));
 
 	char peerid_str[IDTOA_BUF];
 	idtoa(&sr->that.id, peerid_str, sizeof(peerid_str));
 	char secure_peerid_str[IDTOA_BUF] = "";
 	escape_metachar(peerid_str, secure_peerid_str,
 			sizeof(secure_peerid_str));
+	jam(buf, "PLUTO_PEER_ID='%s' ", secure_peerid_str);
+
 	char peerclient_str[SUBNETTOT_BUF];
 	char peerclientnet_str[ADDRTOT_BUF];
 	subnettot(&sr->that.client, 0, peerclient_str,
 		sizeof(peerclientnet_str));
+	jam(buf, "PLUTO_PEER_CLIENT='%s' ", peerclient_str);
+
 	networkof(&sr->that.client, &ta);
 	addrtot(&ta, 0, peerclientnet_str, sizeof(peerclientnet_str));
+	jam(buf, "PLUTO_PEER_CLIENT_NET='%s' ", peerclientnet_str);
+
 	maskof(&sr->that.client, &ta);
 	char peerclientmask_str[ADDRTOT_BUF];
 	addrtot(&ta, 0, peerclientmask_str, sizeof(peerclientmask_str));
+	jam(buf, "PLUTO_PEER_CLIENT_MASK='%s' ", peerclientmask_str);
 
-	char metric_str[sizeof("PLUTO_METRIC= ") + 4];
-	metric_str[0] = '\0';
-	if (c->metric != 0)
-		snprintf(metric_str, sizeof(metric_str), "PLUTO_METRIC=%d ",
-			c->metric);
-
-	char connmtu_str[sizeof("PLUTO_MTU= ") + 5 + 1];
-	connmtu_str[0] = '\0';
-	if (c->connmtu != 0)
-		snprintf(connmtu_str, sizeof(connmtu_str), "PLUTO_MTU=%d ",
-			c->connmtu);
-
-	char secure_xauth_username_str[IDTOA_BUF] = "";
-	secure_xauth_username_str[0] = '\0';
-
-	if (st != NULL && st->st_xauth_username[0] != '\0') {
-		char *p = jam_str(secure_xauth_username_str,
-				sizeof(secure_xauth_username_str),
-				"PLUTO_USERNAME='");
-
-		p = clean_xauth_username(st->st_xauth_username,
-				p,
-				sizeof(secure_xauth_username_str) -
-				(p - secure_xauth_username_str) - 2);
-		passert(p - secure_xauth_username_str + 2 <
-			(ptrdiff_t)sizeof(secure_xauth_username_str));
-		strcpy(p, "' ");	/* 2 extra chars */
-	}
-
-	char traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "";
-	char traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "";
-	if (inbytes) {
-		snprintf(traffic_in_str, sizeof(traffic_in_str),
-			 "PLUTO_INBYTES='%" PRIu64 "' ",
-			 st->st_esp.present ? st->st_esp.our_bytes :
-			 st->st_ah.present ? st->st_ah.our_bytes :
-			 st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
-			 0);
-	}
-	if (outbytes) {
-		snprintf(traffic_out_str, sizeof(traffic_out_str),
-			 "PLUTO_OUTBYTES='%" PRIu64 "' ",
-			 st->st_esp.present ? st->st_esp.peer_bytes :
-			 st->st_ah.present ? st->st_ah.peer_bytes :
-			 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
-			 0);
-	}
-
-	char nflogstr[sizeof("NFLOG='' ") + MAX_DISPLAY_BYTES] = "";
-	nflogstr[0] = '\0';
-	if (c->nflog_group != 0) {
-		snprintf(nflogstr, sizeof(nflogstr), "NFLOG=%d ",
-			c->nflog_group);
-	}
-
-	char catstr[] = "CAT='YES' ";
-	if (!sr->this.has_cat)
-		catstr[0] = '\0';
-
-	char connmarkstr[2 * (sizeof("CONNMARK_XXX='' ") +  2 * sizeof("0xffffffff")+1) + sizeof(", ")] = "";
-	connmarkstr[0] = '\0';
-	if (c->sa_marks.in.val != 0) {
-		snprintf(connmarkstr, sizeof(connmarkstr),
-			"CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
-			c->sa_marks.in.val, c->sa_marks.in.mask);
-	}
-	if (c->sa_marks.out.val != 0) {
-		size_t inend = strlen(connmarkstr);
-		snprintf(connmarkstr+inend, sizeof(connmarkstr)-inend,
-			"CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
-			c->sa_marks.out.val, c->sa_marks.out.mask);
-	}
-
-	char srcip_str[sizeof("PLUTO_MY_SOURCEIP='' ") + ADDRTOT_BUF];
-	srcip_str[0] = '\0';
-	if (addrlenof(&sr->this.host_srcip) != 0 &&
-		!isanyaddr(&sr->this.host_srcip)) {
-		char *p = jam_str(srcip_str, sizeof(srcip_str),
-				"PLUTO_MY_SOURCEIP='");
-
-		addrtot(&sr->this.host_srcip, 0, p,
-			sizeof(srcip_str) - (p - srcip_str));
-		add_str(srcip_str, sizeof(srcip_str), p, "' ");
-	}
+	jam(buf, "PLUTO_PEER_PORT='%u' ", sr->that.port);
+	jam(buf, "PLUTO_PEER_PROTOCOL='%u' ", sr->that.protocol);
 
 	char secure_peerca_str[IDTOA_BUF] = "";
 	{
@@ -570,47 +524,62 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 			}
 		}
 	}
-
- 	/* change VERSION when interface spec changes */
-	jam(buf, "PLUTO_VERSION='2.0' ");
-	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
-	jam(buf, "PLUTO_INTERFACE='%s' ", (c->interface == NULL ? "NULL" :
-					  c->interface->ip_dev->id_vname));
-	jam(buf, "%s" /* possible PLUTO_NEXT_HOP */, nexthop_str);
-	ipstr_buf bme;
-	jam(buf, "PLUTO_ME='%s' ", ipstr(&sr->this.host_addr, &bme));
-	jam(buf, "PLUTO_MY_ID='%s' ", secure_myid_str);
-	jam(buf, "PLUTO_MY_CLIENT='%s' ", myclient_str);
-	jam(buf, "PLUTO_MY_CLIENT_NET='%s' ", myclientnet_str);
-	jam(buf, "PLUTO_MY_CLIENT_MASK='%s' ", myclientmask_str);
-	jam(buf, "%s" /* VTI_IP */, vticlient_str);
-	jam(buf, "PLUTO_MY_PORT='%u' ", sr->this.port);
-	jam(buf, "PLUTO_MY_PROTOCOL='%u' ", sr->this.protocol);
-	jam(buf, "PLUTO_SA_REQID='%u' ", sr->reqid);
-	jam(buf, "PLUTO_SA_TYPE='%s' ", (st == NULL ? "none" :
-					st->st_esp.present ? "ESP" :
-					st->st_ah.present ? "AH" :
-					st->st_ipcomp.present ? "IPCOMP" :
-					"unknown?"));
-	ipstr_buf bpeer;
-	jam(buf, "PLUTO_PEER='%s' ", ipstr(&sr->that.host_addr, &bpeer));
-	jam(buf, "PLUTO_PEER_ID='%s' ", secure_peerid_str);
-	jam(buf, "PLUTO_PEER_CLIENT='%s' ", peerclient_str);
-	jam(buf, "PLUTO_PEER_CLIENT_NET='%s' ", peerclientnet_str);
-	jam(buf, "PLUTO_PEER_CLIENT_MASK='%s' ", peerclientmask_str);
-	jam(buf, "PLUTO_PEER_PORT='%u' ", sr->that.port);
-	jam(buf, "PLUTO_PEER_PROTOCOL='%u' ", sr->that.protocol);
 	jam(buf, "PLUTO_PEER_CA='%s' ", secure_peerca_str);
+
 	jam(buf, "PLUTO_STACK='%s' ", kernel_ops->kern_name);
-	jam(buf, "%s" /* optional metric */, metric_str);
-	jam(buf, "%s" /* optional mtu */, connmtu_str);
+
+	if (c->metric != 0) {
+		char metric_str[sizeof("PLUTO_METRIC= ") + 4];
+		metric_str[0] = '\0';
+		snprintf(metric_str, sizeof(metric_str), "PLUTO_METRIC=%d ",
+			c->metric);
+		jam(buf, "%s" /* optional metric */, metric_str);
+	}
+
+	if (c->connmtu != 0) {
+		char connmtu_str[sizeof("PLUTO_MTU= ") + 5 + 1];
+		connmtu_str[0] = '\0';
+		snprintf(connmtu_str, sizeof(connmtu_str), "PLUTO_MTU=%d ",
+			c->connmtu);
+		jam(buf, "%s" /* optional mtu */, connmtu_str);
+	}
+
 	jam(buf, "PLUTO_ADDTIME='%" PRIu64 "' ", st == NULL ? (uint64_t)0 : st->st_esp.add_time);
 	jam(buf, "PLUTO_CONN_POLICY='%s%s' ", prettypolicy(c->policy), NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
 	jam(buf, "PLUTO_CONN_KIND='%s' ", enum_show(&connection_kind_names, c->kind));
 	jam(buf, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", (c->addr_family == AF_INET) ? 4 : 6);
 	jam(buf, "XAUTH_FAILED=%d ", (st != NULL && st->st_xauth_soft) ? 1 : 0);
-	jam(buf, "%s" /* XAUTH username - if any */, secure_xauth_username_str);
-	jam(buf, "%s" /* PLUTO_MY_SRCIP - if any */, srcip_str);
+
+	if (st != NULL && st->st_xauth_username[0] != '\0') {
+		char secure_xauth_username_str[IDTOA_BUF] = "";
+		secure_xauth_username_str[0] = '\0';
+		char *p = jam_str(secure_xauth_username_str,
+				sizeof(secure_xauth_username_str),
+				"PLUTO_USERNAME='");
+
+		p = clean_xauth_username(st->st_xauth_username,
+				p,
+				sizeof(secure_xauth_username_str) -
+				(p - secure_xauth_username_str) - 2);
+		passert(p - secure_xauth_username_str + 2 <
+			(ptrdiff_t)sizeof(secure_xauth_username_str));
+		strcpy(p, "' ");	/* 2 extra chars */
+		jam(buf, "%s" /* XAUTH username - if any */, secure_xauth_username_str);
+	}
+
+	if (addrlenof(&sr->this.host_srcip) != 0 &&
+		!isanyaddr(&sr->this.host_srcip)) {
+		char srcip_str[sizeof("PLUTO_MY_SOURCEIP='' ") + ADDRTOT_BUF];
+		srcip_str[0] = '\0';
+		char *p = jam_str(srcip_str, sizeof(srcip_str),
+				"PLUTO_MY_SOURCEIP='");
+
+		addrtot(&sr->this.host_srcip, 0, p,
+			sizeof(srcip_str) - (p - srcip_str));
+		add_str(srcip_str, sizeof(srcip_str), p, "' ");
+		jam(buf, "%s" /* PLUTO_MY_SRCIP - if any */, srcip_str);
+	}
+
 	jam(buf, "PLUTO_IS_PEER_CISCO='%u' ", c->remotepeertype /* ??? kind of odd printing an enum with %u */);
 	jam(buf, "PLUTO_PEER_DNS_INFO='%s' ", (st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "");
 	jam(buf, "PLUTO_PEER_DOMAIN_INFO='%s' ", (st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "");
@@ -620,14 +589,61 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 #ifdef HAVE_NM
 	jam(buf, "PLUTO_NM_CONFIGURED='%u' ", c->nmconfigured);
 #endif
-	jam(buf, "%s" /* traffic in stats - if any */, traffic_in_str);
-	jam(buf, "%s" /* traffic out stats - if any */, traffic_out_str);
-	jam(buf, "%s" /* nflog-group - if any */, nflogstr);
-	jam(buf, "%s" /* conn-mark - if any */, connmarkstr);
+
+	if (inbytes) {
+		char traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "";
+		snprintf(traffic_in_str, sizeof(traffic_in_str),
+			 "PLUTO_INBYTES='%" PRIu64 "' ",
+			 st->st_esp.present ? st->st_esp.our_bytes :
+			 st->st_ah.present ? st->st_ah.our_bytes :
+			 st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
+			 0);
+		jam(buf, "%s" /* traffic in stats - if any */, traffic_in_str);
+	}
+	if (outbytes) {
+		char traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "";
+		snprintf(traffic_out_str, sizeof(traffic_out_str),
+			 "PLUTO_OUTBYTES='%" PRIu64 "' ",
+			 st->st_esp.present ? st->st_esp.peer_bytes :
+			 st->st_ah.present ? st->st_ah.peer_bytes :
+			 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
+			 0);
+		jam(buf, "%s" /* traffic out stats - if any */, traffic_out_str);
+	}
+
+	if (c->nflog_group != 0) {
+		char nflogstr[sizeof("NFLOG='' ") + MAX_DISPLAY_BYTES] = "";
+		nflogstr[0] = '\0';
+		snprintf(nflogstr, sizeof(nflogstr), "NFLOG=%d ",
+			c->nflog_group);
+		jam(buf, "%s" /* nflog-group - if any */, nflogstr);
+	}
+
+	if (c->sa_marks.in.val != 0) {
+		char connmarkstr[2 * (sizeof("CONNMARK_XXX='' ") +  2 * sizeof("0xffffffff")+1) + sizeof(", ")] = "";
+		connmarkstr[0] = '\0';
+		snprintf(connmarkstr, sizeof(connmarkstr),
+			"CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
+			c->sa_marks.in.val, c->sa_marks.in.mask);
+		jam(buf, "%s" /* conn-mark - if any */, connmarkstr);
+	}
+	if (c->sa_marks.out.val != 0) {
+		char connmarkstr[2 * (sizeof("CONNMARK_XXX='' ") +  2 * sizeof("0xffffffff")+1) + sizeof(", ")] = "";
+		snprintf(connmarkstr, sizeof(connmarkstr),
+			 "CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
+			 c->sa_marks.out.val, c->sa_marks.out.mask);
+		jam(buf, "%s" /* conn-mark - if any */, connmarkstr);
+	}
+
 	jam(buf, "VTI_IFACE='%s' ", c->vti_iface ? c->vti_iface : "");
 	jam(buf, "VTI_ROUTING='%s' ", bool_str(c->vti_routing));
 	jam(buf, "VTI_SHARED='%s' ", bool_str(c->vti_shared));
+
+	char catstr[] = "CAT='YES' ";
+	if (!sr->this.has_cat)
+		catstr[0] = '\0';
 	jam(buf, "%s" /* CAT=yes if set */, catstr);
+
 	jam(buf, "SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */,
 	    (st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.attrs.spi) :
 	     st->st_ah.present ? ntohl(st->st_ah.attrs.spi) :
