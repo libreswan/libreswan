@@ -1887,9 +1887,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 							     md->message_payloads.data_size);
 					send_v2N_response_from_md(md, md->message_payloads.n,
 								  &data);
+					pexpect(st == NULL);
+				} else {
+					complete_v2_state_transition(st, mdp, STF_IGNORE);
 				}
-				/* replace (*mdp)->st with st ... */
-				complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL);
 				return;
 			}
 		}
