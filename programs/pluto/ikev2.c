@@ -11,7 +11,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2019 Andrew Cagney
  * Copyright (C) 2016-2018 Antony Antony <appu@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
@@ -3102,9 +3102,13 @@ void complete_v2_state_transition(struct state *st,
 				  stf_status result)
 {
 	/*
-	 * XXX; until either .st becomes v1 only or is deleted.
+	 * XXX; If MD.ST is set, make certain it is consistent with
+	 * ST.  Eventually .ST will become v1 only be deleted.
 	 */
-	pexpect(mdp == NULL || *mdp == NULL || (*mdp)->st == st);
+	pexpect(mdp == NULL ||
+		*mdp == NULL ||
+		(*mdp)->st == NULL ||
+		(*mdp)->st == st);
 
 	/* statistics */
 	if (result > STF_FAIL) {
