@@ -147,29 +147,16 @@ void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
 	intmax_t msgid = md->hdr.isa_msgid;
 	const struct v2_msgid_wip wip = responder->st_v2_msgid_wip;
 
-	/*
-	 * start is called multiple times when dealing with an
-	 * IKE_AUTH request: first when starting the SKEYMAT
-	 * calculation; and second when processing the decrypted
-	 * packet.
-	 */
-	const char *what;
-	if (responder->st_v2_msgid_wip.responder == -1) {
-		what = "start";
-	} else if (responder->st_v2_msgid_wip.responder == msgid) {
-		what = "re-start";
-	} else {
-		if (DBGP(DBG_BASE)) {
-			PEXPECT_LOG("Message ID: #%lu.#%lu responder->st_v2_msgid_wip.responder=%jd == {-1,msgid=%jd}",
-				    ike->sa.st_serialno, responder->st_serialno,
-				    responder->st_v2_msgid_wip.responder, msgid);
-		}
-		what = "forced-start";
+	if (DBGP(DBG_BASE) &&
+	    responder->st_v2_msgid_wip.responder != -1) {
+		PEXPECT_LOG("Message ID: #%lu.#%lu responder->st_v2_msgid_wip.responder=%jd == -1",
+			    ike->sa.st_serialno, responder->st_serialno,
+			    responder->st_v2_msgid_wip.responder);
 	}
 	responder->st_v2_msgid_wip.responder = msgid;
 	if (DBGP(DBG_BASE)) {
 		LSWLOG_DEBUG(buf) {
-			jam_msgids(buf, what, role, msgid,
+			jam_msgids(buf, "start-responder", role, msgid,
 				   ike, &ike->sa.st_v2_msgid_windows,
 				   responder, &wip);
 		}
@@ -271,6 +258,37 @@ void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 					   ike, &ike->sa.st_v2_msgid_windows,
 					   &child->sa, &wip);
 			}
+		}
+	}
+}
+
+void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
+			       const struct msg_digest *md)
+{
+	enum message_role role = v2_msg_role(md);
+	if (!pexpect(role == MESSAGE_REQUEST)) {
+		return;
+	}
+	/* extend msgid */
+	intmax_t msgid = md->hdr.isa_msgid;
+	const struct v2_msgid_wip wip = responder->st_v2_msgid_wip;
+
+	/*
+	 * If an encrypted message is corrupt things bail before
+	 * start_responder() but then STF_IGNORE tries to clear it.
+	 */
+	if (DBGP(DBG_BASE) &&
+	    responder->st_v2_msgid_wip.responder != msgid) {
+		PEXPECT_LOG("Message ID: #%lu.#%lu responder->st_v2_msgid_wip.responder=%jd == msgid=%jd",
+			    ike->sa.st_serialno, responder->st_serialno,
+			    responder->st_v2_msgid_wip.responder, msgid);
+	}
+	responder->st_v2_msgid_wip.responder = -1;
+	if (DBGP(DBG_BASE)) {
+		LSWLOG_DEBUG(buf) {
+			jam_msgids(buf, "cancel-responder", role, msgid,
+				   ike, &ike->sa.st_v2_msgid_windows,
+				   responder, &wip);
 		}
 	}
 }

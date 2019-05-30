@@ -72,6 +72,9 @@ void v2_msgid_switch_responder(struct ike_sa *ike, struct child_sa *child,
 void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 			       const struct msg_digest *md);
 
+void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
+			       const struct msg_digest *md);
+
 /*
  * Processing has finished - recv's accepted or sent is on its way -
  * update window.{recv,sent} and wip.{initiator,responder}.

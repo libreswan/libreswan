@@ -1789,6 +1789,23 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		return;
 	}
 
+	/*
+	 * Flag the state as responding to a request.
+	 *
+	 * The processing completes once the response has been sent
+	 * out, or things die and the state is deleted, or there's an
+	 * STF_IGNORE and the response is cancelled (for instance an
+	 * encrypted packet is corrupt).
+	 *
+	 * If the state is collecting fragments then it will have been
+	 * here before.  Hence the extra filter.  Is there something
+	 * better?
+	 */
+	if (st != NULL && v2_msg_role(md) == MESSAGE_REQUEST &&
+	    st->st_v2_rfrags == NULL) {
+		v2_msgid_start_responder(ike, st, md);
+	}
+
 	ikev2_process_state_packet(ike, st, mdp);
 }
 
@@ -2193,19 +2210,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 	md->from_state = svm->state;
 	md->svm = svm;
-
-	/*
-	 * Flag the state as responding to a request.
-	 *
-	 * The processing completes once the response has been sent
-	 * out (or things die and the state is deleted).
-	 *
-	 * XXX: but could it also die for other reasons leaving
-	 * wip.response in limbo?
-	 */
-	if (st != NULL && v2_msg_role(md) == MESSAGE_REQUEST) {
-		v2_msgid_start_responder(ike, st, md);
-	}
 
 	if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
 		/*
@@ -3105,6 +3109,8 @@ void complete_v2_state_transition(struct state *st,
 				  struct msg_digest **mdp,
 				  stf_status result)
 {
+	struct ike_sa *ike = ike_sa(st);
+
 	/*
 	 * XXX; If MD.ST is set, make certain it is consistent with
 	 * ST.  Eventually .ST will become v1 only be deleted.
@@ -3211,6 +3217,11 @@ void complete_v2_state_transition(struct state *st,
 
 	case STF_IGNORE:
 		/* logged above */
+		if (pexpect(st != NULL) && pexpect(md != NULL)) {
+			if (v2_msg_role(md) == MESSAGE_REQUEST) {
+				v2_msgid_cancel_responder(ike, st, md);
+			}
+		}
 		return;
 
 	case STF_OK:
