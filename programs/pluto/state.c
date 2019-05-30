@@ -641,7 +641,6 @@ struct state *state_with_serialno(so_serial_t sn)
  */
 void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
 {
-	dbg("rehashing state object #%lu", st->st_serialno);
 	/* update the responder's SPI */
 	st->st_ike_spis.responder = *ike_responder_spi;
 	/* now, update the state */

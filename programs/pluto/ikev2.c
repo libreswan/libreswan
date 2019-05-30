@@ -1420,26 +1420,28 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
 	const bool sent_by_ike_initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
 
-	DBG(DBG_CONTROL, {
-			struct esb_buf ixb;
-			switch (v2_msg_role(md)) {
-			case MESSAGE_RESPONSE:
-				DBG_log("I am receiving an IKEv2 Response %s",
-					enum_showb(&ikev2_exchange_names, ix, &ixb));
-				break;
-			case MESSAGE_REQUEST:
-				DBG_log("I am receiving an IKEv2 Request %s",
-					enum_showb(&ikev2_exchange_names, ix, &ixb));
-				break;
-			default:
-				bad_case(v2_msg_role(md));
-			}
-		});
-
-	if (sent_by_ike_initiator) {
-		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
-	} else {
-		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Initiator"));
+	/*
+	 * Dump what the message says, once a state has been found
+	 * this can be checked against what is.
+	 */
+	LSWDBGP(DBG_BASE, buf) {
+		if (sent_by_ike_initiator) {
+			jam(buf, "I am the IKE SA Original Responder");
+		} else {
+			jam(buf, "I am the IKE SA Original Initiator");
+		}
+		jam(buf, " receiving an IKEv2 ");
+		lswlog_enum_short(buf, &ikev2_exchange_names, ix);
+		switch (v2_msg_role(md)) {
+		case MESSAGE_RESPONSE:
+			jam(buf, " response ");
+			break;
+		case MESSAGE_REQUEST:
+			jam(buf, " request ");
+			break;
+		default:
+			bad_case(v2_msg_role(md));
+		}
 	}
 
 	/*
@@ -1730,9 +1732,10 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 * state.
 	 */
 	if (st != NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("found state #%lu", st->st_serialno));
-		set_cur_state(st);
+		/* XXX: debug-logging here is redundant */
+		push_cur_state(st);
+	} else if (ike != NULL) {
+		push_cur_state(&ike->sa);
 	}
 
 	/*
@@ -3163,23 +3166,24 @@ void complete_v2_state_transition(struct state *st,
 	 * STF_OK and yet have no remaining state object at this point.
 	 */
 
-	LSWDBGP(DBG_CONTROL, buf) {
-		lswlogf(buf, "#%lu complete v2 state transition from %s",
-			(st == NULL ? SOS_NOBODY : st->st_serialno),
-			from_state->short_name);
-		if (md != NULL) {
-			if (md->from_state != from_state->kind) {
-				lswlogs(buf, " md.from_state=");
-				lswlog_enum_short(buf, &state_names, md->from_state);
-			}
-			if (md->svm != NULL) {
-				if (md->svm->state != from_state->kind) {
-					lswlogs(buf, " svm.state=");
-					lswlog_enum_short(buf, &state_names, md->svm->state);
-				}
-				lswlogs(buf, " to ");
-				lswlog_enum_short(buf, &state_names, md->svm->next_state);
-			}
+	LSWDBGP(DBG_BASE, buf) {
+		lswlogf(buf, "#%lu complete_v2_state_transition()",
+			(st == NULL ? SOS_NOBODY : st->st_serialno));
+		if (md != NULL && md->from_state != STATE_UNDEFINED/*0?*/ &&
+		    md->from_state != from_state->kind) {
+			jam(buf, " md.from_state=");
+			lswlog_enum_short(buf, &state_names, md->from_state);
+		}
+		if (md != NULL && md->svm != NULL &&
+		    md->svm->state != from_state->kind) {
+			jam(buf, " md.svm.state[from]=");
+			lswlog_enum_short(buf, &state_names, md->svm->state);
+		}
+		jam(buf, " %s->", from_state->short_name);
+		if (md != NULL && md->svm != NULL) {
+			lswlog_enum_short(buf, &state_names, md->svm->next_state);
+		} else {
+			jam(buf, "NULL");
 		}
 		lswlogf(buf, " with status ");
 		lswlog_v2_stf_status(buf, result);
@@ -3206,10 +3210,7 @@ void complete_v2_state_transition(struct state *st,
 		return;
 
 	case STF_IGNORE:
-		LSWDBGP(DBG_CONTROL, buf) {
-			lswlogs(buf, "complete v2 state transition with ");
-			lswlog_v2_stf_status(buf, result);
-		}
+		/* logged above */
 		return;
 
 	case STF_OK:

@@ -291,12 +291,12 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 		if (!ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
 			continue;
 		}
-		dbg("State DB: %s state object #%lu found, in %s (%s)",
+		dbg("State DB: found %s state #%lu in %s (%s)",
 		    enum_name(&ike_version_names, ike_version),
-		    st->st_serialno, st->st_state->name, name);
+		    st->st_serialno, st->st_state->short_name, name);
 		return st;
 	}
-	dbg("State DB: %s state object not found (%s)",
+	dbg("State DB: %s state not found (%s)",
 	    enum_name(&ike_version_names, ike_version), name);
 	return NULL;
 }
@@ -322,12 +322,12 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				continue;
 			}
 		}
-		dbg("State DB: %s state object #%lu found, in %s (%s)",
+		dbg("State DB: found %s state #%lu in %s (%s)",
 		    enum_name(&ike_version_names, ike_version),
-		    st->st_serialno, st->st_state->name, name);
+		    st->st_serialno, st->st_state->short_name, name);
 		return st;
 	}
-	dbg("State DB: %s state object not found (%s)",
+	dbg("State DB: %s state not found (%s)",
 	    enum_name(&ike_version_names, ike_version), name);
 	return NULL;
 }
@@ -352,7 +352,9 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 
 void add_state_to_db(struct state *st)
 {
-	dbg("State DB: adding state object #%lu", st->st_serialno);
+	dbg("State DB: adding %s state #%lu in %s",
+	    enum_name(&ike_version_names, st->st_ike_version),
+	    st->st_serialno, st->st_state->short_name);
 	passert(st->st_serialno != SOS_NOBODY);
 	/* serial NR list, entries are only added */
 	st->st_serialno_list_entry = list_entry(&serialno_list_info, st);
@@ -368,7 +370,8 @@ void add_state_to_db(struct state *st)
 
 void rehash_state_cookies_in_db(struct state *st)
 {
-	dbg("State DB: re-hashing state #%lu SPIs",
+	dbg("State DB: re-hashing %s state #%lu IKE SPIs",
+	    enum_name(&ike_version_names, st->st_ike_version),
 	    st->st_serialno);
 	del_from_ike_spi_tables(st);
 	add_to_ike_spi_tables(st);
@@ -376,6 +379,9 @@ void rehash_state_cookies_in_db(struct state *st)
 
 void del_state_from_db(struct state *st)
 {
+	dbg("State DB: deleting %s state #%lu in %s",
+	    enum_name(&ike_version_names, st->st_ike_version),
+	    st->st_serialno, st->st_state->short_name);
 	remove_list_entry(&st->st_serialno_list_entry);
 	del_hash_table_entry(&serialno_hash_table,
 			     &st->st_serialno_hash_entry);
