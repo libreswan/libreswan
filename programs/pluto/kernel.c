@@ -402,6 +402,27 @@ static char *clean_xauth_username(const char *src, char *dst, size_t dstlen)
 	return dst;
 }
 
+static void jam_clean_xauth_username(struct lswlog *buf, const char *src)
+{
+	bool changed = FALSE;
+	const char *dst = jambuf_pos(buf);
+	while (*src != '\0') {
+		if ((*src >= '0' && *src <= '9') ||
+		    (*src >= 'a' && *src <= 'z') ||
+		    (*src >= 'A' && *src <= 'Z') ||
+		    *src == '_' || *src == '-' || *src == '.') {
+			jam_char(buf, *src);
+		} else {
+			changed = TRUE;
+		}
+		src++;
+	}
+	if (changed || !jambuf_ok(buf)) {
+		libreswan_log("Warning: XAUTH username changed from '%s' to '%s'",
+			      src, dst);
+	}
+}
+
 /*
  * form the command string
  *
@@ -527,13 +548,8 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 
 	if (st != NULL && st->st_xauth_username[0] != '\0') {
 		jam(buf, "PLUTO_USERNAME='");
-		char secure_xauth_username_str[IDTOA_BUF] = "";
-		char *p = clean_xauth_username(st->st_xauth_username,
-					       secure_xauth_username_str,
-					       sizeof(secure_xauth_username_str));
-
-		passert(p < secure_xauth_username_str + sizeof(secure_xauth_username_str));
-		jam(buf, "%s' ", secure_xauth_username_str);
+		jam_clean_xauth_username(buf, st->st_xauth_username);
+		jam(buf, "' ");
 	}
 
 	if (addrlenof(&sr->this.host_srcip) != 0 &&
