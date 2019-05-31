@@ -195,8 +195,9 @@ pb_stream open_v2_message(pb_stream *reply,
 		hdr.isa_msgid = md->hdr.isa_msgid;
 	} else {
 		passert(ike != NULL);
-		hdr.isa_msgid = ike->sa.st_msgid_nextuse;
-		if (DBGP(DBG_BASE) && ike->sa.st_msgid_nextuse != ike->sa.st_v2_msgid_windows.initiator.sent + 1) {
+		hdr.isa_msgid = ike->sa.st_v2_msgid_windows.initiator.sent + 1;
+		if (DBGP(DBG_BASE) &&
+		    ike->sa.st_msgid_nextuse != ike->sa.st_v2_msgid_windows.initiator.sent + 1) {
 			PEXPECT_LOG("Message ID: #%lu st_msgid_nextuse "PRI_MSGID" == initiator.sent %jd + 1",
 				    ike->sa.st_serialno, ike->sa.st_msgid_nextuse,
 				    ike->sa.st_v2_msgid_windows.initiator.sent);
