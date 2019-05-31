@@ -39,6 +39,8 @@ struct id_list {
 extern const struct id empty_id;	/* ID_NONE */
 
 extern err_t atoid(char *src, struct id *id, bool oe_only);
+void jam_id(struct lswlog *buf, const struct id *id);
+void jam_id_escaped(struct lswlog *buf, const struct id *id);
 extern int idtoa(const struct id *id, char *dst, size_t dstlen);
 #define IDTOA_BUF	512
 extern void escape_metachar(const char *src, char *dst, size_t dstlen);
