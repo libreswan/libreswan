@@ -596,10 +596,9 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "VTI_ROUTING='%s' ", bool_str(c->vti_routing));
 	jam(buf, "VTI_SHARED='%s' ", bool_str(c->vti_shared));
 
-	char catstr[] = "CAT='YES' ";
-	if (!sr->this.has_cat)
-		catstr[0] = '\0';
-	jam(buf, "%s" /* CAT=yes if set */, catstr);
+	if (sr->this.has_cat) {
+		jam(buf, "CAT='YES' ");
+	}
 
 	jam(buf, "SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */,
 	    (st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.attrs.spi) :
