@@ -429,11 +429,9 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	ipstr_buf bme;
 	jam(buf, "PLUTO_ME='%s' ", ipstr(&sr->this.host_addr, &bme));
 
-	char myid_str2[IDTOA_BUF];
-	idtoa(&sr->this.id, myid_str2, sizeof(myid_str2));
-	char secure_myid_str[IDTOA_BUF] = "";
-	escape_metachar(myid_str2, secure_myid_str, sizeof(secure_myid_str));
-	jam(buf, "PLUTO_MY_ID='%s' ", secure_myid_str);
+	jam(buf, "PLUTO_MY_ID='");
+	jam_id_escaped(buf, &sr->this.id);
+	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT='");
 	jam_subnet(buf, &sr->this.client);
@@ -467,12 +465,9 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	ipstr_buf bpeer;
 	jam(buf, "PLUTO_PEER='%s' ", ipstr(&sr->that.host_addr, &bpeer));
 
-	char peerid_str[IDTOA_BUF];
-	idtoa(&sr->that.id, peerid_str, sizeof(peerid_str));
-	char secure_peerid_str[IDTOA_BUF] = "";
-	escape_metachar(peerid_str, secure_peerid_str,
-			sizeof(secure_peerid_str));
-	jam(buf, "PLUTO_PEER_ID='%s' ", secure_peerid_str);
+	jam(buf, "PLUTO_PEER_ID='");
+	jam_id_escaped(buf, &sr->that.id);
+	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT='");
 	jam_subnet(buf, &sr->that.client);
