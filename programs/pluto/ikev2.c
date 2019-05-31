@@ -2314,16 +2314,17 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 *
 			 * XXX: Er, why?
 			 */
-			if (st == NULL &&
-			    md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT) {
-				rate_log("responding to message with unknown IKE SPI with INVALID_IKE_SPI");
-				/*
-				 * Lets assume "2.21.4.  Error
-				 * Handling Outside IKE SA" - we MAY
-				 * respond.
-				 */
-				send_v2N_response_from_md(md, v2N_INVALID_IKE_SPI,
-							  NULL/*no data*/);
+			if (st == NULL) {
+				if (md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT) {
+					rate_log("responding to message with unknown IKE SPI with INVALID_IKE_SPI");
+					/*
+					 * Lets assume "2.21.4.  Error
+					 * Handling Outside IKE SA" - we MAY
+					 * respond.
+					 */
+					send_v2N_response_from_md(md, v2N_INVALID_IKE_SPI,
+								  NULL/*no data*/);
+				}
 			} else {
 				/*
 				 * Presumably things are pretty messed
@@ -2351,6 +2352,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				 * v2N_INVALID_SYNTAX?
 				 */
 				rate_log("dropping message with no matching microcode");
+				complete_v2_state_transition(st, mdp, STF_IGNORE);
 			}
 		}
 		return;
