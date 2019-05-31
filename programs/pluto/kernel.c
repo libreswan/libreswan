@@ -413,7 +413,6 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 {
 #define MAX_DISPLAY_BYTES 13
 
-
  	/* change VERSION when interface spec changes */
 	jam(buf, "PLUTO_VERSION='2.0' ");
 	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
@@ -458,13 +457,9 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_MY_CLIENT_MASK='%s' ", myclientmask_str);
 
 	if (!isanyaddr(&sr->this.host_vtiip.addr)) {
-		char vticlient_str[SUBNETTOT_BUF + sizeof("VTI_IP=''")];
-		vticlient_str[0] = '\0';
 		char tmpvti[SUBNETTOT_BUF];
 		subnettot(&sr->this.host_vtiip, 0, tmpvti, sizeof(tmpvti));
-
-		snprintf(vticlient_str, sizeof(vticlient_str), "VTI_IP='%s' ", tmpvti);
-		jam(buf, "%s" /* VTI_IP */, vticlient_str);
+		jam(buf, "VTI_IP='%s' ", tmpvti);
 	}
 
 	jam(buf, "PLUTO_MY_PORT='%u' ", sr->this.port);
@@ -529,19 +524,11 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_STACK='%s' ", kernel_ops->kern_name);
 
 	if (c->metric != 0) {
-		char metric_str[sizeof("PLUTO_METRIC= ") + 4];
-		metric_str[0] = '\0';
-		snprintf(metric_str, sizeof(metric_str), "PLUTO_METRIC=%d ",
-			c->metric);
-		jam(buf, "%s" /* optional metric */, metric_str);
+		jam(buf, "PLUTO_METRIC=%d ", c->metric);
 	}
 
 	if (c->connmtu != 0) {
-		char connmtu_str[sizeof("PLUTO_MTU= ") + 5 + 1];
-		connmtu_str[0] = '\0';
-		snprintf(connmtu_str, sizeof(connmtu_str), "PLUTO_MTU=%d ",
-			c->connmtu);
-		jam(buf, "%s" /* optional mtu */, connmtu_str);
+		jam(buf, "PLUTO_MTU=%d ", c->connmtu);
 	}
 
 	jam(buf, "PLUTO_ADDTIME='%" PRIu64 "' ", st == NULL ? (uint64_t)0 : st->st_esp.add_time);
@@ -591,48 +578,31 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 #endif
 
 	if (inbytes) {
-		char traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "";
-		snprintf(traffic_in_str, sizeof(traffic_in_str),
-			 "PLUTO_INBYTES='%" PRIu64 "' ",
-			 st->st_esp.present ? st->st_esp.our_bytes :
-			 st->st_ah.present ? st->st_ah.our_bytes :
-			 st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
-			 0);
-		jam(buf, "%s" /* traffic in stats - if any */, traffic_in_str);
+		jam(buf, "PLUTO_INBYTES='%" PRIu64 "' ",
+		    st->st_esp.present ? st->st_esp.our_bytes :
+		    st->st_ah.present ? st->st_ah.our_bytes :
+		    st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
+		    0);
 	}
 	if (outbytes) {
-		char traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "";
-		snprintf(traffic_out_str, sizeof(traffic_out_str),
-			 "PLUTO_OUTBYTES='%" PRIu64 "' ",
-			 st->st_esp.present ? st->st_esp.peer_bytes :
-			 st->st_ah.present ? st->st_ah.peer_bytes :
-			 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
-			 0);
-		jam(buf, "%s" /* traffic out stats - if any */, traffic_out_str);
+		jam(buf, "PLUTO_OUTBYTES='%" PRIu64 "' ",
+		    st->st_esp.present ? st->st_esp.peer_bytes :
+		    st->st_ah.present ? st->st_ah.peer_bytes :
+		    st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
+		    0);
 	}
 
 	if (c->nflog_group != 0) {
-		char nflogstr[sizeof("NFLOG='' ") + MAX_DISPLAY_BYTES] = "";
-		nflogstr[0] = '\0';
-		snprintf(nflogstr, sizeof(nflogstr), "NFLOG=%d ",
-			c->nflog_group);
-		jam(buf, "%s" /* nflog-group - if any */, nflogstr);
+		jam(buf, "NFLOG=%d ", c->nflog_group);
 	}
 
 	if (c->sa_marks.in.val != 0) {
-		char connmarkstr[2 * (sizeof("CONNMARK_XXX='' ") +  2 * sizeof("0xffffffff")+1) + sizeof(", ")] = "";
-		connmarkstr[0] = '\0';
-		snprintf(connmarkstr, sizeof(connmarkstr),
-			"CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
-			c->sa_marks.in.val, c->sa_marks.in.mask);
-		jam(buf, "%s" /* conn-mark - if any */, connmarkstr);
+		jam(buf, "CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
+		    c->sa_marks.in.val, c->sa_marks.in.mask);
 	}
 	if (c->sa_marks.out.val != 0) {
-		char connmarkstr[2 * (sizeof("CONNMARK_XXX='' ") +  2 * sizeof("0xffffffff")+1) + sizeof(", ")] = "";
-		snprintf(connmarkstr, sizeof(connmarkstr),
-			 "CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
-			 c->sa_marks.out.val, c->sa_marks.out.mask);
-		jam(buf, "%s" /* conn-mark - if any */, connmarkstr);
+		jam(buf, "CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
+		    c->sa_marks.out.val, c->sa_marks.out.mask);
 	}
 
 	jam(buf, "VTI_IFACE='%s' ", c->vti_iface ? c->vti_iface : "");
