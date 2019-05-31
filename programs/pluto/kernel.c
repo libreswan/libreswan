@@ -531,20 +531,14 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "XAUTH_FAILED=%d ", (st != NULL && st->st_xauth_soft) ? 1 : 0);
 
 	if (st != NULL && st->st_xauth_username[0] != '\0') {
+		jam(buf, "PLUTO_USERNAME='");
 		char secure_xauth_username_str[IDTOA_BUF] = "";
-		secure_xauth_username_str[0] = '\0';
-		char *p = jam_str(secure_xauth_username_str,
-				sizeof(secure_xauth_username_str),
-				"PLUTO_USERNAME='");
+		char *p = clean_xauth_username(st->st_xauth_username,
+					       secure_xauth_username_str,
+					       sizeof(secure_xauth_username_str));
 
-		p = clean_xauth_username(st->st_xauth_username,
-				p,
-				sizeof(secure_xauth_username_str) -
-				(p - secure_xauth_username_str) - 2);
-		passert(p - secure_xauth_username_str + 2 <
-			(ptrdiff_t)sizeof(secure_xauth_username_str));
-		strcpy(p, "' ");	/* 2 extra chars */
-		jam(buf, "%s" /* XAUTH username - if any */, secure_xauth_username_str);
+		passert(p < secure_xauth_username_str + sizeof(secure_xauth_username_str));
+		jam(buf, "%s' ", secure_xauth_username_str);
 	}
 
 	if (addrlenof(&sr->this.host_srcip) != 0 &&
