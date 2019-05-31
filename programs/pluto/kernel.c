@@ -420,16 +420,10 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 					  c->interface->ip_dev->id_vname));
 
 	if (addrlenof(&sr->this.host_nexthop) != 0 &&
-		!isanyaddr(&sr->this.host_nexthop)) {
-		char nexthop_str[sizeof("PLUTO_NEXT_HOP='' ") + ADDRTOT_BUF];
-		nexthop_str[0] = '\0';
-		char *n = jam_str(nexthop_str, sizeof(nexthop_str),
-				"PLUTO_NEXT_HOP='");
-
-		addrtot(&sr->this.host_nexthop, 0,
-			n, sizeof(nexthop_str) - (n - nexthop_str));
-		add_str(nexthop_str, sizeof(nexthop_str), n, "' ");
-		jam(buf, "%s" /* possible PLUTO_NEXT_HOP */, nexthop_str);
+	    !isanyaddr(&sr->this.host_nexthop)) {
+		jam(buf, "PLUTO_NEXT_HOP='");
+		jam_address_cooked(buf, &sr->this.host_nexthop);
+		jam(buf, "' ");
 	}
 
 	ipstr_buf bme;
@@ -445,16 +439,16 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam_subnet(buf, &sr->this.client);
 	jam(buf, "' ");
 
+	jam(buf, "PLUTO_MY_CLIENT_NET='");
 	ip_address ta;
 	networkof(&sr->this.client, &ta);
-	char myclientnet_str[ADDRTOT_BUF];
-	addrtot(&ta, 0, myclientnet_str, sizeof(myclientnet_str));
-	jam(buf, "PLUTO_MY_CLIENT_NET='%s' ", myclientnet_str);
+	jam_address_cooked(buf, &ta);
+	jam(buf, "' ");
 
+	jam(buf, "PLUTO_MY_CLIENT_MASK='");
 	maskof(&sr->this.client, &ta);
-	char myclientmask_str[ADDRTOT_BUF];
-	addrtot(&ta, 0, myclientmask_str, sizeof(myclientmask_str));
-	jam(buf, "PLUTO_MY_CLIENT_MASK='%s' ", myclientmask_str);
+	jam_address_cooked(buf, &ta);
+	jam(buf, "' ");
 
 	if (!isanyaddr(&sr->this.host_vtiip.addr)) {
 		jam(buf, "VTI_IP='");
@@ -484,15 +478,15 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam_subnet(buf, &sr->that.client);
 	jam(buf, "' ");
 
-	char peerclientnet_str[ADDRTOT_BUF];
+	jam(buf, "PLUTO_PEER_CLIENT_NET='");
 	networkof(&sr->that.client, &ta);
-	addrtot(&ta, 0, peerclientnet_str, sizeof(peerclientnet_str));
-	jam(buf, "PLUTO_PEER_CLIENT_NET='%s' ", peerclientnet_str);
+	jam_address_cooked(buf, &ta);
+	jam(buf, "' ");
 
+	jam(buf, "PLUTO_PEER_CLIENT_MASK='");
 	maskof(&sr->that.client, &ta);
-	char peerclientmask_str[ADDRTOT_BUF];
-	addrtot(&ta, 0, peerclientmask_str, sizeof(peerclientmask_str));
-	jam(buf, "PLUTO_PEER_CLIENT_MASK='%s' ", peerclientmask_str);
+	jam_address_cooked(buf, &ta);
+	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_PORT='%u' ", sr->that.port);
 	jam(buf, "PLUTO_PEER_PROTOCOL='%u' ", sr->that.protocol);
@@ -554,16 +548,10 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	}
 
 	if (addrlenof(&sr->this.host_srcip) != 0 &&
-		!isanyaddr(&sr->this.host_srcip)) {
-		char srcip_str[sizeof("PLUTO_MY_SOURCEIP='' ") + ADDRTOT_BUF];
-		srcip_str[0] = '\0';
-		char *p = jam_str(srcip_str, sizeof(srcip_str),
-				"PLUTO_MY_SOURCEIP='");
-
-		addrtot(&sr->this.host_srcip, 0, p,
-			sizeof(srcip_str) - (p - srcip_str));
-		add_str(srcip_str, sizeof(srcip_str), p, "' ");
-		jam(buf, "%s" /* PLUTO_MY_SRCIP - if any */, srcip_str);
+	    !isanyaddr(&sr->this.host_srcip)) {
+		jam(buf, "PLUTO_MY_SOURCEIP='");
+		jam_address_cooked(buf, &sr->this.host_srcip);
+		jam(buf, "' ");
 	}
 
 	jam(buf, "PLUTO_IS_PEER_CISCO='%u' ", c->remotepeertype /* ??? kind of odd printing an enum with %u */);
