@@ -441,9 +441,9 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	escape_metachar(myid_str2, secure_myid_str, sizeof(secure_myid_str));
 	jam(buf, "PLUTO_MY_ID='%s' ", secure_myid_str);
 
-	char myclient_str[SUBNETTOT_BUF];
-	subnettot(&sr->this.client, 0, myclient_str, sizeof(myclient_str));
-	jam(buf, "PLUTO_MY_CLIENT='%s' ", myclient_str);
+	jam(buf, "PLUTO_MY_CLIENT='");
+	jam_subnet(buf, &sr->this.client);
+	jam(buf, "' ");
 
 	ip_address ta;
 	networkof(&sr->this.client, &ta);
@@ -457,9 +457,9 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_MY_CLIENT_MASK='%s' ", myclientmask_str);
 
 	if (!isanyaddr(&sr->this.host_vtiip.addr)) {
-		char tmpvti[SUBNETTOT_BUF];
-		subnettot(&sr->this.host_vtiip, 0, tmpvti, sizeof(tmpvti));
-		jam(buf, "VTI_IP='%s' ", tmpvti);
+		jam(buf, "VTI_IP='");
+		jam_subnet(buf, &sr->this.host_vtiip);
+		jam(buf, "' ");
 	}
 
 	jam(buf, "PLUTO_MY_PORT='%u' ", sr->this.port);
@@ -480,12 +480,11 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 			sizeof(secure_peerid_str));
 	jam(buf, "PLUTO_PEER_ID='%s' ", secure_peerid_str);
 
-	char peerclient_str[SUBNETTOT_BUF];
-	char peerclientnet_str[ADDRTOT_BUF];
-	subnettot(&sr->that.client, 0, peerclient_str,
-		sizeof(peerclientnet_str));
-	jam(buf, "PLUTO_PEER_CLIENT='%s' ", peerclient_str);
+	jam(buf, "PLUTO_PEER_CLIENT='");
+	jam_subnet(buf, &sr->that.client);
+	jam(buf, "' ");
 
+	char peerclientnet_str[ADDRTOT_BUF];
 	networkof(&sr->that.client, &ta);
 	addrtot(&ta, 0, peerclientnet_str, sizeof(peerclientnet_str));
 	jam(buf, "PLUTO_PEER_CLIENT_NET='%s' ", peerclientnet_str);
