@@ -1,4 +1,4 @@
-grep "retransmits:" /tmp/pluto.log | sed -e 's/current time .*/current time .../'
+grep "received duplicate [^ ]* message request .* fragment" /tmp/pluto.log
 ../../pluto/bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status

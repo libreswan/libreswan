@@ -14,11 +14,12 @@ east #
  echo "initdone"
 initdone
 east #
- grep "retransmits:" /tmp/pluto.log | sed -e 's/current time .*/current time .../'
-| #1 STATE_PARENT_R2: retransmits: received duplicate IKE_AUTH message request (Message ID 1, fragment 2); discarded as not fragment 1
-| #1 STATE_PARENT_R2: retransmits: received duplicate IKE_AUTH message request (Message ID 1, fragment 3); discarded as not fragment 1
-| #1 STATE_PARENT_R2: retransmits: received duplicate IKE_AUTH message request (Message ID 1, fragment 4); discarded as not fragment 1
-| #1 STATE_PARENT_R2: retransmits: received duplicate IKE_AUTH message request (Message ID 1, fragment 5); discarded as not fragment 1
+ grep "received duplicate [^ ]* message request .* fragment" /tmp/pluto.log
+"westnet-eastnet-ikev2" #1: received duplicate IKE_AUTH message request (Message ID 1, fragment 1); retransmitting response
+| Message ID: #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 2); discarded as not fragment 1; initiator.sent=-1 initiator.recv=-1 responder.sent=1 responder.recv=1
+| Message ID: #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 3); discarded as not fragment 1; initiator.sent=-1 initiator.recv=-1 responder.sent=1 responder.recv=1
+| Message ID: #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 4); discarded as not fragment 1; initiator.sent=-1 initiator.recv=-1 responder.sent=1 responder.recv=1
+| Message ID: #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 5); discarded as not fragment 1; initiator.sent=-1 initiator.recv=-1 responder.sent=1 responder.recv=1
 east #
  ../../pluto/bin/ipsec-look.sh
 east NOW

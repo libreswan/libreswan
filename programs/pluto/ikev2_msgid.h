@@ -92,4 +92,11 @@ bool v2_msgid_ok(struct ike_sa *ike, enum message_role incomming, msgid_t msgid)
 void schedule_next_send(struct state *st);
 stf_status add_st_to_ike_sa_send_list(struct state *st, struct ike_sa *ike);
 
+void dbg_v2_msgid(struct ike_sa *ike, struct state *st, const char *msg, ...) PRINTF_LIKE(3);
+void fail_v2_msgid(const char *func, const char *file, unsigned long line,
+		   struct ike_sa *ike, struct state *st,
+		   const char *fmt, ...) PRINTF_LIKE(6);
+#define FAIL_V2_MSGID(IKE, ST, FMT, ...) \
+	fail_v2_msgid(__func__, PASSERT_BASENAME, __LINE__, IKE, ST, FMT,##__VA_ARGS__)
+
 #endif

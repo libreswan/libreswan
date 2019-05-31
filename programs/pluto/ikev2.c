@@ -1346,9 +1346,10 @@ static bool is_duplicate_request(struct ike_sa *ike,
 		 * saved response (the response was saved right?).
 		 */
 		if (ike->sa.st_tpacket.len == 0 && ike->sa.st_v2_tfrags == NULL) {
-			PEXPECT_LOG("retransmission for message ID: %jd exchange %s failed responder.sent %jd - there is no stored message or fragments to retransmit",
-				    msgid, enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-				    ike->sa.st_v2_msgid_windows.responder.sent);
+			FAIL_V2_MSGID(ike, responder,
+				      "retransmission for messsage %jd exchange %s failed responder.sent %jd - there is no stored message or fragments to retransmit",
+				      msgid, enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+				      ike->sa.st_v2_msgid_windows.responder.sent);
 			return true;
 		}
 		/*
@@ -1375,13 +1376,10 @@ static bool is_duplicate_request(struct ike_sa *ike,
 				      msgid, fragment);
 			send_recorded_v2_ike_msg(&ike->sa, "ikev2-responder-retransmt (fragment 1)");
 		} else {
-			/* formatted to keep tests happy */
-			LSWDBGP(DBG_BASE, buf) {
-				lswlog_retransmit_prefix(buf, &ike->sa);
-				jam(buf, "received duplicate %s message request (Message ID %jd, fragment %u); discarded as not fragment 1",
-				    enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-				    msgid, fragment);
-			}
+			dbg_v2_msgid(ike, responder,
+				     "received duplicate %s message request (Message ID %jd, fragment %u); discarded as not fragment 1",
+				     enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+				     msgid, fragment);
 		}
 		return true;
 	}
@@ -1418,8 +1416,8 @@ static bool is_duplicate_request(struct ike_sa *ike,
 			libreswan_log("discarding fragments received during asynchronous work (DNS or crypto) in %s",
 				      responder->st_state->name);
 		} else {
-			dbg("discarding fragments received during asynchronous work (DNS or crypto) in %s",
-			    responder->st_state->name);
+			dbg_v2_msgid(ike, responder, "discarding fragments received during asynchronous work (DNS or crypto) in %s",
+				     responder->st_state->name);
 		}
 		return true;
 	}
@@ -1450,9 +1448,9 @@ static bool is_duplicate_request(struct ike_sa *ike,
 	if (responder != NULL) {
 		pexpect(responder->st_v2_rfrags != NULL &&
 			responder->st_v2_rfrags->count < responder->st_v2_rfrags->total);
-		dbg("not a duplicate - responder is accumulating fragments");
+		dbg_v2_msgid(ike, responder, "not a duplicate - responder is accumulating fragments");
 	} else {
-		dbg("not a duplicate - message is new");
+		dbg_v2_msgid(ike, responder, "not a duplicate - message is new");
 	}
 
 	return false;
@@ -1491,8 +1489,8 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * current-state wasn't set.
 		 */
 		pexpect(initiator == NULL);
-		dbg("already processed response %jd (%s); discarding packet",
-		    msgid, enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg));
+		dbg_v2_msgid(ike, initiator, "already processed response %jd (%s); discarding packet",
+			     msgid, enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg));
 		return true;
 	}
 
@@ -1519,9 +1517,9 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * There was an initiator waiting for a message that,
 		 * according to the IKE SA, has yet to be sent?!?
 		 */
-		PEXPECT_LOG("Message ID: #%lu.#%lu dropping response with Message ID %jd which is from the future - last request sent was %jd",
-			    ike->sa.st_serialno, initiator->st_serialno,
-			    msgid, ike->sa.st_v2_msgid_windows.initiator.sent);
+		FAIL_V2_MSGID(ike, initiator,
+			      "dropping response with Message ID %jd which is from the future - last request sent was %jd",
+			      msgid, ike->sa.st_v2_msgid_windows.initiator.sent);
 		return true;
 	}
 

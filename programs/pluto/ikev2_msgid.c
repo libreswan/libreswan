@@ -22,6 +22,56 @@
 #include "ikev2_msgid.h"
 
 /*
+ * Logging utilities, can these share code?
+ */
+
+static void jam_v2_msgid(struct lswlog *buf,
+			 struct ike_sa *ike, struct state *st,
+			 const char *fmt, va_list ap)
+{
+	jam(buf, "Message ID: #%lu", ike->sa.st_serialno);
+	if (st != NULL && IS_CHILD_SA(st)) {
+		jam(buf, ".#%lu", st->st_serialno);
+	}
+	jam(buf, " ");
+	jam_va_list(buf, fmt, ap);
+	jam(buf, ";");
+	const struct v2_msgid_windows *w = &ike->sa.st_v2_msgid_windows;
+	jam(buf, " initiator.sent=%jd", w->initiator.sent);
+	jam(buf, " initiator.recv=%jd", w->initiator.recv);
+	jam(buf, " responder.sent=%jd", w->responder.sent);
+	jam(buf, " responder.recv=%jd", w->responder.recv);
+	if (st != NULL) {
+		const struct v2_msgid_wip *wip = &st->st_v2_msgid_wip;
+		jam(buf, " wip.initiator=%jd", wip->initiator);
+		jam(buf, " wip.responder=%jd", wip->responder);
+	}
+}
+
+void dbg_v2_msgid(struct ike_sa *ike, struct state *st,
+		  const char *fmt, ...)
+{
+	LSWDBGP(DBG_BASE, buf) {
+		va_list ap;
+		va_start(ap, fmt);
+		jam_v2_msgid(buf, ike, st, fmt, ap);
+		va_end(ap);
+	}
+}
+
+void fail_v2_msgid(const char *func, const char *file, unsigned long line,
+		   struct ike_sa *ike, struct state *st,
+		   const char *fmt, ...)
+{
+	LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
+		va_list ap;
+		va_start(ap, fmt);
+		jam_v2_msgid(buf, ike, st, fmt, ap);
+		va_end(ap);
+	}
+}
+
+/*
  * Dump the MSGIDs along with any changes.
  *
  * Why not just dump the one that changed in the calling function?
@@ -149,9 +199,9 @@ void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
 
 	if (DBGP(DBG_BASE) &&
 	    responder->st_v2_msgid_wip.responder != -1) {
-		PEXPECT_LOG("Message ID: #%lu.#%lu responder->st_v2_msgid_wip.responder=%jd == -1",
-			    ike->sa.st_serialno, responder->st_serialno,
-			    responder->st_v2_msgid_wip.responder);
+		FAIL_V2_MSGID(ike, responder,
+			      "responder->st_v2_msgid_wip.responder=%jd == -1",
+			      responder->st_v2_msgid_wip.responder);
 	}
 	responder->st_v2_msgid_wip.responder = msgid;
 	if (DBGP(DBG_BASE)) {
@@ -183,9 +233,9 @@ void v2_msgid_switch_responder(struct ike_sa *ike, struct child_sa *child,
 		const struct v2_msgid_wip wip = ike->sa.st_v2_msgid_wip;
 		if (DBGP(DBG_BASE) &&
 		    ike->sa.st_v2_msgid_wip.responder != msgid) {
-			PEXPECT_LOG("Message ID: #%lu ike->sa.st_v2_msgid_wip.responder=%jd == msgid=%jd",
-				    ike->sa.st_serialno,
-				    ike->sa.st_v2_msgid_wip.responder, msgid);
+			FAIL_V2_MSGID(ike, &child->sa,
+				      "ike->sa.st_v2_msgid_wip.responder=%jd == msgid=%jd",
+				      ike->sa.st_v2_msgid_wip.responder, msgid);
 		}
 		ike->sa.st_v2_msgid_wip.responder = -1;
 		if (DBGP(DBG_BASE)) {
@@ -201,9 +251,9 @@ void v2_msgid_switch_responder(struct ike_sa *ike, struct child_sa *child,
 		const struct v2_msgid_wip wip = child->sa.st_v2_msgid_wip;
 		if (DBGP(DBG_BASE) &&
 		    child->sa.st_v2_msgid_wip.responder != -1) {
-			PEXPECT_LOG("Message ID: #%lu.#%lu child->sa.st_v2_msgid_wip.responder=%jd == -1",
-				    ike->sa.st_serialno, child->sa.st_serialno,
-				    child->sa.st_v2_msgid_wip.responder);
+			FAIL_V2_MSGID(ike, &child->sa,
+				      "child->sa.st_v2_msgid_wip.responder=%jd == -1",
+				      child->sa.st_v2_msgid_wip.responder);
 		}
 		child->sa.st_v2_msgid_wip.responder = msgid;
 		if (DBGP(DBG_BASE)) {
@@ -229,9 +279,9 @@ void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 		const struct v2_msgid_wip wip = ike->sa.st_v2_msgid_wip;
 		if (DBGP(DBG_BASE) &&
 		    ike->sa.st_v2_msgid_wip.initiator != msgid) {
-			PEXPECT_LOG("Message ID: #%lu ike->sa.st_v2_msgid_wip.initiator=%jd == msgid=%jd",
-				    ike->sa.st_serialno,
-				    ike->sa.st_v2_msgid_wip.initiator, msgid);
+			FAIL_V2_MSGID(ike, &child->sa,
+				      "ike->sa.st_v2_msgid_wip.initiator=%jd == msgid=%jd",
+				      ike->sa.st_v2_msgid_wip.initiator, msgid);
 		}
 		ike->sa.st_v2_msgid_wip.initiator = -1;
 		if (DBGP(DBG_BASE)) {
@@ -247,9 +297,9 @@ void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 		const struct v2_msgid_wip wip = child->sa.st_v2_msgid_wip;
 		if (DBGP(DBG_BASE) &&
 		    child->sa.st_v2_msgid_wip.initiator != -1) {
-			PEXPECT_LOG("Message ID: #%lu.#%lu child->sa.st_v2_msgid_wip.initiator=%jd == -1",
-				    ike->sa.st_serialno, child->sa.st_serialno,
-				    child->sa.st_v2_msgid_wip.initiator);
+			FAIL_V2_MSGID(ike, &child->sa,
+				      "child->sa.st_v2_msgid_wip.initiator=%jd == -1",
+				      child->sa.st_v2_msgid_wip.initiator);
 		}
 		child->sa.st_v2_msgid_wip.initiator = msgid;
 		if (DBGP(DBG_BASE)) {
@@ -279,9 +329,9 @@ void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
 	 */
 	if (DBGP(DBG_BASE) &&
 	    responder->st_v2_msgid_wip.responder != msgid) {
-		PEXPECT_LOG("Message ID: #%lu.#%lu responder->st_v2_msgid_wip.responder=%jd == msgid=%jd",
-			    ike->sa.st_serialno, responder->st_serialno,
-			    responder->st_v2_msgid_wip.responder, msgid);
+		FAIL_V2_MSGID(ike, responder,
+			      "responder->st_v2_msgid_wip.responder=%jd == msgid=%jd",
+			      responder->st_v2_msgid_wip.responder, msgid);
 	}
 	responder->st_v2_msgid_wip.responder = -1;
 	if (DBGP(DBG_BASE)) {
@@ -315,9 +365,9 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		 */
 		if (DBGP(DBG_BASE) &&
 		    receiver->st_v2_msgid_wip.responder != msgid) {
-			PEXPECT_LOG("Message ID: #%lu.#%lu: wip.responder=%jd == msgid=%jd",
-				    ike->sa.st_serialno, receiver->st_serialno,
-				    receiver->st_v2_msgid_wip.responder, msgid);
+			FAIL_V2_MSGID(ike, receiver,
+				      "wip.responder=%jd == msgid=%jd",
+				      receiver->st_v2_msgid_wip.responder, msgid);
 		}
 		receiver->st_v2_msgid_wip.responder = -1;
 		/* last request we received */
@@ -335,10 +385,10 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		new->initiator.recv = msgid;
 		/* extend st_msgid_lastack */
 		if (DBGP(DBG_BASE) && ike->sa.st_msgid_lastack != new->initiator.recv) {
-			PEXPECT_LOG("Message ID: IKE #%lu receiver #%lu: ike.lastack "PRI_MSGID" == ike.initiator.recv %jd",
-				    ike->sa.st_serialno, receiver->st_serialno,
-				    ike->sa.st_msgid_lastack,
-				    new->initiator.recv);
+			FAIL_V2_MSGID(ike, receiver,
+				      "ike.lastack="PRI_MSGID" == ike.initiator.recv=%jd",
+				      ike->sa.st_msgid_lastack,
+				      new->initiator.recv);
 		}
 		/*
 		 * Since the response has been successfully processed,
@@ -366,9 +416,9 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			    old_receiver.initiator, msgid);
 		} else {
 			if (DBGP(DBG_BASE) && old_receiver.initiator != msgid) {
-				PEXPECT_LOG("Message ID: IKE #%lu receiver #%lu: receiver.wip.initiator %jd == receiver.msgid %jd",
-					    ike->sa.st_serialno, receiver->st_serialno,
-					    old_receiver.initiator, msgid);
+				FAIL_V2_MSGID(ike, receiver,
+					      "receiver.wip.initiator=%jd == receiver.msgid=%jd",
+					      old_receiver.initiator, msgid);
 			}
 			receiver->st_v2_msgid_wip.initiator = -1;
 		}
@@ -410,17 +460,17 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		sender->st_v2_msgid_wip.initiator = new->initiator.sent = msgid;
 		/* extend st_msgid */
 		if (DBGP(DBG_BASE) && sender->st_msgid != sender->st_v2_msgid_wip.initiator) {
-			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: sender.msgid "PRI_MSGID" == sender.wip.initiator %jd",
-				    ike->sa.st_serialno, sender->st_serialno,
-				    sender->st_msgid,
-				    sender->st_v2_msgid_wip.initiator);
+			FAIL_V2_MSGID(ike, sender,
+				      "sender.msgid="PRI_MSGID" == sender.wip.initiator=%jd",
+				      sender->st_msgid,
+				      sender->st_v2_msgid_wip.initiator);
 		}
 		/* extend st_msgid_nextuse */
 		if (DBGP(DBG_BASE) && ike->sa.st_msgid_nextuse != new->initiator.sent + 1) {
-			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: ike.nextuse "PRI_MSGID" == ike.initiator.sent %jd+1",
-				    ike->sa.st_serialno, sender->st_serialno,
-				    ike->sa.st_msgid_nextuse,
-				    new->initiator.sent);
+			FAIL_V2_MSGID(ike, sender,
+				      "ike.nextuse="PRI_MSGID" == ike.initiator.sent=%jd+1",
+				      ike->sa.st_msgid_nextuse,
+				      new->initiator.sent);
 		}
 #if 0
 		/*
@@ -429,9 +479,9 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		 * expected sequence OLD-MSGID -> -1 -> NEW-MSGID.
 		 */
 		if (DBGP(DBG_BASE) && old_sender.initiator != -1) {
-			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: sender.wip.initiator %jd == -1",
-				    ike->sa.st_serialno, sender->st_serialno,
-				    old_sender.initiator);
+			FAIL_V2_MSGID(ike, sender,
+				      "sender.wip.initiator=%jd == -1",
+				      old_sender.initiator);
 		}
 #else
 		if (old_sender.initiator != -1) {
@@ -457,10 +507,10 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		new->responder.sent = msgid;
 		/* extend st_msgid_lastreplied */
 		if (DBGP(DBG_BASE) && ike->sa.st_msgid_lastreplied != new->responder.sent) {
-			PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: ike.lastreplied "PRI_MSGID" == ike.responder.sent %jd",
-				    ike->sa.st_serialno, sender->st_serialno,
-				    ike->sa.st_msgid_lastreplied,
-				    new->responder.sent);
+			FAIL_V2_MSGID(ike, sender,
+				      "ike.lastreplied="PRI_MSGID" == ike.responder.sent=%jd",
+				      ike->sa.st_msgid_lastreplied,
+				      new->responder.sent);
 		}
 		break;
 	case NO_MESSAGE:
