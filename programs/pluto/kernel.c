@@ -372,31 +372,6 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
 	}
 }
 
-/* note: this mutates *st by calling get_sa_info */
-static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char *ostr, size_t ostr_len)
-{
-	passert(istr_len > 0 && ostr_len > 0);
-	istr[0] = '\0';
-	ostr[0] = '\0';
-	if (st == NULL || IS_IKE_SA(st))
-		return;
-
-	if (get_sa_info(st, FALSE, NULL)) { /* our_bytes = out going bytes */
-		snprintf(ostr, ostr_len, "PLUTO_OUTBYTES='%" PRIu64 "' ",
-			st->st_esp.present ? st->st_esp.peer_bytes :
-			st->st_ah.present ? st->st_ah.peer_bytes :
-			st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
-			0);
-	}
-	if (get_sa_info(st, TRUE, NULL)) {
-		snprintf(istr, istr_len, "PLUTO_INBYTES='%" PRIu64 "' ",
-			st->st_esp.present ? st->st_esp.our_bytes :
-			st->st_ah.present ? st->st_ah.our_bytes :
-			st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
-			0);
-	}
-}
-
 /*
  * Remove all characters but [-_.0-9a-zA-Z] from a character string.
  * Truncates the result if it would be too long.
@@ -430,11 +405,23 @@ static char *clean_xauth_username(const char *src, char *dst, size_t dstlen)
 /*
  * form the command string
  *
- * note: this mutates *st by calling fmt_traffic_str
+ * note: this mutates *st by calling get_sa_info().
  */
 bool fmt_common_shell_out(char *buf, size_t blen, const struct connection *c,
 			  const struct spd_route *sr, struct state *st)
 {
+	/*
+	 * note: this mutates *st by calling get_sa_info
+	 *
+	 * XXX: does the get_sa_info() call order matter? Should this
+	 * be a single "atomic" call?
+	 *
+	 * true==inbound: inbound updates OUR_BYTES; !inbound updates
+	 * PEER_BYTES.
+	 */
+	bool outbytes = st != NULL && IS_IKE_SA(st) && get_sa_info(st, false, NULL);
+	bool inbytes = st != NULL && IS_IKE_SA(st) && get_sa_info(st, true, NULL);
+
 #define MAX_DISPLAY_BYTES 13
 	int result;
 	char
@@ -528,7 +515,23 @@ bool fmt_common_shell_out(char *buf, size_t blen, const struct connection *c,
 			(ptrdiff_t)sizeof(secure_xauth_username_str));
 		strcpy(p, "' ");	/* 2 extra chars */
 	}
-	fmt_traffic_str(st, traffic_in_str, sizeof(traffic_in_str), traffic_out_str, sizeof(traffic_out_str));
+
+	if (inbytes) {
+		snprintf(traffic_in_str, sizeof(traffic_in_str),
+			 "PLUTO_INBYTES='%" PRIu64 "' ",
+			 st->st_esp.present ? st->st_esp.our_bytes :
+			 st->st_ah.present ? st->st_ah.our_bytes :
+			 st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
+			 0);
+	}
+	if (outbytes) {
+		snprintf(traffic_out_str, sizeof(traffic_out_str),
+			 "PLUTO_OUTBYTES='%" PRIu64 "' ",
+			 st->st_esp.present ? st->st_esp.peer_bytes :
+			 st->st_ah.present ? st->st_ah.peer_bytes :
+			 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
+			 0);
+	}
 
 	nflogstr[0] = '\0';
 	if (c->nflog_group != 0) {
