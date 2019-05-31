@@ -97,8 +97,19 @@ bool jambuf_ok(jambuf_t *buf);
 
 jambuf_t array_as_jambuf(char *array, size_t sizeof_array);
 #define ARRAY_AS_JAMBUF(ARRAY) array_as_jambuf((ARRAY), sizeof(ARRAY));
+
+/*
+ * Poke around in jambuf internals.
+ *
+ * _as_chunk() returns the buffer contents up to and including the '\0'
+ * terminator.
+ *
+ * _pos() returns the current cursor position (where the next string
+ * will be jammed).
+ */
 /* includes '\0' */
 chunk_t jambuf_as_chunk(jambuf_t *buf);
+const char *jambuf_pos(jambuf_t *buf);
 
 /*
  * Routines for accumulating output in the jambuf buffer.
@@ -117,6 +128,7 @@ chunk_t jambuf_as_chunk(jambuf_t *buf);
  */
 
 size_t jam(jambuf_t *buf, const char *format, ...) PRINTF_LIKE(2);
+size_t jam_char(jambuf_t *buf, char c);
 size_t jam_string(jambuf_t *buf, const char *string);
 size_t jam_jambuf(jambuf_t *buf, jambuf_t *in);
 

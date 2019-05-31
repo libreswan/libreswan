@@ -25,51 +25,104 @@ unsigned fails;
 static void check_jambuf(const char *expect, bool ok, ...)
 {
 	const char *oks =  ok ? "true" : "false";
-	for (int i = 0; i < 2; i++) {
-		const char *op = i == 0 ? "jam" : "jam_string";
+	for (int i = 0; i < 3; i++) {
+		const char *op = (i == 0 ? "jam" :
+				  i == 1 ? "jam_string" :
+				  i == 2 ? "jam_char" :
+				  "???");
 		printf("%s: %s '%s' %s\n", __func__, op, expect, oks);
-		char array[12]; /* 10 characters + NUL + SENTINEL */
+		/* 10 characters + NUL + SENTINEL */
+		char array[12] = "abcdefghijkl";
 		jambuf_t buf = ARRAY_AS_JAMBUF(array);
+#define FAIL(FMT, ...) {						\
+			fprintf(stderr, "%s: %s '%s' ", __func__, op, expect); \
+			fprintf(stderr, FMT,##__VA_ARGS__);		\
+			fprintf(stderr, "\n");				\
+			fails++;					\
+		}
+		/*
+		 * Buffer initialized ok?
+		 */
 		if (!jambuf_ok(&buf)) {
-			fprintf(stderr, "%s: '%s' setup wrong\n",
-				__func__, expect);
-			fails++;
+			FAIL("jambuf_ok() failed at start");
 			return;
 		}
-		va_list ap;
-		va_start(ap, ok);
-		while (true) {
-			const char *str = va_arg(ap, char *);
-			if (str == NULL) break;
-			switch (i) {
-			case 0: jam(&buf, "%s", str); break;
-			case 1: jam_string(&buf, str); break;
-			}
-			if (ok && !jambuf_ok(&buf)) {
-				fprintf(stderr, "%s: %s '%s' %s unexpectedly failed writing '%s'\n",
-					__func__, op, expect, oks, str);
-				fails++;
-				return;
-			}
-		}
-		if (jambuf_ok(&buf) != ok) {
-			fprintf(stderr, "%s: %s '%s' %s wrong\n",
-				__func__, op, expect, oks);
-			fails++;
+		if (array[0] != '\0') {
+			FAIL("array[0] is 0x%x but should be NUL at start\n",
+			     array[0]);
 			return;
 		}
-		if (strcmp(expect, array) != 0) {
-			fprintf(stderr, "%s: %s '%s' %s but got string '%s'\n",
-				__func__, op, expect, oks, array);
-			fails++;
+		const char *pos = jambuf_pos(&buf);
+		if (pos != array) {
+			FAIL("jambuf_pos() is %p but should be %p (aka array) at start",
+			     pos, array);
 			return;
 		}
 		chunk_t c = jambuf_as_chunk(&buf);
-		if (c.len != strlen(expect) + 1 ||
+		if ((const char *)c.ptr != array ||
+		    c.len != 1) {
+			FAIL("jambuf_as_chunk() is "PRI_CHUNK" but should be %p/1 (aka array) at start",
+			     pri_chunk(c), array);
+			return;
+		}
+		/*
+		 * Concat va_list.
+		 *
+		 * Terminated with NULL, it is a series of strings -
+		 * and the string can be NULL!
+		 */
+		va_list ap;
+		va_start(ap, ok);
+		const char *str = va_arg(ap, const char *);
+		do {
+			if (str == NULL) {
+				/* only valid op */
+				jam_string(&buf, str);
+			} else {
+				switch (i) {
+				case 0:
+					jam(&buf, "%s", str);
+					break;
+				case 1:
+					jam_string(&buf, str);
+					break;
+				case 2:
+					for (const char *c = str; *c; c++) {
+						jam_char(&buf, *c);
+					}
+					break;
+				default:
+					FAIL("bad case");
+					return;
+				}
+			}
+			if (ok && !jambuf_ok(&buf)) {
+				FAIL("unexpectedly failed writing '%s'",
+				     str == NULL ? "(null)" : str);
+				return;
+			}
+			str = va_arg(ap, const char *);
+		} while (str != NULL);
+		if (jambuf_ok(&buf) != ok) {
+			FAIL("jambuf_ok() is not %s at end", oks);
+			return;
+		}
+		if (strcmp(expect, array) != 0) {
+			FAIL("array contains '%s' which is wrong", array);
+			return;
+		}
+		c = jambuf_as_chunk(&buf);
+		if ((const char *)c.ptr != array ||
+		    c.len != strlen(expect) + 1 ||
 		    memcmp(expect, c.ptr, c.len) != 0) {
-			fprintf(stderr, "%s: %s '%s' %s but got chunk '%s'\n",
-				__func__, op, expect, oks, array);
-			fails++;
+			FAIL("jambuf_as_chunk() is "PRI_CHUNK" or '%s' which is wrong",
+			     pri_chunk(c), c.ptr);
+			return;
+		}
+		pos = jambuf_pos(&buf);
+		if (pos != array + strlen(expect)) {
+			FAIL("jambuf_pos() is %p but should be %p",
+			     pos, array + strlen(expect));
 			return;
 		}
 	}
@@ -77,6 +130,7 @@ static void check_jambuf(const char *expect, bool ok, ...)
 
 int main(int argc UNUSED, char *argv[] UNUSED)
 {
+	check_jambuf("(null)", true, NULL, NULL);
 	check_jambuf("0", true, "0", NULL);
 	check_jambuf("01", true, "0", "1", NULL);
 	check_jambuf("012", true, "0", "1", "2", NULL);
