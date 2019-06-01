@@ -196,12 +196,6 @@ pb_stream open_v2_message(pb_stream *reply,
 	} else {
 		passert(ike != NULL);
 		hdr.isa_msgid = ike->sa.st_v2_msgid_windows.initiator.sent + 1;
-		if (DBGP(DBG_BASE) &&
-		    ike->sa.st_msgid_nextuse != ike->sa.st_v2_msgid_windows.initiator.sent + 1) {
-			PEXPECT_LOG("Message ID: #%lu st_msgid_nextuse "PRI_MSGID" == initiator.sent %jd + 1",
-				    ike->sa.st_serialno, ike->sa.st_msgid_nextuse,
-				    ike->sa.st_v2_msgid_windows.initiator.sent);
-		}
 	}
 
 	if (IMPAIR(BAD_IKE_AUTH_XCHG)) {
@@ -1038,7 +1032,6 @@ static stf_status v2_record_outbound_fragments(struct state *st,
  */
 
 stf_status record_outbound_v2SK_msg(struct state *msg_sa,
-				    struct msg_digest *md,
 				    pb_stream *msg,
 				    v2SK_payload_t *sk,
 				    const char *what)
@@ -1055,19 +1048,5 @@ stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 		}
 		record_outbound_ike_msg(msg_sa, &reply_stream, what);
 	}
-	/*
-	 * XXX: huh?  there are two sliding windws - one for requests
-	 * and one for responses - yet this always updates the same
-	 * value.
-	 *
-	 * XXX: when initiating an exchange there is no MD (or only a
-	 * badly faked up MD).
-	 */
-	dbg("Message ID: forcing IKE #%lu lastreplied "PRI_MSGID"->"PRI_MSGID" for #%lu",
-	    sk->ike->sa.st_serialno,
-	    sk->ike->sa.st_msgid_lastreplied,
-	    md->hdr.isa_msgid,
-	    msg_sa->st_serialno);
-	sk->ike->sa.st_msgid_lastreplied = md->hdr.isa_msgid;
 	return ret;
 }

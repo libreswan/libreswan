@@ -535,9 +535,6 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	passert(st->st_state->kind == STATE_PARENT_I0);
 	st->st_original_role = ORIGINAL_INITIATOR;
 	passert(st->st_sa_role == SA_INITIATOR);
-	passert(st->st_msgid_lastack == v2_INVALID_MSGID);
-	passert(st->st_msgid_lastrecv == v2_INVALID_MSGID);
-	passert(st->st_msgid_nextuse == 0);
 	st->st_try = try;
 
 	if (HAS_IPSEC_POLICY(policy)) {
@@ -933,8 +930,6 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	passert(st->st_state->kind == STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
 	passert(st->st_sa_role == SA_RESPONDER);
-	passert(st->st_msgid_lastack == v2_INVALID_MSGID);
-	passert(st->st_msgid_nextuse == 0);
 
 	/*
 	 * "cur_state" has been set (possibly repeatedly) so all
@@ -1364,7 +1359,6 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			 * the Message ID counter code thinks this is
 			 * an initial outgoing message.
 			 */
-			v2_msgid_restart_init_request(st);
 			struct ike_sa *ike = pexpect_ike_sa(st);
 			v2_msgid_init_ike(ike);
 			/*
@@ -1449,15 +1443,6 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				 * code thinks this is an initial
 				 * message request.
 				 */
-				/* if we received INVALID_KE, msgid was incremented */
-				st->st_msgid_lastack = v2_INVALID_MSGID;
-				st->st_msgid_lastrecv = v2_INVALID_MSGID;
-				st->st_msgid_nextuse = 0;
-				st->st_msgid = 0;
-				dbg("Message ID: reset for KE #%lu: msgid="PRI_MSGID" lastack="PRI_MSGID" nextuse="PRI_MSGID" lastrecv="PRI_MSGID" lastreplied="PRI_MSGID,
-				    st->st_serialno, st->st_msgid,
-				    st->st_msgid_lastack, st->st_msgid_nextuse,
-				    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
 				struct ike_sa *ike = pexpect_ike_sa(st);
 				v2_msgid_init_ike(ike);
 				/*
@@ -1768,10 +1753,6 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 			return STF_FAIL;
 		}
 	}
-
-	/* update state */
-	dbg("Message ID: received INIT response");
-	v2_msgid_update_counters(md->st, md);
 
 	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and
 	 * v2N_NAT_DETECTION_SOURCE_IP
@@ -2173,11 +2154,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
 	cst->st_try = pst->st_try;
 
-	dbg("Message ID: forcing #%lu.#%lu msgid "PRI_MSGID"->"PRI_MSGID" from IKE nextuse",
-	    pst->st_serialno, cst->st_serialno, cst->st_msgid,
-	    pst->st_msgid_nextuse);
-	cst->st_msgid = pst->st_msgid_nextuse;
-
 	/*
 	 * XXX: This is so lame.  Need to move the current initiator
 	 * from IKE to the CHILD so that the post processor doesn't
@@ -2551,8 +2527,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	 * For AUTH exchange, store the message in the IKE SA.  The
 	 * attempt to create the CHILD SA could have failed.
 	 */
-	return record_outbound_v2SK_msg(&sk.ike->sa, md,
-					&reply_stream, &sk,
+	return record_outbound_v2SK_msg(&sk.ike->sa, &reply_stream, &sk,
 					"sending IKE_AUTH request");
 }
 
@@ -3286,8 +3261,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	 * The attempt to create the CHILD SA could have
 	 * failed.
 	 */
-	return record_outbound_v2SK_msg(&sk.ike->sa, md,
-					&reply_stream, &sk,
+	return record_outbound_v2SK_msg(&sk.ike->sa, &reply_stream, &sk,
 					"replying to IKE_AUTH request");
 }
 
@@ -4802,13 +4776,6 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st),
 					  st->st_sa_role == SA_RESPONDER ? md : NULL,
 					  ISAKMP_v2_CREATE_CHILD_SA);
-	if (st->st_sa_role == SA_INITIATOR) {
-		/* store it to match response */
-		dbg("Message ID: force CHILD #%lu msgid "PRI_MSGID"->"PRI_MSGID" from IKE #%lu nextuse",
-		    st->st_serialno, st->st_msgid,
-		    pst->st_msgid_nextuse, pst->st_serialno);
-		st->st_msgid = pst->st_msgid_nextuse;
-	}
 
 	/* insert an Encryption payload header */
 
@@ -4861,14 +4828,6 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	 */
 	record_outbound_ike_msg(pst, &reply_stream,
 				"packet from ikev2_child_out_cont");
-
-	if (st->st_sa_role == SA_RESPONDER) {
-		dbg("Message ID: forcing IKE #%lu last replied "PRI_MSGID"->"PRI_MSGID" for child #%lu",
-		    pst->st_serialno, pst->st_msgid_lastreplied,
-		    md->hdr.isa_msgid,
-		    st->st_serialno);
-		pst->st_msgid_lastreplied = md->hdr.isa_msgid;
-	}
 
 	if (st->st_state->kind == STATE_V2_CREATE_R ||
 			st->st_state->kind == STATE_V2_REKEY_CHILD_R) {
@@ -5601,11 +5560,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		record_outbound_ike_msg(st, &reply_stream, "reply packet for process_encrypted_informational_ikev2");
 		send_recorded_v2_ike_msg(st, "reply packet for process_encrypted_informational_ikev2");
 
-		dbg("Message ID: forcing #%lu lastreplied "PRI_MSGID"->"PRI_MSGID,
-		    st->st_serialno, st->st_msgid_lastreplied,
-		    md->hdr.isa_msgid);
-		st->st_msgid_lastreplied = md->hdr.isa_msgid;
-
 		/*
 		 * XXX: This code should be neither using record 'n'
 		 * send (which leads to RFC violations because it
@@ -5648,20 +5602,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			pstats_ike_dpd_replied++;
 		else
 			pstats_ike_dpd_recv++;
-	}
-
-	dbg("Message ID: processing a informational");
-	v2_msgid_update_counters(md->st, md);
-	if (st == NULL) {
-		dbg("Message ID: pointlessly tried to update counters as state deleted mid-transition!");
-	} else if (v2_msg_role(md) == MESSAGE_RESPONSE &&
-		   (st->st_msgid_lastack == v2_INVALID_MSGID ||
-		    (st->st_msgid_lastack != v2_INVALID_MSGID &&
-		     st->st_msgid_lastack < md->hdr.isa_msgid))) {
-		dbg("Message ID: IKE #%lu sender #%lu in %s botched lastack="PRI_MSGID"->"PRI_MSGID,
-		    ike->sa.st_serialno, st->st_serialno, __func__,
-		    st->st_msgid_lastack, md->hdr.isa_msgid);
-		ike->sa.st_msgid_lastack = md->hdr.isa_msgid;
 	}
 	return STF_OK;
 }
@@ -6318,71 +6258,6 @@ void v2_schedule_replace_event(struct state *st)
 	event_schedule(kind, deltatime(delay), st);
 }
 
-static void ikev2_log_initiate_rekey_checks(struct state *st)
-{
-	const struct ike_sa *ike = ike_sa(st);
-
-	if (ike == NULL)
-		return;
-
-	msgid_t unack = ike->sa.st_msgid_nextuse - ike->sa.st_msgid_lastack - 1;
-	if (DBGP(DBG_BASE)) {
-		intmax_t unack2 = ike->sa.st_v2_msgid_windows.initiator.sent - ike->sa.st_v2_msgid_windows.initiator.recv;
-		/*
-		 * XXX: The old code updates response counters early
-		 * (as soon as the packet has been decoded) but the
-		 * new code updates counters late.  This can lead to
-		 * an off by one.  Probably the old code is better -
-		 * the response has been received and integrity
-		 * checked so presumably is valid (even if the
-		 * contents are not what was desired)?
-		 *
-		 * However, the message triggered during an
-		 * interesting scenario: given IKE#1, CHILD#2; CHILD#2
-		 * sends rekey request and gets response, but it
-		 * requires DH so state transition is suspended (old
-		 * MSGIDs are updated, new are not); IKE#1 decides it
-		 * is time to rekey so initiates its exchange - and
-		 * discovers its MSGIDs are off.  Question is, should
-		 * IKE#1 delay its rekey until the child really has
-		 * finished?
-		 */
-		if (unack != unack2) {
-			if (unack == unack2 - 1) {
-				dbg("Message ID: XXX: IKE #%lu sender #%lu: %jd (ike.initiator.sent=%jd - ike.initiator.recv=%jd) == "PRI_MSGID" (ike.nextuse="PRI_MSGID" - ike.lastack="PRI_MSGID"-1) (IKE rekey while CHILD rekey in progress?)",
-				    ike->sa.st_serialno, st->st_serialno,
-				    unack2, ike->sa.st_v2_msgid_windows.initiator.sent,
-				    ike->sa.st_v2_msgid_windows.initiator.recv,
-				    unack, ike->sa.st_msgid_nextuse, ike->sa.st_msgid_lastack);
-			} else {
-				PEXPECT_LOG("Message ID: IKE #%lu sender #%lu: %jd (ike.initiator.sent=%jd - ike.initiator.recv=%jd) == "PRI_MSGID" (ike.nextuse="PRI_MSGID" - ike.lastack="PRI_MSGID"-1)",
-					    ike->sa.st_serialno, st->st_serialno,
-					    unack2, ike->sa.st_v2_msgid_windows.initiator.sent,
-					    ike->sa.st_v2_msgid_windows.initiator.recv,
-					    unack, ike->sa.st_msgid_nextuse,
-					    ike->sa.st_msgid_lastack);
-			}
-		}
-	}
-
-	switch (st->st_state->kind) {
-	case STATE_V2_REKEY_IKE_I0:
-	case STATE_V2_REKEY_CHILD_I0:
-	case STATE_V2_CREATE_I0:
-		if (unack < st->st_connection->ike_window) {
-			loglog(RC_LOG_SERIOUS,
-				"expiring %s state. Possible Message Id deadlock?  Parent #%lu unacknowledged %u next Message Id=%u IKE exchange window %u",
-				st->st_state->name,
-				ike->sa.st_serialno, unack,
-				ike->sa.st_msgid_nextuse,
-				ike->sa.st_connection->ike_window);
-		}
-		break;
-	default:
-		break;
-	}
-}
-
 void v2_event_sa_rekey(struct state *st)
 {
 	monotime_t now = mononow();
@@ -6409,7 +6284,6 @@ void v2_event_sa_rekey(struct state *st)
 		event_force(EVENT_SA_REPLACE, st);
 	}
 
-	ikev2_log_initiate_rekey_checks(st);
 	dbg("rekeying stale %s SA", satype);
 	if (IS_IKE_SA(st)) {
 		libreswan_log("initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
@@ -6472,7 +6346,6 @@ void v2_event_sa_replace(struct state *st)
 	/*
 	 * XXX: For a CHILD SA, will this result in a re-key attempt?
 	 */
-	ikev2_log_initiate_rekey_checks(st);
 	dbg("replacing stale %s SA", satype);
 	ipsecdoi_replace(st, 1);
 	delete_liveness_event(st);

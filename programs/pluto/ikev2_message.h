@@ -48,7 +48,6 @@ bool close_v2SK_payload(v2SK_payload_t *sk);
 stf_status encrypt_v2SK_payload(v2SK_payload_t *sk);
 
 stf_status record_outbound_v2SK_msg(struct state *msg_sa,
-				    struct msg_digest *md,
 				    pb_stream *msg,
 				    v2SK_payload_t *sk,
 				    const char *what);

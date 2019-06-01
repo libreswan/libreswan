@@ -73,8 +73,6 @@
 #include "ikev2_msgid.h"
 #include "ip_endpoint.h"
 
-static bool is_msg_request(const struct msg_digest *md);
-
 enum smf2_flags {
 	/*
 	 * Check the value of the I(Initiator) (IKE_I) flag in the
@@ -1275,7 +1273,6 @@ static struct child_sa *process_v2_child_ix(struct msg_digest *md,
 		change_state(&child->sa, STATE_V2_REKEY_IKE_R); /* start with this */
 	}
 
-	child->sa.st_msgid = md->hdr.isa_msgid;
 	binlog_refresh_state(&child->sa);
 
 	LSWDBGP(DBG_BASE, buf) {
@@ -2379,39 +2376,12 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 */
 		struct child_sa *child;
 		if (v2_msg_role(md) == MESSAGE_RESPONSE) {
-			/*
-			 * XXX: Since the above lookup-by-msgid code
-			 * has done its job - using .current_request
-			 * either the child initiator was found or the
-			 * message was discarded - there's no point in
-			 * trying to re-find it using
-			 * process_v2_child_ix() and .st_msgid as that
-			 * will likely screw up.
-			 */
 			child = pexpect_child_sa(st);
 		} else {
 			pexpect(IS_IKE_SA(st));
 			child = process_v2_child_ix(md, ike);
 			v2_msgid_switch_responder(ike, child, md);
 		}
-
-		/*
-		 * XXX: This code path will update the old Message IDs
-		 * twice: first here, and then, assuming things
-		 * succeed, in success_v2_state_transition()
-		 * (presumably the latter does nothing).  The new code
-		 * currently only updates after success and in
-		 * success_v2_state_transition() which, when things
-		 * don't succeed, is a problem.
-		 *
-		 * On the other hand, can all code paths Message ID's
-		 * here?  If the message's integrity checks out then
-		 * probably yes.  But what of the initial exchanges
-		 * where things can't be trusted?
-		 */
-		dbg("Message ID: why update ST #%lu and not CHILD #%lu.#%lu?",
-		    st->st_serialno, ike->sa.st_serialno, child->sa.st_serialno);
-		v2_msgid_update_counters(st, md);
 
 		/*
 		 * Switch to child state (possibly from the same child
@@ -2765,119 +2735,6 @@ void ikev2_log_parentSA(const struct state *st)
 	);
 }
 
-/*
- * Maintain or reset Message IDs.
- *
- * When resetting, need to fudge things up sufficient to fool
- * ikev2_update_msgid_counters(() into thinking that this is a shiny
- * new init request.
- */
-
-void v2_msgid_restart_init_request(struct state *st)
-{
-	st->st_msgid_lastack = v2_INVALID_MSGID;
-	st->st_msgid_lastrecv = v2_INVALID_MSGID;
-	st->st_msgid_nextuse = 0;
-	st->st_msgid = 0;
-	dbg("Message ID: restart #%lu: msgid="PRI_MSGID" lastack="PRI_MSGID" lastrecv="PRI_MSGID" nextuse="PRI_MSGID,
-	    st->st_serialno, st->st_msgid,
-	    st->st_msgid_lastack, st->st_msgid_lastrecv,
-	    st->st_msgid_nextuse);
-}
-
-/*
- * While there's always a state, there may not always be an incomming
- * message.  Hence, don't rely on md->st and instead explicitly pass
- * in ST.
- *
- * XXX: Should this looking at .st_state->transition->flags to decide
- * what to do?
- */
-void v2_msgid_update_counters(struct state *st, struct msg_digest *md)
-{
-	if (st == NULL) {
-		dbg("Message ID: current processor deleted the state nothing to update");
-		return;
-	}
-	struct ike_sa *ike = ike_sa(st);
-
-	/* message ID sequence for things we send (as initiator) */
-	msgid_t st_msgid_lastack = ike->sa.st_msgid_lastack;
-	msgid_t st_msgid_nextuse = ike->sa.st_msgid_nextuse;
-	/* message ID sequence for things we receive (as responder) */
-	msgid_t st_msgid_lastrecv = ike->sa.st_msgid_lastrecv;
-	msgid_t st_msgid_lastreplied = ike->sa.st_msgid_lastreplied;
-
-	/* update when sending a request */
-	if (is_msg_request(md) &&
-			(st->st_state->kind == STATE_PARENT_I1 ||
-			 st->st_state->kind == STATE_V2_REKEY_IKE_I ||
-			 st->st_state->kind == STATE_V2_REKEY_CHILD_I ||
-			 st->st_state->kind == STATE_V2_CREATE_I)) {
-		ike->sa.st_msgid_nextuse += 1;
-		/* an informational exchange does its own increment */
-	} else if (st->st_state->kind == STATE_PARENT_I2) {
-		ike->sa.st_msgid_nextuse += 1;
-	}
-
-	if (is_msg_response(md)) {
-		/* we were initiator for this message exchange */
-		if (md->hdr.isa_msgid == v2_FIRST_MSGID &&
-				ike->sa.st_msgid_lastack == v2_INVALID_MSGID) {
-			ike->sa.st_msgid_lastack = md->hdr.isa_msgid;
-		} else if (md->hdr.isa_msgid > ike->sa.st_msgid_lastack) {
-			ike->sa.st_msgid_lastack = md->hdr.isa_msgid;
-		} /* else { lowever message id ignore it? } */
-	} else {
-		/* we were responder for this message exchange */
-		if (md->hdr.isa_msgid > ike->sa.st_msgid_lastrecv) {
-			if (md->fake_dne) {
-				dbg("Message ID: IKE #%lu in %s narrowly missing a forced update of lastrecv="PRI_MSGID"->"PRI_MSGID" when the message is fake!",
-				    ike->sa.st_serialno, __func__,
-				    ike->sa.st_msgid_lastrecv, md->hdr.isa_msgid);
-			} else {
-				ike->sa.st_msgid_lastrecv = md->hdr.isa_msgid;
-			}
-		}
-		/* first request from the other side */
-		if (md->hdr.isa_msgid == v2_FIRST_MSGID &&
-				ike->sa.st_msgid_lastrecv == v2_INVALID_MSGID) {
-			ike->sa.st_msgid_lastrecv = v2_FIRST_MSGID;
-		}
-	}
-
-	LSWDBGP(DBG_BASE, buf) {
-		lswlogf(buf, "Message ID: '%s' IKE #%lu %s",
-			st->st_connection->name,
-			ike->sa.st_serialno, ike->sa.st_state->short_name);
-		if (&ike->sa != st) {
-			lswlogf(buf, "; CHILD #%lu %s",
-				st->st_serialno, st->st_state->short_name);
-		}
-		lswlogf(buf, "; message-%s msgid=%u",
-			is_msg_response(md) ? "response" : "request",
-			md->hdr.isa_msgid);
-
-		lswlogf(buf, "; initiator { lastack=%u", st_msgid_lastack);
-		if (st_msgid_lastack != ike->sa.st_msgid_lastack) {
-			lswlogf(buf, "->%u", ike->sa.st_msgid_lastack);
-		}
-		lswlogf(buf, " nextuse=%u", st_msgid_nextuse);
-		if (st_msgid_nextuse != ike->sa.st_msgid_nextuse) {
-			lswlogf(buf, "->%u", ike->sa.st_msgid_nextuse);
-		}
-		lswlogf(buf, " } responder { lastrecv=%u", st_msgid_lastrecv);
-		if (st_msgid_lastrecv != ike->sa.st_msgid_lastrecv) {
-			lswlogf(buf, "->%u", ike->sa.st_msgid_lastrecv);
-		}
-		lswlogf(buf, " lastreplied=%u", st_msgid_lastreplied);
-		if (st_msgid_lastreplied != ike->sa.st_msgid_lastreplied) {
-			lswlogf(buf, "->%u", ike->sa.st_msgid_lastreplied);
-		}
-		lswlogf(buf, " }");
-	}
-}
-
 void log_ipsec_sa_established(const char *m, const struct state *st)
 {
 	/* log Child SA Traffic Selector details for admin's pleasure */
@@ -2908,14 +2765,6 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 
 	/* initialze the the new IKE SA. reset and message ID */
 	to->sa.st_clonedfrom = SOS_NOBODY;
-	to->sa.st_msgid_lastack = v2_INVALID_MSGID;
-	to->sa.st_msgid_lastrecv = v2_INVALID_MSGID;
-	to->sa.st_msgid_nextuse = v2_FIRST_MSGID;
-	dbg("Message ID: emancipate #%lu: msgid="PRI_MSGID" lastack="PRI_MSGID" lastrecv="PRI_MSGID" nextuse="PRI_MSGID,
-	    to->sa.st_serialno, to->sa.st_msgid,
-	    to->sa.st_msgid_lastack,
-	    to->sa.st_msgid_lastrecv,
-	    to->sa.st_msgid_nextuse);
 	v2_msgid_init_ike(pexpect_ike_sa(&to->sa));
 
 	/* Switch to the new IKE SPIs */
@@ -2963,7 +2812,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		 */
 		dbg("Message ID: updating counters for #%lu to "PRI_MSGID" before emancipating",
 		    md->st->st_serialno, md->hdr.isa_msgid);
-		v2_msgid_update_counters(md->st, md);
 		v2_msgid_update_recv(ike_sa(st), st, md);
 		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
 		/*
@@ -2982,7 +2830,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		change_state(st, svm->next_state);
 		dbg("Message ID: updating counters for #%lu to "PRI_MSGID" after switching state",
 		    md->st->st_serialno, md->hdr.isa_msgid);
-		v2_msgid_update_counters(md->st, md);
 		v2_msgid_update_recv(ike_sa(st), st, md);
 		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
 		/*
@@ -3516,12 +3363,6 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 bool is_msg_response(const struct msg_digest *md)
 {
 	return (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
-}
-
-/* message is a request */
-bool is_msg_request(const struct msg_digest *md)
-{
-	return !is_msg_response(md);
 }
 
 void lswlog_v2_stf_status(struct lswlog *buf, unsigned status)

@@ -372,24 +372,10 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		receiver->st_v2_msgid_wip.responder = -1;
 		/* last request we received */
 		new->responder.recv = msgid;
-		/* extend st_msgid_lastrecv */
-		if (ike->sa.st_msgid_lastrecv != new->responder.recv) {
-			dbg("Message ID: XXX: IKE #%lu receiver #%lu: ike.lastrecv "PRI_MSGID" != ike.responder.recv %jd",
-			    ike->sa.st_serialno, receiver->st_serialno,
-			    ike->sa.st_msgid_lastrecv,
-			    new->responder.recv);
-		}
 		break;
 	case MESSAGE_RESPONSE:
 		/* last response we received */
 		new->initiator.recv = msgid;
-		/* extend st_msgid_lastack */
-		if (DBGP(DBG_BASE) && ike->sa.st_msgid_lastack != new->initiator.recv) {
-			FAIL_V2_MSGID(ike, receiver,
-				      "ike.lastack="PRI_MSGID" == ike.initiator.recv=%jd",
-				      ike->sa.st_msgid_lastack,
-				      new->initiator.recv);
-		}
 		/*
 		 * Since the response has been successfully processed,
 		 * clear WIP.INITIATOR.  This way duplicate
@@ -458,20 +444,6 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		 */
 		msgid = new->initiator.sent + 1;
 		sender->st_v2_msgid_wip.initiator = new->initiator.sent = msgid;
-		/* extend st_msgid */
-		if (DBGP(DBG_BASE) && sender->st_msgid != sender->st_v2_msgid_wip.initiator) {
-			FAIL_V2_MSGID(ike, sender,
-				      "sender.msgid="PRI_MSGID" == sender.wip.initiator=%jd",
-				      sender->st_msgid,
-				      sender->st_v2_msgid_wip.initiator);
-		}
-		/* extend st_msgid_nextuse */
-		if (DBGP(DBG_BASE) && ike->sa.st_msgid_nextuse != new->initiator.sent + 1) {
-			FAIL_V2_MSGID(ike, sender,
-				      "ike.nextuse="PRI_MSGID" == ike.initiator.sent=%jd+1",
-				      ike->sa.st_msgid_nextuse,
-				      new->initiator.sent);
-		}
 #if 0
 		/*
 		 * XXX: The record 'n' send code calls update_send()
@@ -505,13 +477,6 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		/* extend isa_msgid */
 		msgid = md->hdr.isa_msgid;
 		new->responder.sent = msgid;
-		/* extend st_msgid_lastreplied */
-		if (DBGP(DBG_BASE) && ike->sa.st_msgid_lastreplied != new->responder.sent) {
-			FAIL_V2_MSGID(ike, sender,
-				      "ike.lastreplied="PRI_MSGID" == ike.responder.sent=%jd",
-				      ike->sa.st_msgid_lastreplied,
-				      new->responder.sent);
-		}
 		break;
 	case NO_MESSAGE:
 		dbg("Message ID: IKE #%lu sender #%lu: skipping update_send as nothing to send",
