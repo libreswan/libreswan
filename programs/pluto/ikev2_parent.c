@@ -5945,10 +5945,13 @@ static void ikev2_child_outI_continue(struct state *st,
 	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I0 ? r->pcr_type == pcr_build_ke_and_nonce : true);
 
 	unpack_nonce(&st->st_ni, r);
-	if (r->pcr_type == pcr_build_ke_and_nonce)
+	if (r->pcr_type == pcr_build_ke_and_nonce) {
 		unpack_KE_from_helper(st, r, &st->st_gi);
+	}
+
 	if (child_added_to_ike_send_list(child, ike)) {
 		complete_v2_state_transition(&child->sa, mdp, STF_SUSPEND);
+		return;
 	}
 
 	stf_status e = ikev2_start_new_exchange(ike, child);
