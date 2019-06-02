@@ -7,7 +7,7 @@ NETKEY/XFRM. This identifier is normally automatically allocated in groups
 of 4. It is exported to the _updown script as REQID. On Linux, reqids are
 supported with IP Connection Tracking and NAT (iptables). Automatically
 generated values use the range 16380 and higher. Manually specified
-reqid values therefor must be between 1 and 16379.
+reqid values therefore must be between 1 and 16379.
 </para>
 <para>
 Automatically generated reqids use a range of 0-3 (eg 16380-16383 for the

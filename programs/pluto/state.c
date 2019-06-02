@@ -315,7 +315,7 @@ static void update_state_stat(struct state *st,
 		/*
 		 * When deleting, st->st_connection can be NULL, so we
 		 * cannot look at the policy to determine
-		 * anonimity. We therefor use a scratchpad at
+		 * anonimity. We therefore use a scratchpad at
 		 * st->st_ikev2_anon (a bool) which is copied from
 		 * parent to child states
 		 */

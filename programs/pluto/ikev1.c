@@ -2481,7 +2481,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			 * well.
 			 */
 			suspend_md(md->st, mdp);
-			passert(*mdp == NULL); /* ownership transfered */
+			passert(*mdp == NULL); /* ownership transferred */
 		}
 		return;
 	case STF_IGNORE:

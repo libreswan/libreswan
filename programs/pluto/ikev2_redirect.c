@@ -224,7 +224,7 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 	case AF_INET6:
 	{
 		if (pbs_left(input_pbs) < gw_info.gw_identity_len)
-			return "variable part of payload is smaller than transfered GW Identity Length";
+			return "variable part of payload is smaller than transferred GW Identity Length";
 
 		/* parse address directly to redirect_ip */
 		err_t ugh = initaddr(input_pbs->cur, gw_info.gw_identity_len, af, redirect_ip);
