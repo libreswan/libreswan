@@ -760,6 +760,7 @@ def run_dist_certs():
                         'west-eku-ipsecIKE', 'east-eku-ipsecIKE', # Should work
                         'west-ekuCritical-eku-ipsecIKE', 'east-ekuCritical-eku-ipsecIKE', # Should still work
                         'west-ekuCritical-eku-emailProtection', 'east-ekuCritical-eku-emailProtection', # Should still work
+			'usage-server', 'usage-client', 'usage-both',
                         'nic-noext', 'nic-nourl',
                         'smallkey', 'key4096',
                         'notyetvalid','notvalidanymore',
