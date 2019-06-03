@@ -53,7 +53,8 @@ KVM_USE_NSS_IPSEC_PROFILE ?= true
 KVM_ALL_ALGS ?= false
 KVM_USE_SECCOMP ?= true
 KVM_USE_LABELED_IPSEC ?= true
-KVM_MAKEFLAGS ?= USE_EFENCE=$(KVM_USE_EFENCE) ALL_ALGS=$(KVM_ALL_ALGS) USE_SECCOMP=$(KVM_USE_SECCOMP) USE_LABELED_IPSEC=$(KVM_USE_LABELED_IPSEC) USE_NSS_IPSEC_PROFILE=$(KVM_USE_NSS_IPSEC_PROFILE)
+KVM_SD_RESTART_TYPE=no
+KVM_MAKEFLAGS ?= USE_EFENCE=$(KVM_USE_EFENCE) ALL_ALGS=$(KVM_ALL_ALGS) USE_SECCOMP=$(KVM_USE_SECCOMP) USE_LABELED_IPSEC=$(KVM_USE_LABELED_IPSEC) USE_NSS_IPSEC_PROFILE=$(KVM_USE_NSS_IPSEC_PROFILE) SD_RESTART_TYPE=$(KVM_SD_RESTART_TYPE)
 
 KVM_UID ?= $(shell id -u)
 KVM_GID ?= $(shell id -g $(KVM_GROUP))
@@ -978,9 +979,6 @@ ifeq ($(USE_FIPSCHECK),true)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) install-fipshmac'
 endif
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'sed -i "s/Restart=always/Restart=no/" /lib/systemd/system/ipsec.service'
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'systemctl disable ipsec.service'
-	: $$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'systemctl daemon-reload'
 	$$(KVMSH) --shutdown $(1)
 endef
 
