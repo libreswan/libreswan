@@ -390,7 +390,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 		for (hap = ha; ; hap++) {
 			if (hap == &ha[elemsof(ha)]) {
-				libreswan_log("No acceptible ASN.1 hash blob found for %d in %s",
+				libreswan_log("No acceptable ASN.1 hash blob found for %d in %s",
 					that_authby, context);
 				DBG(DBG_BASE, {
 					size_t dl = min(pbs_left(pbs),
@@ -1662,7 +1662,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 			DBG(DBG_CONTROL, DBG_log("received v2N_REDIRECT in IKE_SA_INIT reply"));
 
 			if (!LIN(POLICY_ACCEPT_REDIRECT_YES, st->st_connection->policy)) {
-				DBG(DBG_CONTROL, DBG_log("ignoring v2N_REDIRECT, we don't allow to be redirected"));
+				DBG(DBG_CONTROL, DBG_log("ignoring v2N_REDIRECT, we don't accept being redirected"));
 				break;
 			}
 
@@ -3631,7 +3631,7 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 			DBG(DBG_CONTROL, DBG_log("received v2N_REDIRECT in IKE_AUTH reply"));
 
 			if (!LIN(POLICY_ACCEPT_REDIRECT_YES, st->st_connection->policy)) {
-				DBG(DBG_CONTROL, DBG_log("ignoring v2N_REDIRECT, we don't allow to be redirected"));
+				DBG(DBG_CONTROL, DBG_log("ignoring v2N_REDIRECT, we don't accept being redirected"));
 				break;
 			}
 

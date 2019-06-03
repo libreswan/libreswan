@@ -55,7 +55,7 @@ extern bool emit_redirect_notification_decoded_dest(
  * notification.
  *
  * @param data that was transferred in v2_REDIRECT Notify
- * @param char* list of addresses we allow to be redirected
+ * @param char* list of addresses we accept being redirected
  * 	  to, specified with conn option accept-redirect-to
  * @param nonce that was send in IKE_SA_INIT request,
  * 	  we need to compare it with nonce data sent

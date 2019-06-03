@@ -1495,7 +1495,7 @@
             make the gateway itself use its internal IP, which is part of the
             <option>--client subnet</option>. Otherwise it will use its
             nearest IP address, which is its public IP address, which is not
-            part of the subnet-subnet IPsec tunnel, and would therefor not get
+            part of the subnet-subnet IPsec tunnel, and would therefore not get
             encrypted.</para>
           </listitem>
         </varlistentry>
@@ -2280,7 +2280,7 @@
           remap="i">ip-address</emphasis></term>
 
           <listitem>
-            <para>If the remote peer has crashed, and therefor did not notify
+            <para>If the remote peer has crashed, and therefore did not notify
             us, we keep sending encrypted traffic, and rejecting all plaintext
             (non-IKE) traffic from that remote peer. The
             <option>--crash</option> brings our end down as well for all the
@@ -2324,7 +2324,7 @@
           <term><emphasis remap="i">ip-address</emphasis></term>
 
           <listitem>
-            <para>If the remote peer has crashed, and therefor did not notify
+            <para>If the remote peer has crashed, and therefore did not notify
             us, we keep sending encrypted traffic, and rejecting all plaintext
             (non-IKE) traffic from that remote peer. The
             <option>--crash</option> brings our end down as well for all the

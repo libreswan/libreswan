@@ -31,7 +31,7 @@ endif
 # The assembly version is incompatible with CONFIG_REGPARM=y The
 # CONFIG_REGPARM defines whether it uses registers or stack to pass
 # arguments and recent kernels (after 2.6.17 or 2.6.18) uses registers
-# unconditionally. Therefor, we disable the assembly version for ix86's
+# unconditionally. Therefore, we disable the assembly version for ix86's
 # completely.
 # #
 # the assembly version expects frame pointers, which are

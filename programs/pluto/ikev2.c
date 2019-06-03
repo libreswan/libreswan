@@ -3206,7 +3206,7 @@ void complete_v2_state_transition(struct state *st,
 			 */
 			if (*mdp != NULL) {
 				suspend_md(st, mdp);
-				passert(*mdp == NULL); /* ownership transfered */
+				passert(*mdp == NULL); /* ownership transferred */
 			}
 			log_stf_suspend(st, result);
 		}

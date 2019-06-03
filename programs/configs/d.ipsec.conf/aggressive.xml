@@ -15,7 +15,7 @@ If the remote system administrator insists on staying irresponsible,
 enable this option.</para>
 
 <para>Aggressive Mode is further limited to only proposals with one
-DH group as there is no room to negotiate the DH group. Therefor
+DH group as there is no room to negotiate the DH group. Therefore
 it is mandatory for Aggressive Mode connections that both
 <emphasis remap='B'>ike=</emphasis> and <emphasis remap='B'>phase2alg=</emphasis>
 options are specified with only one fully specified proposal using one

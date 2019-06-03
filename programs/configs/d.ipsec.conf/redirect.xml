@@ -10,8 +10,8 @@
   <term><emphasis remap='B'>accept-redirect-to</emphasis></term>
   <listitem>
 <para>
-Specify the comma separated list of addresses where we
-allow to be redirected to. Both IPv4 and IPv6 addresses
+Specify the comma separated list of addresses we accept being
+redirected to. Both IPv4 and IPv6 addresses
 are supported as well the FQDNs. The value
 <emphasis remap='B'>%any</emphasis>, as well as not specifying
 any address, signifes that we will redirect to any address
