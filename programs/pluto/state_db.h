@@ -28,6 +28,8 @@ void rehash_state_cookies_in_db(struct state *st);
 void del_state_from_db(struct state *st);
 
 struct state *state_by_serialno(so_serial_t serialno);
+struct ike_sa *ike_sa_by_serialno(so_serial_t serialno);
+struct child_sa *child_sa_by_serialno(so_serial_t serialno);
 
 /*
  * List of all valid states; can be iterated in old-to-new and

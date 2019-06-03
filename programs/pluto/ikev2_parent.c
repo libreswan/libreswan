@@ -83,8 +83,9 @@
 #include "ikev2_message.h"
 #include "ikev2_ts.h"
 #include "ikev2_msgid.h"
-
+#include "state_db.h"
 #include "crypt_symkey.h" /* for release_symkey */
+
 struct mobike {
 	ip_address remoteaddr;
 	uint16_t remoteport;
@@ -4003,23 +4004,18 @@ static stf_status ikev2_rekey_child_resp(struct msg_digest *md)
 	return STF_OK;
 }
 
-static stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
+static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 {
-	struct state *st = md->st;  /* new child state */
-	struct state *rst; /* old child state being rekeyed */
-	stf_status ret = STF_OK; /* if no v2N_REKEY_SA return OK */
-	struct spd_route *spd;
+	passert(child->sa.st_ipsec_pred != SOS_NOBODY);
 
-	if (st->st_ipsec_pred == SOS_NOBODY) {
-		/* this is not rekey quietly return */
-		return ret;
-	}
-
-	rst = state_with_serialno(st->st_ipsec_pred);
-
-	if (rst == NULL) {
-		/* ??? RFC 7296 3.10: this notify requires protocol and SPI! */
-		return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
+	/* old child state being rekeyed */
+	struct child_sa *rchild = child_sa_by_serialno(child->sa.st_ipsec_pred);
+	if (!pexpect(rchild != NULL)) {
+		/*
+		 * Something screwed up - can't even start to rekey a
+		 * CHILD SA when there's no predicessor.
+		 */
+		return false;
 	}
 
 	/*
@@ -4032,19 +4028,19 @@ static stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 		char cib[CONN_INST_BUF];
 
 		DBG_log("#%lu inherit spd, TSi TSr, from \"%s\"%s #%lu",
-			st->st_serialno,
-			rst->st_connection->name,
-			fmt_conn_instance(rst->st_connection, cib),
-			rst->st_serialno);
+			child->sa.st_serialno,
+			rchild->sa.st_connection->name,
+			fmt_conn_instance(rchild->sa.st_connection, cib),
+			rchild->sa.st_serialno);
 	});
 
-	spd = &rst->st_connection->spd;
-	st->st_ts_this = ikev2_end_to_ts(&spd->this);
-	st->st_ts_that = ikev2_end_to_ts(&spd->that);
-	ikev2_print_ts(&st->st_ts_this);
-	ikev2_print_ts(&st->st_ts_that);
+	struct spd_route *spd = &rchild->sa.st_connection->spd;
+	child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
+	child->sa.st_ts_that = ikev2_end_to_ts(&spd->that);
+	ikev2_print_ts(&child->sa.st_ts_this);
+	ikev2_print_ts(&child->sa.st_ts_that);
 
-	return ret;
+	return true;
 }
 
 /* once done use the same function in ikev2_parent_inR1outI2_tail too */
@@ -4761,6 +4757,7 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 
 static stf_status ikev2_child_out_tail(struct msg_digest *md)
 {
+	struct child_sa *child = pexpect_child_sa(md->st);
 	struct state *st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 	stf_status ret;
@@ -4796,7 +4793,11 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		break;
 	default:
 		/* ??? which states are actually correct? */
-		RETURN_STF_FAILURE_STATUS(ikev2_rekey_child_copy_ts(md));
+		if (child->sa.st_ipsec_pred != SOS_NOBODY &&
+		    !ikev2_rekey_child_copy_ts(child)) {
+			/* Should "just work", not working is a screw up */
+			return STF_INTERNAL_ERROR;
+		}
 		ret = ikev2_child_sa_respond(md, &sk.pbs,
 					     ISAKMP_v2_CREATE_CHILD_SA);
 	}

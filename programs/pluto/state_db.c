@@ -91,6 +91,16 @@ struct state *state_by_serialno(so_serial_t serialno)
 	return NULL;
 }
 
+struct ike_sa *ike_sa_by_serialno(so_serial_t serialno)
+{
+	return pexpect_ike_sa(state_by_serialno(serialno));
+}
+
+struct child_sa *child_sa_by_serialno(so_serial_t serialno)
+{
+	return pexpect_child_sa(state_by_serialno(serialno));
+}
+
 /*
  * Hash table indexed by just the IKE SPIi.
  */
