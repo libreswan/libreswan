@@ -554,7 +554,7 @@ struct state *new_v1_rstate(struct msg_digest *md)
 				     md->hdr.isa_ike_spis.initiator,
 				     ike_responder_spi(&md->sender),
 				     IKE_SA);
-	update_ike_endpoints(st, md);
+	update_ike_endpoints(pexpect_ike_sa(st), md);
 	return st;
 }
 
@@ -2612,30 +2612,28 @@ void merge_quirks(struct state *st, const struct msg_digest *md)
  * The probe bool is used to signify we are answering a MOBIKE
  * probe request (basically a informational without UPDATE_ADDRESS
  */
-void update_ike_endpoints(struct state *st,
+void update_ike_endpoints(struct ike_sa *ike,
 			  const struct msg_digest *md)
 {
 	/* caller must ensure we are not behind NAT */
-	st->st_remoteaddr = md->sender;
-	st->st_remoteport = hportof(&md->sender);
-	st->st_localaddr = md->iface->ip_addr;
-	st->st_localport = md->iface->port;
-	st->st_interface = md->iface;
+	ike->sa.st_remoteaddr = md->sender;
+	ike->sa.st_remoteport = hportof(&md->sender);
+	ike->sa.st_localaddr = md->iface->ip_addr;
+	ike->sa.st_localport = md->iface->port;
+	ike->sa.st_interface = md->iface;
 }
 
 /*
  * We have successfully decrypted this packet, so we can update
  * the remote IP / port
  */
-bool update_mobike_endpoints(struct state *pst,
-				const struct msg_digest *md)
+bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 {
-	struct connection *c = pst->st_connection;
+	struct connection *c = ike->sa.st_connection;
 	int af = addrtypeof(&md->iface->ip_addr);
 	ipstr_buf b;
 	ip_address *old_addr, *new_addr;
 	uint16_t old_port, new_port;
-	bool ret = FALSE;
 
 	/*
 	 * AA_201705 is this the right way to find Child SA(s)?
@@ -2643,97 +2641,106 @@ bool update_mobike_endpoints(struct state *pst,
 	 * would it work if the Child SA connection is different from IKE SA?
 	 * for now just do this one connection, later on loop over all Child SAs
 	 */
-	struct state *cst = state_with_serialno(c->newest_ipsec_sa);
-	const bool msg_r = is_msg_response(md); /* MOBIKE inititor */
-
+	struct child_sa *child = child_sa_by_serialno(c->newest_ipsec_sa);
 
 	/* check for all conditions before updating IPsec SA's */
 	if (af != addrtypeof(&c->spd.that.host_addr)) {
 		libreswan_log("MOBIKE: AF change switching between v4 and v6 not supported");
-		return ret;
+		return false;
 	}
 
-	passert(cst->st_connection == pst->st_connection);
+	passert(child->sa.st_connection == ike->sa.st_connection);
 
-	if (msg_r) {
-		/* MOBIKE initiator */
-		old_addr = &pst->st_localaddr;
-		old_port = pst->st_localport;
+	enum message_role md_role = v2_msg_role(md);
+	switch (md_role) {
+	case MESSAGE_RESPONSE:
+		/* MOBIKE inititor processing response */
+		old_addr = &ike->sa.st_localaddr;
+		old_port = ike->sa.st_localport;
 
-		cst->st_mobike_localaddr = pst->st_mobike_localaddr;
-		cst->st_mobike_localport = pst->st_mobike_localport;
-		cst->st_mobike_host_nexthop = pst->st_mobike_host_nexthop;
+		child->sa.st_mobike_localaddr = ike->sa.st_mobike_localaddr;
+		child->sa.st_mobike_localport = ike->sa.st_mobike_localport;
+		child->sa.st_mobike_host_nexthop = ike->sa.st_mobike_host_nexthop;
 
-		new_addr = &pst->st_mobike_localaddr;
-		new_port = pst->st_mobike_localport;
-	} else {
-		/* MOBIKE responder */
-		old_addr = &pst->st_remoteaddr;
-		old_port = pst->st_remoteport;
+		new_addr = &ike->sa.st_mobike_localaddr;
+		new_port = ike->sa.st_mobike_localport;
+		break;
+	case MESSAGE_REQUEST:
+		/* MOBIKE responder processing request */
+		old_addr = &ike->sa.st_remoteaddr;
+		old_port = ike->sa.st_remoteport;
 
-		cst->st_mobike_remoteaddr = md->sender;
-		cst->st_mobike_remoteport = hportof(&md->sender);
-		pst->st_mobike_remoteaddr = md->sender;
-		pst->st_mobike_remoteport = hportof(&md->sender);
+		child->sa.st_mobike_remoteaddr = md->sender;
+		child->sa.st_mobike_remoteport = hportof(&md->sender);
+		ike->sa.st_mobike_remoteaddr = md->sender;
+		ike->sa.st_mobike_remoteport = hportof(&md->sender);
 
-		new_addr = &pst->st_mobike_remoteaddr;
-		new_port = pst->st_mobike_remoteport;
+		new_addr = &ike->sa.st_mobike_remoteaddr;
+		new_port = ike->sa.st_mobike_remoteport;
+		break;
+	default:
+		bad_case(md_role);
 	}
 
 	char buf[256];
 	ipstr_buf old;
 	ipstr_buf new;
 	snprintf(buf, sizeof(buf), "MOBIKE update %s address %s:%u -> %s:%u",
-			msg_r ? "local" : "remote",
+			md_role == MESSAGE_RESPONSE ? "local" : "remote",
 			sensitive_ipstr(old_addr, &old),
 			old_port,
 			sensitive_ipstr(new_addr, &new), new_port);
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu pst=#%lu %s", cst->st_serialno,
-					pst->st_serialno, buf));
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu pst=#%lu %s", child->sa.st_serialno,
+					ike->sa.st_serialno, buf));
 
 	if (sameaddr(old_addr, new_addr) && new_port == old_port) {
-		if (!msg_r) {
+		if (md_role == MESSAGE_REQUEST) {
 			/* on responder NAT could hide end-to-end change */
 			libreswan_log("MOBIKE success no change to kernel SA same IP address ad port  %s:%u",
 						sensitive_ipstr(old_addr, &b), old_port);
 
-			return TRUE;
+			return true;
 		}
 	}
 
-	if (!migrate_ipsec_sa(cst)) {
+	if (!migrate_ipsec_sa(&child->sa)) {
 		libreswan_log("%s FAILED", buf);
-		return ret;
+		return false;
 	}
 
 	libreswan_log(" success %s", buf);
 
-	if (msg_r) {
-		/* MOBIKE initiator */
-		c->spd.this.host_addr = cst->st_mobike_localaddr;
-		c->spd.this.host_port = cst->st_mobike_localport;
-		c->spd.this.host_nexthop  = cst->st_mobike_host_nexthop;
+	switch (md_role) {
+	case MESSAGE_RESPONSE:
+		/* MOBIKE initiator processing response */
+		c->spd.this.host_addr = child->sa.st_mobike_localaddr;
+		c->spd.this.host_port = child->sa.st_mobike_localport;
+		c->spd.this.host_nexthop  = child->sa.st_mobike_host_nexthop;
 
-		pst->st_localaddr = cst->st_localaddr = md->iface->ip_addr;
-		pst->st_localport = cst->st_localport = md->iface->port;
-		pst->st_interface = cst->st_interface = md->iface;
-	} else {
-		/* MOBIKE responder */
+		ike->sa.st_localaddr = child->sa.st_localaddr = md->iface->ip_addr;
+		ike->sa.st_localport = child->sa.st_localport = md->iface->port;
+		ike->sa.st_interface = child->sa.st_interface = md->iface;
+		break;
+	case MESSAGE_REQUEST:
+		/* MOBIKE responder processing request */
 		c->spd.that.host_addr = md->sender;
 		c->spd.that.host_port = hportof(&md->sender);
 
 		/* for the consistency, correct output in ipsec status */
-		cst->st_remoteaddr = pst->st_remoteaddr = md->sender;
-		cst->st_remoteport = pst->st_remoteport = hportof(&md->sender);
-		cst->st_localaddr = pst->st_localaddr = md->iface->ip_addr;
-		cst->st_localport = pst->st_localport = md->iface->port;
-		cst->st_interface = pst->st_interface = md->iface;
+		child->sa.st_remoteaddr = ike->sa.st_remoteaddr = md->sender;
+		child->sa.st_remoteport = ike->sa.st_remoteport = hportof(&md->sender);
+		child->sa.st_localaddr = ike->sa.st_localaddr = md->iface->ip_addr;
+		child->sa.st_localport = ike->sa.st_localport = md->iface->port;
+		child->sa.st_interface = ike->sa.st_interface = md->iface;
+		break;
+	default:
+		bad_case(md_role);
 	}
 
 	/* reset liveness */
-	pst->st_pend_liveness = FALSE;
-	pst->st_last_liveness = monotime_epoch;
+	ike->sa.st_pend_liveness = FALSE;
+	ike->sa.st_last_liveness = monotime_epoch;
 
 	delete_oriented_hp(c); /* hp list may have changed */
 	if (!orient(c)) {
@@ -2741,17 +2748,17 @@ bool update_mobike_endpoints(struct state *pst,
 	}
 	connect_to_host_pair(c); /* re-create hp listing */
 
-	if (msg_r) {
-		/* MOBIKE initiator */
-		migration_up(cst->st_connection, cst);
-		if (dpd_active_locally(cst) && cst->st_liveness_event == NULL) {
+	if (md_role == MESSAGE_RESPONSE) {
+		/* MOBIKE initiator processing response */
+		migration_up(child->sa.st_connection, &child->sa);
+		if (dpd_active_locally(&child->sa) && child->sa.st_liveness_event == NULL) {
 			DBG(DBG_DPD, DBG_log("dpd re-enabled after mobike, scheduling ikev2 liveness checks"));
-			deltatime_t delay = deltatime_max(cst->st_connection->dpd_delay, deltatime(MIN_LIVENESS));
-			event_schedule(EVENT_v2_LIVENESS, delay, cst);
+			deltatime_t delay = deltatime_max(child->sa.st_connection->dpd_delay, deltatime(MIN_LIVENESS));
+			event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 void set_state_ike_endpoints(struct state *st,

@@ -2366,7 +2366,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 */
 		/* going to switch to child st. before that update parent */
 		if (!LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))
-			update_ike_endpoints(&ike->sa, md);
+			update_ike_endpoints(ike, md);
 
 		/* bit further processing of create CREATE_CHILD_SA exchange */
 
@@ -3351,18 +3351,6 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 	*dest = clone_in_pbs_left_as_chunk(nonce_pbs, "nonce");
 	passert(len == dest->len);
 	return v2N_NOTHING_WRONG;
-}
-
-/*
- * The role of a received (from network) message. RFC 7296 #3.1
- * "message is a response to a message containing the same Message ID."
- *
- * Separate from this is IKE role ORIGINAL_INITIATOR or ORIGINAL_RESPONDER
- * RFC 7296 2.2
- */
-bool is_msg_response(const struct msg_digest *md)
-{
-	return (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
 }
 
 void lswlog_v2_stf_status(struct lswlog *buf, unsigned status)

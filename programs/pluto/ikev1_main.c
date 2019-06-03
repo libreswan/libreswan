@@ -2208,16 +2208,18 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 		.policy = POLICY_IKE_FRAG_FORCE, 	/* for should_fragment_ike_msg() */
 	};
 
-	struct state fake_state = {
-		.st_serialno = SOS_NOBODY,
-		.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
-		.st_state = finite_states[STATE_UNDEFINED],
+	struct ike_sa fake_ike = {
+		.sa = {
+			.st_serialno = SOS_NOBODY,
+			.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
+			.st_state = finite_states[STATE_UNDEFINED],
+		},
 	};
 
 	passert(md != NULL);
 
-	update_ike_endpoints(&fake_state, md);
-	send_notification(&fake_state, type, NULL, 0,
+	update_ike_endpoints(&fake_ike, md);
+	send_notification(&fake_ike.sa, type, NULL, 0,
 			md->hdr.isa_ike_initiator_spi.bytes, md->hdr.isa_ike_responder_spi.bytes,
 			PROTO_ISAKMP);
 }

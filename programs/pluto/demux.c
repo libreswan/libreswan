@@ -653,6 +653,8 @@ enum ike_version msg_ike_version(const struct msg_digest *md)
  *       default: bad_case(role);
  *       }
  *
+ * Separate from this is IKE SA role ORIGINAL_INITIATOR or
+ * ORIGINAL_RESPONDER RFC 7296 2.2.
  */
 enum message_role v2_msg_role(const struct msg_digest *md)
 {

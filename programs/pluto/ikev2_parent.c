@@ -926,7 +926,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	struct state *st = &ike->sa;
 	/* set up new state */
 	initialize_new_state(st, c, policy, 0, null_fd);
-	update_ike_endpoints(st, md);
+	update_ike_endpoints(ike, md);
 	passert(st->st_ike_version == IKEv2);
 	passert(st->st_state->kind == STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
@@ -2738,7 +2738,7 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	/* going to switch to child st. before that update parent */
 	if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
-		update_ike_endpoints(pst, md);
+		update_ike_endpoints(ike, md);
 
 	nat_traversal_change_port_lookup(md, st); /* shouldn't this be pst? */
 
@@ -4938,6 +4938,7 @@ static bool mobike_check_established(const struct state *st)
 static bool process_mobike_resp(struct msg_digest *md)
 {
 	struct state *st = md->st;
+	struct ike_sa *ike = ike_sa(st);
 	bool may_mobike = mobike_check_established(st);
 	/* ??? there is currently no need for separate natd_[sd] variables */
 	bool natd_s = FALSE;
@@ -4969,11 +4970,11 @@ static bool process_mobike_resp(struct msg_digest *md)
 	/* use of bitwise & on bool values is correct but odd */
 	bool ret  = natd_s & natd_d;
 
-	if (ret && !update_mobike_endpoints(st, md)) {
+	if (ret && !update_mobike_endpoints(ike, md)) {
 		/* IPs already updated from md */
 		return FALSE;
 	}
-	update_ike_endpoints(st, md); /* update state sender so we can find it for IPsec SA */
+	update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
 
 	return ret;
 }
@@ -4984,6 +4985,7 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 {
 	struct payload_digest *ntfy;
 	struct state *st = md->st;
+	struct ike_sa *ike = ike_sa(st);
 	bool may_mobike = mobike_check_established(st);
 	bool ntfy_update_sa = FALSE;
 	ip_address redirect_ip;
@@ -5072,9 +5074,9 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 		if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 			libreswan_log("Ignoring MOBIKE UPDATE_SA since we are behind NAT");
 		} else {
-			if (!update_mobike_endpoints(st, md))
+			if (!update_mobike_endpoints(ike, md))
 				*ntfy_natd = FALSE;
-			update_ike_endpoints(st, md); /* update state sender so we can find it for IPsec SA */
+			update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
 		}
 	}
 
