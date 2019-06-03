@@ -1097,6 +1097,8 @@ void delete_state(struct state *st)
 	st->st_connection = NULL;	/* c will be discarded */
 	connection_discard(c);
 
+	v2_msgid_free(st);
+
 	change_state(st, STATE_UNDEFINED);
 
 	release_whack(st);

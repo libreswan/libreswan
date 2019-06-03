@@ -32,11 +32,21 @@ enum message_role;
  * An additional bonus is that the old v2_INVALID_MSGID ((uint32_t)-1)
  * will not match -1 - cross checking code should only compare valid
  * MSGIDs.
+ *
+ * While .PENDING is probably only used by the initiator code, store
+ * it in the window so that struct contains everything.
  */
+
+struct v2_msgid_pending {
+	so_serial_t st_serialno;
+//	enum initiate_new_exchagnge send_type;
+	struct v2_msgid_pending *next;
+};
 
 struct v2_msgid_window {
 	intmax_t sent;
 	intmax_t recv;
+	struct v2_msgid_pending *pending;
 };
 
 struct v2_msgid_windows {
@@ -63,6 +73,7 @@ struct v2_msgid_wip {
 
 void v2_msgid_init_ike(struct ike_sa *ike);
 void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child);
+void v2_msgid_free(struct state *st);
 
 void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
 			      const struct msg_digest *md);

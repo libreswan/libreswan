@@ -157,12 +157,6 @@ struct ipsec_proto_info {
 	uint64_t add_time;
 };
 
-struct initiate_list {
-	so_serial_t st_serialno;
-//	enum initiate_new_exchagnge send_type;
-	struct  initiate_list *next;
-};
-
 struct ike_frag {
 	struct ike_frag *next;
 	struct msg_digest *md;
@@ -438,7 +432,6 @@ struct state {
 
 	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
 	chunk_t st_firstpacket_him;             /* copy of his message 1 (for hashing) */
-	struct initiate_list *send_next_ix;
 
 	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */

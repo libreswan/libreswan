@@ -494,10 +494,21 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 	}
 }
 
+void v2_msgid_free(struct state *st)
+{
+	/* find the end; small list? */
+	struct v2_msgid_pending **pp = &st->st_v2_msgid_windows.initiator.pending;
+	while (*pp != NULL) {
+		struct v2_msgid_pending *tbd = *pp;
+		*pp = tbd->next;
+		pfree(tbd);
+	}
+}
+
 bool child_added_to_ike_send_list(struct child_sa *child, struct ike_sa *ike)
 {
-	intmax_t unack = (ike->sa.st_v2_msgid_windows.initiator.sent -
-			  ike->sa.st_v2_msgid_windows.initiator.recv);
+	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
+	intmax_t unack = (initiator->sent - initiator->recv);
 	if (unack < ike->sa.st_connection->ike_window) {
 		dbg_v2_msgid(ike, &child->sa,
 			     "sending new exchange using IKE SA (unack %jd)",
@@ -508,11 +519,11 @@ bool child_added_to_ike_send_list(struct child_sa *child, struct ike_sa *ike)
 	delete_event(&child->sa);
 	event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, &child->sa);
 	/* find the end; small list? */
-	struct initiate_list **pp = &ike->sa.send_next_ix;
+	struct v2_msgid_pending **pp = &initiator->pending;
 	while (*pp != NULL)
 		pp = &(*pp)->next;
 	/* append */
-	struct initiate_list new =  {
+	struct v2_msgid_pending new =  {
 		.st_serialno = child->sa.st_serialno,
 	};
 	*pp = clone_thing(new, "struct initiate_list");
@@ -521,29 +532,23 @@ bool child_added_to_ike_send_list(struct child_sa *child, struct ike_sa *ike)
 
 void schedule_next_send(struct ike_sa *ike)
 {
-	for (intmax_t unack = (ike->sa.st_v2_msgid_windows.initiator.sent -
-			       ike->sa.st_v2_msgid_windows.initiator.recv);
-	     unack < ike->sa.st_connection->ike_window; unack++) {
-		if (ike->sa.send_next_ix == NULL) {
-			break;
-		}
-		/* remove next child so_serial_t from list */
-		so_serial_t child_so = ike->sa.send_next_ix->st_serialno;
-		{
-			struct initiate_list *p = ike->sa.send_next_ix;
-			ike->sa.send_next_ix = p->next;
-			pfree(p);
-		}
-		/* find that child */
-		struct state *child = state_with_serialno(child_so);
-		if (child == NULL) {
+	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
+	for (intmax_t unack = (initiator->sent - initiator->recv);
+	     unack < ike->sa.st_connection->ike_window && initiator->pending != NULL;
+	     unack++) {
+		/* make a copy of head, and drop from list */
+		struct v2_msgid_pending pending = *initiator->pending;
+		pfree(initiator->pending);
+		initiator->pending = pending.next;
+		/* find that state */
+		struct state *st = state_with_serialno(pending.st_serialno);
+		if (st == NULL) {
 			dbg_v2_msgid(ike, NULL,
 				     "can't resume CHILD SA #%lu exchange as child disappeared (unack %jd)",
-				     child_so, unack);
+				     pending.st_serialno, unack);
 			continue;
 		}
-		dbg_v2_msgid(ike, child, "scheduling CHILD SA send using IKE SA (unack %jd)", unack);
-		event_force(EVENT_v2_SEND_NEXT_IKE, child);
-		unack++;
+		dbg_v2_msgid(ike, st, "scheduling CHILD SA send using IKE SA (unack %jd)", unack);
+		event_force(EVENT_v2_SEND_NEXT_IKE, st);
 	}
 }
