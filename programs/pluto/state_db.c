@@ -255,10 +255,11 @@ static void del_from_ike_spi_tables(struct state *st)
 			     &st->st_ike_initiator_spi_hash_entry);
 }
 
-static bool state_plausable(struct state *st, enum ike_version ike_version,
-			    so_serial_t clonedfrom,
+static bool state_plausable(struct state *st,
+			    enum ike_version ike_version,
+			    const so_serial_t *clonedfrom,
 			    const msgid_t *v1_msgid,
-			    enum sa_role *role)
+			    const enum sa_role *role)
 {
 	if (st->st_ike_version != ike_version) {
 		return false;
@@ -269,32 +270,16 @@ static bool state_plausable(struct state *st, enum ike_version ike_version,
 	if (role != NULL && st->st_sa_role != *role) {
 		return false;
 	}
-	switch (clonedfrom) {
-	case SOS_NOBODY:
-		if (!IS_IKE_SA(st)) {
-			return false;
-		}
-		break;
-	case SOS_IGNORE:
-		break;
-	case SOS_SOMEBODY:
-		if (!IS_CHILD_SA(st)) {
-			return false;
-		}
-		break;
-	default:
-		if (st->st_clonedfrom != clonedfrom) {
-			return false;
-		}
-		break;
+	if (clonedfrom != NULL && st->st_clonedfrom != *clonedfrom) {
+		return false;
 	}
 	return true;
 }
 
 struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
-					 so_serial_t clonedfrom,
+					 const so_serial_t *clonedfrom, /*optional*/
 					 const msgid_t *v1_msgid, /*optional*/
-					 enum sa_role *role, /*optional*/
+					 const enum sa_role *role, /*optional*/
 					 const ike_spi_t *ike_initiator_spi,
 					 const char *name)
 {
@@ -318,9 +303,9 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 }
 
 struct state *state_by_ike_spis(enum ike_version ike_version,
-				so_serial_t clonedfrom,
+				const so_serial_t *clonedfrom,
 				const msgid_t *v1_msgid, /*optional*/
-				enum sa_role *sa_role, /*optional*/
+				const enum sa_role *sa_role, /*optional*/
 				const ike_spis_t *ike_spis,
 				state_by_predicate *predicate,
 				void *predicate_context,

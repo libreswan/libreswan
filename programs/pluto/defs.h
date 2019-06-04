@@ -32,9 +32,6 @@
 typedef unsigned long so_serial_t;
 #define SOS_NOBODY      0       /* null serial number */
 #define SOS_FIRST       1       /* first normal serial number */
-/* for wildcards */
-#define SOS_SOMEBODY	((unsigned long) -1)
-#define SOS_IGNORE	((unsigned long) -2)
 
 enum sa_type {
 #define SA_TYPE_FLOOR 0

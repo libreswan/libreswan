@@ -725,7 +725,8 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 	}
 
 	/* Any children? */
-	struct state *st = state_by_ike_spis(IKEv2, ike->sa.st_serialno,
+	struct state *st = state_by_ike_spis(IKEv2,
+					     &ike->sa.st_serialno,
 					     NULL/* ignore v1 msgid */,
 					     NULL/* ignore role */,
 					     &ike->sa.st_ike_spis,
@@ -795,7 +796,7 @@ static void flush_incomplete_children(struct state *pst)
 		return;
 
 	state_by_ike_spis(pst->st_ike_version,
-			  pst->st_serialno,
+			  &pst->st_serialno,
 			  NULL /* ignore MSGID */,
 			  NULL /* ignore role */,
 			  &pst->st_ike_spis,
@@ -1580,7 +1581,8 @@ void for_each_state(void (*f)(struct state *, void *data), void *data,
 
 struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 {
-	return state_by_ike_spis(IKEv1, SOS_IGNORE/*clonedfrom*/,
+	return state_by_ike_spis(IKEv1,
+				 NULL/*ignore-clonedfrom*/,
 				 &msgid/*check v1 msgid*/,
 				 NULL/*ignore-role*/,
 				 ike_spis, NULL, NULL, __func__);
@@ -1589,7 +1591,8 @@ struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 				    msgid_t msgid)
 {
-	return state_by_ike_initiator_spi(IKEv1, SOS_IGNORE,
+	return state_by_ike_initiator_spi(IKEv1,
+					  NULL/*ignore-clonedfrom*/,
 					  &msgid/*check v1 msgid*/,
 					  NULL/*ignore-role*/,
 					  ike_initiator_spi, __func__);
@@ -1601,8 +1604,9 @@ struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 struct ike_sa *find_v2_ike_sa(const ike_spis_t *ike_spis,
 			      enum sa_role local_ike_role)
 {
+	const so_serial_t sos_nobody = SOS_NOBODY;
 	struct state *st = state_by_ike_spis(IKEv2,
-					     SOS_NOBODY/*clonedfrom*/,
+					     &sos_nobody/*clonedfrom: IKE SA*/,
 					     NULL/*ignore v1 msgid*/,
 					     &local_ike_role,
 					     ike_spis, NULL, NULL, __func__);
@@ -1618,7 +1622,9 @@ struct ike_sa *find_v2_ike_sa(const ike_spis_t *ike_spis,
 struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi,
 					       enum sa_role local_ike_role)
 {
-	struct state *st = state_by_ike_initiator_spi(IKEv2, SOS_NOBODY/*IKE_SA*/,
+	const so_serial_t sos_nobody = SOS_NOBODY;
+	struct state *st = state_by_ike_initiator_spi(IKEv2,
+						      &sos_nobody/*clonedfrom: IKE_SA*/,
 						      NULL/*ignore v1 msgid*/,
 						      &local_ike_role,
 						      ike_initiator_spi, __func__);
@@ -1648,7 +1654,8 @@ struct state *find_v2_sa_by_initiator_mip(struct ike_sa *ike, const msgid_t msgi
 	struct request_filter filter = {
 		.msgid = msgid,
 	};
-	struct state *st = state_by_ike_spis(IKEv2, SOS_IGNORE/*see predicate*/,
+	struct state *st = state_by_ike_spis(IKEv2,
+					     NULL/*ignore-clonedfrom;see predicate*/,
 					     NULL/*ignore v1 msgid*/,
 					     NULL/*ignore-role*/,
 					     &ike->sa.st_ike_spis,
@@ -1670,7 +1677,8 @@ struct state *find_v2_sa_by_responder_mip(struct ike_sa *ike, const msgid_t msgi
 	struct request_filter filter = {
 		.msgid = msgid,
 	};
-	struct state *st = state_by_ike_spis(IKEv2, SOS_IGNORE/*see predicate*/,
+	struct state *st = state_by_ike_spis(IKEv2,
+					     NULL/*ignore-clonedfrom;see predicate*/,
 					     NULL/*ignore v1 msgid*/,
 					     NULL/*ignore-role*/,
 					     &ike->sa.st_ike_spis,
@@ -1749,7 +1757,8 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 		.protoid = protoid,
 		.outbound_spi = outbound_spi,
 	};
-	struct state *st = state_by_ike_spis(IKEv2, SOS_SOMEBODY/*child*/,
+	struct state *st = state_by_ike_spis(IKEv2,
+					     &ike->sa.st_serialno,
 					     NULL/* ignore v1 msgid*/,
 					     NULL/*ignore-role*/,
 					     &ike->sa.st_ike_spis,
@@ -1839,7 +1848,8 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 	struct v1_msgid_filter filter = {
 		.msgid = msgid,
 	};
-	return state_by_ike_spis(IKEv1, SOS_IGNORE,
+	return state_by_ike_spis(IKEv1,
+				 NULL/*ignore-clonedfrom*/,
 				 NULL/*ignore v1 msgid; see predicate*/,
 				 NULL/*ignore-role*/,
 				 ike_spis, v1_msgid_predicate,
@@ -2866,7 +2876,8 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 		.from = from,
 		.to = to,
 	};
-	state_by_ike_spis(IKEv2, from->sa.st_serialno,
+	state_by_ike_spis(IKEv2,
+			  &from->sa.st_serialno,
 			  NULL/*ignore v1 msgid*/,
 			  NULL/*ignore-sa-role*/,
 			  &from->sa.st_ike_spis,
@@ -2903,7 +2914,8 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	struct delete_filter delete_filter = {
 		.v2_responder_state = v2_responder_state,
 	};
-	state_by_ike_spis(pst->st_ike_version, pst->st_serialno,
+	state_by_ike_spis(pst->st_ike_version,
+			  &pst->st_serialno,
 			  NULL/*ignore v1 msgid*/,
 			  NULL/*ignore-sa-role*/,
 			  &pst->st_ike_spis,
