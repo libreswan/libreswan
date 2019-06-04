@@ -744,7 +744,7 @@ void fire_timer_photon_torpedo(struct event **evp,
 }
 
 /*
- * Schedule an event now.
+ * Schedule a resume event now.
  *
  * Unlike pluto_event_add(), it can't be canceled, can only run once,
  * doesn't show up in the event list, and leaks when the event-loop
@@ -754,22 +754,35 @@ void fire_timer_photon_torpedo(struct event **evp,
  * cleans up after the event has run.
  */
 
-struct now_event {
-	pluto_event_now_cb *ne_callback;
-	void *ne_context;
-	const char *ne_name;
-	struct event *ne_event;
-	so_serial_t ne_serialno;
+struct resume_event {
+	so_serial_t serialno;
+	resume_cb *callback;
+	void *context;
+	const char *name;
+	struct event *event;
 };
 
-static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
-				  short events UNUSED,
-				  void *arg)
+static void resume(const char *name, so_serial_t serialno,
+		   resume_cb *callback, void *context)
 {
-	struct now_event *ne = (struct now_event *)arg;
-	dbg("start executing now-event %s for #%lu",
-	    ne->ne_name, ne->ne_serialno);
+	dbg("start executing resume %s for #%lu", name, serialno);
+	struct state *st = state_with_serialno(serialno);
+	if (st == NULL) {
+		callback(NULL, NULL, context);
+	} else {
+		struct msg_digest *md = unsuspend_md(st);
+		so_serial_t old_state = push_cur_state(st);
+		callback(st, &md, context);
+		release_any_md(&md);
+		pop_cur_state(old_state);
+	}
+	dbg("stop executing resume %s for #%lu", name, serialno);
+}
 
+static void resume_handler(evutil_socket_t fd UNUSED,
+			   short events UNUSED, void *arg)
+{
+	struct resume_event *e = (struct resume_event *)arg;
 	/*
 	 * At one point, .ne_event was was being set after the event
 	 * was enabled.  With multiple threads this resulted in a race
@@ -777,42 +790,94 @@ static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
 	 * pexpect() followed by the passert() demonstrated this - the
 	 * pexpect() failed yet the passert() passed.
 	 */
-	pexpect(ne->ne_event != NULL);
-	struct state *st = state_with_serialno(ne->ne_serialno);
-	if (st == NULL) {
-		ne->ne_callback(NULL, NULL, ne->ne_context);
-	} else {
-		struct msg_digest *md = unsuspend_md(st);
-		so_serial_t old_state = push_cur_state(st);
-		ne->ne_callback(st, &md, ne->ne_context);
-		release_any_md(&md);
-		pop_cur_state(old_state);
-	}
-	passert(ne->ne_event != NULL);
-	dbg("stop executing now-event %s for #%lu",
-	    ne->ne_name, ne->ne_serialno);
-	event_free(ne->ne_event);
-	pfree(ne);
+	pexpect(e->event != NULL);
+	resume(e->name, e->serialno, e->callback, e->context);
+	passert(e->event != NULL);
+	event_free(e->event);
+	pfree(e);
 }
 
-void pluto_event_now(const char *name, so_serial_t serialno,
-		     pluto_event_now_cb *callback, void *context)
+void schedule_resume(const char *name, so_serial_t serialno,
+		     resume_cb *callback, void *context)
 {
-	struct now_event *ne = alloc_thing(struct now_event, name);
-	ne->ne_callback = callback;
-	ne->ne_context = context;
-	ne->ne_name = name;
-	ne->ne_serialno = serialno;
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("scheduling now-event %s for #%lu",
-		    ne->ne_name, ne->ne_serialno));
+	pexpect(serialno != SOS_NOBODY);
+	struct resume_event tmp = {
+		.serialno = serialno,
+		.callback = callback,
+		.context = context,
+		.name = name,
+	};
+	struct resume_event *e = clone_thing(tmp, name);
+	dbg("scheduling resume %s for #%lu",
+	    e->name, e->serialno);
 
 	/*
 	 * Everything set up; arm and fire the timer's photon torpedo.
 	 * Event may have even run on another thread before the below
 	 * call returns.
 	 */
-	fire_timer_photon_torpedo(&ne->ne_event, schedule_event_now_cb, ne,
+	fire_timer_photon_torpedo(&e->event, resume_handler, e,
+				  deltatime(0)/*now*/);
+}
+
+/*
+ * Schedule a callback now.
+ */
+
+struct callback_event {
+	so_serial_t serialno;
+	callback_cb *callback;
+	void *context;
+	const char *name;
+	struct event *event;
+};
+
+static void callback_handler(evutil_socket_t fd UNUSED,
+			     short events UNUSED, void *arg)
+{
+	struct callback_event *e = (struct callback_event *)arg;
+	/*
+	 * At one point, .event was was being set after the event was
+	 * enabled.  With multiple threads this resulted in a race
+	 * where the event ran before .event was set.  The pexpect()
+	 * followed by the passert() demonstrated this - the pexpect()
+	 * failed yet the passert() passed.
+	 */
+	pexpect(e->event != NULL);
+	dbg("start executing callback %s (#%lu)", e->name, e->serialno);
+	/* serialno can be SOS_NOBODY */
+	struct state *st = state_with_serialno(e->serialno);
+	if (st == NULL) {
+		e->callback(NULL, e->context);
+	} else {
+		so_serial_t old = push_cur_state(st);
+		e->callback(st, e->context);
+		pop_cur_state(old);
+	}
+	dbg("stop executing callback %s (#%lu)", e->name, e->serialno);
+	passert(e->event != NULL);
+	event_free(e->event);
+	pfree(e);
+
+}
+
+extern void schedule_callback(const char *name, so_serial_t serialno,
+			      callback_cb *callback, void *context)
+{
+	struct callback_event tmp = {
+		.serialno = serialno,
+		.callback = callback,
+		.context = context,
+		.name = name,
+	};
+	struct callback_event *e = clone_thing(tmp, name);
+	dbg("scheduling callback %s (#%lu)", e->name, e->serialno);
+	/*
+	 * Everything set up; arm and fire the timer's photon torpedo.
+	 * Event may have even run on another thread before the below
+	 * call returns.
+	 */
+	fire_timer_photon_torpedo(&e->event, callback_handler, e,
 				  deltatime(0)/*now*/);
 }
 

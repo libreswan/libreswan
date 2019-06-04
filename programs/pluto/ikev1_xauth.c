@@ -1155,6 +1155,7 @@ struct xauth_immediate_context {
 	char *name;
 };
 
+static resume_cb xauth_immediate_callback;
 static void xauth_immediate_callback(struct state *st,
 				     struct msg_digest **mdp,
 				     void *arg)
@@ -1177,7 +1178,7 @@ static void xauth_immediate(const char *name, const struct state *st, bool succe
 	xic->success = success;
 	xic->serialno = st->st_serialno;
 	xic->name = clone_str(name, "xauth next name");
-	pluto_event_now("xauth immediate", st->st_serialno,
+	schedule_resume("xauth immediate", st->st_serialno,
 			xauth_immediate_callback, xic);
 }
 

@@ -1,8 +1,9 @@
-/* get-next-event loop
+/* get-next-event loop, for libreswan
+ *
  * Copyright (C) 1998-2001,2013  D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -112,29 +113,47 @@ extern bool should_fragment_ike_msg(struct state *st, size_t len,
 extern struct event_base *get_pluto_event_base(void);
 
 /*
- * Schedule an event with no timeout.
+ * Schedule an event (with no timeout) to resume a suspended state.
+ * SERIALNO (so_serial_t) is used to identify the state because the
+ * state object may not be directly accessable (as happens with worker
+ * threads).
  *
- * Typically used to resume processing of a state on the main thread.
- * For instance, by a worker thread to transfer control back to the
- * main thread (this is why so_serial_t and not struct state is the
- * parameter); and by the main thread when faking STF_SUSPEND by
- * scheduling a new event.
+ * For instance: a worker thread needing to resume processing of a
+ * state on the main thread once crypto has completed; by the main
+ * thread when faking STF_SUSPEND by scheduling a new event.
  *
  * On callback:
  *
- * ST either points at the state matching SERIALNO, or NULL (SERIALNO
- * is either SOS_NOBODY or the state doesn't exist).  A CB expecting a
- * state back MUST check ST before processing.  Caller sets CUR_STATE
- * so don't play with that.
+ * The CALLBACK must check ST's value: if it is NULL then the state
+ * "disappeared"; if it is non-NULL then it is for SERIALNO.  Either
+ * way the CALLBACK is responsible for releasing CONTEXT.
  *
  * MDP either points at the unsuspended contents of .st_suspended_md,
  * or NULL.  On return, if *MDP is non-NULL, then it will be released.
+ *
+ * XXX: There's a design flaw here - what happens if a state is
+ * simultaneously processing a request and a response - there's only
+ * space for one message!  Suspect what saves things is that it
+ * doesn't happen in the real world.
+ *
+ * XXX: resume_cb should return stf_status, but doing this is a mess.
  */
 
-typedef void pluto_event_now_cb(struct state *st, struct msg_digest **mdp,
-				void *context);
-extern void pluto_event_now(const char *name, so_serial_t serialno,
-			    pluto_event_now_cb *callback, void *context);
+typedef void resume_cb(struct state *st, struct msg_digest **mdp,
+		       void *context);
+void schedule_resume(const char *name, so_serial_t serialno,
+		     resume_cb *callback, void *context);
+
+/*
+ * Schedule a callback on the main event loop now.
+ *
+ * Unlike schedule_resume(), SERIALNO can be SOS_NOBODY and this
+ * doesn't try to unsuspend MD.
+ */
+
+typedef void callback_cb(struct state *st, void *context);
+void schedule_callback(const char *name, so_serial_t serialno,
+		       callback_cb *callback, void *context);
 
 /*
  * Create a child process using fork()

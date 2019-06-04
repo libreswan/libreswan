@@ -601,12 +601,10 @@ static bool impair_incoming(struct msg_digest **mdp)
 	return *mdp == NULL;
 }
 
-static pluto_event_now_cb handle_md_event; /* type assertion */
-static void handle_md_event(struct state *st, struct msg_digest **mdp,
-			    void *context)
+static callback_cb handle_md_event; /* type assertion */
+static void handle_md_event(struct state *st, void *context)
 {
-	passert(st == NULL);
-	passert(mdp == NULL); /* suspended md from state */
+	pexpect(st == NULL);
 	struct msg_digest *md = context;
 	process_md(&md);
 	pexpect(md == NULL);
@@ -615,7 +613,7 @@ static void handle_md_event(struct state *st, struct msg_digest **mdp,
 
 void schedule_md_event(const char *name, struct msg_digest *md)
 {
-	pluto_event_now(name, SOS_NOBODY, handle_md_event, md);
+	schedule_callback(name, SOS_NOBODY, handle_md_event, md);
 }
 
 enum ike_version msg_ike_version(const struct msg_digest *md)
