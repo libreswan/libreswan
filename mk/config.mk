@@ -234,7 +234,7 @@ BISONOSFLAGS?=
 NSSFLAGS?=$(shell pkg-config --cflags nss)
 # We don't want to link against every library pkg-config --libs nss
 # returns
-NSS_LDFLAGS ?= -lnss3 -lnssutil3
+NSS_LDFLAGS ?= -lnss3
 NSS_SMIME_LDFLAGS ?= -lsmime3
 NSS_UTIL_LDFLAGS ?= -lnssutil3
 NSPR_LDFLAGS ?= -lnspr4
