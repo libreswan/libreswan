@@ -2814,7 +2814,7 @@ static err_t netlink_migrate_sa_check(void)
 	if (kernel_mobike_supprt > 0) {
 		return NULL;
 	} else {
-		return "CONFIG_XFRM_MIGRATE && CONFIG_NET_KEY_MIGRATE";
+		return "CONFIG_XFRM_MIGRATE";
 	}
 }
 
