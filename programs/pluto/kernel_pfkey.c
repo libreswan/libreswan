@@ -533,7 +533,7 @@ static void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg UNUSED,
 				ipstr(&nfo.dst, &bd), nfo.dport);
 		});
 
-		for_each_state(nat_t_new_klips_mapp, &nfo);
+		for_each_state(nat_t_new_klips_mapp, &nfo, __func__);
 	}
 
 	if (ugh != NULL)

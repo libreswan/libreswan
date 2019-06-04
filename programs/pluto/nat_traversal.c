@@ -893,8 +893,7 @@ void nat_traversal_ka_event(void)
 
 	nat_kap_event = FALSE;  /* ready to be reschedule */
 
-	dbg("FOR_EACH_STATE_... via for_each_state in %s", __func__);
-	for_each_state(nat_traversal_ka_event_state, &nat_kap_st);
+	for_each_state(nat_traversal_ka_event_state, &nat_kap_st, __func__);
 
 	if (nat_kap_st != 0) {
 		/*
@@ -958,8 +957,7 @@ void nat_traversal_new_mapping(struct state *st,
 	nfo.addr  = *nsrc;
 	nfo.port  = nsrcport;
 
-	dbg("FOR_EACH_STATE_... via for_each_state in %s", __func__);
-	for_each_state(nat_traversal_find_new_mapp_state, &nfo);
+	for_each_state(nat_traversal_find_new_mapp_state, &nfo, __func__);
 }
 
 /* this should only be called after packet has been verified/authenticated! */

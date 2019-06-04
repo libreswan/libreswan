@@ -112,6 +112,7 @@ struct connection *conn_by_name(const char *nm, bool strict, bool quiet)
 {
 	struct connection *p, *prev;
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (prev = NULL, p = connections; ; prev = p, p = p->ac_next) {
 		if (p == NULL) {
 			if (strict && !quiet) {
@@ -388,6 +389,7 @@ int foreach_connection_by_alias(const char *alias,
 	struct connection *p, *pnext;
 	int count = 0;
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (p = connections; p != NULL; p = pnext) {
 		pnext = p->ac_next;
 
@@ -433,6 +435,7 @@ void check_orientations(void)
 {
 	/* Try to orient all the unoriented connections. */
 	{
+		dbg("FOR_EACH_UNORIENTED_CONNECTION_... in %s", __func__);
 		struct connection *c = unoriented_connections;
 
 		unoriented_connections = NULL;
@@ -1035,6 +1038,7 @@ static struct connection *find_connection_by_reqid(reqid_t reqid)
 		reqid &= ~3;
 	}
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = c->ac_next)
 		if (c->spd.reqid == reqid)
 			break;
@@ -2345,6 +2349,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 
 	struct connection *c;
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = c->ac_next) {
 		if (c->kind == CK_GROUP)
 			continue;
@@ -2676,6 +2681,7 @@ struct connection *route_owner(struct connection *c,
 	enum routing_t best_routing = cur_spd->routing,
 		best_erouting = best_routing;
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (struct connection *d = connections; d != NULL; d = d->ac_next) {
 		if (!oriented(*d))
 			continue;
@@ -3519,6 +3525,7 @@ static bool is_virtual_net_used(struct connection *c,
 				const ip_subnet *peer_net,
 				const struct id *peer_id)
 {
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (struct connection *d = connections; d != NULL; d = d->ac_next) {
 		switch (d->kind) {
 		case CK_PERMANENT:
@@ -4395,6 +4402,7 @@ void show_connections_status(void)
 	whack_log(RC_COMMENT, "Connection list:"); /* spacer */
 	whack_log(RC_COMMENT, " "); /* spacer */
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = c->ac_next) {
 		count++;
 		if (c->spd.routing == RT_ROUTED_TUNNEL)
@@ -4409,6 +4417,7 @@ void show_connections_status(void)
 				"connection array");
 		int i = 0;
 
+		dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 		for (c = connections; c != NULL; c = c->ac_next)
 			array[i++] = c;
 
@@ -4513,6 +4522,7 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 	/* XXX This logic also predates support for protoports, which isn't handled below */
 	struct connection *ue;
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (ue = connections; ue != NULL; ue = ue->ac_next) {
 		struct spd_route *srue;
 

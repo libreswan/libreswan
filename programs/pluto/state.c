@@ -1556,9 +1556,10 @@ struct child_sa *ikev2_duplicate_state(struct ike_sa *ike,
 	return child;
 }
 
-void for_each_state(void (*f)(struct state *, void *data), void *data)
+void for_each_state(void (*f)(struct state *, void *data), void *data,
+		    const char *func)
 {
-	dbg("FOR_EACH_STATE_... in %s", __func__);
+	dbg("FOR_EACH_STATE_... in %s (%s)", func, __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		/*
@@ -2369,12 +2370,13 @@ static int state_compare_connection(const void *a, const void *b)
 /*
  * NULL terminated array of state pointers.
  */
-static struct state **sort_states(int (*sort_fn)(const void *, const void *))
+static struct state **sort_states(int (*sort_fn)(const void *, const void *),
+				  const char *func)
 {
 	/* COUNT the number of states. */
 	int count = 0;
 	{
-		dbg("FOR_EACH_STATE_... in %s", __func__);
+		dbg("FOR_EACH_STATE_... in %s (%s)", func, __func__);
 		struct state *st;
 		FOR_EACH_STATE_NEW2OLD(st) {
 			count++;
@@ -2426,7 +2428,8 @@ static int log_trafic_state(struct connection *c, void *arg UNUSED)
 void show_traffic_status(const char *name)
 {
 	if (name == NULL) {
-		struct state **array = sort_states(state_compare_serial);
+		struct state **array = sort_states(state_compare_serial,
+						   __func__);
 
 		/* now print sorted results */
 		if (array != NULL) {
@@ -2476,7 +2479,8 @@ void show_states_status(bool brief)
 	if (brief)
 		return;
 
-	struct state **array = sort_states(state_compare_connection);
+	struct state **array = sort_states(state_compare_connection,
+					   __func__);
 
 	if (array != NULL) {
 		monotime_t n = mononow();
@@ -3054,8 +3058,7 @@ void record_newaddr(ip_address *ip, char *a_type)
 	ipstr_buf ip_str;
 	DBG(DBG_KERNEL, DBG_log("XFRM RTM_NEWADDR %s %s",
 				ipstr(ip, &ip_str), a_type));
-	dbg("FOR_EACH_STATE_... via for_each_state( in %s", __func__);
-	for_each_state(ikev2_record_newaddr, ip);
+	for_each_state(ikev2_record_newaddr, ip, __func__);
 }
 
 void record_deladdr(ip_address *ip, char *a_type)
@@ -3063,8 +3066,7 @@ void record_deladdr(ip_address *ip, char *a_type)
 	ipstr_buf ip_str;
 	DBG(DBG_KERNEL, DBG_log("XFRM RTM_DELADDR %s %s",
 				ipstr(ip, &ip_str), a_type));
-	dbg("FOR_EACH_STATE_... via for_each_state in %s", __func__);
-	for_each_state(ikev2_record_deladdr, ip);
+	for_each_state(ikev2_record_deladdr, ip, __func__);
 }
 
 static void append_word(char **sentence, const char *word)
@@ -3143,6 +3145,7 @@ void ISAKMP_SA_established(const struct state *pst)
 		 * unorient the (old) connection (if different from current connection)
 		 * Only do this for connections with the same name (can be shared ike sa)
 		 */
+		dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 		for (struct connection *d = connections; d != NULL; ) {
 			/* might move underneath us */
 			struct connection *next = d->ac_next;

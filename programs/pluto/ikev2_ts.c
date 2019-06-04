@@ -962,6 +962,7 @@ bool v2_process_ts_request(struct child_sa *child,
 		passert(best_connection == c);
 		dbg("no best spd route; looking for a better template connection to instantiate");
 
+		dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 		for (struct connection *t = connections; t != NULL; t = t->ac_next) {
 			/* require a template */
 			if (t->kind != CK_TEMPLATE) {

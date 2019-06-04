@@ -994,6 +994,7 @@ struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 {
 	struct connection *c;
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = c->ac_next) {
 		const struct spd_route *sr;
 
@@ -1108,10 +1109,12 @@ void connection_check_ddns(void)
 	struct connection *c, *cnext;
 	realtime_t tv1 = realnow();
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
 		connection_check_ddns1(c);
 	}
+	dbg("FOR_EACH_UNORIENTED_CONNECTION_... in %s", __func__);
 	for (c = unoriented_connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
 		connection_check_ddns1(c);
@@ -1136,6 +1139,7 @@ void connection_check_phase2(void)
 {
 	struct connection *c, *cnext;
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
 
