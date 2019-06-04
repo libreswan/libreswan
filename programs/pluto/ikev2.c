@@ -2780,6 +2780,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	struct connection *c = st->st_connection;
 	struct state *pst;
 	enum rc_type w;
+	struct ike_sa *ike = ike_sa(st);
 
 	pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
 
@@ -2813,7 +2814,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		 * with transitions message?  And do this before ST
 		 * turns into its own IKE.
 		 */
-		schedule_next_send(ike_sa(st));
+		v2_msgid_schedule_next_initiator(ike);
 		ikev2_child_emancipate(md);
 	} else  {
 		/*
@@ -2830,7 +2831,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		 * XXX: should this be merged with the code sending
 		 * this transitions message?
 		 */
-		schedule_next_send(ike_sa(st));
+		v2_msgid_schedule_next_initiator(ike);
 	}
 
 	w = RC_NEW_V2_STATE + st->st_state->kind;

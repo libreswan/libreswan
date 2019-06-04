@@ -66,7 +66,6 @@ extern void ikev2_initiate_child_sa(struct pending *p);
 void ikev2_rekey_ike_start(struct state *st);
 
 extern void ikev2_child_outI(struct state *st);
-extern void ikev2_child_send_next(struct state *st);
 
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);

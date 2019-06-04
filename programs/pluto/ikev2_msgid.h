@@ -33,13 +33,18 @@ enum message_role;
  * will not match -1 - cross checking code should only compare valid
  * MSGIDs.
  *
- * While .PENDING is probably only used by the initiator code, store
- * it in the window so that struct contains everything.
+ * While .PENDING - the list of states waiting for an open window - is
+ * probably only used by the initiator code, store it in the window so
+ * that struct contains everything.
  */
+
+typedef stf_status v2_msgid_pending_cb(struct ike_sa *ike,
+				       struct state *st,
+				       struct msg_digest **mdp);
 
 struct v2_msgid_pending {
 	so_serial_t st_serialno;
-//	enum initiate_new_exchagnge send_type;
+	v2_msgid_pending_cb *cb;
 	struct v2_msgid_pending *next;
 };
 
@@ -64,6 +69,8 @@ struct v2_msgid_windows {
  *
  * The RESPONDER Message ID is valid for the period that the state is
  * processing the request.
+ *
+ * XXX: should the also be {start,cancel}_initiator()?
  */
 
 struct v2_msgid_wip {
@@ -92,16 +99,36 @@ void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
  *
  * XXX: Should these interfaces be revamped so that they are more like
  * the above?
+ *
+ * In complete_v2_state_transition(), update_recv() and update_send
+ * are first called so that all windows are up-to-date, and then
+ * schedule_next_initiator() is called to schedule any waiting
+ * initiators.  It could probably be simpler, but probably only after
+ * record 'n' send has been eliminated.
  */
 void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			  struct msg_digest *md);
 void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 			  struct msg_digest *md, enum message_role sending);
 
-bool v2_msgid_ok(struct ike_sa *ike, enum message_role incomming, msgid_t msgid);
-
-bool child_added_to_ike_send_list(struct child_sa *child, struct ike_sa *ike);
-void schedule_next_send(struct ike_sa *ike);
+/*
+ * Handle multiple initiators trying to send simultaneously.
+ *
+ * XXX: Suspect this code is broken.
+ *
+ * For this to work all initiators need to route their requests
+ * through queue_initiator(), and due to record 'n' send at least,
+ * this isn't true.
+ *
+ * Complicating this is how each individual initiate code path needs
+ * to be modified so that delays calling queue_initiator() until it is
+ * ready to actually send (and a message id can be assigned).  Would
+ * it be simplier if there was a gate keeper that assigned request
+ * message id up front, but only when one was available?
+ */
+void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
+			      v2_msgid_pending_cb *callback);
+void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 
 void dbg_v2_msgid(struct ike_sa *ike, struct state *st, const char *msg, ...) PRINTF_LIKE(3);
 void fail_v2_msgid(const char *func, const char *file, unsigned long line,

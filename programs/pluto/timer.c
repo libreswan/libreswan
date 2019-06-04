@@ -283,7 +283,6 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_SA_REKEY:
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_EXPIRE:
-	case EVENT_v2_SEND_NEXT_IKE:
 	case EVENT_v2_INITIATE_CHILD:
 	case EVENT_RETRANSMIT:
 	case EVENT_v1_SA_REPLACE_IF_USED:
@@ -395,10 +394,6 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_v1_SEND_XAUTH:
 		xauth_send_request(st);
-		break;
-
-	case EVENT_v2_SEND_NEXT_IKE:
-		ikev2_child_send_next(st);
 		break;
 
 	case EVENT_v2_INITIATE_CHILD:

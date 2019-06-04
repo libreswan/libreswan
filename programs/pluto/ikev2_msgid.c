@@ -20,6 +20,9 @@
 #include "demux.h"
 #include "connections.h"
 #include "ikev2_msgid.h"
+#include "log.h"
+#include "ikev2.h"		/* for complete_v2_state_transition() */
+#include "state_db.h"		/* for ike_sa_by_serialno() */
 
 /*
  * Logging utilities, can these share code?
@@ -505,33 +508,35 @@ void v2_msgid_free(struct state *st)
 	}
 }
 
-bool child_added_to_ike_send_list(struct child_sa *child, struct ike_sa *ike)
+void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
+			      v2_msgid_pending_cb *callback)
 {
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
-	intmax_t unack = (initiator->sent - initiator->recv);
-	if (unack < ike->sa.st_connection->ike_window) {
-		dbg_v2_msgid(ike, &child->sa,
-			     "sending new exchange using IKE SA (unack %jd)",
-			     unack);
-		return false;
-	}
-
-	delete_event(&child->sa);
-	event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, &child->sa);
+	/*
+	 * Always append the task.
+	 */
+	delete_event(st);
+	event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, st);
 	/* find the end; small list? */
 	struct v2_msgid_pending **pp = &initiator->pending;
 	while (*pp != NULL)
 		pp = &(*pp)->next;
 	/* append */
 	struct v2_msgid_pending new =  {
-		.st_serialno = child->sa.st_serialno,
+		.st_serialno = st->st_serialno,
+		.cb = callback,
 	};
 	*pp = clone_thing(new, "struct initiate_list");
-	return true;
+	v2_msgid_schedule_next_initiator(ike);
 }
 
-void schedule_next_send(struct ike_sa *ike)
+static void initiate_next(struct state *st, void *context UNUSED)
 {
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	if (ike == NULL) {
+		dbg("IKE SA with pending initiates disappeared");
+		return;
+	}
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	for (intmax_t unack = (initiator->sent - initiator->recv);
 	     unack < ike->sa.st_connection->ike_window && initiator->pending != NULL;
@@ -548,7 +553,29 @@ void schedule_next_send(struct ike_sa *ike)
 				     pending.st_serialno, unack);
 			continue;
 		}
-		dbg_v2_msgid(ike, st, "scheduling CHILD SA send using IKE SA (unack %jd)", unack);
-		event_force(EVENT_v2_SEND_NEXT_IKE, st);
+		dbg_v2_msgid(ike, st, "resuming SA using IKE SA (unack %jd)", unack);
+		/*
+		 * XXX: there's a race here.
+		 */
+		push_cur_state(st);
+		struct msg_digest *md = unsuspend_md(st);
+		complete_v2_state_transition(st, &md, pending.cb(ike, st, &md));
+		/* complete calls pop() */
+	}
+}
+
+void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
+{
+	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
+	intmax_t unack = (initiator->sent - initiator->recv);
+	/*
+	 * If there appears to be space and there's a pending
+	 * initiate, poke the IKE SA so it tries to initiate things.
+	 */
+	if (unack < ike->sa.st_connection->ike_window &&
+	    initiator->pending != NULL) {
+		dbg_v2_msgid(ike, &ike->sa, "wakeing IKE SA (unack %jd)", unack);
+		schedule_callback(__func__, ike->sa.st_serialno,
+				  initiate_next, NULL);
 	}
 }

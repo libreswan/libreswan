@@ -4861,24 +4861,6 @@ static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
 	}
 }
 
-void ikev2_child_send_next(struct state *st)
-{
-	set_cur_state(st);
-	struct child_sa *child = pexpect_child_sa(st);
-	struct ike_sa *ike = ike_sa(&child->sa);
-
-	stf_status e = ikev2_start_new_exchange(ike, child);
-	if (e != STF_OK)
-		return;	/* ??? e lost?  probably should call complete_v2_state_transition */
-
-	struct msg_digest *md = unsuspend_md(st);
-	e = ikev2_child_out_tail(md);
-	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition(md->st, &md, e);
-	release_any_md(&md);
-	reset_globals();
-}
-
 static void delete_or_replace_state(struct state *st) {
 	struct connection *c = st->st_connection;
 
@@ -5850,6 +5832,8 @@ void ikev2_child_outI(struct state *st)
 	}
 }
 
+static v2_msgid_pending_cb ikev2_child_outI_continue_2;
+
 static void ikev2_child_outI_continue(struct state *st,
 				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
@@ -5892,19 +5876,19 @@ static void ikev2_child_outI_continue(struct state *st,
 		unpack_KE_from_helper(st, r, &st->st_gi);
 	}
 
-	if (child_added_to_ike_send_list(child, ike)) {
-		complete_v2_state_transition(&child->sa, mdp, STF_SUSPEND);
-		return;
-	}
+	v2_msgid_queue_initiator(ike, &child->sa, ikev2_child_outI_continue_2);
+	complete_v2_state_transition(&child->sa, mdp, STF_SUSPEND);
+	/* return STF_SUSPEND */
+}
 
-	stf_status e = ikev2_start_new_exchange(ike, child);
-	if (e == STF_OK) {
-		passert(*mdp != NULL);
-		e =ikev2_child_out_tail(*mdp);
+stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *st,
+				       struct msg_digest **mdp)
+{
+	stf_status e = ikev2_start_new_exchange(ike, pexpect_child_sa(st));
+	if (e != STF_OK) {
+		return e;
 	}
-
-	passert(*mdp != NULL);
-	complete_v2_state_transition(st, mdp, e);
+	return ikev2_child_out_tail(*mdp);
 }
 
 /*

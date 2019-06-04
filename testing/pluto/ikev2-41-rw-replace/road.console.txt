@@ -195,6 +195,8 @@ road #
 | inserting event EVENT_SA_REPLACE, timeout in N.N seconds for #1
 | state #1 requesting EVENT_SA_REPLACE to be deleted
 | inserting event EVENT_SA_REPLACE, timeout in N.N seconds for #1
+| inserting event EVENT_SA_REPLACE, timeout in N.N seconds for #3
+| state #3 requesting EVENT_SA_REPLACE to be deleted
 | state #1 requesting EVENT_SA_REPLACE to be deleted
 | inserting event EVENT_SA_EXPIRE, timeout in N.N seconds for #1
 | handling event EVENT_SA_EXPIRE for parent state #1
