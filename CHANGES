@@ -7,6 +7,7 @@ v3.29 (unreleased)
 * programs: Change to /proc/sys/net/core/xfrm_acq_expires to detect XFRM [Paul]
 
 v3.28 (May 20, 2019)
+* SECURITY: Fixes CVE-2019-12312 https://libreswan.org/security/CVE-2019-12312
 * KLIPS: Disable KLIPS userland support per default [Paul]
          WARNING: Support for KLIPS will be removed in 2019
 * MAST: Removed support for MAST variant of KLIPS stack [Paul]
