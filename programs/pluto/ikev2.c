@@ -1558,19 +1558,28 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 * 1) exchange type received?
 	 * 2) is it initiator or not?
 	 */
-
 	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
-	const bool sent_by_ike_initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
+
+	/*
+	 * If the IKE SA initiator sent the message then this end is
+	 * looking for the IKE SA responder (and vice versa).
+	 */
+	enum sa_role local_ike_role = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) ? SA_RESPONDER : SA_INITIATOR;
 
 	/*
 	 * Dump what the message says, once a state has been found
 	 * this can be checked against what is.
 	 */
 	LSWDBGP(DBG_BASE, buf) {
-		if (sent_by_ike_initiator) {
+		switch (local_ike_role) {
+		case SA_RESPONDER:
 			jam(buf, "I am the IKE SA Original Responder");
-		} else {
+			break;
+		case SA_INITIATOR:
 			jam(buf, "I am the IKE SA Original Initiator");
+			break;
+		default:
+			bad_case(local_ike_role);
 		}
 		jam(buf, " receiving an IKEv2 ");
 		lswlog_enum_short(buf, &ikev2_exchange_names, ix);
@@ -1618,7 +1627,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		switch (v2_msg_role(md)) {
 		case MESSAGE_REQUEST:
 			/* The initiator must send: IKE_I && !MSG_R */
-			if (!sent_by_ike_initiator) {
+			if (local_ike_role != SA_RESPONDER) {
 				libreswan_log("dropping IKE_SA_INIT request with conflicting IKE initiator flag");
 				return;
 			}
@@ -1671,7 +1680,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * cleenly - let the duplicate code drop the
 			 * packet.
 			 */
-			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
+			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi,
+							      local_ike_role);
 			if (ike != NULL) {
 				/*
 				 * Set ST to the state that is
@@ -1729,7 +1739,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			break;
 		case MESSAGE_RESPONSE:
 			/* The responder must send: !IKE_I && MSG_R. */
-			if (sent_by_ike_initiator) {
+			if (local_ike_role != SA_INITIATOR) {
 				libreswan_log("dropping IKE_SA_INIT response with conflicting IKE initiator flag");
 				return;
 			}
@@ -1760,7 +1770,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * contain an as yet unknown but non-zero SPIr
 			 * so looking for it won't work.
 			 */
-			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
+			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi,
+							      local_ike_role);
 			if (ike == NULL) {
 				/*
 				 * There should be a state matching
@@ -1794,7 +1805,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * XXX: what about a request that's already
 		 * in-progress?
 		 */
-		ike = find_v2_ike_sa(&md->hdr.isa_ike_spis);
+		ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
+				     local_ike_role);
 		if (ike == NULL) {
 			struct esb_buf ixb;
 			rate_log("%s message request has no corresponding IKE SA",
@@ -1815,7 +1827,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * initiator (it might also be the IKE SA but it might
 		 * not).
 		 */
-		ike = find_v2_ike_sa(&md->hdr.isa_ike_spis);
+		ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
+				     local_ike_role);
 		if (ike == NULL) {
 			/* technically IKE or CHILD SA */
 			rate_log("%s message response has no matching IKE SA",
@@ -1854,30 +1867,11 @@ void ikev2_process_packet(struct msg_digest **mdp)
 
 	/*
 	 * Check ST's IKE SA's role against the I(Initiator) flag in
-	 * the headers.
-	 *
-	 * How can this happen?  The IKE SA is matched using the IKE
-	 * SPIs and the IKE SPI order is determined by the IKE_I flag.
-	 * So if the flag was backwards, the IKE SA wouldn't have been
-	 * found?  Perhaps when IKE SPIi == SPIr?
+	 * the headers.  Since above searches require the correct IKE
+	 * role, this should always work.
 	 */
-	if (ike != NULL) {
-		switch (ike->sa.st_sa_role) {
-		case SA_INITIATOR:
-			if (sent_by_ike_initiator) {
-				rate_log("IKE SA initiator received a message with I(Initiator) flag set; dropping packet");
-				return;
-			}
-			break;
-		case SA_RESPONDER:
-			if (!sent_by_ike_initiator) {
-				rate_log("IKE SA responder received a message with I(Initiator) flag clear; dropping packet");
-				return;
-			}
-			break;
-		default:
-			bad_case(ike->sa.st_sa_role);
-		}
+	if (ike != NULL && !pexpect(ike->sa.st_sa_role == local_ike_role)) {
+		return;
 	}
 
 	/*

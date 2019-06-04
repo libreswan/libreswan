@@ -51,6 +51,7 @@ extern struct list_head serialno_list_head;
 struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 					 so_serial_t clonedfrom,
 					 const msgid_t *v1_msgid, /* optional */
+					 enum sa_role *role, /*optional*/
 					 const ike_spi_t *ike_initiator_spi,
 					 const char *reason);
 
@@ -58,7 +59,8 @@ typedef bool (state_by_predicate)(struct state *st, void *context);
 
 struct state *state_by_ike_spis(enum ike_version ike_version,
 				so_serial_t clonedfrom,
-				const msgid_t *v1_msgid, /* optional */
+				const msgid_t *v1_msgid, /*optional*/
+				enum sa_role *role, /*optional*/
 				const ike_spis_t *ike_spis,
 				state_by_predicate *predicate /*optional*/,
 				void *predicate_context,
