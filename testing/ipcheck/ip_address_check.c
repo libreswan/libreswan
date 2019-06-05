@@ -16,9 +16,11 @@
  *
  */
 
-#include "stdio.h"
+#include <stdio.h>
+#include <string.h>
 
-#include "constants.h"		/* for elemsof() */
+#include "lswcdefs.h"		/* for elemsof() */
+#include "constants.h"		/* for streq() */
 #include "ip_address.h"
 
 #include "ipcheck.h"

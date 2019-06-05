@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "constants.h"		/* for elemsof() */
+#include "lswcdefs.h"		/* for elemsof() */
 #include "realtime.h"
 #include "timecheck.h"
 

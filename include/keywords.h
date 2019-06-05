@@ -26,8 +26,9 @@
 
 #include <stddef.h>	/* for size_t */
 
-#include "constants.h"	/* XXX: for elemsof() */
 #include "shunk.h"
+
+struct lswlog;
 
 /*
  * NAME<>VALUE map (but with bonus .details)

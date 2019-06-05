@@ -17,9 +17,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "constants.h"		/* for elemsof() */
+#include "lswcdefs.h"		/* for elemsof() */
 #include "deltatime.h"
-
 #include "timecheck.h"
 
 void check_deltatime(void)

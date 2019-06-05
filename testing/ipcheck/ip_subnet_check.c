@@ -17,9 +17,10 @@
 
 #include <stdio.h>
 
+#include "lswcdefs.h"		/* for elemsof() */
+#include "constants.h"		/* for streq() */
 #include "ipcheck.h"
 #include "ip_subnet.h"
-#include "constants.h"		/* for elemsof() */
 
 /*
  * from ttosubnet.c

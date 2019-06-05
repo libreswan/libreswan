@@ -16,7 +16,8 @@
 
 #include <stdio.h>
 
-#include "constants.h"		/* for elemsof() */
+#include "lswcdefs.h"		/* for elemsof() */
+#include "constants.h"		/* for streq() */
 #include "ip_range.h"
 #include "ip_subnet.h"
 #include "ipcheck.h"
