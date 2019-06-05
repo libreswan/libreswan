@@ -47,10 +47,15 @@ struct list_head serialno_list_head;
  * A table hashed by serialno.
  */
 
-static size_t serialno_hash(void *data)
+static shunk_t serialno_key(const so_serial_t *serialno)
 {
-	struct state *st = data;
-	return st->st_serialno;
+	return shunk2(serialno, sizeof(*serialno));
+}
+
+static shunk_t serialno_state_key(const void *data)
+{
+	const struct state *st = data;
+	return serialno_key(&st->st_serialno);
 }
 
 static struct list_head serialno_hash_slots[STATE_TABLE_SIZE];
@@ -59,22 +64,10 @@ static struct hash_table serialno_hash_table = {
 		.name = "serialno table",
 		.log = log_state,
 	},
-	.hash = serialno_hash,
+	.key = serialno_state_key,
 	.nr_slots = STATE_TABLE_SIZE,
 	.slots = serialno_hash_slots,
 };
-
-static struct list_head *serialno_chain(so_serial_t serialno)
-{
-	struct list_head *head = hash_table_slot_by_hash(&serialno_hash_table,
-							 serialno);
-	if (DBGP(DBG_TMI)) {
-		DBG_log("%s: hash serialno #%lu to head %p",
-			serialno_hash_table.info.name,
-			serialno, head);
-	}
-	return head;
-}
 
 struct state *state_by_serialno(so_serial_t serialno)
 {
@@ -83,7 +76,9 @@ struct state *state_by_serialno(so_serial_t serialno)
 	 * SOS_NOBODY always returns NULL.
 	 */
 	struct state *st;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(serialno_chain(serialno), st) {
+	shunk_t key = serialno_key(&serialno);
+	struct list_head *bucket = hash_table_bucket(&serialno_hash_table, key);
+	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
 		if (st->st_serialno == serialno) {
 			return st;
 		}
@@ -105,24 +100,15 @@ struct child_sa *child_sa_by_serialno(so_serial_t serialno)
  * Hash table indexed by just the IKE SPIi.
  */
 
-static size_t ike_initiator_spi_hasher(const ike_spi_t *ike_initiator_spi)
+static shunk_t ike_initiator_spi_key(const ike_spi_t *ike_initiator_spi)
 {
-	/*
-	 * 251 is a prime close to 256 (so like <<8).
-	 *
-	 * There's no real rationale for doing this.
-	 */
-	size_t hash = 0;
-	for (unsigned j = 0; j < sizeof(ike_initiator_spi->bytes); j++) {
-		hash = hash * 251 + ike_initiator_spi->bytes[j];
-	}
-	return hash;
+	return shunk2(ike_initiator_spi, sizeof(*ike_initiator_spi));
 }
 
-static size_t ike_initiator_spi_hash(void *data)
+static shunk_t ike_initiator_spi_state_key(const void *data)
 {
-	struct state *st = (struct state*) data;
-	return ike_initiator_spi_hasher(&st->st_ike_spis.initiator);
+	const struct state *st = data;
+	return ike_initiator_spi_key(&st->st_ike_spis.initiator);
 }
 
 static size_t ike_initiator_spi_log(struct lswlog *buf, void *data)
@@ -142,25 +128,10 @@ static struct hash_table ike_initiator_spi_hash_table = {
 		.name = "IKE SPIi table",
 		.log = ike_initiator_spi_log,
 	},
-	.hash = ike_initiator_spi_hash,
+	.key = ike_initiator_spi_state_key,
 	.nr_slots = STATE_TABLE_SIZE,
 	.slots = ike_initiator_spi_hash_slots,
 };
-
-static struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
-{
-	size_t hash = ike_initiator_spi_hasher(initiator);
-	struct list_head *slot = hash_table_slot_by_hash(&ike_initiator_spi_hash_table, hash);
-	if (DBGP(DBG_TMI)) {
-		LSWLOG_DEBUG(buf) {
-			lswlogf(buf, "%s: hash IKE SPIi ", ike_initiator_spi_hash_table.info.name);
-			lswlog_bytes(buf, initiator->bytes,
-				     sizeof(initiator->bytes));
-			lswlogf(buf, " to %zu slot %p", hash, slot);
-		}
-	}
-	return slot;
-}
 
 /*
  * Hash table indexed by both IKE_INITIATOR_SPI and IKE_RESPONDER_SPI.
@@ -170,27 +141,15 @@ static struct list_head *ike_initiator_spi_slot(const ike_spi_t *initiator)
  * A table hashed by IKE SPIi+SPIr.
  */
 
-static size_t ike_spis_hasher(const ike_spis_t *ike_spis)
+static shunk_t ike_spis_key(const ike_spis_t *ike_spis)
 {
-	/*
-	 * 251 is a prime close to 256 aka <<8.  65521 is a prime
-	 * close to 65536 aka <<16.
-	 *
-	 * There's no real rationale for doing this.
-	 */
-	size_t hash = 0;
-	for (unsigned j = 0; j < sizeof(ike_spis->initiator.bytes); j++) {
-		hash = (hash * 65521 +
-			ike_spis->initiator.bytes[j] * 251 +
-			ike_spis->responder.bytes[j]);
-	}
-	return hash;
+	return shunk2(ike_spis, sizeof(*ike_spis));
 }
 
-static size_t ike_spis_hash(void *data)
+static shunk_t ike_spis_state_key(const void *data)
 {
-	struct state *st = (struct state *)data;
-	return ike_spis_hasher(&st->st_ike_spis);
+	const struct state *st = data;
+	return ike_spis_key(&st->st_ike_spis);
 }
 
 static size_t ike_spis_log(struct lswlog *buf, void *data)
@@ -213,26 +172,10 @@ static struct hash_table ike_spis_hash_table = {
 		.name = "IKE SPIi:SPIr table",
 		.log = ike_spis_log,
 	},
-	.hash = ike_spis_hash,
+	.key = ike_spis_state_key,
 	.nr_slots = STATE_TABLE_SIZE,
 	.slots = ike_spis_hash_slots,
 };
-
-static struct list_head *ike_spis_slot(const ike_spis_t *ike_spis)
-{
-	size_t hash = ike_spis_hasher(ike_spis);
-	struct list_head *slot = hash_table_slot_by_hash(&ike_spis_hash_table, hash);
-	if (DBGP(DBG_TMI)) {
-		LSWLOG_DEBUG(buf) {
-			lswlogf(buf, "%s: hash IKE SPIi ", ike_spis_hash_table.info.name);
-			lswlog_bytes(buf, ike_spis->initiator.bytes, sizeof(ike_spis->initiator.bytes));
-			lswlogs(buf, " SPIr ");
-			lswlog_bytes(buf, ike_spis->responder.bytes, sizeof(ike_spis->responder.bytes));
-			lswlogf(buf, " to %zu slot %p", hash, slot);
-		}
-	}
-	return slot;
-}
 
 /*
  * Add/remove just the SPI[ir] tables.  Unlike serialno, these can
@@ -283,9 +226,10 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 					 const ike_spi_t *ike_initiator_spi,
 					 const char *name)
 {
+	shunk_t key = ike_initiator_spi_key(ike_initiator_spi);
+	struct list_head *bucket = hash_table_bucket(&ike_initiator_spi_hash_table, key);
 	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_initiator_spi_slot(ike_initiator_spi),
-				    st) {
+	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
 		if (!state_plausable(st, ike_version, clonedfrom, v1_msgid, role)) {
 			continue;
 		}
@@ -311,8 +255,10 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				void *predicate_context,
 				const char *name)
 {
+	shunk_t key = ike_spis_key(ike_spis);
+	struct list_head *bucket = hash_table_bucket(&ike_spis_hash_table, key);
 	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(ike_spis_slot(ike_spis), st) {
+	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
 		if (!state_plausable(st, ike_version, clonedfrom, v1_msgid, sa_role)) {
 			continue;
 		}

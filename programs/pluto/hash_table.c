@@ -27,10 +27,17 @@ void init_hash_table(struct hash_table *table)
 	}
 }
 
-struct list_head *hash_table_slot_by_hash(struct hash_table *table,
-					  unsigned long hash)
+struct list_head *hash_table_bucket(struct hash_table *table, shunk_t key)
 {
-	/* let caller do logging */
+	/*
+	 * 251 is a prime close to 256 (so like <<8).
+	 *
+	 * There's no real rationale for doing this.
+	 */
+	size_t hash = 0;
+	for (unsigned j = 0; j < key.len; j++) {
+		hash = hash * 251 + key.ptr[j];
+	}
 	return &table->slots[hash % table->nr_slots];
 }
 
@@ -38,10 +45,10 @@ void add_hash_table_entry(struct hash_table *table,
 			  void *data, struct list_entry *entry)
 {
 	*entry = list_entry(&table->info, data);
-	struct list_head *slot =
-		hash_table_slot_by_hash(table, table->hash(data));
+	shunk_t key = table->key(data);
+	struct list_head *bucket = hash_table_bucket(table, key);
 	table->nr_entries++;
-	insert_list_entry(slot, entry);
+	insert_list_entry(bucket, entry);
 }
 
 void del_hash_table_entry(struct hash_table *table,

@@ -1071,11 +1071,16 @@ static size_t log_pid_entry(struct lswlog *buf, void *data)
 	}
 }
 
-static size_t hash_pid_entry(void *data)
+static shunk_t pid_key(const pid_t *pid)
 {
-	struct pid_entry *entry = (struct pid_entry*)data;
+	return shunk2(pid, sizeof(*pid));
+}
+
+static shunk_t pid_entry_key(const void *data)
+{
+	const struct pid_entry *entry = data;
 	passert(entry->magic == PID_MAGIC);
-	return entry->pid;
+	return pid_key(&entry->pid);
 }
 
 static struct list_head pid_entry_slots[23];
@@ -1085,7 +1090,7 @@ static struct hash_table pids_hash_table = {
 		.name = "pid table",
 		.log = log_pid_entry,
 	},
-	.hash = hash_pid_entry,
+	.key = pid_entry_key,
 	.nr_slots = elemsof(pid_entry_slots),
 	.slots = pid_entry_slots,
 };
@@ -1191,8 +1196,9 @@ static void childhandler_cb(void)
 				log_status(buf, status);
 			}
 			struct pid_entry *pid_entry = NULL;
-			struct list_head *head = hash_table_slot_by_hash(&pids_hash_table, child);
-			FOR_EACH_LIST_ENTRY_OLD2NEW(head, pid_entry) {
+			shunk_t key = pid_key(&child);
+			struct list_head *bucket = hash_table_bucket(&pids_hash_table, key);
+			FOR_EACH_LIST_ENTRY_OLD2NEW(bucket, pid_entry) {
 				passert(pid_entry->magic == PID_MAGIC);
 				if (pid_entry->pid == child) {
 					break;

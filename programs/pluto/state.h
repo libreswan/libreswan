@@ -688,6 +688,7 @@ struct state {
 	struct list_entry st_ike_spis_hash_entry;
 	/* IKE SPIi hash table entry */
 	struct list_entry st_ike_initiator_spi_hash_entry;
+	struct list_entry st_connection_hash_entry;
 
 	struct hidden_variables hidden_variables;
 
