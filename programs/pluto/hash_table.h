@@ -26,6 +26,7 @@
 struct hash_table {
 	const struct list_info info;
 	shunk_t (*key)(const void *data);
+	struct list_entry *(*entry)(void *data);
 	long nr_entries; /* approx? */
 	unsigned long nr_slots;
 	struct list_head *slots;
@@ -39,10 +40,8 @@ void init_hash_table(struct hash_table *table);
  * Use the terms "add" and "del" as this table has no implied
  * ordering.
  */
-void add_hash_table_entry(struct hash_table *table,
-			  void *data, struct list_entry *entry);
-void del_hash_table_entry(struct hash_table *table,
-			  struct list_entry *entry);
+void add_hash_table_entry(struct hash_table *table, void *data);
+void del_hash_table_entry(struct hash_table *table, void *data);
 
 /*
  * Return the head of the list entries that match HASH.

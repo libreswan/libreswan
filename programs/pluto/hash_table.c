@@ -41,9 +41,9 @@ struct list_head *hash_table_bucket(struct hash_table *table, shunk_t key)
 	return &table->slots[hash % table->nr_slots];
 }
 
-void add_hash_table_entry(struct hash_table *table,
-			  void *data, struct list_entry *entry)
+void add_hash_table_entry(struct hash_table *table, void *data)
 {
+	struct list_entry *entry = table->entry(data);
 	*entry = list_entry(&table->info, data);
 	shunk_t key = table->key(data);
 	struct list_head *bucket = hash_table_bucket(table, key);
@@ -51,9 +51,9 @@ void add_hash_table_entry(struct hash_table *table,
 	insert_list_entry(bucket, entry);
 }
 
-void del_hash_table_entry(struct hash_table *table,
-			  struct list_entry *entry)
+void del_hash_table_entry(struct hash_table *table, void *data)
 {
+	struct list_entry *entry = table->entry(data);
 	table->nr_entries--;
 	remove_list_entry(entry);
 }

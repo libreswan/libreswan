@@ -1083,6 +1083,13 @@ static shunk_t pid_entry_key(const void *data)
 	return pid_key(&entry->pid);
 }
 
+static struct list_entry *pid_entry_entry(void *data)
+{
+	struct pid_entry *entry = data;
+	passert(entry->magic == PID_MAGIC);
+	return &entry->hash_entry;
+}
+
 static struct list_head pid_entry_slots[23];
 
 static struct hash_table pids_hash_table = {
@@ -1091,6 +1098,7 @@ static struct hash_table pids_hash_table = {
 		.log = log_pid_entry,
 	},
 	.key = pid_entry_key,
+	.entry = pid_entry_entry,
 	.nr_slots = elemsof(pid_entry_slots),
 	.slots = pid_entry_slots,
 };
@@ -1108,8 +1116,7 @@ static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
 	new_pid->serialno = serialno;
 	new_pid->name = name;
 	new_pid->start_time = mononow();
-	add_hash_table_entry(&pids_hash_table,
-			     new_pid, &new_pid->hash_entry);
+	add_hash_table_entry(&pids_hash_table, new_pid);
 }
 
 int pluto_fork(const char *name, so_serial_t serialno,
@@ -1239,8 +1246,7 @@ static void childhandler_cb(void)
 					release_any_md(&md);
 					pop_cur_state(old_state);
 				}
-				del_hash_table_entry(&pids_hash_table,
-						     &pid_entry->hash_entry);
+				del_hash_table_entry(&pids_hash_table, pid_entry);
 				pfree(pid_entry);
 			}
 			break;

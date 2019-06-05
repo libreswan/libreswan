@@ -58,6 +58,12 @@ static shunk_t serialno_state_key(const void *data)
 	return serialno_key(&st->st_serialno);
 }
 
+static struct list_entry *serialno_state_entry(void *data)
+{
+	struct state *st = data;
+	return &st->st_serialno_hash_entry;
+}
+
 static struct list_head serialno_hash_slots[STATE_TABLE_SIZE];
 static struct hash_table serialno_hash_table = {
 	.info = {
@@ -65,6 +71,7 @@ static struct hash_table serialno_hash_table = {
 		.log = log_state,
 	},
 	.key = serialno_state_key,
+	.entry = serialno_state_entry,
 	.nr_slots = STATE_TABLE_SIZE,
 	.slots = serialno_hash_slots,
 };
@@ -111,6 +118,12 @@ static shunk_t ike_initiator_spi_state_key(const void *data)
 	return ike_initiator_spi_key(&st->st_ike_spis.initiator);
 }
 
+static struct list_entry *ike_initiator_spi_state_entry(void *data)
+{
+	struct state *st = data;
+	return &st->st_ike_initiator_spi_hash_entry;
+}
+
 static size_t ike_initiator_spi_log(struct lswlog *buf, void *data)
 {
 	struct state *st = (struct state *) data;
@@ -129,6 +142,7 @@ static struct hash_table ike_initiator_spi_hash_table = {
 		.log = ike_initiator_spi_log,
 	},
 	.key = ike_initiator_spi_state_key,
+	.entry = ike_initiator_spi_state_entry,
 	.nr_slots = STATE_TABLE_SIZE,
 	.slots = ike_initiator_spi_hash_slots,
 };
@@ -152,6 +166,12 @@ static shunk_t ike_spis_state_key(const void *data)
 	return ike_spis_key(&st->st_ike_spis);
 }
 
+static struct list_entry *ike_spis_state_entry(void *data)
+{
+	struct state *st = data;
+	return &st->st_ike_spis_hash_entry;
+}
+
 static size_t ike_spis_log(struct lswlog *buf, void *data)
 {
 	struct state *st = (struct state *) data;
@@ -173,6 +193,7 @@ static struct hash_table ike_spis_hash_table = {
 		.log = ike_spis_log,
 	},
 	.key = ike_spis_state_key,
+	.entry = ike_spis_state_entry,
 	.nr_slots = STATE_TABLE_SIZE,
 	.slots = ike_spis_hash_slots,
 };
@@ -184,18 +205,14 @@ static struct hash_table ike_spis_hash_table = {
 
 static void add_to_ike_spi_tables(struct state *st)
 {
-	add_hash_table_entry(&ike_spis_hash_table, st,
-			     &st->st_ike_spis_hash_entry);
-	add_hash_table_entry(&ike_initiator_spi_hash_table, st,
-			     &st->st_ike_initiator_spi_hash_entry);
+	add_hash_table_entry(&ike_spis_hash_table, st);
+	add_hash_table_entry(&ike_initiator_spi_hash_table, st);
 }
 
 static void del_from_ike_spi_tables(struct state *st)
 {
-	del_hash_table_entry(&ike_spis_hash_table,
-			     &st->st_ike_spis_hash_entry);
-	del_hash_table_entry(&ike_initiator_spi_hash_table,
-			     &st->st_ike_initiator_spi_hash_entry);
+	del_hash_table_entry(&ike_spis_hash_table, st);
+	del_hash_table_entry(&ike_initiator_spi_hash_table, st);
 }
 
 static bool state_plausable(struct state *st,
@@ -310,9 +327,7 @@ void add_state_to_db(struct state *st)
 			  &st->st_serialno_list_entry);
 
 	/* serial NR to state hash table */
-	add_hash_table_entry(&serialno_hash_table, st,
-			     &st->st_serialno_hash_entry);
-
+	add_hash_table_entry(&serialno_hash_table, st);
 	add_to_ike_spi_tables(st);
 }
 
@@ -331,8 +346,7 @@ void del_state_from_db(struct state *st)
 	    enum_name(&ike_version_names, st->st_ike_version),
 	    st->st_serialno, st->st_state->short_name);
 	remove_list_entry(&st->st_serialno_list_entry);
-	del_hash_table_entry(&serialno_hash_table,
-			     &st->st_serialno_hash_entry);
+	del_hash_table_entry(&serialno_hash_table, st);
 	del_from_ike_spi_tables(st);
 }
 
