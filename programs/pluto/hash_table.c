@@ -57,3 +57,9 @@ void del_hash_table_entry(struct hash_table *table, void *data)
 	table->nr_entries--;
 	remove_list_entry(entry);
 }
+
+void rehash_table_entry(struct hash_table *table, void *data)
+{
+	del_hash_table_entry(table, data);
+	add_hash_table_entry(table, data);
+}

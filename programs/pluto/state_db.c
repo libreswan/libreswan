@@ -326,10 +326,8 @@ void rehash_state_cookies_in_db(struct state *st)
 	    enum_name(&ike_version_names, st->st_ike_version),
 	    st->st_serialno);
 
-	del_hash_table_entry(&state_hashes[IKE_SPIS_STATE_HASH], st);
-	add_hash_table_entry(&state_hashes[IKE_SPIS_STATE_HASH], st);
-	del_hash_table_entry(&state_hashes[IKE_INITIATOR_SPI_STATE_HASH], st);
-	add_hash_table_entry(&state_hashes[IKE_INITIATOR_SPI_STATE_HASH], st);
+	rehash_table_entry(&state_hashes[IKE_SPIS_STATE_HASH], st);
+	rehash_table_entry(&state_hashes[IKE_INITIATOR_SPI_STATE_HASH], st);
 }
 
 void del_state_from_db(struct state *st)

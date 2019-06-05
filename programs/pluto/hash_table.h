@@ -38,10 +38,11 @@ void init_hash_table(struct hash_table *table);
  * Maintain the table.
  *
  * Use the terms "add" and "del" as this table has no implied
- * ordering.
+ * ordering.  rehash does "del" then "add".
  */
 void add_hash_table_entry(struct hash_table *table, void *data);
 void del_hash_table_entry(struct hash_table *table, void *data);
+void rehash_table_entry(struct hash_table *table, void *data);
 
 /*
  * Return the head of the list entries that match HASH.
