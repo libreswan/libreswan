@@ -237,6 +237,16 @@ struct msg_digest *unsuspend_md(struct state *st);
 	}
 
 /*
+ * All the hash tables states are stored in.
+ */
+enum state_hash {
+	SERIALNO_STATE_HASH,
+	IKE_SPIS_STATE_HASH,
+	IKE_INITIATOR_SPI_STATE_HASH,
+	STATE_HASH_ROOF,
+};
+
+/*
  * For auditing, why an SA is being deleted.
  */
 enum delete_reason {
@@ -679,13 +689,9 @@ struct state {
 
 	/* state list entry */
 	struct list_entry st_serialno_list_entry;
-	/* SERIALNO hash table entry */
-	struct list_entry st_serialno_hash_entry;
-	/* IKE SPIi:SPIr hash table entry */
-	struct list_entry st_ike_spis_hash_entry;
-	/* IKE SPIi hash table entry */
-	struct list_entry st_ike_initiator_spi_hash_entry;
-	struct list_entry st_connection_hash_entry;
+
+	/* all the hash table entries */
+	struct list_entry st_hash_entries[STATE_HASH_ROOF];
 
 	struct hidden_variables hidden_variables;
 
