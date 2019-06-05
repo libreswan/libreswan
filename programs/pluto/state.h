@@ -326,9 +326,6 @@ struct state {
 
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
 	bool st_suppress_del_notify;            /* suppress sending DELETE - eg replaced conn */
-	bool st_rekeytov2;                      /* true if this IKEv1 is about
-						 * to be replaced with IKEv2
-						 */
 
 	struct connection *st_connection;       /* connection for this SA */
 	fd_t st_whack_sock;                /* fd for our Whack TCP socket.

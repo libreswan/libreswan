@@ -2909,12 +2909,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			break;
 		}
 
-		if (st->st_rekeytov2) {
-			DBG(DBG_CONTROL,
-			    DBG_log("waiting for IKEv1 -> IKEv2 rekey"));
-			break;
-		}
-
 		DBG(DBG_CONTROL,
 		    DBG_log("phase 1 is done, looking for phase 2 to unpend"));
 
