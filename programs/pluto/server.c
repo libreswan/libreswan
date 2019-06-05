@@ -1483,7 +1483,18 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 
 	while (pfd.revents = 0,
 	       poll(&pfd, 1, -1) > 0 && (pfd.revents & POLLERR)) {
-		uint8_t buffer[3000]; /* hope that this is big enough */
+		/*
+		 * XXX: This buffer should be just slightly larger
+		 * than the IKE header as that way just enough
+		 * information to find the sender is returned.
+		 * Unfortunately it doesn't work - unpacking the
+		 * header using in_struct(HDR) fails when the packet
+		 * is truncated.
+		 *
+		 * So instead use the send buffer size, which is far
+		 * too big.
+		 */
+		uint8_t buffer[MAX_INPUT_UDP_SIZE];
 		union {
 			struct sockaddr sa;
 			struct sockaddr_in sa_in4;
@@ -1543,12 +1554,9 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					  ifp->ip_dev->id_rname, before);
 				break;
 			}
-		} else if (packet_len == (ssize_t)sizeof(buffer)) {
-			libreswan_log(
-				"MSG_ERRQUEUE message longer than %zu bytes; truncated",
-				sizeof(buffer));
-		} else if (packet_len >= (ssize_t)sizeof(struct isakmp_hdr)) {
-			sender = find_likely_sender((size_t) packet_len, buffer);
+		} else {
+			sender = find_likely_sender((size_t) packet_len,
+						    buffer, sizeof(buffer));
 		}
 
 		if (DBGP(DBG_BASE)) {
@@ -1727,6 +1735,10 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					 * Since this output is forced
 					 * using DBGP, report the
 					 * error using debug-log.
+					 *
+					 * A NULL SENDER here doesn't
+					 * matter - it just gets
+					 * ignored.
 					 */
 					LSWDBGP_STATE(DBG_OPPO, sender, buf) {
 						LOG(buf);

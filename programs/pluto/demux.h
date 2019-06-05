@@ -145,7 +145,7 @@ struct msg_digest {
 	struct isakmp_quirks quirks;
 };
 
-enum ike_version msg_ike_version(const struct msg_digest *md);
+enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr);
 enum message_role v2_msg_role(const struct msg_digest *md);
 
 extern struct msg_digest *alloc_md(const char *mdname);

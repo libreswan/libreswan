@@ -616,12 +616,9 @@ void schedule_md_event(const char *name, struct msg_digest *md)
 	schedule_callback(name, SOS_NOBODY, handle_md_event, md);
 }
 
-enum ike_version msg_ike_version(const struct msg_digest *md)
+enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr)
 {
-	if (md == NULL) {
-		return 0; /* reserved */
-	}
-	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
+	unsigned vmaj = hdr->isa_version >> ISA_MAJ_SHIFT;
 	switch (vmaj) {
 	case ISAKMP_MAJOR_VERSION: return IKEv1;
 	case IKEv2_MAJOR_VERSION: return IKEv2;
@@ -659,7 +656,7 @@ enum message_role v2_msg_role(const struct msg_digest *md)
 	if (md == NULL) {
 		return NO_MESSAGE;
 	}
-	if (!pexpect(msg_ike_version(md) == IKEv2)) {
+	if (!pexpect(hdr_ike_version(&md->hdr) == IKEv2)) {
 		return NO_MESSAGE;
 	}
 	if (md->fake_dne) {
@@ -708,7 +705,7 @@ char *cisco_stringify(pb_stream *pbs, const char *attr_name)
  */
 void lswlog_msg_digest(struct lswlog *buf, const struct msg_digest *md)
 {
-	enum ike_version ike_version = msg_ike_version(md);
+	enum ike_version ike_version = hdr_ike_version(&md->hdr);
 	lswlog_enum_enum_short(buf, &exchange_type_names, ike_version,
 			       md->hdr.isa_xchg);
 	if (ike_version == IKEv2) {
