@@ -476,7 +476,7 @@ void initialize_new_state(struct state *st,
 			  int try,
 			  fd_t whack_sock)
 {
-	st->st_connection = c;	/* surely safe: must be a new state */
+	update_state_connection(st, c);
 
 	set_state_ike_endpoints(st, c);
 

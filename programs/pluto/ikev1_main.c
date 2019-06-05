@@ -663,7 +663,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 
 	passert(!st->st_oakley.doing_xauth);
 
-	st->st_connection = c;	/* safe: from new_state */
+	update_state_connection(st, c);
 
 	set_cur_state(st); /* (caller will reset cur_state) */
 	st->st_try = 0; /* not our job to try again from start */

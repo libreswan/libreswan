@@ -2423,7 +2423,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				pc->name, fmt_conn_instance(pc, cib));
 	}
 	/* ??? this seems very late to change the connection */
-	cst->st_connection = cc;	/* safe: from duplicate_state */
+	update_state_connection(cst, cc);
 
 	/* code does not support AH+ESP, which not recommended as per RFC 8247 */
 	struct ipsec_proto_info *proto_info
@@ -3998,7 +3998,7 @@ static stf_status ikev2_rekey_child_resp(struct msg_digest *md)
 		    rst->sa.st_serialno);
 		ikev2_print_ts(&rst->sa.st_ts_this);
 		ikev2_print_ts(&rst->sa.st_ts_that);
-		st->st_connection = rst->sa.st_connection;
+		update_state_connection(st, rst->sa.st_connection);
 	}
 
 	return STF_OK;
@@ -5688,7 +5688,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 	}
 
 	st->st_whack_sock = p->whack_sock;
-	st->st_connection = c;	/* safe: from duplicate_state */
+	update_state_connection(st, c);
 
 	set_cur_state(st); /* we must reset before exit */
 	st->st_try = p->try;

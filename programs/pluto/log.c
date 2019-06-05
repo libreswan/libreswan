@@ -314,6 +314,11 @@ void log_pop_connection(struct connection *c, const char *func,
 	}
 }
 
+bool is_cur_connection(const struct connection *c)
+{
+	return cur_connection == c;
+}
+
 so_serial_t log_push_state(struct state *new_state, const char *func,
 			   const char *file, long line)
 {

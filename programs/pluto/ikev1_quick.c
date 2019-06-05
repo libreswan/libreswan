@@ -788,7 +788,7 @@ void quick_outI1(fd_t whack_sock,
 {
 	struct state *st = ikev1_duplicate_state(isakmp_sa);
 	st->st_whack_sock = whack_sock;
-	st->st_connection = c;	/* safe: from duplicate_state */
+	update_state_connection(st, c);
 	passert(c != NULL);
 
 	so_serial_t old_state = push_cur_state(st); /* we must reset before exit */
@@ -1399,7 +1399,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		 * routine, so we can "reach back" to p1st to get it.
 		 */
 		if (st->st_connection != c) {
-			st->st_connection = c;	/* safe: from duplicate_state */
+			update_state_connection(st, c);
 			set_cur_connection(c);
 		}
 

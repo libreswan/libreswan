@@ -89,6 +89,7 @@
 #include "ip_address.h"
 #include "af_info.h"
 #include "keyhi.h" /* for SECKEY_DestroyPublicKey */
+#include "state_db.h"
 
 struct connection *connections = NULL;
 
@@ -4455,48 +4456,59 @@ void connection_discard(struct connection *c)
 		}
 		DBG(DBG_CONTROL, DBG_log("not in pending use"));
 
-		if (!states_use_connection(c)) {
-			DBG(DBG_CONTROL, DBG_log("no states use this connection, deleting"));
+		/* find the first */
+		struct state *st = state_by_connection(c, NULL, NULL, __func__);
+		if (DBGP(DBG_BASE)) {
+			/*
+			 * Cross check that the state DB has been kept
+			 * up-to-date.
+			 */
+			struct state *dst = NULL;
+			FOR_EACH_STATE_NEW2OLD(dst) {
+				if (dst->st_connection == c) {
+					break;
+				}
+			}
+			/* found a state, may not be the same */
+			pexpect((dst == NULL) == (st == NULL));
+			st = dst; /* let the truth be free */
+		}
+
+		if (st == NULL) {
+			dbg("no states use this connection instance, deleting");
 			delete_connection(c, FALSE);
+		} else {
+			dbg("states still using this connection instance, retaining");
 		}
 	}
 }
 
 /*
- * If a state's connection is being changed, there may no longer be any
- * uses of that connection.  If so, it should be discarded.
- * This routine should be called when you don't know if there are
- * remaining references.
+ * Every time a state's connection is changed, the following need to happen:
  *
- * You don't need to call this routine if:
+ * - update the connection->state hash table
  *
- * - the state has just been created by new_state()
- *   (the st_connection field will be NULL).
- *
- * - the state has just been created by duplicate_state()
- *   (the state from which it was cloned will retain a reference
- *   to the old state)
+ * - discard the old connection when not in use
  */
 void update_state_connection(struct state *st, struct connection *c)
 {
-	struct connection *t = st->st_connection;
+	struct connection *old = st->st_connection;
 
-	if (t != c) {
+	if (old != c) {
 		st->st_connection = c;
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
-		if (t != NULL) {
+		rehash_state_connection(st);
+		if (old != NULL) {
 			/*
 			 * Hack to see cur_connection needs to be
 			 * updated.  If nothing else, it will log a
 			 * suspend then resume.
 			 */
-			struct connection *cur = push_cur_connection(NULL); /* suspend */
-			if (cur == t) {
-				set_cur_connection(c); /* start */
-			} else if (cur != NULL) {
-				pop_cur_connection(cur); /* resume */
+			if (is_cur_connection(old)) {
+				pop_cur_connection(NULL);
+				push_cur_connection(c);
 			}
-			connection_discard(t);
+			connection_discard(old);
 		}
 	}
 }

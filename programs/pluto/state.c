@@ -1035,11 +1035,6 @@ void delete_state(struct state *st)
 	delete_cryptographic_continuation(st);
 
 	/*
-	 * effectively, this deletes any ISAKMP SA that this state represents
-	 */
-	del_state_from_db(st);
-
-	/*
 	 * tell kernel to delete any IPSEC SA
 	 */
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||
@@ -1095,9 +1090,20 @@ void delete_state(struct state *st)
 	 */
 	binlog_fake_state(st, STATE_UNDEFINED);
 
-	/* we might be about to free it */
-	st->st_connection = NULL;	/* c will be discarded */
-	connection_discard(c);
+	/*
+	 * Unlink the connection which may in turn delete the
+	 * connection instance.  Needs to be done before the state is
+	 * removed from the state DB as it can otherwise leak the
+	 * connection (or explode because it was removed from the
+	 * list).
+	 */
+	update_state_connection(st, NULL);
+
+	/*
+	 * Effectively, this deletes any ISAKMP SA that this state
+	 * represents
+	 */
+	del_state_from_db(st);
 
 	v2_msgid_free(st);
 
@@ -1203,18 +1209,6 @@ void delete_state(struct state *st)
 /*
  * Is a connection in use by some state?
  */
-bool states_use_connection(const struct connection *c)
-{
-	/* are there any states still using it? */
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
-		if (st->st_connection == c)
-			return TRUE;
-	};
-
-	return FALSE;
-}
 
 bool shared_phase1_connection(const struct connection *c)
 {
@@ -1467,7 +1461,7 @@ static struct state *duplicate_state(struct state *st,
 			 nst->st_serialno,
 			 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
 
-	nst->st_connection = st->st_connection;
+	update_state_connection(nst, st->st_connection);
 
 	if (sa_type == IPSEC_SA) {
 		nst->st_oakley = st->st_oakley;

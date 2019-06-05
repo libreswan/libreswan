@@ -92,6 +92,7 @@ void log_pop_state(so_serial_t serialno, const char *func,
 
 #define set_cur_connection(C) push_cur_connection(C)
 #define reset_cur_connection() pop_cur_connection(NULL)
+bool is_cur_connection(const struct connection *c);
 #define set_cur_state(ST) push_cur_state(ST)
 #define reset_cur_state() pop_cur_state(SOS_NOBODY)
 

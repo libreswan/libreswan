@@ -82,7 +82,7 @@ static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
 	} else {
 		child = ikev2_duplicate_state(ike, IPSEC_SA,
 					      SA_RESPONDER);
-		child->sa.st_connection = c;	/* safe: from duplicate_state */
+		update_state_connection(&child->sa, c);
 		binlog_refresh_state(&child->sa);
 		/*
 		 * XXX: This is to hack around the broken responder

@@ -181,7 +181,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 
 	md->st = st;  /* (caller will reset cur_state) */
 	set_cur_state(st);
-	st->st_connection = c;	/* safe: from new_state */
+	update_state_connection(st, c);
 	change_state(st, STATE_AGGR_R1);
 
 	st->st_policy = policy;	/* ??? not sure what's needed here */
@@ -1019,7 +1019,7 @@ void aggr_outI1(fd_t whack_sock,
 	/* set up new state */
 	st = new_v1_istate();
 	set_cur_state(st);
-	st->st_connection = c;	/* safe: from new_state */
+	update_state_connection(st, c);
 
 #ifdef HAVE_LABELED_IPSEC
 	st->sec_ctx = NULL;
