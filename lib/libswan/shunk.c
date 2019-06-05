@@ -36,7 +36,7 @@ shunk_t shunk1(const char *ptr)
 	}
 }
 
-shunk_t shunk2(const char *ptr, int len)
+shunk_t shunk2(const void *ptr, int len)
 {
 	/*
 	 * Since a zero length string is not the same as a NULL

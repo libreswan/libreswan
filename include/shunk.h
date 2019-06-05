@@ -52,7 +52,7 @@ typedef struct shunk shunk_t;
 extern const shunk_t null_shunk;
 
 shunk_t shunk1(const char *ptr); /* strlen() implied */
-shunk_t shunk2(const char *ptr, int len);
+shunk_t shunk2(const void *ptr, int len);
 
 /*
  * A shunk version of strsep() (which is like strtok()) - split INPUT
