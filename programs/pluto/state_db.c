@@ -17,6 +17,7 @@
 
 #include "state_db.h"
 #include "state.h"
+#include "connections.h"
 #include "lswlog.h"
 #include "hash_table.h"
 
@@ -114,6 +115,118 @@ struct ike_sa *ike_sa_by_serialno(so_serial_t serialno)
 struct child_sa *child_sa_by_serialno(so_serial_t serialno)
 {
 	return pexpect_child_sa(state_by_serialno(serialno));
+}
+
+/*
+ * A table hashed by the connection's address.
+ */
+
+static shunk_t connection_key(struct connection *const *connection)
+{
+	return shunk2(connection, sizeof(*connection));
+}
+
+static shunk_t connection_state_key(const void *data)
+{
+	const struct state *st = data;
+	return connection_key(&st->st_connection);
+}
+
+static struct list_entry *connection_state_entry(void *data)
+{
+	struct state *st = data;
+	return &st->st_hash_entries[CONNECTION_STATE_HASH];
+}
+
+static struct list_head connection_hash_slots[STATE_TABLE_SIZE];
+
+struct state *state_by_connection(struct connection *connection,
+				  state_by_predicate *predicate /*optional*/,
+				  void *predicate_context,
+				  const char *reason)
+{
+	/*
+	 * Note that since SOS_NOBODY is never hashed, a lookup of
+	 * SOS_NOBODY always returns NULL.
+	 */
+	struct state *st;
+	shunk_t key = connection_key(&connection);
+	struct list_head *bucket = hash_table_bucket(&state_hashes[CONNECTION_STATE_HASH], key);
+	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
+		if (st->st_connection != connection) {
+			continue;
+		}
+		if (predicate != NULL &&
+		    !predicate(st, predicate_context)) {
+			continue;
+		}
+		dbg("State DB: found state #%lu in %s (%s)",
+		    st->st_serialno, st->st_state->short_name, reason);
+		return st;
+	}
+	dbg("State DB: state not found (%s)", reason);
+	return NULL;
+}
+
+void rehash_state_connection(struct state *st)
+{
+	rehash_table_entry(&state_hashes[CONNECTION_STATE_HASH], st);
+}
+
+/*
+ * A table hashed by reqid.
+ */
+
+static shunk_t reqid_key(const reqid_t *reqid)
+{
+	return shunk2(reqid, sizeof(*reqid));
+}
+
+static shunk_t reqid_state_key(const void *data)
+{
+	const struct state *st = data;
+	return reqid_key(&st->st_reqid);
+}
+
+static struct list_entry *reqid_state_entry(void *data)
+{
+	struct state *st = data;
+	return &st->st_hash_entries[REQID_STATE_HASH];
+}
+
+static struct list_head reqid_hash_slots[STATE_TABLE_SIZE];
+
+struct state *state_by_reqid(reqid_t reqid,
+			     state_by_predicate *predicate /*optional*/,
+			     void *predicate_context,
+			     const char *reason)
+{
+	/*
+	 * Note that since SOS_NOBODY is never hashed, a lookup of
+	 * SOS_NOBODY always returns NULL.
+	 */
+	struct state *st;
+	shunk_t key = reqid_key(&reqid);
+	struct list_head *bucket = hash_table_bucket(&state_hashes[REQID_STATE_HASH], key);
+	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
+		if (st->st_reqid != reqid) {
+			continue;
+		}
+		if (predicate != NULL &&
+		    !predicate(st, predicate_context)) {
+			continue;
+		}
+		dbg("State DB: found state #%lu in %s (%s)",
+		    st->st_serialno, st->st_state->short_name, reason);
+		return st;
+	}
+	dbg("State DB: state not found (%s)", reason);
+	return NULL;
+}
+
+void rehash_state_reqid(struct state *st)
+{
+	rehash_table_entry(&state_hashes[REQID_STATE_HASH], st);
 }
 
 /*
@@ -273,7 +386,7 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 static struct hash_table state_hashes[STATE_HASH_ROOF] = {
 	[SERIALNO_STATE_HASH] = {
 		.info = {
-			.name = "serialno",
+			.name = "st_serialno table",
 			.log = log_state,
 		},
 		.key = serialno_state_key,
@@ -281,9 +394,29 @@ static struct hash_table state_hashes[STATE_HASH_ROOF] = {
 		.nr_slots = STATE_TABLE_SIZE,
 		.slots = serialno_hash_slots,
 	},
+	[CONNECTION_STATE_HASH] = {
+		.info = {
+			.name = "st_connection table",
+			.log = log_state,
+		},
+		.key = connection_state_key,
+		.entry = connection_state_entry,
+		.nr_slots = STATE_TABLE_SIZE,
+		.slots = connection_hash_slots,
+	},
+	[REQID_STATE_HASH] = {
+		.info = {
+			.name = "st_reqid table",
+			.log = log_state,
+		},
+		.key = reqid_state_key,
+		.entry = reqid_state_entry,
+		.nr_slots = STATE_TABLE_SIZE,
+		.slots = reqid_hash_slots,
+	},
 	[IKE_INITIATOR_SPI_STATE_HASH] = {
 		.info = {
-			.name = "IKE SPIi",
+			.name = "IKE SPIi table",
 			.log = ike_initiator_spi_log,
 		},
 		.key = ike_initiator_spi_state_key,
@@ -293,7 +426,7 @@ static struct hash_table state_hashes[STATE_HASH_ROOF] = {
 	},
 	[IKE_SPIS_STATE_HASH] = {
 		.info = {
-			.name = "IKE SPIi:SPIr",
+			.name = "IKE SPI[ir] table",
 			.log = ike_spis_log,
 		},
 		.key = ike_spis_state_key,

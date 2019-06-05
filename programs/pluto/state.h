@@ -241,6 +241,8 @@ struct msg_digest *unsuspend_md(struct state *st);
  */
 enum state_hash {
 	SERIALNO_STATE_HASH,
+	CONNECTION_STATE_HASH,
+	REQID_STATE_HASH,
 	IKE_SPIS_STATE_HASH,
 	IKE_INITIATOR_SPI_STATE_HASH,
 	STATE_HASH_ROOF,

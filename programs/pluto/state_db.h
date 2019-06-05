@@ -17,8 +17,10 @@
 #define STATE_DB_H
 
 #include "ike_spi.h"
+#include "reqid.h"
 
 struct state;
+struct connection;
 struct list_entry;
 
 void init_state_db(void);
@@ -65,5 +67,17 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				state_by_predicate *predicate /*optional*/,
 				void *predicate_context,
 				const char *reason);
+
+struct state *state_by_connection(struct connection *c,
+				  state_by_predicate *predicate /*optional*/,
+				  void *predicate_context,
+				  const char *reason);
+void rehash_state_connection(struct state *st);
+
+struct state *state_by_reqid(reqid_t reqid,
+			     state_by_predicate *predicate /*optional*/,
+			     void *predicate_context,
+			     const char *reason);
+void rehash_state_reqid(struct state *st);
 
 #endif
