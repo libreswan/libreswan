@@ -204,7 +204,10 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
                     SAN += ", IP:192.1.2.23"
             if ee == "otherwest" or ee == "othereast":
                 SAN += ", email:%s@other.libreswan.org"%ee
-        add_ext(cert, 'subjectAltName', False, SAN)
+        if 'sanCritical' in cnstr:
+            add_ext(cert, 'subjectAltName', True, SAN)
+        else:
+            add_ext(cert, 'subjectAltName', False, SAN)
 
 
     # Create Key Usage (KU)
@@ -694,7 +697,11 @@ def create_ec_certs():
     for name in ['east', 'west', 'north', 'road']:
         print "- creating %s-ec" % name
         #create end certs
-        pexpect.run('openssl ecparam -out keys/' + name +
+        if name is 'west':
+            pexpect.run('openssl ecparam -out keys/' + name +
+                    '-ec.key -name secp256r1 -genkey -noout')
+        else:
+            pexpect.run('openssl ecparam -out keys/' + name +
                     '-ec.key -name secp384r1 -genkey -noout')
         child = pexpect.spawn('openssl req -x509 '
                               '-new -key keys/curveca.key '
@@ -745,6 +752,7 @@ def run_dist_certs():
                         # openssl refuses to generate these
                         # 'west-kuEmpty', 'east-kuEmpty', # Key Usage may be empty
                         # 'west-ekuEmpty', 'east-ekuEmpty', # Extended Key Usage may be empty
+                        'west-sanCritical', 'east-sanCritical', # should work
                         'west-bcCritical', 'east-bcCritical', # Basic Contraints critical flag should be ignored
                         'west-kuCritical', 'east-kuCritical', # Key Usage critical flag should be ignored
                         'west-ekuCritical', 'east-ekuCritical', # Extended Key Usage critical flag should be ignored ??
