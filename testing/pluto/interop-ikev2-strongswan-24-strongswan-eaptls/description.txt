@@ -1,0 +1,8 @@
+reference test for strongswan-strongswan interop with EAP-TLS. This test case
+is the basis to test libreswan EAP-TLS support on client/server.
+
+For some reason the OCSP fetch fails, but it still establishes
+the connection as strongswan soft fails on this.
+
+Client authenticates server by certificate, server authenticates client by EAP
+
