@@ -25,13 +25,13 @@
 
 static struct hash_table state_hashes[];
 
-static size_t log_state(struct lswlog *buf, void *data)
+static void jam_state(struct lswlog *buf, const void *data)
 {
 	if (data == NULL) {
-		return lswlogf(buf, "state #0");
+		jam(buf, "#0");
 	} else {
-		struct state *st = (struct state*) data;
-		return lswlogf(buf, "state #%lu", st->st_serialno);
+		const struct state *st = data;
+		jam(buf, "#%lu", st->st_serialno);
 	}
 }
 
@@ -62,7 +62,7 @@ static bool state_plausable(struct state *st,
 
 static const struct list_info serialno_list_info = {
 	.name = "serialno list",
-	.log = log_state,
+	.jam = jam_state,
 };
 
 struct list_head serialno_list_head;
@@ -257,15 +257,13 @@ static struct list_entry *ike_initiator_spi_state_entry(void *data)
 	return &st->st_hash_entries[IKE_INITIATOR_SPI_STATE_HASH];
 }
 
-static size_t ike_initiator_spi_log(struct lswlog *buf, void *data)
+static void jam_ike_initiator_spi(struct lswlog *buf, const void *data)
 {
-	struct state *st = (struct state *) data;
-	size_t size = 0;
-	size += log_state(buf, st);
-	size += lswlogs(buf, ": ");
-	size += lswlog_bytes(buf, st->st_ike_spis.initiator.bytes,
-			     sizeof(st->st_ike_spis.initiator.bytes));
-	return size;
+	const struct state *st = data;
+	jam_state(buf, st);
+	jam(buf, ": ");
+	lswlog_bytes(buf, st->st_ike_spis.initiator.bytes,
+		  sizeof(st->st_ike_spis.initiator.bytes));
 }
 
 static struct list_head ike_initiator_spi_hash_slots[STATE_TABLE_SIZE];
@@ -328,18 +326,16 @@ static struct list_entry *ike_spis_state_entry(void *data)
 	return &st->st_hash_entries[IKE_SPIS_STATE_HASH];
 }
 
-static size_t ike_spis_log(struct lswlog *buf, void *data)
+static void jam_ike_spis(struct lswlog *buf, const void *data)
 {
-	struct state *st = (struct state *) data;
-	size_t size = 0;
-	size += log_state(buf, st);
-	size += lswlogs(buf, ": ");
-	size += lswlog_bytes(buf, st->st_ike_spis.initiator.bytes,
-			     sizeof(st->st_ike_spis.initiator.bytes));
-	size += lswlogs(buf, "  ");
-	size += lswlog_bytes(buf, st->st_ike_spis.responder.bytes,
-			     sizeof(st->st_ike_spis.responder.bytes));
-	return size;
+	const struct state *st = data;
+	jam_state(buf, st);
+	jam(buf, ": ");
+	lswlog_bytes(buf, st->st_ike_spis.initiator.bytes,
+		     sizeof(st->st_ike_spis.initiator.bytes));
+	jam(buf, "  ");
+	lswlog_bytes(buf, st->st_ike_spis.responder.bytes,
+		     sizeof(st->st_ike_spis.responder.bytes));
 }
 
 static struct list_head ike_spis_hash_slots[STATE_TABLE_SIZE];
@@ -387,7 +383,7 @@ static struct hash_table state_hashes[STATE_HASH_ROOF] = {
 	[SERIALNO_STATE_HASH] = {
 		.info = {
 			.name = "st_serialno table",
-			.log = log_state,
+			.jam = jam_state,
 		},
 		.key = serialno_state_key,
 		.entry = serialno_state_entry,
@@ -397,7 +393,7 @@ static struct hash_table state_hashes[STATE_HASH_ROOF] = {
 	[CONNECTION_STATE_HASH] = {
 		.info = {
 			.name = "st_connection table",
-			.log = log_state,
+			.jam = jam_state,
 		},
 		.key = connection_state_key,
 		.entry = connection_state_entry,
@@ -407,7 +403,7 @@ static struct hash_table state_hashes[STATE_HASH_ROOF] = {
 	[REQID_STATE_HASH] = {
 		.info = {
 			.name = "st_reqid table",
-			.log = log_state,
+			.jam = jam_state,
 		},
 		.key = reqid_state_key,
 		.entry = reqid_state_entry,
@@ -417,7 +413,7 @@ static struct hash_table state_hashes[STATE_HASH_ROOF] = {
 	[IKE_INITIATOR_SPI_STATE_HASH] = {
 		.info = {
 			.name = "IKE SPIi table",
-			.log = ike_initiator_spi_log,
+			.jam = jam_ike_initiator_spi,
 		},
 		.key = ike_initiator_spi_state_key,
 		.entry = ike_initiator_spi_state_entry,
@@ -427,7 +423,7 @@ static struct hash_table state_hashes[STATE_HASH_ROOF] = {
 	[IKE_SPIS_STATE_HASH] = {
 		.info = {
 			.name = "IKE SPI[ir] table",
-			.log = ike_spis_log,
+			.jam = jam_ike_spis,
 		},
 		.key = ike_spis_state_key,
 		.entry = ike_spis_state_entry,

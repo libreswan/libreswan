@@ -103,30 +103,28 @@ struct pluto_crypto_req_cont {
  * The work queue.  Accesses must be locked.
  */
 
-static size_t log_backlog(struct lswlog *buf, void *data)
+static void jam_backlog(struct lswlog *buf, const void *data)
 {
-	size_t size = 0;
 	if (data == NULL) {
-		size += lswlogf(buf, "no work-order");
+		jam(buf, "no work-order");
 	} else {
-		struct pluto_crypto_req_cont *cn = data;
-		size += lswlogf(buf, "work-order %ju", (uintmax_t)cn->pcrc_id);
+		const struct pluto_crypto_req_cont *cn = data;
+		jam(buf, "work-order %ju", (uintmax_t)cn->pcrc_id);
 		if (cn->pcrc_serialno != SOS_NOBODY) {
-			size += lswlogf(buf, " state #%lu", cn->pcrc_serialno);
+			jam(buf, " state #%lu", cn->pcrc_serialno);
 		}
 		if (cn->pcrc_helpernum != 0) {
-			size += lswlogf(buf, " helper %u", cn->pcrc_helpernum);
+			jam(buf, " helper %u", cn->pcrc_helpernum);
 		}
 		if (cn->pcrc_cancelled) {
-			size += lswlogf(buf, " cancelled");
+			jam(buf, " cancelled");
 		}
 	}
-	return size;
 }
 
 static const struct list_info backlog_info = {
 	.name = "backlog",
-	.log = log_backlog,
+	.jam = jam_backlog,
 };
 
 static pthread_mutex_t backlog_mutex = PTHREAD_MUTEX_INITIALIZER;

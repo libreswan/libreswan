@@ -23,7 +23,7 @@
 
 struct list_info {
 	const char *name;
-	size_t (*log)(struct lswlog *buf, void *data);
+	void (*jam)(struct lswlog *buf, const void *data);
 };
 
 /*
@@ -55,6 +55,8 @@ struct list_entry {
 	void *data;
 	const struct list_info *info;
 };
+
+void jam_list_entry(struct lswlog *buf, const struct list_entry *entry);
 
 /*
  * Double linked list HEAD.

@@ -1055,19 +1055,17 @@ struct pid_entry {
 	monotime_t start_time;
 };
 
-static size_t log_pid_entry(struct lswlog *buf, void *data)
+static void jam_pid_entry(struct lswlog *buf, const void *data)
 {
 	if (data == NULL) {
-		return lswlogs(buf, "NULL pid");
+		jam(buf, "NULL pid");
 	} else {
-		struct pid_entry *entry = (struct pid_entry*)data;
+		const struct pid_entry *entry = data;
 		passert(entry->magic == PID_MAGIC);
-		size_t size = 0;
 		if (entry->serialno != SOS_NOBODY) {
-			size += lswlogf(buf, "#%lu ", entry->serialno);
+			jam(buf, "#%lu ", entry->serialno);
 		}
-		size += lswlogf(buf, "%s pid %d", entry->name, entry->pid);
-		return size;
+		jam(buf, "%s pid %d", entry->name, entry->pid);
 	}
 }
 
@@ -1095,7 +1093,7 @@ static struct list_head pid_entry_slots[23];
 static struct hash_table pids_hash_table = {
 	.info = {
 		.name = "pid table",
-		.log = log_pid_entry,
+		.jam = jam_pid_entry,
 	},
 	.key = pid_entry_key,
 	.entry = pid_entry_entry,
@@ -1224,7 +1222,7 @@ static void childhandler_cb(void)
 							    status, pid_entry->context);
 				} else if (st == NULL) {
 					LSWDBGP(DBG_CONTROLMORE, buf) {
-						log_pid_entry(buf, pid_entry);
+						jam_pid_entry(buf, pid_entry);
 						lswlogs(buf, " disappeared");
 					}
 					pid_entry->callback(NULL, NULL,

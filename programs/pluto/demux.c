@@ -543,17 +543,17 @@ struct replay_entry {
 	unsigned long nr;
 };
 
-static size_t log_replay_entry(struct lswlog *buf, void *data)
+static void jam_replay_entry(struct lswlog *buf, const void *data)
 {
-	struct replay_entry *r = (struct replay_entry*)data;
-	return lswlogf(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
+	const struct replay_entry *r = data;
+	jam(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
 }
 
 static struct list_head replay_packets;
 
 static const struct list_info replay_info = {
 	.name = "replay list",
-	.log = log_replay_entry,
+	.jam = jam_replay_entry,
 };
 
 static void save_any_md_for_replay(struct msg_digest **mdp)
