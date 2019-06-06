@@ -700,9 +700,11 @@ done:
 static void whack_handle(int kernelfd);
 
 void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
-		void *arg UNUSED)
+		     void *arg UNUSED)
 {
-		whack_handle(fd);
+	threadtime_t start = threadtime_start();
+	whack_handle(fd);
+	threadtime_stop(&start, SOS_NOBODY, "whack");
 }
 
 /*

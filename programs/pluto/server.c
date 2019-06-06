@@ -450,16 +450,17 @@ struct global_timer {
 static struct global_timer global_timers[GLOBAL_TIMERS_ROOF];
 
 static void global_timer_event(evutil_socket_t fd UNUSED,
-			       const short event,
-			       void *arg)
+			       const short event, void *arg)
 {
 	passert(in_main_thread());
 	struct global_timer *gt = arg;
 	passert(event & EV_TIMEOUT);
 	passert(gt >= global_timers);
 	passert(gt < global_timers + elemsof(global_timers));
-	dbg("global timer %s event", gt->name);
+	dbg("processing global timer %s", gt->name);
+	threadtime_t start = threadtime_start();
 	gt->cb();
+	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
 }
 
 void enable_periodic_timer(enum event_type type, global_timer_cb *cb,
@@ -586,14 +587,15 @@ static struct signal_handler signal_handlers[] = {
 };
 
 static void signal_handler_handler(evutil_socket_t fd UNUSED,
-				 const short event,
-				 void *arg)
+				   const short event, void *arg)
 {
 	passert(in_main_thread());
-	struct signal_handler *se = arg;
 	passert(event & EV_SIGNAL);
-	dbg("signal %s event", se->name);
+	struct signal_handler *se = arg;
+	dbg("processing signal %s", se->name);
+	threadtime_t start = threadtime_start();
 	se->cb();
+	threadtime_stop(&start, SOS_NOBODY, "signal handler %s", se->name);
 }
 
 static void install_signal_handlers(void)
@@ -762,23 +764,6 @@ struct resume_event {
 	struct event *event;
 };
 
-static void resume(const char *name, so_serial_t serialno,
-		   resume_cb *callback, void *context)
-{
-	dbg("start executing resume %s for #%lu", name, serialno);
-	struct state *st = state_with_serialno(serialno);
-	if (st == NULL) {
-		callback(NULL, NULL, context);
-	} else {
-		struct msg_digest *md = unsuspend_md(st);
-		so_serial_t old_state = push_cur_state(st);
-		callback(st, &md, context);
-		release_any_md(&md);
-		pop_cur_state(old_state);
-	}
-	dbg("stop executing resume %s for #%lu", name, serialno);
-}
-
 static void resume_handler(evutil_socket_t fd UNUSED,
 			   short events UNUSED, void *arg)
 {
@@ -791,7 +776,25 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 	 * pexpect() failed yet the passert() passed.
 	 */
 	pexpect(e->event != NULL);
-	resume(e->name, e->serialno, e->callback, e->context);
+	dbg("processing resume %s for #%lu", e->name, e->serialno);
+	/*
+	 * XXX: Don't confuse this and the "callback") code path.
+	 * This unsuspends MD, "callback" does not.
+	 */
+	struct state *st = state_with_serialno(e->serialno);
+	if (st == NULL) {
+		threadtime_t start = threadtime_start();
+		e->callback(NULL, NULL, e->context);
+		threadtime_stop(&start, e->serialno, "resume %s", e->name);
+	} else {
+		so_serial_t old_state = push_cur_state(st);
+		statetime_t start = statetime_start(st);
+		struct msg_digest *md = unsuspend_md(st);
+		e->callback(st, &md, e->context);
+		release_any_md(&md);
+		statetime_stop(&start, "resume %s", e->name);
+		pop_cur_state(old_state);
+	}
 	passert(e->event != NULL);
 	event_free(e->event);
 	pfree(e);
@@ -844,17 +847,30 @@ static void callback_handler(evutil_socket_t fd UNUSED,
 	 * failed yet the passert() passed.
 	 */
 	pexpect(e->event != NULL);
-	dbg("start executing callback %s (#%lu)", e->name, e->serialno);
-	/* serialno can be SOS_NOBODY */
-	struct state *st = state_with_serialno(e->serialno);
-	if (st == NULL) {
+	if (e->serialno == SOS_NOBODY) {
+		dbg("processing callback %s", e->name);
+		threadtime_t start = threadtime_start();
 		e->callback(NULL, e->context);
+		threadtime_stop(&start, SOS_NOBODY, "callback %s", e->name);
 	} else {
-		so_serial_t old = push_cur_state(st);
-		e->callback(st, e->context);
-		pop_cur_state(old);
+		/*
+		 * XXX: Don't confuse this and the "resume" code paths
+		 * - this does not unsuspend MD, "resume" does.
+		 */
+		dbg("processing callback %s for #%lu", e->name, e->serialno);
+		struct state *st = state_with_serialno(e->serialno);
+		if (st == NULL) {
+			threadtime_t start = threadtime_start();
+			e->callback(NULL, e->context);
+			threadtime_stop(&start, e->serialno, "callback %s", e->name);
+		} else {
+			so_serial_t old_state = push_cur_state(st);
+			statetime_t start = statetime_start(st);
+			e->callback(st, e->context);
+			statetime_stop(&start, "callback %s", e->name);
+			pop_cur_state(old_state);
+		}
 	}
-	dbg("stop executing callback %s (#%lu)", e->name, e->serialno);
 	passert(e->event != NULL);
 	event_free(e->event);
 	pfree(e);

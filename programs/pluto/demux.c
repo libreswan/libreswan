@@ -489,7 +489,9 @@ static void comm_handle(const struct iface_port *ifp)
 
 void comm_handle_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
 {
+	threadtime_t start = threadtime_start();
 	comm_handle((const struct iface_port *) arg);
+	threadtime_stop(&start, SOS_NOBODY, "comm handle");
 }
 
 /*

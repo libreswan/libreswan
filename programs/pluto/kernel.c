@@ -2625,8 +2625,10 @@ static void kernel_process_msg_cb(evutil_socket_t fd,
 {
 	const struct kernel_ops *kernel_ops = arg;
 
-	DBG(DBG_KERNEL, DBG_log(" %s process netlink message", __func__));
+	dbg(" %s process netlink message", __func__);
+	threadtime_t start = threadtime_start();
 	kernel_ops->process_msg(fd);
+	threadtime_stop(&start, SOS_NOBODY, "kernel message");
 	pexpect_reset_globals();
 }
 
