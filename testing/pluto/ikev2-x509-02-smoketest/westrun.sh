@@ -22,6 +22,9 @@ sleep 2
 ipsec auto --up west-ku-nonRepudiation
 ipsec auto --delete west-ku-nonRepudiation
 sleep 2
+ipsec auto --up west-sanCritical
+ipsec auto --delete west-sanCritical
+sleep 2
 # This one works only because of the NSS TLS fallback
 ipsec auto --up west-ekuCritical
 ipsec auto --delete west-ekuCritical

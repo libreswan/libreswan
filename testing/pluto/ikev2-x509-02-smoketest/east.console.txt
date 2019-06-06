@@ -41,6 +41,8 @@ east #
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
 | verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
 | verify_end_cert trying profile TLS Client
 | certificate is valid (profile TLS Client)
 | verify_end_cert trying profile IPsec
