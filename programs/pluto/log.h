@@ -25,10 +25,11 @@
 #include "lswcdefs.h"
 #include "lswlog.h"
 #include "fd.h"
-#include "ip_address.h"
+#include "ip_endpoint.h"
 
 struct state;
 struct connection;
+struct msg_digest;
 
 /* moved common code to library file */
 #include "libreswan/passert.h"
@@ -104,6 +105,36 @@ extern void log_pop_from(ip_address old_from, const char *func,
 #define pop_cur_from(OLD)						\
 	log_pop_from(OLD, __func__, PASSERT_BASENAME, __LINE__)
 
+/*
+ * Direct a log message, possibly prefix with the supplied context
+ * (ST, C, FROM), to either log file, whack, or debug stream; or some
+ * combination of those three :-/
+ *
+ * plog_*(): writes to pluto's log file (it does not write to whack).
+ *
+ * As a way of encouraging the use of log functions that include the
+ * context, the context free log function is given the annoyngly long
+ * name plog_global() and not the shorter plog().
+
+ * The rest are place holders:
+ *
+ * wplog_*()+wplogrc_(): write to pluto's log file and whack
+ * (RC=RC_LOG).
+ *
+ * wlog_*()+wlogrc_(): write to whack (RC=RC_LOG) and, when debugging
+ * is enabled, pluto's log file as a debug message
+ *
+ * dbg_*(): only write to pluto's log file as a debug message
+ */
+
+void plog_raw(const struct state *st,
+	      const struct connection *c,
+	      const ip_endpoint *from,
+	      const char *message, ...) PRINTF_LIKE(4);
+#define plog_global(MESSAGE, ...) plog_raw(NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_from(FROM, MESSAGE, ...) plog_raw(NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
+#define plog_c(C, MESSAGE, ...) plog_raw(NULL, C, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_st(ST, MESSAGE, ...) plog_raw(ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
 
 /*
  * Log 'cur' directly (without setting it first).
@@ -137,6 +168,7 @@ bool log_debugging(struct state *st, struct connection *c, lset_t predicate);
 extern void pluto_init_log(void);
 extern void close_log(void);
 extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
+
 
 /*
  * struct lswlog primitives

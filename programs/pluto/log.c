@@ -523,15 +523,15 @@ static void whack_raw(struct lswlog *b, enum rc_type rc)
 }
 
 static void lswlog_cur_prefix(struct lswlog *buf,
-			      struct state *cur_state,
-			      struct connection *cur_connection,
+			      const struct state *cur_state,
+			      const struct connection *cur_connection,
 			      const ip_address *cur_from)
 {
 	if (!in_main_thread()) {
 		return;
 	}
 
-	struct connection *c = cur_state != NULL ? cur_state->st_connection :
+	const struct connection *c = cur_state != NULL ? cur_state->st_connection :
 		cur_connection;
 
 	if (c != NULL) {
@@ -775,4 +775,19 @@ void set_debugging(lset_t deb)
 void reset_debugging(void)
 {
 	set_debugging(base_debugging);
+}
+
+void plog_raw(const struct state *st,
+	      const struct connection *c,
+	      const ip_endpoint *from,
+	      const char *message, ...)
+{
+	LSWBUF(buf) {
+		lswlog_cur_prefix(buf, st, c, from);
+		va_list ap;
+		va_start(ap, message);
+		jam_va_list(buf, message, ap);
+		va_end(ap);
+		lswlog_to_log_stream(buf);
+	}
 }

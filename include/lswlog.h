@@ -183,8 +183,9 @@ size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
  * whack), while the second default RC to RC_LOG.
  *
  * XXX: even though the the name loglog() gives the impression that
- * it, and not plog(), needs to be used when double logging (to both
- * 'syslog' and whack), it does not.  Hence LSWLOG_RC().
+ * it, and not libreswan_log(), needs to be used when double logging
+ * (i.e., to both 'syslog' and whack), it does not - both functions
+ * double log!  Hence LSWLOG_RC().
  */
 
 void lswlog_log_prefix(struct lswlog *buf);
@@ -199,20 +200,8 @@ extern void libreswan_log_rc(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2);
 
 /* signature needs to match printf() */
 extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
-#define plog	libreswan_log
 
 #define LSWLOG(BUF) LSWLOG_RC(RC_LOG, BUF)
-
-/*
- * Log to the main log stream, but _not_ the whack log stream.
- */
-
-#define LOG_TO_LOG(BUF)							\
-	LSWLOG_(true, BUF,						\
-		lswlog_log_prefix(BUF),					\
-		lswlog_to_log_stream(BUF))
-void log_to_log(const char *message, ...) PRINTF_LIKE(1);
-/* to_all(), to_whack(), ... */
 
 /*
  * Log, at level RC, to the whack log (if attached).

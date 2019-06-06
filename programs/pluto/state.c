@@ -1082,9 +1082,8 @@ void delete_state(struct state *st)
 			libreswan_log("IMPAIR: skipping revival of connection '%s' that is supposed to remain up",
 				      c->name);
 		} else {
-			/* 'cur' is ST; so #SO is in log prefix */
-			log_to_log("deleting IKE SA for connection '%s' but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
-				   c->name);
+			plog_st(st, "deleting IKE SA for connection '%s' but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
+			       c->name);
 			add_revival(c);
 		}
 	}
@@ -3064,8 +3063,8 @@ bool verbose_state_busy(const struct state *st)
 	}
 	if (st->st_suspended_md != NULL) {
 		/* not whack */
-		log_to_log("discarding packet received during asynchronous work (DNS or crypto) in %s",
-			   st->st_state->name);
+		plog_st(st, "discarding packet received during asynchronous work (DNS or crypto) in %s",
+			st->st_state->name);
 	} else if (st->st_offloaded_task != NULL) {
 		libreswan_log("message received while calculating. Ignored.");
 	}

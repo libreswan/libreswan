@@ -164,7 +164,7 @@ static void do_whacklisten(void)
 
 static void key_add_request(const struct whack_message *msg)
 {
-	log_to_log("add keyid %s", msg->keyid);
+	plog_global("add keyid %s", msg->keyid);
 	struct id keyid;
 	err_t ugh = atoid(msg->keyid, &keyid, FALSE);
 
@@ -396,8 +396,8 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 		if (m->name == NULL ) {
 			whack_log(RC_FATAL, "received whack command to delete a connection by username, but did not receive the username - ignored");
 		} else {
-			log_to_log("received whack to delete connection by user %s",
-				m->name);
+			plog_global("received whack to delete connection by user %s",
+				    m->name);
 			for_each_state(v1_delete_state_by_username, m->name,
 				       __func__);
 		}
@@ -407,8 +407,8 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 		if (m->name == NULL ) {
 			whack_log(RC_FATAL, "received whack command to delete a connection by id, but did not receive the id - ignored");
 		} else {
-			log_to_log("received whack to delete connection by id %s",
-				m->name);
+			plog_global("received whack to delete connection by id %s",
+				    m->name);
 			for_each_state(delete_state_by_id_name, m->name, __func__);
 		}
 	}
@@ -422,13 +422,13 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 					m->whack_deletestateno);
 		} else {
 			set_cur_state(st);
-			log_to_log("received whack to delete %s state #%lu %s",
-				   enum_name(&ike_version_names, st->st_ike_version),
-				   st->st_serialno,
-				   st->st_state->name);
+			plog_st(st, "received whack to delete %s state #%lu %s",
+				enum_name(&ike_version_names, st->st_ike_version),
+				st->st_serialno,
+				st->st_state->name);
 
 			if ((st->st_ike_version == IKEv2) && !IS_CHILD_SA(st)) {
-				log_to_log("Also deleting any corresponding CHILD_SAs");
+				plog_st(st, "Also deleting any corresponding CHILD_SAs");
 				delete_my_family(st, FALSE);
 				/* note: no md->st to clear */
 			} else {

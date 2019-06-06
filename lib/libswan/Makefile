@@ -109,7 +109,6 @@ OBJS += dbg.o
 OBJS += DBG_dump.o
 OBJS += DBG_log.o
 
-OBJS += log_to_log.o
 OBJS += libreswan_exit_log_errno.o
 OBJS += libreswan_log_errno.o
 OBJS += libreswan_pexpect.o

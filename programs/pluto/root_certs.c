@@ -22,7 +22,7 @@
 #include "root_certs.h"
 #include "server.h"
 #include "pluto_timing.h"
-#include "lswlog.h"
+#include "log.h"
 
 static CERTCertList *root_certs;
 
@@ -36,7 +36,7 @@ CERTCertList *get_root_certs(void)
 	if (root_certs != NULL) {
 		return root_certs;
 	}
-	log_to_log("loading root certificate cache");
+	plog_global("loading root certificate cache");
 	/* always set, if things fail then an empty list is returned */
 	root_certs = CERT_NewCertList();
 
@@ -91,7 +91,7 @@ void free_root_certs(void)
 {
 	passert(in_main_thread());
 	if (root_certs != NULL) {
-		log_to_log("destroying root certificate cache");
+		plog_global("destroying root certificate cache");
 		CERT_DestroyCertList(root_certs);
 		root_certs = NULL;
 	}
