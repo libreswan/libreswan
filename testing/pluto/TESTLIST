@@ -762,6 +762,7 @@ kvmplutotest	interop-ikev2-strongswan-18-compress-initiator		good
 kvmplutotest	interop-ikev2-strongswan-20-strongswan-eap		good
 kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk		wip
 kvmplutotest	interop-ikev2-strongswan-23-initiator-cp		good
+kvmplutotest	interop-ikev2-strongswan-24-strongswan-eaptls		good
 kvmplutotest	interop-ikev2-strongswan-25-ke-mismatch-initiator	good
 kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
 kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
