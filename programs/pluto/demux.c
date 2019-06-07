@@ -127,11 +127,12 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 			      sizeof(bigbuffer), /*flags*/ 0,
 			      &from.sa, &from_len);
 #endif
+	int packet_errno = errno; /* save!!! */
 
 	/* we do not do anything with *to* addresses yet... we will */
 
-	/* First: digest the from address.
-	 * We presume that nothing here disturbs errno.
+	/*
+	 * First: digest the from address.
 	 */
 	if (packet_len == -1 &&
 	    from_len == sizeof(from) &&
@@ -174,31 +175,32 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	if (packet_len == -1) {
 		if (from_ugh == undisclosed &&
 		    errno == ECONNREFUSED) {
-			/* Tone down scary message for vague event:
-			 * We get "connection refused" in response to some
-			 * datagram we sent, but we cannot tell which one.
+			/*
+			 * Tone down scary message for vague event: We
+			 * get "connection refused" in response to
+			 * some datagram we sent, but we cannot tell
+			 * which one.
 			 */
-			libreswan_log(
-				"some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)");
+			plog_global("some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)");
 		} else if (from_ugh != NULL) {
-			LSWLOG_ERRNO(errno, buf) {
-				lswlogf(buf, "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s",
-					ifp->ip_dev->id_rname, from_ugh);
-			}
+			plog_global("recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
+				    ifp->ip_dev->id_rname, from_ugh, pri_errno(packet_errno));
 		} else {
-			LSWLOG_ERRNO(errno, buf) {
-				lswlogf(buf, "recvfrom on %s from ",
-					ifp->ip_dev->id_rname);
-				jam_endpoint(buf, &sender); /* sensitive? */
-				lswlogs(buf, " failed");
-			}
+			/*
+			 * XXX: The way this and the above logic
+			 * interact when deciding if SENDER is valid
+			 * is too confusing.  Suspect it dates back to
+			 * a time before ERRNO was saved - instead of
+			 * saving it the code went through hoops to
+			 * not have it modified.
+			 */
+			plog_from(&sender, "recvfrom on %s failed "PRI_ERRNO,
+				  ifp->ip_dev->id_rname, pri_errno(packet_errno));
 		}
-
 		return NULL;
 	} else if (from_ugh != NULL) {
-		libreswan_log(
-			"recvfrom on %s returned malformed source sockaddr: %s",
-			ifp->ip_dev->id_rname, from_ugh);
+		plog_from(&sender, "recvfrom on %s returned malformed source sockaddr: %s",
+			  ifp->ip_dev->id_rname, from_ugh);
 		return NULL;
 	}
 
@@ -206,21 +208,13 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		uint32_t non_esp;
 
 		if (packet_len < (int)sizeof(uint32_t)) {
-			LSWLOG(buf) {
-				lswlogs(buf, "recvfrom ");
-				jam_endpoint(buf, &sender); /* sensitive? */
-				lswlogf(buf, " too small packet (%d)",
-					packet_len);
-			}
+			plog_from(&sender, "too small packet (%d)",
+				  packet_len);
 			return NULL;
 		}
 		memcpy(&non_esp, _buffer, sizeof(uint32_t));
 		if (non_esp != 0) {
-			LSWLOG(buf) {
-				lswlogs(buf, "recvfrom ");
-				jam_endpoint(buf, &sender); /* sensitive? */
-				lswlogs(buf, " has no Non-ESP marker");
-			}
+			plog_from(&sender, "has no Non-ESP marker");
 			return NULL;
 		}
 		_buffer += sizeof(uint32_t);
@@ -238,10 +232,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		    packet_len >= NON_ESP_MARKER_SIZE &&
 		    memeq(_buffer, non_ESP_marker,
 			   NON_ESP_MARKER_SIZE)) {
-			LSWLOG(buf) {
-				lswlogs(buf, "Mangled packet with potential spurious non-esp marker ignored. Sender: ");
-				jam_endpoint(buf, &sender); /* sensitiv? */
-			}
+			plog_from(&sender, "mangled with potential spurious non-esp marker");
 			return NULL;
 		}
 	}
@@ -253,10 +244,9 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		 * can reach this point. Complain and discard them.
 		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?
 		 */
-		LSWDBGP(DBG_NATT, buf) {
-			lswlogs(buf, "NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: ");
-			jam_endpoint(buf, &sender); /* sensitive? */
-		};
+		ip_endpoint_buf eb;
+		dbg("NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
+		    str_endpoint(&sender, &eb)); /* sensitive? */
 		return NULL;
 	}
 
@@ -274,16 +264,15 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 			       "message buffer in read_packet()")
 		 , packet_len, "packet");
 
-	LSWDBGP(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL, buf) {
-		lswlogf(buf, "*received %d bytes from ",
-			(int) pbs_room(&md->packet_pbs));
-		jam_endpoint(buf, &sender);
-		lswlogf(buf, " on %s (port=%d)",
-			ifp->ip_dev->id_rname, ifp->port);
-	};
+	ip_endpoint_buf eb;
+	dbg("*received %d bytes from %s on %s (port=%d)",
+	    (int) pbs_room(&md->packet_pbs),
+	    str_endpoint(&sender, &eb),
+	    ifp->ip_dev->id_rname, ifp->port);
 
-	DBG(DBG_RAW,
-	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
+	if (DBGP(DBG_RAW)) {
+		DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs));
+	}
 
 	pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
 
@@ -313,7 +302,7 @@ void process_packet(struct msg_digest **mdp)
 		 * of any content - not even to look for major version
 		 * number!  So we'll just drop it.
 		 */
-		libreswan_log("Received packet with mangled IKE header - dropped");
+		plog_md(md, "received packet with mangled IKE header - dropped");
 		return;
 	}
 
@@ -321,14 +310,13 @@ void process_packet(struct msg_digest **mdp)
 		/* Some (old?) versions of the Cisco VPN client send an additional
 		 * 16 bytes of zero bytes - Complain but accept it
 		 */
-		DBG(DBG_CONTROL, {
-			DBG_log(
-			"size (%u) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
-			(unsigned) pbs_room(&md->packet_pbs),
-			md->hdr.isa_length);
+		if (DBGP(DBG_CONTROL)) {
+			DBG_log("size (%u) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
+				(unsigned) pbs_room(&md->packet_pbs),
+				md->hdr.isa_length);
 			DBG_dump("extraneous bytes:", md->message_pbs.roof,
 				md->packet_pbs.roof - md->message_pbs.roof);
-		});
+		}
 	}
 
 	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
@@ -340,7 +328,7 @@ void process_packet(struct msg_digest **mdp)
 		 * IKEv2 doesn't say what to do with low versions,
 		 * just drop them.
 		 */
-		libreswan_log("ignoring packet with IKE major version '%d'", vmaj);
+		plog_md(md, "ignoring packet with IKE major version '%d'", vmaj);
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
@@ -359,15 +347,14 @@ void process_packet(struct msg_digest **mdp)
 			 * own, given the major version numbers are
 			 * identical.
 			 */
-			libreswan_log("ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
+			plog_md(md, "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
 			send_notification_from_md(md, INVALID_MINOR_VERSION);
 			return;
 		}
-		DBG(DBG_CONTROL,
-		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
-			    vmaj, vmin,
-			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
-			    md->hdr.isa_xchg));
+		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
+		    vmaj, vmin,
+		    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
+		    md->hdr.isa_xchg);
 		process_v1_packet(mdp);
 		/* our caller will release_any_md(mdp) */
 		break;
@@ -377,19 +364,18 @@ void process_packet(struct msg_digest **mdp)
 			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
-			libreswan_log("Ignoring unknown IKEv2 minor version number %d", vmin);
+			plog_md(md, "Ignoring unknown IKEv2 minor version number %d", vmin);
 		}
-		DBG(DBG_CONTROL,
-		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
-			    vmaj, vmin,
-			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
-			    md->hdr.isa_xchg));
+		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
+		    vmaj, vmin,
+		    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
+		    md->hdr.isa_xchg);
 		ikev2_process_packet(mdp);
 		/* our caller will release_any_md(mdp) */
 		break;
 
 	default:
-		libreswan_log("message contains unsupported IKE major version '%d'", vmaj);
+		plog_md(md, "message contains unsupported IKE major version '%d'", vmaj);
 		/*
 		 * According to 1.5.  Informational Messages outside
 		 * of an IKE SA, [...] the message is always sent
@@ -520,8 +506,9 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		va_end(ap);
 		lswlogf(buf, " (%d bytes)", (int)pbs_room(&md->packet_pbs));
 	}
-	DBG(DBG_RAW,
-	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
+	if (DBGP(DBG_RAW)) {
+		DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs));
+	}
 
 	process_md(&md);
 
