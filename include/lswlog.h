@@ -278,6 +278,12 @@ void libreswan_exit_log_errno(int e, const char *message, ...) PRINTF_LIKE(2) NE
 		libreswan_exit_log_errno(exit_log_errno, __VA_ARGS__);	\
 	}
 
+/*
+ * E must have been saved!  Assume it is used as "... "PRI_ERRNO.
+ */
+#define PRI_ERRNO "Errno %d: %s"
+#define pri_errno(E) (E), strerror(E)
+
 
 /*
  * Log debug messages to the main log stream, but not the WHACK log
