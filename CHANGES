@@ -1,7 +1,19 @@
 
 See also https://libreswan.org/
 
+v3.29 (June 10, 2019)
+* SECURITY: Fixes CVE-2019-10155 https://libreswan.org/security/CVE-2019-10155
+* programs: Change to /proc/sys/net/core/xfrm_acq_expires to detect XFRM [Paul]
+* barf: Fix shell script parse error and small cleanup [Tuomo/Hugh]
+* packaging: fedora30 requires gcc to be listed as BuildRequires: [Paul]
+* packaging: rhel6 doesn't need USE_AVA_COPY=true or WERROR_CFLAGS= [Tuomo]
+* packaging/rhel6: remove -lrt, not needed any more [Tuomo]
+* systemd: change Restart default to on-failure [Tuomo]
+* building: Makefiles: Use RT_LDFLAGS for glibc < 2.17 support [Tuomo]
+* building: userland-cflags.mk: add RT_LDFLAGS= for older glibc [Tuomo]
+
 v3.28 (May 20, 2019)
+* SECURITY: Fixes CVE-2019-12312 https://libreswan.org/security/CVE-2019-12312
 * KLIPS: Disable KLIPS userland support per default [Paul]
          WARNING: Support for KLIPS will be removed in 2019
 * MAST: Removed support for MAST variant of KLIPS stack [Paul]
