@@ -46,7 +46,7 @@ west #
 west #
  # confirm the revive conn code triggered
 west #
- hostname | grep east > /dev/null && grep EVENT_REVIVE_CONNS /tmp/pluto.log | sed "s/@.*$//"
+ hostname | grep east > /dev/null && grep -e 'but must remain up per local policy' -e '^[^|].*EVENT_REVIVE_CONNS' /tmp/pluto.log
 west #
 west #
  ../bin/check-for-core.sh
