@@ -193,7 +193,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	{
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
-			= ikev2_child_sa_proto_info(cst, c->policy);
+			= ikev2_child_sa_proto_info(pexpect_child_sa(cst), c->policy);
 
 		if (isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)  {
 			RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
