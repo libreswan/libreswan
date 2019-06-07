@@ -111,21 +111,34 @@ extern void log_pop_from(ip_address old_from, const char *func,
  * (ST, C, FROM), to either log file, whack, or debug stream; or some
  * combination of those three :-/
  *
- * plog_*(): writes to pluto's log file (it does not write to whack).
+ * Todays proposed naming convention:
  *
- * As a way of encouraging the use of log functions that include the
- * context, the context free log function is given the annoyngly long
- * name plog_global() and not the shorter plog().
-
- * The rest are place holders:
+ *   {p,w,wp,}{log,rate,dbg}_{global,from,md,c,st,raw}()
  *
- * wplog_*()+wplogrc_(): write to pluto's log file and whack
- * (RC=RC_LOG).
+ * {p,w,wp} -> p: write to pluto's log file (but not whack); w: write
+ * to whack (but not pluto's log file); wp: write to both.
  *
- * wlog_*()+wlogrc_(): write to whack (RC=RC_LOG) and, when debugging
- * is enabled, pluto's log file as a debug message
+ * {log,rate,dbg} -> log: output as a log message; rate: output as a
+ * log message but cap the number allowed; dbg -> output as a debug
+ * message.
  *
- * dbg_*(): only write to pluto's log file as a debug message
+ * {global,from,md,c,st} -> global: no context prefix; from: endpoint
+ * as prefix; md: endpoint from md as prefix; c: connection+instance
+ * as prefix; st: state+connection as prefix; raw: takes all
+ * parameters with the most detailed being prefered.
+ *
+ * XXX:
+ *
+ * - many of the above combinations are meaningless
+ *
+ * - lets use dbg_*()?
+ *
+ * - As a way of encouraging the use of log functions that include the
+ *   context, the context free log function is given the annoyngly
+ *   long name plog_global() and not the shorter plog().
+ *
+ * - prate_() (pronounced pirate_?) looks terrible: switch to ratep_
+ *   logp_ et.al.; rate_plog_*() is too long.
  */
 
 void plog_raw(const struct state *st,
@@ -134,6 +147,7 @@ void plog_raw(const struct state *st,
 	      const char *message, ...) PRINTF_LIKE(4);
 #define plog_global(MESSAGE, ...) plog_raw(NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
 #define plog_from(FROM, MESSAGE, ...) plog_raw(NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
+#define plog_md(MD, MESSAGE, ...) plog_raw(NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
 #define plog_c(C, MESSAGE, ...) plog_raw(NULL, C, NULL, MESSAGE,##__VA_ARGS__);
 #define plog_st(ST, MESSAGE, ...) plog_raw(ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
 
