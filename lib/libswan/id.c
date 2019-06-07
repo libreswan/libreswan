@@ -260,6 +260,26 @@ void escape_metachar(const char *src, char *dst, size_t dstlen)
 }
 
 /*
+ * these should use jam_char() / jam_metachar(); except they don't
+ * exist.
+ */
+void jam_id(struct lswlog *buf, const struct id *id)
+{
+	char a[IDTOA_BUF];
+	idtoa(id, a, sizeof(a));
+	jam_string(buf, a);
+}
+
+void jam_id_escaped(struct lswlog *buf, const struct id *id)
+{
+	char a[IDTOA_BUF];
+	idtoa(id, a, sizeof(a));
+	char e[IDTOA_BUF];
+	escape_metachar(a, e, sizeof(e));
+	jam_string(buf, e);
+}
+
+/*
  * Make private copy of string in struct id.
  * This is needed if the result of atoid is to be kept.
  */
