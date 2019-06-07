@@ -249,10 +249,16 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	pexpect(old_state == SOS_NOBODY); /* since globals are reset */
 	statetime_t start = statetime_start(st);
 
+#if 0
+	/*
+	 * XXX: this line, which is a merger of the above two lines,
+	 * leaks into the expected test output causing failures.
+	 */
 	dbg("%s: processing %s-event@%p for %s SA #%lu in state %s",
 	    __func__, event_name, ev,
 	    IS_IKE_SA(st) ? "IKE" : "CHILD",
 	    st->st_serialno, st->st_state->short_name);
+#endif
 
 	/*
 	 * Check that st is as expected for the event type.
