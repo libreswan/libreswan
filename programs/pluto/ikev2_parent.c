@@ -3836,19 +3836,35 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	return ikev2_process_ts_and_rest(md);
 }
 
-static bool ikev2_rekey_child_req(struct state *st,
+static bool ikev2_rekey_child_req(struct child_sa *child,
 				  enum ikev2_sec_proto_id *rekey_protoid,
 				  ipsec_spi_t *rekey_spi)
 {
-	struct state *rst = state_with_serialno(st->st_ipsec_pred);
+	if (!pexpect(child->sa.st_establishing_sa == IPSEC_SA) ||
+	    !pexpect(child->sa.st_ipsec_pred != SOS_NOBODY) ||
+	    !pexpect(child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0)) {
+		return false;
+	}
 
-	if (st->st_state->kind != STATE_V2_REKEY_CHILD_I0)
-		return TRUE;
-
+	struct state *rst = state_with_serialno(child->sa.st_ipsec_pred);
 	if (rst ==  NULL) {
-		libreswan_log("Child SA to rekey #%lu vanished abort this exchange",
-				st->st_ipsec_pred);
-		return FALSE;
+		/*
+		 * XXX: For instance:
+		 *
+		 * - the old child initiated this replacement
+		 *
+		 * - this child wondered off to perform DH
+		 *
+		 * - the old child expires itself (or it gets sent a
+		 *   delete)
+		 *
+		 * - this child finds it has no older sibling
+		 *
+		 * The older child should have discarded this state.
+		 */
+		plog_st(&child->sa, "CHILD SA to rekey #%lu vanished abort this exchange",
+			child->sa.st_ipsec_pred);
+		return false;
 	}
 
 	/*
@@ -3864,26 +3880,26 @@ static bool ikev2_rekey_child_req(struct state *st,
 		*rekey_spi = rst->st_ah.our_spi;
 		*rekey_protoid = PROTO_IPSEC_AH;
 	} else {
-		libreswan_log("Child SA to rekey #%lu is not ESP/AH can't rekey",
-				st->st_ipsec_pred);
-		return FALSE;
+		PEXPECT_LOG("CHILD SA to rekey #%lu is not ESP/AH",
+			    child->sa.st_ipsec_pred);
+		return false;
 	}
 
-	st->st_ts_this = rst->st_ts_this;
-	st->st_ts_that = rst->st_ts_that;
+	child->sa.st_ts_this = rst->st_ts_this;
+	child->sa.st_ts_that = rst->st_ts_that;
 
 	char cib[CONN_INST_BUF];
 
 	dbg("#%lu initiate rekey request for \"%s\"%s #%lu SPI 0x%x TSi TSr",
-	    st->st_serialno,
+	    child->sa.st_serialno,
 	    rst->st_connection->name,
 	    fmt_conn_instance(rst->st_connection, cib),
 	    rst->st_serialno, ntohl(*rekey_spi));
 
-	ikev2_print_ts(&st->st_ts_this);
-	ikev2_print_ts(&st->st_ts_that);
+	ikev2_print_ts(&child->sa.st_ts_this);
+	ikev2_print_ts(&child->sa.st_ts_that);
 
-	return TRUE;
+	return true;
 }
 
 static stf_status ikev2_rekey_child_resp(struct msg_digest *md)
@@ -4044,20 +4060,18 @@ static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 }
 
 /* once done use the same function in ikev2_parent_inR1outI2_tail too */
-static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
-				  pb_stream *outpbs,
-				  enum isakmp_xchg_types isa_xchg)
+static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
+						 pb_stream *outpbs)
 {
-	bool send_use_transport;
-	/* child connection */
-	struct state *cst = md->st;
-	struct connection *cc = cst->st_connection;
-
-	send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
+	if (!pexpect(child->sa.st_establishing_sa == IPSEC_SA)) {
+		return STF_INTERNAL_ERROR;
+	}
+	struct connection *cc = child->sa.st_connection;
+	bool send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
 
 	/* ??? this code won't support AH + ESP */
 	struct ipsec_proto_info *proto_info
-		= ikev2_child_sa_proto_info(pexpect_child_sa(cst), cc->policy);
+		= ikev2_child_sa_proto_info(child, cc->policy);
 	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
 	chunk_t local_spi = CHUNKO(proto_info->our_spi);
 
@@ -4073,51 +4087,68 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 	if (!ikev2_emit_sa_proposals(outpbs, cc->v2_create_child_proposals, &local_spi))
 		return STF_INTERNAL_ERROR;
 
+	/*
+	 * If rekeying, get the old SPI and protocol.
+	 */
 	ipsec_spi_t rekey_spi = 0;
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		/* send NONCE */
-
-		enum ikev2_sec_proto_id rekey_protoid = PROTO_v2_RESERVED;
-		if (!ikev2_rekey_child_req(cst, &rekey_protoid, &rekey_spi))
+	enum ikev2_sec_proto_id rekey_protoid = PROTO_v2_RESERVED;
+	if (child->sa.st_ipsec_pred != SOS_NOBODY) {
+		if (!ikev2_rekey_child_req(child, &rekey_protoid, &rekey_spi)) {
+			/*
+			 * XXX: For instance:
+			 *
+			 * - the old child initiated this replacement
+			 *
+			 * - this child wondered off to perform DH
+			 *
+			 * - the old child expires itself (or it gets
+			 *   sent a delete)
+			 *
+			 * - this child finds it has no older sibling
+			 *
+			 * The older child should have discarded this
+			 * state.
+			 */
 			return STF_INTERNAL_ERROR;
+		}
+	}
 
-		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false),
-		};
-		pb_stream pb_nr;
-		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
-		    !out_chunk(cst->st_ni, &pb_nr, "IKEv2 nonce"))
+	struct ikev2_generic in = {
+		.isag_critical = build_ikev2_critical(false),
+	};
+	pb_stream pb_nr;
+	if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
+	    !out_chunk(child->sa.st_ni, &pb_nr, "IKEv2 nonce"))
+		return STF_INTERNAL_ERROR;
+	close_output_pbs(&pb_nr);
+
+	if (child->sa.st_pfs_group != NULL)  {
+		if (!emit_v2KE(&child->sa.st_gi, child->sa.st_pfs_group, outpbs)) {
 			return STF_INTERNAL_ERROR;
-		close_output_pbs(&pb_nr);
-
-		if (cst->st_pfs_group != NULL)  {
-			if (!emit_v2KE(&cst->st_gi, cst->st_pfs_group, outpbs)) {
-				return STF_INTERNAL_ERROR;
-			}
 		}
+	}
 
-		if (rekey_spi != 0) {
-			if (!emit_v2Nsa_pl(v2N_REKEY_SA,
-					rekey_protoid, &rekey_spi,
-					outpbs, NULL))
-				return STF_INTERNAL_ERROR;
-		}
+	if (rekey_spi != 0) {
+		if (!emit_v2Nsa_pl(v2N_REKEY_SA,
+				   rekey_protoid, &rekey_spi,
+				   outpbs, NULL))
+			return STF_INTERNAL_ERROR;
 	}
 
 	if (rekey_spi == 0) {
 		/* not rekey */
-		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
-		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
+		child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this);
+		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that);
 	}
 
-	v2_emit_ts_payloads(pexpect_child_sa(cst), outpbs, cc);
+	v2_emit_ts_payloads(child, outpbs, cc);
 
 	if (send_use_transport) {
-		DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
+		dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
 		if (!emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs))
 			return STF_INTERNAL_ERROR;
 	} else {
-		DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
+		dbg("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE");
 	}
 
 	if (cc->send_no_esp_tfc) {
@@ -4788,8 +4819,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		break;
 	case STATE_V2_CREATE_I0:
 	case STATE_V2_REKEY_CHILD_I0:
-		ret = ikev2_child_add_ipsec_payloads(md, &sk.pbs,
-				ISAKMP_v2_CREATE_CHILD_SA);
+		ret = ikev2_child_add_ipsec_payloads(child, &sk.pbs);
 		break;
 	default:
 		/* ??? which states are actually correct? */
