@@ -46,3 +46,4 @@ void rate_log(const char *fmt, ...)
 		}
 	}
 }
+

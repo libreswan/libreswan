@@ -182,6 +182,11 @@ struct impairment impairments[] = {
 		.how_keynum = &send_impairment_keywords,
 		V(impair_child_key_length_attribute),
 	},
+	{
+		.what = "log-rate-limit",
+		.help = "set the per-hour(?) cap on rate-limited log messages",
+		V(impair_log_rate_limit),
+	},
 };
 
 static void help(const char *prefix, const struct impairment *cr)
@@ -365,8 +370,7 @@ bool parse_impair(const char *optarg,
 		 */
 		if (shunk_strcaseeq(how, "false") ||
 		    shunk_strcaseeq(how, "off") ||
-		    shunk_strcaseeq(how, "no") ||
-		    shunk_strcaseeq(how, "0")) {
+		    shunk_strcaseeq(how, "no")) {
 			/* --impair WHAT:nope */
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
@@ -376,8 +380,7 @@ bool parse_impair(const char *optarg,
 		} else if (how.len == 0 ||
 			   shunk_strcaseeq(how, "true") ||
 			   shunk_strcaseeq(how, "on") ||
-			   shunk_strcaseeq(how, "yes") ||
-			   shunk_strcaseeq(how, "1")) {
+			   shunk_strcaseeq(how, "yes")) {
 			/* --impair WHAT:yes */
 			*whack_impair = (struct whack_impair) {
 				.what = ci,
@@ -385,6 +388,14 @@ bool parse_impair(const char *optarg,
 			};
 			return true;
 		} else {
+			unsigned value = 0;
+			if (parse_biased_unsigned(how, &value, 0)) {
+				*whack_impair = (struct whack_impair) {
+					.what = ci,
+					.how = value,
+				};
+				return true;
+			}
 			/* XXX: ignores "WHAT:" */
 			LSWLOG_ERROR(buf) {
 				lswlogf(buf, "ignoring option '--impair "PRI_SHUNK":"PRI_SHUNK"' with unexpected parameter '"PRI_SHUNK"'",
@@ -428,11 +439,15 @@ static void lswlog_impairment(struct lswlog *buf, const struct impairment *cr)
 		}
 	} else {
 		/* only bool for now */
-		if (value_of(cr) != 0) {
-			lswlogs(buf, cr->what);
-		} else {
+		uintmax_t value = value_of(cr);
+		if (value == 0) {
 			/* parser accepts this */
-			lswlogf(buf, "%s:no", cr->what);
+			jam(buf, "%s:no", cr->what);
+		} else if (value == 1) {
+			/* parser accepts this */
+			jam(buf, "%s", cr->what);
+		} else {
+			jam(buf, "%s:%ju", cr->what, value);
 		}
 	}
 }
@@ -531,3 +546,4 @@ bool impair_emitting;
 enum send_impairment impair_ke_payload;
 enum send_impairment impair_ike_key_length_attribute;
 enum send_impairment impair_child_key_length_attribute;
+unsigned impair_log_rate_limit;

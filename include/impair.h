@@ -52,6 +52,7 @@ extern bool impair_emitting;
 extern enum send_impairment impair_ke_payload;
 extern enum send_impairment impair_ike_key_length_attribute;
 extern enum send_impairment impair_child_key_length_attribute;
+extern unsigned impair_log_rate_limit;
 
 /*
  * What whack sends across the wire for a impair.
