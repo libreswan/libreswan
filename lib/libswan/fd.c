@@ -40,7 +40,7 @@ fd_t new_fd(int fd, const char *code, const char *func, const char *file, unsign
 	LSWDBGP(DBG_CONTROL, buf) {
 		lswlogf(buf, "%s -> "PRI_FD, code, PRI_fd(fdt));
 		if (error) {
-			lswlog_errno(buf, e);
+			jam(buf, " "PRI_ERRNO, pri_errno(e));
 		}
 		lswlog_source_line(buf, func, file, line);
 	}
@@ -64,7 +64,7 @@ fd_t dup_any_fd(fd_t fd, const char *func, const char *file, unsigned long line)
 		lswlogf(buf, "dup_any("PRI_FD") -> "PRI_FD,
 			PRI_fd(fd), PRI_fd(nfd));
 		if (error) {
-			lswlog_errno(buf, e);
+			jam(buf, " "PRI_ERRNO, pri_errno(e));
 		}
 		lswlog_source_line(buf, func, file, line);
 	}
@@ -80,7 +80,7 @@ void close_any_fd(fd_t *fd, const char *func, const char *file, unsigned long li
 		LSWDBGP(DBG_CONTROL, buf) {
 			lswlogf(buf, "close_any("PRI_FD")", PRI_fd(*fd));
 			if (error) {
-				lswlog_errno(buf, e);
+				jam(buf, " "PRI_ERRNO, pri_errno(e));
 			}
 			lswlog_source_line(buf, func, file, line);
 		}

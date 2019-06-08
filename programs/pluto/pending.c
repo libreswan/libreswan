@@ -159,7 +159,7 @@ void release_pending_whacks(struct state *st, err_t story)
 		LSWDBGP(DBG_CONTROL, buf) {
 			lswlogf(buf, "%s: state #%lu stat("PRI_FD") failed ",
 				__func__, st->st_serialno, PRI_fd(st->st_whack_sock));
-			lswlog_errno(buf, e);
+			jam(buf, " "PRI_ERRNO, pri_errno(e));
 		}
 		/* presumably dead */
 		st->st_whack_sock = null_fd;

@@ -280,6 +280,8 @@ void libreswan_exit_log_errno(int e, const char *message, ...) PRINTF_LIKE(2) NE
 
 /*
  * E must have been saved!  Assume it is used as "... "PRI_ERRNO.
+ *
+ *   _Errno E: <strerror(E)>
  */
 #define PRI_ERRNO "Errno %d: %s"
 #define pri_errno(E) (E), strerror(E)
@@ -358,8 +360,6 @@ size_t lswlog_source_line(struct lswlog *log, const char *func,
 			  const char *file, unsigned long line);
 /* <string without binary characters> */
 size_t lswlog_sanitized(struct lswlog *log, const char *string);
-/* _Errno E: <strerror(E)> */
-size_t lswlog_errno(struct lswlog *log, int e);
 /* <hex-byte>:<hex-byte>... */
 size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 		    size_t sizeof_bytes);

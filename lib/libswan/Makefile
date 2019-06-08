@@ -130,7 +130,6 @@ OBJS += lswlog_nss_cka.o
 OBJS += lswlog_nss_secitem.o
 OBJS += lswlog_source_line.o
 OBJS += lswlog_sanitized.o
-OBJS += lswlog_errno.o
 OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o
 OBJS += lswlog_realtime.o
