@@ -130,6 +130,8 @@ static const char *const timer_event_name[] = {
 	E(EVENT_REVIVE_CONNS),
 	E(EVENT_FREE_ROOT_CERTS),
 
+	E(GLOBAL_TIMERS_ROOF),
+
 	E(EVENT_SO_DISCARD),
 	E(EVENT_RETRANSMIT),
 
