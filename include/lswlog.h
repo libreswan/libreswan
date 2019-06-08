@@ -609,18 +609,6 @@ void libreswan_bad_case(const char *expression, long value,
 void lswlog_errno_prefix(struct lswlog *buf, const char *prefix);
 void lswlog_errno_suffix(struct lswlog *buf, int e);
 
-#define LSWLOG_ERRNO_(PREFIX, ERRNO, BUF)				\
-	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
-		for (int lswlog_errno = ERRNO; lswlog_p; lswlog_p = false) \
-			LSWBUF_(BUF)					\
-				for (lswlog_errno_prefix(buf, PREFIX);	\
-				     lswlog_p;				\
-				     lswlog_p = false,			\
-					     lswlog_errno_suffix(buf, lswlog_errno))
-
-#define LSWLOG_ERRNO(ERRNO, BUF)					\
-	LSWLOG_ERRNO_("ERROR: ", ERRNO, BUF)
-
 #define LSWLOG_ERROR(BUF)			\
 	LSWLOG_(true, BUF,			\
 		lswlog_log_prefix(BUF),		\
