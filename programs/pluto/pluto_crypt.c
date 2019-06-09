@@ -428,20 +428,24 @@ static void *pluto_crypto_helper_thread(void *arg)
 
 /*
  * Do the work 'inline' which really means on the event queue.
+ *
+ * Step one is to perform the crypto in a state-free context (just
+ * like for a worker thread); and step two is to resume the thread
+ * with the possibly cancelled result.
  */
 
-static resume_cb inline_worker; /* type assertion */
+static callback_cb inline_worker; /* type assertion */
 
-static void inline_worker(struct state *st,
-			  struct msg_digest **mdp,
+static void inline_worker(struct state *unused_st UNUSED,
 			  void *arg)
 {
 	struct pluto_crypto_req_cont *cn = arg;
 	if (!cn->pcrc_cancelled) {
-		pexpect(st != NULL);
 		pluto_do_crypto_op(cn, -1);
 	}
-	handle_helper_answer(st, mdp, arg);
+	schedule_resume("inline worker sending helper answer",
+			cn->pcrc_serialno,
+			handle_helper_answer, cn);
 }
 
 /*
@@ -502,8 +506,12 @@ void send_crypto_helper_request(struct state *st,
 	 * do it all ourselves?
 	 */
 	if (pc_workers == NULL) {
-		schedule_resume("inline crypto", st->st_serialno,
-				inline_worker, cn);
+		/*
+		 * Invoke the inline worker as if it is on a separate
+		 * thread - no resume (aka unsuspend) and no state
+		 * (hence SOS_NOBODY).
+		 */
+		schedule_callback("inline crypto", SOS_NOBODY, inline_worker, cn);
 	} else {
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("adding %s work-order %u for state #%lu",
