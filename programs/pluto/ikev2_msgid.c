@@ -554,13 +554,11 @@ static void initiate_next(struct state *st, void *context UNUSED)
 			continue;
 		}
 		dbg_v2_msgid(ike, st, "resuming SA using IKE SA (unack %jd)", unack);
-		/*
-		 * XXX: there's a race here.
-		 */
-		push_cur_state(st);
+		so_serial_t old_state = push_cur_state(st);
 		struct msg_digest *md = unsuspend_md(st);
 		complete_v2_state_transition(st, &md, pending.cb(ike, st, &md));
-		/* complete calls pop() */
+		release_any_md(&md);
+		pop_cur_state(old_state);
 	}
 }
 
