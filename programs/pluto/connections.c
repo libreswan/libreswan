@@ -3110,7 +3110,7 @@ struct connection *refine_host_connection(const struct state *st,
 					bool *fromcert)
 {
 	struct connection *c = st->st_connection;
-	generalName_t *requested_ca = st->st_requested_ca;
+	const generalName_t *requested_ca = st->st_requested_ca;
 	/* Ensure the caller and we know the IKE version we are looking for */
 	bool ikev1 = auth_policy != LEMPTY;
 	bool ikev2 = this_authby != AUTH_UNSET;

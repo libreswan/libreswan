@@ -129,7 +129,7 @@ static realtime_t get_nss_cert_notafter(CERTCertificate *cert)
 /*
  * does our CA match one of the requested CAs?
  */
-bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
+bool match_requested_ca(const generalName_t *requested_ca, chunk_t our_ca,
 			int *our_pathlen)
 {
 	/* if no ca is requested than any ca will match */
@@ -144,7 +144,7 @@ bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
 		int pathlen;
 
 		if (trusted_ca_nss(our_ca, requested_ca->name, &pathlen) &&
-			pathlen < *our_pathlen)
+		    pathlen < *our_pathlen)
 			*our_pathlen = pathlen;
 		requested_ca = requested_ca->next;
 	}
@@ -219,9 +219,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 			dntoa(abuf, ASN1_BUF_LEN, a);
 	    		DBG_log("%s: trustee A = '%s'", __func__, abuf);
 		}
-	});
 
-	DBG(DBG_X509 | DBG_CONTROLMORE, {
 		if (b.ptr != NULL) {
 			char bbuf[ASN1_BUF_LEN];
 			dntoa(bbuf, ASN1_BUF_LEN, b);

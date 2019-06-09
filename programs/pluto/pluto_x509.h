@@ -57,7 +57,7 @@ extern bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 extern void load_authcerts(const char *type, const char *path,
 			   u_char auth_flags);
 
-extern bool match_requested_ca(generalName_t *requested_ca,
+extern bool match_requested_ca(const generalName_t *requested_ca,
 			       chunk_t our_ca, int *our_pathlen);
 
 extern bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs,
