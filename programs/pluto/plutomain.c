@@ -1745,6 +1745,7 @@ int main(int argc, char **argv)
 	init_state_db();
 	init_event_base();
 
+	init_rate_log();
 	init_nat_traversal(keep_alive);
 
 	init_virtual_ip(virtual_private);

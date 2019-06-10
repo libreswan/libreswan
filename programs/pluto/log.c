@@ -40,6 +40,8 @@
 #include "kernel.h"	/* for kernel_ops */
 #include "timer.h"
 #include "ip_endpoint.h"
+#include "impair.h"
+#include "demux.h"	/* for struct msg_digest */
 
 bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
@@ -795,4 +797,60 @@ void plog_raw(const struct state *st,
 		va_end(ap);
 		lswlog_to_log_stream(buf);
 	}
+}
+
+#define RATE_LIMIT 1000
+static unsigned nr_rate_limited_logs;
+
+static unsigned log_limit(void)
+{
+	if (impair_log_rate_limit == 0) {
+		/* --impair log-rate-limit:no */
+		return RATE_LIMIT;
+	} else {
+		/* --impair log-rate-limit:yes */
+		/* --impair log-rate-limit:NNN */
+		return impair_log_rate_limit;
+	}
+}
+
+void rate_log(const struct msg_digest *md,
+	      const char *message, ...)
+{
+	unsigned limit = log_limit();
+	if (nr_rate_limited_logs == limit) {
+		plog_global("rate limited log reached limit of %u entries", limit);
+	} else if (nr_rate_limited_logs > limit) {
+		LSWDBGP(DBG_BASE, buf) {
+			va_list ap;
+			va_start(ap, message);
+			lswlogvf(buf, message, ap);
+			va_end(ap);
+		}
+		return;
+	}
+	nr_rate_limited_logs++;
+	LSWBUF(buf) {
+		lswlog_cur_prefix(buf, NULL/*st*/, NULL/*c*/, &md->sender);
+		va_list ap;
+		va_start(ap, message);
+		jam_va_list(buf, message, ap);
+		va_end(ap);
+		lswlog_to_log_stream(buf);
+	}
+}
+
+static void reset_log_rate_limit(void)
+{
+	if (nr_rate_limited_logs > log_limit()) {
+		plog_global("rate limited log reset");
+	}
+	nr_rate_limited_logs = 0;
+}
+
+void init_rate_log(void)
+{
+	enable_periodic_timer(EVENT_RESET_LOG_RATE_LIMIT,
+			      reset_log_rate_limit,
+			      RESET_LOG_RATE_LIMIT);
 }

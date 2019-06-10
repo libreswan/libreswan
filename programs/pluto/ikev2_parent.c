@@ -1307,7 +1307,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		if (ntfy->payload.v2n.isan_spisize != 0) {
-			rate_log("Notify payload for IKE must have zero length SPI - message dropped");
+			libreswan_log("Notify payload for IKE must have zero length SPI - message dropped");
 			return STF_IGNORE;
 		}
 
@@ -1473,7 +1473,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			 * message, they really can't be trusted.
 			 * Just log and forget.
 			 */
-			rate_log("%s: received unauthenticated %s - ignored",
+			libreswan_log("%s: received unauthenticated %s - ignored",
 				 st->st_state->name,
 				 enum_name(&ikev2_notify_names,
 					   ntfy->payload.v2n.isan_type));
@@ -1544,7 +1544,7 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st UN
 
 		if (ntfy->payload.v2n.isan_spisize != 0) {
 			/* invalid-syntax, but can't do anything about it */
-			rate_log("received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
+			libreswan_log("received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
 				 name);
 			return STF_FATAL;
 		}
@@ -1553,9 +1553,9 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st UN
 			/* just log */
 			pstat(ikev2_recv_notifies_s, n);
 			if (name == NULL) {
-				rate_log("IKE_AUTH response contained an unknown status notification (%d)", n);
+				libreswan_log("IKE_AUTH response contained an unknown status notification (%d)", n);
 			} else {
-				rate_log("IKE_AUTH response contained the status notification %s", name);
+				libreswan_log("IKE_AUTH response contained the status notification %s", name);
 			}
 		} else {
 			pstat(ikev2_recv_notifies_e, n);

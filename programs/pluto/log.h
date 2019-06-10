@@ -108,18 +108,17 @@ extern void log_pop_from(ip_address old_from, const char *func,
 
 /*
  * Direct a log message, possibly prefix with the supplied context
- * (ST, C, FROM), to either log file, whack, or debug stream; or some
- * combination of those three :-/
+ * (ST, C, MD, FROM), to either log file, whack, or debug stream; or
+ * some combination of those three :-/
  *
  * Todays proposed naming convention:
  *
- *   {p,w,wp,}{log,rate,dbg}_{global,from,md,c,st,raw}()
+ *   {p,w,wp,}{log,dbg}_{global,from,md,c,st,raw}()
  *
  * {p,w,wp} -> p: write to pluto's log file (but not whack); w: write
  * to whack (but not pluto's log file); wp: write to both.
  *
- * {log,rate,dbg} -> log: output as a log message; rate: output as a
- * log message but cap the number allowed; dbg -> output as a debug
+ * {log,dbg} -> log: output as a log message; dbg -> output as a debug
  * message.
  *
  * {global,from,md,c,st} -> global: no context prefix; from: endpoint
@@ -131,14 +130,18 @@ extern void log_pop_from(ip_address old_from, const char *func,
  *
  * - many of the above combinations are meaningless
  *
- * - lets use dbg_*()?
- *
  * - As a way of encouraging the use of log functions that include the
  *   context, the context free log function is given the annoyngly
  *   long name plog_global() and not the shorter plog().
  *
- * - prate_() (pronounced pirate_?) looks terrible: switch to ratep_
- *   logp_ et.al.; rate_plog_*() is too long.
+ * - instead of a custom whack+pluto logging function, should whack
+ *   logging be decided by a flag in 'c' and/or 'st'?  Suspect that is
+ *   how things have largely managed to work, and if whack is
+ *   monitoring a state or connection then all messages for that state
+ *   or connection should be sent there
+ *
+ * - in addition there is rate_log(md), should it send to whack when
+ *   available?  Or should this be merged with above.
  */
 
 void plog_raw(const struct state *st,
@@ -150,6 +153,12 @@ void plog_raw(const struct state *st,
 #define plog_md(MD, MESSAGE, ...) plog_raw(NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
 #define plog_c(C, MESSAGE, ...) plog_raw(NULL, C, NULL, MESSAGE,##__VA_ARGS__);
 #define plog_st(ST, MESSAGE, ...) plog_raw(ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+
+/*
+ * rate limited logging
+ */
+void rate_log(const struct msg_digest *md,
+	      const char *message, ...) PRINTF_LIKE(2);
 
 /*
  * Log 'cur' directly (without setting it first).
@@ -181,6 +190,7 @@ bool log_debugging(struct state *st, struct connection *c, lset_t predicate);
 		lswlog_to_debug_stream(BUF))
 
 extern void pluto_init_log(void);
+void init_rate_log(void);
 extern void close_log(void);
 extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 

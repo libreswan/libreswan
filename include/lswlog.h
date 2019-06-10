@@ -225,30 +225,6 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
 	LSWLOG_(true, BUF, , lswlog_to_whack_stream(buf))
 
 /*
- * Log the message to the main log stream, and (at level RC_LOG) to
- * the whack stream, but rate limit messages.
- *
- * But what does "rate limit" mean?  For the moment this simply means
- * limit things to the first 1000 messages.  So what could it mean:
- *
- * - limit messages to N entries per M minutes
- *
- * - limit each message type to N entries per M minutes
- *
- * - suppress but count (sequences of?) identical messages
- *
- * - support within the config file and from whack
- *
- * If debugging is enabled, the messages are logged to the debug
- * stream even after the rate limit is exceeded.
- */
-
-extern void rate_log(const char *message, ...) PRINTF_LIKE(1);
-
-#define LSWLOG_RATE(BUF) ... TBD ...
-
-
-/*
  * Wrap <message> in a prefix and suffix where the suffix contains
  * errno and message.
  *

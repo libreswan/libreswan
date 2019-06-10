@@ -176,6 +176,9 @@ enum event_type {
 	EVENT_FREE_ROOT_CERTS,
 #define FREE_ROOT_CERTS_TIMEOUT		deltatime(5 * secs_per_minute)
 
+	EVENT_RESET_LOG_RATE_LIMIT,	/* set nr. rate limited log messages back to 0 */
+#define RESET_LOG_RATE_LIMIT		deltatime(secs_per_hour)
+
 	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
 
 	EVENT_PROCESS_KERNEL_QUEUE,	/* non-netkey */

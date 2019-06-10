@@ -115,8 +115,6 @@ OBJS += libreswan_pexpect.o
 OBJS += libreswan_pexpect_log.o
 OBJS += libreswan_bad_case.o
 
-OBJS += rate_log.o
-
 OBJS += libreswan_log.o
 OBJS += libreswan_log_rc.o
 

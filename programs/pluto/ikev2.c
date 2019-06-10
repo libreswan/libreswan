@@ -1429,8 +1429,8 @@ static bool is_duplicate_request(struct ike_sa *ike,
 	    responder->st_v2_rfrags != NULL &&
 	    responder->st_v2_rfrags->count == responder->st_v2_rfrags->total) {
 		/* bogus message to keep test results happy */
-		rate_log("discarding packet received during asynchronous work (DNS or crypto) in %s",
-			 responder->st_state->name);
+		libreswan_log("discarding packet received during asynchronous work (DNS or crypto) in %s",
+			      responder->st_state->name);
 		return true;
 	}
 
@@ -1499,8 +1499,8 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * XXX: rate_log() sends to whack which, while making
 		 * sense, but churns the test output.
 		 */
-		rate_log("%s message response with Message ID %jd has no matching SA",
-			 enum_name(&ikev2_exchange_names, md->hdr.isa_xchg), msgid);
+		libreswan_log("%s message response with Message ID %jd has no matching SA",
+			      enum_name(&ikev2_exchange_names, md->hdr.isa_xchg), msgid);
 		return true;
 	}
 
@@ -1809,7 +1809,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				     local_ike_role);
 		if (ike == NULL) {
 			struct esb_buf ixb;
-			rate_log("%s message request has no corresponding IKE SA",
+			rate_log(md, "%s message request has no corresponding IKE SA",
 				 enum_show_shortb(&ikev2_exchange_names,
 						  ix, &ixb));
 			return;
@@ -1831,7 +1831,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				     local_ike_role);
 		if (ike == NULL) {
 			/* technically IKE or CHILD SA */
-			rate_log("%s message response has no matching IKE SA",
+			rate_log(md, "%s message response has no matching IKE SA",
 				 enum_name(&ikev2_exchange_names, ix));
 			return;
 		}
@@ -2160,7 +2160,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * dropped.
 			 */
 			if (!ikev2_decrypt_msg(st, md)) {
-				rate_log("encrypted payload seems to be corrupt; dropping packet");
+				libreswan_log("encrypted payload seems to be corrupt; dropping packet");
 				/*
 				 * XXX: Setting/clearing md->st is to
 				 * prop up nested code needing ST but
@@ -2267,7 +2267,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 	/* no useful state microcode entry? */
 	if (svm->state == STATE_IKEv2_ROOF) {
-		rate_log("no useful state microcode entry found for incoming packet");
+		libreswan_log("no useful state microcode entry found for incoming packet");
 		/* count all the error notifications */
 		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
 		     ntfy != NULL; ntfy = ntfy->next) {
@@ -2305,7 +2305,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 */
 			if (st == NULL) {
 				if (md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT) {
-					rate_log("responding to message with unknown IKE SPI with INVALID_IKE_SPI");
+					rate_log(md, "responding to message with unknown IKE SPI with INVALID_IKE_SPI");
 					/*
 					 * Lets assume "2.21.4.  Error
 					 * Handling Outside IKE SA" - we MAY
@@ -2340,7 +2340,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				 * Should it send a non-encrypted
 				 * v2N_INVALID_SYNTAX?
 				 */
-				rate_log("dropping message with no matching microcode");
+				libreswan_log("dropping message with no matching microcode");
 				complete_v2_state_transition(st, mdp, STF_IGNORE);
 			}
 		}

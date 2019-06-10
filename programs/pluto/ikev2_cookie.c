@@ -27,8 +27,6 @@
  *
  */
 
-#include "lswlog.h"
-
 #include "defs.h"
 #include "rnd.h"
 #include "ikev2_cookie.h"
@@ -36,6 +34,7 @@
 #include "ike_alg_hash.h"	/* for sha2 */
 #include "crypt_hash.h"
 #include "ikev2_send.h"
+#include "log.h"
 
 /*
  * That the cookie size of 32-bytes happens to match
@@ -130,12 +129,12 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	 * function (PRF) (We can check for minimum 128bit length).
 	 */
 	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
-		rate_log("DDOS cookie requires Ni paylod - dropping message");
+		rate_log(md, "DDOS cookie requires Ni paylod - dropping message");
 		return true; /* reject cookie */
 	}
 	chunk_t Ni = same_in_pbs_left_as_chunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
-		rate_log("DOS cookie failed as Ni payload invalid  - dropping message");
+		rate_log(md, "DOS cookie failed as Ni payload invalid  - dropping message");
 		return true; /* reject cookie */
 	}
 
@@ -148,7 +147,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 
 	/* No cookie? demand one */
 	if (me_want_cookie && cookie_digest == NULL) {
-		rate_log("DOS mode on; responding to IKE_SA_INIT with cookie notification request");
+		rate_log(md, "DOS mode on; responding to IKE_SA_INIT with cookie notification request");
 		send_v2N_response_from_md(md, v2N_COOKIE, &local_cookie);
 		return true; /* reject cookie */
 	}
@@ -170,7 +169,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	if (cookie_header->isan_protoid != 0 ||
 	    cookie_header->isan_spisize != 0 ||
 	    cookie_header->isan_length != sizeof(v2_cookie_t) + sizeof(struct ikev2_notify)) {
-		rate_log("DOS cookie notification corrupt, or invalid - dropping message");
+		rate_log(md, "DOS cookie notification corrupt, or invalid - dropping message");
 		return true; /* reject cookie */
 	}
 	chunk_t remote_cookie = same_in_pbs_left_as_chunk(&cookie_digest->pbs);
@@ -181,7 +180,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	}
 
 	if (!chunk_eq(local_cookie, remote_cookie)) {
-		rate_log("DOS cookies do not match - dropping message");
+		rate_log(md, "DOS cookies do not match - dropping message");
 		return true; /* reject cookie */
 	}
 	dbg("cookies match");
