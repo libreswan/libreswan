@@ -64,6 +64,25 @@
 #endif
 
 /*
+ * Hack to keep old PCR based code working.
+ */
+struct crypto_task {
+	struct pluto_crypto_req_cont *cn;
+};
+
+static resume_cb handle_helper_answer;
+static crypto_compute_fn pcr_compute;
+static crypto_completed_cb pcr_completed;
+static crypto_cancelled_cb pcr_cancelled;
+
+static const struct crypto_handler pcr_handler = {
+	.name = "pcr",
+	.compute_fn = pcr_compute,
+	.completed_cb = pcr_completed,
+	.cancelled_cb = pcr_cancelled,
+};
+
+/*
  * The crypto continuation structure
  *
  * Pluto is an event-driven transaction system.
@@ -72,31 +91,22 @@
  * transactions and the state carried between them
  * cannot be on the stack or in simple global variables.
  * A continuation is used to hold such state.
- *
- * A struct pluto_crypto_req_cont is heap-allocated
- * by code that wants to delegate cryptographic work.  It fills
- * in parts of the struct, and "fires and forgets" the work.
- * Unless the firing fails, a case that must be handled.
- * This struct stays on the master side: it isn't sent to the helper.
- * It is used to keep track of in-process work and what to do
- * when the work is complete.
- *
- * Used for:
- *	IKEv1 Quick Mode Key Exchange
- *	Other Key Exchange
- *	Diffie-Hellman computation
  */
 
 struct pluto_crypto_req_cont {
-	crypto_req_cont_func *pcrc_func;	/* function to continue with */
+	struct crypto_task *pcrc_task;
+	const struct crypto_handler *pcrc_handler;
 	struct list_entry pcrc_backlog;
 	so_serial_t pcrc_serialno;	/* sponsoring state's serial number */
 	bool pcrc_cancelled;
 	const char *pcrc_name;
-	struct pluto_crypto_req pcrc_pcr;
 	pcr_req_id pcrc_id;
 	int pcrc_helpernum;
 	double pcrc_threadtime_used;
+
+	/* old way */
+	struct pluto_crypto_req pcrc_pcr;
+	crypto_req_cont_func *pcrc_func;	/* function to continue with */
 };
 
 /*
@@ -137,14 +147,11 @@ static int backlog_queue_len = 0;
  * Create the pluto crypto request object.
  */
 
-static resume_cb handle_helper_answer;	/* type assertion */
-
 struct pluto_crypto_req_cont *new_pcrc(crypto_req_cont_func fn,
 				       const char *name)
 {
-	passert(fn != NULL);
 	struct pluto_crypto_req_cont *r = alloc_thing(struct pluto_crypto_req_cont, name);
-	r->pcrc_func = fn;
+	r->pcrc_func = fn; /* may be NULL */
 	r->pcrc_cancelled = false;
 	r->pcrc_name = name;
 	r->pcrc_backlog = list_entry(&backlog_info, r);
@@ -188,16 +195,16 @@ static int pc_workers_cnt = 0;	/* number of workers threads */
 
 /* pluto crypto operations */
 static const char *const pluto_cryptoop_strings[] = {
+	"crypto",		/* generic crypto */
 	"build KE and nonce",	/* calculate g^i and generate a nonce */
 	"build nonce",	/* generate a nonce */
 	"compute dh+iv (V1 Phase 1)",	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
 	"compute dh (V1 Phase 2 PFS)",	/* calculate (g^x)(g^y) for Phase 2 PFS */
 	"compute dh (V2)",	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
-	"computation",		/* generic crypto */
 };
 
 static enum_names pluto_cryptoop_names = {
-	pcr_build_ke_and_nonce, pcr_crypto,
+	0, elemsof(pluto_cryptoop_strings)-1,
 	ARRAY_REF(pluto_cryptoop_strings),
 	NULL, /* prefix */
 	NULL
@@ -219,8 +226,9 @@ static void pcr_init(struct pluto_crypto_req *r,
  * release being performed pre- or post- crypto.  Ewwww!
  */
 
-static void pcr_release(struct pluto_crypto_req *r)
+static void pcr_cancelled(struct crypto_task **task)
 {
+	struct pluto_crypto_req *r = &(*task)->cn->pcrc_pcr;
 	switch (r->pcr_type) {
 	case pcr_build_ke_and_nonce:
 	case pcr_build_nonce:
@@ -234,17 +242,10 @@ static void pcr_release(struct pluto_crypto_req *r)
 		cancelled_v1_dh(&r->pcr_d.v1_dh);
 		break;
 	case pcr_crypto:
-		r->pcr_d.crypto.handler->cancelled_cb(&r->pcr_d.crypto.task);
-		pexpect(r->pcr_d.crypto.task == NULL);
-		break;
+	default:
+		bad_case(r->pcr_type);
 	}
-}
-
-static void pcrc_release_request(struct pluto_crypto_req_cont *cn)
-{
-	pcr_release(&cn->pcrc_pcr);
-	/* free the heap space */
-	pfree(cn);
+	pfreeany(*task);
 }
 
 void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
@@ -298,6 +299,29 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 		sleep(crypto_helper_delay);
 	}
 
+	cn->pcrc_handler->compute_fn(cn->pcrc_task, helpernum);
+
+	LSWDBGP(DBG_CONTROL, buf) {
+		realtime_t tv1 = realnow();
+		deltatime_t tv_diff = realtimediff(tv1, tv0);
+		lswlogf(buf, "crypto helper %d finished %s (%s); request ID %u time elapsed ",
+			helpernum, enum_show(&pluto_cryptoop_names, r->pcr_type),
+			cn->pcrc_name, cn->pcrc_id);
+		lswlog_deltatime(buf, tv_diff);
+		lswlogs(buf, " seconds");
+	}
+
+	cn->pcrc_threadtime_used =
+		threadtime_stop(&start, cn->pcrc_serialno,
+				"crypto helper computing work-order %u: %s (%s)",
+				cn->pcrc_id, cn->pcrc_name, cn->pcrc_handler->name);
+}
+
+static void pcr_compute(struct crypto_task *task, int unused_helpernum UNUSED)
+{
+	struct pluto_crypto_req_cont *cn = task->cn;
+	struct pluto_crypto_req *r = &cn->pcrc_pcr;
+
 	/* now we have the entire request in the buffer, process it */
 	switch (r->pcr_type) {
 	case pcr_build_ke_and_nonce:
@@ -322,26 +346,10 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 		break;
 
 	case pcr_crypto:
-		r->pcr_d.crypto.handler->compute_fn(r->pcr_d.crypto.task,
-						    helpernum);
-		break;
-	}
+	default:
+		bad_case(r->pcr_type);
 
-	LSWDBGP(DBG_CONTROL, buf) {
-		realtime_t tv1 = realnow();
-		deltatime_t tv_diff = realtimediff(tv1, tv0);
-		lswlogf(buf, "crypto helper %d finished %s (%s); request ID %u time elapsed ",
-			helpernum, enum_show(&pluto_cryptoop_names, r->pcr_type),
-			cn->pcrc_name, cn->pcrc_id);
-		lswlog_deltatime(buf, tv_diff);
-		lswlogs(buf, " seconds");
 	}
-
-	cn->pcrc_threadtime_used =
-		threadtime_stop(&start, cn->pcrc_serialno,
-				"crypto helper computing work-order %u: %s (%s)",
-				cn->pcrc_id, enum_show(&pluto_cryptoop_names, r->pcr_type),
-				cn->pcrc_name);
 }
 
 /* IN A HELPER THREAD */
@@ -484,8 +492,10 @@ static void inline_worker(struct state *unused_st UNUSED,
  *
  */
 
-void send_crypto_helper_request(struct state *st,
-				struct pluto_crypto_req_cont *cn)
+static void submit_crypto_request(struct pluto_crypto_req_cont *cn,
+				  struct state *st,
+				  struct crypto_task *task,
+				  const struct crypto_handler *handler)
 {
 	passert(st->st_serialno != SOS_NOBODY);
 	passert(cn->pcrc_serialno == SOS_NOBODY);
@@ -494,6 +504,8 @@ void send_crypto_helper_request(struct state *st,
 	/* set up the id */
 	static pcr_req_id pcw_id = 0;	/* counter for generating unique request IDs */
 	cn->pcrc_id = ++pcw_id;
+	cn->pcrc_handler = handler;
+	cn->pcrc_task = task;
 
 	/*
 	 * Save in case it needs to be cancelled.
@@ -557,7 +569,10 @@ void delete_cryptographic_continuation(struct state *st)
 		}
 		pthread_mutex_unlock(&backlog_mutex);
 		if (cn != NULL) {
-			pcrc_release_request(cn);
+			cn->pcrc_handler->cancelled_cb(&cn->pcrc_task);
+			pexpect(cn->pcrc_task == NULL); /* did their job */
+			/* free the heap space */
+			pfree(cn);
 		}
 	}
 }
@@ -572,17 +587,18 @@ static void handle_helper_answer(struct state *st,
 				 void *arg)
 {
 	struct pluto_crypto_req_cont *cn = arg;
- 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 
 	DBG(DBG_CONTROL,
 		DBG_log("crypto helper %d replies to request ID %u",
 			cn->pcrc_helpernum, cn->pcrc_id));
 
-	passert(cn->pcrc_func != NULL);
+ 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
+	const struct crypto_handler *h = cn->pcrc_handler;
+	passert(h != NULL);
 
 	DBG(DBG_CONTROL,
 		DBG_log("calling continuation function %p",
-			cn->pcrc_func));
+			h->completed_cb));
 
 	/*
 	 * call the continuation (skip if suppressed)
@@ -592,29 +608,77 @@ static void handle_helper_answer(struct state *st,
 		DBG(DBG_CONTROL, DBG_log("work-order %u state #%lu crypto result suppressed",
 					 cn->pcrc_id, cn->pcrc_serialno));
 		pexpect(st == NULL || st->st_offloaded_task == NULL);
-		pcr_release(&cn->pcrc_pcr);
+		h->cancelled_cb(&cn->pcrc_task);
+		pexpect(cn->pcrc_task == NULL); /* did your job */
 	} else if (st == NULL) {
 		/* oops, the state disappeared! */
 		LSWLOG_PEXPECT(buf) {
 			lswlogf(buf, "work-order %u state #%lu disappeared!",
 				cn->pcrc_id, cn->pcrc_serialno);
 		}
-		pcr_release(&cn->pcrc_pcr);
+		h->cancelled_cb(&cn->pcrc_task);
+		pexpect(cn->pcrc_task == NULL); /* did your job */
 	} else {
+		statetime_t start = statetime_start(st);
+		pexpect(st->st_offloaded_task == cn);
 		st->st_offloaded_task = NULL;
 		st->st_v1_offloaded_task_in_background = false;
 		/* bill the thread time */
 		st->st_timing.approx_seconds += cn->pcrc_threadtime_used;
-		statetime_t start = statetime_start(st);
-		(*cn->pcrc_func)(st, mdp, &cn->pcrc_pcr);
+
+		/* so changes can be detected */
+		struct msg_digest *md = *mdp;
+		enum ike_version ike_version = st->st_ike_version;
+
+		/* run the callback */
+		stf_status status = h->completed_cb(st, mdp, &cn->pcrc_task);
+		pexpect(cn->pcrc_task == NULL); /* did your job */
+		/* XXX: this may trash ST */
+
+		if ((*mdp) != md) {
+			dbg("IKEv%d callback for work-order %u %s (%s) stole MD",
+			    ike_version, cn->pcrc_id, cn->pcrc_name, cn->pcrc_handler->name);
+		}
+		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
+			dbg("IKEv%d callback for work-order %u %s (%s) suppresed complete_v%d_state_transition()",
+			    ike_version, cn->pcrc_id, cn->pcrc_name, cn->pcrc_handler->name, ike_version);
+		} else {
+			/* no stealing MD */
+			pexpect((*mdp) == md);
+			/* no switching ST */
+			pexpect((*mdp) == NULL || (*mdp)->st == NULL || (*mdp)->st == st);
+			switch (ike_version) {
+			case IKEv1:
+				complete_v1_state_transition(mdp, status);
+				break;
+			case IKEv2:
+				complete_v2_state_transition(st, mdp, status);
+				break;
+			default:
+				bad_case(st->st_ike_version);
+			}
+		}
 		statetime_stop(&start, "callback for work-order %u: %s (%s)",
 			       cn->pcrc_id,
 			       enum_show(&pluto_cryptoop_names, r->pcr_type),
 			       cn->pcrc_name);
 	}
-
+	pexpect(cn->pcrc_task == NULL); /* cross check - re-check */
 	/* now free up the continuation */
 	pfree(cn);
+}
+
+stf_status pcr_completed(struct state *st,
+			 struct msg_digest **mdp,
+			 struct crypto_task **task)
+{
+	struct pluto_crypto_req_cont *cn = (*task)->cn;
+	passert(cn->pcrc_func != NULL);
+	pexpect(cn->pcrc_pcr.pcr_type != pcr_crypto);
+	(*cn->pcrc_func)(st, mdp, &cn->pcrc_pcr);
+	pfree(*task);
+	*task = NULL;
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
 /*
@@ -714,40 +778,22 @@ void init_crypto_helpers(int nhelpers)
 	}
 }
 
-/*
- * This function is called when a helper passes work back to the main
- * thread using the event loop.
- */
-static crypto_req_cont_func crypto_finished;
-
-static void crypto_finished(struct state *st,
-			    struct msg_digest **mdp,
-			    struct pluto_crypto_req *r)
+void send_crypto_helper_request(struct state *st,
+				struct pluto_crypto_req_cont *cn)
 {
-	stf_status status = r->pcr_d.crypto.handler->completed_cb(st, mdp,
-								  &r->pcr_d.crypto.task);
-	pexpect(r->pcr_d.crypto.task == NULL);
-	switch (st->st_ike_version) {
-	case IKEv1:
-		complete_v1_state_transition(mdp, status);
-		break;
-	case IKEv2:
-		complete_v2_state_transition(st, mdp, status);
-		break;
-	default:
-		bad_case(st->st_ike_version);
-	}
+	passert(cn->pcrc_func != NULL);
+	passert(cn->pcrc_pcr.pcr_type != pcr_crypto);
+	struct crypto_task *task = alloc_thing(struct crypto_task, "pcr_task");
+	task->cn = cn;
+	submit_crypto_request(cn, st, task, &pcr_handler);
 }
 
 void submit_crypto(struct state *st,
-		   struct crypto_task *crypto_task,
-		   const struct crypto_handler *crypto_handler,
+		   struct crypto_task *task,
+		   const struct crypto_handler *handler,
 		   const char *name)
 {
-	struct pluto_crypto_req_cont *cn = new_pcrc(crypto_finished, name);
-	struct pluto_crypto_req *r = &cn->pcrc_pcr;
-	pcr_init(r, pcr_crypto);
-	r->pcr_d.crypto.task = crypto_task;
-	r->pcr_d.crypto.handler = crypto_handler;
-	send_crypto_helper_request(st, cn);
+	struct pluto_crypto_req_cont *cn = new_pcrc(NULL, name);
+	pcr_init(&cn->pcrc_pcr, pcr_crypto);
+	submit_crypto_request(cn, st, task, handler);
 }

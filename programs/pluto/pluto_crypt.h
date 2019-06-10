@@ -69,11 +69,6 @@ struct crypto_handler {
 	crypto_cancelled_cb *cancelled_cb;
 };
 
-struct pcr_crypto {
-	struct crypto_task *task;
-	const struct crypto_handler *handler;
-};
-
 void submit_crypto(struct state *st,
 		   struct crypto_task *task,
 		   const struct crypto_handler *handler,
@@ -83,12 +78,12 @@ void submit_crypto(struct state *st,
  * cryptographic helper operations.
  */
 enum pluto_crypto_requests {
+	pcr_crypto = 0,		/* using crypto_handler */
 	pcr_build_ke_and_nonce,	/* calculate g^i and generate a nonce */
 	pcr_build_nonce,	/* generate a nonce */
 	pcr_compute_dh_iv,	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
 	pcr_compute_dh,		/* calculate (g^x)(g^y) for Phase 2 PFS */
 	pcr_compute_dh_v2,	/* perform IKEv2 SA calculation, create SKEYSEED */
-	pcr_crypto,
 };
 
 typedef unsigned int pcr_req_id;
@@ -274,7 +269,6 @@ struct pluto_crypto_req {
 		struct pcr_kenonce kn;		/* query and result */
 		struct pcr_dh_v2 dh_v2;		/* query and response v2 */
 		struct pcr_v1_dh v1_dh;		/* query and response v1 */
-		struct pcr_crypto crypto;
 	} pcr_d;
 };
 
