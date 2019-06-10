@@ -70,7 +70,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		loglog(RC_LOG_SERIOUS, "error reading hosts: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 	} else {
-		DBG(DBG_DNS, DBG_log("/etc/hosts lookups activated"));
+		DBGF(DBG_DNS, "/etc/hosts lookups activated");
 	}
 
 	/*
@@ -93,7 +93,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		loglog(RC_LOG_SERIOUS, "error reading /etc/resolv.conf: %s: [errno: %s]",
 			ub_strerror(ugh), strerror(e));
 	} else {
-		DBG(DBG_DNS, DBG_log("/etc/resolv.conf usage activated"));
+		DBGF(DBG_DNS, "/etc/resolv.conf usage activated");
 	}
 
 	/*
@@ -105,7 +105,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		loglog(RC_LOG_SERIOUS, "error setting outgoing-port-avoid: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 	} else {
-		DBG(DBG_DNS, DBG_log("outgoing-port-avoid set 0-65535"));
+		DBGF(DBG_DNS, "outgoing-port-avoid set 0-65535");
 	}
 
 	errno = 0;
@@ -114,12 +114,12 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		loglog(RC_LOG_SERIOUS, "error setting outgoing-port-permit: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 	} else {
-		DBG(DBG_DNS, DBG_log("outgoing-port-permit set 32768-60999"));
+		DBGF(DBG_DNS, "outgoing-port-permit set 32768-60999");
 	}
 
 	if (!do_dnssec) {
 		/* No DNSSEC - nothing more to configure */
-		DBG(DBG_DNS, DBG_log("dnssec validation disabled by configuration"));
+		DBGF(DBG_DNS, "dnssec validation disabled by configuration");
 		return;
 	}
 
@@ -133,7 +133,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 			loglog(RC_LOG_SERIOUS, "dnssec-enable=yes but no dnssec-rootkey-file specified. Additional trust anchor file MUST include a root trust anchor or DNSSEC validation will be disabled");
 		}
 	} else {
-		DBG(DBG_DNS, DBG_log("Loading dnssec root key from:%s", rootfile));
+		DBGF(DBG_DNS, "Loading dnssec root key from:%s", rootfile);
 		errno = 0;
 		ugh = ub_ctx_add_ta_file(dns_ctx, rootfile);
 		if (ugh != 0) {
@@ -146,7 +146,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	}
 
 	if (trusted == NULL) {
-		DBG(DBG_DNS, DBG_log("No additional dnssec trust anchors defined via dnssec-trusted= option"));
+		DBGF(DBG_DNS, "No additional dnssec trust anchors defined via dnssec-trusted= option");
 	} else {
 		glob_t globbuf;
 		char **fnp;
@@ -160,8 +160,8 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 					loglog(RC_LOG_SERIOUS, "Ignored trusted key file %s: %s",
 						*fnp,  ub_strerror(ugh));
 				} else {
-					DBG(DBG_DNS, DBG_log("Added contents of trusted key file %s to unbound resolver context",
-						*fnp));
+					DBGF(DBG_DNS, "Added contents of trusted key file %s to unbound resolver context",
+						*fnp);
 				}
 			}
 			break;
@@ -258,24 +258,18 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
 	}
 	if (!result->havedata) {
 		if (result->secure) {
-			DBG(DBG_DNS,
-				DBG_log("Validated reply proves '%s' does not exist",
-					src);
-				);
+			DBGF(DBG_DNS, "Validated reply proves '%s' does not exist",
+				src);
 		} else {
-			DBG(DBG_DNS,
-				DBG_log("Failed to resolve '%s' (%s)", src,
-					result->bogus ? "BOGUS" : "insecure");
-				);
+			DBGF(DBG_DNS, "Failed to resolve '%s' (%s)", src,
+				result->bogus ? "BOGUS" : "insecure");
 		}
 		ub_resolve_free(result);
 		return FALSE;
 	} else if (!result->bogus) {
 		if (!result->secure) {
-			DBG(DBG_DNS,
-				DBG_log("warning: %s lookup was not protected by DNSSEC!",
-					result->qname);
-				);
+			DBGF(DBG_DNS, "warning: %s lookup was not protected by DNSSEC!",
+				result->qname);
 		}
 	}
 
@@ -309,10 +303,8 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
 			0, af, ipaddr);
 		ub_resolve_free(result);
 		if (err == NULL) {
-			DBG(DBG_DNS,
-				DBG_log("success for %s lookup",
-					(af == AF_INET) ? "IPv4" : "IPv6");
-				);
+			DBGF(DBG_DNS, "success for %s lookup",
+				(af == AF_INET) ? "IPv4" : "IPv6");
 			return TRUE;
 		} else {
 			libreswan_log("tnatoaddr failed in unbound_resolve()");
