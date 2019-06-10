@@ -293,6 +293,19 @@ enum seccomp_mode {
  */
 
 typedef enum {
+	/*
+	 * XXX: Upon the state transition function's return do not
+	 * call complete_v[12]_state_transition(), do not pass go, and
+	 * do not collect $200.
+	 *
+	 * This is a hack so that (old) state transitions functions
+	 * that directly directly call complete*() (or other scary
+	 * stuff) can signal the common code that the normal sequence
+	 * of: call state transition function; call complete() should
+	 * be bypassed.  For instance, the IKEv1 crypto continuation
+	 * functions.
+	 */
+	STF_SKIP_COMPLETE_STATE_TRANSITION,
 	/*                         TRANSITION  DELETE   RESPOND  LOG */
 	STF_IGNORE,             /*     no        no       no     tbd? */
 	STF_SUSPEND,            /*   suspend     no       no     tbd? */

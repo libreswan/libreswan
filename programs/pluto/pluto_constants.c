@@ -352,17 +352,20 @@ enum_names routing_story = {
 	NULL };
 
 static const char *const stf_status_strings[] = {
-	"STF_IGNORE",
-	"STF_SUSPEND",
-	"STF_OK",
-	"STF_INTERNAL_ERROR",
-	"STF_FATAL",
-	"STF_DROP",
-	"STF_FAIL"
+#define A(S) [S] = #S
+	A(STF_SKIP_COMPLETE_STATE_TRANSITION),
+	A(STF_IGNORE),
+	A(STF_SUSPEND),
+	A(STF_OK),
+	A(STF_INTERNAL_ERROR),
+	A(STF_FATAL),
+	A(STF_DROP),
+	A(STF_FAIL),
+#undef A
 };
 
 enum_names stf_status_names = {
-	STF_IGNORE, STF_FAIL,
+	0, elemsof(stf_status_strings)-1,
 	ARRAY_REF(stf_status_strings),
 	NULL, /* prefix */
 	NULL
