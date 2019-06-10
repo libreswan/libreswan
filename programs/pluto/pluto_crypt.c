@@ -234,7 +234,7 @@ static void pcr_release(struct pluto_crypto_req *r)
 		cancelled_v1_dh(&r->pcr_d.v1_dh);
 		break;
 	case pcr_crypto:
-		r->pcr_d.crypto.handler->cancelled_callback(&r->pcr_d.crypto.task);
+		r->pcr_d.crypto.handler->cancelled_cb(&r->pcr_d.crypto.task);
 		pexpect(r->pcr_d.crypto.task == NULL);
 		break;
 	}
@@ -322,8 +322,8 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 		break;
 
 	case pcr_crypto:
-		r->pcr_d.crypto.handler->compute(r->pcr_d.crypto.task,
-						 helpernum);
+		r->pcr_d.crypto.handler->compute_fn(r->pcr_d.crypto.task,
+						    helpernum);
 		break;
 	}
 
@@ -724,8 +724,8 @@ static void crypto_finished(struct state *st,
 			    struct msg_digest **mdp,
 			    struct pluto_crypto_req *r)
 {
-	stf_status status = r->pcr_d.crypto.handler->completed_callback(st, *mdp,
-									&r->pcr_d.crypto.task);
+	stf_status status = r->pcr_d.crypto.handler->completed_cb(st, mdp,
+								  &r->pcr_d.crypto.task);
 	pexpect(r->pcr_d.crypto.task == NULL);
 	switch (st->st_ike_version) {
 	case IKEv1:

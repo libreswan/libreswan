@@ -4340,7 +4340,7 @@ static void ikev2_child_ike_inR_continue(struct state *st,
  * initiator received a create Child SA Response (RFC 7296 1.3.1, 1.3.2)
  */
 
-static dh_callback ikev2_child_inR_continue;
+static dh_cb ikev2_child_inR_continue;
 
 stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 {
@@ -4389,8 +4389,9 @@ stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 }
 
 static stf_status ikev2_child_inR_continue(struct state *st,
-					   struct msg_digest *md)
+					   struct msg_digest **mdp)
 {
+	struct msg_digest *md = *mdp;
 	/*
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality
@@ -4516,8 +4517,7 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 	}
 }
 
-static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
-							struct msg_digest *mdp);
+static dh_cb ikev2_child_inIoutR_continue_continue;
 
 static void ikev2_child_inIoutR_continue(struct state *st,
 					 struct msg_digest **mdp,
@@ -4570,8 +4570,9 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 }
 
 static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
-							struct msg_digest *md)
+							struct msg_digest **mdp)
 {
+	struct msg_digest *md = *mdp;
 	/*
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality

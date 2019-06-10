@@ -47,19 +47,26 @@ struct msg_digest;
 /*
  * Offload work to the crypto thread pool (or the event loop if there
  * are no threads).
+ *
+ * XXX: MDP should be just MD.  Per IKEv2, the only code squiriling
+ * away MDP should be in complete_v[12]_state_transition() when
+ * STF_SUSPEND is returned.  Unfortunately, IKEv1 isn't there and
+ * probably never will :-(
  */
 
 struct crypto_task;
 
 typedef void crypto_compute_fn(struct crypto_task *task, int my_thread);
-typedef stf_status crypto_completed_fn(struct state *st, struct msg_digest *mdp,
-				      struct crypto_task **task);
-typedef void crypto_cancelled_fn(struct crypto_task **task);
+typedef stf_status crypto_completed_cb(struct state *st,
+				       struct msg_digest **mdp,
+				       struct crypto_task **task);
+typedef void crypto_cancelled_cb(struct crypto_task **task);
 
 struct crypto_handler {
-	crypto_compute_fn *compute;
-	crypto_completed_fn *completed_callback;
-	crypto_cancelled_fn *cancelled_callback;
+	const char *name;
+	crypto_compute_fn *compute_fn;
+	crypto_completed_cb *completed_cb;
+	crypto_cancelled_cb *cancelled_cb;
 };
 
 struct pcr_crypto {
