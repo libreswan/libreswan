@@ -157,6 +157,11 @@ size_t jam_char(jambuf_t *buf, char c);
 size_t jam_string(jambuf_t *buf, const char *string);
 size_t jam_jambuf(jambuf_t *buf, jambuf_t *in);
 
+#define lswlogf(BUF, FMT, ...) jam(BUF, FMT,##__VA_ARGS__)
+#define lswlogs(BUF, STRING) jam_string(BUF, STRING)
+#define lswlogl(BUF, L) jam_jambuf(BUF, L)
+#define lswlogvf(BUF, FMT, VA) jam_va_list(BUF, FMT, VA)
+
 /*
  * Utilities.
  */

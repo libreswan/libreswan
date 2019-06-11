@@ -321,11 +321,6 @@ void lswlog_dbg_pre(struct lswlog *buf);
  * (void) cast).
  */
 
-size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
-size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
-size_t lswlogs(struct lswlog *log, const char *string);
-size_t lswlogl(struct lswlog *log, struct lswlog *buf);
-
 /*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
