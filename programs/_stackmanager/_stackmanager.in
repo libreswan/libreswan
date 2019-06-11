@@ -129,7 +129,7 @@ startnetkey() {
 	for mod in ipcomp6 xfrm_ipcomp ipcomp xfrm6_tunnel xfrm6_mode_tunnel \
 	    xfrm6_mode_beet xfrm6_mode_ro xfrm6_mode_transport \
 	    xfrm4_mode_transport xfrm4_mode_tunnel xfrm4_tunnel \
-	    xfrm4_mode_beet esp4 esp6 ah4 ah6 ip_vti
+	    xfrm4_mode_beet esp4 esp6 ah4 ah6 ip_vti xfrm_interface
 	do
 	    # echo -n "${mod} " >&2
 	    ${MODPROBE} ${mod} 2>/dev/null
