@@ -85,6 +85,8 @@
 #include "pluto_crypt.h"        /* cryptographic helper functions */
 #include "udpfromto.h"
 #include "monotime.h"
+#include "ikev1.h"		/* for complete_v1_state_transition() */
+#include "ikev2.h"		/* for complete_v2_state_transition() */
 
 #include "nat_traversal.h"
 
@@ -784,13 +786,44 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 	struct state *st = state_with_serialno(e->serialno);
 	if (st == NULL) {
 		threadtime_t start = threadtime_start();
-		e->callback(NULL, NULL, e->context);
+		stf_status status = e->callback(NULL, NULL, e->context);
+		pexpect(status == STF_SKIP_COMPLETE_STATE_TRANSITION);
 		threadtime_stop(&start, e->serialno, "resume %s", e->name);
 	} else {
 		so_serial_t old_state = push_cur_state(st);
 		statetime_t start = statetime_start(st);
 		struct msg_digest *md = unsuspend_md(st);
-		e->callback(st, &md, e->context);
+		/* trust nothing */
+		struct msg_digest *old_md = md;
+		enum ike_version ike_version = st->st_ike_version;
+
+
+		/* run the callback */
+		stf_status status = e->callback(st, &md, e->context);
+		/* XXX: this may trash ST and MD */
+
+		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
+			dbg("resume %s for #%lu suppresed complete_v%d_state_transition()%s",
+			    e->name, e->serialno, ike_version,
+			    md == old_md ? "" : " and stole MD");
+		} else {
+			/* no stealing MD */
+			pexpect(old_md == md);
+			/* no switching ST */
+			pexpect(md == NULL || md->st == NULL || md->st == st);
+			/* don't trust ST */
+			/* XXX: mumble something about struct ike_version */
+			switch (ike_version) {
+			case IKEv1:
+				complete_v1_state_transition(&md, status);
+				break;
+			case IKEv2:
+				complete_v2_state_transition(st, &md, status);
+				break;
+			default:
+				bad_case(ike_version);
+			}
+		}
 		release_any_md(&md);
 		statetime_stop(&start, "resume %s", e->name);
 		pop_cur_state(old_state);

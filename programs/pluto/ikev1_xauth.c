@@ -1143,9 +1143,9 @@ struct xauth_immediate_context {
 };
 
 static resume_cb xauth_immediate_callback;
-static void xauth_immediate_callback(struct state *st,
-				     struct msg_digest **mdp,
-				     void *arg)
+static stf_status xauth_immediate_callback(struct state *st,
+					   struct msg_digest **mdp,
+					   void *arg)
 {
 	struct xauth_immediate_context *xic = (struct xauth_immediate_context *)arg;
 	if (st == NULL) {
@@ -1157,6 +1157,7 @@ static void xauth_immediate_callback(struct state *st,
 	}
 	pfree(xic->name);
 	pfree(xic);
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
 static void xauth_immediate(const char *name, const struct state *st, bool success)

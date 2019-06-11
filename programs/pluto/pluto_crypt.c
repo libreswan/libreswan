@@ -582,9 +582,9 @@ void delete_cryptographic_continuation(struct state *st)
  * thread using the event loop.
  *
  */
-static void handle_helper_answer(struct state *st,
-				 struct msg_digest **mdp,
-				 void *arg)
+static stf_status handle_helper_answer(struct state *st,
+				       struct msg_digest **mdp,
+				       void *arg)
 {
 	struct pluto_crypto_req_cont *cn = arg;
 
@@ -592,7 +592,6 @@ static void handle_helper_answer(struct state *st,
 		DBG_log("crypto helper %d replies to request ID %u",
 			cn->pcrc_helpernum, cn->pcrc_id));
 
- 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 	const struct crypto_handler *h = cn->pcrc_handler;
 	passert(h != NULL);
 
@@ -603,6 +602,7 @@ static void handle_helper_answer(struct state *st,
 	/*
 	 * call the continuation (skip if suppressed)
 	 */
+	stf_status status;
 	if (cn->pcrc_cancelled) {
 		/* suppressed */
 		DBG(DBG_CONTROL, DBG_log("work-order %u state #%lu crypto result suppressed",
@@ -610,6 +610,7 @@ static void handle_helper_answer(struct state *st,
 		pexpect(st == NULL || st->st_offloaded_task == NULL);
 		h->cancelled_cb(&cn->pcrc_task);
 		pexpect(cn->pcrc_task == NULL); /* did your job */
+		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else if (st == NULL) {
 		/* oops, the state disappeared! */
 		LSWLOG_PEXPECT(buf) {
@@ -618,54 +619,21 @@ static void handle_helper_answer(struct state *st,
 		}
 		h->cancelled_cb(&cn->pcrc_task);
 		pexpect(cn->pcrc_task == NULL); /* did your job */
+		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else {
-		statetime_t start = statetime_start(st);
 		pexpect(st->st_offloaded_task == cn);
 		st->st_offloaded_task = NULL;
 		st->st_v1_offloaded_task_in_background = false;
 		/* bill the thread time */
 		st->st_timing.approx_seconds += cn->pcrc_threadtime_used;
-
-		/* so changes can be detected */
-		struct msg_digest *md = *mdp;
-		enum ike_version ike_version = st->st_ike_version;
-
 		/* run the callback */
-		stf_status status = h->completed_cb(st, mdp, &cn->pcrc_task);
+		status = h->completed_cb(st, mdp, &cn->pcrc_task);
 		pexpect(cn->pcrc_task == NULL); /* did your job */
-		/* XXX: this may trash ST */
-
-		if ((*mdp) != md) {
-			dbg("IKEv%d callback for work-order %u %s (%s) stole MD",
-			    ike_version, cn->pcrc_id, cn->pcrc_name, cn->pcrc_handler->name);
-		}
-		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
-			dbg("IKEv%d callback for work-order %u %s (%s) suppresed complete_v%d_state_transition()",
-			    ike_version, cn->pcrc_id, cn->pcrc_name, cn->pcrc_handler->name, ike_version);
-		} else {
-			/* no stealing MD */
-			pexpect((*mdp) == md);
-			/* no switching ST */
-			pexpect((*mdp) == NULL || (*mdp)->st == NULL || (*mdp)->st == st);
-			switch (ike_version) {
-			case IKEv1:
-				complete_v1_state_transition(mdp, status);
-				break;
-			case IKEv2:
-				complete_v2_state_transition(st, mdp, status);
-				break;
-			default:
-				bad_case(st->st_ike_version);
-			}
-		}
-		statetime_stop(&start, "callback for work-order %u: %s (%s)",
-			       cn->pcrc_id,
-			       enum_show(&pluto_cryptoop_names, r->pcr_type),
-			       cn->pcrc_name);
 	}
 	pexpect(cn->pcrc_task == NULL); /* cross check - re-check */
 	/* now free up the continuation */
 	pfree(cn);
+	return status;
 }
 
 stf_status pcr_completed(struct state *st,
