@@ -87,7 +87,7 @@ size_t sockaddrlenof(const ip_address *src);
 
 typedef struct {
 	char buf[(4+1)*8/*0000:...*/ + 1/*\0*/ + 1/*CANARY*/];
-} ip_address_buf;
+} address_buf;
 
 /*
  * address as a string:
@@ -102,9 +102,9 @@ void jam_address_cooked(struct lswlog *buf, const ip_address *src);
 void jam_address_sensitive(struct lswlog *buf, const ip_address *src);
 void jam_address_reversed(struct lswlog *buf, const ip_address *src);
 
-const char *str_address_raw(const ip_address *src, char sepc, ip_address_buf *dst);
-const char *str_address_cooked(const ip_address *src, ip_address_buf *dst);
-const char *str_address_sensitive(const ip_address *src, ip_address_buf *dst);
+const char *str_address_raw(const ip_address *src, char sepc, address_buf *dst);
+const char *str_address_cooked(const ip_address *src, address_buf *dst);
+const char *str_address_sensitive(const ip_address *src, address_buf *dst);
 
 typedef struct {
 	/* string includes NUL, add 1 for canary */
@@ -112,7 +112,7 @@ typedef struct {
 }  address_reversed_buf;
 const char *str_address_reversed(const ip_address *src, address_reversed_buf *buf);
 
-typedef ip_address_buf ipstr_buf; /* compat */
+typedef address_buf ipstr_buf;
 const char *ipstr(const ip_address *src, ipstr_buf *b);
 const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 

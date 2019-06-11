@@ -1789,7 +1789,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				memcpy(&a.u.v4.sin_addr.s_addr, ap,
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
-				ip_address_buf a_buf;
+				address_buf a_buf;
 				const char *a_str = ipstr(&a, &a_buf);
 				loglog(RC_INFORMATIONAL, "Received DNS server %s",
 				       a_str);

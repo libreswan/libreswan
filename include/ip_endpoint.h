@@ -49,15 +49,15 @@ int endpoint_type(const ip_endpoint *endpoint);
  */
 
 typedef struct {
-	char buf[1/*[*/ + sizeof(ip_address_buf) + 1/*]*/ + 5/*:65535*/];
-} ip_endpoint_buf;
+	char buf[1/*[*/ + sizeof(address_buf) + 1/*]*/ + 5/*:65535*/];
+} endpoint_buf;
 
 /*
  * Always cooked.
  */
-const char *str_endpoint(const ip_endpoint *, ip_endpoint_buf *);
+const char *str_endpoint(const ip_endpoint *, endpoint_buf *);
 void jam_endpoint(struct lswlog *, const ip_endpoint*);
-const char *str_sensitive_endpoint(const ip_endpoint *, ip_endpoint_buf *);
+const char *str_sensitive_endpoint(const ip_endpoint *, endpoint_buf *);
 void jam_sensitive_endpoint(struct lswlog *, const ip_endpoint*);
 
 #endif

@@ -251,7 +251,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 		loglog(RC_LOG_SERIOUS,
 		       "kernel algorithm does not like: %s key_len %u is incorrect",
 		       ta->ta_encrypt->common.fqn, ta->enckeylen);
-		ip_endpoint_buf epb;
+		endpoint_buf epb;
 		loglog(RC_LOG_SERIOUS,
 		       "unsupported ESP Transform %s from %s",
 		       ta->ta_encrypt->common.fqn,

@@ -722,7 +722,7 @@ size_t format_end(char *buf,
 	}
 
 	/* [---hop] */
-	ip_address_buf hop_buf; /* must be at same scope as HOP */
+	address_buf hop_buf; /* must be at same scope as HOP */
 	const char *hop = "";
 	hop_sep = "";
 	if (that != NULL && !filter_rnh && !sameaddr(&this->host_nexthop, &that->host_addr)) {

@@ -438,7 +438,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
 		return TRUE;
 	}
 
-	ip_address_buf ip_buf;
+	address_buf ip_buf;
 	const char *ip_str = ipstr(&ip, &ip_buf);
 
 	if ((ugh != NULL && st->st_state->kind == STATE_PARENT_I2)) {

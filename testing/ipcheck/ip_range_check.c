@@ -145,7 +145,7 @@ static void check_rangetosubnet(void)
 			SSFAIL("rangetosubnet succeeded unexpectedly");
 			continue;
 		} else {
-			ip_subnet_buf buf;
+			subnet_buf buf;
 			const char *out = str_subnet(&sub, &buf);
 			if (!streq(t->output, out)) {
 				SSFAIL("gave `%s', expected `%s'",

@@ -465,9 +465,9 @@ static void cannot_oppo(struct connection *c,
 			struct find_oppo_bundle *b,
 			err_t ughmsg)
 {
-	ip_address_buf ocb_buf;
+	address_buf ocb_buf;
 	const char *ocb = ipstr(&b->our_client, &ocb_buf);
-	ip_address_buf pcb_buf;
+	address_buf pcb_buf;
 	const char *pcb = ipstr(&b->peer_client, &pcb_buf);
 
 	DBG(DBG_OPPO,
@@ -588,9 +588,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 	 * First try for one that explicitly handles the clients.
 	 */
 
-	ip_address_buf ourb;
+	address_buf ourb;
 	const char *ours = ipstr(&b->our_client, &ourb);
-	ip_address_buf hisb;
+	address_buf hisb;
 	const char *his = ipstr(&b->peer_client, &hisb);
 
 	ourport = ntohs(portof(&b->our_client));

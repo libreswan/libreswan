@@ -296,7 +296,7 @@ void jam_address_reversed(struct lswlog *buf, const ip_address *address)
 }
 
 const char *str_address_raw(const ip_address *src, char sep,
-			    ip_address_buf *dst)
+			    address_buf *dst)
 {
 	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_address_raw(&buf, src, sep);
@@ -304,7 +304,7 @@ const char *str_address_raw(const ip_address *src, char sep,
 }
 
 const char *str_address_cooked(const ip_address *src,
-			       ip_address_buf *dst)
+			       address_buf *dst)
 {
 	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_address_cooked(&buf, src);
@@ -312,7 +312,7 @@ const char *str_address_cooked(const ip_address *src,
 }
 
 const char *str_address_sensitive(const ip_address *src,
-			       ip_address_buf *dst)
+				  address_buf *dst)
 {
 	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_address_sensitive(&buf, src);

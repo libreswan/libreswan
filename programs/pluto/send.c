@@ -101,7 +101,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	 */
 	if (isanyaddr(&remote_endpoint)) {
 		/* not asserting, who knows what nonsense a user can generate */
-		ip_endpoint_buf b;
+		endpoint_buf b;
 		libreswan_log("Will not send packet to bogus address %s",
 			      str_sensitive_endpoint(&remote_endpoint, &b));
 		return FALSE;
@@ -138,7 +138,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	}
 
 	if (DBGP(DBG_BASE)) {
-		ip_endpoint_buf b;
+		endpoint_buf b;
 		DBG_log("sending %zu bytes for %s through %s:%d to %s (using #%lu)",
 			len,
 			where,
@@ -159,7 +159,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 
 	if (wlen != (ssize_t)len) {
 		if (!just_a_keepalive) {
-			ip_endpoint_buf b;
+			endpoint_buf b;
 			LOG_ERRNO(errno, "sendto on %s to %s failed in %s",
 				  interface->ip_dev->id_rname,
 				  str_sensitive_endpoint(&remote_endpoint, &b),
@@ -174,7 +174,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	if (IMPAIR(JACOB_TWO_TWO)) {
 		/* sleep for half a second, and second another packet */
 		usleep(500000);
-		ip_endpoint_buf b;
+		endpoint_buf b;
 
 		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s:%d to %s:",
 			len,

@@ -290,10 +290,10 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	}
 	free(conn_encode); /* allocated by audit_encode_nv_string() */
 
-	ip_address_buf laddr_buf;
+	address_buf laddr_buf;
 	const char *laddr = ipstr(&c->spd.this.host_addr, &laddr_buf);
 
-	ip_address_buf raddr_buf;
+	address_buf raddr_buf;
 	const char *raddr = ipstr(&c->spd.that.host_addr, &raddr_buf);
 
 	snprintf(audit_str, sizeof(audit_str), "%s %s %s laddr=%s",

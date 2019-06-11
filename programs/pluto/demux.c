@@ -244,7 +244,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		 * can reach this point. Complain and discard them.
 		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?
 		 */
-		ip_endpoint_buf eb;
+		endpoint_buf eb;
 		dbg("NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
 		    str_endpoint(&sender, &eb)); /* sensitive? */
 		return NULL;
@@ -264,7 +264,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 			       "message buffer in read_packet()")
 		 , packet_len, "packet");
 
-	ip_endpoint_buf eb;
+	endpoint_buf eb;
 	dbg("*received %d bytes from %s on %s (port=%d)",
 	    (int) pbs_room(&md->packet_pbs),
 	    str_endpoint(&sender, &eb),

@@ -56,7 +56,7 @@ static void check_str_endpoint(void)
 		ip_endpoint e = endpoint(&a, 65535);
 
 		/* now convert it back */
-		ip_endpoint_buf buf;
+		endpoint_buf buf;
 		const char *out = str_endpoint(&e, &buf);
 		if (out == NULL) {
 			IFAIL("failed");

@@ -179,9 +179,9 @@ static void unlocked_open_peerlog(struct connection *c)
 		/* slight over allocate - NNNN vs N */
 		size_t lf_len = (strlen(peerlog_basedir) +
 				 1 /* '/' */ +
-				 sizeof(ip_address_buf) /* peer path */ +
+				 sizeof(address_buf) /* peer path */ +
 				 1 /* '/' */ +
-				 sizeof(ip_address_buf) /* peer name */ +
+				 sizeof(address_buf) /* peer name */ +
 				 strlen(suffix) +
 				 1 /* '\0' */ +
 				 1 /* cookie */ +

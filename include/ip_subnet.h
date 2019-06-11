@@ -33,9 +33,9 @@ ip_address ip_subnet_floor(const ip_subnet *subnet);
 ip_address ip_subnet_ceiling(const ip_subnet *subnet);
 
 typedef struct {
-	char buf[sizeof(ip_address_buf) + 4/*/NNN*/];
-} ip_subnet_buf;
-const char *str_subnet(const ip_subnet *subnet, ip_subnet_buf *out);
+	char buf[sizeof(address_buf) + 4/*/NNN*/];
+} subnet_buf;
+const char *str_subnet(const ip_subnet *subnet, subnet_buf *out);
 void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
 
 /*
@@ -45,7 +45,7 @@ void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
 
 extern err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
 extern void subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
-#define SUBNETTOT_BUF   sizeof(ip_subnet_buf)
+#define SUBNETTOT_BUF   sizeof(subnet_buf)
 extern err_t initsubnet(const ip_address *addr, int maskbits, int clash,
 		 ip_subnet *dst);
 extern err_t addrtosubnet(const ip_address *addr, ip_subnet *dst);

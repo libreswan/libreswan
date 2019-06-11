@@ -232,7 +232,7 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 			return ugh;
 
 		DBG(DBG_PARSING, {
-			ip_address_buf b;
+			address_buf b;
 			DBG_log("   GW Identity IP: %s", ipstr(redirect_ip, &b));
 		});
 		input_pbs->cur += gw_info.gw_identity_len;

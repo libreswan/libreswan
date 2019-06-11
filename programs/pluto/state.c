@@ -1393,7 +1393,7 @@ void delete_states_by_connection(struct connection *c, bool relations)
  */
 void delete_states_by_peer(const ip_address *peer)
 {
-	ip_address_buf peer_buf;
+	address_buf peer_buf;
 	const char *peerstr = ipstr(peer, &peer_buf);
 
 	whack_log(RC_COMMENT, "restarting peer %s\n", peerstr);

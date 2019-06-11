@@ -186,7 +186,7 @@ static void check_str_subnet(void)
 			continue;
 		}
 
-		ip_subnet_buf buf;
+		subnet_buf buf;
 		const char *out = str_subnet(&s, &buf);
 		if (!streq(t->output, out)) {
 			IFAIL("subnetporttot returned '%s', expected '%s'",

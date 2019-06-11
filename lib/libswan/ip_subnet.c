@@ -63,7 +63,7 @@ void jam_subnet(jambuf_t *buf, const ip_subnet *subnet)
 	jam(buf, "/%u", subnet->maskbits);
 }
 
-const char *str_subnet(const ip_subnet *subnet, ip_subnet_buf *out)
+const char *str_subnet(const ip_subnet *subnet, subnet_buf *out)
 {
 	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_subnet(&buf, subnet);

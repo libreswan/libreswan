@@ -61,7 +61,7 @@ static void check_str_address_raw(void)
 		}
 
 		/* now convert it back */
-		ip_address_buf buf;
+		address_buf buf;
 		const char *out = str_address_raw(&a, t->sep, &buf);
 		if (out == NULL) {
 			IFAIL("failed");
@@ -114,7 +114,7 @@ static void check_str_address_cooked(void)
 		}
 
 		/* now convert it back */
-		ip_address_buf buf;
+		address_buf buf;
 		const char *out = str_address_cooked(&a, &buf);
 		if (out == NULL) {
 			IFAIL("failed");
@@ -149,7 +149,7 @@ static void check_str_address_sensitive(void)
 		}
 
 		/* now convert it back */
-		ip_address_buf buf;
+		address_buf buf;
 		const char *out = str_address_sensitive(&a, &buf);
 		if (out == NULL) {
 			IFAIL("failed");
@@ -292,7 +292,7 @@ static void check_ttoaddr_dns(void)
 		}
 
 		/* now convert it back */
-		ip_address_buf buf;
+		address_buf buf;
 		const char *out = str_address_cooked(&a, &buf);
 		if (!strcaseeq(t->output, out)) {
 			IFAIL("addrtoc returned '%s', expected '%s'",

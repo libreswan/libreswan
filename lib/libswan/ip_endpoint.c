@@ -41,14 +41,14 @@ int endpoint_type(const ip_endpoint *endpoint)
 	return addrtypeof(endpoint);
 }
 
-const char *str_endpoint(const ip_endpoint *endpoint, ip_endpoint_buf *dst)
+const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 {
 	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_endpoint(&buf, endpoint);
 	return dst->buf;
 }
 
-const char *str_sensitive_endpoint(const ip_endpoint *endpoint, ip_endpoint_buf *dst)
+const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 {
 	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_sensitive_endpoint(&buf, endpoint);

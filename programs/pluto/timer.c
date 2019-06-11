@@ -126,9 +126,9 @@ static void liveness_check(struct state *st)
 		pst = st;
 	}
 
-	ip_address_buf this_buf;
+	address_buf this_buf;
 	const char *this_ip = ipstr(&st->st_localaddr, &this_buf);
-	ip_address_buf that_buf;
+	address_buf that_buf;
 	const char *that_ip = ipstr(&st->st_remoteaddr, &that_buf);
 
 	/*
