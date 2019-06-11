@@ -22,7 +22,7 @@
  */
 
 #include "ip_range.h"
-
+#include "jambuf.h"
 #include "libreswan.h"		/* for random stuff that should be elsewhere */
 
 /*
@@ -159,22 +159,22 @@ err_t ttorange(const char *src,
 	return NULL;
 }
 
-size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen)
+void jam_range(jambuf_t *buf, const ip_range *range)
 {
-	size_t l, m;
+	jam_address_cooked(buf, &range->start);
+	jam(buf, "-");
+	jam_address_cooked(buf, &range->end);
+}
 
-	/* start address: */
-	l = addrtot(&src->start, format, dst, dstlen) - 1;
-	/* l is offset of '\0' at end, at least notionally. */
+const char *str_range(const ip_range *range, range_buf *out)
+{
+	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_range(&buf, range);
+	return out->buf;
+}
 
-	/* separator '-' */
-	/* If there is room for '-' and '\0', drop in '-'. */
-	if (dstlen > 0 && l < dstlen - 1)
-		dst[l] = '-';
-	/* count space for '-' */
-	l++;
-	/* where to stuff second address (not past end of buffer) */
-	m = l < dstlen? l : dstlen;
-	l += addrtot(&src->end, format, dst + m, dstlen - m);
-	return l;	/* length needed, including '\0' */
+void rangetot(const ip_range *range, char format UNUSED, char *dst, size_t dstlen)
+{
+	jambuf_t buf = array_as_jambuf(dst, dstlen);
+	jam_range(&buf, range);
 }

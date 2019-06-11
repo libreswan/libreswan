@@ -27,8 +27,15 @@ typedef struct {
 
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
 		bool non_zero);
-extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
-#define RANGETOT_BUF     (ADDRTOT_BUF * 2 + 1)
+extern void rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
+#define RANGETOT_BUF     (sizeof(range_buf))
+
+typedef struct {
+	char buf[sizeof(address_buf) + 1/*"-"*/ + sizeof(address_buf)];
+} range_buf;
+
+void jam_range(struct lswlog *buf, const ip_range *range);
+const char *str_range(const ip_range *range, range_buf *buf);
 
 /*
  * Calculate the number of significant bits in the size of the range.
