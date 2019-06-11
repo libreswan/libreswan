@@ -586,13 +586,4 @@ void lswlog_errno_suffix(struct lswlog *buf, int e);
 		lswlog_log_prefix(BUF),		\
 		lswlog_to_error_stream(buf))
 
-/*
- * Since 'char' can be unsigned need to cast -2 onto a char sized
- * value.
- *
- * The octal equivalent would be something like '\376' but who uses
- * octal :-)
- */
-#define LSWBUF_CANARY ((char) -2)
-
 #endif /* _LSWLOG_H_ */
