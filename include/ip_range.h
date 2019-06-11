@@ -27,8 +27,6 @@ typedef struct {
 
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
 		bool non_zero);
-extern void rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
-#define RANGETOT_BUF     (sizeof(range_buf))
 
 typedef struct {
 	char buf[sizeof(address_buf) + 1/*"-"*/ + sizeof(address_buf)];

@@ -241,14 +241,13 @@ void rel_lease_addr(struct connection *c)
 
 	DBG(DBG_CONTROLMORE, {
 		/* text of addresses */
-		char ta_range[RANGETOT_BUF];
+		range_buf ta_range;
 		ipstr_buf b;
-		rangetot(&pool->r, 0, ta_range, sizeof(ta_range));
 		DBG_log("%s lease refcnt %u %s from addresspool %s index=%u. pool size %u used %u lingering=%u address",
 				story,
 				refcnt,
 				ipstr(&c->spd.that.client.addr, &b),
-				ta_range, i,
+			str_range(&pool->r, &ta_range), i,
 				pool->size, pool->used,
 				pool->lingering);
 	});
@@ -320,11 +319,10 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 	bool s;
 
 	DBG(DBG_CONTROL, {
-		char rbuf[RANGETOT_BUF];
+		range_buf rbuf;
 		char thatidbuf[IDTOA_BUF];
 		ipstr_buf b;
 
-		rangetot(&c->pool->r, 0, rbuf, sizeof(rbuf));
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
 		if (st->st_xauth_username != NULL) {
 			/* force different leases for different xauth users */
@@ -333,7 +331,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 
 		/* ??? what is that.client.addr and why do we care? */
 		DBG_log("request lease from addresspool %s reference count %u thatid '%s' that.client.addr %s",
-			rbuf, c->pool->pool_refcount, thatidbuf,
+			str_range(&c->pool->r, &rbuf), c->pool->pool_refcount, thatidbuf,
 			ipstr(&c->spd.that.client.addr, &b));
 	});
 
@@ -419,18 +417,17 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 			return e;
 	}
 	DBG(DBG_CONTROL, {
-		char rbuf[RANGETOT_BUF];
+		range_buf rbuf;
 		char thatidbuf[IDTOA_BUF];
 		ipstr_buf a;
 		ipstr_buf l;
 
-		rangetot(&c->pool->r, 0, rbuf, sizeof(rbuf));
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
 
 		DBG_log("%s lease %s from addresspool %s to that.client.addr %s thatid '%s'",
 			s ? "re-use" : "new",
 			ipstr(ipa, &l),
-			rbuf,
+			str_range(&c->pool->r, &rbuf),
 			ipstr(&c->spd.that.client.addr, &a),
 			thatidbuf);
 	});
@@ -517,14 +514,13 @@ err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 			/* before or after */
 		} else {
 			/* overlap */
-			char prbuf[RANGETOT_BUF];
-			char hbuf[RANGETOT_BUF];
+			range_buf prbuf;
+			range_buf hbuf;
 
-			rangetot(pool_range, 0, prbuf, sizeof(prbuf));
-			rangetot(&h->r, 0, hbuf, sizeof(hbuf));
 			loglog(RC_CLASH,
 				"ERROR: new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
-					prbuf, hbuf);
+			       str_range(pool_range, &prbuf),
+			       str_range(&h->r, &hbuf));
 			return "ERROR: partial overlap of addresspool";
 		}
 	}
@@ -549,11 +545,11 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 	} else if (p != NULL) {
 		/* re-use existing pool p */
 		DBG(DBG_CONTROLMORE, {
-			char rbuf[RANGETOT_BUF];
+			range_buf rbuf;
 
-			rangetot(&p->r, 0, rbuf, sizeof(rbuf));
 			DBG_log("re-use addresspool %s exists ref count %u used %u size %u ptr %p re-use it",
-				rbuf, p->pool_refcount, p->used, p->size, p);
+				str_range(&p->r, &rbuf),
+				p->pool_refcount, p->used, p->size, p);
 		});
 	} else {
 		/* make a new pool */
@@ -567,11 +563,11 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 		p->lingering = 0;
 
 		DBG(DBG_CONTROLMORE, {
-			char rbuf[RANGETOT_BUF];
+			range_buf rbuf;
 
-			rangetot(&p->r, 0, rbuf, sizeof(rbuf));
 			DBG_log("add new addresspool to global pools %s size %d ptr %p",
-				rbuf, p->size, p);
+				str_range(&p->r, &rbuf),
+				p->size, p);
 		});
 		p->leases = NULL;
 		p->next = *head;

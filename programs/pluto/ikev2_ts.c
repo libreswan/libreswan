@@ -66,14 +66,12 @@ static const char *fit_string(enum fit fit)
 void ikev2_print_ts(const struct traffic_selector *ts)
 {
 	DBG(DBG_CONTROLMORE, {
-		char b[RANGETOT_BUF];
-
-		rangetot(&ts->net, 0, b, sizeof(b));
 		DBG_log("printing contents struct traffic_selector");
 		DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
 		DBG_log("  ipprotoid: %d", ts->ipprotoid);
 		DBG_log("  port range: %d-%d", ts->startport, ts->endport);
-		DBG_log("  ip range: %s", b);
+		range_buf b;
+		DBG_log("  ip range: %s", str_range(&ts->net, &b));
 	});
 }
 
@@ -601,14 +599,11 @@ static int score_address_range(const struct end *end,
 		f = f << 1;
 
 	LSWDBGP(DBG_BASE, buf) {
-	    char end_client[SUBNETTOT_BUF];
-	    subnettot(&end->client,  0, end_client, sizeof(end_client));
-	    char ts_net[RANGETOT_BUF];
-	    rangetot(&ts->net, 0, ts_net, sizeof(ts_net));
-	    lswlogf(buf, MATCH_PREFIX "match address end->client=%s %s %s[%u]net=%s: ",
-		    end_client,
-		    fit_string(fit),
-		    which, index, ts_net);
+	    lswlogf(buf, MATCH_PREFIX "match address end->client=");
+	    jam_subnet(buf, &end->client);
+	    jam(buf, " %s %s[%u]net=", fit_string(fit), which, index);
+	    jam_range(buf, &ts->net);
+	    jam(buf, ": ");
 	    if (f > 0) {
 		    lswlogf(buf, "YES fitness %d", f);
 	    } else {
@@ -632,11 +627,10 @@ static struct score score_end(const struct end *end,
 {
 	const struct traffic_selector *ts = &tss->ts[index];
 	DBG(DBG_CONTROLMORE,
-	    char ts_net[RANGETOT_BUF];
-	    rangetot(&ts->net, 0, ts_net, sizeof(ts_net));
+	    range_buf ts_net;
 	    DBG_log("    %s[%u] .net=%s .iporotoid=%d .{start,end}port=%d..%d",
 		    what, index,
-		    ts_net,
+		    str_range(&ts->net, &ts_net),
 		    ts->ipprotoid,
 		    ts->startport,
 		    ts->endport));

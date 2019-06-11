@@ -172,9 +172,3 @@ const char *str_range(const ip_range *range, range_buf *out)
 	jam_range(&buf, range);
 	return out->buf;
 }
-
-void rangetot(const ip_range *range, char format UNUSED, char *dst, size_t dstlen)
-{
-	jambuf_t buf = array_as_jambuf(dst, dstlen);
-	jam_range(&buf, range);
-}

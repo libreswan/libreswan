@@ -2734,17 +2734,14 @@ void log_ipsec_sa_established(const char *m, const struct state *st)
 	/* log Child SA Traffic Selector details for admin's pleasure */
 	const struct traffic_selector *a = &st->st_ts_this;
 	const struct traffic_selector *b = &st->st_ts_that;
-	char ba[RANGETOT_BUF], bb[RANGETOT_BUF];
-
-	rangetot(&a->net, 0, ba, sizeof(ba));
-	rangetot(&b->net, 0, bb, sizeof(bb));
+	range_buf ba, bb;
 	libreswan_log("%s [%s:%d-%d %d] -> [%s:%d-%d %d]",
 			m,
-			ba,
+		      str_range(&a->net, &ba),
 			a->startport,
 			a->endport,
 			a->ipprotoid,
-			bb,
+		      str_range(&b->net, &bb),
 			b->startport,
 			b->endport,
 			b->ipprotoid);
