@@ -25,13 +25,6 @@
  * Constructor
  */
 
-struct lswlog *lswlog(struct lswlog *buf, char *array,
-		      size_t sizeof_array)
-{
-	*buf = array_as_jambuf(array, sizeof_array);
-	return buf;
-}
-
 size_t lswlogvf(struct lswlog *log, const char *format, va_list ap)
 {
 	return jam_va_list(log, format, ap);

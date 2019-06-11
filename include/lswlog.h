@@ -369,17 +369,6 @@ size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
  * Apparently chaining void function calls using a comma is valid C?
  */
 
-/* primitive to point the LSWBUF at and initialize ARRAY.  */
-#define LSWBUF_ARRAY_(ARRAY, SIZEOF_ARRAY, BUF)				\
-	/* point BUF at LSWLOG at ARRAY */				\
-	for (struct lswlog lswlog_, *BUF = lswlog(&lswlog_, ARRAY, SIZEOF_ARRAY); \
-	     lswlog_p; lswlog_p = false)
-
-/* primitive to construct an LSWBUF on the stack.  */
-#define LSWBUF_(BUF)							\
-	for (char lswbuf[LOG_WIDTH]; lswlog_p; lswlog_p = false)	\
-		LSWBUF_ARRAY_(lswbuf, sizeof(lswbuf), BUF)
-
 /*
  * Scratch buffer for accumulating extra output.
  *
@@ -402,10 +391,17 @@ void lswbuf(struct lswlog *log)
 }
 #endif
 
+/* primitive to construct an LSWBUF on the stack.  */
 #define LSWBUF(BUF)							\
-	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
-		LSWBUF_(BUF)
-
+	/* create the buffer */						\
+	for (char lswbuf[LOG_WIDTH],					\
+		     *lswbuf_ = lswbuf;					\
+	     lswbuf_ != NULL; lswbuf_ = NULL)				\
+		/* create the jambuf */					\
+		for (jambuf_t jambuf = ARRAY_AS_JAMBUF(lswbuf),		\
+			     *BUF = &jambuf;				\
+		     BUF != NULL; BUF = NULL)
+#define LSWBUF_ LSWBUF
 
 /*
  * Template for constructing logging output intended for a logger
@@ -589,8 +585,6 @@ void lswlog_errno_suffix(struct lswlog *buf, int e);
 	LSWLOG_(true, BUF,			\
 		lswlog_log_prefix(BUF),		\
 		lswlog_to_error_stream(buf))
-
-struct lswlog *lswlog(struct lswlog *buf, char *array, size_t sizeof_array);
 
 /*
  * Since 'char' can be unsigned need to cast -2 onto a char sized

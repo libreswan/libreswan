@@ -96,7 +96,7 @@ bool jambuf_ok(jambuf_t *buf);
  */
 
 jambuf_t array_as_jambuf(char *array, size_t sizeof_array);
-#define ARRAY_AS_JAMBUF(ARRAY) array_as_jambuf((ARRAY), sizeof(ARRAY));
+#define ARRAY_AS_JAMBUF(ARRAY) array_as_jambuf((ARRAY), sizeof(ARRAY))
 
 /*
  * Poke around in jambuf internals.
