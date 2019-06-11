@@ -107,3 +107,52 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 		DBG_dump_chunk(NULL, fixup->hash_data);
 	}
 }
+
+bool check_v1_HASH(enum v1_hash_type type, const char *what,
+		   struct state *st, struct msg_digest *md)
+{
+	if (type == V1_HASH_NONE) {
+		dbg("message '%s' HASH payload not checked early", what);
+		return true;
+	}
+	if (impair_v1_hash_check) {
+		libreswan_log("IMPAIR: skipping check of '%s' HASH payload", what);
+		return true;
+	}
+	if (md->hdr.isa_np != ISAKMP_NEXT_HASH) {
+		loglog(RC_LOG_SERIOUS, "received '%s' message is missing a HASH(%u) payload",
+		       what, type);
+		return false;
+	}
+	pb_stream *hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
+	chunk_t received_hash = same_in_pbs_left_as_chunk(hash_pbs);
+	if (received_hash.len != st->st_oakley.ta_prf->prf_output_size) {
+		loglog(RC_LOG_SERIOUS,
+		       "received '%s' message HASH(%u) data is the wrong length (received %zd bytes but expected %zd)",
+		       what, type, received_hash.len, st->st_oakley.ta_prf->prf_output_size);
+		return false;
+	}
+	/* compute the expected hash */
+	uint8_t hash_val[MAX_DIGEST_LEN];
+	passert(sizeof(hash_val) >= st->st_oakley.ta_prf->prf_output_size);
+	struct v1_hash_fixup expected = {
+		.hash_data = chunk(hash_val, st->st_oakley.ta_prf->prf_output_size),
+		.body = received_hash.ptr + received_hash.len,
+		.what = what,
+		.hash_type = type,
+	};
+	fixup_v1_HASH(st, &expected, md->hdr.isa_msgid, md->message_pbs.roof);
+	/* does it match? */
+	if (!chunk_eq(received_hash, expected.hash_data)) {
+		if (DBGP(DBG_BASE)) {
+			DBG_log("received %s HASH_DATA:", what);
+			DBG_dump_chunk(NULL, received_hash);
+		}
+		loglog(RC_LOG_SERIOUS,
+		       "received '%s' message HASH(%u) data does not match computed value",
+		       what, type);
+		return false;
+	}
+	dbg("received '%s' message HASH(%u) data ok", what, type);
+	return true;
+}

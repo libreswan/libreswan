@@ -68,4 +68,10 @@ bool emit_v1_HASH(enum v1_hash_type type, const char *what,
 void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *data,
 		   msgid_t msgid, const uint8_t *roof);
 
+/*
+ * Check the IKEv1 HASH payload.
+ */
+bool check_v1_HASH(enum v1_hash_type type, const char *what,
+		   struct state *st, struct msg_digest *md);
+
 #endif

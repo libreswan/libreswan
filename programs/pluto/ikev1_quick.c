@@ -661,69 +661,6 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	return !bad_proposal;
 }
 
-/* Compute HASH(1), HASH(2) of Quick Mode.
- * HASH(1) is part of Quick I1 message.
- * HASH(2) is part of Quick R1 message.
- * Used by: quick_outI1, quick_inI1_outR1 (twice), quick_inR1_outI2
- * (see RFC 2409 "IKE" 5.5, pg. 18 or draft-ietf-ipsec-ike-01.txt 6.2 pg 25)
- */
-static size_t quick_mode_hash12(u_char *dest, const u_char *start,
-				const u_char *roof,
-				const struct state *st, const msgid_t *msgid,
-				bool hash2)
-{
-	struct hmac_ctx ctx;
-
-#if 0   /* if desperate to debug hashing */
-#   define hmac_update(ctx, ptr, len) { \
-		DBG_dump("hash input", (ptr), (len)); \
-		(hmac_update)((ctx), (ptr), (len)); \
-}
-	DBG_dump("hash key", st->st_skeyid_a.ptr, st->st_skeyid_a.len);
-#endif
-	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
-	passert(sizeof(msgid_t) == sizeof(uint32_t));
-	msgid_t raw_msgid = htonl(*msgid);
-	hmac_update(&ctx, (const void *)&raw_msgid, sizeof(raw_msgid));
-	if (hash2)
-		hmac_update_chunk(&ctx, st->st_ni); /* include Ni_b in the hash */
-	hmac_update(&ctx, start, roof - start);
-	hmac_final(dest, &ctx);
-
-	DBG(DBG_CRYPT, {
-			DBG_log("HASH(%d) computed:", hash2 + 1);
-			DBG_dump("", dest, ctx.hmac_digest_len);
-		});
-	return ctx.hmac_digest_len;
-
-#   undef hmac_update
-}
-
-/* Compute HASH(3) in Quick Mode (part of Quick I2 message).
- * Used by: quick_inR1_outI2, quick_inI2
- * See RFC2409 "The Internet Key Exchange (IKE)" 5.5.
- * NOTE: this hash (unlike HASH(1) and HASH(2)) ONLY covers the
- * Message ID and Nonces.  This is a mistake.
- */
-static size_t quick_mode_hash3(u_char *dest, struct state *st)
-{
-	struct hmac_ctx ctx;
-
-	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
-	hmac_update(&ctx, (const u_char *)"\0", 1);
-	passert(sizeof(msgid_t) == sizeof(uint32_t));
-	msgid_t raw_msgid = htonl(st->st_msgid);
-	hmac_update(&ctx, (const void*)&raw_msgid, sizeof(raw_msgid));
-	hmac_update_chunk(&ctx, st->st_ni);
-	hmac_update_chunk(&ctx, st->st_nr);
-	hmac_final(dest, &ctx);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("HASH(3) computed:", dest,
-			 ctx.hmac_digest_len);
-	}
-	return ctx.hmac_digest_len;
-}
-
 /* Compute Phase 2 IV.
  * Uses Phase 1 IV from st_iv; puts result in st_new_iv.
  */
@@ -1097,13 +1034,6 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	struct connection *c = p1st->st_connection;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct verify_oppo_bundle b;
-
-	/* HASH(1) in */
-	CHECK_QUICK_HASH(md,
-			 quick_mode_hash12(hash_val, hash_pbs->roof,
-					   md->message_pbs.roof,
-					   p1st, &md->hdr.isa_msgid, FALSE),
-			 "HASH(1)", "Quick I1");
 
 	/* [ IDci, IDcr ] in
 	 * We do this now (probably out of physical order) because
@@ -1757,13 +1687,6 @@ static crypto_req_cont_func quick_inR1_outI2_continue;	/* forward decl and type 
 
 stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 {
-	/* HASH(2) in */
-	CHECK_QUICK_HASH(md,
-			 quick_mode_hash12(hash_val, hash_pbs->roof,
-					   md->message_pbs.roof,
-					   st, &st->st_msgid, TRUE),
-			 "HASH(2)", "Quick R1");
-
 	/* SA in */
 	{
 		struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
@@ -1986,12 +1909,8 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
  * (see RFC 2409 "IKE" 5.5)
  * Installs outbound IPsec SAs, routing, etc.
  */
-stf_status quick_inI2(struct state *st, struct msg_digest *md)
+stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 {
-	/* HASH(3) in */
-	CHECK_QUICK_HASH(md, quick_mode_hash3(hash_val, st),
-			 "HASH(3)", "Quick I2");
-
 	/* Tell the kernel to establish the outbound and routing part of the new SA
 	 * (the previous state established inbound)
 	 * (unless the commit bit is set -- which we don't support).
