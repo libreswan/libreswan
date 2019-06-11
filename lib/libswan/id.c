@@ -160,45 +160,41 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 /*
  * Converts a binary key ID into hexadecimal format
  */
-static int keyidtoa(char *dst, size_t dstlen, chunk_t keyid)
+static void keyidtoa(char *dst, size_t dstlen, chunk_t keyid)
 {
-	int n = datatot(keyid.ptr, keyid.len, 'x', dst, dstlen);
-
-	return ((n < (int)dstlen) ? n : (int)dstlen) - 1;
+	datatot(keyid.ptr, keyid.len, 'x', dst, dstlen);
 }
 
-int idtoa(const struct id *id, char *dst, size_t dstlen)
+void idtoa(const struct id *id, char *dst, size_t dstlen)
 {
-	int n;
-
 	switch (id->kind) {
 	case ID_FROMCERT:
-		n = snprintf(dst, dstlen, "%s", "%fromcert");
+		snprintf(dst, dstlen, "%s", "%fromcert");
 		break;
 	case ID_NONE:
-		n = snprintf(dst, dstlen, "%s", "(none)");
+		snprintf(dst, dstlen, "%s", "(none)");
 		break;
 	case ID_NULL:
-		n = snprintf(dst, dstlen, "%s", "ID_NULL");
+		snprintf(dst, dstlen, "%s", "ID_NULL");
 		break;
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		if (isanyaddr(&id->ip_addr)) {
-			n = snprintf(dst, dstlen, "%s", "%any");
+			snprintf(dst, dstlen, "%s", "%any");
 		} else {
-			n = (int)addrtot(&id->ip_addr, 0, dst, dstlen) - 1;
+			addrtot(&id->ip_addr, 0, dst, dstlen);
 		}
 		break;
 	case ID_FQDN:
-		n = snprintf(dst, dstlen, "@%.*s", (int)id->name.len,
+		snprintf(dst, dstlen, "@%.*s", (int)id->name.len,
 			id->name.ptr);
 		break;
 	case ID_USER_FQDN:
-		n = snprintf(dst, dstlen, "%.*s", (int)id->name.len,
+		snprintf(dst, dstlen, "%.*s", (int)id->name.len,
 			id->name.ptr);
 		break;
 	case ID_DER_ASN1_DN:
-		n = dntoa(dst, dstlen, id->name);
+		dntoa(dst, dstlen, id->name);
 		break;
 	case ID_KEY_ID:
 		passert(dstlen > 4);
@@ -206,11 +202,10 @@ int idtoa(const struct id *id, char *dst, size_t dstlen)
 		dst[1] = '#';
 		dstlen -= 2;
 		dst += 2;
-		n = keyidtoa(dst, dstlen, id->name);
-		n += 2;
+		keyidtoa(dst, dstlen, id->name);
 		break;
 	default:
-		n = snprintf(dst, dstlen, "unknown id kind %d", id->kind);
+		snprintf(dst, dstlen, "unknown id kind %d", id->kind);
 		break;
 	}
 
@@ -218,13 +213,11 @@ int idtoa(const struct id *id, char *dst, size_t dstlen)
 	 * "Sanitize" string so that log isn't endangered:
 	 * replace unprintable characters with '?'.
 	 */
-	if (n > 0) {
-		for (; *dst != '\0'; dst++)
-			if (!isprint(*dst))
-				*dst = '?';
+	for (; *dst != '\0'; dst++) {
+		if (!isprint(*dst)) {
+			*dst = '?';
+		}
 	}
-
-	return n;
 }
 
 /*
