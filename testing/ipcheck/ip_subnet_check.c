@@ -22,70 +22,13 @@
 #include "ipcheck.h"
 #include "ip_subnet.h"
 
-/*
- * from ttosubnet.c
- */
-
-#ifdef NOT_YET
-int main(int argc, char *argv[])
-{
-	ip_subnet s;
-	char buf[100];
-	char buf2[100];
-	const char *oops;
-	size_t n;
-	int af;
-	char *p;
-
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s [-6] addr/mask\n", argv[0]);
-		fprintf(stderr, "   or: %s -r\n", argv[0]);
-		exit(2);
-	}
-
-	if (streq(argv[1], "-r")) {
-		regress();
-		fprintf(stderr, "regress() returned?!?\n");
-		exit(1);
-	}
-
-	af = AF_INET;
-	p = argv[1];
-	if (streq(argv[1], "-6")) {
-		af = AF_INET6;
-		p = argv[2];
-	} else if (strchr(argv[1], ':') != NULL) {
-		af = AF_INET6;
-	}
-	oops = ttosubnet(p, 0, af, &s);
-	if (oops != NULL) {
-		fprintf(stderr, "%s: conversion failed: %s\n", argv[0], oops);
-		exit(1);
-	}
-	n = subnettot(&s, 0, buf, sizeof(buf));
-	if (n > sizeof(buf)) {
-		fprintf(stderr, "%s: reverse conversion of ", argv[0]);
-		(void) addrtot(&s.addr, 0, buf2, sizeof(buf2));
-		fprintf(stderr, "%s/", buf2);
-		fprintf(stderr, "%d", s.maskbits);
-		fprintf(stderr, " failed: need %zd bytes, have only %zd\n",
-			n, sizeof(buf));
-		exit(1);
-	}
-	printf("%s\n", buf);
-
-	exit(0);
-}
-#endif
-
 static void check_str_subnet(void)
 {
-	struct test {
+	static const struct test {
 		int family;
-		char *input;
-		char *output;	/* NULL means error expected */
-	};
-	static const struct test tests[] = {
+		char *in;
+		char *out;	/* NULL means error expected */
+	} tests[] = {
 		{ 4, "1.2.3.0/255.255.255.0", "1.2.3.0/24" },
 		{ 4, "1.2.3.0/24", "1.2.3.0/24" },
 #if 0
@@ -167,30 +110,31 @@ static void check_str_subnet(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		IPRINT(stdout, "IPv%d -> '%s'", t->family, t->output);
+		PRINT_IN(stdout, " -> '%s'",
+			 t->out ? t->out : "<error>");
 
 		int af = (t->family == 4) ? AF_INET : AF_INET6;
 
 		ip_subnet s;
-		oops = ttosubnet(t->input, 0, af, &s);
-		if (oops != NULL && t->output == NULL) {
+		oops = ttosubnet(t->in, 0, af, &s);
+		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
-		} else if (oops != NULL && t->output != NULL) {
+		} else if (oops != NULL && t->out != NULL) {
 			/* Error occurred, but we didn't expect one  */
-			IFAIL("ttosubnet failed: %s", oops);
+			FAIL_IN("ttosubnet failed: %s", oops);
 			continue;
-		} else if (oops == NULL && t->output == NULL) {
+		} else if (oops == NULL && t->out == NULL) {
 			/* If no errors, but we expected one */
-			IFAIL("ttosubnet succeeded unexpectedly");
+			FAIL_IN("ttosubnet succeeded unexpectedly");
 			continue;
 		}
 
 		subnet_buf buf;
 		const char *out = str_subnet(&s, &buf);
-		if (!streq(t->output, out)) {
-			IFAIL("subnetporttot returned '%s', expected '%s'",
-			      out, t->output);
+		if (!streq(t->out, out)) {
+			FAIL_IN("subnetporttot returned '%s', expected '%s'",
+				out, t->out);
 			continue;
 		}
 	}

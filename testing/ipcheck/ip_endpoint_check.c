@@ -27,30 +27,30 @@
 
 static void check_str_endpoint(void)
 {
-	struct test {
-		const char *input;
-		const char *output;
-	};
-	static const struct test tests[] = {
+	static const struct test {
+		const int family;
+		const char *in;
+		const char *out;
+	} tests[] = {
 		/* anything else? */
-		{ "1.2.3.4",			"1.2.3.4:65535" },
-		{ "255.255.255.255",		"255.255.255.255:65535" },
-		{ "1:12:3:14:5:16:7:18",	"[1:12:3:14:5:16:7:18]:65535" },
-		{ "11:22:33:44:55:66:77:88",	"[11:22:33:44:55:66:77:88]:65535" },
+		{ 4, "1.2.3.4",			"1.2.3.4:65535" },
+		{ 4, "255.255.255.255",		"255.255.255.255:65535" },
+		{ 6, "1:12:3:14:5:16:7:18",	"[1:12:3:14:5:16:7:18]:65535" },
+		{ 6, "11:22:33:44:55:66:77:88",	"[11:22:33:44:55:66:77:88]:65535" },
 		/* treat special different ? */
-		{ "0:0:0:0:0:0:0:1",		"[::1]:65535" },
-		{ "0:0:0:0:0:0:0:0",		"[::]:65535" },
+		{ 6, "0:0:0:0:0:0:0:1",		"[::1]:65535" },
+		{ 6, "0:0:0:0:0:0:0:0",		"[::]:65535" },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		IPRINT(stdout, "-> '%s'", t->output);
+		PRINT_IN(stdout, "-> '%s'", t->out);
 
 		/* convert it *to* internal format */
 		ip_address a;
-		err_t err = ttoaddr(t->input, strlen(t->input), AF_UNSPEC, &a);
+		err_t err = ttoaddr(t->in, strlen(t->in), AF_UNSPEC, &a);
 		if (err != NULL) {
-			IFAIL("%s", err);
+			FAIL_IN("ttoaddr() failed: %s", err);
 			continue;
 		}
 		ip_endpoint e = endpoint(&a, 65535);
@@ -59,10 +59,10 @@ static void check_str_endpoint(void)
 		endpoint_buf buf;
 		const char *out = str_endpoint(&e, &buf);
 		if (out == NULL) {
-			IFAIL("failed");
-		} else if (!strcaseeq(t->output, out)) {
-			IFAIL("returned '%s', expected '%s'",
-			      out, t->output);
+			FAIL_IN("failed");
+		} else if (!strcaseeq(t->out, out)) {
+			FAIL_IN("returned '%s', expected '%s'",
+				out, t->out);
 		}
 	}
 }
