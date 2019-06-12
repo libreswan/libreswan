@@ -32,9 +32,9 @@
 #include <ietf_constants.h>
 #include <libreswan/passert.h>
 
+#include "jambuf.h"
 #include "constants.h"
 #include "enum_names.h"
-#include "lswlog.h"
 #include "ip_said.h"		/* for SPI_PASS et.al. */
 
 const char *bool_str(bool b)

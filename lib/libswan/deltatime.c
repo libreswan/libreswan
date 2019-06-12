@@ -18,8 +18,8 @@
 
 #include <inttypes.h>		/* for imaxabs() */
 
+#include "jambuf.h"
 #include "deltatime.h"
-#include "lswlog.h"
 
 static const deltatime_t deltatime_zero;
 

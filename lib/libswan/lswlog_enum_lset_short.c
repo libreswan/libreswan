@@ -14,9 +14,11 @@
  * for more details.
  */
 
-#include "lswlog.h"
+#include "jambuf.h"
+#include "lset.h"
+#include "constants.h"		/* for lswlog_enum_short() */
 
-size_t lswlog_enum_lset_short(struct lswlog *buf, enum_names *en,
+size_t lswlog_enum_lset_short(struct lswlog *buf, const struct enum_names *en,
 			      const char *separator, lset_t val)
 {
 	unsigned int e;

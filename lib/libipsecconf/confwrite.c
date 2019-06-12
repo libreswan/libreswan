@@ -24,8 +24,9 @@
 #include <assert.h>
 #include <sys/queue.h>
 
+#include "jambuf.h"
+#include "lswlog.h"		/* for LSWLOG_FILE() */
 #include "constants.h"
-#include "lswlog.h"
 #include "lmod.h"
 #include "ip_address.h"
 

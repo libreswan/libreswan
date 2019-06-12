@@ -17,12 +17,13 @@
 #include <stddef.h>
 #include <limits.h>
 
+#include "jambuf.h"
+#include "lswlog.h"		/* for LSWLOG_INFO() */
 #include "constants.h"
 #include "enum_names.h"
 #include "lmod.h"
 #include "keywords.h"
 #include "impair.h"
-#include "lswlog.h"
 
 /*
  * Initialize both the .name and .help arrays.

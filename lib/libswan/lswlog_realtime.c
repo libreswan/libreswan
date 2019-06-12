@@ -10,8 +10,8 @@
  * for more details.
  */
 
+#include "jambuf.h"
 #include "realtime.h"
-#include "lswlog.h"
 
 static const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
