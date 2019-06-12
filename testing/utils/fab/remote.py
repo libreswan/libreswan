@@ -142,6 +142,8 @@ def _login(domain, console, username, password, login_timeout, password_timeout,
     domain.logger.debug("sending control-c+carriage return, waiting %s seconds for login or shell prompt", login_timeout)
     console.sendintr()
     console.sendline("")
+    console.sendline("")
+    console.sendline("")
     if _wait_for_login_prompt(domain, console, timeout=login_timeout,
                               also_expect=[console.prompt]) == 1:
         # shell prompt
