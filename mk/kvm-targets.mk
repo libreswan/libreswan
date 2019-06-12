@@ -26,7 +26,7 @@
 #
 # Pull in all its defaults so that they override everything below.
 
-KVM_OS ?= fedora28
+KVM_OS ?= fedora30
 include testing/libvirt/$(KVM_OS).mk
 
 
@@ -93,7 +93,7 @@ KVM_CONNECTION ?= qemu:///system
 
 VIRSH = sudo virsh --connect $(KVM_CONNECTION)
 
-VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION)
+VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION) --check path_in_use=off
 VIRT_CPU ?= --cpu host-passthrough
 VIRT_DISK_SIZE_GB ?=8
 VIRT_RND ?= --rng type=random,device=/dev/random
