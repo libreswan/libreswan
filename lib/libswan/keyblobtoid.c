@@ -13,7 +13,6 @@
  * License for more details.
  */
 
-#include "internal.h"
 #include "libreswan.h"
 
 /*

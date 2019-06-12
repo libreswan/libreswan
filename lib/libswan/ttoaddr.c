@@ -17,10 +17,11 @@
  */
 
 #include <string.h>
+#include <netdb.h>		/* for gethostbyname2() */
 
-#include "internal.h"		/* for MALLOC()!! */
 #include "ip_address.h"
 #include "libreswan.h"		/* for ttoul() */
+#include "lswalloc.h"		/* for alloc_things(), pfree() */
 
 /*
  * Legal ASCII characters in a domain name.  Underscore technically is not,
@@ -169,7 +170,7 @@ static err_t tryname(
 		cp = src;
 	} else {
 		if (srclen + 1 > sizeof(namebuf)) {
-			p = (char *) MALLOC(srclen + 1);
+			p = alloc_things(char, srclen + 1, "p");
 			if (p == NULL)
 				return "unable to get temporary space for name";
 		}
@@ -183,7 +184,7 @@ static err_t tryname(
 	if (h == NULL && af == AF_INET)
 		ne = getnetbyname(cp);
 	if (p != namebuf)
-		FREE(p);
+		pfree(p);
 	if (h == NULL && ne == NULL) {
 		/* intricate because we cannot compose a static string */
 		switch (tried_af) {

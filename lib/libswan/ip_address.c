@@ -16,7 +16,6 @@
  * License for more details.
  */
 
-#include "internal.h"
 #include "libreswan.h"
 #include "ip_address.h"
 #include "lswlog.h"

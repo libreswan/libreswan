@@ -14,7 +14,10 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
-#include "internal.h"
+
+#include <stdlib.h>
+#include <netdb.h>		/* for gethostbyname2() */
+
 #include "libreswan.h"
 
 /*
