@@ -21,24 +21,8 @@
 #include "err.h"
 
 #include <stdint.h>
-#include <stdbool.h> /* for 'bool' */
-
-/*
- * Libreswan was written before <stdbool.h> was standardized.
- *
- * (Contradicting the kernel coding style) TRUE and FALSE continue to
- * be used because some think that it is clearer than true or false.
- */
-
-#ifndef TRUE
-# define TRUE true
-#endif
-
-#ifndef FALSE
-# define FALSE false
-#endif
-
 #include <stddef.h>
+#include <stdbool.h>
 
 /*
  * When using uclibc, malloc(0) returns NULL instead of success. This is
