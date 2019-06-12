@@ -39,8 +39,6 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <ctype.h>
-#include <assert.h>
-#define user_assert(foo) assert(foo)
 #include <stdio.h>
 #include <stdint.h>
 
