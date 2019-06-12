@@ -31,6 +31,14 @@
 
 struct lswlog;
 
+/* Some constants code likes to use. Useful? */
+
+enum {
+	secs_per_minute = 60,
+	secs_per_hour = 60 * secs_per_minute,
+	secs_per_day = 24 * secs_per_hour
+};
+
 /*
  * This file was split into internal contants (Libreswan/pluto related),
  * and external constants (defined by IETF, etc.)

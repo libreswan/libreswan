@@ -40,14 +40,6 @@
 
 #include <stddef.h>
 
-/* Some constants code likes to use. Useful? */
-
-enum {
-	secs_per_minute = 60,
-	secs_per_hour = 60 * secs_per_minute,
-	secs_per_day = 24 * secs_per_hour
-};
-
 /*
  * When using uclibc, malloc(0) returns NULL instead of success. This is
  * to make it use the inbuilt work-around.
