@@ -4296,19 +4296,14 @@ void show_one_connection(const struct connection *c)
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; "
 		  "vti-routing:%s; vti-shared:%s;"
-#ifdef USE_NIC_OFFLOAD
 		 " nic-offload:%s;"
-#endif
 		  ,
 		  c->name, instance, nflogstr, markstr,
 		  c->vti_iface == NULL ? "unset" : c->vti_iface,
 		  bool_str(c->vti_routing),
-		  bool_str(c->vti_shared)
-#ifdef USE_NIC_OFFLOAD
-		  ,
+		  bool_str(c->vti_shared),
 		  (c->nic_offload == yna_auto) ? "auto" :
 			bool_str(c->nic_offload == yna_yes)
-#endif
 	);
 
 	{

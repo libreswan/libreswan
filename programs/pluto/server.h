@@ -66,9 +66,7 @@ struct iface_dev {
 	int id_count;
 	char *id_vname; /* virtual (ipsec) device name */
 	char *id_rname; /* real device name */
-#ifdef USE_NIC_OFFLOAD
 	bool id_nic_offload;
-#endif
 };
 
 struct iface_port {

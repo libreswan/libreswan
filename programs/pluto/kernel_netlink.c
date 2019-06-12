@@ -1045,8 +1045,6 @@ static bool netlink_migrate_sa(struct state *st)
 }
 
 
-#ifdef USE_NIC_OFFLOAD
-
 /* see /usr/include/linux/ethtool.h */
 
 enum nic_offload_state {
@@ -1155,8 +1153,6 @@ static bool netlink_detect_offload(const char *ifname)
 	pfree(cmd);
 	return ret;
 }
-
-#endif /* USE_NIC_OFFLOAD */
 
 /*
  * netlink_add_sa - Add an SA into the kernel SPDB via netlink
@@ -1478,11 +1474,9 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		memcpy(RTA_DATA(attr), &natt, sizeof(natt));
 
 		req.n.nlmsg_len += attr->rta_len;
-		/* attr not subsequently used unless USE_NIC_OFFLOAD or HAVE_LABELED_IPSEC */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
-#ifdef USE_NIC_OFFLOAD
 	if (sa->nic_offload_dev) {
 		struct xfrm_user_offload xuo = {
 			.flags = (sa->inbound ? XFRM_OFFLOAD_INBOUND : 0) |
@@ -1502,9 +1496,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	} else {
 		DBG(DBG_KERNEL, DBG_log("netlink: esp-hw-offload not set for IPsec SA"));
 	}
-#else
-		DBG(DBG_KERNEL, DBG_log("netlink: libreswan not compiled with esp-hw-offload support"));
-#endif
 
 #ifdef HAVE_LABELED_IPSEC
 	if (sa->sec_ctx != NULL) {
@@ -2438,9 +2429,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				id->id_vname = clone_str(v->name,
 							"virtual device name netlink");
 				id->id_count++;
-#ifdef USE_NIC_OFFLOAD
 				id->id_nic_offload = netlink_detect_offload(ifp->name);
-#endif
 
 				q->ip_addr = ifp->addr;
 				q->fd = fd;
@@ -2455,11 +2444,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					"adding interface %s/%s (%s) %s:%d",
 					q->ip_dev->id_vname,
 					q->ip_dev->id_rname,
-#ifndef USE_NIC_OFFLOAD
 					"esp-hw-offload not supported by kernel",
-#else
-					id->id_nic_offload ? "esp-hw-offload=yes" : "esp-hw-offload=no",
-#endif
 					ipstr(&q->ip_addr, &b),
 					q->port);
 				/*

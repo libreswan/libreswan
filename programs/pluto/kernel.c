@@ -1679,7 +1679,6 @@ bool del_spi(ipsec_spi_t spi, int proto,
 	return kernel_ops->del_sa(&sa);
 }
 
-#ifdef USE_NIC_OFFLOAD
 static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
 		bool *nic_offload_fallback)
 {
@@ -1702,7 +1701,6 @@ static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
 	}
 	sa->nic_offload_dev = c->interface->ip_dev->id_rname;
 }
-#endif
 
 /*
  * Set up one direction of the SA bundle
@@ -1722,9 +1720,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	bool incoming_ref_set = FALSE;
 	IPsecSAref_t refhim = st->st_refhim;
 	IPsecSAref_t new_refhim = IPSEC_SAREF_NULL;
-#ifdef USE_NIC_OFFLOAD
 	bool nic_offload_fallback = FALSE;
-#endif
 
 	/* SPIs, saved for spigrouping or undoing, if necessary */
 	struct kernel_sa said[EM_MAXRELSPIS];
@@ -2148,20 +2144,17 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->ref = refhim;
 			outgoing_ref_set = TRUE;
 		}
-#ifdef USE_NIC_OFFLOAD
 		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
-#endif
 
 		bool ret = kernel_ops->add_sa(said_next, replace);
 
-#ifdef USE_NIC_OFFLOAD
 		if (!ret && nic_offload_fallback &&
 			said_next->nic_offload_dev != NULL) {
 			/* Fallback to non-nic-offload crypto */
 			said_next->nic_offload_dev = NULL;
 			ret = kernel_ops->add_sa(said_next, replace);
 		}
-#endif
+
 		/* scrub keys from memory */
 		memset(said_next->enckey, 0, said_next->enckeylen);
 		memset(said_next->authkey, 0, said_next->authkeylen);

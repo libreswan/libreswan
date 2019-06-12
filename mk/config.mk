@@ -267,9 +267,6 @@ XFRM_LIFETIME_DEFAULT?=30
 # when you see errors related to 'struct in6_addr'
 USE_GLIBC_KERN_FLIP_HEADERS?=false
 
-# Enable NIC IPsec hardware offloading API. Introduced in Linux Kernel 4.12
-USE_NIC_OFFLOAD?=true
-
 # When compiling on a system where unbound is missing the required unbound-event.h
 # include file, enable this workaround option that will enable an included copy of
 # this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
