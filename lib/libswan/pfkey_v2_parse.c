@@ -69,10 +69,6 @@ extern int debug_pfkey;
  */
 #include <libreswan/pfkey_debug.h>
 
-unsigned int pfkey_lib_debug = PF_KEY_DEBUG_PARSE_NONE;
-libreswan_keying_debug_func_t pfkey_debug_func = NULL;
-libreswan_keying_debug_func_t pfkey_error_func = NULL;
-
 #define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
 
 static struct satype_tbl {

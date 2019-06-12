@@ -20,6 +20,7 @@
 #define _FREESWAN_PFKEY_DEBUG_H
 
 #include "lswlog.h"
+#include "lswalloc.h"
 
 /*
  * Debugging levels for pfkey_lib_debug
@@ -35,7 +36,7 @@
 
 #define ERROR(args ...)      libreswan_log("pfkey_lib_debug:" args)
 
-# define MALLOC(size) malloc(size)
-# define FREE(obj) free(obj)
+# define MALLOC(size) alloc_bytes(size, __func__)
+# define FREE(obj) pfree(obj)
 
 #endif
