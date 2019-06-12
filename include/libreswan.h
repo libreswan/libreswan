@@ -86,13 +86,6 @@ enum {
 /* and the SA ID stuff */
 typedef uint32_t ipsec_spi_t;
 
-/* misc */
-struct prng {                   /* pseudo-random-number-generator guts */
-	unsigned char sbox[256];
-	int i, j;
-	unsigned long count;
-};
-
 /*
  * definitions for user space, taken linux/include/libreswan/ipsec_sa.h
  */
@@ -152,12 +145,6 @@ extern size_t splitkeytoid(const unsigned char *e, size_t elen,
 #define KEYID_BUF       10      /* up to 9 text digits plus NUL */
 extern err_t ttoprotoport(char *src, size_t src_len, u_int8_t *proto, u_int16_t *port,
 			  bool *has_port_wildcard);
-
-/* PRNG */
-extern void prng_init(struct prng *prng, const unsigned char *key, size_t keylen);
-extern void prng_bytes(struct prng *prng, unsigned char *dst, size_t dstlen);
-extern unsigned long prng_count(struct prng *prng);
-extern void prng_final(struct prng *prng);
 
 /* odds and ends */
 extern const char *ipsec_version_code(void);
