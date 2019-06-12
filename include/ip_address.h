@@ -22,6 +22,8 @@
 #include "chunk.h"
 #include "err.h"
 
+extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
+
 /*
  * Hack around this file being sucked into linux kernel module builds.
  */

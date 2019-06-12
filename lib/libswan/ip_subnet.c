@@ -17,8 +17,9 @@
  * for more details.
  */
 
+#include "jambuf.h"
 #include "ip_subnet.h"
-#include "lswlog.h"
+#include "libreswan/passert.h"
 
 bool subnetisnone(const ip_subnet *sn)
 {

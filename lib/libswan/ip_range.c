@@ -21,9 +21,10 @@
  * and more minor utilities for mask length calculations for IKEv2
  */
 
-#include "ip_range.h"
+#include <string.h>
+
 #include "jambuf.h"
-#include "libreswan.h"		/* for random stuff that should be elsewhere */
+#include "ip_range.h"
 
 /*
  * Calculate the number of significant bits in the size of the range.

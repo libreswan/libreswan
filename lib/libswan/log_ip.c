@@ -13,6 +13,6 @@
  * for more details.
  */
 
-#include "lswlog.h"	/* for log_ip */
+#include "ip_address.h"	/* for log_ip */
 
 bool log_ip = true;

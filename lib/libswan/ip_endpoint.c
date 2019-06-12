@@ -14,8 +14,8 @@
  *
  */
 
+#include "jambuf.h"
 #include "ip_endpoint.h"
-#include "lswlog.h"
 
 ip_endpoint endpoint(const ip_address *address, int port)
 {
@@ -55,10 +55,10 @@ const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *ds
 	return dst->buf;
 }
 
-void jam_sensitive_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
+void jam_sensitive_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
 {
 	if (!log_ip) {
-		lswlogs(buf, "<address:port>");
+		jam(buf, "<address:port>");
 		return;
 	}
 	jam_endpoint(buf, endpoint);
@@ -74,7 +74,7 @@ void jam_sensitive_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
  * cannot be used, while for UDP, the source port is optional
  * and a value of zero means no port.
  */
-void jam_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
+void jam_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
 {
 	ip_address address = endpoint_address(endpoint);
 	int port = endpoint_port(endpoint);
@@ -84,24 +84,24 @@ void jam_endpoint(struct lswlog *buf, const ip_endpoint *endpoint)
 	case AF_INET: /* N.N.N.N[:PORT] */
 		jam_address_cooked(buf, &address);
 		if (port > 0) {
-			lswlogf(buf, ":%d", port);
+			jam(buf, ":%d", port);
 		}
 		break;
 	case AF_INET6: /* [N:..:N]:PORT or N:..:N */
 		if (port > 0) {
-			lswlogf(buf, "[");
+			jam(buf, "[");
 			jam_address_cooked(buf, &address);
-			lswlogf(buf, "]");
-			lswlogf(buf, ":%d", port);
+			jam(buf, "]");
+			jam(buf, ":%d", port);
 		} else {
 			jam_address_cooked(buf, &address);
 		}
 		break;
 	case 0:
-		lswlogf(buf, "<invalid-endpoint>");
+		jam(buf, "<invalid-endpoint>");
 		return;
 	default:
-		lswlogf(buf, "<ip-type-%d>", type);
+		jam(buf, "<ip-type-%d>", type);
 		return;
 	}
 }

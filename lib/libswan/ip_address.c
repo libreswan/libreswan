@@ -16,9 +16,9 @@
  * License for more details.
  */
 
-#include "libreswan.h"
+#include "jambuf.h"
 #include "ip_address.h"
-#include "lswlog.h"
+#include "lswlog.h"		/* for libreswan_log() */
 
 /*
  * portof - get the port field of an ip_address in network order.
@@ -148,17 +148,17 @@ chunk_t same_ip_address_as_chunk(const ip_address *address)
  * Implement https://tools.ietf.org/html/rfc5952
  */
 
-static void jam_raw_ipv4_address(struct lswlog *buf, chunk_t a, char sepc)
+static void jam_raw_ipv4_address(jambuf_t *buf, chunk_t a, char sepc)
 {
 	const char seps[2] = { sepc == 0 ? '.' : sepc, 0, };
 	const char *sep = "";
 	for (size_t i = 0; i < a.len; i++) {
-		lswlogf(buf, "%s%"PRIu8, sep, a.ptr[i]);
+		jam(buf, "%s%"PRIu8, sep, a.ptr[i]);
 		sep = seps;
 	}
 }
 
-static void jam_raw_ipv6_address(struct lswlog *buf, chunk_t a, char sepc,
+static void jam_raw_ipv6_address(jambuf_t *buf, chunk_t a, char sepc,
 				 chunk_t skip)
 {
 	const char seps[2] = { sepc == 0 ? ':' : sepc, 0, };
@@ -168,24 +168,24 @@ static void jam_raw_ipv6_address(struct lswlog *buf, chunk_t a, char sepc,
 	while (ptr <= last) {
 		if (ptr == skip.ptr) {
 			/* skip zero run */
-			lswlogf(buf, "%s%s", seps, seps);
+			jam(buf, "%s%s", seps, seps);
 			sep = "";
 			ptr += skip.len;
 		} else {
 			/* suppress zeros */
 			unsigned ia = (ptr[0] << 8) + ptr[1];
-			lswlogf(buf, "%s%x", sep, ia);
+			jam(buf, "%s%x", sep, ia);
 			sep = seps;
 			ptr += 2;
 		}
 	}
 }
 
-void jam_address_raw(struct lswlog *buf, const ip_address *address, char sepc)
+void jam_address_raw(jambuf_t *buf, const ip_address *address, char sepc)
 {
 	chunk_t a = same_ip_address_as_chunk(address);
 	if (a.len == 0) {
-		lswlogs(buf, "<invalid-length>");
+		jam(buf, "<invalid-length>");
 		return;
 	}
 	int type = addrtypeof(address);
@@ -197,10 +197,10 @@ void jam_address_raw(struct lswlog *buf, const ip_address *address, char sepc)
 		jam_raw_ipv6_address(buf, a, sepc, EMPTY_CHUNK);
 		break;
 	case 0:
-		lswlogf(buf, "<invalid-address>");
+		jam(buf, "<invalid-address>");
 		break;
 	default:
-		lswlogf(buf, "<invalid-type-%d>", type);
+		jam(buf, "<invalid-type-%d>", type);
 		break;
 	}
 }
@@ -233,11 +233,11 @@ static chunk_t zeros_to_skip(chunk_t a)
 	return zero;
 }
 
-void jam_address_cooked(struct lswlog *buf, const ip_address *address)
+void jam_address_cooked(jambuf_t *buf, const ip_address *address)
 {
 	chunk_t a = same_ip_address_as_chunk(address);
 	if (a.len == 0) {
-		lswlogs(buf, "<invalid-length>");
+		jam(buf, "<invalid-length>");
 		return;
 	}
 	int type = addrtypeof(address);
@@ -249,24 +249,24 @@ void jam_address_cooked(struct lswlog *buf, const ip_address *address)
 		jam_raw_ipv6_address(buf, a, 0, zeros_to_skip(a));
 		break;
 	case 0:
-		lswlogf(buf, "<invalid-address>");
+		jam(buf, "<invalid-address>");
 		break;
 	default:
-		lswlogf(buf, "<invalid-type-%d>", type);
+		jam(buf, "<invalid-type-%d>", type);
 		break;
 	}
 }
 
-void jam_address_sensitive(struct lswlog *buf, const ip_address *address)
+void jam_address_sensitive(jambuf_t *buf, const ip_address *address)
 {
 	if (log_ip) {
 		jam_address_cooked(buf, address);
 	} else {
-		lswlogs(buf, "<ip-address>");
+		jam(buf, "<ip-address>");
 	}
 }
 
-void jam_address_reversed(struct lswlog *buf, const ip_address *address)
+void jam_address_reversed(jambuf_t *buf, const ip_address *address)
 {
 	chunk_t bytes = same_ip_address_as_chunk(address);
 	int type = addrtypeof(address);
