@@ -106,7 +106,7 @@ def path(domain, console, path):
 # Domain timeouts
 
 SHUTDOWN_TIMEOUT = 20
-START_TIMEOUT = 10
+START_TIMEOUT = 20
 LOGIN_PROMPT_TIMEOUT = 120
 
 def _wait_for_login_prompt(domain, console, timeout, also_expect=[]):
