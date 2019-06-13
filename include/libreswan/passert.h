@@ -17,12 +17,14 @@
  * License for more details.
  */
 
-#include <signal.h>	/* for sig_atomic_t */
-#include "err.h"
-#include "libreswan.h"
-
 #ifndef _LIBRESWAN_PASSERT_H
 #define _LIBRESWAN_PASSERT_H
+
+#include <string.h>		/* for strrchr() */
+
+#include "err.h"		/* for err_t */
+#include "lswcdefs.h"		/* for NEVER_RETURNS PRINTF_LIKE() */
+
 /* our versions of assert: log result */
 
 extern void lsw_passert_fail(const char *file_str,

@@ -15,6 +15,9 @@
  * License for more details.
  */
 
+#include <string.h>
+#include <ctype.h>		/* for tolower() */
+
 #include "libreswan.h"
 
 /* converters and misc */

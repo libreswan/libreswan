@@ -18,6 +18,7 @@
 
 #include <string.h>
 #include <netdb.h>		/* for gethostbyname2() */
+#include <ctype.h>		/* for isxdigit() */
 
 #include "ip_address.h"
 #include "libreswan.h"		/* for ttoul() */

@@ -18,6 +18,7 @@
 #include "constants.h"
 #include "enum_names.h"
 #include "lmod.h"
+#include "lswcdefs.h"		/* for ARRAY_REF() */
 
 /*
  * Initialize both the .name and .help arrays.

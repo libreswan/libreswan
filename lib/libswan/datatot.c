@@ -13,6 +13,8 @@
  * License for more details.
  */
 
+#include <stddef.h>
+
 #include "libreswan/passert.h"
 #include "libreswan.h"
 

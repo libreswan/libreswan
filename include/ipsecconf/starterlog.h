@@ -17,6 +17,8 @@
 #ifndef _STARTER_LOG_H_
 #define _STARTER_LOG_H_
 
+#include "lswcdefs.h"
+
 #define LOG_LEVEL_INFO   1
 #define LOG_LEVEL_ERR    2
 #define LOG_LEVEL_DEBUG  3

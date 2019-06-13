@@ -20,9 +20,10 @@
 
 #include "err.h"
 
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
+
+#include <sys/types.h>
+#include <netinet/in.h>
 
 /*
  * When using uclibc, malloc(0) returns NULL instead of success. This is
@@ -34,13 +35,6 @@
 #  warning Please compile uclibc with GLIBC_COMPATIBILITY defined
 # endif
 #endif
-
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <stdint.h>
 
 #define DEBUG_NO_STATIC static
 
@@ -83,8 +77,6 @@ typedef uint32_t IPsecSAref_t;
 #define IPSEC_SAREF_NULL ((IPsecSAref_t)0u)
 /* Not representable as an nfmark */
 #define IPSEC_SAREF_NA   ((IPsecSAref_t)0xffff0001)
-
-#include "lswcdefs.h"
 
 /*
  * new IPv6-compatible functions

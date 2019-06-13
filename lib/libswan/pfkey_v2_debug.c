@@ -17,30 +17,13 @@
  *
  */
 
-#ifdef __KERNEL__
-
-# include <linux/kernel.h>              /* for printk */
-
-# include "libreswan/ipsec_kversion.h"  /* for malloc switch */
-# include <linux/slab.h>                /* kmalloc() */
-# include <linux/errno.h>               /* error codes */
-# include <linux/types.h>               /* size_t */
-# include <linux/interrupt.h>           /* mark_bh */
-
-# include <linux/netdevice.h>           /* struct device, and other headers */
-# include <linux/etherdevice.h>         /* eth_type_trans */
-extern int debug_pfkey;
-
-#else /* __KERNEL__ */
-
+#include <stddef.h>
 # include <sys/types.h>
 
 #if defined(linux)
 # include <linux/types.h>
 # include <linux/errno.h>
 #endif
-
-#endif /* __KERNEL__ */
 
 #include "libreswan.h"
 #include "libreswan/pfkeyv2.h"

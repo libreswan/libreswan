@@ -26,6 +26,7 @@
 #define _CONSTANTS_H_
 
 #include <stddef.h> /* for size_t */
+#include <string.h>		/* for strcmp() */
 
 #include "shunk.h"
 

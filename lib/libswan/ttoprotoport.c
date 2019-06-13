@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include <netdb.h>		/* for gethostbyname2() */
+#include <string.h>		/* for strchr() */
 
 #include "libreswan.h"
 

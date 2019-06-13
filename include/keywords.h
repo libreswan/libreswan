@@ -26,6 +26,7 @@
 
 #include <stddef.h>	/* for size_t */
 
+#include "lswcdefs.h"		/* for elemsof() */
 #include "shunk.h"
 
 struct lswlog;

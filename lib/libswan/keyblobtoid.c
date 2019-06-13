@@ -13,6 +13,8 @@
  * License for more details.
  */
 
+#include <string.h>
+
 #include "libreswan.h"
 
 /*

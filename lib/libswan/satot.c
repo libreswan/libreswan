@@ -14,6 +14,9 @@
  * License for more details.
  */
 
+#include <string.h>
+#include <stdio.h>
+
 #include "ip_said.h"
 
 static struct typename {

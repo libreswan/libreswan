@@ -14,6 +14,7 @@
  * License for more details.
  */
 
+#include <string.h>		/* for memcmp() */
 #include "ip_address.h"
 #include "ip_said.h"
 #include "ip_subnet.h"

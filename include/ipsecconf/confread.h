@@ -30,6 +30,7 @@
 #include "err.h"
 #include "ip_range.h"
 #include "ip_subnet.h"
+#include "lswcdefs.h"
 
 #ifndef _LIBRESWAN_H
 #include <libreswan.h>

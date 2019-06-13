@@ -12,6 +12,9 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
+
+#include <string.h>
+
 #include "libreswan.h"
 
 /*

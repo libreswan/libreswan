@@ -16,6 +16,7 @@
  * for more details.
  */
 
+#include <error.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>

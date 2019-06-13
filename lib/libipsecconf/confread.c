@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <ctype.h>
 
 #include "lswalloc.h"
 #include "ip_address.h"
