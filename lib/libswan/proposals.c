@@ -589,6 +589,8 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 	}
 	if (str == NULL) {
 		proposals->defaulted = true;
+		/* may still be null */
+		str = parser->protocol->defaults[parser->policy->version]->proposals;
 	}
 	bool ok;
 	switch (parser_version) {
