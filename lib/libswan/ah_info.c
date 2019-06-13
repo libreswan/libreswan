@@ -56,12 +56,33 @@ static bool ah_proposal_ok(struct proposal_parser *parser,
 	return true;
 }
 
-static const struct ike_alg *default_v1_ah_integ[] = {
-#ifdef USE_SHA1
-	&ike_alg_integ_sha1.common,
-#endif
-	NULL,
+/*
+ * IKEv1:
+ */
+
+static const char default_v1_ah_proposals[] =
+	"SHA1_96" /*???*/
+	;
+
+const struct proposal_defaults v1_ah_defaults = {
+	.proposals = default_v1_ah_proposals,
 };
+
+/*
+ * IKEv2:
+ */
+
+static const char default_v2_ah_proposals[] =
+	"SHA2_512_256"
+	","
+	"SHA2_256_128"
+	","
+	/*
+	 * something strongswan might accept; bottom of the preference
+	 * list
+	 */
+	"SHA1_96"
+	;
 
 static const struct ike_alg *default_v2_ah_integ[] = {
 #ifdef USE_SHA2
@@ -71,13 +92,14 @@ static const struct ike_alg *default_v2_ah_integ[] = {
 	NULL,
 };
 
-const struct proposal_defaults v1_ah_defaults = {
-	.integ = default_v1_ah_integ,
-};
-
 const struct proposal_defaults v2_ah_defaults = {
+	.proposals = default_v2_ah_proposals,
 	.integ = default_v2_ah_integ,
 };
+
+/*
+ * All together now ...
+ */
 
 const struct proposal_protocol ah_proposal_protocol = {
 	.name = "AH",

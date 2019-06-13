@@ -21,6 +21,10 @@
 #ifndef PROPOSALS_H
 #define PROPOSALS_H
 
+/*
+ * XXX: rename v[23]_proposal to proposal_v[12].
+ */
+
 #include "lswcdefs.h"
 #include "constants.h"
 #include "ike_alg.h"
@@ -84,6 +88,15 @@ struct proposal_policy {
  */
 
 struct proposal_defaults {
+	/*
+	 * Proposals to parse when the parser is called with a NULL
+	 * proposals string.
+	 */
+	const char *proposals;
+	/*
+	 * Algorithms to add to the proposal when they were not
+	 * specified by the proposal string.
+	 */
 	const struct ike_alg **dh;
 	const struct ike_alg **prf;
 	const struct ike_alg **integ;
@@ -103,7 +116,7 @@ struct proposal_protocol {
 	enum ike_alg_key ikev1_alg_id;
 
 	/*
-	 * Lists of defaults for each IKE version.
+	 * Lists of defaults for both IKE version.
 	 */
 	const struct proposal_defaults *defaults[IKE_VERSION_ROOF];
 

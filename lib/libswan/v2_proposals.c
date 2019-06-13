@@ -399,17 +399,6 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 	    DBG_log("parsing '"PRI_SHUNK"' for %s",
 		    PRI_shunk(input), parser->protocol->name));
 
-	/* use default if no string */
-	if (input.ptr == NULL) {
-		struct proposal *proposal = alloc_proposal(parser);
-		if (!merge_defaults(parser, proposal)) {
-			free_proposal(&proposal);
-			return false;
-		}
-		append_proposal(proposals, &proposal);
-		return true;
-	}
-
 	if (input.len == 0) {
 		/* XXX: hack to keep testsuite happy */
 		proposal_error(parser, "String ended with invalid char, just after \"\"");

@@ -1,5 +1,8 @@
 algparse -v2 -pfs 'esp'
-	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	AES_GCM_16_256-NONE
+	AES_GCM_16_128-NONE
+	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 -pfs 'esp='
 	ERROR: String ended with invalid char, just after ""
 algparse -v2 -pfs 'esp=aes'
@@ -293,7 +296,9 @@ algparse -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
 algparse -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
 	ERROR: more than one IKEv2 ESP DH algorithm (MODP8192, MODP2048) requires unimplemented CHILD_SA INVALID_KE
 algparse -v2 -pfs 'ah'
-	HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	HMAC_SHA2_512_256
+	HMAC_SHA2_256_128
+	HMAC_SHA1_96
 algparse -v2 -pfs 'ah='
 	ERROR: String ended with invalid char, just after ""
 algparse -v2 -pfs 'ah=md5'
@@ -345,7 +350,10 @@ algparse -v2 -pfs 'ah=aes_ccm'
 algparse -v2 -pfs 'ah=ripemd'
 	ERROR: AH integrity algorithm 'ripemd' is not recognized
 algparse -v2 -pfs 'ike'
-	AES_CBC+3DES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_CBC_128-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 algparse -v2 -pfs 'ike='
 	ERROR: String ended with invalid char, just after ""
 algparse -v2 -pfs 'ike=3des-sha1'
