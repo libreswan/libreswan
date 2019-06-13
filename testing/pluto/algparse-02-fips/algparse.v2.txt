@@ -1,5 +1,8 @@
 algparse -fips -v2 'esp'
-	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	AES_GCM_16_256-NONE
+	AES_GCM_16_128-NONE
+	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp='
 	ERROR: String ended with invalid char, just after ""
 algparse -fips -v2 'esp=aes'
@@ -329,7 +332,9 @@ algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v2 'ah'
-	HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	HMAC_SHA2_512_256
+	HMAC_SHA2_256_128
+	HMAC_SHA1_96
 algparse -fips -v2 'ah='
 	ERROR: String ended with invalid char, just after ""
 algparse -fips -v2 'ah=md5'
@@ -385,7 +390,10 @@ algparse -fips -v2 'ah=aes_ccm'
 algparse -fips -v2 'ah=ripemd'
 	ERROR: AH integrity algorithm 'ripemd' is not recognized
 algparse -fips -v2 'ike'
-	AES_CBC+3DES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_CBC_128-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
 algparse -fips -v2 'ike='
 	ERROR: String ended with invalid char, just after ""
 algparse -fips -v2 'ike=3des-sha1'
