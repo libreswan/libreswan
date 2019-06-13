@@ -40,8 +40,10 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
 -sendmail
 -libreswan
-# nm causes problems and steals our interfaces desipte NM_CONTROLLED="no"
--NetworkManager
+
+# NetworkManager causes problems and steals our interfaces despite
+# NM_CONTROLLED="no".  However, without NetworkManager the base and
+# build systems refuse to bring their network up.
 
 %end
 
