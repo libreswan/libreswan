@@ -42,6 +42,7 @@ struct proposal {
 };
 
 struct proposals {
+	bool defaulted;
 	int ref_cnt;
 	struct proposal *proposals;
 };
@@ -586,6 +587,9 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 	if (parser_version == 0) {
 		parser_version = parser->policy->version;
 	}
+	if (str == NULL) {
+		proposals->defaulted = true;
+	}
 	bool ok;
 	switch (parser_version) {
 	case 2: ok = v2_proposals_parse_str(parser, proposals, shunk1(str)); break;
@@ -606,4 +610,9 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 		return NULL;
 	}
 	return proposals;
+}
+
+bool default_proposals(struct proposals *proposals)
+{
+	return proposals == NULL || proposals->defaulted;
 }

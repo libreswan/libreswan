@@ -145,6 +145,7 @@ bool proposal_encrypt_norm(const struct proposal *proposal);
 bool proposal_integ_none(const struct proposal *proposal);
 
 unsigned nr_proposals(struct proposals *proposals);
+bool default_proposals(struct proposals *proposals);
 
 extern void proposals_addref(struct proposals **proposals);
 extern void proposals_delref(struct proposals **proposals);

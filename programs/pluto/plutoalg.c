@@ -277,7 +277,13 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 		pfsbuf = "<N/A>";
 	}
 
-	if (c->child_proposals.p != NULL) {
+	/*
+	 * XXX: don't show the default proposal suite (assuming it is
+	 * known).  Mainly so that test output doesn't get churned
+	 * (originally it wasn't shown because it wasn't known).
+	 */
+	if (c->child_proposals.p != NULL &&
+	    !default_proposals(c->child_proposals.p)) {
 		LSWLOG_WHACK(RC_COMMENT, buf) {
 			/*
 			 * If DH (PFS) was specified in the esp= or
