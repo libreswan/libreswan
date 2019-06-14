@@ -11,7 +11,9 @@ network --bootproto=dhcp --hostname swanbase
 # network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
 rootpw swan
 firewall --disable
-selinux --enforcing
+# permissive while debugging F30 systemd-networkd
+selinux --permissive
+
 timezone --utc America/New_York
 # firstboot --disable
 bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,115200 rd_NO_PLYMOUTH net.ifnames=0 biosdevname=0"
