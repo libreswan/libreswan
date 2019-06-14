@@ -1569,7 +1569,8 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 
 		/* IKE cipher suites */
 
-		if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
+		if (!LIN(POLICY_AUTH_NEVER, wm->policy) &&
+		    (wm->ike != NULL || LIN(POLICY_IKEV2_ALLOW, wm->policy))) {
 			const struct proposal_policy proposal_policy = {
 				/* logic needs to match pick_initiator() */
 				.version = LIN(POLICY_IKEV2_ALLOW, wm->policy) ? IKEv2 : IKEv1,
@@ -1577,6 +1578,8 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.check_pfs_vs_dh = false,
 				.warning = libreswan_log,
+				/* let defaults stumble on regardless */
+				.ignore_parser_errors = (wm->ike == NULL),
 			};
 
 			struct proposal_parser *parser = ike_proposal_parser(&proposal_policy);
@@ -1602,8 +1605,11 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 
 		/* ESP or AH cipher suites (but not both) */
 
-		if (wm->esp != NULL) {
-			DBGF(DBG_CONTROL, "from whack: got --esp=%s", wm->esp);
+		if (wm->esp != NULL ||
+		    (LIN(POLICY_IKEV2_ALLOW, wm->policy) &&
+		     (c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)))) {
+			const char *esp = wm->esp != NULL ? wm->esp : "";
+			DBGF(DBG_CONTROL, "from whack: got --esp=%s", esp);
 
 			const struct proposal_policy proposal_policy = {
 				/*
@@ -1619,11 +1625,9 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.check_pfs_vs_dh = true,
 				.warning = libreswan_log,
+				/* let defaults stumble on regardless */
+				.ignore_parser_errors = (wm->esp == NULL),
 			};
-			struct proposal_parser *(*fn)(const struct proposal_policy *policy) =
-				(c->policy & POLICY_ENCRYPT ? esp_proposal_parser :
-				 ah_proposal_parser);
-			struct proposal_parser *parser = fn(&proposal_policy);
 
 			/*
 			 * We checked above that exactly one of
@@ -1632,11 +1636,17 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 			 * function is called (and those functions are
 			 * almost identical).
 			 */
+			struct proposal_parser *(*fn)(const struct proposal_policy *policy) =
+				(c->policy & POLICY_ENCRYPT) ? esp_proposal_parser :
+				(c->policy & POLICY_AUTHENTICATE) ? ah_proposal_parser :
+				NULL;
+			passert(fn != NULL);
+			struct proposal_parser *parser = fn(&proposal_policy);
 			c->child_proposals.p = proposals_from_str(parser, wm->esp);
 			if (c->child_proposals.p == NULL) {
 				loglog(RC_FATAL,
 				       "Failed to add connection \"%s\", esp=\"%s\" is invalid: %s",
-				       wm->name, wm->esp, parser->error);
+				       wm->name, esp, parser->error);
 				free_proposal_parser(&parser);
 				/* caller will free C */
 				return false;
