@@ -4,14 +4,16 @@ text
 reboot
 lang en_US.UTF-8
 keyboard us
+# F30 will install network using systemd-networkd
 network --bootproto=dhcp --hostname swanbase
+#
 # static network does not work with recent dracut, use kernel args instead
-#network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
+# network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
 rootpw swan
 firewall --disable
 selinux --enforcing
 timezone --utc America/New_York
-#firstboot --disable
+# firstboot --disable
 bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,115200 rd_NO_PLYMOUTH net.ifnames=0 biosdevname=0"
 zerombr
 clearpart --all --initlabel
@@ -37,13 +39,13 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 # automatically.
 
 @core
-
+dracut-network
 -sendmail
 -libreswan
 
 # NetworkManager causes problems and steals our interfaces despite
-# NM_CONTROLLED="no".  However, without NetworkManager the base and
-# build systems refuse to bring their network up.
+# NM_CONTROLLED="no".
+-NetworkManager
 
 %end
 
@@ -55,16 +57,22 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 sysctl -w net.ipv4.tcp_mtu_probing=1
 
 ip addr show scope global >> /var/tmp/network.log
-HWA=`cat /sys/class/net/e[n-t][h-s]?/address`
-#clean up HWADDR line F22 has it F26 not:)
-mv /etc/sysconfig/network-scripts/ifcfg-ens? /etc/sysconfig/network-scripts/ifcfg-eth0
-sed -i '/HWADDR=/d' /etc/sysconfig/network-scripts/ifcfg-eth0
-echo "HWADDR=\"$HWA\"" >> /etc/sysconfig/network-scripts/ifcfg-eth0
-sed  -i 's/ens.*/eth0/' /etc/sysconfig/network-scripts/ifcfg-eth0
-# sometimes it need another ifup
-ifup ens2 >> /var/tmp/network.log
+networkctl >> /var/tmp/network.log
 
-rpm -qa > /var/tmp/rpm-qa-fedora.log
+cat << EOD > /etc/systemd/network/20-wired.network
+[Match]
+Name=eth*
+
+[Network]
+DHCP=yes
+
+EOD
+
+# F28 dracut leave network config files there. remove it
+rm -fr /etc/sysconfig/network-scripts/ifcfg-eth0
+
+systemctl restart systemd-networkd
+rpm -qa > /var/tmp/rpm-qa-darcut-fedora.log
 
 mkdir /testing /source
 
@@ -130,7 +138,7 @@ export EDITOR=vim
 EOD
 
 systemctl disable firewalld.service
-systemctl enable network.service
+systemctl enable systemd-networkd
 systemctl enable iptables.service
 systemctl enable ip6tables.service
 
@@ -147,6 +155,7 @@ Type=oneshot
 [Install]
 WantedBy=shutdown.target reboot.target poweroff.target
 EOD
+
 systemctl enable sshd-shutdown.service
 
 #ensure we can get coredumps
@@ -158,11 +167,9 @@ ln -s /testing/guestbin/swan-install /usr/bin/swan-install
 ln -s /testing/guestbin/swan-update /usr/bin/swan-update
 ln -s /testing/guestbin/swan-run /usr/bin/swan-run
 
-# F28 and later to support X509 Certificates, signed with SHA1
+# > F27 and later to support X509 Certificates, signed with SHA1
 /usr/bin/update-crypto-policies --set LEGACY
 
-# > F24  keep eth0 naming : "Disabling Consistent Network Device Naming"
-ln -s /dev/null /etc/udev/rules.d/80-net-name-slot.rules
 
 # add easy names so we can jump from vm to vm
 cat << EOD >> /etc/hosts
