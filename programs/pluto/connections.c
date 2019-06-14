@@ -1345,33 +1345,40 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 		}
 	}
 
-	if (LIN(POLICY_IKEV2_ALLOW, wm->policy) && LIN(POLICY_IKEV1_ALLOW, wm->policy)) {
+	switch (wm->policy & (POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW)) {
+	case POLICY_IKEV1_ALLOW:
+		c->ike_version = IKEv1;
+		break;
+	case POLICY_IKEV2_ALLOW:
+		c->ike_version = IKEv2;
+		break;
+	default:
 		loglog(RC_FATAL, "Failed to add connection \"%s\": connection can only be ikev1 or ikev2",
 			wm->name);
 		return false;
 	}
 
-	if (wm->policy & POLICY_OPPORTUNISTIC) {
-		if ((wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
-			loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2",
-				wm->name);
-			return false;
-		}
+	if (wm->policy & POLICY_OPPORTUNISTIC &&
+	    c->ike_version != IKEv2) {
+		loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2",
+		       wm->name);
+		return false;
 	}
-	if (wm->sighash_policy != POL_SIGHASH_NONE && (wm->policy & POLICY_IKEV1_ALLOW)) {
+	if (wm->sighash_policy != POL_SIGHASH_NONE &&
+	    c->ike_version != IKEv2) {
 		loglog(RC_FATAL, "SIGHASH requires ikev2");
 		return false;
 	}
 
-	if (wm->policy & POLICY_IKEV1_ALLOW) {
-		if (wm->policy & POLICY_MOBIKE) {
-			loglog(RC_FATAL, "MOBIKE requires ikev2");
-			return false;
-		}
-		if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING) {
-			loglog(RC_FATAL, "narrowing=yes requires ikev2");
-			return false;
-		}
+	if (wm->policy & POLICY_MOBIKE &&
+	    c->ike_version != IKEv2) {
+		loglog(RC_FATAL, "MOBIKE requires ikev2");
+		return false;
+	}
+	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
+	    c->ike_version != IKEv2) {
+		loglog(RC_FATAL, "narrowing=yes requires ikev2");
+		return false;
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {
@@ -1406,7 +1413,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	} else {
 		/* reject all bad combinations of authby with leftauth=/rightauth= */
 		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
-			if ((wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
+			if (c->ike_version != IKEv2) {
 				loglog(RC_FATAL,
 					"Failed to add connection \"%s\": leftauth= and rightauth= require ikev2",
 						wm->name);
@@ -1518,6 +1525,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	if (NEVER_NEGOTIATE(c->policy)) {
 		/* cleanup inherited default */
 		c->policy &= ~(POLICY_IKEV1_ALLOW|POLICY_IKEV2_ALLOW);
+		c->ike_version = 0;
 	}
 
 #ifdef FIPS_CHECK
@@ -1570,10 +1578,10 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 		/* IKE cipher suites */
 
 		if (!LIN(POLICY_AUTH_NEVER, wm->policy) &&
-		    (wm->ike != NULL || LIN(POLICY_IKEV2_ALLOW, wm->policy))) {
+		    (wm->ike != NULL || c->ike_version == IKEv2)) {
 			const struct proposal_policy proposal_policy = {
 				/* logic needs to match pick_initiator() */
-				.version = LIN(POLICY_IKEV2_ALLOW, wm->policy) ? IKEv2 : IKEv1,
+				.version = c->ike_version,
 				.alg_is_ok = ike_alg_is_ike,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.check_pfs_vs_dh = false,
@@ -1606,7 +1614,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 		/* ESP or AH cipher suites (but not both) */
 
 		if (wm->esp != NULL ||
-		    (LIN(POLICY_IKEV2_ALLOW, wm->policy) &&
+		    (c->ike_version == IKEv2 &&
 		     (c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)))) {
 			const char *esp = wm->esp != NULL ? wm->esp : "";
 			DBGF(DBG_CONTROL, "from whack: got --esp=%s", esp);
@@ -1620,7 +1628,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 				 * magic into pluto proper and instead pass a
 				 * simple boolean.
 				 */
-				.version = LIN(POLICY_IKEV2_ALLOW, wm->policy) ? IKEv2 : IKEv1,
+				.version = c->ike_version,
 				.alg_is_ok = kernel_alg_is_ok,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.check_pfs_vs_dh = true,
@@ -2926,7 +2934,8 @@ stf_status ikev2_find_host_connection(struct connection **cp,
 			return STF_DROP; /* technically, this violates the IKEv2 spec that states we must answer */
 		}
 		/* only allow opportunistic for IKEv2 connections */
-		if (LIN(POLICY_OPPORTUNISTIC | POLICY_IKEV2_ALLOW, c->policy)) {
+		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
+		    c->ike_version == IKEv2) {
 			DBGF(DBG_CONTROL, "oppo_instantiate");
 			c = oppo_instantiate(c, him, &c->spd.that.id, &c->spd.this.host_addr, him);
 		} else {
@@ -3349,7 +3358,7 @@ struct connection *refine_host_connection(const struct state *st,
 					continue;
 			}
 
-			if ((d->policy & ((st->st_ike_version == IKEv2) ? POLICY_IKEV2_ALLOW : POLICY_IKEV1_ALLOW)) == LEMPTY) {
+			if (d->ike_version != st->st_ike_version) {
 				/* IKE version has to match */
 				DBGF(DBG_CONTROL, "skipping because mismatching IKE version");
 				continue;

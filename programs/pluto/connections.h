@@ -249,6 +249,7 @@ struct ephemeral_variables {
 
 struct connection {
 	char *name;
+	enum ike_version ike_version;
 	char *foodgroup;
 	char *connalias;
 	lset_t policy;
