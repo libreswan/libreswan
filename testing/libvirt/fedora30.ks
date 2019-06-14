@@ -19,15 +19,16 @@ zerombr
 clearpart --all --initlabel
 part / --asprimary --grow
 # part swap --size 1024
-services --disabled=sm-client,sendmail,network,smartd,crond,atd
+
+services --disabled=sm-client,sendmail,network,smartd,crond,atd,systemd-resolved
 
 %packages --ignoremissing
 
-# Full list of RPMs to install (see also %post)
+# Full list of RPMs to install (see also fedoraXX.mk)
 
 # Since it is fast and local, try to install everything here using the
 # install DVD image.  Anything missing will be fixed up later in
-# %post.  The option --ignoremissing is specified so we don't have to
+# %post. The option --ignoremissing is specified so we don't have to
 # juggle what is enabled / disabled here.
 
 # Note: The problem is that the DVD doesn't contain "Everything" -
@@ -59,19 +60,20 @@ sysctl -w net.ipv4.tcp_mtu_probing=1
 ip addr show scope global >> /var/tmp/network.log
 networkctl >> /var/tmp/network.log
 
-cat << EOD > /etc/systemd/network/20-wired.network
+# dracut does not create systemd-networkd config, so create one
+# https://bugzilla.redhat.com/show_bug.cgi?id=1582941
+cat > /etc/systemd/network/eth0.network << EOF
 [Match]
-Name=eth*
+Name=eth0
 
 [Network]
 DHCP=yes
 
-EOD
+EOF
 
-# F28 dracut leave network config files there. remove it
+# F28 dracut leaves network config files there. remove it to be safe
 rm -fr /etc/sysconfig/network-scripts/ifcfg-eth0
 
-systemctl restart systemd-networkd
 rpm -qa > /var/tmp/rpm-qa-darcut-fedora.log
 
 mkdir /testing /source
@@ -137,11 +139,6 @@ alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
 export EDITOR=vim
 EOD
 
-systemctl disable firewalld.service
-systemctl enable systemd-networkd
-systemctl enable iptables.service
-systemctl enable ip6tables.service
-
 cat << EOD > /etc/systemd/system/sshd-shutdown.service
 # work around for broken systemd/sshd interaction in fedora 20 causes VM hangs
 [Unit]
@@ -156,6 +153,11 @@ Type=oneshot
 WantedBy=shutdown.target reboot.target poweroff.target
 EOD
 
+systemctl disable firewalld.service
+systemctl enable systemd-networkd
+systemctl enable systemd-networkd-wait-online
+systemctl enable iptables.service
+systemctl enable ip6tables.service
 systemctl enable sshd-shutdown.service
 
 #ensure we can get coredumps
@@ -169,7 +171,6 @@ ln -s /testing/guestbin/swan-run /usr/bin/swan-run
 
 # > F27 and later to support X509 Certificates, signed with SHA1
 /usr/bin/update-crypto-policies --set LEGACY
-
 
 # add easy names so we can jump from vm to vm
 cat << EOD >> /etc/hosts
