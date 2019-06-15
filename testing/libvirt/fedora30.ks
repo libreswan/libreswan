@@ -11,8 +11,12 @@ network --bootproto=dhcp --hostname swanbase
 # network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
 rootpw swan
 firewall --disable
-# permissive while debugging F30 systemd-networkd
+# > F28 selinux set to permissive while debugging systemd-networkd
+# systemd-networkd.service: Failed to set up mount namespacing: Permission denied
+# systemd-networkd.service: Failed at step NAMESPACE spawning /usr/lib/systemd/systemd-networkd: Permission denied
+# systemd[1]: systemd-networkd.service: Main process exited, code=exited, status=226/NAMESPACE
 selinux --permissive
+sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 
 timezone --utc America/New_York
 # firstboot --disable
@@ -74,7 +78,13 @@ DHCP=yes
 EOF
 
 # F28 dracut leaves network config files there. remove it to be safe
-rm -fr /etc/sysconfig/network-scripts/ifcfg-eth0
+rm -fr /etc/sysconfig/network-scripts/i*
+
+cat > /etc/sysconfig/network-scripts/README.libreswan << EOF
+Do not add files here.  networkig is handled by systemd-networkd
+/etc/systemd/nework
+networkctl
+EOF
 
 rpm -qa > /var/tmp/rpm-qa-darcut-fedora.log
 
@@ -123,6 +133,9 @@ case ":${PATH:-}:" in
     *:/usr/local/sbin:*) ;;
     *) PATH="/usr/local/sbin${PATH:+:$PATH}" ;;
 esac
+export GIT_PS1_SHOWDIRTYSTATE=true
+alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
+export EDITOR=vim
 EOD
 
 cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
@@ -133,12 +146,6 @@ cat << EOD > /etc/modules-load.d/virtio-rng.conf
 # load virtio RNG device to get entropy from the host
 # Note it should also be loaded on the host
 virtio-rng
-EOD
-
-cat << EOD >> /root/.bash_profile
-export GIT_PS1_SHOWDIRTYSTATE=true
-alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
-export EDITOR=vim
 EOD
 
 cat << EOD > /etc/systemd/system/sshd-shutdown.service
