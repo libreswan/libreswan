@@ -139,13 +139,22 @@ if GUESTOS == "redhat":
             if copy_if_diff(fname, dst):
                 need_netwrok_restart = True
 
-    ifaces = glob.glob(
-        "/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*" % hostname)
-    routes = glob.glob(
-        "/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*" % hostname)
+    print("AA_2019 network files")
+    if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
+        # this system need systemd-network files
+        ifaces = glob.glob("/testing/baseconfigs/%s/etc/systemd/network/*" % hostname)
+        dst = "/etc/systemd/network"
+        routes = []
+    else:
+        ifaces = glob.glob(
+            "/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*" % hostname)
+        routes = glob.glob(
+            "/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*" % hostname)
+        dst = "/etc/sysconfig/network-scripts/"
+
     for entry in (ifaces + routes):
-        dst = "/etc/sysconfig/network-scripts/%s" % os.path.basename(entry)
-        if copy_if_diff(entry, dst):
+        dst_local = dst + '/' + os.path.basename(entry)
+        if copy_if_diff(entry, dst_local):
             need_netwrok_restart = True
 
         if is_docker:
