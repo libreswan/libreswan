@@ -1,0 +1,7 @@
+[Match]
+Name=eth2
+
+[Network]
+Address=192.9.2.45/24
+Address=2001:db8:9:2::45/64
+IPForward=yes
