@@ -5,6 +5,9 @@ Name=eth0
 Address=192.1.2.254
 Address=2001:db8:1:2::45/64
 IPForward=yes
+IPv6DuplicateAddressDetection=no
+IPv6AcceptRouterAdvertisements=false
+DHCP=no
 
 [Route]
 Gateway=192.1.2.45
