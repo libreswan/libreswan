@@ -125,26 +125,26 @@ shutil.copyfile("/testing/baseconfigs/%s/etc/hostname" %
                 hostname, "/etc/hostname")
 
 if GUESTOS == "redhat":
-    need_netwrok_restart = False
+
+    # default to F28 setup
+    network_service  = "network.service"
 
     src = "/testing/baseconfigs/%s/etc/sysconfig/network" % hostname
     dst = "/etc/sysconfig/network"
-    if copy_if_diff(src, dst):
-        need_netwrok_restart = True
 
     fnames = glob.glob("/testing/baseconfigs/all/etc/sysconfig/*")
     for fname in fnames:
         if os.path.isfile(fname):
             dst="/etc/sysconfig/%s" % os.path.basename(fname)
-            if copy_if_diff(fname, dst):
-                need_netwrok_restart = True
+            copy_if_diff(fname, dst)
 
-    print("AA_2019 network files")
     if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
         # this system need systemd-network files
         ifaces = glob.glob("/testing/baseconfigs/%s/etc/systemd/network/*" % hostname)
         dst = "/etc/systemd/network"
         routes = []
+        # F30 and later we use this
+        network_service  = "systemd-networkd"
     else:
         ifaces = glob.glob(
             "/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*" % hostname)
@@ -154,8 +154,7 @@ if GUESTOS == "redhat":
 
     for entry in (ifaces + routes):
         dst_local = dst + '/' + os.path.basename(entry)
-        if copy_if_diff(entry, dst_local):
-            need_netwrok_restart = True
+        copy_if_diff(entry, dst_local)
 
         if is_docker:
             iffile = os.path.basename(entry)
@@ -170,11 +169,9 @@ if GUESTOS == "redhat":
         subprocess.getoutput("chcon -R --reference /var/log /testing/pluto")
 
     if os.path.isfile("/usr/bin/systemctl"):
-        if need_netwrok_restart:
-            output += "\n" + subprocess.getoutput("systemctl restart network.service")
+        output += "\n" + subprocess.getoutput("systemctl restart %s" % network_service)
     else:
-        if need_netwrok_restart:
-            output += "\n" + subprocess.getoutput("service network restart")
+       output += "\n" + subprocess.getoutput("service network restart")
 
     # get rid of damn cp/mv/rm aliases for root
 
