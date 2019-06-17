@@ -897,18 +897,6 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 		}
 	}
 
-	/* check if we would drop the packet based on VID before we create a state */
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
-		if (vid_is_oppo((char *)p->pbs.cur, pbs_left(&p->pbs))) {
-			if (pluto_drop_oppo_null) {
-				DBG(DBG_OPPO, DBG_log("Dropped IKE request for Opportunistic IPsec by global policy"));
-				return STF_DROP; /* no state to delete */
-			}
-			DBG(DBG_OPPO | DBG_CONTROLMORE, DBG_log("Processing IKE request for Opportunistic IPsec"));
-			break;
-		}
-	}
-
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
 		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE);

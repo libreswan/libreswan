@@ -1733,6 +1733,22 @@ void ikev2_process_packet(struct msg_digest **mdp)
 					dbg("pluto is overloaded and demanding cookies; dropping new exchange");
 					return;
 				}
+				/*
+				 * Check if we would drop the packet
+				 * based on VID before we create a
+				 * state. Move this to ikev2_oppo.c:
+				 * drop_oppo_requests()?
+				 */
+				for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
+					if (vid_is_oppo((char *)p->pbs.cur, pbs_left(&p->pbs))) {
+						if (pluto_drop_oppo_null) {
+							DBG(DBG_OPPO, DBG_log("Dropped IKE request for Opportunistic IPsec by global policy"));
+							return;
+						}
+						DBG(DBG_OPPO | DBG_CONTROLMORE, DBG_log("Processing IKE request for Opportunistic IPsec"));
+						break;
+					}
+				}
 				/* else - create a draft state here? */
 			}
 			/* update lastrecv later on */
