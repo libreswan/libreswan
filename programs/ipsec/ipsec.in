@@ -212,7 +212,7 @@ ipsec_import() {
 		# A lot of nss commands use -d to specify NSS db location.
 		# We use --nssdir.
 		;;
-	    *|"")
+	    *)
 		if [ -f "${1}" ]; then
 		    pkcs12bundle="${1}"
 		else
