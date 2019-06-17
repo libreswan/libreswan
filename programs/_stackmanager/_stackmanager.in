@@ -20,6 +20,12 @@
 # nothing to do if the kernel has no module loading/unloading support
 [ ! -f /proc/modules ] && exit 0
 
+# These prevent coverity warnings; variables come in via ipsec addconn call
+xfrmlifetime=""
+overridemtu=""
+fragicmp=""
+hidetos=""
+
 IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
 PATH=@FINALSBINDIR@:${PATH}
 export PATH
@@ -32,11 +38,6 @@ MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
 xfrm_stat=/proc/sys/net/core/xfrm_acq_expires
 klipsstack=/proc/net/ipsec/version
 action="${1}"
-# These prevent coverity warnings; variables come in via ipsec addconn call
-xfrmlifetime=""
-overridemtu=""
-fragicmp=""
-hidetos=""
 
 if [ -z "${action}" ]; then
     echo "no action specified - aborted" >&2
