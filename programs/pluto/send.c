@@ -139,14 +139,16 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 
 	if (DBGP(DBG_BASE)) {
 		endpoint_buf b;
-		DBG_log("sending %zu bytes for %s through %s:%d to %s (using #%lu)",
+		endpoint_buf ib;
+		pexpect_iface_port(interface);
+		DBG_log("sending %zu bytes for %s through %s %s to %s (using #%lu)",
 			len,
 			where,
 			interface->ip_dev->id_rname,
-			interface->port,
+			str_endpoint(&interface->local_endpoint, &ib),
 			str_endpoint(&remote_endpoint, &b),
 			serialno);
-			DBG_dump(NULL, ptr, len);
+		DBG_dump(NULL, ptr, len);
 	}
 
 	check_outgoing_msg_errqueue(interface, "sending a packet");
@@ -175,12 +177,13 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		/* sleep for half a second, and second another packet */
 		usleep(500000);
 		endpoint_buf b;
-
-		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s:%d to %s:",
+		endpoint_buf ib;
+		pexpect_iface_port(interface);
+		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s %s to %s:",
 			len,
 			where,
 			interface->ip_dev->id_rname,
-			interface->port,
+			str_endpoint(&interface->local_endpoint, &ib),
 			str_endpoint(&remote_endpoint, &b));
 
 		wlen = sendto(interface->fd,

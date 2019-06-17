@@ -16,6 +16,7 @@
 
 #include "jambuf.h"
 #include "ip_endpoint.h"
+#include "constants.h"		/* for memeq() */
 
 ip_endpoint endpoint(const ip_address *address, int port)
 {
@@ -104,4 +105,11 @@ void jam_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
 		jam(buf, "<ip-type-%d>", type);
 		return;
 	}
+}
+
+
+
+bool endpoint_eq(const ip_endpoint l, ip_endpoint r)
+{
+	return memeq(&l, &r, sizeof(l));
 }

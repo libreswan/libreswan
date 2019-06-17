@@ -1019,23 +1019,22 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	 */
 	if (!sameaddr(&st->st_localaddr, &st->st_interface->ip_addr) ||
 	     st->st_localport != st->st_interface->port) {
-		DBG(DBG_NATT, {
-			ipstr_buf b1;
-			ipstr_buf b2;
-			DBG_log("NAT-T connection has wrong interface definition %s:%u vs %s:%u",
-				ipstr(&st->st_localaddr, &b1),
-				st->st_localport,
-				ipstr(&st->st_interface->ip_addr, &b2),
-				st->st_interface->port);
-		});
+		ipstr_buf b1;
+		endpoint_buf b2;
+		pexpect_iface_port(st->st_interface);
+		dbg("NAT-T connection has wrong interface definition %s:%u vs %s",
+		    ipstr(&st->st_localaddr, &b1),
+		    st->st_localport,
+		    str_endpoint(&st->st_interface->local_endpoint, &b2));
 
 		for (i = interfaces; i !=  NULL; i = i->next) {
 			if (sameaddr(&st->st_localaddr, &i->ip_addr) &&
 			    st->st_localport == i->port) {
-				DBG(DBG_NATT,
-					DBG_log("NAT-T: updated to use interface %s:%d",
-						i->ip_dev->id_rname,
-						i->port));
+				endpoint_buf b;
+				pexpect_iface_port(i);
+				dbg("NAT-T: updated to use interface %s %s",
+				    i->ip_dev->id_rname,
+				    str_endpoint(&i->local_endpoint, &b));
 				st->st_interface = i;
 				break;
 			}

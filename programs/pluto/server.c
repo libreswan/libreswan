@@ -237,12 +237,12 @@ static void free_dead_ifaces(void)
 
 	for (p = interfaces; p != NULL; p = p->next) {
 		if (p->change == IFN_DELETE) {
-			ipstr_buf b;
-
-			libreswan_log("shutting down interface %s/%s %s:%d",
+			endpoint_buf b;
+			pexpect_iface_port(p);
+			libreswan_log("shutting down interface %s/%s %s",
 				      p->ip_dev->id_vname,
 				      p->ip_dev->id_rname,
-				      ipstr(&p->ip_addr, &b), p->port);
+				      str_endpoint(&p->local_endpoint, &b));
 			some_dead = TRUE;
 		} else if (p->change == IFN_ADD) {
 			some_new = TRUE;
@@ -1010,8 +1010,12 @@ void find_ifaces(bool rm_dead)
 			ifp->pev = add_fd_read_event_handler(ifp->fd,
 							     comm_handle_cb,
 							     ifp, "ethX");
-			dbg("setup callback for interface %s:%u fd %d",
-			    ifp->ip_dev->id_rname, ifp->port, ifp->fd);
+			endpoint_buf b;
+			pexpect_iface_port(ifp);
+			dbg("setup callback for interface %s %s fd %d",
+			    ifp->ip_dev->id_rname,
+			    str_endpoint(&ifp->local_endpoint, &b),
+			    ifp->fd);
 		}
 	}
 }
@@ -1033,10 +1037,11 @@ void show_ifaces_status(void)
 
 	for (p = interfaces; p != NULL; p = p->next) {
 		ipstr_buf b;
-
+		pexpect_iface_port(p);
 		whack_log(RC_COMMENT, "interface %s/%s %s@%d",
 			  p->ip_dev->id_vname, p->ip_dev->id_rname,
-			  ipstr(&p->ip_addr, &b), p->port);
+			  ipstr(&p->ip_addr, &b),
+			  endpoint_port(&p->local_endpoint));
 	}
 }
 
@@ -1747,13 +1752,19 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					break;
 				}
 
-#define LOG(buf) lswlogf(buf,			\
-	"ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]", \
-	ifp->ip_dev->id_rname, ifp->port,	\
-	fromstr,				\
-	offstr,					\
-	strerror(ee->ee_errno),			\
-	ee->ee_errno, orname);
+#define LOG(buf)							\
+				{					\
+					endpoint_buf epb;		\
+					pexpect_iface_port(ifp);	\
+					lswlogf(buf,			\
+						"ERROR: asynchronous network error report on %s (%s)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]", \
+						ifp->ip_dev->id_rname,	\
+						str_endpoint(&ifp->local_endpoint, &epb), \
+						fromstr,		\
+						offstr,			\
+						strerror(ee->ee_errno),	\
+						ee->ee_errno, orname);	\
+				}
 
 				if (packet_len == 1 && buffer[0] == 0xff &&
 				    (cur_debugging & DBG_NATT) == 0) {

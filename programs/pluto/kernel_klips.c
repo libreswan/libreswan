@@ -203,6 +203,7 @@ add_entry:
 					q->next = interfaces;
 					q->change = IFN_ADD;
 					q->port = pluto_port;
+					q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 					q->ike_float = FALSE;
 
 					interfaces = q;
@@ -239,6 +240,7 @@ add_entry:
 						setportof(htons(pluto_nat_port),
 							  &q->ip_addr);
 						q->port = pluto_nat_port;
+						q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;

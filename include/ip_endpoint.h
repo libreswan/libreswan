@@ -60,4 +60,10 @@ void jam_endpoint(struct lswlog *, const ip_endpoint*);
 const char *str_sensitive_endpoint(const ip_endpoint *, endpoint_buf *);
 void jam_sensitive_endpoint(struct lswlog *, const ip_endpoint*);
 
+/*
+ * Logic
+ */
+
+bool endpoint_eq(const ip_endpoint l, ip_endpoint r);
+
 #endif

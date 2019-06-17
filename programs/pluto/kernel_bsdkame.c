@@ -160,6 +160,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					q->next = interfaces;
 					q->change = IFN_ADD;
 					q->port = pluto_port;
+					q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 					q->ike_float = FALSE;
 
 					interfaces = q;
@@ -197,6 +198,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						setportof(htons(pluto_nat_port),
 							  &q->ip_addr);
 						q->port = pluto_nat_port;
+						q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;

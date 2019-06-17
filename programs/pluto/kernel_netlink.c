@@ -2408,7 +2408,6 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 			/* search is over if at end of list */
 			if (q == NULL) {
 				/* matches nothing -- create a new entry */
-				ipstr_buf b;
 				int fd = create_socket(ifp, v->name,
 						pluto_port);
 
@@ -2436,17 +2435,18 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				q->next = interfaces;
 				q->change = IFN_ADD;
 				q->port = pluto_port;
+				q->local_endpoint = endpoint(&ifp->addr, pluto_port);
 				q->ike_float = FALSE;
 
 				interfaces = q;
 
+				endpoint_buf b;
 				libreswan_log(
-					"adding interface %s/%s (%s) %s:%d",
+					"adding interface %s/%s (%s) %s",
 					q->ip_dev->id_vname,
 					q->ip_dev->id_rname,
 					"esp-hw-offload not supported by kernel",
-					ipstr(&q->ip_addr, &b),
-					q->port);
+					str_endpoint(&q->local_endpoint, &b));
 				/*
 				 * right now, we do not support NAT-T
 				 * on IPv6, because  the kernel did
@@ -2471,16 +2471,17 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					setportof(htons(pluto_nat_port),
 						&q->ip_addr);
 					q->port = pluto_nat_port;
+					q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 					q->fd = fd;
 					q->next = interfaces;
 					q->change = IFN_ADD;
 					q->ike_float = TRUE;
 					interfaces = q;
+					endpoint_buf b;
 					libreswan_log(
-						"adding interface %s/%s %s:%d",
+						"adding interface %s/%s %s",
 						q->ip_dev->id_vname, q->ip_dev->id_rname,
-						ipstr(&q->ip_addr, &b),
-						q->port);
+						str_endpoint(&q->local_endpoint, &b));
 				}
 
 				break;

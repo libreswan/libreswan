@@ -265,10 +265,13 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		 , packet_len, "packet");
 
 	endpoint_buf eb;
-	dbg("*received %d bytes from %s on %s (port=%d)",
+	endpoint_buf b2;
+	pexpect_iface_port(ifp);
+	dbg("*received %d bytes from %s on %s (%s)",
 	    (int) pbs_room(&md->packet_pbs),
 	    str_endpoint(&sender, &eb),
-	    ifp->ip_dev->id_rname, ifp->port);
+	    ifp->ip_dev->id_rname,
+	    str_endpoint(&ifp->local_endpoint, &b2));
 
 	if (DBGP(DBG_RAW)) {
 		DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs));

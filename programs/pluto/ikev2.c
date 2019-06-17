@@ -2952,14 +2952,14 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 			nat_traversal_change_port_lookup(md, pst);
 		}
 
-		DBG(DBG_CONTROL, {
-			    ipstr_buf b;
-			    DBG_log("sending V2 %s packet to %s:%u (from port %u)",
-				    new_request ? "new request" :
-				    "reply", ipstr(&st->st_remoteaddr, &b),
-				    st->st_remoteport,
-				    st->st_interface->port);
-		    });
+		ipstr_buf b;
+		endpoint_buf b2;
+		pexpect_iface_port(st->st_interface);
+		dbg("sending V2 %s packet to %s:%u (from %s)",
+		    new_request ? "new request" :
+		    "reply", ipstr(&st->st_remoteaddr, &b),
+		    st->st_remoteport,
+		    str_endpoint(&st->st_interface->local_endpoint, &b2));
 
 		send_recorded_v2_ike_msg(pst, enum_name(&state_names, from_state));
 	}
