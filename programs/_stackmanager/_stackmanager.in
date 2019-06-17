@@ -32,6 +32,11 @@ MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
 xfrm_stat=/proc/sys/net/core/xfrm_acq_expires
 klipsstack=/proc/net/ipsec/version
 action="${1}"
+# Tehse prevent coverity warnings, variables come in via ipsec addconn call
+xfrmlifetime=""
+overridemtu=""
+fragicmp=""
+hidetos=""
 
 if [ -z "${action}" ]; then
     echo "no action specified - aborted" >&2
