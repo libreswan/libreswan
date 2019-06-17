@@ -2869,9 +2869,9 @@ struct connection *find_host_connection(
 	return c;
 }
 
-stf_status ikev2_find_host_connection(struct connection **cp,
-		const ip_address *me, uint16_t my_port, const ip_address *him,
-		uint16_t his_port, lset_t policy)
+struct connection *ikev2_find_host_connection(const ip_address *me, uint16_t my_port,
+					      const ip_address *him, uint16_t his_port,
+					      lset_t policy)
 {
 	struct connection *c = find_host_connection(me, my_port, him, his_port,
 						policy, LEMPTY);
@@ -2922,9 +2922,7 @@ stf_status ikev2_find_host_connection(struct connection **cp,
 				ipstr(me, &b),
 				ntohs(portof(me)),
 				bitnamesof(sa_policy_bit_names, policy));
-
-			*cp = NULL;
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			return NULL;
 		}
 		if (c->kind != CK_TEMPLATE) {
 			ipstr_buf b;
@@ -2934,8 +2932,7 @@ stf_status ikev2_find_host_connection(struct connection **cp,
 				ipstr(me, &b), pluto_port,
 				c->name, fmt_conn_instance(c, cib),
 				enum_name(&connection_kind_names, c->kind));
-			*cp = NULL;
-			return STF_DROP; /* technically, this violates the IKEv2 spec that states we must answer */
+			return NULL;
 		}
 		/* only allow opportunistic for IKEv2 connections */
 		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
@@ -2964,8 +2961,7 @@ stf_status ikev2_find_host_connection(struct connection **cp,
 			c = rw_instantiate(c, him, NULL, NULL);
 		}
 	}
-	*cp = c;
-	return STF_OK;
+	return c;
 }
 
 struct connection *find_next_host_connection(

@@ -832,36 +832,33 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* forward decl and type assertion */
 static crypto_transition_fn ikev2_parent_inI1outR1_continue_tail;	/* forward decl and type assertion */
 
-stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
+static struct connection *find_v2_host_connection(struct msg_digest *md,
+						  lset_t *policy)
 {
-	passert(null_st == NULL);	/* initial responder -> no state */
-
 	/* authentication policy alternatives in order of decreasing preference */
 	static const lset_t policies[] = { POLICY_ECDSA, POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
 
-	lset_t policy;
-	struct connection *c;
-	stf_status e;
+	struct connection *c = NULL;
 	unsigned int i;
 
 	/* XXX in the near future, this loop should find type=passthrough and return STF_DROP */
 	for (i=0; i < elemsof(policies); i++) {
-		policy = policies[i] | POLICY_IKEV2_ALLOW;
-		e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
-				md->iface->port, &md->sender, hportof(&md->sender),
-				policy);
-		if (e == STF_OK)
+		*policy = policies[i] | POLICY_IKEV2_ALLOW;
+		c = ikev2_find_host_connection(&md->iface->ip_addr, md->iface->port,
+					       &md->sender, hportof(&md->sender),
+					       *policy);
+		if (c != NULL)
 			break;
 	}
 
-	if (e != STF_OK) {
+	if (c == NULL) {
 		ipstr_buf b;
 
 		/* we might want to change this to a debug log message only */
 		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no suitable connection found with IKEv2 policy",
 			ipstr(&md->iface->ip_addr, &b),
 			ntohs(portof(&md->iface->ip_addr)));
-		return e;
+		return NULL;
 	}
 
 	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
@@ -870,7 +867,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 		char ci[CONN_INST_BUF];
 		DBG_log("found connection: %s%s with policy %s",
 			c->name, fmt_conn_instance(c, ci),
-			bitnamesof(sa_policy_bit_names, policy));});
+			bitnamesof(sa_policy_bit_names, *policy));});
 
 	/*
 	 * Did we overlook a type=passthrough foodgroup?
@@ -891,10 +888,41 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 					DBG(DBG_OPPO, DBG_log("passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
 						tmp->spd.that.client.maskbits,
 						c->spd.that.client.maskbits));
-					return STF_DROP;
+					return NULL;
 				}
 			}
 		}
+	}
+	return c;
+}
+
+stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
+{
+	passert(null_st == NULL);	/* initial responder -> no state */
+
+	lset_t policy = LEMPTY;
+	struct connection *c = find_v2_host_connection(md, &policy);
+	if (c == NULL) {
+		/*
+		 * 3.10.1.  Notify Message Types:
+		 *
+		 * INVALID_SYNTAX: Indicates the IKE message that was
+		 * received was invalid because some type, length, or
+		 * value was out of range or because the request was
+		 * rejected for policy reasons.  To avoid a DoS attack
+		 * using forged messages, this status may only be
+		 * returned for and in an encrypted packet if the
+		 * Message ID and cryptographic checksum were valid.
+		 * To avoid leaking information to someone probing a
+		 * node, this status MUST be sent in response to any
+		 * error not covered by one of the other status types.
+		 * To aid debugging, more detailed error information
+		 * should be written to a console or log.
+		 *
+		 * already logged
+		 */
+		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
+		return STF_DROP;
 	}
 
 	/* Vendor ID processing */

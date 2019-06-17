@@ -461,9 +461,9 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 
 extern struct connection *conn_by_name(const char *nm, bool strict, bool quiet);
 
-stf_status ikev2_find_host_connection(struct connection **cp,
-		const ip_address *me, uint16_t my_port, const ip_address *him,
-		uint16_t his_port, lset_t req_policy);
+struct connection *ikev2_find_host_connection(const ip_address *me, uint16_t my_port,
+					      const ip_address *him, uint16_t his_port,
+					      lset_t req_policy);
 
 extern struct connection
 	*find_host_connection(const ip_address *me, uint16_t my_port,
