@@ -468,8 +468,6 @@ while [ ${#} -gt 0 ]; do
 	    # if cmd is unset, this is help for ipsec command
 	    if [ -z "${cmd}" ]; then
 		ipsec_help
-	    else
-		helpoption="--help"
 	    fi
 	    ;;
     	version|--version|--versioncode)
