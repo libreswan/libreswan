@@ -727,6 +727,7 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 				if (ferror(f)) {
 					LOG_ERRNO(errno, "fgets failed on output of %s%s command",
 						  verb, verb_suffix);
+					pclose(f);
 					return FALSE;
 				} else {
 					passert(feof(f));
