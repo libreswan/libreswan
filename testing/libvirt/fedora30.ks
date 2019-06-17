@@ -11,12 +11,6 @@ network --bootproto=dhcp --hostname swanbase
 # network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
 rootpw swan
 firewall --disable
-# > F28 selinux set to permissive while debugging systemd-networkd
-# systemd-networkd.service: Failed to set up mount namespacing: Permission denied
-# systemd-networkd.service: Failed at step NAMESPACE spawning /usr/lib/systemd/systemd-networkd: Permission denied
-# systemd[1]: systemd-networkd.service: Main process exited, code=exited, status=226/NAMESPACE
-selinux --permissive
-sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 
 timezone --utc America/New_York
 # firstboot --disable
@@ -65,6 +59,13 @@ sysctl -w net.ipv4.tcp_mtu_probing=1
 
 ip addr show scope global >> /var/tmp/network.log
 networkctl >> /var/tmp/network.log
+
+# > F28 selinux set to permissive while debugging systemd-networkd
+# systemd-networkd.service: Failed to set up mount namespacing: Permission denied
+# systemd-networkd.service: Failed at step NAMESPACE spawning /usr/lib/systemd/systemd-networkd: Permission denied
+# systemd[1]: systemd-networkd.service: Main process exited, code=exited, status=226/NAMESPACE
+selinux --permissive
+/usr/bin/sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 
 # dracut does not create systemd-networkd config, so create one
 # https://bugzilla.redhat.com/show_bug.cgi?id=1582941
