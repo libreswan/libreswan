@@ -1,5 +1,5 @@
 /*
- * A program to read the configuration file and load a single conn
+ * addr_lookup: resolve_defaultroute_one() -- attempt to resolve a default route
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -241,13 +241,10 @@ static ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
 	errno = 0;	/* in case failure does not set it */
 	ssize_t len = netlink_read_reply(sock, pmsgbuf, bufsize, 1, getpid());
 
-	if (len < 0) {
-		int e = errno;
+	if (len < 0)
+		printf("read netlink socket failure: (%d: %s)\n",
+			errno, strerror(errno));
 
-		printf("read netlink socket failure: (%d: %s)\n", e, strerror(e));
-		close(sock);
-		return -1;
-	}
 	close(sock);
 	return len;
 }
