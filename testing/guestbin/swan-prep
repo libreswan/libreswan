@@ -39,11 +39,6 @@ if os.path.isfile("/usr/sbin/ipsec") or os.path.isfile("/sbin/ipsec"):
                  "ABORT: found a swan userland in the base system as well as /usr/local\n"
                  "---------------------------------------------------------------------\n")
 
-# just in case a new copy was installed
-if os.path.isfile("/usr/local/sbin/ipsec") and os.path.isfile("/usr/sbin/restorecon"):
-    subprocess.getoutput(
-        "restorecon -Rv /usr/local/libexec/ipsec /usr/local/sbin/ipsec")
-
 ipv = 0
 ipv6 = 0
 parser = argparse.ArgumentParser(description='swan-prep arguments')
@@ -485,6 +480,8 @@ for dname in ( "pluto", "charon", "starter", "iked", "racoon2-spmd", "racoon2-ik
         subprocess.check_output(["killall", "-9", dname], stderr=subprocess.STDOUT)
     except:
         pass
+if os.path.isfile("/usr/sbin/restorecon"):
+    subprocess.getoutput("restorecon -Rv /etc/ipsec.* /var/lib/ipsec /usr/local/libexec/ipsec /usr/local/sbin/ipsec")
 
 # note shrew and racoon2 share a pid file name
 for pidfile in ("/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid", "/var/run/spmd.pid", "/var/run/starter.charon.pid"):
