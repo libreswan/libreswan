@@ -1299,8 +1299,10 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 
 			for (generalName_t *ca = gn; ca != NULL; ca = ca->next) {
 				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
-							     ca->name, outpbs))
+							     ca->name, outpbs)) {
+					free_generalNames(gn, FALSE);
 					return STF_INTERNAL_ERROR;
+				}
 			}
 			free_generalNames(gn, FALSE);
 		} else {
