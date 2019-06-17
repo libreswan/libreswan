@@ -1469,9 +1469,11 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 		    pk->u.ecdsa.keyid, KEYID_BUF);
 
 	/* ckaid */
-	err_t err =form_ckaid_ecdsa(pub, &ckaid);
-	if (err != NULL)
+	err_t err = form_ckaid_ecdsa(pub, &ckaid);
+	if (err != NULL) {
+		pfree(pk);
 		return NULL;
+	}
 
 	pk->u.ecdsa.ckaid = ckaid;
 	/*
