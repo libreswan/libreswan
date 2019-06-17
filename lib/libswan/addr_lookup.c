@@ -233,6 +233,7 @@ static ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
 		int e = errno;
 
 		printf("write netlink socket failure: (%d: %s)\n", e, strerror(e));
+		close(sock);
 		return -1;
 	}
 
