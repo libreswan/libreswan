@@ -509,19 +509,27 @@ extern struct connection *build_outgoing_opportunistic_connection(
 #define CONN_INST_BUF \
 	(2 + 10 + 1 + SUBNETTOT_BUF + 7 + ADDRTOT_BUF + 3 + SUBNETTOT_BUF + 1 + 1)
 
-void jam_connection_instance(struct lswlog *buf, const struct connection *c);
-/* str_connection_instance() */
 extern char *fmt_conn_instance(const struct connection *c,
 			       char buf[CONN_INST_BUF]);
 
+/* publically useful? */
+void jam_connection_instance(struct lswlog *buf, const struct connection *c);
+void jam_connection(struct lswlog *buf, const struct connection *c);
+
+/*
+ * XXX: Instead of str_connection(), which would require a buffer big
+ * enough to fit an any length name, there's PRI_CONNECTION et.al.
+ */
+
 typedef struct {
-	char buf[CONN_INST_BUF + 1/*COOKIE*/];
+	char buf[CONN_INST_BUF];
 } connection_buf;
 
-const char *str_connection(const struct connection *c,
-			   connection_buf *buf);
+const char *str_connection_instance(const struct connection *c,
+				    connection_buf *buf);
 
-void jam_connection(struct lswlog *buf, const struct connection *c);
+#define PRI_CONNECTION "\"%s\"%s"
+#define pri_connection(C,B) (C)->name, str_connection_instance(C, B)
 
 /* operations on "pending", the structure representing Quick Mode
  * negotiations delayed until a Keying Channel has been negotiated.

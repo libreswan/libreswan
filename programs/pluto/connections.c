@@ -2304,12 +2304,13 @@ void jam_connection(struct lswlog *buf, const struct connection *c)
 	}
 }
 
-const char *str_connection(const struct connection *c,
-			   connection_buf *out)
+const char *str_connection_instance(const struct connection *c, connection_buf *buf)
 {
-	jambuf_t buf = ARRAY_AS_JAMBUF(out->buf);
-	jam_connection(&buf, c);
-	return out->buf;
+	jambuf_t p = ARRAY_AS_JAMBUF(buf->buf);
+	if (c->kind == CK_INSTANCE) {
+		jam_connection_instance(&p, c);
+	}
+	return buf->buf;
 }
 
 /*
