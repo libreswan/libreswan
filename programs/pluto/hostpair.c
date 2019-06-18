@@ -115,33 +115,20 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
  * pair description to the beginning of the list, so that it can be
  * found faster next time.
  */
-struct host_pair *find_host_pair(const ip_address *myaddr,
-				 uint16_t myport,
-				 const ip_address *hisaddr,
-				 uint16_t hisport)
+struct host_pair *find_host_pair(const ip_endpoint *local,
+				 const ip_endpoint *remote)
 {
 	struct host_pair *p, *prev;
 
 	/* default hisaddr to an appropriate any */
-	if (hisaddr == NULL) {
-		hisaddr = aftoinfo(addrtypeof(myaddr))->any;
+	if (remote == NULL) {
+		remote = aftoinfo(endpoint_type(local))->any;
 	}
 
 	/*
 	 * look for a host-pair that has the right set of ports/address.
 	 *
 	 */
-
-	/*
-	 * for the purposes of comparison, port 500 and 4500 are identical,
-	 * but other ports are not.
-	 * So if any port==4500, then set it to 500.
-	 * But we can also have non-RFC values for pluto_port and pluto_nat_port
-	 */
-	if (myport == pluto_nat_port)
-		myport = pluto_port;
-	if (hisport == pluto_nat_port)
-		hisport = pluto_port;
 
 	for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next) {
 		if (p->connections != NULL && (p->connections->kind == CK_INSTANCE) &&
@@ -156,20 +143,15 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
                        continue;
                }
 
-		DBG(DBG_CONTROLMORE, {
-			ipstr_buf b1;
-			ipstr_buf b2;
+		endpoint_buf b1;
+		endpoint_buf b2;
+		dbg("find_host_pair: comparing %s to %s but ignoring ports",
+		    str_endpoint(&p->local, &b1),
+		    str_endpoint(&p->remote, &b2));
 
-			DBG_log("find_host_pair: comparing %s:%d to %s:%d",
-				ipstr(&p->me.addr, &b1), p->me.host_port,
-				ipstr(&p->him.addr, &b2), p->him.host_port);
-		    });
-
-		if (sameaddr(&p->me.addr, myaddr) &&
-		    (!p->me.host_port_specific || p->me.host_port == myport) &&
-		    sameaddr(&p->him.addr, hisaddr) &&
-		    (!p->him.host_port_specific || p->him.host_port == hisport)
-		    ) {
+		/* XXX: same addr does not compare ports.  */
+		if (sameaddr(&p->local, local) &&
+		    sameaddr(&p->remote, remote)) {
 			if (prev != NULL) {
 				prev->next = p->next;   /* remove p from list */
 				p->next = host_pairs;   /* and stick it on front */
@@ -188,12 +170,9 @@ static void remove_host_pair(struct host_pair *hp)
 
 /* find head of list of connections with this pair of hosts */
 struct connection *find_host_pair_connections(const ip_address *myaddr,
-					      uint16_t myport,
-					      const ip_address *hisaddr,
-					      uint16_t hisport)
+					      const ip_address *hisaddr)
 {
-	struct host_pair *hp =
-		find_host_pair(myaddr, myport, hisaddr, hisport);
+	struct host_pair *hp = find_host_pair(myaddr, hisaddr);
 
 	/*
 	DBG(DBG_CONTROLMORE, {
@@ -219,9 +198,7 @@ void connect_to_host_pair(struct connection *c)
 {
 	if (oriented(*c)) {
 		struct host_pair *hp = find_host_pair(&c->spd.this.host_addr,
-						      c->spd.this.host_port,
-						      &c->spd.that.host_addr,
-						      c->spd.that.host_port);
+						      &c->spd.that.host_addr);
 
 		DBG(DBG_CONTROLMORE, {
 			ipstr_buf b1;
@@ -238,14 +215,12 @@ void connect_to_host_pair(struct connection *c)
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */
 			hp = alloc_thing(struct host_pair, "host_pair");
-			hp->me.addr = c->spd.this.host_addr;
-			hp->him.addr = c->spd.that.host_addr;
-			hp->me.host_port =
-				nat_traversal_enabled ?
-				    pluto_port : c->spd.this.host_port;
-			hp->him.host_port =
-				nat_traversal_enabled ?
-				    pluto_port : c->spd.that.host_port;
+			hp->local = endpoint(&c->spd.this.host_addr,
+					     nat_traversal_enabled ?
+					     pluto_port : c->spd.this.host_port);
+			hp->remote = endpoint(&c->spd.that.host_addr,
+					      nat_traversal_enabled ?
+					      pluto_port : c->spd.that.host_port);
 			hp->connections = NULL;
 			hp->pending = NULL;
 			hp->next = host_pairs;

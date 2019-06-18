@@ -176,7 +176,7 @@ void update_host_pairs(struct connection *c)
 
 	if (d->dnshostname == NULL ||
 	    ttoaddr(d->dnshostname, 0, d->addr_family, &new_addr) != NULL ||
-	    sameaddr(&new_addr, &hp->him.addr))
+	    sameaddr(&new_addr, &hp->remote))
 		return;
 
 	struct connection *conn_list = NULL;
@@ -463,11 +463,15 @@ void check_orientations(void)
 				struct host_pair *hp;
 
 				for (hp = host_pairs; hp != NULL;
-					hp = hp->next) {
-					if (sameaddr(&hp->him.addr,
+				     hp = hp->next) {
+					/*
+					 * XXX: what's with the maybe
+					 * compare the port logic?
+					 */
+					if (sameaddr(&hp->remote,
 						     &i->ip_addr) &&
 					    (kern_interface != NO_KERNEL ||
-					     hp->him.host_port == pluto_port))
+					     endpoint_port(&hp->remote) == pluto_port))
 					{
 						/*
 						 * bad news: the whole chain of
@@ -2606,9 +2610,7 @@ struct connection *build_outgoing_opportunistic_connection(const ip_address *our
 		 * We cannot know what port the peer would use, so we assume
 		 * that it is pluto_port (makes debugging easier).
 		 */
-		c = find_host_pair_connections(
-			&p->ip_addr, pluto_port,
-			(ip_address *) NULL, pluto_port);
+		c = find_host_pair_connections(&p->local_endpoint, NULL);
 
 		for (; c != NULL; c = c->hp_next) {
 			DBGF(DBG_OPPO, "checking %s", c->name);
@@ -2853,7 +2855,7 @@ struct connection *find_host_connection(
 	});
 
 	struct connection *c = find_next_host_connection(
-		find_host_pair_connections(me, my_port, him, his_port),
+		find_host_pair_connections(me, him),
 		req_policy, policy_exact_mask);
 
 	/*
@@ -3517,10 +3519,7 @@ struct connection *refine_host_connection(const struct state *st,
 		 * Peer IP.
 		 */
 		DBGF(DBG_CONTROL, "refine going into 2nd loop allowing instantiated conns as well");
-		d = find_host_pair_connections(&c->spd.this.host_addr,
-					c->spd.this.host_port,
-					(ip_address *)NULL,
-					c->spd.that.host_port);
+		d = find_host_pair_connections(&c->spd.this.host_addr, NULL);
 	}
 }
 
@@ -4000,10 +3999,7 @@ struct connection *find_client_connection(struct connection *const c,
 
 		for (sra = &c->spd; hp == NULL &&
 				sra != NULL; sra = sra->spd_next) {
-			hp = find_host_pair(&sra->this.host_addr,
-					sra->this.host_port,
-					NULL,
-					sra->that.host_port);
+			hp = find_host_pair(&sra->this.host_addr, NULL);
 			DBG(DBG_CONTROLMORE, {
 				char s2[SUBNETTOT_BUF];
 				char d2[SUBNETTOT_BUF];

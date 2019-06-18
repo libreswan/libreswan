@@ -873,9 +873,7 @@ static struct connection *find_v2_host_connection(struct msg_digest *md,
 	 * Did we overlook a type=passthrough foodgroup?
 	 */
 	{
-		struct connection *tmp = find_host_pair_connections(
-			&md->iface->ip_addr, md->iface->port,
-			(ip_address *)NULL, hportof(&md->sender));
+		struct connection *tmp = find_host_pair_connections(&md->iface->local_endpoint, NULL);
 
 		for (; tmp != NULL; tmp = tmp->hp_next) {
 			if ((tmp->policy & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP &&

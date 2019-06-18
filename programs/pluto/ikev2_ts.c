@@ -815,9 +815,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	for (const struct spd_route *sra = &c->spd;
 	     hp == NULL && sra != NULL; sra = sra->spd_next) {
 		hp = find_host_pair(&sra->this.host_addr,
-				    sra->this.host_port,
-				    &sra->that.host_addr,
-				    sra->that.host_port);
+				    &sra->that.host_addr);
 
 		DBG(DBG_CONTROLMORE, {
 			char s2[SUBNETTOT_BUF];

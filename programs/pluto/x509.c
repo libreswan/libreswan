@@ -372,9 +372,7 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
 	generalName_t *top = NULL;
-	struct connection *d = find_host_pair_connections(
-		&md->iface->ip_addr, pluto_port,
-		(ip_address *)NULL, hportof(&md->sender));
+	struct connection *d = find_host_pair_connections(&md->iface->local_endpoint, NULL);
 
 	for (; d != NULL; d = d->hp_next) {
 		if (NEVER_NEGOTIATE(d->policy))

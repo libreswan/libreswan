@@ -1221,8 +1221,20 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					tmp_c->spd.that.client.addr = new_peer;
 				}
 
-				/* ??? is this wise?  This may changes a lot of other connections. */
-				tmp_c->host_pair->him.addr = new_peer;
+				/*
+				 * ??? is this wise?  This may changes
+				 * a lot of other connections.
+				 *
+				 * XXX:
+				 *
+				 * As for the old code, preserve the
+				 * existing port.  NEW_PEER, an
+				 * address, doesn't have a port and
+				 * presumably the port wasn't
+				 * updated(?).
+				 */
+				tmp_c->host_pair->remote = endpoint(&new_peer,
+								    endpoint_port(&tmp_c->host_pair->remote));
 
 				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,

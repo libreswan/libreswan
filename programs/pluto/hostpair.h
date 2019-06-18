@@ -22,11 +22,8 @@
  *
  */
 struct host_pair {
-	struct {
-		ip_address addr;
-		uint16_t host_port;            /* IKE port */
-		bool host_port_specific;        /* if above is interesting */
-	} me, him;
+	ip_endpoint local;
+	ip_endpoint remote;
 	struct connection *connections;         /* connections with this pair */
 	struct pending *pending;                /* awaiting Keying Channel */
 	struct host_pair *next;
@@ -36,15 +33,11 @@ extern struct host_pair *host_pairs;
 
 extern void connect_to_host_pair(struct connection *c);
 
-extern struct connection *find_host_pair_connections(const ip_address *myaddr,
-						     uint16_t myport,
-						     const ip_address *hisaddr,
-						     uint16_t hisport);
+extern struct connection *find_host_pair_connections(const ip_endpoint *local,
+						     const ip_endpoint *remote);
 
-extern struct host_pair *find_host_pair(const ip_address *myaddr,
-					uint16_t myport,
-					const ip_address *hisaddr,
-					uint16_t hisport);
+extern struct host_pair *find_host_pair(const ip_endpoint *local,
+					const ip_endpoint *remote);
 
 #define LIST_RM(ENEXT, E, EHEAD, EXPECTED)				\
 	{								\
