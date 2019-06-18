@@ -299,7 +299,7 @@ KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
 # extra link flags
-USERLINK?=-Wl,--as-needed -Wl,-z,relro,-z,now -g -pie $(EFENCE_LDFLAGS) ${ASAN}
+USERLINK?=-Wl,--as-needed -Wl,-z,relro,-z,now -pie $(EFENCE_LDFLAGS) ${ASAN}
 
 PORTINCLUDE?=
 
