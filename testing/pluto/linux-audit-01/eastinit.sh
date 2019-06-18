@@ -1,4 +1,6 @@
 /testing/guestbin/swan-prep
+setenforce 1
+echo ': PSK "test"' >> /etc/ipsec.secrets
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add ikev1

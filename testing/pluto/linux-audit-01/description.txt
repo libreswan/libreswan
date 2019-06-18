@@ -1,2 +1,7 @@
 NETKEY based test to verify AUDIT messages are logged by the kernel
 for service startup and shutdown and IKE SA's and IPSEC SA's events.
+
+This test MUST run with selinux enabled or else the selinux labels in
+the audit log are different (eg unconfined). Since some have configured
+test VMs with /etc/sysconfig/selinux disabled, force it in this test.
+
