@@ -298,9 +298,6 @@ KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # You can also run this before starting libreswan on glibc systems:
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
-# extra link flags
-USERLINK?=-Wl,--as-needed -Wl,-z,relro,-z,now -pie $(EFENCE_LDFLAGS) $(ASAN)
-
 PORTINCLUDE?=
 
 # command used to link/copy KLIPS into kernel source tree

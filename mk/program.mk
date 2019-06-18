@@ -117,7 +117,7 @@ ifdef OBJS
 # instance something is removed), a re-link is triggered.
 
 $(PROGRAM): $(OBJS) $(srcdir)/Makefile
-	cd $(builddir) && $(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
+	cd $(builddir) && $(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLAND_LDFLAGS)
 
 include $(top_srcdir)/mk/depend.mk
 
