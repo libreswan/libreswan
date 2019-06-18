@@ -143,14 +143,11 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	const lset_t policy_exact_mask = POLICY_XAUTH |
 		POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW;
 
-	struct connection *c = find_host_connection(
-		&md->iface->ip_addr, md->iface->port,
-		&md->sender, hportof(&md->sender),
-		policy, policy_exact_mask);
+	struct connection *c = find_host_connection(&md->iface->local_endpoint,
+						    &md->sender, policy, policy_exact_mask);
 
 	if (c == NULL) {
-		c = find_host_connection(&md->iface->ip_addr, pluto_port,
-					 (ip_address*)NULL, hportof(&md->sender),
+		c = find_host_connection(&md->iface->local_endpoint, NULL,
 					 policy, policy_exact_mask);
 		if (c == NULL) {
 			ipstr_buf b;

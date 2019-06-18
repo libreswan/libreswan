@@ -844,9 +844,8 @@ static struct connection *find_v2_host_connection(struct msg_digest *md,
 	/* XXX in the near future, this loop should find type=passthrough and return STF_DROP */
 	for (i=0; i < elemsof(policies); i++) {
 		*policy = policies[i] | POLICY_IKEV2_ALLOW;
-		c = ikev2_find_host_connection(&md->iface->ip_addr, md->iface->port,
-					       &md->sender, hportof(&md->sender),
-					       *policy);
+		c = ikev2_find_host_connection(&md->iface->local_endpoint,
+					       &md->sender, *policy);
 		if (c != NULL)
 			break;
 	}

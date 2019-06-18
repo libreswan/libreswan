@@ -149,6 +149,7 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "reqid.h"
 #include "err.h"
 #include "state.h"
+#include "ip_endpoint.h"
 
 struct virtual_t;	/* opaque type */
 
@@ -461,14 +462,15 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 
 extern struct connection *conn_by_name(const char *nm, bool strict, bool quiet);
 
-struct connection *ikev2_find_host_connection(const ip_address *me, uint16_t my_port,
-					      const ip_address *him, uint16_t his_port,
+struct connection *ikev2_find_host_connection(const ip_endpoint *local,
+					      const ip_endpoint *remote,
 					      lset_t req_policy);
 
+struct connection *find_host_connection(const ip_endpoint *local,
+					const ip_endpoint *remote,
+					lset_t req_policy,
+					lset_t policy_exact_mask);
 extern struct connection
-	*find_host_connection(const ip_address *me, uint16_t my_port,
-		       const ip_address *him, uint16_t his_port,
-		       lset_t req_policy, lset_t policy_exact_mask),
 	*find_next_host_connection(struct connection *c,
 		       lset_t req_policy, lset_t policy_exact_mask),
 	*refine_host_connection(const struct state *st, const struct id *peer_id,

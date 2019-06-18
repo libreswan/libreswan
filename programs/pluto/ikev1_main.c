@@ -539,10 +539,8 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 	}
 
 	/* random source ports are handled by find_host_connection */
-	c = find_host_connection(
-		&md->iface->ip_addr, pluto_port,
-		&md->sender, hportof(&md->sender),
-		POLICY_IKEV1_ALLOW, POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
+	c = find_host_connection(&md->iface->local_endpoint, &md->sender,
+				 POLICY_IKEV1_ALLOW, POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
 
 	if (c == NULL) {
 		lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) |
@@ -567,10 +565,8 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d = find_host_connection(
-				&md->iface->ip_addr, pluto_port,
-				(ip_address *)NULL, hportof(&md->sender),
-				policy, POLICY_XAUTH | POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
+			struct connection *d = find_host_connection(&md->iface->local_endpoint, NULL,
+								    policy, POLICY_XAUTH | POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
 
 			while (d != NULL) {
 				if (d->kind == CK_GROUP) {

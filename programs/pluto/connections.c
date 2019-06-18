@@ -2840,24 +2840,19 @@ struct connection *route_owner(struct connection *c,
  * These should only be used if the caller actually knows
  * the exact value and has included it in req_policy.
  */
-struct connection *find_host_connection(
-	const ip_address *me, uint16_t my_port,
-	const ip_address *him, uint16_t his_port,
-	lset_t req_policy, lset_t policy_exact_mask)
+struct connection *find_host_connection(const ip_endpoint *local,
+					const ip_endpoint *remote,
+					lset_t req_policy, lset_t policy_exact_mask)
 {
-	DBG(DBG_CONTROLMORE, {
-		ipstr_buf a;
-		ipstr_buf b;
-		DBG_log("find_host_connection me=%s:%d him=%s:%d policy=%s",
-			ipstr(me, &a), my_port,
-			him != NULL ? ipstr(him, &b) : "%any",
-			his_port,
-			bitnamesof(sa_policy_bit_names, req_policy));
-	});
+	endpoint_buf lb;
+	endpoint_buf rb;
+	dbg("find_host_connection local=%s remote=%s policy=%s but ignoring ports",
+	    str_endpoint(local, &lb), str_endpoint(remote, &rb),
+	    bitnamesof(sa_policy_bit_names, req_policy));
 
-	struct connection *c = find_next_host_connection(
-		find_host_pair_connections(me, him),
-		req_policy, policy_exact_mask);
+	struct connection *c =
+		find_next_host_connection(find_host_pair_connections(local, remote),
+					  req_policy, policy_exact_mask);
 
 	/*
 	 * This could be a shared IKE SA connection, in which case
@@ -2872,12 +2867,11 @@ struct connection *find_host_connection(
 	return c;
 }
 
-struct connection *ikev2_find_host_connection(const ip_address *me, uint16_t my_port,
-					      const ip_address *him, uint16_t his_port,
+struct connection *ikev2_find_host_connection(const ip_endpoint *local,
+					      const ip_endpoint *remote,
 					      lset_t policy)
 {
-	struct connection *c = find_host_connection(me, my_port, him, his_port,
-						policy, LEMPTY);
+	struct connection *c = find_host_connection(local, remote, policy, LEMPTY);
 
 	if (c == NULL) {
 		/* See if a wildcarded connection can be found.
@@ -2891,9 +2885,8 @@ struct connection *ikev2_find_host_connection(const ip_address *me, uint16_t my_
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d = find_host_connection(me,
-					pluto_port /* not my_port? */, (ip_address*)NULL, his_port,
-					policy, LEMPTY);
+			struct connection *d = find_host_connection(local, NULL,
+								    policy, LEMPTY);
 
 			while (d != NULL) {
 				if (d->kind == CK_GROUP) {
@@ -2907,7 +2900,7 @@ struct connection *ikev2_find_host_connection(const ip_address *me, uint16_t my_
 					}
 
 					/* Opportunistic or Shunt: pick tightest match */
-					if (addrinsubnet(him, &d->spd.that.client) &&
+					if (addrinsubnet(remote, &d->spd.that.client) &&
 							(c == NULL ||
 							 !subnetinsubnet(&c->spd.that.client,
 								 &d->spd.that.client))) {
@@ -2919,33 +2912,29 @@ struct connection *ikev2_find_host_connection(const ip_address *me, uint16_t my_
 			}
 		}
 		if (c == NULL) {
-			ipstr_buf b;
-
-			DBGF(DBG_CONTROL, "initial parent SA message received on %s:%u but no connection has been authorized with policy %s",
-				ipstr(me, &b),
-				ntohs(portof(me)),
-				bitnamesof(sa_policy_bit_names, policy));
+			endpoint_buf b;
+			dbg("initial parent SA message received on %s but no connection has been authorized with policy %s",
+			    str_endpoint(local, &b),
+			    bitnamesof(sa_policy_bit_names, policy));
 			return NULL;
 		}
 		if (c->kind != CK_TEMPLATE) {
-			ipstr_buf b;
-			char cib[CONN_INST_BUF];
-
-			DBGF(DBG_CONTROL, "initial parent SA message received on %s:%u for \"%s\"%s with kind=%s dropped",
-				ipstr(me, &b), pluto_port,
-				c->name, fmt_conn_instance(c, cib),
-				enum_name(&connection_kind_names, c->kind));
+			endpoint_buf eb;
+			connection_buf cib;
+			dbg("initial parent SA message received on %s for "PRI_CONNECTION" with kind=%s dropped",
+			    str_endpoint(local, &eb), pri_connection(c, &cib),
+			    enum_name(&connection_kind_names, c->kind));
 			return NULL;
 		}
 		/* only allow opportunistic for IKEv2 connections */
 		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
 		    c->ike_version == IKEv2) {
 			DBGF(DBG_CONTROL, "oppo_instantiate");
-			c = oppo_instantiate(c, him, &c->spd.that.id, &c->spd.this.host_addr, him);
+			c = oppo_instantiate(c, remote, &c->spd.that.id, &c->spd.this.host_addr, remote);
 		} else {
 			/* regular roadwarrior */
 			DBGF(DBG_CONTROL, "rw_instantiate");
-			c = rw_instantiate(c, him, NULL, NULL);
+			c = rw_instantiate(c, remote, NULL, NULL);
 		}
 	} else {
 		/*
@@ -2957,11 +2946,11 @@ struct connection *ikev2_find_host_connection(const ip_address *me, uint16_t my_
 
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
 			DBGF(DBG_CONTROL, "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
-			c = rw_instantiate(c, him, NULL, NULL);
+			c = rw_instantiate(c, remote, NULL, NULL);
 		} else if ((c->kind == CK_TEMPLATE) &&
 				(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 			DBGF(DBG_CONTROL, "local endpoint has narrowing=yes - needs instantiation");
-			c = rw_instantiate(c, him, NULL, NULL);
+			c = rw_instantiate(c, remote, NULL, NULL);
 		}
 	}
 	return c;
