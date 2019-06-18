@@ -3232,11 +3232,8 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		}
 	}
 
-#ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_CHILD_START);
-#endif
 	statetime_stop(&start, "%s()", __func__);
-
 	return TRUE;
 }
 
@@ -3275,11 +3272,9 @@ bool migrate_ipsec_sa(struct state *st)
  */
 void delete_ipsec_sa(struct state *st)
 {
-#ifdef USE_LINUX_AUDIT
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
 	if (IS_CHILD_SA(st))
 		linux_audit_conn(st, LAK_CHILD_DESTROY);
-#endif
 	switch (kern_interface) {
 	case USE_KLIPS:
 	case USE_NETKEY:

@@ -22,6 +22,7 @@
  *
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -65,11 +66,19 @@
 #include "virtual.h"	/* needs connections.h */
 #include "crypto.h"
 
-#include <libaudit.h>
 
 #include "db_ops.h"
 
 #include "pluto_stats.h"
+
+#ifndef USE_LINUX_AUDIT
+void linux_audit_conn(const struct state *st UNUSED, enum linux_audit_kind op UNUSED)
+{
+	return;
+}
+#else
+
+#include <libaudit.h>
 
 #if __GNUC__ >= 7
 	/*
@@ -106,8 +115,7 @@ void linux_audit_init(void)
 	libreswan_log("Linux audit activated");
 }
 
-static void do_linux_audit(const int type, const char *message, const char *addr,
-			   const int result)
+static void linux_audit(const int type, const char *message, const char *laddr, const int result)
 {
 	int audit_fd, rc;
 
@@ -133,7 +141,7 @@ static void do_linux_audit(const int type, const char *message, const char *addr
 	 * We log the remoteid instead of hostname
 	 */
 
-	rc = audit_log_user_message(audit_fd, type, message, NULL, addr, NULL, result);
+	rc = audit_log_user_message(audit_fd, type, message, NULL, laddr, NULL, result);
 	close(audit_fd);
 	if (rc < 0) {
 		loglog(RC_LOG_SERIOUS,
@@ -141,15 +149,6 @@ static void do_linux_audit(const int type, const char *message, const char *addr
 			strerror(errno));
 		exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
 	}
-}
-
-void linux_audit(const int type, const char *message, const char *addr,
-		 const int result)
-{
-	if (!log_to_audit) {
-		return;
-	}
-	do_linux_audit(type, message, addr, result);
 }
 
 /*
@@ -179,9 +178,10 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	switch (op) {
 	case LAK_PARENT_START:
 	case LAK_PARENT_DESTROY:
+	case LAK_PARENT_FAIL:
 		initiator = (st->st_original_role == ORIGINAL_INITIATOR) || IS_PHASE1_INIT(st->st_state);
 		snprintf(head, sizeof(head), "op=%s direction=%s %s connstate=%lu ike-version=%s auth=%s",
-			op == LAK_PARENT_START ? "start" : "destroy",
+			op == LAK_PARENT_DESTROY ? "destroy" : "start", /* fail to start logged under op=start */
 			initiator ? "initiator" : "responder",
 			conn_encode,
 			st->st_serialno,
@@ -229,9 +229,10 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 	case LAK_CHILD_START:
 	case LAK_CHILD_DESTROY:
+	case LAK_CHILD_FAIL:
 	{
 		snprintf(head, sizeof(head), "op=%s %s connstate=%lu, satype=%s samode=%s",
-			op == LAK_CHILD_START ? "start" : "destroy",
+			op == LAK_CHILD_DESTROY ? "destroy" : "start", /* fail uses op=start */
 			conn_encode,
 			st->st_serialno,
 			st->st_esp.present ? "ipsec-esp" : (st->st_ah.present ? "ipsec-ah" : "ipsec-policy"),
@@ -296,16 +297,18 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	address_buf raddr_buf;
 	const char *raddr = ipstr(&c->spd.that.host_addr, &raddr_buf);
 
-	snprintf(audit_str, sizeof(audit_str), "%s %s %s laddr=%s",
+	snprintf(audit_str, sizeof(audit_str), "%s %s %s raddr=%s",
 		head,
 		cipher_str,
 		spi_str,
-		laddr);
+		raddr);
 
-	linux_audit((op == LAK_CHILD_START || op == LAK_CHILD_DESTROY) ?
+	linux_audit((op == LAK_CHILD_START || op == LAK_CHILD_DESTROY || op == LAK_CHILD_FAIL) ?
 			AUDIT_CRYPTO_IPSEC_SA : AUDIT_CRYPTO_IKE_SA,
-		audit_str, raddr, AUDIT_RESULT_OK);
+			audit_str, laddr,
+			(op == LAK_PARENT_FAIL || op == LAK_CHILD_FAIL) ? AUDIT_RESULT_FAIL : AUDIT_RESULT_OK);
 }
 #if __GNUC__ >= 7
 #pragma GCC diagnostic pop
+#endif
 #endif

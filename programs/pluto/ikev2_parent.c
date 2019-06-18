@@ -1539,7 +1539,7 @@ stf_status ikev2_auth_initiator_process_failure_notification(struct state *st,
 	}
 }
 
-stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st UNUSED,
+stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st,
 							     struct msg_digest *md)
 {
 	/*
@@ -1601,6 +1601,8 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st UN
 	if (ikev2_schedule_retry(st)) {
 		return STF_IGNORE; /* drop packet */
 	} else {
+		/* XXX: it really depends on the NOTIFY ERROR whether this is child or parent? */
+		linux_audit_conn(st, LAK_CHILD_FAIL);
 		return STF_FATAL;
 	}
 }
@@ -3064,9 +3066,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	ikev2_ike_sa_established(pexpect_ike_sa(st), md->svm,
 				 STATE_PARENT_R2);
 
-#ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
-#endif
 
 	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
@@ -3801,9 +3801,7 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	ikev2_ike_sa_established(pexpect_ike_sa(pst), md->svm,
 				 STATE_PARENT_I3);
 
-#ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
-#endif
 
 	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */

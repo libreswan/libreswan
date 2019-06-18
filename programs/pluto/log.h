@@ -214,29 +214,29 @@ extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
 extern void show_global_status(void);
 
-#ifdef USE_LINUX_AUDIT
-#include <libaudit.h>	/* from audit-libs devel */
-#define AUDIT_LOG_SIZE 256
-/* should really be in libaudit.h */
-#define AUDIT_RESULT_FAIL 0
-#define AUDIT_RESULT_OK 1
-#ifndef AUDIT_CRYPTO_IKE_SA
-# define AUDIT_CRYPTO_IKE_SA 2408
-#endif
-#ifndef AUDIT_CRYPTO_IPSEC_SA
-# define AUDIT_CRYPTO_IPSEC_SA 2409
-#endif
-
 enum linux_audit_kind {
 	LAK_PARENT_START,
 	LAK_CHILD_START,
 	LAK_PARENT_DESTROY,
-	LAK_CHILD_DESTROY
+	LAK_CHILD_DESTROY,
+	LAK_PARENT_FAIL,
+	LAK_CHILD_FAIL
 };
-extern void linux_audit_init(void);
-extern void linux_audit(const int type, const char *message,
-			const char *addr, const int result);
 extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
+
+#ifdef USE_LINUX_AUDIT
+extern void linux_audit_init(void);
+# include <libaudit.h>	/* from audit-libs devel */
+# define AUDIT_LOG_SIZE 256
+/* should really be in libaudit.h */
+# define AUDIT_RESULT_FAIL 0
+# define AUDIT_RESULT_OK 1
+# ifndef AUDIT_CRYPTO_IKE_SA
+#  define AUDIT_CRYPTO_IKE_SA 2408
+# endif
+# ifndef AUDIT_CRYPTO_IPSEC_SA
+#  define AUDIT_CRYPTO_IPSEC_SA 2409
+# endif
 #endif
 
 #endif /* _PLUTO_LOG_H */

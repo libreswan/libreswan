@@ -883,14 +883,12 @@ void delete_state(struct state *st)
 	so_serial_t old_serialno = push_cur_state(st);
 	delete_state_log(st, state_by_serialno(old_serialno));
 
-#ifdef USE_LINUX_AUDIT
 	/*
 	 * only log parent state deletes, we log children in
 	 * ipsec_delete_sa()
 	 */
 	if (IS_IKE_SA_ESTABLISHED(st) || st->st_state->kind == STATE_IKESA_DEL)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
-#endif
 
 	/* If we are failed OE initiator, make shunt bare */
 	if (IS_IKE_SA(st) && (c->policy & POLICY_OPPORTUNISTIC) &&
