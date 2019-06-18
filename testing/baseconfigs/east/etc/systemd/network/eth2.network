@@ -2,8 +2,8 @@
 Name=eth2
 
 [Network]
-Address=192.9.4.23/24
-Address=2001:db8:9:4::23/64
+Address=192.9.2.23/24
+Address=2001:db8:9:2::23/64
 IPForward=yes
 IPv6DuplicateAddressDetection=no
 IPv6AcceptRouterAdvertisements=false
