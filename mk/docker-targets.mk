@@ -57,6 +57,7 @@ ifeq ($(DISTRO), centos)
 		TWEAKS = werror-no-missing-field-initializers
 	endif
 	ifeq ($(DISTRO_REL), 6)
+		DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)6-min-packages
 		TWEAKS = werror-no-missing-field-initializers disable-dsnssec disable-nss_ipsec_profile
 	endif
 endif
