@@ -19,8 +19,11 @@ before_install:
   # <travis>-<distro>-<rel>  or default to Fedora 27
   #
   - make travis-docker-image
-  - sudo docker run -h west --privileged --net=none --name swanbase -v $PWD:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d swanbase
+  - git fetch --tags
+  - git fetch --depth=100000
+  - make travis-docker-start
+  #- sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make showdebversion'
 
 script:
-  - sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make travis-docker-base'
-  - sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make install-base'
+  - make travis-docker-make
+  - make travis-docker-make-install
