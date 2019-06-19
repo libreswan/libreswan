@@ -2774,6 +2774,7 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		release_pending_whacks(st, "Authentication failed");
+		/* this is really STF_FATAL but we need to send a reply packet out */
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
@@ -3575,7 +3576,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 
 	/* now install child SAs */
 	if (!install_ipsec_sa(st, TRUE))
-		return STF_FATAL;
+		return STF_FATAL; /* does this affect/kill the IKE SA ? */
 
 	set_newest_ipsec_sa("inR2", st);
 
@@ -3677,6 +3678,18 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 		}
 	}
 
+	/*
+	 * On the initiator, we can STF_FATAL on IKE SA errors, because no
+	 * packet needs to be sent anymore. And we cannot recover. Unlike
+	 * IKEv1, we cannot send an updated IKE_AUTH request that would use
+	 * different credentials.
+	 *
+	 * On responder (code elsewhere), we have to STF_FAIL to get out
+	 * the response packet (we need a zombie state for these)
+	 *
+	 * Note: once AUTH succeeds, we can still return STF_FAIL's because
+	 * those apply to the Child SA and should not tear down the IKE SA.
+	 */
 	if (!v2_decode_certs(ike, md)) {
 		pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 		pexpect(ike->sa.st_remote_certs.verified == NULL);
@@ -3686,7 +3699,7 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 		 */
 		libreswan_log("X509: CERT payload bogus or revoked");
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+		return STF_FATAL;
 	}
 
 	/* XXX this call might change connection in md->st! */
@@ -3694,7 +3707,7 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		release_pending_whacks(st, "Authentication failed");
-		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+		return STF_FATAL;
 	}
 
 	struct connection *c = st->st_connection;
@@ -3796,8 +3809,7 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	 * SA invoke the CHILD SA's transition.
 	 */
 	pexpect(md->svm->next_state == STATE_V2_IPSEC_I);
-	ikev2_ike_sa_established(pexpect_ike_sa(pst), md->svm,
-				 STATE_PARENT_I3);
+	ikev2_ike_sa_established(pexpect_ike_sa(pst), md->svm, STATE_PARENT_I3);
 
 	linux_audit_conn(st, LAK_PARENT_START);
 
