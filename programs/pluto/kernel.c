@@ -1692,12 +1692,12 @@ static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
 
 	if (c->nic_offload == yna_auto) {
 		if (!c->interface->ip_dev->id_nic_offload) {
-			dbg("NIC esp-hw-offload not for connection '%s' not available on nic %s",
+			dbg("NIC esp-hw-offload not for connection '%s' not available on interface %s",
 				c->name, c->interface->ip_dev->id_rname);
 			return;
 		}
 		*nic_offload_fallback = TRUE;
-		dbg("NIC esp-hw-offload offload for connection '%s' enabled on nic %s",
+		dbg("NIC esp-hw-offload offload for connection '%s' enabled on interface %s",
 				c->name, c->interface->ip_dev->id_rname);
 	}
 	sa->nic_offload_dev = c->interface->ip_dev->id_rname;

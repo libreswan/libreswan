@@ -1093,6 +1093,7 @@ static void netlink_find_offload_feature(const char *ifname)
 	if (!siocethtool(ifname, sset_info, "ETHTOOL_GSSET_INFO") ||
 	    sset_info->sset_mask != 1ULL << ETH_SS_FEATURES) {
 		pfree(sset_info);
+		libreswan_log("Kernel does not support NIC esp-hw-offload (ETHTOOL_GSSET_INFO failed)");
 		return;
 	}
 
@@ -1122,6 +1123,12 @@ static void netlink_find_offload_feature(const char *ifname)
 	}
 
 	pfree(cmd);
+
+	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_SUPPORTED) {
+		libreswan_log("Kernel supports NIC esp-hw-offload");
+	} else {
+		libreswan_log("Kernel does not support NIC esp-hw-offload");
+	}
 }
 
 static bool netlink_detect_offload(const char *ifname)
@@ -1134,13 +1141,10 @@ static bool netlink_detect_offload(const char *ifname)
 		netlink_find_offload_feature(ifname);
 
 	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNSUPPORTED) {
-		libreswan_log("Kernel does not support NIC esp-hw-offload");
 		return false;
 	}
 
 	/* Feature is supported by kernel. Query device features */
-
-	libreswan_log("Kernel supports NIC esp-hw-offload");
 
 	struct ethtool_gfeatures *cmd = alloc_bytes(
 		sizeof(*cmd) + sizeof(cmd->features[0]) * netlink_esp_hw_offload.total_blocks,
