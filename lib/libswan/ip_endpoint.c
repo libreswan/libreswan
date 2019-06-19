@@ -42,29 +42,6 @@ int endpoint_type(const ip_endpoint *endpoint)
 	return addrtypeof(endpoint);
 }
 
-const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
-{
-	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
-	jam_endpoint(&buf, endpoint);
-	return dst->buf;
-}
-
-const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
-{
-	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
-	jam_sensitive_endpoint(&buf, endpoint);
-	return dst->buf;
-}
-
-void jam_sensitive_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
-{
-	if (!log_ip) {
-		jam(buf, "<address:port>");
-		return;
-	}
-	jam_endpoint(buf, endpoint);
-}
-
 /*
  * Format an endpoint.
  *
@@ -75,8 +52,20 @@ void jam_sensitive_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
  * cannot be used, while for UDP, the source port is optional
  * and a value of zero means no port.
  */
-void jam_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
+static void format_endpoint(jambuf_t *buf, bool sensitive,
+			    const ip_endpoint *endpoint)
 {
+	/*
+	 * A NULL endpoint can't be sensitive so always log it.
+	 */
+	if (endpoint == NULL) {
+		jam(buf, "<none:>");
+		return;
+	}
+	if (sensitive) {
+		jam(buf, "<address:port>");
+		return;
+	}
 	ip_address address = endpoint_address(endpoint);
 	int port = endpoint_port(endpoint);
 	int type = endpoint_type(endpoint);
@@ -107,7 +96,29 @@ void jam_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
 	}
 }
 
+void jam_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
+{
+	format_endpoint(buf, false, endpoint);
+}
 
+const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
+{
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_endpoint(&buf, endpoint);
+	return dst->buf;
+}
+
+void jam_sensitive_endpoint(jambuf_t *buf, const ip_endpoint *endpoint)
+{
+	format_endpoint(buf, !log_ip, endpoint);
+}
+
+const char *str_sensitive_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
+{
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_sensitive_endpoint(&buf, endpoint);
+	return dst->buf;
+}
 
 bool endpoint_eq(const ip_endpoint l, ip_endpoint r)
 {

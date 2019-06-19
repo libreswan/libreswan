@@ -183,6 +183,10 @@ static void jam_raw_ipv6_address(jambuf_t *buf, chunk_t a, char sepc,
 
 void jam_address_raw(jambuf_t *buf, const ip_address *address, char sepc)
 {
+	if (address == NULL) {
+		jam(buf, "<none>");
+		return;
+	}
 	chunk_t a = same_ip_address_as_chunk(address);
 	if (a.len == 0) {
 		jam(buf, "<invalid-length>");
@@ -233,8 +237,21 @@ static chunk_t zeros_to_skip(chunk_t a)
 	return zero;
 }
 
-void jam_address_cooked(jambuf_t *buf, const ip_address *address)
+static void format_address_cooked(jambuf_t *buf, bool sensitive,
+				  const ip_address *address)
 {
+	/*
+	 * A NULL address can't be sensitive.
+	 */
+	if (address == NULL) {
+		jam(buf, "<none>");
+		return;
+	}
+	if (sensitive) {
+		jam(buf, "<address>");
+		return;
+	}
+
 	chunk_t a = same_ip_address_as_chunk(address);
 	if (a.len == 0) {
 		jam(buf, "<invalid-length>");
@@ -256,14 +273,14 @@ void jam_address_cooked(jambuf_t *buf, const ip_address *address)
 		break;
 	}
 }
+void jam_address_cooked(jambuf_t *buf, const ip_address *address)
+{
+	format_address_cooked(buf, false, address);
+}
 
 void jam_address_sensitive(jambuf_t *buf, const ip_address *address)
 {
-	if (log_ip) {
-		jam_address_cooked(buf, address);
-	} else {
-		jam(buf, "<ip-address>");
-	}
+	format_address_cooked(buf, !log_ip, address);
 }
 
 void jam_address_reversed(jambuf_t *buf, const ip_address *address)
