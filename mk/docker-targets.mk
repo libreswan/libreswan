@@ -17,56 +17,67 @@ DI_T ?= swanbase 	#docker image tag
 W1 = $(firstword $(subst -, ,$1))
 W2 = $(or $(word 2, $(subst -, ,$1)), $(value 2))
 W3 = $(or $(word 3, $(subst -, ,$1)), $(value 2))
+W4 = $(or $(word 4, $(subst -, ,$1)), $(value 2))
 
 FIRST_TARGET ?=$@	# keep track of original target
 DISTRO ?= fedora	# default distro
 DISTRO_REL ?= 28 	# default release
 EXCLUDE_RPM_ARCH ?= --excludepkgs='*.i686'
 
+
 # end of configurable variables
+
+D_USE_UNBOUND_EVENT_H_COPY ?= true
+D_USE_DNSSEC ?= false
+D_USE_NSS_IPSEC_PROFILE ?= flase
+D_USE_GLIBC_KERN_FLIP_HEADERS ?= true
+D_USE_NSS_AVA_COPY ?= true
 
 DI = $(DISTRO)-$(DISTRO_REL)
 DOCKERFILE ?= $(D)/dockerfile
 DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)-min-packages
 TWEAKS=
-
-#
-# Distribution specific tweaks
-#
-ifeq ($(DISTRO), ubuntu)
-	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
-	TWEAKS = dockerfile-ubuntu-cmd
-	ifeq ($(DISTRO_REL), xenial)
-		TWEAKS = flip-glibc-kern-headers use_unbound_event_h_copy enable-nss_ava_copy disable-nss_ipsec_profile
-	endif
-	ifeq ($(DISTRO_REL), cosmic)
-		TWEAKS = disable-nss_ipsec_profile
-	endif
-	ifeq ($(DISTRO_REL), bionic)
-		TWEAKS = disable-nss_ipsec_profile
-	endif
-endif
-
-ifeq ($(DISTRO), debian)
-	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
-	TWEAKS = dockerfile-debian-cmd
-endif
-
-ifeq ($(DISTRO), centos)
-	ifeq ($(DISTRO_REL), 6)
-		DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)6-min-packages
-		TWEAKS = disable-dsnssec disable-nss_ipsec_profile
-	endif
-endif
-
-#ifeq ($(DISTRO), fedora)
-#endif
+LOCAL_MAKE_FLAGS=
+MAKE_BASE = base
+MAKE_INSTLL_BASE = install-base
 
 BRANCH = $(shell test -d .git && test -f /usr/bin/git -o -f /usr/local/bin/git && git rev-parse --abbrev-ref HEAD)
 TRAVIS_BANCH = $(call W1, $(BRANCH),'')
 ifeq ($(TRAVIS_BANCH), travis)
 	DISTRO =  $(call W2, $(BRANCH),fedora)
 	DISTRO_REL = $(call W3, $(BRANCH),27)
+endif
+
+#
+# Distribution specific tweaks
+#
+ifeq ($(DISTRO), ubuntu)
+	MAKE_BASE = deb
+	MAKE_INSTLL_BASE = deb-install
+	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
+endif
+
+ifeq ($(DISTRO), debian)
+	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
+	TWEAKS = dockerfile-debian-cmd
+	MAKE_BASE = deb
+	MAKE_INSTLL_BASE = deb-install
+endif
+
+ifeq ($(DISTRO), centos)
+	MAKE_BASE = base
+	MAKE_INSTLL_BASE = install-base
+	ifeq ($(DISTRO_REL), 6)
+		DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)6-min-packages
+		LOCAL_MAKE_FLAGS += USE_DNSSEC=$(D_USE_DNSSEC)
+		LOCAL_MAKE_FLAGS += USE_NSS_IPSEC_PROFILE=$(D_USE_NSS_IPSEC_PROFILE)
+	endif
+endif
+
+ifeq ($(DISTRO), fedora)
+	MAKE_BASE = base
+	MAKE_INSTLL_BASE = install-base
+	LOCAL_MAKE_FLAGS =
 endif
 
 .PHONY: dockerfile-remove-libreswan-spec
@@ -81,34 +92,8 @@ dockerfile-debian-cmd:
 dockerfile-ubuntu-cmd:
 	$(shell sed -i 's#CMD.*#CMD ["/sbin/init"]#' testing/docker/dockerfile)
 
-.PHONY: disable-dsnssec
-disable-dsnssec:
-	$(shell (grep "^USE_DNSSEC" Makefile.inc.local || echo "USE_DNSSEC ?= false" >> Makefile.inc.local))
-
-.PHONY: disable-nss_ipsec_profile
-disable-nss_ipsec_profile:
-	$(shell (grep "^USE_NSS_IPSEC_PROFILE" Makefile.inc.local || echo "USE_NSS_IPSEC_PROFILE ?= false" >>Makefile.inc.local))
-
-.PHONY: enable-nss_ava_copy
-enable-nss_ava_copy:
-	$(shell (grep "^USE_NSS_AVA_COPY" Makefile.inc.local || echo "USE_NSS_AVA_COPY ?= true" >> Makefile.inc.local))
-
-
-.PHONY: werror-no-missing-field-initializers
-werror-no-missing-field-initializers:
-	 $(shell (grep "^WERROR_CFLAGS" Makefile.inc.local || echo "WERROR_CFLAGS ?= -Werror -Wno-missing-field-initializers" >> Makefile.inc.local))
-
-.PHONY: disable-seccomp
-disable-seccomp:
-	$(shell (grep "^USE_SECCOMP" Makefile.inc.local || echo "USE_SECCOMP ?= false" >> Makefile.inc.local))
-
-.PHONY: flip-glibc-kern-headers
-flip-glibc-kern-headers:
-	$(shell (grep "^USE_GLIBC_KERN_FLIP_HEADERS" Makefile.inc.local || echo "USE_GLIBC_KERN_FLIP_HEADERS ?= true" >> Makefile.inc.local))
-
 .PHONY: use_unbound_event_h_copy
 use_unbound_event_h_copy:
-	$(shell (grep "^USE_UNBOUND_EVENT_H_COPY" Makefile.inc.local || echo "USE_UNBOUND_EVENT_H_COPY ?= true" >> Makefile.inc.local))
 
 #
 # end  of Distribution tweaks
@@ -124,7 +109,11 @@ install-rpm-dep:
 	dnf install -y --skip-broken $(RUN_RPMS)
 
 .PHONY: install-deb-dep
-RUN_DEBS = $$(test -f /usr/bin/apt-cache1 && apt-cache depends libreswan | awk '/Depends:/{print $$2}' | grep -v "<" | sort -u)
+# RUN_DEBS_OLD ?= $$(grep -qE 'jessie|xenial' /etc/os-release && echo "host iptables")
+# hard codde these two packages it fail on xenial and old ones.
+# on buster host is virtual package
+RUN_DEBS_OLD ?= bind9-host iptables
+RUN_DEBS ?= $$(test -f /usr/bin/apt-cache && apt-cache depends libreswan | awk '/Depends:/{print $$2}' | grep -v "<" | sort -u)
 install-deb-dep:
 	apt-get update
 	# development dependencies
@@ -134,13 +123,17 @@ install-deb-dep:
 	cp -r packaging/debian/control libreswan-control
 	mk-build-deps --install --tool "apt-get -o Dpkg::Options::="--force-confold" -o Debug::pkgProblemResolver=yes -y --no-install-recommends" libreswan-control
 	# install libreswan runtime dependencies
-	apt-get install -y $(RUN_DEBS)
+	apt-get install -y $(RUN_DEBS) $(RUN_DEBS_OLD)
 	# give another kick
-	apt --fix-broken install -y 
+	apt-get --fix-broken install -y
 
 .PHONY: travis-docker-image
 travis-docker-image:
 	$(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) docker-image
+
+.PHONY: travis-docker-base
+travis-docker-base:
+	$(MAKE) $(MAKE_BASE)
 
 define debian_exp_repo
 	if [ $(1) == "experimental" ] ; then \
@@ -180,17 +173,62 @@ docker-min-image: dockerfile $(TWEAKS) docker-build
 docker-image: dockerfile $(TWEAKS) docker-ssh-image docker-build
 	echo "done docker image tag $(DI_T) from $(DISTRO)-$(DISTRO_REL) with ssh"
 
-.PHONY: docker-start
-docker-start:
-	$(DOCKER_CMD) run -h $(DI_T) --privileged --name $(DI_T) \
-	-v /home/build:/home/build \
-	-v /sys/fs/cgroup:/sys/fs/cgroup:ro -d $(DI_T)
+
+# NEW tragets to get docker handling 201906
+.PHONY: docker-instance-name
+docker-instance-name:
+	echo $(DI_T)
+
+.PHONY: travis-docker-make
+travis-docker-make:
+	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) make-base"
+
+.PHONY: travis-docker-make-install
+travis-docker-make-install:
+	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) make-install"
 
 .PHONY: docker-exec
 docker-exec:
-	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash
+	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) $(1)"
 
 .PHONY: docker-stop
 docker-stop:
-	$(DOCKER_CMD) stop $(DI_T)
-	$(DOCKER_CMD) rm $(DI_T)
+	$(DOCKER_CMD) stop $(DI_T) && $(DOCKER_CMD) rm $(DI_T) || echo "nothing to stop $(DI_T)"
+
+.PHONY: docker-shell
+docker-shell:
+	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash
+
+.PHONY: make-base
+make-base:
+	$(LOCAL_MAKE_FLAGS) $(MAKE) $(MAKE_BASE)
+
+.PHONY: make-install
+make-install:
+	$(LOCAL_MAKE_FLAGS) $(MAKE) $(MAKE_INSTLL_BASE)
+
+.PHONY: deb-install
+deb-install: install-deb-dep
+	dpkg -i  ../*.deb || apt-get --fix-broken install -y
+
+.PHONY: docker-make-install
+docker-make-install: docker-stop
+	$(DOCKER_CMD) run --privileged --net=none --name $(DI_T) \
+		-v $(PWD):/home/build/libreswan \
+		-v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+		-ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) $(MAKE_INSTLL_BASE)"
+
+.PHONY: docker-make-base
+docker-make-base: docker-stop
+	$(DOCKER_CMD) run --privileged --net=none --name $(DI_T) \
+		-v $(PWD):/home/build/libreswan \
+		-v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+		-ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && \
+		$(LOCAL_MAKE_FLAGS) $(MAKE) $(MAKE_BASE)"
+
+.PHONY: travis-docker-start
+travis-docker-start:
+	$(DOCKER_CMD) run -h $(DI_T) --privileged  --name $(DI_T) \
+		-v $(PWD):/home/build/libreswan/ \
+		-v /sys/fs/cgroup:/sys/fs/cgroup:ro -d $(DI_T)
+

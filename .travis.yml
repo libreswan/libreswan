@@ -22,5 +22,5 @@ before_install:
   - sudo docker run -h west --privileged --net=none --name swanbase -v $PWD:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d swanbase
 
 script:
-  - sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make base'
+  - sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make travis-docker-base'
   - sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make install-base'
