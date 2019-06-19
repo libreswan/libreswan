@@ -1064,8 +1064,14 @@ static bool siocethtool(const char *ifname, void *data, const char *action)
 	struct ifreq ifr = { .ifr_data = data };
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	if (ioctl(nl_send_fd, SIOCETHTOOL, &ifr) != 0) {
-		dbg("cannot offload to %s because SIOCETHTOOL %s failed: %s",
-			ifname, action, strerror(errno));
+		/* EOPNOTSUPP is expected if kernel doesn't support this */
+		if (errno == EOPNOTSUPP) {
+			dbg("cannot offload to %s because SIOCETHTOOL %s failed: %s",
+				ifname, action, strerror(errno));
+		} else {
+			LOG_ERRNO(errno, "can't offload to %s because SIOCETHTOOL %s failed",
+				ifname, action);
+		}
 		return false;
 	} else {
 		return true;
