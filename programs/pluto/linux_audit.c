@@ -161,82 +161,91 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	}
 
 	char audit_str[AUDIT_LOG_SIZE];
-	char cipher_str[AUDIT_LOG_SIZE];
-	char spi_str[AUDIT_LOG_SIZE];
+	jambuf_t buf = ARRAY_AS_JAMBUF(audit_str);
 	struct connection *const c = st->st_connection;
-	bool initiator = FALSE;
-	char head[IDTOA_BUF];
-	char integname[IDTOA_BUF];
-	char prfname[IDTOA_BUF];
-	struct esb_buf esb;
 	/* we need to free() this */
-	char *conn_encode = audit_encode_nv_string("conn-name", c->name,0);
-
-	zero(&cipher_str);	/* OK: no pointer fields */
-	zero(&spi_str);	/* OK: no pointer fields */
+	char *conn_encode = audit_encode_nv_string("conn-name", c->name, 0);
 
 	switch (op) {
 	case LAK_PARENT_START:
 	case LAK_PARENT_DESTROY:
 	case LAK_PARENT_FAIL:
-		initiator = (st->st_original_role == ORIGINAL_INITIATOR) || IS_PHASE1_INIT(st->st_state);
-		snprintf(head, sizeof(head), "op=%s direction=%s %s connstate=%lu ike-version=%s auth=%s",
-			op == LAK_PARENT_DESTROY ? "destroy" : "start", /* fail to start logged under op=start */
-			initiator ? "initiator" : "responder",
-			conn_encode,
-			st->st_serialno,
-			(st->st_ike_version == IKEv2) ? "2.0" : "1",
-			(st->st_ike_version == IKEv2) ? ((c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG") :
-				enum_show_shortb(&oakley_auth_names,
-					st->st_oakley.auth, &esb));
+	{
+		bool initiator = (st->st_original_role == ORIGINAL_INITIATOR) || IS_PHASE1_INIT(st->st_state);
+		/* head */
+		jam(&buf, "op=%s direction=%s %s connstate=%lu ike-version=%s",
+		    op == LAK_PARENT_DESTROY ? "destroy" : "start", /* fail to start logged under op=start */
+		    initiator ? "initiator" : "responder",
+		    conn_encode,
+		    st->st_serialno,
+		    (st->st_ike_version == IKEv2) ? "2.0" : "1");
 
-		snprintf(prfname, sizeof(prfname), "%s",
-			 st->st_oakley.ta_prf->prf_ike_audit_name);
-
-		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
-			if (st->st_ike_version == IKEv1) {
-				/* IKE takes integ from prf, except of course gcm */
-				/* but IANA doesn't define gcm for IKE, only for ESP */
-				jam_str(integname, sizeof(integname), prfname);
-			} else {
-				snprintf(integname, sizeof(integname), "none");
-			}
-		} else if (st->st_oakley.ta_integ != NULL) {
-			snprintf(integname, sizeof(integname), "%s_%zu",
-				st->st_oakley.ta_integ->integ_ike_audit_name,
-				st->st_oakley.ta_integ->integ_output_size *
-				BITS_PER_BYTE);
+		jam(&buf, " auth=");
+		if (st->st_ike_version == IKEv2) {
+			jam_string(&buf, (c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG");;
 		} else {
+			lswlog_enum_short(&buf, &oakley_auth_names, st->st_oakley.auth);
+		}
+
+		jam(&buf, " cipher=%s ksize=%d",
+		    (st->st_oakley.ta_encrypt == NULL ? "none"
+		     : st->st_oakley.ta_encrypt->encrypt_ike_audit_name),
+		    st->st_oakley.enckeylen);
+
+		const char *prfname = (st->st_oakley.ta_prf == NULL ? "none"
+				       : st->st_oakley.ta_prf->prf_ike_audit_name);
+		jam(&buf, " integ=");
+		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
 			/*
-			 * XXX: dead code path?
+			 * XXX: dead code path?  IKEv1 can't do
+			 * INTEG==NONE; "none"'s name is "none".
 			 */
 			if (st->st_ike_version == IKEv1) {
 				/* IKE takes integ from prf, except of course gcm */
 				/* but IANA doesn't define gcm for IKE, only for ESP */
-				jam_str(integname, sizeof(integname), prfname);
+				jam_string(&buf, prfname);
 			} else {
-				snprintf(integname, sizeof(integname), "none");
+				jam(&buf, "none");
+			}
+		} else if (st->st_oakley.ta_integ != NULL) {
+			/*
+			 * XXX: merge bit-size into audit_name?
+			 */
+			jam(&buf, "%s_%zu",
+			    st->st_oakley.ta_integ->integ_ike_audit_name,
+			    st->st_oakley.ta_integ->integ_output_size * BITS_PER_BYTE);
+		} else {
+			/*
+			 * XXX: dead code path?  Integ is never NULL?
+			 */
+			if (st->st_ike_version == IKEv1) {
+				/* IKE takes integ from prf, except of course gcm */
+				/* but IANA doesn't define gcm for IKE, only for ESP */
+				jam_string(&buf, prfname);
+			} else {
+				jam(&buf, "none");
 			}
 		}
 
-		snprintf(cipher_str, sizeof(cipher_str),
-			"cipher=%s ksize=%d integ=%s prf=%s pfs=%s",
-			st->st_oakley.ta_encrypt->encrypt_ike_audit_name,
-			st->st_oakley.enckeylen,
-			integname, prfname,
-			st->st_oakley.ta_dh->common.name);
-		break;
+		jam(&buf, " prf=%s", prfname); /* could be "none" */
+		jam(&buf, " pfs=%s", (st->st_oakley.ta_dh == NULL ? "none"
+				      : st->st_oakley.ta_dh->common.name));
 
+		/* XXX: empty SPI to keep tests happy */
+		jam(&buf, " ");
+		break;
+	}
 	case LAK_CHILD_START:
 	case LAK_CHILD_DESTROY:
 	case LAK_CHILD_FAIL:
 	{
-		snprintf(head, sizeof(head), "op=%s %s connstate=%lu, satype=%s samode=%s",
-			op == LAK_CHILD_DESTROY ? "destroy" : "start", /* fail uses op=start */
-			conn_encode,
-			st->st_serialno,
-			st->st_esp.present ? "ipsec-esp" : (st->st_ah.present ? "ipsec-ah" : "ipsec-policy"),
-			c->policy & POLICY_TUNNEL ? "tunnel" : "transport");
+		/* head */
+		jam(&buf, "op=%s %s connstate=%lu, satype=%s samode=%s",
+		    op == LAK_CHILD_DESTROY ? "destroy" : "start", /* fail uses op=start */
+		    conn_encode,
+		    st->st_serialno,
+		    st->st_esp.present ? "ipsec-esp" : (st->st_ah.present ? "ipsec-ah" : "ipsec-policy"),
+		    c->policy & POLICY_TUNNEL ? "tunnel" : "transport");
 
 		/*
 		 * XXX: Instead of IKEv1_ESP_ID, this should use
@@ -266,24 +275,21 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			integ = NULL;
 			enckeylen = 0;
 		}
-		snprintf(cipher_str, sizeof(cipher_str), "cipher=%s ksize=%u integ=%s",
-			 (encrypt == NULL ? "none" :
-			  encrypt->encrypt_kernel_audit_name),
-			 enckeylen,
-			 (integ == NULL ? "none" :
-			  integ->integ_kernel_audit_name));
+		jam(&buf, " cipher=%s ksize=%u integ=%s",
+		    (encrypt == NULL ? "none" : encrypt->encrypt_kernel_audit_name),
+		    enckeylen,
+		    (integ == NULL ? "none" : integ->integ_kernel_audit_name));
 
 		/* note: each arg appears twice because it is printed two ways */
-		snprintf(spi_str, sizeof(spi_str),
-			"in-spi=%" PRIu32 "(0x%08" PRIu32 ") out-spi=%" PRIu32 "(0x%08" PRIu32 ") in-ipcomp=%" PRIu32 "(0x%08" PRIu32 ") out-ipcomp=%" PRIu32 "(0x%08" PRIu32 ")",
-			ntohl(pi->attrs.spi),
-			ntohl(pi->attrs.spi),
-			ntohl(pi->our_spi),
-			ntohl(pi->our_spi),
-			ntohl(st->st_ipcomp.attrs.spi),	/* zero if missing */
-			ntohl(st->st_ipcomp.attrs.spi),	/* zero if missing */
-			ntohl(st->st_ipcomp.our_spi),	/* zero if missing */
-			ntohl(st->st_ipcomp.our_spi));	/* zero if missing */
+		jam(&buf, " in-spi=%" PRIu32 "(0x%08" PRIu32 ") out-spi=%" PRIu32 "(0x%08" PRIu32 ") in-ipcomp=%" PRIu32 "(0x%08" PRIu32 ") out-ipcomp=%" PRIu32 "(0x%08" PRIu32 ")",
+		    ntohl(pi->attrs.spi),
+		    ntohl(pi->attrs.spi),
+		    ntohl(pi->our_spi),
+		    ntohl(pi->our_spi),
+		    ntohl(st->st_ipcomp.attrs.spi),	/* zero if missing */
+		    ntohl(st->st_ipcomp.attrs.spi),	/* zero if missing */
+		    ntohl(st->st_ipcomp.our_spi),	/* zero if missing */
+		    ntohl(st->st_ipcomp.our_spi));	/* zero if missing */
 		break;
 	}
 	default:
@@ -294,14 +300,8 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	address_buf laddr_buf;
 	const char *laddr = ipstr(&c->spd.this.host_addr, &laddr_buf);
 
-	address_buf raddr_buf;
-	const char *raddr = ipstr(&c->spd.that.host_addr, &raddr_buf);
-
-	snprintf(audit_str, sizeof(audit_str), "%s %s %s raddr=%s",
-		head,
-		cipher_str,
-		spi_str,
-		raddr);
+	jam(&buf, " raddr=");
+	jam_address_cooked(&buf, &c->spd.that.host_addr);
 
 	linux_audit((op == LAK_CHILD_START || op == LAK_CHILD_DESTROY || op == LAK_CHILD_FAIL) ?
 			AUDIT_CRYPTO_IPSEC_SA : AUDIT_CRYPTO_IKE_SA,
