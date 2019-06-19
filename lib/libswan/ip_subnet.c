@@ -35,7 +35,7 @@ ip_address ip_subnet_floor(const ip_subnet *subnet)
 ip_address ip_subnet_ceiling(const ip_subnet *subnet)
 {
 	/* start with address */
-	chunk_t base = same_ip_address_as_chunk(&subnet->addr);
+	shunk_t base = address_as_shunk(&subnet->addr);
 	passert((size_t)subnet->maskbits <= base.len * 8);
 	uint8_t buf[16] = { 0, };
 	passert(base.len <= sizeof(buf))

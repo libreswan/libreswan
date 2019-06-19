@@ -71,8 +71,8 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 
 	crypt_hash_digest_chunk(ctx, "Ni", Ni);
 
-	chunk_t IPi = same_ip_address_as_chunk(&md->sender);
-	crypt_hash_digest_chunk(ctx, "IPi", IPi);
+	shunk_t IPi = address_as_shunk(&md->sender);
+	crypt_hash_digest_bytes(ctx, "IPi", IPi.ptr, IPi.len);
 
 	crypt_hash_digest_bytes(ctx, "SPIi", &md->hdr.isa_ike_initiator_spi,
 				sizeof(md->hdr.isa_ike_initiator_spi));

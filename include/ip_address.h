@@ -19,7 +19,7 @@
 #ifndef IP_ADDRESS_H
 #define IP_ADDRESS_H
 
-#include "chunk.h"
+#include "shunk.h"
 #include "err.h"
 
 extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
@@ -134,12 +134,9 @@ const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 #define isvalidaddr(ADDR) (hportof(ADDR) >= 0)
 
 /*
- * address as a chunk
- *
- * XXX: chunk_t doesn't do const so this strips off the constiness of
- * address :-(
+ * Raw address bytes as a shunk - since that does const.
  */
-chunk_t same_ip_address_as_chunk(const ip_address *address);
+shunk_t address_as_shunk(const ip_address *address);
 
 /*
  * Old style.

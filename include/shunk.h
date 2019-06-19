@@ -18,6 +18,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>	/* size_t */
+#include <stdint.h>	/* uint8_t */
 
 /*
  * Think of shunk_t and shunk_t as opposite solutions to the same
@@ -28,7 +29,15 @@
  *
  * shunk_t's buffer is of type 'char' (which may or may not be signed)
  * making it easier to manipulate strings, chunk_t's is uint8_t making
- * it easier to manipulate raw bytes.
+ * it easier to manipulate raw bytes and safely perform unsigned
+ * arrithmetic.
+ *
+ * The downside of 'char' is that it makes it easier to screw up
+ * unsigned byte operations.  'const void *' would be more robust as
+ * it would force an explicit cast, but that in turn makes things more
+ * cumbersom.  Perhaps shunk_char() and shunk_byte() macros?
+ *
+ * It's assumed that sizeof(char) == 1.
  */
 
 struct shunk {
@@ -53,6 +62,8 @@ extern const shunk_t null_shunk;
 
 shunk_t shunk1(const char *ptr); /* strlen() implied */
 shunk_t shunk2(const void *ptr, int len);
+
+#define THING_AS_SHUNK(THING) shunk2(&(THING), sizeof(THING))
 
 /*
  * A shunk version of strsep() (which is like strtok()) - split INPUT
