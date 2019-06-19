@@ -16,17 +16,13 @@
  * for more details.
  */
 
-#include <error.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <unistd.h>
+
 #include <net/if.h>
-#include <errno.h>
-#include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
-#include <unistd.h>
 
 #include "constants.h"
 #include "lswalloc.h"
