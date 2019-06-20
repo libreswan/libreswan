@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "ip_address.h"
+#include "libreswan/passert.h"
 
 err_t add_port(int af, ip_address *addr, unsigned short port)
 {
@@ -37,45 +38,20 @@ err_t add_port(int af, ip_address *addr, unsigned short port)
 /*
    - initaddr - initialize ip_address from bytes
  */
-err_t                           /* NULL for success, else string literal */
-initaddr(src, srclen, af, dst)
-const unsigned char *src;
-size_t srclen;
-int af;                         /* address family */
-ip_address *dst;
+err_t initaddr(const unsigned char *src, size_t srclen, int af, ip_address *dst)
 {
 	switch (af) {
 	case AF_INET:
 		if (srclen != 4)
 			return "IPv4 address must be exactly 4 bytes";
-
-#if !defined(__KERNEL__)
-		/* On BSD, the kernel compares the entire struct sockaddr when
-		 * using bind(). However, this is as large as the largest
-		 * address family, so the 'remainder' has to be 0. Linux
-		 * compares interface addresses with the length of sa_len,
-		 * instead of sizeof(struct sockaddr), so in that case padding
-		 * is not needed.
-		 *
-		 * Patch by Stefan Arentz <stefan@soze.com>
-		 */
-		memset(&dst->u.v4, '\0', sizeof(dst->u.v4));
-#endif
-		SET_V4(*dst);
-		dst->u.v4.sin_port = 0;
-		memcpy((char *)&dst->u.v4.sin_addr.s_addr, src, srclen);
+		passert(srclen == sizeof(struct in_addr));
+		*dst = address_from_in_addr((const struct in_addr *)src);
 		break;
 	case AF_INET6:
 		if (srclen != 16)
 			return "IPv6 address must be exactly 16 bytes";
-
-#if !defined(__KERNEL__)
-		memset(&dst->u.v6, '\0', sizeof(dst->u.v6));
-#endif
-		SET_V6(*dst);
-		dst->u.v6.sin6_flowinfo = 0;            /* unused */
-		dst->u.v6.sin6_port = 0;
-		memcpy((char *)&dst->u.v6.sin6_addr, src, srclen);
+		passert(srclen == sizeof(struct in6_addr));
+		*dst = address_from_in6_addr((const struct in6_addr *)src);
 		break;
 	default:
 		return "unknown address family in initaddr";
