@@ -21,7 +21,7 @@ west #
 west #
  export EF_DISABLE_BANNER=1
 west #
- PATH/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec pluto --config /etc/ipsec.conf
 west #
  # expecting 2*16 + 5 = 37 tunnels to come up
 west #

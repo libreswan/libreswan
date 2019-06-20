@@ -18,7 +18,7 @@ east #
 east #
  export EF_DISABLE_BANNER=1
 east #
- PATH/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec pluto --config /etc/ipsec.conf
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
