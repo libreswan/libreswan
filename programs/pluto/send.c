@@ -141,7 +141,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		endpoint_buf b;
 		endpoint_buf ib;
 		pexpect_iface_port(interface);
-		DBG_log("sending %zu bytes for %s through %s %s to %s (using #%lu)",
+		DBG_log("sending %zu bytes for %s through %s from %s to %s (using #%lu)",
 			len,
 			where,
 			interface->ip_dev->id_rname,
@@ -179,7 +179,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		endpoint_buf b;
 		endpoint_buf ib;
 		pexpect_iface_port(interface);
-		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s %s to %s:",
+		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
 			len,
 			where,
 			interface->ip_dev->id_rname,
