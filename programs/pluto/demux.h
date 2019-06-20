@@ -24,6 +24,7 @@
 #include "packet.h"
 #include "quirks.h"
 #include "chunk.h"
+#include "ip_address.h"
 
 struct state;   /* forward declaration of tag */
 
@@ -80,7 +81,7 @@ struct msg_digest {
 	struct msg_digest *next;		/* for free list */
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
 	const struct iface_port *iface;		/* interface on which message arrived */
-	ip_address sender;			/* where message came from (network order) */
+	ip_endpoint sender;			/* address:port where message came from */
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
 	enum state_kind from_state;		/* state we started in */

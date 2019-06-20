@@ -97,25 +97,26 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
 
 	uint8_t *_buffer = bigbuffer;
-	union {
+	/*
+	 * Size the socaddr buffer big enough for all known
+	 * alternatives.  On linux, at least, this isn't true:
+	 *
+	 * passert(sizeof(struct sockaddr) >= sizeof(struct sockaddr_in));
+	 * passert(sizeof(struct sockaddr) >= sizeof(struct sockaddr_in6));
+	 */
+	union sas {
 		struct sockaddr sa;
-		struct sockaddr_in sa_in4;
-		struct sockaddr_in6 sa_in6;
-	} from
-#if defined(HAVE_UDPFROMTO)
-	, to
-#endif
-	;
+		struct sockaddr_in sin;
+		struct sockaddr_in6 sin6;
+	};
+	union sas from;
+	zero(&from);
 	socklen_t from_len = sizeof(from);
 #if defined(HAVE_UDPFROMTO)
+	union sas to;
+	zero(&to);
 	socklen_t to_len   = sizeof(to);
 #endif
-	err_t from_ugh = NULL;
-	static const char undisclosed[] = "unknown source";
-
-	ip_address sender;
-	happy(anyaddr(addrtypeof(&ifp->ip_addr), &sender));
-	zero(&from.sa);
 
 #if defined(HAVE_UDPFROMTO)
 	packet_len = recvfromto(ifp->fd, bigbuffer,
@@ -132,68 +133,32 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	/* we do not do anything with *to* addresses yet... we will */
 
 	/*
-	 * First: digest the from address.
+	 * Try to decode the from address and then use it to report
+	 * any actual I/O error.  As a special case, when sockaddr is
+	 * empty, generate custom error messages (why? the text isn't
+	 * the best).
 	 */
-	if (packet_len == -1 &&
-	    from_len == sizeof(from) &&
-	    all_zero((const void *)&from.sa, sizeof(from))) {
-		/* "from" is untouched -- not set by recvfrom */
-		from_ugh = undisclosed;
-	} else if (from_len   <
-		   (int) (offsetof(struct sockaddr,
-				   sa_family) + sizeof(from.sa.sa_family))) {
-		from_ugh = "truncated";
-	} else {
-		const struct af_info *afi = aftoinfo(from.sa.sa_family);
-
-		if (afi == NULL) {
-			from_ugh = "unexpected Address Family";
-		} else if (from_len != afi->sa_sz) {
-			from_ugh = "wrong length";
-		} else {
-			switch (from.sa.sa_family) {
-			case AF_INET:
-				from_ugh = initaddr(
-					(void *) &from.sa_in4.sin_addr,
-					sizeof(from.sa_in4.sin_addr),
-					AF_INET, &sender);
-				setportof(from.sa_in4.sin_port, &sender);
-				break;
-			case AF_INET6:
-				from_ugh = initaddr(
-					(void *) &from.sa_in6.sin6_addr,
-					sizeof(from.sa_in6.
-					       sin6_addr),
-					AF_INET6, &sender);
-				setportof(from.sa_in6.sin6_port, &sender);
-				break;
-			}
-		}
-	}
-
-	/* now we report any actual I/O error */
+	ip_endpoint sender;
+	const char *from_ugh = sockaddr_as_endpoint(&from.sa, from_len, &sender);
 	if (packet_len == -1) {
-		if (from_ugh == undisclosed &&
-		    errno == ECONNREFUSED) {
-			/*
-			 * Tone down scary message for vague event: We
-			 * get "connection refused" in response to
-			 * some datagram we sent, but we cannot tell
-			 * which one.
-			 */
-			plog_global("some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)");
+		if (from_len == sizeof(from) &&
+		    all_zero((const void *)&from, sizeof(from))) {
+			if (packet_errno == ECONNREFUSED) {
+				/*
+				 * Tone down scary message for vague event: We
+				 * get "connection refused" in response to
+				 * some datagram we sent, but we cannot tell
+				 * which one.
+				 */
+				plog_global("some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)");
+			} else {
+				plog_global("recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: undisclosed "PRI_ERRNO,
+					    ifp->ip_dev->id_rname, pri_errno(packet_errno));
+			}
 		} else if (from_ugh != NULL) {
 			plog_global("recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
 				    ifp->ip_dev->id_rname, from_ugh, pri_errno(packet_errno));
 		} else {
-			/*
-			 * XXX: The way this and the above logic
-			 * interact when deciding if SENDER is valid
-			 * is too confusing.  Suspect it dates back to
-			 * a time before ERRNO was saved - instead of
-			 * saving it the code went through hoops to
-			 * not have it modified.
-			 */
 			plog_from(&sender, "recvfrom on %s failed "PRI_ERRNO,
 				  ifp->ip_dev->id_rname, pri_errno(packet_errno));
 		}
