@@ -216,10 +216,7 @@ static void check_ttoaddr_dns(void)
 			 t->numonly ? "" : " DNS",
 			 t->expectfailure ? " fail" : "",
 			 t->out);
-		int af = (t->family == 0 ? AF_UNSPEC :
-			  t->family == 4 ? AF_INET :
-			  t->family == 6 ? AF_INET6 :
-			  -1);
+		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_address a;
 		memset(&a, 0, sizeof(a));

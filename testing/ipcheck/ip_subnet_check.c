@@ -113,7 +113,7 @@ static void check_str_subnet(void)
 		PRINT_IN(stdout, " -> '%s'",
 			 t->out ? t->out : "<error>");
 
-		int af = (t->family == 4) ? AF_INET : AF_INET6;
+		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_subnet s;
 		oops = ttosubnet(t->in, 0, af, &s);

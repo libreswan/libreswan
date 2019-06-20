@@ -20,6 +20,38 @@
 #include "ip_address.h"
 #include "lswlog.h"		/* for libreswan_log() */
 
+ip_address address_from_in_addr(const struct in_addr *in)
+{
+	ip_address address = {
+		.u = {
+			.v4 = {
+				.sin_family = AF_INET,
+				.sin_addr = *in,
+#ifdef NEED_SIN_LEN
+				.sin_len = sizeof(struct sockaddr_in),
+#endif
+			},
+		},
+	};
+	return address;
+}
+
+ip_address address_from_in6_addr(const struct in6_addr *in6)
+{
+	ip_address address = {
+		.u = {
+			.v6 = {
+				.sin6_family = AF_INET6,
+				.sin6_addr = *in6,
+#ifdef NEED_SIN_LEN
+				.sin6_len = sizeof(struct sockaddr_in6),
+#endif
+			},
+		},
+	};
+	return address;
+}
+
 /*
  * portof - get the port field of an ip_address in network order.
  *
@@ -206,7 +238,8 @@ void jam_address_raw(jambuf_t *buf, const ip_address *address, char sepc)
 		jam(buf, "<unspecified>");
 		break;
 	default:
-		bad_case(type);
+		jam(buf, "<invalid>");
+		break;
 	}
 }
 

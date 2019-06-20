@@ -53,7 +53,7 @@ static void check_rangetosubnet(void)
 		const struct test *t = &tests[ti];
 		PRINT_LO2HI(stdout, "-> '%s'",
 			    t->out ? t->out : "<error>");
-		int af = (t->family == 4) ? AF_INET : AF_INET6;
+		sa_family_t af = SA_FAMILY(t->family);
 		const char *oops = NULL;
 
 		ip_address lo;
@@ -123,7 +123,7 @@ static void check_iprange_bits(void)
 		const struct test *t = &tests[ti];
 		PRINT_LO2HI(stdout, " -> %d", t->range);
 
-		int af = (t->family == 4) ? AF_INET : AF_INET6;
+		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_address lo;
 		oops = ttoaddr(t->lo, 0, af, &lo);
@@ -182,7 +182,7 @@ static void check_ttorange_2_str_range(void)
 			PRINT_IN(stdout, "-> <error>");
 		}
 		const char *oops = NULL;
-		int af = (t->family == 4) ? AF_INET : AF_INET6;
+		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_range range;
 		oops = ttorange(t->in, 0, af, &range, false);

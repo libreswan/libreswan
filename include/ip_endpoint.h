@@ -20,6 +20,7 @@
 #include <stdbool.h>
 
 #include "chunk.h"
+#include "err.h"
 
 /*
  * XXX: while ip_endpoint and ip_address should be separate doing so
@@ -38,6 +39,7 @@ typedef ip_address ip_endpoint;
 struct lswlog;
 
 ip_endpoint endpoint(const ip_address *address, int port);
+err_t sockaddr_as_endpoint(const struct sockaddr *sa, socklen_t sa_len, ip_endpoint *endpoint);
 
 /* forces port to zero */
 ip_address endpoint_address(const ip_endpoint *endpoint);

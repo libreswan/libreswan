@@ -34,6 +34,11 @@ extern unsigned fails;
 			    (FAMILY) == 6 ? " IPv6" :	\
 			    " ???")
 
+#define SA_FAMILY(FAMILY) (FAMILY == 0 ? AF_UNSPEC :	\
+			   FAMILY == 4 ? AF_INET :	\
+			   FAMILY == 6 ? AF_INET6 :	\
+			   -1)
+
 /* t->family, t->in */
 #define PRINT_IN(FILE, FMT, ...)					\
 	fprintf(FILE, "%s[%zu]:%s '%s' " FMT "\n",			\

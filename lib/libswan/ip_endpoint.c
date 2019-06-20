@@ -23,6 +23,56 @@ ip_endpoint endpoint(const ip_address *address, int port)
 	return hsetportof(port, *address);
 }
 
+err_t sockaddr_as_endpoint(const struct sockaddr *sa, socklen_t sa_len, ip_endpoint *e)
+{
+	/* paranoia from demux.c */
+	if (sa_len < (socklen_t) (offsetof(struct sockaddr, sa_family) +
+				  sizeof(sa->sa_family))) {
+		zero(e); /* something better? this is AF_UNSPEC */
+		return "truncated";
+	}
+
+	/*
+	 * The text used in the below errors originated in demux.c.
+	 *
+	 * XXX: While af_info seems useful, trying to make it work
+	 * here resulted in convoluted over-engineering.  Instead
+	 * ensure these code paths work using testing.
+	 */
+	ip_address address;
+	int port;
+	switch (sa->sa_family) {
+	case AF_INET:
+	{
+		const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
+		/* XXX: to strict? */
+		if (sa_len != sizeof(*sin)) {
+			return "wrong length";
+		}
+		address = address_from_in_addr(&sin->sin_addr);
+		port = ntohs(sin->sin_port);
+		break;
+	}
+	case AF_INET6:
+	{
+		const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
+		/* XXX: to strict? */
+		if (sa_len != sizeof(*sin6)) {
+			return "wrong length";
+		}
+		address = address_from_in6_addr(&sin6->sin6_addr);
+		port = ntohs(sin6->sin6_port);
+		break;
+	}
+	case AF_UNSPEC:
+		return "unspecified";
+	default:
+		return "unexpected Address Family";
+	}
+	*e = endpoint(&address, port);
+	return NULL;
+}
+
 ip_address endpoint_address(const ip_endpoint *endpoint)
 {
 	if (isvalidaddr(endpoint)) {
@@ -63,7 +113,7 @@ static void format_endpoint(jambuf_t *buf, bool sensitive,
 		return;
 	}
 	if (sensitive) {
-		jam(buf, "<address:port>");
+		jam(buf, "<address:>");
 		return;
 	}
 	ip_address address = endpoint_address(endpoint);
@@ -87,11 +137,11 @@ static void format_endpoint(jambuf_t *buf, bool sensitive,
 			jam_address_cooked(buf, &address);
 		}
 		break;
-	case 0:
-		jam(buf, "<invalid-endpoint>");
+	case AF_UNSPEC:
+		jam(buf, "<unspecified:>");
 		return;
 	default:
-		jam(buf, "<ip-type-%d>", type);
+		jam(buf, "<invalid:>");
 		return;
 	}
 }

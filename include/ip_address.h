@@ -24,14 +24,17 @@
 
 extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
 
-/*
- * Hack around this file being sucked into linux kernel module builds.
- */
 #include <netinet/in.h>		/* for struct sockaddr_in */
 #ifdef HAVE_INET6_IN6_H
 #include <netinet6/in6.h>	/* for struct sockaddr_in6 */
 #endif
 
+/*
+ * XXX: These macros are obsolete.
+ *
+ * All the cases of code using the below can be reduced to
+ * {in,in6}_addr and address_from_*_addr().
+ */
 #ifdef NEED_SIN_LEN
 #define SET_V4(a)	{ (a).u.v4.sin_family = AF_INET; (a).u.v4.sin_len = sizeof(struct sockaddr_in); }
 #define SET_V6(a)	{ (a).u.v6.sin6_family = AF_INET6; (a).u.v6.sin6_len = sizeof(struct sockaddr_in6); }
@@ -43,29 +46,35 @@ extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
 struct lswlog;
 
 /*
- * The type IP_ADDRESS is shared between KLIPS (kernel module) and
- * PLUTO.  Its definition is buried in the common include file
- * "libreswan.h".
- *
- * This header contains declarations for userland specific extensions.
- * Their implementation is found in libswan.a.
- *
- * When KLIPS goes away, the definition of IP_ADDRESS et.al., can be
- * moved here.
- */
-
-/*
  * Basic data types for the address-handling functions.
  * ip_address and ip_subnet are supposed to be opaque types; do not
  * use their definitions directly, they are subject to change!
  */
 
 typedef struct {
+#if 0
+	/*
+	 * XXX: Embedding all of sockaddr_in* in ip_address is seems
+	 * like overkill - it should only needs the fields below.
+	 * Unfortunately code is directly manipulating other fields
+	 * (sinin_port - use ip_endpoint).  So much for an immutable
+	 * abstraction.
+	 */
+	const sa_family_t family; /* descriminator */
+	const union {
+		struct in_addr in;
+		struct in6_addr in6;
+	} u;
+#else
 	union {
 		struct sockaddr_in v4;
 		struct sockaddr_in6 v6;
 	} u;
+#endif
 } ip_address;
+
+ip_address address_from_in_addr(const struct in_addr *in);
+ip_address address_from_in6_addr(const struct in6_addr *sin6);
 
 /* network byte ordered */
 int nportof(const ip_address *src);
