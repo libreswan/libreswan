@@ -601,23 +601,21 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 		}
 
 		if (c == NULL) {
-			ipstr_buf b;
+			endpoint_buf b;
 
 			loglog(RC_LOG_SERIOUS,
-				"initial Main Mode message received on %s:%u but no connection has been authorized with policy %s",
-				ipstr(&md->iface->ip_addr, &b),
-				ntohs(portof(&md->iface->ip_addr)),
+				"initial Main Mode message received on %s but no connection has been authorized with policy %s",
+				str_endpoint(&md->iface->local_endpoint, &b),
 				bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		} else if (c->kind != CK_TEMPLATE) {
-			ipstr_buf b;
-			char cib[CONN_INST_BUF];
-
+			endpoint_buf b;
+			connection_buf cib;
 			loglog(RC_LOG_SERIOUS,
-				"initial Main Mode message received on %s:%u but \"%s\"%s forbids connection",
-				ipstr(&md->iface->ip_addr, &b), pluto_port,
-				c->name, fmt_conn_instance(c, cib));
+				"initial Main Mode message received on %s but "PRI_CONNECTION" forbids connection",
+			       str_endpoint(&md->iface->local_endpoint, &b),
+			       pri_connection(c, &cib));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		} else {
@@ -626,14 +624,11 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 			 * of this one.
 			 * Their ID isn't declared yet.
 			 */
-			DBG(DBG_CONTROL, {
-				ipstr_buf b;
-				char cib[CONN_INST_BUF];
-				DBG_log("instantiating \"%s\"%s for initial Main Mode message received on %s:%u",
-					c->name, fmt_conn_instance(c, cib),
-					ipstr(&md->iface->ip_addr, &b),
-					pluto_port);
-			});
+			endpoint_buf b;
+			connection_buf cib;
+			dbg("instantiating "PRI_CONNECTION" for initial Main Mode message received on %s",
+			    pri_connection(c, &cib),
+			    str_endpoint(&md->iface->local_endpoint, &b));
 			c = rw_instantiate(c, &md->sender,
 					NULL, NULL);
 		}

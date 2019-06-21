@@ -414,12 +414,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	ipstr_buf b;
-	libreswan_log("responding to %s (%d) message (Message ID %u) from %s:%u with unencrypted notification %s",
+	endpoint_buf b;
+	libreswan_log("responding to %s (%d) message (Message ID %u) from %s with unencrypted notification %s",
 		      exchange_name, exchange_type,
 		      md->hdr.isa_msgid,
-		      sensitive_ipstr(&md->sender, &b),
-		      hportof(&md->sender),
+		      str_sensitive_endpoint(&md->sender, &b),
 		      notify_name);
 
 	/*

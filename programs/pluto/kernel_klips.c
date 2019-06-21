@@ -208,12 +208,12 @@ add_entry:
 
 					interfaces = q;
 
+					endpoint_buf b;
 					libreswan_log(
-						"adding interface %s/%s %s:%d",
+						"adding interface %s/%s %s",
 						q->ip_dev->id_vname,
 						q->ip_dev->id_rname,
-						ipstr(&q->ip_addr, &b),
-						q->port);
+						str_endpoint(&q->local_endpoint, &b));
 
 					/*
 					 * right now, we do not support NAT-T on IPv6, because

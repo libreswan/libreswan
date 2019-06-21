@@ -478,10 +478,9 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 						unsigned int iv)
 {
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
-		ipstr_buf b;
-		PEXPECT_LOG("received encrypted packet from %s:%u  but no exponents for state #%lu to decrypt it",
-			    ipstr(&md->sender, &b),
-			    (unsigned)hportof(&md->sender),
+		endpoint_buf b;
+		PEXPECT_LOG("received encrypted packet from %s  but no exponents for state #%lu to decrypt it",
+			    str_endpoint(&md->sender, &b),
 			    ike->sa.st_serialno);
 		return false;
 	}

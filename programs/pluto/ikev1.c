@@ -1165,9 +1165,9 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					} while (tmp_spd != NULL);
 
 					if (tmp_c->interface != NULL) {
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("Current interface_addr: %s",
-							    ipstr(&tmp_c->interface->ip_addr, &b)));
+						endpoint_buf b;
+						dbg("Current interface_addr: %s",
+						    str_endpoint(&tmp_c->interface->local_endpoint, &b));
 					}
 				}
 
@@ -2035,12 +2035,9 @@ void process_v1_packet(struct msg_digest **mdp)
 	if ((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) &&
 	    st != NULL &&
 	    !st->hidden_variables.st_skeyid_calculated) {
-		DBG(DBG_CRYPT | DBG_CONTROL, {
-			ipstr_buf b;
-			DBG_log("received encrypted packet from %s:%u but exponentiation still in progress",
-				ipstr(&md->sender, &b),
-				(unsigned)hportof(&md->sender));
-		});
+		endpoint_buf b;
+		dbg("received encrypted packet from %s but exponentiation still in progress",
+		    str_endpoint(&md->sender, &b));
 
 		/*
 		 * if there was a previous packet, let it go, and go
@@ -2076,12 +2073,8 @@ void process_packet_tail(struct msg_digest **mdp)
 	bool self_delete = FALSE;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-		DBG(DBG_CRYPT, {
-			ipstr_buf b;
-			DBG_log("received encrypted packet from %s:%u",
-				ipstr(&md->sender, &b),
-				(unsigned)hportof(&md->sender));
-		});
+		endpoint_buf b;
+		dbg("received encrypted packet from %s", str_endpoint(&md->sender, &b));
 
 		if (st == NULL) {
 			libreswan_log(

@@ -1104,11 +1104,8 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
 
 	if (st->st_state->kind == STATE_PARENT_I1 &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)) {
-		DBG(DBG_NATT, {
-			ipstr_buf b;
-			DBG_log("NAT-T: floating to port %s:%d",
-				ipstr(&md->sender, &b), pluto_nat_port);
-		});
+		endpoint_buf b;
+		dbg("NAT-T: floating to port %s", str_endpoint(&md->sender, &b));
 		st->st_localport = pluto_nat_port;
 		st->st_remoteport = pluto_nat_port;
 

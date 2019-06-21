@@ -851,12 +851,11 @@ static struct connection *find_v2_host_connection(struct msg_digest *md,
 	}
 
 	if (c == NULL) {
-		ipstr_buf b;
+		endpoint_buf b;
 
 		/* we might want to change this to a debug log message only */
-		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no suitable connection found with IKEv2 policy",
-			ipstr(&md->iface->ip_addr, &b),
-			ntohs(portof(&md->iface->ip_addr)));
+		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s but no suitable connection found with IKEv2 policy",
+		       str_endpoint(&md->iface->local_endpoint, &b));
 		return NULL;
 	}
 
