@@ -100,7 +100,9 @@ static void check_sockaddr_as_endpoint(void)
 			struct sockaddr sa;
 			struct sockaddr_in sin;
 			struct sockaddr_in6 sin6;
-		} sa = {0};
+		} sa;
+		zero(&sa);
+
 		sa.sa.sa_family = SA_FAMILY(t->family);
 		switch (t->family) {
 		case 4:
