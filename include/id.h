@@ -43,6 +43,10 @@ void jam_id(struct lswlog *buf, const struct id *id);
 void jam_id_escaped(struct lswlog *buf, const struct id *id);
 extern void idtoa(const struct id *id, char *dst, size_t dstlen);
 #define IDTOA_BUF	512
+typedef struct {
+	char buf[IDTOA_BUF];
+} id_buf;
+const char *str_id(const struct id *id, id_buf *buf);
 extern void escape_metachar(const char *src, char *dst, size_t dstlen);
 extern void unshare_id_content(struct id *id);
 extern void free_id_content(struct id *id);

@@ -263,6 +263,12 @@ void jam_id(struct lswlog *buf, const struct id *id)
 	jam_string(buf, a);
 }
 
+const char *str_id(const struct id *id, id_buf *buf)
+{
+	idtoa(id, buf->buf, sizeof(buf->buf));
+	return buf->buf;
+}
+
 void jam_id_escaped(struct lswlog *buf, const struct id *id)
 {
 	char a[IDTOA_BUF];
