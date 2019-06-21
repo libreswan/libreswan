@@ -245,12 +245,12 @@ static int parse_eklen(struct proposal_parser *parser, shunk_t buf)
 	long eklen = strtol(buf.ptr, &end, 10);
 	if (buf.ptr + buf.len != end) {
 		proposal_error(parser, "encryption key length '"PRI_SHUNK"' contains a non-numeric character",
-			       PRI_shunk(buf));
+			       pri_shunk(buf));
 		return 0;
 	}
 	if (eklen >= INT_MAX) {
 		proposal_error(parser, "encryption key length '"PRI_SHUNK"' WAY too big",
-			       PRI_shunk(buf));
+			       pri_shunk(buf));
 		return 0;
 	}
 	if (eklen == 0) {
@@ -359,7 +359,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		lswlogs(buf, "algs:");
 		for (struct token *token = tokens; token->alg.ptr != NULL; token++) {
 			lswlogf(buf, " algs[%tu] = '"PRI_SHUNK"'",
-				token - tokens, PRI_shunk(token->alg));
+				token - tokens, pri_shunk(token->alg));
 		}
 	}
 
@@ -463,7 +463,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 
 	if (tokens->alg.ptr != NULL) {
 		proposal_error(parser, "'"PRI_SHUNK"' unexpected",
-			       PRI_shunk(tokens[0].alg));
+			       pri_shunk(tokens[0].alg));
 		return false;
 	}
 
@@ -480,7 +480,7 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 {
 	DBG(DBG_PROPOSAL_PARSER,
 	    DBG_log("parsing '"PRI_SHUNK"' for %s",
-		    PRI_shunk(alg_str), parser->protocol->name));
+		    pri_shunk(alg_str), parser->protocol->name));
 
 	if (alg_str.len == 0) {
 		/* XXX: hack to keep testsuite happy */

@@ -119,6 +119,6 @@ bool shunk_tou(shunk_t lhs, unsigned *value, int base);
  */
 
 #define PRI_SHUNK "%.*s"
-#define PRI_shunk(SHUNK) ((int) (SHUNK).len), ((SHUNK).ptr)
+#define pri_shunk(SHUNK) ((int) (SHUNK).len), ((SHUNK).ptr)
 
 #endif

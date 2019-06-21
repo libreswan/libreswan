@@ -36,7 +36,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 		if (alg->id[protocol->ikev1_alg_id] < 0) {
 			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv1",
 				       protocol->name, ike_alg_type_name(alg->algo_type),
-				       PRI_shunk(print_name));
+				       pri_shunk(print_name));
 			return false;
 		}
 		break;
@@ -44,7 +44,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 		if (alg->id[IKEv2_ALG_ID] < 0) {
 			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv2",
 				       protocol->name, ike_alg_type_name(alg->algo_type),
-				       PRI_shunk(print_name));
+				       pri_shunk(print_name));
 			return false;
 		}
 		break;
@@ -64,7 +64,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 	if (!policy->alg_is_ok(alg)) {
 		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported",
 			       protocol->name, ike_alg_type_name(alg->algo_type),
-			       PRI_shunk(print_name));
+			       pri_shunk(print_name));
 		return false;
 	}
 	/*
@@ -78,7 +78,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 	if (!ike_alg_is_valid(alg)) {
 		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not valid",
 			       protocol->name, ike_alg_type_name(alg->algo_type),
-			       PRI_shunk(print_name));
+			       pri_shunk(print_name));
 		return false;
 	}
 	return true;
@@ -99,11 +99,11 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 		    ike_alg_enum_match(type, IKEv2_ALG_ID, name) >= 0) {
 			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported",
 				       protocol->name, ike_alg_type_name(type),
-				       PRI_shunk(print_name));
+				       pri_shunk(print_name));
 		} else {
 			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not recognized",
 				       protocol->name, ike_alg_type_name(type),
-				       PRI_shunk(print_name));
+				       pri_shunk(print_name));
 		}
 		passert(parser->error[0] != '\0');
 		DBGF(DBG_PROPOSAL_PARSER, "ike_alg_byname() failed: %s",

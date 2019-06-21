@@ -398,7 +398,7 @@ static void pexpect_ike_alg_has_base_names(const struct ike_alg *alg,
 			LSWLOG_PEXPECT(buf) {
 				lswlog_ike_alg(buf, alg);
 				lswlogf(buf, " missing name "PRI_SHUNK" in base ",
-					PRI_shunk(alg_name));
+					pri_shunk(alg_name));
 				lswlog_ike_alg(buf, base_alg);
 			}
 		}
@@ -1122,7 +1122,7 @@ static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg
 		FOR_EACH_IKE_ALG_NAME(alg, alg_name) {
 			/* filter out NAME */
 			if (!shunk_strcaseeq(alg_name, alg->fqn)) {
-				jam(buf, "%s"PRI_SHUNK, sep, PRI_shunk(alg_name));
+				jam(buf, "%s"PRI_SHUNK, sep, pri_shunk(alg_name));
 				sep = ", ";
 			}
 		}

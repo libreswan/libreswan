@@ -317,7 +317,7 @@ bool parse_impair(const char *optarg,
 			LSWLOG_ERROR(buf) {
 				lswlogf(buf, "ignoring unrecognized option '-%s-impair "PRI_SHUNK"'",
 					enable ? "" : "-no",
-					PRI_shunk(what));
+					pri_shunk(what));
 			}
 			return false;
 		} else if (shunk_strcaseeq(nowhat, impairments[ci].what)) {
@@ -343,7 +343,7 @@ bool parse_impair(const char *optarg,
 			LSWLOG_ERROR(buf) {
 				lswlogf(buf, "ignoring option '-%s-impair "PRI_SHUNK":"PRI_SHUNK"' with unexpected parameter '"PRI_SHUNK"'",
 					enable ? "" : "-no",
-					PRI_shunk(what), PRI_shunk(how), PRI_shunk(how));
+					pri_shunk(what), pri_shunk(how), pri_shunk(how));
 			}
 			return false;
 		}
@@ -361,7 +361,7 @@ bool parse_impair(const char *optarg,
 		if (how.len == 0) {
 			LSWLOG_ERROR(buf) {
 				lswlogf(buf, "ignoring option '--impair "PRI_SHUNK"' with missing parameter",
-					PRI_shunk(what));
+					pri_shunk(what));
 			}
 			return false;
 		}
@@ -385,8 +385,8 @@ bool parse_impair(const char *optarg,
 		}
 		LSWLOG_ERROR(buf) {
 			lswlogf(buf, "ignoring option '--impair "PRI_SHUNK":"PRI_SHUNK"' with unknown parameter '"PRI_SHUNK"'",
-				PRI_shunk(what), PRI_shunk(how),
-				PRI_shunk(how));
+				pri_shunk(what), pri_shunk(how),
+				pri_shunk(how));
 		}
 		return false;
 	} else {
@@ -432,7 +432,7 @@ bool parse_impair(const char *optarg,
 			/* XXX: ignores "WHAT:" */
 			LSWLOG_ERROR(buf) {
 				lswlogf(buf, "ignoring option '--impair "PRI_SHUNK":"PRI_SHUNK"' with unexpected parameter '"PRI_SHUNK"'",
-					PRI_shunk(what), PRI_shunk(how), PRI_shunk(how));
+					pri_shunk(what), pri_shunk(how), pri_shunk(how));
 			}
 			return false;
 		}
