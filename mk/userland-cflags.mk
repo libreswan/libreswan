@@ -213,7 +213,7 @@ ifeq ($(USE_CHACHA),true)
 USERLAND_CFLAGS+=-DUSE_CHACHA
 endif
 
-USE_DH2 ?= true
+USE_DH2 ?= false
 ifeq ($(USE_DH2),true)
 USERLAND_CFLAGS+=-DUSE_DH2
 endif
