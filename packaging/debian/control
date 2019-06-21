@@ -44,8 +44,8 @@ Pre-Depends:
 Depends:
  bsdmainutils,
  dns-root-data,
- bind9-host | host,
- iproute2 | iproute (>= 20071016),
+ bind9-host,
+ iproute2,
  iptables,
  libnspr4,
  libnss3 (>= 3.16),
