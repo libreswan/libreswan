@@ -203,7 +203,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				return res;
 		}
 		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy);
-		chunk_t local_spi = CHUNKO(proto_info->our_spi);
+		chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
 					cst->st_accepted_esp_or_ah_proposal,
 					&local_spi)) {

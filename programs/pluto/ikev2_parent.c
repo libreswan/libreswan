@@ -273,7 +273,7 @@ static bool v2_reject_wrong_ke_for_proposal(struct state *st,
 		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
 		/* convert group to a raw buffer */
 		uint16_t gr = htons(accepted_dh->group);
-		chunk_t nd = CHUNKO(gr);
+		chunk_t nd = THING_AS_CHUNK(gr);
 		if (st != NULL) {
 			send_v2N_response_from_state(ike_sa(st), md,
 						     v2N_INVALID_KE_PAYLOAD, &nd);
@@ -2363,7 +2363,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	struct ipsec_proto_info *proto_info
 		= ikev2_child_sa_proto_info(pexpect_child_sa(cst), cc->policy);
 	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
-	const chunk_t local_spi = CHUNKO(proto_info->our_spi);
+	const chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 
 	/*
 	 * A CHILD_SA established during an AUTH exchange does
@@ -3995,7 +3995,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	struct ipsec_proto_info *proto_info
 		= ikev2_child_sa_proto_info(child, cc->policy);
 	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
-	chunk_t local_spi = CHUNKO(proto_info->our_spi);
+	chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 
 	/*
 	 * HACK: Use the CREATE_CHILD_SA proposal suite hopefully
@@ -4093,7 +4093,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 	{
 		local_g = &st->st_gr;
 		local_nonce = st->st_nr;
-		chunk_t local_spi = CHUNKO(st->st_ike_rekey_spis.responder);
+		chunk_t local_spi = THING_AS_CHUNK(st->st_ike_rekey_spis.responder);
 
 		/* send selected v2 IKE SA */
 		if (!ikev2_emit_sa_proposal(outpbs, st->st_accepted_ike_proposal,
@@ -4107,7 +4107,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 	{
 		local_g = &st->st_gi;
 		local_nonce = st->st_ni;
-		chunk_t local_spi = CHUNKO(st->st_ike_rekey_spis.initiator);
+		chunk_t local_spi = THING_AS_CHUNK(st->st_ike_rekey_spis.initiator);
 
 		struct ikev2_proposals *ike_proposals =
 			get_v2_ike_proposals(c, "IKE SA initiating rekey");

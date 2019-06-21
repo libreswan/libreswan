@@ -253,6 +253,6 @@ bool send_keepalive(struct state *st, const char *where)
 	return send_chunks(where, TRUE,
 			   st->st_serialno, st->st_interface,
 			   hsetportof(st->st_remoteport, st->st_remoteaddr),
-			   CHUNKO(ka_payload),
+			   THING_AS_CHUNK(ka_payload),
 			   EMPTY_CHUNK);
 }
