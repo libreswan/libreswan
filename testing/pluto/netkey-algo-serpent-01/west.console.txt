@@ -106,7 +106,6 @@ west #
 000 algorithm IKE PRF: name=HMAC_SHA2_384, hashlen=48
 000 algorithm IKE PRF: name=HMAC_SHA2_512, hashlen=64
 000 algorithm IKE PRF: name=AES_XCBC, hashlen=16
-000 algorithm IKE DH Key Exchange: name=MODP1024, bits=1024
 000 algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
 000 algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
 000 algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
