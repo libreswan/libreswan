@@ -91,37 +91,43 @@ ip_address hsetportof(int port, const ip_address dst);
 struct sockaddr *sockaddrof(const ip_address *src);
 size_t sockaddrlenof(const ip_address *src);
 
-
 /*
- * Converting to a string.
+ * Convert an address to a string:
+ *
+ * This implements https://tools.ietf.org/html/rfc5952 where zeros in
+ * the middle of an IPv6 address are suppressed.  If the IP address is
+ * "sensitive" use *_address_sensitive().
  */
 
 typedef struct {
 	char buf[(4+1)*8/*0000:...*/ + 1/*\0*/ + 1/*CANARY*/];
 } address_buf;
 
-/*
- * address as a string:
- *
- * raw: IPv6 zeros like :0:..:0: not suppressed; no port; when SEPC !=
- * '\0' use it as the separator instead of the default (. or :).
- *
- * cooked: IPv6 zeros like :0:..:0: suppressed; no port
- */
-void jam_address_raw(struct lswlog *buf, const ip_address *src, char sepc);
-void jam_address_cooked(struct lswlog *buf, const ip_address *src);
-void jam_address_sensitive(struct lswlog *buf, const ip_address *src);
-void jam_address_reversed(struct lswlog *buf, const ip_address *src);
+void jam_address(struct lswlog *buf, const ip_address *src);
+const char *str_address(const ip_address *src, address_buf *dst);
 
-const char *str_address_raw(const ip_address *src, char sepc, address_buf *dst);
-const char *str_address_cooked(const ip_address *src, address_buf *dst);
-const char *str_address_sensitive(const ip_address *src, address_buf *dst);
+/*
+ * sensitive: don't print address when !log_ip
+ *
+ * reversed: in-addr format.
+
+ * raw: This is not the format function you are looking for. For IPv6
+ * include all zeros, vis :0:..:0:; when SEPC != '\0' use it as the
+ * separator instead of '.' (IPv4) or ':' (IPv6).
+ */
 
 typedef struct {
 	/* string includes NUL, add 1 for canary */
 	char buf[sizeof("4.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.2.0.0.0.1.0.0.0.IP6.ARPA.") + 1];
 }  address_reversed_buf;
+
+void jam_address_sensitive(struct lswlog *buf, const ip_address *src);
+void jam_address_reversed(struct lswlog *buf, const ip_address *src);
+void jam_address_raw(struct lswlog *buf, const ip_address *src, char sepc);
+
+const char *str_address_sensitive(const ip_address *src, address_buf *dst);
 const char *str_address_reversed(const ip_address *src, address_reversed_buf *buf);
+const char *str_address_raw(const ip_address *src, char sepc, address_buf *dst);
 
 typedef address_buf ipstr_buf;
 const char *ipstr(const ip_address *src, ipstr_buf *b);

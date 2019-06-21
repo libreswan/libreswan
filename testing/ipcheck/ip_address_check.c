@@ -72,7 +72,7 @@ static void check_str_address_raw(void)
 	}
 }
 
-static void check_str_address_cooked(void)
+static void check_str_address(void)
 {
 	static const struct test {
 		int family;
@@ -115,7 +115,7 @@ static void check_str_address_cooked(void)
 
 		/* now convert it back */
 		address_buf buf;
-		const char *out = str_address_cooked(&a, &buf);
+		const char *out = str_address(&a, &buf);
 		if (out == NULL) {
 			FAIL_IN("failed");
 		} else if (!strcaseeq(t->out, out)) {
@@ -243,7 +243,7 @@ static void check_ttoaddr_dns(void)
 
 		/* now convert it back */
 		address_buf buf;
-		const char *out = str_address_cooked(&a, &buf);
+		const char *out = str_address(&a, &buf);
 		if (!strcaseeq(t->out, out)) {
 			FAIL_IN("addrtoc returned '%s', expected '%s'",
 				out, t->out);
@@ -254,7 +254,7 @@ static void check_ttoaddr_dns(void)
 void ip_address_check(void)
 {
 	check_str_address_raw();
-	check_str_address_cooked();
+	check_str_address();
 	check_str_address_sensitive();
 	check_str_address_reversed();
 	check_ttoaddr_dns();

@@ -122,7 +122,7 @@ static void format_endpoint(jambuf_t *buf, bool sensitive,
 
 	switch (type) {
 	case AF_INET: /* N.N.N.N[:PORT] */
-		jam_address_cooked(buf, &address);
+		jam_address(buf, &address);
 		if (port > 0) {
 			jam(buf, ":%d", port);
 		}
@@ -130,11 +130,11 @@ static void format_endpoint(jambuf_t *buf, bool sensitive,
 	case AF_INET6: /* [N:..:N]:PORT or N:..:N */
 		if (port > 0) {
 			jam(buf, "[");
-			jam_address_cooked(buf, &address);
+			jam_address(buf, &address);
 			jam(buf, "]");
 			jam(buf, ":%d", port);
 		} else {
-			jam_address_cooked(buf, &address);
+			jam_address(buf, &address);
 		}
 		break;
 	case AF_UNSPEC:

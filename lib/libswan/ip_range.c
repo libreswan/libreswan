@@ -162,9 +162,9 @@ err_t ttorange(const char *src,
 
 void jam_range(jambuf_t *buf, const ip_range *range)
 {
-	jam_address_cooked(buf, &range->start);
+	jam_address(buf, &range->start);
 	jam(buf, "-");
-	jam_address_cooked(buf, &range->end);
+	jam_address(buf, &range->end);
 }
 
 const char *str_range(const ip_range *range, range_buf *out)

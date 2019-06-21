@@ -60,7 +60,7 @@ ip_address ip_subnet_ceiling(const ip_subnet *subnet)
 
 void jam_subnet(jambuf_t *buf, const ip_subnet *subnet)
 {
-	jam_address_cooked(buf, &subnet->addr); /* sensitive? */
+	jam_address(buf, &subnet->addr); /* sensitive? */
 	jam(buf, "/%u", subnet->maskbits);
 }
 

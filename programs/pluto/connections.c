@@ -2286,7 +2286,7 @@ void jam_connection_instance(jambuf_t *buf, const struct connection *c)
 				      &c->spd.this.client,
 				      &c->spd.this.host_addr);
 		jam_string(buf, " ...");
-		jam_address_cooked(buf, &c->spd.that.host_addr);
+		jam_address(buf, &c->spd.that.host_addr);
 		jam_connection_client(buf, "===", "",
 				      &c->spd.that.client,
 				      &c->spd.that.host_addr);

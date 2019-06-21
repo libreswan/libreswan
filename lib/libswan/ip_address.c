@@ -153,7 +153,7 @@ size_t sockaddrlenof(const ip_address * src)
 
 const char *ipstr(const ip_address *src, ipstr_buf *b)
 {
-	return str_address_cooked(src, b);
+	return str_address(src, b);
 }
 
 const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b)
@@ -303,7 +303,7 @@ static void format_address_cooked(jambuf_t *buf, bool sensitive,
 	}
 }
 
-void jam_address_cooked(jambuf_t *buf, const ip_address *address)
+void jam_address(jambuf_t *buf, const ip_address *address)
 {
 	format_address_cooked(buf, false, address);
 }
@@ -349,11 +349,11 @@ const char *str_address_raw(const ip_address *src, char sep,
 	return dst->buf;
 }
 
-const char *str_address_cooked(const ip_address *src,
+const char *str_address(const ip_address *src,
 			       address_buf *dst)
 {
 	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
-	jam_address_cooked(&buf, src);
+	jam_address(&buf, src);
 	return dst->buf;
 }
 
