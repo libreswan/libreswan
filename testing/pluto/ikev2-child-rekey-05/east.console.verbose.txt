@@ -32,14 +32,14 @@ initdone
 [root@east ikev2-child-rekey]# : ==== cut ====
 [root@east ikev2-child-rekey]# ipsec auto --status
 000 using kernel interface: netkey
-000 interface lo/lo 127.0.0.1@4500
-000 interface lo/lo 127.0.0.1@500
-000 interface eth0/eth0 192.0.2.254@4500
-000 interface eth0/eth0 192.0.2.254@500
-000 interface eth1/eth1 192.1.2.23@4500
-000 interface eth1/eth1 192.1.2.23@500
-000 interface eth2/eth2 192.9.2.23@4500
-000 interface eth2/eth2 192.9.2.23@500
+000 interface lo/lo 127.0.0.1:4500
+000 interface lo/lo 127.0.0.1:500
+000 interface eth0/eth0 192.0.2.254:4500
+000 interface eth0/eth0 192.0.2.254:500
+000 interface eth1/eth1 192.1.2.23:4500
+000 interface eth1/eth1 192.1.2.23:500
+000 interface eth2/eth2 192.9.2.23:4500
+000 interface eth2/eth2 192.9.2.23:500
 000  
 000  
 000 fips mode=disabled;

@@ -1036,12 +1036,11 @@ void show_ifaces_status(void)
 	struct iface_port *p;
 
 	for (p = interfaces; p != NULL; p = p->next) {
-		ipstr_buf b;
+		endpoint_buf b;
 		pexpect_iface_port(p);
-		whack_log(RC_COMMENT, "interface %s/%s %s@%d",
+		whack_log(RC_COMMENT, "interface %s/%s %s",
 			  p->ip_dev->id_vname, p->ip_dev->id_rname,
-			  ipstr(&p->ip_addr, &b),
-			  endpoint_port(&p->local_endpoint));
+			  str_endpoint(&p->local_endpoint, &b));
 	}
 }
 
