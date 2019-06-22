@@ -28,7 +28,7 @@ west #
 003 "san" #1: certificate does not contain ID_USER_FQDN subjectAltName=NOTeast@testing.libreswan.org
 002 "san" #1: Peer public key SubjectAltName does not match peer ID for this connection
 002 "san" #1: X509: CERT payload does not match connection ID
-003 "san" #1: initial Aggressive Mode packet claiming to be from NOTeast@testing.libreswan.org on 192.1.2.23 but no connection has been authorized
+003 "san" #1: initial Aggressive Mode packet claiming to be from NOTeast@testing.libreswan.org on 192.1.2.23:500 but no connection has been authorized
 218 "san" #1: STATE_AGGR_I1: INVALID_ID_INFORMATION
 002 "san" #1: sending notification INVALID_ID_INFORMATION to 192.1.2.23:500
 002 "san" #1: IMPAIR: retransmit so deleting SA

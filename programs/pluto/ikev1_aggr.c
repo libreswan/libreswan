@@ -150,11 +150,11 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 		c = find_host_connection(&md->iface->local_endpoint, NULL,
 					 policy, policy_exact_mask);
 		if (c == NULL) {
-			ipstr_buf b;
+			endpoint_buf b;
 
 			loglog(RC_LOG_SERIOUS,
 				"initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
-				ipstr(&md->sender, &b),
+				str_endpoint(&md->sender, &b),
 				bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
@@ -193,14 +193,12 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	 * But not in this case because we are Aggressive Mode
 	 */
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
-		char buf[IDTOA_BUF];
-		ipstr_buf b;
-
-		(void) idtoa(&st->st_connection->spd.that.id, buf,
-			     sizeof(buf));
+		id_buf buf;
+		endpoint_buf b;
 		loglog(RC_LOG_SERIOUS,
 		       "initial Aggressive Mode packet claiming to be from %s on %s but no matching connection has been authorized",
-		       buf, ipstr(&md->sender, &b));
+		       str_id(&st->st_connection->spd.that.id, &buf),
+		       str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
@@ -544,14 +542,13 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	 * But not in this case because we are Aggressive Mode
 	 */
 	if (!ikev1_decode_peer_id(md, TRUE, TRUE)) {
-		char buf[IDTOA_BUF];
-		ipstr_buf b;
+		id_buf buf;
+		endpoint_buf b;
 
-		(void) idtoa(&st->st_connection->spd.that.id, buf,
-			     sizeof(buf));
 		loglog(RC_LOG_SERIOUS,
 		       "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
-		       buf, ipstr(&md->sender, &b));
+		       str_id(&st->st_connection->spd.that.id, &buf),
+		       str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
