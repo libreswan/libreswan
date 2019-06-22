@@ -1148,11 +1148,6 @@ void connection_check_ddns(void)
 		cnext = c->ac_next;
 		connection_check_ddns1(c);
 	}
-	dbg("FOR_EACH_UNORIENTED_CONNECTION_... in %s", __func__);
-	for (c = unoriented_connections; c != NULL; c = cnext) {
-		cnext = c->ac_next;
-		connection_check_ddns1(c);
-	}
 	check_orientations();
 
 	LSWDBGP(DBG_DNS, buf) {

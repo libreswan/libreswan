@@ -82,6 +82,7 @@
  */
 
 static struct host_pair *host_pairs = NULL;
+static struct connection *unoriented_connections = NULL;
 
 void host_pair_enqueue_pending(const struct connection *c,
 			       struct pending *p,
