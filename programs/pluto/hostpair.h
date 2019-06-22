@@ -29,8 +29,6 @@ struct host_pair {
 	struct host_pair *next;
 };
 
-extern struct host_pair *host_pairs;
-
 extern void connect_to_host_pair(struct connection *c);
 
 extern struct connection *find_host_pair_connections(const ip_endpoint *local,
