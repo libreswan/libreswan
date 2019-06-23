@@ -102,6 +102,8 @@ void linux_audit_init(void)
 			errno == EAFNOSUPPORT) {
 			loglog(RC_LOG_SERIOUS,
 				"Warning: kernel has no audit support");
+			close(audit_fd);
+			return;
 		} else {
 			loglog(RC_LOG_SERIOUS,
 				"FATAL: audit_open() failed : %s",
