@@ -1194,7 +1194,7 @@ int main(int argc, char **argv)
 
 			/* leak */
 			set_cfg_string(&pluto_log_file,
-				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
+				cfg->setup.strings[KSF_LOGFILE]);
 #ifdef USE_DNSSEC
 			set_dnssec_file_names(cfg);
 #endif
@@ -1203,9 +1203,9 @@ int main(int argc, char **argv)
 				log_to_syslog = FALSE;
 			/* plutofork= no longer supported via config file */
 			log_with_timestamp =
-				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
-			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
-			log_ip = cfg->setup.options[KBF_PLUTOSTDERRLOGIP];
+				cfg->setup.options[KBF_LOGTIME];
+			log_append = cfg->setup.options[KBF_LOGAPPEND];
+			log_ip = cfg->setup.options[KBF_LOGIP];
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 #ifdef HAVE_SECCOMP
