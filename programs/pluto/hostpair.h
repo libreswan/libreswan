@@ -52,5 +52,6 @@ extern struct host_pair *find_host_pair(const ip_endpoint *local,
 	}
 
 void delete_oriented_hp(struct connection *c);
+void host_pair_remove_connection(struct connection *c, bool connection_valid);
 
 extern struct connection *connections;

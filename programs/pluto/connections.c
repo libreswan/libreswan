@@ -93,8 +93,6 @@
 
 struct connection *connections = NULL;
 
-struct connection *unoriented_connections = NULL;
-
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
@@ -237,12 +235,7 @@ static void discard_connection(struct connection *c,
 		connection_valid);
 
 	/* find and delete c from the host pair list */
-	if (c->host_pair == NULL) {
-		LIST_RM(hp_next, c, unoriented_connections,
-			connection_valid);
-	} else {
-		delete_oriented_hp(c);
-	}
+	host_pair_remove_connection(c, connection_valid);
 
 	flush_revival(c);
 

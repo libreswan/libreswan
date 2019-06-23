@@ -301,6 +301,16 @@ void delete_oriented_hp(struct connection *c)
 	}
 }
 
+void host_pair_remove_connection(struct connection *c, bool connection_valid)
+{
+	if (c->host_pair == NULL) {
+		LIST_RM(hp_next, c, unoriented_connections,
+			connection_valid);
+	} else {
+		delete_oriented_hp(c);
+	}
+}
+
 /* update the host pairs with the latest DNS ip address */
 void update_host_pairs(struct connection *c)
 {
