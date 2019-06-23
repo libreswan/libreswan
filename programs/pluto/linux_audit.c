@@ -66,6 +66,7 @@
 #include "virtual.h"	/* needs connections.h */
 #include "crypto.h"
 
+#include "ip_address.h" /* for jam_address */
 
 #include "db_ops.h"
 
