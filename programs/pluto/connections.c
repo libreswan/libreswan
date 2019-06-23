@@ -2696,16 +2696,21 @@ struct connection *find_host_connection(const ip_endpoint *local,
 	struct connection *c =
 		find_next_host_connection(find_host_pair_connections(local, remote),
 					  req_policy, policy_exact_mask);
-
 	/*
 	 * This could be a shared IKE SA connection, in which case
 	 * we prefer to find the connection that has the IKE SA
+	 *
+	 * XXX: need to advance candidate before calling
+	 * find_next_host_connection() as otherwise it returns the
+	 * same connection, ARGH!
 	 */
-	struct connection *candidate = c;
-
-	for (; candidate != NULL; candidate = candidate->hp_next)
+	for (struct connection *candidate = c;
+	     candidate != NULL;
+	     candidate = find_next_host_connection(candidate->hp_next, req_policy,
+						   policy_exact_mask)) {
 		if (candidate->newest_isakmp_sa != SOS_NOBODY)
 			return candidate;
+	}
 
 	return c;
 }
