@@ -901,24 +901,13 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	struct connection *c = find_v2_host_connection(md, &policy);
 	if (c == NULL) {
 		/*
-		 * 3.10.1.  Notify Message Types:
+		 * NO_PROPOSAL_CHOSEN is used when the list of proposals is empty,
+		 * like when we did not find any connection to use.
 		 *
-		 * INVALID_SYNTAX: Indicates the IKE message that was
-		 * received was invalid because some type, length, or
-		 * value was out of range or because the request was
-		 * rejected for policy reasons.  To avoid a DoS attack
-		 * using forged messages, this status may only be
-		 * returned for and in an encrypted packet if the
-		 * Message ID and cryptographic checksum were valid.
-		 * To avoid leaking information to someone probing a
-		 * node, this status MUST be sent in response to any
-		 * error not covered by one of the other status types.
-		 * To aid debugging, more detailed error information
-		 * should be written to a console or log.
-		 *
-		 * already logged
+		 * INVALID_SYNTAX is for errors that a configuration change could
+		 * not fix.
 		 */
-		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
+		send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL);
 		return STF_DROP;
 	}
 
