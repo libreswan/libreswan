@@ -65,6 +65,10 @@ kvmplutotest	basic-pluto-04			wip
 kvmplutotest    basic-pluto-07-sourceip		good
 
 kvmplutotest	linux-audit-01-ok		good
+kvmplutotest	linux-audit-02-ike-fail		good
+kvmplutotest	linux-audit-03-ipsec-fail	good
+# this test should still be written once we can whack trigger rekeys
+#kvmplutotest	linux-audit-04-rekey 		wip
 
 kvmplutotest	ikev1-01-fuzzer	good
 kvmplutotest	ikev1-02-fuzzer	good
