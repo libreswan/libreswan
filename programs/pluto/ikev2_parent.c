@@ -237,6 +237,7 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	c->newest_isakmp_sa = ike->sa.st_serialno;
 	v2_schedule_replace_event(&ike->sa);
 	ike->sa.st_viable_parent = TRUE;
+	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	pstat_sa_established(&ike->sa);
 }
 
@@ -1576,6 +1577,24 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st,
 				libreswan_log("IKE_AUTH response contained an unknown error notification (%d)", n);
 			} else {
 				libreswan_log("IKE_AUTH response contained the error notification %s", name);
+				/*
+				 * There won't be a child state transition, so log if error is child related.
+				 * see RFC 7296 Section 1.2
+				 */
+				switch(n) {
+				case v2N_NO_PROPOSAL_CHOSEN:
+				case v2N_SINGLE_PAIR_REQUIRED:
+				case v2N_NO_ADDITIONAL_SAS:
+				case v2N_INTERNAL_ADDRESS_FAILURE:
+				case v2N_FAILED_CP_REQUIRED:
+				case v2N_TS_UNACCEPTABLE:
+				case v2N_INVALID_SELECTORS:
+					/* fallthrough */
+					linux_audit_conn(st, LAK_CHILD_FAIL);
+					break;
+				default:
+					break;
+				}
 			}
 		}
 	}
@@ -1597,8 +1616,6 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st,
 	if (ikev2_schedule_retry(st)) {
 		return STF_IGNORE; /* drop packet */
 	} else {
-		/* XXX: it really depends on the NOTIFY ERROR whether this is child or parent? */
-		linux_audit_conn(st, LAK_CHILD_FAIL);
 		return STF_FATAL;
 	}
 }
@@ -3063,8 +3080,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	ikev2_ike_sa_established(pexpect_ike_sa(st), md->svm,
 				 STATE_PARENT_R2);
 
-	linux_audit_conn(st, LAK_PARENT_START);
-
 	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
 		if (c->nat_keepalive)
@@ -3808,8 +3823,6 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	 */
 	pexpect(md->svm->next_state == STATE_V2_IPSEC_I);
 	ikev2_ike_sa_established(pexpect_ike_sa(pst), md->svm, STATE_PARENT_I3);
-
-	linux_audit_conn(st, LAK_PARENT_START);
 
 	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
@@ -4851,8 +4864,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 			/* Should "just work", not working is a screw up */
 			return STF_INTERNAL_ERROR;
 		}
-		ret = ikev2_child_sa_respond(md, &sk.pbs,
-					     ISAKMP_v2_CREATE_CHILD_SA);
+		ret = ikev2_child_sa_respond(md, &sk.pbs, ISAKMP_v2_CREATE_CHILD_SA);
 	}
 
 	/* note: pst: parent; md->st: child */

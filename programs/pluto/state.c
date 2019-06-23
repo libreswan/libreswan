@@ -884,6 +884,16 @@ void delete_state(struct state *st)
 	delete_state_log(st, state_by_serialno(old_serialno));
 
 	/*
+	 * IKEv2 IKE failures are logged in the state transition conpletion.
+	 * IKEv1 IKE failures do not go through a transition, so we catch
+	 * these in delete_state()
+	 */
+	if (IS_IKE_SA(st) && st->st_ike_version == IKEv1 &&
+		!IS_IKE_SA_ESTABLISHED(st)) {
+		linux_audit_conn(st, LAK_PARENT_FAIL);
+	}
+
+	/*
 	 * only log parent state deletes, we log children in
 	 * ipsec_delete_sa()
 	 */

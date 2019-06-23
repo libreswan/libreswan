@@ -123,6 +123,10 @@ void retransmit_v1_msg(struct state *st)
 
 	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
 	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
+
+	/* placed here because IKEv1 doesn't do a proper state change to STF_FAIL/STF_FATAL */
+	linux_audit_conn(st, IS_IKE_SA(st) ? LAK_PARENT_FAIL : LAK_CHILD_FAIL);
+
 	delete_state(st);
 	/* note: no md->st to clear */
 }

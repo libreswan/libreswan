@@ -3126,6 +3126,7 @@ void complete_v2_state_transition(struct state *st,
 		(*mdp)->st == st);
 
 	/* statistics */
+	/* this really depends on the type of error whether it is an IKE or IPsec fail */
 	if (result > STF_FAIL) {
 		pstats(ike_stf, STF_FAIL);
 	} else {
@@ -3200,6 +3201,14 @@ void complete_v2_state_transition(struct state *st,
 		lswlog_v2_stf_status(buf, result);
 	}
 
+	/* audit log failures - success is audit logged in ikev2_ike_sa_established() */
+	if (result > STF_OK) {
+		pexpect(st != NULL); /* we really need this for logging details */
+		if (st != NULL) {
+			linux_audit_conn(st, IS_IKE_SA_ESTABLISHED(st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
+		}
+	}
+
 	switch (result) {
 
 	case STF_SUSPEND:
@@ -3231,6 +3240,7 @@ void complete_v2_state_transition(struct state *st,
 
 	case STF_OK:
 		if (st == NULL) {
+			/* this happens for the successful transition of STATE_IKESA_DEL */
 			DBG(DBG_CONTROL, DBG_log("STF_OK but no state object remains"));
 		} else {
 			/* advance the state */

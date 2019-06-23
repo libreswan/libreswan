@@ -137,10 +137,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		 * around with the connection.
 		 */
 		child = ikev2_cp_reply_state(ike, md, isa_xchg);
-		if (child == NULL) {
-			linux_audit_conn(&child->sa, LAK_CHILD_FAIL);
+		if (child == NULL)
 			return STF_INTERNAL_ERROR;
-		}
 	} else if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		child = pexpect_child_sa(md->st);
 	} else {
@@ -174,7 +172,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			 * should continue to exist.  This STF_FAIL
 			 * will blame MD->ST aka the IKE SA.
 			 */
-			linux_audit_conn(&child->sa, LAK_CHILD_FAIL);
 			delete_state(&child->sa);
 			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 		}
@@ -203,10 +200,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		if (isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)  {
 			stf_status res = ikev2_process_child_sa_pl(md, FALSE);
-			if (res != STF_OK) {
-				linux_audit_conn(cst, LAK_CHILD_FAIL);
+			if (res != STF_OK)
 				return res;
-			}
 		}
 		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy);
 		chunk_t local_spi = CHUNKO(proto_info->our_spi);
@@ -214,7 +209,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					cst->st_accepted_esp_or_ah_proposal,
 					&local_spi)) {
 			dbg("problem emitting accepted proposal");
-			linux_audit_conn(cst, LAK_CHILD_FAIL);
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -226,10 +220,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		};
 		pb_stream pb_nr;
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
-		    !out_chunk(cst->st_nr, &pb_nr, "IKEv2 nonce")) {
-			linux_audit_conn(cst, LAK_CHILD_FAIL);
+		    !out_chunk(cst->st_nr, &pb_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
-		}
 
 		close_output_pbs(&pb_nr);
 
@@ -238,10 +230,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		 * having computed KE and not what the remote sent?
 		 */
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL)  {
-			if (!emit_v2KE(&cst->st_gr, cst->st_oakley.ta_dh, outpbs)) {
-				linux_audit_conn(cst, LAK_CHILD_FAIL);
+			if (!emit_v2KE(&cst->st_gr, cst->st_oakley.ta_dh, outpbs))
 				return STF_INTERNAL_ERROR;
-			}
 		}
 	}
 
@@ -278,19 +268,16 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			DBG(DBG_CONTROLMORE, DBG_log("received v2N_IPCOMP_SUPPORTED of length %zd", len));
 
 			if (!in_struct(&n_ipcomp, &ikev2notify_ipcomp_data_desc, &pbs, NULL)) {
-				linux_audit_conn(cst, LAK_CHILD_FAIL);
 				return STF_FATAL;
 			}
 
 			if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
 				loglog(RC_LOG_SERIOUS, "Unsupported IPCOMP compression method %d",
 					n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
-				linux_audit_conn(cst, LAK_CHILD_FAIL);
 				return STF_FATAL;
 			}
 			if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
 				loglog(RC_LOG_SERIOUS, "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
-				linux_audit_conn(cst, LAK_CHILD_FAIL);
 				return STF_FATAL;
 			}
 			if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
@@ -342,7 +329,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			/* we should have received transport mode request - and send one */
 			if (!cst->st_seen_use_transport) {
 				libreswan_log("policy dictates Transport Mode, but peer requested Tunnel Mode");
-				linux_audit_conn(cst, LAK_CHILD_FAIL);
 				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			}
 		} else {
@@ -369,10 +355,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		stf_status ret = v2_emit_ts_payloads(pexpect_child_sa(cst),
 						     outpbs, c);
 
-		if (ret != STF_OK) {
-			linux_audit_conn(cst, LAK_CHILD_FAIL);
+		if (ret != STF_OK)
 			return ret;	/* should we delete_state cst? */
-		}
 	}
 
 	if (cst->st_seen_use_transport) {
@@ -389,32 +373,25 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					ENCAPSULATION_MODE_TRANSPORT;
 			}
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			if (!emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs)) {
-				linux_audit_conn(cst, LAK_CHILD_FAIL);
+			if (!emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs))
 				return STF_INTERNAL_ERROR;
-			}
 		}
 	} else {
 		/* the peer wants tunnel mode */
 		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
 			loglog(RC_LOG_SERIOUS, "Local policy is transport mode, but peer did not request that");
-			linux_audit_conn(cst, LAK_CHILD_FAIL);
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 	}
 
 	if (c->send_no_esp_tfc) {
 		DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
-		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs)) {
-			linux_audit_conn(cst, LAK_CHILD_FAIL);
+		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
 			return STF_INTERNAL_ERROR;
-		}
 	}
 
-	if (!emit_v2N_compression(cst, cst->st_seen_use_ipcomp, outpbs)) {
-		linux_audit_conn(cst, LAK_CHILD_FAIL);
+	if (!emit_v2N_compression(cst, cst->st_seen_use_ipcomp, outpbs))
 		return STF_INTERNAL_ERROR;
-	}
 
 	ikev2_derive_child_keys(pexpect_child_sa(cst));
 
@@ -432,15 +409,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	}
 
 	/* install inbound and outbound SPI info */
-	if (!install_ipsec_sa(cst, TRUE)) {
-		linux_audit_conn(cst, LAK_CHILD_FAIL);
+	if (!install_ipsec_sa(cst, TRUE))
 		return STF_FATAL;
-	}
 
 	/* mark the connection as now having an IPsec SA associated with it. */
 	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, isa_xchg), cst);
 
-	/* OK is linux_audit_logged() inside install_ipsec_sa() */
 	return STF_OK;
 }
 

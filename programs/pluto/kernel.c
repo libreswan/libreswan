@@ -3232,7 +3232,8 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		}
 	}
 
-	linux_audit_conn(st, LAK_CHILD_START);
+	if (inbound_also)
+		linux_audit_conn(st, LAK_CHILD_START);
 	statetime_stop(&start, "%s()", __func__);
 	return TRUE;
 }
@@ -3273,8 +3274,16 @@ bool migrate_ipsec_sa(struct state *st)
 void delete_ipsec_sa(struct state *st)
 {
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
-	if (IS_CHILD_SA(st))
-		linux_audit_conn(st, LAK_CHILD_DESTROY);
+	if (IS_CHILD_SA(st)) {
+		/* child destruction already logged for STATE_CHILDSA_DEL state */
+		if (st->st_state->kind != STATE_CHILDSA_DEL) {
+			linux_audit_conn(st, LAK_CHILD_DESTROY);
+		}
+	} else {
+		libreswan_log("delete_ipsec_sa() called with (wrong?) parent state %s",
+				st->st_state->name);
+	}
+
 	switch (kern_interface) {
 	case USE_KLIPS:
 	case USE_NETKEY:

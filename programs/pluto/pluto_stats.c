@@ -160,7 +160,6 @@ void pstat_sa_failed(struct state *st, enum delete_reason r)
 	if (st->st_pstats.delete_reason == REASON_UNKNOWN) {
 		dbg("pstats #%lu %s failed %s", st->st_serialno, name, reason);
 		st->st_pstats.delete_reason = r;
-		linux_audit_conn(st, IS_IKE_SA(st) ? LAK_PARENT_FAIL : LAK_CHILD_FAIL);
 	} else {
 		dbg("pstats #%lu %s re-failed %s", st->st_serialno, name, reason);
 	}
