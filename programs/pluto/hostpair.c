@@ -100,15 +100,6 @@ struct pending **host_pair_first_pending(const struct connection *c)
 	return &c->host_pair->pending;
 }
 
-/* check to see that Ids of peers match */
-bool same_peer_ids(const struct connection *c, const struct connection *d,
-		   const struct id *his_id)
-{
-	return same_id(&c->spd.this.id, &d->spd.this.id) &&
-	       same_id(his_id == NULL ? &c->spd.that.id : his_id,
-		       &d->spd.that.id);
-}
-
 /** returns a host pair based upon addresses.
  *
  * find_host_pair is given a pair of addresses, plus UDP ports, and
@@ -466,4 +457,128 @@ void check_orientations(void)
 			}
 		}
 	}
+}
+
+/*
+ * find_host_connection: find the first satisfactory connection
+ *	with this pair of hosts.
+ *
+ * find_next_host_connection: find the next satisfactory connection
+ *	Starts where find_host_connection left off.
+ *	NOTE: it will return its argument; if you want to
+ *	advance, use c->hp_next.
+ *
+ * We start with the list that find_host_pair_connections would yield
+ * but we narrow the selection.
+ *
+ * We only yield a connection that can negotiate.
+ *
+ * The caller can specify policy requirements as
+ * req_policy and policy_exact_mask.
+ *
+ * All policy bits found in req_policy must be in the
+ * policy of the connection.
+ *
+ * For all bits in policy_exact mask, the req_policy
+ * and connection's policy must be equal.  Likely candidates:
+ * - XAUTH (POLICY_XAUTH)
+ * - kind of IKEV1 (POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW)
+ * These should only be used if the caller actually knows
+ * the exact value and has included it in req_policy.
+ */
+struct connection *find_host_connection(const ip_endpoint *local,
+					const ip_endpoint *remote,
+					lset_t req_policy, lset_t policy_exact_mask)
+{
+	endpoint_buf lb;
+	endpoint_buf rb;
+	dbg("find_host_connection local=%s remote=%s policy=%s but ignoring ports",
+	    str_endpoint(local, &lb), str_endpoint(remote, &rb),
+	    bitnamesof(sa_policy_bit_names, req_policy));
+
+	struct connection *c =
+		find_next_host_connection(find_host_pair_connections(local, remote),
+					  req_policy, policy_exact_mask);
+	/*
+	 * This could be a shared IKE SA connection, in which case
+	 * we prefer to find the connection that has the IKE SA
+	 *
+	 * XXX: need to advance candidate before calling
+	 * find_next_host_connection() as otherwise it returns the
+	 * same connection, ARGH!
+	 */
+	for (struct connection *candidate = c;
+	     candidate != NULL;
+	     candidate = find_next_host_connection(candidate->hp_next, req_policy,
+						   policy_exact_mask)) {
+		if (candidate->newest_isakmp_sa != SOS_NOBODY)
+			return candidate;
+	}
+
+	return c;
+}
+
+struct connection *find_next_host_connection(
+	struct connection *c,
+	lset_t req_policy, lset_t policy_exact_mask)
+{
+	DBGF(DBG_CONTROLMORE, "find_next_host_connection policy=%s",
+			bitnamesof(sa_policy_bit_names, req_policy));
+
+	for (; c != NULL; c = c->hp_next) {
+		DBGF(DBG_CONTROLMORE, "found policy = %s (%s)",
+			bitnamesof(sa_policy_bit_names, c->policy),
+			c->name);
+
+		if (NEVER_NEGOTIATE(c->policy)) {
+			/* are we a block or clear connection? */
+			lset_t shunt = (c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
+			if (shunt != POLICY_SHUNT_TRAP) {
+				/*
+				 * We need to match block/clear so we can send back
+				 * NO_PROPOSAL_CHOSEN, otherwise not match so we
+				 * can hit packetdefault to do real IKE.
+				 * clear and block do not have POLICY_OPPORTUNISTIC,
+				 * but clear-or-private and private-or-clear do, but
+				 * they don't do IKE themselves but allow packetdefault
+				 * to be hit and do the work.
+				 * if not policy_oppo -> we hit clear/block so this is right c
+				 */
+				if ((c->policy & POLICY_OPPORTUNISTIC))
+					continue;
+
+				/* shunt match - stop the search for another conn if we are groupinstance*/
+				if (c->policy & POLICY_GROUPINSTANCE)
+					break;
+			}
+			continue;
+		}
+
+		/*
+		 * Success may require exact match of:
+		 * (1) XAUTH (POLICY_XAUTH)
+		 * (2) kind of IKEV1 (POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW)
+		 * So if any bits are on in the exclusive OR, we fail.
+		 * Each of our callers knows what is known so specifies
+		 * the policy_exact_mask.
+		 */
+		if ((req_policy ^ c->policy) & policy_exact_mask)
+			continue;
+
+		/*
+		 * Success if all specified policy bits are in candidate's policy.
+		 * It works even when the exact-match bits are included.
+		 */
+		if ((req_policy & ~c->policy) == LEMPTY)
+			break;
+	}
+
+	DBG(DBG_CONTROLMORE, {
+			char ci[CONN_INST_BUF];
+			DBG_log("find_next_host_connection returns %s%s",
+					c != NULL ? c->name : "empty",
+					c != NULL ? fmt_conn_instance(c, ci) :
+					""); });
+
+	return c;
 }

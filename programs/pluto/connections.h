@@ -442,8 +442,6 @@ extern char *add_group_instance(struct connection *group,
 
 extern void remove_group_instance(const struct connection *group,
 				  const char *name);
-extern void release_dead_interfaces(void);
-extern void check_orientations(void);
 extern struct connection *route_owner(struct connection *c,
 				      const struct spd_route *cur_spd,
 				      struct spd_route **srp,
@@ -574,12 +572,6 @@ extern void show_connections_status(void);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);
 
-/* export to pending.c */
-extern void host_pair_enqueue_pending(const struct connection *c,
-				      struct pending *p,
-				      struct pending **pnext);
-struct pending **host_pair_first_pending(const struct connection *c);
-
 void connection_check_ddns(void);
 
 void connection_check_phase2(void);
@@ -589,8 +581,6 @@ extern int foreach_connection_by_alias(const char *alias,
 				       int (*f)(struct connection *c,
 						void *arg),
 				       void *arg);
-
-extern void update_host_pairs(struct connection *c);
 
 extern void unshare_connection_end(struct end *e);
 

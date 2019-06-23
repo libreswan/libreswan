@@ -29,6 +29,12 @@ struct host_pair {
 	struct host_pair *next;
 };
 
+/* export to pending.c */
+extern void host_pair_enqueue_pending(const struct connection *c,
+				      struct pending *p,
+				      struct pending **pnext);
+struct pending **host_pair_first_pending(const struct connection *c);
+
 extern void connect_to_host_pair(struct connection *c);
 
 extern struct connection *find_host_pair_connections(const ip_endpoint *local,
@@ -55,3 +61,9 @@ void delete_oriented_hp(struct connection *c);
 void host_pair_remove_connection(struct connection *c, bool connection_valid);
 
 extern struct connection *connections;
+
+extern void update_host_pairs(struct connection *c);
+
+extern void release_dead_interfaces(void);
+extern void check_orientations(void);
+

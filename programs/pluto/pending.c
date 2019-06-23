@@ -52,6 +52,7 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ip_address.h"
+#include "hostpair.h"
 
 /*
  * queue an IPsec SA negotiation pending completion of a
