@@ -65,10 +65,68 @@
 #include "nat_traversal.h"
 #include "ip_address.h"
 #include "af_info.h"
+#include "hash_table.h"
 
 #include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
+
+/*
+ * Table of host_pairs (local->remote endpoints/addresses).
+ */
+
+const char host_pair_magic[] = "host pair magic";
+
+static void jam_host_pair(struct lswlog *buf, const void *data)
+{
+	const struct host_pair *hp = data;
+	passert(hp->magic == host_pair_magic);
+	jam_endpoint(buf, &hp->local);
+	jam(buf, "->");
+	jam_endpoint(buf, &hp->remote);
+}
+
+static shunk_t host_pair_key(const void *data UNUSED)
+{
+	const struct host_pair *hp = data;
+	passert(hp->magic == host_pair_magic);
+	return THING_AS_SHUNK(hp->key);
+}
+
+static struct host_pair_key hp_key(const ip_endpoint *local, const ip_endpoint *remote)
+{
+	struct host_pair_key key = {
+		.local = endpoint_address(local),
+		.remote = endpoint_address(remote),
+	};
+	return key;
+}
+
+
+static struct list_entry *host_pair_list_entry(void *data)
+{
+	struct host_pair *hp = data;
+	passert(hp->magic == host_pair_magic);
+	return &hp->host_pair_entry;
+}
+
+struct list_head host_pair_buckets[STATE_TABLE_SIZE];
+
+static struct hash_table host_pairs = {
+	.info = {
+		.name = "host_pair table",
+		.jam = jam_host_pair,
+	},
+	.key = host_pair_key,
+	.entry = host_pair_list_entry,
+	.nr_slots = elemsof(host_pair_buckets),
+	.slots = host_pair_buckets,
+};
+
+void init_host_pair(void)
+{
+	init_hash_table(&host_pairs);
+}
 
 #define LIST_RM(ENEXT, E, EHEAD, EXPECTED)				\
 	{								\
@@ -94,7 +152,6 @@
  * linked list (using hp_next).  For them, host_pair is NULL.
  */
 
-static struct host_pair *host_pairs = NULL;
 static struct connection *unoriented_connections = NULL;
 
 void host_pair_enqueue_pending(const struct connection *c,
@@ -123,8 +180,6 @@ struct pending **host_pair_first_pending(const struct connection *c)
 struct host_pair *find_host_pair(const ip_endpoint *local,
 				 const ip_endpoint *remote)
 {
-	struct host_pair *p, *prev;
-
 	/* default hisaddr to an appropriate any */
 	if (remote == NULL) {
 		remote = aftoinfo(endpoint_type(local))->any;
@@ -134,43 +189,41 @@ struct host_pair *find_host_pair(const ip_endpoint *local,
 	 * look for a host-pair that has the right set of ports/address.
 	 *
 	 */
-
-	for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next) {
-		if (p->connections != NULL && (p->connections->kind == CK_INSTANCE) &&
-			(p->connections->spd.that.id.kind == ID_NULL))
-		{
-			DBG(DBG_CONTROLMORE, {
-				char ci[CONN_INST_BUF];
-				DBG_log("find_host_pair: ignore CK_INSTANCE with ID_NULL hp:\"%s\"%s",
-					p->connections->name,
-					fmt_conn_instance(p->connections, ci));
-                       });
+	struct host_pair_key key = hp_key(local, remote);
+	struct host_pair *hp = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(hash_table_bucket(&host_pairs,
+						      THING_AS_SHUNK(key)),
+				    hp) {
+		/*
+		 * Skip when the first connection is an instance;
+		 * why????
+		 */
+		if (hp->connections != NULL && (hp->connections->kind == CK_INSTANCE) &&
+		    (hp->connections->spd.that.id.kind == ID_NULL)) {
+			connection_buf ci;
+			dbg("find_host_pair: ignore CK_INSTANCE with ID_NULL hp:"PRI_CONNECTION,
+			    pri_connection(hp->connections, &ci));
                        continue;
-               }
+		}
 
 		endpoint_buf b1;
 		endpoint_buf b2;
 		dbg("find_host_pair: comparing %s to %s but ignoring ports",
-		    str_endpoint(&p->local, &b1),
-		    str_endpoint(&p->remote, &b2));
+		    str_endpoint(&hp->local, &b1),
+		    str_endpoint(&hp->remote, &b2));
 
 		/* XXX: same addr does not compare ports.  */
-		if (sameaddr(&p->local, local) &&
-		    sameaddr(&p->remote, remote)) {
-			if (prev != NULL) {
-				prev->next = p->next;   /* remove p from list */
-				p->next = host_pairs;   /* and stick it on front */
-				host_pairs = p;
-			}
-			break;
+		if (sameaddr(&hp->local, local) &&
+		    sameaddr(&hp->remote, remote)) {
+			return hp;
 		}
 	}
-	return p;
+	return NULL;
 }
 
 static void remove_host_pair(struct host_pair *hp)
 {
-	LIST_RM(next, hp, host_pairs, true/*expected*/);
+	del_hash_table_entry(&host_pairs, hp);
 }
 
 /* find head of list of connections with this pair of hosts */
@@ -208,11 +261,12 @@ void connect_to_host_pair(struct connection *c)
 		DBG(DBG_CONTROLMORE, {
 			ipstr_buf b1;
 			ipstr_buf b2;
-			DBG_log("connect_to_host_pair: %s:%d %s:%d -> hp:%s",
+			DBG_log("connect_to_host_pair: %s:%d %s:%d -> hp@%p: %s",
 				ipstr(&c->spd.this.host_addr, &b1),
 				c->spd.this.host_port,
 				ipstr(&c->spd.that.host_addr, &b2),
 				c->spd.that.host_port,
+				hp,
 				(hp != NULL && hp->connections) ?
 					hp->connections->name : "none");
 		});
@@ -220,16 +274,18 @@ void connect_to_host_pair(struct connection *c)
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */
 			hp = alloc_thing(struct host_pair, "host_pair");
+			dbg("new hp@%p", hp);
+			hp->magic = host_pair_magic;
 			hp->local = endpoint(&c->spd.this.host_addr,
 					     nat_traversal_enabled ?
 					     pluto_port : c->spd.this.host_port);
 			hp->remote = endpoint(&c->spd.that.host_addr,
 					      nat_traversal_enabled ?
 					      pluto_port : c->spd.that.host_port);
+			hp->key = hp_key(&hp->local, &hp->remote);
 			hp->connections = NULL;
 			hp->pending = NULL;
-			hp->next = host_pairs;
-			host_pairs = hp;
+			add_hash_table_entry(&host_pairs, hp);
 		}
 		c->host_pair = hp;
 		c->hp_next = hp->connections;
@@ -246,40 +302,41 @@ void connect_to_host_pair(struct connection *c)
 
 void release_dead_interfaces(void)
 {
-	struct host_pair *hp;
+	for (unsigned i = 0; i < host_pairs.nr_slots; i++) {
+		struct list_head *bucket = &host_pairs.slots[i];
+		struct host_pair *hp = NULL;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+			struct connection **pp, *p;
 
-	for (hp = host_pairs; hp != NULL; hp = hp->next) {
-		struct connection **pp,
-		*p;
+			for (pp = &hp->connections; (p = *pp) != NULL; ) {
+				if (p->interface->change == IFN_DELETE) {
+					/* this connection's interface is going away */
+					enum connection_kind k = p->kind;
 
-		for (pp = &hp->connections; (p = *pp) != NULL; ) {
-			if (p->interface->change == IFN_DELETE) {
-				/* this connection's interface is going away */
-				enum connection_kind k = p->kind;
+					release_connection(p, TRUE);
 
-				release_connection(p, TRUE);
+					if (k <= CK_PERMANENT) {
+						/* The connection should have survived release:
+						 * move it to the unoriented_connections list.
+						 */
+						passert(p == *pp);
 
-				if (k <= CK_PERMANENT) {
-					/* The connection should have survived release:
-					 * move it to the unoriented_connections list.
-					 */
-					passert(p == *pp);
+						terminate_connection(p->name, FALSE);
+						p->interface = NULL; /* withdraw orientation */
 
-					terminate_connection(p->name, FALSE);
-					p->interface = NULL; /* withdraw orientation */
-
-					*pp = p->hp_next; /* advance *pp */
-					p->host_pair = NULL;
-					p->hp_next = unoriented_connections;
-					unoriented_connections = p;
+						*pp = p->hp_next; /* advance *pp */
+						p->host_pair = NULL;
+						p->hp_next = unoriented_connections;
+						unoriented_connections = p;
+					} else {
+						/* The connection should have vanished,
+						 * but the previous connection remains.
+						 */
+						passert(p != *pp);
+					}
 				} else {
-					/* The connection should have vanished,
-					 * but the previous connection remains.
-					 */
-					passert(p != *pp);
+					pp = &p->hp_next; /* advance pp */
 				}
-			} else {
-				pp = &p->hp_next; /* advance pp */
 			}
 		}
 	}
@@ -301,6 +358,7 @@ void delete_oriented_hp(struct connection *c)
 		/* ??? must deal with this! */
 		passert(hp->pending == NULL);
 		remove_host_pair(hp);
+		dbg("free hp@%p", hp);
 		pfree(hp);
 	}
 }
@@ -391,7 +449,8 @@ void update_host_pairs(struct connection *c)
 
 	if (hp->connections == NULL) {
 		passert(hp->pending == NULL); /* ??? must deal with this! */
-		LIST_RM(next, hp, host_pairs, true/*expected*/);
+		del_hash_table_entry(&host_pairs, hp);
+		dbg("free hp@%p", hp);
 		pfree(hp);
 	}
 }
@@ -424,12 +483,19 @@ void check_orientations(void)
 		struct iface_port *i;
 
 		for (i = interfaces; i != NULL; i = i->next) {
-			if (i->change == IFN_ADD) {
-				struct host_pair *hp;
-
-				for (hp = host_pairs; hp != NULL;
-				     hp = hp->next) {
-					if (sameaddr(&hp->remote, &i->ip_addr)) {
+			if (i->change != IFN_ADD) {
+				continue;
+			}
+			for (unsigned u = 0; u < host_pairs.nr_slots; u++) {
+				struct list_head *bucket = &host_pairs.slots[u];
+				struct host_pair *hp = NULL;
+				FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+					/*
+					 * XXX: what's with the maybe
+					 * compare the port logic?
+					 */
+					if (sameaddr(&hp->remote,
+						     &i->ip_addr)) {
 						/*
 						 * bad news: the whole chain of
 						 * connections hanging off this

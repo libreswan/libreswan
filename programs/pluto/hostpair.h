@@ -21,12 +21,22 @@
  * for more details.
  *
  */
+
+#include "list_entry.h"
+
+struct host_pair_key {
+	ip_address local;
+	ip_address remote;
+};
+
 struct host_pair {
+	const char *magic;
+	struct host_pair_key key;
 	ip_endpoint local;
 	ip_endpoint remote;
 	struct connection *connections;         /* connections with this pair */
 	struct pending *pending;                /* awaiting Keying Channel */
-	struct host_pair *next;
+	struct list_entry host_pair_entry;
 };
 
 /* export to pending.c */
@@ -53,3 +63,4 @@ extern void update_host_pairs(struct connection *c);
 extern void release_dead_interfaces(void);
 extern void check_orientations(void);
 
+void init_host_pair(void);

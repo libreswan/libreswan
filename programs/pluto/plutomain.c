@@ -64,6 +64,7 @@
 #include "af_info.h"		/* for init_af_info() */
 #include "ikev2_redirect.h"
 #include "root_certs.h"		/* for init_root_certs() */
+#include "hostpair.h"		/* for init_host_pair() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1758,6 +1759,7 @@ int main(int argc, char **argv)
 	init_secret();
 	init_states();
 	init_connections();
+	init_host_pair();
 	init_ike_alg();
 	test_ike_alg();
 
