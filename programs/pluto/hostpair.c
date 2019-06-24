@@ -70,6 +70,20 @@
 
 #include "hostpair.h"
 
+#define LIST_RM(ENEXT, E, EHEAD, EXPECTED)				\
+	{								\
+		bool found_ = false;					\
+		for (typeof(*(EHEAD)) **ep_ = &(EHEAD); *ep_ != NULL; ep_ = &(*ep_)->ENEXT) { \
+			if (*ep_ == (E)) {				\
+				*ep_ = (E)->ENEXT;			\
+				found_ = true;				\
+				break;					\
+			}						\
+		}							\
+		/* we must not come up empty-handed? */			\
+		pexpect(found_ || !(EXPECTED));				\
+	}
+
 /* struct host_pair: a nexus of information about a pair of hosts.
  * A host is an IP address, UDP port pair.  This is a debatable choice:
  * - should port be considered (no choice of port in standard)?

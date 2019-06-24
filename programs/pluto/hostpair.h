@@ -43,20 +43,6 @@ extern struct connection *find_host_pair_connections(const ip_endpoint *local,
 extern struct host_pair *find_host_pair(const ip_endpoint *local,
 					const ip_endpoint *remote);
 
-#define LIST_RM(ENEXT, E, EHEAD, EXPECTED)				\
-	{								\
-		bool found_ = false;					\
-		for (typeof(*(EHEAD)) **ep_ = &(EHEAD); *ep_ != NULL; ep_ = &(*ep_)->ENEXT) { \
-			if (*ep_ == (E)) {				\
-				*ep_ = (E)->ENEXT;			\
-				found_ = true;				\
-				break;					\
-			}						\
-		}							\
-		/* we must not come up empty-handed? */			\
-		pexpect(found_ || !(EXPECTED));				\
-	}
-
 void delete_oriented_hp(struct connection *c);
 void host_pair_remove_connection(struct connection *c, bool connection_valid);
 
