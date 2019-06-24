@@ -230,8 +230,15 @@ static void discard_connection(struct connection *c,
 	perpeer_logfree(c);
 
 	/* find and delete c from connections list */
-	LIST_RM(ac_next, c, connections,
-		connection_valid);
+	/* XXX: if in list, remove_list_entry(c->ac_next); */
+	for (struct connection **head = &connections;
+	     *head != NULL; head = &(*head)->ac_next) {
+		if (*head == c) {
+			*head = c->ac_next;
+			c->ac_next = NULL;
+			break;
+		}
+	}
 
 	/* find and delete c from the host pair list */
 	host_pair_remove_connection(c, connection_valid);
