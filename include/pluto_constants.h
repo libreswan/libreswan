@@ -25,6 +25,13 @@
 
 #include "lset.h"
 
+/*
+ * Size of hash tables; a prime.
+ *
+ * Mumble something about modifying hash_table.[hc] so it can grow.
+ */
+#define STATE_TABLE_SIZE 499
+
 # ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
 #  define DEFAULT_DNSSEC_ROOTKEY_FILE "<unused>"
 # endif

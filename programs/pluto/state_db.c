@@ -21,8 +21,6 @@
 #include "lswlog.h"
 #include "hash_table.h"
 
-#define STATE_TABLE_SIZE 499
-
 static struct hash_table state_hashes[];
 
 static void jam_state(struct lswlog *buf, const void *data)
