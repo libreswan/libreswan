@@ -18,7 +18,6 @@
 #include <string.h>
 #include <time.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

@@ -35,7 +35,6 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

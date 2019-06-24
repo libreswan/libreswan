@@ -21,7 +21,6 @@
 #include <ctype.h>		/* for isxdigit() */
 
 #include "ip_address.h"
-#include "libreswan.h"		/* for ttoul() */
 #include "lswalloc.h"		/* for alloc_things(), pfree() */
 
 /*

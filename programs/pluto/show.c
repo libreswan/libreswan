@@ -23,7 +23,6 @@
  *
  */
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

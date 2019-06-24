@@ -43,7 +43,6 @@
 #include <crypt.h>
 #endif
 
-#include <libreswan.h>
 
 #include "lswalloc.h"
 

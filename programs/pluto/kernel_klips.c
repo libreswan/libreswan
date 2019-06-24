@@ -29,7 +29,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include <libreswan.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 

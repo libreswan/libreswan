@@ -25,7 +25,6 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#include <libreswan.h>
 
 #include <errno.h>
 

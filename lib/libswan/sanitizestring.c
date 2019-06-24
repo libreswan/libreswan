@@ -16,7 +16,6 @@
  */
 #include <ctype.h>
 #include <string.h>
-#include "libreswan.h"
 #include "libreswan/passert.h"
 #include "constants.h"
 #include "lswlog.h"

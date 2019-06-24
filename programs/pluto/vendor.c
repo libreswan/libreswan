@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

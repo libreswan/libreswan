@@ -33,7 +33,6 @@
 #include <arpa/nameser.h>       /* missing from <resolv.h> on old systems */
 #include <errno.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

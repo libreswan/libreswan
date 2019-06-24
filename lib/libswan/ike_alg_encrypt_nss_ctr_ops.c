@@ -22,7 +22,6 @@
 #include <string.h>
 #include <stddef.h>
 #include <sys/types.h>
-#include <libreswan.h>
 
 #include "constants.h"
 #include "klips-crypto/aes_cbc.h"

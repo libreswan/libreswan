@@ -36,7 +36,6 @@
 
 #include <linux/if_addr.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "socketwrapper.h"

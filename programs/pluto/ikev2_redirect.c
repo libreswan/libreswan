@@ -17,7 +17,6 @@
 
 #include <unistd.h>
 
-#include <libreswan.h>
 
 #include "lswlog.h"
 #include "constants.h"

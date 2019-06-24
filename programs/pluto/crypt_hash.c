@@ -17,7 +17,6 @@
 
 #include <stdlib.h>
 
-//#include "libreswan.h"
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "ike_alg.h"

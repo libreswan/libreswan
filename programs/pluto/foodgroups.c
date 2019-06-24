@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <limits.h> /* PATH_MAX */
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

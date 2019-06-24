@@ -21,7 +21,6 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
-#include <libreswan.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/passert.h>
 

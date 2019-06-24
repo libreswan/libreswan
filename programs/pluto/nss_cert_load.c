@@ -21,7 +21,6 @@
 #include <errno.h>
 #include <limits.h>
 
-#include <libreswan.h>
 #include "ietf_constants.h"
 #include "constants.h"
 #include "lswlog.h"

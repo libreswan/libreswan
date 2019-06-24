@@ -45,7 +45,6 @@
 #include <event2/event_struct.h>
 #include <event2/thread.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

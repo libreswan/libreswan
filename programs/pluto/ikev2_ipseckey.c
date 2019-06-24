@@ -26,7 +26,6 @@
 #include <ldns/ldns.h>	/* from ldns-devel */
 #include <ldns/rr.h>
 #include "unbound-event.h"
-#include "libreswan.h"
 #include "lswlog.h"
 #include "defs.h"
 #include "log.h"

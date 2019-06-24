@@ -19,7 +19,6 @@
 #include <prmem.h>
 #include <prerror.h>
 
-#include "libreswan.h"
 #include "chunk.h"
 #include "lswlog.h"
 #include "lswalloc.h"

@@ -19,7 +19,6 @@
 
 #include <string.h>
 
-#include "libreswan.h"
 #include "constants.h"
 #include "lswlog.h"
 

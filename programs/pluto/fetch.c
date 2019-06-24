@@ -30,7 +30,6 @@
 #include <cert.h>
 #include <certdb.h>
 
-#include <libreswan.h>
 
 #include "constants.h"
 #include "defs.h"

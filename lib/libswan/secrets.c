@@ -41,7 +41,6 @@
 #define GLOB_ABORTED GLOB_ABEND        /* fix for old versions */
 #endif
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "lswlog.h"

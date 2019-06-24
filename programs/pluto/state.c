@@ -41,7 +41,6 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

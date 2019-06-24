@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <libreswan.h>
 
 #include "lswlog.h"
 #include "prmem.h"

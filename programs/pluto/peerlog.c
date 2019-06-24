@@ -29,7 +29,6 @@
 #include <syslog.h>
 #include <sys/stat.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "connections.h"

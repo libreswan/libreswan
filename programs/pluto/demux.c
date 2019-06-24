@@ -42,7 +42,6 @@
 #  include <sys/uio.h>          /* struct iovec */
 #endif
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

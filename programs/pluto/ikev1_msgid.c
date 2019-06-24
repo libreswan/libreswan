@@ -31,7 +31,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include <libreswan.h>
 
 #include "rnd.h"
 #include "defs.h"

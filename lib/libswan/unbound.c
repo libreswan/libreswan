@@ -27,7 +27,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <libreswan.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <glob.h>

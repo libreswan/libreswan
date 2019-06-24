@@ -27,7 +27,6 @@
  * used for more than one connection.
  */
 
-#include "libreswan.h"
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "connections.h"

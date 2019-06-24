@@ -23,7 +23,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "socketwrapper.h"

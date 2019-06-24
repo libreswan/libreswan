@@ -28,7 +28,6 @@
 #include <unistd.h>
 #include <limits.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

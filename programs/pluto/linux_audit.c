@@ -37,7 +37,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-#include <libreswan.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"

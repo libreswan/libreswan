@@ -55,7 +55,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

@@ -29,7 +29,6 @@
 #include <limits.h>
 #include <netinet/in.h>
 
-#include <libreswan.h>
 #include <ietf_constants.h>
 #include <libreswan/passert.h>
 

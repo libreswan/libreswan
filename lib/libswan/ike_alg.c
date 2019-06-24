@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"

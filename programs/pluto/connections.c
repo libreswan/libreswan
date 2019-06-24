@@ -42,7 +42,6 @@
 #include <resolv.h>
 #include <errno.h>
 
-#include <libreswan.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"

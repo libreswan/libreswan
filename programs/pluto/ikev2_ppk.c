@@ -15,7 +15,6 @@
  * for more details.
  */
 
-#include <libreswan.h>
 
 #include "lswlog.h"
 

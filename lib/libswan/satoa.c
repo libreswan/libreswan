@@ -14,7 +14,6 @@
  * License for more details.
  */
 #include "internal.h"
-#include "libreswan.h"
 
 static struct typename {
 	char type;

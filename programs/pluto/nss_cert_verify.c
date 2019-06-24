@@ -26,7 +26,6 @@
 #include <time.h>
 #include <limits.h>
 #include <sys/types.h>
-#include <libreswan.h>
 #include "sysdep.h"
 #include "lswnss.h"
 #include "constants.h"

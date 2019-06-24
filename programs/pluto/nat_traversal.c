@@ -41,7 +41,6 @@
 #include <sys/ioctl.h>
 #include <netinet/udp.h>
 
-#include <libreswan.h>
 #include <libreswan/ipsec_tunnel.h>
 #include <libreswan/ipsec_param.h>
 

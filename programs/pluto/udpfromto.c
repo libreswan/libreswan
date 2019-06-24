@@ -45,7 +45,6 @@
 #include <string.h>
 
 #include "udpfromto.h"
-#include "libreswan.h"
 #include "lswlog.h"
 #include "socketwrapper.h"
 

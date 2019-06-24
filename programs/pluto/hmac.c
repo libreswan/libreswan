@@ -22,7 +22,6 @@
  */
 
 #include <sys/types.h>
-#include <libreswan.h>
 
 #include "constants.h"
 #include "defs.h"
