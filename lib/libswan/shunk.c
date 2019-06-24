@@ -46,30 +46,39 @@ shunk_t shunk2(const void *ptr, int len)
 	return (shunk_t) { .ptr = ptr, .len = len, };
 }
 
-shunk_t shunk_strsep(shunk_t *input, const char *delim)
+shunk_t shunk_token(shunk_t *input, char *delim, const char *delims)
 {
 	/*
-	 * If INPUT is NULL, the loop is skipped and NULL is
-	 * returned.
+	 * If INPUT is either empty, or the NULL_SHUNK, the loop is
+	 * skipped.
 	 */
-	shunk_t token = shunk2(input->ptr, 0);
-	while (input->len > 0) {
-		if (strchr(delim, *input->ptr) != NULL) {
-			/* discard delim */
-			input->ptr++;
-			input->len--;
+	const char *const start = input->ptr;
+	const char *pos = start;
+	while (pos < start + input->len) {
+		if (strchr(delims, *pos) != NULL) {
+			/* save the token and stop character */
+			shunk_t token = shunk2(start, pos-start);
+			if (delim != NULL) {
+				*delim = *pos;
+			}
+			/* strip input of token+delim */
+			pos++;
+			input->ptr = pos;
+			input->len -= (pos - start);
 			return token;
 		}
-		/* advance, transfering the char */
-		token.len++;
-		input->ptr++;
-		input->len--;
+		pos++;
 	}
 	/*
-	 * Flag this as the last token by setting INPUT to NULL; next
-	 * call will return the NULL shunk.
+	 * The last token is all of INPUT.  Flag that INPUT has been
+	 * exhausted by setting INPUT to the NULL_SHUNK; the next call
+	 * will return that NULL_SHUNK.
 	 */
+	shunk_t token = *input;
 	*input = null_shunk;
+	if (delim != NULL) {
+		*delim = '\0';
+	}
 	return token;
 }
 

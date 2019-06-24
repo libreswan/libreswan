@@ -141,24 +141,20 @@ static bool parse_alg(struct proposal_parser *parser,
 }
 
 /*
- * tokenize <input> into <delim><alg><input>
+ * tokenize <input> into <delim><alg><next_delim><input>
  */
 
 struct token {
 	char delim;
+	char next_delim;
 	shunk_t alg;
 	shunk_t input;
 };
 
 static void next(struct token *token)
 {
-	if (token->delim == '\0') {
-		/* first call, set delim to something bogus */
-		token->delim = ' ';
-	} else {
-		token->delim = token->input.ptr != NULL ? token->input.ptr[-1] : ' ';
-	}
-	token->alg = shunk_strsep(&token->input, "-;+");
+	token->delim = token->next_delim;
+	token->alg = shunk_token(&token->input, &token->next_delim, "-;+");
 	if (DBGP(DBG_PROPOSAL_PARSER)) {
 		if (token->alg.ptr == NULL) {
 			DBG_log("delim: n/a  alg: end-of-input");
@@ -407,7 +403,7 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 
 	do {
 		/* find the next proposal */
-		shunk_t proposal = shunk_strsep(&input, ",");
+		shunk_t proposal = shunk_token(&input, NULL, ",");
 		if (!parse_proposal(parser, proposals, proposal)) {
 			pexpect(parser->error[0] != '\0');
 			return false;

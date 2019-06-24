@@ -491,13 +491,13 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 	shunk_t prop_ptr = alg_str;
 	do {
 		/* find the next proposal */
-		shunk_t prop = shunk_strsep(&prop_ptr, ",");
+		shunk_t prop = shunk_token(&prop_ptr, NULL, ",");
 		/* parse it */
 		struct token tokens[8];
 		zero(&tokens);
 		struct token *token = tokens;
-		char last_sep = '\0';
 		shunk_t alg_ptr = prop;
+		char last_sep = '\0';
 		do {
 			if (token + 1 >= tokens+elemsof(tokens)) {
 				/* space for NULL? */
@@ -505,12 +505,13 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 				return false;
 			}
 			/* find the next alg */
-			shunk_t alg = shunk_strsep(&alg_ptr, "-;,");
+			char alg_sep;
+			shunk_t alg = shunk_token(&alg_ptr, &alg_sep, "-;,");
 			*token++ = (struct token) {
 				.alg = alg,
 				.sep = last_sep,
 			};
-			last_sep = alg.ptr[alg.len]; /* save separator */
+			last_sep = alg_sep; /* separator before this token */
 		} while (alg_ptr.len > 0);
 		struct v1_proposal proposal = {
 			.protocol = parser->protocol,

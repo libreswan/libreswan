@@ -302,7 +302,7 @@ bool parse_impair(const char *optarg,
 	}
 	/* Break OPTARG into WHAT[=HOW] */
 	shunk_t arg = shunk1(optarg);
-	shunk_t what = shunk_strsep(&arg, ":=");
+	shunk_t what = shunk_token(&arg, NULL, ":=");
 	shunk_t how = arg;
 	/*
 	 * look for both WHAT and for compatability with the old

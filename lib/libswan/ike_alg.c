@@ -61,8 +61,8 @@ des*       - lookup
 
 #define FOR_EACH_IKE_ALG_NAME(ALG, NAME)				\
 	for (shunk_t NAME##input = shunk1((ALG)->names),		\
-		     NAME = shunk_strsep(&NAME##input, ",");		\
-	     NAME.len > 0; NAME = shunk_strsep(&NAME##input, ","))
+		     NAME = shunk_token(&NAME##input, NULL, ",");	\
+	     NAME.len > 0; NAME = shunk_token(&NAME##input, NULL, ","))
 
 struct algorithm_table {
 	const struct ike_alg **start;

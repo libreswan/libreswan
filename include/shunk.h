@@ -66,32 +66,32 @@ shunk_t shunk2(const void *ptr, int len);
 #define THING_AS_SHUNK(THING) shunk2(&(THING), sizeof(THING))
 
 /*
- * A shunk version of strsep() (which is like strtok()) - split INPUT
- * in two using a character from the DELIM set.
+ * A shunk version of strsep() / strtok(): split off from INPUT a
+ * possibly empty TOKEN containing characters not found in DELIMS and
+ * the delimiting character (or NUL).
  *
- * If INPUT contains a character from the DELIM set, return the
- * characters before the DELIM character as the next TOKEN, and set
- * INPUT to the sub-string following the DELIM character.
+ * Return the TOKEN (or the NULL_TOKEN if INPUT is exhausted); if
+ * DELIM is non-NULL, set *DELIM to the delimiting character or NUL;
+ * and update *INPUT.
  *
- * If INPUT contains no character from the DELIM set, return INPUT as
- * the next TOKEN (possibly empty), and set INPUT to the null_shunk.
+ * For the final token, *DELIM is set to NUL, and INPUT is marked as
+ * being exhausted by setting it to the NULL_SHUNK.
  *
- * If INPUT is the null_shunk, return the null_shunk as the next
- * TOKEN, string remains unchanged (still the null_shunk).
+ * When called with exhausted INPUT (aka the NULL_SHUNK), the
+ * NULL_SHUNK is returned as the token and *DELIM is set to NUL.
  *
  * One way to implement a simple parser is to use TOKEN.ptr==NULL as
  * an end-of-input indicator:
  *
- *     shunk_t token = shunk_strsep(&input, ",");
+ *     char sep;
+ *     shunk_t token = shunk_token(&input, &sep, ",");
  *     while (token.ptr != NULL) {
  *       ... process token ...
- *       token = shunk_strsep(&input, ",");
+ *       token = shunk_token(&input, &sep, ",");
  *     }
  *
- * XXX: Provided INPUT.ptr is non-NULL, INPUT.ptr[-1] is the DELIM
- * character; should this be made an explict parameter.
  */
-shunk_t shunk_strsep(shunk_t *input, const char *delim);
+shunk_t shunk_token(shunk_t *input, char *delim, const char *delims);
 
 /*
  * shunk version of string compare functions (or at least libreswan's
