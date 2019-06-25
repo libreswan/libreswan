@@ -529,6 +529,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	struct ike_sa *ike = new_v2_state(STATE_PARENT_I0, SA_INITIATOR,
 					  ike_initiator_spi(), zero_ike_spi,
 					  c, policy, try, whack_sock);
+	push_cur_state(&ike->sa);
 	/* set up new state */
 	struct state *st = &ike->sa;
 	passert(st->st_ike_version == IKEv2);
@@ -923,6 +924,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 					  md->hdr.isa_ike_spis.initiator,
 					  ike_responder_spi(&md->sender),
 					  c, policy, 0, null_fd);
+	push_cur_state(&ike->sa);
 	v2_msgid_start_responder(ike, &ike->sa, md);
 	struct state *st = &ike->sa;
 	/* set up new state */

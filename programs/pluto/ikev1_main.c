@@ -111,6 +111,8 @@ void main_outI1(fd_t whack_sock,
 
 	/* set up new state */
 	initialize_new_state(st, c, policy, try, whack_sock);
+	push_cur_state(st);
+
 	change_state(st, STATE_MAIN_I1);
 
 	if (HAS_IPSEC_POLICY(policy)) {
