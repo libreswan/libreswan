@@ -42,6 +42,7 @@
 #include "nat_traversal.h"
 #include "pluto_x509.h"
 #include "fd.h"
+#include "hostpair.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R

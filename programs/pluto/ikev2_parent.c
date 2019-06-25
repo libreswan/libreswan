@@ -832,72 +832,12 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* forward decl and type assertion */
 static crypto_transition_fn ikev2_parent_inI1outR1_continue_tail;	/* forward decl and type assertion */
 
-static struct connection *find_v2_host_connection(struct msg_digest *md,
-						  lset_t *policy)
-{
-	/* authentication policy alternatives in order of decreasing preference */
-	static const lset_t policies[] = { POLICY_ECDSA, POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
-
-	struct connection *c = NULL;
-	unsigned int i;
-
-	/* XXX in the near future, this loop should find type=passthrough and return STF_DROP */
-	for (i=0; i < elemsof(policies); i++) {
-		*policy = policies[i] | POLICY_IKEV2_ALLOW;
-		c = ikev2_find_host_connection(&md->iface->local_endpoint,
-					       &md->sender, *policy);
-		if (c != NULL)
-			break;
-	}
-
-	if (c == NULL) {
-		endpoint_buf b;
-
-		/* we might want to change this to a debug log message only */
-		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s but no suitable connection found with IKEv2 policy",
-		       str_endpoint(&md->iface->local_endpoint, &b));
-		return NULL;
-	}
-
-	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
-
-	DBG(DBG_CONTROL, {
-		char ci[CONN_INST_BUF];
-		DBG_log("found connection: %s%s with policy %s",
-			c->name, fmt_conn_instance(c, ci),
-			bitnamesof(sa_policy_bit_names, *policy));});
-
-	/*
-	 * Did we overlook a type=passthrough foodgroup?
-	 */
-	{
-		struct connection *tmp = find_host_pair_connections(&md->iface->local_endpoint, NULL);
-
-		for (; tmp != NULL; tmp = tmp->hp_next) {
-			if ((tmp->policy & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP &&
-			    tmp->kind == CK_INSTANCE &&
-			    addrinsubnet(&md->sender, &tmp->spd.that.client))
-			{
-				DBG(DBG_OPPO, DBG_log("passthrough conn %s also matches - check which has longer prefix match", tmp->name));
-
-				if (c->spd.that.client.maskbits  < tmp->spd.that.client.maskbits) {
-					DBG(DBG_OPPO, DBG_log("passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
-						tmp->spd.that.client.maskbits,
-						c->spd.that.client.maskbits));
-					return NULL;
-				}
-			}
-		}
-	}
-	return c;
-}
-
 stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 {
 	passert(null_st == NULL);	/* initial responder -> no state */
 
 	lset_t policy = LEMPTY;
-	struct connection *c = find_v2_host_connection(md, &policy);
+	struct connection *c = find_v2_host_pair_connection(md, &policy);
 	if (c == NULL) {
 		/*
 		 * NO_PROPOSAL_CHOSEN is used when the list of proposals is empty,

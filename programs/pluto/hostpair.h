@@ -64,3 +64,14 @@ extern void release_dead_interfaces(void);
 extern void check_orientations(void);
 
 void init_host_pair(void);
+
+struct connection *find_v2_host_pair_connection(struct msg_digest *md,
+						lset_t *policy);
+
+struct connection *find_next_host_connection(struct connection *c,
+					     lset_t req_policy, lset_t policy_exact_mask);
+
+struct connection *find_host_connection(const ip_endpoint *local,
+					const ip_endpoint *remote,
+					lset_t req_policy,
+					lset_t policy_exact_mask);

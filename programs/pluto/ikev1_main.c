@@ -65,6 +65,7 @@
 #include "asn1.h"
 #include "pending.h"
 #include "ikev1_hash.h"
+#include "hostpair.h"
 
 #include "crypto.h"
 #include "secrets.h"
