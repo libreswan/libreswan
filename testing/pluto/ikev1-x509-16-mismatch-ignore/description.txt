@@ -1,0 +1,7 @@
+IKEv1 auth test. The certs are valid but both ends use an explicit ID,
+not the cert ID. These IDs are normally only trusted if they appear
+as subjectAltName (SAN) on the certificate. But since both ends now
+specify leftid=/rightid=%any, the IKE ID's are completely ignored and
+the other endpoint only needs to present a certificate that is verified
+to be signed by the proper CA.
+
