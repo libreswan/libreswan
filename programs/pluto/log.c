@@ -132,36 +132,33 @@ static void log_processing(enum processing processing, bool current,
 			   const ip_address *from,
 			   const char *func, const char *file, long line)
 {
-	pexpect(((st != NULL) + (c != NULL) + (from != NULL)) == 1);	/* only 1 */
+	pexpect(((st != NULL) + (c != NULL) + (from != NULL)) == 1);	/* exactly 1 */
 	LSWDBGP(DBG_BASE, buf) {
-		lswlogs(buf, "processing: ");
 		switch (processing) {
-		case START: lswlogs(buf, "start"); break;
-		case STOP: lswlogs(buf, "stop"); break;
-		case RESTART: lswlogs(buf, "[RE]START"); break;
-		case SUSPEND: lswlogs(buf, "suspend"); break;
-		case RESUME: lswlogs(buf, "resume"); break;
-		case RESET: lswlogs(buf, "RESET"); break;
+		case START: jam(buf, "start"); break;
+		case STOP: jam(buf, "stop"); break;
+		case RESTART: jam(buf, "[RE]START"); break;
+		case SUSPEND: jam(buf, "suspend"); break;
+		case RESUME: jam(buf, "resume"); break;
+		case RESET: jam(buf, "RESET"); break;
 		}
+		jam(buf, " processing:");
 		if (st != NULL) {
-			lswlogf(buf, " state #%lu", st->st_serialno);
+			jam(buf, " state #%lu", st->st_serialno);
+			/* also include connection/from */
 			c = st->st_connection;
+			from = &st->st_remoteaddr;
 		}
 		if (c != NULL) {
 			jam_string(buf, " connection ");
 			jam_connection(buf, c);
-		}
-		if (st != NULL && (c == NULL || !(c->policy & POLICY_OPPORTUNISTIC))) {
-			/* jam_conn_instance() include the same if POLICY_OPPORTUNISTIC */
-			lswlogf(buf, " ");
-			jam_endpoint(buf, &st->st_remoteaddr);
 		}
 		if (from != NULL) {
 			lswlogf(buf, " from ");
 			jam_endpoint(buf, from);
 		}
 		if (!current) {
-			lswlogs(buf, " (BACKGROUND)");
+			jam(buf, " (BACKGROUND)");
 		}
 		lswlog_source_line(buf, func, file, line);
 	}
