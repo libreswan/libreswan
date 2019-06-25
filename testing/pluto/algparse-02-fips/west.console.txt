@@ -4,7 +4,7 @@ FIPS mode enabled.
 west #
  # run the parser tests
 west #
- ../bin/algparse.sh 'ipsec algparse' algparse*.txt
+ ../bin/algparse.sh 'ipsec algparse' algparse*.txt > /dev/null
 ipsec algparse -v1 -pfs -t # algparse.v1.pfs.txt
 ipsec algparse -v1 -t # algparse.v1.txt
 ipsec algparse -v2 -pfs -t # algparse.v2.pfs.txt
@@ -13,7 +13,7 @@ ipsec algparse -v # algparse.v.txt
 west #
  # run the algorithm tests
 west #
- ipsec algparse -ta
+ ipsec algparse -ta > /dev/null
 west #
  # check pluto is starting in the correct mode
 west #

@@ -11,7 +11,6 @@ algparse: PRF algorithm AES_XCBC disabled; not FIPS compliant
 algparse: Integrity algorithm HMAC_MD5_96 disabled; not FIPS compliant
 algparse: Integrity algorithm HMAC_SHA2_256_TRUNCBUG disabled; not FIPS compliant
 algparse: Integrity algorithm AES_XCBC_96 disabled; not FIPS compliant
-algparse: DH algorithm MODP1024 disabled; not FIPS compliant
 algparse: DH algorithm MODP1536 disabled; not FIPS compliant
 algparse: DH algorithm DH31 disabled; not FIPS compliant
 algparse: FIPS Encryption algorithms:
