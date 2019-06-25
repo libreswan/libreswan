@@ -876,63 +876,6 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-static struct connection *find_connection_by_reqid(reqid_t reqid)
-{
-	struct connection *c;
-
-	/* find base reqid */
-	if (reqid > IPSEC_MANUAL_REQID_MAX) {
-		reqid &= ~3;
-	}
-
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (c = connections; c != NULL; c = c->ac_next)
-		if (c->spd.reqid == reqid)
-			break;
-
-	return c;
-}
-
-/*
- * generate a base reqid for automatic keying
- *
- * We are actually allocating a group of four contiguous
- * numbers: one is used for each SA in an SA bundle.
- *
- * - must not be in range 0 to IPSEC_MANUAL_REQID_MAX
- * - is a multiple of 4 (we are actually allocating
- *   four requids: see requid_ah, reqid_esp, reqid_ipcomp)
- * - does not duplicate any currently in use
- *
- * NOTE: comments seems to lie, we use same reqid for the
- *       ESP inbound and outbound.
- */
-static reqid_t gen_reqid(void)
-{
-	/* 16384 is the first reqid we will use when not specified manually */
-	static uint32_t global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
-
-	bool looping = FALSE;
-
-	for (;;) {
-		global_reqids += 4;
-		/* wrapping must skip manual reqids */
-		if (global_reqids <= IPSEC_MANUAL_REQID_MAX) {
-			if (looping) {
-				/* gone around the clock without success */
-				exit_log("unable to allocate reqid");
-			}
-			global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
-			looping = TRUE;
-		}
-
-		if (!find_connection_by_reqid(global_reqids)) {
-			return global_reqids;
-		}
-	}
-
-}
-
 static bool load_end_cert_and_preload_secret(const char *which, const char *pubkey,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end)

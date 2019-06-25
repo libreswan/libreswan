@@ -57,6 +57,7 @@ OBJS += constants.o \
 	alg_byname.o
 
 OBJS += certs.o
+OBJS += reqid.o
 
 ifeq ($(USE_NETKEY),true)
 OBJS += addr_lookup.o

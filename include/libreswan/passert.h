@@ -21,6 +21,7 @@
 #define _LIBRESWAN_PASSERT_H
 
 #include <string.h>		/* for strrchr() */
+#include <stdbool.h>
 
 #include "err.h"		/* for err_t */
 #include "lswcdefs.h"		/* for NEVER_RETURNS PRINTF_LIKE() */
