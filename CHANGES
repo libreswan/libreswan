@@ -7,6 +7,8 @@ v3.30 (unreleased)
 * programs: Change to /proc/sys/net/core/xfrm_acq_expires to detect XFRM [Paul]
 * pluto: audit log IKE SA and IPsec SA failures for Common Criteria (CC) [Paul]
 * pluto: Disable support for DH2/modp1024 at compile time [Paul]
+* pluto: add audit-log=yes|no (default yes) [Paul]
+
 
 v3.29 (June 10, 2019)
 * SECURITY: Fixes CVE-2019-10155 https://libreswan.org/security/CVE-2019-10155
