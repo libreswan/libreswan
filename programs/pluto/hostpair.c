@@ -429,15 +429,7 @@ void check_orientations(void)
 
 				for (hp = host_pairs; hp != NULL;
 				     hp = hp->next) {
-					/*
-					 * XXX: what's with the maybe
-					 * compare the port logic?
-					 */
-					if (sameaddr(&hp->remote,
-						     &i->ip_addr) &&
-					    (kern_interface != NO_KERNEL ||
-					     endpoint_port(&hp->remote) == pluto_port))
-					{
+					if (sameaddr(&hp->remote, &i->ip_addr)) {
 						/*
 						 * bad news: the whole chain of
 						 * connections hanging off this
