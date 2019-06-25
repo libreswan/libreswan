@@ -497,7 +497,7 @@ int main(int argc, char **argv)
 
 		if (stat("/proc/sys/net/core/xfrm_acq_expires", &sts) == 0) {
 			fprintf(stderr,
-				"%s: NETKEY does not support eroute table.\n",
+				"%s: XFRM does not support eroute table.\n",
 				progname);
 
 			exit(1);

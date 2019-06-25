@@ -284,9 +284,9 @@ if [ -r /proc/net/ipsec_version ]; then
     cat /proc/net/ipsec_version
 else
     if [ -r /proc/sys/net/core/xfrm_acq_expires ]; then
-	echo "NETKEY ($(uname -r)) support detected "
+	echo "XFRM ($(uname -r)) support detected "
     else
-	echo "no KLIPS or NETKEY support detected"
+	echo "no KLIPS or XFRM support detected"
     fi
 fi
 _________________________ iptables

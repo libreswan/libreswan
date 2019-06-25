@@ -38,7 +38,7 @@ done to combine the outputs.
 </para>
 <para>Some of the above commands, and therefore <emphasis remap='I'>ipsec look</emphasis>,
 are only supported with the KLIPS or MAST stack, and will give errors when used on BSD, Windows
-or Linux with NETKEY.</para>
+or Linux with XFRM/NETKEY.</para>
 </refsect1>
 
 

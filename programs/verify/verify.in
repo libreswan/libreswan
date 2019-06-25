@@ -299,7 +299,7 @@ def installchecknetkey():
 			print_result("OK","OK")
 		else:
 			print_result("FAIL","NOT DISABLED")
-			print("\n  Disable /proc/sys/net/ipv4/conf/*/%s or NETKEY will act on or cause sending of bogus ICMP redirects!\n"%option)
+			print("\n  Disable /proc/sys/net/ipv4/conf/*/%s or XFRM/NETKEY will act on or cause sending of bogus ICMP redirects!\n"%option)
 
 	printfun("         XFRM larval drop")
 	try:

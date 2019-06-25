@@ -77,7 +77,7 @@ static void resolve_defaultroute(struct starter_conn *conn UNUSED)
 	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0);
 #else /* !defined(NETKEY_SUPPORT) */
-	fprintf(stderr, "addcon: without NETKEY, cannot resolve_defaultroute()\n");
+	fprintf(stderr, "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()\n");
 	exit(7);	/* random code */
 #endif
 }
