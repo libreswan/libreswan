@@ -400,9 +400,8 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			 * Getting rid of record 'n' send will fix
 			 * this hack.
 			 */
-			dbg("Message ID: XXX: IKE #%lu receiver #%lu: receiver.wip.initiator %jd != receiver.msgid %jd (record 'n' called update_sent() before update_recv()?)",
-			    ike->sa.st_serialno, receiver->st_serialno,
-			    old_receiver.initiator, msgid);
+			dbg_v2_msgid(ike, receiver, "XXX: receiver.wip.initiator %jd != receiver.msgid %jd - suspect record'n'called update_sent() before update_recv()",
+				     old_receiver.initiator, msgid);
 		} else {
 			if (DBGP(DBG_BASE) && old_receiver.initiator != msgid) {
 				FAIL_V2_MSGID(ike, receiver,
@@ -460,9 +459,8 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		}
 #else
 		if (old_sender.initiator != -1) {
-			dbg("Message ID: XXX: IKE #%lu sender #%lu: expecting sender.wip.initiator %jd == -1 (record 'n' send out-of-order?)",
-			    ike->sa.st_serialno, sender->st_serialno,
-			    old_sender.initiator);
+			dbg_v2_msgid(ike, sender, "XXX: expecting sender.wip.initiator %jd == -1 - suspect record'n'send out-of-order?)",
+				     old_sender.initiator);
 		}
 #endif
 		break;
@@ -482,8 +480,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		new->responder.sent = msgid;
 		break;
 	case NO_MESSAGE:
-		dbg("Message ID: IKE #%lu sender #%lu: skipping update_send as nothing to send",
-		    ike->sa.st_serialno, sender->st_serialno);
+		dbg_v2_msgid(ike, sender, "skipping update_send as nothing to send");
 		return;
 	default:
 		bad_case(sending);

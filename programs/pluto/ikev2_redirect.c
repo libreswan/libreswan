@@ -377,8 +377,8 @@ void send_active_redirect_in_informational(struct state *st)
 		 * should instead let success_v2_state_transition()
 		 * deal with things.
 		 */
-		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
-		    ike->sa.st_serialno, st->st_serialno, __func__);
+		dbg_v2_msgid(ike, st, "XXX: in %s hacking around record'n'send bypassing send queue",
+			     __func__);
 		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
 		ipstr_buf b;
 		libreswan_log("redirecting of peer %s successful",

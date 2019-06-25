@@ -1476,17 +1476,56 @@ static bool is_duplicate_response(struct ike_sa *ike,
 
 	if (msgid <= ike->sa.st_v2_msgid_windows.initiator.recv) {
 		/*
-		 * Processing of the response was completed (the ==)
-		 *		 * so drop as too old.
+		 * Processing of the response was completed so drop as
+		 * too old.
 		 *
 		 * XXX: Should be rate_log() but that shows up in the
 		 * whack output.  While "correct" it messes with test
 		 * output.  The old log line didn't show up because
 		 * current-state wasn't set.
+		 *
+		 * Here's roughly why INITIATOR can be non-NULL:
+		 *
+		 * - west.#8 needs a rekey, so west.#11 is created and
+		 * it sends a CREATE_CHILD_SA with Message ID 3.
+		 *
+		 * - west.#8 gives up on the re-key so it forces a
+		 * delete request (aka record'n'send), sending a
+		 * second message with ID 4
+		 *
+		 * West has two outstanding messages yet its window
+		 * size of 1!
+		 *
+		 * - east receives the rekey with ID 3, creates
+		 * east.#11 and and sends it off for further
+		 * processing
+		 *
+		 * - east receives the delete with ID 4, forces a
+		 * message ID update and sends an ID 4 response
+		 * confirming the delete
+		 *
+		 * - east.#11 finishes its crypto so east sends back
+		 * its response with Message ID 3 for a re-keyed SA it
+		 * just deleted?!?!
+		 *
+		 * East has responded with two out-of-order messages
+		 * (if the window size was 2 this would be ok but it
+		 * isn't).
+		 *
+		 * - west receives the ID 4 response, tries to delete
+		 * the IKE SA but can't because west.#11 is lurking;
+		 * but regardless the ID window is forced 2->4
+		 *
+		 * - west receives the ID 3 response, which is clearly
+		 * to-old so doesn't expect there to be a matching
+		 * initiator, arrg
 		 */
-		pexpect(initiator == NULL);
-		dbg_v2_msgid(ike, initiator, "already processed response %jd (%s); discarding packet",
-			     msgid, enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg));
+		if (initiator != NULL) {
+			dbg_v2_msgid(ike, initiator, "XXX: expecting initiator==NULL - suspect record'n'send with an out-of-order wrong packet response; discarding packet");
+		} else {
+			dbg_v2_msgid(ike, initiator, "already processed response %jd (%s); discarding packet",
+				     msgid, enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg));
+		}
 		return true;
 	}
 
