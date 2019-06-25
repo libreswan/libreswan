@@ -559,7 +559,9 @@ struct state *new_v1_rstate(struct msg_digest *md)
 
 struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 			    const ike_spi_t ike_initiator_spi,
-			    const ike_spi_t ike_responder_spi)
+			    const ike_spi_t ike_responder_spi,
+			    struct connection *c, lset_t policy,
+			    int try, fd_t whack_sock)
 {
 	struct state *st = new_state(IKEv2, &state_undefined,
 				     ike_initiator_spi, ike_responder_spi,
@@ -583,6 +585,7 @@ struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 	pexpect(fs->v2_transitions != NULL);
 	pexpect(fs->nr_transitions == 1);
 	/* st->st_v2_transition = fs->state_transitions[0] */
+	initialize_new_state(&ike->sa, c, policy, try, whack_sock);
 	return ike;
 }
 

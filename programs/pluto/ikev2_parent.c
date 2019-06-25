@@ -527,11 +527,10 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	}
 
 	struct ike_sa *ike = new_v2_state(STATE_PARENT_I0, SA_INITIATOR,
-					  ike_initiator_spi(), zero_ike_spi);
-	struct state *st = &ike->sa;
-
+					  ike_initiator_spi(), zero_ike_spi,
+					  c, policy, try, whack_sock);
 	/* set up new state */
-	initialize_new_state(st, c, policy, try, whack_sock);
+	struct state *st = &ike->sa;
 	passert(st->st_ike_version == IKEv2);
 	passert(st->st_state->kind == STATE_PARENT_I0);
 	st->st_original_role = ORIGINAL_INITIATOR;
@@ -922,11 +921,11 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
 	struct ike_sa *ike = new_v2_state(STATE_PARENT_R0, SA_RESPONDER,
 					  md->hdr.isa_ike_spis.initiator,
-					  ike_responder_spi(&md->sender));
+					  ike_responder_spi(&md->sender),
+					  c, policy, 0, null_fd);
 	v2_msgid_start_responder(ike, &ike->sa, md);
 	struct state *st = &ike->sa;
 	/* set up new state */
-	initialize_new_state(st, c, policy, 0, null_fd);
 	update_ike_endpoints(ike, md);
 	passert(st->st_ike_version == IKEv2);
 	passert(st->st_state->kind == STATE_PARENT_R0);
