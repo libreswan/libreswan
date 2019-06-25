@@ -79,6 +79,7 @@ enum keyword_numeric_config_field {
 	KBF_LOGTIME,
 	KBF_LOGAPPEND,
 	KBF_LOGIP,
+	KBF_AUDIT_LOG,
 	KBF_IKEPORT,
 	KBF_IKEBUF,
 	KBF_IKE_ERRQUEUE,

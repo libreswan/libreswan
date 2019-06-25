@@ -38,10 +38,12 @@
       <arg choice="opt">--vendorid <replaceable>VID</replaceable></arg>
       <arg choice="opt">--nofork</arg>
       <arg choice="opt">--stderrlog</arg>
-      <arg choice="opt">----plutostderrlogtime</arg>
       <arg choice="opt">--logfile <replaceable>filename</replaceable></arg>
+      <arg choice="opt">--log-no-time</arg>
+      <arg choice="opt">--log-no-append</arg>
+      <arg choice="opt">--log-no-ip</arg>
+      <arg choice="opt">--log-no-audit</arg>
       <arg choice="opt">--use-klips</arg>
-      <arg choice="opt">--use-mast</arg>
       <arg choice="opt">--use-netkey</arg>
       <arg choice="opt">--use-nostack</arg>
       <arg choice="opt">--uniqueids</arg>

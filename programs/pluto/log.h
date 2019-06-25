@@ -36,7 +36,8 @@ struct msg_digest;
 
 extern bool
 	log_with_timestamp,     /* prefix timestamp */
-	log_append;
+	log_append,
+	log_to_audit;
 
 extern bool log_to_syslog;          /* should log go to syslog? */
 extern char *pluto_log_file;
@@ -225,7 +226,7 @@ enum linux_audit_kind {
 extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
 
 #ifdef USE_LINUX_AUDIT
-extern void linux_audit_init(void);
+extern void linux_audit_init(int do_audit);
 # include <libaudit.h>	/* from audit-libs devel */
 # define AUDIT_LOG_SIZE 256
 /* should really be in libaudit.h */

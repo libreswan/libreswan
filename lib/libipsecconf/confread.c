@@ -73,6 +73,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	SOPT(KBF_LOGTIME, TRUE);
 	SOPT(KBF_LOGAPPEND, TRUE);
 	SOPT(KBF_LOGIP, TRUE);
+	SOPT(KBF_AUDIT_LOG, TRUE);
 	SOPT(KBF_UNIQUEIDS, TRUE);
 	SOPT(KBF_DO_DNSSEC, TRUE);
 	SOPT(KBF_PERPEERLOG, FALSE);

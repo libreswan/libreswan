@@ -89,9 +89,9 @@ void linux_audit_conn(const struct state *st UNUSED, enum linux_audit_kind op UN
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
 
-static bool log_to_audit = FALSE;		/* audit log messages for kernel */
+bool log_to_audit = TRUE;		/* audit log messages for kernel */
 
-void linux_audit_init(void)
+void linux_audit_init(int do_audit)
 {
 	libreswan_log("Linux audit support [enabled]");
 	/* test and log if audit is enabled on the system */
@@ -111,10 +111,12 @@ void linux_audit_init(void)
 			exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
 		}
 	} else {
-		log_to_audit = TRUE;
+		if (do_audit)
+			log_to_audit = TRUE;
 	}
 	close(audit_fd);
-	libreswan_log("Linux audit activated");
+	if (do_audit)
+		libreswan_log("Linux audit activated");
 }
 
 static void linux_audit(const int type, const char *message, const char *laddr, const int result)
