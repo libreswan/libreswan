@@ -909,6 +909,9 @@ static struct connection *find_connection_by_reqid(reqid_t reqid)
  */
 static reqid_t gen_reqid(void)
 {
+	/* 16384 is the first reqid we will use when not specified manually */
+	static uint32_t global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
+
 	bool looping = FALSE;
 
 	for (;;) {

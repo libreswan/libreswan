@@ -109,9 +109,6 @@ const struct pfkey_proto_info null_proto_info[2] = {
 
 static struct bare_shunt *bare_shunts = NULL;
 
-/* 16384 is the first reqid we will use when not specified manually */
-uint32_t global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
-
 #ifdef IPSEC_CONNECTION_LIMIT
 static int num_ipsec_eroute = 0;
 #endif
