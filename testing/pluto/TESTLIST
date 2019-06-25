@@ -306,6 +306,7 @@ kvmplutotest	ikev1-x509-12-san-dn-match		good
 kvmplutotest	ikev1-x509-13-san-dn-mismatch		good
 kvmplutotest	ikev1-x509-14-san-dn-fromcert		good
 kvmplutotest	ikev1-x509-15-pkcs7			good
+kvmplutotest	ikev1-x509-16-mismatch-ignore		good
 kvmplutotest	ikev1-x509-aggr-05-san-firstemail-match good
 kvmplutotest	ikev1-x509-aggr-06-san-email-mismatch	good
 kvmplutotest	ikev1-x509-aggr-07-san-ip-mismatch	good
@@ -349,6 +350,7 @@ kvmplutotest	ikev2-x509-25-missing-ca		good
 kvmplutotest	ikev2-x509-26-criticalflag		good
 kvmplutotest	ikev2-x509-27-criticalflag-clientAuth	good
 kvmplutotest	ikev2-x509-28-del-nssdb-cert		good
+kvmplutotest	ikev2-x509-30-mismatch-ignore		good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 
