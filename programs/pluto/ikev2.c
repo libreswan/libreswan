@@ -1064,8 +1064,8 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 }
 
 /* report problems - but less so when OE */
-static void ikev2_log_payload_errors(struct state *st, struct msg_digest *md,
-				     const struct ikev2_payload_errors *errors)
+static void log_v2_payload_errors(struct state *st, struct msg_digest *md,
+				  const struct ikev2_payload_errors *errors)
 {
 	if (!DBGP(DBG_OPPO)) {
 		/*
@@ -2396,23 +2396,40 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 	/* no useful state microcode entry? */
 	if (svm->state == STATE_IKEv2_ROOF) {
-		libreswan_log("no useful state microcode entry found for incoming packet");
 		/* count all the error notifications */
 		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
 		     ntfy != NULL; ntfy = ntfy->next) {
 			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
+		/*
+		 * All branches: log error, [complete transition]
+		 * (why), return so first error wins.
+		 */
 		if (message_payload_status.bad) {
 			/*
 			 * A very messed up message.  Should only
-			 * consider replying when IKE_SA_INIT?  Code
-			 * above should have rejected any message with
-			 * invalid integrity.
+			 * consider responding when IKE_SA_INIT
+			 * request?  Code above should have rejected
+			 * any message with invalid integrity.
+			 *
+			 * XXX: how can one complete a state
+			 * transition on something that was never
+			 * started?  because the state may need
+			 * deleting.
 			 */
-			ikev2_log_payload_errors(st, md, &message_payload_status);
-			/* replace (*mdp)->st with st ... */
-			complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL + v2N_INVALID_SYNTAX);
-		} else if (encrypted_payload_status.bad) {
+			log_v2_payload_errors(st, md, &message_payload_status);
+			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT &&
+			    md->hdr.isa_msgid == 0 &&
+			    v2_msg_role(md) == MESSAGE_REQUEST) {
+				pexpect(st == NULL || st->st_v2_msgid_wip.responder == 0);
+				send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
+				complete_v2_state_transition(st, mdp, STF_FATAL);
+			} else {
+				complete_v2_state_transition(st, mdp, STF_IGNORE);
+			}
+			return;
+		}
+		if (encrypted_payload_status.bad) {
 			/*
 			 * Payload decrypted and integrity was ok but
 			 * contents weren't valid.
@@ -2421,58 +2438,68 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * in IKE_AUTH" and "2.21.3.  Error Handling
 			 * after IKE SA is Authenticated" this should
 			 * be fatal, killing the IKE SA.  Oops.
-			 */
-			ikev2_log_payload_errors(st, md, &encrypted_payload_status);
-			/* replace (*mdp)->st with st ... */
-			complete_v2_state_transition((*mdp)->st, mdp, STF_FAIL + v2N_INVALID_SYNTAX);
-		} else if (v2_msg_role(md) == MESSAGE_REQUEST) {
-			/*
-			 * We are the responder to this message so
-			 * return something.
 			 *
-			 * XXX: Er, why?
+			 * XXX: how can one complete a state
+			 * transition on something that was never
+			 * started?  Since this is fatal, the state
+			 * needs to be deleted.
 			 */
-			if (st == NULL) {
-				if (md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT) {
-					rate_log(md, "responding to message with unknown IKE SPI with INVALID_IKE_SPI");
-					/*
-					 * Lets assume "2.21.4.  Error
-					 * Handling Outside IKE SA" - we MAY
-					 * respond.
-					 */
-					send_v2N_response_from_md(md, v2N_INVALID_IKE_SPI,
-								  NULL/*no data*/);
-				}
-			} else {
-				/*
-				 * Presumably things are pretty messed
-				 * up.  While there might be a state
-				 * there probably isn't an established
-				 * IKE SA (so don't even consider
-				 * trying to send an encrypted
-				 * response), for instance:
-				 *
-				 * - instead of an IKE_AUTH request,
-				 * the initiator sends something
-				 * totally unexpected (such as an
-				 * informational) and things end up
-				 * here
-
-				 * - when an IKE_AUTH request's IKE SA
-				 * succeeeds but CHILD SA fails (and
-				 * pluto screws up the IKE SA by
-				 * updating its state but not its
-				 * Message ID and not responding), the
-				 * re-transmitted IKE_AUTH ends up
-				 * here
-				 *
-				 * Should it send a non-encrypted
-				 * v2N_INVALID_SYNTAX?
-				 */
-				libreswan_log("dropping message with no matching microcode");
-				complete_v2_state_transition(st, mdp, STF_IGNORE);
+			log_v2_payload_errors(st, md, &encrypted_payload_status);
+			if (v2_msg_role(md) == MESSAGE_REQUEST) {
+				send_v2N_response_from_state(ike, md, v2N_INVALID_SYNTAX, NULL);
 			}
+			complete_v2_state_transition(st, mdp, STF_FATAL);
+			return;
 		}
+		if (st == NULL && v2_msg_role(md) == MESSAGE_REQUEST &&
+		    md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT) {
+			rate_log(md, "responding to message with unknown IKE SPI with INVALID_IKE_SPI");
+			/*
+			 * Lets assume "2.21.4.  Error Handling
+			 * Outside IKE SA" - we MAY respond.
+			 *
+			 * XXX: how can one complete a state
+			 * transition on something that was never
+			 * started?
+			 *
+			 * XXX: is this ever reached?  All exchanges
+			 * after IKE_SA_INIT _must_ find an IKE SA,
+			 * else they get tossed much earlier in code
+			 * above.
+			 */
+			send_v2N_response_from_md(md, v2N_INVALID_IKE_SPI,
+						  NULL/*no data*/);
+			return;
+		}
+		if (st != NULL) {
+			/*
+			 * Presumably things are pretty messed up.
+			 * While there might be a state there probably
+			 * isn't an established IKE SA (so don't even
+			 * consider trying to send an encrypted
+			 * response), for instance:
+			 *
+			 * - instead of an IKE_AUTH request, the
+			 * initiator sends something totally
+			 * unexpected (such as an informational) and
+			 * things end up here
+			 *
+			 * - when an IKE_AUTH request's IKE SA
+			 * succeeeds but CHILD SA fails (and pluto
+			 * screws up the IKE SA by updating its state
+			 * but not its Message ID and not responding),
+			 * the re-transmitted IKE_AUTH ends up here
+			 *
+			 * If a request, should it send an
+			 * un-encrypted v2N_INVALID_SYNTAX?
+			 */
+			libreswan_log("no useful state microcode entry found for incoming packet");
+			/* "dropping message with no matching microcode" */
+			complete_v2_state_transition(st, mdp, STF_IGNORE);
+			return;
+		}
+		/* XXX: ever reached? */
+		libreswan_log("no useful state microcode entry found for incoming packet");
 		return;
 	}
 
