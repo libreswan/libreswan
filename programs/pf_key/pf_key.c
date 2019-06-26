@@ -48,6 +48,8 @@
 
 #include "socketwrapper.h"
 
+#include "lswcdefs.h"
+
 char *progname;
 uint32_t pfkey_seq = 0;
 int pfkey_sock;
