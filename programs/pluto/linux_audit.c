@@ -89,8 +89,6 @@ void linux_audit_conn(const struct state *st UNUSED, enum linux_audit_kind op UN
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
 
-bool log_to_audit = TRUE;		/* audit log messages for kernel */
-
 void linux_audit_init(int do_audit)
 {
 	libreswan_log("Linux audit support [enabled]");

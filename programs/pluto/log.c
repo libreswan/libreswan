@@ -47,7 +47,8 @@ bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
 	log_to_syslog = TRUE,		/* should log go to syslog? */
 	log_with_timestamp = TRUE,	/* testsuite requires no timestamps */
-	log_append = TRUE;
+	log_append = TRUE,
+	log_to_audit = FALSE;
 
 char *pluto_log_file = NULL;	/* pathname */
 static FILE *pluto_log_fp = NULL;
