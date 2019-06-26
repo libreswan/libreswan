@@ -3260,19 +3260,21 @@ bool migrate_ipsec_sa(struct state *st)
 	}
 }
 
-/* delete an IPSEC SA.
+/*
+ * Delete an IPSEC SA.
  * we may not succeed, but we bull ahead anyway because
  * we cannot do anything better by recognizing failure
  * This used to have a parameter bool inbound_only, but
  * the saref code changed to always install inbound before
  * outbound so this it was always false, and thus removed
+ *
  */
 void delete_ipsec_sa(struct state *st)
 {
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
 	if (IS_CHILD_SA(st)) {
-		/* child destruction already logged for STATE_CHILDSA_DEL state */
-		if (st->st_state->kind != STATE_CHILDSA_DEL) {
+		if (st->st_esp.present || st->st_ah.present) {
+			/* ESP or AH means this was an established IPsec SA */
 			linux_audit_conn(st, LAK_CHILD_DESTROY);
 		}
 	} else {
