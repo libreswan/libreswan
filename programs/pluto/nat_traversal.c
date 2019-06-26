@@ -116,8 +116,7 @@ void init_nat_traversal(deltatime_t keep_alive_period)
 }
 
 static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
-		      const ike_spis_t *spis,
-		      const ip_address *ip, uint16_t port /* host order */)
+		      const ike_spis_t *spis, const ip_endpoint *endpoint)
 {
 	/* only responder's IKE SPI can be zero */
 	pexpect(!ike_spi_is_zero(&spis->initiator));
@@ -141,8 +140,10 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 	crypt_hash_digest_bytes(ctx, "RCOOKIE/IKE SPIr",
 				&spis->responder, sizeof(spis->responder));
 
+	ip_address ip = endpoint_address(endpoint);
+	int port = endpoint_port(endpoint);
 	const unsigned char *ab;
-	size_t al = addrbytesptr_read(ip, &ab);
+	size_t al = addrbytesptr_read(&ip, &ab);
 	crypt_hash_digest_bytes(ctx, "IP addr", ab, al);
 
 	{
@@ -179,21 +180,21 @@ bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 		.initiator = st->st_ike_spis.initiator,
 		.responder = *ike_responder_spi,
 	};
-	uint16_t lport = st->st_localport;
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
+	uint16_t lport = st->st_localport;
 	if (st->st_connection->encaps == yna_yes) {
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		lport = 0;
 	}
-
-	return ikev2_out_natd(&st->st_localaddr, lport,
-				&st->st_remoteaddr, st->st_remoteport,
-				&ike_spis, outs);
+	ip_endpoint local_endpoint = endpoint(&st->st_localaddr, lport);
+	ip_endpoint remote_endpoint = endpoint(&st->st_remoteaddr, st->st_remoteport);
+	return ikev2_out_natd(&local_endpoint, &remote_endpoint,
+			      &ike_spis, outs);
 }
 
-bool ikev2_out_natd(const ip_address *localaddr, uint16_t localport,
-		    const ip_address *remoteaddr, uint16_t remoteport,
+bool ikev2_out_natd(const ip_endpoint *local_endpoint,
+		    const ip_endpoint *remote_endpoint,
 		    const ike_spis_t *ike_spis,
 		    pb_stream *outs)
 {
@@ -206,16 +207,14 @@ bool ikev2_out_natd(const ip_address *localaddr, uint16_t localport,
 
 	/* First: one with local (source) IP & port */
 
-	natd_hash(&ike_alg_hash_sha1, hb, ike_spis,
-		  localaddr, localport);
+	natd_hash(&ike_alg_hash_sha1, hb, ike_spis, local_endpoint);
 
 	if (!emit_v2Nchunk(v2N_NAT_DETECTION_SOURCE_IP, &hch, outs))
 		return FALSE;
 
 	/* Second: one with remote (destination) IP & port */
 
-	natd_hash(&ike_alg_hash_sha1, hb, ike_spis,
-		  remoteaddr, remoteport);
+	natd_hash(&ike_alg_hash_sha1, hb, ike_spis, remote_endpoint);
 
 	return emit_v2Nchunk(v2N_NAT_DETECTION_DESTINATION_IP, &hch, outs);
 }
@@ -399,15 +398,13 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	unsigned char hash_me[MAX_DIGEST_LEN];
 
 	natd_hash(hasher, hash_me, &st->st_ike_spis,
-		  &md->iface->ip_addr, md->iface->port);
+		  &md->iface->local_endpoint);
 
 	/* Second: one with sender IP & port */
 
 	unsigned char hash_him[MAX_DIGEST_LEN];
 
-	natd_hash(hasher, hash_him,
-		  &st->st_ike_spis,
-		  &md->sender, hportof(&md->sender));
+	natd_hash(hasher, hash_him, &st->st_ike_spis, &md->sender);
 
 	DBG(DBG_NATT, {
 		DBG_dump("expected NAT-D(me):", hash_me, hl);
@@ -457,16 +454,12 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
-	const ip_address *first = &md->sender;
-	unsigned short firstport = st->st_remoteport;
-
-	const ip_address *second = &md->iface->ip_addr;
-	unsigned short secondport = st->st_localport;
-
+	unsigned remote_port = st->st_remoteport;
+	unsigned short local_port = st->st_localport;
 	if (st->st_connection->encaps == yna_yes) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection"));
-		firstport = secondport = 0;
+		local_port = remote_port = 0;
 	}
 
 	struct_desc *pd = LDISJOINT(st->hidden_variables.st_nat_traversal, NAT_T_WITH_RFC_VALUES) ?
@@ -477,8 +470,10 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	/* first: emit payload with hash of sender IP & port */
 
+	const ip_endpoint remote_endpoint = set_endpoint_port(&md->sender,
+							      remote_port);
 	natd_hash(st->st_oakley.ta_prf->hasher, hash,
-		  &ike_spis, first, firstport);
+		  &ike_spis, &remote_endpoint);
 
 	if (!ikev1_out_generic_raw(nat_np, pd, outs, hash,
 				   st->st_oakley.ta_prf->hasher->hash_digest_size,
@@ -487,8 +482,10 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	/* second: emit payload with hash of my IP & port */
 
+	const ip_endpoint local_endpoint = set_endpoint_port(&md->iface->local_endpoint,
+							     local_port);
 	natd_hash(st->st_oakley.ta_prf->hasher, hash,
-		  &ike_spis, second, secondport);
+		  &ike_spis, &local_endpoint);
 
 	return ikev1_out_generic_raw(np, pd, outs, hash,
 		st->st_oakley.ta_prf->hasher->hash_digest_size,
@@ -1069,14 +1066,14 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
 	unsigned char hash_me[IKEV2_NATD_HASH_SIZE];
 
 	natd_hash(&ike_alg_hash_sha1, hash_me, &ike_spis,
-		  &md->iface->ip_addr, md->iface->port);
+		  &md->iface->local_endpoint);
 
 	/* Second: one with sender IP & port */
 
 	unsigned char hash_him[IKEV2_NATD_HASH_SIZE];
 
 	natd_hash(&ike_alg_hash_sha1, hash_him, &ike_spis,
-		  &md->sender, hportof(&md->sender));
+		  &md->sender);
 
 	bool found_me = FALSE;
 	bool found_him = FALSE;

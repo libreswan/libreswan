@@ -5571,10 +5571,13 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 static payload_master_t add_mobike_payloads;
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
+	ip_endpoint local_endpoint = endpoint(&st->st_mobike_localaddr,
+					      st->st_mobike_localport);
+	ip_endpoint remote_endpoint = endpoint(&st->st_remoteaddr,
+					       st->st_remoteport);
 	return emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs) &&
-		ikev2_out_natd(&st->st_mobike_localaddr, st->st_mobike_localport,
-			    &st->st_remoteaddr, st->st_remoteport,
-			    &st->st_ike_spis, pbs);
+		ikev2_out_natd(&local_endpoint, &remote_endpoint,
+			       &st->st_ike_spis, pbs);
 }
 #endif
 

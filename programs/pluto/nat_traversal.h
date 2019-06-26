@@ -131,8 +131,8 @@ bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 		       const ike_spi_t *ike_resonder_spi);
 
-bool ikev2_out_natd(const ip_address *localaddr, uint16_t localport,
-		    const ip_address *remoteaddr, uint16_t remoteport,
+bool ikev2_out_natd(const ip_endpoint *local_endpoint,
+		    const ip_endpoint *remote_endpoint,
 		    const ike_spis_t *ike_spis,
 		    pb_stream *outs);
 
