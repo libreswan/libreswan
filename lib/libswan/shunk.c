@@ -17,8 +17,10 @@
 #include <string.h>
 #include <stdlib.h>	/* for strtoul() */
 #include <limits.h>
+#include <ctype.h>
 
 #include "shunk.h"
+#include "lswlog.h"	/* for pexpect() */
 
 /*
  * Don't mistake a NULL_SHUNK for an empty shunk - just like for
@@ -46,6 +48,14 @@ shunk_t shunk2(const void *ptr, int len)
 	return (shunk_t) { .ptr = ptr, .len = len, };
 }
 
+shunk_t shunk_slice(shunk_t s, size_t start, size_t stop)
+{
+	pexpect(start <= stop);
+	pexpect(stop <= s.len);
+	const char *c = s.ptr;
+	return shunk2(c + start, stop - start);
+}
+
 shunk_t shunk_token(shunk_t *input, char *delim, const char *delims)
 {
 	/*
@@ -61,10 +71,8 @@ shunk_t shunk_token(shunk_t *input, char *delim, const char *delims)
 			if (delim != NULL) {
 				*delim = *pos;
 			}
-			/* strip input of token+delim */
-			pos++;
-			input->ptr = pos;
-			input->len -= (pos - start);
+			/* skip over TOKEN+DELIM */
+			*input = shunk_slice(*input, pos-start+1, input->len);
 			return token;
 		}
 		pos++;
@@ -109,8 +117,7 @@ bool shunk_caseeat(shunk_t *shunk, shunk_t dinner)
 	if (strncasecmp(shunk->ptr, dinner.ptr, dinner.len) != 0) {
 		return false;
 	}
-	shunk->ptr += dinner.len;
-	shunk->len -= dinner.len;
+	*shunk = shunk_slice(*shunk, dinner.len, shunk->len);
 	return true;
 }
 
@@ -145,4 +152,20 @@ bool shunk_tou(shunk_t shunk, unsigned *dest, int base)
 	}
 	*dest = (unsigned)ul;
 	return true;
+}
+
+bool shunk_isdigit(shunk_t s, size_t i)
+{
+	pexpect(s.len > 0);
+	pexpect(i < s.len);
+	const char *c = s.ptr;
+	return isdigit(c[i]);
+}
+
+bool shunk_ischar(shunk_t s, size_t i, const char *chars)
+{
+	pexpect(s.len > 0);
+	pexpect(i < s.len);
+	const char *c = s.ptr;
+	return strchr(chars, c[i]) != NULL;
 }

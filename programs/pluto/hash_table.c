@@ -35,8 +35,9 @@ struct list_head *hash_table_bucket(struct hash_table *table, shunk_t key)
 	 * There's no real rationale for doing this.
 	 */
 	size_t hash = 0;
+	const uint8_t *bytes = key.ptr;
 	for (unsigned j = 0; j < key.len; j++) {
-		hash = hash * 251 + key.ptr[j];
+		hash = hash * 251 + bytes[j];
 	}
 	return &table->slots[hash % table->nr_slots];
 }
