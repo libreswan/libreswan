@@ -19,6 +19,7 @@
 
 #include "pfkeyv2.h"
 #include <linux/version.h>
+#include "libreswan.h" /* for IPsecSAref_t */
 #ifdef __KERNEL__
 extern struct proto_ops pfkey_proto_ops;
 typedef struct sock pfkey_sock;
