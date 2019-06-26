@@ -36,7 +36,7 @@ Certificate Nickname                                         Trust Attributes
 east #
  sed -n -e '/IMPAIR: start processing replay forward/,/IMPAIR: stop processing replay forward/ { /^[^|]/ p }' /tmp/pluto.log | grep -v 'message arrived'
 IMPAIR: start processing replay forward: packet 1 of 1 (828 bytes)
-packet from 192.1.2.45:500: IMPAIR: processing a fake (cloned) message
+"westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: proposal 1:IKE:ENCR=AES_GCM_C_256;PRF=HMAC_SHA2_512;DH=MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_256;PRF=HMAC_SHA2_512;PRF=HMAC_SHA2_256;DH=MODP2048;DH=MODP3072;DH=MODP4096;DH=MODP8192;DH=ECP_256;DH=ECP_384;DH=ECP_521;DH=CURVE25519[first-match] 2:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA2_512;PRF=HMAC_SHA2_256;DH=MODP2048;DH=MODP3072;DH=MODP4096;DH=MODP8192;DH=ECP_256;DH=ECP_384;DH=ECP_521;DH=CURVE25519 3:IKE:ENCR=AES_CBC_256;PRF=HMAC_SHA2_512;PRF=HMAC_SHA2_256;INTEG=HMAC_SHA2_512_256;INTEG=HMAC_SHA2_256_128;DH=MODP2048;DH=MODP3072;DH=MODP4096;DH=MODP8192;DH=ECP_256;DH=ECP_384;DH=ECP_521;DH=CURVE25519 4:IKE:ENCR=AES_CBC_128;PRF=HMAC_SHA2_512;PRF=HMAC_SHA2_256;INTEG=HMAC_SHA2_512_256;INTEG=HMAC_SHA2_256_128;DH=MODP2048;DH=MODP3072;DH=MODP4096;DH=MODP8192;DH=ECP_256;DH=ECP_384;DH=ECP_521;DH=CURVE25519
 IMPAIR: stop processing replay forward: packet 1 of 1
 IMPAIR: start processing replay forward: packet 1 of 2 (828 bytes)
