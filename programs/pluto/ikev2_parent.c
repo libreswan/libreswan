@@ -850,11 +850,6 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 		return STF_DROP;
 	}
 
-	/* Vendor ID processing */
-	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
-		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE);
-	}
-
 	/*
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
@@ -894,6 +889,11 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	/* set by caller */
 	pexpect(md->from_state == STATE_PARENT_R0);
 	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
+
+	/* Vendor ID processing */
+	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
+		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE);
+	}
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =
