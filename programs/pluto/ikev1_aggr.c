@@ -848,9 +848,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 	ISAKMP_SA_established(st);
 
-#ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
-#endif
 	return STF_OK;
 }
 
@@ -971,9 +969,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 	ISAKMP_SA_established(st);
 
-#ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
-#endif
 	return STF_OK;
 }
 
