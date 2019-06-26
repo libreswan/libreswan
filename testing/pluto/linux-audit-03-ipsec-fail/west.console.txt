@@ -37,7 +37,7 @@ west #
 1v1 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: initiate
 010 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
 010 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
-031 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+031 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits. No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 000 "ikev1-ipsec-fail" #2: starting keying attempt 2 of at most 1, but releasing whack
 west #
  ipsec auto --delete ikev1-ipsec-fail
@@ -56,7 +56,7 @@ west #
 1v1 "ikev1-aggr-ipsec-fail" #5: STATE_QUICK_I1: initiate
 010 "ikev1-aggr-ipsec-fail" #5: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
 010 "ikev1-aggr-ipsec-fail" #5: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
-031 "ikev1-aggr-ipsec-fail" #5: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+031 "ikev1-aggr-ipsec-fail" #5: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits. No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 000 "ikev1-aggr-ipsec-fail" #5: starting keying attempt 2 of at most 1, but releasing whack
 west #
  ipsec auto --delete ikev1-aggr-ipsec-fail

@@ -2,7 +2,7 @@
 west #
  setenforce 1
 west #
- echo '@psk-west @psk-east: PSK "ThisIsHereToMisMatch"' >> /etc/ipsec.secrets
+ echo '@psk-west @psk-east: PSK "ThisIsHereToMisMatchABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
 west #
  echo ': PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
 west #
@@ -34,7 +34,7 @@ west #
 003 "ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
 010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
-031 "ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv1 message
+031 "ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits. No response (or no acceptable response) to our first IKEv1 message
 000 "ikev1-failtest" #1: starting keying attempt 2 of at most 1, but releasing whack
 west #
  ipsec auto --delete ikev1-failtest
