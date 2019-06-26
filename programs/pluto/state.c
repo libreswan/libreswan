@@ -975,7 +975,7 @@ void delete_state(struct state *st)
 			char *sbcp = readable_humber(st->st_ipcomp.peer_bytes,
 					       statebuf,
 					       statebuf + sizeof(statebuf),
-					       " IPCOMP traffic information: in=");
+					       "IPCOMP traffic information: in=");
 
 			(void)readable_humber(st->st_ipcomp.our_bytes,
 					       sbcp,
