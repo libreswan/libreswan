@@ -832,36 +832,10 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* forward decl and type assertion */
 static crypto_transition_fn ikev2_parent_inI1outR1_continue_tail;	/* forward decl and type assertion */
 
-stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
+stf_status ikev2_parent_inI1outR1(struct state *st, struct msg_digest *md)
 {
-	passert(null_st == NULL);	/* initial responder -> no state */
-
-	lset_t policy = LEMPTY;
-	struct connection *c = find_v2_host_pair_connection(md, &policy);
-	if (c == NULL) {
-		/*
-		 * NO_PROPOSAL_CHOSEN is used when the list of proposals is empty,
-		 * like when we did not find any connection to use.
-		 *
-		 * INVALID_SYNTAX is for errors that a configuration change could
-		 * not fix.
-		 */
-		send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL);
-		return STF_DROP;
-	}
-
-	/*
-	 * We've committed to creating a state and, presumably,
-	 * dedicating real resources to the connection.
-	 */
-	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
-	struct ike_sa *ike = new_v2_state(STATE_PARENT_R0, SA_RESPONDER,
-					  md->hdr.isa_ike_spis.initiator,
-					  ike_responder_spi(&md->sender),
-					  c, policy, 0, null_fd);
-	push_cur_state(&ike->sa);
-	v2_msgid_start_responder(ike, &ike->sa, md);
-	struct state *st = &ike->sa;
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct connection *c = ike->sa.st_connection;
 	/* set up new state */
 	update_ike_endpoints(ike, md);
 	passert(st->st_ike_version == IKEv2);
@@ -885,7 +859,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 		lswlogf(buf, " seconds ago)");
 	}
 
-	md->st = st;
+	pexpect(md->st == st);
 	/* set by caller */
 	pexpect(md->from_state == STATE_PARENT_R0);
 	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);

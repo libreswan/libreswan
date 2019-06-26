@@ -71,6 +71,7 @@
 #include "keywords.h"
 #include "ikev2_msgid.h"
 #include "ip_endpoint.h"
+#include "hostpair.h"		/* for find_v2_host_connection() */
 
 enum smf2_flags {
 	/*
@@ -1826,7 +1827,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 * No.  The equation uses v2Ni forcing
 				 * the entire payload to be parsed.
 				 */
-				st = NULL; /* since IKE==NULL */
 				pexpect(!md->message_payloads.parsed);
 				md->message_payloads = ikev2_decode_payloads(md,
 									     &md->message_pbs,
@@ -1863,6 +1863,35 @@ void ikev2_process_packet(struct msg_digest **mdp)
 					}
 				}
 				/* else - create a draft state here? */
+				lset_t policy = LEMPTY;
+				struct connection *c = find_v2_host_pair_connection(md, &policy);
+				if (c == NULL) {
+					/*
+					 * NO_PROPOSAL_CHOSEN is used
+					 * when the list of proposals
+					 * is empty, like when we did
+					 * not find any connection to
+					 * use.
+					 *
+					 * INVALID_SYNTAX is for
+					 * errors that a configuration
+					 * change could not fix.
+					 */
+					send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL);
+					return;
+				}
+				/*
+				 * We've committed to creating a state
+				 * and, presumably, dedicating real
+				 * resources to the connection.
+				 */
+				ike = new_v2_state(STATE_PARENT_R0, SA_RESPONDER,
+						   md->hdr.isa_ike_spis.initiator,
+						   ike_responder_spi(&md->sender),
+						   c, policy, 0, null_fd);
+				pexpect(md->hdr.isa_msgid == 0); /* per above */
+				st = find_v2_sa_by_responder_wip(ike, md->hdr.isa_msgid);
+				pexpect(st == NULL || st == &ike->sa);
 			}
 			/* update lastrecv later on */
 			break;
