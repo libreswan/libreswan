@@ -77,47 +77,41 @@ endif
 # PFKEYv2.  So that Makefile.inc.local can override, the values are
 # not forced.  over However don't force
 
-# support BSD/KAME kernels (on *BSD and OSX)?
-USE_BSDKAME?=false
-ifeq ($(USE_BSDKAME),true)
-USE_NETKEY?=false
-USE_KLIPS?=false
-endif
+# support Linux kernel's NETLINK_XFRM (aka XFRM/NETKEY) (aka "native")
+USE_NETKEY?=true
 
-# support KLIPS kernel module (KLIPS requires PFKEYv2)
+# support Linux KLIPS kernel module (KLIPS requires PFKEYv2)
 USE_KLIPS?=false
 ifeq ($(USE_KLIPS),true)
-USE_PFKEYv2?=true
-endif
-
-# support Linux kernel's NETLINK_XFRM (aka NETKEY) (aka "native",
-# "kame"???) (NETLINK does not use PFKEY, but it does share some code.
-# True?!?)
-USE_NETKEY?=true
-ifeq ($(USE_NETKEY),true)
 USE_PFKEYv2=true
 endif
 
-# above should set these
-USE_PFKEYv2?=false
+# support BSD/KAME kernels (on *BSD and OSX)?
+USE_BSDKAME?=false
 
-ifeq ($(USE_BSDKAME),true)
-USERLAND_CFLAGS += -DBSD_KAME
+
+
+ifeq ($(USE_NETKEY),true)
+USERLAND_CFLAGS+=-DNETKEY_SUPPORT
 endif
 
 ifeq ($(USE_KLIPS),true)
 USERLAND_CFLAGS+=-DKLIPS
 endif
 
-ifeq ($(USE_NETKEY),true)
-USERLAND_CFLAGS+=-DNETKEY_SUPPORT
+ifeq ($(USE_BSDKAME),true)
+USE_NETKEY?=false
+USE_KLIPS?=false
 endif
 
+ifeq ($(USE_BSDKAME),true)
+USERLAND_CFLAGS += -DBSD_KAME
+endif
+
+USE_PFKEYv2?=false
 ifeq ($(USE_PFKEYv2),true)
 USERLAND_CFLAGS+=-DPFKEY
 endif
-
-#
 
 ifeq ($(USE_DNSSEC),true)
 USERLAND_CFLAGS+=-DUSE_DNSSEC
