@@ -1635,64 +1635,6 @@ struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_sp
 }
 
 /*
- * Find the SA (IKE or CHILD), within IKE's family, that initiated a
- * request using MSGID.
- *
- * Could use a linked list, but for now exploit hash table property
- * that children share hash with parent.
- */
-
-struct request_filter {
-	msgid_t msgid;
-};
-
-static bool v2_sa_by_initiator_mip_p(struct state *st, void *context)
-{
-	const struct request_filter *filter = context;
-	return st->st_v2_msgid_wip.initiator == filter->msgid;
-}
-
-struct state *find_v2_sa_by_initiator_mip(struct ike_sa *ike, const msgid_t msgid)
-{
-	struct request_filter filter = {
-		.msgid = msgid,
-	};
-	struct state *st = state_by_ike_spis(IKEv2,
-					     NULL/*ignore-clonedfrom;see predicate*/,
-					     NULL/*ignore v1 msgid*/,
-					     NULL/*ignore-role*/,
-					     &ike->sa.st_ike_spis,
-					     v2_sa_by_initiator_mip_p, &filter, __func__);
-	pexpect(st == NULL ||
-		st->st_clonedfrom == SOS_NOBODY ||
-		st->st_clonedfrom == ike->sa.st_serialno);
-	return st;
-}
-
-static bool v2_sa_by_responder_mip_p(struct state *st, void *context)
-{
-	const struct request_filter *filter = context;
-	return st->st_v2_msgid_wip.responder == filter->msgid;
-}
-
-struct state *find_v2_sa_by_responder_mip(struct ike_sa *ike, const msgid_t msgid)
-{
-	struct request_filter filter = {
-		.msgid = msgid,
-	};
-	struct state *st = state_by_ike_spis(IKEv2,
-					     NULL/*ignore-clonedfrom;see predicate*/,
-					     NULL/*ignore v1 msgid*/,
-					     NULL/*ignore-role*/,
-					     &ike->sa.st_ike_spis,
-					     v2_sa_by_responder_mip_p, &filter, __func__);
-	pexpect(st == NULL ||
-		st->st_clonedfrom == SOS_NOBODY ||
-		st->st_clonedfrom == ike->sa.st_serialno);
-	return st;
-}
-
-/*
  * Find an IKEv2 CHILD SA using the protocol and the (from our POV)
  * 'outbound' SPI.
  *

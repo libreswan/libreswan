@@ -1290,6 +1290,81 @@ static struct child_sa *process_v2_child_ix(struct msg_digest *md,
 }
 
 /*
+ * Find the SA (IKE or CHILD), within IKE's family, that is initiated
+ * or is responding to Message ID.
+ */
+
+struct wip_filter {
+	msgid_t msgid;
+};
+
+static bool v2_sa_by_initiator_wip_p(struct state *st, void *context)
+{
+	const struct wip_filter *filter = context;
+	return st->st_v2_msgid_wip.initiator == filter->msgid;
+}
+
+static struct state *find_v2_sa_by_initiator_wip(struct ike_sa *ike, const msgid_t msgid)
+{
+	/*
+	 * XXX: Would a linked list of CHILD SAs work better, would
+	 * mean reference counting?  Should this also check that MSGID
+	 * is within the IKE SA's window?
+	 */
+	struct wip_filter filter = {
+		.msgid = msgid,
+	};
+	struct state *st;
+	if (v2_sa_by_initiator_wip_p(&ike->sa, &filter)) {
+		st = &ike->sa;
+	} else {
+		st = state_by_ike_spis(IKEv2,
+				       NULL/*ignore clonedfrom*/,
+				       NULL/*ignore v1 msgid*/,
+				       NULL/*ignore role*/,
+				       &ike->sa.st_ike_spis,
+				       v2_sa_by_initiator_wip_p, &filter, __func__);
+	}
+	pexpect(st == NULL ||
+		st->st_clonedfrom == SOS_NOBODY ||
+		st->st_clonedfrom == ike->sa.st_serialno);
+	return st;
+}
+
+static bool v2_sa_by_responder_wip_p(struct state *st, void *context)
+{
+	const struct wip_filter *filter = context;
+	return st->st_v2_msgid_wip.responder == filter->msgid;
+}
+
+static struct state *find_v2_sa_by_responder_wip(struct ike_sa *ike, const msgid_t msgid)
+{
+	/*
+	 * XXX: Would a linked list of CHILD SAs work better, would
+	 * mean reference counting?  Should this also check that MSGID
+	 * is within the IKE SA's window?
+	 */
+	struct wip_filter filter = {
+		.msgid = msgid,
+	};
+	struct state *st;
+	if (v2_sa_by_responder_wip_p(&ike->sa, &filter)) {
+		st = &ike->sa;
+	} else {
+		st = state_by_ike_spis(IKEv2,
+				       NULL/*ignore clonedfrom*/,
+				       NULL/*ignore v1 msgid*/,
+				       NULL/*ignore role*/,
+				       &ike->sa.st_ike_spis,
+				       v2_sa_by_responder_wip_p, &filter, __func__);
+	}
+	pexpect(st == NULL ||
+		st->st_clonedfrom == SOS_NOBODY ||
+		st->st_clonedfrom == ike->sa.st_serialno);
+	return st;
+}
+
+/*
  * Is this a duplicate request:
  *
  * - an old message which can be tossed
@@ -1732,9 +1807,9 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 */
 				dbg("received what looks like a duplicate IKE_SA_INIT for #%lu",
 				    ike->sa.st_serialno);
-				/* aka find_v2_sa_by_responder_mip() */
 				pexpect(md->hdr.isa_msgid == 0); /* per above */
-				st = ike->sa.st_v2_msgid_wip.responder == 0 ? &ike->sa : NULL;
+				st =find_v2_sa_by_responder_wip(ike, md->hdr.isa_msgid);
+				pexpect(st == NULL || st == &ike->sa);
 			} else if (drop_new_exchanges()) {
 				/* only log for debug to prevent disk filling up */
 				dbg("pluto is overloaded with half-open IKE SAs; dropping new exchange");
@@ -1843,8 +1918,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * at all.
 			 */
 			pexpect(md->hdr.isa_msgid == 0); /* per above */
-			/* aka find_v2_sa_by_responder_mip() */
-			st = ike->sa.st_v2_msgid_wip.initiator == 0 ? &ike->sa : NULL;
+			st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
+			pexpect(st == NULL || st == &ike->sa);
 			break;
 		default:
 			bad_case(v2_msg_role(md));
@@ -1873,7 +1948,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * accumulating fragments.  duplicate() gets to sort
 		 * out the mess.
 		 */
-		st = find_v2_sa_by_responder_mip(ike, md->hdr.isa_msgid);
+		st = find_v2_sa_by_responder_wip(ike, md->hdr.isa_msgid);
 	} else if (v2_msg_role(md) == MESSAGE_RESPONSE) {
 		/*
 		 * A response to this ends request.  First find the
@@ -1889,7 +1964,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 enum_name(&ikev2_exchange_names, ix));
 			return;
 		}
-		st = find_v2_sa_by_initiator_mip(ike, md->hdr.isa_msgid);
+		st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
 	} else {
 		PASSERT_FAIL("message role %d invalid", v2_msg_role(md));
 	}
