@@ -12,8 +12,8 @@ east #
  ipsec auto --add ikev2-base
 002 added connection description "ikev2-base"
 east #
- ipsec auto --add ikev2-esp=aes-sha1-modp1024
-002 added connection description "ikev2-esp=aes-sha1-modp1024"
+ ipsec auto --add ikev2-esp=aes-sha1-modp1536
+002 added connection description "ikev2-esp=aes-sha1-modp1536"
 east #
  echo "initdone"
 initdone
