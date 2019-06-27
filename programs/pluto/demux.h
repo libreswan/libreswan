@@ -25,6 +25,7 @@
 #include "quirks.h"
 #include "chunk.h"
 #include "ip_address.h"
+#include "pluto_timing.h"
 
 struct state;   /* forward declaration of tag */
 
@@ -90,7 +91,7 @@ struct msg_digest {
 	bool new_iv_set;			/* (v1) */
 	struct state *st;			/* current state object */
 
-	realtime_t md_inception;		/* when was this started */
+	threadtime_t md_inception;		/* when was this started */
 
 	notification_t v1_note;			/* reason for failure */
 	bool dpd;				/* (v1) Peer supports RFC 3706 DPD */

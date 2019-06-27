@@ -498,19 +498,13 @@ union sas { struct child_sa child; struct ike_sa ike; struct state st; };
  * Caller must insert_state().
  */
 
-static so_serial_t next_so = SOS_FIRST;
-
-so_serial_t next_so_serialno(void)
-{
-	return next_so;
-}
-
 static struct state *new_state(enum ike_version ike_version,
 			       const struct finite_state *fs,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
 			       enum sa_type sa_type)
 {
+	static so_serial_t next_so = SOS_FIRST;
 	union sas *sas = alloc_thing(union sas, "struct state in new_state()");
 	passert(&sas->st == &sas->child.sa);
 	passert(&sas->st == &sas->ike.sa);
@@ -528,7 +522,6 @@ static struct state *new_state(enum ike_version ike_version,
 		},
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
-	statetime_start(st);
 
 	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);

@@ -179,6 +179,7 @@ struct initiate_stuff {
 
 static int initiate_a_connection(struct connection *c, void *arg)
 {
+	threadtime_t inception  = threadtime_start();
 	struct initiate_stuff *is = (struct initiate_stuff *)arg;
 	fd_t whackfd = is->whackfd;
 
@@ -339,7 +340,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
 	whackfd = dup_any(whackfd);
-	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY
+	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, &inception
 #ifdef HAVE_LABELED_IPSEC
 		  , NULL
 #endif
@@ -611,6 +612,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 #endif
 				  )
 {
+	threadtime_t inception = threadtime_start();
 	struct connection *c = NULL;
 	struct spd_route *sr;
 	int ourport, hisport;
@@ -748,7 +750,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 		}
 
 		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
-				  SOS_NOBODY
+				  SOS_NOBODY, &inception
 #ifdef HAVE_LABELED_IPSEC
 				  , uctx
 #endif
@@ -965,7 +967,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 					    b->want));
 
 				ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
-						  SOS_NOBODY
+						  SOS_NOBODY, &inception
 #ifdef HAVE_LABELED_IPSEC
 						  , NULL /* shall we pass uctx for opportunistic connections? */
 #endif

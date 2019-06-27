@@ -100,7 +100,8 @@ void main_outI1(fd_t whack_sock,
 		struct connection *c,
 		struct state *predecessor,
 		lset_t policy,
-		unsigned long try
+		unsigned long try,
+		const threadtime_t *inception
 #ifdef HAVE_LABELED_IPSEC
 		, struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -109,6 +110,7 @@ void main_outI1(fd_t whack_sock,
 	struct state *st;
 
 	st = new_v1_istate();
+	statetime_t start = statetime_backdate(st, inception);
 
 	/* set up new state */
 	initialize_new_state(st, c, policy, try, whack_sock);
@@ -220,6 +222,8 @@ void main_outI1(fd_t whack_sock,
 			"%s: initiate",
 			st->st_state->name);
 	}
+
+	statetime_stop(&start, "%s()", __func__);
 	reset_cur_state();
 }
 

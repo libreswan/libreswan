@@ -1663,6 +1663,10 @@ static bool is_duplicate_response(struct ike_sa *ike,
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
  */
+
+static void ike_process_packet(struct msg_digest **mdp, enum sa_role local_ike_role,
+			       struct ike_sa *ike, struct state *st);
+
 void ikev2_process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
@@ -1677,6 +1681,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	/*
 	 * If the IKE SA initiator sent the message then this end is
 	 * looking for the IKE SA responder (and vice versa).
+	 *
+	 * XXX: local_ike_role -> expected_ike_role
 	 */
 	enum sa_role local_ike_role = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) ? SA_RESPONDER : SA_INITIATOR;
 
@@ -1999,11 +2005,30 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	}
 
 	/*
-	 * ST, if non-NULL, is either the initiator expecting the
-	 * response, or the responder already processing the message.
+	 * There's at least an IKE SA, and possibly ST willing to
+	 * process the message.  Backdate billing to when the message
+	 * first arrived.
 	 */
-	passert(ike == NULL ? st == NULL : true);
+	passert(ike != NULL);
 
+	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
+	ike_process_packet(mdp, local_ike_role, ike, st);
+	statetime_stop(&start, "%s()", __func__);
+}
+
+/*
+ * The IKE SA for the message has been found (or created).  Continue
+ * verification, and identify the state (ST) that the message should
+ * be sent to.
+ *
+ * XXX: should the find_v2_sa_by_*_wip() be moved to here, it is
+ * pretty generic.
+ */
+
+static void ike_process_packet(struct msg_digest **mdp, enum sa_role local_ike_role,
+			       struct ike_sa *ike, struct state *st)
+{
+	struct msg_digest *md = *mdp;
 	/*
 	 * If there's a state, attribute all further logging to that
 	 * state.
@@ -2061,7 +2086,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		}
 	}
 
-	if (ix == ISAKMP_v2_IKE_SA_INIT &&
+	if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT &&
 	    v2_msg_role(md) == MESSAGE_RESPONSE) {
 		if (pexpect(md->hdr.isa_msgid == 0) &&
 		    pexpect(ike != NULL)) {
@@ -2103,6 +2128,15 @@ void ikev2_process_packet(struct msg_digest **mdp)
 
 	ikev2_process_state_packet(ike, st, mdp);
 }
+
+/*
+ * The SA the message is intended for has also been identified.
+ * Continue ...
+ *
+ * XXX: Well except for a CREATE_CHILD_SA request where, after further
+ * processing the SA may get created.  Should this message instead be
+ * sent to the IKE SA, which can then create a WIP child?
+ */
 
 void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				struct msg_digest **mdp)

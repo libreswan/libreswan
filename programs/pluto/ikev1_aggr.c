@@ -993,7 +993,8 @@ void aggr_outI1(fd_t whack_sock,
 		struct connection *c,
 		struct state *predecessor,
 		lset_t policy,
-		unsigned long try
+		unsigned long try,
+		const threadtime_t *inception
 #ifdef HAVE_LABELED_IPSEC
 		, struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -1009,6 +1010,8 @@ void aggr_outI1(fd_t whack_sock,
 
 	/* set up new state */
 	st = new_v1_istate();
+	statetime_t start = statetime_backdate(st, inception);
+
 	set_cur_state(st);
 	update_state_connection(st, c);
 
@@ -1073,6 +1076,7 @@ void aggr_outI1(fd_t whack_sock,
 	request_ke_and_nonce("aggr_outI1 KE + nonce", st,
 			     st->st_oakley.ta_dh,
 			     aggr_outI1_continue);
+	statetime_stop(&start, "%s()", __func__);
 	reset_globals();
 }
 

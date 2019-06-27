@@ -512,7 +512,8 @@ void ikev2_parent_outI1(fd_t whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,
-		       unsigned long try
+		       unsigned long try,
+		       const threadtime_t *inception
 #ifdef HAVE_LABELED_IPSEC
 		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -529,6 +530,8 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	struct ike_sa *ike = new_v2_state(STATE_PARENT_I0, SA_INITIATOR,
 					  ike_initiator_spi(), zero_ike_spi,
 					  c, policy, try, whack_sock);
+	statetime_t start = statetime_backdate(&ike->sa, inception);
+
 	push_cur_state(&ike->sa);
 	/* set up new state */
 	struct state *st = &ike->sa;
@@ -603,6 +606,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	request_ke_and_nonce("ikev2_outI1 KE", st,
 			     st->st_oakley.ta_dh,
 			     ikev2_parent_outI1_continue);
+	statetime_stop(&start, "%s()", __func__);
 	reset_globals();
 }
 
@@ -842,23 +846,6 @@ stf_status ikev2_parent_inI1outR1(struct state *st, struct msg_digest *md)
 	passert(st->st_state->kind == STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
 	passert(st->st_sa_role == SA_RESPONDER);
-
-	/*
-	 * "cur_state" has been set (possibly repeatedly) so all
-	 * systems are go - emit a log record as early as possible.
-	 *
-	 * Include the "hidden" prep time that's already been sunk
-	 * into the the message.
-	 */
-	LSWLOG(buf) {
-		lswlogf(buf, "processing ");
-		lswlog_msg_digest(buf, md);
-		deltatime_t prep_time = realtimediff(realnow(), md->md_inception);
-		lswlogf(buf, " (message arrived ");
-		lswlog_deltatime(buf, prep_time);
-		lswlogf(buf, " seconds ago)");
-	}
-
 	pexpect(md->st == st);
 	/* set by caller */
 	pexpect(md->from_state == STATE_PARENT_R0);
@@ -2547,22 +2534,6 @@ static crypto_req_cont_func ikev2_ike_sa_process_auth_request_no_skeyid_continue
 stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct state *st,
 						       struct msg_digest *md UNUSED)
 {
-	/*
-	 * This log line flags that a complete packet has been
-	 * received and processing as commenced - any further delay is
-	 * at our end.
-	 *
-	 * XXX: move this into ikev2.c?
-	 */
-	LSWLOG(buf) {
-		lswlogf(buf, "processing encrypted ");
-		lswlog_msg_digest(buf, md);
-		deltatime_t prep_time = realtimediff(realnow(), md->md_inception);
-		lswlogf(buf, " (message arrived ");
-		lswlog_deltatime(buf, prep_time);
-		lswlogf(buf, " seconds ago)");
-	}
-
 	/* for testing only */
 	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
 		libreswan_log(

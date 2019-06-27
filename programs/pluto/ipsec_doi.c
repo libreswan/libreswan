@@ -198,7 +198,8 @@ void ipsecdoi_initiate(fd_t whack_sock,
 		       struct connection *c,
 		       lset_t policy,
 		       unsigned long try,
-		       so_serial_t replacing
+		       so_serial_t replacing,
+		       const threadtime_t *inception
 #ifdef HAVE_LABELED_IPSEC
 		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -226,13 +227,11 @@ void ipsecdoi_initiate(fd_t whack_sock,
 			 * turn will start its timing it), need a way
 			 * to stop it.
 			 */
-			statetime_t start = statetime_start(NULL);
-			initiator(whack_sock, c, NULL, policy, try
+			initiator(whack_sock, c, NULL, policy, try, inception
 #ifdef HAVE_LABELED_IPSEC
 				  , uctx
 #endif
 				  );
-			statetime_stop(&start, "initiator");
 		} else {
 			/* fizzle: whack_sock will be unused */
 			close_any(&whack_sock);
@@ -284,6 +283,12 @@ void ipsecdoi_initiate(fd_t whack_sock,
  */
 void ipsecdoi_replace(struct state *st, unsigned long try)
 {
+	/*
+	 * start billing the new state.  The old state also gets
+	 * billed for this function call, oops.
+	 */
+	threadtime_t inception = threadtime_start();
+
 	if (IS_IKE_SA(st)) {
 		/* start from policy in connection */
 
@@ -302,14 +307,12 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			 * turn will start its timing it), need a way
 			 * to stop it.
 			 */
-			statetime_t start = statetime_start(NULL);
 			(void) initiator(dup_any(st->st_whack_sock),
-				c, st, policy, try
+					 c, st, policy, try, &inception
 #ifdef HAVE_LABELED_IPSEC
 				, st->sec_ctx
 #endif
 				);
-			statetime_stop(&start, "initiator");
 		}
 	} else {
 		/*
@@ -346,7 +349,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			passert(HAS_IPSEC_POLICY(policy));
 
 		ipsecdoi_initiate(dup_any(st->st_whack_sock), st->st_connection,
-			policy, try, st->st_serialno
+				  policy, try, st->st_serialno, &inception
 #ifdef HAVE_LABELED_IPSEC
 			, st->sec_ctx
 #endif
