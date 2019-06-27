@@ -108,20 +108,19 @@ sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:in
 
 
 %build
-%if 0%{with_efence}
-%global efence "-lefence"
-%endif
-
-#796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
 %if 0%{with_development}
-   USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+    OPTIMIZE_CFLAGS="%{?_hardened_cflags}" \
 %else
-  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+    OPTIMIZE_CFLAGS="%{optflags}" \
 %endif
-  USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
-  %{libreswan_config} \
-  programs
+%if 0%{with_efence}
+    USE_EFENCE=true \
+%endif
+    WERROR_CFLAGS="-Werror -Wno-missing-field-initializers" \
+    USERLINK="%{?__global_ldflags}" \
+    %{libreswan_config} \
+    programs
 FS=$(pwd)
 
 # Add generation of HMAC checksums of the final stripped binaries
