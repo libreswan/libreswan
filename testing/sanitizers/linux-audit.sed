@@ -14,3 +14,5 @@ s/ipsec_t/unconfined_service_t/g
 s/  / /g
 # some times we get extra: UID="root" AUID="unset"
 /^UID="root" AUID="unset"$/d
+# rhel and upstream diff in printed auth algo 0
+s/auth=0/auth=OAKLEY__0/g
