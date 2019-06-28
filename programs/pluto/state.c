@@ -896,7 +896,8 @@ void delete_state(struct state *st)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 
 	/* If we are failed OE initiator, make shunt bare */
-	if (IS_IKE_SA(st) && (c->policy & POLICY_OPPORTUNISTIC) &&
+	if (IS_IKE_SA(st) && c->newest_isakmp_sa == st->st_serialno
+	   && (c->policy & POLICY_OPPORTUNISTIC) &&
 	    (st->st_state->kind == STATE_PARENT_I1 ||
 	     st->st_state->kind == STATE_PARENT_I2)) {
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
