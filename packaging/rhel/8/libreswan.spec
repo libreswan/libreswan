@@ -29,12 +29,12 @@
     USE_KLIPS=false \\\
 %{nil}
 
-#global prever rc1
+%global prever dr1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: IPSECBASEVERSION
+Version: 3.30
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -215,5 +215,5 @@ bunzip2 *.fax.bz2
 %{_libdir}/fipscheck/pluto.hmac
 
 %changelog
-* Sun Oct  7 2018 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Mon May 20 2019 Team Libreswan <team@libreswan.org> - 3.30dr1-1
 - Automated build from release tar ball
