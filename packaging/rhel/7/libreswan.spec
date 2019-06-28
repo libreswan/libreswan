@@ -25,12 +25,11 @@
     USE_SECCOMP=true \\\
     USE_XAUTHPAM=true \\\
 %{nil}
-
-%global prever dr1
+#global prever rc1
 
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
-Version: 3.30
+Version: IPSECBASEVERSION
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -216,5 +215,5 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 
 %changelog
-* Mon May 20 2019 Team Libreswan <team@libreswan.org> - 3.30dr1-1
+* Sun Oct  7 2018 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
 - Automated build from release tar ball
