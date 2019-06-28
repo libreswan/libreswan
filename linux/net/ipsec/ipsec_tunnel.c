@@ -1904,7 +1904,9 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 	/* look very carefully at the scope of these compiler
 	   directives before changing anything... -- RGB */
 	case NETDEV_UNREGISTER:
+#ifdef NETDEV_UNREGISTER_FINAL
 	case NETDEV_UNREGISTER_FINAL:
+#endif
 		switch (event) {
 		case NETDEV_DOWN:
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
@@ -1924,6 +1926,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 				    dev->name,
 				    dev->flags);
 			break;
+#ifdef NETDEV_UNREGISTER_FINAL
 		case NETDEV_UNREGISTER_FINAL:
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 				    "klips_debug:ipsec_device_event: "
@@ -1932,6 +1935,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 				    dev->flags);
 			break;
 		}
+#endif
 
 		/* find the attached physical device and detach it. */
 		for (i = 0; i < IPSEC_NUM_IFMAX; i++) {
