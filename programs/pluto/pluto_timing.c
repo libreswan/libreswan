@@ -108,7 +108,14 @@ static statetime_t start_statetime(struct state *st, struct timespec now)
 
 statetime_t statetime_start(struct state *st)
 {
-	passert(st != NULL);
+	if (st == NULL) {
+		/*
+		 * IKEv1 sometimes doesn't have a state to time, just
+		 * ignore it.
+		 */
+		dbg("in %s() with no state", __func__);
+		return disabled_statetime;
+	}
 	if (st->st_timing.level > 0 && !DBGP(DBG_CPU_USAGE)) {
 		/*
 		 * When DBG_CPU_USAGE isn't enabled, only time the
@@ -132,9 +139,19 @@ statetime_t statetime_start(struct state *st)
 
 statetime_t statetime_backdate(struct state *st, const threadtime_t *inception)
 {
-	passert(st != NULL);
-	if (!pexpect(inception != NULL && st->st_timing.level == 0)) {
+	if (st == NULL) {
+		/*
+		 * IKEv1 sometimes doesn't have a state to time, just
+		 * ignore it.
+		 */
+		dbg("in %s() with no state", __func__);
 		return disabled_statetime;
+	}
+	passert(inception != NULL);
+	if (st->st_timing.level > 0) {
+		pexpect(st->st_ike_version == IKEv1);
+		dbg("in %s() with non-zero timing level", __func__);
+		st->st_timing.level = 0;
 	}
 	statetime_t start = start_statetime(st, inception->tt);
 	/*
@@ -160,6 +177,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	/* state disappeared? */
 	struct state *st = state_with_serialno(start->so);
 	if (st == NULL) {
+		dbg("in %s() and could not find #%lu", __func__, start->so);
 		return;
 	}
 
