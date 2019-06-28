@@ -184,9 +184,15 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 		jam(&buf, " auth=");
 		if (st->st_ike_version == IKEv2) {
-			jam_string(&buf, (c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG");;
+			jam_string(&buf, (c->policy & POLICY_PSK) ? "PRESHARED_KEY" :
+				(c->policy & POLICY_RSASIG) ? "RSA_SIG" :
+				(c->policy & POLICY_ECDSA) ? "ECDSA" : "unknown");
 		} else {
-			lswlog_enum_short(&buf, &oakley_auth_names, st->st_oakley.auth);
+			if (op == LAK_PARENT_FAIL)
+				jam_string(&buf, (c->policy & POLICY_PSK) ? "PRESHARED_KEY" :
+					(c->policy & POLICY_RSASIG) ? "RSA_SIG" : "unknown");
+			else
+				lswlog_enum_short(&buf, &oakley_auth_names, st->st_oakley.auth);
 		}
 
 		jam(&buf, " cipher=%s ksize=%d",
