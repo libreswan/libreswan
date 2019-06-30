@@ -15,6 +15,7 @@
 
 #include <stdlib.h>
 #include <sys/wait.h>		/* for WIFEXITED() et.al. */
+#include <signal.h>		/* for kill() and signals in general */
 
 #include "constants.h"
 #include "lswlog.h"
