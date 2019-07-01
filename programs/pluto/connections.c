@@ -1987,6 +1987,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		}
 	}
 
+	/* assumption: orientation is the same as c's */
 	connect_to_host_pair(d);
 
 	return d;

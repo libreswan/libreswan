@@ -2769,6 +2769,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	if (!orient(c)) {
 		PEXPECT_LOG("%s after mobike failed", "orient");
 	}
+	/* assumption: orientation has not changed */
 	connect_to_host_pair(c); /* re-create hp listing */
 
 	if (md_role == MESSAGE_RESPONSE) {

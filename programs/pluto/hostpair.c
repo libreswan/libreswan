@@ -443,6 +443,7 @@ void update_host_pairs(struct connection *c)
 	while (conn_list != NULL) {
 		struct connection *nxt = conn_list->hp_next;
 
+		/* assumption: orientation is the same as before */
 		connect_to_host_pair(conn_list);
 		conn_list = nxt;
 	}
