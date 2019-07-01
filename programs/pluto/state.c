@@ -2789,7 +2789,7 @@ void set_state_ike_endpoints(struct state *st,
 {
 	/* reset our choice of interface */
 	c->interface = NULL;
-	orient(c);
+	(void)orient(c);
 	st->st_interface = c->interface;
 	passert(st->st_interface != NULL);
 
