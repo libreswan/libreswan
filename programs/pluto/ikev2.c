@@ -1832,6 +1832,10 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 *
 				 * No.  The equation uses v2Ni forcing
 				 * the entire payload to be parsed.
+				 *
+				 * The error notification is probably
+				 * INVALID_SYNTAX, but could be
+				 * v2N_UNSUPPORTED_CRITICAL_PAYLOAD.
 				 */
 				pexpect(!md->message_payloads.parsed);
 				md->message_payloads = ikev2_decode_payloads(md,
@@ -2086,6 +2090,31 @@ static void ike_process_packet(struct msg_digest **mdp, enum sa_role local_ike_r
 		}
 	}
 
+	/*
+	 * If not already done above in the IKE_SA_INIT responder code
+	 * path, decode the packet now.
+	 */
+	if (!md->message_payloads.parsed) {
+		dbg("unpacking clear payload");
+		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE ||
+			md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
+		md->message_payloads =
+			ikev2_decode_payloads(md, &md->message_pbs,
+					      md->hdr.isa_np);
+		if (md->message_payloads.n != v2N_NOTHING_WRONG) {
+			/*
+			 * Should only respond when the message is an
+			 * IKE_SA_INIT request.  But that was handled
+			 * above when dealing with cookies so here,
+			 * there's zero reason to respond.
+			 *
+			 * decode calls packet code and that logs
+			 * errors on the spot
+			 */
+			return;
+		}
+	}
+
 	if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT &&
 	    v2_msg_role(md) == MESSAGE_RESPONSE) {
 		if (pexpect(md->hdr.isa_msgid == 0) &&
@@ -2204,49 +2233,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		}
 
 		/*
-		 * Since there is a state transition that looks like
-		 * it might accept the packet, parse the clear payload
-		 * and then continue matching.
-		 */
-		if (!md->message_payloads.parsed) {
-			DBG(DBG_CONTROL, DBG_log("Unpacking clear payload for svm: %s", svm->story));
-			md->message_payloads = ikev2_decode_payloads(md,
-								     &md->message_pbs,
-								     md->hdr.isa_np);
-			if (md->message_payloads.n != v2N_NOTHING_WRONG) {
-				/*
-				 * Only respond if the message is an
-				 * IKE_SA_INIT request.
-				 *
-				 * An IKE_SA_INIT response, like any
-				 * other response, should never
-				 * trigger a further response
-				 * (ignoring an exception that doesn't
-				 * apply here).
-				 *
-				 * For any other request (IKE_AUTH,
-				 * CHILD_SA_..., ...), since this end
-				 * is only allowed to respond after
-				 * the SK payload has been verified,
-				 * things must simply be dropped.
-				 */
-				if (ix == ISAKMP_v2_IKE_SA_INIT &&
-				    v2_msg_role(md) == MESSAGE_REQUEST) {
-					chunk_t data = chunk(md->message_payloads.data,
-							     md->message_payloads.data_size);
-					send_v2N_response_from_md(md, md->message_payloads.n,
-								  &data);
-					pexpect(st == NULL);
-				} else {
-					complete_v2_state_transition(st, mdp, STF_IGNORE);
-				}
-				return;
-			}
-		}
-
-		/*
 		 * Check the message payloads are as expected.
 		 */
+		pexpect(md->message_payloads.parsed);
 		struct ikev2_payload_errors message_payload_errors
 			= ikev2_verify_payloads(md, &md->message_payloads,
 						&svm->message_payloads);
