@@ -75,25 +75,6 @@
 
 enum smf2_flags {
 	/*
-	 * Check the value of the I(Initiator) (IKE_I) flag in the
-	 * header.
-	 *
-	 * The original initiator receives packets with the
-	 * I(Initiator) bit clear, while the original resonder
-	 * receives packets with the I(Initiator) bit set.
-	 *
-	 * The bit is used to identify the IKE SA initiator and
-	 * responder SPIs (cookies) in the header (see 2.6. IKE SA
-	 * SPIs and Cookies).  For incoming messages, the I(Initiator)
-	 * flag in the header is used; for outgoing messages, the
-	 * I(Initiator) flag is set according to ike.sa.st_sa_role.
-	 *
-	 * Arguably, this could be made a separate 3 state variable.
-	 */
-	SMF2_IKE_I_SET = LELEM(1),
-	SMF2_IKE_I_CLEAR = LELEM(2),
-
-	/*
 	 * Is the MSG_R bit set.
 	 *
 	 * Requests have the bit clear, and responses have it set.
@@ -290,7 +271,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiate CREATE_CHILD_SA IKE Rekey",
 	  .state      = STATE_V2_REKEY_IKE_I0,
 	  .next_state = STATE_V2_REKEY_IKE_I,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags      = SMF2_MSG_R_SET,
 	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_RETRANSMIT, },
@@ -301,7 +282,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiate CREATE_CHILD_SA IPsec Rekey SA",
 	  .state      = STATE_V2_REKEY_CHILD_I0,
 	  .next_state = STATE_V2_REKEY_CHILD_I,
-	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags =      SMF2_MSG_R_SET,
 	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_RETRANSMIT, },
@@ -312,7 +293,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiate CREATE_CHILD_SA IPsec SA",
 	  .state      = STATE_V2_CREATE_I0,
 	  .next_state = STATE_V2_CREATE_I,
-	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags =      SMF2_MSG_R_SET,
 	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_RETRANSMIT, },
@@ -323,7 +304,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "initiate IKE_SA_INIT",
 	  .state      = STATE_PARENT_I0,
 	  .next_state = STATE_PARENT_I1,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags      = SMF2_MSG_R_SET,
 	  .send = MESSAGE_REQUEST,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_RETRANSMIT, },
@@ -335,7 +316,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process SA_INIT reply notification",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags = SMF2_MSG_R_SET,
 	  .send = MESSAGE_REQUEST,
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
@@ -352,7 +333,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags = SMF2_MSG_R_SET,
 	  .send = MESSAGE_REQUEST,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
@@ -367,21 +348,21 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 	{ .story      = "Initiator: process INVALID_SYNTAX AUTH notification",
 	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags = SMF2_MSG_R_SET,
 	  .message_payloads = { .required = P(SK), },
 	  .encrypted_payloads = { .required = P(N), .notification = v2N_INVALID_SYNTAX, },
 	  .processor  = ikev2_auth_initiator_process_failure_notification,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
 	{ .story      = "Initiator: process AUTHENTICATION_FAILED AUTH notification",
 	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags = SMF2_MSG_R_SET,
 	  .message_payloads = { .required = P(SK), },
 	  .encrypted_payloads = { .required = P(N), .notification = v2N_AUTHENTICATION_FAILED, },
 	  .processor  = ikev2_auth_initiator_process_failure_notification,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
 	{ .story      = "Initiator: process UNSUPPORTED_CRITICAL_PAYLOAD AUTH notification",
 	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags = SMF2_MSG_R_SET,
 	  .message_payloads = { .required = P(SK), },
 	  .encrypted_payloads = { .required = P(N), .notification = v2N_UNSUPPORTED_CRITICAL_PAYLOAD, },
 	  .processor  = ikev2_auth_initiator_process_failure_notification,
@@ -397,7 +378,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_V2_IPSEC_I,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_ESTABLISHED,
+	  .flags = SMF2_MSG_R_SET | SMF2_ESTABLISHED,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT)|P(CP),
@@ -406,7 +387,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE, },
 	{ .story      = "IKE SA: process IKE_AUTH response containing unknown notification",
 	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags = SMF2_MSG_R_SET,
 	  .message_payloads = { .required = P(SK), },
 	  .encrypted_payloads = { .required = P(N), },
 	  .processor  = ikev2_auth_initiator_process_unknown_notification,
@@ -419,7 +400,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .state      = STATE_PARENT_R0,
 	  .next_state = STATE_PARENT_R1,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR,
+	  .flags = SMF2_MSG_R_CLEAR,
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2_parent_inI1outR1,
@@ -438,7 +419,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Responder: process IKE_AUTH request (no SKEYSEED)",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R1,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_NO_SKEYSEED,
+	  .flags = SMF2_MSG_R_CLEAR | SMF2_NO_SKEYSEED,
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = LEMPTY,
@@ -457,7 +438,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_V2_IPSEC_R,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_ESTABLISHED,
+	  .flags = SMF2_MSG_R_CLEAR | SMF2_ESTABLISHED,
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
@@ -548,7 +529,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: Informational Request",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags      = SMF2_IKE_I_SET | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -557,7 +538,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: Informational Response",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -566,7 +547,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: INFORMATIONAL Request",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags      = SMF2_IKE_I_SET,
+	  .flags      = LEMPTY,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
@@ -576,7 +557,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: INFORMATIONAL Response",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags      = SMF2_IKE_I_CLEAR,
+	  .flags      = LEMPTY,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
@@ -586,7 +567,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: process Informational Request",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_IKE_I_SET | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -595,7 +576,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: process Informational Response",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -604,7 +585,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: process INFORMATIONAL Request",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_IKE_I_SET,
+	  .flags      = LEMPTY,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
@@ -614,7 +595,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: process INFORMATIONAL Response",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_IKE_I_CLEAR,
+	  .flags      = LEMPTY,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
@@ -1664,7 +1645,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
  * *mdp being set to NULL.
  */
 
-static void ike_process_packet(struct msg_digest **mdp, enum sa_role local_ike_role,
+static void ike_process_packet(struct msg_digest **mdp,
 			       struct ike_sa *ike, struct state *st);
 
 void ikev2_process_packet(struct msg_digest **mdp)
@@ -1681,17 +1662,15 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	/*
 	 * If the IKE SA initiator sent the message then this end is
 	 * looking for the IKE SA responder (and vice versa).
-	 *
-	 * XXX: local_ike_role -> expected_ike_role
 	 */
-	enum sa_role local_ike_role = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) ? SA_RESPONDER : SA_INITIATOR;
+	enum sa_role expected_local_ike_role = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) ? SA_RESPONDER : SA_INITIATOR;
 
 	/*
 	 * Dump what the message says, once a state has been found
 	 * this can be checked against what is.
 	 */
 	LSWDBGP(DBG_BASE, buf) {
-		switch (local_ike_role) {
+		switch (expected_local_ike_role) {
 		case SA_RESPONDER:
 			jam(buf, "I am the IKE SA Original Responder");
 			break;
@@ -1699,7 +1678,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			jam(buf, "I am the IKE SA Original Initiator");
 			break;
 		default:
-			bad_case(local_ike_role);
+			bad_case(expected_local_ike_role);
 		}
 		jam(buf, " receiving an IKEv2 ");
 		lswlog_enum_short(buf, &ikev2_exchange_names, ix);
@@ -1747,8 +1726,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		switch (v2_msg_role(md)) {
 		case MESSAGE_REQUEST:
 			/* The initiator must send: IKE_I && !MSG_R */
-			if (local_ike_role != SA_RESPONDER) {
-				libreswan_log("dropping IKE_SA_INIT request with conflicting IKE initiator flag");
+			if (expected_local_ike_role != SA_RESPONDER) {
+				rate_log(md, "dropping IKE_SA_INIT request with conflicting IKE initiator flag");
 				return;
 			}
 			/*
@@ -1801,7 +1780,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * packet.
 			 */
 			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi,
-							      local_ike_role);
+							      expected_local_ike_role);
 			if (ike != NULL) {
 				/*
 				 * Set ST to the state that is
@@ -1907,8 +1886,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			break;
 		case MESSAGE_RESPONSE:
 			/* The responder must send: !IKE_I && MSG_R. */
-			if (local_ike_role != SA_INITIATOR) {
-				libreswan_log("dropping IKE_SA_INIT response with conflicting IKE initiator flag");
+			if (expected_local_ike_role != SA_INITIATOR) {
+				rate_log(md, "dropping IKE_SA_INIT response with conflicting IKE initiator flag");
 				return;
 			}
 			/*
@@ -1939,7 +1918,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * so looking for it won't work.
 			 */
 			ike = find_v2_ike_sa_by_initiator_spi(&md->hdr.isa_ike_initiator_spi,
-							      local_ike_role);
+							      expected_local_ike_role);
 			if (ike == NULL) {
 				/*
 				 * There should be a state matching
@@ -1974,7 +1953,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * in-progress?
 		 */
 		ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
-				     local_ike_role);
+				     expected_local_ike_role);
 		if (ike == NULL) {
 			struct esb_buf ixb;
 			rate_log(md, "%s message request has no corresponding IKE SA",
@@ -1996,7 +1975,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * not).
 		 */
 		ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
-				     local_ike_role);
+				     expected_local_ike_role);
 		if (ike == NULL) {
 			/* technically IKE or CHILD SA */
 			rate_log(md, "%s message response has no matching IKE SA",
@@ -2015,8 +1994,18 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 */
 	passert(ike != NULL);
 
+	/*
+	 * Re-check ST's IKE SA's role against the I(Initiator) flag
+	 * in the headers.  Since above searches will only find an IKE
+	 * SA when the IKE SA's role is correct, this should always
+	 * work.
+	 */
+	if (!pexpect(ike->sa.st_sa_role == expected_local_ike_role)) {
+		return;
+	}
+
 	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
-	ike_process_packet(mdp, local_ike_role, ike, st);
+	ike_process_packet(mdp, ike, st);
 	statetime_stop(&start, "%s()", __func__);
 }
 
@@ -2029,7 +2018,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
  * pretty generic.
  */
 
-static void ike_process_packet(struct msg_digest **mdp, enum sa_role local_ike_role,
+static void ike_process_packet(struct msg_digest **mdp,
 			       struct ike_sa *ike, struct state *st)
 {
 	struct msg_digest *md = *mdp;
@@ -2050,15 +2039,6 @@ static void ike_process_packet(struct msg_digest **mdp, enum sa_role local_ike_r
 	 */
 	if (md->fake_clone) {
 		libreswan_log("IMPAIR: processing a fake (cloned) message");
-	}
-
-	/*
-	 * Check ST's IKE SA's role against the I(Initiator) flag in
-	 * the headers.  Since above searches require the correct IKE
-	 * role, this should always work.
-	 */
-	if (ike != NULL && !pexpect(ike->sa.st_sa_role == local_ike_role)) {
-		return;
 	}
 
 	/*
@@ -2205,19 +2185,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			continue;
 		if (svm->recv_type != ix)
 			continue;
-		/*
-		 * Does the original [ike] initiator flag match?
-		 */
-		if (svm->flags & SMF2_IKE_I_SET) {
-			if ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) == 0)
-				/* opps, clear */
-				continue;
-		}
-		if (svm->flags & SMF2_IKE_I_CLEAR) {
-			if ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0)
-				/* opps, set */
-				continue;
-		}
 		/*
 		 * Does the message reply flag match?
 		 */
