@@ -1547,17 +1547,15 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 	while (pfd.revents = 0,
 	       poll(&pfd, 1, -1) > 0 && (pfd.revents & POLLERR)) {
 		/*
-		 * XXX: This buffer should be just slightly larger
-		 * than the IKE header as that way just enough
-		 * information to find the sender is returned.
-		 * Unfortunately it doesn't work - unpacking the
-		 * header using in_struct(HDR) fails when the packet
-		 * is truncated.
+		 * This buffer needs to be large enough to fit the IKE
+		 * header so that the IKE SPIs and flags can be
+		 * extracted and used to find the sender of the
+		 * message.
 		 *
-		 * So instead use the send buffer size, which is far
-		 * too big.
+		 * Give it double that.
 		 */
-		uint8_t buffer[MAX_INPUT_UDP_SIZE];
+		uint8_t buffer[sizeof(struct isakmp_hdr) * 2];
+
 		union {
 			struct sockaddr sa;
 			struct sockaddr_in sa_in4;

@@ -1803,14 +1803,14 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 				 size_t sizeof_buffer)
 {
-	if (packet_len >= sizeof_buffer) {
+	if (packet_len > sizeof_buffer) {
 		/*
-		 * XXX: in_struct() rejects an attempt to unpack a
-		 * truncated packet.  Should be way to override it.
+		 * When the message is too big it is truncated.  But
+		 * what about the returned packet length?  Force
+		 * truncation.
 		 */
-		libreswan_log("MSG_ERRQUEUE packet longer than %zu bytes; truncated",
-			      sizeof_buffer);
-		return NULL;
+		dbg("MSG_ERRQUEUE packet longer than %zu bytes; truncated", sizeof_buffer);
+		packet_len = sizeof_buffer;
 	}
 	if (packet_len < sizeof(struct isakmp_hdr)) {
 		dbg("MSG_ERRQUEUE packet is smaller than an IKE header");
@@ -1819,8 +1819,23 @@ struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 	pb_stream packet_pbs;
 	init_pbs(&packet_pbs, buffer, packet_len, __func__);
 	struct isakmp_hdr hdr;
-	if (!in_struct(&hdr, &isakmp_hdr_desc, &packet_pbs, NULL)) {
-		dbg("MSG_ERRQUEUE packet IKE header is corrupt");
+	if (!in_struct(&hdr, &raw_isakmp_hdr_desc, &packet_pbs, NULL)) {
+		/*
+		 * XXX:
+		 *
+		 * When in_struct() fails it logs an obscure and
+		 * typically context free error (for instance, cur_*
+		 * is unset when processing error messages); and
+		 * there's no clean for this or calling code to pass
+		 * in context.
+		 *
+		 * Fortunately, since the buffer is large enough to
+		 * hold the header, there's really not much left that
+		 * can trigger an error (everything in ISAKMP_HDR_DESC
+		 * that involves validation has its type set to FT_NAT
+		 * in RAW_ISAKMP_HDR_DESC).
+		 */
+		libreswan_log("MSG_ERRQUEUE packet IKE header is corrupt");
 		return NULL;
 	}
 	enum ike_version ike_version = hdr_ike_version(&hdr);

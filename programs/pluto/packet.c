@@ -71,6 +71,25 @@ struct_desc isakmp_hdr_desc = {
 	.pt = ISAKMP_NEXT_NONE,
 };
 
+static field_desc raw_isa_fields[] = {
+	{ ft_raw, COOKIE_SIZE, "initiator cookie", NULL },
+	{ ft_raw, COOKIE_SIZE, "responder cookie", NULL },
+	{ ft_nat, 8 / BITS_PER_BYTE, "next payload type", },
+	{ ft_nat, 8 / BITS_PER_BYTE, "ISAKMP version", },
+	{ ft_nat, 8 / BITS_PER_BYTE, "exchange type", },
+	{ ft_nat, 8 / BITS_PER_BYTE, "flags", },
+	{ ft_nat, 32 / BITS_PER_BYTE, "Message ID", NULL },
+	{ ft_nat, 32 / BITS_PER_BYTE, "length", NULL },
+	{ ft_end, 0, NULL, NULL }
+};
+
+struct_desc raw_isakmp_hdr_desc = {
+	.name = "ISAKMP Message (raw)",
+	.fields = raw_isa_fields,
+	.size = sizeof(struct isakmp_hdr),
+	.pt = ISAKMP_NEXT_NONE,
+};
+
 /* Generic portion of all ISAKMP payloads.
  * layout from RFC 2408 "ISAKMP" section 3.2
  * This describes the first 32-bit chunk of all payloads.
