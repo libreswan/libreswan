@@ -5,10 +5,11 @@ v3.30 (unreleased)
 * IKEv2:  Message ID handling: remove a O(#STATES) lookup [Andrew]
 * packaging: fedora30 requires gcc to be listed as BuildRequires: [Paul]
 * programs: Change to /proc/sys/net/core/xfrm_acq_expires to detect XFRM [Paul]
-* pluto: audit log IKE SA and IPsec SA failures for Common Criteria (CC) [Paul]
+* pluto: Audit log IKE SA and IPsec SA failures for Common Criteria (CC) [Paul]
 * pluto: Disable support for DH2/modp1024 at compile time [Paul]
-* pluto: add audit-log=yes|no (default yes) [Paul]
-
+* pluto: Add audit-log=yes|no (default yes) [Paul]
+* pluto: DDNS event should not cause connection initialization [Paul]
+* whack: Added whack --ddns to trigger the DNs lookup event manually [Paul]
 
 v3.29 (June 10, 2019)
 * SECURITY: Fixes CVE-2019-10155 https://libreswan.org/security/CVE-2019-10155
