@@ -2412,11 +2412,11 @@
 
       <para>The --ddos-auto, --ddos-busy and --ddos-unlimited options
       tells <emphasis remap="B">pluto</emphasis> to update the DDoS
-      protection state. Normally, these meassures are automatically
+      protection state. Normally, these measures are automatically
       activated or deactivated based on the number of states inside
       pluto. The busy and unlimited option tells pluto to activate or
       deactivate the DDoS protection mode manually.  One of these DDoS
-      protection methods is to active IKEv2 DCOOKIEs to defend against
+      protection methods is to activate IKEv2 DCOOKIEs to defend against
       spoofed IKE packets.
       </para>
 
@@ -2440,7 +2440,7 @@
         <varlistentry>
           <term><option>--ddos-auto</option></term>
           <listitem>
-            <para>activate the buildin detection mechanism for the anti-DDoS meassures.</para>
+            <para>activate the built-in detection mechanism for the anti-DDoS measures.</para>
           </listitem>
         </varlistentry>
       </variablelist>
