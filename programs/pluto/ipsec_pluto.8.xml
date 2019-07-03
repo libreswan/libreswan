@@ -145,9 +145,6 @@
 
       <group choice="opt">
         <arg choice="opt">--client <replaceable>subnet</replaceable></arg>
-
-        <arg choice="opt">--clientwithin
-        <replaceable>subnet</replaceable></arg>
       </group>
 
       <arg choice="opt">--clientprotoport
@@ -211,8 +208,6 @@
       <arg choice="opt">--nexthop <replaceable>ip-address</replaceable></arg>
 
       <arg choice="opt">--client <replaceable>subnet</replaceable></arg>
-
-      <arg choice="opt">--clientwithin <replaceable>subnet</replaceable></arg>
 
       <arg choice="opt">--clientprotoport
       <replaceable>protocol</replaceable>/<replaceable>port</replaceable></arg>
@@ -1457,16 +1452,6 @@
             remap="I">mask</emphasis> is a decimal integer, specifying the
             number of leading one bits in the mask. So, for example,
             10.0.0.0/8 would specify the class A network "Net 10".</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--clientwithin</option>&nbsp;<emphasis
-          remap="I">subnet</emphasis></term>
-
-          <listitem>
-            <para>This option is obsolete and will be removed. Do not use this
-            option anymore.</para>
           </listitem>
         </varlistentry>
 
