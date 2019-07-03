@@ -2022,9 +2022,11 @@ static void ike_process_packet(struct msg_digest **mdp,
 			       struct ike_sa *ike, struct state *st)
 {
 	struct msg_digest *md = *mdp;
+
 	/*
-	 * If there's a state, attribute all further logging to that
-	 * state.
+	 * If there's a state responsible for the message (i.e., ST
+	 * could stil be NULL), attribute all further logging to that
+	 * state; else the IKE SA.
 	 */
 	if (st != NULL) {
 		/* XXX: debug-logging here is redundant */
@@ -2042,32 +2044,41 @@ static void ike_process_packet(struct msg_digest **mdp,
 	}
 
 	/*
-	 * Deal with duplicate messages and busy states.  Update ST so
-	 * it points at the state that will process the message.
+	 * Deal with duplicate messages and busy states.
 	 */
-	if (ike != NULL) {
-		switch (v2_msg_role(md)) {
-		case MESSAGE_REQUEST:
-			/*
-			 * If ST!=NULL then there is a state
-			 * processing MSGID and the message should be
-			 * dropped.  But if ST is accumulating
-			 * fragments, then things need to keep going.
-			 */
-			if (is_duplicate_request(ike, st, md)) {
-				return;
-			}
-			/* The IKE SA always processes requests. */
-			st = &ike->sa;
-			break;
-		case MESSAGE_RESPONSE:
-			if (is_duplicate_response(ike, st, md)) {
-				return;
-			}
-			break;
-		default:
-			bad_case(v2_msg_role(md));
+	switch (v2_msg_role(md)) {
+	case MESSAGE_REQUEST:
+		/*
+		 * When ST!=NULL then there is a state processing
+		 * MSGID and the message should be dropped.  But wait,
+		 * ST!= NULL also occures when there's something
+		 * accumulating fragments.  duplicate() gets to sort
+		 * out the mess.
+		 */
+		if (is_duplicate_request(ike, st, md)) {
+			return;
 		}
+		/*
+		 * The IKE SA always processes requests.
+		 *
+		 * XXX: except further down where the code creates a
+		 * new state when CREATE_CHILD_SA and switches to
+		 * that.
+		 *
+		 * The other quirk is with fragments; but the only
+		 * case that matters it is the IKE SA accumulating
+		 * them.
+		 */
+		st = &ike->sa;
+		break;
+	case MESSAGE_RESPONSE:
+		if (is_duplicate_response(ike, st, md)) {
+			return;
+		}
+		pexpect(st != NULL);
+		break;
+	default:
+		bad_case(v2_msg_role(md));
 	}
 
 	/*
@@ -2130,7 +2141,7 @@ static void ike_process_packet(struct msg_digest **mdp,
 	 * here before.  Hence the extra filter.  Is there something
 	 * better?
 	 */
-	if (st != NULL && v2_msg_role(md) == MESSAGE_REQUEST &&
+	if (v2_msg_role(md) == MESSAGE_REQUEST &&
 	    st->st_v2_rfrags == NULL) {
 		v2_msgid_start_responder(ike, st, md);
 	}
@@ -2151,6 +2162,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
+	passert(ike != NULL);
+	passert(st != NULL);
 
 	/*
 	 * There is no "struct state" object if-and-only-if we're
@@ -2163,11 +2176,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	 * According to the RFC: no.  Instead a small table of
 	 * constants can be used to generate cookies on the fly.
 	 */
-	const struct finite_state *from_state =
-		st == NULL ? finite_states[STATE_PARENT_R0] : st->st_state;
-	dbg("#%lu in state %s: %s",
-	     st != NULL ? st->st_serialno : 0,
-	     from_state->short_name, from_state->story);
+	const struct finite_state *from_state = st->st_state;
+	dbg("#%lu in state %s: %s", st->st_serialno,
+	    from_state->short_name, from_state->story);
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
@@ -2221,11 +2232,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		if (!(svm->message_payloads.required & P(SK))) {
 			break;
 		}
-
-		/*
-		 * SK payloads require state.
-		 */
-		passert(st != NULL);
 
 		/*
 		 * Since the encrypted payload appears plausible, deal
@@ -2440,7 +2446,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT &&
 			    md->hdr.isa_msgid == 0 &&
 			    v2_msg_role(md) == MESSAGE_REQUEST) {
-				pexpect(st == NULL || st->st_v2_msgid_wip.responder == 0);
+				pexpect(st->st_v2_msgid_wip.responder == 0);
 				send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
 				complete_v2_state_transition(st, mdp, STF_FATAL);
 			} else {
@@ -2470,55 +2476,28 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			complete_v2_state_transition(st, mdp, STF_FATAL);
 			return;
 		}
-		if (st == NULL && v2_msg_role(md) == MESSAGE_REQUEST &&
-		    md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT) {
-			rate_log(md, "responding to message with unknown IKE SPI with INVALID_IKE_SPI");
-			/*
-			 * Lets assume "2.21.4.  Error Handling
-			 * Outside IKE SA" - we MAY respond.
-			 *
-			 * XXX: how can one complete a state
-			 * transition on something that was never
-			 * started?
-			 *
-			 * XXX: is this ever reached?  All exchanges
-			 * after IKE_SA_INIT _must_ find an IKE SA,
-			 * else they get tossed much earlier in code
-			 * above.
-			 */
-			send_v2N_response_from_md(md, v2N_INVALID_IKE_SPI,
-						  NULL/*no data*/);
-			return;
-		}
-		if (st != NULL) {
-			/*
-			 * Presumably things are pretty messed up.
-			 * While there might be a state there probably
-			 * isn't an established IKE SA (so don't even
-			 * consider trying to send an encrypted
-			 * response), for instance:
-			 *
-			 * - instead of an IKE_AUTH request, the
-			 * initiator sends something totally
-			 * unexpected (such as an informational) and
-			 * things end up here
-			 *
-			 * - when an IKE_AUTH request's IKE SA
-			 * succeeeds but CHILD SA fails (and pluto
-			 * screws up the IKE SA by updating its state
-			 * but not its Message ID and not responding),
-			 * the re-transmitted IKE_AUTH ends up here
-			 *
-			 * If a request, should it send an
-			 * un-encrypted v2N_INVALID_SYNTAX?
-			 */
-			libreswan_log("no useful state microcode entry found for incoming packet");
-			/* "dropping message with no matching microcode" */
-			complete_v2_state_transition(st, mdp, STF_IGNORE);
-			return;
-		}
-		/* XXX: ever reached? */
+		/*
+		 * Presumably things are pretty messed up.  While
+		 * there might be a state there probably isn't an
+		 * established IKE SA (so don't even consider trying
+		 * to send an encrypted response), for instance:
+		 *
+		 * - instead of an IKE_AUTH request, the initiator
+		 * sends something totally unexpected (such as an
+		 * informational) and things end up here
+		 *
+		 * - when an IKE_AUTH request's IKE SA succeeeds but
+		 * CHILD SA fails (and pluto screws up the IKE SA by
+		 * updating its state but not its Message ID and not
+		 * responding), the re-transmitted IKE_AUTH ends up
+		 * here
+		 *
+		 * If a request, should it send an un-encrypted
+		 * v2N_INVALID_SYNTAX?
+		 */
 		libreswan_log("no useful state microcode entry found for incoming packet");
+		/* "dropping message with no matching microcode" */
+		complete_v2_state_transition(st, mdp, STF_IGNORE);
 		return;
 	}
 
@@ -2577,14 +2556,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	DBG(DBG_CONTROL,
 	    DBG_log("calling processor %s", svm->story));
 
-	/*
-	 * XXX: the initial responder has ST==NULL!  But that's ok as
-	 * statetime_start() will fudge up a statetime_t for the
-	 * not-yet-created state.
-	 */
 	statetime_t start = statetime_start(st);
 	stf_status e = svm->processor(st, md);
-	statetime_stop(&start, "processing: %s", svm->story);
+	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
 
 	/*
 	 * Processor may screw around with md->st, for instance
