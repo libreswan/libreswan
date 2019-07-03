@@ -486,6 +486,11 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 	if (m->whack_ddos != DDOS_undefined)
 		set_whack_pluto_ddos(m->whack_ddos);
 
+	if (m->whack_ddns) {
+		libreswan_log("updating pending dns lookups");
+		connection_check_ddns();
+	}
+
 	if (m->whack_reread & REREAD_SECRETS)
 		load_preshared_secrets();
 
