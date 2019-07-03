@@ -1734,7 +1734,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * zero.
 		 */
 		if (md->hdr.isa_msgid != 0) {
-			libreswan_log("dropping IKE_SA_INIT message containing non-zero message ID");
+			rate_log(md, "dropping IKE_SA_INIT message containing non-zero message ID");
 			return;
 		}
 		/*
@@ -1754,7 +1754,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * message including a cookie).
 			 */
 			if (!ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
-				libreswan_log("dropping IKE_SA_INIT request with non-zero SPIr");
+				rate_log(md, "dropping IKE_SA_INIT request with non-zero SPIr");
 				return;
 			}
 			/*
@@ -1939,7 +1939,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 * Since there isn't someone's playing
 				 * games.  Drop the packet.
 				 */
-				libreswan_log("no matching state for IKE_SA_INIT response; discarding packet");
+				rate_log(md, "no matching state for IKE_SA_INIT response; discarding packet");
 				return;
 			}
 			/*
