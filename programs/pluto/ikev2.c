@@ -1274,6 +1274,11 @@ static struct child_sa *process_v2_child_ix(struct msg_digest *md,
 /*
  * Find the SA (IKE or CHILD), within IKE's family, that is initiated
  * or is responding to Message ID.
+ *
+ * XXX: There's overlap between this and the is_duplicate_*() code.
+ * For instance, there's little point in looking for a state when the
+ * IKE SA's window shows it too old (at least if we ignore
+ * record'n'send bugs).
  */
 
 struct wip_filter {
@@ -1347,22 +1352,38 @@ static struct state *find_v2_sa_by_responder_wip(struct ike_sa *ike, const msgid
 }
 
 /*
- * Is this a duplicate request:
+ * Is this a duplicate message?
  *
- * - an old message which can be tossed
+ * XXX:
  *
- * - the most recent completed request, which should trigger a
- *   retransmit of the response
+ * record'n'send bypassing the send queue can result in pluto having
+ * more outstanding messages then the negotiated window size.
  *
- * - the currently being processed request, which can also be tossed
+ * This and the find_v2_sa_by_*_wip() have some overlap.  For
+ * instance, little point in searching for a state when the IKE SA's
+ * window shows the Message ID is too old (only record'n'send breakage
+ * means it might still have a message, argh!).
  *
- * XXX: This solution is broken. If two exchanges (after the
- * initial exchange) are interleaved, we ignore the first.
- * This is https://bugs.libreswan.org/show_bug.cgi?id=185
- *
- * XXX: Is this still true?
+ * This code should use an explicit log function.  libreswan_log() is
+ * at the mercy of the caller so the messages might be logged against
+ * ST and might be logged against IKE.  This is one thing that
+ * prevents find_v2_sa_by_*_wip() and this code being better
+ * organized.
  */
 
+/*
+ * A duplicate request could be:
+ *
+ * - the request still being processed (for instance waiting on
+ *   crypto), which can be tossed
+ *
+ * - the request last processed, which should trigger a retransmit of
+ *   the response
+ *
+ * - an older request which can be tossed
+ *
+ * But if it is a fragment, much of this is skipped.
+ */
 static bool is_duplicate_request(struct ike_sa *ike,
 				 struct state *responder,
 				 struct msg_digest *md)
@@ -1510,11 +1531,14 @@ static bool is_duplicate_request(struct ike_sa *ike,
 }
 
 /*
- * Is this a duplicate response?
+ * A duplicate response could be:
  *
- * - there's no initiator waiting for it so it can be dropped
+ * - for an old request where there's no longer an initiator waiting,
+ *   and can be dropped
  *
- * - the initiator is busy, presumably because this is a duplicate
+ * - the initiator is busy, presumably because this response is a
+ *   duplicate and the initiator is waiting on crypto to complete so
+ *   it can decrypt the response
  */
 static bool is_duplicate_response(struct ike_sa *ike,
 				  struct state *initiator,
@@ -1643,10 +1667,12 @@ static bool is_duplicate_response(struct ike_sa *ike,
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
+ *
+ * Start by looking for (or creating) the IKE SA responsible for the
+ * IKE SPIs group .....
  */
 
-static void ike_process_packet(struct msg_digest **mdp,
-			       struct ike_sa *ike, struct state *st);
+static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike);
 
 void ikev2_process_packet(struct msg_digest **mdp)
 {
@@ -1695,21 +1721,12 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	}
 
 	/*
-	 * Find one or two SAs:
+	 * Find the IKE SA that is looking after this IKE SPI family.
 	 *
-	 * - IKE: the IKE SA that is looking after this IKE SPI family
-	 *
-	 *   If it's a new IKE_SA_INIT request (or previously
-	 *   discarded request due to cookies) this will be NULL.
-	 *
-	 * - ST: the IKE/CHILD SA that will process (or is already
-         *   processing) the message
-	 *
-	 *   If there's no existing state to handle the message then
-	 *   this will be NULL.
+	 * If it's a new IKE_SA_INIT request (or previously discarded
+	 * request due to cookies) then a new IKE SA is created.
 	 */
 
-	struct state *st;
 	struct ike_sa *ike;
 	if (ix == ISAKMP_v2_IKE_SA_INIT) {
 		/*
@@ -1794,8 +1811,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				dbg("received what looks like a duplicate IKE_SA_INIT for #%lu",
 				    ike->sa.st_serialno);
 				pexpect(md->hdr.isa_msgid == 0); /* per above */
-				st =find_v2_sa_by_responder_wip(ike, md->hdr.isa_msgid);
-				pexpect(st == NULL || st == &ike->sa);
 			} else if (drop_new_exchanges()) {
 				/* only log for debug to prevent disk filling up */
 				dbg("pluto is overloaded with half-open IKE SAs; dropping new exchange");
@@ -1879,8 +1894,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 						   ike_responder_spi(&md->sender),
 						   c, policy, 0, null_fd);
 				pexpect(md->hdr.isa_msgid == 0); /* per above */
-				st = find_v2_sa_by_responder_wip(ike, md->hdr.isa_msgid);
-				pexpect(st == NULL || st == &ike->sa);
 			}
 			/* update lastrecv later on */
 			break;
@@ -1936,8 +1949,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * at all.
 			 */
 			pexpect(md->hdr.isa_msgid == 0); /* per above */
-			st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
-			pexpect(st == NULL || st == &ike->sa);
 			break;
 		default:
 			bad_case(v2_msg_role(md));
@@ -1961,12 +1972,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 						  ix, &ixb));
 			return;
 		}
-		/*
-		 * As well as WIP this can also find something still
-		 * accumulating fragments.  duplicate() gets to sort
-		 * out the mess.
-		 */
-		st = find_v2_sa_by_responder_wip(ike, md->hdr.isa_msgid);
 	} else if (v2_msg_role(md) == MESSAGE_RESPONSE) {
 		/*
 		 * A response to this ends request.  First find the
@@ -1982,7 +1987,6 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				 enum_name(&ikev2_exchange_names, ix));
 			return;
 		}
-		st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
 	} else {
 		PASSERT_FAIL("message role %d invalid", v2_msg_role(md));
 	}
@@ -2004,8 +2008,14 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		return;
 	}
 
+	/*
+	 * Since there's an IKE SA start billing and logging against
+	 * it.
+	 */
 	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
-	ike_process_packet(mdp, ike, st);
+	so_serial_t old = push_cur_state(&ike->sa);
+	ike_process_packet(mdp, ike);
+	pop_cur_state(old);
 	statetime_stop(&start, "%s()", __func__);
 }
 
@@ -2013,20 +2023,39 @@ void ikev2_process_packet(struct msg_digest **mdp)
  * The IKE SA for the message has been found (or created).  Continue
  * verification, and identify the state (ST) that the message should
  * be sent to.
- *
- * XXX: should the find_v2_sa_by_*_wip() be moved to here, it is
- * pretty generic.
  */
 
-static void ike_process_packet(struct msg_digest **mdp,
-			       struct ike_sa *ike, struct state *st)
+static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
 {
 	struct msg_digest *md = *mdp;
 
 	/*
+	 * Use the IKE SA to find the state (ST) responsible for the
+	 * message.  This could be NULL and this could be the IKE SA.
+	 *
+	 * XXX: this and the duplicate code should be merged.
+	 */
+	struct state *st;
+	switch (v2_msg_role(md)) {
+	case MESSAGE_REQUEST:
+		st = find_v2_sa_by_responder_wip(ike, md->hdr.isa_msgid);
+		break;
+	case MESSAGE_RESPONSE:
+		st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
+		break;
+	default:
+		bad_case(v2_msg_role(md));
+	}
+
+ 	/*
 	 * If there's a state responsible for the message (i.e., ST
 	 * could stil be NULL), attribute all further logging to that
 	 * state; else the IKE SA.
+	 *
+	 * XXX: why the need to constantly pick a single winner and
+	 * switch to it?  Because tests expect messages to be logged
+	 * against a specific state.  It would be better of that code
+	 * specified that state as a parameter.
 	 */
 	if (st != NULL) {
 		/* XXX: debug-logging here is redundant */
@@ -2038,6 +2067,9 @@ static void ike_process_packet(struct msg_digest **mdp,
 	/*
 	 * Now that cur-state has been set for logging, log if this
 	 * packet is really bogus.
+	 *
+	 * XXX: case in point of tests expecting this to be logged
+	 * against the child should it be found.
 	 */
 	if (md->fake_clone) {
 		libreswan_log("IMPAIR: processing a fake (cloned) message");
