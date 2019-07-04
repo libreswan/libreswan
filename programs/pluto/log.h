@@ -175,6 +175,35 @@ log_raw_fn DBG_raw;
 log_raw_fn whack_log_raw;
 
 /*
+ * XXX: an abstract way to create and log a jambuf
+ *
+ * RC is a hack because loglog() needs somewhere to save the RC so it
+ * can be used in the .write() function (very long standing issue).
+ *
+ * It falls short as a way to pass a logger into a library: it is
+ * single use (could pass in the initializer function); it would
+ * require RC/ST/C/FROM being passed (existing code instead relies on
+ * global state).
+ */
+
+struct logjam {
+	int rc;
+	char buf[LOG_WIDTH];
+	void (*write)(struct logjam *log);
+	jambuf_t jam;
+};
+
+typedef void (log_jam_fn)(struct logjam *jam,
+			  enum rc_type,
+			  const struct state *st,
+			  const struct connection *c,
+			  const ip_endpoint *from);
+
+log_jam_fn plog_jam;
+log_jam_fn loglog_jam;
+log_jam_fn DBG_jam;
+
+/*
  * rate limited logging
  */
 void rate_log(const struct msg_digest *md,

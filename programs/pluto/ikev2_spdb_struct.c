@@ -394,10 +394,11 @@ static void plog_connection_proposals(const char *prefix, struct connection *c, 
 	int propnum;
 	const struct ikev2_proposal *proposal;
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		PLOG_RAW(NULL/*STATE*/, c, NULL/*FROM*/, buf) {
-			jam_string(buf, prefix);
-			jam_proposal(buf, propnum, proposal);
-		}
+		struct logjam log;
+		loglog_jam(&log, RC_COMMENT, NULL/*state*/, c, NULL/*FROM*/);
+		jam_string(buf, prefix);
+		jam_proposal(buf, propnum, proposal);
+		log.write(&log);
 	}
 }
 
@@ -2050,6 +2051,17 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 	}
 
 	*child_proposals = v2_proposals;
+<<<<<<< HEAD
+=======
+
+	struct logjam log;
+	loglog_jam(&log, RC_COMMENT, NULL/*state*/, c, NULL/*from*/);
+	jam(&log.jam, "constructed local ESP/AH proposals for %s (%s): ",
+	    c->name, why);
+	print_proposals(&log.jam, *child_proposals);
+	log.write(&log);
+
+>>>>>>> 4f49559cf1... work-in-progress abstract logjam
 	passert(*child_proposals != NULL);
 	plog_connection(c, "local ESP/AH proposals (%s): ", why);
 	plog_connection_proposals("  ", c, *child_proposals);
