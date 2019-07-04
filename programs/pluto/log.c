@@ -580,20 +580,6 @@ void log_prefix(struct lswlog *buf, bool debug,
 	}
 }
 
-bool log_debugging(struct state *st, struct connection *c,
-		   lset_t debug)
-{
-	if (st != NULL) {
-		c = st->st_connection;
-	}
-	if (c == NULL) {
-		return base_debugging & debug;
-	} else {
-		lset_t debugging = lmod(base_debugging, c->extra_debugging);
-		return debugging & debug;
-	}
-}
-
 static void log_raw(struct lswlog *buf, int severity)
 {
 	stdlog_raw(buf->array);
@@ -782,13 +768,50 @@ void reset_debugging(void)
 	set_debugging(base_debugging);
 }
 
-void plog_raw(const struct state *st,
+void plog_raw(enum rc_type unused_rc UNUSED,
+	      const struct state *st,
 	      const struct connection *c,
 	      const ip_endpoint *from,
 	      const char *message, ...)
 {
 	LSWBUF(buf) {
 		lswlog_cur_prefix(buf, st, c, from);
+		va_list ap;
+		va_start(ap, message);
+		jam_va_list(buf, message, ap);
+		va_end(ap);
+		lswlog_to_log_stream(buf);
+	}
+}
+
+void loglog_raw(enum rc_type rc,
+		const struct state *st,
+		const struct connection *c,
+		const ip_endpoint *from,
+		const char *message, ...)
+{
+	LSWBUF(buf) {
+		lswlog_cur_prefix(buf, st, c, from);
+		va_list ap;
+		va_start(ap, message);
+		jam_va_list(buf, message, ap);
+		va_end(ap);
+		lswlog_to_log_stream(buf);
+		whack_raw(buf, rc);
+	}
+}
+
+void DBG_raw(enum rc_type unused_rc UNUSED,
+	     const struct state *st,
+	     const struct connection *c,
+	     const ip_endpoint *from,
+	     const char *message, ...)
+{
+	LSWBUF(buf) {
+		jam(buf, DEBUG_PREFIX);
+		if (DBGP(DBG_ADD_PREFIX)) {
+			lswlog_cur_prefix(buf, st, c, from);
+		}
 		va_list ap;
 		va_start(ap, message);
 		jam_va_list(buf, message, ap);

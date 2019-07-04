@@ -114,18 +114,17 @@ extern void log_pop_from(ip_address old_from, const char *func,
  *
  * Todays proposed naming convention:
  *
- *   {p,w,wp,}{log,dbg}_{global,from,md,c,st,raw}()
+ *   {plog,loglog,wlog,dbg}_{global,from,md,c,st,raw}()
  *
- * {p,w,wp} -> p: write to pluto's log file (but not whack); w: write
- * to whack (but not pluto's log file); wp: write to both.
- *
- * {log,dbg} -> log: output as a log message; dbg -> output as a debug
- * message.
+ * {plog,loglog,wlog,dbg} -> plog: write to pluto's log file (but not
+ * whack); wlog: write to whack (but not pluto's log file); loglog:
+ * write to both; dbg: a debug log record to pluto's log file (but not
+ * whack).
  *
  * {global,from,md,c,st} -> global: no context prefix; from: endpoint
  * as prefix; md: endpoint from md as prefix; c: connection+instance
  * as prefix; st: state+connection as prefix; raw: takes all
- * parameters with the most detailed being prefered.
+ * parameters with the most detailed non-NULL value being prefered.
  *
  * XXX:
  *
@@ -145,15 +144,25 @@ extern void log_pop_from(ip_address old_from, const char *func,
  *   available?  Or should this be merged with above.
  */
 
-void plog_raw(const struct state *st,
-	      const struct connection *c,
-	      const ip_endpoint *from,
-	      const char *message, ...) PRINTF_LIKE(4);
-#define plog_global(MESSAGE, ...) plog_raw(NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_from(FROM, MESSAGE, ...) plog_raw(NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
-#define plog_md(MD, MESSAGE, ...) plog_raw(NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
-#define plog_c(C, MESSAGE, ...) plog_raw(NULL, C, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_st(ST, MESSAGE, ...) plog_raw(ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+typedef void (log_raw_fn)(enum rc_type,
+			  const struct state *st,
+			  const struct connection *c,
+			  const ip_endpoint *from,
+			  const char *message, ...) PRINTF_LIKE(5);
+
+log_raw_fn plog_raw;
+
+#define plog_global(MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_from(FROM, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
+#define plog_md(MD, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
+#define plog_c(C, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_st(ST, MESSAGE, ...) plog_raw(RC_COMMENT, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+
+log_raw_fn loglog_raw;
+
+/* unconditional */
+log_raw_fn DBG_raw;
+
 
 /*
  * rate limited logging
@@ -168,27 +177,10 @@ void rate_log(const struct msg_digest *md,
 void log_prefix(struct lswlog *buf, bool debug,
 		struct state *st, struct connection *c);
 
-#define LSWLOG_STATE(STATE, BUF)					\
-	LSWLOG_(true, BUF,						\
-		log_prefix(BUF, false, STATE, NULL),			\
-		lswlog_to_default_streams(BUF, RC_LOG))
-
 #define LSWLOG_CONNECTION(CONNECTION, BUF)				\
 	LSWLOG_(true, BUF,						\
 		log_prefix(BUF, false, NULL, CONNECTION),		\
 		lswlog_to_default_streams(BUF, RC_LOG))
-
-bool log_debugging(struct state *st, struct connection *c, lset_t predicate);
-
-#define LSWDBGP_STATE(DEBUG, STATE, BUF)				\
-	LSWLOG_(log_debugging(STATE, NULL, DEBUG), BUF,			\
-		log_prefix(BUF, true, STATE, NULL),			\
-		lswlog_to_debug_stream(BUF))
-
-#define LSWDBGP_CONNECTION(DEBUG, CONNECTION, BUF)			\
-	LSWLOG_(log_debugging(NULL, CONNECTION, DEBUG), BUF,		\
-		log_prefix(BUF, true, NULL, CONNECTION),		\
-		lswlog_to_debug_stream(BUF))
 
 extern void pluto_init_log(void);
 void init_rate_log(void);
