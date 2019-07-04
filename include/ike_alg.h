@@ -33,21 +33,21 @@ enum ike_alg_key;
  * warning for 'foo = bar'.
  */
 
-#define lswlog_ike_alg(BUF, ALG)					\
-	lswlogf(BUF, "IKE_ALG %s algorithm '%s'",			\
+#define PRI_IKE_ALG "IKE_ALG %s algorithm '%s'"
+#define pri_ike_alg(ALG)						\
 		ike_alg_type_name((ALG)->algo_type),			\
-		(ALG)->fqn != NULL ? (ALG)->fqn				\
-		: (ALG)->name != NULL ? (ALG)->name			\
-		: "NULL")
+			((ALG)->fqn != NULL ? (ALG)->fqn		\
+			 : (ALG)->name != NULL ? (ALG)->name		\
+			 : "NULL")
 
-#define pexpect_ike_alg(ALG, ASSERTION) {				\
+#define pexpect_ike_alg(ALG, ASSERTION)					\
+	{								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
-			LSWLOG_PEXPECT(buf) {				\
-				lswlog_ike_alg(buf, ALG);	\
-				lswlogs(buf, " fails: " #ASSERTION);	\
-			}						\
+			log_pexpect(HERE,				\
+				    PRI_IKE_ALG" fails: " #ASSERTION,	\
+				    pri_ike_alg(ALG));			\
 		}							\
 	}
 
@@ -57,11 +57,10 @@ enum ike_alg_key;
 		const char *lhs = LHS;					\
 		const char *rhs = RHS;					\
 		if (lhs == NULL || rhs == NULL || !streq(LHS, RHS)) {	\
-			LSWLOG_PEXPECT(buf) {				\
-				lswlog_ike_alg(buf, ALG);	\
-				lswlogf(buf, " fails: %s != %s (%s != %s)", \
-					lhs, rhs, #LHS, #RHS);		\
-			}						\
+			log_pexpect(HERE,				\
+				    PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
+				    pri_ike_alg(ALG),			\
+				    lhs, rhs, #LHS, #RHS);		\
 		}							\
 	}
 
@@ -71,12 +70,11 @@ enum ike_alg_key;
 		const char *lhs = LHS;					\
 		const char *rhs = RHS;					\
 		if (lhs == NULL || rhs == NULL || !strcaseeq(LHS, RHS)) { \
-			LSWLOG_PEXPECT(buf) {				\
-				lswlog_ike_alg(buf, ALG);	\
-				lswlogf(buf, " fails: %s != %s (%s != %s)", \
-					ike_alg_type_name((ALG)->algo_type), \
-					(ALG)->fqn, lhs, rhs, #RHS, #LHS); \
-			}						\
+			log_pexpect(HERE,				\
+				    PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
+				    pri_ike_alg(ALG),			\
+				    ike_alg_type_name((ALG)->algo_type), \
+				    (ALG)->fqn, lhs, rhs, #RHS, #LHS);	\
 		}							\
 	}
 
