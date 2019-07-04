@@ -452,7 +452,7 @@ static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
 	struct crypto_tfm *tfm = (struct crypto_tfm *)key_e;
 	struct scatterlist sg;
 #ifdef HAS_SKCIPHER
-	SKCIPHER_REQUEST_ON_STACK(req, __crypto_skcipher_cast(tfm));
+	SYNC_SKCIPHER_REQUEST_ON_STACK(req, __crypto_skcipher_cast(tfm));
 #else
 	struct blkcipher_desc desc;
 #endif
