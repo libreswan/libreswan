@@ -5948,18 +5948,15 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 static const struct iface_port *ikev2_src_iface(struct state *st,
 						struct starter_end *this)
 {
-	const struct iface_port *iface;
-	ipstr_buf b;
-
 	/* success found a new source address */
-
-	iface = lookup_iface_ip(&this->addr, st->st_localport);
-	if (iface ==  NULL) {
-		DBG(DBG_CONTROL, DBG_log("#%lu no interface for %s try to initialize",
-					st->st_serialno,
-					sensitive_ipstr(&this->addr, &b)));
+	ip_endpoint local_endpoint = endpoint(&this->addr, st->st_localport);
+	const struct iface_port *iface = find_iface_port_by_local_endpoint(&local_endpoint);
+	if (iface == NULL) {
+		endpoint_buf b;
+		dbg("#%lu no interface for %s try to initialize",
+		    st->st_serialno, str_endpoint(&local_endpoint, &b));
 		find_ifaces(FALSE);
-		iface = lookup_iface_ip(&this->addr, st->st_localport);
+		iface = find_iface_port_by_local_endpoint(&local_endpoint);
 		if (iface ==  NULL) {
 			return NULL;
 		}

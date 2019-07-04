@@ -959,8 +959,6 @@ void nat_traversal_new_mapping(struct state *st,
 /* this should only be called after packet has been verified/authenticated! */
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 {
-	struct iface_port *i = NULL;
-
 	if (st == NULL)
 		return;
 
@@ -1013,27 +1011,24 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	/*
 	 * Find valid interface according to local port (500/4500)
 	 */
-	if (!sameaddr(&st->st_localaddr, &st->st_interface->ip_addr) ||
-	     st->st_localport != st->st_interface->port) {
-		ipstr_buf b1;
+	ip_endpoint st_local_endpoint = endpoint(&st->st_localaddr, st->st_localport);
+	if (!endpoint_eq(st_local_endpoint, st->st_interface->local_endpoint)) {
+		endpoint_buf b1;
 		endpoint_buf b2;
 		pexpect_iface_port(st->st_interface);
-		dbg("NAT-T connection has wrong interface definition %s:%u vs %s",
-		    ipstr(&st->st_localaddr, &b1),
-		    st->st_localport,
+		dbg("NAT-T: #%lu connection has wrong interface definition %s vs %s",
+		    st->st_serialno,
+		    str_endpoint(&st_local_endpoint, &b1),
 		    str_endpoint(&st->st_interface->local_endpoint, &b2));
 
-		for (i = interfaces; i !=  NULL; i = i->next) {
-			if (sameaddr(&st->st_localaddr, &i->ip_addr) &&
-			    st->st_localport == i->port) {
-				endpoint_buf b;
-				pexpect_iface_port(i);
-				dbg("NAT-T: updated to use interface %s %s",
-				    i->ip_dev->id_rname,
-				    str_endpoint(&i->local_endpoint, &b));
-				st->st_interface = i;
-				break;
-			}
+		struct iface_port *i = find_iface_port_by_local_endpoint(&st_local_endpoint);
+		if (i != NULL) {
+			endpoint_buf b;
+			pexpect_iface_port(i);
+			dbg("NAT-T: #%lu updated to use interface %s %s",
+			    st->st_serialno, i->ip_dev->id_rname,
+			    str_endpoint(&i->local_endpoint, &b));
+			st->st_interface = i;
 		}
 	}
 }
