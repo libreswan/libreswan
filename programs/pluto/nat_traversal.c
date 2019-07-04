@@ -977,10 +977,9 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		 * If interface type has changed, update local port (500/4500)
 		 */
 		if (md->iface->port != st->st_localport) {
+			dbg("NAT-T: #%lu updating local port from %d to %d",
+			    st->st_serialno, st->st_localport, md->iface->port);
 			st->st_localport = md->iface->port;
-			DBG(DBG_NATT,
-				DBG_log("NAT-T: updating local port to %d",
-					st->st_localport));
 		}
 	}
 
@@ -993,9 +992,9 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	     st->st_state->kind == STATE_AGGR_I2) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    st->st_localport != pluto_nat_port) {
-		DBG(DBG_NATT,
-			DBG_log("NAT-T: floating local port %d to nat port %d",
-				st->st_localport, pluto_nat_port));
+		dbg("NAT-T: #%lu floating IKEv1 ports from local=%d remote=%d to pluto nat port %d",
+		    st->st_serialno, st->st_localport, st->st_remoteport,
+		    pluto_nat_port);
 
 		st->st_localport  = pluto_nat_port;
 		st->st_remoteport = pluto_nat_port;
@@ -1010,15 +1009,22 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 
 	/*
 	 * Find valid interface according to local port (500/4500)
+	 *
+	 * XXX: For instance, st_localport modified by either code
+	 * path above or in ikev2_natd_looku().
+	 *
+	 * XXX: But wait, there's also other code that munges
+	 * .st_local{addr,port} - update_ike_endpoints().
 	 */
 	ip_endpoint st_local_endpoint = endpoint(&st->st_localaddr, st->st_localport);
 	if (!endpoint_eq(st_local_endpoint, st->st_interface->local_endpoint)) {
 		endpoint_buf b1;
 		endpoint_buf b2;
 		pexpect_iface_port(st->st_interface);
-		dbg("NAT-T: #%lu connection has wrong interface definition %s vs %s",
+		dbg("NAT-T: #%lu has local endpoint %s which does not match interface %s %s",
 		    st->st_serialno,
 		    str_endpoint(&st_local_endpoint, &b1),
+		    st->st_interface->ip_dev->id_rname,
 		    str_endpoint(&st->st_interface->local_endpoint, &b2));
 
 		struct iface_port *i = find_iface_port_by_local_endpoint(&st_local_endpoint);
@@ -1096,7 +1102,11 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
 	if (st->st_state->kind == STATE_PARENT_I1 &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)) {
 		endpoint_buf b;
-		dbg("NAT-T: floating to port %s", str_endpoint(&md->sender, &b));
+		dbg("NAT-T: #%lu floating IKEv2 ports from local=%d remote=%d to pluto nat port %d for %s",
+		    st->st_serialno,
+		    st->st_localport, st->st_remoteport,
+		    pluto_nat_port,
+		    str_endpoint(&md->sender, &b));
 		st->st_localport = pluto_nat_port;
 		st->st_remoteport = pluto_nat_port;
 
