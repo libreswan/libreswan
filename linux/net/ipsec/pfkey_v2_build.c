@@ -66,6 +66,7 @@
 
 #include "libreswan/ipsec_sa.h"  /* IPSEC_SAREF_NULL, IPSEC_SA_REF_TABLE_IDX_WIDTH */
 #include "libreswan/pfkey_debug.h"
+#include "ip_address.h"		/* for ADDRTOT_BUF */
 
 #define SENDERR(_x) { error = -(_x); goto errlab; }
 
