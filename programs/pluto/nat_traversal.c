@@ -73,6 +73,7 @@
 #include "send.h"
 #include "nat_traversal.h"
 #include "ikev2_send.h"
+#include "state_db.h"
 
 /* As per https://tools.ietf.org/html/rfc3948#section-4 */
 #define DEFAULT_KEEP_ALIVE_SECS  20
@@ -901,59 +902,54 @@ void nat_traversal_ka_event(void)
 }
 
 struct new_mapp_nfo {
-	struct state *st;
-	ip_address addr;
-	uint16_t port;
+	struct ike_sa *ike;
+	const ip_endpoint *new_remote_endpoint;
 };
 
-static void nat_traversal_find_new_mapp_state(struct state *st, void *data)
+static bool nat_traversal_find_new_mapp_state(struct state *st, void *data)
 {
-	struct new_mapp_nfo *nfo = (struct new_mapp_nfo *)data;
-
-	if ((IS_CHILD_SA(nfo->st) &&
-		(st->st_serialno == nfo->st->st_clonedfrom ||
-		 st->st_clonedfrom == nfo->st->st_clonedfrom)) ||
-	    st->st_serialno == nfo->st->st_serialno)
-	{
-		ipstr_buf b1, b2;
-		struct connection *c = st->st_connection;
-
-		DBG(DBG_CONTROLMORE, DBG_log("new NAT mapping for #%lu, was %s:%d, now %s:%d",
-			st->st_serialno,
-			ipstr(&st->st_remoteaddr, &b1),
-			st->st_remoteport,
-			ipstr(&nfo->addr, &b2),
-			nfo->port));
+	struct new_mapp_nfo *nfo = data;
+	if (pexpect(st->st_serialno == nfo->ike->sa.st_serialno ||
+		    st->st_clonedfrom == nfo->ike->sa.st_serialno)) {
+		endpoint_buf b1;
+		endpoint_buf b2;
+		ip_endpoint st_remote_endpoint = endpoint(&st->st_remoteaddr, st->st_remoteport);
+		dbg("new NAT mapping for #%lu, was %s, now %s",
+		    st->st_serialno,
+		    str_endpoint(&st_remote_endpoint, &b1),
+		    str_endpoint(nfo->new_remote_endpoint, &b2));
 
 		/* update it */
-		st->st_remoteaddr = nfo->addr;
-		st->st_remoteport = nfo->port;
-		st->hidden_variables.st_natd = nfo->addr;
-
+		st->st_remoteaddr = endpoint_address(nfo->new_remote_endpoint);
+		st->st_remoteport = endpoint_port(nfo->new_remote_endpoint);
+		st->hidden_variables.st_natd = endpoint_address(nfo->new_remote_endpoint);
+		struct connection *c = st->st_connection;
 		if (c->kind == CK_INSTANCE)
-			c->spd.that.host_addr = nfo->addr;
+			c->spd.that.host_addr = endpoint_address(nfo->new_remote_endpoint);
 	}
+	return false;
 }
 
-void nat_traversal_new_mapping(struct state *st,
-			       const ip_address *nsrc,
-			       uint16_t nsrcport)
+void nat_traversal_new_mapping(struct ike_sa *ike,
+			       const ip_endpoint *new_remote_endpoint)
 {
-	struct new_mapp_nfo nfo;
+	endpoint_buf b;
+	dbg("state #%lu NAT-T: new mapping %s",
+	    ike->sa.st_serialno, str_endpoint(new_remote_endpoint, &b));
 
-	DBG(DBG_NATT, {
-		ipstr_buf b;
-		DBG_log("state #%lu NAT-T: new mapping %s:%d",
-			st->st_serialno,
-			ipstr(nsrc, &b),
-			nsrcport);
-	});
+	struct new_mapp_nfo nfo = {
+		.ike = ike,
+		.new_remote_endpoint = new_remote_endpoint,
+	};
 
-	nfo.st    = st;
-	nfo.addr  = *nsrc;
-	nfo.port  = nsrcport;
-
-	for_each_state(nat_traversal_find_new_mapp_state, &nfo, __func__);
+	state_by_ike_spis(ike->sa.st_ike_version,
+			  NULL /* clonedfrom */,
+			  NULL /* v1_msgid */,
+			  NULL /* role */,
+			  &ike->sa.st_ike_spis,
+			  nat_traversal_find_new_mapp_state,
+			  &nfo,
+			  __func__);
 }
 
 /* this should only be called after packet has been verified/authenticated! */
@@ -967,10 +963,9 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		 * If source port/address has changed, update (including other
 		 * states and established kernel SA)
 		 */
-		if (st->st_remoteport != hportof(&md->sender) ||
-		    !sameaddr(&st->st_remoteaddr, &md->sender)) {
-			nat_traversal_new_mapping(st, &md->sender,
-						hportof(&md->sender));
+		ip_endpoint st_remote_endpoint = endpoint(&st->st_remoteaddr, st->st_remoteport);
+		if (!endpoint_eq(md->sender, st_remote_endpoint)) {
+			nat_traversal_new_mapping(ike_sa(st), &md->sender);
 		}
 
 		/*

@@ -117,9 +117,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 /**
  * New NAT mapping
  */
-void nat_traversal_new_mapping(struct state *st,
-			       const ip_address *nsrc,
-			       uint16_t nsrcport);
+void nat_traversal_new_mapping(struct ike_sa *ike,
+			       const ip_endpoint *new_remote_endpoint);
 
 /**
  * IKE port floating
