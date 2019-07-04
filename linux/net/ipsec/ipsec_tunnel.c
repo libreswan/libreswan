@@ -1934,8 +1934,8 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 				    dev->name,
 				    dev->flags);
 			break;
-		}
 #endif
+		}
 
 		/* find the attached physical device and detach it. */
 		for (i = 0; i < IPSEC_NUM_IFMAX; i++) {
