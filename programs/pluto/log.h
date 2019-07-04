@@ -154,8 +154,11 @@ log_raw_fn plog_raw;
 
 log_raw_fn loglog_raw;
 
-#define loglog_st(ST, RC, MESSAGE, ...) loglog_raw(RC, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define loglog_global(RC, MESSAGE, ...) loglog_raw(RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define loglog_from(RC, FROM, MESSAGE, ...) loglog_raw(RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
 #define loglog_md(MD, RC, MESSAGE, ...) loglog_raw(RC, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
+#define loglog_c(RC, C, MESSAGE, ...) loglog_raw(RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
+#define loglog_st(ST, RC, MESSAGE, ...) loglog_raw(RC, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
 
 /* unconditional */
 log_raw_fn DBG_raw;
