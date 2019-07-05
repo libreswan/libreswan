@@ -72,24 +72,17 @@ endif
 #
 # Kernel support
 #
-# Order these so that the enabled kernel support can fill in defaults
-# for rest.  For instance, MAST should enable KLIPS which should enble
-# PFKEYv2.  So that Makefile.inc.local can override, the values are
-# not forced.  over However don't force
+# set in mk/defaults/*.mk
 
 # support Linux kernel's NETLINK_XFRM (aka XFRM/NETKEY) (aka "native")
-USE_NETKEY?=true
-
+USE_NETKEY?=false
 # support Linux KLIPS kernel module (KLIPS requires PFKEYv2)
 USE_KLIPS?=false
 ifeq ($(USE_KLIPS),true)
 USE_PFKEYv2=true
 endif
-
 # support BSD/KAME kernels (on *BSD and OSX)?
 USE_BSDKAME?=false
-
-
 
 ifeq ($(USE_NETKEY),true)
 USERLAND_CFLAGS+=-DNETKEY_SUPPORT
