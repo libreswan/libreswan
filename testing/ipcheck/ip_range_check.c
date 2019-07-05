@@ -139,15 +139,19 @@ static void check_iprange_bits(void)
 			continue;
 		}
 
-		int n = iprange_bits(hi, lo);
-		if (n != -1 && t->range == -1) {
-			/* okay, error expected */
-		} else if (n == -1) {
-			FAIL_LO2HI("iprangediff failed");
-		} else if (t->range == -1) {
-			FAIL_LO2HI("iprangediff succeeded unexpectedly");
-		} else if (t->range != n) {
-			FAIL_LO2HI("returned '%d', expected '%d'", n, t->range);
+		/*
+		 * XXX: apparently iprange_bits() working for both
+		 * low-hi and hi-low is a feature!?!
+		 */
+		int lo2hi = iprange_bits(lo, hi);
+		int hi2lo = iprange_bits(hi, lo);
+		if (lo2hi != hi2lo) {
+			FAIL_LO2HI("iprange_bits(lo,hi) returned %d and iprange_bits(hi,lo) returned %d",
+				   lo2hi, hi2lo);
+		}
+		if (t->range != lo2hi) {
+			FAIL_LO2HI("iprange_bits(lo,hi) returned '%d', expected '%d'",
+				   lo2hi, t->range);
 		}
 	}
 }
