@@ -25,29 +25,16 @@
 
 #include "err.h"		/* for err_t */
 #include "lswcdefs.h"		/* for NEVER_RETURNS PRINTF_LIKE() */
+#include "where.h"
 
 /* our versions of assert: log result */
 
-extern void lsw_passert_fail(const char *file_str,
-			     unsigned long line_no,
-			     const char *func_str,
-			     const char *fmt, ...)
+extern void lsw_passert_fail(where_t where, const char *fmt, ...)
 	NEVER_RETURNS
-	PRINTF_LIKE(4);
-
-/*
- * http://stackoverflow.com/questions/8487986/file-macro-shows-full-path#8488201
- *
- * It is tempting to tweak the .c.o line so that it passes in the
- * required value.
- */
-#ifndef PASSERT_BASENAME
-#define PASSERT_BASENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#endif
+	PRINTF_LIKE(2);
 
 #define PASSERT_FAIL(FMT, ...)					\
-	lsw_passert_fail(PASSERT_BASENAME, __LINE__,		\
-			 __func__, FMT, __VA_ARGS__)
+	lsw_passert_fail(HERE, FMT, __VA_ARGS__)
 
 #define passert(ASSERTION) {						\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\

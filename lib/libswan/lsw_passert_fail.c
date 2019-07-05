@@ -20,10 +20,7 @@
 
 #include "lswlog.h"
 
-void lsw_passert_fail(const char *file,
-		      unsigned long line,
-		      const char *func,
-		      const char *fmt, ...)
+void lsw_passert_fail(where_t where, const char *fmt, ...)
 {
 	LSWBUF(buf) {
 		lswlog_passert_prefix(buf);
@@ -31,7 +28,7 @@ void lsw_passert_fail(const char *file,
 		va_start(ap, fmt);
 		lswlogvf(buf, fmt, ap);
 		va_end(ap);
-		lswlog_passert_suffix(buf, func, file, line);
+		lswlog_passert_suffix(buf, where);
 	}
 	/* above will panic but compiler doesn't know this */
 	abort();

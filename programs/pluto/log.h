@@ -69,27 +69,23 @@ extern void reset_debugging(void);
 
 extern lset_t base_debugging;	/* bits selecting what to report */
 
-extern void log_reset_globals(const char *func, const char *file, long line);
-#define reset_globals() log_reset_globals(__func__, PASSERT_BASENAME, __LINE__)
+extern void log_reset_globals(where_t where);
+#define reset_globals() log_reset_globals(HERE)
 
-extern void log_pexpect_reset_globals(const char *func, const char *file, long line);
-#define pexpect_reset_globals() log_pexpect_reset_globals(__func__, PASSERT_BASENAME, __LINE__)
+extern void log_pexpect_reset_globals(where_t where);
+#define pexpect_reset_globals() log_pexpect_reset_globals(HERE)
 
-struct connection *log_push_connection(struct connection *c, const char *func,
-				       const char *file, long line);
-void log_pop_connection(struct connection *c, const char *func,
-			const char *file, long line);
+struct connection *log_push_connection(struct connection *c, where_t where);
+void log_pop_connection(struct connection *c, where_t where);
 
-#define push_cur_connection(C) log_push_connection(C, __func__, PASSERT_BASENAME, __LINE__)
-#define pop_cur_connection(C) log_pop_connection(C, __func__, PASSERT_BASENAME, __LINE__)
+#define push_cur_connection(C) log_push_connection(C, HERE)
+#define pop_cur_connection(C) log_pop_connection(C, HERE)
 
-so_serial_t log_push_state(struct state *st, const char *func,
-			   const char *file, long line);
-void log_pop_state(so_serial_t serialno, const char *func,
-		   const char *file, long line);
+so_serial_t log_push_state(struct state *st, where_t where);
+void log_pop_state(so_serial_t serialno, where_t where);
 
-#define push_cur_state(ST) log_push_state(ST, __func__, PASSERT_BASENAME, __LINE__)
-#define pop_cur_state(ST) log_pop_state(ST, __func__, PASSERT_BASENAME, __LINE__)
+#define push_cur_state(ST) log_push_state(ST, HERE)
+#define pop_cur_state(ST) log_pop_state(ST, HERE)
 
 #define set_cur_connection(C) push_cur_connection(C)
 #define reset_cur_connection() pop_cur_connection(NULL)
@@ -97,15 +93,11 @@ bool is_cur_connection(const struct connection *c);
 #define set_cur_state(ST) push_cur_state(ST)
 #define reset_cur_state() pop_cur_state(SOS_NOBODY)
 
-extern ip_address log_push_from(ip_address new_from, const char *func,
-				const char *file, long line);
-extern void log_pop_from(ip_address old_from, const char *func,
-			 const char *file, long line);
+extern ip_address log_push_from(ip_address new_from, where_t where);
+extern void log_pop_from(ip_address old_from, where_t where);
 
-#define push_cur_from(NEW)					\
-	log_push_from(NEW, __func__, PASSERT_BASENAME, __LINE__)
-#define pop_cur_from(OLD)						\
-	log_pop_from(OLD, __func__, PASSERT_BASENAME, __LINE__)
+#define push_cur_from(NEW) log_push_from(NEW, HERE)
+#define pop_cur_from(OLD) log_pop_from(OLD, HERE)
 
 /*
  * Direct a log message, possibly prefix with the supplied context

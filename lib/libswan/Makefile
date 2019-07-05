@@ -112,12 +112,12 @@ OBJS += DBG_log.o
 
 OBJS += libreswan_exit_log_errno.o
 OBJS += libreswan_log_errno.o
-OBJS += libreswan_pexpect.o
-OBJS += libreswan_pexpect_log.o
 OBJS += libreswan_bad_case.o
 
 OBJS += libreswan_log.o
 OBJS += libreswan_log_rc.o
+
+OBJS += log_pexpect.o
 
 OBJS += jambuf.o
 OBJS += lswlog.o
@@ -127,7 +127,6 @@ OBJS += lswlog_nss_ckm.o
 OBJS += lswlog_nss_ckf.o
 OBJS += lswlog_nss_cka.o
 OBJS += lswlog_nss_secitem.o
-OBJS += lswlog_source_line.o
 OBJS += lswlog_sanitized.o
 OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o

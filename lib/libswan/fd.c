@@ -31,8 +31,7 @@ bool fd_p(fd_t fd)
 	return fd.fd >= 0;
 }
 
-fd_t new_fd(int fd, const char *code, const char *func, const char *file, unsigned long line)
-
+fd_t new_fd(int fd, const char *code, where_t where)
 {
 	fd_t fdt = { .fd = fd, };
 	int e = errno; /* don't loose 'errno' */
@@ -42,13 +41,13 @@ fd_t new_fd(int fd, const char *code, const char *func, const char *file, unsign
 		if (error) {
 			jam(buf, " "PRI_ERRNO, pri_errno(e));
 		}
-		lswlog_source_line(buf, func, file, line);
+		jam(buf, " "PRI_WHERE, pri_where(where));
 	}
 	errno = e;
 	return fdt;
 }
 
-fd_t dup_any_fd(fd_t fd, const char *func, const char *file, unsigned long line)
+fd_t dup_any_fd(fd_t fd, where_t where)
 {
 	fd_t nfd;
 	bool error;
@@ -66,13 +65,13 @@ fd_t dup_any_fd(fd_t fd, const char *func, const char *file, unsigned long line)
 		if (error) {
 			jam(buf, " "PRI_ERRNO, pri_errno(e));
 		}
-		lswlog_source_line(buf, func, file, line);
+		jam(buf, " "PRI_WHERE, pri_where(where));
 	}
 	errno = e;
 	return nfd;
 }
 
-void close_any_fd(fd_t *fd, const char *func, const char *file, unsigned long line)
+void close_any_fd(fd_t *fd, where_t where)
 {
 	if (fd_p(*fd)) {
 		bool error = (close(fd->fd) != 0);
@@ -82,7 +81,7 @@ void close_any_fd(fd_t *fd, const char *func, const char *file, unsigned long li
 			if (error) {
 				jam(buf, " "PRI_ERRNO, pri_errno(e));
 			}
-			lswlog_source_line(buf, func, file, line);
+			jam(buf, " "PRI_WHERE, pri_where(where));
 		}
 		errno = e;
 		*fd = null_fd;

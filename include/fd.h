@@ -26,6 +26,8 @@
 
 #include <stdbool.h>
 
+#include "where.h"
+
 typedef struct { int fd; } fd_t;
 
 /*
@@ -33,16 +35,14 @@ typedef struct { int fd; } fd_t;
  */
 extern const fd_t null_fd;
 
-#define NEW_FD(CODE) new_fd((CODE), #CODE, __func__, PASSERT_BASENAME, __LINE__)
-fd_t new_fd(int fd, const char *code,
-	    const char *func, const char *file, unsigned long line);
+#define NEW_FD(CODE) new_fd((CODE), #CODE, HERE)
+fd_t new_fd(int fd, const char *code, where_t where);
 
-#define dup_any(FD) dup_any_fd((FD), __func__, PASSERT_BASENAME, __LINE__)
-fd_t dup_any_fd(fd_t fd, const char *func,
-		const char *file, unsigned long line);
-#define close_any(FD) close_any_fd((FD), __func__, PASSERT_BASENAME, __LINE__)
-void close_any_fd(fd_t *fd,
-		  const char *func, const char *file, unsigned long line);
+#define dup_any(FD) dup_any_fd((FD), HERE)
+fd_t dup_any_fd(fd_t fd, where_t where);
+
+#define close_any(FD) close_any_fd((FD), HERE)
+void close_any_fd(fd_t *fd, where_t where);
 
 /*
  * Is FD valid (as in something non-negative)?

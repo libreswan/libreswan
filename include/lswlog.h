@@ -29,6 +29,7 @@
 #include "jambuf.h"
 #include "libreswan/passert.h"
 #include "constants.h"		/* for DBG_... */
+#include "where.h"		/* used by macros */
 
 /* Build up a diagnostic in a static buffer -- NOT RE-ENTRANT.
  * Although this would be a generally useful function, it is very
@@ -329,15 +330,11 @@ size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
 size_t lswlogs(struct lswlog *log, const char *string);
 size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 
-/* _(in FUNC() at FILE:LINE) */
-size_t lswlog_source_line(struct lswlog *log, const char *func,
-			  const char *file, unsigned long line);
 /* <string without binary characters> */
 size_t lswlog_sanitized(struct lswlog *log, const char *string);
 /* <hex-byte>:<hex-byte>... */
 size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 		    size_t sizeof_bytes);
-
 
 /*
  * Code wrappers that cover up the details of allocating,
@@ -461,14 +458,19 @@ char *lswlog_string(void)
 		,							\
 		STRING = clone_str(BUF->array, "lswlog string"))
 
-
 /*
  * Log an expectation failure message to the error streams.  That is
  * the main log (level LOG_ERR) and whack log (level RC_LOG_SERIOUS).
+ *
+ * When evaluating ASSERTION, do not wrap it in parentheses as it will
+ * suppress the warning for 'foo = bar'.
+ *
+ * Because static analizer tools are easily confused, explicitly
+ * return the assertion result.
  */
 
-#if 0
-void lswlog_pexpect(void *p)
+#ifdef EXAMPLE
+void lswlog_pexpect_example(void *p)
 {
 	if (!pexpect(p != NULL)) {
 		return;
@@ -476,55 +478,32 @@ void lswlog_pexpect(void *p)
 }
 #endif
 
-void libreswan_pexpect_fail(const char *func,
-		       const char *file, unsigned long line,
-		       const char *assertion);
-
-/*
- * Do not wrap ASSERTION in parentheses as it will suppress the
- * warning for 'foo = bar'.
- *
- * Because static analizer tools are easily confused, explicitly
- * return the assertion result.
- */
 #define pexpect(ASSERTION)						\
 	({								\
 		bool assertion__ = ASSERTION;				\
-		if (!assertion__)					\
-			libreswan_pexpect_fail(__func__,		\
-			      PASSERT_BASENAME, __LINE__, #ASSERTION);	\
+		if (!assertion__) {					\
+			log_pexpect(HERE, "%s", #ASSERTION);		\
+		}							\
 		assertion__; /* result */				\
 	})
 
-void lswlog_pexpect_prefix(struct lswlog *buf);
-void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
-			   const char *file, unsigned long line);
+void log_pexpect(where_t where, const char *message, ...) PRINTF_LIKE(2);
 
-#define LSWLOG_PEXPECT_SOURCE(FUNC, FILE, LINE, BUF)	   \
+void lswlog_pexpect_prefix(struct lswlog *buf);
+void lswlog_pexpect_suffix(struct lswlog *buf, where_t where);
+
+#define LSWLOG_PEXPECT_WHERE(WHERE, BUF)		   \
 	LSWLOG_(true, BUF,				   \
 		lswlog_pexpect_prefix(BUF),		   \
-		lswlog_pexpect_suffix(BUF, FUNC, FILE, LINE))
+		lswlog_pexpect_suffix(BUF, WHERE))
 
 #define LSWLOG_PEXPECT(BUF)				   \
-	LSWLOG_PEXPECT_SOURCE(__func__, PASSERT_BASENAME, __LINE__, BUF)
+	LSWLOG_PEXPECT_WHERE(HERE, BUF)
 
-
-/*
- * Old style
- *
- * According to C99, the expansion of PEXPECT_LOG(FMT) will include a
- * stray comma vis: "pexpect_log(file, line, FMT,)".  Plenty of
- * workarounds.
- */
-
-void libreswan_pexpect_log(const char *func,
-			   const char *file, unsigned long line,
-			   const char *message, ...) PRINTF_LIKE(4);
-
-#define PEXPECT_LOG(FMT, ...)						\
-	libreswan_pexpect_log(__func__,					\
-			      PASSERT_BASENAME, __LINE__,		\
-			      FMT,##__VA_ARGS__)
+#define LOG_PEXPECT(FMT, ...)			\
+	log_pexpect(HERE, FMT,##__VA_ARGS__)
+#define PEXPECT_LOG(FMT, ...)			\
+	log_pexpect(HERE, FMT,##__VA_ARGS__)
 
 
 /*
@@ -533,25 +512,18 @@ void libreswan_pexpect_log(const char *func,
  */
 
 void lswlog_passert_prefix(struct lswlog *buf);
-void lswlog_passert_suffix(struct lswlog *buf, const char *func,
-			   const char *file, unsigned long line) NEVER_RETURNS;
+void lswlog_passert_suffix(struct lswlog *buf, where_t where) NEVER_RETURNS;
 
-#define LSWLOG_PASSERT_SOURCE(FUNC, FILE, LINE, BUF)	   \
+#define LSWLOG_PASSERT(BUF)				   \
 	LSWLOG_(true, BUF,				   \
 		lswlog_passert_prefix(BUF),		   \
-		lswlog_passert_suffix(BUF, FUNC, FILE, LINE))
-
-#define LSWLOG_PASSERT(BUF)			\
-	LSWLOG_PASSERT_SOURCE(__func__, PASSERT_BASENAME, __LINE__, BUF)
+		lswlog_passert_suffix(BUF, HERE))
 
 /* for a switch statement */
 
-void libreswan_bad_case(const char *expression, long value,
-			const char *func, const char *file,
-			unsigned long line) NEVER_RETURNS;
+void libreswan_bad_case(const char *expression, long value, where_t where) NEVER_RETURNS;
 
-#define bad_case(N)	libreswan_bad_case(#N, (N), __func__, \
-					   PASSERT_BASENAME, __LINE__)
+#define bad_case(N)	libreswan_bad_case(#N, (N), HERE)
 
 #define impaired_passert(BEHAVIOUR, ASSERTION) {			\
 		if (IMPAIR(BEHAVIOUR)) {				\

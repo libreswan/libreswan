@@ -62,11 +62,10 @@ void dbg_v2_msgid(struct ike_sa *ike, struct state *st,
 	}
 }
 
-void fail_v2_msgid(const char *func, const char *file, unsigned long line,
-		   struct ike_sa *ike, struct state *st,
+void fail_v2_msgid(where_t where, struct ike_sa *ike, struct state *st,
 		   const char *fmt, ...)
 {
-	LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
+	LSWLOG_PEXPECT_WHERE(where, buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		jam_v2_msgid(buf, ike, st, fmt, ap);
