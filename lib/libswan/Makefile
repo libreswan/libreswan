@@ -193,7 +193,7 @@ ifeq ($(USE_KLIPS),true)
 CFLAGS += -DKLIPS
 endif
 
-ifeq ($(USE_PFKEYv2),true)
+ifeq ($(USE_KLIPS),true)
 CFLAGS += -DPFKEYV2
 OBJS += pfkey_sock.o pfkey_error.o
 OBJS += pfkey_v2_build.o pfkey_v2_ext_bits.o pfkey_v2_parse.o

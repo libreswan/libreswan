@@ -73,7 +73,7 @@ endif
 # where to find libreswan headers
 HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto
 
-ifeq ($(USE_PFKEYv2),true)
+ifeq ($(USE_KLIPS),true)
 OBJS += kernel_pfkey.o
 endif
 

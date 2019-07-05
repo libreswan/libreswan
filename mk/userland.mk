@@ -78,9 +78,6 @@ endif
 USE_NETKEY?=false
 # support Linux KLIPS kernel module (KLIPS requires PFKEYv2)
 USE_KLIPS?=false
-ifeq ($(USE_KLIPS),true)
-USE_PFKEYv2=true
-endif
 # support BSD/KAME kernels (on *BSD and OSX)?
 USE_BSDKAME?=false
 
@@ -90,6 +87,7 @@ endif
 
 ifeq ($(USE_KLIPS),true)
 USERLAND_CFLAGS+=-DKLIPS
+USERLAND_CFLAGS+=-DPFKEY
 endif
 
 ifeq ($(USE_BSDKAME),true)
@@ -99,11 +97,6 @@ endif
 
 ifeq ($(USE_BSDKAME),true)
 USERLAND_CFLAGS += -DBSD_KAME
-endif
-
-USE_PFKEYv2?=false
-ifeq ($(USE_PFKEYv2),true)
-USERLAND_CFLAGS+=-DPFKEY
 endif
 
 ifeq ($(USE_DNSSEC),true)
