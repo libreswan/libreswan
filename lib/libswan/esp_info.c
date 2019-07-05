@@ -86,12 +86,6 @@ static const char default_v2_esp_proposals[] =
 	"AES_CBC_256"
 	","
 	"AES_CBC_128"
-	","
-	/*
-	 * Something strongswan might accept; bottom of the preference
-	 * list
-	 */
-	"AES_CBC_128-SHA1_96"
 	;
 
 static const struct ike_alg *default_v2_esp_integ[] = {

@@ -3,7 +3,6 @@ algparse -v2 -pfs 'esp'
 	AES_GCM_16_128-NONE
 	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
-	AES_CBC_128-HMAC_SHA1_96
 algparse -v2 -pfs 'esp='
 	ERROR: String ended with invalid char, just after ""
 algparse -v2 -pfs 'esp=aes'
