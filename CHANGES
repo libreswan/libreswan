@@ -2,14 +2,29 @@
 See also https://libreswan.org/
 
 v3.30 (unreleased)
-* IKEv2:  Message ID handling: remove a O(#STATES) lookup [Andrew]
-* packaging: fedora30 requires gcc to be listed as BuildRequires: [Paul]
-* programs: Change to /proc/sys/net/core/xfrm_acq_expires to detect XFRM [Paul]
+* IKEv2: Message ID handling: remove a O(#STATES) lookup [Andrew]
+* IKEv2: OE previous half-open state overwrites IPsec policy [Paul/Stepan]
+* IKEv2: On initiator, do not retransmit on IKE_AUTH processing failure [Paul]
+* IKEv2: Prevent leak in ikev2_send_certreq() on sending error [Paul]
+* IKEv2: Remove SHA1 from default proposal list [Paul]
+* IKEv1: Re-implement CVE-2019-10155 fix to prevent future occurances [Andrew]
 * pluto: Audit log IKE SA and IPsec SA failures for Common Criteria (CC) [Paul]
 * pluto: Disable support for DH2/modp1024 at compile time [Paul]
 * pluto: Add audit-log=yes|no (default yes) [Paul]
 * pluto: DDNS event should not cause connection initialization [Paul]
-* whack: Added whack --ddns to trigger the DNs lookup event manually [Paul]
+* pluto: Various O(STATE) optimializations [Andrew]
+* pluto: Fixup reporting of esp-hw-offload capabilities in kernel/nic [Paul]
+* pluto: Add chacha20_poly1305 and curve25519 to default proposals [Paul]
+* libswan: Don't leak ECDSA pubkey on form_ckaid_ecdsa() failure [Paul]
+* libswan: Close netlink socket on send error in netlink_query() [Paul]
+* whack: Added whack --ddns to trigger DNS refresh event manually [Paul]
+* XFRM: Fix detection on kernels without xfrm_stat (debian et all) [Paul]
+* KLIPS: Support for kernels >= 4.19 w [Paul]
+* KLIPS: Userland tools compile fixes [Hugh/Paul]
+* building: No longer build with DH2(modp1024) support (see RFC 8247) [Paul]
+* packaging: fedora30 requires gcc to be listed as BuildRequires: [Paul]
+* packaging: Add Debian stretch specific configs and more cleanup [Antony]
+* packaging: make deb jessie and xenial config detection [Antony]
 
 v3.29 (June 10, 2019)
 * SECURITY: Fixes CVE-2019-10155 https://libreswan.org/security/CVE-2019-10155
