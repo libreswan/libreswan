@@ -490,7 +490,8 @@ OSMEDIA?=http://download.fedoraproject.org/pub/fedora/linux/releases/28/Server/x
 # OSMEDIA?=http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
 
 # Now that all the configuration variables are defined, use them to
-# define USERLAND_CFLAGS
-include ${LIBRESWANSRCDIR}/mk/userland-cflags.mk
+# define USERLAND_CFLAGS and USERLAND_LDFLAGS
+
+include ${LIBRESWANSRCDIR}/mk/userland.mk
 
 endif
