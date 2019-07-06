@@ -675,21 +675,6 @@ void whack_log(enum rc_type rc, const char *message, ...)
 	}
 }
 
-void whack_log_comment(const char *message, ...)
-{
-	if (whack_log_p()) {
-		LSWBUF(buf) {
-			/* add_whack_rc_prefix() - skipped */
-			lswlog_log_prefix(buf);
-			va_list args;
-			va_start(args, message);
-			lswlogvf(buf, message, args);
-			va_end(args);
-			lswlog_to_whack_stream(buf);
-		}
-	}
-}
-
 lset_t base_debugging = DBG_NONE; /* default to reporting nothing */
 
 void set_debugging(lset_t deb)

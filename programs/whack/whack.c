@@ -2623,8 +2623,29 @@ int main(int argc, char **argv)
 				be -= ls - buf;
 				break;
 			}
-
 			le++;	/* include NL in line */
+
+			/*
+			 * figure out prefix number and how it should
+			 * affect our exit status and printing
+			 */
+			char *lpe = NULL; /* line-prefix-end */
+			unsigned long s = strtoul(ls, &lpe, 10);
+			if (lpe == ls || *lpe != ' ') {
+				/* includes embedded NL, see above */
+				fprintf(stderr, "whack: log line missing NNN prefix: %*s",
+					(int)(le - ls), ls);
+#if 0
+				ls = le;
+				continue;
+#else
+				exit(RC_WHACK_PROBLEM);
+#endif
+			}
+			if (s == RC_PRINT) {
+				ls = lpe + 1; /* skip NNN_ */
+			}
+
 			if (write(STDOUT_FILENO, ls, le - ls) != (le - ls)) {
 				int e = errno;
 
@@ -2633,20 +2654,10 @@ int main(int argc, char **argv)
 					e, strerror(e));
 			}
 
-			/*
-			 * figure out prefix number
-			 * and how it should affect our exit
-			 * status
-			 *
-			 * we don't generally use strtoul but
-			 * in this case, its failure mode
-			 * (0 for nonsense) is probably OK.
-			 */
-			unsigned long s = strtoul(ls, NULL, 10);
-
 			switch (s) {
 			/* these logs are informational only */
 			case RC_COMMENT:
+			case RC_PRINT:
 			case RC_INFORMATIONAL:
 			case RC_INFORMATIONAL_TRAFFIC:
 			case RC_LOG:

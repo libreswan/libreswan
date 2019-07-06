@@ -188,9 +188,11 @@ void whack_log_pre(enum rc_type rc, struct lswlog *buf);
 
 void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
 /*
- * Like whack_log() but suppress the 'NNN ' prefix.
+ * Like whack_log(RC_COMMENT, ...) but suppress the 'NNN ' prefix.
+ *
+ * XXX: whack_log_comment() -> whack_print().
  */
-void whack_log_comment(const char *message, ...) PRINTF_LIKE(1);
+#define whack_log_comment(FMT, ...) whack_log(RC_PRINT, FMT,##__VA_ARGS__)
 
 /* show status, usually on whack log */
 extern void show_status(void);
