@@ -53,7 +53,7 @@ IMPAIR: stop processing replay forward: packet 1 of 3
 IMPAIR: start processing replay forward: packet 2 of 3 (539 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 IMPAIR: stop processing replay forward: packet 2 of 3
-IMPAIR: start processing replay forward: packet 3 of 3 (141 bytes)
+IMPAIR: start processing replay forward: packet 3 of 3 (101 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 IMPAIR: stop processing replay forward: packet 3 of 3
 IMPAIR: start processing replay forward: packet 1 of 4 (828 bytes)
@@ -64,7 +64,7 @@ IMPAIR: start processing replay forward: packet 2 of 4 (539 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: received duplicate IKE_AUTH message request (Message ID 1, fragment 1); retransmitting response
 IMPAIR: stop processing replay forward: packet 2 of 4
-IMPAIR: start processing replay forward: packet 3 of 4 (141 bytes)
+IMPAIR: start processing replay forward: packet 3 of 4 (101 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 IMPAIR: stop processing replay forward: packet 3 of 4
 IMPAIR: start processing replay forward: packet 4 of 4 (69 bytes)
@@ -82,7 +82,7 @@ IMPAIR: start processing replay forward: packet 2 of 5 (539 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: received too old retransmit: 1 < 2
 IMPAIR: stop processing replay forward: packet 2 of 5
-IMPAIR: start processing replay forward: packet 3 of 5 (141 bytes)
+IMPAIR: start processing replay forward: packet 3 of 5 (101 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #1: received too old retransmit: 1 < 2
 IMPAIR: stop processing replay forward: packet 3 of 5
