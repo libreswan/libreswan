@@ -713,19 +713,6 @@ static void logjam_init(struct logjam *log,
 	log->jam = ARRAY_AS_JAMBUF(log->buf);
 }
 
-static void logjam_raw(enum rc_type rc,
-		       const struct state *st,
-		       const struct connection *c,
-		       const ip_endpoint *from,
-		       log_jam_fn *init,
-		       const char *msg, va_list ap)
-{
-	struct logjam log;
-	init(&log, rc, st, c, from);
-	jam_va_list(&log.jam, msg, ap);
-	log.write(&log);
-}
-
 static void plog_write(struct logjam *log)
 {
 	lswlog_to_log_stream(&log->jam);
@@ -739,18 +726,6 @@ void plog_jam(struct logjam *log,
 {
 	logjam_init(log, rc, plog_write);
 	lswlog_cur_prefix(&log->jam, st, c, from);
-}
-
-void plog_raw(enum rc_type rc,
-	      const struct state *st,
-	      const struct connection *c,
-	      const ip_endpoint *from,
-	      const char *message, ...)
-{
-	va_list ap;
-	va_start(ap, message);
-	logjam_raw(rc, st, c, from, plog_jam, message, ap);
-	va_end(ap);
 }
 
 static void loglog_write(struct logjam *log)
@@ -769,33 +744,29 @@ void loglog_jam(struct logjam *log,
 	lswlog_cur_prefix(&log->jam, st, c, from);
 }
 
-void loglog_raw(enum rc_type rc,
+struct logger plog_stream, whack_stream, DBG_stream, loglog_stream;
+
+void logger_raw(struct logger *logger,
+		enum rc_type rc,
 		const struct state *st,
 		const struct connection *c,
 		const ip_endpoint *from,
 		const char *message, ...)
 {
-	va_list ap;
-	va_start(ap, message);
-	logjam_raw(rc, st, c, from, loglog_jam, message, ap);
-	va_end(ap);
-}
-
-static void DBG_write(struct logjam *log)
-{
-	lswlog_to_log_stream(&log->jam);
-}
-
-void DBG_jam(struct logjam *log,
-		enum rc_type rc,
-		const struct state *st,
-		const struct connection *c,
-		const ip_endpoint *from)
-{
-	logjam_init(log, rc, DBG_write);
-	jam(&log->jam, DEBUG_PREFIX);
-	if (DBGP(DBG_ADD_PREFIX)) {
-		lswlog_cur_prefix(&log->jam, st, c, from);
+	LSWBUF(buf) {
+		if (logger == &DBG_stream) {
+			jam(buf, DEBUG_PREFIX);
+			if (DBGP(DBG_ADD_PREFIX)) {
+				lswlog_cur_prefix(buf, st, c, from);
+			}
+		} else {
+			lswlog_cur_prefix(buf, st, c, from);
+		}
+		va_list ap;
+		va_start(ap, message);
+		jam_va_list(buf, message, ap);
+		va_end(ap);
+		logger->write(buf, rc);
 	}
 }
 

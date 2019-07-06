@@ -133,35 +133,43 @@ extern void log_pop_from(ip_address old_from, where_t where);
  *   available?  Or should this be merged with above.
  */
 
-typedef void (log_raw_fn)(enum rc_type,
-			  const struct state *st,
-			  const struct connection *c,
-			  const ip_endpoint *from,
-			  const char *message, ...) PRINTF_LIKE(5);
 
-#define PLOG_RAW(STATE, CONNECTION, FROM, BUF)				\
-	LSWLOG_(true, BUF,						\
-		jam_log_prefix(BUF, STATE, CONNECTION, FROM),		\
-		lswlog_to_log_stream(BUF))
+struct logger {
+	void (*write)(jambuf_t *buf, enum rc_type);
+};
 
-log_raw_fn plog_raw;
+extern struct logger plog_stream, whack_stream, DBG_stream, loglog_stream;
 
-#define plog_global(MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_from(FROM, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
-#define plog_md(MD, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
-#define plog_connection(C, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_st(ST, MESSAGE, ...) plog_raw(RC_COMMENT, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+void logger_raw(struct logger *,
+		enum rc_type,
+		const struct state *st,
+		const struct connection *c,
+		const ip_endpoint *from,
+		const char *message, ...) PRINTF_LIKE(6);
 
-log_raw_fn loglog_raw;
+#define plog_global(MESSAGE, ...) logger_raw(&plog_stream, RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_from(FROM, MESSAGE, ...) logger_raw(&plog_stream, RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
+#define plog_md(MD, MESSAGE, ...) logger_raw(&plog_stream, RC_COMMENT, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
+#define plog_c(C, MESSAGE, ...) logger_raw(&plog_stream, RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_st(ST, MESSAGE, ...) logger_raw(&plog_stream, RC_COMMENT, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
 
-#define loglog_global(RC, MESSAGE, ...) loglog_raw(RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
-#define loglog_from(RC, FROM, MESSAGE, ...) loglog_raw(RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
-#define loglog_md(MD, RC, MESSAGE, ...) loglog_raw(RC, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
-#define loglog_c(RC, C, MESSAGE, ...) loglog_raw(RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
-#define loglog_st(ST, RC, MESSAGE, ...) loglog_raw(RC, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+void log_global(struct logger *, enum rc_type, const char *message, ...);
+void log_from(struct logger *, enum rc_type, const ip_endpoint *from, const char *message, ...);
+void log_c(struct logger *, enum rc_type, const struct connection *c, const char *message, ...);
+void log_st(struct logger *, enum rc_type, const struct state *st, const char *message, ...);
+
+#define loglog_global(RC, MESSAGE, ...) log_global(loglog_stream, RC_COMMENT, MESSAGE,##__VA_ARGS__);
+#define loglog_from(RC, FROM, MESSAGE, ...) log_from(loglog_stream, RC_COMMENT, FROM, MESSAGE,##__VA_ARGS__);
+#define loglog_md(RC, MD, MESSAGE, ...) log_from(loglog_stream, RC_COMMENT, &(MD)->sender, MESSAGE,##__VA_ARGS__);
+#define loglog_c(RC, C, MESSAGE, ...) log_c(loglog_stream, RC_COMMENT, C, MESSAGE,##__VA_ARGS__);
+#define loglog_st(RC, ST, MESSAGE, ...) log_st(loglog_stream, RC_COMMENT, ST, MESSAGE,##__VA_ARGS__);
 
 /* unconditional */
-log_raw_fn DBG_raw;
+#define DBG_global(RC, MESSAGE, ...) logger_raw(DBG_stream, RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define DBG_from(RC, FROM, MESSAGE, ...) logger_raw(DBG_stream, RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
+#define DBG_md(RC, MD, MESSAGE, ...) logger_raw(DBG_stream, RC_COMMENT, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
+#define DBG_c(RC, C, MESSAGE, ...) logger_raw(DBG_stream, RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
+#define DBG_st(RC, ST, MESSAGE, ...) logger_raw(DBG_stream, RC_COMMENT, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
 
 #define dbg_md(MD, MESSAGE, ...)					\
 	{								\
