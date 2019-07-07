@@ -58,11 +58,18 @@ static void check_jambuf(const char *expect, bool ok, ...)
 			     pos, array);
 			return;
 		}
-		chunk_t c = jambuf_as_chunk(&buf);
-		if ((const char *)c.ptr != array ||
-		    c.len != 1) {
+		chunk_t chunk = jambuf_as_chunk(&buf);
+		if ((const char *)chunk.ptr != array ||
+		    chunk.len != 1) {
 			FAIL("jambuf_as_chunk() is "PRI_CHUNK" but should be %p/1 (aka array) at start",
-			     pri_chunk(c), array);
+			     pri_chunk(chunk), array);
+			return;
+		}
+		shunk_t shunk = jambuf_as_shunk(&buf);
+		if ((const char *)shunk.ptr != array ||
+		    shunk.len != 0) {
+			FAIL("jambuf_as_shunk() is "PRI_SHUNK" but should be %p/0 (aka array) at start",
+			     pri_shunk(shunk), array);
 			return;
 		}
 		/*
@@ -111,12 +118,20 @@ static void check_jambuf(const char *expect, bool ok, ...)
 			FAIL("array contains '%s' which is wrong", array);
 			return;
 		}
-		c = jambuf_as_chunk(&buf);
-		if ((const char *)c.ptr != array ||
-		    c.len != strlen(expect) + 1 ||
-		    memcmp(expect, c.ptr, c.len) != 0) {
+		chunk = jambuf_as_chunk(&buf);
+		if ((const char *)chunk.ptr != array ||
+		    chunk.len != strlen(expect) + 1 ||
+		    memcmp(expect, chunk.ptr, chunk.len) != 0) {
 			FAIL("jambuf_as_chunk() is "PRI_CHUNK" or '%s' which is wrong",
-			     pri_chunk(c), c.ptr);
+			     pri_chunk(chunk), chunk.ptr);
+			return;
+		}
+		shunk = jambuf_as_shunk(&buf);
+		if ((const char *)shunk.ptr != array ||
+		    shunk.len != strlen(expect) ||
+		    memcmp(expect, shunk.ptr, shunk.len) != 0) {
+			FAIL("jambuf_as_shunk() is "PRI_SHUNK" which is wrong",
+			     pri_shunk(shunk));
 			return;
 		}
 		pos = jambuf_pos(&buf);

@@ -24,6 +24,7 @@
 
 #include "lswcdefs.h"		/* for PRINTF_LIKE */
 #include "chunk.h"
+#include "shunk.h"
 
 /*
  * jambuf_t provides a mechanism for accumulating formatted strings
@@ -107,8 +108,10 @@ jambuf_t array_as_jambuf(char *array, size_t sizeof_array);
  * _pos() returns the current cursor position (where the next string
  * will be jammed).
  */
-/* includes '\0' */
+/* includes final '\0' */
 chunk_t jambuf_as_chunk(jambuf_t *buf);
+/* excludes final '\0' */
+shunk_t jambuf_as_shunk(jambuf_t *buf);
 const char *jambuf_pos(jambuf_t *buf);
 
 /*
