@@ -406,19 +406,6 @@ void pluto_init_log(void)
 }
 
 /*
- * Add just the WHACK or STATE (or connection) prefix.
- *
- * Callers need to pick and choose.  For instance, WHACK output some
- * times suppress the whack prefix; and there is no point adding the
- * STATE prefix when it was added earlier.
- */
-
-static void add_whack_rc_prefix(struct lswlog *buf, enum rc_type rc)
-{
-	lswlogf(buf, "%03d ", rc);
-}
-
-/*
  * Wrap up the logic to decide if a particular output should occur.
  * The compiler will likely inline these.
  */
@@ -452,29 +439,51 @@ static void peerlog_raw(char *b)
 	}
 }
 
-static void whack_raw(struct lswlog *b, enum rc_type rc)
+static void whack_raw(struct lswlog *buf, enum rc_type rc)
 {
 	/*
-	 * Only whack-log when the main thread.
-	 *
-	 * Helper threads, which are asynchronous, shouldn't be trying
-	 * to directly emit whack output.
+	 * Using globals so never from a helper thread
 	 */
-	if (in_main_thread()) {
-		if (whack_log_p()) {
-			/*
-			 * On the assumption that logging to whack is
-			 * rare and slow anyway, don't try to tune
-			 * this code path.
-			 */
-			LSWBUF(buf) {
-				add_whack_rc_prefix(buf, rc);
-				/* add_state_prefix() - done by caller */
-				lswlogl(buf, b);
-				lswlog_to_whack_stream(buf);
-			}
-		}
+	passert(in_main_thread());
+	/* aka whack_log_p() */
+	fd_t wfd = (fd_p(whack_log_fd) ? whack_log_fd :
+		    cur_state != NULL ? cur_state->st_whack_sock :
+		    null_fd);
+	if (!fd_p(wfd)) {
+		return;
 	}
+
+	/*
+	 * XXX: use iovec as it's easier than trying to deal with
+	 * truncation while still ensuring that the message is
+	 * terminated with a '\n' (this isn't a performance thing, it
+	 * just replaces local memory moves with kernel equivalent).
+	 */
+
+	/* 'NNN ' */
+	char prefix[10];/*65535+200*/
+	int prefix_len = snprintf(prefix, sizeof(prefix), "%03u ", rc);
+	passert(prefix_len >= 0 && (unsigned) prefix_len < sizeof(prefix));
+
+	/* message, not including trailing '\0' */
+	shunk_t message = jambuf_as_shunk(buf);
+
+	/* NL */
+	char nl = '\n';
+
+	struct iovec iov[] = {
+		{ .iov_base = prefix, .iov_len = prefix_len, },
+		/* need to cast away const :-( */
+		{ .iov_base = (void*)message.ptr, .iov_len = message.len, },
+		{ .iov_base = &nl, .iov_len = sizeof(nl), },
+	};
+	struct msghdr msg = {
+		.msg_iov = iov,
+		.msg_iovlen = elemsof(iov),
+	};
+
+	/* write to whack socket, but suppress possible SIGPIPE */
+	sendmsg(wfd.fd, &msg, MSG_NOSIGNAL);
 }
 
 static void lswlog_cur_prefix(struct lswlog *buf,
@@ -548,7 +557,10 @@ void lswlog_to_debug_stream(struct lswlog *buf)
 void lswlog_to_error_stream(struct lswlog *buf)
 {
 	log_raw(buf, LOG_ERR);
-	whack_raw(buf, RC_LOG_SERIOUS);
+	if (in_main_thread()) {
+		/* don't whack-log from helper threads */
+		whack_raw(buf, RC_LOG_SERIOUS);
+	}
 }
 
 void lswlog_to_log_stream(struct lswlog *buf)
@@ -560,7 +572,10 @@ void lswlog_to_log_stream(struct lswlog *buf)
 void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc)
 {
 	log_raw(buf, LOG_WARNING);
-	whack_raw(buf, rc);
+	if (in_main_thread()) {
+		/* don't whack-log from helper threads */
+		whack_raw(buf, rc);
+	}
 }
 
 void close_log(void)
@@ -611,33 +626,10 @@ void libreswan_exit(enum rc_type rc)
 	exit_pluto(rc);
 }
 
-void whack_log_pre(enum rc_type rc, struct lswlog *buf)
+void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type rc)
 {
-	passert(in_main_thread());
-	add_whack_rc_prefix(buf, rc);
-	lswlog_log_prefix(buf);
-}
-
-void lswlog_to_whack_stream(struct lswlog *buf)
-{
-	passert(in_main_thread());
-
-	fd_t wfd = fd_p(whack_log_fd) ? whack_log_fd :
-		cur_state != NULL ? cur_state->st_whack_sock :
-		null_fd;
-
-	passert(fd_p(wfd));
-
-	/* m includes '\0' */
-	chunk_t m = jambuf_as_chunk(buf);
-
-	/* don't need NUL, do need NL */
-	passert(m.ptr[m.len-1] == '\0');
-	m.ptr[m.len-1] = '\n';
-
-	/* write to whack socket, but suppress possible SIGPIPE */
-	(void) send(wfd.fd, m.ptr, m.len, MSG_NOSIGNAL);
-	m.ptr[m.len-1] = '\0'; /* put NUL back */
+	pexpect(whack_log_p());
+	whack_raw(buf, rc);
 }
 
 bool whack_log_p(void)
@@ -655,7 +647,7 @@ bool whack_log_p(void)
 }
 
 /* emit message to whack.
- * form is "ddd statename text" where
+ * form is "ddd statename text\n" where
  * - ddd is a decimal status code (RC_*) as described in whack.h
  * - text is a human-readable annotation
  */
@@ -664,13 +656,12 @@ void whack_log(enum rc_type rc, const char *message, ...)
 {
 	if (whack_log_p()) {
 		LSWBUF(buf) {
-			add_whack_rc_prefix(buf, rc);
 			lswlog_log_prefix(buf);
 			va_list args;
 			va_start(args, message);
 			lswlogvf(buf, message, args);
 			va_end(args);
-			lswlog_to_whack_stream(buf);
+			lswlog_to_whack_stream(buf, rc);
 		}
 	}
 }
@@ -716,7 +707,9 @@ void loglog_raw(enum rc_type rc,
 		jam_va_list(buf, message, ap);
 		va_end(ap);
 		lswlog_to_log_stream(buf);
-		whack_raw(buf, rc);
+		if (whack_log_p()) {
+			lswlog_to_whack_stream(buf, rc);
+		}
 	}
 }
 

@@ -171,7 +171,7 @@ void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc);
 void lswlog_to_log_stream(struct lswlog *buf);
 void lswlog_to_debug_stream(struct lswlog *buf);
 void lswlog_to_error_stream(struct lswlog *buf);
-void lswlog_to_whack_stream(struct lswlog *buf);
+void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type rc);
 size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
 
 
@@ -220,12 +220,12 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
 
 #define LSWLOG_WHACK(RC, BUF)						\
 	LSWLOG_(whack_log_p(), BUF,					\
-		whack_log_pre(RC, BUF),					\
-		lswlog_to_whack_stream(BUF))
+		lswlog_log_prefix(BUF),					\
+		lswlog_to_whack_stream(BUF, RC))
 
 /* XXX: should be stdout?!? */
-#define LSWLOG_INFO(BUF)					\
-	LSWLOG_(true, BUF, , lswlog_to_whack_stream(buf))
+#define LSWLOG_INFO(BUF)						\
+	LSWLOG_(true, BUF, , lswlog_to_whack_stream(buf, RC_PRINT))
 
 /*
  * Wrap <message> in a prefix and suffix where the suffix contains
