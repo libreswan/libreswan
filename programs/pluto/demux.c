@@ -89,8 +89,6 @@ void init_demux(void)
 
 static struct msg_digest *read_packet(const struct iface_port *ifp)
 {
-	realtime_t md_inception = realnow();
-
 	int packet_len;
 	/* ??? this buffer seems *way* too big */
 	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
@@ -221,7 +219,6 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	struct msg_digest *md = alloc_md("msg_digest in read_packet");
 	md->iface = ifp;
 	md->sender = sender;
-	md->md_inception = md_inception;
 
 	init_pbs(&md->packet_pbs
 		 , clone_bytes(_buffer, packet_len,
@@ -415,36 +412,41 @@ static void process_md(struct msg_digest **mdp)
 
 static bool impair_incoming(struct msg_digest **mdp);
 
-static void comm_handle(const struct iface_port *ifp)
+void comm_handle_cb(evutil_socket_t unused_fd UNUSED,
+		    const short unused_event UNUSED,
+		    void *arg)
 {
-	/* Even though select(2) says that there is a message,
-	 * it might only be a MSG_ERRQUEUE message.  At least
-	 * sometimes that leads to a hanging recvfrom.  To avoid
-	 * what appears to be a kernel bug, check_msg_errqueue
-	 * uses poll(2) and tells us if there is anything for us
-	 * to read.
+	const struct iface_port *ifp = arg;
+	/*
+	 * Even though select(2) says that there is a message, it
+	 * might only be a MSG_ERRQUEUE message.  At least sometimes
+	 * that leads to a hanging recvfrom.  To avoid what appears to
+	 * be a kernel bug, check_msg_errqueue uses poll(2) and tells
+	 * us if there is anything for us to read.
 	 *
 	 * This is early enough that teardown isn't required:
 	 * just return on failure.
 	 */
-	if (!check_incoming_msg_errqueue(ifp, "read_packet"))
+	threadtime_t errqueue_start = threadtime_start();
+	bool errqueue_ok = check_incoming_msg_errqueue(ifp, "read_packet");
+	threadtime_stop(&errqueue_start, SOS_NOBODY,
+			"%s() calling check_incoming_msg_errqueue()", __func__);
+	if (!errqueue_ok) {
 		return; /* no normal message to read */
+	}
 
+	threadtime_t md_start = threadtime_start();
 	struct msg_digest *md = read_packet(ifp);
 	if (md != NULL) {
+		md->md_inception = md_start;
 		if (!impair_incoming(&md)) {
 			process_md(&md);
 		}
 		pexpect(md == NULL);
 	}
+	threadtime_stop(&md_start, SOS_NOBODY,
+			"%s() reading and processing packet", __func__);
 	pexpect_reset_globals();
-}
-
-void comm_handle_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
-{
-	threadtime_t start = threadtime_start();
-	comm_handle((const struct iface_port *) arg);
-	threadtime_stop(&start, SOS_NOBODY, "comm handle");
 }
 
 /*

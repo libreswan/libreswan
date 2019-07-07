@@ -18,6 +18,7 @@
  */
 
 #include "fd.h"
+#include "pluto_timing.h"
 
 struct payload_digest;
 struct state;
@@ -29,7 +30,8 @@ typedef void initiator_function(fd_t whack_sock,
 				struct connection *c,
 				struct state *predecessor,
 				lset_t policy,
-				unsigned long try
+				unsigned long try,
+				const threadtime_t *inception
 #ifdef HAVE_LABELED_IPSEC
 				, struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -37,7 +39,8 @@ typedef void initiator_function(fd_t whack_sock,
 
 extern void ipsecdoi_initiate(fd_t whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
-			      so_serial_t replacing
+			      so_serial_t replacing,
+			      const threadtime_t *inception
 #ifdef HAVE_LABELED_IPSEC
 			      , struct xfrm_user_sec_ctx_ike *uctx
 #endif

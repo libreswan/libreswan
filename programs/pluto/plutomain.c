@@ -64,6 +64,7 @@
 #include "af_info.h"		/* for init_af_info() */
 #include "ikev2_redirect.h"
 #include "root_certs.h"		/* for init_root_certs() */
+#include "hostpair.h"		/* for init_host_pair() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -495,6 +496,7 @@ static const struct option long_opts[] = {
 	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
 	{ "log-no-append\0", no_argument, NULL, '7' },
 	{ "log-no-ip\0", no_argument, NULL, '<' },
+	{ "log-no-audit\0", no_argument, NULL, 'a' },
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
 	{ "force-busy\0", no_argument, NULL, 'D' },
 	{ "force-unlimited\0", no_argument, NULL, 'U' },
@@ -866,6 +868,10 @@ int main(int argc, char **argv)
 			log_ip = FALSE;
 			continue;
 
+		case 'a':	/* --log-no-audit */
+			log_to_audit = FALSE;
+			continue;
+
 		case '8':	/* --drop-oppo-null */
 			pluto_drop_oppo_null = TRUE;
 			continue;
@@ -1194,7 +1200,7 @@ int main(int argc, char **argv)
 
 			/* leak */
 			set_cfg_string(&pluto_log_file,
-				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
+				cfg->setup.strings[KSF_LOGFILE]);
 #ifdef USE_DNSSEC
 			set_dnssec_file_names(cfg);
 #endif
@@ -1203,9 +1209,10 @@ int main(int argc, char **argv)
 				log_to_syslog = FALSE;
 			/* plutofork= no longer supported via config file */
 			log_with_timestamp =
-				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
-			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
-			log_ip = cfg->setup.options[KBF_PLUTOSTDERRLOGIP];
+				cfg->setup.options[KBF_LOGTIME];
+			log_append = cfg->setup.options[KBF_LOGAPPEND];
+			log_ip = cfg->setup.options[KBF_LOGIP];
+			log_to_audit = cfg->setup.options[KBF_AUDIT_LOG];
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 #ifdef HAVE_SECCOMP
@@ -1700,7 +1707,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_LINUX_AUDIT
-	linux_audit_init();
+	linux_audit_init(log_to_audit);
 #else
 	libreswan_log("Linux audit support [disabled]");
 #endif
@@ -1752,6 +1759,7 @@ int main(int argc, char **argv)
 	init_secret();
 	init_states();
 	init_connections();
+	init_host_pair();
 	init_ike_alg();
 	test_ike_alg();
 
@@ -1881,9 +1889,10 @@ void show_setup_plutomain(void)
 		IPSEC_SBINDIR,
 		IPSEC_EXECDIR);
 
-	whack_log(RC_COMMENT, "pluto_version=%s, pluto_vendorid=%s",
+	whack_log(RC_COMMENT, "pluto_version=%s, pluto_vendorid=%s, audit-log=%s",
 		ipsec_version_code(),
-		pluto_vendorid);
+		pluto_vendorid,
+		bool_str(log_to_audit));
 
 	whack_log(RC_COMMENT,
 		"nhelpers=%d, uniqueids=%s, "

@@ -498,19 +498,13 @@ union sas { struct child_sa child; struct ike_sa ike; struct state st; };
  * Caller must insert_state().
  */
 
-static so_serial_t next_so = SOS_FIRST;
-
-so_serial_t next_so_serialno(void)
-{
-	return next_so;
-}
-
 static struct state *new_state(enum ike_version ike_version,
 			       const struct finite_state *fs,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
 			       enum sa_type sa_type)
 {
+	static so_serial_t next_so = SOS_FIRST;
 	union sas *sas = alloc_thing(union sas, "struct state in new_state()");
 	passert(&sas->st == &sas->child.sa);
 	passert(&sas->st == &sas->ike.sa);
@@ -528,7 +522,6 @@ static struct state *new_state(enum ike_version ike_version,
 		},
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
-	statetime_start(st);
 
 	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
@@ -559,7 +552,9 @@ struct state *new_v1_rstate(struct msg_digest *md)
 
 struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 			    const ike_spi_t ike_initiator_spi,
-			    const ike_spi_t ike_responder_spi)
+			    const ike_spi_t ike_responder_spi,
+			    struct connection *c, lset_t policy,
+			    int try, fd_t whack_sock)
 {
 	struct state *st = new_state(IKEv2, &state_undefined,
 				     ike_initiator_spi, ike_responder_spi,
@@ -583,6 +578,7 @@ struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 	pexpect(fs->v2_transitions != NULL);
 	pexpect(fs->nr_transitions == 1);
 	/* st->st_v2_transition = fs->state_transitions[0] */
+	initialize_new_state(&ike->sa, c, policy, try, whack_sock);
 	return ike;
 }
 
@@ -900,7 +896,8 @@ void delete_state(struct state *st)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 
 	/* If we are failed OE initiator, make shunt bare */
-	if (IS_IKE_SA(st) && (c->policy & POLICY_OPPORTUNISTIC) &&
+	if (IS_IKE_SA(st) && c->newest_isakmp_sa == st->st_serialno
+	   && (c->policy & POLICY_OPPORTUNISTIC) &&
 	    (st->st_state->kind == STATE_PARENT_I1 ||
 	     st->st_state->kind == STATE_PARENT_I2)) {
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
@@ -972,7 +969,7 @@ void delete_state(struct state *st)
 			char *sbcp = readable_humber(st->st_ipcomp.peer_bytes,
 					       statebuf,
 					       statebuf + sizeof(statebuf),
-					       " IPCOMP traffic information: in=");
+					       "IPCOMP traffic information: in=");
 
 			(void)readable_humber(st->st_ipcomp.our_bytes,
 					       sbcp,
@@ -1632,64 +1629,6 @@ struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_sp
 }
 
 /*
- * Find the SA (IKE or CHILD), within IKE's family, that initiated a
- * request using MSGID.
- *
- * Could use a linked list, but for now exploit hash table property
- * that children share hash with parent.
- */
-
-struct request_filter {
-	msgid_t msgid;
-};
-
-static bool v2_sa_by_initiator_mip_p(struct state *st, void *context)
-{
-	const struct request_filter *filter = context;
-	return st->st_v2_msgid_wip.initiator == filter->msgid;
-}
-
-struct state *find_v2_sa_by_initiator_mip(struct ike_sa *ike, const msgid_t msgid)
-{
-	struct request_filter filter = {
-		.msgid = msgid,
-	};
-	struct state *st = state_by_ike_spis(IKEv2,
-					     NULL/*ignore-clonedfrom;see predicate*/,
-					     NULL/*ignore v1 msgid*/,
-					     NULL/*ignore-role*/,
-					     &ike->sa.st_ike_spis,
-					     v2_sa_by_initiator_mip_p, &filter, __func__);
-	pexpect(st == NULL ||
-		st->st_clonedfrom == SOS_NOBODY ||
-		st->st_clonedfrom == ike->sa.st_serialno);
-	return st;
-}
-
-static bool v2_sa_by_responder_mip_p(struct state *st, void *context)
-{
-	const struct request_filter *filter = context;
-	return st->st_v2_msgid_wip.responder == filter->msgid;
-}
-
-struct state *find_v2_sa_by_responder_mip(struct ike_sa *ike, const msgid_t msgid)
-{
-	struct request_filter filter = {
-		.msgid = msgid,
-	};
-	struct state *st = state_by_ike_spis(IKEv2,
-					     NULL/*ignore-clonedfrom;see predicate*/,
-					     NULL/*ignore v1 msgid*/,
-					     NULL/*ignore-role*/,
-					     &ike->sa.st_ike_spis,
-					     v2_sa_by_responder_mip_p, &filter, __func__);
-	pexpect(st == NULL ||
-		st->st_clonedfrom == SOS_NOBODY ||
-		st->st_clonedfrom == ike->sa.st_serialno);
-	return st;
-}
-
-/*
  * Find an IKEv2 CHILD SA using the protocol and the (from our POV)
  * 'outbound' SPI.
  *
@@ -1864,14 +1803,14 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 				 size_t sizeof_buffer)
 {
-	if (packet_len >= sizeof_buffer) {
+	if (packet_len > sizeof_buffer) {
 		/*
-		 * XXX: in_struct() rejects an attempt to unpack a
-		 * truncated packet.  Should be way to override it.
+		 * When the message is too big it is truncated.  But
+		 * what about the returned packet length?  Force
+		 * truncation.
 		 */
-		libreswan_log("MSG_ERRQUEUE packet longer than %zu bytes; truncated",
-			      sizeof_buffer);
-		return NULL;
+		dbg("MSG_ERRQUEUE packet longer than %zu bytes; truncated", sizeof_buffer);
+		packet_len = sizeof_buffer;
 	}
 	if (packet_len < sizeof(struct isakmp_hdr)) {
 		dbg("MSG_ERRQUEUE packet is smaller than an IKE header");
@@ -1880,8 +1819,23 @@ struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 	pb_stream packet_pbs;
 	init_pbs(&packet_pbs, buffer, packet_len, __func__);
 	struct isakmp_hdr hdr;
-	if (!in_struct(&hdr, &isakmp_hdr_desc, &packet_pbs, NULL)) {
-		dbg("MSG_ERRQUEUE packet IKE header is corrupt");
+	if (!in_struct(&hdr, &raw_isakmp_hdr_desc, &packet_pbs, NULL)) {
+		/*
+		 * XXX:
+		 *
+		 * When in_struct() fails it logs an obscure and
+		 * typically context free error (for instance, cur_*
+		 * is unset when processing error messages); and
+		 * there's no clean for this or calling code to pass
+		 * in context.
+		 *
+		 * Fortunately, since the buffer is large enough to
+		 * hold the header, there's really not much left that
+		 * can trigger an error (everything in ISAKMP_HDR_DESC
+		 * that involves validation has its type set to FT_NAT
+		 * in RAW_ISAKMP_HDR_DESC).
+		 */
+		libreswan_log("MSG_ERRQUEUE packet IKE header is corrupt");
 		return NULL;
 	}
 	enum ike_version ike_version = hdr_ike_version(&hdr);
@@ -2830,6 +2784,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	if (!orient(c)) {
 		PEXPECT_LOG("%s after mobike failed", "orient");
 	}
+	/* assumption: orientation has not changed */
 	connect_to_host_pair(c); /* re-create hp listing */
 
 	if (md_role == MESSAGE_RESPONSE) {
@@ -2850,7 +2805,7 @@ void set_state_ike_endpoints(struct state *st,
 {
 	/* reset our choice of interface */
 	c->interface = NULL;
-	orient(c);
+	(void)orient(c);
 	st->st_interface = c->interface;
 	passert(st->st_interface != NULL);
 

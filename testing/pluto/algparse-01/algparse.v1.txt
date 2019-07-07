@@ -26,8 +26,7 @@ algparse -v1 'esp=aes-128-sha1-modp2048'
 algparse -v1 'esp=aes_gcm_a-128-null'
 	AES_GCM_8_128-NONE
 algparse -v1 'esp=3des-sha1;modp1024'
-	WARNING: ignoring ESP DH algorithm MODP1024 as PFS policy is disabled
-	3DES_CBC-HMAC_SHA1_96
+	ERROR: ESP DH algorithm 'modp1024' is not supported
 algparse -v1 'esp=3des-sha1;modp1536'
 	WARNING: ignoring ESP DH algorithm MODP1536 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96

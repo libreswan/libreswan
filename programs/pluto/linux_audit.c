@@ -89,9 +89,7 @@ void linux_audit_conn(const struct state *st UNUSED, enum linux_audit_kind op UN
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
 
-static bool log_to_audit = FALSE;		/* audit log messages for kernel */
-
-void linux_audit_init(void)
+void linux_audit_init(int do_audit)
 {
 	libreswan_log("Linux audit support [enabled]");
 	/* test and log if audit is enabled on the system */
@@ -102,6 +100,8 @@ void linux_audit_init(void)
 			errno == EAFNOSUPPORT) {
 			loglog(RC_LOG_SERIOUS,
 				"Warning: kernel has no audit support");
+			close(audit_fd);
+			return;
 		} else {
 			loglog(RC_LOG_SERIOUS,
 				"FATAL: audit_open() failed : %s",
@@ -109,10 +109,12 @@ void linux_audit_init(void)
 			exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
 		}
 	} else {
-		log_to_audit = TRUE;
+		if (do_audit)
+			log_to_audit = TRUE;
 	}
 	close(audit_fd);
-	libreswan_log("Linux audit activated");
+	if (do_audit)
+		libreswan_log("Linux audit activated");
 }
 
 static void linux_audit(const int type, const char *message, const char *laddr, const int result)
@@ -182,9 +184,15 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 		jam(&buf, " auth=");
 		if (st->st_ike_version == IKEv2) {
-			jam_string(&buf, (c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG");;
+			jam_string(&buf, (c->policy & POLICY_PSK) ? "PRESHARED_KEY" :
+				(c->policy & POLICY_RSASIG) ? "RSA_SIG" :
+				(c->policy & POLICY_ECDSA) ? "ECDSA" : "unknown");
 		} else {
-			lswlog_enum_short(&buf, &oakley_auth_names, st->st_oakley.auth);
+			if (op == LAK_PARENT_FAIL)
+				jam_string(&buf, (c->policy & POLICY_PSK) ? "PRESHARED_KEY" :
+					(c->policy & POLICY_RSASIG) ? "RSA_SIG" : "unknown");
+			else
+				lswlog_enum_short(&buf, &oakley_auth_names, st->st_oakley.auth);
 		}
 
 		jam(&buf, " cipher=%s ksize=%d",

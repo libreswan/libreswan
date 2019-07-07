@@ -1661,6 +1661,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	 */
 	if (!install_inbound_ipsec_sa(st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
+
 	/* we only audit once for IPsec SA's, we picked the inbound SA */
 	linux_audit_conn(st, LAK_CHILD_START);
 

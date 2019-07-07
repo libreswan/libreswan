@@ -512,7 +512,8 @@ void ikev2_parent_outI1(fd_t whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,
-		       unsigned long try
+		       unsigned long try,
+		       const threadtime_t *inception
 #ifdef HAVE_LABELED_IPSEC
 		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -527,11 +528,13 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	}
 
 	struct ike_sa *ike = new_v2_state(STATE_PARENT_I0, SA_INITIATOR,
-					  ike_initiator_spi(), zero_ike_spi);
-	struct state *st = &ike->sa;
+					  ike_initiator_spi(), zero_ike_spi,
+					  c, policy, try, whack_sock);
+	statetime_t start = statetime_backdate(&ike->sa, inception);
 
+	push_cur_state(&ike->sa);
 	/* set up new state */
-	initialize_new_state(st, c, policy, try, whack_sock);
+	struct state *st = &ike->sa;
 	passert(st->st_ike_version == IKEv2);
 	passert(st->st_state->kind == STATE_PARENT_I0);
 	st->st_original_role = ORIGINAL_INITIATOR;
@@ -603,6 +606,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	request_ke_and_nonce("ikev2_outI1 KE", st,
 			     st->st_oakley.ta_dh,
 			     ikev2_parent_outI1_continue);
+	statetime_stop(&start, "%s()", __func__);
 	reset_globals();
 }
 
@@ -832,127 +836,25 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* forward decl and type assertion */
 static crypto_transition_fn ikev2_parent_inI1outR1_continue_tail;	/* forward decl and type assertion */
 
-static struct connection *find_v2_host_connection(struct msg_digest *md,
-						  lset_t *policy)
+stf_status ikev2_parent_inI1outR1(struct state *st, struct msg_digest *md)
 {
-	/* authentication policy alternatives in order of decreasing preference */
-	static const lset_t policies[] = { POLICY_ECDSA, POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
-
-	struct connection *c = NULL;
-	unsigned int i;
-
-	/* XXX in the near future, this loop should find type=passthrough and return STF_DROP */
-	for (i=0; i < elemsof(policies); i++) {
-		*policy = policies[i] | POLICY_IKEV2_ALLOW;
-		c = ikev2_find_host_connection(&md->iface->local_endpoint,
-					       &md->sender, *policy);
-		if (c != NULL)
-			break;
-	}
-
-	if (c == NULL) {
-		endpoint_buf b;
-
-		/* we might want to change this to a debug log message only */
-		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s but no suitable connection found with IKEv2 policy",
-		       str_endpoint(&md->iface->local_endpoint, &b));
-		return NULL;
-	}
-
-	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
-
-	DBG(DBG_CONTROL, {
-		char ci[CONN_INST_BUF];
-		DBG_log("found connection: %s%s with policy %s",
-			c->name, fmt_conn_instance(c, ci),
-			bitnamesof(sa_policy_bit_names, *policy));});
-
-	/*
-	 * Did we overlook a type=passthrough foodgroup?
-	 */
-	{
-		struct connection *tmp = find_host_pair_connections(&md->iface->local_endpoint, NULL);
-
-		for (; tmp != NULL; tmp = tmp->hp_next) {
-			if ((tmp->policy & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP &&
-			    tmp->kind == CK_INSTANCE &&
-			    addrinsubnet(&md->sender, &tmp->spd.that.client))
-			{
-				DBG(DBG_OPPO, DBG_log("passthrough conn %s also matches - check which has longer prefix match", tmp->name));
-
-				if (c->spd.that.client.maskbits  < tmp->spd.that.client.maskbits) {
-					DBG(DBG_OPPO, DBG_log("passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
-						tmp->spd.that.client.maskbits,
-						c->spd.that.client.maskbits));
-					return NULL;
-				}
-			}
-		}
-	}
-	return c;
-}
-
-stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
-{
-	passert(null_st == NULL);	/* initial responder -> no state */
-
-	lset_t policy = LEMPTY;
-	struct connection *c = find_v2_host_connection(md, &policy);
-	if (c == NULL) {
-		/*
-		 * NO_PROPOSAL_CHOSEN is used when the list of proposals is empty,
-		 * like when we did not find any connection to use.
-		 *
-		 * INVALID_SYNTAX is for errors that a configuration change could
-		 * not fix.
-		 */
-		send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL);
-		return STF_DROP;
-	}
-
-	/* Vendor ID processing */
-	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
-		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE);
-	}
-
-	/*
-	 * We've committed to creating a state and, presumably,
-	 * dedicating real resources to the connection.
-	 */
-	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
-	struct ike_sa *ike = new_v2_state(STATE_PARENT_R0, SA_RESPONDER,
-					  md->hdr.isa_ike_spis.initiator,
-					  ike_responder_spi(&md->sender));
-	v2_msgid_start_responder(ike, &ike->sa, md);
-	struct state *st = &ike->sa;
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct connection *c = ike->sa.st_connection;
 	/* set up new state */
-	initialize_new_state(st, c, policy, 0, null_fd);
 	update_ike_endpoints(ike, md);
 	passert(st->st_ike_version == IKEv2);
 	passert(st->st_state->kind == STATE_PARENT_R0);
 	st->st_original_role = ORIGINAL_RESPONDER;
 	passert(st->st_sa_role == SA_RESPONDER);
-
-	/*
-	 * "cur_state" has been set (possibly repeatedly) so all
-	 * systems are go - emit a log record as early as possible.
-	 *
-	 * Include the "hidden" prep time that's already been sunk
-	 * into the the message.
-	 */
-	LSWLOG(buf) {
-		lswlogf(buf, "processing ");
-		lswlog_msg_digest(buf, md);
-		deltatime_t prep_time = realtimediff(realnow(), md->md_inception);
-		lswlogf(buf, " (message arrived ");
-		lswlog_deltatime(buf, prep_time);
-		lswlogf(buf, " seconds ago)");
-	}
-
-	md->st = st;
+	pexpect(md->st == st);
 	/* set by caller */
 	pexpect(md->from_state == STATE_PARENT_R0);
 	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
+
+	/* Vendor ID processing */
+	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
+		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE);
+	}
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =
@@ -2632,22 +2534,6 @@ static crypto_req_cont_func ikev2_ike_sa_process_auth_request_no_skeyid_continue
 stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct state *st,
 						       struct msg_digest *md UNUSED)
 {
-	/*
-	 * This log line flags that a complete packet has been
-	 * received and processing as commenced - any further delay is
-	 * at our end.
-	 *
-	 * XXX: move this into ikev2.c?
-	 */
-	LSWLOG(buf) {
-		lswlogf(buf, "processing encrypted ");
-		lswlog_msg_digest(buf, md);
-		deltatime_t prep_time = realtimediff(realnow(), md->md_inception);
-		lswlogf(buf, " (message arrived ");
-		lswlog_deltatime(buf, prep_time);
-		lswlogf(buf, " seconds ago)");
-	}
-
 	/* for testing only */
 	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
 		libreswan_log(
@@ -5607,8 +5493,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		 * When DEL_IKE, the update isn't needed but what
 		 * ever.
 		 */
-		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send hacking around delete_my_family()",
-		    ike->sa.st_serialno, st->st_serialno, __func__);
+		dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue hacking around delete_my_family()",
+			     __func__);
 		v2_msgid_update_sent(ike, st, md, MESSAGE_RESPONSE);
 
 		mobike_reset_remote(st, &mobike_remote);
@@ -5674,8 +5560,8 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 		 * XXX: record 'n' send violates the RFC.  This code should
 		 * instead let success_v2_state_transition() deal with things.
 		 */
-		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
-		    ike->sa.st_serialno, st->st_serialno, __func__);
+		dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue",
+			     __func__);
 		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
 	}
 	return e;
@@ -5685,10 +5571,13 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 static payload_master_t add_mobike_payloads;
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
+	ip_endpoint local_endpoint = endpoint(&st->st_mobike_localaddr,
+					      st->st_mobike_localport);
+	ip_endpoint remote_endpoint = endpoint(&st->st_remoteaddr,
+					       st->st_remoteport);
 	return emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs) &&
-		ikev2_out_natd(&st->st_mobike_localaddr, st->st_mobike_localport,
-			    &st->st_remoteaddr, st->st_remoteport,
-			    &st->st_ike_spis, pbs);
+		ikev2_out_natd(&local_endpoint, &remote_endpoint,
+			       &st->st_ike_spis, pbs);
 }
 #endif
 
@@ -6047,8 +5936,8 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 		 * XXX: record 'n' send violates the RFC.  This code should
 		 * instead let success_v2_state_transition() deal with things.
 		 */
-		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
-		    ike->sa.st_serialno, st->st_serialno, __func__);
+		dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue",
+			     __func__);
 		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
 	}
 	st->st_interface = o_iface;
@@ -6059,18 +5948,15 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 static const struct iface_port *ikev2_src_iface(struct state *st,
 						struct starter_end *this)
 {
-	const struct iface_port *iface;
-	ipstr_buf b;
-
 	/* success found a new source address */
-
-	iface = lookup_iface_ip(&this->addr, st->st_localport);
-	if (iface ==  NULL) {
-		DBG(DBG_CONTROL, DBG_log("#%lu no interface for %s try to initialize",
-					st->st_serialno,
-					sensitive_ipstr(&this->addr, &b)));
+	ip_endpoint local_endpoint = endpoint(&this->addr, st->st_localport);
+	const struct iface_port *iface = find_iface_port_by_local_endpoint(&local_endpoint);
+	if (iface == NULL) {
+		endpoint_buf b;
+		dbg("#%lu no interface for %s try to initialize",
+		    st->st_serialno, str_endpoint(&local_endpoint, &b));
 		find_ifaces(FALSE);
-		iface = lookup_iface_ip(&this->addr, st->st_localport);
+		iface = find_iface_port_by_local_endpoint(&local_endpoint);
 		if (iface ==  NULL) {
 			return NULL;
 		}

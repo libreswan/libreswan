@@ -48,6 +48,8 @@
 
 #include "socketwrapper.h"
 
+#include "lswcdefs.h"
+
 char *progname;
 uint32_t pfkey_seq = 0;
 int pfkey_sock;
@@ -327,7 +329,7 @@ int main(int argc, char *argv[])
 	int ipip_register = 0;
 	int ipcomp_register = 0;
 
-	static const struct option long_options[] =
+	const struct option long_options[] =
 	{
 		{ "help",        no_argument, 0, 'h' },
 		{ "daemon",      required_argument, 0, 'f' },

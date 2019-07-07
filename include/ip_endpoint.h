@@ -41,9 +41,11 @@ struct lswlog;
 ip_endpoint endpoint(const ip_address *address, int port);
 err_t sockaddr_as_endpoint(const struct sockaddr *sa, socklen_t sa_len, ip_endpoint *endpoint);
 
+int endpoint_port(const ip_endpoint *endpoint);
+ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port);
+
 /* forces port to zero */
 ip_address endpoint_address(const ip_endpoint *endpoint);
-int endpoint_port(const ip_endpoint *endpoint);
 int endpoint_type(const ip_endpoint *endpoint);
 
 /*

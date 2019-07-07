@@ -293,6 +293,8 @@ extern void close_output_pbs(pb_stream *pbs);
 #include "isakmp_hdr.h"
 
 extern struct_desc isakmp_hdr_desc;
+/* treat length as raw */
+extern struct_desc raw_isakmp_hdr_desc;
 
 /* Generic portion of all ISAKMP payloads.
  * layout from RFC 2408 "ISAKMP" section 3.2

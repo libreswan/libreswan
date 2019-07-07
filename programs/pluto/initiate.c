@@ -179,6 +179,7 @@ struct initiate_stuff {
 
 static int initiate_a_connection(struct connection *c, void *arg)
 {
+	threadtime_t inception  = threadtime_start();
 	struct initiate_stuff *is = (struct initiate_stuff *)arg;
 	fd_t whackfd = is->whackfd;
 
@@ -339,7 +340,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
 	whackfd = dup_any(whackfd);
-	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY
+	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, &inception
 #ifdef HAVE_LABELED_IPSEC
 		  , NULL
 #endif
@@ -611,6 +612,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 #endif
 				  )
 {
+	threadtime_t inception = threadtime_start();
 	struct connection *c = NULL;
 	struct spd_route *sr;
 	int ourport, hisport;
@@ -748,7 +750,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 		}
 
 		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
-				  SOS_NOBODY
+				  SOS_NOBODY, &inception
 #ifdef HAVE_LABELED_IPSEC
 				  , uctx
 #endif
@@ -965,7 +967,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 					    b->want));
 
 				ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
-						  SOS_NOBODY
+						  SOS_NOBODY, &inception
 #ifdef HAVE_LABELED_IPSEC
 						  , NULL /* shall we pass uctx for opportunistic connections? */
 #endif
@@ -1046,7 +1048,8 @@ struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 #define PENDING_DDNS_INTERVAL secs_per_minute
 
 /*
- * call me periodically to check to see if any DDNS tunnel can come up
+ * Call me periodically to check to see if any DDNS tunnel can come up.
+ * The order matters, we try to do the cheapest checks first.
  */
 
 static void connection_check_ddns1(struct connection *c)
@@ -1055,12 +1058,20 @@ static void connection_check_ddns1(struct connection *c)
 	ip_address new_addr;
 	const char *e;
 
-	if (NEVER_NEGOTIATE(c->policy))
-		return;
-
+	/* this is the cheapest check, so do it first */
 	if (c->dnshostname == NULL)
 		return;
 
+	/* should we let the caller get away with this? */
+	if (NEVER_NEGOTIATE(c->policy))
+		return;
+
+	/*
+	 * We do not update a resolved address once resolved. That might
+	 * be considered a bug. Can we count on liveness if the target
+	 * changed IP? The connection would * need to gets its host_addr
+	 * updated? Do we do that when terminating the conn?
+	 */
 	if (!isanyaddr(&c->spd.that.host_addr)) {
 		DBG(DBG_DNS, {
 			char cib[CONN_INST_BUF];
@@ -1102,8 +1113,38 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
+	/* do not touch what is not broken */
+	if ((c->newest_isakmp_sa != SOS_NOBODY) &&
+	    IS_IKE_SA_ESTABLISHED(state_with_serialno(c->newest_isakmp_sa)))
+		return;
+
+	/* This cannot currently be reached. If in the future we do, don't do weird things */
+	if (sameaddr(&new_addr, &c->spd.that.host_addr)) {
+		dbg("ddns: IP address unchanged for connection '%s'", c->name);
+		return;
+	}
+
+	ipstr_buf old,new;
 	/* I think this is ok now we check everything above ? */
+
+	/*
+	 * It seems DNS failure puts a connection into CK_TEMPLATE, so once the
+	 * resolve is fixed, it is manually placed in CK_PERMANENT here.
+	 * However, that is questionable, eg for connections that are templates
+	 * to begin with, such as those with narrowing=yes. These will mistakenly
+	 * be placed into CK_PERMANENT.
+	 */
+
+	DBG(DBG_DNS, {
+		char cib[CONN_INST_BUF];
+		dbg("ddns: changing connection \"%s\"%s to CK_PERMANENT", c->name,
+			fmt_conn_instance(c, cib));
+	});
 	c->kind = CK_PERMANENT;
+
+	dbg("ddns: Updating IP address for %s from %s to %s",
+		c->dnshostname, sensitive_ipstr(&c->spd.that.host_addr, &old),
+			sensitive_ipstr(&new_addr, &new));
 	c->spd.that.host_addr = new_addr;
 
 	/* a small bit of code from default_end to fixup the end point */
@@ -1123,7 +1164,13 @@ static void connection_check_ddns1(struct connection *c)
 	 * lookup
 	 */
 	update_host_pairs(c);
-	initiate_connection(c->name, null_fd, empty_lmod, empty_lmod, NULL);
+	if (c->policy & POLICY_UP) {
+		dbg("ddns: re-initiating connection '%s'", c->name);
+		initiate_connection(c->name, null_fd, empty_lmod, empty_lmod, NULL);
+	} else {
+		dbg("ddns: : connection '%s' was updated, but does not want to be up",
+			c->name);
+	}
 
 	/* no host pairs, no more to do */
 	pexpect(c->host_pair != NULL);	/* ??? surely */
@@ -1131,7 +1178,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
-		if (c != d && same_in_some_sense(c, d))
+		if (c != d && same_in_some_sense(c, d) && (d->policy & POLICY_UP))
 			initiate_connection(d->name, null_fd,
 					    empty_lmod, empty_lmod, NULL);
 	}

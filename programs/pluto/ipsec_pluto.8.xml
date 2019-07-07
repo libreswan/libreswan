@@ -38,10 +38,12 @@
       <arg choice="opt">--vendorid <replaceable>VID</replaceable></arg>
       <arg choice="opt">--nofork</arg>
       <arg choice="opt">--stderrlog</arg>
-      <arg choice="opt">----plutostderrlogtime</arg>
       <arg choice="opt">--logfile <replaceable>filename</replaceable></arg>
+      <arg choice="opt">--log-no-time</arg>
+      <arg choice="opt">--log-no-append</arg>
+      <arg choice="opt">--log-no-ip</arg>
+      <arg choice="opt">--log-no-audit</arg>
       <arg choice="opt">--use-klips</arg>
-      <arg choice="opt">--use-mast</arg>
       <arg choice="opt">--use-netkey</arg>
       <arg choice="opt">--use-nostack</arg>
       <arg choice="opt">--uniqueids</arg>
@@ -143,9 +145,6 @@
 
       <group choice="opt">
         <arg choice="opt">--client <replaceable>subnet</replaceable></arg>
-
-        <arg choice="opt">--clientwithin
-        <replaceable>subnet</replaceable></arg>
       </group>
 
       <arg choice="opt">--clientprotoport
@@ -209,8 +208,6 @@
       <arg choice="opt">--nexthop <replaceable>ip-address</replaceable></arg>
 
       <arg choice="opt">--client <replaceable>subnet</replaceable></arg>
-
-      <arg choice="opt">--clientwithin <replaceable>subnet</replaceable></arg>
 
       <arg choice="opt">--clientprotoport
       <replaceable>protocol</replaceable>/<replaceable>port</replaceable></arg>
@@ -369,7 +366,6 @@
 
       <group choice="plain">
         <arg choice="plain">--listen</arg>
-
         <arg choice="plain">--unlisten</arg>
       </group>
 
@@ -385,9 +381,9 @@
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
       <group choice="plain">
-        <arg choice="plain">--busy</arg>
-
-        <arg choice="plain">--relax</arg>
+        <arg choice="plain">--ddos-auto</arg>
+        <arg choice="plain">--ddos-busy</arg>
+        <arg choice="plain">--ddos-unlimited</arg>
       </group>
 
       <arg choice="opt">--rundir <replaceable>path</replaceable></arg>
@@ -601,6 +597,14 @@
       <arg choice="opt">--fetchcrls</arg>
       <arg choice="opt">--rereadall</arg>
 
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
+      <arg choice="plain">--ddns</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -1457,16 +1461,6 @@
         </varlistentry>
 
         <varlistentry>
-          <term><option>--clientwithin</option>&nbsp;<emphasis
-          remap="I">subnet</emphasis></term>
-
-          <listitem>
-            <para>This option is obsolete and will be removed. Do not use this
-            option anymore.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
           <term><option>--clientprotoport</option>&nbsp;<emphasis
           remap="I">protocol/port</emphasis></term>
 
@@ -2024,8 +2018,10 @@
       <option>--rereadall</option>,
       and <option>--rereadcrls</option> options reread this information from their
       respective sources, and purge all the online obtained information. The
-      option <option>--listevents</option> lists all pending CRL fetch
-      commands.</para>
+      option <option>--listevents</option> lists all pending events, and the
+      <option>--ddns</option> triggers the Dynamic DNS update event that is normally
+      scheduled to run once every minute.
+      </para>
 
       <variablelist remap="TP">
         <varlistentry>
@@ -2412,16 +2408,19 @@
         </varlistentry>
       </variablelist>
 
-      <para>The busy and relax options tells <emphasis remap="B">pluto</emphasis> to
-      explicitly activate or deactivate additional DDoS protection. Normally, these
-      meassures are automatically activate or deactivate based on the number of
-      states inside pluto. One of these DDoS protection methods is to active IKEv2
-      DCOOKIEs to defend against spoofed IKE packets.
+      <para>The --ddos-auto, --ddos-busy and --ddos-unlimited options
+      tells <emphasis remap="B">pluto</emphasis> to update the DDoS
+      protection state. Normally, these measures are automatically
+      activated or deactivated based on the number of states inside
+      pluto. The busy and unlimited option tells pluto to activate or
+      deactivate the DDoS protection mode manually.  One of these DDoS
+      protection methods is to activate IKEv2 DCOOKIEs to defend against
+      spoofed IKE packets.
       </para>
 
       <variablelist remap="TP">
         <varlistentry>
-          <term><option>--busy</option></term>
+          <term><option>--ddos-busy</option></term>
 
           <listitem>
             <para>place pluto into busy mode and activate anti-DDoS measures.</para>
@@ -2429,10 +2428,17 @@
         </varlistentry>
 
         <varlistentry>
-          <term><option>--relax</option></term>
+          <term><option>--ddos-unlimited</option></term>
 
           <listitem>
             <para>pull pluto out of busy mode and deactivate anti-DDoS measures.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--ddos-auto</option></term>
+          <listitem>
+            <para>activate the built-in detection mechanism for the anti-DDoS measures.</para>
           </listitem>
         </varlistentry>
       </variablelist>

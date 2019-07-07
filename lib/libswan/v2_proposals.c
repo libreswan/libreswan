@@ -211,7 +211,7 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		next(&lookahead);
 		if (lookahead.delim == '-' &&
 		    lookahead.alg.len > 0 &&
-		    isdigit(lookahead.alg.ptr[0])) {
+		    shunk_isdigit(lookahead.alg, 0)) {
 			shunk_t eklen = lookahead.alg;
 			/* assume <ealg>-<eklen> */
 			int enckeylen = parse_eklen(parser, eklen);
@@ -255,21 +255,21 @@ static bool parse_encrypt(struct proposal_parser *parser,
 	 */
 	{
 		shunk_t ealg = token->alg;
-		shunk_t end = shunk2(ealg.ptr + ealg.len, 0);
-		while (end.ptr > ealg.ptr && isdigit(end.ptr[-1])) {
-			end.ptr--;
-			end.len++;
+		size_t end = ealg.len;
+		while (end > 0 && shunk_isdigit(ealg, end-1)) {
+			end--;
 		}
-		if (end.len == 0) {
+		if (end == ealg.len) {
 			/*
-			 * no trailing <eklen> and <ealg> was rejected
-			 * by above); error still contains message
-			 * from not finding just <ealg>.
+			 * no trailing <eklen> digits and <ealg> was
+			 * rejected by above); error still contains
+			 * message from not finding just <ealg>.
 			 */
 			return warning_or_false(parser, "encryption", print);
 		}
 		/* try to convert */
-		int enckeylen = parse_eklen(parser, end);
+		shunk_t eklen = shunk_slice(ealg, end, ealg.len);
+		int enckeylen = parse_eklen(parser, eklen);
 		if (enckeylen <= 0) {
 			pexpect(parser->error[0] != '\0');
 			return false;
@@ -278,9 +278,9 @@ static bool parse_encrypt(struct proposal_parser *parser,
 		 * trim <eklen> from <ealg>; and then trim any
 		 * trailing '_'
 		 */
-		ealg.len = end.ptr - ealg.ptr;
-		if (end.ptr > ealg.ptr && end.ptr[-1] == '_') {
-			ealg.len -= 1;
+		ealg = shunk_slice(ealg, 0, end);
+		if (shunk_ischar(ealg, ealg.len-1, "_")) {
+			ealg = shunk_slice(ealg, 0, ealg.len-1);
 		}
 		/* try again */
 		const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,

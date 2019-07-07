@@ -57,6 +57,7 @@ OBJS += constants.o \
 	alg_byname.o
 
 OBJS += certs.o
+OBJS += reqid.o
 
 ifeq ($(USE_NETKEY),true)
 OBJS += addr_lookup.o
@@ -111,12 +112,12 @@ OBJS += DBG_log.o
 
 OBJS += libreswan_exit_log_errno.o
 OBJS += libreswan_log_errno.o
-OBJS += libreswan_pexpect.o
-OBJS += libreswan_pexpect_log.o
 OBJS += libreswan_bad_case.o
 
 OBJS += libreswan_log.o
 OBJS += libreswan_log_rc.o
+
+OBJS += log_pexpect.o
 
 OBJS += jambuf.o
 OBJS += lswlog.o
@@ -126,7 +127,6 @@ OBJS += lswlog_nss_ckm.o
 OBJS += lswlog_nss_ckf.o
 OBJS += lswlog_nss_cka.o
 OBJS += lswlog_nss_secitem.o
-OBJS += lswlog_source_line.o
 OBJS += lswlog_sanitized.o
 OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o
@@ -188,14 +188,14 @@ OBJS += unbound.o
 endif
 
 OBJS += sanitizestring.o
-OBJS += pfkey_sock.o pfkey_error.o
 
 ifeq ($(USE_KLIPS),true)
 CFLAGS += -DKLIPS
 endif
 
-ifeq ($(USE_PFKEYv2),true)
+ifeq ($(USE_KLIPS),true)
 CFLAGS += -DPFKEYV2
+OBJS += pfkey_sock.o pfkey_error.o
 OBJS += pfkey_v2_build.o pfkey_v2_ext_bits.o pfkey_v2_parse.o
 OBJS += pfkey_v2_debug.o
 endif

@@ -76,20 +76,45 @@ static const statetime_t disabled_statetime = {
 	.level = -1,
 };
 
+static void DBG_missing(const statetime_t *start, struct timespec now, struct timespec last_log)
+{
+	/*
+	 * If there a large blob of time unaccounted for since LAST,
+	 * log it as a separate line item.
+	 */
+	double missing = seconds_sub(now, last_log);
+	if (missing > MISSING_FUDGE) {
+		LSWLOG_DEBUG(buf) {
+			for (int i = 0; i < start->level; i++) {
+				lswlogs(buf, INDENT INDENT);
+			}
+			lswlogf(buf, "#%lu "PRI_CPU_USAGE"",
+				start->so, pri_cpu_usage(missing));
+		}
+	}
+}
+
+static statetime_t start_statetime(struct state *st, struct timespec now)
+{
+	statetime_t start = {
+		.so = st->st_serialno,
+		.level = st->st_timing.level++,
+		.start = now,
+	};
+	st->st_timing.last_log.time = start.start;
+	st->st_timing.last_log.level = start.level;
+	return start;
+}
+
 statetime_t statetime_start(struct state *st)
 {
 	if (st == NULL) {
 		/*
-		 * Return something describing the next state.  A
-		 * second statetime_start(new) call will patch things
-		 * up.
+		 * IKEv1 sometimes doesn't have a state to time, just
+		 * ignore it.
 		 */
-		statetime_t start = {
-			.so = next_so_serialno(),
-			.level = 0,
-			.start = now(),
-		};
-		return start;
+		dbg("in %s() with no state", __func__);
+		return disabled_statetime;
 	}
 	if (st->st_timing.level > 0 && !DBGP(DBG_CPU_USAGE)) {
 		/*
@@ -98,31 +123,43 @@ statetime_t statetime_start(struct state *st)
 		 */
 		return disabled_statetime;
 	}
-	statetime_t start = {
-		.so = st->st_serialno,
-		.level = st->st_timing.level++,
-		.start = now(),
-	};
+	/* save last_log before start_statetime() updates it */
+	struct timespec last_log = st->st_timing.last_log.time;
+	statetime_t start = start_statetime(st, now());
 	if (DBGP(DBG_CPU_USAGE) && start.level > 0) {
 		/*
 		 * If there a large blob of time unaccounted for since
 		 * the last and nested start() or stop() call, log it
 		 * as a separate line item.
 		 */
-		double missing = seconds_sub(start.start, st->st_timing.last_log.time);
-		if (missing > MISSING_FUDGE) {
-			LSWLOG_DEBUG(buf) {
-				for (int i = 0; i < start.level; i++) {
-					lswlogs(buf, INDENT INDENT);
-				}
-				lswlogf(buf, "#%lu "PRI_CPU_USAGE"",
-					st->st_serialno,
-					pri_cpu_usage(missing));
-			}
-		}
+		DBG_missing(&start, start.start, last_log);
 	}
-	st->st_timing.last_log.time = start.start;
-	st->st_timing.last_log.level = start.level;
+	return start;
+}
+
+statetime_t statetime_backdate(struct state *st, const threadtime_t *inception)
+{
+	if (st == NULL) {
+		/*
+		 * IKEv1 sometimes doesn't have a state to time, just
+		 * ignore it.
+		 */
+		dbg("in %s() with no state", __func__);
+		return disabled_statetime;
+	}
+	passert(inception != NULL);
+	if (st->st_timing.level > 0) {
+		pexpect(st->st_ike_version == IKEv1);
+		dbg("in %s() with non-zero timing level", __func__);
+		st->st_timing.level = 0;
+	}
+	statetime_t start = start_statetime(st, inception->tt);
+	/*
+	 * If there's a large blob of time before this call, log it.
+	 */
+	if (DBGP(DBG_CPU_USAGE)) {
+		DBG_missing(&start, now(), inception->tt);
+	}
 	return start;
 }
 
@@ -140,6 +177,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	/* state disappeared? */
 	struct state *st = state_with_serialno(start->so);
 	if (st == NULL) {
+		dbg("in %s() and could not find #%lu", __func__, start->so);
 		return;
 	}
 

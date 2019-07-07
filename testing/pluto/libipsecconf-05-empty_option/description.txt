@@ -1,0 +1,2 @@
+This tests for a bug where an empty option is accepted on a non-last connection,
+and fails on a last connection.

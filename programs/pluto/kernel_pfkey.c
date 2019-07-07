@@ -477,7 +477,8 @@ static void nat_t_new_klips_mapp(struct state *st, void *data)
 	if (st->st_esp.present &&
 	    sameaddr(&st->st_remoteaddr, &nfo->src) &&
 	    st->st_esp.our_spi == nfo->sa->sadb_sa_spi) {
-		nat_traversal_new_mapping(st, &nfo->dst, nfo->dport);
+		ip_endpoint remote_endpoint = endpoint(&nfo->dst, nfo->dport);
+		nat_traversal_new_mapping(ike_sa(st), &remote_endpoint);
 	}
 }
 

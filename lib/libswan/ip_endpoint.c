@@ -87,6 +87,11 @@ int endpoint_port(const ip_endpoint *endpoint)
 	return hportof(endpoint);
 }
 
+ip_endpoint set_endpoint_port(const ip_endpoint *address, int port)
+{
+	return hsetportof(port, *address);
+}
+
 int endpoint_type(const ip_endpoint *endpoint)
 {
 	return addrtypeof(endpoint);

@@ -3,7 +3,6 @@ algparse -v2 -pfs 'esp'
 	AES_GCM_16_128-NONE
 	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
-	AES_CBC_128-HMAC_SHA1_96
 algparse -v2 -pfs 'esp='
 	ERROR: String ended with invalid char, just after ""
 algparse -v2 -pfs 'esp=aes'
@@ -27,7 +26,7 @@ algparse -v2 -pfs 'esp=aes-128-sha1-modp2048'
 algparse -v2 -pfs 'esp=aes_gcm_a-128-null'
 	AES_GCM_8_128-NONE
 algparse -v2 -pfs 'esp=3des-sha1;modp1024'
-	3DES_CBC-HMAC_SHA1_96-MODP1024
+	ERROR: ESP DH algorithm 'modp1024' is not supported
 algparse -v2 -pfs 'esp=3des-sha1;modp1536'
 	3DES_CBC-HMAC_SHA1_96-MODP1536
 algparse -v2 -pfs 'esp=3des-sha1;modp2048'

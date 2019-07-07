@@ -135,8 +135,6 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					/* matches nothing -- create a new entry */
 					int fd = create_socket(ifp, ifp->name,
 							       pluto_port);
-					ipstr_buf b;
-
 					if (fd < 0)
 						break;
 
@@ -170,7 +168,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						"adding interface %s/%s %s",
 						q->ip_dev->id_vname,
 						q->ip_dev->id_rname,
-						str_endpoint(&q->local-endpoint, &b));
+						str_endpoint(&q->local_endpoint, &b));
 
 					/*
 					 * right now, we do not support NAT-T on IPv6, because

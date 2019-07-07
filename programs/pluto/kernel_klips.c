@@ -177,7 +177,6 @@ add_entry:
 					/* matches nothing -- create a new entry */
 					int fd = create_socket(ifp, v->name,
 							       pluto_port);
-					ipstr_buf b;
 
 					if (fd < 0)
 						break;
@@ -248,8 +247,7 @@ add_entry:
 						libreswan_log(
 							"adding interface %s/%s %s:%d",
 							q->ip_dev->id_vname, q->ip_dev->id_rname,
-							ipstr(&q->
-							       ip_addr, &b),
+							str_endpoint(&q->ip_addr, &b),
 							q->port);
 					}
 					break;

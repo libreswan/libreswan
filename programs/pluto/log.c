@@ -47,7 +47,8 @@ bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
 	log_to_syslog = TRUE,		/* should log go to syslog? */
 	log_with_timestamp = TRUE,	/* testsuite requires no timestamps */
-	log_append = TRUE;
+	log_append = TRUE,
+	log_to_audit = FALSE;
 
 char *pluto_log_file = NULL;	/* pathname */
 static FILE *pluto_log_fp = NULL;
@@ -130,40 +131,37 @@ enum processing {
 static void log_processing(enum processing processing, bool current,
 			   struct state *st, struct connection *c,
 			   const ip_address *from,
-			   const char *func, const char *file, long line)
+			   where_t where)
 {
-	pexpect(((st != NULL) + (c != NULL) + (from != NULL)) == 1);	/* only 1 */
+	pexpect(((st != NULL) + (c != NULL) + (from != NULL)) == 1);	/* exactly 1 */
 	LSWDBGP(DBG_BASE, buf) {
-		lswlogs(buf, "processing: ");
 		switch (processing) {
-		case START: lswlogs(buf, "start"); break;
-		case STOP: lswlogs(buf, "stop"); break;
-		case RESTART: lswlogs(buf, "[RE]START"); break;
-		case SUSPEND: lswlogs(buf, "suspend"); break;
-		case RESUME: lswlogs(buf, "resume"); break;
-		case RESET: lswlogs(buf, "RESET"); break;
+		case START: jam(buf, "start"); break;
+		case STOP: jam(buf, "stop"); break;
+		case RESTART: jam(buf, "[RE]START"); break;
+		case SUSPEND: jam(buf, "suspend"); break;
+		case RESUME: jam(buf, "resume"); break;
+		case RESET: jam(buf, "RESET"); break;
 		}
+		jam(buf, " processing:");
 		if (st != NULL) {
-			lswlogf(buf, " state #%lu", st->st_serialno);
+			jam(buf, " state #%lu", st->st_serialno);
+			/* also include connection/from */
 			c = st->st_connection;
+			from = &st->st_remoteaddr;
 		}
 		if (c != NULL) {
 			jam_string(buf, " connection ");
 			jam_connection(buf, c);
-		}
-		if (st != NULL && (c == NULL || !(c->policy & POLICY_OPPORTUNISTIC))) {
-			/* jam_conn_instance() include the same if POLICY_OPPORTUNISTIC */
-			lswlogf(buf, " ");
-			jam_endpoint(buf, &st->st_remoteaddr);
 		}
 		if (from != NULL) {
 			lswlogf(buf, " from ");
 			jam_endpoint(buf, from);
 		}
 		if (!current) {
-			lswlogs(buf, " (BACKGROUND)");
+			jam(buf, " (BACKGROUND)");
 		}
-		lswlog_source_line(buf, func, file, line);
+		jam(buf, " "PRI_WHERE, pri_where(where));
 	}
 }
 
@@ -183,84 +181,65 @@ static void log_processing(enum processing processing, bool current,
  * elsewhere?) and, for as long as the whack connection is up, code
  * keeps setting it back.
  */
-void log_reset_globals(const char *func, const char *file, long line)
+void log_reset_globals(where_t where)
 {
 	if (fd_p(whack_log_fd)) {
-		LSWDBGP(DBG_BASE, buf) {
-			lswlogf(buf, "processing: RESET whack log_fd (was "PRI_FD")",
-				PRI_fd(whack_log_fd));
-			lswlog_source_line(buf, func, file, line);
-		}
+		dbg("processing: RESET whack log_fd (was "PRI_FD") "PRI_WHERE,
+		    PRI_fd(whack_log_fd), pri_where(where));
 		whack_log_fd = null_fd;
 	}
 	if (cur_state != NULL) {
-		log_processing(RESET, true, cur_state, NULL, NULL,
-			       func, file, line);
+		log_processing(RESET, true, cur_state, NULL, NULL, where);
 		cur_state = NULL;
 	}
 	if (cur_connection != NULL) {
-		log_processing(RESET, true, NULL, cur_connection, NULL,
-			       func, file, line);
+		log_processing(RESET, true, NULL, cur_connection, NULL, where);
 		cur_connection = NULL;
 	}
 	if (isvalidaddr(&cur_from)) {
 		/* peer's IP address */
-		log_processing(RESET, true, NULL, NULL, &cur_from,
-			       func, file, line);
+		log_processing(RESET, true, NULL, NULL, &cur_from, where);
 		zero(&cur_from);
 	}
 	if (cur_debugging != base_debugging) {
-		LSWDBGP(DBG_BASE, buf) {
-			lswlogf(buf, "processing: RESET cur_debugging (was "PRI_LSET")",
-				cur_debugging);
-			lswlog_source_line(buf, func, file, line);
-		}
+		dbg("processing: RESET cur_debugging (was "PRI_LSET") "PRI_WHERE,
+		    cur_debugging, pri_where(where));
 		cur_debugging = base_debugging;
 	}
 }
 
-void log_pexpect_reset_globals(const char *func, const char *file, long line)
+void log_pexpect_reset_globals(where_t where)
 {
 	if (fd_p(whack_log_fd)) {
-		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
-			lswlogf(buf, "processing: unexpected whack_log_fd "PRI_FD" should be "PRI_FD,
-				PRI_fd(whack_log_fd), PRI_fd(null_fd));
-		}
+		log_pexpect(where, "processing: unexpected whack_log_fd "PRI_FD" should be "PRI_FD,
+			    PRI_fd(whack_log_fd), PRI_fd(null_fd));
 		whack_log_fd = null_fd;
 	}
 	if (cur_state != NULL) {
-		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
-			lswlogf(buf, "processing: unexpected cur_state #%lu should be #0",
-				cur_state->st_serialno);
-		}
+		log_pexpect(where, "processing: unexpected cur_state #%lu should be #0",
+			    cur_state->st_serialno);
 		cur_state = NULL;
 	}
 	if (cur_connection != NULL) {
-		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
-			lswlogf(buf, "processing: unexpected cur_connection %s should be NULL",
-				cur_connection->name);
-		}
+		log_pexpect(where, "processing: unexpected cur_connection %s should be NULL",
+			    cur_connection->name);
 		cur_connection = NULL;
 	}
 	if (isvalidaddr(&cur_from)) {
-		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
-			lswlogs(buf, "processing: unexpected cur_from ");
-			jam_sensitive_endpoint(buf, &cur_from);
-			lswlogs(buf, " should be NULL");
-		}
+		endpoint_buf buf;
+		log_pexpect(where, "processing: unexpected cur_from %s should be NULL",
+			    str_sensitive_endpoint(&cur_from, &buf));
 		zero(&cur_from);
 	}
 	if (cur_debugging != base_debugging) {
-		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
-			lswlogf(buf, "processing: unexpected cur_debugging "PRI_LSET" should be "PRI_LSET,
-				cur_debugging, base_debugging);
-		}
+		log_pexpect(where, "processing: unexpected cur_debugging "PRI_LSET" should be "PRI_LSET,
+			    cur_debugging, base_debugging);
 		cur_debugging = base_debugging;
 	}
 }
 
-struct connection *log_push_connection(struct connection *new_connection, const char *func,
-				       const char *file, long line)
+struct connection *log_push_connection(struct connection *new_connection,
+				       where_t where)
 {
 	bool current = (cur_state == NULL); /* not hidden by state? */
 	struct connection *old_connection = cur_connection;
@@ -268,51 +247,41 @@ struct connection *log_push_connection(struct connection *new_connection, const 
 	if (old_connection != NULL &&
 	    old_connection != new_connection) {
 		log_processing(SUSPEND, current,
-			       NULL, old_connection, NULL,
-			       func, file, line);
+			       NULL, old_connection, NULL, where);
 	}
 
 	cur_connection = new_connection;
 	update_debugging();
 
 	if (new_connection == NULL) {
-		LSWDBGP(DBG_BASE, buf) {
-			lswlogf(buf, "start processing: connection NULL");
-			lswlog_source_line(buf, func, file, line);
-		}
+		dbg("start processing: connection NULL "PRI_WHERE,
+		    pri_where(where));
 	} else if (old_connection == new_connection) {
 		log_processing(RESTART, current,
-			       NULL, new_connection, NULL,
-			       func, file, line);
+			       NULL, new_connection, NULL, where);
 	} else {
 		log_processing(START, current,
-			       NULL, new_connection, NULL,
-			       func, file, line);
+			       NULL, new_connection, NULL, where);
 	}
 
 	return old_connection;
 }
 
-void log_pop_connection(struct connection *c, const char *func,
-			const char *file, long line)
+void log_pop_connection(struct connection *c, where_t where)
 {
 	bool current = (cur_state == NULL); /* not hidden by state? */
 	if (cur_connection != NULL) {
 		log_processing(STOP, current /* current? */,
-			       NULL, cur_connection, NULL,
-			       func, file, line);
+			       NULL, cur_connection, NULL, where);
 	} else {
-		LSWDBGP(DBG_BASE, buf) {
-			lswlogf(buf, "processing: STOP connection NULL");
-			lswlog_source_line(buf, func, file, line);
-		}
+		dbg("processing: STOP connection NULL "PRI_WHERE,
+		    pri_where(where));
 	}
 	cur_connection = c;
 	update_debugging();
 	if (cur_connection != NULL) {
 		log_processing(RESUME, current /* current? */,
-			       NULL, cur_connection, NULL,
-			       func, file, line);
+			       NULL, cur_connection, NULL, where);
 	}
 }
 
@@ -321,103 +290,82 @@ bool is_cur_connection(const struct connection *c)
 	return cur_connection == c;
 }
 
-so_serial_t log_push_state(struct state *new_state, const char *func,
-			   const char *file, long line)
+so_serial_t log_push_state(struct state *new_state, where_t where)
 {
 	struct state *old_state = cur_state;
 
 	if (old_state != NULL) {
 		if (old_state != new_state) {
 			log_processing(SUSPEND, true /* must be current */,
-				       cur_state, NULL, NULL,
-				       func, file, line);
+				       cur_state, NULL, NULL, where);
 		}
 	} else if (cur_connection != NULL && new_state != NULL) {
 		log_processing(SUSPEND, true /* current for now */,
-			       NULL, cur_connection, NULL,
-			       func, file, line);
+			       NULL, cur_connection, NULL, where);
 	}
 
 	cur_state = new_state;
 	update_debugging();
 
 	if (new_state == NULL) {
-		LSWDBGP(DBG_BASE, buf) {
-			lswlogf(buf, "skip start processing: state #0");
-			lswlog_source_line(buf, func, file, line);
-		}
+		dbg("skip start processing: state #0 "PRI_WHERE,
+		    pri_where(where));
 	} else if (old_state == new_state) {
 		log_processing(RESTART, true /* must be current */,
-			       new_state, NULL, NULL,
-			       func, file, line);
+			       new_state, NULL, NULL, where);
 	} else {
 		log_processing(START, true /* must be current */,
-			       new_state, NULL, NULL,
-			       func, file, line);
+			       new_state, NULL, NULL, where);
 	}
 	return old_state != NULL ? old_state->st_serialno : SOS_NOBODY;
 }
 
-void log_pop_state(so_serial_t serialno, const char *func,
-		   const char *file, long line)
+void log_pop_state(so_serial_t serialno, where_t where)
 {
 	if (cur_state != NULL) {
 		log_processing(STOP, true, /* must be current */
-			       cur_state, NULL, NULL,
-			       func, file, line);
+			       cur_state, NULL, NULL, where);
 	} else {
-		LSWDBGP(DBG_BASE, buf) {
-			lswlogf(buf, "processing: STOP state #0");
-			lswlog_source_line(buf, func, file, line);
-		}
+		dbg("processing: STOP state #0 "PRI_WHERE,
+		    pri_where(where));
 	}
 	cur_state = state_by_serialno(serialno);
 	update_debugging();
 	if (cur_state != NULL) {
 		log_processing(RESUME, true, /* must be current */
-			       cur_state, NULL, NULL,
-			       func, file, line);
+			       cur_state, NULL, NULL, where);
 	} else if (cur_connection != NULL) {
 		log_processing(RESUME, true, /* now current */
-			       NULL, cur_connection, NULL,
-			       func, file, line);
+			       NULL, cur_connection, NULL, where);
 	}
 }
 
-extern ip_address log_push_from(ip_address new_from,
-				const char *func,
-				const char *file, long line)
+extern ip_address log_push_from(ip_address new_from, where_t where)
 {
 	bool current = (cur_state == NULL && cur_connection == NULL);
 	ip_address old_from = cur_from;
 	if (isvalidaddr(&old_from)) {
 		log_processing(SUSPEND, current,
-			       NULL, NULL, &old_from,
-			       func, file, line);
+			       NULL, NULL, &old_from, where);
 	}
 	cur_from = new_from;
 	if (isvalidaddr(&cur_from)) {
 		log_processing(START, current,
-			       NULL, NULL, &cur_from,
-			       func, file, line);
+			       NULL, NULL, &cur_from, where);
 	}
 	return old_from;
 }
 
-extern void log_pop_from(ip_address old_from,
-			 const char *func,
-			 const char *file, long line)
+extern void log_pop_from(ip_address old_from, where_t where)
 {
 	bool current = (cur_state == NULL && cur_connection == NULL);
 	if (isvalidaddr(&cur_from)) {
 		log_processing(STOP, current,
-			       NULL, NULL, &cur_from,
-			       func, file, line);
+			       NULL, NULL, &cur_from, where);
 	}
 	if (isvalidaddr(&old_from)) {
 		log_processing(RESUME, current,
-			       NULL, NULL, &old_from,
-			       func, file, line);
+			       NULL, NULL, &old_from, where);
 	}
 	cur_from = old_from;
 }
@@ -582,20 +530,6 @@ void log_prefix(struct lswlog *buf, bool debug,
 	}
 }
 
-bool log_debugging(struct state *st, struct connection *c,
-		   lset_t debug)
-{
-	if (st != NULL) {
-		c = st->st_connection;
-	}
-	if (c == NULL) {
-		return base_debugging & debug;
-	} else {
-		lset_t debugging = lmod(base_debugging, c->extra_debugging);
-		return debugging & debug;
-	}
-}
-
 static void log_raw(struct lswlog *buf, int severity)
 {
 	stdlog_raw(buf->array);
@@ -702,23 +636,7 @@ void lswlog_to_whack_stream(struct lswlog *buf)
 	m.ptr[m.len-1] = '\n';
 
 	/* write to whack socket, but suppress possible SIGPIPE */
-#ifdef MSG_NOSIGNAL                     /* depends on version of glibc??? */
 	(void) send(wfd.fd, m.ptr, m.len, MSG_NOSIGNAL);
-#else /* !MSG_NOSIGNAL */
-	int r;
-	struct sigaction act, oldact;
-
-	act.sa_handler = SIG_IGN;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0; /* no nothing */
-	r = sigaction(SIGPIPE, &act, &oldact);
-	passert(r == 0);
-
-	(void) write(wfd, m.ptr, m.len);
-
-	r = sigaction(SIGPIPE, &oldact, NULL);
-	passert(r == 0);
-#endif /* !MSG_NOSIGNAL */
 	m.ptr[m.len-1] = '\0'; /* put NUL back */
 }
 
@@ -757,21 +675,6 @@ void whack_log(enum rc_type rc, const char *message, ...)
 	}
 }
 
-void whack_log_comment(const char *message, ...)
-{
-	if (whack_log_p()) {
-		LSWBUF(buf) {
-			/* add_whack_rc_prefix() - skipped */
-			lswlog_log_prefix(buf);
-			va_list args;
-			va_start(args, message);
-			lswlogvf(buf, message, args);
-			va_end(args);
-			lswlog_to_whack_stream(buf);
-		}
-	}
-}
-
 lset_t base_debugging = DBG_NONE; /* default to reporting nothing */
 
 void set_debugging(lset_t deb)
@@ -784,13 +687,50 @@ void reset_debugging(void)
 	set_debugging(base_debugging);
 }
 
-void plog_raw(const struct state *st,
+void plog_raw(enum rc_type unused_rc UNUSED,
+	      const struct state *st,
 	      const struct connection *c,
 	      const ip_endpoint *from,
 	      const char *message, ...)
 {
 	LSWBUF(buf) {
 		lswlog_cur_prefix(buf, st, c, from);
+		va_list ap;
+		va_start(ap, message);
+		jam_va_list(buf, message, ap);
+		va_end(ap);
+		lswlog_to_log_stream(buf);
+	}
+}
+
+void loglog_raw(enum rc_type rc,
+		const struct state *st,
+		const struct connection *c,
+		const ip_endpoint *from,
+		const char *message, ...)
+{
+	LSWBUF(buf) {
+		lswlog_cur_prefix(buf, st, c, from);
+		va_list ap;
+		va_start(ap, message);
+		jam_va_list(buf, message, ap);
+		va_end(ap);
+		lswlog_to_log_stream(buf);
+		whack_raw(buf, rc);
+	}
+}
+
+void DBG_raw(enum rc_type unused_rc UNUSED,
+	     const struct state *st,
+	     const struct connection *c,
+	     const ip_endpoint *from,
+	     const char *message, ...)
+{
+	LSWBUF(buf) {
+		jam(buf, DEBUG_PREFIX);
+		if (DBGP(DBG_ADD_PREFIX)) {
+			lswlog_cur_prefix(buf, st, c, from);
+		}
 		va_list ap;
 		va_start(ap, message);
 		jam_va_list(buf, message, ap);

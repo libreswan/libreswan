@@ -131,10 +131,8 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 
 void dbg_v2_msgid(struct ike_sa *ike, struct state *st, const char *msg, ...) PRINTF_LIKE(3);
-void fail_v2_msgid(const char *func, const char *file, unsigned long line,
-		   struct ike_sa *ike, struct state *st,
-		   const char *fmt, ...) PRINTF_LIKE(6);
-#define FAIL_V2_MSGID(IKE, ST, FMT, ...) \
-	fail_v2_msgid(__func__, PASSERT_BASENAME, __LINE__, IKE, ST, FMT,##__VA_ARGS__)
+void fail_v2_msgid(where_t where, struct ike_sa *ike, struct state *st,
+		   const char *fmt, ...) PRINTF_LIKE(4);
+#define FAIL_V2_MSGID(IKE, ST, FMT, ...) fail_v2_msgid(HERE, IKE, ST, FMT,##__VA_ARGS__)
 
 #endif

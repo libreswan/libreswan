@@ -394,12 +394,13 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "syslog",  kv_config,  kt_string,  KSF_SYSLOG, NULL, NULL, },
   { "klipsdebug",  kv_config,  kt_list,  KBF_KLIPSDEBUG,  &kw_klipsdebug_list, NULL, },
   { "plutodebug",  kv_config,  kt_lset,  KBF_PLUTODEBUG, NULL, &debug_lmod_info, },
-  { "logfile",  kv_config,  kt_filename,  KSF_PLUTOSTDERRLOG, NULL, NULL, },
-  { "plutostderrlog",  kv_config | kv_alias,  kt_filename,  KSF_PLUTOSTDERRLOG, NULL, NULL, },  /* obsolete */
-  { "logtime",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGTIME, NULL, NULL, },
-  { "plutostderrlogtime",  kv_config | kv_alias,  kt_bool,  KBF_PLUTOSTDERRLOGTIME, NULL, NULL, },  /* obsolete */
-  { "logappend",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGAPPEND, NULL, NULL, },
-  { "logip",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGIP, NULL, NULL, },
+  { "logfile",  kv_config,  kt_filename,  KSF_LOGFILE, NULL, NULL, },
+  { "plutostderrlog",  kv_config | kv_alias,  kt_filename,  KSF_LOGFILE, NULL, NULL, },  /* obsolete */
+  { "logtime",  kv_config,  kt_bool,  KBF_LOGTIME, NULL, NULL, },
+  { "plutostderrlogtime",  kv_config | kv_alias,  kt_bool,  KBF_LOGTIME, NULL, NULL, },  /* obsolete */
+  { "logappend",  kv_config,  kt_bool,  KBF_LOGAPPEND, NULL, NULL, },
+  { "logip",  kv_config,  kt_bool,  KBF_LOGIP, NULL, NULL, },
+  { "audit-log",  kv_config,  kt_bool,  KBF_AUDIT_LOG, NULL, NULL, },
 #ifdef USE_DNSSEC
   { "dnssec-enable",  kv_config,  kt_bool,  KBF_DO_DNSSEC, NULL, NULL, },
   { "dnssec-rootkey-file",  kv_config,  kt_filename, KSF_PLUTO_DNSSEC_ROOTKEY_FILE, NULL, NULL, },

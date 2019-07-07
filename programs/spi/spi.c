@@ -89,7 +89,9 @@ int alg = 0;
 
 #include <assert.h>
 const char *alg_string = NULL;          /* algorithm string */
-struct proposal_info *esp_info = NULL;       /* esp info from 1st (only) element */
+struct proposal *proposal = NULL;       /* esp info from 1st (only) element */
+struct algorithm *encrypt = NULL;
+struct algorithm *integ = NULL;
 int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
 
 unsigned long replay_window = 0;
@@ -409,70 +411,63 @@ static bool kernel_alg_proc_read(void)
  */
 
 const struct proposal_policy policy = {
-	.ikev1 = false,
-	.ikev2 = false,
+	.version = 0, /* any? */
 	.alg_is_ok = kernel_alg_is_ok,
 };
 
 static int decode_esp(char *algname)
 {
-	char err_buf[256] = "";	/* ??? big enough? */
-	int esp_alg;
+	struct proposal_parser *parser = esp_proposal_parser(&policy);
+	struct proposals *proposals = proposals_from_str(parser, algname);
 
-	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(&policy, algname,
-								     err_buf, sizeof(err_buf));
-
-	if (alg_info != NULL) {
-		int esp_ealg_id, esp_aalg_id;
-
-		esp_alg = XF_OTHER_ALG;
-		if (alg_info->ai.alg_info_cnt > 1) {
-			fprintf(stderr, "%s: Invalid encryption algorithm '%s' "
-				"follows '--esp' option: lead too many(%d) "
-				"transforms\n",
-				progname, algname,
-				alg_info->ai.alg_info_cnt);
-			exit(1);
-		}
-		alg_string = algname;
-		esp_info = &alg_info->ai.proposals[0];
-		if (debug) {
-			fprintf(stdout,
-				"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
-				progname,
-				alg_info->ai.alg_info_cnt,
-				esp_info->encrypt->common.id[IKEv1_ESP_ID],
-				esp_info->integ->common.id[IKEv1_ESP_ID]);
-		}
-		esp_ealg_id = esp_info->encrypt->common.id[IKEv1_ESP_ID];
-		esp_aalg_id = esp_info->integ->common.id[IKEv1_ESP_ID];
-		if (kernel_alg_proc_read()) {
-			proc_read_ok++;
-
-			if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
-				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
-					"not present\n",
-					progname,
-					esp_ealg_id,
-					enum_name(&esp_transformid_names,
-						  esp_ealg_id));
-				exit(1);
-			}
-
-			if (!kernel_alg_integ_ok(esp_info->integ)) {
-				/* ??? this message looks badly worded */
-				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - alg not present\n",
-					progname, esp_aalg_id,
-					enum_name(&auth_alg_names,
-						  esp_aalg_id));
-				exit(1);
-			}
-		}
-	} else {
+	if (proposals == NULL) {
 		fprintf(stderr,
 			"%s: Invalid encryption algorithm '%s' follows '--esp' option %s\n",
-			progname, algname, err_buf);
+			progname, algname, parser->error);
 		exit(1);
+	}
+
+	if (nr_proposals(proposals) > 1) {
+		fprintf(stderr, "%s: Invalid encryption algorithm '%s' "
+			"follows '--esp' option: lead too many(%d) "
+			"transforms\n",
+			progname, algname,
+			nr_proposals(proposals));
+		exit(1);
+	}
+
+	/* global */
+	proposal = next_proposal(proposals, NULL);
+	encrypt = next_algorithm(proposal, PROPOSAL_encrypt, NULL);
+	integ = next_algorithm(proposal, PROPOSAL_integ, NULL);
+
+	int esp_alg = XF_OTHER_ALG;
+	alg_string = algname;
+	int esp_ealg_id = encrypt->desc->id[IKEv1_ESP_ID];
+	int esp_aalg_id = integ->desc->id[IKEv1_ESP_ID];
+	if (debug) {
+		fprintf(stdout,
+			"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
+			progname,
+			nr_proposals(proposals), esp_ealg_id, esp_aalg_id);
+	}
+	if (kernel_alg_proc_read()) {
+		proc_read_ok++;
+		if (!kernel_alg_encrypt_ok(encrypt_desc(encrypt->desc))) {
+			fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
+				"not present\n",
+				progname,
+				esp_ealg_id,
+				encrypt->desc->fqn);
+			exit(1);
+		}
+		if (!kernel_alg_integ_ok(integ_desc(integ->desc))) {
+			/* ??? this message looks badly worded */
+			fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - alg not present\n",
+				progname, esp_aalg_id,
+				integ->desc->fqn);
+			exit(1);
+		}
 	}
 	return esp_alg;
 }
@@ -1162,21 +1157,21 @@ int main(int argc, char *argv[])
 		/* validate keysizes */
 		if (proc_read_ok) {
 			{
-				size_t keylen = enckeylen * 8;
-				size_t minbits = encrypt_min_key_bit_length(esp_info->encrypt);
-				size_t maxbits = encrypt_max_key_bit_length(esp_info->encrypt);
+				int keylen = enckeylen * 8;
+				int minbits = encrypt_min_key_bit_length(encrypt_desc(encrypt->desc));
+				int maxbits = encrypt_max_key_bit_length(encrypt_desc(encrypt->desc));
 				/*
 				 * if explicit keylen told in encrypt
 				 * algo, eg "aes128" check actual
 				 * keylen "equality"
 				 */
-				if (esp_info->enckeylen &&
-				    esp_info->enckeylen != keylen) {
+				if (encrypt->enckeylen &&
+				    encrypt->enckeylen != keylen) {
 					fprintf(stderr, "%s: invalid encryption keylen=%d, "
 						"required %d by encrypt algo string=\"%s\"\n",
 						progname,
-						(int)keylen,
-						(int)esp_info->enckeylen,
+						keylen,
+						encrypt->enckeylen,
 						alg_string);
 					exit(1);
 				}
@@ -1185,23 +1180,23 @@ int main(int argc, char *argv[])
 					fprintf(stderr, "%s: invalid encryption keylen=%d, "
 						"must be between %d and %d bits\n",
 						progname,
-						(int)keylen,
-						(int)minbits,
-						(int)maxbits);
+						keylen,
+						minbits,
+						maxbits);
 					exit(1);
 				}
 			}
 			{
-				size_t keylen = authkeylen * 8;
-				size_t minbits = esp_info->integ->integ_keymat_size * 8;
-				size_t maxbits = esp_info->integ->integ_keymat_size * 8;
+				int keylen = authkeylen * 8;
+				int minbits = integ_desc(integ->desc)->integ_keymat_size * 8;
+				int maxbits = integ_desc(integ->desc)->integ_keymat_size * 8;
 				if (minbits > keylen || maxbits < keylen) {
 					fprintf(stderr, "%s: invalid auth keylen=%d, "
 						"must be between %d and %d bits\n",
 						progname,
-						(int)keylen,
-						(int)minbits,
-						(int)maxbits);
+						keylen,
+						minbits,
+						maxbits);
 					exit(1);
 				}
 			}
@@ -1313,7 +1308,7 @@ int main(int argc, char *argv[])
 
 	switch (alg) {
 	case XF_OTHER_ALG:
-		authalg = esp_info->integ->integ_ikev1_ah_transform;
+		authalg = integ_desc(integ->desc)->integ_ikev1_ah_transform;
 		if (debug) {
 			fprintf(stdout, "%s: debug: authalg=%d\n",
 				progname, authalg);
@@ -1330,7 +1325,7 @@ int main(int argc, char *argv[])
 		encryptalg = SADB_X_CALG_LZS;
 		break;
 	case XF_OTHER_ALG:
-		encryptalg = esp_info->encrypt->common.id[IKEv1_ESP_ID];
+		encryptalg = encrypt->desc->id[IKEv1_ESP_ID];
 		if (debug) {
 			fprintf(stdout, "%s: debug: encryptalg=%d\n",
 				progname, encryptalg);

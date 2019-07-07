@@ -5,6 +5,7 @@
 %global with_cavstests 1
 # There is no new enough unbound on rhel7
 %global with_dnssec 0
+%global nss_version 3.36.0-7.1
 # Libreswan config options
 %global libreswan_config \\\
     USE_KLIPS=false \\\
@@ -38,23 +39,29 @@ Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
 Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source12: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
-BuildRequires: bison flex redhat-rpm-config pkgconfig
-BuildRequires: systemd
-Requires(post): coreutils bash systemd
-Requires(preun): systemd
-Requires(postun): systemd
-Requires: iproute
 
-Conflicts: openswan < %{version}-%{release}
-Obsoletes: openswan < %{version}-%{release}
-Provides: openswan = %{version}-%{release}
-Provides: openswan-doc = %{version}-%{release}
-
-BuildRequires: pkgconfig hostname
-BuildRequires: nss-devel >= 3.16.2
-BuildRequires: nspr-devel
-BuildRequires: pam-devel
+BuildRequires: audit-libs-devel
+BuildRequires: bison
+BuildRequires: curl-devel
+BuildRequires: fipscheck-devel
+BuildRequires: flex
+BuildRequires: hostname
+BuildRequires: libcap-ng-devel
 BuildRequires: libevent-devel
+BuildRequires: libseccomp-devel
+BuildRequires: libselinux-devel
+BuildRequires: nspr-devel
+BuildRequires: nss-devel >= %{nss_version}
+BuildRequires: openldap-devel
+BuildRequires: pam-devel
+BuildRequires: pkgconfig
+BuildRequires: pkgconfig
+BuildRequires: redhat-rpm-config
+BuildRequires: systemd-devel
+BuildRequires: xmlto
+%if 0%{with_efence}
+BuildRequires: ElectricFence
+%endif
 %if 0%{with_dnssec}
 BuildRequires: ldns-devel
 BuildRequires: unbound-devel >= 1.6.0
@@ -63,22 +70,23 @@ Requires: unbound-libs >= 1.6.0
 %else
 %global USE_DNSSEC false
 %endif
-BuildRequires: libseccomp-devel
-BuildRequires: libselinux-devel
-BuildRequires: fipscheck-devel
 Requires: fipscheck%{_isa}
-Buildrequires: audit-libs-devel
-BuildRequires: systemd-devel
-BuildRequires: libcap-ng-devel
-BuildRequires: curl-devel
-BuildRequires: openldap-devel
-%if 0%{with_efence}
-BuildRequires: ElectricFence
-%endif
-BuildRequires: xmlto
-
-Requires: nss-tools
+Requires: iproute
+Requires: nss >= %{nss_version}
 Requires: nss-softokn
+Requires: nss-tools
+Requires(post): bash
+Requires(post): coreutils
+Requires(post): systemd
+Requires(postun): systemd
+Requires(preun): systemd
+
+Conflicts: openswan < %{version}-%{release}
+Obsoletes: openswan < %{version}-%{release}
+Provides: openswan = %{version}-%{release}
+Provides: openswan-doc = %{version}-%{release}
+
+
 
 %description
 Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is
@@ -100,18 +108,17 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %setup -q -n libreswan-%{version}%{?prever}
 
 %build
-%if 0%{with_efence}
-%define efence "-lefence"
-%endif
-
-#796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
 %if 0%{with_development}
-    USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+    OPTIMIZE_CFLAGS="%{?_hardened_cflags}" \
 %else
-    USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+    OPTIMIZE_CFLAGS="%{optflags}" \
 %endif
-    USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
+%if 0%{with_efence}
+    USE_EFENCE=true \
+%endif
+    WERROR_CFLAGS="-Werror -Wno-missing-field-initializers" \
+    USERLINK="%{?__global_ldflags}" \
     %{libreswan_config} \
     programs
 FS=$(pwd)

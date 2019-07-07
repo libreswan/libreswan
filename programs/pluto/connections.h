@@ -460,17 +460,7 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 
 extern struct connection *conn_by_name(const char *nm, bool strict, bool quiet);
 
-struct connection *ikev2_find_host_connection(const ip_endpoint *local,
-					      const ip_endpoint *remote,
-					      lset_t req_policy);
-
-struct connection *find_host_connection(const ip_endpoint *local,
-					const ip_endpoint *remote,
-					lset_t req_policy,
-					lset_t policy_exact_mask);
 extern struct connection
-	*find_next_host_connection(struct connection *c,
-		       lset_t req_policy, lset_t policy_exact_mask),
 	*refine_host_connection(const struct state *st, const struct id *peer_id,
 			const struct id *tarzan_id,
 			bool initiator, lset_t auth_policy /* used by ikev1 */,
@@ -495,7 +485,11 @@ extern struct connection *rw_instantiate(struct connection *c,
 					 const ip_address *him,
 					 const ip_subnet *his_net,
 					 const struct id *his_id);
-
+struct connection *oppo_instantiate(struct connection *c,
+				    const ip_address *him,
+				    const struct id *his_id,
+				    const ip_address *our_client,
+				    const ip_address *peer_client);
 extern struct connection *instantiate(struct connection *c,
 				      const ip_address *him,
 				      const struct id *his_id);

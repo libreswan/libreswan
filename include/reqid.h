@@ -16,15 +16,18 @@
 #ifndef REQID_H
 #define REQID_H
 
+#include <stdint.h>		/* for uint32_t */
+
 /*
  * reqid definitions
  *
  * A reqid is a numerical identifier used to match IPsec SAs using
- * iptables with NETKEY/XFRM. This identifier is normally automatically
- * allocated.  It is exported to the _updown script as REQID. On Linux,
- * reqids are supported with IP Connection Tracking and NAT (iptables).
- * Automatically generated values use the range 16380 and higher.
- * Manually specified reqid values therefore must be between 1 and 16379.
+ * iptables with NETKEY/XFRM. This identifier is normally
+ * automatically allocated.  It is exported to the _updown script as
+ * REQID. On Linux, reqids are supported with IP Connection Tracking
+ * and NAT (iptables).  Automatically generated values use the range
+ * 16384 and higher.  Manually specified reqid values therefore must
+ * be between 1 and 16383.
  *
  * Automatically generated reqids are allocated in groups of four, one
  * for each potential SA and pseudo SA in an SA bundle.  Their number
@@ -34,14 +37,14 @@
  * and its instantiations.
  */
 
-#include <stdint.h>		/* for uint32_t */
-
 typedef uint32_t reqid_t;
 
 #define IPSEC_MANUAL_REQID_MAX  0x3fff
 
-#define reqid_ah(r)	(r)
-#define reqid_esp(r)	((r) <= IPSEC_MANUAL_REQID_MAX ? (r) : (r) + 1)
-#define reqid_ipcomp(r)	((r) <= IPSEC_MANUAL_REQID_MAX ? (r) : (r) + 2)
+reqid_t gen_reqid(void);
+
+reqid_t reqid_ah(reqid_t r);
+reqid_t reqid_esp(reqid_t r);
+reqid_t reqid_ipcomp(reqid_t r);
 
 #endif

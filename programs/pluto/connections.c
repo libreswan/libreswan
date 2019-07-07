@@ -876,60 +876,6 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-static struct connection *find_connection_by_reqid(reqid_t reqid)
-{
-	struct connection *c;
-
-	/* find base reqid */
-	if (reqid > IPSEC_MANUAL_REQID_MAX) {
-		reqid &= ~3;
-	}
-
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (c = connections; c != NULL; c = c->ac_next)
-		if (c->spd.reqid == reqid)
-			break;
-
-	return c;
-}
-
-/*
- * generate a base reqid for automatic keying
- *
- * We are actually allocating a group of four contiguous
- * numbers: one is used for each SA in an SA bundle.
- *
- * - must not be in range 0 to IPSEC_MANUAL_REQID_MAX
- * - is a multiple of 4 (we are actually allocating
- *   four requids: see requid_ah, reqid_esp, reqid_ipcomp)
- * - does not duplicate any currently in use
- *
- * NOTE: comments seems to lie, we use same reqid for the
- *       ESP inbound and outbound.
- */
-static reqid_t gen_reqid(void)
-{
-	bool looping = FALSE;
-
-	for (;;) {
-		global_reqids += 4;
-		/* wrapping must skip manual reqids */
-		if (global_reqids <= IPSEC_MANUAL_REQID_MAX) {
-			if (looping) {
-				/* gone around the clock without success */
-				exit_log("unable to allocate reqid");
-			}
-			global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
-			looping = TRUE;
-		}
-
-		if (!find_connection_by_reqid(global_reqids)) {
-			return global_reqids;
-		}
-	}
-
-}
-
 static bool load_end_cert_and_preload_secret(const char *which, const char *pubkey,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end)
@@ -2041,6 +1987,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		}
 	}
 
+	/* assumption: orientation is the same as c's */
 	connect_to_host_pair(d);
 
 	return d;
@@ -2321,11 +2268,11 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	return best;
 }
 
-static struct connection *oppo_instantiate(struct connection *c,
-				const ip_address *him,
-				const struct id *his_id,
-				const ip_address *our_client,
-				const ip_address *peer_client)
+struct connection *oppo_instantiate(struct connection *c,
+				    const ip_address *him,
+				    const struct id *his_id,
+				    const ip_address *our_client,
+				    const ip_address *peer_client)
 {
 	struct connection *d = instantiate(c, him, his_id);
 
@@ -2653,95 +2600,6 @@ struct connection *route_owner(struct connection *c,
 	}
 
 	return routed(best_routing) ? best_ro : NULL;
-}
-
-struct connection *ikev2_find_host_connection(const ip_endpoint *local,
-					      const ip_endpoint *remote,
-					      lset_t policy)
-{
-	struct connection *c = find_host_connection(local, remote, policy, LEMPTY);
-
-	if (c == NULL) {
-		/* See if a wildcarded connection can be found.
-		 * We cannot pick the right connection, so we're making a guess.
-		 * All Road Warrior connections are fair game:
-		 * we pick the first we come across (if any).
-		 * If we don't find any, we pick the first opportunistic
-		 * with the smallest subnet that includes the peer.
-		 * There is, of course, no necessary relationship between
-		 * an Initiator's address and that of its client,
-		 * but Food Groups kind of assumes one.
-		 */
-		{
-			struct connection *d = find_host_connection(local, NULL,
-								    policy, LEMPTY);
-
-			while (d != NULL) {
-				if (d->kind == CK_GROUP) {
-					/* ignore */
-				} else {
-					if (d->kind == CK_TEMPLATE &&
-							!(d->policy & POLICY_OPPORTUNISTIC)) {
-						/* must be Road Warrior: we have a winner */
-						c = d;
-						break;
-					}
-
-					/* Opportunistic or Shunt: pick tightest match */
-					if (addrinsubnet(remote, &d->spd.that.client) &&
-							(c == NULL ||
-							 !subnetinsubnet(&c->spd.that.client,
-								 &d->spd.that.client))) {
-						c = d;
-					}
-				}
-				d = find_next_host_connection(d->hp_next,
-						policy, LEMPTY);
-			}
-		}
-		if (c == NULL) {
-			endpoint_buf b;
-			dbg("initial parent SA message received on %s but no connection has been authorized with policy %s",
-			    str_endpoint(local, &b),
-			    bitnamesof(sa_policy_bit_names, policy));
-			return NULL;
-		}
-		if (c->kind != CK_TEMPLATE) {
-			endpoint_buf eb;
-			connection_buf cib;
-			dbg("initial parent SA message received on %s for "PRI_CONNECTION" with kind=%s dropped",
-			    str_endpoint(local, &eb), pri_connection(c, &cib),
-			    enum_name(&connection_kind_names, c->kind));
-			return NULL;
-		}
-		/* only allow opportunistic for IKEv2 connections */
-		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
-		    c->ike_version == IKEv2) {
-			DBGF(DBG_CONTROL, "oppo_instantiate");
-			c = oppo_instantiate(c, remote, &c->spd.that.id, &c->spd.this.host_addr, remote);
-		} else {
-			/* regular roadwarrior */
-			DBGF(DBG_CONTROL, "rw_instantiate");
-			c = rw_instantiate(c, remote, NULL, NULL);
-		}
-	} else {
-		/*
-		 * We found a non-wildcard connection.
-		 * Double check whether it needs instantiation anyway (eg. vnet=)
-		 */
-		/* vnet=/vhost= should have set CK_TEMPLATE on connection loading */
-		passert(c->spd.this.virt == NULL);
-
-		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
-			DBGF(DBG_CONTROL, "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
-			c = rw_instantiate(c, remote, NULL, NULL);
-		} else if ((c->kind == CK_TEMPLATE) &&
-				(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-			DBGF(DBG_CONTROL, "local endpoint has narrowing=yes - needs instantiation");
-			c = rw_instantiate(c, remote, NULL, NULL);
-		}
-	}
-	return c;
 }
 
 /*

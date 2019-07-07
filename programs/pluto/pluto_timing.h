@@ -94,6 +94,7 @@ typedef struct {
 	struct timespec start;
 } statetime_t;
 
+statetime_t statetime_backdate(struct state *st, const threadtime_t *inception);
 statetime_t statetime_start(struct state *st);
 void statetime_stop(const statetime_t *start, const char *fmt, ...) PRINTF_LIKE(2);
 

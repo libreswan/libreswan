@@ -2558,7 +2558,10 @@ void process_packet_tail(struct msg_digest **mdp)
 		/* note: st ought to be NULL from here on */
 	}
 
+	/* XXX: pexpect(st == md->st); fails! */
+	statetime_t start = statetime_start(md->st);
 	complete_v1_state_transition(mdp, smc->processor(st, md));
+	statetime_stop(&start, "%s()", __func__);
 	/* our caller will release_any_md(mdp); */
 }
 

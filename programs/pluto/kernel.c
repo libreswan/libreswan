@@ -109,9 +109,6 @@ const struct pfkey_proto_info null_proto_info[2] = {
 
 static struct bare_shunt *bare_shunts = NULL;
 
-/* 16384 is the first reqid we will use when not specified manually */
-uint32_t global_reqids = IPSEC_MANUAL_REQID_MAX + 1;
-
 #ifdef IPSEC_CONNECTION_LIMIT
 static int num_ipsec_eroute = 0;
 #endif
@@ -3263,19 +3260,21 @@ bool migrate_ipsec_sa(struct state *st)
 	}
 }
 
-/* delete an IPSEC SA.
+/*
+ * Delete an IPSEC SA.
  * we may not succeed, but we bull ahead anyway because
  * we cannot do anything better by recognizing failure
  * This used to have a parameter bool inbound_only, but
  * the saref code changed to always install inbound before
  * outbound so this it was always false, and thus removed
+ *
  */
 void delete_ipsec_sa(struct state *st)
 {
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
 	if (IS_CHILD_SA(st)) {
-		/* child destruction already logged for STATE_CHILDSA_DEL state */
-		if (st->st_state->kind != STATE_CHILDSA_DEL) {
+		if (st->st_esp.present || st->st_ah.present) {
+			/* ESP or AH means this was an established IPsec SA */
 			linux_audit_conn(st, LAK_CHILD_DESTROY);
 		}
 	} else {

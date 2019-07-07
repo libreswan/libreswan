@@ -305,6 +305,9 @@ struct whack_message {
 	/* for DDOS modes */
 	enum ddos_mode whack_ddos;
 
+	/* force EVENT_PENDING_DDNS */
+	bool whack_ddns;
+
 	/* for WHACK_CRASH - note if a remote peer is known to have rebooted */
 	bool whack_crash;
 	ip_address whack_crash_peer;

@@ -230,6 +230,8 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			   const short unused_event UNUSED,
 			   void *arg)
 {
+	threadtime_t inception = threadtime_start();
+
 	struct pluto_event *ev = arg;
 	DBG(DBG_LIFECYCLE,
 	    DBG_log("%s: processing event@%p", __func__, ev));
@@ -246,7 +248,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	pexpect_reset_globals();
 	so_serial_t old_state = push_cur_state(st);
 	pexpect(old_state == SOS_NOBODY); /* since globals are reset */
-	statetime_t start = statetime_start(st);
+	statetime_t start = statetime_backdate(st, &inception);
 
 #if 0
 	/*
@@ -375,6 +377,11 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			} else {
 				dbg("replacing stale %s SA",
 				    IS_IKE_SA(st) ? "ISAKMP" : "IPsec");
+				/*
+				 * XXX: this call gets double billed -
+				 * both to the state being deleted and
+				 * to the new state being created.
+				 */
 				ipsecdoi_replace(st, 1);
 			}
 

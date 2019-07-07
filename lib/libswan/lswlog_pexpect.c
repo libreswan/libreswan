@@ -22,9 +22,8 @@ void lswlog_pexpect_prefix(struct lswlog *buf)
 	lswlogs(buf, "EXPECTATION FAILED: ");
 }
 
-void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
-			     const char *file, unsigned long line)
+void lswlog_pexpect_suffix(struct lswlog *buf, where_t where)
 {
-	lswlog_source_line(buf, func, file, line);
+	jam(buf, " "PRI_WHERE, pri_where(where));
 	lswlog_to_error_stream(buf);
 }

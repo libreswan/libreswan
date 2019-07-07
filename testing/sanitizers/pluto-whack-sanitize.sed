@@ -18,6 +18,8 @@ s,\(003 .* received Vendor ID payload \[Libreswan \).*,\1,
 s/add_time=[0-9]*,/add_time=1234567890,/
 s/SN: 0x[a-f0-9]*/SN: 0xXX/
 
+s/start processing duplicate packet ([0-9]* bytes)/start processing duplicate packet (xxx bytes)/
+
 # Hack: real fix is to cleanup the delete log line and use str_datetime()
 s/ aged [0-9]*\.[0-9]*s / /
 

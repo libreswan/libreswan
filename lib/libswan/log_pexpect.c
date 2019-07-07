@@ -19,10 +19,12 @@
 
 #include "lswlog.h"
 
-void libreswan_pexpect_fail(const char *func, const char *file,
-		       unsigned long line, const char *assertion)
+void log_pexpect(where_t where, const char *message, ...)
 {
-	LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
-		lswlogs(buf, assertion);
+	LSWLOG_PEXPECT_WHERE(where, buf) {
+		va_list args;
+		va_start(args, message);
+		lswlogvf(buf, message, args);
+		va_end(args);
 	}
 }

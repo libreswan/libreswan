@@ -26,22 +26,10 @@
  *
  * shunk_t's buffer is constant making it good for manipulating static
  * constant data (such as "a string"), chunk_t's is not.
- *
- * shunk_t's buffer is of type 'char' (which may or may not be signed)
- * making it easier to manipulate strings, chunk_t's is uint8_t making
- * it easier to manipulate raw bytes and safely perform unsigned
- * arrithmetic.
- *
- * The downside of 'char' is that it makes it easier to screw up
- * unsigned byte operations.  'const void *' would be more robust as
- * it would force an explicit cast, but that in turn makes things more
- * cumbersom.  Perhaps shunk_char() and shunk_byte() macros?
- *
- * It's assumed that sizeof(char) == 1.
  */
 
 struct shunk {
-	const char *ptr;
+	const void *ptr;
 	size_t len;
 };
 
@@ -64,6 +52,9 @@ shunk_t shunk1(const char *ptr); /* strlen() implied */
 shunk_t shunk2(const void *ptr, int len);
 
 #define THING_AS_SHUNK(THING) shunk2(&(THING), sizeof(THING))
+
+/* shunk[START..END) */
+shunk_t shunk_slice(shunk_t s, size_t start, size_t stop);
 
 /*
  * A shunk version of strsep() / strtok(): split off from INPUT a
@@ -103,6 +94,9 @@ bool shunk_strcaseeq(shunk_t shunk, const char *string);
 bool shunk_caseeat(shunk_t *lhs, shunk_t rhs);
 bool shunk_strcaseeat(shunk_t *lhs, const char *string);
 
+bool shunk_isdigit(shunk_t s, size_t offset);
+bool shunk_ischar(shunk_t s, size_t offset, const char *chars);
+
 /*
  * Number conversion.  like strtoul() et.al.
  */
@@ -119,6 +113,6 @@ bool shunk_tou(shunk_t lhs, unsigned *value, int base);
  */
 
 #define PRI_SHUNK "%.*s"
-#define pri_shunk(SHUNK) ((int) (SHUNK).len), ((SHUNK).ptr)
+#define pri_shunk(SHUNK) ((int) (SHUNK).len), (const char *) ((SHUNK).ptr)
 
 #endif

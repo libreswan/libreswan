@@ -53,6 +53,7 @@ for file in "$@" ; do
 	       | diff -u ${file} - ; then
 	    :
 	else
+	    echo "fail: ${algparse} ${flags}" 1>&2
 	    rc=1
 	fi
     else

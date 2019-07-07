@@ -1,3 +1,5 @@
+USE_NETKEY = true
+
 USERLAND_CFLAGS += -DTimeZoneOffset=timezone
 
 # This normally comes in via bind9/config.h

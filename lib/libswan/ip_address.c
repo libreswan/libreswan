@@ -185,8 +185,8 @@ static void jam_raw_ipv4_address(jambuf_t *buf, shunk_t a, char sepc)
 	const char seps[2] = { sepc == 0 ? '.' : sepc, 0, };
 	const char *sep = "";
 	for (size_t i = 0; i < a.len; i++) {
-		uint8_t ia = a.ptr[i];
-		jam(buf, "%s%"PRIu8, sep, ia);
+		const uint8_t *bytes = a.ptr;
+		jam(buf, "%s%"PRIu8, sep, bytes[i]);
 		sep = seps;
 	}
 }
@@ -261,8 +261,7 @@ static shunk_t zeros_to_skip(shunk_t a)
 			}
 		}
 		if (l > 2 && l > zero.len) {
-			zero.ptr = ptr;
-			zero.len = l;
+			zero = shunk2(ptr, l);
 			ptr += l;
 		} else {
 			ptr += 2;
@@ -319,19 +318,23 @@ void jam_address_reversed(jambuf_t *buf, const ip_address *address)
 	int type = addrtypeof(address);
 	switch (type) {
 	case AF_INET:
+	{
 		for (int i = bytes.len - 1; i >= 0; i--) {
-			uint8_t byte = bytes.ptr[i];
-			jam(buf, "%d.", byte);
+			const uint8_t *byte = bytes.ptr;
+			jam(buf, "%d.", byte[i]);
 		}
 		jam(buf, "IN-ADDR.ARPA.");
 		break;
+	}
 	case AF_INET6:
+	{
 		for (int i = bytes.len - 1; i >= 0; i--) {
-			uint8_t byte = bytes.ptr[i];
-			jam(buf, "%x.%x.", byte & 0xf, byte >> 4);
+			const uint8_t *byte = bytes.ptr;
+			jam(buf, "%x.%x.", byte[i] & 0xf, byte[i] >> 4);
 		}
 		jam(buf, "IP6.ARPA.");
 		break;
+	}
 	case AF_UNSPEC:
 		jam(buf, "<unspecified>");
 		break;

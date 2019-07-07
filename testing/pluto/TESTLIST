@@ -90,6 +90,7 @@ kvmplutotest	algparse-02-fips			good
 kvmplutotest	libipsecconf-01				good
 kvmplutotest	libipsecconf-02				good
 kvmplutotest	libipsecconf-04				good
+kvmplutotest	libipsecconf-05-empty_option		wip
 
 #################################################################
 # Whack UI tests
@@ -177,6 +178,7 @@ kvmplutotest	ikev2-27-uniqueid			good
 kvmplutotest	ikev2-29-no-rekey			good
 kvmplutotest	ikev2-ddns-01				good
 kvmplutotest	ikev2-ddns-02				good
+kvmplutotest	ikev2-ddns-03				good
 kvmplutotest	ikev1-cryptoload-01			good
 kvmplutotest	ikev1-cryptoload-00			good
 
@@ -204,6 +206,7 @@ kvmplutotest	ikev2-algo-12-aes-aes_cmac		good
 kvmplutotest	ikev2-algo-14-esp-null_auth_aes_gmac-none	good
 kvmplutotest	ikev2-algo-15-esp-null-none		good
 kvmplutotest	ikev2-algo-16-newer-dh			good
+kvmplutotest	ikev2-algo-17-no-sha1-01		wip
 kvmplutotest	netkey-algo-aes_gcm-01			good
 kvmplutotest	netkey-algo-aes_gcm-02			good
 kvmplutotest	netkey-algo-aes_gcm-03			good
@@ -306,6 +309,7 @@ kvmplutotest	ikev1-x509-12-san-dn-match		good
 kvmplutotest	ikev1-x509-13-san-dn-mismatch		good
 kvmplutotest	ikev1-x509-14-san-dn-fromcert		good
 kvmplutotest	ikev1-x509-15-pkcs7			good
+kvmplutotest	ikev1-x509-16-mismatch-ignore		good
 kvmplutotest	ikev1-x509-aggr-05-san-firstemail-match good
 kvmplutotest	ikev1-x509-aggr-06-san-email-mismatch	good
 kvmplutotest	ikev1-x509-aggr-07-san-ip-mismatch	good
@@ -349,6 +353,7 @@ kvmplutotest	ikev2-x509-25-missing-ca		good
 kvmplutotest	ikev2-x509-26-criticalflag		good
 kvmplutotest	ikev2-x509-27-criticalflag-clientAuth	good
 kvmplutotest	ikev2-x509-28-del-nssdb-cert		good
+kvmplutotest	ikev2-x509-30-mismatch-ignore		good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 

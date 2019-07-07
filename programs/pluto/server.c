@@ -1020,14 +1020,13 @@ void find_ifaces(bool rm_dead)
 	}
 }
 
-struct iface_port *lookup_iface_ip(ip_address *ip, uint16_t port)
+struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint)
 {
-	struct iface_port *p;
-	for (p = interfaces; p != NULL; p = p->next) {
-		if (sameaddr(ip, &p->ip_addr) && (p->port == port))
+	for (struct iface_port *p = interfaces; p != NULL; p = p->next) {
+		if (endpoint_eq(*local_endpoint, p->local_endpoint)) {
 			return p;
+		}
 	}
-
 	return NULL;
 }
 
@@ -1547,17 +1546,15 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 	while (pfd.revents = 0,
 	       poll(&pfd, 1, -1) > 0 && (pfd.revents & POLLERR)) {
 		/*
-		 * XXX: This buffer should be just slightly larger
-		 * than the IKE header as that way just enough
-		 * information to find the sender is returned.
-		 * Unfortunately it doesn't work - unpacking the
-		 * header using in_struct(HDR) fails when the packet
-		 * is truncated.
+		 * This buffer needs to be large enough to fit the IKE
+		 * header so that the IKE SPIs and flags can be
+		 * extracted and used to find the sender of the
+		 * message.
 		 *
-		 * So instead use the send buffer size, which is far
-		 * too big.
+		 * Give it double that.
 		 */
-		uint8_t buffer[MAX_INPUT_UDP_SIZE];
+		uint8_t buffer[sizeof(struct isakmp_hdr) * 2];
+
 		union {
 			struct sockaddr sa;
 			struct sockaddr_in sa_in4;
@@ -1751,26 +1748,14 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					break;
 				}
 
-#define LOG(buf)							\
-				{					\
-					endpoint_buf epb;		\
-					pexpect_iface_port(ifp);	\
-					lswlogf(buf,			\
-						"ERROR: asynchronous network error report on %s (%s)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]", \
-						ifp->ip_dev->id_rname,	\
-						str_endpoint(&ifp->local_endpoint, &epb), \
-						fromstr,		\
-						offstr,			\
-						strerror(ee->ee_errno),	\
-						ee->ee_errno, orname);	\
-				}
-
+				log_raw_fn *logger;
 				if (packet_len == 1 && buffer[0] == 0xff &&
 				    (cur_debugging & DBG_NATT) == 0) {
 					/*
 					 * don't log NAT-T keepalive related errors unless NATT debug is
 					 * enabled
 					 */
+					logger = NULL;
 				} else if (sender != NULL && sender->st_connection != NULL &&
 					   LDISJOINT(sender->st_connection->policy, POLICY_OPPORTUNISTIC)) {
 					/*
@@ -1796,9 +1781,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					 * explicit parameter to the
 					 * logging system?
 					 */
-					LSWLOG_STATE(sender, buf) {
-						LOG(buf);
-					}
+					logger = loglog_raw;
 				} else {
 					/*
 					 * Since this output is forced
@@ -1809,10 +1792,19 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					 * matter - it just gets
 					 * ignored.
 					 */
-					LSWDBGP_STATE(DBG_OPPO, sender, buf) {
-						LOG(buf);
-					}
-#undef LOG
+					logger = DBG_raw;
+				}
+				if (logger != NULL) {
+					endpoint_buf epb;
+					logger(RC_COMMENT, sender/*could be null*/,
+					       NULL/*connection*/, NULL/*endpoint*/,
+					       "ERROR: asynchronous network error report on %s (%s)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]",
+					       ifp->ip_dev->id_rname,
+					       str_endpoint(&ifp->local_endpoint, &epb),
+					       fromstr,
+					       offstr,
+					       strerror(ee->ee_errno),
+					       ee->ee_errno, orname);
 				}
 			} else if (cm->cmsg_level == SOL_IP &&
 				   cm->cmsg_type == IP_PKTINFO) {

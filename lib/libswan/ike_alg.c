@@ -336,16 +336,14 @@ static bool ike_alg_in_table(const struct ike_alg *alg)
 	return false;
 }
 
-static void pexpect_ike_alg_base_in_table(const struct ike_alg *alg,
+static void pexpect_ike_alg_base_in_table(where_t where,
+					  const struct ike_alg *alg,
 					  const struct ike_alg *base_alg)
 {
 	if (!ike_alg_in_table(base_alg)) {
-		LSWLOG_PEXPECT(buf) {
-			lswlog_ike_alg(buf, alg);
-			lswlogs(buf, " base ");
-			lswlog_ike_alg(buf, base_alg);
-			lswlogs(buf, " missing from algorithm table");
-		}
+		log_pexpect(where,
+			    PRI_IKE_ALG" base "PRI_IKE_ALG" missing from algorithm table",
+			    pri_ike_alg(alg), pri_ike_alg(base_alg));
 	}
 }
 
@@ -363,21 +361,18 @@ static bool ike_alg_has_name(const struct ike_alg *alg, shunk_t name)
 	return false;
 }
 
-static bool pexpect_ike_alg_has_name(const struct ike_alg *alg,
+static bool pexpect_ike_alg_has_name(where_t where,
+				     const struct ike_alg *alg,
 				     const char *name,
 				     const char *description)
 {
 	if (name == NULL) {
-		LSWLOG_PEXPECT(buf) {
-			lswlog_ike_alg(buf, alg);
-			lswlogf(buf, " %s name is NULL", description);
-		}
+		log_pexpect(where, PRI_IKE_ALG" %s name is NULL",
+			    pri_ike_alg(alg), description);
 		return false;
 	} else if (!ike_alg_has_name(alg, shunk1(name))) {
-		LSWLOG_PEXPECT(buf) {
-			lswlog_ike_alg(buf, alg);
-			lswlogf(buf, " missing %s name %s", description, name);
-		}
+		log_pexpect(where, PRI_IKE_ALG" missing %s name %s",
+			    pri_ike_alg(alg), description, name);
 		return false;
 	}
 	return true;
@@ -389,17 +384,16 @@ static bool pexpect_ike_alg_has_name(const struct ike_alg *alg,
  * For instance, a PRF implemented using a HASH must have all the
  * shorter HASH names in the PRF name table.
  */
-static void pexpect_ike_alg_has_base_names(const struct ike_alg *alg,
+static void pexpect_ike_alg_has_base_names(where_t where,
+					   const struct ike_alg *alg,
 					   const struct ike_alg *base_alg)
 {
 	FOR_EACH_IKE_ALG_NAME(base_alg, alg_name) {
 		if (!ike_alg_has_name(alg, alg_name)) {
-			LSWLOG_PEXPECT(buf) {
-				lswlog_ike_alg(buf, alg);
-				lswlogf(buf, " missing name "PRI_SHUNK" in base ",
-					pri_shunk(alg_name));
-				lswlog_ike_alg(buf, base_alg);
-			}
+			log_pexpect(where,
+				    PRI_IKE_ALG" missing name "PRI_SHUNK" in base "PRI_IKE_ALG,
+				    pri_ike_alg(alg), pri_shunk(alg_name),
+				    pri_ike_alg(base_alg));
 		}
 
 	}
@@ -486,7 +480,7 @@ static void prf_desc_check(const struct ike_alg *alg)
 	const struct prf_desc *prf = prf_desc(alg);
 	pexpect_ike_alg(alg, prf->prf_key_size > 0);
 	pexpect_ike_alg(alg, prf->prf_output_size > 0);
-	pexpect_ike_alg_has_name(alg, prf->prf_ike_audit_name, ".prf_ike_audit_name");
+	pexpect_ike_alg_has_name(HERE, alg, prf->prf_ike_audit_name, ".prf_ike_audit_name");
 	if (prf->prf_ops != NULL) {
 		pexpect_ike_alg(alg, prf->prf_ops->check != NULL);
 		pexpect_ike_alg(alg, prf->prf_ops->init_symkey != NULL);
@@ -507,9 +501,9 @@ static void prf_desc_check(const struct ike_alg *alg)
 		/*
 		 * Check for dangling pointer.
 		 */
-		pexpect_ike_alg_base_in_table(&prf->common, &prf->hasher->common);
+		pexpect_ike_alg_base_in_table(HERE, &prf->common, &prf->hasher->common);
 		pexpect_ike_alg(alg, prf->prf_output_size == prf->hasher->hash_digest_size);
-		pexpect_ike_alg_has_base_names(&prf->common, &prf->hasher->common);
+		pexpect_ike_alg_has_base_names(HERE, &prf->common, &prf->hasher->common);
 	}
 }
 
@@ -566,9 +560,9 @@ static void integ_desc_check(const struct ike_alg *alg)
 	const struct integ_desc *integ = integ_desc(alg);
 	pexpect_ike_alg(alg, integ->integ_keymat_size > 0);
 	pexpect_ike_alg(alg, integ->integ_output_size > 0);
-	pexpect_ike_alg_has_name(alg, integ->integ_tcpdump_name, ".integ_tcpdump_name");
-	pexpect_ike_alg_has_name(alg, integ->integ_ike_audit_name, ".integ_ike_audit_name");
-	pexpect_ike_alg_has_name(alg, integ->integ_kernel_audit_name, ".integ_kernel_audit_name");
+	pexpect_ike_alg_has_name(HERE, alg, integ->integ_tcpdump_name, ".integ_tcpdump_name");
+	pexpect_ike_alg_has_name(HERE, alg, integ->integ_ike_audit_name, ".integ_ike_audit_name");
+	pexpect_ike_alg_has_name(HERE, alg, integ->integ_kernel_audit_name, ".integ_kernel_audit_name");
 	if (integ->common.id[IKEv1_ESP_ID] >= 0) {
 		struct esb_buf esb;
 		pexpect_ike_alg_streq(alg, integ->integ_kernel_audit_name,
@@ -580,7 +574,7 @@ static void integ_desc_check(const struct ike_alg *alg)
 		pexpect_ike_alg(alg, integ->integ_keymat_size == integ->prf->prf_key_size);
 		pexpect_ike_alg(alg, integ->integ_output_size <= integ->prf->prf_output_size);
 		pexpect_ike_alg(alg, prf_desc_is_ike(&integ->prf->common));
-		pexpect_ike_alg_has_base_names(&integ->common, &integ->prf->common);
+		pexpect_ike_alg_has_base_names(HERE, &integ->common, &integ->prf->common);
 	}
 }
 
@@ -694,10 +688,10 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 		pexpect_ike_alg_streq(alg, encrypt->encrypt_tcpdump_name, "aes_gcm");
 		pexpect_ike_alg_streq(alg, encrypt->encrypt_ike_audit_name, "aes_gcm");
 	} else {
-		pexpect_ike_alg_has_name(alg, encrypt->encrypt_tcpdump_name, ".encrypt_tcpdump_name");
-		pexpect_ike_alg_has_name(alg, encrypt->encrypt_ike_audit_name, ".encrypt_ike_audit_name");
+		pexpect_ike_alg_has_name(HERE, alg, encrypt->encrypt_tcpdump_name, ".encrypt_tcpdump_name");
+		pexpect_ike_alg_has_name(HERE, alg, encrypt->encrypt_ike_audit_name, ".encrypt_ike_audit_name");
 	}
-	pexpect_ike_alg_has_name(alg, encrypt->encrypt_kernel_audit_name, ".encrypt_kernel_audit_name");
+	pexpect_ike_alg_has_name(HERE, alg, encrypt->encrypt_kernel_audit_name, ".encrypt_kernel_audit_name");
 	if (encrypt->common.id[IKEv1_ESP_ID] >= 0) {
 		struct esb_buf esb;
 		pexpect_ike_alg_streq(alg, encrypt->encrypt_kernel_audit_name,
@@ -870,7 +864,7 @@ static void check_enum_name(const char *what,
 		DBG(DBG_CRYPT,
 		    DBG_log("%s id: %d enum name: %s",
 			    what, id, enum_name));
-		pexpect_ike_alg_has_name(alg, enum_name, "enum table name");
+		pexpect_ike_alg_has_name(HERE, alg, enum_name, "enum table name");
 	} else {
 		DBG(DBG_CRYPT, DBG_log("%s id: %d enum name: N/A", what, id));
 	}
@@ -905,7 +899,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		 * Check the FQN first; and require upper case.  If
 		 * this one fails abort as things are really broken.
 		 */
-		passert(pexpect_ike_alg_has_name(alg, alg->fqn, ".fqn"));
+		passert(pexpect_ike_alg_has_name(HERE, alg, alg->fqn, ".fqn"));
 		pexpect_ike_alg(alg, (strlen(alg->fqn) ==
 				      strspn(alg->fqn, "ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789")));
 
@@ -915,7 +909,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		 * Requiring this is easier than trying to ensure that
 		 * changes to NAME don't break NAMES.
 		 */
-		pexpect_ike_alg_has_name(alg, alg->name, ".name");
+		pexpect_ike_alg_has_name(HERE, alg, alg->name, ".name");
 
 		/*
 		 * Don't allow 0 as an algorithm ID.

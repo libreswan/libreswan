@@ -198,8 +198,10 @@ static void help(void)
 		"status: whack [--status] | [--trafficstatus] | [--globalstatus] | \\\n"
 		"	[--clearstats] | [--shuntstatus] | [--fipsstatus] | [--briefstatus] \n"
 		"\n"
+		"refresh dns: whack --ddns\n"
+		"\n"
 #ifdef HAVE_SECCOMP
-		"status: whack --seccomp-crashtest (CAREFUL!)\n"
+		"testing: whack --seccomp-crashtest (CAREFUL!)\n"
 		"\n"
 #endif
 		"shutdown: whack --shutdown\n"
@@ -306,6 +308,8 @@ enum option_enums {
 	OPT_DDOS_BUSY,
 	OPT_DDOS_UNLIMITED,
 	OPT_DDOS_AUTO,
+
+	OPT_DDNS,
 
 	OPT_REREADSECRETS,
 	OPT_REREADCRLS,
@@ -550,6 +554,8 @@ static const struct option long_opts[] = {
 	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
 	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED + OO },
 	{ "ddos-auto", no_argument, NULL, OPT_DDOS_AUTO + OO },
+
+	{ "ddns", no_argument, NULL, OPT_DDNS + OO },
 
 	{ "rereadsecrets", no_argument, NULL, OPT_REREADSECRETS + OO },
 	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO }, /* obsolete */
@@ -1301,6 +1307,10 @@ int main(int argc, char **argv)
 
 		case OPT_DDOS_AUTO:	/* --ddos-auto */
 			msg.whack_ddos = DDOS_AUTO;
+			continue;
+
+		case OPT_DDNS:	/* --ddns */
+			msg.whack_ddns = TRUE;
 			continue;
 
 		case OPT_LISTEN:	/* --listen */
@@ -2422,7 +2432,7 @@ int main(int argc, char **argv)
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
 	      msg.whack_unlisten || msg.whack_list || msg.ike_buf_size ||
-	      msg.whack_ddos != DDOS_undefined ||
+	      msg.whack_ddos != DDOS_undefined || msg.whack_ddns ||
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
 	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
@@ -2613,8 +2623,29 @@ int main(int argc, char **argv)
 				be -= ls - buf;
 				break;
 			}
-
 			le++;	/* include NL in line */
+
+			/*
+			 * figure out prefix number and how it should
+			 * affect our exit status and printing
+			 */
+			char *lpe = NULL; /* line-prefix-end */
+			unsigned long s = strtoul(ls, &lpe, 10);
+			if (lpe == ls || *lpe != ' ') {
+				/* includes embedded NL, see above */
+				fprintf(stderr, "whack: log line missing NNN prefix: %*s",
+					(int)(le - ls), ls);
+#if 0
+				ls = le;
+				continue;
+#else
+				exit(RC_WHACK_PROBLEM);
+#endif
+			}
+			if (s == RC_PRINT) {
+				ls = lpe + 1; /* skip NNN_ */
+			}
+
 			if (write(STDOUT_FILENO, ls, le - ls) != (le - ls)) {
 				int e = errno;
 
@@ -2623,20 +2654,10 @@ int main(int argc, char **argv)
 					e, strerror(e));
 			}
 
-			/*
-			 * figure out prefix number
-			 * and how it should affect our exit
-			 * status
-			 *
-			 * we don't generally use strtoul but
-			 * in this case, its failure mode
-			 * (0 for nonsense) is probably OK.
-			 */
-			unsigned long s = strtoul(ls, NULL, 10);
-
 			switch (s) {
 			/* these logs are informational only */
 			case RC_COMMENT:
+			case RC_PRINT:
 			case RC_INFORMATIONAL:
 			case RC_INFORMATIONAL_TRAFFIC:
 			case RC_LOG:

@@ -117,9 +117,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 /**
  * New NAT mapping
  */
-void nat_traversal_new_mapping(struct state *st,
-			       const ip_address *nsrc,
-			       uint16_t nsrcport);
+void nat_traversal_new_mapping(struct ike_sa *ike,
+			       const ip_endpoint *new_remote_endpoint);
 
 /**
  * IKE port floating
@@ -131,8 +130,8 @@ bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 		       const ike_spi_t *ike_resonder_spi);
 
-bool ikev2_out_natd(const ip_address *localaddr, uint16_t localport,
-		    const ip_address *remoteaddr, uint16_t remoteport,
+bool ikev2_out_natd(const ip_endpoint *local_endpoint,
+		    const ip_endpoint *remote_endpoint,
 		    const ike_spis_t *ike_spis,
 		    pb_stream *outs);
 

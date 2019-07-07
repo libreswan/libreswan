@@ -36,7 +36,8 @@ struct msg_digest;
 
 extern bool
 	log_with_timestamp,     /* prefix timestamp */
-	log_append;
+	log_append,
+	log_to_audit;
 
 extern bool log_to_syslog;          /* should log go to syslog? */
 extern char *pluto_log_file;
@@ -68,27 +69,23 @@ extern void reset_debugging(void);
 
 extern lset_t base_debugging;	/* bits selecting what to report */
 
-extern void log_reset_globals(const char *func, const char *file, long line);
-#define reset_globals() log_reset_globals(__func__, PASSERT_BASENAME, __LINE__)
+extern void log_reset_globals(where_t where);
+#define reset_globals() log_reset_globals(HERE)
 
-extern void log_pexpect_reset_globals(const char *func, const char *file, long line);
-#define pexpect_reset_globals() log_pexpect_reset_globals(__func__, PASSERT_BASENAME, __LINE__)
+extern void log_pexpect_reset_globals(where_t where);
+#define pexpect_reset_globals() log_pexpect_reset_globals(HERE)
 
-struct connection *log_push_connection(struct connection *c, const char *func,
-				       const char *file, long line);
-void log_pop_connection(struct connection *c, const char *func,
-			const char *file, long line);
+struct connection *log_push_connection(struct connection *c, where_t where);
+void log_pop_connection(struct connection *c, where_t where);
 
-#define push_cur_connection(C) log_push_connection(C, __func__, PASSERT_BASENAME, __LINE__)
-#define pop_cur_connection(C) log_pop_connection(C, __func__, PASSERT_BASENAME, __LINE__)
+#define push_cur_connection(C) log_push_connection(C, HERE)
+#define pop_cur_connection(C) log_pop_connection(C, HERE)
 
-so_serial_t log_push_state(struct state *st, const char *func,
-			   const char *file, long line);
-void log_pop_state(so_serial_t serialno, const char *func,
-		   const char *file, long line);
+so_serial_t log_push_state(struct state *st, where_t where);
+void log_pop_state(so_serial_t serialno, where_t where);
 
-#define push_cur_state(ST) log_push_state(ST, __func__, PASSERT_BASENAME, __LINE__)
-#define pop_cur_state(ST) log_pop_state(ST, __func__, PASSERT_BASENAME, __LINE__)
+#define push_cur_state(ST) log_push_state(ST, HERE)
+#define pop_cur_state(ST) log_pop_state(ST, HERE)
 
 #define set_cur_connection(C) push_cur_connection(C)
 #define reset_cur_connection() pop_cur_connection(NULL)
@@ -96,15 +93,11 @@ bool is_cur_connection(const struct connection *c);
 #define set_cur_state(ST) push_cur_state(ST)
 #define reset_cur_state() pop_cur_state(SOS_NOBODY)
 
-extern ip_address log_push_from(ip_address new_from, const char *func,
-				const char *file, long line);
-extern void log_pop_from(ip_address old_from, const char *func,
-			 const char *file, long line);
+extern ip_address log_push_from(ip_address new_from, where_t where);
+extern void log_pop_from(ip_address old_from, where_t where);
 
-#define push_cur_from(NEW)					\
-	log_push_from(NEW, __func__, PASSERT_BASENAME, __LINE__)
-#define pop_cur_from(OLD)						\
-	log_pop_from(OLD, __func__, PASSERT_BASENAME, __LINE__)
+#define push_cur_from(NEW) log_push_from(NEW, HERE)
+#define pop_cur_from(OLD) log_pop_from(OLD, HERE)
 
 /*
  * Direct a log message, possibly prefix with the supplied context
@@ -113,18 +106,17 @@ extern void log_pop_from(ip_address old_from, const char *func,
  *
  * Todays proposed naming convention:
  *
- *   {p,w,wp,}{log,dbg}_{global,from,md,c,st,raw}()
+ *   {plog,loglog,wlog,dbg}_{global,from,md,c,st,raw}()
  *
- * {p,w,wp} -> p: write to pluto's log file (but not whack); w: write
- * to whack (but not pluto's log file); wp: write to both.
- *
- * {log,dbg} -> log: output as a log message; dbg -> output as a debug
- * message.
+ * {plog,loglog,wlog,dbg} -> plog: write to pluto's log file (but not
+ * whack); wlog: write to whack (but not pluto's log file); loglog:
+ * write to both; dbg: a debug log record to pluto's log file (but not
+ * whack).
  *
  * {global,from,md,c,st} -> global: no context prefix; from: endpoint
  * as prefix; md: endpoint from md as prefix; c: connection+instance
  * as prefix; st: state+connection as prefix; raw: takes all
- * parameters with the most detailed being prefered.
+ * parameters with the most detailed non-NULL value being prefered.
  *
  * XXX:
  *
@@ -144,15 +136,25 @@ extern void log_pop_from(ip_address old_from, const char *func,
  *   available?  Or should this be merged with above.
  */
 
-void plog_raw(const struct state *st,
-	      const struct connection *c,
-	      const ip_endpoint *from,
-	      const char *message, ...) PRINTF_LIKE(4);
-#define plog_global(MESSAGE, ...) plog_raw(NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_from(FROM, MESSAGE, ...) plog_raw(NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
-#define plog_md(MD, MESSAGE, ...) plog_raw(NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
-#define plog_c(C, MESSAGE, ...) plog_raw(NULL, C, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_st(ST, MESSAGE, ...) plog_raw(ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+typedef void (log_raw_fn)(enum rc_type,
+			  const struct state *st,
+			  const struct connection *c,
+			  const ip_endpoint *from,
+			  const char *message, ...) PRINTF_LIKE(5);
+
+log_raw_fn plog_raw;
+
+#define plog_global(MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_from(FROM, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
+#define plog_md(MD, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
+#define plog_c(C, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_st(ST, MESSAGE, ...) plog_raw(RC_COMMENT, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+
+log_raw_fn loglog_raw;
+
+/* unconditional */
+log_raw_fn DBG_raw;
+
 
 /*
  * rate limited logging
@@ -167,27 +169,10 @@ void rate_log(const struct msg_digest *md,
 void log_prefix(struct lswlog *buf, bool debug,
 		struct state *st, struct connection *c);
 
-#define LSWLOG_STATE(STATE, BUF)					\
-	LSWLOG_(true, BUF,						\
-		log_prefix(BUF, false, STATE, NULL),			\
-		lswlog_to_default_streams(BUF, RC_LOG))
-
 #define LSWLOG_CONNECTION(CONNECTION, BUF)				\
 	LSWLOG_(true, BUF,						\
 		log_prefix(BUF, false, NULL, CONNECTION),		\
 		lswlog_to_default_streams(BUF, RC_LOG))
-
-bool log_debugging(struct state *st, struct connection *c, lset_t predicate);
-
-#define LSWDBGP_STATE(DEBUG, STATE, BUF)				\
-	LSWLOG_(log_debugging(STATE, NULL, DEBUG), BUF,			\
-		log_prefix(BUF, true, STATE, NULL),			\
-		lswlog_to_debug_stream(BUF))
-
-#define LSWDBGP_CONNECTION(DEBUG, CONNECTION, BUF)			\
-	LSWLOG_(log_debugging(NULL, CONNECTION, DEBUG), BUF,		\
-		log_prefix(BUF, true, NULL, CONNECTION),		\
-		lswlog_to_debug_stream(BUF))
 
 extern void pluto_init_log(void);
 void init_rate_log(void);
@@ -203,9 +188,11 @@ void whack_log_pre(enum rc_type rc, struct lswlog *buf);
 
 void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
 /*
- * Like whack_log() but suppress the 'NNN ' prefix.
+ * Like whack_log(RC_COMMENT, ...) but suppress the 'NNN ' prefix.
+ *
+ * XXX: whack_log_comment() -> whack_print().
  */
-void whack_log_comment(const char *message, ...) PRINTF_LIKE(1);
+#define whack_log_comment(FMT, ...) whack_log(RC_PRINT, FMT,##__VA_ARGS__)
 
 /* show status, usually on whack log */
 extern void show_status(void);
@@ -225,7 +212,7 @@ enum linux_audit_kind {
 extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
 
 #ifdef USE_LINUX_AUDIT
-extern void linux_audit_init(void);
+extern void linux_audit_init(int do_audit);
 # include <libaudit.h>	/* from audit-libs devel */
 # define AUDIT_LOG_SIZE 256
 /* should really be in libaudit.h */

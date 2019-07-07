@@ -9,6 +9,7 @@ will still contain IP addresses of peers. This option is mostly meant for server
 logging IP addresses of incoming clients. Other identifiable information might still be logged, such as
 ID payloads and X.509 certificate details. When using ID of type IP address, this option will not hide
 the actual IP address as part of the ID. Most deployments will not want to change this from the default.
+If logging of IP addresses is unwanted, <emphasis remap='B'>audit-log=no</emphasis> should also be set.
 </para>
   </listitem>
   </varlistentry>

@@ -133,6 +133,7 @@ d.ipsec.conf/uniqueids.xml
 d.ipsec.conf/logfile.xml
 d.ipsec.conf/logappend.xml
 d.ipsec.conf/logip.xml
+d.ipsec.conf/audit-log.xml
 d.ipsec.conf/logtime.xml
 d.ipsec.conf/force-busy.xml
 d.ipsec.conf/ddos-mode.xml

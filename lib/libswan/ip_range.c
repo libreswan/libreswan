@@ -22,6 +22,7 @@
  */
 
 #include <string.h>
+#include <arpa/inet.h>		/* for ntohl() */
 
 #include "jambuf.h"
 #include "ip_range.h"

@@ -207,7 +207,7 @@ static void test(void)
 	esp(true, "aes-128-sha1-modp2048");
 
 	esp(true, "aes_gcm_a-128-null");
-	esp(!fips, "3des-sha1;modp1024");
+	esp(false, "3des-sha1;modp1024");
 	esp(!fips, "3des-sha1;modp1536");
 	esp(true, "3des-sha1;modp2048");
 	esp(ike_version == IKEv2, "3des-sha1;dh21");
