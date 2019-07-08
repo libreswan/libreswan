@@ -1973,13 +1973,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RSA_SHA2_256:	/* --rsa-sha2, --rsa-sha2_256 */
-			msg.sighash_policy = POL_SIGHASH_SHA2_256;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			continue;
 		case CD_RSA_SHA2_384:	/* --rsa-sha2_384 */
-			msg.sighash_policy = POL_SIGHASH_SHA2_384;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			continue;
 		case CD_RSA_SHA2_512:	/* --rsa-sha2_512 */
-			msg.sighash_policy = POL_SIGHASH_SHA2_512;
+			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 
 		case CD_CONNIPV6:	/* --ipv6 */
