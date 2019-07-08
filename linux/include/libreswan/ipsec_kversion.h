@@ -590,7 +590,7 @@ typedef struct ctl_table ctl_table;
 # define HAS_PRIV_DESTRUCTOR
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 20, 0)
 # define SYNC_SKCIPHER_REQUEST_ON_STACK(a,b) SKCIPHER_REQUEST_ON_STACK(a,b)
 #endif
 
