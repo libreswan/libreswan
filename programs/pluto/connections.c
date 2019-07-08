@@ -1155,24 +1155,24 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	}
 
 	if (wm->policy & POLICY_OPPORTUNISTIC &&
-	    c->ike_version != IKEv2) {
+	    c->ike_version == IKEv1) {
 		loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2",
 		       wm->name);
 		return false;
 	}
 	if (wm->sighash_policy != LEMPTY &&
-	    c->ike_version != IKEv2) {
+	    c->ike_version == IKEv1) {
 		loglog(RC_FATAL, "SIGHASH requires ikev2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_MOBIKE &&
-	    c->ike_version != IKEv2) {
+	    c->ike_version == IKEv1) {
 		loglog(RC_FATAL, "MOBIKE requires ikev2");
 		return false;
 	}
 	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
-	    c->ike_version != IKEv2) {
+	    c->ike_version == IKEv1) {
 		loglog(RC_FATAL, "narrowing=yes requires ikev2");
 		return false;
 	}
@@ -1209,7 +1209,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	} else {
 		/* reject all bad combinations of authby with leftauth=/rightauth= */
 		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
-			if (c->ike_version != IKEv2) {
+			if (c->ike_version == IKEv1) {
 				loglog(RC_FATAL,
 					"Failed to add connection \"%s\": leftauth= and rightauth= require ikev2",
 						wm->name);
