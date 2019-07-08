@@ -1199,7 +1199,7 @@ static bool load_conn(
 	if (conn->options_set[KSCF_AUTHBY]) {
 
 		conn->policy &= ~POLICY_ID_AUTH_MASK;
-		conn->sighash_policy = POL_SIGHASH_NONE;
+		conn->sighash_policy = LEMPTY;
 	}
 
 	KW_POLICY_NEGATIVE_FLAG(KNCF_IKEPAD, POLICY_NO_IKEPAD);
@@ -1428,7 +1428,7 @@ static bool load_conn(
 				conn->policy |= POLICY_PSK;
 			} else if (streq(val, "rsasig") || streq(val, "rsa")) {
 				conn->policy |= POLICY_RSASIG;
-				conn->sighash_policy |= POL_SIGHASH_NONE;
+				conn->sighash_policy = LEMPTY;
 			} else if (streq(val, "never")) {
 				conn->policy |= POLICY_AUTH_NEVER;
 			/* everything else is only supported for IKEv2 */

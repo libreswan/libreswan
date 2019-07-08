@@ -125,9 +125,9 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 	if (authby != AUTH_NULL) {
 		pss = get_psk(c);
 		if (pss == NULL) {
-			libreswan_log("No matching PSK found for connection: %s",
+			loglog(RC_LOG_SERIOUS,"No matching PSK found for connection: %s",
 			      st->st_connection->name);
-			return FALSE; /* failure: no PSK to use */
+			return FALSE;
 		}
 		DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
 		const size_t key_size_min = crypt_prf_fips_key_size_min(st->st_oakley.ta_prf);

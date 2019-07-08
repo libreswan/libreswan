@@ -104,6 +104,8 @@ static bool RSA_ikev2_calculate_sighash(const struct state *st,
 		break;
 #endif
 	default:
+		libreswan_log("unknown or unsupported hash algorithm %d",
+			hash_algo); /* no enum_name for this? */
 		return FALSE;
 	}
 
@@ -134,8 +136,10 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	const struct connection *c = st->st_connection;
 	const struct RSA_private_key *k = get_RSA_private_key(c);
 
-	if (k == NULL)
-		return FALSE; /* failure: no key to use */
+	if (k == NULL) {
+		libreswan_log("No RSA private key found");
+		return FALSE;
+	}
 
 	unsigned int sz = k->pub.k;
 
@@ -179,6 +183,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 		break;
 
 	default:
+		libreswan_log("unknown or unsupported hash algorithm");
 		return FALSE;
 	}
 

@@ -767,7 +767,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 	/* Send SIGNATURE_HASH_ALGORITHMS Notify payload */
 	if (!IMPAIR(OMIT_HASH_NOTIFY_REQUEST)) {
 		if (((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
-			&& (c->sighash_policy != POL_SIGHASH_NONE)) {
+			&& (c->sighash_policy != LEMPTY)) {
 			if (!emit_v2N_signature_hash_algorithms(c->sighash_policy, &rbody))
 				return STF_INTERNAL_ERROR;
 		}
@@ -1132,7 +1132,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
 	if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
 		if (st->st_seen_hashnotify && ((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
-			&& (c->sighash_policy != POL_SIGHASH_NONE)) {
+			&& (c->sighash_policy != LEMPTY)) {
 			if (!emit_v2N_signature_hash_algorithms(c->sighash_policy, &rbody))
 				return STF_INTERNAL_ERROR;
 		}
@@ -1883,7 +1883,7 @@ static stf_status ikev2_send_auth(struct state *st,
 	switch (authby) {
 	case AUTH_RSASIG:
 		a.isaa_type = pst->st_seen_hashnotify &&
-			c->sighash_policy != POL_SIGHASH_NONE ?
+			c->sighash_policy != LEMPTY ?
 				IKEv2_AUTH_DIGSIG : IKEv2_AUTH_RSA;
 		break;
 	case AUTH_ECDSA:

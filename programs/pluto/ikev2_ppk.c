@@ -126,13 +126,12 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 			h = &asn1_rsa_pss_sha2_384;
 		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
 			h = &asn1_rsa_pss_sha2_256;
-		} else if (c->sighash_policy & POL_SIGHASH_NONE) {
+		} else if (c->sighash_policy == LEMPTY) {
 			/* RSA with SHA1 without Digsig: no oid blob appended */
 			if (!ikev2_calculate_rsa_hash(st,
 					st->st_original_role, id_hash, NULL,
 					no_ppk_auth, IKEv2_AUTH_HASH_SHA1))
 			{
-				/* ??? what diagnostic? */
 				return STF_FAIL;
 			}
 			return STF_OK;
@@ -146,7 +145,6 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 		if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
 				id_hash, NULL, &hashval,
 				h->hash_algo)) {
-			/* ??? what diagnostic? */
 			return STF_FAIL;
 		}
 
@@ -171,7 +169,6 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 	case AUTH_PSK:
 		/* store in no_ppk_auth */
 		if (!ikev2_create_psk_auth(AUTH_PSK, st, id_hash, no_ppk_auth)) {
-			/* ??? what diagnostic? */
 			return STF_INTERNAL_ERROR;
 		}
 		return STF_OK;
