@@ -19,7 +19,7 @@ v3.30 (unreleased)
 * libswan: Close netlink socket on send error in netlink_query() [Paul]
 * whack: Added whack --ddns to trigger DNS refresh event manually [Paul]
 * XFRM: Fix detection on kernels without xfrm_stat (debian et all) [Paul]
-* KLIPS: Support for kernels >= 4.19 w [Paul]
+* KLIPS: Support for kernels >= 4.20 with SYNC_SKCIPHER_REQUEST_ON_STACK [Paul]
 * KLIPS: Userland tools compile fixes [Hugh/Paul]
 * building: No longer build with DH2(modp1024) support (see RFC 8247) [Paul]
 * packaging: fedora30 requires gcc to be listed as BuildRequires: [Paul]
