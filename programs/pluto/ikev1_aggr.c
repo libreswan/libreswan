@@ -1001,7 +1001,6 @@ void aggr_outI1(fd_t whack_sock,
 		)
 {
 	struct state *st;
-	struct spd_route *sr;
 
 	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
 		loglog(RC_LOG_SERIOUS,
@@ -1011,34 +1010,9 @@ void aggr_outI1(fd_t whack_sock,
 	/* set up new state */
 	st = new_v1_istate();
 	statetime_t start = statetime_backdate(st, inception);
-
-	set_cur_state(st);
-	update_state_connection(st, c);
-
-#ifdef HAVE_LABELED_IPSEC
-	st->sec_ctx = NULL;
-#endif
-	set_state_ike_endpoints(st, c);
-
-	set_cur_state(st);
-
-	st->st_policy = policy & ~POLICY_IPSEC_MASK;
-	st->st_whack_sock = whack_sock;
-	st->st_try = try;
 	change_state(st, STATE_AGGR_I1);
-
-	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		if (sr->this.xauth_client) {
-			if (sr->this.xauth_username != NULL) {
-				jam_str(st->st_xauth_username,
-					sizeof(st->st_xauth_username),
-					sr->this.xauth_username);
-				break;
-			}
-		}
-	}
-
-	binlog_refresh_state(st);
+	initialize_new_state(st, c, policy, try, whack_sock);
+	push_cur_state(st);
 
 	if (!init_aggr_st_oakley(st, policy)) {
 		/*

@@ -480,15 +480,22 @@ void initialize_new_state(struct state *st,
 {
 	update_state_connection(st, c);
 
+#ifdef HAVE_LABELED_IPSEC
+	/*
+	 * XXX: delete this?  aggr_outI1() had .sec_ctx=NULL, but
+	 * since the state was just created it can only be NULL.
+	 */
+	pexpect(st->sec_ctx == NULL);
+#endif
+
 	set_state_ike_endpoints(st, c);
 
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
 	st->st_whack_sock = whack_sock;
 	st->st_try = try;
 
-	const struct spd_route *sr;
-
-	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+	for (const struct spd_route *sr = &c->spd;
+	     sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
 			if (sr->this.xauth_username != NULL) {
 				jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), sr->this.xauth_username);
