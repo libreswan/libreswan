@@ -2809,8 +2809,9 @@ void set_state_ike_endpoints(struct state *st,
 	st->st_interface = c->interface;
 	passert(st->st_interface != NULL);
 
-	st->st_localaddr  = c->spd.this.host_addr;
-	st->st_localport  = c->spd.this.host_port;
+	st->st_localaddr = endpoint_address(&st->st_interface->local_endpoint);
+	st->st_localport = endpoint_port(&st->st_interface->local_endpoint);
+
 	st->st_remoteaddr = c->spd.that.host_addr;
 	st->st_remoteport = c->spd.that.host_port;
 
