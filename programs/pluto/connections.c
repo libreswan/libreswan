@@ -1160,7 +1160,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 		       wm->name);
 		return false;
 	}
-	if (wm->sighash_policy == LEMPTY &&
+	if (wm->sighash_policy != LEMPTY &&
 	    c->ike_version != IKEv2) {
 		loglog(RC_FATAL, "SIGHASH requires ikev2");
 		return false;
