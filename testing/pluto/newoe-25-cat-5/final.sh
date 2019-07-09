@@ -1,6 +1,6 @@
 ipsec whack --trafficstatus
 iptables -t nat -L -n
-../../pluto/bin/ipsec-look.sh | sed "s/udp sport [0-9]* /udp sport XXXXX /"
+../../pluto/bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

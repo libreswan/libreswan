@@ -4,9 +4,9 @@ west #
  ipsec _stackmanager start
 west #
  service auditd stop
-Stopping logging: [  OK  ]
+Stopping logging: [ OK ]
 west #
- rm  -f /var/log/audit/audit.log
+ rm -f /var/log/audit/audit.log
 west #
  systemctl start auditd.service
 west #

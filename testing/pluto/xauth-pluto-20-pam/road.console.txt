@@ -30,6 +30,8 @@ road #
 002 "xauth-road-eastnet" #1: XAUTH: aborting entire IKE Exchange
 036 "xauth-road-eastnet" #1: encountered fatal error in state STATE_XAUTH_I1
 road #
+ # prevent revive race
+road #
  sleep 3
 road #
  ipsec whack --xauthname 'gooduser' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
