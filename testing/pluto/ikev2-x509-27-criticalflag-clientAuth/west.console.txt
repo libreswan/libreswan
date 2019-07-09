@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --x509 --x509name west-critical-client
+/testing/guestbin/swan-prep --x509 --x509name west-ekuCritical
 Preparing X.509 files
 west #
  certutil -D -n east -d sql:/etc/ipsec.d
@@ -100,7 +100,7 @@ hashsha1                                                     P,,
 nic                                                          P,,  
 north                                                        P,,  
 road                                                         P,,  
-west-critical-client                                         u,u,u
+west-ekuCritical                                             u,u,u
 west #
  # on east, it should show it failed the NSS IPsec profile and used the NSS TLS profile
 west #

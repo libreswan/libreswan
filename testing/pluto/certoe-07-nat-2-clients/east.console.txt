@@ -49,29 +49,29 @@ east #
 006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
 006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.2/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.2/32
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../pluto/bin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	encap type espinudp sport 2501 dport 4500 addr 0.0.0.0
+	encap type espinudp sport XXXX dport XXXX addr 0.0.0.0
 src 192.1.2.23 dst 192.1.2.254
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	encap type espinudp sport 4500 dport 2501 addr 0.0.0.0
+	encap type espinudp sport XXXX dport XXXX addr 0.0.0.0
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	encap type espinudp sport 2500 dport 4500 addr 0.0.0.0
+	encap type espinudp sport XXXX dport XXXX addr 0.0.0.0
 src 192.1.2.23 dst 192.1.2.254
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	encap type espinudp sport 4500 dport 2500 addr 0.0.0.0
+	encap type espinudp sport XXXX dport XXXX addr 0.0.0.0
 XFRM policy:
 src 10.0.10.1/32 dst 192.1.2.23/32
 	dir fwd priority 1564639 ptype main

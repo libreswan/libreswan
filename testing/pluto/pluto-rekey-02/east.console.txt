@@ -11,7 +11,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../pluto/bin/ipsec-look.sh | sed "s/dport [0-9][0-9][0-9][0-9][0-9]/dport DPORT/"
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
@@ -25,7 +25,7 @@ src 192.1.2.23 dst 192.1.2.254
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-	encap type espinudp sport 4500 dport 11000 addr 0.0.0.0
+	encap type espinudp sport 4500 dport DPORT addr 0.0.0.0
 XFRM policy:
 src 192.0.2.0/24 dst 192.0.3.0/24
 	dir out priority 1042407 ptype main

@@ -80,7 +80,7 @@ north #
  echo done
 done
 north #
- ../../pluto/bin/ipsec-look.sh
+ ../../pluto/bin/ipsec-look.sh | sed "s/dport [0-9][0-9][0-9][0-9][0-9]/dport DPORT/"
 north NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.32
