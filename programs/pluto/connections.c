@@ -2064,7 +2064,8 @@ static void jam_connection_client(jambuf_t *b,
 
 void jam_connection_instance(jambuf_t *buf, const struct connection *c)
 {
-	if (!pexpect(c->kind == CK_INSTANCE)) {
+	if (!pexpect(c->kind == CK_INSTANCE ||
+		     c->kind == CK_GOING_AWAY)) {
 		return;
 	}
 	if (c->instance_serial != 0) {
@@ -2088,7 +2089,7 @@ void jam_connection_instance(jambuf_t *buf, const struct connection *c)
 void jam_connection(struct lswlog *buf, const struct connection *c)
 {
 	jam(buf, "\"%s\"", c->name);
-	if (c->kind == CK_INSTANCE) {
+	if (c->kind == CK_INSTANCE || c->kind == CK_GOING_AWAY) {
 		jam_connection_instance(buf, c);
 	}
 }
