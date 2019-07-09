@@ -22,6 +22,7 @@ b end
   # due to a kernel difference? Just ignore the error code in the routing table
   s/metric 1024 error -[0-9][0-9]*/metric 1024 error -XXXX/g
   s/metric 1024 error [0-9][0-9]*/metric 1024 error -XXXX/g
+  /^.* dev lo metric 1024.*$/d
 
   # fix up keys and other magic numbers; see also ip xfrm state
   s/ spi 0x[^ ]* / spi 0xSPISPI /g
