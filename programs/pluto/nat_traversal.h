@@ -94,6 +94,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 				struct hidden_variables *hv);
 bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
 			     struct state *st, bool initiator);
+void v2_nat_initiator_endpoints(struct state *st, where_t where);
 
 /**
  * NAT-keep_alive

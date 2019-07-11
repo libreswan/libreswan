@@ -371,7 +371,39 @@ struct state {
 	ip_address st_remoteaddr;               /* where to send packets to */
 	uint16_t st_remoteport;                /* host byte order */
 
-	const struct iface_port *st_interface;  /* where to send from */  /* dhr 2013: why? There was already connection->interface */
+	/*
+	 * dhr 2013: why [.st_interface]? There was already
+	 * connection->interface
+	 *
+	 * XXX: It seems that .st_interface starts out the same as the
+	 * connection's interface but then be changed by NAT.  For
+	 * instance, when the initial request is sent on :500 but the
+	 * response comes back on :4500, .st_interface will switch.
+	 *
+	 * XXX: However, that doesn't explain why st_localaddr and
+	 * st_localport are needed - surely they are identical to
+	 * .st_interface .local_endpoint?  Lets find out.
+	 */
+	const struct iface_port *st_interface;  /* where to send from */
+#define pexpect_st_local_endpoint(ST)					\
+	{								\
+		ip_endpoint st_local_endpoint = endpoint(&(ST)->st_localaddr, \
+							 (ST)->st_localport); \
+		endpoint_buf ib, stb;					\
+		if (endpoint_eq((ST)->st_interface->local_endpoint,	\
+				st_local_endpoint)) {			\
+			dbg("st_local_endpoint %s vs interface %s "PRI_WHERE, \
+			    str_endpoint(&st_local_endpoint, &stb),	\
+			    str_endpoint(&(ST)->st_interface->local_endpoint, &ib), \
+			    pri_where(HERE));				\
+		} else {						\
+			log_pexpect(HERE,				\
+				    "st_local_endpoint %s vs interface %s "PRI_WHERE, \
+				    str_endpoint(&st_local_endpoint, &stb), \
+				    str_endpoint(&(ST)->st_interface->local_endpoint, &ib), \
+				    pri_where(HERE));			\
+		}							\
+	}
 	ip_address st_localaddr;                /* where to send them from */
 	uint16_t st_localport;
 

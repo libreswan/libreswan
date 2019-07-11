@@ -1094,18 +1094,56 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
 	}
 
 	natd_lookup_common(st, &md->sender, found_me, found_him);
+}
 
-	if (st->st_state->kind == STATE_PARENT_I1 &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)) {
-		endpoint_buf b;
-		dbg("NAT-T: #%lu floating IKEv2 ports from local=%d remote=%d to pluto nat port %d for %s",
-		    st->st_serialno,
-		    st->st_localport, st->st_remoteport,
-		    pluto_nat_port,
-		    str_endpoint(&md->sender, &b));
-		st->st_localport = pluto_nat_port;
-		st->st_remoteport = pluto_nat_port;
 
-		nat_traversal_change_port_lookup(NULL, st);
+/*
+ * Update the initiator endpoints so that all further exchanges are
+ * tunneled via :PLUT_NAT_PORT aka :4500.
+ */
+void v2_nat_initiator_endpoints(struct state *st, where_t where)
+{
+	/*
+	 * Float the local endpoint's port to :PLUTO_NAT_PORT (:4500)
+	 * and then re-bind the interface so that all further
+	 * exchanges use that port.
+	 */
+	pexpect_st_local_endpoint(st);
+	endpoint_buf b1, b2;
+	ip_endpoint new_local_endpoint = set_endpoint_port(&st->st_interface->local_endpoint, pluto_nat_port);
+	dbg("NAT: #%lu floating local endpoint from %s to %s using pluto_nat_port "PRI_WHERE,
+	    st->st_serialno,
+	    str_endpoint(&st->st_interface->local_endpoint, &b1),
+	    str_endpoint(&new_local_endpoint, &b2),
+	    pri_where(where));
+	/*
+	 * If not already ...
+	 */
+	if (!endpoint_eq(new_local_endpoint, st->st_interface->local_endpoint)) {
+		/*
+		 * For IPv4, both :PLUTO_PORT and :PLUTO_NAT_PORT are
+		 * opened by server.c so the new endpoint using
+		 * :PLUTO_NAT_PORT should exist.  IPv6 nat isn't
+		 * supported.
+		 */
+		struct iface_port *i = find_iface_port_by_local_endpoint(&new_local_endpoint);
+		if (pexpect(i != NULL)) {
+			endpoint_buf b;
+			pexpect_iface_port(i);
+			dbg("NAT: #%lu floating endpoint ended up on interface %s %s",
+			    st->st_serialno, i->ip_dev->id_rname,
+			    str_endpoint(&i->local_endpoint, &b));
+			st->st_interface = i;
+			st->st_localport = pluto_nat_port;
+		}
 	}
+	pexpect_st_local_endpoint(st);
+
+	/*
+	 * Float the remote port to :PLUTO_NAT_PORT (:4500)
+	 */
+	dbg("NAT-T: #%lu floating remote port from %d to %d using pluto_nat_port "PRI_WHERE,
+	    st->st_serialno, st->st_remoteport, pluto_nat_port,
+	    pri_where(where));
+	st->st_remoteport = pluto_nat_port;
 }

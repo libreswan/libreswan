@@ -1676,11 +1676,24 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and
-	 * v2N_NAT_DETECTION_SOURCE_IP
+	/*
+	 * Check v2N_NAT_DETECTION_DESTINATION_IP or/and
+	 * v2N_NAT_DETECTION_SOURCE_IP, and when detected float the
+	 * endpoints.
+	 *
+	 * 2.23.  NAT Traversal
+	 *
+	 * The IKE initiator MUST check the NAT_DETECTION_SOURCE_IP or
+	 * NAT_DETECTION_DESTINATION_IP payloads if present, and if
+	 * they do not match the addresses in the outer packet, MUST
+	 * tunnel all future IKE and ESP packets associated with this
+	 * IKE SA over UDP port 4500.
 	 */
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		ikev2_natd_lookup(md, &st->st_ike_spis.responder);
+		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
+			v2_nat_initiator_endpoints(st, HERE);
+		}
 	}
 
 	/* initiate calculation of g^xy */
