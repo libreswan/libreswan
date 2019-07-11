@@ -5033,6 +5033,7 @@ static void mobike_reset_remote(struct state *st, struct mobike *est_remote)
 	st->st_remoteaddr = est_remote->remoteaddr;
 	st->st_remoteport = est_remote->remoteport;
 	st->st_interface = est_remote->interface;
+	pexpect_st_local_endpoint(st);
 
 	anyaddr(AF_INET, &st->st_mobike_remoteaddr);
 	st->st_mobike_remoteport = 0;
@@ -5059,6 +5060,7 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 		st->st_remoteaddr = md->sender;
 		st->st_remoteport = hportof(&md->sender);
 		st->st_interface = md->iface;
+		pexpect_st_local_endpoint(st);
 	}
 }
 
@@ -5898,6 +5900,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 	if (!mobike_check_established(st))
 		return;
 
+	pexpect_st_local_endpoint(st);
 	if (sameaddr(ip, &st->st_localaddr)) {
 		ip_address ip_p = st->st_deleted_local_addr;
 		st->st_deleted_local_addr = st->st_localaddr;
@@ -5935,9 +5938,11 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 				sensitive_ipstr(&st->st_remoteaddr, &b),
 				ipstr(&this->nexthop, &g)));
 	st->st_mobike_localaddr = this->addr;
+	pexpect_st_local_endpoint(st);
 	st->st_mobike_localport = st->st_localport;
 	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
 	const struct iface_port *o_iface = st->st_interface;
+	/* notice how it gets set back below */
 	st->st_interface = iface;
 
 	stf_status e = record_v2_informational_request("mobike informational request",
@@ -5954,6 +5959,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
 	}
 	st->st_interface = o_iface;
+	pexpect_st_local_endpoint(st);
 }
 #endif
 
@@ -5962,6 +5968,7 @@ static const struct iface_port *ikev2_src_iface(struct state *st,
 						struct starter_end *this)
 {
 	/* success found a new source address */
+	pexpect_st_local_endpoint(st);
 	ip_endpoint local_endpoint = endpoint(&this->addr, st->st_localport);
 	const struct iface_port *iface = find_iface_port_by_local_endpoint(&local_endpoint);
 	if (iface == NULL) {

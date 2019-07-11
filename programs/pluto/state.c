@@ -1475,9 +1475,13 @@ static struct state *duplicate_state(struct state *st,
 	nst->hidden_variables = st->hidden_variables;
 	nst->st_remoteaddr = st->st_remoteaddr;
 	nst->st_remoteport = st->st_remoteport;
+	pexpect_st_local_endpoint(st);
 	nst->st_localaddr = st->st_localaddr;
+	dbg("#%lu updating local port from %d to %d (using #%ld.st_localport in %s())",
+	    nst->st_serialno, nst->st_localport, st->st_localport, st->st_serialno, __func__);
 	nst->st_localport = st->st_localport;
 	nst->st_interface = st->st_interface;
+	pexpect_st_local_endpoint(nst);
 	nst->st_clonedfrom = st->st_serialno;
 	passert(nst->st_ike_version == st->st_ike_version);
 	nst->st_ikev2_anon = st->st_ikev2_anon;
@@ -2657,8 +2661,11 @@ void update_ike_endpoints(struct ike_sa *ike,
 	ike->sa.st_remoteaddr = md->sender;
 	ike->sa.st_remoteport = hportof(&md->sender);
 	ike->sa.st_localaddr = md->iface->ip_addr;
+	dbg("#%lu updating local port from %d to %d (using md->iface in %s())",
+	    ike->sa.st_serialno, ike->sa.st_localport, md->iface->port, __func__);
 	ike->sa.st_localport = md->iface->port;
 	ike->sa.st_interface = md->iface;
+	pexpect_st_local_endpoint(&ike->sa);
 }
 
 /*
@@ -2693,6 +2700,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE inititor processing response */
+		pexpect_st_local_endpoint(&ike->sa);
 		old_addr = &ike->sa.st_localaddr;
 		old_port = ike->sa.st_localport;
 
@@ -2775,6 +2783,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	default:
 		bad_case(md_role);
 	}
+	pexpect_st_local_endpoint(&ike->sa);
+	pexpect_st_local_endpoint(&child->sa);
 
 	/* reset liveness */
 	ike->sa.st_pend_liveness = FALSE;
@@ -2811,6 +2821,7 @@ void set_state_ike_endpoints(struct state *st,
 
 	st->st_localaddr = endpoint_address(&st->st_interface->local_endpoint);
 	st->st_localport = endpoint_port(&st->st_interface->local_endpoint);
+	pexpect_st_local_endpoint(st);
 
 	st->st_remoteaddr = c->spd.that.host_addr;
 	st->st_remoteport = c->spd.that.host_port;

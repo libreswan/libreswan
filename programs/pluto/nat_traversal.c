@@ -184,6 +184,7 @@ bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 	};
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
+	pexpect_st_local_endpoint(st);
 	uint16_t lport = st->st_localport;
 	if (st->st_connection->encaps == yna_yes) {
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
@@ -457,6 +458,7 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
 	unsigned remote_port = st->st_remoteport;
+	pexpect_st_local_endpoint(st);
 	unsigned short local_port = st->st_localport;
 	if (st->st_connection->encaps == yna_yes) {
 		DBG(DBG_NATT,
@@ -618,6 +620,7 @@ bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
 {
 	const ip_address *ipinit, *ipresp;
 
+	pexpect_st_local_endpoint(st);
 	if (initiator) {
 		ipinit = &st->st_localaddr;
 		ipresp = &st->st_remoteaddr;
