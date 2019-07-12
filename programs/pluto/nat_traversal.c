@@ -990,8 +990,9 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	     st->st_state->kind == STATE_AGGR_I2) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    st->st_localport != pluto_nat_port) {
-		dbg("NAT-T: #%lu floating IKEv1 ports from local=%d remote=%d to pluto nat port %d",
-		    st->st_serialno, st->st_localport, st->st_remoteport,
+		dbg("NAT-T: #%lu in %s floating IKEv1 ports from local=%d remote=%d to pluto nat port %d",
+		    st->st_serialno, st->st_state->short_name,
+		    st->st_localport, st->st_remoteport,
 		    pluto_nat_port);
 
 		st->st_localport  = pluto_nat_port;
