@@ -2801,7 +2801,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		if (smc->flags & SMF_REPLY) {
 			ipstr_buf b;
 			endpoint_buf b2;
-			pexpect_iface_port(st->st_interface);
+			pexpect_st_local_endpoint(st);
 			dbg("sending reply packet to %s:%u (from %s)",
 			    ipstr(&st->st_remoteaddr, &b),
 			    st->st_remoteport,

@@ -387,8 +387,9 @@ struct state {
 	const struct iface_port *st_interface;  /* where to send from */
 #define pexpect_st_local_endpoint(ST)					\
 	{								\
-		ip_endpoint st_local_endpoint = endpoint(&(ST)->st_localaddr, \
-							 (ST)->st_localport); \
+		ip_endpoint st_local_endpoint =				\
+			endpoint(&(ST)->st_localaddr,			\
+				 (ST)->st_localport);			\
 		endpoint_buf ib, stb;					\
 		if (endpoint_eq((ST)->st_interface->local_endpoint,	\
 				st_local_endpoint)) {			\
@@ -398,10 +399,19 @@ struct state {
 			    pri_where(HERE));				\
 		} else {						\
 			log_pexpect(HERE,				\
-				    "st_local_endpoint %s vs interface %s "PRI_WHERE, \
+				    "st_local_endpoint %s vs interface %s", \
 				    str_endpoint(&st_local_endpoint, &stb), \
-				    str_endpoint(&(ST)->st_interface->local_endpoint, &ib), \
-				    pri_where(HERE));			\
+				    str_endpoint(&(ST)->st_interface->local_endpoint, &ib)); \
+		}							\
+		ip_endpoint st_interface_addr_port =			\
+			endpoint(&(ST)->st_interface->ip_addr,		\
+				 (ST)->st_interface->port);		\
+		if (!endpoint_eq(st_local_endpoint,			\
+				 st_interface_addr_port)) {		\
+			log_pexpect(HERE,				\
+				    "st_local_endpoint %s vs interface %s", \
+				    str_endpoint(&st_local_endpoint, &stb), \
+				    str_endpoint(&st_interface_addr_port, &ib)); \
 		}							\
 	}
 	ip_address st_localaddr;                /* where to send them from */

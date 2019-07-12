@@ -956,6 +956,8 @@ void nat_traversal_new_mapping(struct ike_sa *ike,
 /* this should only be called after packet has been verified/authenticated! */
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 {
+	pexpect_st_local_endpoint(st);
+
 	if (st == NULL)
 		return;
 
@@ -1016,7 +1018,6 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	if (!endpoint_eq(st_local_endpoint, st->st_interface->local_endpoint)) {
 		endpoint_buf b1;
 		endpoint_buf b2;
-		pexpect_iface_port(st->st_interface);
 		dbg("NAT-T: #%lu has local endpoint %s which does not match interface %s %s",
 		    st->st_serialno,
 		    str_endpoint(&st_local_endpoint, &b1),
@@ -1026,13 +1027,13 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		struct iface_port *i = find_iface_port_by_local_endpoint(&st_local_endpoint);
 		if (i != NULL) {
 			endpoint_buf b;
-			pexpect_iface_port(i);
 			dbg("NAT-T: #%lu updated to use interface %s %s",
 			    st->st_serialno, i->ip_dev->id_rname,
 			    str_endpoint(&i->local_endpoint, &b));
 			st->st_interface = i;
 		}
 	}
+	pexpect_st_local_endpoint(st);
 }
 
 void show_setup_natt(void)
@@ -1129,7 +1130,6 @@ void v2_nat_initiator_endpoints(struct state *st, where_t where)
 		struct iface_port *i = find_iface_port_by_local_endpoint(&new_local_endpoint);
 		if (pexpect(i != NULL)) {
 			endpoint_buf b;
-			pexpect_iface_port(i);
 			dbg("NAT: #%lu floating endpoint ended up on interface %s %s",
 			    st->st_serialno, i->ip_dev->id_rname,
 			    str_endpoint(&i->local_endpoint, &b));

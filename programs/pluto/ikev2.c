@@ -3180,7 +3180,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 
 		ipstr_buf b;
 		endpoint_buf b2;
-		pexpect_iface_port(st->st_interface);
+		pexpect_st_local_endpoint(st);
 		dbg("sending V2 %s packet to %s:%u (from %s)",
 		    v2_msg_role(md) == MESSAGE_REQUEST ? "new request" : "reply",
 		    ipstr(&st->st_remoteaddr, &b),
