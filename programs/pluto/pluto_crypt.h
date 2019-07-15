@@ -69,7 +69,7 @@ struct crypto_handler {
 	crypto_cancelled_cb *cancelled_cb;
 };
 
-void submit_crypto(struct state *st,
+extern void submit_crypto(struct state *st,
 		   struct crypto_task *task,
 		   const struct crypto_handler *handler,
 		   const char *name);
