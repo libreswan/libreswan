@@ -2780,6 +2780,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		if (nat_traversal_enabled && st->st_connection->ikev1_natt != NATT_NONE) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
+			v1_maybe_natify_initiator_endpoints(st, HERE);
 		}
 
 		/*

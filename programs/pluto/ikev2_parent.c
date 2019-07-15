@@ -1692,7 +1692,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		ikev2_natd_lookup(md, &st->st_ike_spis.responder);
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
-			v2_nat_initiator_endpoints(st, HERE);
+			natify_initiator_endpoints(st, HERE);
 		}
 	}
 
