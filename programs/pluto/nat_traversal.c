@@ -977,9 +977,13 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		/*
 		 * If interface type has changed, update local port (500/4500)
 		 */
-		if (md->iface->port != st->st_localport) {
-			dbg("NAT-T: #%lu updating local port from %d to %d",
-			    st->st_serialno, st->st_localport, md->iface->port);
+		if (md->iface != st->st_interface) {
+			endpoint_buf b1, b2;
+			dbg("NAT-T: #%lu updating local interface from %s to %s (using md->iface in %s())",
+			    st->st_serialno,
+			    str_endpoint(&st->st_interface->local_endpoint, &b1),
+			    str_endpoint(&md->iface->local_endpoint, &b2), __func__);
+			st->st_interface = md->iface;
 			st->st_localport = md->iface->port;
 		}
 	}
