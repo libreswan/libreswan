@@ -420,7 +420,6 @@ struct state {
 	/* IKEv2 MOBIKE probe copies */
 	ip_address st_mobike_remoteaddr;
 	uint16_t st_mobike_remoteport;
-	const struct iface_port *st_mobike_interface;
 	ip_address st_deleted_local_addr;	/* kernel deleted address */
 	ip_address st_mobike_localaddr;		/* new address to initiate MOBIKE */
 	uint16_t st_mobike_localport;		/* is this necessary ? */

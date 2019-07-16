@@ -4853,7 +4853,6 @@ static void set_mobike_remote_addr(struct msg_digest *md, struct state *st)
 
 	st->st_mobike_remoteaddr = md->sender;
 	st->st_mobike_remoteport = hportof(&md->sender);
-	st->st_mobike_interface = md->iface;
 	/* local_addr and localport are not used in send_packet() ! */
 }
 
@@ -5037,7 +5036,6 @@ static void mobike_reset_remote(struct state *st, struct mobike *est_remote)
 
 	anyaddr(AF_INET, &st->st_mobike_remoteaddr);
 	st->st_mobike_remoteport = 0;
-	st->st_mobike_interface = NULL;
 }
 
 /* MOBIKE liveness/update response. set temp remote address/interface */
