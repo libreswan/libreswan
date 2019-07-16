@@ -170,7 +170,6 @@ extern size_t addrtot(const ip_address *src, int format, char *buf, size_t bufle
 
 /* initializations */
 extern err_t loopbackaddr(int af, ip_address *dst);
-extern err_t unspecaddr(int af, ip_address *dst);
 extern err_t anyaddr(int af, ip_address *dst);
 extern err_t initaddr(const unsigned char *src, size_t srclen, int af,
 	       ip_address *dst);
@@ -189,7 +188,6 @@ extern bool sameaddr(const ip_address *a, const ip_address *b);
 extern int addrcmp(const ip_address *a, const ip_address *b);
 extern bool sameaddrtype(const ip_address *a, const ip_address *b);
 extern int isanyaddr(const ip_address *src);
-extern int isunspecaddr(const ip_address *src);
 extern int isloopbackaddr(const ip_address *src);
 
 #endif
