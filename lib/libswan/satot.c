@@ -94,7 +94,7 @@ size_t dstlen;
 
 	if (strcmp(pre, PASSTHROUGHTYPE) == 0 &&
 	    sa->spi == PASSTHROUGHSPI &&
-	    isunspecaddr(&sa->dst)) {
+	    isanyaddr(&sa->dst)) {
 		strcpy(buf, (addrtypeof(&sa->dst) == AF_INET) ?
 		       PASSTHROUGH4NAME :
 		       PASSTHROUGH6NAME);
