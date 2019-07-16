@@ -1130,13 +1130,6 @@ int main(int argc, char *argv[])
 			progname);
 	}
 
-	if (stat("/proc/sys/net/core/xfrm_acq_expires", &sts) == 0) {
-		fprintf(stderr,
-			"%s: XFRM does not use the ipsec spi command. Use 'ip xfrm' instead.\n",
-			progname);
-		exit(1);
-	}
-
 	if (argcount == 1) {
 		int ret = 1;
 
