@@ -247,10 +247,6 @@ startklips() {
     if [ -f ${xfrm_stat} ]; then
 	echo "Warning: found possible XFRM IPsec stack loaded - attempting to unload..." >&2
 	stopnetkey --wait
-	if [ -f ${xfrm_stat} ]; then
-	    echo "FAILURE to unload XFRM IPsec stack" >&2
-	    exit 1
-	fi
     fi
     if [ ! -f ${klipsstack} ]; then
 	# KLIPS-related paths
