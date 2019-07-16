@@ -414,8 +414,8 @@ struct state {
 				    str_endpoint(&st_interface_addr_port, &ib)); \
 		}							\
 	}
-	ip_address st_localaddr;                /* where to send them from */
-	uint16_t st_localport;
+#define st_localaddr st_interface->ip_addr
+#define st_localport st_interface->port
 
 	/* IKEv2 MOBIKE probe copies */
 	ip_address st_mobike_remoteaddr;

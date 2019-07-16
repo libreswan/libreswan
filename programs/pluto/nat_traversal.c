@@ -984,7 +984,6 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 			    str_endpoint(&st->st_interface->local_endpoint, &b1),
 			    str_endpoint(&md->iface->local_endpoint, &b2), __func__);
 			st->st_interface = md->iface;
-			st->st_localport = md->iface->port;
 		}
 	}
 	pexpect_st_local_endpoint(st);
@@ -1124,7 +1123,6 @@ void natify_initiator_endpoints(struct state *st, where_t where)
 			    st->st_serialno, i->ip_dev->id_rname,
 			    str_endpoint(&i->local_endpoint, &b));
 			st->st_interface = i;
-			st->st_localport = pluto_nat_port;
 		}
 	}
 	pexpect_st_local_endpoint(st);
