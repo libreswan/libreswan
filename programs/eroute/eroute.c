@@ -494,27 +494,18 @@ int main(int argc, char **argv)
 
 	if (argcount == 1) {
 		struct stat sts;
+		int ret = 1;
 
-		if (stat("/proc/sys/net/core/xfrm_acq_expires", &sts) == 0) {
+		if (stat("/proc/net/ipsec_eroute", &sts) != 0) {
 			fprintf(stderr,
-				"%s: XFRM does not support eroute table.\n",
+				"%s: No eroute table - no KLIPS IPsec support in kernel\n",
 				progname);
-
-			exit(1);
 		} else {
-			int ret = 1;
-
-			if (stat("/proc/net/ipsec_eroute", &sts) != 0) {
-				fprintf(stderr,
-					"%s: No eroute table - no IPsec support in kernel (are the modules loaded?)\n",
-					progname);
-			} else {
-				ret = system("cat /proc/net/ipsec_eroute");
-				ret = ret != -1 &&
-				      WIFEXITED(ret) ? WEXITSTATUS(ret) : 1;
-			}
-			exit(ret);
+			ret = system("cat /proc/net/ipsec_eroute");
+			ret = ret != -1 &&
+			      WIFEXITED(ret) ? WEXITSTATUS(ret) : 1;
 		}
+		exit(ret);
 	}
 
 	/* Sanity checks */

@@ -869,6 +869,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	if (st->st_mobike_localport > 0) {
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
+		pexpect_st_local_endpoint(st);
 		old_port = st->st_localport;
 		new_port = st->st_mobike_localport;
 		new_addr = &st->st_mobike_localaddr;
@@ -918,6 +919,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			set_text_said(n, src, sa.spi, proto);
 			if (natt_type != 0) {
 				natt_sport = st->st_mobike_remoteport;
+				pexpect_st_local_endpoint(st);
 				natt_dport = st->st_localport;
 			}
 
@@ -932,6 +934,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			set_text_said(n, dst, sa.spi, proto);
 
 			if (natt_type != 0) {
+				pexpect_st_local_endpoint(st);
 				natt_sport = st->st_localport;
 				natt_dport = st->st_mobike_remoteport;
 			}

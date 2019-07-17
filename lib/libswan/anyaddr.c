@@ -54,17 +54,6 @@ ip_address *dst;
 }
 
 /*
-   - unspecaddr - initialize to the unspecified-address value
- */
-err_t                           /* NULL for success, else string literal */
-unspecaddr(af, dst)
-int af;                         /* address family */
-ip_address *dst;
-{
-	return anyaddr(af, dst);
-}
-
-/*
    - loopbackaddr - initialize to the loopback-address value
  */
 err_t                           /* NULL for success, else string literal */
@@ -113,15 +102,6 @@ const ip_address * src;
 	}
 
 	return (cmp == 0) ? 1 : 0;
-}
-
-/*
-   - isunspecaddr - test for the unspecified-address value
- */
-int isunspecaddr(src)
-const ip_address * src;
-{
-	return isanyaddr(src);
 }
 
 /*
