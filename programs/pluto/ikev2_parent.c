@@ -5052,7 +5052,7 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 		/* remember the established/old address and interface */
 		est_remote->remoteaddr = st->st_remoteaddr;
 		est_remote->remoteport = st->st_remoteport;
-		est_remote->interface = md->iface;
+		est_remote->interface = st->st_interface;
 
 		/* set temp one and after the message sent reset it */
 		st->st_remoteaddr = md->sender;
