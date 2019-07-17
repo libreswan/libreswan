@@ -52,6 +52,7 @@
 #include "ike_spi.h"
 #include "pluto_timing.h"	/* for statetime_t */
 #include "ikev2_msgid.h"
+#include "ip_endpoint.h"
 
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
@@ -418,11 +419,9 @@ struct state {
 #define st_localport st_interface->port
 
 	/* IKEv2 MOBIKE probe copies */
-	ip_address st_mobike_remoteaddr;
-	uint16_t st_mobike_remoteport;
+	ip_address st_mobike_remote_endpoint;
 	ip_address st_deleted_local_addr;	/* kernel deleted address */
-	ip_address st_mobike_localaddr;		/* new address to initiate MOBIKE */
-	uint16_t st_mobike_localport;		/* is this necessary ? */
+	ip_endpoint st_mobike_local_endpoint;	/* new address to initiate MOBIKE */
 	ip_address st_mobike_host_nexthop;	/* for updown script */
 
 	/** IKEv1-only things **/

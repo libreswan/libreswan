@@ -4844,18 +4844,6 @@ static void delete_or_replace_state(struct state *st) {
 	}
 }
 
-static void set_mobike_remote_addr(struct msg_digest *md, struct state *st)
-{
-	/*
-	 * If this is a MOBIKE probe, use the received IP:port for only this reply packet,
-	 * without updating IKE endpoint and without UPDATE_SA.
-	 */
-
-	st->st_mobike_remoteaddr = md->sender;
-	st->st_mobike_remoteport = hportof(&md->sender);
-	/* local_addr and localport are not used in send_packet() ! */
-}
-
 /* can an established state initiate or respond to mobike probe */
 static bool mobike_check_established(const struct state *st)
 {
@@ -5015,7 +5003,12 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 
 	if (may_mobike && !ntfy_update_sa && *ntfy_natd &&
 	    !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
-		set_mobike_remote_addr(md, st);
+		/*
+		 * If this is a MOBIKE probe, use the received IP:port
+		 * for only this reply packet, without updating IKE
+		 * endpoint and without UPDATE_SA.
+		 */
+		st->st_mobike_remote_endpoint = md->sender;
 	}
 
 	if (ntfy_update_sa)
@@ -5033,9 +5026,7 @@ static void mobike_reset_remote(struct state *st, struct mobike *est_remote)
 	st->st_remoteport = est_remote->remoteport;
 	st->st_interface = est_remote->interface;
 	pexpect_st_local_endpoint(st);
-
-	anyaddr(AF_INET, &st->st_mobike_remoteaddr);
-	st->st_mobike_remoteport = 0;
+	st->st_mobike_remote_endpoint = endpoint_invalid;
 }
 
 /* MOBIKE liveness/update response. set temp remote address/interface */
@@ -5584,8 +5575,7 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 static payload_master_t add_mobike_payloads;
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
-	ip_endpoint local_endpoint = endpoint(&st->st_mobike_localaddr,
-					      st->st_mobike_localport);
+	ip_endpoint local_endpoint = st->st_mobike_local_endpoint;
 	ip_endpoint remote_endpoint = endpoint(&st->st_remoteaddr,
 					       st->st_remoteport);
 	return emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs) &&
@@ -5935,9 +5925,10 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 				st->st_serialno, ipstr(&this->addr, &s),
 				sensitive_ipstr(&st->st_remoteaddr, &b),
 				ipstr(&this->nexthop, &g)));
-	st->st_mobike_localaddr = this->addr;
 	pexpect_st_local_endpoint(st);
-	st->st_mobike_localport = st->st_localport;
+	/* XXX: why not local_endpoint or is this redundant */
+	st->st_mobike_local_endpoint =
+		endpoint(&this->addr, endpoint_port(&st->st_interface->local_endpoint));
 	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
 	const struct iface_port *o_iface = st->st_interface;
 	/* notice how it gets set back below */

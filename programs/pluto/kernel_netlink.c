@@ -858,21 +858,19 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		.natt_type = natt_type,
 	};
 
-	ip_address *new_addr;
+	ip_endpoint new_endpoint;
 	uint16_t old_port;
-	uint16_t new_port;
 	uint16_t natt_sport = 0;
 	uint16_t natt_dport = 0;
 	const ip_address *src, *dst;
 	const ip_subnet *src_client, *dst_client;
 
-	if (st->st_mobike_localport > 0) {
+	if (endpoint_is_valid(&st->st_mobike_local_endpoint)) {
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
 		pexpect_st_local_endpoint(st);
 		old_port = st->st_localport;
-		new_port = st->st_mobike_localport;
-		new_addr = &st->st_mobike_localaddr;
+		new_endpoint = st->st_mobike_local_endpoint;
 
 		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
 			src = &c->spd.that.host_addr;
@@ -880,24 +878,24 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			src_client = &c->spd.that.client;
 			dst_client = &c->spd.this.client;
 			sa.nsrc = src;
-			sa.ndst = &st->st_mobike_localaddr;
+			sa.ndst = &st->st_mobike_local_endpoint;
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, dst, sa.spi, proto);
 			if (natt_type != 0) {
 				natt_sport = st->st_remoteport;
-				natt_dport = st->st_mobike_localport;
+				natt_dport = endpoint_port(&st->st_mobike_local_endpoint);
 			}
 		} else {
 			src = &c->spd.this.host_addr;
 			dst = &c->spd.that.host_addr;
 			src_client = &c->spd.this.client;
 			dst_client = &c->spd.that.client;
-			sa.nsrc = &st->st_mobike_localaddr;
+			sa.nsrc = &st->st_mobike_local_endpoint;
 			sa.ndst = dst;
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (natt_type != 0) {
-				natt_sport = st->st_mobike_localport;
+				natt_sport = endpoint_port(&st->st_mobike_local_endpoint);
 				natt_dport = st->st_remoteport;
 			}
 		}
@@ -905,38 +903,36 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "responder migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
 		old_port = st->st_remoteport;
-		new_port = st->st_mobike_remoteport;
-		new_addr = &st->st_mobike_remoteaddr;
+		new_endpoint = st->st_mobike_remote_endpoint;
 
 		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
 			src = &c->spd.that.host_addr;
 			dst = &c->spd.this.host_addr;
 			src_client = &c->spd.that.client;
 			dst_client = &c->spd.this.client;
-			sa.nsrc = &st->st_mobike_remoteaddr;
+			sa.nsrc = &st->st_mobike_remote_endpoint;
 			sa.ndst = &c->spd.this.host_addr;
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (natt_type != 0) {
-				natt_sport = st->st_mobike_remoteport;
+				natt_sport = endpoint_port(&st->st_mobike_remote_endpoint);
 				pexpect_st_local_endpoint(st);
-				natt_dport = st->st_localport;
+				natt_dport = endpoint_port(&st->st_interface->local_endpoint);
 			}
-
 		} else {
 			src = &c->spd.this.host_addr;
 			dst = &c->spd.that.host_addr;
 			src_client = &c->spd.this.client;
 			dst_client = &c->spd.that.client;
 			sa.nsrc = &c->spd.this.host_addr;
-			sa.ndst = &st->st_mobike_remoteaddr;
+			sa.ndst = &st->st_mobike_remote_endpoint;
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, dst, sa.spi, proto);
 
 			if (natt_type != 0) {
 				pexpect_st_local_endpoint(st);
-				natt_sport = st->st_localport;
-				natt_dport = st->st_mobike_remoteport;
+				natt_sport = endpoint_port(&st->st_interface->local_endpoint);
+				natt_dport = endpoint_port(&st->st_mobike_remote_endpoint);
 			}
 		}
 	}
@@ -951,10 +947,10 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	sa.natt_dport = natt_dport;
 
 	char reqid_buf[ULTOT_BUF + 32];
-	ipstr_buf ra;
-	snprintf(reqid_buf, sizeof(reqid_buf), ":%u to %s:%u reqid=%u %s",
+	endpoint_buf ra;
+	snprintf(reqid_buf, sizeof(reqid_buf), ":%u to %s reqid=%u %s",
 			old_port,
-			ipstr(new_addr, &ra), new_port,
+		 str_endpoint(&new_endpoint, &ra),
 			sa.reqid,
 			enum_name(&netkey_sa_dir_names, dir));
 	add_str(text_said, SAMIGTOT_BUF, text_said, reqid_buf);
