@@ -54,7 +54,8 @@ KVM_ALL_ALGS ?= false
 KVM_USE_SECCOMP ?= true
 KVM_USE_LABELED_IPSEC ?= true
 KVM_SD_RESTART_TYPE=no
-KVM_MAKEFLAGS ?= USE_EFENCE=$(KVM_USE_EFENCE) ALL_ALGS=$(KVM_ALL_ALGS) USE_SECCOMP=$(KVM_USE_SECCOMP) USE_LABELED_IPSEC=$(KVM_USE_LABELED_IPSEC) USE_NSS_IPSEC_PROFILE=$(KVM_USE_NSS_IPSEC_PROFILE) SD_RESTART_TYPE=$(KVM_SD_RESTART_TYPE) USE_KLIPS=true
+KVM_USE_KLIPS ?= true
+KVM_MAKEFLAGS ?= USE_EFENCE=$(KVM_USE_EFENCE) ALL_ALGS=$(KVM_ALL_ALGS) USE_SECCOMP=$(KVM_USE_SECCOMP) USE_LABELED_IPSEC=$(KVM_USE_LABELED_IPSEC) USE_NSS_IPSEC_PROFILE=$(KVM_USE_NSS_IPSEC_PROFILE) SD_RESTART_TYPE=$(KVM_SD_RESTART_TYPE) USE_KLIPS=$(KVM_USE_KLIPS)
 
 KVM_UID ?= $(shell id -u)
 KVM_GID ?= $(shell id -g $(KVM_GROUP))
@@ -936,7 +937,7 @@ define kvm-DOMAIN-build
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR)'
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) base'
-ifeq ($(USE_KLIPS),true)
+ifeq ($(KVM_USE_KLIPS),true)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) module'
 endif
 	: install will run $$(KVMSH) --shutdown $(1)
@@ -972,11 +973,11 @@ define kvm-DOMAIN-install
 	: kvm-DOMAIN-install domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) install-base'
-ifeq ($(USE_KLIPS),true)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) module_install'
-endif
 ifeq ($(USE_FIPSCHECK),true)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) install-fipshmac'
+endif
+ifeq ($(KVM_USE_KLIPS),true)
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) module_install'
 endif
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
 	$$(KVMSH) --shutdown $(1)
