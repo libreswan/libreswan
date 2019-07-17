@@ -250,9 +250,10 @@ USERLAND_CFLAGS += -DUSE_TWOFISH
 LIBTWOFISH= ${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 endif
 
-USE_XCBC ?= true
-ifeq ($(USE_XCBC),true)
-USERLAND_CFLAGS += -DUSE_XCBC
+# Used mostly for IoT
+USE_PRF_AES_XCBC ?= true
+ifeq ($(USE_PRF_AES_XCBC),true)
+USERLAND_CFLAGS += -DUSE_PRF_AES_XCBC
 endif
 
 # Use the NSS Key Derivation Function (KDF) instead of using the NSS

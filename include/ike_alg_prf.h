@@ -13,7 +13,7 @@
  * for more details.
  */
 
-#ifdef USE_AES
+#ifdef USE_PRF_AES_XCBC
 extern const struct prf_desc ike_alg_prf_aes_xcbc;
 #endif
 

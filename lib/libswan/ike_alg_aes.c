@@ -313,6 +313,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.encrypt_kernel_audit_name = "AES_CCM_C",
 };
 
+#ifdef USE_PRF_AES_XCBC
 const struct prf_desc ike_alg_prf_aes_xcbc = {
 	.common = {
 		.name = "aes_xcbc",
@@ -336,6 +337,7 @@ const struct prf_desc ike_alg_prf_aes_xcbc = {
 	.prf_ikev2_ops = &ike_alg_prf_ikev2_mac_ops,
 	.prf_ike_audit_name = "aes_xcbc",
 };
+#endif
 
 const struct integ_desc ike_alg_integ_aes_xcbc = {
 	.common = {
@@ -353,7 +355,7 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 	.integ_keymat_size = AES_XCBC_DIGEST_SIZE,
 	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 	.integ_ikev1_ah_transform = AH_AES_XCBC_MAC,
-#ifdef USE_XCBC
+#ifdef USE_PRF_AES_XCBC
 	.prf = &ike_alg_prf_aes_xcbc,
 #endif
 #ifdef SADB_X_AALG_AES_XCBC_MAC
