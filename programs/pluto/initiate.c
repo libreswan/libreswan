@@ -721,8 +721,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 			 * and the existing one. So we return without
 			 * doing anything
 			 */
-			libreswan_log("found existing state, ignoring instance \"%s\"%s, due to duplicate acquire",
-				c->name, fmt_conn_instance(c, cib));
+			libreswan_log("ignoring found existing connection instance \"%s\"%s that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
+				c->name, fmt_conn_instance(c, cib),
+				c->newest_isakmp_sa, c->newest_ipsec_sa);
 			return;
 #endif
 		}
