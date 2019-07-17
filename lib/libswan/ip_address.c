@@ -52,6 +52,19 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 	return address;
 }
 
+int address_type(const ip_address *address)
+{
+	int af = address->u.v4.sin_family;
+	switch (af) {
+	case AF_INET:
+	case AF_INET6:
+	case AF_UNSPEC:
+		return af;
+	default:
+		bad_case(af);
+	}
+}
+
 /*
  * portof - get the port field of an ip_address in network order.
  *
@@ -374,4 +387,24 @@ const char *str_address_reversed(const ip_address *src,
 	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_address_reversed(&buf, src);
 	return dst->buf;
+}
+
+const ip_address address_invalid = {
+	.u = {
+		.v4 = {
+			.sin_family = AF_UNSPEC,
+		},
+	},
+};
+
+bool address_is_invalid(const ip_address *address)
+{
+	int af = address_type(address);
+	return (af == AF_UNSPEC);
+}
+
+bool address_is_valid(const ip_address *address)
+{
+	int af = address_type(address);
+	return (af == AF_INET || af == AF_INET6);
 }

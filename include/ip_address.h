@@ -76,21 +76,6 @@ typedef struct {
 ip_address address_from_in_addr(const struct in_addr *in);
 ip_address address_from_in6_addr(const struct in6_addr *sin6);
 
-/* network byte ordered */
-int nportof(const ip_address *src);
-ip_address nsetportof(int port, ip_address dst);
-
-/* host byte ordered */
-int hportof(const ip_address *src);
-ip_address hsetportof(int port, const ip_address dst);
-
-/* XXX: compatibility */
-#define portof(SRC) nportof((SRC))
-#define setportof(PORT, DST) { *(DST) = nsetportof(PORT, *(DST)); }
-
-struct sockaddr *sockaddrof(const ip_address *src);
-size_t sockaddrlenof(const ip_address *src);
-
 /*
  * Convert an address to a string:
  *
@@ -134,28 +119,49 @@ const char *ipstr(const ip_address *src, ipstr_buf *b);
 const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 
 /*
- * isvalidaddr(): true when ADDR contains some sort of IPv4 or IPv6
- * address.
+ * Magic values.
  *
- * The relationship !isvalidaddr() IFF ipstr()=="<invalid>" is ment to
- * hold.  Both the *addrtot() (used by ipstr()) and *portof() seem to
- * use the same check.  hportof() just happens to be an easy way to
- * access it.
+ * XXX: While the headers call the all-zero address "ANY" (INADDR_ANY,
+ * IN6ADDR_ANY_INIT), the headers also refer to the IPv6 value as
+ * unspecified (for instance IN6_IS_ADDR_UNSPECIFIED()) leaving the
+ * term "unspecified" underspecified.
  *
- * The routine isanyaddr() isn't used as, in addition to "<invalid>"
- * it includes magic "any" IPv4 and IPv6 addresses.
+ * Consequently, "invalid" refers to AF_UNSPEC, "any" refers to
+ * AF_{INET,INET6)=0, and "specified" refers to other stuff.
  */
 
-#define isvalidaddr(ADDR) (hportof(ADDR) >= 0)
+/* AF=AF_UNSPEC, ADDR = 0, */
+const ip_address address_invalid;
+bool address_is_invalid(const ip_address *address);
+
+/* AF=={INET,INET6}; ADDR = *; is this too general? */
+bool address_is_valid(const ip_address *address);
 
 /*
  * Raw address bytes as a shunk - since that does const.
  */
 shunk_t address_as_shunk(const ip_address *address);
 
+int address_type(const ip_address *address);
+
 /*
  * Old style.
  */
+
+/* network byte ordered */
+int nportof(const ip_address *src);
+ip_address nsetportof(int port, ip_address dst);
+
+/* host byte ordered */
+int hportof(const ip_address *src);
+ip_address hsetportof(int port, const ip_address dst);
+
+/* XXX: compatibility */
+#define portof(SRC) nportof((SRC))
+#define setportof(PORT, DST) { *(DST) = nsetportof(PORT, *(DST)); }
+
+struct sockaddr *sockaddrof(const ip_address *src);
+size_t sockaddrlenof(const ip_address *src);
 
 /* looks up names in DNS */
 extern err_t ttoaddr(const char *src, size_t srclen, int af, ip_address *dst);
