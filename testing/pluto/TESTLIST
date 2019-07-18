@@ -1040,3 +1040,10 @@ kvmplutotest 	interop-ikev2-strongswan-38-mobike-initiator	good
 kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 
 kvmplutotest	bad-nexthop-01		wip
+
+#kvmplutotest	algo-ike-ikev1					wip
+#kvmplutotest	algo-ike-ikev2					wip
+kvmplutotest	algo-esp-ikev1-klips				wip
+kvmplutotest	algo-esp-ikev2-klips				wip
+kvmplutotest	algo-ah-ikev1-klips				wip
+kvmplutotest	algo-ah-ikev2-klips				wip
