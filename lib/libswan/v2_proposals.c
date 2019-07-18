@@ -37,7 +37,13 @@ static bool warning_or_false(struct proposal_parser *parser,
 	pexpect(parser->error[0] != '\0');
 	bool result;
 	if (parser->policy->ignore_parser_errors) {
-		parser->policy->warning("ignoring unknown %s algorithm '"PRI_SHUNK"'",
+		/*
+		 * XXX: the algorithm might be unknown, or might be
+		 * known but not enabled due to FIPS or KLIPS, or ...?
+		 */
+		parser->policy->warning("ignoring %s %s %s algorithm '"PRI_SHUNK"'",
+					enum_name(&ike_version_names, parser->policy->version),
+					parser->protocol->name, /* ESP|IKE|AH */
 					what, pri_shunk(print));
 		result = true;
 	} else {
