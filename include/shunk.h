@@ -47,6 +47,7 @@ typedef struct shunk shunk_t;
 
 #define NULL_SHUNK { .ptr = NULL, .len = 0, }
 extern const shunk_t null_shunk;
+extern const shunk_t empty_shunk;
 
 shunk_t shunk1(const char *ptr); /* strlen() implied */
 shunk_t shunk2(const void *ptr, int len);
@@ -87,9 +88,19 @@ shunk_t shunk_token(shunk_t *input, char *delim, const char *delims);
 /*
  * shunk version of string compare functions (or at least libreswan's
  * versions).
+ *
+ * (Confusingly and just like POSIX, *case* ignores case).
+ *
+ * Just like a NULL and EMPTY ("") string, a NULL (uninitialized) and
+ * EMPTY (pointing somewhere but no bytes) shunks are considered
+ * different.
  */
 bool shunk_caseeq(shunk_t lhs, shunk_t rhs);
 bool shunk_strcaseeq(shunk_t shunk, const char *string);
+
+bool shunk_eq(shunk_t l, shunk_t r);
+bool shunk_memeq(shunk_t l, const void *r, size_t sizeof_r);
+#define shunk_thingeq(SHUNK, THING) shunk_memeq(SHUNK, &(THING), sizeof(THING))
 
 bool shunk_caseeat(shunk_t *lhs, shunk_t rhs);
 bool shunk_strcaseeat(shunk_t *lhs, const char *string);
