@@ -15,7 +15,6 @@ struct af_info {
 	size_t sa_sz;
 	int mask_cnt;
 	uint8_t id_addr, id_subnet, id_range;
-	const ip_address *any;
 	const ip_subnet *none;  /* 0.0.0.0/32 or IPv6 equivalent */
 	const ip_subnet *all;   /* 0.0.0.0/0 or IPv6 equivalent */
 };

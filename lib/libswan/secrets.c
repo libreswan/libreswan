@@ -891,13 +891,13 @@ static void add_secret(struct secret **slist,
 		idl->next = NULL;
 		idl->id = empty_id;
 		idl->id.kind = ID_NONE;
-		(void)anyaddr(AF_INET, &idl->id.ip_addr);
+		idl->id.ip_addr = address_any(AF_INET);
 
 		struct id_list *idl2 = alloc_bytes(sizeof(struct id_list), "id list");
 		idl2->next = idl;
 		idl2->id = empty_id;
 		idl2->id.kind = ID_NONE;
-		(void)anyaddr(AF_INET, &idl2->id.ip_addr);
+		idl2->id.ip_addr = address_any(AF_INET);
 
 		s->ids = idl2;
 	}
@@ -1068,11 +1068,13 @@ static void lsw_process_secret_records(struct secret **psecrets)
 				if (tokeq("%any")) {
 					id = empty_id;
 					id.kind = ID_IPV4_ADDR;
-					ugh = anyaddr(AF_INET, &id.ip_addr);
+					id.ip_addr = address_any(AF_INET);
+					ugh = NULL;
 				} else if (tokeq("%any6")) {
 					id = empty_id;
 					id.kind = ID_IPV6_ADDR;
-					ugh = anyaddr(AF_INET6, &id.ip_addr);
+					id.ip_addr = address_any(AF_INET6);
+					ugh = NULL;
 				} else {
 					ugh = atoid(flp->tok, &id, FALSE);
 				}

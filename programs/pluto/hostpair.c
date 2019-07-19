@@ -97,7 +97,8 @@ static struct host_pair_key hp_key(const ip_endpoint *local, const ip_endpoint *
 {
 	struct host_pair_key key = {
 		.local = endpoint_address(local),
-		.remote = endpoint_address(remote),
+		.remote = (remote != NULL ? endpoint_address(remote)
+			   : address_any(endpoint_type(local))),
 	};
 	return key;
 }
@@ -180,11 +181,6 @@ struct pending **host_pair_first_pending(const struct connection *c)
 struct host_pair *find_host_pair(const ip_endpoint *local,
 				 const ip_endpoint *remote)
 {
-	/* default hisaddr to an appropriate any */
-	if (remote == NULL) {
-		remote = aftoinfo(endpoint_type(local))->any;
-	}
-
 	/*
 	 * look for a host-pair that has the right set of ports/address.
 	 *
@@ -213,8 +209,8 @@ struct host_pair *find_host_pair(const ip_endpoint *local,
 		    str_endpoint(&hp->remote, &b2));
 
 		/* XXX: same addr does not compare ports.  */
-		if (sameaddr(&hp->local, local) &&
-		    sameaddr(&hp->remote, remote)) {
+		if (sameaddr(&hp->local, &key.local) &&
+		    sameaddr(&hp->remote, &key.remote)) {
 			return hp;
 		}
 	}

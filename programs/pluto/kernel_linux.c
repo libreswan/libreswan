@@ -135,9 +135,7 @@ struct raw_iface *find_raw_ifaces4(void)
 
 	/* bind the socket */
 	{
-		ip_address any;
-
-		happy(anyaddr(AF_INET, &any));
+		ip_address any = address_any(AF_INET);
 		setportof(htons(pluto_port), &any);
 		if (bind(master_sock, sockaddrof(&any),
 			 sockaddrlenof(&any)) < 0)

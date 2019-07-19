@@ -167,7 +167,6 @@ static void check_str_address_reversed(void)
 		const char *in;
 		const char *out;                   /* NULL means error expected */
 	} tests[] = {
-
 		{ 4, "1.2.3.4", "4.3.2.1.IN-ADDR.ARPA." },
 		/* 0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3 4 5 6 7 8 9 a b c d e f */
 		{ 6, "0123:4567:89ab:cdef:1234:5678:9abc:def0",
@@ -194,6 +193,75 @@ static void check_str_address_reversed(void)
 		}
 	}
 }
+
+static void check_address_any(void)
+{
+	static const struct test {
+		int family;
+		const char *in;
+		bool any;
+	} tests[] = {
+		{ 4, "<%any>",			true },
+		{ 6, "<%any6>",			true },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		const char *any = t->any ? "true" : "false";
+		PRINT_IN(stdout, "-> %s", any);
+
+		/* convert it *to* internal format */
+		ip_address a = address_any(SA_FAMILY(t->family));
+		bool a_is_any = address_is_any(&a);
+		if (a_is_any != t->any) {
+			FAIL_IN("addres_is_any() returned %s, expected %s",
+				a_is_any ? "true" : "false", any);
+		}
+	}
+}
+
+static void check_address_is_any(void)
+{
+	static const struct test {
+		int family;
+		const char *in;
+		bool any;
+	} tests[] = {
+		{ 0, "<invalid>",		false },
+		{ 4, "0.0.0.0",			true },
+		{ 6, "::",			true },
+		{ 4, "1.2.3.4",			false },
+		{ 6, "1:12:3:14:5:16:7:18",	false },
+#if 0
+		{ 4, "%any",			true },
+		{ 6, "%any6",			true },
+#endif
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		const char *any = t->any ? "true" : "false";
+		PRINT_IN(stdout, "-> %s", any);
+
+		/* convert it *to* internal format */
+		ip_address a;
+		if (t->family == 0) {
+			a = address_invalid;
+		} else {
+			err_t err = ttoaddr(t->in, strlen(t->in), AF_UNSPEC, &a);
+			if (err != NULL) {
+				FAIL_IN("%s", err);
+			}
+		}
+
+		bool a_is_any = address_is_any(&a);
+		if (a_is_any != t->any) {
+			FAIL_IN("addres_is_any() returned %s, expected %s",
+				a_is_any ? "true" : "false", any);
+		}
+	}
+}
+
 
 static void check_ttoaddr_dns(void)
 {
@@ -264,5 +332,7 @@ void ip_address_check(void)
 	check_str_address();
 	check_str_address_sensitive();
 	check_str_address_reversed();
+	check_address_any();
+	check_address_is_any();
 	check_ttoaddr_dns();
 }

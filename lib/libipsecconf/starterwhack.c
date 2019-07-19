@@ -324,18 +324,18 @@ static void set_whack_end(char *lr,
 	case KH_DEFAULTROUTE:
 	case KH_IPHOSTNAME:
 		/* note: we always copy the name string below */
-		anyaddr(l->addr_family, &w->host_addr);
+		w->host_addr = address_any(l->addr_family);
 		break;
 
 	case KH_OPPO:
 	case KH_GROUP:
 	case KH_OPPOGROUP:
 		/* policy should have been set to OPPO */
-		anyaddr(l->addr_family, &w->host_addr);
+		w->host_addr = address_any(l->addr_family);
 		break;
 
 	case KH_ANY:
-		anyaddr(l->addr_family, &w->host_addr);
+		w->host_addr = address_any(l->addr_family);
 		break;
 
 	default:
@@ -356,7 +356,7 @@ static void set_whack_end(char *lr,
 		 * but, get the family set up right
 		 * XXX the nexthop type has to get into the whack message!
 		 */
-		anyaddr(addrtypeof(&l->addr), &w->host_nexthop);
+		w->host_nexthop = address_any(address_type(&l->addr));
 		break;
 
 	default:

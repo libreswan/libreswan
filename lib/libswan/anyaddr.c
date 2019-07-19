@@ -18,40 +18,12 @@
 
 #include "ip_address.h"
 
-/* these are mostly fallbacks for the no-IPv6-support-in-library case */
-#ifndef IN6ADDR_ANY_INIT
-#define IN6ADDR_ANY_INIT        { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-				      0, 0 } } }
-#endif
 #ifndef IN6ADDR_LOOPBACK_INIT
 #define IN6ADDR_LOOPBACK_INIT   { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
 				      0, 1 } } }
 #endif
 
-static struct in6_addr v6any = IN6ADDR_ANY_INIT;
 static struct in6_addr v6loop = IN6ADDR_LOOPBACK_INIT;
-
-/*
-   - anyaddr - initialize to the any-address value
- */
-err_t                           /* NULL for success, else string literal */
-anyaddr(af, dst)
-int af;                         /* address family */
-ip_address *dst;
-{
-	uint32_t v4any = htonl(INADDR_ANY);
-
-	switch (af) {
-	case AF_INET:
-		return initaddr((unsigned char *)&v4any, sizeof(v4any), af,
-				dst);
-	case AF_INET6:
-		return initaddr((unsigned char *)&v6any, sizeof(v6any), af,
-				dst);
-	default:
-		return "unknown address family in anyaddr/unspecaddr";
-	}
-}
 
 /*
    - loopbackaddr - initialize to the loopback-address value
@@ -76,32 +48,22 @@ ip_address *dst;
 }
 
 /*
-   - isanyaddr - test for the any-address value
+ * isanyaddr - test for the any-address value; this version treats 0
+ * (aka AF_UNSPEC?) as any addr!
  */
 int isanyaddr(src)
 const ip_address * src;
 {
-	uint32_t v4any = htonl(INADDR_ANY);
-	int cmp;
-
 	switch (src->u.v4.sin_family) {
 	case AF_INET:
-		cmp = memcmp(&src->u.v4.sin_addr.s_addr, &v4any,
-			       sizeof(v4any));
-		break;
 	case AF_INET6:
-		cmp = memcmp(&src->u.v6.sin6_addr, &v6any, sizeof(v6any));
-		break;
-
+		return address_is_any(src);
 	case 0:
 		/* a zeroed structure is considered any address */
 		return 1;
-
 	default:
 		return 0;
 	}
-
-	return (cmp == 0) ? 1 : 0;
 }
 
 /*

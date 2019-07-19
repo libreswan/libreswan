@@ -523,8 +523,8 @@ static struct state *new_state(enum ike_version ike_version,
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 
-	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
-	anyaddr(AF_INET, &st->hidden_variables.st_natd);
+	st->hidden_variables.st_nat_oa = address_any(AF_INET);
+	st->hidden_variables.st_natd = address_any(AF_INET);
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
 	add_state_to_db(st);

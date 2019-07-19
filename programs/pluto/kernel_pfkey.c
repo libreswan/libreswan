@@ -1385,16 +1385,13 @@ bool pfkey_shunt_eroute(const struct connection *c,
 	{
 		const ip_address *peer = &sr->that.host_addr;
 		char buf2[256];
-		const struct af_info *fam = aftoinfo(addrtypeof(peer));
-
-		if (fam == NULL)
-			fam = aftoinfo(AF_INET);
+		const ip_address any = address_any(addrtypeof(peer));
 
 		snprintf(buf2, sizeof(buf2),
 			 "eroute_connection %s", opname);
 
 		return pfkey_raw_eroute(&sr->this.host_addr, &sr->this.client,
-					fam->any,
+					&any,
 					&sr->that.client,
 					htonl(spi),
 					htonl(spi),

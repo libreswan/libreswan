@@ -408,3 +408,48 @@ bool address_is_valid(const ip_address *address)
 	int af = address_type(address);
 	return (af == AF_INET || af == AF_INET6);
 }
+
+/* these are both zero */
+static const struct in_addr in_addr_any = { INADDR_ANY, };
+static const struct in6_addr in6_addr_any = IN6ADDR_ANY_INIT;
+
+ip_address address_any(int af)
+{
+	switch (af) {
+	case AF_INET:
+		return address_from_in_addr(&in_addr_any);
+	case AF_INET6:
+		return address_from_in6_addr(&in6_addr_any);
+	case AF_UNSPEC:
+		/*
+		 * XXX: Loudly reject AF_UNSPEC, but don't crash.
+		 * Callers know the protocol of the "any" (IPv[46]
+		 * term) or "unspecified" (alternative IPv6 term)
+		 * address required.
+		 *
+		 * If there's a need for a function that also allows
+		 * AF_UNSPEC, then call that function
+		 * address_unspecified().
+		 */
+		PEXPECT_LOG("AF_UNSPEC unexpected");
+		return address_invalid;
+	default:
+		bad_case(af);
+	}
+}
+
+bool address_is_any(const ip_address *address)
+{
+	shunk_t addr = address_as_shunk(address);
+	int af = address_type(address);
+	switch (af) {
+	case AF_INET:
+		return shunk_thingeq(addr, in_addr_any);
+	case AF_INET6:
+		return shunk_thingeq(addr, in6_addr_any);
+	case AF_UNSPEC:
+		return false;
+	default:
+		bad_case(af);
+	}
+}

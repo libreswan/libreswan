@@ -705,7 +705,7 @@ sa_build:
 	case EMT_REPLACEROUTE:
 	case EMT_INEROUTE:
 	case EMT_INREPLACEROUTE:
-		anyaddr(said_af, &pfkey_address_s_ska);
+		pfkey_address_s_ska = address_any(said_af);
 		error = pfkey_address_build(
 				&extensions[SADB_EXT_ADDRESS_SRC],
 				SADB_EXT_ADDRESS_SRC,

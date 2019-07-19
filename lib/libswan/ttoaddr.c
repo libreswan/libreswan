@@ -349,7 +349,7 @@ ip_address *dst;
 			return "illegal leading `:' in " IT;
 
 		if (srclen == 2) {
-			anyaddr(AF_INET6, dst);
+			*dst = address_any(AF_INET6);
 			return NULL;
 		}
 		src++;	/* past first but not second */
