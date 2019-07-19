@@ -15,6 +15,8 @@
 
 #ifndef IPCHECK_H
 
+#include <stdbool.h>
+
 extern void ip_address_check(void);
 extern void ip_endpoint_check(void);
 extern void ip_range_check(void);
@@ -28,6 +30,7 @@ extern void ip_subnet_check(void);
  */
 
 extern unsigned fails;
+extern bool use_dns;
 
 #define pri_family(FAMILY) ((FAMILY) == 0 ? "" :	\
 			    (FAMILY) == 4 ? " IPv4" :	\

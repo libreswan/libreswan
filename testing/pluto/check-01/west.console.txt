@@ -27,8 +27,8 @@ west #
 west #
  ipsec timecheck > /dev/null || echo failed
 west #
- # XXX: Don't enable for now as ipcheck tries to talk to DNS :-(
+ # Need to disable DNS tests
 west #
- #ipsec ipcheck > /dev/null || echo failed
+ ipsec ipcheck --nodns > /dev/null || echo failed
 west #
  

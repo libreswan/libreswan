@@ -17,6 +17,5 @@ ipsec enumcheck | cmp ../../check/enum/OUTPUT.enumcheck.txt - || echo "Does the 
 ipsec jambufcheck > /dev/null || echo failed
 ipsec timecheck > /dev/null || echo failed
 
-# XXX: Don't enable for now as ipcheck tries to talk to DNS :-(
-
-#ipsec ipcheck > /dev/null || echo failed
+# Need to disable DNS tests
+ipsec ipcheck --nodns > /dev/null || echo failed

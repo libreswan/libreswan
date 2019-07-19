@@ -25,10 +25,22 @@
 #include "ipcheck.h"
 
 unsigned fails;
+bool use_dns = true;
 
-int main(int argc UNUSED, char *argv[] UNUSED)
+int main(int argc, char *argv[])
 {
 	log_ip = false; /* force sensitive */
+
+	for (char **argp = argv+1; argp < argv+argc; argp++) {
+		if (streq(*argp, "--nodns")) {
+			use_dns = false;
+		} else {
+			fprintf(stderr, "%s: unknown option '%s'\n",
+				argv[0], *argp);
+			return 1;
+		}
+	}
+
 	ip_address_check();
 	ip_endpoint_check();
 	ip_range_check();

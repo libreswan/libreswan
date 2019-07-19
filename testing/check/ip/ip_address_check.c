@@ -212,6 +212,13 @@ static void check_ttoaddr_dns(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
+		if (!t->numonly && !use_dns) {
+			PRINT_IN(stdout, "%s%s -> '%s' SKIPPED - NO DNS",
+				 t->numonly ? "" : " DNS",
+				 t->expectfailure ? " fail" : "",
+				 t->out);
+			continue;
+		}
 		PRINT_IN(stdout, "%s%s -> '%s",
 			 t->numonly ? "" : " DNS",
 			 t->expectfailure ? " fail" : "",
