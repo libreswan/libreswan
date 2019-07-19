@@ -238,7 +238,6 @@ static void free_dead_ifaces(void)
 	for (p = interfaces; p != NULL; p = p->next) {
 		if (p->change == IFN_DELETE) {
 			endpoint_buf b;
-			pexpect_iface_port(p);
 			libreswan_log("shutting down interface %s/%s %s",
 				      p->ip_dev->id_vname,
 				      p->ip_dev->id_rname,
@@ -1011,7 +1010,6 @@ void find_ifaces(bool rm_dead)
 							     comm_handle_cb,
 							     ifp, "ethX");
 			endpoint_buf b;
-			pexpect_iface_port(ifp);
 			dbg("setup callback for interface %s %s fd %d",
 			    ifp->ip_dev->id_rname,
 			    str_endpoint(&ifp->local_endpoint, &b),
@@ -1036,7 +1034,6 @@ void show_ifaces_status(void)
 
 	for (p = interfaces; p != NULL; p = p->next) {
 		endpoint_buf b;
-		pexpect_iface_port(p);
 		whack_log(RC_COMMENT, "interface %s/%s %s",
 			  p->ip_dev->id_vname, p->ip_dev->id_rname,
 			  str_endpoint(&p->local_endpoint, &b));

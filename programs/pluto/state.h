@@ -381,42 +381,13 @@ struct state {
 	 * instance, when the initial request is sent on :500 but the
 	 * response comes back on :4500, .st_interface will switch.
 	 *
-	 * XXX: However, that doesn't explain why st_localaddr and
-	 * st_localport are needed - surely they are identical to
-	 * .st_interface .local_endpoint?  Lets find out.
+	 * XXX: It looks like there's redundancy, or at least there
+	 * should be consistency between this.{addr,port} and the
+	 * local endpoint.  pexpect_st_local_endpoint() is a place
+	 * holder as that idear gets explored.
 	 */
 	const struct iface_port *st_interface;  /* where to send from */
-#define pexpect_st_local_endpoint(ST)					\
-	{								\
-		ip_endpoint st_local_endpoint =				\
-			endpoint(&(ST)->st_localaddr,			\
-				 (ST)->st_localport);			\
-		endpoint_buf ib, stb;					\
-		if (endpoint_eq((ST)->st_interface->local_endpoint,	\
-				st_local_endpoint)) {			\
-			dbg("st_local_endpoint %s vs interface %s "PRI_WHERE, \
-			    str_endpoint(&st_local_endpoint, &stb),	\
-			    str_endpoint(&(ST)->st_interface->local_endpoint, &ib), \
-			    pri_where(HERE));				\
-		} else {						\
-			log_pexpect(HERE,				\
-				    "st_local_endpoint %s vs interface %s", \
-				    str_endpoint(&st_local_endpoint, &stb), \
-				    str_endpoint(&(ST)->st_interface->local_endpoint, &ib)); \
-		}							\
-		ip_endpoint st_interface_addr_port =			\
-			endpoint(&(ST)->st_interface->ip_addr,		\
-				 (ST)->st_interface->port);		\
-		if (!endpoint_eq(st_local_endpoint,			\
-				 st_interface_addr_port)) {		\
-			log_pexpect(HERE,				\
-				    "st_local_endpoint %s vs interface %s", \
-				    str_endpoint(&st_local_endpoint, &stb), \
-				    str_endpoint(&st_interface_addr_port, &ib)); \
-		}							\
-	}
-#define st_localaddr st_interface->ip_addr
-#define st_localport st_interface->port
+#define pexpect_st_local_endpoint(ST) /* see above */
 
 	/* IKEv2 MOBIKE probe copies */
 	ip_address st_mobike_remote_endpoint;

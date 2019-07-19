@@ -5889,9 +5889,11 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 		return;
 
 	pexpect_st_local_endpoint(st);
-	if (sameaddr(ip, &st->st_localaddr)) {
+	ip_address local_address = endpoint_address(&st->st_interface->local_endpoint);
+	/* ignore port */
+	if (sameaddr(ip, &local_address)) {
 		ip_address ip_p = st->st_deleted_local_addr;
-		st->st_deleted_local_addr = st->st_localaddr;
+		st->st_deleted_local_addr = local_address;
 		struct state *cst = state_with_serialno(st->st_connection->newest_ipsec_sa);
 		migration_down(cst->st_connection, cst);
 		unroute_connection(st->st_connection);
@@ -5902,10 +5904,8 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 			event_schedule_s(EVENT_v2_ADDR_CHANGE, 0, st);
 		} else {
 			ipstr_buf o, n;
-			DBG(DBG_CONTROL, DBG_log("#%lu MOBIKE new RTM_DELADDR %s pending previous %s",
-						st->st_serialno,
-						sensitive_ipstr(ip, &n),
-						sensitive_ipstr(&ip_p, &o)));
+			dbg("#%lu MOBIKE new RTM_DELADDR %s pending previous %s",
+			    st->st_serialno, ipstr(ip, &n), ipstr(&ip_p, &o));
 		}
 	}
 }
@@ -5958,7 +5958,7 @@ static const struct iface_port *ikev2_src_iface(struct state *st,
 {
 	/* success found a new source address */
 	pexpect_st_local_endpoint(st);
-	ip_endpoint local_endpoint = endpoint(&this->addr, st->st_localport);
+	ip_endpoint local_endpoint = endpoint(&this->addr, endpoint_port(&st->st_interface->local_endpoint));
 	const struct iface_port *iface = find_iface_port_by_local_endpoint(&local_endpoint);
 	if (iface == NULL) {
 		endpoint_buf b;

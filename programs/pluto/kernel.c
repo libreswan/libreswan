@@ -1962,12 +1962,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
 			natt_type = ESPINUDP_WITH_NON_ESP;
-			pexpect_st_local_endpoint(st);
 			if (inbound) {
 				natt_sport = st->st_remoteport;
-				natt_dport = st->st_localport;
+				natt_dport = endpoint_port(&st->st_interface->local_endpoint);
 			} else {
-				natt_sport = st->st_localport;
+				natt_sport = endpoint_port(&st->st_interface->local_endpoint);
 				natt_dport = st->st_remoteport;
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;

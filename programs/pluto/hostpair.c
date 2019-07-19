@@ -496,7 +496,7 @@ void check_orientations(void)
 					 * compare the port logic?
 					 */
 					if (sameaddr(&hp->remote,
-						     &i->ip_addr)) {
+						     &i->local_endpoint)) {
 						/*
 						 * bad news: the whole chain of
 						 * connections hanging off this

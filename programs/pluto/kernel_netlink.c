@@ -869,7 +869,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
 		pexpect_st_local_endpoint(st);
-		old_port = st->st_localport;
+		old_port = endpoint_port(&st->st_interface->local_endpoint);
 		new_endpoint = st->st_mobike_local_endpoint;
 
 		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
@@ -2440,11 +2440,9 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				id->id_count++;
 				id->id_nic_offload = netlink_detect_offload(ifp->name);
 
-				q->ip_addr = ifp->addr;
 				q->fd = fd;
 				q->next = interfaces;
 				q->change = IFN_ADD;
-				q->port = pluto_port;
 				q->local_endpoint = endpoint(&ifp->addr, pluto_port);
 				q->ike_float = FALSE;
 
@@ -2477,10 +2475,6 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					q->ip_dev = id;
 					id->id_count++;
 
-					q->ip_addr = ifp->addr;
-					setportof(htons(pluto_nat_port),
-						&q->ip_addr);
-					q->port = pluto_nat_port;
 					q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 					q->fd = fd;
 					q->next = interfaces;
@@ -2499,8 +2493,9 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 			/* search over if matching old entry found */
 			if (streq(q->ip_dev->id_rname, ifp->name) &&
-				streq(q->ip_dev->id_vname, v->name) &&
-				sameaddr(&q->ip_addr, &ifp->addr)) {
+			    streq(q->ip_dev->id_vname, v->name) &&
+			    /* XXX: should this be endpoint_eq(, ifp->addr, pluto_port)? */
+			    sameaddr(&q->local_endpoint, &ifp->addr)) {
 				/* matches -- rejuvinate old entry */
 				q->change = IFN_KEEP;
 
@@ -2511,7 +2506,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				for (q = q->next; q; q = q->next) {
 					if (streq(q->ip_dev->id_rname, ifp->name) &&
 						streq(q->ip_dev->id_vname, v->name) &&
-						sameaddr(&q->ip_addr, &ifp->addr))
+						sameaddr(&q->local_endpoint, &ifp->addr))
 						q->change = IFN_KEEP;
 				}
 

@@ -2678,7 +2678,7 @@ void update_ike_endpoints(struct ike_sa *ike,
 bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
-	int af = addrtypeof(&md->iface->ip_addr);
+	int af = endpoint_type(&md->iface->local_endpoint);
 
 	/*
 	 * AA_201705 is this the right way to find Child SA(s)?
