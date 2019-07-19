@@ -1,6 +1,6 @@
-# ip tests Makefile, for libreswan
+# *time_t tests Makefile, for libreswan
 #
-# Copyright (C) 2018 Andrew Cagney
+# Copyright (C) 2019 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,21 +15,23 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = ipcheck
+PROGRAM = timecheck
 
-OBJS += ipcheck.o
-OBJS += ip_address_check.o
-OBJS += ip_endpoint_check.o
-OBJS += ip_range_check.o
-OBJS += ip_subnet_check.o
+OBJS += timecheck.o
+OBJS += check_monotime.o
+OBJS += check_realtime.o
+OBJS += check_deltatime.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
+# Add RT_LDFLAGS for glibc < 2.17
+LDFLAGS += $(RT_LDFLAGS)
+
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
-include ../../mk/program.mk
+include ../../../mk/program.mk
 endif
 
 #local-selfcheck:

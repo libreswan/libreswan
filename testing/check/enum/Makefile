@@ -1,6 +1,6 @@
-# ip tests Makefile, for libreswan
+# enumcheck Makefile, for libreswan
 #
-# Copyright (C) 2019 Andrew Cagney
+# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,9 +15,8 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = jambufcheck
-
-OBJS += jambufcheck.o
+PROGRAM = enumcheck
+OBJS += $(PROGRAM).o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
@@ -25,8 +24,8 @@ OBJS += $(LSWTOOLLIBS)
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
-include ../../mk/program.mk
+include ../../../mk/program.mk
 endif
 
-#local-selfcheck:
-#	$(builddir)/$(PROGRAM) | diff -u $(srcdir)/OUTPUT.$(PROGRAM).txt -
+local-selfcheck:
+	$(builddir)/$(PROGRAM) | diff -u $(srcdir)/OUTPUT.$(PROGRAM).txt -

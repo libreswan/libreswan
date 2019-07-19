@@ -18,7 +18,7 @@ west #
 west #
  # $ git diff
 west #
- ipsec enumcheck | cmp ../../enumcheck/OUTPUT.enumcheck.txt - || echo "Does the file OUTPUT.enumcheck.txt need updating?"
+ ipsec enumcheck | cmp ../../check/enum/OUTPUT.enumcheck.txt - || echo "Does the file OUTPUT.enumcheck.txt need updating?"
 enumcheck: leak detective found no leaks
 west #
  # other checks

@@ -1,4 +1,4 @@
-# Testing root makefile, for libreswan
+# Testing check makefile, for libreswan
 #
 # Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
 #
@@ -12,10 +12,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-SUBDIRS += pluto
-SUBDIRS += check
+SUBDIRS += enum
+SUBDIRS += ip
+SUBDIRS += jambuf
+SUBDIRS += time
 
 ifndef top_srcdir
-include ../mk/dirs.mk
+include ../../mk/dirs.mk
 endif
 include $(top_srcdir)/mk/subdirs.mk
