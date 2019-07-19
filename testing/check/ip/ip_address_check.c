@@ -47,9 +47,9 @@ static void check_str_address_raw(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		if (t->sep == 0) {
-			PRINT_IN(stdout, "0 -> '%s'", t->out);
+			PRINT_IN(stdout, " 0 -> '%s'", t->out);
 		} else {
-			PRINT_IN(stdout, "'%c' -> '%s'", t->sep, t->out);
+			PRINT_IN(stdout, " '%c' -> '%s'", t->sep, t->out);
 		}
 
 		/* convert it *to* internal format */
@@ -103,7 +103,7 @@ static void check_str_address(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, "-> '%s'", t->out);
+		PRINT_IN(stdout, " -> '%s'", t->out);
 
 		/* convert it *to* internal format */
 		ip_address a;
@@ -138,7 +138,7 @@ static void check_str_address_sensitive(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, "-> '%s'", t->out);
+		PRINT_IN(stdout, " -> '%s'", t->out);
 
 		/* convert it *to* internal format */
 		ip_address a;
@@ -176,7 +176,7 @@ static void check_str_address_reversed(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, "-> '%s", t->out);
+		PRINT_IN(stdout, " -> '%s", t->out);
 
 		/* convert it *to* internal format */
 		ip_address a;

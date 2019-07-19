@@ -181,9 +181,9 @@ static void check_ttorange_2_str_range(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		if (t->out != NULL) {
-			PRINT_IN(stdout, "-> %s pool %ld", t->out, t->pool);
+			PRINT_IN(stdout, " -> %s pool %ld", t->out, t->pool);
 		} else {
-			PRINT_IN(stdout, "-> <error>");
+			PRINT_IN(stdout, " -> <error>");
 		}
 		const char *oops = NULL;
 		sa_family_t af = SA_FAMILY(t->family);

@@ -44,13 +44,13 @@ extern bool use_dns;
 
 /* t->family, t->in */
 #define PRINT_IN(FILE, FMT, ...)					\
-	fprintf(FILE, "%s[%zu]:%s '%s' " FMT "\n",			\
+	fprintf(FILE, "%s[%zu]:%s '%s'" FMT "\n",			\
 		__func__, ti, pri_family(t->family),			\
 		t->in ,##__VA_ARGS__);
 #define FAIL_IN(FMT, ...)						\
 	{								\
 		fails++;						\
-		PRINT_IN(stderr, FMT ,##__VA_ARGS__);			\
+		PRINT_IN(stderr, ": "FMT ,##__VA_ARGS__);		\
 		continue;						\
 	}
 
@@ -61,7 +61,7 @@ extern bool use_dns;
 		t->lo, t->hi,##__VA_ARGS__)
 #define FAIL_LO2HI(FMT, ...) {						\
 		fails++;						\
-		PRINT_LO2HI(stderr, FMT ,##__VA_ARGS__);		\
+		PRINT_LO2HI(stderr, ": "FMT ,##__VA_ARGS__);		\
 		continue;						\
 	}
 
