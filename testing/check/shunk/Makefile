@@ -1,4 +1,4 @@
-# *time_t tests Makefile, for libreswan
+# shunk_t tests, for libreswan
 #
 # Copyright (C) 2019 Andrew Cagney
 #
@@ -15,24 +15,15 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = timecheck
+PROGRAM = shunkcheck
 
-OBJS += timecheck.o
-OBJS += check_monotime.o
-OBJS += check_realtime.o
-OBJS += check_deltatime.o
+OBJS += shunkcheck.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
-# Add RT_LDFLAGS for glibc < 2.17
-LDFLAGS += $(RT_LDFLAGS)
-
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
-include ../../mk/program.mk
+include ../../../mk/program.mk
 endif
-
-#local-selfcheck:
-#	$(builddir)/$(PROGRAM) | diff -u $(srcdir)/OUTPUT.$(PROGRAM).txt -

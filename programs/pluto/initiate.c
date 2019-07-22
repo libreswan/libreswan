@@ -130,7 +130,7 @@ bool orient(struct connection *c)
 			for (;;) {
 				/* check if this interface matches this end */
 				if (sameaddr(&sr->this.host_addr,
-					     &p->ip_addr) &&
+					     &p->local_endpoint) &&
 				    (kern_interface != NO_KERNEL ||
 				     sr->this.host_port ==
 				     pluto_port)) {
@@ -157,7 +157,7 @@ bool orient(struct connection *c)
 
 				/* done with this interface if it doesn't match that end */
 				if (!(sameaddr(&sr->that.host_addr,
-					       &p->ip_addr) &&
+					       &p->local_endpoint) &&
 				      (kern_interface != NO_KERNEL ||
 				       sr->that.host_port ==
 				       pluto_port)))

@@ -196,12 +196,10 @@ add_entry:
 								 "virtual device name klips");
 					id->id_count++;
 
-					q->ip_addr = ifp->addr;
+					q->local_endpoint = endpoint(&ifp->addr, pluto_port);
 					q->fd = fd;
 					q->next = interfaces;
 					q->change = IFN_ADD;
-					q->port = pluto_port;
-					q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 					q->ike_float = FALSE;
 
 					interfaces = q;
@@ -234,21 +232,15 @@ add_entry:
 						q->ip_dev = id;
 						id->id_count++;
 
-						q->ip_addr = ifp->addr;
-						setportof(htons(pluto_nat_port),
-							  &q->ip_addr);
-						q->port = pluto_nat_port;
 						q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;
 						q->ike_float = TRUE;
 						interfaces = q;
-						libreswan_log(
-							"adding interface %s/%s %s:%d",
-							q->ip_dev->id_vname, q->ip_dev->id_rname,
-							str_endpoint(&q->ip_addr, &b),
-							q->port);
+						plog_global("adding interface %s/%s %s",
+							    q->ip_dev->id_vname, q->ip_dev->id_rname,
+							    str_endpoint(&q->local_endpoint, &b));
 					}
 					break;
 				}
@@ -256,7 +248,7 @@ add_entry:
 				/* search over if matching old entry found */
 				if (streq(q->ip_dev->id_rname, ifp->name) &&
 				    streq(q->ip_dev->id_vname, v->name) &&
-				    sameaddr(&q->ip_addr, &ifp->addr)) {
+				    sameaddr(&q->local_endpoint, &ifp->addr)) {
 					/* matches -- rejuvinate old entry */
 					q->change = IFN_KEEP;
 
@@ -266,7 +258,7 @@ add_entry:
 							  ifp->name) &&
 						    streq(q->ip_dev->id_vname,
 							  v->name) &&
-						    sameaddr(&q->ip_addr,
+						    sameaddr(&q->local_endpoint,
 							     &ifp->addr))
 							q->change = IFN_KEEP;
 					}

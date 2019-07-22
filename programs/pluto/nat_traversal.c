@@ -185,12 +185,12 @@ bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
 	pexpect_st_local_endpoint(st);
-	uint16_t lport = st->st_localport;
+	uint16_t lport = endpoint_port(&st->st_interface->local_endpoint);
 	if (st->st_connection->encaps == yna_yes) {
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		lport = 0;
 	}
-	ip_endpoint local_endpoint = endpoint(&st->st_localaddr, lport);
+	ip_endpoint local_endpoint = endpoint(&st->st_interface->local_endpoint, lport);
 	ip_endpoint remote_endpoint = endpoint(&st->st_remoteaddr, st->st_remoteport);
 	return ikev2_out_natd(&local_endpoint, &remote_endpoint,
 			      &ike_spis, outs);
@@ -459,7 +459,7 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	unsigned remote_port = st->st_remoteport;
 	pexpect_st_local_endpoint(st);
-	unsigned short local_port = st->st_localport;
+	unsigned short local_port = endpoint_port(&st->st_interface->local_endpoint);
 	if (st->st_connection->encaps == yna_yes) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection"));
@@ -622,10 +622,10 @@ bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
 
 	pexpect_st_local_endpoint(st);
 	if (initiator) {
-		ipinit = &st->st_localaddr;
+		ipinit = &st->st_interface->local_endpoint;
 		ipresp = &st->st_remoteaddr;
 	} else {
-		ipresp = &st->st_localaddr;
+		ipresp = &st->st_interface->local_endpoint;
 		ipinit = &st->st_remoteaddr;
 	}
 
@@ -1005,7 +1005,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	     st->st_state->kind == STATE_QUICK_I1 ||
 	     st->st_state->kind == STATE_AGGR_I2) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-	    st->st_localport != pluto_nat_port) {
+	    endpoint_port(&st->st_interface->local_endpoint) != pluto_nat_port) {
 		dbg("NAT-T: #%lu in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
 		    st->st_serialno, st->st_state->short_name,
 		    pluto_nat_port);

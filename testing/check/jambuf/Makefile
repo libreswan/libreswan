@@ -25,7 +25,7 @@ OBJS += $(LSWTOOLLIBS)
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
-include ../../mk/program.mk
+include ../../../mk/program.mk
 endif
 
 #local-selfcheck:

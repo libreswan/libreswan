@@ -2678,10 +2678,7 @@ void update_ike_endpoints(struct ike_sa *ike,
 bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
-	int af = addrtypeof(&md->iface->ip_addr);
-	ipstr_buf b;
-	const ip_address *old_addr, *new_addr;
-	uint16_t old_port, new_port;
+	int af = endpoint_type(&md->iface->local_endpoint);
 
 	/*
 	 * AA_201705 is this the right way to find Child SA(s)?
@@ -2699,55 +2696,51 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 
 	passert(child->sa.st_connection == ike->sa.st_connection);
 
+	ip_endpoint old_endpoint;
+	ip_endpoint new_endpoint;
+
 	enum message_role md_role = v2_msg_role(md);
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE inititor processing response */
 		pexpect_st_local_endpoint(&ike->sa);
-		old_addr = &ike->sa.st_localaddr;
-		old_port = ike->sa.st_localport;
+		old_endpoint = ike->sa.st_interface->local_endpoint;
 
-		child->sa.st_mobike_localaddr = ike->sa.st_mobike_localaddr;
-		child->sa.st_mobike_localport = ike->sa.st_mobike_localport;
+		child->sa.st_mobike_local_endpoint = ike->sa.st_mobike_local_endpoint;
 		child->sa.st_mobike_host_nexthop = ike->sa.st_mobike_host_nexthop;
 
-		new_addr = &ike->sa.st_mobike_localaddr;
-		new_port = ike->sa.st_mobike_localport;
+		new_endpoint = ike->sa.st_mobike_local_endpoint;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
-		old_addr = &ike->sa.st_remoteaddr;
-		old_port = ike->sa.st_remoteport;
+		old_endpoint = endpoint(&ike->sa.st_remoteaddr, ike->sa.st_remoteport);
 
-		child->sa.st_mobike_remoteaddr = md->sender;
-		child->sa.st_mobike_remoteport = hportof(&md->sender);
-		ike->sa.st_mobike_remoteaddr = md->sender;
-		ike->sa.st_mobike_remoteport = hportof(&md->sender);
+		child->sa.st_mobike_remote_endpoint = md->sender;
+		ike->sa.st_mobike_remote_endpoint = md->sender;
 
-		new_addr = &ike->sa.st_mobike_remoteaddr;
-		new_port = ike->sa.st_mobike_remoteport;
+		new_endpoint =md->sender;
 		break;
 	default:
 		bad_case(md_role);
 	}
 
 	char buf[256];
-	ipstr_buf old;
-	ipstr_buf new;
-	snprintf(buf, sizeof(buf), "MOBIKE update %s address %s:%u -> %s:%u",
-			md_role == MESSAGE_RESPONSE ? "local" : "remote",
-			sensitive_ipstr(old_addr, &old),
-			old_port,
-			sensitive_ipstr(new_addr, &new), new_port);
+	endpoint_buf old;
+	endpoint_buf new;
+	snprintf(buf, sizeof(buf), "MOBIKE update %s address %s -> %s",
+		 md_role == MESSAGE_RESPONSE ? "local" : "remote",
+		 str_sensitive_endpoint(&old_endpoint, &old),
+		 str_sensitive_endpoint(&new_endpoint, &new));
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu pst=#%lu %s", child->sa.st_serialno,
 					ike->sa.st_serialno, buf));
 
-	if (sameaddr(old_addr, new_addr) && new_port == old_port) {
+	if (endpoint_eq(old_endpoint, new_endpoint)) {
 		if (md_role == MESSAGE_REQUEST) {
 			/* on responder NAT could hide end-to-end change */
-			libreswan_log("MOBIKE success no change to kernel SA same IP address ad port  %s:%u",
-						sensitive_ipstr(old_addr, &b), old_port);
+			endpoint_buf b;
+			libreswan_log("MOBIKE success no change to kernel SA same IP address ad port  %s",
+				      str_sensitive_endpoint(&old_endpoint, &b));
 
 			return true;
 		}
@@ -2763,8 +2756,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE initiator processing response */
-		c->spd.this.host_addr = child->sa.st_mobike_localaddr;
-		c->spd.this.host_port = child->sa.st_mobike_localport;
+		c->spd.this.host_addr = endpoint_address(&child->sa.st_mobike_local_endpoint);
+		c->spd.this.host_port = endpoint_port(&child->sa.st_mobike_local_endpoint);
 		c->spd.this.host_nexthop  = child->sa.st_mobike_host_nexthop;
 
 		ike->sa.st_interface = child->sa.st_interface = md->iface;

@@ -15,6 +15,8 @@
 
 #ifndef IPCHECK_H
 
+#include <stdbool.h>
+
 extern void ip_address_check(void);
 extern void ip_endpoint_check(void);
 extern void ip_range_check(void);
@@ -28,6 +30,7 @@ extern void ip_subnet_check(void);
  */
 
 extern unsigned fails;
+extern bool use_dns;
 
 #define pri_family(FAMILY) ((FAMILY) == 0 ? "" :	\
 			    (FAMILY) == 4 ? " IPv4" :	\
@@ -41,13 +44,13 @@ extern unsigned fails;
 
 /* t->family, t->in */
 #define PRINT_IN(FILE, FMT, ...)					\
-	fprintf(FILE, "%s[%zu]:%s '%s' " FMT "\n",			\
+	fprintf(FILE, "%s[%zu]:%s '%s'" FMT "\n",			\
 		__func__, ti, pri_family(t->family),			\
 		t->in ,##__VA_ARGS__);
 #define FAIL_IN(FMT, ...)						\
 	{								\
 		fails++;						\
-		PRINT_IN(stderr, FMT ,##__VA_ARGS__);			\
+		PRINT_IN(stderr, ": "FMT ,##__VA_ARGS__);		\
 		continue;						\
 	}
 
@@ -58,7 +61,7 @@ extern unsigned fails;
 		t->lo, t->hi,##__VA_ARGS__)
 #define FAIL_LO2HI(FMT, ...) {						\
 		fails++;						\
-		PRINT_LO2HI(stderr, FMT ,##__VA_ARGS__);		\
+		PRINT_LO2HI(stderr, ": "FMT ,##__VA_ARGS__);		\
 		continue;						\
 	}
 

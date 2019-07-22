@@ -54,7 +54,18 @@ KVM_ALL_ALGS ?= false
 KVM_USE_SECCOMP ?= true
 KVM_USE_LABELED_IPSEC ?= true
 KVM_SD_RESTART_TYPE=no
-KVM_MAKEFLAGS ?= USE_EFENCE=$(KVM_USE_EFENCE) ALL_ALGS=$(KVM_ALL_ALGS) USE_SECCOMP=$(KVM_USE_SECCOMP) USE_LABELED_IPSEC=$(KVM_USE_LABELED_IPSEC) USE_NSS_IPSEC_PROFILE=$(KVM_USE_NSS_IPSEC_PROFILE) SD_RESTART_TYPE=$(KVM_SD_RESTART_TYPE) USE_KLIPS=true
+KVM_USE_KLIPS ?= true
+KVM_USE_FIPSCHECK ?= true
+
+KVM_MAKEFLAGS ?= \
+	USE_EFENCE=$(KVM_USE_EFENCE) \
+	ALL_ALGS=$(KVM_ALL_ALGS) \
+	USE_SECCOMP=$(KVM_USE_SECCOMP) \
+	USE_LABELED_IPSEC=$(KVM_USE_LABELED_IPSEC) \
+	USE_NSS_IPSEC_PROFILE=$(KVM_USE_NSS_IPSEC_PROFILE) \
+	SD_RESTART_TYPE=$(KVM_SD_RESTART_TYPE) \
+	USE_KLIPS=$(KVM_USE_KLIPS) \
+	USE_FIPSCHECK=$(KVM_USE_FIPSCHECK)
 
 KVM_UID ?= $(shell id -u)
 KVM_GID ?= $(shell id -g $(KVM_GROUP))
@@ -110,11 +121,11 @@ VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
 
 KVM_BASE_HOST = swan$(KVM_OS)base
 
-KVM_BUILD_HOST ?= build
+KVM_BUILD_HOST = build
+KVM_BUILD_HOST_CLONES = $(filter-out $(KVM_BASIC_HOSTS), $(KVM_TEST_HOSTS))
 
 KVM_TEST_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_BASIC_HOSTS = nic
-KVM_INSTALL_HOSTS = $(filter-out $(KVM_BASIC_HOSTS), $(KVM_TEST_HOSTS))
 
 KVM_LOCAL_HOSTS = $(sort $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
 
@@ -125,23 +136,18 @@ KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_LOCAL_HOSTS)
 #
 
 KVM_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BASE_HOST))
-
-KVM_BUILD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST))
+KVM_BASE_DOMAIN_CLONES = $(KVM_BUILD_DOMAIN) $(KVM_BASIC_DOMAINS)
 
 KVM_BASIC_DOMAINS = $(call add-kvm-prefixes, $(KVM_BASIC_HOSTS))
-KVM_INSTALL_DOMAINS = $(call add-kvm-prefixes, $(KVM_INSTALL_HOSTS))
+
+KVM_BUILD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST))
+KVM_BUILD_DOMAIN_CLONES = $(call add-kvm-prefixes, $(KVM_BUILD_HOST_CLONES))
+
 KVM_TEST_DOMAINS = $(call add-kvm-prefixes, $(KVM_TEST_HOSTS))
 
 KVM_LOCAL_DOMAINS = $(sort $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS))
 
 KVM_DOMAINS = $(KVM_BASE_DOMAIN) $(KVM_LOCAL_DOMAINS)
-
-#
-# what needs to be copied?
-#
-
-KVM_BASE_DOMAIN_CLONES = $(KVM_BASIC_DOMAINS) $(KVM_BUILD_DOMAIN)
-KVM_BUILD_DOMAIN_CLONES = $(KVM_INSTALL_DOMAINS)
 
 #
 # Other utilities and directories
@@ -672,14 +678,14 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_G
 
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks
 	$(call check-kvm-qemu-directory)
-	$(if $(KVM_PACKAGES), \
-		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
-	$(if $(KVM_PACKAGES), \
-		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_UPGRADE) $(KVM_PACKAGES))
+	$(if $(KVM_PACKAGE_INSTALL), $(if $(KVM_INSTALL_PACKAGES), \
+		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_INSTALL) $(KVM_INSTALL_PACKAGES)))
+	$(if $(KVM_PACKAGE_UPGRADE), $(if $(KVM_UPGRADE_PACKAGES), \
+		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_UPGRADE) $(KVM_UPGRADE_PACKAGES)))
 	$(if $(KVM_INSTALL_RPM_LIST), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_INSTALL_RPM_LIST))
-	$(if $(KVM_DEBUGINFO), \
-		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
+	$(if $(KVM_DEBUGINFO_INSTALL), $(if $(KVM_DEBUGINFO), \
+		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO)))
 	$(MAKE) kvm-shutdown-base-domain
 	touch $@
 
@@ -836,6 +842,10 @@ $(foreach domain, $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS), \
 $(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN)): \
 	$(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN_CLONES))
 
+$(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN)): \
+	$(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN_CLONES))
+
+
 #
 # Generic kvm-* rules, point at the *-kvm-* primitives defined
 # elsewhere.
@@ -854,7 +864,7 @@ define kvm-hosts-domains
   kvm-$(1)-basic-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_BASIC_DOMAINS))
 
   .PHONY: kvm-$(1)-install-domains
-  kvm-$(1)-install-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_INSTALL_DOMAINS))
+  kvm-$(1)-install-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_BUILD_DOMAIN_CLONES))
 
   .PHONY: kvm-$(1)-test-domains
   kvm-$(1)-test-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_TEST_DOMAINS))
@@ -879,7 +889,7 @@ $(eval $(call kvm-hosts-domains,shutdown))
 # XXX: don't depend on targets that trigger a KVM build.
 #
 # For kvm-uninstall, instead of trying to uninstall libreswan from the
-# $(KVM_INSTALL_DOMAINS), delete both $(KVM_INSTALL_DOMAINS) and
+# $(KVM_BUILD_DOMAIN_CLONES), delete both $(KVM_BUILD_DOMAIN_CLONES) and
 # $(KVM_BUILD_DOMAIN) the install domains were cloned from.  This way,
 # in addition to giving kvm-install a 100% fresh start (no depdenence
 # on 'make uninstall') the next test run also gets entirely new
@@ -912,93 +922,49 @@ kvm-demolish: kvm-uninstall-base-domain
 kvm-demolish: kvm-uninstall-base-network
 
 #
-# Build targets
+# kvm-build target
 #
-# Map the documented targets, and their aliases, onto
-# internal/canonical targets.
+# First delete all of the build domain's clones.  The build domain
+# won't boot when its clones are running.
 
-#
-# kvm-build and kvm-HOST|DOMAIN-build
-#
-# To avoid "make base" and "make module" running in parallel on the
-# build machine (stepping on each others toes), this uses two explicit
-# commands (each invokes make on the domain) to ensre that "make base"
-# and "make modules" are serialized.
-#
-# Shutdown the domains before building.  The build domain won't boot
-# when its clones are running.
-
-define kvm-DOMAIN-build
-  #(info kvm-DOMAIN-build domain=$(1))
-  .PHONY: kvm-$(1)-build
-  kvm-$(1)-build: | $$(KVM_LOCALDIR)/$(1).xml
-	: kvm-DOMAIN-build domain=$(1)
+.PHONY: kvm-$(KVM_BUILD_DOMAIN)-build
+kvm-$(KVM_BUILD_DOMAIN)-build: | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 	$(call check-kvm-qemu-directory)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR)'
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) base'
-ifeq ($(USE_KLIPS),true)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) module'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'export OBJDIR=$(KVM_OBJDIR)'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) base'
+ifeq ($(KVM_USE_KLIPS),true)
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) module'
 endif
-	: install will run $$(KVMSH) --shutdown $(1)
-endef
-
-$(foreach domain, $(KVM_LOCAL_DOMAINS), \
-	$(eval $(call kvm-DOMAIN-build,$(domain))))
-$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_LOCAL_HOSTS)), \
-	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-build)))
+	: install will run $(KVMSH) --shutdown $(1)
 
 .PHONY: kvm-build
-kvm-build: $(foreach domain, $(KVM_INSTALL_DOMAINS), uninstall-kvm-domain-$(domain))
+kvm-build: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-$(domain))
 	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-build
 
-
 #
-# kvm-install and kvm-HOST|DOMAIN-install
-#
-# "kvm-DOMAIN-install" can't start until the common
-# kvm-$(KVM_BUILD_DOMAIN)-build has completed.
-#
-# After installing shut down the domain.  Otherwise, when KVM_PREFIX
-# is large, the idle domains consume huge amounts of memory.
-#
-# When KVM_PREFIX is large, "make kvm-install" is dominated by the
-# below target.  It should be possible to instead create one domain
-# with everything installed and then clone it.
-
-define kvm-DOMAIN-install
-  #(info kvm-DOMAIN-install domain=$(1))
-  .PHONY: kvm-$(1)-install
-  kvm-$(1)-install: kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
-	: kvm-DOMAIN-install domain=$(1)
-	$(call check-kvm-qemu-directory)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) install-base'
-ifeq ($(USE_KLIPS),true)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) module_install'
-endif
-ifeq ($(USE_FIPSCHECK),true)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) install-fipshmac'
-endif
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
-	$$(KVMSH) --shutdown $(1)
-endef
-
-$(foreach domain, $(KVM_LOCAL_DOMAINS), \
-	$(eval $(call kvm-DOMAIN-install,$(domain))))
-$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_LOCAL_HOSTS)), \
-	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-install)))
-
-#
-# kvm-install
+# kvm-install target
 #
 # So that all the INSTALL domains are deleted before the build domain
 # is booted, this is done using a series of sub-makes (without this,
 # things barf because the build domain things its disk is in use).
 
-.PHONY: kvm-install
-kvm-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), uninstall-kvm-domain-$(domain))
-	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
-	$(MAKE) $(foreach domain, $(KVM_TEST_DOMAINS), install-kvm-domain-$(domain))
+.PHONY: kvm-$(KVM_BUILD_DOMAIN)-install
+kvm-$(KVM_BUILD_DOMAIN)-install: kvm-$(KVM_BUILD_DOMAIN)-build | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+	$(call check-kvm-qemu-directory)
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) install-base'
+ifeq ($(KVM_USE_FIPSCHECK),true)
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) install-fipshmac'
+endif
+ifeq ($(KVM_USE_KLIPS),true)
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) module_install'
+endif
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
+	$(KVMSH) --shutdown $(KVM_BUILD_DOMAIN)
 
+.PHONY: kvm-install
+kvm-install: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-$(domain))
+	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
+	$(MAKE) $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS), install-kvm-domain-$(domain))
 
 #
 # kvmsh-HOST
@@ -1062,7 +1028,7 @@ $(foreach domain, $(KVM_DOMAINS), \
 kvm-shutdown: $(addprefix shutdown-kvm-domain-,$(KVM_DOMAINS))
 
 .PHONY: kvm-shutdown-install-domains
-kvm-shutdown-install-domains: $(addprefix shutdown-kvm-domain-,$(KVM_INSTALL_DOMAINS))
+kvm-shutdown-install-domains: $(addprefix shutdown-kvm-domain-,$(KVM_BUILD_DOMAIN_CLONES))
 
 .PHONY: kvm-shutdown-test-domains
 kvm-shutdown-test-domains: $(addprefix shutdown-kvm-domain-,$(KVM_TEST_DOMAINS))
@@ -1139,29 +1105,27 @@ Configuration:
 
  KVM Domains:
 
-    $(call kvm-value,KVM_BASE_DOMAIN)
+    $(KVM_BASE_DOMAIN)
+    | gateway: $(KVM_GATEWAY)
+    | directory: $(KVM_POOLDIR)
     |
-    | gateway: $(call kvm-value,KVM_GATEWAY)
-    | directory: $(call kvm-value,KVM_POOLDIR)
-    |
-    + $(call kvm-value,KVM_BUILD_DOMAIN)
-    | |
-    | | gateway: $(call kvm-value,KVM_GATEWAY)
-    | | directory: $(call kvm-value,KVM_LOCALDIR)
-    | |  \
+    +- $(KVM_BUILD_DOMAIN)
+    |  | gateway: $(KVM_GATEWAY)
+    |  | directory: $(KVM_LOCALDIR)
+    |  |  \
 $(foreach prefix,$(KVM_PREFIXES), \
   \
-  $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)| test group $(prefix) \
-  $(crlf)$(sp)$(sp)$(sp) +---- basic: \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)$(sp)| test group $(prefix) \
+  $(crlf)$(sp)$(sp)$(sp) +----- \
   $(foreach basic,$(KVM_BASIC_HOSTS),$(call strip-prefix,$(prefix))$(basic)) \
   \
-  $(crlf)$(sp)$(sp)$(sp)$(sp)| +-- install: \
-  $(foreach install,$(KVM_INSTALL_HOSTS),$(call strip-prefix,$(prefix))$(install)) \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp) +-- \
+  $(foreach install,$(KVM_BUILD_HOST_CLONES),$(call strip-prefix,$(prefix))$(install)) \
   \
-  $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp$)$(sp)$(sp) networks: \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)$(sp)|$(sp$)$(sp)$(sp) networks: \
   $(foreach network, $(KVM_TEST_SUBNETS),$(call strip-prefix,$(prefix))$(network)) \
   \
-  $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)| \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)$(sp)| \
 )
 endef
 

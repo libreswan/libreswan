@@ -44,7 +44,7 @@ static void check_str_endpoint(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, "-> '%s'", t->out);
+		PRINT_IN(stdout, " -> '%s'", t->out);
 
 		/* convert it *to* internal format */
 		ip_address a;
@@ -93,7 +93,7 @@ static void check_sockaddr_as_endpoint(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		const char *expect_out = t->out == NULL ? t->in : t->out;
-		PRINT_IN(stdout, "-> '%s'", expect_out);
+		PRINT_IN(stdout, " -> '%s'", expect_out);
 
 		/* construct a sockaddr */
 		union {

@@ -549,7 +549,6 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	/* set nexthop address to something consistent, by default */
-	anyaddr(hostfam, &end->nexthop);
 	anyaddr(addrtypeof(&end->addr), &end->nexthop);
 
 	/* validate the KSCF_NEXTHOP */
