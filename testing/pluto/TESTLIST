@@ -1041,9 +1041,21 @@ kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 
 kvmplutotest	bad-nexthop-01		wip
 
-#kvmplutotest	algo-ike-ikev1					wip
-#kvmplutotest	algo-ike-ikev2					wip
-kvmplutotest	algo-esp-ikev1-klips				wip
-kvmplutotest	algo-esp-ikev2-klips				wip
-kvmplutotest	algo-ah-ikev1-klips				wip
-kvmplutotest	algo-ah-ikev2-klips				wip
+# Kernel interops
+
+kvmplutotest	algo-ah-klips-to-klips-ikev1			wip
+kvmplutotest	algo-ah-klips-to-klips-ikev2			good
+kvmplutotest	algo-ah-klips-to-netkey-ikev1			good
+kvmplutotest	algo-ah-klips-to-netkey-ikev2			good
+kvmplutotest	algo-ah-netkey-to-klips-ikev1			wip
+kvmplutotest	algo-ah-netkey-to-klips-ikev2			good
+kvmplutotest	algo-ah-netkey-to-netkey-ikev1			good
+kvmplutotest	algo-ah-netkey-to-netkey-ikev2			good
+kvmplutotest	algo-esp-klips-to-klips-ikev1			wip
+kvmplutotest	algo-esp-klips-to-klips-ikev2			wip
+kvmplutotest	algo-esp-klips-to-netkey-ikev1			wip
+kvmplutotest	algo-esp-klips-to-netkey-ikev2			wip
+kvmplutotest	algo-esp-netkey-to-klips-ikev1			wip
+kvmplutotest	algo-esp-netkey-to-klips-ikev2			good
+kvmplutotest	algo-esp-netkey-to-netkey-ikev1			good
+kvmplutotest	algo-esp-netkey-to-netkey-ikev2			good
