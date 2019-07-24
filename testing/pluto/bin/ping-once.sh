@@ -49,25 +49,33 @@ case "${op}" in
 	;;
 esac
 
-# run the ping command, map well known exit codes onto names.
+# Record the ping command that will run (the secret sauce used to
+# invoke ping is subject to change, it is hidden from the test
+# results).
+
 ping="ping -q -n -c 1 -i $(expr 1 + ${wait}) -w ${wait} "$@""
+echo ==== cut ====
+echo "${ping}"
+echo ==== tuc ====
+
+# Run the ping command, capturing output and exit code.  To prevent a
+# kernel log line that is emitted part way through the ping from being
+# 'cut', ping's 'cut' output is only displayed after the ping has
+# finished.
+
 output=$(${ping})
 status=$?
 case "${status}" in
     0) status=up ;;
     1) status=down ;;
 esac
-
-# So kernel log lines are not lost, only print output after ping
-# completes.
 echo ==== cut ====
-echo "${ping}"
 echo "${output}"
 echo ==== tuc ====
 
 case "${status}${op}" in
     up--up | down--down ) echo ${status} ; exit 0 ;;
-    down--up | up--down ) echo ${status} unexpected ; exit 1 ;;
-    up--forget | down--forget ) exit 0 ;;
+    down--up | up--down ) echo ${status} UNEXPECTED ; exit 1 ;;
+    up--forget | down--forget ) echo fired and forgotten ; exit 0 ;;
     * ) echo $0: unexpected status ${status} 1>&2 ; exit ${status} ;;
 esac
