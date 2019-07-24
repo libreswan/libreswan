@@ -55,11 +55,12 @@ for alg in ${algs} ; do
     ipsec auto --up ${name}
     echo +
 
-    # IKEv1 KLIPS AH needs to be given some extra time before the SA
-    # really is established - clearly a BUG given neither IKEv2 nor
-    # NETKEY suffer the same problem.
-    case ${version}-${protocol}-${responder_stack} in
-	ikev1-ah-klips )
+    # IKEv1 KLIPS ESP/AH responder needs to be given some extra time
+    # before the SA really is established - clearly a BUG given
+    # neither IKEv2 (with KLIPS) nor NETKEY (IKEv1 responder) suffer
+    # the same problem.
+    case ${version}-${responder_stack} in
+	ikev1-klips )
 	    echo "sleep 2 # hack around bug in IKEv1 KLIPS AH"
 	    sleep 2
 	    echo +

@@ -1056,7 +1056,7 @@ kvmplutotest	algo-esp-klips-to-klips-ikev1			wip
 kvmplutotest	algo-esp-klips-to-klips-ikev2			wip
 kvmplutotest	algo-esp-klips-to-netkey-ikev1			wip
 kvmplutotest	algo-esp-klips-to-netkey-ikev2			wip
-kvmplutotest	algo-esp-netkey-to-klips-ikev1			wip
+kvmplutotest	algo-esp-netkey-to-klips-ikev1			good
 kvmplutotest	algo-esp-netkey-to-klips-ikev2			good
 kvmplutotest	algo-esp-netkey-to-netkey-ikev1			good
 kvmplutotest	algo-esp-netkey-to-netkey-ikev2			good
