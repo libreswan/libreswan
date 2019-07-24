@@ -20,12 +20,16 @@ ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits
 
+# The 'echo +' is to stop the sanitizer eating blank lines.  Works,
+# but '+' given diff, isn't the best character choice.
+
 echo testing ${algs}
 for alg in ${algs} ; do
     name=${proto}-${version}-${alg}
     echo +
     echo + ${name}
     echo +
+
     ( set -x ; ipsec whack --name ${name} \
 		     --${version}-allow \
 		     --psk \
@@ -47,10 +51,25 @@ for alg in ${algs} ; do
 		     --client 192.0.2.0/24 \
 	)
     echo +
+
     ipsec auto --up ${name}
     echo +
+
+    # IKEv1 KLIPS AH needs to be given some extra time before the SA
+    # really is established - clearly a BUG given neither IKEv2 nor
+    # NETKEY suffer the same problem.
+    case ${version}-${protocol}-${responder_stack} in
+	ikev1-ah-klips )
+	    echo "sleep 2 # hack around bug in IKEv1 KLIPS AH"
+	    sleep 2
+	    echo +
+	    ;;
+    esac
+
     ../bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
     echo +
+
     ipsec auto --delete ${name}
     echo +
+
 done
