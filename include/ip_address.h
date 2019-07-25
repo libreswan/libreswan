@@ -29,20 +29,6 @@ extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
 #include <netinet6/in6.h>	/* for struct sockaddr_in6 */
 #endif
 
-/*
- * XXX: These macros are obsolete.
- *
- * All the cases of code using the below can be reduced to
- * {in,in6}_addr and address_from_*_addr().
- */
-#ifdef NEED_SIN_LEN
-#define SET_V4(a)	{ (a).u.v4.sin_family = AF_INET; (a).u.v4.sin_len = sizeof(struct sockaddr_in); }
-#define SET_V6(a)	{ (a).u.v6.sin6_family = AF_INET6; (a).u.v6.sin6_len = sizeof(struct sockaddr_in6); }
-#else
-#define SET_V4(a)	{ (a).u.v4.sin_family = AF_INET; }
-#define SET_V6(a)	{ (a).u.v6.sin6_family = AF_INET6; }
-#endif
-
 struct lswlog;
 
 /*

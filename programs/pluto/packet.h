@@ -26,6 +26,7 @@
 
 #include "lswcdefs.h"
 #include "chunk.h"
+#include "ip_address.h"
 
 /* a struct_desc describes a structure for the struct I/O routines.
  * This requires arrays of field_desc values to describe struct fields.
@@ -210,9 +211,26 @@ extern void init_out_pbs(pb_stream *pbs, uint8_t *start, size_t len,
 extern pb_stream open_out_pbs(const char *name, uint8_t *buffer,
 			      size_t sizeof_buffer);
 
+/*
+ * PBS_IN
+ */
+
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
 		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
 extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MUST_USE_RESULT;
+
+/*
+ * Utilities, is there a better home?
+ */
+#define pbs_in packet_byte_stream
+bool pbs_in_address_in(ip_address *address, struct pbs_in *in_pbs,
+		       const char *what) MUST_USE_RESULT;
+bool pbs_in_address_in6(ip_address *address, struct pbs_in *in_pbs,
+			const char *what) MUST_USE_RESULT;
+
+/*
+ * PBS_OUT
+ */
 
 extern bool out_struct(const void *struct_ptr, struct_desc *sd,
 		       pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;

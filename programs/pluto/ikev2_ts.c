@@ -294,39 +294,27 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 
 		switch (ts1.isat1_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
+		{
 			ts->ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-			SET_V4(ts->net.start);
-			if (!in_raw(&ts->net.start.u.v4.sin_addr.s_addr,
-				    sizeof(ts->net.start.u.v4.sin_addr.s_addr),
-				    &addr, "ipv4 ts low"))
+			if (!pbs_in_address_in(&ts->net.start, &addr, "ipv4 ts low")) {
 				return false;
-
-			SET_V4(ts->net.end);
-
-			if (!in_raw(&ts->net.end.u.v4.sin_addr.s_addr,
-				    sizeof(ts->net.end.u.v4.sin_addr.s_addr),
-				    &addr, "ipv4 ts high"))
+			}
+			if (!pbs_in_address_in(&ts->net.end, &addr, "ipv4 ts high")) {
 				return false;
-
+			}
 			break;
-
+		}
 		case IKEv2_TS_IPV6_ADDR_RANGE:
+		{
 			ts->ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-			SET_V6(ts->net.start);
-
-			if (!in_raw(&ts->net.start.u.v6.sin6_addr.s6_addr,
-				    sizeof(ts->net.start.u.v6.sin6_addr.s6_addr),
-				    &addr, "ipv6 ts low"))
+			if (!pbs_in_address_in6(&ts->net.start, &addr, "ipv4 ts low")) {
 				return false;
-
-			SET_V6(ts->net.end);
-
-			if (!in_raw(&ts->net.end.u.v6.sin6_addr.s6_addr,
-				    sizeof(ts->net.end.u.v6.sin6_addr.s6_addr),
-				    &addr, "ipv6 ts high"))
+			}
+			if (!pbs_in_address_in6(&ts->net.end, &addr, "ipv4 ts high")) {
 				return false;
-
+			}
 			break;
+		}
 
 		default:
 			return false;

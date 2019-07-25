@@ -2723,3 +2723,25 @@ void close_output_pbs(pb_stream *pbs)
 	if (pbs->container != NULL)
 		pbs->container->cur = pbs->cur; /* pass space utilization up */
 }
+
+bool pbs_in_address_in(ip_address *address, struct pbs_in *in_pbs, const char *what)
+{
+	struct in_addr ip;
+	if (!in_raw(&ip, sizeof(ip), in_pbs, what)) {
+		*address = address_invalid;
+		return false;
+	}
+	*address = address_from_in_addr(&ip);
+	return true;
+}
+
+bool pbs_in_address_in6(ip_address *address, struct pbs_in *in_pbs, const char *what)
+{
+	struct in6_addr ip;
+	if (!in_raw(&ip, sizeof(ip), in_pbs, what)) {
+		*address = address_invalid;
+		return false;
+	}
+	*address = address_from_in6_addr(&ip);
+	return true;
+}
