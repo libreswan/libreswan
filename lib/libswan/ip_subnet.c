@@ -21,6 +21,11 @@
 #include "ip_subnet.h"
 #include "libreswan/passert.h"
 
+const struct ip_info *subnet_info(const ip_subnet * src)
+{
+	return address_info(&src->addr);
+}
+
 bool subnetisnone(const ip_subnet *sn)
 {
 	ip_address base = ip_subnet_floor(sn);

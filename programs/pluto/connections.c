@@ -86,7 +86,7 @@
 #include "crypto.h"
 #include "kernel_netlink.h"
 #include "ip_address.h"
-#include "af_info.h"
+#include "ip_info.h"
 #include "keyhi.h" /* for SECKEY_DestroyPublicKey */
 #include "state_db.h"
 
@@ -352,7 +352,7 @@ void delete_every_connection(void)
 static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 {
 	err_t ugh = NULL;
-	const struct af_info *afi = aftoinfo(addrtypeof(&e->host_addr));
+	const struct ip_info *afi = aftoinfo(addrtypeof(&e->host_addr));
 
 	if (afi == NULL)
 		return "unknown address family in default_end";

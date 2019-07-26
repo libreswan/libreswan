@@ -76,7 +76,7 @@
 #include "ip_address.h"
 #include "send.h"		/* for send without recording */
 #include "ikev1_send.h"
-#include "af_info.h"
+#include "ip_info.h"
 #include "ikev1_hash.h"
 #include "impair.h"
 
@@ -1799,7 +1799,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				if (!c->spd.that.has_client) {
 					passert(c->spd.spd_next == NULL);
 					c->spd.that.has_client = TRUE;
-					c->spd.that.client = *af_inet4_info.all;
+					c->spd.that.client = *ipv4_info.all;
 					c->spd.that.has_client_wildcard = FALSE;
 				}
 

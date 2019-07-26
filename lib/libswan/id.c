@@ -39,7 +39,7 @@
 #include "x509.h"
 #include <cert.h>
 #include "certs.h"
-#include "af_info.h"
+#include "ip_info.h"
 
 /*
  * Convert textual form of id into a (temporary) struct id.
@@ -83,9 +83,9 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 			 * We need a notation to specify that a FQDN is to be
 			 * resolved to IPv6.
 			 */
-			const struct af_info *afi = strchr(src, ':') == NULL ?
-				&af_inet4_info : &
-				af_inet6_info;
+			const struct ip_info *afi = strchr(src, ':') == NULL ?
+				&ipv4_info :
+				&ipv6_info;
 
 			id->kind = afi->id_addr;
 			ugh = ttoaddr(src, 0, afi->af, &id->ip_addr);

@@ -79,7 +79,7 @@
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "ip_address.h"
-#include "af_info.h"
+#include "ip_info.h"
 #include "ikev1_hash.h"
 
 #include <blapit.h>
@@ -147,7 +147,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 			   uint16_t port,
 			   pb_stream *outs)
 {
-	const struct af_info *ai = aftoinfo(subnettypeof(net));
+	const struct ip_info *ai = aftoinfo(subnettypeof(net));
 	const bool usehost = net->maskbits == ai->mask_cnt;
 	pb_stream id_pbs;
 
@@ -430,7 +430,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			  ip_subnet *net,
 			  const char *which)
 {
-	const struct af_info *afi = NULL;
+	const struct ip_info *afi = NULL;
 
 	/* Note: the following may be a pointer into static memory
 	 * that may be recycled, but only if the type is not known.
@@ -442,12 +442,12 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV4_ADDR:
 	case ID_IPV4_ADDR_SUBNET:
 	case ID_IPV4_ADDR_RANGE:
-		afi = &af_inet4_info;
+		afi = &ipv4_info;
 		break;
 	case ID_IPV6_ADDR:
 	case ID_IPV6_ADDR_SUBNET:
 	case ID_IPV6_ADDR_RANGE:
-		afi = &af_inet6_info;
+		afi = &ipv6_info;
 		break;
 	case ID_FQDN:
 		loglog(RC_COMMENT, "%s type is FQDN", which);

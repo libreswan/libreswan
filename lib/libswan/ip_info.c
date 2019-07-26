@@ -18,51 +18,59 @@
  */
 
 #include "ietf_constants.h"
-#include "af_info.h"
+#include "ip_info.h"
 #include "libreswan/passert.h"
+#include "lswlog.h"		/* for bad_case() */
 
-static ip_address ipv4_any, ipv6_any;
 static ip_subnet ipv4_wildcard, ipv6_wildcard;
 static ip_subnet ipv4_all, ipv6_all;
 
-const struct af_info af_inet4_info = {
-	AF_INET,
-	"AF_INET",
-	sizeof(struct in_addr),
-	sizeof(struct sockaddr_in),
-	32,
-	ID_IPV4_ADDR, ID_IPV4_ADDR_SUBNET, ID_IPV4_ADDR_RANGE,
-	&ipv4_wildcard, &ipv4_all,
+const struct ip_info ipv4_info = {
+	.af = AF_INET,
+	.af_name = "AF_INET",
+	.version = 4,
+	.ia_sz = sizeof(struct in_addr),
+	.sa_sz = sizeof(struct sockaddr_in),
+	.mask_cnt = 32,
+	.id_addr = ID_IPV4_ADDR,
+	.id_subnet = ID_IPV4_ADDR_SUBNET,
+	.id_range = ID_IPV4_ADDR_RANGE,
+	.none = &ipv4_wildcard,
+	.all = &ipv4_all,
 };
 
-const struct af_info af_inet6_info = {
-	AF_INET6,
-	"AF_INET6",
-	sizeof(struct in6_addr),
-	sizeof(struct sockaddr_in6),
-	128,
-	ID_IPV6_ADDR, ID_IPV6_ADDR_SUBNET, ID_IPV6_ADDR_RANGE,
-	&ipv6_wildcard, &ipv6_all,
+const struct ip_info ipv6_info = {
+	.af = AF_INET6,
+	.af_name = "AF_INET6",
+	.version = 6,
+	.ia_sz = sizeof(struct in6_addr),
+	.sa_sz = sizeof(struct sockaddr_in6),
+	.mask_cnt = 128,
+	.id_addr = ID_IPV6_ADDR,
+	.id_subnet = ID_IPV6_ADDR_SUBNET,
+	.id_range = ID_IPV6_ADDR_RANGE,
+	.none = &ipv6_wildcard,
+	.all = &ipv6_all,
 };
 
-const struct af_info *aftoinfo(int af)
+const struct ip_info *aftoinfo(int af)
 {
 	switch (af) {
 	case AF_INET:
-		return &af_inet4_info;
-
+		return &ipv4_info;
 	case AF_INET6:
-		return &af_inet6_info;
-
-	default:
+		return &ipv6_info;
+	case AF_UNSPEC:
 		return NULL;
+	default:
+		bad_case(af);
 	}
 }
 
-void init_af_info(void)
+void init_ip_info(void)
 {
-	ipv4_any = address_any(AF_INET);
-	ipv6_any = address_any(AF_INET6);
+	ip_address ipv4_any = address_any(AF_INET);
+	ip_address ipv6_any = address_any(AF_INET6);
 
 	happy(addrtosubnet(&ipv4_any, &ipv4_wildcard));
 	happy(addrtosubnet(&ipv6_any, &ipv6_wildcard));
