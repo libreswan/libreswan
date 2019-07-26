@@ -46,10 +46,10 @@ road #
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
-005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=168B out=168B
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: down-client output: restoring resolvconf
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I3) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
+005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=168B out=168B
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting state (STATE_PARENT_I3) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 instance with peer 192.1.2.23
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 road #
@@ -69,10 +69,10 @@ road #
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #4: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
-005 "westnet-eastnet-ipv4-psk-ikev2" #4: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-ipv4-psk-ikev2" #4: down-client output: restoring resolvconf
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting state (STATE_PARENT_I3) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
+005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: ESP traffic information: in=0B out=0B
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: down-client output: restoring resolvconf
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: deleting state (STATE_PARENT_I3) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 instance with peer 192.1.2.23
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 road #
@@ -92,10 +92,10 @@ road #
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #6: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
-005 "westnet-eastnet-ipv4-psk-ikev2" #6: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-ipv4-psk-ikev2" #6: down-client output: restoring resolvconf
-002 "westnet-eastnet-ipv4-psk-ikev2" #5: deleting state (STATE_PARENT_I3) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: deleting state (STATE_V2_IPSEC_I) and NOT sending notification
+005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: ESP traffic information: in=0B out=0B
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: down-client output: restoring resolvconf
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: deleting state (STATE_PARENT_I3) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 instance with peer 192.1.2.23
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 road #

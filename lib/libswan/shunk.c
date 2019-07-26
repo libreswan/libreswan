@@ -23,11 +23,12 @@
 #include "lswlog.h"	/* for pexpect() */
 
 /*
- * Don't mistake a NULL_SHUNK for an empty shunk - just like for
- * strings they are different.
+ * Don't mistake a NULL_SHUNK for an EMPTY_SHUNK - just like when
+ * manipulating strings they are different.
  */
 
 const shunk_t null_shunk = NULL_SHUNK;
+const shunk_t empty_shunk = { .ptr = "", .len = 0, };
 
 shunk_t shunk1(const char *ptr)
 {
@@ -92,6 +93,7 @@ shunk_t shunk_token(shunk_t *input, char *delim, const char *delims)
 
 bool shunk_caseeq(shunk_t lhs, shunk_t rhs)
 {
+	/* NULL and EMPTY("") are not the same */
 	if (lhs.ptr == NULL || rhs.ptr == NULL) {
 		return lhs.ptr == rhs.ptr;
 	}
@@ -104,6 +106,23 @@ bool shunk_caseeq(shunk_t lhs, shunk_t rhs)
 bool shunk_strcaseeq(shunk_t shunk, const char *str)
 {
 	return shunk_caseeq(shunk, shunk1(str));
+}
+
+bool shunk_memeq(shunk_t l, const void *r, size_t sizeof_r)
+{
+	/* NULL and EMPTY("") are not the same */
+	if (l.ptr == NULL || r == NULL) {
+		return l.ptr == r;
+	}
+	if (l.len != sizeof_r) {
+		return false;
+	}
+	return memeq(l.ptr, r, sizeof_r);
+}
+
+bool shunk_eq(shunk_t l, shunk_t r)
+{
+	return shunk_memeq(l, r.ptr, r.len);
 }
 
 bool shunk_caseeat(shunk_t *shunk, shunk_t dinner)

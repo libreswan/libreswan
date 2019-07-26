@@ -183,7 +183,7 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 
 	bs->said.proto = SA_INT;
 	bs->said.spi = htonl(shunt_spi);
-	bs->said.dst = *aftoinfo(subnettypeof(ours))->any;
+	bs->said.dst = address_any(subnettypeof(ours));
 
 	bs->count = 0;
 	bs->last_activity = mononow();
@@ -1336,7 +1336,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			const char *why)
 {
 	ip_subnet this_client, that_client;
-	const ip_address *null_host = aftoinfo(addrtypeof(src))->any;
+	const ip_address null_host = address_any(addrtypeof(src));
 
 	DBG(DBG_CONTROL, DBG_log("fiddle_bare_shunt called"));
 
@@ -1363,8 +1363,8 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	DBG(DBG_KERNEL,
 		DBG_log("%s specific host-to-host bare shunt",
 			repl ? "replacing" : "removing"));
-	if (raw_eroute(null_host, &this_client,
-			null_host, &that_client,
+	if (raw_eroute(&null_host, &this_client,
+			&null_host, &that_client,
 			htonl(cur_shunt_spi),
 			htonl(new_shunt_spi),
 			SA_INT, transport_proto,
@@ -1412,7 +1412,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			bs->policy_prio = policy_prio;
 			bs->said.spi = htonl(new_shunt_spi);
 			bs->said.proto = SA_INT;
-			bs->said.dst = *null_host;
+			bs->said.dst = null_host;
 			bs->count = 0;
 			bs->last_activity = mononow();
 			DBG_bare_shunt("change", bs);
@@ -1466,21 +1466,21 @@ bool eroute_connection(const struct spd_route *sr,
 #endif
 	)
 {
-	const ip_address *peer = &sr->that.host_addr;
+	ip_address peer = sr->that.host_addr;
 	char buf2[256];
 
 	snprintf(buf2, sizeof(buf2),
 		"eroute_connection %s", opname);
 
 	if (sa_proto == SA_INT)
-		peer = aftoinfo(addrtypeof(peer))->any;
+		peer = address_any(addrtypeof(&peer));
 
 	if (sr->this.has_cat) {
 		ip_subnet client;
 
 		addrtosubnet(&sr->this.host_addr, &client);
 		bool t = raw_eroute(&sr->this.host_addr, &client,
-				peer, &sr->that.client,
+				    &peer, &sr->that.client,
 				cur_spi,
 				new_spi,
 				sa_proto,
@@ -1500,7 +1500,7 @@ bool eroute_connection(const struct spd_route *sr,
 	}
 
 	return raw_eroute(&sr->this.host_addr, &sr->this.client,
-			peer, &sr->that.client,
+			  &peer, &sr->that.client,
 			cur_spi,
 			new_spi,
 			sa_proto,
@@ -1964,9 +1964,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			natt_type = ESPINUDP_WITH_NON_ESP;
 			if (inbound) {
 				natt_sport = st->st_remoteport;
-				natt_dport = st->st_localport;
+				natt_dport = endpoint_port(&st->st_interface->local_endpoint);
 			} else {
-				natt_sport = st->st_localport;
+				natt_sport = endpoint_port(&st->st_interface->local_endpoint);
 				natt_dport = st->st_remoteport;
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
@@ -3553,7 +3553,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 		bs->said.proto = SA_INT;
 		bs->said.spi = htonl(negotiation_shunt);
-		bs->said.dst = *aftoinfo(subnettypeof(&sr->this.client))->any;
+		bs->said.dst = address_any(subnettypeof(&sr->this.client));
 
 		bs->count = 0;
 		bs->last_activity = mononow();

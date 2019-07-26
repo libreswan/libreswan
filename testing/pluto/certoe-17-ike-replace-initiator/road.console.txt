@@ -1,0 +1,166 @@
+/testing/guestbin/swan-prep
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+road #
+ # ensure for tests acquires expire before our failureshunt=2m
+road #
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ # give OE policies time to load
+road #
+ sleep 5
+road #
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out &
+[x] PID
+road #
+ echo "initdone"
+initdone
+road #
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 3 received, 25% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ # wait on OE retransmits and rekeying
+road #
+ sleep 20
+road #
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ sleep 20
+road #
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ sleep 20
+road #
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ sleep 20
+road #
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=1596, outBytes=1596, id='ID_NULL'
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+road #
+ killall ip > /dev/null 2> /dev/null
+[1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out
+road #
+ echo done
+done
+road #
+ ../../pluto/bin/ipsec-look.sh
+road NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+XFRM policy:
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.2.253/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.2.254/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.3.253/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.3.254/32
+	dir out priority 1564639 ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 2088927 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 2088927 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 2088927 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority 2088935 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.3.209/32 dst 192.1.3.0/24
+	dir out priority 2088935 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.3.254 dev eth0
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+road #
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

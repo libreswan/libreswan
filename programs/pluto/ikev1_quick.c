@@ -835,7 +835,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		if (LHAS(isakmp_sa->hidden_variables.st_nat_traversal,
 			 NATED_HOST))
 			has_client = TRUE;
-		nat_traversal_change_port_lookup(NULL, st);
+		v1_maybe_natify_initiator_endpoints(st, HERE);
 	} else {
 		st->hidden_variables.st_nat_traversal = LEMPTY;
 	}
@@ -1366,6 +1366,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 			st->hidden_variables.st_nat_traversal =
 				p1st->hidden_variables.st_nat_traversal;
 			nat_traversal_change_port_lookup(md, md->st);
+			v1_maybe_natify_initiator_endpoints(st, HERE);
 		} else {
 			/* ??? this partially overwrites what was done via hv */
 			st->hidden_variables.st_nat_traversal = LEMPTY;

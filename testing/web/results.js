@@ -111,6 +111,10 @@ function results(div_id, json_file) {
 				// old diff might be helpful.
 				href = result.baseline_output_directory + "/" + host + ".console.diff"
 				value = "previous-different"
+			    } else if (error == "EXPECTATION"
+				       || error == "ASSERTION") {
+				href = result.output_directory + "/" + host + ".pluto.log.gz"
+				value = error
 			    } else {
 				href = result.output_directory
 				value = error

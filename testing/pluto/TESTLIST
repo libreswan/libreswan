@@ -354,6 +354,7 @@ kvmplutotest	ikev2-x509-26-criticalflag		good
 kvmplutotest	ikev2-x509-27-criticalflag-clientAuth	good
 kvmplutotest	ikev2-x509-28-del-nssdb-cert		good
 kvmplutotest	ikev2-x509-30-mismatch-ignore		good
+kvmplutotest	ikev2-x509-31-wifi-assist		wip
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 
@@ -495,6 +496,7 @@ kvmplutotest	certoe-12-nat-server			good
 kvmplutotest	certoe-13-poc-del-slash24		good
 kvmplutotest	certoe-14-poc-del-slash32		good
 kvmplutotest	certoe-15-poc-east-west			good
+kvmplutotest	certoe-17-asymmetric-cert-nat		good
 kvmplutotest	rawrsaoe-asymmetric-nat			good
 kvmplutotest	rawrsaoe-asymmetric-01			good
 
@@ -1039,3 +1041,23 @@ kvmplutotest 	interop-ikev2-strongswan-38-mobike-initiator	good
 kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 
 kvmplutotest	bad-nexthop-01		wip
+
+# Kernel interops
+
+kvmplutotest	algo-ah-klips-to-klips-ikev1			good
+kvmplutotest	algo-ah-klips-to-klips-ikev2			good
+kvmplutotest	algo-ah-klips-to-netkey-ikev1			good
+kvmplutotest	algo-ah-klips-to-netkey-ikev2			good
+kvmplutotest	algo-ah-netkey-to-klips-ikev1			good
+kvmplutotest	algo-ah-netkey-to-klips-ikev2			good
+kvmplutotest	algo-ah-netkey-to-netkey-ikev1			good
+kvmplutotest	algo-ah-netkey-to-netkey-ikev2			good
+
+kvmplutotest	algo-esp-klips-to-klips-ikev1			wip
+kvmplutotest	algo-esp-klips-to-klips-ikev2			wip
+kvmplutotest	algo-esp-klips-to-netkey-ikev1			wip
+kvmplutotest	algo-esp-klips-to-netkey-ikev2			wip
+kvmplutotest	algo-esp-netkey-to-klips-ikev1			good
+kvmplutotest	algo-esp-netkey-to-klips-ikev2			good
+kvmplutotest	algo-esp-netkey-to-netkey-ikev1			good
+kvmplutotest	algo-esp-netkey-to-netkey-ikev2			good

@@ -73,9 +73,6 @@ struct iface_dev {
 struct iface_port {
 	struct iface_dev   *ip_dev;
 	ip_endpoint local_endpoint;	/* interface IP address:port */
-	uint16_t port;         /* host byte order; use LOCAL_ENDPOINT */
-	ip_address ip_addr;     /* interface IP address; use LOCAL_ENDPOINT */
-#define pexpect_iface_port(I) pexpect(endpoint_eq(I->local_endpoint, endpoint(&I->ip_addr, I->port)))
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
 	struct iface_port *next;
 	bool ike_float;

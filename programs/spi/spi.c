@@ -909,9 +909,9 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			/* currently we ensure that all addresses belong to the same address family */
-			anyaddr(address_family, &dst);
-			anyaddr(address_family, &edst);
-			anyaddr(address_family, &src);
+			dst = address_any(address_family);
+			edst = address_any(address_family);
+			src = address_any(address_family);
 			af_opt = optarg;
 			break;
 
@@ -963,9 +963,9 @@ int main(int argc, char *argv[])
 					progname, address_family, optarg);
 				exit(1);
 			}
-			anyaddr(address_family, &dst);
-			anyaddr(address_family, &edst);
-			anyaddr(address_family, &src);
+			dst = address_any(address_family);
+			edst = address_any(address_family);
+			src = address_any(address_family);
 			said_opt = optarg;
 			break;
 
@@ -1128,13 +1128,6 @@ int main(int argc, char *argv[])
 	if (debug) {
 		fprintf(stdout, "%s: All options processed.\n",
 			progname);
-	}
-
-	if (stat("/proc/sys/net/core/xfrm_acq_expires", &sts) == 0) {
-		fprintf(stderr,
-			"%s: XFRM does not use the ipsec spi command. Use 'ip xfrm' instead.\n",
-			progname);
-		exit(1);
 	}
 
 	if (argcount == 1) {

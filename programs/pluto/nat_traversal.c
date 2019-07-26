@@ -184,12 +184,13 @@ bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 	};
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
-	uint16_t lport = st->st_localport;
+	pexpect_st_local_endpoint(st);
+	uint16_t lport = endpoint_port(&st->st_interface->local_endpoint);
 	if (st->st_connection->encaps == yna_yes) {
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		lport = 0;
 	}
-	ip_endpoint local_endpoint = endpoint(&st->st_localaddr, lport);
+	ip_endpoint local_endpoint = endpoint(&st->st_interface->local_endpoint, lport);
 	ip_endpoint remote_endpoint = endpoint(&st->st_remoteaddr, st->st_remoteport);
 	return ikev2_out_natd(&local_endpoint, &remote_endpoint,
 			      &ike_spis, outs);
@@ -319,7 +320,7 @@ static void natd_lookup_common(struct state *st,
 	const ip_address *sender,
 	bool found_me, bool found_him)
 {
-	anyaddr(AF_INET, &st->hidden_variables.st_natd);
+	st->hidden_variables.st_natd = address_any(AF_INET);
 
 	/* update NAT-T settings for local policy */
 	switch (st->st_connection->encaps) {
@@ -457,7 +458,8 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
 	unsigned remote_port = st->st_remoteport;
-	unsigned short local_port = st->st_localport;
+	pexpect_st_local_endpoint(st);
+	unsigned short local_port = endpoint_port(&st->st_interface->local_endpoint);
 	if (st->st_connection->encaps == yna_yes) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection"));
@@ -505,7 +507,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	passert(md->iface != NULL);
 
 	/* Initialize NAT-OA */
-	anyaddr(AF_INET, &hv->st_nat_oa);
+	hv->st_nat_oa = address_any(AF_INET);
 
 	/* Count NAT-OA */
 	const struct payload_digest *p;
@@ -618,11 +620,12 @@ bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
 {
 	const ip_address *ipinit, *ipresp;
 
+	pexpect_st_local_endpoint(st);
 	if (initiator) {
-		ipinit = &st->st_localaddr;
+		ipinit = &st->st_interface->local_endpoint;
 		ipresp = &st->st_remoteaddr;
 	} else {
-		ipresp = &st->st_localaddr;
+		ipresp = &st->st_interface->local_endpoint;
 		ipinit = &st->st_remoteaddr;
 	}
 
@@ -956,6 +959,8 @@ void nat_traversal_new_mapping(struct ike_sa *ike,
 /* this should only be called after packet has been verified/authenticated! */
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 {
+	pexpect_st_local_endpoint(st);
+
 	if (st == NULL)
 		return;
 
@@ -972,13 +977,26 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		/*
 		 * If interface type has changed, update local port (500/4500)
 		 */
-		if (md->iface->port != st->st_localport) {
-			dbg("NAT-T: #%lu updating local port from %d to %d",
-			    st->st_serialno, st->st_localport, md->iface->port);
-			st->st_localport = md->iface->port;
+		if (md->iface != st->st_interface) {
+			endpoint_buf b1, b2;
+			dbg("NAT-T: #%lu updating local interface from %s to %s (using md->iface in %s())",
+			    st->st_serialno,
+			    str_endpoint(&st->st_interface->local_endpoint, &b1),
+			    str_endpoint(&md->iface->local_endpoint, &b2), __func__);
+			st->st_interface = md->iface;
 		}
 	}
+	pexpect_st_local_endpoint(st);
+}
 
+/*
+ * XXX: there should be no maybes about this - each of the callers
+ * know the state and hence, know if there's any point in calling this
+ * function.
+ */
+void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
+{
+	pexpect_st_local_endpoint(st);
 	/*
 	 * If we're initiator and NAT-T is detected, we
 	 * need to change port (MAIN_I3, QUICK_I1 or AGGR_I2)
@@ -987,52 +1005,22 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	     st->st_state->kind == STATE_QUICK_I1 ||
 	     st->st_state->kind == STATE_AGGR_I2) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-	    st->st_localport != pluto_nat_port) {
-		dbg("NAT-T: #%lu floating IKEv1 ports from local=%d remote=%d to pluto nat port %d",
-		    st->st_serialno, st->st_localport, st->st_remoteport,
+	    endpoint_port(&st->st_interface->local_endpoint) != pluto_nat_port) {
+		dbg("NAT-T: #%lu in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
+		    st->st_serialno, st->st_state->short_name,
 		    pluto_nat_port);
-
-		st->st_localport  = pluto_nat_port;
-		st->st_remoteport = pluto_nat_port;
-
+		natify_initiator_endpoints(st, where);
 		/*
 		 * Also update pending connections or they will be deleted if
 		 * uniqueids option is set.
 		 * THIS does NOTHING as, both arguments are "st"!
+		 *
+		 * XXX: so can it be deleted, it would kill the
+		 * function.
 		 */
 		update_pending(st, st);
 	}
-
-	/*
-	 * Find valid interface according to local port (500/4500)
-	 *
-	 * XXX: For instance, st_localport modified by either code
-	 * path above or in ikev2_natd_looku().
-	 *
-	 * XXX: But wait, there's also other code that munges
-	 * .st_local{addr,port} - update_ike_endpoints().
-	 */
-	ip_endpoint st_local_endpoint = endpoint(&st->st_localaddr, st->st_localport);
-	if (!endpoint_eq(st_local_endpoint, st->st_interface->local_endpoint)) {
-		endpoint_buf b1;
-		endpoint_buf b2;
-		pexpect_iface_port(st->st_interface);
-		dbg("NAT-T: #%lu has local endpoint %s which does not match interface %s %s",
-		    st->st_serialno,
-		    str_endpoint(&st_local_endpoint, &b1),
-		    st->st_interface->ip_dev->id_rname,
-		    str_endpoint(&st->st_interface->local_endpoint, &b2));
-
-		struct iface_port *i = find_iface_port_by_local_endpoint(&st_local_endpoint);
-		if (i != NULL) {
-			endpoint_buf b;
-			pexpect_iface_port(i);
-			dbg("NAT-T: #%lu updated to use interface %s %s",
-			    st->st_serialno, i->ip_dev->id_rname,
-			    str_endpoint(&i->local_endpoint, &b));
-			st->st_interface = i;
-		}
-	}
+	pexpect_st_local_endpoint(st);
 }
 
 void show_setup_natt(void)
@@ -1094,18 +1082,56 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
 	}
 
 	natd_lookup_common(st, &md->sender, found_me, found_him);
+}
 
-	if (st->st_state->kind == STATE_PARENT_I1 &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)) {
-		endpoint_buf b;
-		dbg("NAT-T: #%lu floating IKEv2 ports from local=%d remote=%d to pluto nat port %d for %s",
-		    st->st_serialno,
-		    st->st_localport, st->st_remoteport,
-		    pluto_nat_port,
-		    str_endpoint(&md->sender, &b));
-		st->st_localport = pluto_nat_port;
-		st->st_remoteport = pluto_nat_port;
 
-		nat_traversal_change_port_lookup(NULL, st);
+/*
+ * Update the initiator endpoints so that all further exchanges are
+ * encapsulated in UDP and exchanged between :PLUTO_NAT_PORTs (i.e.,
+ * :4500).
+ */
+
+void natify_initiator_endpoints(struct state *st, where_t where)
+{
+	/*
+	 * Float the local endpoint's port to :PLUTO_NAT_PORT (:4500)
+	 * and then re-bind the interface so that all further
+	 * exchanges use that port.
+	 */
+	pexpect_st_local_endpoint(st);
+	endpoint_buf b1, b2;
+	ip_endpoint new_local_endpoint = set_endpoint_port(&st->st_interface->local_endpoint, pluto_nat_port);
+	dbg("NAT: #%lu floating local endpoint from %s to %s using pluto_nat_port "PRI_WHERE,
+	    st->st_serialno,
+	    str_endpoint(&st->st_interface->local_endpoint, &b1),
+	    str_endpoint(&new_local_endpoint, &b2),
+	    pri_where(where));
+	/*
+	 * If not already ...
+	 */
+	if (!endpoint_eq(new_local_endpoint, st->st_interface->local_endpoint)) {
+		/*
+		 * For IPv4, both :PLUTO_PORT and :PLUTO_NAT_PORT are
+		 * opened by server.c so the new endpoint using
+		 * :PLUTO_NAT_PORT should exist.  IPv6 nat isn't
+		 * supported.
+		 */
+		struct iface_port *i = find_iface_port_by_local_endpoint(&new_local_endpoint);
+		if (pexpect(i != NULL)) {
+			endpoint_buf b;
+			dbg("NAT: #%lu floating endpoint ended up on interface %s %s",
+			    st->st_serialno, i->ip_dev->id_rname,
+			    str_endpoint(&i->local_endpoint, &b));
+			st->st_interface = i;
+		}
 	}
+	pexpect_st_local_endpoint(st);
+
+	/*
+	 * Float the remote port to :PLUTO_NAT_PORT (:4500)
+	 */
+	dbg("NAT-T: #%lu floating remote port from %d to %d using pluto_nat_port "PRI_WHERE,
+	    st->st_serialno, st->st_remoteport, pluto_nat_port,
+	    pri_where(where));
+	st->st_remoteport = pluto_nat_port;
 }

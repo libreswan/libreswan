@@ -37,7 +37,13 @@ static bool warning_or_false(struct proposal_parser *parser,
 	pexpect(parser->error[0] != '\0');
 	bool result;
 	if (parser->policy->ignore_parser_errors) {
-		parser->policy->warning("ignoring unknown %s algorithm '"PRI_SHUNK"'",
+		/*
+		 * XXX: the algorithm might be unknown, or might be
+		 * known but not enabled due to FIPS or KLIPS, or ...?
+		 */
+		parser->policy->warning("ignoring %s %s %s algorithm '"PRI_SHUNK"'",
+					enum_name(&ike_version_names, parser->policy->version),
+					parser->protocol->name, /* ESP|IKE|AH */
 					what, pri_shunk(print));
 		result = true;
 	} else {
@@ -307,22 +313,56 @@ static bool parse_proposal(struct proposal_parser *parser,
 		.input = input,
 	};
 	next(&token);
+
 	/*
-	 * Encryption is expected, it isn't optional.
+	 * Encryption.
+	 *
+	 * When encryption is part of the proposal, at least one
+	 * (encryption algorithm) token should be present, further
+	 * tokens are optional.
+	 *
+	 * Each token is then converted to an encryption algorithm and
+	 * added to the proposal, and any invalid algorithm causing
+	 * the whole proposal to be rejected.
+	 *
+	 * However, when either ignore IGNORE_PARSER_ERRORS or IMPAIR,
+	 * invalid algorithms are instead skipped and this can result
+	 * in a proposal with no encryption algorithm.
+	 *
+	 * For instance, the encryption algorithm "AES_GCM" will be
+	 * invalid when ESP and KLIPS.  Normally this proposal will be
+	 * rejected, but when IGNORE_PARSER_ERRORS (for default
+	 * proposals) the code will instead stumble on.
 	 */
 	if (parser->protocol->encrypt) {
+		/* first encryption algorithm token is expected */
 		if (!parse_encrypt(parser, proposal, &token)) {
 			free_proposal(&proposal);
 			return false;
 		}
 		error[0] = parser->error[0] = '\0';
 		next(&token);
+		/* further encryption algorithm tokens are optional */
 		while (token.delim == '+' &&
 		       parse_encrypt(parser, proposal, &token)) {
 			error[0] = parser->error[0] = '\0';
 			next(&token);
 		}
+		/* deal with all encryption algorithm tokens being skipped */
+		if (next_algorithm(proposal, PROPOSAL_encrypt, NULL) == NULL) {
+			if (parser->policy->ignore_parser_errors) {
+				DBGF(DBG_PROPOSAL_PARSER, "all encryption algorithms skipped; stumbling on");
+				free_proposal(&proposal);
+				return true;
+			}
+			if (!IMPAIR(PROPOSAL_PARSER)) {
+				PEXPECT_LOG("all encryption algorithms skipped");
+				free_proposal(&proposal);
+				return false;
+			}
+		}
 	}
+
 #define PARSE_ALG(STOP, ALG)						\
 	if (error[0] == '\0' && parser->error[0] != '\0') {		\
 		strcpy(error, parser->error);				\
@@ -339,6 +379,7 @@ static bool parse_proposal(struct proposal_parser *parser,
 			next(&token);					\
 		}							\
 	}
+
 	PARSE_ALG(';', prf);
 	/*
 	 * By default, don't allow ike=...-<prf>-<integ>-... but do

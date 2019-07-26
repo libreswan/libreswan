@@ -12,11 +12,8 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-SUBDIRS = pluto
-SUBDIRS += enumcheck
-SUBDIRS += ipcheck
-SUBDIRS += jambufcheck
-SUBDIRS += timecheck
+SUBDIRS += pluto
+SUBDIRS += check
 
 ifndef top_srcdir
 include ../mk/dirs.mk

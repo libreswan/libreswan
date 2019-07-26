@@ -49,7 +49,7 @@ def main():
                 sys.exit("failed to find source ip for destination %s" % dest)
 
     if args.debug:
-        print "Need to find matching IPsec policy for %s/32 <=> %s/32" % (source, dest)
+        print("Need to find matching IPsec policy for %s/32 <=> %s/32" % (source, dest))
 
     if dest:
         if "/" in source:

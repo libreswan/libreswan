@@ -52,6 +52,7 @@
 #include "ike_spi.h"
 #include "pluto_timing.h"	/* for statetime_t */
 #include "ikev2_msgid.h"
+#include "ip_endpoint.h"
 
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
@@ -371,17 +372,27 @@ struct state {
 	ip_address st_remoteaddr;               /* where to send packets to */
 	uint16_t st_remoteport;                /* host byte order */
 
-	const struct iface_port *st_interface;  /* where to send from */  /* dhr 2013: why? There was already connection->interface */
-	ip_address st_localaddr;                /* where to send them from */
-	uint16_t st_localport;
+	/*
+	 * dhr 2013: why [.st_interface]? There was already
+	 * connection->interface
+	 *
+	 * XXX: It seems that .st_interface starts out the same as the
+	 * connection's interface but then be changed by NAT.  For
+	 * instance, when the initial request is sent on :500 but the
+	 * response comes back on :4500, .st_interface will switch.
+	 *
+	 * XXX: It looks like there's redundancy, or at least there
+	 * should be consistency between this.{addr,port} and the
+	 * local endpoint.  pexpect_st_local_endpoint() is a place
+	 * holder as that idear gets explored.
+	 */
+	const struct iface_port *st_interface;  /* where to send from */
+#define pexpect_st_local_endpoint(ST) /* see above */
 
 	/* IKEv2 MOBIKE probe copies */
-	ip_address st_mobike_remoteaddr;
-	uint16_t st_mobike_remoteport;
-	const struct iface_port *st_mobike_interface;
+	ip_address st_mobike_remote_endpoint;
 	ip_address st_deleted_local_addr;	/* kernel deleted address */
-	ip_address st_mobike_localaddr;		/* new address to initiate MOBIKE */
-	uint16_t st_mobike_localport;		/* is this necessary ? */
+	ip_endpoint st_mobike_local_endpoint;	/* new address to initiate MOBIKE */
 	ip_address st_mobike_host_nexthop;	/* for updown script */
 
 	/** IKEv1-only things **/

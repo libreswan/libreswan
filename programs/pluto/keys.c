@@ -1037,8 +1037,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 
 		rw_id.kind = addrtypeof(&c->spd.that.host_addr) == AF_INET ?
 			     ID_IPV4_ADDR : ID_IPV6_ADDR;
-		happy(anyaddr(addrtypeof(&c->spd.that.host_addr),
-			      &rw_id.ip_addr));
+		rw_id.ip_addr = address_any(address_type(&c->spd.that.host_addr));
 		his_id = &rw_id;
 	}
 

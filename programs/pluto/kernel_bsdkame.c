@@ -154,11 +154,11 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					id->id_count++;
 
 					q->ip_addr = ifp->addr;
+					q->port = pluto_port;
+					q->local_endpoint = endpoint(&ifp->addr, pluto_port);
 					q->fd = fd;
 					q->next = interfaces;
 					q->change = IFN_ADD;
-					q->port = pluto_port;
-					q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 					q->ike_float = FALSE;
 
 					interfaces = q;

@@ -14,7 +14,7 @@ baseversion=$1
 
 cd "${2:-.}" || usage
 
-if test -d .git
+if test -d .git -o -f .git
 then
 	gitcheck="`git version 2> /dev/null`"
 	if test -z "$gitcheck"
@@ -25,7 +25,7 @@ then
 		exit
 	fi
 	# use git to determine tree differences
-	BRANCH="`head -1 .git/HEAD  | sed \"s/^.*\///\"`"
+	BRANCH=$(git rev-parse --abbrev-ref HEAD)
 	CUR="`git describe --tags --dirty`"
 	echo "$CUR-$BRANCH"
 else

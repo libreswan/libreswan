@@ -43,10 +43,17 @@ typedef struct /*chunk*/ {
 chunk_t chunk(void *ptr, size_t len);
 
 /*
- * CHUNKO: create a chunk that encompasses an object
- * Warning: the cast can mask some type errors (eg. loosing const attribute).
+ * Convert writeable THING to a writeable CHUNK.  When compiled with
+ * GCC (at least) and THING is read-only, a warning will be generated.
+ *
+ * This works because GCC doesn't like implictly converting a 'const'
+ * &THING actual parameter to the non-const 'void*' formal parameter.
+ * Using an explicit cast (such as in a static initializer) suppresses
+ * this warning.
+ *
+ * For a read-only CHUNK like object, see THING_AS_SHUNK().
  */
-#define CHUNKO(OBJECT) ((const chunk_t) { .ptr = (void *)&(OBJECT), .len = sizeof(OBJECT) })
+#define THING_AS_CHUNK(THING) chunk(&(THING), sizeof(THING))
 
 chunk_t alloc_chunk(size_t count, const char *name);
 void free_chunk_contents(chunk_t *chunk); /* blats *CHUNK */

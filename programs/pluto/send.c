@@ -140,7 +140,6 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	if (DBGP(DBG_BASE)) {
 		endpoint_buf b;
 		endpoint_buf ib;
-		pexpect_iface_port(interface);
 		DBG_log("sending %zu bytes for %s through %s from %s to %s (using #%lu)",
 			len,
 			where,
@@ -178,7 +177,6 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		usleep(500000);
 		endpoint_buf b;
 		endpoint_buf ib;
-		pexpect_iface_port(interface);
 		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
 			len,
 			where,
@@ -255,6 +253,6 @@ bool send_keepalive(struct state *st, const char *where)
 	return send_chunks(where, TRUE,
 			   st->st_serialno, st->st_interface,
 			   hsetportof(st->st_remoteport, st->st_remoteaddr),
-			   CHUNKO(ka_payload),
+			   THING_AS_CHUNK(ka_payload),
 			   EMPTY_CHUNK);
 }

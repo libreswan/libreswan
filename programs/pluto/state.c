@@ -523,8 +523,8 @@ static struct state *new_state(enum ike_version ike_version,
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 
-	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
-	anyaddr(AF_INET, &st->hidden_variables.st_natd);
+	st->hidden_variables.st_nat_oa = address_any(AF_INET);
+	st->hidden_variables.st_natd = address_any(AF_INET);
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
 	add_state_to_db(st);
@@ -1475,9 +1475,14 @@ static struct state *duplicate_state(struct state *st,
 	nst->hidden_variables = st->hidden_variables;
 	nst->st_remoteaddr = st->st_remoteaddr;
 	nst->st_remoteport = st->st_remoteport;
-	nst->st_localaddr = st->st_localaddr;
-	nst->st_localport = st->st_localport;
+	pexpect_st_local_endpoint(st);
+	endpoint_buf eb;
+	dbg("#%lu setting local endpoint to %s from #%ld.st_localport "PRI_WHERE,
+	    nst->st_serialno,
+	    str_endpoint(&st->st_interface->local_endpoint, &eb),
+	    st->st_serialno,pri_where(HERE));
 	nst->st_interface = st->st_interface;
+	pexpect_st_local_endpoint(nst);
 	nst->st_clonedfrom = st->st_serialno;
 	passert(nst->st_ike_version == st->st_ike_version);
 	nst->st_ikev2_anon = st->st_ikev2_anon;
@@ -2656,9 +2661,14 @@ void update_ike_endpoints(struct ike_sa *ike,
 	/* caller must ensure we are not behind NAT */
 	ike->sa.st_remoteaddr = md->sender;
 	ike->sa.st_remoteport = hportof(&md->sender);
-	ike->sa.st_localaddr = md->iface->ip_addr;
-	ike->sa.st_localport = md->iface->port;
+	endpoint_buf eb1, eb2;
+	dbg("#%lu updating local interface from %s to %s using md->iface "PRI_WHERE,
+	    ike->sa.st_serialno,
+	    ike->sa.st_interface != NULL ? str_endpoint(&ike->sa.st_interface->local_endpoint, &eb1) : "<none>",
+	    str_endpoint(&md->iface->local_endpoint, &eb2),
+	    pri_where(HERE));
 	ike->sa.st_interface = md->iface;
+	pexpect_st_local_endpoint(&ike->sa);
 }
 
 /*
@@ -2668,10 +2678,7 @@ void update_ike_endpoints(struct ike_sa *ike,
 bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
-	int af = addrtypeof(&md->iface->ip_addr);
-	ipstr_buf b;
-	ip_address *old_addr, *new_addr;
-	uint16_t old_port, new_port;
+	int af = endpoint_type(&md->iface->local_endpoint);
 
 	/*
 	 * AA_201705 is this the right way to find Child SA(s)?
@@ -2689,54 +2696,51 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 
 	passert(child->sa.st_connection == ike->sa.st_connection);
 
+	ip_endpoint old_endpoint;
+	ip_endpoint new_endpoint;
+
 	enum message_role md_role = v2_msg_role(md);
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE inititor processing response */
-		old_addr = &ike->sa.st_localaddr;
-		old_port = ike->sa.st_localport;
+		pexpect_st_local_endpoint(&ike->sa);
+		old_endpoint = ike->sa.st_interface->local_endpoint;
 
-		child->sa.st_mobike_localaddr = ike->sa.st_mobike_localaddr;
-		child->sa.st_mobike_localport = ike->sa.st_mobike_localport;
+		child->sa.st_mobike_local_endpoint = ike->sa.st_mobike_local_endpoint;
 		child->sa.st_mobike_host_nexthop = ike->sa.st_mobike_host_nexthop;
 
-		new_addr = &ike->sa.st_mobike_localaddr;
-		new_port = ike->sa.st_mobike_localport;
+		new_endpoint = ike->sa.st_mobike_local_endpoint;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
-		old_addr = &ike->sa.st_remoteaddr;
-		old_port = ike->sa.st_remoteport;
+		old_endpoint = endpoint(&ike->sa.st_remoteaddr, ike->sa.st_remoteport);
 
-		child->sa.st_mobike_remoteaddr = md->sender;
-		child->sa.st_mobike_remoteport = hportof(&md->sender);
-		ike->sa.st_mobike_remoteaddr = md->sender;
-		ike->sa.st_mobike_remoteport = hportof(&md->sender);
+		child->sa.st_mobike_remote_endpoint = md->sender;
+		ike->sa.st_mobike_remote_endpoint = md->sender;
 
-		new_addr = &ike->sa.st_mobike_remoteaddr;
-		new_port = ike->sa.st_mobike_remoteport;
+		new_endpoint =md->sender;
 		break;
 	default:
 		bad_case(md_role);
 	}
 
 	char buf[256];
-	ipstr_buf old;
-	ipstr_buf new;
-	snprintf(buf, sizeof(buf), "MOBIKE update %s address %s:%u -> %s:%u",
-			md_role == MESSAGE_RESPONSE ? "local" : "remote",
-			sensitive_ipstr(old_addr, &old),
-			old_port,
-			sensitive_ipstr(new_addr, &new), new_port);
+	endpoint_buf old;
+	endpoint_buf new;
+	snprintf(buf, sizeof(buf), "MOBIKE update %s address %s -> %s",
+		 md_role == MESSAGE_RESPONSE ? "local" : "remote",
+		 str_sensitive_endpoint(&old_endpoint, &old),
+		 str_sensitive_endpoint(&new_endpoint, &new));
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu pst=#%lu %s", child->sa.st_serialno,
 					ike->sa.st_serialno, buf));
 
-	if (sameaddr(old_addr, new_addr) && new_port == old_port) {
+	if (endpoint_eq(old_endpoint, new_endpoint)) {
 		if (md_role == MESSAGE_REQUEST) {
 			/* on responder NAT could hide end-to-end change */
-			libreswan_log("MOBIKE success no change to kernel SA same IP address ad port  %s:%u",
-						sensitive_ipstr(old_addr, &b), old_port);
+			endpoint_buf b;
+			libreswan_log("MOBIKE success no change to kernel SA same IP address ad port  %s",
+				      str_sensitive_endpoint(&old_endpoint, &b));
 
 			return true;
 		}
@@ -2752,12 +2756,10 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE initiator processing response */
-		c->spd.this.host_addr = child->sa.st_mobike_localaddr;
-		c->spd.this.host_port = child->sa.st_mobike_localport;
+		c->spd.this.host_addr = endpoint_address(&child->sa.st_mobike_local_endpoint);
+		c->spd.this.host_port = endpoint_port(&child->sa.st_mobike_local_endpoint);
 		c->spd.this.host_nexthop  = child->sa.st_mobike_host_nexthop;
 
-		ike->sa.st_localaddr = child->sa.st_localaddr = md->iface->ip_addr;
-		ike->sa.st_localport = child->sa.st_localport = md->iface->port;
 		ike->sa.st_interface = child->sa.st_interface = md->iface;
 		break;
 	case MESSAGE_REQUEST:
@@ -2768,13 +2770,13 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		/* for the consistency, correct output in ipsec status */
 		child->sa.st_remoteaddr = ike->sa.st_remoteaddr = md->sender;
 		child->sa.st_remoteport = ike->sa.st_remoteport = hportof(&md->sender);
-		child->sa.st_localaddr = ike->sa.st_localaddr = md->iface->ip_addr;
-		child->sa.st_localport = ike->sa.st_localport = md->iface->port;
 		child->sa.st_interface = ike->sa.st_interface = md->iface;
 		break;
 	default:
 		bad_case(md_role);
 	}
+	pexpect_st_local_endpoint(&ike->sa);
+	pexpect_st_local_endpoint(&child->sa);
 
 	/* reset liveness */
 	ike->sa.st_pend_liveness = FALSE;
@@ -2808,9 +2810,7 @@ void set_state_ike_endpoints(struct state *st,
 	(void)orient(c);
 	st->st_interface = c->interface;
 	passert(st->st_interface != NULL);
-
-	st->st_localaddr = endpoint_address(&st->st_interface->local_endpoint);
-	st->st_localport = endpoint_port(&st->st_interface->local_endpoint);
+	pexpect_st_local_endpoint(st);
 
 	st->st_remoteaddr = c->spd.that.host_addr;
 	st->st_remoteport = c->spd.that.host_port;

@@ -135,9 +135,7 @@ struct raw_iface *find_raw_ifaces4(void)
 
 	/* bind the socket */
 	{
-		ip_address any;
-
-		happy(anyaddr(AF_INET, &any));
+		ip_address any = address_any(AF_INET);
 		setportof(htons(pluto_port), &any);
 		if (bind(master_sock, sockaddrof(&any),
 			 sockaddrlenof(&any)) < 0)
@@ -413,7 +411,7 @@ struct raw_iface *find_raw_ifaces6(void)
 
 			happy(ttoaddr_num(sb, 0, AF_INET6, &ri.addr));
 
-			if (!isunspecaddr(&ri.addr)) {
+			if (!isanyaddr(&ri.addr)) {
 				DBG(DBG_CONTROL,
 				    DBG_log("found %s with address %s",
 					    ri.name, sb));

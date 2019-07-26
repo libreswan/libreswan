@@ -130,7 +130,7 @@ bool orient(struct connection *c)
 			for (;;) {
 				/* check if this interface matches this end */
 				if (sameaddr(&sr->this.host_addr,
-					     &p->ip_addr) &&
+					     &p->local_endpoint) &&
 				    (kern_interface != NO_KERNEL ||
 				     sr->this.host_port ==
 				     pluto_port)) {
@@ -157,7 +157,7 @@ bool orient(struct connection *c)
 
 				/* done with this interface if it doesn't match that end */
 				if (!(sameaddr(&sr->that.host_addr,
-					       &p->ip_addr) &&
+					       &p->local_endpoint) &&
 				      (kern_interface != NO_KERNEL ||
 				       sr->that.host_port ==
 				       pluto_port)))
@@ -721,8 +721,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 			 * and the existing one. So we return without
 			 * doing anything
 			 */
-			libreswan_log("found existing state, ignoring instance \"%s\"%s, due to duplicate acquire",
-				c->name, fmt_conn_instance(c, cib));
+			libreswan_log("ignoring found existing connection instance \"%s\"%s that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
+				c->name, fmt_conn_instance(c, cib),
+				c->newest_isakmp_sa, c->newest_ipsec_sa);
 			return;
 #endif
 		}

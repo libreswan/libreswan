@@ -32,7 +32,7 @@ const struct af_info af_inet4_info = {
 	sizeof(struct sockaddr_in),
 	32,
 	ID_IPV4_ADDR, ID_IPV4_ADDR_SUBNET, ID_IPV4_ADDR_RANGE,
-	&ipv4_any, &ipv4_wildcard, &ipv4_all,
+	&ipv4_wildcard, &ipv4_all,
 };
 
 const struct af_info af_inet6_info = {
@@ -42,7 +42,7 @@ const struct af_info af_inet6_info = {
 	sizeof(struct sockaddr_in6),
 	128,
 	ID_IPV6_ADDR, ID_IPV6_ADDR_SUBNET, ID_IPV6_ADDR_RANGE,
-	&ipv6_any, &ipv6_wildcard, &ipv6_all,
+	&ipv6_wildcard, &ipv6_all,
 };
 
 const struct af_info *aftoinfo(int af)
@@ -61,8 +61,8 @@ const struct af_info *aftoinfo(int af)
 
 void init_af_info(void)
 {
-	happy(anyaddr(AF_INET, &ipv4_any));
-	happy(anyaddr(AF_INET6, &ipv6_any));
+	ipv4_any = address_any(AF_INET);
+	ipv6_any = address_any(AF_INET6);
 
 	happy(addrtosubnet(&ipv4_any, &ipv4_wildcard));
 	happy(addrtosubnet(&ipv6_any, &ipv6_wildcard));

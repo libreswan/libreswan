@@ -101,6 +101,7 @@ class Issues:
     SEGFAULT = "SEGFAULT"
     GPFAULT = "GPFAULT"
     PRINTF_NULL = "%NULL"
+    KERNEL = "KERNEL"
 
     TIMEOUT = "timeout"
 
@@ -330,6 +331,9 @@ class TestResult:
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"\(null\)"):
                 self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.resolution.failed()
+            if self.grub(raw_output_filename, r"\[ *\d+\.\d+\] Call Trace:"):
+                self.issues.add(Issues.KERNEL, host_name)
                 self.resolution.failed()
 
             # Check that the host's raw output is complete.

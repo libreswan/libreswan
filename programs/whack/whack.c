@@ -858,9 +858,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 			diag("address family of client subnet inconsistent");
 	} else {
 		/* fill in anyaddr-anyaddr as (missing) client subnet */
-		ip_address cn;
-
-		diagq(anyaddr(caf, &cn), NULL);
+		ip_address cn = address_any(caf);
 		diagq(rangetosubnet(&cn, &cn, &this->client), NULL);
 	}
 
@@ -1445,8 +1443,7 @@ int main(int argc, char **argv)
 			lset_t new_policy = LEMPTY;
 
 			af_used_by = long_opts[long_index].name;
-			diagq(anyaddr(msg.addr_family,
-				      &msg.right.host_addr), optarg);
+			msg.right.host_addr = address_any(msg.addr_family);
 			if (streq(optarg, "%any")) {
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
@@ -1494,11 +1491,8 @@ int main(int argc, char **argv)
 					 * --client to 0.0.0.0/0
 					 * or IPV6 equivalent
 					 */
-					ip_address any;
-
 					tunnel_af_used_by = optarg;
-					diagq(anyaddr(msg.tunnel_addr_family,
-						      &any), optarg);
+					ip_address any = address_any(msg.tunnel_addr_family);
 					diagq(initsubnet(&any, 0, '0',
 							 &msg.right.client),
 					      optarg);
@@ -1575,9 +1569,7 @@ int main(int argc, char **argv)
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
 			af_used_by = long_opts[long_index].name;
 			if (streq(optarg, "%direct")) {
-				diagq(anyaddr(msg.addr_family,
-					      &msg.right.host_nexthop),
-				      optarg);
+				msg.right.host_nexthop = address_any(msg.addr_family);
 			} else {
 				diagq(ttoaddr(optarg, 0, msg.addr_family,
 					      &msg.right.host_nexthop),

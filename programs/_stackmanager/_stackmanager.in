@@ -166,7 +166,7 @@ startnetkey() {
 
 stopklips() {
     if [ -f ${klipsstack} ]; then
-	# Bring down ipsecX and mast0 interfaces
+	# Bring down ipsecX interfaces
 	ifl=$(grep -v NULL /proc/net/ipsec_tncfg 2>/dev/null | sed -n -e "/^ipsec/s/ .*//p")
 	if [ -n "${ifl}" ]; then
 	    for iface in  ${ifl}; do
@@ -176,10 +176,6 @@ stopklips() {
 		# ipsec0 won't let itself be deleted
 		ipsec tncfg --delete ${iface}
 	    done
-	    # mast0 is not listed in ipsec_tncfg
-	    if [ -d /proc/sys/net/ipv4/conf/mast0 ]; then
-		ipsec tncfg --delete mast0
-	    fi
 	    [ -r /proc/net/ipsec_klipsdebug ] && ipsec klipsdebug --none
 	    [ -d /proc/net/ipsec/eroute ] && ipsec eroute --clear
 	    [ -d /proc/net/ipsec/spi ] && ipsec spi --clear
@@ -193,20 +189,6 @@ stopklips() {
 	echo "FAILURE to unload KLIPS module" >&2
 	exit 1
     fi
-}
-
-stopmast() {
-    stopklips
-    # Flush policy out in case of mast - NEW_IPSEC_CONN and IPSEC
-    # tables are created in _updown.mast on demand
-    grep ^mangle /proc/net/ip_tables_names >/dev/null 2>&1 && \
-	iptables -t mangle -F IPSEC >/dev/null 2>&1
-    grep ^mangle /proc/net/ip_tables_names >/dev/null 2>&1 && \
-	iptables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>&1
-    grep ^mangle /proc/net/ip6_tables_names >/dev/null 2>&1 && \
-	ip6tables -t mangle -F IPSEC >/dev/null 2>&1
-    grep ^mangle /proc/net/ip6_tables_names >/dev/null 2>&1 && \
-	ip6tables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>&1
 }
 
 stop() {
@@ -260,19 +242,11 @@ cryptomodules() {
     done
 }
 
-startmast() {
-    startklips
-}
-
 startklips() {
     cryptomodules
     if [ -f ${xfrm_stat} ]; then
-	echo "Warning: found XFRM IPsec stack loaded - attempting to unload..." >&2
+	echo "Warning: found possible XFRM IPsec stack loaded - attempting to unload..." >&2
 	stopnetkey --wait
-	if [ -f ${xfrm_stat} ]; then
-	    echo "FAILURE to unload KLIPS module" >&2
-	    exit 1
-	fi
     fi
     if [ ! -f ${klipsstack} ]; then
 	# KLIPS-related paths
@@ -303,53 +277,11 @@ startklips() {
 	fi
     fi
 
-    # If overridemtu present, need to change for all interfaces (ipsecX, mastX)
-    if [ ${stack} = "mast" ]; then
-	# we really just ignore the interfaces= line completely
-	# make sure this mast device exists, if not create it
-	virt="mast0"
-	if [ ! -d /sys/devices/virtual/net/${virt} ]; then
-	    # in mast mode we just create the virtual interface
-	    ipsec tncfg --create ${virt}
-	fi
-	# ensure the link is up, even if module was already loaded
-	ip link set ${virt} up
-	# detach all ipsecX devices
-	ipsec tncfg --clear
-	# remove any ipsecX interfaces, as we are using mastX
-	# Note: currently it seems klips cannot delete ipsec0
-	for device in $(ip -oneline link show | grep ipsec | cut -d: -f2 | sort -r)
-	do
-	    ipsec tncfg --delete ${device}
-	done
-	# PAUL: Shouldn't we configure an ip for mast0, but which one?
-	#	best guess is the defaultroute one?
-	# PAUL: We tell in the man page for ipsec.conf protostack= that
-	#	the user should do this
-
-	if [ "${overridemtu}" != "" ]; then
-		ip link set mtu ${overridemtu} dev ${virt}
-	else
-		# Double check the mtu is not 0
-		# if it is set it to a saner default
-		ip link show dev ${virt} | grep -q 'mtu 0 '
-		RETVAL=$?
-		if [ "${RETVAL}" -eq 0 ]; then
-			echo "Fixup of mtu on ${virt} to 16260" >&2
-			ip link set mtu 16260 dev ${virt}
-		fi
-	fi
-
-    elif [ ${stack} = "klips" ]; then
+    if [ ${stack} = "klips" ]; then
 	# in klips mode we attach it to the physical device
 	# clear tables out in case dregs have been left over
 	ipsec eroute --clear
 	ipsec spi --clear
-	# remove mast0 interface, as we are using ipsecX
-	for device in $(ip -oneline link show | grep mast0 | cut -d: -f2 | sort -r)
-	do
-	    ipsec tncfg --delete ${device}
-	done
 	# detach all ipsecX devices
 	ipsec tncfg --clear
 
@@ -443,7 +375,7 @@ else
 fi
 
 case ${stack} in
-    netkey|klips|mast|none)
+    netkey|klips|none)
 	;;
     auto)
 	echo "protostack=auto is not longer supported, defaulting to netkey" >&2
@@ -478,9 +410,6 @@ case ${action} in
 		;;
 	    klips)
 		startklips
-		;;
-	    mast)
-		startmast
 		;;
 	esac
 	;;
