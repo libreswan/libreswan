@@ -1563,7 +1563,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			char caddr[SUBNETTOT_BUF];
 
 			ip_address a;
-			if (!pbs_in_address_in(&a, &strattr, "addr")) {
+			if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
 				return STF_FATAL;
 			}
 			addrtosubnet(&a, &c->spd.this.client);
@@ -1721,7 +1721,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				char caddr[SUBNETTOT_BUF];
 
 				ip_address a;
-				if (!pbs_in_address_in(&a, &strattr, "addr")) {
+				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
 					return STF_FATAL;
 				}
 				addrtosubnet(&a, &c->spd.this.client);
@@ -1751,7 +1751,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ipstr_buf b;
 
 				ip_address a;
-				if (!pbs_in_address_in(&a, &strattr, "addr")) {
+				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
 					return STF_FATAL;
 				}
 
@@ -1764,7 +1764,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
-				if (!pbs_in_address_in(&a, &strattr, "addr")) {
+				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
 					return STF_FATAL;
 				}
 

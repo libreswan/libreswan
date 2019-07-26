@@ -28,7 +28,7 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 #include "impair.h"
-
+#include "ip_info.h"		/* used by pbs_in_address() */
 #include "packet.h"
 
 const pb_stream empty_pbs;
@@ -2724,24 +2724,31 @@ void close_output_pbs(pb_stream *pbs)
 		pbs->container->cur = pbs->cur; /* pass space utilization up */
 }
 
-bool pbs_in_address_in(ip_address *address, struct pbs_in *in_pbs, const char *what)
+bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
+		    struct pbs_in *input_pbs, const char *what)
 {
-	struct in_addr ip;
-	if (!in_raw(&ip, sizeof(ip), in_pbs, what)) {
-		*address = address_invalid;
-		return false;
+	switch (ipv->af) {
+	case AF_INET:
+	{
+		struct in_addr ip;
+		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
+			*address = address_invalid;
+			return false;
+		}
+		*address = address_from_in_addr(&ip);
+		return true;
 	}
-	*address = address_from_in_addr(&ip);
-	return true;
-}
-
-bool pbs_in_address_in6(ip_address *address, struct pbs_in *in_pbs, const char *what)
-{
-	struct in6_addr ip;
-	if (!in_raw(&ip, sizeof(ip), in_pbs, what)) {
-		*address = address_invalid;
-		return false;
+	case AF_INET6:
+	{
+		struct in6_addr ip;
+		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
+			*address = address_invalid;
+			return false;
+		}
+		*address = address_from_in6_addr(&ip);
+		return true;
 	}
-	*address = address_from_in6_addr(&ip);
-	return true;
+	default:
+		bad_case(ipv->af);
+	}
 }

@@ -31,6 +31,7 @@
 #include "demux.h"
 #include "virtual.h"
 #include "hostpair.h"
+#include "ip_info.h"
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -292,34 +293,26 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 		if (!in_struct(&ts1, &ikev2_ts1_desc, &ts_pd->pbs, &addr))
 			return false;
 
+		const struct ip_info *ipv;
 		switch (ts1.isat1_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
-		{
-			ts->ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-			if (!pbs_in_address_in(&ts->net.start, &addr, "ipv4 ts low")) {
-				return false;
-			}
-			if (!pbs_in_address_in(&ts->net.end, &addr, "ipv4 ts high")) {
-				return false;
-			}
+			ipv = &ipv4_info;
 			break;
-		}
 		case IKEv2_TS_IPV6_ADDR_RANGE:
-		{
-			ts->ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-			if (!pbs_in_address_in6(&ts->net.start, &addr, "ipv4 ts low")) {
-				return false;
-			}
-			if (!pbs_in_address_in6(&ts->net.end, &addr, "ipv4 ts high")) {
-				return false;
-			}
+			ipv = &ipv6_info;
 			break;
-		}
-
 		default:
 			return false;
 		}
 
+		ts->ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
+		if (!pbs_in_address(&ts->net.start, ipv, &addr, "TS low")) {
+			return false;
+		}
+		if (!pbs_in_address(&ts->net.end, ipv, &addr, "TS high")) {
+			return false;
+		}
+		/* XXX: does this matter? */
 		if (pbs_left(&addr) != 0)
 			return false;
 

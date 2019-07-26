@@ -28,6 +28,8 @@
 #include "chunk.h"
 #include "ip_address.h"
 
+struct ip_info;
+
 /* a struct_desc describes a structure for the struct I/O routines.
  * This requires arrays of field_desc values to describe struct fields.
  */
@@ -221,13 +223,15 @@ extern bool in_struct(void *struct_ptr, struct_desc *sd,
 extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MUST_USE_RESULT;
 
 /*
- * Utilities, is there a better home?
+ * Utilities:
+ *
+ * XXX: is there a better place to be adding these in functions that
+ * build on the primitives?
  */
 
-bool pbs_in_address_in(ip_address *address, struct pbs_in *in_pbs,
-		       const char *what) MUST_USE_RESULT;
-bool pbs_in_address_in6(ip_address *address, struct pbs_in *in_pbs,
-			const char *what) MUST_USE_RESULT;
+bool pbs_in_address(ip_address *address, const struct ip_info *af,
+		    struct pbs_in *input_pbs,
+		    const char *WHAT) MUST_USE_RESULT;
 
 /*
  * Output PBS
