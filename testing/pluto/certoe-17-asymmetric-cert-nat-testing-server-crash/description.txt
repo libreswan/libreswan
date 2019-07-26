@@ -1,3 +1,2 @@
-Testing roadwarrior with OE using authnull to cert with real certificate
-
-road has the CA of east
+testing: what happens when server crashes and restarts
+https://github.com/Rishabh04-02/Libreswan-Opportunistic-IPsec/issues/8

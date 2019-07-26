@@ -23,10 +23,32 @@ east #
  echo "initdone"
 initdone
 east #
- # A tunnel should have established with non-zero byte counters
+ # confirm tunnel is up
 east #
  ipsec whack --trafficstatus
 006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
+east #
+ # killing service ipsec
+east #
+ killall -9 pluto
+east #
+ #eck if  tunnel is up
+east #
+ ipsec whack --trafficstatus
+whack: is Pluto running?  connect() for "/run/pluto/pluto.ctl" failed (111 Connection refused)
+east #
+ # restart ipsec service
+east #
+ systemctl start ipsec
+east #
+ # give OE conns time to load
+east #
+ sleep 5
+east #
+ # A tunnel should have established with non-zero byte counters
+east #
+ ipsec whack --trafficstatus
+006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
 east #
  grep "negotiated connection" /tmp/pluto.log
 "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32 #2: negotiated connection [192.1.2.23-192.1.2.23:0-65535 0] -> [10.0.10.1-10.0.10.1:0-65535 0]
@@ -34,6 +56,8 @@ east #
  grep IKEv2_AUTH_ OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 east #
