@@ -51,7 +51,8 @@ int iprange_bits(ip_address low, ip_address high)
 
 	ip_address diff = low;	/* initialize all the contents to sensible values */
 	unsigned char *dp;
-	addrbytesptr_write(&diff, &dp);
+	chunk_t diff_chunk = address_as_chunk(&diff);
+	dp = diff_chunk.ptr; /* cast void* */
 
 	unsigned lastnz = n;
 

@@ -20,6 +20,7 @@
 #define IP_ADDRESS_H
 
 #include "shunk.h"
+#include "chunk.h"
 #include "err.h"
 
 extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
@@ -129,9 +130,10 @@ ip_address address_any(int af);
 bool address_is_any(const ip_address *address);
 
 /*
- * Raw address bytes as a shunk - since that does const.
+ * Raw address bytes, both read-only and read-write.
  */
 shunk_t address_as_shunk(const ip_address *address);
+chunk_t address_as_chunk(ip_address *address);
 
 int address_type(const ip_address *address);
 const struct ip_info *address_info(const ip_address *address);
@@ -176,7 +178,6 @@ extern err_t add_port(int af, ip_address *addr, unsigned short port);
 extern int addrtypeof(const ip_address *src);
 extern size_t addrlenof(const ip_address *src);
 extern size_t addrbytesptr_read(const ip_address *src, const unsigned char **dst);
-extern size_t addrbytesptr_write(ip_address *src, unsigned char **dst);
 extern int masktocount(const ip_address *src);
 
 /* tests */

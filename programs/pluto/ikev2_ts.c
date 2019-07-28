@@ -76,7 +76,7 @@ void ikev2_print_ts(const struct traffic_selector *ts)
 	});
 }
 
-/* rewrite me with addrbytesptr_write() */
+/* rewrite me with address_as_{chunk,shunk}()? */
 struct traffic_selector ikev2_end_to_ts(const struct end *e)
 {
 	struct traffic_selector ts;
@@ -86,6 +86,11 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e)
 	/* subnet => range */
 	ts.net.start = e->client.addr;
 	ts.net.end = e->client.addr;
+
+	/*
+	 * XXX: This is computing low&=mask; hi|=mask; should there be
+	 * a function to do this?
+	 */
 	switch (addrtypeof(&e->client.addr)) {
 	case AF_INET:
 	{

@@ -205,6 +205,21 @@ shunk_t address_as_shunk(const ip_address *address)
 	}
 }
 
+chunk_t address_as_chunk(ip_address *address)
+{
+	if (address == NULL) {
+		return empty_chunk;
+	}
+	switch (address->u.v4.sin_family) {
+	case AF_INET:
+		return THING_AS_CHUNK(address->u.v4.sin_addr.s_addr); /* strip const */
+	case AF_INET6:
+		return THING_AS_CHUNK(address->u.v6.sin6_addr); /* strip const */
+	default:
+		return empty_chunk;
+	}
+}
+
 /*
  * Implement https://tools.ietf.org/html/rfc5952
  */
