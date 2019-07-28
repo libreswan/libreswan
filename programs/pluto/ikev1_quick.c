@@ -169,7 +169,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 		return FALSE;
 
 	if (!usehost) {
-		maskof(net, &ta);
+		ta = subnet_mask(net);
 		tal = addrbytesptr_read(&ta, &tbp);
 		if (!out_raw(tbp, tal, &id_pbs, "client mask"))
 			return FALSE;

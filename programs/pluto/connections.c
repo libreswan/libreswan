@@ -446,7 +446,7 @@ size_t format_end(char *buf,
 		ip_address client_net, client_mask;
 
 		networkof(&this->client, &client_net);
-		maskof(&this->client, &client_mask);
+		client_mask = subnet_mask(&this->client);
 		client_sep = "===";
 
 		/* {client_subnet_wildcard} */

@@ -936,11 +936,11 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	int satype;
 
 	networkof(this_client, &sflow_ska);
-	maskof(this_client, &smask_ska);
+	smask_ska = subnet_mask(this_client);
 	setportof(sport ? ~0 : 0, &smask_ska);
 
 	networkof(that_client, &dflow_ska);
-	maskof(that_client, &dmask_ska);
+	dmask_ska = subnet_mask(that_client);
 	setportof(dport ? ~0 : 0, &dmask_ska);
 
 	satype = eroute_type_to_pfkey_satype(esatype);

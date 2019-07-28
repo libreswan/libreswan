@@ -146,8 +146,6 @@ int main(int argc, char **argv)
 	/*struct sockaddr_in pfkey_address_d_ska;*/
 	ip_address pfkey_address_sflow_ska;
 	ip_address pfkey_address_dflow_ska;
-	ip_address pfkey_address_smask_ska;
-	ip_address pfkey_address_dmask_ska;
 
 	int transport_proto = 0;
 	int src_port = 0;
@@ -165,8 +163,6 @@ int main(int argc, char **argv)
 	zero(&pfkey_address_s_ska);
 	zero(&pfkey_address_sflow_ska);
 	zero(&pfkey_address_dflow_ska);
-	zero(&pfkey_address_smask_ska);
-	zero(&pfkey_address_dmask_ska);
 	zero(&said);
 	zero(&s_subnet);
 	zero(&d_subnet);
@@ -804,7 +800,8 @@ sa_build:
 				progname);
 		}
 
-		maskof(&s_subnet, &pfkey_address_smask_ska); /* src mask */
+		/* XXX: should check S_SUBNET valid */
+		ip_address pfkey_address_smask_ska = subnet_mask(&s_subnet); /* src mask */
 		add_port(eroute_af, &pfkey_address_smask_ska,
 			 src_port ? ~0 : 0);
 		error = pfkey_address_build(
@@ -828,7 +825,8 @@ sa_build:
 				progname);
 		}
 
-		maskof(&d_subnet, &pfkey_address_dmask_ska); /* dst mask */
+		/* XXX: should check d_subnet valid */
+		ip_address pfkey_address_dmask_ska = subnet_mask(&d_subnet); /* dst mask */
 		add_port(eroute_af, &pfkey_address_dmask_ska,
 			 dst_port ? ~0 : 0);
 		error = pfkey_address_build(
