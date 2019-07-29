@@ -95,29 +95,3 @@ const ip_address * src;
 {
 	return addrbytesptr_read(src, NULL);
 }
-
-/*
-   - addrbytesof - get the address bytes of an ip_address
- */
-size_t                          /* 0 for error */
-addrbytesof(src, dst, dstlen)
-const ip_address * src;
-unsigned char *dst;
-size_t dstlen;
-{
-	const unsigned char *p;
-	size_t n;
-	size_t ncopy;
-
-	n = addrbytesptr_read(src, &p);
-	if (n == 0)
-		return 0;
-
-	if (dstlen > 0) {
-		ncopy = n;
-		if (ncopy > dstlen)
-			ncopy = dstlen;
-		memcpy(dst, p, ncopy);
-	}
-	return n;
-}
