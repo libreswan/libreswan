@@ -232,3 +232,18 @@ travis-docker-start:
 		-v $(PWD):/home/build/libreswan/ \
 		-v /sys/fs/cgroup:/sys/fs/cgroup:ro -d $(DI_T)
 
+.PHONY: nsrunclean
+nsrunclean:
+	sudo rm -fr /home/build/libreswan/testing/pluto/*/OUTPUT /home/build/libreswan/testing/pluto/*/NS
+
+NSURNDIRS = $(shell mount | grep "^nsfs" | cut -d  " " -f 3)
+.PHONY: nsrun
+nsrun: nsrunclean
+	$(if $(NSURNDIRS), $(shell sudo umount $(NSURNDIRS)), $(echo "no nsfs"))
+	/home/build/libreswan/testing/utils/nsrun  --ns --shutdown --log-level debug --verbos 2 --testrun
+
+.PHONY: nsinstall
+nsinstall:
+	$(MAKE) clean
+	$(MAKE) INITSYSTEM=docker DOCKER_PLUTONOFORK= base
+	sudo $(MAKE) INITSYSTEM=docker DOCKER_PLUTONOFORK= install-base
