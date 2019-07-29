@@ -31,8 +31,8 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	bottom: 30,
 	left: 50
     }
-    var width = 960 - margin.left - margin.right
-    var height = 500 - margin.top - margin.bottom
+    var width = 900 - margin.left - margin.right
+    var height = 450 - margin.top - margin.bottom
     var radius = 3.0
 
     var now = new Date()
@@ -118,7 +118,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	.domain([start, now])
 	.range([1, width])
     var xp = d3.scalePow()
-	.exponent(2)
+	.exponent(1.9)
 	.domain([1, width])
 	.range([0, width])
 
@@ -135,7 +135,8 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     x = x_copy()
 
     // set the graph size based on results with "full" data
-    var y = d3.scaleLinear()
+    var y = d3.scalePow()
+	.exponent(2.1)
 	.domain([
 	    d3.min(full_test_runs, function(d) {
 		// very first accumulative value
