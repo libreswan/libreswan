@@ -18,6 +18,7 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-ver-remove.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-status.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS selinux.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS systemd-fixup.sed"
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS initscripts-fixup.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS pluto-log-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS retransmit-sanitize.sed"
 # always included so we can hot-swap libreswan for openswan in any test
