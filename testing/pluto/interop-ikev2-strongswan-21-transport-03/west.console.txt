@@ -43,7 +43,6 @@ Status of IKE charon daemon (strongSwan VERSION):
 Listening IP addresses:
   192.0.1.254
   192.1.2.45
-  192.9.4.45
 Connections:
 westnet-eastnet-ikev2:  192.1.2.45...192.1.2.23  IKEv2
 westnet-eastnet-ikev2:   local:  [west] uses pre-shared key authentication

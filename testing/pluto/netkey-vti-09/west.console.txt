@@ -103,7 +103,6 @@ west #
        valid_lft forever preferred_lft forever
 4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default
     link/ether 12:00:00:32:64:45 brd ff:ff:ff:ff:ff:ff
-    inet 192.9.4.45/24 brd 192.9.4.255 scope global eth2
        valid_lft forever preferred_lft forever
 5: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN group default
     link/ipip 0.0.0.0 brd 0.0.0.0
@@ -133,7 +132,6 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 dev ipsec0 scope link
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 192.1.2.254 dev eth1 scope link
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
 west #
  ip xfrm state
 src 192.1.2.23 dst 192.1.2.45

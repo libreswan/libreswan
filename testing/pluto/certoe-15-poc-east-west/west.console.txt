@@ -3,7 +3,6 @@ Preparing X.509 files
 west #
  ip route del default
 west #
- ip route add default via 192.9.4.1
 west #
  certutil -D -n east -d sql:/etc/ipsec.d
 west #
