@@ -41,6 +41,7 @@ KVM_UPGRADE_PACKAGES ?= \
     elfutils-libelf-devel \
     fipscheck-devel \
     flex \
+    fping \
     gcc \
     gdb \
     git \
