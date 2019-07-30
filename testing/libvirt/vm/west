@@ -52,11 +52,6 @@ You can load this machine definition into libvirt using:
       <source network='192_1_2'/>
       <model type='virtio'/>
     </interface>
-    <interface type='network'>
-      <mac address='12:00:00:32:64:45'/>
-      <source network='192_9_4'/>
-      <model type='virtio'/>
-    </interface>
     <serial type='pty'>
       <target port='0'/>
     </serial>
