@@ -15,7 +15,7 @@ west #
  ## ping -n -c 4 -I 192.1.2.45 192.1.2.23
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #

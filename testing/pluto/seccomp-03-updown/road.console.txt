@@ -9,7 +9,7 @@ road #
  unbound
 road #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
@@ -75,7 +75,7 @@ road #
  ipsec auto --delete westnet-eastnet-ipv4-psk-ikev2
 road #
  ipsec stop
-Redirecting to: systemctl stop ipsec.service
+Redirecting to: [initsystem]
 road #
  # ensure seccomp did not kill pluto - should not show any hits
 road #
@@ -85,7 +85,7 @@ road #
  # and also test seccomp actually works
 road #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 road #
  sleep 3
 road #

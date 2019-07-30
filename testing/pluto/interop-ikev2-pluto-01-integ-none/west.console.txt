@@ -18,7 +18,7 @@ west #
 down
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
@@ -88,7 +88,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
  ipsec stop
-Redirecting to: systemctl stop ipsec.service
+Redirecting to: [initsystem]
 west #
  # east shows what was sent across the wire; expect two lines for each
 west #

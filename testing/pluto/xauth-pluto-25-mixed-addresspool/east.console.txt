@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  echo "xnorth:xOzlFlqtwJIu2:east-any:192.0.2.201" > /etc/ipsec.d/passwd
 east #
@@ -21,7 +21,7 @@ east #
 east #
 east #
  hostname | grep east > /dev/null && ipsec stop
-Redirecting to: systemctl stop ipsec.service
+Redirecting to: [initsystem]
 east #
  grep "^leak" /tmp/pluto.log
 leak-detective enabled

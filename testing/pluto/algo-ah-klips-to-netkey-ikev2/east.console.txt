@@ -9,7 +9,7 @@ encrypt=3des integ=md5
 proto=authenticate algs= md5
 check that the stack is netkey
 	protostack=netkey
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 002 added connection description "westnet-eastnet-algo"
 000 using kernel interface: netkey
 000 interface lo/lo 127.0.0.1:4500

@@ -6,7 +6,7 @@ east #
  ip link set dev eth1 mtu 1480
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

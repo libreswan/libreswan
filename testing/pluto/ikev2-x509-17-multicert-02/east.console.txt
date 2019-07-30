@@ -13,7 +13,7 @@ correcting trust bits for west-ec
 correcting trust bits for Libreswan test CA for otherca - Libreswan
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

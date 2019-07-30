@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -138,7 +138,7 @@ east #
  # stop on east caused crash on west at some point in the past
 east #
  hostname |grep west > /dev/null || ipsec stop
-Redirecting to: systemctl stop ipsec.service
+Redirecting to: [initsystem]
 east #
 east #
  ../bin/check-for-core.sh

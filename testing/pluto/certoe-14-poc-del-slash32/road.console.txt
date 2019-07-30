@@ -27,7 +27,7 @@ road #
  restorecon -R /etc/ipsec.d
 road #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #

@@ -16,7 +16,7 @@ west #
  iptables -I OUTPUT -m policy --dir out --pol ipsec -j ACCEPT
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #

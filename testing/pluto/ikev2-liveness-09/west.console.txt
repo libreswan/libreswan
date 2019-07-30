@@ -6,7 +6,7 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #

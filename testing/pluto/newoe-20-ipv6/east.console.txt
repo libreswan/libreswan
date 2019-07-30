@@ -11,7 +11,7 @@ east #
  echo "fe80::/10" >> /etc/ipsec.d/policies/clear
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

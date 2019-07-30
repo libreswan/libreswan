@@ -19,7 +19,7 @@ west #
     inet 192.0.1.254/24 brd 192.0.1.255 scope global eth0
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #

@@ -5,7 +5,7 @@ east #
 certutil: could not find certificate named "mainca": SEC_ERROR_...
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

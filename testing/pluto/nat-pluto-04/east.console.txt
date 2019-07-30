@@ -5,7 +5,7 @@ east #
  echo 1 >/proc/sys/net/ipv4/conf/eth0/proxy_arp
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

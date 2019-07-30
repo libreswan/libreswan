@@ -14,7 +14,7 @@ road #
  restorecon -R /etc/ipsec.d
 road #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
@@ -148,7 +148,7 @@ target     prot opt source               destination
 SNAT       all  --  0.0.0.0/0            192.1.2.23           policy match dir out pol ipsec to:10.0.10.1
 road #
  ipsec stop
-Redirecting to: systemctl stop ipsec.service
+Redirecting to: [initsystem]
 road #
  conntrack -L -n | sed -e "s/id=[0-9]*/id=XXXX/g" -e "s/icmp     1 [0-9]*/icmp     1 XX/" | sort
 conntrack vA.B.C (conntrack-tools): 1 flow entries have been shown.
@@ -170,7 +170,7 @@ road #
  iptables -t nat -F
 road #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 road #
  sleep 5
 road #

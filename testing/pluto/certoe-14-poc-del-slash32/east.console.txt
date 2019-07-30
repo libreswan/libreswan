@@ -20,7 +20,7 @@ east #
  restorecon -R /etc/ipsec.d
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -41,7 +41,7 @@ east #
  # east sends a delete by restarting
 east #
  ipsec restart
-Redirecting to: systemctl restart ipsec.service
+Redirecting to: [initsystem]
 east #
  # give OE conns time to load
 east #

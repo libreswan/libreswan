@@ -8,7 +8,7 @@ east #
  # this leaves real east and real west certs. other end will use different fake west cert
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

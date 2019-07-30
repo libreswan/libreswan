@@ -21,7 +21,7 @@ north #
  # routes and addresses setup for the test
 north #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #

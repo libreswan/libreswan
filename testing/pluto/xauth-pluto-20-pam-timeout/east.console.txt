@@ -9,7 +9,7 @@ east #
  cp pluto.pam /etc/pam.d/pluto
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

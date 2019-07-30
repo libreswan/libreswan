@@ -9,7 +9,7 @@ encrypt=3des integ=md5
 proto=authenticate algs= md5
 check that the stack is klips
 	protostack=klips
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
