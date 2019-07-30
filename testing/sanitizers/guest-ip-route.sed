@@ -18,3 +18,6 @@ b end
 b match
 
 :end
+
+s/ proto static$//
+s/ proto static onlink$//
