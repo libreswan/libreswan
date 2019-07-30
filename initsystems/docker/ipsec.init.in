@@ -118,7 +118,7 @@ verify_config() {
 }
 
 start() {
-    echo -n $"Starting pluto IKE daemon for IPsec: "
+    echo $"Starting pluto IKE daemon for IPsec: "
     verify_config
     ipsec _stackmanager start
 
