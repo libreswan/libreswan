@@ -128,3 +128,4 @@ s/ FLOWLBL=[0-9]* / FLOWLBL=XXXXX /g
 /^.*SELinux: unrecognized netlink message.*$/d
 /^.*clocksource.*$/d
 s/ qlen 1000$//
+/^type=PROCTITLE.*$/d
