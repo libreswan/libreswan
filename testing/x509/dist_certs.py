@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """ dist_certs.py: create a suite of x509 certificates for the Libreswan
     test harness
 
@@ -127,14 +127,14 @@ def reset_files():
 def writeout_cert(filename, item,
                   type=crypto.FILETYPE_PEM):
     global dirbase
-    with open(dirbase + filename, "w") as f:
+    with open(dirbase + filename, "wb") as f:
         f.write(crypto.dump_certificate(type, item))
 
 
 def writeout_privkey(filename, item,
                      type=crypto.FILETYPE_PEM):
     global dirbase
-    with open(dirbase + filename, "w") as f:
+    with open(dirbase + filename, "wb") as f:
         f.write(crypto.dump_privatekey(type, item))
 
 
@@ -167,7 +167,7 @@ def create_csr(pkey, CN,
 
 def add_ext(cert, kind, crit, string):
     #print("DEBUG: %s"%string)
-    cert.add_extensions([crypto.X509Extension(kind, crit, string)])
+    cert.add_extensions([crypto.X509Extension(kind.encode('utf-8'), crit, string.encode('utf-8'))])
 
 def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocspuri=True):
     ocspeku = 'serverAuth,clientAuth,codeSigning,OCSPSigning'
@@ -195,7 +195,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
         SAN = "DNS: " + cnstr
         if "." in cnstr:
             ee = cnstr.split(".")[0]
-            print "EE:%s"%ee
+            print("EE:%s"% ee)
             if ee == "west" or ee == "east":
                 SAN += ", email:%s@testing.libreswan.org"%ee
                 if ee == "west":
@@ -293,8 +293,8 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
 
     cert = crypto.X509()
     cert.set_serial_number(snum)
-    cert.set_notBefore(START)
-    cert.set_notAfter(END)
+    cert.set_notBefore(START.encode('utf-8'))
+    cert.set_notAfter(END.encode('utf-8'))
     cert.set_issuer(CACert.get_subject())
     cert.set_subject(certreq.get_subject())
     cert.set_pubkey(certreq.get_pubkey())
@@ -325,8 +325,8 @@ def create_root_ca(CN, START, END,
 
     cacert = crypto.X509()
     cacert.set_serial_number(0)
-    cacert.set_notBefore(START)
-    cacert.set_notAfter(END)
+    cacert.set_notBefore(START.encode('utf-8'))
+    cacert.set_notAfter(END.encode('utf-8'))
     cacert.set_issuer(careq.get_subject())
     cacert.set_subject(careq.get_subject())
     cacert.set_pubkey(careq.get_pubkey())
@@ -372,9 +372,9 @@ def store_cert_and_key(name, cert, key):
     global end_certs
 
     ext = cert.get_extension(0)
-    if ext.get_short_name() == 'basicConstraints':
+    if ext.get_short_name() == b'basicConstraints':
         # compare the bytes for CA:True
-        if name == "badca" or '0\x03\x01\x01\xff' == ext.get_data():
+        if name == "badca" or b'0\x03\x01\x01\xff' == ext.get_data():
             ca_certs[name] = cert, key
         else:
             end_certs[name] = cert, key
@@ -390,9 +390,9 @@ def writeout_cert_and_key(certdir, name, cert, privkey):
 def create_basic_pluto_cas(ca_names):
     """ Create the core root certs
     """
-    print "creating CA certs"
+    print("creating CA certs")
     for name in ca_names:
-        print " - creating %s" % name
+        print(" - creating %s"% name)
         ca, key = create_root_ca(CN="Libreswan test CA for " + name,
                                  START=dates['OK_NOW'],
                                  END=dates['FUTURE_END'])
@@ -406,20 +406,20 @@ def create_pkcs12(path, name, cert, key, ca_cert):
     p12 = crypto.PKCS12()
     p12.set_certificate(cert)
     p12.set_privatekey(key)
-    p12.set_friendlyname(name)
+    p12.set_friendlyname(name.encode('utf-8'))
     p12.set_ca_certificates([ca_cert])
     with open(dirbase + path + name + ".p12", "wb") as f:
-        f.write(p12.export(passphrase="foobar"))
+        f.write(p12.export(passphrase = b"foobar"))
 
 
 def create_mainca_end_certs(mainca_end_certs):
     """ Create the core set of end certs from mainca
     """
     serial = 2
-    print "creating mainca's end certs"
+    print("creating mainca's end certs")
     for name in mainca_end_certs:
         # put special cert handling here
-        print " - creating %s" % name
+        print(" - creating %s"% name)
         if name == 'smallkey':
             keysize = 2048
         else:
@@ -477,6 +477,9 @@ def create_mainca_end_certs(mainca_end_certs):
         else:
             emailAddress = "user-%s@testing.libreswan.org"%name
 
+        #print("CA signer is %s"%signer)
+        #print(ca_certs)
+        #print(end_certs)
         cert, key = create_sub_cert(common_name,
                                     ca_certs[signer][0],
                                     ca_certs[signer][1],
@@ -507,17 +510,17 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
         lastca = ""
         #note there's an issue with the authkeyid in the chain
         #signpair = ()
-        print "creating %s chain" % chainca
+        print("creating %s chain"% chainca)
         for level in range(min_path, max_path):
             cname = prefix + chainca + '_int_' + str(level)
 
-            print "level %d cname %s serial %d" % (level, cname, serial)
+            print("level %d cname %s serial %d"% (level, cname, serial))
 
             if level == min_path:
                 lastca = "mainca"
 
             signpair = ca_certs[lastca]
-            print " - creating %s with the last ca of %s" % (cname, lastca)
+            print(" - creating %s with the last ca of %s"% (cname, lastca))
             ca, key = create_sub_cert(cname + '.testing.libreswan.org',
                                       signpair[0], signpair[1], serial,
                                       START=dates['OK_NOW'],
@@ -535,7 +538,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                 endcert_name = prefix + chainca + "_endcert"
 
                 signpair = ca_certs[lastca]
-                print " - creating %s" % endcert_name
+                print(" - creating %s"% endcert_name)
                 ecert, ekey = create_sub_cert(endcert_name + ".testing.libreswan.org",
                                               signpair[0], signpair[1], serial,
                                               emailAddress="%s@testing.libreswan.org"%endcert_name,
@@ -549,7 +552,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
 
                 endrev_name = prefix + chainca + "_revoked"
                 top_caname = cname
-                print " - creating %s" % endrev_name
+                print(" - creating %s"% endrev_name)
                 ercert, erkey = create_sub_cert(endrev_name + ".testing.libreswan.org",
                                               signpair[0], signpair[1], serial,
                                               emailAddress="%s@testing.libreswan.org"%endcert_name,
@@ -572,7 +575,7 @@ def create_leading_zero_crl():
     signcert, signkey = ca_certs['mainca']
     days = 1
 
-    print "creating a CRL with a leading zero byte signature.."
+    print("creating a CRL with a leading zero byte signature..")
     while True:
         good = False
         nl = ''
@@ -590,8 +593,8 @@ def create_leading_zero_crl():
                     break
 
         if good:
-            print nl
-            print "found after %d signatures!" % (days)
+            print(nl)
+            print("found after %d signatures!"% days)
             with open(dirbase + "crls/crl-leading-zero-byte.crl", "wb") as f:
                 f.write(der)
             break
@@ -602,24 +605,22 @@ def create_leading_zero_crl():
 def create_crlsets():
     """ Create test CRLs
     """
-    print "creating crl set"
+    print("creating crl set")
     revoked = crypto.Revoked()
     chainrev = crypto.Revoked()
     future_revoked = crypto.Revoked()
 
-    revoked.set_rev_date(dates['OK_NOW'])
-    chainrev.set_rev_date(dates['OK_NOW'])
-    future_revoked.set_rev_date(dates['FUTURE'])
+    revoked.set_rev_date(dates['OK_NOW'].encode('utf-8'))
+    chainrev.set_rev_date(dates['OK_NOW'].encode('utf-8'))
+    future_revoked.set_rev_date(dates['FUTURE'].encode('utf-8'))
     # the get_serial_number method results in a hex str like '0x17'
     # but set_serial needs a hex str like '17'
-    revoked.set_serial(
-            hex(end_certs['revoked'][0].get_serial_number())[2:])
-
-    chainrev.set_serial(
-            hex(end_certs['west_chain_revoked'][0].get_serial_number())[2:])
-
-    future_revoked.set_serial(
-            hex(end_certs['revoked'][0].get_serial_number())[2:])
+    ser = hex(end_certs['revoked'][0].get_serial_number())[2:]
+    revoked.set_serial(ser.encode('utf-8'))
+    ser = hex(end_certs['west_chain_revoked'][0].get_serial_number())[2:]
+    chainrev.set_serial(ser.encode('utf-8'))
+    ser = hex(end_certs['revoked'][0].get_serial_number())[2:]
+    future_revoked.set_serial(ser.encode('utf-8'))
 
     needupdate = crypto.CRL()
     needupdate.add_revoked(revoked)
@@ -628,9 +629,9 @@ def create_crlsets():
         f.write(needupdate.export(ca_certs['mainca'][0],
                                   ca_certs['mainca'][1],
                                   type=crypto.FILETYPE_ASN1,
-                                  days=0, digest='sha256'))
+                                  days=0, digest='sha256'.encode('utf-8')))
 
-    print "sleeping for needupdate/valid crl time difference"
+    print("sleeping for needupdate/valid crl time difference")
     time.sleep(5)
     validcrl = crypto.CRL()
     validcrl.add_revoked(revoked)
@@ -639,7 +640,7 @@ def create_crlsets():
         f.write(validcrl.export(ca_certs['mainca'][0],
                                 ca_certs['mainca'][1],
                                 type=crypto.FILETYPE_ASN1,
-                                days=15, digest='sha256'))
+                                days=15, digest='sha256'.encode('utf-8')))
 
     othercrl = crypto.CRL()
     othercrl.add_revoked(revoked)
@@ -648,7 +649,7 @@ def create_crlsets():
         f.write(othercrl.export(ca_certs['otherca'][0],
                                 ca_certs['otherca'][1],
                                 type=crypto.FILETYPE_ASN1,
-                                days=15, digest='sha256'))
+                                days=15, digest='sha256'.encode('utf-8')))
 
     notyet = crypto.CRL()
     notyet.add_revoked(future_revoked)
@@ -656,7 +657,7 @@ def create_crlsets():
         f.write(notyet.export(ca_certs['mainca'][0],
                               ca_certs['mainca'][1],
                               type=crypto.FILETYPE_ASN1,
-                              days=15, digest='sha256'))
+                              days=15, digest='sha256'.encode('utf-8')))
 
      #create_leading_zero_crl()
 
@@ -669,7 +670,7 @@ def create_ec_certs():
     if dirbase != '':
         return
 
-    print "creating EC certs"
+    print("creating EC certs")
     #create CA
     pexpect.run('openssl ecparam -out keys/curveca.key '
                 '-name secp384r1 -genkey -noout')
@@ -695,7 +696,7 @@ def create_ec_certs():
 
     serial = 2
     for name in ['east', 'west', 'north', 'road']:
-        print "- creating %s-ec" % name
+        print("- creating %s-ec"% name)
         #create end certs
         if name is 'west':
             pexpect.run('openssl ecparam -out keys/' + name +
@@ -788,7 +789,7 @@ def run_dist_certs():
     create_ec_certs()
 
 def create_nss_pw():
-    print "creating nss-pw"
+    print("creating nss-pw")
     f = open("nss-pw","w")
     f.write("foobar")
     f.close()
@@ -801,10 +802,10 @@ def main():
     global dirbase
     reset_files()
     dates = gen_gmtime_dates()
-    print "format dates being used for this run:"
+    print("format dates being used for this run:")
     # TODO: print the display GMT times
-    for n, s in dates.iteritems():
-        print "%s : %s" % (n, s)
+    for n, s in dates.items():
+        print("%s : %s"% (n, s))
 
     dirbase = ""
     run_dist_certs()
@@ -816,7 +817,7 @@ def main():
     create_nss_pw()
     os.chdir(cwd)
 
-    print "finished!"
+    print("finished!")
 
 
 if __name__ == "__main__":
