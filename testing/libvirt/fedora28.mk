@@ -79,7 +79,7 @@ KVM_UPGRADE_PACKAGES ?= \
     pexpect \
     policycoreutils-python-utils \
     psmisc \
-    python2-pyOpenSSL \
+    python3-pyOpenSSL \
     python3-pexpect \
     racoon2 \
     rpm-build \
