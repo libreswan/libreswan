@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 #
 # swantest: run kvmpluto and dockerpluto tests
 #
-# Copyright (C) 2016-2018 Antony Antony
+# Copyright (C) 2016-2019 Antony Antony
 # Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -1676,7 +1676,7 @@ def kill_zombie_tcpdump(signal=1):
 
 def kill_zombies(name, killrest=False):
 
-    #setproctitle.setproctitle(name)
+    #setproctitle.setproctitle(name) # not in RHEL8 use shebang line instead.
     if killrest:
         me = os.getpid()
         zombie_pids = subprocess.getoutput("pidof %s" % name)
@@ -3225,7 +3225,7 @@ def resanitize(args):
     # for h in DEFAULTCONFIG['swanhosts']:
     #       f = "OUTPUT/%s.console.diff"%h
     #       if  os.path.exists(f):
-    #               cmd = "egrep '^[+-]' %s | egrep -v '^(\+\+\+|---)' | sort -u | cmp -s - ../strongswan-star-diff"%f
+    #               cmd = "grep -E '^[+-]' %s | egrep -v '^(\+\+\+|---)' | sort -u | cmp -s - ../strongswan-star-diff"%f
     #               (status, output) =  commands.getstatusoutput(cmd);
     #               if not status:
     #                       print "cp %s/OUTPUT/%s.console.txt %s/" % (testdir,h,testdir)

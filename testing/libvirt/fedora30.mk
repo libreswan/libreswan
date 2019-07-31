@@ -82,7 +82,6 @@ KVM_UPGRADE_PACKAGES ?= \
     psmisc \
     python2-pyOpenSSL \
     python3-pexpect \
-    python-setproctitle \
     racoon2 \
     rpm-build \
     screen \
