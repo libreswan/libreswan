@@ -56,37 +56,6 @@ const unsigned char **dstp;   /* NULL means just a size query */
 }
 
 /*
-   - addrbytesptr_write - get pointer to the address bytes of an ip_address for writing
- */
-size_t                          /* 0 for error */
-addrbytesptr_write(src, dstp)
-ip_address * src;
-unsigned char **dstp;   /* NULL means just a size query */
-{
-	unsigned char *p;
-	size_t n;
-
-	switch (src->u.v4.sin_family) {
-	case AF_INET:
-		p = (unsigned char *)&src->u.v4.sin_addr.s_addr;
-		n = 4;
-		break;
-	case AF_INET6:
-		p = (unsigned char *)&src->u.v6.sin6_addr;
-		n = 16;
-		break;
-	default:
-		return 0;
-
-		break;
-	}
-
-	if (dstp != NULL)
-		*dstp = p;
-	return n;
-}
-
-/*
    - addrlenof - get length of the address bytes of an ip_address
  */
 size_t                          /* 0 for error */
@@ -94,30 +63,4 @@ addrlenof(src)
 const ip_address * src;
 {
 	return addrbytesptr_read(src, NULL);
-}
-
-/*
-   - addrbytesof - get the address bytes of an ip_address
- */
-size_t                          /* 0 for error */
-addrbytesof(src, dst, dstlen)
-const ip_address * src;
-unsigned char *dst;
-size_t dstlen;
-{
-	const unsigned char *p;
-	size_t n;
-	size_t ncopy;
-
-	n = addrbytesptr_read(src, &p);
-	if (n == 0)
-		return 0;
-
-	if (dstlen > 0) {
-		ncopy = n;
-		if (ncopy > dstlen)
-			ncopy = dstlen;
-		memcpy(dst, p, ncopy);
-	}
-	return n;
 }

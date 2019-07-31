@@ -6,7 +6,7 @@ east #
  certutil -A -i /testing/x509/cacerts/otherca.crt -d sql:/etc/ipsec.d -n "otherca" -t 'CT,,'
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

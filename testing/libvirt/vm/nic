@@ -54,11 +54,6 @@ You can load this machine definition into libvirt using:
       <model type='virtio'/>
     </interface>
     <interface type='network'>
-      <mac address='12:00:00:32:64:fe'/>
-      <source network='192_9_4'/>
-      <model type='virtio'/>
-    </interface>
-    <interface type='network'>
       <mac address='52:54:00:1d:9c:19'/>
       <source network='swandefault'/>
       <model type='virtio'/>

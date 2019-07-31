@@ -19,6 +19,7 @@
 #include "jambuf.h"
 #include "ip_address.h"
 #include "lswlog.h"		/* for libreswan_log() */
+#include "ip_info.h"
 
 ip_address address_from_in_addr(const struct in_addr *in)
 {
@@ -60,6 +61,21 @@ int address_type(const ip_address *address)
 	case AF_INET6:
 	case AF_UNSPEC:
 		return af;
+	default:
+		bad_case(af);
+	}
+}
+
+const struct ip_info *address_info(const ip_address *address)
+{
+	int af = address->u.v4.sin_family;
+	switch (af) {
+	case AF_INET:
+		return &ipv4_info;
+	case AF_INET6:
+		return &ipv6_info;
+	case AF_UNSPEC:
+		return NULL;
 	default:
 		bad_case(af);
 	}
@@ -186,6 +202,21 @@ shunk_t address_as_shunk(const ip_address *address)
 		return THING_AS_SHUNK(address->u.v6.sin6_addr); /* strip const */
 	default:
 		return null_shunk;
+	}
+}
+
+chunk_t address_as_chunk(ip_address *address)
+{
+	if (address == NULL) {
+		return empty_chunk;
+	}
+	switch (address->u.v4.sin_family) {
+	case AF_INET:
+		return THING_AS_CHUNK(address->u.v4.sin_addr.s_addr); /* strip const */
+	case AF_INET6:
+		return THING_AS_CHUNK(address->u.v6.sin6_addr); /* strip const */
+	default:
+		return empty_chunk;
 	}
 }
 

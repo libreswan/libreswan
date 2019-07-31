@@ -15,7 +15,7 @@ east #
  iptables -I INPUT -p UDP --dport 500 -j DROP
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

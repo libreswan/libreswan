@@ -76,7 +76,7 @@
 #include "ip_address.h"
 #include "send.h"		/* for send without recording */
 #include "ikev1_send.h"
-#include "af_info.h"
+#include "ip_info.h"
 #include "ikev1_hash.h"
 #include "impair.h"
 
@@ -1560,19 +1560,13 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 		{
 			struct connection *c = st->st_connection;
-			ip_address a;
 			char caddr[SUBNETTOT_BUF];
 
-			uint32_t *ap = (uint32_t *)(strattr.cur);
-			SET_V4(a);
-			/* ??? this code should ensure that the size of the attribute value is correct */
-			/* ??? this code is duplicated four times! */
-			memcpy(&a.u.v4.sin_addr.s_addr, ap,
-			       sizeof(a.u.v4.sin_addr.s_addr));
+			ip_address a;
+			if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+				return STF_FATAL;
+			}
 			addrtosubnet(&a, &c->spd.this.client);
-
-			/* make sure that the port info is zeroed */
-			setportof(0, &c->spd.this.client.addr);
 
 			c->spd.this.has_client = TRUE;
 			subnettot(&c->spd.this.client, 0,
@@ -1724,20 +1718,13 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			{
 				struct connection *c = st->st_connection;
-				ip_address a;
 				char caddr[SUBNETTOT_BUF];
 
-				uint32_t *ap =
-					(uint32_t *)(strattr.cur);
-				SET_V4(a);
-				/* ??? this code should ensure that the size of the attribute value is correct */
-				/* ??? this code is duplicated four times! */
-				memcpy(&a.u.v4.sin_addr.s_addr, ap,
-				       sizeof(a.u.v4.sin_addr.s_addr));
+				ip_address a;
+				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+					return STF_FATAL;
+				}
 				addrtosubnet(&a, &c->spd.this.client);
-
-				/* make sure that the port info is zeroed */
-				setportof(0, &c->spd.this.client.addr);
 
 				c->spd.this.has_client = TRUE;
 				subnettot(&c->spd.this.client, 0,
@@ -1761,15 +1748,12 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 			case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 			{
-				ip_address a;
 				ipstr_buf b;
-				uint32_t *ap = (uint32_t *)(strattr.cur);
 
-				SET_V4(a);
-				/* ??? this code should ensure that the size of the attribute value is correct */
-				/* ??? this code is duplicated four times! */
-				memcpy(&a.u.v4.sin_addr.s_addr, ap,
-				       sizeof(a.u.v4.sin_addr.s_addr));
+				ip_address a;
+				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+					return STF_FATAL;
+				}
 
 				DBG(DBG_CONTROL, DBG_log("Received IP4 NETMASK %s",
 					ipstr(&a, &b)));
@@ -1780,14 +1764,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
-
-				uint32_t *ap =
-					(uint32_t *)(strattr.cur);
-				SET_V4(a);
-				/* ??? this code should ensure that the size of the attribute value is correct */
-				/* ??? this code is duplicated four times! */
-				memcpy(&a.u.v4.sin_addr.s_addr, ap,
-				       sizeof(a.u.v4.sin_addr.s_addr));
+				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
+					return STF_FATAL;
+				}
 
 				address_buf a_buf;
 				const char *a_str = ipstr(&a, &a_buf);
@@ -1820,7 +1799,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				if (!c->spd.that.has_client) {
 					passert(c->spd.spd_next == NULL);
 					c->spd.that.has_client = TRUE;
-					c->spd.that.client = *af_inet4_info.all;
+					c->spd.that.client = *ipv4_info.all;
 					c->spd.that.has_client_wildcard = FALSE;
 				}
 

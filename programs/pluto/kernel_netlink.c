@@ -149,14 +149,25 @@ static sparse_names calg_list = {
  */
 static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_family_t family)
 {
-	if (family == AF_INET) {
-		/* an IPv4 address */
-		SET_V4(*addr);
-		addr->u.v4.sin_addr.s_addr = xaddr->a4;
-	} else {
-		/* Must be IPv6 */
-		SET_V6(*addr);
-		memcpy(&addr->u.v6.sin6_addr, xaddr->a6, sizeof(xaddr->a6));
+	switch (family) {
+	case AF_INET:
+	{
+		/*
+		 * XXX: The rationale for this SNAFU as stated in the
+		 * xfrm.h header:
+		 *
+		 * Structure to encapsulate addresses. I do not want
+		 * to use "standard" structure. My apologies.
+		 */
+		struct in_addr in = { xaddr->a4 };
+		*addr = address_from_in_addr(&in);
+		break;
+	}
+	case AF_INET6:
+		*addr = address_from_in6_addr(&xaddr->in6);
+		break;
+	default:
+		bad_case(family);
 	}
 }
 
@@ -1581,16 +1592,22 @@ static err_t xfrm_to_ip_address(unsigned family, const xfrm_address_t *src,
 				ip_address *dst)
 {
 	switch (family) {
-	case AF_INET:	/* IPv4 */
-		initaddr((const void *) &src->a4, sizeof(src->a4), family,
-			dst);
+	case AF_INET:
+	{
+		/*
+		 * XXX: The rationale for this SNAFU as stated in the
+		 * xfrm.h header:
+		 *
+		 * Structure to encapsulate addresses. I do not want
+		 * to use "standard" structure. My apologies.
+		 */
+		struct in_addr in = { src->a4 };
+		*dst = address_from_in_addr(&in);
 		return NULL;
-
-	case AF_INET6:	/* IPv6 */
-		initaddr((const void *) &src->a6, sizeof(src->a6), family,
-			dst);
+	}
+	case AF_INET6:
+		*dst = address_from_in6_addr(&src->in6);
 		return NULL;
-
 	default:
 		return "unknown address family";
 	}

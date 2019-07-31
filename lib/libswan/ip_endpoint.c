@@ -17,6 +17,7 @@
 #include "jambuf.h"
 #include "ip_endpoint.h"
 #include "constants.h"		/* for memeq() */
+#include "ip_info.h"
 
 ip_endpoint endpoint(const ip_address *address, int port)
 {
@@ -99,6 +100,15 @@ ip_endpoint set_endpoint_port(const ip_endpoint *address, int port)
 int endpoint_type(const ip_endpoint *endpoint)
 {
 	return addrtypeof(endpoint);
+}
+
+const struct ip_info *endpoint_info(const ip_endpoint *endpoint)
+{
+#ifdef ENDPOINT_ADDRESS_PORT
+	return address_info(&endpoint->address);
+#else
+	return address_info(endpoint);
+#endif
 }
 
 /*

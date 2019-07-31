@@ -34,8 +34,14 @@ if [ $(ip addr list|grep -c cipsec) -ne 0 ]; then
     exit 1
 fi
 
-initsystem=unknown
-if [ -d /run/systemd/system ]; then
+initsystem=@INITSYSTEM@
+
+# this magic should go. build already decided initsystem.
+# it breaks inside a namespace take what was decided at build
+
+if [ "${initsystem}" = "docker" ]; then
+    initsystem="docker"
+elif [ -d /run/systemd/system ]; then
     initsystem=systemd
 elif [ -f /sbin/start ]; then
     if [ -r /etc/redhat-release ]; then
@@ -77,6 +83,9 @@ case "$1" in
 	elif [ ${initsystem} = sysv ]; then
 	    echo "Redirecting to: /etc/init.d/ipsec start"
 	    exec /etc/init.d/ipsec start
+	elif [ ${initsystem} = docker ]; then
+	    echo "Redirecting to: /etc/init.d/ipsec start"
+	    exec /etc/init.d/ipsec start
 	else
 	    echo "Unknown init system in use - aborted"
 	    exit 3
@@ -99,6 +108,9 @@ case "$1" in
 	    echo "Redirecting to: rc-service ipsec stop"
 	    exec rc-service ipsec stop
 	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: /etc/init.d/ipsec stop"
+	    exec /etc/init.d/ipsec stop
+	elif [ ${initsystem} = docker ]; then
 	    echo "Redirecting to: /etc/init.d/ipsec stop"
 	    exec /etc/init.d/ipsec stop
 	else
@@ -159,6 +171,9 @@ case "$1" in
 	    echo "Redirecting to: rc-service ipsec restart"
 	    exec rc-service ipsec restart
 	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: /etc/init.d/ipsec restart"
+	    exec /etc/init.d/ipsec restart
+	elif [ ${initsystem} = docker ]; then
 	    echo "Redirecting to: /etc/init.d/ipsec restart"
 	    exec /etc/init.d/ipsec restart
 	else

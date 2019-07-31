@@ -28,7 +28,7 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 #include "impair.h"
-
+#include "ip_info.h"		/* used by pbs_in_address() */
 #include "packet.h"
 
 const pb_stream empty_pbs;
@@ -2722,4 +2722,33 @@ void close_output_pbs(pb_stream *pbs)
 
 	if (pbs->container != NULL)
 		pbs->container->cur = pbs->cur; /* pass space utilization up */
+}
+
+bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
+		    struct pbs_in *input_pbs, const char *what)
+{
+	switch (ipv->af) {
+	case AF_INET:
+	{
+		struct in_addr ip;
+		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
+			*address = address_invalid;
+			return false;
+		}
+		*address = address_from_in_addr(&ip);
+		return true;
+	}
+	case AF_INET6:
+	{
+		struct in6_addr ip;
+		if (!in_raw(&ip, sizeof(ip), input_pbs, what)) {
+			*address = address_invalid;
+			return false;
+		}
+		*address = address_from_in6_addr(&ip);
+		return true;
+	}
+	default:
+		bad_case(ipv->af);
+	}
 }

@@ -8,7 +8,7 @@
 # Default-Start:
 # Default-Stop: 0 1 6
 # Short-Description: Start Libreswan IPsec at boot time
-# Description: Enable automatic key management for IPsec (KLIPS and XFRM
+# Description: Enable automatic key management for IPsec (XFRM
 ### END INIT INFO
 #
 ### see https://bugzilla.redhat.com/show_bug.cgi?id=636572
@@ -33,7 +33,7 @@
 # for more details.
 #
 # ipsec	        sysv style init.d script for starting and stopping
-#		the IPsec security subsystem (KLIPS and Pluto).
+#		the IPsec security subsystem (XFRM and Pluto).
 #
 # This script becomes /etc/init.d/ipsec
 # and is also accessible as "ipsec setup"
@@ -45,7 +45,7 @@
 #
 # chkconfig: - 47 76
 # description: IPsec provides encrypted and authenticated communications; \
-# XFRM or KLIPS is the kernel half of it, Pluto is the user-level management daemon.
+# XFRM is the kernel half of it, Pluto is the user-level management daemon.
 
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 
@@ -73,12 +73,18 @@ IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 unset PLUTO_OPTIONS
 
-rundir=/var/run/pluto
+rundir=@IPSEC_RUNDIR@
 plutopid=${rundir}/pluto.pid
 plutoctl=${rundir}/pluto.ctl
 lockdir=/run/lock/subsys
 lockfile=ipsec
 lockpath=${lockdir}/${lockfile}
+nofork=@DOCKER_PLUTONOFORK@
+if [ -n "${nofork}" ]; then
+        nofork="--nofork "
+else
+        nofork=''
+fi
 
 # /etc/resolv.conf related paths
 LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup
@@ -112,23 +118,23 @@ verify_config() {
 }
 
 start() {
-    echo -n $"Starting pluto IKE daemon for IPsec: "
+    echo $"Starting pluto IKE daemon for IPsec: "
     verify_config
     ipsec _stackmanager start
 
     # pluto searches the current directory, so this is required for making it selinux compliant
     cd /
-    # Create nss db or convert from old format to new sql format
-    ipsec --checknss
     # Enable nflog if configured
     ipsec --checknflog > /dev/null
     # Create lockfile
     [ -d ${lockdir} ] || mkdir -p ${lockdir}
     touch ${lockpath}
     # Start pluto on foreground, blocking here until it's killed.
-    ${IPSEC_EXECDIR}/pluto --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS}
-    # Pluto was killed, remove lockfile
-    rm -f ${lockpath}
+    ${IPSEC_EXECDIR}/pluto --config ${IPSEC_CONF} @DOCKER_PLUTONOFORK@ ${PLUTO_OPTIONS}
+    if [ "${nofork}" = "--nofork " ]; then
+	# Pluto was killed, remove lockfile
+	rm -f ${lockpath}
+    fi
     return 0
 }
 

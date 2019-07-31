@@ -66,7 +66,6 @@
 #include "lsw_select.h"
 #include "kernel_alg.h"
 #include "ip_address.h"
-#include "af_info.h"
 
 #define KLIPS_OP_MASK   0xFF
 #define KLIPS_OP_FLAG_SHIFT     8
@@ -506,16 +505,12 @@ static void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg UNUSED,
 	if (srca->sa_family != AF_INET || dsta->sa_family != AF_INET) {
 		ugh = "only AF_INET supported";
 	} else {
-		initaddr(
-			(const void *) &((const struct sockaddr_in *)srca)->sin_addr,
-			sizeof(((const struct sockaddr_in *)srca)->sin_addr),
-			srca->sa_family, &nfo.src);
+		/* XXX: endpoint */
+		nfo.src = address_from_in_addr(&((const struct sockaddr_in *)srca)->sin_addr);
 		nfo.sport =
 			ntohs(((const struct sockaddr_in *)srca)->sin_port);
-		initaddr(
-			(const void *) &((const struct sockaddr_in *)dsta)->sin_addr,
-			sizeof(((const struct sockaddr_in *)dsta)->sin_addr),
-			dsta->sa_family, &nfo.dst);
+		/* XXX: endpoint */
+		nfo.dst = address_from_in_addr(&((const struct sockaddr_in *)dsta)->sin_addr);
 		nfo.dport =
 			ntohs(((const struct sockaddr_in *)dsta)->sin_port);
 

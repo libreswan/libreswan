@@ -64,7 +64,7 @@ OBJS += addr_lookup.o
 endif
 
 OBJS += log_ip.o
-OBJS += af_info.o
+OBJS += ip_info.o
 OBJS += fd.o
 OBJS += kernel_alg.o
 OBJS += kernel_sadb.o

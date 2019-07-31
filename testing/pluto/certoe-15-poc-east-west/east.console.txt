@@ -3,7 +3,6 @@ Preparing X.509 files
 east #
  ip route del default
 east #
- ip route add default via 192.9.2.1
 east #
  certutil -D -n west -d sql:/etc/ipsec.d
 east #
@@ -16,7 +15,7 @@ east #
  restorecon -R /etc/ipsec.d
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -37,7 +36,7 @@ east #
  # east sends a delete by restarting
 east #
  ipsec restart
-Redirecting to: systemctl restart ipsec.service
+Redirecting to: [initsystem]
 east #
  # give OE conns time to load
 east #

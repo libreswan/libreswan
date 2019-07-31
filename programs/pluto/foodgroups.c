@@ -38,7 +38,7 @@
 #include "lex.h"
 #include "log.h"
 #include "whack.h"
-#include "af_info.h"
+#include "ip_info.h"
 
 #include <errno.h>
 
@@ -128,9 +128,9 @@ static void read_foodgroup(struct fg_groups *g)
 			switch (flp->bdry) {
 			case B_none:
 			{
-				const struct af_info *afi =
+				const struct ip_info *afi =
 					strchr(flp->tok, ':') == NULL ?
-					&af_inet4_info : &af_inet6_info;
+					&ipv4_info : &ipv6_info;
 				ip_subnet sn;
 				err_t ugh;
 

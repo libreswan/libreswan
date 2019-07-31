@@ -5,7 +5,7 @@ west #
  ipsec initnss > /dev/null 2> /dev/null
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #

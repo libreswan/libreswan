@@ -31,6 +31,7 @@
 #include "demux.h"
 #include "virtual.h"
 #include "hostpair.h"
+#include "ip_info.h"
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -75,7 +76,7 @@ void ikev2_print_ts(const struct traffic_selector *ts)
 	});
 }
 
-/* rewrite me with addrbytesptr_write() */
+/* rewrite me with address_as_{chunk,shunk}()? */
 struct traffic_selector ikev2_end_to_ts(const struct end *e)
 {
 	struct traffic_selector ts;
@@ -85,6 +86,11 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e)
 	/* subnet => range */
 	ts.net.start = e->client.addr;
 	ts.net.end = e->client.addr;
+
+	/*
+	 * XXX: This is computing low&=mask; hi|=mask; should there be
+	 * a function to do this?
+	 */
 	switch (addrtypeof(&e->client.addr)) {
 	case AF_INET:
 	{
@@ -292,46 +298,26 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 		if (!in_struct(&ts1, &ikev2_ts1_desc, &ts_pd->pbs, &addr))
 			return false;
 
+		const struct ip_info *ipv;
 		switch (ts1.isat1_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
-			ts->ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-			SET_V4(ts->net.start);
-			if (!in_raw(&ts->net.start.u.v4.sin_addr.s_addr,
-				    sizeof(ts->net.start.u.v4.sin_addr.s_addr),
-				    &addr, "ipv4 ts low"))
-				return false;
-
-			SET_V4(ts->net.end);
-
-			if (!in_raw(&ts->net.end.u.v4.sin_addr.s_addr,
-				    sizeof(ts->net.end.u.v4.sin_addr.s_addr),
-				    &addr, "ipv4 ts high"))
-				return false;
-
+			ipv = &ipv4_info;
 			break;
-
 		case IKEv2_TS_IPV6_ADDR_RANGE:
-			ts->ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-			SET_V6(ts->net.start);
-
-			if (!in_raw(&ts->net.start.u.v6.sin6_addr.s6_addr,
-				    sizeof(ts->net.start.u.v6.sin6_addr.s6_addr),
-				    &addr, "ipv6 ts low"))
-				return false;
-
-			SET_V6(ts->net.end);
-
-			if (!in_raw(&ts->net.end.u.v6.sin6_addr.s6_addr,
-				    sizeof(ts->net.end.u.v6.sin6_addr.s6_addr),
-				    &addr, "ipv6 ts high"))
-				return false;
-
+			ipv = &ipv6_info;
 			break;
-
 		default:
 			return false;
 		}
 
+		ts->ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
+		if (!pbs_in_address(&ts->net.start, ipv, &addr, "TS low")) {
+			return false;
+		}
+		if (!pbs_in_address(&ts->net.end, ipv, &addr, "TS high")) {
+			return false;
+		}
+		/* XXX: does this matter? */
 		if (pbs_left(&addr) != 0)
 			return false;
 

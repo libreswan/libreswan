@@ -6,7 +6,7 @@ north #
 destination 192.1.2.23 is alive
 north #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #

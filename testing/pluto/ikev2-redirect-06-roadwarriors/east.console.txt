@@ -4,7 +4,7 @@ east #
  ip route del 192.0.1.0/24
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

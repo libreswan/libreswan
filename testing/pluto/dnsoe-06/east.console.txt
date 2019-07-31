@@ -9,7 +9,7 @@ east #
  ip addr add 192.1.2.67/24 dev eth1
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

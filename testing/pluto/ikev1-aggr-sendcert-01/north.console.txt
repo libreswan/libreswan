@@ -2,7 +2,7 @@
 Preparing X.509 files
 north #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #

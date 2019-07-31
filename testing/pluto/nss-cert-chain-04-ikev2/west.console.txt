@@ -9,7 +9,7 @@ west #
  certutil -A -i /testing/x509/certs/west_chain_int_2.crt -n "east_chain_2" -d sql:/etc/ipsec.d -t "CT,,"
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #

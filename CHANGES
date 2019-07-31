@@ -25,6 +25,7 @@ v3.30 (unreleased)
 * packaging: fedora30 requires gcc to be listed as BuildRequires: [Paul]
 * packaging: Add Debian stretch specific configs and more cleanup [Antony]
 * packaging: make deb jessie and xenial config detection [Antony]
+* testing: Added a new namespaces based testrun method [Antony]
 
 v3.29 (June 10, 2019)
 * SECURITY: Fixes CVE-2019-10155 https://libreswan.org/security/CVE-2019-10155

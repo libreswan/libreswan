@@ -7,7 +7,7 @@ east #
  echo "192.1.2.254/32"  >> /etc/ipsec.d/policies/clear-or-private
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

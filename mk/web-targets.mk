@@ -28,7 +28,7 @@ WEB_UTILSDIR ?= testing/utils
 WEB_SOURCEDIR ?= testing/web
 WEB_REPODIR ?= .
 # these are verbose so multiple invocations can be spotted
-WEB_SUBDIR ?= $(shell set -x ; $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_REPODIR))
+WEB_SUBDIR ?= $(shell $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_REPODIR))
 
 # shortcuts to use when web is enabled, set up to evaluate once as
 # they can be a little expensive.  These make variable can only be
@@ -36,7 +36,7 @@ WEB_SUBDIR ?= $(shell set -x ; $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_RE
 
 ifdef WEB_ENABLED
 ifndef WEB_HASH
-WEB_HASH := $(shell set -x ; cd $(WEB_REPODIR) ; git show --no-patch --format=%H HEAD)
+WEB_HASH := $(shell cd $(WEB_REPODIR) ; git show --no-patch --format=%H HEAD)
 endif
 ifndef WEB_RESULTSDIR
 WEB_RESULTSDIR := $(WEB_SUMMARYDIR)/$(WEB_SUBDIR)

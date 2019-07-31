@@ -86,7 +86,7 @@
 #include <ocsp.h>
 #include "crypt_hash.h"
 #include "crl_queue.h"
-#include "af_info.h"
+#include "ip_info.h"
 
 bool crl_strict = FALSE;
 bool ocsp_strict = FALSE;
@@ -416,7 +416,7 @@ static void gntoid(struct id *id, const generalName_t *gn)
 		break;
 	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
 	{
-		const struct af_info *afi = &af_inet4_info;
+		const struct ip_info *afi = &ipv4_info;
 		err_t ugh = NULL;
 
 		id->kind = afi->id_addr;

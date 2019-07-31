@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 # swantest: run kvmpluto and dockerpluto tests
 #
@@ -47,7 +47,7 @@ from contextlib import contextmanager
 try:
     import argparse
     import pexpect
-    import setproctitle
+    #import setproctitle
 except ImportError as e:
     module = str(e)[16:]
     sys.exit("we require the python module %s" % module)
@@ -1457,7 +1457,7 @@ def kill_zombie_tcpdump(signal=1):
 
 def kill_zombies(proctitle):
 
-    setproctitle.setproctitle(proctitle)
+    #setproctitle.setproctitle(proctitle)
     me = os.getpid()
     zombie_pids = subprocess.getoutput("pidof %s" % proctitle)
     for pid in (zombie_pids.split()):

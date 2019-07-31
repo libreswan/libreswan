@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -16,8 +16,6 @@ east #
 000 interface eth0/eth0 192.0.2.254:500
 000 interface eth1/eth1 192.1.2.23:4500
 000 interface eth1/eth1 192.1.2.23:500
-000 interface eth2/eth2 192.9.2.23:4500
-000 interface eth2/eth2 192.9.2.23:500
 000  
 000  
 000 fips mode=disabled;
@@ -138,7 +136,7 @@ east #
  # stop on east caused crash on west at some point in the past
 east #
  hostname |grep west > /dev/null || ipsec stop
-Redirecting to: systemctl stop ipsec.service
+Redirecting to: [initsystem]
 east #
 east #
  ../bin/check-for-core.sh

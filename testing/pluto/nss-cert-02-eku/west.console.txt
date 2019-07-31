@@ -7,7 +7,7 @@ west #
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #

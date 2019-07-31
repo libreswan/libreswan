@@ -66,7 +66,7 @@
 
 #include "ip_address.h"
 #include "ip_endpoint.h"
-#include "af_info.h"
+#include "ip_info.h"
 #include "pluto_stats.h"
 #include "ikev2_send.h"
 

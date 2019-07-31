@@ -34,7 +34,9 @@ ip_subnet *dst;
 	int die;
 
 	dst->addr = *addr;
-	n = addrbytesptr_write(&dst->addr, &p);
+	chunk_t addr_chunk = address_as_chunk(&dst->addr);
+	n = addr_chunk.len;
+	p = addr_chunk.ptr; /* cast void* */
 	if (n == 0)
 		return "unknown address family";
 

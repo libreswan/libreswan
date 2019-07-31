@@ -39,7 +39,6 @@ nic #
        valid_lft forever preferred_lft forever
 4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default
     link/ether 12:00:00:32:64:fe brd ff:ff:ff:ff:ff:ff
-    inet 192.9.4.245/24 brd 192.9.4.255 scope global eth2
        valid_lft forever preferred_lft forever
     inet6 2001:db8:9:2::23/64 scope global
        valid_lft forever preferred_lft forever

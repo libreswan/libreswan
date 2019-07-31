@@ -6,7 +6,7 @@ east #
  certutil  -d sql:/etc/ipsec.d -D -n west
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -42,7 +42,7 @@ east #
 east #
 east #
  ipsec stop
-Redirecting to: systemctl stop ipsec.service
+Redirecting to: [initsystem]
 east #
  ipsec status
 whack: Pluto is not running (no "/run/pluto/pluto.ctl")

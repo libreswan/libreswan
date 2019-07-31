@@ -41,6 +41,7 @@ KVM_UPGRADE_PACKAGES ?= \
     elfutils-libelf-devel \
     fipscheck-devel \
     flex \
+    fping \
     gcc \
     gdb \
     git \
@@ -78,9 +79,8 @@ KVM_UPGRADE_PACKAGES ?= \
     pexpect \
     policycoreutils-python-utils \
     psmisc \
-    python2-pyOpenSSL \
+    python3-pyOpenSSL \
     python3-pexpect \
-    python-setproctitle \
     racoon2 \
     rpm-build \
     screen \

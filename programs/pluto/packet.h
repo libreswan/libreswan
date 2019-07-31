@@ -8,7 +8,7 @@
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
- * Copyright (C) 2018 Andrew Cagney
+ * Copyright (C) 2018-2019 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +26,9 @@
 
 #include "lswcdefs.h"
 #include "chunk.h"
+#include "ip_address.h"
+
+struct ip_info;
 
 /* a struct_desc describes a structure for the struct I/O routines.
  * This requires arrays of field_desc values to describe struct fields.
@@ -93,7 +96,16 @@ struct fixup {
  *
  * Note: it is safe to copy a PBS with no children because a PBS
  * is only pointed to by its children.  This is done in out_struct().
+ *
+ * XXX: packet_byte_stream should be split into 'struct pbs_{in,out}':
+ *
+ * - pbs_in's underlying structure is read-only (shunk_t?)
+ *
+ * - pbs_out's underlying structure is read-write (chunk_t?)
+ *
+ * - half of packet_byte_stream is pbs_out specific
  */
+
 struct packet_byte_stream {
 	struct packet_byte_stream *container;	/* PBS of which we are part */
 	struct_desc *desc;
@@ -163,18 +175,29 @@ extern const pb_stream empty_pbs;
  *	pbs_offset is current size of stream.
  *	pbs_room is maximum size allowed.
  *	pbs_left is amount of space remaining
+ *
+ * XXX: How can an input pbs have room()?
  */
 #define pbs_ok(PBS) ((PBS)->start != NULL)
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
 
+#define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
+
 /*
- * Map/clone the current contents (i.e., everything written so far)
- * [start..cur) of an output PBS as a chunk.
+ * Input PBS
  */
-extern chunk_t same_out_pbs_as_chunk(pb_stream *pbs);
-extern chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name);
+
+#define pbs_in packet_byte_stream
+
+/*
+ * Initializers; point PBS at a pre-allocated (or static) buffer.
+ *
+ * XXX: should the buffer instead be allocated as part of the PBS?
+ */
+extern void init_pbs(pb_stream *pbs, uint8_t *start, size_t len,
+		     const char *name);
 
 /*
  * Map an input PBS onto CHUNK.
@@ -195,6 +218,27 @@ extern chunk_t clone_in_pbs_as_chunk(pb_stream *pbs, const char *name);
 extern chunk_t same_in_pbs_left_as_chunk(pb_stream *pbs);
 extern chunk_t clone_in_pbs_left_as_chunk(pb_stream *pbs, const char *name);
 
+extern bool in_struct(void *struct_ptr, struct_desc *sd,
+		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
+extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MUST_USE_RESULT;
+
+/*
+ * Utilities:
+ *
+ * XXX: is there a better place to be adding these in functions that
+ * build on the primitives?
+ */
+
+bool pbs_in_address(ip_address *address, const struct ip_info *af,
+		    struct pbs_in *input_pbs,
+		    const char *WHAT) MUST_USE_RESULT;
+
+/*
+ * Output PBS
+ */
+
+#define pbs_out packet_byte_stream
+
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
  *
@@ -203,16 +247,18 @@ extern chunk_t clone_in_pbs_left_as_chunk(pb_stream *pbs, const char *name);
  *
  * XXX: should the buffer instead be allocated as part of the PBS?
  */
-extern void init_pbs(pb_stream *pbs, uint8_t *start, size_t len,
-		     const char *name);
 extern void init_out_pbs(pb_stream *pbs, uint8_t *start, size_t len,
 			 const char *name);
 extern pb_stream open_out_pbs(const char *name, uint8_t *buffer,
 			      size_t sizeof_buffer);
 
-extern bool in_struct(void *struct_ptr, struct_desc *sd,
-		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
-extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MUST_USE_RESULT;
+/*
+ * Map/clone the current contents (i.e., everything written so far)
+ * [start..cur) of an output PBS as a chunk.
+ */
+
+extern chunk_t same_out_pbs_as_chunk(pb_stream *pbs);
+extern chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name);
 
 extern bool out_struct(const void *struct_ptr, struct_desc *sd,
 		       pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
@@ -234,7 +280,6 @@ extern bool out_raw(const void *bytes, size_t len, pb_stream *outs,
 
 extern void close_output_pbs(pb_stream *pbs);
 
-#define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
 
 /* ISAKMP Header: for all messages
  * layout from RFC 2408 "ISAKMP" section 3.1
