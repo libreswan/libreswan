@@ -128,6 +128,8 @@ class DefaultVariables ():
 
         self.ip_c = '/usr/sbin/ip'
 
+        self.docker_c = 'podman'
+
 # hosts = ['east', 'west', 'road', 'nic', 'north']
 r_init = threading.Event()
 i_ran = threading.Event()
@@ -195,54 +197,6 @@ class PipeworkEroor():
     pass
 
 
-def grep_4_known_errors(test):
-    for host in test["test_hosts"]:
-        tpath = os.getcwd()
-
-        plutolog = tpath + '/OUTPUT/' + host + '.pluto.log'
-        if not os.path.exists(plutolog):
-            plutolog = plutolog + '.gz'
-        conslelog = tpath + '/OUTPUT/' + host + '.console.txt'
-        if not os.path.exists(conslelog):
-            conslelog = conslelog + '.gz'
-
-        conslelog_verbose = tpath + '/OUTPUT/' + host + '.console.verbose.txt'
-        if not os.path.exists(conslelog_verbose):
-            conslelog_verbose = conslelog_verbose + '.gz'
-
-        if os.path.exists(plutolog):
-            grep_n_add(test, host, plutolog, 'ASSERTION FAILED', "ASSERT")
-            grep_n_add(test, host, plutolog, 'EXPECTATION FAILED', "EXPECT")
-
-        if os.path.exists(conslelog):
-            grep_n_add(test, host, conslelog, 'segfault', "SEGFAULT")
-            grep_n_add(test, host, conslelog, 'general protection', "GPFAULT")
-
-        if os.path.exists(conslelog_verbose):
-            grep_n_add(test, host, conslelog_verbose, "^CORE FOUND", "CORE")
-
-
-def grep_n_add(test, host, filename, pattern, note):
-    if not os.path.exists(filename):
-        return
-
-    fixed = '-F '
-    fixed = ''
-    key = "%s-status" % host
-    status = ''
-
-    cmd = "zgrep " + fixed + "'" + pattern + "'  " + filename
-    match = subprocess.getoutput(cmd)
-    logger.debug("%s" % cmd)
-    if match:
-        logger.info("%s %s" % (host, match))
-        logger.debug(("%s %s %s" % (host, cmd, match)))
-        if key in test:
-            test[key] += " " + note
-        else:
-            test[key] = note
-
-
 class guest (threading.Thread):
 
     def __init__(self, hostname, role, testname, args, prefix=None, install=None, compile=None, ipsecstop=None):
@@ -256,7 +210,7 @@ class guest (threading.Thread):
         self.status = "NEW"
         self.bootwait = args.bootwait
         self.stoponerror = args.stoponerror
-        self.testingdir = args.testingdir
+        self.testingdir = args.libreswandir + '/testing/pluto'
         self.reboot = True
         if args.noreboot:
             self.reboot = None
@@ -1240,32 +1194,37 @@ class scantests:
 
         return diffr
 
-    def grep_4_known_errors(self):
-        for role in ["initiator", "responder"]:
-            host = self.tests[self.testname][role]
-            plutolog = self.tpath + '/OUTPUT/' + host + '.pluto.log'
+
+class scantest:
+    def __init__(self, test, slist=None):
+        self.test = test
+        self.slist = slist
+        self.grep_4_known_errors(self)
+
+    def grep_4_known_errors(self, host):
+        for host in test.hosts:
+            plutolog =  'OUTPUT/' + host + '.pluto.log'
             if not os.path.exists(plutolog):
                 plutolog = plutolog + '.gz'
-            conslelog = self.tpath + '/OUTPUT/' + host + '.console.txt'
+            conslelog = 'OUTPUT/' + host + '.console.txt'
             if not os.path.exists(conslelog):
                 conslelog = conslelog + '.gz'
-            conslelog_verbose = self.tpath + '/OUTPUT/' + host + '.console.verbose.txt'
+            conslelog_verbose = 'OUTPUT/' + host + '.console.verbose.txt'
             if not os.path.exists(conslelog_verbose):
                 conslelog_verbose = conslelog_verbose + '.gz'
 
             if os.path.exists(plutolog):
-                self.grep_n_add(role, plutolog, 'ASSERTION FAILED', "ASSERT")
-                self.grep_n_add(role, plutolog, 'EXPECTATION FAILED', "EXPECT")
+                self.grep_n_add(plutolog, 'ASSERTION FAILED', "ASSERT")
+                self.grep_n_add(plutolog, 'EXPECTATION FAILED', "EXPECT")
 
             if os.path.exists(conslelog):
-                self.grep_n_add(role, conslelog, 'segfault', "SEGFAULT")
-                self.grep_n_add(
-                    role, conslelog, 'general protection', "GPFAULT")
+                self.grep_n_add(conslelog, 'segfault', "SEGFAULT")
+                self.grep_n_add(conslelog, 'general protection', "GPFAULT")
 
             if os.path.exists(conslelog_verbose):
                 self.grep_n_add(role, conslelog_verbose, "^CORE FOUND", "CORE")
 
-    def grep_n_add(self, role, filename, pattern, note):
+    def grep_n_add(self, filename, pattern, note):
         if not os.path.exists(filename):
             return
 
@@ -2027,9 +1986,6 @@ def cmdline():
         "--tcpdumpfilter", default=DEFAULTCONFIG['tcpdumpfilter'],
         help="tcpdump_filter used by tcpdump command. Default %s" % DEFAULTCONFIG['tcpdumpfilter'])
 
-    parser.add_argument(
-        "--testingdir", default="/home/build/libreswan/testing", help="Change the /testing directory")
-
     parser.add_argument("--testlist", default=DEFAULTCONFIG['testlist'],
                         help="read kvmpluto tests from  %s" % DEFAULTCONFIG['testlist'])
 
@@ -2139,13 +2095,6 @@ def docker_stop_container(dname):
     # hangs on F23
     runcmd("sudo docker stop --time=1 %s" % dname)
     runcmd("sudo docker rm -f %s" % dname)
-
-
-def docker_start_container(dhost, dname, dimage):
-
-    cmd = "sudo docker run -h %s --privileged --net=none --name %s -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
-        dhost, dname, dimage)
-    return (runcmd(cmd))
 
 
 def docker_flush_eth0(dhost, dname):
@@ -2261,7 +2210,8 @@ def docker_containers_start_stop(args, test, st, stop):
     except:
         return True
 
-    docker_restart_network(test)
+    if docker_restart_network(test):
+        return True
 
     for host in test["test_hosts"]:
         if host == "nic":
@@ -2613,7 +2563,7 @@ class NS_IF():
 
 class NS_GuestNetwork():
 
-    def __init__(self, testname, sudo, guest=None, hostname=None):
+    def __init__(self, testname, sudo, guest=None, hostname=None, eth0_bridge=False):
 
         self.sudo = sudo  # root shell on host
         if guest:  # guest == None when deleting
@@ -2630,6 +2580,8 @@ class NS_GuestNetwork():
 
         if hostname == "east":
             self.eth0.ipv4 = "192.0.2.254/24"
+            if eth0_bridge:
+                self.eth0.br = "brswan02-" + self.tcsum
 
             self.eth1.ipv4 = "192.1.2.23/24"
             self.eth1.gwv4 = "192.1.2.254"
@@ -2638,6 +2590,8 @@ class NS_GuestNetwork():
 
         elif hostname == "west":
             self.eth0.ipv4 = "192.0.1.254/24"
+            if eth0_bridge:
+                self.eth0.br = "brswan01-" + self.tcsum
 
             self.eth1.ipv4 = "192.1.2.45/24"
             self.eth1.gwv4 = "192.1.2.254"
@@ -2651,6 +2605,8 @@ class NS_GuestNetwork():
 
         elif hostname == "north":
             self.eth0.ipv4 = "192.0.3.254/24"
+            if eth0_bridge:
+                self.eth0.br = "brswan03-" + self.tcsum
 
             self.eth1.ipv4 = "192.1.3.33/24"
             self.eth1.gwv4 = "192.1.3.254"
@@ -2699,9 +2655,19 @@ class NS_GuestNetwork():
             DEF.ip_c, eth.hif, DEF.ip_c, eth.hif, DEF.ip_c, eth.hif)
         sudo_shell_run(cmd, self.sudo)
         if eth.br:
-            cmd = "(%s link show | grep 'master %s' || %s link show %s && %s link set %s down && %s link del name %s) || true" %(
+            cmd = "(%s link show | grep 'master %s' || (%s link show %s && %s link set %s down && %s link del name %s)) || true" %(
                 DEF.ip_c, eth.br,  DEF.ip_c, eth.br, DEF.ip_c, eth.br, DEF.ip_c, eth.br)
             sudo_shell_run(cmd, self.sudo)
+
+    def docker_add_link(self, eth, dname):
+        cmd = "/usr/local/bin/pipework-podman %s -i %s -l %s %s %s" % (
+                eth.br, eth.name, eth.hif, dname, eth.ipv4)
+
+        if sudo_shell_run(cmd, self.sudo):
+            raise Exception("FATAL ERROR: %s" % cmd)
+
+        if self.route_add(eth):
+            raise Exception("FATAL ERROR: in route_add")
 
     def link_add_veth(self, eth, ns):
         if eth.br:
@@ -2729,17 +2695,33 @@ class NS_GuestNetwork():
         cmd = "%s -4 link set %s up" % (DEF.ip_c, eth.name)
         sudo_shell_run(cmd, self.shell)
 
-        if eth.gwv4:
-            cmd = "%s route add default via %s" % (DEF.ip_c, eth.gwv4)
-            sudo_shell_run(cmd, self.shell)
-
-        for r in eth.routes:
-            cmd = "%s %s" % (DEF.ip_c, r)
-            sudo_shell_run(cmd, self.shell)
-
         if eth.br:
             cmd = "%s link set dev %s master %s" % (DEF.ip_c, eth.hif, eth.br)
             sudo_shell_run(cmd, self.sudo)
+
+        self.route_add(eth)
+
+    def route_add(self, eth):
+        # sleep 1 because after pipework it seems to take while before dev appears
+
+        ipshow = "%s link show dev %s" % (DEF.ip_c, eth.name)
+        delay = 2
+        cmd  = ipshow
+        while (delay < 17):
+            cmd = "sleep 0.%s && %s" % (delay, ipshow)
+            if not sudo_shell_run(cmd, self.shell):
+                break
+            delay += delay
+
+        if eth.gwv4:
+            cmd = "%s route add default via %s" % (DEF.ip_c, eth.gwv4)
+            if sudo_shell_run(cmd, self.shell):
+                return True
+
+        for r in eth.routes:
+            cmd = "%s %s" % (DEF.ip_c, r)
+            if sudo_shell_run(cmd, self.shell):
+                return True
 
 
 def is_mount(mount_t, dirs):
@@ -2953,7 +2935,7 @@ def nsfs_mount_exist(ns):
     return (mr, nr, ur)
 
 def sudo_shell_run(cmd, shell):
-    logger.debug(cmd)
+    logger.info("%s # %s" % (shell.hostname, cmd))
     status = 0
     try:
         status = shell.run(cmd)
@@ -2963,6 +2945,8 @@ def sudo_shell_run(cmd, shell):
 
     if status:
         logger.error("%s exit status %d", cmd, status)
+
+    return status
 
 
 def ns_run_line_subprocess(cmd, f_log, prompt='', timeout=10):
@@ -3040,7 +3024,7 @@ def localhost_sudo(args, testname):
         s.sendline('TERM=dumb; export TERM; unset LS_COLORS')
         s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
         # this has to before shell.run()
-        s.chdir("%s/pluto/%s" % (args.testingdir, testname))
+        s.chdir("%s/testing/pluto/%s" % (args.libreswandir, testname))
         s.stty_sane()
         # s.child.setecho(False) # this does not seems to work!
         s.run('stty -echo')
@@ -3111,7 +3095,7 @@ def do_kvmplutotest(args=None, test=None, tlr=None):
 def setup_single_test(args, cwd=None):
 
     if args.testname:
-        tdir = "%s/pluto/%s" % (args.testingdir, args.testname)
+        tdir = "%s/testing/pluto/%s" % (args.libreswandir, args.testname)
         if os.path.isdir(tdir):
             os.chdir(tdir)
         else:
@@ -3161,16 +3145,11 @@ def do_single_test(args=None, test=None, tlr=None):
 
     e = None
 
-    if test.type == 'dockerplutotest':
-        if do_dockerplutotest(args=args, start=test.start, test=test, st=None):
-            os.chdir("..")  # chdir end
-    else:
-        if test.do_test():
-            os.chdir("..")  # chdir end
-            return True
-  
-    if test.type != 'nsplutotest':
-        grep_4_known_errors(test)
+    if test.do_test():
+        os.chdir("..")  # chdir end
+        return True
+
+    ## test.grep_4_known_errors()
 
     s = sanitize(args.sanitizer)
     write_result(args, test, s)
@@ -3277,19 +3256,21 @@ def update_progress_table(args, tests, st):
     return
 
 
-def tlist_progress_worker(args, st):
+def tlist_progress_worker(tlr):
 
-    if tp.empty():
-        return  # no need to execute
+    if not tlr.args.ns:
+        if tp.empty():
+            return  # no need to execute
+        tp.get()
 
-    tp.get()
-    progress = scantests(args, stdir=st["odir"], to_append=True)
+    progress = scantests(tlr.args, stdir=tlr.odir, to_append=True)
     progress.scan_test_runs()
-    tp.put(1)
+    if not tlr.args.ns:
+        tp.put(1)
 
 def do_single_test_subprocess(tlr, test):
 
-    cmd = "%s --shutdown --testingdir %s --ns --testname %s --testexpect %s " %(__file__, test.args.testingdir, test.name, test.expect)
+    cmd = "%s --shutdown --docker --testname %s --testexpect %s " %(__file__, test.name, test.expect)
     logger.info("start new process %s" % cmd)
     test.start = time.time()  # update test start time.
 
@@ -3298,7 +3279,7 @@ def do_single_test_subprocess(tlr, test):
             encoding='utf-8')
 
     # first without OUTPUT/RESULT. then with to be. So copying is atomic
-    srcdir = "%s/pluto/%s" % (test.args.testingdir, test.name)
+    srcdir = "%s/testing/pluto/%s" % (test.args.libreswandir, test.name)
     rsync_file_to_dir(srcdir, tlr.odir, exclude=["NS"])
 
     test.end_time = time.time()  # update test start time.
@@ -3323,36 +3304,114 @@ def tlr_test_worker(tlr=None, test=None):
 
     do_single_test_subprocess(tlr, test)
 
-class Virsh:
+# inherit Andrew's shell.Remote
+class Vshell(shell.Remote):
+    def __init__(self, cmd, hostname, directory, username="root"):
+        logger.info("Vshell %s" % cmd)
+        shell.Remote.__init__(self, cmd, hostname=hostname, username=username)
+        self.initialize(directory)
+
+    def initialize(self, directory):
+        self.sendline('TERM=dumb; export TERM; unset LS_COLORS')
+        self.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
+        # this has to before shell.run()
+        self.chdir(directory)
+        self.stty_sane()
+        # self.child.setecho(False) # this does not seems to work!
+        self.run('stty -echo')
+        self.run('unalias mv cp ls ll rm iptables')
+        self.run("alias iptables='iptables --wait 120 --wait-interval=100000'")
+
+class Docker:
 
     def __init__(self):
-        self.test_start_banner_pre = "***** KVM PLUTO RUNNING TEST"
+        self.test_start_banner_pre = "***** DOCKER PLUTO RUNNING TEST"
         self.test_start_banner_suf = " *******"
 
-    def kvm_shutdown(self, test, instance):
-        running = []
+        # wrapers within class bellow
+        self.restart = self.docker_restart
+        self.stop_inst = self.docker_del
+        self.start_new_inst = self.docker_add
 
+    def close_pexpect_shells(self, test):
+        for host in test.hosts:
+            test.shell[host].child.sendcontrol("d")
+            test.shell[host].close()
+            test.shell[host] = None
+
+        test.sudo.child.sendcontrol("d")
+        test.sudo.close()
+        test.sudo = None
+
+    def docker_get_console(self, test, host):
+        dname = "%s-%s" % (host, test.name)
+        cmd = "%s %s exec -it %s /bin/bash " % (DEF.sudo_c, DEF.docker_c, dname)
+        directory = "%s/testing/pluto/%s" % (test.args.libreswandir, test.name)
+        return Vshell(cmd, host, directory, username="root")
+
+    def docker_start_container(self, test, host):
+        dname = "%s-%s" % (host, test.name)
+        cmd = "%s run -h %s --privileged --net=none --name %s -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
+         DEF.docker_c, host, dname, test.args.dockerimage)
+        if sudo_shell_run(cmd, test.sudo):
+            raise Exception("ERROR: %s" % cmd)
+        time.sleep(5)
+        test.shell[host] = self.docker_get_console(test, host)
+
+    def docker_add_network(self, test, shell):
+        net = NS_GuestNetwork(test.name, test.sudo, guest=shell, eth0_bridge=True)
+        if net.docker_add_link(net.eth0,  "%s-%s" % (shell.hostname, test.name)):
+            logger.error("ERROR: failed add networking eth0")
+            return True
+        if net.eth1:
+            if net.docker_add_link(net.eth1,  "%s-%s" % (shell.hostname, test.name)):
+                logger.error("ERROR: failed add networking eth1")
+                return True
+
+    def docker_add(self, test):
+        logger.info("docker_add test %s hosts %s", test.name, test.hosts)
+        if not test.tlr:
+            ns_host_tweaks(test.args, test.sudo)
+
+        for i, host in enumerate(test.hosts):
+            dname = host + "-" + test.name
+            self.docker_start_container(test, host)
+            if self.docker_add_network(test, test.shell[host]):
+                return True
+            
+            # slef.docker_restart_network(test, host)
+
+    def docker_del(self, test, instance="previous"):
         # stop all hosts of tests.
         all_hosts = DEFAULTCONFIG['swanhosts'].copy()
-        all_hosts.extend(DEFAULTCONFIG['regualrhosts'].copy)
+        all_hosts.extend(DEFAULTCONFIG['regualrhosts'].copy())
 
-        if test.kvm_dom_prefix:
-            for i, host in enumerate(all_hosts):
-                all_hosts[i] = "%s%s" % (test.kvm_dom_prefix, host)
+        for i, host in enumerate(all_hosts):
+            dname = "%s-%s" % (host, test.name)
+            cmd = "%s stop --time=1  %s" % (DEF.docker_c, dname)
+            if sudo_shell_run(cmd, test.sudo):
+                raise Exception("ERROR: %s" % cmd)
+            cmd = "%s rm -f %s" % (DEF.docker_c, dname)
+            if sudo_shell_run(cmd, test.sudo):
+                logger.error("ERROR: '%s' non zero exit status" % cmd)
+            cmd = "%s rm --storage %s" % (DEF.docker_c, dname)
+            if sudo_shell_run(cmd, test.sudo):
+                logger.error("ERROR: '%s' non zero exit status" % cmd)
 
-        logger.debug("%s shutdown list %s", test.name, all_hosts)
+            net = NS_GuestNetwork(test.name, test.sudo, hostname=host, eth0_bridge=True)
+            net.link_del_veth(net.eth0, "%s-%s" % (host, test.name))
+            if net.eth1:
+                net.link_del_veth(net.eth1, "%s-%s" % (host, test.name))
 
-    # def restart_instart(self, test)
+    def docker_restart(self, test):
 
-    def stop_inst(self, test, instance="previous"):
-        self.kvm_shutdown(test, instance)
+        if self.docker_del(test):
+            logger.error("abort %s failed to stop docker test instance", self.name)
+            return True
 
-    def start_new_inst(self, test):
-        self.ns_boot(test)
-
-    def run_test_scripts(self, test):
-        self.kvm_run_test_scripts(test)
-
+        if self.docker_add(test):
+            logger.error("abort %s failed to initialize docker test instance", self.name)
+            return True
 
 class Namespace:
 
@@ -3364,7 +3423,6 @@ class Namespace:
         self.restart = self.ns_restart
         self.stop_inst = self.ns_del
         self.start_new_inst = self.ns_add
-        self.run_test_scripts = self.ns_run_test_scripts
 
     def ns_add_guest_path(self, test, host):
         ns = "%s-%s" % (host, test.name)
@@ -3411,7 +3469,7 @@ class Namespace:
             s.sendline('TERM=dumb; export TERM; unset LS_COLORS')
             s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
             # this has to before shell.run()
-            s.chdir("%s/pluto/%s" % (test.args.testingdir, test.name))
+            s.chdir("%s/testing/pluto/%s" % (test.args.libreswandir, test.name))
             s.stty_sane()
             # s.child.setecho(False) # this does not seems necessary or works.
             s.run('stty -echo')
@@ -3479,7 +3537,7 @@ class Namespace:
         for i, host in enumerate(test.hosts):
             self.add_nsfs_files(test, host)
             self.ns_add_network(test, test.shell[host])
-            self.ns_add_testing_dir(test.args.testingdir, test.shell[host])
+            self.ns_add_testing_dir("%s/testing" % test.args.libreswandir, test.shell[host])
 
     def ns_del(self, test, instance="previous"):
 
@@ -3523,6 +3581,11 @@ class Namespace:
                     if sudo_shell_run(cmd, test.sudo):
                         return True
 
+                    cmd = "rm " + dirs
+                    if sudo_shell_run(cmd, test.sudo):
+                        return True
+
+
                 if dirs:
                     for d in dirs.split(' '):
                         d = d.rstrip()
@@ -3541,47 +3604,6 @@ class Namespace:
 
             logger.debug("ns_del cleaned test '%s'", test.name)
 
-    def ns_run_script_pexpect(self, console, host, script, timeout=120):
-
-        if not os.path.exists(script):
-            logger.error("can not find the script %s", script)
-            return True
-
-        console_out = "OUTPUT/%s.console.verbose.txt" % host
-
-        with open(console_out, 'a',  encoding='utf-8') as f_log:
-            console.output(f_log)
-            with open(script, 'r',  encoding='utf-8') as f_cmds:
-                output = ''
-                for line in f_cmds:
-                    line = line.rstrip()
-                    # logger.debug(line)
-                    try:
-                        status = console.run(line, timeout=timeout)
-                        if status:
-                            # Can not abort some commands are expected to fail.
-                            # leave a cut/tuc marker in verbose to cleanup
-                            logger.warning(
-                                "WARNING %s line %s exit status %d", script, line, status)
-                            console.child.logfile.write("%s exit status %s %s '%s' %s" % (
-                                LINECUT, status, script, line, LINETUC))
-                    except pexpect.TIMEOUT as e:
-                        post_timeout = "%s %s:%s" % (TIMEOUT, host, script)
-                        logger.warning("*** %s ***" % post_timeout)
-                        console.child.logfile.write(
-                            "%s\n%s %s\n" % (CUT, post_timeout, TUC))
-                    except BaseException as e:
-                        # if there is an exception, write
-                        # it to the console
-                        console.child.logfile.write(
-                            "\n%s %s:%s %s\n" % (EXCEPTION, host, script, str(e)))
-                        raise
-
-        console.output()
-
-    def ns_run_test_scripts(self, test):
-        for host, script in test.hosts_scripts:
-            self.ns_run_script_pexpect(test.shell[host], host, script)
 
     def close_pexpect_shells(self, test):
         for host in test.hosts:
@@ -3606,7 +3628,7 @@ class Namespace:
                     return True
                 hosttweaks = ''
                 test.shell[host] = self.ns_get_console(test, host)
-                self.ns_add_testing_dir(test.args.testingdir, test.shell[host])
+                self.ns_add_testing_dir("%s/testing" % test.args.libreswandir, test.shell[host])
         else:
             if self.ns_del(test, "previous"):
                 logger.error("abort %s failed to remove previous instance", self.name)
@@ -3620,8 +3642,11 @@ def vm(testtype):
         return(Namespace())
     elif  testtype == "kvmplutotest":
         return(Virsh())
-    else:
-        logger.info("no vm for testtype %s testrun will fail"  % testtype)
+    elif  testtype == "dockerplutotest":
+        return(Docker())
+
+    e = "ERROR: unknown testtype %s test run will fail"  % testtype
+    raise Exception(e)
 
 
 
@@ -3719,7 +3744,7 @@ class Test():
                     "abort %s failed to restart instance", self.name)
                 return True
 
-            self.vm.run_test_scripts(test=self)
+            self.run_test_scripts()
             self.script_end = time.time()
             self.script_runtime = self.script_end - self.script_start
             logger.info("finished running %s %s scripts run time %s" % (self.name, self.hosts_scripts, self.script_runtime))
@@ -3728,6 +3753,49 @@ class Test():
                     logger.error(
                         "ERROR %s failed to stop current instance", self.name)
             self.vm.close_pexpect_shells(test=self)
+
+    def run_script_pexpect(self, console, host, script, timeout=120):
+
+        if not os.path.exists(script):
+            logger.error("can not find the script %s", script)
+            return True
+
+        console_out = "OUTPUT/%s.console.verbose.txt" % host
+
+        with open(console_out, 'a',  encoding='utf-8') as f_log:
+            console.output(f_log)
+            with open(script, 'r',  encoding='utf-8') as f_cmds:
+                output = ''
+                for line in f_cmds:
+                    line = line.rstrip()
+                    # logger.debug(line)
+                    try:
+                        status = console.run(line, timeout=timeout)
+                        if status:
+                            # Can not abort some commands are expected to fail.
+                            # leave a cut/tuc marker in verbose to cleanup
+                            logger.warning(
+                                "WARNING %s line %s exit status %d", script, line, status)
+                            console.child.logfile.write("%s exit status %s %s '%s' %s" % (
+                                LINECUT, status, script, line, LINETUC))
+                    except pexpect.TIMEOUT as e:
+                        post_timeout = "%s %s:%s" % (TIMEOUT, host, script)
+                        logger.warning("*** %s ***" % post_timeout)
+                        console.child.logfile.write(
+                            "%s\n%s %s\n" % (CUT, post_timeout, TUC))
+                    except BaseException as e:
+                        # if there is an exception, write
+                        # it to the console
+                        console.child.logfile.write(
+                            "\n%s %s:%s %s\n" % (EXCEPTION, host, script, str(e)))
+                        raise
+
+        console.output()
+
+    def run_test_scripts(self):
+        for host, script in self.hosts_scripts:
+            self.run_script_pexpect(self.shell[host], host, script)
+
 
 
 class TestListRun():
@@ -3826,6 +3894,9 @@ class TestListRun():
             if testtype == 'kvmplutotest' and self.args.testtype == 'nsplutotest':
                 testtype = "nsplutotest"
 
+            if testtype == 'kvmplutotest' and self.args.testtype == 'dockerplutotest':
+                testtype = "dockerplutotest"
+
             if self.args.testtype == 'nsplutotest' and not self.ns_skip_test(testdir):
                 continue
 
@@ -3893,7 +3964,7 @@ class TestListRun():
                              self.odir)
                 return True
 
-        if self.nstorun:
+        if (self.dtorun + self.ktorun + self.nstorun):
             if self.args.ns_max_q > 1:
                 self.run_q_conc()
             else:
@@ -3955,11 +4026,10 @@ class TestListRun():
                     i += 1
                     logger.info("queue up %s %s %d/%d", test.type,
                                 test.name, i, self.nstorun)
-                    if ((i > ns_max_workers) and (i % progress_period == 0)):
-                        # aa_201902 executor.submit(tlist_progress_worker,
-                        # args=args, st=st)
-                        progress_period *= 2
-                        progress_period = 50 if progress_period >= 50 else progress_period
+                    # if ((i > ns_max_workers) and (i % progress_period == 0)):
+                    #    executor.submit(tlist_progress_worker, tlr=tlr)
+                    #    progress_period *= 2
+                    #    progress_period = 50 if progress_period >= 50 else progress_period
                     self.n = i
                     executor.submit(tlr_test_worker, tlr=self, test=test)
             except KeyboardInterrupt:
