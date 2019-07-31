@@ -2659,12 +2659,11 @@ class NS_GuestNetwork():
         elif hostname == "nic":
             self.eth0.ipv4 = "192.1.2.254/24"
             self.eth0.br = "brswan12-" + self.tcsum
-            self.eth0.routes = [
-                'route add 192.0.1.0/24 via 192.1.2.45', 'route add 192.0.2.0/24 via 192.1.2.23']
+            self.eth0.routes = ['route add 192.0.1.0/24 via 192.1.2.45', 'route add 192.0.2.0/24 via 192.1.2.23']
 
             self.eth1.ipv4 = "192.1.3.254/24"
             self.eth1.br = "brswan13-" + self.tcsum
-            self.eth0.routes = ['route add 192.0.3.0/24 via 192.1.3.33']
+            self.eth1.routes = ['route add 192.0.3.0/24 via 192.1.3.33']
         else:
             raise Exception("ERROR: unknown host name: '%s'" % hostname)
 
