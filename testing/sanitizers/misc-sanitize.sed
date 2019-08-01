@@ -19,3 +19,5 @@ s/ike-scan \(.*\) with/ike-scan XX with/
 s/Ending ike-scan \(.*\):/ Ending ike-scan XX:/
 s/conntrack v[0-9]*\.[0-9]*\.[0-9]* /conntrack vA.B.C /
 s/ip_vti0@NONE: <NOARP> mtu [0-9]* /ip_vti0@NONE: <NOARP> mtu XXXX /
+# this prevents us seeing race conditions between namespaces / kvm
+/^.*Terminated.*ip -s xfrm monitor.*$/d
