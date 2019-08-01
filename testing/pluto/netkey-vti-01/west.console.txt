@@ -100,7 +100,7 @@ west #
  # there should be no vti0 device left
 west #
  ip addr show vti0
-6: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1480 qdisc noqueue state UNKNOWN group default
+5: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1480 qdisc noqueue state UNKNOWN group default
     link/ipip 192.1.2.45 peer 192.1.2.23
 west #
 west #

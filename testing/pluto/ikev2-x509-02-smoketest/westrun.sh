@@ -25,7 +25,7 @@ sleep 2
 ipsec auto --up west-sanCritical
 ipsec auto --delete west-sanCritical
 sleep 2
-# This one works only because of the NSS TLS fallback
+# This one works now - older NSS versions relied on NSS TLS fallback
 ipsec auto --up west-ekuCritical
 ipsec auto --delete west-ekuCritical
 sleep 2
@@ -44,11 +44,11 @@ sleep 2
 ipsec auto --up west-ku-keyAgreement-digitalSignature
 ipsec auto --delete west-ku-keyAgreement-digitalSignature
 sleep 2
-# following should not fail, but does?
+# fails on older versions of NSS only
 ipsec auto --up west-ekuCritical-eku-emailProtection
 ipsec auto --delete west-ekuCritical-eku-emailProtection
 sleep 2
-# following tests should fail
+# following tests should fail (but it does not?)
 ipsec auto --up west-ekuBOGUS-bad
 ipsec auto --delete west-ekuBOGUS-bad
 sleep 2

@@ -60,7 +60,6 @@ east #
 east #
  hostname | grep east > /dev/null && grep "verify_end_cert trying profile" /tmp/pluto.log
 | verify_end_cert trying profile IPsec
-| verify_end_cert trying profile TLS Client
 east #
 east #
  ../bin/check-for-core.sh
