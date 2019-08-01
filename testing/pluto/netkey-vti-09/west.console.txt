@@ -101,12 +101,9 @@ west #
     link/ether 12:00:00:64:64:45 brd ff:ff:ff:ff:ff:ff
     inet 192.1.2.45/24 brd 192.1.2.255 scope global eth1
        valid_lft forever preferred_lft forever
-4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default
-    link/ether 12:00:00:32:64:45 brd ff:ff:ff:ff:ff:ff
-       valid_lft forever preferred_lft forever
-5: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN group default
+4: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN group default
     link/ipip 0.0.0.0 brd 0.0.0.0
-6: ipsec0@NONE: <NOARP,UP,LOWER_UP> mtu 1480 qdisc noqueue state UNKNOWN group default
+5: ipsec0@NONE: <NOARP,UP,LOWER_UP> mtu 1480 qdisc noqueue state UNKNOWN group default
     link/ipip 192.1.2.45 brd 0.0.0.0
     inet 192.0.1.254/24 scope global ipsec0
        valid_lft forever preferred_lft forever
@@ -118,11 +115,9 @@ west #
     link/ether 12:00:00:ab:cd:ff brd ff:ff:ff:ff:ff:ff
 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default
     link/ether 12:00:00:64:64:45 brd ff:ff:ff:ff:ff:ff
-4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default
-    link/ether 12:00:00:32:64:45 brd ff:ff:ff:ff:ff:ff
-5: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN mode DEFAULT group default
+4: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN mode DEFAULT group default
     link/ipip 0.0.0.0 brd 0.0.0.0
-6: ipsec0@NONE: <NOARP,UP,LOWER_UP> mtu 1480 qdisc noqueue state UNKNOWN mode DEFAULT group default
+5: ipsec0@NONE: <NOARP,UP,LOWER_UP> mtu 1480 qdisc noqueue state UNKNOWN mode DEFAULT group default
     link/ipip 192.1.2.45 brd 0.0.0.0
 west #
  ip route show
@@ -150,27 +145,27 @@ west #
  ip xfrm policy
 src 10.0.1.0/24 dst 10.0.2.0/24 
 	dir out priority 1042407 ptype main 
-	mark 0x15/0xffffffff
+	mark 0x15/0xffffffff 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 src 10.0.2.0/24 dst 10.0.1.0/24 
 	dir fwd priority 1042407 ptype main 
-	mark 0x14/0xffffffff
+	mark 0x14/0xffffffff 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 src 10.0.2.0/24 dst 10.0.1.0/24 
 	dir in priority 1042407 ptype main 
-	mark 0x14/0xffffffff
+	mark 0x14/0xffffffff 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 1042407 ptype main 
-	mark 0x15/0xffffffff
+	mark 0x15/0xffffffff 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir fwd priority 1042407 ptype main 
-	mark 0x14/0xffffffff
+	mark 0x14/0xffffffff 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir in priority 1042407 ptype main 
-	mark 0x14/0xffffffff
+	mark 0x14/0xffffffff 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 west #
 west #
