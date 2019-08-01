@@ -1,8 +1,3 @@
-
-
-WORK IN PROGRESS
-
-
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
@@ -43,9 +38,6 @@ east #
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
 | verify_end_cert trying profile IPsec
-| verify_end_cert trying profile TLS Client
-| certificate is valid (profile TLS Client)
-| verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
@@ -56,8 +48,9 @@ east #
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
 | verify_end_cert trying profile IPsec
-| verify_end_cert trying profile TLS Client
-| verify_end_cert trying profile TLS Server
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
 east #
