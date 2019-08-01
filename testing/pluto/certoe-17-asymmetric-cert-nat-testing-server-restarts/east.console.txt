@@ -10,7 +10,7 @@ east #
  echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/clear-or-private
 east #
  ipsec restart
-Redirecting to: systemctl restart ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -31,7 +31,7 @@ east #
  # restart ipsec
 east #
  ipsec restart
-Redirecting to: systemctl restart ipsec.service
+Redirecting to: [initsystem]
 east #
  # give OE conns time to load
 east #
