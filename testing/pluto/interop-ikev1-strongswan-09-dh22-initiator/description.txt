@@ -1,7 +1,0 @@
-Basic pluto with IKEv1 using PSK on the responder (east), and Strongswan on
-the initiator (west).
-
-This tests our response to DH22, which we no longer support.
-
-the connection should fail (because strongswan somehow only picks DH22
-and DH19 (twice!) when you configure it non-strict mode.
