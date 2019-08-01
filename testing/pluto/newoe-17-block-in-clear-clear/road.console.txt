@@ -26,7 +26,6 @@ road #
 initdone
 road #
  killall ip > /dev/null 2> /dev/null
-[1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out
 road #
  cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 road #
