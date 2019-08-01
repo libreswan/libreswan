@@ -37,7 +37,7 @@ parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
 selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/MODP_2048
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2{1}
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH N(IPCOMP_SUP) SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH N(IPCOMP_SUP) SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr N(IPCOMP_SUP) ]
@@ -92,6 +92,9 @@ west #
  if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Shunted Connections:
+Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
+Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
@@ -146,6 +149,18 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 		level use 
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir fwd priority 175423 ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir in priority 175423 ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir out priority 175423 ptype main 
+src 192.0.1.0/24 dst 192.0.1.0/24 
+	dir fwd priority 175423 ptype main 
+src 192.0.1.0/24 dst 192.0.1.0/24 
+	dir in priority 175423 ptype main 
+src 192.0.1.0/24 dst 192.0.1.0/24 
+	dir out priority 175423 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
