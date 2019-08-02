@@ -498,9 +498,9 @@ doproxyarp() {
 	    return 0
 	fi
 	# check if client is routeable
-	if ip -o route get ${PLUTO_PEER_CLIENT_NET%/*} | \
+	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
 	    grep -E -q -s -v " via |^local"; then
-	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET%/*} | \
+	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
 		awk '{print $3}')
 	    if [ -r /sys/class/net/${iface}/address ]; then
 		macaddr=$(cat /sys/class/net/${iface}/address)
@@ -528,7 +528,7 @@ doroute() {
     cmd=${1}
     st=0
     if [ ${cmd} != del ]; then
-	oops="$(eval ip route get ${PLUTO_PEER_CLIENT%/*} 2>&1)"
+	oops="$(eval ip route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
 	case "${oops}" in
 	    'RTNETLINK answers: No route to host'*)
 		# Routing is mandatory for IPsec
@@ -564,7 +564,7 @@ doroute() {
 		    sed "s/^.*dev \([^ ]*\) .*/\1/")
 		;;
 	    *)
-		peer_interface=$(ip -o route get ${PLUTO_PEER_CLIENT%/*} | \
+		peer_interface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
 		    sed "s/^.*dev \([^ ]*\) .*/\1/")
 		;;
 	esac
