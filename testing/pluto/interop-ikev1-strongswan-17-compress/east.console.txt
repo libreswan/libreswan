@@ -42,6 +42,18 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 		proto comp reqid 1 mode tunnel
 		level use 
 	tmpl src 0.0.0.0 dst 0.0.0.0
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir fwd priority 175423 ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir in priority 175423 ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir out priority 175423 ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir fwd priority 175423 ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir in priority 175423 ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir out priority 175423 ptype main 
 east #
 east #
  ../bin/check-for-core.sh

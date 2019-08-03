@@ -1,4 +1,0 @@
-Basic pluto with IKEv1 using PSK on the responder (east), and Strongswan on
-the initiator (west).
-
-This is a test for DH24, but this algorithm is no longer compiled in per default

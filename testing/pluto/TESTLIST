@@ -996,9 +996,6 @@ kvmplutotest	ikev2-leak-02-no-psk		good
 #################################################################
 kvmplutotest	ikev2-algo-08-cast				skiptest
 kvmplutotest	netkey-algo-cast-01				skiptest
-kvmplutotest	interop-ikev1-strongswan-09-dh22-initiator	skiptest
-kvmplutotest	interop-ikev1-strongswan-05-dh24-responder	skiptest
-kvmplutotest	interop-ikev1-strongswan-06-dh24-initiator	skiptest
 
 # seccomp
 kvmplutotest	seccomp-01-enabled		good

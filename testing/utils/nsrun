@@ -3034,7 +3034,7 @@ def localhost_sudo(args, testname):
     cmd = "%s /bin/bash -i" % DEF.sudo_c
     logger.debug("host sudo command : %s", cmd)
     s = shell.Remote(cmd, hostname=args.node,
-                     username="root", prefix="%s " % testname)
+                     username="root")
     if s:
         logger.info("sudo pexpect '%s' pid %d", cmd, s.child.pid)
         s.sendline('TERM=dumb; export TERM; unset LS_COLORS')
@@ -3402,8 +3402,7 @@ class Namespace:
         ns = "%s-%s" % (host, test.name)
         cmd = self.nsenter_cmd(ns) + ' /bin/bash'
         logger.debug("nsenter full command : %s", cmd)
-        s = shell.Remote(cmd, hostname=host, username="root",
-                         prefix="%s " % test.name)
+        s = shell.Remote(cmd, hostname=host, username="root")
         if s:
             logger.debug("Got console %s lets sanitize" % ns)
             # next few lines are bit hackery to get the local prompt behave
@@ -3481,7 +3480,6 @@ class Namespace:
             self.add_nsfs_files(test, host)
             self.ns_add_network(test, test.shell[host])
             self.ns_add_testing_dir(test.args.testingdir, test.shell[host])
-            test.shell[host] = self.ns_get_console(test, host)
 
     def ns_del(self, test, instance="previous"):
 

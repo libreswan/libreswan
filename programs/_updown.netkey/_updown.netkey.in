@@ -446,7 +446,7 @@ delsource() {
         return ${st}
     fi
     # Remove source ip if it's not used any more.
-    if [ -z $(ip -o route list src ${PLUTO_MY_SOURCEIP}) ]; then
+    if [ -z "$(ip -o route list src ${PLUTO_MY_SOURCEIP})" ]; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
 	    interface="${VTI_IFACE}"
 	fi
@@ -528,7 +528,7 @@ doroute() {
     cmd=${1}
     st=0
     if [ ${cmd} != del ]; then
-	oops="$(eval ip route get ${PLUTO_PEER_CLIENT} 2>&1)"
+	oops="$(eval ip route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
 	case "${oops}" in
 	    'RTNETLINK answers: No route to host'*)
 		# Routing is mandatory for IPsec
@@ -564,7 +564,7 @@ doroute() {
 		    sed "s/^.*dev \([^ ]*\) .*/\1/")
 		;;
 	    *)
-		peer_interface=$(ip -o route get ${PLUTO_PEER_CLIENT} | \
+		peer_interface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
 		    sed "s/^.*dev \([^ ]*\) .*/\1/")
 		;;
 	esac

@@ -60,7 +60,6 @@ road #
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
 road #
  killall ip > /dev/null 2> /dev/null
-[1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out
 road #
  cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 road #

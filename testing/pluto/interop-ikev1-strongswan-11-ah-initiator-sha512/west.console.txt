@@ -28,8 +28,8 @@ generating ID_PROT request 0 [ SA V V V V V ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed ID_PROT response 0 [ SA V V V ]
-received FRAGMENTATION vendor ID
 received DPD vendor ID
+received FRAGMENTATION vendor ID
 received NAT-T (RFC 3947) vendor ID
 selected proposal: IKE:AES_CBC_256/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
 generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
@@ -86,6 +86,18 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	dir in priority 375423 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto ah reqid REQID mode tunnel
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir fwd priority 175423 ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir in priority 175423 ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir out priority 175423 ptype main 
+src 192.0.1.0/24 dst 192.0.1.0/24 
+	dir fwd priority 175423 ptype main 
+src 192.0.1.0/24 dst 192.0.1.0/24 
+	dir in priority 175423 ptype main 
+src 192.0.1.0/24 dst 192.0.1.0/24 
+	dir out priority 175423 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
@@ -109,6 +121,9 @@ west #
  if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Shunted Connections:
+Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
+Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev1[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev1{1}:  INSTALLED, TUNNEL, reqid 1, AH SPIs: SPISPI_i SPISPI_o
