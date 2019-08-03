@@ -51,6 +51,7 @@ KVM_UPGRADE_PACKAGES ?= \
     iproute \
     ipsec-tools \
     iptables \
+    iputils \
     ldns \
     ldns-devel \
     libcap-ng-devel \
