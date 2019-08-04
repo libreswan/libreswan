@@ -18,13 +18,31 @@
 #ifndef IP_SUBNET_H
 #define IP_SUBNET_H
 
-#include "ip_address.h"
+/*
+ * In libreswan ip_subnet is something of a mashup.  In addition to
+ * a traditional subnet:
+ *
+ *    (NETWORK)PREFIX | 0..0 / MASK
+ *
+ * with attributes such as MASK, BITS, PREFIX, it is used to store
+ * "routed endpoints" (is that a term?) as in:
+ *
+ *    (NETWORK)PREFIX | HOST(IDENTIFIER) : PORT / MASK
+ *
+ * with the additional attributes of ENDPOINT, PORT, ADDRESS.
+ *
+ * XXX: does the latter need to be split adding ip_routepoint?
+ * Depends on what you think a SUBNET is.
+ */
+
+#include "ip_endpoint.h"
 
 struct lswlog;
 
-/* then the main types */
 typedef struct {
-	ip_address addr;
+	/* (routing)prefix|host(id):port */
+	ip_endpoint addr;
+	/* (routing prefix) bits */
 	int maskbits;
 } ip_subnet;
 
