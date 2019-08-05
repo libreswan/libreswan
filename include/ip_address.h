@@ -169,7 +169,6 @@ extern err_t tnatoaddr(const char *src, size_t srclen, int af, ip_address *dst);
 extern size_t addrtot(const ip_address *src, int format, char *buf, size_t buflen);
 
 /* initializations */
-extern err_t loopbackaddr(int af, ip_address *dst);
 extern err_t initaddr(const unsigned char *src, size_t srclen, int af,
 	       ip_address *dst);
 extern err_t add_port(int af, ip_address *addr, unsigned short port);
