@@ -466,30 +466,21 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV6_ADDR:
 	{
 		ip_address temp_address;
-		err_t ughmsg = initaddr(id_pbs->cur, pbs_left(id_pbs),
-					afi->af, &temp_address);
-
-		if (ughmsg != NULL) {
-			loglog(RC_LOG_SERIOUS,
-			       "%s ID payload %s has wrong length in Quick I1 (%s)",
-			       which, idtypename, ughmsg);
-			/* XXX Could send notification back */
-			return FALSE;
+		if (!pbs_in_address(&temp_address, afi, id_pbs, "ID address")) {
+			return false;
 		}
-		if (isanyaddr(&temp_address)) {
+		/* i.e., "zero" */
+		if (address_is_any(&temp_address)) {
 			ipstr_buf b;
-
 			loglog(RC_LOG_SERIOUS,
 			       "%s ID payload %s is invalid (%s) in Quick I1",
 			       which, idtypename, ipstr(&temp_address, &b));
 			/* XXX Could send notification back */
-			return FALSE;
+			return false;
 		}
 		happy(addrtosubnet(&temp_address, net));
-		DBG(DBG_PARSING | DBG_CONTROL, {
-			ipstr_buf b;
-			DBG_log("%s is %s", which, ipstr(&temp_address, &b));
-		});
+		subnet_buf b;
+		dbg("%s is %s", which, str_subnet(net, &b));
 		break;
 	}
 
@@ -497,25 +488,15 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV6_ADDR_SUBNET:
 	{
 		ip_address temp_address, temp_mask;
-		err_t ughmsg;
-
-		if (pbs_left(id_pbs) != 2 * afi->ia_sz) {
-			loglog(RC_LOG_SERIOUS,
-			       "%s ID payload %s wrong length in Quick I1",
-			       which, idtypename);
-			/* XXX Could send notification back */
-			return FALSE;
+		if (!pbs_in_address(&temp_address, afi, id_pbs, "ID address")) {
+			return false;
 		}
-		ughmsg = initaddr(id_pbs->cur,
-				  afi->ia_sz, afi->af, &temp_address);
-		if (ughmsg == NULL)
-			ughmsg = initaddr(id_pbs->cur + afi->ia_sz,
-					  afi->ia_sz, afi->af, &temp_mask);
-		if (ughmsg == NULL) {
-			ughmsg = initsubnet(&temp_address,
-					    masktocount(&temp_mask),
-					   '0', net);
+		if (!pbs_in_address(&temp_mask, afi, id_pbs, "ID mask")) {
+			return false;
 		}
+		err_t ughmsg = initsubnet(&temp_address,
+					  masktocount(&temp_mask),
+					  '0', net);
 		if (ughmsg == NULL && subnetisnone(net))
 			ughmsg = "contains only anyaddr";
 		if (ughmsg != NULL) {
@@ -525,46 +506,25 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			/* XXX Could send notification back */
 			return FALSE;
 		}
-		DBG(DBG_PARSING | DBG_CONTROL,
-		    {
-			    char temp_buff[SUBNETTOT_BUF];
-
-			    subnettot(net, 0, temp_buff, sizeof(temp_buff));
-			    DBG_log("%s is subnet %s", which, temp_buff);
-		    });
+		subnet_buf buf;
+		dbg("%s is subnet %s", which, str_subnet(net, &buf));
 		break;
 	}
 
 	case ID_IPV4_ADDR_RANGE:
 	case ID_IPV6_ADDR_RANGE:
 	{
-		ip_address temp_address_from, temp_address_to;
-		err_t ughmsg;
-
-		if (pbs_left(id_pbs) != 2 * afi->ia_sz) {
-			loglog(RC_LOG_SERIOUS,
-			       "%s ID payload %s wrong length in Quick I1",
-			       which, idtypename);
-			/* XXX Could send notification back */
-			return FALSE;
+		ip_address temp_address_from;
+		if (!pbs_in_address(&temp_address_from, afi, id_pbs, "ID from address")) {
+			return false;
 		}
-		ughmsg = initaddr(id_pbs->cur, afi->ia_sz, afi->af,
-				  &temp_address_from);
-		if (ughmsg == NULL) {
-			ughmsg = initaddr(id_pbs->cur + afi->ia_sz,
-					  afi->ia_sz, afi->af,
-					  &temp_address_to);
-		}
-		if (ughmsg != NULL) {
-			loglog(RC_LOG_SERIOUS,
-			       "%s ID payload %s malformed (%s) in Quick I1",
-			       which, idtypename, ughmsg);
-			/* XXX Could send notification back */
-			return FALSE;
+		ip_address temp_address_to;
+		if (!pbs_in_address(&temp_address_to, afi, id_pbs, "ID to address")) {
+			return false;
 		}
 
-		ughmsg = rangetosubnet(&temp_address_from, &temp_address_to,
-				       net);
+		err_t ughmsg = rangetosubnet(&temp_address_from,
+					     &temp_address_to, net);
 		if (ughmsg == NULL && subnetisnone(net))
 			ughmsg = "contains only anyaddr";
 		if (ughmsg != NULL) {
@@ -577,13 +537,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			       ughmsg);
 			return FALSE;
 		}
-		DBG(DBG_PARSING | DBG_CONTROL, {
-			char temp_buff[SUBNETTOT_BUF];
-
-			subnettot(net, 0, temp_buff, sizeof(temp_buff));
-			DBG_log("%s is subnet %s (received as range)",
-				which, temp_buff);
-		});
+		subnet_buf buf;
+		dbg("%s is subnet %s (received as range)", which, str_subnet(net, &buf));
 		break;
 	}
 	}
