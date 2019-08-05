@@ -206,9 +206,7 @@ struct raw_iface *find_raw_ifaces4(void)
 		if (rs->sin_addr.s_addr == 0)
 			continue;
 
-		happy(initaddr((const void *)&rs->sin_addr,
-			       sizeof(struct in_addr),
-			       AF_INET, &ri.addr));
+		ri.addr = address_from_in_addr(&rs->sin_addr);
 
 		DBG(DBG_CONTROL, {
 			ipstr_buf b;

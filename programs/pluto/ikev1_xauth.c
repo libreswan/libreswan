@@ -1812,15 +1812,10 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 						break;
 					}
 
-					err_t ugh;
-					ip_address base, mask;
+					ip_address base = address_from_in_addr(&i.cs_addr);
+					ip_address mask = address_from_in_addr(&i.cs_mask);
 					ip_subnet subnet;
-
-					ugh = initaddr((void *)&i.cs_addr.s_addr, sizeof(i.cs_addr.s_addr), AF_INET, &base);
-					if (ugh == NULL)
-						ugh = initaddr((void *)&i.cs_mask.s_addr, sizeof(i.cs_mask.s_addr), AF_INET, &mask);
-					if (ugh == NULL)
-						ugh = initsubnet(&base, masktocount(&mask), '0', &subnet);
+					err_t ugh = initsubnet(&base, masktocount(&mask), '0', &subnet);
 
 					if (ugh != NULL) {
 						loglog(RC_INFORMATIONAL,
