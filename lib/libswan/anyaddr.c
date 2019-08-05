@@ -26,28 +26,6 @@
 static struct in6_addr v6loop = IN6ADDR_LOOPBACK_INIT;
 
 /*
-   - loopbackaddr - initialize to the loopback-address value
- */
-err_t                           /* NULL for success, else string literal */
-loopbackaddr(af, dst)
-int af;                         /* address family */
-ip_address *dst;
-{
-	uint32_t v4loop = htonl(INADDR_LOOPBACK);
-
-	switch (af) {
-	case AF_INET:
-		return initaddr((unsigned char *)&v4loop, sizeof(v4loop), af,
-				dst);
-	case AF_INET6:
-		return initaddr((unsigned char *)&v6loop, sizeof(v6loop), af,
-				dst);
-	default:
-		return "unknown address family in loopbackaddr";
-	}
-}
-
-/*
  * isanyaddr - test for the any-address value; this version treats 0
  * (aka AF_UNSPEC?) as any addr!
  */

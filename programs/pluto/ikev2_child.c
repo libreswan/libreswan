@@ -60,6 +60,7 @@
 #include "ikev2_send.h"
 #include "ikev2_message.h"
 #include "ikev2_ts.h"
+#include "ip_info.h"
 
 static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
 					     const struct msg_digest *md,
@@ -429,77 +430,72 @@ static void ikev2_set_domain(pb_stream *cp_a_pbs, struct state *st)
 	}
 }
 
-static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
+static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
+			  const struct ip_info *af)
 {
-	ip_address ip;
 	struct connection *c = st->st_connection;
-	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), af, &ip);
-	bool responder = (st->st_state->kind != STATE_PARENT_I2);
 
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-		libreswan_log("ignored INTERNAL_IP%s_DNS CP payload for Opportunistic IPsec",
-			af == AF_INET ? "4" : "6");
-		return TRUE;
+		libreswan_log("ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
+			      af->version);
+		return true;
 	}
 
-	address_buf ip_buf;
-	const char *ip_str = ipstr(&ip, &ip_buf);
-
-	if ((ugh != NULL && st->st_state->kind == STATE_PARENT_I2)) {
-		libreswan_log("ERROR INTERNAL_IP%s_DNS malformed: %s",
-			af == AF_INET ? "4" : "6", ugh);
-		return FALSE;
+	ip_address ip;
+	if (!pbs_in_address(&ip, af, cp_a_pbs, "INTERNAL_IP_DNS CP payload")) {
+		return false;
 	}
 
-	if (isanyaddr(&ip)) {
-		libreswan_log("ERROR INTERNAL_IP%s_DNS %s is invalid",
-			af == AF_INET ? "4" : "6",
-			ugh == NULL ? ip_str : ugh);
-		return FALSE;
+	/* i.e. all zeros */
+	if (address_is_any(&ip)) {
+		address_buf ip_str;
+		libreswan_log("ERROR INTERNAL_IP%d_DNS %s is invalid",
+			      af->version, ipstr(&ip, &ip_str));
+		return false;
 	}
 
+	bool responder = (st->st_state->kind != STATE_PARENT_I2);
 	if (!responder) {
-		libreswan_log("received INTERNAL_IP%s_DNS %s",
-			af == AF_INET ? "4" : "6", ip_str);
+		address_buf ip_buf;
+		const char *ip_str = ipstr(&ip, &ip_buf);
+		libreswan_log("received INTERNAL_IP%d_DNS %s",
+			      af->version, ip_str);
 		append_st_cfg_dns(st, ip_str);
 	} else {
-		libreswan_log("initiator INTERNAL_IP%s_DNS CP ignored",
-			af == AF_INET ? "4" : "6");
+		libreswan_log("initiator INTERNAL_IP%d_DNS CP ignored",
+			      af->version);
 	}
 
-	return TRUE;
+	return true;
 }
 
-static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af,
-			 bool *seen_an_address)
+static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
+			 const struct ip_info *af, bool *seen_an_address)
 {
-	ip_address ip;
-	ipstr_buf ip_str;
 	struct connection *c = st->st_connection;
-	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), af, &ip);
-	bool responder = st->st_state->kind != STATE_PARENT_I2;
 
-	if ((ugh != NULL && st->st_state->kind == STATE_PARENT_I2) || isanyaddr(&ip)) {
-		libreswan_log("ERROR INTERNAL_IP%s_ADDRESS malformed: %s",
-			af == AF_INET ? "4" : "6", ugh);
-		return FALSE;
+	ip_address ip;
+	if (!pbs_in_address(&ip, af, cp_a_pbs, "INTERNAL_IP_ADDRESS")) {
+		return false;
 	}
 
-	if (isanyaddr(&ip)) {
-		libreswan_log("ERROR INTERNAL_IP%s_ADDRESS %s is invalid",
-			af == AF_INET ? "4" : "6",
-			ipstr(&ip, &ip_str));
-		return FALSE;
+	if (address_is_any(&ip)) {
+		ipstr_buf ip_str;
+		libreswan_log("ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
+			      af->version, ipstr(&ip, &ip_str));
+		return false;
 	}
 
-	libreswan_log("received INTERNAL_IP%s_ADDRESS %s%s",
-		      af == AF_INET ? "4" : "6",
-		      ipstr(&ip, &ip_str),
+	ipstr_buf ip_str;
+	libreswan_log("received INTERNAL_IP%d_ADDRESS %s%s",
+		      af->version, ipstr(&ip, &ip_str),
 		      *seen_an_address ? "; discarded" : "");
 
+
+	bool responder = st->st_state->kind != STATE_PARENT_I2;
 	if (responder) {
 		libreswan_log("bogus responder CP ignored");
-		return TRUE;
+		return true;
 	}
 
 	if (*seen_an_address) {
@@ -507,25 +503,21 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af,
 	}
 
 	*seen_an_address = true;
-	c->spd.this.has_client = TRUE;
-	c->spd.this.has_internal_address = TRUE;
+	c->spd.this.has_client = true;
+	c->spd.this.has_internal_address = true;
 
 	if (c->spd.this.cat) {
-		DBG(DBG_CONTROL, DBG_log("CAT is set, not setting host source IP address to %s",
-			ipstr(&ip, &ip_str)));
+		dbg("CAT is set, not setting host source IP address to %s",
+		    ipstr(&ip, &ip_str));
 		if (sameaddr(&c->spd.this.client.addr, &ip)) {
 			/* The address we received is same as this side
 			 * should we also check the host_srcip */
-			DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] received INTERNAL_IP%s_ADDRESS that is same as this.client.addr %s. Will not add CAT iptable rules",
-				st->st_serialno, c->name, c->instance_serial,
-				af == AF_INET ? "4" : "6",
-				ipstr(&ip, &ip_str)));
+			dbg("#%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this.client.addr %s. Will not add CAT iptable rules",
+			    st->st_serialno, c->name, c->instance_serial,
+			    af->version, ipstr(&ip, &ip_str));
 		} else {
 			c->spd.this.client.addr = ip;
-			if (af == AF_INET)
-				c->spd.this.client.maskbits = 32;
-			else
-				c->spd.this.client.maskbits = 128;
+			c->spd.this.client.maskbits = af->mask_cnt;
 			st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
 			c->spd.this.has_cat = TRUE; /* create iptable entry */
 		}
@@ -535,13 +527,13 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af,
 		/* only set sourceip= value if unset in configuration */
 		if (addrlenof(&c->spd.this.host_srcip) == 0 ||
 			isanyaddr(&c->spd.this.host_srcip)) {
-				DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",
-					ipstr(&ip, &ip_str)));
-				c->spd.this.host_srcip = ip;
+			dbg("setting host source IP address to %s",
+			    ipstr(&ip, &ip_str));
+			c->spd.this.host_srcip = ip;
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
@@ -578,7 +570,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 
 		switch (cp_a.type) {
 		case IKEv2_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_ia(&cp_a_pbs, st, AF_INET,
+			if (!ikev2_set_ia(&cp_a_pbs, st, &ipv4_info,
 					  &seen_internal_address)) {
 				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
 				return FALSE;
@@ -586,14 +578,14 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 			break;
 
 		case IKEv2_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_dns(&cp_a_pbs, st, AF_INET)) {
+			if (!ikev2_set_dns(&cp_a_pbs, st, &ipv4_info)) {
 				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP4_DNS attribute");
 				return FALSE;
 			}
 			break;
 
 		case IKEv2_INTERNAL_IP6_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_ia(&cp_a_pbs, st, AF_INET6,
+			if (!ikev2_set_ia(&cp_a_pbs, st, &ipv6_info,
 						 &seen_internal_address)) {
 				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
 				return FALSE;
@@ -601,7 +593,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 			break;
 
 		case IKEv2_INTERNAL_IP6_DNS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_dns(&cp_a_pbs, st, AF_INET6)) {
+			if (!ikev2_set_dns(&cp_a_pbs, st, &ipv6_info)) {
 				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP6_DNS attribute");
 				return FALSE;
 			}

@@ -75,6 +75,7 @@
 #include "nat_traversal.h"
 #include "ikev2_send.h"
 #include "state_db.h"
+#include "ip_info.h"
 
 /* As per https://tools.ietf.org/html/rfc3948#section-4 */
 #define DEFAULT_KEEP_ALIVE_SECS  20
@@ -542,30 +543,16 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		DBG_dump("NAT-OA:", p->pbs.start, pbs_room(&p->pbs)));
 
 	ip_address ip;
+	struct pbs_in pbs = p->pbs;
 
+	const struct ip_info *ipv;
 	switch (p->payload.nat_oa.isanoa_idtype) {
 	case ID_IPV4_ADDR:
-		if (pbs_left(&p->pbs) != sizeof(struct in_addr)) {
-			loglog(RC_LOG_SERIOUS,
-				"NAT-Traversal: received IPv4 NAT-OA with invalid IP size (%d)",
-				(int)pbs_left(&p->pbs));
-			return;
-		}
-
-		initaddr(p->pbs.cur, pbs_left(&p->pbs), AF_INET, &ip);
+		ipv = &ipv4_info;
 		break;
-
 	case ID_IPV6_ADDR:
-		if (pbs_left(&p->pbs) != sizeof(struct in6_addr)) {
-			loglog(RC_LOG_SERIOUS,
-				"NAT-Traversal: received IPv6 NAT-OA with invalid IP size (%d)",
-				(int)pbs_left(&p->pbs));
-			return;
-		}
-
-		initaddr(p->pbs.cur, pbs_left(&p->pbs), AF_INET6, &ip);
+		ipv = &ipv6_info;
 		break;
-
 	default:
 		loglog(RC_LOG_SERIOUS,
 			"NAT-Traversal: invalid ID Type (%d) in NAT-OA - ignored",
@@ -573,13 +560,14 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		return;
 	}
 
-	DBG(DBG_NATT, {
-		ipstr_buf b;
-		DBG_log("received NAT-OA: %s",
-			ipstr(&ip, &b));
-	});
+	if (!pbs_in_address(&ip, ipv, &pbs, "NAT-Traversal: NAT-OA IP")) {
+		return;
+	}
 
-	if (isanyaddr(&ip)) {
+	ipstr_buf b;
+	dbg("received NAT-OA: %s", ipstr(&ip, &b));
+
+	if (address_is_any(&ip)) {
 		loglog(RC_LOG_SERIOUS,
 			"NAT-Traversal: received 0.0.0.0 NAT-OA...");
 	} else {
