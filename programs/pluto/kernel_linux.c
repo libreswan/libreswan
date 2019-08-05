@@ -245,15 +245,9 @@ struct raw_iface *find_raw_ifaces4(void)
 			continue;
 		}
 
-		happy(initaddr((const void *)&rs->sin_addr,
-			       sizeof(struct in_addr),
-			       AF_INET, &ri.addr));
-
-		DBG(DBG_CONTROLMORE, {
-			ipstr_buf b;
-			DBG_log("found %s with address %s",
-				ri.name, ipstr(&ri.addr, &b));
-		});
+		ri.addr = address_from_in_addr(&rs->sin_addr);
+		ipstr_buf b;
+		dbg("found %s with address %s", ri.name, ipstr(&ri.addr, &b));
 		ri.next = rifaces;
 		rifaces = clone_thing(ri, "struct raw_iface");
 	}
