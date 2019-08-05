@@ -1613,12 +1613,27 @@ static err_t xfrm_to_ip_address(unsigned family, const xfrm_address_t *src,
 	}
 }
 
+/*
+ * Create ip_endpoint out of xfrm_address_t:NPORT.
+ */
+static err_t xfrm_to_endpoint(unsigned family, const xfrm_address_t *src,
+			      uint16_t nport, ip_endpoint *dst)
+{
+	ip_address ip;
+	err_t err = xfrm_to_ip_address(family, src, &ip);
+	if (err != NULL) {
+		return err;
+	}
+	*dst = endpoint(&ip, ntohs(nport));
+	return NULL;
+}
+
 static void netlink_acquire(struct nlmsghdr *n)
 {
 	struct xfrm_user_acquire *acquire;
 	const xfrm_address_t *srcx, *dstx;
 	int src_proto, dst_proto;
-	ip_address src, dst;
+	ip_endpoint src, dst;
 	ip_subnet ours, his;
 	unsigned family;
 	unsigned transport_proto;
@@ -1759,10 +1774,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 	 * XXX also the type of src/dst should be checked to make sure
 	 *     that they aren't v4 to v6 or something goofy
 	 */
-	if (NULL == (ugh = xfrm_to_ip_address(family, srcx, &src)) &&
-		NULL == (ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
-		NULL == (ugh = add_port(family, &src, acquire->sel.sport)) &&
-		NULL == (ugh = add_port(family, &dst, acquire->sel.dport)) &&
+	if (NULL == (ugh = xfrm_to_endpoint(family, srcx, acquire->sel.sport, &src)) &&
+	    NULL == (ugh = xfrm_to_endpoint(family, dstx, acquire->sel.dport, &dst)) &&
 		NULL == (ugh = src_proto == dst_proto ?
 			NULL : "src and dst protocols differ") &&
 		NULL == (ugh = addrtosubnet(&src, &ours)) &&
