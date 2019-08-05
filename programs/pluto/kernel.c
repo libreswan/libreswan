@@ -225,8 +225,8 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 
 	ip_address src, dst;
 
-	networkof(ours, &src);
-	networkof(his, &dst);
+	src = subnet_endpoint(ours);
+	dst = subnet_endpoint(his);
 
 	/* This check should not be needed :( */
 	if (has_bare_hold(&src, &dst, transport_proto)) {
@@ -429,7 +429,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 
 	jam(buf, "PLUTO_MY_CLIENT_NET='");
 	ip_address ta;
-	networkof(&sr->this.client, &ta);
+	ta = subnet_endpoint(&sr->this.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
@@ -464,7 +464,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT_NET='");
-	networkof(&sr->that.client, &ta);
+	ta = subnet_endpoint(&sr->that.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 

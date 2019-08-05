@@ -72,6 +72,9 @@ ip_address subnet_floor(const ip_subnet *subnet);
 /* PREFIX|~MASK; aka IPv4 broadcast but not IPv6 */
 ip_address subnet_ceiling(const ip_subnet *subnet);
 
+/* PREFIX|HOST:PORT */
+ip_endpoint subnet_endpoint(const ip_subnet *subnet);
+
 /*
  * old
  */
@@ -88,7 +91,6 @@ extern err_t addrtosubnet(const ip_address *addr, ip_subnet *dst);
 extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
 		    ip_subnet *dst);
 extern int subnettypeof(const ip_subnet *src);
-extern void networkof(const ip_subnet *src, ip_address *dst);
 
 /* tests */
 extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);

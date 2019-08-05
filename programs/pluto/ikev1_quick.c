@@ -162,7 +162,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 		return FALSE;
 
 	ip_address ta;
-	networkof(net, &ta);
+	ta = subnet_endpoint(net);
 	const unsigned char *tbp;
 	size_t tal = addrbytesptr_read(&ta, &tbp);
 	if (!out_raw(tbp, tal, &id_pbs, "client network"))

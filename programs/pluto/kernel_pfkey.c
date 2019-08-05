@@ -935,11 +935,11 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	int dport = ntohs(portof(&that_client->addr));
 	int satype;
 
-	networkof(this_client, &sflow_ska);
+	sflow_ska = subnet_endpoint(this_client);
 	smask_ska = subnet_mask(this_client);
 	setportof(sport ? ~0 : 0, &smask_ska);
 
-	networkof(that_client, &dflow_ska);
+	dflow_ska = subnet_endpoint(that_client);
 	dmask_ska = subnet_mask(that_client);
 	setportof(dport ? ~0 : 0, &dmask_ska);
 
@@ -1794,8 +1794,8 @@ void pfkey_scan_shunts(void)
 		struct eroute_info *p = expired;
 		ip_address src, dst;
 
-		networkof(&p->ours, &src);
-		networkof(&p->his, &dst);
+		src = subnet_endpoint(&p->ours);
+		dst = subnet_endpoint(&p->his);
 
 		if (delete_bare_shunt(&src, &dst,
 				p->transport_proto, SPI_HOLD, /* what spi to use? */

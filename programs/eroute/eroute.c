@@ -754,7 +754,7 @@ sa_build:
 	case EMT_INEROUTE:
 	case EMT_INREPLACEROUTE:
 	case EMT_DELEROUTE:
-		networkof(&s_subnet, &pfkey_address_sflow_ska); /* src flow */
+		pfkey_address_sflow_ska = subnet_endpoint(&s_subnet); /* src flow */
 		add_port(eroute_af, &pfkey_address_sflow_ska, src_port);
 		error = pfkey_address_build(
 				&extensions[SADB_X_EXT_ADDRESS_SRC_FLOW],
@@ -777,7 +777,7 @@ sa_build:
 				progname);
 		}
 
-		networkof(&d_subnet, &pfkey_address_dflow_ska); /* dst flow */
+		pfkey_address_dflow_ska = subnet_endpoint(&d_subnet); /* dst flow */
 		add_port(eroute_af, &pfkey_address_dflow_ska, dst_port);
 		error = pfkey_address_build(
 				&extensions[SADB_X_EXT_ADDRESS_DST_FLOW],

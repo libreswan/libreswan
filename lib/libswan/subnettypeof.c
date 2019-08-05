@@ -26,16 +26,6 @@ const ip_subnet * src;
 }
 
 /*
- * networkof - get the network address of a subnet
- */
-void networkof(src, dst)
-const ip_subnet * src;
-ip_address *dst;
-{
-	*dst = src->addr;
-}
-
-/*
  * masktocount - convert a mask, expressed as an address, to a bit count
  */
 int	/* -1 if not valid mask */
