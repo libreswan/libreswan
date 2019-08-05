@@ -20,21 +20,6 @@
 #include "ip_address.h"
 #include "libreswan/passert.h"
 
-err_t add_port(int af, ip_address *addr, unsigned short port)
-{
-	switch (af) {
-	case AF_INET:
-		addr->u.v4.sin_port = port;
-		break;
-	case AF_INET6:
-		addr->u.v6.sin6_port = port;
-		break;
-	default:
-		return "unknown address family in add_port";
-	}
-	return NULL;
-}
-
 /*
    - initaddr - initialize ip_address from bytes
  */
