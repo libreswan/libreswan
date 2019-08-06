@@ -33,6 +33,7 @@
  */
 static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 	{
+		.description = "empty string",
 		.key ="0xcf063a34d4a9a76c2c86787d3f96db71",
 		.salted_iv = "0x113b9785971864c83b01c787",
 		.ciphertext = "",
@@ -41,6 +42,7 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 		.plaintext = ""
 	},
 	{
+		.description = "one block",
 		.key = "0xe98b72a9881a84ca6b76e0f43e68647a",
 		.salted_iv = "0x8b23299fde174053f3d652ba",
 		.ciphertext = "0x5a3c1cf1985dbb8bed818036fdd5ab42",
@@ -49,6 +51,7 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 		.plaintext = "0x28286a321293253c3e0aa2704a278032",
 	},
 	{
+		.description = "two blocks",
 		.key = "0xbfd414a6212958a607a0f5d3ab48471d",
 		.salted_iv = "0x86d8ea0ab8e40dcc481cd0e2",
 		.ciphertext = "0x62171db33193292d930bf6647347652c1ef33316d7feca99d54f1db4fcf513f8",
@@ -57,6 +60,7 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 		.plaintext = "0xa6b76a066e63392c9443e60272ceaeb9d25c991b0f2e55e2804e168c05ea591a",
 	},
 	{
+		.description = "two blocks with associated data",
 		.key = "0x006c458100fc5f4d62949d2c833b82d1",
 		.salted_iv = "0xa4e9c4bc5725a21ff42c82b2",
 		.ciphertext = "0xf39b4db3542d8542fb73fd2d66be568f26d7f814b3f87d1eceac3dd09a8d697e",
@@ -73,7 +77,7 @@ const struct gcm_test_vector *const aes_gcm_tests = aes_gcm_test_vectors;
 static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct gcm_test_vector *test)
 {
-	DBG(DBG_CRYPT, DBG_log("test_gcm_vector: enter"));
+	libreswan_log("%s: %s", __func__, test->description);
 
 	const size_t salt_size = encrypt_desc->salt_size;
 

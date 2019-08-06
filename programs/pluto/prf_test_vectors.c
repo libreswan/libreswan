@@ -39,7 +39,7 @@ const struct prf_test_vectors aes_xcbc_prf_tests = {
 	.tests = {
 		/* from RFC 3566 */
 		{
-			.description = "Test Case #1   : AES-XCBC-MAC-96 with 0-byte input",
+			.description = "RFC 3566 Test Case #1: AES-XCBC-MAC-96 with 0-byte input",
 			.key = "0x000102030405060708090a0b0c0d0e0f",
 			.key_size = 16,
 			.message = "",
@@ -47,7 +47,7 @@ const struct prf_test_vectors aes_xcbc_prf_tests = {
 			/* AES-XCBC-MAC-96: 75f0251d528ac01c4573dfd5 */
 		},
 		{
-			.description = " Test Case #2   : AES-XCBC-MAC-96 with 3-byte input",
+			.description = "RFC 3566 Test Case #2: AES-XCBC-MAC-96 with 3-byte input",
 			.key = "0x000102030405060708090a0b0c0d0e0f",
 			.key_size = 16,
 			.message = "0x000102",
@@ -55,7 +55,7 @@ const struct prf_test_vectors aes_xcbc_prf_tests = {
 			/* AES-XCBC-MAC-96: 5b376580ae2f19afe7219cee */
 		},
 		{
-			.description = " Test Case #3   : AES-XCBC-MAC-96 with 16-byte input",
+			.description = "RFC 3566 Test Case #3: AES-XCBC-MAC-96 with 16-byte input",
 			.key = "0x000102030405060708090a0b0c0d0e0f",
 			.key_size = 16,
 			.message = "0x000102030405060708090a0b0c0d0e0f",
@@ -63,7 +63,7 @@ const struct prf_test_vectors aes_xcbc_prf_tests = {
 			/* AES-XCBC-MAC-96: d2a246fa349b68a79998a439 */
 		},
 		{
-			.description = " Test Case #4   : AES-XCBC-MAC-96 with 20-byte input",
+			.description = "RFC 3566 Test Case #4: AES-XCBC-MAC-96 with 20-byte input",
 			.key = "0x000102030405060708090a0b0c0d0e0f",
 			.key_size = 16,
 			.message = "0x000102030405060708090a0b0c0d0e0f10111213",
@@ -71,7 +71,7 @@ const struct prf_test_vectors aes_xcbc_prf_tests = {
 			/* AES-XCBC-MAC-96: 47f51b4564966215b8985c63 */
 		},
 		{
-			.description = " Test Case #5   : AES-XCBC-MAC-96 with 32-byte input",
+			.description = "RFC 3566 Test Case #5: AES-XCBC-MAC-96 with 32-byte input",
 			.key = "0x000102030405060708090a0b0c0d0e0f",
 			.key_size = 16,
 			.message = ("0x000102030405060708090a0b0c0d0e0f10111213141516171819"
@@ -80,7 +80,7 @@ const struct prf_test_vectors aes_xcbc_prf_tests = {
 			/* AES-XCBC-MAC-96: f54f0ec8d2b9f3d36807734b */
 		},
 		{
-			.description = " Test Case #6   : AES-XCBC-MAC-96 with 34-byte input",
+			.description = "RFC 3566 Test Case #6: AES-XCBC-MAC-96 with 34-byte input",
 			.key = "0x000102030405060708090a0b0c0d0e0f",
 			.key_size = 16,
 			.message = ("0x000102030405060708090a0b0c0d0e0f10111213141516171819"
@@ -89,7 +89,7 @@ const struct prf_test_vectors aes_xcbc_prf_tests = {
 			/* AES-XCBC-MAC-96: becbb3bccdb518a30677d548 */
 		},
 		{
-			.description = " Test Case #7   : AES-XCBC-MAC-96 with 1000-byte input",
+			.description = "RFC 3566 Test Case #7: AES-XCBC-MAC-96 with 1000-byte input",
 			.key = "0x000102030405060708090a0b0c0d0e0f",
 			.key_size = 16,
 			/* .message = "0x00000000000000000000 ... 00000000000000000000 [1000 bytes]", */
@@ -99,21 +99,21 @@ const struct prf_test_vectors aes_xcbc_prf_tests = {
 		},
 		/* from RFC 4434 */
 		{
-			.description = "Test Case AES-XCBC-PRF-128 with 20-byte input (key length 16)",
+			.description = "RFC 4434 Test Case AES-XCBC-PRF-128 with 20-byte input (key length 16)",
 			.key = "0x000102030405060708090a0b0c0d0e0f",
 			.key_size = 16,
 			.message = "0x000102030405060708090a0b0c0d0e0f10111213",
 			.prf_output = "0x47f51b4564966215b8985c63055ed308",
 		},
 		{
-			.description = "Test Case AES-XCBC-PRF-128 with 20-byte input (key length 10)",
+			.description = "RFC 4434 Test Case AES-XCBC-PRF-128 with 20-byte input (key length 10)",
 			.key = "0x00010203040506070809",
 			.key_size = 10,
 			.message = "0x000102030405060708090a0b0c0d0e0f10111213",
 			.prf_output = "0x0fa087af7d866e7653434e602fdde835",
 		},
 		{
-			.description = "Test Case AES-XCBC-PRF-128 with 20-byte input (key length 18)",
+			.description = "RFC 4434 Test Case AES-XCBC-PRF-128 with 20-byte input (key length 18)",
 			.key = "0x000102030405060708090a0b0c0d0e0fedcb",
 			.key_size = 18,
 			.message = "0x000102030405060708090a0b0c0d0e0f10111213",
@@ -128,7 +128,7 @@ const struct prf_test_vectors aes_xcbc_prf_tests = {
 static bool test_prf_vector(const struct prf_desc *prf,
 			    const struct prf_test_vector *test)
 {
-	DBGF(DBG_CRYPT, "%s: %s", __func__, test->description);
+	libreswan_log("%s: %s", __func__, test->description);
 
 	chunk_t chunk_key = decode_to_chunk(__func__, test->key);
 	passert(chunk_key.len == test->key_size);

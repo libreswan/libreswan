@@ -188,7 +188,7 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct ctr_test_vector *test)
 {
-	DBG(DBG_CRYPT, DBG_log("test_ctr_vector: %s", test->description));
+	libreswan_log("%s: %s", __func__, test->description);
 	bool ok = TRUE;
 
 	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);

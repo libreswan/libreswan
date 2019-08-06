@@ -13,6 +13,7 @@
  */
 
 struct gcm_test_vector {
+	const char *description;
 	const char *key;
 	/*
 	 * NIST provides a simple IV, while we require a separate SALT
