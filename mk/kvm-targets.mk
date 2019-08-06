@@ -26,8 +26,8 @@
 #
 # Pull in all its defaults so that they override everything below.
 
-KVM_OS ?= fedora28
-include testing/libvirt/$(KVM_OS).mk
+KVM_GUEST_OS ?= fedora28
+include testing/libvirt/$(KVM_GUEST_OS).mk
 
 
 #
@@ -112,14 +112,14 @@ VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',
 VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
 VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=swansource
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
-KVM_OS_VARIANT ?= $(KVM_OS)
+KVM_OS_VARIANT ?= $(KVM_GUEST_OS)
 VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
 
 #
 # Hosts
 #
 
-KVM_BASE_HOST = swan$(KVM_OS)base
+KVM_BASE_HOST = swan$(KVM_GUEST_OS)base
 
 KVM_BUILD_HOST = build
 KVM_BUILD_HOST_CLONES = $(filter-out $(KVM_BASIC_HOSTS), $(KVM_TEST_HOSTS))
@@ -1094,7 +1094,7 @@ Configuration:
 	the shared NATting gateway;
 	used by the base (master) domain along with any local domains
 	when internet access is required
-    $(call kvm-var-value,KVM_OS)
+    $(call kvm-var-value,KVM_GUEST_OS)
     $(call kvm-var-value,KVM_KICKSTART_FILE)
     $(call kvm-var-value,KVM_GATEWAY)
     $(call kvm-var-value,KVM_BASE_HOST)
