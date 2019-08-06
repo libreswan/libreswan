@@ -83,6 +83,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, fcntl);
 		LSW_SECCOMP_ADD(ctx, getcwd);
 		LSW_SECCOMP_ADD(ctx, getdents);
+		LSW_SECCOMP_ADD(ctx, getdents64);
 		LSW_SECCOMP_ADD(ctx, getegid);
 		LSW_SECCOMP_ADD(ctx, geteuid);
 		LSW_SECCOMP_ADD(ctx, getgid);
