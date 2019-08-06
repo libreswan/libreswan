@@ -32,6 +32,16 @@ const struct ip_info *subnet_info(const ip_subnet * src)
 	return address_info(&src->addr);
 }
 
+/*
+ * mashup() notes:
+ * - mashup operates on network-order IP addresses
+ * - prefix_and is 0xFF for all existing calls so it could be eliminated
+ */
+
+#define BITS_ON		0xFF/*don't care*/, 0xFF
+#define BITS_OFF	0x00, 0x00
+#define BITS_KEEP	0xFF, 0x00
+
 static ip_address mashup(const ip_subnet *src,
 			 uint8_t prefix_and, uint8_t prefix_or,
 			 uint8_t host_and, uint8_t host_or)
@@ -47,8 +57,8 @@ static ip_address mashup(const ip_subnet *src,
 	uint8_t *p = raw.ptr; /* cast void* */
 
 	/* the cross over byte */
-	size_t xbyte = src->maskbits / 8;
-	unsigned xbit = src->maskbits % 8;
+	size_t xbyte = src->maskbits / BITS_PER_BYTE;
+	unsigned xbit = src->maskbits % BITS_PER_BYTE;
 
 	/* leading bytes: & PREFIX_AND | PREFIX_OR */
 	unsigned b = 0;
@@ -57,15 +67,21 @@ static ip_address mashup(const ip_subnet *src,
 		p[b] |= prefix_or;
 	}
 
-	/* cross over: & {PREFIX,HOST}_AND | {PREFIX,HOST}_OR */
+	/*
+	 * cross over: & {PREFIX,HOST}_AND | {PREFIX,HOST}_OR
+	 *
+	 * tricky logic:
+	 * - b == xbyte
+	 * - if xbyte == raw.len we must not access p[xbyte]
+	 * - if xbyte == raw.len, xbit will be 0
+	 * - if xbit == 0, the loop for trailing bytes will
+	 *   perform the required operation slightly more efficiently
+	 * So we guard this step with xbit != 0 instead of b < raw.len
+	 */
 	if (xbit != 0) {
-		uint8_t mask = (0xff << (8 - xbit)) & 0xff;
-		uint8_t and = ((prefix_and & mask) |
-			       (host_and & ~mask));
-		uint8_t or = ((prefix_or & mask) |
-			      (host_or & ~mask));
-		p[b] &= and;
-		p[b] |= or;
+		uint8_t hmask = 0xFF >> xbit;
+		p[b] &= (prefix_and & ~hmask) | (host_and & hmask);
+		p[b] |= (prefix_or & ~hmask) | (host_or & hmask);
 		b++;
 	}
 
@@ -87,8 +103,8 @@ static ip_address mashup(const ip_subnet *src,
 ip_address subnet_mask(const ip_subnet *src)
 {
 	return mashup(src,
-		      /*prefix and/or*/ 0x00, 0xff,
-		      /*host and/or*/ 0x00, 0x00);
+		      /*prefix*/ BITS_ON,
+		      /*host*/ BITS_OFF);
 }
 
 bool subnetisnone(const ip_subnet *sn)
@@ -100,16 +116,20 @@ bool subnetisnone(const ip_subnet *sn)
 ip_address subnet_floor(const ip_subnet *subnet)
 {
 	return mashup(subnet,
-		      /*prefix and/or*/ 0xff, 0x00,
-		      /*host and/or*/ 0x00, 0x00);
+		      /*prefix*/ BITS_KEEP,
+		      /*host*/ BITS_OFF);
 }
 
 ip_address subnet_ceiling(const ip_subnet *subnet)
 {
 	return mashup(subnet,
-		      /*prefix and/or*/ 0xff, 0x00,
-		      /*host and/or*/ 0x00, 0xff);
+		      /*prefix*/ BITS_KEEP,
+		      /*host*/ BITS_ON);
 }
+
+#undef BITS_KEEP
+#undef BITS_OFF
+#undef BITS_ON
 
 void jam_subnet(jambuf_t *buf, const ip_subnet *subnet)
 {

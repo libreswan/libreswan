@@ -67,7 +67,7 @@ const struct ip_info *subnet_info(const ip_subnet *subnet);
 ip_address subnet_mask(const ip_subnet *subnet);
 
 /* [floor..ceiling] vs [floor..roof) */
-/* PREFIX&MASK; aka IPv4 netork, IPv6 anycast */
+/* PREFIX&MASK; aka IPv4 network, IPv6 anycast */
 ip_address subnet_floor(const ip_subnet *subnet);
 /* PREFIX|~MASK; aka IPv4 broadcast but not IPv6 */
 ip_address subnet_ceiling(const ip_subnet *subnet);
