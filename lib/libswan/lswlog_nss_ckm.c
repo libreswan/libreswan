@@ -40,6 +40,10 @@ size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism)
 		CASE(CKM_AES_CTR);
 		CASE(CKM_AES_GCM);
 		CASE(CKM_AES_MAC);
+		CASE(CKM_AES_ECB);
+#ifdef CKM_AES_XCBC_MAC
+		CASE(CKM_AES_XCBC_MAC);
+#endif
 
 		CASE(CKM_AES_KEY_GEN);
 
@@ -65,6 +69,7 @@ size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism)
 		CASE(CKM_ECDH1_DERIVE);
 
 		CASE(CKM_VENDOR_DEFINED);
+
 
 #undef CASE
 
