@@ -125,17 +125,23 @@ $(WEB_SUMMARYDIR)/index.html: $(WEB_SOURCES) | $(WEB_SUMMARYDIR)
 endif
 
 #
-# Update the pooled summaries from all the test runs
+# Update the pooled summary (summaries.json) of all the test runs
 #
+# Note that $(WEB_SUMMARYDIR) may be a soft-link.
+#
+# Because the number of summaries can get large a FIND and not a GLOB
+# is used to generate the list.
 
 ifdef WEB_ENABLED
 
 .PHONY: web-summaries-json
 web-site web-summarydir web-summaries-json: $(WEB_SUMMARYDIR)/summaries.json
-$(WEB_SUMMARYDIR)/summaries.json: $(wildcard $(WEB_SUMMARYDIR)/*-g*/summary.json) $(WEB_SOURCEDIR)/json-summaries.sh
-	find $(WEB_SUMMARYDIR) \
+$(WEB_SUMMARYDIR)/summaries.json: $(wildcard $(WEB_SUMMARYDIR)/*/summary.json) $(WEB_SOURCEDIR)/json-summaries.sh
+	: -H - follow any $(WEB_SUMMARYDIR) link
+	: -maxdepth 2 - stop before $(WEB_SUMMARYDIR)/*/*/
+	find -H $(WEB_SUMMARYDIR) \
+		-maxdepth 2 \
 		\( -type f -name summary.json -print \) \
-		-o \( -type d -path '$(WEB_SUMMARYDIR)/*/*' -prune \) \
 	| $(WEB_SOURCEDIR)/json-summaries.sh $(WEB_REPODIR) - > $@.tmp
 	mv $@.tmp $@
 
