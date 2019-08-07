@@ -21,6 +21,8 @@
 #include <pk11pub.h>
 
 #include "chunk.h"
+#include "where.h"
+#include "jambuf.h"
 
 struct ike_alg;
 struct hash_desc;
@@ -30,9 +32,10 @@ struct prf_desc;
 /*
  * Log some information on a SYMKEY.
  *
- * The format is <PREFIX><NAME>-key@...
+ * The format is <PREFIX>: <NAME>-key@...
  */
 void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key);
+void jam_symkey(jambuf_t *buf, const char *name, PK11SymKey *key);
 
 /*
  * Add/delete references to a reference-countered PK11SymKey.
@@ -153,5 +156,13 @@ PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
  * XOR a symkey with a chunk.
  */
 PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
+
+/*
+ * Generic operation.
+ */
+PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem *params,
+			 const char *target_name, CK_MECHANISM_TYPE target_mechanism,
+			 CK_ATTRIBUTE_TYPE operation,
+			 int key_size, CK_FLAGS flags, where_t where);
 
 #endif
