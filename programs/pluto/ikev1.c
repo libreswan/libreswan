@@ -1072,11 +1072,19 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				loglog(RC_LOG_SERIOUS,
 					"ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message without IPv4 address");
 			} else {
-				ip_address new_peer;
+				/*
+				 * Copy (not cast) the last 4 bytes
+				 * (size of an IPv4) address from the
+				 * end of the notification into IN
+				 * (can't cast as can't assume that
+				 * ->roof-4 is correctly aligned).
+				 */
+				struct in_addr in;
+				memcpy(&in, n_pbs->roof - sizeof(in), sizeof(in));
+				ip_address new_peer = address_from_in_addr(&in);
 
-				(void)initaddr(n_pbs->roof - 4, 4, AF_INET, &new_peer);
-
-				if (isanyaddr(&new_peer)) {
+				/* is all zeros? */
+				if (address_is_any(&new_peer)) {
 					ipstr_buf b;
 
 					loglog(RC_LOG_SERIOUS,

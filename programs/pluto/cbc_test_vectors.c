@@ -171,7 +171,7 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct cbc_test_vector *test)
 {
 	bool ok = TRUE;
-	DBG(DBG_CRYPT, DBG_log("test_cbc_vector: %s", test->description));
+	libreswan_log("%s: %s", __func__, test->description);
 
 	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
 	if (!test_cbc_op(encrypt_desc, test->description, 1,

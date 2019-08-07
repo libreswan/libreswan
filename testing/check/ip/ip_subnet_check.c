@@ -123,11 +123,9 @@ static void check_str_subnet(void)
 		} else if (oops != NULL && t->out != NULL) {
 			/* Error occurred, but we didn't expect one  */
 			FAIL_IN("ttosubnet failed: %s", oops);
-			continue;
 		} else if (oops == NULL && t->out == NULL) {
 			/* If no errors, but we expected one */
 			FAIL_IN("ttosubnet succeeded unexpectedly");
-			continue;
 		}
 
 		subnet_buf buf;
@@ -135,7 +133,68 @@ static void check_str_subnet(void)
 		if (!streq(t->out, out)) {
 			FAIL_IN("subnetporttot returned '%s', expected '%s'",
 				out, t->out);
-			continue;
+		}
+	}
+}
+
+static void check_subnet_mashup(void)
+{
+	static const struct test {
+		int family;
+		const char *in;
+		const char *mask;
+		const char *floor;
+		const char *ceiling;
+	} tests[] = {
+		{ 4, "1.2.3.4/1", "128.0.0.0", "0.0.0.0", "127.255.255.255", },
+		{ 4, "1.2.3.4/23", "255.255.254.0", "1.2.2.0", "1.2.3.255", },
+		{ 4, "1.2.3.4/24", "255.255.255.0", "1.2.3.0", "1.2.3.255", },
+		{ 4, "1.2.3.4/25", "255.255.255.128", "1.2.3.0", "1.2.3.127", },
+		{ 4, "1.2.3.4/31", "255.255.255.254", "1.2.3.4", "1.2.3.5", },
+		{ 4, "1.2.3.4/32", "255.255.255.255", "1.2.3.4", "1.2.3.4", },
+		{ 6, "1:2:3:4:5:6:7:8/1", "8000::", "::", "7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" },
+		{ 6, "1:2:3:4:5:6:7:8/63", "ffff:ffff:ffff:fffe::", "1:2:3:4::", "1:2:3:5:ffff:ffff:ffff:ffff", },
+		{ 6, "1:2:3:4:5:6:7:8/64", "ffff:ffff:ffff:ffff::", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", },
+		{ 6, "1:2:3:4:5:6:7:8/65", "ffff:ffff:ffff:ffff:8000::", "1:2:3:4::", "1:2:3:4:7fff:ffff:ffff:ffff" },
+		{ 6, "1:2:3:4:5:6:7:8/127", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:9", },
+		{ 6, "1:2:3:4:5:6:7:8/128", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_IN(stdout, " -> mask: %s floor: %s ceiling: %s",
+			 t->mask, t->floor, t->ceiling);
+
+		sa_family_t af = SA_FAMILY(t->family);
+
+		ip_subnet s;
+		err_t oops = ttosubnet(t->in, 0, af, &s);
+		if (oops != NULL) {
+			FAIL_IN("ttosubnet() failed: %s", oops);
+		}
+
+		address_buf buf;
+		const char *out;
+
+		ip_address mask = subnet_mask(&s);
+		out = str_address(&mask, &buf);
+		if (!streq(t->mask, out)) {
+			FAIL_IN("subnet_mask() returned '%s', expected '%s'",
+				out, t->mask);
+		}
+
+		ip_address floor = subnet_floor(&s);
+		out = str_address(&floor, &buf);
+		if (!streq(t->floor, out)) {
+			FAIL_IN("subnet_floor() returned '%s', expected '%s'",
+				out, t->floor);
+		}
+
+		ip_address ceiling = subnet_ceiling(&s);
+		out = str_address(&ceiling, &buf);
+		if (!streq(t->ceiling, out)) {
+			FAIL_IN("subnet_ceiling() returned '%s', expected '%s'",
+				out, t->ceiling);
 		}
 	}
 }
@@ -143,4 +202,5 @@ static void check_str_subnet(void)
 void ip_subnet_check(void)
 {
 	check_str_subnet();
+	check_subnet_mashup();
 }

@@ -20,48 +20,116 @@
 #include "jambuf.h"
 #include "ip_subnet.h"
 #include "libreswan/passert.h"
+#include "lswlog.h"	/* for pexpect() */
+
+ip_endpoint subnet_endpoint(const ip_subnet *src)
+{
+	return src->addr;
+}
 
 const struct ip_info *subnet_info(const ip_subnet * src)
 {
 	return address_info(&src->addr);
 }
 
+/*
+ * mashup() notes:
+ * - mashup operates on network-order IP addresses
+ * - prefix_and is 0xFF for all existing calls so it could be eliminated
+ */
+
+#define BITS_ON		0xFF/*don't care*/, 0xFF
+#define BITS_OFF	0x00, 0x00
+#define BITS_KEEP	0xFF, 0x00
+
+static ip_address mashup(const ip_subnet *src,
+			 uint8_t prefix_and, uint8_t prefix_or,
+			 uint8_t host_and, uint8_t host_or)
+{
+	/* strip port; copy type */
+	ip_address mask = endpoint_address(&src->addr);
+	chunk_t raw = address_as_chunk(&mask);
+
+	if (!pexpect((size_t)src->maskbits <= raw.len * 8)) {
+		return address_invalid;	/* "can't happen" */
+	}
+
+	uint8_t *p = raw.ptr; /* cast void* */
+
+	/* the cross over byte */
+	size_t xbyte = src->maskbits / BITS_PER_BYTE;
+	unsigned xbit = src->maskbits % BITS_PER_BYTE;
+
+	/* leading bytes: & PREFIX_AND | PREFIX_OR */
+	unsigned b = 0;
+	for (; b < xbyte; b++) {
+		p[b] &= prefix_and;
+		p[b] |= prefix_or;
+	}
+
+	/*
+	 * cross over: & {PREFIX,HOST}_AND | {PREFIX,HOST}_OR
+	 *
+	 * tricky logic:
+	 * - b == xbyte
+	 * - if xbyte == raw.len we must not access p[xbyte]
+	 * - if xbyte == raw.len, xbit will be 0
+	 * - if xbit == 0, the loop for trailing bytes will
+	 *   perform the required operation slightly more efficiently
+	 * So we guard this step with xbit != 0 instead of b < raw.len
+	 */
+	if (xbit != 0) {
+		uint8_t hmask = 0xFF >> xbit;
+		p[b] &= (prefix_and & ~hmask) | (host_and & hmask);
+		p[b] |= (prefix_or & ~hmask) | (host_or & hmask);
+		b++;
+	}
+
+	/* trailing bytes: & HOST_AND | HOST_OR */
+	for (; b < raw.len; b++) {
+		p[b] &= host_and;
+		p[b] |= host_or;
+	}
+
+	return mask;
+}
+
+/*
+ * subnet mask - get the mask of a subnet, as an address
+ *
+ * For instance 1.2.3.4/24 -> 255.255.255.0.
+ */
+
+ip_address subnet_mask(const ip_subnet *src)
+{
+	return mashup(src,
+		      /*prefix*/ BITS_ON,
+		      /*host*/ BITS_OFF);
+}
+
 bool subnetisnone(const ip_subnet *sn)
 {
-	ip_address base = ip_subnet_floor(sn);
+	ip_address base = subnet_floor(sn);
 	return isanyaddr(&base) && subnetishost(sn);
 }
 
-ip_address ip_subnet_floor(const ip_subnet *subnet)
+ip_address subnet_floor(const ip_subnet *subnet)
 {
-	return subnet->addr;
+	return mashup(subnet,
+		      /*prefix*/ BITS_KEEP,
+		      /*host*/ BITS_OFF);
 }
 
-ip_address ip_subnet_ceiling(const ip_subnet *subnet)
+ip_address subnet_ceiling(const ip_subnet *subnet)
 {
-	/* start with address */
-	shunk_t base = address_as_shunk(&subnet->addr);
-	passert((size_t)subnet->maskbits <= base.len * 8);
-	uint8_t buf[16] = { 0, };
-	passert(base.len <= sizeof(buf))
-	memcpy(buf, base.ptr, base.len);
-
-	/* maskbits = 9 -> byte = 1; bits = 1 */
-	unsigned byte = subnet->maskbits / 8;
-	unsigned bits = subnet->maskbits - (byte * 8);
-	/* 1 << (8-1) -> 0x80 - 1 -> 0x7f */
-	if (bits != 0) {
-		buf[byte] |= (1 << (8 - bits)) - 1;
-		byte++;
-	}
-	for (; byte < base.len; byte++) {
-		buf[byte] = 0xff;
-	}
-
-	ip_address mask;
-	initaddr(buf, base.len, addrtypeof(&subnet->addr), &mask);
-	return mask;
+	return mashup(subnet,
+		      /*prefix*/ BITS_KEEP,
+		      /*host*/ BITS_ON);
 }
+
+#undef BITS_KEEP
+#undef BITS_OFF
+#undef BITS_ON
 
 void jam_subnet(jambuf_t *buf, const ip_subnet *subnet)
 {

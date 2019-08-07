@@ -361,6 +361,7 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 	if (e->id.kind == ID_NONE && !isanyaddr(&e->host_addr)) {
 		e->id.kind = afi->id_addr;
 		e->id.ip_addr = e->host_addr;
+		e->id.isanyid = TRUE; /* used to match id=%any */
 		e->has_id_wildcards = FALSE;
 	}
 
@@ -445,8 +446,8 @@ size_t format_end(char *buf,
 	if (this->has_client) {
 		ip_address client_net, client_mask;
 
-		networkof(&this->client, &client_net);
-		maskof(&this->client, &client_mask);
+		client_net = subnet_endpoint(&this->client);
+		client_mask = subnet_mask(&this->client);
 		client_sep = "===";
 
 		/* {client_subnet_wildcard} */
@@ -3903,8 +3904,10 @@ void show_one_connection(const struct connection *c)
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
 		c->name, instance,
-		enum_name(&ike_idtype_names_extended, c->spd.this.id.kind), thisid,
-		enum_name(&ike_idtype_names_extended, c->spd.that.id.kind), thatid);
+		enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
+		c->spd.this.id.isanyid ? "%any" : thisid,
+		enum_name(&ike_idtype_names_extended, c->spd.that.id.kind),
+		c->spd.that.id.isanyid ? "%any" : thatid);
 	}
 
 	/* slightly complicated stuff to avoid extra crap */

@@ -546,8 +546,8 @@ static int score_address_range(const struct end *end,
 	 *
 	 * XXX: so what is CIDR?
 	 */
-	ip_address floor = ip_subnet_floor(&end->client);
-	ip_address ceiling = ip_subnet_ceiling(&end->client);
+	ip_address floor = subnet_floor(&end->client);
+	ip_address ceiling = subnet_ceiling(&end->client);
 	passert(addrcmp(&floor, &ceiling) <= 0);
 	passert(addrcmp(&ts->net.start, &ts->net.end) <= 0);
 	switch (fit) {

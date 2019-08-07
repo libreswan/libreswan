@@ -15,22 +15,41 @@
  * License for more details.
  *
  */
+
 #ifndef IP_SUBNET_H
 #define IP_SUBNET_H
 
-#include "ip_address.h"
+/*
+ * In libreswan ip_subnet is something of a mashup.  In addition to
+ * a traditional subnet:
+ *
+ *    (NETWORK)PREFIX | 0..0 / MASK
+ *
+ * with attributes such as MASK, BITS, PREFIX, it is used to store
+ * "routed endpoints" (is that a term?) as in:
+ *
+ *    (NETWORK)PREFIX | HOST(IDENTIFIER) : PORT / MASK
+ *
+ * with the additional attributes of ENDPOINT, PORT, ADDRESS.
+ *
+ * XXX: does the latter need to be split adding ip_routepoint?
+ * Depends on what you think a SUBNET is.
+ */
+
+#include "ip_endpoint.h"
 
 struct lswlog;
 
-/* then the main types */
 typedef struct {
-	ip_address addr;
+	/* (routing)prefix|host(id):port */
+	ip_endpoint addr;
+	/* (routing prefix) bits */
 	int maskbits;
 } ip_subnet;
 
-/* [floor..ceiling] vs [floor..roof) */
-ip_address ip_subnet_floor(const ip_subnet *subnet);
-ip_address ip_subnet_ceiling(const ip_subnet *subnet);
+/*
+ * Format as a string.
+ */
 
 typedef struct {
 	char buf[sizeof(address_buf) + 4/*/NNN*/];
@@ -39,6 +58,22 @@ const char *str_subnet(const ip_subnet *subnet, subnet_buf *out);
 void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
 
 const struct ip_info *subnet_info(const ip_subnet *subnet);
+
+/*
+ * Extract details
+ */
+
+/* when applied to an address, leaves just the routing prefix */
+ip_address subnet_mask(const ip_subnet *subnet);
+
+/* [floor..ceiling] vs [floor..roof) */
+/* PREFIX&MASK; aka IPv4 network, IPv6 anycast */
+ip_address subnet_floor(const ip_subnet *subnet);
+/* PREFIX|~MASK; aka IPv4 broadcast but not IPv6 */
+ip_address subnet_ceiling(const ip_subnet *subnet);
+
+/* PREFIX|HOST:PORT */
+ip_endpoint subnet_endpoint(const ip_subnet *subnet);
 
 /*
  * old
@@ -56,8 +91,6 @@ extern err_t addrtosubnet(const ip_address *addr, ip_subnet *dst);
 extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
 		    ip_subnet *dst);
 extern int subnettypeof(const ip_subnet *src);
-extern void networkof(const ip_subnet *src, ip_address *dst);
-extern void maskof(const ip_subnet *src, ip_address *dst);
 
 /* tests */
 extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);

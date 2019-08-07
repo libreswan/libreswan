@@ -378,8 +378,9 @@ ipsec_checknss() {
 	    echo "Failed to initialize nss database ${IPSEC_NSSDIR_SQL}" >&2
 	    exit 4
 	fi
-	if [ -x "$(which restorecon)" ]; then
-	    restorecon -Rv "${IPSEC_NSSDIR}"
+	restorecon="$(which restorecon 2>/dev/null)"
+	if [ -n "${restorecon}" -a -x "${restorecon}" ]; then
+	    "${restorecon}" -Rv "${IPSEC_NSSDIR}"
 	fi
 	exit 0
     else

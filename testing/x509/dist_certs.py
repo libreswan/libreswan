@@ -753,6 +753,7 @@ def run_dist_certs():
                         # openssl refuses to generate these
                         # 'west-kuEmpty', 'east-kuEmpty', # Key Usage may be empty
                         # 'west-ekuEmpty', 'east-ekuEmpty', # Extended Key Usage may be empty
+                        'west-nosan', 'east-nosan', # No Subject Alt Names
                         'west-sanCritical', 'east-sanCritical', # should work
                         'west-bcCritical', 'east-bcCritical', # Basic Contraints critical flag should be ignored
                         'west-kuCritical', 'east-kuCritical', # Key Usage critical flag should be ignored

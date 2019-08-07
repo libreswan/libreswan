@@ -32,7 +32,7 @@
 #include "ikev2.h"
 #include "ikev2_send.h"
 #include "kernel.h"		/* needed for del_spi */
-
+#include "ip_info.h"
 #include "ikev2_redirect.h"
 
 /*
@@ -179,26 +179,24 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 	if (!in_struct(&gw_info, &ikev2_redirect_desc, input_pbs, NULL))
 		return "received deformed REDIRECT payload";
 
-	int af;
+	const struct ip_info *af;
 
 	switch (gw_info.gw_identity_type) {
 	case GW_IPV4:
-		af = AF_INET;
+		af = &ipv4_info;
 		break;
 	case GW_IPV6:
-		af = AF_INET6;
+		af = &ipv6_info;
 		break;
 	case GW_FQDN:
-		af  = AF_UNSPEC;
+		af  = NULL;
 		break;
 	default:
 		return "bad GW Ident Type";
 	}
 
 	/* in_raw() actual GW Identity */
-	switch (af) {
-	case AF_UNSPEC:
-	{
+	if (af == NULL) {
 		/*
 		 * The FQDN string isn't NUL-terminated.
 		 *
@@ -215,28 +213,18 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 
 		err_t ugh = ttoaddr((char *) gw_str, gw_info.gw_identity_len,
 					AF_UNSPEC, redirect_ip);
-		if (ugh != NULL)
+		if (ugh != NULL) {
 			return ugh;
-		break;
-	}
-	case AF_INET:
-	case AF_INET6:
-	{
-		if (pbs_left(input_pbs) < gw_info.gw_identity_len)
-			return "variable part of payload is smaller than transferred GW Identity Length";
-
-		/* parse address directly to redirect_ip */
-		err_t ugh = initaddr(input_pbs->cur, gw_info.gw_identity_len, af, redirect_ip);
-		if (ugh != NULL)
-			return ugh;
-
-		DBG(DBG_PARSING, {
-			address_buf b;
-			DBG_log("   GW Identity IP: %s", ipstr(redirect_ip, &b));
-		});
-		input_pbs->cur += gw_info.gw_identity_len;
-		break;
-	}
+		}
+	} else {
+		if (gw_info.gw_identity_len < af->ia_sz) {
+			return "transferred GW Identity Length is too small for an IP address";
+		}
+		if (!pbs_in_address(redirect_ip, af, input_pbs, "REDIRECT address")) {
+			return "variable part of payload does not match transferred GW Identity Length";
+		}
+		address_buf b;
+		dbg("   GW Identity IP: %s", ipstr(redirect_ip, &b));
 	}
 
 	/*

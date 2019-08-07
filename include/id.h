@@ -29,6 +29,7 @@ struct id {
 
 	/* used for ID_FQDN, ID_USER_FQDN, ID_KEY_ID, ID_DER_ASN_DN */
 	chunk_t name;
+	bool isanyid;
 };
 
 struct id_list {

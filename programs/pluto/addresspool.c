@@ -279,18 +279,16 @@ static bool share_lease(const struct connection *c,
 		}
 	}
 
-	DBG(DBG_CONTROLMORE, {
-		char thatid[IDTOA_BUF];
+	if (DBGP(DBG_BASE)) {
 
-		idtoa(&c->spd.that.id, thatid, sizeof(thatid));
+		id_buf thatid_buf;
+		const char *thatid = str_id(&c->spd.that.id, &thatid_buf);
+
 		if (r) {
 			ipstr_buf b;
-			ip_address ipaddr;
 			uint32_t addr = ntohl(c->pool->r.start.u.v4.sin_addr.s_addr) + *index;
-			uint32_t addr_nw = htonl(addr);
-
-			initaddr((unsigned char *)&addr_nw,
-				sizeof(addr_nw), AF_INET, &ipaddr);
+			struct in_addr addr_nw = { htonl(addr), };
+			ip_address ipaddr = address_from_in_addr(&addr_nw);
 
 			DBG_log("in %s: found a lingering addresspool lease %s refcnt %d for '%s'",
 				__func__,
@@ -302,7 +300,7 @@ static bool share_lease(const struct connection *c,
 				__func__,
 				thatid);
 		}
-	});
+	}
 
 	return r;
 }
@@ -408,12 +406,8 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 	/* convert index i in range to an IP_address */
 	{
 		uint32_t addr = ntohl(c->pool->r.start.u.v4.sin_addr.s_addr) + i;
-		uint32_t addr_nw = htonl(addr);
-		err_t e = initaddr((unsigned char *)&addr_nw, sizeof(addr_nw),
-			     AF_INET, ipa);
-
-		if (e != NULL)
-			return e;
+		struct in_addr addr_nw = { htonl(addr), };
+		*ipa = address_from_in_addr(&addr_nw);
 	}
 	DBG(DBG_CONTROL, {
 		range_buf rbuf;
