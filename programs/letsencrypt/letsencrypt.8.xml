@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Rishabh</firstname><surname>Rishabh</surname><authorblurb><para></para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>LETSENCRYPT</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>3 August 2019</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>letsencrypt</refname>
+<refpurpose>invoke Opportunistic Encryption utilities</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>letsencrypt</command>
+    <arg choice='plain'><replaceable>command</replaceable></arg>
+    <arg choice='opt' rep='repeat'><replaceable>argument</replaceable></arg>
+    <arg choice='plain'><replaceable>letsencrypt</replaceable></arg>
+    <arg choice='plain'>-h </arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>letsencrypt</emphasis>
+invokes any of several utilities involved in controlling the Opportunistic Encryption system,
+running the specified
+<emphasis remap='I'>command</emphasis>
+with the specified
+<emphasis remap='I'>argument</emphasis>s
+as if it had been invoked directly.</para>
+
+<para><userinput>ipsec letsencrypt -h</userinput>
+lists the available commands.</para>
+
+</refsect1>
+
+<refsect1 id='commands'><title>COMMANDS</title>
+<para>To get a list of supported commands, use ipsec letsencrypt -h. A few of the
+commonly used commands are described below</para>
+
+<para><userinput>ipsec letsencrypt -client OR ipsec letsencrypt -server</userinput> For initial setup.</para>
+
+<para><userinput>ipsec letsencrypt test OR ipsec letsencrypt -t</userinput> For testing the configuration/connections.</para>
+
+<para><userinput>ipsec letsencrypt generatecertificate OR ipsec letsencrypt -gc</userinput> For generating the certificate.</para>
+
+<para><userinput>ipsec letsencrypt updatecertificate OR ipsec letsencrypt -uc</userinput> For updating the generated certificate (keeping the private key same).</para>
+</refsect1>
+
+<refsect1 id='returncode'><title>RETURN CODE</title>
+<para>The ipsec command passes the return code of the sub-command
+back to the caller.</para>
+</refsect1>
+
+<refsect1 id='files'><title>FILES</title>
+<para>/usr/libexec/ipsec/	usual utilities directory</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Original Program written by &lt;<ulink url='https://github.com/Rishabh04-02/'>Rishabh Rishabh</ulink>&gt; .</para>
+</refsect1>
+
+</refentry>

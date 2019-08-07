@@ -460,6 +460,10 @@ while [ ${#} -gt 0 ]; do
 	    setupoption="--stop"
 	    shift
 	    ;;
+	letsencrypt)
+	    shift
+	    exec "${IPSEC_EXECDIR}/letsencrypt" "${@}"
+	    ;;
 	restart|--restart)
 	    cmd="setup"
 	    setupoption="--restart"
