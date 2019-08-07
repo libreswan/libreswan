@@ -7,4 +7,3 @@ Address=2001:db8:0:3::254/64
 IPForward=yes
 IPv6DuplicateAddressDetection=no
 IPv6AcceptRouterAdvertisements=false
-DHCP=no
