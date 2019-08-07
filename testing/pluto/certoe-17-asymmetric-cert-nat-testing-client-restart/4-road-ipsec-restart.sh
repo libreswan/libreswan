@@ -1,4 +1,4 @@
-# restarting ipsec
+# restart ipsec
 ipsec restart
 # give OE conns time to load
 sleep 5
