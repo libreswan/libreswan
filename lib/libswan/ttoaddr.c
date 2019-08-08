@@ -22,6 +22,7 @@
 
 #include "ip_address.h"
 #include "lswalloc.h"		/* for alloc_things(), pfree() */
+#include "lswlog.h"		/* for pexpect() */
 
 /*
  * Legal ASCII characters in a domain name.  Underscore technically is not,
@@ -206,10 +207,13 @@ static err_t tryname(
 	} else {
 		if (ne->n_addrtype != af)
 			return "address-type mismatch from getnetbyname!!!";
-
-		ne->n_net = htonl(ne->n_net);
-		return initaddr((unsigned char *)&ne->n_net, sizeof(ne->n_net),
-				af, dst);
+		if (!pexpect(af == AF_INET)) {
+			return "address-type mismatch by convoluted logic!!!";
+		}
+		/* apparently .n_net is in host order */
+		struct in_addr in = { htonl(ne->n_net), };
+		*dst = address_from_in_addr(&in);
+		return NULL;
 	}
 }
 
