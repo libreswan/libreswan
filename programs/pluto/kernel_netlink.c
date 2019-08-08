@@ -1776,10 +1776,10 @@ static void netlink_acquire(struct nlmsghdr *n)
 	 */
 	if (NULL == (ugh = xfrm_to_endpoint(family, srcx, acquire->sel.sport, &src)) &&
 	    NULL == (ugh = xfrm_to_endpoint(family, dstx, acquire->sel.dport, &dst)) &&
-		NULL == (ugh = src_proto == dst_proto ?
-			NULL : "src and dst protocols differ") &&
-		NULL == (ugh = addrtosubnet(&src, &ours)) &&
-		NULL == (ugh = addrtosubnet(&dst, &his)))
+	    NULL == (ugh = (src_proto == dst_proto ?
+			NULL : "src and dst protocols differ")) &&
+	    NULL == (ugh = addrtosubnet(&src, &ours)) &&
+	    NULL == (ugh = addrtosubnet(&dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, transport_proto,
 #ifdef HAVE_LABELED_IPSEC
 						uctx,
