@@ -21,6 +21,7 @@
 #include <ctype.h>		/* for isxdigit() */
 
 #include "ip_address.h"
+#include "ip_info.h"
 #include "lswalloc.h"		/* for alloc_things(), pfree() */
 #include "lswlog.h"		/* for pexpect() */
 
@@ -202,8 +203,7 @@ static err_t tryname(
 		if (h->h_addrtype != af)
 			return "address-type mismatch from gethostbyname2!!!";
 
-		return initaddr((unsigned char *)h->h_addr, h->h_length, af,
-				dst);
+		return data_to_address(h->h_addr, h->h_length, aftoinfo(af), dst);
 	} else {
 		if (ne->n_addrtype != af)
 			return "address-type mismatch from getnetbyname!!!";

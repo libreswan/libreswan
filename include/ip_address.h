@@ -19,6 +19,7 @@
 #ifndef IP_ADDRESS_H
 #define IP_ADDRESS_H
 
+#include "lswcdefs.h"		/* for MUST_USE_RESULT */
 #include "shunk.h"
 #include "chunk.h"
 #include "err.h"
@@ -63,6 +64,10 @@ typedef struct {
 
 ip_address address_from_in_addr(const struct in_addr *in);
 ip_address address_from_in6_addr(const struct in6_addr *sin6);
+err_t data_to_address(const void *data, size_t sizeof_data,
+		      const struct ip_info *af, ip_address *dst) MUST_USE_RESULT;
+/* either SHUNK or CHUNK */
+#define hunk_to_address(HUNK, AF, DST) data_to_address(HUNK.ptr, HUNK.len, AF, DST)
 
 /*
  * Convert an address to a string:
@@ -167,10 +172,6 @@ extern err_t ttoaddr_num(const char *src, size_t srclen, int af, ip_address *dst
 #define ADDRTOT_BUF     sizeof(address_reversed_buf)
 extern err_t tnatoaddr(const char *src, size_t srclen, int af, ip_address *dst);
 extern size_t addrtot(const ip_address *src, int format, char *buf, size_t buflen);
-
-/* initializations */
-extern err_t initaddr(const unsigned char *src, size_t srclen, int af,
-	       ip_address *dst);
 
 /* misc. conversions and related */
 extern int addrtypeof(const ip_address *src);

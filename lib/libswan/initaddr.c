@@ -17,29 +17,40 @@
 
 #include <string.h>
 
+#include "ip_info.h"
 #include "ip_address.h"
 #include "libreswan/passert.h"
+#include "lswlog.h"		/* for bad_case() */
 
 /*
    - initaddr - initialize ip_address from bytes
  */
-err_t initaddr(const unsigned char *src, size_t srclen, int af, ip_address *dst)
+err_t data_to_address(const void *data, size_t sizeof_data,
+		      const struct ip_info *afi, ip_address *dst)
 {
-	switch (af) {
+	if (afi == NULL) {
+		*dst = address_invalid;
+		return "unknown address family";
+	}
+	switch (afi->af) {
 	case AF_INET:
-		if (srclen != 4)
+		if (sizeof_data != 4)
 			return "IPv4 address must be exactly 4 bytes";
-		passert(srclen == sizeof(struct in_addr));
-		*dst = address_from_in_addr((const struct in_addr *)src);
+		passert(sizeof_data == sizeof(struct in_addr));
+		struct in_addr in; /* force alignment of data */
+		memcpy(&in, data, sizeof_data);
+		*dst = address_from_in_addr(&in);
 		break;
 	case AF_INET6:
-		if (srclen != 16)
+		if (sizeof_data != 16)
 			return "IPv6 address must be exactly 16 bytes";
-		passert(srclen == sizeof(struct in6_addr));
-		*dst = address_from_in6_addr((const struct in6_addr *)src);
+		passert(sizeof_data == sizeof(struct in6_addr));
+		struct in6_addr in6; /* force alignment of data */
+		memcpy(&in6, data, sizeof_data);
+		*dst = address_from_in6_addr(&in6);
 		break;
 	default:
-		return "unknown address family in initaddr";
+		bad_case(afi->af);
 	}
 	return NULL;
 }

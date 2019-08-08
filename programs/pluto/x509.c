@@ -420,8 +420,7 @@ static void gntoid(struct id *id, const generalName_t *gn)
 		err_t ugh = NULL;
 
 		id->kind = afi->id_addr;
-		ugh = initaddr(gn->name.ptr, gn->name.len, afi->af,
-			&id->ip_addr);
+		ugh = hunk_to_address(gn->name, afi, &id->ip_addr);
 		if (ugh != NULL) {
 			libreswan_log(
 				"Warning: gntoid() failed to initaddr(): %s",

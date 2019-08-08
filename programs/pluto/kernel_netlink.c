@@ -82,6 +82,7 @@
 #include "ike_alg_integ.h"
 #include "ike_alg_encrypt.h"
 #include "ip_address.h"
+#include "ip_info.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -1826,8 +1827,6 @@ static void process_addr_chage(struct nlmsghdr *n)
 	struct ifaddrmsg *nl_msg = NLMSG_DATA(n);
 	struct rtattr *rta = IFLA_RTA(nl_msg);
 	size_t msg_size = IFA_PAYLOAD (n);
-	chunk_t local_addr = EMPTY_CHUNK;
-	chunk_t addr = EMPTY_CHUNK;
 	ip_address ip;
 	ipstr_buf ip_str;
 
@@ -1840,10 +1839,8 @@ static void process_addr_chage(struct nlmsghdr *n)
 
 		switch (rta->rta_type) {
 		case IFA_LOCAL:
-			local_addr.ptr = RTA_DATA(rta);
-			local_addr.len = RTA_PAYLOAD(rta);
-			ugh = initaddr(local_addr.ptr, local_addr.len,
-					nl_msg->ifa_family, &ip);
+			ugh = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
+					      aftoinfo(nl_msg->ifa_family), &ip);
 			if (ugh != NULL) {
 				libreswan_log("ERROR IFA_LOCAL invalid %s", ugh);
 			} else  {
@@ -1855,9 +1852,8 @@ static void process_addr_chage(struct nlmsghdr *n)
 			break;
 
 		case IFA_ADDRESS:
-			addr.ptr = RTA_DATA(rta);
-			addr.len = RTA_PAYLOAD(rta);
-			ugh = initaddr(addr.ptr, addr.len, nl_msg->ifa_family, &ip);
+			ugh = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
+					      aftoinfo(nl_msg->ifa_family), &ip);
 			if (ugh != NULL) {
 				libreswan_log("ERROR IFA_ADDRESS invalid %s",
 						ugh);
