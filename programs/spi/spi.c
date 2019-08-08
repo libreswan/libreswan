@@ -542,7 +542,6 @@ int main(int argc, char *argv[])
 	__u32 spi = 0;
 	int c;
 	ip_said said;
-	const char *error_s;
 	char ipsaid_txt[SATOT_BUF];
 
 	int outif = 0;
@@ -810,15 +809,17 @@ int main(int argc, char *argv[])
 					progname, optarg, edst_opt);
 				exit(1);
 			}
-			error_s = ttoaddr_num(optarg, 0, address_family, &edst);
-			if (error_s != NULL) {
-				if (error_s) {
+
+			{
+				err_t e = ttoaddr_num(optarg, 0, address_family, &edst);
+				if (e != NULL) {
 					fprintf(stderr,
 						"%s: Error, %s converting --edst argument:%s\n",
-						progname, error_s, optarg);
+						progname, e, optarg);
 					exit(1);
 				}
 			}
+
 			edst_opt = optarg;
 			if (debug) {
 				ipstr_buf b;
@@ -940,13 +941,17 @@ int main(int argc, char *argv[])
 					progname, optarg, spi_opt);
 				exit(1);
 			}
-			error_s = ttosa(optarg, 0, &said);
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting --sa argument:%s\n",
-					progname, error_s, optarg);
-				exit(1);
+
+			{
+				err_t e = ttosa(optarg, 0, &said);
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting --sa argument:%s\n",
+						progname, e, optarg);
+					exit(1);
+				}
 			}
+
 			if (debug) {
 				satot(&said, 0, ipsaid_txt,
 				      sizeof(ipsaid_txt));
@@ -1007,13 +1012,17 @@ int main(int argc, char *argv[])
 					progname, optarg, dst_opt);
 				exit(1);
 			}
-			error_s = ttoaddr_num(optarg, 0, address_family, &dst);
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting --dst argument:%s\n",
-					progname, error_s, optarg);
-				exit(1);
+
+			{
+				err_t e = ttoaddr_num(optarg, 0, address_family, &dst);
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting --dst argument:%s\n",
+						progname, e, optarg);
+					exit(1);
+				}
 			}
+
 			dst_opt = optarg;
 			if (debug) {
 				ipstr_buf b;
@@ -1081,13 +1090,17 @@ int main(int argc, char *argv[])
 					progname, optarg, src_opt);
 				exit(1);
 			}
-			error_s = ttoaddr_num(optarg, 0, address_family, &src);
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting --src argument:%s\n",
-					progname, error_s, optarg);
-				exit(1);
+
+			{
+				err_t e = ttoaddr_num(optarg, 0, address_family, &src);
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting --src argument:%s\n",
+						progname, e, optarg);
+					exit(1);
+				}
 			}
+
 			src_opt = optarg;
 			if (debug) {
 				ipstr_buf b;

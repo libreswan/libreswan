@@ -95,7 +95,6 @@ int main(int argc, char **argv)
 	int i, nspis;
 	int said_opt = 0;
 
-	const char *error_s = NULL;
 	int j;
 	struct said_af said_af_array[4];
 
@@ -230,12 +229,12 @@ int main(int argc, char **argv)
 			fprintf(stdout, "processing spi #%d.\n", i);
 
 		if (said_opt) {
-			error_s = ttosa((const char *)argv[i + 2], 0,
+			err_t e = ttosa((const char *)argv[i + 2], 0,
 					(ip_said*)&(said_af_array[i].said));
-			if (error_s != NULL) {
+			if (e != NULL) {
 				fprintf(stderr,
 					"%s: Error, %s converting --sa argument:%s\n",
-					progname, error_s, argv[i + 2]);
+					progname, e, argv[i + 2]);
 				exit(1);
 			}
 			said_af_array[i].af =
@@ -271,14 +270,14 @@ int main(int argc, char **argv)
 
 			/* IP address */
 			{
-				err_t error_s = ttoaddr(p[1], 0,
+				err_t e = ttoaddr(p[1], 0,
 						  af,
 						  &(said_af_array[i].said.dst));
 
-				if (error_s != NULL) {
+				if (e != NULL) {
 					fprintf(stderr,
 						"%s: Error, %s converting %dth address argument:%s\n",
-						progname, error_s, i, p[1]);
+						progname, e, i, p[1]);
 					exit(1);
 				}
 			}

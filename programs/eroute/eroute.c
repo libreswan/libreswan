@@ -136,7 +136,6 @@ int main(int argc, char **argv)
 {
 	unsigned long u;	/* for ttoulb */
 	int c;
-	const char *error_s;
 
 	int error = 0;
 
@@ -247,13 +246,17 @@ int main(int argc, char **argv)
 					progname, optarg, edst_opt);
 				exit(1);
 			}
-			error_s = ttoaddr(optarg, 0, said_af, &said.dst);
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting --edst argument:%s\n",
-					progname, error_s, optarg);
-				exit(1);
+
+			{
+				err_t e = ttoaddr(optarg, 0, said_af, &said.dst);
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting --edst argument:%s\n",
+						progname, e, optarg);
+					exit(1);
+				}
 			}
+
 			edst_opt = optarg;
 			break;
 		case 'h':
@@ -274,15 +277,18 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 
-			error_s = ttoulb(optarg, 0, 0, 0xFFFFFFFFul, &u);
-			if (error_s == NULL && u < 0x100)
-				error_s = "values less than 0x100 are reserved";
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Invalid SPI parameter \"%s\": %s\n",
-					progname, optarg, error_s);
-				exit(1);
+			{
+				err_t e = ttoulb(optarg, 0, 0, 0xFFFFFFFFul, &u);
+				if (e == NULL && u < 0x100)
+					e = "values less than 0x100 are reserved";
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Invalid SPI parameter \"%s\": %s\n",
+						progname, optarg, e);
+					exit(1);
+				}
 			}
+
 			said.spi = htonl(u);
 			spi_opt = optarg;
 			break;
@@ -347,13 +353,18 @@ int main(int argc, char **argv)
 					progname, optarg, said_af_opt);
 				exit(1);
 			}
-			error_s = ttosa(optarg, 0, &said);
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting --sa argument:%s\n",
-					progname, error_s, optarg);
-				exit(1);
-			} else if (ntohl(said.spi) < 0x100) {
+
+			{
+				err_t e = ttosa(optarg, 0, &said);
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting --sa argument:%s\n",
+						progname, e, optarg);
+					exit(1);
+				}
+			}
+
+			if (ntohl(said.spi) < 0x100) {
 				fprintf(stderr,
 					"%s: Illegal reserved spi: %s => 0x%x Must be larger than or equal to 0x100.\n",
 					progname, optarg, said.spi);
@@ -374,13 +385,17 @@ int main(int argc, char **argv)
 					progname, optarg, dst_opt);
 				exit(1);
 			}
-			error_s = ttosubnet(optarg, 0, eroute_af, &d_subnet);
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting --dst argument: %s\n",
-					progname, error_s, optarg);
-				exit(1);
+
+			{
+				err_t e = ttosubnet(optarg, 0, eroute_af, &d_subnet);
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting --dst argument: %s\n",
+						progname, e, optarg);
+					exit(1);
+				}
 			}
+
 			dst_opt = optarg;
 			break;
 		case 'S':
@@ -390,13 +405,17 @@ int main(int argc, char **argv)
 					progname, optarg, src_opt);
 				exit(1);
 			}
-			error_s = ttosubnet(optarg, 0, eroute_af, &s_subnet);
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting --src argument: %s\n",
-					progname, error_s, optarg);
-				exit(1);
+
+			{
+				err_t e = ttosubnet(optarg, 0, eroute_af, &s_subnet);
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting --src argument: %s\n",
+						progname, e, optarg);
+					exit(1);
+				}
 			}
+
 			src_opt = optarg;
 			break;
 		case 'P':
@@ -511,15 +530,15 @@ int main(int argc, char **argv)
 			action_type);
 
 	if (transport_proto_opt != 0) {
-		struct protoent * proto = getprotobyname(transport_proto_opt);
+		struct protoent *proto = getprotobyname(transport_proto_opt);
 		if (proto != 0) {
 			transport_proto = proto->p_proto;
 		} else {
-			error_s = ttoulb(optarg, 0, 0, 255, &u);
-			if (error_s != NULL) {
+			err_t e = ttoulb(optarg, 0, 0, 255, &u);
+			if (e != NULL) {
 				fprintf(stderr,
 					"%s: Invalid --transport-proto parameter \"%s\": %s\n",
-					progname, transport_proto_opt, error_s);
+					progname, transport_proto_opt, e);
 				exit(1);
 			}
 
@@ -541,15 +560,15 @@ int main(int argc, char **argv)
 	}
 
 	if (src_port_opt != NULL) {
-		struct servent * ent = getservbyname(src_port_opt, 0);
+		struct servent *ent = getservbyname(src_port_opt, 0);
 		if (ent != 0) {
 			src_port = ntohs(ent->s_port);
 		} else {
-			err_t error_s = ttoulb(optarg, 0, 0, 0xFFFF, &u);
-			if (error_s != NULL) {
+			err_t e = ttoulb(optarg, 0, 0, 0xFFFF, &u);
+			if (e != NULL) {
 				fprintf(stderr,
 					"%s: Invalid --src-port parameter \"%s\": %s\n",
-					progname, src_port_opt, error_s);
+					progname, src_port_opt, e);
 				exit(1);
 			}
 			src_port = u;
@@ -557,15 +576,15 @@ int main(int argc, char **argv)
 	}
 
 	if (dst_port_opt != NULL) {
-		struct servent * ent = getservbyname(dst_port_opt, 0);
+		struct servent *ent = getservbyname(dst_port_opt, 0);
 		if (ent != 0) {
 			dst_port = ntohs(ent->s_port);
 		} else {
-			err_t error_s = ttoulb(optarg, 0, 0, 0xFFFF, &u);
-			if (error_s != NULL) {
+			err_t e = ttoulb(optarg, 0, 0, 0xFFFF, &u);
+			if (e != NULL) {
 				fprintf(stderr,
 					"%s: Invalid --dst-port parameter \"%s\": %s\n",
-					progname, src_port_opt, error_s);
+					progname, src_port_opt, e);
 				exit(1);
 			}
 			dst_port = u;
