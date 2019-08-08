@@ -437,7 +437,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		libreswan_log("ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
-			      af->version);
+			      af->ip_version);
 		return true;
 	}
 
@@ -450,7 +450,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 	if (address_is_any(&ip)) {
 		address_buf ip_str;
 		libreswan_log("ERROR INTERNAL_IP%d_DNS %s is invalid",
-			      af->version, ipstr(&ip, &ip_str));
+			      af->ip_version, ipstr(&ip, &ip_str));
 		return false;
 	}
 
@@ -459,11 +459,11 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 		address_buf ip_buf;
 		const char *ip_str = ipstr(&ip, &ip_buf);
 		libreswan_log("received INTERNAL_IP%d_DNS %s",
-			      af->version, ip_str);
+			      af->ip_version, ip_str);
 		append_st_cfg_dns(st, ip_str);
 	} else {
 		libreswan_log("initiator INTERNAL_IP%d_DNS CP ignored",
-			      af->version);
+			      af->ip_version);
 	}
 
 	return true;
@@ -482,13 +482,13 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	if (address_is_any(&ip)) {
 		ipstr_buf ip_str;
 		libreswan_log("ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
-			      af->version, ipstr(&ip, &ip_str));
+			      af->ip_version, ipstr(&ip, &ip_str));
 		return false;
 	}
 
 	ipstr_buf ip_str;
 	libreswan_log("received INTERNAL_IP%d_ADDRESS %s%s",
-		      af->version, ipstr(&ip, &ip_str),
+		      af->ip_version, ipstr(&ip, &ip_str),
 		      *seen_an_address ? "; discarded" : "");
 
 
@@ -514,7 +514,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 			 * should we also check the host_srcip */
 			dbg("#%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this.client.addr %s. Will not add CAT iptable rules",
 			    st->st_serialno, c->name, c->instance_serial,
-			    af->version, ipstr(&ip, &ip_str));
+			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
 			c->spd.this.client.addr = ip;
 			c->spd.this.client.maskbits = af->mask_cnt;

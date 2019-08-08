@@ -217,7 +217,7 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 			return ugh;
 		}
 	} else {
-		if (gw_info.gw_identity_len < af->ia_sz) {
+		if (gw_info.gw_identity_len < af->ip_size) {
 			return "transferred GW Identity Length is too small for an IP address";
 		}
 		if (!pbs_in_address(redirect_ip, af, input_pbs, "REDIRECT address")) {

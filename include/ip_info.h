@@ -10,9 +10,9 @@
 struct ip_info {
 	int af; /* AF_INET or AF_INET6 */
 	const char *af_name;
-	int version; /* 4 or 6 */
-	size_t ia_sz;
-	size_t sa_sz;
+	int ip_version; /* 4 or 6 */
+	size_t ip_size; /* 4 or 16 */
+	size_t sockaddr_size; /* sizeof(sockaddr_in) | sizeof(sockaddr_in6)? */
 	int mask_cnt; /* 32 or 128 */
 	uint8_t id_addr, id_subnet, id_range;
 	const ip_subnet *none;  /* 0.0.0.0/32 or IPv6 equivalent */
