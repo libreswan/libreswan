@@ -1,6 +1,6 @@
-# restart ipsec
+# restarting ipsec service
 ipsec restart
-# give OE conns time to load
+# give OE policies time to load
 sleep 5
 # should be empty
 ipsec status |grep STATE_

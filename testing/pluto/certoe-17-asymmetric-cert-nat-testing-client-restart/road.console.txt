@@ -9,7 +9,7 @@ road #
 road #
  echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 road #
- ipsec start
+ ipsec restart
 Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
@@ -53,29 +53,21 @@ road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
- echo " restarting road"
- restarting road
+ echo "waiting for road to restart client cleanly"
+waiting for road to restart client cleanly
 road #
- # restart ipsec
+ # restarting ipsec service
 road #
  ipsec restart
 Redirecting to: [initsystem]
 road #
- # give OE conns time to load
+ # give OE policies time to load
 road #
  sleep 5
 road #
  # should be empty
 road #
  ipsec status |grep STATE_
-road #
- # should show established tunnel and no bare shunts
-road #
- ipsec whack --trafficstatus
-road #
- ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
 road #
  # trigger ping, this will be lost
 road #
