@@ -448,67 +448,6 @@ PK11SymKey *prf_key_from_bytes(const char *name, const struct prf_desc *prf,
 }
 
 /*
- * Concatenate two pieces of keying material creating a
- * new SYMKEY object.
- */
-
-PK11SymKey *concat_symkey_symkey(PK11SymKey *lhs, PK11SymKey *rhs)
-{
-	return merge_symkey_symkey("result", lhs, rhs,
-				   CKM_CONCATENATE_BASE_AND_KEY,
-				   PK11_GetMechanism(lhs));
-}
-
-PK11SymKey *concat_symkey_bytes(PK11SymKey *lhs, const void *rhs,
-				size_t sizeof_rhs)
-{
-	return merge_symkey_bytes("result", lhs, rhs, sizeof_rhs,
-				  CKM_CONCATENATE_BASE_AND_DATA,
-				  PK11_GetMechanism(lhs));
-}
-
-PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
-				PK11SymKey *rhs)
-{
-	/* copy the existing KEY's type (mechanism).  */
-	CK_MECHANISM_TYPE target = PK11_GetMechanism(rhs);
-	return merge_symkey_bytes("result", rhs, lhs, sizeof_lhs,
-				  CKM_CONCATENATE_DATA_AND_BASE,
-				  target);
-}
-
-chunk_t concat_chunk_symkey(const char *name, chunk_t lhs, PK11SymKey *rhs)
-{
-	chunk_t rhs_chunk = chunk_from_symkey(name, rhs);
-	chunk_t new = clone_chunk_chunk(lhs, rhs_chunk, name);
-	freeanychunk(rhs_chunk);
-	return new;
-}
-
-PK11SymKey *concat_symkey_chunk(PK11SymKey *lhs, chunk_t rhs)
-{
-	return concat_symkey_bytes(lhs, rhs.ptr, rhs.len);
-}
-
-PK11SymKey *concat_symkey_byte(PK11SymKey *lhs, uint8_t rhs)
-{
-	return concat_symkey_bytes(lhs, &rhs, sizeof(rhs));
-}
-
-chunk_t concat_chunk_bytes(const char *name, chunk_t lhs,
-			   const void *rhs, size_t sizeof_rhs)
-{
-	size_t len = lhs.len + sizeof_rhs;
-	chunk_t cat = {
-		.len = len,
-		.ptr = alloc_things(uint8_t, len, name),
-	};
-	memcpy(cat.ptr, lhs.ptr, lhs.len);
-	memcpy(cat.ptr + lhs.len, rhs, sizeof_rhs);
-	return cat;
-}
-
-/*
  * Append new keying material to an existing key; replace the existing
  * key with the result.
  *
@@ -517,7 +456,9 @@ chunk_t concat_chunk_bytes(const char *name, chunk_t lhs,
 
 void append_symkey_symkey(PK11SymKey **lhs, PK11SymKey *rhs)
 {
-	PK11SymKey *newkey = concat_symkey_symkey(*lhs, rhs);
+	PK11SymKey *newkey = merge_symkey_symkey("result", *lhs, rhs,
+						 CKM_CONCATENATE_BASE_AND_KEY,
+						 PK11_GetMechanism(*lhs));
 	release_symkey(__func__, "lhs", lhs);
 	*lhs = newkey;
 }
@@ -525,7 +466,9 @@ void append_symkey_symkey(PK11SymKey **lhs, PK11SymKey *rhs)
 void append_symkey_bytes(PK11SymKey **lhs, const void *rhs,
 			 size_t sizeof_rhs)
 {
-	PK11SymKey *newkey = concat_symkey_bytes(*lhs, rhs, sizeof_rhs);
+	PK11SymKey *newkey = merge_symkey_bytes("result", *lhs, rhs, sizeof_rhs,
+						CKM_CONCATENATE_BASE_AND_DATA,
+						PK11_GetMechanism(*lhs));
 	release_symkey(__func__, "lhs", lhs);
 	*lhs = newkey;
 }
@@ -533,7 +476,10 @@ void append_symkey_bytes(PK11SymKey **lhs, const void *rhs,
 void append_bytes_symkey(const void *lhs, size_t sizeof_lhs,
 			 PK11SymKey **rhs)
 {
-	PK11SymKey *newkey = concat_bytes_symkey(lhs, sizeof_lhs, *rhs);
+	/* copy the existing KEY's type (mechanism).  */
+	PK11SymKey *newkey = merge_symkey_bytes("result", *rhs, lhs, sizeof_lhs,
+						CKM_CONCATENATE_DATA_AND_BASE,
+						PK11_GetMechanism(*rhs));
 	release_symkey(__func__, "rhs", rhs);
 	*rhs = newkey;
 }
@@ -558,14 +504,19 @@ void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs)
 void append_chunk_bytes(const char *name, chunk_t *lhs,
 			const void *rhs, size_t sizeof_rhs)
 {
-	chunk_t new = concat_chunk_bytes(name, *lhs, rhs, sizeof_rhs);
+	size_t len = lhs->len + sizeof_rhs;
+	chunk_t new = alloc_chunk(len, name);
+	memcpy(new.ptr, lhs->ptr, lhs->len);
+	memcpy(new.ptr + lhs->len, rhs, sizeof_rhs);
 	freeanychunk(*lhs);
 	*lhs = new;
 }
 
 void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs)
 {
-	chunk_t new = concat_chunk_symkey(name, *lhs, rhs);
+	chunk_t rhs_chunk = chunk_from_symkey(name, rhs);
+	chunk_t new = clone_chunk_chunk(*lhs, rhs_chunk, name);
+	freeanychunk(rhs_chunk);
 	freeanychunk(*lhs);
 	*lhs = new;
 }

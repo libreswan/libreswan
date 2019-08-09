@@ -186,7 +186,9 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 		data = symkey_from_chunk("data", Ni);
 		append_symkey_chunk(&data, Nr);
 	} else {
-		data = concat_symkey_chunk(new_dh_secret, Ni);
+		/* make a local "readonly copy" and manipulate that */
+		data = reference_symkey("prf", "data", new_dh_secret);
+		append_symkey_chunk(&data, Ni);
 		append_symkey_chunk(&data, Nr);
 	}
 	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,

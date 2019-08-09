@@ -53,23 +53,8 @@ PK11SymKey *reference_symkey(const char *prefix, const char *name, PK11SymKey *k
 size_t sizeof_symkey(PK11SymKey *key);
 
 /*
- * Concatenate two pieces of keying material creating a
- * new SYMKEY object.
- */
-PK11SymKey *concat_symkey_symkey(PK11SymKey *lhs, PK11SymKey *rhs);
-PK11SymKey *concat_symkey_bytes(PK11SymKey *lhs, const void *rhs,
-				size_t sizeof_rhs);
-PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
-				PK11SymKey *rhs);
-PK11SymKey *concat_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
-PK11SymKey *concat_symkey_byte(PK11SymKey *lhs, uint8_t rhs);
-chunk_t concat_chunk_symkey(const char *name, chunk_t lhs, PK11SymKey *rhs);
-chunk_t concat_chunk_bytes(const char *name, chunk_t lhs,
-			   const void *rhs, size_t sizeof_rhs);
-
-/*
- * Append new keying material to an existing key; replace the existing
- * key with the result.
+ * Append new keying material to an existing key forming a new key;
+ * unreference the old key, replacing it with the new one.
  *
  * Use this to chain a series of concat operations.
  */

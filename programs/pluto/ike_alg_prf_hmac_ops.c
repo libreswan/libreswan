@@ -33,15 +33,6 @@ struct prf_context {
 static void prf_update(struct prf_context *prf);
 
 /*
- * Update (replace) KEY.  PK11SymKey is reference counted.
- */
-static void replace_key(struct prf_context *prf, PK11SymKey *key)
-{
-	release_symkey(prf->name, "key", &prf->key);
-	prf->key = key;
-}
-
-/*
  * Create a PRF ready to consume data.
  */
 
@@ -88,21 +79,23 @@ static void prf_update(struct prf_context *prf)
 
 	passert(prf->desc->hasher->hash_block_size <= MAX_HMAC_BLOCKSIZE);
 
-	/* If the key is too big, re-hash it down to size. */
 	if (sizeof_symkey(prf->key) > prf->desc->hasher->hash_block_size) {
-		replace_key(prf, crypt_hash_symkey("prf hash to size:",
-						   prf->desc->hasher,
-						   "raw key", prf->key));
-	}
-
-	/* If the key is too small, pad it. */
-	if (sizeof_symkey(prf->key) < prf->desc->hasher->hash_block_size) {
-		/* pad it to block_size. */
+		/*
+		 * The key is too big, hash it down to size using the
+		 * HASH that the PRF's HMAC is built from.
+		 */
+		PK11SymKey *new = crypt_hash_symkey("prf hash to size:",
+						    prf->desc->hasher,
+						    "raw key", prf->key);
+		release_symkey(prf->name, "key", &prf->key);
+		prf->key = new;
+	} else if (sizeof_symkey(prf->key) < prf->desc->hasher->hash_block_size) {
+		/*
+		 * The key is too small, pad it with zeros to block
+		 * size.
+		 */
 		static /*const*/ unsigned char z[MAX_HMAC_BLOCKSIZE] = { 0 };
-		chunk_t hmac_pad_prf = { z,
-					 prf->desc->hasher->hash_block_size - sizeof_symkey(prf->key) };
-
-		replace_key(prf, concat_symkey_chunk(prf->key, hmac_pad_prf));
+		append_symkey_bytes(&prf->key, z, prf->desc->hasher->hash_block_size - sizeof_symkey(prf->key));
 	}
 	passert(prf->key != NULL);
 

@@ -195,7 +195,9 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		 * right pad with zeros
 		 */
 		chunk_t zeros = alloc_chunk(prf_desc->prf_key_size - dkey_sz, "zeros");
-		PK11SymKey *tmp = concat_symkey_chunk(draft_key, zeros);
+		/* make a local "readonly copy" and manipulate that */
+		PK11SymKey *tmp = reference_symkey("xcbc", "tmp", draft_key);
+		append_symkey_chunk(&tmp, zeros);
 		freeanychunk(zeros);
 		key = prf_key_from_symkey_bytes(name, prf_desc,
 						0, prf_desc->prf_key_size, tmp);
