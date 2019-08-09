@@ -127,7 +127,7 @@ bool samesubnettype(a, b)
 const ip_subnet * a;
 const ip_subnet *b;
 {
-	return (subnettypeof(a) == subnettypeof(b)) ? 1 : 0;
+	return subnet_info(a) == subnet_info(b);
 }
 
 /*
@@ -137,8 +137,8 @@ bool addrinsubnet(a, s)
 const ip_address * a;
 const ip_subnet *s;
 {
-	if (addrtypeof(a) != subnettypeof(s))
-		return 0;
+	if (address_info(a) != subnet_info(s))
+		return false;
 
 	if (!samenbits(a, &s->addr, s->maskbits))
 		return 0;
@@ -153,8 +153,8 @@ bool subnetinsubnet(a, b)
 const ip_subnet * a;
 const ip_subnet *b;
 {
-	if (subnettypeof(a) != subnettypeof(b))
-		return 0;
+	if (subnet_info(a) != subnet_info(b))
+		return false;
 
 	if (a->maskbits < b->maskbits)	/* a is bigger than b */
 		return 0;

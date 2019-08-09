@@ -147,7 +147,7 @@ static bool emit_subnet_id(const ip_subnet *net,
 			   uint16_t port,
 			   pb_stream *outs)
 {
-	const struct ip_info *ai = aftoinfo(subnettypeof(net));
+	const struct ip_info *ai = subnet_info(net);
 	const bool usehost = net->maskbits == ai->mask_cnt;
 	pb_stream id_pbs;
 

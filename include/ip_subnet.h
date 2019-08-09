@@ -90,7 +90,6 @@ extern err_t addrtosubnet(const ip_address *addr, ip_subnet *dst);
 /* misc. conversions and related */
 extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
 		    ip_subnet *dst);
-extern int subnettypeof(const ip_subnet *src);
 
 /* tests */
 extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);

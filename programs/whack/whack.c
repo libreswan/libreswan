@@ -55,6 +55,7 @@
 #include "defs.h"
 #include "whack.h"
 #include "ip_address.h"
+#include "ip_info.h"
 
 #include "ipsecconf/confread.h" /* for DEFAULT_UPDOWN */
 #include <net/if.h> /* for IFNAMSIZ */
@@ -854,7 +855,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 		diag("address family of host inconsistent");
 
 	if (this->has_client) {
-		if (taf != subnettypeof(&this->client))
+		if (aftoinfo(taf) != subnet_info(&this->client))
 			diag("address family of client subnet inconsistent");
 	} else {
 		/* fill in anyaddr-anyaddr as (missing) client subnet */
@@ -2360,8 +2361,8 @@ int main(int argc, char **argv)
 		check_end(&msg.right, &msg.left,
 			  msg.addr_family, msg.tunnel_addr_family);
 
-		if (subnettypeof(&msg.left.client) !=
-		    subnettypeof(&msg.right.client))
+		if (subnet_info(&msg.left.client) !=
+		    subnet_info(&msg.right.client))
 			diag("endpoints clash: one is IPv4 and the other is IPv6");
 
 		if (msg.policy & POLICY_AUTH_NEVER) {

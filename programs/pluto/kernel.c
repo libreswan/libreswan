@@ -183,7 +183,7 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 
 	bs->said.proto = SA_INT;
 	bs->said.spi = htonl(shunt_spi);
-	bs->said.dst = address_any(subnettypeof(ours));
+	bs->said.dst = address_any(subnet_info(ours)->af);
 
 	bs->count = 0;
 	bs->last_activity = mononow();
@@ -3553,7 +3553,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 		bs->said.proto = SA_INT;
 		bs->said.spi = htonl(negotiation_shunt);
-		bs->said.dst = address_any(subnettypeof(&sr->this.client));
+		bs->said.dst = address_any(subnet_info(&sr->this.client)->af);
 
 		bs->count = 0;
 		bs->last_activity = mononow();

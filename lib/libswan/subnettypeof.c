@@ -17,15 +17,6 @@
 #include "ip_subnet.h"
 
 /*
- * subnettypeof - get the address type of an ip_subnet
- */
-int subnettypeof(src)
-const ip_subnet * src;
-{
-	return src->addr.u.v4.sin_family;
-}
-
-/*
  * masktocount - convert a mask, expressed as an address, to a bit count
  */
 int	/* -1 if not valid mask */

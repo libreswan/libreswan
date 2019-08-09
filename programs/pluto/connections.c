@@ -849,7 +849,7 @@ static bool check_connection_end(const struct whack_end *this,
 	}
 
 	if (!isanyaddr(&this->client.addr) && !isanyaddr(&that->client.addr)) {
-		if (subnettypeof(&this->client) != subnettypeof(&that->client)) {
+		if (subnet_info(&this->client) != subnet_info(&that->client)) {
 			/*
 			 * !!! overloaded use of RC_CLASH
 			 */
@@ -2014,8 +2014,7 @@ struct connection *rw_instantiate(struct connection *c,
 		 * from trying to use this connection to get to a particular
 		 * client
 		 */
-		d->spd.that.client = *aftoinfo(subnettypeof(
-						&d->spd.that.client))->none;
+		d->spd.that.client = *subnet_info(&d->spd.that.client)->none;
 	}
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
