@@ -136,6 +136,10 @@ PK11SymKey *crypt_hash_symkey(const char *name, const struct hash_desc *hash_des
 	DBGF(DBG_CRYPT, "%s hash %s %s-key@%p (size %zu)",
 	     name, hash_desc->common.name,
 	     symkey_name, symkey, sizeof_symkey(symkey));
-	return hash_desc->hash_ops->symkey_to_symkey(hash_desc, name,
-						     symkey_name, symkey);
+	struct crypt_hash *hash = crypt_hash_init(name, hash_desc);
+	crypt_hash_digest_symkey(hash, symkey_name, symkey);
+	chunk_t out = crypt_hash_final_chunk(&hash);
+	PK11SymKey *key = symkey_from_chunk(name, out);
+	freeanychunk(out);
+	return key;
 }

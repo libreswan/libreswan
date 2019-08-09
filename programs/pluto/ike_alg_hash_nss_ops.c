@@ -79,33 +79,6 @@ static void final_bytes(struct hash_context **hashp,
 	*hashp = NULL;
 }
 
-static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
-				    const char *prefix,
-				    const char *symkey_name, PK11SymKey *symkey)
-{
-	CK_MECHANISM_TYPE derive = hash_desc->nss.derivation_mechanism;
-	SECItem *param = NULL;
-	CK_MECHANISM_TYPE target = CKM_CONCATENATE_BASE_AND_KEY; /* bogus */
-	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
-	int key_size = 0;
-
-	if DBGP(DBG_CRYPT) {
-		LSWLOG_DEBUG(buf) {
-			lswlogf(buf, "%s hash(%s) symkey %s(%p) to symkey - derive ",
-				prefix, hash_desc->common.name,
-				symkey_name, symkey);
-			lswlog_nss_ckm(buf, derive);
-		}
-		DBG_symkey(prefix, symkey_name, symkey);
-	}
-
-	PK11SymKey *result = crypt_derive(symkey, derive, param,
-					  prefix/*target_name*/, target,
-					  operation, key_size, /*flags*/0, HERE);
-
-	return result;
-}
-
 static void nss_hash_check(const struct hash_desc *hash)
 {
 	const struct ike_alg *alg = &hash->common;
@@ -120,5 +93,4 @@ const struct hash_ops ike_alg_hash_nss_ops = {
 	digest_symkey,
 	digest_bytes,
 	final_bytes,
-	symkey_to_symkey,
 };

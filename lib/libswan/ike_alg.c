@@ -427,7 +427,6 @@ static void hash_desc_check(const struct ike_alg *alg)
 		pexpect_ike_alg(alg, hash->hash_ops->digest_symkey != NULL);
 		pexpect_ike_alg(alg, hash->hash_ops->digest_bytes != NULL);
 		pexpect_ike_alg(alg, hash->hash_ops->final_bytes != NULL);
-		pexpect_ike_alg(alg, hash->hash_ops->symkey_to_symkey != NULL);
 		hash->hash_ops->check(hash);
 	}
 }

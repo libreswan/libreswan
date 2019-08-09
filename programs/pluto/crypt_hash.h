@@ -54,7 +54,7 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 chunk_t crypt_hash_final_chunk(struct crypt_hash **hashp);
 
 /*
- * FIPS short cut for symkeys.
+ * Short cut for symkeys.
  */
 PK11SymKey *crypt_hash_symkey(const char *hash_name,
 			      const struct hash_desc *hash_desc,

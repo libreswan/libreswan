@@ -550,10 +550,6 @@ struct hash_ops {
 			     const uint8_t *bytes, size_t sizeof_bytes);
 	void (*final_bytes)(struct hash_context**,
 			    uint8_t *bytes, size_t sizeof_bytes);
-	/* FIPS short cuts */
-	PK11SymKey *(*symkey_to_symkey)(const struct hash_desc *hash_desc,
-					const char *name,
-					const char *symkey_name, PK11SymKey *symkey);
 };
 
 /*
