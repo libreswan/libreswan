@@ -23,7 +23,7 @@ east #
  echo "initdone"
 initdone
 east #
- # A tunnel should have established with non-zero byte counters
+ # Two tunnels should have established with non-zero byte counters. East will have both of the road tunnels established
 east #
  ipsec whack --trafficstatus
 006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='ID_NULL', lease=10.0.10.1/32
