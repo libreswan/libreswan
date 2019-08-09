@@ -33,7 +33,7 @@ installsystemdservice: local-base | $(UNITDIR)
 	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(UNITFILE) $(UNITDIR)
 	@if test $(UNITDIR) = $(SYSTEMUNITDIR) ; then \
 		echo running: systemctl --system daemon-reload; \
-		systemctl --system daemon-reload ; \
+		systemctl --system daemon-reload || echo "failed restart" ; \
 	fi
 	@if test -f $(DESTDIR)/$(FINALLIBEXECDIR)/portexcludes; then \
 		echo fixing port excludes ; \

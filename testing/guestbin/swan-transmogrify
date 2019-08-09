@@ -90,10 +90,9 @@ shutil.copyfile(sysctl, "/etc/sysctl.conf")
 output += "\n" + subprocess.getoutput("sysctl -q -p")
 
 # and resolv.conf
-resolv = "/testing/baseconfigs/%s/etc/resolv.conf"
-if not os.path.isfile(resolv):
-    resolv = "/testing/baseconfigs/%s/etc/resolv.conf" % hostname
-shutil.copyfile(resolv, "/etc/resolv.conf")
+resolv = "/testing/baseconfigs/%s/etc/resolv.conf" % hostname
+if os.path.isfile(resolv):
+    shutil.copyfile(resolv, "/etc/resolv.conf")
 
 # and bind config - can be run on all hosts (to prevent network DNS
 # packets) as well as on nic
@@ -121,8 +120,9 @@ output += "\n" + \
     subprocess.getoutput("cp /testing/baseconfigs/all/root/.ssh/* /root/.ssh/")
 output += "\n" + subprocess.getoutput("chmod 600 /etc/ssh/*key* /root/.ssh/*")
 
-shutil.copyfile("/testing/baseconfigs/%s/etc/hostname" %
-                hostname, "/etc/hostname")
+hostname_file = "/testing/baseconfigs/%s/etc/hostname" % hostname
+if os.path.isfile(hostname_file):
+    shutil.copyfile(hostname_file, "/etc/hostname")
 
 if GUESTOS == "redhat":
 
@@ -136,41 +136,43 @@ if GUESTOS == "redhat":
             dst="/etc/sysconfig/%s" % os.path.basename(fname)
             copy_if_diff(fname, dst)
 
-    if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
-        # this system need systemd-network files
-        ifaces = glob.glob("/testing/baseconfigs/%s/etc/systemd/network/*" % hostname)
-        dst = "/etc/systemd/network"
-        routes = []
-        # F30 and later we use this
-        network_service  = "systemd-networkd"
-    else:
-        src = "/testing/baseconfigs/%s/etc/sysconfig/network" % hostname
-        dst = "/etc/sysconfig/network"
-        copy_if_diff(src, dst)
-        ifaces = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*" % hostname)
-        routes = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*" % hostname)
-        dst = "/etc/sysconfig/network-scripts/"
+    if os.path.isdir("/testing/baseconfigs/%s" % hostname):
+        if os.path.isfile("/etc/sysconfig/network-scripts/README.libreswan"):
+            # this system need systemd-network files
+            ifaces = glob.glob("/testing/baseconfigs/%s/etc/systemd/network/*" % hostname)
+            dst = "/etc/systemd/network"
+            routes = []
+            # F30 and later we use this
+            network_service  = "systemd-networkd"
+        else:
+            src = "/testing/baseconfigs/%s/etc/sysconfig/network" % hostname
+            dst = "/etc/sysconfig/network"
+            copy_if_diff(src, dst)
+            ifaces = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*" % hostname)
+            routes = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*" % hostname)
+            dst = "/etc/sysconfig/network-scripts/"
 
-    for entry in (ifaces + routes):
-        dst_local = dst + '/' + os.path.basename(entry)
-        copy_if_diff(entry, dst_local)
+        for entry in (ifaces + routes):
+            dst_local = dst + '/' + os.path.basename(entry)
+            copy_if_diff(entry, dst_local)
 
-        if is_docker:
-            iffile = os.path.basename(entry)
-            cmd = "sed -i /HWADDR/d /etc/sysconfig/network-scripts/%s" % (
-                iffile)
-            print(("cmd %s" % cmd))
-            subprocess.getoutput(cmd)
+            if is_docker:
+                iffile = os.path.basename(entry)
+                cmd = "sed -i /HWADDR/d /etc/sysconfig/network-scripts/%s" % (
+                    iffile)
+                print(("cmd %s" % cmd))
+                subprocess.getoutput(cmd)
 
     # SElinux fixup
     output += "\n" + subprocess.getoutput("restorecon -R /etc/ /root/.ssh")
     output += "\n" + \
         subprocess.getoutput("chcon -R --reference /var/log /testing/pluto")
 
-    if os.path.isfile("/usr/bin/systemctl"):
-        output += "\n" + subprocess.getoutput("systemctl restart %s" % network_service)
-    else:
-       output += "\n" + subprocess.getoutput("service network restart")
+    if os.path.isdir("/testing/baseconfigs/%s" % hostname):
+        if os.path.isfile("/usr/bin/systemctl"):
+            output += "\n" + subprocess.getoutput("systemctl restart %s" % network_service)
+        else:
+           output += "\n" + subprocess.getoutput("service network restart")
 
     # get rid of damn cp/mv/rm aliases for root
 

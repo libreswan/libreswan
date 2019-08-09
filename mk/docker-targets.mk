@@ -9,7 +9,7 @@
 # The variables above could be set from command line.
 #
 
-DOCKER_CMD ?= sudo docker
+DOCKER_CMD ?= sudo podman
 D ?= testing/docker
 
 DI_T ?= swanbase 	#docker image tag
@@ -99,11 +99,16 @@ use_unbound_event_h_copy:
 # end  of Distribution tweaks
 #
 
+.PHONY: install-testing-rpm-dep
+install-testing-rpm-dep: install--rpm-dep
+	$(if $(KVM_INSTALL_PACKAGES), $(KVM_PACKAGE_INSTALL) $(KVM_INSTALL_PACKAGES))
+	$(if $(KVM_UPGRADE_PACKAGES), $(KVM_PACKAGE_UPGRADE) $(KVM_UPGRADE_PACKAGES))
+
 .PHONY: install-rpm-dep
 RUN_RPMS = $$(dnf deplist $(EXCLUDE_RPM_ARCH) libreswan | awk '/provider:/ {print $$2}' | sort -u)
 install-rpm-dep:
-	$(if $(KVM_PACKAGES), $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
-	$(if $(KVM_PACKAGES), $(KVM_PACKAGE_UPGRADE) $(KVM_PACKAGES))
+	$(if $(KVM_INSTALL_PACKAGES), $(KVM_PACKAGE_INSTALL) $(KVM_INSTALL_PACKAGES))
+	$(if $(KVM_UPGRADE_PACKAGES), $(KVM_PACKAGE_UPGRADE) $(KVM_UPGRADE_PACKAGES))
 	dnf builddep -y libreswan
 	dnf install -y \@development-tools
 	dnf install -y --skip-broken $(RUN_RPMS)
@@ -158,7 +163,7 @@ travis-ubuntu-xenial: ubuntu-xenial-packages
 
 .PHONY: docker-build
 docker-build: dockerfile
-	$(DOCKER_CMD) build -t $(DI_T) -f $(DOCKERFILE) .
+	$(DOCKER_CMD) build -t $(DI_T) --volume /home/build/libreswan:/home/build/libreswan -f $(DOCKERFILE) .
 
 .PHONY: docker-ssh-image
 docker-ssh-image: DOCKERFILE_SSH = $(D)/Dockerfile-swan-ssh
