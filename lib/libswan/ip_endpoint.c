@@ -18,6 +18,7 @@
 #include "ip_endpoint.h"
 #include "constants.h"		/* for memeq() */
 #include "ip_info.h"
+#include "lswlog.h"		/* for bad_case() */
 
 ip_endpoint endpoint(const ip_address *address, int port)
 {
@@ -97,11 +98,6 @@ ip_endpoint set_endpoint_port(const ip_endpoint *address, int port)
 	return hsetportof(port, *address);
 }
 
-int endpoint_type(const ip_endpoint *endpoint)
-{
-	return addrtypeof(endpoint);
-}
-
 const struct ip_info *endpoint_info(const ip_endpoint *endpoint)
 {
 #ifdef ENDPOINT_ADDRESS_PORT
@@ -137,9 +133,14 @@ static void format_endpoint(jambuf_t *buf, bool sensitive,
 	}
 	ip_address address = endpoint_address(endpoint);
 	int port = endpoint_port(endpoint);
-	int type = endpoint_type(endpoint);
+	const struct ip_info *afi = endpoint_info(endpoint);
 
-	switch (type) {
+	if (afi == NULL) {
+		jam(buf, "<unspecified:>");
+		return;
+	}
+
+	switch (afi->af) {
 	case AF_INET: /* N.N.N.N[:PORT] */
 		jam_address(buf, &address);
 		if (port > 0) {
@@ -156,12 +157,8 @@ static void format_endpoint(jambuf_t *buf, bool sensitive,
 			jam_address(buf, &address);
 		}
 		break;
-	case AF_UNSPEC:
-		jam(buf, "<unspecified:>");
-		return;
 	default:
-		jam(buf, "<invalid:>");
-		return;
+		bad_case(afi->af);
 	}
 }
 

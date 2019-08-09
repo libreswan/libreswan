@@ -2678,7 +2678,7 @@ void update_ike_endpoints(struct ike_sa *ike,
 bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
-	int af = endpoint_type(&md->iface->local_endpoint);
+	const struct ip_info *afi = endpoint_info(&md->iface->local_endpoint);
 
 	/*
 	 * AA_201705 is this the right way to find Child SA(s)?
@@ -2689,7 +2689,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	struct child_sa *child = child_sa_by_serialno(c->newest_ipsec_sa);
 
 	/* check for all conditions before updating IPsec SA's */
-	if (af != addrtypeof(&c->spd.that.host_addr)) {
+	if (afi != address_info(&c->spd.that.host_addr)) {
 		libreswan_log("MOBIKE: AF change switching between v4 and v6 not supported");
 		return false;
 	}
