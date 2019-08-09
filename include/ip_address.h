@@ -49,7 +49,7 @@ typedef struct {
 	 * (sinin_port - use ip_endpoint).  So much for an immutable
 	 * abstraction.
 	 */
-	const struct ip_info *info; /* descriminator */
+	const struct ip_info *info; /* discriminator */
 	const union {
 		struct in_addr in;
 		struct in6_addr in6;
