@@ -27,4 +27,4 @@ RUN echo "Do not add files here.  networkig is handled by systemd-networkd in\n/
 RUN ls
 RUN cd /home/build/libreswan; ls; make install-rpm-dep && cd /
 RUN rm -fr /etc/sysconfig/network-scripts/ifcfg-ens3
-RUN /home/build/libreswan/testing/guestbin/swan-transmogrify
+# RUN /home/build/libreswan/testing/guestbin/swan-transmogrify
