@@ -11,7 +11,7 @@ RUN ssh-keygen -P '' -b 2048 -t rsa -f /etc/ssh/ssh_host_key
 ADD testing/baseconfigs/all/root/.ssh/authorized_keys /root/.ssh/authorized_keys
 RUN chmod 400 /root/.ssh/authorized_keys
 RUN chown -R root:root /root/.ssh
-RUN systemctl disable sshd
+# RUN systemctl disable sshd
 RUN sed -i 's/UsePAM\syes/UsePAM no/' /etc/ssh/sshd_config
 RUN sed -i '/UseDNS/d' /etc/ssh/sshd_config
 RUN echo "UseDNS no" >> /etc/ssh/sshd_config
