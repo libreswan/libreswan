@@ -2,7 +2,9 @@
 # MAINTAINER "Antony Antony" <antony@phenome.org>
 # ENV container docker
 RUN dnf -y update
-RUN mkdir -p /home/build/libreswan
+# RUN mkdir -p /home/build/libreswan
+RUN mkdir -p /home/build/
+COPY . /home/build/libreswan
 RUN dnf -y install systemd; \
 (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
 rm -f /lib/systemd/system/multi-user.target.wants/*;\

@@ -163,7 +163,9 @@ travis-ubuntu-xenial: ubuntu-xenial-packages
 
 .PHONY: docker-build
 docker-build: dockerfile
-	$(DOCKER_CMD) build -t $(DI_T) --volume /home/build/libreswan:/home/build/libreswan -f $(DOCKERFILE) .
+	# --volume is only in podman
+	# $(DOCKER_CMD) build -t $(DI_T) --volume /home/build/libreswan:/home/build/libreswan -f $(DOCKERFILE) .
+	$(DOCKER_CMD) build -t $(DI_T) -f $(DOCKERFILE) .
 
 .PHONY: docker-ssh-image
 docker-ssh-image: DOCKERFILE_SSH = $(D)/Dockerfile-swan-ssh
