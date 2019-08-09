@@ -20,6 +20,3 @@ RUN echo "StrictModes no" >> /etc/ssh/sshd_config
 ADD testing/docker/bash_profile /root/.bash_profile_docker
 RUN cat /root/.bash_profile_docker >> /root/.bashrc; rm /root/.bash_profile_docker
 RUN ln -s /home/build/libreswan/testing /testing
-RUN cd /home/build/libreswan; ls; make install-testing-rpm-dep  base install-base && cd /
-#RUN /home/build/libreswan/testing/guestbin/swan-transmogrify 2>&1 /var/log/swan-transmogrify.txt
-RUN /home/build/libreswan/testing/guestbin/swan-transmogrify
