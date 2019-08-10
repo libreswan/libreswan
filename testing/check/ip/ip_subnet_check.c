@@ -128,6 +128,8 @@ static void check_str_subnet(void)
 			FAIL_IN("ttosubnet succeeded unexpectedly");
 		}
 
+		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+
 		subnet_buf buf;
 		const char *out = str_subnet(&s, &buf);
 		if (!streq(t->out, out)) {
@@ -173,6 +175,8 @@ static void check_subnet_mashup(void)
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
 
+		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+
 		address_buf buf;
 		const char *out;
 
@@ -189,6 +193,7 @@ static void check_subnet_mashup(void)
 			FAIL_IN("subnet_floor() returned '%s', expected '%s'",
 				out, t->floor);
 		}
+		CHECK_TYPE(FAIL_IN, address_type(&floor), t->family);
 
 		ip_address ceiling = subnet_ceiling(&s);
 		out = str_address(&ceiling, &buf);
@@ -196,6 +201,7 @@ static void check_subnet_mashup(void)
 			FAIL_IN("subnet_ceiling() returned '%s', expected '%s'",
 				out, t->ceiling);
 		}
+		CHECK_TYPE(FAIL_IN, address_type(&ceiling), t->family);
 	}
 }
 

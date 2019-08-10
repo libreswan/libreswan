@@ -54,6 +54,7 @@ static void check_str_endpoint(void)
 			continue;
 		}
 		ip_endpoint e = endpoint(&a, 65535);
+		CHECK_TYPE(FAIL_IN, endpoint_type(&a), t->family);
 
 		/* now convert it back */
 		endpoint_buf buf;
@@ -129,6 +130,7 @@ static void check_sockaddr_as_endpoint(void)
 				FAIL_IN("sockaddr_as_endpoint() returned error '%s', expecting '%s'", err, t->err);
 			}
 		}
+		CHECK_TYPE(FAIL_IN, endpoint_type(&endpoint), t->err == NULL ? t->family : 0);
 
 		/* now convert it back */
 		endpoint_buf buf;
