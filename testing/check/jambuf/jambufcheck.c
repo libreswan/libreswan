@@ -171,7 +171,9 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_jambuf("0123456...", false, "0123456789", "-", NULL);
 	check_jambuf("0123456...", false, "0123456789", "-", "", NULL);
 	check_jambuf("0123456...", false, "0123456789", "", "-", NULL);
+
 	if (fails > 0) {
+		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);
 		return 1;
 	} else {
 		return 0;

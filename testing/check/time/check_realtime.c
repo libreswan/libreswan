@@ -44,7 +44,7 @@ void check_realtime(void)
 		snprintf(what, sizeof(what), "realtime(%jd) - realtime(%jd) = %s", t->l, t->r, t->diff);
 		if (strcmp(str, t->diff) != 0) {
 			fprintf(stderr, "FAIL: %s vs %s\n", what, str);
-			fail++;
+			fails++;
 		} else {
 			printf("%s\n", what);
 		}

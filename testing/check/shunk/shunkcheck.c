@@ -263,7 +263,9 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	shunk_null_empty_check();
 	shunk_slice_check();
 	shunk_token_check();
+
 	if (fails > 0) {
+		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);
 		return 1;
 	} else {
 		return 0;

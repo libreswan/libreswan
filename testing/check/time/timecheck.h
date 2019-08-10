@@ -17,7 +17,7 @@
 #ifndef TIMECHECK_H
 #define TIMECHECK_H
 
-extern int fail;
+extern int fails;
 
 void check_deltatime(void);
 void check_monotime(void);

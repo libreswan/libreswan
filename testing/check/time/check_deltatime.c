@@ -41,7 +41,7 @@ void check_deltatime(void)
 		snprintf(what, sizeof(what), "str_deltatime(%jdms) == %s", t->ms, t->str);
 		if (strcmp(str, t->str) != 0) {
 			fprintf(stderr, "FAIL: %s vs %s\n", what, str);
-			fail++;
+			fails++;
 		} else {
 			printf("%s\n", what);
 		}
@@ -64,7 +64,7 @@ void check_deltatime(void)
 		snprintf(what, sizeof(what), "str_deltatime(deltatime_max(%jdms, %jdms)) == %s", t->lms, t->rms, t->str);
 		if (strcmp(str, t->str) != 0) {
 			fprintf(stderr, "FAIL: %s vs %s\n", what, str);
-			fail++;
+			fails++;
 		} else {
 			printf("%s\n", what);
 		}
@@ -86,7 +86,7 @@ void check_deltatime(void)
 		snprintf(what, sizeof(what), "deltaless(%jdms, %jdms) == %s", t->lms, t->rms, t->less ? "true" : "false");
 		if (less != t->less) {
 			fprintf(stderr, "FAIL: %s vs %s\n", what, less ? "true" : "false");
-			fail++;
+			fails++;
 		} else {
 			printf("%s\n", what);
 		}

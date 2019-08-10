@@ -14,16 +14,24 @@
  *
  */
 
+#include <stdio.h>
+
 #include "lswcdefs.h"	/* for UNUSED */
 
 #include "timecheck.h"
 
-int fail = 0;
+int fails = 0;
 
 int main(int argc UNUSED, char *argv[] UNUSED)
 {
 	check_deltatime();
 	check_monotime();
 	check_realtime();
-	return fail > 0;
+
+	if (fails > 0) {
+		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);
+		return 1;
+	} else {
+		return 0;
+	}
 }
