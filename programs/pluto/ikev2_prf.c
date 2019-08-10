@@ -172,6 +172,15 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  const chunk_t Ni, const chunk_t Nr,
 				  size_t required_bytes)
 {
+	if (required_bytes == 0) {
+		/*
+		 * For instance esp=null-none.  Caller should
+		 * interpret NULL to mean empty (NSS doesn't create
+		 * zero length keys).
+		 */
+		dbg("No CHILD SA KEMAT is required");
+		return NULL;
+	}
 	PK11SymKey *data;
 	if (new_dh_secret == NULL) {
 		data = symkey_from_chunk("data", Ni);
