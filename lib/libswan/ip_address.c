@@ -21,8 +21,23 @@
 #include "lswlog.h"		/* for libreswan_log() */
 #include "ip_info.h"
 
+#ifdef ADDRESS_TYPE
+static ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes)
+{
+	ip_address address = {
+		.type = afi,
+	};
+	passert(afi->ip_size == bytes.len);
+	memcpy(address.bytes, bytes.ptr, bytes.len);
+	return address;
+}
+#endif
+
 ip_address address_from_in_addr(const struct in_addr *in)
 {
+#ifdef ADDRESS_TYPE
+	return address_from_shunk(&ipv4_info, THING_AS_SHUNK(*in));
+#else
 	ip_address address = {
 		.u = {
 			.v4 = {
@@ -35,10 +50,14 @@ ip_address address_from_in_addr(const struct in_addr *in)
 		},
 	};
 	return address;
+#endif
 }
 
 ip_address address_from_in6_addr(const struct in6_addr *in6)
 {
+#ifdef ADDRESS_TYPE
+	return address_from_shunk(&ipv6_info, THING_AS_SHUNK(*in6));
+#else
 	ip_address address = {
 		.u = {
 			.v6 = {
@@ -51,10 +70,14 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 		},
 	};
 	return address;
+#endif
 }
 
 const struct ip_info *address_type(const ip_address *address)
 {
+#ifdef ADDRESS_TYPE
+	return address->type;
+#else
 	int af = address->u.v4.sin_family;
 	switch (af) {
 	case AF_INET:
@@ -66,6 +89,7 @@ const struct ip_info *address_type(const ip_address *address)
 	default:
 		bad_case(af);
 	}
+#endif
 }
 
 /*
@@ -91,14 +115,22 @@ shunk_t address_as_shunk(const ip_address *address)
 	if (address == NULL) {
 		return null_shunk;
 	}
-	switch (address->u.v4.sin_family) {
-	case AF_INET:
-		return THING_AS_SHUNK(address->u.v4.sin_addr.s_addr); /* strip const */
-	case AF_INET6:
-		return THING_AS_SHUNK(address->u.v6.sin6_addr); /* strip const */
-	default:
+#ifdef ADDRESS_TYPE
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
 		return null_shunk;
 	}
+	return shunk2(address->bytes, afi->ip_size);
+#else
+	switch (address->u.v4.sin_family) {
+ 	case AF_INET:
+		return THING_AS_SHUNK(address->u.v4.sin_addr.s_addr); /* strip const */
+ 	case AF_INET6:
+		return THING_AS_SHUNK(address->u.v6.sin6_addr); /* strip const */
+ 	default:
+		return null_shunk;
+	}
+#endif
 }
 
 chunk_t address_as_chunk(ip_address *address)
@@ -106,6 +138,13 @@ chunk_t address_as_chunk(ip_address *address)
 	if (address == NULL) {
 		return empty_chunk;
 	}
+#ifdef ADDRESS_TYPE
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		return empty_chunk;
+	}
+	return chunk(address->bytes, afi->ip_size);
+#else
 	switch (address->u.v4.sin_family) {
 	case AF_INET:
 		return THING_AS_CHUNK(address->u.v4.sin_addr.s_addr); /* strip const */
@@ -114,6 +153,7 @@ chunk_t address_as_chunk(ip_address *address)
 	default:
 		return empty_chunk;
 	}
+#endif
 }
 
 /*
@@ -317,11 +357,15 @@ const char *str_address_reversed(const ip_address *src,
 }
 
 const ip_address address_invalid = {
+#ifdef ADDRESS_TYPE
+	.type = NULL,
+#else
 	.u = {
 		.v4 = {
 			.sin_family = AF_UNSPEC,
 		},
 	},
+#endif
 };
 
 ip_address address_any(const struct ip_info *info)

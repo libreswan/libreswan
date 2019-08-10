@@ -22,7 +22,15 @@
 
 ip_endpoint endpoint(const ip_address *address, int port)
 {
+#if defined(ENDPOINT_TYPE)
+	ip_endpoint endpoint = {
+		.address = *address,
+		.port = port,
+	};
+	return endpoint;
+#else
 	return set_endpoint_port(address, port);
+#endif
 }
 
 err_t sockaddr_to_endpoint(const ip_sockaddr *sa, socklen_t sa_len, ip_endpoint *e)
@@ -75,7 +83,13 @@ err_t sockaddr_to_endpoint(const ip_sockaddr *sa, socklen_t sa_len, ip_endpoint 
 
 ip_address endpoint_address(const ip_endpoint *endpoint)
 {
-#ifdef ENDPOINT_ADDRESS_PORT
+#if defined(ENDPOINT_TYPE)
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (afi == NULL) {
+		/* not asserting, who knows what nonsense a user can generate */
+		libreswan_log("endpoint has unspecified type");
+		return address_invalid;
+	}
 	return endpoint->address;
 #else
 	if (address_type(endpoint) != NULL) {
@@ -94,6 +108,11 @@ int endpoint_port(const ip_endpoint *endpoint)
 		libreswan_log("endpoint has unspecified type");
 		return -1;
 	}
+#if defined(ENDPOINT_TYPE)
+	return endpoint->port;
+#elif defined(ADDRESS_TYPE)
+	return endpoint->port;
+#else
 	switch (afi->af) {
 	case AF_INET:
 		return ntohs(endpoint->u.v4.sin_port);
@@ -102,6 +121,7 @@ int endpoint_port(const ip_endpoint *endpoint)
 	default:
 		bad_case(afi->af);
 	}
+#endif
 }
 
 ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port)
@@ -112,6 +132,17 @@ ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port)
 		libreswan_log("endpoint has unspecified type");
 		return endpoint_invalid;
 	}
+#if defined(ENDPOINT_TYPE)
+	ip_endpoint dst = {
+		.address = endpoint->address,
+		.port = port,
+	};
+	return dst;
+#elif defined(ADDRESS_TYPE)
+	ip_endpoint dst = *endpoint;
+	dst.port = port;
+	return dst;
+#else
 	ip_endpoint dst = *endpoint;
 	switch (afi->af) {
 	case AF_INET:
@@ -124,6 +155,7 @@ ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port)
 		bad_case(afi->af);
 	}
 	return dst;
+#endif
 }
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
@@ -132,7 +164,11 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 	 * Avoid endpoint*() functions as things quickly get
 	 * recursive.
 	 */
+#if defined(ENDPOINT_TYPE)
+	return address_type(&endpoint->address);
+#else
 	return address_type(endpoint);
+#endif
 }
 
 bool endpoint_is_specified(const ip_endpoint *e)
@@ -233,10 +269,18 @@ bool endpoint_eq(const ip_endpoint l, ip_endpoint r)
 	return memeq(&l, &r, sizeof(l));
 }
 
-#ifdef ENDPOINT_ADDRESS_PORT
+#if defined(ENDPOINT_TYPE)
 const ip_endpoint endpoint_invalid = {
 	.address = {
-		.family = AF_UNSPEC,
+#if defined(ADDRESS_TYPE)
+		.type = NULL,
+#else
+		.u = {
+			.v4 = {
+				.sin_family = AF_UNSPEC,
+			},
+		},
+#endif
 	},
 };
 #endif

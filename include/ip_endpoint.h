@@ -27,12 +27,14 @@
 struct lswlog;
 
 /*
- * XXX: while ip_endpoint and ip_address should be unique types where
- * an endpoint has both an address and a port, separating them is a
- * mess.
+ * While ip_endpoint and ip_address should be distinct types where the
+ * latter consists of ADDRESS:PORT.  Unfortunately separating them is
+ * going to be slow.
+ *
+ * Defining ENDPOINT_TYPE causes the the types to become distinct.
  */
 
-#ifdef ENDPOINT_ADDRESS_PORT
+#ifdef ENDPOINT_TYPE
 typedef struct {
 	ip_address address;
 	int port;
@@ -41,22 +43,24 @@ typedef struct {
 typedef ip_address ip_endpoint;
 #endif
 
+/*
+ * Constructors.
+ */
+
 ip_endpoint endpoint(const ip_address *address, int port);
 
-/* forces port to zero */
-ip_address endpoint_address(const ip_endpoint *endpoint);
-
 /*
- * formatting
+ * Formatting
+ *
+ * Endpoint formatting is always "cooked".  For instance, the address
+ * "::1" is printed as "[::1]:PORT" (raw would print it as
+ * "[0:0....:0]:PORT"
  */
 
 typedef struct {
 	char buf[1/*[*/ + sizeof(address_buf) + 1/*]*/ + 5/*:65535*/];
 } endpoint_buf;
 
-/*
- * Always cooked.
- */
 const char *str_endpoint(const ip_endpoint *, endpoint_buf *);
 void jam_endpoint(struct lswlog *, const ip_endpoint*);
 const char *str_sensitive_endpoint(const ip_endpoint *, endpoint_buf *);
@@ -81,8 +85,8 @@ bool endpoint_eq(const ip_endpoint l, ip_endpoint r);
  */
 
 /* AF_UNSPEC(==0); ADDR = 0; PORT = 0, */
-#ifdef ENDPOINT_ADDRESS
-extern ip_endpoint endpoint_invalid;
+#ifdef ENDPOINT_TYPE
+extern const ip_endpoint endpoint_invalid;
 #else
 #define endpoint_invalid address_invalid
 #endif
@@ -100,6 +104,9 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 /* host byte order */
 int endpoint_port(const ip_endpoint *endpoint);
 ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port);
+
+/* currently forces port to zero */
+ip_address endpoint_address(const ip_endpoint *endpoint);
 
 /*
  * conversions

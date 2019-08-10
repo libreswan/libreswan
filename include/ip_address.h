@@ -1,5 +1,5 @@
-/*
- * header file for Libreswan library functions
+/* ip address type, for libreswan
+ *
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
@@ -36,24 +36,53 @@ struct ip_info;
 
 /*
  * Basic data types for the address-handling functions.
- * ip_address and ip_subnet are supposed to be opaque types; do not
- * use their definitions directly, they are subject to change!
+ *
+ * ip_address et.al. are supposed to be opaque types; do not use their
+ * definitions directly, they are subject to change!
  */
 
 typedef struct {
-#if 0
+#ifdef ADDRESS_TYPE
 	/*
-	 * XXX: Embedding all of sockaddr_in* in ip_address is seems
-	 * like overkill - it should only needs the fields below.
-	 * Unfortunately code is directly manipulating other fields
-	 * (sinin_port - use ip_endpoint).  So much for an immutable
-	 * abstraction.
+	 * XXX:
+	 *
+	 * Why embed the entire struct sockaddr_in* in ip_address when
+	 * all that is needed is the type and address bytes?
+	 *
+	 * Unfortunately such a change isn't immediately possible as
+	 * code still is still directly internal fields.  So much for
+	 * an immutable abstraction.
+	 *
+	 * Defining ADDRESS_TYPE changes the in ways that break such
+	 * erant code.
 	 */
-	const struct ip_info *info; /* discriminator */
-	const union {
-		struct in_addr in;
-		struct in6_addr in6;
-	} u;
+	const struct ip_info *type;
+	/*
+	 * Need something that makes static IPv4 initializers possible
+	 * (struct in_addr requires htonl() which is run-time only).
+	 */
+	uint8_t bytes[sizeof(struct in6_addr)];
+#ifndef ENDPOINT_TYPE
+	/*
+	 * XXX:
+	 *
+	 * A simple address - type+bytes - doesn't contain a port.
+	 * Instead there'a the new abstraction - ip_endpoint which
+	 * contains an address+port - intended for that.
+	 *
+	 * Consequently the types ip_address and ip_endpoint should
+	 * distinct (with just the latter having space for a port).
+	 * Unfortunately that's a ways-a-way.  Code continues to
+	 * either store the port in the ip_address structure or (not
+	 * sure if that works) store the port separately or (to cover
+	 * all bases) both.
+	 *
+	 * Defining ENDPOINT_TYPE makes the ip_address and ip_endpoint
+	 * types distinct (only the latter has a port) so the port
+	 * field in ip_address can be dropped.
+	 */
+	int port;
+#endif
 #else
 	union {
 		struct sockaddr_in v4;
