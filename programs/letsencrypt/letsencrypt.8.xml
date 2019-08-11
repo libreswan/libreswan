@@ -52,9 +52,9 @@ commonly used commands are described below</para>
 
 <para><userinput>ipsec letsencrypt test OR ipsec letsencrypt -t</userinput> For testing the configuration/connections.</para>
 
-<para><userinput>ipsec letsencrypt generatecertificate OR ipsec letsencrypt -gc</userinput> For generating the certificate.</para>
+<para><userinput>ipsec letsencrypt generatecertificate hostname OR ipsec letsencrypt -gc hostname</userinput> For generating the certificate.</para>
 
-<para><userinput>ipsec letsencrypt updatecertificate OR ipsec letsencrypt -uc</userinput> For updating the generated certificate (keeping the private key same).</para>
+<para><userinput>certbot renew --deploy-hook 'ipsec letsencrypt -ug hostname'</userinput> For updating the generated certificate (keeping the private key same).</para>
 </refsect1>
 
 <refsect1 id='returncode'><title>RETURN CODE</title>

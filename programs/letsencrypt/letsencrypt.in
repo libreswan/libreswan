@@ -29,6 +29,7 @@ CERT4NAME="letsencryptauthorityx3.pem.txt"
 # @IPSEC_NSSDIR@ variable for getting location to save the configuration files
 # Installing for -server or -client
 ServerClient=$1
+HostName=$2
 
 # function for checking if the command is run as root
 check_root() {
@@ -144,7 +145,7 @@ generate_certificate() {
     # Generating the certificate using Certbot
     certBotInstalled=$(which certbot 2>/dev/null)
     if [ -n "${certBotInstalled}" -a -x "${certBotInstalled}" ]; then
-        certbot certonly --webroot
+        certbot certonly --webroot -d "$HostName"
     else
         echo "Certbot not installed. Please install Certbot and try again."
         exit
@@ -160,9 +161,6 @@ generate_certificate() {
         echo "Certificates NOT Found OR Saving the certificate in directory failed"
         exit
     fi
-
-    # Getting the host name eg. letsencrypt.libreswan.org
-    read -p "Please enter the host name (e.g. letsencrypt.libreswan.org) : " HostName
 
     # Now generating the #pkcs12 (.p12) file
     LetsEncryptCertDir="/etc/letsencrypt/live/$HostName"
@@ -183,80 +181,70 @@ generate_certificate() {
     LetsEncryptConfFile="/etc/letsencrypt/renewal/$HostName.conf"
     echo "reuse_key = True" >>"$LetsEncryptConfFile"
 
-    # To confirm the success try running the test connection script on the client
+    # creating a crontab fot automatic cert renewals
+    echo "0 1 * * * certbot renew --deploy-hook 'ipsec letsencrypt -ug $HostName'" >>cert-renewal
+    crontab cert-renewal
+    rm cert-renewal
+
+    echo "try running 'ipsec restart' to load the latest certificates"
+
     echo "To confirm the success try running 'ipsec letsencrypt -t' on the client"
 }
 
 # function for updating the issued certificates
 update_certificate() {
-    # Updating the certificate using Certbot keeping the private key same
-    certBotInstalled=$(which certbot 2>/dev/null)
-    if [ -n "${certBotInstalled}" -a -x "${certBotInstalled}" ]; then
-        # Updating the certificate using Certbot keeping the private key same.
-        certbot renew --reuse-key
-    else
-        echo "Certbot not installed. Please install Certbot and try again."
+    # Generating #pkcs12 file, Downloading the required Intermediate certificate
+    # set secure umask
+    umask 077
+
+    DIR=$(mktemp -d)
+
+    wget_output=$(wget -q -P "$DIR" "$CERT4")
+    if [ $? -ne 0 ]; then
+        echo "Certificates NOT Found OR Saving the certificate in directory failed"
         exit
     fi
 
-    # Did your certificate update?
-    read -p "Did your certificate update? (yY/nN) " updateAnswer
-    if [ "$updateAnswer" = "n" ] || [ "$updateAnswer" = "N" ]; then
-        exit
-    else
-        # Generating #pkcs12 file, Downloading the required Intermediate certificate
-        # set secure umask
-        umask 077
+    # Now generating the #pkcs12 (.p12) file
+    LetsEncryptCertDir="/etc/letsencrypt/live/$HostName"
 
-        DIR=$(mktemp -d)
+    openssl pkcs12 -export -inkey "$LetsEncryptCertDir/privkey.pem" -in "$LetsEncryptCertDir/fullchain.pem" -CAfile "$DIR/$CERT4NAME" -out "$LetsEncryptCertDir/generatedCertificate.p12"
 
-        wget_output=$(wget -q -P "$DIR" "$CERT4")
-        if [ $? -ne 0 ]; then
-            echo "Certificates NOT Found OR Saving the certificate in directory failed"
-            exit
-        fi
+    # Importing the certificate in nss database
+    echo "Importing the certificate in database. Password for PKCS12 file is the same as the Export Password you entered above."
+    pk12util -d "sql:@IPSEC_NSSDIR@" -i "$LetsEncryptCertDir/generatedCertificate.p12"
 
-        # Getting the host name eg. letsencrypt.libreswan.org
-        read -p "Please enter the host name (e.g. letsencrypt.libreswan.org) : " HostName
+    # restore umask
+    umask ${umask}
 
-        # Now generating the #pkcs12 (.p12) file
-        LetsEncryptCertDir="/etc/letsencrypt/live/$HostName"
+    # Displaying the certificates installed in nss database
+    echo "Displaying the certificates installed in the database."
+    certutil -L -d "sql:@IPSEC_NSSDIR@"
 
-        openssl pkcs12 -export -inkey "$LetsEncryptCertDir/privkey.pem" -in "$LetsEncryptCertDir/fullchain.pem" -CAfile "$DIR/$CERT4NAME" -out "$LetsEncryptCertDir/generatedCertificate.p12"
+    # restarting ipsec to load all certificates
+    ipsec restart
 
-        # Importing the certificate in nss database
-        echo "Importing the certificate in database. Password for PKCS12 file is the same as the Export Password you entered above."
-        pk12util -d "sql:@IPSEC_NSSDIR@" -i "$LetsEncryptCertDir/generatedCertificate.p12"
-
-        # restore umask
-        umask ${umask}
-
-        # Displaying the certificates installed in nss database
-        echo "Displaying the certificates installed in the database."
-        certutil -L -d "sql:@IPSEC_NSSDIR@"
-
-        # To confirm the success try running the test connection script on the client
-        echo "To confirm the success try running 'ipsec letsencrypt -t' on the client"
-    fi
+    # To confirm the success try running the test connection script on the client
+    echo "To confirm the success try running 'ipsec letsencrypt -t' on the client"
 }
 
 # function for showing help
 help() {
     echo "Usage: ipsec letsencrypt [arguments]"
     echo "Available [arguments]"
-    echo "-server, -client, test, generatecertificate, updatecertificate, help, -t, -gc, -uc, -h"
+    echo "-server, -client, test, generatecertificate hostname, updatecertificate hostname, help, -t, -gc hostname, -uc hostname, -h"
     echo
     echo "-server, -client :  For initial server/client setup."
     echo "usage: 'ipsec letsencrypt -client' OR 'ipsec letsencrypt -server'"
     echo
-    echo "test, -t  -  For testing the configuration/connections."
+    echo "test, -t  :  For testing the configuration/connections."
     echo "usage: 'ipsec letsencrypt test' OR 'ipsec letsencrypt -t'"
     echo
-    echo "generatecertificate, -gc  -  For generating the certificate."
-    echo "usage: 'ipsec letsencrypt generatecertificate' OR 'ipsec letsencrypt -gc'"
+    echo "generatecertificate hostname, -gc hostname :  For generating the certificate."
+    echo "usage: 'ipsec letsencrypt generatecertificate hostname' OR 'ipsec letsencrypt -gc hostname'"
     echo
-    echo "updatecertificate, -uc  -  For updating the generated certificate (keeping the private key same)."
-    echo "usage: 'ipsec letsencrypt updatecertificate' OR 'ipsec letsencrypt -uc'"
+    echo "For updating the generated certificate (keeping the private key same) use the following command."
+    echo "usage: certbot renew --deploy-hook 'ipsec letsencrypt -ug hostname'"
 }
 
 case $1 in
