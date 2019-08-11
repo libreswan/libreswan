@@ -254,7 +254,7 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	ip_address ipaddr;
 	ipstr_buf ra;
 	ipstr_buf rb;
-	const struct ip_info *afi = address_info(&st->st_remoteaddr);
+	const struct ip_info *afi = address_type(&st->st_remoteaddr);
 
 	if (dnsr->qtype != LDNS_RR_TYPE_A) {
 		return;

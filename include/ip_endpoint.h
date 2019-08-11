@@ -48,7 +48,7 @@ ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port);
 
 /* forces port to zero */
 ip_address endpoint_address(const ip_endpoint *endpoint);
-const struct ip_info *endpoint_info(const ip_endpoint *endpoint);
+const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 
 /*
  * formatting

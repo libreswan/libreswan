@@ -356,7 +356,7 @@ static void set_whack_end(char *lr,
 		 * but, get the family set up right
 		 * XXX the nexthop type has to get into the whack message!
 		 */
-		w->host_nexthop = address_any(address_type(&l->addr));
+		w->host_nexthop = address_any(addrtypeof(&l->addr));
 		break;
 
 	default:

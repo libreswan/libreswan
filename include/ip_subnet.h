@@ -57,7 +57,7 @@ typedef struct {
 const char *str_subnet(const ip_subnet *subnet, subnet_buf *out);
 void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
 
-const struct ip_info *subnet_info(const ip_subnet *subnet);
+const struct ip_info *subnet_type(const ip_subnet *subnet);
 
 /*
  * Extract details

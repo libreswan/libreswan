@@ -855,7 +855,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 		diag("address family of host inconsistent");
 
 	if (this->has_client) {
-		if (aftoinfo(taf) != subnet_info(&this->client))
+		if (aftoinfo(taf) != subnet_type(&this->client))
 			diag("address family of client subnet inconsistent");
 	} else {
 		/* fill in anyaddr-anyaddr as (missing) client subnet */
@@ -2361,8 +2361,8 @@ int main(int argc, char **argv)
 		check_end(&msg.right, &msg.left,
 			  msg.addr_family, msg.tunnel_addr_family);
 
-		if (subnet_info(&msg.left.client) !=
-		    subnet_info(&msg.right.client))
+		if (subnet_type(&msg.left.client) !=
+		    subnet_type(&msg.right.client))
 			diag("endpoints clash: one is IPv4 and the other is IPv6");
 
 		if (msg.policy & POLICY_AUTH_NEVER) {

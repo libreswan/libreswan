@@ -98,13 +98,10 @@ ip_endpoint set_endpoint_port(const ip_endpoint *address, int port)
 	return hsetportof(port, *address);
 }
 
-const struct ip_info *endpoint_info(const ip_endpoint *endpoint)
+const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 {
-#ifdef ENDPOINT_ADDRESS_PORT
-	return address_info(&endpoint->address);
-#else
-	return address_info(endpoint);
-#endif
+	ip_address address = endpoint_address(endpoint);
+	return address_type(&address);
 }
 
 /*
@@ -133,7 +130,7 @@ static void format_endpoint(jambuf_t *buf, bool sensitive,
 	}
 	ip_address address = endpoint_address(endpoint);
 	int port = endpoint_port(endpoint);
-	const struct ip_info *afi = endpoint_info(endpoint);
+	const struct ip_info *afi = endpoint_type(endpoint);
 
 	if (afi == NULL) {
 		jam(buf, "<unspecified:>");

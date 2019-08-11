@@ -140,8 +140,7 @@ bool address_is_any(const ip_address *address);
 shunk_t address_as_shunk(const ip_address *address);
 chunk_t address_as_chunk(ip_address *address);
 
-int address_type(const ip_address *address);
-const struct ip_info *address_info(const ip_address *address);
+const struct ip_info *address_type(const ip_address *address);
 
 /*
  * Old style.

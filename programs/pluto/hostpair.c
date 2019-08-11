@@ -98,7 +98,7 @@ static struct host_pair_key hp_key(const ip_endpoint *local, const ip_endpoint *
 	struct host_pair_key key = {
 		.local = endpoint_address(local),
 		.remote = (remote != NULL ? endpoint_address(remote)
-			   : address_any(endpoint_info(local)->af)),
+			   : address_any(endpoint_type(local)->af)),
 	};
 	return key;
 }

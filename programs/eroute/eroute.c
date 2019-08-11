@@ -774,7 +774,7 @@ sa_build:
 	case EMT_INREPLACEROUTE:
 	case EMT_DELEROUTE:
 	{
-		if (subnet_info(&s_subnet) == NULL) {
+		if (subnet_type(&s_subnet) == NULL) {
 			fprintf(stderr, "%s: source subnet not specified\n", progname);
 			exit(1);
 		}
@@ -801,7 +801,7 @@ sa_build:
 				progname);
 		}
 
-		if (subnet_info(&d_subnet) == NULL) {
+		if (subnet_type(&d_subnet) == NULL) {
 			fprintf(stderr, "%s: destination subnet not specified.\n", progname);
 			exit(1);
 		}
