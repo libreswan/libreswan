@@ -119,16 +119,15 @@ const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
  * unspecified (for instance IN6_IS_ADDR_UNSPECIFIED()) leaving the
  * term "unspecified" underspecified.
  *
- * Consequently, "invalid" refers to AF_UNSPEC, "any" refers to
- * AF_{INET,INET6)=0, and "specified" refers to other stuff.
+ * Consequently to identify an AF_UNSPEC (i.e., uninitialized)
+ * address, see if *_type() returns NULL.
  */
 
 /* AF=AF_UNSPEC, ADDR = 0, */
 const ip_address address_invalid;
-bool address_is_invalid(const ip_address *address);
 
-/* AF=={INET,INET6}; ADDR = *; is this too general? */
-bool address_is_valid(const ip_address *address);
+/* returns NULL when address_invalid */
+const struct ip_info *address_type(const ip_address *address);
 
 /* AF={INET,INET6}, ADDR = 0; aka %any? */
 ip_address address_any(int af);
@@ -139,8 +138,6 @@ bool address_is_any(const ip_address *address);
  */
 shunk_t address_as_shunk(const ip_address *address);
 chunk_t address_as_chunk(ip_address *address);
-
-const struct ip_info *address_type(const ip_address *address);
 
 /*
  * Old style.

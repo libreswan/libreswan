@@ -360,16 +360,6 @@ const ip_address address_invalid = {
 	},
 };
 
-bool address_is_invalid(const ip_address *address)
-{
-	return address_type(address) == NULL;
-}
-
-bool address_is_valid(const ip_address *address)
-{
-	return address_type(address) != NULL;
-}
-
 /* these are both zero */
 static const struct in_addr in_addr_any = { INADDR_ANY, };
 static const struct in6_addr in6_addr_any = IN6ADDR_ANY_INIT;

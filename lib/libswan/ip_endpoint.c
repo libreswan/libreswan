@@ -80,7 +80,7 @@ ip_address endpoint_address(const ip_endpoint *endpoint)
 #ifdef ENDPOINT_ADDRESS_PORT
 	return endpoint->address;
 #else
-	if (address_is_valid(endpoint)) {
+	if (address_type(endpoint) != NULL) {
 		return set_endpoint_port(endpoint, 0); /* scrub the port */
 	} else {
 		return *endpoint; /* empty_address? */
@@ -233,24 +233,6 @@ const ip_endpoint endpoint_invalid = {
 	},
 };
 #endif
-
-bool endpoint_is_invalid(const ip_endpoint *endpoint)
-{
-#ifdef ENDPOINT_ADDRESS_PORT
-	return address_is_unspec(&endpoint->address);
-#else
-	return address_is_invalid(endpoint);
-#endif
-}
-
-bool endpoint_is_valid(const ip_endpoint *endpoint)
-{
-#ifdef ENDPOINT_ADDRESS_PORT
-	return address_is_valid(&endpoint->address);
-#else
-	return address_is_valid(endpoint);
-#endif
-}
 
 /*
  * portof - get the port field of an ip_endpoint in network order.

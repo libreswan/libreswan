@@ -196,7 +196,7 @@ void log_reset_globals(where_t where)
 		log_processing(RESET, true, NULL, cur_connection, NULL, where);
 		cur_connection = NULL;
 	}
-	if (address_is_valid(&cur_from)) {
+	if (endpoint_type(&cur_from) != NULL) {
 		/* peer's IP address */
 		log_processing(RESET, true, NULL, NULL, &cur_from, where);
 		zero(&cur_from);
@@ -225,7 +225,7 @@ void log_pexpect_reset_globals(where_t where)
 			    cur_connection->name);
 		cur_connection = NULL;
 	}
-	if (address_is_valid(&cur_from)) {
+	if (endpoint_type(&cur_from) != NULL) {
 		endpoint_buf buf;
 		log_pexpect(where, "processing: unexpected cur_from %s should be NULL",
 			    str_sensitive_endpoint(&cur_from, &buf));
@@ -344,12 +344,12 @@ extern ip_address log_push_from(ip_address new_from, where_t where)
 {
 	bool current = (cur_state == NULL && cur_connection == NULL);
 	ip_address old_from = cur_from;
-	if (address_is_valid(&old_from)) {
+	if (endpoint_type(&old_from) != NULL) {
 		log_processing(SUSPEND, current,
 			       NULL, NULL, &old_from, where);
 	}
 	cur_from = new_from;
-	if (address_is_valid(&cur_from)) {
+	if (endpoint_type(&cur_from) != NULL) {
 		log_processing(START, current,
 			       NULL, NULL, &cur_from, where);
 	}
@@ -359,11 +359,11 @@ extern ip_address log_push_from(ip_address new_from, where_t where)
 extern void log_pop_from(ip_address old_from, where_t where)
 {
 	bool current = (cur_state == NULL && cur_connection == NULL);
-	if (address_is_valid(&cur_from)) {
+	if (endpoint_type(&cur_from) != NULL) {
 		log_processing(STOP, current,
 			       NULL, NULL, &cur_from, where);
 	}
-	if (address_is_valid(&old_from)) {
+	if (endpoint_type(&old_from) != NULL) {
 		log_processing(RESUME, current,
 			       NULL, NULL, &old_from, where);
 	}
@@ -510,7 +510,7 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 			}
 		}
 		lswlogs(buf, ": ");
-	} else if (cur_from != NULL && address_is_valid(cur_from)) {
+	} else if (cur_from != NULL && endpoint_type(cur_from) != NULL) {
 		/* peer's IP address */
 		lswlogs(buf, "packet from ");
 		jam_sensitive_endpoint(buf, cur_from);

@@ -45,7 +45,6 @@ err_t sockaddr_as_endpoint(const struct sockaddr *sa, socklen_t sa_len, ip_endpo
 
 /* forces port to zero */
 ip_address endpoint_address(const ip_endpoint *endpoint);
-const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 
 /*
  * formatting
@@ -77,8 +76,8 @@ bool endpoint_eq(const ip_endpoint l, ip_endpoint r);
  * unspecified (for instance IN6_IS_ADDR_UNSPECIFIED()) leaving the
  * term "unspecified" underspecified.
  *
- * Consequently, "invalid" refers to AF_UNSPEC, "any" refers to
- * AF_{INET,INET6)=0, and "specified" refers to other stuff.
+ * Consequently to identify an AF_UNSPEC (i.e., uninitialized)
+ * address, see if *_type() returns NULL.
  */
 
 /* AF_UNSPEC(==0); ADDR = 0; PORT = 0, */
@@ -87,8 +86,9 @@ extern ip_endpoint endpoint_invalid;
 #else
 #define endpoint_invalid address_invalid
 #endif
-bool endpoint_is_invalid(const ip_endpoint *address);
-bool endpoint_is_valid(const ip_endpoint *address);
+
+/* returns NULL when address_invalid */
+const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 
 /* host byte order */
 int endpoint_port(const ip_endpoint *endpoint);
