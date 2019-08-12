@@ -43,9 +43,6 @@ typedef ip_address ip_endpoint;
 ip_endpoint endpoint(const ip_address *address, int port);
 err_t sockaddr_as_endpoint(const struct sockaddr *sa, socklen_t sa_len, ip_endpoint *endpoint);
 
-int endpoint_port(const ip_endpoint *endpoint);
-ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port);
-
 /* forces port to zero */
 ip_address endpoint_address(const ip_endpoint *endpoint);
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
@@ -92,5 +89,22 @@ extern ip_endpoint endpoint_invalid;
 #endif
 bool endpoint_is_invalid(const ip_endpoint *address);
 bool endpoint_is_valid(const ip_endpoint *address);
+
+/* host byte order */
+int endpoint_port(const ip_endpoint *endpoint);
+ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port);
+
+/*
+ * Old style.
+ */
+
+/* N=network H=host; need ip_port type? */
+#define nportof(ENDPOINT) htons(endpoint_port(ENDPOINT))
+#define hportof(ENDPOINT) endpoint_port(ENDPOINT)
+ip_endpoint nsetportof(int port, ip_endpoint dst);
+ip_endpoint hsetportof(int port, ip_endpoint dst);
+/* XXX: compatibility */
+#define portof(SRC) nportof((SRC))
+#define setportof(PORT, DST) { *(DST) = nsetportof(PORT, *(DST)); }
 
 #endif

@@ -69,61 +69,6 @@ const struct ip_info *address_type(const ip_address *address)
 }
 
 /*
- * portof - get the port field of an ip_address in network order.
- *
- * Return -1 if ip_address isn't valid.
- */
-
-int nportof(const ip_address * src)
-{
-	switch (src->u.v4.sin_family) {
-	case AF_INET:
-		return src->u.v4.sin_port;
-
-	case AF_INET6:
-		return src->u.v6.sin6_port;
-
-	default:
-		return -1;
-	}
-}
-
-int hportof(const ip_address *src)
-{
-	int nport = nportof(src);
-	if (nport >= 0) {
-		return ntohs(nport);
-	} else {
-		return -1;
-	}
-}
-
-/*
- * setportof - set the network ordered port field of an ip_address
- */
-
-ip_address nsetportof(int port /* network order */, ip_address dst)
-{
-	switch (dst.u.v4.sin_family) {
-	case AF_INET:
-		dst.u.v4.sin_port = port;
-		break;
-	case AF_INET6:
-		dst.u.v6.sin6_port = port;
-		break;
-	default:
-		/* not asserting, who knows what nonsense a user can generate */
-		libreswan_log("Will not set port on bogus address 0.0.0.0");
-	}
-	return dst;
-}
-
-ip_address hsetportof(int port /* host byte order */, ip_address dst)
-{
-	return nsetportof(htons(port), dst);
-}
-
-/*
  * sockaddrof - get a pointer to the sockaddr hiding inside an ip_address
  */
 struct sockaddr *sockaddrof(const ip_address *src)

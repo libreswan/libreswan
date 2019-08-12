@@ -22,7 +22,7 @@
 
 ip_endpoint endpoint(const ip_address *address, int port)
 {
-	return hsetportof(port, *address);
+	return set_endpoint_port(address, port);
 }
 
 err_t sockaddr_as_endpoint(const struct sockaddr *sa, socklen_t sa_len, ip_endpoint *e)
@@ -81,7 +81,7 @@ ip_address endpoint_address(const ip_endpoint *endpoint)
 	return endpoint->address;
 #else
 	if (address_is_valid(endpoint)) {
-		return hsetportof(0, *endpoint);
+		return set_endpoint_port(endpoint, 0); /* scrub the port */
 	} else {
 		return *endpoint; /* empty_address? */
 	}
@@ -90,18 +90,51 @@ ip_address endpoint_address(const ip_endpoint *endpoint)
 
 int endpoint_port(const ip_endpoint *endpoint)
 {
-	return hportof(endpoint);
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (afi == NULL) {
+		/* not asserting, who knows what nonsense a user can generate */
+		libreswan_log("endpoint has unspecified type");
+		return -1;
+	}
+	switch (afi->af) {
+	case AF_INET:
+		return ntohs(endpoint->u.v4.sin_port);
+	case AF_INET6:
+		return ntohs(endpoint->u.v6.sin6_port);
+	default:
+		bad_case(afi->af);
+	}
 }
 
-ip_endpoint set_endpoint_port(const ip_endpoint *address, int port)
+ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port)
 {
-	return hsetportof(port, *address);
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (afi == NULL) {
+		/* not asserting, who knows what nonsense a user can generate */
+		libreswan_log("endpoint has unspecified type");
+		return endpoint_invalid;
+	}
+	ip_endpoint dst = *endpoint;
+	switch (afi->af) {
+	case AF_INET:
+		dst.u.v4.sin_port = htons(port);
+		break;
+	case AF_INET6:
+		dst.u.v6.sin6_port = htons(port);
+		break;
+	default:
+		bad_case(afi->af);
+	}
+	return dst;
 }
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 {
-	ip_address address = endpoint_address(endpoint);
-	return address_type(&address);
+	/*
+	 * Avoid endpoint*() functions as things quickly get
+	 * recursive.
+	 */
+	return address_type(endpoint);
 }
 
 /*
@@ -212,4 +245,20 @@ bool endpoint_is_valid(const ip_endpoint *endpoint)
 #else
 	return address_is_valid(endpoint);
 #endif
+}
+
+/*
+ * portof - get the port field of an ip_endpoint in network order.
+ *
+ * Return -1 if ip_endpoint isn't valid.
+ */
+
+ip_endpoint nsetportof(int port /* network order */, ip_endpoint endpoint)
+{
+	return set_endpoint_port(&endpoint, htons(port));
+}
+
+ip_endpoint hsetportof(int port /* host order */, ip_endpoint endpoint)
+{
+	return set_endpoint_port(&endpoint, port);
 }
