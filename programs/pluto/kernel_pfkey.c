@@ -660,19 +660,22 @@ static bool pfkey_msg_start(uint8_t msg_type,
 
 /* pfkey_build + pfkey_address_build */
 static bool pfkeyext_address(uint16_t exttype,
-			     const ip_address *address,
+			     const ip_endpoint *endpoint,
 			     const char *description,
 			     const char *text_said,
 			     struct sadb_ext *extensions[K_SADB_EXT_MAX + 1])
 {
-	/* the following variable is only needed to silence
-	 * a warning caused by the fact that the argument
-	 * to sockaddrof is NOT pointer to const!
+	/*
+	 *
+	 * XXX: pfkey_address_build() extracts both the address and
+	 * the port, hence this code should expect an endpoint.
 	 */
-	ip_address t = *address;
+	ip_sockaddr sa;
+	size_t sa_len = endpoint_to_sockaddr(endpoint, &sa);
+	passert(sa_len > 0);
 
 	return pfkey_build(pfkey_address_build(extensions + exttype,
-					       exttype, 0, 0, sockaddrof(&t)),
+					       exttype, 0, 0, &sa.sa),
 			   description, text_said, extensions);
 }
 

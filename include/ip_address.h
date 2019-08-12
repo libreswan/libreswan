@@ -143,9 +143,6 @@ chunk_t address_as_chunk(ip_address *address);
  * Old style.
  */
 
-struct sockaddr *sockaddrof(const ip_address *src);
-size_t sockaddrlenof(const ip_address *src);
-
 /* looks up names in DNS */
 extern err_t ttoaddr(const char *src, size_t srclen, int af, ip_address *dst);
 

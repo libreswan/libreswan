@@ -22,6 +22,7 @@
 #include "chunk.h"
 #include "err.h"
 #include "ip_address.h"
+#include "ip_sockaddr.h"
 
 struct lswlog;
 
@@ -41,7 +42,6 @@ typedef ip_address ip_endpoint;
 #endif
 
 ip_endpoint endpoint(const ip_address *address, int port);
-err_t sockaddr_as_endpoint(const struct sockaddr *sa, socklen_t sa_len, ip_endpoint *endpoint);
 
 /* forces port to zero */
 ip_address endpoint_address(const ip_endpoint *endpoint);
@@ -93,6 +93,15 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 /* host byte order */
 int endpoint_port(const ip_endpoint *endpoint);
 ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port);
+
+/*
+ * conversions
+ */
+
+/* convert the endpoint to a sockaddr; return true size */
+size_t endpoint_to_sockaddr(const ip_endpoint *endpoint, ip_sockaddr *sa);
+/* convert sockaddr to an endpoint */
+err_t sockaddr_to_endpoint(const ip_sockaddr *sa, socklen_t sa_len, ip_endpoint *endpoint);
 
 /*
  * Old style.

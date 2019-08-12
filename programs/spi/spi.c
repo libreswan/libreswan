@@ -1431,11 +1431,13 @@ int main(int argc, char *argv[])
 				progname, ipstr(&src, &b));
 		}
 
+		ip_sockaddr src_sa;
+		passert(endpoint_to_sockaddr(&src, &src_sa) > 0);
 		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_SRC],
 					    SADB_EXT_ADDRESS_SRC,
 					    0,
 					    0,
-					    sockaddrof(&src));
+					    &src_sa.sa);
 		if (error != 0) {
 			ipstr_buf b;
 
@@ -1446,11 +1448,13 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
+		ip_sockaddr edst_sa;
+		passert(endpoint_to_sockaddr(&edst, &edst_sa) > 0);
 		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_DST],
 					    SADB_EXT_ADDRESS_DST,
 					    0,
 					    0,
-					    sockaddrof(&edst));
+					    &edst_sa.sa);
 		if (error != 0) {
 			ipstr_buf b;
 

@@ -96,15 +96,12 @@ static void check_sockaddr_as_endpoint(void)
 		const char *expect_out = t->out == NULL ? t->in : t->out;
 		PRINT_IN(stdout, " -> '%s'", expect_out);
 
-		/* construct a sockaddr */
-		union {
-			struct sockaddr sa;
-			struct sockaddr_in sin;
-			struct sockaddr_in6 sin6;
-		} sa;
-		zero(&sa);
-
-		sa.sa.sa_family = SA_FAMILY(t->family);
+		/* construct a raw sockaddr */
+		ip_sockaddr sa = {
+			.sa = {
+				.sa_family = SA_FAMILY(t->family),
+			},
+		};
 		switch (t->family) {
 		case 4:
 			memcpy(&sa.sin.sin_addr, t->addr, sizeof(sa.sin.sin_addr));
@@ -116,9 +113,9 @@ static void check_sockaddr_as_endpoint(void)
 			break;
 		}
 
-		/* convert it to an address */
+		/* sockaddr->endpoint */
 		ip_endpoint endpoint;
-		err_t err = sockaddr_as_endpoint(&sa.sa, t->size, &endpoint);
+		err_t err = sockaddr_to_endpoint(&sa, t->size, &endpoint);
 		if (err == NULL) {
 			if (t->err != NULL) {
 				FAIL_IN("sockaddr_as_endpoint() should have failed: %s", t->err);
@@ -132,13 +129,32 @@ static void check_sockaddr_as_endpoint(void)
 		}
 		CHECK_TYPE(FAIL_IN, endpoint_type(&endpoint), t->err == NULL ? t->family : 0);
 
-		/* now convert it back */
+		/* endpoint->sockaddr */
+		ip_sockaddr esa;
+		size_t size = endpoint_to_sockaddr(&endpoint, &esa);
+		if (err == NULL) {
+			if (size == 0) {
+				FAIL_IN("endpoint_to_sockaddr() returned %zu, expecting non-zero", size);
+			} else if (size > sizeof(esa)) {
+				FAIL_IN("endpoint_to_sockaddr() returned %zu, expecting %zu or smaller",
+					size, sizeof(esa));
+			} else if (!memeq(&esa, &sa, sizeof(esa))) {
+				/* compare the entire buffer, not just size */
+				FAIL_IN("endpoint_to_sockaddr() returned a different value");
+			}
+		} else {
+			if (size != 0) {
+				FAIL_IN("endpoint_to_sockaddr() returned %zu, expecting non-zero", size);
+			}
+		}
+
+		/* as a string */
 		endpoint_buf buf;
 		const char *out = str_endpoint(&endpoint, &buf);
 		if (out == NULL) {
 			FAIL_IN("str_endpoint() returned NULL");
 		} else if (!strcaseeq(expect_out, out)) {
-			FAIL_IN("returned '%s', expected '%s'",
+			FAIL_IN("str_endpoint() returned '%s', expecting '%s'",
 				out, expect_out);
 		}
 	}

@@ -25,11 +25,11 @@ ip_endpoint endpoint(const ip_address *address, int port)
 	return set_endpoint_port(address, port);
 }
 
-err_t sockaddr_as_endpoint(const struct sockaddr *sa, socklen_t sa_len, ip_endpoint *e)
+err_t sockaddr_to_endpoint(const ip_sockaddr *sa, socklen_t sa_len, ip_endpoint *e)
 {
 	/* paranoia from demux.c */
-	if (sa_len < (socklen_t) (offsetof(struct sockaddr, sa_family) +
-				  sizeof(sa->sa_family))) {
+	if (sa_len < (socklen_t) (offsetof(ip_sockaddr, sa.sa_family) +
+				  sizeof(sa->sa.sa_family))) {
 		zero(e); /* something better? this is AF_UNSPEC */
 		return "truncated";
 	}
@@ -43,27 +43,25 @@ err_t sockaddr_as_endpoint(const struct sockaddr *sa, socklen_t sa_len, ip_endpo
 	 */
 	ip_address address;
 	int port;
-	switch (sa->sa_family) {
+	switch (sa->sa.sa_family) {
 	case AF_INET:
 	{
-		const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
 		/* XXX: to strict? */
-		if (sa_len != sizeof(*sin)) {
+		if (sa_len != sizeof(sa->sin)) {
 			return "wrong length";
 		}
-		address = address_from_in_addr(&sin->sin_addr);
-		port = ntohs(sin->sin_port);
+		address = address_from_in_addr(&sa->sin.sin_addr);
+		port = ntohs(sa->sin.sin_port);
 		break;
 	}
 	case AF_INET6:
 	{
-		const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
 		/* XXX: to strict? */
-		if (sa_len != sizeof(*sin6)) {
+		if (sa_len != sizeof(sa->sin6)) {
 			return "wrong length";
 		}
-		address = address_from_in6_addr(&sin6->sin6_addr);
-		port = ntohs(sin6->sin6_port);
+		address = address_from_in6_addr(&sa->sin6.sin6_addr);
+		port = ntohs(sa->sin6.sin6_port);
 		break;
 	}
 	case AF_UNSPEC:
@@ -248,4 +246,47 @@ ip_endpoint nsetportof(int port /* network order */, ip_endpoint endpoint)
 ip_endpoint hsetportof(int port /* host order */, ip_endpoint endpoint)
 {
 	return set_endpoint_port(&endpoint, port);
+}
+
+/*
+ * Construct and return a sockaddr structure.
+ */
+
+size_t endpoint_to_sockaddr(const ip_endpoint *endpoint, ip_sockaddr *sa)
+{
+	zero(sa);
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (afi == NULL) {
+		return 0;
+	}
+	ip_address address = endpoint_address(endpoint);
+	int port = endpoint_port(endpoint);
+
+	shunk_t src_addr = address_as_shunk(&address);
+	chunk_t dst_addr;
+
+	switch (afi->af) {
+	case AF_INET:
+		sa->sin.sin_family = afi->af;
+		sa->sin.sin_port = htons(port);
+		dst_addr = THING_AS_CHUNK(sa->sin.sin_addr);
+#ifdef NEED_SIN_LEN
+		sa->sin.sin_len = sizeof(struct sockaddr_in);
+#endif
+		break;
+	case AF_INET6:
+		sa->sin6.sin6_family = afi->af;
+		sa->sin6.sin6_port = htons(port);
+		dst_addr = THING_AS_CHUNK(sa->sin6.sin6_addr);
+#ifdef NEED_SIN_LEN
+		sa->sin6.sin6_len = sizeof(struct sockaddr_in6);
+#endif
+		break;
+	default:
+		bad_case(afi->af);
+	}
+	passert(src_addr.len == afi->ip_size);
+	passert(dst_addr.len == afi->ip_size);
+	memcpy(dst_addr.ptr, src_addr.ptr, src_addr.len);
+	return afi->sockaddr_size;
 }

@@ -69,42 +69,6 @@ const struct ip_info *address_type(const ip_address *address)
 }
 
 /*
- * sockaddrof - get a pointer to the sockaddr hiding inside an ip_address
- */
-struct sockaddr *sockaddrof(const ip_address *src)
-{
-	switch (src->u.v4.sin_family) {
-	case AF_INET:
-		return (struct sockaddr *)&src->u.v4;
-
-	case AF_INET6:
-		return (struct sockaddr *)&src->u.v6;
-
-	default:
-		return NULL;	/* "can't happen" */
-	}
-}
-
-/*
- * sockaddrlenof - get length of the sockaddr hiding inside an ip_address
- *
- * Return 0 on error.
- */
-size_t sockaddrlenof(const ip_address * src)
-{
-	switch (src->u.v4.sin_family) {
-	case AF_INET:
-		return sizeof(src->u.v4);
-
-	case AF_INET6:
-		return sizeof(src->u.v6);
-
-	default:
-		return 0;
-	}
-}
-
-/*
  * simplified interface to addrtot()
  *
  * Caller should allocate a buffer to hold the result as long

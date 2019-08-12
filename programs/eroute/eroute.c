@@ -142,10 +142,6 @@ int main(int argc, char **argv)
 
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 	struct sadb_msg *pfkey_msg;
-	ip_address pfkey_address_s_ska;
-	/*struct sockaddr_in pfkey_address_d_ska;*/
-	ip_address pfkey_address_sflow_ska;
-	ip_address pfkey_address_dflow_ska;
 
 	int transport_proto = 0;
 	int src_port = 0;
@@ -160,9 +156,6 @@ int main(int argc, char **argv)
 
 	progname = argv[0];
 
-	zero(&pfkey_address_s_ska);
-	zero(&pfkey_address_sflow_ska);
-	zero(&pfkey_address_dflow_ska);
 	zero(&said);
 	zero(&s_subnet);
 	zero(&d_subnet);
@@ -721,19 +714,22 @@ sa_build:
 	case EMT_REPLACEROUTE:
 	case EMT_INEROUTE:
 	case EMT_INREPLACEROUTE:
-		pfkey_address_s_ska = address_any(aftoinfo(said_af));
+	{
+		ip_address s_any = address_any(aftoinfo(said_af));
+		ip_endpoint s_end = endpoint(&s_any, 0);
+		ip_sockaddr s_sa;
+		passert(endpoint_to_sockaddr(&s_end, &s_sa) > 0);
 		error = pfkey_address_build(
 				&extensions[SADB_EXT_ADDRESS_SRC],
 				SADB_EXT_ADDRESS_SRC,
 				0,
 				0,
-				sockaddrof(&pfkey_address_s_ska));
+				&s_sa.sa);
 		if (error) {
-			ipstr_buf b;
-
+			endpoint_buf b;
 			fprintf(stderr,
 				"%s: Trouble building address_s extension (%s), error=%d.\n",
-				progname, ipstr(&pfkey_address_s_ska, &b),
+				progname, str_endpoint(&s_end, &b),
 				error);
 			pfkey_extensions_free(extensions);
 			exit(1);
@@ -744,18 +740,18 @@ sa_build:
 				progname);
 		}
 
-		error = pfkey_address_build(
-				&extensions[SADB_EXT_ADDRESS_DST],
-				SADB_EXT_ADDRESS_DST,
-				0,
-				0,
-				sockaddrof(&said.dst));
+		ip_sockaddr said_dst_sa;
+		passert(endpoint_to_sockaddr(&said.dst, &said_dst_sa) > 0);
+		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_DST],
+					    SADB_EXT_ADDRESS_DST,
+					    0,
+					    0,
+					    &said_dst_sa.sa);
 		if (error) {
-			ipstr_buf b;
-
+			endpoint_buf b;
 			fprintf(stderr,
 				"%s: Trouble building address_d extension (%s), error=%d.\n",
-				progname, ipstr(&said.dst, &b), error);
+				progname, str_endpoint(&said.dst, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -764,6 +760,7 @@ sa_build:
 				"%s: DEBUG: pfkey_address_build successful for dst.\n",
 				progname);
 		}
+	}
 	default:
 		break;
 	}
@@ -779,20 +776,20 @@ sa_build:
 			fprintf(stderr, "%s: source subnet not specified\n", progname);
 			exit(1);
 		}
-		ip_endpoint s_flow = subnet_endpoint(&s_subnet);
-		pfkey_address_sflow_ska = set_endpoint_port(&s_flow, src_port); /* src flow */
-		error = pfkey_address_build(
-				&extensions[SADB_X_EXT_ADDRESS_SRC_FLOW],
-				SADB_X_EXT_ADDRESS_SRC_FLOW,
-				0,
-				0,
-				sockaddrof(&pfkey_address_sflow_ska));
+		ip_endpoint sflow = subnet_endpoint(&s_subnet);
+		ip_endpoint sflow_end = set_endpoint_port(&sflow, src_port); /* src flow */
+		ip_sockaddr sflow_sa;
+		passert(endpoint_to_sockaddr(&sflow_end, &sflow_sa) > 0);
+		error = pfkey_address_build(&extensions[SADB_X_EXT_ADDRESS_SRC_FLOW],
+					    SADB_X_EXT_ADDRESS_SRC_FLOW,
+					    0,
+					    0,
+					    &sflow_sa.sa);
 		if (error) {
-			ipstr_buf b;
-
+			endpoint_buf b;
 			fprintf(stderr,
 				"%s: Trouble building address_sflow extension (%s), error=%d.\n",
-				progname, ipstr(&pfkey_address_sflow_ska, &b), error);
+				progname, str_endpoint(&sflow_end, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -806,20 +803,20 @@ sa_build:
 			fprintf(stderr, "%s: destination subnet not specified.\n", progname);
 			exit(1);
 		}
-		ip_endpoint d_flow = subnet_endpoint(&d_subnet);
-		pfkey_address_dflow_ska = set_endpoint_port(&d_flow, dst_port); /* dst flow */
-		error = pfkey_address_build(
-				&extensions[SADB_X_EXT_ADDRESS_DST_FLOW],
-				SADB_X_EXT_ADDRESS_DST_FLOW,
-				0,
-				0,
-				sockaddrof(&pfkey_address_dflow_ska));
+		ip_endpoint dflow = subnet_endpoint(&d_subnet);
+		ip_endpoint dflow_end = set_endpoint_port(&dflow, dst_port); /* dst flow */
+		ip_sockaddr dflow_sa;
+		passert(endpoint_to_sockaddr(&dflow_end, &dflow_sa) > 0);
+		error = pfkey_address_build(&extensions[SADB_X_EXT_ADDRESS_DST_FLOW],
+					    SADB_X_EXT_ADDRESS_DST_FLOW,
+					    0,
+					    0,
+					    &dflow_sa.sa);
 		if (error) {
-			ipstr_buf b;
-
+			endpoint_buf b;
 			fprintf(stderr,
 				"%s: Trouble building address_dflow extension (%s), error=%d.\n",
-				progname, ipstr(&pfkey_address_dflow_ska, &b), error);
+				progname, str_endpoint(&dflow_end, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -829,20 +826,20 @@ sa_build:
 				progname);
 		}
 
-		ip_address s_mask = subnet_mask(&s_subnet); /* src mask */
-		ip_endpoint pfkey_address_smask_ska = endpoint(&s_mask, src_port ? ~0 : 0);
-		error = pfkey_address_build(
-				&extensions[SADB_X_EXT_ADDRESS_SRC_MASK],
-				SADB_X_EXT_ADDRESS_SRC_MASK,
-				0,
-				0,
-				sockaddrof(&pfkey_address_smask_ska));
+		ip_address smask = subnet_mask(&s_subnet); /* src mask */
+		ip_endpoint smask_end = endpoint(&smask, src_port ? ~0 : 0);
+		ip_sockaddr smask_sa;
+		passert(endpoint_to_sockaddr(&smask_end, &smask_sa) > 0);
+		error = pfkey_address_build(&extensions[SADB_X_EXT_ADDRESS_SRC_MASK],
+					    SADB_X_EXT_ADDRESS_SRC_MASK,
+					    0,
+					    0,
+					    &smask_sa.sa);
 		if (error) {
-			ipstr_buf b;
-
+			endpoint_buf b;
 			fprintf(stderr,
 				"%s: Trouble building address_smask extension (%s), error=%d.\n",
-				progname, ipstr(&pfkey_address_smask_ska, &b), error);
+				progname, str_endpoint(&smask_end, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -852,20 +849,20 @@ sa_build:
 				progname);
 		}
 
-		ip_address d_mask = subnet_mask(&d_subnet); /* dst mask */
-		ip_endpoint pfkey_address_dmask_ska = endpoint(&d_mask, dst_port ? ~0 : 0);
-		error = pfkey_address_build(
-				&extensions[SADB_X_EXT_ADDRESS_DST_MASK],
-					 SADB_X_EXT_ADDRESS_DST_MASK,
-					 0,
-					 0,
-					 sockaddrof(&pfkey_address_dmask_ska));
+		ip_address dmask = subnet_mask(&d_subnet); /* dst mask */
+		ip_endpoint dmask_end = endpoint(&dmask, dst_port ? ~0 : 0);
+		ip_sockaddr dmask_sa;
+		passert(endpoint_to_sockaddr(&dmask_end, &dmask_sa) > 0);
+		error = pfkey_address_build(&extensions[SADB_X_EXT_ADDRESS_DST_MASK],
+					    SADB_X_EXT_ADDRESS_DST_MASK,
+					    0,
+					    0,
+					    &dmask_sa.sa);
 		if (error) {
-			ipstr_buf b;
-
+			endpoint_buf b;
 			fprintf(stderr,
 				"%s: Trouble building address_dmask extension (%s), error=%d.\n",
-				progname, ipstr(&pfkey_address_dmask_ska, &b),
+				progname, str_endpoint(&dmask_end, &b),
 				error);
 			pfkey_extensions_free(extensions);
 			exit(1);

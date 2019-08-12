@@ -63,7 +63,7 @@
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
 #include "udpfromto.h"
-
+#include "ip_sockaddr.h"
 #include "ip_address.h"
 #include "ip_endpoint.h"
 #include "ip_info.h"
@@ -94,23 +94,11 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
 
 	uint8_t *_buffer = bigbuffer;
-	/*
-	 * Size the socaddr buffer big enough for all known
-	 * alternatives.  On linux, at least, this isn't true:
-	 *
-	 * passert(sizeof(struct sockaddr) >= sizeof(struct sockaddr_in));
-	 * passert(sizeof(struct sockaddr) >= sizeof(struct sockaddr_in6));
-	 */
-	union sas {
-		struct sockaddr sa;
-		struct sockaddr_in sin;
-		struct sockaddr_in6 sin6;
-	};
-	union sas from;
+	ip_sockaddr from;
 	zero(&from);
 	socklen_t from_len = sizeof(from);
 #if defined(HAVE_UDPFROMTO)
-	union sas to;
+	ip_sockaddr to;
 	zero(&to);
 	socklen_t to_len   = sizeof(to);
 #endif
@@ -136,7 +124,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	 * the best).
 	 */
 	ip_endpoint sender;
-	const char *from_ugh = sockaddr_as_endpoint(&from.sa, from_len, &sender);
+	const char *from_ugh = sockaddr_to_endpoint(&from, from_len, &sender);
 	if (packet_len == -1) {
 		if (from_len == sizeof(from) &&
 		    all_zero((const void *)&from, sizeof(from))) {

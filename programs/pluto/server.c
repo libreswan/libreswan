@@ -394,14 +394,14 @@ int create_socket(const struct raw_iface *ifp, const char *v_name, int port)
 	 * Old code seemed to assume that it should be reset to pluto_port.
 	 * But only on successful bind.  Seems wrong or unnecessary.
 	 */
-	ip_address a = ifp->addr;	/* copy so we can overwrite port */
-	setportof(htons(port), &a);
-	if (bind(fd, sockaddrof(&a), sockaddrlenof(&a)) < 0) {
-		ipstr_buf b;
-
-		LOG_ERRNO(errno, "bind() for %s/%s %s:%u in process_raw_ifaces()",
+	ip_endpoint if_endpoint = endpoint(&ifp->addr, port);
+	ip_sockaddr if_sa;
+	size_t if_sa_size = endpoint_to_sockaddr(&if_endpoint, &if_sa);
+	if (bind(fd, &if_sa.sa, if_sa_size) < 0) {
+		endpoint_buf b;
+		LOG_ERRNO(errno, "bind() for %s/%s %s in process_raw_ifaces()",
 			  ifp->name, v_name,
-			  ipstr(&a, &b), (unsigned) port);
+			  str_endpoint(&if_endpoint, &b));
 		close(fd);
 		return -1;
 	}

@@ -51,6 +51,7 @@
 
 #include "ip_address.h"
 #include "ip_said.h"
+#include "ip_endpoint.h"
 
 const char *progname;
 
@@ -414,9 +415,10 @@ int main(int argc, char **argv)
 			{
 				uint16_t x = j == 0 ? SADB_EXT_ADDRESS_DST : SADB_X_EXT_ADDRESS_DST2;
 
-				error = pfkey_address_build(
-					&extensions[x], x, 0, 0,
-					sockaddrof(&said_af_array[i + j].said.dst));
+				ip_sockaddr said_dst_sa;
+				passert(endpoint_to_sockaddr(&said_af_array[i + j].said.dst, &said_dst_sa) > 0);
+				error = pfkey_address_build(&extensions[x], x, 0, 0,
+							    &said_dst_sa.sa);
 			}
 
 			if (error) {
