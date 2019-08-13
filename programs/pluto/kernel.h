@@ -244,10 +244,10 @@ struct kernel_ops {
 	err_t (*migrate_sa_check)(void);
 	bool (*migrate_sa)(struct state *st);
 	bool (*v6holes)();
-	bool (*poke_ipsec_policy_hole)(struct raw_iface *ifp, int fd);
+	bool (*poke_ipsec_policy_hole)(const struct raw_iface *ifp, int fd);
 };
 
-extern int create_socket(struct raw_iface *ifp, const char *v_name, int port);
+extern int create_socket(const struct raw_iface *ifp, const char *v_name, int port);
 
 #ifndef IPSECDEVPREFIX
 # define IPSECDEVPREFIX "ipsec"

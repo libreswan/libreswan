@@ -282,7 +282,7 @@ void free_ifaces(void)
 
 struct raw_iface *static_ifn = NULL;
 
-int create_socket(struct raw_iface *ifp, const char *v_name, int port)
+int create_socket(const struct raw_iface *ifp, const char *v_name, int port)
 {
 	int fd = socket(addrtypeof(&ifp->addr), SOCK_DGRAM, IPPROTO_UDP);
 	int fcntl_flags;

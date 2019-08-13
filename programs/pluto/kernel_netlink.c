@@ -2835,7 +2835,7 @@ static err_t netlink_migrate_sa_check(void)
 	}
 }
 
-static bool netlink_poke_ipsec_policy_hole(struct raw_iface *ifp, int fd)
+static bool netlink_poke_ipsec_policy_hole(const struct raw_iface *ifp, int fd)
 {
 	struct xfrm_userpolicy_info policy = {
 		.action = XFRM_POLICY_ALLOW,
