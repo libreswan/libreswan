@@ -228,6 +228,18 @@ update_certificate() {
     echo "To confirm the success try running 'ipsec letsencrypt -t' on the client"
 }
 
+# function for manual cert renewals
+manual_cert_renew() {
+    # Renewing the certificate using Certbot
+    certBotInstalled=$(which certbot 2>/dev/null)
+    if [ -n "${certBotInstalled}" -a -x "${certBotInstalled}" ]; then
+        certbot renew --deploy-hook 'ipsec letsencrypt -ug $HostName'
+    else
+        echo "Certbot not installed. Please install Certbot and try again."
+        exit
+    fi
+}
+
 # function for showing help
 help() {
     echo "Usage: ipsec letsencrypt [arguments]"
@@ -243,8 +255,8 @@ help() {
     echo "generatecertificate hostname, -gc hostname :  For generating the certificate."
     echo "usage: 'ipsec letsencrypt generatecertificate hostname' OR 'ipsec letsencrypt -gc hostname'"
     echo
-    echo "For updating the generated certificate (keeping the private key same) use the following command."
-    echo "usage: certbot renew --deploy-hook 'ipsec letsencrypt -ug hostname'"
+    echo "-renew hostname :  For updating the generated certificate (keeping the private key same) use the following command."
+    echo "usage: 'ipsec letsencrypt -renew hostname'"
 }
 
 case $1 in
@@ -265,6 +277,10 @@ case $1 in
 "updatecertificate" | "-uc")
     check_root
     update_certificate
+    ;;
+"-renew")
+    check_root
+    manual_cert_renew
     ;;
 "help" | "-h")
     help
