@@ -71,6 +71,8 @@ void crypt_prf_update_byte(struct crypt_prf *prf,
 			   const char *update_name, uint8_t update);
 void crypt_prf_update_bytes(struct crypt_prf *prf,
 			    const char *update_name, const void *update, size_t update_size);
+#define crypt_prf_update_hunk(PRF, UPDATE_NAME, UPDATE) \
+	crypt_prf_update_bytes(PRF, UPDATE_NAME, UPDATE.ptr, UPDATE.len)
 
 /*
  * Finally ...

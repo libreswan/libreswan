@@ -52,16 +52,15 @@
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
 #include "lswfips.h"
-
+#include "ikev2_prf.h"
 #include <nss.h>
 #include <pk11pub.h>
 
-static bool ikev2_calculate_psk_sighash(bool verify,
-					const struct state *st,
-					enum keyword_authby authby,
-					const unsigned char *idhash,
-					const chunk_t firstpacket,
-					unsigned char signed_octets[MAX_DIGEST_LEN])
+static chunk_t ikev2_calculate_psk_sighash(bool verify,
+					   const struct state *st,
+					   enum keyword_authby authby,
+					   const unsigned char *idhash,
+					   const chunk_t firstpacket)
 {
 	const struct connection *c = st->st_connection;
 	const size_t hash_len = st->st_oakley.ta_prf->prf_output_size;
@@ -127,7 +126,7 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 		if (pss == NULL) {
 			loglog(RC_LOG_SERIOUS,"No matching PSK found for connection: %s",
 			      st->st_connection->name);
-			return FALSE;
+			return empty_chunk;
 		}
 		DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
 		const size_t key_size_min = crypt_prf_fips_key_size_min(st->st_oakley.ta_prf);
@@ -139,7 +138,7 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 				       pss->len,
 				       st->st_oakley.ta_prf->common.name,
 				       key_size_min);
-				return FALSE;
+				return empty_chunk;
 			} else {
 				libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
 					      st->st_connection->name,
@@ -171,70 +170,17 @@ static bool ikev2_calculate_psk_sighash(bool verify,
 
 	passert(pss->len != 0);
 
-	/*
-	 * RFC 4306 2.15:
-	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
-	 */
-
-	/* calculate inner prf */
-	PK11SymKey *prf_psk;
-
-	{
-		struct crypt_prf *prf =
-			crypt_prf_init_chunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
-					     st->st_oakley.ta_prf,
-					     "shared secret", *pss);
-		if (prf == NULL) {
-			if (libreswan_fipsmode()) {
-				PASSERT_FAIL("FIPS: failure creating %s PRF context for digesting PSK",
-					     st->st_oakley.ta_prf->common.name);
-			}
-			loglog(RC_LOG_SERIOUS,
-			       "failure creating %s PRF context for digesting PSK",
-			       st->st_oakley.ta_prf->common.name);
-			return FALSE;
-		}
-
-		static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* RFC 4306  2:15 */
-
-		crypt_prf_update_bytes(prf, psk_key_pad_str, /* name */
-				       psk_key_pad_str,
-				       sizeof(psk_key_pad_str) - 1);
-		prf_psk = crypt_prf_final_symkey(&prf);
-	}
-
-	/* calculate outer prf */
-	{
-		struct crypt_prf *prf =
-			crypt_prf_init_symkey("<signed-octets> = prf(<prf-psk>, <msg octets>)",
-					      st->st_oakley.ta_prf,
-					      "<prf-psk>", prf_psk);
-		/*
-		 * For the responder, the octets to be signed start
-		 * with the first octet of the first SPI in the header
-		 * of the second message and end with the last octet
-		 * of the last payload in the second message.
-		 * Appended to this (for purposes of computing the
-		 * signature) are the initiator's nonce Ni (just the
-		 * value, not the payload containing it), and the
-		 * value prf(SK_pr,IDr') where IDr' is the responder's
-		 * ID payload excluding the fixed header.  Note that
-		 * neither the nonce Ni nor the value prf(SK_pr,IDr')
-		 * are transmitted.
-		 */
-		crypt_prf_update_chunk(prf, "first-packet", firstpacket);
-		crypt_prf_update_chunk(prf, "nonce", *nonce);
-		crypt_prf_update_bytes(prf, "hash", idhash, hash_len);
-		crypt_prf_final_bytes(&prf, signed_octets, hash_len);
-	}
-	release_symkey(__func__, "prf-psk", &prf_psk);
-
 	DBG(DBG_CRYPT,
 	    DBG_dump_chunk("inputs to hash1 (first packet)", firstpacket);
 	    DBG_dump_chunk(nonce_name, *nonce);
 	    DBG_dump("idhash", idhash, hash_len));
 
-	return TRUE;
+	/*
+	 * RFC 4306 2.15:
+	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
+	 */
+	return ikev2_psk_auth(st->st_oakley.ta_prf, *pss, firstpacket, *nonce,
+			      shunk2(idhash, hash_len));
 }
 
 bool ikev2_emit_psk_auth(enum keyword_authby authby,
@@ -242,20 +188,18 @@ bool ikev2_emit_psk_auth(enum keyword_authby authby,
 			   const unsigned char *idhash,
 			   pb_stream *a_pbs)
 {
-	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
-	unsigned char signed_octets[MAX_DIGEST_LEN];
-
-	if (!ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
-					 st->st_firstpacket_me,
-					 signed_octets))
-	{
-		return FALSE;
+	chunk_t signed_octets = ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
+							    st->st_firstpacket_me);
+	if (signed_octets.len == 0) {
+		return false;
 	}
 
-	DBG(DBG_PRIVATE,
-	    DBG_dump("PSK auth octets", signed_octets, hash_len));
+	DBG(DBG_CRYPT,
+	    DBG_dump_chunk("PSK auth octets", signed_octets));
 
-	return out_raw(signed_octets, hash_len, a_pbs, "PSK auth");
+	bool ok = out_chunk(signed_octets, a_pbs, "PSK auth");
+	freeanychunk(signed_octets);
+	return ok;
 }
 
 bool ikev2_create_psk_auth(enum keyword_authby authby,
@@ -263,24 +207,17 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 			   const unsigned char *idhash,
 			   chunk_t *additional_auth /* output */)
 {
-	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
-	unsigned char signed_octets[MAX_DIGEST_LEN];
-
-	if (!ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
-					 st->st_firstpacket_me,
-					 signed_octets))
-	{
-		return FALSE;
+	chunk_t signed_octets = ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
+							    st->st_firstpacket_me);
+	if (signed_octets.len == 0) {
+		return false;
 	}
 
-	DBG(DBG_PRIVATE,
-	    DBG_dump("PSK auth octets", signed_octets, hash_len));
-
 	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
-	clonetochunk(*additional_auth, signed_octets, hash_len, chunk_n);
+	*additional_auth = signed_octets;
 	DBG(DBG_PRIVATE, DBG_dump_chunk(chunk_n, *additional_auth));
 
-	return TRUE;
+	return true;
 }
 
 bool ikev2_verify_psk_auth(enum keyword_authby authby,
@@ -289,7 +226,6 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 				 pb_stream *sig_pbs)
 {
 	size_t hash_len = st->st_oakley.ta_prf->prf_output_size;
-	unsigned char calc_hash[MAX_DIGEST_LEN];
 	size_t sig_len = pbs_left(sig_pbs);
 
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
@@ -298,25 +234,26 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 		libreswan_log(
 			"hash length in I2 packet (%zu) does not equal hash length (%zu) of negotiated PRF (%s)",
 			sig_len, hash_len, st->st_oakley.ta_prf->common.name);
-		return FALSE;
+		return false;
 	}
 
-
-	if (!ikev2_calculate_psk_sighash(TRUE, st, authby, idhash,
-					 st->st_firstpacket_him, calc_hash)) {
-		return FALSE;
+	chunk_t calc_hash = ikev2_calculate_psk_sighash(TRUE, st, authby, idhash,
+							st->st_firstpacket_him);
+	if (calc_hash.len == 0) {
+		return false;
 	}
 
-	DBG(DBG_PRIVATE,
+	DBG(DBG_CRYPT,
 	    DBG_dump("Received PSK auth octets", sig_pbs->cur, sig_len);
-	    DBG_dump("Calculated PSK auth octets", calc_hash, hash_len));
-
-	if (memeq(sig_pbs->cur, calc_hash, hash_len)) {
+	    DBG_dump_chunk("Calculated PSK auth octets", calc_hash));
+	bool ok = memeq(sig_pbs->cur, calc_hash.ptr, calc_hash.len);
+	freeanychunk(calc_hash);
+	if (ok) {
 		loglog(RC_LOG_SERIOUS, "Authenticated using authby=%s",
 			authby == AUTH_NULL ? "null" : "secret");
-		return TRUE;
+		return true;
 	} else {
 		loglog(RC_LOG_SERIOUS, "AUTH mismatch: Received AUTH != computed AUTH");
-		return FALSE;
+		return false;
 	}
 }

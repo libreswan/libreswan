@@ -22,6 +22,8 @@
 
 #include "lswnss.h"
 #include "ike_spi.h"
+#include "chunk.h"
+#include "shunk.h"
 
 struct prf_desc;
 
@@ -55,5 +57,12 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  PK11SymKey *new_dh_secret,
 				  const chunk_t Ni, const chunk_t Nr,
 				  size_t required_bytes);
+
+/*
+ * Authentication.
+ */
+
+chunk_t ikev2_psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
+		       chunk_t first_packet, chunk_t nonce, shunk_t id_hash);
 
 #endif

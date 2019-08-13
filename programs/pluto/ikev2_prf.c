@@ -28,6 +28,7 @@
 
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
+#include "lswfips.h"
 
 /*
  * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.
@@ -196,4 +197,62 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 					    required_bytes);
 	release_symkey(__func__, "data", &data);
 	return prfplus;
+}
+
+chunk_t ikev2_psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
+		       chunk_t first_packet, chunk_t nonce, shunk_t id_hash)
+{
+	/* calculate inner prf */
+	PK11SymKey *prf_psk;
+
+	{
+		struct crypt_prf *prf =
+			crypt_prf_init_chunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
+					     prf_desc, "shared secret", pss);
+		if (prf == NULL) {
+			if (libreswan_fipsmode()) {
+				PASSERT_FAIL("FIPS: failure creating %s PRF context for digesting PSK",
+					     prf_desc->common.name);
+			}
+			loglog(RC_LOG_SERIOUS,
+			       "failure creating %s PRF context for digesting PSK",
+			       prf_desc->common.name);
+			return empty_chunk;
+		}
+
+		static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* RFC 4306  2:15 */
+
+		crypt_prf_update_bytes(prf, psk_key_pad_str, /* name */
+				       psk_key_pad_str,
+				       sizeof(psk_key_pad_str) - 1);
+		prf_psk = crypt_prf_final_symkey(&prf);
+	}
+
+	/* calculate outer prf */
+	chunk_t signed_octets;
+	{
+		struct crypt_prf *prf =
+			crypt_prf_init_symkey("<signed-octets> = prf(<prf-psk>, <msg octets>)",
+					      prf_desc, "<prf-psk>", prf_psk);
+		/*
+		 * For the responder, the octets to be signed start
+		 * with the first octet of the first SPI in the header
+		 * of the second message and end with the last octet
+		 * of the last payload in the second message.
+		 * Appended to this (for purposes of computing the
+		 * signature) are the initiator's nonce Ni (just the
+		 * value, not the payload containing it), and the
+		 * value prf(SK_pr,IDr') where IDr' is the responder's
+		 * ID payload excluding the fixed header.  Note that
+		 * neither the nonce Ni nor the value prf(SK_pr,IDr')
+		 * are transmitted.
+		 */
+		crypt_prf_update_hunk(prf, "first-packet", first_packet);
+		crypt_prf_update_hunk(prf, "nonce", nonce);
+		crypt_prf_update_hunk(prf, "hash", id_hash);
+		signed_octets = crypt_prf_final_chunk(&prf);
+	}
+	release_symkey(__func__, "prf-psk", &prf_psk);
+
+	return signed_octets;
 }
