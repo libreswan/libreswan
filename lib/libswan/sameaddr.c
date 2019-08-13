@@ -110,7 +110,7 @@ bool samesubnettype(const ip_subnet *a, const ip_subnet *b)
  */
 bool addrinsubnet(const ip_address *a, const ip_subnet *s)
 {
-	return address_type(a) != subnet_type(s) &&
+	return address_type(a) == subnet_type(s) &&
 		samenbits(a, &s->addr, s->maskbits);
 }
 
