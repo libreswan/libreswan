@@ -27,9 +27,7 @@ static bool samenbits(const ip_address *a, const ip_address *b, int n);
  * size test can yield cases where a<b, b<c, but a>c.
  */
 int	/* like memcmp */
-addrcmp(a, b)
-const ip_address *a;
-const ip_address *b;
+addrcmp(const ip_address *a, const ip_address *b)
 {
 	int at = addrtypeof(a);
 	int bt = addrtypeof(b);
@@ -59,9 +57,7 @@ const ip_address *b;
 /*
  * sameaddr - are two addresses the same?
  */
-bool sameaddr(a, b)
-const ip_address * a;
-const ip_address *b;
+bool sameaddr(const ip_address *a, const ip_address *b)
 {
 	return addrcmp(a, b) == 0;
 }
@@ -69,135 +65,85 @@ const ip_address *b;
 /*
  * samesubnet - are two subnets the same?
  */
-bool samesubnet(a, b)
-const ip_subnet * a;
-const ip_subnet *b;
+bool samesubnet(const ip_subnet * a, const ip_subnet *b)
 {
-	if (!sameaddr(&a->addr, &b->addr))	/* also does type check */
-		return 0;
-
-	if (a->maskbits != b->maskbits)
-		return 0;
-
-	return 1;
+	return sameaddr(&a->addr, &b->addr) &&	/* also does type check */
+		a->maskbits == b->maskbits;
 }
 
 /*
  * subnetishost - is a subnet in fact a single host?
  */
-bool subnetishost(a)
-const ip_subnet * a;
+bool subnetishost(const ip_subnet *a)
 {
-	return (a->maskbits == (int)addrlenof(&a->addr) * 8) ? 1 : 0;
+	return a->maskbits == (int)addrlenof(&a->addr) * 8;
 }
 
 /*
  * samesaid - are two SA IDs the same?
  */
-bool samesaid(a, b)
-const ip_said *a;
-const ip_said *b;
+bool samesaid(const ip_said *a, const ip_said *b)
 {
-	if (a->spi != b->spi)	/* test first, most likely to be different */
-		return 0;
-
-	if (!sameaddr(&a->dst, &b->dst))
-		return 0;
-
-	if (a->proto != b->proto)
-		return 0;
-
-	return 1;
+	return a->spi == b->spi &&	/* test first, most likely to be different */
+		sameaddr(&a->dst, &b->dst) &&
+		a->proto == b->proto;
 }
 
 /*
  * sameaddrtype - do two addresses have the same type?
  */
-bool sameaddrtype(a, b)
-const ip_address * a;
-const ip_address *b;
+bool sameaddrtype(const ip_address *a, const ip_address *b)
 {
-	return (addrtypeof(a) == addrtypeof(b)) ? 1 : 0;
+	return addrtypeof(a) == addrtypeof(b);
 }
 
 /*
  * samesubnettype - do two subnets have the same type?
  */
-bool samesubnettype(a, b)
-const ip_subnet * a;
-const ip_subnet *b;
+bool samesubnettype(const ip_subnet *a, const ip_subnet *b)
 {
-	return subnet_type(a) == subnet_type(b);
+	return sameaddrtype(&a->addr, &b->addr);
 }
 
 /*
  * addrinsubnet - is this address in this subnet?
  */
-bool addrinsubnet(a, s)
-const ip_address * a;
-const ip_subnet *s;
+bool addrinsubnet(const ip_address *a, const ip_subnet *s)
 {
-	if (address_type(a) != subnet_type(s))
-		return false;
-
-	if (!samenbits(a, &s->addr, s->maskbits))
-		return 0;
-
-	return 1;
+	return address_type(a) != subnet_type(s) &&
+		samenbits(a, &s->addr, s->maskbits);
 }
 
 /*
  * subnetinsubnet - is one subnet within another?
  */
-bool subnetinsubnet(a, b)
-const ip_subnet * a;
-const ip_subnet *b;
+bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b)
 {
-	if (subnet_type(a) != subnet_type(b))
-		return false;
-
-	if (a->maskbits < b->maskbits)	/* a is bigger than b */
-		return 0;
-
-	if (!samenbits(&a->addr, &b->addr, b->maskbits))
-		return 0;
-
-	return 1;
+	return addrinsubnet(&a->addr, b) &&
+		a->maskbits >= b->maskbits;	/* a is not bigger than b */
 }
 
 /*
  * samenbits - do two addresses have the same first n bits?
  */
-static bool samenbits(a, b, nbits)
-const ip_address * a;
-const ip_address *b;
-int nbits;
+static bool samenbits(const ip_address *a, const ip_address *b, int nbits)
 {
-	const unsigned char *ap;
-	const unsigned char *bp;
-	size_t n;
-	int m;
-
 	if (addrtypeof(a) != addrtypeof(b))
-		return 0;	/* arbitrary */
+		return false;	/* arbitrary */
 
-	n = addrbytesptr_read(a, &ap);
+	const unsigned char *ap;
+	int n = addrbytesptr_read(a, &ap);
 	if (n == 0)
-		return 0;	/* arbitrary */
+		return false;	/* arbitrary */
 
+	const unsigned char *bp;
 	(void) addrbytesptr_read(b, &bp);
 	if (nbits > (int)n * 8)
-		return 0;	/* "can't happen" */
+		return false;	/* "can't happen" */
 
 	for (; nbits >= 8 && *ap == *bp; nbits -= 8, ap++, bp++)
 		continue;
-	if (nbits >= 8)
-		return 0;
 
-	if (nbits > 0) {	/* partial byte */
-		m = ~(0xff >> nbits);
-		if ((*ap & m) != (*bp & m))
-			return 0;
-	}
-	return 1;
+	return nbits < 8 &&
+		(*ap ^ *bp) >> (8 - nbits) == 0x00;
 }

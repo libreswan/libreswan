@@ -54,23 +54,23 @@ typedef struct {
 typedef struct {
 	char buf[sizeof(address_buf) + 4/*/NNN*/];
 } subnet_buf;
-const char *str_subnet(const ip_subnet *subnet, subnet_buf *out);
-void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
+extern const char *str_subnet(const ip_subnet *subnet, subnet_buf *out);
+extern void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
 
-const struct ip_info *subnet_type(const ip_subnet *subnet);
+extern const struct ip_info *subnet_type(const ip_subnet *subnet);
 
 /*
  * Extract details
  */
 
 /* when applied to an address, leaves just the routing prefix */
-ip_address subnet_mask(const ip_subnet *subnet);
+extern ip_address subnet_mask(const ip_subnet *subnet);
 
 /* [floor..ceiling] vs [floor..roof) */
 /* PREFIX&MASK; aka IPv4 network, IPv6 anycast */
-ip_address subnet_floor(const ip_subnet *subnet);
+extern ip_address subnet_floor(const ip_subnet *subnet);
 /* PREFIX|~MASK; aka IPv4 broadcast but not IPv6 */
-ip_address subnet_ceiling(const ip_subnet *subnet);
+extern ip_address subnet_ceiling(const ip_subnet *subnet);
 
 /* PREFIX|HOST:PORT */
 ip_endpoint subnet_endpoint(const ip_subnet *subnet);
