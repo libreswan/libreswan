@@ -1380,7 +1380,7 @@ bool pfkey_shunt_eroute(const struct connection *c,
 	{
 		const ip_address *peer = &sr->that.host_addr;
 		char buf2[256];
-		const ip_address any = address_any(addrtypeof(peer));
+		const ip_address any = address_any(address_type(peer));
 
 		snprintf(buf2, sizeof(buf2),
 			 "eroute_connection %s", opname);

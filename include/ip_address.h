@@ -130,7 +130,7 @@ const ip_address address_invalid;
 const struct ip_info *address_type(const ip_address *address);
 
 /* AF={INET,INET6}, ADDR = 0; aka %any? */
-ip_address address_any(int af);
+ip_address address_any(const struct ip_info *info);
 bool address_is_any(const ip_address *address);
 
 /*

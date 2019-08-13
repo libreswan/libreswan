@@ -69,8 +69,8 @@ const struct ip_info *aftoinfo(int af)
 
 void init_ip_info(void)
 {
-	ip_address ipv4_any = address_any(AF_INET);
-	ip_address ipv6_any = address_any(AF_INET6);
+	ip_address ipv4_any = address_any(&ipv4_info);
+	ip_address ipv6_any = address_any(&ipv6_info);
 
 	happy(addrtosubnet(&ipv4_any, &ipv4_wildcard));
 	happy(addrtosubnet(&ipv6_any, &ipv6_wildcard));

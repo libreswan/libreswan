@@ -50,6 +50,7 @@
 #include "ip_address.h"
 #include "ip_said.h"
 #include "ip_subnet.h"
+#include "ip_info.h"
 
 const char *progname;
 static const char me[] = "ipsec eroute";
@@ -720,7 +721,7 @@ sa_build:
 	case EMT_REPLACEROUTE:
 	case EMT_INEROUTE:
 	case EMT_INREPLACEROUTE:
-		pfkey_address_s_ska = address_any(said_af);
+		pfkey_address_s_ska = address_any(aftoinfo(said_af));
 		error = pfkey_address_build(
 				&extensions[SADB_EXT_ADDRESS_SRC],
 				SADB_EXT_ADDRESS_SRC,

@@ -59,6 +59,7 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
 #include "ip_address.h"
+#include "ip_info.h"
 
 #ifdef HAVE_BROKEN_POPEN
 /*
@@ -135,7 +136,7 @@ struct raw_iface *find_raw_ifaces4(void)
 
 	/* bind the socket */
 	{
-		ip_address any = address_any(AF_INET);
+		ip_address any = address_any(&ipv4_info);
 		setportof(htons(pluto_port), &any);
 		if (bind(master_sock, sockaddrof(&any),
 			 sockaddrlenof(&any)) < 0)

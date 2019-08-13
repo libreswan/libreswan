@@ -65,8 +65,7 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, const struct end 
 
 	switch (id->kind) {
 	case ID_NONE:
-		hd->isaiid_idtype =
-			aftoinfo(addrtypeof(&end->host_addr))->id_addr;
+		hd->isaiid_idtype = address_type(&end->host_addr)->id_addr;
 		tl->len = addrbytesptr_read(&end->host_addr, &p);
 		tl->ptr = DISCARD_CONST(unsigned char *, p);
 		break;

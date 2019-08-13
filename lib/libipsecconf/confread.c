@@ -35,6 +35,7 @@
 
 #include "lswalloc.h"
 #include "ip_address.h"
+#include "ip_info.h"
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
@@ -178,14 +179,14 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_ESN_NO;      	     /* esn=no */
 
 	d->left.addr_family = AF_INET;
-	d->left.addr = address_any(AF_INET);
+	d->left.addr = address_any(&ipv4_info);
 	d->left.nexttype = KH_NOTSET;
-	d->left.nexthop = address_any(AF_INET);
+	d->left.nexthop = address_any(&ipv4_info);
 
 	d->right.addr_family = AF_INET;
-	d->right.addr = address_any(AF_INET);
+	d->right.addr = address_any(&ipv4_info);
 	d->right.nexttype = KH_NOTSET;
-	d->right.nexthop = address_any(AF_INET);
+	d->right.nexthop = address_any(&ipv4_info);
 
 	/* default is NOT to look in DNS */
 	d->left.key_from_DNS_on_demand = FALSE;
@@ -433,7 +434,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	/* validate the KSCF_IP/KNCF_IP */
 	switch (end->addrtype) {
 	case KH_ANY:
-		end->addr = address_any(hostfam);
+		end->addr = address_any(aftoinfo(hostfam));
 		break;
 
 	case KH_IFACE:
@@ -549,7 +550,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	/* set nexthop address to something consistent, by default */
-	end->nexthop = address_any(addrtypeof(&end->addr));
+	end->nexthop = address_any(address_type(&end->addr));
 
 	/* validate the KSCF_NEXTHOP */
 	if (end->strings_set[KSCF_NEXTHOP]) {
@@ -584,7 +585,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
-		end->nexthop = address_any(hostfam);
+		end->nexthop = address_any(aftoinfo(hostfam));
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
 			end->nexttype = KH_DEFAULTROUTE;

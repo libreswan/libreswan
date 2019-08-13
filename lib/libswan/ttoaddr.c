@@ -351,7 +351,7 @@ static err_t colon(const char *src,
 			return "illegal leading `:' in " IT;
 
 		if (srclen == 2) {
-			*dst = address_any(AF_INET6);
+			*dst = address_any(&ipv6_info);
 			return NULL;
 		}
 		src++;	/* past first but not second */

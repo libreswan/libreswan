@@ -364,14 +364,9 @@ const ip_address address_invalid = {
 static const struct in_addr in_addr_any = { INADDR_ANY, };
 static const struct in6_addr in6_addr_any = IN6ADDR_ANY_INIT;
 
-ip_address address_any(int af)
+ip_address address_any(const struct ip_info *info)
 {
-	switch (af) {
-	case AF_INET:
-		return address_from_in_addr(&in_addr_any);
-	case AF_INET6:
-		return address_from_in6_addr(&in6_addr_any);
-	case AF_UNSPEC:
+	if (info == NULL) {
 		/*
 		 * XXX: Loudly reject AF_UNSPEC, but don't crash.
 		 * Callers know the protocol of the "any" (IPv[46]
@@ -384,8 +379,15 @@ ip_address address_any(int af)
 		 */
 		PEXPECT_LOG("AF_UNSPEC unexpected");
 		return address_invalid;
-	default:
-		bad_case(af);
+	} else {
+		switch (info->af) {
+		case AF_INET:
+			return address_from_in_addr(&in_addr_any);
+		case AF_INET6:
+			return address_from_in6_addr(&in6_addr_any);
+		default:
+			bad_case(info->af);
+		}
 	}
 }
 

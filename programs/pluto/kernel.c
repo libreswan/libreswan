@@ -183,7 +183,7 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 
 	bs->said.proto = SA_INT;
 	bs->said.spi = htonl(shunt_spi);
-	bs->said.dst = address_any(subnet_type(ours)->af);
+	bs->said.dst = address_any(subnet_type(ours));
 
 	bs->count = 0;
 	bs->last_activity = mononow();
@@ -1336,7 +1336,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			const char *why)
 {
 	ip_subnet this_client, that_client;
-	const ip_address null_host = address_any(addrtypeof(src));
+	const ip_address null_host = address_any(address_type(src));
 
 	DBG(DBG_CONTROL, DBG_log("fiddle_bare_shunt called"));
 
@@ -1473,7 +1473,7 @@ bool eroute_connection(const struct spd_route *sr,
 		"eroute_connection %s", opname);
 
 	if (sa_proto == SA_INT)
-		peer = address_any(addrtypeof(&peer));
+		peer = address_any(address_type(&peer));
 
 	if (sr->this.has_cat) {
 		ip_subnet client;
@@ -3553,7 +3553,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 		bs->said.proto = SA_INT;
 		bs->said.spi = htonl(negotiation_shunt);
-		bs->said.dst = address_any(subnet_type(&sr->this.client)->af);
+		bs->said.dst = address_any(subnet_type(&sr->this.client));
 
 		bs->count = 0;
 		bs->last_activity = mononow();

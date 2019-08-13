@@ -222,7 +222,7 @@ static void check_address_any(void)
 		PRINT_IN(stdout, "-> %s", any);
 
 		/* convert it *to* internal format */
-		ip_address a = address_any(SA_FAMILY(t->family));
+		ip_address a = address_any(IP_TYPE(t->family));
 		bool a_is_any = address_is_any(&a);
 		if (a_is_any != t->any) {
 			FAIL_IN("addres_is_any() returned %s, expected %s",

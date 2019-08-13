@@ -69,6 +69,7 @@
 #include "pfkey_help.h"
 #include "ip_address.h"
 #include "ip_said.h"
+#include "ip_info.h"
 
 struct encap_msghdr *em;
 
@@ -910,9 +911,9 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			/* currently we ensure that all addresses belong to the same address family */
-			dst = address_any(address_family);
-			edst = address_any(address_family);
-			src = address_any(address_family);
+			dst = address_any(aftoinfo(address_family));
+			edst = address_any(aftoinfo(address_family));
+			src = address_any(aftoinfo(address_family));
 			af_opt = optarg;
 			break;
 
@@ -968,9 +969,9 @@ int main(int argc, char *argv[])
 					progname, address_family, optarg);
 				exit(1);
 			}
-			dst = address_any(address_family);
-			edst = address_any(address_family);
-			src = address_any(address_family);
+			dst = address_any(aftoinfo(address_family));
+			edst = address_any(aftoinfo(address_family));
+			src = address_any(aftoinfo(address_family));
 			said_opt = optarg;
 			break;
 

@@ -321,7 +321,7 @@ static void natd_lookup_common(struct state *st,
 	const ip_address *sender,
 	bool found_me, bool found_him)
 {
-	st->hidden_variables.st_natd = address_any(AF_INET);
+	st->hidden_variables.st_natd = address_any(&ipv4_info);
 
 	/* update NAT-T settings for local policy */
 	switch (st->st_connection->encaps) {
@@ -508,7 +508,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	passert(md->iface != NULL);
 
 	/* Initialize NAT-OA */
-	hv->st_nat_oa = address_any(AF_INET);
+	hv->st_nat_oa = address_any(&ipv4_info);
 
 	/* Count NAT-OA */
 	const struct payload_digest *p;
