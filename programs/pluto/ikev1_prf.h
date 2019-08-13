@@ -61,9 +61,9 @@ PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
 			   chunk_t cky_i, chunk_t cky_r);
 
-PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
-				const struct encrypt_desc *encrypter,
-				PK11SymKey *skeyid_e,
-				unsigned required_keymat);
+PK11SymKey *ikev1_appendix_b_keymat_e(const struct prf_desc *prf_desc,
+				      const struct encrypt_desc *encrypter,
+				      PK11SymKey *skeyid_e,
+				      unsigned required_keymat);
 
 #endif

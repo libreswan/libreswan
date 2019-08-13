@@ -123,10 +123,10 @@ PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 	return crypt_prf_final_symkey(&prf);
 }
 
-PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
-				const struct encrypt_desc *encrypter,
-				PK11SymKey *skeyid_e,
-				unsigned required_keymat)
+PK11SymKey *ikev1_appendix_b_keymat_e(const struct prf_desc *prf_desc,
+				      const struct encrypt_desc *encrypter,
+				      PK11SymKey *skeyid_e,
+				      unsigned required_keymat)
 {
 	if (sizeof_symkey(skeyid_e) >= required_keymat) {
 		return encrypt_key_from_symkey_bytes("keymat", encrypter,

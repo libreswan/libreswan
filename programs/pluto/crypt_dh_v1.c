@@ -252,8 +252,8 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 	PK11SymKey *skeyid_e = ikev1_skeyid_e(prf_desc, skeyid, skeyid_a,
 					      shared, icookie, rcookie);
 
-	PK11SymKey *enc_key = appendix_b_keymat_e(prf_desc, encrypter,
-						  skeyid_e, keysize);
+	PK11SymKey *enc_key = ikev1_appendix_b_keymat_e(prf_desc, encrypter,
+							skeyid_e, keysize);
 
 	*skeyid_out = skeyid;
 	*skeyid_d_out = skeyid_d;
