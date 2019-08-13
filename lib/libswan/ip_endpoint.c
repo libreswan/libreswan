@@ -157,18 +157,23 @@ static void format_endpoint(jambuf_t *buf, bool sensitive,
 		jam(buf, "<none:>");
 		return;
 	}
+
+	/*
+	 * An endpoint with no type (i.e., uninitialized) can't be
+	 * sensitive so always log it.
+	 */
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (afi == NULL) {
+		jam(buf, "<unspecified:>");
+		return;
+	}
+
 	if (sensitive) {
 		jam(buf, "<address:>");
 		return;
 	}
 	ip_address address = endpoint_address(endpoint);
 	int port = endpoint_port(endpoint);
-	const struct ip_info *afi = endpoint_type(endpoint);
-
-	if (afi == NULL) {
-		jam(buf, "<unspecified:>");
-		return;
-	}
 
 	switch (afi->af) {
 	case AF_INET: /* N.N.N.N[:PORT] */
