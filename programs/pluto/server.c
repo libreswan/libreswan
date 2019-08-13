@@ -389,17 +389,22 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 		return -1;
 	}
 
-	setportof(htons(port), &ifp->addr);
-	if (bind(fd, sockaddrof(&ifp->addr), sockaddrlenof(&ifp->addr)) < 0) {
+	/*
+	 * ??? does anyone care about the value of port of ifp->addr?
+	 * Old code seemed to assume that it should be reset to pluto_port.
+	 * But only on successful bind.  Seems wrong or unnecessary.
+	 */
+	ip_address a = ifp->addr;	/* copy so we can overwrite port */
+	setportof(htons(port), &a);
+	if (bind(fd, sockaddrof(&a), sockaddrlenof(&a)) < 0) {
 		ipstr_buf b;
 
 		LOG_ERRNO(errno, "bind() for %s/%s %s:%u in process_raw_ifaces()",
 			  ifp->name, v_name,
-			  ipstr(&ifp->addr, &b), (unsigned) port);
+			  ipstr(&a, &b), (unsigned) port);
 		close(fd);
 		return -1;
 	}
-	setportof(htons(pluto_port), &ifp->addr);
 
 #if defined(HAVE_UDPFROMTO)
 	/* we are going to use udpfromto.c, so initialize it */
