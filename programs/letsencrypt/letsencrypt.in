@@ -253,10 +253,13 @@ disable_ipsec() {
 help() {
     echo "Usage: ipsec letsencrypt [arguments]"
     echo "Available [arguments]"
-    echo "--server, --client, --test, --generate-certificate hostname, --update-certificate hostname, --help"
+    echo "--server, --client, --test, --generate-certificate hostname, --renew hostname, --help, --disable"
     echo
-    echo "--server, --client :  For initial server/client setup."
-    echo "usage: 'ipsec letsencrypt --client' OR 'ipsec letsencrypt --server'"
+    echo "--client :  For initial client setup."
+    echo "usage: 'ipsec letsencrypt --client'"
+    echo
+    echo "--server :  For initial server setup."
+    echo "usage: 'ipsec letsencrypt --server'"
     echo
     echo "--test  :  For testing the configuration/connections."
     echo "usage: 'ipsec letsencrypt --test'"
@@ -266,6 +269,9 @@ help() {
     echo
     echo "--renew hostname :  For updating the generated certificate (keeping the private key same) use the following command."
     echo "usage: 'ipsec letsencrypt --renew hostname'"
+    echo
+    echo "--disable :  For disabling IPsec service."
+    echo "usage: 'ipsec letsencrypt --disable'"
 }
 
 case $1 in

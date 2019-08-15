@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>letsencrypt</command>
+  <command>ipsec letsencrypt</command>
     <arg choice='plain'><replaceable>command</replaceable></arg>
     <arg choice='opt' rep='repeat'><replaceable>argument</replaceable></arg>
     <arg choice='plain'><replaceable>letsencrypt</replaceable></arg>
@@ -45,26 +45,28 @@ lists the available commands.</para>
 </refsect1>
 
 <refsect1 id='commands'><title>COMMANDS</title>
-<para>To get a list of supported commands, use ipsec letsencrypt -h. A few of the
+<para>To get a list of supported commands, use ipsec letsencrypt --help. A few of the
 commonly used commands are described below</para>
 
-<para><userinput>ipsec letsencrypt -client OR ipsec letsencrypt -server</userinput> For initial setup.</para>
+<para><userinput>ipsec letsencrypt --client</userinput> For initial client setup.</para>
 
-<para><userinput>ipsec letsencrypt test OR ipsec letsencrypt -t</userinput> For testing the configuration/connections.</para>
+<para><userinput>ipsec letsencrypt --server</userinput> For initial server setup.</para>
 
-<para><userinput>ipsec letsencrypt generatecertificate hostname OR ipsec letsencrypt -gc hostname</userinput> For generating the certificate.</para>
+<para><userinput>ipsec letsencrypt --test</userinput> For testing the configuration/connections.</para>
 
-<para><userinput>ipsec letsencrypt -renew hostname</userinput> For updating the generated certificate (keeping the private key same) use the following command.</para>
+<para><userinput>ipsec letsencrypt --generate-certificate hostname</userinput> For generating the certificate.</para>
 
+<para><userinput>ipsec letsencrypt --renew hostname</userinput> For updating the generated certificate (keeping the private key same) use the following command.</para>
+
+<para><userinput>ipsec letsencrypt --disable</userinput> For disabling IPsec service.</para>
 </refsect1>
 
 <refsect1 id='returncode'><title>RETURN CODE</title>
-<para>The ipsec command passes the return code of the sub-command
-back to the caller.</para>
+<para>The ipsec letsencrypt command passes the return code of the sub-command back to the caller.</para>
 </refsect1>
 
 <refsect1 id='files'><title>FILES</title>
-<para>/usr/libexec/ipsec/	usual utilities directory</para>
+<para>/usr/libexec/ipsec/letsencrypt</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
@@ -74,7 +76,7 @@ back to the caller.</para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
-<para>Original Program written by &lt;<ulink url='https://github.com/Rishabh04-02/'>Rishabh Rishabh</ulink>&gt; .</para>
+<para>Original Program written by &lt;<ulink url='https://github.com/Rishabh04-02/'>Rishabh</ulink>&gt; .</para>
 </refsect1>
 
 </refentry>
