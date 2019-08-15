@@ -474,7 +474,7 @@ static void nat_t_new_klips_mapp(struct state *st, void *data)
 	struct new_klips_mapp_nfo *nfo = (struct new_klips_mapp_nfo *)data;
 
 	if (st->st_esp.present &&
-	    sameaddr(&st->st_remoteaddr, &nfo->src) &&
+	    sameaddr(&st->st_remote_endpoint, &nfo->src) &&
 	    st->st_esp.our_spi == nfo->sa->sadb_sa_spi) {
 		ip_endpoint remote_endpoint = endpoint(&nfo->dst, nfo->dport);
 		nat_traversal_new_mapping(ike_sa(st), &remote_endpoint);

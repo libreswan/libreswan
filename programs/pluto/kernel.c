@@ -1960,11 +1960,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
 			natt_type = ESPINUDP_WITH_NON_ESP;
 			if (inbound) {
-				natt_sport = st->st_remoteport;
+				natt_sport = endpoint_port(&st->st_remote_endpoint);
 				natt_dport = endpoint_port(&st->st_interface->local_endpoint);
 			} else {
 				natt_sport = endpoint_port(&st->st_interface->local_endpoint);
-				natt_dport = st->st_remoteport;
+				natt_dport = endpoint_port(&st->st_remote_endpoint);
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
 		}
@@ -2424,11 +2424,12 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	 * and it has now the new address (but we need
 	 * the old one).
 	 */
-	if (!sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
+
+	if (!sameaddr(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
 	    address_is_specified(&c->temp_vars.redirect_ip)) {
 		redirected = TRUE;
 		tmp_ip = c->spd.that.host_addr;
-		c->spd.that.host_addr = st->st_remoteaddr;
+		c->spd.that.host_addr = st->st_remote_endpoint;
 	}
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
@@ -3408,11 +3409,11 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	 * spd.that.host_addr temporarily, we reset
 	 * it back later
 	 */
-	if (!sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
+	if (!sameaddr(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
 	    address_is_specified(&c->temp_vars.redirect_ip)) {
 		redirected = TRUE;
 		tmp_ip = c->spd.that.host_addr;
-		c->spd.that.host_addr = st->st_remoteaddr;
+		c->spd.that.host_addr = st->st_remote_endpoint;
 	}
 
 	if (inbound) {

@@ -213,8 +213,7 @@ bool send_chunks_using_state(struct state *st, const char *where,
 {
 	return send_chunks(where, FALSE,
 			   st->st_serialno, st->st_interface,
-			   hsetportof(st->st_remoteport, st->st_remoteaddr),
-			   a, b);
+			   st->st_remote_endpoint, a, b);
 }
 
 bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet)
@@ -248,7 +247,7 @@ bool send_keepalive(struct state *st, const char *where)
 
 	return send_chunks(where, TRUE,
 			   st->st_serialno, st->st_interface,
-			   hsetportof(st->st_remoteport, st->st_remoteaddr),
+			   st->st_remote_endpoint,
 			   THING_AS_CHUNK(ka_payload),
 			   EMPTY_CHUNK);
 }

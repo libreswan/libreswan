@@ -87,8 +87,7 @@
 #include "ip_info.h"
 
 struct mobike {
-	ip_address remoteaddr;
-	uint16_t remoteport;
+	ip_endpoint remote;
 	const struct iface_port *interface;
 };
 
@@ -486,7 +485,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		idtoa(&id, thatid, sizeof(thatid));
 		DBG_log("%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
 			c->name, st->st_serialno,
-			err1, err2, ipstr(&st->st_remoteaddr, &ra), thatid);
+			err1, err2, ipstr(&st->st_remote_endpoint, &ra), thatid);
 	});
 	return FALSE;
 }
@@ -5021,8 +5020,7 @@ static void mobike_reset_remote(struct state *st, struct mobike *est_remote)
 	if (est_remote->interface == NULL)
 		return;
 
-	st->st_remoteaddr = est_remote->remoteaddr;
-	st->st_remoteport = est_remote->remoteport;
+	st->st_remote_endpoint = est_remote->remote;
 	st->st_interface = est_remote->interface;
 	pexpect_st_local_endpoint(st);
 	st->st_mobike_remote_endpoint = endpoint_invalid;
@@ -5037,16 +5035,14 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 
 	if (mobike_check_established(st) &&
 	    !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST) &&
-	    (!sameaddr(&md->sender, &st->st_remoteaddr) ||
-	     hportof(&md->sender) != st->st_remoteport)) {
+	    (!sameaddr(&md->sender, &st->st_remote_endpoint) ||
+	     hportof(&md->sender) != endpoint_port(&st->st_remote_endpoint))) {
 		/* remember the established/old address and interface */
-		est_remote->remoteaddr = st->st_remoteaddr;
-		est_remote->remoteport = st->st_remoteport;
+		est_remote->remote = st->st_remote_endpoint;
 		est_remote->interface = st->st_interface;
 
 		/* set temp one and after the message sent reset it */
-		st->st_remoteaddr = md->sender;
-		st->st_remoteport = hportof(&md->sender);
+		st->st_remote_endpoint = md->sender;
 		st->st_interface = md->iface;
 		pexpect_st_local_endpoint(st);
 	}
@@ -5575,8 +5571,7 @@ static payload_master_t add_mobike_payloads;
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
 	ip_endpoint local_endpoint = st->st_mobike_local_endpoint;
-	ip_endpoint remote_endpoint = endpoint(&st->st_remoteaddr,
-					       st->st_remoteport);
+	ip_endpoint remote_endpoint = st->st_remote_endpoint;
 	return emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs) &&
 		ikev2_out_natd(&local_endpoint, &remote_endpoint,
 			       &st->st_ike_spis, pbs);
@@ -5919,11 +5914,12 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	 * from the pool as a new source address?
 	 */
 
-	ipstr_buf s, g, b;
-	DBG(DBG_CONTROL, DBG_log("#%lu MOBIKE new source address %s remote %s and gateway %s",
-				st->st_serialno, ipstr(&this->addr, &s),
-				sensitive_ipstr(&st->st_remoteaddr, &b),
-				ipstr(&this->nexthop, &g)));
+	ipstr_buf s, g;
+	endpoint_buf b;
+	dbg("#%lu MOBIKE new source address %s remote %s and gateway %s",
+	    st->st_serialno, ipstr(&this->addr, &s),
+	    str_endpoint(&st->st_remote_endpoint, &b),
+	    ipstr(&this->nexthop, &g));
 	pexpect_st_local_endpoint(st);
 	/* XXX: why not local_endpoint or is this redundant */
 	st->st_mobike_local_endpoint =
@@ -5986,13 +5982,13 @@ void ikev2_addr_change(struct state *st)
 	struct starter_end this = {
 		.addrtype = KH_DEFAULTROUTE,
 		.nexttype = KH_DEFAULTROUTE,
-		.addr_family = st->st_remoteaddr.u.v4.sin_family
+		.addr_family = st->st_remote_endpoint.u.v4.sin_family
 	};
 
 	struct starter_end that = {
 		.addrtype = KH_IPADDR,
-		.addr_family = st->st_remoteaddr.u.v4.sin_family,
-		.addr = st->st_remoteaddr
+		.addr_family = st->st_remote_endpoint.u.v4.sin_family,
+		.addr = st->st_remote_endpoint
 	};
 
 	/*

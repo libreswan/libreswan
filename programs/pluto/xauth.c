@@ -180,7 +180,7 @@ void xauth_fork_pam_process(struct state *st,
 	xauth->ptarg.c_name = clone_str(st->st_connection->name, "pam connection name");
 
 	ipstr_buf ra;
-	xauth->ptarg.ra = clone_str(ipstr(&st->st_remoteaddr, &ra), "pam remoteaddr");
+	xauth->ptarg.ra = clone_str(ipstr(&st->st_remote_endpoint, &ra), "pam remoteaddr");
 	xauth->ptarg.st_serialno = serialno;
 	xauth->ptarg.c_instance_serial = st->st_connection->instance_serial;
 	xauth->ptarg.atype = atype;

@@ -129,7 +129,7 @@ static void liveness_check(struct state *st)
 	address_buf this_buf;
 	const char *this_ip = ipstr(&st->st_interface->local_endpoint, &this_buf);
 	address_buf that_buf;
-	const char *that_ip = ipstr(&st->st_remoteaddr, &that_buf);
+	const char *that_ip = ipstr(&st->st_remote_endpoint, &that_buf);
 
 	/*
 	 * If we are a lingering (replaced) IPsec SA, don't do liveness

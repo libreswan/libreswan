@@ -191,7 +191,7 @@ bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 		lport = 0;
 	}
 	ip_endpoint local_endpoint = endpoint(&st->st_interface->local_endpoint, lport);
-	ip_endpoint remote_endpoint = endpoint(&st->st_remoteaddr, st->st_remoteport);
+	ip_endpoint remote_endpoint = st->st_remote_endpoint;
 	return ikev2_out_natd(&local_endpoint, &remote_endpoint,
 			      &ike_spis, outs);
 }
@@ -457,7 +457,7 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
-	unsigned remote_port = st->st_remoteport;
+	unsigned remote_port = endpoint_port(&st->st_remote_endpoint);
 	pexpect_st_local_endpoint(st);
 	unsigned short local_port = endpoint_port(&st->st_interface->local_endpoint);
 	if (st->st_connection->encaps == yna_yes) {
@@ -606,10 +606,10 @@ bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
 	pexpect_st_local_endpoint(st);
 	if (initiator) {
 		ipinit = &st->st_interface->local_endpoint;
-		ipresp = &st->st_remoteaddr;
+		ipresp = &st->st_remote_endpoint;
 	} else {
 		ipresp = &st->st_interface->local_endpoint;
-		ipinit = &st->st_remoteaddr;
+		ipinit = &st->st_remote_endpoint;
 	}
 
 	struct_desc *pd = LDISJOINT(st->hidden_variables.st_nat_traversal, NAT_T_WITH_RFC_VALUES) ?
@@ -772,13 +772,10 @@ void nat_traversal_new_ka_event(void)
 static void nat_traversal_send_ka(struct state *st)
 {
 	set_cur_state(st);
-	DBG(DBG_NATT | DBG_DPD, {
-		ipstr_buf b;
-		DBG_log("ka_event: send NAT-KA to %s:%d (state=#%lu)",
-			ipstr(&st->st_remoteaddr, &b),
-			st->st_remoteport,
-			st->st_serialno);
-	});
+	endpoint_buf b;
+	dbg("ka_event: send NAT-KA to %s (state=#%lu)",
+	    str_endpoint(&st->st_remote_endpoint, &b),
+	    st->st_serialno);
 
 	/* send keep alive */
 	DBG(DBG_NATT | DBG_DPD, DBG_log("sending NAT-T Keep Alive"));
@@ -900,15 +897,14 @@ static bool nat_traversal_find_new_mapp_state(struct state *st, void *data)
 		    st->st_clonedfrom == nfo->ike->sa.st_serialno)) {
 		endpoint_buf b1;
 		endpoint_buf b2;
-		ip_endpoint st_remote_endpoint = endpoint(&st->st_remoteaddr, st->st_remoteport);
+		ip_endpoint st_remote_endpoint = st->st_remote_endpoint;
 		dbg("new NAT mapping for #%lu, was %s, now %s",
 		    st->st_serialno,
 		    str_endpoint(&st_remote_endpoint, &b1),
 		    str_endpoint(nfo->new_remote_endpoint, &b2));
 
 		/* update it */
-		st->st_remoteaddr = endpoint_address(nfo->new_remote_endpoint);
-		st->st_remoteport = endpoint_port(nfo->new_remote_endpoint);
+		st->st_remote_endpoint = *nfo->new_remote_endpoint;
 		st->hidden_variables.st_natd = endpoint_address(nfo->new_remote_endpoint);
 		struct connection *c = st->st_connection;
 		if (c->kind == CK_INSTANCE)
@@ -952,8 +948,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		 * If source port/address has changed, update (including other
 		 * states and established kernel SA)
 		 */
-		ip_endpoint st_remote_endpoint = endpoint(&st->st_remoteaddr, st->st_remoteport);
-		if (!endpoint_eq(md->sender, st_remote_endpoint)) {
+		if (!endpoint_eq(md->sender, st->st_remote_endpoint)) {
 			nat_traversal_new_mapping(ike_sa(st), &md->sender);
 		}
 
@@ -1114,7 +1109,7 @@ void natify_initiator_endpoints(struct state *st, where_t where)
 	 * Float the remote port to :PLUTO_NAT_PORT (:4500)
 	 */
 	dbg("NAT-T: #%lu floating remote port from %d to %d using pluto_nat_port "PRI_WHERE,
-	    st->st_serialno, st->st_remoteport, pluto_nat_port,
+	    st->st_serialno, endpoint_port(&st->st_remote_endpoint), pluto_nat_port,
 	    pri_where(where));
-	st->st_remoteport = pluto_nat_port;
+	st->st_remote_endpoint = set_endpoint_port(&st->st_remote_endpoint, pluto_nat_port);
 }

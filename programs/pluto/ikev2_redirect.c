@@ -368,7 +368,7 @@ void send_active_redirect_in_informational(struct state *st)
 		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
 		ipstr_buf b;
 		libreswan_log("redirecting of peer %s successful",
-				sensitive_ipstr(&st->st_remoteaddr, &b));
+				sensitive_ipstr(&st->st_remote_endpoint, &b));
 	} else {
 		libreswan_log("redirect not successful");
 	}

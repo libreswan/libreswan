@@ -894,7 +894,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, dst, sa.spi, proto);
 			if (natt_type != 0) {
-				natt_sport = st->st_remoteport;
+				natt_sport = endpoint_port(&st->st_remote_endpoint);
 				natt_dport = endpoint_port(&st->st_mobike_local_endpoint);
 			}
 		} else {
@@ -908,13 +908,13 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			set_text_said(n, src, sa.spi, proto);
 			if (natt_type != 0) {
 				natt_sport = endpoint_port(&st->st_mobike_local_endpoint);
-				natt_dport = st->st_remoteport;
+				natt_dport = endpoint_port(&st->st_remote_endpoint);
 			}
 		}
 	} else {
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "responder migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
-		old_port = st->st_remoteport;
+		old_port = endpoint_port(&st->st_remote_endpoint);
 		new_endpoint = st->st_mobike_remote_endpoint;
 
 		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {

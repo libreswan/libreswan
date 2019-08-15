@@ -369,8 +369,7 @@ struct state {
 	lset_t st_hash_negotiated;              /* Saving the negotiated hash values here */
 	lset_t st_policy;                       /* policy for IPsec SA */
 
-	ip_address st_remoteaddr;               /* where to send packets to */
-	uint16_t st_remoteport;                /* host byte order */
+	ip_endpoint st_remote_endpoint;        /* where to send packets to */
 
 	/*
 	 * dhr 2013: why [.st_interface]? There was already

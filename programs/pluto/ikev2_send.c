@@ -281,11 +281,10 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
 	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
 
-	ipstr_buf b;
-	libreswan_log("responding to %s message (ID %u) from %s:%u with encrypted notification %s",
+	endpoint_buf b;
+	libreswan_log("responding to %s message (ID %u) from %s with encrypted notification %s",
 		      exchange_name, md->hdr.isa_msgid,
-		      sensitive_ipstr(&ike->sa.st_remoteaddr, &b),
-		      ike->sa.st_remoteport,
+		      str_sensitive_endpoint(&ike->sa.st_remote_endpoint, &b),
 		      notify_name);
 
 	/*

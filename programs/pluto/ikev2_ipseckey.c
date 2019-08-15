@@ -254,7 +254,7 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	ip_address ipaddr;
 	ipstr_buf ra;
 	ipstr_buf rb;
-	const struct ip_info *afi = address_type(&st->st_remoteaddr);
+	const struct ip_info *afi = address_type(&st->st_remote_endpoint);
 
 	if (dnsr->qtype != LDNS_RR_TYPE_A) {
 		return;
@@ -264,11 +264,11 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	if (data_to_address(addr, afi->ip_size, afi, &ipaddr) != NULL)
 		return;
 
-	if (!sameaddr(&ipaddr, &st->st_remoteaddr)) {
+	if (!sameaddr(&ipaddr, &st->st_remote_endpoint)) {
 		DBG(DBG_DNS,
 			DBG_log(" forward address of IDi %s do not match remote address %s != %s",
 				dnsr->qname,
-				ipstr(&st->st_remoteaddr, &ra),
+				ipstr(&st->st_remote_endpoint, &ra),
 				ipstr(&ipaddr, &rb)));
 		return;
 	}
@@ -276,7 +276,7 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	dnsr->fwd_addr_valid = TRUE;
 	DBG(DBG_DNS, DBG_log("address of IDi %s match remote address %s",
 				dnsr->qname,
-				ipstr(&st->st_remoteaddr, &ra)));
+				ipstr(&st->st_remote_endpoint, &ra)));
 }
 
 static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)

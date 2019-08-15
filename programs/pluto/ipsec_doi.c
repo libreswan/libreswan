@@ -648,7 +648,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		snprintf(oa, sizeof(oa),
 			 "%s:%d",
 			 sensitive_ipstr(&st->hidden_variables.st_natd, &ipb),
-			 st->st_remoteport);
+			 endpoint_port(&st->st_remote_endpoint));
 		lswlogs(buf, oa);
 	}
 

@@ -2033,13 +2033,11 @@ static void send_notification(struct state *sndst, notification_t type,
 		encst = NULL;
 
 	{
-		ipstr_buf b;
-
-		libreswan_log("sending %snotification %s to %s:%u",
-			encst ? "encrypted " : "",
-			enum_name(&ikev1_notify_names, type),
-			ipstr(&sndst->st_remoteaddr, &b),
-			sndst->st_remoteport);
+		endpoint_buf b;
+		libreswan_log("sending %snotification %s to %s",
+			      encst ? "encrypted " : "",
+			      enum_name(&ikev1_notify_names, type),
+			      str_endpoint(&sndst->st_remote_endpoint, &b));
 	}
 
 	init_out_pbs(&pbs, buffer, sizeof(buffer), "notification msg");

@@ -148,7 +148,7 @@ static void log_processing(enum processing processing, bool current,
 			jam(buf, " state #%lu", st->st_serialno);
 			/* also include connection/from */
 			c = st->st_connection;
-			from = &st->st_remoteaddr;
+			from = &st->st_remote_endpoint;
 		}
 		if (c != NULL) {
 			jam_string(buf, " connection ");

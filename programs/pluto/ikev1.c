@@ -2808,12 +2808,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* if requested, send the new reply packet */
 		if (smc->flags & SMF_REPLY) {
-			ipstr_buf b;
+			endpoint_buf b;
 			endpoint_buf b2;
 			pexpect_st_local_endpoint(st);
-			dbg("sending reply packet to %s:%u (from %s)",
-			    ipstr(&st->st_remoteaddr, &b),
-			    st->st_remoteport,
+			dbg("sending reply packet to %s (from %s)",
+			    str_endpoint(&st->st_remote_endpoint, &b),
 			    str_endpoint(&st->st_interface->local_endpoint, &b2));
 
 			close_output_pbs(&reply_stream); /* good form, but actually a no-op */

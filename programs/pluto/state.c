@@ -1409,14 +1409,12 @@ void delete_states_by_peer(const ip_address *peer)
 		dbg("FOR_EACH_STATE_... in %s", __func__);
 		FOR_EACH_STATE_NEW2OLD(this) {
 			const struct connection *c = this->st_connection;
-			DBG(DBG_CONTROL, {
-				ipstr_buf b;
-				DBG_log("comparing %s to %s",
-					ipstr(&this->st_remoteaddr, &b),
-					peerstr);
-			});
+			endpoint_buf b;
+			dbg("comparing %s to %s",
+			    str_endpoint(&this->st_remote_endpoint, &b),
+			    peerstr);
 
-			if (sameaddr(&this->st_remoteaddr, peer)) {
+			if (sameaddr(&this->st_remote_endpoint, peer)) {
 				if (ph1 == 0 && IS_IKE_SA(this)) {
 					whack_log(RC_COMMENT,
 						  "peer %s for connection %s crashed; replacing",
@@ -1474,8 +1472,7 @@ static struct state *duplicate_state(struct state *st,
 
 	nst->quirks = st->quirks;
 	nst->hidden_variables = st->hidden_variables;
-	nst->st_remoteaddr = st->st_remoteaddr;
-	nst->st_remoteport = st->st_remoteport;
+	nst->st_remote_endpoint = st->st_remote_endpoint;
 	pexpect_st_local_endpoint(st);
 	endpoint_buf eb;
 	dbg("#%lu setting local endpoint to %s from #%ld.st_localport "PRI_WHERE,
@@ -1727,7 +1724,7 @@ void find_states_and_redirect(const char *conn_name,
 		dbg("FOR_EACH_STATE_... in %s", __func__);
 		struct state *st = NULL;
 		FOR_EACH_STATE_NEW2OLD(st) {
-			if (sameaddr(&st->st_remoteaddr, &remote_ip) &&
+			if (sameaddr(&st->st_remote_endpoint, &remote_ip) &&
 			    IS_CHILD_SA(st))
 			{
 				redirect_state = st;
@@ -2008,7 +2005,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 		    (st->st_ike_version == IKEv2) == is_ikev2 &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
-		    sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
+		    sameaddr(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
 		    IS_IKE_SA(st) &&
 		    (best == NULL || best->st_serialno < st->st_serialno))
 		{
@@ -2193,7 +2190,7 @@ void fmt_state(struct state *st, const monotime_t now,
 		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s;",
 		 st->st_serialno,
 		 c->name, inst,
-		 st->st_remoteport,
+		 endpoint_port(&st->st_remote_endpoint),
 		 st->st_state->name,
 		 st->st_state->story,
 		 st->st_event == NULL ? "none" :
@@ -2659,8 +2656,7 @@ void update_ike_endpoints(struct ike_sa *ike,
 			  const struct msg_digest *md)
 {
 	/* caller must ensure we are not behind NAT */
-	ike->sa.st_remoteaddr = md->sender;
-	ike->sa.st_remoteport = hportof(&md->sender);
+	ike->sa.st_remote_endpoint = md->sender;
 	endpoint_buf eb1, eb2;
 	dbg("#%lu updating local interface from %s to %s using md->iface "PRI_WHERE,
 	    ike->sa.st_serialno,
@@ -2713,7 +2709,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
-		old_endpoint = endpoint(&ike->sa.st_remoteaddr, ike->sa.st_remoteport);
+		old_endpoint = ike->sa.st_remote_endpoint;
 
 		child->sa.st_mobike_remote_endpoint = md->sender;
 		ike->sa.st_mobike_remote_endpoint = md->sender;
@@ -2768,8 +2764,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		c->spd.that.host_port = hportof(&md->sender);
 
 		/* for the consistency, correct output in ipsec status */
-		child->sa.st_remoteaddr = ike->sa.st_remoteaddr = md->sender;
-		child->sa.st_remoteport = ike->sa.st_remoteport = hportof(&md->sender);
+		child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint = md->sender;
 		child->sa.st_interface = ike->sa.st_interface = md->iface;
 		break;
 	default:
@@ -2812,8 +2807,7 @@ void set_state_ike_endpoints(struct state *st,
 	passert(st->st_interface != NULL);
 	pexpect_st_local_endpoint(st);
 
-	st->st_remoteaddr = c->spd.that.host_addr;
-	st->st_remoteport = c->spd.that.host_port;
+	st->st_remote_endpoint = endpoint(&c->spd.that.host_addr, c->spd.that.host_port);
 }
 
 /* seems to be a good spot for now */

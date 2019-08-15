@@ -3178,13 +3178,12 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 			nat_traversal_change_port_lookup(md, pst);
 		}
 
-		ipstr_buf b;
+		endpoint_buf b;
 		endpoint_buf b2;
 		pexpect_st_local_endpoint(st);
-		dbg("sending V2 %s packet to %s:%u (from %s)",
+		dbg("sending V2 %s packet to %s (from %s)",
 		    v2_msg_role(md) == MESSAGE_REQUEST ? "new request" : "reply",
-		    ipstr(&st->st_remoteaddr, &b),
-		    st->st_remoteport,
+		    str_endpoint(&st->st_remote_endpoint, &b),
 		    str_endpoint(&st->st_interface->local_endpoint, &b2));
 
 		send_recorded_v2_ike_msg(pst, enum_name(&state_names, from_state));
