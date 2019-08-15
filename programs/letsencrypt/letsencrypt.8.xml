@@ -51,7 +51,7 @@
 <para><emphasis remap='I'>Letsencrypt</emphasis>
 The command creates a secure Opportunistic Connection between the hosts commonly referred to as client and server.
 The client connects to the server and remains anonymous, whereas the server is authenticated before connecting to it.
-The server is not anonymous. The server uses Let's Encrypt certificates for authentication and encryption purposes.
+The server is not anonymous. The server uses Let's Encrypt certificates for authentication and encryption purposes.</para>
 
 <para>The
 <option>--client</option>
