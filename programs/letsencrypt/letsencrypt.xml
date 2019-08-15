@@ -4,17 +4,17 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry>
 <refentryinfo>
-  <author><firstname>Rishabh</firstname><surname>Rishabh</surname><authorblurb><para></para> </authorblurb></author>
+  <author><firstname>Rishabh</firstname><surname></surname><authorblurb><para></para> </authorblurb></author>
 </refentryinfo>
 <refmeta>
-<refentrytitle>LETSENCRYPT</refentrytitle>
+<refentrytitle>IPSEC_LETSENCRYPT</refentrytitle>
 <manvolnum>8</manvolnum>
 <refmiscinfo class='date'>3 August 2019</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>letsencrypt</refname>
+<refname>ipsec letsencrypt</refname>
 <refpurpose>invoke Opportunistic Encryption utilities</refpurpose>
 </refnamediv>
 <!-- body begins here -->
