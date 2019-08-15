@@ -24,7 +24,7 @@
     <arg choice='plain'><replaceable>command</replaceable></arg>
     <arg choice='opt' rep='repeat'><replaceable>argument</replaceable></arg>
     <arg choice='plain'><replaceable>letsencrypt</replaceable></arg>
-    <arg choice='plain'>-h </arg>
+    <arg choice='plain'>--help </arg>
     <sbr/>
 </cmdsynopsis>
 </refsynopsisdiv>
