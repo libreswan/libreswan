@@ -21,6 +21,7 @@
 #include "crypt_symkey.h"
 #include "crypto.h"
 #include "crypt_hash.h"
+#include "ike_alg_prf_mac_ops.h"
 
 struct prf_context {
 	const char *name;
@@ -114,14 +115,14 @@ static void prf_update(struct prf_context *prf)
 static void digest_symkey(struct prf_context *prf, const char *name UNUSED,
 			  PK11SymKey *update)
 {
-	passert(digest_symkey == prf->desc->prf_ops->digest_symkey);
+	passert(digest_symkey == prf->desc->prf_mac_ops->digest_symkey);
 	append_symkey_symkey(&(prf->inner), update);
 }
 
 static void digest_bytes(struct prf_context *prf, const char *name UNUSED,
 			 const uint8_t *bytes, size_t sizeof_bytes)
 {
-	passert(digest_bytes == prf->desc->prf_ops->digest_bytes);
+	passert(digest_bytes == prf->desc->prf_mac_ops->digest_bytes);
 	append_symkey_bytes(&(prf->inner), bytes, sizeof_bytes);
 }
 
@@ -153,7 +154,7 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 
 static PK11SymKey *final_symkey(struct prf_context **prfp)
 {
-	passert(final_symkey == (*prfp)->desc->prf_ops->final_symkey);
+	passert(final_symkey == (*prfp)->desc->prf_mac_ops->final_symkey);
 	PK11SymKey *outer = compute_outer(*prfp);
 	/* Finally hash that */
 	PK11SymKey *hashed_outer = crypt_hash_symkey("PRF HMAC outer hash",
@@ -171,7 +172,7 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 static void final_bytes(struct prf_context **prfp,
 			uint8_t *bytes, size_t sizeof_bytes)
 {
-	passert(final_bytes == (*prfp)->desc->prf_ops->final_bytes);
+	passert(final_bytes == (*prfp)->desc->prf_mac_ops->final_bytes);
 	PK11SymKey *outer = compute_outer(*prfp);
 	/* Finally hash that */
 	struct crypt_hash *hash = crypt_hash_init("PRF HMAC outer hash",
@@ -189,7 +190,7 @@ static void hmac_prf_check(const struct prf_desc *prf)
 	pexpect_ike_alg(alg, prf->hasher != NULL);
 }
 
-const struct prf_ops ike_alg_prf_hmac_ops = {
+const struct prf_mac_ops ike_alg_prf_mac_hmac_ops = {
 	hmac_prf_check,
 	init_symkey,
 	init_bytes,

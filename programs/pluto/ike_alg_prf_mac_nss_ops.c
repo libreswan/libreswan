@@ -25,7 +25,7 @@
 
 #include "constants.h"
 #include "ike_alg.h"
-#include "ike_alg_prf_nss_ops.h"
+#include "ike_alg_prf_mac_ops.h"
 #include "crypt_symkey.h"
 
 struct prf_context {
@@ -184,7 +184,7 @@ static void nss_prf_check(const struct prf_desc *prf)
 	pexpect_ike_alg(alg, prf->nss.mechanism > 0);
 }
 
-const struct prf_ops ike_alg_prf_nss_ops = {
+const struct prf_mac_ops ike_alg_prf_mac_nss_ops = {
 	nss_prf_check,
 	init_symkey,
 	init_bytes,

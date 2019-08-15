@@ -26,7 +26,7 @@
 
 #include "constants.h"
 #include "ike_alg.h"
-#include "ike_alg_encrypt_nss_cbc_ops.h"
+#include "ike_alg_encrypt_ops.h"
 #include "lswnss.h"		/* for lswlog_nss_error() */
 
 static void ike_alg_nss_cbc(const struct encrypt_desc *alg,

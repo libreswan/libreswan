@@ -19,7 +19,7 @@
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
 #include "ike_alg_dh.h"
-#include "ike_alg_dh_nss_modp_ops.h"
+#include "ike_alg_dh_ops.h"
 #include "sadb.h"
 
 /*

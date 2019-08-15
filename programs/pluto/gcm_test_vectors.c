@@ -21,6 +21,7 @@
 #include "ike_alg.h"
 #include "test_buffer.h"
 #include "ike_alg_test_gcm.h"
+#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 
 #include "nss.h"
 #include "pk11pub.h"

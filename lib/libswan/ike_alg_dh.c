@@ -24,8 +24,7 @@
 #include "ike_alg.h"
 
 #include "ike_alg_dh.h"
-#include "ike_alg_dh_nss_modp_ops.h"
-#include "ike_alg_dh_nss_ecp_ops.h"
+#include "ike_alg_dh_ops.h"
 
 /*
  * Oakley group description

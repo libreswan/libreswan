@@ -33,8 +33,7 @@
 #include <prerror.h>
 #include <blapit.h>
 
-#include "ike_alg_encrypt_nss_ctr_ops.h"
-#include "ike_alg_encrypt_nss_gcm_ops.h"
+#include "ike_alg_encrypt_ops.h"
 
 static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 		       uint8_t *buf, size_t buf_len, PK11SymKey *sym_key,

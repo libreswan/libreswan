@@ -17,8 +17,8 @@
 #include "lswalloc.h"
 #include "ike_alg.h"
 #include "ike_alg_prf.h"
-#include "ike_alg_hash_nss_ops.h"
-#include "ike_alg_prf_hmac_ops.h"
+#include "ike_alg_hash_ops.h"
+#include "ike_alg_prf_mac_ops.h"
 
 #include "crypt_symkey.h"
 #include "crypt_prf.h"
@@ -46,7 +46,7 @@ static struct prf_desc ike_alg_prf_sha2_224 = {
 	.prf_key_size = 64, /* 224/8 */
 	.prf_output_size = 28,  /* 224/8 */
 	.hasher = &ike_alg_hash_sha2_224,
-	.prf_ops = &ike_alg_prf_hmac_ops,
+	.prf_mac_ops = &ike_alg_prf_mac_hmac_ops,
 };
 #endif
 

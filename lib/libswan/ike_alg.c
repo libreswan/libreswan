@@ -33,18 +33,17 @@
 #include "lswfips.h"
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "proposals.h"
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
 #include "ike_alg_encrypt.h"
-#include "proposals.h"
+#include "ike_alg_encrypt_ops.h"
 #include "ike_alg_prf.h"
-#include "ike_alg_prf_hmac_ops.h"
-#include "ike_alg_prf_nss_ops.h"
+#include "ike_alg_prf_mac_ops.h"
 #include "ike_alg_hash.h"
-#include "ike_alg_hash_nss_ops.h"
+#include "ike_alg_hash_ops.h"
 #include "ike_alg_dh.h"
-#include "ike_alg_dh_nss_modp_ops.h"
-#include "ike_alg_dh_nss_ecp_ops.h"
+#include "ike_alg_dh_ops.h"
 
 /*==========================================================
 *
@@ -480,21 +479,21 @@ static void prf_desc_check(const struct ike_alg *alg)
 	pexpect_ike_alg(alg, prf->prf_key_size > 0);
 	pexpect_ike_alg(alg, prf->prf_output_size > 0);
 	pexpect_ike_alg_has_name(HERE, alg, prf->prf_ike_audit_name, ".prf_ike_audit_name");
-	if (prf->prf_ops != NULL) {
-		pexpect_ike_alg(alg, prf->prf_ops->check != NULL);
-		pexpect_ike_alg(alg, prf->prf_ops->init_symkey != NULL);
-		pexpect_ike_alg(alg, prf->prf_ops->init_bytes != NULL);
-		pexpect_ike_alg(alg, prf->prf_ops->digest_symkey != NULL);
-		pexpect_ike_alg(alg, prf->prf_ops->digest_bytes != NULL);
-		pexpect_ike_alg(alg, prf->prf_ops->final_symkey != NULL);
-		pexpect_ike_alg(alg, prf->prf_ops->final_bytes != NULL);
+	if (prf->prf_mac_ops != NULL) {
+		pexpect_ike_alg(alg, prf->prf_mac_ops->check != NULL);
+		pexpect_ike_alg(alg, prf->prf_mac_ops->init_symkey != NULL);
+		pexpect_ike_alg(alg, prf->prf_mac_ops->init_bytes != NULL);
+		pexpect_ike_alg(alg, prf->prf_mac_ops->digest_symkey != NULL);
+		pexpect_ike_alg(alg, prf->prf_mac_ops->digest_bytes != NULL);
+		pexpect_ike_alg(alg, prf->prf_mac_ops->final_symkey != NULL);
+		pexpect_ike_alg(alg, prf->prf_mac_ops->final_bytes != NULL);
 		/*
 		 * IKEv1 IKE algorithms must have a hasher - used for
 		 * things like computing IV.
 		 */
 		pexpect_ike_alg(alg, prf->common.id[IKEv1_OAKLEY_ID] < 0 ||
 				     prf->hasher != NULL);
-		prf->prf_ops->check(prf);
+		prf->prf_mac_ops->check(prf);
 	}
 	if (prf->hasher != NULL) {
 		/*
@@ -509,7 +508,7 @@ static void prf_desc_check(const struct ike_alg *alg)
 static bool prf_desc_is_ike(const struct ike_alg *alg)
 {
 	const struct prf_desc *prf = prf_desc(alg);
-	return prf->prf_ops != NULL;
+	return prf->prf_mac_ops != NULL;
 }
 
 static struct algorithm_table prf_algorithms = ALGORITHM_TABLE(prf_descriptors);

@@ -22,6 +22,7 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
+#include "ike_alg_encrypt_ops.h"
 #include "sadb.h"
 
 #define  SERPENT_CBC_BLOCK_SIZE (128 / BITS_PER_BYTE)

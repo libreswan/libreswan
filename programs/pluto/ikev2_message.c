@@ -35,6 +35,7 @@
 #include "connections.h"
 #include "lswlog.h"
 #include "ike_alg.h"
+#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"

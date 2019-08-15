@@ -18,7 +18,7 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
-#include "ike_alg_hash_nss_ops.h"
+#include "ike_alg_hash_ops.h"
 
 #include "crypt_symkey.h"
 #include "ikev2_prf.h"

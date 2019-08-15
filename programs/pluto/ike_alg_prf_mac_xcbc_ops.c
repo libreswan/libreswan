@@ -25,8 +25,7 @@
 
 #include "constants.h"
 #include "ike_alg.h"
-#include "ike_alg_prf_nss_xcbc_ops.h"
-#include "ike_alg_prf_nss_ops.h"
+#include "ike_alg_prf_mac_ops.h"
 #include "crypt_symkey.h"
 #include "lswnss.h"
 
@@ -296,7 +295,7 @@ static void nss_xcbc_check(const struct prf_desc *prf)
 	pexpect_ike_alg(alg, prf->nss.mechanism > 0);
 }
 
-const struct prf_ops ike_alg_prf_nss_xcbc_ops = {
+const struct prf_mac_ops ike_alg_prf_mac_nss_xcbc_ops = {
 	nss_xcbc_check,
 	nss_xcbc_init_symkey,
 	nss_xcbc_init_bytes,

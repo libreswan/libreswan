@@ -71,6 +71,7 @@
 #include "secrets.h"
 
 #include "ike_alg.h"
+#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "pluto_crypt.h"

@@ -27,8 +27,8 @@
 #include "ike_alg_hash.h"
 #include "ike_alg_prf.h"
 #include "ike_alg_integ.h"
-#include "ike_alg_hash_nss_ops.h"
-#include "ike_alg_prf_nss_ops.h"
+#include "ike_alg_hash_ops.h"
+#include "ike_alg_prf_mac_ops.h"
 #include "sadb.h"
 
 const struct hash_desc ike_alg_hash_sha1 = {
@@ -72,7 +72,7 @@ const struct prf_desc ike_alg_prf_sha1 = {
 	.prf_key_size = SHA1_DIGEST_SIZE,
 	.prf_output_size = SHA1_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_sha1,
-	.prf_ops = &ike_alg_prf_nss_ops,
+	.prf_mac_ops = &ike_alg_prf_mac_nss_ops,
 	.prf_ike_audit_name = "sha1",
 };
 

@@ -24,11 +24,9 @@
 #include "constants.h"		/* for BYTES_FOR_BITS() */
 #include "ietf_constants.h"
 #include "ike_alg.h"
-#include "ike_alg_encrypt_nss_cbc_ops.h"
-#include "ike_alg_encrypt_nss_ctr_ops.h"
-#include "ike_alg_encrypt_nss_gcm_ops.h"
-#include "ike_alg_prf_nss_xcbc_ops.h"
+#include "ike_alg_prf_mac_ops.h"
 #include "ike_alg_encrypt.h"
+#include "ike_alg_encrypt_ops.h"
 #include "ike_alg_integ.h"
 #include "ike_alg_prf.h"
 #include "sadb.h"
@@ -331,7 +329,7 @@ const struct prf_desc ike_alg_prf_aes_xcbc = {
 	},
 	.prf_key_size = BYTES_FOR_BITS(128),
 	.prf_output_size = BYTES_FOR_BITS(128),
-	.prf_ops = &ike_alg_prf_nss_xcbc_ops,
+	.prf_mac_ops = &ike_alg_prf_mac_nss_xcbc_ops,
 	.prf_ike_audit_name = "aes_xcbc",
 };
 

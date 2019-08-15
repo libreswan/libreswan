@@ -24,6 +24,7 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
+#include "ike_alg_encrypt_ops.h"
 #include "ietf_constants.h"
 #include "sadb.h"
 

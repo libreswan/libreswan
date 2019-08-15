@@ -20,6 +20,7 @@
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "ike_alg.h"
+#include "ike_alg_hash_ops.h"
 #include "crypt_hash.h"
 #include "crypt_symkey.h"
 

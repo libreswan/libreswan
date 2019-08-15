@@ -157,6 +157,7 @@
 #include "hostpair.h"
 #include "ip_address.h"
 #include "ikev1_hash.h"
+#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 
 #ifdef HAVE_NM
 #include "kernel.h"

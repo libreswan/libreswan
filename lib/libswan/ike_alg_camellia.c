@@ -17,7 +17,7 @@
 
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
-#include "ike_alg_encrypt_nss_cbc_ops.h"
+#include "ike_alg_encrypt_ops.h"
 #include "sadb.h"
 
 /* Camellia is a drop-in replacement for AES */

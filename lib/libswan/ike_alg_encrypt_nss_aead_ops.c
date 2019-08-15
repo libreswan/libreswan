@@ -23,7 +23,7 @@
 
 #include "constants.h"
 #include "ike_alg.h"
-#include "ike_alg_encrypt_nss_aead_ops.h"
+#include "ike_alg_encrypt_ops.h"
 
 #if defined(CKM_NSS_CHACHA20_POLY1305)
 

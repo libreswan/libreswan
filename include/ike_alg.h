@@ -442,46 +442,6 @@ struct encrypt_desc {
 	const struct encrypt_ops *encrypt_ops;
 };
 
-struct encrypt_ops {
-	/*
-	 * Delegate responsibility for checking OPS specific fields.
-	 */
-	void (*const check)(const struct encrypt_desc *alg);
-
-	/*
-	 * Perform simple encryption.
-	 *
-	 * Presumably something else is implementing the integrity.
-	 */
-	void (*const do_crypt)(const struct encrypt_desc *alg,
-			       uint8_t *dat,
-			       size_t datasize,
-			       PK11SymKey *key,
-			       uint8_t *iv,
-			       bool enc);
-
-	/*
-	 * Perform Authenticated Encryption with Associated Data
-	 * (AEAD).
-	 *
-	 * The salt and wire-IV are concatenated to form the NONCE
-	 * (aka. counter variable; IV; ...).
-	 *
-	 * The Additional Authentication Data (AAD) and the
-	 * cipher-text are concatenated when generating/validating the
-	 * tag (which is appended to the text).
-	 *
-	 * All sizes are in 8-bit bytes.
-	 */
-	bool (*const do_aead)(const struct encrypt_desc *alg,
-			      uint8_t *salt, size_t salt_size,
-			      uint8_t *wire_iv, size_t wire_iv_size,
-			      uint8_t *aad, size_t aad_size,
-			      uint8_t *text_and_tag,
-			      size_t text_size, size_t tag_size,
-			      PK11SymKey *key, bool enc);
-};
-
 /*
  * A "hash" algorithm is used to compute a simple message
  * authentication code.
@@ -531,28 +491,6 @@ struct asn1_hash_blob {
 };
 
 /*
- * Generic implementation of HASH_DESC.
- */
-struct hash_context;
-
-struct hash_ops {
-	/*
-	 * Delegate responsibility for checking OPS specific fields.
-	 */
-	void (*const check)(const struct hash_desc *alg);
-
-	struct hash_context *(*init)(const struct hash_desc *hash_desc,
-				     const char *name);
-	void (*digest_symkey)(struct hash_context *hash,
-			      const char *name, PK11SymKey *symkey);
-	void (*digest_bytes)(struct hash_context *hash,
-			     const char *name,
-			     const uint8_t *bytes, size_t sizeof_bytes);
-	void (*final_bytes)(struct hash_context**,
-			    uint8_t *bytes, size_t sizeof_bytes);
-};
-
-/*
  * Pseudo Random Function:
  *
  *     PRF(<key>, <data>) -> digest
@@ -560,6 +498,7 @@ struct hash_ops {
  * While some PRFs are implemented using HMAC (for instance,
  * HMAC_SHA1), some are not (for instance, AES_CMAC).
  */
+
 struct prf_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	/*
@@ -617,33 +556,12 @@ struct prf_desc {
 	/*
 	 * FIPS controlled native implementation.
 	 */
-	const struct prf_ops *prf_ops;
+	const struct prf_mac_ops *prf_mac_ops;
 	/*
 	 * Name used when generating a linux audit record for an IKE
 	 * SA.
 	 */
 	const char *prf_ike_audit_name;
-};
-
-struct prf_ops {
-	/*
-	 * Delegate responsibility for checking OPS specific fields.
-	 */
-	void (*const check)(const struct prf_desc *alg);
-
-	struct prf_context *(*init_symkey)(const struct prf_desc *prf_desc,
-					   const char *name,
-					   const char *key_name, PK11SymKey *key);
-	struct prf_context *(*init_bytes)(const struct prf_desc *prf_desc,
-					  const char *name,
-					  const char *key_name,
-					  const uint8_t *bytes, size_t sizeof_bytes);
-	void (*digest_symkey)(struct prf_context *prf,
-			      const char *name, PK11SymKey *symkey);
-	void (*digest_bytes)(struct prf_context *prf,
-			     const char *name, const uint8_t *bytes, size_t sizeof_bytes);
-	PK11SymKey *(*final_symkey)(struct prf_context **prf);
-	void (*final_bytes)(struct prf_context **prf, uint8_t *bytes, size_t sizeof_bytes);
 };
 
 /*
@@ -810,33 +728,6 @@ struct dh_desc {
 	SECOidTag nss_oid;
 
 	const struct dh_ops *dh_ops;
-};
-
-struct dh_ops {
-	/*
-	 * Delegate responsibility for checking OPS specific fields.
-	 */
-	void (*const check)(const struct dh_desc *alg);
-
-	/*
-	 * Create the local secret and KE for remote.
-	 *
-	 * The LOCAL_PUBK parameter is arguably redundant - just the
-	 * KE bytes and private key are needed - however MODP's
-	 * CALC_G_IR() uses LOCAL_PUBK to fudge up the remote's public
-	 * key.
-	 *
-	 * SIZEOF_KE == .BYTES from above, but pass it in so both ends
-	 * can perform a sanity check.
-	 */
-	void (*calc_secret)(const struct dh_desc *group,
-			    SECKEYPrivateKey **local_privk,
-			    SECKEYPublicKey **locak_pubk,
-			    uint8_t *ke, size_t sizeof_ke);
-	PK11SymKey *(*calc_shared)(const struct dh_desc *group,
-				   SECKEYPrivateKey *local_privk,
-				   const SECKEYPublicKey *local_pubk,
-				   uint8_t *remote_ke, size_t sizeof_remote_ke);
 };
 
 extern const struct dh_desc unset_group;      /* magic signifier */

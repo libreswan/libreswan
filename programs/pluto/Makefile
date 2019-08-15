@@ -134,9 +134,9 @@ endif
 OBJS += ike_alg_dh_nss_ecp_ops.o
 OBJS += ike_alg_dh_nss_modp_ops.o
 OBJS += ike_alg_hash_nss_ops.o
-OBJS += ike_alg_prf_hmac_ops.o
-OBJS += ike_alg_prf_nss_ops.o
-OBJS += ike_alg_prf_nss_xcbc_ops.o
+OBJS += ike_alg_prf_mac_hmac_ops.o
+OBJS += ike_alg_prf_mac_nss_ops.o
+OBJS += ike_alg_prf_mac_xcbc_ops.o
 
 OBJS += db_ops.o
 

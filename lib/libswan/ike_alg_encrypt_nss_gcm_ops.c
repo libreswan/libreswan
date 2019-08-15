@@ -23,7 +23,7 @@
 
 #include "constants.h"
 #include "ike_alg.h"
-#include "ike_alg_encrypt_nss_gcm_ops.h"
+#include "ike_alg_encrypt_ops.h"
 
 static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 			    uint8_t *salt, size_t salt_size,

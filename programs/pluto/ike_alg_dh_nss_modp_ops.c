@@ -27,7 +27,7 @@
 #include "lswlog.h"
 
 #include "ike_alg.h"
-#include "ike_alg_dh_nss_modp_ops.h"
+#include "ike_alg_dh_ops.h"
 #include "crypt_symkey.h"
 
 static void nss_modp_calc_secret(const struct dh_desc *group,

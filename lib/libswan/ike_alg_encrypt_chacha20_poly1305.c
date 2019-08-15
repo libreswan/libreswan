@@ -17,7 +17,7 @@
 
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
-#include "ike_alg_encrypt_nss_aead_ops.h"
+#include "ike_alg_encrypt_ops.h"
 
 /*
  * See: https://tools.ietf.org/html/rfc7634#section-2
