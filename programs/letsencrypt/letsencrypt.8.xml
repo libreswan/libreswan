@@ -47,7 +47,6 @@
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
 </cmdsynopsis>
 </refsect1>
-
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>Letsencrypt</emphasis>
 The command creates a secure Opportunistic Connection between the hosts commonly referred to as client and server.
@@ -82,15 +81,12 @@ operation is used for disabling IPsec service.</para>
 <option>--help</option>
 operation is used for displaying all the available options.</para>
 </refsect1>
-
 <refsect1 id='see_also'><title>SEE ALSO</title>
 <para>
 <citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 </para>
 </refsect1>
-
 <refsect1 id='history'><title>HISTORY</title>
 <para>Original Program written by &lt;<ulink url='https://github.com/Rishabh04-02/'>Rishabh</ulink>&gt; .</para>
 </refsect1>
-
 </refentry>
