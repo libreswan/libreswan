@@ -57,7 +57,7 @@ test() {
     # Checking the success of establishing OE connection
     oeSuccess=$(ipsec traffic | grep private)
     if [ -z "$oeSuccess" ]; then
-        echo "Failed to establish an OE connection. try 'ipsec restart' and test again using 'ipsec letsencrypt -t'."
+        echo "Failed to establish an OE connection. try 'ipsec restart' and test again using 'ipsec letsencrypt --test'."
         exit
     else
         echo "OE Connection established successfully."
@@ -69,7 +69,7 @@ test() {
 # Function for performaing Initial setup
 setup() {
     # Installing for client or server?
-    if [ "$ServerClient" = "-client" ]; then
+    if [ "$ServerClient" = "--client" ]; then
         echo "Installing for Client."
     else
         echo "Installing for Server."
@@ -122,7 +122,7 @@ setup() {
     umask ${umask}
 
     # Copying the required configuration
-    if [ "$ServerClient" = "-server" ]; then
+    if [ "$ServerClient" = "--server" ]; then
         configFile="@FINALDOCDIR@/examples/oe-letsencrypt-server.conf"
         configFileName="oe-letsencrypt-server.conf"
     else
@@ -138,6 +138,8 @@ setup() {
     if [ -n "${checkRestorecon}" -a -x "${checkRestorecon}" ]; then
         restorecon "@IPSEC_NSSDIR@/$configFileName"
     fi
+
+    echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
 }
 
 # function for generating a certificates
@@ -182,13 +184,13 @@ generate_certificate() {
     echo "reuse_key = True" >>"$LetsEncryptConfFile"
 
     # creating a crontab fot automatic cert renewals
-    echo "0 1 * * * certbot renew --deploy-hook 'ipsec letsencrypt -ug $HostName'" >>cert-renewal
+    echo "0 1 * * * certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate $HostName'" >>cert-renewal
     crontab cert-renewal
     rm cert-renewal
 
     echo "try running 'ipsec restart' to load the latest certificates"
 
-    echo "To confirm the success try running 'ipsec letsencrypt -t' on the client"
+    echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
 }
 
 # function for updating the issued certificates
@@ -225,7 +227,7 @@ update_certificate() {
     ipsec restart
 
     # To confirm the success try running the test connection script on the client
-    echo "To confirm the success try running 'ipsec letsencrypt -t' on the client"
+    echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
 }
 
 # function for manual cert renewals
@@ -233,60 +235,70 @@ manual_cert_renew() {
     # Renewing the certificate using Certbot
     certBotInstalled=$(which certbot 2>/dev/null)
     if [ -n "${certBotInstalled}" -a -x "${certBotInstalled}" ]; then
-        certbot renew --deploy-hook 'ipsec letsencrypt -ug $HostName'
+        certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate $HostName'
     else
         echo "Certbot not installed. Please install Certbot and try again."
         exit
     fi
 }
 
+# function to disable ipsec by deleting the conf file in /etc/ipsec.d
+disable_ipsec() {
+    # Deleting the configuration files present in /etc/ipsec.d directory
+    rm -f /etc/ipsec.d/oe-letsencrypt-*.conf
+    echo "Please restart the IPsec service using 'ipsec restart' for changes to take effect."
+}
+
 # function for showing help
 help() {
     echo "Usage: ipsec letsencrypt [arguments]"
     echo "Available [arguments]"
-    echo "-server, -client, test, generatecertificate hostname, updatecertificate hostname, help, -t, -gc hostname, -uc hostname, -h"
+    echo "--server, --client, --test, --generate-certificate hostname, --update-certificate hostname, --help"
     echo
-    echo "-server, -client :  For initial server/client setup."
-    echo "usage: 'ipsec letsencrypt -client' OR 'ipsec letsencrypt -server'"
+    echo "--server, --client :  For initial server/client setup."
+    echo "usage: 'ipsec letsencrypt --client' OR 'ipsec letsencrypt --server'"
     echo
-    echo "test, -t  :  For testing the configuration/connections."
-    echo "usage: 'ipsec letsencrypt test' OR 'ipsec letsencrypt -t'"
+    echo "--test  :  For testing the configuration/connections."
+    echo "usage: 'ipsec letsencrypt --test'"
     echo
-    echo "generatecertificate hostname, -gc hostname :  For generating the certificate."
-    echo "usage: 'ipsec letsencrypt generatecertificate hostname' OR 'ipsec letsencrypt -gc hostname'"
+    echo "--generate-certificate hostname :  For generating the certificate."
+    echo "usage: 'ipsec letsencrypt --generate-certificate hostname'"
     echo
-    echo "-renew hostname :  For updating the generated certificate (keeping the private key same) use the following command."
-    echo "usage: 'ipsec letsencrypt -renew hostname'"
+    echo "--renew hostname :  For updating the generated certificate (keeping the private key same) use the following command."
+    echo "usage: 'ipsec letsencrypt --renew hostname'"
 }
 
 case $1 in
 
-"test" | "-t")
+"--test")
     check_root
     test
     ;;
-"-server" | "-client")
+"--server" | "--client")
     check_root
     setup
-    test
     ;;
-"generatecertificate" | "-gc")
+"--generate-certificate")
     check_root
     generate_certificate
     ;;
-"updatecertificate" | "-uc")
+"--update-certificate")
     check_root
     update_certificate
     ;;
-"-renew")
+"--renew")
     check_root
     manual_cert_renew
     ;;
-"help" | "-h")
+"--disable")
+    check_root
+    disable_ipsec
+    ;;
+"--help")
     help
     ;;
 *)
     echo "[argument] $1 not found"
-    echo "try: 'ipsec letsencrypt -h' OR 'ipsec letsencrypt help' for help"
+    echo "try: 'ipsec letsencrypt --help' for help"
     ;;
 esac
