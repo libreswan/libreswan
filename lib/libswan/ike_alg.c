@@ -40,6 +40,8 @@
 #include "ike_alg_encrypt_ops.h"
 #include "ike_alg_prf.h"
 #include "ike_alg_prf_mac_ops.h"
+#include "ike_alg_prf_ikev1_ops.h"
+#include "ike_alg_prf_ikev2_ops.h"
 #include "ike_alg_hash.h"
 #include "ike_alg_hash_ops.h"
 #include "ike_alg_dh.h"
@@ -479,6 +481,10 @@ static void prf_desc_check(const struct ike_alg *alg)
 	pexpect_ike_alg(alg, prf->prf_key_size > 0);
 	pexpect_ike_alg(alg, prf->prf_output_size > 0);
 	pexpect_ike_alg_has_name(HERE, alg, prf->prf_ike_audit_name, ".prf_ike_audit_name");
+	/* all or none */
+	pexpect_ike_alg(alg, (prf->prf_mac_ops != NULL) == (prf->prf_ikev1_ops != NULL));
+	pexpect_ike_alg(alg, (prf->prf_mac_ops != NULL) == (prf->prf_ikev2_ops != NULL));
+	
 	if (prf->prf_mac_ops != NULL) {
 		pexpect_ike_alg(alg, prf->prf_mac_ops->check != NULL);
 		pexpect_ike_alg(alg, prf->prf_mac_ops->init_symkey != NULL);
@@ -495,6 +501,23 @@ static void prf_desc_check(const struct ike_alg *alg)
 				     prf->hasher != NULL);
 		prf->prf_mac_ops->check(prf);
 	}
+	if (prf->prf_ikev1_ops != NULL) {
+		pexpect_ike_alg(alg, prf->prf_ikev1_ops->signature_skeyid != NULL);
+		pexpect_ike_alg(alg, prf->prf_ikev1_ops->pre_shared_key_skeyid != NULL);
+		pexpect_ike_alg(alg, prf->prf_ikev1_ops->skeyid_d != NULL);
+		pexpect_ike_alg(alg, prf->prf_ikev1_ops->skeyid_a != NULL);
+		pexpect_ike_alg(alg, prf->prf_ikev1_ops->skeyid_e != NULL);
+		pexpect_ike_alg(alg, prf->prf_ikev1_ops->appendix_b_keymat_e != NULL);
+	}
+	if (prf->prf_ikev2_ops != NULL) {
+		pexpect_ike_alg(alg, prf->prf_ikev2_ops->prfplus != NULL);
+		pexpect_ike_alg(alg, prf->prf_ikev2_ops->ike_sa_skeyseed != NULL);
+		pexpect_ike_alg(alg, prf->prf_ikev2_ops->ike_sa_rekey_skeyseed != NULL);
+		pexpect_ike_alg(alg, prf->prf_ikev2_ops->ike_sa_keymat != NULL);
+		pexpect_ike_alg(alg, prf->prf_ikev2_ops->child_sa_keymat != NULL);
+		pexpect_ike_alg(alg, prf->prf_ikev2_ops->psk_auth != NULL);
+	}
+
 	if (prf->hasher != NULL) {
 		/*
 		 * Check for dangling pointer.

@@ -27,6 +27,8 @@
 #include "ike_alg_prf.h"
 #include "ike_alg_hash_ops.h"
 #include "ike_alg_prf_mac_ops.h"
+#include "ike_alg_prf_ikev1_ops.h"
+#include "ike_alg_prf_ikev2_ops.h"
 #include "sadb.h"
 
 const struct hash_desc ike_alg_hash_md5 = {
@@ -67,6 +69,8 @@ const struct prf_desc ike_alg_prf_md5 = {
 	.prf_output_size = MD5_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_md5,
 	.prf_mac_ops = &ike_alg_prf_mac_hmac_ops,
+	.prf_ikev1_ops = &ike_alg_prf_ikev1_mac_ops,
+	.prf_ikev2_ops = &ike_alg_prf_ikev2_mac_ops,
 	.prf_ike_audit_name = "md5",
 };
 

@@ -19,6 +19,8 @@
 #include "ike_alg_prf.h"
 #include "ike_alg_hash_ops.h"
 #include "ike_alg_prf_mac_ops.h"
+#include "ike_alg_prf_ikev1_ops.h"
+#include "ike_alg_prf_ikev2_ops.h"
 
 #include "crypt_symkey.h"
 #include "crypt_prf.h"
@@ -47,6 +49,8 @@ static struct prf_desc ike_alg_prf_sha2_224 = {
 	.prf_output_size = 28,  /* 224/8 */
 	.hasher = &ike_alg_hash_sha2_224,
 	.prf_mac_ops = &ike_alg_prf_mac_hmac_ops,
+	.prf_ikev1_ops = &ike_alg_prf_ikev1_mac_ops,
+	.prf_ikev2_ops = &ike_alg_prf_ikev2_mac_ops,
 };
 #endif
 

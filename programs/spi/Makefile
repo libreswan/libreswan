@@ -26,6 +26,7 @@ OBJS += $(PROGRAM).o
 #
 CFLAGS += -I$(top_srcdir)/programs/pluto
 PLUTOOBJS += $(patsubst %.c,%.o,$(notdir $(sort $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c))))
+PLUTOOBJS += crypt_prf.o
 PLUTOOBJS += crypt_symkey.o
 PLUTOOBJS += crypt_hash.o
 PLUTOOBJS += test_buffer.o
