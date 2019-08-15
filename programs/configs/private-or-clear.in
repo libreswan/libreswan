@@ -19,5 +19,7 @@
 # prefer encrypt all incoming smtp traffic
 #  0.0.0.0/0  tcp  25  0
 #
-# Ideally, enable this for every host on the internet
-# 0.0.0.0/0
+# The libreswan letsenccrypt test server - this can be left enabled at all times
+193.110.157.131/32
+# Attempt OE IPsec using letsencrypt for the entire Internet - Comment out to disable
+0.0.0.0/0
