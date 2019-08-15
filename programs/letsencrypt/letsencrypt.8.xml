@@ -38,8 +38,9 @@ running the specified
 with the specified
 <emphasis remap='I'>argument</emphasis>s
 as if it had been invoked directly.</para>
-The command creates a secure Opportunistic Connection between the hosts commonly referred as client and server.
-The client connects to the server and remains anonymous, where as the server is authenticated before connecting to it. The server is not anonymous. The server uses Let's Encrypt certificates for authentication and encryption purposes.
+The command creates a secure Opportunistic Connection between the hosts commonly referred to as client and server.
+The client connects to the server and remains anonymous, whereas the server is authenticated before connecting to it.
+The server is not anonymous. The server uses Let's Encrypt certificates for authentication and encryption purposes.
 <para><userinput>ipsec letsencrypt --help</userinput>
 lists the available commands.</para>
 
