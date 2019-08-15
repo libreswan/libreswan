@@ -8,7 +8,7 @@
 </refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC_LETSENCRYPT</refentrytitle>
-<manvolnum>1</manvolnum>
+<manvolnum>8</manvolnum>
 <refmiscinfo class='date'>3 August 2019</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
@@ -47,6 +47,7 @@
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
 </cmdsynopsis>
 </refsect1>
+
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>Letsencrypt</emphasis>
 The command creates a secure Opportunistic Connection between the hosts commonly referred to as client and server.
@@ -80,6 +81,7 @@ operation is used for disabling IPsec service.</para>
 <para>The
 <option>--help</option>
 operation is used for displaying all the available options.</para>
+</refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
 <para>
