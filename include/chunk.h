@@ -25,6 +25,8 @@
 #include <stddef.h>	/* size_t */
 #include <stdint.h>	/* uint8_t */
 
+#include "lswalloc.h"	/* for freeanychunk() refering to pfree() which can go away */
+
 /*
  * chunk is a simple pointer-and-size abstraction
  *
