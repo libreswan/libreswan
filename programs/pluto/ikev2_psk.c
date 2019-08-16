@@ -128,7 +128,7 @@ static chunk_t ikev2_calculate_psk_sighash(bool verify,
 			      st->st_connection->name);
 			return empty_chunk;
 		}
-		DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
+		DBG(DBG_PRIVATE, DBG_dump_hunk("User PSK:", *pss));
 		const size_t key_size_min = crypt_prf_fips_key_size_min(st->st_oakley.ta_prf);
 		if (pss->len < key_size_min) {
 			if (libreswan_fipsmode()) {
@@ -165,14 +165,14 @@ static chunk_t ikev2_calculate_psk_sighash(bool verify,
 		passert(st->hidden_variables.st_skeyid_calculated);
 
 		pss = nullauth_pss;
-		DBG(DBG_PRIVATE, DBG_dump_chunk("AUTH_NULL PSK:", *pss));
+		DBG(DBG_PRIVATE, DBG_dump_hunk("AUTH_NULL PSK:", *pss));
 	}
 
 	passert(pss->len != 0);
 
 	DBG(DBG_CRYPT,
-	    DBG_dump_chunk("inputs to hash1 (first packet)", firstpacket);
-	    DBG_dump_chunk(nonce_name, *nonce);
+	    DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
+	    DBG_dump_hunk(nonce_name, *nonce);
 	    DBG_dump("idhash", idhash, hash_len));
 
 	/*
@@ -195,7 +195,7 @@ bool ikev2_emit_psk_auth(enum keyword_authby authby,
 	}
 
 	DBG(DBG_CRYPT,
-	    DBG_dump_chunk("PSK auth octets", signed_octets));
+	    DBG_dump_hunk("PSK auth octets", signed_octets));
 
 	bool ok = out_chunk(signed_octets, a_pbs, "PSK auth");
 	freeanychunk(signed_octets);
@@ -215,7 +215,7 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 
 	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
 	*additional_auth = signed_octets;
-	DBG(DBG_PRIVATE, DBG_dump_chunk(chunk_n, *additional_auth));
+	DBG(DBG_PRIVATE, DBG_dump_hunk(chunk_n, *additional_auth));
 
 	return true;
 }
@@ -245,7 +245,7 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 
 	DBG(DBG_CRYPT,
 	    DBG_dump("Received PSK auth octets", sig_pbs->cur, sig_len);
-	    DBG_dump_chunk("Calculated PSK auth octets", calc_hash));
+	    DBG_dump_hunk("Calculated PSK auth octets", calc_hash));
 	bool ok = memeq(sig_pbs->cur, calc_hash.ptr, calc_hash.len);
 	freeanychunk(calc_hash);
 	if (ok) {

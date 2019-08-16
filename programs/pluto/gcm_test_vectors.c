@@ -114,7 +114,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 		DBG(DBG_CRYPT,  \
 		    DBG_log("test_gcm_vector: %s: aad-size=%zd salt-size=%zd wire-IV-size=%zd text-size=%zd tag-size=%zd",  \
 			    desc, aad.len, salt.len, wire_iv.len, len, tag.len);  \
-		    DBG_dump_chunk("test_gcm_vector: text+tag on call",  \
+		    DBG_dump_hunk("test_gcm_vector: text+tag on call",  \
 				   text_and_tag));  \
 		if (!encrypt_desc->encrypt_ops->do_aead(encrypt_desc,  \
 							salt.ptr, salt.len, \
@@ -127,7 +127,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 				   to, text_and_tag.ptr) ||  \
 		    !verify_chunk_data("TAG", tag, text_and_tag.ptr + len))  \
 			ok = FALSE;  \
-		DBG(DBG_CRYPT, DBG_dump_chunk("test_gcm_vector: text+tag on return",  \
+		DBG(DBG_CRYPT, DBG_dump_hunk("test_gcm_vector: text+tag on return",  \
 					      text_and_tag));  \
 	}
 

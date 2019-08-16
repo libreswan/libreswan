@@ -169,7 +169,7 @@ void calc_dh(struct pcr_v1_dh *dh)
 	/* now calculate the (g^x)(g^y) */
 	chunk_t g;
 	setchunk_from_wire(g, dh, dh->role == ORIGINAL_RESPONDER ? &dh->gi : &dh->gr);
-	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
+	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", g));
 
 	dh->shared = calc_dh_shared(dh->secret, g);
 }
@@ -267,8 +267,8 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 	/* generate IV */
 	{
 		DBG(DBG_CRYPT, {
-			    DBG_dump_chunk("DH_i:", gi);
-			    DBG_dump_chunk("DH_r:", gr);
+			    DBG_dump_hunk("DH_i:", gi);
+			    DBG_dump_hunk("DH_r:", gr);
 		    });
 		struct crypt_hash *ctx = crypt_hash_init("new IV", hasher);
 		crypt_hash_digest_chunk(ctx, "GI", gi);
@@ -292,7 +292,7 @@ void calc_dh_iv(struct pcr_v1_dh *dh)
 	setchunk_from_wire(g, dh,
 		dh->role == ORIGINAL_RESPONDER ? &dh->gi : &dh->gr);
 
-	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
+	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", g));
 
 	dh->shared = calc_dh_shared(dh->secret, g);
 

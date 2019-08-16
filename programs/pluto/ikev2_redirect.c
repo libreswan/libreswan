@@ -248,7 +248,7 @@ err_t parse_redirect_payload(pb_stream *input_pbs,
 		if (nonce->len != len ||
 		    !memeq(nonce->ptr, input_pbs->cur, len)) {
 			DBG(DBG_CONTROL, {
-				DBG_dump_chunk("expected nonce", *nonce);
+				DBG_dump_hunk("expected nonce", *nonce);
 				DBG_dump("received nonce", input_pbs->cur, len);
 			});
 			return "received nonce is not the same as Ni";

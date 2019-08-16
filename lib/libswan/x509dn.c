@@ -362,7 +362,7 @@ int dntoa(char *dst, size_t dstlen, chunk_t dn)
 
 	if (ugh != NULL) {	/* error, print DN as hex string */
 		libreswan_log("error in DN parsing: %s", ugh);
-		DBG_dump_chunk("Bad DN:", dn);
+		DBG_dump_hunk("Bad DN:", dn);
 		str.ptr = (unsigned char *)dst;
 		str.len = dstlen;
 		hex_str(dn, &str);
@@ -545,7 +545,7 @@ err_t atodn(const char *src, chunk_t *dn)
 	END_OBJ(ASN1_SEQUENCE);	/* 0 */
 	dn->len = dn_ptr - dn->ptr;
 	if (DBGP(DBG_BASE)) {
-		DBG_dump_chunk("ASCII to DN =>", *dn);
+		DBG_dump_hunk("ASCII to DN =>", *dn);
 	}
 	return NULL;
 

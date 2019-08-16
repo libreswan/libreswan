@@ -89,8 +89,3 @@ bool chunk_eq(chunk_t a, chunk_t b)
 {
 	return a.len == b.len && memeq(a.ptr, b.ptr, b.len);
 }
-
-void DBG_dump_chunk(const char *prefix, chunk_t chunk)
-{
-	DBG_dump(prefix, chunk.ptr, chunk.len);
-}

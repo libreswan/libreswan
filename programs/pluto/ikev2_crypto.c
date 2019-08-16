@@ -144,16 +144,16 @@ void ikev2_derive_child_keys(struct child_sa *child)
 	switch (child->sa.st_sa_role) {
 	case SA_RESPONDER:
 		DBG(DBG_PRIVATE, {
-			    DBG_dump_chunk("our  keymat", ikeymat);
-			    DBG_dump_chunk("peer keymat", rkeymat);
+			    DBG_dump_hunk("our  keymat", ikeymat);
+			    DBG_dump_hunk("peer keymat", rkeymat);
 		    });
 		ipi->our_keymat = ikeymat.ptr;
 		ipi->peer_keymat = rkeymat.ptr;
 		break;
 	case SA_INITIATOR:
 		DBG(DBG_PRIVATE, {
-			    DBG_dump_chunk("our  keymat", rkeymat);
-			    DBG_dump_chunk("peer keymat", ikeymat);
+			    DBG_dump_hunk("our  keymat", rkeymat);
+			    DBG_dump_hunk("peer keymat", ikeymat);
 		    });
 		ipi->peer_keymat = ikeymat.ptr;
 		ipi->our_keymat = rkeymat.ptr;

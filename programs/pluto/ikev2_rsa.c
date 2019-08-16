@@ -80,8 +80,8 @@ static bool RSA_ikev2_calculate_sighash(const struct state *st,
 	}
 
 	DBG(DBG_CRYPT,
-	    DBG_dump_chunk("inputs to hash1 (first packet)", firstpacket);
-	    DBG_dump_chunk(nonce_name, *nonce);
+	    DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
+	    DBG_dump_hunk(nonce_name, *nonce);
 	    DBG_dump("idhash", idhash, st->st_oakley.ta_prf->prf_output_size));
 
 	const struct hash_desc *hd;
@@ -206,7 +206,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 		passert(shr == (int)sz);
 		if (no_ppk_auth != NULL) {
 			clonetochunk(*no_ppk_auth, sig_val, sz, "NO_PPK_AUTH chunk");
-			DBG(DBG_PRIVATE, DBG_dump_chunk("NO_PPK_AUTH payload", *no_ppk_auth));
+			DBG(DBG_PRIVATE, DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth));
 		} else {
 			if (!out_raw(sig_val, sz, a_pbs, "rsa signature"))
 				return FALSE;

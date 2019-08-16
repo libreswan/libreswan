@@ -96,7 +96,7 @@ struct crypt_prf *crypt_prf_init_chunk(const char *name,
 		DBG_log("%s PRF %s init %s-chunk@%p (length %zd)",
 			name, prf_desc->common.name,
 			chunk_name, chunk.ptr, chunk.len);
-		DBG_dump_chunk(NULL, chunk);
+		DBG_dump_hunk(NULL, chunk);
 	}
 	return wrap(prf_desc, name,
 		    prf_desc->prf_mac_ops->init_bytes(prf_desc, name,
@@ -129,7 +129,7 @@ void crypt_prf_update_chunk(struct crypt_prf *prf,
 		DBG_log("%s PRF %s update %s-chunk@%p (length %zd)",
 			prf->name, prf->desc->common.name,
 			name, update.ptr, update.len);
-		DBG_dump_chunk(NULL, update);
+		DBG_dump_hunk(NULL, update);
 	}
 	prf->desc->prf_mac_ops->digest_bytes(prf->context, name, update.ptr, update.len);
 }
@@ -209,7 +209,7 @@ chunk_t crypt_prf_final_chunk(struct crypt_prf **prfp)
 		DBG_log("%s PRF %s final-chunk@%p (length %zu)",
 			(*prfp)->name, (*prfp)->desc->common.name,
 			chunk.ptr, chunk.len);
-		DBG_dump_chunk(NULL, chunk);
+		DBG_dump_hunk(NULL, chunk);
 	}
 	pfree(*prfp);
 	*prfp = prf = NULL;

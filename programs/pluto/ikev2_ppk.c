@@ -99,7 +99,7 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 
 	/* clone ppk id data without ppk id type byte */
 	clonetochunk(payl->ppk_id, dst + 1, len - 1, "PPK_ID data");
-	DBG(DBG_CONTROL, DBG_dump_chunk("Extracted PPK_ID", payl->ppk_id));
+	DBG(DBG_CONTROL, DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id));
 
 	return TRUE;
 }
@@ -187,7 +187,7 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key, c
 	*sk = t;
 	DBG(DBG_PRIVATE, {
 		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk);
-		DBG_dump_chunk(name, chunk_sk);
+		DBG_dump_hunk(name, chunk_sk);
 		freeanychunk(chunk_sk);
 	});
 }
@@ -201,7 +201,7 @@ void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
 
 	DBG(DBG_CRYPT, {
 		DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
-		DBG_dump_chunk("PPK:", *ppk);
+		DBG_dump_hunk("PPK:", *ppk);
 	});
 
 	DBGF(DBG_PRIVATE, "PPK recalculating SK_d, SK_pi, SK_pr");

@@ -292,6 +292,7 @@ void dbg(const char *fmt, ...) PRINTF_LIKE(1);
 #define DBGF(cond, ...) { if (DBGP(cond)) { DBG_log(__VA_ARGS__); } }
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);
 void DBG_dump(const char *label, const void *p, size_t len);
+#define DBG_dump_hunk(LABEL, HUNK) DBG_dump(LABEL, (HUNK).ptr, (HUNK).len)
 
 void lswlog_dbg_pre(struct lswlog *buf);
 

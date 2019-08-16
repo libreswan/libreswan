@@ -95,7 +95,7 @@ chunk_t decode_to_chunk(const char *prefix, const char *original)
 		chunk = zalloc_chunk(strlen(original), original);
 		memcpy(chunk.ptr, original, chunk.len);
 	}
-	DBG(DBG_CRYPT, DBG_dump_chunk("decode_to_chunk: output: ", chunk));
+	DBG(DBG_CRYPT, DBG_dump_hunk("decode_to_chunk: output: ", chunk));
 	return chunk;
 }
 

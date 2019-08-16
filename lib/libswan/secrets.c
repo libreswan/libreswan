@@ -115,8 +115,8 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 void DBG_log_RSA_public_key(const struct RSA_public_key *k)
 {
 	DBG_log(" keyid: *%s", k->keyid);
-	DBG_dump_chunk("n", k->n);
-	DBG_dump_chunk("e", k->e);
+	DBG_dump_hunk("n", k->n);
+	DBG_dump_hunk("e", k->e);
 	DBG_log_ckaid("CKAID", k->ckaid);
 }
 
@@ -124,7 +124,7 @@ void DBG_log_ECDSA_public_key(const struct ECDSA_public_key *k)
 {
 	DBG_log(" keyid: *%s", k->keyid);
 	DBG_log(" key size: *%s", k->keyid);
-	DBG_dump_chunk("pub", k->pub);
+	DBG_dump_hunk("pub", k->pub);
 	DBG_log_ckaid("CKAID", k->ckaid);
 }
 
@@ -816,7 +816,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 			DBG(DBG_PRIVATE, DBG_dump(p->name, bv, bvlen));
 			chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
 			clonetochunk(*n, bv, bvlen, p->name);
-			DBG(DBG_PRIVATE, DBG_dump_chunk(p->name, *n));
+			DBG(DBG_PRIVATE, DBG_dump_hunk(p->name, *n));
 		} else {
 			DBG(DBG_CONTROL, DBG_log("ignoring %s", p->name));
 		}

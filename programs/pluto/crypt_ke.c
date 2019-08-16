@@ -66,7 +66,7 @@ void calc_ke(struct pcr_kenonce *kn)
 	DBG(DBG_CRYPT,
 	    DBG_log("NSS: Local DH %s secret (pointer): %p",
 		    group->common.name, kn->secret);
-	    DBG_dump_chunk("NSS: Public DH wire value:",
+	    DBG_dump_hunk("NSS: Public DH wire value:",
 			   kn->gi));
 }
 
@@ -77,7 +77,7 @@ void calc_nonce(struct pcr_kenonce *kn)
 	get_rnd_bytes(kn->n.ptr, kn->n.len);
 
 	DBG(DBG_CRYPT,
-	    DBG_dump_chunk("Generated nonce:", kn->n));
+	    DBG_dump_hunk("Generated nonce:", kn->n));
 }
 
 void cancelled_ke_and_nonce(struct pcr_kenonce *kn)

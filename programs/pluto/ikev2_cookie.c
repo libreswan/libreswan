@@ -175,8 +175,8 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	chunk_t remote_cookie = same_in_pbs_left_as_chunk(&cookie_digest->pbs);
 
 	if (DBGP(DBG_BASE)) {
-		DBG_dump_chunk("received cookie", remote_cookie);
-		DBG_dump_chunk("computed cookie", local_cookie);
+		DBG_dump_hunk("received cookie", remote_cookie);
+		DBG_dump_hunk("computed cookie", local_cookie);
 	}
 
 	if (!chunk_eq(local_cookie, remote_cookie)) {

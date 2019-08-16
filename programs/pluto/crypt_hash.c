@@ -55,7 +55,7 @@ void crypt_hash_digest_chunk(struct crypt_hash *hash,
 		DBG_log("%s hash %s digest %s-chunk@%p (length %zu)",
 			hash->name, hash->desc->common.name,
 			name, chunk.ptr, chunk.len);
-		DBG_dump_chunk(NULL, chunk);
+		DBG_dump_hunk(NULL, chunk);
 	}
 	hash->desc->hash_ops->digest_bytes(hash->context, name, chunk.ptr, chunk.len);
 }
@@ -124,7 +124,7 @@ chunk_t crypt_hash_final_chunk(struct crypt_hash **hashp)
 		DBG_log("%s hash %s final chunk@%p (length %zu)",
 			hash->name, hash->desc->common.name,
 			chunk.ptr, chunk.len);
-		DBG_dump_chunk(NULL, chunk);
+		DBG_dump_hunk(NULL, chunk);
 	}
 	pfree(*hashp);
 	*hashp = hash = NULL;

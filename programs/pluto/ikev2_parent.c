@@ -1250,7 +1250,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				"saved received dcookie");
 
 			DBG(DBG_CONTROLMORE,
-			    DBG_dump_chunk("dcookie received (instead of an R1):",
+			    DBG_dump_hunk("dcookie received (instead of an R1):",
 					   st->st_dcookie);
 			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
 
@@ -2059,7 +2059,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 			create_ppk_id_payload(ppk_id, &ppk_id_p);
 			DBG(DBG_CONTROL, DBG_log("ppk type: %d", (int) ppk_id_p.type));
-			DBG(DBG_CONTROL, DBG_dump_chunk("ppk_id from payload:", ppk_id_p.ppk_id));
+			DBG(DBG_CONTROL, DBG_dump_hunk("ppk_id from payload:", ppk_id_p.ppk_id));
 
 			ppk_recalculate(ppk, pst->st_oakley.ta_prf,
 						&pst->st_skey_d_nss,
@@ -4967,7 +4967,7 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 
 					clonetochunk(*cookie2, dc_pbs->cur, pbs_left(dc_pbs),
 							"saved cookie2");
-					DBG_dump_chunk("MOBIKE COOKIE2 received:", *cookie2);
+					DBG_dump_hunk("MOBIKE COOKIE2 received:", *cookie2);
 				}
 			} else {
 				libreswan_log("Connection does not allow MOBIKE, ignoring COOKIE2");

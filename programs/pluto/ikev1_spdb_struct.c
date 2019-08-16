@@ -1380,7 +1380,7 @@ psk_common:
 								"Can't authenticate: no preshared key found for `%s' and `%s'",
 								mid, hid);
 						} else {
-							DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
+							DBG(DBG_PRIVATE, DBG_dump_hunk("User PSK:", *pss));
 						}
 						ta.auth = OAKLEY_PRESHARED_KEY;
 					}

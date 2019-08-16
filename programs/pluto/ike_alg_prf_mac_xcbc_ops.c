@@ -69,15 +69,15 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 			chunk_t bytes)
 {
 	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_chunk("XCBC: data", bytes);
+		DBG_dump_hunk("XCBC: data", bytes);
 		chunk_t k = chunk_from_symkey("K", key);
-		DBG_dump_chunk("XCBC: K:", k);
+		DBG_dump_hunk("XCBC: K:", k);
 		freeanychunk(k);
 	}
 
 	chunk_t k1t = derive_ki(prf, key, 1);
 	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_chunk("XCBC: K1", k1t);
+		DBG_dump_hunk("XCBC: K1", k1t);
 	}
 	PK11SymKey *k1 = prf_key_from_bytes("k1", prf, k1t.ptr, k1t.len);
 	freeanychunk(k1t);
@@ -115,9 +115,9 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		chunk_t k2 = derive_ki(prf, key, 2);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_log("XCBC: Computing E[%d] using K2", n);
-			DBG_dump_chunk("XCBC: K2", k2);
-			DBG_dump_chunk("XCBC: E[n-1]", e);
-			DBG_dump_chunk("XCBC: M[n]", m);
+			DBG_dump_hunk("XCBC: K2", k2);
+			DBG_dump_hunk("XCBC: E[n-1]", e);
+			DBG_dump_hunk("XCBC: M[n]", m);
 		}
 		/*
 		 *      a)  If the blocksize of M[n] is 128 bits:
@@ -128,16 +128,16 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 			t.ptr[j] = m.ptr[j] ^ e.ptr[j] ^ k2.ptr[j];
 		}
 		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_chunk("XCBC: M[n]^E[n-1]^K2", t);
+			DBG_dump_hunk("XCBC: M[n]^E[n-1]^K2", t);
 		}
 		freeanychunk(k2);
 	} else {
 		chunk_t k3 = derive_ki(prf, key, 3);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_log("Computing E[%d] using K3", n);
-			DBG_dump_chunk("XCBC: K3", k3);
-			DBG_dump_chunk("XCBC: E[n-1]", e);
-			DBG_dump_chunk("XCBC: M[n]", m);
+			DBG_dump_hunk("XCBC: K3", k3);
+			DBG_dump_hunk("XCBC: E[n-1]", e);
+			DBG_dump_hunk("XCBC: M[n]", m);
 		}
 		/*
 		 *      b)  If the blocksize of M[n] is less than 128 bits:
@@ -158,15 +158,15 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 			t.ptr[j] = 0x00 ^ e.ptr[j] ^ k3.ptr[j];
 		}
 		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_chunk("XCBC: M[n]", m);
-			DBG_dump_chunk("XCBC: M[n]:80...^E[n-1]^K3", t);
+			DBG_dump_hunk("XCBC: M[n]", m);
+			DBG_dump_hunk("XCBC: M[n]:80...^E[n-1]^K3", t);
 		}
 		freeanychunk(k3);
 	}
 
 	encrypt("K1(M[n]^E[n-1]^K2)", e, t, prf, k1);
 	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_chunk("XCBC: MAC", e);
+		DBG_dump_hunk("XCBC: MAC", e);
 	}
 
 	release_symkey("xcbc", "k1", &k1);

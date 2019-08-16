@@ -331,10 +331,10 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 		/* ??? this won't fire count-pointers.awk; should it? */
 		DBG_log("calc_skeyseed_v2 pointers: shared-key@%p, SK_d-key@%p, SK_ai-key@%p, SK_ar-key@%p, SK_ei-key@%p, SK_er-key@%p, SK_pi-key@%p, SK_pr-key@%p",
 			shared, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
-		DBG_dump_chunk("calc_skeyseed_v2 initiator salt", initiator_salt);
-		DBG_dump_chunk("calc_skeyseed_v2 responder salt", responder_salt);
-		DBG_dump_chunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
-		DBG_dump_chunk("calc_skeyseed_v2 SK_pr", chunk_SK_pr);
+		DBG_dump_hunk("calc_skeyseed_v2 initiator salt", initiator_salt);
+		DBG_dump_hunk("calc_skeyseed_v2 responder salt", responder_salt);
+		DBG_dump_hunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
+		DBG_dump_hunk("calc_skeyseed_v2 SK_pr", chunk_SK_pr);
 	});
 }
 
@@ -352,7 +352,7 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 	chunk_t remote_ke;
 	setchunk_from_wire(remote_ke, sk, sk->role == ORIGINAL_RESPONDER ? &sk->gi : &sk->gr);
 
-	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", remote_ke));
+	DBG(DBG_CRYPT, DBG_dump_hunk("peer's g: ", remote_ke));
 
 	sk->shared = calc_dh_shared(sk->secret, remote_ke);
 	if (sk->shared == NULL) {

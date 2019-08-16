@@ -117,7 +117,7 @@ void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key)
 		} else {
 			chunk_t bytes = chunk_from_symkey(prefix, 0, key);
 			/* NULL suppresses the dump header */
-			DBG_dump_chunk(NULL, bytes);
+			DBG_dump_hunk(NULL, bytes);
 			freeanychunk(bytes);
 		}
 	}

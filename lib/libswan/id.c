@@ -592,8 +592,8 @@ bool same_dn_any_order(chunk_t a, chunk_t b)
 		DBG(DBG_CONTROL, {
 			DBG_log("%s: not an exact match, now checking any RDN order",
 				 __func__);
-			// DBG_dump_chunk("a", a);
-			// DBG_dump_chunk("b", b);
+			// DBG_dump_hunk("a", a);
+			// DBG_dump_hunk("b", b);
 		});
 		ret = match_dn_unordered(a, b, NULL);
 	}

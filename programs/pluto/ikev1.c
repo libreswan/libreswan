@@ -1133,7 +1133,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 						if (tmp_spd->that.id.name.ptr
 						    != NULL)
 							DBG(DBG_CONTROLMORE,
-							    DBG_dump_chunk(
+							    DBG_dump_hunk(
 								    "that id name",
 								    tmp_spd->
 								    that.id.

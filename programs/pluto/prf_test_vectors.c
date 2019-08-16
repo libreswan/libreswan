@@ -143,7 +143,7 @@ static bool test_prf_vector(const struct prf_desc *prf,
 							   "key", chunk_key);
 	crypt_prf_update_chunk(chunk_prf, "message", chunk_message);
 	chunk_t chunk_output = crypt_prf_final_chunk(&chunk_prf);
-	DBG(DBG_CRYPT, DBG_dump_chunk("chunk output", chunk_output));
+	DBG(DBG_CRYPT, DBG_dump_hunk("chunk output", chunk_output));
 	bool ok = verify_chunk(test->description, prf_output, chunk_output);
 	freeanychunk(chunk_output);
 

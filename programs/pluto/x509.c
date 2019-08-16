@@ -987,7 +987,7 @@ void ikev1_decode_cr(struct msg_digest *md)
 		};
 
 		if (DBGP(DBG_BASE)) {
-			DBG_dump_chunk("CR", ca_name);
+			DBG_dump_hunk("CR", ca_name);
 		}
 
 		const struct isakmp_cr *const cr = &p->payload.cr;
@@ -1039,7 +1039,7 @@ void ikev2_decode_cr(struct msg_digest *md)
 				.ptr = pbs_left(&p->pbs) > 0 ? p->pbs.cur : NULL
 			};
 			if (DBGP(DBG_BASE)) {
-				DBG_dump_chunk("CERT_X509_SIGNATURE CR:", ca_name);
+				DBG_dump_hunk("CERT_X509_SIGNATURE CR:", ca_name);
 			}
 
 			if (ca_name.len > 0) {
@@ -1101,7 +1101,7 @@ static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
 	}
 	passert(sz <= sizeof(combined_hash));
 	clonetochunk(result, combined_hash, sz, "combined CERTREQ hash");
-	DBG(DBG_CRYPT, DBG_dump_chunk("Combined CERTREQ hashes", result));
+	DBG(DBG_CRYPT, DBG_dump_hunk("Combined CERTREQ hashes", result));
 	return result;
 }
 #endif
