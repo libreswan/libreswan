@@ -41,13 +41,6 @@ LOCAL_MAKE_FLAGS=
 MAKE_BASE = base
 MAKE_INSTLL_BASE = install-base
 
-BRANCH = $(shell test -d .git -o -f .git && (git rev-parse --abbrev-ref HEAD || echo ''))
-TRAVIS_BANCH = $(call W1, $(BRANCH),'')
-ifeq ($(TRAVIS_BANCH), travis)
-	DISTRO =  $(call W2, $(BRANCH),fedora)
-	DISTRO_REL = $(call W3, $(BRANCH),27)
-endif
-
 #
 # Distribution specific tweaks
 #
