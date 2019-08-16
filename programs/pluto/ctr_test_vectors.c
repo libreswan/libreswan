@@ -24,6 +24,7 @@
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 
 #include "nss.h"
+#include "lswfips.h"
 #include "pk11pub.h"
 #include "crypt_symkey.h"
 
@@ -189,7 +190,7 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct ctr_test_vector *test)
 {
-	libreswan_log("%s: %s", __func__, test->description);
+	libreswan_log("  %s", test->description);
 	bool ok = TRUE;
 
 	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
@@ -214,13 +215,13 @@ static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 	return ok;
 }
 
-bool test_ctr_vectors(const struct encrypt_desc *encrypt_desc,
+bool test_ctr_vectors(const struct encrypt_desc *desc,
 		      const struct ctr_test_vector *tests)
 {
 	bool ok = TRUE;
 	const struct ctr_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
-		if (!test_ctr_vector(encrypt_desc, test)) {
+		if (!test_ctr_vector(desc, test)) {
 			ok = FALSE;
 		}
 	}

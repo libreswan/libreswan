@@ -21,11 +21,7 @@ struct prf_test_vector {
 	const char *prf_output;
 };
 
-struct prf_test_vectors {
-	const struct prf_desc *prf;
-	const struct prf_test_vector tests[];
-};
+extern const struct prf_test_vector aes_xcbc_prf_tests[];
 
-extern const struct prf_test_vectors aes_xcbc_prf_tests;
-
-bool test_prf_vectors(const struct prf_test_vectors *tests);
+bool test_prf_vectors(const struct prf_desc *desc,
+		      const struct prf_test_vector *tests);

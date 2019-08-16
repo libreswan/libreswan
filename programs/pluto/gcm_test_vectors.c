@@ -17,6 +17,7 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "lswlog.h"
+#include "lswfips.h"
 
 #include "ike_alg.h"
 #include "test_buffer.h"
@@ -78,7 +79,7 @@ const struct gcm_test_vector *const aes_gcm_tests = aes_gcm_test_vectors;
 static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct gcm_test_vector *test)
 {
-	libreswan_log("%s: %s", __func__, test->description);
+	libreswan_log("  %s", test->description);
 
 	const size_t salt_size = encrypt_desc->salt_size;
 
@@ -155,13 +156,13 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	return ok;
 }
 
-bool test_gcm_vectors(const struct encrypt_desc *encrypt_desc,
+bool test_gcm_vectors(const struct encrypt_desc *desc,
 		      const struct gcm_test_vector *tests)
 {
 	bool ok = TRUE;
 	const struct gcm_test_vector *test;
 	for (test = tests; test->key != NULL; test++) {
-		if (!test_gcm_vector(encrypt_desc, test)) {
+		if (!test_gcm_vector(desc, test)) {
 			ok = FALSE;
 		}
 	}

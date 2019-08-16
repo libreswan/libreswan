@@ -25,6 +25,7 @@
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 
 #include "nss.h"
+#include "lswfips.h"
 #include "pk11pub.h"
 #include "crypt_symkey.h"
 
@@ -171,8 +172,8 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct cbc_test_vector *test)
 {
+	libreswan_log("  %s", test->description);
 	bool ok = TRUE;
-	libreswan_log("%s: %s", __func__, test->description);
 
 	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key);
 	if (!test_cbc_op(encrypt_desc, test->description, 1,
@@ -196,13 +197,13 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 	return ok;
 }
 
-bool test_cbc_vectors(const struct encrypt_desc *encrypt_desc,
+bool test_cbc_vectors(const struct encrypt_desc *desc,
 		      const struct cbc_test_vector *tests)
 {
 	bool ok = TRUE;
 	const struct cbc_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
-		if (!test_cbc_vector(encrypt_desc, test)) {
+		if (!test_cbc_vector(desc, test)) {
 			ok = FALSE;
 		}
 	}
