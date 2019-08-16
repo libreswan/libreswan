@@ -557,6 +557,8 @@ struct prf_desc {
 	 * FIPS controlled native implementation.
 	 */
 	const struct prf_mac_ops *prf_mac_ops;
+	const struct prf_ikev1_ops *prf_ikev1_ops;
+	const struct prf_ikev2_ops *prf_ikev2_ops;
 	/*
 	 * Name used when generating a linux audit record for an IKE
 	 * SA.
