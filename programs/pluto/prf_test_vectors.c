@@ -136,19 +136,19 @@ static bool test_prf_vector(const struct prf_desc *prf,
 
 
 	/* chunk interface */
-	struct crypt_prf *chunk_prf = crypt_prf_init_chunk("PRF chunk interface", prf,
-							   "key", chunk_key);
-	crypt_prf_update_chunk(chunk_prf, "message", chunk_message);
+	struct crypt_prf *chunk_prf = crypt_prf_init_hunk("PRF chunk interface", prf,
+							  "key", chunk_key);
+	crypt_prf_update_hunk(chunk_prf, "message", chunk_message);
 	chunk_t chunk_output = crypt_prf_final_chunk(&chunk_prf);
 	DBG(DBG_CRYPT, DBG_dump_hunk("chunk output", chunk_output));
 	bool ok = verify_chunk(test->description, prf_output, chunk_output);
 	freeanychunk(chunk_output);
 
 	/* symkey interface */
-	PK11SymKey *symkey_key = symkey_from_chunk("key symkey", chunk_key);
+	PK11SymKey *symkey_key = symkey_from_hunk("key symkey", chunk_key);
 	struct crypt_prf *symkey_prf = crypt_prf_init_symkey("PRF symkey interface", prf,
 							     "key symkey", symkey_key);
-	PK11SymKey *symkey_message = symkey_from_chunk("message symkey",
+	PK11SymKey *symkey_message = symkey_from_hunk("message symkey",
 						       chunk_message);
 	crypt_prf_update_symkey(symkey_prf, "symkey message", symkey_message);
 	PK11SymKey *symkey_output = crypt_prf_final_symkey(&symkey_prf);

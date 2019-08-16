@@ -197,7 +197,7 @@ void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
 			PK11SymKey **sk_pi,	/* updated */
 			PK11SymKey **sk_pr)	/* updated */
 {
-	PK11SymKey *ppk_key = symkey_from_chunk("PPK Keying material", *ppk);
+	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk);
 
 	DBG(DBG_CRYPT, {
 		DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");

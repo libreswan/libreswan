@@ -79,7 +79,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk("XCBC: K1", k1t);
 	}
-	PK11SymKey *k1 = prf_key_from_bytes("k1", prf, k1t.ptr, k1t.len);
+	PK11SymKey *k1 = prf_key_from_hunk("k1", prf, k1t);
 	freeanychunk(k1t);
 
 	/*
@@ -196,7 +196,7 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		chunk_t zeros = alloc_chunk(prf_desc->prf_key_size - dkey_sz, "zeros");
 		/* make a local "readonly copy" and manipulate that */
 		PK11SymKey *tmp = reference_symkey("xcbc", "tmp", draft_key);
-		append_symkey_chunk(&tmp, zeros);
+		append_symkey_hunk("tmp+=0", &tmp, zeros);
 		freeanychunk(zeros);
 		key = prf_key_from_symkey_bytes(name, prf_desc,
 						0, prf_desc->prf_key_size, tmp);
@@ -208,14 +208,12 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		 * put the key through the mac with a zero key
 		 */
 		chunk_t zeros = alloc_chunk(prf_desc->prf_key_size, "zeros");
-		PK11SymKey *zero_key = prf_key_from_bytes(key_name, prf_desc,
-							  zeros.ptr, zeros.len);
+		PK11SymKey *zero_key = prf_key_from_hunk(key_name, prf_desc, zeros);
 		freeanychunk(zeros);
 		chunk_t draft_chunk = chunk_from_symkey(key_name, draft_key);
 		chunk_t key_chunk = xcbc_mac(prf_desc, zero_key, draft_chunk);
 		freeanychunk(draft_chunk);
-		key = prf_key_from_bytes(key_name, prf_desc,
-					 key_chunk.ptr, key_chunk.len);
+		key = prf_key_from_hunk(key_name, prf_desc, key_chunk);
 		freeanychunk(key_chunk);
 	} else {
 		DBGF(DBG_CRYPT, "XCBC: Key %zd=%zd just right",
@@ -281,7 +279,7 @@ static void nss_xcbc_final_bytes(struct prf_context **prf,
 static PK11SymKey *nss_xcbc_final_symkey(struct prf_context **prf)
 {
 	chunk_t mac = xcbc_mac((*prf)->desc, (*prf)->key, (*prf)->bytes);
-	PK11SymKey *key = symkey_from_chunk("xcbc", mac);
+	PK11SymKey *key = symkey_from_hunk("xcbc", mac);
 	freeanychunk(mac);
 	freeanychunk((*prf)->bytes);
 	release_symkey((*prf)->name, "key", &(*prf)->key);

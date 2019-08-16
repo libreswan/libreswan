@@ -34,9 +34,8 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 {
 	/* key = Ni|Nr */
 	chunk_t key = clone_chunk_chunk(Ni, Nr, "key = Ni|Nr");
-	struct crypt_prf *prf = crypt_prf_init_chunk("SKEYID sig",
-						     prf_desc,
-						     "Ni|Nr", key);
+	struct crypt_prf *prf = crypt_prf_init_hunk("SKEYID sig", prf_desc,
+						    "Ni|Nr", key);
 	freeanychunk(key);
 	/* seed = g^xy */
 	crypt_prf_update_symkey(prf, "g^xy", dh_secret);
@@ -52,11 +51,11 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					chunk_t Ni, chunk_t Nr)
 {
 	/* key = pre-shared-key */
-	struct crypt_prf *prf = crypt_prf_init_chunk("SKEYID psk", prf_desc,
-						     "psk", pre_shared_key);
+	struct crypt_prf *prf = crypt_prf_init_hunk("SKEYID psk", prf_desc,
+						    "psk", pre_shared_key);
 	/* seed = Ni_b | Nr_b */
-	crypt_prf_update_chunk(prf, "Ni", Ni);
-	crypt_prf_update_chunk(prf, "Nr", Nr);
+	crypt_prf_update_hunk(prf, "Ni", Ni);
+	crypt_prf_update_hunk(prf, "Nr", Nr);
 	/* generate */
 	return crypt_prf_final_symkey(&prf);
 }
@@ -74,8 +73,8 @@ PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 						      "SKEYID", skeyid);
 	/* seed = g^xy | CKY-I | CKY-R | 0 */
 	crypt_prf_update_symkey(prf, "g^xy", dh_secret);
-	crypt_prf_update_chunk(prf, "CKI_i", cky_i);
-	crypt_prf_update_chunk(prf, "CKI_r", cky_r);
+	crypt_prf_update_hunk(prf, "CKI_i", cky_i);
+	crypt_prf_update_hunk(prf, "CKI_r", cky_r);
 	crypt_prf_update_byte(prf, "0", 0);
 	/* generate */
 	return crypt_prf_final_symkey(&prf);
@@ -95,8 +94,8 @@ PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 	/* seed = SKEYID_d | g^xy | CKY-I | CKY-R | 1 */
 	crypt_prf_update_symkey(prf, "SKEYID_d", skeyid_d);
 	crypt_prf_update_symkey(prf, "g^xy", dh_secret);
-	crypt_prf_update_chunk(prf, "CKI_i", cky_i);
-	crypt_prf_update_chunk(prf, "CKI_r", cky_r);
+	crypt_prf_update_hunk(prf, "CKI_i", cky_i);
+	crypt_prf_update_hunk(prf, "CKI_r", cky_r);
 	crypt_prf_update_byte(prf, "1", 1);
 	/* generate */
 	return crypt_prf_final_symkey(&prf);
@@ -116,8 +115,8 @@ PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 	/* seed = SKEYID_a | g^xy | CKY-I | CKY-R | 2 */
 	crypt_prf_update_symkey(prf, "SKEYID_a", skeyid_a);
 	crypt_prf_update_symkey(prf, "g^xy", dh_secret);
-	crypt_prf_update_chunk(prf, "CKI_i", cky_i);
-	crypt_prf_update_chunk(prf, "CKI_r", cky_r);
+	crypt_prf_update_hunk(prf, "CKI_i", cky_i);
+	crypt_prf_update_hunk(prf, "CKI_r", cky_r);
 	crypt_prf_update_byte(prf, "2", 2);
 	/* generate */
 	return crypt_prf_final_symkey(&prf);

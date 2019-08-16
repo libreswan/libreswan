@@ -59,15 +59,26 @@ size_t sizeof_symkey(PK11SymKey *key);
  * Use this to chain a series of concat operations.
  */
 void append_symkey_symkey(PK11SymKey **lhs, PK11SymKey *rhs);
-void append_symkey_bytes(PK11SymKey **lhs, const void *rhs,
-			 size_t sizeof_rhs);
-void append_bytes_symkey(const void *lhs, size_t sizeof_lhs,
-			 PK11SymKey **rhs);
-void append_symkey_chunk(PK11SymKey **lhs, chunk_t rhs);
+
+void append_symkey_bytes(const char *result,
+			 PK11SymKey **lhs,
+			 const void *rhs, size_t sizeof_rhs);
+#define append_symkey_hunk(NAME, LHS, RHS)			\
+	append_symkey_bytes(NAME, LHS, (RHS).ptr, (RHS).len)
+
+void prepend_bytes_to_symkey(const char *result,
+			    const void *lhs, size_t sizeof_lhs,
+			    PK11SymKey **rhs);
+#define prepend_hunk_to_symkey(NAME, LHS, RHS)			\
+	append_bytes_symkey(NAME, (LHS).ptr, (LHS).len, RHS)
+
 void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs);
-void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs);
+
 void append_chunk_bytes(const char *name, chunk_t *lhs, const void *rhs,
 			size_t sizeof_rhs);
+#define append_chunk_hunk(NAME, LHS, RHS)			\
+	append_chunk_bytes(NAME, LHS, (RHS).ptr, (RHS).len)
+
 void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs);
 
 /*
@@ -117,14 +128,20 @@ chunk_t chunk_from_symkey_bytes(const char *prefix,
  */
 PK11SymKey *symkey_from_bytes(const char *name,
 			      const uint8_t *bytes, size_t sizeof_bytes);
-PK11SymKey *symkey_from_chunk(const char *name,
-			      chunk_t chunk);
+#define symkey_from_hunk(NAME, HUNK)			\
+	symkey_from_bytes(NAME, (HUNK).ptr, (HUNK).len)
+
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
 				   const uint8_t *bytes, size_t sizeof_bytes);
+#define encrypt_key_from_hunk(NAME, ENCRYPT, HUNK)			\
+	encrypt_key_from_bytes(NAME, ENCRYPT, (HUNK).ptr, (HUNK).len)
+
 PK11SymKey *prf_key_from_bytes(const char *name,
 			       const struct prf_desc *prf,
 			       const uint8_t *bytes, size_t sizeof_bytes);
+#define prf_key_from_hunk(NAME, PRF, HUNK)			\
+	prf_key_from_bytes(NAME, PRF, (HUNK).ptr, (HUNK).len)
 
 /*
  * Extract SIZEOF_KEY bytes of keying material as a KEY.

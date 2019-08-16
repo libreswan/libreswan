@@ -102,7 +102,7 @@ chunk_t decode_to_chunk(const char *prefix, const char *original)
 PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string)
 {
 	chunk_t chunk = decode_hex_to_chunk(prefix, string);
-	PK11SymKey *symkey = symkey_from_chunk(prefix, chunk);
+	PK11SymKey *symkey = symkey_from_hunk(prefix, chunk);
 	freeanychunk(chunk);
 	return symkey;
 }
@@ -165,8 +165,7 @@ PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc,
 			  const char *encoded_key)
 {
 	chunk_t raw_key = decode_to_chunk("raw_key", encoded_key);
-	PK11SymKey *symkey = encrypt_key_from_bytes("symkey", encrypt_desc,
-						    raw_key.ptr, raw_key.len);
+	PK11SymKey *symkey = encrypt_key_from_hunk("symkey", encrypt_desc, raw_key);
 	freeanychunk(raw_key);
 	return symkey;
 }

@@ -96,7 +96,8 @@ static void prf_update(struct prf_context *prf)
 		 * size.
 		 */
 		static /*const*/ unsigned char z[MAX_HMAC_BLOCKSIZE] = { 0 };
-		append_symkey_bytes(&prf->key, z, prf->desc->hasher->hash_block_size - sizeof_symkey(prf->key));
+		append_symkey_bytes("trimed key", &prf->key, z,
+				    prf->desc->hasher->hash_block_size - sizeof_symkey(prf->key));
 	}
 	passert(prf->key != NULL);
 
@@ -119,11 +120,11 @@ static void digest_symkey(struct prf_context *prf, const char *name UNUSED,
 	append_symkey_symkey(&(prf->inner), update);
 }
 
-static void digest_bytes(struct prf_context *prf, const char *name UNUSED,
+static void digest_bytes(struct prf_context *prf, const char *name,
 			 const uint8_t *bytes, size_t sizeof_bytes)
 {
 	passert(digest_bytes == prf->desc->prf_mac_ops->digest_bytes);
-	append_symkey_bytes(&(prf->inner), bytes, sizeof_bytes);
+	append_symkey_bytes(name, &(prf->inner), bytes, sizeof_bytes);
 }
 
 /*

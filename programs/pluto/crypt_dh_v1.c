@@ -271,8 +271,8 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 			    DBG_dump_hunk("DH_r:", gr);
 		    });
 		struct crypt_hash *ctx = crypt_hash_init("new IV", hasher);
-		crypt_hash_digest_chunk(ctx, "GI", gi);
-		crypt_hash_digest_chunk(ctx, "GR", gr);
+		crypt_hash_digest_hunk(ctx, "GI", gi);
+		crypt_hash_digest_hunk(ctx, "GR", gr);
 		*new_iv = crypt_hash_final_chunk(&ctx);
 	}
 }

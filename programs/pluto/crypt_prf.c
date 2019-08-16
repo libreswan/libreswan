@@ -88,19 +88,19 @@ static struct crypt_prf *wrap(const struct prf_desc *prf_desc,
 	return prf;
 }
 
-struct crypt_prf *crypt_prf_init_chunk(const char *name,
+struct crypt_prf *crypt_prf_init_bytes(const char *name,
 				       const struct prf_desc *prf_desc,
-				       const char *chunk_name, chunk_t chunk)
+				       const char *key_name, const void *key, size_t key_size)
 {
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s PRF %s init %s-chunk@%p (length %zd)",
 			name, prf_desc->common.name,
-			chunk_name, chunk.ptr, chunk.len);
-		DBG_dump_hunk(NULL, chunk);
+			key_name, key, key_size);
+		DBG_dump(NULL, key, key_size);
 	}
 	return wrap(prf_desc, name,
 		    prf_desc->prf_mac_ops->init_bytes(prf_desc, name,
-						  chunk_name, chunk.ptr, chunk.len));
+						      key_name, key, key_size));
 }
 
 struct crypt_prf *crypt_prf_init_symkey(const char *name,
@@ -121,18 +121,6 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name,
 /*
  * Accumulate data.
  */
-
-void crypt_prf_update_chunk(struct crypt_prf *prf,
-			    const char *name, chunk_t update)
-{
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s PRF %s update %s-chunk@%p (length %zd)",
-			prf->name, prf->desc->common.name,
-			name, update.ptr, update.len);
-		DBG_dump_hunk(NULL, update);
-	}
-	prf->desc->prf_mac_ops->digest_bytes(prf->context, name, update.ptr, update.len);
-}
 
 void crypt_prf_update_symkey(struct crypt_prf *prf,
 			     const char *name, PK11SymKey *update)

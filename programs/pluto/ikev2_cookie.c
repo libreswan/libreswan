@@ -69,7 +69,7 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 	struct crypt_hash *ctx = crypt_hash_init("IKEv2 COOKIE",
 						 &ike_alg_hash_sha2_256);
 
-	crypt_hash_digest_chunk(ctx, "Ni", Ni);
+	crypt_hash_digest_hunk(ctx, "Ni", Ni);
 
 	shunk_t IPi = address_as_shunk(&md->sender);
 	crypt_hash_digest_bytes(ctx, "IPi", IPi.ptr, IPi.len);

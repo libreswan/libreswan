@@ -112,8 +112,8 @@ static bool RSA_ikev2_calculate_sighash(const struct state *st,
 	passert(hd->hash_digest_size <= *sig_size);
 	struct crypt_hash *ctx = crypt_hash_init("sighash", hd);
 
-	crypt_hash_digest_chunk(ctx, "first packet", firstpacket);
-	crypt_hash_digest_chunk(ctx, "nonce", *nonce);
+	crypt_hash_digest_hunk(ctx, "first packet", firstpacket);
+	crypt_hash_digest_hunk(ctx, "nonce", *nonce);
 
 	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
 	crypt_hash_digest_bytes(ctx, "IDHASH", idhash,

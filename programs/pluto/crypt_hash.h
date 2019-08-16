@@ -33,15 +33,17 @@ struct crypt_hash *crypt_hash_init(const char *hash_name,
 /*
  * Digest the body
  */
-void crypt_hash_digest_chunk(struct crypt_hash *hash,
-			     const char *chunk_name, chunk_t chunk);
+
 void crypt_hash_digest_symkey(struct crypt_hash *hash,
 			      const char *symkey_name, PK11SymKey *symkey);
 void crypt_hash_digest_byte(struct crypt_hash *hash,
 			    const char *byte_name, uint8_t byte);
+
 void crypt_hash_digest_bytes(struct crypt_hash *hash,
 			     const char *bytes_name, const void *bytes,
 			     size_t sizeof_bytes);
+#define crypt_hash_digest_hunk(HASH, NAME, HUNK)			\
+	crypt_hash_digest_bytes(HASH, NAME, (HUNK).ptr, (HUNK).len)
 
 /*
  * Finally ...

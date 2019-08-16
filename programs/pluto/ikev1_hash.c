@@ -85,7 +85,7 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 	case V1_HASH_2:
 		/* HASH(2) = prf(SKEYID_a, M-ID | Ni_b | payload ) */
 		crypt_prf_update_bytes(hash, "M-ID", &raw_msgid, sizeof(raw_msgid));
-		crypt_prf_update_chunk(hash, "Ni_b", st->st_ni);
+		crypt_prf_update_hunk(hash, "Ni_b", st->st_ni);
 		crypt_prf_update_bytes(hash, "payload",
 				       fixup->body, roof - fixup->body);
 		break;
@@ -93,8 +93,8 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 		/* HASH(3) = prf(SKEYID_a, 0 | M-ID | Ni_b | Nr_b) */
 		crypt_prf_update_byte(hash, "0", 0);
 		crypt_prf_update_bytes(hash, "M-ID", &raw_msgid, sizeof(raw_msgid));
-		crypt_prf_update_chunk(hash, "Ni_b", st->st_ni);
-		crypt_prf_update_chunk(hash, "Nr_b", st->st_nr);
+		crypt_prf_update_hunk(hash, "Ni_b", st->st_ni);
+		crypt_prf_update_hunk(hash, "Nr_b", st->st_nr);
 		break;
 	default:
 		bad_case(fixup->hash_type);

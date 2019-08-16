@@ -411,11 +411,6 @@ PK11SymKey *symkey_from_bytes(const char *name, const uint8_t *bytes, size_t siz
 	return key;
 }
 
-PK11SymKey *symkey_from_chunk(const char *name, chunk_t chunk)
-{
-	return symkey_from_bytes(name, chunk.ptr, chunk.len);
-}
-
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
 				   const uint8_t *bytes, size_t sizeof_bytes)
@@ -463,42 +458,32 @@ void append_symkey_symkey(PK11SymKey **lhs, PK11SymKey *rhs)
 	*lhs = newkey;
 }
 
-void append_symkey_bytes(PK11SymKey **lhs, const void *rhs,
+void append_symkey_bytes(const char *name,
+			 PK11SymKey **lhs, const void *rhs,
 			 size_t sizeof_rhs)
 {
-	PK11SymKey *newkey = merge_symkey_bytes("result", *lhs, rhs, sizeof_rhs,
+	PK11SymKey *newkey = merge_symkey_bytes(name, *lhs, rhs, sizeof_rhs,
 						CKM_CONCATENATE_BASE_AND_DATA,
 						PK11_GetMechanism(*lhs));
 	release_symkey(__func__, "lhs", lhs);
 	*lhs = newkey;
 }
 
-void append_bytes_symkey(const void *lhs, size_t sizeof_lhs,
-			 PK11SymKey **rhs)
+void prepend_bytes_to_symkey(const char *result,
+			     const void *lhs, size_t sizeof_lhs,
+			     PK11SymKey **rhs)
 {
 	/* copy the existing KEY's type (mechanism).  */
-	PK11SymKey *newkey = merge_symkey_bytes("result", *rhs, lhs, sizeof_lhs,
+	PK11SymKey *newkey = merge_symkey_bytes(result, *rhs, lhs, sizeof_lhs,
 						CKM_CONCATENATE_DATA_AND_BASE,
 						PK11_GetMechanism(*rhs));
 	release_symkey(__func__, "rhs", rhs);
 	*rhs = newkey;
 }
 
-void append_symkey_chunk(PK11SymKey **lhs, chunk_t rhs)
-{
-	append_symkey_bytes(lhs, rhs.ptr, rhs.len);
-}
-
 void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs)
 {
-	append_symkey_bytes(lhs, &rhs, sizeof(rhs));
-}
-
-void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs)
-{
-	chunk_t new = clone_chunk_chunk(*lhs, rhs, name);
-	freeanychunk(*lhs);
-	*lhs = new;
+	append_symkey_bytes("result", lhs, &rhs, sizeof(rhs));
 }
 
 void append_chunk_bytes(const char *name, chunk_t *lhs,

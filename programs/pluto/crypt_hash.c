@@ -48,18 +48,6 @@ struct crypt_hash *crypt_hash_init(const char *name, const struct hash_desc *has
 	return hash;
 }
 
-void crypt_hash_digest_chunk(struct crypt_hash *hash,
-			     const char *name, chunk_t chunk)
-{
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s hash %s digest %s-chunk@%p (length %zu)",
-			hash->name, hash->desc->common.name,
-			name, chunk.ptr, chunk.len);
-		DBG_dump_hunk(NULL, chunk);
-	}
-	hash->desc->hash_ops->digest_bytes(hash->context, name, chunk.ptr, chunk.len);
-}
-
 void crypt_hash_digest_symkey(struct crypt_hash *hash,
 			      const char *name, PK11SymKey *symkey)
 {
@@ -140,7 +128,7 @@ PK11SymKey *crypt_hash_symkey(const char *name, const struct hash_desc *hash_des
 	struct crypt_hash *hash = crypt_hash_init(name, hash_desc);
 	crypt_hash_digest_symkey(hash, symkey_name, symkey);
 	chunk_t out = crypt_hash_final_chunk(&hash);
-	PK11SymKey *key = symkey_from_chunk(name, out);
+	PK11SymKey *key = symkey_from_hunk(name, out);
 	freeanychunk(out);
 	return key;
 }

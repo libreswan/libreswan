@@ -106,9 +106,9 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 		key_name = "Ni | Nr";
 		break;
 	}
-	struct crypt_prf *prf = crypt_prf_init_chunk("SKEYSEED = prf(Ni | Nr, g^ir)",
-						     prf_desc,
-						     key_name, key);
+	struct crypt_prf *prf = crypt_prf_init_hunk("SKEYSEED = prf(Ni | Nr, g^ir)",
+						    prf_desc,
+						    key_name, key);
 	freeanychunk(key);
 	if (prf == NULL) {
 		libreswan_log("failed to create IKEv2 PRF for computing SKEYSEED = prf(Ni | Nr, g^ir)");
@@ -138,8 +138,8 @@ PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 
 	/* seed: g^ir (new) | Ni | Nr) */
 	crypt_prf_update_symkey(prf, "g^ir (new)", new_dh_secret);
-	crypt_prf_update_chunk(prf, "Ni", Ni);
-	crypt_prf_update_chunk(prf, "Nr", Nr);
+	crypt_prf_update_hunk(prf, "Ni", Ni);
+	crypt_prf_update_hunk(prf, "Nr", Nr);
 	/* generate */
 	return crypt_prf_final_symkey(&prf);
 }
@@ -153,10 +153,10 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				const ike_spis_t *SPIir,
 				size_t required_bytes)
 {
-	PK11SymKey *data = symkey_from_chunk("data", Ni);
-	append_symkey_chunk(&data, Nr);
-	append_symkey_bytes(&data, &SPIir->initiator, sizeof(SPIir->initiator));
-	append_symkey_bytes(&data, &SPIir->responder, sizeof(SPIir->responder));
+	PK11SymKey *data = symkey_from_hunk("data", Ni);
+	append_symkey_hunk("Nr", &data, Nr);
+	append_symkey_bytes("SPIi", &data, &SPIir->initiator, sizeof(SPIir->initiator));
+	append_symkey_bytes("SPIr", &data, &SPIir->responder, sizeof(SPIir->responder));
 	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,
 					    skeyseed, data,
 					    required_bytes);
@@ -184,13 +184,13 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 	}
 	PK11SymKey *data;
 	if (new_dh_secret == NULL) {
-		data = symkey_from_chunk("data", Ni);
-		append_symkey_chunk(&data, Nr);
+		data = symkey_from_hunk("data=Ni", Ni);
+		append_symkey_hunk("data+=Nr", &data, Nr);
 	} else {
 		/* make a local "readonly copy" and manipulate that */
-		data = reference_symkey("prf", "data", new_dh_secret);
-		append_symkey_chunk(&data, Ni);
-		append_symkey_chunk(&data, Nr);
+		data = reference_symkey("data=DH", "data", new_dh_secret);
+		append_symkey_hunk("data+=Ni", &data, Ni);
+		append_symkey_hunk("data+=Nr", &data, Nr);
 	}
 	PK11SymKey *prfplus = ikev2_prfplus(prf_desc,
 					    SK_d, data,
@@ -207,8 +207,8 @@ chunk_t ikev2_psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 
 	{
 		struct crypt_prf *prf =
-			crypt_prf_init_chunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
-					     prf_desc, "shared secret", pss);
+			crypt_prf_init_hunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
+					    prf_desc, "shared secret", pss);
 		if (prf == NULL) {
 			if (libreswan_fipsmode()) {
 				PASSERT_FAIL("FIPS: failure creating %s PRF context for digesting PSK",

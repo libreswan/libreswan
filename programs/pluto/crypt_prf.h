@@ -56,15 +56,16 @@ struct crypt_prf *crypt_prf_init_symkey(const char *prf_name,
 					const struct prf_desc *prf_desc,
 					const char *key_name, PK11SymKey *key);
 
-struct crypt_prf *crypt_prf_init_chunk(const char *prf_name,
+struct crypt_prf *crypt_prf_init_bytes(const char *prf_name,
 				       const struct prf_desc *prf_desc,
-				       const char *key_name, chunk_t key);
+				       const char *key_name, const void *key, size_t sizeof_key);
+#define crypt_prf_init_hunk(PRF_NAME, PRF, KEY_NAME, KEY) \
+	crypt_prf_init_bytes(PRF_NAME, PRF, KEY_NAME, (KEY).ptr, (KEY).len)
 
 /*
  * Call these to accumulate the seed/data/text.
  */
-void crypt_prf_update_chunk(struct crypt_prf *prf,
-			    const char *update_name, chunk_t update);
+
 void crypt_prf_update_symkey(struct crypt_prf *prf,
 			     const char *update_name, PK11SymKey *update);
 void crypt_prf_update_byte(struct crypt_prf *prf,
