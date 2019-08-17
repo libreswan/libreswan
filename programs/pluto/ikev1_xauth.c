@@ -231,8 +231,6 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 				   const struct state *st)
 {
 	pb_stream attrval;
-	const unsigned char *byte_ptr;
-	unsigned int len;
 	bool ok = TRUE;
 	struct connection *c = st->st_connection;
 
@@ -249,16 +247,15 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	switch (attr_type) {
 	case INTERNAL_IP4_ADDRESS:
-		len = addrbytesptr_read(&ia->ipaddr, &byte_ptr);
-		ok = out_raw(byte_ptr, len, &attrval,
-			     "IP4_addr");
+		if (!pbs_out_address(&ia->ipaddr, &attrval, "IP_addr")) {
+			return STF_INTERNAL_ERROR;
+		}
 		break;
 
 	case INTERNAL_IP4_SUBNET:
-		len = addrbytesptr_read(
-			&c->spd.this.client.addr, &byte_ptr);
-		if (!out_raw(byte_ptr, len, &attrval, "IP4_subnet"))
+		if (!pbs_out_address(&c->spd.this.client.addr, &attrval, "IP4_subnet")) {
 			return STF_INTERNAL_ERROR;
+		}
 		/* FALL THROUGH */
 	case INTERNAL_IP4_NETMASK:
 	{
@@ -289,9 +286,9 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 				return STF_INTERNAL_ERROR;
 			}
 			/* emit attribute's value */
-			len = addrbytesptr_read(&dnsip, &byte_ptr);
-			if (!out_raw(byte_ptr, len, &attrval, "IP4_dns"))
+			if (!pbs_out_address(&dnsip, &attrval, "IP4_dns")) {
 				return STF_INTERNAL_ERROR;
+			}
 
 			ipstr = strtok(NULL, ", ");
 			if (ipstr != NULL) {

@@ -30,6 +30,7 @@
 #include "impair.h"
 #include "ip_info.h"		/* used by pbs_in_address() */
 #include "packet.h"
+#include "shunk.h"
 
 const pb_stream empty_pbs;
 
@@ -2751,4 +2752,10 @@ bool pbs_in_address(ip_address *address, const struct ip_info *ipv,
 	default:
 		bad_case(ipv->af);
 	}
+}
+
+bool pbs_out_address(const ip_address *address, struct pbs_out *out_pbs, const char *what)
+{
+	shunk_t as = address_as_shunk(address);
+	return out_raw(as.ptr, as.len, out_pbs, what);
 }

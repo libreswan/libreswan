@@ -163,16 +163,15 @@ static bool emit_subnet_id(const ip_subnet *net,
 
 	ip_address ta;
 	ta = subnet_endpoint(net);
-	const unsigned char *tbp;
-	size_t tal = addrbytesptr_read(&ta, &tbp);
-	if (!out_raw(tbp, tal, &id_pbs, "client network"))
-		return FALSE;
+	if (!pbs_out_address(&ta, &id_pbs, "client network")) {
+		return false;
+	}
 
 	if (!usehost) {
 		ta = subnet_mask(net);
-		tal = addrbytesptr_read(&ta, &tbp);
-		if (!out_raw(tbp, tal, &id_pbs, "client mask"))
-			return FALSE;
+		if (!pbs_out_address(&ta, &id_pbs, "client mask")) {
+			return false;
+		}
 	}
 
 	close_output_pbs(&id_pbs);

@@ -582,10 +582,6 @@ static bool emit_one_natoa(
 	const ip_address *ip,
 	const char *nm)
 {
-	const unsigned char *ip_val;
-	size_t ip_len = addrbytesptr_read(ip, &ip_val);
-	passert(ip_len != 0);
-
 	pb_stream pbs;
 
 	struct isakmp_nat_oa natoa = {
@@ -594,11 +590,11 @@ static bool emit_one_natoa(
 			ID_IPV4_ADDR : ID_IPV6_ADDR,
 	};
 	if (!out_struct(&natoa, pd, outs, &pbs) ||
-	    !out_raw(ip_val, ip_len, &pbs, nm))
+	    !pbs_out_address(ip, &pbs, nm))
 		return FALSE;
 
-	DBG(DBG_NATT,
-		DBG_dump("NAT-OAi (S):", ip_val, ip_len));
+	address_buf ab;
+	dbg("NAT-OAi (S): %s", str_address(ip, &ab));
 	close_output_pbs(&pbs);
 	return TRUE;
 }

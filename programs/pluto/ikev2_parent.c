@@ -1735,10 +1735,9 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 		return STF_INTERNAL_ERROR;
 
 	if (attr.len > 0) {
-		const unsigned char *byte_ptr;
-		addrbytesptr_read(ip, &byte_ptr);
-		if (!out_raw(byte_ptr, attr.len, &a_pbs, story))
+		if (!pbs_out_address(ip, &a_pbs, story)) {
 			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	close_output_pbs(&a_pbs);

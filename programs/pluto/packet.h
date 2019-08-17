@@ -223,17 +223,6 @@ extern bool in_struct(void *struct_ptr, struct_desc *sd,
 extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MUST_USE_RESULT;
 
 /*
- * Utilities:
- *
- * XXX: is there a better place to be adding these in functions that
- * build on the primitives?
- */
-
-bool pbs_in_address(ip_address *address, const struct ip_info *af,
-		    struct pbs_in *input_pbs,
-		    const char *WHAT) MUST_USE_RESULT;
-
-/*
  * Output PBS
  */
 
@@ -1229,5 +1218,17 @@ struct pbs_reply_backup {
 	pb_stream stream;
 	uint8_t *buffer;
 };
+
+/*
+ * Utilities:
+ *
+ * XXX: is there a better place to be adding these in functions that
+ * build on the primitives?
+ */
+
+bool pbs_in_address(ip_address *address, const struct ip_info *af,
+		    struct pbs_in *input_pbs,
+		    const char *WHAT) MUST_USE_RESULT;
+bool pbs_out_address(const ip_address *address, struct pbs_out *output_pbs, const char *what);
 
 #endif /* _PACKET_H */
