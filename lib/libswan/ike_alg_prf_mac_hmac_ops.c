@@ -19,7 +19,6 @@
 #include "ike_alg.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
-#include "crypto.h"
 #include "crypt_hash.h"
 #include "ike_alg_prf_mac_ops.h"
 
