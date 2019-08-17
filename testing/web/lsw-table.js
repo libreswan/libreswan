@@ -209,7 +209,7 @@ function lsw_table_body(table) {
 	.data(function(table) {
 	    return table.rows
 	})
-        // add the table row
+	// add the table row
 	.enter()
 	.append("tr")
 	.style("background-color", function(row) {
@@ -219,8 +219,8 @@ function lsw_table_body(table) {
 	    if (row.table.select.row) {
 		lsw_table_select_row(table.id, row.data)
 	    }
- 	})
-        // add the row data
+	})
+	// add the row data
 	.selectAll("td")
 	.data(function(row) {
 	    return row.columns
