@@ -84,6 +84,7 @@
 #include "ikev2_msgid.h"
 #include "state_db.h"
 #include "crypt_symkey.h" /* for release_symkey */
+#include "ip_info.h"
 
 struct mobike {
 	ip_address remoteaddr;
@@ -1726,7 +1727,7 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 
 	struct ikev2_cp_attribute attr = {
 		.type = type,
-		.len = (ip == NULL) ? 0 : addrlenof(ip),
+		.len = (ip == NULL) ? 0 : address_type(ip)->ip_size,
 	};
 
 	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,

@@ -3659,7 +3659,7 @@ static void show_one_sr(const struct connection *c,
 		enum_name(&routing_story, sr->routing),
 		sr->eroute_owner);
 
-#define OPT_HOST(h, ipb)  (addrlenof(h) == 0 || isanyaddr(h) ? \
+#define OPT_HOST(h, ipb)  (address_type(h) == NULL || isanyaddr(h) ? \
 			"unset" : ipstr(h, &ipb))
 
 		/* note: this macro generates a pair of arguments */

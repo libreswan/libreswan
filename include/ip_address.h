@@ -156,7 +156,6 @@ extern size_t addrtot(const ip_address *src, int format, char *buf, size_t bufle
 
 /* misc. conversions and related */
 extern int addrtypeof(const ip_address *src);
-extern size_t addrlenof(const ip_address *src);
 extern size_t addrbytesptr_read(const ip_address *src, const unsigned char **dst);
 extern int masktocount(const ip_address *src);
 

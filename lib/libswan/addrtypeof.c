@@ -54,13 +54,3 @@ const unsigned char **dstp;   /* NULL means just a size query */
 		*dstp = p;
 	return n;
 }
-
-/*
-   - addrlenof - get length of the address bytes of an ip_address
- */
-size_t                          /* 0 for error */
-addrlenof(src)
-const ip_address * src;
-{
-	return addrbytesptr_read(src, NULL);
-}

@@ -18,6 +18,7 @@
 #include "ip_address.h"
 #include "ip_said.h"
 #include "ip_subnet.h"
+#include "ip_info.h"
 
 static bool samenbits(const ip_address *a, const ip_address *b, int n);
 
@@ -76,7 +77,8 @@ bool samesubnet(const ip_subnet * a, const ip_subnet *b)
  */
 bool subnetishost(const ip_subnet *a)
 {
-	return a->maskbits == (int)addrlenof(&a->addr) * 8;
+	const struct ip_info *afi = subnet_type(a);
+	return a->maskbits == afi->mask_cnt;
 }
 
 /*

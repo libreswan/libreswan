@@ -14,6 +14,7 @@
  */
 
 #include "ip_subnet.h"
+#include "ip_info.h"
 
 /*
  * initsubnet - initialize ip_subnet from address and count
@@ -85,13 +86,13 @@ addrtosubnet(addr, dst)
 const ip_address *addr;
 ip_subnet *dst;
 {
-	int n;
-
 	dst->addr = *addr;
-	n = addrlenof(&dst->addr);
-	if (n == 0)
+	const struct ip_info *afi = address_type(addr);
+	if (afi == NULL) {
+		/* actually AF_UNSPEC */
 		return "unknown address family";
+	}
 
-	dst->maskbits = n * 8;
+	dst->maskbits = afi->mask_cnt;
 	return NULL;
 }

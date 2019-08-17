@@ -525,8 +525,8 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 		addrtosubnet(&ip, &c->spd.this.client);
 		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */
 		/* only set sourceip= value if unset in configuration */
-		if (addrlenof(&c->spd.this.host_srcip) == 0 ||
-			isanyaddr(&c->spd.this.host_srcip)) {
+		if (address_type(&c->spd.this.host_srcip) == NULL ||
+		    isanyaddr(&c->spd.this.host_srcip)) {
 			dbg("setting host source IP address to %s",
 			    ipstr(&ip, &ip_str));
 			c->spd.this.host_srcip = ip;

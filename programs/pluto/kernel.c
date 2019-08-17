@@ -409,7 +409,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_INTERFACE='%s' ", (c->interface == NULL ? "NULL" :
 					  c->interface->ip_dev->id_vname));
 
-	if (addrlenof(&sr->this.host_nexthop) != 0 &&
+	if (address_type(&sr->this.host_nexthop) != NULL &&
 	    !isanyaddr(&sr->this.host_nexthop)) {
 		jam(buf, "PLUTO_NEXT_HOP='");
 		jam_address(buf, &sr->this.host_nexthop);
@@ -521,7 +521,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 		jam(buf, "' ");
 	}
 
-	if (addrlenof(&sr->this.host_srcip) != 0 &&
+	if (address_type(&sr->this.host_srcip) != NULL &&
 	    !isanyaddr(&sr->this.host_srcip)) {
 		jam(buf, "PLUTO_MY_SOURCEIP='");
 		jam_address(buf, &sr->this.host_srcip);
