@@ -2265,13 +2265,9 @@ const char *strip_prefix(const char *s, const char *prefix)
  */
 int enum_search(enum_names *ed, const char *str)
 {
-	enum_names  *p;
-
-	for (p = ed; p != NULL; p = p->en_next_range) {
-		unsigned long en;
-
+	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
-		for (en = p->en_first; en <= p->en_last; en++) {
+		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
 			const char *ptr = p->en_names[en - p->en_first];
 
 			if (ptr != NULL && strcaseeq(ptr, str)) {
@@ -2285,13 +2281,9 @@ int enum_search(enum_names *ed, const char *str)
 
 int enum_match(enum_names *ed, shunk_t string)
 {
-	enum_names  *p;
-
-	for (p = ed; p != NULL; p = p->en_next_range) {
-		unsigned long en;
-
+	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
-		for (en = p->en_first; en <= p->en_last; en++) {
+		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
 			const char *name = p->en_names[en - p->en_first];
 
 			if (name == NULL) {
@@ -2301,14 +2293,15 @@ int enum_match(enum_names *ed, shunk_t string)
 			passert(en <= INT_MAX);
 
 			/*
--			 * Try matching the entire name including any
--			 * prefix.  If needed, ignore any trailing
--			 * '(...)'
+			 * Try matching the entire name including any
+			 * prefix.  If needed, ignore any trailing
+			 * '(...)'
 			 */
 			if (strlen(name) == string.len &&
 			    strncaseeq(name, string.ptr, string.len)) {
 				return en;
 			}
+
 			if (strcspn(name, "(") == string.len &&
 			    name[strlen(name) - 1] == ')' &&
 			    strncaseeq(name, string.ptr, string.len)) {
@@ -2322,6 +2315,7 @@ int enum_match(enum_names *ed, shunk_t string)
 			if (ed->en_prefix == NULL) {
 				continue;
 			}
+
 			const char *short_name = strip_prefix(name, ed->en_prefix);
 			if (short_name == name) {
 				continue;
@@ -2331,12 +2325,12 @@ int enum_match(enum_names *ed, shunk_t string)
 			    strncaseeq(short_name, string.ptr, string.len)) {
 				return en;
 			}
+
 			if (strcspn(short_name, "(") == string.len &&
 			    short_name[strlen(short_name) - 1] == ')' &&
 			    strncaseeq(short_name, string.ptr, string.len)) {
 				return en;
 			}
-
 		}
 	}
 	return -1;
