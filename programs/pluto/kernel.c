@@ -409,8 +409,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_INTERFACE='%s' ", (c->interface == NULL ? "NULL" :
 					  c->interface->ip_dev->id_vname));
 
-	if (address_type(&sr->this.host_nexthop) != NULL &&
-	    !isanyaddr(&sr->this.host_nexthop)) {
+	if (address_is_specified(&sr->this.host_nexthop)) {
 		jam(buf, "PLUTO_NEXT_HOP='");
 		jam_address(buf, &sr->this.host_nexthop);
 		jam(buf, "' ");
@@ -438,7 +437,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
-	if (!isanyaddr(&sr->this.host_vtiip.addr)) {
+	if (subnet_is_specified(&sr->this.host_vtiip)) {
 		jam(buf, "VTI_IP='");
 		jam_subnet(buf, &sr->this.host_vtiip);
 		jam(buf, "' ");
@@ -521,8 +520,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 		jam(buf, "' ");
 	}
 
-	if (address_type(&sr->this.host_srcip) != NULL &&
-	    !isanyaddr(&sr->this.host_srcip)) {
+	if (address_is_specified(&sr->this.host_srcip)) {
 		jam(buf, "PLUTO_MY_SOURCEIP='");
 		jam_address(buf, &sr->this.host_srcip);
 		jam(buf, "' ");
@@ -2428,7 +2426,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	 * the old one).
 	 */
 	if (!sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
-			!isanyaddr(&c->temp_vars.redirect_ip)) {
+	    address_is_specified(&c->temp_vars.redirect_ip)) {
 		redirected = TRUE;
 		tmp_ip = c->spd.that.host_addr;
 		c->spd.that.host_addr = st->st_remoteaddr;
@@ -3417,7 +3415,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	 * it back later
 	 */
 	if (!sameaddr(&st->st_remoteaddr, &c->spd.that.host_addr) &&
-			!isanyaddr(&c->temp_vars.redirect_ip)) {
+	    address_is_specified(&c->temp_vars.redirect_ip)) {
 		redirected = TRUE;
 		tmp_ip = c->spd.that.host_addr;
 		c->spd.that.host_addr = st->st_remoteaddr;

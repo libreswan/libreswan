@@ -183,8 +183,8 @@ static bool get_internal_addresses(
 		}
 		*got_lease = TRUE;
 	} else {
-		passert(!isanyaddr(&c->spd.that.client.addr));
-		ia->ipaddr = c->spd.that.client.addr;
+		passert(subnet_is_specified(&c->spd.that.client));
+		ia->ipaddr = subnet_endpoint(&c->spd.that.client);
 	}
 
 	return TRUE;
@@ -1571,12 +1571,9 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			loglog(RC_LOG, "Received IP address %s",
 				      caddr);
 
-			if (addrbytesptr_read(&c->spd.this.host_srcip,
-					 NULL) == 0 ||
-			    isanyaddr(&c->spd.this.host_srcip)) {
-				libreswan_log(
-					"setting ip source address to %s",
-					caddr);
+			if (!address_is_specified(&c->spd.this.host_srcip)) {
+				libreswan_log("setting ip source address to %s",
+					      caddr);
 				c->spd.this.host_srcip = a;
 			}
 		}
@@ -1730,13 +1727,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					"Received IPv4 address: %s",
 					caddr);
 
-				if (addrbytesptr_read(&c->spd.this.host_srcip,
-						 NULL) == 0 ||
-				    isanyaddr(&c->spd.this.host_srcip))
-				{
-					DBG(DBG_CONTROL, DBG_log(
-						"setting ip source address to %s",
-						caddr));
+				if (!address_is_specified(&c->spd.this.host_srcip)) {
+					dbg("setting ip source address to %s",
+					    caddr);
 					c->spd.this.host_srcip = a;
 				}
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);

@@ -1068,14 +1068,14 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			hv = p1st->hidden_variables;
 			nat_traversal_natoa_lookup(md, &hv);
 
-			if (!isanyaddr(&hv.st_nat_oa)) {
+			if (address_is_specified(&hv.st_nat_oa)) {
 				addrtosubnet(&hv.st_nat_oa, &b.his.net);
 				subnettot(&b.his.net, 0, subnet_buf,
 					  sizeof(subnet_buf));
 				loglog(RC_LOG_SERIOUS,
 				       "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
 				       idfqdn, subnet_buf,
-				       isanyaddr(&hv.st_nat_oa));
+				       isanyaddr(&hv.st_nat_oa)/*XXX: always 0?*/);
 			}
 		}
 	} else {

@@ -1073,7 +1073,7 @@ static void connection_check_ddns1(struct connection *c)
 	 * changed IP? The connection would * need to gets its host_addr
 	 * updated? Do we do that when terminating the conn?
 	 */
-	if (!isanyaddr(&c->spd.that.host_addr)) {
+	if (endpoint_is_specified(&c->spd.that.host_addr)) {
 		DBG(DBG_DNS, {
 			char cib[CONN_INST_BUF];
 			DBG_log("pending ddns: connection \"%s\"%s has address",

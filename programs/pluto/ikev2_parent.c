@@ -756,7 +756,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 	 * - if not, check if we support redirect mechanism
 	 *   and send v2N_REDIRECT_SUPPORTED if we do
 	 */
-	if (!isanyaddr(&c->temp_vars.redirect_ip)) {
+	if (address_is_specified(&c->temp_vars.redirect_ip)) {
 		if (!emit_redirect_notification_decoded_dest(v2N_REDIRECTED_FROM,
 				&c->temp_vars.old_gw_address, NULL, NULL, &rbody))
 			return STF_INTERNAL_ERROR;
@@ -5864,7 +5864,7 @@ void ikev2_record_newaddr(struct state *st, void *arg_ip)
 	if (!mobike_check_established(st))
 		return;
 
-	if (!isanyaddr(&st->st_deleted_local_addr)) {
+	if (address_is_specified(&st->st_deleted_local_addr)) {
 		/*
 		 * A work around for delay between new address and new route
 		 * A better fix would be listen to  RTM_NEWROUTE, RTM_DELROUTE

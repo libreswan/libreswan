@@ -338,7 +338,7 @@ static void confwrite_side(FILE *out,
 		}
 	}
 
-	if (!isanyaddr(&end->vti_ip.addr)) {
+	if (subnet_is_specified(&end->vti_ip)) {
 			char as[ADDRTOT_BUF];
 
 			subnettot(&end->vti_ip, 0, as, sizeof(as));
@@ -368,7 +368,7 @@ static void confwrite_side(FILE *out,
 	if (end->certx != NULL)
 		fprintf(out, "\t%scert=%s\n", side, end->certx);
 
-	if (!isanyaddr(&end->sourceip)) {
+	if (address_is_specified(&end->sourceip)) {
 		ipstr_buf as;
 
 		fprintf(out, "\t%ssourceip=%s\n",

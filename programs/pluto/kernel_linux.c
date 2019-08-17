@@ -406,10 +406,9 @@ struct raw_iface *find_raw_ifaces6(void)
 
 			happy(ttoaddr_num(sb, 0, AF_INET6, &ri.addr));
 
-			if (!isanyaddr(&ri.addr)) {
-				DBG(DBG_CONTROL,
-				    DBG_log("found %s with address %s",
-					    ri.name, sb));
+			if (address_is_specified(&ri.addr)) {
+				dbg("found %s with address %s",
+				    ri.name, sb);
 				ri.next = rifaces;
 				rifaces = clone_thing(ri, "struct raw_iface");
 			}
