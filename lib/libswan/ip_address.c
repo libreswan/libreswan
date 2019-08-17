@@ -372,3 +372,21 @@ bool address_is_any(const ip_address *address)
 		}
 	}
 }
+
+bool address_is_specified(const ip_address *address)
+{
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		return false;
+	} else {
+		shunk_t addr = address_as_shunk(address);
+		switch (afi->af) {
+		case AF_INET:
+			return !shunk_thingeq(addr, in_addr_any);
+		case AF_INET6:
+			return !shunk_thingeq(addr, in6_addr_any);
+		default:
+			bad_case(afi->af);
+		}
+	}
+}

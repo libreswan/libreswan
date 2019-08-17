@@ -119,11 +119,12 @@ const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
  * unspecified (for instance IN6_IS_ADDR_UNSPECIFIED()) leaving the
  * term "unspecified" underspecified.
  *
- * Consequently to identify an AF_UNSPEC (i.e., uninitialized)
- * address, see if *_type() returns NULL.
+ * Consequently to identify an AF_UNSPEC address (i.e.,
+ * uninitialized), see if *_type() returns NULL.  There's an
+ * address_is_invalid() wrapper for completeness.
  */
 
-/* AF=AF_UNSPEC, ADDR = 0, */
+/* AF=AF_UNSPEC, ADDR = 0; aka all zeros */
 const ip_address address_invalid;
 
 /* returns NULL when address_invalid */
@@ -131,7 +132,11 @@ const struct ip_info *address_type(const ip_address *address);
 
 /* AF={INET,INET6}, ADDR = 0; aka %any? */
 ip_address address_any(const struct ip_info *info);
+
+/* mutually exclusive */
+#define address_is_invalid(A) (address_type(A) == NULL)
 bool address_is_any(const ip_address *address);
+bool address_is_specified(const ip_address *address);
 
 /*
  * Raw address bytes, both read-only and read-write.

@@ -87,6 +87,13 @@ extern ip_endpoint endpoint_invalid;
 #define endpoint_invalid address_invalid
 #endif
 
+/* mutually exclusive */
+#if 0
+#define endpoint_is_invalid(A) (endpoint_type(A) == NULL)
+bool endpoint_is_any(const ip_endpoint *endpoint);
+#endif
+bool endpoint_is_specified(const ip_endpoint *endpoint);
+
 /* returns NULL when address_invalid */
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 

@@ -57,11 +57,19 @@ typedef struct {
 extern const char *str_subnet(const ip_subnet *subnet, subnet_buf *out);
 extern void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
 
-extern const struct ip_info *subnet_type(const ip_subnet *subnet);
-
 /*
  * Extract details
  */
+
+/* mutually exclusive */
+#if 0
+extern const ip_subnet subnet_invalid;
+#define subnet_is_invalid(S) (subnet_type(S) == NULL)
+bool subnet_is_any(const ip_subnet *subnet);
+#endif
+bool subnet_is_specified(const ip_subnet *subnet);
+
+const struct ip_info *subnet_type(const ip_subnet *subnet);
 
 /* when applied to an address, leaves just the routing prefix */
 extern ip_address subnet_mask(const ip_subnet *subnet);

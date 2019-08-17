@@ -2434,8 +2434,8 @@ int main(int argc, char **argv)
 
 	/* do the logic for --redirect command */
 	if (msg.active_redirect) {
-		bool redirect_peer_spec = !isanyaddr(&msg.active_redirect_peer);
-		bool redirect_gw_spec = !isanyaddr(&msg.active_redirect_gw);
+		bool redirect_peer_spec = address_is_specified(&msg.active_redirect_peer);
+		bool redirect_gw_spec = address_is_specified(&msg.active_redirect_gw);
 		msg.active_redirect = FALSE;	/* if we pass all the 'tests' we set it back to TRUE */
 		if (msg.name != NULL)
 			if (redirect_peer_spec)

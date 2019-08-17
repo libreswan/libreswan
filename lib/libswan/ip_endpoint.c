@@ -135,6 +135,15 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 	return address_type(endpoint);
 }
 
+bool endpoint_is_specified(const ip_endpoint *e)
+{
+#ifdef ENDPOINT_TYPE
+	return address_is_specified(&e->address);
+#else
+	return address_is_specified(e);
+#endif
+}
+
 /*
  * Format an endpoint.
  *

@@ -32,6 +32,11 @@ const struct ip_info *subnet_type(const ip_subnet *src)
 	return endpoint_type(&src->addr);
 }
 
+bool subnet_is_specified(const ip_subnet *s)
+{
+	return endpoint_is_specified(&s->addr);
+}
+
 /*
  * mashup() notes:
  * - mashup operates on network-order IP addresses

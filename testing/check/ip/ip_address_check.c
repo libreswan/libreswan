@@ -232,28 +232,26 @@ static void check_address_any(void)
 	}
 }
 
-static void check_address_is_any(void)
+static void check_address_is(void)
 {
 	static const struct test {
 		int family;
 		const char *in;
+		bool invalid;
 		bool any;
+		bool specified;
 	} tests[] = {
-		{ 0, "<invalid>",		false },
-		{ 4, "0.0.0.0",			true },
-		{ 6, "::",			true },
-		{ 4, "1.2.3.4",			false },
-		{ 6, "1:12:3:14:5:16:7:18",	false },
-#if 0
-		{ 4, "%any",			true },
-		{ 6, "%any6",			true },
-#endif
+		{ 0, "<invalid>",		.invalid = true, },
+		{ 4, "0.0.0.0",			.any = true, },
+		{ 6, "::",			.any = true, },
+		{ 4, "1.2.3.4",			.specified = true, },
+		{ 6, "1:12:3:14:5:16:7:18",	.specified = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		const char *any = t->any ? "true" : "false";
-		PRINT_IN(stdout, "-> %s", any);
+		PRINT_IN(stdout, "-> invalid: %s, any: %s, specified: %s",
+			 bool_str(t->invalid), bool_str(t->any), bool_str(t->specified));
 
 		/* convert it *to* internal format */
 		ip_address a;
@@ -267,10 +265,23 @@ static void check_address_is_any(void)
 		}
 		CHECK_TYPE(FAIL_IN, address_type(&a), t->family);
 
-		bool a_is_any = address_is_any(&a);
-		if (a_is_any != t->any) {
+		/* aka address_type(&a) == NULL; */
+		bool invalid = address_is_invalid(&a);
+		if (invalid != t->invalid) {
+			FAIL_IN("addres_is_invalid() returned %s, expected %s",
+				bool_str(invalid), bool_str(t->invalid));
+		}
+
+		bool any = address_is_any(&a);
+		if (any != t->any) {
 			FAIL_IN("addres_is_any() returned %s, expected %s",
-				a_is_any ? "true" : "false", any);
+				bool_str(any), bool_str(t->any));
+		}
+
+		bool specified = address_is_specified(&a);
+		if (specified != t->specified) {
+			FAIL_IN("addres_is_specified() returned %s, expected %s",
+				bool_str(specified), bool_str(t->specified));
 		}
 	}
 }
@@ -347,6 +358,6 @@ void ip_address_check(void)
 	check_str_address_sensitive();
 	check_str_address_reversed();
 	check_address_any();
-	check_address_is_any();
+	check_address_is();
 	check_ttoaddr_dns();
 }
