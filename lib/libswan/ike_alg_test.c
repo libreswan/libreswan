@@ -43,4 +43,7 @@ void test_ike_alg(void)
 	TEST(test_cbc_vectors, ike_alg_encrypt_aes_cbc,    aes_cbc_tests);
 	TEST(test_prf_vectors, ike_alg_prf_aes_xcbc,       aes_xcbc_prf_tests);
 #endif
+#ifdef USE_MD5
+	TEST(test_prf_vectors, ike_alg_prf_hmac_md5,       hmac_md5_prf_tests);
+#endif
 }

@@ -122,6 +122,40 @@ const struct prf_test_vector aes_xcbc_prf_tests[] = {
 	}
 };
 
+const struct prf_test_vector hmac_md5_prf_tests[] = {
+	{
+		.description = "RFC 2104: MD5_HMAC test 1",
+		.key = "0x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+		.key_size = 16, /* bytes */
+		.message = "Hi There",
+		/* data_len =    8  bytes */
+		.prf_output = "0x9294727a3638bb1c13f48ef8158bfc9d",
+	},
+	{
+		.description = "RFC 2104: MD5_HMAC test 2",
+		.key = "Jefe",
+		.key_size = 4,
+		.message = "what do ya want for nothing?",
+		/* data_len =    28 bytes */
+		.prf_output = "0x750c783e6ab0b503eaa86e310a5db738",
+	},
+	{
+		.description = "RFC 2104: MD5_HMAC test 3",
+		.key = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		.key_size = 16, /* bytes */
+		.message = ("0xDDDDDDDDDDDDDDDDDDDD"
+			    "DDDDDDDDDDDDDDDDDDDD"
+			    "DDDDDDDDDDDDDDDDDDDD"
+			    "DDDDDDDDDDDDDDDDDDDD"
+			    "DDDDDDDDDDDDDDDDDDDD"),
+		/* data_len =    50 bytes */
+		.prf_output = "0x56be34521d144c88dbb8c733f0e8b3f6",
+	},
+	{
+		.description = NULL,
+	},
+};
+
 static bool test_prf_vector(const struct prf_desc *prf,
 			    const struct prf_test_vector *test)
 {
