@@ -30,7 +30,7 @@ extern const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug;
 #endif
 
 #ifdef USE_MD5
-extern const struct integ_desc ike_alg_integ_md5;
+extern const struct integ_desc ike_alg_integ_hmac_md5_96;
 #endif
 
 #ifdef USE_RIPEMD

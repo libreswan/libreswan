@@ -460,7 +460,7 @@ const struct ike_alg_type ike_alg_hash = {
 
 static const struct prf_desc *prf_descriptors[] = {
 #ifdef USE_MD5
-	&ike_alg_prf_md5,
+	&ike_alg_prf_hmac_md5,
 #endif
 #ifdef USE_SHA1
 	&ike_alg_prf_sha1,
@@ -555,7 +555,7 @@ const struct ike_alg_type ike_alg_prf = {
 
 static const struct integ_desc *integ_descriptors[] = {
 #ifdef USE_MD5
-	&ike_alg_integ_md5,
+	&ike_alg_integ_hmac_md5_96,
 #endif
 #ifdef USE_SHA1
 	&ike_alg_integ_sha1,

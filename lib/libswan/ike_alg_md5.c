@@ -53,7 +53,7 @@ const struct hash_desc ike_alg_hash_md5 = {
 };
 
 
-const struct prf_desc ike_alg_prf_md5 = {
+const struct prf_desc ike_alg_prf_hmac_md5 = {
 	.common = {
 		.name = "md5",
 		.fqn = "HMAC_MD5",
@@ -74,7 +74,7 @@ const struct prf_desc ike_alg_prf_md5 = {
 	.prf_ike_audit_name = "md5",
 };
 
-const struct integ_desc ike_alg_integ_md5 = {
+const struct integ_desc ike_alg_integ_hmac_md5_96 = {
 	.common = {
 		.name = "md5",
 		.fqn = "HMAC_MD5_96",
@@ -89,7 +89,7 @@ const struct integ_desc ike_alg_integ_md5 = {
 	.integ_keymat_size = MD5_DIGEST_SIZE,
 	.integ_output_size = MD5_DIGEST_SIZE_96,
 	.integ_ikev1_ah_transform = AH_MD5,
-	.prf = &ike_alg_prf_md5,
+	.prf = &ike_alg_prf_hmac_md5,
 #ifdef SADB_AALG_MD5HMAC
 	.integ_sadb_aalg_id = SADB_AALG_MD5HMAC,
 #endif
