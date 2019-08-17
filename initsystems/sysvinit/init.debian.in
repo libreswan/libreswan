@@ -65,7 +65,7 @@ fi
 if [ `id -u` -ne 0 ]
 then
     echo "permission denied (must be superuser)" | \
-      logger -s -p daemon.error -t ipsec_setup 2>&1
+	logger -s -p daemon.error -t ipsec_setup 2>&1
     exit 4
 fi
 
@@ -82,9 +82,9 @@ test -f /etc/debian_version && BINARY_ERROR=0 || BINARY_ERROR=5
 test -x $IPSEC_SBINDIR/ipsec || exit $BINARY_ERROR
 
 if [ -f /etc/sysconfig/ipsec ]; then
-     . /etc/sysconfig/ipsec
+    . /etc/sysconfig/ipsec
 elif [ -f /etc/default/ipsec ]; then
-     . /etc/default/ipsec
+    . /etc/default/ipsec
 fi
 
 # misc setup
@@ -109,10 +109,10 @@ verify_config() {
     RETVAL=$?
     if [ $RETVAL != 0 ]
     then
-        echo "Configuration error - the following error occurred:"
-        echo $config_error
-        echo "IKE daemon status was not modified"
-        exit $RETVAL
+	echo "Configuration error - the following error occurred:"
+	echo $config_error
+	echo "IKE daemon status was not modified"
+	exit $RETVAL
     fi
     # Create nss db or convert from old format to new sql format
     ipsec --checknss
@@ -131,7 +131,7 @@ start() {
 		ipsec _startnetkey stop
 		;;
 	mast|klips)
-	   	ipsec _startklips start
+		ipsec _startklips start
 		;;
 	*)
 		echo "unexpected stack $IPSECprotostack"
@@ -168,7 +168,6 @@ condrestart() {
 }
 
 status() {
-
     RETVAL=$?
     return $RETVAL
 }
@@ -183,29 +182,29 @@ version() {
 # do it
 case "$1" in
     start)
-         start
-         ;;
+	start
+	;;
     stop)
-         stop
-         ;;
+	stop
+	;;
     restart)
-         restart
- 	 ;;
+	restart
+	;;
     reload|force-reload)
-         restart
- 	 ;;
+	restart
+	;;
     condrestart|try-restart)
-         condrestart
-         ;;
+	condrestart
+	;;
     status)
-         status
-         ;;
+	status
+	;;
     version)
-         version
-         ;;
+	version
+	;;
     *)
-         echo "Usage: $0 {start|stop|restart|reload|force-reload|condrestart|try-restart|status|version}"
-         RETVAL=2
+	echo "Usage: $0 {start|stop|restart|reload|force-reload|condrestart|try-restart|status|version}"
+	RETVAL=2
 esac
 
 exit $RETVAL
