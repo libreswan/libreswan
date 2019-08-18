@@ -267,7 +267,7 @@ enum retransmit_status retransmit(struct state *st)
 
 	double_delay(rt, nr_retransmits);
 	rt->nr_retransmits++;
- 	rt->delays = deltatime_add(rt->delays, rt->delay);
+	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
 	LSWLOG_RC(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: retransmission; will wait ",
@@ -291,7 +291,7 @@ void suppress_retransmits(struct state *st)
 
 	monotime_t now = mononow();
 	rt->delay = monotimediff(monotimesum(rt->start, rt->timeout), now);
- 	rt->delays = deltatime_add(rt->delays, rt->delay);
+	rt->delays = deltatime_add(rt->delays, rt->delay);
 	/*
 	 * XXX: Can't call delete_event() because that calls
 	 * clear_retransmits().  However, got to wonder why

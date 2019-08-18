@@ -335,7 +335,7 @@ bool parse_impair(const char *optarg,
 
 	/*
 	 * Ensure that --no-impair WHAT, --impair no-WHAT, --impair
-         * WHAT:no, all always work.
+	 * WHAT:no, all always work.
 	 */
 	if (no || shunk_strcaseeq(how, "no")) {
 		/* reject --no-impair WHAT:no and --impair no-WHAT:no */
@@ -445,16 +445,16 @@ bool parse_impair(const char *optarg,
 
 static uintmax_t value_of(const struct impairment *cr)
 {
-       switch (cr->sizeof_value) {
+	switch (cr->sizeof_value) {
 #define L(T) case sizeof(uint##T##_t): return *(uint##T##_t*)cr->value
-               L(8);
-               L(16);
-               L(32);
-               L(64);
+		L(8);
+		L(16);
+		L(32);
+		L(64);
 #undef L
-       default:
-               bad_case(cr->sizeof_value);
-       }
+	default:
+		bad_case(cr->sizeof_value);
+	}
 }
 
 static void lswlog_impairment(struct lswlog *buf, const struct impairment *cr)

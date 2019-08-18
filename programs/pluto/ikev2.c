@@ -2047,7 +2047,7 @@ static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
 		bad_case(v2_msg_role(md));
 	}
 
- 	/*
+	/*
 	 * If there's a state responsible for the message (i.e., ST
 	 * could stil be NULL), attribute all further logging to that
 	 * state; else the IKE SA.

@@ -1674,7 +1674,8 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 static void quick_inR1_outI2_continue(struct state *st,
 				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
-{	DBG(DBG_CONTROL,
+{
+	DBG(DBG_CONTROL,
 		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
 			st->st_serialno));
 

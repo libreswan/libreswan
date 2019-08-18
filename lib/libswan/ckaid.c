@@ -93,10 +93,10 @@ err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
 
 err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
 {
-       /*
-        * Compute the CKAID directly using the public value. - keep old
-        * configurations hobbling along.
-        */
+	/*
+	 * Compute the CKAID directly using the public value. - keep old
+	 * configurations hobbling along.
+	 */
 	SECItem nss_pub_value = same_chunk_as_secitem(pub_value, siBuffer);
 	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&nss_pub_value);
 	if (nss_ckaid == NULL) {

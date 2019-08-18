@@ -373,9 +373,9 @@ void append_algorithm(struct proposal_parser *parser,
 void fmt_proposal(struct lswlog *log,
 		  const struct proposal *proposal)
 {
- 	const char *ps = "";
+	const char *ps = "";
 
- 	const char *as = "";
+	const char *as = "";
 
 	as = ps;
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {

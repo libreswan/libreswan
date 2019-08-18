@@ -131,7 +131,7 @@ int enc;
 			tout1 = tin[1] ^ xor1;
 			l2cn(tout0, tout1, out, l + 8);
 			/*	xor0=tin0;
-			        xor1=tin1; */
+				xor1=tin1; */
 		}
 	}
 	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;

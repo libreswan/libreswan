@@ -42,13 +42,13 @@ deltatime_t deltatime(time_t secs)
 
 deltatime_t deltatime_ms(intmax_t ms)
 {
-       /*
-        * C99 defines '%' thus:
-        *
-        * [...] the result of the % operator is the remainder. [...]
-        * If the quotient a/b is representable, the expression (a/b)*b
-        * + a%b shall equal a.
-        */
+	/*
+	 * C99 defines '%' thus:
+	 *
+	 * [...] the result of the % operator is the remainder. [...]
+	 * If the quotient a/b is representable, the expression (a/b)*b
+	 * + a%b shall equal a.
+	 */
 	intmax_t ams = imaxabs(ms);
 	deltatime_t res = {
 		.dt = {

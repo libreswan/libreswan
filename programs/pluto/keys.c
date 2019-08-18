@@ -333,7 +333,7 @@ int sign_hash_ECDSA(const struct ECDSA_private_key *k,
 
 	if (privateKey == NULL) {
 		LSWDBGP(DBG_CRYPT, buf) {
-		        lswlogf(buf, "NSS: Can't find the private key from the NSS CKA_ID");
+			lswlogf(buf, "NSS: Can't find the private key from the NSS CKA_ID");
 			lswlog_nss_error(buf);
 		}
 

@@ -255,7 +255,7 @@ ipsec_checknss() {
 		cmd=initnss
 		;;
 	    --settrusts)
-	        set_trusts=yes
+		set_trusts=yes
 		;;
 	    --configdir)
 		echo "ipsec ${cmd} warning: --configdir is obsoleted, use --nssdir" >&2

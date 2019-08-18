@@ -906,7 +906,7 @@ unsigned satype;
  *	-1:	error occurred, and set errno.
  *	0:	error occurred, and set errno.
  *	others:	a pointer to new allocated buffer in which supported
- *	        algorithms is.
+ *		algorithms is.
  */
 int pfkey_send_promisc_toggle(so, flag)
 int so;

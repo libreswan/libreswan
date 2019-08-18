@@ -142,7 +142,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	DBGF(DBG_CRYPT, "ikev2_calculate_ecdsa_hash get_ECDSA_private_key");
 	/* XXX: use struct hash_desc and a lookup? */
 	size_t hash_digest_size;
- 	switch (hash_algo) {
+	switch (hash_algo) {
 #ifdef USE_SHA2
 	case IKEv2_AUTH_HASH_SHA2_256:
 		hash_digest_size = SHA2_256_DIGEST_SIZE;

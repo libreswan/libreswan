@@ -2992,7 +2992,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 */
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 			if (dpd_init(st) != STF_OK) {
-		                loglog(RC_LOG_SERIOUS, "DPD initialization failed - continuing without DPD");
+				loglog(RC_LOG_SERIOUS, "DPD initialization failed - continuing without DPD");
 			}
 		}
 

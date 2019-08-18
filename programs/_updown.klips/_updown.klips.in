@@ -313,16 +313,16 @@ notifyNM() {
     # can keep track of the coonnections.
 
     if [ 0${PLUTO_NM_CONFIGURED} -eq 1 ]; then
-        echo "sending $1 signal to NetworkManager"
-        libreswan_reason=$1
-        export libreswan_reason
-        export PLUTO_PEER_DOMAIN_INFO
-        export PLUTO_PEER_DNS_INFO
-        export PLUTO_PEER_BANNER
-        export PLUTO_MY_SOURCEIP
-        export PLUTO_PEER
-        [ -x /usr/libexec/nm-libreswan-service-helper ] && \
-            /usr/libexec/nm-libreswan-service-helper
+	echo "sending $1 signal to NetworkManager"
+	libreswan_reason=$1
+	export libreswan_reason
+	export PLUTO_PEER_DOMAIN_INFO
+	export PLUTO_PEER_DNS_INFO
+	export PLUTO_PEER_BANNER
+	export PLUTO_MY_SOURCEIP
+	export PLUTO_PEER
+	[ -x /usr/libexec/nm-libreswan-service-helper ] && \
+	    /usr/libexec/nm-libreswan-service-helper
     fi
     return 0
  }
@@ -362,10 +362,10 @@ changesource() {
     fi
     it="ip route replace ${parms} ${parms2} ${parms3}${PLUTO_MTU:+ mtu ${PLUTO_MTU}} ${PLUTO_METRIC:+ metric ${PLUTO_METRIC}}"
     case "${PLUTO_PEER_CLIENT}" in
- 	"0.0.0.0/0"|"::/0")
+	"0.0.0.0/0"|"::/0")
 	    # opportunistic encryption work around
 	    it=
- 	    ;;
+	    ;;
     esac
     oops="$(eval ${it} 2>&1)"
     st=$?

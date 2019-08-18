@@ -403,7 +403,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 				 const struct spd_route *sr, struct state *st,
 				 bool inbytes, bool outbytes)
 {
- 	/* change VERSION when interface spec changes */
+	/* change VERSION when interface spec changes */
 	jam(buf, "PLUTO_VERSION='2.0' ");
 	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
 	jam(buf, "PLUTO_INTERFACE='%s' ", (c->interface == NULL ? "NULL" :

@@ -1611,7 +1611,7 @@ static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 	}
 
 	clonetochunk(ecdsak->pub.pub, pubk->u.ec.publicValue.data,
-             pubk->u.ec.publicValue.len, "pub");
+		pubk->u.ec.publicValue.len, "pub");
 	ugh = form_ckaid_nss(certCKAID, &ecdsak->pub.ckaid);
 	if (ugh != NULL) {
 		/* let caller clean up mess */
@@ -1619,7 +1619,7 @@ static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 	}
 	/* keyid */
 	memset(ecdsak->pub.keyid,0,KEYID_BUF);
-        memcpy(ecdsak->pub.keyid, pubk->u.ec.publicValue.data, KEYID_BUF-1);
+	memcpy(ecdsak->pub.keyid, pubk->u.ec.publicValue.data, KEYID_BUF-1);
 
 	/*size */
 	ecdsak->pub.k = pubk->u.ec.size;
@@ -1648,7 +1648,7 @@ static err_t lsw_extract_nss_cert_privkey_RSA(struct RSA_private_key *rsak,
 }
 
 static err_t lsw_extract_nss_cert_privkey_ECDSA(struct ECDSA_private_key *ecdsak,
-                                          CERTCertificate *cert)
+						CERTCertificate *cert)
 {
 	DBG(DBG_CRYPT,
 		DBG_log("extracting the ECDSA private key for %s", cert->nickname));
@@ -1684,7 +1684,7 @@ static const struct RSA_private_key *get_nss_cert_privkey_RSA(struct secret *sec
 }
 
 static const struct ECDSA_private_key *get_nss_cert_privkey_ECDSA(struct secret *secrets,
-                                                          CERTCertificate *cert)
+								CERTCertificate *cert)
 {
 	struct pubkey *pub = allocate_ECDSA_public_key_nss(cert);
 

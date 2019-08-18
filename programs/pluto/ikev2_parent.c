@@ -2963,7 +2963,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	 * IKE SA state.  There should instead be separate state
 	 * transitions for the IKE and CHILD SAs and then have the IKE
 	 * SA invoke the CHILD SA's transition.
- 	 */
+	 */
 	pexpect(md->svm->next_state == STATE_V2_IPSEC_R);
 	ikev2_ike_sa_established(pexpect_ike_sa(st), md->svm,
 				 STATE_PARENT_R2);
@@ -4381,7 +4381,7 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 	 * replacement has KE or has SA processor handled that by only
 	 * accepting a proposal with KE?
 	 */
- 	if (st->st_pfs_group != NULL) {
+	if (st->st_pfs_group != NULL) {
 		pexpect(st->st_oakley.ta_dh == st->st_pfs_group);
 		if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
 			       md->chain[ISAKMP_NEXT_v2KE])) {

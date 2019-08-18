@@ -47,7 +47,7 @@ controls {
 // prime the server with knowledge of the root servers
 zone "." {
 	type hint;
- 	file "/etc/bind/db.hint";
+	file "/etc/bind/db.hint";
 };
 
 // be authoritative for the localhost forward and reverse zones, and for

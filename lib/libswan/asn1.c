@@ -162,7 +162,7 @@ size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 		}
 		sig_val->len = len_r;
 		/* XXX: need to check len_r and len_s fits in this */
-	        sig_val->ptr = alloc_bytes(len_r * 2, "ec points");
+		sig_val->ptr = alloc_bytes(len_r * 2, "ec points");
 		DBG(DBG_PARSING, DBG_log(" sig_val  len is %zu",sig_val->len));
 		/* copy the values of r into signature */
 		memcpy(sig_val->ptr,blob->ptr,len_r);

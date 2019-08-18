@@ -199,7 +199,7 @@ struct host_pair *find_host_pair(const ip_endpoint *local,
 			connection_buf ci;
 			dbg("find_host_pair: ignore CK_INSTANCE with ID_NULL hp:"PRI_CONNECTION,
 			    pri_connection(hp->connections, &ci));
-                       continue;
+			continue;
 		}
 
 		endpoint_buf b1;
