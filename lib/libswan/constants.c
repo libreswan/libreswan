@@ -2293,44 +2293,36 @@ int enum_match(enum_names *ed, shunk_t string)
 			passert(en <= INT_MAX);
 
 			/*
-			 * Try matching the entire name including any
-			 * prefix.  If needed, ignore any trailing
-			 * '(...)'
+			 * try matching all four variants of name:
+			 * with and without prefix en->en_prefix and
+			 * with and without suffix '(...)'
 			 */
-			if (strlen(name) == string.len &&
-			    strncaseeq(name, string.ptr, string.len)) {
+			size_t name_len = strlen(name);
+
+			/* pl: prefix length */
+			size_t pl = ed->en_prefix == NULL ? 0 :
+				strip_prefix(name, ed->en_prefix) - name;
+
+			/* suffix must not and will not overlap prefix */
+			const char *suffix = strchr(name + pl, '(');
+
+			/* sl: suffix length */
+			size_t sl = suffix != NULL && name[name_len - 1] == ')' ?
+				&name[name_len] - suffix : 0;
+
+#			define try(guard, f, b) ( \
+				(guard) && \
+				name_len - ((f) + (b)) == string.len && \
+				strncaseeq(name + (f), string.ptr, string.len))
+
+			if (try(true, 0, 0) ||
+			    try(sl > 0, 0, sl) ||
+			    try(pl > 0, pl, 0) ||
+			    try(pl > 0 && sl > 0, pl, sl))
+			{
 				return en;
 			}
-
-			if (strcspn(name, "(") == string.len &&
-			    name[strlen(name) - 1] == ')' &&
-			    strncaseeq(name, string.ptr, string.len)) {
-				return en;
-			}
-
-			/*
-			 * Try matching the name minus any prefix.  If
-			 * needed, ignore any trailing '(...)'.
-			 */
-			if (ed->en_prefix == NULL) {
-				continue;
-			}
-
-			const char *short_name = strip_prefix(name, ed->en_prefix);
-			if (short_name == name) {
-				continue;
-			}
-
-			if (strlen(short_name) == string.len &&
-			    strncaseeq(short_name, string.ptr, string.len)) {
-				return en;
-			}
-
-			if (strcspn(short_name, "(") == string.len &&
-			    short_name[strlen(short_name) - 1] == ')' &&
-			    strncaseeq(short_name, string.ptr, string.len)) {
-				return en;
-			}
+#			undef try
 		}
 	}
 	return -1;
