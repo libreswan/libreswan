@@ -1,4 +1,4 @@
-/* Output an expection failure, for libreswan
+/* Output an assertion failure, for libreswan
  *
  * Copyright (C) 2017 Andrew Cagney
  *
