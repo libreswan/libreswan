@@ -22,6 +22,7 @@ extern void ip_address_check(void);
 extern void ip_endpoint_check(void);
 extern void ip_range_check(void);
 extern void ip_subnet_check(void);
+extern void ip_said_check(void);
 
 /*
  * See: https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
@@ -47,27 +48,30 @@ extern bool use_dns;
 			 (FAMILY) == 6 ? &ipv6_info :	\
 			 NULL)
 
+#define PRINT(FILE, FMT, ...)						\
+	fprintf(FILE, "%s[%zu]:"FMT"\n", __func__, ti,##__VA_ARGS__)
+
 /* t->family, t->in */
 #define PRINT_IN(FILE, FMT, ...)					\
-	fprintf(FILE, "%s[%zu]:%s '%s'" FMT "\n",			\
-		__func__, ti, pri_family(t->family),			\
-		t->in ,##__VA_ARGS__);
+	PRINT(FILE, "%s '%s'"FMT,					\
+	      pri_family(t->family), t->in ,##__VA_ARGS__);
+
 #define FAIL_IN(FMT, ...)						\
 	{								\
 		fails++;						\
-		PRINT_IN(stderr, ": "FMT" (%s() %s:%d)",##__VA_ARGS__,	\
+		PRINT_IN(stderr, " "FMT" (%s() %s:%d)",##__VA_ARGS__,	\
 			 __func__, __FILE__, __LINE__);			\
 		continue;						\
 	}
 
 /* t->family, t->lo, t->hi */
 #define PRINT_LO2HI(FILE, FMT, ...)					\
-	fprintf(FILE, "%s[%zu]:%s '%s'-'%s'" FMT "\n",			\
-		__func__, ti, pri_family(t->family),			\
-		t->lo, t->hi,##__VA_ARGS__)
+	PRINT(FILE, "%s '%s'-'%s'"FMT,					\
+	      pri_family(t->family), t->lo, t->hi,##__VA_ARGS__)
+
 #define FAIL_LO2HI(FMT, ...) {						\
 		fails++;						\
-		PRINT_LO2HI(stderr, ": "FMT" (%s() %s:%d)",##__VA_ARGS__, \
+		PRINT_LO2HI(stderr, " "FMT" (%s() %s:%d)",##__VA_ARGS__, \
 			    __func__, __FILE__, __LINE__);		\
 		continue;						\
 	}

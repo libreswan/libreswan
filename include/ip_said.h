@@ -21,6 +21,7 @@
 #include "err.h"
 #include "ip_address.h"
 #include "libreswan.h"		/* for ipsec_spi_t */
+#include "jambuf.h"
 
 typedef struct {                                /* to identify an SA, we need: */
 	ip_address dst;                         /* A. destination host */
@@ -39,9 +40,20 @@ typedef struct {                                /* to identify an SA, we need: *
 #               define  SA_INT  61      /* IANA reserved for internal use */
 } ip_said;
 
+typedef struct {
+	char buf[5 + ULTOT_BUF + 1 + sizeof(address_buf)];
+} said_buf;
+
+void jam_said(jambuf_t *buf, const ip_said *said, int format);
+const char *str_said(const ip_said *said, int format, said_buf *buf);
+
+/*
+ * old stype
+ */
+
 extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
 extern size_t satot(const ip_said *src, int format, char *bufptr, size_t buflen);
-#define SATOT_BUF       (5 + ULTOT_BUF + 1 + ADDRTOT_BUF)
+#define SATOT_BUF       sizeof(said_buf)
 
 /* initializations */
 extern void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,
