@@ -18,6 +18,8 @@
 #include <stdio.h>
 
 #include "ip_said.h"
+#include "jambuf.h"
+#include "libreswan/passert.h"
 
 static struct typename {
 	char type;
@@ -147,8 +149,14 @@ size_t dstlen;
 		}
 		len += ultot(ntohl(sa->spi), base, buf + len, sizeof(buf) - len);
 		*(buf + len - 1) = '@';
-		len += addrtot(&sa->dst, 0, buf + len, sizeof(buf) - len);
-		*(buf + len) = '\0';
+		/* jambuf's are always '\0' terminated */
+		jambuf_t b = array_as_jambuf(buf + len, sizeof(buf) - len);
+		jam_address(&b, &sa->dst);
+		/* "pos" is always '\0' */
+		const char *end = jambuf_pos(&b);
+		passert(*end == '\0');
+		/* *tot() functions lengh includes the NULL */
+		len = end-buf+1;
 	}
 
 	if (dst != NULL) {

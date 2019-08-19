@@ -89,21 +89,6 @@ size_t dstlen;
 }
 
 /*
-   - addrtot - convert binary address to text (dotted decimal or IPv6 string)
- */
-size_t                          /* space needed for full conversion */
-addrtot(src, format, dst, dstlen)
-const ip_address *src;
-int format;                     /* character */
-char *dst;                      /* need not be valid if dstlen is 0 */
-size_t dstlen;
-{
-	const unsigned char *src_inet;
-	(void)addrbytesptr_read(src, &src_inet);
-	return inet_addrtot(addrtypeof(src), src_inet, format, dst, dstlen);
-}
-
-/*
  * sin_addrtot - convert binary sockaddr_in/sockaddr_in6 address to text
  * (dotted decimal or IPv6 string)
  */

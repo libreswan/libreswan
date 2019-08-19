@@ -157,7 +157,6 @@ extern err_t ttoaddr_num(const char *src, size_t srclen, int af, ip_address *dst
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     sizeof(address_reversed_buf)
 extern err_t tnatoaddr(const char *src, size_t srclen, int af, ip_address *dst);
-extern size_t addrtot(const ip_address *src, int format, char *buf, size_t buflen);
 
 /* misc. conversions and related */
 extern int addrtypeof(const ip_address *src);

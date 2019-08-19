@@ -181,7 +181,8 @@ void idtoa(const struct id *id, char *dst, size_t dstlen)
 		if (isanyaddr(&id->ip_addr)) {
 			snprintf(dst, dstlen, "%s", "%any");
 		} else {
-			addrtot(&id->ip_addr, 0, dst, dstlen);
+			jambuf_t b = array_as_jambuf(dst, dstlen);
+			jam_address(&b, &id->ip_addr);
 		}
 		break;
 	case ID_FQDN:
