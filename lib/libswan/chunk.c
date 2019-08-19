@@ -18,6 +18,8 @@
 #include "chunk.h"
 #include "lswalloc.h"
 #include "lswlog.h"	/* for DBG_dump() */
+#include "ctype.h"		/* for isxdigit() */
+#include <stdlib.h>		/* for strtoul() */
 
 /*
  * Compiler note: some older versions of GCC claim that EMPTY_CHUNK
@@ -88,4 +90,48 @@ chunk_t clone_bytes_as_chunk(void *bytes, size_t sizeof_bytes, const char *name)
 bool chunk_eq(chunk_t a, chunk_t b)
 {
 	return a.len == b.len && memeq(a.ptr, b.ptr, b.len);
+}
+
+/*
+ * Given a HEX encoded string (there is no leading 0x prefix, but
+ * there may be embedded spaces), decode it into a freshly allocated
+ * chunk.
+ *
+ * If this function fails, crash and burn - it is fed static data so
+ * should never ever have a problem.
+ *
+ * The caller must free the chunk.
+ */
+chunk_t chunk_from_hex(const char *hex, const char *name)
+{
+	/*
+	 * The decoded buffer (consiting of can't be bigger than half the encoded
+	 * string.
+	 */
+	chunk_t chunk = alloc_chunk((strlen(hex)+1)/2, name);
+	chunk.len = 0;
+	const char *pos = hex;
+	for (;;) {
+		/* skip leading/trailing space */
+		while (*pos == ' ') {
+			pos++;
+		}
+		if (*pos == '\0') {
+			break;
+		}
+		/* Expecting <HEX><HEX> */
+		if (!isxdigit(pos[0]) || !isxdigit(pos[1])) {
+			/* friendly barf for debugging */
+			PASSERT_FAIL("expected hex digit at offset %tu in hex buffer \"%s\" but found \"%.1s\"",
+				     pos - hex, hex, pos);
+		}
+
+		char buf[3] = { pos[0], pos[1], '\0' };
+		char *end;
+		chunk.ptr[chunk.len] = strtoul(buf, &end, 16);
+		passert(*end == '\0');
+		chunk.len++;
+		pos += 2;
+	}
+	return chunk;
 }

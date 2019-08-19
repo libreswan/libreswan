@@ -78,6 +78,7 @@ extern const chunk_t empty_chunk;
 #define PRI_CHUNK "%p@%zu"
 #define pri_chunk(CHUNK) (CHUNK).ptr, (CHUNK).len
 
+chunk_t chunk_from_hex(const char *hex, const char *name);
 
 /*
  * Old stuff that can go away.

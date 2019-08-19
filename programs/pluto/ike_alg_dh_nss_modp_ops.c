@@ -37,8 +37,8 @@ static void nss_modp_calc_secret(const struct dh_desc *group,
 {
 	passert(sizeof_ke == group->bytes);
 
-	chunk_t prime = decode_hex_to_chunk(group->modp, group->modp);
-	chunk_t base = decode_hex_to_chunk(group->gen, group->gen);
+	chunk_t prime = chunk_from_hex(group->modp, group->modp);
+	chunk_t base = chunk_from_hex(group->gen, group->gen);
 
 	DBG(DBG_CRYPT, DBG_dump_hunk("NSS: Value of Prime:", prime));
 	DBG(DBG_CRYPT, DBG_dump_hunk("NSS: Value of base:", base));

@@ -36,48 +36,6 @@ static chunk_t zalloc_chunk(size_t length, const char *name)
 }
 
 /*
- * Given a hex encoded string, decode it into a chunk.
- *
- * If this function fails, crash and burn.  It is fed static data
- * so should never ever have a problem.
- * The caller must free the chunk.
- */
-chunk_t decode_hex_to_chunk(const char *original, const char *string)
-{
-	/* The decoded buffer can't be bigger than half the encoded string.  */
-	chunk_t chunk = zalloc_chunk((strlen(string)+1)/2, original);
-	chunk.len = 0;
-	const char *pos = string;
-	for (;;) {
-		/* skip leading/trailing space */
-		while (*pos == ' ') {
-			pos++;
-		}
-		if (*pos == '\0') {
-			break;
-		}
-		/* Expecting <HEX><HEX> */
-		char buf[3] = { '\0', '\0', '\0' };
-		if (isxdigit(*pos)) {
-			buf[0] = *pos++;
-			if (isxdigit(*pos)) {
-				buf[1] = *pos++;
-			}
-		}
-		if (buf[1] == '\0') {
-			PASSERT_FAIL("expected hex digit at offset %tu in hex buffer \"%s\" but found \"%.1s\"",
-				     pos - string, string, pos);
-		}
-
-		char *end;
-		chunk.ptr[chunk.len] = strtoul(buf, &end, 16);
-		passert(*end == '\0');
-		chunk.len++;
-	}
-	return chunk;
-}
-
-/*
  * Given an ASCII string, convert it into a chunk of bytes.  If the
  * string is prefixed by 0x assume the contents are hex (with spaces)
  * and decode it; otherwise it is assumed that the ASCII (minus the
@@ -90,7 +48,7 @@ chunk_t decode_to_chunk(const char *prefix, const char *original)
 			       prefix, original));
 	chunk_t chunk;
 	if (startswith(original, "0x")) {
-		chunk = decode_hex_to_chunk(original, original + strlen("0x"));
+		chunk = chunk_from_hex(original + strlen("0x"), original);
 	} else {
 		chunk = zalloc_chunk(strlen(original), original);
 		memcpy(chunk.ptr, original, chunk.len);
@@ -101,7 +59,7 @@ chunk_t decode_to_chunk(const char *prefix, const char *original)
 
 PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string)
 {
-	chunk_t chunk = decode_hex_to_chunk(prefix, string);
+	chunk_t chunk = chunk_from_hex(string, prefix);
 	PK11SymKey *symkey = symkey_from_hunk(prefix, chunk);
 	freeanychunk(chunk);
 	return symkey;
