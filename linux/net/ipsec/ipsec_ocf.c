@@ -179,7 +179,7 @@ static inline unsigned char *safe_skb_put(struct sk_buff *skb, int extend)
 }
 
 /*
- * We need to grow the skb to accommodate the expanssion of the ipcomp packet.
+ * We need to grow the skb to accommodate the expansion of the ipcomp packet.
  *
  * The following comment comes from the skb_decompress() which does the
  * same...
@@ -539,7 +539,7 @@ static int ipsec_ocf_rcv_cb(struct cryptop *crp)
 				       ipsec_skb_offset(irs->skb, irs->iph));
 		KLIPS_IP_PRINT(debug_rcv & DB_RX_PKTRX, ip_hdr(irs->skb));
 
-		/* relese the backup copy */
+		/* release the backup copy */
 		if (irs->pre_ipcomp_skb) {
 			kfree_skb(irs->pre_ipcomp_skb);
 			irs->pre_ipcomp_skb = NULL;

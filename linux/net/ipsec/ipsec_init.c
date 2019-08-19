@@ -377,7 +377,7 @@ error_sadb_init:
 error_proc_init:
 	/* ipsec_proc_init() does not cleanup after itself, so we have to do
 	 * it here
-	 * TODO: ipsec_proc_init() should roll back what it chaned on failure
+	 * TODO: ipsec_proc_init() should roll back what it changed on failure
 	 */
 	ipsec_proc_cleanup();
 	ipsec_rcv_state_cache_cleanup();
