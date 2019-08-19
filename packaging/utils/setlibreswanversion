@@ -1,33 +1,32 @@
 #!/bin/sh
 #
-# Copyright 2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+#
 # Based on Openswan version
-# Called via Makefile.inc, IPSECVERSION is passed as $1, basedir as $2
+#
+# Called via mk/config.mk
+#
+# Options: IPSECVERSION is passed as ${1}, basedir as ${2}
 
 usage() {
-	echo "Usage: $0 <baseversion> [srctree]" >&2
-	exit 1
+    echo "Usage: $0 <baseversion> [srctree]" >&2
+    exit 1
 }
 
-baseversion=$1
-[ -n "$baseversion" ] || usage
+baseversion="${1}"
+[ -n "${baseversion}" ] || usage
 
 cd "${2:-.}" || usage
 
-if test -d .git -o -f .git
-then
-	gitcheck="`git version 2> /dev/null`"
-	if test -z "$gitcheck"
-	then
-		echo >&2 "Error: git should be installed to determine exact Libreswan version"
-		# fallback
-		echo $baseversion
-		exit
-	fi
-	# use git to determine tree differences
+# -f .git check is needed for "git worktree"
+if [ -d .git -o -f .git ]; then
+    if git version >/dev/null 2>&1; then
+	CUR=$(git describe --tags --dirty)
 	BRANCH=$(git rev-parse --abbrev-ref HEAD)
-	CUR="`git describe --tags --dirty`"
-	echo "$CUR-$BRANCH"
-else
-	echo $baseversion
+	echo "${CUR}-${BRANCH}"
+	exit 0
+    else
+	echo "Error: git should be installed to determine exact Libreswan version" >&2
+    fi
 fi
+echo "${baseversion}"
