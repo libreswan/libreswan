@@ -190,11 +190,11 @@ docker-instance-name:
 
 .PHONY: travis-docker-make
 travis-docker-make:
-	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) make-base"
+	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) make-base"
 
 .PHONY: travis-docker-make-install
 travis-docker-make-install:
-	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) make-install"
+	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) make-install"
 
 .PHONY: docker-exec
 docker-exec:
