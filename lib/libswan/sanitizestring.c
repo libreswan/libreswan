@@ -43,7 +43,7 @@ void sanitize_string(char *buf, size_t size)
 		unsigned char c = *p;
 
 		/*
-		 * exception is that all veritical space just becomes
+		 * exception is that all vertical space just becomes
 		 * white space
 		 */
 		if (c == '\n' || c == '\r') {

@@ -594,7 +594,7 @@ unsigned ulp, p1, p2;
  */
 static const char *str_real_time(realtime_t t)
 {
-	/* ??? What's 20?  What's 128?  Whats 4? */
+	/* ??? What's 20?  What's 128?  What's 4? */
 	static char buf[128];
 
 	if (t == 0) {

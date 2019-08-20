@@ -288,7 +288,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 
 static void init_whack_msg(struct whack_message *msg)
 {
-	/* properly initialzes pointers to NULL */
+	/* properly initializes pointers to NULL */
 	static const struct whack_message zwm;
 
 	*msg = zwm;
@@ -376,7 +376,7 @@ static void set_whack_end(char *lr,
 	if (l->has_client) {
 		w->client = l->subnet;
 	} else {
-		/* ??? is this a crude way of seting client to anyaddr? */
+		/* ??? is this a crude way of setting client to anyaddr? */
 		w->client.addr.u.v4.sin_family = l->addr_family;
 	}
 
@@ -777,7 +777,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
  *
  * This function goes through the set of N x M combinations of the subnets
  * defined in conn's "subnets=" declarations and synthesizes conns with
- * the proper left/right subnet setttings, and then calls operation(),
+ * the proper left/right subnet settings, and then calls operation(),
  * (which is usually add/delete/route/etc.)
  *
  */

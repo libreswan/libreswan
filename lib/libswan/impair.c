@@ -305,7 +305,7 @@ bool parse_impair(const char *optarg,
 	shunk_t what = shunk_token(&arg, NULL, ":=");
 	shunk_t how = arg;
 	/*
-	 * look for both WHAT and for compatability with the old
+	 * look for both WHAT and for compatibility with the old
 	 * lset_t impair flags, no-WHAT.
 	 */
 	unsigned ci = 1;
@@ -572,7 +572,7 @@ void process_impair(const struct whack_impair *wc)
 /*
  * XXX: define these at the end of the file so that all references are
  * forced to use the declaration in the header (help stop code
- * refering to the wrong variable?).
+ * referring to the wrong variable?).
  */
 
 bool impair_revival;

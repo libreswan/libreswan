@@ -95,7 +95,7 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 			if (!oe_only && *(src + 1) == '#') {
 				/*
 				 * if there is a second specifier (#) on the
-				 * line we interprete this as ID_KEY_ID
+				 * line we interpret this as ID_KEY_ID
 				 */
 				id->kind = ID_KEY_ID;
 				id->name.ptr = (unsigned char *)src;
@@ -106,7 +106,7 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 			} else if (!oe_only && *(src + 1) == '~') {
 				/*
 				 * if there is a second specifier (~) on the
-				 * line we interprete this as a binary
+				 * line we interpret this as a binary
 				 * ID_DER_ASN1_DN
 				 */
 				id->kind = ID_DER_ASN1_DN;
@@ -118,7 +118,7 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 			} else if (!oe_only && *(src + 1) == '[') {
 				/*
 				 * if there is a second specifier ([) on the
-				 * line we interprete this as a text ID_KEY_ID,
+				 * line we interpret this as a text ID_KEY_ID,
 				 * and we remove a trailing ", if there is one.
 				 */
 				int len = strlen(src + 2);

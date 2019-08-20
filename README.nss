@@ -80,7 +80,7 @@ Enter return for the "old password", then enter your new password.
 
 If you create the database with a password, and want to run NSS in FIPS
 mode, you must create a password file with the name "nsspassword" in
-the /etc/ipsec.d direcotry before starting libreswan. The "nsspassword"
+the /etc/ipsec.d directory before starting libreswan. The "nsspassword"
 file must contain the password you provided when creating NSS database.
 
 If the NSS db is protected with a non-empty password, the "nsspassword"

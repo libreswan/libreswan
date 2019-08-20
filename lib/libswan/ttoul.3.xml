@@ -64,7 +64,7 @@ converts a text-string number into a binary
 <emphasis remap='B'>unsigned long</emphasis>
 value.
 <emphasis remap='I'>Ttoulb</emphasis>
-deoes the same as <emphasis remap='I'>Ttoul</emphasis> with the addition of a bounds check.
+does the same as <emphasis remap='I'>Ttoul</emphasis> with the addition of a bounds check.
 converts a text-string number into a binary
 <emphasis remap='B'>unsigned long</emphasis>
 value.

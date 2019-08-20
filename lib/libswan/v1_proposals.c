@@ -440,7 +440,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 			if (tokens[1].alg.ptr == NULL &&
 			    !parser->protocol->prf) {
 				/*
-				 * Only one arg, integrity is prefered
+				 * Only one arg, integrity is preferred
 				 * to DH (and no PRF); error applies.
 				 */
 				passert(parser->error[0] != '\0');

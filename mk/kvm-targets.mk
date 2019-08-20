@@ -221,10 +221,10 @@ broken-kvm-qemu-directory:
 #
 # However, do create $(KVM_LOCALDIR) (but not using -p) if it is
 # unique and doesn't exist - convention seems to be to point it at
-# /tmp/pool which needs to be re-created everytime the host is
+# /tmp/pool which needs to be re-created every time the host is
 # rebooted.
 #
-# Definining a macro and the printing it using $(info) is easier than
+# Defining a macro and the printing it using $(info) is easier than
 # a bunch of echo's or :s.
 #
 
@@ -1188,7 +1188,7 @@ Standard targets and operations:
     kvm-purge and kvm-demolish leave the upgrade to the next
     kvm-install.
 
-  Manipulating and accessing (loging into) domains:
+  Manipulating and accessing (logging into) domains:
 
     kvmsh-base kvmsh-build
     kvmsh-HOST ($(filter-out build, $(KVM_TEST_HOSTS)))

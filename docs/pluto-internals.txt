@@ -182,7 +182,7 @@ eroute.
 The kind and duration of a failure shunt eroute should perhaps depend
 on the nature of the failure, at least as imperfectly detected by
 Pluto.  We haven't looked at this.  In particular, the mapping from
-observations to robust respose isn't obvious.
+observations to robust response isn't obvious.
 
 The shunt eroute policies should be a function of the potential
 connection.  The failure shunt eroute can be specified for a
