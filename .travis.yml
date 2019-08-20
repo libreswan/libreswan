@@ -18,12 +18,12 @@ before_install:
   # 'make travis-docker-image' reads the branch name
   # <travis>-<distro>-<rel>  or default to Fedora 27
   #
-  - make travis-docker-image
+  - make TRAVIS_ENABLED=true travis-docker-image
   - git fetch --tags
   - git fetch --depth=100000
-  - make travis-docker-start
+  - make TRAVIS_ENABLED=true travis-docker-start
   #- sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make showdebversion'
 
 script:
-  - make travis-docker-make
-  - make travis-docker-make-install
+  - make TRAVIS_ENABLED=true travis-docker-make
+  - make TRAVIS_ENABLED=true travis-docker-make-install
