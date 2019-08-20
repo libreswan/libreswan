@@ -126,6 +126,7 @@ static void nss_aead_check(const struct encrypt_desc *encrypt)
 }
 
 const struct encrypt_ops ike_alg_encrypt_nss_aead_ops = {
+	.backend = "NSS(AEAD)",
 	.check = nss_aead_check,
 	.do_aead = ike_alg_nss_aead,
 };

@@ -116,6 +116,7 @@ static void nss_cbc_check(const struct encrypt_desc *encrypt)
 }
 
 const struct encrypt_ops ike_alg_encrypt_nss_cbc_ops = {
+	.backend = "NSS(CBC)",
 	.check = nss_cbc_check,
 	.do_crypt = ike_alg_nss_cbc,
 };

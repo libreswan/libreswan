@@ -424,6 +424,7 @@ static void hash_desc_check(const struct ike_alg *alg)
 	pexpect_ike_alg(alg, hash->hash_digest_size > 0);
 	pexpect_ike_alg(alg, hash->hash_block_size > 0);
 	if (hash->hash_ops != NULL) {
+		pexpect_ike_alg(alg, hash->hash_ops->backend != NULL);
 		pexpect_ike_alg(alg, hash->hash_ops->check != NULL);
 		pexpect_ike_alg(alg, hash->hash_ops->digest_symkey != NULL);
 		pexpect_ike_alg(alg, hash->hash_ops->digest_bytes != NULL);
@@ -484,8 +485,9 @@ static void prf_desc_check(const struct ike_alg *alg)
 	/* all or none */
 	pexpect_ike_alg(alg, (prf->prf_mac_ops != NULL) == (prf->prf_ikev1_ops != NULL));
 	pexpect_ike_alg(alg, (prf->prf_mac_ops != NULL) == (prf->prf_ikev2_ops != NULL));
-	
+
 	if (prf->prf_mac_ops != NULL) {
+		pexpect_ike_alg(alg, prf->prf_mac_ops->backend != NULL);
 		pexpect_ike_alg(alg, prf->prf_mac_ops->check != NULL);
 		pexpect_ike_alg(alg, prf->prf_mac_ops->init_symkey != NULL);
 		pexpect_ike_alg(alg, prf->prf_mac_ops->init_bytes != NULL);
@@ -501,7 +503,9 @@ static void prf_desc_check(const struct ike_alg *alg)
 				     prf->hasher != NULL);
 		prf->prf_mac_ops->check(prf);
 	}
+
 	if (prf->prf_ikev1_ops != NULL) {
+		pexpect_ike_alg(alg, prf->prf_ikev1_ops->backend != NULL);
 		pexpect_ike_alg(alg, prf->prf_ikev1_ops->signature_skeyid != NULL);
 		pexpect_ike_alg(alg, prf->prf_ikev1_ops->pre_shared_key_skeyid != NULL);
 		pexpect_ike_alg(alg, prf->prf_ikev1_ops->skeyid_d != NULL);
@@ -509,7 +513,9 @@ static void prf_desc_check(const struct ike_alg *alg)
 		pexpect_ike_alg(alg, prf->prf_ikev1_ops->skeyid_e != NULL);
 		pexpect_ike_alg(alg, prf->prf_ikev1_ops->appendix_b_keymat_e != NULL);
 	}
+
 	if (prf->prf_ikev2_ops != NULL) {
+		pexpect_ike_alg(alg, prf->prf_ikev2_ops->backend != NULL);
 		pexpect_ike_alg(alg, prf->prf_ikev2_ops->prfplus != NULL);
 		pexpect_ike_alg(alg, prf->prf_ikev2_ops->ike_sa_skeyseed != NULL);
 		pexpect_ike_alg(alg, prf->prf_ikev2_ops->ike_sa_rekey_skeyseed != NULL);
@@ -725,6 +731,7 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 	 * Only implemented one way, if at all.
 	 */
 	if (encrypt->encrypt_ops != NULL) {
+		pexpect_ike_alg(alg, encrypt->encrypt_ops->backend != NULL);
 		pexpect_ike_alg(alg, encrypt->encrypt_ops->check != NULL);
 		pexpect_ike_alg(alg, ((encrypt->encrypt_ops->do_crypt == NULL)
 				      != (encrypt->encrypt_ops->do_aead == NULL)));
@@ -833,6 +840,7 @@ static void dh_desc_check(const struct ike_alg *alg)
 	/* always implemented */
 	pexpect_ike_alg(alg, dh->dh_ops != NULL);
 	if (dh->dh_ops != NULL) {
+		pexpect_ike_alg(alg, dh->dh_ops->backend != NULL);
 		pexpect_ike_alg(alg, dh->dh_ops->check != NULL);
 		pexpect_ike_alg(alg, dh->dh_ops->calc_secret != NULL);
 		pexpect_ike_alg(alg, dh->dh_ops->calc_shared != NULL);

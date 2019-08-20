@@ -75,6 +75,7 @@ static void twofish_check(const struct encrypt_desc *alg UNUSED)
 }
 
 static const struct encrypt_ops twofish_encrypt_ops = {
+	.backend = "twofish",
 	.check = twofish_check,
 	.do_crypt = do_twofish,
 };

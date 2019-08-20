@@ -130,6 +130,7 @@ static void nss_modp_check(const struct dh_desc *dhmke)
 }
 
 const struct dh_ops ike_alg_dh_nss_modp_ops = {
+	.backend = "NSS(MODP)",
 	.check = nss_modp_check,
 	.calc_secret = nss_modp_calc_secret,
 	.calc_shared = nss_modp_calc_shared,

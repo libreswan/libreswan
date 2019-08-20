@@ -185,6 +185,7 @@ static void nss_prf_check(const struct prf_desc *prf)
 }
 
 const struct prf_mac_ops ike_alg_prf_mac_nss_ops = {
+	"NSS",
 	nss_prf_check,
 	init_symkey,
 	init_bytes,

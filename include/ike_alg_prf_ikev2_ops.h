@@ -20,6 +20,8 @@
 #include "shunk.h"
 
 struct prf_ikev2_ops {
+	const char *backend;
+
 	/*
 	 * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.
 	 */

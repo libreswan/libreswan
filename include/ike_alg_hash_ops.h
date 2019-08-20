@@ -21,6 +21,8 @@
 struct hash_context;
 
 struct hash_ops {
+	const char *backend;
+
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */

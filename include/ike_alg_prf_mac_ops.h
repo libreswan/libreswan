@@ -16,6 +16,8 @@
 #define IKE_ALG_PRF_MAC_OPS_H
 
 struct prf_mac_ops {
+	const char *backend;
+
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */

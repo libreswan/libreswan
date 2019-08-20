@@ -206,6 +206,7 @@ static void nss_ecp_check(const struct dh_desc *dhmke)
 }
 
 const struct dh_ops ike_alg_dh_nss_ecp_ops = {
+	.backend = "NSS(ECP)",
 	.check = nss_ecp_check,
 	.calc_secret = nss_ecp_calc_secret,
 	.calc_shared = nss_ecp_calc_shared,

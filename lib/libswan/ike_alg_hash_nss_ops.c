@@ -89,6 +89,7 @@ static void nss_hash_check(const struct hash_desc *hash)
 }
 
 const struct hash_ops ike_alg_hash_nss_ops = {
+	"NSS",
 	nss_hash_check,
 	init,
 	digest_symkey,

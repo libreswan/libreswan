@@ -121,6 +121,7 @@ static void nss_gcm_check(const struct encrypt_desc *encrypt) {
 }
 
 const struct encrypt_ops ike_alg_encrypt_nss_gcm_ops = {
+	.backend = "NSS(GCM)",
 	.check = nss_gcm_check,
 	.do_aead = ike_alg_nss_gcm,
 };

@@ -16,6 +16,8 @@
 #define IKE_ALG_DH_OPS_H
 
 struct dh_ops {
+	const char *backend;
+
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */

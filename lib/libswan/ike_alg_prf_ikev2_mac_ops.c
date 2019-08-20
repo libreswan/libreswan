@@ -257,6 +257,7 @@ static chunk_t psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 }
 
 const struct prf_ikev2_ops ike_alg_prf_ikev2_mac_ops = {
+	.backend = "native",
 	.prfplus = prfplus,
 	.ike_sa_skeyseed = ike_sa_skeyseed,
 	.ike_sa_rekey_skeyseed = ike_sa_rekey_skeyseed,

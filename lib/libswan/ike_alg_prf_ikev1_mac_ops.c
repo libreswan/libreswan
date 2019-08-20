@@ -163,6 +163,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 }
 
 const struct prf_ikev1_ops ike_alg_prf_ikev1_mac_ops = {
+	.backend = "native",
 	.signature_skeyid = signature_skeyid,
 	.pre_shared_key_skeyid = pre_shared_key_skeyid,
 	.skeyid_d = skeyid_d,

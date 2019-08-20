@@ -17,6 +17,8 @@
 #define IKE_ALG_ENCRYPT_OPS_H
 
 struct encrypt_ops {
+	const char *backend;
+
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */

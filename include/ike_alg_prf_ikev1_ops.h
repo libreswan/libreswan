@@ -19,6 +19,8 @@
 #include "chunk.h"
 
 struct prf_ikev1_ops {
+	const char *backend;
+
 	/* SKEYID = prf(Ni_b | Nr_b, g^xy) */
 	PK11SymKey *(*signature_skeyid)(const struct prf_desc *prf_desc,
 					const chunk_t Ni_b, const chunk_t Nr_b,
