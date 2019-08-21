@@ -93,7 +93,9 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
-sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/verify/verify.in
+sed -i "s:/usr/bin/python$:/usr/bin/python3:" programs/verify/verify.in
+sed -i "s:/usr/bin/python$:/usr/bin/python3:" programs/show/show.in
+sed -i "s:/usr/bin/python$:/usr/bin/python3:" programs/_unbound-hook/_unbound-hook.in
 
 %build
 %if 0%{with_efence}
