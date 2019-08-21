@@ -515,15 +515,14 @@ static void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg UNUSED,
 			ntohs(((const struct sockaddr_in *)dsta)->sin_port);
 
 		DBG(DBG_NATT, {
-			char text_said[SATOT_BUF];
+			said_buf text_said;
 			ip_said said;
 			ipstr_buf bs;
 			ipstr_buf bd;
 
 			said = said3(&nfo.src, nfo.sa->sadb_sa_spi, SA_ESP);
-			satot(&said, 0, text_said, SATOT_BUF);
 			DBG_log("new klips mapping %s %s:%d %s:%d",
-				text_said,
+				str_said(&said, 0, &text_said),
 				ipstr(&nfo.src, &bs), nfo.sport,
 				ipstr(&nfo.dst, &bd), nfo.dport);
 		});
@@ -1838,7 +1837,8 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 			}
 
 			said = said3(&dst, spi, proto);
-			satot(&said, 'x', text_said, SATOT_BUF);
+			jambuf_t jam = ARRAY_AS_JAMBUF(text_said);
+			jam_said(&jam, &said, 'x');
 
 			line = fgets(buf, sizeof(buf), f);
 			if (line == NULL) {

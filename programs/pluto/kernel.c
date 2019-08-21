@@ -1077,7 +1077,8 @@ void set_text_said(char *text_said, const ip_address *dst,
 			ipsec_spi_t spi, int sa_proto)
 {
 	ip_said said = said3(dst, spi, sa_proto);
-	satot(&said, 0, text_said, SATOT_BUF);
+	jambuf_t jam = array_as_jambuf(text_said, SATOT_BUF);
+	jam_said(&jam, &said, 0);
 }
 
 /* find an entry in the bare_shunt table.
