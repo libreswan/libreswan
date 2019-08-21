@@ -16,6 +16,7 @@
  */
 
 #include "ip_subnet.h"
+#include "libreswan/passert.h"
 
 /*
  * rangetosubnet - turn an address range into a subnet, if possible
@@ -31,28 +32,31 @@ const ip_address *from;
 const ip_address *to;
 ip_subnet *dst;
 {
-	const unsigned char *fp;
-	const unsigned char *tp;
+	const struct ip_info *ft = address_type(from);
+	const struct ip_info *tt = address_type(to);
+	if (ft == NULL || tt == NULL) {
+		return "unknown address type";
+	}
+	if (ft != tt) {
+		return "mismatched address types";
+	}
+
 	unsigned fb;
 	unsigned tb;
 	const unsigned char *f;
 	const unsigned char *t;
-	size_t n;
-	size_t n2;
 	int i;
 	int nnet;
 	unsigned m;
 
-	if (addrtypeof(from) != addrtypeof(to))
-		return "mismatched address types";
+	shunk_t fs = address_as_shunk(from);
+	const uint8_t *fp = fs.ptr; /* cast cast void * */
+	passert(fs.len > 0);
+	size_t n = fs.len;
 
-	n = addrbytesptr_read(from, &fp);
-	if (n == 0)
-		return "unknown address type";
-
-	n2 = addrbytesptr_read(to, &tp);
-	if (n != n2)
-		return "internal size mismatch in rangetosubnet";
+	shunk_t ts = address_as_shunk(to);
+	const uint8_t *tp = ts.ptr; /* cast const void * */
+	passert(fs.len == ts.len);
 
 	f = fp;
 	t = tp;

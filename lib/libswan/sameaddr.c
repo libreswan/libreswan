@@ -19,6 +19,7 @@
 #include "ip_said.h"
 #include "ip_subnet.h"
 #include "ip_info.h"
+#include "libreswan/passert.h"
 
 static bool samenbits(const ip_address *a, const ip_address *b, int n);
 
@@ -30,27 +31,26 @@ static bool samenbits(const ip_address *a, const ip_address *b, int n);
 int	/* like memcmp */
 addrcmp(const ip_address *a, const ip_address *b)
 {
-	int at = addrtypeof(a);
-	int bt = addrtypeof(b);
-
-	if (at != bt) {
-		return (at < bt) ? -1 : 1;
+	const struct ip_info *at = address_type(a);
+	const struct ip_info *bt = address_type(b);
+	if (at == NULL && bt == NULL) {
+		/* XXX: see old code */
+		return 0;
+	} else if (at == NULL) {
+		/* AF_UNSPEC<AF_*/
+		return -1;
+	} else if (bt == NULL) {
+		/* AF<AF_UNSPEC*/
+		return 1;
+	} else if (at != bt) {
+		return (at->af < bt->af) ? -1 : 1;
 	} else {
-		const unsigned char *ap;
-		const unsigned char *bp;
-		size_t as = addrbytesptr_read(a, &ap);
-		size_t bs = addrbytesptr_read(b, &bp);
-
-		size_t n = (as < bs) ? as : bs;	/* min(as, bs) */
-
-		int c = memcmp(ap, bp, n);
-
-		if (c != 0)	/* bytes differ */
+		shunk_t as = address_as_shunk(a);
+		shunk_t bs = address_as_shunk(b);
+		passert(as.len == bs.len);
+		int c = memcmp(as.ptr, bs.ptr, as.len);
+		if (c != 0)
 			return (c < 0) ? -1 : 1;
-
-		if (as != bs)	/* comparison incomplete:  lexical order */
-			return (as < bs) ? -1 : 1;
-
 		return 0;
 	}
 }
@@ -130,16 +130,24 @@ bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b)
  */
 static bool samenbits(const ip_address *a, const ip_address *b, int nbits)
 {
-	if (addrtypeof(a) != addrtypeof(b))
-		return false;	/* arbitrary */
+	const struct ip_info *at = address_type(a);
+	const struct ip_info *bt = address_type(b);
+	if (at == NULL || bt == NULL) {
+		return false;
+	}
+	if (at != bt) {
+		return false;
+	}
 
-	const unsigned char *ap;
-	int n = addrbytesptr_read(a, &ap);
-	if (n == 0)
-		return false;	/* arbitrary */
+	shunk_t as = address_as_shunk(a);
+	const uint8_t *ap = as.ptr; /* cast const void * */
+	passert(as.len > 0);
+	int n = as.len;
 
-	const unsigned char *bp;
-	(void) addrbytesptr_read(b, &bp);
+	shunk_t bs = address_as_shunk(b);
+	const uint8_t *bp = bs.ptr; /* cast const void * */
+	passert(as.len == bs.len);
+
 	if (nbits > (int)n * 8)
 		return false;	/* "can't happen" */
 

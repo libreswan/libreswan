@@ -24,12 +24,12 @@ masktocount(src)
 const ip_address * src;
 {
 	int b;
-	const unsigned char *bp;
-	size_t n;
 	const unsigned char *p;
 	const unsigned char *stop;
 
-	n = addrbytesptr_read(src, &bp);
+	shunk_t sc = address_as_shunk(src);
+	const uint8_t *bp = sc.ptr; /* cast const void * */
+	size_t n = sc.len;
 	if (n == 0)
 		return -1;
 

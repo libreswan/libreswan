@@ -145,9 +145,8 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 
 	ip_address ip = endpoint_address(endpoint);
 	int port = endpoint_port(endpoint);
-	const unsigned char *ab;
-	size_t al = addrbytesptr_read(&ip, &ab);
-	crypt_hash_digest_bytes(ctx, "IP addr", ab, al);
+	shunk_t ap = address_as_shunk(&ip);
+	crypt_hash_digest_hunk(ctx, "IP addr", ap);
 
 	{
 		uint16_t netorder_port = htons(port);
@@ -160,7 +159,7 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 			(int)hasher->hash_digest_size);
 		DBG_dump("natd_hash: icookie=", &spis->initiator, sizeof(spis->initiator));
 		DBG_dump("natd_hash: rcookie=", &spis->responder, sizeof(spis->responder));
-		DBG_dump("natd_hash: ip=", ab, al);
+		DBG_dump_hunk("natd_hash: ip=", ap);
 		DBG_log("natd_hash: port=%d", port);
 		DBG_dump("natd_hash: hash=", hash,
 			 hasher->hash_digest_size);

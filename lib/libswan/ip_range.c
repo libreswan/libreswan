@@ -26,6 +26,7 @@
 
 #include "jambuf.h"
 #include "ip_range.h"
+#include "libreswan/passert.h"
 
 /*
  * Calculate the number of significant bits in the size of the range.
@@ -36,18 +37,24 @@
 
 int iprange_bits(ip_address low, ip_address high)
 {
-	if (addrtypeof(&high) != addrtypeof(&low))
+	const struct ip_info *ht = address_type(&high);
+	const struct ip_info *lt = address_type(&low);
+	if (ht == NULL || lt == NULL) {
+		/* either invalid */
 		return -1;
+	}
+	if (ht != lt) {
+		return -1;
+	}
 
-	const unsigned char *hp;
-	size_t n = addrbytesptr_read(&high, &hp);
-	if (n == 0)
-		return -1;
+	shunk_t hs = address_as_shunk(&high);
+	const uint8_t *hp = hs.ptr; /* cast const void * */
+	passert(hs.len > 0);
+	size_t n = hs.len;
 
-	const unsigned char *lp;
-	size_t n2 = addrbytesptr_read(&low, &lp);
-	if (n != n2)
-		return -1;
+	shunk_t ls = address_as_shunk(&low);
+	const uint8_t *lp = ls.ptr; /* cast const void * */
+	passert(hs.len == ls.len);
 
 	ip_address diff = low;	/* initialize all the contents to sensible values */
 	unsigned char *dp;

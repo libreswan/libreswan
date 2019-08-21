@@ -160,7 +160,6 @@ extern err_t tnatoaddr(const char *src, size_t srclen, int af, ip_address *dst);
 
 /* misc. conversions and related */
 extern int addrtypeof(const ip_address *src);
-extern size_t addrbytesptr_read(const ip_address *src, const unsigned char **dst);
 extern int masktocount(const ip_address *src);
 
 /* tests */

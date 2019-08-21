@@ -56,7 +56,6 @@
 void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, const struct end *end)
 {
 	const struct id *id = &end->id;
-	const unsigned char *p;
 
 	zero(hd);	/* OK: no pointer fields */
 	/* hd->np = ISAKMP_NEXT_NONE; */
@@ -65,10 +64,13 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, const struct end 
 
 	switch (id->kind) {
 	case ID_NONE:
+	{
 		hd->isaiid_idtype = address_type(&end->host_addr)->id_addr;
-		tl->len = addrbytesptr_read(&end->host_addr, &p);
-		tl->ptr = DISCARD_CONST(unsigned char *, p);
+		shunk_t p = address_as_shunk(&end->host_addr);
+		tl->len = p.len;
+		tl->ptr = DISCARD_CONST(uint8_t *, p.ptr); /* cast const void * */
 		break;
+	}
 	case ID_FROMCERT:
 		hd->isaiid_idtype = ID_DER_ASN1_DN;
 		/* FALLTHROUGH */
@@ -80,9 +82,12 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, const struct end 
 		break;
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		tl->len = addrbytesptr_read(&id->ip_addr, &p);
-		tl->ptr = DISCARD_CONST(unsigned char *, p);
+	{
+		shunk_t p = address_as_shunk(&id->ip_addr);
+		tl->len = p.len;
+		tl->ptr = DISCARD_CONST(uint8_t *, p.ptr); /* cast const void * */
 		break;
+	}
 	case ID_NULL:
 		break;
 	default:

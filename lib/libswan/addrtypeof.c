@@ -25,32 +25,3 @@ const ip_address * src;
 {
 	return src->u.v4.sin_family;
 }
-
-/*
-   - addrbytesptr_read - get pointer to the address bytes of an ip_address for reading
- */
-size_t                          /* 0 for error */
-addrbytesptr_read(src, dstp)
-const ip_address * src;
-const unsigned char **dstp;   /* NULL means just a size query */
-{
-	const unsigned char *p;
-	size_t n;
-
-	switch (src->u.v4.sin_family) {
-	case AF_INET:
-		p = (const unsigned char *) &src->u.v4.sin_addr.s_addr;
-		n = 4;
-		break;
-	case AF_INET6:
-		p = (const unsigned char *) &src->u.v6.sin6_addr;
-		n = 16;
-		break;
-	default:
-		return 0;
-	}
-
-	if (dstp != NULL)
-		*dstp = p;
-	return n;
-}

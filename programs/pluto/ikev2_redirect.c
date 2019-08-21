@@ -90,12 +90,10 @@ bool emit_redirect_notification_decoded_dest(
 		pb_stream *pbs)
 {
 	struct ikev2_redirect_part gwi;
-	size_t id_len;
-	const unsigned char *id_bytes;
+	shunk_t id;
 
 	if (dest_ip == NULL) {
-		id_len = strlen(dest_str);
-		id_bytes = (const unsigned char *)dest_str;
+		id = shunk1(dest_str);
 	} else {
 		passert(dest_str == NULL);
 
@@ -109,15 +107,15 @@ bool emit_redirect_notification_decoded_dest(
 		default:
 			bad_case(addrtypeof(dest_ip));
 		}
-		id_len = addrbytesptr_read(dest_ip, &id_bytes);
+		id = address_as_shunk(dest_ip);
 	}
 
-	if (id_len > 0xFF) {
+	if (id.len > 0xFF) {
 		/* ??? what should we do? */
 		loglog(RC_LOG_SERIOUS, "redirect destination longer than 255 octets; ignoring");
 		return false;
 	}
-	gwi.gw_identity_len = id_len;
+	gwi.gw_identity_len = id.len;
 
 	passert(nonce == NULL ||
 		(nonce->len >= IKEv2_MINIMUM_NONCE_SIZE &&
@@ -127,7 +125,7 @@ bool emit_redirect_notification_decoded_dest(
 	return
 		emit_v2Npl(ntype, pbs, &gwid_pbs) &&
 		out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL) &&
-		out_raw(id_bytes, id_len , &gwid_pbs, "redirect ID") &&
+		out_raw(id.ptr, id.len , &gwid_pbs, "redirect ID") &&
 		(nonce == NULL || out_chunk(*nonce, &gwid_pbs, "redirect ID len")) &&
 		(close_output_pbs(&gwid_pbs), true);
 }
