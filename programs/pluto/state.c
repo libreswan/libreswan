@@ -2146,9 +2146,9 @@ static void whack_log_state_traffic(enum rc_type rc, struct state *st)
 /*
  * odd fact: st cannot be const because we call get_sa_info on it
  */
-void fmt_state(struct state *st, const monotime_t now,
-	       char *state_buf, const size_t state_buf_len,
-	       char *state_buf2, const size_t state_buf2_len)
+void log_state(enum rc_type rc, log_raw_fn *log,
+	       struct state *st, const monotime_t now,
+	       const char *prefix1, const char *prefix2)
 {
 	/* what the heck is interesting about a state? */
 	const struct connection *c = st->st_connection;
@@ -2204,25 +2204,25 @@ void fmt_state(struct state *st, const monotime_t now,
 		delta = -1;	/* ??? sort of odd signifier */
 	}
 
-	snprintf(state_buf, state_buf_len,
-		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s;",
-		 st->st_serialno,
-		 c->name, inst,
-		 endpoint_hport(&st->st_remote_endpoint),
-		 st->st_state->name,
-		 st->st_state->story,
-		 st->st_event == NULL ? "none" :
-			enum_name(&timer_event_names, st->st_event->ev_type),
-		 delta,
-		 np1, np2, eo, dpdbuf,
-		 (st->st_offloaded_task != NULL && !st->st_v1_offloaded_task_in_background)
-		 ? "crypto_calculating" :
-			st->st_suspended_md != NULL ?  "crypto/dns-lookup" :
-			"idle");
+	log(rc, st, NULL, NULL,
+	    "%s#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s;",
+	    prefix1,
+	    st->st_serialno,
+	    c->name, inst,
+	    endpoint_hport(&st->st_remote_endpoint),
+	    st->st_state->name,
+	    st->st_state->story,
+	    st->st_event == NULL ? "none" :
+	    enum_name(&timer_event_names, st->st_event->ev_type),
+	    delta,
+	    np1, np2, eo, dpdbuf,
+	    ((st->st_offloaded_task != NULL && !st->st_v1_offloaded_task_in_background)
+	     ? "crypto_calculating" :
+	     st->st_suspended_md != NULL ?  "crypto/dns-lookup" :
+	     "idle"));
 
 	/* print out SPIs if SAs are established */
-	if (state_buf2_len != 0)
-		state_buf2[0] = '\0';   /* default to empty */
+
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		char lastused[40];      /* should be plenty long enough */
 		char saids_buf[(1 + SATOT_BUF) * 6];
@@ -2349,17 +2349,18 @@ void fmt_state(struct state *st, const monotime_t now,
 		}
 #endif
 
-		snprintf(state_buf2, state_buf2_len,
-			"#%lu: \"%s\"%s%s%s ref=%" PRIu32 " refhim=%" PRIu32 " %s %s%s",
-			st->st_serialno,
-			c->name, inst,
-			lastused,
-			saids_buf,
-			st->st_ref,
-			st->st_refhim,
-			traffic_buf,
-			st->st_xauth_username[0] != '\0' ? "username=" : "",
-			st->st_xauth_username);
+		log(rc, st, NULL, NULL,
+		    "%s#%lu: \"%s\"%s%s%s ref=%" PRIu32 " refhim=%" PRIu32 " %s %s%s",
+		    prefix2,
+		    st->st_serialno,
+		    c->name, inst,
+		    lastused,
+		    saids_buf,
+		    st->st_ref,
+		    st->st_refhim,
+		    traffic_buf,
+		    st->st_xauth_username[0] != '\0' ? "username=" : "",
+		    st->st_xauth_username);
 
 #       undef add_said
 	}
@@ -2530,14 +2531,7 @@ void show_states_status(bool brief)
 		int i;
 		for (i = 0; array[i] != NULL; i++) {
 			struct state *st = array[i];
-
-			char state_buf[LOG_WIDTH];
-			char state_buf2[LOG_WIDTH];
-			fmt_state(st, n, state_buf, sizeof(state_buf),
-				  state_buf2, sizeof(state_buf2));
-			whack_log(RC_COMMENT, "%s", state_buf);
-			if (state_buf2[0] != '\0')
-				whack_log(RC_COMMENT, "%s", state_buf2);
+			log_state(RC_COMMENT, whack_log_raw, st, n, "", "");
 
 			/* show any associated pending Phase 2s */
 			if (IS_IKE_SA(st))

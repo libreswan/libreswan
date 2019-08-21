@@ -751,6 +751,24 @@ void DBG_raw(enum rc_type unused_rc UNUSED,
 	}
 }
 
+void whack_log_raw(enum rc_type rc,
+		   const struct state *st,
+		   const struct connection *c,
+		   const ip_endpoint *from,
+		   const char *message, ...)
+{
+	if (whack_log_p()) {
+		LSWBUF(buf) {
+			lswlog_cur_prefix(buf, st, c, from);
+			va_list args;
+			va_start(args, message);
+			lswlogvf(buf, message, args);
+			va_end(args);
+			lswlog_to_whack_stream(buf, rc);
+		}
+	}
+}
+
 #define RATE_LIMIT 1000
 static unsigned nr_rate_limited_logs;
 

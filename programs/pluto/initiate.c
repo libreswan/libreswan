@@ -550,16 +550,11 @@ static void cannot_oppo(struct connection *c,
 		DBG(DBG_OPPO, DBG_log("installing state: %lu for %s to %s",
 				      nc->newest_ipsec_sa,
 				      ocb, pcb));
-
-		DBG(DBG_OPPO | DBG_CONTROLMORE, {
-			char state_buf[LOG_WIDTH];
-			char state_buf2[LOG_WIDTH];
-
-			fmt_state(st, mononow(), state_buf, sizeof(state_buf),
-				  state_buf2, sizeof(state_buf2));
-			DBG_log("cannot_oppo, failure SA1: %s", state_buf);
-			DBG_log("cannot_oppo, failure SA2: %s", state_buf2);
-		});
+		if (DBGP(DBG_BASE)) {
+			log_state(0/*ignored*/, DBG_raw, st, mononow(),
+				  "cannot_oppo, failure SA1: ",
+				  "cannot_oppo, failure SA2: ");
+		}
 
 		if (!route_and_eroute(c, shunt_spd, st)) {
 			whack_log(RC_OPPOFAILURE,

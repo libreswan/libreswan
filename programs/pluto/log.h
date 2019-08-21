@@ -168,6 +168,9 @@ log_raw_fn DBG_raw;
 		}							\
 	}
 
+/* whack only */
+log_raw_fn whack_log_raw;
+
 /*
  * rate limited logging
  */

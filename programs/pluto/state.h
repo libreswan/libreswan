@@ -53,6 +53,7 @@
 #include "pluto_timing.h"	/* for statetime_t */
 #include "ikev2_msgid.h"
 #include "ip_endpoint.h"
+#include "log.h"		/* for log_raw_fn */
 
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
@@ -861,6 +862,9 @@ extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st, int
 extern void fmt_state(struct state *st, const monotime_t n,
 		      char *state_buf, const size_t state_buf_len,
 		      char *state_buf2, const size_t state_buf_len2);
+extern void log_state(enum rc_type rc, log_raw_fn *log,
+		      struct state *st, const monotime_t n,
+		      const char *prefix1, const char *prefix2);
 
 extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
