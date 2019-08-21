@@ -452,7 +452,6 @@ void ipsec_sa_untern(struct ipsec_sa *ips)
 			    "ref=%u -> %p but untern'ing %p\n", ref,
 			    IPsecSAref2SA(ref), ips);
 	}
-
 }
 
 int ipsec_sa_intern(struct ipsec_sa *ips)

@@ -218,7 +218,6 @@ static void shunk_token_check(void)
 				pri_shunk(t_input),
 			       t->input == NULL ? "NULL" : t->input);
 		}
-
 	}
 }
 

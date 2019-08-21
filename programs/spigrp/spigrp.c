@@ -432,7 +432,6 @@ int main(int argc, char **argv)
 				pfkey_extensions_free(extensions);
 				exit(1);
 			}
-
 		}
 
 		if ((error = pfkey_msg_build(&pfkey_msg, extensions,

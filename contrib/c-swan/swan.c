@@ -97,7 +97,6 @@ static char *split_words(char *command_output)
 			if (*from == '\n') {
 				/* Copy "\n" as word */
 				*(to++) = *(from++);
-
 			} else {
 				/* Copy word */
 				while (*from > ' ' && *from != '\\')
@@ -226,14 +225,12 @@ static bool parse_policy_list(char *source, char *destination, char *xfrm, int d
 
 			memset(&parsed, 0, sizeof(parsed));
 			keyword = NULL;
-
 		} else if (keyword != NULL) {
 			if (*keyword == 0) {
 				strncpy(keyword, p, IPLEN);
 				keyword[IPLEN] = 0;
 			}
 			keyword = NULL;
-
 		} else if (strcmp(p, "src") == 0)
 			keyword = parsed.src;
 		else if (strcmp(p, "dst") == 0)

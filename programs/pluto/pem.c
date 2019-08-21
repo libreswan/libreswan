@@ -242,12 +242,11 @@ err_t pemtobin(chunk_t *blob)
 					continue;
 
 				if (match("Proc-Type",
-						&name) && *value.ptr == '4')
+						&name) && *value.ptr == '4') {
 					return "Proc-Type: encrypted files no longer supported outside of the NSS database, please import these into NSS";
-
-				else if (match("DEK-Info", &name))
+				} else if (match("DEK-Info", &name)) {
 					return "DEK-Info: encrypted files no longer supported outside of the NSS database, please import these into NSS";
-
+				}
 			} else {
 				/* state is PEM_BODY */
 				const char *ugh = NULL;

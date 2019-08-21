@@ -911,7 +911,6 @@ static void callback_handler(evutil_socket_t fd UNUSED,
 	passert(e->event != NULL);
 	event_free(e->event);
 	pfree(e);
-
 }
 
 extern void schedule_callback(const char *name, so_serial_t serialno,

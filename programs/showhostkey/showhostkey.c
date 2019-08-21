@@ -165,7 +165,6 @@ static void print(struct private_key_stuff *pks,
 	case PKK_INVALID:
 		printf("Invalid or unknown key: %s\n", idb);
 		exit(1);
-
 	}
 }
 

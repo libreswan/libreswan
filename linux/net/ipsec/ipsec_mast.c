@@ -537,7 +537,6 @@ int ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	ipsec_xsm(ixs);
 	return 0;
-
 }
 
 DEBUG_NO_STATIC struct net_device_stats *ipsec_mast_get_stats(
@@ -642,7 +641,6 @@ DEBUG_NO_STATIC int ipsec_mast_set_mac_address(struct net_device *dev,
 
 	prv = prv;
 	return 0;
-
 }
 
 DEBUG_NO_STATIC void ipsec_mast_cache_update(struct hh_cache *hh,

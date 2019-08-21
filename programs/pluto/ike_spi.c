@@ -92,7 +92,6 @@ ike_spi_t ike_responder_spi(const ip_address *addr)
 		passert(IKE_SA_SPI_SIZE <= SHA2_256_DIGEST_SIZE);
 		passert(IKE_SA_SPI_SIZE == sizeof(spi));
 		memcpy(&spi, buffer, sizeof(spi));
-
 	} while (ike_spi_is_zero(&spi)); /* probably never loops */
 	return spi;
 }

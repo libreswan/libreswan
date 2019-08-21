@@ -1578,7 +1578,6 @@ rsasig_common:
 							key_size_min);
 					}
 				}
-
 			}
 
 			/*

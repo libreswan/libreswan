@@ -1887,7 +1887,6 @@ struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 	    enum_name(&ike_version_names, ike_version),
 	    st->st_serialno);
 	return st;
-
 }
 
 /*
@@ -2815,7 +2814,6 @@ void set_state_ike_endpoints(struct state *st,
 
 	st->st_remoteaddr = c->spd.that.host_addr;
 	st->st_remoteport = c->spd.that.host_port;
-
 }
 
 /* seems to be a good spot for now */
@@ -3090,7 +3088,6 @@ void set_newest_ipsec_sa(const char *m, struct state *const st)
 
 	st->st_connection->newest_ipsec_sa = st->st_serialno;
 	log_newest_sa_change(m, old_ipsec_sa, st);
-
 }
 
 void record_newaddr(ip_address *ip, char *a_type)

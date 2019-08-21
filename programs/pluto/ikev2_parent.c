@@ -136,7 +136,6 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 		default:
 			libreswan_log("Received and ignored hash algorithm %d", h_value);
 		}
-
 	}
 	return true;
 }

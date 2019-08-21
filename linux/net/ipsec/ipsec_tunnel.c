@@ -908,8 +908,8 @@ enum ipsec_xmit_value ipsec_tunnel_restore_hard_header(
 			       skb_headroom(ixs->skb));
 			ixs->stats->tx_errors++;
 			return IPSEC_XMIT_PUSHPULLERR;
-
 		}
+
 		skb_push(ixs->skb, ixs->hard_header_len);
 		{
 			int i;
@@ -1314,7 +1314,6 @@ DEBUG_NO_STATIC int ipsec_tunnel_set_mac_address(struct net_device *dev,
 		    "Revectored dev=%s->%s addr=0p%p\n",
 		    dev->name, prv->dev->name, addr);
 	return prv->set_mac_address(prv->dev, addr);
-
 }
 #endif /* HAVE_SET_MAC_ADDR */
 

@@ -57,7 +57,6 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
 				return false;
 			}
 			nr_frags++;
-
 		}
 		dbg("sent %u fragments", nr_frags);
 		return true;

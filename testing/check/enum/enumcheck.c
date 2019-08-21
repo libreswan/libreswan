@@ -233,7 +233,6 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 			printf("ERROR [empty]\n");
 		}
 	}
-
 }
 
 static void test_enum_lset(const char *name, const enum_names *en, lset_t val)

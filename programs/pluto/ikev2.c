@@ -3559,7 +3559,6 @@ void complete_v2_state_transition(struct state *st,
 				enum_name(&ikev2_notify_names, notification)));
 		break;
 	}
-
 }
 
 v2_notification_t accept_v2_nonce(struct msg_digest *md,

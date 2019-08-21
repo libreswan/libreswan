@@ -1461,7 +1461,6 @@ typedef enum {
 	 * internal ip
 	 */
 	NETSCREEN_NHTB_INFORM = 40001,
-
 } notification_t;
 
 /*

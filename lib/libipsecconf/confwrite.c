@@ -379,7 +379,6 @@ static void confwrite_side(FILE *out,
 		      end->options, end->options_set, end->strings);
 	confwrite_str(out, side, kv_conn | kv_leftright,
 		      end->strings, end->strings_set);
-
 }
 
 static void confwrite_comments(FILE *out, struct starter_conn *conn)
@@ -575,7 +574,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 						esn = "no";
 					else
 						esn = "either";
-
 				} else {
 						/* both cannot be unset */
 						esn = "yes";

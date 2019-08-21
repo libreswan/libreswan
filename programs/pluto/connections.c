@@ -3757,7 +3757,6 @@ static void show_one_sr(const struct connection *c,
 		  c->name, instance, labeled_ipsec);
 	whack_log(RC_COMMENT, "\"%s\"%s:   policy_label:%s;",
 		  c->name, instance, policy_label);
-
 }
 
 void show_one_connection(const struct connection *c)

@@ -195,7 +195,6 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	/* report duplication; this should NOT happen */
 	if (bspp != NULL)
 		log_bare_shunt("CONFLICTING      new", bs);
-
 }
 
 
@@ -2937,14 +2936,11 @@ bool route_and_eroute(struct connection *c,
 			if (!route_installed)
 				DBG(DBG_CONTROL,
 					DBG_log("route command returned an error"));
-
-
 		} else {
 			route_installed = do_command(c, sr, "route", st);
 			if (!route_installed)
 				DBG(DBG_CONTROL,
 					DBG_log("route command returned an error"));
-
 
 			if (!do_command(ro, sr, "unroute", st)) {
 				DBG(DBG_CONTROL,
@@ -3031,8 +3027,6 @@ bool route_and_eroute(struct connection *c,
 			if (!do_command(c, sr, "down", st))
 				DBG(DBG_CONTROL,
 					DBG_log("down command returned an error"));
-
-
 		}
 
 		if (eroute_installed) {

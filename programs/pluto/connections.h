@@ -386,7 +386,6 @@ struct connection {
 
 	char *redirect_to;        /* RFC 5685 */
 	char *accept_redirect_to;
-
 };
 
 #define oriented(c) ((c).interface != NULL)

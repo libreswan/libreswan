@@ -187,7 +187,6 @@ size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 			/* copy the values of r into signature */
 			memcpy(sig_val->ptr+len_r,blob->ptr,len_s);
 		}
-
 	} else {
 		DBG(DBG_PARSING, DBG_log("Invalid DER encoded signature"));
 	}

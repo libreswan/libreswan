@@ -275,7 +275,6 @@ static err_t trydotted(const char *src, size_t srclen, ip_address *dst)
 				return "?syntax error in dotted-decimal address";
 			else
 				return "syntax error in dotted-decimal address";
-
 		}
 	}
 	if (src != stop)

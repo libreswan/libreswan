@@ -161,5 +161,4 @@ void ikev2_derive_child_keys(struct child_sa *child)
 	default:
 		bad_case(child->sa.st_sa_role);
 	}
-
 }

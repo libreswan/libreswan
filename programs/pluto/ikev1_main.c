@@ -2332,7 +2332,6 @@ void send_v1_delete(struct state *st)
 					"notify payload"));
 				close_output_pbs(&cruft_pbs);
 			}
-
 		}
 	}
 

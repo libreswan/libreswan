@@ -889,7 +889,6 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				lswlogf(buf, "; optional: ");
 				lswlog_trans_types(buf, matching_local_proposal->
 						   optional_transform_types);
-
 			}
 		}
 	}

@@ -256,7 +256,6 @@ static void nss_xcbc_digest_symkey(struct prf_context *prf,
 				  const char *symkey_name, PK11SymKey *symkey)
 {
 	append_chunk_symkey(symkey_name, &prf->bytes, symkey);
-
 }
 
 static void nss_xcbc_digest_bytes(struct prf_context *prf, const char *name,

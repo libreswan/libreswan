@@ -458,7 +458,6 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 			/* we are redirecting all peers of one connection */
 			find_states_and_redirect(m->name, m->active_redirect_peer, redirect_gw);
 		}
-
 	}
 
 	/* update any socket buffer size before calling listen */

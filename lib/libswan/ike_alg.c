@@ -396,7 +396,6 @@ static void pexpect_ike_alg_has_base_names(where_t where,
 				    pri_ike_alg(alg), pri_shunk(alg_name),
 				    pri_ike_alg(base_alg));
 		}
-
 	}
 }
 

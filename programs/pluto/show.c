@@ -65,7 +65,6 @@ static void show_system_security(void)
 	whack_log(RC_COMMENT, "seccomp=unsupported");
 #endif
 	whack_log(RC_COMMENT, " ");     /* spacer */
-
 }
 
 void show_global_status(void)

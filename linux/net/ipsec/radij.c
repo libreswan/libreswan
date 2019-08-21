@@ -729,8 +729,6 @@ on1:
 			else
 				printk("klips_debug:rj_delete: "
 				       "couldn't find node that we started with\n");
-
-
 		}
 		t = tt + 1;
 		if (t->rj_flags & RJF_ACTIVE) {

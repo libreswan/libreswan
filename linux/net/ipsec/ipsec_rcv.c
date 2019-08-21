@@ -393,7 +393,6 @@ struct sk_buff *ipsec_rcv_unclone(struct sk_buff *skb,
 		skb_pull(skb, irs->hard_header_len);
 	}
 	return skb;
-
 }
 
 #if !defined(NET_26) && defined(CONFIG_IPSEC_NAT_TRAVERSAL)

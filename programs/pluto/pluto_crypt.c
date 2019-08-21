@@ -347,7 +347,6 @@ static void pcr_compute(struct crypto_task *task, int unused_helpernum UNUSED)
 	case pcr_crypto:
 	default:
 		bad_case(r->pcr_type);
-
 	}
 }
 

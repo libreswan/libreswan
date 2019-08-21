@@ -969,7 +969,6 @@ void init_ikev1(void)
 					enum_short_name(&timer_event_names,
 							t->timeout_event));
 			}
-
 		}
 	}
 }

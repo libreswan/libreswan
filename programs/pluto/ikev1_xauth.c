@@ -1229,7 +1229,6 @@ static void xauth_launch_authent(struct state *st,
 
 	pfreeany(arg_name);
 	pfreeany(arg_password);
-
 }
 
 /* log a nice description of an unsupported attribute */

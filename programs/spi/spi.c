@@ -1498,8 +1498,8 @@ int main(int argc, char *argv[])
 					fprintf(stdout, "%s: key not provided (NULL alg?).\n",
 						progname);
 				break;
-
 			}
+
 			error = pfkey_key_build(&extensions[SADB_EXT_KEY_ENCRYPT],
 						SADB_EXT_KEY_ENCRYPT,
 						enckeylen * 8,
@@ -1511,6 +1511,7 @@ int main(int argc, char *argv[])
 				pfkey_extensions_free(extensions);
 				exit(1);
 			}
+
 			if (debug) {
 				fprintf(stdout,
 					"%s: key_e extension assembled.\n",

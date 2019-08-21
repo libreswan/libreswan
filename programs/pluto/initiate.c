@@ -837,7 +837,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 							DBG(DBG_OPPO, DBG_log("KLIPS might not support these shunts with protoport"));
 						}
 					}
-
 				} else {
 					DBG(DBG_OPPO, DBG_log("shunt not widened for oppo because no protoport received from the kernel for the shunt"));
 				}
