@@ -16,6 +16,7 @@ v3.30 (unreleased)
 * pluto: Fixup reporting of esp-hw-offload capabilities in kernel/nic [Paul]
 * pluto: Add chacha20_poly1305 and curve25519 to default proposals [Paul]
 * pluto: Updated SECCOMP syscall whitelist with getdents64/getrandom [Paul]
+* letsencrypt: new command "ipsec letsencrypt" [Rishabh]
 * _updown: Fix to work for iproute >= 5.1 [Paul]
 * libswan: Don't leak ECDSA pubkey on form_ckaid_ecdsa() failure [Paul]
 * libswan: Close netlink socket on send error in netlink_query() [Paul]
