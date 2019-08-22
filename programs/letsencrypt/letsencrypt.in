@@ -1,0 +1,310 @@
+#! /bin/sh
+#
+# default letsencrypt script for OE utilities
+#
+# Copyright (C) 2019 Rishabh Rishabh <rishabh0402@gmail.com>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+
+# record original umask
+umask=$(umask)
+
+# CA certificates URL
+CERT1="https://letsencrypt.org/certs/isrgrootx1.pem.txt"
+CERT2="https://letsencrypt.org/certs/trustid-x3-root.pem.txt"
+
+# Intermediate certificates URL and CERT4 Name
+CERT3="https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem.txt"
+CERT4="https://letsencrypt.org/certs/letsencryptauthorityx3.pem.txt"
+CERT4NAME="letsencryptauthorityx3.pem.txt"
+
+# @IPSEC_NSSDIR@ variable for getting location to save the configuration files
+# Installing for -server or -client
+ServerClient=$1
+HostName=$2
+
+# function for checking if the command is run as root
+check_root() {
+    # Checking if the command is run as root, This command needs to be run as root
+    if [ ${EUID} -ne 0 ]; then
+        echo "This command should be run as root."
+        exit
+    fi
+}
+
+# function for testing OE connection
+test() {
+    # Checking for any existing OE connections
+    oeExisting=$(ipsec traffic | grep private)
+    if [ ! -z "$oeExisting" ]; then
+        echo "Existing OE Connections Found. Please stop the connections using 'ipsec restart' and try again."
+        echo "$oeExisting"
+        exit
+    fi
+
+    # Establishing an OE connection and sending pings to letsencrypt.libreswan.org server
+    echo "Sending ping(IPv4) to letsencrypt.libreswan.org server."
+    ping -4 -c 5 letsencrypt.libreswan.org &>/dev/null
+
+    # Checking the success of establishing OE connection
+    oeSuccess=$(ipsec traffic | grep private)
+    if [ -z "$oeSuccess" ]; then
+        echo "Failed to establish an OE connection. try 'ipsec restart' and test again using 'ipsec letsencrypt --test'."
+        exit
+    else
+        echo "OE Connection established successfully."
+        # Displaying connection status
+        ipsec traffic | grep private
+    fi
+}
+
+# Function for performaing Initial setup
+setup() {
+    # Installing for client or server?
+    if [ "$ServerClient" = "--client" ]; then
+        echo "Installing for Client."
+    else
+        echo "Installing for Server."
+    fi
+
+    # Downloading the letsencrypt certificates
+    echo "Downloading the letsencrypt certificates"
+
+    # set secure umask
+    umask 077
+
+    DIR1=$(mktemp -d)
+    DIR2=$(mktemp -d)
+
+    # Downloading the CA certificates
+    wget_output=$(wget -q -P "$DIR1" "$CERT1" "$CERT2")
+    if [ $? -ne 0 ]; then
+        echo "CA Certificates NOT Found OR Saving the certificates in directory failed."
+        exit
+    fi
+
+    # Downloading the Intermediate certificates
+    wget_output=$(wget -q -P "$DIR2" "$CERT3" "$CERT4")
+    if [ $? -ne 0 ]; then
+        echo "Intermediate Certificates NOT Found OR Saving the certificates in directory failed."
+        exit
+    fi
+
+    # Checking if nss database exists
+    dbFileCount=$(ls "@IPSEC_NSSDIR@"/*.db 2>/dev/null | wc -l)
+    if [ $dbFileCount -eq 0 ]; then
+        # NSS database does not exist. Initializing the nss database
+        ipsec initnss
+    fi
+
+    # Importing the CA certificates in NSS database
+    echo "Importing the downloaded certificates into the database"
+    for file in "$DIR1"/*; do
+        file=${file##*/}
+        certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "$DIR1"/"$file" -t "CT,,"
+    done
+
+    # Importing the Intermediate certificates in NSS database
+    for file in "$DIR2"/*; do
+        file=${file##*/}
+        certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "$DIR2"/"$file" -t "u,u,u"
+    done
+
+    # restore umask
+    umask ${umask}
+
+    # Copying the required configuration
+    if [ "$ServerClient" = "--server" ]; then
+        configFile="@FINALDOCDIR@/examples/oe-letsencrypt-server.conf"
+        configFileName="oe-letsencrypt-server.conf"
+    else
+        configFile="@FINALDOCDIR@/examples/oe-letsencrypt-client.conf"
+        configFileName="oe-letsencrypt-client.conf"
+    fi
+
+    echo "Saving the required configuration"
+    cp "$configFile" "@IPSEC_NSSDIR@"
+
+    # restoring the security context of @IPSEC_NSSDIR@/$configFileName using restorecon.
+    checkRestorecon=$(which restorecon 2>/dev/null)
+    if [ -n "${checkRestorecon}" -a -x "${checkRestorecon}" ]; then
+        restorecon "@IPSEC_NSSDIR@/$configFileName"
+    fi
+
+    echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
+}
+
+# function for generating a certificates
+generate_certificate() {
+    # Generating the certificate using Certbot
+    certBotInstalled=$(which certbot 2>/dev/null)
+    if [ -n "${certBotInstalled}" -a -x "${certBotInstalled}" ]; then
+        certbot certonly --webroot -d "$HostName"
+    else
+        echo "Certbot not installed. Please install Certbot and try again."
+        exit
+    fi
+
+    # set secure umask
+    umask 077
+
+    DIR=$(mktemp -d)
+
+    wget_output=$(wget -q -P "$DIR" "$CERT4")
+    if [ $? -ne 0 ]; then
+        echo "Certificates NOT Found OR Saving the certificate in directory failed"
+        exit
+    fi
+
+    # Now generating the #pkcs12 (.p12) file
+    LetsEncryptCertDir="/etc/letsencrypt/live/$HostName"
+
+    openssl pkcs12 -export -inkey "$LetsEncryptCertDir/privkey.pem" -in "$LetsEncryptCertDir/fullchain.pem" -CAfile "$DIR/$CERT4NAME" -out "$LetsEncryptCertDir/generatedCertificate.p12"
+
+    # Importing the certificate in nss database
+    echo "Importing the certificate in database. Password for PKCS12 file is the same as the Export Password you entered above."
+    pk12util -d "sql:@IPSEC_NSSDIR@" -i "$LetsEncryptCertDir/generatedCertificate.p12"
+
+    # restore umask
+    umask ${umask}
+
+    # Displaying the certificates installed in nss database
+    certutil -L -d "sql:@IPSEC_NSSDIR@"
+
+    # Now generating the certbot configuration for reusing key
+    LetsEncryptConfFile="/etc/letsencrypt/renewal/$HostName.conf"
+    echo "reuse_key = True" >>"$LetsEncryptConfFile"
+
+    # creating a crontab fot automatic cert renewals
+    echo "0 1 * * * certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate $HostName'" >>cert-renewal
+    crontab cert-renewal
+    rm cert-renewal
+
+    echo "try running 'ipsec restart' to load the latest certificates"
+
+    echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
+}
+
+# function for updating the issued certificates
+update_certificate() {
+    # Generating #pkcs12 file, Downloading the required Intermediate certificate
+    # set secure umask
+    umask 077
+
+    DIR=$(mktemp -d)
+
+    wget_output=$(wget -q -P "$DIR" "$CERT4")
+    if [ $? -ne 0 ]; then
+        echo "Certificates NOT Found OR Saving the certificate in directory failed"
+        exit
+    fi
+
+    # Now generating the #pkcs12 (.p12) file
+    LetsEncryptCertDir="/etc/letsencrypt/live/$HostName"
+
+    openssl pkcs12 -export -inkey "$LetsEncryptCertDir/privkey.pem" -in "$LetsEncryptCertDir/fullchain.pem" -CAfile "$DIR/$CERT4NAME" -out "$LetsEncryptCertDir/generatedCertificate.p12"
+
+    # Importing the certificate in nss database
+    echo "Importing the certificate in database. Password for PKCS12 file is the same as the Export Password you entered above."
+    pk12util -d "sql:@IPSEC_NSSDIR@" -i "$LetsEncryptCertDir/generatedCertificate.p12"
+
+    # restore umask
+    umask ${umask}
+
+    # Displaying the certificates installed in nss database
+    echo "Displaying the certificates installed in the database."
+    certutil -L -d "sql:@IPSEC_NSSDIR@"
+
+    # restarting ipsec to load all certificates
+    ipsec restart
+
+    # To confirm the success try running the test connection script on the client
+    echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
+}
+
+# function for manual cert renewals
+manual_cert_renew() {
+    # Renewing the certificate using Certbot
+    certBotInstalled=$(which certbot 2>/dev/null)
+    if [ -n "${certBotInstalled}" -a -x "${certBotInstalled}" ]; then
+        certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate $HostName'
+    else
+        echo "Certbot not installed. Please install Certbot and try again."
+        exit
+    fi
+}
+
+# function to disable ipsec by deleting the conf file in /etc/ipsec.d
+disable_ipsec() {
+    # Deleting the configuration files present in /etc/ipsec.d directory
+    rm -f /etc/ipsec.d/oe-letsencrypt-*.conf
+    echo "Please restart the IPsec service using 'ipsec restart' for changes to take effect."
+}
+
+# function for showing help
+help() {
+    echo "Usage: ipsec letsencrypt [arguments]"
+    echo "Available [arguments]"
+    echo "--server, --client, --test, --generate-certificate hostname, --renew hostname, --help, --disable"
+    echo
+    echo "--client :  For initial client setup."
+    echo "usage: 'ipsec letsencrypt --client'"
+    echo
+    echo "--server :  For initial server setup."
+    echo "usage: 'ipsec letsencrypt --server'"
+    echo
+    echo "--test  :  For testing the configuration/connections."
+    echo "usage: 'ipsec letsencrypt --test'"
+    echo
+    echo "--generate-certificate hostname :  For generating the certificate."
+    echo "usage: 'ipsec letsencrypt --generate-certificate hostname'"
+    echo
+    echo "--renew hostname :  For updating the generated certificate (keeping the private key same) use the following command."
+    echo "usage: 'ipsec letsencrypt --renew hostname'"
+    echo
+    echo "--disable :  For disabling IPsec service."
+    echo "usage: 'ipsec letsencrypt --disable'"
+}
+
+case $1 in
+
+"--test")
+    check_root
+    test
+    ;;
+"--server" | "--client")
+    check_root
+    setup
+    ;;
+"--generate-certificate")
+    check_root
+    generate_certificate
+    ;;
+"--update-certificate")
+    check_root
+    update_certificate
+    ;;
+"--renew")
+    check_root
+    manual_cert_renew
+    ;;
+"--disable")
+    check_root
+    disable_ipsec
+    ;;
+"--help")
+    help
+    ;;
+*)
+    echo "[argument] $1 not found"
+    echo "try: 'ipsec letsencrypt --help' for help"
+    ;;
+esac

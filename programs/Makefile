@@ -33,6 +33,7 @@ SUBDIRS+=readwriteconf
 SUBDIRS+=_import_crl
 SUBDIRS+=algparse
 SUBDIRS+=cavp
+SUBDIRS+=letsencrypt
 
 ifeq ($(USE_PORTEXCLUDES),true)
 SUBDIRS+=portexcludes
