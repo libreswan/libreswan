@@ -497,7 +497,14 @@ kvmplutotest	certoe-12-nat-server			good
 kvmplutotest	certoe-13-poc-del-slash24		good
 kvmplutotest	certoe-14-poc-del-slash32		good
 kvmplutotest	certoe-15-poc-east-west			good
+
 kvmplutotest	certoe-17-asymmetric-cert-nat		good
+kvmplutotest	certoe-17-asymmetric-cert-nat-testing-client-crash	good
+kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-restarts	good
+kvmplutotest	certoe-17-asymmetric-cert-nat-testing-client-restart	good
+kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-crash	good
+kvmplutotest	certoe-17-asymmetric-dual-clients-behind-nat-01		good
+
 kvmplutotest	rawrsaoe-asymmetric-nat			good
 kvmplutotest	rawrsaoe-asymmetric-01			good
 
