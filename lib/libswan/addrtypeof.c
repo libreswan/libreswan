@@ -16,12 +16,13 @@
 #include <string.h>
 
 #include "ip_address.h"
+#include "ip_info.h"
 
 /*
    - addrtypeof - get the type of an ip_address
  */
-int addrtypeof(src)
-const ip_address * src;
+int addrtypeof(const ip_address *src)
 {
-	return src->u.v4.sin_family;
+	const struct ip_info *t = address_type(src);
+	return t == NULL ? AF_UNSPEC : t->af;
 }
