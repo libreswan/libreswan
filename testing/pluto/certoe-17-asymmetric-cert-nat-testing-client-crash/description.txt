@@ -1,0 +1,2 @@
+testing: what happens when client crashes and restarts
+https://github.com/Rishabh04-02/Libreswan-Opportunistic-IPsec/issues/17

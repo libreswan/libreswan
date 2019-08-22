@@ -1,0 +1,2 @@
+testing: what is behaviour when server restarts cleanly
+https://github.com/Rishabh04-02/Libreswan-Opportunistic-IPsec/issues/7
