@@ -166,7 +166,10 @@ extern int masktocount(const ip_address *src);
 extern bool sameaddr(const ip_address *a, const ip_address *b);
 extern int addrcmp(const ip_address *a, const ip_address *b);
 extern bool sameaddrtype(const ip_address *a, const ip_address *b);
-extern int isanyaddr(const ip_address *src);
+
+/* XXX: use address_is_{invalid,any,specified}() instead */
+extern bool isanyaddr(const ip_address *src);
+
 extern int isloopbackaddr(const ip_address *src);
 
 #endif

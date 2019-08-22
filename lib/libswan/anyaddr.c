@@ -26,22 +26,16 @@
 static struct in6_addr v6loop = IN6ADDR_LOOPBACK_INIT;
 
 /*
- * isanyaddr - test for the any-address value; this version treats 0
- * (aka AF_UNSPEC?) as any addr!
+ * Test for the any-address value (IPv6 calls this the unspecified
+ * address).  Make it obvious that this version consideres an invalid
+ * (presumably zeroed) ip_address structure to be 'any'.
+ *
+ * XXX: callers seem to be using this as a proxy for
+ * address_is_invalid() (i.e., not updated).
  */
-int isanyaddr(src)
-const ip_address * src;
+bool isanyaddr(const ip_address * src)
 {
-	switch (src->u.v4.sin_family) {
-	case AF_INET:
-	case AF_INET6:
-		return address_is_any(src);
-	case 0:
-		/* a zeroed structure is considered any address */
-		return 1;
-	default:
-		return 0;
-	}
+	return address_is_invalid(src) || address_is_any(src);
 }
 
 /*
