@@ -82,16 +82,6 @@ bool subnetishost(const ip_subnet *a)
 }
 
 /*
- * samesaid - are two SA IDs the same?
- */
-bool samesaid(const ip_said *a, const ip_said *b)
-{
-	return a->spi == b->spi &&	/* test first, most likely to be different */
-		sameaddr(&a->dst, &b->dst) &&
-		a->proto == b->proto;
-}
-
-/*
  * sameaddrtype - do two addresses have the same type?
  */
 bool sameaddrtype(const ip_address *a, const ip_address *b)

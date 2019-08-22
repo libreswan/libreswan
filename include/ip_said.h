@@ -59,7 +59,4 @@ extern size_t satot(const ip_said *src, int format, char *bufptr, size_t buflen)
 extern void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,
 	      ip_said *dst);
 
-/* tests */
-extern bool samesaid(const ip_said *a, const ip_said *b);
-
 #endif
