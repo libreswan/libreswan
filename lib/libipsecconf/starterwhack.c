@@ -376,8 +376,7 @@ static void set_whack_end(char *lr,
 	if (l->has_client) {
 		w->client = l->subnet;
 	} else {
-		/* ??? is this a crude way of seting client to anyaddr? */
-		w->client.addr.u.v4.sin_family = l->addr_family;
+		w->client = *(aftoinfo(l->addr_family)->all_addresses);
 	}
 
 	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */

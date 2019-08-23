@@ -1494,10 +1494,7 @@ int main(int argc, char **argv)
 					 * or IPV6 equivalent
 					 */
 					tunnel_af_used_by = optarg;
-					ip_address any = address_any(aftoinfo(msg.tunnel_addr_family));
-					diagq(initsubnet(&any, 0, '0',
-							 &msg.right.client),
-					      optarg);
+					msg.right.client = *(aftoinfo(msg.tunnel_addr_family)->all_addresses);
 				}
 				msg.right.has_client = TRUE;
 			}
