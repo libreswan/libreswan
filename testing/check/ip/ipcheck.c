@@ -31,6 +31,8 @@ int main(int argc, char *argv[])
 {
 	log_ip = false; /* force sensitive */
 
+	init_ip_info();
+
 	for (char **argp = argv+1; argp < argv+argc; argp++) {
 		if (streq(*argp, "--nodns")) {
 			use_dns = false;
