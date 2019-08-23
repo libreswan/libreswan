@@ -324,10 +324,6 @@ const ip_address address_invalid = {
 	},
 };
 
-/* these are both zero */
-static const struct in_addr in_addr_any = { INADDR_ANY, };
-static const struct in6_addr in6_addr_any = IN6ADDR_ANY_INIT;
-
 ip_address address_any(const struct ip_info *info)
 {
 	if (info == NULL) {
@@ -344,49 +340,42 @@ ip_address address_any(const struct ip_info *info)
 		PEXPECT_LOG("AF_UNSPEC unexpected");
 		return address_invalid;
 	} else {
-		switch (info->af) {
-		case AF_INET:
-			return address_from_in_addr(&in_addr_any);
-		case AF_INET6:
-			return address_from_in6_addr(&in6_addr_any);
-		default:
-			bad_case(info->af);
-		}
+		return *info->any_address;
 	}
 }
 
 bool address_is_any(const ip_address *address)
 {
-	const struct ip_info *afi = address_type(address);
-	if (afi == NULL) {
+	const struct ip_info *type = address_type(address);
+	if (type == NULL) {
 		return false;
 	} else {
 		shunk_t addr = address_as_shunk(address);
-		switch (afi->af) {
-		case AF_INET:
-			return shunk_thingeq(addr, in_addr_any);
-		case AF_INET6:
-			return shunk_thingeq(addr, in6_addr_any);
-		default:
-			bad_case(afi->af);
-		}
+		shunk_t any = address_as_shunk(type->any_address);
+		return shunk_eq(addr, any);
 	}
 }
 
 bool address_is_specified(const ip_address *address)
 {
-	const struct ip_info *afi = address_type(address);
-	if (afi == NULL) {
+	const struct ip_info *type = address_type(address);
+	if (type == NULL) {
 		return false;
 	} else {
 		shunk_t addr = address_as_shunk(address);
-		switch (afi->af) {
-		case AF_INET:
-			return !shunk_thingeq(addr, in_addr_any);
-		case AF_INET6:
-			return !shunk_thingeq(addr, in6_addr_any);
-		default:
-			bad_case(afi->af);
-		}
+		shunk_t any = address_as_shunk(type->any_address);
+		return !shunk_eq(addr, any);
+	}
+}
+
+bool address_is_loopback(const ip_address *address)
+{
+	const struct ip_info *type = address_type(address);
+	if (type == NULL) {
+		return false;
+	} else {
+		shunk_t addr = address_as_shunk(address);
+		shunk_t loopback = address_as_shunk(type->loopback_address);
+		return shunk_eq(addr, loopback);
 	}
 }

@@ -205,30 +205,75 @@ static void check_str_address_reversed(void)
 	}
 }
 
+#define CHECK_ADDRESS(FAIL, ADDRESS)					\
+	{								\
+		CHECK_TYPE(FAIL, address_type(ADDRESS), t->family);	\
+		/* aka address_type(ADDRESS) == NULL; */		\
+		bool invalid = address_is_invalid(ADDRESS);		\
+		if (invalid != t->invalid) {				\
+			FAIL("addres_is_invalid() returned %s, expected %s", \
+			     bool_str(invalid), bool_str(t->invalid));	\
+		}							\
+		bool any = address_is_any(ADDRESS);			\
+		if (any != t->any) {					\
+			FAIL("addres_is_any() returned %s, expected %s", \
+			     bool_str(any), bool_str(t->any));		\
+		}							\
+		bool specified = address_is_specified(ADDRESS);		\
+		if (specified != t->specified) {			\
+			FAIL("addres_is_specified() returned %s, expected %s", \
+			     bool_str(specified), bool_str(t->specified)); \
+		}							\
+		bool loopback = address_is_loopback(ADDRESS);		\
+		if (loopback != t->loopback) {				\
+			FAIL("addres_is_loopback() returned %s, expected %s", \
+			     bool_str(loopback), bool_str(t->loopback)); \
+		}							\
+	}
+
 static void check_address_any(void)
 {
 	static const struct test {
 		int family;
 		const char *in;
+		const struct ip_info *info;
+		bool invalid;
 		bool any;
+		bool specified;
+		bool loopback;
 	} tests[] = {
-		{ 4, "<%any>",			true },
-		{ 6, "<%any6>",			true },
+		{ 4, "<%any4>", &ipv4_info, .any = true },
+		{ 6, "<%any6>", &ipv6_info, .any = true },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		const char *any = t->any ? "true" : "false";
-		PRINT_IN(stdout, "-> %s", any);
-
-		/* convert it *to* internal format */
+		PRINT_IN(stdout, "");
+		CHECK_ADDRESS(FAIL_IN, t->info->any_address);
 		ip_address a = address_any(IP_TYPE(t->family));
-		bool a_is_any = address_is_any(&a);
-		if (a_is_any != t->any) {
-			FAIL_IN("addres_is_any() returned %s, expected %s",
-				a_is_any ? "true" : "false", any);
-		}
-		CHECK_TYPE(FAIL_IN, address_type(&a), t->family);
+		CHECK_ADDRESS(FAIL_IN, &a);
+	}
+}
+
+static void check_address_loopback(void)
+{
+	static const struct test {
+		int family;
+		const char *in;
+		const struct ip_info *info;
+		bool invalid;
+		bool any;
+		bool specified;
+		bool loopback;
+	} tests[] = {
+		{ 4, "<%loop4>", &ipv4_info, .specified = true, .loopback = true, },
+		{ 6, "<%loop6>", &ipv6_info, .specified = true, .loopback = true, },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_IN(stdout, "");
+		CHECK_ADDRESS(FAIL_IN, t->info->loopback_address);
 	}
 }
 
@@ -240,12 +285,15 @@ static void check_address_is(void)
 		bool invalid;
 		bool any;
 		bool specified;
+		bool loopback;
 	} tests[] = {
 		{ 0, "<invalid>",		.invalid = true, },
 		{ 4, "0.0.0.0",			.any = true, },
 		{ 6, "::",			.any = true, },
 		{ 4, "1.2.3.4",			.specified = true, },
 		{ 6, "1:12:3:14:5:16:7:18",	.specified = true, },
+		{ 4, "127.0.0.1",		.specified = true, .loopback = true, },
+		{ 6, "::1",			.specified = true, .loopback = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -263,29 +311,10 @@ static void check_address_is(void)
 				FAIL_IN("%s", err);
 			}
 		}
-		CHECK_TYPE(FAIL_IN, address_type(&a), t->family);
 
-		/* aka address_type(&a) == NULL; */
-		bool invalid = address_is_invalid(&a);
-		if (invalid != t->invalid) {
-			FAIL_IN("addres_is_invalid() returned %s, expected %s",
-				bool_str(invalid), bool_str(t->invalid));
-		}
-
-		bool any = address_is_any(&a);
-		if (any != t->any) {
-			FAIL_IN("addres_is_any() returned %s, expected %s",
-				bool_str(any), bool_str(t->any));
-		}
-
-		bool specified = address_is_specified(&a);
-		if (specified != t->specified) {
-			FAIL_IN("addres_is_specified() returned %s, expected %s",
-				bool_str(specified), bool_str(t->specified));
-		}
+		CHECK_ADDRESS(FAIL_IN, &a);
 	}
 }
-
 
 static void check_ttoaddr_dns(void)
 {
@@ -358,6 +387,7 @@ void ip_address_check(void)
 	check_str_address_sensitive();
 	check_str_address_reversed();
 	check_address_any();
+	check_address_loopback();
 	check_address_is();
 	check_ttoaddr_dns();
 }

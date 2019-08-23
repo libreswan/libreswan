@@ -18,13 +18,6 @@
 
 #include "ip_address.h"
 
-#ifndef IN6ADDR_LOOPBACK_INIT
-#define IN6ADDR_LOOPBACK_INIT   { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-				      0, 1 } } }
-#endif
-
-static struct in6_addr v6loop = IN6ADDR_LOOPBACK_INIT;
-
 /*
  * Test for the any-address value (IPv6 calls this the unspecified
  * address).  Make it obvious that this version consideres an invalid
@@ -36,28 +29,4 @@ static struct in6_addr v6loop = IN6ADDR_LOOPBACK_INIT;
 bool isanyaddr(const ip_address * src)
 {
 	return address_is_invalid(src) || address_is_any(src);
-}
-
-/*
-   - isloopbackaddr - test for the loopback-address value
- */
-int isloopbackaddr(src)
-const ip_address * src;
-{
-	uint32_t v4loop = htonl(INADDR_LOOPBACK);
-	int cmp;
-
-	switch (src->u.v4.sin_family) {
-	case AF_INET:
-		cmp = memcmp(&src->u.v4.sin_addr.s_addr, &v4loop,
-			     sizeof(v4loop));
-		break;
-	case AF_INET6:
-		cmp = memcmp(&src->u.v6.sin6_addr, &v6loop, sizeof(v6loop));
-		break;
-	default:
-		return 0;
-	}
-
-	return (cmp == 0) ? 1 : 0;
 }

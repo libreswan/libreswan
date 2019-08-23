@@ -137,6 +137,8 @@ ip_address address_any(const struct ip_info *info);
 #define address_is_invalid(A) (address_type(A) == NULL)
 bool address_is_any(const ip_address *address);
 bool address_is_specified(const ip_address *address);
+/* implies specified */
+bool address_is_loopback(const ip_address *address);
 
 /*
  * Raw address bytes, both read-only and read-write.
@@ -169,7 +171,5 @@ extern bool sameaddrtype(const ip_address *a, const ip_address *b);
 
 /* XXX: use address_is_{invalid,any,specified}() instead */
 extern bool isanyaddr(const ip_address *src);
-
-extern int isloopbackaddr(const ip_address *src);
 
 #endif
