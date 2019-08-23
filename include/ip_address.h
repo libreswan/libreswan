@@ -42,7 +42,6 @@ struct ip_info;
  */
 
 typedef struct {
-#ifdef ADDRESS_TYPE
 	/*
 	 * Because whack sends raw ip_addresses to pluto using a byte
 	 * stream, this structure needs to be stream friendly - it
@@ -71,12 +70,6 @@ typedef struct {
 	 * be used.
 	 */
 	uint16_t hport;
-#endif
-#else
-	union {
-		struct sockaddr_in v4;
-		struct sockaddr_in6 v6;
-	} u;
 #endif
 } ip_address;
 

@@ -108,18 +108,7 @@ int endpoint_hport(const ip_endpoint *endpoint)
 		libreswan_log("%s has unspecified type", __func__);
 		return -1;
 	}
-#if defined(ADDRESS_TYPE)
 	return endpoint->hport;
-#else
-	switch (afi->af) {
-	case AF_INET:
-		return ntohs(endpoint->u.v4.sin_port);
-	case AF_INET6:
-		return ntohs(endpoint->u.v6.sin6_port);
-	default:
-		bad_case(afi->af);
-	}
-#endif
 }
 
 int endpoint_nport(const ip_endpoint *endpoint)
@@ -130,18 +119,7 @@ int endpoint_nport(const ip_endpoint *endpoint)
 		libreswan_log("%s has unspecified type", __func__);
 		return -1;
 	}
-#if defined(ADDRESS_TYPE)
 	return htons(endpoint->hport);
-#else
-	switch (afi->af) {
-	case AF_INET:
-		return endpoint->u.v4.sin_port;
-	case AF_INET6:
-		return endpoint->u.v6.sin6_port;
-	default:
-		bad_case(afi->af);
-	}
-#endif
 }
 
 ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint, int hport)
@@ -152,28 +130,15 @@ ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint, int hport)
 		libreswan_log("endpoint has unspecified type");
 		return endpoint_invalid;
 	}
-#if defined(ENDPOINT_TYPE)
+#ifdef ENDPOINT_TYPE
 	ip_endpoint dst = {
 		.address = endpoint->address,
 		.hport = hport,
 	};
 	return dst;
-#elif defined(ADDRESS_TYPE)
-	ip_endpoint dst = *endpoint;
-	dst.hport = hport;
-	return dst;
 #else
 	ip_endpoint dst = *endpoint;
-	switch (afi->af) {
-	case AF_INET:
-		dst.u.v4.sin_port = htons(hport);
-		break;
-	case AF_INET6:
-		dst.u.v6.sin6_port = htons(hport);
-		break;
-	default:
-		bad_case(afi->af);
-	}
+	dst.hport = hport;
 	return dst;
 #endif
 }
@@ -289,18 +254,10 @@ bool endpoint_eq(const ip_endpoint l, ip_endpoint r)
 	return memeq(&l, &r, sizeof(l));
 }
 
-#if defined(ENDPOINT_TYPE)
+#ifdef ENDPOINT_TYPE
 const ip_endpoint endpoint_invalid = {
 	.address = {
-#if defined(ADDRESS_TYPE)
-		.type = NULL,
-#else
-		.u = {
-			.v4 = {
-				.sin_family = AF_UNSPEC,
-			},
-		},
-#endif
+		.af = AF_UNSPEC,
 	},
 };
 #endif
