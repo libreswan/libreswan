@@ -48,6 +48,12 @@ typedef struct {
 } ip_subnet;
 
 /*
+ * Construct a subnet exactly as specified (presumably caller has
+ * performed all checks).
+ */
+ip_subnet subnet(const ip_address *address, int maskbits, int port);
+
+/*
  * Format as a string.
  */
 

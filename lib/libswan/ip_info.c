@@ -22,8 +22,49 @@
 #include "libreswan/passert.h"
 #include "lswlog.h"		/* for bad_case() */
 
-static ip_subnet ipv4_wildcard, ipv6_wildcard;
-static ip_subnet ipv4_all, ipv6_all;
+/*
+ * Construct well known addresses.
+ *
+ * Perhaps one day this will all be made static const.  However, to do
+ * that this code would need to assume ip_address internals, and
+ * likely also hardwire the contents of those constants.
+ *
+ * The current code uses address_from_in*_addr() since that knows how
+ * to initialize secret sockaddr fields such as BSD's size.
+ */
+
+static ip_address any_address_ipv4;
+static ip_address any_address_ipv6;
+
+static ip_address loopback_address_ipv4;
+static ip_address loopback_address_ipv6;
+
+static ip_subnet no_addresses_ipv4;
+static ip_subnet no_addresses_ipv6;
+
+static ip_subnet all_addresses_ipv4;
+static ip_subnet all_addresses_ipv6;
+
+void init_ip_info(void)
+{
+	struct in_addr in_any = { htonl(INADDR_ANY), };
+	any_address_ipv4 = address_from_in_addr(&in_any);
+
+	struct in6_addr in6_any = IN6ADDR_ANY_INIT;
+	any_address_ipv6 = address_from_in6_addr(&in6_any);
+
+	struct in_addr in_loopback = { htonl(INADDR_LOOPBACK), };
+	loopback_address_ipv4 = address_from_in_addr(&in_loopback);
+
+	struct in6_addr in6_loopback = IN6ADDR_LOOPBACK_INIT;
+	loopback_address_ipv6 = address_from_in6_addr(&in6_loopback);
+
+	no_addresses_ipv4 = subnet(&any_address_ipv4, ipv4_info.mask_cnt, 0);
+	no_addresses_ipv6 = subnet(&any_address_ipv6, ipv6_info.mask_cnt, 0);
+
+	all_addresses_ipv4 = subnet(&any_address_ipv4, 0, 0);
+	all_addresses_ipv6 = subnet(&any_address_ipv6, 0, 0);
+}
 
 const struct ip_info ipv4_info = {
 	.af = AF_INET,
@@ -35,8 +76,11 @@ const struct ip_info ipv4_info = {
 	.id_addr = ID_IPV4_ADDR,
 	.id_subnet = ID_IPV4_ADDR_SUBNET,
 	.id_range = ID_IPV4_ADDR_RANGE,
-	.none = &ipv4_wildcard,
-	.all = &ipv4_all,
+	/* */
+	.any_address = &any_address_ipv4,
+	.loopback_address = &loopback_address_ipv4,
+	.no_addresses = &no_addresses_ipv4,
+	.all_addresses = &all_addresses_ipv4,
 };
 
 const struct ip_info ipv6_info = {
@@ -49,8 +93,11 @@ const struct ip_info ipv6_info = {
 	.id_addr = ID_IPV6_ADDR,
 	.id_subnet = ID_IPV6_ADDR_SUBNET,
 	.id_range = ID_IPV6_ADDR_RANGE,
-	.none = &ipv6_wildcard,
-	.all = &ipv6_all,
+	/* */
+	.any_address = &any_address_ipv6,
+	.loopback_address = &loopback_address_ipv6,
+	.no_addresses = &no_addresses_ipv6,
+	.all_addresses = &all_addresses_ipv6,
 };
 
 const struct ip_info *aftoinfo(int af)
@@ -65,16 +112,4 @@ const struct ip_info *aftoinfo(int af)
 	default:
 		bad_case(af);
 	}
-}
-
-void init_ip_info(void)
-{
-	ip_address ipv4_any = address_any(&ipv4_info);
-	ip_address ipv6_any = address_any(&ipv6_info);
-
-	happy(addrtosubnet(&ipv4_any, &ipv4_wildcard));
-	happy(addrtosubnet(&ipv6_any, &ipv6_wildcard));
-
-	happy(initsubnet(&ipv4_any, 0, '0', &ipv4_all));
-	happy(initsubnet(&ipv6_any, 0, '0', &ipv6_all));
 }

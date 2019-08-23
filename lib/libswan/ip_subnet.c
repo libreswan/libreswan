@@ -22,6 +22,17 @@
 #include "libreswan/passert.h"
 #include "lswlog.h"	/* for pexpect() */
 
+ip_subnet subnet(const ip_address *address, int maskbits, int port)
+{
+	ip_endpoint e = endpoint(address, port);
+	ip_subnet s = {
+		.addr = e,
+		.maskbits = maskbits,
+	};
+	return s;
+}
+
+
 ip_endpoint subnet_endpoint(const ip_subnet *src)
 {
 	return src->addr;
