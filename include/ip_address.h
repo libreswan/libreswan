@@ -44,19 +44,11 @@ struct ip_info;
 typedef struct {
 #ifdef ADDRESS_TYPE
 	/*
-	 * XXX:
-	 *
-	 * Why embed the entire struct sockaddr_in* in ip_address when
-	 * all that is needed is the type and address bytes?
-	 *
-	 * Unfortunately such a change isn't immediately possible as
-	 * code is still directly referencing internal fields.  So much for
-	 * an immutable abstraction.
-	 *
-	 * Defining ADDRESS_TYPE changes the in ways that break such
-	 * undisciplined code.
+	 * Because whack sends raw ip_addresses to pluto using a byte
+	 * stream, this structure needs to be stream friendly - it
+	 * can't contain a pointer to struct ip_info.
 	 */
-	const struct ip_info *type;
+	int af;
 	/*
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).
@@ -64,23 +56,21 @@ typedef struct {
 	uint8_t bytes[sizeof(struct in6_addr)];
 #ifndef ENDPOINT_TYPE
 	/*
+	 * In pluto, port "0" is reserved and indicates all ports (but
+	 * does it also denote no port?).
+	 *
 	 * XXX:
 	 *
-	 * A simple address - type+bytes - doesn't contain a port.
-	 * If a port is required, the abstraction ip_endpoint should be used.
+	 * Would separate and incompatible ip_hport and ip_nport types
+	 * help stop host <-> network port conversion screwups?
 	 *
-	 * Consequently the types ip_address and ip_endpoint should
-	 * be distinct (with only the latter designating a port).
-	 * Unfortunately that's a ways-a-way.  Code continues to
-	 * either store the port in the ip_address structure or (not
-	 * aware that that works) store the port separately or (to cover
-	 * all bases) both.
+	 * XXX:
 	 *
-	 * Defining ENDPOINT_TYPE makes the ip_address and ip_endpoint
-	 * types distinct (only the latter has a port) so the port
-	 * field in ip_address can be dropped.
+	 * A simple address - type+bytes - should not contain a port.
+	 * If a port is required, the abstraction ip_endpoint should
+	 * be used.
 	 */
-	int port;
+	uint16_t hport;
 #endif
 #else
 	union {

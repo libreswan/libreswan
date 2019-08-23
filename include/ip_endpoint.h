@@ -37,7 +37,11 @@ struct lswlog;
 #ifdef ENDPOINT_TYPE
 typedef struct {
 	ip_address address;
-	int port;
+	/*
+	 * In pluto "0" denotes all ports (or, in the context of an
+	 * endpoint, is that none?).
+	 */
+	int hport;
 } ip_endpoint;
 #else
 typedef ip_address ip_endpoint;

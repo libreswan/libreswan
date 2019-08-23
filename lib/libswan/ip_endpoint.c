@@ -109,9 +109,9 @@ int endpoint_port(const ip_endpoint *endpoint)
 		return -1;
 	}
 #if defined(ENDPOINT_TYPE)
-	return endpoint->port;
+	return endpoint->hport;
 #elif defined(ADDRESS_TYPE)
-	return endpoint->port;
+	return endpoint->hport;
 #else
 	switch (afi->af) {
 	case AF_INET:
@@ -140,7 +140,7 @@ ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port)
 	return dst;
 #elif defined(ADDRESS_TYPE)
 	ip_endpoint dst = *endpoint;
-	dst.port = port;
+	dst.hport = port;
 	return dst;
 #else
 	ip_endpoint dst = *endpoint;

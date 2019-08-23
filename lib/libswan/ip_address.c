@@ -24,8 +24,9 @@
 #ifdef ADDRESS_TYPE
 static ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes)
 {
+	passert(afi != NULL);
 	ip_address address = {
-		.type = afi,
+		.af = afi->af,
 	};
 	passert(afi->ip_size == bytes.len);
 	memcpy(address.bytes, bytes.ptr, bytes.len);
@@ -85,9 +86,10 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 const struct ip_info *address_type(const ip_address *address)
 {
 #ifdef ADDRESS_TYPE
-	return address->type;
+	int af = address->af;
 #else
 	int af = address->u.v4.sin_family;
+#endif
 	switch (af) {
 	case AF_INET:
 		return &ipv4_info;
@@ -98,7 +100,6 @@ const struct ip_info *address_type(const ip_address *address)
 	default:
 		bad_case(af);
 	}
-#endif
 }
 
 /*
@@ -367,7 +368,7 @@ const char *str_address_reversed(const ip_address *src,
 
 const ip_address address_invalid = {
 #ifdef ADDRESS_TYPE
-	.type = NULL,
+	.af = AF_UNSPEC,
 #else
 	.u = {
 		.v4 = {

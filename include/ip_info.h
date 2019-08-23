@@ -5,6 +5,7 @@
 
 /* socket address family info */
 
+#include "ip_address.h"
 #include "ip_subnet.h"
 
 struct ip_info {

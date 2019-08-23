@@ -64,26 +64,20 @@ typedef struct {
 	 * (making this structure decidedly non-subnet like).
 	 */
 	ip_address address;
-	int maskbits
 	/*
-	 * Allow -1 and interpret that to mean wildcard (as in all
-	 * ports [0..65535]).
-	 *
-	 * The old ip_address's sockaddr_in* only had 16-bits of space
-	 * which isn't sufficient to encode this additional
-	 * information.
+	 * In pluto "0" indicates all ports [0..65535]).
 	 *
 	 * XXX: IKEv2 code checks for both end.port==0 (er, 0's only
 	 * reserved for TCP and UDP) and end.has_port_wildcard.  See
 	 * https://daniel.haxx.se/blog/2014/10/25/pretending-port-zero-is-a-normal-one/
 	 */
-	int port;
+	uint16_t hport;
 #else
 	/* (routing)prefix|host(id):port */
 	ip_endpoint addr;
+#endif
 	/* (routing prefix) bits */
 	int maskbits;
-#endif
 } ip_subnet;
 
 /*
