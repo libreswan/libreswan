@@ -150,26 +150,17 @@ static sparse_names calg_list = {
  */
 static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_family_t family)
 {
-	switch (family) {
-	case AF_INET:
-	{
-		/*
-		 * XXX: The rationale for this SNAFU as stated in the
-		 * xfrm.h header:
-		 *
-		 * Structure to encapsulate addresses. I do not want
-		 * to use "standard" structure. My apologies.
-		 */
-		struct in_addr in = { xaddr->a4 };
-		*addr = address_from_in_addr(&in);
-		break;
-	}
-	case AF_INET6:
-		*addr = address_from_in6_addr(&xaddr->in6);
-		break;
-	default:
-		bad_case(family);
-	}
+	shunk_t x = THING_AS_SHUNK(*xaddr);
+
+	const struct ip_info *afi = aftoinfo(family);
+	passert(afi != NULL);
+
+	*addr = *afi->any_address; /* initalize dst type and zero */
+	chunk_t a = address_as_chunk(addr);
+
+	/* a = x */
+	passert(x.len >= a.len);
+	memcpy(a.ptr, x.ptr, a.len);
 }
 
 /*
@@ -180,11 +171,15 @@ static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_fami
  */
 static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 {
-	/* If it's an IPv4 address */
-	if (addr->u.v4.sin_family == AF_INET)
-		xaddr->a4 = addr->u.v4.sin_addr.s_addr;
-	else	/* Must be IPv6 */
-		memcpy(xaddr->a6, &addr->u.v6.sin6_addr, sizeof(xaddr->a6));
+	shunk_t a = address_as_shunk(addr);
+
+	/* .len == ipv6 len */
+	chunk_t x = THING_AS_CHUNK(*xaddr);
+
+	/* x = a */
+	passert(x.len >= a.len);
+	zero(xaddr);
+	memcpy(x.ptr, a.ptr, a.len);
 }
 
 static void init_netlink_route_fd(void)
@@ -1589,29 +1584,25 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
  * @param dst ip_address formatted destination
  * @return err_t NULL if okay, otherwise an error
  */
-static err_t xfrm_to_ip_address(unsigned family, const xfrm_address_t *src,
-				ip_address *dst)
+static err_t xfrm_to_ip_address(unsigned family, const xfrm_address_t *xaddr,
+				ip_address *addr)
 {
-	switch (family) {
-	case AF_INET:
-	{
-		/*
-		 * XXX: The rationale for this SNAFU as stated in the
-		 * xfrm.h header:
-		 *
-		 * Structure to encapsulate addresses. I do not want
-		 * to use "standard" structure. My apologies.
-		 */
-		struct in_addr in = { src->a4 };
-		*dst = address_from_in_addr(&in);
-		return NULL;
-	}
-	case AF_INET6:
-		*dst = address_from_in6_addr(&src->in6);
-		return NULL;
-	default:
+	const struct ip_info *afi = aftoinfo(family);
+	if (afi == NULL) {
 		return "unknown address family";
 	}
+
+	/* .len == ipv6 size */
+	shunk_t x = THING_AS_SHUNK(*xaddr);
+
+	*addr = *afi->any_address; /* "zero" it & set type */
+	chunk_t a = address_as_chunk(addr);
+
+	/* a = x */
+	passert(a.len <= x.len);
+	memcpy(a.ptr, x.ptr, a.len);
+
+	return NULL;
 }
 
 /*
