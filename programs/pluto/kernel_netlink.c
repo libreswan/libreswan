@@ -796,7 +796,7 @@ static bool netlink_get_sa_policy(const struct kernel_sa *sa,
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
 	req.id.dir = sa->nk_dir;	/* clang 6.0.0 thinks RHS is garbage or undefined */
-	req.id.sel.family = sa->src->u.v4.sin_family;
+	req.id.sel.family = address_type(sa->src)->af;
 
 	ip2xfrm(&sa->src_client->addr, &req.id.sel.saddr);
 	ip2xfrm(&sa->dst_client->addr, &req.id.sel.daddr);
@@ -839,7 +839,7 @@ static void  set_migration_attr(const struct kernel_sa *sa,
 	m->proto = sa->proto;
 	m->mode = XFRM_MODE_TUNNEL;  /* AA_201705 hard coded how to figure this out */
 	m->reqid = sa->reqid;
-	m->old_family = m->new_family = sa->src->u.v4.sin_family;
+	m->old_family = m->new_family = address_type(sa->src)->af;
 }
 
 static bool create_xfrm_migrate_sa(struct state *st, const int dir,
