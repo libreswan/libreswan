@@ -29,6 +29,7 @@
 #include "lswalloc.h"
 #include "lswtool.h"
 #include "whack.h"
+#include "ip_info.h"		/* for init_ip_info() */
 #include "ipsecconf/parser-controls.h"
 #include "ipsecconf/starterlog.h"
 #include "ipsecconf/confread.h"
@@ -37,7 +38,6 @@
 #ifdef NETKEY_SUPPORT
 #include "addr_lookup.h"
 #endif
-
 #ifdef USE_DNSSEC
 # include "dnssec.h"
 #endif
@@ -209,6 +209,9 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
+	tool_init_log(argv[0]);
+	init_ip_info();
+
 	int opt;
 	bool autoall = FALSE;
 	bool configsetup = FALSE;
@@ -236,9 +239,6 @@ int main(int argc, char *argv[])
 	EF_PROTECT_BELOW = 1;
 	EF_PROTECT_FREE = 1;
 #endif
-
-	tool_init_log(argv[0]);
-
 	while ((opt = getopt_long(argc, argv, "", longopts, 0)) != EOF) {
 		switch (opt) {
 		case 'h':

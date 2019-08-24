@@ -155,6 +155,7 @@ int main(int argc, char **argv)
 	int argcount = argc;
 
 	progname = argv[0];
+	init_ip_info();
 
 	zero(&said);
 	zero(&s_subnet);
