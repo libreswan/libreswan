@@ -14,6 +14,7 @@
  * License for more details.
  *
  */
+
 #ifndef IP_RANGE_H
 #define IP_RANGE_H
 
@@ -25,8 +26,7 @@ typedef struct {
 	ip_address end;
 } ip_range;
 
-extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
-		bool non_zero);
+extern err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst);
 
 typedef struct {
 	char buf[sizeof(address_buf) + 1/*"-"*/ + sizeof(address_buf)];

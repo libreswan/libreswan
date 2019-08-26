@@ -901,12 +901,12 @@ static bool add_xauth_addresspool(struct connection *c,
 		DBG(DBG_CONTROLMORE|DBG_XAUTH,
 			DBG_log("XAUTH: adding single ip addresspool entry %s for the conn %s user=%s",
 				single_addresspool, c->name, userid));
-		er = ttorange(single_addresspool, 0, AF_INET, &pool_range, TRUE);
+		er = ttorange(single_addresspool, &ipv4_info, &pool_range);
 	} else {
 		DBG(DBG_CONTROLMORE|DBG_XAUTH,
 			DBG_log("XAUTH: adding addresspool entry %s for the conn %s user %s",
 				addresspool, c->name, userid));
-		er = ttorange(addresspool, 0, AF_INET, &pool_range, TRUE);
+		er = ttorange(addresspool, &ipv4_info, &pool_range);
 	}
 	if (er != NULL) {
 		libreswan_log("XAUTH IP address %s is not valid %s user=%s",

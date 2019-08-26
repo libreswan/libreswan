@@ -26,6 +26,7 @@
 
 #include "jambuf.h"
 #include "ip_range.h"
+#include "ip_info.h"
 #include "libreswan/passert.h"
 
 /*
@@ -111,61 +112,46 @@ int iprange_bits(ip_address low, ip_address high)
 /*
  * ttorange - convert text "addr1-addr2" to address_start address_end
  */
-err_t ttorange(const char *src,
-	       size_t srclen /* 0 means "apply strlen" */,
-	       int af /* AF_INET only.  AF_INET6 not supported yet. */,
-	       ip_range *dst,
-	       bool non_zero /* is 0.0.0.0 allowed? */)
+err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 {
 	const char *dash;
 	const char *high;
 	size_t hlen;
 	const char *oops;
 
-	ip_address addr_start_tmp;
-	ip_address addr_end_tmp;
+	zero(dst);
+	ip_range tmp = *dst; /* clear it */
 
-	/* this should be a passert */
-	if (af != AF_INET)
-		return "ttorange only supports IPv4 addresses";
-
-	if (srclen == 0)
-		srclen = strlen(src);
-
+	size_t srclen = strlen(src);
 	dash = memchr(src, '-', srclen);
 	if (dash == NULL)
 		return "missing '-' in ip address range";
 
 	high = dash + 1;
 	hlen = srclen - (high - src);
-	oops = ttoaddr_num(src, dash - src, af, &addr_start_tmp);
+
+	/* extract start ip address */
+	oops = ttoaddr_num(src, dash - src, afi->af, &tmp.start);
 	if (oops != NULL)
 		return oops;
-
-	/*
-	 * If we allowed af == AF_UNSPEC,
-	 * set it to addrtypeof(&addr_start_tmp)
-	 */
 
 	/* extract end ip address */
-	oops = ttoaddr_num(high, hlen, af, &addr_end_tmp);
+	oops = ttoaddr_num(high, hlen, afi->af, &tmp.end);
 	if (oops != NULL)
 		return oops;
 
-	if (ntohl(addr_end_tmp.u.v4.sin_addr.s_addr) <
-		ntohl(addr_start_tmp.u.v4.sin_addr.s_addr))
+	if (addrcmp(&tmp.start, &tmp.end) > 0) {
 		return "start of range must not be greater than end";
+	}
 
-	if (non_zero) {
-		uint32_t addr  = ntohl(addr_start_tmp.u.v4.sin_addr.s_addr);
-
-		if (addr == 0)
-			return "'0.0.0.0' not allowed in range";
+	if (address_is_any(&tmp.start) ||
+	    address_is_any(&tmp.end)) {
+		/* XXX: IPv6 netral error? */
+		return "'0.0.0.0' not allowed in range";
 	}
 
 	/* We have validated the range. Now put bounds in dst. */
-	dst->start = addr_start_tmp;
-	dst->end = addr_end_tmp;
+	*dst = tmp;
 	return NULL;
 }
 

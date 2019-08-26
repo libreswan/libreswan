@@ -156,7 +156,7 @@ static void check_iprange_bits(void)
 	}
 }
 
-static void check_ttorange_2_str_range(void)
+static void check_ttorange__to__str_range(void)
 {
 	static const struct test {
 		int family;
@@ -164,18 +164,28 @@ static void check_ttorange_2_str_range(void)
 		long pool;
 		const char *out;
 	} tests[] = {
-		/* er, pick one! */
+		/* smallest */
+		{ 4, "1.2.3.4-1.2.3.4", 1, "1.2.3.4-1.2.3.4", },
+		{ 6, "::1-::1", -1, "::1-::1", },
+		/* normal */
 		{ 4, "1.2.3.0-1.2.3.9", 10, "1.2.3.0-1.2.3.9", },
-		/* { 4, "1.2.3.0-1.2.3.9", 9, "1.2.3.0-1.2.3.9", }, */
-		{ 4, "1.2.3.0-nonenone", -1, NULL, },
+		{ 6, "::1-::2", -1, "::1-::2", },
+		/* wrong order */
+		{ 4, "1.2.3.4-1.2.3.3", -1, NULL, },
+		{ 6, "::2-::1", -1, NULL, },
+		/* not masks; but why? */
 		{ 4, "1.2.3.0/255.255.255.0", -1, NULL, },
-		{ 4, "_", -1, NULL, },
+		{ 4, "1.2.3.0/32", -1, NULL, },
+		{ 6, "1:0:3:0:0:0:0:2/128", -1, NULL, },
+		{ 6, "abcd:ef01:2345:6789:0:00a:000:20/128", -1, NULL, },
+		/* not any */
+		{ 4, "0.0.0.0-0.0.0.0", -1, NULL, },
+		{ 6, "::-::", -1, NULL, },
+		/* nonsense */
+		{ 4, "1.2.3.0-nonenone", -1, NULL, },
+		{ 4, "-", -1, NULL, },
 		{ 4, "_/_", -1, NULL, },
-		/* not implemented */
-		{ 6, "1:0:3:0:0:0:0:2/128", -1, NULL, /*"1:0:3::2/128"*/ },
-		{ 6, "abcd:ef01:2345:6789:0:00a:000:20/128",
-		  -1, NULL, /*"abcd:ef01:2345:6789:0:a:0:20/128"*/ },
-		{ 6, "%default", -1, NULL, /*"NULL"*/ },
+		{ 6, "%default", -1, NULL, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -186,10 +196,9 @@ static void check_ttorange_2_str_range(void)
 			PRINT_IN(stdout, " -> <error>");
 		}
 		const char *oops = NULL;
-		sa_family_t af = SA_FAMILY(t->family);
 
 		ip_range range;
-		oops = ttorange(t->in, 0, af, &range, false);
+		oops = ttorange(t->in, IP_TYPE(t->family), &range);
 		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -208,13 +217,15 @@ static void check_ttorange_2_str_range(void)
 			continue;
 		}
 
-		/* er, isn't the point of this a function? */
-		unsigned pool_size = (uint32_t)ntohl(range.end.u.v4.sin_addr.s_addr) -
-			(uint32_t)ntohl(range.start.u.v4.sin_addr.s_addr);
-		pool_size++;
-		if (t->pool != (long)pool_size) {
-			FAIL_IN("pool_size gave %u, expecting %ld",
-				pool_size, t->pool);
+		if (t->pool > 0) {
+			/* er, isn't the point of this a function? */
+			unsigned pool_size = (uint32_t)ntohl(range.end.u.v4.sin_addr.s_addr) -
+				(uint32_t)ntohl(range.start.u.v4.sin_addr.s_addr);
+			pool_size++;
+			if (t->pool != (long)pool_size) {
+				FAIL_IN("pool_size gave %u, expecting %ld",
+					pool_size, t->pool);
+			}
 		}
 	}
 }
@@ -223,5 +234,5 @@ void ip_range_check(void)
 {
 	check_rangetosubnet();
 	check_iprange_bits();
-	check_ttorange_2_str_range();
+	check_ttorange__to__str_range();
 }
