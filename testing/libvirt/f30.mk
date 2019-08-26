@@ -64,7 +64,6 @@ KVM_UPGRADE_PACKAGES ?= \
     mtr \
     nc \
     net-tools \
-    network-scripts \
     nsd \
     nspr \
     nspr-devel \
