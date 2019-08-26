@@ -243,13 +243,13 @@ travis-docker-start:
 
 .PHONY: nsrunclean
 nsrunclean:
-	sudo rm -fr /home/build/libreswan/testing/pluto/*/OUTPUT /home/build/libreswan/testing/pluto/*/NS
+	sudo rm -fr $(abs_top_srcdir)/testing/pluto/*/OUTPUT $(abs_top_srcdir)/testing/pluto/*/NS
 
 NSURNDIRS = $(shell mount | grep "^nsfs" | cut -d  " " -f 3)
 .PHONY: nsrun
 nsrun: nsrunclean
 	$(if $(NSURNDIRS), $(shell sudo umount $(NSURNDIRS)), $(echo "no nsfs"))
-	/home/build/libreswan/testing/utils/nsrun  --ns --shutdown --log-level debug --verbos 2 --testrun
+	$(abs_top_srcdir)/testing/utils/nsrun  --ns --shutdown --log-level debug --verbos 2 --testrun
 
 .PHONY: nsinstall
 nsinstall:
