@@ -88,7 +88,7 @@ DEFAULTCONFIG = {
     'sanitizer': "../../utils/sanitize.sh",
     'ns_script': "../../utils/ns.sh",
     'ns': False,
-    'ns-max-q': 10,
+    'ns-max-q': 30,
     'nsenter': '/usr/bin/nsenter',
     'nsenter_ns_args': ['--mount=/run/mountns/', '--net=/run/netns/', '--uts=/run/utsns/'],
     'PS1': '[\\u@\\h \\W$(x=$? ; test $x -ne 0 && echo " $x")]\\$ ',
@@ -2011,6 +2011,9 @@ def cmdline():
     parser.add_argument("-v", "--verbose", default=1, type=int,
                         help="increase verbosity: 0 = only warnings, 1 = info, 2 = debug. Default info")
 
+    parser.add_argument("--no-host-tweaks", dest="no_host_tweaks", default=False, action="store_true", help="Do not run host tweaks")
+
+
     logutil.add_arguments(parser)
     args = parser.parse_args()
 
@@ -3270,7 +3273,15 @@ def tlist_progress_worker(tlr):
 
 def do_single_test_subprocess(tlr, test):
 
-    cmd = "%s --shutdown --docker --testname %s --testexpect %s " %(__file__, test.name, test.expect)
+    testtype = "--ns"
+    if test.type == "kvmplutotest":
+        testtype = "--kvmplutotest"
+    elif test.type == "nsplutotest":
+        testtype = "--ns"
+    elif test.type == "dockerplutotest":
+        testtype = "--docker"
+
+    cmd = "%s %s --shutdown --no-host-tweaks --testname %s --testexpect %s " %(__file__, testtype, test.name, test.expect)
     logger.info("start new process %s" % cmd)
     test.start = time.time()  # update test start time.
 
@@ -3530,7 +3541,7 @@ class Namespace:
         logger.info("ns_add test %s hosts %s", test.name, test.hosts)
         # stop all hosts of tests.
 
-        if not test.tlr:
+        if  not test.args.no_host_tweaks:
             ns_host_tweaks(test.args, test.sudo)
             ns_add_root_dirs(test.args, test.sudo)
 
@@ -3853,7 +3864,7 @@ class TestListRun():
         self.torun = 0
         self.notorun = 0
         self.nsunsuported = 0
-        self.ns_skip_tests =  ["audit", "dnsoe", "fips", "interop", "klips", "ocsp", "seccomp", "strongswan"]
+        self.ns_skip_tests =  ["audit", "dnsoe", "fips", "ipseckey", "dnssec", "interop", "klips", "ocsp", "seccomp", "strongswan"]
 
     def ns_skip_test(self, testdir):
         for s in self.ns_skip_tests:
@@ -4184,6 +4195,7 @@ def main():
         tlr = TestListRun(args)
         if tlr:
             args.shutdown = True
+            args.no_host_tweaks = True
 
     if args.testrun and tlr.is_testlist:
         tlr.tried = 1
