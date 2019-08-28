@@ -7,6 +7,11 @@ KVM_PACKAGE_INSTALL = dnf install -y
 KVM_PACKAGE_UPGRADE = dnf upgrade -y
 KVM_DEBUGINFO_INSTALL = dnf debuginfo-install -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
+KVM_F28_HACK = $(KVMSH) --shutdown $(KVM_CLONE_DOMAIN) \
+                sed -i -e '"s/HWADDR=.*/HWADDR=\"$$(cat /sys/class/net/e[n-t][h-s]?/address)\"/"' \
+                        /etc/sysconfig/network-scripts/ifcfg-eth0 \; \
+                service network restart \; \
+                ip address show scope global
 
 # Force the NSS version - version 3.40 caused pluto to dump core while
 # loading the NSS DB.  Versions 3.36 and 3.41 (current at time of

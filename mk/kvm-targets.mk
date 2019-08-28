@@ -592,12 +592,7 @@ define create-kvm-domain
 		--import \
 		--noautoconsole \
 		--noreboot
-	: Fixing up eth0, must be a better way ...
-	$(KVMSH) --shutdown $(notdir $(1)) \
-		sed -i -e '"s/HWADDR=.*/HWADDR=\"$$(cat /sys/class/net/e[n-t][h-s]?/address)\"/"' \
-			/etc/sysconfig/network-scripts/ifcfg-eth0 \; \
-		service network restart \; \
-		ip address show scope global
+	$(KVM_F28_HACK)
 endef
 
 define destroy-kvm-domain
