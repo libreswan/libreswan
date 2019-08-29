@@ -220,18 +220,8 @@ CFLAGS+=${CROSSFLAGS}
 
 OBJS += $(abs_builddir)/version.o
 
-RM_VERSION_C_DEP=
-ifdef BUILD_NO_CACHE_VERSION_C
-# re-create version.c every time would keep pluto --version uptodate
-# will re-create lib/libswan/libswan.a every time.
-RM_VERSION_C_DEP = rm-version.c
-.PHONY: rm-version.c
-rm-version.c:
-	rm -f $(abs_builddir)/version.c
-endif
-
 # build version.c using version number from Makefile.ver
-$(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/Makefile.ver $(RM_VERSION_C_DEP)
+$(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/Makefile.ver
 	rm -f $@.tmp
 	sed -e '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' \
 	    -e '/"/s/@IPSECVIDVERSION@/$(IPSECVIDVERSION)/' \
