@@ -102,7 +102,8 @@ cmd=${cmd-add}
 
 ns="${guest}-${testname}"
 # short hash 8 char, predictable, unique if names
-tcsm=$(sum <<< "${testname}" | cut -f 1 -d ' ')
+#tcsm=$(sum <<< "${testname}" | cut -f 1 -d ' ')
+tcsm=$(python -c "import binascii; from sys import argv; print(str(binascii.crc_hqx(str.encode(argv[1]), 0)))" ${testname})
 breth0=brswan01-${tcsm} #host side bridge for eth0
 heth0=h${guest}e0${tcsm} #host eth0 veth end point
 heth1=h${guest}e1${tcsm} #host eth1
