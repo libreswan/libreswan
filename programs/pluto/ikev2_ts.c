@@ -188,20 +188,13 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 	/* now do IP addresses */
 	switch (ts->ts_type) {
 	case IKEv2_TS_IPV4_ADDR_RANGE:
-		if (!out_raw(&ts->net.start.u.v4.sin_addr.s_addr, 4, &ts_pbs2,
-			     "ipv4 start") ||
-		    !out_raw(&ts->net.end.u.v4.sin_addr.s_addr, 4, &ts_pbs2,
-			     "ipv4 end"))
-			return STF_INTERNAL_ERROR;
-
-		break;
 	case IKEv2_TS_IPV6_ADDR_RANGE:
-		if (!out_raw(&ts->net.start.u.v6.sin6_addr.s6_addr, 16, &ts_pbs2,
-			     "ipv6 start") ||
-		    !out_raw(&ts->net.end.u.v6.sin6_addr.s6_addr, 16, &ts_pbs2,
-			     "ipv6 end"))
+		if (!pbs_out_address(&ts->net.start, &ts_pbs2, "IP start")) {
 			return STF_INTERNAL_ERROR;
-
+		}
+		if (!pbs_out_address(&ts->net.end, &ts_pbs2, "IP end")) {
+			return STF_INTERNAL_ERROR;
+		}
 		break;
 	case IKEv2_TS_FC_ADDR_RANGE:
 		DBG_log("Traffic Selector IKEv2_TS_FC_ADDR_RANGE not supported");
