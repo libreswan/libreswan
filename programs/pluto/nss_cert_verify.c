@@ -44,6 +44,7 @@
 #include "state.h"
 #include "pluto_timing.h"
 #include "root_certs.h"
+#include "ip_info.h"
 
 /*
  * set up the slot/handle/trust things that NSS needs
@@ -675,27 +676,24 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 			if (!san_ip)
 				break;
 
-			if ((current->name.other.len == 4) && (addrtypeof(&myip) == AF_INET)) {
-				if (memcmp(current->name.other.data, &myip.u.v4.sin_addr.s_addr, 4) == 0) {
-					DBG(DBG_X509, DBG_log("subjectAltname IPv4 matches %s", name));
+			/*
+			 * XXX: when would myip not have a type?
+			 * suspect this is the wrong test
+			 */
+			const struct ip_info *afi = address_type(&myip);
+			if (afi != NULL) {
+				shunk_t as = address_as_shunk(&myip);
+				if (shunk_memeq(as, current->name.other.data,
+						current->name.other.len)) {
+					dbg("subjectAltname IPv%d matches %s", afi->ip_version, name);
 					PORT_FreeArena(arena, PR_FALSE);
-					return TRUE;
+					return true;
 				} else {
-					DBG(DBG_X509, DBG_log("subjectAltname IPv4 does not match %s", name));
+					dbg("subjectAltname IPv%d does not match %s", afi->ip_version, name);
 					break;
 				}
 			}
-			if ((current->name.other.len == 16) && (addrtypeof(&myip) == AF_INET6)) {
-				if (memcmp(current->name.other.data, &myip.u.v6.sin6_addr.s6_addr, 16) == 0) {
-					DBG(DBG_X509, DBG_log("subjectAltname IPv6 matches %s", name));
-					PORT_FreeArena(arena, PR_FALSE);
-					return TRUE;
-				} else {
-					DBG(DBG_X509, DBG_log("subjectAltname IPv6 does not match %s", name));
-					break;
-				}
-			}
-			DBG(DBG_X509, DBG_log("subjectAltname IP address family mismatch for %s", name));
+			dbg("subjectAltname IP address family mismatch for %s", name);
 			break;
 
 		default:
