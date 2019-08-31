@@ -328,9 +328,13 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
 	case CISCO_SPLIT_INC:
 	{
+		/* XXX: bitstomask(c->spd.this.client.maskbits), */
+		ip_address mask = subnet_mask(&c->spd.this.client);
+		/* XXX: ignore endpint/address snafu for now */
+		ip_address addr = subnet_endpoint(&c->spd.this.client);
 		struct CISCO_split_item i = {
-			c->spd.this.client.addr.u.v4.sin_addr,
-			bitstomask(c->spd.this.client.maskbits)
+			.cs_addr = { htonl(ntohl_address(&addr)), },
+			.cs_mask = { htonl(ntohl_address(&mask)), },
 		};
 
 		ok = out_struct(&i, &CISCO_split_desc, &attrval, NULL);
