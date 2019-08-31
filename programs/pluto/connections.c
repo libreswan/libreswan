@@ -836,7 +836,9 @@ static bool check_connection_end(const struct whack_end *this,
 	}
 
 	/* ??? seems like a nasty test (in-band, low-level) */
-	if (this->pool_range.start.u.v4.sin_addr.s_addr != 0) {
+	/* XXX: still nasty; just less low-level */
+	if (range_type(&this->pool_range) == &ipv4_info &&
+	    range_is_specified(&this->pool_range)) {
 		struct ip_pool *pool;
 		err_t er = find_addresspool(&this->pool_range, &pool);
 
@@ -1621,13 +1623,15 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	 * It is not necessary on the initiator
 	 */
 
-	if (wm->left.pool_range.start.u.v4.sin_addr.s_addr != 0) {
+	if (range_type(&wm->left.pool_range) == &ipv4_info &&
+	    range_is_specified(&wm->left.pool_range)) {
 		/* there is address pool range add to the global list */
 		c->pool = install_addresspool(&wm->left.pool_range);
 		c->spd.that.modecfg_server = TRUE;
 		c->spd.this.modecfg_client = TRUE;
 	}
-	if (wm->right.pool_range.start.u.v4.sin_addr.s_addr != 0) {
+	if (range_type(&wm->right.pool_range) == &ipv4_info &&
+	    range_is_specified(&wm->right.pool_range)) {
 		/* there is address pool range add to the global list */
 		c->pool = install_addresspool(&wm->right.pool_range);
 		c->spd.that.modecfg_client = TRUE;
