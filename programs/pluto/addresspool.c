@@ -201,8 +201,8 @@ void rel_lease_addr(struct connection *c)
 	 * Therefore a single test against size will indicate
 	 * membership in the range.
 	 */
-	i = ntohl(c->spd.that.client.addr.u.v4.sin_addr.s_addr) -
-	    ntohl(pool->r.start.u.v4.sin_addr.s_addr);
+	i = (ntohl_address(&c->spd.that.client.addr) -
+	     ntohl_address(&pool->r.start));
 
 	passert(i < pool->size);
 
@@ -286,7 +286,7 @@ static bool share_lease(const struct connection *c,
 
 		if (r) {
 			ipstr_buf b;
-			uint32_t addr = ntohl(c->pool->r.start.u.v4.sin_addr.s_addr) + *index;
+			uint32_t addr = ntohl_address(&c->pool->r.start) + *index;
 			struct in_addr addr_nw = { htonl(addr), };
 			ip_address ipaddr = address_from_in_addr(&addr_nw);
 
@@ -405,7 +405,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 
 	/* convert index i in range to an IP_address */
 	{
-		uint32_t addr = ntohl(c->pool->r.start.u.v4.sin_addr.s_addr) + i;
+		uint32_t addr = ntohl_address(&c->pool->r.start) + i;
 		struct in_addr addr_nw = { htonl(addr), };
 		*ipa = address_from_in_addr(&addr_nw);
 	}
@@ -550,8 +550,8 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 
 		p->pool_refcount = 0;
 		p->r = *pool_range;
-		p->size = ntohl(p->r.end.u.v4.sin_addr.s_addr) -
-			  ntohl(p->r.start.u.v4.sin_addr.s_addr) + 1;
+		p->size = (ntohl_address(&p->r.end) -
+			   ntohl_address(&p->r.start) + 1);
 		p->used = 0;
 		p->lingering = 0;
 
