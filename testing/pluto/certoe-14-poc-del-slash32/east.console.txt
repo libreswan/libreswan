@@ -3,6 +3,12 @@ Preparing X.509 files
 east #
  ip route del default
 east #
+ ip tuntap add mode tun tun0
+[ 00.00] tun: Universal TUN/TAP device driver VERSION
+east #
+ ifconfig tun0 10.13.13.13/24
+east #
+ ip route add default via 10.13.13.1
 east #
  ip route add 192.1.3.0/24 via 192.1.2.254
 east #
