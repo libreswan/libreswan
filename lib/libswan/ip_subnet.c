@@ -51,16 +51,20 @@ bool subnet_is_specified(const ip_subnet *s)
 /*
  * mashup() notes:
  * - mashup operates on network-order IP addresses
- * - prefix_and is 0xFF for all existing calls so it could be eliminated
  */
 
-#define BITS_ON		0xFF/*don't care*/, 0xFF
-#define BITS_OFF	0x00, 0x00
-#define BITS_KEEP	0xFF, 0x00
+struct ip_blit {
+	uint8_t and;
+	uint8_t or;
+};
 
-static ip_address mashup(const ip_subnet *src,
-			 uint8_t prefix_and, uint8_t prefix_or,
-			 uint8_t host_and, uint8_t host_or)
+const struct ip_blit clear_bits = { .and = 0x00, .or = 0x00, };
+const struct ip_blit set_bits = { .and = 0x00/*don't care*/, .or = 0xff, };
+const struct ip_blit keep_bits = { .and = 0xff, .or = 0x00, };
+
+ip_address subnet_blit(const ip_subnet *src,
+			  const struct ip_blit *prefix,
+			  const struct ip_blit *host)
 {
 	/* strip port; copy type */
 	ip_address mask = endpoint_address(&src->addr);
@@ -76,11 +80,11 @@ static ip_address mashup(const ip_subnet *src,
 	size_t xbyte = src->maskbits / BITS_PER_BYTE;
 	unsigned xbit = src->maskbits % BITS_PER_BYTE;
 
-	/* leading bytes: & PREFIX_AND | PREFIX_OR */
+	/* leading bytes: & PREFIX->AND | PREFIX->OR */
 	unsigned b = 0;
 	for (; b < xbyte; b++) {
-		p[b] &= prefix_and;
-		p[b] |= prefix_or;
+		p[b] &= prefix->and;
+		p[b] |= prefix->or;
 	}
 
 	/*
@@ -96,15 +100,15 @@ static ip_address mashup(const ip_subnet *src,
 	 */
 	if (xbit != 0) {
 		uint8_t hmask = 0xFF >> xbit;
-		p[b] &= (prefix_and & ~hmask) | (host_and & hmask);
-		p[b] |= (prefix_or & ~hmask) | (host_or & hmask);
+		p[b] &= (prefix->and & ~hmask) | (host->and & hmask);
+		p[b] |= (prefix->or & ~hmask) | (host->or & hmask);
 		b++;
 	}
 
-	/* trailing bytes: & HOST_AND | HOST_OR */
+	/* trailing bytes: & HOST->AND | HOST->OR */
 	for (; b < raw.len; b++) {
-		p[b] &= host_and;
-		p[b] |= host_or;
+		p[b] &= host->and;
+		p[b] |= host->or;
 	}
 
 	return mask;
@@ -118,34 +122,14 @@ static ip_address mashup(const ip_subnet *src,
 
 ip_address subnet_mask(const ip_subnet *src)
 {
-	return mashup(src,
-		      /*prefix*/ BITS_ON,
-		      /*host*/ BITS_OFF);
+	return subnet_blit(src, /*prefix*/ &set_bits, /*host*/ &clear_bits);
 }
 
 bool subnetisnone(const ip_subnet *sn)
 {
-	ip_address base = subnet_floor(sn);
+	ip_address base = subnet_blit(sn, &keep_bits, &clear_bits);
 	return isanyaddr(&base) && subnetishost(sn);
 }
-
-ip_address subnet_floor(const ip_subnet *subnet)
-{
-	return mashup(subnet,
-		      /*prefix*/ BITS_KEEP,
-		      /*host*/ BITS_OFF);
-}
-
-ip_address subnet_ceiling(const ip_subnet *subnet)
-{
-	return mashup(subnet,
-		      /*prefix*/ BITS_KEEP,
-		      /*host*/ BITS_ON);
-}
-
-#undef BITS_KEEP
-#undef BITS_OFF
-#undef BITS_ON
 
 void jam_subnet(jambuf_t *buf, const ip_subnet *subnet)
 {

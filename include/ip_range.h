@@ -20,11 +20,14 @@
 
 #include "err.h"
 #include "ip_address.h"
+#include "ip_subnet.h"
 
 typedef struct {
 	ip_address start;
 	ip_address end;
 } ip_range;
+
+ip_range range_from_subnet(const ip_subnet *subnet);
 
 extern err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst);
 

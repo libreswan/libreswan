@@ -539,26 +539,25 @@ static int score_address_range(const struct end *end,
 	 *
 	 * XXX: so what is CIDR?
 	 */
-	ip_address floor = subnet_floor(&end->client);
-	ip_address ceiling = subnet_ceiling(&end->client);
-	passert(addrcmp(&floor, &ceiling) <= 0);
+	ip_range range = range_from_subnet(&end->client);
+	passert(addrcmp(&range.start, &range.end) <= 0);
 	passert(addrcmp(&ts->net.start, &ts->net.end) <= 0);
 	switch (fit) {
 	case END_EQUALS_TS:
-		if (addrcmp(&floor, &ts->net.start) == 0 &&
-		    addrcmp(&ceiling, &ts->net.end) == 0) {
+		if (addrcmp(&range.start, &ts->net.start) == 0 &&
+		    addrcmp(&range.end, &ts->net.end) == 0) {
 			f = fitbits;
 		}
 		break;
 	case END_NARROWER_THAN_TS:
-		if (addrcmp(&floor, &ts->net.start) >= 0 &&
-		    addrcmp(&ceiling, &ts->net.end) <= 0) {
+		if (addrcmp(&range.start, &ts->net.start) >= 0 &&
+		    addrcmp(&range.end, &ts->net.end) <= 0) {
 			f = fitbits;
 		}
 		break;
 	case END_WIDER_THAN_TS:
-		if (addrcmp(&floor, &ts->net.start) <= 0 &&
-		    addrcmp(&ceiling, &ts->net.end) >= 0) {
+		if (addrcmp(&range.start, &ts->net.start) <= 0 &&
+		    addrcmp(&range.end, &ts->net.end) >= 0) {
 			f = fitbits;
 		}
 		break;

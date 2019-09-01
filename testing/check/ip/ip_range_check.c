@@ -230,9 +230,69 @@ static void check_ttorange__to__str_range(void)
 	}
 }
 
+static void check_range_from_subnet(void)
+{
+	static const struct test {
+		int family;
+		const char *in;
+		const char *start;
+		const char *end;
+	} tests[] = {
+		{ 4, "1.2.3.4/1", "0.0.0.0", "127.255.255.255", },
+		{ 4, "1.2.3.4/23", "1.2.2.0", "1.2.3.255", },
+		{ 4, "1.2.3.4/24", "1.2.3.0", "1.2.3.255", },
+		{ 4, "1.2.3.4/25", "1.2.3.0", "1.2.3.127", },
+		{ 4, "1.2.3.4/31", "1.2.3.4", "1.2.3.5", },
+		{ 4, "1.2.3.4/32", "1.2.3.4", "1.2.3.4", },
+		{ 6, "1:2:3:4:5:6:7:8/1", "::", "7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ 6, "1:2:3:4:5:6:7:8/63", "1:2:3:4::", "1:2:3:5:ffff:ffff:ffff:ffff", },
+		{ 6, "1:2:3:4:5:6:7:8/64", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", },
+		{ 6, "1:2:3:4:5:6:7:8/65", "1:2:3:4::", "1:2:3:4:7fff:ffff:ffff:ffff", },
+		{ 6, "1:2:3:4:5:6:7:8/127", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:9", },
+		{ 6, "1:2:3:4:5:6:7:8/128", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", },
+	};
+
+	const char *oops;
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_IN(stdout, " -> '%s'..'%s'", t->start, t->end);
+
+		sa_family_t af = SA_FAMILY(t->family);
+
+		ip_subnet s;
+		oops = ttosubnet(t->in, 0, af, &s);
+		if (oops != NULL) {
+			FAIL_IN("ttosubnet() failed: %s", oops);
+		}
+
+		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+
+		ip_range r = range_from_subnet(&s);
+
+		address_buf start_buf;
+		const char *start = str_address(&r.start, &start_buf);
+		if (!streq(t->start, start)) {
+			FAIL_IN("r.start is '%s', expected '%s'",
+				start, t->start);
+		}
+		CHECK_TYPE(FAIL_IN, address_type(&r.start), t->family);
+
+		address_buf end_buf;
+		const char *end = str_address(&r.end, &end_buf);
+		if (!streq(t->end, end)) {
+			FAIL_IN("r.end is '%s', expected '%s'",
+				end, t->end);
+		}
+		CHECK_TYPE(FAIL_IN, address_type(&r.end), t->family);
+
+	}
+}
+
 void ip_range_check(void)
 {
 	check_rangetosubnet();
 	check_iprange_bits();
 	check_ttorange__to__str_range();
+	check_range_from_subnet();
 }

@@ -168,3 +168,12 @@ const char *str_range(const ip_range *range, range_buf *out)
 	jam_range(&buf, range);
 	return out->buf;
 }
+
+ip_range range_from_subnet(const ip_subnet *subnet)
+{
+	ip_range r = {
+		.start = subnet_blit(subnet, &keep_bits, &clear_bits),
+		.end = subnet_blit(subnet, &keep_bits, &set_bits),
+	};
+	return r;
+}

@@ -126,11 +126,13 @@ const struct ip_info *subnet_type(const ip_subnet *subnet);
 /* when applied to an address, leaves just the routing prefix */
 extern ip_address subnet_mask(const ip_subnet *subnet);
 
-/* [floor..ceiling] vs [floor..roof) */
-/* PREFIX&MASK; aka IPv4 network, IPv6 anycast */
-extern ip_address subnet_floor(const ip_subnet *subnet);
-/* PREFIX|~MASK; aka IPv4 broadcast but not IPv6 */
-extern ip_address subnet_ceiling(const ip_subnet *subnet);
+extern const struct ip_blit set_bits;
+extern const struct ip_blit clear_bits;
+extern const struct ip_blit keep_bits;
+
+ip_address subnet_blit(const ip_subnet *in,
+		       const struct ip_blit *network,
+		       const struct ip_blit *host);
 
 /* PREFIX|HOST:PORT */
 ip_endpoint subnet_endpoint(const ip_subnet *subnet);
