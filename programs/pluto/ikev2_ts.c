@@ -83,42 +83,17 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e)
 
 	zero(&ts);	/* OK: no pointer fields */
 
-	/* subnet => range */
-	ts.net.start = e->client.addr;
-	ts.net.end = e->client.addr;
-
-	/*
-	 * XXX: This is computing low&=mask; hi|=mask; should there be
-	 * a function to do this?
-	 */
-	switch (addrtypeof(&e->client.addr)) {
+	switch (subnet_type(&e->client)->af) {
 	case AF_INET:
-	{
-		struct in_addr v4mask = bitstomask(e->client.maskbits);
-
 		ts.ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-		ts.net.start.u.v4.sin_addr.s_addr &= v4mask.s_addr;
-		ts.net.end.u.v4.sin_addr.s_addr |= ~v4mask.s_addr;
 		break;
-	}
 	case AF_INET6:
-	{
-		struct in6_addr v6mask = bitstomask6(e->client.maskbits);
-
 		ts.ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-		ts.net.start.u.v6.sin6_addr.s6_addr32[0] &= v6mask.s6_addr32[0];
-		ts.net.start.u.v6.sin6_addr.s6_addr32[1] &= v6mask.s6_addr32[1];
-		ts.net.start.u.v6.sin6_addr.s6_addr32[2] &= v6mask.s6_addr32[2];
-		ts.net.start.u.v6.sin6_addr.s6_addr32[3] &= v6mask.s6_addr32[3];
-
-		ts.net.end.u.v6.sin6_addr.s6_addr32[0] |= ~v6mask.s6_addr32[0];
-		ts.net.end.u.v6.sin6_addr.s6_addr32[1] |= ~v6mask.s6_addr32[1];
-		ts.net.end.u.v6.sin6_addr.s6_addr32[2] |= ~v6mask.s6_addr32[2];
-		ts.net.end.u.v6.sin6_addr.s6_addr32[3] |= ~v6mask.s6_addr32[3];
 		break;
 	}
 
-	}
+	/* subnet => range */
+	ts.net = range_from_subnet(&e->client);
 	/* Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595) not yet supported */
 
 	ts.ipprotoid = e->protocol;
