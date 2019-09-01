@@ -53,6 +53,15 @@ ip_address address_from_in_addr(const struct in_addr *in)
 #endif
 }
 
+uint32_t ntohl_address(const ip_address *a)
+{
+	uint32_t u;
+	shunk_t s = address_as_shunk(a);
+	passert(sizeof(u) == s.len);
+	memcpy(&u, s.ptr, s.len);
+	return ntohl(u);
+}
+
 ip_address address_from_in6_addr(const struct in6_addr *in6)
 {
 #ifdef ADDRESS_TYPE

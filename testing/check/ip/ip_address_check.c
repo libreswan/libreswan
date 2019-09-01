@@ -205,6 +205,63 @@ static void check_str_address_reversed(void)
 	}
 }
 
+static void check_in_addr(void)
+{
+	static const struct test {
+		const int family;
+		const char *in;
+		uint8_t addr[16];
+	} tests[] = {
+		{ 4, "1.2.3.4", { 1, 2, 3, 4, }, },
+		{ 6, "102:304:506:708:90a:b0c:d0e:f10", { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, }, },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_IN(stdout, " -> '%s'", t->in);
+
+		ip_address a;
+		switch (t->family) {
+		case 4:
+		{
+			struct in_addr in;
+			memcpy(&in, t->addr, sizeof(in));
+			a = address_from_in_addr(&in);
+			break;
+		}
+		case 6:
+		{
+			struct in6_addr in6;
+			memcpy(&in6, t->addr, sizeof(in6));
+			a = address_from_in6_addr(&in6);
+			break;
+		}
+		}
+
+		/* as a string */
+		address_buf buf;
+		const char *out = str_address(&a, &buf);
+		if (out == NULL) {
+			FAIL_IN("str_address() returned NULL");
+		} else if (!strcaseeq(out, t->in)) {
+			FAIL_IN("str_address() returned '%s', expecting '%s'",
+				out, t->in);
+		}
+
+		switch (t->family) {
+		case 4:
+		{
+			uint32_t h = ntohl_address(&a);
+			uint32_t n = htonl(h);
+			if (!memeq(&n, t->addr, sizeof(n))) {
+				FAIL_IN("ntohl_address() returned %08"PRIx32", expecting something else", h);
+			}
+			break;
+		}
+		}
+	}
+}
+
 #define CHECK_ADDRESS(FAIL, ADDRESS)					\
 	{								\
 		CHECK_TYPE(FAIL, address_type(ADDRESS), t->family);	\
@@ -390,4 +447,5 @@ void ip_address_check(void)
 	check_address_loopback();
 	check_address_is();
 	check_ttoaddr_dns();
+	check_in_addr();
 }

@@ -219,8 +219,8 @@ static void check_ttorange__to__str_range(void)
 
 		if (t->pool > 0) {
 			/* er, isn't the point of this a function? */
-			unsigned pool_size = (uint32_t)ntohl(range.end.u.v4.sin_addr.s_addr) -
-				(uint32_t)ntohl(range.start.u.v4.sin_addr.s_addr);
+			uint32_t pool_size = (ntohl_address(&range.end) -
+					      ntohl_address(&range.start));
 			pool_size++;
 			if (t->pool != (long)pool_size) {
 				FAIL_IN("pool_size gave %u, expecting %ld",
