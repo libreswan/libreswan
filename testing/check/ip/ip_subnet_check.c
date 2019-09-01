@@ -1,8 +1,7 @@
-/*
- * convert from text form of subnet specification to binary
+/* test subnets, for libreswan
  *
  * Copyright (C) 2000  Henry Spencer.
- * Copyright (C) 2018  Andrew Cagney
+ * Copyright (C) 2018, 2019  Andrew Cagney
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -31,15 +30,6 @@ static void check_str_subnet(void)
 	} tests[] = {
 		{ 4, "1.2.3.0/255.255.255.0", "1.2.3.0/24" },
 		{ 4, "1.2.3.0/24", "1.2.3.0/24" },
-#if 0
-		{ 4, "1.2.3.0/24:10", "1.2.3.0/24:10" },
-		{ 4, "1.2.3.0/24:-1", NULL },
-		{ 4, "1.2.3.0/24:none", NULL },
-		{ 4, "1.2.3.0/24:", NULL },
-		{ 4, "1.2.3.0/24:0x10", "1.2.3.0/24:16" },
-		{ 4, "1.2.3.0/24:0X10", "1.2.3.0/24:16" },
-		{ 4, "1.2.3.0/24:010", "1.2.3.0/24:8" },
-#endif
 		{ 4, "1.2.3.1/255.255.255.240", "1.2.3.0/28" },
 		{ 4, "1.2.3.1/32", "1.2.3.1/32" },
 		{ 4, "1.2.3.1/0", "0.0.0.0/0" },
@@ -76,9 +66,6 @@ static void check_str_subnet(void)
 		{ 6, "3049:1::8007::2040/128", NULL },
 		{ 6, "3049:1::8007:2040/ffff:0", NULL },
 		{ 6, "3049:1::8007:2040/64", "3049:1::/64" },
-#if 0
-		{ 6, "3049:1::8007:2040/64:53", "3049:1::/64:53" },
-#endif
 		{ 6, "3049:1::8007:2040/ffff:", NULL },
 		{ 6, "3049:1::8007:2040/0000:ffff::0", NULL },
 		{ 6, "3049:1::8007:2040/ff1f:0", NULL },
@@ -133,7 +120,7 @@ static void check_str_subnet(void)
 		subnet_buf buf;
 		const char *out = str_subnet(&s, &buf);
 		if (!streq(t->out, out)) {
-			FAIL_IN("subnetporttot returned '%s', expected '%s'",
+			FAIL_IN("str_subnet() returned '%s', expected '%s'",
 				out, t->out);
 		}
 	}
@@ -187,8 +174,73 @@ static void check_subnet_mask(void)
 	}
 }
 
+static void check_subnet_port(void)
+{
+	static const struct test {
+		int family;
+		const char *in;
+		const char *out;
+		int port;
+	} tests[] = {
+		{ 4, "1.2.3.0/24", "1.2.3.0/24", 0, },
+		{ 4, "1.2.3.0/24:0", "1.2.3.0/24", 0, },
+		{ 4, "1.2.3.0/24:10", "1.2.3.0/24", 10, },
+		{ 4, "1.2.3.0/24:-1", NULL },
+		{ 4, "1.2.3.0/24:none", NULL },
+		{ 4, "1.2.3.0/24:", NULL },
+		{ 4, "1.2.3.0/24:0x10", "1.2.3.0/24", 16, },
+		{ 4, "1.2.3.0/24:0X10", "1.2.3.0/24", 16, },
+		{ 4, "1.2.3.0/24:010", "1.2.3.0/24", 8, },
+		{ 6, "3049:1::8007:2040/64", "3049:1::/64", 0, },
+		{ 6, "3049:1::8007:2040/64:0", "3049:1::/64", 0, },
+		{ 6, "3049:1::8007:2040/64:53", "3049:1::/64", 53, },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_IN(stdout, " -> %d", t->port);
+
+		sa_family_t af = SA_FAMILY(t->family);
+
+		ip_subnet s;
+		err_t oops = ttosubnet(t->in, 0, af, &s);
+		if (oops != NULL && t->out == NULL) {
+			/* Error was expected, do nothing */
+			continue;
+		} else if (oops != NULL && t->out != NULL) {
+			/* Error occurred, but we didn't expect one  */
+			FAIL_IN("ttosubnet failed: %s", oops);
+		} else if (oops == NULL && t->out == NULL) {
+			/* If no errors, but we expected one */
+			FAIL_IN("ttosubnet succeeded unexpectedly");
+		}
+		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+
+		subnet_buf out_buf;
+		const char *out = str_subnet(&s, &out_buf);
+		if (!streq(t->out, out)) {
+			FAIL_IN("str_subnet() returned '%s', expected '%s'",
+				out, t->out);
+		}
+
+		int port = subnet_port(&s);
+		if (port != t->port) {
+			FAIL_IN("subnet_port() returned '%d', expected '%d'",
+				port, t->port);
+		}
+
+		ip_subnet ps = set_subnet_port(&s, t->port+1);
+		int pport = subnet_port(&ps);
+		if (pport != t->port+1) {
+			FAIL_IN("subnet_port() returned '%d', expected '%d'",
+				pport, t->port+1);
+		}
+	}
+}
+
 void ip_subnet_check(void)
 {
 	check_str_subnet();
 	check_subnet_mask();
+	check_subnet_port();
 }

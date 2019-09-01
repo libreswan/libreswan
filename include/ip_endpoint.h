@@ -103,7 +103,7 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 
 /* host byte order */
 int endpoint_port(const ip_endpoint *endpoint);
-ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port);
+ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port) MUST_USE_RESULT;
 
 /* currently forces port to zero */
 ip_address endpoint_address(const ip_endpoint *endpoint);

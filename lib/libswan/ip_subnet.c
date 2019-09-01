@@ -43,6 +43,26 @@ const struct ip_info *subnet_type(const ip_subnet *src)
 	return endpoint_type(&src->addr);
 }
 
+int subnet_port(const ip_subnet *subnet)
+{
+#ifdef SUBNET_TYPE
+	return subnet->port;
+#else
+	return endpoint_port(&subnet->addr);
+#endif
+}
+
+ip_subnet set_subnet_port(const ip_subnet *subnet, int hport)
+{
+	ip_subnet s = *subnet;
+#ifdef SUBNET_TYPE
+	s.port = hport;
+#else
+	s.addr = set_endpoint_port(&subnet->addr, hport);
+#endif
+	return s;
+}
+
 bool subnet_is_specified(const ip_subnet *s)
 {
 	return endpoint_is_specified(&s->addr);
