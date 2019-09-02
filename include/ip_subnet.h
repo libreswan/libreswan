@@ -117,7 +117,6 @@ extern void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
 #if 0
 extern const ip_subnet subnet_invalid;
 #define subnet_is_invalid(S) (subnet_type(S) == NULL)
-bool subnet_is_any(const ip_subnet *subnet);
 #endif
 bool subnet_is_specified(const ip_subnet *subnet);
 

@@ -197,8 +197,8 @@ static void check_ttorange__to__str_range(void)
 		}
 		const char *oops = NULL;
 
-		ip_range range;
-		oops = ttorange(t->in, IP_TYPE(t->family), &range);
+		ip_range r;
+		oops = ttorange(t->in, IP_TYPE(t->family), &r);
 		if (oops != NULL && t->out == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -206,11 +206,12 @@ static void check_ttorange__to__str_range(void)
 		if (oops != NULL && t->out != NULL) {
 			/* Error occurred, but we didn't expect one  */
 			FAIL_IN("ttorange() failed: %s", oops);
-			continue;
 		}
 
+		CHECK_TYPE(FAIL_IN, range_type(&r), t->family);
+
 		range_buf buf;
-		const char *out = str_range(&range, &buf);
+		const char *out = str_range(&r, &buf);
 		if (!streq(out, t->out)) {
 			FAIL_IN("str_range() returned '%s', expecting '%s'",
 				out, t->out);
@@ -219,8 +220,8 @@ static void check_ttorange__to__str_range(void)
 
 		if (t->pool > 0) {
 			/* er, isn't the point of this a function? */
-			uint32_t pool_size = (ntohl_address(&range.end) -
-					      ntohl_address(&range.start));
+			uint32_t pool_size = (ntohl_address(&r.end) -
+					      ntohl_address(&r.start));
 			pool_size++;
 			if (t->pool != (long)pool_size) {
 				FAIL_IN("pool_size gave %u, expecting %ld",
@@ -269,6 +270,7 @@ static void check_range_from_subnet(void)
 		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
 
 		ip_range r = range_from_subnet(&s);
+		CHECK_TYPE(FAIL_IN, range_type(&r), t->family);
 
 		address_buf start_buf;
 		const char *start = str_address(&r.start, &start_buf);
@@ -289,10 +291,75 @@ static void check_range_from_subnet(void)
 	}
 }
 
+static void check_range_is(void)
+{
+	static const struct test {
+		int family;
+		const char *lo;
+		const char *hi;
+		bool invalid;
+		bool specified;
+	} tests[] = {
+		{ 0, "", "", .invalid = true, },
+
+		{ 4, "0.0.0.0", "0.0.0.0", },
+		{ 4, "0.0.0.1", "0.0.0.2", .specified = true, },
+
+		{ 6, "::", "::", },
+		{ 6, "::1", "::2", .specified = true, },
+	};
+
+	const char *oops;
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_LO2HI(stdout, " -> invalid: %s specified: %s",
+			    bool_str(t->invalid), bool_str(t->specified));
+
+		sa_family_t af = SA_FAMILY(t->family);
+
+		ip_address lo;
+		if (strlen(t->lo) > 0) {
+			oops = ttoaddr(t->lo, 0, af, &lo);
+			if (oops != NULL) {
+				FAIL_LO2HI("ttoaddr failed converting '%s'", t->lo);
+			}
+		} else {
+			lo = address_invalid;
+		}
+
+		ip_address hi;
+		if (strlen(t->hi) > 0) {
+			oops = ttoaddr(t->hi, 0, af, &hi);
+			if (oops != NULL) {
+				FAIL_LO2HI("ttoaddr failed converting '%s'", t->hi);
+			}
+		} else {
+			hi = address_invalid;
+		}
+
+		ip_range r = range(&lo, &hi);
+		CHECK_TYPE(FAIL_LO2HI, range_type(&r), t->family);
+
+		bool invalid = range_is_invalid(&r);
+		if (invalid != t->invalid) {
+			FAIL_LO2HI("range_is_invalid() returned %s, expecting %s",
+				   bool_str(invalid), bool_str(t->invalid));
+		}
+
+		bool specified = range_is_specified(&r);
+		if (specified != t->specified) {
+			FAIL_LO2HI("range_is_specified() returned %s, expecting %s",
+				   bool_str(specified), bool_str(t->specified));
+		}
+	}
+}
+
 void ip_range_check(void)
 {
 	check_rangetosubnet();
 	check_iprange_bits();
 	check_ttorange__to__str_range();
 	check_range_from_subnet();
+	check_range_is();
 }

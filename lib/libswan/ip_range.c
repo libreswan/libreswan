@@ -28,6 +28,23 @@
 #include "ip_range.h"
 #include "ip_info.h"
 #include "libreswan/passert.h"
+#include "lswlog.h"		/* for pexpect() */
+
+ip_range range(const ip_address *start, const ip_address *end)
+{
+	/* does the caller know best? */
+	const struct ip_info *st = address_type(start);
+	const struct ip_info *et = address_type(end);
+	passert(st == et);
+	bool ss = address_is_specified(start);
+	bool es = address_is_specified(end);
+	passert(ss == es);
+	ip_range r = {
+		.start = *start,
+		.end = *end,
+	};
+	return r;
+}
 
 /*
  * Calculate the number of significant bits in the size of the range.
@@ -176,4 +193,24 @@ ip_range range_from_subnet(const ip_subnet *subnet)
 		.end = subnet_blit(subnet, &keep_bits, &set_bits),
 	};
 	return r;
+}
+
+const struct ip_info *range_type(const ip_range *range)
+{
+	const struct ip_info *start = address_type(&range->start);
+	const struct ip_info *end = address_type(&range->end);
+	if (!pexpect(start == end)) {
+		return NULL;
+	}
+	return start;
+}
+
+bool range_is_specified(const ip_range *r)
+{
+	bool start = address_is_specified(&r->start);
+	bool end = address_is_specified(&r->end);
+	if (!pexpect(start == end)) {
+		return false;
+	}
+	return start;
 }

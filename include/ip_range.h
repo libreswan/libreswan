@@ -27,9 +27,16 @@ typedef struct {
 	ip_address end;
 } ip_range;
 
+/* caller knows best */
+ip_range range(const ip_address *start, const ip_address *end);
+
 ip_range range_from_subnet(const ip_subnet *subnet);
 
 extern err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst);
+
+/*
+ * Formatting
+ */
 
 typedef struct {
 	char buf[sizeof(address_buf) + 1/*"-"*/ + sizeof(address_buf)];
@@ -37,6 +44,14 @@ typedef struct {
 
 void jam_range(struct lswlog *buf, const ip_range *range);
 const char *str_range(const ip_range *range, range_buf *buf);
+
+/*
+ * Extract internals.
+ */
+
+const struct ip_info *range_type(const ip_range *r);
+#define range_is_invalid(R) (range_type(R) == NULL)
+bool range_is_specified(const ip_range *r);
 
 /*
  * Calculate the number of significant bits in the size of the range.
