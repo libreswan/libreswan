@@ -927,23 +927,18 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      )
 {
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
-	ip_address
-		sflow_ska,
-		dflow_ska,
-		smask_ska,
-		dmask_ska;
 	int klips_op = kernelop2klips(op);
 
 	int sport = ntohs(portof(&this_client->addr));
 	int dport = ntohs(portof(&that_client->addr));
 	int satype;
 
-	sflow_ska = subnet_endpoint(this_client);
-	smask_ska = subnet_mask(this_client);
+	ip_address sflow_ska = subnet_prefix(this_client);
+	ip_address smask_ska = subnet_mask(this_client);
 	setportof(sport ? ~0 : 0, &smask_ska);
 
-	dflow_ska = subnet_endpoint(that_client);
-	dmask_ska = subnet_mask(that_client);
+	ip_address dflow_ska = subnet_prefix(that_client);
+	ip_address dmask_ska = subnet_mask(that_client);
 	setportof(dport ? ~0 : 0, &dmask_ska);
 
 	satype = eroute_type_to_pfkey_satype(esatype);
@@ -1795,10 +1790,9 @@ void pfkey_scan_shunts(void)
 	 */
 	while (expired != NULL) {
 		struct eroute_info *p = expired;
-		ip_address src, dst;
 
-		src = subnet_endpoint(&p->ours);
-		dst = subnet_endpoint(&p->his);
+		ip_address src = subnet_prefix(&p->ours);
+		ip_address dst = subnet_prefix(&p->his);
 
 		if (delete_bare_shunt(&src, &dst,
 				p->transport_proto, SPI_HOLD, /* what spi to use? */

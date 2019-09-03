@@ -777,8 +777,8 @@ sa_build:
 			fprintf(stderr, "%s: source subnet not specified\n", progname);
 			exit(1);
 		}
-		ip_endpoint sflow = subnet_endpoint(&s_subnet);
-		ip_endpoint sflow_end = set_endpoint_port(&sflow, src_port); /* src flow */
+		ip_address sflow = subnet_prefix(&s_subnet);
+		ip_endpoint sflow_end = endpoint(&sflow, src_port); /* src flow */
 		ip_sockaddr sflow_sa;
 		passert(endpoint_to_sockaddr(&sflow_end, &sflow_sa) > 0);
 		error = pfkey_address_build(&extensions[SADB_X_EXT_ADDRESS_SRC_FLOW],
@@ -804,8 +804,8 @@ sa_build:
 			fprintf(stderr, "%s: destination subnet not specified.\n", progname);
 			exit(1);
 		}
-		ip_endpoint dflow = subnet_endpoint(&d_subnet);
-		ip_endpoint dflow_end = set_endpoint_port(&dflow, dst_port); /* dst flow */
+		ip_address dflow = subnet_prefix(&d_subnet);
+		ip_endpoint dflow_end = endpoint(&dflow, dst_port); /* dst flow */
 		ip_sockaddr dflow_sa;
 		passert(endpoint_to_sockaddr(&dflow_end, &dflow_sa) > 0);
 		error = pfkey_address_build(&extensions[SADB_X_EXT_ADDRESS_DST_FLOW],

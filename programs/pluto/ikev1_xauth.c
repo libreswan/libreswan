@@ -184,7 +184,7 @@ static bool get_internal_addresses(
 		*got_lease = TRUE;
 	} else {
 		passert(subnet_is_specified(&c->spd.that.client));
-		ia->ipaddr = subnet_endpoint(&c->spd.that.client);
+		ia->ipaddr = subnet_prefix(&c->spd.that.client);
 	}
 
 	return TRUE;
@@ -330,8 +330,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	{
 		/* XXX: bitstomask(c->spd.this.client.maskbits), */
 		ip_address mask = subnet_mask(&c->spd.this.client);
-		/* XXX: ignore endpint/address snafu for now */
-		ip_address addr = subnet_endpoint(&c->spd.this.client);
+		ip_address addr = subnet_prefix(&c->spd.this.client);
 		struct CISCO_split_item i = {
 			.cs_addr = { htonl(ntohl_address(&addr)), },
 			.cs_mask = { htonl(ntohl_address(&mask)), },

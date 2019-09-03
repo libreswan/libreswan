@@ -127,6 +127,8 @@ int subnet_port(const ip_subnet *subnet);
 
 /* when applied to an address, leaves just the routing prefix */
 extern ip_address subnet_mask(const ip_subnet *subnet);
+/* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */
+ip_address subnet_prefix(const ip_subnet *subnet);
 
 extern const struct ip_blit set_bits;
 extern const struct ip_blit clear_bits;
@@ -135,9 +137,6 @@ extern const struct ip_blit keep_bits;
 ip_address subnet_blit(const ip_subnet *in,
 		       const struct ip_blit *network,
 		       const struct ip_blit *host);
-
-/* PREFIX|HOST:PORT */
-ip_endpoint subnet_endpoint(const ip_subnet *subnet);
 
 /*
  * old

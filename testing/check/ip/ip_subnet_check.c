@@ -174,6 +174,55 @@ static void check_subnet_mask(void)
 	}
 }
 
+static void check_subnet_prefix(void)
+{
+	static const struct test {
+		int family;
+		const char *in;
+		const char *out;
+	} tests[] = {
+		{ 4, "255.255.255.255/1", "128.0.0.0", },
+		{ 6, "ffff:2:3:4:5:6:7:8/1", "8000::", },
+
+		{ 4, "1.2.255.255/23", "1.2.254.0", },
+		{ 4, "1.2.255.255/24", "1.2.255.0", },
+		{ 4, "1.2.255.255/25", "1.2.255.128", },
+		{ 6, "1:2:3:ffff:ffff:6:7:8/63", "1:2:3:fffe::", },
+		{ 6, "1:2:3:ffff:ffff:6:7:8/64", "1:2:3:ffff::", },
+		{ 6, "1:2:3:ffff:ffff:6:7:8/65", "1:2:3:ffff:8000::", },
+
+		{ 4, "1.2.3.255/31", "1.2.3.254", },
+		{ 4, "1.2.3.255/32", "1.2.3.255", },
+		{ 6, "1:2:3:4:5:6:7:ffff/127", "1:2:3:4:5:6:7:fffe", },
+		{ 6, "1:2:3:4:5:6:7:ffff/128", "1:2:3:4:5:6:7:ffff", },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_IN(stdout, " -> %s", t->out);
+
+		sa_family_t af = SA_FAMILY(t->family);
+
+		ip_subnet s;
+		err_t oops = ttosubnet(t->in, 0, af, &s);
+		if (oops != NULL) {
+			FAIL_IN("ttosubnet() failed: %s", oops);
+		}
+
+		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+
+		ip_address prefix = subnet_prefix(&s);
+		CHECK_TYPE(FAIL_IN, address_type(&prefix), t->family);
+
+		address_buf buf;
+		const char *out = str_address(&prefix, &buf);
+		if (!streq(out, t->out)) {
+			FAIL_IN("subnet_prefix() returned '%s', expected '%s'",
+				out, t->out);
+		}
+	}
+}
+
 static void check_subnet_port(void)
 {
 	static const struct test {
@@ -241,6 +290,7 @@ static void check_subnet_port(void)
 void ip_subnet_check(void)
 {
 	check_str_subnet();
+	check_subnet_prefix();
 	check_subnet_mask();
 	check_subnet_port();
 }

@@ -88,12 +88,11 @@ static struct fg_targets *new_targets;
  */
 static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
 {
-	ip_address neta, netb;
 	int r;
 
-	neta = subnet_endpoint(a);
+	ip_address neta = subnet_prefix(a);
 	ip_address maska = subnet_mask(a);
-	netb = subnet_endpoint(b);
+	ip_address netb = subnet_prefix(b);
 	ip_address maskb = subnet_mask(b);
 	r = addrcmp(&neta, &netb);
 	if (r == 0)

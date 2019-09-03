@@ -161,15 +161,14 @@ static bool emit_subnet_id(const ip_subnet *net,
 	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_pbs))
 		return FALSE;
 
-	ip_address ta;
-	ta = subnet_endpoint(net);
-	if (!pbs_out_address(&ta, &id_pbs, "client network")) {
+	ip_address tp = subnet_prefix(net);
+	if (!pbs_out_address(&tp, &id_pbs, "client network")) {
 		return false;
 	}
 
 	if (!usehost) {
-		ta = subnet_mask(net);
-		if (!pbs_out_address(&ta, &id_pbs, "client mask")) {
+		ip_address tm = subnet_mask(net);
+		if (!pbs_out_address(&tm, &id_pbs, "client mask")) {
 			return false;
 		}
 	}

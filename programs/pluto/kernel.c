@@ -222,10 +222,8 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 	 *          proc value is different from our internal value?
 	 */
 
-	ip_address src, dst;
-
-	src = subnet_endpoint(ours);
-	dst = subnet_endpoint(his);
+	ip_address src = subnet_prefix(ours);
+	ip_address dst = subnet_prefix(his);
 
 	/* This check should not be needed :( */
 	if (has_bare_hold(&src, &dst, transport_proto)) {
@@ -402,6 +400,8 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 				 const struct spd_route *sr, struct state *st,
 				 bool inbytes, bool outbytes)
 {
+	ip_address ta;
+
 	/* change VERSION when interface spec changes */
 	jam(buf, "PLUTO_VERSION='2.0' ");
 	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
@@ -426,8 +426,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT_NET='");
-	ip_address ta;
-	ta = subnet_endpoint(&sr->this.client);
+	ta = subnet_prefix(&sr->this.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
@@ -462,7 +461,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT_NET='");
-	ta = subnet_endpoint(&sr->that.client);
+	ta = subnet_prefix(&sr->that.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 

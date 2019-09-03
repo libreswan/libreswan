@@ -444,10 +444,8 @@ size_t format_end(char *buf,
 
 	/* [client===] */
 	if (this->has_client) {
-		ip_address client_net, client_mask;
-
-		client_net = subnet_endpoint(&this->client);
-		client_mask = subnet_mask(&this->client);
+		ip_address client_net = subnet_prefix(&this->client);
+		ip_address client_mask = subnet_mask(&this->client);
 		client_sep = "===";
 
 		/* {client_subnet_wildcard} */

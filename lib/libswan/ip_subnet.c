@@ -32,10 +32,11 @@ ip_subnet subnet(const ip_address *address, int maskbits, int port)
 	return s;
 }
 
-
-ip_endpoint subnet_endpoint(const ip_subnet *src)
+ip_address subnet_prefix(const ip_subnet *src)
 {
-	return src->addr;
+	return subnet_blit(src,
+			   /*routing-prefix*/&keep_bits,
+			   /*host-id*/&clear_bits);
 }
 
 const struct ip_info *subnet_type(const ip_subnet *src)
