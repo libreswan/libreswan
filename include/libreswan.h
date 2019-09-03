@@ -133,9 +133,6 @@ extern struct in_addr broadcastof(struct in_addr addr,
 			   );
 
 /* mask handling */
-extern int goodmask(struct in_addr mask);
-extern int masktobits(struct in_addr mask);
-extern int mask6tobits(struct in6_addr *mask);
 extern struct in_addr  bitstomask(int n);
 extern struct in6_addr bitstomask6(int n);
 
