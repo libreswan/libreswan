@@ -35,8 +35,6 @@
 #include "x509.h"
 #include "lswconf.h"
 
-static void hex_str(chunk_t bin, chunk_t *str);	/* forward */
-
 /* coding of X.501 distinguished name */
 typedef const struct {
 	const char *name;
@@ -260,6 +258,44 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
 }
 
 /*
+ * Count the number of wildcard RDNs in a distinguished name; -1 signifies error.
+ */
+int dn_count_wildcards(chunk_t dn)
+{
+	chunk_t rdn;
+	chunk_t attribute;
+	bool more;
+	int wildcards = 0;
+
+	err_t ugh = init_rdn(dn, &rdn, &attribute, &more);
+	if (ugh != NULL)
+		return -1;
+
+	while (more) {
+		chunk_t oid;
+		asn1_t type;
+		chunk_t value;
+		ugh = get_next_rdn(&rdn, &attribute, &oid, &type, &value,
+				   &more);
+		if (ugh != NULL)
+			return -1;
+		if (value.len == 1 && *value.ptr == '*')
+			wildcards++;	/* we have found a wildcard RDN */
+	}
+	return wildcards;
+}
+
+/*
+ * Prints a binary string in hexadecimal form
+ */
+static void hex_str(chunk_t bin, chunk_t *str)
+{
+	format_chunk(str, "0x");
+	for (unsigned i = 0; i < bin.len; i++)
+		format_chunk(str, "%02X", *bin.ptr++);
+}
+
+/*
  * Parses an ASN.1 distinguished name into its OID/value pairs
  */
 static err_t dn_parse(chunk_t dn, chunk_t *str)
@@ -308,44 +344,6 @@ static err_t dn_parse(chunk_t dn, chunk_t *str)
 		format_chunk(str, "%.*s", (int)l, p);
 	}
 	return NULL;
-}
-
-/*
- * Count the number of wildcard RDNs in a distinguished name; -1 signifies error.
- */
-int dn_count_wildcards(chunk_t dn)
-{
-	chunk_t rdn;
-	chunk_t attribute;
-	bool more;
-	int wildcards = 0;
-
-	err_t ugh = init_rdn(dn, &rdn, &attribute, &more);
-	if (ugh != NULL)
-		return -1;
-
-	while (more) {
-		chunk_t oid;
-		asn1_t type;
-		chunk_t value;
-		ugh = get_next_rdn(&rdn, &attribute, &oid, &type, &value,
-				   &more);
-		if (ugh != NULL)
-			return -1;
-		if (value.len == 1 && *value.ptr == '*')
-			wildcards++;	/* we have found a wildcard RDN */
-	}
-	return wildcards;
-}
-
-/*
- * Prints a binary string in hexadecimal form
- */
-static void hex_str(chunk_t bin, chunk_t *str)
-{
-	format_chunk(str, "0x");
-	for (unsigned i = 0; i < bin.len; i++)
-		format_chunk(str, "%02X", *bin.ptr++);
 }
 
 /*
