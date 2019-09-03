@@ -438,8 +438,8 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 	DBG(DBG_CONTROLMORE, {
 			char abuf[IDTOA_BUF];
 			char bbuf[IDTOA_BUF];
-			idtoa(a, abuf, IDTOA_BUF);
-			idtoa(b, bbuf, IDTOA_BUF);
+			idtoa(a, abuf, sizeof(abuf));
+			idtoa(b, bbuf, sizeof(bbuf));
 			DBG_log("   match_id a=%s", abuf);
 			DBG_log("            b=%s", bbuf);
 			DBG_log("   results  %s", match ? "matched" : "fail");
@@ -452,7 +452,6 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 int id_count_wildcards(const struct id *id)
 {
 	int count = 0;
-	char idbuf[IDTOA_BUF];
 
 	switch (id->kind) {
 	case ID_NONE:
@@ -465,7 +464,8 @@ int id_count_wildcards(const struct id *id)
 		break;
 	}
 
-	idtoa(id, idbuf, IDTOA_BUF);
+	char idbuf[IDTOA_BUF];
+	idtoa(id, idbuf, sizeof(idbuf));
 	DBG(DBG_CONTROL,
 		DBG_log("counting wild cards for %s is %d",
 			idbuf,
@@ -540,8 +540,8 @@ static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wild
 	int rdn_num = 0;
 	int matched = 0;
 
-	dntoa(abuf, ASN1_BUF_LEN, a);
-	dntoa(bbuf, ASN1_BUF_LEN, b);
+	dntoa(abuf, sizeof(abuf), a);
+	dntoa(bbuf, sizeof(bbuf), b);
 
 	DBG(DBG_CONTROL,
 	    DBG_log("%s A: %s, B: %s", __func__, abuf, bbuf));

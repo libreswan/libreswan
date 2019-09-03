@@ -731,7 +731,7 @@ void list_crl_fetch_requests(bool utc)
 			lswlog_realtime(buf, req->installed, utc);
 			lswlogf(buf, ", trials: %d", req->trials);
 		}
-		dntoa(buf, ASN1_BUF_LEN, req->issuer);
+		dntoa(buf, sizeof(buf), req->issuer);
 		whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
 		list_distribution_points(req->distributionPoints);
 	}

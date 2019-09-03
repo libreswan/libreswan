@@ -103,8 +103,8 @@ static void print(struct private_key_stuff *pks,
 		  int count, struct id *id, bool disclose)
 {
 	char idb[IDTOA_BUF] = "n/a";
-	if (id) {
-		idtoa(id, idb, IDTOA_BUF);
+	if (id != NULL) {
+		idtoa(id, idb, sizeof(idb));
 	}
 
 	char pskbuf[128] = "";

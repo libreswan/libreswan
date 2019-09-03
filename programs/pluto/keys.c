@@ -659,9 +659,9 @@ static bool try_all_RSA_keys(const char *pubkey_description,
 
 		if (DBGP(DBG_BASE)) {
 			char printkid[IDTOA_BUF];
-			idtoa(&key->id, printkid, IDTOA_BUF);
+			idtoa(&key->id, printkid, sizeof(printkid));
 			char thatid[IDTOA_BUF];
-			idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
+			idtoa(&c->spd.that.id, thatid, sizeof(thatid));
 			DBG_log("checking RSA keyid '%s' for match with '%s'",
 				printkid, thatid);
 		}
@@ -672,8 +672,8 @@ static bool try_all_RSA_keys(const char *pubkey_description,
 		    same_id(&c->spd.that.id, &key->id) &&
 		    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
 			if (DBGP(DBG_BASE)) {
-				char buf[IDTOA_BUF];
-				dntoa_or_null(buf, IDTOA_BUF,
+				char buf[ASN1_BUF_LEN];
+				dntoa_or_null(buf, sizeof(buf),
 					      key->issuer, "%any");
 				DBG_log("key issuer CA is '%s'", buf);
 			}
@@ -730,8 +730,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 	realtime_t now = realnow();
 
 	if (DBGP(DBG_BASE)) {
-		char buf[IDTOA_BUF];
-		dntoa_or_null(buf, IDTOA_BUF, c->spd.that.ca, "%any");
+		char buf[ASN1_BUF_LEN];
+		dntoa_or_null(buf, sizeof(buf), c->spd.that.ca, "%any");
 		DBG_log("required RSA CA is '%s'", buf);
 	}
 
@@ -805,9 +805,9 @@ static bool try_all_ECDSA_keys(const char *pubkey_description,
 
 		if (DBGP(DBG_BASE)) {
 			char printkid[IDTOA_BUF];
-			idtoa(&key->id, printkid, IDTOA_BUF);
+			idtoa(&key->id, printkid, sizeof(printkid));
 			char thatid[IDTOA_BUF];
-			idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
+			idtoa(&c->spd.that.id, thatid, sizeof(thatid));
 			DBG_log("checking ECDSA keyid '%s' for match with '%s'",
 				printkid, thatid);
 		}
@@ -818,8 +818,8 @@ static bool try_all_ECDSA_keys(const char *pubkey_description,
 		    same_id(&c->spd.that.id, &key->id) &&
 		    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
 			if (DBGP(DBG_BASE)) {
-				char buf[IDTOA_BUF];
-				dntoa_or_null(buf, IDTOA_BUF,
+				char buf[ASN1_BUF_LEN];
+				dntoa_or_null(buf, sizeof(buf),
 					      key->issuer, "%any");
 				DBG_log("key issuer CA is '%s'", buf);
 			}
@@ -876,8 +876,8 @@ stf_status ECDSA_check_signature_gen(struct state *st,
 	realtime_t now = realnow();
 
 	if (DBGP(DBG_BASE)) {
-		char buf[IDTOA_BUF];
-		dntoa_or_null(buf, IDTOA_BUF, c->spd.that.ca, "%any");
+		char buf[ASN1_BUF_LEN];
+		dntoa_or_null(buf, sizeof(buf), c->spd.that.ca, "%any");
 		DBG_log("required ECDSA CA is '%s'", buf);
 	}
 
@@ -954,8 +954,8 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	char idme[IDTOA_BUF];
 	char idhim[IDTOA_BUF];
 
-	idtoa(my_id, idme,  IDTOA_BUF);
-	idtoa(his_id, idhim, IDTOA_BUF);
+	idtoa(my_id, idme,  sizeof(idme));
+	idtoa(his_id, idhim, sizeof(idhim));
 
 	DBG(DBG_CONTROL,
 	    DBG_log("started looking for secret for %s->%s of kind %s",
@@ -1042,7 +1042,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	}
 
 	char idhim_revised[IDTOA_BUF];
-	idtoa(his_id, idhim_revised, IDTOA_BUF);
+	idtoa(his_id, idhim_revised, sizeof(idhim_revised));
 
 	DBG(DBG_CONTROL,
 	    DBG_log("actually looking for secret for %s->%s of kind %s",
@@ -1329,7 +1329,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 			    !startswith(check_expiry_msg, "ok")) {
 				char id_buf[IDTOA_BUF];
 
-				idtoa(&key->id, id_buf, IDTOA_BUF);
+				idtoa(&key->id, id_buf, sizeof(id_buf));
 
 				LSWLOG_WHACK(RC_COMMENT, buf) {
 					lswlog_realtime(buf, key->installed_time, utc);
@@ -1360,10 +1360,12 @@ void list_public_keys(bool utc, bool check_pub_keys)
 						    key->id.kind), id_buf);
 
 				if (key->issuer.len > 0) {
-					dntoa(id_buf, IDTOA_BUF, key->issuer);
+					char b[ASN1_BUF_LEN];
+
+					dntoa(b, sizeof(b), key->issuer);
 					whack_log(RC_COMMENT,
 						  "       Issuer '%s'",
-						  id_buf);
+						  b);
 				}
 			}
 			break;

@@ -2055,7 +2055,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	const struct connection *c = st->st_connection;
 	char inst[CONN_INST_BUF];
 	char traffic_buf[512];
-	char thatidbuf[IDTOA_BUF] ;
+	char thatidbuf[IDTOA_BUF];
 
 	state_buf[0] = '\0';   /* default to empty */
 	traffic_buf[0] = '\0';

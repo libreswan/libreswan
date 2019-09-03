@@ -2805,12 +2805,13 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		}
 	}
 
-	char idbuf[IDTOA_BUF];
-
 	DBG(DBG_CONTROL, {
-		dntoa_or_null(idbuf, IDTOA_BUF, c->spd.this.ca, "%none");
-		DBG_log("offered CA: '%s'", idbuf);
+		char b[ASN1_BUF_LEN];
+		dntoa_or_null(b, sizeof(b), c->spd.this.ca, "%none");
+		DBG_log("offered CA: '%s'", b);
 	});
+
+	char idbuf[IDTOA_BUF];
 
 	idtoa(&peer_id, idbuf, sizeof(idbuf));
 

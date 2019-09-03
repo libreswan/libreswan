@@ -477,7 +477,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	char secure_peerca_str[IDTOA_BUF] = "";
 	{
 		struct pubkey_list *p;
-		char peerca_str[IDTOA_BUF];
+		char peerca_str[ASN1_BUF_LEN];
 
 		for (p = pluto_pubkeys; p != NULL; p = p->next) {
 			struct pubkey *key = p->key;
@@ -487,7 +487,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 			    same_id(&sr->that.id, &key->id) &&
 			    trusted_ca_nss(key->issuer, sr->that.ca, &pathlen))
 			{
-				dntoa_or_null(peerca_str, IDTOA_BUF,
+				dntoa_or_null(peerca_str, sizeof(peerca_str),
 					key->issuer, "");
 				escape_metachar(peerca_str, secure_peerca_str,
 						sizeof(secure_peerca_str));

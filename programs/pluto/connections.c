@@ -3789,10 +3789,10 @@ void show_one_connection(const struct connection *c)
 
 	/* Show CAs */
 	if (c->spd.this.ca.ptr != NULL || c->spd.that.ca.ptr != NULL) {
-		char this_ca[IDTOA_BUF], that_ca[IDTOA_BUF];
+		char this_ca[ASN1_BUF_LEN], that_ca[ASN1_BUF_LEN];
 
-		dntoa_or_null(this_ca, IDTOA_BUF, c->spd.this.ca, "%any");
-		dntoa_or_null(that_ca, IDTOA_BUF, c->spd.that.ca, "%any");
+		dntoa_or_null(this_ca, sizeof(this_ca), c->spd.this.ca, "%any");
+		dntoa_or_null(that_ca, sizeof(that_ca), c->spd.that.ca, "%any");
 
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   CAs: '%s'...'%s'",

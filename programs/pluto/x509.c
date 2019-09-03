@@ -215,13 +215,13 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	DBG(DBG_X509 | DBG_CONTROLMORE, {
 		if (a.ptr != NULL) {
 			char abuf[ASN1_BUF_LEN];
-			dntoa(abuf, ASN1_BUF_LEN, a);
+			dntoa(abuf, sizeof(abuf), a);
 	    		DBG_log("%s: trustee A = '%s'", __func__, abuf);
 		}
 
 		if (b.ptr != NULL) {
 			char bbuf[ASN1_BUF_LEN];
-			dntoa(bbuf, ASN1_BUF_LEN, b);
+			dntoa(bbuf, sizeof(bbuf), b);
 	    		DBG_log("%s: trustor B = '%s'", __func__, bbuf);
 		}
 	});
@@ -1006,8 +1006,8 @@ void ikev1_decode_cr(struct msg_digest *md)
 			}
 
 			DBG(DBG_X509 | DBG_CONTROL, {
-					char buf[IDTOA_BUF];
-					dntoa_or_null(buf, IDTOA_BUF, ca_name,
+					char buf[ASN1_BUF_LEN];
+					dntoa_or_null(buf, sizeof(buf), ca_name,
 						"%any");
 					DBG_log("requested CA: '%s'", buf);
 				});
@@ -1055,8 +1055,8 @@ void ikev2_decode_cr(struct msg_digest *md)
 			}
 
 			DBG(DBG_X509, {
-					char buf[IDTOA_BUF];
-					dntoa_or_null(buf, IDTOA_BUF, ca_name,
+					char buf[ASN1_BUF_LEN];
+					dntoa_or_null(buf, sizeof(buf), ca_name,
 						"%any");
 					DBG_log("requested CA: '%s'", buf);
 				});
@@ -1204,7 +1204,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	if (ca.ptr != NULL) {
 		char cbuf[ASN1_BUF_LEN];
 
-		dntoa(cbuf, ASN1_BUF_LEN, ca);
+		dntoa(cbuf, sizeof(cbuf), ca);
 
 		SECItem caname = same_chunk_as_dercert_secitem(ca);
 

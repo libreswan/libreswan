@@ -355,12 +355,12 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 		idhim[IDTOA_BUF],
 		idhim2[IDTOA_BUF];
 
-	idtoa(my_id,  idme,  IDTOA_BUF);
+	idtoa(my_id, idme, sizeof(idme));
 
 	idhim[0] = '\0';
 	idhim2[0] = '\0';
 	if (his_id != NULL) {
-		idtoa(his_id, idhim, IDTOA_BUF);
+		idtoa(his_id, idhim, sizeof(idhim));
 		strcpy(idhim2, idhim);
 	}
 
@@ -391,7 +391,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					char idstr1[IDTOA_BUF];
 
 					idnum++;
-					idtoa(&i->id, idstr1, IDTOA_BUF);
+					idtoa(&i->id, idstr1, sizeof(idstr1));
 
 					if (any_id(&i->id)) {
 						/*
@@ -1096,7 +1096,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 					unshare_id_content(&i->id);
 					i->next = s->ids;
 					s->ids = i;
-					idtoa(&id, idb, IDTOA_BUF);
+					idtoa(&id, idb, sizeof(idb));
 					DBG(DBG_CONTROL,
 						DBG_log("id type added to secret(%p) %s: %s",
 							s,
