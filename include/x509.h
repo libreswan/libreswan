@@ -83,8 +83,8 @@ extern deltatime_t crl_check_interval;
 extern bool same_dn(chunk_t a, chunk_t b);
 extern bool match_dn(chunk_t a, chunk_t b, int *wildcards);
 extern int dn_count_wildcards(chunk_t dn);
-extern int dntoa(char *dst, size_t dstlen, chunk_t dn);
-extern int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
+extern void dntoa(char *dst, size_t dstlen, chunk_t dn);
+extern void dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
 			 const char *null_dn);
 extern err_t atodn(const char *src, chunk_t *dn);
 extern void free_generalNames(generalName_t *gn, bool free_name);

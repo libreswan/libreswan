@@ -123,18 +123,18 @@ static void format_chunk(chunk_t *ch, const char *format, ...)
 			 * we ought to raise a stink
 			 * For now: pretend nothing happened!
 			 */
-		} else if ((size_t)ret > len) {
+			ret = 0;
+		}
+		if ((size_t)ret > len) {
 			/*
 			 * BUG: if ret >= len, then the vsnprintf output was
-			 * truncate, we ought to raise a stink!
+			 * truncated: we ought to raise a stink!
 			 * For now: accept truncated output.
 			 */
-			ch->ptr += len;
-			ch->len = 0;
-		} else {
-			ch->ptr += ret;
-			ch->len -= ret;
+			ret = len;
 		}
+		ch->ptr += ret;
+		ch->len -= ret;
 	}
 }
 
@@ -168,13 +168,17 @@ static err_t unwrap(asn1_t ty, chunk_t *container, chunk_t *contents)
 {
 	if (container->len == 0)
 		return "missing ASN1 type";
+
 	if (container->ptr[0] != ty)
 		return "unexpected ASN1 type";
+
 	size_t sz = asn1_length(container);
 	if (sz == ASN1_INVALID_LENGTH)
 		return "invalid ASN1 length";
+
 	if (sz > container->len)
 		return "ASN1 length larger than space";
+
 	contents->ptr = container->ptr;
 	contents->len = sz;
 	container->ptr += sz;
@@ -279,6 +283,7 @@ int dn_count_wildcards(chunk_t dn)
 				   &more);
 		if (ugh != NULL)
 			return -1;
+
 		if (value.len == 1 && *value.ptr == '*')
 			wildcards++;	/* we have found a wildcard RDN */
 	}
@@ -296,18 +301,14 @@ static void hex_str(chunk_t bin, chunk_t *str)
 }
 
 /*
- * Parses an ASN.1 distinguished name into its OID/value pairs
+ * formats an ASN.1 Distinguished Name into an ASCII string of OID/value pairs
  */
-static err_t dn_parse(chunk_t dn, chunk_t *str)
+static err_t format_dn(chunk_t dn, chunk_t *str)
 {
 	chunk_t rdn;
 	chunk_t attribute;
 	bool more;
 
-	if (dn.ptr == NULL) {
-		format_chunk(str, "(empty)");
-		return NULL;
-	}
 	RETURN_IF_ERR(init_rdn(dn, &rdn, &attribute, &more));
 
 	for (bool first = TRUE; more; first = FALSE) {
@@ -350,32 +351,31 @@ static err_t dn_parse(chunk_t dn, chunk_t *str)
  * Converts a binary DER-encoded ASN.1 distinguished name
  * into LDAP-style human-readable ASCII format
  */
-int dntoa(char *dst, size_t dstlen, chunk_t dn)
+void dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
 {
-	chunk_t str;
+	chunk_t str = {
+		.ptr = (unsigned char *)dst,
+		.len = dstlen
+	};
+	if (dn.ptr == NULL) {
+		format_chunk(&str, "%s", null_dn);
+	} else {
+		err_t ugh = format_dn(dn, &str);
 
-	str.ptr = (unsigned char *)dst;
-	str.len = dstlen;
-	err_t ugh = dn_parse(dn, &str);
-
-	if (ugh != NULL) {	/* error, print DN as hex string */
-		libreswan_log("error in DN parsing: %s", ugh);
-		DBG_dump_hunk("Bad DN:", dn);
-		str.ptr = (unsigned char *)dst;
-		str.len = dstlen;
-		hex_str(dn, &str);
+		if (ugh != NULL) {
+			/* error: print DN as hex string */
+			libreswan_log("error in DN parsing: %s", ugh);
+			DBG_dump_hunk("Bad DN:", dn);
+			str.ptr = (unsigned char *)dst;
+			str.len = dstlen;
+			hex_str(dn, &str);
+		}
 	}
-	return (int)(dstlen - str.len);
 }
 
-/*
- * Same as dntoa but prints a special string for a null dn
- */
-int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
+void dntoa(char *dst, size_t dstlen, chunk_t dn)
 {
-	return dn.ptr == NULL ?
-		snprintf(dst, dstlen, "%s", null_dn) :
-		dntoa(dst, dstlen, dn);
+	dntoa_or_null(dst, dstlen, dn, "(empty)");
 }
 
 /*
@@ -691,8 +691,8 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			char abuf[ASN1_BUF_LEN];
 			char bbuf[ASN1_BUF_LEN];
 
-			dntoa(abuf, ASN1_BUF_LEN, a);
-			dntoa(bbuf, ASN1_BUF_LEN, b);
+			dntoa(abuf, sizeof(abuf), a);
+			dntoa(bbuf, sizeof(bbuf), b);
 
 			libreswan_log(
 				"while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
