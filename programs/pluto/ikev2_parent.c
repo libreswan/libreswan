@@ -480,12 +480,13 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 			err2 = enum_show(&ike_idtype_names, id.kind);
 		}
 
-		char thatid[IDTOA_BUF];
+		id_buf thatid;
 		ipstr_buf ra;
-		idtoa(&id, thatid, sizeof(thatid));
 		DBG_log("%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
 			c->name, st->st_serialno,
-			err1, err2, ipstr(&st->st_remote_endpoint, &ra), thatid);
+			err1, err2,
+			ipstr(&st->st_remote_endpoint, &ra),
+			str_id(&id, &thatid));
 	});
 	return FALSE;
 }

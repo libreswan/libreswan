@@ -767,7 +767,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 		 * DNS query (if any).  It also selects the kind of the next step.
 		 * The second chunk initiates the next DNS query (if any).
 		 */
-		char mycredentialstr[IDTOA_BUF];
 
 		DBG(DBG_CONTROL, {
 			    char cib[CONN_INST_BUF];
@@ -781,8 +780,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 			sr->routing = RT_ROUTED_ECLIPSED;
 			eclipse_count++;
 		}
-
-		idtoa(&sr->this.id, mycredentialstr, sizeof(mycredentialstr));
 
 		passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 

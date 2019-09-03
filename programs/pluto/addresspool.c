@@ -384,11 +384,10 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 		} else if (ll != NULL) {
 			/* we take over this lingering lease */
 			DBG(DBG_CONTROLMORE, {
-				char thatidbuf[IDTOA_BUF];
+				id_buf thatidbuf;
 
-				idtoa(&ll->thatid, thatidbuf, sizeof(thatidbuf));
 				DBG_log("grabbed lingering lease index %u from %s",
-					i, thatidbuf);
+					i, str_id(&ll->thatid, &thatidbuf));
 			});
 			duplicate_id(&ll->thatid, &c->spd.that.id);
 			c->pool->lingering--;
@@ -410,19 +409,17 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 		*ipa = address_from_in_addr(&addr_nw);
 	}
 	DBG(DBG_CONTROL, {
-		range_buf rbuf;
-		char thatidbuf[IDTOA_BUF];
-		ipstr_buf a;
 		ipstr_buf l;
-
-		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
+		range_buf rbuf;
+		ipstr_buf a;
+		id_buf thatidbuf;
 
 		DBG_log("%s lease %s from addresspool %s to that.client.addr %s thatid '%s'",
 			s ? "re-use" : "new",
 			ipstr(ipa, &l),
 			str_range(&c->pool->r, &rbuf),
 			ipstr(&c->spd.that.client.addr, &a),
-			thatidbuf);
+			str_id(&c->spd.that.id, &thatidbuf));
 	});
 
 	return NULL;

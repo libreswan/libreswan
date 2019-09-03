@@ -3275,11 +3275,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	st->st_peeridentity_port = ntohs(id->isaid_doi_specific_b);
 
 	{
-		char buf[IDTOA_BUF];
+		id_buf buf;
 
-		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("Peer ID is %s: '%s'",
-			enum_show(&ike_idtype_names, id->isaid_idtype), buf);
+			enum_show(&ike_idtype_names, id->isaid_idtype),
+			str_id(&peer, &buf));
 	}
 
 	/* check for certificates */
@@ -3321,14 +3321,13 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		if (!st->st_peer_alt_id &&
 		    !same_id(&c->spd.that.id, &peer) &&
 		    c->spd.that.id.kind != ID_FROMCERT) {
-			char expect[IDTOA_BUF],
-			     found[IDTOA_BUF];
+			id_buf expect;
+			id_buf found;
 
-			idtoa(&c->spd.that.id, expect, sizeof(expect));
-			idtoa(&peer, found, sizeof(found));
 			loglog(RC_LOG_SERIOUS,
 			       "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
-			       expect, found);
+			       str_id(&c->spd.that.id, &expect),
+			       str_id(&peer, &found));
 			return FALSE;
 		} else if (c->spd.that.id.kind == ID_FROMCERT) {
 			if (peer.kind != ID_DER_ASN1_DN) {
@@ -3372,11 +3371,12 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				&fromcert);
 
 		if (r == NULL) {
-			char buf[IDTOA_BUF];
+			DBG(DBG_CONTROL, {
+				id_buf buf;
 
-			idtoa(&peer, buf, sizeof(buf));
-			DBG(DBG_CONTROL, DBG_log(
-			       "no more suitable connection for peer '%s'", buf));
+				DBG_log("no more suitable connection for peer '%s'",
+					str_id(&peer, &buf));
+			});
 			/* can we continue with what we had? */
 			if (!md->st->st_peer_alt_id &&
 			    !same_id(&c->spd.that.id, &peer) &&

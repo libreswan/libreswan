@@ -86,8 +86,6 @@ static int print_secrets(struct secret *secret,
 			 struct private_key_stuff *pks UNUSED,
 			 void *uservoid UNUSED)
 {
-	char idb1[IDTOA_BUF];
-	char idb2[IDTOA_BUF];
 	const char *kind = "?";
 	const char *more = "";
 	struct id_list *ids;
@@ -110,8 +108,9 @@ static int print_secrets(struct secret *secret,
 	}
 
 	ids = lsw_get_idlist(secret);
-	strcpy(idb1, "%any");
-	strcpy(idb2, "");
+
+	char idb1[IDTOA_BUF] = "%any";
+	char idb2[IDTOA_BUF] = "";
 
 	if (ids != NULL) {
 		idtoa(&ids->id, idb1, sizeof(idb1));
@@ -658,12 +657,11 @@ static bool try_all_RSA_keys(const char *pubkey_description,
 		struct pubkey *key = p->key;
 
 		if (DBGP(DBG_BASE)) {
-			char printkid[IDTOA_BUF];
-			idtoa(&key->id, printkid, sizeof(printkid));
-			char thatid[IDTOA_BUF];
-			idtoa(&c->spd.that.id, thatid, sizeof(thatid));
+			id_buf printkid;
+			id_buf thatid;
 			DBG_log("checking RSA keyid '%s' for match with '%s'",
-				printkid, thatid);
+				str_id(&key->id, &printkid),
+				str_id(&c->spd.that.id, &thatid));
 		}
 
 		int pl;	/* value ignored */
@@ -755,7 +753,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 	{
 		char id_buf[IDTOA_BUF]; /* arbitrary limit on length of ID reported */
 
-		(void) idtoa(&st->st_connection->spd.that.id, id_buf,
+		idtoa(&st->st_connection->spd.that.id, id_buf,
 			     sizeof(id_buf));
 
 		if (s.best_ugh == NULL) {
@@ -804,12 +802,11 @@ static bool try_all_ECDSA_keys(const char *pubkey_description,
 		struct pubkey *key = p->key;
 
 		if (DBGP(DBG_BASE)) {
-			char printkid[IDTOA_BUF];
-			idtoa(&key->id, printkid, sizeof(printkid));
-			char thatid[IDTOA_BUF];
-			idtoa(&c->spd.that.id, thatid, sizeof(thatid));
+			id_buf printkid;
+			id_buf thatid;
 			DBG_log("checking ECDSA keyid '%s' for match with '%s'",
-				printkid, thatid);
+				str_id(&key->id, &printkid),
+				str_id(&c->spd.that.id, &thatid));
 		}
 
 		int pl;	/* value ignored */
@@ -901,7 +898,7 @@ stf_status ECDSA_check_signature_gen(struct state *st,
 	{
 		char id_buf[IDTOA_BUF]; /* arbitrary limit on length of ID reported */
 
-		(void) idtoa(&st->st_connection->spd.that.id, id_buf,
+		idtoa(&st->st_connection->spd.that.id, id_buf,
 			     sizeof(id_buf));
 
 		if (s.best_ugh == NULL) {
@@ -952,15 +949,16 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	const struct id *his_id = &c->spd.that.id;
 
 	char idme[IDTOA_BUF];
-	char idhim[IDTOA_BUF];
 
 	idtoa(my_id, idme,  sizeof(idme));
-	idtoa(his_id, idhim, sizeof(idhim));
 
-	DBG(DBG_CONTROL,
-	    DBG_log("started looking for secret for %s->%s of kind %s",
-		    idme, idhim,
-		    enum_name(&pkk_names, kind)));
+	DBG(DBG_CONTROL, {
+		id_buf idhim;
+		DBG_log("started looking for secret for %s->%s of kind %s",
+			idme,
+			str_id(his_id, &idhim),
+			enum_name(&pkk_names, kind));
+	});
 
 	/* is there a certificate assigned to this connection? */
 	if ((kind == PKK_ECDSA || kind == PKK_RSA) &&
@@ -1041,13 +1039,14 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		his_id = &rw_id;
 	}
 
-	char idhim_revised[IDTOA_BUF];
-	idtoa(his_id, idhim_revised, sizeof(idhim_revised));
+	DBG(DBG_CONTROL, {
+		id_buf idhim_revised;
 
-	DBG(DBG_CONTROL,
-	    DBG_log("actually looking for secret for %s->%s of kind %s",
-		    idme, idhim_revised,
-		    enum_name(&pkk_names, kind)));
+		DBG_log("actually looking for secret for %s->%s of kind %s",
+			idme,
+			str_id(his_id, &idhim_revised),
+			enum_name(&pkk_names, kind));
+	});
 
 	return lsw_find_secret_by_id(pluto_secrets,
 				     kind,
@@ -1327,10 +1326,6 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 			if (!check_pub_keys ||
 			    !startswith(check_expiry_msg, "ok")) {
-				char id_buf[IDTOA_BUF];
-
-				idtoa(&key->id, id_buf, sizeof(id_buf));
-
 				LSWLOG_WHACK(RC_COMMENT, buf) {
 					lswlog_realtime(buf, key->installed_time, utc);
 					lswlogs(buf, ", ");
@@ -1355,9 +1350,12 @@ void list_public_keys(bool utc, bool check_pub_keys)
 				}
 
 				/* XXX could be ikev2_idtype_names */
+				id_buf idb;
+
 				whack_log(RC_COMMENT, "       %s '%s'",
-					  enum_show(&ike_idtype_names,
-						    key->id.kind), id_buf);
+					enum_show(&ike_idtype_names,
+						    key->id.kind),
+					str_id(&key->id, &idb));
 
 				if (key->issuer.len > 0) {
 					char b[ASN1_BUF_LEN];

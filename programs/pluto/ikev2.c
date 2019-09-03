@@ -2691,14 +2691,12 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		if (!ike->sa.st_peer_alt_id &&
 		    !same_id(&c->spd.that.id, &peer_id) &&
 		    c->spd.that.id.kind != ID_FROMCERT) {
-			char expect[IDTOA_BUF],
-			     found[IDTOA_BUF];
+			id_buf expect, found;
 
-			idtoa(&c->spd.that.id, expect, sizeof(expect));
-			idtoa(&peer_id, found, sizeof(found));
 			loglog(RC_LOG_SERIOUS,
 				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
-				expect, found);
+				str_id(&c->spd.that.id, &expect),
+				str_id(&peer_id, &found));
 			return FALSE;
 		} else if (c->spd.that.id.kind == ID_FROMCERT) {
 			if (peer_id.kind != ID_DER_ASN1_DN) {
@@ -2749,11 +2747,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 			if (r == NULL) {
 				/* no "improvement" on c found */
-				char buf[IDTOA_BUF];
+				char peer_str[IDTOA_BUF];
 
-				idtoa(&peer_id, buf, sizeof(buf));
+				idtoa(&peer_id, peer_str, sizeof(peer_str));
 				DBG(DBG_CONTROL, DBG_log(
-					"no suitable connection for peer '%s'", buf));
+					"no suitable connection for peer '%s'", peer_str));
 				/* can we continue with what we had? */
 				if (!ike->sa.st_peer_alt_id &&
 				    !same_id(&c->spd.that.id, &peer_id) &&
@@ -2762,11 +2760,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 					if (LIN(POLICY_AUTH_NULL, c->policy) &&
 					    tip != NULL && tip->kind == ID_NULL) {
 						libreswan_log("Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
-							buf);
+							peer_str);
 						ike->sa.st_peer_wants_null = TRUE;
 					} else {
 						libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
-							buf);
+							peer_str);
 						return FALSE;
 					}
 				} else {

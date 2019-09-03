@@ -256,12 +256,6 @@ void escape_metachar(const char *src, char *dst, size_t dstlen)
  * these should use jam_char() / jam_metachar(); except they don't
  * exist.
  */
-void jam_id(struct lswlog *buf, const struct id *id)
-{
-	char a[IDTOA_BUF];
-	idtoa(id, a, sizeof(a));
-	jam_string(buf, a);
-}
 
 const char *str_id(const struct id *id, id_buf *buf)
 {
@@ -269,12 +263,18 @@ const char *str_id(const struct id *id, id_buf *buf)
 	return buf->buf;
 }
 
+void jam_id(struct lswlog *buf, const struct id *id)
+{
+	id_buf b;
+
+	jam_string(buf, str_id(id, &b));
+}
+
 void jam_id_escaped(struct lswlog *buf, const struct id *id)
 {
-	char a[IDTOA_BUF];
-	idtoa(id, a, sizeof(a));
+	id_buf a;
 	char e[IDTOA_BUF];
-	escape_metachar(a, e, sizeof(e));
+	escape_metachar(str_id(id, &a), e, sizeof(e));
 	jam_string(buf, e);
 }
 
@@ -436,14 +436,11 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 	}
 
 	DBG(DBG_CONTROLMORE, {
-			char abuf[IDTOA_BUF];
-			char bbuf[IDTOA_BUF];
-			idtoa(a, abuf, sizeof(abuf));
-			idtoa(b, bbuf, sizeof(bbuf));
-			DBG_log("   match_id a=%s", abuf);
-			DBG_log("            b=%s", bbuf);
-			DBG_log("   results  %s", match ? "matched" : "fail");
-		});
+		id_buf buf;
+		DBG_log("   match_id a=%s", str_id(a, &buf));
+		DBG_log("            b=%s", str_id(b, &buf));
+		DBG_log("   results  %s", match ? "matched" : "fail");
+	});
 
 	return match;
 }
@@ -464,13 +461,12 @@ int id_count_wildcards(const struct id *id)
 		break;
 	}
 
-	char idbuf[IDTOA_BUF];
-	idtoa(id, idbuf, sizeof(idbuf));
-	DBG(DBG_CONTROL,
+	DBG(DBG_CONTROL, {
+		id_buf b;
 		DBG_log("counting wild cards for %s is %d",
-			idbuf,
+			str_id(id, &b),
 			count);
-		);
+	});
 
 	return count;
 }

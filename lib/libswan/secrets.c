@@ -352,16 +352,12 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 	char
 		idme[IDTOA_BUF],
-		idhim[IDTOA_BUF],
-		idhim2[IDTOA_BUF];
+		idhim[IDTOA_BUF] = "";
 
 	idtoa(my_id, idme, sizeof(idme));
 
-	idhim[0] = '\0';
-	idhim2[0] = '\0';
 	if (his_id != NULL) {
 		idtoa(his_id, idhim, sizeof(idhim));
-		strcpy(idhim2, idhim);
 	}
 
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
@@ -1090,20 +1086,19 @@ static void lsw_process_secret_records(struct secret **psecrets)
 					struct id_list *i = alloc_thing(
 						struct id_list,
 						"id_list");
-					char idb[IDTOA_BUF];
 
 					i->id = id;
 					unshare_id_content(&i->id);
 					i->next = s->ids;
 					s->ids = i;
-					idtoa(&id, idb, sizeof(idb));
-					DBG(DBG_CONTROL,
+					DBG(DBG_CONTROL, {
+						id_buf b;
 						DBG_log("id type added to secret(%p) %s: %s",
 							s,
 							enum_name(&pkk_names,
 								s->pks.kind),
-							idb);
-						);
+							str_id(&id, &b));
+					});
 				}
 				if (!shift()) {
 					/* unexpected Record Boundary or EOF */
@@ -1252,12 +1247,12 @@ void unreference_key(struct pubkey **pkp)
 
 	/* print stuff */
 	DBG(DBG_CONTROLMORE, {
-			char b[IDTOA_BUF];
-
-			idtoa(&pk->id, b, sizeof(b));
-			DBG_log("unreference key: %p %s cnt %d--", pk, b,
-				pk->refcnt);
-		});
+		id_buf b;
+		DBG_log("unreference key: %p %s cnt %d--",
+			pk,
+			str_id(&pk->id, &b),
+			pk->refcnt);
+	});
 
 	/* cancel out the pointer */
 	*pkp = NULL;

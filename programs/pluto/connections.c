@@ -513,9 +513,9 @@ size_t format_end(char *buf,
 	/* id, if different from host */
 	host_id[0] = '\0';
 	if (!(this->id.kind == ID_NONE ||
-			(id_is_ipaddr(&this->id) &&
-				sameaddr(&this->id.ip_addr,
-					&this->host_addr)))) {
+		(id_is_ipaddr(&this->id) &&
+		 sameaddr(&this->id.ip_addr, &this->host_addr)))) 
+	{
 		id_obrackets = "[";
 		id_cbrackets = "]";
 		idtoa(&this->id, host_id, sizeof(host_id));
@@ -2885,14 +2885,15 @@ struct connection *refine_host_connection(const struct state *st,
 			/* 'You Tarzan, me Jane' check based on received IDr */
 			if (!initiator && tarzan_id != NULL) {
 				DBG(DBG_CONTROL, {
-					char tarzan_str[IDTOA_BUF];
-					idtoa(tarzan_id, tarzan_str, sizeof(tarzan_str));
+					id_buf tzb;
 					DBG_log("Peer expects us to be %s (%s) according to its IDr payload",
-						tarzan_str, enum_show(&ike_idtype_names, tarzan_id->kind));
-					char us_str[IDTOA_BUF];
-					idtoa(&d->spd.this.id, us_str, sizeof(us_str));
+						str_id(tarzan_id, &tzb),
+						enum_show(&ike_idtype_names, tarzan_id->kind));
+
+					id_buf usb;
 					DBG_log("This connection's local id is %s (%s)",
-						us_str, enum_show(&ike_idtype_names, d->spd.this.id.kind));
+						str_id(&d->spd.this.id, &usb),
+						enum_show(&ike_idtype_names, d->spd.this.id.kind));
 				});
 				if (!idr_wildmatch(d, tarzan_id)) {
 					DBGF(DBG_CONTROL, "Peer IDr payload does not match our expected ID, this connection will not do");
@@ -3118,12 +3119,11 @@ static bool is_virtual_net_used(struct connection *c,
 						peer_net)) &&
 				!same_id(&d->spd.that.id, peer_id))
 			{
-				char buf[IDTOA_BUF];
+				id_buf idb;
 				char cbuf[CONN_INST_BUF];
 				char client[SUBNETTOT_BUF];
 
 				subnettot(peer_net, 0, client, sizeof(client));
-				idtoa(&d->spd.that.id, buf, sizeof(buf));
 
 				libreswan_log(
 					"Virtual IP %s overlaps with connection \"%s\"%s (kind=%s) '%s'",
@@ -3131,7 +3131,7 @@ static bool is_virtual_net_used(struct connection *c,
 					d->name, fmt_conn_instance(d, cbuf),
 					enum_name(&connection_kind_names,
 						d->kind),
-					buf);
+					str_id(&d->spd.that.id, &idb));
 
 				if (!kernel_ops->overlap_supported) {
 					libreswan_log(
@@ -3169,8 +3169,7 @@ static bool is_virtual_net_used(struct connection *c,
 				}
 
 				/* ??? why is this a separate log line? */
-				idtoa(peer_id, buf, sizeof(buf));
-				libreswan_log("Your ID is '%s'", buf);
+				libreswan_log("Your ID is '%s'", str_id(peer_id, &idb));
 
 				return TRUE; /* already used by another one */
 			}
@@ -3896,19 +3895,16 @@ void show_one_connection(const struct connection *c)
 	);
 
 	{
-		char thisid[IDTOA_BUF];
-		char thatid[IDTOA_BUF];
+		id_buf thisidb;
+		id_buf thatidb;
 
-		idtoa(&c->spd.this.id, thisid, sizeof(thisid));
-		idtoa(&c->spd.that.id, thatid, sizeof(thatid));
-
-	whack_log(RC_COMMENT,
-		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
-		c->name, instance,
-		enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
-		c->spd.this.id.isanyid ? "%any" : thisid,
-		enum_name(&ike_idtype_names_extended, c->spd.that.id.kind),
-		c->spd.that.id.isanyid ? "%any" : thatid);
+		whack_log(RC_COMMENT,
+			"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
+			c->name, instance,
+			enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
+			c->spd.this.id.isanyid ? "%any" : str_id(&c->spd.this.id, &thisidb),
+			enum_name(&ike_idtype_names_extended, c->spd.that.id.kind),
+			c->spd.that.id.isanyid ? "%any" : str_id(&c->spd.that.id, &thatidb));
 	}
 
 	/* slightly complicated stuff to avoid extra crap */

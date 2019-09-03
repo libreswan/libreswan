@@ -1363,22 +1363,15 @@ psk_common:
 
 						if (pss == NULL)
 						{
-							char mid[IDTOA_BUF],
-							     hid[IDTOA_BUF];
-
-							idtoa(&c->spd.this.id, mid,
-							      sizeof(mid));
-							if (remote_id_was_instantiated(c)) {
-								strcpy(hid,
-								       "%any");
-							} else {
-								idtoa(&c->spd.that.id, hid,
-								      sizeof(hid));
-							}
+							id_buf mid;
+							id_buf hid;
 
 							ugh = builddiag(
 								"Can't authenticate: no preshared key found for `%s' and `%s'",
-								mid, hid);
+								str_id(&c->spd.this.id, &mid),
+								remote_id_was_instantiated(c) ?
+									"%any" :
+									str_id(&c->spd.that.id, &hid));
 						} else {
 							DBG(DBG_PRIVATE, DBG_dump_hunk("User PSK:", *pss));
 						}

@@ -121,24 +121,12 @@ static void dbg_log_dns_question(struct p_dns_req *dnsr,
 static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 				chunk_t *keyval)
 {
-	ldns_buffer *ldns_pkey = NULL;
-	char *pubkey_start;
-	size_t len;
-	size_t bin_len;
-	char err_buf[TTODATAV_BUF];
-	char *keyspace;
-	int alg;
-	ldns_status lerr;
-	err_t ugh;
-	bool ret = TRUE;
-
-	ldns_pkey = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 +1));
-	lerr = ldns_rdf2buffer_str_ipseckey(ldns_pkey, rdf);
+	ldns_buffer *ldns_pkey = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 + 1));
+	ldns_status lerr = ldns_rdf2buffer_str_ipseckey(ldns_pkey, rdf);
 
 	if (lerr != LDNS_STATUS_OK)
 	{
-		ldns_lookup_table *lt;
-		lt = ldns_lookup_by_id(ldns_error_str, lerr);
+		ldns_lookup_table *lt = ldns_lookup_by_id(ldns_error_str, lerr);
 		loglog(RC_LOG_SERIOUS, "IPSECKEY rr parse error %s "
 				"%s", lt->name, dnsr->log_buf);
 
@@ -147,12 +135,12 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	}
 
 	/* 10 0 2 . AQPO39yuENlW ... is an example */
-	pubkey_start = (char *)ldns_buffer_begin(ldns_pkey); /* precedence */
+	char *pubkey_start = (char *)ldns_buffer_begin(ldns_pkey); /* precedence */
 	strsep(&pubkey_start, " "); /* gateway type */
 	strsep(&pubkey_start, " "); /* algorithm */
 
 	/* RFC 4025 #2.4 only accept RSA Algorithm */
-	alg = atoi(pubkey_start);
+	int alg = atoi(pubkey_start);
 	if (alg != PUBKEY_ALG_RSA) {
 		/* game over */
 		loglog(RC_LOG_SERIOUS, "Unsupported Algorithm in IPSECKEY %d. "
@@ -166,79 +154,76 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	strsep(&pubkey_start, " "); /* gateway */
 	strsep(&pubkey_start, " "); /* bb64 encoded key */
 
-	len = strlen(pubkey_start);
-	keyspace = alloc_things(char, len, "temp pubkey bin store");
-	ugh =  ttodatav(pubkey_start, len, 64, keyspace, len,
+	size_t len = strlen(pubkey_start);
+	char *keyspace = alloc_things(char, len, "temp pubkey bin store");
+	size_t bin_len;
+	char err_buf[TTODATAV_BUF];
+	err_t ugh = ttodatav(pubkey_start, len, 64, keyspace, len,
 			&bin_len, err_buf, sizeof(err_buf), 0);
 
 	if (ugh != NULL) {
 		loglog(RC_LOG_SERIOUS, "converting base64 pubkey to binary failed %s", ugh);
-		ret = FALSE;
+	} else {
+		clonetochunk(*keyval, keyspace, bin_len,  "ipseckey from dns");
 	}
 
 	ldns_buffer_free(ldns_pkey);
-	if (ret)
-		clonetochunk(*keyval, keyspace, bin_len,  "ipseckey from dns");
-
 	pfreeany(keyspace);
 
-	return ret;
+	return ugh == NULL;
 }
 
 static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 		uint32_t ttl)
 {
-	struct state *st = state_with_serialno(dnsr->so_serial_t);
-	struct id keyid = st->st_connection->spd.that.id;
-	chunk_t keyval = EMPTY_CHUNK;
-	err_t ugh = NULL;
-	char thatidbuf[IDTOA_BUF];
-	char ttl_buf[ULTOT_BUF + 32]; /* 32 is aribitary */
-	uint32_t ttl_used;
+	const struct state *st = state_with_serialno(dnsr->so_serial_t);
+	const struct id *keyid = &st->st_connection->spd.that.id;
 
 	/*
 	 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey does not expire while
 	 * negotiating
 	 */
-	ttl_used = max(ttl,  (uint32_t)RETRANSMIT_TIMEOUT_DEFAULT);
+	uint32_t ttl_used = max(ttl,  (uint32_t)RETRANSMIT_TIMEOUT_DEFAULT);
+	char ttl_buf[ULTOT_BUF + 32]; /* 32 is aribitary */
 
 	if (ttl_used == ttl) {
 		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
 	} else {
-		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u ttl used %u", ttl,
-				ttl_used);
+		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u ttl used %u",
+			ttl, ttl_used);
 	}
 
+	chunk_t keyval;
 	if (!get_keyval_chunk(dnsr, rdf, &keyval))
 		return "could not get key to add";
+
+	char thatidbuf[IDTOA_BUF];
 
 	idtoa(&st->st_connection->spd.that.id, thatidbuf, sizeof(thatidbuf));
 	/* algorithm is hardcoded RSA -- PUBKEY_ALG_RSA */
 	if (dnsr->delete_exisiting_keys)  {
-		DBG(DBG_DNS,
-			DBG_log("delete RSA public keys(s) from pluto id=%s",
-				thatidbuf));
+		DBGF(DBG_DNS, "delete RSA public keys(s) from pluto id=%s",
+				thatidbuf);
 		/* delete only once. then multiple keys could be added */
-		delete_public_keys(&pluto_pubkeys, &keyid, PUBKEY_ALG_RSA);
+		delete_public_keys(&pluto_pubkeys, keyid, PUBKEY_ALG_RSA);
 		dnsr->delete_exisiting_keys = FALSE;
 	}
 
 	enum dns_auth_level al = dnsr->secure == UB_EVNET_SECURE ?
 		DNSSEC_SECURE : DNSSEC_INSECURE;
 
-	if (keyid.kind == ID_FQDN) {
-		DBG(DBG_DNS, DBG_log("add IPSECKEY pluto as publickey %s %s %s",
-					thatidbuf, ttl_buf,
-					enum_name(&dns_auth_level_names, al)));
+	if (keyid->kind == ID_FQDN) {
+		DBGF(DBG_DNS, "add IPSECKEY pluto as publickey %s %s %s",
+			thatidbuf, ttl_buf,
+			enum_name(&dns_auth_level_names, al));
 	} else {
-		DBG(DBG_DNS,
-			DBG_log("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
-				thatidbuf,
-				dnsr->qname, ttl_buf,
-				enum_name(&dns_auth_level_names, al)));
+		DBGF(DBG_DNS, "add IPSECKEY pluto as publickey %s dns query is %s %s %s",
+			thatidbuf,
+			dnsr->qname, ttl_buf,
+			enum_name(&dns_auth_level_names, al));
 	}
 
-	ugh = add_ipseckey(&keyid, al, PUBKEY_ALG_RSA, ttl, ttl_used,
+	err_t ugh = add_ipseckey(keyid, al, PUBKEY_ALG_RSA, ttl, ttl_used,
 			&keyval, &pluto_pubkeys);
 	if (ugh != NULL)
 		loglog(RC_LOG_SERIOUS, "Add  publickey failed %s, %s, %s", ugh,

@@ -792,7 +792,6 @@ bool match_certs_id(const struct certs *certs,
 		struct id *peer_id /*ID_FROMCERT => updated*/)
 {
 	char namebuf[IDTOA_BUF];
-	char iptxt[IDTOA_BUF];
 
 	CERTCertificate *end_cert = certs->cert;
 
@@ -807,6 +806,9 @@ bool match_certs_id(const struct certs *certs,
 	switch (peer_id->kind) {
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
+	{
+		char iptxt[IDTOA_BUF];
+
 		idtoa(peer_id, iptxt, sizeof(iptxt));
 		m = cert_VerifySubjectAltName(end_cert, iptxt);
 		if (m) {
@@ -817,6 +819,7 @@ bool match_certs_id(const struct certs *certs,
 			       iptxt);
 		}
 		break;
+	}
 
 	case ID_FQDN:
 		/* We need to skip the "@" prefix from our configured FQDN */
