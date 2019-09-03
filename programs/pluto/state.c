@@ -940,7 +940,7 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
 				st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_esp.our_bytes;
 			pstats_ipsec_out_bytes += st->st_esp.peer_bytes;
@@ -959,7 +959,7 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
 				st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_ah.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ah.our_bytes;
@@ -978,7 +978,7 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
 				st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_ipcomp.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ipcomp.our_bytes;
@@ -2113,15 +2113,20 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	snprintf(state_buf, state_buf_len,
 		 "#%lu: \"%s\"%s%s%s%s%s%s%s%s%s",
 		 st->st_serialno,
-		 c->name, inst,
-		 (st->st_xauth_username[0] != '\0') ? ", username=" : "",
-		 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "",
-		 (traffic_buf[0] != '\0') ? traffic_buf : "",
+		 c->name,
+		 inst,
+
+		 st->st_xauth_username[0] != '\0' ? ", username=" : "",
+		 st->st_xauth_username,
+
+		 traffic_buf,
+
 		 thatidbuf[0] != '\0' ? ", id='" : "",
-		 thatidbuf[0] != '\0' ? thatidbuf : "",
+		 thatidbuf,
 		 thatidbuf[0] != '\0' ? "'" : "",
+
 		 lease_ip[0] != '\0' ? ", lease=" : "",
-		 lease_ip[0] != '\0' ? lease_ip : ""
+		 lease_ip
 		);
 }
 
@@ -2345,8 +2350,8 @@ void fmt_state(struct state *st, const monotime_t now,
 			st->st_ref,
 			st->st_refhim,
 			traffic_buf,
-			(st->st_xauth_username[0] != '\0') ? "username=" : "",
-			(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "");
+			st->st_xauth_username[0] != '\0' ? "username=" : "",
+			st->st_xauth_username);
 
 #       undef add_said
 	}
