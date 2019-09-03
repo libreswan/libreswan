@@ -74,7 +74,6 @@ OBJS += addrtot.o
 OBJS += addrtypeof.o
 OBJS += anyaddr.o
 OBJS += datatot.o
-OBJS += goodmask.o
 OBJS += satot.o
 OBJS += ip_said.o
 OBJS += ultot.o

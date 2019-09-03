@@ -132,10 +132,6 @@ extern struct in_addr broadcastof(struct in_addr addr,
 			   struct in_addr mask
 			   );
 
-/* mask handling */
-extern struct in_addr  bitstomask(int n);
-extern struct in6_addr bitstomask6(int n);
-
 /*
  * ENUM of klips debugging values. Not currently used in klips.
  * debug flag is actually 32 -bits, but only one bit is ever used,
