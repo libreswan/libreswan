@@ -432,33 +432,32 @@ err_t check_virtual_net_allowed(const struct connection *c,
 }
 
 static void show_virtual_private_kind(const char *kind,
-	const ip_subnet *private_net,
-	int private_net_len)
+				      const ip_subnet *private_net,
+				      int private_net_len)
 {
 	if (private_net != NULL) {
-		bool trunc = FALSE;
 		char all[256] = "";  /* arbitrary limit */
+		jambuf_t buf = ARRAY_AS_JAMBUF(all);
 		int i;
-
 		for (i = 0; i < private_net_len; i++) {
-			char sn[SUBNETTOT_BUF];
-			const char *sep = *all == '\0'? "" : ", ";
-
-			subnettot(&private_net[i], 0, sn, sizeof(sn));
-			if (strlen(all) + strlen(sep) +  strlen(sn) <
-					sizeof(all)) {
-				strcat(all, sep);	/* safe: see allocation above */
-				strcat(all, sn);	/* safe: see allocation above */
-			} else {
-				trunc = TRUE;
+			size_t start = jambuf_cursor(&buf) - all;
+			passert(all[start] == '\0');
+			if (i > 0) {
+				jam(&buf, ", ");
+			}
+			jam_subnet(&buf, &private_net[i]);
+			if (!jambuf_ok(&buf)) {
+				/* oops overflowed, discard last */
+				all[start] = '\0';
 				break;
 			}
 		}
 		whack_log(RC_COMMENT, "- %s subnet%s: %s",
-			kind, i == 1? "" : "s", all);
-		if (trunc)
+			  kind, i == 1? "" : "s", all);
+		if (i < private_net_len) {
 			whack_log(RC_COMMENT, "showing only %d of %d!",
-				i, private_net_len);
+				  i, private_net_len);
+		}
 	}
 }
 
