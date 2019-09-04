@@ -442,30 +442,27 @@ static void show_virtual_private_kind(const struct fd *whackfd,
 				      int private_net_len)
 {
 	if (private_net != NULL) {
-		bool trunc = FALSE;
 		char all[256] = "";  /* arbitrary limit */
+		jambuf_t buf = ARRAY_AS_JAMBUF(all);
 		int i;
-
 		for (i = 0; i < private_net_len; i++) {
-			const char *sep = *all == '\0'? "" : ", ";
-
-			subnet_buf snb;
-			const char *sn = str_subnet(&private_net[i], &snb);
-
-			if (strlen(all) + strlen(sep) +  strlen(sn) <
-					sizeof(all)) {
-				strcat(all, sep);	/* safe: see allocation above */
-				strcat(all, sn);	/* safe: see allocation above */
-			} else {
-				trunc = TRUE;
+			jampos_t start = jambuf_get_pos(&buf);
+			if (i > 0) {
+				jam(&buf, ", ");
+			}
+			jam_subnet(&buf, &private_net[i]);
+			if (!jambuf_ok(&buf)) {
+				/* oops overflowed, discard last */
+				jambuf_set_pos(&buf, &start);
 				break;
 			}
 		}
 		whack_comment(whackfd, "- %s subnet%s: %s",
 			kind, i == 1? "" : "s", all);
-		if (trunc)
+		if (i < private_net_len) {
 			whack_comment(whackfd, "showing only %d of %d!",
-				i, private_net_len);
+				      i, private_net_len);
+		}
 	}
 }
 
