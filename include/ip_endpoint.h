@@ -27,7 +27,7 @@
 struct lswlog;
 
 /*
- * While ip_endpoint and ip_address should be distinct types where the
+ * ip_endpoint and ip_address should be distinct types where the
  * latter consists of ADDRESS:PORT.  Unfortunately separating them is
  * going to be slow.
  *

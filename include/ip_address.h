@@ -50,15 +50,15 @@ typedef struct {
 	 * all that is needed is the type and address bytes?
 	 *
 	 * Unfortunately such a change isn't immediately possible as
-	 * code still is still directly internal fields.  So much for
+	 * code is still directly referencing internal fields.  So much for
 	 * an immutable abstraction.
 	 *
 	 * Defining ADDRESS_TYPE changes the in ways that break such
-	 * erant code.
+	 * undisciplined code.
 	 */
 	const struct ip_info *type;
 	/*
-	 * Need something that makes static IPv4 initializers possible
+	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).
 	 */
 	uint8_t bytes[sizeof(struct in6_addr)];
@@ -67,14 +67,14 @@ typedef struct {
 	 * XXX:
 	 *
 	 * A simple address - type+bytes - doesn't contain a port.
-	 * Instead there'a the new abstraction - ip_endpoint which
+	 * Instead there's a the new abstraction - ip_endpoint which
 	 * contains an address+port - intended for that.
 	 *
 	 * Consequently the types ip_address and ip_endpoint should
-	 * distinct (with just the latter having space for a port).
+	 * be distinct (with just the latter having space for a port).
 	 * Unfortunately that's a ways-a-way.  Code continues to
 	 * either store the port in the ip_address structure or (not
-	 * sure if that works) store the port separately or (to cover
+	 * aware that that works) store the port separately or (to cover
 	 * all bases) both.
 	 *
 	 * Defining ENDPOINT_TYPE makes the ip_address and ip_endpoint
