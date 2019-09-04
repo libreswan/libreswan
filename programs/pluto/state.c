@@ -2037,15 +2037,13 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			return;
 		}
 	}
-	DBG(DBG_CONTROL, {
-		char ourst[SUBNETTOT_BUF];
-		char hist[SUBNETTOT_BUF];
-
-		subnettot(ours, 0, ourst, sizeof(ourst));
-		subnettot(his, 0, hist, sizeof(hist));
+	if (DBGP(DBG_BASE)) {
+		subnet_buf ourst;
+		subnet_buf hist;
 		DBG_log("unknown tunnel eroute %s -> %s found in scan",
-			ourst, hist);
-	});
+			str_subnet_port(ours, &ourst),
+			str_subnet_port(his, &hist));
+	}
 }
 
 /* note: this mutates *st by calling get_sa_info */
@@ -2091,19 +2089,19 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		}
 	}
 
-	char lease_ip[SUBNETTOT_BUF] = "";
+	subnet_buf lease_ip = { "" };
 	if (c->spd.that.has_lease) {
 		/*
 		 * "this" gave "that" a lease from "this" address
 		 * pool.
 		 */
-		subnettot(&c->spd.that.client, 0, lease_ip, sizeof(lease_ip));
+		str_subnet(&c->spd.that.client, &lease_ip);
 	} else if (c->spd.this.has_internal_address) {
 		/*
 		 * "this" received an internal address from "that";
 		 * presumably from "that"'s address pool.
 		 */
-		subnettot(&c->spd.this.client, 0, lease_ip, sizeof(lease_ip));
+		str_subnet(&c->spd.this.client, &lease_ip);
 	}
 
 	if (st->st_xauth_username[0] == '\0') {
@@ -2125,8 +2123,8 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		 thatidbuf,
 		 thatidbuf[0] != '\0' ? "'" : "",
 
-		 lease_ip[0] != '\0' ? ", lease=" : "",
-		 lease_ip
+		 lease_ip.buf[0] != '\0' ? ", lease=" : "",
+		 lease_ip.buf
 		);
 }
 

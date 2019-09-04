@@ -631,18 +631,16 @@ static struct best_score score_ends(enum fit fit,
 				    const struct traffic_selectors *tsi,
 				    const struct traffic_selectors *tsr)
 {
-	DBG(DBG_CONTROLMORE, {
-		char ei3[SUBNETTOT_BUF];
-		char er3[SUBNETTOT_BUF];
-		char cib[CONN_INST_BUF];
-		subnettot(&ends->i->client,  0, ei3, sizeof(ei3));
-		subnettot(&ends->r->client,  0, er3, sizeof(er3));
-		DBG_log("evaluating our conn=\"%s\"%s I=%s:%d/%d R=%s:%d/%d%s to their:",
-			d->name, fmt_conn_instance(d, cib),
-			ei3, ends->i->protocol, ends->i->port,
-			er3, ends->r->protocol, ends->r->port,
+	if (DBGP(DBG_BASE)) {
+		subnet_buf ei3;
+		subnet_buf er3;
+		connection_buf cib;
+		DBG_log("evaluating our conn="PRI_CONNECTION" I=%s:%d/%d R=%s:%d/%d%s to their:",
+			pri_connection(d, &cib),
+			str_subnet_port(&ends->i->client, &ei3), ends->i->protocol, ends->i->port,
+			str_subnet_port(&ends->r->client, &er3), ends->r->protocol, ends->r->port,
 			is_virtual_connection(d) ? " (virt)" : "");
-	});
+	}
 
 	struct best_score best_score = NO_SCORE;
 
@@ -770,19 +768,14 @@ bool v2_process_ts_request(struct child_sa *child,
 		hp = find_host_pair(&sra->this.host_addr,
 				    &sra->that.host_addr);
 
-		DBG(DBG_CONTROLMORE, {
-			char s2[SUBNETTOT_BUF];
-			char d2[SUBNETTOT_BUF];
-
-			subnettot(&sra->this.client, 0, s2,
-				  sizeof(s2));
-			subnettot(&sra->that.client, 0, d2,
-				  sizeof(d2));
-
+		if (DBGP(DBG_BASE)) {
+			subnet_buf s2;
+			subnet_buf d2;
 			DBG_log("  checking hostpair %s -> %s is %s",
-				s2, d2,
+				str_subnet_port(&sra->this.client, &s2),
+				str_subnet_port(&sra->that.client, &d2),
 				hp == NULL ? "not found" : "found");
-		});
+		}
 
 		if (hp == NULL)
 			continue;

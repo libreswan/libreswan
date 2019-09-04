@@ -116,43 +116,40 @@ static int num_ipsec_eroute = 0;
 static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
 	/* same as log_bare_shunt but goes to debug log */
-	DBG(DBG_KERNEL, {
-		int ourport = ntohs(portof(&bs->ours.addr));
-		int hisport = ntohs(portof(&bs->his.addr));
-		char ourst[SUBNETTOT_BUF];
-		char hist[SUBNETTOT_BUF];
-		char sat[SATOT_BUF];
-		char prio[POLICY_PRIO_BUF];
+	if (DBGP(DBG_BASE)) {
+		said_buf sat;
+		subnet_buf ourst;
+		subnet_buf hist;
 
-		subnettot(&bs->ours, 0, ourst, sizeof(ourst));
-		subnettot(&bs->his, 0, hist, sizeof(hist));
-		satot(&bs->said, 0, sat, sizeof(sat));
+		char prio[POLICY_PRIO_BUF];
 		fmt_policy_prio(bs->policy_prio, prio);
-		DBG_log("%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
-			op, (const void *)bs, ourst, ourport,
-			bs->transport_proto, hist, hisport,
-			sat, prio, bs->why);
-	});
+
+		DBG_log("%s bare shunt %p %s --%d--> %s => %s %s    %s",
+			op, (const void *)bs,
+			str_subnet_port(&bs->ours, &ourst),
+			bs->transport_proto,
+			str_subnet_port(&bs->his, &hist),
+			str_said(&bs->said, 0, &sat),
+			prio, bs->why);
+	}
 }
 
 static void log_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
-	/* same as DBG_bare_shunt but goes to real log */
-	int ourport = ntohs(portof(&bs->ours.addr));
-	int hisport = ntohs(portof(&bs->his.addr));
-	char ourst[SUBNETTOT_BUF];
-	char hist[SUBNETTOT_BUF];
-	char sat[SATOT_BUF];
-	char prio[POLICY_PRIO_BUF];
+	said_buf sat;
+	subnet_buf ourst;
+	subnet_buf hist;
 
-	subnettot(&bs->ours, 0, ourst, sizeof(ourst));
-	subnettot(&bs->his, 0, hist, sizeof(hist));
-	satot(&bs->said, 0, sat, sizeof(sat));
+	char prio[POLICY_PRIO_BUF];
 	fmt_policy_prio(bs->policy_prio, prio);
-	libreswan_log("%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
-		op, (const void *)bs, ourst, ourport,
-		bs->transport_proto, hist, hisport,
-		sat, prio, bs->why);
+
+	libreswan_log("%s bare shunt %p %s --%d--> %s => %s %s    %s",
+		      op, (const void *)bs,
+		      str_subnet_port(&bs->ours, &ourst),
+		      bs->transport_proto,
+		      str_subnet_port(&bs->his, &hist),
+		      str_said(&bs->said, 0, &sat),
+		      prio, bs->why);
 }
 
 /*
@@ -1001,10 +998,14 @@ static bool shunt_eroute(const struct connection *c,
 			enum pluto_sadb_operations op,
 			const char *opname)
 {
-	DBG(DBG_CONTROL, DBG_log("shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s' using protoports %d--%d->-%d",
-		c->name, opname, enum_name(&routing_story, rt_kind),
-		sr->this.protocol, ntohs(portof(&sr->this.client.addr)),
-		ntohs(portof(&sr->that.client.addr))));
+	if (DBGP(DBG_BASE)) {
+		subnet_buf thisb, thatb;
+		DBG_log("shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s' using protoports %s --%d->- %s",
+			c->name, opname, enum_name(&routing_story, rt_kind),
+			str_subnet_port(&sr->this.client, &thisb),
+			sr->this.protocol,
+			str_subnet_port(&sr->that.client, &thatb));
+	}
 
 	if (kernel_ops->shunt_eroute != NULL) {
 		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname);
@@ -1147,23 +1148,19 @@ void show_shunt_status(void)
 	whack_log(RC_COMMENT, " "); /* spacer */
 	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
+		subnet_buf ourst;
+		subnet_buf hist;
+		said_buf sat;
 
-		int ourport = ntohs(portof(&bs->ours.addr));
-		int hisport = ntohs(portof(&bs->his.addr));
-		char ourst[SUBNETTOT_BUF];
-		char hist[SUBNETTOT_BUF];
-		char sat[SATOT_BUF];
 		char prio[POLICY_PRIO_BUF];
-
-		subnettot(&(bs)->ours, 0, ourst, sizeof(ourst));
-		subnettot(&(bs)->his, 0, hist, sizeof(hist));
-		satot(&(bs)->said, 0, sat, sizeof(sat));
 		fmt_policy_prio(bs->policy_prio, prio);
 
-		whack_log(RC_COMMENT, "%s:%d -%d-> %s:%d => %s %s    %s",
-			ourst, ourport, bs->transport_proto, hist, hisport,
-			sat,
-			prio, bs->why);
+		whack_log(RC_COMMENT, "%s -%d-> %s => %s %s    %s",
+			  str_subnet_port(&(bs)->ours, &ourst),
+			  bs->transport_proto,
+			  str_subnet_port(&(bs)->his, &hist),
+			  str_said(&(bs)->said, 0, &sat),
+			  prio, bs->why);
 	}
 }
 
@@ -1218,24 +1215,21 @@ bool raw_eroute(const ip_address *this_host,
 		bad_case(op);
 	}
 
-	DBG(DBG_CONTROL | DBG_KERNEL,
-		{
-			int sport = ntohs(portof(&this_client->addr));
-			int dport = ntohs(portof(&that_client->addr));
-			char mybuf[SUBNETTOT_BUF];
-			char peerbuf[SUBNETTOT_BUF];
-
-			subnettot(this_client, 0, mybuf, sizeof(mybuf));
-			subnettot(that_client, 0, peerbuf, sizeof(peerbuf));
-			DBG_log("%s eroute %s:%d --%d-> %s:%d => %s (raw_eroute)",
-				opname, mybuf, sport, transport_proto, peerbuf,
-				dport, text_said);
+	if (DBGP(DBG_BASE)) {
+		subnet_buf mybuf;
+		subnet_buf peerbuf;
+		DBG_log("%s eroute %s --%d-> %s => %s (raw_eroute)",
+			opname,
+			str_subnet_port(this_client, &mybuf),
+			transport_proto,
+			str_subnet_port(that_client, &peerbuf),
+			text_said);
 #ifdef HAVE_LABELED_IPSEC
-			if (policy_label != NULL)
-				DBG_log("policy security label %s",
-					policy_label);
+		if (policy_label != NULL)
+			DBG_log("policy security label %s",
+				policy_label);
 #endif
-		});
+	}
 
 	bool result = kernel_ops->raw_eroute(this_host, this_client,
 					that_host, that_client,

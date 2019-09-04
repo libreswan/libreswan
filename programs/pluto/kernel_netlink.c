@@ -2177,9 +2177,13 @@ static bool netlink_shunt_eroute(const struct connection *c,
 	 */
 	spi = shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
 
-	DBG(DBG_KERNEL, DBG_log("netlink_shunt_eroute for proto %d, and source port %d dest port %d",
-		sr->this.protocol, ntohs(portof(&sr->this.client.addr)),
-		ntohs(portof(&sr->that.client.addr))));
+	if (DBGP(DBG_BASE)) {
+		subnet_buf this_buf, that_buf;
+		DBG_log("netlink_shunt_eroute for proto %d, and source %s dest %s",
+			sr->this.protocol,
+			str_subnet_port(&sr->this.client, &this_buf),
+			str_subnet_port(&sr->that.client, &that_buf));
+	}
 
 	if (spi == 0) {
 		/*

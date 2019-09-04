@@ -399,7 +399,6 @@ size_t format_end(char *buf,
 		lset_t policy,
 		bool filter_rnh)
 {
-	char client[SUBNETTOT_BUF];
 	const char *client_sep = "";
 	char protoport[sizeof(":255/65535")];
 	const char *host = NULL;
@@ -437,12 +436,11 @@ size_t format_end(char *buf,
 		}
 	}
 
-	client[0] = '\0';
-
 	if (is_virtual_end(this) && isanyaddr(&this->host_addr))
 		host = "%virtual";
 
 	/* [client===] */
+	subnet_buf client = { "" };
 	if (this->has_client) {
 		ip_address client_net = subnet_prefix(&this->client);
 		ip_address client_mask = subnet_mask(&this->client);
@@ -459,13 +457,13 @@ size_t format_end(char *buf,
 			client_sep = ""; /* boring case */
 		} else if (is_virtual_end(this)) {
 			if (is_virtual_vhost(this))
-				strcpy(client, "vhost:?");
+				strcpy(client.buf, "vhost:?");
 			else
-				strcpy(client, "vnet:?");
+				strcpy(client.buf, "vnet:?");
 		} else if (subnetisnone(&this->client)) {
-			strcpy(client, "?");
+			strcpy(client.buf, "?");
 		} else {
-			subnettot(&this->client, 0, client, sizeof(client));
+			str_subnet(&this->client, &client);
 		}
 	}
 
@@ -577,7 +575,7 @@ size_t format_end(char *buf,
 
 	if (is_left) {
 		snprintf(buf, buf_len, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
-			open_brackets, client, close_brackets,
+			open_brackets, client.buf, close_brackets,
 			client_sep, host, host_port,
 			id_obrackets, host_id, id_comma, endopts,
 			id_cbrackets,
@@ -588,7 +586,7 @@ size_t format_end(char *buf,
 			id_obrackets, host_id, id_comma, endopts,
 			id_cbrackets,
 			protoport, client_sep,
-			open_brackets, client, close_brackets);
+			open_brackets, client.buf, close_brackets);
 	}
 	return strlen(buf);
 }
@@ -1838,15 +1836,14 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 	char namebuf[100];	/* presumed large enough */
 
 	{
-		char targetbuf[SUBNETTOT_BUF];
-
-		subnettot(target, 0, targetbuf, sizeof(targetbuf));
+		subnet_buf targetbuf;
+		str_subnet(target, &targetbuf);
 
 		if (proto == 0) {
-			snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf);
+			snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf.buf);
 		} else {
 			snprintf(namebuf, sizeof(namebuf), "%s#%s-(%d--%d--%d)", group->name,
-				targetbuf, sport, proto, dport);
+				targetbuf.buf, sport, proto, dport);
 		}
 	}
 
@@ -2194,53 +2191,41 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					2 * (sr->that.port == peer_port) +
 					1 * (sr->this.protocol == transport_proto);
 
-				DBG(DBG_CONTROLMORE, {
-						char cib[CONN_INST_BUF];
-						char c_ocb[SUBNETTOT_BUF];
-						char c_pcb[SUBNETTOT_BUF];
+				if (DBGP(DBG_BASE)) {
+					connection_buf cib;
+					subnet_buf c_ocb;
+					subnet_buf c_pcb;
+					DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s -> %s [pri: %" PRIu32 "]",
+						pri_connection(c, &cib),
+						str_subnet_port(&c->spd.this.client, &c_ocb),
+						str_subnet_port(&c->spd.that.client, &c_pcb),
+						prio);
 
-						subnettot(&c->spd.this.client,
-							0, c_ocb,
-							sizeof(c_ocb));
-						subnettot(&c->spd.that.client,
-							0, c_pcb,
-							sizeof(c_pcb));
-						DBG_log("find_connection: conn \"%s\"%s has compatible peers: %s -> %s [pri: %" PRIu32 "]",
-							c->name,
-							fmt_conn_instance(c,
-									cib),
-							c_ocb, c_pcb, prio);
-					});
-
-				DBG(DBG_CONTROLMORE,
 					if (best == NULL) {
-						char cib2[CONN_INST_BUF];
-						DBG_log("find_connection: first OK \"%s\"%s [pri:%" PRIu32 "]{%p} (child %s)",
-							c->name,
-							fmt_conn_instance(c, cib2),
+						connection_buf cib2;
+						DBG_log("find_connection: first OK "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
+							pri_connection(c, &cib2),
 							prio, c,
 							c->policy_next ?
 								c->policy_next->name :
 								"none");
 					} else {
-						char cib[CONN_INST_BUF];
-						char cib2[CONN_INST_BUF];
-						DBG_log("find_connection: comparing best \"%s\"%s [pri:%" PRIu32 "]{%p} (child %s) to \"%s\"%s [pri:%" PRIu32 "]{%p} (child %s)",
-							best->name,
-							fmt_conn_instance(best, cib),
+						connection_buf cib;
+						connection_buf cib2;
+						DBG_log("find_connection: comparing best "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s) to "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
+							pri_connection(best, &cib),
 							best_prio,
 							best,
 							best->policy_next ?
 								best->policy_next->name :
 								"none",
-							c->name,
-							fmt_conn_instance(c, cib2),
+							pri_connection(c, &cib2),
 							prio, c,
 							c->policy_next ?
 								c->policy_next->name :
 								"none");
 					}
-				);
+				}
 
 				if (best == NULL || prio > best_prio) {
 					best = c;
@@ -3122,18 +3107,14 @@ static bool is_virtual_net_used(struct connection *c,
 				!same_id(&d->spd.that.id, peer_id))
 			{
 				id_buf idb;
-				char cbuf[CONN_INST_BUF];
-				char client[SUBNETTOT_BUF];
-
-				subnettot(peer_net, 0, client, sizeof(client));
-
-				libreswan_log(
-					"Virtual IP %s overlaps with connection \"%s\"%s (kind=%s) '%s'",
-					client,
-					d->name, fmt_conn_instance(d, cbuf),
-					enum_name(&connection_kind_names,
-						d->kind),
-					str_id(&d->spd.that.id, &idb));
+				connection_buf cbuf;
+				subnet_buf client;
+				libreswan_log("Virtual IP %s overlaps with connection "PRI_CONNECTION" (kind=%s) '%s'",
+					      str_subnet(peer_net, &client),
+					      pri_connection(d, &cbuf),
+					      enum_name(&connection_kind_names,
+							d->kind),
+					      str_id(&d->spd.that.id, &idb));
 
 				if (!kernel_ops->overlap_supported) {
 					libreswan_log(
@@ -3164,10 +3145,8 @@ static bool is_virtual_net_used(struct connection *c,
 					libreswan_log(
 						"overlap is forbidden (neither agrees to overlap)");
 				} else {
-					libreswan_log(
-						"overlap is forbidden (%s%s does not agree to overlap)",
-						x->name,
-						fmt_conn_instance(x, cbuf));
+					libreswan_log("overlap is forbidden ("PRI_CONNECTION" does not agree to overlap)",
+						      pri_connection(x, &cbuf));
 				}
 
 				/* ??? why is this a separate log line? */
@@ -3230,10 +3209,6 @@ static struct connection *fc_try(const struct connection *c,
 	const bool peer_net_is_host = subnetisaddr(peer_net,
 						&c->spd.that.host_addr);
 	err_t virtualwhy = NULL;
-	char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
-
-	subnettot(our_net, 0, s1, sizeof(s1));
-	subnettot(peer_net, 0, d1, sizeof(d1));
 
 	struct connection *d;
 
@@ -3275,31 +3250,30 @@ static struct connection *fc_try(const struct connection *c,
 		const struct spd_route *sr;
 
 		for (sr = &d->spd; best != d && sr != NULL; sr = sr->spd_next) {
-			DBG(DBG_CONTROLMORE, {
-				char s3[SUBNETTOT_BUF];
-				char d3[SUBNETTOT_BUF];
-				subnettot(&sr->this.client, 0, s3,
-					sizeof(s3));
-				subnettot(&sr->that.client, 0, d3,
-					sizeof(d3));
+			if (DBGP(DBG_BASE)) {
+				subnet_buf s1, d1;
+				subnet_buf s3, d3;
 				DBG_log("  fc_try trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
-					c->name, s1, c->spd.this.protocol,
-					c->spd.this.port, d1,
+					c->name, str_subnet_port(our_net, &s1),
+					c->spd.this.protocol, c->spd.this.port,
+					str_subnet_port(peer_net, &d1),
 					c->spd.that.protocol, c->spd.that.port,
 					is_virtual_connection(c) ?
-					"(virt)" : "", d->name, s3,
+					"(virt)" : "", d->name,
+					str_subnet_port(&sr->this.client, &s3),
 					sr->this.protocol, sr->this.port,
-					d3, sr->that.protocol, sr->that.port,
+					str_subnet_port(&sr->that.client, &d3),
+					sr->that.protocol, sr->that.port,
 					is_virtual_sr(sr) ? "(virt)" : "");
-			});
+			}
 
 			if (!samesubnet(&sr->this.client, our_net)) {
-				DBG(DBG_CONTROLMORE,
-					char s3[SUBNETTOT_BUF];
-					subnettot(&sr->this.client, 0, s3,
-						sizeof(s3));
+				if (DBGP(DBG_BASE)) {
+					subnet_buf s1, s3;
 					DBG_log("   our client (%s) not in our_net (%s)",
-						s3, s1));
+						str_subnet_port(&sr->this.client, &s3),
+						str_subnet_port(our_net, &s1));
+				}
 
 				continue;
 			}
@@ -3311,13 +3285,12 @@ static struct connection *fc_try(const struct connection *c,
 
 				if (!samesubnet(&sr->that.client, peer_net) &&
 				    !is_virtual_sr(sr)) {
-					DBG(DBG_CONTROLMORE, {
-						char d3[SUBNETTOT_BUF];
-						subnettot(&sr->that.client, 0, d3,
-							sizeof(d3));
+					if (DBGP(DBG_BASE)) {
+						subnet_buf d1, d3;
 						DBG_log("   their client (%s) not in same peer_net (%s)",
-							d3, d1);
-					});
+							str_subnet_port(&sr->that.client, &d3),
+							str_subnet_port(peer_net, &d1));
+					}
 					continue;
 				}
 
@@ -3428,21 +3401,17 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		const struct spd_route *sr;
 
 		for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
-			DBG(DBG_CONTROLMORE, {
-				char s1[SUBNETTOT_BUF];
-				char d1[SUBNETTOT_BUF];
-				char s3[SUBNETTOT_BUF];
-				char d3[SUBNETTOT_BUF];
-
-				subnettot(our_net, 0, s1, sizeof(s1));
-				subnettot(peer_net, 0, d1, sizeof(d1));
-				subnettot(&sr->this.client, 0, s3,
-					sizeof(s3));
-				subnettot(&sr->that.client, 0, d3,
-					sizeof(d3));
+			if (DBGP(DBG_BASE)) {
+				subnet_buf s1;
+				subnet_buf d1;
+				subnet_buf s3;
+				subnet_buf d3;
 				DBG_log("  fc_try_oppo trying %s:%s -> %s vs %s:%s -> %s",
-					c->name, s1, d1, d->name, s3, d3);
-			});
+					c->name, str_subnet_port(our_net, &s1),
+					str_subnet_port(peer_net, &d1),
+					d->name, str_subnet_port(&sr->this.client, &s3),
+					str_subnet_port(&sr->that.client, &d3));
+			}
 
 			if (!subnetinsubnet(our_net, &sr->this.client) ||
 				!subnetinsubnet(peer_net, &sr->that.client))
@@ -3499,19 +3468,15 @@ struct connection *find_client_connection(struct connection *const c,
 		return NULL;
 	}
 
-	DBG(DBG_CONTROLMORE, {
-		char s1[SUBNETTOT_BUF];
-		char d1[SUBNETTOT_BUF];
-
-		subnettot(our_net, 0, s1, sizeof(s1));
-		subnettot(peer_net, 0, d1, sizeof(d1));
-
+	if (DBGP(DBG_BASE)) {
+		subnet_buf s1;
+		subnet_buf d1;
 		DBG_log("find_client_connection starting with %s",
 			c->name);
 		DBG_log("  looking for %s:%d/%d -> %s:%d/%d",
-			s1, our_protocol, our_port,
-			d1, peer_protocol, peer_port);
-	});
+			str_subnet_port(our_net, &s1), our_protocol, our_port,
+			str_subnet_port(peer_net, &d1), peer_protocol, peer_port);
+	}
 
 	/*
 	 * Give priority to current connection
@@ -3527,14 +3492,13 @@ struct connection *find_client_connection(struct connection *const c,
 			sr = sr->spd_next) {
 			srnum++;
 
-			DBG(DBG_CONTROLMORE, {
-				char s2[SUBNETTOT_BUF];
-				char d2[SUBNETTOT_BUF];
-
-				subnettot(&sr->this.client, 0, s2, sizeof(s2));
-				subnettot(&sr->that.client, 0, d2, sizeof(d2));
-				DBG_log("  concrete checking against sr#%d %s -> %s", srnum, s2, d2);
-			});
+			if (DBGP(DBG_BASE)) {
+				subnet_buf s2;
+				subnet_buf d2;
+				DBG_log("  concrete checking against sr#%d %s -> %s", srnum,
+					str_subnet_port(&sr->this.client, &s2),
+					str_subnet_port(&sr->that.client, &d2));
+			}
 
 			if (samesubnet(&sr->this.client, our_net) &&
 				samesubnet(&sr->that.client, peer_net) &&
@@ -3577,19 +3541,14 @@ struct connection *find_client_connection(struct connection *const c,
 		for (sra = &c->spd; hp == NULL &&
 				sra != NULL; sra = sra->spd_next) {
 			hp = find_host_pair(&sra->this.host_addr, NULL);
-			DBG(DBG_CONTROLMORE, {
-				char s2[SUBNETTOT_BUF];
-				char d2[SUBNETTOT_BUF];
-
-				subnettot(&sra->this.client, 0, s2,
-					sizeof(s2));
-				subnettot(&sra->that.client, 0, d2,
-					sizeof(d2));
-
+			if (DBGP(DBG_BASE)) {
+				subnet_buf s2;
+				subnet_buf d2;
 				DBG_log("  checking hostpair %s -> %s is %s",
-					s2, d2,
+					str_subnet_port(&sra->this.client, &s2),
+					str_subnet_port(&sra->that.client, &d2),
 					(hp ? "found" : "not found"));
-			});
+			}
 		}
 
 		if (hp != NULL) {

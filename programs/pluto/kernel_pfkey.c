@@ -1716,30 +1716,16 @@ void pfkey_scan_shunts(void)
 						   eri.transport_proto) ==
 				    NULL &&
 				    shunt_owner(&eri.ours, &eri.his) == NULL) {
-					char ourst[SUBNETTOT_BUF];
-					char hist[SUBNETTOT_BUF];
-					char sat[SATOT_BUF];
-
-					subnettot(&eri.ours, 0, ourst,
-						  sizeof(ourst));
-					subnettot(&eri.his, 0, hist,
-						  sizeof(hist));
-					satot(&eri.said, 0, sat, sizeof(sat));
-
-					DBG(DBG_CONTROL, {
-						    int ourport =
-							    ntohs(portof(&eri.
-									 ours.
-									 addr));
-						    int hisport =
-							    ntohs(portof(&eri.
-									 his.
-									 addr));
-						    DBG_log("add orphaned shunt %s:%d -> %s:%d => %s:%d",
-							    ourst, ourport,
-							    hist, hisport, sat,
-							    eri.transport_proto);
-					    });
+					if (DBGP(DBG_BASE)) {
+						subnet_buf ourst;
+						subnet_buf hist;
+						said_buf sat;
+						DBG_log("add orphaned shunt %s -> %s => %s:%d",
+							str_subnet_port(&eri.ours, &ourst),
+							str_subnet_port(&eri.his, &hist),
+							str_said(&eri.said, 0, &sat),
+							eri.transport_proto);
+					}
 					eri.next = orphaned_holds;
 					orphaned_holds = clone_thing(eri,
 								     "orphaned %hold");

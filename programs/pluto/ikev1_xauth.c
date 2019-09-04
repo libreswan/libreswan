@@ -1559,7 +1559,6 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 		{
 			struct connection *c = st->st_connection;
-			char caddr[SUBNETTOT_BUF];
 
 			ip_address a;
 			if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
@@ -1568,19 +1567,18 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			addrtosubnet(&a, &c->spd.this.client);
 
 			c->spd.this.has_client = TRUE;
-			subnettot(&c->spd.this.client, 0,
-				  caddr, sizeof(caddr));
-			loglog(RC_LOG, "Received IP address %s",
-				      caddr);
+			subnet_buf caddr;
+			str_subnet(&c->spd.this.client, &caddr);
+			loglog(RC_LOG, "Received IP address %s", caddr.buf);
 
 			if (!address_is_specified(&c->spd.this.host_srcip)) {
 				libreswan_log("setting ip source address to %s",
-					      caddr);
+					      caddr.buf);
 				c->spd.this.host_srcip = a;
 			}
-		}
 			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 			break;
+		}
 
 		case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 		case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
@@ -1714,7 +1712,6 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			{
 				struct connection *c = st->st_connection;
-				char caddr[SUBNETTOT_BUF];
 
 				ip_address a;
 				if (!pbs_in_address(&a, &ipv4_info, &strattr, "addr")) {
@@ -1723,15 +1720,15 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				addrtosubnet(&a, &c->spd.this.client);
 
 				c->spd.this.has_client = TRUE;
-				subnettot(&c->spd.this.client, 0,
-					  caddr, sizeof(caddr));
+				subnet_buf caddr;
+				str_subnet(&c->spd.this.client, &caddr);
 				loglog(RC_INFORMATIONAL,
 					"Received IPv4 address: %s",
-					caddr);
+					caddr.buf);
 
 				if (!address_is_specified(&c->spd.this.host_srcip)) {
 					dbg("setting ip source address to %s",
-					    caddr);
+					    caddr.buf);
 					c->spd.this.host_srcip = a;
 				}
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
@@ -1816,16 +1813,12 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 						break;
 					}
 
-					char pretty_subnet[SUBNETTOT_BUF];
-					subnettot(
-						&subnet,
-						0,
-						pretty_subnet,
-						sizeof(pretty_subnet));
+					subnet_buf pretty_subnet;
+					str_subnet(&subnet, &pretty_subnet);
 
 					loglog(RC_INFORMATIONAL,
 						"Received subnet %s",
-						pretty_subnet);
+						pretty_subnet.buf);
 
 					struct spd_route *sr;
 					for (sr = &c->spd; ; sr = sr->spd_next) {
@@ -1833,7 +1826,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							/* duplicate entry: ignore */
 							loglog(RC_INFORMATIONAL,
 								"Subnet %s already has an spd_route - ignoring",
-								pretty_subnet);
+								pretty_subnet.buf);
 							break;
 						} else if (sr->spd_next == NULL) {
 							/* new entry: add at end*/

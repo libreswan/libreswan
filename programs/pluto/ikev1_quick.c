@@ -566,13 +566,12 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 		return FALSE;
 
 	if (!samesubnet(net, &net_temp)) {
-		char subrec[SUBNETTOT_BUF];
-		char subxmt[SUBNETTOT_BUF];
-		subnettot(net, 0, subxmt, sizeof(subxmt));
-		subnettot(&net_temp, 0, subrec, sizeof(subrec));
+		subnet_buf subrec;
+		subnet_buf subxmt;
 		loglog(RC_LOG_SERIOUS,
 		       "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
-		       which, subxmt, subrec);
+		       which, str_subnet(net, &subxmt),
+		       str_subnet(&net_temp, &subrec));
 #ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
 		loglog(RC_LOG_SERIOUS,
 		       "Allowing questionable proposal anyway [ALLOW_MICROSOFT_BAD_PROPOSAL]");
@@ -1053,7 +1052,6 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		    (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
 			struct hidden_variables hv;
 			char idfqdn[IDTOA_BUF];
-			char subnet_buf[SUBNETTOT_BUF];
 			size_t idlen = pbs_room(&IDci->pbs);
 
 			if (idlen >= sizeof(idfqdn)) {
@@ -1069,11 +1067,10 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 
 			if (address_is_specified(&hv.st_nat_oa)) {
 				addrtosubnet(&hv.st_nat_oa, &b.his.net);
-				subnettot(&b.his.net, 0, subnet_buf,
-					  sizeof(subnet_buf));
+				subnet_buf buf;
 				loglog(RC_LOG_SERIOUS,
 				       "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
-				       idfqdn, subnet_buf,
+				       idfqdn, str_subnet(&b.his.net, &buf),
 				       isanyaddr(&hv.st_nat_oa)/*XXX: always 0?*/);
 			}
 		}
@@ -1119,14 +1116,17 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 	struct hidden_variables hv;
 
 	{
-		char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
-
-		subnettot(our_net, 0, s1, sizeof(s1));
-		subnettot(his_net, 0, d1, sizeof(d1));
-
+		/*
+		 * XXX: ADDRESS/MASK:PROTOCOL/PORT - is a pretty
+		 * messed up way of logging things.  Should at least
+		 * follow SUB -%d-> SUB format.
+		 *
+		 * XXX: why is protocol always logged as an integer.
+		 */
+		subnet_buf s1, d1;
 		libreswan_log("the peer proposed: %s:%d/%d -> %s:%d/%d",
-			      s1, c->spd.this.protocol, c->spd.this.port,
-			      d1, c->spd.that.protocol, c->spd.that.port);
+			      str_subnet(our_net, &s1), c->spd.this.protocol, c->spd.this.port,
+			      str_subnet(his_net, &d1), c->spd.that.protocol, c->spd.that.port);
 	}
 
 	/* Now that we have identities of client subnets, we must look for
@@ -1159,8 +1159,8 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 			struct end
 				me = c->spd.this,
 				he = c->spd.that;
-			char buf[2 * SUBNETTOT_BUF + 2 * ADDRTOT_BUF + 2 *
-				 IDTOA_BUF + 2 * ADDRTOT_BUF + 12];                       /* + 12 for separating */
+			char buf[2 * sizeof(subnet_buf) + 2 * sizeof(address_buf) + 2 *
+				 sizeof(id_buf) + 2 * sizeof(address_buf) + 12];                       /* + 12 for separating */
 			size_t l;
 
 			me.client = *our_net;
@@ -1742,7 +1742,6 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 			     NAT_T_WITH_NATOA) &&
 			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 				char idfqdn[IDTOA_BUF];
-				char subnet_buf[SUBNETTOT_BUF];
 				size_t idlen = pbs_room(&IDcr->pbs);
 
 				if (idlen >= sizeof(idfqdn)) {
@@ -1755,12 +1754,11 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 
 				addrtosubnet(&st->hidden_variables.st_nat_oa,
 					     &st->st_connection->spd.that.client);
-
-				subnettot(&st->st_connection->spd.that.client,
-					  0, subnet_buf, sizeof(subnet_buf));
+				subnet_buf buf;
 				loglog(RC_LOG_SERIOUS,
 				       "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
-				       idfqdn, subnet_buf);
+				       idfqdn,
+				       str_subnet(&st->st_connection->spd.that.client, &buf));
 			}
 		} else {
 			/* no IDci, IDcr: we must check that the defaults match our proposal */

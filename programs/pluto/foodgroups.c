@@ -245,18 +245,15 @@ static void read_foodgroup(struct fg_groups *g)
 					}
 
 					if (r == 0) {
-						char source[SUBNETTOT_BUF];
-						char dest[SUBNETTOT_BUF];
-
-						subnettot(lsn, 0, source, sizeof(source));
-						subnettot(&sn, 0, dest, sizeof(dest));
+						subnet_buf source;
+						subnet_buf dest;
 						loglog(RC_LOG_SERIOUS,
 						       "\"%s\" line %d: subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
 						       flp->filename,
 						       flp->lino,
-						       dest,
+						       str_subnet(&sn, &dest),
 						       proto, sport, dport,
-						       source,
+						       str_subnet(lsn, &source),
 						       (*pp)->group->connection->name);
 					} else {
 						struct fg_targets *f =
@@ -316,23 +313,17 @@ void load_groups(void)
 	}
 
 	/* dump new_targets */
-	DBG(DBG_CONTROL,
-	    {
-		    struct fg_targets *t;
-
-		    for (t = new_targets; t != NULL; t = t->next) {
-			    char asource[SUBNETTOT_BUF];
-			    char atarget[SUBNETTOT_BUF];
-
-			    subnettot(&t->group->connection->spd.this.client,
-				      0, asource, sizeof(asource));
-			    subnettot(&t->subnet, 0, atarget, sizeof(atarget));
-			    DBG_log("%s->%s %d sport %d dport %d %s",
-				    asource, atarget,
-					t->proto, t->sport, t->dport,
-				    t->group->connection->name);
-		    }
-	    });
+	if (DBG_BASE) {
+		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
+			subnet_buf asource;
+			subnet_buf atarget;
+			DBG_log("%s->%s %d sport %d dport %d %s",
+				str_subnet_port(&t->group->connection->spd.this.client, &asource),
+				str_subnet_port(&t->subnet, &atarget),
+				t->proto, t->sport, t->dport,
+				t->group->connection->name);
+		}
+	    }
 
 	/* determine and deal with differences between targets and new_targets.
 	 * structured like a merge.
