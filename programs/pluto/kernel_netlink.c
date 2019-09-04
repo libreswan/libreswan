@@ -588,8 +588,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	const int family = addrtypeof(&that_client->addr);
 
-	req.u.p.sel.sport = portof(&this_client->addr);
-	req.u.p.sel.dport = portof(&that_client->addr);
+	req.u.p.sel.sport = subnet_nport(this_client);
+	req.u.p.sel.dport = subnet_nport(that_client);
 
 	/*
 	 * As per RFC 4301/5996, icmp type is put in the most significant
@@ -798,8 +798,8 @@ static bool netlink_get_sa_policy(const struct kernel_sa *sa,
 	req.id.sel.prefixlen_s = sa->src_client->maskbits;
 	req.id.sel.prefixlen_d = sa->dst_client->maskbits;
 
-	req.id.sel.sport = portof(&sa->src_client->addr);
-	req.id.sel.dport = portof(&sa->dst_client->addr);
+	req.id.sel.sport = subnet_nport(sa->src_client);
+	req.id.sel.dport = subnet_nport(sa->dst_client);
 
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp, "Get policy",
 			      sa->text_said)) {
@@ -1243,8 +1243,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			src = sa->src_client;
 		}
 
-		req.p.sel.sport = portof(&sa->src_client->addr);
-		req.p.sel.dport = portof(&sa->dst_client->addr);
+		req.p.sel.sport = subnet_nport(sa->src_client);
+		req.p.sel.dport = subnet_nport(sa->dst_client);
 
 		/*
 		 * As per RFC 4301/5996, icmp type is put in the most

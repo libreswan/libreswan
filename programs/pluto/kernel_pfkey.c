@@ -929,8 +929,8 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 	int klips_op = kernelop2klips(op);
 
-	int sport = ntohs(portof(&this_client->addr));
-	int dport = ntohs(portof(&that_client->addr));
+	int sport = subnet_hport(this_client);
+	int dport = subnet_hport(that_client);
 	int satype;
 
 	ip_address sflow_ska = subnet_prefix(this_client);
@@ -1906,8 +1906,8 @@ void pfkey_remove_orphaned_holds(int transport_proto,
 			if (samesubnet(ours, &p->ours) &&
 			    samesubnet(his, &p->his) &&
 			    transport_proto == p->transport_proto &&
-			    portof(&ours->addr) == portof(&p->ours.addr) &&
-			    portof(&his->addr) == portof(&p->his.addr)) {
+			    subnet_hport(ours) == subnet_hport(&p->ours) &&
+			    subnet_hport(his) == subnet_hport(&p->his)) {
 				*pp = p->next;
 				pfree(p);
 				break;

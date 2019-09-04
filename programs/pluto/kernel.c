@@ -1107,10 +1107,10 @@ struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours, const ip_subnet *his,
 
 	for (pp = &bare_shunts; (p = *pp) != NULL; pp = &p->next) {
 		if (samesubnet(ours, &p->ours) &&
-			samesubnet(his, &p->his) &&
-			transport_proto == p->transport_proto &&
-			portof(&ours->addr) == portof(&p->ours.addr) &&
-			portof(&his->addr) == portof(&p->his.addr))
+		    samesubnet(his, &p->his) &&
+		    transport_proto == p->transport_proto &&
+		    subnet_hport(ours) == subnet_hport(&p->ours) &&
+		    subnet_hport(his) == subnet_hport(&p->his))
 			return pp;
 	}
 	return NULL;
@@ -1278,13 +1278,13 @@ static void clear_narrow_holds(const ip_subnet *ours,
 
 	for (pp = &bare_shunts; (p = *pp) != NULL; ) {
 		if (subnetishost(&p->ours) &&
-			subnetishost(&p->his) &&
-			p->said.spi == htonl(SPI_HOLD) &&
-			addrinsubnet(&p->ours.addr, ours) &&
-			addrinsubnet(&p->his.addr, his) &&
-			transport_proto == p->transport_proto &&
-			portof(&ours->addr) == portof(&p->ours.addr) &&
-			portof(&his->addr) == portof(&p->his.addr))
+		    subnetishost(&p->his) &&
+		    p->said.spi == htonl(SPI_HOLD) &&
+		    addrinsubnet(&p->ours.addr, ours) &&
+		    addrinsubnet(&p->his.addr, his) &&
+		    transport_proto == p->transport_proto &&
+		    subnet_hport(ours) == subnet_hport(&p->ours) &&
+		    subnet_hport(his) == subnet_hport(&p->his))
 		{
 			if (!delete_bare_shunt(&p->ours.addr, &p->his.addr,
 					transport_proto, SPI_HOLD,
