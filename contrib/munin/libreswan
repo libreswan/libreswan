@@ -40,7 +40,9 @@ def get_stats():
     # Parse output
     values = tree()
     for line in output.splitlines():
-        prefix, val = line.split("=")
+        if '=' not in line:
+            continue
+        prefix, val = line.split('=')
         prefix = prefix.split('.')
         pos = values
         for key in prefix[:-1]:
