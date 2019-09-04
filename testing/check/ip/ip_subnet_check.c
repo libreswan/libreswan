@@ -126,6 +126,60 @@ static void check_str_subnet(void)
 	}
 }
 
+static void check_str_subnet_port(void)
+{
+	/*
+	 * XXX: can't yet do invalid ports.
+	 */
+	static const struct test {
+		int family;
+		char *in;
+		char *out;	/* NULL means error expected */
+	} tests[] = {
+		/* no port as in :0 should not appear (broken as uint16_t port) */
+		{ 4, "0.0.0.0/0", "0.0.0.0/0:0" },
+		{ 6, "::/0", "::/0:0", },
+		/* any */
+		{ 4, "0.0.0.0/0:0", "0.0.0.0/0:0" },
+		{ 6, "::/0:0", "::/0:0", },
+		/* longest */
+		{ 4, "101.102.103.104/32:65535", "101.102.103.104/32:65535" },
+		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008/128:65535", "1001:1002:1003:1004:1005:1006:1007:1008/128:65535", },
+	};
+
+	const char *oops;
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_IN(stdout, " -> '%s'",
+			 t->out ? t->out : "<error>");
+
+		sa_family_t af = SA_FAMILY(t->family);
+
+		ip_subnet s;
+		oops = ttosubnet(t->in, 0, af, &s);
+		if (oops != NULL && t->out == NULL) {
+			/* Error was expected, do nothing */
+			continue;
+		} else if (oops != NULL && t->out != NULL) {
+			/* Error occurred, but we didn't expect one  */
+			FAIL_IN("ttosubnet failed: %s", oops);
+		} else if (oops == NULL && t->out == NULL) {
+			/* If no errors, but we expected one */
+			FAIL_IN("ttosubnet succeeded unexpectedly");
+		}
+
+		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+
+		subnet_buf buf;
+		const char *out = str_subnet_port(&s, &buf);
+		if (!streq(t->out, out)) {
+			FAIL_IN("str_subnet_port() returned '%s', expected '%s'",
+				out, t->out);
+		}
+	}
+}
+
 static void check_subnet_mask(void)
 {
 	static const struct test {
@@ -296,6 +350,7 @@ static void check_subnet_port(void)
 void ip_subnet_check(void)
 {
 	check_str_subnet();
+	check_str_subnet_port();
 	check_subnet_prefix();
 	check_subnet_mask();
 	check_subnet_port();

@@ -104,10 +104,13 @@ err_t ts_to_subnet(const ip_address *starting_address, const ip_address *ending 
  */
 
 typedef struct {
-	char buf[sizeof(address_buf) + 4/*/NNN*/];
+	char buf[sizeof(address_buf) + 4/*/NNN*/ + 6/*:65535*/];
 } subnet_buf;
 extern const char *str_subnet(const ip_subnet *subnet, subnet_buf *out);
+extern const char *str_subnet_port(const ip_subnet *subnet, subnet_buf *out);
+
 extern void jam_subnet(struct lswlog *buf, const ip_subnet *subnet);
+extern void jam_subnet_port(struct lswlog *buf, const ip_subnet *subnet);
 
 /*
  * Extract details
