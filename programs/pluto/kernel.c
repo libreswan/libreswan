@@ -222,8 +222,11 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 	 *          proc value is different from our internal value?
 	 */
 
-	ip_address src = subnet_prefix(ours);
-	ip_address dst = subnet_prefix(his);
+	ip_address sp = subnet_prefix(ours);
+	ip_address dp = subnet_prefix(his);
+
+	ip_endpoint src = endpoint(&sp, subnet_port(ours));
+	ip_endpoint dst = endpoint(&dp, subnet_port(his));
 
 	/* This check should not be needed :( */
 	if (has_bare_hold(&src, &dst, transport_proto)) {
