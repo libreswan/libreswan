@@ -121,8 +121,10 @@ extern const ip_subnet subnet_invalid;
 bool subnet_is_specified(const ip_subnet *subnet);
 
 const struct ip_info *subnet_type(const ip_subnet *subnet);
-ip_subnet set_subnet_port(const ip_subnet *subnet, int port) MUST_USE_RESULT;
-int subnet_port(const ip_subnet *subnet);
+int subnet_hport(const ip_subnet *subnet);
+int subnet_nport(const ip_subnet *subnet);
+
+ip_subnet set_subnet_port(const ip_subnet *subnet, int hport) MUST_USE_RESULT;
 
 /* when applied to an address, leaves just the routing prefix */
 extern ip_address subnet_mask(const ip_subnet *subnet);

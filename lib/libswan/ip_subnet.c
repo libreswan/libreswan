@@ -44,13 +44,27 @@ const struct ip_info *subnet_type(const ip_subnet *src)
 	return endpoint_type(&src->addr);
 }
 
-int subnet_port(const ip_subnet *subnet)
+int subnet_hport(const ip_subnet *subnet)
 {
 #ifdef SUBNET_TYPE
 	return subnet->port;
 #else
 	return endpoint_port(&subnet->addr);
 #endif
+}
+
+int subnet_nport(const ip_subnet *subnet)
+{
+#ifdef SUBNET_TYPE
+	int port = subnet->port;
+#else
+	int port = endpoint_port(&subnet->addr);
+#endif
+	if (port < 0) {
+		return -1;
+	} else {
+		return htons(port);
+	}
 }
 
 ip_subnet set_subnet_port(const ip_subnet *subnet, int hport)

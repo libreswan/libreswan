@@ -229,7 +229,7 @@ static void check_subnet_port(void)
 		int family;
 		const char *in;
 		const char *out;
-		int port;
+		int hport;
 	} tests[] = {
 		{ 4, "1.2.3.0/24", "1.2.3.0/24", 0, },
 		{ 4, "1.2.3.0/24:0", "1.2.3.0/24", 0, },
@@ -247,7 +247,7 @@ static void check_subnet_port(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, " -> %d", t->port);
+		PRINT_IN(stdout, " -> %d", t->hport);
 
 		sa_family_t af = SA_FAMILY(t->family);
 
@@ -272,17 +272,23 @@ static void check_subnet_port(void)
 				out, t->out);
 		}
 
-		int port = subnet_port(&s);
-		if (port != t->port) {
-			FAIL_IN("subnet_port() returned '%d', expected '%d'",
-				port, t->port);
+		int hport = subnet_hport(&s);
+		if (hport != t->hport) {
+			FAIL_IN("subnet_hport() returned '%d', expected '%d'",
+				hport, t->hport);
 		}
 
-		ip_subnet ps = set_subnet_port(&s, t->port+1);
-		int pport = subnet_port(&ps);
-		if (pport != t->port+1) {
-			FAIL_IN("subnet_port() returned '%d', expected '%d'",
-				pport, t->port+1);
+		int nport = subnet_nport(&s);
+		if (nport != htons(t->hport)) {
+			FAIL_IN("subnet_nport() returned '%04x', expected '%04x'",
+				nport, htons(t->hport));
+		}
+
+		ip_subnet ps = set_subnet_port(&s, t->hport+1);
+		int pport = subnet_hport(&ps);
+		if (pport != t->hport+1) {
+			FAIL_IN("subnet_hport()+1 returned '%d', expected '%d'",
+				pport, t->hport+1);
 		}
 	}
 }
