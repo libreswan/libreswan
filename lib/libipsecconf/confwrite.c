@@ -329,20 +329,17 @@ static void confwrite_side(FILE *out,
 
 	if (end->has_client) {
 		if (!subnetishost(&end->subnet) ||
-		     !addrinsubnet(&end->addr, &end->subnet))
-		{
-			char as[ADDRTOT_BUF];
-
-			subnettot(&end->subnet, 0, as, sizeof(as));
-			fprintf(out, "\t%ssubnet=%s\n", side, as);
+		     !addrinsubnet(&end->addr, &end->subnet)) {
+			subnet_buf as;
+			fprintf(out, "\t%ssubnet=%s\n", side,
+				str_subnet(&end->subnet, &as));
 		}
 	}
 
 	if (subnet_is_specified(&end->vti_ip)) {
-			char as[ADDRTOT_BUF];
-
-			subnettot(&end->vti_ip, 0, as, sizeof(as));
-			fprintf(out, "\t%svti=%s\n", side, as);
+		subnet_buf as;
+		fprintf(out, "\t%svti=%s\n", side,
+			str_subnet(&end->vti_ip, &as));
 	}
 
 	if (end->rsakey1 != NULL && end->rsakey1[0] != '\0')
