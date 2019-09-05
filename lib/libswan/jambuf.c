@@ -254,7 +254,7 @@ bool jambuf_ok(jambuf_t *buf)
 	return buf->total < buf->roof;
 }
 
-const char *jambuf_pos(jambuf_t *buf)
+const char *jambuf_cursor(jambuf_t *buf)
 {
 	assert_jambuf(buf);
 	struct dest d = dest(buf);

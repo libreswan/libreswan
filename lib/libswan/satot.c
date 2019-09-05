@@ -153,7 +153,7 @@ size_t dstlen;
 		jambuf_t b = array_as_jambuf(buf + len, sizeof(buf) - len);
 		jam_address(&b, &sa->dst);
 		/* "pos" is always '\0' */
-		const char *end = jambuf_pos(&b);
+		const char *end = jambuf_cursor(&b);
 		passert(*end == '\0');
 		/* *tot() functions lengh includes the NULL */
 		len = end-buf+1;

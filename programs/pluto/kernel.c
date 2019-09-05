@@ -372,8 +372,8 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
 
 static void jam_clean_xauth_username(struct lswlog *buf, const char *src)
 {
-	bool changed = FALSE;
-	const char *dst = jambuf_pos(buf);
+	bool changed = false;
+	const char *dst = jambuf_cursor(buf);
 	while (*src != '\0') {
 		if ((*src >= '0' && *src <= '9') ||
 		    (*src >= 'a' && *src <= 'z') ||
@@ -381,7 +381,7 @@ static void jam_clean_xauth_username(struct lswlog *buf, const char *src)
 		    *src == '_' || *src == '-' || *src == '.') {
 			jam_char(buf, *src);
 		} else {
-			changed = TRUE;
+			changed = true;
 		}
 		src++;
 	}

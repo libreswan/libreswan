@@ -105,14 +105,14 @@ jambuf_t array_as_jambuf(char *array, size_t sizeof_array);
  * _as_chunk() returns the buffer contents up to and including the '\0'
  * terminator.
  *
- * _pos() returns the current cursor position (where the next string
- * will be jammed).
+ * _cursor() returns the current cursor position (where the next
+ * string will be jammed); *cursor is always '\0'.
  */
 /* includes final '\0' */
 chunk_t jambuf_as_chunk(jambuf_t *buf);
 /* excludes final '\0' */
 shunk_t jambuf_as_shunk(jambuf_t *buf);
-const char *jambuf_pos(jambuf_t *buf);
+const char *jambuf_cursor(jambuf_t *buf);
 
 /*
  * Routines for accumulating output in the jambuf buffer.

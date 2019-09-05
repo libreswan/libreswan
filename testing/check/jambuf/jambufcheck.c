@@ -52,9 +52,9 @@ static void check_jambuf(const char *expect, bool ok, ...)
 			     array[0]);
 			return;
 		}
-		const char *pos = jambuf_pos(&buf);
+		const char *pos = jambuf_cursor(&buf);
 		if (pos != array) {
-			FAIL("jambuf_pos() is %p but should be %p (aka array) at start",
+			FAIL("jambuf_cursor() is %p but should be %p (aka array) at start",
 			     pos, array);
 			return;
 		}
@@ -134,9 +134,9 @@ static void check_jambuf(const char *expect, bool ok, ...)
 			     pri_shunk(shunk));
 			return;
 		}
-		pos = jambuf_pos(&buf);
+		pos = jambuf_cursor(&buf);
 		if (pos != array + strlen(expect)) {
-			FAIL("jambuf_pos() is %p but should be %p",
+			FAIL("jambuf_cursor() is %p but should be %p",
 			     pos, array + strlen(expect));
 			return;
 		}
