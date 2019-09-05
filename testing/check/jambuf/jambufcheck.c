@@ -155,19 +155,19 @@ static void check_jambuf_pos(const char *pre, const char *pre_expect,
 
 	jam_string(&buf, pre);
 	if (!streq(array, pre_expect)) {
-		FAIL(" pre failed");
+		FAIL(" pre failed '%s'", array);
 	}
 
 	jampos_t pos = jambuf_get_pos(&buf);
 
 	jam_string(&buf, post);
 	if (!streq(array, post_expect)) {
-		FAIL(" post failed");
+		FAIL(" post get_pos() failed '%s'", array);
 	}
 
 	jambuf_set_pos(&buf, &pos);
 	if (!streq(array, set_expect)) {
-		FAIL(" set failed");
+		FAIL(" post set_pos() failed, '%s'", array);
 	}
 }
 
@@ -219,17 +219,22 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_jambuf_pos("", "", "", "", "");
 	check_jambuf_pos("s", "s", "", "s", "s");
 	check_jambuf_pos("st", "st", "", "st", "st");
-	check_jambuf_pos("stu", "stu", "", "st...", "st...");
+	check_jambuf_pos("stu", "stu", "", "stu", "stu");
+	check_jambuf_pos("stuf", "stuf", "", "stuf", "stuf");
+	check_jambuf_pos("stuff", "stuff", "", "stuff", "stuff");
 
 	check_jambuf_pos("", "", "o", "o", "");
 	check_jambuf_pos("s", "s", "o", "so", "s");
 	check_jambuf_pos("st", "st", "o", "sto", "st");
-	check_jambuf_pos("stu", "stu", "o", "st...", "st...");
+	check_jambuf_pos("stu", "stu", "o", "stuo", "stu");
+	check_jambuf_pos("stuf", "stuf", "o", "stufo", "stuf");
+	check_jambuf_pos("stuff", "stuff", "o", "st...", "st...");
 
 	check_jambuf_pos("", "", "ov", "ov", "");
 	check_jambuf_pos("s", "s", "ov", "sov", "s");
 	check_jambuf_pos("st", "st", "ov", "stov", "st");
-	check_jambuf_pos("stu", "stu", "ov", "st...", "st...");
+	check_jambuf_pos("stu", "stu", "ov", "stuov", "stu");
+	check_jambuf_pos("stuf", "stuf", "ov", "st...", "st...");
 
 	check_jambuf_pos("", "", "ove", "ove", "");
 	check_jambuf_pos("s", "s", "ove", "sove", "s");
@@ -251,7 +256,12 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_jambuf_pos("st", "st", "overf", "st...", "st");
 	check_jambuf_pos("stu", "stu", "overf", "st...", "st...");
 
-	check_jambuf_pos("stuffed", "st...", "", "st...", "st...");
+	check_jambuf_pos("", "", "overfull", "ov...", "");
+	check_jambuf_pos("s", "s", "overfull", "so...", "s");
+	check_jambuf_pos("st", "st", "overfull", "st...", "st");
+	check_jambuf_pos("stu", "stu", "overfull", "st...", "st...");
+	check_jambuf_pos("stuf", "stuf", "overfull", "st...", "st...");
+	check_jambuf_pos("stuff", "stuff", "overfull", "st...", "st...");
 
 	/* jam_bytes() */
 
