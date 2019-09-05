@@ -1,4 +1,4 @@
-/* test fmtbuf_t, for libreswan
+/* test jambuf_t, for libreswan
  *
  * Copyright (C) 2019 Andrew Cagney
  *
@@ -141,6 +141,48 @@ static void check_jambuf(const char *expect, bool ok, ...)
 			return;
 		}
 	}
+#undef FAIL
+}
+
+static void check_jambuf_pos(const char *pre, const char *pre_expect,
+			     const char *post, const char *post_expect,
+			     const char *set_expect)
+{
+	fprintf(stdout, "%s: %s -> '%s' + '%s' -> '%s' |-> '%s'",	\
+		__func__,						\
+		pre, pre_expect,					\
+		post, post_expect, set_expect);
+	fprintf(stdout, "\n");
+#define FAIL(FMT, ...) {						\
+		fprintf(stderr, "%s: %s -> '%s' + '%s' -> '%s' |-> '%s'", \
+			__func__,					\
+			pre, pre_expect,				\
+			post, post_expect, set_expect);			\
+		fprintf(stderr, FMT,##__VA_ARGS__);			\
+		fprintf(stderr, "\n");					\
+		fails++;						\
+		return;							\
+	}
+
+	char array[5/*stuff*/+2/*NUL+CANARY*/];
+	jambuf_t buf = ARRAY_AS_JAMBUF(array);
+
+	jam_string(&buf, pre);
+	if (!streq(array, pre_expect)) {
+		FAIL(" pre failed");
+	}
+
+	jampos_t pos = jambuf_get_pos(&buf);
+
+	jam_string(&buf, post);
+	if (!streq(array, post_expect)) {
+		FAIL(" post failed");
+	}
+
+	jambuf_set_pos(&buf, &pos);
+	if (!streq(array, set_expect)) {
+		FAIL(" set failed");
+	}
 }
 
 int main(int argc UNUSED, char *argv[] UNUSED)
@@ -171,6 +213,45 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_jambuf("0123456...", false, "0123456789", "-", NULL);
 	check_jambuf("0123456...", false, "0123456789", "-", "", NULL);
 	check_jambuf("0123456...", false, "0123456789", "", "-", NULL);
+
+	/* st... */
+
+	check_jambuf_pos("", "", "", "", "");
+	check_jambuf_pos("s", "s", "", "s", "s");
+	check_jambuf_pos("st", "st", "", "st", "st");
+	check_jambuf_pos("stu", "stu", "", "st...", "st...");
+
+	check_jambuf_pos("", "", "o", "o", "");
+	check_jambuf_pos("s", "s", "o", "so", "s");
+	check_jambuf_pos("st", "st", "o", "sto", "st");
+	check_jambuf_pos("stu", "stu", "o", "st...", "st...");
+
+	check_jambuf_pos("", "", "ov", "ov", "");
+	check_jambuf_pos("s", "s", "ov", "sov", "s");
+	check_jambuf_pos("st", "st", "ov", "stov", "st");
+	check_jambuf_pos("stu", "stu", "ov", "st...", "st...");
+
+	check_jambuf_pos("", "", "ove", "ove", "");
+	check_jambuf_pos("s", "s", "ove", "sove", "s");
+	check_jambuf_pos("st", "st", "ove", "stove", "st");
+	check_jambuf_pos("stu", "stu", "ove", "st...", "st...");
+
+	check_jambuf_pos("", "", "over", "over", "");
+	check_jambuf_pos("s", "s", "over", "sover", "s");
+	check_jambuf_pos("st", "st", "over", "st...", "st");
+	check_jambuf_pos("stu", "stu", "over", "st...", "st...");
+
+	check_jambuf_pos("", "", "overf", "overf", "");
+	check_jambuf_pos("s", "s", "overf", "so...", "s");
+	check_jambuf_pos("st", "st", "overf", "st...", "st");
+	check_jambuf_pos("stu", "stu", "overf", "st...", "st...");
+
+	check_jambuf_pos("", "", "overfl", "ov...", "");
+	check_jambuf_pos("s", "s", "overf", "so...", "s");
+	check_jambuf_pos("st", "st", "overf", "st...", "st");
+	check_jambuf_pos("stu", "stu", "overf", "st...", "st...");
+
+	check_jambuf_pos("stuffed", "st...", "", "st...", "st...");
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

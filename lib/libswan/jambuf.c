@@ -275,3 +275,36 @@ shunk_t jambuf_as_shunk(jambuf_t *buf)
 	struct dest d = dest(buf);
 	return shunk2(buf->array, d.cursor - buf->array);
 }
+
+jampos_t jambuf_get_pos(jambuf_t *buf)
+{
+	assert_jambuf(buf);
+	if (buf->total < buf->roof &&
+	    buf->total + strlen(buf->dots) >= buf->roof) {
+		/*
+		 * The buffer is nearly full; force an overflow.
+		 *
+		 * When a (nearly) full buffer overflows some of the
+		 * existing otput is lost (scribbled on with dots)
+		 * making the "set" impossible.  Fortunately this
+		 * doesn't matter, "get" on a nearly full buffer has a
+		 * bigger problem - the buffer is too small..
+		 */
+		jam_string(buf, buf->dots);
+	}
+	jampos_t pos = {
+		.total = buf->total,
+	};
+	return pos;
+}
+
+void jambuf_set_pos(jambuf_t *buf, const jampos_t *pos)
+{
+	assert_jambuf(buf);
+	buf->total = pos->total;
+	if (pos->total < buf->roof) {
+		/* not overflowed */
+		buf->array[pos->total] = '\0';
+	}
+	assert_jambuf(buf);
+}

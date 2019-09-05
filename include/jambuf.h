@@ -115,6 +115,17 @@ shunk_t jambuf_as_shunk(jambuf_t *buf);
 const char *jambuf_cursor(jambuf_t *buf);
 
 /*
+ * Save/restore the 'cursor'.
+ *
+ * See x509 code, where part way through scribbing all over the buf it
+ * detects and error and throws everything away.
+ */
+
+typedef struct { size_t total; } jampos_t;
+jampos_t jambuf_get_pos(jambuf_t *buf);
+void jambuf_set_pos(jambuf_t *buf, const jampos_t *pos);
+
+/*
  * Routines for accumulating output in the jambuf buffer.
  *
  * If there is insufficient space, the output is truncated and "..."
