@@ -54,11 +54,11 @@ findlog() {	# findlog string fallbackstring possiblefile ...
     do
 	if [ -s ${LOGS}/${f} -a \
 	    -f ${LOGS}/${f} -a \
-	    grep -E -q "$s" ${LOGS}/${f} ]
+	    grep -E -q "${s}" ${LOGS}/${f} 2>/dev/null ]
 	then
 	    # aha, this one has it
 	    findlog_file=${LOGS}/${f}
-	    findlog_startline=$(grep -E -n "$s" ${LOGS}/${f} | \
+	    findlog_startline=$(grep -E -n "${s}" ${LOGS}/${f} | \
 		sed -n '$s/:.*//p')
 	    return 0
 	fi
@@ -67,11 +67,11 @@ findlog() {	# findlog string fallbackstring possiblefile ...
     do
 	if [ -s ${LOGS}/${f} -a \
 	    -f ${LOGS}/${f} -a \
-	    grep -E -q "$t" ${LOGS}/${f} ]
+	    grep -E -q "${t}" ${LOGS}/${f} 2>/dev/null ]
 	then
 	    # aha, this one has it
 	    findlog_file=${LOGS}/${f}
-	    findlog_startline=$(grep -E -n "$t" ${LOGS}/${f} | \
+	    findlog_startline=$(grep -E -n "${t}" ${LOGS}/${f} | \
 		sed -n '1s/:.*//p')
 	    return 0
 	fi
@@ -81,11 +81,11 @@ findlog() {	# findlog string fallbackstring possiblefile ...
 	do
 	if [ -f ${LOGS}/${f} -a \
 	    ! -d ${LOGS}/${f} -a \
-	    grep -E -q "$s" ${LOGS}/${f} ]
+	    grep -E -q "${s}" ${LOGS}/${f} 2>/dev/null ]
 	then
 	    # found it
 	    findlog_file=${LOGS}/${f}
-	    findlog_startline=$(grep -E -n "$s" ${LOGS}/${f} | \
+	    findlog_startline=$(grep -E -n "${s}" ${LOGS}/${f} | \
 		sed -n '$s/:.*//p')
 	    return 0
 	fi
@@ -94,11 +94,11 @@ findlog() {	# findlog string fallbackstring possiblefile ...
     do
 	if [ -s ${LOGS}/${f} -a \
 	    -f ${LOGS}/${f} -a \
-	    grep -E -q "$t" ${LOGS}/${f} ]
+	    grep -E -q "${t}" ${LOGS}/${f} 2>/dev/null ]
 	then
 	    # found it
 	    findlog_file=${LOGS}/${f}
-	    findlog_startline=$(grep -E -n "$t" ${LOGS}/${f} | \
+	    findlog_startline=$(grep -E -n "${t}" ${LOGS}/${f} | \
 		sed -n '1s/:.*//p')
 	    return 0
 	fi
@@ -112,15 +112,14 @@ if [ ! -x /usr/bin/journalctl -a ! -x /bin/journalctl ]; then
     # no systemd, need to figure out log file location
     findlog "${fstart}" "klips" messages syslog auth.log daemon.log
     if [ "${findlog_file}" = "/dev/null" ]; then
-	echo "Unable to find KLIPS messages, typically found in /var/log/messages or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logwatch) or we do not understand your logging configuration."
+	echo "Unable to find KLIPS messages, typically found in /var/log/messages or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logrotate) or we do not understand your logging configuration."
     fi
     klog=${findlog_file}
     kline=${findlog_startline}
 
     findlog "$pstart" "Pluto" secure auth.log daemon.log debug
-    if [ "${findlog_file}" = "/dev/null" ]
-	then
-	echo "Unable to find Pluto messages, typically found in /var/log/secure or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logwatch) or we do not understand your logging configuration."
+    if [ "${findlog_file}" = "/dev/null" ]; then
+	echo "Unable to find Pluto messages, typically found in /var/log/secure or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logrotate) or we do not understand your logging configuration."
 	fi
 	plog=${findlog_file}
 	pline=${findlog_startline}
