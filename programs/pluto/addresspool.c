@@ -238,18 +238,18 @@ void rel_lease_addr(struct connection *c)
 
 	c->spd.that.has_lease = FALSE;
 
-	DBG(DBG_CONTROLMORE, {
+	if (DBGP(DBG_BASE)) {
 		/* text of addresses */
-		range_buf ta_range;
-		ipstr_buf b;
+		range_buf rbuf;
+		subnet_buf sbuf;
 		DBG_log("%s lease refcnt %u %s from addresspool %s index=%u. pool size %u used %u lingering=%u address",
-				story,
-				refcnt,
-				ipstr(&c->spd.that.client.addr, &b),
-			str_range(&pool->r, &ta_range), i,
-				pool->size, pool->used,
-				pool->lingering);
-	});
+			story,
+			refcnt,
+			str_subnet_port(&c->spd.that.client, &sbuf),
+			str_range(&pool->r, &rbuf), i,
+			pool->size, pool->used,
+			pool->lingering);
+	}
 }
 
 /*
@@ -315,22 +315,26 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 	uint32_t i = 0;
 	bool s;
 
-	DBG(DBG_CONTROL, {
+	if (DBGP(DBG_BASE)) {
 		range_buf rbuf;
-		char thatidbuf[IDTOA_BUF];
-		ipstr_buf b;
+		subnet_buf sbuf;
 
-		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
+		id_buf i; /* do not reduce scope */
+		const char *thatid = i.buf; /* hint to not reduce scope */
 		if (st->st_xauth_username != NULL) {
 			/* force different leases for different xauth users */
-			jam_str(thatidbuf, sizeof(thatidbuf), st->st_xauth_username);
+			thatid = st->st_xauth_username;
+		} else {
+			thatid = str_id(&c->spd.that.id, &i);
 		}
 
-		/* ??? what is that.client.addr and why do we care? */
-		DBG_log("request lease from addresspool %s reference count %u thatid '%s' that.client.addr %s",
-			str_range(&c->pool->r, &rbuf), c->pool->pool_refcount, thatidbuf,
-			ipstr(&c->spd.that.client.addr, &b));
-	});
+		/* ??? what is that.client and why do we care? */
+		/* XXX: the remote's exit point for the local pool addresss */
+		DBG_log("request lease from addresspool %s reference count %u thatid '%s' that.client %s",
+			str_range(&c->pool->r, &rbuf),
+			c->pool->pool_refcount, thatid,
+			str_subnet_port(&c->spd.that.client, &sbuf));
+	}
 
 	s = share_lease(c, &i);
 	if (!s) {
@@ -408,19 +412,18 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 		struct in_addr addr_nw = { htonl(addr), };
 		*ipa = address_from_in_addr(&addr_nw);
 	}
-	DBG(DBG_CONTROL, {
-		ipstr_buf l;
+	if (DBGP(DBG_BASE)) {
+		subnet_buf sbuf;
 		range_buf rbuf;
-		ipstr_buf a;
-		id_buf thatidbuf;
-
-		DBG_log("%s lease %s from addresspool %s to that.client.addr %s thatid '%s'",
+		address_buf abuf;
+		id_buf ibuf;
+		DBG_log("%s lease %s from addresspool %s to that.client %s thatid '%s'",
 			s ? "re-use" : "new",
-			ipstr(ipa, &l),
+			str_address(ipa, &abuf),
 			str_range(&c->pool->r, &rbuf),
-			ipstr(&c->spd.that.client.addr, &a),
-			str_id(&c->spd.that.id, &thatidbuf));
-	});
+			str_subnet_port(&c->spd.that.client, &sbuf),
+			str_id(&c->spd.that.id, &ibuf));
+	}
 
 	return NULL;
 }
