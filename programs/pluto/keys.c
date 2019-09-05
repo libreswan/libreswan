@@ -670,10 +670,9 @@ static bool try_all_RSA_keys(const char *pubkey_description,
 		    same_id(&c->spd.that.id, &key->id) &&
 		    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
 			if (DBGP(DBG_BASE)) {
-				char buf[ASN1_BUF_LEN];
-				dntoa_or_null(buf, sizeof(buf),
-					      key->issuer, "%any");
-				DBG_log("key issuer CA is '%s'", buf);
+				dn_buf buf;
+				DBG_log("key issuer CA is '%s'",
+					str_dn_or_null(key->issuer, "%any", &buf));
 			}
 
 			/* check if found public key has expired */
@@ -728,9 +727,9 @@ stf_status RSA_check_signature_gen(struct state *st,
 	realtime_t now = realnow();
 
 	if (DBGP(DBG_BASE)) {
-		char buf[ASN1_BUF_LEN];
-		dntoa_or_null(buf, sizeof(buf), c->spd.that.ca, "%any");
-		DBG_log("required RSA CA is '%s'", buf);
+		dn_buf buf;
+		DBG_log("required RSA CA is '%s'",
+			str_dn_or_null(c->spd.that.ca, "%any", &buf));
 	}
 
 	if (try_all_RSA_keys("remote certificates",
@@ -815,10 +814,9 @@ static bool try_all_ECDSA_keys(const char *pubkey_description,
 		    same_id(&c->spd.that.id, &key->id) &&
 		    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
 			if (DBGP(DBG_BASE)) {
-				char buf[ASN1_BUF_LEN];
-				dntoa_or_null(buf, sizeof(buf),
-					      key->issuer, "%any");
-				DBG_log("key issuer CA is '%s'", buf);
+				dn_buf buf;
+				DBG_log("key issuer CA is '%s'",
+					str_dn_or_null(key->issuer, "%any", &buf));
 			}
 
 			/* check if found public key has expired */
@@ -873,9 +871,9 @@ stf_status ECDSA_check_signature_gen(struct state *st,
 	realtime_t now = realnow();
 
 	if (DBGP(DBG_BASE)) {
-		char buf[ASN1_BUF_LEN];
-		dntoa_or_null(buf, sizeof(buf), c->spd.that.ca, "%any");
-		DBG_log("required ECDSA CA is '%s'", buf);
+		dn_buf buf;
+		DBG_log("required ECDSA CA is '%s'",
+			str_dn_or_null(c->spd.that.ca, "%any", &buf));
 	}
 
 	if (try_all_ECDSA_keys("remote certificates",
@@ -1358,12 +1356,10 @@ void list_public_keys(bool utc, bool check_pub_keys)
 					str_id(&key->id, &idb));
 
 				if (key->issuer.len > 0) {
-					char b[ASN1_BUF_LEN];
-
-					dntoa(b, sizeof(b), key->issuer);
+					dn_buf b;
 					whack_log(RC_COMMENT,
 						  "       Issuer '%s'",
-						  b);
+						  str_dn(key->issuer, &b));
 				}
 			}
 			break;

@@ -3365,12 +3365,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			}
 		}
 
-		DBG(DBG_CONTROL, {
-			char buf[ASN1_BUF_LEN];
-			dntoa_or_null(buf, sizeof(buf), r->spd.this.ca,
-				      "%none");
-			DBG_log("offered CA: '%s'", buf);
-		});
+		if (DBGP(DBG_BASE)) {
+			dn_buf buf;
+			DBG_log("offered CA: '%s'",
+				str_dn_or_null(r->spd.this.ca, "%none", &buf));
+		}
 
 		if (r != c) {
 			/*

@@ -2246,10 +2246,11 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		/* send CERTREQ  */
 		bool send_certreq = ikev2_send_certreq_INIT_decision(cst, ORIGINAL_INITIATOR);
 		if (send_certreq) {
-			char buf[ASN1_BUF_LEN];
-			dntoa(buf, sizeof(buf), cst->st_connection->spd.that.ca);
-			DBG(DBG_X509,
-			    DBG_log("Sending [CERTREQ] of %s", buf));
+			if (DBGP(DBG_BASE)) {
+				dn_buf buf;
+				DBG_log("Sending [CERTREQ] of %s",
+					str_dn(cst->st_connection->spd.that.ca, &buf));
+			}
 			ikev2_send_certreq(cst, md, &sk.pbs);
 		}
 	}

@@ -207,19 +207,18 @@ static void same_nss_gn_as_pluto_gn(CERTGeneralName *nss_gn,
  */
 bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 {
-	DBG(DBG_X509 | DBG_CONTROLMORE, {
+	if (DBGP(DBG_BASE)) {
 		if (a.ptr != NULL) {
-			char abuf[ASN1_BUF_LEN];
-			dntoa(abuf, sizeof(abuf), a);
-	    		DBG_log("%s: trustee A = '%s'", __func__, abuf);
+			dn_buf abuf;
+	    		DBG_log("%s: trustee A = '%s'", __func__,
+				str_dn(a, &abuf));
 		}
-
 		if (b.ptr != NULL) {
-			char bbuf[ASN1_BUF_LEN];
-			dntoa(bbuf, sizeof(bbuf), b);
-	    		DBG_log("%s: trustor B = '%s'", __func__, bbuf);
+			dn_buf bbuf;
+	    		DBG_log("%s: trustor B = '%s'", __func__,
+				str_dn(b, &bbuf));
 		}
-	});
+	}
 
 	/* no CA b specified => any CA a is accepted */
 	if (b.ptr == NULL) {
@@ -1003,12 +1002,11 @@ void ikev1_decode_cr(struct msg_digest *md)
 				md->st->st_requested_ca = gn;
 			}
 
-			DBG(DBG_X509 | DBG_CONTROL, {
-					char buf[ASN1_BUF_LEN];
-					dntoa_or_null(buf, sizeof(buf), ca_name,
-						"%any");
-					DBG_log("requested CA: '%s'", buf);
-				});
+			if (DBGP(DBG_BASE)) {
+				dn_buf buf;
+				DBG_log("requested CA: '%s'",
+					str_dn_or_null(ca_name, "%any", &buf));
+			}
 		} else {
 			loglog(RC_LOG_SERIOUS,
 				"ignoring %s certificate request payload",
@@ -1052,12 +1050,11 @@ void ikev2_decode_cr(struct msg_digest *md)
 				md->st->st_requested_ca = gn;
 			}
 
-			DBG(DBG_X509, {
-					char buf[ASN1_BUF_LEN];
-					dntoa_or_null(buf, sizeof(buf), ca_name,
-						"%any");
-					DBG_log("requested CA: '%s'", buf);
-				});
+			if (DBGP(DBG_BASE)) {
+				dn_buf buf;
+				DBG_log("requested CA: '%s'",
+					str_dn_or_null(ca_name, "%any", &buf));
+			}
 			break;
 		}
 		default:

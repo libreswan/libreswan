@@ -726,13 +726,13 @@ void list_crl_fetch_requests(bool utc)
 	}
 
 	for (; req != NULL; req = req->next) {
-		char buf[ASN1_BUF_LEN];
 		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlog_realtime(buf, req->installed, utc);
 			lswlogf(buf, ", trials: %d", req->trials);
 		}
-		dntoa(buf, sizeof(buf), req->issuer);
-		whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
+		dn_buf buf;
+		whack_log(RC_COMMENT, "       issuer:  '%s'",
+			  str_dn(req->issuer, &buf));
 		list_distribution_points(req->distributionPoints);
 	}
 

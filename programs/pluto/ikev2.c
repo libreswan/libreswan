@@ -2820,11 +2820,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		}
 	}
 
-	DBG(DBG_CONTROL, {
-		char b[ASN1_BUF_LEN];
-		dntoa_or_null(b, sizeof(b), c->spd.this.ca, "%none");
-		DBG_log("offered CA: '%s'", b);
-	});
+	if (DBGP(DBG_BASE)) {
+		dn_buf b;
+		DBG_log("offered CA: '%s'",
+			str_dn_or_null(c->spd.this.ca, "%none", &b));
+	}
 
 	char idbuf[IDTOA_BUF];
 

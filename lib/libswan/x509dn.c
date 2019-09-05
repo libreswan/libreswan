@@ -702,16 +702,11 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 	if (more_a || more_b) {
 		if (wildcards != NULL && *wildcards != 0) {
 			/* ??? for some reason we think a failure with wildcards is worth logging */
-			char abuf[ASN1_BUF_LEN];
-			char bbuf[ASN1_BUF_LEN];
-
-			dntoa(abuf, sizeof(abuf), a);
-			dntoa(bbuf, sizeof(bbuf), b);
-
-			libreswan_log(
-				"while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
-				abuf, bbuf, *wildcards,
-				(more_a ? "B" : "A"));
+			dn_buf abuf;
+			dn_buf bbuf;
+			libreswan_log("while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
+				      str_dn(a, &abuf), str_dn(b, &bbuf), *wildcards,
+				      (more_a ? "B" : "A"));
 		}
 		return FALSE;
 	}
