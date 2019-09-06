@@ -447,7 +447,9 @@ kvm-keys-up-to-date:
 kvm-rpm:
 	@echo building rpm for libreswan testing
 	mkdir -p ~/rpmbuild/SPECS/
-	sed  "s/@IPSECBASEVERSION@/$(RPM_VERSION)/g" packaging/fedora/libreswan-testing.spec.in \
+	sed  -e "s/@IPSECBASEVERSION@/$(RPM_VERSION)/g" \
+		-e "s/@INITSYSTEM@/$(INITSYSTEM)/g" \
+		packaging/fedora/libreswan-testing.spec.in \
 		> ~/rpmbuild/SPECS/libreswan-testing.spec
 	mkdir -p ~/rpmbuild/SOURCES
 	git archive --format=tar --prefix=$(RPM_PREFIX)/ \

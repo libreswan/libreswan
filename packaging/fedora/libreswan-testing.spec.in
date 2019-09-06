@@ -4,6 +4,7 @@
 %global with_development 1
 %global with_cavstests 0
 %global _exec_prefix %{_prefix}/local
+%global initsystem @INITSYSTEM@
 # Libreswan config options
 %global libreswan_config \\\
     FINALDOCDIR=%{_pkgdocdir} \\\
@@ -15,6 +16,7 @@
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_exec_prefix} \\\
     IPSECVERSION=%{IPSECVERSION} \\\
+    INITSYSTEM=%{initsystem} \\\
 %{nil}
 
 #global prever rc1
@@ -163,6 +165,7 @@ export NSS_DISABLE_HW_GCM=1
 : CAVS tests passed
 %endif
 
+%if "%{initsystem}" == "systemd"
 %post
 %systemd_post ipsec.service
 
@@ -171,6 +174,7 @@ export NSS_DISABLE_HW_GCM=1
 
 %postun
 %systemd_postun_with_restart ipsec.service
+%endif
 
 %files
 %doc CHANGES COPYING CREDITS README* LICENSE
@@ -184,8 +188,14 @@ export NSS_DISABLE_HW_GCM=1
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0700,root,root) %dir %{_rundir}/pluto
+%if "%{initsystem}" == "systemd"
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
+%endif
+%if "%{initsystem}" == "docker" || "%{initsystem}" == "sysvinit"
+%attr(0755,root,root) %{_initddir}/ipsec
+%config(noreplace) %{_sysconfdir}/sysconfig/pluto
+%endif
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
