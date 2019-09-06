@@ -2606,6 +2606,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 static bool decode_peer_id_counted(struct ike_sa *ike,
 				   struct msg_digest *md, int depth)
 {
+	dbg("X509: decode_peer_id count: %d", depth);
 	if (depth > 10) {
 		/* should not happen, but it would be nice to survive */
 		libreswan_log("decoding IKEv2 peer ID failed due to confusion");
@@ -2667,12 +2668,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			dbg("X509: CERT and ID matches current connection");
 			ike->sa.st_peer_alt_id = true;
 		} else {
-			if (initiator) {
-				/* cannot switch connection so fail */
+			if (c->spd.that.id.isanyid) {
+					dbg("X509: CERT payload does not match connection ID but connection allows any ID.");
+			} else  {
 				libreswan_log("X509: CERT payload does not match connection ID");
 				return FALSE;
-			} else {
-				dbg("X509: CERT payload does not match connection ID");
 			}
 		}
 	}
@@ -2705,7 +2705,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			}
 			duplicate_id(&c->spd.that.id, &peer_id);
 		}
-	} else {
+	} else { /* responder */
 		/* why should refine_host_connection() update this? We pulled it from their packet */
 		bool fromcert = peer_id.kind == ID_DER_ASN1_DN;
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
@@ -2772,6 +2772,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				}
 			} else if (r != c) {
 				/* r is an improvement on c -- replace */
+				ike->sa.st_peer_alt_id = false; /* was based on previous c */
 
 				char b1[CONN_INST_BUF];
 				char b2[CONN_INST_BUF];
