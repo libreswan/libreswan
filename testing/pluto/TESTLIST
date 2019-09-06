@@ -355,7 +355,16 @@ kvmplutotest	ikev2-x509-27-criticalflag-clientAuth	good
 kvmplutotest	ikev2-x509-28-del-nssdb-cert		good
 kvmplutotest	ikev2-x509-30-mismatch-ignore		good
 kvmplutotest	ikev2-x509-31-wifi-assist		wip
+
+# wildcard ID related tests
+kvmplutotest	ikev1-x509-17-id-any			good
+kvmplutotest	ikev1-x509-18-id-notany			good
+kvmplutotest	ikev1-x509-19-id-notany-responder	good
+kvmplutotest	ikev1-x509-20-id-any-responder		good
 kvmplutotest	ikev2-x509-32-id-any			good
+kvmplutotest	ikev2-x509-33-id-notany			good
+kvmplutotest	ikev2-x509-34-id-notany-responder	good
+kvmplutotest	ikev2-x509-35-id-any-responder		good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 
