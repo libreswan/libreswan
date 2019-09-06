@@ -105,14 +105,9 @@ chunk_t get_dercert_from_nss_cert(CERTCertificate *cert)
 	return same_secitem_as_chunk(cert->derCert);
 }
 
-typedef struct {
-	char buf[ASN1_BUF_LEN];
-} dntoasi_buf_t;
-
-static char *dntoasi(dntoasi_buf_t *dst, SECItem si)
+static const char *dntoasi(dn_buf *dst, SECItem si)
 {
-	dntoa(dst->buf, sizeof(dst->buf), same_secitem_as_chunk(si));
-	return dst->buf;
+	return str_dn(same_secitem_as_chunk(si), dst);
 }
 
 static realtime_t get_nss_cert_notafter(CERTCertificate *cert)
@@ -866,7 +861,7 @@ bool match_certs_id(const struct certs *certs,
 	{
 		idtoa(peer_id, namebuf, sizeof(namebuf));
 
-		dntoasi_buf_t sbuf;
+		dn_buf sbuf;
 		dbg("ID_DER_ASN1_DN '%s' needs further ID comparison against '%s'",
 			dntoasi(&sbuf, end_cert->derSubject),
 			namebuf);
@@ -1553,14 +1548,14 @@ static void cert_detail_to_whacklog(CERTCertificate *cert)
 		cert->nickname, print_sn);
 
 	{
-		dntoasi_buf_t sbuf;
+		dn_buf sbuf;
 
 		whack_log(RC_COMMENT, "  subject: %s",
 			dntoasi(&sbuf, cert->derSubject));
 	}
 
 	{
-		dntoasi_buf_t ibuf;
+		dn_buf ibuf;
 
 		whack_log(RC_COMMENT, "  issuer: %s",
 			dntoasi(&ibuf, cert->derIssuer));
@@ -1599,7 +1594,7 @@ static void crl_detail_to_whacklog(CERTCrl *crl)
 	whack_log(RC_COMMENT, " ");
 
 	{
-		dntoasi_buf_t ibuf;
+		dn_buf ibuf;
 
 		whack_log(RC_COMMENT, "issuer: %s",
 			dntoasi(&ibuf, crl->derName));
