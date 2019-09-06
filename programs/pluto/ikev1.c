@@ -1105,76 +1105,52 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				/* ??? how do we know that tmp_name hasn't been freed? */
 				struct connection *tmp_c = conn_by_name(tmp_name, FALSE, FALSE);
 
-				DBG(DBG_PARSING, {
-					ipstr_buf npb;
-					DBG_log("new peer address: %s", ipstr(&new_peer, &npb));
-				});
+				if (DBGP(DBG_BASE)) {
+					address_buf npb;
+					DBG_log("new peer address: %s",
+						str_address(&new_peer, &npb));
 
-				/* Current remote peer info */
-				{
-					ipstr_buf b;
-					const struct spd_route *tmp_spd =
-						&tmp_c->spd;
-					int count_spd = 0;
-
-					do {
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("spd route number: %d",
-							    ++count_spd));
+					/* Current remote peer info */
+					int count_spd = 1;
+					for (const struct spd_route *tmp_spd = &tmp_c->spd;
+					     tmp_spd != NULL; tmp_spd = tmp_spd->spd_next) {
+						address_buf b;
+						endpoint_buf e;
+						subnet_buf s;
+						DBG_log("spd route number: %d",
+							count_spd++);
 
 						/**that info**/
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("that id kind: %d",
-							    tmp_spd->that.id.kind));
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("that id ipaddr: %s",
-							    ipstr(&tmp_spd->that.id.ip_addr, &b)));
-						if (tmp_spd->that.id.name.ptr
-						    != NULL)
-							DBG(DBG_CONTROLMORE,
-							    DBG_dump_hunk(
-								    "that id name",
-								    tmp_spd->
-								    that.id.
-								    name));
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("that host_addr: %s",
-							    ipstr(&tmp_spd->that.host_addr, &b)));
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("that nexthop: %s",
-							    ipstr(&tmp_spd->that.host_nexthop, &b)));
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("that srcip: %s",
-							    ipstr(&tmp_spd->that.host_srcip, &b)));
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("that client_addr: %s, maskbits:%d",
-							    ipstr(&tmp_spd->that.client.addr, &b),
-							    tmp_spd->that.
-							    client.maskbits));
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("that has_client: %d",
-							    tmp_spd->that.
-							    has_client));
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("that has_client_wildcard: %d",
-							    tmp_spd->that.
-							    has_client_wildcard));
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("that has_port_wildcard: %d",
-							    tmp_spd->that.
-							    has_port_wildcard));
-						DBG(DBG_CONTROLMORE,
-						    DBG_log("that has_id_wildcards: %d",
-							    tmp_spd->that.
-							    has_id_wildcards));
-
-						tmp_spd = tmp_spd->spd_next;
-					} while (tmp_spd != NULL);
+						DBG_log("that id kind: %d",
+							tmp_spd->that.id.kind);
+						DBG_log("that id ipaddr: %s",
+							str_address(&tmp_spd->that.id.ip_addr, &b));
+						if (tmp_spd->that.id.name.ptr != NULL) {
+							DBG_dump_hunk("that id name",
+								      tmp_spd->that.id. name);
+						}
+						DBG_log("that host_addr: %s",
+							str_endpoint(&tmp_spd->that.host_addr, &e));
+						DBG_log("that nexthop: %s",
+							str_address(&tmp_spd->that.host_nexthop, &b));
+						DBG_log("that srcip: %s",
+							str_address(&tmp_spd->that.host_srcip, &b));
+						DBG_log("that client: %s",
+							str_subnet_port(&tmp_spd->that.client, &s));
+						DBG_log("that has_client: %d",
+							tmp_spd->that.has_client);
+						DBG_log("that has_client_wildcard: %d",
+							tmp_spd->that.has_client_wildcard);
+						DBG_log("that has_port_wildcard: %d",
+							tmp_spd->that.has_port_wildcard);
+						DBG_log("that has_id_wildcards: %d",
+							tmp_spd->that.has_id_wildcards);
+					}
 
 					if (tmp_c->interface != NULL) {
 						endpoint_buf b;
-						dbg("Current interface_addr: %s",
-						    str_endpoint(&tmp_c->interface->local_endpoint, &b));
+						DBG_log("Current interface_addr: %s",
+							str_endpoint(&tmp_c->interface->local_endpoint, &b));
 					}
 				}
 

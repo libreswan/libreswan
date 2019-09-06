@@ -335,8 +335,6 @@ size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
 size_t lswlogs(struct lswlog *log, const char *string);
 size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 
-/* <string without binary characters> */
-size_t lswlog_sanitized(struct lswlog *log, const char *string);
 /* <hex-byte>:<hex-byte>... */
 size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 		    size_t sizeof_bytes);

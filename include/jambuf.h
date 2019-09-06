@@ -137,11 +137,13 @@ size_t jam_jambuf(jambuf_t *buf, jambuf_t *in);
 
 size_t jam_va_list(jambuf_t *buf, const char *format, va_list ap);
 
+/*
+ * Utilities.
+ */
+
 /* _(in FUNC() at FILE:LINE) */
 size_t jam_source_line(jambuf_t *buf, const char *func,
 			  const char *file, unsigned long line);
-/* <string without binary characters> */
-size_t jam_sanitized(jambuf_t *buf, const char *string);
 /* _Errno E: <strerror(E)> */
 size_t jam_errno(jambuf_t *buf, int e);
 /* <hex-byte>:<hex-byte>... */

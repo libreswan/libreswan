@@ -373,9 +373,23 @@ void dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
 	}
 }
 
+const char *str_dn_or_null(chunk_t dn, const char *null_dn, dn_buf *dst)
+{
+	dntoa_or_null(dst->buf, sizeof(dst->buf), dn, null_dn);
+	sanitize_string(dst->buf, sizeof(dst->buf));
+	return dst->buf;
+}
+
 void dntoa(char *dst, size_t dstlen, chunk_t dn)
 {
 	dntoa_or_null(dst, dstlen, dn, "(empty)");
+}
+
+const char *str_dn(chunk_t dn, dn_buf *dst)
+{
+	dntoa(dst->buf, sizeof(dst->buf), dn);
+	sanitize_string(dst->buf, sizeof(dst->buf));
+	return dst->buf;
 }
 
 /*

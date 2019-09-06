@@ -42,8 +42,6 @@ typedef enum {
 	LSW_CERT_ID_OK = 3
 } lsw_cert_ret;
 
-/* Maximum length of ASN.1 distinquished name */
-#define ASN1_BUF_LEN	512
 /*
  * NSS can actually support a much larger path length
  */
@@ -83,9 +81,6 @@ extern deltatime_t crl_check_interval;
 extern bool same_dn(chunk_t a, chunk_t b);
 extern bool match_dn(chunk_t a, chunk_t b, int *wildcards);
 extern int dn_count_wildcards(chunk_t dn);
-extern void dntoa(char *dst, size_t dstlen, chunk_t dn);
-extern void dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
-			 const char *null_dn);
 extern err_t atodn(const char *src, chunk_t *dn);
 extern void free_generalNames(generalName_t *gn, bool free_name);
 extern void load_crls(void);
@@ -105,5 +100,37 @@ extern bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 				     CERTCertificate *cert);
 extern bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen);
 extern CERTCertList *get_all_certificates(void);
+
+/*
+ * Formatting.
+ *
+ * It's assumed that the str_*() functions are only used for logging.
+ * Since the DN may contain data from the wire (true?), any
+ * non-printable characters need to be sanitized.
+ *
+ * XXX: The underlying dntoa() seems to assume that the caller will
+ * deal with sanitization - dump parts of the buffer as "ascii".  For
+ * instance str_id_escaped(), sanitizes UNIX shell metacharacters as a
+ * post processing step.
+ */
+
+typedef struct {
+	/* Maximum length of ASN.1 distinquished name */
+	/* XXX: where did 512 come from? */
+	char buf[512/*includes NUL and SENTINEL*/];
+} dn_buf;
+
+#define ASN1_BUF_LEN	sizeof(dn_buf)
+
+const char *str_dn(chunk_t dn, dn_buf *buf);
+const char *str_dn_or_null(chunk_t dn, const char *null_dn, dn_buf *buf);
+
+/*
+ * Old style.
+ */
+
+extern void dntoa(char *dst, size_t dstlen, chunk_t dn);
+extern void dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
+			 const char *null_dn);
 
 #endif /* _X509_H */
