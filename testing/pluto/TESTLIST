@@ -310,7 +310,7 @@ kvmplutotest	ikev1-x509-13-san-dn-mismatch		good
 kvmplutotest	ikev1-x509-14-san-dn-fromcert		good
 kvmplutotest	ikev1-x509-15-pkcs7			good
 kvmplutotest	ikev1-x509-16-mismatch-ignore		good
-kvmplutotest	ikev1-x509-aggr-05-san-firstemail-match good
+kvmplutotest	ikev1-x509-aggr-05-san-firstemail-match	good
 kvmplutotest	ikev1-x509-aggr-06-san-email-mismatch	good
 kvmplutotest	ikev1-x509-aggr-07-san-ip-mismatch	good
 kvmplutotest	ikev1-x509-aggr-08-san-dns-mismatch	good
