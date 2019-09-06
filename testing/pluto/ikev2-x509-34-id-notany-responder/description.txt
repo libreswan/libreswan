@@ -1,0 +1,1 @@
+Responder does not have leftid=%any, so it should fail because west does not have SAN matching IKE ID
