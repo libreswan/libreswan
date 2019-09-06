@@ -297,6 +297,7 @@ class TestResult:
 
         # Check the raw console output for problems and that it
         # matches expected output.
+
         for host_name in test.host_names:
 
             # Check that the host's raw output is present.
@@ -328,9 +329,6 @@ class TestResult:
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"GPFAULT"):
                 self.issues.add(Issues.GPFAULT, host_name)
-                self.resolution.failed()
-            if self.grub(raw_output_filename, r"\(null\)"):
-                self.issues.add(Issues.PRINTF_NULL, host_name)
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"\[ *\d+\.\d+\] Call Trace:"):
                 self.issues.add(Issues.KERNEL, host_name)
@@ -375,6 +373,10 @@ class TestResult:
                 self.resolution.unresolved()
                 continue
             self.sanitized_output[host_name] = sanitized_output
+
+            if self.grep(sanitized_output, r"\(null\)"):
+                self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.resolution.failed()
 
             expected_output_path = test.testing_directory("pluto", test.name,
                                                           host_name + ".console.txt")
@@ -456,6 +458,9 @@ class TestResult:
                         self.grub_cache[filename] = f.read()
                         break
         contents = self.grub_cache[filename]
+        return self.grep(contents, regex, cast)
+
+    def grep(self, contents, regex=None, cast=lambda x: x):
         if contents is None:
             return None
         if regex is None:
