@@ -1198,10 +1198,6 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	 */
 
 	if (ca.ptr != NULL) {
-		char cbuf[ASN1_BUF_LEN];
-
-		dntoa(cbuf, sizeof(cbuf), ca);
-
 		SECItem caname = same_chunk_as_dercert_secitem(ca);
 
 		CERTCertificate *cacert =
@@ -1224,7 +1220,9 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			freeanychunk(cr_full_hash);
 		} else {
 			LSWDBGP(DBG_X509, buf) {
-				lswlogf(buf, "NSS: locating CA cert \'%s\' for CERTREQ using CERT_FindCertByName() failed: ", cbuf);
+				jam(buf, "NSS: locating CA cert \'");
+				jam_dn(buf, ca, jam_sanitized_bytes);
+				jam(buf, "\' for CERTREQ using CERT_FindCertByName() failed: ");
 				lswlog_nss_error(buf);
 			}
 		}
