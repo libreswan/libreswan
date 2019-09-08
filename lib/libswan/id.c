@@ -156,63 +156,50 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 	return ugh;
 }
 
-/*
- * Converts a binary key ID into hexadecimal format
- */
-static void keyidtoa(char *dst, size_t dstlen, chunk_t keyid)
-{
-	datatot(keyid.ptr, keyid.len, 'x', dst, dstlen);
-}
-
-static void idtot(const struct id *id, char *dst, size_t dstlen)
+static void jam_id(jambuf_t *buf, const struct id *id, jam_bytes_fn *jam_bytes)
 {
 	switch (id->kind) {
 	case ID_FROMCERT:
-		snprintf(dst, dstlen, "%s", "%fromcert");
+		jam(buf, "%%fromcert");
 		break;
 	case ID_NONE:
-		snprintf(dst, dstlen, "%s", "(none)");
+		jam(buf, "(none)");
 		break;
 	case ID_NULL:
-		snprintf(dst, dstlen, "%s", "ID_NULL");
+		jam(buf, "ID_NULL");
 		break;
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		if (isanyaddr(&id->ip_addr)) {
-			snprintf(dst, dstlen, "%s", "%any");
+			jam(buf, "%%any");
 		} else {
-			jambuf_t b = array_as_jambuf(dst, dstlen);
-			jam_address(&b, &id->ip_addr);
+			jam_address(buf, &id->ip_addr);
 		}
 		break;
 	case ID_FQDN:
-		snprintf(dst, dstlen, "@%.*s", (int)id->name.len,
-			id->name.ptr);
+		jam(buf, "@");
+		jam_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	case ID_USER_FQDN:
-		snprintf(dst, dstlen, "%.*s", (int)id->name.len,
-			id->name.ptr);
+		jam_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	case ID_DER_ASN1_DN:
-		dntoa(dst, dstlen, id->name);
+		jam_dn(buf, id->name, jam_bytes);
 		break;
 	case ID_KEY_ID:
-		passert(dstlen > 4);
-		dst[0] = '@';
-		dst[1] = '#';
-		dstlen -= 2;
-		dst += 2;
-		keyidtoa(dst, dstlen, id->name);
+		jam(buf, "@#0x");
+		jam_hex_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	default:
-		snprintf(dst, dstlen, "unknown id kind %d", id->kind);
+		jam(buf, "unknown id kind %d", id->kind);
 		break;
 	}
 }
 
 void idtoa(const struct id *id, char *dst, size_t dstlen)
 {
-	idtot(id, dst, dstlen);
+	jambuf_t buf = array_as_jambuf(dst, dstlen);
+	jam_id(&buf, id, jam_raw_bytes);
 	/*
 	 * "Sanitize" string so that log isn't endangered:
 	 * replace unprintable characters with '?'.
@@ -256,25 +243,16 @@ void escape_metachar(const char *src, char *dst, size_t dstlen)
 	*dst = '\0';
 }
 
-/*
- * these should use jam_char() / jam_metachar(); except they don't
- * exist.
- */
-
 const char *str_id(const struct id *id, id_buf *dst)
 {
-	idtot(id, dst->buf, sizeof(dst->buf));
-	sanitize_string(dst->buf, sizeof(dst->buf));
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_id(&buf, id, jam_sanitized_bytes);
 	return dst->buf;
 }
 
 void jam_id_escaped(struct lswlog *buf, const struct id *id)
 {
-	char e[IDTOA_BUF];
-	idtoa(id, e, sizeof(e));
-	char a[IDTOA_BUF];
-	escape_metachar(e, a, sizeof(a));
-	jam_string(buf, a);
+	jam_id(buf, id, jam_meta_escaped_bytes);
 }
 
 /*
