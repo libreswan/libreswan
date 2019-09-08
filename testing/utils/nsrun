@@ -2805,6 +2805,10 @@ sysctl -w net.ipv4.conf.default.rp_filter=0
 sysctl -w net.ipv4.conf.default.forwarding=1
 sysctl -w net.ipv4.conf.default.proxy_arp=1
 sysctl -w net.ipv4.conf.default.proxy_arp=1
+"""
+
+    if os.path.isdir("/proc/sys/net/bridge"):
+        h += """
 # https://wiki.libvirt.org/page/Net.bridge.bridge-nf-call_and_sysctl.conf
 sysctl -w net.bridge.bridge-nf-call-arptables=0
 sysctl -w net.bridge.bridge-nf-call-iptables=0
@@ -3543,7 +3547,7 @@ class Namespace:
 
         if  not test.args.no_host_tweaks:
             ns_host_tweaks(test.args, test.sudo)
-            ns_add_root_dirs(test.args, test.sudo)
+        ns_add_root_dirs(test.args, test.sudo)
 
         for i, host in enumerate(test.hosts):
             self.add_nsfs_files(test, host)
