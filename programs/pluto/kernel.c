@@ -418,7 +418,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_ME='%s' ", ipstr(&sr->this.host_addr, &bme));
 
 	jam(buf, "PLUTO_MY_ID='");
-	jam_id_escaped(buf, &sr->this.id);
+	jam_id(buf, &sr->this.id, jam_meta_escaped_bytes);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT='");
@@ -453,7 +453,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_PEER='%s' ", ipstr(&sr->that.host_addr, &bpeer));
 
 	jam(buf, "PLUTO_PEER_ID='");
-	jam_id_escaped(buf, &sr->that.id);
+	jam_id(buf, &sr->that.id, jam_meta_escaped_bytes);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT='");

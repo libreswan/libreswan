@@ -156,7 +156,7 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 	return ugh;
 }
 
-static void jam_id(jambuf_t *buf, const struct id *id, jam_bytes_fn *jam_bytes)
+void jam_id(jambuf_t *buf, const struct id *id, jam_bytes_fn *jam_bytes)
 {
 	switch (id->kind) {
 	case ID_FROMCERT:
@@ -248,11 +248,6 @@ const char *str_id(const struct id *id, id_buf *dst)
 	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_id(&buf, id, jam_sanitized_bytes);
 	return dst->buf;
-}
-
-void jam_id_escaped(struct lswlog *buf, const struct id *id)
-{
-	jam_id(buf, id, jam_meta_escaped_bytes);
 }
 
 /*

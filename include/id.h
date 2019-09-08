@@ -20,6 +20,7 @@
 #include "chunk.h"
 #include "err.h"
 #include "ip_address.h"
+#include "jambuf.h"
 
 struct id {
 	enum ike_id_type kind;
@@ -38,16 +39,30 @@ struct id_list {
 
 extern const struct id empty_id;	/* ID_NONE */
 
+/*
+ * parsing.
+ */
 extern err_t atoid(char *src, struct id *id, bool oe_only);
 
-void jam_id_escaped(struct lswlog *buf, const struct id *id);
+/*
+ * Formattting.
+ */
+
+void jam_id(struct lswlog *buf, const struct id *id, jam_bytes_fn *jam_bytes);
 extern void idtoa(const struct id *id, char *dst, size_t dstlen);
-#define IDTOA_BUF	512
+
 typedef struct {
-	char buf[IDTOA_BUF];
+	char buf[512];
 } id_buf;
+#define IDTOA_BUF	sizeof(id_buf)
+
 const char *str_id(const struct id *id, id_buf *buf);
 extern void escape_metachar(const char *src, char *dst, size_t dstlen);
+
+/*
+ * Operations.
+ */
+
 extern void unshare_id_content(struct id *id);
 extern void free_id_content(struct id *id);
 extern bool any_id(const struct id *a);
