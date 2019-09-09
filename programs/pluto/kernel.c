@@ -473,28 +473,18 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_PEER_PORT='%u' ", sr->that.port);
 	jam(buf, "PLUTO_PEER_PROTOCOL='%u' ", sr->that.protocol);
 
-	char secure_peerca_str[IDTOA_BUF] = "";
-	{
-		struct pubkey_list *p;
-		char peerca_str[ASN1_BUF_LEN];
-
-		for (p = pluto_pubkeys; p != NULL; p = p->next) {
-			struct pubkey *key = p->key;
-			int pathlen;	/* value ignored */
-
-			if (key->alg == PUBKEY_ALG_RSA &&
-			    same_id(&sr->that.id, &key->id) &&
-			    trusted_ca_nss(key->issuer, sr->that.ca, &pathlen))
-			{
-				dntoa_or_null(peerca_str, sizeof(peerca_str),
-					key->issuer, "");
-				escape_metachar(peerca_str, secure_peerca_str,
-						sizeof(secure_peerca_str));
-				break;
-			}
+	jam(buf, "PLUTO_PEER_CA='");
+	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
+		struct pubkey *key = p->key;
+		int pathlen;	/* value ignored */
+		if (key->alg == PUBKEY_ALG_RSA &&
+		    same_id(&sr->that.id, &key->id) &&
+		    trusted_ca_nss(key->issuer, sr->that.ca, &pathlen)) {
+			jam_dn_or_null(buf, key->issuer, "", jam_meta_escaped_bytes);
+			break;
 		}
 	}
-	jam(buf, "PLUTO_PEER_CA='%s' ", secure_peerca_str);
+	jam(buf, "' ");
 
 	jam(buf, "PLUTO_STACK='%s' ", kernel_ops->kern_name);
 

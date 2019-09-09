@@ -101,43 +101,6 @@ static const x501rdn_t x501rdns[] = {
 #	undef OC
 };
 
-static void format_chunk(chunk_t *ch, const char *format, ...) PRINTF_LIKE(2);
-
-/*
- * format into a chunk.
- * The chunk is used as a cursor for free space at the end of the buffer.
- * We leave it advanced to the remainder of the free space.
- * BUG: if there is no free space to start with, we don't do anything.
- */
-static void format_chunk(chunk_t *ch, const char *format, ...)
-{
-	if (ch->len > 0) {
-		size_t len = ch->len;
-		va_list args;
-		va_start(args, format);
-		int ret = vsnprintf((char *)ch->ptr, len, format, args);
-		va_end(args);
-		if (ret < 0) {
-			/*
-			 * BUG: if ret < 0, vsnprintf encountered some error,
-			 * we ought to raise a stink
-			 * For now: pretend nothing happened!
-			 */
-			ret = 0;
-		}
-		if ((size_t)ret > len) {
-			/*
-			 * BUG: if ret >= len, then the vsnprintf output was
-			 * truncated: we ought to raise a stink!
-			 * For now: accept truncated output.
-			 */
-			ret = len;
-		}
-		ch->ptr += ret;
-		ch->len -= ret;
-	}
-}
-
 /*
  * Routines to iterate through a DN.
  * rdn: remainder of the sequence of RDNs
@@ -291,19 +254,13 @@ int dn_count_wildcards(chunk_t dn)
 }
 
 /*
- * Prints a binary string in hexadecimal form
+ * Formats an ASN.1 Distinguished Name into an ASCII string of
+ * OID/value pairs.  If there's a problem, return err_t (buf's
+ * contents should be ignored).
  */
-static void hex_str(chunk_t bin, chunk_t *str)
-{
-	format_chunk(str, "0x");
-	for (unsigned i = 0; i < bin.len; i++)
-		format_chunk(str, "%02X", *bin.ptr++);
-}
 
-/*
- * formats an ASN.1 Distinguished Name into an ASCII string of OID/value pairs
- */
-static err_t format_dn(chunk_t dn, chunk_t *str)
+static err_t format_dn(jambuf_t *buf, chunk_t dn,
+		       jam_bytes_fn *jam_bytes)
 {
 	chunk_t rdn;
 	chunk_t attribute;
@@ -318,23 +275,27 @@ static err_t format_dn(chunk_t dn, chunk_t *str)
 		RETURN_IF_ERR(get_next_rdn(&rdn, &attribute, &oid, &type, &value,
 				   &more));
 		if (!first)
-			format_chunk(str, ", ");
+			jam(buf, ", ");
 
 		/* print OID */
 		int oid_code = known_oid(oid);
-		if (oid_code == OID_UNKNOWN)	/* OID not found in list */
-			hex_str(oid, str);
-		else
-			format_chunk(str, "%s", oid_names[oid_code].name);
+		if (oid_code == OID_UNKNOWN) {
+			/* OID not found in list */
+			jam(buf, "0x");
+			jam_HEX_bytes(buf, oid.ptr, oid.len);
+		} else {
+			jam(buf, "%s", oid_names[oid_code].name);
+		}
 
-		format_chunk(str, "=");
+		jam(buf, "=");
 		/* print value, doubling any ',' and '/' */
 		unsigned char *p = value.ptr;
 		size_t l = value.len;
 		for (size_t i = 0; i<l; ) {
 			if (p[i] == ',' || p[i] == '/') {
 				/* character p[i] must be doubled */
-				format_chunk(str, "%.*s%c", (int)(i + 1), p, p[i]);
+				jam_bytes(buf, p, i);
+				jam_bytes(buf, &p[i], 1);
 				l -= i + 1;
 				p += i + 1;
 				i = 0;
@@ -342,7 +303,7 @@ static err_t format_dn(chunk_t dn, chunk_t *str)
 				i++;
 			}
 		}
-		format_chunk(str, "%.*s", (int)l, p);
+		jam_bytes(buf, p, l);
 	}
 	return NULL;
 }
@@ -353,42 +314,53 @@ static err_t format_dn(chunk_t dn, chunk_t *str)
  */
 void dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
 {
-	chunk_t str = {
-		.ptr = (unsigned char *)dst,
-		.len = dstlen
-	};
-	if (dn.ptr == NULL) {
-		format_chunk(&str, "%s", null_dn);
-	} else {
-		err_t ugh = format_dn(dn, &str);
+	jambuf_t buf = array_as_jambuf(dst, dstlen);
+	jam_dn_or_null(&buf, dn, null_dn, jam_raw_bytes);
+}
 
+void jam_dn_or_null(jambuf_t *buf, chunk_t dn, const char *null_dn,
+		    jam_bytes_fn *jam_bytes)
+{
+	if (dn.ptr == NULL) {
+		jam(buf, "%s", null_dn);
+	} else {
+		/* save start in case things screw up */
+		jampos_t pos = jambuf_get_pos(buf);
+		err_t ugh = format_dn(buf, dn, jam_bytes);
 		if (ugh != NULL) {
 			/* error: print DN as hex string */
 			libreswan_log("error in DN parsing: %s", ugh);
 			DBG_dump_hunk("Bad DN:", dn);
-			str.ptr = (unsigned char *)dst;
-			str.len = dstlen;
-			hex_str(dn, &str);
+			/* reset the buffer */
+			jambuf_set_pos(buf, &pos);
+			jam(buf, "0x");
+			jam_HEX_bytes(buf, dn.ptr, dn.len);
 		}
 	}
 }
 
 const char *str_dn_or_null(chunk_t dn, const char *null_dn, dn_buf *dst)
 {
-	dntoa_or_null(dst->buf, sizeof(dst->buf), dn, null_dn);
-	sanitize_string(dst->buf, sizeof(dst->buf));
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_dn_or_null(&buf, dn, null_dn, jam_sanitized_bytes);
 	return dst->buf;
+}
+
+void jam_dn(jambuf_t *buf, chunk_t dn, jam_bytes_fn *jam_bytes)
+{
+	jam_dn_or_null(buf, dn, "(empty)", jam_bytes);
 }
 
 void dntoa(char *dst, size_t dstlen, chunk_t dn)
 {
-	dntoa_or_null(dst, dstlen, dn, "(empty)");
+	jambuf_t buf = array_as_jambuf(dst, dstlen);
+	jam_dn(&buf, dn, jam_raw_bytes);
 }
 
 const char *str_dn(chunk_t dn, dn_buf *dst)
 {
-	dntoa(dst->buf, sizeof(dst->buf), dn);
-	sanitize_string(dst->buf, sizeof(dst->buf));
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_dn(&buf, dn, jam_sanitized_bytes);
 	return dst->buf;
 }
 
