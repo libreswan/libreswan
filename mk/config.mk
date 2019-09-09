@@ -400,7 +400,10 @@ NONINTCONFIG=oldconfig
 # make sure we only run this once per build,  its too expensive to run
 # every time Makefile.inc is included
 ifndef IPSECVERSION
-IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
+ ifeq ($(VERSION_ADD_GIT_DIRTY),true)
+  ADD_GIT_DIRTY = --add-git-diry
+ endif
+IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${ADD_GIT_DIRTY} ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
 export IPSECVERSION
 endif
 ifndef IPSECVIDVERSION

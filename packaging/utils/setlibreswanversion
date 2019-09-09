@@ -10,8 +10,12 @@
 
 usage() {
     echo "Usage: $0 <baseversion> [srctree]" >&2
+    echo "       $0 --add-git-diry <baseversion> [srctree]" >&2
     exit 1
 }
+
+ADD_GIT_DIRTY=
+if [ "${1}" = "--add-git-diry" ]; then ADD_GIT_DIRTY=' --dirty'; shift; fi
 
 baseversion="${1}"
 [ -n "${baseversion}" ] || usage
@@ -21,7 +25,7 @@ cd "${2:-.}" || usage
 # -f .git check is needed for "git worktree"
 if [ -d .git -o -f .git ]; then
     if git version >/dev/null 2>&1; then
-	CUR=$(git describe --tags)
+	CUR=$(git describe --tags ${ADD_GIT_DIRTY})
 	BRANCH=$(git rev-parse --abbrev-ref HEAD)
 	echo "${CUR}-${BRANCH}"
 	exit 0
