@@ -86,10 +86,9 @@ static int print_secrets(struct secret *secret,
 			 struct private_key_stuff *pks UNUSED,
 			 void *uservoid UNUSED)
 {
-	const char *kind = "?";
-	const char *more = "";
 	struct id_list *ids;
 
+	const char *kind;
 	switch (pks->kind) {
 	case PKK_PSK:
 		kind = "PSK";
@@ -109,20 +108,21 @@ static int print_secrets(struct secret *secret,
 
 	ids = lsw_get_idlist(secret);
 
-	char idb1[IDTOA_BUF] = "%any";
-	char idb2[IDTOA_BUF] = "";
-
-	if (ids != NULL) {
-		idtoa(&ids->id, idb1, sizeof(idb1));
-		if (ids->next != NULL) {
-			idtoa(&ids->next->id, idb2, sizeof(idb2));
-			if (ids->next->next != NULL)
-				more = "more";
+	LSWLOG_WHACK(RC_COMMENT, buf) {
+		jam(buf, "    %d: %s ", pks->line, kind);
+		if (ids == NULL) {
+			jam(buf, "%%any");
+		} else {
+			jam_id(buf, &ids->id, jam_sanitized_bytes);
+			if (ids->next != NULL) {
+				jam(buf, " ");
+				jam_id(buf, &ids->next->id, jam_sanitized_bytes);
+				if (ids->next->next != NULL) {
+					jam(buf, " more");
+				}
+			}
 		}
 	}
-
-	whack_log(RC_COMMENT, "    %d: %s %s %s%s",
-		  pks->line, kind, idb1, idb2, more);
 
 	/* continue loop until end */
 	return 1;
