@@ -52,7 +52,7 @@
 #include "ip_address.h"
 #include "ip_said.h"
 #include "ip_endpoint.h"
-#include "ip_info.h"		/* for init_ip_info() */
+#include "ip_info.h"
 
 const char *progname;
 
@@ -107,7 +107,6 @@ int main(int argc, char **argv)
 	struct sadb_msg *pfkey_msg;
 
 	progname = argv[0];
-	init_ip_info();
 
 	zero(&said_af_array);	/* OK: no pointer fields */
 

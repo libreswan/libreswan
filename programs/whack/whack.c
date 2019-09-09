@@ -888,7 +888,6 @@ static void send_reply(int sock, char *buf, ssize_t len)
 int main(int argc, char **argv)
 {
 	tool_init_log(argv[0]);
-	init_ip_info();
 
 	struct whack_message msg;
 	struct whackpacker wp;

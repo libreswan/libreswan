@@ -39,7 +39,6 @@
 #include "socketwrapper.h"
 #include "lswtool.h"
 #include "lswlog.h"
-#include "ip_info.h"		/* for init_ip_info() */
 #include "libreswan/pfkey.h"
 #include "libreswan/pfkeyv2.h"
 #include "pfkey_help.h"
@@ -172,7 +171,6 @@ int debug = 0;
 int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
-	init_ip_info();
 
 	/* force pfkey logging */
 	cur_debugging = DBG_BASE;

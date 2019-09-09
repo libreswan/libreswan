@@ -29,7 +29,6 @@
 #include "lswalloc.h"
 #include "lswtool.h"
 #include "whack.h"
-#include "ip_info.h"		/* for init_ip_info() */
 #include "ipsecconf/parser-controls.h"
 #include "ipsecconf/starterlog.h"
 #include "ipsecconf/confread.h"
@@ -210,7 +209,6 @@ static const struct option longopts[] =
 int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
-	init_ip_info();
 
 	int opt;
 	bool autoall = FALSE;

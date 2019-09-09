@@ -45,7 +45,6 @@
 #include "libreswan.h"
 #include "libreswan/pfkeyv2.h"
 #include "libreswan/pfkey.h"
-#include "ip_info.h"		/* for init_ip_info() */
 
 #include "socketwrapper.h"
 
@@ -316,8 +315,6 @@ static void controlC(int foo UNUSED)
 
 int main(int argc, char *argv[])
 {
-	init_ip_info();
-
 	int opt;
 	ssize_t readlen;
 	unsigned char pfkey_buf[256];

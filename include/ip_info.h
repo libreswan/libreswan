@@ -55,6 +55,5 @@ extern const struct ip_info ipv6_info;
 extern const struct ip_info *aftoinfo(int af);
 
 const struct ip_info *ip_version_info(unsigned version);
-extern void init_ip_info(void);
 
 #endif

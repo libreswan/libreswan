@@ -31,7 +31,6 @@
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/parser-controls.h"
 #include "ipsecconf/starterlog.h"
-#include "ip_info.h"		/* for init_ip_info() */
 
 static int verbose = 0;
 
@@ -60,7 +59,6 @@ static const struct option longopts[] =
 int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
-	init_ip_info();
 
 	int opt;
 	struct starter_config *cfg = NULL;

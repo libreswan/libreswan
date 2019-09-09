@@ -26,10 +26,6 @@
  * Construct well known addresses.
  */
 
-void init_ip_info(void)
-{
-}
-
 #define ANY_IPv4_ADDRESS { .version = 4, .bytes = { 0, }, }
 #define ANY_IPv6_ADDRESS { .version = 6, .bytes = { 0, }, }
 

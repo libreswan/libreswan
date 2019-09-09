@@ -537,7 +537,6 @@ static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext
 int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
-	init_ip_info();
 
 	/* force pfkey logging */
 	cur_debugging = DBG_BASE;
