@@ -211,38 +211,6 @@ void idtoa(const struct id *id, char *dst, size_t dstlen)
 	}
 }
 
-/*
- * Replace the shell metacharacters ', \, ", `, and $ in a character string
- * by escape sequences consisting of their octal values
- */
-void escape_metachar(const char *src, char *dst, size_t dstlen)
-{
-	while (*src != '\0' && dstlen > 5) {
-		switch (*src) {
-		case '\'':
-		case '\\':
-		case '"':
-		case '`':
-		case '$':
-		{
-			int n = snprintf(dst, dstlen, "\\03%o", *src & 0xFF);
-
-			passert((size_t)n < dstlen);	/* no truncation! */
-			dst += n;
-			dstlen -= n;
-			break;
-		}
-		default:
-			passert(1 < dstlen);	/* no truncation! */
-			*dst++ = *src;
-			dstlen--;
-		}
-		src++;
-	}
-	passert(1 <= dstlen);	/* no truncation! */
-	*dst = '\0';
-}
-
 const char *str_id(const struct id *id, id_buf *dst)
 {
 	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);

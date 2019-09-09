@@ -57,7 +57,6 @@ typedef struct {
 #define IDTOA_BUF	sizeof(id_buf)
 
 const char *str_id(const struct id *id, id_buf *buf);
-extern void escape_metachar(const char *src, char *dst, size_t dstlen);
 
 /*
  * Operations.
