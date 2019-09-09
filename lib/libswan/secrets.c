@@ -333,10 +333,10 @@ struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
 }
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
-				enum PrivateKeyKind kind,
-				const struct id *my_id,
-				const struct id *his_id,
-				bool asym)
+				     enum PrivateKeyKind kind,
+				     const struct id *local_id,
+				     const struct id *remote_id,
+				     bool asym)
 {
 	enum {
 		match_none = 000,
@@ -344,30 +344,21 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 		/* bits */
 		match_default = 001,
 		match_any = 002,
-		match_him = 004,
-		match_me = 010
+		match_remote = 004,
+		match_local = 010
 	};
 	unsigned int best_match = match_none;
 	struct secret *best = NULL;
 
-	char
-		idme[IDTOA_BUF],
-		idhim[IDTOA_BUF] = "";
-
-	idtoa(my_id, idme, sizeof(idme));
-
-	if (his_id != NULL) {
-		idtoa(his_id, idhim, sizeof(idhim));
-	}
-
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
-		DBG(DBG_CONTROLMORE,
+		if (DBGP(DBG_BASE)) {
+			id_buf idl;
 			DBG_log("line %d: key type %s(%s) to type %s",
 				s->pks.line,
 				enum_name(&pkk_names, kind),
-				idme,
+				str_id(local_id, &idl),
 				enum_name(&pkk_names, s->pks.kind));
-			);
+		}
 
 		if (s->pks.kind == kind) {
 			unsigned int match = match_none;
@@ -384,36 +375,44 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				int idnum = 0;
 
 				for (i = s->ids; i != NULL; i = i->next) {
-					char idstr1[IDTOA_BUF];
-
 					idnum++;
-					idtoa(&i->id, idstr1, sizeof(idstr1));
-
 					if (any_id(&i->id)) {
 						/*
-						 * match any will automatically
-						 * match me and him so treat it
-						 * as its own match type so
-						 * that specific matches get
-						 * a higher "match" value and
-						 * are used in preference to
-						 * "any" matches.
+						 * match any will
+						 * automatically match
+						 * local and remote so
+						 * treat it as its own
+						 * match type so that
+						 * specific matches
+						 * get a higher
+						 * "match" value and
+						 * are used in
+						 * preference to "any"
+						 * matches.
 						 */
 						match |= match_any;
 					} else {
-						if (same_id(&i->id, my_id))
-							match |= match_me;
+						if (same_id(&i->id, local_id)) {
+							match |= match_local;
+						}
 
-						if (his_id != NULL &&
-						    same_id(&i->id, his_id))
-							match |= match_him;
+						if (remote_id != NULL &&
+						    same_id(&i->id, remote_id)) {
+							match |= match_remote;
+						}
 					}
 
-					DBG(DBG_CONTROL,
+					if (DBGP(DBG_BASE)) {
+						id_buf idi;
+						id_buf idl;
+						id_buf idr;
 						DBG_log("%d: compared key %s to %s / %s -> 0%02o",
-							idnum, idstr1, idme,
-							idhim, match);
-						);
+							idnum,
+							str_id(&i->id, &idi),
+							str_id(local_id, &idl),
+							(remote_id == NULL ? "" : str_id(remote_id, &idr)),
+							match);
+					}
 				}
 
 				/*
@@ -421,8 +420,8 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				 * default to matching any peer.
 				 * A more specific match will trump this.
 				 */
-				if (match == match_me &&
-					s->ids->next == NULL)
+				if (match == match_local &&
+				    s->ids->next == NULL)
 					match |= match_default;
 			}
 
@@ -432,27 +431,22 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				);
 
 			switch (match) {
-			case match_me:
+			case match_local:
 				/*
-				 * if this is an asymmetric (eg. public key)
-				 * system, allow this-side-only match to count,
-				 * even if there are other ids in the list.
+				 * if this is an asymmetric
+				 * (eg. public key) system, allow
+				 * this-side-only match to count, even
+				 * if there are other ids in the list.
 				 */
 				if (!asym)
 					break;
 				/* FALLTHROUGH */
 			case match_default:	/* default all */
 			case match_any:	/* a wildcard */
-			case match_me | match_default:	/* default peer */
-			case match_me | match_any:	/*
-							 * %any/0.0.0.0 and
-							 * me
-							 */
-			case match_him | match_any:	/*
-							 * %any/0.0.0.0 and
-							 * peer
-							 */
-			case match_me | match_him:	/* explicit */
+			case match_local | match_default:	/* default peer */
+			case match_local | match_any: /* %any/0.0.0.0 and local */
+			case match_remote | match_any: /* %any/0.0.0.0 and remote */
+			case match_local | match_remote:	/* explicit */
 				if (match == best_match) {
 					/*
 					 * two good matches are equally good:
@@ -466,7 +460,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						break;
 					case PKK_PSK:
 						same = chunk_eq(s->pks.u.preshared_secret,
-							best->pks.u.preshared_secret);
+								best->pks.u.preshared_secret);
 						break;
 					case PKK_RSA:
 						/*
