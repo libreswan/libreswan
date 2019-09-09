@@ -157,9 +157,30 @@ size_t jam_source_line(jambuf_t *buf, const char *func,
 			  const char *file, unsigned long line);
 /* _Errno E: <strerror(E)> */
 size_t jam_errno(jambuf_t *buf, int e);
-/* <hex-byte>:<hex-byte>... */
-size_t jam_bytes(jambuf_t *buf, const uint8_t *bytes,
-		 size_t sizeof_bytes);
+
+/*
+ * Jam a string of bytes possibly encoded.
+ */
+
+typedef size_t (jam_bytes_fn)(jambuf_t *buf, const void *bytes, size_t size);
+
+/* bytes as hex ... */
+
+/* B1B2... */
+jam_bytes_fn jam_HEX_bytes;
+/* b1b2... */
+jam_bytes_fn jam_hex_bytes;
+/* b1 b2 b3 b4  b6 b6 b7 b8  ... aka DBG_dump */
+jam_bytes_fn jam_dump_bytes;
+
+/* bytes as a string */
+
+/* memcp(), but stop at '\0'? */
+jam_bytes_fn jam_raw_bytes;
+/* (isprint(b1) ? \NNN : b1)... */
+jam_bytes_fn jam_sanitized_bytes;
+/* (ismeta(b1)) ? \NNN : b1)... */
+jam_bytes_fn jam_meta_escaped_bytes;
 
 /*
  * Code wrappers that cover up the details of allocating,

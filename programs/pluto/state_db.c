@@ -260,8 +260,8 @@ static void jam_ike_initiator_spi(struct lswlog *buf, const void *data)
 	const struct state *st = data;
 	jam_state(buf, st);
 	jam(buf, ": ");
-	lswlog_bytes(buf, st->st_ike_spis.initiator.bytes,
-		  sizeof(st->st_ike_spis.initiator.bytes));
+	jam_dump_bytes(buf, st->st_ike_spis.initiator.bytes,
+		       sizeof(st->st_ike_spis.initiator.bytes));
 }
 
 static struct list_head ike_initiator_spi_hash_slots[STATE_TABLE_SIZE];
@@ -329,11 +329,11 @@ static void jam_ike_spis(struct lswlog *buf, const void *data)
 	const struct state *st = data;
 	jam_state(buf, st);
 	jam(buf, ": ");
-	lswlog_bytes(buf, st->st_ike_spis.initiator.bytes,
-		     sizeof(st->st_ike_spis.initiator.bytes));
+	jam_dump_bytes(buf, st->st_ike_spis.initiator.bytes,
+		       sizeof(st->st_ike_spis.initiator.bytes));
 	jam(buf, "  ");
-	lswlog_bytes(buf, st->st_ike_spis.responder.bytes,
-		     sizeof(st->st_ike_spis.responder.bytes));
+	jam_dump_bytes(buf, st->st_ike_spis.responder.bytes,
+		       sizeof(st->st_ike_spis.responder.bytes));
 }
 
 static struct list_head ike_spis_hash_slots[STATE_TABLE_SIZE];

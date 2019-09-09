@@ -53,8 +53,8 @@ size_t lswlog_nss_secitem(struct lswlog *buf, const SECItem *secitem)
 		size = lswlogs(buf, "(SECItem*)NULL");
 	} else {
 		lswlog_nss_secitemtype(buf, secitem->type);
-		lswlogs(buf, ": ");
-		lswlog_bytes(buf, secitem->data, secitem->len);
+		jam(buf, ": ");
+		jam_dump_bytes(buf, secitem->data, secitem->len);
 	}
 	return size;
 }

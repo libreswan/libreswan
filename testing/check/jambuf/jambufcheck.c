@@ -185,6 +185,20 @@ static void check_jambuf_pos(const char *pre, const char *pre_expect,
 	}
 }
 
+static void check_jam_bytes(const char *what, jam_bytes_fn *jam_bytes,
+			    const char *in, size_t size,
+			    const char *out)
+{
+	fprintf(stdout, "%s: %s('%s') -> '%s'\n", __func__, what, in, out);
+	char outbuf[1024];
+	jambuf_t buf = ARRAY_AS_JAMBUF(outbuf);
+	jam_bytes(&buf, in, size);
+	if (!streq(outbuf, out)) {
+		fprintf(stderr, "%s: %s('%s') failed, expecting '%s' returned '%s'\n", __func__,
+			what, in, out, outbuf);
+	}
+}
+
 int main(int argc UNUSED, char *argv[] UNUSED)
 {
 	check_jambuf("(null)", true, NULL, NULL);
@@ -252,6 +266,21 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_jambuf_pos("stu", "stu", "overf", "st...", "st...");
 
 	check_jambuf_pos("stuffed", "st...", "", "st...", "st...");
+
+	/* jam_bytes() */
+
+	/* use sizeof so '\0' is included */
+	static const char in[] = "\t !\"#$%&'()*+,-./:;<=>?@[\\^+`{|}~";
+#define BYTES in, sizeof(in)
+#define FN(X) #X, jam_##X##_bytes
+	check_jam_bytes(FN(HEX), BYTES, "09202122232425262728292A2B2C2D2E2F3A3B3C3D3E3F405B5C5E2B607B7C7D7E00");
+	check_jam_bytes(FN(hex), BYTES, "09202122232425262728292a2b2c2d2e2f3a3b3c3d3e3f405b5c5e2b607b7c7d7e00");
+	check_jam_bytes(FN(dump), BYTES, "09 20 21 22  23 24 25 26  27 28 29 2a  2b 2c 2d 2e  2f 3a 3b 3c  3d 3e 3f 40  5b 5c 5e 2b  60 7b 7c 7d  7e 00");
+	check_jam_bytes(FN(raw), BYTES, "\t !\"#$%&'()*+,-./:;<=>?@[\\^+`{|}~");
+	check_jam_bytes(FN(sanitized), BYTES, "\\011 !\"#$%&'()*+,-./:;<=>?@[\\^+`{|}~\\000");
+	check_jam_bytes(FN(meta_escaped), BYTES, "\\011 !\\042#\\044%&\\047()*+,-./:;<=>?@[\\134^+\\140{|}~\\000");
+#undef FN
+#undef BYTES
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

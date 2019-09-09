@@ -313,7 +313,6 @@ void lswlog_dbg_pre(struct lswlog *buf);
 
 #define IMPAIR(BEHAVIOUR) (cur_debugging & (IMPAIR_##BEHAVIOUR))
 
-
 /*
  * Routines for accumulating output in the lswlog buffer.
  *
@@ -334,10 +333,6 @@ size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
 size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
 size_t lswlogs(struct lswlog *log, const char *string);
 size_t lswlogl(struct lswlog *log, struct lswlog *buf);
-
-/* <hex-byte>:<hex-byte>... */
-size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
-		    size_t sizeof_bytes);
 
 /*
  * Code wrappers that cover up the details of allocating,

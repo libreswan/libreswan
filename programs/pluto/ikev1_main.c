@@ -2005,8 +2005,8 @@ static void send_notification(struct state *sndst, notification_t type,
 
 		if (sndst->st_iv_len != 0) {
 			LSWLOG(buf) {
-				lswlogf(buf, "payload malformed.  IV: ");
-				lswlog_bytes(buf, sndst->st_iv, sndst->st_iv_len);
+				jam(buf, "payload malformed.  IV: ");
+				jam_dump_bytes(buf, sndst->st_iv, sndst->st_iv_len);
 			}
 		}
 

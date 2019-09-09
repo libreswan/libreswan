@@ -120,6 +120,7 @@ OBJS += libreswan_log_rc.o
 OBJS += log_pexpect.o
 
 OBJS += jambuf.o
+OBJS += jam_bytes.o
 OBJS += lswlog.o
 OBJS += lswlog_dbg.o
 OBJS += lswlog_nss_error.o
@@ -127,7 +128,6 @@ OBJS += lswlog_nss_ckm.o
 OBJS += lswlog_nss_ckf.o
 OBJS += lswlog_nss_cka.o
 OBJS += lswlog_nss_secitem.o
-OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o
 OBJS += lswlog_realtime.o
 OBJS += lswlog_monotime.o
