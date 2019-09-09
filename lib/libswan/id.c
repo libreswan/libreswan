@@ -164,7 +164,7 @@ static void keyidtoa(char *dst, size_t dstlen, chunk_t keyid)
 	datatot(keyid.ptr, keyid.len, 'x', dst, dstlen);
 }
 
-void idtoa(const struct id *id, char *dst, size_t dstlen)
+static void idtot(const struct id *id, char *dst, size_t dstlen)
 {
 	switch (id->kind) {
 	case ID_FROMCERT:
@@ -208,7 +208,11 @@ void idtoa(const struct id *id, char *dst, size_t dstlen)
 		snprintf(dst, dstlen, "unknown id kind %d", id->kind);
 		break;
 	}
+}
 
+void idtoa(const struct id *id, char *dst, size_t dstlen)
+{
+	idtot(id, dst, dstlen);
 	/*
 	 * "Sanitize" string so that log isn't endangered:
 	 * replace unprintable characters with '?'.
@@ -257,25 +261,20 @@ void escape_metachar(const char *src, char *dst, size_t dstlen)
  * exist.
  */
 
-const char *str_id(const struct id *id, id_buf *buf)
+const char *str_id(const struct id *id, id_buf *dst)
 {
-	idtoa(id, buf->buf, sizeof(buf->buf));
-	return buf->buf;
-}
-
-void jam_id(struct lswlog *buf, const struct id *id)
-{
-	id_buf b;
-
-	jam_string(buf, str_id(id, &b));
+	idtot(id, dst->buf, sizeof(dst->buf));
+	sanitize_string(dst->buf, sizeof(dst->buf));
+	return dst->buf;
 }
 
 void jam_id_escaped(struct lswlog *buf, const struct id *id)
 {
-	id_buf a;
 	char e[IDTOA_BUF];
-	escape_metachar(str_id(id, &a), e, sizeof(e));
-	jam_string(buf, e);
+	idtoa(id, e, sizeof(e));
+	char a[IDTOA_BUF];
+	escape_metachar(e, a, sizeof(a));
+	jam_string(buf, a);
 }
 
 /*

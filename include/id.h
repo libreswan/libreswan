@@ -40,7 +40,7 @@ struct id_list {
 extern const struct id empty_id;	/* ID_NONE */
 
 extern err_t atoid(char *src, struct id *id, bool oe_only);
-void jam_id(struct lswlog *buf, const struct id *id);
+
 void jam_id_escaped(struct lswlog *buf, const struct id *id);
 extern void idtoa(const struct id *id, char *dst, size_t dstlen);
 #define IDTOA_BUF	512
