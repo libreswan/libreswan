@@ -2786,28 +2786,12 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 					/* instantiate it, filling in peer's ID */
 					r = rw_instantiate(r, &c->spd.that.host_addr,
 						   NULL, &peer_id);
-					peer_id.isanyid = r->spd.that.id.isanyid; /* inherit from template */
 				}
 
 				update_state_connection(md->st, r);
 				/* redo from scratch so we read and check CERT payload */
 				DBGF(DBG_X509, "retrying ikev2_decode_peer_id_and_certs() with new conn");
 				return decode_peer_id_counted(ike, md, depth + 1);
-			} else {
-				/* we didn't switch connections, if certs, we need to check peer ID is a SAN entry */
-				if(!ike->sa.st_peer_alt_id) {
-					char peer_str[IDTOA_BUF];
-
-					idtoa(&peer_id, peer_str, sizeof(peer_str));
-					if (!c->spd.that.id.isanyid) {
-						libreswan_log("Peer ID '%s' not suitable for connection '%s'",
-							peer_str, c->name);
-						return FALSE;
-					} else {
-						libreswan_log("Peer ID '%s' not suitable but connection '%s' allows any id",
-							peer_str, c->name);
-					}
-				}
 			}
 
 			if (c->spd.that.has_id_wildcards) {
