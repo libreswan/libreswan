@@ -286,18 +286,12 @@ static int cmp_iface(const void *lv, const void *rv)
 	if (i != 0) {
 		return i;
 	}
-	/*
-	 * address
-	 */
+	/* address */
 	i = addrcmp(&l->addr, &r->addr);
 	if (i != 0) {
 		return i;
 	}
-	/* port */
-	i = hportof(&l->addr) - hportof(&r->addr);
-	if (i != 0) {
-		return i;
-	}
+	/* Interface addresses don't have ports. */
 	/* what else */
 	dbg("interface sort not stable or duplicate");
 	return 0;
