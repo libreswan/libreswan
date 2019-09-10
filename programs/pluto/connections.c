@@ -357,14 +357,11 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 	if (afi == NULL)
 		return "unknown address family in default_end";
 
-	if (e->id.kind == ID_NONE) {
-		libreswan_log("PAUL: defaul_end setting isanyid to TRUE");
-		e->id.isanyid = TRUE; /* used to match id=%any */
-	}
 	/* Default ID to IP (but only if not NO_IP -- WildCard) */
 	if (e->id.kind == ID_NONE && endpoint_is_specified(&e->host_addr)) {
 		e->id.kind = afi->id_addr;
 		e->id.ip_addr = e->host_addr;
+		e->id.isanyid = TRUE; /* used to match id=%any */
 		e->has_id_wildcards = FALSE;
 	}
 
@@ -513,7 +510,7 @@ size_t format_end(char *buf,
 	host_id[0] = '\0';
 	if (!(this->id.kind == ID_NONE ||
 		(id_is_ipaddr(&this->id) &&
-		 sameaddr(&this->id.ip_addr, &this->host_addr))))
+		 sameaddr(&this->id.ip_addr, &this->host_addr)))) 
 	{
 		id_obrackets = "[";
 		id_cbrackets = "]";
@@ -3859,14 +3856,12 @@ void show_one_connection(const struct connection *c)
 		id_buf thatidb;
 
 		whack_log(RC_COMMENT,
-			"\"%s\"%s:   our idtype: %s; our id=%s%s; their idtype: %s; their id=%s%s",
+			"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
 			c->name, instance,
 			enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
-			str_id(&c->spd.this.id, &thisidb),
-			c->spd.this.id.isanyid ? "(with %any)" : "",
+			c->spd.this.id.isanyid ? "%any" : str_id(&c->spd.this.id, &thisidb),
 			enum_name(&ike_idtype_names_extended, c->spd.that.id.kind),
-			str_id(&c->spd.that.id, &thatidb),
-			c->spd.that.id.isanyid ? "(with %any)" : "");
+			c->spd.that.id.isanyid ? "%any" : str_id(&c->spd.that.id, &thatidb));
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
