@@ -3857,16 +3857,15 @@ void show_one_connection(const struct connection *c)
 		id_buf thisidb;
 		id_buf thatidb;
 
-		bool idignore =  NEVER_NEGOTIATE(c->policy);
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   our idtype: %s; our id=%s%s; their idtype: %s; their id=%s%s",
 			c->name, instance,
 			enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
 			str_id(&c->spd.this.id, &thisidb),
-			(!idignore && c->spd.this.id.isanyid) ? "(with %any)" : "",
+			c->spd.this.id.isanyid ? "(with %any)" : "",
 			enum_name(&ike_idtype_names_extended, c->spd.that.id.kind),
 			str_id(&c->spd.that.id, &thatidb),
-			(!idignore && c->spd.that.id.isanyid) ? "(with %any)" : "");
+			c->spd.that.id.isanyid ? "(with %any)" : "");
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
