@@ -72,7 +72,7 @@ bool starter_iface_find(const char *iface, int af, ip_address *dst, ip_address *
 			/* XXX: sizeof right? */
 			ip_endpoint nhe;
 			happy(sockaddr_to_endpoint(sa, sizeof(*sa), &nhe));
-			pexpect(endpoint_port(&nhe) == 0);
+			pexpect(endpoint_hport(&nhe) == 0);
 			*nh = endpoint_address(&nhe);
 		}
 	}
@@ -85,7 +85,7 @@ bool starter_iface_find(const char *iface, int af, ip_address *dst, ip_address *
 			/* XXX: sizeof right? */
 			ip_endpoint dste;
 			happy(sockaddr_to_endpoint(sa, sizeof(*sa), &dste));
-			pexpect(endpoint_port(&dste) == 0);
+			pexpect(endpoint_hport(&dste) == 0);
 			*dst = endpoint_address(&dste);
 		}
 	}

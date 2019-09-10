@@ -100,7 +100,7 @@ ip_address endpoint_address(const ip_endpoint *endpoint)
 #endif
 }
 
-int endpoint_port(const ip_endpoint *endpoint)
+int endpoint_hport(const ip_endpoint *endpoint)
 {
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
@@ -216,21 +216,21 @@ static void format_endpoint(jambuf_t *buf, bool sensitive,
 		return;
 	}
 	ip_address address = endpoint_address(endpoint);
-	int port = endpoint_port(endpoint);
+	int hport = endpoint_hport(endpoint);
 
 	switch (afi->af) {
 	case AF_INET: /* N.N.N.N[:PORT] */
 		jam_address(buf, &address);
-		if (port > 0) {
-			jam(buf, ":%d", port);
+		if (hport > 0) {
+			jam(buf, ":%d", hport);
 		}
 		break;
 	case AF_INET6: /* [N:..:N]:PORT or N:..:N */
-		if (port > 0) {
+		if (hport > 0) {
 			jam(buf, "[");
 			jam_address(buf, &address);
 			jam(buf, "]");
-			jam(buf, ":%d", port);
+			jam(buf, ":%d", hport);
 		} else {
 			jam_address(buf, &address);
 		}
@@ -313,7 +313,7 @@ size_t endpoint_to_sockaddr(const ip_endpoint *endpoint, ip_sockaddr *sa)
 		return 0;
 	}
 	ip_address address = endpoint_address(endpoint);
-	int port = endpoint_port(endpoint);
+	int hport = endpoint_hport(endpoint);
 
 	shunk_t src_addr = address_as_shunk(&address);
 	chunk_t dst_addr;
@@ -321,7 +321,7 @@ size_t endpoint_to_sockaddr(const ip_endpoint *endpoint, ip_sockaddr *sa)
 	switch (afi->af) {
 	case AF_INET:
 		sa->sin.sin_family = afi->af;
-		sa->sin.sin_port = htons(port);
+		sa->sin.sin_port = htons(hport);
 		dst_addr = THING_AS_CHUNK(sa->sin.sin_addr);
 #ifdef NEED_SIN_LEN
 		sa->sin.sin_len = sizeof(struct sockaddr_in);
@@ -329,7 +329,7 @@ size_t endpoint_to_sockaddr(const ip_endpoint *endpoint, ip_sockaddr *sa)
 		break;
 	case AF_INET6:
 		sa->sin6.sin6_family = afi->af;
-		sa->sin6.sin6_port = htons(port);
+		sa->sin6.sin6_port = htons(hport);
 		dst_addr = THING_AS_CHUNK(sa->sin6.sin6_addr);
 #ifdef NEED_SIN_LEN
 		sa->sin6.sin6_len = sizeof(struct sockaddr_in6);
