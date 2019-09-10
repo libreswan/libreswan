@@ -876,7 +876,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
 		pexpect_st_local_endpoint(st);
-		old_port = endpoint_port(&st->st_interface->local_endpoint);
+		old_port = endpoint_hport(&st->st_interface->local_endpoint);
 		new_endpoint = st->st_mobike_local_endpoint;
 
 		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
@@ -889,8 +889,8 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, dst, sa.spi, proto);
 			if (natt_type != 0) {
-				natt_sport = endpoint_port(&st->st_remote_endpoint);
-				natt_dport = endpoint_port(&st->st_mobike_local_endpoint);
+				natt_sport = endpoint_hport(&st->st_remote_endpoint);
+				natt_dport = endpoint_hport(&st->st_mobike_local_endpoint);
 			}
 		} else {
 			src = &c->spd.this.host_addr;
@@ -902,14 +902,14 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (natt_type != 0) {
-				natt_sport = endpoint_port(&st->st_mobike_local_endpoint);
-				natt_dport = endpoint_port(&st->st_remote_endpoint);
+				natt_sport = endpoint_hport(&st->st_mobike_local_endpoint);
+				natt_dport = endpoint_hport(&st->st_remote_endpoint);
 			}
 		}
 	} else {
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "responder migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
-		old_port = endpoint_port(&st->st_remote_endpoint);
+		old_port = endpoint_hport(&st->st_remote_endpoint);
 		new_endpoint = st->st_mobike_remote_endpoint;
 
 		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
@@ -922,9 +922,9 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (natt_type != 0) {
-				natt_sport = endpoint_port(&st->st_mobike_remote_endpoint);
+				natt_sport = endpoint_hport(&st->st_mobike_remote_endpoint);
 				pexpect_st_local_endpoint(st);
-				natt_dport = endpoint_port(&st->st_interface->local_endpoint);
+				natt_dport = endpoint_hport(&st->st_interface->local_endpoint);
 			}
 		} else {
 			src = &c->spd.this.host_addr;
@@ -938,8 +938,8 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 
 			if (natt_type != 0) {
 				pexpect_st_local_endpoint(st);
-				natt_sport = endpoint_port(&st->st_interface->local_endpoint);
-				natt_dport = endpoint_port(&st->st_mobike_remote_endpoint);
+				natt_sport = endpoint_hport(&st->st_interface->local_endpoint);
+				natt_dport = endpoint_hport(&st->st_mobike_remote_endpoint);
 			}
 		}
 	}

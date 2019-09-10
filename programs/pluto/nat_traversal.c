@@ -144,12 +144,13 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 				&spis->responder, sizeof(spis->responder));
 
 	ip_address ip = endpoint_address(endpoint);
-	int port = endpoint_port(endpoint);
+	/* XXX: use hportof() as marker - this code should use endpoint_nport() */
+	int hport = hportof(endpoint);
 	shunk_t ap = address_as_shunk(&ip);
 	crypt_hash_digest_hunk(ctx, "IP addr", ap);
 
 	{
-		uint16_t netorder_port = htons(port);
+		uint16_t netorder_port = htons(hport);
 		crypt_hash_digest_bytes(ctx, "PORT",
 					&netorder_port, sizeof(netorder_port));
 	}
@@ -160,7 +161,7 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 		DBG_dump("natd_hash: icookie=", &spis->initiator, sizeof(spis->initiator));
 		DBG_dump("natd_hash: rcookie=", &spis->responder, sizeof(spis->responder));
 		DBG_dump_hunk("natd_hash: ip=", ap);
-		DBG_log("natd_hash: port=%d", port);
+		DBG_log("natd_hash: port=%d", hport);
 		DBG_dump("natd_hash: hash=", hash,
 			 hasher->hash_digest_size);
 	}
@@ -185,7 +186,7 @@ bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
 	pexpect_st_local_endpoint(st);
-	uint16_t lport = endpoint_port(&st->st_interface->local_endpoint);
+	uint16_t lport = endpoint_hport(&st->st_interface->local_endpoint);
 	if (st->st_connection->encaps == yna_yes) {
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		lport = 0;
@@ -457,9 +458,9 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
-	unsigned remote_port = endpoint_port(&st->st_remote_endpoint);
+	unsigned remote_port = endpoint_hport(&st->st_remote_endpoint);
 	pexpect_st_local_endpoint(st);
-	unsigned short local_port = endpoint_port(&st->st_interface->local_endpoint);
+	unsigned short local_port = endpoint_hport(&st->st_interface->local_endpoint);
 	if (st->st_connection->encaps == yna_yes) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection"));
@@ -983,7 +984,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	     st->st_state->kind == STATE_QUICK_I1 ||
 	     st->st_state->kind == STATE_AGGR_I2) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-	    endpoint_port(&st->st_interface->local_endpoint) != pluto_nat_port) {
+	    endpoint_hport(&st->st_interface->local_endpoint) != pluto_nat_port) {
 		dbg("NAT-T: #%lu in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
 		    st->st_serialno, st->st_state->short_name,
 		    pluto_nat_port);
@@ -1109,7 +1110,7 @@ void natify_initiator_endpoints(struct state *st, where_t where)
 	 * Float the remote port to :PLUTO_NAT_PORT (:4500)
 	 */
 	dbg("NAT-T: #%lu floating remote port from %d to %d using pluto_nat_port "PRI_WHERE,
-	    st->st_serialno, endpoint_port(&st->st_remote_endpoint), pluto_nat_port,
+	    st->st_serialno, endpoint_hport(&st->st_remote_endpoint), pluto_nat_port,
 	    pri_where(where));
 	st->st_remote_endpoint = set_endpoint_port(&st->st_remote_endpoint, pluto_nat_port);
 }

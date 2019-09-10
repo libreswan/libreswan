@@ -2193,7 +2193,7 @@ void fmt_state(struct state *st, const monotime_t now,
 		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s;",
 		 st->st_serialno,
 		 c->name, inst,
-		 endpoint_port(&st->st_remote_endpoint),
+		 endpoint_hport(&st->st_remote_endpoint),
 		 st->st_state->name,
 		 st->st_state->story,
 		 st->st_event == NULL ? "none" :
@@ -2756,7 +2756,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	case MESSAGE_RESPONSE:
 		/* MOBIKE initiator processing response */
 		c->spd.this.host_addr = endpoint_address(&child->sa.st_mobike_local_endpoint);
-		c->spd.this.host_port = endpoint_port(&child->sa.st_mobike_local_endpoint);
+		c->spd.this.host_port = endpoint_hport(&child->sa.st_mobike_local_endpoint);
 		c->spd.this.host_nexthop  = child->sa.st_mobike_host_nexthop;
 
 		ike->sa.st_interface = child->sa.st_interface = md->iface;

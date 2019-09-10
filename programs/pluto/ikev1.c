@@ -1217,7 +1217,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				 * updated(?).
 				 */
 				tmp_c->host_pair->remote = endpoint(&new_peer,
-								    endpoint_port(&tmp_c->host_pair->remote));
+								    endpoint_hport(&tmp_c->host_pair->remote));
 
 				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,

@@ -1946,11 +1946,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
 			natt_type = ESPINUDP_WITH_NON_ESP;
 			if (inbound) {
-				natt_sport = endpoint_port(&st->st_remote_endpoint);
-				natt_dport = endpoint_port(&st->st_interface->local_endpoint);
+				natt_sport = endpoint_hport(&st->st_remote_endpoint);
+				natt_dport = endpoint_hport(&st->st_interface->local_endpoint);
 			} else {
-				natt_sport = endpoint_port(&st->st_interface->local_endpoint);
-				natt_dport = endpoint_port(&st->st_remote_endpoint);
+				natt_sport = endpoint_hport(&st->st_interface->local_endpoint);
+				natt_dport = endpoint_hport(&st->st_remote_endpoint);
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
 		}

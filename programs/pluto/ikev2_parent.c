@@ -5038,7 +5038,7 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 	if (mobike_check_established(st) &&
 	    !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST) &&
 	    (!sameaddr(&md->sender, &st->st_remote_endpoint) ||
-	     hportof(&md->sender) != endpoint_port(&st->st_remote_endpoint))) {
+	     hportof(&md->sender) != endpoint_hport(&st->st_remote_endpoint))) {
 		/* remember the established/old address and interface */
 		est_remote->remote = st->st_remote_endpoint;
 		est_remote->interface = st->st_interface;
@@ -5925,7 +5925,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	pexpect_st_local_endpoint(st);
 	/* XXX: why not local_endpoint or is this redundant */
 	st->st_mobike_local_endpoint =
-		endpoint(&this->addr, endpoint_port(&st->st_interface->local_endpoint));
+		endpoint(&this->addr, endpoint_hport(&st->st_interface->local_endpoint));
 	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
 	const struct iface_port *o_iface = st->st_interface;
 	/* notice how it gets set back below */
@@ -5955,7 +5955,7 @@ static const struct iface_port *ikev2_src_iface(struct state *st,
 {
 	/* success found a new source address */
 	pexpect_st_local_endpoint(st);
-	ip_endpoint local_endpoint = endpoint(&this->addr, endpoint_port(&st->st_interface->local_endpoint));
+	ip_endpoint local_endpoint = endpoint(&this->addr, endpoint_hport(&st->st_interface->local_endpoint));
 	const struct iface_port *iface = find_iface_port_by_local_endpoint(&local_endpoint);
 	if (iface == NULL) {
 		endpoint_buf b;
