@@ -888,11 +888,6 @@ bool match_certs_id(const struct certs *certs,
 		libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
 	}
 
-	if (peer_id->isanyid) {
-		libreswan_log("Peer ID is configured with %%any - allowing unmatched ID");
-		return TRUE;
-	}
-
 	return m;
 }
 

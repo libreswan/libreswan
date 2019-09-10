@@ -361,7 +361,6 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 	if (e->id.kind == ID_NONE && endpoint_is_specified(&e->host_addr)) {
 		e->id.kind = afi->id_addr;
 		e->id.ip_addr = e->host_addr;
-		e->id.isanyid = TRUE; /* used to match id=%any */
 		e->has_id_wildcards = FALSE;
 	}
 
@@ -3855,13 +3854,13 @@ void show_one_connection(const struct connection *c)
 		id_buf thisidb;
 		id_buf thatidb;
 
-		whack_log(RC_COMMENT,
-			"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
-			c->name, instance,
-			enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
-			c->spd.this.id.isanyid ? "%any" : str_id(&c->spd.this.id, &thisidb),
-			enum_name(&ike_idtype_names_extended, c->spd.that.id.kind),
-			c->spd.that.id.isanyid ? "%any" : str_id(&c->spd.that.id, &thatidb));
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
+		c->name, instance,
+		enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
+		str_id(&c->spd.this.id, &thisidb),
+		enum_name(&ike_idtype_names_extended, c->spd.that.id.kind),
+		str_id(&c->spd.that.id, &thatidb));
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
