@@ -660,7 +660,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 		if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 			nat_traversal_show_result(
 				st->hidden_variables.st_nat_traversal,
-				hportof(&md->sender));
+				endpoint_hport(&md->sender));
 		}
 	}
 	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {

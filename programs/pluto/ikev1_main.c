@@ -689,7 +689,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 
 		libreswan_log("responding to Main Mode from unknown peer %s on port %u",
 			sensitive_ipstr(&c->spd.that.host_addr, &b),
-			hportof(&md->sender));
+			endpoint_hport(&md->sender));
 		DBG(DBG_CONTROL, DBG_dump("  ICOOKIE-DUMP:", st->st_ike_spis.initiator.bytes, COOKIE_SIZE));
 	} else {
 		libreswan_log("responding to Main Mode");

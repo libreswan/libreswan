@@ -129,9 +129,6 @@ err_t sockaddr_to_endpoint(const ip_sockaddr *sa, socklen_t sa_len, ip_endpoint 
  * Old style.
  */
 
-/* N=network H=host; need ip_port type? */
-#define hportof(ENDPOINT) endpoint_hport(ENDPOINT)
-
 /* XXX: compatibility */
 #define portof(SRC) endpoint_nport((SRC))
 #define setportof(PORT, DST) update_endpoint_hport((DST), ntohs(PORT))
