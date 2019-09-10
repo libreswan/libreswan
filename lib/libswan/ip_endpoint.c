@@ -20,16 +20,16 @@
 #include "ip_info.h"
 #include "lswlog.h"		/* for bad_case() */
 
-ip_endpoint endpoint(const ip_address *address, int port)
+ip_endpoint endpoint(const ip_address *address, int hport)
 {
 #if defined(ENDPOINT_TYPE)
 	ip_endpoint endpoint = {
 		.address = *address,
-		.port = port,
+		.hport = hport,
 	};
 	return endpoint;
 #else
-	return set_endpoint_port(address, port);
+	return set_endpoint_hport(address, hport);
 #endif
 }
 
@@ -93,7 +93,7 @@ ip_address endpoint_address(const ip_endpoint *endpoint)
 	return endpoint->address;
 #else
 	if (address_type(endpoint) != NULL) {
-		return set_endpoint_port(endpoint, 0); /* scrub the port */
+		return set_endpoint_hport(endpoint, 0); /* scrub the port */
 	} else {
 		return *endpoint; /* empty_address? */
 	}
@@ -124,7 +124,7 @@ int endpoint_hport(const ip_endpoint *endpoint)
 #endif
 }
 
-ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port)
+ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint, int hport)
 {
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
@@ -135,21 +135,21 @@ ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port)
 #if defined(ENDPOINT_TYPE)
 	ip_endpoint dst = {
 		.address = endpoint->address,
-		.port = port,
+		.hport = hport,
 	};
 	return dst;
 #elif defined(ADDRESS_TYPE)
 	ip_endpoint dst = *endpoint;
-	dst.hport = port;
+	dst.hport = hport;
 	return dst;
 #else
 	ip_endpoint dst = *endpoint;
 	switch (afi->af) {
 	case AF_INET:
-		dst.u.v4.sin_port = htons(port);
+		dst.u.v4.sin_port = htons(hport);
 		break;
 	case AF_INET6:
-		dst.u.v6.sin6_port = htons(port);
+		dst.u.v6.sin6_port = htons(hport);
 		break;
 	default:
 		bad_case(afi->af);
@@ -284,22 +284,6 @@ const ip_endpoint endpoint_invalid = {
 	},
 };
 #endif
-
-/*
- * portof - get the port field of an ip_endpoint in network order.
- *
- * Return -1 if ip_endpoint isn't valid.
- */
-
-ip_endpoint nsetportof(int port /* network order */, ip_endpoint endpoint)
-{
-	return set_endpoint_port(&endpoint, htons(port));
-}
-
-ip_endpoint hsetportof(int port /* host order */, ip_endpoint endpoint)
-{
-	return set_endpoint_port(&endpoint, port);
-}
 
 /*
  * Construct and return a sockaddr structure.

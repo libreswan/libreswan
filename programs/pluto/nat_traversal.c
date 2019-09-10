@@ -475,8 +475,8 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	/* first: emit payload with hash of sender IP & port */
 
-	const ip_endpoint remote_endpoint = set_endpoint_port(&md->sender,
-							      remote_port);
+	const ip_endpoint remote_endpoint = set_endpoint_hport(&md->sender,
+							       remote_port);
 	natd_hash(st->st_oakley.ta_prf->hasher, hash,
 		  &ike_spis, &remote_endpoint);
 
@@ -487,8 +487,8 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	/* second: emit payload with hash of my IP & port */
 
-	const ip_endpoint local_endpoint = set_endpoint_port(&md->iface->local_endpoint,
-							     local_port);
+	const ip_endpoint local_endpoint = set_endpoint_hport(&md->iface->local_endpoint,
+							      local_port);
 	natd_hash(st->st_oakley.ta_prf->hasher, hash,
 		  &ike_spis, &local_endpoint);
 
@@ -1079,7 +1079,7 @@ void natify_initiator_endpoints(struct state *st, where_t where)
 	 */
 	pexpect_st_local_endpoint(st);
 	endpoint_buf b1, b2;
-	ip_endpoint new_local_endpoint = set_endpoint_port(&st->st_interface->local_endpoint, pluto_nat_port);
+	ip_endpoint new_local_endpoint = set_endpoint_hport(&st->st_interface->local_endpoint, pluto_nat_port);
 	dbg("NAT: #%lu floating local endpoint from %s to %s using pluto_nat_port "PRI_WHERE,
 	    st->st_serialno,
 	    str_endpoint(&st->st_interface->local_endpoint, &b1),
@@ -1112,5 +1112,5 @@ void natify_initiator_endpoints(struct state *st, where_t where)
 	dbg("NAT-T: #%lu floating remote port from %d to %d using pluto_nat_port "PRI_WHERE,
 	    st->st_serialno, endpoint_hport(&st->st_remote_endpoint), pluto_nat_port,
 	    pri_where(where));
-	st->st_remote_endpoint = set_endpoint_port(&st->st_remote_endpoint, pluto_nat_port);
+	update_endpoint_hport(&st->st_remote_endpoint, pluto_nat_port);
 }

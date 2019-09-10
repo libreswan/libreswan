@@ -67,13 +67,13 @@ int subnet_nport(const ip_subnet *subnet)
 	}
 }
 
-ip_subnet set_subnet_port(const ip_subnet *subnet, int hport)
+ip_subnet set_subnet_hport(const ip_subnet *subnet, int hport)
 {
 	ip_subnet s = *subnet;
 #ifdef SUBNET_TYPE
 	s.port = hport;
 #else
-	s.addr = set_endpoint_port(&subnet->addr, hport);
+	s.addr = set_endpoint_hport(&subnet->addr, hport);
 #endif
 	return s;
 }

@@ -824,7 +824,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 									loglog(RC_LOG_SERIOUS, "Dragons! connection port %d mismatches shunt dest port %d",
 										c->spd.that.port, hisport);
 								} else {
-									hsetportof(hisport, that_client.addr);
+									update_subnet_hport(&that_client, hisport);
 									DBG(DBG_OPPO, DBG_log("bare shunt destination port set to %d", hisport));
 								}
 							} else {

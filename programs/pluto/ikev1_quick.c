@@ -1024,7 +1024,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 
 		b.his.proto = id_pd->payload.ipsec_id.isaiid_protoid;
 		b.his.port = id_pd->payload.ipsec_id.isaiid_port;
-		b.his.net = set_subnet_port(&b.his.net, b.his.port);
+		update_subnet_hport(&b.his.net, b.his.port);
 
 		/* IDcr (we are responder) */
 
@@ -1034,7 +1034,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 
 		b.my.proto = IDci->payload.ipsec_id.isaiid_protoid;
 		b.my.port = IDci->payload.ipsec_id.isaiid_port;
-		b.my.net = set_subnet_port(&b.my.net, b.my.port);
+		update_subnet_hport(&b.my.net, b.my.port);
 
 		/*
 		 * if there is a NATOA payload, then use it as

@@ -338,7 +338,7 @@ static void check_subnet_port(void)
 				nport, htons(t->hport));
 		}
 
-		ip_subnet ps = set_subnet_port(&s, t->hport+1);
+		ip_subnet ps = set_subnet_hport(&s, t->hport+1);
 		int pport = subnet_hport(&ps);
 		if (pport != t->hport+1) {
 			FAIL_IN("subnet_hport()+1 returned '%d', expected '%d'",

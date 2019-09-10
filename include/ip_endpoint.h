@@ -105,9 +105,12 @@ bool endpoint_is_specified(const ip_endpoint *endpoint);
 /* returns NULL when address_invalid */
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 
-/* host byte order */
+/* h(ost) byte order */
 int endpoint_hport(const ip_endpoint *endpoint);
-ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, int port) MUST_USE_RESULT;
+ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint,
+			       int hport) MUST_USE_RESULT;
+#define update_endpoint_hport(ENDPOINT, HPORT)			\
+	{ *(ENDPOINT) = set_endpoint_hport(ENDPOINT, HPORT); }
 
 /* currently forces port to zero */
 ip_address endpoint_address(const ip_endpoint *endpoint);
@@ -128,10 +131,9 @@ err_t sockaddr_to_endpoint(const ip_sockaddr *sa, socklen_t sa_len, ip_endpoint 
 /* N=network H=host; need ip_port type? */
 #define nportof(ENDPOINT) htons(endpoint_hport(ENDPOINT))
 #define hportof(ENDPOINT) endpoint_hport(ENDPOINT)
-ip_endpoint nsetportof(int port, ip_endpoint dst);
-ip_endpoint hsetportof(int port, ip_endpoint dst);
+
 /* XXX: compatibility */
 #define portof(SRC) nportof((SRC))
-#define setportof(PORT, DST) { *(DST) = nsetportof(PORT, *(DST)); }
+#define setportof(PORT, DST) update_endpoint_hport((DST), ntohs(PORT))
 
 #endif
