@@ -358,6 +358,7 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 		return "unknown address family in default_end";
 
 	if (e->id.kind == ID_NONE) {
+		libreswan_log("PAUL: defaul_end setting isanyid to TRUE");
 		e->id.isanyid = TRUE; /* used to match id=%any */
 	}
 	/* Default ID to IP (but only if not NO_IP -- WildCard) */
