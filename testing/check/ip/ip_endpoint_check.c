@@ -160,8 +160,66 @@ static void check_sockaddr_as_endpoint(void)
 	}
 }
 
+static void check_endpoint_port(void)
+{
+	/*
+	 * XXX: can't yet do invalid ports.
+	 */
+	static const struct test {
+		int family;
+		char *in;
+		int hport;
+	} tests[] = {
+		/* any */
+		{ 4, "0.0.0.0", 0 },
+		{ 6, "::0", 0, },
+		/* longest */
+		{ 4, "101.102.103.104", 65534, },
+		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008", 65534, },
+	};
+
+	const char *oops;
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_IN(stdout, " -> '%d'", t->hport);
+
+		sa_family_t af = SA_FAMILY(t->family);
+
+		ip_address a;
+		oops = ttoaddr(t->in, 0, af, &a);
+		if (oops != NULL) {
+			/* Error occurred, but we didn't expect one  */
+			FAIL_IN("ttosubnet failed: %s", oops);
+		}
+		ip_endpoint e = endpoint(&a, t->hport);
+
+		CHECK_TYPE(FAIL_IN, endpoint_type(&e), t->family);
+
+		int hport = endpoint_hport(&e);
+		if (hport != t->hport) {
+			FAIL_IN("endpoint_hport() returned '%d', expected '%d'",
+				hport, t->hport);
+		}
+
+		int nport = endpoint_nport(&e);
+		if (nport != htons(t->hport)) {
+			FAIL_IN("endpoint_nport() returned '%04x', expected '%04x'",
+				nport, htons(t->hport));
+		}
+
+		ip_endpoint pe = set_endpoint_hport(&e, t->hport+1);
+		int pport = endpoint_hport(&pe);
+		if (pport != t->hport+1) {
+			FAIL_IN("endpoint_hport()+1 returned '%d', expected '%d'",
+				pport, t->hport+1);
+		}
+	}
+}
+
 void ip_endpoint_check(void)
 {
 	check_str_endpoint();
 	check_sockaddr_as_endpoint();
+	check_endpoint_port();
 }

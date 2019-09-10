@@ -44,27 +44,34 @@ const struct ip_info *subnet_type(const ip_subnet *src)
 	return endpoint_type(&src->addr);
 }
 
-int subnet_hport(const ip_subnet *subnet)
+int subnet_hport(const ip_subnet *s)
 {
 #ifdef SUBNET_TYPE
-	return subnet->hport;
+	const struct ip_info *afi = subnet_type(s);
+	if (afi == NULL) {
+		/* not asserting, who knows what nonsense a user can generate */
+		libreswan_log("%s has unspecified type", __func__);
+		return -1;
+	}
+	return s->hport;
 #else
-	return endpoint_hport(&subnet->addr);
+	return endpoint_hport(&s->addr);
 #endif
 }
 
-int subnet_nport(const ip_subnet *subnet)
+int subnet_nport(const ip_subnet *s)
 {
 #ifdef SUBNET_TYPE
-	int port = subnet->hport;
-#else
-	int port = endpoint_hport(&subnet->addr);
-#endif
-	if (port < 0) {
+	const struct ip_info *afi = subnet_type(s);
+	if (afi == NULL) {
+		/* not asserting, who knows what nonsense a user can generate */
+		libreswan_log("%s has unspecified type", __func__);
 		return -1;
-	} else {
-		return htons(port);
 	}
+	return htons(s->hport);
+#else
+	return endpoint_nport(&s->addr);
+#endif
 }
 
 ip_subnet set_subnet_hport(const ip_subnet *subnet, int hport)

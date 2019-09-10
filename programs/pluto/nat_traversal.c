@@ -144,24 +144,22 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 				&spis->responder, sizeof(spis->responder));
 
 	ip_address ip = endpoint_address(endpoint);
-	/* XXX: use hportof() as marker - this code should use endpoint_nport() */
-	int hport = hportof(endpoint);
 	shunk_t ap = address_as_shunk(&ip);
 	crypt_hash_digest_hunk(ctx, "IP addr", ap);
 
-	{
-		uint16_t netorder_port = htons(hport);
-		crypt_hash_digest_bytes(ctx, "PORT",
-					&netorder_port, sizeof(netorder_port));
-	}
+	uint16_t nport = endpoint_nport(endpoint);
+	crypt_hash_digest_bytes(ctx, "PORT",
+				&nport, sizeof(nport));
+
 	crypt_hash_final_bytes(&ctx, hash, hasher->hash_digest_size);
+
 	if (DBGP(DBG_BASE)) {
 		DBG_log("natd_hash: hasher=%p(%d)", hasher,
 			(int)hasher->hash_digest_size);
 		DBG_dump("natd_hash: icookie=", &spis->initiator, sizeof(spis->initiator));
 		DBG_dump("natd_hash: rcookie=", &spis->responder, sizeof(spis->responder));
 		DBG_dump_hunk("natd_hash: ip=", ap);
-		DBG_log("natd_hash: port=%d", hport);
+		DBG_dump("natd_hash: port=", &nport, sizeof(nport));
 		DBG_dump("natd_hash: hash=", hash,
 			 hasher->hash_digest_size);
 	}
