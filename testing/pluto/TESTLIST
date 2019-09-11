@@ -327,6 +327,7 @@ kvmplutotest	ikev2-x509-02-eku			good
 kvmplutotest	ikev2-x509-02-smoketest			wip
 kvmplutotest	ikev2-x509-03				good
 kvmplutotest	ikev2-x509-05-san-firstemail-match	good
+kvmplutotest	ikev2-x509-05-san-firstemail-match-respponder	good
 kvmplutotest	ikev2-x509-06-san-email-mismatch	good
 kvmplutotest	ikev2-x509-07-san-ip-mismatch		good
 kvmplutotest	ikev2-x509-08-san-dns-mismatch		good
