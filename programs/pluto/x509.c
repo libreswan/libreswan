@@ -938,11 +938,15 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 		return LSW_CERT_NONE;
 	}
 
-	if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/)) {
-		return LSW_CERT_MISMATCHED_ID;
+	if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
+	} else {
+		if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/)) {
+			return LSW_CERT_MISMATCHED_ID;
+		}
+		dbg("SAN ID matched, updating that.cert");
 	}
 
-	dbg("SAN ID matched, updating that.cert");
 	st->st_peer_alt_id = true;
 	if (c->spd.that.cert.ty == CERT_X509_SIGNATURE &&
 	    c->spd.that.cert.u.nss_cert != NULL) {

@@ -392,6 +392,7 @@ const char *const sa_policy_bit_names[] = {
 	"DECAP_DSCP",
 	"NOPMTUDISC",
 	"MSDH_DOWNGRADE",
+	"ALLOW_NO_SAN",
 	"DNS_MATCH_ID",
 	"SHA2_TRUNCBUG",
 	"SHUNT0",

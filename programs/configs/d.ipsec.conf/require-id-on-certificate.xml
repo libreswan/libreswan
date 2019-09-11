@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>require-id-on-certificate</emphasis></term>
+  <listitem>
+<para>When using certificates, check whether the IKE peer ID is present as a
+subjectAltName (SAN) on the peer certificate. Accepted values are
+<emphasis remap='B'>yes</emphasis> (the default) or <emphasis remap='B'>no</emphasis>.
+This check should only be disabled when using dpeloyed certificates that do not have
+their peer ID specified as a SAN on the certificate. These certificates violate RFC 4945
+Section 3.1 and are normally rejected to avoid a compromised host to assume the
+IKE identity of another host. The SAN limits the ID's the peer is able to assume.
+</para>
+  </listitem>
+  </varlistentry>
+

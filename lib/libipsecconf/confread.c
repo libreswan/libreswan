@@ -1227,6 +1227,11 @@ static bool load_conn(
 	KW_POLICY_FLAG(KNCF_DNS_MATCH_ID, POLICY_DNS_MATCH_ID);
 	KW_POLICY_FLAG(KNCF_SHA2_TRUNCBUG, POLICY_SHA2_TRUNCBUG);
 
+	if (conn->options_set[KNCF_SAN_ON_CERT]) {
+		if (!conn->options[KNCF_SAN_ON_CERT])
+			conn->policy |= POLICY_ALLOW_NO_SAN;
+	}
+
 	/* ??? sometimes (when? why?) the member is already set */
 
 #	define str_to_conn(member, kscf) { \

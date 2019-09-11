@@ -27,6 +27,7 @@ d.ipsec.conf/phase2alg.xml
 d.ipsec.conf/sha2-truncbug.xml
 d.ipsec.conf/ms-dh-downgrade.xml
 d.ipsec.conf/dns-match-id.xml
+d.ipsec.conf/require-id-on-certificate.xml
 d.ipsec.conf/ppk.xml
 d.ipsec.conf/nat-ikev1-method.xml
 d.ipsec.conf/esp.xml

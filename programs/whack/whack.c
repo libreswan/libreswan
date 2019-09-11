@@ -96,7 +96,7 @@ static void help(void)
 		"		[--auth-never] \\\n"
 		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] \\\n"
 		"	[--ms-dh-downgrade] \\\n"
-		"	[--overlapip] [--tunnel] [--pfs] [--dns-match-id] \\\n"
+		"	[--overlapip] [--tunnel] [--pfs] [--dns-match-id] [--allow-cert-without-san-id]\\\n"
 		"	[--pfsgroup modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
 		"		dh22 | dh23 | dh24] \\\n"
@@ -642,6 +642,7 @@ static const struct option long_opts[] = {
 	PS("pfs", PFS),
 	PS("ms-dh-downgrade", MSDH_DOWNGRADE),
 	PS("dns-match-id", DNS_MATCH_ID),
+	PS("allow-cert-without-san-id", ALLOW_NO_SAN),
 	PS("sha2-truncbug", SHA2_TRUNCBUG),
 	PS("sha2_truncbug", SHA2_TRUNCBUG), /* backwards compatibility */
 	PS("aggressive", AGGRESSIVE),
@@ -1716,6 +1717,8 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_MSDH_DOWNGRADE_IX:
 		/* --dns-match-id */
 		case CDP_SINGLETON + POLICY_DNS_MATCH_ID_IX:
+		/* --allow-cert-without-san-id */
+		case CDP_SINGLETON + POLICY_ALLOW_NO_SAN_IX:
 		/* --sha2-truncbug or --sha2_truncbug */
 		case CDP_SINGLETON + POLICY_SHA2_TRUNCBUG_IX:
 
