@@ -490,9 +490,14 @@ size_t format_end(char *buf,
 	}
 
 	host_port[0] = '\0';
-	if (this->host_port_specific)
+	if (this->host_port_specific) {
+		endpoint_buf b;
+		dbg("in %s() this %s port %d is host_port_specific",
+		    __func__, str_endpoint(&this->host_addr, &b),
+		    this->host_port);
 		snprintf(host_port, sizeof(host_port), ":%u",
 			 this->host_port);
+	}
 
 	/* payload portocol and port */
 	protoport[0] = '\0';
@@ -776,6 +781,10 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 	if (src->host_port != pluto_port) {
 		dst->host_port = src->host_port;
 		dst->host_port_specific = TRUE;
+		endpoint_buf b;
+		dbg("in %s() end %s port %d is host_port_specific",
+		    __func__, str_endpoint(&dst->host_addr, &b),
+		    dst->host_port);
 	}
 
 	dst->sendcert =  src->sendcert;
