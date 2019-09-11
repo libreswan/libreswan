@@ -861,14 +861,16 @@ bool match_certs_id(const struct certs *certs,
 		idtoa(peer_id, namebuf, sizeof(namebuf));
 
 		dn_buf sbuf;
+		int wildcards;  /* value ignored */
+
 		dbg("ID_DER_ASN1_DN '%s' needs further ID comparison against '%s'",
 			dntoasi(&sbuf, end_cert->derSubject),
 			namebuf);
 
-		m = same_dn_any_order(peer_id->name,
-			same_secitem_as_chunk(end_cert->derSubject));
+		m = match_dn_any_order_wild(peer_id->name, same_secitem_as_chunk(end_cert->derSubject),
+			&wildcards);
 		if (m) {
-			dbg("ID_DER_ASN1_DN '%s' matched our ID", namebuf);
+			dbg("ID_DER_ASN1_DN '%s' matched our ID '%s'", end_cert->subjectName, namebuf);
 		} else {
 			loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
 			       end_cert->subjectName, namebuf);
