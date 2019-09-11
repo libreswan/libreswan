@@ -12,7 +12,7 @@ west #
 002 added connection description "ikev2-westnet-eastnet-x509-cr"
 west #
  ipsec status | grep idtype
-000 "ikev2-westnet-eastnet-x509-cr":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: ID_IPV4_ADDR; their id=192.1.2.23(with %any)
+000 "ikev2-westnet-eastnet-x509-cr":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: ID_IPV4_ADDR; their id=192.1.2.23
 west #
  #ipsec whack --impair suppress-retransmits
 west #
@@ -28,7 +28,8 @@ west #
 003 "ikev2-westnet-eastnet-x509-cr" #2: certificate contains no subjectAltName extension matching '192.1.2.23'
 003 "ikev2-westnet-eastnet-x509-cr" #2: certificate does not contain ID_IP subjectAltName=192.1.2.23
 002 "ikev2-westnet-eastnet-x509-cr" #2: Peer public key SubjectAltName does not match peer ID for this connection
-002 "ikev2-westnet-eastnet-x509-cr" #2: Peer ID is configured with %any - allowing unmatched ID
+002 "ikev2-westnet-eastnet-x509-cr" #2: X509: CERT payload does not match connection ID
+002 "ikev2-westnet-eastnet-x509-cr" #2: X509: connection allows unmatched IKE ID and certificate SAN
 003 "ikev2-westnet-eastnet-x509-cr" #2: Authenticated using RSA
 002 "ikev2-westnet-eastnet-x509-cr" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-westnet-eastnet-x509-cr" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}

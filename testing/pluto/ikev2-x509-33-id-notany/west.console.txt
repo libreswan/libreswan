@@ -31,6 +31,7 @@ west #
 003 "ikev2-westnet-eastnet-x509-cr" #2: certificate does not contain subjectAltName=right
 002 "ikev2-westnet-eastnet-x509-cr" #2: Peer public key SubjectAltName does not match peer ID for this connection
 002 "ikev2-westnet-eastnet-x509-cr" #2: X509: CERT payload does not match connection ID
+002 "ikev2-westnet-eastnet-x509-cr" #2: X509: connection failed due to unmatched IKE ID in certificate SAN
 west #
  echo "done"
 done

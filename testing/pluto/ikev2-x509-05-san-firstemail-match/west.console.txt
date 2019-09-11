@@ -30,6 +30,7 @@ west #
 003 "san" #2: certificate does not contain ID_USER_FQDN subjectAltName=user-east@testing.libreswan.org
 002 "san" #2: Peer public key SubjectAltName does not match peer ID for this connection
 002 "san" #2: X509: CERT payload does not match connection ID
+002 "san" #2: X509: connection failed due to unmatched IKE ID in certificate SAN
 west #
  echo "done"
 done

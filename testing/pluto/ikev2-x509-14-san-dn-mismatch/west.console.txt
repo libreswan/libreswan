@@ -27,6 +27,7 @@ west #
 003 "san" #2: ID_DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=NOTeast.testing.libreswan.org, E=user-NOTeast@testing.libreswan.org'
 002 "san" #2: Peer public key SubjectAltName does not match peer ID for this connection
 002 "san" #2: X509: CERT payload does not match connection ID
+002 "san" #2: X509: connection failed due to unmatched IKE ID in certificate SAN
 west #
  echo "done"
 done
