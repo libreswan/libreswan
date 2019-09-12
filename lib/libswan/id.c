@@ -469,23 +469,39 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
  */
 static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wildcards)
 {
-	char abuf[ASN1_BUF_LEN];
-	char bbuf[ASN1_BUF_LEN];
-	int rdn_num = 0;
-	int matched = 0;
+	char abuf[ASN1_BUF_LEN] = "";
+	char bbuf[ASN1_BUF_LEN] = "";
+	/*
+	 * XXX: Convert to raw ASCII so they can be passed to NSS.
+	 */
+	dntoa(abuf, sizeof(abuf), a); /* RFC1485 for NSS */
+	dntoa(bbuf, sizeof(bbuf), b); /* RFC1485 for NSS */
 
-	dntoa(abuf, sizeof(abuf), a);
-	dntoa(bbuf, sizeof(bbuf), b);
-
-	DBG(DBG_CONTROL,
-	    DBG_log("%s A: %s, B: %s", __func__, abuf, bbuf));
+	/*
+	 * ABUF and BBUF, set by dntoa(), contain an RFC 1485(?)
+	 * encoded string and that can contain UTF-8 (i.e.,
+	 * !isprint()).  Strip that out before logging.
+	 */
+	LSWDBGP(DBG_BASE, buf) {
+		jam_string(buf, __func__);
+		jam_string(buf, " A: ");
+		jam_sanitized_bytes(buf, abuf, strlen(abuf));
+		jam_string(buf, ", B: ");
+		jam_sanitized_bytes(buf, bbuf, strlen(bbuf));
+	}
 
 	CERTName *const a_name = CERT_AsciiToName(abuf);
 	CERTName *const b_name = CERT_AsciiToName(bbuf);
 
-	if (a_name == NULL || b_name == NULL)
-		return FALSE;
+	if (a_name == NULL || b_name == NULL) {
+		/* NULL is ignored; see NSS commit 206 */
+		CERT_DestroyName(a_name);
+		CERT_DestroyName(b_name);
+		return false;
+	}
 
+	int rdn_num = 0;
+	int matched = 0;
 	CERTRDN *const *rdns_b;
 	for (rdns_b = b_name->rdns; *rdns_b != NULL; rdns_b++) {
 		CERTRDN *const rdn_b = *rdns_b;
@@ -509,12 +525,8 @@ static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wild
 
 	CERT_DestroyName(a_name);
 	CERT_DestroyName(b_name);
-	DBG(DBG_CONTROL,
-	    DBG_log("%s matched: %d, rdn_num: %d, wc %d",
-		    __func__,
-		    matched,
-		    rdn_num,
-		    wildcards ? *wildcards : 0));
+	dbg("%s matched: %d, rdn_num: %d, wc %d",
+	    __func__, matched, rdn_num, wildcards ? *wildcards : 0);
 
 	return matched > 0 && rdn_num > 0 && matched == rdn_num;
 }
