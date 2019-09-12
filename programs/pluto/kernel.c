@@ -208,7 +208,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 #endif
 				const char *why)
 {
-	passert(samesubnettype(ours, his));
+	passert(subnet_type(ours) == subnet_type(his));
 
 	/*
 	 * Add the kernel shunt to the pluto bare shunt list.

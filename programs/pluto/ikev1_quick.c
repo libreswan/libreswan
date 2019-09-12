@@ -1076,8 +1076,8 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		}
 	} else {
 		/* implicit IDci and IDcr: peer and self */
-		if (!sameaddrtype(&c->spd.this.host_addr,
-				  &c->spd.that.host_addr))
+		if (endpoint_type(&c->spd.this.host_addr) !=
+		    endpoint_type(&c->spd.that.host_addr))
 			return STF_FAIL;
 
 		happy(addrtosubnet(&c->spd.this.host_addr, &b.my.net));
