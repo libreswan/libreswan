@@ -12,7 +12,7 @@ USE_LIBCAP_NG=false
 
 LDFLAGS +=  -lipsec -L/usr/pkg/lib -Wl,-rpath,/usr/pkg/lib
 
-NSSFLAGS = -I/usr/pkg/include/nspr -I/usr/pkg/include/nss/nss
+NSS_CFLAGS = -I/usr/pkg/include/nspr -I/usr/pkg/include/nss/nss
 NSS_LDFLAGS = -L/usr/pkg/lib/nss -Wl,-rpath,/usr/pkg/lib/nss -lnss3 -lfreebl3 -lssl3
 NSPR_LDFLAGS = -L/usr/pkg/lib/nspr -Wl,-rpath,/usr/pkg/lib/nspr -lnspr4
 

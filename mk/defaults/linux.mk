@@ -38,6 +38,7 @@ USE_LABELED_IPSEC?=true
 ifndef LINUX_VARIANT
   ifneq ($(wildcard /etc/os-release),)
     LINUX_VARIANT:=$(shell sed -n -e 's/^ID=//p' /etc/os-release)
+    export LINUX_VARIANT
   endif
 endif
 #(info LINUX_VARIANT=$(LINUX_VARIANT))
@@ -45,6 +46,7 @@ endif
 ifndef LINUX_VARIANT_VERSION
   ifneq ($(wildcard /etc/os-release),)
     LINUX_VARIANT_VERSION:=$(shell sed -n -e 's/^VERSION_ID=//p' /etc/os-release)
+    export LINUX_VARIANT_VERSION
   endif
 endif
 #(info LINUX_VARIANT_VERSION=$(LINUX_VARIANT_VERSION))
@@ -59,3 +61,8 @@ ifeq ($(LINUX_VARIANT),fedora)
   endif
 endif
 #(info USE_GLIBC_KERN_FLIP_HEADERS=$(USE_GLIBC_KERN_FLIP_HEADERS))
+
+ifndef NSS_CFLAGS
+  NSS_CFLAGS := $(shell pkg-config --cflags nss)
+  export NSS_CFLAGS
+endif
