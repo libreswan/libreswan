@@ -40,12 +40,22 @@ typedef struct {                                /* to identify an SA, we need: *
 #               define  SA_INT  61      /* IANA reserved for internal use */
 } ip_said;
 
+/*
+ * Formatting
+ */
+
 typedef struct {
 	char buf[5 + ULTOT_BUF + 1 + sizeof(address_buf)];
 } said_buf;
 
 void jam_said(jambuf_t *buf, const ip_said *said, int format);
 const char *str_said(const ip_said *said, int format, said_buf *buf);
+
+/*
+ * Details.
+ */
+
+const struct ip_info *said_type(const ip_said *said);
 
 /*
  * old stype
