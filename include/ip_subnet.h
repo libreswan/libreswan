@@ -161,7 +161,6 @@ extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);
 extern bool addrinsubnet(const ip_address *a, const ip_subnet *s);
 extern bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b);
 extern bool subnetishost(const ip_subnet *s);
-extern bool samesubnettype(const ip_subnet *a, const ip_subnet *b);
 #define subnetisaddr(sn, a) (subnetishost(sn) && addrinsubnet((a), (sn)))
 extern bool subnetisnone(const ip_subnet *sn);
 

@@ -157,8 +157,9 @@ def main():
         return 1
 
     result_stats = stats.Results()
+    exit_code = 1 # assume a barf
     try:
-        results(logger, tests, baseline, args, result_stats)
+        exit_code = results(logger, tests, baseline, args, result_stats)
     finally:
         if args.stats is Stats.details:
             result_stats.log_details(stderr_log, header="Details:", prefix="  ")
@@ -167,7 +168,7 @@ def main():
         publish.json_results(logger, args)
         publish.json_summary(logger, args)
 
-    return 0
+    return exit_code
 
 
 def stderr_log(fmt, *args):
@@ -176,6 +177,8 @@ def stderr_log(fmt, *args):
 
 
 def results(logger, tests, baseline, args, result_stats):
+
+    failures = 0
 
     for test in tests:
 
@@ -212,6 +215,11 @@ def results(logger, tests, baseline, args, result_stats):
                     continue
             result_stats.add_result(result)
 
+            if result.resolution not in [post.Resolution.PASSED,
+                                         post.Resolution.UNTESTED,
+                                         post.Resolution.UNSUPPORTED]:
+                failures = failures + 1
+
             publish.test_files(logger, args, result)
             publish.test_output_files(logger, args, result)
             publish.json_result(logger, args, result)
@@ -230,6 +238,13 @@ def results(logger, tests, baseline, args, result_stats):
             printer.build_result(logger, result, baseline, args, args.print, b)
 
     publish.json_status(logger, args, "finished")
+
+    # exit code
+    if failures:
+        return 1
+    else:
+        return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

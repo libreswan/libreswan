@@ -676,21 +676,14 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 
 	set_nat_traversal(st, md);
 
-	/* host_port_specific is set if our port is not pluto_port?? */
-	if ((c->kind == CK_INSTANCE) && (c->spd.that.host_port_specific)) {
-		ipstr_buf b;
+	if (DBGP(DBG_BASE)) {
+		DBG_dump("  ICOOKIE-DUMP:", st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
+	}
 
-		libreswan_log(
-			"responding to Main Mode from unknown peer %s:%u",
-			sensitive_ipstr(&c->spd.that.host_addr, &b),
-			c->spd.that.host_port);
-	} else if (c->kind == CK_INSTANCE) {
-		ipstr_buf b;
-
-		libreswan_log("responding to Main Mode from unknown peer %s on port %u",
-			sensitive_ipstr(&c->spd.that.host_addr, &b),
-			hportof(&md->sender));
-		DBG(DBG_CONTROL, DBG_dump("  ICOOKIE-DUMP:", st->st_ike_spis.initiator.bytes, COOKIE_SIZE));
+	if (c->kind == CK_INSTANCE) {
+		endpoint_buf b;
+		libreswan_log("responding to Main Mode from unknown peer %s",
+			      str_sensitive_endpoint(&md->sender, &b));
 	} else {
 		libreswan_log("responding to Main Mode");
 	}

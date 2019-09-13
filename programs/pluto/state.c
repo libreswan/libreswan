@@ -2764,7 +2764,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
 		c->spd.that.host_addr = md->sender;
-		c->spd.that.host_port = hportof(&md->sender);
+		c->spd.that.host_port = endpoint_hport(&md->sender);
 
 		/* for the consistency, correct output in ipsec status */
 		child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint = md->sender;

@@ -156,63 +156,50 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 	return ugh;
 }
 
-/*
- * Converts a binary key ID into hexadecimal format
- */
-static void keyidtoa(char *dst, size_t dstlen, chunk_t keyid)
-{
-	datatot(keyid.ptr, keyid.len, 'x', dst, dstlen);
-}
-
-static void idtot(const struct id *id, char *dst, size_t dstlen)
+void jam_id(jambuf_t *buf, const struct id *id, jam_bytes_fn *jam_bytes)
 {
 	switch (id->kind) {
 	case ID_FROMCERT:
-		snprintf(dst, dstlen, "%s", "%fromcert");
+		jam(buf, "%%fromcert");
 		break;
 	case ID_NONE:
-		snprintf(dst, dstlen, "%s", "(none)");
+		jam(buf, "(none)");
 		break;
 	case ID_NULL:
-		snprintf(dst, dstlen, "%s", "ID_NULL");
+		jam(buf, "ID_NULL");
 		break;
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		if (isanyaddr(&id->ip_addr)) {
-			snprintf(dst, dstlen, "%s", "%any");
+			jam(buf, "%%any");
 		} else {
-			jambuf_t b = array_as_jambuf(dst, dstlen);
-			jam_address(&b, &id->ip_addr);
+			jam_address(buf, &id->ip_addr);
 		}
 		break;
 	case ID_FQDN:
-		snprintf(dst, dstlen, "@%.*s", (int)id->name.len,
-			id->name.ptr);
+		jam(buf, "@");
+		jam_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	case ID_USER_FQDN:
-		snprintf(dst, dstlen, "%.*s", (int)id->name.len,
-			id->name.ptr);
+		jam_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	case ID_DER_ASN1_DN:
-		dntoa(dst, dstlen, id->name);
+		jam_dn(buf, id->name, jam_bytes);
 		break;
 	case ID_KEY_ID:
-		passert(dstlen > 4);
-		dst[0] = '@';
-		dst[1] = '#';
-		dstlen -= 2;
-		dst += 2;
-		keyidtoa(dst, dstlen, id->name);
+		jam(buf, "@#0x");
+		jam_hex_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	default:
-		snprintf(dst, dstlen, "unknown id kind %d", id->kind);
+		jam(buf, "unknown id kind %d", id->kind);
 		break;
 	}
 }
 
 void idtoa(const struct id *id, char *dst, size_t dstlen)
 {
-	idtot(id, dst, dstlen);
+	jambuf_t buf = array_as_jambuf(dst, dstlen);
+	jam_id(&buf, id, jam_raw_bytes);
 	/*
 	 * "Sanitize" string so that log isn't endangered:
 	 * replace unprintable characters with '?'.
@@ -224,57 +211,11 @@ void idtoa(const struct id *id, char *dst, size_t dstlen)
 	}
 }
 
-/*
- * Replace the shell metacharacters ', \, ", `, and $ in a character string
- * by escape sequences consisting of their octal values
- */
-void escape_metachar(const char *src, char *dst, size_t dstlen)
-{
-	while (*src != '\0' && dstlen > 5) {
-		switch (*src) {
-		case '\'':
-		case '\\':
-		case '"':
-		case '`':
-		case '$':
-		{
-			int n = snprintf(dst, dstlen, "\\03%o", *src & 0xFF);
-
-			passert((size_t)n < dstlen);	/* no truncation! */
-			dst += n;
-			dstlen -= n;
-			break;
-		}
-		default:
-			passert(1 < dstlen);	/* no truncation! */
-			*dst++ = *src;
-			dstlen--;
-		}
-		src++;
-	}
-	passert(1 <= dstlen);	/* no truncation! */
-	*dst = '\0';
-}
-
-/*
- * these should use jam_char() / jam_metachar(); except they don't
- * exist.
- */
-
 const char *str_id(const struct id *id, id_buf *dst)
 {
-	idtot(id, dst->buf, sizeof(dst->buf));
-	sanitize_string(dst->buf, sizeof(dst->buf));
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_id(&buf, id, jam_sanitized_bytes);
 	return dst->buf;
-}
-
-void jam_id_escaped(struct lswlog *buf, const struct id *id)
-{
-	char e[IDTOA_BUF];
-	idtoa(id, e, sizeof(e));
-	char a[IDTOA_BUF];
-	escape_metachar(e, a, sizeof(a));
-	jam_string(buf, a);
 }
 
 /*
@@ -528,23 +469,39 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
  */
 static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wildcards)
 {
-	char abuf[ASN1_BUF_LEN];
-	char bbuf[ASN1_BUF_LEN];
-	int rdn_num = 0;
-	int matched = 0;
+	char abuf[ASN1_BUF_LEN] = "";
+	char bbuf[ASN1_BUF_LEN] = "";
+	/*
+	 * XXX: Convert to raw ASCII so they can be passed to NSS.
+	 */
+	dntoa(abuf, sizeof(abuf), a); /* RFC1485 for NSS */
+	dntoa(bbuf, sizeof(bbuf), b); /* RFC1485 for NSS */
 
-	dntoa(abuf, sizeof(abuf), a);
-	dntoa(bbuf, sizeof(bbuf), b);
-
-	DBG(DBG_CONTROL,
-	    DBG_log("%s A: %s, B: %s", __func__, abuf, bbuf));
+	/*
+	 * ABUF and BBUF, set by dntoa(), contain an RFC 1485(?)
+	 * encoded string and that can contain UTF-8 (i.e.,
+	 * !isprint()).  Strip that out before logging.
+	 */
+	LSWDBGP(DBG_BASE, buf) {
+		jam_string(buf, __func__);
+		jam_string(buf, " A: ");
+		jam_sanitized_bytes(buf, abuf, strlen(abuf));
+		jam_string(buf, ", B: ");
+		jam_sanitized_bytes(buf, bbuf, strlen(bbuf));
+	}
 
 	CERTName *const a_name = CERT_AsciiToName(abuf);
 	CERTName *const b_name = CERT_AsciiToName(bbuf);
 
-	if (a_name == NULL || b_name == NULL)
-		return FALSE;
+	if (a_name == NULL || b_name == NULL) {
+		/* NULL is ignored; see NSS commit 206 */
+		CERT_DestroyName(a_name);
+		CERT_DestroyName(b_name);
+		return false;
+	}
 
+	int rdn_num = 0;
+	int matched = 0;
 	CERTRDN *const *rdns_b;
 	for (rdns_b = b_name->rdns; *rdns_b != NULL; rdns_b++) {
 		CERTRDN *const rdn_b = *rdns_b;
@@ -568,12 +525,8 @@ static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wild
 
 	CERT_DestroyName(a_name);
 	CERT_DestroyName(b_name);
-	DBG(DBG_CONTROL,
-	    DBG_log("%s matched: %d, rdn_num: %d, wc %d",
-		    __func__,
-		    matched,
-		    rdn_num,
-		    wildcards ? *wildcards : 0));
+	dbg("%s matched: %d, rdn_num: %d, wc %d",
+	    __func__, matched, rdn_num, wildcards ? *wildcards : 0);
 
 	return matched > 0 && rdn_num > 0 && matched == rdn_num;
 }

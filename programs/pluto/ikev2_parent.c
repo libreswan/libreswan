@@ -5038,7 +5038,7 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 	if (mobike_check_established(st) &&
 	    !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST) &&
 	    (!sameaddr(&md->sender, &st->st_remote_endpoint) ||
-	     hportof(&md->sender) != endpoint_hport(&st->st_remote_endpoint))) {
+	     endpoint_hport(&md->sender) != endpoint_hport(&st->st_remote_endpoint))) {
 		/* remember the established/old address and interface */
 		est_remote->remote = st->st_remote_endpoint;
 		est_remote->interface = st->st_interface;

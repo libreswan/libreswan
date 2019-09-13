@@ -208,7 +208,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 #endif
 				const char *why)
 {
-	passert(samesubnettype(ours, his));
+	passert(subnet_type(ours) == subnet_type(his));
 
 	/*
 	 * Add the kernel shunt to the pluto bare shunt list.
@@ -418,7 +418,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_ME='%s' ", ipstr(&sr->this.host_addr, &bme));
 
 	jam(buf, "PLUTO_MY_ID='");
-	jam_id_escaped(buf, &sr->this.id);
+	jam_id(buf, &sr->this.id, jam_meta_escaped_bytes);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT='");
@@ -453,7 +453,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_PEER='%s' ", ipstr(&sr->that.host_addr, &bpeer));
 
 	jam(buf, "PLUTO_PEER_ID='");
-	jam_id_escaped(buf, &sr->that.id);
+	jam_id(buf, &sr->that.id, jam_meta_escaped_bytes);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT='");

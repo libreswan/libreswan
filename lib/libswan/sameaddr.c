@@ -82,22 +82,6 @@ bool subnetishost(const ip_subnet *a)
 }
 
 /*
- * sameaddrtype - do two addresses have the same type?
- */
-bool sameaddrtype(const ip_address *a, const ip_address *b)
-{
-	return addrtypeof(a) == addrtypeof(b);
-}
-
-/*
- * samesubnettype - do two subnets have the same type?
- */
-bool samesubnettype(const ip_subnet *a, const ip_subnet *b)
-{
-	return sameaddrtype(&a->addr, &b->addr);
-}
-
-/*
  * addrinsubnet - is this address in this subnet?
  */
 bool addrinsubnet(const ip_address *a, const ip_subnet *s)
