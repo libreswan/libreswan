@@ -122,10 +122,14 @@ const struct ip_info *subnet_type(const ip_subnet *subnet);
 /* h(ost) or n(etwork) ordered */
 int subnet_hport(const ip_subnet *subnet);
 int subnet_nport(const ip_subnet *subnet);
+
 ip_subnet set_subnet_hport(const ip_subnet *subnet,
 			   int hport) MUST_USE_RESULT;
+
 #define update_subnet_hport(SUBNET, HPORT)			\
 	{ *(SUBNET) = set_subnet_hport(SUBNET, HPORT); }
+#define update_subnet_nport(SUBNET, NPORT)			\
+	{ *(SUBNET) = set_subnet_hport(SUBNET, ntohs(NPORT)); }
 
 /* when applied to an address, leaves just the routing prefix */
 extern ip_address subnet_mask(const ip_subnet *subnet);

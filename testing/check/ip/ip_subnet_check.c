@@ -282,21 +282,38 @@ static void check_subnet_port(void)
 	static const struct test {
 		int family;
 		const char *in;
-		const char *out;
-		int hport;
+		uint16_t hport;
+		uint8_t nport[2];
+		bool error;
 	} tests[] = {
-		{ 4, "1.2.3.0/24", "1.2.3.0/24", 0, },
-		{ 4, "1.2.3.0/24:0", "1.2.3.0/24", 0, },
-		{ 4, "1.2.3.0/24:10", "1.2.3.0/24", 10, },
-		{ 4, "1.2.3.0/24:-1", NULL },
-		{ 4, "1.2.3.0/24:none", NULL },
-		{ 4, "1.2.3.0/24:", NULL },
-		{ 4, "1.2.3.0/24:0x10", "1.2.3.0/24", 16, },
-		{ 4, "1.2.3.0/24:0X10", "1.2.3.0/24", 16, },
-		{ 4, "1.2.3.0/24:010", "1.2.3.0/24", 8, },
-		{ 6, "3049:1::8007:2040/64", "3049:1::/64", 0, },
-		{ 6, "3049:1::8007:2040/64:0", "3049:1::/64", 0, },
-		{ 6, "3049:1::8007:2040/64:53", "3049:1::/64", 53, },
+		/* zero port implied */
+		{ 4, "0.0.0.0/0", },
+		{ 6, "::0/0", },
+		{ 4, "101.102.103.104/16", },
+		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008/64", },
+		{ 4, "101.102.103.104/32", },
+		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", },
+		/* "reserved" zero port specified; reject? */
+		{ 4, "0.0.0.0/0:0", },
+		{ 6, "::0/0:0", },
+		{ 4, "101.102.103.104/16:0", },
+		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008/64:0", },
+		{ 4, "101.102.103.104/32:0", },
+		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008/128:0", },
+		/* non-zero port mixed with mask; only allow when /32/128? */
+		{ 4, "0.0.0.0/0:65534", 65534, { 255, 254, }, },
+		{ 6, "::0/0:65534", 65534, { 255, 254, }, },
+		{ 4, "101.102.103.104/16:65534", 65534, { 255, 254, }, },
+		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008/64:65534", 65534, { 255, 254, }, },
+		{ 4, "101.102.103.104/32:65534", 65534, { 255, 254, }, },
+		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008/128:65534", 65534, { 255, 254, }, },
+		/* hex/octal */
+		{ 4, "101.102.103.104/16:0xfffe", 65534, { 255, 254, }, },
+		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008/64:0177776", 65534, { 255, 254, }, },
+		/* invalid */
+		{ 4, "1.2.3.0/24:-1", .error = true, },
+		{ 4, "1.2.3.0/24:none",  .error = true, },
+		{ 4, "1.2.3.0/24:",  .error = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -307,42 +324,57 @@ static void check_subnet_port(void)
 
 		ip_subnet s;
 		err_t oops = ttosubnet(t->in, 0, af, &s);
-		if (oops != NULL && t->out == NULL) {
+		if (oops != NULL && t->error) {
 			/* Error was expected, do nothing */
 			continue;
-		} else if (oops != NULL && t->out != NULL) {
+		} else if (oops != NULL && !t->error) {
 			/* Error occurred, but we didn't expect one  */
 			FAIL_IN("ttosubnet failed: %s", oops);
-		} else if (oops == NULL && t->out == NULL) {
+		} else if (oops == NULL && t->error) {
 			/* If no errors, but we expected one */
 			FAIL_IN("ttosubnet succeeded unexpectedly");
 		}
 		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
 
-		subnet_buf out_buf;
-		const char *out = str_subnet(&s, &out_buf);
-		if (!streq(t->out, out)) {
-			FAIL_IN("str_subnet() returned '%s', expected '%s'",
-				out, t->out);
-		}
-
-		int hport = subnet_hport(&s);
-		if (hport != t->hport) {
+		uint16_t hport = subnet_hport(&s);
+		if (!memeq(&hport, &t->hport, sizeof(hport))) {
 			FAIL_IN("subnet_hport() returned '%d', expected '%d'",
 				hport, t->hport);
 		}
 
-		int nport = subnet_nport(&s);
-		if (nport != htons(t->hport)) {
-			FAIL_IN("subnet_nport() returned '%04x', expected '%04x'",
-				nport, htons(t->hport));
+		uint16_t nport = subnet_nport(&s);
+		if (!memeq(&nport, &t->nport, sizeof(nport))) {
+			FAIL_IN("subnet_nport() returned '%04x', expected '%02x%02x'",
+				nport, t->nport[0], t->nport[1]);
 		}
 
-		ip_subnet ps = set_subnet_hport(&s, t->hport+1);
-		int pport = subnet_hport(&ps);
-		if (pport != t->hport+1) {
-			FAIL_IN("subnet_hport()+1 returned '%d', expected '%d'",
-				pport, t->hport+1);
+		/* tweak the port numbers */
+		uint16_t hport_plus_one = t->hport+1;
+		uint16_t nport_plus_one = ntohs(t->hport+1);
+		/* check math? */
+		uint8_t nport_plus_plus[2];
+		memcpy(nport_plus_plus, t->nport, sizeof(nport_plus_plus));
+		nport_plus_plus[1]++;
+		if (!memeq(&nport_plus_one, nport_plus_plus, sizeof(nport_plus_one))) {
+			FAIL_IN("can't do basic math");
+		}
+
+		/* hport+1 -> nport+1 */
+		ip_subnet hp = s;
+		update_subnet_hport(&hp, hport_plus_one);
+		uint16_t nportp = subnet_nport(&hp);
+		if (!memeq(&nportp, &nport_plus_one, sizeof(nportp))) {
+			FAIL_IN("subnet_nport(set_subnet_hport(+1)) returned '%04x', expected '%04x'",
+				nportp, nport_plus_one);
+		}
+
+		/* nport+1 -> hport+1 */
+		ip_subnet np = s;
+		update_subnet_nport(&np, nport_plus_one);
+		uint16_t hportp = subnet_hport(&np);
+		if (!memeq(&hportp, &hport_plus_one, sizeof(hportp))) {
+			FAIL_IN("subnet_hport(set_subnet_nport(+1)) returned '%d', expected '%d'",
+				hportp, hport_plus_one);
 		}
 	}
 }

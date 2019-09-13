@@ -108,10 +108,14 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
 /* Host or Network byte order */
 int endpoint_hport(const ip_endpoint *endpoint);
 int endpoint_nport(const ip_endpoint *endpoint);
+
 ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint,
 			       int hport) MUST_USE_RESULT;
+
 #define update_endpoint_hport(ENDPOINT, HPORT)			\
 	{ *(ENDPOINT) = set_endpoint_hport(ENDPOINT, HPORT); }
+#define update_endpoint_nport(ENDPOINT, NPORT)			\
+	{ *(ENDPOINT) = set_endpoint_hport(ENDPOINT, ntohs(NPORT)); }
 
 /* currently forces port to zero */
 ip_address endpoint_address(const ip_endpoint *endpoint);
@@ -129,8 +133,13 @@ err_t sockaddr_to_endpoint(const ip_sockaddr *sa, socklen_t sa_len, ip_endpoint 
  * Old style.
  */
 
-/* XXX: compatibility */
+/*
+ * XXX: compatibility.
+ *
+ * setportof() should be replaced by update_{subnet,endpoint}_nport();
+ * code is assuming ip_subnet.addr is an endpoint.
+ */
 #define portof(SRC) endpoint_nport((SRC))
-#define setportof(PORT, DST) update_endpoint_hport((DST), ntohs(PORT))
+#define setportof(PORT, DST) update_endpoint_nport(DST, PORT)
 
 #endif
