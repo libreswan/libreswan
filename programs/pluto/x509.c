@@ -785,8 +785,6 @@ bool v2_decode_certs(struct ike_sa *ike, struct msg_digest *md)
 bool match_certs_id(const struct certs *certs,
 		struct id *peer_id /*ID_FROMCERT => updated*/)
 {
-	char namebuf[IDTOA_BUF];
-
 	CERTCertificate *end_cert = certs->cert;
 
 	if (CERT_IsCACert(end_cert, NULL)) {
@@ -802,7 +800,6 @@ bool match_certs_id(const struct certs *certs,
 	case ID_IPV6_ADDR:
 	{
 		char iptxt[IDTOA_BUF];
-
 		idtoa(peer_id, iptxt, sizeof(iptxt));
 		m = cert_VerifySubjectAltName(end_cert, iptxt);
 		if (m) {
@@ -816,7 +813,9 @@ bool match_certs_id(const struct certs *certs,
 	}
 
 	case ID_FQDN:
+	{
 		/* We need to skip the "@" prefix from our configured FQDN */
+		char namebuf[IDTOA_BUF];
 		idtoa(peer_id, namebuf, sizeof(namebuf));
 		m = cert_VerifySubjectAltName(end_cert, namebuf + 1);
 		if (m) {
@@ -827,8 +826,11 @@ bool match_certs_id(const struct certs *certs,
 			       namebuf + 1);
 		}
 		break;
+	}
 
 	case ID_USER_FQDN:
+	{
+		char namebuf[IDTOA_BUF];
 		idtoa(peer_id, namebuf, sizeof(namebuf));
 		m = cert_VerifySubjectAltName(end_cert, namebuf);
 		if (m) {
@@ -838,9 +840,12 @@ bool match_certs_id(const struct certs *certs,
 			       namebuf);
 		}
 		break;
+	}
 
 	case ID_FROMCERT:
+	{
 		/* We are committed to accept any ID as long as the CERT verified */
+		char namebuf[IDTOA_BUF];
 		idtoa(peer_id, namebuf, sizeof(namebuf));
 		dbg("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf);
 		m = true;
@@ -855,9 +860,11 @@ bool match_certs_id(const struct certs *certs,
 			duplicate_id(peer_id, &id);
 		}
 		break;
+	}
 
 	case ID_DER_ASN1_DN:
 	{
+		char namebuf[IDTOA_BUF];
 		idtoa(peer_id, namebuf, sizeof(namebuf));
 
 		dn_buf sbuf;
