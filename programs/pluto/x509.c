@@ -802,22 +802,8 @@ bool match_certs_id(const struct certs *certs,
 	case ID_USER_FQDN:
 	{
 		/* simple match */
-		const char *kn = enum_name(&ike_idtype_names, peer_id->kind);
-		char namebuf[IDTOA_BUF];
-		idtoa(peer_id, namebuf, sizeof(namebuf));
-		const char *np = namebuf;
-		if (peer_id->kind == ID_FQDN) {
-			/* must skip leading '@' */
-			passert(np[0] == '@');
-			np++;
-		}
-		m = cert_VerifySubjectAltName(end_cert, np);
-		if (m) {
-			dbg("%s '%s' matched", kn, np);
-		} else {
-			loglog(RC_LOG_SERIOUS, "certificate does not contain %s subjectAltName=%s",
-			       kn, np);
-		}
+		/* this logs errors; no need for duplication */
+		m = cert_VerifySubjectAltName(end_cert, peer_id);
 		break;
 	}
 

@@ -45,7 +45,8 @@ extern struct certs *find_and_verify_certs(struct state *st,
 					   bool *crl_needed,
 					   bool *bad);
 
-extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name);
+extern bool cert_VerifySubjectAltName(const CERTCertificate *cert,
+				      const struct id *id);
 
 extern SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain);
 

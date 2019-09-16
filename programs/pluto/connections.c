@@ -4174,16 +4174,11 @@ bool idr_wildmatch(const struct connection *c, const struct id *idr)
 
 	/* check if received IDr is a valid SAN of our cert */
 	if (c->spd.this.cert.ty != CERT_NONE && (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
-		char idrbuf[IDTOA_BUF];
-
-		idtoa(idr, idrbuf, sizeof(idrbuf));
-		if (cert_VerifySubjectAltName(c->spd.this.cert.u.nss_cert, idrbuf + 1 /* skip @ */)) {
-			DBGF(DBG_CONTROL, "IDr payload '%s' is a valid certificate SAN for this connection",
-				idrbuf);
-			return TRUE;
-		} else {
-			DBGF(DBG_CONTROL, "IDr payload '%s' is NOT a valid certificate SAN for this connection",
-				idrbuf);
+		/* this will [debug]log any errors */
+		/* XXX: is calling this with ID_DER_ASN1_DN futile? */
+		if (cert_VerifySubjectAltName(c->spd.this.cert.u.nss_cert, idr)) {
+			/* already debug logged */
+			return true;
 		}
 	}
 

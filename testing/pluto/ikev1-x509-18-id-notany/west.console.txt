@@ -30,7 +30,6 @@ west #
 1v1 "ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "ikev2-westnet-eastnet-x509-cr" #1: Peer ID is ID_FQDN: '@right'
 002 "ikev2-westnet-eastnet-x509-cr" #1: certificate verified OK: E=user-east-nosan@testing.libreswan.org,CN=east-nosan.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "ikev2-westnet-eastnet-x509-cr" #1: certificate contains no subjectAltName extension matching 'right'
 003 "ikev2-westnet-eastnet-x509-cr" #1: certificate does not contain subjectAltName=right
 002 "ikev2-westnet-eastnet-x509-cr" #1: Peer public key SubjectAltName does not match peer ID for this connection
 002 "ikev2-westnet-eastnet-x509-cr" #1: X509: CERT payload does not match connection ID

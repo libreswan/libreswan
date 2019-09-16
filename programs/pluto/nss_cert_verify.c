@@ -592,35 +592,79 @@ struct certs *find_and_verify_certs(struct state *st,
 	return certs;
 }
 
-bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
+bool cert_VerifySubjectAltName(const CERTCertificate *cert,
+			       const struct id *id)
 {
+	/*
+	 * Get a handle on the certificate's subject alt name.
+	 */
 	SECItem	subAltName;
 	SECStatus rv = CERT_FindCertExtension(cert, SEC_OID_X509_SUBJECT_ALT_NAME,
-			&subAltName);
+					      &subAltName);
 	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "certificate contains no subjectAltName extension matching '%s'",
-			name);
-		return FALSE;
-	}
-
-	ip_address myip;
-	bool san_ip = (tnatoaddr(name, 0, AF_UNSPEC, &myip) == NULL);
-
-	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-	passert(arena != NULL);
-
-	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
-
-	if (nameList == NULL) {
-		loglog(RC_LOG_SERIOUS, "certificate subjectAltName extension failed to decode while looking for '%s'",
-			name);
-		PORT_FreeArena(arena, PR_FALSE);
-		return FALSE;
+		id_buf name;
+		loglog(RC_LOG_SERIOUS, "certificate contains no subjectAltName extension to match %s '%s'",
+		       enum_name(&ike_idtype_names, id->kind),
+		       str_id(id, &name));
+		return false;
 	}
 
 	/*
-	 * nameList is a pointer into a non-empty circular linked list.
-	 * This loop visits each entry.
+	 * Now decode that into a circular buffer (yes not a list) so
+	 * the ID can be compared against it.
+	 */
+	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	passert(arena != NULL);
+	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
+	if (nameList == NULL) {
+		id_buf name;
+		loglog(RC_LOG_SERIOUS, "certificate subjectAltName extension failed to decode while looking for %s '%s'",
+		       enum_name(&ike_idtype_names, id->kind),
+		       str_id(id, &name));
+		/* XXX: is nss error set? */
+		PORT_FreeArena(arena, PR_FALSE);
+		return false;
+	}
+
+	/*
+	 * Convert the ID with no special escaping (idtoa() escapes
+	 * things).  Strictly speaking, logging code should then emit
+	 * using jam_sanitized_bytes(raw_id, strlen(raw_id).
+	 *
+	 * XXX: Is there any point in continung whn KIND isn't'
+	 * ID_FQDN?  For instance, ID_DER_ASN1_DN (in fact, for DN,
+	 * code was calling this with the ID's first character - not
+	 * an @ - discarded making the value useless).
+	 *
+	 * XXX: Is this overkill?  For instance, if DNS name contained
+	 * unprintable characters (from memory only a very limited
+	 * character set is allowed) then things can't match.
+	 */
+	char raw_id_buf[IDTOA_BUF];
+	jambuf_t raw_id_jambuf = ARRAY_AS_JAMBUF(raw_id_buf);
+	jam_id(&raw_id_jambuf, id, jam_raw_bytes);
+	const char *raw_id = raw_id_buf;
+	if (id->kind == ID_FQDN) {
+		pexpect(raw_id[0] == '@');
+		raw_id++;
+	} else {
+		pexpect(raw_id[0] != '@');
+	}
+
+	/*
+	 * Try converting the ID to an address.  If it fails, assume
+	 * it is a DNS name?
+	 *
+	 * XXX: Is this a "smart" way of handling both an ID_*address*
+	 * and an ID_FQDN containing a textual IP address?
+	 */
+	ip_address myip;
+	bool san_ip = (tnatoaddr(raw_id, 0, AF_UNSPEC, &myip) == NULL);
+
+	/*
+	 * nameList is a pointer into a non-empty circular linked
+	 * list.  This loop visits each entry.
+	 *
 	 * We have visited each when we come back to the start.
 	 * We test only at the end, after we advance, because we want to visit
 	 * the first entry the first time we see it but stop when we get to it
@@ -632,6 +676,8 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 		case certDNSName:
 		case certRFC822Name:
 		{
+			if (san_ip)
+				break;
 			/*
 			 * Match the parameter name with the name in the certificate.
 			 * The name in the cert may start with "*."; that will match
@@ -641,12 +687,9 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 			const char *c_ptr = (const void *) current->name.other.data;
 			size_t c_len =  current->name.other.len;
 
-			const char *n_ptr = name;
+			const char *n_ptr = raw_id;
 			static const char wild[] = "*.";
 			const size_t wild_len = sizeof(wild) - 1;
-
-			if (san_ip)
-				break;
 
 			if (c_len > wild_len && startswith(c_ptr, wild)) {
 				/* wildcard in cert: ignore first component of name */
@@ -660,12 +703,14 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 			}
 
 			if (c_len == strlen(n_ptr) && strncaseeq(n_ptr, c_ptr, c_len)) {
-				/*
-				 * ??? if current->name.other.data contains bad characters,
-				 * what prevents them being logged?
-				 */
-				DBG(DBG_X509, DBG_log("subjectAltname %s matched %*s in certificate",
-					name, current->name.other.len, current->name.other.data));
+				LSWDBGP(DBG_BASE, buf) {
+					jam(buf, "subjectAltname '");
+					jam_sanitized_bytes(buf, raw_id, strlen(raw_id)),
+					jam(buf, "' matched '");
+					jam_sanitized_bytes(buf, current->name.other.data,
+							    current->name.other.len);
+					jam(buf, "' in certificate");
+				}
 				PORT_FreeArena(arena, PR_FALSE);
 				return TRUE;
 			}
@@ -673,28 +718,28 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 		}
 
 		case certIPAddress:
+		{
 			if (!san_ip)
 				break;
-
 			/*
-			 * XXX: when would myip not have a type?
-			 * suspect this is the wrong test
+			 * XXX: If one address is IPv4 and the other
+			 * is IPv6 then the shunk_memeq() check will
+			 * fail because the lengths are wrong.
 			 */
-			const struct ip_info *afi = address_type(&myip);
-			if (afi != NULL) {
-				shunk_t as = address_as_shunk(&myip);
-				if (shunk_memeq(as, current->name.other.data,
-						current->name.other.len)) {
-					dbg("subjectAltname IPv%d matches %s", afi->ip_version, name);
-					PORT_FreeArena(arena, PR_FALSE);
-					return true;
-				} else {
-					dbg("subjectAltname IPv%d does not match %s", afi->ip_version, name);
-					break;
-				}
+			shunk_t as = address_as_shunk(&myip);
+			if (shunk_memeq(as, current->name.other.data,
+					current->name.other.len)) {
+				address_buf b;
+				dbg("subjectAltname matches address %s",
+				    str_address(&myip, &b));
+				PORT_FreeArena(arena, PR_FALSE);
+				return true;
 			}
-			dbg("subjectAltname IP address family mismatch for %s", name);
+			address_buf b;
+			dbg("subjectAltname does not match address %s",
+			    str_address(&myip, &b));
 			break;
+		}
 
 		default:
 			break;
@@ -702,10 +747,17 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 		current = CERT_GetNextGeneralName(current);
 	} while (current != nameList);
 
-	loglog(RC_LOG_SERIOUS, "No matching subjectAltName found for '%s'", name);
+	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+		jam(buf, "certificate subjectAltName extension does not match ");
+		lswlog_enum(buf, &ike_idtype_names, id->kind);
+		jam(buf, " '");
+		jam_sanitized_bytes(buf, raw_id, strlen(raw_id));
+		jam(buf, "'");
+	}
+
 	/* Don't free nameList, it's part of the arena. */
 	PORT_FreeArena(arena, PR_FALSE);
-	return FALSE;
+	return false;
 }
 
 SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain)
