@@ -312,11 +312,6 @@ static err_t format_dn(jambuf_t *buf, chunk_t dn,
  * Converts a binary DER-encoded ASN.1 distinguished name
  * into LDAP-style human-readable ASCII format
  */
-void dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
-{
-	jambuf_t buf = array_as_jambuf(dst, dstlen);
-	jam_dn_or_null(&buf, dn, null_dn, jam_raw_bytes);
-}
 
 void jam_dn_or_null(jambuf_t *buf, chunk_t dn, const char *null_dn,
 		    jam_bytes_fn *jam_bytes)

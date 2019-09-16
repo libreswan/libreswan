@@ -137,7 +137,5 @@ void jam_dn(struct lswlog *buf, chunk_t dn,
  */
 
 extern void dntoa(char *dst, size_t dstlen, chunk_t dn);
-extern void dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
-			 const char *null_dn);
 
 #endif /* _X509_H */
