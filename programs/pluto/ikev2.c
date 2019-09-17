@@ -2746,11 +2746,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 			if (r == NULL) {
 				/* no "improvement" on c found */
-				char peer_str[IDTOA_BUF];
-
-				idtoa(&peer_id, peer_str, sizeof(peer_str));
-				DBG(DBG_CONTROL, DBG_log(
-					"no suitable connection for peer '%s'", peer_str));
+				if (DBGP(DBG_BASE)) {
+					id_buf peer_str;
+					DBG_log("no suitable connection for peer '%s'",
+						str_id(&peer_id, &peer_str));
+				}
 				/* can we continue with what we had? */
 				if (!ike->sa.st_peer_alt_id &&
 				    !same_id(&c->spd.that.id, &peer_id) &&
@@ -2758,12 +2758,14 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				{
 					if (LIN(POLICY_AUTH_NULL, c->policy) &&
 					    tip != NULL && tip->kind == ID_NULL) {
+						id_buf peer_str;
 						libreswan_log("Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
-							peer_str);
+							      str_id(&peer_id, &peer_str));
 						ike->sa.st_peer_wants_null = TRUE;
 					} else {
+						id_buf peer_str;
 						libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
-							peer_str);
+							      str_id(&peer_id, &peer_str));
 						return FALSE;
 					}
 				} else {
@@ -2808,18 +2810,16 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			str_dn_or_null(c->spd.this.ca, "%none", &b));
 	}
 
-	char idbuf[IDTOA_BUF];
-
-	idtoa(&peer_id, idbuf, sizeof(idbuf));
-
 	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
+		id_buf idbuf;
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
+			      enum_show(&ikev2_idtype_names, hik),
+			      str_id(&peer_id, &idbuf));
+	} else if (DBGP(DBG_BASE)) {
+		id_buf idbuf;
+		DBG_log("IKEv2 mode peer ID is %s: '%s'",
 			enum_show(&ikev2_idtype_names, hik),
-			idbuf);
-	} else {
-		DBG(DBG_OPPO, DBG_log("IKEv2 mode peer ID is %s: '%s'",
-			enum_show(&ikev2_idtype_names, hik),
-			idbuf));
+			str_id(&peer_id, &idbuf));
 	}
 
 	return TRUE;
