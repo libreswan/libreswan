@@ -201,8 +201,16 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 	rsa->n = clone_chunk(modulus, "n");
 	rsa->ckaid = ckaid;
 
-	DBG(DBG_PRIVATE, DBG_log_RSA_public_key(rsa));
 	/* generate the CKAID */
+
+	if (DBGP(DBG_BASE)) {
+		/* pubkey information isn't DBG_PRIVATE */
+		DBG_log("keyid: *%s", rsa->keyid);
+		DBG_dump_hunk("  n", rsa->n);
+		DBG_dump_hunk("  e", rsa->e);
+		DBG_log_ckaid("  CKAID", rsa->ckaid);
+	}
+
 	return NULL;
 }
 
@@ -224,7 +232,15 @@ err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pub
 	ecdsa->k = pubkey->len;
 	ecdsa->ckaid = ckaid;
 
-	DBG(DBG_PRIVATE, DBG_log_ECDSA_public_key(ecdsa));
 	/* generate the CKAID */ /* ??? really? Not done above? */
+
+	if (DBGP(DBG_BASE)) {
+		/* pubkey information isn't DBG_PRIVATE */
+		DBG_log("keyid: *%s", ecdsa->keyid);
+		DBG_log("  key size: *%s", ecdsa->keyid);
+		DBG_dump_hunk("  pub", ecdsa->pub);
+		DBG_log_ckaid("  CKAID", ecdsa->ckaid);
+	}
+
        return NULL;
 }

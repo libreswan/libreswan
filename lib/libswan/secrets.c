@@ -112,22 +112,6 @@ static const struct fld RSA_private_field[] = {
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
 
-void DBG_log_RSA_public_key(const struct RSA_public_key *k)
-{
-	DBG_log(" keyid: *%s", k->keyid);
-	DBG_dump_hunk("n", k->n);
-	DBG_dump_hunk("e", k->e);
-	DBG_log_ckaid("CKAID", k->ckaid);
-}
-
-void DBG_log_ECDSA_public_key(const struct ECDSA_public_key *k)
-{
-	DBG_log(" keyid: *%s", k->keyid);
-	DBG_log(" key size: *%s", k->keyid);
-	DBG_dump_hunk("pub", k->pub);
-	DBG_log_ckaid("CKAID", k->ckaid);
-}
-
 static err_t RSA_public_key_sanity(const struct RSA_private_key *k)
 {
 	/*
