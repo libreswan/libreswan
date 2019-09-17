@@ -261,8 +261,9 @@ stf_status ikev2_verify_rsa_hash(struct state *st,
 		return STF_FATAL;
 	}
 
-	stf_status retstat = RSA_check_signature_gen(st, calc_hash, hash_len,
-					  sig_pbs, hash_algo, try_RSA_signature_v2);
+	stf_status retstat = check_signature_gen(st, calc_hash, hash_len,
+						 sig_pbs, hash_algo,
+						 &pubkey_type_rsa, try_RSA_signature_v2);
 	statetime_stop(&start, "%s()", __func__);
 	return retstat;
 }

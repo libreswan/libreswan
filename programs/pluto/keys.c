@@ -528,128 +528,70 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 }
 
 /*
- * Check signature against all RSA public keys we can find.
- * If we need keys from DNS KEY records, and they haven't been fetched,
+ * Check signature against all RSA public keys we can find.  If we
+ * need keys from DNS KEY records, and they haven't been fetched,
  * return STF_SUSPEND to ask for asynch DNS lookup.
  *
- * Note: parameter keys_from_dns contains results of DNS lookup for key
- * or is NULL indicating lookup not yet tried.
+ * Note: parameter keys_from_dns contains results of DNS lookup for
+ * key or is NULL indicating lookup not yet tried.
  *
- * take_a_crack is a helper function.  Mostly forensic.
- * If only we had coroutines.
+ * take_a_crack is a helper function.  Mostly forensic.  If only we
+ * had coroutines. (XXX: generators).
  */
-struct tac_state_RSA {
-	/* RSA_check_signature's args that take_a_crack needs */
+struct tac_state {
+	const struct pubkey_type *type;
+	/* check_signature's args that take_a_crack needs */
 	struct state *st;
 	const u_char *hash_val;
 	size_t hash_len;
 	const pb_stream *sig_pbs;
 	enum notify_payload_hash_algorithms hash_algo;
 
-	err_t (*try_RSA_signature)(const u_char hash_val[MAX_DIGEST_LEN],
-				   size_t hash_len,
-				   const pb_stream *sig_pbs,
-				   struct pubkey *kr,
-				   struct state *st,
-				   enum notify_payload_hash_algorithms hash_algo);
+	err_t (*try_signature)(const u_char hash_val[MAX_DIGEST_LEN],
+			       size_t hash_len,
+			       const pb_stream *sig_pbs,
+			       struct pubkey *kr,
+			       struct state *st,
+			       enum notify_payload_hash_algorithms hash_algo);
 
 	/* state carried between calls */
 	err_t best_ugh; /* most successful failure */
 	int tried_cnt;  /* number of keys tried */
 	char tried[50]; /* keyids of tried public keys */
-	char *tn;       /* roof of tried[] */
+	jambuf_t tn;
 };
 
-struct tac_state_ECDSA {
-	/* RSA_check_signature's args that take_a_crack needs */
-	struct state *st;
-	const u_char *hash_val;
-	size_t hash_len;
-	const pb_stream *sig_pbs;
-	enum notify_payload_hash_algorithms hash_algo;
-
-	err_t (*try_ECDSA_signature)(const u_char hash_val[MAX_DIGEST_LEN],
-				   size_t hash_len,
-				   const pb_stream *sig_pbs,
-				   struct pubkey *kr,
-				   struct state *st,
-				   enum notify_payload_hash_algorithms hash_algo);
-
-	/* state carried between calls */
-	err_t best_ugh; /* most successful failure */
-	int tried_cnt;  /* number of keys tried */
-	char tried[50]; /* keyids of tried public keys */
-	char *tn;       /* roof of tried[] */
-};
-
-static bool take_a_crack_RSA(struct tac_state_RSA *s,
+static bool take_a_crack(struct tac_state *s,
 			 struct pubkey *kr,
 			 const char *story)
 {
-	err_t ugh =
-		(s->try_RSA_signature)(s->hash_val, s->hash_len, s->sig_pbs,
-				       kr, s->st, s->hash_algo);
-	const struct RSA_public_key *k = &kr->u.rsa;
-
 	s->tried_cnt++;
+	err_t ugh = (s->try_signature)(s->hash_val, s->hash_len, s->sig_pbs,
+				       kr, s->st, s->hash_algo);
+
+	const char *key_id_str = pubkey_keyid(kr);
+
 	if (ugh == NULL) {
-		DBG(DBG_CRYPT | DBG_CONTROL,
-		    DBG_log("an RSA Sig check passed with *%s [%s]",
-			    k->keyid, story));
-		return TRUE;
+		dbg("an %s Sig check passed with *%s [%s]",
+		    kr->type->name, key_id_str, story);
+		return true;
 	} else {
-		DBG(DBG_CRYPT,
-		    DBG_log("an RSA Sig check failure %s with *%s [%s]",
-			    ugh + 1, k->keyid, story));
+		dbg("an %s Sig check failed '%s' with *%s [%s]",
+		    kr->type->name, ugh + 1, key_id_str, story);
 		if (s->best_ugh == NULL || s->best_ugh[0] < ugh[0])
 			s->best_ugh = ugh;
-		if (ugh[0] > '0' &&
-		    s->tn - s->tried + KEYID_BUF + 2 <
-		    (ptrdiff_t)sizeof(s->tried)) {
-			strcpy(s->tn, " *");
-			strcpy(s->tn + 2, k->keyid);
-			s->tn += strlen(s->tn);
+		if (ugh[0] > '0') {
+		    jam_string(&s->tn, " *");
+		    jam_string(&s->tn, key_id_str);
 		}
-		return FALSE;
+		return false;
 	}
 }
 
-static bool take_a_crack_ECDSA(struct tac_state_ECDSA *s,
-			 struct pubkey *kr,
-			 const char *story)
-{
-	err_t ugh =
-		(s->try_ECDSA_signature)(s->hash_val, s->hash_len, s->sig_pbs,
-				       kr, s->st, s->hash_algo);
-	const struct ECDSA_public_key *k = &kr->u.ecdsa;
-
-	s->tried_cnt++;
-	if (ugh == NULL) {
-		DBG(DBG_CRYPT | DBG_CONTROL,
-		    DBG_log("an ECDSA Sig check passed with *%s [%s]",
-			    k->keyid, story));
-		return TRUE;
-	} else {
-		DBG(DBG_CRYPT,
-		    DBG_log("an ECDSA Sig check failure %s with *%s [%s]",
-			    ugh + 1, k->keyid, story));
-		if (s->best_ugh == NULL || s->best_ugh[0] < ugh[0])
-			s->best_ugh = ugh;
-		if (ugh[0] > '0' &&
-		    s->tn - s->tried + KEYID_BUF + 2 <
-		    (ptrdiff_t)sizeof(s->tried)) {
-			strcpy(s->tn, " *");
-			strcpy(s->tn + 2, k->keyid);
-			s->tn += strlen(s->tn);
-		}
-		return FALSE;
-	}
-}
-
-static bool try_all_RSA_keys(const char *pubkey_description,
-			     struct pubkey_list **pubkey_db,
-			     const struct connection *c, realtime_t now,
-			     struct tac_state_RSA *s)
+static bool try_all_keys(const char *pubkey_description,
+			 struct pubkey_list **pubkey_db,
+			 const struct connection *c, realtime_t now,
+			 struct tac_state *s)
 {
 	struct pubkey_list **pp = pubkey_db;
 
@@ -659,19 +601,21 @@ static bool try_all_RSA_keys(const char *pubkey_description,
 		if (DBGP(DBG_BASE)) {
 			id_buf printkid;
 			id_buf thatid;
-			DBG_log("checking RSA keyid '%s' for match with '%s'",
+			DBG_log("checking %s keyid '%s' for match with '%s'",
+				s->type->name,
 				str_id(&key->id, &printkid),
 				str_id(&c->spd.that.id, &thatid));
 		}
 
 		int pl;	/* value ignored */
 
-		if (key->type == &pubkey_type_rsa &&
+		if (key->type == s->type &&
 		    same_id(&c->spd.that.id, &key->id) &&
 		    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
 			if (DBGP(DBG_BASE)) {
 				dn_buf buf;
-				DBG_log("key issuer CA is '%s'",
+				DBG_log("%s key issuer CA is '%s'",
+					s->type->name,
 					str_dn_or_null(key->issuer, "%any", &buf));
 			}
 
@@ -679,13 +623,14 @@ static bool try_all_RSA_keys(const char *pubkey_description,
 			if (!is_realtime_epoch(key->until_time) &&
 			    realbefore(key->until_time, now)) {
 				loglog(RC_LOG_SERIOUS,
-				       "cached RSA public key has expired and has been deleted");
+				       "cached %s public key has expired and has been deleted",
+					s->type->name);
 				*pp = free_public_keyentry(p);
 				continue; /* continue with next public key */
 			}
 
 			statetime_t try_time = statetime_start(s->st);
-			bool ok =take_a_crack_RSA(s, key, pubkey_description);
+			bool ok = take_a_crack(s, key, pubkey_description);
 			statetime_stop(&try_time, "%s() trying a pubkey", __func__);
 			if (ok) {
 				return true;
@@ -696,242 +641,94 @@ static bool try_all_RSA_keys(const char *pubkey_description,
 	return false;
 }
 
-stf_status RSA_check_signature_gen(struct state *st,
-				   const u_char hash_val[MAX_DIGEST_LEN],
-				   size_t hash_len,
-				   const pb_stream *sig_pbs,
-				   enum notify_payload_hash_algorithms hash_algo,
-				   err_t (*try_RSA_signature)(
-					   const u_char hash_val[MAX_DIGEST_LEN],
-					   size_t hash_len,
-					   const pb_stream *sig_pbs,
-					   struct pubkey *kr,
-					   struct state *st,
-					   enum notify_payload_hash_algorithms hash_algo))
+stf_status check_signature_gen(struct state *st,
+			       const u_char hash_val[MAX_DIGEST_LEN],
+			       size_t hash_len,
+			       const pb_stream *sig_pbs,
+			       enum notify_payload_hash_algorithms hash_algo,
+			       const struct pubkey_type *type,
+			       err_t (*try_signature)(
+				       const u_char hash_val[MAX_DIGEST_LEN],
+				       size_t hash_len,
+				       const pb_stream *sig_pbs,
+				       struct pubkey *kr,
+				       struct state *st,
+				       enum notify_payload_hash_algorithms hash_algo))
 {
 	const struct connection *c = st->st_connection;
-	struct tac_state_RSA s;
-
-	s.st = st;
-	s.hash_val = hash_val;
-	s.hash_len = hash_len;
-	s.sig_pbs = sig_pbs;
-	s.hash_algo = hash_algo;
-	s.try_RSA_signature = try_RSA_signature;
-
-	s.best_ugh = NULL;
-	s.tried_cnt = 0;
-	s.tn = s.tried;
+	struct tac_state s = {
+		.type = type,
+		.st = st,
+		.hash_val = hash_val,
+		.hash_len = hash_len,
+		.sig_pbs = sig_pbs,
+		.hash_algo = hash_algo,
+		.try_signature = try_signature,
+		.best_ugh = NULL,
+		.tried_cnt = 0,
+	};
+	s.tn = ARRAY_AS_JAMBUF(s.tried);
 
 	/* try all appropriate Public keys */
 	realtime_t now = realnow();
 
 	if (DBGP(DBG_BASE)) {
 		dn_buf buf;
-		DBG_log("required RSA CA is '%s'",
+		DBG_log("required %s CA is '%s'",
+			type->name,
 			str_dn_or_null(c->spd.that.ca, "%any", &buf));
 	}
 
-	if (try_all_RSA_keys("remote certificates",
-			     &st->st_remote_certs.pubkey_db,
-			     c, now, &s) ||
-	    try_all_RSA_keys("preloaded key",
-			     &pluto_pubkeys,
-			     c, now, &s)) {
-		loglog(RC_LOG_SERIOUS, "Authenticated using RSA");
+	if (try_all_keys("remote certificates",
+			 &st->st_remote_certs.pubkey_db,
+			 c, now, &s) ||
+	    try_all_keys("preloaded keys",
+			 &pluto_pubkeys,
+			 c, now, &s)) {
+		loglog(RC_LOG_SERIOUS, "Authenticated using %s", type->name);
 		return STF_OK;
 	}
 
-	/* if no key was found (evidenced by best_ugh == NULL)
-	 * and that side of connection is key_from_DNS_on_demand
-	 * then go search DNS for keys for peer.
+	/*
+	 * if no key was found (evidenced by best_ugh == NULL) and
+	 * that side of connection is key_from_DNS_on_demand then go
+	 * search DNS for keys for peer.
 	 */
+
 	/* To be re-implemented */
 
-	/* no acceptable key was found: diagnose */
-	{
-		char id_buf[IDTOA_BUF]; /* arbitrary limit on length of ID reported */
+	/* sanitize the ID suitable for logging */
+	id_buf id_str = { "" }; /* arbitrary limit on length of ID reported */
+	str_id(&st->st_connection->spd.that.id, &id_str);
+	passert(id_str.buf[0] != '\0');
 
-		idtoa(&st->st_connection->spd.that.id, id_buf,
-			     sizeof(id_buf));
-
-		if (s.best_ugh == NULL) {
-				loglog(RC_LOG_SERIOUS,
-				       "no RSA public key known for '%s'",
-				       id_buf);
-
-			/* ??? is this the best code there is? */
-			return STF_FAIL + INVALID_KEY_INFORMATION;
-		}
-
-		if (s.best_ugh[0] == '9') {
-			loglog(RC_LOG_SERIOUS, "%s", s.best_ugh + 1);
-			/* XXX Could send notification back */
-			return STF_FAIL + INVALID_HASH_INFORMATION;
-		} else {
-			if (s.tried_cnt == 1) {
-				loglog(RC_LOG_SERIOUS,
-				       "RSA Signature check (on %s) failed (wrong key?); tried%s",
-				       id_buf, s.tried);
-				DBG(DBG_CONTROL,
-				    DBG_log("RSA public key for %s failed: decrypted SIG payload into a malformed ECB (%s)",
-					    id_buf, s.best_ugh + 1));
-			} else {
-				loglog(RC_LOG_SERIOUS,
-				       "RSA Signature check (on %s) failed: tried%s keys but none worked.",
-				       id_buf, s.tried);
-				DBG(DBG_CONTROL,
-				    DBG_log("all %d RSA public keys for %s failed: best decrypted SIG payload into a malformed ECB (%s)",
-					    s.tried_cnt, id_buf,
-					    s.best_ugh + 1));
-			}
-			return STF_FAIL + INVALID_KEY_INFORMATION;
-		}
-	}
-}
-
-static bool try_all_ECDSA_keys(const char *pubkey_description,
-			     struct pubkey_list **pubkey_db,
-			     const struct connection *c, realtime_t now,
-			     struct tac_state_ECDSA *s)
-{
-	struct pubkey_list **pp = pubkey_db;
-
-	for (struct pubkey_list *p = *pubkey_db; p != NULL; p = *pp) {
-		struct pubkey *key = p->key;
-
-		if (DBGP(DBG_BASE)) {
-			id_buf printkid;
-			id_buf thatid;
-			DBG_log("checking ECDSA keyid '%s' for match with '%s'",
-				str_id(&key->id, &printkid),
-				str_id(&c->spd.that.id, &thatid));
-		}
-
-		int pl;	/* value ignored */
-
-		if (key->type == &pubkey_type_ecdsa &&
-		    same_id(&c->spd.that.id, &key->id) &&
-		    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
-			if (DBGP(DBG_BASE)) {
-				dn_buf buf;
-				DBG_log("key issuer CA is '%s'",
-					str_dn_or_null(key->issuer, "%any", &buf));
-			}
-
-			/* check if found public key has expired */
-			if (!is_realtime_epoch(key->until_time) &&
-			    realbefore(key->until_time, now)) {
-				loglog(RC_LOG_SERIOUS,
-				       "cached ECDSA public key has expired and has been deleted");
-				*pp = free_public_keyentry(p);
-				continue; /* continue with next public key */
-			}
-
-			statetime_t try_time = statetime_start(s->st);
-			bool ok = take_a_crack_ECDSA(s, key, pubkey_description);
-			statetime_stop(&try_time, "%s() trying a pubkey", __func__);
-			if (ok) {
-				return true;
-			}
-		}
-		pp = &p->next;
-	}
-	return false;
-}
-
-stf_status ECDSA_check_signature_gen(struct state *st,
-				   const u_char hash_val[MAX_DIGEST_LEN],
-				   size_t hash_len,
-				   const pb_stream *sig_pbs,
-				   enum notify_payload_hash_algorithms hash_algo,
-				   err_t (*try_ECDSA_signature)(
-					   const u_char hash_val[MAX_DIGEST_LEN],
-					   size_t hash_len,
-					   const pb_stream *sig_pbs,
-					   struct pubkey *kr,
-					   struct state *st,
-					   enum notify_payload_hash_algorithms hash_algo))
-{
-	const struct connection *c = st->st_connection;
-	struct tac_state_ECDSA s;
-
-	s.st = st;
-	s.hash_val = hash_val;
-	s.hash_len = hash_len;
-	s.sig_pbs = sig_pbs;
-	s.hash_algo = hash_algo;
-	s.try_ECDSA_signature = try_ECDSA_signature;
-
-	s.best_ugh = NULL;
-	s.tried_cnt = 0;
-	s.tn = s.tried;
-
-	/* try all appropriate Public keys */
-	realtime_t now = realnow();
-
-	if (DBGP(DBG_BASE)) {
-		dn_buf buf;
-		DBG_log("required ECDSA CA is '%s'",
-			str_dn_or_null(c->spd.that.ca, "%any", &buf));
+	if (s.best_ugh == NULL) {
+		loglog(RC_LOG_SERIOUS,
+		       "no %s public key known for '%s'",
+		       type->name, id_str.buf);
+		/* ??? is this the best code there is? */
+		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
-	if (try_all_ECDSA_keys("remote certificates",
-			       &st->st_remote_certs.pubkey_db,
-			       c, now, &s) ||
-	    try_all_ECDSA_keys("preloaded key",
-			       &pluto_pubkeys,
-			       c, now, &s)) {
-		loglog(RC_LOG_SERIOUS, "Authenticated using ECDSA");
-		return STF_OK;
+	if (s.best_ugh[0] == '9') {
+		loglog(RC_LOG_SERIOUS, "%s", s.best_ugh + 1);
+		/* XXX Could send notification back */
+		return STF_FAIL + INVALID_HASH_INFORMATION;
 	}
 
-	/* if no key was found (evidenced by best_ugh == NULL)
-	 * and that side of connection is key_from_DNS_on_demand
-	 * then go search DNS for keys for peer.
-	 */
-	/* To be re-implemented */
-
-	/* no acceptable key was found: diagnose */
-	{
-		char id_buf[IDTOA_BUF]; /* arbitrary limit on length of ID reported */
-
-		idtoa(&st->st_connection->spd.that.id, id_buf,
-			     sizeof(id_buf));
-
-		if (s.best_ugh == NULL) {
-				loglog(RC_LOG_SERIOUS,
-				       "no ECDSA public key known for '%s'",
-				       id_buf);
-
-			/* ??? is this the best code there is? */
-			return STF_FAIL + INVALID_KEY_INFORMATION;
-		}
-
-		if (s.best_ugh[0] == '9') {
-			loglog(RC_LOG_SERIOUS, "%s", s.best_ugh + 1);
-			/* XXX Could send notification back */
-			return STF_FAIL + INVALID_HASH_INFORMATION;
-		} else {
-			if (s.tried_cnt == 1) {
-				loglog(RC_LOG_SERIOUS,
-				       "ECDSA Signature check (on %s) failed (wrong key?); tried%s",
-				       id_buf, s.tried);
-				DBG(DBG_CONTROL,
-				    DBG_log("ECDSA public key for %s failed: decrypted SIG payload into a malformed ECB (%s)",
-					    id_buf, s.best_ugh + 1));
-			} else {
-				loglog(RC_LOG_SERIOUS,
-				       "ECDSA Signature check (on %s) failed: tried%s keys but none worked.",
-				       id_buf, s.tried);
-				DBG(DBG_CONTROL,
-				    DBG_log("all %d ECDSA public keys for %s failed: best decrypted SIG payload into a malformed ECB (%s)",
-					    s.tried_cnt, id_buf,
-					    s.best_ugh + 1));
-			}
-			return STF_FAIL + INVALID_KEY_INFORMATION;
-		}
+	if (s.tried_cnt == 1) {
+		loglog(RC_LOG_SERIOUS,
+		       "%s Signature check (on %s) failed (wrong key?); tried%s",
+		       type->name, id_str.buf, s.tried);
+	} else {
+		loglog(RC_LOG_SERIOUS,
+		       "%s Signature check (on %s) failed: tried%s keys but none worked.",
+		       type->name, id_str.buf, s.tried);
 	}
+	dbg("all %d %s public keys for %s failed: best decrypted SIG payload into a malformed ECB (%s)",
+	    s.tried_cnt, type->name, id_str.buf, s.best_ugh+1/*skip '9'*/);
+
+	return STF_FAIL + INVALID_KEY_INFORMATION;
 }
 
 /*

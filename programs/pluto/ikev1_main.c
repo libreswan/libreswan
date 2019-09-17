@@ -389,9 +389,9 @@ static stf_status RSA_check_signature(struct state *st,
 				enum notify_payload_hash_algorithms hash_algo
 					UNUSED /* for ikev2 only */)
 {
-	return RSA_check_signature_gen(st, hash_val, hash_len,
-				sig_pbs, 0 /* for ikev2 only */,
-				try_RSA_signature_v1);
+	return check_signature_gen(st, hash_val, hash_len,
+				   sig_pbs, 0 /* for ikev2 only */,
+				   &pubkey_type_rsa, try_RSA_signature_v1);
 }
 
 notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,

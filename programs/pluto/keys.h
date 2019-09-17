@@ -36,6 +36,7 @@ struct RSA_public_key;
 struct ECDSA_public_key;
 struct ECDSA_private_key;
 struct pubkey;
+struct pubkey_type;
 
 extern int sign_hash_RSA(const struct RSA_private_key *k, const u_char *hash_val,
 		      size_t hash_len, u_char *sig_val, size_t sig_len,
@@ -74,31 +75,19 @@ extern struct pubkey_list *pluto_pubkeys;
 struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid);
 
 struct packet_byte_stream;
-extern stf_status RSA_check_signature_gen(struct state *st,
-					  const u_char hash_val[MAX_DIGEST_LEN],
-					  size_t hash_len,
-					  const struct packet_byte_stream *sig_pbs,
-					  enum notify_payload_hash_algorithms hash_algo,
-					  err_t (*try_RSA_signature)(
-						  const u_char hash_val[MAX_DIGEST_LEN],
-						  size_t hash_len,
-						  const struct packet_byte_stream *sig_pbs,
-						  struct pubkey *kr,
-						  struct state *st,
-						  enum notify_payload_hash_algorithms hash_algo));
-
-extern stf_status ECDSA_check_signature_gen(struct state *st,
-					  const u_char hash_val[MAX_DIGEST_LEN],
-					  size_t hash_len,
-					  const struct packet_byte_stream *sig_pbs,
-					  enum notify_payload_hash_algorithms hash_algo,
-					  err_t (*try_ECDSA_signature)(
-						  const u_char hash_val[MAX_DIGEST_LEN],
-						  size_t hash_len,
-						  const struct packet_byte_stream *sig_pbs,
-						  struct pubkey *kr,
-						  struct state *st,
-						  enum notify_payload_hash_algorithms hash_algo));
+extern stf_status check_signature_gen(struct state *st,
+				      const u_char hash_val[MAX_DIGEST_LEN],
+				      size_t hash_len,
+				      const struct packet_byte_stream *sig_pbs,
+				      enum notify_payload_hash_algorithms hash_algo,
+				      const struct pubkey_type *type,
+				      err_t (*try_signature)(
+					      const u_char hash_val[MAX_DIGEST_LEN],
+					      size_t hash_len,
+					      const struct packet_byte_stream *sig_pbs,
+					      struct pubkey *kr,
+					      struct state *st,
+					      enum notify_payload_hash_algorithms hash_algo));
 
 enum PrivateKeyKind nss_cert_key_kind(CERTCertificate *cert);
 

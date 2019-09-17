@@ -380,7 +380,9 @@ stf_status ikev2_verify_ecdsa_hash(struct state *st,
 		return STF_FATAL;
 	}
 
-	retstat = ECDSA_check_signature_gen(st, calc_hash, hash_len,
-					  sig_pbs, hash_algo, try_ECDSA_signature_v2);
+	retstat = check_signature_gen(st, calc_hash, hash_len,
+				      sig_pbs, hash_algo,
+				      &pubkey_type_ecdsa,
+				      try_ECDSA_signature_v2);
 	return retstat;
 }
