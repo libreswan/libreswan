@@ -464,6 +464,16 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
 }
 
 /*
+ * Escape the ASN.1 into RFC-1485 such that it is suitable for
+ * CERT_AsciiToName().
+ */
+static void dntoa(char *dst, size_t dstlen, chunk_t dn)
+{
+	jambuf_t buf = array_as_jambuf(dst, dstlen);
+	jam_dn(&buf, dn, jam_raw_bytes);
+}
+
+/*
  * match an equal number of RDNs, in any order
  * if wildcards != NULL, wildcard matches are enabled
  */

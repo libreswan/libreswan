@@ -257,6 +257,9 @@ int dn_count_wildcards(chunk_t dn)
  * Formats an ASN.1 Distinguished Name into an ASCII string of
  * OID/value pairs.  If there's a problem, return err_t (buf's
  * contents should be ignored).
+ *
+ * XXX: Since the raw output is fed to CERT_AsciiToName() and that
+ * expects RFC-1485, this function should be emitting the same.
  */
 
 static err_t format_dn(jambuf_t *buf, chunk_t dn,
@@ -292,6 +295,10 @@ static err_t format_dn(jambuf_t *buf, chunk_t dn,
 		unsigned char *p = value.ptr;
 		size_t l = value.len;
 		for (size_t i = 0; i<l; ) {
+			/*
+			 * XXX: escaping by doubling (and just ',' and
+			 * '/') doesn't seem to be part of RFC-1485.
+			 */
 			if (p[i] == ',' || p[i] == '/') {
 				/* character p[i] must be doubled */
 				jam_bytes(buf, p, i);
@@ -344,12 +351,6 @@ const char *str_dn_or_null(chunk_t dn, const char *null_dn, dn_buf *dst)
 void jam_dn(jambuf_t *buf, chunk_t dn, jam_bytes_fn *jam_bytes)
 {
 	jam_dn_or_null(buf, dn, "(empty)", jam_bytes);
-}
-
-void dntoa(char *dst, size_t dstlen, chunk_t dn)
-{
-	jambuf_t buf = array_as_jambuf(dst, dstlen);
-	jam_dn(&buf, dn, jam_raw_bytes);
 }
 
 const char *str_dn(chunk_t dn, dn_buf *dst)

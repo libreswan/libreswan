@@ -105,14 +105,22 @@ extern CERTCertList *get_all_certificates(void);
 /*
  * Formatting.
  *
- * It's assumed that the str_*() functions are only used for logging.
- * Since the DN may contain data from the wire (true?), any
- * non-printable characters need to be sanitized.
+ * jam_dn() converts the ASN.1 DN into a "standards compliant"
+ * distinguised name (aka DN).
  *
- * XXX: The underlying dntoa() seems to assume that the caller will
- * deal with sanitization - dump parts of the buffer as "ascii".  For
- * instance str_id_escaped(), sanitizes UNIX shell metacharacters as a
- * post processing step.
+ * XXX: Where "standards compliant" presumably means RFC-1485 et.al. -
+ * the raw output is passed to CERT_AsciiToName() and that expects
+ * RFC-1485.  However, it looks like a different excaping schema is
+ * used.
+ *
+ * The JAM_BYTES_FN parameter controls additional escaping (after
+ * RFC-1485) that should be applied to UTF-8 strings.  For instance:
+ * jam_sanitized_bytes() makes the string suitable for logging; and
+ * jam_meta_escaped_bytes() makes the string suitable for shell
+ * scripts.
+ *
+ * The str_*() wrappers are hardwired to jam_sanitized_bytes() and,
+ * hence, are only suitable for logging.
  */
 
 typedef struct {
@@ -130,12 +138,5 @@ void jam_dn_or_null(struct lswlog *buf, chunk_t dn, const char *null_dn,
 		    jam_bytes_fn *jam_bytes);
 void jam_dn(struct lswlog *buf, chunk_t dn,
 	    jam_bytes_fn *jam_bytes);
-
-
-/*
- * Old style.
- */
-
-extern void dntoa(char *dst, size_t dstlen, chunk_t dn);
 
 #endif /* _X509_H */
