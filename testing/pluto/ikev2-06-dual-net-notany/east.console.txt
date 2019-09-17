@@ -1,0 +1,25 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-b
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2-b"
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec trafficstatus
+006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+006 #3: "westnet-eastnet-ipv4-psk-ikev2-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
