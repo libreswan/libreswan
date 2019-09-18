@@ -87,7 +87,7 @@ static bool can_share_lease(const struct connection *c)
 {
 	/*
 	 * Cannot share with PSK - it either uses GroupID or
-	 * a non-unique ID_IP due to clients using pre-NAT IP address
+	 * a non-unique ID_IP* due to clients using pre-NAT IP address
 	 */
 	if (((c->policy & POLICY_PSK) != LEMPTY) || c->spd.that.authby == AUTH_PSK)
 		return FALSE;
@@ -96,9 +96,11 @@ static bool can_share_lease(const struct connection *c)
 	if (((c->policy & POLICY_AUTH_NULL) != LEMPTY) || c->spd.that.authby == AUTH_NULL)
 		return FALSE;
 
-	/* Cannot share NULL/NONE ID. Also cannot share ID_IP due to NAT and dynamic IP */
-	if (c->spd.that.id.kind == ID_NULL || c->spd.that.id.kind == ID_NONE ||
-		c->spd.that.id.kind == ID_IPV4_ADDR || c->spd.that.id.kind == ID_IPV6_ADDR)
+	/* Cannot share NULL/NONE ID. Also cannot share ID_IP* due to NAT and dynamic IP */
+	if (c->spd.that.id.kind == ID_NULL ||
+	    c->spd.that.id.kind == ID_NONE ||
+	    c->spd.that.id.kind == ID_IPV4_ADDR ||
+	    c->spd.that.id.kind == ID_IPV6_ADDR)
 			return FALSE;
 
 	/* If uniqueids=false - this can mean multiple clients on the same ID & CERT */
