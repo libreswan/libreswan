@@ -798,67 +798,44 @@ bool match_certs_id(const struct certs *certs,
 	switch (peer_id->kind) {
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-	{
-		char iptxt[IDTOA_BUF];
-		idtoa(peer_id, iptxt, sizeof(iptxt));
-		m = cert_VerifySubjectAltName(end_cert, iptxt);
-		if (m) {
-			dbg("ID_IP '%s' matched", iptxt);
-		} else {
-			loglog(RC_LOG_SERIOUS,
-			       "certificate does not contain ID_IP subjectAltName=%s",
-			       iptxt);
-		}
-		break;
-	}
-
 	case ID_FQDN:
-	{
-		/* We need to skip the "@" prefix from our configured FQDN */
-		char namebuf[IDTOA_BUF];
-		idtoa(peer_id, namebuf, sizeof(namebuf));
-		m = cert_VerifySubjectAltName(end_cert, namebuf + 1);
-		if (m) {
-			dbg("ID_FQDN '%s' matched", namebuf+1);
-		} else {
-			loglog(RC_LOG_SERIOUS,
-			       "certificate does not contain subjectAltName=%s",
-			       namebuf + 1);
-		}
-		break;
-	}
-
 	case ID_USER_FQDN:
 	{
+		/* simple match */
+		const char *kn = enum_name(&ike_idtype_names, peer_id->kind);
 		char namebuf[IDTOA_BUF];
 		idtoa(peer_id, namebuf, sizeof(namebuf));
-		m = cert_VerifySubjectAltName(end_cert, namebuf);
+		const char *np = namebuf;
+		if (peer_id->kind == ID_FQDN) {
+			/* must skip leading '@' */
+			passert(np[0] == '@');
+			np++;
+		}
+		m = cert_VerifySubjectAltName(end_cert, np);
 		if (m) {
-			dbg("ID_USER_FQDN '%s' matched", namebuf);
+			dbg("%s '%s' matched", kn, np);
 		} else {
-			loglog(RC_LOG_SERIOUS, "certificate does not contain ID_USER_FQDN subjectAltName=%s",
-			       namebuf);
+			loglog(RC_LOG_SERIOUS, "certificate does not contain %s subjectAltName=%s",
+			       kn, np);
 		}
 		break;
 	}
 
 	case ID_FROMCERT:
 	{
-		/* We are committed to accept any ID as long as the CERT verified */
+		/* adopt ID from CERT (the CERT has been verified) */
 		char namebuf[IDTOA_BUF];
 		idtoa(peer_id, namebuf, sizeof(namebuf));
 		dbg("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf);
 		m = true;
 
-		{
-			dbg("stomping on peer_id");
-			struct id id = {
-				.kind = ID_DER_ASN1_DN,
-				/* safe as duplicate_id() will clone this */
-				.name = same_secitem_as_chunk(end_cert->derSubject),
-			};
-			duplicate_id(peer_id, &id);
-		}
+		dbg("stomping on peer_id");
+		struct id id = {
+			.kind = ID_DER_ASN1_DN,
+			/* safe as duplicate_id() will clone this */
+			.name = same_secitem_as_chunk(end_cert->derSubject),
+		};
+		duplicate_id(peer_id, &id);
 		break;
 	}
 
@@ -886,8 +863,7 @@ bool match_certs_id(const struct certs *certs,
 	}
 
 	default:
-		loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
-		       peer_id->kind,
+		loglog(RC_LOG_SERIOUS, "Unhandled ID type %s",
 		       enum_show(&ike_idtype_names, peer_id->kind));
 		m = false;
 		break;
