@@ -177,6 +177,19 @@ struct pubkey {
 	union pubkey_content u;
 };
 
+/*
+ * XXX: While these fields seem to really belong in 'struct pubkey',
+ * moving them isn't so easy - code assumes the fields are also found
+ * in {RSA,ECDSA}_private_key's .pub.  Perhaps that structure have its
+ * own copy.
+ *
+ * All pointers are references into the underlying PK structure.
+ */
+
+const char *pubkey_keyid(const struct pubkey *pk);
+const ckaid_t *pubkey_ckaid(const struct pubkey *pk);
+unsigned pubkey_size(const struct pubkey *pk);
+
 struct pubkey_list {
 	struct pubkey *key;
 	struct pubkey_list *next;

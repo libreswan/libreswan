@@ -26,6 +26,9 @@
 
 /*
  * For rationale behind *_t? Blame chunk_t.
+ *
+ * XXX: Can ckaid be changed to bytes[]+length?  The length is
+ * determined by the hash algorithm(s) used to generate the ckaid?
  */
 typedef struct {
 	SECItem *nss;

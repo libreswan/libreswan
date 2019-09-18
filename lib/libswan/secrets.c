@@ -278,6 +278,48 @@ const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
 }
 
 /*
+ * XXX: Go for a simplicity - a switch is easier than adding to
+ * pubkey_type - especially when the fields could end up moving to
+ * struct pubkey proper (we can but dream).
+ */
+
+const char *pubkey_keyid(const struct pubkey *pk)
+{
+	switch (pk->type->alg) {
+	case PUBKEY_ALG_RSA:
+		return pk->u.rsa.keyid;
+	case PUBKEY_ALG_ECDSA:
+		return pk->u.ecdsa.keyid;
+	default:
+		bad_case(pk->type->alg);
+	}
+}
+
+const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
+{
+	switch (pk->type->alg) {
+	case PUBKEY_ALG_RSA:
+		return &pk->u.rsa.ckaid;
+	case PUBKEY_ALG_ECDSA:
+		return &pk->u.ecdsa.ckaid;
+	default:
+		bad_case(pk->type->alg);
+	}
+}
+
+unsigned pubkey_size(const struct pubkey *pk)
+{
+	switch (pk->type->alg) {
+	case PUBKEY_ALG_RSA:
+		return pk->u.rsa.k;
+	case PUBKEY_ALG_ECDSA:
+		return pk->u.ecdsa.k;
+	default:
+		bad_case(pk->type->alg);
+	}
+}
+
+/*
  * free a public key struct
  */
 void free_public_key(struct pubkey *pk)
