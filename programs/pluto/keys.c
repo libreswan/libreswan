@@ -666,7 +666,7 @@ static bool try_all_RSA_keys(const char *pubkey_description,
 
 		int pl;	/* value ignored */
 
-		if (key->alg == PUBKEY_ALG_RSA &&
+		if (key->type == &pubkey_type_rsa &&
 		    same_id(&c->spd.that.id, &key->id) &&
 		    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
 			if (DBGP(DBG_BASE)) {
@@ -810,7 +810,7 @@ static bool try_all_ECDSA_keys(const char *pubkey_description,
 
 		int pl;	/* value ignored */
 
-		if (key->alg == PUBKEY_ALG_ECDSA &&
+		if (key->type == &pubkey_type_ecdsa &&
 		    same_id(&c->spd.that.id, &key->id) &&
 		    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
 			if (DBGP(DBG_BASE)) {
@@ -1209,41 +1209,17 @@ void free_remembered_public_keys(void)
 
 err_t add_public_key(const struct id *id, /* ASKK */
 		     enum dns_auth_level dns_auth_level,
-		     enum pubkey_alg alg,
+		     const struct pubkey_type *type,
 		     const chunk_t *key,
 		     struct pubkey_list **head)
 {
 	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
 
 	/* first: algorithm-specific decoding of key chunk */
-	switch (alg) {
-	case PUBKEY_ALG_RSA:
-	{
-		err_t ugh = unpack_RSA_public_key(&pk->u.rsa, key);
-
-		if (ugh != NULL) {
-			pfree(pk);
-			return ugh;
-		}
-	}
-	break;
-	case PUBKEY_ALG_ECDSA:
-	{
-		err_t ugh = unpack_ECDSA_public_key(&pk->u.ecdsa, key);
-
-		if (ugh != NULL) {
-			pfree(pk);
-			return ugh;
-		}
-	}
-	break;
-	default:
-		bad_case(alg);
-	}
-
+	type->unpack_pubkey_content(&pk->u, *key);
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
-	pk->alg = alg;
+	pk->type = type;
 	pk->until_time = realtime_epoch;
 	pk->issuer = EMPTY_CHUNK;
 
@@ -1252,46 +1228,22 @@ err_t add_public_key(const struct id *id, /* ASKK */
 }
 
 err_t add_ipseckey(const struct id *id,
-		     enum dns_auth_level dns_auth_level,
-		     enum pubkey_alg alg,
-		     uint32_t ttl, uint32_t ttl_used,
-		     const chunk_t *key,
-		     struct pubkey_list **head)
+		   enum dns_auth_level dns_auth_level,
+		   const struct pubkey_type *type,
+		   uint32_t ttl, uint32_t ttl_used,
+		   const chunk_t *key,
+		   struct pubkey_list **head)
 {
 	struct pubkey *pk = alloc_thing(struct pubkey, "ipseckey publickey");
 
 	/* first: algorithm-specific decoding of key chunk */
-	switch (alg) {
-	case PUBKEY_ALG_RSA:
-	{
-		err_t ugh = unpack_RSA_public_key(&pk->u.rsa, key);
-
-		if (ugh != NULL) {
-			pfree(pk);
-			return ugh;
-		}
-	}
-	break;
-	case PUBKEY_ALG_ECDSA:
-	{
-		err_t ugh = unpack_ECDSA_public_key(&pk->u.ecdsa, key);
-
-		if (ugh != NULL) {
-			pfree(pk);
-			return ugh;
-		}
-	}
-	break;
-	default:
-		bad_case(alg);
-	}
-
+	type->unpack_pubkey_content(&pk->u, *key);
 	pk->dns_ttl = ttl;
 	pk->installed_time = realnow();
 	pk->until_time = realtimesum(pk->installed_time, deltatime(ttl_used));
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
-	pk->alg = alg;
+	pk->type = type;
 	pk->issuer = EMPTY_CHUNK; /* ipseckey has no issuer */
 
 	install_public_key(pk, head);
@@ -1314,7 +1266,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 	while (p != NULL) {
 		struct pubkey *key = p->key;
 
-		switch (key->alg) {
+		switch (key->type->alg) {
 		case PUBKEY_ALG_RSA:
 		case PUBKEY_ALG_ECDSA:
 		{
@@ -1327,7 +1279,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 				LSWLOG_WHACK(RC_COMMENT, buf) {
 					lswlog_realtime(buf, key->installed_time, utc);
 					lswlogs(buf, ", ");
-					switch (key->alg) {
+					switch (key->type->alg) {
 					case PUBKEY_ALG_RSA:
 						lswlogf(buf, "%4d RSA Key %s",
 							8 * key->u.rsa.k,
@@ -1339,7 +1291,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 							key->u.ecdsa.keyid);
 						break;
 					default:
-						bad_case(key->alg);
+						bad_case(key->type->alg);
 					}
 					lswlogf(buf, " (%s private key), until ",
 						(has_private_rawkey(key) ? "has" : "no"));
@@ -1365,7 +1317,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 			break;
 		}
 		default:
-			dbg("ignoring key with unsupported alg %d", key->alg);
+			dbg("ignoring key with unsupported alg %d", key->type->alg);
 		}
 		p = p->next;
 	}
@@ -1431,7 +1383,7 @@ struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid)
 	for (p = pluto_pubkeys; p != NULL; p = p->next) {
 		DBG_log("looking at a PUBKEY");
 		struct pubkey *key = p->key;
-		switch (key->alg) {
+		switch (key->type->alg) {
 		case PUBKEY_ALG_RSA: {
 			if (rsa_pubkey_ckaid_matches(key, bin, binlen)) {
 				dbg("ckaid matching pubkey");

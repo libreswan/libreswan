@@ -172,12 +172,12 @@ static void key_add_request(const struct whack_message *msg)
 	} else {
 		if (!msg->whack_addkey)
 			delete_public_keys(&pluto_pubkeys, &keyid,
-					   msg->pubkey_alg);
+					   pubkey_alg_type(msg->pubkey_alg));
 
 		if (msg->keyval.len != 0) {
 			DBG_dump_hunk("add pubkey", msg->keyval);
 			ugh = add_public_key(&keyid, PUBKEY_LOCAL,
-					     msg->pubkey_alg,
+					     pubkey_alg_type(msg->pubkey_alg),
 					     &msg->keyval, &pluto_pubkeys);
 			if (ugh != NULL)
 				loglog(RC_LOG_SERIOUS, "%s", ugh);

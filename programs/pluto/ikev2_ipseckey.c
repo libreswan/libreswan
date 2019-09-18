@@ -258,7 +258,7 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 		DBGF(DBG_DNS, "delete RSA public keys(s) from pluto id=%s",
 				thatidbuf);
 		/* delete only once. then multiple keys could be added */
-		delete_public_keys(&pluto_pubkeys, keyid, PUBKEY_ALG_RSA);
+		delete_public_keys(&pluto_pubkeys, keyid, &pubkey_type_rsa);
 		dnsr->delete_existing_keys = FALSE;
 	}
 
@@ -276,8 +276,8 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 			enum_name(&dns_auth_level_names, al));
 	}
 
-	err_t ugh = add_ipseckey(keyid, al, PUBKEY_ALG_RSA, ttl, ttl_used,
-			&keyval, &pluto_pubkeys);
+	err_t ugh = add_ipseckey(keyid, al, &pubkey_type_rsa, ttl, ttl_used,
+				 &keyval, &pluto_pubkeys);
 	if (ugh != NULL)
 		loglog(RC_LOG_SERIOUS, "Add publickey failed %s, %s, %s", ugh,
 				thatidbuf, dnsr->log_buf);

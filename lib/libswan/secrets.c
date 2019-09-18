@@ -224,10 +224,57 @@ static void free_RSA_public_content(struct RSA_public_key *rsa)
 	freeanyckaid(&rsa->ckaid);
 }
 
+static void free_RSA_pubkey_content(union pubkey_content *u)
+{
+	free_RSA_public_content(&u->rsa);
+}
+
+static err_t unpack_RSA_pubkey_content(union pubkey_content *u, chunk_t pubkey)
+{
+	return unpack_RSA_public_key(&u->rsa, &pubkey);
+}
+
+const struct pubkey_type pubkey_type_rsa = {
+	.alg = PUBKEY_ALG_RSA,
+	.name = "RSA",
+	.free_pubkey_content = free_RSA_pubkey_content,
+	.unpack_pubkey_content = unpack_RSA_pubkey_content,
+};
+
 static void free_ECDSA_public_content(struct ECDSA_public_key *ecdsa)
 {
 	freeanychunk(ecdsa->pub);
 	/* ??? what about ecdsa->pub.{ecParams,version,ckaid}? */
+}
+
+static void free_ECDSA_pubkey_content(union pubkey_content *u)
+{
+	free_ECDSA_public_content(&u->ecdsa);
+}
+
+static err_t unpack_ECDSA_pubkey_content(union pubkey_content *u, chunk_t pubkey)
+{
+	return unpack_ECDSA_public_key(&u->ecdsa, &pubkey);
+}
+
+const struct pubkey_type pubkey_type_ecdsa = {
+	.alg = PUBKEY_ALG_ECDSA,
+	.name = "ECDSA",
+	.free_pubkey_content = free_ECDSA_pubkey_content,
+	.unpack_pubkey_content = unpack_ECDSA_pubkey_content,
+
+};
+
+const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
+{
+	static const struct pubkey_type *pubkey_types[] = {
+		[PUBKEY_ALG_RSA] = &pubkey_type_rsa,
+		[PUBKEY_ALG_ECDSA] = &pubkey_type_ecdsa,
+	};
+	passert(alg < elemsof(pubkey_types));
+	const struct pubkey_type *type = pubkey_types[alg];
+	pexpect(type != NULL);
+	return type;
 }
 
 /*
@@ -237,18 +284,8 @@ void free_public_key(struct pubkey *pk)
 {
 	free_id_content(&pk->id);
 	freeanychunk(pk->issuer);
-
 	/* algorithm-specific freeing */
-	switch (pk->alg) {
-	case PUBKEY_ALG_RSA:
-		free_RSA_public_content(&pk->u.rsa);
-		break;
-	case PUBKEY_ALG_ECDSA:
-		free_ECDSA_public_content(&pk->u.ecdsa);
-		break;
-	default:
-		bad_case(pk->alg);
-	}
+	pk->type->free_pubkey_content(&pk->u);
 	pfree(pk);
 }
 
@@ -1327,14 +1364,15 @@ void install_public_key(struct pubkey *pk, struct pubkey_list **head)
 }
 
 void delete_public_keys(struct pubkey_list **head,
-			const struct id *id, enum pubkey_alg alg)
+			const struct id *id,
+			const struct pubkey_type *type)
 {
 	struct pubkey_list **pp, *p;
 
 	for (pp = head; (p = *pp) != NULL; ) {
 		struct pubkey *pk = p->key;
 
-		if (same_id(id, &pk->id) && pk->alg == alg)
+		if (same_id(id, &pk->id) && pk->type == type)
 			*pp = free_public_keyentry(p);
 		else
 			pp = &p->next;
@@ -1395,7 +1433,7 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 
 	/* DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa)); */
 
-	pk->alg = PUBKEY_ALG_RSA;
+	pk->type = &pubkey_type_rsa;
 	pk->id  = empty_id;
 	pk->issuer = EMPTY_CHUNK;
 
@@ -1460,7 +1498,7 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 
 	/* DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa)); */
 
-	pk->alg = PUBKEY_ALG_ECDSA;
+	pk->type = &pubkey_type_ecdsa;
 	pk->id  = empty_id;
 	pk->issuer = EMPTY_CHUNK;
 

@@ -477,7 +477,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
 		int pathlen;	/* value ignored */
-		if (key->alg == PUBKEY_ALG_RSA &&
+		if (key->type == &pubkey_type_rsa &&
 		    same_id(&sr->that.id, &key->id) &&
 		    trusted_ca_nss(key->issuer, sr->that.ca, &pathlen)) {
 			jam_dn_or_null(buf, key->issuer, "", jam_meta_escaped_bytes);

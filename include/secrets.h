@@ -34,6 +34,9 @@
 
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */
+struct pubkey;		/* forward */
+union pubkey_content;	/* forward */
+struct pubkey_type;	/* forward */
 
 struct RSA_public_key {
 	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
@@ -143,6 +146,24 @@ typedef int (*secret_eval)(struct secret *secret,
 
 extern struct secret *lsw_foreach_secret(struct secret *secrets,
 					 secret_eval func, void *uservoid);
+
+union pubkey_content {
+	struct RSA_public_key rsa;
+	struct ECDSA_public_key ecdsa;
+};
+
+struct pubkey_type {
+	const char *name;
+	enum pubkey_alg alg;
+	void (*free_pubkey_content)(union pubkey_content *pkc);
+	err_t (*unpack_pubkey_content)(union pubkey_content *pkc, chunk_t key);
+};
+
+extern const struct pubkey_type pubkey_type_rsa;
+extern const struct pubkey_type pubkey_type_ecdsa;
+
+const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg);
+
 /* public key machinery */
 struct pubkey {
 	struct id id;
@@ -152,11 +173,8 @@ struct pubkey {
 	realtime_t until_time;
 	uint32_t dns_ttl; /* from wire. until_time is derived using this */
 	chunk_t issuer;
-	enum pubkey_alg alg;
-	union {
-		struct RSA_public_key rsa;
-		struct ECDSA_public_key ecdsa;
-	} u;
+	const struct pubkey_type *type;
+	union pubkey_content u;
 };
 
 struct pubkey_list {
@@ -171,7 +189,7 @@ extern void free_public_keys(struct pubkey_list **keys);
 extern void free_remembered_public_keys(void);
 extern void delete_public_keys(struct pubkey_list **head,
 			       const struct id *id,
-			       enum pubkey_alg alg);
+			       const struct pubkey_type *type);
 extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
 
 extern struct pubkey *reference_key(struct pubkey *pk);
@@ -179,14 +197,14 @@ extern void unreference_key(struct pubkey **pkp);
 
 extern err_t add_public_key(const struct id *id,
 			    enum dns_auth_level dns_auth_level,
-			    enum pubkey_alg alg,
+			    const struct pubkey_type *type,
 			    const chunk_t *key,
 			    struct pubkey_list **head);
 extern err_t add_ipseckey(const struct id *id,
-		enum dns_auth_level dns_auth_level,
-		enum pubkey_alg alg, uint32_t ttl,
-		uint32_t ttl_used, const chunk_t *key,
-		struct pubkey_list **head);
+			  enum dns_auth_level dns_auth_level,
+			  const struct pubkey_type *type, uint32_t ttl,
+			  uint32_t ttl_used, const chunk_t *key,
+			  struct pubkey_list **head);
 
 extern bool same_RSA_public_key(const struct RSA_public_key *a,
 				const struct RSA_public_key *b);

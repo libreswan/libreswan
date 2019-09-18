@@ -2612,7 +2612,7 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 
 	for (p = *pubkey_db; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
-		if (key->alg == PUBKEY_ALG_RSA && same_id(peer_id, &key->id))
+		if (key->type == &pubkey_type_rsa && same_id(peer_id, &key->id))
 			return key->issuer;
 	}
 	return EMPTY_CHUNK;

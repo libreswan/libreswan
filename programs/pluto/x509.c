@@ -471,7 +471,7 @@ static void replace_public_key(struct pubkey_list **pubkey_db,
 			       struct pubkey *pk)
 {
 	/* ??? clang 3.5 thinks pk might be NULL */
-	delete_public_keys(pubkey_db, &pk->id, pk->alg);
+	delete_public_keys(pubkey_db, &pk->id, pk->type);
 	install_public_key(pk, pubkey_db);
 }
 
