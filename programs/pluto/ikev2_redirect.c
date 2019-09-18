@@ -94,6 +94,7 @@ bool emit_redirect_notification_decoded_dest(
 
 	if (dest_ip == NULL) {
 		id = shunk1(dest_str);
+		gwi.gw_identity_type = GW_FQDN;
 	} else {
 		passert(dest_str == NULL);
 
