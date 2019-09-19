@@ -46,7 +46,7 @@ west #
 1v1 "ikev1-aggr-failtest" #3: STATE_AGGR_I1: initiate
 002 "ikev1-aggr-failtest" #3: Peer ID is ID_FQDN: '@east-v1'
 002 "ikev1-aggr-failtest" #3: Peer ID is ID_FQDN: '@east-v1'
-003 "ikev1-aggr-failtest" #3: Signature check (on @east-v1) failed (wrong key?); tried *000000000
+003 "ikev1-aggr-failtest" #3: RSA Signature check (on @east-v1) failed (wrong key?); tried *000000000
 217 "ikev1-aggr-failtest" #3: STATE_AGGR_I1: INVALID_KEY_INFORMATION
 002 "ikev1-aggr-failtest" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 002 "ikev1-aggr-failtest" #3: deleting state (STATE_AGGR_I1) and NOT sending notification

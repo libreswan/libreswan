@@ -771,17 +771,17 @@ stf_status RSA_check_signature_gen(struct state *st,
 		} else {
 			if (s.tried_cnt == 1) {
 				loglog(RC_LOG_SERIOUS,
-				       "Signature check (on %s) failed (wrong key?); tried%s",
+				       "RSA Signature check (on %s) failed (wrong key?); tried%s",
 				       id_buf, s.tried);
 				DBG(DBG_CONTROL,
-				    DBG_log("public key for %s failed: decrypted SIG payload into a malformed ECB (%s)",
+				    DBG_log("RSA public key for %s failed: decrypted SIG payload into a malformed ECB (%s)",
 					    id_buf, s.best_ugh + 1));
 			} else {
 				loglog(RC_LOG_SERIOUS,
-				       "Signature check (on %s) failed: tried%s keys but none worked.",
+				       "RSA Signature check (on %s) failed: tried%s keys but none worked.",
 				       id_buf, s.tried);
 				DBG(DBG_CONTROL,
-				    DBG_log("all %d public keys for %s failed: best decrypted SIG payload into a malformed ECB (%s)",
+				    DBG_log("all %d RSA public keys for %s failed: best decrypted SIG payload into a malformed ECB (%s)",
 					    s.tried_cnt, id_buf,
 					    s.best_ugh + 1));
 			}
@@ -918,14 +918,14 @@ stf_status ECDSA_check_signature_gen(struct state *st,
 				       "ECDSA Signature check (on %s) failed (wrong key?); tried%s",
 				       id_buf, s.tried);
 				DBG(DBG_CONTROL,
-				    DBG_log("public key for %s failed: decrypted SIG payload into a malformed ECB (%s)",
+				    DBG_log("ECDSA public key for %s failed: decrypted SIG payload into a malformed ECB (%s)",
 					    id_buf, s.best_ugh + 1));
 			} else {
 				loglog(RC_LOG_SERIOUS,
 				       "ECDSA Signature check (on %s) failed: tried%s keys but none worked.",
 				       id_buf, s.tried);
 				DBG(DBG_CONTROL,
-				    DBG_log("all %d public keys for %s failed: best decrypted SIG payload into a malformed ECB (%s)",
+				    DBG_log("all %d ECDSA public keys for %s failed: best decrypted SIG payload into a malformed ECB (%s)",
 					    s.tried_cnt, id_buf,
 					    s.best_ugh + 1));
 			}
