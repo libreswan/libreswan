@@ -337,7 +337,6 @@ search ${new_search}"
 nameserver ${nameserver}"
 	done
 
-	rm -f -- "${ETC_RESOLV_CONF}"
 	echo "${new_resolv_conf}" > "${ETC_RESOLV_CONF}"
 	rc=$?
     fi
