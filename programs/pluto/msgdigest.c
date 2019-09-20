@@ -41,6 +41,7 @@ struct msg_digest *clone_md(struct msg_digest *md, const char *name)
 	/* raw_packet */
 	clone->iface = md->iface; /* copy reference */
 	clone->sender = md->sender; /* copy value */
+	update_md_log_prefix(clone, HERE);
 	/* packet_pbs ... */
 	size_t packet_size = pbs_room(&md->packet_pbs);
 	void *packet_bytes = clone_bytes(md->packet_pbs.start, packet_size, name);
@@ -52,6 +53,7 @@ static void free_mdp(struct msg_digest **mdp)
 {
 	freeanychunk((*mdp)->raw_packet);
 	pfreeany((*mdp)->packet_pbs.start);
+	pfreeany(md->md_log_prefix);
 	pfree(*mdp);
 	*mdp = NULL;
 }

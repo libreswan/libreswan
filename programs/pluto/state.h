@@ -322,6 +322,7 @@ struct state {
 	so_serial_t st_clonedfrom;              /* serial number of parent */
 	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */
 	so_serial_t st_ipsec_pred;		/* replacing established IPsec SA */
+	char *st_log_prefix;			/* put in front of all log messages */
 
 #ifdef XAUTH_HAVE_PAM
 	struct xauth *st_xauth;			/* per state xauth/pam thread */

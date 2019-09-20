@@ -1902,6 +1902,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					whole_md->iface = frag->md->iface;
 					whole_md->sender = frag->md->sender;
+					update_md_log_prefix(md, HERE);
 
 					/* Reassemble fragments in buffer */
 					frag = st->st_v1_rfrags;
@@ -3380,7 +3381,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 						   &peer);
 			}
 
-			update_state_connection(st, r);
+			update_state_connection(st, r, HERE);
 			c = r;	/* c not subsequently used */
 			/* redo from scratch so we read and check CERT payload */
 			DBG(DBG_CONTROL, DBG_log("retrying ike_decode_peer_id() with new conn"));

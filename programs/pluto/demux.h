@@ -80,6 +80,7 @@ struct payload_summary {
 
 struct msg_digest {
 	struct msg_digest *next;		/* for free list */
+	char *md_log_prefix;
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
 	const struct iface_port *iface;		/* interface on which message arrived */
 	ip_endpoint sender;			/* address:port where message came from */

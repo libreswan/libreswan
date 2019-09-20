@@ -78,12 +78,12 @@ static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
 	struct child_sa *child;	/* to-be-determined */
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		child = pexpect_child_sa(md->st);
-		update_state_connection(&child->sa, c);
+		update_state_connection(&child->sa, c, HERE);
 	} else {
 		child = ikev2_duplicate_state(ike, IPSEC_SA,
 					      SA_RESPONDER,
 					      null_fd);
-		update_state_connection(&child->sa, c);
+		update_state_connection(&child->sa, c, HERE);
 		binlog_refresh_state(&child->sa);
 		/*
 		 * XXX: This is to hack around the broken responder
@@ -183,6 +183,10 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 		}
 	}
+	update_connection_log_prefix(child->sa.st_connection, HERE);
+	update_state_log_prefix(&child->sa, HERE);
+	update_state_log_prefix(&ike->sa, HERE);
+
 	struct state *cst = &child->sa;	/* child state */
 
 	/* switch to child */
@@ -190,6 +194,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	    md->st->st_serialno, cst->st_serialno);
 	md->st = cst;
 	c = cst->st_connection;
+	push_cur_state(cst);
 
 	if (c->spd.that.has_lease &&
 	    md->chain[ISAKMP_NEXT_v2CP] != NULL &&
@@ -520,6 +525,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	c->spd.this.has_client = true;
 	c->spd.this.has_internal_address = true;
 
+	push_cur_state(st);
 	if (c->spd.this.cat) {
 		dbg("CAT is set, not setting host source IP address to %s",
 		    ipstr(&ip, &ip_str));
@@ -546,6 +552,10 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 			c->spd.this.host_srcip = ip;
 		}
 	}
+	/* above screws with it */
+	update_connection_log_prefix(c, HERE);
+	update_state_log_prefix(st, HERE);
+	push_cur_state(st);
 
 	return true;
 }
@@ -582,6 +592,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 			return FALSE;
 		}
 
+		push_cur_state(st);
 		switch (cp_a.type) {
 		case IKEv2_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_ia(&cp_a_pbs, st, &ipv4_info,
@@ -624,6 +635,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 				cp_a.len);
 			break;
 		}
+		push_cur_state(st);
 	}
 	return TRUE;
 }

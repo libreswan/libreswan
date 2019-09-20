@@ -2818,7 +2818,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 						   NULL, &peer_id);
 				}
 
-				update_state_connection(md->st, r);
+				update_state_connection(md->st, r, HERE);
 				/* redo from scratch so we read and check CERT payload */
 				DBGF(DBG_X509, "retrying ikev2_decode_peer_id_and_certs() with new conn");
 				return decode_peer_id_counted(ike, md, depth + 1);

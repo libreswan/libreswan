@@ -298,6 +298,7 @@ static void discard_connection(struct connection *c,
 	free_ikev2_proposals(&c->v2_create_child_proposals);
 	c->v2_create_child_proposals_default_dh = NULL; /* static pointer */
 
+	pfreeany(c->c_log_prefix);
 	pfree(c);
 }
 
@@ -1069,6 +1070,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	 * have something to log.
 	 */
 	c->name = clone_str(wm->name, "connection name");
+	update_connection_log_prefix(c, HERE);
 
 	if (conn_by_name(wm->name, FALSE, FALSE) != NULL) {
 		loglog(RC_DUPNAME, "attempt to redefine connection \"%s\"",
@@ -1850,7 +1852,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 		return NULL;
 	} else {
 		struct connection *t = clone_thing(*group, "group instance");
-
+		t->c_log_prefix = NULL; /* update later */
 		t->foodgroup = clone_str(t->name, "cloned from groupname"); /* not set in group template */
 		t->name = namebuf;	/* trick: unsharing will clone this for us */
 
@@ -1901,6 +1903,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 			if (!trap_connection(t))
 				whack_log(whackfd, RC_ROUTE, "could not route");
 		}
+		update_connection_log_prefix(t, HERE);
 		return clone_str(t->name, "group instance name");
 	}
 }
@@ -1935,6 +1938,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 
 	c->instance_serial++;
 	d = clone_thing(*c, "instantiated connection");
+	d->c_log_prefix = NULL; /* update later */
 	if (his_id != NULL) {
 		int wildcards;	/* value ignored */
 
@@ -1984,6 +1988,8 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 			global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 		}
 	}
+
+	update_connection_log_prefix(d, HERE);
 
 	/* assumption: orientation is the same as c's */
 	connect_to_host_pair(d);
@@ -2334,6 +2340,8 @@ struct connection *oppo_instantiate(struct connection *c,
 		jam(buf, ": ");
 		jam_connection_topology(buf, d, &d->spd);
 	}
+
+	update_connection_log_prefix(d, HERE);
 	return d;
 }
 
@@ -4013,15 +4021,31 @@ void connection_discard(struct connection *c)
  * - update the connection->state hash table
  *
  * - discard the old connection when not in use
+ *
+ * - update the state's logging prefix
  */
-void update_state_connection(struct state *st, struct connection *c)
+void update_state_connection(struct state *st, struct connection *c, where_t where)
 {
 	struct connection *old = st->st_connection;
 
 	if (old != c) {
+		/*
+		 * Switch everythng to the new connection, including
+		 * the log name.
+		 */
 		st->st_connection = c;
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		rehash_state_connection(st);
+		update_state_log_prefix(st, where);
+		/*
+		 * With the new log name in place, possibly delete the
+		 * old connection.
+		 *
+		 * XXX: Needing the state's log-prefix updated before
+		 * deleting the connection shouldn't matter except
+		 * cur==ST so logging gets attributed to the state and
+		 * that needs the prefix updated.
+		 */
 		if (old != NULL) {
 			/*
 			 * Hack to see cur_connection needs to be

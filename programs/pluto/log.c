@@ -440,44 +440,115 @@ static void whack_raw(jambuf_t *buf, enum rc_type rc, const struct state *st)
 	sendmsg(wfd.fd, &msg, MSG_NOSIGNAL);
 }
 
-/*
- * This needs to mimic both lswlog_log_prefix() and
- * lswlog_dbg_prefix().
- */
+static void jam_state_prefix(jambuf_t *buf, const struct state *st)
+{
+	struct connection *c = st->st_connection;
+	if (st->st_connection != NULL) {
+		jam_connection(buf, c);
+		jam(buf, " ");
+	}
+	/* state number */
+	jam(buf, "#%lu", st->st_serialno);
+	/* state name; optional */
+	if (DBGP(DBG_ADD_PREFIX)) {
+		jam(buf, " %s", st->st_state->short_name);
+	}
+	jam(buf, ": ");
+}
+
+static void jam_connection_prefix(jambuf_t *buf, const struct connection *c)
+{
+	jam_connection(buf, c);
+	jam(buf, ": ");
+}
+
+static void jam_from_prefix(jambuf_t *buf, const ip_endpoint *from)
+{
+	/* peer's IP address */
+	lswlogs(buf, "packet from ");
+	jam_sensitive_endpoint(buf, from);
+	lswlogs(buf, ": ");
+}
+
+void update_md_log_prefix(struct msg_digest *md, where_t where)
+{
+	const char *old = md->md_log_prefix;
+	/* new */
+	char new[LOG_WIDTH];
+	jambuf_t buf = ARRAY_AS_JAMBUF(new);
+	jam_from_prefix(&buf, &md->sender);
+	dbg("md log prefix: '%s' -> '%s' "PRI_WHERE,
+	    old != NULL ? old : "<none>", new, pri_where(where));
+	pfreeany(md->md_log_prefix);
+	md->md_log_prefix = clone_str(new, "from prefix");
+}
+
+void update_connection_log_prefix(struct connection *c, where_t where)
+{
+	const char *old = c->c_log_prefix;
+	/* new */
+	char new[LOG_WIDTH];
+	jambuf_t buf = ARRAY_AS_JAMBUF(new);
+	jam_connection_prefix(&buf, c);
+	dbg("connection log prefix: '%s' -> '%s' "PRI_WHERE,
+	    old != NULL ? old : "<none>", new, pri_where(where));
+	pfreeany(c->c_log_prefix);
+	c->c_log_prefix = clone_str(new, "connection prefix");
+}
+
+void update_state_log_prefix(struct state *st, where_t where)
+{
+	const char *old = st->st_log_prefix;
+	/* new */
+	char new[LOG_WIDTH];
+	jambuf_t buf = ARRAY_AS_JAMBUF(new);
+	jam_state_prefix(&buf, st);
+	dbg("state log prefix: '%s' -> '%s' "PRI_WHERE,
+	    old != NULL ? old : "<none>", new, pri_where(where));
+	pfreeany(st->st_log_prefix);
+	st->st_log_prefix = clone_str(new, "state prefix");
+}
 
 void jam_log_prefix(struct lswlog *buf,
 		    const struct state *st,
 		    const struct connection *c,
-		    const ip_address *from)
+		    const ip_endpoint *from)
 {
 	if (!in_main_thread()) {
 		return;
 	}
 
+	const char *pos = jambuf_cursor(buf);
+	const char *prefix;
+	bool check;
 	if (st != NULL) {
+		jam_state_prefix(buf, st);
 		/*
-		 * XXX: When delete state() triggers a delete
-		 * connection, this can be NULL.
+		 * Don't complain about a mis-match when the
+		 * connection's missing (presumably during a delete).
 		 */
-		if (st->st_connection != NULL) {
-			jam_connection(buf, st->st_connection);
-		}
-		/* state number */
-		lswlogf(buf, " #%lu", st->st_serialno);
-		/* state name */
-		if (DBGP(DBG_ADD_PREFIX)) {
-			lswlogf(buf, " ");
-			lswlogs(buf, st->st_state->short_name);
-		}
-		jam(buf, ": ");
+		check = (st->st_connection != NULL);
+		prefix = st->st_log_prefix;
 	} else if (c != NULL) {
-		jam_connection(buf, c);
-		jam(buf, ": ");
+		jam_connection_prefix(buf, c);
+		check = true;
+		prefix = c->c_log_prefix;
 	} else if (from != NULL) {
-		/* peer's IP address */
-		jam(buf, "packet from ");
-		jam_sensitive_endpoint(buf, from);
-		jam(buf, ": ");
+		jam_from_prefix(buf, from);
+		check = false;
+		prefix = NULL;
+	} else {
+		check = false;
+		prefix = NULL;
+	}
+
+	/* WARNING: can't pexpect() as recursive */
+	if (check) {
+		if (prefix == NULL) {
+			jam(buf, "(EXPECTATION FAILED: prefix NULL) ");
+		} else if (!streq(prefix, pos)) {
+			jam(buf, "(EXPECTATION FAILED: prefix %s) ", prefix);
+		}
 	}
 }
 

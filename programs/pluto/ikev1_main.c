@@ -653,7 +653,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 	passert(!st->st_oakley.doing_xauth);
 
-	update_state_connection(st, c);
+	update_state_connection(st, c, HERE);
 
 	set_cur_state(st); /* (caller will reset cur_state) */
 	st->st_try = 0; /* not our job to try again from start */

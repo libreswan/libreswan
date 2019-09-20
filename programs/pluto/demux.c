@@ -207,6 +207,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	struct msg_digest *md = alloc_md("msg_digest in read_packet");
 	md->iface = ifp;
 	md->sender = sender;
+	update_md_log_prefix(md, HERE);
 
 	init_pbs(&md->packet_pbs
 		 , clone_bytes(_buffer, packet_len,

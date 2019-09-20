@@ -181,7 +181,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 
 	md->st = st;  /* (caller will reset cur_state) */
 	set_cur_state(st);
-	update_state_connection(st, c);
+	update_state_connection(st, c, HERE);
 	change_state(st, STATE_AGGR_R1);
 
 	st->st_policy = policy;	/* ??? not sure what's needed here */
@@ -1055,6 +1055,7 @@ static void aggr_outI1_continue(struct state *st,
 	 * MD.  This hacks around it.
 	 */
 	struct msg_digest *fake_md = alloc_md("msg_digest by aggr_outI1");
+	update_md_log_prefix(fake_md, HERE);
 	fake_md->st = st;
 	fake_md->smc = NULL;	/* ??? */
 	fake_md->from_state = STATE_UNDEFINED;	/* ??? */

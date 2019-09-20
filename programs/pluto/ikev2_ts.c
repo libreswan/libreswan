@@ -1060,7 +1060,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	 * de-references the old connection; which is what really
 	 * matters
 	 */
-	update_state_connection(&child->sa, best_connection);
+	update_state_connection(&child->sa, best_connection, HERE);
 
 	child->sa.st_ts_this = ikev2_end_to_ts(&best_spd_route->this);
 	child->sa.st_ts_that = ikev2_end_to_ts(&best_spd_route->that);

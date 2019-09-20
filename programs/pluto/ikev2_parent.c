@@ -245,6 +245,7 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 static struct msg_digest *fake_md(struct state *st)
 {
 	struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
+	update_md_log_prefix(fake_md, HERE);
 	fake_md->st = st;
 	fake_md->from_state = st->st_state->kind;
 	fake_md->hdr.isa_msgid = v2_INVALID_MSGID;
@@ -1818,6 +1819,7 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return STF_INTERNAL_ERROR;
 
+	push_cur_state(st);
 	if (cfg_reply) {
 		ikev2_ship_cp_attr_ip(subnet_type(&c->spd.that.client) == &ipv4_info ?
 			IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
@@ -2412,7 +2414,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				pc->name, fmt_conn_instance(pc, cib));
 	}
 	/* ??? this seems very late to change the connection */
-	update_state_connection(cst, cc);
+	update_state_connection(cst, cc, HERE);
 
 	/* code does not support AH+ESP, which not recommended as per RFC 8247 */
 	struct ipsec_proto_info *proto_info
@@ -3357,10 +3359,12 @@ static stf_status ikev2_process_cp_respnse(struct msg_digest *md)
 			 */
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
+		push_cur_state(st);
 		if (!ikev2_parse_cp_r_body(md->chain[ISAKMP_NEXT_v2CP], st))
 		{
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
+		push_cur_state(st);
 	}
 
 	return STF_OK;
@@ -3399,7 +3403,9 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	struct child_sa *child = pexpect_child_sa(md->st);
 	struct state *st = &child->sa;
 
+	push_cur_state(&child->sa);
 	RETURN_STF_FAILURE_STATUS(ikev2_process_cp_respnse(md));
+	push_cur_state(&child->sa);
 	if (!v2_process_ts_response(child, md)) {
 		/*
 		 * XXX: will this will cause the state machine to
@@ -3408,6 +3414,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		 */
 		return STF_FAIL + v2N_TS_UNACCEPTABLE;
 	}
+	push_cur_state(&child->sa);
 
 	/* examin and accpept SA ESP/AH proposals */
 	if (md->hdr.isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)
@@ -3962,7 +3969,7 @@ static stf_status ikev2_rekey_child_resp(struct msg_digest *md)
 		    rst->sa.st_serialno);
 		ikev2_print_ts(&rst->sa.st_ts_this);
 		ikev2_print_ts(&rst->sa.st_ts_that);
-		update_state_connection(st, rst->sa.st_connection);
+		update_state_connection(st, rst->sa.st_connection, HERE);
 	}
 
 	return STF_OK;
@@ -5648,7 +5655,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 		st->st_ike_rekey_spis.initiator = ike_initiator_spi();
 		st->st_ike_pred = ike->sa.st_serialno;
 	}
-	update_state_connection(st, c);
+	update_state_connection(st, c, HERE);
 
 	set_cur_state(st); /* we must reset before exit */
 	st->st_try = p->try;

@@ -183,6 +183,10 @@ void jam_log_prefix(struct lswlog *buf,
 		    const struct connection *c,
 		    const ip_address *from);
 
+void update_md_log_prefix(struct msg_digest *md, where_t where);
+void update_connection_log_prefix(struct connection *c, where_t where);
+void update_state_log_prefix(struct state *st, where_t where);
+
 extern void pluto_init_log(void);
 void init_rate_log(void);
 extern void close_log(void);

@@ -1127,7 +1127,7 @@ void delete_state(struct state *st)
 	 * connection (or explode because it was removed from the
 	 * list).
 	 */
-	update_state_connection(st, NULL);
+	update_state_connection(st, NULL, HERE);
 
 	/*
 	 * Effectively, this deletes any ISAKMP SA that this state
@@ -1230,6 +1230,8 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_no_ppk_auth);
 
 	pfreeany(st->sec_ctx);
+	pfreeany(st->st_log_prefix);
+
 	messup(st);
 	pfree(st);
 }
@@ -1488,7 +1490,7 @@ static struct state *duplicate_state(struct state *st,
 			 nst->st_serialno,
 			 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
 
-	update_state_connection(nst, st->st_connection);
+	update_state_connection(nst, st->st_connection, HERE);
 
 	if (sa_type == IPSEC_SA) {
 		nst->st_oakley = st->st_oakley;

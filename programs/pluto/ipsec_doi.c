@@ -451,7 +451,7 @@ void initialize_new_state(struct state *st,
 			  lset_t policy,
 			  int try)
 {
-	update_state_connection(st, c);
+	update_state_connection(st, c, HERE);
 	set_state_ike_endpoints(st, c);
 
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */

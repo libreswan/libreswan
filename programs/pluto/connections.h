@@ -250,6 +250,7 @@ struct ephemeral_variables {
 struct connection {
 	char *name;
 	enum ike_version ike_version;
+	char *c_log_prefix;
 	char *foodgroup;
 	char *connalias;
 	lset_t policy;
@@ -531,7 +532,8 @@ extern void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike);
 extern void flush_pending_by_state(struct ike_sa *ike);
 
 extern void connection_discard(struct connection *c);
-extern void update_state_connection(struct state *st, struct connection *c);
+extern void update_state_connection(struct state *st, struct connection *c,
+				    where_t where);
 
 /* A template connection's eroute can be eclipsed by
  * either a %hold or an eroute for an instance iff
