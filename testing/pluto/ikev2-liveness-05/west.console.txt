@@ -77,8 +77,6 @@ west #
 west #
  ping -w 2 -q -n -c 3 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=2 
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
@@ -92,7 +90,6 @@ west #
 west #
  ping -W 1 -w 1 -q -n -c 1 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
 --- 192.0.2.254 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
@@ -100,10 +97,6 @@ west #
 west #
  ping -W 1 -w 4 -q -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=2 
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=3 
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=4 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
