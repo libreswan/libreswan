@@ -24,6 +24,13 @@ LIBRESWANSRCDIR?=$(shell pwd)
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
+MAIN_RPM_VERSION = $(shell make showversion | sed "s/-.*//")
+MAIN_RPM_PREVER = $(shell make showversion | sed -e  "s/^.[^-]*-\([^-]*\)-\(.*\)/rc\1_\2/" -e "s/-/_/")
+MAIN_RPM_PREFIX  = libreswan-$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER)
+MAIN_RPM_RHEL_PKG = $(shell rpm -qf /etc/redhat-release)
+MAIN_RPM_RHEL_VERSION = $(shell echo $(MAIN_RPM_RHEL_PKG) | sed "s/.*-release-\(.\).*/\1/")
+MAIN_RPM_SPECFILE = $(shell if [ -f /etc/fedora-release ]; then echo packaging/fedora/libreswan.spec; elif [ -n "$(MAIN_RPM_RHEL_VERSION)" ]; then echo packaging/rhel/$(MAIN_RPM_RHEL_VERSION)/libreswan.spec; else echo "unknown distro, cannot find spec file to use in packaging directory"; fi)
+
 SRCDIR?=$(shell pwd)/
 
 # dummy default rule
@@ -128,9 +135,20 @@ buildready:
 	# obsolete cd doc ; $(MAKE) -s
 
 rpm:
-	@echo To build an rpm, use: rpmbuild -ba packaging/XXX/libreswan.spec
-	@echo where XXX is your rpm based vendor
-	rpmbuild -bs packaging/fedora/libreswan.spec
+	@echo building rpm for libreswan testing
+	mkdir -p ~/rpmbuild/SPECS/
+	sed  -e "s/^Version:.*/Version: $(MAIN_RPM_VERSION)/g" \
+	     -e "s/^#global prever.*/%global prever $(MAIN_RPM_PREVER)/" \
+	     -e "s/^Release:.*/Release: 0.$(MAIN_RPM_PREVER)/" \
+		$(MAIN_RPM_SPECFILE) > ~/rpmbuild/SPECS/libreswan.spec
+	mkdir -p ~/rpmbuild/SOURCES
+	git archive --format=tar --prefix=libreswan-$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER)/ \
+		-o ~/rpmbuild/SOURCES/libreswan-$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER).tar HEAD
+	if [ -a Makefile.inc.local ] ; then \
+		tar --transform "s|^|$(MAIN_RPM_PREFIX)/|" -rf ~/rpmbuild/SOURCES/$(MAIN_RPM_PREFIX).tar Makefile.inc.local ; \
+	fi;
+	gzip -f ~/rpmbuild/SOURCES/$(MAIN_RPM_PREFIX).tar
+	rpmbuild -ba ~/rpmbuild/SPECS/libreswan.spec
 
 tarpkg:
 	@echo "Generating tar.gz package to install"
