@@ -102,7 +102,7 @@ use_unbound_event_h_copy:
 #
 
 .PHONY: install-testing-rpm-dep
-install-testing-rpm-dep: install--rpm-dep
+install-testing-rpm-dep: install-rpm-dep
 	$(if $(KVM_INSTALL_PACKAGES), $(KVM_PACKAGE_INSTALL) $(KVM_INSTALL_PACKAGES))
 	$(if $(KVM_UPGRADE_PACKAGES), $(KVM_PACKAGE_UPGRADE) $(KVM_UPGRADE_PACKAGES))
 
