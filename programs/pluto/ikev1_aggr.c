@@ -476,9 +476,9 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_R out */
-			u_char sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = RSA_sign_hash(c, sig_val, hash_val,
-						       hash_len, 0 /* for ikev2 only */);
+			uint8_t sig_val[RSA_MAX_OCTETS];
+			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val),
+							  hash_val, hash_len);
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "unable to locate my private key for RSA Signature");
@@ -779,11 +779,10 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_I out */
-			u_char sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = RSA_sign_hash(st->st_connection,
-						       sig_val, hash_val,
-						       hash_len, 0 /* for ikev2 only */);
-
+			uint8_t sig_val[RSA_MAX_OCTETS];
+			size_t sig_len = v1_sign_hash_RSA(st->st_connection,
+							  sig_val, sizeof(sig_val),
+							  hash_val, hash_len);
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "unable to locate my private key for RSA Signature");

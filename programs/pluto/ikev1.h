@@ -84,10 +84,9 @@ extern void send_v1_delete(struct state *st);
 extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			   bool aggrmode);
 
-extern size_t RSA_sign_hash(const struct connection *c,
-			    u_char sig_val[RSA_MAX_OCTETS],
-			    const u_char *hash_val, size_t hash_len,
-			    enum notify_payload_hash_algorithms hash_algo);
+extern size_t v1_sign_hash_RSA(const struct connection *c,
+			       uint8_t *sig_val, size_t sig_size,
+			       const u_char *hash_val, size_t hash_size);
 
 extern size_t                           /* length of hash */
 main_mode_hash(struct state *st,

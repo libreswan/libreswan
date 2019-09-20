@@ -292,23 +292,22 @@ main_mode_hash(struct state *st,
  * RSAES-PKCS1-V1_5) in PKCS#2.
  * Returns 0 on failure.
  */
-size_t RSA_sign_hash(const struct connection *c,
-		u_char sig_val[RSA_MAX_OCTETS],
-		const u_char *hash_val, size_t hash_len,
-		enum notify_payload_hash_algorithms hash_algo UNUSED /* for ikev2 only*/)
+
+size_t v1_sign_hash_RSA(const struct connection *c,
+			uint8_t *sig_val, size_t sig_size,
+			const uint8_t *hash_val, size_t hash_size)
 {
-	size_t sz;
 	int shr;
 	const struct RSA_private_key *k = get_RSA_private_key(c);
 
 	if (k == NULL)
 		return 0; /* failure: no key to use */
 
-	sz = k->pub.k;
+	size_t sz = k->pub.k;
 	passert(RSA_MIN_OCTETS <= sz &&
-		4 + hash_len < sz &&
-		sz <= RSA_MAX_OCTETS);
-	shr = sign_hash_RSA(k, hash_val, hash_len, sig_val, sz, 0 /* for ikev2 only */);
+		4 + hash_size < sz &&
+		sz <= sig_size);
+	shr = sign_hash_RSA(k, hash_val, hash_size, sig_val, sz, 0 /* for ikev2 only */);
 	passert(shr == 0 || (int)sz == shr);
 	return shr;
 }
@@ -1363,11 +1362,9 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_I out */
-			u_char sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = RSA_sign_hash(c,
-						sig_val, hash_val,
-						hash_len, 0 /* for ikev2 only */);
-
+			uint8_t sig_val[RSA_MAX_OCTETS];
+			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val),
+							  hash_val, hash_len);
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
 					"unable to locate my private key for RSA Signature");
@@ -1731,11 +1728,9 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_R out */
-			u_char sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = RSA_sign_hash(c,
-						sig_val, hash_val,
-						hash_len, 0 /* for ikev2 only */);
-
+			uint8_t sig_val[RSA_MAX_OCTETS];
+			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val),
+							  hash_val, hash_len);
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
 					"unable to locate my private key for RSA Signature");
