@@ -947,43 +947,24 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
 }
 
 /*
- * find the appropriate RSA private key (see get_secret).
- * Failure is indicated by a NULL pointer.
+ * Find the appropriate private key (see get_secret).  Failure is
+ * indicated by a NULL pointer.
  */
-const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
+
+const struct private_key_stuff *get_connection_private_key(const struct connection *c,
+							   const struct pubkey_type *type)
 {
-	struct secret *s = lsw_get_secret(c, PKK_RSA, TRUE);
-	const struct RSA_private_key *RSA_pk =
-		s == NULL ? NULL : &lsw_get_pks(s)->u.RSA_private_key;
+	struct secret *s = lsw_get_secret(c, type->private_key_kind, TRUE);
+	if (s == NULL) {
+		dbg("no %s private key Found", type->name);
+		return NULL;
+	}
 
-	DBG(DBG_CRYPT, {
-		if (RSA_pk == NULL)
-			DBG_log("no RSA key Found");
-		else
-			DBG_log("RSA key %s found",
-				RSA_pk->pub.keyid);
-	});
-	return RSA_pk;
-}
+	const struct private_key_stuff *pks = lsw_get_pks(s);
+	passert(pks != NULL);
 
-/*
- * find the appropriate ECDSA private key (see get_secret).
- * Failure is indicated by a NULL pointer.
- */
-const struct ECDSA_private_key *get_ECDSA_private_key(const struct connection *c)
-{
-	struct secret *s = lsw_get_secret(c, PKK_ECDSA, TRUE);
-	const struct ECDSA_private_key *ECDSA_pk =
-		s == NULL ? NULL : &lsw_get_pks(s)->u.ECDSA_private_key;
-
-	DBG(DBG_CRYPT, {
-		if (ECDSA_pk == NULL)
-			DBG_log("no ECDSA key Found");
-		else
-			DBG_log("ECDSA key %s found",
-				ECDSA_pk->pub.keyid);
-	});
-	return ECDSA_pk;
+	dbg("%s private key found", type->name);
+	return pks;
 }
 
 /*

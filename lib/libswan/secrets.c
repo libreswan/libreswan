@@ -237,6 +237,7 @@ static err_t unpack_RSA_pubkey_content(union pubkey_content *u, chunk_t pubkey)
 const struct pubkey_type pubkey_type_rsa = {
 	.alg = PUBKEY_ALG_RSA,
 	.name = "RSA",
+	.private_key_kind = PKK_RSA,
 	.free_pubkey_content = free_RSA_pubkey_content,
 	.unpack_pubkey_content = unpack_RSA_pubkey_content,
 };
@@ -260,6 +261,7 @@ static err_t unpack_ECDSA_pubkey_content(union pubkey_content *u, chunk_t pubkey
 const struct pubkey_type pubkey_type_ecdsa = {
 	.alg = PUBKEY_ALG_ECDSA,
 	.name = "ECDSA",
+	.private_key_kind = PKK_ECDSA,
 	.free_pubkey_content = free_ECDSA_pubkey_content,
 	.unpack_pubkey_content = unpack_ECDSA_pubkey_content,
 

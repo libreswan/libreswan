@@ -2783,27 +2783,36 @@ struct connection *refine_host_connection(const struct state *st,
 			break;
 
 		case AUTH_RSASIG:
+		{
 			/*
-			 * At this point, we've committed to our RSA private
-			 * key: we used it in our previous message.
-			 * Paul: only true for IKEv1
+			 * At this point, we've committed to our
+			 * private key: we used it in our previous
+			 * message.  Paul: only true for IKEv1
 			 */
-			my_RSA_pri = get_RSA_private_key(c);
-			if (my_RSA_pri == NULL) {
-				loglog(RC_LOG_SERIOUS, "cannot find RSA key");
-				 /* cannot determine my RSA private key, so not switching */
+			const struct pubkey_type *type = &pubkey_type_rsa;
+			if (get_connection_private_key(c, type) == NULL) {
+				loglog(RC_LOG_SERIOUS, "cannot find %s key", type->name);
+				 /* cannot determine my private key, so not switching */
 				return c;
 			}
 			break;
+		}
 #if 0
 		case AUTH_ECDSA:
-			my_ECDSA_pri = get_RSA_private_key(c);
-			if (my_ECDSA_pri == NULL) {
-				loglog(RC_LOG_SERIOUS, "cannot find ECDSA key");*/
-					/* cannot determine my ECDSA private key, so not switching */
+		{
+			/*
+			 * At this point, we've committed to our
+			 * private key: we used it in our previous
+			 * message.  Paul: only true for IKEv1
+			 */
+			const struct pubkey_type *type = &pubkey_type_ecdsa;
+			if (get_connection_private_key(c, type) == NULL) {
+				loglog(RC_LOG_SERIOUS, "cannot find %s key", type->name);
+				 /* cannot determine my private key, so not switching */
 				return c;
 			}
-			break;*/
+			break;
+		}
 #endif
 		default:
 			/* don't die on bad_case(auth); */
@@ -3020,10 +3029,13 @@ struct connection *refine_host_connection(const struct state *st,
 				 * the IKEv1 SIG_I payload or IKEv2 AUTH payload that
 				 * we sent previously.
 				 */
-				const struct RSA_private_key *pri = get_RSA_private_key(d);
-
-				if (pri == NULL)
+				const struct pubkey_type *type = &pubkey_type_rsa;
+				const struct private_key_stuff *pks = get_connection_private_key(d, type);
+				if (pks == NULL)
 					continue;	/* no key */
+
+				/* XXX: same_{RSA,ECDSA}_public_key()? */
+				const struct RSA_private_key *pri = &pks->u.RSA_private_key;
 
 				if (initiator &&
 				    !same_RSA_public_key(&my_RSA_pri->pub, &pri->pub)) {

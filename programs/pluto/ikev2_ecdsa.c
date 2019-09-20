@@ -132,12 +132,17 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 			      chunk_t *no_ppk_auth /* optional output */,
 			      enum notify_payload_hash_algorithms hash_algo)
 {
+	const struct pubkey_type *type = &pubkey_type_ecdsa;
 	const struct connection *c = st->st_connection;
-	const struct ECDSA_private_key *k = get_ECDSA_private_key(c);
-	if (k == NULL) {
-		DBGF(DBG_CRYPT, "no ECDSA key for connection");
+
+	const struct private_key_stuff *pks = get_connection_private_key(c, type);
+	if (pks == NULL) {
+		libreswan_log("no %s private key for connection", type->name);
 		return false; /* failure: no key to use */
 	}
+
+	/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash() */
+	const struct ECDSA_private_key *k = &pks->u.ECDSA_private_key;
 
 	DBGF(DBG_CRYPT, "ikev2_calculate_ecdsa_hash get_ECDSA_private_key");
 	/* XXX: use struct hash_desc and a lookup? */

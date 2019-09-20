@@ -155,6 +155,7 @@ union pubkey_content {
 struct pubkey_type {
 	const char *name;
 	enum pubkey_alg alg;
+	enum PrivateKeyKind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
 	err_t (*unpack_pubkey_content)(union pubkey_content *pkc, chunk_t key);
 };

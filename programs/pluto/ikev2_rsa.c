@@ -132,15 +132,18 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 			      chunk_t *no_ppk_auth, /* optional output */
 			      enum notify_payload_hash_algorithms hash_algo)
 {
+	const struct pubkey_type *type = &pubkey_type_rsa;
 	statetime_t start = statetime_start(st);
 	const struct connection *c = st->st_connection;
-	const struct RSA_private_key *k = get_RSA_private_key(c);
 
-	if (k == NULL) {
-		libreswan_log("No RSA private key found");
-		return FALSE;
+	const struct private_key_stuff *pks = get_connection_private_key(c, type);
+	if (pks == NULL) {
+		libreswan_log("No %s private key found", type->name);
+		return false; /* failure: no key to use */
 	}
 
+	/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
+	const struct RSA_private_key *k = &pks->u.RSA_private_key;
 	unsigned int sz = k->pub.k;
 
 	/*

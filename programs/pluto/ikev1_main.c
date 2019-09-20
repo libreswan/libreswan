@@ -297,17 +297,19 @@ size_t v1_sign_hash_RSA(const struct connection *c,
 			uint8_t *sig_val, size_t sig_size,
 			const uint8_t *hash_val, size_t hash_size)
 {
-	int shr;
-	const struct RSA_private_key *k = get_RSA_private_key(c);
-
-	if (k == NULL)
+	const struct private_key_stuff *pks = get_connection_private_key(c, &pubkey_type_rsa);
+	if (pks == NULL) {
 		return 0; /* failure: no key to use */
+	}
+
+	/* XXX: merge sign_hash_{RSA,ECDSA}()? */
+	const struct RSA_private_key *k = &pks->u.RSA_private_key;
 
 	size_t sz = k->pub.k;
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash_size < sz &&
 		sz <= sig_size);
-	shr = sign_hash_RSA(k, hash_val, hash_size, sig_val, sz, 0 /* for ikev2 only */);
+	int shr = sign_hash_RSA(k, hash_val, hash_size, sig_val, sz, 0 /* for ikev2 only */);
 	passert(shr == 0 || (int)sz == shr);
 	return shr;
 }

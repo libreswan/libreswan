@@ -50,10 +50,9 @@ extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				      const u_char *sig_val, size_t sig_len,
 				      enum notify_payload_hash_algorithms hash_algo);
 
-extern const struct RSA_private_key *get_RSA_private_key(
-	const struct connection *c);
-extern const struct ECDSA_private_key *get_ECDSA_private_key(
-	const struct connection *c);
+
+const struct private_key_stuff *get_connection_private_key(const struct connection *c,
+							   const struct pubkey_type *type);
 
 extern bool has_private_key(cert_t cert);
 extern void list_public_keys(bool utc, bool check_pub_keys);
