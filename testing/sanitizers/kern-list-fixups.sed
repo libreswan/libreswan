@@ -129,3 +129,4 @@ s/ FLOWLBL=[0-9]* / FLOWLBL=XXXXX /g
 /^.*clocksource.*$/d
 s/ qlen 1000$//
 /^type=PROCTITLE.*$/d
+/^\[ 00.00\] IN=.*$/d
