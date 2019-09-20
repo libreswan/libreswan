@@ -60,7 +60,16 @@ case "$1" in
 	# preliminaries
 	mkdir -p ${rundir}
 	chmod 700 ${rundir} > /dev/null 2>/dev/null
-	# Finally start the pluto daemon in a restart loop
+
+	# if namespace testing, start pluto directly
+	echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+	    echo "Redirecting to: namespaces direct start via ipsec pluto"
+	    exec ipsec pluto --config /etc/ipsec.conf
+	fi
+
+	# start regular pluto daemon in a restart loop
 	if [ ${initsystem} = systemd ]; then
 	    systemctl status ipsec.service > /dev/null
 	    RETVAL=$?
@@ -94,6 +103,10 @@ case "$1" in
 	;;
   stop|--stop|_autostop)	# _autostop is same as stop
 	# Shut things down.
+
+	# if namespace testing, stop pluto directly
+	echo $SUDO_COMMAND | grep "/bin/nsenter " && exec ipsec whack --shutdown
+
 	if [ ${initsystem} = systemd ]; then
 	    echo "Redirecting to: systemctl stop ipsec.service"
 	    # don't exec, we need to cleanup the IPsec stack afterwards
