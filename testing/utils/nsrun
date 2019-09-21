@@ -619,10 +619,8 @@ class TestList:
             tdir = self.trpath + '/' + testdir
             if not os.path.exists(tdir):
                 # This is serious
-                if self.verbose:
-                    logger.error(
-                        "****** invalid test %s: directory %s not found", testdir, tdir)
-                    continue
+                logger.error("****** invalid test %s: directory %s not found", testdir, tdir)
+                continue
             reason = self.skip_test(testtype, testdir, testexpect)
             if reason and self.args.log_level == "debug":
                 TestList.log_skip(testdir, reason, )
