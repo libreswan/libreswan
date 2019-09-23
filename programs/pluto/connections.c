@@ -388,110 +388,59 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 
 /*
  * Format the topology of a connection end, leaving out defaults.
- * Largest left end looks like: client === host : port [ host_id ] --- hop
- * Note: if that == NULL, skip nexthop
- * Returns strlen of formatted result (length excludes NUL at end).
+ * Used to construct strings of the form:
+ *
+ *      LOCAL_END ...END_REMOTE
+ *
+ * where END_REMOTE is roughly formatted as the mirror image of
+ * LOCAL_END.  IS_LEFT (confusing name given connection left/right)
+ * determines if the LHS or RHS string is being emitted..  LOCAL_END's
+ * longest string is:
+ *
+ *    client === host : port [ host_id ] --- HOP
+ *
+ * Note: if that == NULL, skip nexthop Returns strlen of formatted
+ * result (length excludes NUL at end).
  */
-size_t format_end(char *buf,
-		size_t buf_len,
-		const struct end *this,
-		const struct end *that,
-		bool is_left,
-		lset_t policy,
-		bool filter_rnh)
-{
-	const char *client_sep = "";
-	char protoport[sizeof(":255/65535")];
-	const char *host = NULL;
-	char host_space[ADDRTOT_BUF + 256]; /* if you change this, see below */
-	bool dohost_name = FALSE;
-	char host_port[sizeof(":65535")];
-	char host_id[IDTOA_BUF + 2];
-	char endopts[sizeof("MS+MC+XS+XC+Sxx+CAT") + 1] = "";
-	const char *hop_sep = "";
-	const char *open_brackets  = "";
-	const char *close_brackets = "";
-	const char *id_obrackets = "";
-	const char *id_cbrackets = "";
-	const char *id_comma = "";
 
+static void jam_end_host(jambuf_t *buf, const struct end *this, lset_t policy)
+{
+	/* HOST */
+	bool dohost_name;
 	if (isanyaddr(&this->host_addr)) {
 		if (this->host_type == KH_IPHOSTNAME) {
-			host = strcpy(host_space, "%dns");
-			dohost_name = TRUE;
+			dohost_name = true;
+			jam_string(buf, "%dns");
 		} else {
+			dohost_name = false;
 			switch (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)) {
 			case POLICY_GROUP:
-				host = "%group";
+				jam_string(buf, "%group");
 				break;
 			case POLICY_OPPORTUNISTIC:
-				host = "%opportunistic";
+				jam_string(buf, "%opportunistic");
 				break;
 			case POLICY_GROUP | POLICY_OPPORTUNISTIC:
-				host = "%opportunisticgroup";
+				jam_string(buf, "%opportunisticgroup");
 				break;
 			default:
-				host = "%any";
+				jam_string(buf, "%any");
 				break;
 			}
 		}
+	} else if (is_virtual_end(this)) {
+		dohost_name = false;
+		jam_string(buf, "%virtual");
+	} else {
+		dohost_name = true;
+		jam_address_sensitive(buf, &this->host_addr);
 	}
 
-	if (is_virtual_end(this) && isanyaddr(&this->host_addr))
-		host = "%virtual";
-
-	/* [client===] */
-	subnet_buf client = { "" };
-	if (this->has_client) {
-		ip_address client_net = subnet_prefix(&this->client);
-		ip_address client_mask = subnet_mask(&this->client);
-		client_sep = "===";
-
-		/* {client_subnet_wildcard} */
-		if (this->has_client_wildcard) {
-			open_brackets  = "{";
-			close_brackets = "}";
-		}
-
-		if (isanyaddr(&client_net) && isanyaddr(&client_mask) &&
-			(policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC))) {
-			client_sep = ""; /* boring case */
-		} else if (is_virtual_end(this)) {
-			if (is_virtual_vhost(this))
-				strcpy(client.buf, "vhost:?");
-			else
-				strcpy(client.buf, "vnet:?");
-		} else if (subnetisnone(&this->client)) {
-			strcpy(client.buf, "?");
-		} else {
-			str_subnet(&this->client, &client);
-		}
+	/* <NAME> */
+	if (dohost_name && this->host_addr_name != NULL) {
+		jam(buf, "<%s>", this->host_addr_name);
 	}
 
-	/* host */
-	if (host == NULL) {
-		ipstr_buf b;
-
-		jam_str(host_space, sizeof(host_space),
-			sensitive_ipstr(&this->host_addr, &b));
-		host = host_space;
-		dohost_name = TRUE;
-	}
-
-	if (dohost_name) {
-		if (this->host_addr_name != NULL) {
-			size_t icl = strlen(host_space);
-			int room = sizeof(host_space) - icl - 1;
-			int needed = snprintf(host_space + icl, room, "<%s>",
-					this->host_addr_name);
-
-			if (needed > room)
-				loglog(RC_BADID,
-					"format_end: buffer too small for dohost_name - should not happen");
-		}
-	}
-
-	host_port[0] = '\0';
 	if (this->host_port != pluto_port) {
 		/*
 		 * XXX: Part of the problem is that code is stomping
@@ -501,103 +450,174 @@ size_t format_end(char *buf,
 		 * XXX: Format this as ADDRESS:PORT<name> not
 		 * ADDRESS<name>:PORT?  Or always emit the PORT?
 		 */
-		snprintf(host_port, sizeof(host_port), ":%u",
-			 this->host_port);
+		jam(buf, ":%u", this->host_port);
 	}
+}
 
+static void jam_end_client(jambuf_t *buf, const struct end *this,
+			   lset_t policy, bool is_left)
+{
+	/* [CLIENT===] */
+	if (this->has_client) {
+		ip_address client_net = subnet_prefix(&this->client);
+		ip_address client_mask = subnet_mask(&this->client);
+		/* XXX: subnet_has_all_addresses()? */
+		bool boring = (isanyaddr(&client_net) && isanyaddr(&client_mask) &&
+			       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
+
+		if (!boring && !is_left) {
+			jam_string(buf, "===");
+		}
+		if (this->has_client_wildcard) {
+			jam_string(buf, "{");
+		}
+
+		if (boring) {
+			/* boring case */
+		} else if (is_virtual_end(this)) {
+			if (is_virtual_vhost(this))
+				jam_string(buf, "vhost:?");
+			else
+				jam_string(buf,  "vnet:?");
+		} else if (subnetisnone(&this->client)) {
+			jam_string(buf, "?");
+		} else {
+			jam_subnet(buf, &this->client);
+		}
+
+		if (this->has_client_wildcard) {
+			jam_string(buf, "}");
+		}
+		if (!boring && is_left) {
+			jam_string(buf, "===");
+		}
+
+	}
+}
+
+static void jam_end_protoport(jambuf_t *buf, const struct end *this)
+{
 	/* payload portocol and port */
-	protoport[0] = '\0';
 	if (this->has_port_wildcard) {
-		snprintf(protoport, sizeof(protoport), ":%u/%%any",
-			this->protocol);
+		jam(buf, ":%u/%%any", this->protocol);
 	} else if (this->port || this->protocol) {
-		snprintf(protoport, sizeof(protoport), ":%u/%u",
-			this->protocol,
-			this->port);
+		jam(buf, ":%u/%u", this->protocol, this->port);
 	}
+}
 
+static void jam_end_id(jambuf_t *buf, const struct end *this)
+{
 	/* id, if different from host */
-	host_id[0] = '\0';
+	bool open_paren = false;
 	if (!(this->id.kind == ID_NONE ||
-		(id_is_ipaddr(&this->id) &&
-		 sameaddr(&this->id.ip_addr, &this->host_addr)))) 
-	{
-		id_obrackets = "[";
-		id_cbrackets = "]";
-		idtoa(&this->id, host_id, sizeof(host_id));
+	      (id_is_ipaddr(&this->id) &&
+	       sameaddr(&this->id.ip_addr, &this->host_addr)))) {
+		open_paren = true;
+		jam_string(buf, "[");
+		jam_id(buf, &this->id, jam_sanitized_bytes);
 	}
 
 	if (this->modecfg_server || this->modecfg_client ||
 	    this->xauth_server || this->xauth_client ||
 	    this->sendcert != cert_defaultcertpolicy) {
-		char *p = endopts;
 
-		if (id_obrackets[0] == '[') {
-			id_comma = ",";
+		if (open_paren) {
+			jam_string(buf, ",");
 		} else {
-			id_obrackets = "[";
-			id_cbrackets = "]";
+			open_paren = true;
+			jam_string(buf, "[");
 		}
 
 		if (this->modecfg_server)
-			p = jam_str(endopts, sizeof(endopts), "MS");
-
+			jam_string(buf, "MS");
 		if (this->modecfg_client)
-			p = add_str(endopts, sizeof(endopts), p, "+MC");
-
+			jam_string(buf, "+MC");
 		if (this->cat)
-			p = add_str(endopts, sizeof(endopts), p, "+CAT");
-
+			jam_string(buf, "+CAT");
 		if (this->xauth_server)
-			p = add_str(endopts, sizeof(endopts), p, "+XS");
-
+			jam_string(buf, "+XS");
 		if (this->xauth_client)
-			p = add_str(endopts, sizeof(endopts), p, "+XC");
+			jam_string(buf, "+XC");
 
-		{
-			const char *send_cert;
-
-			switch (this->sendcert) {
-			case CERT_NEVERSEND:
-				send_cert = "+S-C";
-				break;
-			case CERT_SENDIFASKED:
-				send_cert = "+S?C";
-				break;
-			case CERT_ALWAYSSEND:
-				send_cert = "+S=C";
-				break;
-			default:
-				send_cert = "+UNKNOWN";
-			}
-			add_str(endopts, sizeof(endopts), p, send_cert);
+		switch (this->sendcert) {
+		case CERT_NEVERSEND:
+			jam(buf, "+S-C");
+			break;
+		case CERT_SENDIFASKED:
+			jam(buf, "+S?C");
+			break;
+		case CERT_ALWAYSSEND:
+			jam(buf, "+S=C");
+			break;
+		default:
+			jam(buf, "+UNKNOWN");
 		}
 	}
 
-	/* [---hop] */
-	address_buf hop_buf; /* must be at same scope as HOP */
-	const char *hop = "";
-	hop_sep = "";
-	if (that != NULL && !filter_rnh && !sameaddr(&this->host_nexthop, &that->host_addr)) {
-		hop = ipstr(&this->host_nexthop, &hop_buf);
-		hop_sep = "---";
+	if (open_paren) {
+		jam_string(buf, "]");
 	}
+}
 
-	if (is_left) {
-		snprintf(buf, buf_len, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
-			open_brackets, client.buf, close_brackets,
-			client_sep, host, host_port,
-			id_obrackets, host_id, id_comma, endopts,
-			id_cbrackets,
-			protoport, hop_sep, hop);
-	} else {
-		snprintf(buf, buf_len, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
-			hop, hop_sep, host, host_port,
-			id_obrackets, host_id, id_comma, endopts,
-			id_cbrackets,
-			protoport, client_sep,
-			open_brackets, client.buf, close_brackets);
+static void jam_end_nexthop(jambuf_t *buf, const struct end *this,
+			    const struct end *that, bool filter_rnh, bool is_left)
+{
+	/* [---hop] */
+	if (that != NULL &&
+	    !filter_rnh &&
+	    !sameaddr(&this->host_nexthop, &that->host_addr)) {
+		if (is_left) {
+			jam_string(buf, "---");
+		}
+		jam_address(buf, &this->host_nexthop);
+		if (!is_left) {
+			jam_string(buf, "---");
+		}
 	}
+}
+
+static void jam_end(jambuf_t *buf,
+		  const struct end *this,
+		    const struct end *that,
+		    bool is_left,
+		    lset_t policy,
+		    bool filter_rnh)
+{
+	if (is_left) {
+		/* CLIENT=== */
+		jam_end_client(buf, this, policy, is_left);
+		/* HOST */
+		jam_end_host(buf, this, policy);
+		/* [ID+OPTS] */
+		jam_end_id(buf, this);
+		/* /PROTOCOL:PORT */
+		jam_end_protoport(buf, this);
+		/* ---NEXTHOP */
+		jam_end_nexthop(buf, this, that, filter_rnh, is_left);
+	} else {
+		/* HOPNEXT--- */
+		jam_end_nexthop(buf, this, that, filter_rnh, is_left);
+		/* HOST */
+		jam_end_host(buf, this, policy);
+		/* [ID+OPTS] */
+		jam_end_id(buf, this);
+		/* /PROTOCOL:PORT */
+		jam_end_protoport(buf, this);
+		/* ===CLIENT */
+		jam_end_client(buf, this, policy, is_left);
+	}
+}
+
+size_t format_end(char *buf,
+		  size_t buf_len,
+		  const struct end *this,
+		  const struct end *that,
+		  bool is_left,
+		  lset_t policy,
+		  bool filter_rnh)
+{
+	jambuf_t b = array_as_jambuf(buf, buf_len);
+	jam_end(&b, this, that, is_left, policy, filter_rnh);
 	return strlen(buf);
 }
 
