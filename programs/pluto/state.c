@@ -2047,85 +2047,71 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 }
 
 /* note: this mutates *st by calling get_sa_info */
-void fmt_list_traffic(struct state *st, char *state_buf,
-		      const size_t state_buf_len)
+static void jam_state_traffic(jambuf_t *buf, struct state *st)
 {
+	jam(buf, "#%lu: ", st->st_serialno);
 	const struct connection *c = st->st_connection;
-	char inst[CONN_INST_BUF];
-	char traffic_buf[512];
-	char thatidbuf[IDTOA_BUF];
+	jam_connection(buf, c);
 
-	state_buf[0] = '\0';   /* default to empty */
-	traffic_buf[0] = '\0';
-	thatidbuf[0] = '\0';
+	if (st->st_xauth_username[0] != '\0') {
+		jam(buf, ", username=%s", st->st_xauth_username);
+	}
 
+	/* traffic */
+	jam(buf, ", type=%s, add_time=%"PRIu64,
+	    (st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN"),
+	    st->st_esp.add_time);
+
+	if (get_sa_info(st, TRUE, NULL)) {
+		unsigned inb = (st->st_esp.present ? st->st_esp.our_bytes:
+				st->st_ah.present ? st->st_ah.our_bytes :
+				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0);
+		jam(buf, ", inBytes=%u", inb);
+	}
+
+	if (get_sa_info(st, FALSE, NULL)) {
+		unsigned outb = (st->st_esp.present ? st->st_esp.peer_bytes :
+				 st->st_ah.present ? st->st_ah.peer_bytes :
+				 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0);
+		jam(buf, ", outBytes=%u", outb);
+	}
+
+	if (st->st_xauth_username[0] == '\0') {
+		jam(buf, ", id='");
+		jam_id(buf, &c->spd.that.id, jam_sanitized_bytes);
+		jam(buf, "'");
+	}
+
+	if (c->spd.that.has_lease) {
+		/*
+		 * "this" gave "that" a lease from "this" address
+		 * pool.
+		 */
+		jam(buf, ", lease=");
+		jam_subnet(buf, &c->spd.that.client);
+	} else if (c->spd.this.has_internal_address) {
+		/*
+		 * "this" received an internal address from "that";
+		 * presumably from "that"'s address pool.
+		 */
+		jam(buf, ", lease=");
+		jam_subnet(buf, &c->spd.this.client);
+	}
+}
+
+static void whack_log_state_traffic(enum rc_type rc, struct state *st)
+{
 	if (IS_IKE_SA(st))
 		return; /* ignore non-IPsec states */
 
 	if (!IS_IPSEC_SA_ESTABLISHED(st))
 		return; /* ignore non established states */
 
-	fmt_conn_instance(c, inst);
-
-	{
-		char *mode = st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN";
-		char *mbcp = traffic_buf + snprintf(traffic_buf,
-				sizeof(traffic_buf) - 1, ", type=%s, add_time=%" PRIu64, mode,  st->st_esp.add_time);
-
-		if (get_sa_info(st, TRUE, NULL)) {
-			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			unsigned inb = st->st_esp.present ? st->st_esp.our_bytes:
-				st->st_ah.present ? st->st_ah.our_bytes :
-				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0;
-			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u", inb);
-		}
-
-		if (get_sa_info(st, FALSE, NULL)) {
-			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			unsigned outb = st->st_esp.present ? st->st_esp.peer_bytes :
-				st->st_ah.present ? st->st_ah.peer_bytes :
-				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
-			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
-		}
+	/* whack-log-global - no prefix */
+	LSWLOG_WHACK(rc, buf) {
+		/* note: this mutates *st by calling get_sa_info */
+		jam_state_traffic(buf, st);
 	}
-
-	subnet_buf lease_ip = { "" };
-	if (c->spd.that.has_lease) {
-		/*
-		 * "this" gave "that" a lease from "this" address
-		 * pool.
-		 */
-		str_subnet(&c->spd.that.client, &lease_ip);
-	} else if (c->spd.this.has_internal_address) {
-		/*
-		 * "this" received an internal address from "that";
-		 * presumably from "that"'s address pool.
-		 */
-		str_subnet(&c->spd.this.client, &lease_ip);
-	}
-
-	if (st->st_xauth_username[0] == '\0') {
-		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
-	}
-
-	snprintf(state_buf, state_buf_len,
-		 "#%lu: \"%s\"%s%s%s%s%s%s%s%s%s",
-		 st->st_serialno,
-		 c->name,
-		 inst,
-
-		 st->st_xauth_username[0] != '\0' ? ", username=" : "",
-		 st->st_xauth_username,
-
-		 traffic_buf,
-
-		 thatidbuf[0] != '\0' ? ", id='" : "",
-		 thatidbuf,
-		 thatidbuf[0] != '\0' ? "'" : "",
-
-		 lease_ip.buf[0] != '\0' ? ", lease=" : "",
-		 lease_ip.buf
-		);
 }
 
 /*
@@ -2447,18 +2433,14 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 	return array;
 }
 
-static int log_trafic_state(struct connection *c, void *arg UNUSED)
+static int whack_log_newest_state_traffic(struct connection *c, void *arg UNUSED)
 {
-	char state_buf[LOG_WIDTH];
 	struct state *st = state_by_serialno(c->newest_ipsec_sa);
 
 	if (st == NULL)
 		return 0;
 
-	fmt_list_traffic(st, state_buf, sizeof(state_buf));
-	if (state_buf[0] != '\0')
-		whack_log(RC_INFORMATIONAL_TRAFFIC, "%s", state_buf);
-
+	whack_log_state_traffic(RC_INFORMATIONAL_TRAFFIC, st);
 	return 1;
 }
 
@@ -2472,10 +2454,7 @@ void show_traffic_status(const char *name)
 		if (array != NULL) {
 			int i;
 			for (i = 0; array[i] != NULL; i++) {
-				char state_buf[LOG_WIDTH];
-				fmt_list_traffic(array[i], state_buf, sizeof(state_buf));
-				if (state_buf[0] != '\0')
-					whack_log(RC_INFORMATIONAL_TRAFFIC, "%s", state_buf);
+				whack_log_state_traffic(RC_INFORMATIONAL_TRAFFIC, array[i]);
 			}
 			pfree(array);
 		}
@@ -2483,13 +2462,15 @@ void show_traffic_status(const char *name)
 		struct connection *c = conn_by_name(name, TRUE, TRUE);
 
 		if (c != NULL) {
-			(void) log_trafic_state(c, NULL);
+			(void) whack_log_newest_state_traffic(c, NULL);
 		} else {
-			int count = foreach_connection_by_alias(name, log_trafic_state, NULL);
-
-			if (count == 0)
+			int count = foreach_connection_by_alias(name,
+								whack_log_newest_state_traffic,
+								NULL);
+			if (count == 0) {
 				loglog(RC_UNKNOWN_NAME,
-					"no such connection or aliased connection named \"%s\"", name);
+				       "no such connection or aliased connection named \"%s\"", name);
+			}
 		}
 	}
 }
