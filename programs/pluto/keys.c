@@ -740,20 +740,16 @@ static struct secret *lsw_get_secret(const struct connection *c,
 				     enum PrivateKeyKind kind,
 				     bool asym)
 {
-	const struct id *my_id = &c->spd.this.id;
-	const struct id *his_id = &c->spd.that.id;
+	const struct id *const this_id = &c->spd.this.id;
+	const struct id *that_id = &c->spd.that.id; /* can change */
 
-	char idme[IDTOA_BUF];
-
-	idtoa(my_id, idme,  sizeof(idme));
-
-	DBG(DBG_CONTROL, {
-		id_buf idhim;
+	if (DBGP(DBG_BASE)) {
+		id_buf this_buf, that_buf;
 		DBG_log("started looking for secret for %s->%s of kind %s",
-			idme,
-			str_id(his_id, &idhim),
+			str_id(this_id, &this_buf),
+			str_id(that_id, &that_buf),
 			enum_name(&pkk_names, kind));
-	});
+	}
 
 	/* is there a certificate assigned to this connection? */
 	if ((kind == PKK_ECDSA || kind == PKK_RSA) &&
@@ -804,7 +800,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		return best;
 	}
 
-	/* under certain conditions, override his_id to %ANYADDR */
+	/* under certain conditions, override that_id to %ANYADDR */
 
 	struct id rw_id;
 
@@ -831,21 +827,20 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		rw_id.kind = addrtypeof(&c->spd.that.host_addr) == AF_INET ?
 			     ID_IPV4_ADDR : ID_IPV6_ADDR;
 		rw_id.ip_addr = address_any(address_type(&c->spd.that.host_addr));
-		his_id = &rw_id;
+		that_id = &rw_id;
 	}
 
-	DBG(DBG_CONTROL, {
-		id_buf idhim_revised;
-
+	if (DBGP(DBG_BASE)) {
+		id_buf this_buf, that_buf;
 		DBG_log("actually looking for secret for %s->%s of kind %s",
-			idme,
-			str_id(his_id, &idhim_revised),
+			str_id(this_id, &this_buf),
+			str_id(that_id, &that_buf),
 			enum_name(&pkk_names, kind));
-	});
+	}
 
 	return lsw_find_secret_by_id(pluto_secrets,
 				     kind,
-				     my_id, his_id, asym);
+				     this_id, that_id, asym);
 }
 
 /*
