@@ -227,7 +227,7 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 }
 
 static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
-		uint32_t ttl)
+				     uint32_t ttl)
 {
 	const struct state *st = state_with_serialno(dnsr->so_serial_t);
 	const struct id *keyid = &st->st_connection->spd.that.id;
@@ -250,13 +250,13 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	if (!get_keyval_chunk(dnsr, rdf, &keyval))
 		return "could not get key to add";
 
-	char thatidbuf[IDTOA_BUF];
-
-	idtoa(&st->st_connection->spd.that.id, thatidbuf, sizeof(thatidbuf));
 	/* algorithm is hardcoded RSA -- PUBKEY_ALG_RSA */
 	if (dnsr->delete_existing_keys) {
-		DBGF(DBG_DNS, "delete RSA public keys(s) from pluto id=%s",
-				thatidbuf);
+		if (DBGP(DBG_BASE)) {
+			id_buf thatidbuf;
+			dbg("delete RSA public keys(s) from pluto id=%s",
+			    str_id(&st->st_connection->spd.that.id, &thatidbuf));
+		}
 		/* delete only once. then multiple keys could be added */
 		delete_public_keys(&pluto_pubkeys, keyid, &pubkey_type_rsa);
 		dnsr->delete_existing_keys = FALSE;
@@ -265,22 +265,29 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	enum dns_auth_level al = dnsr->secure == UB_EVNET_SECURE ?
 		DNSSEC_SECURE : DNSSEC_INSECURE;
 
-	if (keyid->kind == ID_FQDN) {
-		DBGF(DBG_DNS, "add IPSECKEY pluto as publickey %s %s %s",
-			thatidbuf, ttl_buf,
-			enum_name(&dns_auth_level_names, al));
-	} else {
-		DBGF(DBG_DNS, "add IPSECKEY pluto as publickey %s dns query is %s %s %s",
-			thatidbuf,
-			dnsr->qname, ttl_buf,
-			enum_name(&dns_auth_level_names, al));
+	if (DBGP(DBG_BASE)) {
+		if (keyid->kind == ID_FQDN) {
+			id_buf thatidbuf;
+			DBG_log("add IPSECKEY pluto as publickey %s %s %s",
+				str_id(&st->st_connection->spd.that.id, &thatidbuf),
+				ttl_buf, enum_name(&dns_auth_level_names, al));
+		} else {
+			id_buf thatidbuf;
+			DBG_log("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
+				str_id(&st->st_connection->spd.that.id, &thatidbuf),
+				dnsr->qname, ttl_buf,
+				enum_name(&dns_auth_level_names, al));
+		}
 	}
 
 	err_t ugh = add_ipseckey(keyid, al, &pubkey_type_rsa, ttl, ttl_used,
 				 &keyval, &pluto_pubkeys);
-	if (ugh != NULL)
+	if (ugh != NULL) {
+		id_buf thatidbuf;
 		loglog(RC_LOG_SERIOUS, "Add publickey failed %s, %s, %s", ugh,
-				thatidbuf, dnsr->log_buf);
+		       str_id(&st->st_connection->spd.that.id, &thatidbuf),
+		       dnsr->log_buf);
+	}
 
 	freeanychunk(keyval);
 	return NULL;
