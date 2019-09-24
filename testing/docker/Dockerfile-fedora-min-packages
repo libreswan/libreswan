@@ -25,6 +25,6 @@ RUN dnf builddep -y libreswan
 RUN ls -l /usr/bin/update-crypto-policies && /usr/bin/update-crypto-policies --set LEGACY || true
 RUN echo "Do not add files here.  networkig is handled by systemd-networkd in\n/etc/systemd/nework\networkctl" > /etc/sysconfig/network-scripts/README.libreswan
 RUN ls
-RUN cd /home/build/libreswan; ls; make install-rpm-dep && cd /
+RUN cd /home/build/libreswan; ls; make install-rpm-build-dep && cd /
 RUN rm -fr /etc/sysconfig/network-scripts/ifcfg-ens3
 # RUN /home/build/libreswan/testing/guestbin/swan-transmogrify
