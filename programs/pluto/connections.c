@@ -99,6 +99,8 @@ static bool load_end_cert_and_preload_secret(const char *which, const char *pubk
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end);
 
+static bool idr_wildmatch(const struct end *this, const struct id *b);
+
 /*
  * Find a connection by name.
  *
@@ -2750,7 +2752,8 @@ struct connection *refine_host_connection(const struct state *st,
 
 			/* peer ID matches current connection -- check for "you Tarzan, me Jane" */
 			if (!initiator && tarzan_id != NULL) {
-				if (idr_wildmatch(c, tarzan_id)) {
+				/* ??? pexpect(c->spd.spd_next == NULL); */
+				if (idr_wildmatch(&c->spd.this, tarzan_id)) {
 					DBGF(DBG_CONTROLMORE, "The remote specified our ID in its IDr payload");
 					return c;
 				} else {
@@ -2890,7 +2893,8 @@ struct connection *refine_host_connection(const struct state *st,
 						str_id(&d->spd.this.id, &usb),
 						enum_show(&ike_idtype_names, d->spd.this.id.kind));
 				});
-				if (!idr_wildmatch(d, tarzan_id)) {
+				/* ??? pexpect(d->spd.spd_next == NULL); */
+				if (!idr_wildmatch(&d->spd.this, tarzan_id)) {
 					DBGF(DBG_CONTROL, "Peer IDr payload does not match our expected ID, this connection will not do");
 					continue;
 				}
@@ -4167,35 +4171,46 @@ void liveness_action(struct connection *c, enum ike_version ike_version)
 	}
 }
 
-
-bool idr_wildmatch(const struct connection *c, const struct id *idr)
+static bool idr_wildmatch(const struct end *this, const struct id *idr)
 {
-	const struct id *wild = &c->spd.this.id;
-
 	/* check if received IDr is a valid SAN of our cert */
-	if (c->spd.this.cert.ty != CERT_NONE && (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
-		/* this will [debug]log any errors */
-		/* XXX: is calling this with ID_DER_ASN1_DN futile? */
-		if (cert_VerifySubjectAltName(c->spd.this.cert.u.nss_cert, idr)) {
-			/* already debug logged */
-			return true;
-		}
-	}
+	/* cert_VerifySubjectAltName, if called, will [debug]log any errors */
+	/* XXX:  calling cert_VerifySubjectAltName with ID_DER_ASN1_DN futile? */
+	/* ??? if cert matches we don't actually do any further ID matching, wildcard or not */
+	if (this->cert.ty != CERT_NONE &&
+	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN) &&
+	    cert_VerifySubjectAltName(this->cert.u.nss_cert, idr))
+		return true;
 
-	/* if no wildcard, do simple id check */
-	if (!(wild->kind == idr->kind && wild->kind == ID_FQDN))
+	const struct id *wild = &this->id;
+
+	/* if not both ID_FQDN, fall back to same_id (no wildcarding possible) */
+	if (idr->kind != ID_FQDN || wild->kind != ID_FQDN)
 		return same_id(wild, idr);
 
-	/* check wildcard ID on connection case against IDr payload */
-	size_t wl = wild->name.len, il = idr->name.len;
+	size_t wl = wild->name.len;
 	const char *wp = (const char *) wild->name.ptr;
-	const char *ip = (const char *) idr->name.ptr;
 
-	return  wl > 0 && wp[0] == '*' ?
-		/* wildcard case */
-		wl-1 <= il && strncaseeq(wp+1, ip+il-(wl-1), wl-1) :
-		/* literal case */
-		wl == il && strncaseeq(wp, ip, wl);
+	/* if wild has no *, fall back to same_id (no wildcard present) */
+	if (wl == 0 || wp[0] != '*')
+		return same_id(wild, idr);
+
+	while (wp[wl - 1] == '.')
+		wl--;	/* strip trailing dot */
+
+	size_t il = idr->name.len;
+	const char *ip = (const char *) idr->name.ptr;
+	while (il > 0 && ip[il - 1] == '.')
+		il--;	/* strip trailing dot */
+
+	/*
+	 * ??? should we require that the * match only whole components?
+	 * wl-1 == il ||   // total match
+	 * wl > 1 && wp[1] == '.' ||   // wild included leading "."
+	 * ip[il-(wl-1) - 1] == '.'   // match preceded by "."
+	 */
+
+	return wl-1 <= il && strncaseeq(&wp[1], &ip[il-(wl-1)], wl-1);
 }
 
 /* sa priority and type should really go into kernel_sa */

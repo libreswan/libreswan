@@ -581,8 +581,6 @@ extern void liveness_clear_connection(struct connection *c, const char *v);
 
 extern void liveness_action(struct connection *c, enum ike_version ike_version);
 
-extern bool idr_wildmatch(const struct connection *c, const struct id *b);
-
 extern uint32_t calculate_sa_prio(const struct connection *c);
 
 so_serial_t get_newer_sa_from_connection(struct state *st);
