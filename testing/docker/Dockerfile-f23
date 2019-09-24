@@ -16,7 +16,7 @@ VOLUME [ "/sys/fs/cgroup" ]
 CMD ["/usr/sbin/init"]
 RUN dnf install -y ElectricFence audit-libs-devel bind-utils bison \
  conntrack-tools curl-devel dnf-plugins-core fipscheck-devel flex gcc git \
- hping3 ike-scan iproute iptables ipsec-tools ldns-devel libcap-ng-devel \
+ hping3 ike-scan iproute iptables ldns-devel libcap-ng-devel \
  libevent-devel libfaketime libseccomp libseccomp-devel libselinux-devel \
  lsof make mtr nc net-tools nmap nsd nspr-devel nss-devel nss-tools ocspd \
  openldap-devel openssh-server openssh-clients pam-devel pam-devel pexpect \

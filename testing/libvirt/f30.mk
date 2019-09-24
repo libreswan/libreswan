@@ -50,7 +50,6 @@ KVM_UPGRADE_PACKAGES ?= \
     hping3 \
     ike-scan \
     iproute \
-    ipsec-tools \
     iptables \
     iputils \
     ldns \

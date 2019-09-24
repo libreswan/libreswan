@@ -13,7 +13,7 @@ rm -f /lib/systemd/system/basic.target.wants/*;\
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 RUN dnf install -y ElectricFence audit-libs-devel bind-utils bison \
  conntrack-tools curl-devel dnf-plugins-core fipscheck-devel flex gcc git \
- hping3 ipsec-tools libcap-ng-devel libevent-devel libselinux-devel lsof make \
+ hping3 libcap-ng-devel libevent-devel libselinux-devel lsof make \
  mtr nc nc6 net-tools nmap nspr-devel nss-devel nss-tools openldap-devel
  pam-devel pam-devel pexpect pexpect psmisc pyOpenSSL python3-cryptography \
  python3-pexpect python3-setproctitle \
