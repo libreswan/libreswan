@@ -175,7 +175,6 @@ struct end {
 	bool has_id_wildcards;
 	char *updown;
 	uint16_t host_port;		/* where the IKE port is */
-	bool host_port_specific;	/* if TRUE, then IKE ports are tested for */
 	uint16_t port;			/* port number, if per-port keying */
 	uint8_t protocol;		/* transport-protocol number, if per-X keying */
 
