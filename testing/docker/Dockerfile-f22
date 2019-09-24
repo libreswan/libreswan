@@ -16,7 +16,7 @@ RUN dnf install -y ElectricFence audit-libs-devel bind-utils bison \
  hping3 ipsec-tools libcap-ng-devel libevent-devel libselinux-devel lsof make \
  mtr nc nc6 net-tools nmap nspr-devel nss-devel nss-tools openldap-devel
  pam-devel pam-devel pexpect pexpect psmisc pyOpenSSL python3-cryptography \
- python3-pexpect python3-setproctitle racoon2 \
+ python3-pexpect python3-setproctitle \
  redhat-rpm-config rpm-build screen strace systemd-devel tcpdump telnet \
  traceroute trousers unbound unbound-devel unbound-libs valgrind vim-enhanced \
  wget xl2tpd xmlto;

@@ -194,8 +194,6 @@ if hostname != "nic":
         dname = "pluto"
     elif args.userland == "strongswan":
         dname = "charon"
-    elif args.userland == "racoon":
-        dname = "racoon"
     else:
         dname = "iked"
 
@@ -210,7 +208,7 @@ if hostname != "nic":
         os.symlink(daemonlogfile, tmplink)
    
 if args.userland:
-    if not args.userland in ("libreswan", "strongswan", "racoon", "shrew", "openswan"):
+    if not args.userland in ("libreswan", "strongswan", "openswan"):
         sys.exit("swan-prep: unknown userland type '%s'" % args.userland)
     userland = args.userland
 else:
@@ -527,25 +525,6 @@ if userland == "strongswan" and args.x509:
                     certname, "/etc/strongswan/ipsec.d/certs/")
 
 
-if userland == "racoon2" or userland == "racoon":
-    # Racoon uses x509 files straight from /testing/x509/*
-    # shutil.copytree("%s/%s-racoon/"%(testpath,hostname), "/etc/racoon2/")
-    distutils.dir_util.copy_tree("%s/%s-racoon" %
-                                 (testpath, hostname), "/etc/racoon2/")
-    os.chmod("/etc/racoon2/psk/test.psk", 0o600)
-    os.chmod("/etc/racoon2/spmd.pwd", 0o600)
-    if not os.path.isdir("/var/run/racoon2"):
-        os.mkdir("/var/run/racoon2")
-        os.chmod("/var/run/racoon2", 0o600)
-    # craete stub ipsec.conf for stackmanager to load netkey
-    ipsecconf = open("/etc/ipsec.conf", "w")
-    ipsecconf.write("version 2\n")
-    ipsecconf.write("config setup\n")
-    ipsecconf.write("\tprotostack=netkey\n")
-    ipsecconf.close()
-
-if userland == "shrew":
-    print("shrew not yet tested/integrated")
 
 if hostname != "nic" and not args.ipv:
     subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
@@ -589,7 +568,7 @@ if not args.namespace: # inside namespace this would kill pluto from other ns
     # for some reason this fails to stop strongswan?
     subprocess.call(["systemctl", "stop", "strongswan"])
     # python has no pidof - just outsource to the shell, thanks python!
-    for dname in ( "pluto", "charon", "starter", "iked", "racoon2-spmd", "racoon2-iked"):
+    for dname in ( "pluto", "charon", "starter", "iked" ):
         try:
             if args.verbose:
                 print ("INFO found daemon runing stop it %s" % dname)
@@ -602,8 +581,7 @@ if not args.namespace: # inside namespace this would kill pluto from other ns
         if os.path.isfile("/usr/sbin/restorecon") and selinux == 'Enforcing':
             subprocess.getoutput("restorecon -Rv /etc/ipsec.* /var/lib/ipsec /usr/local/libexec/ipsec /usr/local/sbin/ipsec")
 
-# note shrew and racoon2 share a pid file name
-for pidfile in ("/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid", "/var/run/spmd.pid", "/var/run/starter.charon.pid"):
+for pidfile in ("/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/spmd.pid", "/var/run/starter.charon.pid"):
     if os.path.isfile(pidfile):
         os.unlink(pidfile)
 

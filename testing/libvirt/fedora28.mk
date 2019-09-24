@@ -87,7 +87,6 @@ KVM_UPGRADE_PACKAGES ?= \
     psmisc \
     python3-pyOpenSSL \
     python3-pexpect \
-    racoon2 \
     rpm-build \
     screen \
     strace \
