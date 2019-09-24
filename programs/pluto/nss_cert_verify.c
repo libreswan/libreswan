@@ -645,8 +645,8 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	jam_id(&raw_id_jambuf, id, jam_raw_bytes);
 	const char *raw_id = raw_id_buf;
 	if (id->kind == ID_FQDN) {
-		pexpect(raw_id[0] == '@');
-		raw_id++;
+		if (pexpect(raw_id[0] == '@'))
+			raw_id++;
 	} else {
 		pexpect(raw_id[0] != '@');
 	}
