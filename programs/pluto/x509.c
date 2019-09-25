@@ -793,8 +793,6 @@ bool match_certs_id(const struct certs *certs,
 		return false;
 	}
 
-	bool m;
-
 	switch (peer_id->kind) {
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
@@ -803,63 +801,72 @@ bool match_certs_id(const struct certs *certs,
 	{
 		/* simple match */
 		/* this logs errors; no need for duplication */
-		m = cert_VerifySubjectAltName(end_cert, peer_id);
-		break;
+		return cert_VerifySubjectAltName(end_cert, peer_id);
 	}
 
 	case ID_FROMCERT:
 	{
+		chunk_t end_cert_der_subject = same_secitem_as_chunk(end_cert->derSubject);
 		/* adopt ID from CERT (the CERT has been verified) */
-		char namebuf[IDTOA_BUF];
-		idtoa(peer_id, namebuf, sizeof(namebuf));
-		dbg("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf);
-		m = true;
-
-		dbg("stomping on peer_id");
+		if (DBGP(DBG_BASE)) {
+			id_buf idb;
+			dn_buf dnb;
+			DBG_log("ID_DER_ASN1_DN '%s' does not need further ID verification; stomping on peer_id with '%s'",
+				str_id(peer_id, &idb), str_dn(end_cert_der_subject, &dnb));
+		}
+		/* replace peer_id */
 		struct id id = {
 			.kind = ID_DER_ASN1_DN,
 			/* safe as duplicate_id() will clone this */
-			.name = same_secitem_as_chunk(end_cert->derSubject),
+			.name = end_cert_der_subject,
 		};
 		duplicate_id(peer_id, &id);
-		break;
+		return true;
 	}
 
 	case ID_DER_ASN1_DN:
 	{
-		char namebuf[IDTOA_BUF];
-		idtoa(peer_id, namebuf, sizeof(namebuf));
-
-		dn_buf sbuf;
-		int wildcards;  /* value ignored */
-
-		dbg("ID_DER_ASN1_DN '%s' needs further ID comparison against '%s'",
-			dntoasi(&sbuf, end_cert->derSubject),
-			namebuf);
-
-		m = match_dn_any_order_wild(peer_id->name, same_secitem_as_chunk(end_cert->derSubject),
-			&wildcards);
-		if (m) {
-			dbg("ID_DER_ASN1_DN '%s' matched our ID '%s'", end_cert->subjectName, namebuf);
-		} else {
-			loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
-			       end_cert->subjectName, namebuf);
+		chunk_t end_cert_der_subject = same_secitem_as_chunk(end_cert->derSubject);
+		if (DBGP(DBG_BASE)) {
+			/*
+			 * Dump .derSubject as an RFC 1485 string.
+			 * Include both our (str_dn()) and NSS's
+			 * (.subjectName) representations; does the
+			 * latter need sanitizing?
+			 */
+			dn_buf dnb;
+			id_buf idb;
+			DBG_log("comparing ID_DER_ASN1_DN '%s' to certificate derSubject='%s' (subjectName='%s')",
+				str_id(peer_id, &idb),
+				str_dn(end_cert_der_subject, &dnb),
+				end_cert->subjectName);
 		}
-		break;
+
+		int wildcards;  /* value ignored */
+		bool m = match_dn_any_order_wild(peer_id->name, end_cert_der_subject, &wildcards);
+		if (!m) {
+			/*
+			 * XXX: can these two errors be merged?  The
+			 * latter refers to a public key but this is
+			 * all about certificates.
+			 */
+			id_buf idb;
+			loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
+			       end_cert->subjectName, str_id(peer_id, &idb));
+		} else if (DBGP(DBG_BASE)) {
+			id_buf idb;
+			DBG_log("ID_DER_ASN1_DN '%s' matched our ID '%s'",
+				end_cert->subjectName,
+				str_id(peer_id, &idb));
+		}
+		return m;
 	}
 
 	default:
-		loglog(RC_LOG_SERIOUS, "Unhandled ID type %s",
+		loglog(RC_LOG_SERIOUS, "unhandled ID type %s; cannot match peer's certificate with expected peer ID",
 		       enum_show(&ike_idtype_names, peer_id->kind));
-		m = false;
-		break;
+		return false;
 	}
-
-	if (!m) {
-		libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
-	}
-
-	return m;
 }
 
 /*
@@ -913,6 +920,13 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
 	} else {
 		if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/)) {
+			/*
+			 * XXX: Below message is confusing - it refers
+			 * to both a public key (its a certificate)
+			 * and the subjectAltName (ID_DER_ASN1_DN does
+			 * not check that).
+			 */
+			libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
 			return LSW_CERT_MISMATCHED_ID;
 		}
 		dbg("SAN ID matched, updating that.cert");

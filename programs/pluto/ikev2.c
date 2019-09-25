@@ -2667,6 +2667,14 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			dbg("X509: CERT and ID matches current connection");
 			ike->sa.st_peer_alt_id = true;
 		} else {
+			/*
+			 * XXX: This first message is both redundant
+			 * and confusing - it refers to both a public
+			 * key (its a certificate) and the
+			 * subjectAltName (ID_DER_ASN1_DN does not
+			 * check that).
+			 */
+			libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
 			libreswan_log("X509: CERT payload does not match connection ID");
 			if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 				libreswan_log("X509: connection failed due to unmatched IKE ID in certificate SAN");
