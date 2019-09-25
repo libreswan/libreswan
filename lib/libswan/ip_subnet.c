@@ -21,6 +21,7 @@
 #include "ip_subnet.h"
 #include "libreswan/passert.h"
 #include "lswlog.h"	/* for pexpect() */
+#include "ip_info.h"
 
 ip_subnet subnet(const ip_address *address, int maskbits, int port)
 {
@@ -88,6 +89,30 @@ ip_subnet set_subnet_hport(const ip_subnet *subnet, int hport)
 bool subnet_is_specified(const ip_subnet *s)
 {
 	return endpoint_is_specified(&s->addr);
+}
+
+bool subnet_contains_all_addresses(const ip_subnet *s)
+{
+	const struct ip_info *afi = subnet_type(s);
+	if (!pexpect(afi != NULL) ||
+	    s->maskbits != 0) {
+		return false;
+	}
+	ip_address network = subnet_prefix(s);
+	return (address_is_any(&network)
+		&& subnet_hport(s) == 0);
+}
+
+bool subnet_contains_no_addresses(const ip_subnet *s)
+{
+	const struct ip_info *afi = subnet_type(s);
+	if (!pexpect(afi != NULL) ||
+	    s->maskbits != afi->mask_cnt) {
+		return false;
+	}
+	ip_address network = subnet_prefix(s);
+	return (address_is_any(&network)
+		&& subnet_hport(s) == 0);
 }
 
 /*

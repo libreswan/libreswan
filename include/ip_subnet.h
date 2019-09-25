@@ -110,14 +110,26 @@ extern void jam_subnet_port(struct lswlog *buf, const ip_subnet *subnet);
  * Extract details
  */
 
+const struct ip_info *subnet_type(const ip_subnet *subnet);
+
 /* mutually exclusive */
+/* not very well defined, is no_addresses "specified" */
 #if 0
 extern const ip_subnet subnet_invalid;
 #define subnet_is_invalid(S) (subnet_type(S) == NULL)
 #endif
 bool subnet_is_specified(const ip_subnet *subnet);
 
-const struct ip_info *subnet_type(const ip_subnet *subnet);
+/* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
+bool subnet_contains_all_addresses(const ip_subnet *subnet);
+/* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
+bool subnet_contains_no_addresses(const ip_subnet *subnet);
+#if 0
+/* ADDRESS..ADDRESS:0..65535 in SUBNET */
+bool subnet_contains_address(const ip_subnet *subnet, const ip_address *address);
+/* ADDRESS..ADDRESS:PORT..PORT in SUBNET */
+bool subnet_contains_endpoint(const ip_subnet *subnet, const ip_address *address);
+#endif
 
 /* h(ost) or n(etwork) ordered */
 int subnet_hport(const ip_subnet *subnet);

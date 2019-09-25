@@ -379,6 +379,60 @@ static void check_subnet_port(void)
 	}
 }
 
+static void check_subnet_has(void)
+{
+	static const struct test {
+		int family;
+		const char *in;
+		bool all_addresses;
+		bool no_addresses;
+	} tests[] = {
+		/* all_addresses */
+		{ 4, "0.0.0.0/0", .all_addresses = true, },
+		{ 6, "::/0", .all_addresses = true, },
+		/* port must be zero */
+		{ 4, "0.0.0.0/0:1", },
+		{ 6, "::/0:1", },
+
+		/* no_addresses */
+		{ 4, "0.0.0.0/32", .no_addresses = true, },
+		{ 6, "::/128", .no_addresses = true, },
+		/* port must be zero */
+		{ 4, "0.0.0.0/32:1", },
+		{ 6, "::/128:1",  },
+		/* address must be zero */
+		{ 4, "127.0.0.1/32:1", },
+		{ 6, "::1/128:1",  },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_IN(stdout, " -> all_addresses: %s no_addresses: %s",
+			 bool_str(t->all_addresses), bool_str(t->no_addresses));
+
+		sa_family_t af = SA_FAMILY(t->family);
+
+		ip_subnet s;
+		err_t oops = ttosubnet(t->in, 0, af, &s);
+		if (oops != NULL) {
+			FAIL_IN("ttosubnet() failed: %s", oops);
+		}
+		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+
+		bool all_addresses = subnet_contains_all_addresses(&s);
+		if (all_addresses != t->all_addresses) {
+			FAIL_IN("subnet_contains_all_addresses() returned %s, expecting %s",
+				bool_str(all_addresses), bool_str(t->all_addresses));
+		}
+
+		bool no_addresses = subnet_contains_no_addresses(&s);
+		if (no_addresses != t->no_addresses) {
+			FAIL_IN("subnet_contains_no_addresses() returned %s, expecting %s",
+				bool_str(no_addresses), bool_str(t->no_addresses));
+		}
+	}
+}
+
 void ip_subnet_check(void)
 {
 	check_str_subnet();
@@ -386,4 +440,5 @@ void ip_subnet_check(void)
 	check_subnet_prefix();
 	check_subnet_mask();
 	check_subnet_port();
+	check_subnet_has();
 }
