@@ -54,7 +54,7 @@ static void check_str_endpoint(void)
 			continue;
 		}
 		ip_endpoint e = endpoint(&a, 65535);
-		CHECK_TYPE(FAIL_IN, endpoint_type(&a), t->family);
+		CHECK_TYPE(FAIL_IN, endpoint_type(&e), t->family);
 
 		/* now convert it back */
 		endpoint_buf buf;
