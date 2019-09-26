@@ -495,8 +495,10 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		err_t ughmsg = initsubnet(&temp_address,
 					  masktocount(&temp_mask),
 					  '0', net);
-		if (ughmsg == NULL && subnetisnone(net))
-			ughmsg = "contains only anyaddr";
+		if (ughmsg == NULL &&
+		    subnet_contains_no_addresses(net))
+			/* i.e., ::/128 or 0.0.0.0/32 */
+			ughmsg = "subnet contains no addresses";
 		if (ughmsg != NULL) {
 			loglog(RC_LOG_SERIOUS,
 			       "%s ID payload %s bad subnet in Quick I1 (%s)",
@@ -523,8 +525,10 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 
 		err_t ughmsg = rangetosubnet(&temp_address_from,
 					     &temp_address_to, net);
-		if (ughmsg == NULL && subnetisnone(net))
-			ughmsg = "contains only anyaddr";
+		if (ughmsg == NULL &&
+		    subnet_contains_no_addresses(net))
+			/* i.e., ::/128 or 0.0.0.0/32 */
+			ughmsg = "range contains no addresses";
 		if (ughmsg != NULL) {
 			ipstr_buf a, b;
 

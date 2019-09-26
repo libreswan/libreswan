@@ -236,12 +236,6 @@ ip_address subnet_mask(const ip_subnet *src)
 	return subnet_blit(src, /*prefix*/ &set_bits, /*host*/ &clear_bits);
 }
 
-bool subnetisnone(const ip_subnet *sn)
-{
-	ip_address base = subnet_blit(sn, &keep_bits, &clear_bits);
-	return isanyaddr(&base) && subnetishost(sn);
-}
-
 void jam_subnet(jambuf_t *buf, const ip_subnet *subnet)
 {
 	jam_address(buf, &subnet->addr); /* sensitive? */

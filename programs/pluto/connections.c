@@ -479,7 +479,7 @@ static void jam_end_client(jambuf_t *buf, const struct end *this,
 				jam_string(buf, "vhost:?");
 			else
 				jam_string(buf,  "vnet:?");
-		} else if (subnetisnone(&this->client)) {
+		} else if (subnet_contains_no_addresses(&this->client)) {
 			jam_string(buf, "?");
 		} else {
 			jam_subnet(buf, &this->client);
@@ -2070,7 +2070,7 @@ static void jam_connection_client(jambuf_t *b,
 		/* compact denotation for "self" */
 	} else {
 		jam_string(b, prefix);
-		if (subnetisnone(client)) {
+		if (subnet_contains_no_addresses(client)) {
 			jam_string(b, "?"); /* unknown */
 		} else {
 			jam_subnet(b, client);
