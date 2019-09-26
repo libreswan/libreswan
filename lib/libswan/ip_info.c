@@ -59,8 +59,10 @@ void init_ip_info(void)
 	struct in6_addr in6_loopback = IN6ADDR_LOOPBACK_INIT;
 	loopback_address_ipv6 = address_from_in6_addr(&in6_loopback);
 
-	no_addresses_ipv4 = subnet(&any_address_ipv4, ipv4_info.mask_cnt, 0);
-	no_addresses_ipv6 = subnet(&any_address_ipv6, ipv6_info.mask_cnt, 0);
+	/* ::/128 or 0.0.0.0/32 */
+	/* [::..::]:0..65535 or 0.0.0.0..0.0.0.0:0..65535 */
+	no_addresses_ipv4 = subnet_from_address(&any_address_ipv4);
+	no_addresses_ipv6 = subnet_from_address(&any_address_ipv6);
 
 	all_addresses_ipv4 = subnet(&any_address_ipv4, 0, 0);
 	all_addresses_ipv6 = subnet(&any_address_ipv6, 0, 0);

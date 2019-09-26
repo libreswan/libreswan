@@ -20,20 +20,21 @@
 #define IP_SUBNET_H
 
 /*
- * In libreswan ip_subnet is used to store client routing information
- * (IKEv2 calls this traffic selectors).
+ * This is not the subnet you're looking for.
  *
- * In addition to what might traditionally be thought of as a subnet:
+ * In libreswan ip_subnet is used to store client routing information.
+ * IKEv2 calls this traffic selectors and it allows the negotiation
+ * of:
  *
- *    (NETWORK)PREFIX | 0..0 / MASK
+ *    LO_ADDRESS..HI_ADDRESS : LO_PORT..HI_PORT
  *
- * with attributes such as MASK, BITS, PREFIX, an ip_subnet can also
- * contain a port (and if IKEv2 had its way, a port range):
+ * The structures below can only handle a limited subset of this,
+ * namely:
  *
- *    (NETWORK)PREFIX | HOST(IDENTIFIER) : PORT / MASK
+ *    NETWORK_PREFIX | 0 / MASK : PORT
  *
- * adding the the additional attributes of PORT, ADDRESS and ENDPOINT
- * - ADDRESS:PORT.
+ * where PORT==0 imples 0..65535, and (presumably) port can only be
+ * non-zero when the NETWORK_PREFIX/MASK is for a single address.
  */
 
 #ifdef SUBNET_TYPE
@@ -47,51 +48,30 @@ struct lswlog;
 typedef struct {
 #ifdef SUBNET_TYPE
 	/*
-	 * XXX:
-	 *
-	 * As a starting point, since initsubnet() constructs subnets
-	 * using an address/mask (the port is added later) reflect
-	 * that in the structure.
-	 *
-	 * However this structure is deficient when it comes to
-	 * describing IKEv2's "3.13.1. Traffic Selector"
-	 * https://tools.ietf.org/html/rfc7296#section-3.13.1
-	 *
-	 * Use ip_address and not an ip_endpoint (keeping the port[s]
-	 * separate).  The the latter may strictly limit the port's
-	 * range [0..65535] preventing the wildcard port from being
-	 * represented.  IPv2 means that a range might be better
-	 * (making this structure decidedly non-subnet like).
+	 * XXX: Data structure sufficient for IKEv2
 	 */
-	ip_address address;
-	/*
-	 * In pluto "0" indicates all ports [0..65535]).
-	 *
-	 * XXX: IKEv2 code checks for both end.port==0 (er, 0's only
-	 * reserved for TCP and UDP) and end.has_port_wildcard.  See
-	 * https://daniel.haxx.se/blog/2014/10/25/pretending-port-zero-is-a-normal-one/
-	 */
-	uint16_t hport;
+	ip_address lo_address, hi_address;
+	uint16_t lo_hport, hi_hport;
 #else
 	/* (routing)prefix|host(id):port */
 	ip_endpoint addr;
-#endif
 	/* (routing prefix) bits */
 	int maskbits;
+#endif
 } ip_subnet;
 
 /*
  * Construct a subnet exactly as specified (presumably the caller has
  * performed all checks).
  */
+
 ip_subnet subnet(const ip_address *address, int maskbits, int port);
 
-#if 0
-/* IKEv2 */
-err_t ts_to_subnet(const ip_address *starting_address, const ip_address *ending address,
-		   uint16_t start_port, uint16_t end_port);
-/* IKEv1? */
-#endif
+/* ADDRESS..ADDRESS:0..65535 */
+ip_subnet subnet_from_address(const ip_address *address);
+/* ENDPOINT.ADDRESS..ENDPOINT.ADDRESS:ENDPOINT.PORT..ENDPOINT.PORT */
+/* XXX: what hapens if ENDPOINT.PORT==0 */
+ip_subnet subnet_from_endpoint(const ip_endpoint *endpoint);
 
 /*
  * Format as a string.
@@ -114,8 +94,8 @@ const struct ip_info *subnet_type(const ip_subnet *subnet);
 
 /* mutually exclusive */
 /* not very well defined, is no_addresses "specified" */
-#if 0
 extern const ip_subnet subnet_invalid;
+#if 0
 #define subnet_is_invalid(S) (subnet_type(S) == NULL)
 #endif
 bool subnet_is_specified(const ip_subnet *subnet);
