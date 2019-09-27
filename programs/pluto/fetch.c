@@ -728,7 +728,7 @@ void list_crl_fetch_requests(struct whack_io *whackfd,
 	}
 
 	for (; req != NULL; req = req->next) {
-		LSWLOG_WHACK(RC_COMMENT, buf) {
+		WHACK_LOG(RC_COMMENT, buf) {
 			lswlog_realtime(buf, req->installed, utc);
 			lswlogf(buf, ", trials: %d", req->trials);
 		}

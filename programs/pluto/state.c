@@ -2137,7 +2137,7 @@ static void whack_log_state_traffic(enum rc_type rc, struct state *st)
 		return; /* ignore non established states */
 
 	/* whack-log-global - no prefix */
-	LSWLOG_WHACK(rc, buf) {
+	WHACK_LOG(rc, buf) {
 		/* note: this mutates *st by calling get_sa_info */
 		jam_state_traffic(buf, st);
 	}
@@ -3244,7 +3244,7 @@ static void whack_log_state_event(struct state *st, struct pluto_event *pe,
 {
 	if (pe != NULL) {
 		pexpect(st == pe->ev_state);
-		LSWLOG_WHACK(RC_LOG, buf) {
+		WHACK_LOG(RC_LOG, buf) {
 			lswlogf(buf, "event %s is ", pe->ev_name);
 			if (pe->ev_type == EVENT_NULL) {
 				lswlogf(buf, "not timer based");

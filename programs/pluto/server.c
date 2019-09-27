@@ -1047,7 +1047,7 @@ void show_ifaces_status(void)
 
 void show_debug_status(void)
 {
-	LSWLOG_WHACK(RC_COMMENT, buf) {
+	WHACK_LOG(RC_COMMENT, buf) {
 		lswlogs(buf, "debug:");
 		if (cur_debugging & DBG_MASK) {
 			lswlogs(buf, " ");

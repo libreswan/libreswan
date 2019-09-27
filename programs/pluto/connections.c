@@ -3628,7 +3628,7 @@ static void show_one_sr(const struct connection *c,
 			const struct spd_route *sr,
 			const char *instance)
 {
-	LSWLOG_WHACK(RC_COMMENT, buf) {
+	WHACK_LOG(RC_COMMENT, buf) {
 		jam_connection(buf, c);
 		jam(buf, ": ");
 		jam_connection_topology(buf, c, sr);
@@ -3891,7 +3891,7 @@ void show_one_connection(const struct connection *c)
 		);
 
 	if (!lmod_empty(c->extra_debugging)) {
-		LSWLOG_WHACK(RC_COMMENT, buf) {
+		WHACK_LOG(RC_COMMENT, buf) {
 			lswlogf(buf, "\"%s\"%s:   debug: ",
 				c->name, instance);
 			lswlog_lmod(buf, &debug_names, "+", c->extra_debugging);
@@ -3899,7 +3899,7 @@ void show_one_connection(const struct connection *c)
 	}
 
 	if (!lmod_empty(c->extra_impairing)) {
-		LSWLOG_WHACK(RC_COMMENT, buf) {
+		WHACK_LOG(RC_COMMENT, buf) {
 			lswlogf(buf, "\"%s\"%s:   impair: ",
 				c->name, instance);
 			lswlog_lmod(buf, &impair_names, "+", c->extra_impairing);

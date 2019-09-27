@@ -108,7 +108,7 @@ static int print_secrets(struct secret *secret,
 
 	ids = lsw_get_idlist(secret);
 
-	LSWLOG_WHACK(RC_COMMENT, buf) {
+	WHACK_LOG(RC_COMMENT, buf) {
 		jam(buf, "    %d: %s ", pks->line, kind);
 		if (ids == NULL) {
 			jam(buf, "%%any");
@@ -1071,7 +1071,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 			if (!check_pub_keys ||
 			    !startswith(check_expiry_msg, "ok")) {
-				LSWLOG_WHACK(RC_COMMENT, buf) {
+				WHACK_LOG(RC_COMMENT, buf) {
 					lswlog_realtime(buf, key->installed_time, utc);
 					lswlogs(buf, ", ");
 					switch (key->type->alg) {

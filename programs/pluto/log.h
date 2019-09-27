@@ -213,6 +213,11 @@ bool whack_log_p(void);
 #define whack_log_comment(FMT, ...) whack_log_raw(RD, RC_PRINT, NULL, NULL, NULL, \
 						  FMT,##__VA_ARGS__)
 
+#define WHACK_LOG(RC, BUF)						\
+	LSWLOG_(whack_log_p(), BUF, /*no prefix*/,			\
+		lswlog_to_whack_stream(BUF, RC))
+
+
 /* show status, usually on whack log */
 extern void show_status(struct whack_io *);
 

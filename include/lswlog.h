@@ -204,21 +204,10 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
 #define LSWLOG(BUF) LSWLOG_RC(RC_LOG, BUF)
 
 /*
- * Log, at level RC, to the whack log (if attached).
- *
- * XXX: See programs/pluto/log.h for interface; should only be used in
- * pluto.  This code assumes that it is being called from the main
- * thread.
- *
  * LSWLOG_INFO() sends stuff just to "whack" (or for a tool STDERR?).
- * XXX: there is no prefix, bug?  Should it send stuff out with level
- * RC_COMMENT?
+ * XXX: Should it send stuff out with level RC_COMMENT?  RC_PRINT
+ * supresses the prefix at the other end?
  */
-
-#define LSWLOG_WHACK(RC, BUF)						\
-	LSWLOG_(whack_log_p(), BUF,					\
-		/* no prefix */,					\
-		lswlog_to_whack_stream(BUF, RC))
 
 /* XXX: should be stdout?!? */
 #define LSWLOG_INFO(BUF)						\
