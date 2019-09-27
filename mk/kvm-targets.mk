@@ -46,6 +46,7 @@ KVM_WORKERS ?= 1
 #KVM_WORKERS ?= $(shell awk 'BEGIN { c=1 } /cpu cores/ { c=$$4 } END { if (c>1) print c/2; }' /proc/cpuinfo)
 KVM_GROUP ?= qemu
 #KVM_PYTHON ?= PYTHONPATH=/home/python/pexpect:/home/python/ptyprocess /home/python/v3.8/bin/python3
+KVM_PIDFILE ?= kvmrunner.pid
 
 # Should these live in the OS.mk file?
 KVM_USE_EFENCE ?= true
@@ -303,6 +304,7 @@ $(1): 		$$(KVM_QMUDIR_OK) \
 	: kvm-test target=$(1) param=$(2)
 	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
 	$$(KVMRUNNER) \
+		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
 		$$(foreach prefix,$$(KVM_PREFIXES), --prefix $$(prefix)) \
 		$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) \
 		$$(if $$(WEB_ENABLED), \
@@ -312,6 +314,14 @@ $(1): 		$$(KVM_QMUDIR_OK) \
 		$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
 	$$(if $$(WEB_ENABLED),,@$(MAKE) -s web-pages-disabled)
 endef
+
+# XXX: $(file < "x") tries to open '"x"' !!!
+.PHONY: kvm-kill
+kvm-kill:
+	test -s "$(KVM_PIDFILE)" && kill $(file < $(KVM_PIDFILE))
+.PHONY: kvm-status
+kvm-status:
+	test -s "$(KVM_PIDFILE)" && ps $(file < $(KVM_PIDFILE))
 
 # "test" and "check" just runs the entire testsuite.
 $(eval $(call kvm-test,kvm-check kvm-test, --test-status "good"))
@@ -1255,6 +1265,9 @@ Standard targets and operations:
     kvm-check-clean   - delete the test OUTPUT/ directories
 
     distclean         - scrubs the source tree (but don't touch the KVMS)
+
+    kvm-status        - prints PS for the currently running tests
+    kvm-kill          - kill the currently running tests
 
   To analyze test results:
 

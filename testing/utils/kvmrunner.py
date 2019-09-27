@@ -18,6 +18,7 @@ import signal
 import faulthandler
 import sys
 import argparse
+import os
 from datetime import datetime
 
 from fab import runner
@@ -42,6 +43,7 @@ def main():
                                      epilog="SIGUSR1 will dump all thread stacks")
 
     parser.add_argument("--verbose", "-v", action="count", default=0)
+    parser.add_argument("--pid-file", default="", help="file to store process id of KVMRUNNER");
 
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
                         help="a testsuite directory, a TESTLIST file, or a list of test directories")
@@ -60,12 +62,19 @@ def main():
     logger.info("Options:")
     logger.info("  directories: %s", args.directories)
     logger.info("  verbose: %s", args.verbose)
+    logger.info("  pid-file: %s", args.pid_file)
     testsuite.log_arguments(logger, args)
     runner.log_arguments(logger, args)
     logutil.log_arguments(logger, args)
     skip.log_arguments(logger, args)
     ignore.log_arguments(logger, args)
     publish.log_arguments(logger, args)
+
+    if args.pid_file:
+        pid = os.getpid()
+        logger.info("writing pid %d to '%s'", pid, args.pid_file)
+        with open(args.pid_file, "wt") as pidfile:
+            pidfile.write("%d\n" % os.getpid())
 
     tests = testsuite.load_testsuite_or_tests(logger, args.directories, args,
                                               log_level=logutil.INFO)
