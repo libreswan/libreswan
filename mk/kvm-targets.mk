@@ -332,9 +332,12 @@ $(KVM_TEST_CLEAN_TARGETS):
 .PHONY: kvm-results
 kvm-results:
 	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS)
+		$(if $(KVM_BASELINE),--baseline $(KVM_BASELINE))
 .PHONY: kvm-diffs
 kvm-diffs:
-	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) --print diffs
+	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) \
+		$(if $(KVM_BASELINE),--baseline $(KVM_BASELINE)) \
+		--print diffs
 
 .PHONY: kvm-test-modified kvm-check-modified
 KVM_MODIFIED_TESTS = $$(git status testing/pluto | awk '/modified:/ { print $$2 }' | cut -d/ -f1-3 | sort -u)
@@ -1256,7 +1259,9 @@ Standard targets and operations:
   To analyze test results:
 
     kvm-results       - list the tests and their results
+                        compare against KVM_BASELINE when defined
     kvm-diffs         - list the tests and their differences
+                        compare against KVM_BASELINE when defined
     kvm-check-modified
                       - run any tests with modified files
     kvm-diff-modified
