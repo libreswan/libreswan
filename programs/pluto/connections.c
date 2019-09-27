@@ -618,20 +618,14 @@ size_t format_end(char *buf,
  * format topology of a connection.
  * Two symmetric ends separated by ...
  */
-#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
 
-static char *format_connection(char *buf, size_t buf_len,
-			const struct connection *c,
-			const struct spd_route *sr)
+static void jam_connection_topology(jambuf_t *buf,
+				    const struct connection *c,
+				    const struct spd_route *sr)
 {
-	size_t w =
-		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY, FALSE);
-
-	snprintf(buf + w, buf_len - w, "...");
-	w += strlen(buf + w);
-	(void) format_end(buf + w, buf_len - w, &sr->that, &sr->this, FALSE, c->policy,
-		oriented(*c));
-	return buf;
+	jam_end(buf, &sr->this, &sr->that, true, LEMPTY, false);
+	jam(buf, "...");
+	jam_end(buf, &sr->that, &sr->this, false, c->policy, oriented(*c));
 }
 
 /* spd_route's with end's get copied in xauth.c */
@@ -1793,19 +1787,20 @@ void add_connection(const struct whack_message *wm)
 	if (extract_connection(wm, c)) {
 		/* log all about this connection */
 		libreswan_log("added connection description \"%s\"", c->name);
-		DBG(DBG_CONTROL, {
-				DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
-					deltasecs(c->sa_ike_life_seconds),
-					deltasecs(c->sa_ipsec_life_seconds),
-					deltasecs(c->sa_rekey_margin),
-					c->sa_rekey_fuzz,
-					c->sa_keying_tries,
-					c->sa_replay_window,
-					prettypolicy(c->policy),
-					NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
-				char topo[CONN_BUF_LEN];
-				DBG_log("%s", format_connection(topo, sizeof(topo), c, &c->spd));
-			});
+		if (DBGP(DBG_BASE)) {
+			DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
+				deltasecs(c->sa_ike_life_seconds),
+				deltasecs(c->sa_ipsec_life_seconds),
+				deltasecs(c->sa_rekey_margin),
+				c->sa_rekey_fuzz,
+				c->sa_keying_tries,
+				c->sa_replay_window,
+				prettypolicy(c->policy),
+				NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
+			LSWLOG_DEBUG(buf) {
+				jam_connection_topology(buf, c, &c->spd);
+			}
+		}
 	} else {
 		/*
 		 * Don't log here - it's assumed that
@@ -2268,17 +2263,16 @@ struct connection *oppo_instantiate(struct connection *c,
 {
 	struct connection *d = instantiate(c, him, his_id);
 
-	DBGF(DBG_CONTROL, "oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
-		d->name, c->name,
-		enum_name(&routing_story, c->spd.routing),
-		enum_name(&routing_story, d->spd.routing));
-	DBG(DBG_CONTROL, {
-			char instbuf[512];
-
-			DBG_log("new oppo instance: %s",
-				format_connection(instbuf,
-					sizeof(instbuf), d, &d->spd));
-		});
+	if (DBGP(DBG_BASE)) {
+		DBG_log("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
+			d->name, c->name,
+			enum_name(&routing_story, c->spd.routing),
+			enum_name(&routing_story, d->spd.routing));
+		LSWLOG_DEBUG(buf) {
+			jam(buf, "new oppo instance: ");
+			jam_connection_topology(buf, d, &d->spd);
+		}
+	}
 
 	passert(d->spd.spd_next == NULL);
 
@@ -2334,15 +2328,12 @@ struct connection *oppo_instantiate(struct connection *c,
 	if (routed(c->spd.routing))
 		d->instance_initiation_ok = TRUE;
 
-	DBG(DBG_CONTROL, {
-		char topo[CONN_BUF_LEN];
-		char inst[CONN_INST_BUF];
-
-		DBG_log("oppo_instantiate() instantiated \"%s\"%s: %s",
-			fmt_conn_instance(d, inst),
-			d->name,
-			format_connection(topo, sizeof(topo), d, &d->spd));
-	});
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "oppo_instantiate() instantiated ");
+		jam_connection(buf, d);
+		jam(buf, ": ");
+		jam_connection_topology(buf, d, &d->spd);
+	}
 	return d;
 }
 
@@ -3629,21 +3620,22 @@ static void show_one_sr(const struct connection *c,
 			const struct spd_route *sr,
 			const char *instance)
 {
-	char topo[CONN_BUF_LEN];
-	ipstr_buf thisipb, thatipb;
-
-	whack_log(whackfd, RC_COMMENT, "\"%s\"%s: %s; %s; eroute owner: #%lu",
-		c->name, instance,
-		format_connection(topo, sizeof(topo), c, sr),
-		enum_name(&routing_story, sr->routing),
-		sr->eroute_owner);
+	LSWLOG_WHACK(RC_COMMENT, buf) {
+		jam_connection(buf, c);
+		jam(buf, ": ");
+		jam_connection_topology(buf, c, sr);
+		jam(buf, "; %s; eroute owner: #%lu",
+		    enum_name(&routing_story, sr->routing),
+		    sr->eroute_owner);
+	}
 
 #define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(h, &ipb) : "unset")
 
 		/* note: this macro generates a pair of arguments */
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
-	whack_log(whackfd, RC_COMMENT,
+	ipstr_buf thisipb, thatipb;
+	whack_log(RC_COMMENT,
 		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		c->name, instance,
 		oriented(*c) ? "oriented" : "unoriented",
