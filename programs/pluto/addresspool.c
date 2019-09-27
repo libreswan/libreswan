@@ -35,7 +35,7 @@
 #include "addresspool.h"
 #include "monotime.h"
 #include "ip_address.h"
-
+#include "ip_info.h"
 
 /*
  * A pool is a range of IPv4 addresses to be individually allocated.
@@ -195,7 +195,7 @@ void rel_lease_addr(struct connection *c)
 	if (!c->spd.that.has_lease)
 		return; /* it is not from the addresspool to free */
 
-	passert(addrtypeof(&c->spd.that.client.addr) == AF_INET);
+	passert(subnet_type(&c->spd.that.client) == &ipv4_info);
 
 	/* i is index of client.addr within pool's range.
 	 * Using unsigned arithmetic means that if client.addr is less than

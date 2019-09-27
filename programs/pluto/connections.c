@@ -1331,7 +1331,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 		return false;
 	}
 
-	if (addrtypeof(&wm->left.client.addr) != addrtypeof(&wm->right.client.addr)) {
+	if (subnet_type(&wm->left.client) != subnet_type(&wm->right.client)) {
 		loglog(RC_FATAL, "Failed to load connection \"%s\": subnets must have the same address family",
 			wm->name);
 		return false;

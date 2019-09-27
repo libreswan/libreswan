@@ -1784,7 +1784,7 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 		return STF_INTERNAL_ERROR;
 
 	if (cfg_reply) {
-		ikev2_ship_cp_attr_ip(addrtypeof(&c->spd.that.client.addr) == AF_INET ?
+		ikev2_ship_cp_attr_ip(subnet_type(&c->spd.that.client) == &ipv4_info ?
 			IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
 			&c->spd.that.client.addr, "Internal IP Address", &cp_pbs);
 

@@ -586,7 +586,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
-	const int family = addrtypeof(&that_client->addr);
+	const int family = subnet_type(that_client)->af;
 
 	req.u.p.sel.sport = subnet_nport(this_client);
 	req.u.p.sel.dport = subnet_nport(that_client);
@@ -1280,7 +1280,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		req.p.sel.prefixlen_s = src->maskbits;
 		req.p.sel.prefixlen_d = dst->maskbits;
 		req.p.sel.proto = sa->transport_proto;
-		req.p.sel.family = addrtypeof(&src->addr);
+		req.p.sel.family = subnet_type(src)->af;
 	}
 
 	req.p.reqid = sa->reqid;
