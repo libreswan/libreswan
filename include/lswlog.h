@@ -217,7 +217,7 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
 
 #define LSWLOG_WHACK(RC, BUF)						\
 	LSWLOG_(whack_log_p(), BUF,					\
-		lswlog_log_prefix(BUF),					\
+		/* no prefix */,					\
 		lswlog_to_whack_stream(BUF, RC))
 
 /* XXX: should be stdout?!? */
