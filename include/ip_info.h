@@ -9,9 +9,10 @@
 #include "ip_subnet.h"
 
 struct ip_info {
+	/* sockaddr */
 	int af; /* AF_INET or AF_INET6 */
 	const char *af_name;
-	int ip_version; /* 4 or 6 */
+	unsigned ip_version; /* 4 or 6 */
 	size_t ip_size; /* 4 or 16 */
 	size_t sockaddr_size; /* sizeof(sockaddr_in) | sizeof(sockaddr_in6)? */
 	int mask_cnt; /* 32 or 128 */
@@ -32,6 +33,7 @@ extern const struct ip_info ipv6_info;
 
 extern const struct ip_info *aftoinfo(int af);
 
+const struct ip_info *ip_version_info(unsigned version);
 extern void init_ip_info(void);
 
 #endif

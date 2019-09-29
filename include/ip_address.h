@@ -24,50 +24,49 @@
 #include "chunk.h"
 #include "err.h"
 
-extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
-
-#include <netinet/in.h>		/* for struct sockaddr_in */
-#ifdef HAVE_INET6_IN6_H
-#include <netinet6/in6.h>	/* for struct sockaddr_in6 */
-#endif
-
 struct lswlog;
 struct ip_info;
+
+extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
 
 /*
  * Basic data types for the address-handling functions.
  *
  * ip_address et.al. are supposed to be opaque types; do not use their
  * definitions directly, they are subject to change!
+ *
+ * Because whack sends raw ip_addresses to pluto using a byte
+ * stream, this structure needs to be stream friendly - it
+ * must not contain pointers (such as a pointer to struct
+ * ip_info). so instead it contains an index.
  */
 
 typedef struct {
 	/*
-	 * Because whack sends raw ip_addresses to pluto using a byte
-	 * stream, this structure needs to be stream friendly - it
-	 * can't contain a pointer to struct ip_info.
+	 * Index into the struct ip_info array; must be stream
+	 * friendly.
 	 */
-	int af;
+	unsigned version; /* 0, 4, 6 */
 	/*
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).
 	 */
-	uint8_t bytes[sizeof(struct in6_addr)];
+	uint8_t bytes[16];
 #ifndef ENDPOINT_TYPE
 	/*
+	 * XXX: An address abstraction - type+bytes - should not
+	 * contain a port.  If a port is required, the abstraction
+	 * ip_endpoint should be used.
+	 *
 	 * In pluto, port "0" is reserved and indicates all ports (but
-	 * does it also denote no port?).
+	 * does it also denote no port?).  Hopefully it is only paired
+	 * with the zero (any) address.
 	 *
-	 * XXX:
+	 * XXX: Would separate and incompatible ip_hport and ip_nport
+	 * types help stop host <-> network port conversion screwups?
+	 * For instance, using ntohs() when using htons() is needed -
+	 * while wrong they have the same effect.
 	 *
-	 * Would separate and incompatible ip_hport and ip_nport types
-	 * help stop host <-> network port conversion screwups?
-	 *
-	 * XXX:
-	 *
-	 * A simple address - type+bytes - should not contain a port.
-	 * If a port is required, the abstraction ip_endpoint should
-	 * be used.
 	 */
 	uint16_t hport;
 #endif

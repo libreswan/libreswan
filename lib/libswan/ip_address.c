@@ -25,7 +25,7 @@ static ip_address address_from_shunk(const struct ip_info *afi, const shunk_t by
 {
 	passert(afi != NULL);
 	ip_address address = {
-		.af = afi->af,
+		.version = afi->ip_version,
 	};
 	passert(afi->ip_size == bytes.len);
 	memcpy(address.bytes, bytes.ptr, bytes.len);
@@ -53,17 +53,7 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 
 const struct ip_info *address_type(const ip_address *address)
 {
-	int af = address->af;
-	switch (af) {
-	case AF_INET:
-		return &ipv4_info;
-	case AF_INET6:
-		return &ipv6_info;
-	case AF_UNSPEC:
-		return NULL;
-	default:
-		bad_case(af);
-	}
+	return ip_version_info(address->version);
 }
 
 /*
@@ -309,7 +299,7 @@ const char *str_address_reversed(const ip_address *src,
 }
 
 const ip_address address_invalid = {
-	.af = AF_UNSPEC,
+	.version = 0,
 };
 
 ip_address address_any(const struct ip_info *info)

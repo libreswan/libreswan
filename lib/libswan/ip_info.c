@@ -115,3 +115,14 @@ const struct ip_info *aftoinfo(int af)
 		bad_case(af);
 	}
 }
+
+const struct ip_info *ip_version_info(unsigned version)
+{
+	static const struct ip_info *ip_types[] = {
+		[0] = NULL,
+		[4] = &ipv4_info,
+		[6] = &ipv6_info,
+	};
+	passert(version < elemsof(ip_types));
+	return ip_types[version];
+}
