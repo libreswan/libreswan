@@ -214,14 +214,13 @@ void main_outI1(fd_t whack_sock,
 
 	if (predecessor != NULL) {
 		update_pending(predecessor, st);
-		whack_log(RC_NEW_V1_STATE + STATE_MAIN_I1,
-			"%s: initiate, replacing #%lu",
-			st->st_state->name,
-			predecessor->st_serialno);
+		loglog(RC_NEW_V1_STATE + st->st_state->kind,
+		       "%s: %s, replacing #%lu",
+		       st->st_state->name, st->st_state->story,
+		       predecessor->st_serialno);
 	} else {
-		whack_log(RC_NEW_V1_STATE + STATE_MAIN_I1,
-			"%s: initiate",
-			st->st_state->name);
+		loglog(RC_NEW_V1_STATE + st->st_state->kind,
+		       "%s: %s", st->st_state->name, st->st_state->story);
 	}
 
 	statetime_stop(&start, "%s()", __func__);
