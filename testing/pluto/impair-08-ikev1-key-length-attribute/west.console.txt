@@ -17,13 +17,13 @@ west #
  ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 added connection description "aes128"
 002 "aes128" #1: initiating Main Mode
-1v1 "aes128" #1: STATE_MAIN_I1: initiate
+1v1 "aes128" #1: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "aes128" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "aes128" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "aes128" #1: Peer ID is ID_FQDN: '@east'
 004 "aes128" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-1v1 "aes128" #2: STATE_QUICK_I1: initiate
+1v1 "aes128" #2: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "aes128" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
@@ -45,7 +45,7 @@ west #
 002 "aes128" #3: initiating Main Mode
 002 "aes128" #3: IMPAIR: stripping key-length
 002 "aes128" #3: IMPAIR: duplicating key-length
-1v1 "aes128" #3: STATE_MAIN_I1: initiate
+1v1 "aes128" #3: STATE_MAIN_I1: sent MI1, expecting MR1
 003 "aes128" #3: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
 003 "aes128" #3: received and ignored notification payload: BAD_PROPOSAL_SYNTAX
 002 "aes128" #3: IMPAIR: retransmit so deleting SA
@@ -60,7 +60,7 @@ west #
  ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 added connection description "aes128"
 002 "aes128" #4: initiating Main Mode
-1v1 "aes128" #4: STATE_MAIN_I1: initiate
+1v1 "aes128" #4: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "aes128" #4: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "aes128" #4: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "aes128" #4: Peer ID is ID_FQDN: '@east'
@@ -68,7 +68,7 @@ west #
 002 "aes128" #5: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 002 "aes128" #5: IMPAIR: stripping key-length
 002 "aes128" #5: IMPAIR: duplicating key-length
-1v1 "aes128" #5: STATE_QUICK_I1: initiate
+1v1 "aes128" #5: STATE_QUICK_I1: sent QI1, expecting QR1
 002 "aes128" #5: IMPAIR: retransmit so deleting SA
 002 "aes128" #5: deleting state (STATE_QUICK_I1) and NOT sending notification
 west #
@@ -85,7 +85,7 @@ west #
 002 "aes128" #6: initiating Main Mode
 002 "aes128" #6: IMPAIR: stripping key-length
 002 "aes128" #6: IMPAIR: sending key-length attribute value 0
-1v1 "aes128" #6: STATE_MAIN_I1: initiate
+1v1 "aes128" #6: STATE_MAIN_I1: sent MI1, expecting MR1
 003 "aes128" #6: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 003 "aes128" #6: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "aes128" #6: IMPAIR: retransmit so deleting SA
@@ -100,7 +100,7 @@ west #
  ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 added connection description "aes128"
 002 "aes128" #7: initiating Main Mode
-1v1 "aes128" #7: STATE_MAIN_I1: initiate
+1v1 "aes128" #7: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "aes128" #7: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "aes128" #7: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "aes128" #7: Peer ID is ID_FQDN: '@east'
@@ -108,7 +108,7 @@ west #
 002 "aes128" #8: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 002 "aes128" #8: IMPAIR: stripping key-length
 002 "aes128" #8: IMPAIR: sending key-length attribute value 0
-1v1 "aes128" #8: STATE_QUICK_I1: initiate
+1v1 "aes128" #8: STATE_QUICK_I1: sent QI1, expecting QR1
 002 "aes128" #8: IMPAIR: retransmit so deleting SA
 002 "aes128" #8: deleting state (STATE_QUICK_I1) and NOT sending notification
 west #
@@ -125,13 +125,13 @@ west #
 002 "aes128" #9: initiating Main Mode
 002 "aes128" #9: IMPAIR: stripping key-length
 002 "aes128" #9: IMPAIR: not sending key-length attribute
-1v1 "aes128" #9: STATE_MAIN_I1: initiate
+1v1 "aes128" #9: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "aes128" #9: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "aes128" #9: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "aes128" #9: Peer ID is ID_FQDN: '@east'
 004 "aes128" #9: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #10: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-1v1 "aes128" #10: STATE_QUICK_I1: initiate
+1v1 "aes128" #10: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "aes128" #10: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
@@ -149,7 +149,7 @@ west #
  ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 added connection description "aes128"
 002 "aes128" #11: initiating Main Mode
-1v1 "aes128" #11: STATE_MAIN_I1: initiate
+1v1 "aes128" #11: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "aes128" #11: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "aes128" #11: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "aes128" #11: Peer ID is ID_FQDN: '@east'
@@ -157,7 +157,7 @@ west #
 002 "aes128" #12: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 002 "aes128" #12: IMPAIR: stripping key-length
 002 "aes128" #12: IMPAIR: not sending key-length attribute
-1v1 "aes128" #12: STATE_QUICK_I1: initiate
+1v1 "aes128" #12: STATE_QUICK_I1: sent QI1, expecting QR1
 002 "aes128" #12: IMPAIR: retransmit so deleting SA
 002 "aes128" #12: deleting state (STATE_QUICK_I1) and NOT sending notification
 west #
@@ -176,13 +176,13 @@ west #
 002 "aes128" #13: initiating Main Mode
 002 "aes128" #13: IMPAIR: stripping key-length
 002 "aes128" #13: IMPAIR: key-length-attribute:empty not implemented
-1v1 "aes128" #13: STATE_MAIN_I1: initiate
+1v1 "aes128" #13: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "aes128" #13: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "aes128" #13: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "aes128" #13: Peer ID is ID_FQDN: '@east'
 004 "aes128" #13: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 002 "aes128" #14: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-1v1 "aes128" #14: STATE_QUICK_I1: initiate
+1v1 "aes128" #14: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "aes128" #14: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
@@ -202,7 +202,7 @@ west #
  ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 added connection description "aes128"
 002 "aes128" #15: initiating Main Mode
-1v1 "aes128" #15: STATE_MAIN_I1: initiate
+1v1 "aes128" #15: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "aes128" #15: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "aes128" #15: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "aes128" #15: Peer ID is ID_FQDN: '@east'
@@ -210,7 +210,7 @@ west #
 002 "aes128" #16: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 002 "aes128" #16: IMPAIR: stripping key-length
 002 "aes128" #16: IMPAIR: key-length-attribute:empty not implemented
-1v1 "aes128" #16: STATE_QUICK_I1: initiate
+1v1 "aes128" #16: STATE_QUICK_I1: sent QI1, expecting QR1
 002 "aes128" #16: IMPAIR: retransmit so deleting SA
 002 "aes128" #16: deleting state (STATE_QUICK_I1) and NOT sending notification
 west #
@@ -225,13 +225,13 @@ west #
  ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 002 added connection description "3des"
 002 "3des" #17: initiating Main Mode
-1v1 "3des" #17: STATE_MAIN_I1: initiate
+1v1 "3des" #17: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "3des" #17: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "3des" #17: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "3des" #17: Peer ID is ID_FQDN: '@east'
 004 "3des" #17: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "3des" #18: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-1v1 "3des" #18: STATE_QUICK_I1: initiate
+1v1 "3des" #18: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "3des" #18: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des": terminating SAs using this connection
@@ -252,7 +252,7 @@ west #
 002 added connection description "3des"
 002 "3des" #19: initiating Main Mode
 002 "3des" #19: IMPAIR: sending key-length attribute value 0
-1v1 "3des" #19: STATE_MAIN_I1: initiate
+1v1 "3des" #19: STATE_MAIN_I1: sent MI1, expecting MR1
 003 "3des" #19: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 003 "3des" #19: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "3des" #19: IMPAIR: retransmit so deleting SA
@@ -270,13 +270,13 @@ west #
 002 added connection description "3des"
 002 "3des" #20: initiating Main Mode
 002 "3des" #20: IMPAIR: sending key-length attribute value 192
-1v1 "3des" #20: STATE_MAIN_I1: initiate
+1v1 "3des" #20: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "3des" #20: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "3des" #20: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "3des" #20: Peer ID is ID_FQDN: '@east'
 004 "3des" #20: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "3des" #21: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-1v1 "3des" #21: STATE_QUICK_I1: initiate
+1v1 "3des" #21: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "3des" #21: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des": terminating SAs using this connection
