@@ -168,14 +168,15 @@ static void check_endpoint_port(void)
 	static const struct test {
 		int family;
 		char *in;
-		int hport;
+		uint16_t hport;
+		uint8_t nport[2];
 	} tests[] = {
 		/* any */
-		{ 4, "0.0.0.0", 0 },
-		{ 6, "::0", 0, },
+		{ 4, "0.0.0.0", 0, { 0, 0, }, },
+		{ 6, "::0", 0, { 0, 0, }, },
 		/* longest */
-		{ 4, "101.102.103.104", 65534, },
-		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008", 65534, },
+		{ 4, "101.102.103.104", 65534, { 255, 254, }, },
+		{ 6, "1001:1002:1003:1004:1005:1006:1007:1008", 65534, { 255, 254, }, },
 	};
 
 	const char *oops;
@@ -196,23 +197,45 @@ static void check_endpoint_port(void)
 
 		CHECK_TYPE(FAIL_IN, endpoint_type(&e), t->family);
 
-		int hport = endpoint_hport(&e);
-		if (hport != t->hport) {
+		uint16_t hport = endpoint_hport(&e);
+		if (!memeq(&hport, &t->hport, sizeof(hport))) {
 			FAIL_IN("endpoint_hport() returned '%d', expected '%d'",
 				hport, t->hport);
 		}
 
-		int nport = endpoint_nport(&e);
-		if (nport != htons(t->hport)) {
-			FAIL_IN("endpoint_nport() returned '%04x', expected '%04x'",
-				nport, htons(t->hport));
+		uint16_t nport = endpoint_nport(&e);
+		if (!memeq(&nport, &t->nport, sizeof(nport))) {
+			FAIL_IN("endpoint_nport() returned '%04x', expected '%02x%02x'",
+				nport, t->nport[0], t->nport[1]);
 		}
 
-		ip_endpoint pe = set_endpoint_hport(&e, t->hport+1);
-		int pport = endpoint_hport(&pe);
-		if (pport != t->hport+1) {
-			FAIL_IN("endpoint_hport()+1 returned '%d', expected '%d'",
-				pport, t->hport+1);
+		/* tweak the port numbers */
+		uint16_t hport_plus_one = t->hport+1;
+		uint16_t nport_plus_one = ntohs(t->hport+1);
+		/* check math? */
+		uint8_t nport_plus_plus[2];
+		memcpy(nport_plus_plus, t->nport, sizeof(nport_plus_plus));
+		nport_plus_plus[1]++;
+		if (!memeq(&nport_plus_one, nport_plus_plus, sizeof(nport_plus_one))) {
+			FAIL_IN("can't do basic math");
+		}
+
+		/* hport+1 -> nport+1 */
+		ip_endpoint hp = e;
+		update_endpoint_hport(&hp, hport_plus_one);
+		uint16_t nportp = endpoint_nport(&hp);
+		if (!memeq(&nportp, &nport_plus_one, sizeof(nportp))) {
+			FAIL_IN("endpoint_nport(set_endpoint_hport(+1)) returned '%04x', expected '%04x'",
+				nportp, nport_plus_one);
+		}
+
+		/* nport+1 -> hport+1 */
+		ip_endpoint np = e;
+		update_endpoint_nport(&np, nport_plus_one);
+		uint16_t hportp = endpoint_hport(&np);
+		if (!memeq(&hportp, &hport_plus_one, sizeof(hportp))) {
+			FAIL_IN("endpoint_hport(set_endpoint_nport(+1)) returned '%d', expected '%d'",
+				hportp, hport_plus_one);
 		}
 	}
 }

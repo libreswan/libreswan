@@ -21,6 +21,9 @@
 #include "ip_subnet.h"
 #include "libreswan/passert.h"
 #include "lswlog.h"	/* for pexpect() */
+#include "ip_info.h"
+
+const ip_subnet subnet_invalid; /* all zeros */
 
 ip_subnet subnet(const ip_address *address, int maskbits, int port)
 {
@@ -30,6 +33,48 @@ ip_subnet subnet(const ip_address *address, int maskbits, int port)
 		.maskbits = maskbits,
 	};
 	return s;
+}
+
+#ifdef SUBNET_TYPE
+static ip_subnet subnet4(const ip_address *lo_address, const ip_address *hi_address,
+			 int lo_hport, int hi_hport)
+{
+	ip_subnet s = {
+		.lo_address = *lo_address,
+		.hi_address = *hi_address,
+		.lo_port = lo_port,
+		.hi_port = hi_port,
+	};
+}
+#endif
+
+ip_subnet subnet_from_address(const ip_address *address)
+{
+	const struct ip_info *afi = address_type(address);
+	if (!pexpect(afi != NULL)) {
+		return subnet_invalid;
+	}
+#ifdef SUBNET_TYPE
+	return subnet4(address, address, 0, 65535/*const?*/);
+#else
+	return subnet(address, afi->mask_cnt, 0);
+#endif
+}
+
+ip_subnet subnet_from_endpoint(const ip_endpoint *endpoint)
+{
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (!pexpect(afi != NULL)) {
+		return subnet_invalid;
+	}
+	ip_address address = endpoint_address(endpoint);
+	int hport = endpoint_hport(endpoint);
+	pexpect(hport != 0);
+#ifdef SUBNET_TYPE
+	return subnet4(&address, &address, port, hport);
+#else
+	return subnet(&address, afi->mask_cnt, hport);
+#endif
 }
 
 ip_address subnet_prefix(const ip_subnet *src)
@@ -88,6 +133,30 @@ ip_subnet set_subnet_hport(const ip_subnet *subnet, int hport)
 bool subnet_is_specified(const ip_subnet *s)
 {
 	return endpoint_is_specified(&s->addr);
+}
+
+bool subnet_contains_all_addresses(const ip_subnet *s)
+{
+	const struct ip_info *afi = subnet_type(s);
+	if (!pexpect(afi != NULL) ||
+	    s->maskbits != 0) {
+		return false;
+	}
+	ip_address network = subnet_prefix(s);
+	return (address_is_any(&network)
+		&& subnet_hport(s) == 0);
+}
+
+bool subnet_contains_no_addresses(const ip_subnet *s)
+{
+	const struct ip_info *afi = subnet_type(s);
+	if (!pexpect(afi != NULL) ||
+	    s->maskbits != afi->mask_cnt) {
+		return false;
+	}
+	ip_address network = subnet_prefix(s);
+	return (address_is_any(&network)
+		&& subnet_hport(s) == 0);
 }
 
 /*
