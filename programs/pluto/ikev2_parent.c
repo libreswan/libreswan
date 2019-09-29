@@ -563,15 +563,16 @@ void ikev2_parent_outI1(fd_t whack_sock,
 				st->st_ike_pred = predecessor->st_serialno;
 		}
 		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
-		whack_log(RC_NEW_V2_STATE + STATE_PARENT_I1,
-			  "%s: initiate, replacing #%lu",
-			  st->st_state->name,
-			  predecessor->st_serialno);
+		update_pending(predecessor, st);
+		loglog(RC_NEW_V2_STATE + STATE_PARENT_I1,
+		       "%s: initiate, replacing #%lu",
+		       st->st_state->name,
+		       predecessor->st_serialno);
 	} else {
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			libreswan_log("initiating v2 parent SA");
 		}
-		whack_log(RC_NEW_V2_STATE + STATE_PARENT_I1, "initiate");
+		loglog(RC_NEW_V2_STATE + STATE_PARENT_I1, "initiate");
 	}
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {
