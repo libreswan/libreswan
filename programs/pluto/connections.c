@@ -776,15 +776,6 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 	dst->host_vtiip = src->host_vtiip;
 	dst->client = src->client;
 
-#ifdef HAVE_SIN_LEN
-	/* XXX need to fix this for v6 */
-	dst->client.addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
-	dst->host_vtiip.addr.u.v4.sin_len = sizeof(struct sockaddr_in);
-	dst->host_addr.u.v4.sin_len = sizeof(struct sockaddr_in);
-	dst->host_nexthop.u.v4.sin_len = sizeof(struct sockaddr_in);
-	dst->host_srcip.u.v4.sin_len = sizeof(struct sockaddr_in);
-#endif
-
 	dst->modecfg_server = src->modecfg_server;
 	dst->modecfg_client = src->modecfg_client;
 	dst->cat = src->cat;
