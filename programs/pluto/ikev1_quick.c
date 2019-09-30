@@ -918,14 +918,13 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	start_retransmits(st);
 
 	if (st->st_ipsec_pred == SOS_NOBODY) {
-		whack_log(RC_NEW_V1_STATE + STATE_QUICK_I1,
-			  "%s: initiate",
-			  st->st_state->name);
+		loglog(RC_NEW_V1_STATE + st->st_state->kind,
+		       "%s: %s", st->st_state->name, st->st_state->story);
 	} else {
-		whack_log(RC_NEW_V1_STATE + STATE_QUICK_I1,
-			  "%s: initiate to replace #%lu",
-			  st->st_state->name,
-			  st->st_ipsec_pred);
+		loglog(RC_NEW_V1_STATE + st->st_state->kind,
+		       "%s: %s, to replace #%lu",
+		       st->st_state->name, st->st_state->story,
+		       st->st_ipsec_pred);
 		st->st_ipsec_pred = SOS_NOBODY;
 	}
 
