@@ -29,6 +29,8 @@ west #
 west #
  ipsec shunkcheck > /dev/null || echo failed
 west #
+ ipsec idcheck > /dev/null || echo failed
+west #
  # Need to disable DNS tests
 west #
  ipsec ipcheck --nodns > /dev/null || echo failed

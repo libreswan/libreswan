@@ -136,7 +136,8 @@ const char *str_dn_or_null(chunk_t dn, const char *null_dn, dn_buf *buf);
 
 void jam_dn_or_null(struct lswlog *buf, chunk_t dn, const char *null_dn,
 		    jam_bytes_fn *jam_bytes);
-void jam_dn(struct lswlog *buf, chunk_t dn,
-	    jam_bytes_fn *jam_bytes);
+void jam_dn(struct lswlog *buf, chunk_t dn, jam_bytes_fn *jam_bytes);
+void jam_raw_dn(struct lswlog *buf, chunk_t dn, jam_bytes_fn *jam_bytes,
+		bool nss_compatible);
 
 #endif /* _X509_H */
