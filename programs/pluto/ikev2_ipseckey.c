@@ -764,15 +764,22 @@ static err_t build_dns_name(jambuf_t *name_buf, const struct id *id)
 		break;
 
 	case ID_FQDN:
-		{
-			/* idtoa() will have an extra @ as prefix */
-			/* strip trailing "." characters, then add one */
-			unsigned len = id->name.len;
-			while (len > 0 && id->name.ptr[len - 1] == '.')
-				len--;
-			jam(name_buf, "%.*s.", len, id->name.ptr);
-		}
+	{
+		/*
+		 * strip any and all trailing "." characters, then add
+		 * just one
+		 *
+		 * id.name will have an extra @ as prefix
+		 * (XXX: is this still relevant?)
+		 */
+		unsigned len = id->name.len;
+		while (len > 0 && id->name.ptr[len - 1] == '.')
+			len--;
+		/* stop at len, or any embedded '\0'; add the '.' */
+		/* XXX: use jam_raw_bytes()? */
+		jam(name_buf, "%.*s.", len, id->name.ptr);
 		break;
+	}
 
 	default:
 		return "can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR";

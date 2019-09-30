@@ -627,18 +627,18 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	}
 
 	/*
-	 * Convert the ID with no special escaping (idtoa() escapes
-	 * things).  Strictly speaking, logging code should then emit
-	 * using jam_sanitized_bytes(raw_id, strlen(raw_id).
+	 * Convert the ID with no special escaping (other than that
+	 * specified for converting an ASN.1 DN to text).
 	 *
-	 * XXX: Is there any point in continung whn KIND isn't'
+	 * XXX: Is there any point in continung wehn KIND isn't'
 	 * ID_FQDN?  For instance, ID_DER_ASN1_DN (in fact, for DN,
 	 * code was calling this with the ID's first character - not
 	 * an @ - discarded making the value useless).
 	 *
-	 * XXX: Is this overkill?  For instance, if DNS name contained
-	 * unprintable characters (from memory only a very limited
-	 * character set is allowed) then things can't match.
+	 * XXX: Is this overkill?  For instance, sicne DNS ID has a
+	 * very limited character set, the escaping used is largely
+	 * accademic - any escape character ('\', '?') is invalid and
+	 * can't match.
 	 */
 	char raw_id_buf[IDTOA_BUF];
 	jambuf_t raw_id_jambuf = ARRAY_AS_JAMBUF(raw_id_buf);
