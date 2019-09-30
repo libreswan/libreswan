@@ -1284,6 +1284,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	req.p.reqid = sa->reqid;
+	DBG(DBG_KERNEL, DBG_log("XFRM: adding IPsec SA with reqid %d", sa->reqid));
 
 	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
@@ -1573,6 +1574,8 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
+	DBG(DBG_KERNEL, DBG_log("XFRM: deleting IPsec SA with reqid %d", sa->reqid));
+
 	return send_netlink_msg(&req.n, NLMSG_NOOP, NULL, "Del SA", sa->text_said);
 }
 
@@ -1686,6 +1689,12 @@ static void netlink_acquire(struct nlmsghdr *n)
 			DBG_log("xfrm acquire rtattribute type %u", attr->rta_type));
 		switch (attr->rta_type) {
 		case XFRMA_TMPL:
+		{
+			struct xfrm_user_tmpl* tmpl = (struct xfrm_user_tmpl *) RTA_DATA(attr);
+			DBG(DBG_KERNEL,
+				DBG_log("xfrm template attribute with reqid:%d, spi:%d, proto:%d", tmpl->reqid, tmpl->id.spi, tmpl->id.proto));
+			break;
+		}
 		case XFRMA_POLICY_TYPE:
 			/* discard */
 			break;
@@ -1751,7 +1760,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 		}
 		default:
 			DBG(DBG_KERNEL,
-				DBG_log("ignoring unkndown xfrm acquire payload type %u",
+				DBG_log("ignoring unknown xfrm acquire payload type %u",
 					attr->rta_type));
 			break;
 		}

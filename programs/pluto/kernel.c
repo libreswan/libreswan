@@ -1208,12 +1208,13 @@ bool raw_eroute(const ip_address *this_host,
 	if (DBGP(DBG_BASE)) {
 		subnet_buf mybuf;
 		subnet_buf peerbuf;
-		DBG_log("%s eroute %s --%d-> %s => %s (raw_eroute)",
+		DBG_log("%s eroute %s --%d-> %s => %s using reqid %d (raw_eroute)",
 			opname,
 			str_subnet_port(this_client, &mybuf),
 			transport_proto,
 			str_subnet_port(that_client, &peerbuf),
-			text_said);
+			text_said,
+			proto_info->reqid);
 #ifdef HAVE_LABELED_IPSEC
 		if (policy_label != NULL)
 			DBG_log("policy security label %s",
