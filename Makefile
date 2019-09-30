@@ -135,6 +135,7 @@ buildready:
 	# obsolete cd doc ; $(MAKE) -s
 
 rpm:
+	# would be nice if we could support ~/.rpmmacros here
 	@echo building rpm for libreswan testing
 	mkdir -p ~/rpmbuild/SPECS/
 	sed  -e "s/^Version:.*/Version: $(MAIN_RPM_VERSION)/g" \
@@ -147,6 +148,9 @@ rpm:
 	if [ -a Makefile.inc.local ] ; then \
 		tar --transform "s|^|$(MAIN_RPM_PREFIX)/|" -rf ~/rpmbuild/SOURCES/$(MAIN_RPM_PREFIX).tar Makefile.inc.local ; \
 	fi;
+	echo 'IPSECBASEVERSION=$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER)' > ~/rpmbuild/SOURCES/version.mk
+	tar --transform "s|^|$(MAIN_RPM_PREFIX)/mk/|" -rf ~/rpmbuild/SOURCES/$(MAIN_RPM_PREFIX).tar ~/rpmbuild/SOURCES/version.mk
+	rm ~/rpmbuild/SOURCES/version.mk
 	gzip -f ~/rpmbuild/SOURCES/$(MAIN_RPM_PREFIX).tar
 	rpmbuild -ba ~/rpmbuild/SPECS/libreswan.spec
 
