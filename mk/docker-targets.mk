@@ -22,7 +22,7 @@ W4 = $(or $(word 4, $(subst -, ,$1)), $(value 2))
 FIRST_TARGET ?=$@	# keep track of original target
 DISTRO ?= fedora	# default distro
 DISTRO_REL ?= 28 	# default release
-EXCLUDE_RPM_ARCH ?= --excludepkgs='*.i686'
+EXCLUDE_RPM_ARCH ?= --exclude='*.i686'
 
 D_USE_UNBOUND_EVENT_H_COPY ?= true
 D_USE_DNSSEC ?= false
@@ -33,9 +33,11 @@ D_USE_NSS_AVA_COPY ?= true
 DOCKERFILE ?= $(D)/dockerfile
 
 SUDO_CMD ?= sudo
-DNF_INSTALL = $(SUDO_CMD) dnf install -y
-DNF_UPGRADE = $(SUDO_CMD) dnf upgrade -y
-DNF_DEBUGINFO_INSTALL = $(SUDO_CMD) dnf debuginfo-install -y
+PKG_CMD = $(shell test -f /usr/bin/dnf && echo /usr/bin/dnf || (test -f /usr/bin/yum && echo /usr/bin/yum || echo "no yum or dnf found" && exit 1))
+PKG_BUILDDEP = $(shell test -f /usr/bin/dnf && echo "/usr/bin/dnf builddep" || echo /usr/bin/yum-builddep )
+PKG_INSTALL = $(SUDO_CMD) $(PKG_CMD) install -y
+PKG_UPGRADE = $(SUDO_CMD) $(PKG_CMD) upgrade -y
+PKG_DEBUGINFO_INSTALL = $(SUDO_CMD) $(PKG_CMD) debuginfo-install -y
 
 # end of configurable variables
 
@@ -108,20 +110,20 @@ use_unbound_event_h_copy:
 
 .PHONY: install-testing-rpm-dep
 install-testing-rpm-dep: install-rpm-build-dep install-rpm-run-dep
-	$(if $(KVM_INSTALL_PACKAGES), $(DNF_INSTALL) $(KVM_INSTALL_PACKAGES))
-	$(if $(KVM_UPGRADE_PACKAGES), $(DNF_UPGRADE) $(KVM_UPGRADE_PACKAGES))
+	$(if $(KVM_INSTALL_PACKAGES), $(PKG_INSTALL) $(KVM_INSTALL_PACKAGES))
+	$(if $(KVM_UPGRADE_PACKAGES), $(PKG_UPGRADE) $(KVM_UPGRADE_PACKAGES))
 	$(if $(KVM_DEBUGINFO_INSTALL), $(if $(KVM_DEBUGINFO), \
-                $(DNF_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO)))
+                $(PKG_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO)))
 
 .PHONY: install-rpm-run-dep
-RUN_RPMS = $$(dnf deplist $(EXCLUDE_RPM_ARCH) libreswan | awk '/provider:/ {print $$2}' | sort -u)
+RUN_RPMS = $$($(PKG_CMD) deplist $(EXCLUDE_RPM_ARCH) libreswan | awk '/provider:/ {print $$2}' | sort -u)
 install-rpm-run-dep:
-	 $(DNF_INSTALL) --skip-broken $(RUN_RPMS)
+	 $(PKG_INSTALL) --skip-broken $(RUN_RPMS)
 
 .PHONY: install-rpm-build-dep
 install-rpm-build-dep:
-	$(SUDO_CMD) dnf builddep -y libreswan
-	$(SUDO_CMD) dnf install -y \@development-tools
+	$(SUDO_CMD) $(PKG_BUILDDEP) -y libreswan
+	$(SUDO_CMD) $(PKG_CMD) groupinstall -y "Development Tools"
 
 .PHONY: install-deb-dep
 # RUN_DEBS_OLD ?= $$(grep -qE 'jessie|xenial' /etc/os-release && echo "host iptables")
