@@ -459,10 +459,7 @@ static void jam_end_client(jambuf_t *buf, const struct end *this,
 {
 	/* [CLIENT===] */
 	if (this->has_client) {
-		ip_address client_net = subnet_prefix(&this->client);
-		ip_address client_mask = subnet_mask(&this->client);
-		/* XXX: subnet_has_all_addresses()? */
-		bool boring = (isanyaddr(&client_net) && isanyaddr(&client_mask) &&
+		bool boring = (subnet_contains_all_addresses(&this->client) &&
 			       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
 
 		if (!boring && !is_left) {
