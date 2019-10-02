@@ -69,37 +69,45 @@ void init_ip_info(void)
 }
 
 const struct ip_info ipv4_info = {
-	.af = AF_INET,
-	.af_name = "AF_INET",
+	/* ip_address */
 	.ip_version = 4,
 	.ip_size = sizeof(struct in_addr),
-	.sockaddr_size = sizeof(struct sockaddr_in),
+	.ip_name = "IPv4",
+	.any_address = &any_address_ipv4,
+	.loopback_address = &loopback_address_ipv4,
+	/* ip_subnet */
 	.mask_cnt = 32,
+	.no_addresses = &no_addresses_ipv4,
+	.all_addresses = &all_addresses_ipv4,
+	/* sockaddr */
+	.af = AF_INET,
+	.af_name = "AF_INET",
+	.sockaddr_size = sizeof(struct sockaddr_in),
+	/* id */
 	.id_addr = ID_IPV4_ADDR,
 	.id_subnet = ID_IPV4_ADDR_SUBNET,
 	.id_range = ID_IPV4_ADDR_RANGE,
-	/* */
-	.any_address = &any_address_ipv4,
-	.loopback_address = &loopback_address_ipv4,
-	.no_addresses = &no_addresses_ipv4,
-	.all_addresses = &all_addresses_ipv4,
 };
 
 const struct ip_info ipv6_info = {
-	.af = AF_INET6,
-	.af_name = "AF_INET6",
+	/* ip_address */
 	.ip_version = 6,
 	.ip_size = sizeof(struct in6_addr),
-	.sockaddr_size = sizeof(struct sockaddr_in6),
+	.ip_name = "IPv6",
+	.any_address = &any_address_ipv6,
+	.loopback_address = &loopback_address_ipv6,
+	/* ip_subnet */
 	.mask_cnt = 128,
+	.no_addresses = &no_addresses_ipv6,
+	.all_addresses = &all_addresses_ipv6,
+	/* sockaddr */
+	.af = AF_INET6,
+	.af_name = "AF_INET6",
+	.sockaddr_size = sizeof(struct sockaddr_in6),
+	/* id */
 	.id_addr = ID_IPV6_ADDR,
 	.id_subnet = ID_IPV6_ADDR_SUBNET,
 	.id_range = ID_IPV6_ADDR_RANGE,
-	/* */
-	.any_address = &any_address_ipv6,
-	.loopback_address = &loopback_address_ipv6,
-	.no_addresses = &no_addresses_ipv6,
-	.all_addresses = &all_addresses_ipv6,
 };
 
 const struct ip_info *aftoinfo(int af)

@@ -9,23 +9,38 @@
 #include "ip_subnet.h"
 
 struct ip_info {
-	/* sockaddr */
-	int af; /* AF_INET or AF_INET6 */
-	const char *af_name;
-	unsigned ip_version; /* 4 or 6 */
-	size_t ip_size; /* 4 or 16 */
-	size_t sockaddr_size; /* sizeof(sockaddr_in) | sizeof(sockaddr_in6)? */
-	int mask_cnt; /* 32 or 128 */
-	uint8_t id_addr, id_subnet, id_range;
 	/*
-	 * some pre-defined values
+	 * ip_address
 	 */
+	unsigned ip_version; /* 4 or 6 */
+	const char *ip_name;
+	size_t ip_size; /* 4 or 16 */
+	/* 0.0.0.0 or :: */
 	const ip_address *any_address;
+	/* 127.0.0.1 or ::1 */
 	const ip_address *loopback_address;
+
+	/*
+	 * ip_subnet.
+	 */
+	int mask_cnt; /* 32 or 128 */
 	/* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
 	const ip_subnet *no_addresses;
 	/* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
 	const ip_subnet *all_addresses;
+
+	/*
+	 * Sockaddr.
+	 */
+	int af; /* AF_INET or AF_INET6 */
+	const char *af_name;
+	size_t sockaddr_size; /* sizeof(sockaddr_in) | sizeof(sockaddr_in6)? */
+
+	/*
+	 * ID stuff.
+	 */
+	uint8_t id_addr, id_subnet, id_range;
+
 };
 
 extern const struct ip_info ipv4_info;
