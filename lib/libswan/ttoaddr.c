@@ -481,6 +481,16 @@ ttoaddr(const char *src,
 	return err;
 }
 
+err_t domain_to_address(shunk_t src, const struct ip_info *type, ip_address *dst)
+{
+	*dst = address_invalid;
+	if (src.len == 0) {
+		return "empty string";
+	}
+
+	return ttoaddr(src.ptr, src.len, type == NULL ? AF_UNSPEC : type->af, dst);
+}
+
 err_t	/* NULL for success, else string literal */
 ttoaddr_num(const char *src,
 	size_t srclen,	/* 0 means "apply strlen" */
@@ -496,4 +506,14 @@ ttoaddr_num(const char *src,
 	}
 
 	return ttoaddr_base(src, srclen, af, &numfailed, dst);
+}
+
+err_t numeric_to_address(shunk_t src, const struct ip_info *type, ip_address *dst)
+{
+	*dst = address_invalid;
+	if (src.len == 0) {
+		return "empty string";
+	}
+
+	return ttoaddr_num(src.ptr, src.len, type == NULL ? AF_UNSPEC : type->af, dst);
 }

@@ -48,9 +48,10 @@ static void check_str_endpoint(void)
 
 		/* convert it *to* internal format */
 		ip_address a;
-		err_t err = ttoaddr(t->in, strlen(t->in), AF_UNSPEC, &a);
+		const struct ip_info *type = NULL;
+		err_t err = numeric_to_address(shunk1(t->in), type, &a);
 		if (err != NULL) {
-			FAIL_IN("ttoaddr() failed: %s", err);
+			FAIL_IN("numeric_to_address() failed: %s", err);
 			continue;
 		}
 		ip_endpoint e = endpoint(&a, 65535);
@@ -187,10 +188,10 @@ static void check_endpoint_port(void)
 		const struct test *t = &tests[ti];
 		PRINT_IN(stdout, " -> '%d'", t->hport);
 
-		sa_family_t af = SA_FAMILY(t->family);
+		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address a;
-		oops = ttoaddr(t->in, 0, af, &a);
+		oops = numeric_to_address(shunk1(t->in), type, &a);
 		if (oops != NULL) {
 			/* Error occurred, but we didn't expect one  */
 			FAIL_IN("ttosubnet failed: %s", oops);

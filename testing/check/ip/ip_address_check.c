@@ -25,112 +25,141 @@
 
 #include "ipcheck.h"
 
-static void check_str_address_raw(void)
+static void check_shunk_to_address(void)
 {
 	static const struct test {
 		int family;
 		const char *in;
 		const char sep;
-		const char *out;
+		const char *cooked;
+		const char *raw;
+		bool requires_dns;
 	} tests[] = {
-		/* any */
+
+		/* any/unspec */
 		{ 4, "0.0.0.0", 0, "0.0.0.0", },
-		{ 6, "::", 0, "0:0:0:0:0:0:0:0", },
-		/* all */
-		{ 4, "1.2.3.4", 0, "1.2.3.4", },
-		{ 6, "1:2:3:4:5:6:7:8", 0, "1:2:3:4:5:6:7:8", },
+		{ 6, "::", 0, "::", "0:0:0:0:0:0:0:0", },
+		{ 6, "0:0:0:0:0:0:0:0", 0, "::", "0:0:0:0:0:0:0:0", },
+
 		/* local */
 		{ 4, "127.0.0.1", 0, "127.0.0.1", },
-		{ 6, "::1", 0, "0:0:0:0:0:0:0:1", },
-		/* different sepc */
-		{ 4, "127.0.0.1", '/', "127/0/0/1", },
-		{ 6, "1:2::7:8", '/', "1/2/0/0/0/0/7/8", },
-		/* buffer overflow */
+		{ 6, "::1", 0, "::1", "0:0:0:0:0:0:0:1", },
+		{ 6, "0:0:0:0:0:0:0:1", 0, "::1", "0:0:0:0:0:0:0:1", },
+
+		/* mask - and buffer overflow */
 		{ 4, "255.255.255.255", 0, "255.255.255.255", },
-		{ 6, "1111:2222:3333:4444:5555:6666:7777:8888", 0, "1111:2222:3333:4444:5555:6666:7777:8888", },
-	};
+		{ 6, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 0, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		if (t->sep == 0) {
-			PRINT_IN(stdout, " 0 -> '%s'", t->out);
-		} else {
-			PRINT_IN(stdout, " '%c' -> '%s'", t->sep, t->out);
-		}
-
-		/* convert it *to* internal format */
-		ip_address a;
-		err_t err = ttoaddr(t->in, strlen(t->in), AF_UNSPEC, &a);
-		if (err != NULL) {
-			FAIL_IN("ttoaddr failed: %s", err);
-			continue;
-		}
-		CHECK_TYPE(PRINT_IN, address_type(&a));
-
-		/* now convert it back */
-		address_buf buf;
-		const char *out = str_address_raw(&a, t->sep, &buf);
-		if (out == NULL) {
-			FAIL_IN("failed");
-		} else if (!strcaseeq(t->out, out)) {
-			FAIL_IN("returned '%s', expected '%s'",
-				out, t->out);
-		}
-	}
-}
-
-static void check_str_address(void)
-{
-	static const struct test {
-		int family;
-		const char *in;
-		const char *out;
-	} tests[] = {
-		/* anything else? */
-		{ 4, "0.0.0.0", "0.0.0.0", },
-		{ 4, "1.2.3.4", "1.2.3.4" },
+		/* all bytes and '/' */
+		{ 4, "1.2.3.4", '/', "1.2.3.4", "1/2/3/4", },
+		{ 6, "1:2:3:4:5:6:7:8", '/', "1:2:3:4:5:6:7:8", "1/2/3/4/5/6/7/8", },
 
 		/* suppress leading zeros - 01 vs 1 */
-		{ 6, "1:12:3:14:5:16:7:18",	"1:12:3:14:5:16:7:18" },
+		{ 6, "0001:0012:0003:0014:0005:0016:0007:0018", 0, "1:12:3:14:5:16:7:18", },
 		/* drop leading 0:0: */
-		{ 6, "0:0:3:4:5:6:7:8",		"::3:4:5:6:7:8" },
+		{ 6, "0:0:3:4:5:6:7:8", 0, "::3:4:5:6:7:8", "0:0:3:4:5:6:7:8", },
 		/* drop middle 0:...:0 */
-		{ 6, "1:2:0:0:0:0:7:8",		"1:2::7:8" },
+		{ 6, "1:2:0:0:0:0:7:8", 0, "1:2::7:8", "1:2:0:0:0:0:7:8", },
 		/* drop trailing :0..:0 */
-		{ 6, "1:2:3:4:5:0:0:0",		"1:2:3:4:5::" },
+		{ 6, "1:2:3:4:5:0:0:0", 0, "1:2:3:4:5::", "1:2:3:4:5:0:0:0", },
 		/* drop first 0:..:0 */
-		{ 6, "1:2:0:0:3:4:0:0",		"1:2::3:4:0:0" },
+		{ 6, "1:2:0:0:5:6:0:0", 0, "1:2::5:6:0:0", "1:2:0:0:5:6:0:0", },
 		/* drop logest 0:..:0 */
-		{ 6, "0:0:3:0:0:0:7:8",		"0:0:3::7:8" },
+		{ 6, "0:0:3:0:0:0:7:8", 0, "0:0:3::7:8", "0:0:3:0:0:0:7:8", },
 		/* need two 0 */
-		{ 6, "0:2:0:4:0:6:0:8",		"0:2:0:4:0:6:0:8" },
-		/* edge cases */
-		{ 6, "0:0:0:0:0:0:0:1",		"::1" },
-		{ 6, "0:0:0:0:0:0:0:0",		"::" },
+		{ 6, "0:2:0:4:0:6:0:8", 0, "0:2:0:4:0:6:0:8", },
+
+		{ 4, "www.libreswan.org", 0, "188.127.201.229", .requires_dns = true, },
 	};
+
+	err_t err;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, " -> '%s'", t->out);
+		PRINT_IN(stdout, " '%c' -> cooked: %s raw: %s dns: %s",
+			 t->sep == 0 ? '0' : t->sep,
+			 t->cooked == NULL ? "ERROR" : t->cooked,
+			 t->raw == NULL ? t->cooked == NULL ? "ERROR" : t->cooked : t->raw,
+			 bool_str(t->requires_dns));
 
-		/* convert it *to* internal format */
+		const struct ip_info *type;
 		ip_address a;
-		err_t err = ttoaddr(t->in, strlen(t->in), AF_UNSPEC, &a);
+
+		/* NUMERIC/NULL */
+
+		type = NULL;
+		err = numeric_to_address(shunk1(t->in), type, &a);
 		if (err != NULL) {
-			FAIL_IN("%s", err);
+			if (t->cooked != NULL && !t->requires_dns) {
+				FAIL_IN("numeric_to_address(NULL) unexpecedly failed: %s", err);
+			}
+		} else if (t->requires_dns) {
+			FAIL_IN(" numeric_to_address(NULL) unexpecedly parsed a DNS address");
+		} else if (t->cooked == NULL) {
+			FAIL_IN(" numeric_to_address(NULL) unexpecedly succeeded");
+		} else {
+			CHECK_TYPE(PRINT_IN, address_type(&a));
+		}
+
+		/* NUMERIC/TYPE */
+
+		type = IP_TYPE(t->family);
+		err = numeric_to_address(shunk1(t->in), type, &a);
+		if (err != NULL) {
+			if (!t->requires_dns && t->raw != NULL) {
+				FAIL_IN(" numeric_to_address(type) unexpecedly failed: %s", err);
+			}
+		} else if (t->requires_dns) {
+			FAIL_IN(" numeric_to_address(type) unexpecedly parsed a DNS address");
+		} else if (t->cooked == NULL) {
+			FAIL_IN(" numeric_to_address(type) unexpecedly succeeded");
+		} else {
+			CHECK_TYPE(PRINT_IN, address_type(&a));
+		}
+
+		if (t->requires_dns && !use_dns) {
+			PRINT_IN(stdout, " skipping str_address() tests as no DNS");
 			continue;
 		}
-		CHECK_TYPE(PRINT_IN, address_type(&a));
+
+		/* DNS/TYPE */
+
+		if (t->requires_dns && !use_dns) {
+			PRINT_IN(stdout, " skipping dns_hunk_to_address(type) -- no DNS");
+		} else {
+			type = IP_TYPE(t->family);
+			err = domain_to_address(shunk1(t->in), type, &a);
+			if (err != NULL) {
+				if (t->cooked != NULL) {
+					FAIL_IN("dns_hunk_to_address(type) unexpecedly failed: %s", err);
+				}
+			} else if (t->cooked == NULL) {
+				FAIL_IN(" dns_hunk_to_address(type) unexpecedly succeeded");
+			} else {
+				CHECK_TYPE(PRINT_IN, address_type(&a));
+			}
+		}
+
+		address_buf buf;
+
+		/* now convert it back cooked */
+		const char *cooked = str_address(&a, &buf);
+		if (cooked == NULL) {
+			FAIL_IN("str_address() failed");
+		} else if (!strcaseeq(t->cooked, cooked)) {
+			FAIL_IN("str_address() returned '%s', expected '%s'",
+				cooked, t->cooked);
+		}
 
 		/* now convert it back */
-		address_buf buf;
-		const char *out = str_address(&a, &buf);
-		if (out == NULL) {
-			FAIL_IN("failed");
-		} else if (!strcaseeq(t->out, out)) {
-			FAIL_IN("returned '%s', expected '%s'",
-				out, t->out);
+		const char *raw = str_address_raw(&a, t->sep, &buf);
+		if (raw == NULL) {
+			FAIL_IN("str_address_raw() failed");
+		} else if (!strcaseeq(raw, t->raw == NULL ? t->cooked : t->raw)) {
+			FAIL_IN("str_address_raw() returned '%s', expected '%s'",
+				raw, t->raw == NULL ? t->cooked : t->raw);
 		}
+
 	}
 }
 
@@ -150,10 +179,11 @@ static void check_str_address_sensitive(void)
 		PRINT_IN(stdout, " -> '%s'", t->out);
 
 		/* convert it *to* internal format */
+		const struct ip_info *type = NULL;
 		ip_address a;
-		err_t err = ttoaddr(t->in, strlen(t->in), AF_UNSPEC, &a);
+		err_t err = numeric_to_address(shunk1(t->in), type, &a);
 		if (err != NULL) {
-			FAIL_IN("%s", err);
+			FAIL_IN("numeric_to_address() failed: %s", err);
 			continue;
 		}
 		CHECK_TYPE(PRINT_IN, address_type(&a));
@@ -188,10 +218,11 @@ static void check_str_address_reversed(void)
 		PRINT_IN(stdout, " -> '%s", t->out);
 
 		/* convert it *to* internal format */
+		const struct ip_info *type = NULL;
 		ip_address a;
-		err_t err = ttoaddr(t->in, strlen(t->in), AF_UNSPEC, &a);
+		err_t err = numeric_to_address(shunk1(t->in), type, &a);
 		if (err != NULL) {
-			FAIL_IN("%s", err);
+			FAIL_IN("numeric_to_address() returned: %s", err);
 			continue;
 		}
 		CHECK_TYPE(PRINT_IN, address_type(&a));
@@ -291,9 +322,10 @@ static void check_address_is(void)
 		if (t->family == 0) {
 			a = address_invalid;
 		} else {
-			err_t err = ttoaddr(t->in, strlen(t->in), AF_UNSPEC, &a);
+			const struct ip_info *type = NULL;
+			err_t err = numeric_to_address(shunk1(t->in), type, &a);
 			if (err != NULL) {
-				FAIL_IN("%s", err);
+				FAIL_IN("numeric_to_address() failed: %s", err);
 			}
 		}
 
@@ -301,77 +333,11 @@ static void check_address_is(void)
 	}
 }
 
-static void check_ttoaddr_dns(void)
-{
-	static const struct test {
-		int family;
-		const char *in;
-		bool numonly;
-		bool expectfailure;
-		const char *out;	/* NULL means error expected */
-	} tests[] = {
-		{ 4, "www.libreswan.org", false, false, "188.127.201.229" },
-		{ 0, "www.libreswan.org", true, true, "1.2.3.4" },
-	};
-
-	const char *oops;
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		if (!t->numonly && !use_dns) {
-			PRINT_IN(stdout, "%s%s -> '%s' SKIPPED - NO DNS",
-				 t->numonly ? "" : " DNS",
-				 t->expectfailure ? " fail" : "",
-				 t->out);
-			continue;
-		}
-		PRINT_IN(stdout, "%s%s -> '%s",
-			 t->numonly ? "" : " DNS",
-			 t->expectfailure ? " fail" : "",
-			 t->out);
-		sa_family_t af = SA_FAMILY(t->family);
-
-		ip_address a;
-		memset(&a, 0, sizeof(a));
-
-		if (t->numonly) {
-			/* convert it *to* internal format (no DNS) */
-			oops = ttoaddr_num(t->in, strlen(t->in), af, &a);
-		} else {
-			/* convert it *to* internal format */
-			oops = ttoaddr(t->in, strlen(t->in), af, &a);
-		}
-		CHECK_TYPE(PRINT_IN, address_type(&a));
-
-		if (t->expectfailure && oops == NULL) {
-			FAIL_IN("expected failure, but it succeeded");
-			continue;
-		}
-
-		if (oops != NULL) {
-			if (!t->expectfailure) {
-				FAIL_IN("failed to parse: %s", oops);
-			}
-			continue;
-		}
-
-		/* now convert it back */
-		address_buf buf;
-		const char *out = str_address(&a, &buf);
-		if (!strcaseeq(t->out, out)) {
-			FAIL_IN("addrtoc returned '%s', expected '%s'",
-				out, t->out);
-		}
-	}
-}
-
 void ip_address_check(void)
 {
-	check_str_address_raw();
-	check_str_address();
+	check_shunk_to_address();
 	check_str_address_sensitive();
 	check_str_address_reversed();
 	check_address_is();
-	check_ttoaddr_dns();
 	check_in_addr();
 }

@@ -462,12 +462,12 @@ static void check_subnet_from_address(void)
 		const struct test *t = &tests[ti];
 		PRINT_IN(stdout, "");
 
-		sa_family_t af = SA_FAMILY(t->family);
+		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address a;
-		err_t oops = ttoaddr(t->in, 0, af, &a);
+		err_t oops = numeric_to_address(shunk1(t->in), type, &a);
 		if (oops != NULL) {
-			FAIL_IN("ttoaddr() failed: %s", oops);
+			FAIL_IN("numeric_to_address() failed: %s", oops);
 		}
 		ip_subnet s = subnet_from_address(&a);
 
@@ -511,12 +511,12 @@ static void check_subnet_from_endpoint(void)
 		const struct test *t = &tests[ti];
 		PRINT_IN(stdout, " -> %d", t->hport);
 
-		sa_family_t af = SA_FAMILY(t->family);
+		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address a;
-		err_t oops = ttoaddr(t->in, 0, af, &a);
+		err_t oops = numeric_to_address(shunk1(t->in), type, &a);
 		if (oops != NULL) {
-			FAIL_IN("ttoaddr() failed: %s", oops);
+			FAIL_IN("numeric_to_address() failed: %s", oops);
 		}
 		ip_endpoint e = endpoint(&a, t->hport);
 		ip_subnet s = subnet_from_endpoint(&e);

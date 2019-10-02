@@ -49,23 +49,24 @@ static void check_rangetosubnet(void)
 		{ 6, "1:2:3:4:5:6:7:f0", "1:2:3:4:5:6:7:ff", "1:2:3:4:5:6:7:f0/124" },
 	};
 
+	const char *oops;
+
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT_LO2HI(stdout, "-> '%s'",
 			    t->out ? t->out : "<error>");
-		sa_family_t af = SA_FAMILY(t->family);
-		const char *oops = NULL;
+		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address lo;
-		oops = ttoaddr(t->lo, 0, af, &lo);
+		oops = numeric_to_address(shunk1(t->lo), type, &lo);
 		if (oops != NULL) {
-			FAIL_LO2HI("ttoaddr(lo) failed: %s", oops);
+			FAIL_LO2HI("numeric_to_address(lo) failed: %s", oops);
 			continue;
 		}
 		ip_address hi;
-		oops = ttoaddr(t->hi, 0, af, &hi);
+		oops = numeric_to_address(shunk1(t->hi), type, &hi);
 		if (oops != NULL) {
-			FAIL_LO2HI("ttoaddr(hi) failed: %s", oops);
+			FAIL_LO2HI("numeric_to_address(hi) failed: %s", oops);
 			continue;
 		}
 		ip_subnet subnet;
@@ -123,19 +124,19 @@ static void check_iprange_bits(void)
 		const struct test *t = &tests[ti];
 		PRINT_LO2HI(stdout, " -> %d", t->range);
 
-		sa_family_t af = SA_FAMILY(t->family);
+		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address lo;
-		oops = ttoaddr(t->lo, 0, af, &lo);
+		oops = numeric_to_address(shunk1(t->lo), type, &lo);
 		if (oops != NULL) {
-			FAIL_LO2HI("ttoaddr failed converting '%s'", t->lo);
+			FAIL_LO2HI("numeric_to_address() failed converting '%s'", t->lo);
 			continue;
 		}
 
 		ip_address hi;
-		oops = ttoaddr(t->hi, 0, af, &hi);
+		oops = numeric_to_address(shunk1(t->hi), type, &hi);
 		if (oops != NULL) {
-			FAIL_LO2HI("ttoaddr failed converting '%s'", t->hi);
+			FAIL_LO2HI("numeric_to_address() failed converting '%s'", t->hi);
 			continue;
 		}
 
@@ -316,13 +317,13 @@ static void check_range_is(void)
 		PRINT_LO2HI(stdout, " -> invalid: %s specified: %s",
 			    bool_str(t->invalid), bool_str(t->specified));
 
-		sa_family_t af = SA_FAMILY(t->family);
+		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address lo;
 		if (strlen(t->lo) > 0) {
-			oops = ttoaddr(t->lo, 0, af, &lo);
+			oops = numeric_to_address(shunk1(t->lo), type, &lo);
 			if (oops != NULL) {
-				FAIL_LO2HI("ttoaddr failed converting '%s'", t->lo);
+				FAIL_LO2HI("numeric_to_address() failed converting '%s'", t->lo);
 			}
 		} else {
 			lo = address_invalid;
@@ -330,9 +331,9 @@ static void check_range_is(void)
 
 		ip_address hi;
 		if (strlen(t->hi) > 0) {
-			oops = ttoaddr(t->hi, 0, af, &hi);
+			oops = numeric_to_address(shunk1(t->hi), type, &hi);
 			if (oops != NULL) {
-				FAIL_LO2HI("ttoaddr failed converting '%s'", t->hi);
+				FAIL_LO2HI("numeric_to_address() failed converting '%s'", t->hi);
 			}
 		} else {
 			hi = address_invalid;

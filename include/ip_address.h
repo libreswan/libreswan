@@ -72,12 +72,21 @@ typedef struct {
 #endif
 } ip_address;
 
+/*
+ * Constructors.
+ */
+
 ip_address address_from_in_addr(const struct in_addr *in);
 ip_address address_from_in6_addr(const struct in6_addr *sin6);
 err_t data_to_address(const void *data, size_t sizeof_data,
 		      const struct ip_info *af, ip_address *dst) MUST_USE_RESULT;
 /* either SHUNK or CHUNK */
 #define hunk_to_address(HUNK, AF, DST) data_to_address(HUNK.ptr, HUNK.len, AF, DST)
+
+/* assumes dotted / colon notation */
+err_t numeric_to_address(shunk_t src, const struct ip_info *type, ip_address *dst);
+/* if numeric lookup fails, try a DNS lookup */
+err_t domain_to_address(shunk_t src, const struct ip_info *type, ip_address *dst);
 
 /*
  * Convert an address to a string:
