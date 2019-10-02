@@ -24,61 +24,26 @@
 
 /*
  * Construct well known addresses.
- *
- * Perhaps one day this will all be made static const.  However, to do
- * that this code would need to assume ip_address internals, and
- * likely also hardwire the contents of those constants.
- *
- * The current code uses address_from_in*_addr() since that knows how
- * to initialize secret sockaddr fields such as BSD's size.
  */
-
-static ip_address any_address_ipv4;
-static ip_address any_address_ipv6;
-
-static ip_address loopback_address_ipv4;
-static ip_address loopback_address_ipv6;
-
-static ip_subnet no_addresses_ipv4;
-static ip_subnet no_addresses_ipv6;
-
-static ip_subnet all_addresses_ipv4;
-static ip_subnet all_addresses_ipv6;
 
 void init_ip_info(void)
 {
-	struct in_addr in_any = { htonl(INADDR_ANY), };
-	any_address_ipv4 = address_from_in_addr(&in_any);
-
-	struct in6_addr in6_any = IN6ADDR_ANY_INIT;
-	any_address_ipv6 = address_from_in6_addr(&in6_any);
-
-	struct in_addr in_loopback = { htonl(INADDR_LOOPBACK), };
-	loopback_address_ipv4 = address_from_in_addr(&in_loopback);
-
-	struct in6_addr in6_loopback = IN6ADDR_LOOPBACK_INIT;
-	loopback_address_ipv6 = address_from_in6_addr(&in6_loopback);
-
-	/* ::/128 or 0.0.0.0/32 */
-	/* [::..::]:0..65535 or 0.0.0.0..0.0.0.0:0..65535 */
-	no_addresses_ipv4 = subnet_from_address(&any_address_ipv4);
-	no_addresses_ipv6 = subnet_from_address(&any_address_ipv6);
-
-	all_addresses_ipv4 = subnet(&any_address_ipv4, 0, 0);
-	all_addresses_ipv6 = subnet(&any_address_ipv6, 0, 0);
 }
+
+#define ANY4 { .version = 4, .bytes = { 0, }, }
+#define ANY6 { .version = 6, .bytes = { 0, }, }
 
 const struct ip_info ipv4_info = {
 	/* ip_address */
 	.ip_version = 4,
 	.ip_size = sizeof(struct in_addr),
 	.ip_name = "IPv4",
-	.any_address = &any_address_ipv4,
-	.loopback_address = &loopback_address_ipv4,
+	.any_address = ANY4, /* 0.0.0.0 */
+	.loopback_address = { .version = 4, .bytes = { 127, 0, 0, 1, }, }, /* 127.0.0.1 */
 	/* ip_subnet */
 	.mask_cnt = 32,
-	.no_addresses = &no_addresses_ipv4,
-	.all_addresses = &all_addresses_ipv4,
+	.no_addresses = { .addr = ANY4, .maskbits = 32, }, /* 0.0.0.0/32 */
+	.all_addresses = { .addr = ANY4, .maskbits = 0, }, /* 0.0.0.0/32 */
 	/* sockaddr */
 	.af = AF_INET,
 	.af_name = "AF_INET",
@@ -94,12 +59,12 @@ const struct ip_info ipv6_info = {
 	.ip_version = 6,
 	.ip_size = sizeof(struct in6_addr),
 	.ip_name = "IPv6",
-	.any_address = &any_address_ipv6,
-	.loopback_address = &loopback_address_ipv6,
+	.any_address = ANY6, /* :: */
+	.loopback_address = { .version = 6, .bytes = { [15] = 1, }, }, /* ::1 */
 	/* ip_subnet */
 	.mask_cnt = 128,
-	.no_addresses = &no_addresses_ipv6,
-	.all_addresses = &all_addresses_ipv6,
+	.no_addresses = { .addr = ANY6, .maskbits = 128, }, /* ::/128 */
+	.all_addresses = { .addr = ANY6, .maskbits = 0, }, /* ::/0 */
 	/* sockaddr */
 	.af = AF_INET6,
 	.af_name = "AF_INET6",

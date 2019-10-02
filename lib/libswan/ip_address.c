@@ -318,7 +318,7 @@ ip_address address_any(const struct ip_info *info)
 		PEXPECT_LOG("AF_UNSPEC unexpected");
 		return address_invalid;
 	} else {
-		return *info->any_address;
+		return info->any_address;
 	}
 }
 
@@ -329,7 +329,7 @@ bool address_is_any(const ip_address *address)
 		return false;
 	} else {
 		shunk_t addr = address_as_shunk(address);
-		shunk_t any = address_as_shunk(type->any_address);
+		shunk_t any = address_as_shunk(&type->any_address);
 		return shunk_eq(addr, any);
 	}
 }
@@ -341,7 +341,7 @@ bool address_is_specified(const ip_address *address)
 		return false;
 	} else {
 		shunk_t addr = address_as_shunk(address);
-		shunk_t any = address_as_shunk(type->any_address);
+		shunk_t any = address_as_shunk(&type->any_address);
 		return !shunk_eq(addr, any);
 	}
 }
@@ -353,7 +353,7 @@ bool address_is_loopback(const ip_address *address)
 		return false;
 	} else {
 		shunk_t addr = address_as_shunk(address);
-		shunk_t loopback = address_as_shunk(type->loopback_address);
+		shunk_t loopback = address_as_shunk(&type->loopback_address);
 		return shunk_eq(addr, loopback);
 	}
 }

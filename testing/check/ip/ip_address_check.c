@@ -306,7 +306,7 @@ static void check_address_any(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT_IN(stdout, "");
-		CHECK_ADDRESS(FAIL_IN, t->info->any_address);
+		CHECK_ADDRESS(FAIL_IN, &t->info->any_address);
 		ip_address a = address_any(IP_TYPE(t->family));
 		CHECK_ADDRESS(FAIL_IN, &a);
 	}
@@ -330,7 +330,7 @@ static void check_address_loopback(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT_IN(stdout, "");
-		CHECK_ADDRESS(FAIL_IN, t->info->loopback_address);
+		CHECK_ADDRESS(FAIL_IN, &t->info->loopback_address);
 	}
 }
 

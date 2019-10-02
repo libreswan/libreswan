@@ -16,18 +16,18 @@ struct ip_info {
 	const char *ip_name;
 	size_t ip_size; /* 4 or 16 */
 	/* 0.0.0.0 or :: */
-	const ip_address *any_address;
+	const ip_address any_address;
 	/* 127.0.0.1 or ::1 */
-	const ip_address *loopback_address;
+	const ip_address loopback_address;
 
 	/*
 	 * ip_subnet.
 	 */
 	int mask_cnt; /* 32 or 128 */
 	/* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
-	const ip_subnet *no_addresses;
+	const ip_subnet no_addresses;
 	/* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
-	const ip_subnet *all_addresses;
+	const ip_subnet all_addresses;
 
 	/*
 	 * Sockaddr.

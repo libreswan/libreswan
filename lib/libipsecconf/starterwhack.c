@@ -376,7 +376,7 @@ static void set_whack_end(char *lr,
 	if (l->has_client) {
 		w->client = l->subnet;
 	} else {
-		w->client = *(aftoinfo(l->addr_family)->all_addresses);
+		w->client = (aftoinfo(l->addr_family)->all_addresses);
 	}
 
 	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */

@@ -155,7 +155,7 @@ static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_fami
 	const struct ip_info *afi = aftoinfo(family);
 	passert(afi != NULL);
 
-	*addr = *afi->any_address; /* initalize dst type and zero */
+	*addr = afi->any_address; /* initalize dst type and zero */
 	chunk_t a = address_as_chunk(addr);
 
 	/* a = x */
@@ -1598,7 +1598,7 @@ static err_t xfrm_to_ip_address(unsigned family, const xfrm_address_t *xaddr,
 	/* .len == ipv6 size */
 	shunk_t x = THING_AS_SHUNK(*xaddr);
 
-	*addr = *afi->any_address; /* "zero" it & set type */
+	*addr = afi->any_address; /* "zero" it & set type */
 	chunk_t a = address_as_chunk(addr);
 
 	/* a = x */
