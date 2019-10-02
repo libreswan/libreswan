@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 #include "ip_said.h"
+#include "ip_info.h"
 #include "jambuf.h"
 #include "libreswan/passert.h"
 
@@ -97,7 +98,7 @@ size_t dstlen;
 	if (strcmp(pre, PASSTHROUGHTYPE) == 0 &&
 	    sa->spi == PASSTHROUGHSPI &&
 	    isanyaddr(&sa->dst)) {
-		strcpy(buf, (addrtypeof(&sa->dst) == AF_INET) ?
+		strcpy(buf, (said_type(sa) == &ipv4_info) ?
 		       PASSTHROUGH4NAME :
 		       PASSTHROUGH6NAME);
 		len = strlen(buf);
@@ -142,7 +143,7 @@ size_t dstlen;
 		len = strlen(buf);
 		if (showversion) {
 			*(buf +
-			  len) = (addrtypeof(&sa->dst) == AF_INET) ?
+			  len) = (said_type(sa) == &ipv4_info) ?
 				'.' : ':';
 			len++;
 			*(buf + len) = '\0';
