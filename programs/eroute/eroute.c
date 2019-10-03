@@ -1,5 +1,5 @@
-/*
- * manipulate eroutes
+/* manipulate eroutes, for libreswan
+ *
  * Copyright (C) 1996  John Ioannidis.
  * Copyright (C) 1997, 1998, 1999, 2000, 2001  Richard Guy Briggs.
  * Copyright (C) 2013 - 2017 D. Hugh Redelmeier
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 	ip_said said;
 	ip_subnet s_subnet, d_subnet;
 	int eroute_af = 0;
-	int said_af = 0;
+	const struct ip_info *said_af = NULL;
 	int sa_flags = 0;
 
 	int argcount = argc;
@@ -243,7 +243,7 @@ int main(int argc, char **argv)
 			}
 
 			{
-				err_t e = ttoaddr(optarg, 0, said_af, &said.dst);
+				err_t e = domain_to_address(shunk1(optarg), said_af, &said.dst);
 				if (e != NULL) {
 					fprintf(stderr,
 						"%s: Error, %s converting --edst argument:%s\n",
@@ -365,7 +365,7 @@ int main(int argc, char **argv)
 					progname, optarg, said.spi);
 				exit(1);
 			}
-			said_af = addrtypeof(&said.dst);
+			said_af = said_type(&said);
 			said_opt = optarg;
 			break;
 		case 'v':
@@ -464,10 +464,10 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 			if (streq(optarg, "inet"))
-				said_af = AF_INET;
+				said_af = &ipv4_info;
 			if (streq(optarg, "inet6"))
-				said_af = AF_INET6;
-			if (said_af == 0) {
+				said_af = &ipv6_info;
+			if (said_af == NULL) {
 				fprintf(stderr,
 					"%s: Invalid address family parameter for SAID: %s\n",
 					progname, optarg);
@@ -716,8 +716,7 @@ sa_build:
 	case EMT_INEROUTE:
 	case EMT_INREPLACEROUTE:
 	{
-		ip_address s_any = address_any(aftoinfo(said_af));
-		ip_endpoint s_end = endpoint(&s_any, 0);
+		ip_endpoint s_end = said_af->any_endpoint;
 		ip_sockaddr s_sa;
 		passert(endpoint_to_sockaddr(&s_end, &s_sa) > 0);
 		error = pfkey_address_build(
@@ -741,18 +740,25 @@ sa_build:
 				progname);
 		}
 
-		ip_sockaddr said_dst_sa;
-		passert(endpoint_to_sockaddr(&said.dst, &said_dst_sa) > 0);
+		/*
+		 * PFKEY's Address Extension, with the exception of
+		 * SADB_ACQUIRE, MUST have the port zeroed in the sock
+		 * addr.
+		 */
+		ip_address dst_a = said_address(&said);
+		ip_endpoint dst_e = endpoint(&dst_a, 0);
+		ip_sockaddr dst_sa;
+		passert(endpoint_to_sockaddr(&dst_e, &dst_sa) > 0);
 		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_DST],
 					    SADB_EXT_ADDRESS_DST,
 					    0,
 					    0,
-					    &said_dst_sa.sa);
+					    &dst_sa.sa);
 		if (error) {
-			endpoint_buf b;
+			said_buf b;
 			fprintf(stderr,
 				"%s: Trouble building address_d extension (%s), error=%d.\n",
-				progname, str_endpoint(&said.dst, &b), error);
+				progname, str_said(&said, 0, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
