@@ -262,52 +262,6 @@ static void check_in_addr(void)
 	}
 }
 
-static void check_address_any(void)
-{
-	static const struct test {
-		int family;
-		const char *in;
-		const struct ip_info *info;
-		bool invalid;
-		bool any;
-		bool specified;
-		bool loopback;
-	} tests[] = {
-		{ 4, "<%any4>", &ipv4_info, .any = true },
-		{ 6, "<%any6>", &ipv6_info, .any = true },
-	};
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, "");
-		CHECK_ADDRESS(PRINT_IN, &t->info->any_address);
-		ip_address a = address_any(IP_TYPE(t->family));
-		CHECK_ADDRESS(PRINT_IN, &a);
-	}
-}
-
-static void check_address_loopback(void)
-{
-	static const struct test {
-		int family;
-		const char *in;
-		const struct ip_info *info;
-		bool invalid;
-		bool any;
-		bool specified;
-		bool loopback;
-	} tests[] = {
-		{ 4, "<%loop4>", &ipv4_info, .specified = true, .loopback = true, },
-		{ 6, "<%loop6>", &ipv6_info, .specified = true, .loopback = true, },
-	};
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		PRINT_IN(stdout, "");
-		CHECK_ADDRESS(PRINT_IN, &t->info->loopback_address);
-	}
-}
-
 static void check_address_is(void)
 {
 	static const struct test {
@@ -417,8 +371,6 @@ void ip_address_check(void)
 	check_str_address();
 	check_str_address_sensitive();
 	check_str_address_reversed();
-	check_address_any();
-	check_address_loopback();
 	check_address_is();
 	check_ttoaddr_dns();
 	check_in_addr();

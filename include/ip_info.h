@@ -21,6 +21,12 @@ struct ip_info {
 	const ip_address loopback_address;
 
 	/*
+	 * ip_endpoint
+	 */
+	/* 0.0.0.0:0 or [::]:0 */
+	const ip_endpoint any_endpoint;
+
+	/*
 	 * ip_subnet.
 	 */
 	int mask_cnt; /* 32 or 128 */

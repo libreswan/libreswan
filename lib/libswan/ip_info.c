@@ -30,20 +30,30 @@ void init_ip_info(void)
 {
 }
 
-#define ANY4 { .version = 4, .bytes = { 0, }, }
-#define ANY6 { .version = 6, .bytes = { 0, }, }
+#define ANY_IPv4_ADDRESS { .version = 4, .bytes = { 0, }, }
+#define ANY_IPv6_ADDRESS { .version = 6, .bytes = { 0, }, }
+
+#ifdef ENDPOINT_TYPE
+#define ANY_IPv4_ENDPOINT { .address = ANY_IPv4_ADDRESS, .hport = 0, }
+#define ANY_IPv6_ENDPOINT { .address = ANY_IPv6_ADDRESS, .hport = 0, }
+#else
+#define ANY_IPv4_ENDPOINT ANY_IPv4_ADDRESS
+#define ANY_IPv6_ENDPOINT ANY_IPv6_ADDRESS
+#endif
 
 const struct ip_info ipv4_info = {
 	/* ip_address */
 	.ip_version = 4,
 	.ip_size = sizeof(struct in_addr),
 	.ip_name = "IPv4",
-	.any_address = ANY4, /* 0.0.0.0 */
+	.any_address = ANY_IPv4_ADDRESS, /* 0.0.0.0 */
 	.loopback_address = { .version = 4, .bytes = { 127, 0, 0, 1, }, }, /* 127.0.0.1 */
+	/* ip_endpoint */
+	.any_endpoint = ANY_IPv4_ENDPOINT, /* 0.0.0.0:0 */
 	/* ip_subnet */
 	.mask_cnt = 32,
-	.no_addresses = { .addr = ANY4, .maskbits = 32, }, /* 0.0.0.0/32 */
-	.all_addresses = { .addr = ANY4, .maskbits = 0, }, /* 0.0.0.0/32 */
+	.no_addresses = { .addr = ANY_IPv4_ENDPOINT, .maskbits = 32, }, /* 0.0.0.0/32 */
+	.all_addresses = { .addr = ANY_IPv4_ENDPOINT, .maskbits = 0, }, /* 0.0.0.0/32 */
 	/* sockaddr */
 	.af = AF_INET,
 	.af_name = "AF_INET",
@@ -59,12 +69,13 @@ const struct ip_info ipv6_info = {
 	.ip_version = 6,
 	.ip_size = sizeof(struct in6_addr),
 	.ip_name = "IPv6",
-	.any_address = ANY6, /* :: */
+	.any_address = ANY_IPv6_ADDRESS, /* :: */
 	.loopback_address = { .version = 6, .bytes = { [15] = 1, }, }, /* ::1 */
+	/* ip_endpoint */
+	.any_endpoint = ANY_IPv6_ENDPOINT, /* [::]:0 */
 	/* ip_subnet */
-	.mask_cnt = 128,
-	.no_addresses = { .addr = ANY6, .maskbits = 128, }, /* ::/128 */
-	.all_addresses = { .addr = ANY6, .maskbits = 0, }, /* ::/0 */
+	.no_addresses = { .addr = ANY_IPv6_ENDPOINT, .maskbits = 128, }, /* ::/128 */
+	.all_addresses = { .addr = ANY_IPv6_ENDPOINT, .maskbits = 0, }, /* ::/0 */
 	/* sockaddr */
 	.af = AF_INET6,
 	.af_name = "AF_INET6",
