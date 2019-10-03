@@ -54,7 +54,7 @@ static void check_str_endpoint(void)
 			continue;
 		}
 		ip_endpoint e = endpoint(&a, 65535);
-		CHECK_TYPE(FAIL_IN, endpoint_type(&e), t->family);
+		CHECK_TYPE(PRINT_IN, endpoint_type(&e));
 
 		/* now convert it back */
 		endpoint_buf buf;
@@ -116,18 +116,20 @@ static void check_sockaddr_as_endpoint(void)
 		/* sockaddr->endpoint */
 		ip_endpoint endpoint;
 		err_t err = sockaddr_to_endpoint(&sa, t->size, &endpoint);
-		if (err == NULL) {
-			if (t->err != NULL) {
-				FAIL_IN("sockaddr_as_endpoint() should have failed: %s", t->err);
-			}
-		} else {
+		if (err != NULL) {
 			if (t->err == NULL) {
-				FAIL_IN("sockaddr_as_endpoint() unexpectedly failed: %s", err);
+				FAIL_IN("sockaddr_to_endpoint() unexpectedly failed: %s", err);
 			} else if (!streq(err, t->err)) {
-				FAIL_IN("sockaddr_as_endpoint() returned error '%s', expecting '%s'", err, t->err);
+				FAIL_IN("sockaddr_to_endpoint() returned error '%s', expecting '%s'", err, t->err);
 			}
+			if (endpoint_type(&endpoint) != NULL) {
+				FAIL_IN("sockaddr_to_endpoint() failed yet endpoint has a type");
+			}
+		} else if (t->err != NULL) {
+			FAIL_IN("sockaddr_to_endpoint() should have failed: %s", t->err);
+		} else {
+			CHECK_TYPE(PRINT_IN, endpoint_type(&endpoint));
 		}
-		CHECK_TYPE(FAIL_IN, endpoint_type(&endpoint), t->err == NULL ? t->family : 0);
 
 		/* endpoint->sockaddr */
 		ip_sockaddr esa;
@@ -195,7 +197,7 @@ static void check_endpoint_port(void)
 		}
 		ip_endpoint e = endpoint(&a, t->hport);
 
-		CHECK_TYPE(FAIL_IN, endpoint_type(&e), t->family);
+		CHECK_TYPE(PRINT_IN, endpoint_type(&e));
 
 		uint16_t hport = endpoint_hport(&e);
 		if (!memeq(&hport, &t->hport, sizeof(hport))) {

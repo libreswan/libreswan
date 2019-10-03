@@ -51,43 +51,65 @@ extern bool use_dns;
 #define PRINT(FILE, FMT, ...)						\
 	fprintf(FILE, "%s[%zu]:"FMT"\n", __func__, ti,##__VA_ARGS__)
 
+#define FAIL(PRINT, FMT, ...)						\
+	{								\
+		fails++;						\
+		PRINT(stderr, " "FMT" (%s() %s:%d)",##__VA_ARGS__,	\
+			__func__, __FILE__, __LINE__);			\
+		continue;						\
+	}
+
 /* t->family, t->in */
 #define PRINT_IN(FILE, FMT, ...)					\
 	PRINT(FILE, "%s '%s'"FMT,					\
 	      pri_family(t->family), t->in ,##__VA_ARGS__);
 
-#define FAIL_IN(FMT, ...)						\
-	{								\
-		fails++;						\
-		PRINT_IN(stderr, " "FMT" (%s() %s:%d)",##__VA_ARGS__,	\
-			 __func__, __FILE__, __LINE__);			\
-		continue;						\
-	}
+#define FAIL_IN(FMT, ...) FAIL(PRINT_IN, FMT,##__VA_ARGS__)
 
 /* t->family, t->lo, t->hi */
 #define PRINT_LO2HI(FILE, FMT, ...)					\
 	PRINT(FILE, "%s '%s'-'%s'"FMT,					\
 	      pri_family(t->family), t->lo, t->hi,##__VA_ARGS__)
 
-#define FAIL_LO2HI(FMT, ...) {						\
-		fails++;						\
-		PRINT_LO2HI(stderr, " "FMT" (%s() %s:%d)",##__VA_ARGS__, \
-			    __func__, __FILE__, __LINE__);		\
-		continue;						\
-	}
+#define FAIL_LO2HI(FMT, ...) FAIL(PRINT_LO2HI, FMT,##__VA_ARGS__)
 
-
-#define CHECK_TYPE(FAIL, TYPE, VERSION)					\
+#define CHECK_TYPE(PRINT, TYPE)						\
 	{								\
 		const struct ip_info *actual = TYPE;			\
 		const char *actual_name =				\
 			actual == NULL ? "unspec" : actual->af_name;	\
-		const struct ip_info *expected = IP_TYPE(VERSION);	\
+		const struct ip_info *expected = IP_TYPE(t->family);	\
 		const char *expected_name =				\
 			expected == NULL ? "unspec" : expected->af_name; \
 		if (actual != expected) {				\
-			FAIL(#TYPE" returned %s, expecting %s",		\
+			FAIL(PRINT, " "#TYPE" returned %s, expecting %s", \
 			     actual_name, expected_name);		\
+		}							\
+	}
+
+#define CHECK_ADDRESS(PRINT, ADDRESS)					\
+	{								\
+		CHECK_TYPE(PRINT, address_type(ADDRESS));		\
+		/* aka address_type(ADDRESS) == NULL; */		\
+		bool invalid = address_is_invalid(ADDRESS);		\
+		if (invalid != t->invalid) {				\
+			FAIL(PRINT, " addres_is_invalid() returned %s, expected %s", \
+			     bool_str(invalid), bool_str(t->invalid));	\
+		}							\
+		bool any = address_is_any(ADDRESS);			\
+		if (any != t->any) {					\
+			FAIL(PRINT, " addres_is_any() returned %s, expected %s", \
+			     bool_str(any), bool_str(t->any));		\
+		}							\
+		bool specified = address_is_specified(ADDRESS);		\
+		if (specified != t->specified) {			\
+			FAIL(PRINT, " addres_is_specified() returned %s, expected %s", \
+			     bool_str(specified), bool_str(t->specified)); \
+		}							\
+		bool loopback = address_is_loopback(ADDRESS);		\
+		if (loopback != t->loopback) {				\
+			FAIL(PRINT, " addres_is_loopback() returned %s, expected %s", \
+			     bool_str(loopback), bool_str(t->loopback)); \
 		}							\
 	}
 

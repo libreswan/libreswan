@@ -115,7 +115,7 @@ static void check_str_subnet(void)
 			FAIL_IN("ttosubnet succeeded unexpectedly");
 		}
 
-		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
 		subnet_buf buf;
 		const char *out = str_subnet(&s, &buf);
@@ -169,7 +169,7 @@ static void check_str_subnet_port(void)
 			FAIL_IN("ttosubnet succeeded unexpectedly");
 		}
 
-		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
 		subnet_buf buf;
 		const char *out = str_subnet_port(&s, &buf);
@@ -213,7 +213,7 @@ static void check_subnet_mask(void)
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
 
-		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
 		address_buf buf;
 		const char *out;
@@ -224,7 +224,7 @@ static void check_subnet_mask(void)
 			FAIL_IN("subnet_mask() returned '%s', expected '%s'",
 				out, t->mask);
 		}
-		CHECK_TYPE(FAIL_IN, address_type(&mask), t->family);
+		CHECK_TYPE(PRINT_IN, address_type(&mask));
 	}
 }
 
@@ -263,10 +263,10 @@ static void check_subnet_prefix(void)
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
 
-		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
 		ip_address prefix = subnet_prefix(&s);
-		CHECK_TYPE(FAIL_IN, address_type(&prefix), t->family);
+		CHECK_TYPE(PRINT_IN, address_type(&prefix));
 
 		address_buf buf;
 		const char *out = str_address(&prefix, &buf);
@@ -334,7 +334,7 @@ static void check_subnet_port(void)
 			/* If no errors, but we expected one */
 			FAIL_IN("ttosubnet succeeded unexpectedly");
 		}
-		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
 		uint16_t hport = subnet_hport(&s);
 		if (!memeq(&hport, &t->hport, sizeof(hport))) {
@@ -417,7 +417,7 @@ static void check_subnet_has(void)
 		if (oops != NULL) {
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
-		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
 		bool all_addresses = subnet_contains_all_addresses(&s);
 		if (all_addresses != t->all_addresses) {
@@ -471,7 +471,7 @@ static void check_subnet_from_address(void)
 		}
 		ip_subnet s = subnet_from_address(&a);
 
-		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
 		int hport = subnet_hport(&s);
 		if (hport != 0) {
@@ -521,7 +521,7 @@ static void check_subnet_from_endpoint(void)
 		ip_endpoint e = endpoint(&a, t->hport);
 		ip_subnet s = subnet_from_endpoint(&e);
 
-		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
 		int hport = subnet_hport(&s);
 		if (hport != t->hport) {

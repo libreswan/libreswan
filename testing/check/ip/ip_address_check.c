@@ -65,7 +65,7 @@ static void check_str_address_raw(void)
 			FAIL_IN("ttoaddr failed: %s", err);
 			continue;
 		}
-		CHECK_TYPE(FAIL_IN, address_type(&a), t->family);
+		CHECK_TYPE(PRINT_IN, address_type(&a));
 
 		/* now convert it back */
 		address_buf buf;
@@ -120,7 +120,7 @@ static void check_str_address(void)
 			FAIL_IN("%s", err);
 			continue;
 		}
-		CHECK_TYPE(FAIL_IN, address_type(&a), t->family);
+		CHECK_TYPE(PRINT_IN, address_type(&a));
 
 		/* now convert it back */
 		address_buf buf;
@@ -156,7 +156,7 @@ static void check_str_address_sensitive(void)
 			FAIL_IN("%s", err);
 			continue;
 		}
-		CHECK_TYPE(FAIL_IN, address_type(&a), t->family);
+		CHECK_TYPE(PRINT_IN, address_type(&a));
 
 		/* now convert it back */
 		address_buf buf;
@@ -194,7 +194,7 @@ static void check_str_address_reversed(void)
 			FAIL_IN("%s", err);
 			continue;
 		}
-		CHECK_TYPE(FAIL_IN, address_type(&a), t->family);
+		CHECK_TYPE(PRINT_IN, address_type(&a));
 
 		address_reversed_buf buf;
 		const char *out = str_address_reversed(&a, &buf);
@@ -262,32 +262,6 @@ static void check_in_addr(void)
 	}
 }
 
-#define CHECK_ADDRESS(FAIL, ADDRESS)					\
-	{								\
-		CHECK_TYPE(FAIL, address_type(ADDRESS), t->family);	\
-		/* aka address_type(ADDRESS) == NULL; */		\
-		bool invalid = address_is_invalid(ADDRESS);		\
-		if (invalid != t->invalid) {				\
-			FAIL("addres_is_invalid() returned %s, expected %s", \
-			     bool_str(invalid), bool_str(t->invalid));	\
-		}							\
-		bool any = address_is_any(ADDRESS);			\
-		if (any != t->any) {					\
-			FAIL("addres_is_any() returned %s, expected %s", \
-			     bool_str(any), bool_str(t->any));		\
-		}							\
-		bool specified = address_is_specified(ADDRESS);		\
-		if (specified != t->specified) {			\
-			FAIL("addres_is_specified() returned %s, expected %s", \
-			     bool_str(specified), bool_str(t->specified)); \
-		}							\
-		bool loopback = address_is_loopback(ADDRESS);		\
-		if (loopback != t->loopback) {				\
-			FAIL("addres_is_loopback() returned %s, expected %s", \
-			     bool_str(loopback), bool_str(t->loopback)); \
-		}							\
-	}
-
 static void check_address_any(void)
 {
 	static const struct test {
@@ -306,9 +280,9 @@ static void check_address_any(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT_IN(stdout, "");
-		CHECK_ADDRESS(FAIL_IN, &t->info->any_address);
+		CHECK_ADDRESS(PRINT_IN, &t->info->any_address);
 		ip_address a = address_any(IP_TYPE(t->family));
-		CHECK_ADDRESS(FAIL_IN, &a);
+		CHECK_ADDRESS(PRINT_IN, &a);
 	}
 }
 
@@ -330,7 +304,7 @@ static void check_address_loopback(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT_IN(stdout, "");
-		CHECK_ADDRESS(FAIL_IN, &t->info->loopback_address);
+		CHECK_ADDRESS(PRINT_IN, &t->info->loopback_address);
 	}
 }
 
@@ -369,7 +343,7 @@ static void check_address_is(void)
 			}
 		}
 
-		CHECK_ADDRESS(FAIL_IN, &a);
+		CHECK_ADDRESS(PRINT_IN, &a);
 	}
 }
 
@@ -413,7 +387,7 @@ static void check_ttoaddr_dns(void)
 			/* convert it *to* internal format */
 			oops = ttoaddr(t->in, strlen(t->in), af, &a);
 		}
-		CHECK_TYPE(FAIL_IN, address_type(&a), t->family);
+		CHECK_TYPE(PRINT_IN, address_type(&a));
 
 		if (t->expectfailure && oops == NULL) {
 			FAIL_IN("expected failure, but it succeeded");

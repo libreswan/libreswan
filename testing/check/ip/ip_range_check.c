@@ -208,7 +208,7 @@ static void check_ttorange__to__str_range(void)
 			FAIL_IN("ttorange() failed: %s", oops);
 		}
 
-		CHECK_TYPE(FAIL_IN, range_type(&r), t->family);
+		CHECK_TYPE(PRINT_IN, range_type(&r));
 
 		range_buf buf;
 		const char *out = str_range(&r, &buf);
@@ -267,10 +267,10 @@ static void check_range_from_subnet(void)
 			FAIL_IN("ttosubnet() failed: %s", oops);
 		}
 
-		CHECK_TYPE(FAIL_IN, subnet_type(&s), t->family);
+		CHECK_TYPE(PRINT_IN, subnet_type(&s));
 
 		ip_range r = range_from_subnet(&s);
-		CHECK_TYPE(FAIL_IN, range_type(&r), t->family);
+		CHECK_TYPE(PRINT_IN, range_type(&r));
 
 		address_buf start_buf;
 		const char *start = str_address(&r.start, &start_buf);
@@ -278,7 +278,7 @@ static void check_range_from_subnet(void)
 			FAIL_IN("r.start is '%s', expected '%s'",
 				start, t->start);
 		}
-		CHECK_TYPE(FAIL_IN, address_type(&r.start), t->family);
+		CHECK_TYPE(PRINT_IN, address_type(&r.start));
 
 		address_buf end_buf;
 		const char *end = str_address(&r.end, &end_buf);
@@ -286,7 +286,7 @@ static void check_range_from_subnet(void)
 			FAIL_IN("r.end is '%s', expected '%s'",
 				end, t->end);
 		}
-		CHECK_TYPE(FAIL_IN, address_type(&r.end), t->family);
+		CHECK_TYPE(PRINT_IN, address_type(&r.end));
 
 	}
 }
@@ -339,7 +339,7 @@ static void check_range_is(void)
 		}
 
 		ip_range r = range(&lo, &hi);
-		CHECK_TYPE(FAIL_LO2HI, range_type(&r), t->family);
+		CHECK_TYPE(PRINT_LO2HI, range_type(&r));
 
 		bool invalid = range_is_invalid(&r);
 		if (invalid != t->invalid) {
