@@ -71,7 +71,7 @@ static void check_str_said(void)
 		{ 0, "int261@0.0.0.0", "%trapsubnet" },
 		/* was "int.106@0.0.0.0" */
 		{ 0, "int262@0.0.0.0", "%unk-262" },
-		{ 0, "esp9@1.2.3.4", "unk77.9@1.2.3.4", .fudge = true, },
+		{ 0, "esp9@1.2.3.4", "unk.9@1.2.3.4", .fudge = true, },
 		{ 0, "unk77.9@1.2.3.4", NULL, },
 
 		/* XXX: 'f' is never used!?! */
@@ -118,7 +118,7 @@ static void check_str_said(void)
 		}
 
 		if (t->fudge) {
-			sa.proto = 77;
+			sa.proto = NULL;
 		}
 
 		/* now convert it back */

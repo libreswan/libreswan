@@ -316,8 +316,8 @@ int main(int argc, char **argv)
 
 			fprintf(stdout, "SA %d contains: ", i + 1);
 			fprintf(stdout, "\n");
-			fprintf(stdout, "proto = %d\n",
-				said_af_array[i].said.proto);
+			fprintf(stdout, "proto = %s\n",
+				said_af_array[i].said.proto->name);
 			fprintf(stdout, "spi = %08x\n",
 				said_af_array[i].said.spi);
 			fprintf(stdout, "edst = %s\n", ipstr(&said_af_array[i].said.dst, &b));
@@ -366,8 +366,8 @@ int main(int argc, char **argv)
 			} else {
 				if (debug) {
 					fprintf(stdout,
-						"setting x_satype proto=%d satype=%d\n",
-						said_af_array[i + j].said.proto,
+						"setting x_satype proto=%s satype=%d\n",
+						said_af_array[i + j].said.proto->name,
 						proto2satype(said_af_array[i +
 									   j].
 							     said.proto)

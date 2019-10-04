@@ -17,7 +17,6 @@
 #include <string.h>
 
 #include "ip_said.h"
-#include "ip_protocol.h"
 
 static struct magic {
 	char *name;
@@ -84,7 +83,7 @@ ip_said *sa;
 	const struct ip_protocol *sat = protocol_by_prefix(src);
 	if (sat == NULL)
 		return "SA specifier lacks valid protocol prefix";
-	sa->proto = sat->protoid;
+	sa->proto = sat;
 	spi = src + strlen(sat->prefix);
 
 	if (spi >= at)

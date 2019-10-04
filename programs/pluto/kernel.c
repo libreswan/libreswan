@@ -246,21 +246,18 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 	}
 }
 
-static reqid_t get_proto_reqid(reqid_t base, int proto)
+static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
 {
-	switch (proto) {
-	case IPPROTO_COMP:
+	if (proto == SA_COMP)
 		return reqid_ipcomp(base);
 
-	case IPPROTO_ESP:
+	if (proto == SA_ESP)
 		return reqid_esp(base);
 
-	case IPPROTO_AH:
+	if (proto == SA_AH)
 		return reqid_ah(base);
 
-	default:
-		bad_case(proto);
-	}
+	PASSERT_FAIL("bad protocol %s", proto->name);
 }
 
 /* Generate Unique SPI numbers.
@@ -285,11 +282,11 @@ static reqid_t get_proto_reqid(reqid_t base, int proto)
  * SPI lives longer than 4G of its successors).
  */
 ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
-			int proto,
+			const struct ip_protocol *proto,
 			const struct spd_route *sr,
 			bool tunnel)
 {
-	passert(proto == IPPROTO_AH || proto == IPPROTO_ESP);
+	passert(proto == SA_AH || proto == SA_ESP);
 
 	if (kernel_ops->get_spi != NULL) {
 		char text_said[SATOT_BUF];
@@ -330,12 +327,11 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel)
 {
 	if (kernel_ops->get_spi != NULL) {
 		char text_said[SATOT_BUF];
-		set_text_said(text_said, &sr->this.host_addr, 0, IPPROTO_COMP);
+		set_text_said(text_said, &sr->this.host_addr, 0, SA_COMP);
 		return kernel_ops->get_spi(&sr->that.host_addr,
-					&sr->this.host_addr, IPPROTO_COMP,
+					&sr->this.host_addr, SA_COMP,
 					tunnel,
-					get_proto_reqid(sr->reqid,
-							IPPROTO_COMP),
+					get_proto_reqid(sr->reqid, SA_COMP),
 					IPCOMP_FIRST_NEGOTIATED,
 					IPCOMP_LAST_NEGOTIATED,
 					text_said);
@@ -1074,7 +1070,7 @@ void unroute_connection(struct connection *c)
 #include "kernel_alg.h"
 
 void set_text_said(char *text_said, const ip_address *dst,
-			ipsec_spi_t spi, int sa_proto)
+			ipsec_spi_t spi, const struct ip_protocol *sa_proto)
 {
 	ip_said said = said3(dst, spi, sa_proto);
 	jambuf_t jam = array_as_jambuf(text_said, SATOT_BUF);
@@ -1161,7 +1157,7 @@ bool raw_eroute(const ip_address *this_host,
 		const ip_subnet *that_client,
 		ipsec_spi_t cur_spi,
 		ipsec_spi_t new_spi,
-		int sa_proto,
+		const struct ip_protocol *sa_proto,
 		unsigned int transport_proto,
 		enum eroute_type esatype,
 		const struct pfkey_proto_info *proto_info,
@@ -1434,7 +1430,8 @@ bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 bool eroute_connection(const struct spd_route *sr,
 		ipsec_spi_t cur_spi,
 		ipsec_spi_t new_spi,
-		int sa_proto, enum eroute_type esatype,
+		const struct ip_protocol *sa_proto,
+		enum eroute_type esatype,
 		const struct pfkey_proto_info *proto_info,
 		uint32_t sa_priority,
 		const struct sa_marks *sa_marks,
@@ -1633,8 +1630,8 @@ ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective)
 		fail_spi[(c->policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT];
 }
 
-bool del_spi(ipsec_spi_t spi, int proto,
-		const ip_address *src, const ip_address *dest)
+bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
+	     const ip_address *src, const ip_address *dest)
 {
 	char text_said[SATOT_BUF];
 
@@ -1688,7 +1685,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	ip_subnet src, dst;
 	ip_subnet src_client, dst_client;
 	ipsec_spi_t inner_spi = 0;
-	unsigned int proto = 0;
+	const struct ip_protocol *proto = NULL;
 	enum eroute_type esatype = ET_UNSPEC;
 	bool replace = inbound && (kernel_ops->get_spi != NULL);
 	bool outgoing_ref_set = FALSE;
@@ -2390,7 +2387,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	struct connection *const c = st->st_connection;
 
 	struct {
-		unsigned proto;
+		const struct ip_protocol *proto;
 		struct ipsec_proto_info *info;
 	} protos[4];
 	int i = 0;
@@ -2422,7 +2419,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				&c->spd.this.client,
 				SPI_PASS, SPI_PASS,
 				c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ?
-					SA_ESP : IPSEC_PROTO_ANY,
+					SA_ESP : NULL,
 				c->spd.this.protocol,
 				c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ?
 					ET_ESP : ET_UNSPEC,
@@ -2473,7 +2470,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 	bool result = TRUE;
 	for (i = 0; protos[i].proto; i++) {
-		unsigned proto = protos[i].proto;
+		const struct ip_protocol *proto = protos[i].proto;
 		ipsec_spi_t spi;
 		const ip_address *src, *dst;
 
@@ -3366,7 +3363,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 		return FALSE;
 	}
 
-	unsigned proto;
+	const struct ip_protocol *proto;
 	struct ipsec_proto_info *p2;
 
 	if (st->st_esp.present) {

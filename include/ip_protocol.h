@@ -49,15 +49,6 @@ extern const struct ip_protocol ip_protocol_comp;	/* IP Payload Compression Prot
 extern const struct ip_protocol ip_protocol_int;	/* any host internal protocol */
 
 #if 0
-#define SA_ICMP &ip_protocol_unspec
-#define SA_IPIP &ip_protocol_ipip
-#define SA_ESP &ip_protocol_esp
-#define SA_AH &ip_protocol_ah
-#define SA_COMP &ip_protocol_comp
-#define SA_INT &ip_protocol_int
-#endif
-
-#if 0
 #               define  SA_ESP  50      /* IPPROTO_ESP */
 #               define  SA_AH   51      /* IPPROTO_AH */
 #               define  SA_IPIP 4       /* IPPROTO_IPIP */

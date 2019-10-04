@@ -15,7 +15,8 @@
 
 #include "ip_said.h"
 
-ip_said said3(const ip_address *address, ipsec_spi_t spi, int proto)
+ip_said said3(const ip_address *address, ipsec_spi_t spi,
+	      const struct ip_protocol *proto)
 {
 	ip_said said = {
 		.dst = *address,

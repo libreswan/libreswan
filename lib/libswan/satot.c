@@ -19,7 +19,6 @@
 
 #include "ip_said.h"
 #include "ip_info.h"
-#include "ip_protocol.h"
 #include "jambuf.h"
 #include "libreswan/passert.h"
 
@@ -69,17 +68,8 @@ size_t dstlen;
 	memset(buf, 0, sizeof(buf));
 
 	/* const ip_protocol *proto = sa->proto; */
-	const struct ip_protocol *proto = protocol_by_protoid(sa->proto);
-	char unk[10] = ""; /* same scope as pre */
-	const char *pre;
-	if (proto == NULL) {
-		strcpy(unk, "unk");
-		ultot((uint8_t)sa->proto, 10, unk + strlen(unk),
-		      sizeof(unk) - strlen(unk));
-		pre = unk;
-	} else {
-		pre = proto->prefix;
-	}
+	const struct ip_protocol *proto = sa->proto;
+	const char *pre = (proto == NULL ? "unk" : proto->prefix);
 
 	if (strcmp(pre, PASSTHROUGHTYPE) == 0 &&
 	    sa->spi == PASSTHROUGHSPI &&
