@@ -241,8 +241,7 @@ int main(int argc, char **argv)
 					progname, e, argv[i + 2]);
 				exit(1);
 			}
-			said_af_array[i].af =
-				addrtypeof(&(said_af_array[i].said.dst));
+			said_af_array[i].af = said_type(&(said_af_array[i].said))->af;
 			if (debug) {
 				ipstr_buf b;
 
@@ -258,13 +257,13 @@ int main(int argc, char **argv)
 			 * +3: proto
 			 */
 			char **p = &argv[i * 4 + 1];
-			int af;
+			const struct ip_info *af;
 
 			/* address family */
 			if (streq(p[0], "inet")) {
-				af = AF_INET;
+				af = &ipv4_info;
 			} else if (streq(p[0], "inet6")) {
-				af = AF_INET6;
+				af = &ipv6_info;
 			} else {
 				fprintf(stderr,
 					"%s: Address family %s not supported\n",
@@ -274,9 +273,8 @@ int main(int argc, char **argv)
 
 			/* IP address */
 			{
-				err_t e = ttoaddr(p[1], 0,
-						  af,
-						  &(said_af_array[i].said.dst));
+				err_t e = domain_to_address(shunk1(p[1]), af,
+							    &(said_af_array[i].said.dst));
 
 				if (e != NULL) {
 					fprintf(stderr,
@@ -418,8 +416,10 @@ int main(int argc, char **argv)
 			{
 				uint16_t x = j == 0 ? SADB_EXT_ADDRESS_DST : SADB_X_EXT_ADDRESS_DST2;
 
+				/* force port to 0 */
+				ip_endpoint said_dst_e = endpoint(&said_af_array[i + j].said.dst, 0);
 				ip_sockaddr said_dst_sa;
-				passert(endpoint_to_sockaddr(&said_af_array[i + j].said.dst, &said_dst_sa) > 0);
+				passert(endpoint_to_sockaddr(&said_dst_e, &said_dst_sa) > 0);
 				error = pfkey_address_build(&extensions[x], x, 0, 0,
 							    &said_dst_sa.sa);
 			}

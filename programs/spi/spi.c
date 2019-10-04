@@ -84,7 +84,7 @@ char scratch[2];
 unsigned char *iv = NULL, *enckey = NULL, *authkey = NULL;
 size_t ivlen = 0, enckeylen = 0, authkeylen = 0;
 ip_address edst, dst, src;
-int address_family = 0;
+static const struct ip_info *address_family = NULL;
 unsigned char proto = 0;
 int alg = 0;
 
@@ -545,7 +545,7 @@ int main(int argc, char *argv[])
 	__u32 spi = 0;
 	int c;
 	ip_said said;
-	char ipsaid_txt[SATOT_BUF];
+	char ipsaid_txt[SATOT_BUF] = "(error)";
 
 	int outif = 0;
 	int error = 0;
@@ -745,7 +745,7 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			alg = XF_IP4;
-			address_family = AF_INET;
+			address_family = &ipv4_info;
 			if (debug) {
 				fprintf(stdout, "%s: Algorithm %d selected.\n",
 					progname,
@@ -761,7 +761,7 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			alg = XF_IP6;
-			address_family = AF_INET6;
+			address_family = &ipv6_info;
 			if (debug) {
 				fprintf(stdout, "%s: Algorithm %d selected.\n",
 					progname,
@@ -814,7 +814,7 @@ int main(int argc, char *argv[])
 			}
 
 			{
-				err_t e = ttoaddr_num(optarg, 0, address_family, &edst);
+				err_t e = numeric_to_address(shunk1(optarg), address_family, &edst);
 				if (e != NULL) {
 					fprintf(stderr,
 						"%s: Error, %s converting --edst argument:%s\n",
@@ -903,9 +903,9 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			if (streq(optarg, "inet")) {
-				address_family = AF_INET;
+				address_family = &ipv4_info;
 			} else if (streq(optarg, "inet6")) {
-				address_family = AF_INET6;
+				address_family = &ipv6_info;
 			} else {
 				fprintf(stderr,
 					"%s: Invalid ADDRESS FAMILY parameter: %s.\n",
@@ -913,9 +913,9 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			/* currently we ensure that all addresses belong to the same address family */
-			dst = address_any(aftoinfo(address_family));
-			edst = address_any(aftoinfo(address_family));
-			src = address_any(aftoinfo(address_family));
+			dst = address_any(address_family);
+			edst = address_any(address_family);
+			src = address_any(address_family);
 			af_opt = optarg;
 			break;
 
@@ -953,27 +953,32 @@ int main(int argc, char *argv[])
 						progname, e, optarg);
 					exit(1);
 				}
+				/* always fill in ipsaid_txt */
+				jambuf_t buf = ARRAY_AS_JAMBUF(ipsaid_txt);
+				jam_said(&buf, &said, 0);
 			}
 
+			/* always set ipsaid_text */
+			jambuf_t ipsaid_buf = ARRAY_AS_JAMBUF(ipsaid_txt);
+			jam_said(&ipsaid_buf, &said, 0);
+
 			if (debug) {
-				satot(&said, 0, ipsaid_txt,
-				      sizeof(ipsaid_txt));
 				fprintf(stdout, "%s: said=%s.\n",
 					progname,
 					ipsaid_txt);
 			}
 			/* init the src and dst with the same address family */
-			if (address_family == 0) {
-				address_family = addrtypeof(&said.dst);
-			} else if (address_family != addrtypeof(&said.dst)) {
+			if (address_family == NULL) {
+				address_family = said_type(&said);
+			} else if (address_family != said_type(&said)) {
 				fprintf(stderr,
-					"%s: Error, specified address family (%d) is different that of SAID: %s\n",
-					progname, address_family, optarg);
+					"%s: Error, specified address family (%s) is different that of SAID: %s\n",
+					progname, address_family->ip_name, optarg);
 				exit(1);
 			}
-			dst = address_any(aftoinfo(address_family));
-			edst = address_any(aftoinfo(address_family));
-			src = address_any(aftoinfo(address_family));
+			dst = address_any(address_family);
+			edst = address_any(address_family);
+			src = address_any(address_family);
 			said_opt = optarg;
 			break;
 
@@ -1017,7 +1022,7 @@ int main(int argc, char *argv[])
 			}
 
 			{
-				err_t e = ttoaddr_num(optarg, 0, address_family, &dst);
+				err_t e = numeric_to_address(shunk1(optarg), address_family, &dst);
 				if (e != NULL) {
 					fprintf(stderr,
 						"%s: Error, %s converting --dst argument:%s\n",
@@ -1095,7 +1100,7 @@ int main(int argc, char *argv[])
 			}
 
 			{
-				err_t e = ttoaddr_num(optarg, 0, address_family, &src);
+				err_t e = numeric_to_address(shunk1(optarg), address_family, &src);
 				if (e != NULL) {
 					fprintf(stderr,
 						"%s: Error, %s converting --src argument:%s\n",
@@ -1246,8 +1251,8 @@ int main(int argc, char *argv[])
 			spi = ntohl(said.spi);
 			edst = said.dst;
 		}
-		if ((address_family != 0) &&
-		    (address_family != addrtypeof(&said.dst))) {
+		if (address_family != NULL &&
+		    address_family != said_type(&said)) {
 			fprintf(stderr,
 				"%s: Defined address family and address family of SA missmatch.\n",
 				progname);
@@ -1433,8 +1438,10 @@ int main(int argc, char *argv[])
 				progname, ipstr(&src, &b));
 		}
 
+		/* emit 0 port */
+		ip_endpoint src_e = endpoint(&src, 0);
 		ip_sockaddr src_sa;
-		passert(endpoint_to_sockaddr(&src, &src_sa) > 0);
+		passert(endpoint_to_sockaddr(&src_e, &src_sa) > 0);
 		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_SRC],
 					    SADB_EXT_ADDRESS_SRC,
 					    0,
@@ -1450,8 +1457,10 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
+		/* emit 0 port */
+		ip_endpoint edst_e = endpoint(&edst, 0);
 		ip_sockaddr edst_sa;
-		passert(endpoint_to_sockaddr(&edst, &edst_sa) > 0);
+		passert(endpoint_to_sockaddr(&edst_e, &edst_sa) > 0);
 		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_DST],
 					    SADB_EXT_ADDRESS_DST,
 					    0,
