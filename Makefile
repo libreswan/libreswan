@@ -25,7 +25,7 @@ LIBRESWANSRCDIR?=$(shell pwd)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
 MAIN_RPM_VERSION = $(shell make showversion | sed "s/-.*//")
-MAIN_RPM_PREVER = $(shell make showversion | sed -e  "s/^.[^-]*-\([^-]*\)-\(.*\)/rc\1_\2/" -e "s/-/_/g")
+MAIN_RPM_PREVER = $(shell make showversion | sed -e  "s/^.[^-]*-\([^-]*\)-\(.*\)/rc\1_\2/" -e "s/-/_/")
 MAIN_RPM_PREFIX  = libreswan-$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER)
 MAIN_RPM_RHEL_PKG = $(shell rpm -qf /etc/redhat-release)
 MAIN_RPM_RHEL_VERSION = $(shell echo $(MAIN_RPM_RHEL_PKG) | sed "s/.*-release-\(.\).*/\1/")
