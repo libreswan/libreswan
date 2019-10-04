@@ -33,3 +33,8 @@ const struct ip_info *said_type(const ip_said *said)
 {
 	return address_type(&said->dst);
 }
+
+ip_address said_address(const ip_said *said)
+{
+	return said->dst;
+}
