@@ -74,6 +74,7 @@ const struct ip_info ipv6_info = {
 	/* ip_endpoint */
 	.any_endpoint = ANY_IPv6_ENDPOINT, /* [::]:0 */
 	/* ip_subnet */
+	.mask_cnt = 128,
 	.no_addresses = { .addr = ANY_IPv6_ENDPOINT, .maskbits = 128, }, /* ::/128 */
 	.all_addresses = { .addr = ANY_IPv6_ENDPOINT, .maskbits = 0, }, /* ::/0 */
 	/* sockaddr */
