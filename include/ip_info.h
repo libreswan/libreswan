@@ -36,6 +36,17 @@ struct ip_info {
 	const ip_subnet all_addresses;
 
 	/*
+	 * ike
+	 */
+#if 0
+	/* needs ike_version.h? */
+	unsigned max_fragment_size[IKE_VERSION_ROOF];
+#else
+	unsigned ikev1_max_fragment_size;
+	unsigned ikev2_max_fragment_size;
+#endif
+
+	/*
 	 * Sockaddr.
 	 */
 	int af; /* AF_INET or AF_INET6 */

@@ -41,6 +41,7 @@
 #include "rnd.h"
 #include "crypto.h"
 #include "send.h"	/* record_outbound_ike_message() */
+#include "ip_info.h"
 
 /*
  * Determine the IKE version we will use for the IKE packet
@@ -943,8 +944,7 @@ static stf_status v2_record_outbound_fragments(struct state *st,
 	 * function above be left to do the computation on-the-fly?
 	 */
 
-	len = (sk->ike->sa.st_connection->addr_family == AF_INET) ?
-	      ISAKMP_V2_FRAG_MAXLEN_IPv4 : ISAKMP_V2_FRAG_MAXLEN_IPv6;
+	len = endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size;
 
 	if (sk->ike->sa.st_interface != NULL && sk->ike->sa.st_interface->ike_float)
 		len -= NON_ESP_MARKER_SIZE;

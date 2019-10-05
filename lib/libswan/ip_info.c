@@ -44,16 +44,24 @@ const struct ip_info ipv4_info = {
 	.ip_name = "IPv4",
 	.any_address = ANY_IPv4_ADDRESS, /* 0.0.0.0 */
 	.loopback_address = { .version = 4, .bytes = { 127, 0, 0, 1, }, }, /* 127.0.0.1 */
+
 	/* ip_endpoint */
 	.any_endpoint = ANY_IPv4_ENDPOINT, /* 0.0.0.0:0 */
+
 	/* ip_subnet */
 	.mask_cnt = 32,
 	.no_addresses = { .addr = ANY_IPv4_ENDPOINT, .maskbits = 32, }, /* 0.0.0.0/32 */
 	.all_addresses = { .addr = ANY_IPv4_ENDPOINT, .maskbits = 0, }, /* 0.0.0.0/32 */
+
+	/* ike */
+	.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv4,
+	.ikev2_max_fragment_size = ISAKMP_V2_FRAG_MAXLEN_IPv4,
+
 	/* sockaddr */
 	.af = AF_INET,
 	.af_name = "AF_INET",
 	.sockaddr_size = sizeof(struct sockaddr_in),
+
 	/* id */
 	.id_addr = ID_IPV4_ADDR,
 	.id_subnet = ID_IPV4_ADDR_SUBNET,
@@ -61,22 +69,31 @@ const struct ip_info ipv4_info = {
 };
 
 const struct ip_info ipv6_info = {
+
 	/* ip_address */
 	.ip_version = 6,
 	.ip_size = sizeof(struct in6_addr),
 	.ip_name = "IPv6",
 	.any_address = ANY_IPv6_ADDRESS, /* :: */
 	.loopback_address = { .version = 6, .bytes = { [15] = 1, }, }, /* ::1 */
+
 	/* ip_endpoint */
 	.any_endpoint = ANY_IPv6_ENDPOINT, /* [::]:0 */
+
 	/* ip_subnet */
 	.mask_cnt = 128,
 	.no_addresses = { .addr = ANY_IPv6_ENDPOINT, .maskbits = 128, }, /* ::/128 */
 	.all_addresses = { .addr = ANY_IPv6_ENDPOINT, .maskbits = 0, }, /* ::/0 */
+
+	/* ike */
+	.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv6,
+	.ikev2_max_fragment_size = ISAKMP_V2_FRAG_MAXLEN_IPv6,
+
 	/* sockaddr */
 	.af = AF_INET6,
 	.af_name = "AF_INET6",
 	.sockaddr_size = sizeof(struct sockaddr_in6),
+
 	/* id */
 	.id_addr = ID_IPV6_ADDR,
 	.id_subnet = ID_IPV6_ADDR_SUBNET,

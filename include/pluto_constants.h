@@ -1214,3 +1214,50 @@ extern void init_pluto_constants(void);
 #define PLUTO_SPD_STATIC_MAX	(2u * (1u << 19) - 1u)
 #define PLUTO_SPD_OPPO_MAX	(3u * (1u << 19) - 1u)
 #define PLUTO_SPD_OPPO_ANON_MAX	(4u * (1u << 19) - 1u)
+
+/*
+ * Maximum data (inluding IKE HDR) allowed in a packet.
+ *
+ * v1 fragmentation is non-IETF magic voodoo we need to consider for interop:
+ * - www.cisco.com/en/US/docs/ios/sec_secure_connectivity/configuration/guide/sec_fragment_ike_pack.html
+ * - www.cisco.com/en/US/docs/ios-xml/ios/sec_conn_ikevpn/configuration/15-mt/sec-fragment-ike-pack.pdf
+ * - msdn.microsoft.com/en-us/library/cc233452.aspx
+ * - iOS/Apple racoon source ipsec-164.9 at www.opensource.apple.com (frak length 1280)
+ * - stock racoon source (frak length 552)
+ *
+ * v2 fragmentation is RFC7383.
+ *
+ * What is a sane and safe value? iOS/Apple uses 1280, stock racoon uses 552.
+ * Why is there no RFC to guide interop people here :/
+ *
+ * UDP packet overhead: the number of bytes of header and pseudo header
+ * - v4 UDP: 20 source addr, dest addr, protocol, length, source port, destination port, length, checksum
+ * - v6 UDP: 48 (similar)
+ *
+ * Other considerations:
+ * - optional non-ESP Marker: 4 NON_ESP_MARKER_SIZE
+ * - ISAKMP header
+ * - encryption representation overhead
+ */
+#define MIN_MAX_UDP_DATA_v4	(576 - 20)	/* this length must work */
+#define MIN_MAX_UDP_DATA_v6	(1280 - 48)	/* this length must work */
+
+// #define OVERHEAD_NON_FRAG_v1	(2*4 + 16)	/* ??? what is this number? */
+// #define OVERHEAD_NON_FRAG_v2	(2*4 + 16)	/* ??? what is this number? */
+
+/*
+ * ??? perhaps all current uses are not about fragment size, but how large
+ * the content of a packet (ie. excluding UDP headers) can be allowed before
+ * fragmentation must be considered.
+ */
+
+#define ISAKMP_V1_FRAG_OVERHEAD_IPv4	(2*4 + 16)	/* ??? */
+#define ISAKMP_V1_FRAG_MAXLEN_IPv4	(MIN_MAX_UDP_DATA_v4 - ISAKMP_V1_FRAG_OVERHEAD_IPv4)
+#define ISAKMP_V1_FRAG_OVERHEAD_IPv6	40	/* ??? */
+#define ISAKMP_V1_FRAG_MAXLEN_IPv6	(MIN_MAX_UDP_DATA_v6 - ISAKMP_V1_FRAG_OVERHEAD_IPv6)
+
+/* ??? it is unlikely that the v2 numbers should match the v1 numbers */
+#define ISAKMP_V2_FRAG_OVERHEAD_IPv4	(2*4 + 16)	/* ??? !!! */
+#define ISAKMP_V2_FRAG_MAXLEN_IPv4	(MIN_MAX_UDP_DATA_v4 - ISAKMP_V2_FRAG_OVERHEAD_IPv4)
+#define ISAKMP_V2_FRAG_OVERHEAD_IPv6	40	/* ??? !!! */
+#define ISAKMP_V2_FRAG_MAXLEN_IPv6	(MIN_MAX_UDP_DATA_v6 - ISAKMP_V1_FRAG_OVERHEAD_IPv6)

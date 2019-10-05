@@ -99,6 +99,7 @@
 #include "hash_table.h"
 #include "ip_address.h"
 #include "hostpair.h"
+#include "ip_info.h"
 
 /*
  *  Server main loop and socket initialization routines.
@@ -1863,8 +1864,7 @@ bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
 	 *
 	 * ??? the following test does not account for natt_bonus
 	 */
-	return len >= (st->st_connection->addr_family == AF_INET ?
-		       ISAKMP_V1_FRAG_MAXLEN_IPv4 : ISAKMP_V1_FRAG_MAXLEN_IPv6) &&
+	return len >= endpoint_type(&st->st_remote_endpoint)->ikev1_max_fragment_size &&
 	    (   (resending &&
 			(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
 			st->st_seen_fragvid) ||

@@ -33,6 +33,7 @@
 #include "lswlog.h"
 #include "server.h"
 #include "connections.h"
+#include "ip_info.h"
 
 /*
  * (IKE v1) send fragments of packet.
@@ -59,8 +60,7 @@ static bool send_v1_frags(struct state *st, const char *where)
 	 * max_data_len is the maximum data length that will fit within it.
 	 */
 	const size_t max_data_len =
-		((st->st_connection->addr_family ==
-		  AF_INET) ? ISAKMP_V1_FRAG_MAXLEN_IPv4 : ISAKMP_V1_FRAG_MAXLEN_IPv6)
+		endpoint_type(&st->st_remote_endpoint)->ikev1_max_fragment_size
 		-
 		(natt_bonus + NSIZEOF_isakmp_hdr +
 		 NSIZEOF_isakmp_ikefrag);
