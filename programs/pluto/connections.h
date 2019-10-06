@@ -330,7 +330,6 @@ struct connection {
 
 	/* note: if the client is the gateway, the following must be equal */
 	sa_family_t addr_family;	/* between gateways */
-	sa_family_t tunnel_addr_family;	/* between clients */	/* ??? set but not used! */
 
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;

@@ -370,13 +370,11 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 	if (isanyaddr(&e->host_nexthop))
 		e->host_nexthop = *dflt_nexthop;
 
-	/*
-	 * Default client to subnet containing only self
-	 * XXX This may mean that the client's address family doesn't match
-	 * tunnel_addr_family.
-	 */
-	if (!e->has_client)
+	/* Default client to subnet containing only self */
+	if (!e->has_client) {
+		/* XXX: this uses ADDRESS:PORT */
 		ugh = addrtosubnet(&e->host_addr, &e->client);
+	}
 
 	if (e->sendcert == 0) {
 		/* uninitialized (ugly hack) */
@@ -1596,7 +1594,6 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	c->sa_tfcpad = wm->sa_tfcpad;
 	c->send_no_esp_tfc = wm->send_no_esp_tfc;
 	c->addr_family = wm->addr_family;
-	c->tunnel_addr_family = wm->tunnel_addr_family;
 	c->sa_reqid = wm->sa_reqid;
 
 	/*

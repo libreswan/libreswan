@@ -1149,12 +1149,11 @@ static void connection_check_ddns1(struct connection *c)
 	if (isanyaddr(&c->spd.this.host_nexthop))
 		c->spd.this.host_nexthop = c->spd.that.host_addr;
 
-	/* default client to subnet containing only self
-	 * XXX This may mean that the client's address family doesn't match
-	 * tunnel_addr_family.
-	 */
-	if (!c->spd.that.has_client)
+	/* default client to subnet containing only self */
+	if (!c->spd.that.has_client) {
+		/* XXX: this uses ADDRESS:PORT */
 		addrtosubnet(&c->spd.that.host_addr, &c->spd.that.client);
+	}
 
 	/*
 	 * reduce the work we do by updating all connections waiting for this
