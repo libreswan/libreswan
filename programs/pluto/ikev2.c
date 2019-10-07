@@ -3538,12 +3538,10 @@ void complete_v2_state_transition(struct state *st,
 		passert(result >= STF_FAIL);
 		v2_notification_t notification = result > STF_FAIL ?
 			result - STF_FAIL : v2N_NOTHING_WRONG;
-		whack_log(RC_NOTIFICATION + notification,
-			  "%s: %s",
-			  from_state_name,
-			  enum_name(&ikev2_notify_names, notification));
 
-		if (notification != v2N_NOTHING_WRONG) {
+		if (notification != v2N_NOTHING_WRONG &&
+		    /* Only the responder sends a notification */
+		    !(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*
 			 * XXX: For IKEv2, this code path isn't
 			 * sufficient - a message request can result
@@ -3553,35 +3551,36 @@ void complete_v2_state_transition(struct state *st,
 			 * using that - look for comments about
 			 * STF_ZOMBIFY.
 			 */
-			/* Only the responder sends a notification */
-			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
-				struct state *pst = st;
+			struct state *pst = st;
 
-				DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
-				/* We are the exchange responder */
-				if (st != NULL && IS_CHILD_SA(st)) {
-					pst = state_with_serialno(
-							st->st_clonedfrom);
-				}
+			DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
+			/* We are the exchange responder */
+			if (st != NULL && IS_CHILD_SA(st)) {
+				pst = state_with_serialno(st->st_clonedfrom);
+			}
 
-				if (st == NULL) {
-					send_v2N_response_from_md(md, notification, NULL);
+			if (st == NULL) {
+				send_v2N_response_from_md(md, notification, NULL);
+			} else {
+				send_v2N_response_from_state(ike_sa(pst), md,
+							     notification,
+							     NULL/*no data*/);
+				if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
+					delete_state(st);
 				} else {
-					send_v2N_response_from_state(ike_sa(pst), md,
-								     notification,
-								     NULL/*no data*/);
-					if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
-						delete_state(st);
-					} else {
-						dbg("forcing #%lu to a discard event",
-						    st->st_serialno);
-						delete_event(st);
-						event_schedule_s(EVENT_SO_DISCARD,
-								 MAXIMUM_RESPONDER_WAIT,
-								 st);
-					}
+					dbg("forcing #%lu to a discard event",
+					    st->st_serialno);
+					delete_event(st);
+					event_schedule_s(EVENT_SO_DISCARD,
+							 MAXIMUM_RESPONDER_WAIT,
+							 st);
 				}
 			}
+		} else {
+			loglog(RC_NOTIFICATION + notification,
+			       "%s: %s",
+			       from_state_name,
+			       enum_name(&ikev2_notify_names, notification));
 		}
 
 		DBG(DBG_CONTROL,
