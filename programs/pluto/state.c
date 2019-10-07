@@ -593,13 +593,13 @@ void init_states(void)
 
 void delete_state_by_id_name(struct state *st, void *name)
 {
-	char thatidbuf[IDTOA_BUF];
 	struct connection *c = st->st_connection;
 
 	if (!IS_IKE_SA(st))
 		return;
 
-	idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
+	id_buf thatidb;
+	const char *thatidbuf = str_id(&c->spd.that.id, &thatidb);
 	if (streq(thatidbuf, name)) {
 		delete_my_family(st, FALSE);
 		/* note: no md->st to clear */

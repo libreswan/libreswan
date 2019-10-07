@@ -46,10 +46,15 @@ extern err_t atoid(char *src, struct id *id, bool oe_only);
 
 /*
  * Formattting.
+ *
+ * jam_id() only emits printable ASCII.  Non-printable characters, for
+ * instance, are escaped using the RFC compliant sequence \<HEX><HEX>.
+ *
+ * While good for logging, it isn't good for shell commands.  Use
+ * JAM_BYTES to apply additional escaping.
  */
 
 void jam_id(struct lswlog *buf, const struct id *id, jam_bytes_fn *jam_bytes);
-extern void idtoa(const struct id *id, char *dst, size_t dstlen);
 
 typedef struct {
 	char buf[512];

@@ -196,25 +196,11 @@ void jam_id(jambuf_t *buf, const struct id *id, jam_bytes_fn *jam_bytes)
 	}
 }
 
-void idtoa(const struct id *id, char *dst, size_t dstlen)
-{
-	jambuf_t buf = array_as_jambuf(dst, dstlen);
-	jam_id(&buf, id, jam_raw_bytes);
-	/*
-	 * "Sanitize" string so that log isn't endangered:
-	 * replace unprintable characters with '?'.
-	 */
-	for (; *dst != '\0'; dst++) {
-		if (!isprint(*dst)) {
-			*dst = '?';
-		}
-	}
-}
-
 const char *str_id(const struct id *id, id_buf *dst)
 {
 	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
-	jam_id(&buf, id, jam_sanitized_bytes);
+	/* JAM_ID() only emits printable ASCII */
+	jam_id(&buf, id, jam_raw_bytes);
 	return dst->buf;
 }
 
@@ -464,41 +450,29 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
 }
 
 /*
- * Escape the ASN.1 into RFC-1485 such that it is suitable for
- * CERT_AsciiToName().
- */
-static void dntoa(char *dst, size_t dstlen, chunk_t dn)
-{
-	jambuf_t buf = array_as_jambuf(dst, dstlen);
-	jam_dn(&buf, dn, jam_raw_bytes);
-}
-
-/*
  * match an equal number of RDNs, in any order
  * if wildcards != NULL, wildcard matches are enabled
  */
 static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wildcards)
 {
-	char abuf[ASN1_BUF_LEN] = "";
-	char bbuf[ASN1_BUF_LEN] = "";
+	dn_buf a_dnbuf = { "", };
+	dn_buf b_dnbuf = { "", };
+
+
 	/*
-	 * XXX: Convert to raw ASCII so they can be passed to NSS.
+	 * Escape the ASN.1 into RFC-1485 (actually RFC-4514 and
+	 * printable ASCII) so that that it is suitable for NSS's
+	 * CERT_AsciiToName().
 	 */
-	dntoa(abuf, sizeof(abuf), a); /* RFC1485 for NSS */
-	dntoa(bbuf, sizeof(bbuf), b); /* RFC1485 for NSS */
+	const char *abuf = str_dn(a, &a_dnbuf); /* RFC1485 for NSS */
+	const char *bbuf = str_dn(b, &b_dnbuf); /* RFC1485 for NSS */
 
 	/*
 	 * ABUF and BBUF, set by dntoa(), contain an RFC 1485(?)
 	 * encoded string and that can contain UTF-8 (i.e.,
 	 * !isprint()).  Strip that out before logging.
 	 */
-	LSWDBGP(DBG_BASE, buf) {
-		jam_string(buf, __func__);
-		jam_string(buf, " A: ");
-		jam_sanitized_bytes(buf, abuf, strlen(abuf));
-		jam_string(buf, ", B: ");
-		jam_sanitized_bytes(buf, bbuf, strlen(bbuf));
-	}
+	dbg("matching unordered DNs A: '%s' B: '%s'", abuf, bbuf);
 
 	CERTName *const a_name = CERT_AsciiToName(abuf);
 	CERTName *const b_name = CERT_AsciiToName(bbuf);

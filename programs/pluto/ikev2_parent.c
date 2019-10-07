@@ -2509,8 +2509,8 @@ static void ikev2_pam_continue(struct state *st,
 
 static stf_status ikev2_start_pam_authorize(struct state *st)
 {
-	char thatid[IDTOA_BUF];
-	idtoa(&st->st_connection->spd.that.id, thatid, sizeof(thatid));
+	id_buf thatidb;
+	const char *thatid = str_id(&st->st_connection->spd.that.id, &thatidb);
 	libreswan_log("IKEv2: [XAUTH]PAM method requested to authorize '%s'",
 		      thatid);
 	xauth_fork_pam_process(st,

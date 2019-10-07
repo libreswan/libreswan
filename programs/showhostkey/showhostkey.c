@@ -102,10 +102,11 @@ struct option opts[] = {
 static void print(struct private_key_stuff *pks,
 		  int count, struct id *id, bool disclose)
 {
-	char idb[IDTOA_BUF] = "n/a";
+	id_buf idbuf = { "n/a", };
 	if (id != NULL) {
-		idtoa(id, idb, sizeof(idb));
+		str_id(id, &idbuf);
 	}
+	const char *idb = idbuf.buf;
 
 	char pskbuf[128] = "";
 	if (pks->kind == PKK_PSK || pks->kind == PKK_XAUTH) {
