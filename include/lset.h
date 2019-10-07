@@ -55,15 +55,17 @@ typedef uint_fast64_t lset_t;
  * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
  * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
  *
- * lswlog_enum_lset_short() formats into a caller-supplied buffer -- only form
+ * jam_enum_lset_short() formats into a caller-supplied buffer -- only form
  */
 extern bool testset(const char *const table[], lset_t val);
 extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-ENTRANT */
 extern const char *bitnamesofb(const char *const table[],
 			       lset_t val,
 			       char *buf, size_t blen);
-
+/* old */
 size_t lswlog_enum_lset_short(struct lswlog *, const struct enum_names *sd,
 			      const char *separator, lset_t val);
+/* new */
+#define jam_enum_lset_short lswlog_enum_lset_short
 
 #endif /* CONSTANTS_H */

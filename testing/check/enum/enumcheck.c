@@ -1,11 +1,13 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "constants.h"
-#include "lswlog.h"
 #include "lswalloc.h"
 #include "lswtool.h"
+#include "jambuf.h"
+#include "libreswan/passert.h"
 
 #define PREFIX "         "
 
@@ -18,6 +20,8 @@ enum where {
 static void test_enum(enum_names *enum_test, int i,
 		      enum where where)
 {
+	char scratch[100];
+
 	/* find a name, if any, for this value */
 	const char *name = enum_name(enum_test, i);
 	switch (where) {
@@ -50,10 +54,12 @@ static void test_enum(enum_names *enum_test, int i,
 		return;
 	}
 
-	LSWBUF(buf) {
-		printf(PREFIX "lswlog_enum %d: ", i);
-		lswlog_enum(buf, enum_test, i);
-		if (streq(name, buf->array)) {
+	{
+		printf(PREFIX "jam_enum %d: ", i);
+		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
+		jam_enum(&buf, enum_test, i);
+		shunk_t s = jambuf_as_shunk(&buf);
+		if (hunk_streq(s, name)) {
 			printf("OK\n");
 		} else {
 			printf("ERROR\n");
@@ -105,10 +111,12 @@ static void test_enum(enum_names *enum_test, int i,
 		printf(" OK\n");
 	}
 
-	LSWBUF(buf) {
-		printf(PREFIX "lswlog_enum_short %d: ", i);
-		lswlog_enum_short(buf, enum_test, i);
-		if (streq(short_name, buf->array)) {
+	{
+		printf(PREFIX "jam_enum_short %d: ", i);
+		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
+		jam_enum_short(&buf, enum_test, i);
+		shunk_t s = jambuf_as_shunk(&buf);
+		if (hunk_streq(s, short_name)) {
 			printf("OK\n");
 		} else {
 			printf("ERROR\n");
@@ -179,6 +187,8 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 			   unsigned long table, enum_names *en,
 			   unsigned long val, bool val_ok)
 {
+	char scratch[100];
+
 	printf("%s:\n", title);
 
 	{
@@ -207,27 +217,31 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 		printf("ERROR\n");
 	}
 
-	LSWBUF(buf) {
-		printf(PREFIX "lswlog_enum_enum %lu %lu: ", table, val);
-		lswlog_enum_enum(buf, een, table, val);
+	{
+		printf(PREFIX "jam_enum_enum %lu %lu: ", table, val);
+		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
+		jam_enum_enum(&buf, een, table, val);
+		shunk_t s = jambuf_as_shunk(&buf);
 		/* ??? clang says that name might be NULL */
 		if (val_ok && name == NULL) {
 			printf("name == NULL\n");
-		} else if (val_ok && streq(buf->array, name)) {
+		} else if (val_ok && hunk_streq(s, name)) {
 			printf("OK\n");
-		} else if (strlen(buf->array) > 0) {
+		} else if (s.len > 0) {
 			printf("OK\n");
 		} else {
 			printf("ERROR [empty]\n");
 		}
 	}
 
-	LSWBUF(buf) {
-		printf(PREFIX "lswlog_enum_enum_short %lu %lu: ", table, val);
-		lswlog_enum_enum_short(buf, een, table, val);
-		if (val_ok && streq(buf->array, enum_short_name(en, val))) {
+	{
+		printf(PREFIX "jam_enum_enum_short %lu %lu: ", table, val);
+		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
+		jam_enum_enum_short(&buf, een, table, val);
+		shunk_t s = jambuf_as_shunk(&buf);
+		if (val_ok && hunk_streq(s, enum_short_name(en, val))) {
 			printf("OK\n");
-		} else if (strlen(buf->array) > 0) {
+		} else if (s.len > 0) {
 			printf("OK\n");
 		} else {
 			printf("ERROR [empty]\n");
@@ -238,11 +252,14 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 static void test_enum_lset(const char *name, const enum_names *en, lset_t val)
 {
 	printf("  %s "PRI_LSET":\n", name, val);
-	LSWLOG_FILE(stdout, buf) {
-		lswlogs(buf, "\t<<");
-		lswlog_enum_lset_short(buf, en, "+", val);
-		lswlogs(buf, ">>");
+	printf("\t<<");
+	{
+		char scratch[100];
+		jambuf_t buf = ARRAY_AS_JAMBUF(scratch);
+		jam_enum_lset_short(&buf, en, "+", val);
+		printf(PRI_SHUNK, pri_shunk(jambuf_as_shunk(&buf)));
 	}
+	printf(">>");
 }
 
 int main(int argc UNUSED, char *argv[])
@@ -322,7 +339,7 @@ int main(int argc UNUSED, char *argv[])
 		       IKEv2_PRF_INVALID, false);
 	printf("\n");
 
-	printf("lswlog_enum_lset_short:\n\n");
+	printf("jam_enum_lset_short:\n\n");
 	test_enum_lset("debug", &debug_names, DBG_CRYPT|DBG_CPU_USAGE);
 	printf("\n");
 

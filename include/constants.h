@@ -215,8 +215,12 @@ typedef const struct enum_names enum_names;
 extern const char *enum_name(enum_names *ed, unsigned long val);
 extern const char *enum_short_name(enum_names *ed, unsigned long val);
 
+/* old names */
 size_t lswlog_enum(struct lswlog *, enum_names *en, unsigned long val);
 size_t lswlog_enum_short(struct lswlog *, enum_names *en, unsigned long val);
+/* new names */
+#define jam_enum lswlog_enum
+#define jam_enum_short lswlog_enum
 
 /* caller-allocated buffer for enum_showb */
 struct esb_buf {
@@ -286,10 +290,14 @@ const char *enum_enum_name(enum_enum_names *e, unsigned long table,
 const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
 			    unsigned long val, struct esb_buf *buf);
 
+/* old */
 size_t lswlog_enum_enum(struct lswlog *log, enum_enum_names *een,
 			unsigned long table, unsigned long val);
 size_t lswlog_enum_enum_short(struct lswlog *log, enum_enum_names *een,
 			      unsigned long table, unsigned long val);
+/* new */
+#define jam_enum_enum lswlog_enum_enum
+#define jam_enum_enum_short lswlog_enum_enum_short
 
 /*
  * The sparser_name should be transformed into keyword_enum_value
