@@ -24,12 +24,23 @@
 
 unsigned fails;
 
+#define PRINTLN(FILE, FMT, ...)						\
+	fprintf(FILE, "%s[%zu]:"FMT"\n",				\
+		__func__, ti,##__VA_ARGS__)
+
 #define PRINT_LR(FILE, FMT, ...)					\
 	fprintf(FILE, "%s[%zu]: '%s' vs '%s'" FMT "\n",			\
 		__func__, ti,						\
 		t->l == NULL ? "NULL" : t->l,				\
 		t->r == NULL ? "NULL" : t->r,				\
 		##__VA_ARGS__);
+
+#define FAIL(FMT, ...)						\
+	{							\
+		fails++;					\
+		PRINTLN(stderr, " "FMT,##__VA_ARGS__);		\
+		continue;					\
+	}
 
 #define FAIL_LR(FMT, ...)					\
 	{							\
@@ -104,12 +115,6 @@ static void shunk_eq_check(void)
 				bool_str(t_empty), bool_str(shunk_strcaseeq(l, "")));
 		}
 
-		bool t_caseeq = shunk_caseeq(l, r);
-		if (t_caseeq != t->caseeq) {
-			FAIL_LR("shunk_caseeq() returned %s, expecting %s",
-				bool_str(t_caseeq), bool_str(t->caseeq));
-		}
-
 		bool t_eq = shunk_eq(l, r);
 		if (t_eq != t->eq) {
 			FAIL_LR("shunk_eq() returned %s, expecting %s",
@@ -120,6 +125,24 @@ static void shunk_eq_check(void)
 		if (t_memeq != t->eq) {
 			FAIL_LR("shunk_memeq() returned %s, expecting %s",
 				bool_str(t_memeq), bool_str(t->eq));
+		}
+
+		bool t_streq = shunk_streq(l, t->r);
+		if (t_streq != t->eq) {
+			FAIL_LR("shunk_streq() returned %s, expecting %s",
+				bool_str(t_streq), bool_str(t->eq));
+		}
+
+		bool t_caseeq = shunk_caseeq(l, r);
+		if (t_caseeq != t->caseeq) {
+			FAIL_LR("shunk_caseeq() returned %s, expecting %s",
+				bool_str(t_caseeq), bool_str(t->caseeq));
+		}
+
+		bool t_strcaseeq = shunk_strcaseeq(l, t->r);
+		if (t_strcaseeq != t->caseeq) {
+			FAIL_LR("shunk_strcaseeq() returned %s, expecting %s",
+				bool_str(t_strcaseeq), bool_str(t->caseeq));
 		}
 
 		bool t_thing = shunk_thingeq(l, thing);
@@ -221,6 +244,49 @@ static void shunk_token_check(void)
 	}
 }
 
+static void shunk_span_check(void)
+{
+	static const struct test {
+		/* span(&old->new, delim, accept)->token */
+		const char *old;
+		const char *accept;
+		const char *token;
+		const char *new;
+	} tests[] = {
+		/* termination */
+		{ "",   ",", "",   NULL, }, /* token=NULL instead? */
+		{ "a",  "a", "a",  NULL, },
+		{ NULL, ",", NULL, NULL, },
+
+		/* empty spans */
+		{ ",a",  "a",  "", ",a", },
+
+		/* non empty spans */
+		{ "a,b", "a",  "a",  ",b", },
+		{ "a,b", "a,", "a,", "b", },
+		{ "a,b", "ba", "a",  ",b", },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINTLN(stdout, " old='%s' accept='%s' -> token='%s' new='%s'",
+			t->old, t->accept, t->token, t->token);
+
+		shunk_t t_input = shunk1(t->old);
+		shunk_t t_token = shunk_span(&t_input, t->accept);
+
+		if (!shunk_eq(t_token, shunk1(t->token))) {
+			FAIL("shunk_span() returned token '"PRI_SHUNK"', expecting '%s'",
+			     pri_shunk(t_token), t->token);
+		}
+
+		if (!shunk_eq(t_input, shunk1(t->new))) {
+			FAIL("shunk_span() returned new input '"PRI_SHUNK"', expecting '%s'",
+			     pri_shunk(t_input), t->new);
+		}
+	}
+}
+
 static void shunk_null_empty_check(void)
 {
 	static const struct test {
@@ -262,6 +328,7 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	shunk_null_empty_check();
 	shunk_slice_check();
 	shunk_token_check();
+	shunk_span_check();
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

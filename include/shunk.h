@@ -86,6 +86,22 @@ shunk_t shunk_slice(shunk_t s, size_t start, size_t stop);
 shunk_t shunk_token(shunk_t *input, char *delim, const char *delims);
 
 /*
+ * Return the sequence of charcters in ACCEPT, update INPUT.
+ *
+ * When input is exhausted the NULL_SHUNK is returned (rather than the
+ * EMPTY_SHUNK).
+ *
+ * edge cases (these might change a little):
+ *
+ * span("", "accept"): returns the token EMPTY_SHUNK and sets input to
+ * NULL_SHUNK so the next call returns the NULL_SHUNK.
+ *
+ * span("a", "accept"): returns the token "a" and sets input to
+ * NULL_SHUNK so the next call returns the NULL_SHUNK.
+ */
+shunk_t shunk_span(shunk_t *input, const char *accept);
+
+/*
  * shunk version of string compare functions (or at least libreswan's
  * versions).
  *
@@ -95,10 +111,12 @@ shunk_t shunk_token(shunk_t *input, char *delim, const char *delims);
  * EMPTY (pointing somewhere but no bytes) shunks are considered
  * different.
  */
+
 bool shunk_caseeq(shunk_t lhs, shunk_t rhs);
 bool shunk_strcaseeq(shunk_t shunk, const char *string);
 
 bool shunk_eq(shunk_t l, shunk_t r);
+bool shunk_streq(shunk_t lhs, const char *);
 bool shunk_memeq(shunk_t l, const void *r, size_t sizeof_r);
 #define shunk_thingeq(SHUNK, THING) shunk_memeq(SHUNK, &(THING), sizeof(THING))
 

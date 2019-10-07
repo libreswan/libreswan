@@ -91,6 +91,34 @@ shunk_t shunk_token(shunk_t *input, char *delim, const char *delims)
 	return token;
 }
 
+shunk_t shunk_span(shunk_t *input, const char *accept)
+{
+	/*
+	 * If INPUT is either empty, or the NULL_SHUNK, the loop is
+	 * skipped.
+	 */
+	const char *const start = input->ptr;
+	const char *pos = start;
+	while (pos < start + input->len) {
+		if (strchr(accept, *pos) == NULL) {
+			/* save the token and stop character */
+			shunk_t token = shunk2(start, pos - start);
+			/* skip over TOKEN+DELIM */
+			*input = shunk_slice(*input, pos - start, input->len);
+			return token;
+		}
+		pos++;
+	}
+	/*
+	 * The last token is all of INPUT.  Flag that INPUT has been
+	 * exhausted by setting INPUT to the NULL_SHUNK; the next call
+	 * will return that NULL_SHUNK.
+	 */
+	shunk_t token = *input;
+	*input = null_shunk;
+	return token;
+}
+
 bool shunk_caseeq(shunk_t lhs, shunk_t rhs)
 {
 	/* NULL and EMPTY("") are not the same */
@@ -123,6 +151,11 @@ bool shunk_memeq(shunk_t l, const void *r, size_t sizeof_r)
 bool shunk_eq(shunk_t l, shunk_t r)
 {
 	return shunk_memeq(l, r.ptr, r.len);
+}
+
+bool shunk_streq(shunk_t l, const char *r)
+{
+	return shunk_eq(l, shunk1(r));
 }
 
 bool shunk_caseeat(shunk_t *shunk, shunk_t dinner)
