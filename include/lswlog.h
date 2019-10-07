@@ -368,9 +368,6 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
  * XXX: case should be expanded to illustrate how to stuff a truncated
  * version of the output into the LOG buffer.
  *
- * XXX: Is this one redundant?  Code can use LSWLOG_ARRAY() or
- * LSWLOG_STRING().
- *
  * For instance:
  */
 
@@ -435,26 +432,6 @@ void lswlog_file(FILE f)
 	LSWLOG_(true, BUF,						\
 		,							\
 		lswlog_to_file_stream(BUF, FILE))
-
-/*
- * Capture LSWLOG into a heap allocated string.
- */
-
-#if 0
-char *lswlog_string(void)
-{
-	char *string;
-	LSWLOG_STRING(string, buf) {
-		lswlogf(buf, "written to string");
-	}
-	return string;
-}
-#endif
-
-#define LSWLOG_STRING(STRING, BUF)					\
-	LSWLOG_(true, BUF,						\
-		,							\
-		STRING = clone_str(BUF->array, "lswlog string"))
 
 /*
  * Log an expectation failure message to the error streams.  That is
