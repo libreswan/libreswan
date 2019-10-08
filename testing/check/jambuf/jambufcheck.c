@@ -18,7 +18,8 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "jambuf.h" /* jambuf_t */
+#include "jambuf.h"		/* for jambuf_t */
+#include "constants.h"		/* for streq() */
 
 unsigned fails;
 
@@ -56,13 +57,6 @@ static void check_jambuf(const char *expect, bool ok, ...)
 		if (pos != array) {
 			FAIL("jambuf_cursor() is %p but should be %p (aka array) at start",
 			     pos, array);
-			return;
-		}
-		chunk_t chunk = jambuf_as_chunk(&buf);
-		if ((const char *)chunk.ptr != array ||
-		    chunk.len != 1) {
-			FAIL("jambuf_as_chunk() is "PRI_CHUNK" but should be %p/1 (aka array) at start",
-			     pri_chunk(chunk), array);
 			return;
 		}
 		shunk_t shunk = jambuf_as_shunk(&buf);
@@ -116,14 +110,6 @@ static void check_jambuf(const char *expect, bool ok, ...)
 		}
 		if (strcmp(expect, array) != 0) {
 			FAIL("array contains '%s' which is wrong", array);
-			return;
-		}
-		chunk = jambuf_as_chunk(&buf);
-		if ((const char *)chunk.ptr != array ||
-		    chunk.len != strlen(expect) + 1 ||
-		    memcmp(expect, chunk.ptr, chunk.len) != 0) {
-			FAIL("jambuf_as_chunk() is "PRI_CHUNK" or '%s' which is wrong",
-			     pri_chunk(chunk), chunk.ptr);
 			return;
 		}
 		shunk = jambuf_as_shunk(&buf);

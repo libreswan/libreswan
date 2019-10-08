@@ -23,7 +23,6 @@
 #include <stddef.h>		/* for size_t */
 
 #include "lswcdefs.h"		/* for PRINTF_LIKE */
-#include "chunk.h"
 #include "shunk.h"
 
 /*
@@ -100,22 +99,21 @@ jambuf_t array_as_jambuf(char *array, size_t sizeof_array);
 #define ARRAY_AS_JAMBUF(ARRAY) array_as_jambuf((ARRAY), sizeof(ARRAY))
 
 /*
- * Poke around in jambuf internals.
+ * Assuming the jambuf is an array, poke around in the jambuf's
+ * internal buffer.
  *
- * _as_chunk() returns the buffer contents up to and including the '\0'
- * terminator.
+ * _as_shunk() returns the buffer contents (not including the trailing
+ * '\0') so is useful for calls like fwrite().
  *
  * _cursor() returns the current cursor position (where the next
  * string will be jammed); *cursor is always '\0'.
  */
-/* includes final '\0' */
-chunk_t jambuf_as_chunk(jambuf_t *buf);
-/* excludes final '\0' */
+
 shunk_t jambuf_as_shunk(jambuf_t *buf);
 const char *jambuf_cursor(jambuf_t *buf);
 
 /*
- * Save/restore the 'cursor'.
+ * Assuming the jambuf is an array, save/restore the 'cursor'.
  *
  * See x509 code, where part way through scribbing all over the buf it
  * detects and error and throws everything away.

@@ -261,14 +261,6 @@ const char *jambuf_cursor(jambuf_t *buf)
 	return d.cursor;
 }
 
-chunk_t jambuf_as_chunk(jambuf_t *buf)
-{
-	assert_jambuf(buf);
-	struct dest d = dest(buf);
-	passert(d.cursor[0] == '\0');
-	return chunk(buf->array, d.cursor - buf->array + 1);
-}
-
 shunk_t jambuf_as_shunk(jambuf_t *buf)
 {
 	assert_jambuf(buf);
