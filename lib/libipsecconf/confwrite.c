@@ -153,12 +153,10 @@ static void confwrite_int(FILE *out,
 				unsigned long val = options[k->field];
 
 				if (val != 0) {
-					LSWLOG_FILE(out, buf) {
-						lswlogf(buf, "\t%s%s=\"", side, k->keyname);
-						lswlog_enum_lset_short(buf, k->info->names,
-								       ",", val);
-						lswlogf(buf, "\"");
-					}
+					fprintf(out, "\t%s%s=\"", side, k->keyname);
+					jambuf_t buf = file_as_jambuf(out);
+					lswlog_enum_lset_short(&buf, k->info->names, ",", val);
+					fprintf(out, "\"");
 				}
 			}
 			break;

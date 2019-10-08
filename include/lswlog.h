@@ -416,27 +416,6 @@ void lswbuf(struct lswlog *log)
 			for (PREFIX; lswlog_p; lswlog_p = false, SUFFIX)
 
 /*
- * Write a line of output to the FILE stream as a single block;
- * includes an implicit new-line.
- *
- * For instance:
- */
-
-#if 0
-void lswlog_file(FILE f)
-{
-	LSWLOG_FILE(f, buf) {
-		lswlogf(buf, "written to file");
-	}
-}
-#endif
-
-#define LSWLOG_FILE(FILE, BUF)						\
-	LSWLOG_(true, BUF,						\
-		,							\
-		lswlog_to_file_stream(BUF, FILE))
-
-/*
  * Log an expectation failure message to the error streams.  That is
  * the main log (level LOG_ERR) and whack log (level RC_LOG_SERIOUS).
  *

@@ -2215,19 +2215,19 @@ int main(int argc, char **argv)
 				fprintf(stderr, "debug options (* included in 'all'):\n");
 				for (long e = next_enum(&debug_names, -1);
 				     e != -1; e = next_enum(&debug_names, e)) {
-					LSWLOG_FILE(stdout, buf) {
-						if (LELEM(e) & DBG_ALL) {
-							lswlogs(buf, " *");
-						} else {
-							lswlogs(buf, "  ");
-						}
-						lswlog_enum_short(buf, &debug_names, e);
-						const char *help = enum_name(&debug_help, e);
-						if (help != NULL) {
-							lswlogs(buf, ": ");
-							lswlogs(buf, help);
-						}
+					if (LELEM(e) & DBG_ALL) {
+						fprintf(stdout, " *");
+					} else {
+						fprintf(stdout, "  ");
 					}
+					jambuf_t buf = file_as_jambuf(stdout);
+					lswlog_enum_short(&buf, &debug_names, e);
+					const char *help = enum_name(&debug_help, e);
+					if (help != NULL) {
+						fprintf(stdout, ": %s", help);
+					}
+					fprintf(stderr, "\n");
+
 				}
 				exit(1);
 			} else if (!lmod_arg(&msg.debugging, &debug_lmod_info, optarg, enable)) {
@@ -2245,15 +2245,14 @@ int main(int argc, char **argv)
 				fprintf(stderr, "impair options:\n");
 				for (long e = next_enum(&impair_names, -1);
 				     e != -1; e = next_enum(&impair_names, e)) {
-					LSWLOG_FILE(stdout, buf) {
-						lswlogs(buf, "  ");
-						lswlog_enum_short(buf, &impair_names, e);
-						const char *help = enum_name(&impair_help, e);
-						if (help != NULL) {
-							lswlogs(buf, ": ");
-							lswlogs(buf, help);
-						}
+					fprintf(stdout, "  ");
+					jambuf_t buf = file_as_jambuf(stdout);
+					lswlog_enum_short(&buf, &impair_names, e);
+					const char *help = enum_name(&impair_help, e);
+					if (help != NULL) {
+						fprintf(stdout, ": %s", help);
 					}
+					fprintf(stderr, "\n");
 				}
 				help_impair("  ");
 				exit(1);
