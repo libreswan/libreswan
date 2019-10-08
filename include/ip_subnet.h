@@ -63,11 +63,8 @@ typedef struct {
 } ip_subnet;
 
 /*
- * Construct a subnet exactly as specified (presumably the caller has
- * performed all checks).
+ * Constructors
  */
-
-ip_subnet subnet(const ip_address *address, int maskbits, int port);
 
 /* ADDRESS..ADDRESS:0..65535 */
 ip_subnet subnet_from_address(const ip_address *address);

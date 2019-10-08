@@ -25,7 +25,7 @@
 
 const ip_subnet subnet_invalid; /* all zeros */
 
-ip_subnet subnet(const ip_address *address, int maskbits, int port)
+static ip_subnet subnet3(const ip_address *address, int maskbits, int port)
 {
 	ip_endpoint e = endpoint(address, port);
 	ip_subnet s = {
@@ -54,11 +54,7 @@ ip_subnet subnet_from_address(const ip_address *address)
 	if (!pexpect(afi != NULL)) {
 		return subnet_invalid;
 	}
-#ifdef SUBNET_TYPE
-	return subnet4(address, address, 0, 65535/*const?*/);
-#else
-	return subnet(address, afi->mask_cnt, 0);
-#endif
+	return subnet3(address, afi->mask_cnt, 0);
 }
 
 ip_subnet subnet_from_endpoint(const ip_endpoint *endpoint)
@@ -70,11 +66,7 @@ ip_subnet subnet_from_endpoint(const ip_endpoint *endpoint)
 	ip_address address = endpoint_address(endpoint);
 	int hport = endpoint_hport(endpoint);
 	pexpect(hport != 0);
-#ifdef SUBNET_TYPE
-	return subnet4(&address, &address, port, hport);
-#else
-	return subnet(&address, afi->mask_cnt, hport);
-#endif
+	return subnet3(&address, afi->mask_cnt, hport);
 }
 
 ip_address subnet_prefix(const ip_subnet *src)
