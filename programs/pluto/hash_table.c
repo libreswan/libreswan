@@ -20,6 +20,8 @@
 #include "defs.h"
 #include "hash_table.h"
 
+const hash_t zero_hash = { 0 };
+
 void init_hash_table(struct hash_table *table)
 {
 	for (unsigned i = 0; i < table->nr_slots; i++) {
@@ -27,27 +29,31 @@ void init_hash_table(struct hash_table *table)
 	}
 }
 
-struct list_head *hash_table_bucket(struct hash_table *table, shunk_t key)
+hash_t hasher(shunk_t data, hash_t hash)
 {
 	/*
 	 * 251 is a prime close to 256 (so like <<8).
 	 *
 	 * There's no real rationale for doing this.
 	 */
-	size_t hash = 0;
-	const uint8_t *bytes = key.ptr;
-	for (unsigned j = 0; j < key.len; j++) {
-		hash = hash * 251 + bytes[j];
+	const uint8_t *bytes = data.ptr;
+	for (unsigned j = 0; j < data.len; j++) {
+		hash.hash = hash.hash * 251 + bytes[j];
 	}
-	return &table->slots[hash % table->nr_slots];
+	return hash;
+}
+
+struct list_head *hash_table_bucket(struct hash_table *table, hash_t hash)
+{
+	return &table->slots[hash.hash % table->nr_slots];
 }
 
 void add_hash_table_entry(struct hash_table *table, void *data)
 {
 	struct list_entry *entry = table->entry(data);
 	*entry = list_entry(&table->info, data);
-	shunk_t key = table->key(data);
-	struct list_head *bucket = hash_table_bucket(table, key);
+	hash_t hash = table->hasher(data);
+	struct list_head *bucket = hash_table_bucket(table, hash);
 	table->nr_entries++;
 	insert_list_entry(bucket, entry);
 }

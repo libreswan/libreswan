@@ -24,14 +24,8 @@
 
 #include "list_entry.h"
 
-struct host_pair_key {
-	ip_address local;
-	ip_address remote;
-};
-
 struct host_pair {
 	const char *magic;
-	struct host_pair_key key;
 	ip_endpoint local;
 	ip_endpoint remote;
 	struct connection *connections;         /* connections with this pair */

@@ -23,9 +23,12 @@
  * Generic hash table.
  */
 
+typedef struct { unsigned hash; } hash_t;
+extern const hash_t zero_hash;
+
 struct hash_table {
 	const struct list_info info;
-	shunk_t (*key)(const void *data);
+	hash_t (*hasher)(const void *data);
 	struct list_entry *(*entry)(void *data);
 	long nr_entries; /* approx? */
 	unsigned long nr_slots;
@@ -33,6 +36,8 @@ struct hash_table {
 };
 
 void init_hash_table(struct hash_table *table);
+
+hash_t hasher(shunk_t data, hash_t hash);
 
 /*
  * Maintain the table.
@@ -53,6 +58,6 @@ void rehash_table_entry(struct hash_table *table, void *data);
  * than one hash can map to the same list of entries.
  */
 
-struct list_head *hash_table_bucket(struct hash_table *table, shunk_t key);
+struct list_head *hash_table_bucket(struct hash_table *table, hash_t hash);
 
 #endif

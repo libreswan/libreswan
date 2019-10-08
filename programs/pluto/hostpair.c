@@ -86,23 +86,24 @@ static void jam_host_pair(struct lswlog *buf, const void *data)
 	jam_endpoint(buf, &hp->remote);
 }
 
-static shunk_t host_pair_key(const void *data UNUSED)
+static hash_t hp_hasher(const ip_endpoint *local, const ip_endpoint *remote)
+{
+	/* strip port */
+	ip_address laddr = endpoint_address(local);
+	/* NULL -> any_address aka zero; must hash it */
+	ip_address raddr = (remote != NULL ? endpoint_address(remote) : endpoint_type(local)->any_address);
+	hash_t hash = zero_hash;
+	hash = hasher(address_as_shunk(&laddr), hash);
+	hash = hasher(address_as_shunk(&raddr), hash);
+	return hash;
+}
+
+static hash_t host_pair_hasher(const void *data)
 {
 	const struct host_pair *hp = data;
 	passert(hp->magic == host_pair_magic);
-	return THING_AS_SHUNK(hp->key);
+	return hp_hasher(&hp->local, &hp->remote);
 }
-
-static struct host_pair_key hp_key(const ip_endpoint *local, const ip_endpoint *remote)
-{
-	struct host_pair_key key = {
-		.local = endpoint_address(local),
-		.remote = (remote != NULL ? endpoint_address(remote)
-			   : address_any(endpoint_type(local))),
-	};
-	return key;
-}
-
 
 static struct list_entry *host_pair_list_entry(void *data)
 {
@@ -118,7 +119,7 @@ static struct hash_table host_pairs = {
 		.name = "host_pair table",
 		.jam = jam_host_pair,
 	},
-	.key = host_pair_key,
+	.hasher = host_pair_hasher,
 	.entry = host_pair_list_entry,
 	.nr_slots = elemsof(host_pair_buckets),
 	.slots = host_pair_buckets,
@@ -178,18 +179,22 @@ struct pending **host_pair_first_pending(const struct connection *c)
  * pair description to the beginning of the list, so that it can be
  * found faster next time.
  */
+
 struct host_pair *find_host_pair(const ip_endpoint *local,
 				 const ip_endpoint *remote)
 {
+	/* NULL -> any_address aka zero; must hash it */
+	if (remote == NULL) {
+		remote = &endpoint_type(local)->any_address;
+	}
 	/*
 	 * look for a host-pair that has the right set of ports/address.
 	 *
 	 */
-	struct host_pair_key key = hp_key(local, remote);
+	hash_t hash = hp_hasher(local, remote);
 	struct host_pair *hp = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(hash_table_bucket(&host_pairs,
-						      THING_AS_SHUNK(key)),
-				    hp) {
+	struct list_head *bucket = hash_table_bucket(&host_pairs, hash);
+	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
 		/*
 		 * Skip when the first connection is an instance;
 		 * why????
@@ -209,8 +214,8 @@ struct host_pair *find_host_pair(const ip_endpoint *local,
 		    str_endpoint(&hp->remote, &b2));
 
 		/* XXX: same addr does not compare ports.  */
-		if (sameaddr(&hp->local, &key.local) &&
-		    sameaddr(&hp->remote, &key.remote)) {
+		if (sameaddr(&hp->local, local) &&
+		    sameaddr(&hp->remote, remote)) {
 			return hp;
 		}
 	}
@@ -278,7 +283,6 @@ void connect_to_host_pair(struct connection *c)
 			hp->remote = endpoint(&c->spd.that.host_addr,
 					      nat_traversal_enabled ?
 					      pluto_port : c->spd.that.host_port);
-			hp->key = hp_key(&hp->local, &hp->remote);
 			hp->connections = NULL;
 			hp->pending = NULL;
 			add_hash_table_entry(&host_pairs, hp);
