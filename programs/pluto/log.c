@@ -359,7 +359,7 @@ void pluto_init_log(void)
  * The compiler will likely inline these.
  */
 
-static void stdlog_raw(char *b)
+static void stdlog_raw(const char *b)
 {
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		FILE *out = log_to_stderr ? stderr : pluto_log_fp;
@@ -375,13 +375,13 @@ static void stdlog_raw(char *b)
 	}
 }
 
-static void syslog_raw(int severity, char *b)
+static void syslog_raw(int severity, const char *b)
 {
 	if (log_to_syslog)
 		syslog(severity, "%s", b);
 }
 
-static void peerlog_raw(char *b)
+static void peerlog_raw(const char *b)
 {
 	if (log_to_perpeer) {
 		peerlog(cur_connection, b);
@@ -497,9 +497,10 @@ void lswlog_log_prefix(struct lswlog *buf)
 
 static void log_raw(struct lswlog *buf, int severity)
 {
-	stdlog_raw(buf->array);
-	syslog_raw(severity, buf->array);
-	peerlog_raw(buf->array);
+	shunk_t s = jambuf_as_shunk(buf);
+	stdlog_raw(s.ptr);
+	syslog_raw(severity, s.ptr);
+	peerlog_raw(s.ptr);
 	/* not whack */
 }
 

@@ -21,6 +21,7 @@
 #include <stdarg.h>		/* for va_list */
 #include <stdint.h>		/* for uint8_t */
 #include <stddef.h>		/* for size_t */
+#include <stdio.h>		/* for FILE */
 
 #include "lswcdefs.h"		/* for PRINTF_LIKE */
 #include "shunk.h"
@@ -75,10 +76,11 @@
  */
 
 typedef struct lswlog {
-	char *array;
+	void *handle;
 	size_t total;
 	size_t roof;
 	const char *dots;
+	const struct jammer *jammer;
 } jambuf_t;
 
 bool jambuf_ok(jambuf_t *buf);
@@ -97,6 +99,15 @@ bool jambuf_ok(jambuf_t *buf);
 
 jambuf_t array_as_jambuf(char *array, size_t sizeof_array);
 #define ARRAY_AS_JAMBUF(ARRAY) array_as_jambuf((ARRAY), sizeof(ARRAY))
+
+/*
+ * Wrap FILE up as a jambuf so that jam_*() functions write to it.
+ *
+ * For moment there's no flush() or newline() operation - callers need
+ * to deal with adding implicit newlines.
+ */
+
+jambuf_t file_as_jambuf(FILE *file);
 
 /*
  * Assuming the jambuf is an array, poke around in the jambuf's
@@ -210,5 +221,12 @@ jam_bytes_fn jam_meta_escaped_bytes;
  * To debug, set this to printf or similar.
  */
 extern int (*jambuf_debugf)(const char *format, ...) PRINTF_LIKE(1);
+
+struct jammer {
+	bool (*jambuf_ok)(jambuf_t *buf);
+	size_t (*jam_raw_bytes)(jambuf_t *buf, const void *ptr, size_t nr);
+	size_t (*jam_va_list)(jambuf_t *buf, const char *format, va_list ap);
+	/* flush() */
+};
 
 #endif

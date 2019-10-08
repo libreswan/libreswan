@@ -75,25 +75,32 @@ void lswlog_log_prefix(struct lswlog *buf)
 	lswlogf(buf, "%s%s", progname, prog_suffix);
 }
 
+static void to_file(jambuf_t *buf, FILE *file)
+{
+	shunk_t s = jambuf_as_shunk(buf);
+	fwrite(s.ptr, s.len, 1, file);
+	fwrite("\n", 1, 1, file);
+}
+
 void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type unused_rc UNUSED)
 {
-	fprintf(stderr, "%s\n", buf->array);
+	to_file(buf, stderr);
 }
 
 void lswlog_to_debug_stream(struct lswlog *buf)
 {
-	fprintf(stderr, "%s\n", buf->array);
+	to_file(buf, stderr);
 }
 
 void lswlog_to_error_stream(struct lswlog *buf)
 {
-	fprintf(stderr, "%s\n", buf->array);
+	to_file(buf, stderr);
 }
 
 void lswlog_to_log_stream(struct lswlog *buf)
 {
 	if (log_to_stderr) {
-		fprintf(stderr, "%s\n", buf->array);
+		to_file(buf, stderr);
 	}
 }
 
