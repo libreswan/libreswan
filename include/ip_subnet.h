@@ -43,6 +43,8 @@
 #include "ip_endpoint.h"
 #endif
 
+#include "where.h"		/* used by endtosubnet() */
+
 struct lswlog;
 
 typedef struct {
@@ -146,7 +148,8 @@ extern void subnettot(const ip_subnet *src, int format, char *buf, size_t buflen
 #define SUBNETTOT_BUF   sizeof(subnet_buf)
 extern err_t initsubnet(const ip_address *addr, int maskbits, int clash,
 		 ip_subnet *dst);
-extern err_t addrtosubnet(const ip_address *addr, ip_subnet *dst);
+extern err_t endtosubnet(const ip_endpoint *end, ip_subnet *dst, where_t where);
+#define addrtosubnet(ADDR, DST) endtosubnet(ADDR, DST, HERE)
 
 /* misc. conversions and related */
 extern err_t rangetosubnet(const ip_address *from, const ip_address *to,

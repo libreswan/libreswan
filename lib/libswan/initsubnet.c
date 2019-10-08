@@ -14,7 +14,7 @@
  */
 
 #include "ip_subnet.h"
-#include "ip_info.h"
+#include "lswlog.h"	/* for dbg() */
 
 /*
  * initsubnet - initialize ip_subnet from address and count
@@ -79,20 +79,43 @@ ip_subnet *dst;
 }
 
 /*
- * addrtosubnet - initialize ip_subnet from a single address
+ * addrtosubnet - initialize ip_subnet from an address:port
+ *
+ * XXX: yes, address:port; not address
+ *
+ * The [old] code copied END directly into .addr and because that was
+ * a sockaddr underneath it would include the port.  This means that
+ * code creating the client's subnet from the end's .host_addr is
+ * (intentional or otherwise) creating a subnet for address:port.  It
+ * might help explain why code keeps stuffing the client's port into
+ * .host_addr.
+ *
+ * NULL for success, else string literal
  */
-err_t	/* NULL for success, else string literal */
-addrtosubnet(addr, dst)
-const ip_address *addr;
-ip_subnet *dst;
+err_t endtosubnet(const ip_endpoint *endpoint, ip_subnet *dst, where_t where)
 {
-	dst->addr = *addr;
-	const struct ip_info *afi = address_type(addr);
+	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
 		/* actually AF_UNSPEC */
+		*dst = subnet_invalid;
 		return "unknown address family";
 	}
 
-	dst->maskbits = afi->mask_cnt;
+	ip_subnet s;
+	if (endpoint_hport(endpoint) == 0) {
+		endpoint_buf eb_;
+		dbg("subnet from address %s "PRI_WHERE,
+		    str_endpoint(endpoint, &eb_),
+		    pri_where(where));
+		ip_address a = endpoint_address(endpoint);
+		s = subnet_from_address(&a);
+	} else {
+		endpoint_buf eb_;
+		dbg("subnet from endpoint %s "PRI_WHERE,
+		    str_endpoint(endpoint, &eb_),
+		    pri_where(where));
+		s = subnet_from_endpoint(endpoint);
+	}
+	*dst = s;
 	return NULL;
 }
