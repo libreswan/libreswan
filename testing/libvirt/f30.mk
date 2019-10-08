@@ -61,6 +61,7 @@ KVM_UPGRADE_PACKAGES ?= \
     libselinux-devel \
     linux-firmware \
     lsof \
+    make \
     mtr \
     nc \
     net-tools \
