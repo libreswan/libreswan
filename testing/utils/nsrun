@@ -3581,7 +3581,7 @@ class Namespace:
 
     def ns_clean_prev_run(self, test_name, host, timer=30):
 
-        cmd = self.nsenter_cmd("%s-%s" % (host, test_name)) + ' ipsec stop'
+        cmd = self.nsenter_cmd("%s-%s" % (host, test_name)) + ' ipsec stop; ip link show type xfrm'
         # next command is bit smarter than the previous one, it does not seems
         # to work with subprocess, may be in pexpect
         # cmd = self.nsenter_cmd("%s-%s" % (host, test_name)) +  ' /usr/bin/findmnt /run/pluto/ && ls /run/pluto/pluto.pid &&  ipsec stop'
