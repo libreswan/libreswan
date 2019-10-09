@@ -630,14 +630,14 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	 * Convert the ID with no special escaping (other than that
 	 * specified for converting an ASN.1 DN to text).
 	 *
-	 * XXX: Is there any point in continung wehn KIND isn't'
+	 * XXX: Is there any point in continuing when KIND isn't
 	 * ID_FQDN?  For instance, ID_DER_ASN1_DN (in fact, for DN,
 	 * code was calling this with the ID's first character - not
 	 * an @ - discarded making the value useless).
 	 *
-	 * XXX: Is this overkill?  For instance, sicne DNS ID has a
+	 * XXX: Is this overkill?  For instance, since DNS ID has a
 	 * very limited character set, the escaping used is largely
-	 * accademic - any escape character ('\', '?') is invalid and
+	 * academic - any escape character ('\', '?') is invalid and
 	 * can't match.
 	 */
 	char raw_id_buf[IDTOA_BUF];
