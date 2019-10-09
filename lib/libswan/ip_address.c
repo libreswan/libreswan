@@ -334,7 +334,7 @@ bool address_is_any(const ip_address *address)
 	} else {
 		shunk_t addr = address_as_shunk(address);
 		shunk_t any = address_as_shunk(&type->any_address);
-		return shunk_eq(addr, any);
+		return hunk_eq(addr, any);
 	}
 }
 
@@ -346,7 +346,7 @@ bool address_is_specified(const ip_address *address)
 	} else {
 		shunk_t addr = address_as_shunk(address);
 		shunk_t any = address_as_shunk(&type->any_address);
-		return !shunk_eq(addr, any);
+		return !hunk_eq(addr, any);
 	}
 }
 
@@ -358,6 +358,6 @@ bool address_is_loopback(const ip_address *address)
 	} else {
 		shunk_t addr = address_as_shunk(address);
 		shunk_t loopback = address_as_shunk(&type->loopback_address);
-		return shunk_eq(addr, loopback);
+		return hunk_eq(addr, loopback);
 	}
 }

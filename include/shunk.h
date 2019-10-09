@@ -102,23 +102,33 @@ shunk_t shunk_token(shunk_t *input, char *delim, const char *delims);
 shunk_t shunk_span(shunk_t *input, const char *accept);
 
 /*
- * shunk version of string compare functions (or at least libreswan's
+ * shunk version of compare functions (or at least libreswan's
  * versions).
  *
  * (Confusingly and just like POSIX, *case* ignores case).
  *
  * Just like a NULL and EMPTY ("") string, a NULL (uninitialized) and
- * EMPTY (pointing somewhere but no bytes) shunks are considered
- * different.
+ * EMPTY (pointing somewhere but no bytes) are considered different.
  */
+
+/* XXX: move to constants.h? */
+bool bytes_eq(const void *l_ptr, size_t l_len,
+	      const void *r_ptr, size_t r_len);
+
+#define hunk_eq(L,R)							\
+	({								\
+		typeof(L) l_ = L; /* evaluate once */			\
+		typeof(R) r_ = R; /* evaluate once */			\
+		bytes_eq(l_.ptr, l_.len, r_.ptr, r_.len);		\
+	})
+
+#define hunk_streq(HUNK, STRING) hunk_eq(HUNK, shunk1(STRING))
+#define hunk_memeq(HUNK, MEM, SIZE) hunk_eq(HUNK, shunk2(MEM, SIZE))
+
+#define hunk_thingeq(SHUNK, THING) hunk_memeq(SHUNK, &(THING), sizeof(THING))
 
 bool shunk_caseeq(shunk_t lhs, shunk_t rhs);
 bool shunk_strcaseeq(shunk_t shunk, const char *string);
-
-bool shunk_eq(shunk_t l, shunk_t r);
-bool shunk_streq(shunk_t lhs, const char *);
-bool shunk_memeq(shunk_t l, const void *r, size_t sizeof_r);
-#define shunk_thingeq(SHUNK, THING) shunk_memeq(SHUNK, &(THING), sizeof(THING))
 
 bool shunk_caseeat(shunk_t *lhs, shunk_t rhs);
 bool shunk_strcaseeat(shunk_t *lhs, const char *string);

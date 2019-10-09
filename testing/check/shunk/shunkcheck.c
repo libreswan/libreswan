@@ -62,7 +62,7 @@ unsigned fails;
 		continue;					\
 	}
 
-static void shunk_eq_check(void)
+static void hunk_eq_check(void)
 {
 	static const struct test {
 		const char *l;
@@ -103,33 +103,33 @@ static void shunk_eq_check(void)
 		shunk_t l = shunk1(t->l);
 		shunk_t r = shunk1(t->r);
 
-		bool t_null = shunk_eq(l, null_shunk);
+		bool t_null = hunk_eq(l, null_shunk);
 		if ((t->l == NULL) != t_null) {
-			FAIL_LR("shunk_eq(l, null_shunk) returned %s, expecting %s",
+			FAIL_LR("hunk_eq(l, null_shunk) returned %s, expecting %s",
 				bool_str(t_null), bool_str(t->l == NULL));
 		}
 
-		bool t_empty = shunk_eq(l, empty_shunk);
+		bool t_empty = hunk_eq(l, empty_shunk);
 		if (shunk_strcaseeq(l, "") != t_empty) {
-			FAIL_LR("shunk_eq(l, empty_shunk) returned %s, expecting %s",
+			FAIL_LR("hunk_eq(l, empty_shunk) returned %s, expecting %s",
 				bool_str(t_empty), bool_str(shunk_strcaseeq(l, "")));
 		}
 
-		bool t_eq = shunk_eq(l, r);
+		bool t_eq = hunk_eq(l, r);
 		if (t_eq != t->eq) {
-			FAIL_LR("shunk_eq() returned %s, expecting %s",
+			FAIL_LR("hunk_eq() returned %s, expecting %s",
 				bool_str(t_eq), bool_str(t->eq));
 		}
 
-		bool t_memeq = shunk_memeq(l, r.ptr, r.len);
+		bool t_memeq = hunk_memeq(l, r.ptr, r.len);
 		if (t_memeq != t->eq) {
-			FAIL_LR("shunk_memeq() returned %s, expecting %s",
+			FAIL_LR("hunk_memeq() returned %s, expecting %s",
 				bool_str(t_memeq), bool_str(t->eq));
 		}
 
-		bool t_streq = shunk_streq(l, t->r);
+		bool t_streq = hunk_streq(l, t->r);
 		if (t_streq != t->eq) {
-			FAIL_LR("shunk_streq() returned %s, expecting %s",
+			FAIL_LR("hunk_streq() returned %s, expecting %s",
 				bool_str(t_streq), bool_str(t->eq));
 		}
 
@@ -145,9 +145,9 @@ static void shunk_eq_check(void)
 				bool_str(t_strcaseeq), bool_str(t->caseeq));
 		}
 
-		bool t_thing = shunk_thingeq(l, thing);
+		bool t_thing = hunk_thingeq(l, thing);
 		if (t_thing != t->thingeq) {
-			FAIL_LR("shunk_thingeq() returned %s, expecting %s",
+			FAIL_LR("hunk_thingeq() returned %s, expecting %s",
 				bool_str(t_thing), bool_str(t->thingeq));
 		}
 	}
@@ -182,7 +182,7 @@ static void shunk_slice_check(void)
 		shunk_t r = shunk1(t->r);
 
 		shunk_t t_slice = shunk_slice(l, t->lo, t->hi);
-		if (!shunk_eq(r, t_slice)) {
+		if (!hunk_eq(r, t_slice)) {
 			FAIL_LR("shunk_slice() returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
 				pri_shunk(t_slice), pri_shunk(r));
 		}
@@ -226,7 +226,7 @@ static void shunk_token_check(void)
 		char t_delim = -1;
 		shunk_t t_token = shunk_token(&t_input, &t_delim, t->delims);
 
-		if (!shunk_eq(t_token, shunk1(t->token))) {
+		if (!hunk_eq(t_token, shunk1(t->token))) {
 			FAIL_S("shunk_token() returned token '"PRI_SHUNK"', expecting '%s'",
 				pri_shunk(t_token), t->token);
 		}
@@ -236,7 +236,7 @@ static void shunk_token_check(void)
 			       t_delim, t->delim);
 		}
 
-		if (!shunk_eq(t_input, shunk1(t->input))) {
+		if (!hunk_eq(t_input, shunk1(t->input))) {
 			FAIL_S("shunk_token() returned input '"PRI_SHUNK"', expecting '%s'",
 				pri_shunk(t_input),
 			       t->input == NULL ? "NULL" : t->input);
@@ -275,12 +275,12 @@ static void shunk_span_check(void)
 		shunk_t t_input = shunk1(t->old);
 		shunk_t t_token = shunk_span(&t_input, t->accept);
 
-		if (!shunk_eq(t_token, shunk1(t->token))) {
+		if (!hunk_eq(t_token, shunk1(t->token))) {
 			FAIL("shunk_span() returned token '"PRI_SHUNK"', expecting '%s'",
 			     pri_shunk(t_token), t->token);
 		}
 
-		if (!shunk_eq(t_input, shunk1(t->new))) {
+		if (!hunk_eq(t_input, shunk1(t->new))) {
 			FAIL("shunk_span() returned new input '"PRI_SHUNK"', expecting '%s'",
 			     pri_shunk(t_input), t->new);
 		}
@@ -308,15 +308,15 @@ static void shunk_null_empty_check(void)
 		PRINT_S(stdout, "");
 		shunk_t s = shunk1(t->s);
 
-		bool t_null = shunk_eq(s, null_shunk);
+		bool t_null = hunk_eq(s, null_shunk);
 		if (t->null != t_null) {
-			FAIL_S("shunk_eq(s, null_shunk) returned %s, expecting %s",
+			FAIL_S("hunk_eq(s, null_shunk) returned %s, expecting %s",
 			       bool_str(t_null), bool_str(t->null));
 		}
 
-		bool t_empty = shunk_eq(s, empty_shunk);
+		bool t_empty = hunk_eq(s, empty_shunk);
 		if (t->empty != t_empty) {
-			FAIL_S("shunk_eq(s, empty_shunk) returned %s, expecting %s",
+			FAIL_S("hunk_eq(s, empty_shunk) returned %s, expecting %s",
 			       bool_str(t_empty), bool_str(t->empty));
 		}
 	}
@@ -324,7 +324,7 @@ static void shunk_null_empty_check(void)
 
 int main(int argc UNUSED, char *argv[] UNUSED)
 {
-	shunk_eq_check();
+	hunk_eq_check();
 	shunk_null_empty_check();
 	shunk_slice_check();
 	shunk_token_check();

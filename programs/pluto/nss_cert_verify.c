@@ -723,12 +723,12 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 				break;
 			/*
 			 * XXX: If one address is IPv4 and the other
-			 * is IPv6 then the shunk_memeq() check will
+			 * is IPv6 then the hunk_memeq() check will
 			 * fail because the lengths are wrong.
 			 */
 			shunk_t as = address_as_shunk(&myip);
-			if (shunk_memeq(as, current->name.other.data,
-					current->name.other.len)) {
+			if (hunk_memeq(as, current->name.other.data,
+				       current->name.other.len)) {
 				address_buf b;
 				dbg("subjectAltname matches address %s",
 				    str_address(&myip, &b));

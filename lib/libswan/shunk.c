@@ -136,26 +136,17 @@ bool shunk_strcaseeq(shunk_t shunk, const char *str)
 	return shunk_caseeq(shunk, shunk1(str));
 }
 
-bool shunk_memeq(shunk_t l, const void *r, size_t sizeof_r)
+bool bytes_eq(const void *l_ptr, size_t l_len,
+	      const void *r_ptr, size_t r_len)
 {
 	/* NULL and EMPTY("") are not the same */
-	if (l.ptr == NULL || r == NULL) {
-		return l.ptr == r;
+	if (l_ptr == NULL || r_ptr == NULL) {
+		return l_ptr == r_ptr;
 	}
-	if (l.len != sizeof_r) {
+	if (l_len != r_len) {
 		return false;
 	}
-	return memeq(l.ptr, r, sizeof_r);
-}
-
-bool shunk_eq(shunk_t l, shunk_t r)
-{
-	return shunk_memeq(l, r.ptr, r.len);
-}
-
-bool shunk_streq(shunk_t l, const char *r)
-{
-	return shunk_eq(l, shunk1(r));
+	return memcmp(l_ptr, r_ptr, r_len) == 0;
 }
 
 bool shunk_caseeat(shunk_t *shunk, shunk_t dinner)
