@@ -619,29 +619,62 @@ enum message_role v2_msg_role(const struct msg_digest *md)
  * Auxiliary function for modecfg_inR1()
  * Result is allocated on heap so caller must ensure it is freed.
  */
-char *cisco_stringify(pb_stream *pbs, const char *attr_name)
+
+char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
-	size_t len = pbs_left(pbs);
-
-	if (len > sizeof(strbuf) - 1)
-		len = sizeof(strbuf) - 1;	/* silently truncate */
-
-	memcpy(strbuf, pbs->cur, len);
-	strbuf[len] = '\0';
+	jambuf_t buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
+	chunk_t str = same_in_pbs_left_as_chunk(input_pbs);
 
 	/*
-	 * ' is poison to the way this string will be used
-	 * in system() and hence shell.  Remove any.
+	 * detox string
 	 */
-	for (char *s = strbuf;; ) {
-		s = strchr(s, '\'');
-		if (s == NULL)
+	for (const char *p = (const void *)str.ptr, *end = p + str.len;
+	     p < end && *p != '\0'; p++) {
+		char c = *p;
+		switch (c) {
+		case '\'':
+			/*
+			 * preserve cisco_stringify() behaviour:
+			 *
+			 * ' is poison to the way this string will be
+			 * used in system() and hence shell.  Remove
+			 * any.
+			 */
+			jam(&buf, "?");
 			break;
-		*s = '?';
+		case '\n':
+		case '\r':
+			/*
+			 * preserve sanitize_string() behaviour:
+			 *
+			 * exception is that all veritical space just
+			 * becomes white space
+			 */
+			jam(&buf, " ");
+			break;
+		default:
+			/*
+			 * preserve sanitize_string() behavour:
+			 *
+			 * XXX: isprint() is wrong as it is affected
+			 * by locale - need portable is printable
+			 * ascii; is there something hiding in the
+			 * x509 sources?
+			 */
+			if (c != '\\' && isprint(c)) {
+				jam_char(&buf, c);
+			} else {
+				jam(&buf, "\\%03o", c);
+			}
+			break;
+		}
 	}
-	sanitize_string(strbuf, sizeof(strbuf));
-	loglog(RC_INFORMATIONAL, "Received %s: %s", attr_name, strbuf);
+	if (!jambuf_ok(&buf)) {
+		loglog(RC_INFORMATIONAL, "Received overlong %s: %s (truncated)", attr_name, strbuf);
+	} else {
+		loglog(RC_INFORMATIONAL, "Received %s: %s", attr_name, strbuf);
+	}
 	return clone_str(strbuf, attr_name);
 }
 
