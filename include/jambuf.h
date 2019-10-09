@@ -133,18 +133,18 @@ void jambuf_set_pos(jambuf_t *buf, const jampos_t *pos);
  * untruncated size of output that the call would append (the value
  * can never be negative).
  *
- * While probably not directly useful, it provides a sink for code
- * that needs to consume an otherwise ignored return value (the
- * compiler attribute warn_unused_result can't be suppressed using a
- * (void) cast).
+ * While typically not useful, the return value does get used when
+ * trying to pretty-print a table of values.
  */
 
+size_t jam_va_list(jambuf_t *buf, const char *format, va_list ap);
+size_t jam_raw_bytes(jambuf_t *buf, const void *bytes, size_t nr_bytes);
+
+/* wrap above */
 size_t jam(jambuf_t *buf, const char *format, ...) PRINTF_LIKE(2);
 size_t jam_char(jambuf_t *buf, char c);
 size_t jam_string(jambuf_t *buf, const char *string);
 size_t jam_jambuf(jambuf_t *buf, jambuf_t *in);
-
-size_t jam_va_list(jambuf_t *buf, const char *format, va_list ap);
 
 /*
  * Utilities.
@@ -157,24 +157,22 @@ size_t jam_source_line(jambuf_t *buf, const char *func,
 size_t jam_errno(jambuf_t *buf, int e);
 
 /*
- * Jam a string of bytes possibly encoded.
+ * Jam a string of bytes formatted in some way.
  */
 
 typedef size_t (jam_bytes_fn)(jambuf_t *buf, const void *bytes, size_t size);
 
-/* bytes as hex ... */
+/* bytes as hex ...  */
 
-/* B1B2... */
+/* upper case hex - B1B2... */
 jam_bytes_fn jam_HEX_bytes;
-/* b1b2... */
+/* lower case hex - b1b2... */
 jam_bytes_fn jam_hex_bytes;
-/* b1 b2 b3 b4  b6 b6 b7 b8  ... aka DBG_dump */
+/* hex bytes - b1 b2 b3 b4  b6 b6 b7 b8 - like DBG_dump */
 jam_bytes_fn jam_dump_bytes;
 
 /* bytes as a string */
 
-/* memcp(), but stop at '\0'? */
-jam_bytes_fn jam_raw_bytes;
 /* (isprint(b1) ? \NNN : b1)... */
 jam_bytes_fn jam_sanitized_bytes;
 /* (ismeta(b1)) ? \NNN : b1)... */

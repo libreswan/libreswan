@@ -142,8 +142,9 @@ static void truncate_buf(jambuf_t *buf)
  * trailing NUL, that should have been written to the buffer.
  */
 
-static size_t concat(jambuf_t *buf, const char *string, size_t n)
+size_t jam_raw_bytes(jambuf_t *buf, const void *string, size_t n)
 {
+	assert_jambuf(buf);
 	struct dest d = dest(buf);
 
 	buf->total += n;
@@ -167,6 +168,7 @@ static size_t concat(jambuf_t *buf, const char *string, size_t n)
 		 */
 		truncate_buf(buf);
 	}
+	assert_jambuf(buf);
 	return n;
 }
 
@@ -218,15 +220,11 @@ size_t jam(jambuf_t *buf, const char *format, ...)
 
 size_t jam_char(jambuf_t *buf, char c)
 {
-	assert_jambuf(buf);
-	size_t n = concat(buf, &c, 1);
-	assert_jambuf(buf);
-	return n;
+	return jam_raw_bytes(buf, &c, 1);
 }
 
 size_t jam_string(jambuf_t *buf, const char *string)
 {
-	assert_jambuf(buf);
 	/*
 	 * Just in case a NULL ends up here.  This has the side effect
 	 * of returning "6" for a NULL string.
@@ -234,18 +232,13 @@ size_t jam_string(jambuf_t *buf, const char *string)
 	if (string == NULL) {
 		string = "(null)";
 	}
-	size_t n = concat(buf, string, strlen(string));
-	assert_jambuf(buf);
-	return n;
+	return jam_raw_bytes(buf, string, strlen(string));
 }
 
 size_t jam_jambuf(jambuf_t *buf, jambuf_t *jambuf)
 {
-	assert_jambuf(buf);
-	struct dest s = dest(jambuf);
-	size_t n = concat(buf, jambuf->array, s.cursor - jambuf->array);
-	assert_jambuf(buf);
-	return n;
+	shunk_t s = jambuf_as_shunk(jambuf);
+	return jam_raw_bytes(buf, s.ptr, s.len);
 }
 
 bool jambuf_ok(jambuf_t *buf)

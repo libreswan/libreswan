@@ -18,12 +18,6 @@
 
 #include "jambuf.h"
 
-size_t jam_raw_bytes(jambuf_t *buf, const void *ptr, size_t size)
-{
-	/* XXX: stops at '\0' or SIZE; is this a good or bad thing? */
-	return jam(buf, "%.*s", (int) size, (const char*)ptr);
-}
-
 size_t jam_hex_bytes(jambuf_t *buf, const void *ptr, size_t size)
 {
 	size_t n = 0;
