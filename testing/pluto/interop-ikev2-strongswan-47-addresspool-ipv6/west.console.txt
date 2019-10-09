@@ -1,0 +1,73 @@
+/testing/guestbin/swan-prep --userland strongswan --46
+west #
+ ../../pluto/bin/wait-until-alive 2001:db8:0:2::254
+destination 2001:db8:0:2::254 is alive
+west #
+ ip6tables -A INPUT -i eth1 -s 2001:db8:0:2::254 -p ipv6-icmp -j DROP
+west #
+ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ ../../pluto/bin/ping-once.sh --down 2001:db8:0:2::254
+down
+west #
+ ../../pluto/bin/strongswan-start.sh
+west #
+ echo "initdone"
+initdone
+west #
+ strongswan up rw-eastnet-ipv6
+initiating IKE_SA rw-eastnet-ipv6[1] to 2001:db8:1:2::23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 2001:db8:1:2::45[500] to 2001:db8:1:2::23[500] (XXX bytes)
+received packet: from 2001:db8:1:2::23[500] to 2001:db8:1:2::45[500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
+selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/MODP_2048
+authentication of 'west' (myself) with pre-shared key
+establishing CHILD_SA rw-eastnet-ipv6{1}
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH CPRQ(ADDR6 DNS6) SA TSi TSr N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+sending packet: from 2001:db8:1:2::45[500] to 2001:db8:1:2::23[500] (XXX bytes)
+received packet: from 2001:db8:1:2::23[500] to 2001:db8:1:2::45[500] (XXX bytes)
+parsed IKE_AUTH response 1 [ IDr AUTH CPRP(ADDR6) SA TSi TSr ]
+authentication of 'east' with pre-shared key successful
+IKE_SA rw-eastnet-ipv6[1] established between 2001:db8:1:2::45[west]...2001:db8:1:2::23[east]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+installing new virtual IP 2001:db8:0:3:1::
+selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
+CHILD_SA rw-eastnet-ipv6{1} established with SPIs SPISPI_i SPISPI_o and TS 2001:db8:0:3:1::/128 === 2001:db8:0:2::/64
+connection 'rw-eastnet-ipv6' established successfully
+west #
+ ping6 -w 4 -c 4 -I 2001:db8:0:3:1::0 2001:db8:0:2::254
+PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:3:1:: : 56 data bytes
+64 bytes from 2001:db8:0:2::254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:0:2::254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:0:2::254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:0:2::254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 2001:db8:0:2::254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ echo done
+done
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+west #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Shunted Connections:
+Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
+Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
+Bypass LAN ::1/128:  ::1/128 === ::1/128 PASS
+Bypass LAN 2001:db8:0:1::/64:  2001:db8:0:1::/64 === 2001:db8:0:1::/64 PASS
+Bypass LAN 2001:db8:1:2::/64:  2001:db8:1:2::/64 === 2001:db8:1:2::/64 PASS
+Bypass LAN fe80::/64:  fe80::/64 === fe80::/64 PASS
+Bypass LAN 2001:db8:0:3:1::/128:  2001:db8:0:3:1::/128 === 2001:db8:0:3:1::/128 PASS
+Security Associations (1 up, 0 connecting):
+rw-eastnet-ipv6[1]: ESTABLISHED XXX second ago, 2001:db8:1:2::45[west]...2001:db8:1:2::23[east]
+rw-eastnet-ipv6{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+rw-eastnet-ipv6{1}:   2001:db8:0:3:1::/128 === 2001:db8:0:2::/64
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
