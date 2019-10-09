@@ -3596,7 +3596,7 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 		return v2N_INVALID_SYNTAX; /* ??? */
 	}
 	free_chunk_contents(dest);
-	*dest = clone_in_pbs_left_as_chunk(nonce_pbs, "nonce");
+	*dest = clone_hunk(pbs_in_left_as_shunk(nonce_pbs), "nonce");
 	passert(len == dest->len);
 	return v2N_NOTHING_WRONG;
 }

@@ -64,7 +64,7 @@ void refresh_v2_cookie_secret(void)
  */
 static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 				      struct msg_digest *md,
-				      chunk_t Ni)
+				      shunk_t Ni)
 {
 	struct crypt_hash *ctx = crypt_hash_init("IKEv2 COOKIE",
 						 &ike_alg_hash_sha2_256);
@@ -132,7 +132,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 		rate_log(md, "DDOS cookie requires Ni paylod - dropping message");
 		return true; /* reject cookie */
 	}
-	chunk_t Ni = same_in_pbs_left_as_chunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
+	shunk_t Ni = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
 		rate_log(md, "DOS cookie failed as Ni payload invalid  - dropping message");
 		return true; /* reject cookie */
@@ -172,14 +172,14 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 		rate_log(md, "DOS cookie notification corrupt, or invalid - dropping message");
 		return true; /* reject cookie */
 	}
-	chunk_t remote_cookie = same_in_pbs_left_as_chunk(&cookie_digest->pbs);
+	shunk_t remote_cookie = pbs_in_left_as_shunk(&cookie_digest->pbs);
 
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("received cookie", remote_cookie);
 		DBG_dump_hunk("computed cookie", local_cookie);
 	}
 
-	if (!chunk_eq(local_cookie, remote_cookie)) {
+	if (!hunk_eq(local_cookie, remote_cookie)) {
 		rate_log(md, "DOS cookies do not match - dropping message");
 		return true; /* reject cookie */
 	}

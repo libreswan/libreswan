@@ -26,6 +26,7 @@
 
 #include "lswcdefs.h"
 #include "chunk.h"
+#include "shunk.h"
 #include "ip_address.h"
 
 struct ip_info;
@@ -208,15 +209,13 @@ extern pb_stream same_chunk_as_in_pbs(chunk_t chunk, const char *name);
  * Map/Clone the entire contents [start..pbs_room()) of an input PBS
  * as a chunk.
  */
-extern chunk_t same_in_pbs_as_chunk(pb_stream *pbs);
-extern chunk_t clone_in_pbs_as_chunk(pb_stream *pbs, const char *name);
+extern shunk_t pbs_in_as_shunk(pb_stream *pbs);
 
 /*
  * Map/Clone the remaining contents [cur..pbs_left()) of an input PBS
  * as a chunk.
  */
-extern chunk_t same_in_pbs_left_as_chunk(pb_stream *pbs);
-extern chunk_t clone_in_pbs_left_as_chunk(pb_stream *pbs, const char *name);
+extern shunk_t pbs_in_left_as_shunk(pb_stream *pbs);
 
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
 		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;

@@ -154,7 +154,7 @@ bool accept_KE(chunk_t *dest, const char *val_name,
 		return false;
 	}
 	free_chunk_contents(dest); /* XXX: ever needed? */
-	*dest = clone_in_pbs_left_as_chunk(pbs, val_name);
+	*dest = clone_hunk(pbs_in_left_as_shunk(pbs), val_name);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk("DH public value received:\n", *dest);
 	}

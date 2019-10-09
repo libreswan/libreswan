@@ -125,7 +125,7 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 		return false;
 	}
 	pb_stream *hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
-	chunk_t received_hash = same_in_pbs_left_as_chunk(hash_pbs);
+	shunk_t received_hash = pbs_in_left_as_shunk(hash_pbs);
 	if (received_hash.len != st->st_oakley.ta_prf->prf_output_size) {
 		loglog(RC_LOG_SERIOUS,
 		       "received '%s' message HASH(%u) data is the wrong length (received %zd bytes but expected %zd)",
@@ -143,7 +143,7 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 	};
 	fixup_v1_HASH(st, &expected, md->hdr.isa_msgid, md->message_pbs.roof);
 	/* does it match? */
-	if (!chunk_eq(received_hash, expected.hash_data)) {
+	if (!hunk_eq(received_hash, expected.hash_data)) {
 		if (DBGP(DBG_BASE)) {
 			DBG_log("received %s HASH_DATA:", what);
 			DBG_dump_hunk(NULL, received_hash);

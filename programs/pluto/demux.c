@@ -624,7 +624,7 @@ char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
 	jambuf_t buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
-	chunk_t str = same_in_pbs_left_as_chunk(input_pbs);
+	shunk_t str = pbs_in_left_as_shunk(input_pbs);
 
 	/*
 	 * detox string

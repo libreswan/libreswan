@@ -405,7 +405,7 @@ notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
 		return PAYLOAD_MALFORMED; /* ??? */
 	}
 	free_chunk_contents(dest);
-	*dest = clone_in_pbs_left_as_chunk(nonce_pbs, "nonce");
+	*dest = clone_hunk(pbs_in_left_as_shunk(nonce_pbs), "nonce");
 	passert(len == dest->len);
 	return NOTHING_WRONG;
 }
@@ -747,8 +747,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 
 	/* save initiator SA for HASH */
 	free_chunk_contents(&st->st_p1isa);
-	st->st_p1isa = clone_in_pbs_as_chunk(&sa_pd->pbs,
-					    "sa in main_inI1_outR1()");
+	st->st_p1isa = clone_hunk(pbs_in_as_shunk(&sa_pd->pbs), "sa in main_inI1_outR1()");
 
 	return STF_OK;
 }

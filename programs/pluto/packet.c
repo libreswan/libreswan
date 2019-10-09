@@ -1713,24 +1713,14 @@ chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name)
 	return clone_hunk(same_out_pbs_as_chunk(pbs), name);
 }
 
-chunk_t same_in_pbs_as_chunk(pb_stream *pbs)
+shunk_t pbs_in_as_shunk(pb_stream *pbs)
 {
-	return chunk(pbs->start, pbs_room(pbs));
+	return shunk2(pbs->start, pbs_room(pbs));
 }
 
-chunk_t clone_in_pbs_as_chunk(pb_stream *pbs, const char *name)
+shunk_t pbs_in_left_as_shunk(pb_stream *pbs)
 {
-	return clone_hunk(same_in_pbs_as_chunk(pbs), name);
-}
-
-chunk_t same_in_pbs_left_as_chunk(pb_stream *pbs)
-{
-	return chunk(pbs->cur, pbs_left(pbs));
-}
-
-chunk_t clone_in_pbs_left_as_chunk(pb_stream *pbs, const char *name)
-{
-	return clone_hunk(same_in_pbs_left_as_chunk(pbs), name);
+	return shunk2(pbs->cur, pbs_left(pbs));
 }
 
 static err_t enum_enum_checker(

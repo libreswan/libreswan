@@ -467,9 +467,14 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 		}
 
 		dbg("saving certificate of type '%s'", cert_name);
-		/* convert remaining buffer to something nss  likes */
-		chunk_t payload_chunk = same_in_pbs_left_as_chunk(&p->pbs);
-		SECItem payload = same_chunk_as_secitem(payload_chunk, siDERCertBuffer);
+		/* convert remaining buffer to something nss likes */
+		shunk_t payload_hunk = pbs_in_left_as_shunk(&p->pbs);
+		/* NSS doesn't do const */
+		SECItem payload = {
+			.type = siDERCertBuffer,
+			.data = (void*)payload_hunk.ptr,
+			.len = payload_hunk.len,
+		};
 
 		switch (cert_type) {
 		case CERT_X509_SIGNATURE:
