@@ -252,8 +252,7 @@ int dn_count_wildcards(chunk_t dn)
 		if (ugh != NULL)
 			return -1;
 
-		if (value_content.len == 1 &&
-		    ((const char *)value_content.ptr)[0] == '*')
+		if (value_content.len == 1 && value_content.ptr[0] == '*')
 			wildcards++;	/* we have found a wildcard RDN */
 	}
 	return wildcards;
@@ -330,7 +329,7 @@ static err_t format_dn(jambuf_t *buf, chunk_t dn,
 		 * <descr> and <numericoid> are defined in [RFC4512].
 		 *
 		 * XXX: An early RFC defined this as OID.N.N.N but
-		 * then the OID prefix was then dropped.
+		 * later the OID prefix was dropped.
 		 */
 
 		/* print OID */
@@ -366,23 +365,26 @@ static err_t format_dn(jambuf_t *buf, chunk_t dn,
 				return "OID length is zero";
 			}
 			/* first two nodes encoded in single byte */
+			/* ??? where does 40 come from? */
 			jam(buf, "%d.%d", *p / 40, *p % 40);
 			p++;
 			/* runs of 1xxxxxxx+ 0xxxxxxx */
 			while (p < end) {
 				uintmax_t n = 0;
-				while (true) {
-					uint8_t b = *p;
+				for (;;) {
+					uint8_t b = *p++;
+					if (n > UINTMAX_MAX >> 7)
+						return "OID too large";
+
 					n = (n << 7) | (b & 0x7f);
 					/* stop at 0xxxxxxx */
-					if (b < 0x80) break;
-					p++;
-					if (p >= end) {
+					if (b < 0x80)
+						break;
+
+					if (p >= end)
 						return "corrupt OID run encoding";
-					}
 				}
 				jam(buf, ".%ju", n);
-				p++;
 			}
 		} else {
 			jam(buf, "%s", oid_names[oid_code].name);
@@ -662,6 +664,7 @@ err_t atodn(const char *src, chunk_t *dn)
 #	define START_OBJ() { *ppp++ = dn_ptr; }
 
 	/* note: on buffer overflow this returns from atodn */
+	/* ??? all but one call has len==1 so we could simplify */
 #	define EXTEND_OBJ(ptr, len) { \
 		if (dn_redline - dn_ptr < (ptrdiff_t)(len)) \
 			return "DN too big"; \
@@ -707,7 +710,8 @@ err_t atodn(const char *src, chunk_t *dn)
 			uint8_t byte;
 			/* B1.B2 */
 			unsigned long b0a = strtoul(src, &end, 10);
-			if (src == end) {
+			/* ??? where does 40 come from? */
+			if (src == end || b0a > UINT8_MAX / 40) {
 				return "numeric OID has invalid first digit";
 			}
 			src = end;
@@ -716,7 +720,7 @@ err_t atodn(const char *src, chunk_t *dn)
 			}
 			src++;
 			unsigned long b0b = strtoul(src, &end, 10);
-			if (src == end) {
+			if (src == end || b0b >= 40) {
 				return "numeric OID has invalid second digit";
 			}
 			src = end;
@@ -740,7 +744,7 @@ err_t atodn(const char *src, chunk_t *dn)
 					}
 					byte = l | 0x80;
 					EXTEND_OBJ(&byte, 1);
-					b = b - (l << shifts);
+					b -= l << shifts;
 				}
 				byte = b;
 				EXTEND_OBJ(&byte, 1);
@@ -944,7 +948,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		/* ??? this does not care whether types match.  Should it? */
 		if (wildcards != NULL &&
 		    value_content_b.len == 1 &&
-		    ((const char *)value_content_b.ptr)[0] == '*') {
+		    value_content_b.ptr[0] == '*') {
 			(*wildcards)++;
 			continue;
 		}
