@@ -94,22 +94,22 @@ extern bool use_dns;
 		/* aka address_type(ADDRESS) == NULL; */		\
 		bool invalid = address_is_invalid(ADDRESS);		\
 		if (invalid != t->invalid) {				\
-			FAIL(PRINT, " addres_is_invalid() returned %s, expected %s", \
+			FAIL(PRINT, " address_is_invalid() returned %s; expected %s", \
 			     bool_str(invalid), bool_str(t->invalid));	\
 		}							\
 		bool any = address_is_any(ADDRESS);			\
 		if (any != t->any) {					\
-			FAIL(PRINT, " addres_is_any() returned %s, expected %s", \
+			FAIL(PRINT, " address_is_any() returned %s; expected %s", \
 			     bool_str(any), bool_str(t->any));		\
 		}							\
 		bool specified = address_is_specified(ADDRESS);		\
 		if (specified != t->specified) {			\
-			FAIL(PRINT, " addres_is_specified() returned %s, expected %s", \
+			FAIL(PRINT, " address_is_specified() returned %s; expected %s", \
 			     bool_str(specified), bool_str(t->specified)); \
 		}							\
 		bool loopback = address_is_loopback(ADDRESS);		\
 		if (loopback != t->loopback) {				\
-			FAIL(PRINT, " addres_is_loopback() returned %s, expected %s", \
+			FAIL(PRINT, " address_is_loopback() returned %s; expected %s", \
 			     bool_str(loopback), bool_str(t->loopback)); \
 		}							\
 	}
