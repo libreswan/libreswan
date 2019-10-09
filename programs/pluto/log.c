@@ -549,7 +549,6 @@ static void log_raw(struct lswlog *buf, int severity)
 
 void lswlog_to_debug_stream(struct lswlog *buf)
 {
-	sanitize_string(buf->array, buf->roof); /* needed? */
 	log_raw(buf, LOG_DEBUG);
 	/* not whack */
 }
