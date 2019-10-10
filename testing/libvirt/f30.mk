@@ -35,7 +35,7 @@ KVM_UPGRADE_PACKAGES ?= \
     ElectricFence \
     audit-libs-devel \
     bind-utils	\
-    bind-dnssec-utils \
+    /usr/sbin/dnssec-signzone \
     bison \
     conntrack-tools \
     curl-devel \
