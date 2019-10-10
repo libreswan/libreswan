@@ -70,7 +70,16 @@ size_t dstlen;
 
 	/* const ip_protocol *proto = sa->proto; */
 	const struct ip_protocol *proto = protocol_by_protoid(sa->proto);
-	const char *pre = (proto == NULL ? "unk" : proto->prefix);
+	char unk[10] = ""; /* same scope as pre */
+	const char *pre;
+	if (proto == NULL) {
+		strcpy(unk, "unk");
+		ultot((uint8_t)sa->proto, 10, unk + strlen(unk),
+		      sizeof(unk) - strlen(unk));
+		pre = unk;
+	} else {
+		pre = proto->prefix;
+	}
 
 	if (strcmp(pre, PASSTHROUGHTYPE) == 0 &&
 	    sa->spi == PASSTHROUGHSPI &&
