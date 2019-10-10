@@ -35,9 +35,10 @@ DOCKERFILE ?= $(D)/dockerfile
 SUDO_CMD ?= sudo
 PKG_CMD = $(shell test -f /usr/bin/dnf && echo /usr/bin/dnf || (test -f /usr/bin/yum && echo /usr/bin/yum || echo "no yum or dnf found" && exit 1))
 PKG_BUILDDEP = $(shell test -f /usr/bin/dnf && echo "/usr/bin/dnf builddep" || echo /usr/bin/yum-builddep )
-PKG_INSTALL = $(SUDO_CMD) $(PKG_CMD) install -y
-PKG_UPGRADE = $(SUDO_CMD) $(PKG_CMD) upgrade -y
-PKG_DEBUGINFO_INSTALL = $(SUDO_CMD) $(PKG_CMD) debuginfo-install -y
+REPO_POWERTOOLS = $(shell test -f /etc/yum.repos.d/CentOS-PowerTools.repo && echo "--enablerepo=PowerTools" || echo "" )
+PKG_INSTALL = $(SUDO_CMD) $(PKG_CMD) $(REPO_POWERTOOLS) install -y
+PKG_UPGRADE = $(SUDO_CMD) $(PKG_CMD) $(REPO_POWERTOOLS) upgrade -y
+PKG_DEBUGINFO_INSTALL = $(SUDO_CMD) $(PKG_CMD) $(REPO_POWERTOOLS) debuginfo-install -y
 
 # end of configurable variables
 
@@ -122,7 +123,7 @@ install-rpm-run-dep:
 
 .PHONY: install-rpm-build-dep
 install-rpm-build-dep:
-	$(SUDO_CMD) $(PKG_BUILDDEP) -y libreswan
+	$(SUDO_CMD) $(PKG_BUILDDEP) $(REPO_POWERTOOLS) -y libreswan
 	$(SUDO_CMD) $(PKG_CMD) groupinstall -y "Development Tools"
 
 .PHONY: install-deb-dep
