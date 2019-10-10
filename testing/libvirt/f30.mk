@@ -131,7 +131,7 @@ KVM_DEBUGINFO = \
     openssl-libs \
     pam \
     pcre \
-    python-libs \
+    python3-libs \
     sqlite \
     unbound-libs \
     xz-libs \
