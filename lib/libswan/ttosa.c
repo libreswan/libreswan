@@ -17,19 +17,7 @@
 #include <string.h>
 
 #include "ip_said.h"
-
-static struct satype {
-	char *prefix;
-	size_t prelen;	/* strlen(prefix) */
-	int proto;
-} satypes[] = {
-	{ "ah", 2, SA_AH },
-	{ "esp", 3, SA_ESP },
-	{ "tun", 3, SA_IPIP },
-	{ "comp", 4, SA_COMP },
-	{ "int", 3, SA_INT },
-	{ NULL, 0, 0, }
-};
+#include "ip_protocol.h"
 
 static struct magic {
 	char *name;
@@ -60,7 +48,6 @@ ip_said *sa;
 	const char *addr;
 	size_t alen;
 	const char *spi = NULL;
-	struct satype *sat;
 	unsigned long ul;
 	const char *oops;
 	struct magic *mp;
@@ -94,15 +81,11 @@ ip_said *sa;
 	if (at == NULL)
 		return "no @ in SA specifier";
 
-	for (sat = satypes; sat->prefix != NULL; sat++)
-		if (sat->prelen < srclen &&
-			strncmp(src, sat->prefix, sat->prelen) == 0) {
-			sa->proto = sat->proto;
-			spi = src + sat->prelen;
-			break;	/* NOTE BREAK OUT */
-		}
-	if (sat->prefix == NULL)
+	const struct ip_protocol *sat = protocol_by_prefix(src);
+	if (sat == NULL)
 		return "SA specifier lacks valid protocol prefix";
+	sa->proto = sat->protoid;
+	spi = src + strlen(sat->prefix);
 
 	if (spi >= at)
 		return "no SPI in SA specifier";

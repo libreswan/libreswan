@@ -64,7 +64,6 @@ OBJS += addr_lookup.o
 endif
 
 OBJS += log_ip.o
-OBJS += ip_info.o
 OBJS += fd.o
 OBJS += kernel_alg.o
 OBJS += kernel_sadb.o
@@ -75,7 +74,6 @@ OBJS += addrtypeof.o
 OBJS += anyaddr.o
 OBJS += datatot.o
 OBJS += satot.o
-OBJS += ip_said.o
 OBJS += ultot.o
 
 OBJS += proposals.o
@@ -92,7 +90,10 @@ OBJS += shunk.o
 
 OBJS += ip_address.o
 OBJS += ip_endpoint.o
+OBJS += ip_info.o
+OBJS += ip_protocol.o
 OBJS += ip_range.o
+OBJS += ip_said.o
 OBJS += ip_subnet.o
 
 OBJS += lmod.o

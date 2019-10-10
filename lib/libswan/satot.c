@@ -19,20 +19,9 @@
 
 #include "ip_said.h"
 #include "ip_info.h"
+#include "ip_protocol.h"
 #include "jambuf.h"
 #include "libreswan/passert.h"
-
-static struct typename {
-	char type;
-	char *name;
-} typenames[] = {
-	{ SA_AH,        "ah" },
-	{ SA_ESP,       "esp" },
-	{ SA_IPIP,      "tun" },
-	{ SA_COMP,      "comp" },
-	{ SA_INT,       "int" },
-	{ 0,            NULL }
-};
 
 /*
    - satot - convert SA to text "ah507@1.2.3.4"
@@ -47,11 +36,8 @@ size_t dstlen;
 	size_t len = 0;         /* 0 means "not recognized yet" */
 	int base;
 	int showversion;        /* use delimiter to show IP version? */
-	struct typename *tn;
 	char *p;
-	char *pre;
 	char buf[10 + 1 + ULTOT_BUF + ADDRTOT_BUF];
-	char unk[10];
 
 	switch (format) {
 	case 0:
@@ -82,18 +68,9 @@ size_t dstlen;
 
 	memset(buf, 0, sizeof(buf));
 
-	pre = NULL;
-	for (tn = typenames; tn->name != NULL; tn++)
-		if (sa->proto == tn->type) {
-			pre = tn->name;
-			break;          /* NOTE BREAK OUT */
-		}
-	if (pre == NULL) {              /* unknown protocol */
-		strcpy(unk, "unk");
-		(void) ultot((unsigned char)sa->proto, 10, unk + strlen(unk),
-			     sizeof(unk) - strlen(unk));
-		pre = unk;
-	}
+	/* const ip_protocol *proto = sa->proto; */
+	const struct ip_protocol *proto = protocol_by_protoid(sa->proto);
+	const char *pre = (proto == NULL ? "unk" : proto->prefix);
 
 	if (strcmp(pre, PASSTHROUGHTYPE) == 0 &&
 	    sa->spi == PASSTHROUGHSPI &&
