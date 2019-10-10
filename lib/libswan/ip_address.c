@@ -21,7 +21,7 @@
 #include "lswlog.h"		/* for libreswan_log() */
 #include "ip_info.h"
 
-static ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes)
+ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes)
 {
 	passert(afi != NULL);
 	ip_address address = {
@@ -41,8 +41,12 @@ uint32_t ntohl_address(const ip_address *a)
 {
 	uint32_t u;
 	shunk_t s = address_as_shunk(a);
-	passert(sizeof(u) == s.len);
-	memcpy(&u, s.ptr, s.len);
+	if  (s.len == sizeof(u)) { /* IPv6 address */
+		memcpy(&u, s.ptr, s.len);
+	} else  {
+		s.ptr += (s.len - sizeof(u));
+		memcpy(&u, s.ptr, sizeof(u));
+	}
 	return ntohl(u);
 }
 
