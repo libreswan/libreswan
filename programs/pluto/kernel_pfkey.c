@@ -520,8 +520,7 @@ static void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg UNUSED,
 			ipstr_buf bs;
 			ipstr_buf bd;
 
-			initsaid(&nfo.src, nfo.sa->sadb_sa_spi, SA_ESP,
-				&said);
+			said = said3(&nfo.src, nfo.sa->sadb_sa_spi, SA_ESP);
 			satot(&said, 0, text_said, SATOT_BUF);
 			DBG_log("new klips mapping %s %s:%d %s:%d",
 				text_said,
@@ -1838,7 +1837,7 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 				break;
 			}
 
-			initsaid(&dst, spi, proto, &said);
+			said = said3(&dst, spi, proto);
 			satot(&said, 'x', text_said, SATOT_BUF);
 
 			line = fgets(buf, sizeof(buf), f);

@@ -178,10 +178,7 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	bs->transport_proto = transport_proto;
 	bs->policy_prio = BOTTOM_PRIO;
 
-	bs->said.proto = SA_INT;
-	bs->said.spi = htonl(shunt_spi);
-	bs->said.dst = address_any(subnet_type(ours));
-
+	bs->said = said3(&subnet_type(ours)->any_address, htonl(shunt_spi), SA_INT);
 	bs->count = 0;
 	bs->last_activity = mononow();
 
@@ -1079,9 +1076,7 @@ void unroute_connection(struct connection *c)
 void set_text_said(char *text_said, const ip_address *dst,
 			ipsec_spi_t spi, int sa_proto)
 {
-	ip_said said;
-
-	initsaid(dst, spi, sa_proto, &said);
+	ip_said said = said3(dst, spi, sa_proto);
 	satot(&said, 0, text_said, SATOT_BUF);
 }
 
@@ -1394,9 +1389,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 
 			bs->why = why;
 			bs->policy_prio = policy_prio;
-			bs->said.spi = htonl(new_shunt_spi);
-			bs->said.proto = SA_INT;
-			bs->said.dst = null_host;
+			bs->said = said3(&null_host, htonl(new_shunt_spi), SA_INT);
 			bs->count = 0;
 			bs->last_activity = mononow();
 			DBG_bare_shunt("change", bs);
@@ -3531,9 +3524,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		bs->transport_proto = sr->this.protocol;
 		bs->policy_prio = BOTTOM_PRIO;
 
-		bs->said.proto = SA_INT;
-		bs->said.spi = htonl(negotiation_shunt);
-		bs->said.dst = address_any(subnet_type(&sr->this.client));
+		bs->said = said3(&subnet_type(&sr->this.client)->any_address,
+				 htonl(negotiation_shunt), SA_INT);
 
 		bs->count = 0;
 		bs->last_activity = mononow();

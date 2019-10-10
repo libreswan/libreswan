@@ -1244,7 +1244,7 @@ int main(int argc, char *argv[])
 					progname);
 				exit(1);
 			}
-			initsaid(&edst, htonl(spi), proto, &said);
+			said = said3(&edst, htonl(spi), proto);
 		} else {
 			proto = said.proto;
 			spi = ntohl(said.spi);

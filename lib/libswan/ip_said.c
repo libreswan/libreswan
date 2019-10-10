@@ -15,6 +15,16 @@
 
 #include "ip_said.h"
 
+ip_said said3(const ip_address *address, ipsec_spi_t spi, int proto)
+{
+	ip_said said = {
+		.dst = *address,
+		.spi = spi,
+		.proto = proto,
+	};
+	return said;
+}
+
 void jam_said(jambuf_t *buf, const ip_said *said, int format)
 {
 	char t[SATOT_BUF];

@@ -41,7 +41,7 @@ OBJS += x509dn.o asn1.o oid.o
 
 OBJS += constants.o \
 	alloc.o diag.o \
-	id.o initaddr.o initsaid.o initsubnet.o \
+	id.o initaddr.o initsubnet.o \
         keyblobtoid.o \
 	lex.o \
 	lswconf.o \

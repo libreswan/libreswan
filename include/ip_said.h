@@ -22,6 +22,7 @@
 #include "ip_endpoint.h"
 #include "libreswan.h"		/* for ipsec_spi_t */
 #include "jambuf.h"
+#include "ip_protocol.h"
 
 /*
  * to identify an SA, we need
@@ -72,6 +73,12 @@ typedef struct {
 } ip_said;
 
 /*
+ * Constructors
+ */
+
+ip_said said3(const ip_address *address, ipsec_spi_t spi/*network-byte-order*/, int proto);
+
+/*
  * Formatting
  */
 
@@ -96,9 +103,5 @@ ip_address said_address(const ip_said *said);
 extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
 extern size_t satot(const ip_said *src, int format, char *bufptr, size_t buflen);
 #define SATOT_BUF       sizeof(said_buf)
-
-/* initializations */
-extern void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,
-	      ip_said *dst);
 
 #endif
