@@ -93,8 +93,8 @@ static void check_str_said(void)
 #define FAIL_SA(FMT, ...)						\
 	{								\
 		fails++;						\
-		PRINT_SA(stderr, " "FMT" (%s() %s:%d)",##__VA_ARGS__,	\
-			 __func__, __FILE__, __LINE__);			\
+		PRINT_SA(stderr, " "FMT" ("PRI_WHERE")",##__VA_ARGS__,	\
+			 pri_where(HERE));				\
 		continue;						\
 	}
 

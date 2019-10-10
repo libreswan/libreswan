@@ -17,6 +17,7 @@
 
 #include <stdbool.h>
 #include "ip_info.h"
+#include "where.h"
 
 extern void ip_address_check(void);
 extern void ip_endpoint_check(void);
@@ -55,8 +56,8 @@ extern bool use_dns;
 #define FAIL(PRINT, FMT, ...)						\
 	{								\
 		fails++;						\
-		PRINT(stderr, " "FMT" (%s() %s:%d)",##__VA_ARGS__,	\
-			__func__, __FILE__, __LINE__);			\
+		PRINT(stderr, " "FMT" ("PRI_WHERE")",##__VA_ARGS__,	\
+		      pri_where(HERE));					\
 		continue;						\
 	}
 
