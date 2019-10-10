@@ -35,7 +35,7 @@ static generalName_t *deep_clone_general_names(generalName_t *orig)
 	while (orig != NULL) {
 		*new = alloc_thing(generalName_t, "crl_queue: general name");
 		(*new)->kind = orig->kind;
-		(*new)->name = clone_chunk(orig->name, "crl_queue: general name name");
+		(*new)->name = clone_hunk(orig->name, "crl_queue: general name name");
 		(*new)->next = NULL;
 		orig = orig->next;
 		new = &(*new)->next;

@@ -60,7 +60,11 @@ chunk_t chunk(void *ptr, size_t len);
 chunk_t alloc_chunk(size_t count, const char *name);
 void free_chunk_contents(chunk_t *chunk); /* blats *CHUNK */
 
-chunk_t clone_chunk(chunk_t old, const char *name);
+/* result is always a WRITEABLE chunk */
+#define clone_hunk(HUNK, NAME) ({					\
+			typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+			clone_bytes_as_chunk(hunk_.ptr, hunk_.len, NAME); \
+		})
 
 /* clone(first+second) */
 chunk_t clone_chunk_chunk(chunk_t first, chunk_t second, const char *name);
@@ -68,7 +72,7 @@ chunk_t clone_chunk_chunk(chunk_t first, chunk_t second, const char *name);
 /* always NUL terminated; NULL is NULL */
 char *clone_chunk_as_string(chunk_t chunk, const char *name);
 
-chunk_t clone_bytes_as_chunk(void *bytes, size_t sizeof_bytes, const char *name);
+chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name);
 
 bool chunk_eq(chunk_t a, chunk_t b);
 

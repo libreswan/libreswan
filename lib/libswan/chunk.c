@@ -44,19 +44,6 @@ void free_chunk_contents(chunk_t *chunk)
 	*chunk = EMPTY_CHUNK;
 }
 
-chunk_t clone_chunk(chunk_t chunk, const char *name)
-{
-	if (chunk.ptr == NULL) {
-		return EMPTY_CHUNK;
-	} else {
-		chunk_t clone = {
-			.ptr = clone_bytes(chunk.ptr, chunk.len, name),
-			.len = chunk.len,
-		};
-		return clone;
-	}
-}
-
 chunk_t clone_chunk_chunk(chunk_t lhs, chunk_t rhs, const char *name)
 {
 	size_t len = lhs.len + rhs.len;
@@ -82,9 +69,13 @@ char *clone_chunk_as_string(chunk_t chunk, const char *name)
 	}
 }
 
-chunk_t clone_bytes_as_chunk(void *bytes, size_t sizeof_bytes, const char *name)
+chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name)
 {
-	return chunk(clone_bytes(bytes, sizeof_bytes, name), sizeof_bytes);
+	if (bytes == NULL) {
+		return empty_chunk;
+	} else {
+		return chunk(clone_bytes(bytes, sizeof_bytes, name), sizeof_bytes);
+	}
 }
 
 bool chunk_eq(chunk_t a, chunk_t b)

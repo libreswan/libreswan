@@ -749,7 +749,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 					src->ca, ugh);
 				dst->ca = EMPTY_CHUNK;
 			} else {
-				dst->ca = clone_chunk(dst->ca, "ca string");
+				dst->ca = clone_hunk(dst->ca, "ca string");
 			}
 		}
 	}
@@ -1621,9 +1621,9 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	}
 
 	if (same_rightca == 1) {
-		c->spd.that.ca = clone_chunk(c->spd.this.ca, "same rightca");
+		c->spd.that.ca = clone_hunk(c->spd.this.ca, "same rightca");
 	} else if (same_leftca == 1) {
-		c->spd.this.ca = clone_chunk(c->spd.that.ca, "same leftca");
+		c->spd.this.ca = clone_hunk(c->spd.that.ca, "same leftca");
 	}
 
 	/*

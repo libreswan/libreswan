@@ -980,7 +980,7 @@ void ikev1_decode_cr(struct msg_digest *md)
 
 				generalName_t *gn = alloc_thing(generalName_t, "generalName");
 
-				gn->name = clone_chunk(ca_name, "ca name");
+				gn->name = clone_hunk(ca_name, "ca name");
 				gn->kind = GN_DIRECTORY_NAME;
 				gn->next = md->st->st_requested_ca;
 				md->st->st_requested_ca = gn;
@@ -1028,7 +1028,7 @@ void ikev2_decode_cr(struct msg_digest *md)
 
 				generalName_t *gn =
 					alloc_thing(generalName_t, "generalName");
-				gn->name = clone_chunk(ca_name, "ca name");
+				gn->name = clone_hunk(ca_name, "ca name");
 				gn->kind = GN_DIRECTORY_NAME;
 				gn->next = md->st->st_requested_ca;
 				md->st->st_requested_ca = gn;

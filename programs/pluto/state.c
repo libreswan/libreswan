@@ -1518,7 +1518,7 @@ static struct state *duplicate_state(struct state *st,
 
 		/* v2 duplication of state */
 #   define state_clone_chunk(CHUNK) \
-		nst->CHUNK = clone_chunk(st->CHUNK, #CHUNK " in duplicate state")
+		nst->CHUNK = clone_hunk(st->CHUNK, #CHUNK " in duplicate state")
 
 		state_clone_chunk(st_ni);
 		state_clone_chunk(st_nr);

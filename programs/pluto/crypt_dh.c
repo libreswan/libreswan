@@ -217,7 +217,7 @@ void submit_dh(struct state *st, chunk_t remote_ke,
 	       dh_cb *cb, const char *name)
 {
 	struct crypto_task *task = alloc_thing(struct crypto_task, "dh");
-	task->remote_ke = clone_chunk(remote_ke, "DH crypto");
+	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
 	transfer_dh_secret_to_helper(st, "DH", &task->local_secret);
 	task->cb = cb;
 	submit_crypto(st, task, &dh_handler, name);

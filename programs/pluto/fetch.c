@@ -165,7 +165,7 @@ static err_t fetch_curl(chunk_t url,
 
 		if (res == CURLE_OK) {
 			/* clone from realloc(3)ed memory to pluto-allocated memory */
-			*blob = clone_chunk(response, "curl blob");
+			*blob = clone_hunk(response, "curl blob");
 		} else {
 			libreswan_log("fetching uri (%s) with libcurl failed: %s", uri,
 			     errorbuffer);
@@ -624,7 +624,7 @@ static void add_distribution_points(const generalName_t *newPoints,
 				 * Clone additional distribution point.
 				 */
 				generalName_t *ngn = clone_const_thing(*newPoints, "generalName");
-				ngn->name = clone_chunk(newPoints->name,
+				ngn->name = clone_hunk(newPoints->name,
 							"add_distribution_points: general name name");
 				/* insert additional CRL distribution point */
 				ngn->next = *distributionPoints;
@@ -670,7 +670,7 @@ static void merge_crl_fetch_request(struct crl_fetch_request *request)
 				.trials = 0,
 
 				/* clone issuer (again) */
-				.issuer = clone_chunk(idn, "issuer dn"),
+				.issuer = clone_hunk(idn, "issuer dn"),
 
 				.distributionPoints = NULL,
 			};

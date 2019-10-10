@@ -415,8 +415,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
 	/* make a local copy.  */
-	chunk_t n = clone_chunk(k->n, "n");
-	chunk_t e = clone_chunk(k->e, "e");
+	chunk_t n = clone_hunk(k->n, "n");
+	chunk_t e = clone_hunk(k->e, "e");
 
 	/* Converting n and e to nss_n and nss_e */
 	nss_n.data = n.ptr;
