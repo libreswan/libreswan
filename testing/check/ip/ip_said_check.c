@@ -72,6 +72,7 @@ static void check_str_said(void)
 		/* was "int.106@0.0.0.0" */
 		{ 0, "int262@0.0.0.0", "%unk-262" },
 		{ 0, "esp9@1.2.3.4", "unk77.9@1.2.3.4", .fudge = true, },
+		{ 0, "unk77.9@1.2.3.4", NULL, },
 
 		/* XXX: 'f' is never used!?! */
 		{ 'f', "esp0xa9@1.2.3.4", "esp.000000a9@1.2.3.4" },
