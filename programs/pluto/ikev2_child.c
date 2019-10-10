@@ -66,10 +66,10 @@ static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
 					     const struct msg_digest *md,
 					     enum isakmp_xchg_types isa_xchg)
 {
-	ip_address ipv4;
+	ip_address ip;
 	struct connection *c = md->st->st_connection;
 
-	err_t e = lease_an_address(c, md->st, &ipv4);
+	err_t e = lease_an_address(c, md->st, &ip);
 	if (e != NULL) {
 		libreswan_log("ikev2 lease_an_address failure %s", e);
 		return NULL;
@@ -100,8 +100,12 @@ static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
 	 */
 	struct spd_route *spd = &md->st->st_connection->spd;
 	spd->that.has_lease = TRUE;
-	spd->that.client.addr = ipv4;
-	spd->that.client.maskbits = 32; /* export it as value */
+	spd->that.client.addr = ip;
+
+	if (addrtypeof(&ip) == AF_INET)
+		spd->that.client.maskbits = INTERNL_IP4_PREFIX_LEN; /* export it as value */
+	else
+		spd->that.client.maskbits = INTERNL_IP6_PREFIX_LEN; /* export it as value */
 	spd->that.has_client = TRUE;
 
 	child->sa.st_ts_this = ikev2_end_to_ts(&spd->this);
@@ -478,6 +482,11 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	if (!pbs_in_address(&ip, af, cp_a_pbs, "INTERNAL_IP_ADDRESS")) {
 		return false;
 	}
+
+	/*
+	 * if (af->af == AF_INET6) pbs_in_address only reads 16 bytes.
+	 * There should be one more byte in the pbs, 17th byte is prefix length.
+	 */
 
 	if (address_is_any(&ip)) {
 		ipstr_buf ip_str;

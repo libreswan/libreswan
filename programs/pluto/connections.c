@@ -1631,15 +1631,17 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	 * It is not necessary on the initiator
 	 */
 
-	if (range_type(&wm->left.pool_range) == &ipv4_info &&
-	    range_is_specified(&wm->left.pool_range)) {
+	if ((range_type(&wm->left.pool_range) == &ipv4_info ||
+		range_type(&wm->left.pool_range) == &ipv6_info)	&&
+		range_is_specified(&wm->left.pool_range)) {
 		/* there is address pool range add to the global list */
 		c->pool = install_addresspool(&wm->left.pool_range);
 		c->spd.that.modecfg_server = TRUE;
 		c->spd.this.modecfg_client = TRUE;
 	}
-	if (range_type(&wm->right.pool_range) == &ipv4_info &&
-	    range_is_specified(&wm->right.pool_range)) {
+	if ((range_type(&wm->right.pool_range) == &ipv4_info ||
+		range_type(&wm->left.pool_range) == &ipv6_info)	&&
+		range_is_specified(&wm->right.pool_range)) {
 		/* there is address pool range add to the global list */
 		c->pool = install_addresspool(&wm->right.pool_range);
 		c->spd.that.modecfg_client = TRUE;

@@ -128,7 +128,7 @@ int iprange_bits(ip_address low, ip_address high)
 
 /*
  * ttorange - convert text v4 "addr1-addr2" to address_start address_end
- *            convert text v6 "subnet/mask" mask 32-64 to to address_start address_end
+ *            convert text v6 "subnet/mask" (prefix len 96-128) to to address_start address_end
  */
 err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 {
@@ -136,21 +136,30 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	const char *high;
 	size_t hlen;
 	const char *oops;
+	err_t er;
 
 	zero(dst);
 	ip_range tmp = *dst; /* clear it */
 
 	size_t srclen = strlen(src);
 
-	ip_subnet v6_subnet;
-	err_t er = ttosubnet(src, 0, AF_INET6, &v6_subnet);
-	if (er == NULL) {
-		if (v6_subnet.maskbits >= 96 && v6_subnet.maskbits <=128)
-			tmp = range_from_subnet(&v6_subnet);
-		else {
-			return "ipv6 support subnet /96 to /128";
+	if (afi == NULL || afi->af == AF_INET6) {
+		ip_subnet v6_subnet;
+		er = ttosubnet(src, 0, AF_INET6, &v6_subnet);
+		if (er == NULL) {
+			if (v6_subnet.maskbits >= 96 && v6_subnet.maskbits <= 128)
+				tmp = range_from_subnet(&v6_subnet);
+			else
+				return "ipv6 support prefix length /96 to /128";
+		} else {
+			if (afi != NULL && afi->af == AF_INET6) /* IPv6 only, failed give up */
+				return er;
 		}
-	} else {
+	}
+
+	if ((afi == NULL || afi->af == AF_INET) && er != NULL) {
+		if (afi == NULL)
+			afi = &ipv4_info;
 		dash = memchr(src, '-', srclen);
 		if (dash == NULL)
 			return "not ipv4 address range with '-' or ipv6 subnet";

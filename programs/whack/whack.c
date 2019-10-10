@@ -2056,7 +2056,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
-			ttorange(optarg, &ipv4_info, &msg.right.pool_range);
+			ttorange(optarg, NULL, &msg.right.pool_range);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */
