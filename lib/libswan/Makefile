@@ -195,8 +195,6 @@ ifeq ($(USE_DNSSEC),true)
 OBJS += unbound.o
 endif
 
-OBJS += sanitizestring.o
-
 ifeq ($(USE_KLIPS),true)
 CFLAGS += -DKLIPS
 endif

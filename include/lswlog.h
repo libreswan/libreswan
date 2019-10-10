@@ -45,9 +45,6 @@
 
 extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
 
-/* sanitize a string */
-extern void sanitize_string(char *buf, size_t size);
-
 extern bool log_to_stderr;          /* should log go to stderr? */
 
 
