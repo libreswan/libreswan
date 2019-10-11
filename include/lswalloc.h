@@ -70,6 +70,13 @@ extern void report_leaks(void);
 
 #define alloc_things(THING, COUNT, NAME) ((THING*) alloc_bytes(sizeof(THING) * (COUNT), (NAME)))
 
+#define resize_things(THINGS, COUNT)					\
+	{								\
+		void *things_ = THINGS;					\
+		resize_bytes(&things_, COUNT * sizeof((THINGS)[0]));	\
+		THINGS = things_;					\
+	}
+
 #define clone_thing(orig, name)						\
 	((__typeof__(&(orig))) clone_bytes((const void *)&(orig),	\
 					   sizeof(orig), (name)))
