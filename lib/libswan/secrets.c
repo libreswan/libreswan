@@ -1671,8 +1671,12 @@ static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 		goto out;
 	}
 	/* keyid */
-	memset(ecdsak->pub.keyid,0,KEYID_BUF);
-	memcpy(ecdsak->pub.keyid, pubk->u.ec.publicValue.data, KEYID_BUF-1);
+	char keyid[KEYID_BUF];
+	memset(keyid, 0, KEYID_BUF);
+	memcpy(keyid, pubk->u.ec.publicValue.data, KEYID_BUF-1);
+	memset(ecdsak->pub.keyid, 0, KEYID_BUF);
+	keyblobtoid((const unsigned char *)keyid, KEYID_BUF,
+		    ecdsak->pub.keyid, KEYID_BUF);
 
 	/*size */
 	ecdsak->pub.k = pubk->u.ec.size;
