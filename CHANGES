@@ -17,6 +17,7 @@ v3.30 (unreleased)
 * pluto: Fixup reporting of esp-hw-offload capabilities in kernel/nic [Paul]
 * pluto: Add chacha20_poly1305 and curve25519 to default proposals [Paul]
 * pluto: Updated SECCOMP syscall whitelist with getdents64/getrandom [Paul]
+* pluto: With non-default config file, connections loading was skipped [Paul]
 * X509: SAN checks should confirm IKE peer ID on responder too [Paul]
 * letsencrypt: new command "ipsec letsencrypt" [Rishabh]
 * _updown: Fix to work for iproute >= 5.1 [Paul]
