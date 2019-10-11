@@ -1,0 +1,28 @@
+/testing/guestbin/swan-prep
+west #
+ cp test.conf /tmp/test.conf
+west #
+ ipsec pluto --config /tmp/test.conf
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ # did pluto forked addconn pickup right config file location and load the connection
+west #
+ ipsec status | grep westnet-eastnet-ipv4-psk-ikev2 | grep "eroute owner"
+000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+west #
+ # does status show /tmp/test.conf as config file used for startup
+west #
+ ipsec status | grep configfile
+000 configdir=/etc, configfile=/tmp/test.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
+west #
+ echo done
+done
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

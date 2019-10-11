@@ -1,0 +1,11 @@
+Testing of non-standard ipsec.conf passed to pluto
+
+In versions prior to 3.30, starting pluto using ipsec pluto --config /dir/ipsec.conf
+would cause the pluto main process to start addconn without passing
+the --config /dir/ipsec.conf option and any connections meant to be loaded
+on startup would not load.
+
+Additionally, ipsec status would display that /etc/ipsec.conf was used instead
+of /dir/ipsec.conf
+
+
