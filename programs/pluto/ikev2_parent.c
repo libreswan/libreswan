@@ -1724,10 +1724,16 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 {
 	pb_stream a_pbs;
 
-	struct ikev2_cp_attribute attr = {
-		.type = type,
-		.len = (ip == NULL) ? 0 : address_type(ip)->ip_size,
-	};
+	struct ikev2_cp_attribute attr;
+	attr.type = type;
+	if (ip == NULL) {
+		attr.len = 0;
+	} else {
+		if (address_type(ip)->af == AF_INET)
+			attr.len = address_type(ip)->ip_size;
+		else
+			attr.len = INTERNAL_IP6_ADDRESS_SIZE; /* RFC hack to append IPv6 prefix len */
+	}
 
 	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
 				&a_pbs))
@@ -1737,6 +1743,12 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 		if (!pbs_out_address(ip, &a_pbs, story)) {
 			return STF_INTERNAL_ERROR;
 		}
+	}
+
+	if (attr.len == INTERNAL_IP6_ADDRESS_SIZE) { /* IPv6 address add prefix */
+		uint8_t ipv6_prefix_len = INTERNL_IP6_PREFIX_LEN;
+		if (!out_raw(&ipv6_prefix_len, sizeof(uint8_t), &a_pbs, "INTERNL_IP6_PREFIX_LEN"))
+			return STF_INTERNAL_ERROR;
 	}
 
 	close_output_pbs(&a_pbs);

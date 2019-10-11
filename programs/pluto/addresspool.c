@@ -22,7 +22,7 @@
  * With XAUTH/CP, we need a way to allocate an address to a client.
  * This address must be unique on our system.
  * The pools of addresses to be used are declared in our config file.
- * Each connection may specify a pool as a range of IPv4 addresses.
+ * Each connection may specify a pool as a range of IPv4 or IPv6 addresses.
  * All pools must be non-everlapping, but each pool may be
  * used for more than one connection.
  */
@@ -38,7 +38,7 @@
 #include "ip_info.h"
 
 /*
- * A pool is a range of IPv4 addresses to be individually allocated.
+ * A pool is a range of IP addresses to be individually allocated.
  * A connection may have a pool.
  * That pool may be shared with other connections (hence the reference count).
  *
@@ -188,14 +188,12 @@ static struct lease_addr **ref_to_lease(struct ip_pool *pool, uint32_t i) {
 void rel_lease_addr(struct connection *c)
 {
 	struct ip_pool *pool = c->pool;
-	uint32_t i;	/* index within range of IPv4 address to be released */
+	uint32_t i;	/* index within range of IP address to be released */
 	unsigned refcnt;	/* for DBG logging */
 	const char *story;	/* for DBG logging */
 
 	if (!c->spd.that.has_lease)
 		return; /* it is not from the addresspool to free */
-
-	passert(subnet_type(&c->spd.that.client) == &ipv4_info);
 
 	/* i is index of client.addr within pool's range.
 	 * Using unsigned arithmetic means that if client.addr is less than
@@ -254,6 +252,41 @@ void rel_lease_addr(struct connection *c)
 	}
 }
 
+static ip_address ipv4_address_from_index(ip_address *start, uint32_t i)
+{
+	uint32_t addr = ntohl_address(start) + i;
+	struct in_addr addr_nw = { htonl(addr), };
+	return address_from_in_addr(&addr_nw);
+}
+
+static ip_address ipv6_address_from_index(ip_address *start, uint32_t i)
+{
+	/* careful here manipulating raw bits and bytes  */
+	ip_address lease = *start;
+	chunk_t addr_chunk = address_as_chunk(&lease);
+	uint8_t *ptr = addr_chunk.ptr;
+	ptr += (addr_chunk.len - sizeof(uint32_t)); /* allow last 32 bits as index */
+	uint32_t cur_ho = ntohl(*(uint32_t*)ptr);
+	cur_ho += i; /* add the index */
+	uint32_t cur_nw = htonl(cur_ho);
+	memcpy(ptr, &cur_nw, sizeof(uint32_t));
+	return lease;
+}
+
+static ip_address ip_address_from_index(ip_address *start, uint32_t i)
+{
+	int type = addrtypeof(start);
+	switch (type) {
+		case AF_INET: /* N.N.N.N */
+			return ipv4_address_from_index(start, i);
+		case AF_INET6: /* N:N:...:N */
+			return ipv6_address_from_index(start, i);
+		case AF_UNSPEC:
+		default:
+			bad_case(type);
+	}
+}
+
 /*
  * return previous lease if there is one lingering for the same ID
  */
@@ -288,10 +321,7 @@ static bool share_lease(const struct connection *c,
 
 		if (r) {
 			ipstr_buf b;
-			uint32_t addr = ntohl_address(&c->pool->r.start) + *index;
-			struct in_addr addr_nw = { htonl(addr), };
-			ip_address ipaddr = address_from_in_addr(&addr_nw);
-
+			ip_address ipaddr = ip_address_from_index(&c->pool->r.start, *index);
 			DBG_log("in %s: found a lingering addresspool lease %s refcnt %d for '%s'",
 				__func__,
 				ipstr(&ipaddr, &b),
@@ -409,11 +439,8 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 	}
 
 	/* convert index i in range to an IP_address */
-	{
-		uint32_t addr = ntohl_address(&c->pool->r.start) + i;
-		struct in_addr addr_nw = { htonl(addr), };
-		*ipa = address_from_in_addr(&addr_nw);
-	}
+
+	*ipa = ip_address_from_index(&c->pool->r.start, i);
 	if (DBGP(DBG_BASE)) {
 		subnet_buf sbuf;
 		range_buf rbuf;
@@ -524,8 +551,7 @@ err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 
 /*
  * the caller must enforce the following:
- * - Range must not include 0.0.0.0
- * - Only IPv4 allowed.
+ * - Range must not include 0.0.0.0 or ::0
  * - The range must be non-empty
  */
 struct ip_pool *install_addresspool(const ip_range *pool_range)
@@ -552,15 +578,24 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 
 		p->pool_refcount = 0;
 		p->r = *pool_range;
-		p->size = (ntohl_address(&p->r.end) -
-			   ntohl_address(&p->r.start) + 1);
+
+		/* with IPv6 size could overflow */
+		p->size = (ntohl_address(&p->r.end) - ntohl_address(&p->r.start));
+		if (p->size < UINT32_MAX)  {
+			p->size++;
+		} else {
+			/* uint32_t overflow, 2001:db8:0:3:1::/96, truncate to UINT32_MAX */
+			loglog(RC_CLASH, "WARNING addresspool size overflow truncated size to UINT32_MAX %u", UINT32_MAX);
+		}
+		passert(p->size > 0);
+
 		p->used = 0;
 		p->lingering = 0;
 
 		DBG(DBG_CONTROLMORE, {
 			range_buf rbuf;
 
-			DBG_log("add new addresspool to global pools %s size %d ptr %p",
+			DBG_log("add new addresspool to global pools %s size %u ptr %p",
 				str_range(&p->r, &rbuf),
 				p->size, p);
 		});

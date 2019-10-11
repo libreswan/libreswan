@@ -127,7 +127,8 @@ int iprange_bits(ip_address low, ip_address high)
 }
 
 /*
- * ttorange - convert text "addr1-addr2" to address_start address_end
+ * ttorange - convert text v4 "addr1-addr2" to address_start address_end
+ *            convert text v6 "subnet/mask" (prefix len 96-128) to to address_start address_end
  */
 err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 {
@@ -135,27 +136,47 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	const char *high;
 	size_t hlen;
 	const char *oops;
+	err_t er;
 
 	zero(dst);
 	ip_range tmp = *dst; /* clear it */
 
 	size_t srclen = strlen(src);
-	dash = memchr(src, '-', srclen);
-	if (dash == NULL)
-		return "missing '-' in ip address range";
 
-	high = dash + 1;
-	hlen = srclen - (high - src);
+	if (afi == NULL || afi->af == AF_INET6) {
+		ip_subnet v6_subnet;
+		er = ttosubnet(src, 0, AF_INET6, &v6_subnet);
+		if (er == NULL) {
+			if (v6_subnet.maskbits >= 96 && v6_subnet.maskbits <= 128)
+				tmp = range_from_subnet(&v6_subnet);
+			else
+				return "ipv6 support prefix length /96 to /128";
+		} else {
+			if (afi != NULL && afi->af == AF_INET6) /* IPv6 only, failed give up */
+				return er;
+		}
+	}
 
-	/* extract start ip address */
-	oops = ttoaddr_num(src, dash - src, afi->af, &tmp.start);
-	if (oops != NULL)
-		return oops;
+	if ((afi == NULL || afi->af == AF_INET) && er != NULL) {
+		if (afi == NULL)
+			afi = &ipv4_info;
+		dash = memchr(src, '-', srclen);
+		if (dash == NULL)
+			return "not ipv4 address range with '-' or ipv6 subnet";
 
-	/* extract end ip address */
-	oops = ttoaddr_num(high, hlen, afi->af, &tmp.end);
-	if (oops != NULL)
-		return oops;
+		high = dash + 1;
+		hlen = srclen - (high - src);
+
+		/* extract start ip address */
+		oops = ttoaddr_num(src, dash - src, afi->af, &tmp.start);
+		if (oops != NULL)
+			return oops;
+
+		/* extract end ip address */
+		oops = ttoaddr_num(high, hlen, afi->af, &tmp.end);
+		if (oops != NULL)
+			return oops;
+	}
 
 	if (addrcmp(&tmp.start, &tmp.end) > 0) {
 		return "start of range must not be greater than end";
@@ -164,7 +185,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	if (address_is_any(&tmp.start) ||
 	    address_is_any(&tmp.end)) {
 		/* XXX: IPv6 netral error? */
-		return "'0.0.0.0' not allowed in range";
+		return "'0.0.0.0 or ::0' not allowed in range";
 	}
 
 	/* We have validated the range. Now put bounds in dst. */
@@ -175,8 +196,14 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 void jam_range(jambuf_t *buf, const ip_range *range)
 {
 	jam_address(buf, &range->start);
-	jam(buf, "-");
-	jam_address(buf, &range->end);
+	if (range_type(range) == &ipv4_info) {
+		jam(buf, "-");
+		jam_address(buf, &range->end);
+	} else {
+		ip_subnet tmp_subnet;
+		rangetosubnet(&range->start, &range->end, &tmp_subnet);
+		jam(buf, "/%u", tmp_subnet.maskbits);
+	}
 }
 
 const char *str_range(const ip_range *range, range_buf *out)
