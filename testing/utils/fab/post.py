@@ -100,8 +100,9 @@ class Issues:
     CORE = "CORE"
     SEGFAULT = "SEGFAULT"
     GPFAULT = "GPFAULT"
-    PRINTF_NULL = "%NULL"
+    PRINTF_NULL = "PRINTF_NULL"
     KERNEL = "KERNEL"
+    ISCNTRL = "ISCNTRL"
 
     TIMEOUT = "timeout"
 
@@ -282,6 +283,11 @@ class TestResult:
                 # self.resolution.failed() XXX: allow expection failures?
             if self.grub(pluto_log_filename, "\(null\)"):
                 self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.resolution.failed()
+            if self.grub(pluto_log_filename, r"[^ -~\n]"):
+                # This won't detect a \n embedded in the middle of a
+                # log line.
+                self.issues.add(Issues.ISCNTRL, host_name)
                 self.resolution.failed()
 
         # Check the raw console output for problems and that it
