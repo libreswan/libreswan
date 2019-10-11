@@ -433,7 +433,7 @@ class TestResult:
                 if diff:
                     for line in diff:
                         f.write(line)
-                        f.write(rb"\n")
+                        f.write(b"\n")
 
     def _file_contents(self, path):
         # Find/load the file, and uncompress when needed.
