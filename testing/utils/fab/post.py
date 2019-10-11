@@ -175,9 +175,9 @@ class Issues:
 
 
 def _strip(s):
-    s = re.sub(r"[ \t]+", r"", s)
-    s = re.sub(r"\n+", r"\n", s)
-    s = re.sub(r"^\n", r"", s)
+    s = re.sub(rb"[ \t]+", rb"", s)
+    s = re.sub(rb"\n+", rb"\n", s)
+    s = re.sub(rb"^\n", rb"", s)
     return s
 
 def _whitespace(l, r):
@@ -192,9 +192,10 @@ def _diff(logger, ln, l, rn, r):
         logger.debug("_diff '%s' and '%s' fast match", ln, rn)
         return []
     # compare
-    diff = list(difflib.unified_diff(l.splitlines(), r.splitlines(),
-                                     fromfile=ln, tofile=rn,
-                                     lineterm=""))
+    diff = list(difflib.diff_bytes(difflib.unified_diff,
+                                   l.splitlines(), r.splitlines(),
+                                   fromfile=ln.encode(), tofile=rn.encode(),
+                                   lineterm=rb""))
     logger.debug("_diff: %s", diff)
     if not diff:
         # Always return a list.
@@ -221,7 +222,7 @@ def _sanitize_output(logger, raw_path, test):
         logger.error("sanitize command '%s' failed; exit code %s; stderr: '%s'",
                      command, process.returncode, stderr.decode("utf8"))
         return None
-    return stdout.decode("utf-8")
+    return stdout
 
 
 # The TestResult objects are almost, but not quite, an enum. It
@@ -405,6 +406,9 @@ class TestResult:
 
     def save(self, output_directory=None):
         output_directory = output_directory or self.output_directory
+        if not os.path.exists(self.output_directory):
+            self.logger.debug("output directory missing: %s", output_directory)
+            return
         # write the sanitized console output
         for host_name in self.test.host_names:
             if host_name in self.sanitized_output:
@@ -414,7 +418,7 @@ class TestResult:
                                                          sanitized_output_filename)
                 self.logger.debug("host %s writing sanitized output file: %s",
                                   host_name, sanitized_output_pathname)
-                with open(sanitized_output_pathname, "w") as f:
+                with open(sanitized_output_pathname, "wb") as f:
                     f.write(sanitized_output)
         # write the diffs
         for host_name in self.test.host_names:
@@ -425,23 +429,24 @@ class TestResult:
             diff_pathname = os.path.join(output_directory, diff_filename)
             self.logger.debug("host %s writing diff file %s",
                               host_name, diff_pathname)
-            with open(diff_pathname, "w") as f:
+            with open(diff_pathname, "wb") as f:
                 if diff:
                     for line in diff:
                         f.write(line)
-                        f.write("\n")
+                        f.write(rb"\n")
 
     def _file_contents(self, path):
         # Find/load the file, and uncompress when needed.
         if not path in self._file_contents_cache:
+            self.logger.debug("loading contents of '%s'", path)
             self._file_contents_cache[path] = None
             for suffix, open_op in [("", open), (".gz", gzip.open), (".bz2", bz2.open),]:
                 zippath = path + suffix
-                self.logger.debug("trying to load contents of '%s'", zippath)
                 if os.path.isfile(zippath):
                     self.logger.debug("loading '%s' into cache", zippath)
-                    with open_op(path, "rt") as f:
+                    with open_op(path, "rb") as f:
                         self._file_contents_cache[path] = f.read()
+                        self.logger.debug("loaded contents of '%s'", zippath)
                         break
         return self._file_contents_cache[path]
 
@@ -457,7 +462,10 @@ class TestResult:
             return None
         if regex is None:
             return contents
-        match = re.search(regex, contents, re.MULTILINE)
+        # convert utf-8 regex to bytes
+        byte_regex = regex.encode()
+        self.logger.debug("greping content %s using %s", type(contents), type(byte_regex))
+        match = re.search(byte_regex, contents, re.MULTILINE)
         if not match:
             return None
         group = match.group(len(match.groups()))
