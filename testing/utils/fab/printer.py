@@ -165,9 +165,10 @@ def build_result(logger, result, baseline, args, what_to_print, b):
 
     if Print.diffs in what_to_print:
         for domain in result.diffs:
-            b.add(Print.diffs, domain, result.diffs[domain],
+            b.add(Print.diffs, domain,
+                  result.diffs[domain],
                   string=(lambda diff, sep: diff
-                          and (sep and "\n" or "") + "\n".join(diff)
+                          and (sep and "\n" or "") + b"\n".join(diff).decode()
                           or ""))
 
     b.flush()
