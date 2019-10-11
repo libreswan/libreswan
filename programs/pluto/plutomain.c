@@ -105,6 +105,7 @@ static const char *fips_package_files[] = { IPSEC_EXECDIR "/pluto", NULL };
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
+static char *conffile;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
 static bool do_dnssec = FALSE;
@@ -123,6 +124,7 @@ static void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(coredir);
+	pfree(conffile);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
 	pfree(pluto_vendorid);
@@ -696,6 +698,7 @@ int main(int argc, char **argv)
 
 	pluto_name = argv[0];
 
+	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 	coredir = clone_str(DEFAULT_RUNDIR, "coredir in main()");
 	rundir = clone_str(DEFAULT_RUNDIR, "rundir");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
@@ -1195,7 +1198,9 @@ int main(int argc, char **argv)
 			 * overwrite all previously set options. Keep this
 			 * in the same order as long_opts[] is.
 			 */
-			struct starter_config *cfg = read_cfg_file(optarg);
+			pfree(conffile);
+			conffile = clone_str(optarg, "conffile via getopt");
+			struct starter_config *cfg = read_cfg_file(conffile);
 
 			/* leak */
 			set_cfg_string(&pluto_log_file,
@@ -1791,7 +1796,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	call_server();
+	call_server(conffile);
 	return -1;	/* Shouldn't ever reach this */
 }
 
@@ -1868,7 +1873,7 @@ void show_setup_plutomain(void)
 	whack_log(RC_COMMENT, " ");	/* spacer */
 	whack_log(RC_COMMENT, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s",
 		oco->confdir,
-		oco->conffile,
+		conffile, /* oco contains only a copy of hardcoded default */
 		oco->secretsfile,
 		oco->confddir);
 

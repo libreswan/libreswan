@@ -1369,7 +1369,7 @@ void init_event_base(void)
 /* call_server listens for incoming ISAKMP packets and Whack messages,
  * and handles timer events.
  */
-void call_server(void)
+void call_server(char *conffile)
 {
 	init_hash_table(&pids_hash_table);
 
@@ -1442,6 +1442,8 @@ void call_server(void)
 		char *newargv[] = { DISCARD_CONST(char *, "addconn"),
 				    DISCARD_CONST(char *, "--ctlsocket"),
 				    DISCARD_CONST(char *, ctl_addr.sun_path),
+				    DISCARD_CONST(char *, "--config"),
+				    DISCARD_CONST(char *, conffile),
 				    DISCARD_CONST(char *, "--autoall"), NULL };
 		char *newenv[] = { NULL };
 #if USE_VFORK
