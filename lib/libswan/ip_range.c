@@ -136,7 +136,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	const char *high;
 	size_t hlen;
 	const char *oops;
-	err_t er;
+	err_t er = NULL;
 
 	zero(dst);
 	ip_range tmp = *dst; /* clear it */
