@@ -114,7 +114,11 @@ static void dbg_log_dns_question(struct p_dns_req *dnsr,
 		}
 	}
 
-	DBG(DBG_DNS, DBG_log("DNS QUESTION %s", ldns_buffer_begin(output)));
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "DNS QUESTION ");
+		jam_sanitized_bytes(buf, ldns_buffer_begin(output),
+				    ldns_buffer_position(output));
+	}
 	ldns_buffer_free(output);
 }
 
