@@ -16,3 +16,5 @@ s/  / /g
 /^UID="root" AUID="unset"$/d
 # rhel and upstream diff in printed auth algo 0
 s/auth=0/auth=OAKLEY__0/g
+# and embedded group separators
+s/ res=\([a-z]*\)'\o035/res=\1'^]/
