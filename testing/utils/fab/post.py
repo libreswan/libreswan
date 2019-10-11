@@ -346,6 +346,7 @@ class TestResult:
                 self.issues.add(Issues.OUTPUT_TRUNCATED, host_name)
                 self.resolution.unresolved()
 
+
             # Sanitize what ever output there is and save it.
             #
             # Even when the output is seemingly truncated this is
@@ -370,6 +371,13 @@ class TestResult:
 
             if self.grep(sanitized_output, r"\(null\)"):
                 self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.resolution.failed()
+
+            if self.grep(sanitized_output, r"[^ -~\r\n\t]"):
+                # Console contains \r\n; this won't detect \n embedded
+                # in the middle of a log line.  Audit emits embedded
+                # escapes!
+                self.issues.add(Issues.ISCNTRL, host_name)
                 self.resolution.failed()
 
             expected_output_path = test.testing_directory("pluto", test.name,
