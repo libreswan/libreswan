@@ -515,16 +515,14 @@ static void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg UNUSED,
 			ntohs(((const struct sockaddr_in *)dsta)->sin_port);
 
 		DBG(DBG_NATT, {
-			char text_said[SATOT_BUF];
+			said_buf text_said;
 			ip_said said;
 			ipstr_buf bs;
 			ipstr_buf bd;
 
-			initsaid(&nfo.src, nfo.sa->sadb_sa_spi, SA_ESP,
-				&said);
-			satot(&said, 0, text_said, SATOT_BUF);
+			said = said3(&nfo.src, nfo.sa->sadb_sa_spi, SA_ESP);
 			DBG_log("new klips mapping %s %s:%d %s:%d",
-				text_said,
+				str_said(&said, 0, &text_said),
 				ipstr(&nfo.src, &bs), nfo.sport,
 				ipstr(&nfo.dst, &bd), nfo.dport);
 		});
@@ -912,7 +910,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      const ip_subnet *that_client,
 		      ipsec_spi_t cur_spi UNUSED,
 		      ipsec_spi_t new_spi,
-		      int sa_proto UNUSED,
+		      const struct ip_protocol *unused_sa_proto UNUSED,
 		      unsigned int transport_proto,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
@@ -1407,7 +1405,6 @@ bool pfkey_shunt_eroute(const struct connection *c,
 bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 		      unsigned op, const char *opname)
 {
-	unsigned int inner_proto;
 	enum eroute_type inner_esatype;
 	ipsec_spi_t inner_spi;
 	struct pfkey_proto_info proto_info[4];
@@ -1422,7 +1419,7 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 	proto_info[i].proto = 0;
 	tunnel = FALSE;
 
-	inner_proto = 0;
+	const struct ip_protocol *inner_proto = NULL;
 	inner_esatype = ET_UNSPEC;
 	inner_spi = 0;
 
@@ -1815,7 +1812,7 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 			char buf[1024];
 			char *line;
 			char text_said[SATOT_BUF];
-			uint8_t proto = 0;
+			const struct ip_protocol *proto = NULL;
 			ip_address dst;
 			ip_said said;
 			ipsec_spi_t spi = 0;
@@ -1838,8 +1835,9 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 				break;
 			}
 
-			initsaid(&dst, spi, proto, &said);
-			satot(&said, 'x', text_said, SATOT_BUF);
+			said = said3(&dst, spi, proto);
+			jambuf_t jam = ARRAY_AS_JAMBUF(text_said);
+			jam_said(&jam, &said, 'x');
 
 			line = fgets(buf, sizeof(buf), f);
 			if (line == NULL) {

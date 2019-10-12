@@ -2196,19 +2196,15 @@ void fmt_state(struct state *st, const monotime_t now,
 		state_buf2[0] = '\0';   /* default to empty */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		char lastused[40];      /* should be plenty long enough */
-		char buf[SATOT_BUF * 6 + 1];
-		char *p = buf;
+		char saids_buf[(1 + SATOT_BUF) * 6];
+		jambuf_t buf = ARRAY_AS_JAMBUF(saids_buf);
 
-#	define add_said(adst, aspi, aproto) { \
-		ip_said s; \
-		\
-		initsaid(adst, aspi, aproto, &s); \
-		if (p < &buf[sizeof(buf) - 1]) \
-		{ \
-			*p++ = ' '; \
-			p += satot(&s, 0, p, &buf[sizeof(buf)] - p) - 1; \
-		} \
-}
+#	define add_said(ADST, ASPI, APROTO)				\
+		{							\
+			ip_said s = said3(ADST, ASPI, APROTO);		\
+			jam(&buf, " ");					\
+			jam_said(&buf, &s, 0);				\
+		}
 
 		/*
 		 * XXX - mcr last used is really an attribute of
@@ -2227,7 +2223,6 @@ void fmt_state(struct state *st, const monotime_t now,
 		       snprintf(traffic_buf, sizeof(traffic_buf) - 1,
 				"Traffic:");
 
-		*p = '\0';
 		if (st->st_ah.present) {
 			add_said(&c->spd.that.host_addr, st->st_ah.attrs.spi,
 				 SA_AH);
@@ -2330,7 +2325,7 @@ void fmt_state(struct state *st, const monotime_t now,
 			st->st_serialno,
 			c->name, inst,
 			lastused,
-			buf,
+			saids_buf,
 			st->st_ref,
 			st->st_refhim,
 			traffic_buf,

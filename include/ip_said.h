@@ -22,10 +22,12 @@
 #include "ip_endpoint.h"
 #include "libreswan.h"		/* for ipsec_spi_t */
 #include "jambuf.h"
+#include "ip_protocol.h"
 
 /*
  * to identify an SA, we need
  */
+
 typedef struct {
 	/*
 	 * destination host; no port
@@ -37,6 +39,7 @@ typedef struct {
 	 * session which generates the ACQUIRE message.
 	 */
 	ip_address dst;
+
 	/*
 	 * 32-bit SPI, assigned by the destination host; or one of the
 	 * below magic values.
@@ -57,19 +60,25 @@ typedef struct {
 	/*
 	 * protocol
 	 *
-	 * See list below; where does this magic come from?
-	 *
-	 * Don't confuse this with the type of the above address.  Why
-	 * do these #defines seem to be duplicates of other values.
+	 * Don't confuse this with the IP version of the above
+	 * address.
 	 */
-#               define  SA_ESP  50      /* IPPROTO_ESP */
-#               define  SA_AH   51      /* IPPROTO_AH */
-#               define  SA_IPIP 4       /* IPPROTO_IPIP */
-#               define  SA_COMP 108     /* IPPROTO_COMP */
-#               define  SA_INT  61      /* IANA reserved for internal use */
-	int proto;
+#define SA_ICMP &ip_protocol_unspec
+#define SA_IPIP &ip_protocol_ipip
+#define SA_ESP &ip_protocol_esp
+#define SA_AH &ip_protocol_ah
+#define SA_COMP &ip_protocol_comp
+#define SA_INT &ip_protocol_int
+	const struct ip_protocol *proto;
 
 } ip_said;
+
+/*
+ * Constructors
+ */
+
+ip_said said3(const ip_address *address, ipsec_spi_t spi/*network-byte-order*/,
+	      const struct ip_protocol *proto);
 
 /*
  * Formatting
@@ -96,9 +105,5 @@ ip_address said_address(const ip_said *said);
 extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
 extern size_t satot(const ip_said *src, int format, char *bufptr, size_t buflen);
 #define SATOT_BUF       sizeof(said_buf)
-
-/* initializations */
-extern void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,
-	      ip_said *dst);
 
 #endif

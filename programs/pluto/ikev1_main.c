@@ -2217,15 +2217,11 @@ void send_v1_delete(struct state *st)
 		}
 
 		if (st->st_ah.present) {
-			ns->spi = st->st_ah.our_spi;
-			ns->dst = st->st_connection->spd.this.host_addr;
-			ns->proto = PROTO_IPSEC_AH;
+			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_ah.our_spi, SA_AH);
 			ns++;
 		}
 		if (st->st_esp.present) {
-			ns->spi = st->st_esp.our_spi;
-			ns->dst = st->st_connection->spd.this.host_addr;
-			ns->proto = PROTO_IPSEC_ESP;
+			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_ah.our_spi, SA_ESP);
 			ns++;
 		}
 
@@ -2291,7 +2287,7 @@ void send_v1_delete(struct state *st)
 				.isad_np = ns == said ?
 					ISAKMP_NEXT_NONE : ISAKMP_NEXT_D,
 				.isad_spisize = sizeof(ipsec_spi_t),
-				.isad_protoid = ns->proto,
+				.isad_protoid = ns->proto->ikev1,
 				.isad_nospi = 1,
 			};
 

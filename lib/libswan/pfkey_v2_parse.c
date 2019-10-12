@@ -72,7 +72,7 @@ extern int debug_pfkey;
 #define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
 
 static struct satype_tbl {
-	uint8_t proto;
+	const struct ip_protocol *proto;
 	uint8_t satype;
 	char *name;
 } satype_tbl[] = {
@@ -94,7 +94,7 @@ static struct satype_tbl {
 	{ 0,            0,                      "UNKNOWN" }
 };
 
-uint8_t satype2proto(uint8_t satype)
+const struct ip_protocol *satype2proto(uint8_t satype)
 {
 	int i = 0;
 
@@ -103,7 +103,7 @@ uint8_t satype2proto(uint8_t satype)
 	return satype_tbl[i].proto;
 }
 
-uint8_t proto2satype(uint8_t proto)
+uint8_t proto2satype(const struct ip_protocol *proto)
 {
 	int i = 0;
 
@@ -1291,10 +1291,10 @@ int pfkey_msg_parse(struct sadb_msg *pfkey_msg,
 		} else {
 			DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
 				  "pfkey_msg_parse: "
-				  "satype %d(%s) conversion to proto gives %d for msg_type %d(%s).\n",
+				  "satype %d(%s) conversion to proto gives %s for msg_type %d(%s).\n",
 				  pfkey_msg->sadb_msg_satype,
 				  satype2name(pfkey_msg->sadb_msg_satype),
-				  satype2proto(pfkey_msg->sadb_msg_satype),
+				  satype2proto(pfkey_msg->sadb_msg_satype)->name,
 				  pfkey_msg->sadb_msg_type,
 				  pfkey_v2_sadb_type_string(pfkey_msg->
 							    sadb_msg_type));

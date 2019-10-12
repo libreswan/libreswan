@@ -85,7 +85,7 @@ unsigned char *iv = NULL, *enckey = NULL, *authkey = NULL;
 size_t ivlen = 0, enckeylen = 0, authkeylen = 0;
 ip_address edst, dst, src;
 static const struct ip_info *address_family = NULL;
-unsigned char proto = 0;
+const struct ip_protocol *proto = NULL;
 int alg = 0;
 
 #include <assert.h>
@@ -1244,7 +1244,7 @@ int main(int argc, char *argv[])
 					progname);
 				exit(1);
 			}
-			initsaid(&edst, htonl(spi), proto, &said);
+			said = said3(&edst, htonl(spi), proto);
 		} else {
 			proto = said.proto;
 			spi = ntohl(said.spi);

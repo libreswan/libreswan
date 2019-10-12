@@ -76,14 +76,20 @@ extern const struct pfkey_proto_info null_proto_info[2];
 
 struct sadb_msg;
 
-/* replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal SADB_SATYPE values */
+/*
+ * replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal SADB_SATYPE values
+ *
+ * XXX: Seems largely redundant.  Only place that eroute and
+ * ip_protocol have different "values" is when netkey is inserting a
+ * shunt - and that looks like a bug.
+ */
 enum eroute_type {
 	ET_UNSPEC = 0,
-	ET_AH    = SA_AH,       /* (51)  authentication */
-	ET_ESP   = SA_ESP,      /* (50)  encryption/auth */
-	ET_IPCOMP= SA_COMP,     /* (108) compression */
-	ET_INT   = SA_INT,      /* (61)  internal type */
-	ET_IPIP  = SA_IPIP,     /* (4)   turn on tunnel type */
+	ET_AH    = 51,	/* SA_AH,      (51)  authentication */
+	ET_ESP   = 50,	/* SA_ESP,     (50)  encryption/auth */
+	ET_IPCOMP= 108,	/* SA_COMP,    (108) compression */
+	ET_INT   = 61,	/* SA_INT,     (61)  internal type */
+	ET_IPIP  = 4,	/* SA_IPIP,    (4)   turn on tunnel type */
 };
 #define esatype2proto(X) ((int)(X))
 #define proto2esatype(X) ((enum eroute_type)(X))
@@ -106,7 +112,7 @@ struct kernel_sa {
 	bool nopmtudisc;
 	uint32_t tfcpad;
 	ipsec_spi_t spi;
-	unsigned proto;
+	const struct ip_protocol *proto;
 	unsigned int transport_proto;
 	enum eroute_type esatype;
 	unsigned replay_window;
@@ -196,7 +202,7 @@ struct kernel_ops {
 			   const ip_subnet *that_client,
 			   ipsec_spi_t cur_spi,
 			   ipsec_spi_t new_spi,
-			   int sa_proto,
+			   const struct ip_protocol *sa_proto,
 			   unsigned int transport_proto,
 			   enum eroute_type satype,
 			   const struct pfkey_proto_info *proto_info,
@@ -228,7 +234,7 @@ struct kernel_ops {
 		       uint64_t *add_time);
 	ipsec_spi_t (*get_spi)(const ip_address *src,
 			       const ip_address *dst,
-			       int proto,
+			       const struct ip_protocol *proto,
 			       bool tunnel_mode,
 			       reqid_t reqid,
 			       ipsec_spi_t min,
@@ -391,7 +397,7 @@ extern ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective
 
 struct state;   /* forward declaration of tag */
 extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
-				 int proto,
+				 const struct ip_protocol *proto,
 				 const struct spd_route *sr,
 				 bool tunnel_mode);
 extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode);
@@ -407,7 +413,7 @@ extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
 extern bool migrate_ipsec_sa(struct state *st);
 extern bool del_spi(ipsec_spi_t spi,
-		    int proto,
+		    const struct ip_protocol *proto,
 		    const ip_address *src,
 		    const ip_address *dest);
 
@@ -415,7 +421,8 @@ extern bool del_spi(ipsec_spi_t spi,
 extern bool eroute_connection(const struct spd_route *sr,
 			      ipsec_spi_t cur_spi,
 			      ipsec_spi_t new_spi,
-			      int proto, enum eroute_type esatype,
+			      const struct ip_protocol *proto,
+			      enum eroute_type esatype,
 			      const struct pfkey_proto_info *proto_info,
 			      uint32_t sa_priority,
 			      const struct sa_marks *sa_marks,
@@ -459,7 +466,7 @@ extern bool raw_eroute(const ip_address *this_host,
 		       const ip_subnet *that_client,
 		       ipsec_spi_t cur_spi,
 		       ipsec_spi_t new_spi,
-		       int sa_proto,
+		       const struct ip_protocol *sa_proto,
 		       unsigned int transport_proto,
 		       enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
@@ -475,6 +482,6 @@ extern bool raw_eroute(const ip_address *this_host,
 
 extern deltatime_t bare_shunt_interval;
 extern void set_text_said(char *text_said, const ip_address *dst,
-			  ipsec_spi_t spi, int sa_proto);
+			  ipsec_spi_t spi, const struct ip_protocol *sa_proto);
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

@@ -60,7 +60,6 @@
 #include "ikev2.h"
 #include "rnd.h"
 #include "ikev2_message.h"		/* for build_ikev2_critical() */
-
 #include "nat_traversal.h"
 
 /*
@@ -2131,13 +2130,13 @@ struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child, lset_
 
 ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy)
 {
-	int ipprotoid;
+	const struct ip_protocol *ipprotoid;
 	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
 	case POLICY_ENCRYPT:
-		ipprotoid = IPPROTO_ESP;
+		ipprotoid = SA_ESP;
 		break;
 	case POLICY_AUTHENTICATE:
-		ipprotoid = IPPROTO_AH;
+		ipprotoid = SA_AH;
 		break;
 	default:
 		bad_case(policy);

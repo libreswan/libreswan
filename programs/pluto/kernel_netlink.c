@@ -477,7 +477,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			const ip_subnet *that_client,
 			ipsec_spi_t cur_spi,	/* current SPI */
 			ipsec_spi_t new_spi,	/* new SPI */
-			int sa_proto,
+			const struct ip_protocol *sa_proto,
 			unsigned int transport_proto,
 			enum eroute_type esatype,
 			const struct pfkey_proto_info *proto_info,
@@ -831,7 +831,7 @@ static void  set_migration_attr(const struct kernel_sa *sa,
 	ip2xfrm(sa->nsrc, &m->new_saddr);
 	ip2xfrm(sa->ndst, &m->new_daddr);
 
-	m->proto = sa->proto;
+	m->proto = sa->proto->protoid;
 	m->mode = XFRM_MODE_TUNNEL;  /* AA_201705 hard coded how to figure this out */
 	m->reqid = sa->reqid;
 	m->old_family = m->new_family = address_type(sa->src)->af;
@@ -845,7 +845,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	const uint8_t natt_type = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ?
 		ESPINUDP_WITH_NON_ESP : 0;
 
-	unsigned proto;
+	const struct ip_protocol *proto;
 	struct ipsec_proto_info *proto_info;
 
 	if (st->st_esp.present) {
@@ -1570,7 +1570,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 
 	req.id.spi = sa->spi;
 	req.id.family = addrtypeof(sa->src);
-	req.id.proto = sa->proto;
+	req.id.proto = sa->proto->protoid;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
@@ -2011,7 +2011,7 @@ static void netlink_process_msg(int fd)
 
 static ipsec_spi_t netlink_get_spi(const ip_address *src,
 				const ip_address *dst,
-				int proto,
+				const struct ip_protocol *proto,
 				bool tunnel_mode,
 				reqid_t reqid,
 				ipsec_spi_t min,
@@ -2032,7 +2032,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	ip2xfrm(dst, &req.spi.info.id.daddr);
 	req.spi.info.mode = tunnel_mode;
 	req.spi.info.reqid = reqid;
-	req.spi.info.id.proto = proto;
+	req.spi.info.id.proto = proto->protoid;
 	req.spi.info.family = addrtypeof(src);
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.spi)));
@@ -2068,7 +2068,6 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 			unsigned op, const char *opname)
 {
 	struct connection *c = st->st_connection;
-	unsigned int inner_proto;
 	enum eroute_type inner_esatype;
 	ipsec_spi_t inner_spi;
 	struct pfkey_proto_info proto_info[4];
@@ -2083,7 +2082,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 	proto_info[i].proto = 0;
 	tunnel = FALSE;
 
-	inner_proto = 0;
+	const struct ip_protocol *inner_proto = NULL;
 	inner_esatype = ET_UNSPEC;
 	inner_spi = 0;
 
@@ -2267,7 +2266,15 @@ static bool netlink_shunt_eroute(const struct connection *c,
 
 	snprintf(buf2, sizeof(buf2), "eroute_connection %s", opname);
 
-	int sa_proto = c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ?
+	/*
+	 * XXX: the two calls below to netlink_raw_eroute() (not
+	 * raw_eroute()) seems to be the only place where SA_PROTO and
+	 * ESATYPE disagree - when ENCAPSULATION_MODE_TRANSPORT
+	 * SA_PROTO==SA_ESP and ESATYPE==ET_INT!?!  Looking in the
+	 * function there's a weird test involving both SA_PROTO and
+	 * ESATYPE.
+	 */
+	const struct ip_protocol *sa_proto = c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ?
 		SA_ESP : SA_INT;
 
 	if (!netlink_raw_eroute(&sr->this.host_addr, &sr->this.client,
@@ -2583,7 +2590,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 
 	req.id.spi = sa->spi;
 	req.id.family = addrtypeof(sa->src);
-	req.id.proto = sa->proto;
+	req.id.proto = sa->proto->protoid;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
