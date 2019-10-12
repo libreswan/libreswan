@@ -41,9 +41,10 @@ uint32_t ntohl_address(const ip_address *a)
 {
 	uint32_t u;
 	shunk_t s = address_as_shunk(a);
-	if  (s.len == sizeof(u)) { /* IPv6 address */
+	if (address_type(a) == &ipv4_info) {
 		memcpy(&u, s.ptr, s.len);
 	} else  {
+		/* IPv6 take bits 96 - 128 to compute size */
 		s.ptr += (s.len - sizeof(u));
 		memcpy(&u, s.ptr, sizeof(u));
 	}
