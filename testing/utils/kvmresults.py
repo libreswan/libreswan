@@ -52,6 +52,9 @@ def main():
                                      epilog="By default this tool uses 'sanitizer.sh' and 'diff' to generate up-to-the-minuite test results (the previously generated files 'OUTPUT/*.console.txt' and 'OUTPUT/*.console.diff' are ignored).  While this makes things a little slower, it has the benefit of always providing the most up-to-date and correct results (for instance, changes to known-good files are reflected immediately).  SIGUSR1 will dump all thread stacks")
     parser.add_argument("--verbose", "-v", action="count", default=0)
 
+    parser.add_argument("--exit-ok", action="store_true",
+                        help=("return a zero exit status; normally, when there are failures, a non-zero exit status is returned"))
+
     parser.add_argument("--quick", action="store_true",
                         help=("Use the previously generated '.console.txt' and '.console.diff' files"))
 
@@ -112,6 +115,7 @@ def main():
         logger.info("  Json: %s", args.json)
         logger.info("  Quick: %s", args.quick)
         logger.info("  Update: %s", args.update)
+        logger.info("  Exit OK: %s", args.exit_ok)
         testsuite.log_arguments(logger, args)
         logutil.log_arguments(logger, args)
         skip.log_arguments(logger, args)
@@ -240,7 +244,9 @@ def results(logger, tests, baseline, args, result_stats):
     publish.json_status(logger, args, "finished")
 
     # exit code
-    if failures:
+    if args.exit_ok:
+        return 0
+    elif failures:
         return 1
     else:
         return 0

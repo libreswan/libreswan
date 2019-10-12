@@ -245,6 +245,7 @@ $(WEB_RESULTSDIR)/index.html: $(WEB_SOURCES) | $(WEB_RESULTSDIR)
 
 $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
 	$(WEB_UTILSDIR)/kvmresults.py \
+		--exit-ok \
 		--quick \
 		--test-kind '' \
 		--test-status '' \
