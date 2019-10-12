@@ -25,6 +25,9 @@
 typedef struct {
 	ip_address start;
 	ip_address end;
+	uint32_t size; /* number of addresses within range */
+	bool truncated; /* true when size is truncated to UINT32_MAX IPv6 */
+	bool is_subnet; /* hint for jam_range */
 } ip_range;
 
 /* caller knows best */

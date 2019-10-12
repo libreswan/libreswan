@@ -126,49 +126,68 @@ int iprange_bits(ip_address low, ip_address high)
 	return (n - lastnz) * 8 - bo;
 }
 
-/*
- * ttorange - convert text v4 "addr1-addr2" to address_start address_end
- *            convert text v6 "subnet/mask" (prefix len 96-128) to to address_start address_end
- */
-err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
+static err_t extract_ends(const char *src, const struct ip_info *afi, ip_range *dst)
 {
 	const char *dash;
 	const char *high;
 	size_t hlen;
 	const char *oops;
+	size_t srclen = strlen(src);
+
+	dash = memchr(src, '-', srclen);
+	if (dash == NULL)
+		return "not ipv4 address range with '-' or ipv6 subnet";
+
+	high = dash + 1;
+	hlen = srclen - (high - src);
+
+	/* extract start ip address */
+	oops = ttoaddr_num(src, dash - src, afi->af, &dst->start);
+	if (oops != NULL)
+		return oops;
+
+	/* extract end ip address */
+	oops = ttoaddr_num(high, hlen, afi->af, &dst->end);
+	if (oops != NULL)
+		return oops;
+
+	return NULL;
+}
+
+/*
+ * ttorange - convert text v4 "addr1-addr2" to address_start address_end
+ *            convert text v6 "subnet/mask" to address_start address_end v6 truncate size UINT32_MAX
+ */
+err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
+{
 	err_t er = NULL;
 
 	zero(dst);
 	ip_range tmp = *dst; /* clear it */
 
-	size_t srclen = strlen(src);
-
 	ip_subnet v6_subnet;
 	er = ttosubnet(src, 0, AF_INET6, &v6_subnet);
 	if (er == NULL) {
-		if (v6_subnet.maskbits >= 96 && v6_subnet.maskbits <= 128)
-			tmp = range_from_subnet(&v6_subnet);
-		else
-			return "ipv6 support prefix length /96 to /128";
+		if (v6_subnet.maskbits < IPV6_MIN_POOL_PREFIX_LEN)
+			tmp.truncated = true;
+		tmp = range_from_subnet(&v6_subnet);
+		tmp.is_subnet = true;
+		afi = &ipv6_info;
 	} else  {
-		if (afi == NULL)
+		if (afi == NULL) {
 			afi = &ipv4_info;
-		dash = memchr(src, '-', srclen);
-		if (dash == NULL)
-			return "not ipv4 address range with '-' or ipv6 subnet";
+			if (extract_ends(src, afi, &tmp) != NULL) {
+				afi = &ipv6_info;
+				er = extract_ends(src, afi, &tmp);
+				if (er != NULL)
+					return er; /* v4 error is ignored */
 
-		high = dash + 1;
-		hlen = srclen - (high - src);
-
-		/* extract start ip address */
-		oops = ttoaddr_num(src, dash - src, afi->af, &tmp.start);
-		if (oops != NULL)
-			return oops;
-
-		/* extract end ip address */
-		oops = ttoaddr_num(high, hlen, afi->af, &tmp.end);
-		if (oops != NULL)
-			return oops;
+			}
+		} else {
+			er = extract_ends(src, afi, &tmp);
+			if (er != NULL)
+				return er;
+		}
 	}
 
 	if (addrcmp(&tmp.start, &tmp.end) > 0) {
@@ -177,9 +196,18 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 
 	if (address_is_any(&tmp.start) ||
 	    address_is_any(&tmp.end)) {
-		/* XXX: IPv6 netral error? */
 		return "'0.0.0.0 or ::0' not allowed in range";
 	}
+
+	if(afi == &ipv6_info) {
+		int prefix_len = ipv6_info.mask_cnt - iprange_bits(tmp.start, tmp.end);
+		if (prefix_len < IPV6_MIN_POOL_PREFIX_LEN)
+			tmp.truncated = true;
+	}
+
+	tmp.size = (ntohl_address(&tmp.end) - ntohl_address(&tmp.start));
+	if (!tmp.truncated && tmp.size < UINT32_MAX)
+		tmp.size++;
 
 	/* We have validated the range. Now put bounds in dst. */
 	*dst = tmp;
@@ -189,13 +217,13 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 void jam_range(jambuf_t *buf, const ip_range *range)
 {
 	jam_address(buf, &range->start);
-	if (range_type(range) == &ipv4_info) {
-		jam(buf, "-");
-		jam_address(buf, &range->end);
-	} else {
+	if (range_type(range) == &ipv6_info && range->is_subnet) {
 		ip_subnet tmp_subnet;
 		rangetosubnet(&range->start, &range->end, &tmp_subnet);
 		jam(buf, "/%u", tmp_subnet.maskbits);
+	} else {
+		jam(buf, "-");
+		jam_address(buf, &range->end);
 	}
 }
 
