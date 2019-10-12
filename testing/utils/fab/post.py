@@ -484,7 +484,10 @@ class TestResult:
             return None
         group = match.group(len(match.groups()))
         self.logger.debug("grub '%s' matched '%s'", regex, group)
-        return cast(group)
+        # feed utf-8 into cast
+        result = cast(group.decode())
+        self.logger.debug("greping result %s", result)
+        return result
 
     def start_time(self):
         if not self._start_time:
