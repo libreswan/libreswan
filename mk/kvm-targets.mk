@@ -341,13 +341,10 @@ $(KVM_TEST_CLEAN_TARGETS):
 
 .PHONY: kvm-results
 kvm-results:
-	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS)
-		$(if $(KVM_BASELINE),--baseline $(KVM_BASELINE))
+	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE))
 .PHONY: kvm-diffs
 kvm-diffs:
-	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) \
-		$(if $(KVM_BASELINE),--baseline $(KVM_BASELINE)) \
-		--print diffs
+	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE)) --print diffs
 
 .PHONY: kvm-test-modified kvm-check-modified
 KVM_MODIFIED_TESTS = $$(git status testing/pluto | awk '/modified:/ { print $$2 }' | cut -d/ -f1-3 | sort -u)
