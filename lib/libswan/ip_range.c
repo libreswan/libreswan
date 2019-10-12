@@ -143,21 +143,14 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 
 	size_t srclen = strlen(src);
 
-	if (afi == NULL || afi->af == AF_INET6) {
-		ip_subnet v6_subnet;
-		er = ttosubnet(src, 0, AF_INET6, &v6_subnet);
-		if (er == NULL) {
-			if (v6_subnet.maskbits >= 96 && v6_subnet.maskbits <= 128)
-				tmp = range_from_subnet(&v6_subnet);
-			else
-				return "ipv6 support prefix length /96 to /128";
-		} else {
-			if (afi != NULL && afi->af == AF_INET6) /* IPv6 only, failed give up */
-				return er;
-		}
-	}
-
-	if ((afi == NULL || afi->af == AF_INET) && er != NULL) {
+	ip_subnet v6_subnet;
+	er = ttosubnet(src, 0, AF_INET6, &v6_subnet);
+	if (er == NULL) {
+		if (v6_subnet.maskbits >= 96 && v6_subnet.maskbits <= 128)
+			tmp = range_from_subnet(&v6_subnet);
+		else
+			return "ipv6 support prefix length /96 to /128";
+	} else  {
 		if (afi == NULL)
 			afi = &ipv4_info;
 		dash = memchr(src, '-', srclen);
