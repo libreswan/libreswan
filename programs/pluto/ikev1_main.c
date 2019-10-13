@@ -2221,7 +2221,7 @@ void send_v1_delete(struct state *st)
 			ns++;
 		}
 		if (st->st_esp.present) {
-			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_ah.our_spi, SA_ESP);
+			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_esp.our_spi, SA_ESP);
 			ns++;
 		}
 
