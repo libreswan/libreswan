@@ -116,6 +116,8 @@ static void check_iprange_bits(void)
 		{ 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:ffff", 16 },
 		{ 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:fff", 12 },
 		{ 6, "1:2:3:4:5:6:7:f0", "1:2:3:4:5:6:7:ff", 4 },
+		{ 6, "2000::", "3fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 125},
+		{ 6, "::", "7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 127},
 	};
 
 	const char *oops;
@@ -166,23 +168,36 @@ static void check_ttorange__to__str_range(void)
 		const char *out;
 	} tests[] = {
 		/* smallest */
+		{ 6, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 		{ 6, "::1-::1", 1, "::1-::1", },
 		{ 6, "::2/128", 1, "::2/128", },
 		{ 4, "1.2.3.4-1.2.3.4", 1, "1.2.3.4-1.2.3.4", },
 		/* normal */
-		{ 4, "1.2.3.0-1.2.3.9", 10, "1.2.3.0-1.2.3.9", },
 		{ 6, "::1-::2", 2, "::1-::2", },
+		{ 4, "1.2.3.0-1.2.3.9", 10, "1.2.3.0-1.2.3.9", },
 		{ 6, "1:0:3:0:0:0:0:2/128", 1, "1:0:3::2/128", },
 		{ 6, "2001:db8:0:9:1:2::/112", 65536, "2001:db8:0:9:1:2::/112", },
 		{ 6, "abcd:ef01:2345:6789:0:00a:000:20/128", 1, "abcd:ef01:2345:6789:0:a:0:20/128", },
+		{ 6, "2001:db8:0:8::/112", 65536, "2001:db8:0:8::/112",},
+		{ 6, "2001:db8:0:9:ffff:fffe::-2001:db8:0:9:ffff:ffff::", 4294967295,"2001:db8:0:9:ffff:fffe::-2001:db8:0:9:ffff:ffff::", },
+		{ 6, "2001:db8:0:9:ffff:ffff:0:2-2001:db8:0:9:ffff:ffff:ffff:ffff", 4294967294, "2001:db8:0:9:ffff:ffff:0:2-2001:db8:0:9:ffff:ffff:ffff:ffff", },
+		{ 6, "2001:db8:0:9::1-2001:db8:0:9:0:0:ffff:ffff", 4294967295, "2001:db8:0:9::1-2001:db8:0:9::ffff:ffff", },
+		{ 6, "2001:db8:0:1:2:ffff:0:2-2001:db8:0:1:2:ffff:ffff:fffe", 4294967293, "2001:db8:0:1:2:ffff:0:2-2001:db8:0:1:2:ffff:ffff:fffe", },
+		{ 6, "2001:db8:0:7::/97", 2147483648, "2001:db8:0:7::/97", },
+		/* truncated ranges */
 		{ 6, "2001:db8:0:1::-2001:db8:0:1:0:0:ffff:ffff", 4294967295, "2001:db8:0:1::-2001:db8:0:1::ffff:ffff", },
-		{ 6, "2001:db8:0:2::-2001:db8:0:2:0:0:ffff:ffff", 4294967295, "2001:db8:0:2::-2001:db8:0:2::ffff:ffff", },
 		{ 6, "2001:db8:0:3::-2001:db8:0:3:0:ffff:ffff:ffff", 4294967295, "2001:db8:0:3::-2001:db8:0:3:0:ffff:ffff:ffff", },
 		{ 6, "2001:db8:0:4::/96", 4294967295, "2001:db8:0:4::/96", },
-		{ 6, "2001:db8:0:5::/96", 4294967295, "2001:db8:0:5::/96", },
 		{ 6, "2001:db8:0:6::/64", 4294967295, "2001:db8:0:6::/64", },
-		{ 6, "2001:db8:0:7::/97", 2147483648, "2001:db8:0:7::/97", },
-		{ 6, "2001:db8:0:8::/112", 65536, "2001:db8:0:8::/112", },
+		{ 6, "2001:db8::/32", 4294967295, "2001:db8::/32", },
+		{ 6, "2000::/3", 4294967295, "2000::/3", },
+		{ 6, "4000::/2", 4294967295, "4000::/2", },
+		{ 6, "8000::/1", 4294967295, "8000::/1", },
+		{ 6, "2001:db8:0:fffe::2-2001:db8:0:ffff::", 4294967294, "2001:db8:0:fffe::2-2001:db8:0:ffff::", },
+		{ 6, "2001:db8:0:1:2:fffe::-2001:db8:0:1:2:ffff:ffff:ffee", 4294967295, "2001:db8:0:1:2:fffe::-2001:db8:0:1:2:ffff:ffff:ffee", },
+		{ 6, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ 6, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967294, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 		/* wrong order */
 		{ 4, "1.2.3.4-1.2.3.3", -1, NULL, },
 		{ 6, "::2-::1", -1, NULL, },
@@ -236,9 +251,11 @@ static void check_ttorange__to__str_range(void)
 		}
 
 		if (t->pool > 0) {
-			if (t->pool != (long)r.size) {
+			uint32_t pool_size;
+			range_size(&r, &pool_size);
+			if (t->pool != (long)pool_size) {
 				FAIL_IN("pool_size gave %u, expecting %ld",
-					r.size, t->pool);
+					pool_size, t->pool);
 			}
 		}
 	}
