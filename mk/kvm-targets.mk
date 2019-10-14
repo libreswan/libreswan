@@ -346,14 +346,19 @@ kvm-results:
 kvm-diffs:
 	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE)) --print diffs
 
-.PHONY: kvm-test-modified kvm-check-modified
 KVM_MODIFIED_TESTS = $$(git status testing/pluto | awk '/modified:/ { print $$2 }' | cut -d/ -f1-3 | sort -u)
-kvm-test-modified kvm-check-modified:
+.PHONY: kvm-modified
+kvm-modified:
+	echo $(KVM_MODIFIED_TESTS)
+.PHONY: kvm-modified-test kvm-modified-check
+kvm-modified-test kvm-modified-check:
 	$(MAKE) kvm-test KVM_TESTS="$(KVM_MODIFIED_TESTS)"
-.PHONY: kvm-diff-modified
-kvm-diff-modified:
-	$(KVM_RESULTS) --print diffs $(KVM_MODIFIED_TESTS)
-
+.PHONY: kvm-modified-results
+kvm-modified-results:
+	$(KVMRESULTS) $(KVM_MODIFIED_TESTS)
+.PHONY: kvm-modified-diffs
+kvm-modified-diffs:
+	$(KVMRESULTS) --print diffs $(KVM_MODIFIED_TESTS)
 
 
 #
@@ -1272,10 +1277,11 @@ Standard targets and operations:
                         compare against KVM_BASELINE when defined
     kvm-diffs         - list the tests and their differences
                         compare against KVM_BASELINE when defined
-    kvm-check-modified
-                      - run any tests with modified files
-    kvm-diff-modified
-                      - list any modified tests and their differences
+    kvm-modified
+    kvm-modified-check
+    kvm-modified-results
+    kvm-modified-diffs
+                      - list/run/examine any tests with modified files
 
   To print make variables:
 
