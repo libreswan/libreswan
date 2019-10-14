@@ -25,8 +25,6 @@
 typedef struct {
 	ip_address start;
 	ip_address end;
-	uint32_t size; /* number of addresses within range */
-	bool truncated; /* true when size is truncated to UINT32_MAX IPv6 */
 	bool is_subnet; /* hint for jam_range */
 } ip_range;
 
@@ -63,5 +61,7 @@ bool range_is_specified(const ip_range *r);
  * ??? this really should use ip_range rather than a pair of ip_address values
  */
 int iprange_bits(ip_address low, ip_address high);
+
+extern bool range_size(ip_range *r, uint32_t *size);
 
 #endif

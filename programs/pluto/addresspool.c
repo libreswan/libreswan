@@ -37,6 +37,7 @@
 #include "addresspool.h"
 #include "monotime.h"
 #include "ip_address.h"
+#include "ip_range.h"
 
 struct entry {
 	unsigned prev;
@@ -184,6 +185,7 @@ struct lease {
 struct ip_pool {
 	unsigned pool_refcount;	/* reference counted! */
 	ip_range r;
+	uint32_t size; /* number of addresses within range */
 
 	unsigned nr_reusable;
 	struct list free_list;
@@ -256,7 +258,7 @@ static void DBG_pool(bool verbose, const struct ip_pool *pool,
 		va_end(args);
 		if (verbose) {
 			jam(buf, "; pool-refcount %u size %u leases %u in-use %u free %u reusable %u",
-			    pool->pool_refcount, pool->r.size, pool->nr_leases,
+			    pool->pool_refcount, pool->size, pool->nr_leases,
 			    pool->nr_in_use, pool->free_list.nr, pool->nr_reusable);
 		}
 	}
@@ -370,7 +372,7 @@ void rel_lease_addr(struct connection *c)
 	ip_address cp = subnet_prefix(&c->spd.that.client);
 	uint32_t i = ntohl_address(&cp) - ntohl_address(&pool->r.start);
 
-	passert(pool->nr_leases <= pool->r.size);
+	passert(pool->nr_leases <= pool->size);
 	passert(i < pool->nr_leases);
 	struct lease *lease = &pool->leases[i];
 
@@ -492,7 +494,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 	if (new_lease == NULL) {
 		if (IS_EMPTY(pool, free_list)) {
 			/* try to grow the address pool */
-			if (pool->nr_leases >= pool->r.size) {
+			if (pool->nr_leases >= pool->size) {
 				if (DBGP(DBG_BASE)) {
 					DBG_pool(true, pool, "no free address and no space to grow");
 				}
@@ -500,10 +502,10 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 			}
 			unsigned old_nr_leases = pool->nr_leases;
 			if (pool->nr_leases == 0) {
-				pool->nr_leases = min(1U, pool->r.size);
+				pool->nr_leases = min(1U, pool->size);
 				pool->leases = alloc_things(struct lease, pool->nr_leases, "leases");
 			} else {
-				pool->nr_leases = min(pool->nr_leases * 2, pool->r.size);
+				pool->nr_leases = min(pool->nr_leases * 2, pool->size);
 				resize_things(pool->leases, pool->nr_leases);
 			}
 			DBG_pool(false, pool, "growing address pool from %u to %u",
@@ -696,14 +698,14 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 
 		pool->pool_refcount = 0;
 		pool->r = *pool_range;
-		if (pool->r.truncated) {
+		if (range_size(&pool->r, &pool->size)) {
 			/*
 			 * uint32_t overflow, 2001:db8:0:3::/64 truncated to UINT32_MAX
 			 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
 			 */
-			dbg("WARNING addresspool size overflow truncated size to UINT32_MAX %u", UINT32_MAX);
+			dbg("WARNING addresspool size overflow truncated to %u", pool->size);
 		}
-		passert(pool->r.size > 0);
+		passert(pool->size > 0);
 
 		pool->nr_in_use = 0;
 		pool->nr_leases = 0;

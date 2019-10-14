@@ -357,8 +357,8 @@ typedef enum {
 
 #define PPK_ID_MAXLEN 64 /* fairly arbitrary */
 
-
-#define IPV6_MIN_POOL_PREFIX_LEN 96 /* < 96 will overflow size uint32_t */
+/* could overflow size uint32_t */
+#define IPV6_MIN_POOL_PREFIX_LEN 96
 
 /*
  * debugging settings: a set of selections for reporting These would

@@ -722,6 +722,12 @@ static bool validate_end(struct starter_conn *conn_st,
 		if (er != NULL)
 			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
 					addresspool, er);
+
+		if (address_type(&end->pool_range.start) == &ipv6_info &&
+				!end->pool_range.is_subnet) {
+			ERR_FOUND("bad IPv6 %saddresspool=%s not subnet", leftright,
+					addresspool);
+		}
 	}
 
 	if (end->options_set[KNCF_XAUTHSERVER] ||
