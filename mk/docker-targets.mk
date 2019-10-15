@@ -35,7 +35,7 @@ DOCKERFILE ?= $(D)/dockerfile
 SUDO_CMD ?= sudo
 PKG_CMD = $(shell test -f /usr/bin/dnf && echo /usr/bin/dnf || (test -f /usr/bin/yum && echo /usr/bin/yum || echo "no yum or dnf found" && exit 1))
 PKG_BUILDDEP = $(shell test -f /usr/bin/dnf && echo "/usr/bin/dnf builddep" || echo /usr/bin/yum-builddep )
-REPO_POWERTOOLS = $(shell test -f /etc/yum.repos.d/CentOS-PowerTools.repo && echo "--enablerepo=PowerTools" || echo "" )
+REPO_POWERTOOLS = $(shell grep -qE '^ID="centos"' /etc/os-release && echo "--enablerepo=PowerTools" || echo "" )
 PKG_INSTALL = $(SUDO_CMD) $(PKG_CMD) $(REPO_POWERTOOLS) install -y
 PKG_UPGRADE = $(SUDO_CMD) $(PKG_CMD) $(REPO_POWERTOOLS) upgrade -y
 PKG_DEBUGINFO_INSTALL = $(SUDO_CMD) $(PKG_CMD) $(REPO_POWERTOOLS) debuginfo-install -y
@@ -128,9 +128,10 @@ install-rpm-run-dep:
 	 $(PKG_INSTALL) --skip-broken $(RUN_RPMS)
 
 .PHONY: install-rpm-build-dep
+DEV_GROUP = $(shell grep -qE '^ID_LIKE="rhel' /etc/os-release && echo "development" || echo "development-tools")
 install-rpm-build-dep:
+	$(SUDO_CMD) $(PKG_CMD) groupinstall $(POWER_TOOLS) -y $(DEV_GROUP)
 	$(SUDO_CMD) $(PKG_BUILDDEP) $(REPO_POWERTOOLS) -y libreswan
-	$(SUDO_CMD) $(PKG_CMD) groupinstall -y "Development Tools"
 
 .PHONY: install-deb-dep
 # RUN_DEBS_OLD ?= $$(grep -qE 'jessie|xenial' /etc/os-release && echo "host iptables")
