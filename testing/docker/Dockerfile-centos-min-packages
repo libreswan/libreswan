@@ -1,6 +1,4 @@
-FROM docker.io/centos
 MAINTAINER "Antony Antony" <antony@phenome.org>
-ENV container docker
 RUN yum -y update;
 RUN yum -y install systemd; \
 (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
