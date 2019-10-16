@@ -140,7 +140,7 @@ ip_address subnet_blit(const ip_subnet *in,
  */
 #include "err.h"
 
-extern err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
+extern err_t ttosubnet(const char *src, size_t srclen, int af, int clash, ip_subnet *dst);
 extern void subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
 #define SUBNETTOT_BUF   sizeof(subnet_buf)
 extern err_t initsubnet(const ip_address *addr, int maskbits, int clash,

@@ -166,7 +166,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	ip_range tmp = *dst; /* clear it */
 
 	ip_subnet v6_subnet;
-	er = ttosubnet(src, 0, AF_INET6, &v6_subnet);
+	er = ttosubnet(src, 0, AF_INET6, '6', &v6_subnet);
 	if (er == NULL) {
 		tmp = range_from_subnet(&v6_subnet);
 		tmp.is_subnet = true;

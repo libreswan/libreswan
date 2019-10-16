@@ -14,6 +14,7 @@
  */
 
 #include "ip_subnet.h"
+#include "ip_info.h" 	/* ipv6_info */
 #include "lswlog.h"	/* for dbg() */
 
 /*
@@ -32,7 +33,8 @@ ip_subnet *dst;
 	int n;
 	int c;
 	unsigned m;
-	int die;
+	bool die = false;
+	bool warn = 0;
 
 	dst->addr = *addr;
 	chunk_t addr_chunk = address_as_chunk(&dst->addr);
@@ -48,6 +50,12 @@ ip_subnet *dst;
 	case 'x':
 		die = 1;
 		break;
+	case '6':
+		if (address_type(addr) == &ipv6_info)
+			die = 1;
+		warn = 1;
+		break;
+
 	default:
 		return "unknown clash-control value in initsubnet";
 	}
@@ -63,11 +71,14 @@ ip_subnet *dst;
 	c = count % 8;
 	if (n > 0 && c != 0)	/* partial byte */
 		m >>= c;
+
+	bool warning = false;
 	for (; n > 0; n--) {
 		if ((*p & m) != 0) {
 			if (die)
 				return "improper subnet, host-part bits on";
-
+			if (warn && !warning)
+				warning = true;
 			*p &= ~m;
 		}
 		m = 0xff;
@@ -75,6 +86,17 @@ ip_subnet *dst;
 	}
 
 	dst->maskbits = count;
+
+	if (warning) {
+		LSWLOG(buf) {
+			jam(buf, "WARNING:improper subnet mask, host-part bits on input ");
+			jam_address(buf, addr);
+			jam(buf, "/%d ", count);
+			jam(buf, " extracted subnet ");
+			jam_subnet(buf, dst);
+		}
+	}
+
 	return NULL;
 }
 
