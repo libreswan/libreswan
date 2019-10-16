@@ -2561,7 +2561,9 @@ class NS_IF():
                 self.name = None
 
         self.ipv4 = None
+        self.ipv6 = None
         self.gwv4 = None
+        self.gwv6 = None
         self.br = None
 
         if ifpre:
@@ -2594,46 +2596,66 @@ class NS_GuestNetwork():
 
         if hostname == "east":
             self.eth0.ipv4 = "192.0.2.254/24"
+            self.eth0.ipv6 = "2001:db8:0:2::254/64"
             if eth0_bridge:
                 self.eth0.br = "brswan02-" + self.tcsum
 
             self.eth1.ipv4 = "192.1.2.23/24"
             self.eth1.gwv4 = "192.1.2.254"
-            self.eth1.routes = ['route add 192.0.1.0/24 via 192.1.2.45']
+            self.eth1.ipv6 = "2001:db8:1:2::23/64"
+            self.eth1.gwv6  = "2001:db8:1:2::254"
+            self.eth1.routes = ['route add 192.0.1.0/24 via 192.1.2.45',
+                                'route add 2001:db8:0:1::/64 via 2001:db8:1:2::45']
             self.eth1.br = "brswan12-" + self.tcsum
 
         elif hostname == "west":
             self.eth0.ipv4 = "192.0.1.254/24"
+            self.eth0.ipv6 = "2001:db8:0:1::254/64"
             if eth0_bridge:
                 self.eth0.br = "brswan01-" + self.tcsum
 
             self.eth1.ipv4 = "192.1.2.45/24"
             self.eth1.gwv4 = "192.1.2.254"
-            self.eth1.routes = ['route add 192.0.2.0/24 via 192.1.2.23']
+            self.eth1.ipv6 = "2001:db8:1:2::45/64"
+            self.eth1.gwv6 = "2001:db8:1:2::254"
+            self.eth1.routes = ['route add 192.0.2.0/24 via 192.1.2.23',
+                                'route add 2001:db8:0:2::/64 via 2001:db8:1:2::23']
             self.eth1.br = "brswan12-" + self.tcsum
 
         elif hostname == "road":
             self.eth0.ipv4 = "192.1.3.209/24"
             self.eth0.gwv4 = "192.1.3.254"
+            self.eth0.ipv6 = "2001:db8:1:3::209/64"
+            self.eth0.gwv6  = "2001:db8:1:3::254"
             self.eth0.br = "brswan13-" + self.tcsum
 
         elif hostname == "north":
             self.eth0.ipv4 = "192.0.3.254/24"
+            self.eth0.ipv6 = "2001:db8:0:3::254/64"
             if eth0_bridge:
                 self.eth0.br = "brswan03-" + self.tcsum
 
             self.eth1.ipv4 = "192.1.3.33/24"
             self.eth1.gwv4 = "192.1.3.254"
+            self.eth1.ipv6 = "2001:db8:1:3::33/64"
+            self.eth1.gwv6  = "2001:db8:1:3::254"
             self.eth1.br = "brswan13-" + self.tcsum
 
         elif hostname == "nic":
             self.eth0.ipv4 = "192.1.2.254/24"
+            self.eth0.ipv6 = "2001:db8:1:2::254/64"
             self.eth0.br = "brswan12-" + self.tcsum
-            self.eth0.routes = ['route add 192.0.1.0/24 via 192.1.2.45', 'route add 192.0.2.0/24 via 192.1.2.23']
+            self.eth0.routes = ['route add 192.0.1.0/24 via 192.1.2.45',
+                                'route add 192.0.2.0/24 via 192.1.2.23'
+                                'route add 2001:db8:0:1::/64 via 2001:db8:1:2::45',
+                                'route add 2001:db8:0:2::/64 via 2001:db8:1:2::23']
 
             self.eth1.ipv4 = "192.1.3.254/24"
+            self.eth0.ipv6 = "2001:db8:1:3::254/64"
             self.eth1.br = "brswan13-" + self.tcsum
-            self.eth1.routes = ['route add 192.0.3.0/24 via 192.1.3.33']
+            self.eth1.routes = ['route add 192.0.3.0/24 via 192.1.3.33',
+                                'route add 2001:db8:0:3::/64 via 2001:db8:1:3::33']
+
         else:
             raise Exception("ERROR: unknown host name: '%s'" % hostname)
 
@@ -2706,7 +2728,10 @@ class NS_GuestNetwork():
         cmd = "%s -4 addr add %s dev %s" % (DEF.ip_c, eth.ipv4, eth.name)
         sudo_shell_run(cmd, self.shell)
 
-        cmd = "%s -4 link set %s up" % (DEF.ip_c, eth.name)
+        cmd = "%s -6 addr add %s dev %s" % (DEF.ip_c, eth.ipv6, eth.name)
+        sudo_shell_run(cmd, self.shell)
+
+        cmd = "%s link set %s up" % (DEF.ip_c, eth.name)
         sudo_shell_run(cmd, self.shell)
 
         if eth.br:
@@ -2729,6 +2754,11 @@ class NS_GuestNetwork():
 
         if eth.gwv4:
             cmd = "%s route add default via %s" % (DEF.ip_c, eth.gwv4)
+            if sudo_shell_run(cmd, self.shell):
+                return True
+
+        if eth.gwv6:
+            cmd = "%s route add default via %s" % (DEF.ip_c, eth.gwv6)
             if sudo_shell_run(cmd, self.shell):
                 return True
 
@@ -3547,7 +3577,7 @@ class Namespace:
             return True
         except subprocess.CalledProcessError as e:
             # this could be non fatal
-            logger.debug("%s ERROR %s %s", e.output)
+            logger.debug("ERROR %s", cmd)
 
         return False
 
