@@ -510,7 +510,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			 * retain the specific IP in this case.
 			 * So we subsequently overwrite the IP address of the subnet.
 			 */
-			er = ttosubnet(value, 0, AF_UNSPEC, &end->vti_ip);
+			er = ttosubnet(value, 0, AF_UNSPEC, '0', &end->vti_ip);
 			if (er != NULL) {
 				ERR_FOUND("bad addr %svti=%s [%s]",
 					  leftright, value, er);
@@ -538,7 +538,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->virt = clone_str(value, "validate_end item");
 		} else {
 			end->has_client = TRUE;
-			er = ttosubnet(value, 0, AF_UNSPEC, &end->subnet);
+			er = ttosubnet(value, 0, AF_UNSPEC, '0', &end->subnet);
 		}
 		if (er != NULL)
 			ERR_FOUND("bad subnet %ssubnet=%s [%s]", leftright,

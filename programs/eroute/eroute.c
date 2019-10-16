@@ -381,7 +381,8 @@ int main(int argc, char **argv)
 			}
 
 			{
-				err_t e = ttosubnet(optarg, 0, eroute_af, &d_subnet);
+				err_t e = ttosubnet(optarg, 0, eroute_af, '0',
+							&d_subnet);
 				if (e != NULL) {
 					fprintf(stderr,
 						"%s: Error, %s converting --dst argument: %s\n",
@@ -401,7 +402,8 @@ int main(int argc, char **argv)
 			}
 
 			{
-				err_t e = ttosubnet(optarg, 0, eroute_af, &s_subnet);
+				err_t e = ttosubnet(optarg, 0, eroute_af, '0',
+							&s_subnet);
 				if (e != NULL) {
 					fprintf(stderr,
 						"%s: Error, %s converting --src argument: %s\n",

@@ -1646,7 +1646,7 @@ void pfkey_scan_shunts(void)
 
 			context = "source subnet field malformed: ";
 			ugh = ttosubnet((char *)ff[0].ptr, ff[0].len, AF_UNSPEC,
-					&eri.ours);
+					'0', &eri.ours);
 			if (ugh != NULL)
 				break;
 
@@ -1654,7 +1654,7 @@ void pfkey_scan_shunts(void)
 
 			context = "destination subnet field malformed: ";
 			ugh = ttosubnet((char *)ff[2].ptr, ff[2].len, AF_UNSPEC,
-					&eri.his);
+					'0', &eri.his);
 			if (ugh != NULL)
 				break;
 

@@ -143,7 +143,7 @@ static void read_foodgroup(struct fg_groups *g)
 						ugh = addrtosubnet(&t, &sn);
 				} else {
 					ugh = ttosubnet(flp->tok, 0, afi->af,
-							&sn);
+							'x', &sn);
 				}
 
 				if (ugh != NULL) {

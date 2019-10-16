@@ -156,7 +156,7 @@ static bool addr_in_mask(char *address_str, char *mask_str)
 	err = ttoaddr(address_str, 0, AF_UNSPEC, &address);
 	if (err)
 		return false;
-	err = ttosubnet(mask_str, 0, AF_UNSPEC, &mask);
+	err = ttosubnet(mask_str, 0, '0', AF_UNSPEC, &mask);
 	if (err)
 		return false;
 	return addrinsubnet(&address, &mask);
