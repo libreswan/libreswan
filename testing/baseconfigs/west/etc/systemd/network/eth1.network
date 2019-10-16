@@ -17,5 +17,5 @@ GatewayOnlink=yes
 
 [Route]
 Gateway=2001:db8:1:2::23
-Destination=2001:db8:0:2::254/48
+Destination=2001:db8:0:2::254/64
 GatewayOnlink=yes
