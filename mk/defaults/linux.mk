@@ -28,8 +28,6 @@ PORTDEFINE=-DSCANDIR_HAS_CONST
 
 BISONOSFLAGS=-g --verbose
 
-USE_LABELED_IPSEC?=true
-
 # Detect linux variants and releases.
 
 # So that the sub-shell is invoked only once, ":=" is used.  This in
@@ -55,6 +53,7 @@ ifeq ($(LINUX_VARIANT),fedora)
   USE_FIPSCHECK?=true
   USE_LINUX_AUDIT?=true
   USE_SECCOMP?=true
+  USE_LABELED_IPSEC?=true
   # Assume that fedora 22 (used by test VMs) needs the hack
   ifeq ($(LINUX_VARIANT_VERSION),22)
     USE_GLIBC_KERN_FLIP_HEADERS=true
