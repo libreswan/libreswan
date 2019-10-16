@@ -9,7 +9,7 @@
 # The variables above could be set from command line.
 #
 
-DOCKER_CMD ?= sudo docker
+DOCKER_CMD ?= sudo podman
 D ?= testing/docker
 
 DI_T ?= swanbase 	#docker image tag
