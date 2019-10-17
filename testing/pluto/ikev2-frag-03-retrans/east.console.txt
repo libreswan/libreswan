@@ -14,6 +14,8 @@ east #
  echo "initdone"
 initdone
 east #
+ # On east this shows the duplicates on west there is nothing.
+east #
  grep "received duplicate [^ ]* message request .* fragment" /tmp/pluto.log
 "westnet-eastnet-ikev2" #1: received duplicate IKE_AUTH message request (Message ID 1, fragment 1); retransmitting response
 | Message ID: #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 2); discarded as not fragment 1; initiator.sent=-1 initiator.recv=-1 responder.sent=1 responder.recv=1
