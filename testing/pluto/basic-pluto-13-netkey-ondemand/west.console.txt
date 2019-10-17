@@ -18,7 +18,6 @@ west #
 000 "westnet-eastnet-route":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-route":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-route":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-route":   labeled_ipsec:no;
 000 "westnet-eastnet-route":   policy_label:unset;
 000 "westnet-eastnet-route":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-route":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
