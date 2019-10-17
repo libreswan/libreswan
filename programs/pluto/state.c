@@ -1399,7 +1399,7 @@ void delete_states_by_peer(const ip_address *peer)
 	address_buf peer_buf;
 	const char *peerstr = ipstr(peer, &peer_buf);
 
-	whack_log(RC_COMMENT, "restarting peer %s\n", peerstr);
+	whack_log(RC_COMMENT, "restarting peer %s", peerstr);
 
 	/* first restart the phase1s */
 	for (int ph1 = 0; ph1 < 2; ph1++) {

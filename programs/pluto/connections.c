@@ -3897,7 +3897,7 @@ void show_one_connection(const struct connection *c)
 
 	if (c->connalias != NULL) {
 		whack_log(RC_COMMENT,
-			"\"%s\"%s:   aliases: %s\n",
+			"\"%s\"%s:   aliases: %s",
 			c->name,
 			instance,
 			c->connalias);
