@@ -102,11 +102,8 @@ void main_outI1(fd_t whack_sock,
 		struct state *predecessor,
 		lset_t policy,
 		unsigned long try,
-		const threadtime_t *inception
-#ifdef HAVE_LABELED_IPSEC
-		, struct xfrm_user_sec_ctx_ike *uctx
-#endif
-	)
+		const threadtime_t *inception,
+		struct xfrm_user_sec_ctx_ike *uctx)
 {
 	struct state *st;
 
@@ -122,17 +119,12 @@ void main_outI1(fd_t whack_sock,
 	if (HAS_IPSEC_POLICY(policy)) {
 		add_pending(dup_any(whack_sock), st, c, policy, 1,
 			predecessor == NULL ?
-			  SOS_NOBODY : predecessor->st_serialno
-#ifdef HAVE_LABELED_IPSEC
-			, uctx
-#endif
-			);
+			  SOS_NOBODY : predecessor->st_serialno,
+			uctx);
 	}
 
-#ifdef HAVE_LABELED_IPSEC
 	/* For main modes states, sec ctx is always null */
 	st->sec_ctx = NULL;
-#endif
 
 	if (predecessor == NULL)
 		libreswan_log("initiating Main Mode");

@@ -1563,9 +1563,6 @@ struct_desc ikev2notify_ipcomp_data_desc = {
 	.size = 3,
 };
 
-
-#ifdef HAVE_LABELED_IPSEC
-
 /*
  * Undocumented Security Context for Labeled IPsec
  *
@@ -1585,8 +1582,6 @@ struct_desc sec_ctx_desc = {
 	.fields = sec_ctx_fields,
 	.size = sizeof(struct sec_ctx),
 };
-
-#endif
 
 /*
  * descriptor for each V1 payload type

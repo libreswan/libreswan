@@ -58,10 +58,20 @@
 #include "ip_endpoint.h"
 #include "nat_traversal.h"
 
-#ifdef HAVE_LABELED_IPSEC
-
 #include "security_selinux.h"
 
+
+#ifndef USE_LABELED_IPSEC
+static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st UNUSED)
+{
+	/*
+	 * We received a security label but don't support it,
+	 * so fail the IKE negotiation
+	 */
+	loglog(RC_LOG_SERIOUS, "Received Sec Ctx Textual Label but support for labeled ipsec not compiled in");
+	return FALSE;
+}
+#else
 static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 {
 	struct xfrm_user_sec_ctx_ike uctx;
@@ -71,15 +81,13 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 	if (pbs_left(pbs) != uctx.ctx.ctx_len) {
 		/* ??? should we ignore padding? */
-		/* ??? is this the right way to log an error? */
-		libreswan_log("Sec Ctx Textual Label length mismatch (length=%u; packet space = %u)",
+		loglog(RC_LOG_SERIOUS, "Sec Ctx Textual Label length mismatch (length=%u; packet space = %u)",
 			uctx.ctx.ctx_len, (unsigned)pbs_left(pbs));
 		return FALSE;
 	}
 
 	if (uctx.ctx.ctx_len > MAX_SECCTX_LEN) {
-		/* ??? is this the right way to log an error? */
-		libreswan_log("Sec Ctx Textual Label too long (%u > %u)",
+		loglog(RC_LOG_SERIOUS, "Sec Ctx Textual Label too long (%u > %u)",
 			uctx.ctx.ctx_len, MAX_SECCTX_LEN);
 		return FALSE;
 	}
@@ -97,19 +105,16 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	if (uctx.ctx.ctx_len == 0 ||
 	    uctx.sec_ctx_value[uctx.ctx.ctx_len - 1] != '\0') {
 		if (uctx.ctx.ctx_len == MAX_SECCTX_LEN) {
-			/* ??? is this the right way to log an error? */
-			libreswan_log("Sec Ctx Textual Label missing terminal NUL and there is no space to add it");
+			loglog(RC_LOG_SERIOUS, "Sec Ctx Textual Label missing terminal NUL and there is no space to add it");
 			return FALSE;
 		}
-		/* ??? is this the right way to log a warning? */
-		libreswan_log("Sec Ctx Textual Label missing terminal NUL; we are adding it");
+		DBG_log("Sec Ctx Textual Label missing terminal NUL; we are adding it");
 		uctx.sec_ctx_value[uctx.ctx.ctx_len] = '\0';
 		uctx.ctx.ctx_len++;
 	}
 
 	if (strlen(uctx.sec_ctx_value) + 1 != uctx.ctx.ctx_len) {
-		/* ??? is this the right way to log a warning? */
-		libreswan_log("Error: Sec Ctx Textual Label contains embedded NUL");
+		loglog(RC_LOG_SERIOUS, "Error: Sec Ctx Textual Label contains embedded NUL");
 		return FALSE;
 	}
 
@@ -120,15 +125,14 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		 * verify that the received security label is
 		 * within range of this connection's policy's security label
 		 */
-		if (!st->st_connection->labeled_ipsec) {
-			libreswan_log("This state (connection) is not labeled ipsec enabled, so cannot proceed");
+		if (st->st_connection->policy_label == NULL) {
+			loglog(RC_LOG_SERIOUS, "This state (connection) is not labeled ipsec enabled, so cannot proceed");
 			return FALSE;
-		} else if (st->st_connection->policy_label != NULL &&
-			   within_range(uctx.sec_ctx_value,
+		} else if (within_range(uctx.sec_ctx_value,
 					 st->st_connection->policy_label)) {
 			DBG_log("security context verification succeeded");
 		} else {
-			libreswan_log("security context verification failed (perhaps policy_label is not confgured for this connection)");
+			loglog(RC_LOG_SERIOUS, "security context verification failed");
 			return FALSE;
 		}
 		/*
@@ -146,13 +150,12 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		if (streq(st->sec_ctx->sec_ctx_value, uctx.sec_ctx_value)) {
 			DBG_log("security contexts are verified in the initiator state");
 		} else {
-			libreswan_log("security context verification failed in the initiator state (shouldn't reach here unless responder (or something in between) is modifying the security context");
+			loglog(RC_LOG_SERIOUS, "security context verification failed in the initiator state (shouldn't reach here unless responder (or something in between) is modifying the security context");
 			return FALSE;
 		}
 	}
 	return TRUE;
 }
-
 #endif
 
 /** output an attribute (within an SA) */
@@ -734,15 +737,13 @@ bool ikev1_out_sa(pb_stream *outs,
 						      &trans_pbs))
 						goto fail;
 
-#ifdef HAVE_LABELED_IPSEC
 					if (st->sec_ctx != NULL &&
-					    st->st_connection->labeled_ipsec) {
+					    st->st_connection->policy_label != NULL) {
 						passert(st->sec_ctx->ctx.ctx_len <= MAX_SECCTX_LEN);
 
 						pb_stream val_pbs;
 						struct isakmp_attribute attr = {
-							.isaat_af_type =
-								secctx_attr_type |
+							.isaat_af_type = secctx_attr_type |
 								ISAKMP_ATTR_AF_TLV,
 						};
 
@@ -762,7 +763,6 @@ bool ikev1_out_sa(pb_stream *outs,
 
 						close_output_pbs(&val_pbs);
 					}
-#endif
 				}
 
 				/*
@@ -1826,9 +1826,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 {
 	lset_t seen_attrs = LEMPTY,
 	       seen_durations = LEMPTY;
-#ifdef HAVE_LABELED_IPSEC
 	bool seen_secctx_attr = FALSE;
-#endif
 	uint16_t life_type = 0;	/* initialized to silence GCC */
 	const struct dh_desc *pfs_group = NULL;
 
@@ -1898,7 +1896,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		ty = a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK;
 		val = a.isaat_lv;
 
-#ifdef HAVE_LABELED_IPSEC
 		if (ty == secctx_attr_type) {
 			if (seen_secctx_attr) {
 				loglog(RC_LOG_SERIOUS,
@@ -1908,9 +1905,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			}
 			seen_secctx_attr = TRUE;
 			vdesc = NULL;
-		} else
-#endif
-		{
+		} else {
 			passert(ty < LELEM_ROOF);
 			if (LHAS(seen_attrs, ty)) {
 				loglog(RC_LOG_SERIOUS,
@@ -2112,16 +2107,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 
 		default:
-#ifdef HAVE_LABELED_IPSEC
 			if (a.isaat_af_type ==
 			    (secctx_attr_type | ISAKMP_ATTR_AF_TLV)) {
 				pb_stream *pbs = &attr_pbs;
 
 				if (!parse_secctx_attr(pbs, st))
 					return FALSE;
-			} else
-#endif
-			{
+			} else {
 				loglog(RC_LOG_SERIOUS,
 				       "unsupported IPsec attribute %s",
 				       enum_show(&ipsec_attr_names, a.isaat_af_type));

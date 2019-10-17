@@ -340,12 +340,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
 	whackfd = dup_any(whackfd);
-	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, &inception
-#ifdef HAVE_LABELED_IPSEC
-		  , NULL
-#endif
-		  );
-
+	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, &inception, NULL);
 	reset_cur_connection();
 	return 1;
 }
@@ -606,10 +601,8 @@ static void cannot_oppo(struct connection *c,
 	}
 }
 
-static void initiate_ondemand_body(struct find_oppo_bundle *b
-#ifdef HAVE_LABELED_IPSEC
-				   , struct xfrm_user_sec_ctx_ike *uctx
-#endif
+static void initiate_ondemand_body(struct find_oppo_bundle *b,
+				   struct xfrm_user_sec_ctx_ike *uctx
 				  )
 {
 	threadtime_t inception = threadtime_start();
@@ -631,7 +624,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 	ourport = ntohs(portof(&b->our_client));
 	hisport = ntohs(portof(&b->peer_client));
 
-#ifdef HAVE_LABELED_IPSEC
 	DBG(DBG_CONTROLMORE, {
 		if (uctx != NULL) {
 			DBG_log("received security label string: %.*s",
@@ -639,7 +631,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 				uctx->sec_ctx_value);
 		}
 	});
-#endif
 
 	snprintf(demandbuf, sizeof(demandbuf),
 		 "initiate on demand from %s:%d to %s:%d proto=%d because: %s",
@@ -751,11 +742,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 		}
 
 		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
-				  SOS_NOBODY, &inception
-#ifdef HAVE_LABELED_IPSEC
-				  , uctx
-#endif
-				  );
+				  SOS_NOBODY, &inception, uctx);
 		b->whackfd = null_fd; /* protect from close */
 	} else {
 		/* We are handling an opportunistic situation.
@@ -860,11 +847,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 					deltatime(SHUNT_PATIENCE),
 					calculate_sa_prio(c),
 					NULL,
-					ERO_ADD, addwidemsg
-#ifdef HAVE_LABELED_IPSEC
-					, NULL
-#endif
-					))
+					ERO_ADD, addwidemsg,
+					NULL))
 				{
 					libreswan_log("adding bare wide passthrough negotiationshunt failed");
 				} else {
@@ -965,9 +949,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 
 				ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
 						  SOS_NOBODY, &inception
-#ifdef HAVE_LABELED_IPSEC
 						  , NULL /* shall we pass uctx for opportunistic connections? */
-#endif
 						  );
 				b->whackfd = null_fd; /* protect from close */
 			}
@@ -993,9 +975,7 @@ void initiate_ondemand(const ip_address *our_client,
 		      int transport_proto,
 		      bool held,
 		      fd_t whackfd,
-#ifdef HAVE_LABELED_IPSEC
 		      struct xfrm_user_sec_ctx_ike *uctx,
-#endif
 		      err_t why)
 {
 	struct find_oppo_bundle b;
@@ -1011,11 +991,7 @@ void initiate_ondemand(const ip_address *our_client,
 	b.failure_shunt = SPI_HOLD; /* until we found connection policy */
 	b.whackfd = whackfd;
 
-	initiate_ondemand_body(&b
-#ifdef HAVE_LABELED_IPSEC
-				, uctx
-#endif
-	);
+	initiate_ondemand_body(&b, uctx);
 }
 
 /* Find a connection that owns the shunt eroute between subnets.

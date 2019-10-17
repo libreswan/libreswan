@@ -15,7 +15,6 @@
 #ifndef _LABELED_IPSEC_H
 #define _LABELED_IPSEC_H
 
-#ifdef HAVE_LABELED_IPSEC
 
 /*
  * Security Label Context representations.
@@ -54,7 +53,5 @@ struct xfrm_user_sec_ctx_ike {
 	struct sec_ctx ctx;
 	char sec_ctx_value[MAX_SECCTX_LEN];	/* text label, NUL-terminated */
 };
-
-#endif
 
 #endif

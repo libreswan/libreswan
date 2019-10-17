@@ -57,10 +57,8 @@ static bool nokernel_raw_eroute(const ip_address *this_host UNUSED,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
 			       unsigned int op UNUSED,
-			       const char *text_said UNUSED
-#ifdef HAVE_LABELED_IPSEC
-			       , const char *policy_label UNUSED
-#endif
+			       const char *text_said UNUSED,
+			       const char *policy_label UNUSED
 			       )
 {
 	return TRUE;

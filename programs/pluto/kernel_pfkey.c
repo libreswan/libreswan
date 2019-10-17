@@ -452,11 +452,8 @@ static void process_pfkey_acquire(pfkey_buf *buf,
 		NULL : "conflicting address types") &&
 	    !(ugh = addrtosubnet(src, &ours)) &&
 	    !(ugh = addrtosubnet(dst, &his)))
-		record_and_initiate_opportunistic(&ours, &his, 0,
-#ifdef HAVE_LABELED_IPSEC
-						  NULL,
-#endif
-						  "%acquire-pfkey");
+		record_and_initiate_opportunistic(&ours, &his, 0, NULL,
+			  "%acquire-pfkey");
 
 	if (ugh != NULL)
 		libreswan_log("K_SADB_ACQUIRE message from KLIPS malformed: %s", ugh);
@@ -605,12 +602,8 @@ void pfkey_dequeue(void)
 	while (orphaned_holds != NULL && !pfkey_input_ready() && limit-- > 0)
 		record_and_initiate_opportunistic(&orphaned_holds->ours,
 						  &orphaned_holds->his,
-						  orphaned_holds->transport_proto
-#ifdef HAVE_LABELED_IPSEC
-						  , NULL
-#endif
-						  ,
-						  "%hold found-pfkey");
+						  orphaned_holds->transport_proto,
+						  NULL, "%hold found-pfkey");
 
 	if (limit <= 0) {
 		loglog(RC_LOG_SERIOUS,
@@ -918,11 +911,8 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      uint32_t sa_priority UNUSED,
 		      const struct sa_marks *sa_marks UNUSED,
 		      enum pluto_sadb_operations op,
-		      const char *text_said
-#ifdef HAVE_LABELED_IPSEC
-		      , const char *policy_label UNUSED
-#endif
-		      )
+		      const char *text_said,
+		      const char *policy_label UNUSED)
 {
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 	int klips_op = kernelop2klips(op);
@@ -1393,11 +1383,8 @@ bool pfkey_shunt_eroute(const struct connection *c,
 					deltatime(0),
 					calculate_sa_prio(c),
 					&c->sa_marks,
-					op, buf2
-#ifdef HAVE_LABELED_IPSEC
-					, c->policy_label
-#endif
-					);
+					op, buf2,
+					c->policy_label);
 	}
 }
 
@@ -1483,11 +1470,8 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 	return eroute_connection(sr,
 				 inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
-				 0 /* KLIPS does not support priority */, NULL, op, opname
-#ifdef HAVE_LABELED_IPSEC
-				 , NULL
-#endif
-				 );
+				 0 /* KLIPS does not support priority */, NULL, op, opname,
+				 NULL /* KLIPS does not support secure labels */);
 }
 
 /*

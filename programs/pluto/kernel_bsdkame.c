@@ -422,11 +422,8 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
 			       enum pluto_sadb_operations op,
-			       const char *text_said UNUSED
-#ifdef HAVE_LABELED_IPSEC
-			       , const char *policy_label UNUSED
-#endif
-			       )
+			       const char *text_said UNUSED,
+			       const char *policy_label UNUSED)
 {
 	const struct sockaddr *saddr =
 		(const struct sockaddr *)&this_client->addr;
@@ -894,11 +891,8 @@ static bool bsdkame_sag_eroute(const struct state *st,
 				  0,		/* sa_priority */
 				  NULL,		/* sa_marks */
 				  op,
-				  NULL          /* text_said unused */
-#ifdef HAVE_LABELED_IPSEC
-				  , NULL        /*unused*/
-#endif
-				  );
+				  NULL,         /* text_said unused */
+				  NULL);        /*unused*/
 }
 
 static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)

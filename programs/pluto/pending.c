@@ -63,9 +63,7 @@ void add_pending(fd_t whack_sock,
 		 lset_t policy,
 		 unsigned long try,
 		 so_serial_t replacing
-#ifdef HAVE_LABELED_IPSEC
 		 , struct xfrm_user_sec_ctx_ike *uctx
-#endif
 		 )
 {
 	struct pending *p, **pp;
@@ -107,7 +105,6 @@ void add_pending(fd_t whack_sock,
 	p->try = try;
 	p->replacing = replacing;
 	p->pend_time = mononow();
-#ifdef HAVE_LABELED_IPSEC
 	p->uctx = NULL;
 	if (uctx != NULL) {
 		p->uctx = clone_thing(*uctx, "pending security context");
@@ -116,7 +113,6 @@ void add_pending(fd_t whack_sock,
 			    p->uctx->sec_ctx_value,
 			    p->uctx->ctx.ctx_len));
 	}
-#endif
 
 	host_pair_enqueue_pending(c, p, &p->next);
 }
@@ -257,10 +253,7 @@ static void delete_pending(struct pending **pp)
 		}
 	});
 
-#ifdef HAVE_LABELED_IPSEC
 	pfreeany(p->uctx);
-#endif
-
 	pfree(p);
 }
 
@@ -314,9 +307,7 @@ void unpend(struct state *st, struct connection *cc)
 				quick_outI1(p->whack_sock, st, p->connection,
 					    p->policy,
 					    p->try, p->replacing
-#ifdef HAVE_LABELED_IPSEC
 					    , p->uctx
-#endif
 					    );
 				break;
 			default:

@@ -485,11 +485,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			uint32_t sa_priority,
 			const struct sa_marks *sa_marks,
 			enum pluto_sadb_operations sadb_op,
-			const char *text_said
-#ifdef HAVE_LABELED_IPSEC
-			, const char *policy_label
-#endif
-	)
+			const char *text_said,
+			const char *policy_label)
 {
 	struct {
 		struct nlmsghdr n;
@@ -713,7 +710,6 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		}
 	}
 
-#ifdef HAVE_LABELED_IPSEC
 	if (policy_label != NULL) {
 		size_t len = strlen(policy_label) + 1;
 		struct rtattr *attr = (struct rtattr *)
@@ -737,7 +733,6 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		memcpy(uctx + 1, policy_label, len);
 		req.n.nlmsg_len += attr->rta_len;
 	}
-#endif
 
 	bool enoent_ok = sadb_op == ERO_DEL_INBOUND ||
 		(sadb_op == ERO_DELETE && ntohl(cur_spi) == SPI_HOLD);
@@ -1508,14 +1503,12 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		memcpy(RTA_DATA(attr), &xuo, sizeof(xuo));
 
 		req.n.nlmsg_len += attr->rta_len;
-		/* attr not subsequently used unless HAVE_LABELED_IPSEC */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 		DBG(DBG_KERNEL, DBG_log("netlink: esp-hw-offload set via interface %s for IPsec SA", sa->nic_offload_dev));
 	} else {
 		DBG(DBG_KERNEL, DBG_log("netlink: esp-hw-offload not set for IPsec SA"));
 	}
 
-#ifdef HAVE_LABELED_IPSEC
 	if (sa->sec_ctx != NULL) {
 		size_t len = sa->sec_ctx->ctx.ctx_len;
 		struct xfrm_user_sec_ctx xuctx;
@@ -1538,7 +1531,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		/* attr not subsequently used */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
-#endif
+
 	ret = send_netlink_msg(&req.n, NLMSG_NOOP, NULL, "Add SA", sa->text_said);
 	if (!ret && netlink_errno == ESRCH &&
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
@@ -1633,11 +1626,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 	unsigned family;
 	unsigned transport_proto;
 	err_t ugh = NULL;
-
-#ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
 	struct xfrm_user_sec_ctx_ike uctx_space;
-#endif
 
 	DBG(DBG_KERNEL,
 		DBG_log("xfrm netlink msg len %zu",
@@ -1674,10 +1664,11 @@ static void netlink_acquire(struct nlmsghdr *n)
 	family = acquire->policy.sel.family;
 	transport_proto = acquire->sel.proto;
 
-#ifdef HAVE_LABELED_IPSEC
-
-	/* Run through rtattributes looking for XFRMA_SEC_CTX */
-
+	/*
+	 * Run through rtattributes looking for XFRMA_SEC_CTX
+	 * Instead, it should loop through all (known rtattributes
+	 * and use/log them.
+	 */
 	struct rtattr *attr = (struct rtattr *)
 		((char*) NLMSG_DATA(n) +
 			NLMSG_ALIGN(sizeof(struct xfrm_user_acquire)));
@@ -1767,7 +1758,6 @@ static void netlink_acquire(struct nlmsghdr *n)
 		/* updates remaining too */
 		attr = RTA_NEXT(attr, remaining);
 	}
-#endif
 
 	src_proto = dst_proto = acquire->sel.proto;
 
@@ -1781,11 +1771,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 			NULL : "src and dst protocols differ")) &&
 	    NULL == (ugh = addrtosubnet(&src, &ours)) &&
 	    NULL == (ugh = addrtosubnet(&dst, &his)))
-		record_and_initiate_opportunistic(&ours, &his, transport_proto,
-#ifdef HAVE_LABELED_IPSEC
-						uctx,
-#endif
-						"%acquire-netlink");
+		record_and_initiate_opportunistic(&ours, &his, transport_proto, uctx,
+			"%acquire-netlink");
 
 	if (ugh != NULL)
 		libreswan_log(
@@ -2145,11 +2132,8 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				inner_esatype, proto_info + i,
-				calculate_sa_prio(c), &c->sa_marks, op, opname
-#ifdef HAVE_LABELED_IPSEC
-				, st->st_connection->policy_label
-#endif
-		);
+				calculate_sa_prio(c), &c->sa_marks, op, opname,
+				st->st_connection->policy_label);
 }
 
 /* Check if there was traffic on given SA during the last idle_max
@@ -2287,11 +2271,8 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				deltatime(0),
 				calculate_sa_prio(c),
 				&c->sa_marks,
-				op, buf2
-#ifdef HAVE_LABELED_IPSEC
-				, c->policy_label
-#endif
-				))
+				op, buf2,
+				c->policy_label))
 		return FALSE;
 
 	switch (op) {
@@ -2317,11 +2298,8 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				  deltatime(0),
 				  calculate_sa_prio(c),
 				  &c->sa_marks,
-				  op, buf2
-#ifdef HAVE_LABELED_IPSEC
-				  , c->policy_label
-#endif
-				  );
+				  op, buf2,
+				  c->policy_label);
 }
 
 static void netlink_process_raw_ifaces(struct raw_iface *rifaces)

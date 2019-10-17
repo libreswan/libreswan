@@ -31,20 +31,14 @@ typedef void initiator_function(fd_t whack_sock,
 				struct state *predecessor,
 				lset_t policy,
 				unsigned long try,
-				const threadtime_t *inception
-#ifdef HAVE_LABELED_IPSEC
-				, struct xfrm_user_sec_ctx_ike *uctx
-#endif
-				);
+				const threadtime_t *inception,
+				struct xfrm_user_sec_ctx_ike *uctx);
 
 extern void ipsecdoi_initiate(fd_t whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
 			      so_serial_t replacing,
-			      const threadtime_t *inception
-#ifdef HAVE_LABELED_IPSEC
-			      , struct xfrm_user_sec_ctx_ike *uctx
-#endif
-			      );
+			      const threadtime_t *inception,
+			      struct xfrm_user_sec_ctx_ike *uctx);
 
 extern void ipsecdoi_replace(struct state *st, unsigned long try);
 

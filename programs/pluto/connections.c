@@ -257,9 +257,7 @@ static void discard_connection(struct connection *c,
 	pfreeany(c->modecfg_dns);
 	pfreeany(c->modecfg_domains);
 	pfreeany(c->modecfg_banner);
-#ifdef HAVE_LABELED_IPSEC
 	pfreeany(c->policy_label);
-#endif
 	pfreeany(c->dnshostname);
 	pfreeany(c->redirect_to);
 	pfreeany(c->accept_redirect_to);
@@ -680,10 +678,8 @@ static void unshare_connection(struct connection *c)
 				"connection modecfg_domains");
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
-#ifdef HAVE_LABELED_IPSEC
 	c->policy_label = clone_str(c->policy_label,
 				    "connection policy_label");
-#endif
 	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
 
 	/* duplicate any alias, adding spaces to the beginning and end */
@@ -1585,10 +1581,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	c->nmconfigured = wm->nmconfigured;
 #endif
 
-#ifdef HAVE_LABELED_IPSEC
-	c->labeled_ipsec = wm->labeled_ipsec;
 	c->policy_label = clone_str(wm->policy_label, "connection policy_label");
-#endif
 	c->nflog_group = wm->nflog_group;
 	c->sa_priority = wm->sa_priority;
 	c->sa_tfcpad = wm->sa_tfcpad;
@@ -3713,22 +3706,8 @@ static void show_one_sr(const struct connection *c,
 		c->name, instance, c->modecfg_banner);
 	}
 
-	/*
-	 * Always print the labeled ipsec status; and always use the
-	 * same log call.  Ensures that test result output is
-	 * consistent regardless of support.
-	 */
-	const char *labeled_ipsec;
 	const char *policy_label;
-#ifdef HAVE_LABELED_IPSEC
-	labeled_ipsec = bool_str(c->labeled_ipsec);
 	policy_label = (c->policy_label == NULL) ? "unset" : c->policy_label;
-#else
-	labeled_ipsec = "no";
-	policy_label = "unset";
-#endif
-	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s;",
-		  c->name, instance, labeled_ipsec);
 	whack_log(RC_COMMENT, "\"%s\"%s:   policy_label:%s;",
 		  c->name, instance, policy_label);
 }

@@ -481,9 +481,7 @@ struct state {
 	chunk_t st_tpacket;                     /* Transmitted packet */
 	struct v2_ike_tfrag *st_v2_tfrags;	/* Transmitted fragments */
 
-#ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
-#endif
 
 	/* Phase 2 ID payload info about my user */
 	uint8_t st_myuserprotoid;             /* IDcx.protoid */

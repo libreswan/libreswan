@@ -292,11 +292,7 @@ struct connection {
 #ifdef HAVE_NM
 	bool nmconfigured;
 #endif
-
-#ifdef HAVE_LABELED_IPSEC
-	bool labeled_ipsec;
 	char *policy_label;
-#endif
 
 	/* Cisco interop: remote peer type */
 	enum keyword_remotepeertype remotepeertype;
@@ -411,18 +407,14 @@ extern void initiate_connection(const char *name,
 extern void restart_connections_by_peer(struct connection *c);
 extern void flush_revival(const struct connection *c);
 
-#ifdef HAVE_LABELED_IPSEC
 struct xfrm_user_sec_ctx_ike; /* forward declaration */
-#endif
 
 extern void initiate_ondemand(const ip_address *our_client,
 			     const ip_address *peer_client,
 			     int transport_proto,
 			     bool held,
 			     fd_t whackfd,
-#ifdef HAVE_LABELED_IPSEC
 			     struct xfrm_user_sec_ctx_ike *uctx,
-#endif
 			     err_t why);
 
 extern void terminate_connection(const char *name, bool quiet);
@@ -533,11 +525,8 @@ extern void add_pending(fd_t whack_sock,
 			struct connection *c,
 			lset_t policy,
 			unsigned long try,
-			so_serial_t replacing
-#ifdef HAVE_LABELED_IPSEC
-			, struct xfrm_user_sec_ctx_ike *uctx
-#endif
-			);
+			so_serial_t replacing,
+			struct xfrm_user_sec_ctx_ike *uctx);
 
 extern void release_pending_whacks(struct state *st, err_t story);
 extern void unpend(struct state *st, struct connection *cc);

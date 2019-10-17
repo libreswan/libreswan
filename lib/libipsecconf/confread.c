@@ -142,10 +142,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_NMCONFIGURED, FALSE);
 #endif
 
-#ifdef HAVE_LABELED_IPSEC
-	DOPT(KNCF_LABELED_IPSEC, FALSE);
-#endif
-
 	DOPT(KNCF_XAUTHBY, XAUTHBY_FILE);
 	DOPT(KNCF_XAUTHFAIL, XAUTHFAIL_HARD);
 

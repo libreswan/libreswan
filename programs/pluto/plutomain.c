@@ -436,20 +436,17 @@ static bool pluto_init_nss(char *nssdir)
 /* 0 is special and default: do not check crls dynamically */
 deltatime_t crl_check_interval = DELTATIME_INIT(0);
 
-#ifdef HAVE_LABELED_IPSEC
 /*
  * Attribute Type "constant" for Security Context
  *
- * ??? NOT A CONSTANT!
  * Originally, we assigned the value 10, but that properly belongs to ECN_TUNNEL.
  * We then assigned 32001 which is in the private range RFC 2407.
  * Unfortunately, we feel we have to support 10 as an option for backward
  * compatibility.
  * This variable specifies (globally!!) which we support: 10 or 32001.
- * ??? surely that makes migration to 32001 all or nothing.
+ * That makes migration to 32001 all or nothing.
  */
 uint16_t secctx_attr_type = SECCTX;
-#endif
 
 /*
  * Table of Pluto command-line options.
@@ -567,12 +564,10 @@ static const struct option long_opts[] = {
 	{ "nhelpers\0<number>", required_argument, NULL, 'j' },
 	{ "expire-shunt-interval\0<secs>", required_argument, NULL, '9' },
 	{ "seedbits\0<number>", required_argument, NULL, 'c' },
-#ifdef HAVE_LABELED_IPSEC
-	/* ??? really an attribute type, not a value */
+	/* really an attribute type, not a value */
 	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* obsolete name; _ */
 	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },	/* obsolete name */
 	{ "secctx-attr-type\0<number>", required_argument, NULL, 'w' },
-#endif
 #ifdef HAVE_SECCOMP
 	{ "seccomp-enabled\0", no_argument, NULL, '3' },
 	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
@@ -1368,9 +1363,7 @@ int main(int argc, char **argv)
 				cfg->setup.strings[KSF_GLOBAL_REDIRECT_TO]);
 
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
-#ifdef HAVE_LABELED_IPSEC
 			secctx_attr_type = cfg->setup.options[KBF_SECCTX];
-#endif
 			base_debugging = cfg->setup.options[KBF_PLUTODEBUG];
 
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];

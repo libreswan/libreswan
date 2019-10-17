@@ -605,9 +605,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 						m->whack_async ?
 						  null_fd :
 						  dup_any(whackfd),
-#ifdef HAVE_LABELED_IPSEC
 						NULL,
-#endif
 						"whack");
 		}
 	}

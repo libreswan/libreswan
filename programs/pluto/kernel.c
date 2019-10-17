@@ -200,9 +200,7 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 void record_and_initiate_opportunistic(const ip_subnet *ours,
 				const ip_subnet *his,
 				int transport_proto,
-#ifdef HAVE_LABELED_IPSEC
 				struct xfrm_user_sec_ctx_ike *uctx,
-#endif
 				const char *why)
 {
 	passert(subnet_type(ours) == subnet_type(his));
@@ -232,11 +230,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 
 	/* actually initiate opportunism / ondemand */
 	initiate_ondemand(&src, &dst, transport_proto,
-			  TRUE, null_fd,
-#ifdef HAVE_LABELED_IPSEC
-			uctx,
-#endif
-			"acquire");
+			  TRUE, null_fd, uctx, "acquire");
 
 	if (kernel_ops->remove_orphaned_holds != NULL) {
 		/* remove from KLIPS's list */
@@ -1165,11 +1159,8 @@ bool raw_eroute(const ip_address *this_host,
 		uint32_t sa_priority,
 		const struct sa_marks *sa_marks,
 		enum pluto_sadb_operations op,
-		const char *opname
-#ifdef HAVE_LABELED_IPSEC
-		, const char *policy_label
-#endif
-	)
+		const char *opname,
+		const char *policy_label)
 {
 	char text_said[SATOT_BUF + SATOT_BUF];
 
@@ -1207,11 +1198,10 @@ bool raw_eroute(const ip_address *this_host,
 			str_subnet_port(that_client, &peerbuf),
 			text_said,
 			proto_info->reqid);
-#ifdef HAVE_LABELED_IPSEC
+
 		if (policy_label != NULL)
 			DBG_log("policy security label %s",
 				policy_label);
-#endif
 	}
 
 	bool result = kernel_ops->raw_eroute(this_host, this_client,
@@ -1219,11 +1209,8 @@ bool raw_eroute(const ip_address *this_host,
 					cur_spi, new_spi, sa_proto,
 					transport_proto,
 					esatype, proto_info,
-					use_lifetime, sa_priority, sa_marks, op, text_said
-#ifdef HAVE_LABELED_IPSEC
-					, policy_label
-#endif
-					);
+					use_lifetime, sa_priority, sa_marks, op, text_said,
+					policy_label);
 
 	DBG(DBG_CONTROL | DBG_KERNEL, DBG_log("raw_eroute result=%s",
 		result ? "success" : "failed"));
@@ -1348,11 +1335,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			deltatime(SHUNT_PATIENCE),
 			0, /* we don't know connection for priority yet */
 			NULL, /* sa_marks */
-			op, why
-#ifdef HAVE_LABELED_IPSEC
-			, NULL
-#endif
-			))
+			op, why, NULL))
 	{
 		struct bare_shunt **bs_pp = bare_shunt_ptr(
 			&this_client,
@@ -1435,11 +1418,8 @@ bool eroute_connection(const struct spd_route *sr,
 		const struct pfkey_proto_info *proto_info,
 		uint32_t sa_priority,
 		const struct sa_marks *sa_marks,
-		unsigned int op, const char *opname
-#ifdef HAVE_LABELED_IPSEC
-		, const char *policy_label
-#endif
-	)
+		unsigned int op, const char *opname,
+		const char *policy_label)
 {
 	ip_address peer = sr->that.host_addr;
 	char buf2[256];
@@ -1463,11 +1443,8 @@ bool eroute_connection(const struct spd_route *sr,
 				esatype,
 				proto_info,
 				deltatime(0),
-				sa_priority, sa_marks, op, buf2
-#ifdef HAVE_LABELED_IPSEC
-				, policy_label
-#endif
-				);
+				sa_priority, sa_marks, op, buf2,
+				policy_label);
 		if (!t)
 			libreswan_log("CAT: failed to eroute additional Client Address Translation policy");
 
@@ -1483,11 +1460,8 @@ bool eroute_connection(const struct spd_route *sr,
 			esatype,
 			proto_info,
 			deltatime(0),
-			sa_priority, sa_marks, op, buf2
-#ifdef HAVE_LABELED_IPSEC
-			, policy_label
-#endif
-		);
+			sa_priority, sa_marks, op, buf2,
+			policy_label);
 }
 
 /* assign a bare hold or pass to a connection */
@@ -1573,11 +1547,9 @@ bool assign_holdpass(const struct connection *c,
 						calculate_sa_prio(c),
 						NULL,
 						op,
-						reason
-#ifdef HAVE_LABELED_IPSEC
-						, c->policy_label
-#endif
-					)) {
+						reason,
+						c->policy_label))
+			{
 				DBG(DBG_CONTROL,
 					DBG_log("assign_holdpass() eroute_connection() done"));
 			} else {
@@ -1752,9 +1724,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
-#ifdef HAVE_LABELED_IPSEC
 		.sec_ctx = st->sec_ctx,
-#endif
 	};
 
 	if (kernel_ops->inbound_eroute) {
@@ -2315,11 +2285,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				calculate_sa_prio(c),	/* priority */
 				&c->sa_marks,		/* IPsec SA marks */
 				ERO_ADD_INBOUND,	/* op */
-				"add inbound"		/* opname */
-#ifdef HAVE_LABELED_IPSEC
-				, st->st_connection->policy_label
-#endif
-				)) {
+				"add inbound",		/* opname */
+				st->st_connection->policy_label))
+		{
 			libreswan_log("raw_eroute() in setup_half_ipsec_sa() failed to add inbound");
 		}
 	}
@@ -2428,11 +2396,9 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				calculate_sa_prio(c),
 				&c->sa_marks,
 				ERO_DEL_INBOUND,
-				"delete inbound"
-#ifdef HAVE_LABELED_IPSEC
-				, c->policy_label
-#endif
-				)) {
+				"delete inbound",
+				c->policy_label))
+		{
 			libreswan_log("raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");
 		}
 	}
@@ -3038,11 +3004,9 @@ bool route_and_eroute(struct connection *c,
 						calculate_sa_prio(c),
 						NULL,
 						ERO_REPLACE,
-						"restore"
-#ifdef HAVE_LABELED_IPSEC
-						, NULL /* bare shunt are not associated with any connection so no security label */
-#endif
-						)) {
+						"restore",
+						NULL)) /* bare shunt are not associated with any connection so no security label */
+				{
 					libreswan_log("raw_eroute() in route_and_eroute() failed to restore/replace SA");
 				}
 			} else if (ero != NULL) {

@@ -1204,9 +1204,7 @@ void delete_state(struct state *st)
 	pfreeany(st->st_active_redirect_gw);
 	freeanychunk(st->st_no_ppk_auth);
 
-#ifdef HAVE_LABELED_IPSEC
 	pfreeany(st->sec_ctx);
-#endif
 	messup(st);
 	pfree(st);
 }

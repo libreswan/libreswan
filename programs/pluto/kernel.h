@@ -146,9 +146,7 @@ struct kernel_sa {
 	uint8_t natt_type;
 	ip_address *natt_oa;
 	const char *text_said;
-#ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
-#endif
 	const char *nic_offload_dev;
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
@@ -210,11 +208,8 @@ struct kernel_ops {
 			   uint32_t sa_priority,
 			   const struct sa_marks *sa_marks,
 			   enum pluto_sadb_operations op,
-			   const char *text_said
-#ifdef HAVE_LABELED_IPSEC
-			   , const char *policy_label
-#endif
-			   );
+			   const char *text_said,
+			   const char *policy_label);
 	bool (*shunt_eroute)(const struct connection *c,
 			     const struct spd_route *sr,
 			     enum routing_t rt_kind,
@@ -352,15 +347,11 @@ struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
  * because we use it indefinitely without copying or pfreeing.
  * Simple rule: use a string literal.
  */
-#ifdef HAVE_LABELED_IPSEC
 struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
-#endif
 extern void record_and_initiate_opportunistic(const ip_subnet *,
 					      const ip_subnet *,
 					      int transport_proto,
-#ifdef HAVE_LABELED_IPSEC
 					      struct xfrm_user_sec_ctx_ike *,
-#endif
 					      const char *why);
 extern void init_kernel(void);
 
@@ -426,11 +417,8 @@ extern bool eroute_connection(const struct spd_route *sr,
 			      const struct pfkey_proto_info *proto_info,
 			      uint32_t sa_priority,
 			      const struct sa_marks *sa_marks,
-			      unsigned int op, const char *opname
-#ifdef HAVE_LABELED_IPSEC
-			      , const char *policy_label
-#endif
-			      );
+			      unsigned int op, const char *opname,
+			      const char *policy_label);
 
 static inline bool compatible_overlapping_connections(const struct connection *a,
 						      const struct connection *b)
@@ -474,11 +462,8 @@ extern bool raw_eroute(const ip_address *this_host,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
 		       enum pluto_sadb_operations op,
-		       const char *opname
-#ifdef HAVE_LABELED_IPSEC
-		       , const char *policy_label
-#endif
-		       );
+		       const char *opname,
+		       const char *policy_label);
 
 extern deltatime_t bare_shunt_interval;
 extern void set_text_said(char *text_said, const ip_address *dst,

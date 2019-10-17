@@ -98,11 +98,9 @@ extern enum_names allow_global_redirect_names;
 
 extern enum_names dns_auth_level_names;
 
-#ifdef HAVE_LABELED_IPSEC
 /*
  * Attribute Type "constant" for Security Context
  *
- * ??? NOT A CONSTANT!
  * Originally, we assigned the value 10, but that properly belongs to ECN_TUNNEL.
  * We then assigned 32001 which is in the private range RFC 2407.
  * Unfortunately, we feel we have to support 10 as an option for backward
@@ -111,7 +109,6 @@ extern enum_names dns_auth_level_names;
  * ??? surely that makes migration to 32001 all or nothing.
  */
 extern uint16_t secctx_attr_type;
-#endif
 
 extern const char *const natt_bit_names[];
 extern enum_names natt_method_names;

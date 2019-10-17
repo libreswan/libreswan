@@ -1155,9 +1155,7 @@ struct ikev2_notify_ipcomp_data {
 };
 extern struct_desc ikev2notify_ipcomp_data_desc;
 
-#ifdef HAVE_LABELED_IPSEC
 extern struct_desc sec_ctx_desc;
-#endif
 
 /*
  * Nasty evil global packet buffer.

@@ -465,7 +465,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nhelpers",  kv_config,  kt_number,  KBF_NHELPERS, NULL, NULL, },
   { "drop-oppo-null",  kv_config,  kt_bool,  KBF_DROP_OPPO_NULL, NULL, NULL, },
 #ifdef HAVE_LABELED_IPSEC
-  /* ??? AN ATTRIBUTE TYPE, NOT VALUE! */
+  /* It is really an attribute type, not a value */
   { "secctx_attr_value",  kv_config | kv_alias,  kt_number,  KBF_SECCTX, NULL, NULL, },  /* obsolete _ */
   { "secctx-attr-value",  kv_config,  kt_number,  KBF_SECCTX, NULL, NULL, },  /* obsolete: not a value, a type */
   { "secctx-attr-type",  kv_config,  kt_number,  KBF_SECCTX, NULL, NULL, },
@@ -575,8 +575,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   {"ikepad",  kv_conn,  kt_bool,  KNCF_IKEPAD, NULL, NULL, },
   { "nat-ikev1-method",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEV1_NATT,  &kw_ikev1natt_list, NULL, },
 #ifdef HAVE_LABELED_IPSEC
-  { "labeled_ipsec",  kv_conn | kv_alias,  kt_bool,  KNCF_LABELED_IPSEC, NULL, NULL, },  /* obsolete _ */
-  { "labeled-ipsec",  kv_conn,  kt_bool,  KNCF_LABELED_IPSEC, NULL, NULL, },
+  /* only policy label is used, non-zero means wanting labeled IPsec */
+  { "labeled_ipsec",  kv_conn, kt_obsolete, KNCF_WARNIGNORE, NULL, NULL, }, /* obsolete */
+  { "labeled-ipsec",  kv_conn, kt_obsolete, KNCF_WARNIGNORE, NULL, NULL, }, /* obsolete */
   { "policy_label",  kv_conn | kv_alias,  kt_string,  KSCF_POLICY_LABEL, NULL, NULL, },  /* obsolete _ */
   { "policy-label",  kv_conn,  kt_string,  KSCF_POLICY_LABEL, NULL, NULL, },
 #endif

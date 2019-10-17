@@ -29,11 +29,9 @@ extern void ikev2_parent_outI1(fd_t whack_sock,
 			      struct connection *c,
 			      struct state *predecessor,
 			      lset_t policy,
-			       unsigned long try,
-			       const threadtime_t *inception
-#ifdef HAVE_LABELED_IPSEC
-			      , struct xfrm_user_sec_ctx_ike *uctx
-#endif
+			      unsigned long try,
+			      const threadtime_t *inception,
+			      struct xfrm_user_sec_ctx_ike *uctx
 			      );
 
 extern void log_ipsec_sa_established(const char *m, const struct state *st);

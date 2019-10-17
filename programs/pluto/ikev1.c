@@ -3050,10 +3050,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			change_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
 			set_cur_state(st);
 			quick_outI1(st->st_whack_sock, st, st->st_connection,
-				    st->st_connection->policy, 1, SOS_NOBODY
-#ifdef HAVE_LABELED_IPSEC
-				    , NULL /* Setting NULL as this is responder and will not have sec ctx from a flow*/
-#endif
+				    st->st_connection->policy, 1, SOS_NOBODY,
+				    NULL /* Setting NULL as this is responder and will not have sec ctx from a flow*/
 				    );
 			break;
 		}

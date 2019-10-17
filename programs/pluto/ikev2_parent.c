@@ -513,10 +513,8 @@ void ikev2_parent_outI1(fd_t whack_sock,
 		       struct state *predecessor,
 		       lset_t policy,
 		       unsigned long try,
-		       const threadtime_t *inception
-#ifdef HAVE_LABELED_IPSEC
-		       , struct xfrm_user_sec_ctx_ike *uctx
-#endif
+		       const threadtime_t *inception,
+		       struct xfrm_user_sec_ctx_ike *uctx
 		       )
 {
 	if (drop_new_exchanges()) {
@@ -542,17 +540,13 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	st->st_try = try;
 
 	if (HAS_IPSEC_POLICY(policy)) {
-#ifdef HAVE_LABELED_IPSEC
 		st->sec_ctx = NULL;
 		if (uctx != NULL)
 			libreswan_log(
 				"Labeled ipsec is not supported with ikev2 yet");
-#endif
 		add_pending(dup_any(whack_sock), st, c, policy, 1,
-			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno
-#ifdef HAVE_LABELED_IPSEC
-			    , st->sec_ctx
-#endif
+			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
+			    st->sec_ctx
 			    );
 	}
 
@@ -5601,9 +5595,7 @@ void ikev2_rekey_ike_start(struct state *st)
 	p.policy = LEMPTY;
 	p.try = 1;
 	p.replacing = st->st_serialno;
-#ifdef HAVE_LABELED_IPSEC
 	p.uctx = st->sec_ctx;
-#endif
 	ikev2_initiate_child_sa(&p);
 }
 
@@ -5676,7 +5668,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 
 	st->st_policy = p->policy;
 
-#ifdef HAVE_LABELED_IPSEC
 	st->sec_ctx = NULL;
 	if (p->uctx != NULL) {
 		st->sec_ctx = clone_thing(*p->uctx, "sec ctx structure");
@@ -5684,7 +5675,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 		    DBG_log("pending phase 2 with security context \"%s\"",
 			    st->sec_ctx->sec_ctx_value));
 	}
-#endif
 	change_state(st, new_state); /* from STATE_UNDEFINED */
 
 	binlog_refresh_state(st);

@@ -43,10 +43,6 @@ struct pending {
 	unsigned long try;
 	so_serial_t replacing;
 	monotime_t pend_time;
-
-#ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *uctx;
-#endif
-
 	struct pending *next;
 };

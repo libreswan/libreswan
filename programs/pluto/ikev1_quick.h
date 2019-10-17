@@ -20,8 +20,6 @@ extern void quick_outI1(fd_t whack_sock,
 			struct connection *c,
 			lset_t policy,
 			unsigned long try,
-			so_serial_t replacing
-#ifdef HAVE_LABELED_IPSEC
-			, struct xfrm_user_sec_ctx_ike *uctx
-#endif
+			so_serial_t replacing,
+			struct xfrm_user_sec_ctx_ike *uctx
 			);

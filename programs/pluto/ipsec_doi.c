@@ -199,10 +199,8 @@ void ipsecdoi_initiate(fd_t whack_sock,
 		       lset_t policy,
 		       unsigned long try,
 		       so_serial_t replacing,
-		       const threadtime_t *inception
-#ifdef HAVE_LABELED_IPSEC
-		       , struct xfrm_user_sec_ctx_ike *uctx
-#endif
+		       const threadtime_t *inception,
+		       struct xfrm_user_sec_ctx_ike *uctx
 		       )
 {
 	/*
@@ -227,11 +225,7 @@ void ipsecdoi_initiate(fd_t whack_sock,
 			 * turn will start its timing it), need a way
 			 * to stop it.
 			 */
-			initiator(whack_sock, c, NULL, policy, try, inception
-#ifdef HAVE_LABELED_IPSEC
-				  , uctx
-#endif
-				  );
+			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
 		} else {
 			/* fizzle: whack_sock will be unused */
 			close_any(&whack_sock);
@@ -240,11 +234,7 @@ void ipsecdoi_initiate(fd_t whack_sock,
 		if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 			/* leave our Phase 2 negotiation pending */
 			add_pending(whack_sock, st, c, policy, try,
-				    replacing
-#ifdef HAVE_LABELED_IPSEC
-				    , uctx
-#endif
-				    );
+				    replacing, uctx);
 		} else if (st->st_ike_version == IKEv2) {
 			struct pending p;
 			p.whack_sock = whack_sock;
@@ -253,9 +243,7 @@ void ipsecdoi_initiate(fd_t whack_sock,
 			p.try = try;
 			p.policy = policy;
 			p.replacing = replacing;
-#ifdef HAVE_LABELED_IPSEC
 			p.uctx = uctx;
-#endif
 			ikev2_initiate_child_sa(&p);
 		} else {
 			/* ??? we assume that peer_nexthop_sin isn't important:
@@ -263,11 +251,7 @@ void ipsecdoi_initiate(fd_t whack_sock,
 			 * It isn't clear what to do with the error return.
 			 */
 			quick_outI1(whack_sock, st, c, policy, try,
-				    replacing
-#ifdef HAVE_LABELED_IPSEC
-				    , uctx
-#endif
-				    );
+				    replacing, uctx);
 			}
 	}
 }
@@ -308,11 +292,8 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			 * to stop it.
 			 */
 			(void) initiator(dup_any(st->st_whack_sock),
-					 c, st, policy, try, &inception
-#ifdef HAVE_LABELED_IPSEC
-				, st->sec_ctx
-#endif
-				);
+					 c, st, policy, try, &inception,
+				st->sec_ctx);
 		}
 	} else {
 		/*
@@ -349,11 +330,8 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			passert(HAS_IPSEC_POLICY(policy));
 
 		ipsecdoi_initiate(dup_any(st->st_whack_sock), st->st_connection,
-				  policy, try, st->st_serialno, &inception
-#ifdef HAVE_LABELED_IPSEC
-			, st->sec_ctx
-#endif
-			);
+				  policy, try, st->st_serialno, &inception,
+			st->sec_ctx);
 	}
 }
 
@@ -475,15 +453,6 @@ void initialize_new_state(struct state *st,
 			  fd_t whack_sock)
 {
 	update_state_connection(st, c);
-
-#ifdef HAVE_LABELED_IPSEC
-	/*
-	 * XXX: delete this?  aggr_outI1() had .sec_ctx=NULL, but
-	 * since the state was just created it can only be NULL.
-	 */
-	pexpect(st->sec_ctx == NULL);
-#endif
-
 	set_state_ike_endpoints(st, c);
 
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
