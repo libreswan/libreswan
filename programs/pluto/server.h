@@ -105,8 +105,6 @@ extern void free_pluto_event_list(void);
 bool ev_before(struct pluto_event *pev, deltatime_t delay);
 extern void set_pluto_busy(bool busy);
 extern void set_whack_pluto_ddos(enum ddos_mode mode);
-extern bool should_fragment_ike_msg(struct state *st, size_t len,
-				    bool resending);
 
 extern struct event_base *get_pluto_event_base(void);
 

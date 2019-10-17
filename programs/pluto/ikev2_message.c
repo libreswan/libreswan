@@ -1022,6 +1022,34 @@ static stf_status v2_record_outbound_fragments(struct state *st,
 	return STF_OK;
 }
 
+static bool should_fragment_v2_ike_msg(struct state *st, size_t len, bool resending)
+{
+	if (st->st_interface != NULL && st->st_interface->ike_float)
+		len += NON_ESP_MARKER_SIZE;
+
+	/* This condition is complex.  Formatting is meant to help reader.
+	 *
+	 * Hugh thinks his banished style would make this earlier version
+	 * a little clearer:
+	 * len + natt_bonus
+	 *    >= (st->st_connection->addr_family == AF_INET
+	 *       ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6)
+	 * && ((  resending
+	 *        && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)
+	 *        && st->st_seen_fragvid)
+	 *     || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
+	 *     || st->st_seen_fragments))
+	 *
+	 * ??? the following test does not account for natt_bonus
+	 */
+	return len >= endpoint_type(&st->st_remote_endpoint)->ikev1_max_fragment_size &&
+	    (   (resending &&
+			(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
+			st->st_seen_fragvid) ||
+		(st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
+		st->st_seen_fragments   );
+}
+
 /*
  * Record the message ready for sending.  If needed, first fragment
  * it.
@@ -1037,7 +1065,7 @@ stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 				    const char *what)
 {
 	stf_status ret;
-	if (should_fragment_ike_msg(&sk->ike->sa, pbs_offset(msg),
+	if (should_fragment_v2_ike_msg(&sk->ike->sa, pbs_offset(msg),
 				    true/*IKEv1 retransmit*/)) {
 		ret = v2_record_outbound_fragments(msg_sa, msg, sk, what);
 	} else {

@@ -137,6 +137,34 @@ static bool send_v1_frags(struct state *st, const char *where)
 	return TRUE;
 }
 
+static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resending)
+{
+	if (st->st_interface != NULL && st->st_interface->ike_float)
+		len += NON_ESP_MARKER_SIZE;
+
+	/* This condition is complex.  Formatting is meant to help reader.
+	 *
+	 * Hugh thinks his banished style would make this earlier version
+	 * a little clearer:
+	 * len + natt_bonus
+	 *    >= (st->st_connection->addr_family == AF_INET
+	 *       ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6)
+	 * && ((  resending
+	 *        && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)
+	 *        && st->st_seen_fragvid)
+	 *     || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
+	 *     || st->st_seen_fragments))
+	 *
+	 * ??? the following test does not account for natt_bonus
+	 */
+	return len >= endpoint_type(&st->st_remote_endpoint)->ikev1_max_fragment_size &&
+	    (   (resending &&
+			(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
+			st->st_seen_fragvid) ||
+		(st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
+		st->st_seen_fragments   );
+}
+
 static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 						 const char *where,
 						 bool resending)
@@ -170,7 +198,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 	 * to do with the attacks inital packet?
 	 */
 	if (st->st_state->kind != STATE_MAIN_I1 &&
-	    should_fragment_ike_msg(st, len + natt_bonus, resending)) {
+	    should_fragment_v1_ike_msg(st, len + natt_bonus, resending)) {
 		return send_v1_frags(st, where);
 	} else {
 		return send_chunk_using_state(st, where, st->st_tpacket);

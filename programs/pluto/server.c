@@ -1846,34 +1846,6 @@ void check_outgoing_msg_errqueue(const struct iface_port *ifp UNUSED,
 #endif	/* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 }
 
-bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
-{
-	if (st->st_interface != NULL && st->st_interface->ike_float)
-		len += NON_ESP_MARKER_SIZE;
-
-	/* This condition is complex.  Formatting is meant to help reader.
-	 *
-	 * Hugh thinks his banished style would make this earlier version
-	 * a little clearer:
-	 * len + natt_bonus
-	 *    >= (st->st_connection->addr_family == AF_INET
-	 *       ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6)
-	 * && ((  resending
-	 *        && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)
-	 *        && st->st_seen_fragvid)
-	 *     || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
-	 *     || st->st_seen_fragments))
-	 *
-	 * ??? the following test does not account for natt_bonus
-	 */
-	return len >= endpoint_type(&st->st_remote_endpoint)->ikev1_max_fragment_size &&
-	    (   (resending &&
-			(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
-			st->st_seen_fragvid) ||
-		(st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
-		st->st_seen_fragments   );
-}
-
 bool ev_before(struct pluto_event *pev, deltatime_t delay) {
 	struct timeval timeout;
 
