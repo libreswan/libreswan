@@ -1041,9 +1041,9 @@ stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 	    sk->ike->sa.st_interface->ike_float)
 		len += NON_ESP_MARKER_SIZE;
 
-	/* This condition is broken; it uses the IKEv1 constant */
 	stf_status ret;
-	if (len >= endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev1_max_fragment_size) {
+	/* IPv4 and IPv6 have different fragment sizes */
+	if (len >= endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
 		ret = v2_record_outbound_fragments(msg_sa, msg, sk, what);
 	} else {
 		ret = encrypt_v2SK_payload(sk);

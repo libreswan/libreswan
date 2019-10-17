@@ -38,13 +38,9 @@ struct ip_info {
 	/*
 	 * ike
 	 */
-#if 0
-	/* needs ike_version.h? */
-	unsigned max_fragment_size[IKE_VERSION_ROOF];
-#else
+	/* IPv4 and IPv6 have different fragment sizes */
 	unsigned ikev1_max_fragment_size;
 	unsigned ikev2_max_fragment_size;
-#endif
 
 	/*
 	 * Sockaddr.
