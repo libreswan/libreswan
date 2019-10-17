@@ -2551,14 +2551,26 @@ def boot_n_login(args=None, test=None):
 
 class NS_IF():
 
-    def __init__(self, hostname, tcsum, ifpre):
-        self.name = "eth" + ifpre
+    def __init__(self, hostname, tcsum, ifpre, name=None):
+        if name and ifpre:
+            self.name = name
+        else:
+            if ifpre:
+                self.name = "eth" + ifpre
+            else:
+                self.name = None
+
         self.ipv4 = None
         self.gwv4 = None
         self.br = None
-        self.hif = 'h' + hostname + "e" + ifpre + \
-            tcsum  # host end of veth eth0(inside)
-        self.gif = 'g' + hostname + "e" + ifpre + tcsum  # guest eth0 veth end point
+
+        if ifpre:
+            self.hif = 'h' + hostname + "e" + ifpre + \
+                    tcsum  # host end of veth eth0(inside)
+            self.gif = 'g' + hostname + "e" + ifpre + tcsum  # guest eth0 veth end point
+        else:
+            self.hif = None
+            self.gif = None
         self.routes = []  # additional static routes
 
 
@@ -2578,6 +2590,7 @@ class NS_GuestNetwork():
         self.eth1 = None
         if hostname != "road":
             self.eth1 = NS_IF(hostname, self.tcsum, '1')
+        self.lo = NS_IF(hostname, self.tcsum, None)
 
         if hostname == "east":
             self.eth0.ipv4 = "192.0.2.254/24"
