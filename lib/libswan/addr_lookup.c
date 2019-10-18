@@ -28,6 +28,7 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "ipsecconf/confread.h"
+#include "kernel_xfrm_reply.h"
 #include "addr_lookup.h"
 #ifdef USE_DNSSEC
 # include "dnssec.h"
@@ -86,8 +87,7 @@ static void resolve_point_to_point_peer(
  * will be truncated if it doesn't fit to buffer. Netlink returns up
  * to 16KiB of data so always keep that much free.
  */
-#define RTNL_BUFMARGIN 16384
-#define RTNL_BUFSIZE (RTNL_BUFMARGIN + 8192)
+#define RTNL_BUFSIZE (NL_BUFMARGIN + 8192)
 
 /*
  * Initialize netlink query message.
@@ -146,61 +146,6 @@ static void netlink_query_add(char *msgbuf, int rta_type, const ip_address *addr
 	else
 		rtmsg->rtm_dst_len = bytes.len * 8;
 	nlmsg->nlmsg_len += rtattr->rta_len;
-}
-
-static ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
-				  unsigned int seqnum, __u32 pid)
-{
-	size_t msglen = 0;
-
-	for (;;) {
-		struct sockaddr_nl sa;
-		ssize_t readlen;
-
-		/* Read netlink message, verifying kernel origin. */
-		do {
-			socklen_t salen = sizeof(sa);
-
-			readlen = recvfrom(sock, *pbuf + msglen,
-					bufsize - msglen, 0,
-					(struct sockaddr *)&sa, &salen);
-			if (readlen <= 0 || salen != sizeof(sa))
-				return -1;
-		} while (sa.nl_pid != 0);
-
-		/* Verify it's valid */
-		struct nlmsghdr *nlhdr = (struct nlmsghdr *)(*pbuf + msglen);
-
-		if (!NLMSG_OK(nlhdr, (size_t)readlen) ||
-			nlhdr->nlmsg_type == NLMSG_ERROR)
-			return -1;
-
-		/* Move read pointer */
-		msglen += readlen;
-
-		/* Check if it is the last message */
-		if (nlhdr->nlmsg_type == NLMSG_DONE)
-			break;
-
-		/* all done if it's not a multi part */
-		if ((nlhdr->nlmsg_flags & NLM_F_MULTI) == 0)
-			break;
-
-		/* all done if this is the one we were searching for */
-		if (nlhdr->nlmsg_seq == seqnum && nlhdr->nlmsg_pid == pid)
-			break;
-
-		/* Allocate more memory for buffer if needed. */
-		if (msglen >= bufsize - RTNL_BUFMARGIN) {
-			bufsize = bufsize * 2;
-			char *newbuf = alloc_bytes(bufsize, "netlink query");
-			memcpy(newbuf, *pbuf, msglen);
-			pfree(*pbuf);
-			*pbuf = newbuf;
-		}
-	}
-
-	return msglen;
 }
 
 /*
