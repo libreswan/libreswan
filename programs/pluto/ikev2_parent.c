@@ -1883,8 +1883,9 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 		 * Asymmetric policy unset.
 		 * Pick up from symmetric policy, in order of preference!
 		 */
-		/* ??? what about POLICY_ECDSA? */
-		if (c->policy & POLICY_RSASIG) {
+		if (c->policy & POLICY_ECDSA) {
+			authby = AUTH_ECDSA;
+		} else if (c->policy & POLICY_RSASIG) {
 			authby = AUTH_RSASIG;
 		} else if (c->policy & POLICY_PSK) {
 			authby = AUTH_PSK;
@@ -1902,10 +1903,26 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 
 	switch (authby) {
 	case AUTH_RSASIG:
-		a.isaa_type = ike->sa.st_seen_hashnotify &&
-			c->sighash_policy != LEMPTY ?
-				IKEv2_AUTH_DIGSIG : IKEv2_AUTH_RSA;
+	{
+		bool allow_legacy = LIN(POLICY_RSASIG_v1_5, c->policy);
+
+		if (pst->st_seen_hashnotify) {
+			if (c->sighash_policy != LEMPTY) {
+				a.isaa_type = IKEv2_AUTH_DIGSIG;
+			} else {
+				if (allow_legacy)
+					a.isaa_type = IKEv2_AUTH_RSA;
+				else
+					return STF_FATAL;
+			}
+		} else {
+			if (allow_legacy)
+				a.isaa_type = IKEv2_AUTH_RSA;
+			else
+				return STF_FATAL;
+		}
 		break;
+	}
 	case AUTH_ECDSA:
 		a.isaa_type = IKEv2_AUTH_DIGSIG;
 		break;

@@ -1425,6 +1425,8 @@ static bool load_conn(
 	 * there is also leftauthby/rightauthby version stored in 'end'
 	 *
 	 * authby=secret|rsasig|null|never|rsa-HASH
+	 *
+	 * using authby=rsasig results in legacy POLICY_RSASIG_v1_5 and RSA_PSS
 	 */
 	if (conn->strings_set[KSCF_AUTHBY]) {
 		char *val = strtok(conn->strings[KSCF_AUTHBY], ", ");
@@ -1435,7 +1437,10 @@ static bool load_conn(
 				conn->policy |= POLICY_PSK;
 			} else if (streq(val, "rsasig") || streq(val, "rsa")) {
 				conn->policy |= POLICY_RSASIG;
-				conn->sighash_policy = LEMPTY;
+				conn->policy |= POLICY_RSASIG_v1_5;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (streq(val, "never")) {
 				conn->policy |= POLICY_AUTH_NEVER;
 			/* everything else is only supported for IKEv2 */
@@ -1444,9 +1449,12 @@ static bool load_conn(
 				return TRUE;
 			} else if (streq(val, "null")) {
 				conn->policy |= POLICY_AUTH_NULL;
+			} else if (streq(val, "rsa-sha1")) {
+				conn->policy |= POLICY_RSASIG;
+				conn->policy |= POLICY_RSASIG_v1_5;
 			} else if (streq(val, "rsa-sha2") || streq(val, "rsa-sha2_256")) {
 				conn->policy |= POLICY_RSASIG;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
+				conn->sighash_policy |= POL_SIGHASH_SHA1;
 			} else if (streq(val, "rsa-sha2_384")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;

@@ -1378,6 +1378,10 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 		    (wm->left.authby == AUTH_RSASIG && wm->right.authby == AUTH_NULL)) {
 			c->policy |= POLICY_RSASIG;
 		}
+		if ((wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_ECDSA) ||
+		    (wm->left.authby == AUTH_ECDSA && wm->right.authby == AUTH_NULL)) {
+			c->policy |= POLICY_ECDSA;
+		}
 
 		/* IKE cipher suites */
 
