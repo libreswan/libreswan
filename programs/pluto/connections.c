@@ -1586,7 +1586,6 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	c->sa_priority = wm->sa_priority;
 	c->sa_tfcpad = wm->sa_tfcpad;
 	c->send_no_esp_tfc = wm->send_no_esp_tfc;
-	c->addr_family = wm->addr_family;
 	c->sa_reqid = wm->sa_reqid;
 
 	/*
@@ -4228,7 +4227,8 @@ uint32_t calculate_sa_prio(const struct connection *c)
 		srcw = c->spd.this.client.maskbits;
 		dstw = c->spd.that.client.maskbits;
 	} else {
-		srcw = dstw = c->addr_family == AF_INET ? 32 : 128;
+		srcw = address_type(&c->spd.this.host_addr)->mask_cnt;
+		dstw = address_type(&c->spd.that.host_addr)->mask_cnt;
 	}
 
 	uint32_t prio = pmax - (portsw << 17 | protow << 16 | srcw << 8 | dstw);

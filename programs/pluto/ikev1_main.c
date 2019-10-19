@@ -2155,7 +2155,6 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	 */
 	struct connection fake_connection = {
 		.interface = md->iface,
-		.addr_family = addrtypeof(&md->sender),	/* for should_fragment_ike_msg() */
 		.policy = POLICY_IKE_FRAG_FORCE, 	/* for should_fragment_ike_msg() */
 	};
 
@@ -2164,6 +2163,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 			.st_serialno = SOS_NOBODY,
 			.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
 			.st_state = finite_states[STATE_UNDEFINED],
+			.st_remote_endpoint = md->sender,
 		},
 	};
 

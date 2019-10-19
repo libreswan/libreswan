@@ -486,7 +486,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	jam(buf, "PLUTO_ADDTIME='%" PRIu64 "' ", st == NULL ? (uint64_t)0 : st->st_esp.add_time);
 	jam(buf, "PLUTO_CONN_POLICY='%s%s' ", prettypolicy(c->policy), NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
 	jam(buf, "PLUTO_CONN_KIND='%s' ", enum_show(&connection_kind_names, c->kind));
-	jam(buf, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", (c->addr_family == AF_INET) ? 4 : 6);
+	jam(buf, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->this.host_addr)->ip_version);
 	jam(buf, "XAUTH_FAILED=%d ", (st != NULL && st->st_xauth_soft) ? 1 : 0);
 
 	if (st != NULL && st->st_xauth_username[0] != '\0') {

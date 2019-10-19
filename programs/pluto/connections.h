@@ -324,9 +324,6 @@ struct connection {
 	lmod_t extra_debugging;
 	lmod_t extra_impairing;
 
-	/* note: if the client is the gateway, the following must be equal */
-	sa_family_t addr_family;	/* between gateways */
-
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;
 
