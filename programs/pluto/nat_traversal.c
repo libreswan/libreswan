@@ -118,29 +118,30 @@ void init_nat_traversal(deltatime_t keep_alive_period)
 	init_oneshot_timer(EVENT_NAT_T_KEEPALIVE, nat_traversal_ka_event);
 }
 
-static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
-		      const ike_spis_t *spis, const ip_endpoint *endpoint)
+static struct crypt_mac natd_hash(const struct hash_desc *hasher,
+				  const ike_spis_t *spis,
+				  const ip_endpoint *endpoint)
 {
 	/* only responder's IKE SPI can be zero */
 	pexpect(!ike_spi_is_zero(&spis->initiator));
 
 	if (ike_spi_is_zero(&spis->responder)) {
 		/* IKE_SA_INIT exchange */
-		dbg("natd_hash: rcookie is zero");
+		dbg("natd_hash: IKE.SPIr is zero");
 	}
 
 	/*
 	 * RFC 3947
 	 *
-	 *   HASH = HASH(CKY-I | CKY-R | IP | Port)
+	 *   HASH = HASH(IKE.SPIi | IKE.SPIr | IP | Port)
 	 *
 	 * All values in network order
 	 */
 	struct crypt_hash *ctx = crypt_hash_init("NATD", hasher);
 
-	crypt_hash_digest_bytes(ctx, "ICOOKIE/IKE SPIi",
+	crypt_hash_digest_bytes(ctx, "IKE SPIi",
 				&spis->initiator, sizeof(spis->initiator));
-	crypt_hash_digest_bytes(ctx, "RCOOKIE/IKE SPIr",
+	crypt_hash_digest_bytes(ctx, "IKE SPIr",
 				&spis->responder, sizeof(spis->responder));
 
 	ip_address ip = endpoint_address(endpoint);
@@ -150,8 +151,7 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 	uint16_t nport = endpoint_nport(endpoint);
 	crypt_hash_digest_bytes(ctx, "PORT",
 				&nport, sizeof(nport));
-
-	crypt_hash_final_bytes(&ctx, hash, hasher->hash_digest_size);
+	struct crypt_mac hash = crypt_hash_final_mac(&ctx);
 
 	if (DBGP(DBG_BASE)) {
 		DBG_log("natd_hash: hasher=%p(%d)", hasher,
@@ -160,9 +160,9 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 		DBG_dump("natd_hash: rcookie=", &spis->responder, sizeof(spis->responder));
 		DBG_dump_hunk("natd_hash: ip=", ap);
 		DBG_dump("natd_hash: port=", &nport, sizeof(nport));
-		DBG_dump("natd_hash: hash=", hash,
-			 hasher->hash_digest_size);
+		DBG_dump_hunk("natd_hash: hash=", hash);
 	}
+	return hash;
 }
 
 /*
@@ -200,8 +200,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 		    const ike_spis_t *ike_spis,
 		    pb_stream *outs)
 {
-	unsigned char hb[IKEV2_NATD_HASH_SIZE];
-	chunk_t hch = { hb, sizeof(hb) };
+	struct crypt_mac hb;
 
 	DBG(DBG_NATT,
 		DBG_log(" NAT-Traversal support %s add v2N payloads.",
@@ -209,16 +208,19 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 
 	/* First: one with local (source) IP & port */
 
-	natd_hash(&ike_alg_hash_sha1, hb, ike_spis, local_endpoint);
-
-	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, hch, outs))
-		return FALSE;
+	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, local_endpoint);
+	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, hb, outs)) {
+		return false;
+	}
 
 	/* Second: one with remote (destination) IP & port */
 
-	natd_hash(&ike_alg_hash_sha1, hb, ike_spis, remote_endpoint);
+	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, remote_endpoint);
+	if (!emit_v2N_hunk(v2N_NAT_DETECTION_DESTINATION_IP, hb, outs)) {
+		return false;
+	}
 
-	return emit_v2N_hunk(v2N_NAT_DETECTION_DESTINATION_IP, hch, outs);
+	return true;
 }
 
 /*
@@ -374,7 +376,6 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	const struct hash_desc *const hasher = st->st_oakley.ta_prf->hasher;
-	const size_t hl = hasher->hash_digest_size;
 	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
 
 	passert(md->iface != NULL);
@@ -397,43 +398,37 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 
 	/* First: one with my IP & port */
 
-	unsigned char hash_me[MAX_DIGEST_LEN];
-
-	natd_hash(hasher, hash_me, &st->st_ike_spis,
-		  &md->iface->local_endpoint);
+	struct crypt_mac hash_local = natd_hash(hasher, &st->st_ike_spis,
+						&md->iface->local_endpoint);
 
 	/* Second: one with sender IP & port */
 
-	unsigned char hash_him[MAX_DIGEST_LEN];
+	struct crypt_mac hash_remote = natd_hash(hasher, &st->st_ike_spis,
+						 &md->sender);
 
-	natd_hash(hasher, hash_him, &st->st_ike_spis, &md->sender);
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_hunk("expected NAT-D(local):", hash_local);
+		DBG_dump_hunk("expected NAT-D(remote):", hash_remote);
+	}
 
-	DBG(DBG_NATT, {
-		DBG_dump("expected NAT-D(me):", hash_me, hl);
-		DBG_dump("expected NAT-D(him):", hash_him, hl);
-	});
-
-	bool found_me = FALSE;
-	bool found_him = FALSE;
+	bool found_local = false;
+	bool found_remote = false;
 
 	for (const struct payload_digest *p = hd; p != NULL; p = p->next) {
 		DBG(DBG_NATT,
 			DBG_dump("received NAT-D:", p->pbs.cur,
 				pbs_left(&p->pbs)));
 
-		if (pbs_left(&p->pbs) == hl) {
-			if (memeq(p->pbs.cur, hash_me, hl))
-				found_me = TRUE;
-
-			if (memeq(p->pbs.cur, hash_him, hl))
-				found_him = TRUE;
-
-			if (found_me && found_him)
-				break;
-		}
+		shunk_t left = pbs_in_left_as_shunk(&p->pbs);
+		if (hunk_eq(left, hash_local))
+			found_local = true;
+		if (hunk_eq(left, hash_remote))
+			found_remote = true;
+		if (found_local && found_remote)
+			break;
 	}
 
-	natd_lookup_common(st, &md->sender, found_me, found_him);
+	natd_lookup_common(st, &md->sender, found_local, found_remote);
 }
 
 bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
@@ -469,17 +464,15 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 		&isakmp_nat_d_drafts : &isakmp_nat_d;
 	unsigned int nat_np = pd->pt;
 
-	unsigned char hash[MAX_DIGEST_LEN];
-
 	/* first: emit payload with hash of sender IP & port */
 
 	const ip_endpoint remote_endpoint = set_endpoint_hport(&md->sender,
 							       remote_port);
-	natd_hash(st->st_oakley.ta_prf->hasher, hash,
-		  &ike_spis, &remote_endpoint);
+	struct crypt_mac hash;
 
-	if (!ikev1_out_generic_raw(nat_np, pd, outs, hash,
-				   st->st_oakley.ta_prf->hasher->hash_digest_size,
+	hash = natd_hash(st->st_oakley.ta_prf->hasher,
+			 &ike_spis, &remote_endpoint);
+	if (!ikev1_out_generic_raw(nat_np, pd, outs, hash.ptr, hash.len,
 				   "NAT-D"))
 		return FALSE;
 
@@ -487,12 +480,10 @@ bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 
 	const ip_endpoint local_endpoint = set_endpoint_hport(&md->iface->local_endpoint,
 							      local_port);
-	natd_hash(st->st_oakley.ta_prf->hasher, hash,
-		  &ike_spis, &local_endpoint);
-
-	return ikev1_out_generic_raw(np, pd, outs, hash,
-		st->st_oakley.ta_prf->hasher->hash_digest_size,
-		"NAT-D");
+	hash = natd_hash(st->st_oakley.ta_prf->hasher,
+			 &ike_spis, &local_endpoint);
+	return ikev1_out_generic_raw(np, pd, outs, hash.ptr, hash.len,
+				     "NAT-D");
 }
 
 /*
@@ -1025,20 +1016,16 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
 	 * TODO: This use must be allowed even with USE_SHA1=false
 	 */
 
-	unsigned char hash_me[IKEV2_NATD_HASH_SIZE];
-
-	natd_hash(&ike_alg_hash_sha1, hash_me, &ike_spis,
-		  &md->iface->local_endpoint);
+	struct crypt_mac hash_local = natd_hash(&ike_alg_hash_sha1, &ike_spis,
+						&md->iface->local_endpoint);
 
 	/* Second: one with sender IP & port */
 
-	unsigned char hash_him[IKEV2_NATD_HASH_SIZE];
+	struct crypt_mac hash_remote = natd_hash(&ike_alg_hash_sha1, &ike_spis,
+						 &md->sender);
 
-	natd_hash(&ike_alg_hash_sha1, hash_him, &ike_spis,
-		  &md->sender);
-
-	bool found_me = FALSE;
-	bool found_him = FALSE;
+	bool found_local = false;
+	bool found_remote = false;
 
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 		if (pbs_left(&p->pbs) != IKEV2_NATD_HASH_SIZE)
@@ -1048,17 +1035,18 @@ void ikev2_natd_lookup(struct msg_digest *md, const ike_spi_t *ike_responder_spi
 		case v2N_NAT_DETECTION_DESTINATION_IP:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 			/* ??? do we know from the isan_type which of these to test? */
-			if (memeq(p->pbs.cur, hash_me, sizeof(hash_me)))
-				found_me = TRUE;
-			if (memeq(p->pbs.cur, hash_him, sizeof(hash_him)))
-				found_him = TRUE;
+			/* XXX: should this check pbs_left(), see other code */
+			if (memeq(p->pbs.cur, hash_local.ptr, hash_local.len))
+				found_local = true;
+			if (memeq(p->pbs.cur, hash_remote.ptr, hash_remote.len))
+				found_remote = true;
 			break;
 		default:
 			continue;
 		}
 	}
 
-	natd_lookup_common(st, &md->sender, found_me, found_him);
+	natd_lookup_common(st, &md->sender, found_local, found_remote);
 }
 
 
