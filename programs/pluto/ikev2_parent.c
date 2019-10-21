@@ -69,6 +69,7 @@
 #include "ikev2_redirect.h"
 #include "xauth.h"
 #include "crypt_dh.h"
+#include "crypt_prf.h"
 #include "ietf_constants.h"
 #include "ip_address.h"
 #include "hostpair.h"
@@ -2025,6 +2026,21 @@ static bool need_configuration_payload(const struct connection *const pc,
 		(!pc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST)));
 }
 
+static struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
+				   const char *id_name, shunk_t id_payload,
+				   const char *key_name, PK11SymKey *key)
+{
+	const uint8_t *id_start = id_payload.ptr;
+	size_t id_size = id_payload.len;
+	/* HASH of ID is not done over common header */
+	id_start += NSIZEOF_isakmp_generic;
+	id_size -= NSIZEOF_isakmp_generic;
+	struct crypt_prf *id_ctx = crypt_prf_init_symkey(why, ike->sa.st_oakley.ta_prf,
+							 key_name, key);
+	crypt_prf_update_bytes(id_ctx, id_name, id_start, id_size);
+	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
+}
+
 static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_digest *md,
 					      struct pluto_crypto_req *r)
 {
@@ -2189,22 +2205,15 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* send out the IDi payload */
 
-	unsigned char idhash[MAX_DIGEST_LEN];
-	unsigned char idhash_npa[MAX_DIGEST_LEN];	/* idhash for NO_PPK_AUTH (npa) */
+	struct crypt_mac idhash;
+	struct crypt_mac idhash_npa = { .len = 0, };
 
 	{
-		pb_stream i_id_pbs;
-		struct hmac_ctx id_ctx;
-
 		shunk_t id_b;
 		struct ikev2_id i_id = build_v2_id_payload(&pc->spd.this, &id_b);
 
-		hmac_init(&id_ctx, pst->st_oakley.ta_prf, pst->st_skey_pi_nss);
-
-		/* HASH of ID is not done over common header */
-		unsigned char *const id_start =
-			sk.pbs.cur + NSIZEOF_isakmp_generic;
-
+		uint8_t *id_start = sk.pbs.cur;
+		pb_stream i_id_pbs;
 		if (!out_struct(&i_id,
 				&ikev2_id_i_desc,
 				&sk.pbs,
@@ -2214,21 +2223,22 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		close_output_pbs(&i_id_pbs);
 
+		/*
+		 * XXX: if i_id_pbs included the header (i_id) then
+		 * the structure, after closing, could be passed into
+		 * v2_id_hash.
+		 */
 		/* calculate hash of IDi for AUTH below */
-
 		const size_t id_len = sk.pbs.cur - id_start;
-
-		DBG(DBG_CRYPT, DBG_dump("idhash calc I2", id_start, id_len));
-		hmac_update(&id_ctx, id_start, id_len);
-		hmac_final(idhash, &id_ctx);
+		idhash = v2_id_hash(ike, "IDi verify hash",
+				    "IDi", shunk2(id_start, id_len),
+				    "skey_pi", ike->sa.st_skey_pi_nss);
 
 		if (pst->st_seen_ppk && !LIN(POLICY_PPK_INSIST, pc->policy)) {
-			struct hmac_ctx id_ctx_npa;
-
-			hmac_init(&id_ctx_npa, pst->st_oakley.ta_prf, pst->st_sk_pi_no_ppk);
 			/* ID payload that we've build is the same */
-			hmac_update(&id_ctx_npa, id_start, id_len);
-			hmac_final(idhash_npa, &id_ctx_npa);
+			idhash_npa = v2_id_hash(ike, "IDi verify hash (no-PPK)",
+						"IDi", shunk2(id_start, id_len),
+						"sk_pi_no_pkk", ike->sa.st_sk_pi_no_ppk);
 		}
 	}
 
@@ -2295,7 +2305,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	chunk_t null_auth;	/* we must free this */
 
 	stf_status authstat = ikev2_send_auth(cst, ORIGINAL_INITIATOR, 0,
-					      idhash, &sk.pbs, &null_auth);
+					      idhash.ptr, &sk.pbs, &null_auth);
 	if (authstat != STF_OK) {
 		freeanychunk(null_auth);
 		return authstat;
@@ -2408,7 +2418,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		close_output_pbs(&ppks);
 
 		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
-			stf_status s = ikev2_calc_no_ppk_auth(pst, idhash_npa,
+			stf_status s = ikev2_calc_no_ppk_auth(pst, idhash_npa.ptr,
 				&pst->st_no_ppk_auth);
 			if (s != STF_OK) {
 				freeanychunk(null_auth);
@@ -2679,8 +2689,8 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 {
 	struct state *const st = md->st;
+	struct ike_sa *ike = pexpect_ike_sa(st);
 	lset_t policy = st->st_connection->policy;
-	unsigned char idhash_in[MAX_DIGEST_LEN];
 	bool found_ppk = FALSE;
 	bool ppkid_seen = FALSE;
 	bool noppk_seen = FALSE;
@@ -2811,17 +2821,9 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	}
 
 	/* calculate hash of IDi for AUTH below */
-	{
-		struct hmac_ctx id_ctx;
-		const pb_stream *id_pbs = &md->chain[ISAKMP_NEXT_v2IDi]->pbs;
-		unsigned char *idstart = id_pbs->start + NSIZEOF_isakmp_generic;
-		unsigned int idlen = pbs_room(id_pbs) - NSIZEOF_isakmp_generic;
-
-		hmac_init(&id_ctx, st->st_oakley.ta_prf, st->st_skey_pi_nss);
-		DBG(DBG_CRYPT, DBG_dump("idhash verify I2", idstart, idlen));
-		hmac_update(&id_ctx, idstart, idlen);
-		hmac_final(idhash_in, &id_ctx);
-	}
+	struct crypt_mac idhash_in = v2_id_hash(ike, "IDi verify hash",
+						"IDi", pbs_in_as_shunk(&md->chain[ISAKMP_NEXT_v2IDi]->pbs),
+						"skey_pi", st->st_skey_pi_nss);
 
 	/* process CERTREQ payload */
 	if (md->chain[ISAKMP_NEXT_v2CERTREQ] != NULL) {
@@ -2849,7 +2851,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		init_pbs(&pbs_no_ppk_auth, st->st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
 		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
-				st, ORIGINAL_RESPONDER, idhash_in,
+				st, ORIGINAL_RESPONDER, idhash_in.ptr,
 				&pbs_no_ppk_auth,
 				st->st_connection->spd.that.authby, "no-PPK-auth"))
 		{
@@ -2878,7 +2880,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			DBG(DBG_CONTROL, DBG_log("going to try to verify NULL_AUTH from Notify payload"));
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
 			if (!v2_check_auth(IKEv2_AUTH_NULL, st,
-					ORIGINAL_RESPONDER, idhash_in,
+					ORIGINAL_RESPONDER, idhash_in.ptr,
 					&pbs_null_auth, AUTH_NULL, "NULL_auth from Notify Payload"))
 			{
 				struct ike_sa *ike = ike_sa(st);
@@ -2893,7 +2895,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		} else {
 			DBGF(DBG_CONTROL, "verifying AUTH payload");
 			if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
-					st, ORIGINAL_RESPONDER, idhash_in,
+					st, ORIGINAL_RESPONDER, idhash_in.ptr,
 					&md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 					st->st_connection->spd.that.authby, "I2 Auth Payload")) {
 				struct ike_sa *ike = ike_sa(st);
@@ -2923,6 +2925,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						   bool pam_status)
 {
 	struct connection *const c = st->st_connection;
+	struct ike_sa *ike = pexpect_ike_sa(st);
 
 	if (!pam_status) {
 		/*
@@ -3044,7 +3047,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	}
 
 	/* send out the IDr payload */
-	unsigned char idhash_out[MAX_DIGEST_LEN];
+	struct crypt_mac idhash_out;
 
 	{
 		shunk_t id_b;
@@ -3059,15 +3062,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		} else {
 			r_id = build_v2_id_payload(&c->spd.this, &id_b);
 		}
+
+		uint8_t *id_start = sk.pbs.cur;
 		pb_stream r_id_pbs;
-		struct hmac_ctx id_ctx;
-		unsigned char *id_start;
-		unsigned int id_len;
-
-		hmac_init(&id_ctx, st->st_oakley.ta_prf, st->st_skey_pr_nss);
-
-		id_start = sk.pbs.cur + NSIZEOF_isakmp_generic;
-
 		if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
 				&r_id_pbs) ||
 		    !out_chunk(id_b, &r_id_pbs, "my identity"))
@@ -3076,11 +3073,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		close_output_pbs(&r_id_pbs);
 
 		/* calculate hash of IDi for AUTH below */
-		id_len = sk.pbs.cur - id_start;
-		DBG(DBG_CRYPT,
-		    DBG_dump("idhash calc R2", id_start, id_len));
-		hmac_update(&id_ctx, id_start, id_len);
-		hmac_final(idhash_out, &id_ctx);
+		size_t id_len = sk.pbs.cur - id_start;
+		idhash_out = v2_id_hash(ike, "IDi verify hash",
+					"IDr", shunk2(id_start, id_len),
+					"skey pr", st->st_skey_pr_nss);
 	}
 
 	DBG(DBG_CONTROLMORE,
@@ -3124,7 +3120,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	{
 		stf_status authstat = ikev2_send_auth(st,
 						      ORIGINAL_RESPONDER, auth_np,
-						      idhash_out,
+						      idhash_out.ptr,
 						      &sk.pbs, NULL);
 						      /* ??? NULL - don't calculate additional NULL_AUTH ??? */
 
@@ -3495,7 +3491,6 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 {
 	struct ike_sa *ike = ike_sa(st);
-	unsigned char idhash_in[MAX_DIGEST_LEN];
 	struct payload_digest *ntfy;
 	struct state *pst = st;
 	bool got_transport = FALSE;
@@ -3645,25 +3640,15 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	{
-		struct hmac_ctx id_ctx;
-		const pb_stream *id_pbs = &md->chain[ISAKMP_NEXT_v2IDr]->pbs;
-		unsigned char *idstart = id_pbs->start + NSIZEOF_isakmp_generic;
-		unsigned int idlen = pbs_room(id_pbs) - NSIZEOF_isakmp_generic;
-
-		hmac_init(&id_ctx, pst->st_oakley.ta_prf, pst->st_skey_pr_nss);
-
-		/* calculate hash of IDr for AUTH below */
-		DBG(DBG_CRYPT, DBG_dump("idhash auth R2", idstart, idlen));
-		hmac_update(&id_ctx, idstart, idlen);
-		hmac_final(idhash_in, &id_ctx);
-	}
+	struct crypt_mac idhash_in = v2_id_hash(ike, "idhash auth R2",
+						"IDr", pbs_in_as_shunk(&md->chain[ISAKMP_NEXT_v2IDr]->pbs),
+						"skey_pr", pst->st_skey_pr_nss);
 
 	/* process AUTH payload */
 
 	DBGF(DBG_CONTROL, "verifying AUTH payload");
 	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
-			pst, ORIGINAL_INITIATOR, idhash_in,
+			pst, ORIGINAL_INITIATOR, idhash_in.ptr,
 			&md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby, "R2 Auth Payload"))
 	{
 		/*
