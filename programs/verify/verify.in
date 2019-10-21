@@ -363,7 +363,7 @@ def configsetupcheck():
 		print_result("OK","OK")
 	else:
 		print_result("WARN","OBSOLETE KEYWORD")
-		err = str(err, encoding = 'utf-8').replace("Warning"," Warning")
+		err = err.replace("Warning"," Warning")
 		print(err[:-1])
 
 def main():
