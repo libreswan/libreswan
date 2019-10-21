@@ -291,7 +291,7 @@ static bool v2_reject_wrong_ke_for_proposal(struct state *st,
  */
 /*
  * ??? Several verify routines return an stf_status and yet we just return a bool.
- *     We perhaps should return an stf_status so distinction don't get lost.
+ *     We perhaps should return an stf_status so distinctions don't get lost.
  */
 static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	struct state *st,
