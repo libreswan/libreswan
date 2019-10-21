@@ -968,7 +968,6 @@ enum sa_policy_bits {
 
 #define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
 
-	POLICY_RSASIG_v1_5_IX,	/* must be after AUTH MASK */
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
 	POLICY_AUTHENTICATE_IX,	/* must be second */
 	POLICY_COMPRESS_IX,	/* must be third */
@@ -1053,7 +1052,8 @@ enum sa_policy_bits {
 	POLICY_PPK_INSIST_IX,
 	POLICY_ESN_NO_IX,		/* send/accept ESNno */
 	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
-#define POLICY_IX_LAST	POLICY_ESN_YES_IX
+	POLICY_RSASIG_v1_5_IX,
+#define POLICY_IX_LAST	POLICY_RSASIG_v1_5_IX
 };
 
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
@@ -1061,7 +1061,6 @@ enum sa_policy_bits {
 #define POLICY_ECDSA   LELEM(POLICY_ECDSA_IX)
 #define POLICY_AUTH_NEVER	LELEM(POLICY_AUTH_NEVER_IX)
 #define POLICY_AUTH_NULL LELEM(POLICY_AUTH_NULL_IX)
-#define POLICY_RSASIG_v1_5	LELEM(POLICY_RSASIG_v1_5_IX)
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
 #define POLICY_AUTHENTICATE	LELEM(POLICY_AUTHENTICATE_IX)	/* must be second */
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
@@ -1107,6 +1106,7 @@ enum sa_policy_bits {
 #define POLICY_PPK_INSIST	LELEM(POLICY_PPK_INSIST_IX)
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
+#define POLICY_RSASIG_v1_5	LELEM(POLICY_RSASIG_v1_5_IX)
 
 #define NEGOTIATE_AUTH_HASH_SHA1		LELEM(IKEv2_AUTH_HASH_SHA1)	/* rfc7427 does responder support SHA1? */
 #define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_AUTH_HASH_SHA2_256)	/* rfc7427 does responder support SHA2-256?  */

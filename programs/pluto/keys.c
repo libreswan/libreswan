@@ -685,7 +685,9 @@ stf_status check_signature_gen(struct state *st,
 	    try_all_keys("preloaded keys",
 			 &pluto_pubkeys,
 			 c, now, &s)) {
-		loglog(RC_LOG_SERIOUS, "Authenticated using %s", type->name);
+		loglog(RC_LOG_SERIOUS, "Authenticated using %s with %s",
+			type->name,
+			enum_name(&notify_hash_algo_names, hash_algo));
 		return STF_OK;
 	}
 
