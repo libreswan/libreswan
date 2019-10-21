@@ -202,12 +202,13 @@ OBJS += peerlog.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o hmac.o hostpair.o
 OBJS += retry.o
-OBJS += myid.o ipsec_doi.o
+OBJS += ipsec_doi.o
 ifeq ($(USE_DNSSEC),true)
 OBJS += ikev2_ipseckey.o
 endif
 OBJS += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJS += ikev1_hash.o
+OBJS += ikev1_message.o
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
 OBJS += ikev2_ecdsa.o ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += ikev2_redirect.o

@@ -2193,17 +2193,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	unsigned char idhash_npa[MAX_DIGEST_LEN];	/* idhash for NO_PPK_AUTH (npa) */
 
 	{
-		struct ikev2_id i_id = {
-			.isai_np = ISAKMP_NEXT_v2NONE,
-		};
 		pb_stream i_id_pbs;
-		chunk_t id_b;
 		struct hmac_ctx id_ctx;
 
+		shunk_t id_b;
+		struct ikev2_id i_id = build_v2_id_payload(&pc->spd.this, &id_b);
+
 		hmac_init(&id_ctx, pst->st_oakley.ta_prf, pst->st_skey_pi_nss);
-		v2_build_id_payload(&i_id, &id_b,
-				 &pc->spd.this);
-		i_id.isai_critical = build_ikev2_critical(false);
 
 		/* HASH of ID is not done over common header */
 		unsigned char *const id_start =
@@ -2262,45 +2258,28 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* you Tarzan, me Jane support */
 	if (send_idr) {
-		struct ikev2_id r_id;
-		pb_stream r_id_pbs;
-		chunk_t id_b;
-		r_id.isai_type = ID_NONE;
-
 		switch (pc->spd.that.id.kind) {
 		case ID_DER_ASN1_DN:
-			r_id.isai_type = ID_DER_ASN1_DN;
-			break;
 		case ID_FQDN:
-			r_id.isai_type = ID_FQDN;
-			break;
 		case ID_USER_FQDN:
-			r_id.isai_type = ID_USER_FQDN;
-			break;
 		case ID_KEY_ID:
-			r_id.isai_type = ID_KEY_ID;
-			break;
 		case ID_NULL:
-			r_id.isai_type = ID_NULL;
-			break;
-		default:
-			DBG(DBG_CONTROL, DBG_log("Not sending IDr payload for remote ID type %s",
-				enum_show(&ike_idtype_names, pc->spd.that.id.kind)));
-			break;
-		}
-
-		if (r_id.isai_type != ID_NONE) {
-			v2_build_id_payload(&r_id,
-				 &id_b,
-				 &pc->spd.that);
-			r_id.isai_np = ic ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
-
+		{
+			shunk_t id_b;
+			struct ikev2_id r_id = build_v2_id_payload(&pc->spd.that, &id_b);
+			pb_stream r_id_pbs;
 			if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
 				&r_id_pbs) ||
 			    !out_chunk(id_b, &r_id_pbs, "IDr"))
 				return STF_INTERNAL_ERROR;
 
 			close_output_pbs(&r_id_pbs);
+			break;
+		}
+		default:
+			DBG(DBG_CONTROL, DBG_log("Not sending IDr payload for remote ID type %s",
+				enum_show(&ike_idtype_names, pc->spd.that.id.kind)));
+			break;
 		}
 	}
 
@@ -3068,27 +3047,24 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	unsigned char idhash_out[MAX_DIGEST_LEN];
 
 	{
-		struct ikev2_id r_id = {
-			.isai_np = ISAKMP_NEXT_v2NONE,
-			.isai_type = ID_NULL,
-			/* critical bit zero */
-		};
+		shunk_t id_b;
+		struct ikev2_id r_id;
+		if (st->st_peer_wants_null) {
+			id_b = empty_shunk;
+			r_id = (struct ikev2_id) {
+				.isai_np = ISAKMP_NEXT_v2NONE,
+				.isai_type = ID_NULL,
+				/* critical bit zero */
+			};
+		} else {
+			r_id = build_v2_id_payload(&c->spd.this, &id_b);
+		}
 		pb_stream r_id_pbs;
-		chunk_t id_b;
 		struct hmac_ctx id_ctx;
 		unsigned char *id_start;
 		unsigned int id_len;
 
 		hmac_init(&id_ctx, st->st_oakley.ta_prf, st->st_skey_pr_nss);
-		if (st->st_peer_wants_null) {
-			/* make it the Null ID */
-			/* r_id already set */
-			id_b = EMPTY_CHUNK;
-		} else {
-			v2_build_id_payload(&r_id,
-					 &id_b,
-					 &c->spd.this);
-		}
 
 		id_start = sk.pbs.cur + NSIZEOF_isakmp_generic;
 

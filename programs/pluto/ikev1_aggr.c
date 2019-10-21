@@ -43,6 +43,7 @@
 #include "pluto_x509.h"
 #include "fd.h"
 #include "hostpair.h"
+#include "ikev1_message.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
@@ -403,16 +404,11 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 	/* IDir out */
 
-	pb_stream r_id_pbs; /* ID Payload; used later for hash calculation */
+	pb_stream r_id_pbs; /* ID Payload; used later for hash calculation; XXX: use ID_B instead? */
 
 	{
-		struct isakmp_ipsec_id id_hd;
-		chunk_t id_b;
-
-		build_id_payload(&id_hd, &id_b, &c->spd.this);
-		id_hd.isaiid_np =
-			send_cert ? ISAKMP_NEXT_CERT : auth_payload;
-
+		shunk_t id_b;
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &r_id_pbs) ||
 		    !out_chunk(id_b, &r_id_pbs, "my identity")) {
@@ -752,9 +748,8 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		dbg("next payload chain: creating a fake payload for hashing identity");
 
 		/* first build an ID payload as a raw material */
-		struct isakmp_ipsec_id id_hd;
-		chunk_t id_b;
-		build_id_payload(&id_hd, &id_b, &c->spd.this);
+		shunk_t id_b;
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
 
 		pb_stream id_pbs;
 		u_char idbuf[1024]; /* fits all possible identity payloads? */
@@ -868,12 +863,12 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	{
 		dbg("next payload chain: creating a fake payload for hashing identity");
 
-		struct isakmp_ipsec_id id_hd;
-		chunk_t id_b;
 		pb_stream pbs;
 		pb_stream id_pbs;
 
-		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.that);
+		shunk_t id_b;
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.that, &id_b);
+
 		init_out_pbs(&pbs, idbuf, sizeof(idbuf), "identity payload");
 
 		/* interop ID for SoftRemote & maybe others ? */
@@ -1142,12 +1137,10 @@ static stf_status aggr_outI1_tail(struct state *st,
 
 	/* IDii out */
 	{
-		struct isakmp_ipsec_id id_hd;
-		chunk_t id_b;
-		pb_stream id_pbs;
+		shunk_t id_b;
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
 
-		build_id_payload(&id_hd, &id_b, &c->spd.this);
-		id_hd.isaiid_np = send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_VID;
+		pb_stream id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &id_pbs) ||
 		    !out_chunk(id_b, &id_pbs, "my identity"))

@@ -77,7 +77,7 @@
 #include "pluto_crypt.h"
 #include "ikev1.h"
 #include "ikev1_continuations.h"
-
+#include "ikev1_message.h"
 #include "ikev1_xauth.h"
 
 #include "vendor.h"
@@ -1271,12 +1271,8 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 		 * id_hd should be struct isakmp_id, but struct isakmp_ipsec_id
 		 * allows build_id_payload() to work for both phases.
 		 */
-		struct isakmp_ipsec_id id_hd;
-		chunk_t id_b;
-
-		build_id_payload(&id_hd, &id_b, &c->spd.this);
-		id_hd.isaiid_np =
-			send_cert ? ISAKMP_NEXT_CERT : auth_payload;
+		shunk_t id_b;
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
 		if (!out_struct(&id_hd,
 				&isakmp_ipsec_identification_desc,
 				rbody,
@@ -1653,12 +1649,8 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		 * id_hd should be struct isakmp_id, but struct isakmp_ipsec_id
 		 * allows build_id_payload() to work for both phases.
 		 */
-		struct isakmp_ipsec_id id_hd;
-		chunk_t id_b;
-
-		build_id_payload(&id_hd, &id_b, &c->spd.this);
-		id_hd.isaiid_np =
-			send_cert ? ISAKMP_NEXT_CERT : auth_payload;
+		shunk_t id_b;
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 					&rbody, &r_id_pbs) ||
 		    !out_chunk(id_b, &r_id_pbs, "my identity")) {

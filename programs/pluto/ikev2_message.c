@@ -1055,3 +1055,12 @@ stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 	}
 	return ret;
 }
+
+struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body)
+{
+	struct ikev2_id id_header = {
+		.isai_type = id_to_payload(&end->id, &end->host_addr, body),
+		.isai_critical = build_ikev2_critical(false),
+	};
+	return id_header;
+}

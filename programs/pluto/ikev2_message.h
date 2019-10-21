@@ -24,6 +24,7 @@ struct msg_digest;
 struct dh_desc;
 struct ike_sa;
 struct state;
+struct end;
 
 pb_stream open_v2_message(pb_stream *reply,
 			  struct ike_sa *ike, struct msg_digest *md,
@@ -55,5 +56,7 @@ stf_status record_outbound_v2SK_msg(struct state *msg_sa,
 uint8_t build_ikev2_critical(bool impair);
 
 bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md);
+
+struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body);
 
 #endif

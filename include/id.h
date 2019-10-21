@@ -13,8 +13,8 @@
  * for more details.
  */
 
-#ifndef _ID_H
-#define _ID_H
+#ifndef ID_H
+#define ID_H
 
 #include "ietf_constants.h"	/* for enum ike_id_type */
 #include "chunk.h"
@@ -78,16 +78,10 @@ extern int id_count_wildcards(const struct id *id);
 #define id_is_ipaddr(id) ((id)->kind == ID_IPV4_ADDR || (id)->kind == \
 			  ID_IPV6_ADDR)
 
-struct isakmp_ipsec_id;	/* forward declaration of tag (defined in packet.h) */
-struct end;	/* forward declaration of tag (defined in connections.h) */
-extern void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl,
-			     const struct end *end);
-struct ikev2_id;	/* forward declaration of tag (defined in packet.h) */
-extern void v2_build_id_payload(struct ikev2_id *hd, chunk_t *tl,
-			     const struct end *end);
-
 extern void duplicate_id(struct id *dst, const struct id *src);
 extern bool same_dn_any_order(chunk_t a, chunk_t b);
 
-#endif /* _ID_H */
+/* returns ID Type; and points body at Identification Data */
+enum ike_id_type id_to_payload(const struct id *id, const ip_address *host, shunk_t *body);
 
+#endif

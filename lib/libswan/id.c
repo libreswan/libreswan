@@ -2,10 +2,13 @@
  * identity representation, as in IKE ID Payloads (RFC 2407 DOI 4.6.2.1)
  *
  * Copyright (C) 1999-2001,2013-2017  D. Hugh Redelmeier
- * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2013-2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2013-2015 Matt Rogers, <mrogers@libreswan.org>
+ * Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2008,2012-2017  Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
+ * Copyright (C) 2013-2015 Matt Rogers, <mrogers@libreswan.org>
+ * Copyright (C) 2013-2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015 Valeriu Goldberger <vgoldberger@ventusnetworks.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
@@ -541,4 +544,47 @@ bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards)
 		ret = match_dn_unordered(a, b, wildcards);
 	}
 	return ret;
+}
+
+/*
+ * Build an ID payload
+ * Note: no memory is allocated for the body of the payload (tl->ptr).
+ * We assume it will end up being a pointer into a sufficiently
+ * stable datastructure.  It only needs to last a short time.
+ */
+
+enum ike_id_type id_to_payload(const struct id *id, const ip_address *host, shunk_t *body)
+{
+	int type;
+	shunk_t tl;
+	switch (id->kind) {
+	case ID_NONE:
+		type = address_type(host)->id_addr;
+		tl = address_as_shunk(host);
+		break;
+	case ID_FROMCERT:
+		type = ID_DER_ASN1_DN;
+		tl = shunk2(id->name.ptr, id->name.len);
+		break;
+	case ID_FQDN:
+	case ID_USER_FQDN:
+	case ID_DER_ASN1_DN:
+	case ID_KEY_ID:
+		type = id->kind;
+		tl = shunk2(id->name.ptr, id->name.len);
+		break;
+	case ID_IPV4_ADDR:
+	case ID_IPV6_ADDR:
+		type = id->kind;
+		tl = address_as_shunk(&id->ip_addr);
+		break;
+	case ID_NULL:
+		type = id->kind;
+		tl = empty_shunk;
+		break;
+	default:
+		bad_case(id->kind);
+	}
+	*body = tl;
+	return type;
 }
