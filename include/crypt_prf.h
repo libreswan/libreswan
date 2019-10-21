@@ -23,6 +23,7 @@
 #include <pk11pub.h>
 
 #include "chunk.h"
+#include "crypt_mac.h"
 
 struct hash_desc;
 struct crypt_prf;
@@ -84,5 +85,7 @@ PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp);
 void crypt_prf_final_bytes(struct crypt_prf **prfp,
 			   void *bytes, size_t sizeof_bytes);
 chunk_t crypt_prf_final_chunk(struct crypt_prf **prfp);
+
+struct crypt_mac crypt_prf_final_mac(struct crypt_prf **prfp, const struct integ_desc *integ);
 
 #endif

@@ -181,6 +181,8 @@ ifeq ($(USE_TWOFISH),true)
 OBJS += ike_alg_twofish.o
 endif
 
+OBJS += crypt_mac.o
+
 ifeq ($(USE_NSS_AVA_COPY),true)
 OBJS += nss_copies.o
 endif

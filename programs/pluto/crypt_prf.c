@@ -203,3 +203,33 @@ chunk_t crypt_prf_final_chunk(struct crypt_prf **prfp)
 	*prfp = prf = NULL;
 	return chunk;
 }
+
+struct crypt_mac crypt_prf_final_mac(struct crypt_prf **prfp, const struct integ_desc *integ)
+{
+	struct crypt_prf *prf = *prfp;
+	/* get the MAC's length, INTEG trumps PRF */
+	struct crypt_mac output;
+	if (integ != NULL) {
+		/* integ derived from prf */
+		passert(integ->prf == prf->desc);
+		/* truncating */
+		passert(integ->integ_output_size <= prf->desc->prf_output_size);
+		output = (struct crypt_mac) { .len = integ->integ_output_size, };
+	} else {
+		output = (struct crypt_mac) { .len = prf->desc->prf_output_size, };
+	}
+	/* extract it, note that PRF's size must be passed in */
+	passert(prf->desc->prf_output_size <= sizeof(output.ptr/*array*/));
+	prf->desc->prf_mac_ops->final_bytes(&prf->context, output.ptr,
+					    prf->desc->prf_output_size);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s PRF %s final length %zu",
+			(*prfp)->name, (*prfp)->desc->common.name,
+			output.len);
+		DBG_dump_hunk(NULL, output);
+	}
+	/* clean up */
+	pfree(*prfp);
+	*prfp = prf = NULL;
+	return output;
+}

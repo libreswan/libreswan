@@ -119,6 +119,22 @@ chunk_t crypt_hash_final_chunk(struct crypt_hash **hashp)
 	return chunk;
 }
 
+struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp)
+{
+	struct crypt_hash *hash = *hashp;
+	struct crypt_mac output = { .len = hash->desc->hash_digest_size, };
+	passert(output.len <= sizeof(output.ptr/*array*/));
+	hash->desc->hash_ops->final_bytes(&hash->context, output.ptr, output.len);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("%s hash %s final length %zu",
+			hash->name, hash->desc->common.name, output.len);
+		DBG_dump_hunk(NULL, output);
+	}
+	pfree(*hashp);
+	*hashp = hash = NULL;
+	return output;
+}
+
 PK11SymKey *crypt_hash_symkey(const char *name, const struct hash_desc *hash_desc,
 			      const char *symkey_name, PK11SymKey *symkey)
 {

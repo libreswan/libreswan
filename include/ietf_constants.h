@@ -486,8 +486,11 @@
  * SHA2_*_DIGEST_SIZE.
  * Needs to be a compile-time constant for array allocation.
  * To avoid combinatorial explosion, we cheat.
+ *
+ * XXX: this shouldn't be in this header - it isn't an IETF constant.
+ * Use struct crypt_mac and crypt_{prf,hash}_final() instead.
  */
-#define MAX_DIGEST_LEN SHA2_512_DIGEST_SIZE	/* bytes */
+#define MAX_DIGEST_LEN SHA2_512_DIGEST_SIZE	/* bytes */ /* XXX: use struct crypt_mac */
 
 /* RFC 2404 "HMAC-SHA-1-96" section 3 */
 #define HMAC_SHA1_KEY_LEN SHA1_DIGEST_SIZE	/* bytes */
