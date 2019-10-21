@@ -39,7 +39,7 @@
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
-#include "crypto.h"
+#include "crypt_prf.h"
 #include "send.h"	/* record_outbound_ike_message() */
 #include "ip_info.h"
 
@@ -354,12 +354,16 @@ static void construct_enc_iv(const char *name,
 	DBG(DBG_CRYPT, DBG_dump(name, enc_iv, encrypter->enc_blocksize));
 }
 
-static stf_status ikev2_encrypt_msg(struct ike_sa *ike,
-				    uint8_t *auth_start,
-				    uint8_t *wire_iv_start,
-				    uint8_t *enc_start,
-				    uint8_t *integ_start)
+
+stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
 {
+	struct ike_sa *ike = sk->ike;
+	uint8_t *auth_start = sk->pbs.container->start;
+	uint8_t *wire_iv_start = sk->iv.ptr;
+	uint8_t *enc_start = sk->cleartext.ptr;
+	uint8_t *integ_start = sk->integrity.ptr;
+	size_t integ_size = sk->integrity.len;
+
 	passert(auth_start <= wire_iv_start);
 	passert(wire_iv_start <= enc_start);
 	passert(enc_start <= integ_start);
@@ -395,7 +399,7 @@ static stf_status ikev2_encrypt_msg(struct ike_sa *ike,
 		 * data.
 		 */
 		size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
-		size_t integ_size = ike->sa.st_oakley.ta_encrypt->aead_tag_size;
+		pexpect(integ_size == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
 		unsigned char *aad_start = auth_start;
 		size_t aad_size = enc_start - aad_start - wire_iv_size;
 
@@ -445,16 +449,17 @@ static stf_status ikev2_encrypt_msg(struct ike_sa *ike,
 		/* note: saved_iv's updated value is discarded */
 
 		/* okay, authenticate from beginning of IV */
-		struct hmac_ctx ctx;
-		hmac_init(&ctx, ike->sa.st_oakley.ta_integ->prf, authkey);
-		hmac_update(&ctx, auth_start, integ_start - auth_start);
-		hmac_final(integ_start, &ctx);
+		struct crypt_prf *ctx = crypt_prf_init_symkey("integ", ike->sa.st_oakley.ta_integ->prf,
+							      "authkey", authkey);
+		crypt_prf_update_bytes(ctx, "message", auth_start, integ_start - auth_start);
+		passert(integ_size == ike->sa.st_oakley.ta_integ->integ_output_size);
+		struct crypt_mac mac = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
+		memcpy_hunk(integ_start, mac, integ_size);
 
-		DBG(DBG_PARSING, {
+		DBG(DBG_CRYPT, {
 			    DBG_dump("data being hmac:", auth_start,
 				     integ_start - auth_start);
-			    DBG_dump("out calculated auth:", integ_start,
-				     ike->sa.st_oakley.ta_integ->integ_output_size);
+			    DBG_dump("out calculated auth:", integ_start, integ_size);
 		    });
 	}
 
@@ -591,23 +596,12 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		 * check authenticator.  The last INTEG_SIZE bytes are
 		 * the truncated digest.
 		 */
-		unsigned char td[MAX_DIGEST_LEN];
-		struct hmac_ctx ctx;
+		struct crypt_prf *ctx = crypt_prf_init_symkey("auth", ike->sa.st_oakley.ta_integ->prf,
+							      "authkey", authkey);
+		crypt_prf_update_bytes(ctx, "message", auth_start, integ_start - auth_start);
+		struct crypt_mac td = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
 
-		hmac_init(&ctx, ike->sa.st_oakley.ta_integ->prf, authkey);
-		hmac_update(&ctx, auth_start, integ_start - auth_start);
-		hmac_final(td, &ctx);
-
-		DBG(DBG_PARSING, {
-			DBG_dump("data for hmac:",
-				auth_start, integ_start - auth_start);
-			DBG_dump("calculated auth:",
-				 td, integ_size);
-			DBG_dump("  provided auth:",
-				 integ_start, integ_size);
-		    });
-
-		if (!memeq(td, integ_start, integ_size)) {
+		if (!hunk_memeq(td, integ_start, integ_size)) {
 			libreswan_log("failed to match authenticator");
 			return false;
 		}
@@ -798,13 +792,6 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 		    ok ? "success" : "failed"));
 
 	return ok;
-}
-
-stf_status encrypt_v2SK_payload(v2SK_payload_t *sk)
-{
-	return ikev2_encrypt_msg(sk->ike, sk->pbs.container->start,
-				 sk->iv.ptr, sk->cleartext.ptr,
-				 sk->integrity.ptr);
 }
 
 /*
