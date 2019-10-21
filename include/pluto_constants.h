@@ -968,7 +968,7 @@ enum sa_policy_bits {
 
 #define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
 
-	POLICY_RSASIG_v1_5_IX,   /* must be after AUTH MASK */
+	POLICY_RSASIG_v1_5_IX,	/* must be after AUTH MASK */
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
 	POLICY_AUTHENTICATE_IX,	/* must be second */
 	POLICY_COMPRESS_IX,	/* must be third */
