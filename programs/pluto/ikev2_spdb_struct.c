@@ -2124,7 +2124,6 @@ struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child, lset_
 		return &child->sa.st_ah;
 	default:
 		bad_case(policy);
-		return NULL;
 	}
 }
 

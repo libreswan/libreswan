@@ -160,7 +160,6 @@ static inline unsigned eroute_type_to_pfkey_satype(enum eroute_type esatype)
 	switch (esatype) {
 	default:
 		bad_case(esatype);
-		return -1;
 
 	case ET_UNSPEC:
 		return K_SADB_SATYPE_UNSPEC;

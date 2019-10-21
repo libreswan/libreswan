@@ -270,8 +270,6 @@ bool any_id(const struct id *a)
 
 	default:
 		bad_case(a->kind);
-		/* NOTREACHED */
-		return FALSE;
 	}
 }
 
@@ -335,8 +333,6 @@ bool same_id(const struct id *a, const struct id *b)
 
 	default:
 		bad_case(a->kind);
-		/* NOTREACHED */
-		return FALSE;
 	}
 }
 

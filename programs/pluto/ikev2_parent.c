@@ -421,7 +421,6 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 		default:
 			bad_case(that_authby);
-			break;
 		}
 
 		if (authstat != STF_OK) {

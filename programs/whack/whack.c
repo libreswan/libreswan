@@ -2293,7 +2293,6 @@ int main(int argc, char **argv)
 
 		default:
 			bad_case(c);
-			break;
 		}
 		break;
 	}
