@@ -892,6 +892,14 @@ kvmplutotest	interop-ikev2-strongswan-44-responder-digsig-rsa-pss-multi-hash	goo
 kvmplutotest	interop-ikev2-pluto-01-integ-none		good
 
 #################################################################
+# RFC 7427
+#################################################################
+
+kvmplutotest	ikev2-digsig-01-defaults		good
+kvmplutotest	ikev2-digsig-02-legacy			wip
+kvmplutotest	ikev2-digsig-03-rsa-sha2		good
+
+#################################################################
 # DNSSEC tests
 #################################################################
 
