@@ -3808,6 +3808,15 @@ void show_one_connection(const struct connection *c)
 		  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
 		  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 
+	char hashpolbuf[200];
+        const char *hashstr = bitnamesofb(sighash_policy_bit_names,
+                                     c->sighash_policy,
+                                     hashpolbuf, sizeof(hashpolbuf));
+
+	whack_log(RC_COMMENT, "\"%s\"%s:   v2-auth-hash-policy: %s;",
+		  c->name, instance, hashstr);
+
+
 	if (c->connmtu != 0)
 		snprintf(mtustr, sizeof(mtustr), "%d", c->connmtu);
 	else

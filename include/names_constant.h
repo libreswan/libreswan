@@ -29,6 +29,7 @@ extern enum_names connection_kind_names;
 extern enum_names routing_story;
 extern enum_names certpolicy_type_names;
 extern const char *const sa_policy_bit_names[];
+extern const char *const sighash_policy_bit_names[];
 extern enum_names oakley_attr_names;
 extern const char *const oakley_attr_bit_names[];
 extern enum_names *const oakley_attr_val_descs[];

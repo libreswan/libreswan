@@ -168,11 +168,16 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->policy =
 		POLICY_TUNNEL |
+		POLICY_ECDSA | POLICY_RSASIG | POLICY_RSASIG_v1_5 | /* authby= */
 		POLICY_ENCRYPT | POLICY_PFS |
 		POLICY_IKEV2_ALLOW |
 		POLICY_SAREF_TRACK |         /* sareftrack=yes */
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      	     /* esn=no */
+
+	d->sighash_policy =
+		POL_SIGHASH_SHA1 | /* not really sighash but legacy v2-auth */
+		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
 
 	d->left.addr_family = AF_INET;
 	d->left.addr = address_any(&ipv4_info);
@@ -1427,9 +1432,16 @@ static bool load_conn(
 	 * authby=secret|rsasig|null|never|rsa-HASH
 	 *
 	 * using authby=rsasig results in legacy POLICY_RSASIG_v1_5 and RSA_PSS
+	 *
+	 * HASH needs to use full syntax - eg sha2_256 and not sha256, to avoid
+	 * confusion with sha3_256
 	 */
 	if (conn->strings_set[KSCF_AUTHBY]) {
 		char *val = strtok(conn->strings[KSCF_AUTHBY], ", ");
+
+		conn->sighash_policy = LEMPTY;
+		conn->policy &= ~POLICY_ID_AUTH_MASK;
+		conn->policy &= ~POLICY_RSASIG_v1_5;
 
 		while (val != NULL) {
 			/* Supported for IKEv1 and IKEv2 */
@@ -1438,6 +1450,7 @@ static bool load_conn(
 			} else if (streq(val, "rsasig") || streq(val, "rsa")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->policy |= POLICY_RSASIG_v1_5;
+				conn->sighash_policy |= POL_SIGHASH_SHA1;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
@@ -1445,23 +1458,33 @@ static bool load_conn(
 				conn->policy |= POLICY_AUTH_NEVER;
 			/* everything else is only supported for IKEv2 */
 			} else if (conn->policy & POLICY_IKEV1_ALLOW) {
-				starter_error_append(perrl, "connection allowing ikev1 must use authby= of rsasig, secret or never");
+				starter_error_append(perrl, "ikev1 connection must use authby= of rsasig, secret or never");
 				return TRUE;
 			} else if (streq(val, "null")) {
 				conn->policy |= POLICY_AUTH_NULL;
 			} else if (streq(val, "rsa-sha1")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->policy |= POLICY_RSASIG_v1_5;
-			} else if (streq(val, "rsa-sha2") || streq(val, "rsa-sha2_256")) {
-				conn->policy |= POLICY_RSASIG;
 				conn->sighash_policy |= POL_SIGHASH_SHA1;
+			} else if (streq(val, "rsa-sha2")) {
+				conn->policy |= POLICY_RSASIG;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
+			} else if (streq(val, "rsa-sha2_256")) {
+				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 			} else if (streq(val, "rsa-sha2_384")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 			} else if (streq(val, "rsa-sha2_512")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (streq(val, "ecdsa") || streq(val, "ecdsa-sha2_256")) {
+			} else if (streq(val, "ecdsa") || streq(val, "ecdsa-sha2")) {
+				conn->policy |= POLICY_ECDSA;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
+			} else if (streq(val, "ecdsa-sha2_256")) {
 				conn->policy |= POLICY_ECDSA;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 			} else if (streq(val, "ecdsa-sha2_384")) {
@@ -1470,6 +1493,9 @@ static bool load_conn(
 			} else if (streq(val, "ecdsa-sha2_512")) {
 				conn->policy |= POLICY_ECDSA;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
+			} else if (streq(val, "ecdsa-sha1")) {
+				starter_error_append(perrl, "authby=ecdsa cannot use sha1, only sha2");
+				return TRUE;
 			} else {
 				starter_error_append(perrl, "connection authby= value is unknown");
 				return TRUE;

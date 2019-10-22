@@ -373,7 +373,8 @@ enum_names stf_status_names = {
 	NULL
 };
 
-/* Names for sa_policy_bits.
+/*
+ * Names for sa_policy_bits.
  * Note: we drop the POLICY_ prefix so that logs are more concise.
  */
 const char *const sa_policy_bit_names[] = {
@@ -428,6 +429,17 @@ const char *const sa_policy_bit_names[] = {
 	"ESN_NO",
 	"ESN_YES",
 	"RSASIG_v1_5",
+	NULL	/* end for bitnamesof() */
+};
+
+/*
+ * Names for RFC 7427 IKEv2 AUTH signature hash algo sighash_policy_bits
+ */
+const char *const sighash_policy_bit_names[] = {
+	"SHA-1", /* really means IKEv2 legacy - not RFC 7427 style */
+	"SHA2_256",
+	"SHA2_384",
+	"SHA2_512",
 	NULL	/* end for bitnamesof() */
 };
 
