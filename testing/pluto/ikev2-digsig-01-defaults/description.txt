@@ -1,0 +1,2 @@
+RFC 7427 test with default authby=
+Because it has RSA certificates, it should pick IKEv2 AUTH method RSA-SHA2
