@@ -189,16 +189,20 @@ bool emit_v2Npl(v2_notification_t ntype,
 	return emit_v2Nsa_pl(ntype, PROTO_v2_RESERVED, NULL, outs, payload_pbs);
 }
 
-/* emit a v2 Notification payload, with optional chunk as sub-payload */
-bool emit_v2Nchunk(v2_notification_t ntype,
-		const chunk_t *ndata, /* optional */
-		pb_stream *outs)
+/* emit a v2 Notification payload, with bytes as sub-payload */
+bool emit_v2N_bytes(v2_notification_t ntype,
+		    const void *bytes, size_t size, /* optional */
+		    pb_stream *outs)
 {
 	pb_stream pl;
-
-	if (!emit_v2Npl(ntype, outs, &pl) ||
-	    (ndata != NULL && !out_chunk(*ndata, &pl, "Notify data")))
+	if (!emit_v2Npl(ntype, outs, &pl)) {
 		return false;
+	}
+
+	/* for some reason out_raw() doesn't like size==0 */
+	if (size > 0 && !out_raw(bytes, size, &pl, "Notify data")) {
+		return false;
+	}
 
 	close_output_pbs(&pl);
 	return true;
@@ -447,7 +451,8 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	}
 
 	/* build and add v2N payload to the packet */
-	if (!emit_v2Nchunk(ntype, ndata, &rbody)) {
+	chunk_t nhunk = ndata == NULL ? empty_chunk : *ndata;
+	if (!emit_v2N_hunk(ntype, nhunk, &rbody)) {
 		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->hdr.isa_msgid);
 		return;

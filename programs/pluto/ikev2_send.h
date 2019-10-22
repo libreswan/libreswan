@@ -70,14 +70,16 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 		pb_stream *payload_pbs /* optional */);
 
 /* emit a v2 Notification payload, with optional sub-payload */
+/* i.e., emit header then open a containing payload? */
 bool emit_v2Npl(v2_notification_t ntype,
 		pb_stream *outs,
 		pb_stream *payload_pbs /* optional */);
 
-/* emit a v2 Notification payload, with optional chunk as sub-payload */
-bool emit_v2Nchunk(v2_notification_t ntype,
-		const chunk_t *ndata, /* optional */
-		pb_stream *outs);
+/* emit a v2 Notification payload, with optional hunk as sub-payload */
+bool emit_v2N_bytes(v2_notification_t ntype,
+		   const void *bytes, size_t size,
+		   pb_stream *outs);
+#define emit_v2N_hunk(NTYPE, HUNK, OUTS)	emit_v2N_bytes(NTYPE, (HUNK).ptr, (HUNK).len, OUTS)
 
 /* output a v2 simple Notification payload */
 bool emit_v2N(v2_notification_t ntype,

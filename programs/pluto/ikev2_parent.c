@@ -694,7 +694,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 	 */
 	if (st->st_dcookie.ptr != NULL) {
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
-		if (!emit_v2Nchunk(v2N_COOKIE, &st->st_dcookie, &rbody)) {
+		if (!emit_v2N_hunk(v2N_COOKIE, st->st_dcookie, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2436,8 +2436,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				return s;
 			}
 
-			if (!emit_v2Nchunk(v2N_NO_PPK_AUTH,
-					&pst->st_no_ppk_auth, &sk.pbs)) {
+			if (!emit_v2N_hunk(v2N_NO_PPK_AUTH,
+					   pst->st_no_ppk_auth, &sk.pbs)) {
 				freeanychunk(null_auth);
 				return STF_INTERNAL_ERROR;
 			}
@@ -2445,7 +2445,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (null_auth.ptr != NULL) {
-		if (!emit_v2Nchunk(v2N_NULL_AUTH, &null_auth, &sk.pbs)) {
+		if (!emit_v2N_hunk(v2N_NULL_AUTH, null_auth, &sk.pbs)) {
 			freeanychunk(null_auth);
 			return STF_INTERNAL_ERROR;
 		}
@@ -5070,7 +5070,7 @@ static stf_status add_mobike_response_payloads(
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(!ike_spi_is_zero(&st->st_ike_spis.responder));
 	if (ikev2_out_nat_v2n(pbs, st, &st->st_ike_spis.responder) &&
-	    (cookie2->len == 0 || emit_v2Nchunk(v2N_COOKIE2, cookie2, pbs)))
+	    (cookie2->len == 0 || emit_v2N_hunk(v2N_COOKIE2, *cookie2, pbs)))
 		r = STF_OK;
 
 	freeanychunk(*cookie2);

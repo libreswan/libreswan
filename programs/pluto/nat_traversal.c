@@ -211,14 +211,14 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 
 	natd_hash(&ike_alg_hash_sha1, hb, ike_spis, local_endpoint);
 
-	if (!emit_v2Nchunk(v2N_NAT_DETECTION_SOURCE_IP, &hch, outs))
+	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, hch, outs))
 		return FALSE;
 
 	/* Second: one with remote (destination) IP & port */
 
 	natd_hash(&ike_alg_hash_sha1, hb, ike_spis, remote_endpoint);
 
-	return emit_v2Nchunk(v2N_NAT_DETECTION_DESTINATION_IP, &hch, outs);
+	return emit_v2N_hunk(v2N_NAT_DETECTION_DESTINATION_IP, hch, outs);
 }
 
 /*
