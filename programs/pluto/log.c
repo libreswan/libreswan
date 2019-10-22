@@ -485,6 +485,13 @@ void lswlog_log_prefix(struct lswlog *buf)
 {
 	/* convert FROM into a pointer so logic is easier */
 	const ip_address *from = (endpoint_type(&cur_from) != NULL ? &cur_from : NULL);
+	if (cur_state != NULL) {
+		/* jam(buf, "EXPECTATION FAILED (state) "); */
+	} else if (cur_connection != NULL) {
+		/* jam(buf, "EXPECTATION FAILED (connection) "); */
+	} else if (from != NULL) {
+		jam(buf, "EXPECTATION FAILED (from) ");
+	}
 	jam_log_prefix(buf, cur_state, cur_connection, from);
 }
 
