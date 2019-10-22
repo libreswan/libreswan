@@ -58,10 +58,9 @@
 #include "ip_endpoint.h"
 #include "nat_traversal.h"
 
-#include "security_selinux.h"
-
 
 #ifndef USE_LABELED_IPSEC
+
 static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st UNUSED)
 {
 	/*
@@ -72,6 +71,7 @@ static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st UNUSED)
 	return FALSE;
 }
 #else
+#include "security_selinux.h"
 static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 {
 	struct xfrm_user_sec_ctx_ike uctx;
