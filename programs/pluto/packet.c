@@ -1713,7 +1713,7 @@ shunk_t pbs_in_as_shunk(pb_stream *pbs)
 	return shunk2(pbs->start, pbs_room(pbs));
 }
 
-shunk_t pbs_in_left_as_shunk(pb_stream *pbs)
+shunk_t pbs_in_left_as_shunk(const pb_stream *pbs)
 {
 	return shunk2(pbs->cur, pbs_left(pbs));
 }

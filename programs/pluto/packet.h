@@ -215,7 +215,7 @@ extern shunk_t pbs_in_as_shunk(pb_stream *pbs);
  * Map/Clone the remaining contents [cur..pbs_left()) of an input PBS
  * as a chunk.
  */
-extern shunk_t pbs_in_left_as_shunk(pb_stream *pbs);
+extern shunk_t pbs_in_left_as_shunk(const pb_stream *pbs);
 
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
 		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
