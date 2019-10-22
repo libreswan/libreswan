@@ -322,9 +322,8 @@ def ipsecsecretcheck():
 		print(" (run ipsec verify as root to test ipsec.secrets)")
 		return
 
-	p = subprocess.Popen(["ipsec","secrets"], universal_newlines=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	p = subprocess.Popen(["ipsec","secrets"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, err = p.communicate()
-	output = output.decode(prefencoding)
 	if "ERROR" in output:
 		print_result("FAIL","PARSE ERROR")
 		for line in output.split("\n"):
@@ -354,7 +353,7 @@ def ipsecconfcheck():
 
 def configsetupcheck():
 	global retcode
-	p = subprocess.Popen(["ipsec","addconn","--configsetup"], universal_newlines=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	p = subprocess.Popen(["ipsec","addconn","--configsetup"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	configsetup, err = p.communicate()
 
 	# grab obsolete settings
@@ -363,7 +362,6 @@ def configsetupcheck():
 		print_result("OK","OK")
 	else:
 		print_result("WARN","OBSOLETE KEYWORD")
-		err = err.replace("Warning"," Warning")
 		print(err[:-1])
 
 def main():
