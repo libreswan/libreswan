@@ -798,8 +798,9 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 		endpoint_buf b;
 
 		/* we might want to change this to a debug log message only */
-		loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s but no suitable connection found with IKEv2 policy",
-		       str_endpoint(&md->iface->local_endpoint, &b));
+		loglog_md(RC_LOG_SERIOUS, md,
+			  "initial parent SA message received on %s but no suitable connection found with IKEv2 policy",
+			  str_endpoint(&md->iface->local_endpoint, &b));
 		return NULL;
 	}
 

@@ -1354,16 +1354,14 @@ void process_v1_packet(struct msg_digest **mdp)
 	case ISAKMP_XCHG_AGGR:
 	case ISAKMP_XCHG_IDPROT: /* part of a Main Mode exchange */
 		if (md->hdr.isa_msgid != v1_MAINMODE_MSGID) {
-			libreswan_log(
-				"Message ID was 0x%08" PRIx32 " but should be zero in phase 1",
+			plog_md(md, "Message ID was 0x%08" PRIx32 " but should be zero in phase 1",
 				md->hdr.isa_msgid);
 			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 			return;
 		}
 
 		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
-			libreswan_log(
-				"Initiator Cookie must not be zero in phase 1 message");
+			plog_md(md, "Initiator Cookie must not be zero in phase 1 message");
 			SEND_NOTIFICATION(INVALID_COOKIE);
 			return;
 		}
@@ -1373,7 +1371,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * initial message from initiator
 			 */
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-				libreswan_log("initial phase 1 message is invalid: its Encrypted Flag is on");
+				plog_md(md, "initial phase 1 message is invalid: its Encrypted Flag is on");
 				SEND_NOTIFICATION(INVALID_FLAGS);
 				return;
 			}
@@ -1396,8 +1394,8 @@ void process_v1_packet(struct msg_digest **mdp)
 					 * state that should be
 					 * discarded.
 					 */
-					libreswan_log("discarding initial packet; already %s",
-						      st->st_state->name);
+					plog_st(st, "discarding initial packet; already %s",
+						st->st_state->name);
 				}
 				pop_cur_state(old_state);
 				return;
@@ -1423,8 +1421,7 @@ void process_v1_packet(struct msg_digest **mdp)
 							   md->hdr.isa_msgid);
 
 				if (st == NULL) {
-					libreswan_log(
-						"phase 1 message is part of an unknown exchange");
+					plog_md(md, "phase 1 message is part of an unknown exchange");
 					/* XXX Could send notification back */
 					return;
 				}
@@ -2260,7 +2257,7 @@ void process_packet_tail(struct msg_digest **mdp)
 
 				default:
 					loglog(RC_LOG_SERIOUS,
-						"%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
+					       "%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 					       excuse,
 					       enum_show(&ikev1_payload_names, np));
 					if (!md->encrypted) {

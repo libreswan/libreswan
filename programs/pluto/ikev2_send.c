@@ -33,7 +33,7 @@
 #include "server.h"
 #include "state.h"
 #include "connections.h"
-#include "lswlog.h"
+#include "log.h"
 #include "ike_alg.h"
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
@@ -407,22 +407,6 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
 	passert(notify_name != NULL); /* must be known */
 
-	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
-	const char *exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
-	if (exchange_name == NULL) {
-		/* when responding to crud, name may not be known */
-		exchange_name = "UNKNOWN";
-		dbg("message request contains unknown exchange type %d",
-		    exchange_type);
-	}
-
-	endpoint_buf b;
-	libreswan_log("responding to %s (%d) message (Message ID %u) from %s with unencrypted notification %s",
-		      exchange_name, exchange_type,
-		      md->hdr.isa_msgid,
-		      str_sensitive_endpoint(&md->sender, &b),
-		      notify_name);
-
 	/*
 	 * Normally an unencrypted response is only valid for
 	 * IKE_SA_INIT or IKE_AUTH (when DH fails).  However "1.5.
@@ -430,13 +414,33 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	 * respond to other crud using the initiator's exchange type
 	 * and Message ID and an unencrypted response.
 	 */
+	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
+	const char *exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
 	switch (exchange_type) {
 	case ISAKMP_v2_IKE_SA_INIT:
 	case ISAKMP_v2_IKE_AUTH:
 		break;
 	default:
-		dbg("normally exchange type %s is encrypted", exchange_name);
+		if (exchange_name == NULL) {
+			/*
+			 * when responding to crud the type, and
+			 * hence, name may not be known
+			 */
+			exchange_name = "UNKNOWN";
+			dbg_md(md, "normally exchange type %s is encrypted but this is crud",
+			       exchange_name);
+		} else {
+			dbg_md(md, "message request contains unknown exchange type %d",
+			       exchange_type);
+		}
 	}
+
+	endpoint_buf b;
+	plog_md(md, "responding to %s (%d) message (Message ID %u) from %s with unencrypted notification %s",
+		exchange_name, exchange_type,
+		md->hdr.isa_msgid,
+		str_sensitive_endpoint(&md->sender, &b),
+		notify_name);
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	pb_stream reply = open_out_pbs("unencrypted notification",

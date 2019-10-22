@@ -51,20 +51,20 @@ static void show_system_security(void)
 	int fips = FALSE;
 #endif
 
-	whack_log(RC_COMMENT, " ");     /* spacer */
+	whack_log(fd, RC_COMMENT, " ");     /* spacer */
 
-	whack_log(RC_COMMENT, "fips mode=%s;", fips ? "enabled" : "disabled");
+	whack_log(fd, RC_COMMENT, "fips mode=%s;", fips ? "enabled" : "disabled");
 
-	whack_log(RC_COMMENT, "SElinux=%s",
+	whack_log(fd, RC_COMMENT, "SElinux=%s",
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 #ifdef HAVE_SECCOMP
-	whack_log(RC_COMMENT, "seccomp=%s",
+	whack_log(fd, RC_COMMENT, "seccomp=%s",
 		pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
 			pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");
 #else
-	whack_log(RC_COMMENT, "seccomp=unsupported");
+	whack_log(fd, RC_COMMENT, "seccomp=unsupported");
 #endif
-	whack_log(RC_COMMENT, " ");     /* spacer */
+	whack_log(fd, RC_COMMENT, " ");     /* spacer */
 }
 
 void show_global_status(void)
@@ -77,7 +77,7 @@ void show_status(void)
 {
 	show_kernel_interface();
 	show_ifaces_status();
-	whack_log(RC_COMMENT, " ");     /* spacer */
+	whack_log(fd, RC_COMMENT, " ");     /* spacer */
 	show_system_security();
 	show_setup_plutomain();
 	show_debug_status();

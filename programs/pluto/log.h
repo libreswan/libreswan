@@ -155,10 +155,18 @@ log_raw_fn plog_raw;
 log_raw_fn loglog_raw;
 
 #define loglog_st(ST, RC, MESSAGE, ...) loglog_raw(RC, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define loglog_md(MD, RC, MESSAGE, ...) loglog_raw(RC, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
 
 /* unconditional */
 log_raw_fn DBG_raw;
 
+#define dbg_md(MD, MESSAGE, ...)					\
+	{								\
+		if (DBGP(DBG_BASE)) {					\
+			DBG_raw(RC_COMMENT, NULL, NULL, &(MD)->sender,	\
+				MESSAGE,##__VA_ARGS__);			\
+		}							\
+	}
 
 /*
  * rate limited logging
@@ -180,19 +188,22 @@ void init_rate_log(void);
 extern void close_log(void);
 extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 
-
 /*
- * struct lswlog primitives
+ * whack logging
  */
+
+log_raw_fn whack_log_raw;
+
 bool whack_log_p(void);
 
-void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
-/*
- * Like whack_log(RC_COMMENT, ...) but suppress the 'NNN ' prefix.
- *
- * XXX: whack_log_comment() -> whack_print().
- */
-#define whack_log_comment(FMT, ...) whack_log(RC_PRINT, FMT,##__VA_ARGS__)
+/* global */
+#define whack_log(FD, RC, FMT, ...) whack_log_raw(FD, RC, NULL, NULL, NULL, \
+						  FMT,##__VA_ARGS__)
+#define whack_log_st(RD, RC, ST, FMT, ...) whack_log_raw(RD, RC, ST, NULL, NULL, \
+						     FMT,##__VA_ARGS__)
+/* no NNN prefix; rename to whack_print()? */
+#define whack_log_comment(FMT, ...) whack_log_raw(RD, RC_PRINT, NULL, NULL, NULL, \
+						  FMT,##__VA_ARGS__)
 
 /* show status, usually on whack log */
 extern void show_status(void);

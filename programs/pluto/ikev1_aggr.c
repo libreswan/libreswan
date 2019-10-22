@@ -155,10 +155,10 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		if (c == NULL) {
 			endpoint_buf b;
 
-			loglog(RC_LOG_SERIOUS,
-				"initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
-				str_endpoint(&md->sender, &b),
-				bitnamesof(sa_policy_bit_names, policy));
+			loglog_md(RC_LOG_SERIOUS, md,
+				  "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
+				  str_endpoint(&md->sender, &b),
+				  bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		}
@@ -168,6 +168,9 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		 */
 		c = rw_instantiate(c, &md->sender, NULL, NULL);
 	}
+
+	/* Set up state */
+	struct state *st = md->st = new_v1_rstate(md);
 
 	/* warn for especially dangerous Aggressive Mode and PSK */
 	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {

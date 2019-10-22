@@ -597,11 +597,15 @@ bool whack_log_p(void)
  * - text is a human-readable annotation
  */
 
-void whack_log(enum rc_type rc, const char *message, ...)
+void whack_log_raw(enum rc_type rc,
+		   const struct state *st,
+		   const struct connection *c,
+		   const ip_endpoint *from,
+		   const char *message, ...)
 {
 	if (whack_log_p()) {
 		LSWBUF(buf) {
-			lswlog_log_prefix(buf);
+			jam_log_prefix(buf, st, c, from);
 			va_list args;
 			va_start(args, message);
 			lswlogvf(buf, message, args);
