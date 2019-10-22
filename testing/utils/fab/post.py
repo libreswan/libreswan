@@ -464,36 +464,42 @@ class TestResult:
                         break
         return self._file_contents_cache[path]
 
-    def grub(self, filename, regex=None, cast=lambda x: x):
+    def grub(self, filename, regex=None, cast=None):
         """Grub around FILENAME to find regex"""
         self.logger.debug("grubbing '%s' for '%s'", filename, regex)
         path = os.path.join(self.output_directory, filename)
         contents = self._file_contents(path)
         return self.grep(contents, regex, cast)
 
-    def grep(self, contents, regex=None, cast=lambda x: x):
+    def grep(self, contents, regex=None, cast=None):
         if contents is None:
             return None
+        self.logger.debug("grep() content type is %s", type(contents))
         if regex is None:
+            # returns raw bytes
             return contents
         # convert utf-8 regex to bytes
+        self.logger.debug("grep() encoding regex type %s to raw bytes using utf-8", type(regex))
         byte_regex = regex.encode()
-        self.logger.debug("greping content %s using %s", type(contents), type(byte_regex))
         match = re.search(byte_regex, contents, re.MULTILINE)
         if not match:
             return None
         group = match.group(len(match.groups()))
-        self.logger.debug("grub '%s' matched '%s'", regex, group)
-        # feed utf-8 into cast
-        result = cast(group.decode())
-        self.logger.debug("greping result %s", result)
+        self.logger.debug("grep() '%s' matched '%s'", regex, group)
+        if cast:
+            # caller is matching valid utf-8, decode and cast
+            result = cast(group.decode())
+        else:
+            # caller isn't interested in what matched, return success
+            result = True
+        self.logger.debug("grep() result %s", result)
         return result
 
     def start_time(self):
         if not self._start_time:
             # starting debug log at 2018-08-15 13:00:12.275358
             self._start_time = self.grub("debug.log", r"starting debug log at (.*)$",
-                                   cast=jsonutil.ptime)
+                                         cast=jsonutil.ptime)
         return self._start_time
 
     def stop_time(self):
@@ -507,21 +513,21 @@ class TestResult:
         if not self._runtime:
             # stop testing basic-pluto-01 (test 2 of 756) after 79.3 seconds
             self._runtime = self.grub("debug.log", r": stop testing .* after (.*) second",
-                                cast=float)
+                                      cast=float)
         return self._runtime
 
     def boot_time(self):
         if not self._boot_time:
             # stop booting domains after 56.9 seconds
             self._boot_time = self.grub("debug.log", r": stop booting domains after (.*) second",
-                                  cast=float)
+                                        cast=float)
         return self._boot_time
 
     def script_time(self):
         if not self._script_time:
             # stop running scripts east:eastinit.sh ... after 22.4 seconds
             self._script_time = self.grub("debug.log", r": stop running scripts .* after (.*) second",
-                                    cast=float)
+                                          cast=float)
         return self._script_time
 
 
