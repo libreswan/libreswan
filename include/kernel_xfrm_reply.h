@@ -19,6 +19,6 @@ ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
 /*
  * When reading data from netlink the final packet in each recvfrom()
  * will be truncated if it doesn't fit to buffer. Netlink returns up
- * to 16KiB of data so always keep that much free.
+ * to 32KiB of data so always keep that much free.
  */
-#define NL_BUFMARGIN 16384
+#define NL_BUFMARGIN 32768
