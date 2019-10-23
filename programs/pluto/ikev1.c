@@ -1314,14 +1314,9 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 				       st->st_state->name);
 			}
 		} else {
-			LSWDBGP(DBG_CONTROLMORE, buf) {
-				lswlog_log_prefix(buf);
-				lswlogf(buf, "discarding duplicate packet; already %s;",
-					st->st_state->name);
-				lswlogf(buf, " replied=%s", replied ? "T" : "F");
-				lswlogf(buf, " retransmit_on_duplicate=%s",
-					retransmit_on_duplicate ? "T" : "F");
-			}
+			dbg("#%lu discarding duplicate packet; already %s; replied=%s retransmit_on_duplicate=%s",
+			    st->st_serialno, st->st_state->name,
+			    bool_str(replied), bool_str(retransmit_on_duplicate));
 		}
 		return true;
 	}
