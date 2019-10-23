@@ -84,36 +84,6 @@ static struct state *cur_state = NULL;                 /* current state, for dia
 static struct connection *cur_connection = NULL;       /* current connection, for diagnostics */
 static ip_address cur_from;				/* source of current current message */
 
-static void update_extra(const char *what, enum_names *names,
-			 lmod_t extra, lset_t mask)
-{
-	if (!lmod_empty(extra)) {
-		lset_t old = base_debugging & mask;
-		lset_t new = lmod(old, extra);
-		if (new != old) {
-			LSWLOG(buf) {
-				lswlogf(buf, "extra %s enabled for connection: ", what);
-				lswlog_enum_lset_short(buf, names, "+", new & ~old);
-				/* XXX: doesn't log cleared */
-			}
-			set_debugging(new | (base_debugging & ~mask));
-		}
-	}
-}
-
-static void update_debugging(void)
-{
-	struct connection *c = cur_state != NULL ? cur_state->st_connection : cur_connection;
-	if (c == NULL) {
-		set_debugging(base_debugging);
-	} else {
-		update_extra("debugging", &debug_names,
-			     c->extra_debugging, DBG_MASK);
-		update_extra("impairing", &impair_names,
-			     c->extra_impairing, IMPAIR_MASK);
-	}
-}
-
 /*
  * if any debugging is on, make sure that we log the connection we are
  * processing, because it may not be clear in later debugging.
@@ -201,11 +171,6 @@ void log_reset_globals(where_t where)
 		log_processing(RESET, true, NULL, NULL, &cur_from, where);
 		zero(&cur_from);
 	}
-	if (cur_debugging != base_debugging) {
-		dbg("processing: RESET cur_debugging (was "PRI_LSET") "PRI_WHERE,
-		    cur_debugging, pri_where(where));
-		cur_debugging = base_debugging;
-	}
 }
 
 void log_pexpect_reset_globals(where_t where)
@@ -231,11 +196,6 @@ void log_pexpect_reset_globals(where_t where)
 			    str_sensitive_endpoint(&cur_from, &buf));
 		zero(&cur_from);
 	}
-	if (cur_debugging != base_debugging) {
-		log_pexpect(where, "processing: unexpected cur_debugging "PRI_LSET" should be "PRI_LSET,
-			    cur_debugging, base_debugging);
-		cur_debugging = base_debugging;
-	}
 }
 
 struct connection *log_push_connection(struct connection *new_connection,
@@ -251,7 +211,6 @@ struct connection *log_push_connection(struct connection *new_connection,
 	}
 
 	cur_connection = new_connection;
-	update_debugging();
 
 	if (new_connection == NULL) {
 		dbg("start processing: connection NULL "PRI_WHERE,
@@ -277,8 +236,9 @@ void log_pop_connection(struct connection *c, where_t where)
 		dbg("processing: STOP connection NULL "PRI_WHERE,
 		    pri_where(where));
 	}
+
 	cur_connection = c;
-	update_debugging();
+
 	if (cur_connection != NULL) {
 		log_processing(RESUME, current /* current? */,
 			       NULL, cur_connection, NULL, where);
@@ -305,7 +265,6 @@ so_serial_t log_push_state(struct state *new_state, where_t where)
 	}
 
 	cur_state = new_state;
-	update_debugging();
 
 	if (new_state == NULL) {
 		dbg("skip start processing: state #0 "PRI_WHERE,
@@ -329,8 +288,9 @@ void log_pop_state(so_serial_t serialno, where_t where)
 		dbg("processing: STOP state #0 "PRI_WHERE,
 		    pri_where(where));
 	}
+
 	cur_state = state_by_serialno(serialno);
-	update_debugging();
+
 	if (cur_state != NULL) {
 		log_processing(RESUME, true, /* must be current */
 			       cur_state, NULL, NULL, where);
@@ -665,16 +625,9 @@ void whack_log(enum rc_type rc, const char *message, ...)
 	}
 }
 
-lset_t base_debugging = DBG_NONE; /* default to reporting nothing */
-
 void set_debugging(lset_t deb)
 {
 	cur_debugging = deb;
-}
-
-void reset_debugging(void)
-{
-	set_debugging(base_debugging);
 }
 
 void plog_raw(enum rc_type unused_rc UNUSED,

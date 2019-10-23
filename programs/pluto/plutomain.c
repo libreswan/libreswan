@@ -1121,11 +1121,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'N':	/* --debug-none */
-			base_debugging = DBG_NONE;
+			cur_debugging = DBG_NONE;
 			continue;
 
 		case 'A':	/* --debug-all */
-			base_debugging = DBG_ALL;
+			cur_debugging = DBG_ALL;
 			continue;
 
 		case 'P':	/* --perpeerlogbase */
@@ -1364,7 +1364,7 @@ int main(int argc, char **argv)
 
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
 			secctx_attr_type = cfg->setup.options[KBF_SECCTX];
-			base_debugging = cfg->setup.options[KBF_PLUTODEBUG];
+			cur_debugging = cfg->setup.options[KBF_PLUTODEBUG];
 
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 
@@ -1397,7 +1397,7 @@ int main(int argc, char **argv)
 		{
 			lmod_t mod = empty_lmod;
 			if (lmod_arg(&mod, &debug_lmod_info, optarg, true/*enable*/)) {
-				base_debugging = lmod(base_debugging, mod);
+				cur_debugging = lmod(cur_debugging, mod);
 			} else {
 				libreswan_log("unrecognized --debug '%s' option ignored",
 					      optarg);
@@ -1409,7 +1409,7 @@ int main(int argc, char **argv)
 		{
 			lmod_t mod = empty_lmod;
 			if (lmod_arg(&mod, &impair_lmod_info, optarg, true/*enable*/)) {
-				base_debugging = lmod(base_debugging, mod);
+				cur_debugging = lmod(cur_debugging, mod);
 			} else {
 				libreswan_log("unrecognized --impair '%s' option ignored",
 					      optarg);
@@ -1440,7 +1440,6 @@ int main(int argc, char **argv)
 	}
 	if (optind != argc)
 		invocation_fail("unexpected argument");
-	reset_debugging();
 
 	if (chdir(coredir) == -1) {
 		int e = errno;
@@ -1583,8 +1582,8 @@ int main(int argc, char **argv)
 		 * impairs are also not allowed but cannot come in via
 		 * ipsec.conf, only whack
 		 */
-		if (base_debugging & DBG_PRIVATE) {
-			base_debugging &= ~DBG_PRIVATE;
+		if (cur_debugging & DBG_PRIVATE) {
+			cur_debugging &= ~DBG_PRIVATE;
 			loglog(RC_LOG_SERIOUS, "FIPS mode: debug-private disabled as such logging is not allowed");
 		}
 	}

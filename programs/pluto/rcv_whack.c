@@ -302,7 +302,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 						    "+", m->debugging);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
-					lswlogs(buf, "base debugging = ");
+					lswlogs(buf, "new debugging = ");
 					lswlog_enum_lset_short(buf, &debug_names,
 							       "+", new_debugging);
 				}
@@ -315,12 +315,11 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 						    "+", m->impairing);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
-					lswlogs(buf, "base impairing = ");
+					lswlogs(buf, "new impairing = ");
 					lswlog_enum_lset_short(buf, &impair_names,
 							       "+", new_impairing);
 				}
-				base_debugging = new_debugging | new_impairing;
-				set_debugging(base_debugging);
+				set_debugging(new_debugging | new_impairing);
 				process_impair(&m->impairment);
 			} else if (!m->whack_connection) {
 				struct connection *c = conn_by_name(m->name,

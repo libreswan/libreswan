@@ -65,9 +65,6 @@ extern bool whack_prompt_for(fd_t whackfd,
 extern void binlog_state(struct state *st, enum state_kind state);
 
 extern void set_debugging(lset_t deb);
-extern void reset_debugging(void);
-
-extern lset_t base_debugging;	/* bits selecting what to report */
 
 extern void log_reset_globals(where_t where);
 #define reset_globals() log_reset_globals(HERE)
