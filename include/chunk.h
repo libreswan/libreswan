@@ -76,6 +76,13 @@ chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char 
 
 bool chunk_eq(chunk_t a, chunk_t b);
 
+#define memcpy_hunk(DST, HUNK, SIZE)					\
+	({								\
+		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
+		passert(hunk_.len == SIZE);				\
+		memcpy(DST, hunk_.ptr, SIZE);				\
+	})
+
 extern const chunk_t empty_chunk;
 #define EMPTY_CHUNK ((const chunk_t) { .ptr = NULL, .len = 0 })
 
