@@ -155,15 +155,6 @@ struct list {
 		WHAT->LIST.nr++;					\
 	}
 
-#define HASH(LEASE)							\
-	{								\
-		passert(LEASE->reusable_entry.next == SENTINEL);	\
-		passert(LEASE->reusable_entry.prev == SENTINEL);	\
-		unsigned hash = hasher(LEASE->reusable_name);		\
-		struct lease *bucket = &pool->leases[hash % pool->nr_leases]; \
-		APPEND(bucket, reusable_bucket, reusable_entry, LEASE); \
-	}
-
 /*
  * A pool is a range of IP addresses to be individually allocated.
  * A connection may have a pool.
@@ -221,6 +212,24 @@ static unsigned hasher(const char *name)
 		hash = hash * 251 + (uint8_t) *c;
 	}
 	return hash;
+}
+
+static struct lease *lease_id_bucket(struct ip_pool *pool, const char *name)
+{
+	unsigned hash = hasher(name);
+	return &pool->leases[hash % pool->nr_leases];
+}
+
+static void hash_lease_id(struct ip_pool *pool, struct lease *lease)
+{
+	struct lease *bucket = lease_id_bucket(pool, lease->reusable_name);
+	APPEND(bucket, reusable_bucket, reusable_entry, lease);
+}
+
+static void unhash_lease_id(struct ip_pool *pool, struct lease *lease)
+{
+	struct lease *bucket = lease_id_bucket(pool, lease->reusable_name);
+	REMOVE(bucket, reusable_bucket, reusable_entry, lease);
 }
 
 static ip_address lease_address(const struct ip_pool *pool,
@@ -417,8 +426,7 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 		return NULL;
 	}
 
-	unsigned hash = hasher(that_name);
-	struct lease *bucket = &pool->leases[hash % pool->nr_leases];
+	struct lease *bucket = lease_id_bucket(pool, that_name);
 	if (IS_EMPTY(bucket, reusable_bucket)) {
 		return NULL;
 	}
@@ -528,7 +536,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 			for (unsigned l = 0; l < old_nr_leases; l++) {
 				struct lease *lease = &pool->leases[l];
 				if (lease->reusable_name != NULL) {
-					HASH(lease);
+					hash_lease_id(pool, lease);
 				}
 			}
 		}
@@ -541,14 +549,12 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 				DBG_lease(false, pool, new_lease, "stealing reusable lease from '%s'",
 					  new_lease->reusable_name);
 			}
-			unsigned hash = hasher(that_name);
-			struct lease *bucket = &pool->leases[hash % pool->nr_leases];
-			REMOVE(bucket, reusable_bucket, reusable_entry, new_lease);
-			free_lease_content(new_lease);
+			unhash_lease_id(pool, new_lease);
 		}
+		free_lease_content(new_lease);
 		if (reusable) {
 			new_lease->reusable_name = clone_str(that_name, "lease name");
-			HASH(new_lease);
+			hash_lease_id(pool, new_lease);
 		}
 		pool->nr_in_use++;
 		new_lease->lease_refcount++;
