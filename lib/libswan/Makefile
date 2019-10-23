@@ -106,8 +106,6 @@ OBJS += debug.o
 OBJS += impair.o
 OBJS += keywords.o
 
-OBJS += dbg.o
-
 OBJS += DBG_dump.o
 OBJS += DBG_log.o
 
