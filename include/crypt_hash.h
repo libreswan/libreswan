@@ -1,5 +1,4 @@
-/*
- * Hash algorithms, for libreswan
+/* Hash algorithms, for libreswan
  *
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
  *
@@ -53,8 +52,6 @@ void crypt_hash_digest_bytes(struct crypt_hash *hash,
  */
 void crypt_hash_final_bytes(struct crypt_hash **hashp,
 			    uint8_t *bytes, size_t sizeof_bytes);
-
-chunk_t crypt_hash_final_chunk(struct crypt_hash **hashp);
 
 struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp);
 

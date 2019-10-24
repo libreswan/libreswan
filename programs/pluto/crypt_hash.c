@@ -103,22 +103,6 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 	*hashp = hash = NULL;
 }
 
-chunk_t crypt_hash_final_chunk(struct crypt_hash **hashp)
-{
-	struct crypt_hash *hash = *hashp;
-	chunk_t chunk = alloc_chunk(hash->desc->hash_digest_size, hash->name);
-	hash->desc->hash_ops->final_bytes(&hash->context, chunk.ptr, chunk.len);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s hash %s final chunk@%p (length %zu)",
-			hash->name, hash->desc->common.name,
-			chunk.ptr, chunk.len);
-		DBG_dump_hunk(NULL, chunk);
-	}
-	pfree(*hashp);
-	*hashp = hash = NULL;
-	return chunk;
-}
-
 struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp)
 {
 	struct crypt_hash *hash = *hashp;
@@ -143,8 +127,7 @@ PK11SymKey *crypt_hash_symkey(const char *name, const struct hash_desc *hash_des
 	     symkey_name, symkey, sizeof_symkey(symkey));
 	struct crypt_hash *hash = crypt_hash_init(name, hash_desc);
 	crypt_hash_digest_symkey(hash, symkey_name, symkey);
-	chunk_t out = crypt_hash_final_chunk(&hash);
+	struct crypt_mac out = crypt_hash_final_mac(&hash);
 	PK11SymKey *key = symkey_from_hunk(name, out);
-	freeanychunk(out);
 	return key;
 }
