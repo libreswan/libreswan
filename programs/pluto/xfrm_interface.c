@@ -127,9 +127,15 @@ static bool nl_query_small_resp(struct nlmsghdr *req, int protocol, struct nlm_r
 		r = recvfrom(nl_fd, &rsp, sizeof(rsp), 0,
 				(struct sockaddr *)&addr, &alen);
 		if (r < 0) {
-			LOG_ERRNO(errno, " in nl_query_small_resp() reading");
-			close(nl_fd);
-			break;
+			if (errno == EAGAIN) {
+				//AA_2019 fix this xxx
+				dbg("xfrmi go EAGAIN Resource Currently not available ignore?? %s", __func__);
+				break;
+			} else {
+				LOG_ERRNO(errno, " in nl_query_small_resp() reading");
+				close(nl_fd);
+				break;
+			}
 		}
 	}
 
