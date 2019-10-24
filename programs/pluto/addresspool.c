@@ -39,16 +39,17 @@
 #include "ip_address.h"
 #include "ip_range.h"
 
+#define SENTINEL (unsigned)-1
+
 struct entry {
 	unsigned prev;
 	unsigned next;
 };
 
-#define INIT_ENTRY(WHAT, ENTRY)			\
-	{					\
-		WHAT->ENTRY.prev = SENTINEL;	\
-		WHAT->ENTRY.next = SENTINEL;	\
-	}
+static const struct entry empty_entry = {
+	.prev = SENTINEL,
+	.next = SENTINEL,
+};
 
 struct list {
 	unsigned first;
@@ -56,12 +57,11 @@ struct list {
 	unsigned nr;
 };
 
-#define INIT_LIST(WHAT, LIST)			\
-	{					\
-		WHAT->LIST.nr = 0;		\
-		WHAT->LIST.first = SENTINEL;	\
-		WHAT->LIST.last = SENTINEL;	\
-	}
+static const struct list empty_list = {
+	.nr = 0,
+	.first = SENTINEL,
+	.last = SENTINEL,
+};
 
 #define IS_EMPTY(WHAT, LIST)						\
 	({								\
@@ -88,8 +88,6 @@ struct list {
 		}							\
 		result_;						\
 	})
-
-#define SENTINEL (unsigned)-1
 
 #define REMOVE(WHAT, LIST, ENTRY, LEASE)				\
 	{								\
@@ -513,24 +511,37 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 				pool->nr_leases = min(1U, pool->size);
 				pool->leases = alloc_things(struct lease, pool->nr_leases, "leases");
 			} else {
+				/*
+				 * Danger: this may use realloc() and
+				 * realloc() does not initialize the
+				 * additional memory
+				 */
 				pool->nr_leases = min(pool->nr_leases * 2, pool->size);
 				resize_things(pool->leases, pool->nr_leases);
 			}
 			DBG_pool(false, pool, "growing address pool from %u to %u",
 				 old_nr_leases, pool->nr_leases);
-			/* destroy existing hash table */
-			for (unsigned l = 0; l < old_nr_leases; l++) {
-				struct lease *new_lease = &pool->leases[l];
-				INIT_ENTRY(new_lease, reusable_entry);
-				INIT_LIST(new_lease, reusable_bucket);
-			}
 			/* initialize new leases (and add to free list) */
 			for (unsigned l = old_nr_leases; l < pool->nr_leases; l++) {
 				struct lease *lease = &pool->leases[l];
-				INIT_ENTRY(lease, free_entry);
-				INIT_ENTRY(lease, reusable_entry);
-				INIT_LIST(lease, reusable_bucket);
+				/*
+				 * Danger: must initialize entire
+				 * struct as resize_things(), which
+				 * may use realloc(), can leave the
+				 * data uninitialized.
+				 */
+				*lease = (struct lease) {
+					.free_entry = empty_entry,
+					.reusable_entry = empty_entry,
+					.reusable_bucket = empty_list,
+				};
 				PREPEND(pool, free_list, free_entry, lease);
+			}
+			/* destroy existing hash table */
+			for (unsigned l = 0; l < old_nr_leases; l++) {
+				struct lease *lease = &pool->leases[l];
+				lease->reusable_entry = empty_entry;
+				lease->reusable_bucket = empty_list;
 			}
 			/* build a new hash table containing old */
 			for (unsigned l = 0; l < old_nr_leases; l++) {
@@ -715,7 +726,7 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 
 		pool->nr_in_use = 0;
 		pool->nr_leases = 0;
-		INIT_LIST(pool, free_list);
+		pool->free_list = empty_list;
 		pool->leases = NULL;
 		/* insert */
 		pool->next = *head;
