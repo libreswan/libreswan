@@ -340,65 +340,60 @@ static void compute_proto_keymat(struct state *st,
 
 	pi->keymat_len = needed_len;
 
-	/* Allocate space for the keying material.
-	 * Although only needed_len bytes are desired, we
-	 * must round up to a multiple of ctx.hmac_digest_len
-	 * so that our buffer isn't overrun.
+	/*
+	 * Allocate space for the keying material.  Although only
+	 * needed_len bytes are desired, we must round up to a
+	 * multiple of ctx.hmac_digest_len so that our buffer isn't
+	 * overrun.
 	 */
-	{
-		struct hmac_ctx ctx_me, ctx_peer;
-		size_t needed_space; /* space needed for keying material (rounded up) */
-		size_t i;
+	size_t prf_output_size = st->st_oakley.ta_prf->prf_output_size;
+	size_t needed_space = needed_len + pad_up(needed_len, prf_output_size);
+	replace(pi->our_keymat, alloc_bytes(needed_space,
+					    "keymat in compute_keymat()"));
+	replace(pi->peer_keymat, alloc_bytes(needed_space,
+					     "peer_keymat in quick_inI1_outR1()"));
 
-		hmac_init(&ctx_me, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
-		/* PK11Context * DigestContext makes hmac not allowable for copy */
-		hmac_init(&ctx_peer, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
-		needed_space = needed_len + pad_up(needed_len,
-						   ctx_me.hmac_digest_len);
-		replace(pi->our_keymat,
-			alloc_bytes(needed_space,
-				    "keymat in compute_keymat()"));
-		replace(pi->peer_keymat,
-			alloc_bytes(needed_space,
-				    "peer_keymat in quick_inI1_outR1()"));
-
-		for (i = 0;; ) {
-			if (st->st_shared_nss != NULL) {
-				crypt_prf_update_symkey(ctx_me.prf, "g^xy", st->st_shared_nss);
-				crypt_prf_update_symkey(ctx_peer.prf, "g^xy", st->st_shared_nss);
-			}
-			hmac_update(&ctx_me, &protoid, sizeof(protoid));
-			hmac_update(&ctx_peer, &protoid, sizeof(protoid));
-
-			hmac_update(&ctx_me, (u_char *)&pi->our_spi,
-				    sizeof(pi->our_spi));
-			hmac_update(&ctx_peer, (u_char *)&pi->attrs.spi,
-				    sizeof(pi->attrs.spi));
-
-			hmac_update_chunk(&ctx_me, st->st_ni);
-			hmac_update_chunk(&ctx_peer, st->st_ni);
-
-			hmac_update_chunk(&ctx_me, st->st_nr);
-			hmac_update_chunk(&ctx_peer, st->st_nr);
-
-			hmac_final(pi->our_keymat + i, &ctx_me);
-			hmac_final(pi->peer_keymat + i, &ctx_peer);
-
-			i += ctx_me.hmac_digest_len;
-			if (i >= needed_space)
-				break;
-
-			/* more keying material needed: prepare to go around again */
-			hmac_init(&ctx_me, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
-			hmac_init(&ctx_peer, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
-
-			hmac_update(&ctx_me,
-				    pi->our_keymat + i - ctx_me.hmac_digest_len,
-				    ctx_me.hmac_digest_len);
-			hmac_update(&ctx_peer,
-				    pi->peer_keymat + i - ctx_peer.hmac_digest_len,
-				    ctx_peer.hmac_digest_len);
+	struct crypt_prf *ctx_local = crypt_prf_init_symkey("ctx local", st->st_oakley.ta_prf,
+							    "skeyid_d", st->st_skeyid_d_nss);
+	struct crypt_prf *ctx_remote = crypt_prf_init_symkey("ctx peer", st->st_oakley.ta_prf,
+							     "skeyid_d", st->st_skeyid_d_nss);
+	for (size_t i = 0;; ) {
+		if (st->st_shared_nss != NULL) {
+			crypt_prf_update_symkey(ctx_local, "g^xy", st->st_shared_nss);
+			crypt_prf_update_symkey(ctx_remote, "g^xy", st->st_shared_nss);
 		}
+		crypt_prf_update_bytes(ctx_local, "protoid", &protoid, sizeof(protoid));
+		crypt_prf_update_bytes(ctx_remote, "protoid", &protoid, sizeof(protoid));
+
+		crypt_prf_update_bytes(ctx_local, "spi", &pi->our_spi, sizeof(pi->our_spi));
+		crypt_prf_update_bytes(ctx_remote, "spi", &pi->attrs.spi, sizeof(pi->attrs.spi));
+
+		crypt_prf_update_hunk(ctx_local, "Ni", st->st_ni);
+		crypt_prf_update_hunk(ctx_remote, "Ni", st->st_ni);
+
+		crypt_prf_update_hunk(ctx_local, "Nr", st->st_nr);
+		crypt_prf_update_hunk(ctx_remote, "Nr", st->st_nr);
+
+		crypt_prf_final_bytes(&ctx_local, pi->our_keymat + i, prf_output_size);
+		crypt_prf_final_bytes(&ctx_remote, pi->peer_keymat + i, prf_output_size);
+
+		i += prf_output_size;
+		passert(i <= needed_space);
+		if (i == needed_space)
+			break;
+
+		/* more keying material needed: prepare to go around again */
+		ctx_local = crypt_prf_init_symkey("ctx me", st->st_oakley.ta_prf,
+						  "skeyid_d", st->st_skeyid_d_nss);
+		ctx_remote = crypt_prf_init_symkey("ctx peer", st->st_oakley.ta_prf,
+						   "skeyid_d", st->st_skeyid_d_nss);
+
+		crypt_prf_update_bytes(ctx_local, "old keymat",
+				       pi->our_keymat + i - prf_output_size,
+				       prf_output_size);
+		crypt_prf_update_bytes(ctx_remote, "old keymat",
+				       pi->peer_keymat + i - prf_output_size,
+				       prf_output_size);
 	}
 
 	DBG(DBG_PRIVATE, {
