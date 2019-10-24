@@ -93,8 +93,8 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 	return prf_desc->prf_ikev2_ops->child_sa_keymat(prf_desc, SK_d, new_dh_secret, Ni, Nr, required_bytes);
 }
 
-chunk_t ikev2_psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
-		       chunk_t first_packet, chunk_t nonce, shunk_t id_hash)
+struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
+				chunk_t first_packet, chunk_t nonce, shunk_t id_hash)
 {
 	return prf_desc->prf_ikev2_ops->psk_auth(prf_desc, pss, first_packet, nonce, id_hash);
 }

@@ -56,11 +56,11 @@
 #include <nss.h>
 #include <pk11pub.h>
 
-static chunk_t ikev2_calculate_psk_sighash(bool verify,
-					   const struct state *st,
-					   enum keyword_authby authby,
-					   const unsigned char *idhash,
-					   const chunk_t firstpacket)
+static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
+						    const struct state *st,
+						    enum keyword_authby authby,
+						    const unsigned char *idhash,
+						    const chunk_t firstpacket)
 {
 	const struct connection *c = st->st_connection;
 	const size_t hash_len = st->st_oakley.ta_prf->prf_output_size;
@@ -126,7 +126,7 @@ static chunk_t ikev2_calculate_psk_sighash(bool verify,
 		if (pss == NULL) {
 			loglog(RC_LOG_SERIOUS,"No matching PSK found for connection: %s",
 			      st->st_connection->name);
-			return empty_chunk;
+			return empty_mac;
 		}
 		DBG(DBG_PRIVATE, DBG_dump_hunk("User PSK:", *pss));
 		const size_t key_size_min = crypt_prf_fips_key_size_min(st->st_oakley.ta_prf);
@@ -138,7 +138,7 @@ static chunk_t ikev2_calculate_psk_sighash(bool verify,
 				       pss->len,
 				       st->st_oakley.ta_prf->common.name,
 				       key_size_min);
-				return empty_chunk;
+				return empty_mac;
 			} else {
 				libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
 					      st->st_connection->name,
@@ -188,8 +188,8 @@ bool ikev2_emit_psk_auth(enum keyword_authby authby,
 			   const unsigned char *idhash,
 			   pb_stream *a_pbs)
 {
-	chunk_t signed_octets = ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
-							    st->st_firstpacket_me);
+	struct crypt_mac signed_octets = ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
+								     st->st_firstpacket_me);
 	if (signed_octets.len == 0) {
 		return false;
 	}
@@ -198,7 +198,6 @@ bool ikev2_emit_psk_auth(enum keyword_authby authby,
 	    DBG_dump_hunk("PSK auth octets", signed_octets));
 
 	bool ok = out_chunk(signed_octets, a_pbs, "PSK auth");
-	freeanychunk(signed_octets);
 	return ok;
 }
 
@@ -207,15 +206,16 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 			   const unsigned char *idhash,
 			   chunk_t *additional_auth /* output */)
 {
-	chunk_t signed_octets = ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
-							    st->st_firstpacket_me);
+	*additional_auth = empty_chunk;
+	struct crypt_mac signed_octets = ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
+								     st->st_firstpacket_me);
 	if (signed_octets.len == 0) {
 		return false;
 	}
 
 	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
-	*additional_auth = signed_octets;
-	DBG(DBG_PRIVATE, DBG_dump_hunk(chunk_n, *additional_auth));
+	*additional_auth = clone_hunk(signed_octets, chunk_n);
+	DBG(DBG_CRYPT, DBG_dump_hunk(chunk_n, *additional_auth));
 
 	return true;
 }
@@ -226,28 +226,27 @@ bool ikev2_verify_psk_auth(enum keyword_authby authby,
 				 pb_stream *sig_pbs)
 {
 	size_t hash_len = st->st_oakley.ta_prf->prf_output_size;
-	size_t sig_len = pbs_left(sig_pbs);
+	shunk_t sig = pbs_in_left_as_shunk(sig_pbs);
 
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
-	if (sig_len != hash_len) {
+	if (sig.len != hash_len) {
 		libreswan_log(
 			"hash length in I2 packet (%zu) does not equal hash length (%zu) of negotiated PRF (%s)",
-			sig_len, hash_len, st->st_oakley.ta_prf->common.name);
+			sig.len, hash_len, st->st_oakley.ta_prf->common.name);
 		return false;
 	}
 
-	chunk_t calc_hash = ikev2_calculate_psk_sighash(TRUE, st, authby, idhash,
-							st->st_firstpacket_him);
+	struct crypt_mac calc_hash = ikev2_calculate_psk_sighash(TRUE, st, authby, idhash,
+								 st->st_firstpacket_him);
 	if (calc_hash.len == 0) {
 		return false;
 	}
 
 	DBG(DBG_CRYPT,
-	    DBG_dump("Received PSK auth octets", sig_pbs->cur, sig_len);
+	    DBG_dump_hunk("Received PSK auth octets", sig);
 	    DBG_dump_hunk("Calculated PSK auth octets", calc_hash));
-	bool ok = memeq(sig_pbs->cur, calc_hash.ptr, calc_hash.len);
-	freeanychunk(calc_hash);
+	bool ok = hunk_eq(sig, calc_hash);
 	if (ok) {
 		loglog(RC_LOG_SERIOUS, "Authenticated using authby=%s",
 			authby == AUTH_NULL ? "null" : "secret");

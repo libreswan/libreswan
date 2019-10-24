@@ -198,8 +198,8 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 	return result;
 }
 
-static chunk_t psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
-		       chunk_t first_packet, chunk_t nonce, shunk_t id_hash)
+static struct crypt_mac psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
+				 chunk_t first_packet, chunk_t nonce, shunk_t id_hash)
 {
 	/* calculate inner prf */
 	PK11SymKey *prf_psk;
@@ -216,7 +216,7 @@ static chunk_t psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 			loglog(RC_LOG_SERIOUS,
 			       "failure creating %s PRF context for digesting PSK",
 			       prf_desc->common.name);
-			return empty_chunk;
+			return empty_mac;
 		}
 
 		static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* RFC 4306  2:15 */
@@ -228,7 +228,7 @@ static chunk_t psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 	}
 
 	/* calculate outer prf */
-	chunk_t signed_octets;
+	struct crypt_mac signed_octets;
 	{
 		struct crypt_prf *prf =
 			crypt_prf_init_symkey("<signed-octets> = prf(<prf-psk>, <msg octets>)",
@@ -249,7 +249,7 @@ static chunk_t psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
 		crypt_prf_update_hunk(prf, "first-packet", first_packet);
 		crypt_prf_update_hunk(prf, "nonce", nonce);
 		crypt_prf_update_hunk(prf, "hash", id_hash);
-		signed_octets = crypt_prf_final_chunk(&prf);
+		signed_octets = crypt_prf_final_mac(&prf, NULL);
 	}
 	release_symkey(__func__, "prf-psk", &prf_psk);
 
