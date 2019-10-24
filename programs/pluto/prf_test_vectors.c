@@ -173,10 +173,9 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	struct crypt_prf *chunk_prf = crypt_prf_init_hunk("PRF chunk interface", prf,
 							  "key", chunk_key);
 	crypt_prf_update_hunk(chunk_prf, "message", chunk_message);
-	chunk_t chunk_output = crypt_prf_final_chunk(&chunk_prf);
+	struct crypt_mac chunk_output = crypt_prf_final_mac(&chunk_prf, NULL);
 	DBG(DBG_CRYPT, DBG_dump_hunk("chunk output", chunk_output));
-	bool ok = verify_chunk(test->description, prf_output, chunk_output);
-	freeanychunk(chunk_output);
+	bool ok = verify_hunk(test->description, prf_output, chunk_output);
 
 	/* symkey interface */
 	PK11SymKey *symkey_key = symkey_from_hunk("key symkey", chunk_key);
@@ -193,7 +192,6 @@ static bool test_prf_vector(const struct prf_desc *prf,
 
 	freeanychunk(chunk_message);
 	freeanychunk(chunk_key);
-	freeanychunk(chunk_output);
 
 	release_symkey(__func__, "message", &symkey_message);
 	release_symkey(__func__, "key", &symkey_key);

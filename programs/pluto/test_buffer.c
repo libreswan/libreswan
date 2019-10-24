@@ -67,39 +67,32 @@ PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string)
 
 /*
  * Verify that the chunk's data is the same as actual.
- * Note that it is assumed that there is enough data in actual.
  */
-bool verify_chunk_data(const char *desc,
-		  chunk_t expected,
-		  u_char *actual)
+
+bool verify_bytes(const char *desc,
+		  const void *expected, size_t expected_size,
+		  const void *actual, size_t actual_size)
 {
+	if (expected_size != actual_size) {
+		DBG(DBG_CRYPT,
+		    DBG_log("verify_chunk: %s: expected length %zd but got %zd",
+			    desc, expected_size, actual_size));
+		return false;
+	}
+
 	size_t i;
-	for (i = 0; i < expected.len; i++) {
-		u_char l = expected.ptr[i];
-		u_char r = actual[i];
-		if (l != r) {
+	for (i = 0; i < expected_size; i++) {
+		uint8_t e = ((const uint8_t*)expected)[i];
+		uint8_t a = ((const uint8_t*)actual)[i];
+		if (e != a) {
 			/* Caller should issue the real log message.  */
 			DBG(DBG_CRYPT, DBG_log("verify_chunk_data: %s: bytes at %zd differ, expected %02x found %02x",
-					       desc, i, l, r));
-			return FALSE;
+					       desc, i, e, a));
+			return false;
 		}
 	}
 	DBG(DBG_CRYPT, DBG_log("verify_chunk_data: %s: ok", desc));
-	return TRUE;
-}
-
-/* verify that expected is the same as actual */
-bool verify_chunk(const char *desc,
-		   chunk_t expected,
-		   chunk_t actual)
-{
-	if (expected.len != actual.len) {
-		DBG(DBG_CRYPT,
-		    DBG_log("verify_chunk: %s: expected length %zd but got %zd",
-			    desc, expected.len, actual.len));
-		return FALSE;
-	}
-	return verify_chunk_data(desc, expected, actual.ptr);
+	return true;
 }
 
 /* verify that expected is the same as actual */
@@ -111,7 +104,7 @@ bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual)
 		return FALSE;
 	}
 	chunk_t chunk = chunk_from_symkey(desc, actual);
-	bool ok = verify_chunk_data(desc, expected, chunk.ptr);
+	bool ok = verify_hunk(desc, expected, chunk);
 	freeanychunk(chunk);
 	return ok;
 }

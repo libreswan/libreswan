@@ -124,10 +124,11 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 							text_and_tag.ptr, \
 							len, tag.len,	\
 							sym_key, enc) || \
-		    !verify_chunk_data("output ciphertext",  \
-				   to, text_and_tag.ptr) ||  \
-		    !verify_chunk_data("TAG", tag, text_and_tag.ptr + len))  \
-			ok = FALSE;  \
+		    !verify_bytes("output ciphertext", to.ptr, to.len,	\
+				  text_and_tag.ptr, to.len) ||		\
+		    !verify_bytes("TAG", tag.ptr, tag.len,		\
+				  text_and_tag.ptr + len, tag.len))	\
+			ok = FALSE;					\
 		DBG(DBG_CRYPT, DBG_dump_hunk("test_gcm_vector: text+tag on return",  \
 					      text_and_tag));  \
 	}

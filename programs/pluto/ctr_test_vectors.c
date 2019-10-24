@@ -170,11 +170,11 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 	/* do_crypt modifies the data and IV in place.  */
 	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
 					    sym_key, cb.ptr, encrypt);
-	if (!verify_chunk(op, expected_output, tmp)) {
+	if (!verify_hunk(op, expected_output, tmp)) {
 		DBG(DBG_CRYPT, DBG_log("test_ctr_op: %s: %s: output does not match", description, op));
 		ok = FALSE;
 	}
-	if (!verify_chunk("counter-block", expected_cb, cb)) {
+	if (!verify_hunk("counter-block", expected_cb, cb)) {
 		DBG(DBG_CRYPT, DBG_log("test_ctr_op: %s: %s: counter-block does not match", description, op));
 		ok = FALSE;
 	}
