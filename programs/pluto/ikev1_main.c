@@ -79,7 +79,7 @@
 #include "ikev1_continuations.h"
 #include "ikev1_message.h"
 #include "ikev1_xauth.h"
-
+#include "crypt_prf.h"
 #include "vendor.h"
 #include "nat_traversal.h"
 #include "ikev1_dpd.h"
@@ -233,20 +233,25 @@ void main_outI1(fd_t whack_sock,
  */
 
 static void main_mode_hash_body(struct state *st,
-				bool hashi, /* Initiator? */
+				enum sa_role role,
 				const pb_stream *idpl, /* ID payload, as PBS */
-				struct hmac_ctx *ctx)
+				struct crypt_prf *ctx)
 {
-	if (hashi) {
-		hmac_update_chunk(ctx, st->st_gi);
-		hmac_update_chunk(ctx, st->st_gr);
-		hmac_update(ctx, st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
-		hmac_update(ctx, st->st_ike_spis.responder.bytes, COOKIE_SIZE);
-	} else {
-		hmac_update_chunk(ctx, st->st_gr);
-		hmac_update_chunk(ctx, st->st_gi);
-		hmac_update(ctx, st->st_ike_spis.responder.bytes, COOKIE_SIZE);
-		hmac_update(ctx, st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
+	switch (role) {
+	case SA_INITIATOR:
+		crypt_prf_update_hunk(ctx, "gi", st->st_gi);
+		crypt_prf_update_hunk(ctx, "gr", st->st_gr);
+		crypt_prf_update_thing(ctx, "initiator", st->st_ike_spis.initiator);
+		crypt_prf_update_thing(ctx, "responder", st->st_ike_spis.responder);
+		break;
+	case SA_RESPONDER:
+		crypt_prf_update_hunk(ctx, "gr", st->st_gr);
+		crypt_prf_update_hunk(ctx, "gi", st->st_gi);
+		crypt_prf_update_thing(ctx, "respoder", st->st_ike_spis.responder);
+		crypt_prf_update_thing(ctx, "initiator", st->st_ike_spis.initiator);
+		break;
+	default:
+		bad_case(role);
 	}
 
 	DBG(DBG_CRYPT,
@@ -254,8 +259,9 @@ static void main_mode_hash_body(struct state *st,
 			st->st_p1isa.len - sizeof(struct isakmp_generic)));
 
 	/* SA_b */
-	hmac_update(ctx, st->st_p1isa.ptr + sizeof(struct isakmp_generic),
-		st->st_p1isa.len - sizeof(struct isakmp_generic));
+	crypt_prf_update_bytes(ctx, "p1isa",
+			       st->st_p1isa.ptr + sizeof(struct isakmp_generic),
+			       st->st_p1isa.len - sizeof(struct isakmp_generic));
 
 	/*
 	 * Hash identification payload, without generic payload header.
@@ -263,26 +269,20 @@ static void main_mode_hash_body(struct state *st,
 	 * we use the bytes as they appear on the wire to avoid
 	 * "spelling problems".
 	 */
-	hmac_update(ctx,
-		idpl->start + sizeof(struct isakmp_generic),
-		pbs_offset(idpl) - sizeof(struct isakmp_generic));
-
-#undef hash_update_chunk
-#undef hash_update
+	crypt_prf_update_bytes(ctx, "idpl",
+			       idpl->start + sizeof(struct isakmp_generic),
+			       pbs_offset(idpl) - sizeof(struct isakmp_generic));
 }
 
-size_t /* length of hash */
-main_mode_hash(struct state *st,
-	u_char *hash_val, /* resulting bytes */
-	bool hashi, /* Initiator? */
-	const pb_stream *idpl) /* ID payload, as PBS; cur must be at end */
+struct crypt_mac main_mode_hash(struct state *st,
+				enum sa_role role,
+				const pb_stream *idpl) /* ID payload, as PBS; cur must be at end */
 {
-	struct hmac_ctx ctx;
-
-	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_nss);
-	main_mode_hash_body(st, hashi, idpl, &ctx);
-	hmac_final(hash_val, &ctx);
-	return ctx.hmac_digest_len;
+	struct crypt_prf *ctx = crypt_prf_init_symkey("main mode",
+						      st->st_oakley.ta_prf,
+						      "skeyid", st->st_skeyid_nss);
+	main_mode_hash_body(st, role, idpl, ctx);
+	return crypt_prf_final_mac(&ctx, NULL);
 }
 
 /*
@@ -295,7 +295,7 @@ main_mode_hash(struct state *st,
 
 size_t v1_sign_hash_RSA(const struct connection *c,
 			uint8_t *sig_val, size_t sig_size,
-			const uint8_t *hash_val, size_t hash_size)
+			const struct crypt_mac *hash)
 {
 	const struct private_key_stuff *pks = get_connection_private_key(c, &pubkey_type_rsa);
 	if (pks == NULL) {
@@ -307,9 +307,9 @@ size_t v1_sign_hash_RSA(const struct connection *c,
 
 	size_t sz = k->pub.k;
 	passert(RSA_MIN_OCTETS <= sz &&
-		4 + hash_size < sz &&
+		4 + hash->len < sz &&
 		sz <= sig_size);
-	int shr = sign_hash_RSA(k, hash_val, hash_size, sig_val, sz, 0 /* for ikev2 only */);
+	int shr = sign_hash_RSA(k, hash->ptr, hash->len, sig_val, sz, 0 /* for ikev2 only */);
 	passert(shr == 0 || (int)sz == shr);
 	return shr;
 }
@@ -1347,8 +1347,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 
 	/* HASH_I or SIG_I out */
 	{
-		u_char hash_val[MAX_DIGEST_LEN];
-		size_t hash_len = main_mode_hash(st, hash_val, TRUE, &id_pbs);
+		struct crypt_mac hash = main_mode_hash(st, SA_INITIATOR, &id_pbs);
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
@@ -1356,13 +1355,12 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 						ISAKMP_NEXT_NONE,
 						&isakmp_hash_desc,
 						rbody,
-						hash_val, hash_len, "HASH_I"))
+						hash.ptr, hash.len, "HASH_I"))
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_I out */
 			uint8_t sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val),
-							  hash_val, hash_len);
+			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val), &hash);
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
 					"unable to locate my private key for RSA Signature");
@@ -1463,8 +1461,6 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 			bool aggrmode)
 {
 	struct state *st = md->st;
-	u_char hash_val[MAX_DIGEST_LEN];
-	size_t hash_len;
 	stf_status r = STF_OK;
 	lsw_cert_ret ret = LSW_CERT_NONE;
 
@@ -1493,12 +1489,14 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	 * main_mode_hash requires idpl->cur to be at end of payload
 	 * so we temporarily set if so.
 	 */
+	struct crypt_mac hash;
 	{
 		pb_stream *idpl = &md->chain[ISAKMP_NEXT_ID]->pbs;
 		uint8_t *old_cur = idpl->cur;
 
 		idpl->cur = idpl->roof;
-		hash_len = main_mode_hash(st, hash_val, !initiator, idpl);
+		/* authenticating other end, flip role! */
+		hash = main_mode_hash(st, initiator ? SA_RESPONDER : SA_INITIATOR, idpl);
 		idpl->cur = old_cur;
 	}
 
@@ -1514,8 +1512,8 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 		 * function and also not magically force caller to
 		 * return.
 		 */
-		if (pbs_left(hash_pbs) != hash_len ||
-			!memeq(hash_pbs->cur, hash_val, hash_len)) {
+		if (pbs_left(hash_pbs) != hash.len ||
+			!memeq(hash_pbs->cur, hash.ptr, hash.len)) {
 			if (DBGP(DBG_CRYPT)) {
 				DBG_dump("received HASH:",
 					 hash_pbs->cur, pbs_left(hash_pbs));
@@ -1534,7 +1532,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 
 	case OAKLEY_RSA_SIG:
 	{
-		r = RSA_check_signature(st, hash_val, hash_len,
+		r = RSA_check_signature(st, hash.ptr, hash.len,
 					&md->chain[ISAKMP_NEXT_SIG]->pbs, 0 /* for ikev2 only*/);
 		if (r != STF_OK) {
 			dbg("received '%s' message SIG_%s data did not match computed value",
@@ -1711,20 +1709,17 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		enum next_payload_types_ikev1 np = (c->policy & POLICY_IKEV2_ALLOW) ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		u_char hash_val[MAX_DIGEST_LEN];
-		size_t hash_len =
-			main_mode_hash(st, hash_val, FALSE, &r_id_pbs);
+		struct crypt_mac hash = main_mode_hash(st, SA_RESPONDER, &r_id_pbs);
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_R out */
 			if (!ikev1_out_generic_raw(np, &isakmp_hash_desc, &rbody,
-						hash_val, hash_len, "HASH_R"))
+						hash.ptr, hash.len, "HASH_R"))
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_R out */
 			uint8_t sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val),
-							  hash_val, hash_len);
+			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val), &hash);
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
 					"unable to locate my private key for RSA Signature");

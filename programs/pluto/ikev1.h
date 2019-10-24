@@ -5,6 +5,7 @@
 #include "ikev1_continuations.h"
 #include "packet.h"		/* for pb_stream */
 #include "fd.h"
+#include "crypt_mac.h"
 
 struct child_proposals;
 struct ike_proposals;
@@ -86,13 +87,10 @@ extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 
 extern size_t v1_sign_hash_RSA(const struct connection *c,
 			       uint8_t *sig_val, size_t sig_size,
-			       const u_char *hash_val, size_t hash_size);
+			       const struct crypt_mac *hash);
 
-extern size_t                           /* length of hash */
-main_mode_hash(struct state *st,
-	       u_char *hash_val,        /* resulting bytes */
-	       bool hashi,              /* Initiator? */
-	       const pb_stream *idpl);  /* ID payload, as PBS; cur must be at end */
+struct crypt_mac main_mode_hash(struct state *st, enum sa_role role,
+				const pb_stream *idpl);  /* ID payload, as PBS; cur must be at end */
 
 /*
  * Note: oakley_id_and_auth may switch the connection being used!

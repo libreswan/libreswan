@@ -456,25 +456,21 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 	/* HASH_R or SIG_R out */
 	{
-		u_char hash_val[MAX_DIGEST_LEN];
-
-		size_t hash_len =
-			main_mode_hash(st, hash_val, FALSE, &r_id_pbs);
+		struct crypt_mac hash = main_mode_hash(st, SA_RESPONDER, &r_id_pbs);
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_R out */
 			if (!ikev1_out_generic_raw(ISAKMP_NEXT_VID,
 					     &isakmp_hash_desc,
 					     &rbody,
-					     hash_val,
-					     hash_len,
+					     hash.ptr,
+					     hash.len,
 					     "HASH_R"))
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_R out */
 			uint8_t sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val),
-							  hash_val, hash_len);
+			size_t sig_len = v1_sign_hash_RSA(c, sig_val, sizeof(sig_val), &hash);
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "unable to locate my private key for RSA Signature");
@@ -763,21 +759,19 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		close_output_pbs(&r_id_pbs);
 		close_output_pbs(&id_pbs);
 
-		u_char hash_val[MAX_DIGEST_LEN];
-		size_t hash_len = main_mode_hash(st, hash_val, TRUE, &id_pbs);
+		struct crypt_mac hash = main_mode_hash(st, SA_INITIATOR, &id_pbs);
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
 			if (!ikev1_out_generic_raw(ISAKMP_NEXT_NONE,
 					     &isakmp_hash_desc, &rbody,
-					     hash_val, hash_len, "HASH_I"))
+					     hash.ptr, hash.len, "HASH_I"))
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_I out */
 			uint8_t sig_val[RSA_MAX_OCTETS];
 			size_t sig_len = v1_sign_hash_RSA(st->st_connection,
-							  sig_val, sizeof(sig_val),
-							  hash_val, hash_len);
+							  sig_val, sizeof(sig_val), &hash);
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
 				       "unable to locate my private key for RSA Signature");
