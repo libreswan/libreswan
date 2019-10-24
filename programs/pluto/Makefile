@@ -200,7 +200,7 @@ OBJS += ike_spi.o
 OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJS += peerlog.o
 OBJS += hash_table.o list_entry.o
-OBJS += timer.o hmac.o hostpair.o
+OBJS += timer.o hostpair.o
 OBJS += retry.o
 OBJS += ipsec_doi.o
 ifeq ($(USE_DNSSEC),true)
