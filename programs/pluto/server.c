@@ -1313,19 +1313,17 @@ static void *libevent_malloc(size_t size)
 	dbg("%s: new ptr-libevent@%p size %zu", __func__, ptr, size);
 	return ptr;
 }
-static void *libevent_realloc(void *ptr, size_t size)
+static void *libevent_realloc(void *old, size_t size)
 {
-	if (ptr == NULL) {
-		ptr = alloc_bytes(size, __func__);
-		dbg("%s: new ptr-libevent@%p size %zu", __func__, ptr, size);
-		return ptr;
+	void *new = uninitialized_realloc(old, size, __func__);
+	if (old == NULL) {
+		dbg("%s: new ptr-libevent@%p size %zu", __func__, new, size);
 	} else {
 		/* enough to keep count-pointers.awk happy */
-		dbg("%s: release ptr-libevent@%p", __func__, ptr);
-		resize_bytes(&ptr, size);
-		dbg("%s: new ptr-libevent@%p size %zu", __func__, ptr, size);
-		return ptr;
+		dbg("%s: release ptr-libevent@%p", __func__, old);
+		dbg("%s: new ptr-libevent@%p size %zu", __func__, new, size);
 	}
+	return new;
 }
 static void libevent_free(void *ptr)
 {

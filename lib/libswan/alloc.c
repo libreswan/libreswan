@@ -224,29 +224,36 @@ void *clone_bytes(const void *orig, size_t size, const char *name)
  * NULL pointer.  The caller, which is presumably implementing some
  * sort of realloc() wrapper, gets to handle this.  So as to avoid any
  * confusion, give this a different name and function signature.
- *
- * Efficiency isn't this code's strong point.
  */
+
+void *uninitialized_realloc(void *ptr, size_t new_size, const char *name)
+{
+	if (ptr == NULL) {
+		return uninitialized_malloc(new_size, name);
+	} else if (leak_detective) {
+		union mhdr *p = ((union mhdr *)ptr) - 1;
+		passert(p->i.magic == LEAK_MAGIC);
+		remove_allocation(p);
+		p = realloc(p, sizeof(union mhdr) + new_size);
+		if (p == NULL) {
+		}
+		install_allocation(p, new_size, name);
+		return p+1;
+	} else {
+		return realloc(ptr, new_size);
+	}
+}
 
 void resize_bytes(void **ptr, size_t new_size)
 {
-	void *old = *ptr;
-	passert(old != NULL);
+	passert(*ptr != NULL);
 	if (leak_detective) {
-		const union mhdr *p = ((const union mhdr *)old) - 1;
+		union mhdr *p = ((union mhdr *)*ptr) - 1;
 		passert(p->i.magic == LEAK_MAGIC);
-		void *new = uninitialized_malloc(new_size, p->i.name);
-		/*
-		 * XXX: Use PMIN(unsigned long,size_t) and not
-		 * min(unsigned long,size_t) as the latter doesn't
-		 * always compile - 32-bit systems (i.e.,
-		 * sizeof(unsigned long)==4) can have
-		 * sizeof(size_t)==8.
-		 */
-		memcpy(new, old, PMIN(p->i.size, new_size));
-		pfree(old);
-		*ptr = new;
+		*ptr = uninitialized_realloc(*ptr, new_size, p->i.name);
+		/* XXX: old_size..new_size still uninitialized */
 	} else {
-		*ptr = realloc(old, new_size);
+		*ptr = realloc(*ptr, new_size);
+		/* XXX: old_size..new_size still uninitialized */
 	}
 }

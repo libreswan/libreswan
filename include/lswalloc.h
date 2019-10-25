@@ -1,5 +1,5 @@
 /*
- * misc. universal things
+ * Misc. universal things
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001, 2013 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -101,5 +101,6 @@ extern void report_leaks(void);
  * Memory primitives, should only be used by libevent.
  */
 void *uninitialized_malloc(size_t size, const char *name);
+void *uninitialized_realloc(void *ptr, size_t size, const char *name);
 
 #endif /* _LSW_ALLOC_H_ */
