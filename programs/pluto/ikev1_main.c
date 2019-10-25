@@ -669,7 +669,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 	set_nat_traversal(st, md);
 
 	if (DBGP(DBG_BASE)) {
-		DBG_dump("  ICOOKIE-DUMP:", st->st_ike_spis.initiator.bytes, COOKIE_SIZE);
+		DBG_dump_thing("  ICOOKIE-DUMP:", st->st_ike_spis.initiator);
 	}
 
 	if (c->kind == CK_INSTANCE) {

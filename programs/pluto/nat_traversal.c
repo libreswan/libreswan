@@ -156,10 +156,10 @@ static struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	if (DBGP(DBG_BASE)) {
 		DBG_log("natd_hash: hasher=%p(%d)", hasher,
 			(int)hasher->hash_digest_size);
-		DBG_dump("natd_hash: icookie=", &spis->initiator, sizeof(spis->initiator));
-		DBG_dump("natd_hash: rcookie=", &spis->responder, sizeof(spis->responder));
+		DBG_dump_thing("natd_hash: icookie=", spis->initiator);
+		DBG_dump_thing("natd_hash: rcookie=", spis->responder);
 		DBG_dump_hunk("natd_hash: ip=", ap);
-		DBG_dump("natd_hash: port=", &nport, sizeof(nport));
+		DBG_dump_thing("natd_hash: port=", nport);
 		DBG_dump_hunk("natd_hash: hash=", hash);
 	}
 	return hash;

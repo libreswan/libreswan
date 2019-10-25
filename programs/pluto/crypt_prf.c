@@ -141,7 +141,7 @@ void crypt_prf_update_byte(struct crypt_prf *prf,
 		DBG_log("%s PRF %s update %s-byte@0x%x (%u)",
 			prf->name, prf->desc->common.name,
 			name, update, update);
-		DBG_dump(NULL, &update, sizeof(update));
+		DBG_dump_thing(NULL, update);
 	}
 	prf->desc->prf_mac_ops->digest_bytes(prf->context, name, &update, 1);
 }

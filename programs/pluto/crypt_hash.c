@@ -67,7 +67,7 @@ void crypt_hash_digest_byte(struct crypt_hash *hash,
 		DBG_log("%s hash %s digest %s-byte@0x%x (%d)",
 			hash->name, hash->desc->common.name,
 			name, byte, byte);
-		DBG_dump(NULL, &byte, sizeof(byte));
+		DBG_dump_thing(NULL, byte);
 	}
 	hash->desc->hash_ops->digest_bytes(hash->context, name, &byte, 1);
 }

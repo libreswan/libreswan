@@ -1459,12 +1459,10 @@ void process_v1_packet(struct msg_digest **mdp)
 
 				/* Let's try to log some info about these to track them down */
 				DBG(DBG_CONTROL, {
-					    DBG_dump("- unknown SA's md->hdr.isa_ike_initiator_spi.bytes:",
-						    md->hdr.isa_ike_initiator_spi.bytes,
-						    COOKIE_SIZE);
-					    DBG_dump("- unknown SA's md->hdr.isa_ike_responder_spi.bytes:",
-						    md->hdr.isa_ike_responder_spi.bytes,
-						    COOKIE_SIZE);
+					    DBG_dump_thing("- unknown SA's md->hdr.isa_ike_initiator_spi.bytes:",
+							   md->hdr.isa_ike_initiator_spi);
+					    DBG_dump_thing("- unknown SA's md->hdr.isa_ike_responder_spi.bytes:",
+							   md->hdr.isa_ike_responder_spi);
 				    });
 
 				/* XXX Could send notification back */

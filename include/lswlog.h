@@ -295,6 +295,7 @@ void DBG_dump(const char *label, const void *p, size_t len);
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
 		DBG_dump(LABEL, hunk_.ptr, hunk_.len);		\
 	}
+#define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
 void lswlog_dbg_pre(struct lswlog *buf);
 
