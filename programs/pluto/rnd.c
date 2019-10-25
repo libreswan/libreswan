@@ -66,7 +66,7 @@
  *   exchange.  Eventually, one per informational exchange.
  */
 
-void get_rnd_bytes(u_char *buffer, int length)
+void get_rnd_bytes(void *buffer, size_t length)
 {
 	SECStatus rv = PK11_GenerateRandom(buffer, length);
 	if (rv != SECSuccess) {

@@ -44,14 +44,13 @@ typedef struct {
 	uint8_t bytes[32];
 } v2_cookie_t;
 
-static uint8_t v2_cookie_secret[sizeof(v2_cookie_t)];
+static v2_cookie_t v2_cookie_secret;
 
 void refresh_v2_cookie_secret(void)
 {
-	get_rnd_bytes(v2_cookie_secret, sizeof(v2_cookie_secret));
+	get_rnd_bytes(&v2_cookie_secret, sizeof(v2_cookie_secret));
 	DBG(DBG_PRIVATE,
-	    DBG_dump("v2_cookie_secret",
-		     v2_cookie_secret, sizeof(v2_cookie_secret)));
+	    DBG_dump("v2_cookie_secret", &v2_cookie_secret, sizeof(v2_cookie_secret)));
 }
 
 /*
@@ -77,8 +76,7 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 	crypt_hash_digest_bytes(ctx, "SPIi", &md->hdr.isa_ike_initiator_spi,
 				sizeof(md->hdr.isa_ike_initiator_spi));
 
-	crypt_hash_digest_bytes(ctx, "<secret>", v2_cookie_secret,
-				sizeof(v2_cookie_secret));
+	crypt_hash_digest_bytes(ctx, "<secret>", &v2_cookie_secret, sizeof(v2_cookie_secret));
 
 	/* happy coincidence? */
 	pexpect(sizeof(cookie->bytes) == SHA2_256_DIGEST_SIZE);

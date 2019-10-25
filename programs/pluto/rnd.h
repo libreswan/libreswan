@@ -17,12 +17,12 @@
 #ifndef PLUTO_RND_H
 #define PLUTO_RND_H
 
-#include <stdint.h>
+#include <stdlib.h>	/* for size_t */
 
 #include "chunk.h"
 
 extern void fill_rnd_chunk(chunk_t chunk);
-extern void get_rnd_bytes(uint8_t *buffer, int length);
+extern void get_rnd_bytes(void *buffer, size_t size);
 
 extern void init_secret(void);
 
