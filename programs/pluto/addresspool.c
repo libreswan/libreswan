@@ -509,16 +509,10 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 			unsigned old_nr_leases = pool->nr_leases;
 			if (pool->nr_leases == 0) {
 				pool->nr_leases = min(1U, pool->size);
-				pool->leases = alloc_things(struct lease, pool->nr_leases, "leases");
 			} else {
-				/*
-				 * Danger: this may use realloc() and
-				 * realloc() does not initialize the
-				 * additional memory
-				 */
 				pool->nr_leases = min(pool->nr_leases * 2, pool->size);
-				resize_things(pool->leases, pool->nr_leases);
 			}
+			realloc_things(pool->leases, old_nr_leases, pool->nr_leases, "leases");
 			DBG_pool(false, pool, "growing address pool from %u to %u",
 				 old_nr_leases, pool->nr_leases);
 			/* initialize new leases (and add to free list) */

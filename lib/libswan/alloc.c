@@ -244,16 +244,19 @@ void *uninitialized_realloc(void *ptr, size_t new_size, const char *name)
 	}
 }
 
-void resize_bytes(void **ptr, size_t new_size)
+void realloc_bytes(void **ptr, size_t old_size, size_t new_size, const char *name)
 {
-	passert(*ptr != NULL);
-	if (leak_detective) {
+	if (*ptr == NULL) {
+		passert(old_size == 0);
+	} else if (leak_detective) {
 		union mhdr *p = ((union mhdr *)*ptr) - 1;
 		passert(p->i.magic == LEAK_MAGIC);
-		*ptr = uninitialized_realloc(*ptr, new_size, p->i.name);
-		/* XXX: old_size..new_size still uninitialized */
-	} else {
-		*ptr = realloc(*ptr, new_size);
-		/* XXX: old_size..new_size still uninitialized */
+		passert(p->i.size == old_size);
+	}
+	*ptr = uninitialized_realloc(*ptr, new_size, name);
+	/* XXX: old_size..new_size still uninitialized */
+	if (new_size > old_size) {
+		uint8_t *b = *ptr;
+		memset(b + old_size, '\0', new_size - old_size);
 	}
 }

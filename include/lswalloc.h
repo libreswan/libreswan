@@ -30,7 +30,7 @@ extern void pfree(void *ptr);
 extern void *alloc_bytes(size_t size, const char *name);
 extern void *clone_bytes(const void *orig, size_t size,
 			  const char *name);
-void resize_bytes(void **ptr, size_t new_size);
+void realloc_bytes(void **ptr, size_t old_size, size_t new_size, const char *name);
 
 extern bool leak_detective;
 extern void report_leaks(void);
@@ -70,10 +70,13 @@ extern void report_leaks(void);
 
 #define alloc_things(THING, COUNT, NAME) ((THING*) alloc_bytes(sizeof(THING) * (COUNT), (NAME)))
 
-#define resize_things(THINGS, COUNT)					\
+#define realloc_things(THINGS, OLD_COUNT, NEW_COUNT, NAME)		\
 	{								\
 		void *things_ = THINGS;					\
-		resize_bytes(&things_, COUNT * sizeof((THINGS)[0]));	\
+		realloc_bytes(&things_,					\
+			      OLD_COUNT * sizeof((THINGS)[0]),		\
+			      NEW_COUNT * sizeof((THINGS)[0]),		\
+			      NAME);					\
 		THINGS = things_;					\
 	}
 
