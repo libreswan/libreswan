@@ -1309,7 +1309,7 @@ static void childhandler_cb(void)
 #ifdef EVENT_SET_MEM_FUNCTIONS_IMPLEMENTED
 static void *libevent_malloc(size_t size)
 {
-	void *ptr = alloc_bytes(size, __func__);
+	void *ptr = uninitialized_malloc(size, __func__);
 	dbg("%s: new ptr-libevent@%p size %zu", __func__, ptr, size);
 	return ptr;
 }

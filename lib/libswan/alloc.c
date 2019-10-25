@@ -67,7 +67,41 @@ static pthread_mutex_t leak_detective_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static union mhdr *allocs = NULL;
 
-static void *alloc_bytes_raw(size_t size, const char *name)
+static void install_allocation(union mhdr *p, size_t size, const char *name)
+{
+	p->i.name = name;
+	p->i.size = size;
+	p->i.magic = LEAK_MAGIC;
+	p->i.newer = NULL;
+	{
+		pthread_mutex_lock(&leak_detective_mutex);
+		p->i.older = allocs;
+		if (allocs != NULL)
+			allocs->i.newer = p;
+		allocs = p;
+		pthread_mutex_unlock(&leak_detective_mutex);
+	}
+}
+
+static void remove_allocation(union mhdr *p)
+{
+	pthread_mutex_lock(&leak_detective_mutex);
+	if (p->i.older != NULL) {
+		passert(p->i.older->i.newer == p);
+		p->i.older->i.newer = p->i.newer;
+	}
+	if (p->i.newer == NULL) {
+		passert(p == allocs);
+		allocs = p->i.older;
+	} else {
+		passert(p->i.newer->i.older == p);
+		p->i.newer->i.older = p->i.older;
+	}
+	pthread_mutex_unlock(&leak_detective_mutex);
+	p->i.magic = ~LEAK_MAGIC;
+}
+
+void *uninitialized_malloc(size_t size, const char *name)
 {
 	union mhdr *p;
 
@@ -91,18 +125,7 @@ static void *alloc_bytes_raw(size_t size, const char *name)
 	}
 
 	if (leak_detective) {
-		p->i.name = name;
-		p->i.size = size;
-		p->i.magic = LEAK_MAGIC;
-		p->i.newer = NULL;
-		{
-			pthread_mutex_lock(&leak_detective_mutex);
-			p->i.older = allocs;
-			if (allocs != NULL)
-				allocs->i.newer = p;
-			allocs = p;
-			pthread_mutex_unlock(&leak_detective_mutex);
-		}
+		install_allocation(p, size, name);
 		return p + 1;
 	} else {
 		return p;
@@ -124,23 +147,10 @@ void pfree(void *ptr)
 			PASSERT_FAIL("pointer %p invalid, possible heap corruption or bad pointer (magic != LEAK_MAGIC or ~LEAK_MAGIC})", ptr);
 		}
 
-		{
-			pthread_mutex_lock(&leak_detective_mutex);
-			if (p->i.older != NULL) {
-				passert(p->i.older->i.newer == p);
-				p->i.older->i.newer = p->i.newer;
-			}
-			if (p->i.newer == NULL) {
-				passert(p == allocs);
-				allocs = p->i.older;
-			} else {
-				passert(p->i.newer->i.older == p);
-				p->i.newer->i.older = p->i.older;
-			}
-			pthread_mutex_unlock(&leak_detective_mutex);
-		}
+		remove_allocation(p);
 		/* stomp on memory!   Is another byte value better? */
 		memset(p, 0xEF, sizeof(union mhdr) + p->i.size);
+		/* put back magic */
 		p->i.magic = ~LEAK_MAGIC;
 		free(p);
 	} else {
@@ -194,15 +204,14 @@ void report_leaks(void)
 
 void *alloc_bytes(size_t size, const char *name)
 {
-	void *p = alloc_bytes_raw(size, name);
-
+	void *p = uninitialized_malloc(size, name);
 	memset(p, '\0', size);
 	return p;
 }
 
 void *clone_bytes(const void *orig, size_t size, const char *name)
 {
-	void *p = alloc_bytes_raw(size, name);
+	void *p = uninitialized_malloc(size, name);
 
 	memcpy(p, orig, size);
 	return p;
@@ -226,7 +235,7 @@ void resize_bytes(void **ptr, size_t new_size)
 	if (leak_detective) {
 		const union mhdr *p = ((const union mhdr *)old) - 1;
 		passert(p->i.magic == LEAK_MAGIC);
-		void *new = alloc_bytes_raw(new_size, p->i.name);
+		void *new = uninitialized_malloc(new_size, p->i.name);
 		/*
 		 * XXX: Use PMIN(unsigned long,size_t) and not
 		 * min(unsigned long,size_t) as the latter doesn't

@@ -97,4 +97,9 @@ extern void report_leaks(void);
 
 #define replace(p, q) { pfreeany(p); (p) = (q); }
 
+/*
+ * Memory primitives, should only be used by libevent.
+ */
+void *uninitialized_malloc(size_t size, const char *name);
+
 #endif /* _LSW_ALLOC_H_ */
