@@ -67,7 +67,41 @@ static pthread_mutex_t leak_detective_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static union mhdr *allocs = NULL;
 
-static void *alloc_bytes_raw(size_t size, const char *name)
+static void install_allocation(union mhdr *p, size_t size, const char *name)
+{
+	p->i.name = name;
+	p->i.size = size;
+	p->i.magic = LEAK_MAGIC;
+	p->i.newer = NULL;
+	{
+		pthread_mutex_lock(&leak_detective_mutex);
+		p->i.older = allocs;
+		if (allocs != NULL)
+			allocs->i.newer = p;
+		allocs = p;
+		pthread_mutex_unlock(&leak_detective_mutex);
+	}
+}
+
+static void remove_allocation(union mhdr *p)
+{
+	pthread_mutex_lock(&leak_detective_mutex);
+	if (p->i.older != NULL) {
+		passert(p->i.older->i.newer == p);
+		p->i.older->i.newer = p->i.newer;
+	}
+	if (p->i.newer == NULL) {
+		passert(p == allocs);
+		allocs = p->i.older;
+	} else {
+		passert(p->i.newer->i.older == p);
+		p->i.newer->i.older = p->i.older;
+	}
+	pthread_mutex_unlock(&leak_detective_mutex);
+	p->i.magic = ~LEAK_MAGIC;
+}
+
+static void *allocate(void *(*alloc)(size_t), size_t size, const char *name)
 {
 	union mhdr *p;
 
@@ -81,32 +115,26 @@ static void *alloc_bytes_raw(size_t size, const char *name)
 		if (sizeof(union mhdr) + size < size)
 			return NULL;
 
-		p = malloc(sizeof(union mhdr) + size);
+		p = alloc(sizeof(union mhdr) + size);
 	} else {
-		p = malloc(size);
+		p = alloc(size);
 	}
 
 	if (p == NULL) {
-		PASSERT_FAIL("unable to malloc %zu bytes for %s", size, name);
+		PASSERT_FAIL("unable to allocate %zu bytes for %s", size, name);
 	}
 
 	if (leak_detective) {
-		p->i.name = name;
-		p->i.size = size;
-		p->i.magic = LEAK_MAGIC;
-		p->i.newer = NULL;
-		{
-			pthread_mutex_lock(&leak_detective_mutex);
-			p->i.older = allocs;
-			if (allocs != NULL)
-				allocs->i.newer = p;
-			allocs = p;
-			pthread_mutex_unlock(&leak_detective_mutex);
-		}
+		install_allocation(p, size, name);
 		return p + 1;
 	} else {
 		return p;
 	}
+}
+
+void *uninitialized_malloc(size_t size, const char *name)
+{
+	return allocate(malloc, size, name);
 }
 
 void pfree(void *ptr)
@@ -124,23 +152,10 @@ void pfree(void *ptr)
 			PASSERT_FAIL("pointer %p invalid, possible heap corruption or bad pointer (magic != LEAK_MAGIC or ~LEAK_MAGIC})", ptr);
 		}
 
-		{
-			pthread_mutex_lock(&leak_detective_mutex);
-			if (p->i.older != NULL) {
-				passert(p->i.older->i.newer == p);
-				p->i.older->i.newer = p->i.newer;
-			}
-			if (p->i.newer == NULL) {
-				passert(p == allocs);
-				allocs = p->i.older;
-			} else {
-				passert(p->i.newer->i.older == p);
-				p->i.newer->i.older = p->i.older;
-			}
-			pthread_mutex_unlock(&leak_detective_mutex);
-		}
+		remove_allocation(p);
 		/* stomp on memory!   Is another byte value better? */
 		memset(p, 0xEF, sizeof(union mhdr) + p->i.size);
+		/* put back magic */
 		p->i.magic = ~LEAK_MAGIC;
 		free(p);
 	} else {
@@ -192,17 +207,19 @@ void report_leaks(void)
 		libreswan_log("leak detective found no leaks");
 }
 
+static void *zalloc(size_t size)
+{
+	return calloc(1, size);
+}
+
 void *alloc_bytes(size_t size, const char *name)
 {
-	void *p = alloc_bytes_raw(size, name);
-
-	memset(p, '\0', size);
-	return p;
+	return allocate(zalloc, size, name);
 }
 
 void *clone_bytes(const void *orig, size_t size, const char *name)
 {
-	void *p = alloc_bytes_raw(size, name);
+	void *p = uninitialized_malloc(size, name);
 
 	memcpy(p, orig, size);
 	return p;
@@ -215,29 +232,39 @@ void *clone_bytes(const void *orig, size_t size, const char *name)
  * NULL pointer.  The caller, which is presumably implementing some
  * sort of realloc() wrapper, gets to handle this.  So as to avoid any
  * confusion, give this a different name and function signature.
- *
- * Efficiency isn't this code's strong point.
  */
 
-void resize_bytes(void **ptr, size_t new_size)
+void *uninitialized_realloc(void *ptr, size_t new_size, const char *name)
 {
-	void *old = *ptr;
-	passert(old != NULL);
-	if (leak_detective) {
-		const union mhdr *p = ((const union mhdr *)old) - 1;
+	if (ptr == NULL) {
+		return uninitialized_malloc(new_size, name);
+	} else if (leak_detective) {
+		union mhdr *p = ((union mhdr *)ptr) - 1;
 		passert(p->i.magic == LEAK_MAGIC);
-		void *new = alloc_bytes_raw(new_size, p->i.name);
-		/*
-		 * XXX: Use PMIN(unsigned long,size_t) and not
-		 * min(unsigned long,size_t) as the latter doesn't
-		 * always compile - 32-bit systems (i.e.,
-		 * sizeof(unsigned long)==4) can have
-		 * sizeof(size_t)==8.
-		 */
-		memcpy(new, old, PMIN(p->i.size, new_size));
-		pfree(old);
-		*ptr = new;
+		remove_allocation(p);
+		p = realloc(p, sizeof(union mhdr) + new_size);
+		if (p == NULL) {
+		}
+		install_allocation(p, new_size, name);
+		return p+1;
 	} else {
-		*ptr = realloc(old, new_size);
+		return realloc(ptr, new_size);
+	}
+}
+
+void realloc_bytes(void **ptr, size_t old_size, size_t new_size, const char *name)
+{
+	if (*ptr == NULL) {
+		passert(old_size == 0);
+	} else if (leak_detective) {
+		union mhdr *p = ((union mhdr *)*ptr) - 1;
+		passert(p->i.magic == LEAK_MAGIC);
+		passert(p->i.size == old_size);
+	}
+	*ptr = uninitialized_realloc(*ptr, new_size, name);
+	/* XXX: old_size..new_size still uninitialized */
+	if (new_size > old_size) {
+		uint8_t *b = *ptr;
+		memset(b + old_size, '\0', new_size - old_size);
 	}
 }
