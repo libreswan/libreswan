@@ -139,18 +139,15 @@ static struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	 */
 	struct crypt_hash *ctx = crypt_hash_init("NATD", hasher);
 
-	crypt_hash_digest_bytes(ctx, "IKE SPIi",
-				&spis->initiator, sizeof(spis->initiator));
-	crypt_hash_digest_bytes(ctx, "IKE SPIr",
-				&spis->responder, sizeof(spis->responder));
+	crypt_hash_digest_thing(ctx, "IKE SPIi", spis->initiator);
+	crypt_hash_digest_thing(ctx, "IKE SPIr", spis->responder);
 
 	ip_address ip = endpoint_address(endpoint);
 	shunk_t ap = address_as_shunk(&ip);
 	crypt_hash_digest_hunk(ctx, "IP addr", ap);
 
 	uint16_t nport = endpoint_nport(endpoint);
-	crypt_hash_digest_bytes(ctx, "PORT",
-				&nport, sizeof(nport));
+	crypt_hash_digest_thing(ctx, "PORT", nport);
 	struct crypt_mac hash = crypt_hash_final_mac(&ctx);
 
 	if (DBGP(DBG_BASE)) {

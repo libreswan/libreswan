@@ -71,12 +71,11 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 	crypt_hash_digest_hunk(ctx, "Ni", Ni);
 
 	shunk_t IPi = address_as_shunk(&md->sender);
-	crypt_hash_digest_bytes(ctx, "IPi", IPi.ptr, IPi.len);
+	crypt_hash_digest_hunk(ctx, "IPi", IPi);
 
-	crypt_hash_digest_bytes(ctx, "SPIi", &md->hdr.isa_ike_initiator_spi,
-				sizeof(md->hdr.isa_ike_initiator_spi));
+	crypt_hash_digest_thing(ctx, "SPIi", md->hdr.isa_ike_initiator_spi);
 
-	crypt_hash_digest_bytes(ctx, "<secret>", &v2_cookie_secret, sizeof(v2_cookie_secret));
+	crypt_hash_digest_thing(ctx, "<secret>", v2_cookie_secret);
 
 	/* happy coincidence? */
 	pexpect(sizeof(cookie->bytes) == SHA2_256_DIGEST_SIZE);

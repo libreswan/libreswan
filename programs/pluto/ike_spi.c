@@ -42,11 +42,13 @@ bool ike_spis_eq(const ike_spis_t *lhs, const ike_spis_t *rhs)
 		ike_spi_eq(&lhs->responder, &rhs->responder));
 }
 
-static uint8_t ike_spi_secret[SHA2_256_DIGEST_SIZE];
+static struct {
+	uint8_t bytes[SHA2_256_DIGEST_SIZE];
+} ike_spi_secret;
 
 void refresh_ike_spi_secret(void)
 {
-	get_rnd_bytes(ike_spi_secret, sizeof(ike_spi_secret));
+	get_rnd_bytes(&ike_spi_secret, sizeof(ike_spi_secret));
 }
 
 /*
@@ -79,12 +81,10 @@ ike_spi_t ike_responder_spi(const ip_address *addr)
 		struct crypt_hash *ctx = crypt_hash_init("IKE SPIr",
 							 &ike_alg_hash_sha2_256);
 
-		crypt_hash_digest_bytes(ctx, "addr", addr, sizeof(*addr));
-		crypt_hash_digest_bytes(ctx, "sod", ike_spi_secret,
-					sizeof(ike_spi_secret));
+		crypt_hash_digest_thing(ctx, "addr", *addr);
+		crypt_hash_digest_thing(ctx, "sod", ike_spi_secret);
 		counter++;
-		crypt_hash_digest_bytes(ctx, "counter", &counter,
-					sizeof(counter));
+		crypt_hash_digest_thing(ctx, "counter", counter);
 
 		u_char buffer[SHA2_256_DIGEST_SIZE];
 		crypt_hash_final_bytes(&ctx, buffer, SHA2_256_DIGEST_SIZE);

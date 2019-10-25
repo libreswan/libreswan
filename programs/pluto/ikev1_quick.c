@@ -642,7 +642,7 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	passert(*msgid != 0);
 	passert(sizeof(msgid_t) == sizeof(uint32_t));
 	msgid_t raw_msgid = htonl(*msgid);
-	crypt_hash_digest_bytes(ctx, "MSGID", (void*) &raw_msgid, sizeof(raw_msgid));
+	crypt_hash_digest_thing(ctx, "MSGID", raw_msgid);
 	crypt_hash_final_bytes(&ctx, st->st_new_iv, st->st_new_iv_len);
 }
 
