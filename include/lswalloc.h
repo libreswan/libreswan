@@ -97,7 +97,4 @@ extern void report_leaks(void);
 
 #define replace(p, q) { pfreeany(p); (p) = (q); }
 
-typedef void (*exit_log_func_t)(const char *message, ...);
-extern void set_alloc_exit_log_func(exit_log_func_t func);
-
 #endif /* _LSW_ALLOC_H_ */

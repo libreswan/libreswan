@@ -337,7 +337,6 @@ extern void log_pop_from(ip_address old_from, where_t where)
 
 void pluto_init_log(void)
 {
-	set_alloc_exit_log_func(exit_log);
 	if (log_to_stderr)
 		setbuf(stderr, NULL);
 

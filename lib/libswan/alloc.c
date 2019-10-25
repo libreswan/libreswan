@@ -33,13 +33,6 @@
 
 bool leak_detective = FALSE;	/* must not change after first alloc! */
 
-static exit_log_func_t exit_log_func = NULL;	/* allow for customer to customize */
-
-void set_alloc_exit_log_func(exit_log_func_t func)
-{
-	exit_log_func = func;
-}
-
 /*
  * memory allocation
  *
@@ -94,11 +87,7 @@ static void *alloc_bytes_raw(size_t size, const char *name)
 	}
 
 	if (p == NULL) {
-		if (exit_log_func != NULL) {
-			(*exit_log_func)("unable to malloc %zu bytes for %s",
-					size, name);
-		}
-		abort();
+		PASSERT_FAIL("unable to malloc %zu bytes for %s", size, name);
 	}
 
 	if (leak_detective) {
