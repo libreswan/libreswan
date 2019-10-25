@@ -101,7 +101,7 @@ static void remove_allocation(union mhdr *p)
 	p->i.magic = ~LEAK_MAGIC;
 }
 
-void *uninitialized_malloc(size_t size, const char *name)
+static void *allocate(void *(*alloc)(size_t), size_t size, const char *name)
 {
 	union mhdr *p;
 
@@ -115,13 +115,13 @@ void *uninitialized_malloc(size_t size, const char *name)
 		if (sizeof(union mhdr) + size < size)
 			return NULL;
 
-		p = malloc(sizeof(union mhdr) + size);
+		p = alloc(sizeof(union mhdr) + size);
 	} else {
-		p = malloc(size);
+		p = alloc(size);
 	}
 
 	if (p == NULL) {
-		PASSERT_FAIL("unable to malloc %zu bytes for %s", size, name);
+		PASSERT_FAIL("unable to allocate %zu bytes for %s", size, name);
 	}
 
 	if (leak_detective) {
@@ -130,6 +130,11 @@ void *uninitialized_malloc(size_t size, const char *name)
 	} else {
 		return p;
 	}
+}
+
+void *uninitialized_malloc(size_t size, const char *name)
+{
+	return allocate(malloc, size, name);
 }
 
 void pfree(void *ptr)
@@ -202,11 +207,14 @@ void report_leaks(void)
 		libreswan_log("leak detective found no leaks");
 }
 
+static void *zalloc(size_t size)
+{
+	return calloc(1, size);
+}
+
 void *alloc_bytes(size_t size, const char *name)
 {
-	void *p = uninitialized_malloc(size, name);
-	memset(p, '\0', size);
-	return p;
+	return allocate(zalloc, size, name);
 }
 
 void *clone_bytes(const void *orig, size_t size, const char *name)
