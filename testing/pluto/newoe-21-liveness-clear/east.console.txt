@@ -165,6 +165,7 @@ east #
 |    Message ID: 4 (0x4)
 |    Message ID: 5 (0x5)
 |    Message ID: 6 (0x6)
+|    Message ID: 6 (0x6)
 |    Message ID: 0 (0x0)
 |    Message ID: 0 (0x0)
 |    Message ID: 1 (0x1)
