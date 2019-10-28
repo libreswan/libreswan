@@ -1623,10 +1623,11 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 
 		if (DBGP(DBG_BASE)) {
 			if (packet_len > 0) {
-				DBG_dump("rejected packet:\n", buffer,
-					  packet_len);
+				DBG_log("rejected packet:");
+				DBG_dump(NULL, buffer, packet_len);
 			}
-			DBG_dump("control:\n", emh.msg_control,
+			DBG_log("control:");
+			DBG_dump(NULL, emh.msg_control,
 				 emh.msg_controllen);
 		}
 
@@ -1638,7 +1639,8 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 		 */
 		passert(emh.msg_name == &from.sa);
 		if (DBGP(DBG_BASE)) {
-			DBG_dump("name:\n", emh.msg_name, emh.msg_namelen);
+			DBG_log("name:");
+			DBG_dump(NULL, emh.msg_name, emh.msg_namelen);
 		}
 
 		fromstr[0] = '\0'; /* usual case :-( */

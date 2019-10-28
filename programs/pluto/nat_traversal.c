@@ -98,8 +98,7 @@ void init_nat_traversal(deltatime_t keep_alive_period)
 
 			if (n == '0') {
 				nat_traversal_enabled = FALSE;
-				libreswan_log(
-					"  KLIPS does not have NAT-Traversal built in (see /proc/net/ipsec/natt)\n");
+				libreswan_log("  KLIPS does not have NAT-Traversal built in (see /proc/net/ipsec/natt)");
 			}
 			fclose(f);
 		}
