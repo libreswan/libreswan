@@ -44,7 +44,9 @@ road #
 road #
  sleep 5
 road #
- # confirm we updated unbound - should not be empty once DNS CP is added
+ # confirm we updated unbound - should not be empty once DNS CP is
+road #
+ # added
 road #
  unbound-control list_forwards
 test.tld. IN forward 8.8.8.8 1.2.3.4
@@ -82,19 +84,23 @@ road #
  ausearch -ts recent -i -m SECCOMP
 <no matches>
 road #
- # and also test seccomp actually works
+ # Test seccomp actually works - that it records pluto crashing ....
 road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- sleep 3
+ /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --seccomp-crashtest &
+ # Since whack hangs - it does not know that pluto died - run it in the
+road #
+ # background.  Give it a few seconds to do its job.
+road #
+ ipsec whack --seccomp-crashtest & sleep 2
 [x] PID
-road #
- # should show 1 entry now
 003 pluto is running with seccomp=enabled! pluto is expected to die!
 003 Performing seccomp security test using getsid() syscall
+road #
+ # should show 1 entry of pluto crashing now
 road #
  ausearch -ts recent -i -m SECCOMP | sed -e "s/ ip=[^ ]* / ip=XXX /" -e "s/ pid=[^ ]* / pid=XXX /" -e "s/msg=audit(.*) /msg=audit(XXX) /"
 ----
