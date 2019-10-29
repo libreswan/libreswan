@@ -42,7 +42,13 @@ void crypt_hash_digest_byte(struct crypt_hash *hash,
 void crypt_hash_digest_bytes(struct crypt_hash *hash,
 			     const char *bytes_name, const void *bytes,
 			     size_t sizeof_bytes);
-#define crypt_hash_digest_hunk(HASH, NAME, HUNK) crypt_hash_digest_bytes(HASH, NAME, (HUNK).ptr, (HUNK).len)
+#define crypt_hash_digest_hunk(HASH, NAME, HUNK)			\
+	{								\
+		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
+		crypt_hash_digest_bytes(HASH, NAME,			\
+					hunk_.ptr, hunk_.len);		\
+	}
+
 #define crypt_hash_digest_thing(HASH, NAME, THING) crypt_hash_digest_bytes(HASH, NAME, &THING, sizeof(THING))
 
 
