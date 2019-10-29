@@ -1858,14 +1858,13 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			break;
 
 		case ft_raw:            /* bytes to be left in network-order */
-		{
-			char m[50];     /* arbitrary limit on name width in log */
-
-			snprintf(m, sizeof(m), "   %s:", fp->name);
-			DBG_dump(m, inp, i);
+			LSWLOG_DEBUG(buf) {
+				jam(buf, "   %s: ", fp->name);
+				jam_dump_bytes(buf, inp, i);
+			}
 			inp += i;
-		}
-		break;
+			break;
+
 		default:
 			bad_case(fp->field_type);
 		}
