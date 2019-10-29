@@ -33,6 +33,8 @@
 #include "pluto_crypt.h"
 #include "ikev2.h"
 #include "ikev2_ppk.h"
+#include "ike_alg_hash.h"
+#include "crypt_mac.h"
 
 /*
  * used by initiator, to properly construct struct
@@ -104,11 +106,9 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 	return TRUE;
 }
 
-#include "ike_alg_hash.h"
-
 stf_status ikev2_calc_no_ppk_auth(struct state *st,
-			unsigned char *id_hash,
-			chunk_t *no_ppk_auth /* output */)
+				  const struct crypt_mac *id_hash,
+				  chunk_t *no_ppk_auth /* output */)
 {
 	struct connection *c = st->st_connection;
 	enum keyword_authby authby = c->spd.this.authby;
@@ -128,9 +128,10 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 			h = &asn1_rsa_pss_sha2_256;
 		} else if (c->sighash_policy == LEMPTY) {
 			/* RSA with SHA1 without Digsig: no oid blob appended */
-			if (!ikev2_calculate_rsa_hash(st,
-					st->st_original_role, id_hash, NULL,
-					no_ppk_auth, IKEv2_AUTH_HASH_SHA1))
+			if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
+						      id_hash->ptr, NULL,
+						      no_ppk_auth,
+						      IKEv2_AUTH_HASH_SHA1))
 			{
 				return STF_FAIL;
 			}
@@ -143,8 +144,8 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 		chunk_t hashval;
 
 		if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
-				id_hash, NULL, &hashval,
-				h->hash_algo)) {
+					      id_hash->ptr, NULL, &hashval,
+					      h->hash_algo)) {
 			return STF_FAIL;
 		}
 

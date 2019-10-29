@@ -59,7 +59,7 @@
 static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 						    const struct state *st,
 						    enum keyword_authby authby,
-						    const unsigned char *idhash,
+						    const struct crypt_mac *idhash,
 						    const chunk_t firstpacket)
 {
 	const struct connection *c = st->st_connection;
@@ -179,14 +179,14 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	 * RFC 4306 2.15:
 	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
 	 */
-	return ikev2_psk_auth(st->st_oakley.ta_prf, *pss, firstpacket, *nonce,
-			      shunk2(idhash, hash_len));
+	passert(idhash->len == hash_len);
+	return ikev2_psk_auth(st->st_oakley.ta_prf, *pss, firstpacket, *nonce, idhash);
 }
 
 bool ikev2_emit_psk_auth(enum keyword_authby authby,
-			   const struct state *st,
-			   const unsigned char *idhash,
-			   pb_stream *a_pbs)
+			 const struct state *st,
+			 const struct crypt_mac *idhash,
+			 pb_stream *a_pbs)
 {
 	struct crypt_mac signed_octets = ikev2_calculate_psk_sighash(FALSE, st, authby, idhash,
 								     st->st_firstpacket_me);
@@ -203,7 +203,7 @@ bool ikev2_emit_psk_auth(enum keyword_authby authby,
 
 bool ikev2_create_psk_auth(enum keyword_authby authby,
 			   const struct state *st,
-			   const unsigned char *idhash,
+			   const struct crypt_mac *idhash,
 			   chunk_t *additional_auth /* output */)
 {
 	*additional_auth = empty_chunk;
@@ -222,7 +222,7 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 
 bool ikev2_verify_psk_auth(enum keyword_authby authby,
 				 const struct state *st,
-				 const unsigned char *idhash,
+				 const struct crypt_mac *idhash,
 				 pb_stream *sig_pbs)
 {
 	size_t hash_len = st->st_oakley.ta_prf->prf_output_size;

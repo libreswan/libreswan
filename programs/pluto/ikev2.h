@@ -16,6 +16,7 @@
 struct pending;
 struct pluto_crypto_req;
 struct spd_route;
+struct crypt_mac;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
@@ -173,13 +174,13 @@ extern bool ikev2_calculate_ecdsa_hash(struct state *st,
 					enum notify_payload_hash_algorithms hash_algo);
 
 extern bool ikev2_emit_psk_auth(enum keyword_authby authby,
-				  const struct state *st,
-				  const unsigned char *idhash,
-				  pb_stream *a_pbs);
+				const struct state *st,
+				const struct crypt_mac *idhash,
+				pb_stream *a_pbs);
 
 extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 				  const struct state *st,
-				  const unsigned char *idhash,
+				  const struct crypt_mac *idhash,
 				  chunk_t *additional_auth /* output */);
 
 extern stf_status ikev2_verify_rsa_hash(struct state *st,
@@ -196,7 +197,7 @@ extern stf_status ikev2_verify_ecdsa_hash(struct state *st,
 
 extern bool ikev2_verify_psk_auth(enum keyword_authby authby,
 					const struct state *st,
-					const unsigned char *idhash,
+					const struct crypt_mac *idhash,
 					pb_stream *sig_pbs);
 
 extern void ikev2_derive_child_keys(struct child_sa *child);

@@ -52,7 +52,8 @@ struct prf_ikev2_ops {
 				       size_t required_bytes);
 	/* AUTH = prf( prf(Shared Secret, "Key Pad for IKEv2"), <{Initiator,Responder}SignedOctets>) */
 	struct crypt_mac (*psk_auth)(const struct prf_desc *prf_desc, chunk_t pss,
-				     chunk_t first_packet, chunk_t nonce, shunk_t id_hash);
+				     chunk_t first_packet, chunk_t nonce,
+				     const struct crypt_mac *id_hash);
 };
 
 extern const struct prf_ikev2_ops ike_alg_prf_ikev2_mac_ops;
