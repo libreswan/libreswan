@@ -18,6 +18,8 @@ road #
  ipsec auto --add road-west-x509-ipv4
 002 added connection description "road-west-x509-ipv4"
 road #
+ ipsec whack --impair suppress-retransmits
+road #
  echo "initdone"
 initdone
 road #
