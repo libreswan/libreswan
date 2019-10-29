@@ -56,8 +56,8 @@ size_t jam_dump_bytes(jambuf_t *buf, const void *bytes, size_t size)
 	}
 
 	size_t n = 0;
-	const char *byte = bytes;
-	const char *end = byte + size;
+	const uint8_t *byte = bytes;
+	const uint8_t *end = byte + size;
 	const char *sep = "";
 	while (byte < end) {
 		for (unsigned b = 0; b < 4 && byte < end; b++) {
