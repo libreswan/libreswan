@@ -362,9 +362,10 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
         if os.path.isfile(chapfile):
             lsw_cp_file(chapfile, "/etc/ppp/chap-secrets", nsbasepath=nsbasepath)
 
-        dbfiles = glob.glob("/etc/ipsec.d/*db")
-        for dbfile in dbfiles:
-            os.chown(dbfile, 0, 0)
+        if not args.namespace:
+            dbfiles = glob.glob("/etc/ipsec.d/*db")
+            for dbfile in dbfiles:
+                os.chown(dbfile, 0, 0)
 
     # restore /etc/hosts to original - some tests make changes
     lsw_cp_file("/testing/baseconfigs/all/etc/hosts", "/etc/hosts", nsbasepath=nsbasepath)
