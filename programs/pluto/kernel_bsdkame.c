@@ -414,7 +414,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       const ip_subnet *that_client,
 			       ipsec_spi_t cur_spi,
 			       ipsec_spi_t new_spi UNUSED,
-			       int sa_proto,
+			       const struct ip_protocol *sa_proto,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype UNUSED,
 			       const struct pfkey_proto_info *proto_info UNUSED,
@@ -483,10 +483,6 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	zero(&pbuf);	/* OK: no pointer fields */
 
-	/* this is sanity check that it got set properly */
-	passert(this_client->addr.u.v4.sin_len == sizeof(struct sockaddr_in));
-	passert(that_client->addr.u.v4.sin_len == sizeof(struct sockaddr_in));
-
 	passert(policy != -1);
 
 	policy_struct->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
@@ -496,43 +492,41 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	policylen = sizeof(*policy_struct);
 
-	switch (sa_proto) {
+	switch (sa_proto->protoid) {
 	case IPPROTO_ESP:
 	case IPPROTO_AH:
 	case IPPROTO_IPCOMP:
 		break;
 
 	default:
-		DBG_log("bsdkame_raw_eroute not installing eroute to proto=%d",
-			sa_proto);
+		DBG_log("bsdkame_raw_eroute not installing eroute to proto=%s",
+			sa_proto->name);
 		return TRUE;
 	}
 
 	if (policy == IPSEC_POLICY_IPSEC) {
-		const ip_address me   = *this_host;
-		const ip_address him  = *that_host;
-		unsigned char *addrmem;
+		ip_sockaddr local_sa, remote_sa;
+		size_t local_sa_len = endpoint_to_sockaddr(this_host, &local_sa);
+		size_t remote_sa_len = endpoint_to_sockaddr(that_host, &remote_sa);
 
 		ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
 
-		ir->sadb_x_ipsecrequest_len =
-			sizeof(struct sadb_x_ipsecrequest) + me.u.v4.sin_len +
-			him.u.v4.sin_len;
-		ir->sadb_x_ipsecrequest_proto = sa_proto;
+		ir->sadb_x_ipsecrequest_len = (sizeof(struct sadb_x_ipsecrequest) +
+					       local_sa_len + remote_sa_len);
+		ir->sadb_x_ipsecrequest_proto = sa_proto->protoid;
 
-		if (sa_proto == ET_IPIP)
+		if (sa_proto->protoid == ET_IPIP)
 			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;
 		else
 			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
 		ir->sadb_x_ipsecrequest_level = IPSEC_LEVEL_REQUIRE;
 		ir->sadb_x_ipsecrequest_reqid = 0; /* not used for now */
 
-		addrmem = (unsigned char *)&ir[1];
-		memcpy(addrmem, &me.u.v4,  me.u.v4.sin_len);
-		addrmem += me.u.v4.sin_len;
-		memcpy(addrmem, &him.u.v4, him.u.v4.sin_len);
-
-		addrmem += him.u.v4.sin_len;
+		uint8_t *addrmem = (uint8_t*)&ir[1];
+		memcpy(addrmem, &local_sa.sa,  local_sa_len);
+		addrmem += local_sa_len;
+		memcpy(addrmem, &remote_sa.sa, remote_sa_len);
+		addrmem += remote_sa_len;
 
 		policylen += ir->sadb_x_ipsecrequest_len;
 
@@ -703,23 +697,14 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		policylen = sizeof(*policy_struct);
 
 		if (policy == IPSEC_POLICY_IPSEC) {
-			const ip_address *me   = &sr->this.host_addr;
-			const ip_address *him  = &sr->that.host_addr;
-			unsigned char *addrmem;
-
-			/* should be already filled in */
-#if 1
-			dbg("blatting me/him sin_len");
-#else
-			me->u.v4.sin_len  = sizeof(struct sockaddr_in);
-			him->u.v4.sin_len  = sizeof(struct sockaddr_in);
-#endif
+			ip_sockaddr local_sa, remote_sa;
+			size_t local_sa_len = endpoint_to_sockaddr(&sr->this.host_addr, &local_sa);
+			size_t remote_sa_len = endpoint_to_sockaddr(&sr->that.host_addr, &remote_sa);
 
 			ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
 
-			ir->sadb_x_ipsecrequest_len =
-				sizeof(struct sadb_x_ipsecrequest) +
-				me->u.v4.sin_len + him->u.v4.sin_len;
+			ir->sadb_x_ipsecrequest_len = (sizeof(struct sadb_x_ipsecrequest) +
+						       local_sa_len + remote_sa_len);
 			if (c->policy & POLICY_ENCRYPT) {
 				/* maybe should look at IPCOMP too */
 				ir->sadb_x_ipsecrequest_proto = IPPROTO_ESP;
@@ -736,12 +721,11 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 			ir->sadb_x_ipsecrequest_level = IPSEC_LEVEL_REQUIRE;
 			ir->sadb_x_ipsecrequest_reqid = 0; /* not used for now */
 
-			addrmem = (unsigned char *)&ir[1];
-			memcpy(addrmem, &me->u.v4,  me->u.v4.sin_len);
-			addrmem += me->u.v4.sin_len;
-			memcpy(addrmem, &him->u.v4, him->u.v4.sin_len);
-
-			addrmem += him->u.v4.sin_len;
+			uint8_t *addrmem = (uint8_t *)&ir[1];
+			memcpy(addrmem, &local_sa.sa,  local_sa_len);
+			addrmem += local_sa_len;
+			memcpy(addrmem, &remote_sa.sa, remote_sa_len);
+			addrmem += remote_sa_len;
 
 			policylen += ir->sadb_x_ipsecrequest_len;
 
@@ -856,26 +840,24 @@ static bool bsdkame_sag_eroute(const struct state *st,
 			       enum pluto_sadb_operations op UNUSED,
 			       const char *opname UNUSED)
 {
-	int proto;
+	const struct ip_protocol *proto;
 
 	DBG_log("sag eroute called");
 
 	proto = 0;
 	if (st->st_ah.present)
-		proto = IPPROTO_AH;
+		proto = SA_AH;
 	else if (st->st_esp.present)
-		proto = IPPROTO_ESP;
+		proto = SA_ESP;
 	else if (st->st_ipcomp.present)
-		proto = IPPROTO_COMP;
+		proto = SA_COMP;
 
-#if 1
-	dbg("sr->*.port = ...");
-#else
-	if (!sr->this.has_port_wildcard)
-		setportof(htons(sr->this.port), &sr->this.client.addr);
-	if (!sr->that.has_port_wildcard)
-		setportof(htons(sr->that.port), &sr->that.client.addr);
-#endif
+	if (!sr->this.has_port_wildcard) {
+		passert(subnet_hport(&sr->this.client) == sr->this.port);
+	}
+	if (!sr->that.has_port_wildcard) {
+		passert(subnet_hport(&sr->that.client) == sr->that.port);
+	}
 
 	return bsdkame_raw_eroute(&sr->this.host_addr,
 				  &sr->this.client,
@@ -901,8 +883,6 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	const struct sockaddr *daddr = (const struct sockaddr *)sa->dst;
 	char keymat[256];
 	int ret, mode, satype;
-
-	passert(sa->src->u.v4.sin_len == sizeof(struct sockaddr_in));
 
 	if (sa->encapsulation == ENCAPSULATION_MODE_TUNNEL)
 		mode = IPSEC_MODE_TUNNEL;

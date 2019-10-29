@@ -39,6 +39,7 @@
 #include "socketwrapper.h"
 #include "constants.h"
 #include "lswlog.h"
+#include "ip_info.h"
 
 #include "defs.h"
 #include "rnd.h"
@@ -130,7 +131,7 @@ struct raw_iface *find_raw_ifaces4(void)
 		ip_address anya = address_any(&ipv4_info);
 		ip_endpoint any = endpoint(&anya, 0);
 		ip_sockaddr any_sa;
-		size_t any_len = endpoint_to_sockaddr(&any, any_sa);
+		size_t any_sa_len = endpoint_to_sockaddr(&any, &any_sa);
 		if (bind(master_sock, &any_sa.sa, any_sa_len) < 0)
 			EXIT_LOG_ERRNO(errno, "bind() failed in find_raw_ifaces4()");
 	}
