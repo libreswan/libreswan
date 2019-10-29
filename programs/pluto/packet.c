@@ -1746,13 +1746,13 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 	bool immediate = FALSE;
 	const uint8_t *inp = struct_ptr;
 	field_desc *fp;
-	uint32_t last_enum = 0;
+	uintmax_t last_enum = 0;
 
 	DBG_log("%s%s:", label, sd->name);
 
 	for (fp = sd->fields; fp->field_type != ft_end; fp++) {
 		int i = fp->size;
-		uint32_t n = 0;
+		uintmax_t n = 0;
 
 		switch (fp->field_type) {
 		case ft_zig:		/* zero (ignore violations) */
@@ -1793,7 +1793,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 					break;
 			/* FALL THROUGH */
 			case ft_nat: /* natural number (may be 0) */
-				DBG_log("   %s: %" PRIu32 " (0x%" PRIx32 ")",
+				DBG_log("   %s: %ju (0x%jx)",
 					fp->name,
 					n,
 					n);
@@ -1814,7 +1814,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 				if (name == NULL) {
 					name = enum_show(fp->desc, n);
 				}
-				DBG_log("   %s: %s%s (0x%" PRIx32 ")",
+				DBG_log("   %s: %s%s (0x%jx)",
 					fp->name,
 					immediate ? "AF+" : "",
 					name, n);
@@ -1827,7 +1827,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			case ft_pnpc:
 			case ft_lss:
 				last_enum = n;
-				DBG_log("   %s: %s (0x%" PRIx32 ")",
+				DBG_log("   %s: %s (0x%jx)",
 					fp->name,
 					enum_show(fp->desc, n),
 					n);
@@ -1839,14 +1839,14 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 				const char *name = enum_enum_showb(fp->desc,
 								   last_enum,
 								   n, &buf);
-				DBG_log("   %s: %s (0x%" PRIx32 ")",
+				DBG_log("   %s: %s (0x%jx)",
 					fp->name,
 					name, n);
 			}
 				break;
 
 			case ft_set: /* bits representing set */
-				DBG_log("   %s: %s (0x%" PRIx32 ")",
+				DBG_log("   %s: %s (0x%jx)",
 					fp->name,
 					bitnamesof(fp->desc, n),
 					n);
