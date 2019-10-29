@@ -61,7 +61,7 @@ enum field_type {
 
 typedef const struct {
 	enum field_type field_type;
-	int size;		/* size, in bytes, of field */
+	size_t size;		/* size, in bytes, of field */
 	const char *name;
 	/*
 	 * cheap union:
