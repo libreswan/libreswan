@@ -740,21 +740,20 @@ static struct secret *lsw_get_secret(const struct connection *c,
 				     enum PrivateKeyKind kind,
 				     bool asym)
 {
-	const struct id *const this_id = &c->spd.this.id;
-	const struct id *that_id = &c->spd.that.id; /* can change */
-
-	if (DBGP(DBG_BASE)) {
-		id_buf this_buf, that_buf;
-		DBG_log("started looking for secret for %s->%s of kind %s",
-			str_id(this_id, &this_buf),
-			str_id(that_id, &that_buf),
-			enum_name(&pkk_names, kind));
-	}
-
 	/* is there a certificate assigned to this connection? */
 	if ((kind == PKK_ECDSA || kind == PKK_RSA) &&
 	    c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 	    c->spd.this.cert.u.nss_cert != NULL) {
+
+		if (DBGP(DBG_BASE)) {
+			id_buf this_buf, that_buf;
+			DBG_log("%s() using certificate for %s->%s of kind %s",
+				__func__,
+				str_id(&c->spd.this.id, &this_buf),
+				str_id(&c->spd.that.id, &that_buf),
+				enum_name(&pkk_names, kind));
+		}
+
 		/* from here on: must free my_public_key */
 		struct pubkey *my_public_key;
 		switch (kind) {
@@ -778,15 +777,15 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		if (best == NULL) {
 			const char *nickname = cert_nickname(&c->spd.this.cert);
 			DBG(DBG_CONTROL,
-			    DBG_log("private key for cert %s not found in local cache; loading from NSS DB",
-				    nickname));
+			    DBG_log("%s() private key for cert %s not found in local cache; loading from NSS DB",
+				    __func__, nickname));
 
 			err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert);
 			if (err != NULL) {
 				/* ??? should this be logged? */
 				DBG(DBG_CONTROL,
-				    DBG_log("private key for cert %s not found in NSS DB (%s)",
-					    nickname, err));
+				    DBG_log("%s() private key for cert %s not found in NSS DB (%s)",
+					    __func__, nickname, err));
 			} else {
 				best = lsw_find_secret_by_public_key(pluto_secrets,
 								     my_public_key, kind);
@@ -803,6 +802,8 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	/* under certain conditions, override that_id to %ANYADDR */
 
 	struct id rw_id;
+	const struct id *const this_id = &c->spd.this.id;
+	const struct id *that_id = &c->spd.that.id; /* can change */
 
 	if (
 	    /* case 1: */
@@ -819,20 +820,24 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		  id_is_ipaddr(&c->spd.that.id) &&
 		  /* Check if we are a road warrior instantiation, not a vnet: instantiation */
 		  isanyaddr(&c->spd.that.host_addr) ) ) )
-	) {
-		/* roadwarrior: replace him with %ANYADDR */
-		DBG(DBG_CONTROL,
-		    DBG_log("instantiating him to %%ANYADDR"));
-
+		) {
+		/* roadwarrior: replace that with %ANYADDR */
 		rw_id.kind = addrtypeof(&c->spd.that.host_addr) == AF_INET ?
 			     ID_IPV4_ADDR : ID_IPV6_ADDR;
 		rw_id.ip_addr = address_any(address_type(&c->spd.that.host_addr));
+		if (DBGP(DBG_BASE)) {
+			id_buf old_buf, new_buf;
+			DBG_log("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
+				__func__, str_id(that_id, &old_buf), str_id(&rw_id, &new_buf));
+		}
 		that_id = &rw_id;
+
 	}
 
 	if (DBGP(DBG_BASE)) {
 		id_buf this_buf, that_buf;
-		DBG_log("actually looking for secret for %s->%s of kind %s",
+		DBG_log("%s() using IDs for %s->%s of kind %s",
+			__func__,
 			str_id(this_id, &this_buf),
 			str_id(that_id, &that_buf),
 			enum_name(&pkk_names, kind));
