@@ -52,6 +52,7 @@
 #include "secrets.h"
 #include "crypt_hash.h"
 #include "ietf_constants.h"
+#include "ikev2_sighash.h"
 
 static const u_char der_digestinfo[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
@@ -59,75 +60,9 @@ static const u_char der_digestinfo[] = {
 };
 static const int der_digestinfo_len = sizeof(der_digestinfo);
 
-static bool RSA_ikev2_calculate_sighash(const struct state *st,
-				    enum original_role role,
-				    const unsigned char *idhash,
-				    const chunk_t firstpacket,
-				    unsigned char *sig_octets, /* output */
-				    size_t *sig_size, /* input & output */
-				    enum notify_payload_hash_algorithms hash_algo)
-{
-	const chunk_t *nonce;
-	const char *nonce_name;
-
-	if (role == ORIGINAL_INITIATOR) {
-		/* on initiator, we need to hash responders nonce */
-		nonce = &st->st_nr;
-		nonce_name = "inputs to hash2 (responder nonce)";
-	} else {
-		nonce = &st->st_ni;
-		nonce_name = "inputs to hash2 (initiator nonce)";
-	}
-
-	DBG(DBG_CRYPT,
-	    DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
-	    DBG_dump_hunk(nonce_name, *nonce);
-	    DBG_dump("idhash", idhash, st->st_oakley.ta_prf->prf_output_size));
-
-	const struct hash_desc *hd;
-
-	switch (hash_algo) {
-#ifdef USE_SHA1
-	case IKEv2_AUTH_HASH_SHA1:
-		hd = &ike_alg_hash_sha1;
-		break;
-#endif
-#ifdef USE_SHA2
-	case IKEv2_AUTH_HASH_SHA2_256:
-		hd = &ike_alg_hash_sha2_256;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_384:
-		hd = &ike_alg_hash_sha2_384;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_512:
-		hd = &ike_alg_hash_sha2_512;
-		break;
-#endif
-	default:
-		libreswan_log("unknown or unsupported hash algorithm %d",
-			hash_algo); /* no enum_name for this? */
-		return FALSE;
-	}
-
-	passert(hd->hash_digest_size <= *sig_size);
-	struct crypt_hash *ctx = crypt_hash_init("sighash", hd);
-
-	crypt_hash_digest_hunk(ctx, "first packet", firstpacket);
-	crypt_hash_digest_hunk(ctx, "nonce", *nonce);
-
-	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
-	crypt_hash_digest_bytes(ctx, "IDHASH", idhash,
-				st->st_oakley.ta_prf->prf_output_size);
-
-	crypt_hash_final_bytes(&ctx, sig_octets, hd->hash_digest_size);
-	*sig_size = hd->hash_digest_size;
-
-	return TRUE;
-}
-
 bool ikev2_calculate_rsa_hash(struct state *st,
 			      enum original_role role,
-			      const unsigned char *idhash,
+			      const struct crypt_mac *idhash,
 			      pb_stream *a_pbs,
 			      chunk_t *no_ppk_auth, /* optional output */
 			      enum notify_payload_hash_algorithms hash_algo)
@@ -154,40 +89,46 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	unsigned char signed_octets[MAX_DIGEST_LEN + RSA_SHA1_SIGNED_OCTETS];
 	size_t signed_len;
 
+	/* XXX: table lookup? */
+	const struct hash_desc *hasher;
+	switch (hash_algo) {
+	case IKEv2_AUTH_HASH_SHA1:
+		hasher = &ike_alg_hash_sha1;
+		break;
+	case IKEv2_AUTH_HASH_SHA2_256:
+		hasher = &ike_alg_hash_sha2_256;
+		break;
+	case IKEv2_AUTH_HASH_SHA2_384:
+		hasher = &ike_alg_hash_sha2_384;
+		break;
+	case IKEv2_AUTH_HASH_SHA2_512:
+		hasher = &ike_alg_hash_sha2_512;
+		break;
+	default:
+		libreswan_log("unknown or unsupported hash algorithm");
+		return false;
+	}
+	struct crypt_mac hash = v2_calculate_sighash(st, role, idhash,
+						     st->st_firstpacket_me,
+						     hasher);
+
 	switch (hash_algo) {
 	case IKEv2_AUTH_HASH_SHA1:
 		/* old style RSA with SHA1 */
+		passert(der_digestinfo_len + hash.len <= sizeof(signed_octets));
 		memcpy(signed_octets, der_digestinfo, der_digestinfo_len);
-
-		signed_len = sizeof(signed_octets) - der_digestinfo_len;
-		if (!RSA_ikev2_calculate_sighash(st, role, idhash,
-					st->st_firstpacket_me,
-					signed_octets + der_digestinfo_len,
-					&signed_len,
-					hash_algo))
-		{
-			return FALSE;
-		}
-		signed_len += der_digestinfo_len;
+		memcpy(signed_octets + der_digestinfo_len, hash.ptr, hash.len);
+		signed_len = der_digestinfo_len + hash.len;
 		break;
-
 	case IKEv2_AUTH_HASH_SHA2_256:
 	case IKEv2_AUTH_HASH_SHA2_384:
 	case IKEv2_AUTH_HASH_SHA2_512:
-		signed_len = sizeof(signed_octets);
-		if (!RSA_ikev2_calculate_sighash(st, role, idhash,
-					st->st_firstpacket_me,
-					signed_octets,
-					&signed_len,
-					hash_algo))
-		{
-			return FALSE;
-		}
+		passert(hash.len <= sizeof(signed_octets));
+		memcpy(signed_octets, hash.ptr, hash.len);
+		signed_len = hash.len;
 		break;
-
 	default:
-		libreswan_log("unknown or unsupported hash algorithm");
-		return FALSE;
+		bad_case(hash_algo);
 	}
 
 	passert(RSA_MIN_OCTETS <= sz && 4 + signed_len < sz &&
@@ -250,21 +191,37 @@ static err_t try_RSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
 
 stf_status ikev2_verify_rsa_hash(struct state *st,
 				 enum original_role role,
-				 const unsigned char *idhash,
+				 const struct crypt_mac *idhash,
 				 pb_stream *sig_pbs,
 				 enum notify_payload_hash_algorithms hash_algo)
 {
 	statetime_t start = statetime_start(st);
 	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 
-	unsigned char calc_hash[MAX_DIGEST_LEN];
-	size_t hash_len = sizeof(calc_hash);
-	if (!RSA_ikev2_calculate_sighash(st, invertrole, idhash, st->st_firstpacket_him,
-				calc_hash, &hash_len, hash_algo)) {
-		return STF_FATAL;
+	/* XXX: table lookup? */
+	const struct hash_desc *hasher;
+	switch (hash_algo) {
+	case IKEv2_AUTH_HASH_SHA1:
+		hasher = &ike_alg_hash_sha1;
+		break;
+	case IKEv2_AUTH_HASH_SHA2_256:
+		hasher = &ike_alg_hash_sha2_256;
+		break;
+	case IKEv2_AUTH_HASH_SHA2_384:
+		hasher = &ike_alg_hash_sha2_384;
+		break;
+	case IKEv2_AUTH_HASH_SHA2_512:
+		hasher = &ike_alg_hash_sha2_512;
+		break;
+	default:
+		libreswan_log("unknown or unsupported hash algorithm");
+		return STF_INTERNAL_ERROR;
 	}
 
-	stf_status retstat = check_signature_gen(st, calc_hash, hash_len,
+	struct crypt_mac hash = v2_calculate_sighash(st, invertrole, idhash,
+						     st->st_firstpacket_him,
+						     hasher);
+	stf_status retstat = check_signature_gen(st, hash.ptr, hash.len,
 						 sig_pbs, hash_algo,
 						 &pubkey_type_rsa, try_RSA_signature_v2);
 	statetime_stop(&start, "%s()", __func__);

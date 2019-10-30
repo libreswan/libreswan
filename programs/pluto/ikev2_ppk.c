@@ -129,8 +129,7 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 		} else if (c->sighash_policy == LEMPTY) {
 			/* RSA with SHA1 without Digsig: no oid blob appended */
 			if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
-						      id_hash->ptr, NULL,
-						      no_ppk_auth,
+						      id_hash, NULL, no_ppk_auth,
 						      IKEv2_AUTH_HASH_SHA1))
 			{
 				return STF_FAIL;
@@ -144,7 +143,7 @@ stf_status ikev2_calc_no_ppk_auth(struct state *st,
 		chunk_t hashval;
 
 		if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
-					      id_hash->ptr, NULL, &hashval,
+					      id_hash, NULL, &hashval,
 					      h->hash_algo)) {
 			return STF_FAIL;
 		}

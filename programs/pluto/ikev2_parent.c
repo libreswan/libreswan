@@ -315,7 +315,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		stf_status authstat = ikev2_verify_rsa_hash(
 				st,
 				role,
-				idhash_in->ptr,
+				idhash_in,
 				pbs,
 				IKEv2_AUTH_HASH_SHA1);
 
@@ -413,11 +413,11 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 		switch (that_authby) {
 		case AUTH_RSASIG:
-			authstat = ikev2_verify_rsa_hash(st, role, idhash_in->ptr, pbs, hap->algo);
+			authstat = ikev2_verify_rsa_hash(st, role, idhash_in, pbs, hap->algo);
 			break;
 
 		case AUTH_ECDSA:
-			authstat = ikev2_verify_ecdsa_hash(st, role, idhash_in->ptr, pbs, hap->algo);
+			authstat = ikev2_verify_ecdsa_hash(st, role, idhash_in, pbs, hap->algo);
 			break;
 
 		default:
@@ -1927,7 +1927,7 @@ static stf_status ikev2_send_auth(struct state *st,
 
 	switch (a.isaa_type) {
 	case IKEv2_AUTH_RSA:
-		if (!ikev2_calculate_rsa_hash(pst, role, idhash_out->ptr, &a_pbs,
+		if (!ikev2_calculate_rsa_hash(pst, role, idhash_out, &a_pbs,
 					      NULL /* we don't keep no_ppk_auth */,
 					      IKEv2_AUTH_HASH_SHA1))
 		{
@@ -1967,7 +1967,7 @@ static stf_status ikev2_send_auth(struct state *st,
 		switch (authby) {
 		case AUTH_ECDSA:
 		{
-			if (!ikev2_calculate_ecdsa_hash(pst, role, idhash_out->ptr, &a_pbs,
+			if (!ikev2_calculate_ecdsa_hash(pst, role, idhash_out, &a_pbs,
 							NULL /* don't grab value */,
 							hash_algo))
 			{
@@ -1978,7 +1978,7 @@ static stf_status ikev2_send_auth(struct state *st,
 		}
 		case AUTH_RSASIG:
 		{
-			if (!ikev2_calculate_rsa_hash(pst, role, idhash_out->ptr, &a_pbs,
+			if (!ikev2_calculate_rsa_hash(pst, role, idhash_out, &a_pbs,
 						      NULL /* we don't keep no_ppk_auth */,
 						      hash_algo))
 			{

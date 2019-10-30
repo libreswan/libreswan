@@ -54,83 +54,14 @@
 #include "ietf_constants.h"
 #include "asn1.h"
 #include "lswnss.h"
-
-/*
- * XXX: isn't this function identical to that used by RSA?  And why
- * not pass in the hash_desc?
- */
-
-static bool ECDSA_calculate_sighash(const struct state *st,
-				    enum original_role role,
-				    const unsigned char *idhash,
-				    const chunk_t firstpacket,
-				    unsigned char *sig_octets,
-				    enum notify_payload_hash_algorithms hash_algo)
-{
-	const chunk_t *nonce;
-	const char *nonce_name;
-
-	if (role == ORIGINAL_INITIATOR) {
-		/* on initiator, we need to hash responders nonce */
-		nonce = &st->st_nr;
-		nonce_name = "inputs to hash2 (responder nonce)";
-	} else {
-		nonce = &st->st_ni;
-		nonce_name = "inputs to hash2 (initiator nonce)";
-	}
-
-	DBG(DBG_CRYPT,
-	    DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
-	    DBG_dump_hunk(nonce_name, *nonce);
-	    DBG_dump("idhash", idhash, st->st_oakley.ta_prf->prf_output_size));
-
-	const struct hash_desc *hd;
-
-	switch (hash_algo) {
-#ifdef USE_SHA1
-	/*
-	 * While ecdsa-sha1 is defined in RFC 4724, should we support it for IKEv2?
-	 * It is not listed in RFC 8247, meaning it is only a MAY to be implemented
-	 */
-	case IKEv2_AUTH_HASH_SHA1:
-		hd = &ike_alg_hash_sha1;
-		break;
-#endif
-#ifdef USE_SHA2
-	case IKEv2_AUTH_HASH_SHA2_256:
-		hd = &ike_alg_hash_sha2_256;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_384:
-		hd = &ike_alg_hash_sha2_384;
-		break;
-	case IKEv2_AUTH_HASH_SHA2_512:
-		hd = &ike_alg_hash_sha2_512;
-		break;
-#endif
-	default:
-		return false;
-	}
-
-	struct crypt_hash *ctx = crypt_hash_init("sighash", hd);
-
-	crypt_hash_digest_hunk(ctx, "first packet", firstpacket);
-	crypt_hash_digest_hunk(ctx, "nonce", *nonce);
-
-	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
-	crypt_hash_digest_bytes(ctx, "IDHASH", idhash,
-				st->st_oakley.ta_prf->prf_output_size);
-
-	crypt_hash_final_bytes(&ctx, sig_octets, hd->hash_digest_size);
-
-	return true;
-}
+#include "ikev2_sighash.h"
 
 bool ikev2_calculate_ecdsa_hash(struct state *st,
-			      enum original_role role,
-			      const unsigned char *idhash,
-			      pb_stream *a_pbs,
-			      chunk_t *no_ppk_auth /* optional output */,
-			      enum notify_payload_hash_algorithms hash_algo)
+				enum original_role role,
+				const struct crypt_mac *idhash,
+				pb_stream *a_pbs,
+				chunk_t *no_ppk_auth /* optional output */,
+				enum notify_payload_hash_algorithms hash_algo)
 {
 	const struct pubkey_type *type = &pubkey_type_ecdsa;
 	const struct connection *c = st->st_connection;
@@ -146,17 +77,17 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 
 	DBGF(DBG_CRYPT, "ikev2_calculate_ecdsa_hash get_ECDSA_private_key");
 	/* XXX: use struct hash_desc and a lookup? */
-	size_t hash_digest_size;
+	const struct hash_desc *hasher;
 	switch (hash_algo) {
 #ifdef USE_SHA2
 	case IKEv2_AUTH_HASH_SHA2_256:
-		hash_digest_size = SHA2_256_DIGEST_SIZE;
+		hasher = &ike_alg_hash_sha2_256;
 		break;
 	case IKEv2_AUTH_HASH_SHA2_384:
-		hash_digest_size = SHA2_384_DIGEST_SIZE;
+		hasher = &ike_alg_hash_sha2_384;
 		break;
 	case IKEv2_AUTH_HASH_SHA2_512:
-		hash_digest_size = SHA2_512_DIGEST_SIZE;
+		hasher = &ike_alg_hash_sha2_512;
 		break;
 #endif
 	default:
@@ -165,12 +96,12 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	}
 
 	/* hash the packet et.al. */
-	passert(hash_digest_size <= MAX_DIGEST_LEN);
-	uint8_t hash[MAX_DIGEST_LEN];
-	ECDSA_calculate_sighash(st, role, idhash,
-				st->st_firstpacket_me,
-				hash, hash_algo);
-	DBG(DBG_CRYPT, DBG_dump("ECDSA hash", hash, hash_digest_size));
+	struct crypt_mac hash = v2_calculate_sighash(st, role, idhash,
+						     st->st_firstpacket_me,
+						     hasher);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("ECDSA hash", hash);
+	}
 
 	/*
 	 * Sign the hash.
@@ -182,7 +113,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	 */
 	uint8_t sig_val[BYTES_FOR_BITS(1056)];
 	statetime_t sign_time = statetime_start(st);
-	size_t shr = sign_hash_ECDSA(k, hash, hash_digest_size,
+	size_t shr = sign_hash_ECDSA(k, hash.ptr, hash.len,
 				     sig_val, sizeof(sig_val));
 	statetime_stop(&sign_time, "%s() calling sign_hash_ECDSA()", __func__);
 
@@ -349,45 +280,35 @@ static err_t try_ECDSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
 }
 
 stf_status ikev2_verify_ecdsa_hash(struct state *st,
-				 enum original_role role,
-				 const unsigned char *idhash,
-				 pb_stream *sig_pbs,
-				 enum notify_payload_hash_algorithms hash_algo)
+				   enum original_role role,
+				   const struct crypt_mac *idhash,
+				   pb_stream *sig_pbs,
+				   enum notify_payload_hash_algorithms hash_algo)
 {
-	size_t hash_len;
-	stf_status retstat;
-	enum original_role invertrole;
-
+	const struct hash_desc *hasher;
 	switch (hash_algo) {
 	/* We don't support ecdsa-sha1 */
 #ifdef USE_SHA2
 	case IKEv2_AUTH_HASH_SHA2_256:
-		hash_len = SHA2_256_DIGEST_SIZE;
+		hasher = &ike_alg_hash_sha2_256;
 		break;
 	case IKEv2_AUTH_HASH_SHA2_384:
-		hash_len = SHA2_384_DIGEST_SIZE;
+		hasher = &ike_alg_hash_sha2_384;
 		break;
 	case IKEv2_AUTH_HASH_SHA2_512:
-		hash_len = SHA2_512_DIGEST_SIZE;
+		hasher = &ike_alg_hash_sha2_512;
 		break;
 #endif
 	default:
 		return STF_FATAL;
 	}
 
-	passert(hash_len <= MAX_DIGEST_LEN);
-	unsigned char calc_hash[MAX_DIGEST_LEN];
-
-	invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
-
-	if (!ECDSA_calculate_sighash(st, invertrole, idhash, st->st_firstpacket_him,
-				calc_hash, hash_algo)) {
-		return STF_FATAL;
-	}
-
-	retstat = check_signature_gen(st, calc_hash, hash_len,
-				      sig_pbs, hash_algo,
-				      &pubkey_type_ecdsa,
-				      try_ECDSA_signature_v2);
-	return retstat;
+	enum original_role invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
+	struct crypt_mac calc_hash = v2_calculate_sighash(st, invertrole, idhash,
+							  st->st_firstpacket_him,
+							  hasher);
+	return check_signature_gen(st, calc_hash.ptr, calc_hash.len,
+				   sig_pbs, hash_algo,
+				   &pubkey_type_ecdsa,
+				   try_ECDSA_signature_v2);
 }

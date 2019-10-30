@@ -56,6 +56,7 @@ OBJS += ikev2_message.o
 OBJS += ikev2_cookie.o
 OBJS += ikev2_ts.o
 OBJS += ikev2_msgid.o
+OBJS += ikev2_sighash.o
 
 OBJS += state_db.o
 OBJS += show.o
