@@ -157,7 +157,7 @@ size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 		len_r = *blob->ptr++;
 		if (len_r%2 != 0) {
 			len_r = len_r-1;
-			/* advance to the next octect as the current octet is 0 */
+			/* advance to the next octet as the current octet is 0 */
 			blob->ptr++;
 		}
 		sig_val->len = len_r;
@@ -178,7 +178,7 @@ size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 			len_s = *blob->ptr++;
 			if (len_s%2 !=0) {
 				len_s = len_s-1;
-				/* advance to the next octect as the current octet is 0 */
+				/* advance to the next octet as the current octet is 0 */
 				blob->ptr++;
 			}
 			DBG(DBG_PARSING, DBG_log("  len_s is %d",len_s));

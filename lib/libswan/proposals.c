@@ -439,7 +439,7 @@ void fmt_proposals(struct lswlog *log, const struct proposals *proposals)
 
 /*
  * When PFS=no ignore any DH algorithms, and when PFS=yes reject
- * mixing implict and explicit DH.
+ * mixing implicit and explicit DH.
  */
 static bool proposals_pfs_vs_dh_check(struct proposal_parser *parser,
 				      struct proposals *proposals)

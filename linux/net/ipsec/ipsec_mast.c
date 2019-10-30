@@ -1029,7 +1029,7 @@ int ipsec_mast_deletenum(int vifnum)
 
 	KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 	unregister_netdev(dev_ipsec);
-	KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
+	KLIPS_PRINT(debug_tunnel, "Unregistered %s\n", dev_ipsec->name);
 #ifndef ipsec_alloc_netdev
 	kfree(dev_ipsec->priv);
 	dev_ipsec->priv = NULL;

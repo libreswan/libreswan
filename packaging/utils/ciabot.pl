@@ -37,7 +37,7 @@
 #	done
 #
 # This is useful when you use a remote repository without working copy, where
-# you only push to - the update hook will be trigerred each time you push into
+# you only push to - the update hook will be triggered each time you push into
 # that repository, and the pushed commits will be reported through CIA.
 
 use strict;

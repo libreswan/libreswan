@@ -1101,7 +1101,7 @@ static bool load_conn(
 					 * Requires a re-allocation.
 					 * Copying is shallow: the lists
 					 * are copied and freed but
-					 * the underlaying strings are unchanged.
+					 * the underlying strings are unchanged.
 					 */
 					char **ra = alloc_bytes((alsosize +
 						newalsosize + 1) *

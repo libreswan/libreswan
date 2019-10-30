@@ -168,7 +168,7 @@ bool endpoint_is_specified(const ip_endpoint *e)
 /*
  * Format an endpoint.
  *
- * Either ADDRESS:PORT (IPv4) or [ADDDRESS]:PORT, but when PORT is
+ * Either ADDRESS:PORT (IPv4) or [ADDRESS]:PORT, but when PORT is
  * invalid, just the ADDRESS is formatted.
  *
  * From wikipedia: For TCP, port number 0 is reserved and

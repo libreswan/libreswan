@@ -34,7 +34,7 @@ start()
 		# marker
 		[ "$conn" = "--up" ] && { up=1; continue; }
 
-		checkconnactive $conn && die 0 "$conn alread active"
+		checkconnactive $conn && die 0 "$conn already active"
 
 		ipsec auto --left "$ip" --add "$conn"
 		[ -z "$up" ] || ipsec auto --asynchronous --up "$conn" || true

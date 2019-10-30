@@ -1532,7 +1532,7 @@ DEBUG_NO_STATIC int ipsec_tunnel_clear(void)
 		if ((ret = ipsec_tunnel_detach(ipsecdev))) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 				    "klips_debug:ipsec_tunnel_clear: "
-				    "error %d detatching device %s from device %s.\n",
+				    "error %d detaching device %s from device %s.\n",
 				    ret, ipsecdev->name, prvdev->name);
 			return ret;
 		}
@@ -2234,7 +2234,7 @@ int ipsec_tunnel_deletenum(int vifnum)
 
 	KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 	unregister_netdev(dev_ipsec);
-	KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
+	KLIPS_PRINT(debug_tunnel, "Unregistered %s\n", dev_ipsec->name);
 #ifndef ipsec_alloc_netdev
 	kfree(dev_ipsec->priv);
 	dev_ipsec->priv = NULL;
@@ -2277,7 +2277,7 @@ int ipsec_tunnel_cleanup_devices(void)
 		KLIPS_PRINT(debug_tunnel, "Unregistering %s\n",
 			    dev_ipsec->name);
 		unregister_netdev(dev_ipsec);
-		KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
+		KLIPS_PRINT(debug_tunnel, "Unregistered %s\n", dev_ipsec->name);
 #ifndef ipsec_alloc_netdev
 		kfree(dev_ipsec->priv);
 		dev_ipsec->priv = NULL;

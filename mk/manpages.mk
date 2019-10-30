@@ -68,7 +68,7 @@ $(builddir)/%.tmp: $(srcdir)/%.xml | $(builddir)
 	mv $@.tmp $@
 
 # Default rule for creating the man pages from the intermediate
-# (transormed) input.
+# (transformed) input.
 #
 # Note: XMLTO seems to fail even when it succeeds so ignore the exit
 # status and instead explicitlay check for the expected output files.

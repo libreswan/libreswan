@@ -29,7 +29,7 @@ Before creating the test domains, the following make variables need to
 be defined (these make variables are only used when creating the
 domains):
 
-    KVM_POOL: directory containg the test domain disks
+    KVM_POOL: directory containing the test domain disks
 
     KVM_SOURCEDIR: directory to mount on /source within the domains
 

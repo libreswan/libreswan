@@ -28,7 +28,7 @@
 
 // An AES (Rijndael) implementation for the Pentium. This version only
 // implements the standard AES block length (128 bits, 16 bytes). This code
-// does not preserve the eax, ecx or edx registers or the artihmetic status
+// does not preserve the eax, ecx or edx registers or the arithmetic status
 // flags. However, the ebx, esi, edi, and ebp registers are preserved across
 // calls.
 

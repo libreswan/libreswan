@@ -16,7 +16,7 @@
 ifndef OBJS
 $(error define OBJS)
 endif
-# cflags for this variant of the compile comand
+# cflags for this variant of the compile command
 ifndef CFLAGS
 $(error define CFLAGS)
 endif

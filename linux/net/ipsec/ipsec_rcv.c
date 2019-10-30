@@ -2133,7 +2133,7 @@ int ipsec_rcv(struct sk_buff *skb
 	if (unlikely(!irs)) {
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
-			    "failled to allocate a rcv state object\n");
+			    "failed to allocate a rcv state object\n");
 		goto rcvleave;
 	}
 
@@ -2330,7 +2330,7 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 	if (unlikely(!irs)) {
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:klips26_rcv_encap: "
-			    "failled to allocate a rcv state object\n");
+			    "failed to allocate a rcv state object\n");
 		goto rcvleave;
 	}
 

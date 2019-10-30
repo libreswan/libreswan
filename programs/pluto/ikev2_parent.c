@@ -5794,7 +5794,7 @@ stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *st,
 
 /*
  * if this connection has a newer Child SA than this state
- * this negotitation is not relevant any more.
+ * this negotiation is not relevant any more.
  * would this cover if there are multiple CREATE_CHILD_SA pending on
  * this IKE negotiation ???
  */
@@ -5806,7 +5806,7 @@ bool need_this_intiator(struct state *st)
 		return FALSE; /* ignore STATE_V2_CREATE_I ??? */
 
 	if (c->newest_ipsec_sa > st->st_serialno) {
-		libreswan_log("suppressing retransmit because superseded by #%lu try=%lu. Drop this negotitation",
+		libreswan_log("suppressing retransmit because superseded by #%lu try=%lu. Drop this negotiation",
 				c->newest_ipsec_sa, st->st_try);
 		return TRUE;
 	}

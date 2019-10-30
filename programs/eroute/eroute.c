@@ -634,7 +634,7 @@ int main(int argc, char **argv)
 
 	if (debug) {
 		fprintf(stdout,
-			"%s: DEBUG: PFKEYv2 socket successfully openned=%d.\n",
+			"%s: DEBUG: PFKEYv2 socket successfully opened=%d.\n",
 			progname, pfkey_sock);
 	}
 
@@ -978,7 +978,7 @@ sa_build:
 		case ENOENT:
 			if (action_type == EMT_INEROUTE ||
 			    action_type == EMT_INREPLACEROUTE) {
-				fprintf(stderr, "non-existant IPIP SA.\n");
+				fprintf(stderr, "non-existent IPIP SA.\n");
 			} else {
 				fprintf(stderr, "eroute doesn't exist.  Can't delete.\n");
 			}

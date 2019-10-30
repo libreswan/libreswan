@@ -38,7 +38,7 @@ bool leak_detective = FALSE;	/* must not change after first alloc! */
  *
  * --leak_detective puts a wrapper around each allocation and maintains
  * a list of live ones.  If a dead one is freed, an assertion MIGHT fail.
- * If the live list is currupted, that will often be detected.
+ * If the live list is corrupted, that will often be detected.
  * In the end, report_leaks() is called, and the names of remaining
  * live allocations are printed.  At the moment, it is hoped, not that
  * the list is empty, but that there will be no surprises.

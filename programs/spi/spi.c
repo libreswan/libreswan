@@ -1253,7 +1253,7 @@ int main(int argc, char *argv[])
 		if (address_family != NULL &&
 		    address_family != said_type(&said)) {
 			fprintf(stderr,
-				"%s: Defined address family and address family of SA missmatch.\n",
+				"%s: Defined address family and address family of SA mismatch.\n",
 				progname);
 			exit(1);
 		}
@@ -1761,7 +1761,7 @@ int main(int argc, char *argv[])
 			if (pfkey_msg_parse(pfkey_msg, NULL, extensions,
 					    EXT_BITS_OUT)) {
 				if (debug) {
-					printf("%s: unparseable PF_KEY message.\n",
+					printf("%s: unparsable PF_KEY message.\n",
 						progname);
 				}
 				continue;
