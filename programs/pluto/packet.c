@@ -1734,12 +1734,47 @@ static err_t enum_enum_checker(
 	return NULL;
 }
 
-/* print a host struct
- *
- * This code assumes that the network and host structure
- * members have the same alignment and size!  This requires
- * that all padding be explicit.
+/*
+ * print a natural number using the specified FMT, with the value in
+ * network-byte-order appended.
  */
+
+static void DBG_print_nat(const field_desc *fp, uintmax_t nat)
+{
+	LSWLOG_DEBUG(buf) {
+		jam(buf, "   %s: %ju", fp->name, nat);
+		jam(buf, " (");
+		/*
+		 * Note that a single byte value such as "(23)" is
+		 * ambigious.  Since it is prefixed by the equivalent
+		 * decimal it should be clear.
+		 *
+		 * XXX: the same conversion code appears in
+		 * out_struct() and probably elsewhere?
+		 */
+		passert(fp->size > 0);
+		passert(fp->size <= sizeof(nat));
+		uint8_t bytes[sizeof(nat)];
+		uint8_t *cur = bytes + fp->size;
+		uintmax_t n = nat;
+		do {
+			cur--;
+			*cur = (uint8_t)n;
+			n >>= BITS_PER_BYTE;
+		} while (cur > bytes);
+		jam_dump_bytes(buf, bytes, fp->size);
+		jam(buf, ")");
+	}
+}
+
+/*
+ * print a host-byte-ordered struct
+ *
+ * This code assumes that the network and host structure members have
+ * the same alignment and size!  This requires that all padding be
+ * explicit.
+ */
+
 static void DBG_print_struct(const char *label, const void *struct_ptr,
 		      struct_desc *sd, bool len_meaningful)
 {
@@ -1770,7 +1805,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 		case ft_set:            /* bits representing set */
-			/* grab i bytes */
+			/* grab bytes in host-byte-order */
 			switch (i) {
 			case 8 / BITS_PER_BYTE:
 				n = *(const uint8_t *)inp;
@@ -1793,10 +1828,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 					break;
 			/* FALL THROUGH */
 			case ft_nat: /* natural number (may be 0) */
-				DBG_log("   %s: %ju (0x%jx)",
-					fp->name,
-					n,
-					n);
+				DBG_print_nat(fp, n);
 				break;
 
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
