@@ -2605,7 +2605,17 @@ static bool space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 {
 	if (space_for(len, outs, "%zu raw bytes of %s", len, name)) {
-		DBG(DBG_EMITTING, DBG_dump(name, bytes, len));
+		if (DBGP(DBG_BASE)) {
+			if (len > 16) { /* arbitrary */
+				DBG_log("%s:", name);
+				DBG_dump(NULL, bytes, len);
+			} else {
+				LSWLOG_DEBUG(buf) {
+					jam(buf, "%s: ", name);
+					jam_dump_bytes(buf, bytes, len);
+				}
+			}
+		}
 		memcpy(outs->cur, bytes, len);
 		outs->cur += len;
 		return true;

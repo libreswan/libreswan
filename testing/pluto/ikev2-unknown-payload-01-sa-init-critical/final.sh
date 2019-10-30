@@ -1,4 +1,4 @@
-grep 'Notify data  ff$' /tmp/pluto.log
+grep 'Notify data: ff$' /tmp/pluto.log
 ../../pluto/bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status

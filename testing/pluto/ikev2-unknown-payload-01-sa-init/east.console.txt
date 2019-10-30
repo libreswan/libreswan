@@ -13,8 +13,8 @@ east #
  echo "initdone"
 initdone
 east #
- grep 'Notify data  ff$' /tmp/pluto.log
-| Notify data  ff
+ grep 'Notify data: ff$' /tmp/pluto.log
+| Notify data: ff
 east #
  ../../pluto/bin/ipsec-look.sh
 east NOW
