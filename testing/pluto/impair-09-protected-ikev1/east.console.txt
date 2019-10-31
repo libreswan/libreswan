@@ -28,19 +28,19 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI1_outR1' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI2' message HASH(3) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 16 (0x10)
@@ -62,7 +62,7 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 28 (0x1c)
@@ -93,7 +93,7 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 28 (0x1c)
@@ -112,19 +112,19 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 "westnet-eastnet" #5: received 'quick_inI1_outR1' message HASH(1) data does not match computed value
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 "westnet-eastnet" #5: received 'quick_inI1_outR1' message HASH(1) data does not match computed value
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 28 (0x1c)
@@ -143,13 +143,13 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI1_outR1' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI2' message HASH(3) data ok
 -- start message (D)
 |    next payload type: ISAKMP_NEXT_D (0xc)
@@ -181,13 +181,13 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI1_outR1' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI2' message HASH(3) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
@@ -225,19 +225,19 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI1_outR1' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI2' message HASH(3) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 16 (0x10)
@@ -250,7 +250,7 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 28 (0x1c)
@@ -269,19 +269,19 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI1_outR1' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI2' message HASH(3) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 16 (0x10)
@@ -303,19 +303,19 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI1_outR1' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI2' message HASH(3) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 16 (0x10)
@@ -337,19 +337,19 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI1_outR1' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI2' message HASH(3) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 16 (0x10)
@@ -371,19 +371,19 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI1_outR1' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI2' message HASH(3) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 16 (0x10)
@@ -405,19 +405,19 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI1_outR1' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI2' message HASH(3) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 16 (0x10)
@@ -439,19 +439,19 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI1_outR1' message HASH(1) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inI2' message HASH(3) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 16 (0x10)

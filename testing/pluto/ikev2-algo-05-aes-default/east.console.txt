@@ -15,70 +15,70 @@ east #
 east #
  grep -A 1 'af+type: AF+IKEv2_KEY_LENGTH' /tmp/pluto.log
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    length/value: 256 (01 00)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    length/value: 128 (00 80)
 east #
 east #
  ../bin/check-for-core.sh

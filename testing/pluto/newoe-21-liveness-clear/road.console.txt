@@ -282,10 +282,12 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
  grep -E "Message ID: [0-9] " /tmp/pluto.log
-|    Message ID: 0 (0x0)
-|    Message ID: 0 (0x0)
-|    Message ID: 1 (0x1)
-|    Message ID: 1 (0x1)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 0 (00 00 00 00)
 road #
  # grep on east
 road #
