@@ -445,57 +445,52 @@ static void whack_raw(struct lswlog *buf, enum rc_type rc)
 	sendmsg(wfd.fd, &msg, MSG_NOSIGNAL);
 }
 
-static void lswlog_cur_prefix(struct lswlog *buf,
-			      const struct state *cur_state,
-			      const struct connection *cur_connection,
-			      const ip_address *cur_from)
-{
-	if (!in_main_thread()) {
-		return;
-	}
-
-	const struct connection *c = cur_state != NULL ? cur_state->st_connection :
-		cur_connection;
-
-	if (c != NULL) {
-		jam_connection(buf, c);
-		if (cur_state != NULL) {
-			/* state number */
-			lswlogf(buf, " #%lu", cur_state->st_serialno);
-			/* state name */
-			if (DBGP(DBG_ADD_PREFIX)) {
-				lswlogf(buf, " ");
-				lswlogs(buf, cur_state->st_state->short_name);
-			}
-		}
-		lswlogs(buf, ": ");
-	} else if (cur_from != NULL && endpoint_type(cur_from) != NULL) {
-		/* peer's IP address */
-		lswlogs(buf, "packet from ");
-		jam_sensitive_endpoint(buf, cur_from);
-		lswlogs(buf, ": ");
-	}
-}
-
-void lswlog_log_prefix(struct lswlog *buf)
-{
-	lswlog_cur_prefix(buf, cur_state, cur_connection, &cur_from);
-}
-
 /*
  * This needs to mimic both lswlog_log_prefix() and
  * lswlog_dbg_prefix().
  */
 
-void log_prefix(struct lswlog *buf, bool debug,
-		struct state *st, struct connection *c)
+void jam_log_prefix(struct lswlog *buf,
+		    const struct state *st,
+		    const struct connection *c,
+		    const ip_address *from)
 {
-	if (debug) {
-		lswlogs(buf, DEBUG_PREFIX);
+	if (!in_main_thread()) {
+		return;
 	}
-	if (!debug || DBGP(DBG_ADD_PREFIX)) {
-		lswlog_cur_prefix(buf, st, c, &cur_from);
+
+	if (st != NULL) {
+		/*
+		 * XXX: When delete state() triggers a delete
+		 * connection, this can be NULL.
+		 */
+		if (st->st_connection != NULL) {
+			jam_connection(buf, st->st_connection);
+		}
+		/* state number */
+		lswlogf(buf, " #%lu", st->st_serialno);
+		/* state name */
+		if (DBGP(DBG_ADD_PREFIX)) {
+			lswlogf(buf, " ");
+			lswlogs(buf, st->st_state->short_name);
+		}
+		jam(buf, ": ");
+	} else if (c != NULL) {
+		jam_connection(buf, c);
+		jam(buf, ": ");
+	} else if (from != NULL) {
+		/* peer's IP address */
+		jam(buf, "packet from ");
+		jam_sensitive_endpoint(buf, from);
+		jam(buf, ": ");
 	}
+}
+
+void lswlog_log_prefix(struct lswlog *buf)
+{
+	/* convert FROM into a pointer so logic is easier */
+	const ip_address *from = (endpoint_type(&cur_from) != NULL ? &cur_from : NULL);
+	jam_log_prefix(buf, cur_state, cur_connection, from);
 }
 
 static void log_raw(struct lswlog *buf, int severity)
@@ -636,7 +631,7 @@ void plog_raw(enum rc_type unused_rc UNUSED,
 	      const char *message, ...)
 {
 	LSWBUF(buf) {
-		lswlog_cur_prefix(buf, st, c, from);
+		jam_log_prefix(buf, st, c, from);
 		va_list ap;
 		va_start(ap, message);
 		jam_va_list(buf, message, ap);
@@ -652,7 +647,7 @@ void loglog_raw(enum rc_type rc,
 		const char *message, ...)
 {
 	LSWBUF(buf) {
-		lswlog_cur_prefix(buf, st, c, from);
+		jam_log_prefix(buf, st, c, from);
 		va_list ap;
 		va_start(ap, message);
 		jam_va_list(buf, message, ap);
@@ -673,7 +668,7 @@ void DBG_raw(enum rc_type unused_rc UNUSED,
 	LSWBUF(buf) {
 		jam(buf, DEBUG_PREFIX);
 		if (DBGP(DBG_ADD_PREFIX)) {
-			lswlog_cur_prefix(buf, st, c, from);
+			jam_log_prefix(buf, st, c, from);
 		}
 		va_list ap;
 		va_start(ap, message);
@@ -698,30 +693,35 @@ static unsigned log_limit(void)
 	}
 }
 
+static void rate_log_raw(const char *prefix,
+			 const struct msg_digest *md,
+			 const char *message,
+			 va_list ap)
+{
+	LSWBUF(buf) {
+		jam_string(buf, prefix);
+		jam_log_prefix(buf, NULL/*st*/, NULL/*c*/, &md->sender);
+		jam_va_list(buf, message, ap);
+		lswlog_to_log_stream(buf);
+	}
+}
+
 void rate_log(const struct msg_digest *md,
 	      const char *message, ...)
 {
 	unsigned limit = log_limit();
-	if (nr_rate_limited_logs == limit) {
+	va_list ap;
+	va_start(ap, message);
+	if (nr_rate_limited_logs < limit) {
+		rate_log_raw("", md, message, ap);
+	} else if (nr_rate_limited_logs == limit) {
+		rate_log_raw("", md, message, ap);
 		plog_global("rate limited log reached limit of %u entries", limit);
-	} else if (nr_rate_limited_logs > limit) {
-		LSWDBGP(DBG_BASE, buf) {
-			va_list ap;
-			va_start(ap, message);
-			lswlogvf(buf, message, ap);
-			va_end(ap);
-		}
-		return;
+	} else if (DBGP(DBG_BASE)) {
+		rate_log_raw(DEBUG_PREFIX, md, message, ap);
 	}
+	va_end(ap);
 	nr_rate_limited_logs++;
-	LSWBUF(buf) {
-		lswlog_cur_prefix(buf, NULL/*st*/, NULL/*c*/, &md->sender);
-		va_list ap;
-		va_start(ap, message);
-		jam_va_list(buf, message, ap);
-		va_end(ap);
-		lswlog_to_log_stream(buf);
-	}
 }
 
 static void reset_log_rate_limit(void)

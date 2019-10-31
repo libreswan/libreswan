@@ -163,12 +163,14 @@ void rate_log(const struct msg_digest *md,
  * Log 'cur' directly (without setting it first).
  */
 
-void log_prefix(struct lswlog *buf, bool debug,
-		struct state *st, struct connection *c);
+void jam_log_prefix(struct lswlog *buf,
+		    const struct state *st,
+		    const struct connection *c,
+		    const ip_address *from);
 
 #define LSWLOG_CONNECTION(CONNECTION, BUF)				\
 	LSWLOG_(true, BUF,						\
-		log_prefix(BUF, false, NULL, CONNECTION),		\
+		jam_log_prefix(BUF, NULL, CONNECTION, NULL),	\
 		lswlog_to_default_streams(BUF, RC_LOG))
 
 extern void pluto_init_log(void);
