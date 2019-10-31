@@ -45,17 +45,17 @@ road #
 | sending IKE fragment id '1', number '3'
 | sending IKE fragment id '1', number '4'
 | sending IKE fragment id '1', number '5' (last)
-|    fragment id: 1 (0x1)
-|    fragment number: 1 (0x1)
+|    fragment id: 1 (00 01)
+|    fragment number: 1 (01)
 | received IKE fragment id '1', number '1'
-|    fragment id: 1 (0x1)
-|    fragment number: 2 (0x2)
+|    fragment id: 1 (00 01)
+|    fragment number: 2 (02)
 | received IKE fragment id '1', number '2'
-|    fragment id: 1 (0x1)
-|    fragment number: 3 (0x3)
+|    fragment id: 1 (00 01)
+|    fragment number: 3 (03)
 | received IKE fragment id '1', number '3'
-|    fragment id: 1 (0x1)
-|    fragment number: 4 (0x4)
+|    fragment id: 1 (00 01)
+|    fragment number: 4 (04)
 | received IKE fragment id '1', number '4'(last)
 |  updated IKE fragment state to respond using fragments without waiting for re-transmits
 road #

@@ -390,7 +390,7 @@ west #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
@@ -441,7 +441,7 @@ west #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
 "westnet-eastnet" #13: IMPAIR: omitting HASH payload for send delete
 "westnet-eastnet" #12: IMPAIR: omitting HASH payload for send delete
@@ -455,7 +455,7 @@ west #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
 "westnet-eastnet" #15: IMPAIR: sending HASH payload with no data for send delete
 "westnet-eastnet" #14: IMPAIR: sending HASH payload with no data for send delete
@@ -469,7 +469,7 @@ west #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
 "westnet-eastnet" #17: IMPAIR: setting HASH payload bytes to 00
 "westnet-eastnet" #16: IMPAIR: setting HASH payload bytes to 00
@@ -483,7 +483,7 @@ west #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
@@ -519,7 +519,7 @@ west #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
@@ -537,7 +537,7 @@ west #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
@@ -555,7 +555,7 @@ west #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
@@ -573,7 +573,7 @@ west #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
@@ -591,7 +591,7 @@ west #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (0x24)
+|    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
