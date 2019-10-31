@@ -139,12 +139,17 @@ typedef void (log_raw_fn)(enum rc_type,
 			  const ip_endpoint *from,
 			  const char *message, ...) PRINTF_LIKE(5);
 
+#define PLOG_RAW(STATE, CONNECTION, FROM, BUF)				\
+	LSWLOG_(true, BUF,						\
+		jam_log_prefix(BUF, STATE, CONNECTION, FROM),		\
+		lswlog_to_log_stream(BUF))
+
 log_raw_fn plog_raw;
 
 #define plog_global(MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
 #define plog_from(FROM, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
 #define plog_md(MD, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
-#define plog_c(C, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_connection(C, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
 #define plog_st(ST, MESSAGE, ...) plog_raw(RC_COMMENT, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
 
 log_raw_fn loglog_raw;
@@ -167,11 +172,6 @@ void jam_log_prefix(struct lswlog *buf,
 		    const struct state *st,
 		    const struct connection *c,
 		    const ip_address *from);
-
-#define LSWLOG_CONNECTION(CONNECTION, BUF)				\
-	LSWLOG_(true, BUF,						\
-		jam_log_prefix(BUF, NULL, CONNECTION, NULL),	\
-		lswlog_to_default_streams(BUF, RC_LOG))
 
 extern void pluto_init_log(void);
 void init_rate_log(void);

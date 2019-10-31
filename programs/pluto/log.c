@@ -630,13 +630,11 @@ void plog_raw(enum rc_type unused_rc UNUSED,
 	      const ip_endpoint *from,
 	      const char *message, ...)
 {
-	LSWBUF(buf) {
-		jam_log_prefix(buf, st, c, from);
+	PLOG_RAW(st, c, from, buf) {
 		va_list ap;
 		va_start(ap, message);
 		jam_va_list(buf, message, ap);
 		va_end(ap);
-		lswlog_to_log_stream(buf);
 	}
 }
 

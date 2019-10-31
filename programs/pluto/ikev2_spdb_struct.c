@@ -1931,7 +1931,7 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 	}
 	c->v2_ike_proposals = v2_proposals;
 
-	LSWLOG_CONNECTION(c, buf) {
+	PLOG_RAW(NULL/*STATE*/, c, NULL/*FROM*/, buf) {
 		lswlogf(buf, "constructed local IKE proposals for %s (%s): ",
 			c->name, why);
 		print_proposals(buf, c->v2_ike_proposals);
@@ -2051,7 +2051,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 	}
 
 	*child_proposals = v2_proposals;
-	LSWLOG_CONNECTION(c, buf) {
+	PLOG_RAW(NULL/*STATE*/, c, NULL/*FROM*/, buf) {
 		lswlogf(buf, "constructed local ESP/AH proposals for %s (%s): ",
 			c->name, why);
 		print_proposals(buf, *child_proposals);
