@@ -50,7 +50,9 @@ size_t jam_HEX_bytes(jambuf_t *buf, const void *ptr, size_t size)
 
 size_t jam_dump_bytes(jambuf_t *buf, const void *bytes, size_t size)
 {
-	if (bytes == NULL) {
+	if (size == 0) {
+		return 0;
+	} else if (bytes == NULL) {
 		/* will inject "(null)" or error */
 		return jam_string(buf, NULL);
 	}
