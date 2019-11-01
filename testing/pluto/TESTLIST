@@ -896,9 +896,11 @@ kvmplutotest	interop-ikev2-pluto-01-integ-none		good
 #################################################################
 
 kvmplutotest	ikev2-digsig-01-defaults		good
-kvmplutotest	ikev2-digsig-02-legacy			wip
+kvmplutotest	ikev2-digsig-02-legacy			good
 kvmplutotest	ikev2-digsig-03-rsa-sha2		good
+# 04 works but test times out due to another whack fd leak
 kvmplutotest	ikev2-digsig-04-mismatch		wip
+kvmplutotest	ikev2-digsig-05-rsasig-rsa1		good
 
 #################################################################
 # DNSSEC tests
