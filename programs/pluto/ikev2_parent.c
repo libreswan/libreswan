@@ -761,7 +761,7 @@ static stf_status ikev2_parent_outI1_common(struct state *st)
 	/* Send SIGNATURE_HASH_ALGORITHMS Notify payload */
 	if (!IMPAIR(OMIT_HASH_NOTIFY_REQUEST)) {
 		if (((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
-			&& (c->sighash_policy != LEMPTY)) {
+			&& ((c->sighash_policy & ~POL_SIGHASH_SHA1) != LEMPTY)) {
 			if (!emit_v2N_signature_hash_algorithms(c->sighash_policy, &rbody))
 				return STF_INTERNAL_ERROR;
 		}
@@ -1126,7 +1126,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
 	if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
 		if (st->st_seen_hashnotify && ((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
-			&& (c->sighash_policy != LEMPTY)) {
+			&& ((c->sighash_policy & ~POL_SIGHASH_SHA1) != LEMPTY)) {
 			if (!emit_v2N_signature_hash_algorithms(c->sighash_policy, &rbody))
 				return STF_INTERNAL_ERROR;
 		}
@@ -1883,7 +1883,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 		 * Asymmetric policy unset.
 		 * Pick up from symmetric policy, in order of preference!
 		 */
-		if (c->policy & POLICY_ECDSA) {
+		if ((c->policy & POLICY_ECDSA) && ((c->sighash_policy & ~POL_SIGHASH_SHA1) != LEMPTY)) {
 			authby = AUTH_ECDSA;
 		} else if (c->policy & POLICY_RSASIG) {
 			authby = AUTH_RSASIG;
@@ -1906,20 +1906,25 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 	{
 		bool allow_legacy = LIN(POLICY_RSASIG_v1_5, c->policy);
 
-		if (pst->st_seen_hashnotify) {
-			if (c->sighash_policy != LEMPTY) {
+		if (!pst->st_seen_hashnotify) {
+				if (allow_legacy) {
+					a.isaa_type = IKEv2_AUTH_RSA;
+				} else {
+					loglog(RC_LOG_SERIOUS, "legacy RSA-SHA1 is not allowed but peer supports nothing else");
+					return STF_FATAL;
+				}
+		} else {
+			if ((c->sighash_policy & ~POL_SIGHASH_SHA1) != LEMPTY) {
 				a.isaa_type = IKEv2_AUTH_DIGSIG;
 			} else {
-				if (allow_legacy)
+				if (allow_legacy) {
 					a.isaa_type = IKEv2_AUTH_RSA;
-				else
+				} else {
+					loglog(RC_LOG_SERIOUS, "Local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
 					return STF_FATAL;
+				}
 			}
-		} else {
-			if (allow_legacy)
-				a.isaa_type = IKEv2_AUTH_RSA;
-			else
-				return STF_FATAL;
+
 		}
 		break;
 	}
