@@ -1,0 +1,3 @@
+initiator supports old and new style. Responder only old style RSA-SHA1
+
+conection should establish
