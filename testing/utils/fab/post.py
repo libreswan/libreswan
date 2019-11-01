@@ -280,7 +280,7 @@ class TestResult:
                 self.resolution.failed()
             if self.grub(pluto_log_filename, "EXPECTATION FAILED"):
                 self.issues.add(Issues.EXPECTATION, host_name)
-                # self.resolution.failed() XXX: allow expection failures?
+                self.resolution.failed()
             if self.grub(pluto_log_filename, "\(null\)"):
                 self.issues.add(Issues.PRINTF_NULL, host_name)
                 self.resolution.failed()
