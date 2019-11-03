@@ -181,7 +181,6 @@ static int initiate_a_connection(struct connection *c, void *arg)
 {
 	threadtime_t inception  = threadtime_start();
 	struct initiate_stuff *is = (struct initiate_stuff *)arg;
-	fd_t whackfd = is->whackfd;
 
 	set_cur_connection(c);
 
@@ -331,7 +330,6 @@ static int initiate_a_connection(struct connection *c, void *arg)
 			whack_log(RC_LOG_SERIOUS,
 				  "cannot initiate: no acceptable kernel algorithms loaded");
 			reset_cur_connection();
-			close_any(&is->whackfd);
 			return 0;
 		}
 		free_sa(&phase2_sa);
@@ -339,8 +337,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 
 	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
-	whackfd = dup_any(whackfd);
-	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, &inception, NULL);
+	ipsecdoi_initiate(is->whackfd, c, c->policy, 1, SOS_NOBODY, &inception, NULL);
 	reset_cur_connection();
 	return 1;
 }
@@ -355,7 +352,7 @@ void initiate_connection(const char *name, fd_t whackfd,
 
 	passert(name != NULL);
 	struct initiate_stuff is = {
-		.whackfd = whackfd,
+		.whackfd = whackfd, /*on-stack*/
 		.more_debugging = more_debugging,
 		.more_impairing = more_impairing,
 		.remote_host = remote_host,
@@ -364,7 +361,6 @@ void initiate_connection(const char *name, fd_t whackfd,
 	if (c != NULL) {
 		if (!initiate_a_connection(c, &is))
 			whack_log(RC_FATAL, "failed to initiate %s", c->name);
-		close_any(&is.whackfd);
 		return;
 	}
 
@@ -375,8 +371,6 @@ void initiate_connection(const char *name, fd_t whackfd,
 		whack_log(RC_UNKNOWN_NAME,
 			  "no connection named \"%s\"", name);
 	}
-
-	close_any(&is.whackfd);
 }
 
 static bool same_host(const char *a_dnshostname, const ip_address *a_host_addr,
@@ -743,7 +737,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
 				  SOS_NOBODY, &inception, uctx);
-		b->whackfd = null_fd; /* protect from close */
 	} else {
 		/* We are handling an opportunistic situation.
 		 * This involves several DNS lookup steps that require suspension.
@@ -951,7 +944,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 						  SOS_NOBODY, &inception
 						  , NULL /* shall we pass uctx for opportunistic connections? */
 						  );
-				b->whackfd = null_fd; /* protect from close */
 			}
 		}
 
@@ -966,8 +958,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 					ipstr(&b->peer_client, &b2));
 			}
 		});
-
-	close_any(&b->whackfd);
 }
 
 void initiate_ondemand(const ip_address *our_client,
@@ -978,18 +968,18 @@ void initiate_ondemand(const ip_address *our_client,
 		      struct xfrm_user_sec_ctx_ike *uctx,
 		      err_t why)
 {
-	struct find_oppo_bundle b;
-
-	b.want = why;   /* fudge */
-	b.failure_ok = FALSE;
-	b.our_client = *our_client;
-	b.peer_client = *peer_client;
-	b.transport_proto = transport_proto;
-	b.held = held;
-	b.policy_prio = BOTTOM_PRIO;
-	b.negotiation_shunt = SPI_HOLD; /* until we found connection policy */
-	b.failure_shunt = SPI_HOLD; /* until we found connection policy */
-	b.whackfd = whackfd;
+	struct find_oppo_bundle b = {
+		.want = why,   /* fudge */
+		.failure_ok = false,
+		.our_client = *our_client,
+		.peer_client = *peer_client,
+		.transport_proto = transport_proto,
+		.held = held,
+		.policy_prio = BOTTOM_PRIO,
+		.negotiation_shunt = SPI_HOLD, /* until we found connection policy */
+		.failure_shunt = SPI_HOLD, /* until we found connection policy */
+		.whackfd = whackfd, /*on-stack*/
+	};
 
 	initiate_ondemand_body(&b, uctx);
 }
@@ -1238,13 +1228,12 @@ void connection_check_phase2(void)
 				}
 			} else {
 				/* start a new connection. Something wanted it up */
-				struct initiate_stuff is;
-
-				is.whackfd = null_fd;
-				is.more_debugging = empty_lmod;
-				is.more_impairing = empty_lmod;
-				is.remote_host = NULL;
-
+				struct initiate_stuff is = {
+					.whackfd = null_fd/*on-stack*/,
+					.more_debugging = empty_lmod,
+					.more_impairing = empty_lmod,
+					.remote_host = NULL,
+				};
 				initiate_a_connection(c, &is);
 			}
 		}

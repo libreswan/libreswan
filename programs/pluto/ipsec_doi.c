@@ -227,9 +227,6 @@ void ipsecdoi_initiate(fd_t whack_sock,
 			 * to stop it.
 			 */
 			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
-		} else {
-			/* fizzle: whack_sock will be unused */
-			close_any(&whack_sock);
 		}
 	} else if (HAS_IPSEC_POLICY(policy)) {
 		if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
@@ -239,7 +236,7 @@ void ipsecdoi_initiate(fd_t whack_sock,
 				    replacing, uctx);
 		} else if (st->st_ike_version == IKEv2) {
 			struct pending p = {
-				.whack_sock = whack_sock,
+				.whack_sock = whack_sock, /*on-stack*/
 				.ike = pexpect_ike_sa(st),
 				.connection = c,
 				.try = try,
@@ -294,7 +291,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			 * turn will start its timing it), need a way
 			 * to stop it.
 			 */
-			(void) initiator(dup_any(st->st_whack_sock),
+			(void) initiator(st->st_whack_sock,
 					 c, st, policy, try, &inception,
 				st->sec_ctx);
 		}
@@ -332,7 +329,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));
 
-		ipsecdoi_initiate(dup_any(st->st_whack_sock), st->st_connection,
+		ipsecdoi_initiate(st->st_whack_sock, st->st_connection,
 				  policy, try, st->st_serialno, &inception,
 			st->sec_ctx);
 	}

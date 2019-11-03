@@ -1223,6 +1223,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,
 						    empty_lmod, empty_lmod, NULL);
+				close_any(&tmp_whack_sock);
 			}
 			return STF_IGNORE;
 		default:

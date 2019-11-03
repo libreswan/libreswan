@@ -80,7 +80,6 @@ void add_pending(fd_t whack_sock,
 					ipstr(&c->spd.that.host_addr, &b),
 					c->name, fmt_conn_instance(c, cib));
 			});
-			close_any(&whack_sock);
 			return;
 		}
 	}
@@ -98,7 +97,7 @@ void add_pending(fd_t whack_sock,
 		});
 
 	p = alloc_thing(struct pending, "struct pending");
-	p->whack_sock = whack_sock;
+	p->whack_sock = dup_any(whack_sock); /*on heap*/
 	p->ike = ike;
 	p->connection = c;
 	p->policy = policy;
@@ -175,12 +174,20 @@ void release_pending_whacks(struct state *st, err_t story)
 	 * this check for, and release the whacks for any pending
 	 * CHILD_SA attached to this ST's IKE SA?
 	 */
+	struct ike_sa *ike_with_same_whack = NULL;
 	if (IS_CHILD_SA(st)) {
 		struct ike_sa *ike = ike_sa(st);
 		if (same_fd(&stst, ike->sa.st_whack_sock)) {
+			ike_with_same_whack = ike;
 			release_any_whack(&ike->sa, HERE, "release pending whacks state's IKE SA");
+		} else {
+			dbg("isolated child, no point looking for pending children");
+			return;
 		}
+	} else {
+		ike_with_same_whack = pexpect_ike_sa(st);
 	}
+	pexpect(ike_with_same_whack != NULL);
 
 	/*
 	 * Now go through pending children and close the whack socket
@@ -191,9 +198,6 @@ void release_pending_whacks(struct state *st, err_t story)
 	 * SAME_FD() is used to identify whack sockets that are
 	 * differnt to ST - when found a further release message is
 	 * printed.
-	 *
-	 * XXX: but what if this is a child?  Presumably the loop
-	 * becomes redundant or does IKEv1 confuse things?
 	 */
 
 	struct pending **pp = host_pair_first_pending(st->st_connection);
@@ -204,7 +208,7 @@ void release_pending_whacks(struct state *st, err_t story)
 		    __func__, p->ike->sa.st_serialno,
 		    PRI_fd(p->ike->sa.st_whack_sock),
 		    PRI_fd(p->whack_sock));
-		if (&p->ike->sa == st && fd_p(p->whack_sock)) {
+		if (p->ike == ike_with_same_whack && fd_p(p->whack_sock)) {
 			if (!same_fd(&stst, p->whack_sock)) {
 				passert(!fd_p(whack_log_fd));
 				whack_log_fd = p->whack_sock;
@@ -213,7 +217,7 @@ void release_pending_whacks(struct state *st, err_t story)
 					  story);
 				whack_log_fd = null_fd;
 			}
-			close_any(&p->whack_sock);
+			close_any(&p->whack_sock);/*on-heap*/
 		}
 	}
 }
@@ -234,7 +238,7 @@ static void delete_pending(struct pending **pp)
 	*pp = p->next;
 	if (p->connection != NULL)
 		connection_discard(p->connection);
-	close_any(&p->whack_sock);
+	close_any(&p->whack_sock); /*on-heap*/
 
 	DBG(DBG_DPD, {
 		if (p->connection == NULL) {
@@ -318,7 +322,6 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 					fmt_conn_instance(p->connection, cib));
 			});
 
-			p->whack_sock = null_fd;        /* ownership transferred */
 			p->connection = NULL;           /* ownership transferred */
 			delete_pending(pp);	/* in effect, advances pp */
 		} else {
@@ -339,7 +342,8 @@ struct connection *first_pending(const struct ike_sa *ike,
 	     (p = *pp) != NULL; pp = &p->next)
 	{
 		if (p->ike == ike) {
-			*p_whack_sock = p->whack_sock;
+			close_any(p_whack_sock); /*on-heap*/
+			*p_whack_sock = dup_any(p->whack_sock); /*on-heap*/
 			*policy = p->policy;
 			return p->connection;
 		}

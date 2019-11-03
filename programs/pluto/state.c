@@ -511,7 +511,7 @@ static struct state *new_state(enum ike_version ike_version,
 	passert(&sas->st == &sas->ike.sa);
 	struct state *st = &sas->st;
 	*st = (struct state) {
-		.st_whack_sock = whackfd,
+		.st_whack_sock = dup_any(whackfd),
 		.st_state = fs,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
@@ -781,6 +781,11 @@ static bool flush_incomplete_child(struct state *st, void *pst UNUSED)
 
 			event_force(EVENT_SA_EXPIRE, st);
 		}
+		/*
+		 * Shut down further logging for the child, above are
+		 * the last whack will hear from them.
+		 */
+		release_any_whack(st, HERE, "IKE going away");
 	}
 	/*
 	 * XXX: why was this non-conditional?  probably doesn't matter

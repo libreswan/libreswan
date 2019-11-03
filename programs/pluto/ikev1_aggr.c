@@ -1013,9 +1013,9 @@ void aggr_outI1(fd_t whack_sock,
 	}
 
 	if (HAS_IPSEC_POLICY(policy))
-		add_pending(dup_any(whack_sock), ike, c, policy, 1,
-			predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
-			uctx);
+		add_pending(whack_sock, ike, c, policy, 1,
+			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
+			    uctx);
 
 	if (predecessor == NULL) {
 		libreswan_log("initiating Aggressive Mode");

@@ -488,9 +488,7 @@ static bool whack_process(fd_t whackfd, const struct whack_message *const m)
 				}
 			}
 			initiate_connection(m->name,
-					    (m->whack_async ?
-					     null_fd :
-					     dup_any(whackfd)),
+					    (m->whack_async ? null_fd : whackfd),
 					    m->debugging,
 					    m->impairing,
 					    pass_remote ? m->remote_host : NULL);
@@ -505,9 +503,7 @@ static bool whack_process(fd_t whackfd, const struct whack_message *const m)
 			initiate_ondemand(&m->oppo_my_client,
 						&m->oppo_peer_client, m->oppo_proto,
 						FALSE,
-						m->whack_async ?
-						  null_fd :
-						  dup_any(whackfd),
+					  (m->whack_async ? null_fd : whackfd),
 						NULL,
 						"whack");
 		}

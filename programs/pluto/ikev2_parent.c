@@ -522,7 +522,6 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
 		if (c->policy & POLICY_OPPORTUNISTIC) {
-			close_any(&whack_sock);
 			return;
 		}
 	}
@@ -546,7 +545,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 		if (uctx != NULL)
 			libreswan_log(
 				"Labeled ipsec is not supported with ikev2 yet");
-		add_pending(dup_any(whack_sock), ike, c, policy, 1,
+		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			    st->sec_ctx
 			    );
@@ -5587,7 +5586,7 @@ static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 void ikev2_rekey_ike_start(struct ike_sa *ike)
 {
 	struct pending p = {
-		.whack_sock = null_fd,
+		.whack_sock = null_fd,/*on-stack*/
 		.ike = ike,
 		.connection = ike->sa.st_connection,
 		.policy = LEMPTY,
@@ -5631,7 +5630,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 		st->st_ike_pred = ike->sa.st_serialno;
 	}
 
-	st->st_whack_sock = p->whack_sock;
+	st->st_whack_sock = dup_any(p->whack_sock);/*on-heap*/
 	update_state_connection(st, c);
 
 	set_cur_state(st); /* we must reset before exit */

@@ -635,7 +635,7 @@ void quick_outI1(fd_t whack_sock,
 		 )
 {
 	struct state *st = ikev1_duplicate_state(isakmp_sa);
-	st->st_whack_sock = whack_sock;
+	st->st_whack_sock = dup_any(whack_sock);
 	update_state_connection(st, c);
 	passert(c != NULL);
 
