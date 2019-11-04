@@ -388,16 +388,21 @@ static void peerlog_raw(char *b)
 	}
 }
 
-static void whack_raw(struct lswlog *buf, enum rc_type rc)
+static fd_t find_whack_fd(fd_t global_fd, const struct state *st)
+{
+	/* Using globals so never from a helper thread */
+	passert(in_main_thread());
+	return (st != NULL ? st->st_whack_sock : global_fd);
+}
+
+static void whack_raw(jambuf_t *buf, enum rc_type rc, const struct state *st)
 {
 	/*
 	 * Using globals so never from a helper thread
 	 */
 	passert(in_main_thread());
 	/* aka whack_log_p() */
-	fd_t wfd = (fd_p(whack_log_fd) ? whack_log_fd :
-		    cur_state != NULL ? cur_state->st_whack_sock :
-		    null_fd);
+	fd_t wfd = find_whack_fd(whack_log_fd, st);
 	if (!fd_p(wfd)) {
 		return;
 	}
@@ -502,7 +507,7 @@ void lswlog_to_error_stream(struct lswlog *buf)
 	log_raw(buf, LOG_ERR);
 	if (in_main_thread()) {
 		/* don't whack-log from helper threads */
-		whack_raw(buf, RC_LOG_SERIOUS);
+		whack_raw(buf, RC_LOG_SERIOUS, cur_state);
 	}
 }
 
@@ -517,7 +522,7 @@ void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc)
 	log_raw(buf, LOG_WARNING);
 	if (in_main_thread()) {
 		/* don't whack-log from helper threads */
-		whack_raw(buf, rc);
+		whack_raw(buf, rc, cur_state);
 	}
 }
 
@@ -572,7 +577,7 @@ void libreswan_exit(enum rc_type rc)
 void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type rc)
 {
 	pexpect(whack_log_p());
-	whack_raw(buf, rc);
+	whack_raw(buf, rc, cur_state);
 }
 
 bool whack_log_p(void)
@@ -582,10 +587,7 @@ bool whack_log_p(void)
 		return false;
 	}
 
-	fd_t wfd = fd_p(whack_log_fd) ? whack_log_fd :
-	      cur_state != NULL ? cur_state->st_whack_sock :
-	      null_fd;
-
+	fd_t wfd = find_whack_fd(whack_log_fd, cur_state);
 	return fd_p(wfd);
 }
 
@@ -641,8 +643,8 @@ void loglog_raw(enum rc_type rc,
 		jam_va_list(buf, message, ap);
 		va_end(ap);
 		lswlog_to_log_stream(buf);
-		if (whack_log_p()) {
-			lswlog_to_whack_stream(buf, rc);
+		if (in_main_thread()) {
+			whack_raw(buf, rc, st);
 		}
 	}
 }
