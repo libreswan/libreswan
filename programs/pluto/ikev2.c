@@ -3482,12 +3482,10 @@ void complete_v2_state_transition(struct state *st,
 		break;
 
 	case STF_INTERNAL_ERROR:
-		whack_log(RC_INTERNALERR, "%s: internal error",
-			  from_state_name);
-
-		DBG(DBG_CONTROL,
-		    DBG_log("state transition function for %s had internal error",
-			    from_state_name));
+		passert(st != NULL);
+		loglog_st(st, RC_INTERNALERR, "state transition function for %s had internal error",
+			  st->st_state->name);
+		release_pending_whacks(st, "internal error");
 		break;
 
 	case STF_DROP:
@@ -3500,9 +3498,8 @@ void complete_v2_state_transition(struct state *st,
 
 	case STF_FATAL:
 		passert(st != NULL);
-		whack_log(RC_FATAL,
-			  "encountered fatal error in state %s",
-			  from_state_name);
+		loglog_st(st, RC_FATAL, "encountered fatal error in state %s",
+			  st->st_state->name);
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
 		md->st = st = NULL;

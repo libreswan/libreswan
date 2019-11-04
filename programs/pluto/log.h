@@ -154,6 +154,8 @@ log_raw_fn plog_raw;
 
 log_raw_fn loglog_raw;
 
+#define loglog_st(ST, RC, MESSAGE, ...) loglog_raw(RC, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+
 /* unconditional */
 log_raw_fn DBG_raw;
 

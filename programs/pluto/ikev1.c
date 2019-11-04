@@ -3093,22 +3093,17 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	case STF_INTERNAL_ERROR:
 		/* update the previous packet history */
 		remember_received_packet(st, md);
-
-		whack_log(RC_INTERNALERR + md->v1_note,
-			  "%s: internal error",
+		loglog_st(st, RC_INTERNALERR + md->v1_note,
+			  "state transition function for %s had internal error",
 			  st->st_state->name);
-
-		DBG(DBG_CONTROL,
-		    DBG_log("state transition function for %s had internal error",
-			    enum_name(&state_names, from_state)));
+		release_pending_whacks(st, "internal error");
 		break;
 
 	case STF_FATAL:
+		passert(st != NULL);
 		/* update the previous packet history */
 		remember_received_packet(st, md);
-
-		whack_log(RC_FATAL,
-			  "encountered fatal error in state %s",
+		loglog_st(st, RC_FATAL, "encountered fatal error in state %s",
 			  st->st_state->name);
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
