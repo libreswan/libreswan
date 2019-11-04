@@ -179,8 +179,6 @@ static void help(void)
 		"	[--impair help|list|none|<behaviour>]  \\\n"
 		"	[--no-impair <behaviour>]\n"
 		"\n"
-		"testcases: [--whackrecord <file>] [--whackstoprecord]\n"
-		"\n"
 		"listen: whack (--listen | --unlisten)\n"
 		"\n"
 		"socket buffers: whack --ike-socket-bufsize <bufsize>\n"
@@ -346,10 +344,8 @@ enum option_enums {
 	OPT_DELETECRASH,
 	OPT_USERNAME,
 	OPT_XAUTHPASS,
-	OPT_WHACKRECORD,
-	OPT_WHACKSTOPRECORD,
 
-#define OPT_LAST2 OPT_WHACKSTOPRECORD	/* last "normal" option, range 2 */
+#define OPT_LAST2 OPT_XAUTHPASS	/* last "normal" option, range 2 */
 
 /* List options */
 
@@ -787,8 +783,6 @@ static const struct option long_opts[] = {
 	{ "no-impair", required_argument, NULL, DBGOPT_NO_IMPAIR + OO, },
 
 #    undef DO
-	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
-	{ "whackstoprecord", no_argument, NULL, OPT_WHACKSTOPRECORD + OO },
 #   undef OO
 	{ 0, 0, 0, 0 }
 };
@@ -2175,17 +2169,6 @@ int main(int argc, char **argv)
 
 			msg.sa_reqid = opt_whole;
 			continue;
-
-		case OPT_WHACKRECORD:	/* --whackrecord */
-			msg.string1 = strdup(optarg);
-			msg.whack_options = TRUE;
-			msg.opt_set = WHACK_STARTWHACKRECORD;
-			break;
-
-		case OPT_WHACKSTOPRECORD:	/* --whackstoprecord */
-			msg.whack_options = TRUE;
-			msg.opt_set = WHACK_STOPWHACKRECORD;
-			break;
 
 		case DBGOPT_NONE:	/* --debug-none (obsolete) */
 			/*

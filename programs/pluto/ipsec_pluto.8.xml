@@ -470,24 +470,6 @@
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
-      <arg choice="plain">--whackrecord</arg>
-
-      <arg choice="opt">filename</arg>
-    </cmdsynopsis>
-
-    <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
-
-      <arg choice="plain">--whackstoprecord</arg>
-    </cmdsynopsis>
-
-    <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
-
       <arg choice="plain">--name
       <replaceable>connection-name</replaceable></arg>
 
@@ -2285,35 +2267,6 @@
       </variablelist>
 
       <variablelist remap="tp">
-        <varlistentry>
-          <term><option>--whackrecord</option><emphasis
-          remap="i">filename</emphasis></term>
-
-          <term><option>--whackstoprecord</option></term>
-
-          <listitem>
-            <para>this causes <emphasis remap="b">pluto</emphasis>to open the
-            given filename for write, and record each of the messages received
-            from whack or addconn. This continues until the whackstoprecord
-            option is used. This option may not be combined with any other
-            command. The start/stop commands are not recorded themselves.
-            These files are usually used to create input files for unit tests,
-            particularly for complex setups where policies may in fact
-            overlap. </para>
-
-            <para>The format of the file consists of a line starting with
-            #!pluto-whack and the date that the file was started, as well as
-            the hostname, and a linefeed. What follows are binary format
-            records consisting of a 32-bit record length in bytes, (including
-            the length record itself), a 64-bit timestamp, and then the
-            literal contents of the whack message that was received. All
-            integers are in host format. In order to unambigously determine
-            the host order, the first record is an empty record that contains
-            only the current WHACK_MAGIC value. This record is 16 bytes
-            long.</para>
-          </listitem>
-        </varlistentry>
-
         <varlistentry>
           <term><emphasis remap="i">ip-address</emphasis></term>
 

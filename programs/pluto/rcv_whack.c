@@ -186,77 +186,6 @@ static void key_add_request(const struct whack_message *msg)
 		}
 	}
 }
-static char whackrecordname[PATH_MAX];
-static FILE *whackrecordfile = NULL;
-
-/*
- * writewhackrecord must match readwhackmsg.
- * Writes out 64 bits for time, even if we only have 32-bit time_t.
- */
-static bool writewhackrecord(char *buf, size_t buflen)
-{
-	uint32_t header[3];	/* length, high time, low time */
-	time_t now = time(NULL);
-
-	/* round up buffer length */
-	size_t abuflen = (buflen + sizeof(header[0]) - 1) & ~(sizeof(header[0]) - 1);
-
-	/* bail if we aren't writing anything */
-	if (whackrecordfile == NULL)
-		return TRUE;
-
-	header[0] = buflen + sizeof(header);
-	header[1] = (now >> 16) >> 16;	/* >> 32 not legal on 32-bit systems */
-	header[2] = now;	/* bottom 32 bits */
-
-	/* DBG_log("buflen: %zu abuflen: %zu", buflen, abuflen); */
-
-	if (fwrite(header, sizeof(header), 1, whackrecordfile) < 1)
-		DBG_log("writewhackrecord: fwrite error when writing header");
-
-	if (fwrite(buf, abuflen, 1, whackrecordfile) < 1)
-		DBG_log("writewhackrecord: fwrite error when writing buf");
-
-	return TRUE;
-}
-
-/*
- * we write out an empty record with the right WHACK magic.
- * this should permit a later mechanism to figure out the
- * endianness of the file, since we will get records from
- * other systems for analysis eventually.
- */
-static bool openwhackrecordfile(char *file)
-{
-	char when[256];
-	char FQDN[SWAN_MAX_DOMAIN_LEN];
-	const uint32_t magic = WHACK_BASIC_MAGIC;
-
-	strcpy(FQDN, "unknown host");
-	gethostname(FQDN, sizeof(FQDN));
-
-	jam_str(whackrecordname, sizeof(whackrecordname), file);
-	whackrecordfile = fopen(whackrecordname, "w");
-	if (whackrecordfile == NULL) {
-		libreswan_log("Failed to open whack record file: '%s'",
-			      whackrecordname);
-		return FALSE;
-	}
-
-	struct realtm now = local_realtime(realnow());
-	strftime(when, sizeof(when), "%F %T", &now.tm);
-
-	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s",
-		FQDN, when);
-
-	writewhackrecord((char *)&magic, sizeof(magic));
-
-	DBG(DBG_CONTROL,
-	    DBG_log("started recording whack messages to %s",
-		    whackrecordname));
-	return TRUE;
-}
-
 
 /*
  * handle a whack message.
@@ -349,31 +278,6 @@ static void whack_process(fd_t whackfd, const struct whack_message *const m)
 			/* XXX */
 			break;
 
-		case WHACK_STARTWHACKRECORD:
-			/* close old filename */
-			if (whackrecordfile != NULL) {
-				DBG(DBG_CONTROL,
-				    DBG_log("stopped recording whack messages to %s",
-					    whackrecordname));
-				fclose(whackrecordfile);
-			}
-			whackrecordfile = NULL;
-
-			openwhackrecordfile(m->string1);
-
-			/* do not do any other processing for these */
-			return;
-
-		case WHACK_STOPWHACKRECORD:
-			if (whackrecordfile != NULL) {
-				DBG(DBG_CONTROL,
-				    DBG_log("stopped recording whack messages to %s",
-					    whackrecordname));
-				fclose(whackrecordfile);
-			}
-			whackrecordfile = NULL;
-			/* do not do any other processing for these */
-			return;
 		}
 	}
 
@@ -728,30 +632,18 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
  */
 static void whack_handle(fd_t whackfd)
 {
-	struct whack_message msg, msg_saved;
-	/* Note: actual value in n should fit in int.  To print, cast to int. */
-	ssize_t n;
-
-	/* static int msgnum=0; */
-
 	/*
-	 * properly initialize msg
-	 *
-	 * - needed because short reads are sometimes OK
-	 *
-	 * - although struct whack_msg has pointer fields
-	 *   they don't appear on the wire so zero() should work.
+	 * properly initialize msg - needed because short reads are
+	 * sometimes OK
 	 */
-	zero(&msg);
+	struct whack_message msg = { .magic = 0, };
 
-	n = read(whackfd.fd, &msg, sizeof(msg));
+	ssize_t n = read(whackfd.fd, &msg, sizeof(msg));
 	if (n <= 0) {
 		LOG_ERRNO(errno, "read() failed in whack_handle()");
 		close_any(&whackfd);
 		return;
 	}
-
-	msg_saved = msg;
 
 	/* DBG_log("msg %d size=%u", ++msgnum, n); */
 
@@ -800,9 +692,6 @@ static void whack_handle(fd_t whackfd)
 			return;
 		}
 	}
-
-	/* dump record if necessary */
-	writewhackrecord((char *)&msg_saved, n);
 
 	whack_process(whackfd, &msg);
 }

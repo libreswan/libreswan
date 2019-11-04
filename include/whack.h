@@ -127,8 +127,6 @@ struct whack_end {
 enum whack_opt_set {
 	WHACK_ADJUSTOPTIONS=0,		/* normal case */
 	WHACK_SETDUMPDIR=1,		/* string1 contains new dumpdir */
-	WHACK_STARTWHACKRECORD=2,	/* string1 contains file to write options to */
-	WHACK_STOPWHACKRECORD=3,	/* turn off recording to file */
 };
 
 struct whack_message {
