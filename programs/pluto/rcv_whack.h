@@ -26,6 +26,4 @@
 extern void whack_handle_cb(evutil_socket_t fd,
 		const short event UNUSED, void *arg UNUSED);
 
-extern void whack_process(fd_t whackfd, const struct whack_message *const m);
-
 #endif

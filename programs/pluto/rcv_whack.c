@@ -261,7 +261,7 @@ static bool openwhackrecordfile(char *file)
 /*
  * handle a whack message.
  */
-void whack_process(fd_t whackfd, const struct whack_message *const m)
+static void whack_process(fd_t whackfd, const struct whack_message *const m)
 {
 	/*
 	 * May be needed in future:
@@ -274,7 +274,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 			if (libreswan_fipsmode()) {
 				if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
 					whack_log(RC_FATAL, "FIPS: --debug-private is not allowed in FIPS mode, aborted");
-					goto done;
+					return;
 				}
 			}
 #endif
@@ -362,7 +362,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 			openwhackrecordfile(m->string1);
 
 			/* do not do any other processing for these */
-			goto done;
+			return;
 
 		case WHACK_STOPWHACKRECORD:
 			if (whackrecordfile != NULL) {
@@ -373,7 +373,7 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 			}
 			whackrecordfile = NULL;
 			/* do not do any other processing for these */
-			goto done;
+			return;
 		}
 	}
 
@@ -691,46 +691,48 @@ void whack_process(fd_t whackfd, const struct whack_message *const m)
 		libreswan_log("shutting down");
 		exit_pluto(PLUTO_EXIT_OK); /* delete lock and leave, with 0 status */
 	}
-
-done:
-	whack_log_fd = null_fd;
-	close_any(&whackfd);
 }
 
-static void whack_handle(int kernelfd);
+static void whack_handle(fd_t whackfd);
 
 void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 		     void *arg UNUSED)
 {
 	threadtime_t start = threadtime_start();
-	whack_handle(fd);
+	{
+		struct sockaddr_un whackaddr;
+		socklen_t whackaddrlen = sizeof(whackaddr);
+		fd_t whackfd = NEW_FD(accept(fd, (struct sockaddr *)&whackaddr,
+					     &whackaddrlen));
+		if (!fd_p(whackfd)) {
+			LOG_ERRNO(errno, "accept() failed in whack_handle()");
+			return;
+		}
+		if (fcntl(whackfd.fd, F_SETFD, FD_CLOEXEC) < 0) {
+			LOG_ERRNO(errno, "failed to set CLOEXEC in whack_handle()");
+			close_any(&whackfd);
+			return;
+		}
+		whack_log_fd = whackfd;
+		{
+			whack_handle(whackfd);
+		}
+		whack_log_fd = null_fd;
+		close_any(&whackfd);
+	}
 	threadtime_stop(&start, SOS_NOBODY, "whack");
 }
 
 /*
  * Handle a whack request.
  */
-static void whack_handle(int whackctlfd)
+static void whack_handle(fd_t whackfd)
 {
 	struct whack_message msg, msg_saved;
-	struct sockaddr_un whackaddr;
-	socklen_t whackaddrlen = sizeof(whackaddr);
-	fd_t whackfd = NEW_FD(accept(whackctlfd, (struct sockaddr *)&whackaddr,
-				     &whackaddrlen));
 	/* Note: actual value in n should fit in int.  To print, cast to int. */
 	ssize_t n;
 
 	/* static int msgnum=0; */
-
-	if (!fd_p(whackfd)) {
-		LOG_ERRNO(errno, "accept() failed in whack_handle()");
-		return;
-	}
-	if (fcntl(whackfd.fd, F_SETFD, FD_CLOEXEC) < 0) {
-		LOG_ERRNO(errno, "failed to set CLOEXEC in whack_handle()");
-		close_any(&whackfd);
-		return;
-	}
 
 	/*
 	 * properly initialize msg
@@ -748,8 +750,6 @@ static void whack_handle(int whackctlfd)
 		close_any(&whackfd);
 		return;
 	}
-
-	whack_log_fd = whackfd;
 
 	msg_saved = msg;
 

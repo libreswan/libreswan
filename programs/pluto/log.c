@@ -153,11 +153,6 @@ static void log_processing(enum processing processing, bool current,
  */
 void log_reset_globals(where_t where)
 {
-	if (fd_p(whack_log_fd)) {
-		dbg("processing: RESET whack log_fd (was "PRI_FD") "PRI_WHERE,
-		    PRI_fd(whack_log_fd), pri_where(where));
-		whack_log_fd = null_fd;
-	}
 	if (cur_state != NULL) {
 		log_processing(RESET, true, cur_state, NULL, NULL, where);
 		cur_state = NULL;
@@ -175,11 +170,6 @@ void log_reset_globals(where_t where)
 
 void log_pexpect_reset_globals(where_t where)
 {
-	if (fd_p(whack_log_fd)) {
-		log_pexpect(where, "processing: unexpected whack_log_fd "PRI_FD" should be "PRI_FD,
-			    PRI_fd(whack_log_fd), PRI_fd(null_fd));
-		whack_log_fd = null_fd;
-	}
 	if (cur_state != NULL) {
 		log_pexpect(where, "processing: unexpected cur_state #%lu should be #0",
 			    cur_state->st_serialno);
