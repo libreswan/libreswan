@@ -33,7 +33,8 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS all-date-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS debug.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS impair.sed"
 
-# The following sanitizers are written to only modify a single command
+# The following sanitizers are written to only modify specific commands
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ephemeral-ports.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-route.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-addr.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-link.sed"
