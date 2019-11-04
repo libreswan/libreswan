@@ -436,7 +436,6 @@ const char *const sa_policy_bit_names[] = {
  * Names for RFC 7427 IKEv2 AUTH signature hash algo sighash_policy_bits
  */
 const char *const sighash_policy_bit_names[] = {
-	"SHA-1", /* really means IKEv2 legacy - not RFC 7427 style */
 	"SHA2_256",
 	"SHA2_384",
 	"SHA2_512",

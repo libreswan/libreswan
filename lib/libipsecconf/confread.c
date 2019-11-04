@@ -176,7 +176,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_ESN_NO;      	     /* esn=no */
 
 	d->sighash_policy =
-		POL_SIGHASH_SHA1 | /* not really sighash but legacy v2-auth */
 		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
 
 	d->left.addr_family = AF_INET;
@@ -1450,7 +1449,6 @@ static bool load_conn(
 			} else if (streq(val, "rsasig") || streq(val, "rsa")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->policy |= POLICY_RSASIG_v1_5;
-				conn->sighash_policy |= POL_SIGHASH_SHA1;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
@@ -1465,7 +1463,6 @@ static bool load_conn(
 			} else if (streq(val, "rsa-sha1")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->policy |= POLICY_RSASIG_v1_5;
-				conn->sighash_policy |= POL_SIGHASH_SHA1;
 			} else if (streq(val, "rsa-sha2")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
