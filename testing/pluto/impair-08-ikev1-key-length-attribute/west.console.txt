@@ -12,6 +12,8 @@ west #
 west #
  # should work
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair suppress-retransmits
 west #
  ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
@@ -36,6 +38,8 @@ west #
 west #
  # send 128 twice
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:duplicate
@@ -50,8 +54,11 @@ west #
 003 "aes128" #3: received and ignored notification payload: BAD_PROPOSAL_SYNTAX
 002 "aes128" #3: IMPAIR: retransmit so deleting SA
 002 "aes128" #3: deleting state (STATE_MAIN_I1) and NOT sending notification
+002 "aes128" #3: IMPAIR: skipping revival of connection 'aes128' that is supposed to remain up
 west #
  ipsec whack --impair none
+west #
+ ipsec whack --impair revival
 west #
  ipsec whack --impair delete-on-retransmit
 west #
@@ -76,6 +83,8 @@ west #
 west #
  # send 0 instead of 128
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:0
@@ -90,8 +99,11 @@ west #
 003 "aes128" #6: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "aes128" #6: IMPAIR: retransmit so deleting SA
 002 "aes128" #6: deleting state (STATE_MAIN_I1) and NOT sending notification
+002 "aes128" #6: IMPAIR: skipping revival of connection 'aes128' that is supposed to remain up
 west #
  ipsec whack --impair none
+west #
+ ipsec whack --impair revival
 west #
  ipsec whack --impair delete-on-retransmit
 west #
@@ -115,6 +127,8 @@ west #
  ipsec whack --impair none
 west #
  # omit the key-length attribute
+west #
+ ipsec whack --impair revival
 west #
  ipsec whack --impair delete-on-retransmit
 west #
@@ -142,6 +156,8 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec whack --impair none
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec whack --impair child-key-length-attribute:omit
@@ -164,6 +180,8 @@ west #
  ipsec whack --impair none
 west #
  # send an "empty" key-length attribute
+west #
+ ipsec whack --impair revival
 west #
  ipsec whack --impair delete-on-retransmit
 west #
@@ -193,6 +211,8 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec whack --impair none
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec whack --impair emitting
@@ -220,6 +240,8 @@ west #
 west #
  # should work
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair suppress-retransmits
 west #
  ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
@@ -244,6 +266,8 @@ west #
 west #
  # send 0 instead of leaving it out
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec whack --impair ike-key-length-attribute:0
@@ -257,10 +281,13 @@ west #
 003 "3des" #19: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "3des" #19: IMPAIR: retransmit so deleting SA
 002 "3des" #19: deleting state (STATE_MAIN_I1) and NOT sending notification
+002 "3des" #19: IMPAIR: skipping revival of connection '3des' that is supposed to remain up
 west #
  ipsec whack --impair none
 west #
  # send 192 instead of leaving it out
+west #
+ ipsec whack --impair revival
 west #
  ipsec whack --impair delete-on-retransmit
 west #
