@@ -3082,7 +3082,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) ||
 		    IS_IPSEC_SA_ESTABLISHED(st))
-			release_whack(st);
+			release_any_whack(st, HERE, "IKEv1 transitions finished");
 
 		if (IS_QUICK(st->st_state->kind))
 			break;

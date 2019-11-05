@@ -161,10 +161,7 @@ void release_pending_whacks(struct state *st, err_t story)
 		st->st_whack_sock = null_fd;
 		zero(&stst);
 	} else {
-		dbg("%s: state #%lu "PRI_FD" .st_dev=%lu .st_ino=%lu",
-		     __func__, st->st_serialno, PRI_fd(st->st_whack_sock),
-		     (unsigned long)stst.st_dev, (unsigned long)stst.st_ino);
-		release_whack(st);
+		release_any_whack(st, HERE, "releasing pending whacks");
 	}
 
 	/*
@@ -181,7 +178,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	if (IS_CHILD_SA(st)) {
 		struct ike_sa *ike = ike_sa(st);
 		if (same_fd(&stst, ike->sa.st_whack_sock)) {
-			release_whack(&ike->sa);
+			release_any_whack(&ike->sa, HERE, "release pending whacks state's IKE SA");
 		}
 	}
 

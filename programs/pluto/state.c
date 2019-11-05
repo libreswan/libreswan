@@ -649,8 +649,10 @@ void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
  * Free the Whack socket file descriptor.
  * This has the side effect of telling Whack that we're done.
  */
-void release_whack(struct state *st)
+void release_any_whack(struct state *st, where_t where, const char *why)
 {
+	dbg("releasing #%lu's "PRI_FD" because %s "PRI_WHERE"",
+	    st->st_serialno, PRI_fd(st->st_whack_sock), why, pri_where(where));
 	close_any(&st->st_whack_sock);
 }
 
@@ -1114,7 +1116,7 @@ void delete_state(struct state *st)
 
 	change_state(st, STATE_UNDEFINED);
 
-	release_whack(st);
+	release_any_whack(st, HERE, "deleting state");
 
 	/* from here on we are just freeing RAM */
 

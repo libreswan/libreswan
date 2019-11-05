@@ -3198,20 +3198,17 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	}
 
 	if (w == RC_SUCCESS) {
-		DBG(DBG_CONTROL, DBG_log("releasing whack for #%lu (sock="PRI_FD")",
-					 st->st_serialno, PRI_fd(st->st_whack_sock)));
-		release_whack(st);
+		release_any_whack(st, HERE, "IKEv2 transitions finished");
 
 		/* XXX should call unpend again on parent SA */
 		if (IS_CHILD_SA(st)) {
 			/* with failed child sa, we end up here with an orphan?? */
-			struct state *pst = state_with_serialno(st->st_clonedfrom);
-
-			DBG(DBG_CONTROL, DBG_log("releasing whack and unpending for parent #%lu",
-				pst->st_serialno));
+			struct ike_sa *ike = ike_sa(st);
+			dbg("unpending #%lu's IKE SA #%lu", st->st_serialno,
+			    ike->sa.st_serialno);
 			/* a better call unpend in ikev2_ike_sa_established? */
-			unpend(pst, st->st_connection);
-			release_whack(pst);
+			unpend(&ike->sa, st->st_connection);
+			release_any_whack(&ike->sa, HERE, "IKEv2 transitions finished so releaseing IKE SA");
 		}
 	}
 
