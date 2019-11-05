@@ -143,7 +143,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 	}
 
 	/* make a reference to keep things easy */
-	PK11SymKey *old_k = reference_symkey(__func__, "old_k#1", keymat);
+	PK11SymKey *old_k = reference_symkey(__func__, "old_k:1", keymat);
 	while (sizeof_symkey(keymat) < required_keymat) {
 		/* Kn = prf(skeyid_e, Kn-1) */
 		struct crypt_prf *prf = crypt_prf_init_symkey("Kn", prf_desc,
@@ -151,10 +151,10 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 		crypt_prf_update_symkey(prf, "old_k", old_k);
 		PK11SymKey *new_k = crypt_prf_final_symkey(&prf);
 		append_symkey_symkey(&keymat, new_k);
-		release_symkey(__func__, "old_k#N", &old_k);
+		release_symkey(__func__, "old_k:N", &old_k);
 		old_k = new_k;
 	}
-	release_symkey(__func__, "old_k#final", &old_k);
+	release_symkey(__func__, "old_k:final", &old_k);
 	PK11SymKey *cryptkey = encrypt_key_from_symkey_bytes("cryptkey", encrypter,
 							     0, required_keymat,
 							     keymat);
