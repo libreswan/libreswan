@@ -1816,20 +1816,6 @@ void exit_pluto(int status)
 	 */
 	exiting_pluto = true;
 
-	/*
-	 * Kill any wack FD.
-	 *
-	 * This stops all messages other than "shutting down" appeaing
-	 * on the console.
-	 *
-	 * This was a side effect of calling reset_globals() but that
-	 * code's been removed.
-	 *
-	 * XXX: But why?  Arguably having all the shutdown messages
-	 * appear on the console looks better.
-	 */
-	whack_log_fd = null_fd;
-
 	/* needed because we may be called in odd state */
 	reset_globals();
  #ifdef USE_SYSTEMD_WATCHDOG

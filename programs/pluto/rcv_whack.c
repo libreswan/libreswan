@@ -190,7 +190,7 @@ static void key_add_request(const struct whack_message *msg)
 /*
  * handle a whack message.
  */
-static void whack_process(fd_t whackfd, const struct whack_message *const m)
+static bool whack_process(fd_t whackfd, const struct whack_message *const m)
 {
 	/*
 	 * May be needed in future:
@@ -203,7 +203,7 @@ static void whack_process(fd_t whackfd, const struct whack_message *const m)
 			if (libreswan_fipsmode()) {
 				if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
 					whack_log(RC_FATAL, "FIPS: --debug-private is not allowed in FIPS mode, aborted");
-					return;
+					return false; /*don't shutdown*/
 				}
 			}
 #endif
@@ -593,11 +593,13 @@ static void whack_process(fd_t whackfd, const struct whack_message *const m)
 
 	if (m->whack_shutdown) {
 		libreswan_log("shutting down");
-		exit_pluto(PLUTO_EXIT_OK); /* delete lock and leave, with 0 status */
+		return true; /* shutting down */
 	}
+
+	return false; /* don't shut down */
 }
 
-static void whack_handle(fd_t whackfd);
+static bool whack_handle(fd_t whackfd);
 
 void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 		     void *arg UNUSED)
@@ -618,11 +620,24 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 			return;
 		}
 		whack_log_fd = whackfd;
-		{
-			whack_handle(whackfd);
-		}
+		bool shutdown = whack_handle(whackfd);
 		whack_log_fd = null_fd;
-		close_any(&whackfd);
+		if (shutdown) {
+			/*
+			 * Leak the whack FD, when pluto finally exits
+			 * it will be closed and whack released.
+			 *
+			 * Note that the above killed off whack_log_fd
+			 * which means that the entire exit process is
+			 * radio silent.
+			 */
+			dbg("leaking "PRI_FD"; will be closed/released when pluto exits",
+			    PRI_fd(whackfd));
+			/* XXX: shutdown the event loop */
+			exit_pluto(PLUTO_EXIT_OK);
+		} else {
+			close_any(&whackfd);
+		}
 	}
 	threadtime_stop(&start, SOS_NOBODY, "whack");
 }
@@ -630,7 +645,7 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 /*
  * Handle a whack request.
  */
-static void whack_handle(fd_t whackfd)
+static bool whack_handle(fd_t whackfd)
 {
 	/*
 	 * properly initialize msg - needed because short reads are
@@ -641,59 +656,55 @@ static void whack_handle(fd_t whackfd)
 	ssize_t n = read(whackfd.fd, &msg, sizeof(msg));
 	if (n <= 0) {
 		LOG_ERRNO(errno, "read() failed in whack_handle()");
-		close_any(&whackfd);
-		return;
+		return false; /* don't shutdown */
 	}
 
 	/* DBG_log("msg %d size=%u", ++msgnum, n); */
 
 	/* sanity check message */
 	{
-		err_t ugh = NULL;
-		struct whackpacker wp;
+		if ((size_t)n < offsetof(struct whack_message,
+					 whack_shutdown) + sizeof(msg.whack_shutdown)) {
+			loglog(RC_BADWHACKMESSAGE, "ignoring runt message from whack: got %zd bytes", n);
+			return false; /* don't shutdown */
+		}
 
-		wp.msg = &msg;
-		wp.n   = n;
-		wp.str_next = msg.string;
-		wp.str_roof = (unsigned char *)&msg + n;
+		if (msg.magic != WHACK_MAGIC) {
 
-		if ((size_t)n <
-		    offsetof(struct whack_message,
-			     whack_shutdown) + sizeof(msg.whack_shutdown)) {
-			ugh = builddiag(
-				"ignoring runt message from whack: got %d bytes",
-				(int)n);
-		} else if (msg.magic != WHACK_MAGIC) {
 			if (msg.whack_shutdown) {
 				libreswan_log("shutting down%s",
 				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
-				exit_pluto(PLUTO_EXIT_OK);  /* delete lock and leave, with 0 status */
+				return true; /* force shutting down */
 			}
+
 			if (msg.magic == WHACK_BASIC_MAGIC) {
 				/* Only basic commands.  Simpler inter-version compatibility. */
 				if (msg.whack_status)
 					show_status();
-
-				ugh = "";               /* bail early, but without complaint */
-			} else {
-				ugh = builddiag(
-					"ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
-					msg.magic, WHACK_MAGIC);
+				/* bail early, but without complaint */
+				return false; /* don't shutdown */
 			}
-		} else {
-			ugh = unpack_whack_msg(&wp);
-		}
 
-		if (ugh != NULL) {
-			if (*ugh != '\0')
-				loglog(RC_BADWHACKMESSAGE, "%s", ugh);
-			whack_log_fd = null_fd;
-			close_any(&whackfd);
-			return;
+			loglog(RC_BADWHACKMESSAGE, "ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
+			       msg.magic, WHACK_MAGIC);
+			return false; /* bail (but don't shutdown) */
 		}
 	}
 
-	whack_process(whackfd, &msg);
+	struct whackpacker wp = {
+		.msg = &msg,
+		.n = n,
+		.str_next = msg.string,
+		.str_roof = (unsigned char *)&msg + n,
+	};
+	const char *ugh = unpack_whack_msg(&wp);
+	if (ugh != NULL) {
+		if (*ugh != '\0')
+			loglog(RC_BADWHACKMESSAGE, "%s", ugh);
+		return false; /* don't shutdown */
+	}
+
+	return whack_process(whackfd, &msg);
 }
 
 /*
