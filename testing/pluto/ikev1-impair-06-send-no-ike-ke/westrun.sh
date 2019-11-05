@@ -1,3 +1,6 @@
+# don't come back
+ipsec whack --impair revival
+
 # expect quick fail
 ipsec whack --impair ke-payload:omit  --impair delete-on-retransmit
 ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2

@@ -11,6 +11,10 @@ west #
  echo "initdone"
 initdone
 west #
+ # don't come back
+west #
+ ipsec whack --impair revival
+west #
  # expect quick fail
 west #
  ipsec whack --impair ke-payload:omit  --impair delete-on-retransmit
@@ -22,6 +26,7 @@ west #
 1v1 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_MAIN_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skipping revival of connection 'westnet-eastnet-ipv4-psk-ikev2' that is supposed to remain up
 west #
  ipsec whack --impair none
 west #
