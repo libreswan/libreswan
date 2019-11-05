@@ -138,7 +138,7 @@ def writeout_privkey(filename, item,
         f.write(crypto.dump_privatekey(type, item))
 
 
-def create_keypair(algo=crypto.TYPE_RSA, bits=1024):
+def create_keypair(algo=crypto.TYPE_RSA, bits=2048):
     """ Create an OpenSSL keypair
     """
     pkey = crypto.PKey()
@@ -281,7 +281,7 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
                     C='CA', ST='Ontario', L='Toronto',
                     O='Libreswan', OU='Test Department',
                     emailAddress='',
-                    ty=crypto.TYPE_RSA, keybits=1024,
+                    ty=crypto.TYPE_RSA, keybits=2048,
                     sign_alg='sha256', isCA=False, ocsp=False):
     """ Create a subordinate cert and return the cert, key tuple
     This could be a CA for an intermediate, or not for an EE
@@ -315,7 +315,7 @@ def create_root_ca(CN, START, END,
                    C='CA', ST='Ontario', L='Toronto',
                    O='Libreswan', OU='Test Department',
                    emailAddress='testing@libreswan.org',
-                   ty=crypto.TYPE_RSA, keybits=1024,
+                   ty=crypto.TYPE_RSA, keybits=2048,
                    sign_alg='sha256'):
     """ Create a root CA - Returns the cert, key tuple
     """
@@ -421,7 +421,7 @@ def create_mainca_end_certs(mainca_end_certs):
         # put special cert handling here
         print(" - creating %s"% name)
         if name == 'smallkey':
-            keysize = 2048
+            keysize = 1024
         else:
             if name == 'key4096':
                 keysize = 4096
