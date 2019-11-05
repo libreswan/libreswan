@@ -1168,11 +1168,6 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 		       wm->name);
 		return false;
 	}
-	if (wm->sighash_policy != LEMPTY &&
-	    c->ike_version == IKEv1) {
-		loglog(RC_FATAL, "SIGHASH requires ikev2");
-		return false;
-	}
 
 	if (wm->policy & POLICY_MOBIKE &&
 	    c->ike_version == IKEv1) {
@@ -1324,7 +1319,12 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 
 	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
-	c->sighash_policy = wm->sighash_policy;
+       /* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
+	if (c->ike_version == IKEv1)
+		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
+	/* ignore supplied sighash and ECDSA (from defaults) for IKEv1 */
+	if (c->ike_version == IKEv2)
+		c->sighash_policy = wm->sighash_policy;
 
 	if (NEVER_NEGOTIATE(c->policy)) {
 		/* cleanup inherited default */
@@ -3808,14 +3808,15 @@ void show_one_connection(const struct connection *c)
 		  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
 		  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 
-	char hashpolbuf[200];
-        const char *hashstr = bitnamesofb(sighash_policy_bit_names,
-                                     c->sighash_policy,
-                                     hashpolbuf, sizeof(hashpolbuf));
+	if (c->ike_version == IKEv2) {
+		char hashpolbuf[200];
+		const char *hashstr = bitnamesofb(sighash_policy_bit_names,
+				c->sighash_policy,
+				hashpolbuf, sizeof(hashpolbuf));
 
-	whack_log(RC_COMMENT, "\"%s\"%s:   v2-auth-hash-policy: %s;",
-		  c->name, instance, hashstr);
-
+		whack_log(RC_COMMENT, "\"%s\"%s:   v2-auth-hash-policy: %s;",
+			c->name, instance, hashstr);
+	}
 
 	if (c->connmtu != 0)
 		snprintf(mtustr, sizeof(mtustr), "%d", c->connmtu);
