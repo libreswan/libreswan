@@ -8,10 +8,10 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm clear text does not get through
 ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 ipsec _stackmanager start
-mkdir /tmp/tmpnss
+mkdir /tmp/tmpnss-west
 export NSS_DISABLE_UNLOAD=no
 export NSS_SDB_USE_CACHE=yes
-export TMPDIR=/tmp/tmpnss
+export TMPDIR=/tmp/tmpnss-west
 export NSS_DEBUG_PKCS11_MODULE="NSS Internal PKCS #11 Module"
 export LOGGING=1
 export SOCKETTRACE=1

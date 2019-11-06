@@ -1,10 +1,10 @@
 /testing/guestbin/swan-prep --x509
 certutil -D -n west -d sql:/etc/ipsec.d
 ipsec _stackmanager start
-mkdir /tmp/tmpnss
+mkdir /tmp/tmpnss-east
 export NSS_DISABLE_UNLOAD=no
 export NSS_SDB_USE_CACHE=yes
-export TMPDIR=/tmp/tmpnss
+export TMPDIR=/tmp/tmpnss-east
 export NSS_DEBUG_PKCS11_MODULE="NSS Internal PKCS #11 Module"
 export LOGGING=1
 export SOCKETTRACE=1
