@@ -17,7 +17,7 @@ road #
 1v1 "xauth-road-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "xauth-road-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "xauth-road-eastnet" #1: Peer ID is ID_FQDN: '@east'
-003 "xauth-road-eastnet" #1: Authenticated using RSA
+003 "xauth-road-eastnet" #1: Authenticated using RSA with SHA-1
 004 "xauth-road-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 040 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Password:
 002 "xauth-road-eastnet" #1: XAUTH: Answering XAUTH challenge with user='use1'

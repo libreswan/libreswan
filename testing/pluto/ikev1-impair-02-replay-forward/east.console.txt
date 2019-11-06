@@ -68,7 +68,7 @@ IMPAIR: start processing replay forward: packet 2 of 3 (396 bytes)
 IMPAIR: stop processing replay forward: packet 2 of 3
 IMPAIR: start processing replay forward: packet 3 of 3 (332 bytes)
 "westnet-eastnet" #1: Peer ID is ID_FQDN: '@west'
-"westnet-eastnet" #1: Authenticated using RSA
+"westnet-eastnet" #1: Authenticated using RSA with SHA-1
 "westnet-eastnet" #1: STATE_MAIN_R3: sent MR3, ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 IMPAIR: stop processing replay forward: packet 3 of 3
 IMPAIR: start processing replay forward: packet 1 of 4 (792 bytes)

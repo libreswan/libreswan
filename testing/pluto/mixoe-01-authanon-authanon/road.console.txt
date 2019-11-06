@@ -69,7 +69,7 @@ road #
  # Authentication should be RSA
 road #
  hostname | grep nic > /dev/null || grep Authenticated /tmp/pluto.log
-"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #2: Authenticated using RSA
+"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #2: Authenticated using RSA with SHA-1
 road #
 road #
  ../bin/check-for-core.sh

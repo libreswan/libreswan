@@ -23,7 +23,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #1: Authenticated using RSA
+"westnet-eastnet" #1: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -57,7 +57,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #3: Authenticated using RSA
+"westnet-eastnet" #3: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -76,7 +76,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #4: Authenticated using RSA
+"westnet-eastnet" #4: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -107,7 +107,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #5: Authenticated using RSA
+"westnet-eastnet" #5: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -138,7 +138,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #6: Authenticated using RSA
+"westnet-eastnet" #6: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -176,7 +176,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #8: Authenticated using RSA
+"westnet-eastnet" #8: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -220,7 +220,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #10: Authenticated using RSA
+"westnet-eastnet" #10: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -264,7 +264,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #12: Authenticated using RSA
+"westnet-eastnet" #12: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -298,7 +298,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #14: Authenticated using RSA
+"westnet-eastnet" #14: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -332,7 +332,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #16: Authenticated using RSA
+"westnet-eastnet" #16: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -366,7 +366,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #18: Authenticated using RSA
+"westnet-eastnet" #18: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -400,7 +400,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #20: Authenticated using RSA
+"westnet-eastnet" #20: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -434,7 +434,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #22: Authenticated using RSA
+"westnet-eastnet" #22: Authenticated using RSA with SHA-1
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:

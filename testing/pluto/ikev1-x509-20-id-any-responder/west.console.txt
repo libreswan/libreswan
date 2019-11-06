@@ -30,7 +30,7 @@ west #
 003 "ikev2-westnet-eastnet-x509-cr" #1: certificate contains no subjectAltName extension to match ID_IPV4_ADDR '192.1.2.23'
 002 "ikev2-westnet-eastnet-x509-cr" #1: Peer public key SubjectAltName does not match peer ID for this connection
 002 "ikev2-westnet-eastnet-x509-cr" #1: Peer ID is configured with %any - allowing unmatched ID
-003 "ikev2-westnet-eastnet-x509-cr" #1: Authenticated using RSA
+003 "ikev2-westnet-eastnet-x509-cr" #1: Authenticated using RSA with SHA-1
 004 "ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "ikev2-westnet-eastnet-x509-cr" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 1v1 "ikev2-westnet-eastnet-x509-cr" #2: STATE_QUICK_I1: sent QI1, expecting QR1

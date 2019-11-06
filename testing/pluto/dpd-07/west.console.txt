@@ -30,7 +30,7 @@ west #
 1v1 "west-east" #1: STATE_AGGR_I1: sent AI1, expecting AR1
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
-003 "west-east" #1: Authenticated using RSA
+003 "west-east" #1: Authenticated using RSA with SHA-1
 004 "west-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 1v1 "west-east" #2: STATE_QUICK_I1: sent QI1, expecting QR1
