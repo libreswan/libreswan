@@ -1286,6 +1286,8 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		restore_new_iv(st, b->new_iv, b->new_iv_len);
 
 		set_cur_state(st);      /* (caller will reset) */
+		dbg("switching MD.ST from #%lu to CHILD #%lu; ulgh",
+		    md->st->st_serialno, st->st_serialno);
 		md->st = st;            /* feed back new state */
 
 		st->st_peeruserprotoid = b->his.proto;

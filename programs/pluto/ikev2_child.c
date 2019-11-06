@@ -183,6 +183,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	struct state *cst = &child->sa;	/* child state */
 
 	/* switch to child */
+	dbg("switching MD.ST from #%lu to CHILD #%lu; ulgh",
+	    md->st->st_serialno, cst->st_serialno);
 	md->st = cst;
 	c = cst->st_connection;
 

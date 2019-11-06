@@ -2107,6 +2107,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	v2_msgid_switch_initiator(ike, child, md);
 
 	binlog_refresh_state(cst);
+	dbg("switching MD.ST from #%lu to CHILD #%lu; ulgh",
+	    md->st->st_serialno, cst->st_serialno);
 	md->st = cst;
 
 	/*
@@ -4132,6 +4134,8 @@ stf_status ikev2_child_ike_inR(struct state *st /* child state */,
 		/* free early return items */
 		free_ikev2_proposal(&st->st_accepted_ike_proposal);
 		passert(st->st_accepted_ike_proposal == NULL);
+		dbg("switching MD.ST from #%lu to IKE #%lu; ulgh",
+		    md->st->st_serialno, pst->st_serialno);
 		md->st = pst;
 		return STF_FAIL;
 	}
@@ -4531,6 +4535,8 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 		 * will delete the child state?  Or perhaps there a
 		 * lurking SO_DISPOSE to clean it up?
 		 */
+		dbg("switching MD.ST from #%lu to IKE #%lu; ulgh",
+		    md->st->st_serialno, pst->st_serialno);
 		md->st = pst;
 		return STF_IGNORE;
 	}
@@ -4542,6 +4548,8 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 		 * will delete the child state?  Or perhaps there a
 		 * lurking SO_DISPOSE to clean it up?
 		 */
+		dbg("switching MD.ST from #%lu to IKE #%lu; ulgh",
+		    md->st->st_serialno, pst->st_serialno);
 		md->st = pst;
 		return STF_FAIL; /* XXX; STF_FATAL? */
 	}
@@ -5077,6 +5085,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		if (st == NULL)
 			return STF_INTERNAL_ERROR;
 
+		dbg("switching MD.ST from #%lu to IKE #%lu; ulgh",
+		    md->st->st_serialno, st->st_serialno);
 		md->st = st;
 		set_cur_state(st);
 		DBG(DBG_CONTROLMORE,
