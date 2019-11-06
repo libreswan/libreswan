@@ -1,0 +1,6 @@
+
+Authentication should be successfull with one of the rsa-sha2 variants
+but strongswan doesn't like our rsa/pss when we do not specifically
+say sha2_256 ?
+
+
