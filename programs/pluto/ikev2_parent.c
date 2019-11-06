@@ -1850,12 +1850,14 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 }
 
 static stf_status ikev2_send_auth(struct ike_sa *ike,
-				  enum original_role role,
-				  enum next_payload_types_ikev2 np,
 				  const struct crypt_mac *idhash_out,
 				  pb_stream *outpbs,
 				  chunk_t *null_auth /* optional out */)
 {
+	/* XXX: this is dead; just use SA_ROLE */
+	enum original_role role = (ike->sa.st_sa_role == SA_INITIATOR ? ORIGINAL_INITIATOR :
+				   ike->sa.st_sa_role == SA_RESPONDER ? ORIGINAL_RESPONDER :
+				   pexpect(0));
 	const struct connection *c = ike->sa.st_connection;
 	enum keyword_authby authby = c->spd.this.authby;
 	if (null_auth != NULL)
@@ -1882,7 +1884,6 @@ static stf_status ikev2_send_auth(struct ike_sa *ike,
 	}
 
 	struct ikev2_a a = {
-		.isaa_np = np,
 		.isaa_critical = build_ikev2_critical(false),
 	};
 
@@ -2292,10 +2293,10 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* send out the AUTH payload */
 	chunk_t null_auth;	/* we must free this */
 
-	stf_status authstat = ikev2_send_auth(ike, ORIGINAL_INITIATOR, 0,
-					      &idhash, &sk.pbs, &null_auth);
+	stf_status authstat = ikev2_send_auth(ike, &idhash, &sk.pbs, &null_auth);
 	if (authstat != STF_OK) {
 		freeanychunk(null_auth);
+		
 		return authstat;
 	}
 
@@ -3105,14 +3106,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	    DBG_log("going to assemble AUTH payload"));
 
 	/* now send AUTH payload */
-	{
-		stf_status authstat = ikev2_send_auth(ike, ORIGINAL_RESPONDER, auth_np,
-						      &idhash_out, &sk.pbs, NULL);
-		/* ??? NULL - don't calculate additional NULL_AUTH ??? */
-
-		if (authstat != STF_OK)
-			return authstat;
-	}
+	stf_status authstat = ikev2_send_auth(ike, &idhash_out, &sk.pbs, NULL);
+	/* ??? NULL - don't calculate additional NULL_AUTH ??? */
+	if (authstat != STF_OK)
+		return authstat;
 
 	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 		/* must have enough to build an CHILD_SA */
