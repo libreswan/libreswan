@@ -785,8 +785,8 @@ extern bool states_use_connection(const struct connection *c);
 
 /* state functions */
 
-struct state *new_v1_istate(void);
-struct state *new_v1_rstate(struct msg_digest *md);
+struct ike_sa *new_v1_istate(void);
+struct ike_sa *new_v1_rstate(struct msg_digest *md);
 struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 			    const ike_spi_t ike_initiator_spi,
 			    const ike_spi_t ike_responder_spi,

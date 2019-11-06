@@ -534,21 +534,23 @@ static struct state *new_state(enum ike_version ike_version,
 	return st;
 }
 
-struct state *new_v1_istate(void)
+struct ike_sa *new_v1_istate(void)
 {
 	struct state *st = new_state(IKEv1, &state_undefined, ike_initiator_spi(),
 				     zero_ike_spi, IKE_SA);
-	return st;
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	return ike;
 }
 
-struct state *new_v1_rstate(struct msg_digest *md)
+struct ike_sa *new_v1_rstate(struct msg_digest *md)
 {
 	struct state *st = new_state(IKEv1, &state_undefined,
 				     md->hdr.isa_ike_spis.initiator,
 				     ike_responder_spi(&md->sender),
 				     IKE_SA);
-	update_ike_endpoints(pexpect_ike_sa(st), md);
-	return st;
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	update_ike_endpoints(ike, md);
+	return ike;
 }
 
 struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,

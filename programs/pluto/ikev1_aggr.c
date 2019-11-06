@@ -126,7 +126,8 @@ static void aggr_inI1_outR1_continue1(struct state *st,
  * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDii
  *           --> HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
  */
-stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
+stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
+			   struct msg_digest *md)
 {
 	/* With Aggressive Mode, we get an ID payload in this, the first
 	 * message, so we can use it to index the preshared-secrets
@@ -175,8 +176,8 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	}
 
 	/* Set up state */
-	pexpect(st == NULL);
-	st = new_v1_rstate(md);
+	struct ike_sa *ike = new_v1_rstate(md);
+	struct state *st = &ike->sa;
 
 	md->st = st;  /* (caller will reset cur_state) */
 	set_cur_state(st);
@@ -985,15 +986,14 @@ void aggr_outI1(fd_t whack_sock,
 		const threadtime_t *inception,
 		struct xfrm_user_sec_ctx_ike *uctx)
 {
-	struct state *st;
-
 	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
 		loglog(RC_LOG_SERIOUS,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
 
 	/* set up new state */
-	st = new_v1_istate();
+	struct ike_sa *ike = new_v1_istate();
+	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
 	change_state(st, STATE_AGGR_I1);
 	initialize_new_state(st, c, policy, try, whack_sock);

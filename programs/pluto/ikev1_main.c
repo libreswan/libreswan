@@ -105,9 +105,8 @@ void main_outI1(fd_t whack_sock,
 		const threadtime_t *inception,
 		struct xfrm_user_sec_ctx_ike *uctx)
 {
-	struct state *st;
-
-	st = new_v1_istate();
+	struct ike_sa *ike = new_v1_istate();
+	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
 
 	/* set up new state */
@@ -525,7 +524,8 @@ bool ikev1_close_message(pb_stream *pbs, const struct state *st)
  * HDR;SA --> HDR;SA
  */
 
-stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
+stf_status main_inI1_outR1(struct state *unused_st UNUSED,
+			   struct msg_digest *md)
 {
 	/* ??? this code looks a lot like the middle of ikev2_parent_inI1outR1 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
@@ -649,8 +649,8 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 	}
 
 	/* Set up state */
-	pexpect(st == NULL);
-	md->st = st = new_v1_rstate(md);
+	struct ike_sa *ike = new_v1_rstate(md);
+	struct state *st = md->st = &ike->sa;
 
 	passert(!st->st_oakley.doing_xauth);
 
