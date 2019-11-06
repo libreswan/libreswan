@@ -704,7 +704,7 @@ def create_ec_certs():
         else:
             pexpect.run('openssl ecparam -out keys/' + name +
                     '-ec.key -name secp384r1 -genkey -noout')
-        child = pexpect.spawn('openssl req -x509 '
+        child = pexpect.spawn('openssl req -extensions ec-addon -config openssl.cnf -x509 '
                               '-new -key keys/curveca.key '
                               '-out certs/' + name +
                               '-ec.crt -days 365 -set_serial ' +
