@@ -1,6 +1,6 @@
 grep NO_PROPOSAL_CHOSEN /tmp/pluto.log
 ipsec whack --shutdown
-grep leak /tmp/pluto.log
+grep -e leak /tmp/pluto.log | grep -v -e '|'
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

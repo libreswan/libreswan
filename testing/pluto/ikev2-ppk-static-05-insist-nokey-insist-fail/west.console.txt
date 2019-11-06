@@ -53,7 +53,7 @@ west #
  ipsec whack --shutdown
 002 shutting down
 west #
- grep leak /tmp/pluto.log
+ grep -e leak /tmp/pluto.log | grep -v -e '|'
 leak-detective enabled
 leak detective found no leaks
 west #
