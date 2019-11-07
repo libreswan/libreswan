@@ -1849,10 +1849,10 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 	return STF_OK;
 }
 
-static stf_status ikev2_send_auth(struct ike_sa *ike,
-				  const struct crypt_mac *idhash_out,
-				  pb_stream *outpbs,
-				  chunk_t *null_auth /* optional out */)
+static stf_status emit_v2AUTH(struct ike_sa *ike,
+			      const struct crypt_mac *idhash_out,
+			      pb_stream *outpbs,
+			      chunk_t *null_auth /* optional out */)
 {
 	/* XXX: this is dead; just use SA_ROLE */
 	enum original_role role = (ike->sa.st_sa_role == SA_INITIATOR ? ORIGINAL_INITIATOR :
@@ -1883,7 +1883,7 @@ static stf_status ikev2_send_auth(struct ike_sa *ike,
 		}
 	}
 
-	struct ikev2_a a = {
+	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false),
 	};
 
@@ -1909,7 +1909,7 @@ static stf_status ikev2_send_auth(struct ike_sa *ike,
 
 	pb_stream a_pbs;
 
-	if (!out_struct(&a, &ikev2_a_desc, outpbs, &a_pbs)) {
+	if (!out_struct(&a, &ikev2_auth_desc, outpbs, &a_pbs)) {
 		/* loglog(RC_LOG_SERIOUS, "Failed to emit IKE_AUTH payload"); */
 		return STF_INTERNAL_ERROR;
 	}
@@ -2293,10 +2293,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* send out the AUTH payload */
 	chunk_t null_auth;	/* we must free this */
 
-	stf_status authstat = ikev2_send_auth(ike, &idhash, &sk.pbs, &null_auth);
+	stf_status authstat = emit_v2AUTH(ike, &idhash, &sk.pbs, &null_auth);
 	if (authstat != STF_OK) {
 		freeanychunk(null_auth);
-		
 		return authstat;
 	}
 
@@ -2663,7 +2662,7 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
-	atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
+	atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_type;
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, atype)) {
 		ret = idi_ipseckey_fetch(md);
 		if (ret != STF_OK) {
@@ -2839,7 +2838,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		size_t len = pbs_left(&pbs);
 		init_pbs(&pbs_no_ppk_auth, st->st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
-		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
+		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_type,
 				   st, ORIGINAL_RESPONDER, &idhash_in,
 				   &pbs_no_ppk_auth,
 				   st->st_connection->spd.that.authby, "no-PPK-auth"))
@@ -2883,7 +2882,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			DBG(DBG_CONTROL, DBG_log("NULL_AUTH verified"));
 		} else {
 			DBGF(DBG_CONTROL, "verifying AUTH payload");
-			if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
+			if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_type,
 					   st, ORIGINAL_RESPONDER, &idhash_in,
 					   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 					   st->st_connection->spd.that.authby, "I2 Auth Payload")) {
@@ -3106,7 +3105,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	    DBG_log("going to assemble AUTH payload"));
 
 	/* now send AUTH payload */
-	stf_status authstat = ikev2_send_auth(ike, &idhash_out, &sk.pbs, NULL);
+	stf_status authstat = emit_v2AUTH(ike, &idhash_out, &sk.pbs, NULL);
 	/* ??? NULL - don't calculate additional NULL_AUTH ??? */
 	if (authstat != STF_OK)
 		return authstat;
@@ -3630,7 +3629,7 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	/* process AUTH payload */
 
 	DBGF(DBG_CONTROL, "verifying AUTH payload");
-	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
+	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_type,
 			   pst, ORIGINAL_INITIATOR, &idhash_in,
 			   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby, "R2 Auth Payload"))
 	{

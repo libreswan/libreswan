@@ -946,7 +946,7 @@ extern struct_desc ikev2_id_i_desc;
 extern struct_desc ikev2_id_r_desc;
 
 /* rfc4306, section 3.8 */
-struct ikev2_a {
+struct ikev2_auth {
 	uint8_t isaa_np;		/* Next payload */
 	uint8_t isaa_critical;
 	uint16_t isaa_length;		/* Payload length */
@@ -954,7 +954,7 @@ struct ikev2_a {
 	uint8_t isaa_res1;
 	uint16_t isaa_res2;
 };
-extern struct_desc ikev2_a_desc;
+extern struct_desc ikev2_auth_desc;
 
 /* rfc4306 section 3.6 CERT Payload */
 struct ikev2_cert {
@@ -1126,7 +1126,7 @@ union payload {
 	struct ikev2_prop v2prop;
 	struct ikev2_sa v2sa;
 	struct ikev2_id v2id;
-	struct ikev2_a v2a;
+	struct ikev2_auth v2auth;
 	struct ikev2_ts v2ts;
 	struct ikev2_cert v2cert;
 	struct ikev2_certreq v2certreq;

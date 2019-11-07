@@ -2717,7 +2717,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 	} else {
 		/* why should refine_host_connection() update this? We pulled it from their packet */
 		bool fromcert = peer_id.kind == ID_DER_ASN1_DN;
-		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
+		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_type;
 		enum keyword_authby authby = AUTH_NEVER;
 
 		switch (auth) {

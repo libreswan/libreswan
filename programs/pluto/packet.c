@@ -1199,7 +1199,7 @@ struct_desc ikev2_certificate_req_desc = {
  *               Figure 14:  Authentication Payload Format
  *
  */
-static field_desc ikev2a_fields[] = {
+static field_desc ikev2_auth_fields[] = {
 	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
@@ -1208,10 +1208,10 @@ static field_desc ikev2a_fields[] = {
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc ikev2_a_desc = {
+struct_desc ikev2_auth_desc = {
 	.name = "IKEv2 Authentication Payload",
-	.fields = ikev2a_fields,
-	.size = sizeof(struct ikev2_a),
+	.fields = ikev2_auth_fields,
+	.size = sizeof(struct ikev2_auth),
 	.pt = ISAKMP_NEXT_v2AUTH,
 };
 
@@ -1630,7 +1630,7 @@ struct_desc *v2_payload_desc(unsigned p)
 		&ikev2_id_r_desc,		/* 36 ISAKMP_NEXT_v2IDr */
 		&ikev2_certificate_desc,        /* 37 ISAKMP_NEXT_v2CERT */
 		&ikev2_certificate_req_desc,    /* 38 ISAKMP_NEXT_v2CERTREQ */
-		&ikev2_a_desc,                  /* 39 ISAKMP_NEXT_v2AUTH */
+		&ikev2_auth_desc,               /* 39 ISAKMP_NEXT_v2AUTH */
 		&ikev2_nonce_desc,              /* 40 ISAKMP_NEXT_v2Ni / ISAKMP_NEXT_v2Nr */
 		&ikev2_notify_desc,             /* 41 ISAKMP_NEXT_v2N */
 		&ikev2_delete_desc,             /* 42 ISAKMP_NEXT_v2D */
