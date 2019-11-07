@@ -392,6 +392,7 @@ kvm-keys: $(KVM_KEYS)
 	$(MAKE) --no-print-directory kvm-keys-up-to-date
 
 $(KVM_KEYS):	$(top_srcdir)/testing/x509/dist_certs.py \
+		$(top_srcdir)/testing/x509/openssl.cnf \
 		$(top_srcdir)/testing/x509/strongswan-ec-gen.sh \
 		$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh \
 		$(KVM_QEMUDIR_OK) \
@@ -415,6 +416,7 @@ $(KVM_KEYS):	$(top_srcdir)/testing/x509/dist_certs.py \
 	: per comments, generate everything in /tmp/x509
 	:
 	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) cp -f ./testing/x509/dist_certs.py /tmp/x509
+	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) cp -f ./testing/x509/openssl.cnf /tmp/x509
 	$(KVMSH) --chdir /tmp/x509 $(KVM_BUILD_DOMAIN) ./dist_certs.py
 	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) cp -f ./testing/x509/strongswan-ec-gen.sh /tmp/x509
 	$(KVMSH) --chdir /tmp/x509 $(KVM_BUILD_DOMAIN) ./strongswan-ec-gen.sh
