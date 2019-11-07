@@ -128,9 +128,8 @@ install-rpm-run-dep:
 	 $(PKG_INSTALL) --skip-broken $(RUN_RPMS)
 
 .PHONY: install-rpm-build-dep
-DEV_GROUP = $(shell grep -qE '^ID_LIKE="rhel' /etc/os-release && echo "development" || echo "development-tools")
 install-rpm-build-dep:
-	$(SUDO_CMD) $(PKG_CMD) groupinstall $(POWER_TOOLS) -y $(DEV_GROUP)
+	$(SUDO_CMD) $(PKG_CMD) groupinstall $(POWER_TOOLS) -y 'Development Tools'
 	$(SUDO_CMD) $(PKG_BUILDDEP) $(REPO_POWERTOOLS) -y libreswan
 
 .PHONY: install-deb-dep
