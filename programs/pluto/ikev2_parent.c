@@ -5794,7 +5794,7 @@ stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *st,
  * would this cover if there are multiple CREATE_CHILD_SA pending on
  * this IKE negotiation ???
  */
-bool need_this_intiator(struct state *st)
+bool need_this_initiator(struct state *st)
 {
 	struct connection *c = st->st_connection;
 

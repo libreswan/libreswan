@@ -1,4 +1,4 @@
-FALSE/*
+/*
  * IKEv2 functions: that ikev2_parent.c/ikev2_child.c needs.
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
