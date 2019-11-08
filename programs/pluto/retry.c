@@ -162,7 +162,21 @@ void retransmit_v2_msg(struct state *st)
 			retransmit_count(pst) + 1);
 		});
 
-	if (!need_this_initiator(st)) {
+	/*
+	 * if this connection has a newer Child SA than this state
+	 * this negotiation is not relevant any more.  would this
+	 * cover if there are multiple CREATE_CHILD_SA pending on this
+	 * IKE negotiation ???
+	 *
+	 * XXX: this is testing for an IKE SA that's been superseed by
+	 * a newer IKE SA (not child).  Suspect this is to handle a
+	 * race where the other end brings up the IKE SA first?  For
+	 * that case, shouldn't this state have been deleted?
+	 */
+	if (st->st_state->kind != STATE_PARENT_I1 &&
+	    c->newest_ipsec_sa > st->st_serialno) {
+		libreswan_log("suppressing retransmit because superseded by #%lu try=%lu. Drop this negotiation",
+				c->newest_ipsec_sa, st->st_try);
 		pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
 		delete_state(st);
 		return;

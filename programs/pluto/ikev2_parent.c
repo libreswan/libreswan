@@ -1527,8 +1527,21 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 		return STF_IGNORE;
 	}
 
-	if (!need_this_initiator(st)) {
-		return STF_DROP;
+	/*
+	 * if this connection has a newer Child SA than this state
+	 * this negotiation is not relevant any more.  would this
+	 * cover if there are multiple CREATE_CHILD_SA pending on this
+	 * IKE negotiation ???
+	 *
+	 * XXX: this is testing for an IKE SA that's been superseed by
+	 * a newer IKE SA (not child).  Suspect this is to handle a
+	 * race where the other end brings up the IKE SA first?  For
+	 * that case, shouldn't this state have been deleted?
+	 */
+	if (c->newest_ipsec_sa > st->st_serialno) {
+		libreswan_log("state superseded by #%lu try=%lu, drop this negotiation",
+			      c->newest_ipsec_sa, st->st_try);
+		return STF_FATAL;
 	}
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
@@ -5786,27 +5799,6 @@ stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *st,
 		return e;
 	}
 	return ikev2_child_out_tail(*mdp);
-}
-
-/*
- * if this connection has a newer Child SA than this state
- * this negotiation is not relevant any more.
- * would this cover if there are multiple CREATE_CHILD_SA pending on
- * this IKE negotiation ???
- */
-bool need_this_initiator(struct state *st)
-{
-	struct connection *c = st->st_connection;
-
-	if (st->st_state->kind !=  STATE_PARENT_I1)
-		return true; /* ignore STATE_V2_CREATE_I ??? */
-
-	if (c->newest_ipsec_sa > st->st_serialno) {
-		libreswan_log("suppressing retransmit because superseded by #%lu try=%lu. Drop this negotiation",
-				c->newest_ipsec_sa, st->st_try);
-		return false;
-	}
-	return true;
 }
 
 void ikev2_record_newaddr(struct state *st, void *arg_ip)

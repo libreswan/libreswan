@@ -287,8 +287,6 @@ extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 
 extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
 
-extern bool need_this_initiator(struct state *st);
-
 extern void init_ikev2(void);
 
 extern void ikev2_record_newaddr(struct state *st, void *arg_ip);
