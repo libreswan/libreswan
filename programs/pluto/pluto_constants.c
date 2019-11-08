@@ -362,6 +362,7 @@ static const char *const stf_status_strings[] = {
 	A(STF_OK),
 	A(STF_INTERNAL_ERROR),
 	A(STF_FATAL),
+	A(STF_ZOMBIFY),
 	A(STF_FAIL),
 #undef A
 };

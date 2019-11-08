@@ -3513,6 +3513,26 @@ void complete_v2_state_transition(struct state *st,
 		md->st = st = NULL;
 		break;
 
+	case STF_ZOMBIFY:
+		if (md != NULL && v2_msg_role(md) == MESSAGE_REQUEST) {
+			v2_msgid_update_recv(ike, st, md);
+			pexpect(md->svm->send == MESSAGE_RESPONSE);
+			v2_msgid_update_sent(ike, st, md, md->svm->send);
+			send_recorded_v2_ike_msg(&ike->sa, "last utterance from a zombie");
+			dbg("XXX: reap any children?");
+			dbg("forcing zombie #%lu to a discard event",
+			    st->st_serialno);
+			delete_event(st);
+			event_schedule_s(EVENT_SO_DISCARD,
+					 MAXIMUM_RESPONDER_WAIT,
+					 st);
+			release_pending_whacks(st, "fatal error");
+		} else {
+			change_state(st, IS_IKE_SA(st) ? STATE_IKESA_DEL : STATE_CHILDSA_DEL);
+			delete_state(st);
+		}
+		break;
+
 	default:
 		passert(result >= STF_FAIL);
 		v2_notification_t notification = result > STF_FAIL ?

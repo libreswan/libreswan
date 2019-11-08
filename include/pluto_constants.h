@@ -298,6 +298,10 @@ enum seccomp_mode {
  * in a response.  XXX: for IKEv2 this is broken: KE responses can't
  * use it - need to suggest KE; AUTH responses can't use it - need to
  * send other stuff (but they do breaking auth).
+ *
+ * XXX: STF_FATAL should probably behave like STF_ZOMBIFY - when the
+ * responder send the pending message; switch state to "deleting" and
+ * reap any children.
  */
 
 typedef enum {
@@ -320,6 +324,7 @@ typedef enum {
 	STF_OK,                 /*    yes        no     message? tbd? */
 	STF_INTERNAL_ERROR,     /*     no        no      never   tbd? */
 	STF_FATAL,		/*     no      always    never   fail */
+	STF_ZOMBIFY,		/*   delete  initiator responder  yes */
 	STF_FAIL,       	/*     no      maybe?    maybe?  fail */
 	STF_ROOF = STF_FAIL + 65536 /* see RFC and above */
 } stf_status;
