@@ -403,16 +403,16 @@ void update_pending(struct state *os, struct state *ns)
 }
 
 /* a Main Mode negotiation has failed; discard any pending */
-void flush_pending_by_state(struct state *st)
+void flush_pending_by_state(struct ike_sa *ike)
 {
 	struct pending **pp, *p;
 
-	pp = host_pair_first_pending(st->st_connection);
+	pp = host_pair_first_pending(ike->sa.st_connection);
 	if (pp == NULL)
 		return;
 
 	while ((p = *pp) != NULL) {
-		if (p->isakmp_sa == st) {
+		if (p->isakmp_sa == &ike->sa) {
 			/* we don't have to worry about deref to free'ed
 			 * *pp, because delete_pending updates pp to
 			 * point to the next element before it frees *pp

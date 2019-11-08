@@ -528,7 +528,7 @@ extern void add_pending(fd_t whack_sock,
 extern void release_pending_whacks(struct state *st, err_t story);
 extern void unpend(struct state *st, struct connection *cc);
 extern void update_pending(struct state *os, struct state *ns);
-extern void flush_pending_by_state(struct state *st);
+extern void flush_pending_by_state(struct ike_sa *ike);
 
 extern void connection_discard(struct connection *c);
 extern void update_state_connection(struct state *st, struct connection *c);

@@ -790,16 +790,13 @@ static bool flush_incomplete_child(struct state *st, void *pst UNUSED)
 	return false; /* keep going */
 }
 
-static void flush_incomplete_children(struct state *pst)
+static void flush_incomplete_children(struct ike_sa *ike)
 {
-	if (IS_CHILD_SA(pst))
-		return;
-
-	state_by_ike_spis(pst->st_ike_version,
-			  &pst->st_serialno,
+	state_by_ike_spis(ike->sa.st_ike_version,
+			  &ike->sa.st_serialno,
 			  NULL /* ignore MSGID */,
 			  NULL /* ignore role */,
-			  &pst->st_ike_spis,
+			  &ike->sa.st_ike_spis,
 			  flush_incomplete_child, NULL/*arg*/, __func__);
 }
 
@@ -1032,10 +1029,14 @@ void delete_state(struct state *st)
 	 * flush_pending_by_state inadvertently and prematurely
 	 * deleting our connection.
 	 */
-	flush_pending_by_state(st);
+	if (IS_IKE_SA(st)) {
+		flush_pending_by_state(pexpect_ike_sa(st));
+	}
 
 	/* flush unestablished child states */
-	flush_incomplete_children(st);
+	if (IS_IKE_SA(st)) {
+		flush_incomplete_children(pexpect_ike_sa(st));
+	}
 
 	/*
 	 * if there is anything in the cryptographic queue, then remove this
