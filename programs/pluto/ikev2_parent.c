@@ -1906,7 +1906,7 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 	{
 		bool allow_legacy = LIN(POLICY_RSASIG_v1_5, c->policy);
 
-		if (!pst->st_seen_hashnotify) {
+		if (!ike->sa.st_seen_hashnotify) {
 				if (allow_legacy) {
 					a.isaa_type = IKEv2_AUTH_RSA;
 				} else {
