@@ -63,7 +63,7 @@ extern ikev2_state_transition_fn ikev2_parent_inR2;
 
 extern void ikev2_initiate_child_sa(struct pending *p);
 
-void ikev2_rekey_ike_start(struct state *st);
+void ikev2_rekey_ike_start(struct ike_sa *ike);
 
 extern void ikev2_child_outI(struct state *st);
 

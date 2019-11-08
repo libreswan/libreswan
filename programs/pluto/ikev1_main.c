@@ -116,7 +116,7 @@ void main_outI1(fd_t whack_sock,
 	change_state(st, STATE_MAIN_I1);
 
 	if (HAS_IPSEC_POLICY(policy)) {
-		add_pending(dup_any(whack_sock), st, c, policy, 1,
+		add_pending(dup_any(whack_sock), ike, c, policy, 1,
 			predecessor == NULL ?
 			  SOS_NOBODY : predecessor->st_serialno,
 			uctx);
@@ -204,7 +204,7 @@ void main_outI1(fd_t whack_sock,
 	start_retransmits(st);
 
 	if (predecessor != NULL) {
-		update_pending(predecessor, st);
+		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
 		loglog(RC_NEW_V1_STATE + st->st_state->kind,
 		       "%s: %s, replacing #%lu",
 		       st->st_state->name, st->st_state->story,

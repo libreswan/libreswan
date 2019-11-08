@@ -1,4 +1,5 @@
 /* State machine for IKEv1
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2010,2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
@@ -3077,7 +3078,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			 * as it is.
 			 *
 			 */
-			unpend(st, NULL);
+			unpend(pexpect_ike_sa(st), NULL);
 		}
 
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) ||

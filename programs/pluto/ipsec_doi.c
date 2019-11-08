@@ -234,17 +234,19 @@ void ipsecdoi_initiate(fd_t whack_sock,
 	} else if (HAS_IPSEC_POLICY(policy)) {
 		if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 			/* leave our Phase 2 negotiation pending */
-			add_pending(whack_sock, st, c, policy, try,
+			add_pending(whack_sock, pexpect_ike_sa(st),
+				    c, policy, try,
 				    replacing, uctx);
 		} else if (st->st_ike_version == IKEv2) {
-			struct pending p;
-			p.whack_sock = whack_sock;
-			p.isakmp_sa = st;
-			p.connection = c;
-			p.try = try;
-			p.policy = policy;
-			p.replacing = replacing;
-			p.uctx = uctx;
+			struct pending p = {
+				.whack_sock = whack_sock,
+				.ike = pexpect_ike_sa(st),
+				.connection = c,
+				.try = try,
+				.policy = policy,
+				.replacing = replacing,
+				.uctx = uctx,
+			};
 			ikev2_initiate_child_sa(&p);
 		} else {
 			/* ??? we assume that peer_nexthop_sin isn't important:

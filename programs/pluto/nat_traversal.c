@@ -982,7 +982,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 		 * XXX: so can it be deleted, it would kill the
 		 * function.
 		 */
-		update_pending(st, st);
+		update_pending(pexpect_ike_sa(st), pexpect_ike_sa(st));
 	}
 	pexpect_st_local_endpoint(st);
 }

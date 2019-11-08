@@ -3207,7 +3207,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 			dbg("unpending #%lu's IKE SA #%lu", st->st_serialno,
 			    ike->sa.st_serialno);
 			/* a better call unpend in ikev2_ike_sa_established? */
-			unpend(&ike->sa, st->st_connection);
+			unpend(ike, st->st_connection);
 			release_any_whack(&ike->sa, HERE, "IKEv2 transitions finished so releaseing IKE SA");
 		}
 	}

@@ -518,7 +518,7 @@ const char *str_connection_instance(const struct connection *c,
 struct pending; /* forward declaration (opaque outside connections.c) */
 
 extern void add_pending(fd_t whack_sock,
-			struct state *isakmp_sa,
+			struct ike_sa *ike,
 			struct connection *c,
 			lset_t policy,
 			unsigned long try,
@@ -526,8 +526,8 @@ extern void add_pending(fd_t whack_sock,
 			struct xfrm_user_sec_ctx_ike *uctx);
 
 extern void release_pending_whacks(struct state *st, err_t story);
-extern void unpend(struct state *st, struct connection *cc);
-extern void update_pending(struct state *os, struct state *ns);
+extern void unpend(struct ike_sa *ike, struct connection *cc);
+extern void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike);
 extern void flush_pending_by_state(struct ike_sa *ike);
 
 extern void connection_discard(struct connection *c);

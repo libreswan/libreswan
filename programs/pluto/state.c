@@ -2515,7 +2515,8 @@ void show_states_status(bool brief)
 
 			/* show any associated pending Phase 2s */
 			if (IS_IKE_SA(st))
-				show_pending_phase2(st->st_connection, st);
+				show_pending_phase2(st->st_connection,
+						    pexpect_ike_sa(st));
 		}
 
 		whack_log(RC_COMMENT, " "); /* spacer */

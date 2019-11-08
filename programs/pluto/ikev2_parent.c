@@ -544,7 +544,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 		if (uctx != NULL)
 			libreswan_log(
 				"Labeled ipsec is not supported with ikev2 yet");
-		add_pending(dup_any(whack_sock), st, c, policy, 1,
+		add_pending(dup_any(whack_sock), ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			    st->sec_ctx
 			    );
@@ -561,7 +561,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 			else
 				st->st_ike_pred = predecessor->st_serialno;
 		}
-		update_pending(predecessor, st);
+		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
 		whack_log(RC_NEW_V2_STATE + STATE_PARENT_I1,
 			  "%s: initiate, replacing #%lu",
 			  st->st_state->name,
@@ -2324,7 +2324,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	lset_t policy = pc->policy;
 
 	/* child connection */
-	struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
+	struct connection *cc = first_pending(pexpect_ike_sa(pst),
+					      &policy, &cst->st_whack_sock);
 
 	if (cc == NULL) {
 		cc = pc;
@@ -5538,16 +5539,17 @@ static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 }
 #endif
 
-void ikev2_rekey_ike_start(struct state *st)
+void ikev2_rekey_ike_start(struct ike_sa *ike)
 {
-	struct pending p;
-	p.whack_sock = null_fd;
-	p.isakmp_sa = st;
-	p.connection = st->st_connection;
-	p.policy = LEMPTY;
-	p.try = 1;
-	p.replacing = st->st_serialno;
-	p.uctx = st->sec_ctx;
+	struct pending p = {
+		.whack_sock = null_fd,
+		.ike = ike,
+		.connection = ike->sa.st_connection,
+		.policy = LEMPTY,
+		.try = 1,
+		.replacing = ike->sa.st_serialno,
+		.uctx = ike->sa.sec_ctx,
+	};
 	ikev2_initiate_child_sa(&p);
 }
 
@@ -5557,7 +5559,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 	char replacestr[32];
 	enum state_kind new_state = STATE_UNDEFINED;
 	enum sa_type sa_type = IPSEC_SA;
-	struct ike_sa *ike = ike_sa(p->isakmp_sa);
+	struct ike_sa *ike = p->ike;
 	struct connection *c = p->connection;
 
 	if (p->replacing == ike->sa.st_serialno) { /* IKE rekey exchange */
@@ -6173,7 +6175,7 @@ void v2_event_sa_rekey(struct state *st)
 	dbg("rekeying stale %s SA", satype);
 	if (IS_IKE_SA(st)) {
 		libreswan_log("initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
-		ikev2_rekey_ike_start(st);
+		ikev2_rekey_ike_start(pexpect_ike_sa(st));
 	} else {
 		/*
 		 * XXX: Don't be fooled, ipsecdoi_replace() is magic -
