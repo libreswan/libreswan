@@ -1527,7 +1527,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 		return STF_IGNORE;
 	}
 
-	if (need_this_intiator(st)) {
+	if (!need_this_initiator(st)) {
 		return STF_DROP;
 	}
 
@@ -5799,14 +5799,14 @@ bool need_this_intiator(struct state *st)
 	struct connection *c = st->st_connection;
 
 	if (st->st_state->kind !=  STATE_PARENT_I1)
-		return FALSE; /* ignore STATE_V2_CREATE_I ??? */
+		return true; /* ignore STATE_V2_CREATE_I ??? */
 
 	if (c->newest_ipsec_sa > st->st_serialno) {
 		libreswan_log("suppressing retransmit because superseded by #%lu try=%lu. Drop this negotiation",
 				c->newest_ipsec_sa, st->st_try);
-		return TRUE;
+		return false;
 	}
-	return FALSE;
+	return true;
 }
 
 void ikev2_record_newaddr(struct state *st, void *arg_ip)

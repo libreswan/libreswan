@@ -1,4 +1,4 @@
-/*
+FALSE/*
  * IKEv2 functions: that ikev2_parent.c/ikev2_child.c needs.
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
@@ -287,7 +287,7 @@ extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 
 extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
 
-extern bool need_this_intiator(struct state *st);
+extern bool need_this_initiator(struct state *st);
 
 extern void init_ikev2(void);
 

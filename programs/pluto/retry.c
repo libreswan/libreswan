@@ -162,7 +162,7 @@ void retransmit_v2_msg(struct state *st)
 			retransmit_count(pst) + 1);
 		});
 
-	if (need_this_intiator(st)) {
+	if (!need_this_initiator(st)) {
 		pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
 		delete_state(st);
 		return;
