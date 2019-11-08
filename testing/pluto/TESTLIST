@@ -371,6 +371,8 @@ kvmplutotest	ikev2-x509-33-id-notany			good
 kvmplutotest	ikev2-x509-34-id-notany-responder	good
 kvmplutotest	ikev2-x509-35-id-any-responder		good
 
+kvmplutotest	ikev2-x509-36-leftrightauth		good
+
 kvmplutotest	ikev2-no-nhelpers-01			good
 
 kvmplutotest	ikev2-auth-null-01			good
