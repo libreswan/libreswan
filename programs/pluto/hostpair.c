@@ -658,7 +658,7 @@ struct connection *find_next_host_connection(
 
 static struct connection *ikev2_find_host_connection(const ip_endpoint *local,
 						     const ip_endpoint *remote,
-						     lset_t policy)
+						     lset_t policy, bool *send_reject_response)
 {
 	struct connection *c = find_host_connection(local, remote, policy, LEMPTY);
 
@@ -705,6 +705,7 @@ static struct connection *ikev2_find_host_connection(const ip_endpoint *local,
 			dbg("initial parent SA message received on %s but no connection has been authorized with policy %s",
 			    str_endpoint(local, &b),
 			    bitnamesof(sa_policy_bit_names, policy));
+			*send_reject_response = true;
 			return NULL;
 		}
 		if (c->kind != CK_TEMPLATE) {
@@ -713,6 +714,23 @@ static struct connection *ikev2_find_host_connection(const ip_endpoint *local,
 			dbg("initial parent SA message received on %s for "PRI_CONNECTION" with kind=%s dropped",
 			    str_endpoint(local, &eb), pri_connection(c, &cib),
 			    enum_name(&connection_kind_names, c->kind));
+			/*
+			 * This is used when in IKE_INIT request is
+			 * received but hits an OE clear
+			 * foodgroup. There is no point sending the
+			 * message as it is unauthenticated and cannot
+			 * be trusted by the initiator. And the
+			 * responder is revealing itself to the
+			 * initiator while it is configured to never
+			 * talk to that particular initiator. With
+			 * this, the system does not need to enforce
+			 * this policy using a firewall.
+			 *
+			 * Note that this technically violates the
+			 * IKEv2 specification that states we MUST
+			 * answer (with NO_PROPOSAL_CHOSEN).
+			 */
+			*send_reject_response = false;
 			return NULL;
 		}
 		/* only allow opportunistic for IKEv2 connections */
@@ -745,8 +763,8 @@ static struct connection *ikev2_find_host_connection(const ip_endpoint *local,
 	return c;
 }
 
-struct connection *find_v2_host_pair_connection(struct msg_digest *md,
-						lset_t *policy)
+struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *policy,
+						bool *send_reject_response)
 {
 	/* authentication policy alternatives in order of decreasing preference */
 	static const lset_t policies[] = { POLICY_ECDSA, POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
@@ -754,11 +772,24 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md,
 	struct connection *c = NULL;
 	unsigned int i;
 
-	/* XXX in the near future, this loop should find type=passthrough and return STF_DROP */
+	/*
+	 * XXX in the near future, this loop should find
+	 * type=passthrough and return STF_DROP
+	 */
 	for (i=0; i < elemsof(policies); i++) {
+		/*
+		 * When the connection "isn't found" POLICY and
+		 * SEND_REJECTED_RESPONSE end up with the values from
+		 * the final POLICY_AUTH_NULL search.
+		 *
+		 * For instance, if an earlier search returns NULL but
+		 * clears SEND_REJECT_RESPONSE, that will be lost.
+		 */
 		*policy = policies[i] | POLICY_IKEV2_ALLOW;
+		*send_reject_response = true;
 		c = ikev2_find_host_connection(&md->iface->local_endpoint,
-					       &md->sender, *policy);
+					       &md->sender, *policy,
+					       send_reject_response);
 		if (c != NULL)
 			break;
 	}

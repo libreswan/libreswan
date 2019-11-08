@@ -1868,20 +1868,27 @@ void ikev2_process_packet(struct msg_digest **mdp)
 				}
 				/* else - create a draft state here? */
 				lset_t policy = LEMPTY;
-				struct connection *c = find_v2_host_pair_connection(md, &policy);
+				bool send_reject_response = true;
+				struct connection *c = find_v2_host_pair_connection(md, &policy,
+										    &send_reject_response);
 				if (c == NULL) {
-					/*
-					 * NO_PROPOSAL_CHOSEN is used
-					 * when the list of proposals
-					 * is empty, like when we did
-					 * not find any connection to
-					 * use.
-					 *
-					 * INVALID_SYNTAX is for
-					 * errors that a configuration
-					 * change could not fix.
-					 */
-					send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL);
+					if (send_reject_response) {
+						/*
+						 * NO_PROPOSAL_CHOSEN
+						 * is used when the
+						 * list of proposals
+						 * is empty, like when
+						 * we did not find any
+						 * connection to use.
+						 *
+						 * INVALID_SYNTAX is
+						 * for errors that a
+						 * configuration
+						 * change could not
+						 * fix.
+						 */
+						send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL);
+					}
 					return;
 				}
 				/*

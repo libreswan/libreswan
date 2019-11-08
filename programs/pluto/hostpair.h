@@ -60,7 +60,7 @@ extern void check_orientations(void);
 void init_host_pair(void);
 
 struct connection *find_v2_host_pair_connection(struct msg_digest *md,
-						lset_t *policy);
+						lset_t *policy, bool *send_reject_response);
 
 struct connection *find_next_host_connection(struct connection *c,
 					     lset_t req_policy, lset_t policy_exact_mask);
