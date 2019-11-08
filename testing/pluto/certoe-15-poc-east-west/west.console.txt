@@ -3,6 +3,8 @@ Preparing X.509 files
 west #
  ip route del default
 west #
+ ip route add default via 192.9.4.1
+Error: Nexthop has invalid gateway.
 west #
  certutil -D -n east -d sql:/etc/ipsec.d
 west #
@@ -137,14 +139,6 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 west #
  ping -n -c 1 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
@@ -202,14 +196,6 @@ src 192.1.2.254/32 dst 192.1.2.45/32
 	dir in priority 1564639 ptype main 
 src 192.1.2.45/32 dst 192.1.2.254/32 
 	dir out priority 1564639 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 

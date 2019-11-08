@@ -33,12 +33,31 @@ east #
 "clear-or-private#192.1.2.254/32"[2] ...192.1.2.254===10.0.10.1/32 #4: negotiated connection [192.1.2.23-192.1.2.23:0-65535 0] -> [10.0.10.1-10.0.10.1:0-65535 0]
 east #
  grep IKEv2_AUTH_ OUTPUT/*pluto.log
+OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256 into IKEv2 Notify Payload
+OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256: 00 02
+OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384 into IKEv2 Notify Payload
+OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384: 00 03
+OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512 into IKEv2 Notify Payload
+OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512: 00 04
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256 into IKEv2 Notify Payload
+OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256: 00 02
+OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384 into IKEv2 Notify Payload
+OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384: 00 03
+OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512 into IKEv2 Notify Payload
+OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512: 00 04
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256 into IKEv2 Notify Payload
+OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256: 00 02
+OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384 into IKEv2 Notify Payload
+OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384: 00 03
+OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512 into IKEv2 Notify Payload
+OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512: 00 04
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: Authenticated using RSA with IKEv2_AUTH_HASH_SHA2_512
 east #
 east #
  ../bin/check-for-core.sh
