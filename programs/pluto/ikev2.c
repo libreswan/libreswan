@@ -3485,14 +3485,6 @@ void complete_v2_state_transition(struct state *st,
 		release_pending_whacks(st, "internal error");
 		break;
 
-	case STF_DROP:
-		/* be vewy vewy quiet */
-		if (st != NULL) {
-			delete_state(st);
-			md->st = st = NULL;
-		}
-		break;
-
 	case STF_FATAL:
 		passert(st != NULL);
 		loglog_st(st, RC_FATAL, "encountered fatal error in state %s",
