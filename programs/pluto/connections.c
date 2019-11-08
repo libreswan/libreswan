@@ -1236,18 +1236,6 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 						conflict = TRUE;
 					}
 					break;
-				case AUTH_RSASIG:
-					if (auth_pol != POLICY_RSASIG && auth_pol != LEMPTY) {
-						loglog(RC_FATAL, "leftauthby=rsasig but authby= is not rsasig");
-						conflict = TRUE;
-					}
-					break;
-				case AUTH_ECDSA:
-					if (auth_pol != POLICY_ECDSA && auth_pol != LEMPTY) {
-						loglog(RC_FATAL, "leftauthby=ecdsa but authby= is not ecdsa");
-						conflict = TRUE;
-					}
-					break;
 				case AUTH_NULL:
 					if (auth_pol != POLICY_AUTH_NULL && auth_pol != LEMPTY) {
 						loglog(RC_FATAL, "leftauthby=null but authby= is not null");
@@ -1259,6 +1247,10 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 						loglog(RC_FATAL, "leftauthby=never but authby= is not never - double huh?");
 						conflict = TRUE;
 					}
+					break;
+				case AUTH_RSASIG:
+				case AUTH_ECDSA:
+					/* will be fixed later below */
 					break;
 				default:
 					bad_case(wm->left.authby);
@@ -1272,16 +1264,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 							prettypolicy(wm->policy & POLICY_ID_AUTH_MASK));
 					return false;
 				}
-			} else { /* leftauth != rightauth so authby MUST be unset */
-				if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
-					loglog(RC_FATAL,
-						"Failed to add connection \"%s\": leftauth=%s is unequal to rightauth=%s so authby=%s must not be set",
-							wm->name,
-							enum_name(&ikev2_asym_auth_name, wm->left.authby),
-							enum_name(&ikev2_asym_auth_name, wm->right.authby),
-							prettypolicy(wm->policy & POLICY_ID_AUTH_MASK));
-					return false;
-				}
+			} else {
 				if ((wm->left.authby == AUTH_PSK && wm->right.authby == AUTH_NULL) ||
 				    (wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_PSK)) {
 					loglog(RC_FATAL,
@@ -1322,6 +1305,16 @@ static bool extract_connection(const struct whack_message *wm, struct connection
        /* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
 	if (c->ike_version == IKEv1)
 		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
+	/* ignore symmetrical defaults if we got left/rightauth */
+	if (wm->left.authby != wm->right.authby)
+		c->policy = c->policy & ~POLICY_ID_AUTH_MASK;
+	/* remove default pubkey policy if left/rightauth is specified */
+	if (wm->left.authby == wm->right.authby) {
+		if (wm->left.authby == AUTH_RSASIG)
+			c->policy = (c->policy & ~(POLICY_ECDSA));
+		if (wm->left.authby == AUTH_ECDSA)
+			c->policy = (c->policy & ~(POLICY_RSASIG | POLICY_RSASIG_v1_5));
+	}
 	/* ignore supplied sighash and ECDSA (from defaults) for IKEv1 */
 	if (c->ike_version == IKEv2)
 		c->sighash_policy = wm->sighash_policy;
