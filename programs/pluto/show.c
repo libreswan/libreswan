@@ -42,7 +42,7 @@
 #include "crypto.h"
 #include "db_ops.h"
 
-static void show_system_security(void)
+static void show_system_security(struct whack_io *whackfd)
 {
 	int selinux = libreswan_selinux();
 #ifdef FIPS_CHECK
@@ -51,45 +51,45 @@ static void show_system_security(void)
 	int fips = FALSE;
 #endif
 
-	whack_log(fd, RC_COMMENT, " ");     /* spacer */
+	whack_log(whackfd, RC_COMMENT, " ");     /* spacer */
 
-	whack_log(fd, RC_COMMENT, "fips mode=%s;", fips ? "enabled" : "disabled");
+	whack_log(whackfd, RC_COMMENT, "fips mode=%s;", fips ? "enabled" : "disabled");
 
-	whack_log(fd, RC_COMMENT, "SElinux=%s",
+	whack_log(whackfd, RC_COMMENT, "SElinux=%s",
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 #ifdef HAVE_SECCOMP
-	whack_log(fd, RC_COMMENT, "seccomp=%s",
+	whack_log(whackfd, RC_COMMENT, "seccomp=%s",
 		pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
 			pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");
 #else
-	whack_log(fd, RC_COMMENT, "seccomp=unsupported");
+	whack_log(whackfd, RC_COMMENT, "seccomp=unsupported");
 #endif
-	whack_log(fd, RC_COMMENT, " ");     /* spacer */
+	whack_log(whackfd, RC_COMMENT, " ");     /* spacer */
 }
 
-void show_global_status(void)
+void show_global_status(struct whack_io *whackfd)
 {
-	show_globalstate_status();
-	show_pluto_stats();
+	show_globalstate_status(whackfd);
+	show_pluto_stats(whackfd);
 }
 
-void show_status(void)
+void show_status(struct whack_io *whackfd)
 {
-	show_kernel_interface();
-	show_ifaces_status();
-	whack_log(fd, RC_COMMENT, " ");     /* spacer */
-	show_system_security();
-	show_setup_plutomain();
-	show_debug_status();
-	show_setup_natt();
-	show_virtual_private();
-	kernel_alg_show_status();
-	ike_alg_show_status();
-	db_ops_show_status();
-	show_connections_status();
+	show_kernel_interface(whackfd);
+	show_ifaces_status(whackfd);
+	whack_log(whackfd, RC_COMMENT, " ");     /* spacer */
+	show_system_security(whackfd);
+	show_setup_plutomain(whackfd);
+	show_debug_status(whackfd);
+	show_setup_natt(whackfd);
+	show_virtual_private(whackfd);
+	kernel_alg_show_status(whackfd);
+	ike_alg_show_status(whackfd);
+	db_ops_show_status(whackfd);
+	show_connections_status(whackfd);
 	show_states_status(FALSE);
 #if defined(NETKEY_SUPPORT) || defined(KLIPS)
-	show_shunt_status();
+	show_shunt_status(whackfd);
 #endif
 }
 

@@ -545,7 +545,7 @@ extern struct connection *eclipsed(const struct connection *c, struct spd_route 
 /* print connection status */
 
 extern void show_one_connection(const struct connection *c);
-extern void show_connections_status(void);
+extern void show_connections_status(struct whack_io *whack);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);
 

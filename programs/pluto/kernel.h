@@ -328,8 +328,8 @@ struct bare_shunt {
 	struct bare_shunt *next;
 };
 
-extern void show_shunt_status(void);
-extern unsigned show_shunt_count(void);
+extern void show_shunt_status(struct whack_io *whackfd);
+extern unsigned show_shunt_count(struct whack_io *whackfd);
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 				   const ip_subnet *his,
@@ -433,7 +433,7 @@ static inline bool compatible_overlapping_connections(const struct connection *a
 extern const struct kernel_ops klips_kernel_ops;
 #endif
 
-extern void show_kernel_interface(void);
+extern void show_kernel_interface(struct whack_io *whackfd);
 extern void free_kernelfd(void);
 extern void expire_bare_shunts(void);
 

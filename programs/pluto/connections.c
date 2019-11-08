@@ -116,7 +116,7 @@ struct connection *conn_by_name(const char *nm, bool strict, bool quiet)
 	for (prev = NULL, p = connections; ; prev = p, p = p->ac_next) {
 		if (p == NULL) {
 			if (strict && !quiet) {
-				whack_log(RC_UNKNOWN_NAME,
+				whack_log(whackfd, RC_UNKNOWN_NAME,
 					"no connection named \"%s\"", nm);
 			}
 			break;
@@ -945,7 +945,7 @@ static bool load_end_cert_and_preload_secret(const char *which, const char *pubk
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
 		if (pk->u.rsa.modulus.len * BITS_PER_BYTE < FIPS_MIN_RSA_KEY_SIZE) {
-			whack_log(RC_FATAL,
+			whack_log(whackfd, RC_FATAL,
 				"FIPS: Rejecting cert with key size %d which is under %d",
 				pk->u.rsa.modulus.len * BITS_PER_BYTE,
 				FIPS_MIN_RSA_KEY_SIZE);
@@ -1904,7 +1904,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 		/* route if group is routed */
 		if (group->policy & POLICY_GROUTED) {
 			if (!trap_connection(t))
-				whack_log(RC_ROUTE, "could not route");
+				whack_log(whackfd, RC_ROUTE, "could not route");
 		}
 		return clone_str(t->name, "group instance name");
 	}
@@ -3632,7 +3632,7 @@ static void show_one_sr(const struct connection *c,
 	char topo[CONN_BUF_LEN];
 	ipstr_buf thisipb, thatipb;
 
-	whack_log(RC_COMMENT, "\"%s\"%s: %s; %s; eroute owner: #%lu",
+	whack_log(whackfd, RC_COMMENT, "\"%s\"%s: %s; %s; eroute owner: #%lu",
 		c->name, instance,
 		format_connection(topo, sizeof(topo), c, sr),
 		enum_name(&routing_story, sr->routing),
@@ -3643,7 +3643,7 @@ static void show_one_sr(const struct connection *c,
 		/* note: this macro generates a pair of arguments */
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		c->name, instance,
 		oriented(*c) ? "oriented" : "unoriented",
@@ -3667,7 +3667,7 @@ static void show_one_sr(const struct connection *c,
 		((END).CLIENT ? "BOTH??" : "server") : \
 		((END).CLIENT ? "client" : "none"))
 
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		"\"%s\"%s:   xauth us:%s, xauth them:%s, %s my_username=%s; their_username=%s",
 		c->name, instance,
 		/*
@@ -3689,13 +3689,13 @@ static void show_one_sr(const struct connection *c,
 
 	struct esb_buf auth1, auth2;
 
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		"\"%s\"%s:   our auth:%s, their auth:%s",
 		c->name, instance,
 		enum_show_shortb(&ikev2_asym_auth_name, sr->this.authby, &auth1),
 		enum_show_shortb(&ikev2_asym_auth_name, sr->that.authby, &auth2));
 
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s%s, cat:%s;",
 		c->name, instance,
 		COMBO(sr->this, modecfg_server, modecfg_client),
@@ -3710,13 +3710,13 @@ static void show_one_sr(const struct connection *c,
 #undef COMBO
 
 	if (c->modecfg_banner != NULL) {
-		whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
+		whack_log(whackfd, RC_COMMENT, "\"%s\"%s: banner:%s;",
 		c->name, instance, c->modecfg_banner);
 	}
 
 	const char *policy_label;
 	policy_label = (c->policy_label == NULL) ? "unset" : c->policy_label;
-	whack_log(RC_COMMENT, "\"%s\"%s:   policy_label:%s;",
+	whack_log(whackfd, RC_COMMENT, "\"%s\"%s:   policy_label:%s;",
 		  c->name, instance, policy_label);
 }
 
@@ -3751,7 +3751,7 @@ void show_one_connection(const struct connection *c)
 	/* Show CAs */
 	if (c->spd.this.ca.ptr != NULL || c->spd.that.ca.ptr != NULL) {
 		dn_buf this_ca, that_ca;
-		whack_log(RC_COMMENT,
+		whack_log(whackfd, RC_COMMENT,
 			  "\"%s\"%s:   CAs: '%s'...'%s'",
 			  c->name,
 			  instance,
@@ -3759,7 +3759,7 @@ void show_one_connection(const struct connection *c)
 			  str_dn_or_null(c->spd.that.ca, "%any", &that_ca));
 	}
 
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		"\"%s\"%s:   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		c->name,
 		instance,
@@ -3770,14 +3770,14 @@ void show_one_connection(const struct connection *c)
 		c->sa_rekey_fuzz,
 		c->sa_keying_tries);
 
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		  "\"%s\"%s:   retransmit-interval: %jdms; retransmit-timeout: %jds;",
 		  c->name,
 		  instance,
 		  deltamillisecs(c->r_interval),
 		  deltasecs(c->r_timeout));
 
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		  "\"%s\"%s:   initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
 		  c->name, instance,
 		  bool_str(c->initial_contact),
@@ -3787,12 +3787,12 @@ void show_one_connection(const struct connection *c)
 		  bool_str(c->send_no_esp_tfc));
 
 	if (c->policy_next != NULL) {
-		whack_log(RC_COMMENT,
+		whack_log(whackfd, RC_COMMENT,
 			"\"%s\"%s:   policy_next: %s",
 			c->name, instance, c->policy_next->name);
 	}
 
-	whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s%s%s%s%s;",
+	whack_log(whackfd, RC_COMMENT, "\"%s\"%s:   policy: %s%s%s%s%s;",
 		  c->name, instance,
 		  prettypolicy(c->policy),
 		  NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",
@@ -3827,7 +3827,7 @@ void show_one_connection(const struct connection *c)
 		strcpy(satfcstr, "none");
 
 	fmt_policy_prio(c->prio, prio);
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %u; mtu: %s; sa_prio:%s; sa_tfc:%s;",
 		  c->name, instance,
 		  prio,
@@ -3849,7 +3849,7 @@ void show_one_connection(const struct connection *c)
 		strcpy(markstr, "unset");
 	}
 
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; "
 		  "vti-routing:%s; vti-shared:%s;"
 		 " nic-offload:%s;"
@@ -3866,7 +3866,7 @@ void show_one_connection(const struct connection *c)
 		id_buf thisidb;
 		id_buf thatidb;
 
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
 		c->name, instance,
 		enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
@@ -3876,7 +3876,7 @@ void show_one_connection(const struct connection *c)
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
 		c->name, instance,
 		enum_name(&dpd_action_names, c->dpd_action),
@@ -3906,7 +3906,7 @@ void show_one_connection(const struct connection *c)
 		}
 	}
 
-	whack_log(RC_COMMENT,
+	whack_log(whackfd, RC_COMMENT,
 		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu;",
 		c->name,
 		instance,
@@ -3914,7 +3914,7 @@ void show_one_connection(const struct connection *c)
 		c->newest_ipsec_sa);
 
 	if (c->connalias != NULL) {
-		whack_log(RC_COMMENT,
+		whack_log(whackfd, RC_COMMENT,
 			"\"%s\"%s:   aliases: %s",
 			c->name,
 			instance,
@@ -3931,9 +3931,9 @@ void show_connections_status(void)
 	int active = 0;
 	struct connection *c;
 
-	whack_log(RC_COMMENT, " "); /* spacer */
-	whack_log(RC_COMMENT, "Connection list:"); /* spacer */
-	whack_log(RC_COMMENT, " "); /* spacer */
+	whack_log(whackfd, RC_COMMENT, " "); /* spacer */
+	whack_log(whackfd, RC_COMMENT, "Connection list:"); /* spacer */
+	whack_log(whackfd, RC_COMMENT, " "); /* spacer */
 
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = c->ac_next) {
@@ -3962,10 +3962,10 @@ void show_connections_status(void)
 			show_one_connection(array[i]);
 
 		pfree(array);
-		whack_log(RC_COMMENT, " "); /* spacer */
+		whack_log(whackfd, RC_COMMENT, " "); /* spacer */
 	}
 
-	whack_log(RC_COMMENT, "Total IPsec connections: loaded %d, active %d",
+	whack_log(whackfd, RC_COMMENT, "Total IPsec connections: loaded %d, active %d",
 		count, active);
 }
 

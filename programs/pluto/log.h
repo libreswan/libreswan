@@ -192,7 +192,11 @@ extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
  * whack logging
  */
 
-log_raw_fn whack_log_raw;
+void whack_log_raw(struct whack_io *, enum rc_type,
+		   const struct state *st,
+		   const struct connection *c,
+		   const ip_endpoint *from,
+		   const char *message, ...) PRINTF_LIKE(6);
 
 bool whack_log_p(void);
 
@@ -206,11 +210,11 @@ bool whack_log_p(void);
 						  FMT,##__VA_ARGS__)
 
 /* show status, usually on whack log */
-extern void show_status(void);
+extern void show_status(struct whack_io *);
 
-extern void show_setup_plutomain(void);
-extern void show_setup_natt(void);
-extern void show_global_status(void);
+extern void show_setup_plutomain(struct whack_io *);
+extern void show_setup_natt(struct whack_io *);
+extern void show_global_status(struct whack_io *);
 
 enum linux_audit_kind {
 	LAK_PARENT_START,

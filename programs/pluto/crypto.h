@@ -79,6 +79,6 @@ struct connection;
 
 void ike_alg_show_connection(const struct connection *c, const char *instance);
 
-void ike_alg_show_status(void);
+void ike_alg_show_status(struct whack_io *whackfd);
 
 #endif /* _CRYPTO_H */
