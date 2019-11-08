@@ -503,7 +503,7 @@ static struct state *new_state(enum ike_version ike_version,
 			       const struct finite_state *fs,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
-			       enum sa_type sa_type)
+			       enum sa_type sa_type, fd_t whackfd)
 {
 	static so_serial_t next_so = SOS_FIRST;
 	union sas *sas = alloc_thing(union sas, "struct state in new_state()");
@@ -511,7 +511,7 @@ static struct state *new_state(enum ike_version ike_version,
 	passert(&sas->st == &sas->ike.sa);
 	struct state *st = &sas->st;
 	*st = (struct state) {
-		.st_whack_sock = null_fd,	/* note: not 0 */
+		.st_whack_sock = whackfd,
 		.st_state = fs,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
@@ -534,10 +534,10 @@ static struct state *new_state(enum ike_version ike_version,
 	return st;
 }
 
-struct ike_sa *new_v1_istate(void)
+struct ike_sa *new_v1_istate(fd_t whackfd)
 {
 	struct state *st = new_state(IKEv1, &state_undefined, ike_initiator_spi(),
-				     zero_ike_spi, IKE_SA);
+				     zero_ike_spi, IKE_SA, whackfd);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	return ike;
 }
@@ -547,7 +547,7 @@ struct ike_sa *new_v1_rstate(struct msg_digest *md)
 	struct state *st = new_state(IKEv1, &state_undefined,
 				     md->hdr.isa_ike_spis.initiator,
 				     ike_responder_spi(&md->sender),
-				     IKE_SA);
+				     IKE_SA, null_fd);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	update_ike_endpoints(ike, md);
 	return ike;
@@ -561,7 +561,7 @@ struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 {
 	struct state *st = new_state(IKEv2, &state_undefined,
 				     ike_initiator_spi, ike_responder_spi,
-				     IKE_SA);
+				     IKE_SA, whack_sock);
 	st->st_sa_role = sa_role;
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
@@ -581,7 +581,7 @@ struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 	pexpect(fs->v2_transitions != NULL);
 	pexpect(fs->nr_transitions == 1);
 	/* st->st_v2_transition = fs->state_transitions[0] */
-	initialize_new_state(&ike->sa, c, policy, try, whack_sock);
+	initialize_new_state(&ike->sa, c, policy, try);
 	return ike;
 }
 
@@ -1457,7 +1457,7 @@ static struct state *duplicate_state(struct state *st,
 	nst = new_state(st->st_ike_version, fs,
 			st->st_ike_spis.initiator,
 			st->st_ike_spis.responder,
-			sa_type);
+			sa_type, null_fd);
 
 	DBG(DBG_CONTROL,
 		DBG_log("duplicating state object #%lu \"%s\"%s as #%lu for %s",

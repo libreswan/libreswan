@@ -452,14 +452,12 @@ bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id
 void initialize_new_state(struct state *st,
 			  struct connection *c,
 			  lset_t policy,
-			  int try,
-			  fd_t whack_sock)
+			  int try)
 {
 	update_state_connection(st, c);
 	set_state_ike_endpoints(st, c);
 
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
-	st->st_whack_sock = whack_sock;
 	st->st_try = try;
 
 	for (const struct spd_route *sr = &c->spd;

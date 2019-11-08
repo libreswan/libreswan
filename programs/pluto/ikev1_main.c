@@ -105,12 +105,12 @@ void main_outI1(fd_t whack_sock,
 		const threadtime_t *inception,
 		struct xfrm_user_sec_ctx_ike *uctx)
 {
-	struct ike_sa *ike = new_v1_istate();
+	struct ike_sa *ike = new_v1_istate(whack_sock);
 	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
 
 	/* set up new state */
-	initialize_new_state(st, c, policy, try, whack_sock);
+	initialize_new_state(st, c, policy, try);
 	push_cur_state(st);
 
 	change_state(st, STATE_MAIN_I1);

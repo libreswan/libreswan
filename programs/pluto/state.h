@@ -785,7 +785,7 @@ extern bool states_use_connection(const struct connection *c);
 
 /* state functions */
 
-struct ike_sa *new_v1_istate(void);
+struct ike_sa *new_v1_istate(fd_t whackfd);
 struct ike_sa *new_v1_rstate(struct msg_digest *md);
 struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 			    const ike_spi_t ike_initiator_spi,
@@ -843,8 +843,7 @@ extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
 extern void initialize_new_state(struct state *st,
 				 struct connection *c,
 				 lset_t policy,
-				 int try,
-				 fd_t whack_sock);
+				 int try);
 
 extern void show_traffic_status(const char *name);
 extern void show_states_status(bool brief);

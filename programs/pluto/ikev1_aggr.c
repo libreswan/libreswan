@@ -992,11 +992,11 @@ void aggr_outI1(fd_t whack_sock,
 	}
 
 	/* set up new state */
-	struct ike_sa *ike = new_v1_istate();
+	struct ike_sa *ike = new_v1_istate(whack_sock);
 	struct state *st = &ike->sa;
 	statetime_t start = statetime_backdate(st, inception);
 	change_state(st, STATE_AGGR_I1);
-	initialize_new_state(st, c, policy, try, whack_sock);
+	initialize_new_state(st, c, policy, try);
 	push_cur_state(st);
 
 	if (!init_aggr_st_oakley(st, policy)) {
