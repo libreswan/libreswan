@@ -2311,6 +2311,11 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	stf_status authstat = emit_v2AUTH(ike, &idhash, &sk.pbs, &null_auth);
 	if (authstat != STF_OK) {
 		freeanychunk(null_auth);
+		passert(IS_CHILD_SA(cst));
+		dbg("switching MD.ST from CHILD #%lu to IKE #%lu; ulgh",
+		    md->st->st_serialno, ike->sa.st_serialno);
+		md->st = &ike->sa;
+		discard_state(&cst);
 		return authstat;
 	}
 
