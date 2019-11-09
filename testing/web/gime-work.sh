@@ -82,11 +82,18 @@ while read commits ; do
 
     # directory containing test result?
     #
-    # Git seems to use both 7 and 9 character abbreviated hashes.  Try
-    # both.
+    # Git's idea of how long an abrievated hash needs to be keeps
+    # growing.
 
     resultdir=
-    for h in ${commit} $(expr ${commit} : '\(.......\).*') $(expr ${commit} : '\(.........\).*') ; do
+    for h in ${commit} \
+		 $(expr ${commit} : '\(............\).*') \
+		 $(expr ${commit} : '\(...........\).*') \
+		 $(expr ${commit} : '\(..........\).*') \
+		 $(expr ${commit} : '\(.........\).*') \
+		 $(expr ${commit} : '\(........\).*') \
+		 $(expr ${commit} : '\(.......\).*') \
+	     ; do
 	d=$(echo ${summarydir}/*-g${h}-* | awk '{print $1}')
 	if test -d "$d" ; then
 	    resultdir=$d
