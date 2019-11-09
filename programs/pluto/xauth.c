@@ -43,10 +43,16 @@ struct xauth {
 	xauth_callback_t *callback;
 	bool abort;
 	pid_t child;
+	pam_handle_t *ptr_pam_ptr = NULL;
 };
 
 static void pfree_xauth(struct xauth *x)
 {
+  /*
+   * @avi
+   * don't free ptr_pam_ptr because we need to keep pam ptr alive for as long as the
+   * session is alive, dpd code at connections.c will take care of it.
+   */
 	pfree(x->ptarg.name);
 	pfree(x->ptarg.password);
 	pfree(x->ptarg.c_name);
@@ -218,6 +224,13 @@ void xauth_start_pam_thread(struct state *st,
 		return;
 	}
 	libreswan_log("Telmate/GTL XAUTH:: User: '%s' password: '%s' authenticating...", name, password);
+    if(xauth->ptr_pam_ptr != NULL) {
+      st->st_connection->ptr_gtl_pam_session = xauth->ptr_pam_ptr; /* ptr copy */
+      DBG_log("Telmate/GTL XAUTH:: pam handle ptr was NOT NULL, copied to connection struct.");
+    } else {
+      libreswan_log("Telmate/GTL XAUTH:: pam handle ptr IS NULL, felt cute, might crash later?");
+    }
+
 	st->st_xauth = xauth;
 	pstats_xauth_started++;
 }

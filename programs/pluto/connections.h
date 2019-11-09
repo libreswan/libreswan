@@ -257,6 +257,8 @@ struct connection {
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 	enum encaps_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
 
+    pam_handle_t *ptr_gtl_pam_session;       /* keep the handle alive for the as long as the connection is */
+
 	/* Network Manager support */
 #ifdef HAVE_NM
 	bool nmconfigured;

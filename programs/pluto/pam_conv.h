@@ -24,8 +24,9 @@ struct pam_thread_arg {
 	so_serial_t st_serialno;
 	unsigned long c_instance_serial;
 	const char *atype;  /* string XAUTH or IKEv2 */
+
 };
 
 extern bool do_pam_authentication(struct pam_thread_arg *arg);
-
+extern bool impl_pam_close_session(pam_handle_t *pamh);
 #endif /* XAUTH_HAVE_PAM */
