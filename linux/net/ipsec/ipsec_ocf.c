@@ -7,7 +7,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -96,7 +96,7 @@ static void ipsec_ocf_queue_init(void)
 {
 	skb_queue_head_init(&ipsec_ocf_skbq);
 	tasklet_init(&ipsec_ocf_task, ipsec_ocf_skbq_process,
-		     (unsigned long) 0);
+		     0ul);
 }
 
 #define ipsec_ocf_queue_task(func, this) \
@@ -179,7 +179,7 @@ static inline unsigned char *safe_skb_put(struct sk_buff *skb, int extend)
 }
 
 /*
- * We need to grow the skb to accommodate the expanssion of the ipcomp packet.
+ * We need to grow the skb to accommodate the expansion of the ipcomp packet.
  *
  * The following comment comes from the skb_decompress() which does the
  * same...
@@ -539,7 +539,7 @@ static int ipsec_ocf_rcv_cb(struct cryptop *crp)
 				       ipsec_skb_offset(irs->skb, irs->iph));
 		KLIPS_IP_PRINT(debug_rcv & DB_RX_PKTRX, ip_hdr(irs->skb));
 
-		/* relese the backup copy */
+		/* release the backup copy */
 		if (irs->pre_ipcomp_skb) {
 			kfree_skb(irs->pre_ipcomp_skb);
 			irs->pre_ipcomp_skb = NULL;

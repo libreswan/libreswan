@@ -1,3 +1,0 @@
-These tests check that the V2 ipsec setup and auto scripts match the V1
-scripts, when intended changes have been taken into account.
-This test compares the standard 1.98b ipsec.conf and a V2 emulation.

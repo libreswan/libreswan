@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -13,90 +13,72 @@ initdone
 east #
  : dump key-length attributes to the connsole - none can be zero
 east #
- grep -A 1 'af+type: IKEv2_KEY_LENGTH' /tmp/pluto.log
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+ grep -A 1 'af+type: AF+IKEv2_KEY_LENGTH' /tmp/pluto.log
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 east #
 east #
  ../bin/check-for-core.sh

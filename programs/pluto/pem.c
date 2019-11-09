@@ -5,11 +5,12 @@
  * Copyright (C) 2003-2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -33,7 +34,6 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#include <libreswan.h>
 #define HEADER_DES_LOCL_H	/*
 				 * stupid trick to force prototype decl in
 				 * <des.h>
@@ -54,7 +54,7 @@
  */
 static bool present(const char* pattern, chunk_t* ch)
 {
-	u_int pattern_len = strlen(pattern);
+	unsigned pattern_len = strlen(pattern);
 
 	if (ch->len >= pattern_len &&
 		strneq((char *)ch->ptr, pattern, pattern_len)) {
@@ -79,7 +79,7 @@ static bool match(const char *pattern, const chunk_t *ch)
  */
 static bool find_boundary(const char *tag, chunk_t *line)
 {
-	chunk_t name = empty_chunk;
+	chunk_t name = EMPTY_CHUNK;
 
 	if (!present("-----", line))
 		return FALSE;
@@ -128,14 +128,14 @@ static bool extract_token(chunk_t *token, char termination, chunk_t *src)
 	u_char *eot = memchr(src->ptr, termination, src->len);
 
 	/* initialize empty token */
-	*token = empty_chunk;
+	*token = EMPTY_CHUNK;
 
 	if (eot == NULL)	/* termination symbol not found */
 		return FALSE;
 
 	/* extract token */
 	token->ptr = src->ptr;
-	token->len = (u_int)(eot - src->ptr);
+	token->len = (unsigned)(eot - src->ptr);
 
 	/* advance src pointer after termination symbol */
 	src->ptr = eot + 1;
@@ -204,9 +204,9 @@ err_t pemtobin(chunk_t *blob)
 
 	state_t state  = PEM_PRE;
 
-	chunk_t src    = *blob;
-	chunk_t dst    = *blob;
-	chunk_t line   = empty_chunk;
+	chunk_t src = *blob;
+	chunk_t dst = *blob;
+	chunk_t line = EMPTY_CHUNK;
 
 	/* zero size of converted blob */
 	dst.len = 0;
@@ -228,8 +228,8 @@ err_t pemtobin(chunk_t *blob)
 					PEM_BODY : PEM_HEADER;
 			}
 			if (state == PEM_HEADER) {
-				chunk_t name  = empty_chunk;
-				chunk_t value = empty_chunk;
+				chunk_t name = EMPTY_CHUNK;
+				chunk_t value = EMPTY_CHUNK;
 
 				/* an empty line separates HEADER and BODY */
 				if (line.len == 0) {
@@ -242,12 +242,11 @@ err_t pemtobin(chunk_t *blob)
 					continue;
 
 				if (match("Proc-Type",
-						&name) && *value.ptr == '4')
+						&name) && *value.ptr == '4') {
 					return "Proc-Type: encrypted files no longer supported outside of the NSS database, please import these into NSS";
-
-				else if (match("DEK-Info", &name))
+				} else if (match("DEK-Info", &name)) {
 					return "DEK-Info: encrypted files no longer supported outside of the NSS database, please import these into NSS";
-
+				}
 			} else {
 				/* state is PEM_BODY */
 				const char *ugh = NULL;

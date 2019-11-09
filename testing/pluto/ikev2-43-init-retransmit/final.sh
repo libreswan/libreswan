@@ -1,5 +1,5 @@
-ipsec look
-grep retransmits: /tmp/pluto.log | sed -e 's/current time is [.0-9]*/current time is .../'
+../../pluto/bin/ipsec-look.sh
+hostname | grep east > /dev/null && grep ikev2-responder-retransmit /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

@@ -192,7 +192,7 @@ v2.6.33 (February 18, 2011)
          is added for the localnet to the ipsec device [Tuomo]
    #1201 dpd + ddns does not work [Mattias Walström]
    #1204 Workaround for iPhone/MacOS X NAT problem [Wolfgang Nothdurft]
-   #1210 Failes to compile with uClibc >= 0.9.29 [mb@openwrt]
+   #1210 Fails to compile with uClibc >= 0.9.29 [mb@openwrt]
 
 v2.6.32 (December 17, 2010)
 * Remove by default forced -DLEAK_DETECTIVE [Tuomo]
@@ -202,7 +202,7 @@ v2.6.32 (December 17, 2010)
 * NOMMU: Added HAVE_NO_FORK?= option to Makefile.inc (default false) [Paul]
 * INTEROP: Ignore IKEv1 notification type 40001 (Netscreen private use)
     [Andreas/Daniel]
-* IKEv2: Fix crash on receiving retransmited STATE_PARENT_I2 on bad AUTH [Paul]
+* IKEv2: Fix crash on receiving retransmitted STATE_PARENT_I2 on bad AUTH [Paul]
 * IKEv2: Check for USE_TRANSPORT_MODE in all received notification payloads,
     not just the first notify payload. This is Red Hat bugzilla 646718 [Avesh]
 * MAST: The mastX interface no longer gets/needs an IP address [Paul]
@@ -343,7 +343,7 @@ v2.6.28 (July 29, 2010)
 * _startnetkey update for DNS and NetworkManager [Avesh]
 * SAREF: fix bug in stream-socket saref mode [Bart]
 * Added TCP header flags to ipsec_print_ip() output [Bart]
-* KLIPS: Don't fail non-existant header_ops (breaks ppp) [David]
+* KLIPS: Don't fail non-existent header_ops (breaks ppp) [David]
 * KLIPS: ip_select_ident hashing fix in AH xmit path [Kirill Berezin]
 * HAVE_STATSD: Fix phase1/phase2 logging through HAVE_STATSD interface [David]
 * HAVE_STATSD: log output fix when two connections share a phase1 [David]
@@ -646,7 +646,7 @@ v2.6.20 (Feb 9, 2009)
 
 v2.6.19 (Nov 24, 2008)
 * Fix for L2TP/IPsec with Windows machines having their packets
-  disgarded by accident [Hiren Joshi]
+  discarded by accident [Hiren Joshi]
 * Workaround for bad "%v:" virtual_private= entries [paul]
 * Fixes to interop with SoftRemote/aggressive mode [David McCullough]
 * Fix for ERROR: Module xfrm6_tunnel is in use by ipcomp6 [paul]
@@ -788,7 +788,7 @@ v2.6.14 (Jun 6, 2008)
 * Various fixes on strnat, chdir, fwrite, fgets, etc. [paul]
 * Fix for a potential crasher when displaying status using certs [paul]
 * Removed obsoleted and unused  hardware random related defines [paul]
-* Maintanance on IKEv2 properties and names [paul]
+* Maintenance on IKEv2 properties and names [paul]
 * IKEv2 rekey fix for initiator [herbert]
 * KLIPS fixes to compile on 2.6.24+ [david/paul]
 * Added AES-CCM support [herbert]
@@ -976,7 +976,7 @@ v2.4.11 (Dec 4, 2007)
   #185: Deadlock in function "scx_release()" daemon pluto.(SMARTCARD) [Kurodo]
 
 v2.5.15 (Aug 14, 2007)
-   change ipsec_breakroute to permit non-existant eroute's to be replaced.
+   change ipsec_breakroute to permit non-existent eroute's to be replaced.
    fix for NAT-T negotiation with IP address changes during negotiation.
    adjusted addconn to support nat-t debug keywords.
 
@@ -1046,7 +1046,7 @@ v2.5.0sbs4 (Dec 11, 2005)
 	change the order of the virtual IP address setting and the
 	port-wildcard processing.
         This patch also provides some additional debugging of the proposal
-	which actually processed by the machinery.
+	that is actually processed by the machinery.
 
     tests for L2TP+X.509 L2TP configuration --- 2 clients behind the
         same NAT with certificates that need to have their connection both
@@ -1107,7 +1107,7 @@ v2.4.10 (Nov 6, 2007)
   Use the workaround for OSX clients using rightprotoport=17/0
 * Backport of fix for xauth name containing a space [paul]
 * Fix for final next payload in Aggressive Mode [David McCullough]
-* Fixes for compliling against 2.6.22 [David McCullough / Hugh Redelmeier]
+* Fixes for compiling against 2.6.22 [David McCullough / Hugh Redelmeier]
   (note: NAT-T KLIPS patch will not work on 2.6.23+)
 * Speed gains in the scripts on systems with many interfaces [David McCullough]
 * passert declaration fix [David McCullough]
@@ -1207,7 +1207,7 @@ v2.4.6 (Aug 4, 2006)
   remove IP addresses from IP aliases bound to ipsecX devices.
 * Fixed typo in ipsec.conf's virtual_private example
 * Improved protocol detection in ipsec_print_ip() [bart]
-* Fixed minimum skb length requried for ipsec decompression [bart]
+* Fixed minimum skb length required for ipsec decompression [bart]
   (This is probably bug #609)
 * Fix a 64bit bug in compression code [bart]
 * Removing a left over '#else' that split another '#if/#endif' block in two
@@ -1241,7 +1241,7 @@ v2.4.5 (Apr 6, 2006)
   are preferred over software routines.
 * allow rightsubnet= with type=transport for L2TP behind NAT.
 * Refactored natd_lookup / hash code, probably fixes lot of NAT related bugs
-* Fix for interop with Cisco devices which propose port 0 (eg: VPN3000)
+* Fix for interop with Cisco devices that propose port 0 (eg: VPN3000)
 * When DPD rcookie is invalid, just warn instead of ignoring entirely
 * Redid all the DPD log messages
 * Fix for manual.in to not use a complicated sed line that some embedded
@@ -1261,7 +1261,7 @@ v2.4.5 (Apr 6, 2006)
        connection. (fix by Matthias Haas <mh@pompase.net>)
   #560 Pluto crash (memory leak fixes in pluto by Ilia Sotnikov)
   #563 Error when unload ipsec.ko module "rmmod ipsec" [dupl bug]
-  #568 uninitialized struct in ipsec_tunnel.c coud break routing under 2.6
+  #568 uninitialized struct in ipsec_tunnel.c could break routing under 2.6
        kernels
   #569 ipsec module unload crasher
   #573 Openswan fails to compile with NAT_TRAVERSAL=false
@@ -1357,7 +1357,7 @@ v2.3.1
 * NAT-T RFC support (mlafon/mcr)
 * NAT-T Server Side rewrite - handles rekeying a lot better
 * NAT-T Client Side rekey bug fixed
-* Removed HowTo (obselete)
+* Removed HowTo (obsolete)
 * IPKG packaging updates
 * Log message updates
 * dpdaction=restart support

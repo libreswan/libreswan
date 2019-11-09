@@ -1,0 +1,75 @@
+/testing/guestbin/swan-prep --46
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add east
+002 added connection description "east"
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+east NOW
+XFRM state:
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+XFRM policy:
+src 2001:db8:0:2::/64 dst 2001:db8:0:3:1::/128
+	dir out priority 1032063 ptype main
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto esp reqid REQID mode tunnel
+src 2001:db8:0:3:1::/128 dst 2001:db8:0:2::/64
+	dir fwd priority 1032063 ptype main
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto esp reqid REQID mode tunnel
+src 2001:db8:0:3:1::/128 dst 2001:db8:0:2::/64
+	dir in priority 1032063 ptype main
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto esp reqid REQID mode tunnel
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority 1 ptype main
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+::1 dev lo proto kernel metric 256
+2001:db8:0:1::/64 via 2001:db8:1:2::45 dev eth1
+2001:db8:0:2::/64 dev eth0 proto kernel metric 256
+2001:db8:1:2::/64 dev eth1 proto kernel metric 256
+fe80::/64 dev eth1 proto kernel metric 256
+fe80::/64 dev eth0 proto kernel metric 256
+default via 2001:db8:1:2::254 dev eth1
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

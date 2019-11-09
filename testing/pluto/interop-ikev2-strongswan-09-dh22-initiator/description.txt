@@ -1,8 +1,0 @@
-Basic pluto with IKEv1 using PSK on the responder (east), and Strongswan on
-the initiator (west).
-
-This tests our response to DH22, which we no longer support. This is using IKEv2.
-Unlike IKEv1, stongswan now does allow us to use DH24, and the connection succeeds
-with DH24 after libreswan rejects DH22
-
-libreswan should only answer with INVALID_KE, and not with NO_PROPOSAL_CHOSEN

@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 road #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
@@ -19,10 +19,11 @@ initdone
 road #
  ipsec auto --up eastnet-any
 002 "eastnet-any"[1] 192.1.2.23 #1: initiating v2 parent SA
-133 "eastnet-any"[1] 192.1.2.23 #1: STATE_PARENT_I1: initiate
-133 "eastnet-any"[1] 192.1.2.23 #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "eastnet-any"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+1v2 "eastnet-any"[1] 192.1.2.23 #1: initiate
+1v2 "eastnet-any"[1] 192.1.2.23 #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "eastnet-any"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "eastnet-any"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "eastnet-any"[1] 192.1.2.23 #2: Authenticated using authby=secret
 002 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.13.2
 002 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 5.6.7.8
@@ -58,10 +59,10 @@ road #
 road #
  ipsec auto --down eastnet-any
 002 "eastnet-any"[1] 192.1.2.23: terminating SAs using this connection
-002 "eastnet-any" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "eastnet-any" #2: ESP traffic information: in=336B out=336B
-002 "eastnet-any" #2: down-client output: restoring resolvconf
-002 "eastnet-any" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "eastnet-any"[1] 192.1.2.23 #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "eastnet-any"[1] 192.1.2.23 #2: ESP traffic information: in=336B out=336B
+002 "eastnet-any"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
+002 "eastnet-any"[1] 192.1.2.23 #1: deleting state (STATE_PARENT_I3) and sending notification
 002 "eastnet-any"[1] 192.1.2.23: deleting connection "eastnet-any"[1] 192.1.2.23 instance with peer 192.1.2.23
 road #
  cat /etc/resolv.conf

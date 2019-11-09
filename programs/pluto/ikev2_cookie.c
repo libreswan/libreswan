@@ -1,0 +1,186 @@
+/* IKEv2 cookie calculation, for Libreswan
+ *
+ * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
+ * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2010,2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ */
+
+#include "defs.h"
+#include "rnd.h"
+#include "ikev2_cookie.h"
+#include "demux.h"
+#include "ike_alg_hash.h"	/* for sha2 */
+#include "crypt_hash.h"
+#include "ikev2_send.h"
+#include "log.h"
+
+/*
+ * That the cookie size of 32-bytes happens to match
+ * SHA2_256_DIGEST_SIZE is just a happy coincidence.
+ */
+typedef struct {
+	uint8_t bytes[32];
+} v2_cookie_t;
+
+static v2_cookie_t v2_cookie_secret;
+
+void refresh_v2_cookie_secret(void)
+{
+	get_rnd_bytes(&v2_cookie_secret, sizeof(v2_cookie_secret));
+	DBG(DBG_PRIVATE,
+	    DBG_dump_thing("v2_cookie_secret", v2_cookie_secret));
+}
+
+/*
+ * Cookie = <VersionIDofSecret> | Hash(Ni | IPi | SPIi | <secret>)
+ * where <secret> is a randomly generated secret known only to us
+ *
+ * Our implementation does not use <VersionIDofSecret> which means
+ * once a day and while under DOS attack, we could fail a few cookies
+ * until the peer restarts from scratch.
+ */
+static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
+				      struct msg_digest *md,
+				      shunk_t Ni)
+{
+	struct crypt_hash *ctx = crypt_hash_init("IKEv2 COOKIE",
+						 &ike_alg_hash_sha2_256);
+
+	crypt_hash_digest_hunk(ctx, "Ni", Ni);
+
+	shunk_t IPi = address_as_shunk(&md->sender);
+	crypt_hash_digest_hunk(ctx, "IPi", IPi);
+
+	crypt_hash_digest_thing(ctx, "SPIi", md->hdr.isa_ike_initiator_spi);
+
+	crypt_hash_digest_thing(ctx, "<secret>", v2_cookie_secret);
+
+	/* happy coincidence? */
+	pexpect(sizeof(cookie->bytes) == SHA2_256_DIGEST_SIZE);
+	crypt_hash_final_bytes(&ctx, cookie->bytes, sizeof(cookie->bytes));
+
+	return true;
+}
+
+bool v2_rejected_initiator_cookie(struct msg_digest *md,
+				  bool me_want_cookie)
+{
+	/* establish some home truths, but don't barf */
+	if (!pexpect(md->hdr.isa_msgid == 0) ||
+	    !pexpect(v2_msg_role(md) == MESSAGE_REQUEST) ||
+	    !pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) ||
+	    !pexpect(md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I)) {
+		return true; /* reject cookie */
+	}
+
+	/*
+	 * Expect the cookie notification to be first, and don't
+	 * bother checking for things like duplicates.
+	 */
+	struct payload_digest *cookie_digest = NULL;
+	if (md->hdr.isa_np == ISAKMP_NEXT_v2N &&
+	    pexpect(md->chain[ISAKMP_NEXT_v2N] != NULL) &&
+	    md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type == v2N_COOKIE) {
+		cookie_digest = md->chain[ISAKMP_NEXT_v2N];
+	}
+	if (!me_want_cookie && cookie_digest == NULL) {
+		dbg("DDOS disabled and no cookie sent, continuing");
+		return false; /* all ok!?! */
+	}
+	pexpect(me_want_cookie || cookie_digest != NULL);
+
+	/*
+	 * Paranoid mode is on - either DDOS or there's a cookie (or
+	 * both).  So need to compute a cookie, but to do that v2Ni is
+	 * needed ...
+	 *
+	 * Annoyingly this is the only reason why the payload needs to
+	 * be parsed - the cookie is first so parsing the full packet
+	 * shouldn't be needed.
+	 *
+	 * RFC 5996 Section 2.10 Nonces used in IKEv2 MUST be randomly
+	 * chosen, MUST be at least 128 bits in size, and MUST be at
+	 * least half the key size of the negotiated pseudorandom
+	 * function (PRF) (We can check for minimum 128bit length).
+	 */
+	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
+		rate_log(md, "DDOS cookie requires Ni paylod - dropping message");
+		return true; /* reject cookie */
+	}
+	shunk_t Ni = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
+	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
+		rate_log(md, "DOS cookie failed as Ni payload invalid  - dropping message");
+		return true; /* reject cookie */
+	}
+
+	/* Most code paths require our cookie, compute it. */
+	v2_cookie_t my_cookie;
+	if (!compute_v2_cookie_from_md(&my_cookie, md, Ni)) {
+		return true; /* reject cookie */
+	}
+	chunk_t local_cookie = chunk(&my_cookie, sizeof(my_cookie));
+
+	/* No cookie? demand one */
+	if (me_want_cookie && cookie_digest == NULL) {
+		rate_log(md, "DOS mode on; responding to IKE_SA_INIT with cookie notification request");
+		send_v2N_response_from_md(md, v2N_COOKIE, &local_cookie);
+		return true; /* reject cookie */
+	}
+
+	/* done: !me_want_cookie && cookie_digest == NULL */
+	/* done: me_want_cookie && cookie_digest == NULL */
+	if (!pexpect(cookie_digest != NULL)) {
+		return true; /* reject cookie */
+	}
+
+	/*
+	 * Check that the cookie notification is well constructed.
+	 * Mainly for own sanity.
+	 *
+	 * Since they payload is understood ISAKMP_PAYLOAD_CRITICAL
+	 * should be ignored.
+	 */
+	struct ikev2_notify *cookie_header = &cookie_digest->payload.v2n;
+	if (cookie_header->isan_protoid != 0 ||
+	    cookie_header->isan_spisize != 0 ||
+	    cookie_header->isan_length != sizeof(v2_cookie_t) + sizeof(struct ikev2_notify)) {
+		rate_log(md, "DOS cookie notification corrupt, or invalid - dropping message");
+		return true; /* reject cookie */
+	}
+	shunk_t remote_cookie = pbs_in_left_as_shunk(&cookie_digest->pbs);
+
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_hunk("received cookie", remote_cookie);
+		DBG_dump_hunk("computed cookie", local_cookie);
+	}
+
+	if (!hunk_eq(local_cookie, remote_cookie)) {
+		rate_log(md, "DOS cookies do not match - dropping message");
+		return true; /* reject cookie */
+	}
+	dbg("cookies match");
+
+	return false; /* love the cookie */
+}

@@ -1,11 +1,11 @@
 # Stuff to talk to virsh, for libreswan
 #
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2019  Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -29,8 +29,9 @@ def mounts(domain):
     """Return a table of 9p mounts for the given domain"""
     # maintain a local cache
     if domain in MOUNTS:
-        domain.logger.debug("using mounts from cache")
-        return MOUNTS[domain]
+        mounts = MOUNTS[domain]
+        domain.logger.debug("using mounts from cache: %s", mounts)
+        return
     mounts = {}
     MOUNTS[domain] = mounts
     status, output = domain.dumpxml()
@@ -57,6 +58,7 @@ def mounts(domain):
             domain.logger.debug("filesystem target '%s' source '%s'", target, source)
             mounts[target] = source
             continue
+    domain.logger.debug("extracted mounts: %s", mounts)
     return mounts
 
 
@@ -68,7 +70,7 @@ def mount_point(domain, console, device):
         FSTABS[domain] = {}
     fstab = FSTABS[domain]
     if device in fstab:
-        mount= fstab[device]
+        mount = fstab[device]
         domain.logger.debug("using fstab entry for %s (%s) from cache", device, mount)
         return mount;
     console.sendline("awk '$1==\"" + device + "\" { print $2 }' < /etc/fstab")
@@ -79,21 +81,32 @@ def mount_point(domain, console, device):
     return mount
 
 
-def directory(domain, console, directory, default=None):
-    directory = os.path.realpath(directory)
-    for target, source in mounts(domain).items():
-        if os.path.commonprefix([source, directory]) == source:
-            # found a suitable mount point, now find were it is
-            # mounted on the remote machine.
-            root = mount_point(domain, console, target)
-            return root + directory[len(source):]
-    return default
+# Map the local PATH onto a domain DIRECTORY
+def path(domain, console, path):
+    path = os.path.realpath(path)
+    # Because .items() returns an unordered list (it can change across
+    # python invocations or even within python as the dictionary
+    # evolves) it first needs to be sorted.  Use the DIRECTORY sorted
+    # in reverse so that /source/testing comes before /source - and
+    # the longer path is prefered.
+    device_directory = sorted(mounts(domain).items(),
+                              key=lambda item: item[1],
+                              reverse=True)
+    domain.logger.debug("ordered device/directory %s", device_directory);
+    for device, directory in device_directory:
+        if os.path.commonprefix([directory, path]) == directory:
+            # found the local directory path that is mounted on the
+            # machine, now map that onto a remote path
+            root = mount_point(domain, console, device)
+            return root + path[len(directory):]
+
+    raise AssertionError("the host path '%s' is not mounted on the guest %s" % (path, domain))
 
 
 # Domain timeouts
 
 SHUTDOWN_TIMEOUT = 20
-START_TIMEOUT = 10
+START_TIMEOUT = 20
 LOGIN_PROMPT_TIMEOUT = 120
 
 def _wait_for_login_prompt(domain, console, timeout, also_expect=[]):
@@ -128,6 +141,8 @@ def _login(domain, console, username, password, login_timeout, password_timeout,
 
     domain.logger.debug("sending control-c+carriage return, waiting %s seconds for login or shell prompt", login_timeout)
     console.sendintr()
+    console.sendline("")
+    console.sendline("")
     console.sendline("")
     if _wait_for_login_prompt(domain, console, timeout=login_timeout,
                               also_expect=[console.prompt]) == 1:
@@ -173,24 +188,24 @@ def login(domain, console,
 
 def _start(domain, timeout):
     domain.logger.info("starting domain")
-    # Bring the machine up from scratch.
-    end_time = time.time() + timeout
     # Do not call this when the console is functional!
     console = domain.console()
     if console:
-        raise pexpect.TIMEOUT("console should not be open")
+        raise pexpect.EOF("console for domain %s already open" % domain)
+    # Bring the machine up from scratch.
+    end_time = time.time() + timeout
     first_attempt = True
     while console == None:
         if time.time() > end_time:
-            pexpect.TIMEOUT("Trying to get a console")
+            raise pexpect.EOF("trying to start domain %s" % domain)
         status, output = domain.start()
         if status and first_attempt:
             # The first attempt at starting the domain _must_ succeed.
             # Failing is a sign that the domain was running.  Further
             # attempts might fail as things get racey.
-            raise pexpect.TIMEOUT("failed to start domain: %s" % output)
+            raise pexpect.EOF("failed to start domain %s" % output)
+        # give the VM time to start and then try opening the console.
         time.sleep(1)
-        # try opening the console again
         console = domain.console()
         first_attempt = False
     domain.logger.debug("got console")
@@ -221,8 +236,7 @@ def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
 def _reboot_to_login_prompt(domain, console):
 
     # Drain any existing output.
-    domain.logger.debug("draining any existing output")
-    console.expect(pexpect.TIMEOUT, timeout=0)
+    console.drain()
 
     # The reboot pattern needs to match all the output up to the point
     # where the machine is reset.  That way, the next pattern below

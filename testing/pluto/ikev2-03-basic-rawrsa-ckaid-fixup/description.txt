@@ -1,0 +1,11 @@
+ "ipsec auto --add westnet-eastnet-ikev2" which specifies CKAIDs and
+  RSASIGKEYs doesn't work as the RSASIGKEYs only get added to the
+  pubkey list _after_ the connection has been added; and of course that
+  fails because they haven't yet been added ...
+
+But there's a work-around:
+
+load keys via leftrsasigkey= for our own end point?
+
+
+WIP

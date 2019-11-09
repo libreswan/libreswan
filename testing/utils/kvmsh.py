@@ -2,18 +2,20 @@
 
 # Login to a vm and run a command, for libreswan
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+import signal
+import faulthandler
 import sys
 import argparse
 import logging
@@ -33,8 +35,12 @@ class Boot(Enum):
 
 def main():
 
+    # If SIGUSR1, backtrace all threads; hopefully this is early
+    # enough.
+    faulthandler.register(signal.SIGUSR1)
+
     parser = argparse.ArgumentParser(description="Connect to and run a shell command on a virtual machine domain",
-                                     epilog=("If no command or file is specified an interactive shell is created."))
+                                     epilog="If no command or file is specified an interactive shell is created.  SIGUSR1 will dump all thread stacks")
 
     parser.add_argument("--timeout", type=argutil.timeout, default=None,
                         help=("maximum runtime for the command"
@@ -108,7 +114,7 @@ def main():
         if args.chdir and os.path.isabs(args.chdir):
             chdir = args.chdir
         elif args.chdir:
-            chdir = remote.directory(domain, console, directory=os.path.realpath(args.chdir))
+            chdir = remote.path(domain, console, path=args.chdir)
         else:
             chdir = None
         if chdir:

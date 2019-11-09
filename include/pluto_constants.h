@@ -2,18 +2,19 @@
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2016-2017, Andrew Cagney
- * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2019-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -22,20 +23,26 @@
  *
  */
 
-/* Control and lock pathnames */
+#include "lset.h"
 
-#ifndef DEFAULT_RUNDIR
-# define DEFAULT_RUNDIR "/run/pluto/"
-#endif
-
-#ifndef DEFAULT_CTL_SOCKET
-# define DEFAULT_CTL_SOCKET DEFAULT_RUNDIR "/pluto.ctl"
-#endif
+/*
+ * Size of hash tables; a prime.
+ *
+ * Mumble something about modifying hash_table.[hc] so it can grow.
+ */
+#define STATE_TABLE_SIZE 499
 
 # ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
 #  define DEFAULT_DNSSEC_ROOTKEY_FILE "<unused>"
 # endif
 
+enum ike_version {
+	/* 0 reserved */
+#define IKE_VERSION_FLOOR 1
+	IKEv1 = 1,
+	IKEv2 = 2,
+#define IKE_VERSION_ROOF 3
+};
 
 /*
  * IETF has no recommendations
@@ -47,6 +54,8 @@
 #define IPSEC_SA_LIFETIME_DEFAULT secs_per_hour * 8
 #define IPSEC_SA_LIFETIME_MAXIMUM secs_per_day
 #define FIPS_IPSEC_SA_LIFETIME_MAXIMUM secs_per_hour * 8
+#define FIPS_IKE_SA_LIFETIME_MAXIMUM secs_per_hour * 24
+#define FIPS_MIN_RSA_KEY_SIZE 3072
 
 #define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
 #define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )
@@ -64,7 +73,6 @@ enum kernel_interface {
 	USE_KLIPS = 2,
 	USE_NETKEY= 3,
 	USE_WIN2K = 4,
-	USE_MASTKLIPS = 5,
 	USE_BSDKAME = 6,
 };
 
@@ -94,13 +102,20 @@ enum keyword_authby {
 	AUTH_NEVER	= 1,
 	AUTH_PSK	= 2,
 	AUTH_RSASIG	= 3,
-	AUTH_NULL	= 4,
+	AUTH_ECDSA      = 4,
+	AUTH_NULL	= 5,
 };
 
 enum keyword_xauthby {
 	XAUTHBY_FILE = 0,
 	XAUTHBY_PAM = 1,
 	XAUTHBY_ALWAYSOK = 2,
+};
+
+enum allow_global_redirect {
+	GLOBAL_REDIRECT_NO,
+	GLOBAL_REDIRECT_YES,
+	GLOBAL_REDIRECT_AUTO,
 };
 
 enum keyword_xauthfail {
@@ -152,37 +167,58 @@ enum natt_method {
 enum event_type {
 	EVENT_NULL,			/* non-event */
 
-	/* events not associated with states */
+	/*
+	 * Timer events not associated with states (aka global
+	 * timers).
+	 */
 
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
 	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
 	EVENT_SD_WATCHDOG,		/* update systemd's watchdog interval */
 	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
+	EVENT_CHECK_CRLS,		/* check/update CRLS */
+	EVENT_REVIVE_CONNS,
+
+	EVENT_FREE_ROOT_CERTS,
+#define FREE_ROOT_CERTS_TIMEOUT		deltatime(5 * secs_per_minute)
+
+	EVENT_RESET_LOG_RATE_LIMIT,	/* set nr. rate limited log messages back to 0 */
+#define RESET_LOG_RATE_LIMIT		deltatime(secs_per_hour)
+
+	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
+
+	EVENT_PROCESS_KERNEL_QUEUE,	/* non-netkey */
+
+	GLOBAL_TIMERS_ROOF,
+
+	/* events associated with connections */
 
 	/* events associated with states */
 
 	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
-	EVENT_v1_RETRANSMIT,		/* v1 Retransmit IKE packet */
-	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
+	EVENT_RETRANSMIT,		/* v1/v2 retransmit IKE packet */
+
+	/*
+	 * For IKEv2 'replace' is really either a re-key a full
+	 * replace, or expire.  IKEv1 should be the same but isn't.
+	 */
+	EVENT_SA_REKEY,			/* v2 SA rekey event */
 	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
-	EVENT_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
-	EVENT_v2_SA_REPLACE_IF_USED_IKE, /* v2 IKE SA, replace if IPsec SA is in use */
-	EVENT_v2_SA_REPLACE_IF_USED,    /* v2 IPSEC SA, replace if used */
 	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
-	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
+
+	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
+	EVENT_v1_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
 	EVENT_DPD,			/* v1 dead peer detection */
 	EVENT_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
 	EVENT_CRYPTO_TIMEOUT,		/* v1/v2 after some time, give up on crypto helper */
 	EVENT_PAM_TIMEOUT,		/* v1/v2 give up on PAM helper */
 
-	EVENT_v2_RETRANSMIT,		/* v2 Initiator: Retransmit IKE packet */
-	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */
 	EVENT_v2_INITIATE_CHILD,	/* initiate a IPsec child */
-	EVENT_v2_SEND_NEXT_IKE,		/* send next IKE message using parent */
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
+	EVENT_v2_REDIRECT,		/* initiate new IKE exchange on new address */
 	EVENT_RETAIN,			/* don't change the previous event */
 };
 
@@ -191,6 +227,10 @@ enum event_type {
 #define EVENT_RELEASE_WHACK_DELAY	10	/* seconds */
 
 #define RTM_NEWADDR_ROUTE_DELAY		3 /* seconds */
+
+#define PARENT_MIN_LIFE			1 /* second */
+#define EXPIRE_OLD_SA			1 /* second */
+#define REPLACE_ORPHAN			1 /* second */
 
 /*
  * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
@@ -204,25 +244,10 @@ enum event_type {
 #endif
 #define DELETE_SA_DELAY			RETRANSMIT_TIMEOUT_DEFAULT /* wait until the other side giveup on us */
 #define EVENT_CRYPTO_TIMEOUT_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
-#define EVENT_PAM_TIMEOUT_DELAY		RETRANSMIT_TIMEOUT_DEFAULT /* wait untill this side give up on PAM */
+#define EVENT_PAM_TIMEOUT_DELAY		RETRANSMIT_TIMEOUT_DEFAULT /* wait until this side give up on PAM */
 
-/*
- * operational importance of this cryptographic operation.
- * this determines if the operation will be dropped (because the other
- * end will retransmit, if they are legit), if it pertains to an on-going
- * connection, or if it is something that we initiated, and therefore
- * we should do it all costs.
- */
-enum crypto_importance {
-	pcim_notset_crypto,
-	pcim_stranger_crypto,
-	pcim_known_crypto,
-	pcim_ongoing_crypto,
-	pcim_local_crypto,
-	pcim_demand_crypto
-#define CRYPTO_IMPORTANCE_ROOF (pcim_demand_crypto + 1)
-};
-
+#define REVIVE_CONN_DELAY	5 /* seconds */
+#define REVIVE_CONN_DELAY_MAX  300 /* Do not delay more than 5 minutes per attempt */
 
 /* is pluto automatically switching busy state or set manually */
 enum ddos_mode {
@@ -250,18 +275,52 @@ enum seccomp_mode {
  * notification_t or v2_notification_t) means fail with that
  * notification.  Since <notification> is a uint16_t, it is limited to
  * 65535 possible values (0 isn't valid).
+ *
+ * tbd? means someone needs to look at the IKEv1/IKEv2 code and figure
+ * it out.
+ *
+ * delete 'if state': delete state is known - the post processing
+ * function function complete_*_state_transition() assumes there is a
+ * message and if it contains a state (*MDP)->ST delete it.  XXX: This
+ * is messed up - a state transition function, which by definition is
+ * operating on a state, should require a state and not the message.
+ *
+ * delete 'maybe?': For IKEv2, delete the IKE_SA_INIT responder state
+ * but only when STF_FAIL+<v2notification>.  IKEv1?  XXX: With no
+ * clear / fast rule, this just creates confusion; perhaps the intent
+ * is for it to delete larval response states, who knows?
+ *
+ * respond 'message?': if the state transition says a message should
+ * be sent (hopefully there is one).
+ *
+ * respond 'maybe?': For instance, with IKEv2 when a responder and
+ * STF_FAIL+<notification>, a notification is sent as the only content
+ * in a response.  XXX: for IKEv2 this is broken: KE responses can't
+ * use it - need to suggest KE; AUTH responses can't use it - need to
+ * send other stuff (but they do breaking auth).
  */
 
 typedef enum {
-	STF_IGNORE,             /* don't respond */
-	STF_SUSPEND,            /* unfinished -- don't release resources */
-	STF_OK,                 /* success */
-	STF_INTERNAL_ERROR,     /* discard everything, we failed */
-	STF_FATAL,              /* just stop. we can't continue. */
-	STF_DROP,               /* just stop, delete any state, and don't log or respond */
-	STF_FAIL,               /* discard everything, something failed.  notification_t added.
-				 * values STF_FAIL + x are notifications.
-				 */
+	/*
+	 * XXX: Upon the state transition function's return do not
+	 * call complete_v[12]_state_transition(), do not pass go, and
+	 * do not collect $200.
+	 *
+	 * This is a hack so that (old) state transitions functions
+	 * that directly directly call complete*() (or other scary
+	 * stuff) can signal the common code that the normal sequence
+	 * of: call state transition function; call complete() should
+	 * be bypassed.  For instance, the IKEv1 crypto continuation
+	 * functions.
+	 */
+	STF_SKIP_COMPLETE_STATE_TRANSITION,
+	/*                         TRANSITION  DELETE   RESPOND  LOG */
+	STF_IGNORE,             /*     no        no       no     tbd? */
+	STF_SUSPEND,            /*   suspend     no       no     tbd? */
+	STF_OK,                 /*    yes        no     message? tbd? */
+	STF_INTERNAL_ERROR,     /*     no        no      never   tbd? */
+	STF_FATAL,		/*     no      always    never   fail */
+	STF_FAIL,       	/*     no      maybe?    maybe?  fail */
 	STF_ROOF = STF_FAIL + 65536 /* see RFC and above */
 } stf_status;
 
@@ -280,6 +339,7 @@ typedef enum {
 #define MAXIMUM_MALFORMED_NOTIFY             16
 
 #define MAX_INPUT_UDP_SIZE             65536
+#define MIN_OUTPUT_UDP_SIZE		1024
 #define MAX_OUTPUT_UDP_SIZE            65536
 
 #define MAX_IKE_FRAGMENTS       16
@@ -293,6 +353,9 @@ typedef enum {
 #define IKE_V2_OVERLAPPING_WINDOW_SIZE	1 /* our default for rfc 7296 # 2.3 */
 
 #define PPK_ID_MAXLEN 64 /* fairly arbitrary */
+
+/* could overflow size uint32_t */
+#define IPV6_MIN_POOL_PREFIX_LEN 96
 
 /*
  * debugging settings: a set of selections for reporting These would
@@ -316,28 +379,19 @@ typedef enum {
 
 enum {
 	DBG_floor_IX = 0,
-	DBG_RAW_IX = DBG_floor_IX,		/* raw packet I/O */
-	DBG_CRYPT_IX,		/* encryption/decryption of messages */
-	DBG_PARSING_IX,		/* show decoding of messages */
-	DBG_EMITTING_IX,	/* show encoding of messages */
-	DBG_CONTROL_IX,		/* control flow within Pluto */
-	DBG_LIFECYCLE_IX,	/* SA lifecycle */
-	DBG_KERNEL_IX,		/* messages with the kernel */
-	DBG_DNS_IX,		/* DNS activity */
-	DBG_OPPO_IX,		/* opportunism */
-	DBG_CONTROLMORE_IX,	/* more detailed debugging */
 
-	DBG_PFKEY_IX,		/* turn on the pfkey library debugging */
-	DBG_NATT_IX,		/* debugging of NAT-traversal */
-	DBG_X509_IX,		/* X.509/pkix verify, cert retrival */
-	DBG_DPD_IX,		/* DPD items */
-	DBG_XAUTH_IX,		/* XAUTH aka PAM */
-	DBG_RETRANSMITS_IX,	/* Retransmitting packets */
-	DBG_OPPOINFO_IX,	/* log various informational things about oppo/%trap-keying */
+	DBG_BASE_IX = DBG_floor_IX,
 
-	DBG_WHACKWATCH_IX,	/* never let WHACK go */
-	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
-	DBG_ADD_PREFIX_IX,	/* add the log+state prefix to debug lines */
+	/* below are also enabled by debug=all */
+	DBG_CPU_USAGE_IX,
+
+	/* below are excluded from debug=base */
+	DBG_TMI_IX,
+	DBG_CRYPT_IX,
+	DBG_PRIVATE_IX,
+
+	DBG_WHACKWATCH_IX,
+	DBG_ADD_PREFIX_IX,
 
 	DBG_roof_IX,		/* first unassigned DBG is assigned to IMPAIR! */
 };
@@ -346,71 +400,93 @@ enum {
 
 #define DBG_MASK	LRANGE(DBG_floor_IX, DBG_roof_IX - 1)
 #define DBG_NONE        0                                       /* no options on, including impairments */
-#define DBG_ALL         LRANGES(DBG_RAW, DBG_OPPOINFO)          /* all logging options on EXCEPT DBG_PRIVATE and DBG_WHACKWATCH */
+
+#define DBG_BASE        LELEM(DBG_BASE_IX)
+#define DBG_CPU_USAGE	LELEM(DBG_CPU_USAGE_IX)
+#define DBG_ALL         (DBG_BASE | DBG_CPU_USAGE)
 
 /* singleton sets: must be kept in sync with the items! */
 
-#define DBG_RAW	LELEM(DBG_RAW_IX)
+/* so things don't break */
+#define DBG_RAW		DBG_BASE
+#define DBG_PARSING	DBG_BASE
+#define DBG_EMITTING	DBG_BASE
+#define DBG_CONTROL	DBG_BASE
+#define DBG_LIFECYCLE	DBG_BASE
+#define DBG_KERNEL	DBG_BASE
+#define DBG_DNS		DBG_BASE
+#define DBG_OPPO	DBG_BASE
+#define DBG_CONTROLMORE	DBG_BASE
+#define DBG_NATT	DBG_BASE
+#define DBG_X509	DBG_BASE
+#define DBG_DPD		DBG_BASE
+#define DBG_XAUTH	DBG_BASE
+#define DBG_RETRANSMITS	DBG_BASE
+#define DBG_OPPOINFO	DBG_BASE
+
+/* These are not part of "base" debugging */
+#define DBG_TMI		LELEM(DBG_TMI_IX)
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
-#define DBG_PARSING	LELEM(DBG_PARSING_IX)
-#define DBG_EMITTING	LELEM(DBG_EMITTING_IX)
-#define DBG_CONTROL	LELEM(DBG_CONTROL_IX)
-#define DBG_LIFECYCLE	LELEM(DBG_LIFECYCLE_IX)
-#define DBG_KERNEL	LELEM(DBG_KERNEL_IX)
-#define DBG_DNS		LELEM(DBG_DNS_IX)
-#define DBG_OPPO	LELEM(DBG_OPPO_IX)
-#define DBG_CONTROLMORE	LELEM(DBG_CONTROLMORE_IX)
-#define DBG_PFKEY	LELEM(DBG_PFKEY_IX)
-#define DBG_NATT	LELEM(DBG_NATT_IX)
-#define DBG_X509	LELEM(DBG_X509_IX)
-#define DBG_DPD		LELEM(DBG_DPD_IX)
-#define DBG_XAUTH	LELEM(DBG_XAUTH_IX)
-#define DBG_RETRANSMITS	LELEM(DBG_RETRANSMITS_IX)
-#define DBG_OPPOINFO	LELEM(DBG_OPPOINFO_IX)
+#define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
+
+/* so things don't break */
+#define DBG_PROPOSAL_PARSER	DBG_TMI
 
 #define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
-#define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
 #define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)
 
 /*
- * Index of IMPAIR set elements.  These set at the end of the DBG
- * elements.
+ * Index of IMPAIR set elements.
+ *
+ * see impair.c (libswan) for a definition of each of these fields.
+ *
+ * XXX: For now, these share the same lset_t as the DBG elements
+ * above.
  */
 
 enum {
 	IMPAIR_floor_IX = DBG_roof_IX,
-	IMPAIR_BUST_MI2_IX = IMPAIR_floor_IX,	/* make MI2 really large */
-	IMPAIR_BUST_MR2_IX,			/* make MR2 really large */
-	IMPAIR_DROP_I2_IX,			/* drop second initiator packet */
-	IMPAIR_SA_CREATION_IX,			/* fail all SA creation */
-	IMPAIR_DIE_ONINFO_IX,			/* cause state to be deleted upon receipt of information payload */
-	IMPAIR_JACOB_TWO_TWO_IX,		/* cause pluto to send all messages twice. */
-						/* cause pluto to send all messages twice. */
-	IMPAIR_ALLOW_NULL_NULL_IX,			/* cause pluto to allow esp=null-null and ah=null for testing */
-	IMPAIR_MAJOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE major version that's higher then we support. */
-	IMPAIR_MINOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE minor version that's higher then we support. */
-	IMPAIR_RETRANSMITS_IX,			/* causes pluto to timeout on first retransmit */
-	IMPAIR_SEND_NO_RETRANSMITS_IX,		/* causes pluto to never send retransmits */
-	IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX,	/* causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it */
-	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,	/* causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it */
-	IMPAIR_SEND_IKEv2_KE_IX,		/* causes pluto to omit sending the KE payload in IKEv2 */
-	IMPAIR_SEND_NO_DELETE_IX,		/* causes pluto to omit sending Notify/Delete messages */
-	IMPAIR_SEND_NO_IKEV2_AUTH_IX,		/* causes pluto to omit sending an IKEv2 IKE_AUTH packet */
-	IMPAIR_SEND_NO_XAUTH_R0_IX,		/* causes pluto to omit sending an XAUTH user/passwd request */
-	IMPAIR_DROP_XAUTH_R0_IX,		/* causes pluto to drop an XAUTH user/passwd request on IKE initiator */
-	IMPAIR_SEND_NO_MAIN_R2_IX,		/* causes pluto to omit sending an last Main Mode response packet */
-	IMPAIR_FORCE_FIPS_IX,			/* causes pluto to believe we are in fips mode, NSS needs its own hack */
-	IMPAIR_SEND_KEY_SIZE_CHECK_IX,		/* causes pluto to omit checking configured ESP key sizes for testing */
-	IMPAIR_SEND_ZERO_GX_IX,			/* causes pluto to send a g^x that is zero, breaking DH calculation */
-	IMPAIR_SEND_BOGUS_DCOOKIE_IX,		/* causes pluto to send a a bogus IKEv2 DCOOKIE */
-	IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX,	/* causes pluto to omit sending hash notify in IKE_SA_INIT Request */
-	IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX,	/* causes pluto to ignore incoming hash notify from IKE_SA_INIT Request */
-	IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX,	/* causes pluto to ignore incoming hash notify from IKE_SA_INIT Response*/
-	IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX,	/* lets pluto exclude integrity 'none' in proposals */
-	IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX,	/* lets pluto include integrity 'none' in proposals */
-	IMPAIR_REPLAY_DUPLICATES_IX,		/* replay duplicates of each incoming packet */
-	IMPAIR_REPLAY_FORWARD_IX,		/* replay all earlier packets old-to-new */
-	IMPAIR_REPLAY_BACKWARD_IX,		/* replay all earlier packets new-to-old */
+
+	IMPAIR_BUST_MI2_IX = IMPAIR_floor_IX,
+	IMPAIR_BUST_MR2_IX,
+	IMPAIR_DROP_I2_IX,
+	IMPAIR_SA_CREATION_IX,
+	IMPAIR_JACOB_TWO_TWO_IX,
+	IMPAIR_ALLOW_NULL_NONE_IX,
+	IMPAIR_MAJOR_VERSION_BUMP_IX,
+	IMPAIR_MINOR_VERSION_BUMP_IX,
+	IMPAIR_TIMEOUT_ON_RETRANSMIT_IX,
+	IMPAIR_DELETE_ON_RETRANSMIT_IX,
+	IMPAIR_SUPPRESS_RETRANSMITS_IX,
+	IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX,
+	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,
+	IMPAIR_SEND_NO_DELETE_IX,
+	IMPAIR_SEND_NO_IKEV2_AUTH_IX,
+	IMPAIR_SEND_NO_XAUTH_R0_IX,
+	IMPAIR_DROP_XAUTH_R0_IX,
+	IMPAIR_SEND_NO_MAIN_R2_IX,
+	IMPAIR_FORCE_FIPS_IX,
+	IMPAIR_SEND_KEY_SIZE_CHECK_IX,
+	IMPAIR_SEND_BOGUS_DCOOKIE_IX,
+	IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX,
+	IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX,
+	IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX,
+	IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX,
+	IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX,
+	IMPAIR_REPLAY_DUPLICATES_IX,
+	IMPAIR_REPLAY_FORWARD_IX,
+	IMPAIR_REPLAY_BACKWARD_IX,
+	IMPAIR_REPLAY_ENCRYPTED_IX,
+	IMPAIR_CORRUPT_ENCRYPTED_IX,
+	IMPAIR_PROPOSAL_PARSER_IX,
+	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_SA_INIT_IX,
+	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_IX,
+	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK_IX,
+	IMPAIR_UNKNOWN_PAYLOAD_CRITICAL_IX,
+	IMPAIR_ALLOW_DNS_INSECURE_IX,
+	IMPAIR_SEND_PKCS7_THINGIE_IX,
+	IMPAIR_IKEv1_DEL_WITH_NOTIFY_IX,
+	IMPAIR_BAD_IKE_AUTH_XCHG_IX,
 
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
@@ -421,37 +497,46 @@ enum {
 
 /* singleton sets: must be kept in sync with the items! */
 
-#define IMPAIR_BUST_MI2	LELEM(IMPAIR_BUST_MI2_IX)
-#define IMPAIR_BUST_MR2	LELEM(IMPAIR_BUST_MR2_IX)
-#define IMPAIR_DROP_I2	LELEM(IMPAIR_DROP_I2_IX)
-#define IMPAIR_SA_CREATION	LELEM(IMPAIR_SA_CREATION_IX)
-#define IMPAIR_DIE_ONINFO	LELEM(IMPAIR_DIE_ONINFO_IX)
-#define IMPAIR_JACOB_TWO_TWO	LELEM(IMPAIR_JACOB_TWO_TWO_IX)
-#define IMPAIR_ALLOW_NULL_NULL	LELEM(IMPAIR_ALLOW_NULL_NULL_IX)
-#define IMPAIR_MAJOR_VERSION_BUMP	LELEM(IMPAIR_MAJOR_VERSION_BUMP_IX)
-#define IMPAIR_MINOR_VERSION_BUMP	LELEM(IMPAIR_MINOR_VERSION_BUMP_IX)
-#define IMPAIR_RETRANSMITS	LELEM(IMPAIR_RETRANSMITS_IX)
-#define IMPAIR_SEND_NO_RETRANSMITS	LELEM(IMPAIR_SEND_NO_RETRANSMITS_IX)
-#define IMPAIR_SEND_BOGUS_PAYLOAD_FLAG	LELEM(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX)
-#define IMPAIR_SEND_BOGUS_ISAKMP_FLAG	LELEM(IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX)
-#define IMPAIR_SEND_IKEv2_KE	LELEM(IMPAIR_SEND_IKEv2_KE_IX)
-#define IMPAIR_SEND_NO_DELETE	LELEM(IMPAIR_SEND_NO_DELETE_IX)
-#define IMPAIR_SEND_NO_IKEV2_AUTH	LELEM(IMPAIR_SEND_NO_IKEV2_AUTH_IX)
-#define IMPAIR_SEND_NO_XAUTH_R0	LELEM(IMPAIR_SEND_NO_XAUTH_R0_IX)
-#define IMPAIR_DROP_XAUTH_R0	LELEM(IMPAIR_DROP_XAUTH_R0_IX)
-#define IMPAIR_SEND_NO_MAIN_R2	LELEM(IMPAIR_SEND_NO_MAIN_R2_IX)
-#define IMPAIR_FORCE_FIPS	LELEM(IMPAIR_FORCE_FIPS_IX)
-#define IMPAIR_SEND_KEY_SIZE_CHECK	LELEM(IMPAIR_SEND_KEY_SIZE_CHECK_IX)
-#define IMPAIR_SEND_ZERO_GX	LELEM(IMPAIR_SEND_ZERO_GX_IX)
-#define IMPAIR_SEND_BOGUS_DCOOKIE	LELEM(IMPAIR_SEND_BOGUS_DCOOKIE_IX)
+#define IMPAIR_BUST_MI2				LELEM(IMPAIR_BUST_MI2_IX)
+#define IMPAIR_BUST_MR2				LELEM(IMPAIR_BUST_MR2_IX)
+#define IMPAIR_DROP_I2				LELEM(IMPAIR_DROP_I2_IX)
+#define IMPAIR_SA_CREATION			LELEM(IMPAIR_SA_CREATION_IX)
+#define IMPAIR_JACOB_TWO_TWO			LELEM(IMPAIR_JACOB_TWO_TWO_IX)
+#define IMPAIR_ALLOW_NULL_NONE			LELEM(IMPAIR_ALLOW_NULL_NONE_IX)
+#define IMPAIR_MAJOR_VERSION_BUMP		LELEM(IMPAIR_MAJOR_VERSION_BUMP_IX)
+#define IMPAIR_MINOR_VERSION_BUMP		LELEM(IMPAIR_MINOR_VERSION_BUMP_IX)
+#define IMPAIR_TIMEOUT_ON_RETRANSMIT		LELEM(IMPAIR_TIMEOUT_ON_RETRANSMIT_IX)
+#define IMPAIR_DELETE_ON_RETRANSMIT		LELEM(IMPAIR_DELETE_ON_RETRANSMIT_IX)
+#define IMPAIR_SUPPRESS_RETRANSMITS		LELEM(IMPAIR_SUPPRESS_RETRANSMITS_IX)
+#define IMPAIR_SEND_BOGUS_PAYLOAD_FLAG		LELEM(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX)
+#define IMPAIR_SEND_BOGUS_ISAKMP_FLAG		LELEM(IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX)
+#define IMPAIR_SEND_NO_DELETE			LELEM(IMPAIR_SEND_NO_DELETE_IX)
+#define IMPAIR_SEND_NO_IKEV2_AUTH		LELEM(IMPAIR_SEND_NO_IKEV2_AUTH_IX)
+#define IMPAIR_SEND_NO_XAUTH_R0			LELEM(IMPAIR_SEND_NO_XAUTH_R0_IX)
+#define IMPAIR_DROP_XAUTH_R0			LELEM(IMPAIR_DROP_XAUTH_R0_IX)
+#define IMPAIR_SEND_NO_MAIN_R2			LELEM(IMPAIR_SEND_NO_MAIN_R2_IX)
+#define IMPAIR_FORCE_FIPS			LELEM(IMPAIR_FORCE_FIPS_IX)
+#define IMPAIR_SEND_KEY_SIZE_CHECK		LELEM(IMPAIR_SEND_KEY_SIZE_CHECK_IX)
+#define IMPAIR_SEND_BOGUS_DCOOKIE		LELEM(IMPAIR_SEND_BOGUS_DCOOKIE_IX)
 #define IMPAIR_OMIT_HASH_NOTIFY_REQUEST		LELEM(IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX)
 #define IMPAIR_IGNORE_HASH_NOTIFY_REQUEST	LELEM(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX)
 #define IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE	LELEM(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX)
-#define IMPAIR_IKEv2_EXCLUDE_INTEG_NONE LELEM(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX)
-#define IMPAIR_IKEv2_INCLUDE_INTEG_NONE LELEM(IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX)
-#define IMPAIR_REPLAY_DUPLICATES 	LELEM(IMPAIR_REPLAY_DUPLICATES_IX)
-#define IMPAIR_REPLAY_FORWARD	 	LELEM(IMPAIR_REPLAY_FORWARD_IX)
-#define IMPAIR_REPLAY_BACKWARD 		LELEM(IMPAIR_REPLAY_BACKWARD_IX)
+#define IMPAIR_IKEv2_EXCLUDE_INTEG_NONE 	LELEM(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX)
+#define IMPAIR_IKEv2_INCLUDE_INTEG_NONE 	LELEM(IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX)
+#define IMPAIR_REPLAY_DUPLICATES 		LELEM(IMPAIR_REPLAY_DUPLICATES_IX)
+#define IMPAIR_REPLAY_FORWARD	 		LELEM(IMPAIR_REPLAY_FORWARD_IX)
+#define IMPAIR_REPLAY_BACKWARD 			LELEM(IMPAIR_REPLAY_BACKWARD_IX)
+#define IMPAIR_REPLAY_ENCRYPTED			LELEM(IMPAIR_REPLAY_ENCRYPTED_IX)
+#define IMPAIR_CORRUPT_ENCRYPTED		LELEM(IMPAIR_CORRUPT_ENCRYPTED_IX)
+#define IMPAIR_PROPOSAL_PARSER 			LELEM(IMPAIR_PROPOSAL_PARSER_IX)
+#define IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_SA_INIT	LELEM(IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_SA_INIT_IX)
+#define IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH	LELEM(IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_IX)
+#define IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK	LELEM(IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK_IX)
+#define IMPAIR_UNKNOWN_PAYLOAD_CRITICAL		LELEM(IMPAIR_UNKNOWN_PAYLOAD_CRITICAL_IX)
+#define IMPAIR_ALLOW_DNS_INSECURE		LELEM(IMPAIR_ALLOW_DNS_INSECURE_IX)
+#define IMPAIR_SEND_PKCS7_THINGIE		LELEM(IMPAIR_SEND_PKCS7_THINGIE_IX)
+#define IMPAIR_IKEv1_DEL_WITH_NOTIFY		LELEM(IMPAIR_IKEv1_DEL_WITH_NOTIFY_IX)
+#define IMPAIR_BAD_IKE_AUTH_XCHG		LELEM(IMPAIR_BAD_IKE_AUTH_XCHG_IX)
 
 /* State of exchanges
  *
@@ -487,11 +572,6 @@ enum {
 
 enum state_kind {
 	STATE_UNDEFINED,
-
-	/* Hack so state numbers don't change */
-
-	STATE_UNUSED_1,
-	STATE_UNUSED_2,
 
 	/* IKE states */
 
@@ -543,9 +623,8 @@ enum state_kind {
 	 */
 	STATE_IKEv2_FLOOR,
 
-	STATE_IKEv2_BASE = STATE_IKEv2_FLOOR,	/* state when faking a state */
-
 	/* INITIATOR states */
+	STATE_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
 	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
 	STATE_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
 	STATE_PARENT_I3,        /* IKE_AUTH done: received auth response */
@@ -556,6 +635,7 @@ enum state_kind {
 	 * for all work states.
 	 * ??? what does that mean?
 	 */
+	STATE_PARENT_R0,	/* just starting */
 	STATE_PARENT_R1,	/* IKE_SA_INIT: sent response */
 	STATE_PARENT_R2,	/* IKE_AUTH: sent response */
 
@@ -585,29 +665,85 @@ enum state_kind {
 /* STATE_IKEv2_ROOF lurks in the code so leave space for it */
 #define STATE_IKE_ROOF (STATE_IKEv2_ROOF+1)	/* not a state! */
 
-
 /*
- * The IKEv2 (RFC 7296) original role - either the "original
- * initiator" or the "original responder" - as determined by the "I
- * (Initiator)" flag in the (ISAKMP_FLAGS_v2_IKE_I) in the payload
- * header.  The "original initiator" either sent: the initial INIT
- * packet; or, the CREATE_CHILD_SA rekey-ike request.
+ * The IKEv2 (RFC 7296) original role.  Either the "original
+ * initiator" or the "original responder" as identified by the I
+ * (Initiator flag).
  *
- * The bit is used to identify which keying material to use when
- * encrypting and decrypting SK payloads.
- *
- * Separate from this is the IKEv2 "R (Response)" flag
- * (ISAKMP_FLAGS_v2_MSG_R) in the payload header.  The response flag
- * that a message is a response to a previous request.  Since either
- * end can send requests, either end can also set the "R" flag.
+ * The "original initiator" will set the I (Initiator) flag
+ * (ISAKMP_FLAGS_v2_IKE_I) when sending either the initial SA_INIT
+ * packet or CREATE_CHILD_SA rekey-ike request.  The original
+ * responder will see the I flag set in all packets it receives from
+ * the original initiator.
  *
  * The IKEv1 equivalent is the phase1 role.  It is identified by the
  * IKEv1 IS_PHASE1_INIT() macro.
+ *
+ * The values are chosen such that no role has values that overlap.
+ *
+ * XXX: If IKEv2 code correctly uses CHILD_SA and IKE_SA then the, is
+ * probably be redundant - An IKE SA's SA_ROLE should be consistent
+ * with its ORIGINAL_ROLE.  Currently code isn't consistent, so both
+ * are used/defined.
  */
+
 enum original_role {
-	ORIGINAL_INITIATOR = 1,
-	ORIGINAL_RESPONDER = 2
+	/* values follow after enum message_role */
+	ORIGINAL_INITIATOR = 5, /* IKE_I present */
+	ORIGINAL_RESPONDER = 6, /* IKE_I missing */
 };
+
+/*
+ * The IKEv2 message role.  Is this message a request or a response
+ * (to a request) as determined by the IKEv2 "R (Response)" flag.
+ *
+ * Since either end can initiate a request either end can set the
+ * R(Repsonse) flag.
+ *
+ * During a CHILD_SA exchange it is the request initiator (receives
+ * the MESSAGE_RESPONSE) and request responder (receives the
+ * MESSAGE_REQUEST), and not the original (IKE SA) initiator /
+ * responder that determine how crypto material is carved up.
+ *
+ * The values are chosen such that no role has values that overlap.
+ */
+
+enum message_role {
+	NO_MESSAGE = 0,
+	/* values follow after enum sa_role */
+	MESSAGE_REQUEST = 3, /* MSG_R missing */
+	MESSAGE_RESPONSE = 4, /* MSR_R present */
+	/* followed by enum original_role */
+};
+
+extern struct keywords message_role_names;
+
+/*
+ * The SA role determined by who initiated the SA.
+ *
+ * For all IKEv2 exchanges establishing or rekeying an SA it is
+ * determined by who initiated that SA exchange.  During the exchange,
+ * the SA_INITIATOR will always have the R(esponse) bit clear and the
+ * SA_RESPONDER will always have the R(esponse) bit set.
+ *
+ * The IKE SA's role is used to identify which SPI (cookie) to use in
+ * the header by setting or clearing the I(Initiator) flag.
+ *
+ * The IKE or CHILD SA role is used when assigning keying material.
+ *
+ * The IKEv1 equivalent is the phase1 role.  It is identified by the
+ * IKEv1 IS_PHASE1_INIT() macro.
+ *
+ * The values are chosen such that no role has values that overlap.
+ */
+
+enum sa_role {
+	SA_INITIATOR = 1,
+	SA_RESPONDER = 2,
+	/* followed by enum message_role */
+};
+
+extern struct keywords sa_role_names;
 
 
 #define PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \
@@ -621,7 +757,7 @@ enum original_role {
 				  LELEM(STATE_MODE_CFG_I1))
 
 
-#define IS_PHASE1_INIT(s) ((LELEM(s) & PHASE1_INITIATOR_STATES) != LEMPTY)
+#define IS_PHASE1_INIT(s) ((LELEM(s->kind) & PHASE1_INITIATOR_STATES) != LEMPTY)
 
 #define IS_PHASE1(s) (STATE_MAIN_R0 <= (s) && (s) <= STATE_AGGR_R2)
 
@@ -638,12 +774,13 @@ enum original_role {
 #define IS_ISAKMP_ENCRYPTED(s) ((LELEM(s) & ISAKMP_ENCRYPTED_STATES) != LEMPTY)
 
 /* ??? Is this really authenticate?  Even in xauth case? In STATE_INFO case? */
-#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) \
-				    && STATE_AGGR_R0 != (s) \
-				    && STATE_AGGR_I1 != (s))
+#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s->kind) && \
+				    STATE_AGGR_R0 != (s->kind) && \
+				    STATE_AGGR_I1 != (s->kind))
 
-#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I1) |\
-					LELEM(STATE_PARENT_I2))
+#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
+				       LELEM(STATE_PARENT_I1) |	\
+				       LELEM(STATE_PARENT_I2))
 
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
 				       LELEM(STATE_MAIN_I4) | \
@@ -660,7 +797,7 @@ enum original_role {
 				       LELEM(STATE_PARENT_I3) | \
 				       LELEM(STATE_PARENT_R2))
 
-#define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
+#define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
 #define IPSECSA_PENDING_STATES (LELEM(STATE_V2_CREATE_I) | \
 				LELEM(STATE_V2_CREATE_I0) | \
@@ -670,21 +807,21 @@ enum original_role {
 
 /* IKEv1 or IKEv2 */
 #define IS_IPSEC_SA_ESTABLISHED(s) (IS_CHILD_SA(s) && \
-				    ((s->st_state) == STATE_QUICK_I2 || \
-				    (s->st_state) == STATE_QUICK_R1 || \
-				    (s->st_state) == STATE_QUICK_R2 || \
-				    (s->st_state) == STATE_V2_IPSEC_I || \
-				    (s->st_state) == STATE_V2_IPSEC_R))
+				    ((s->st_state->kind) == STATE_QUICK_I2 || \
+				    (s->st_state->kind) == STATE_QUICK_R1 || \
+				    (s->st_state->kind) == STATE_QUICK_R2 || \
+				    (s->st_state->kind) == STATE_V2_IPSEC_I || \
+				    (s->st_state->kind) == STATE_V2_IPSEC_R))
 
-#define IS_MODE_CFG_ESTABLISHED(s) ((s) == STATE_MODE_CFG_R2)
+#define IS_MODE_CFG_ESTABLISHED(s) ((s->kind) == STATE_MODE_CFG_R2)
 
 /* Only relevant to IKEv2 */
 
 /* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
 
-#define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || \
-		(s) == STATE_PARENT_I3 || (s) == STATE_V2_IPSEC_I || \
-		(s) == STATE_V2_IPSEC_R)
+#define IS_V2_ESTABLISHED(s) ((s->kind) == STATE_PARENT_R2 || \
+		(s->kind) == STATE_PARENT_I3 || (s->kind) == STATE_V2_IPSEC_I || \
+		(s->kind) == STATE_V2_IPSEC_R)
 
 #define IS_IKE_SA_ESTABLISHED(st) \
 	( IS_ISAKMP_SA_ESTABLISHED(st->st_state) || \
@@ -697,37 +834,22 @@ enum original_role {
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
 #define IS_CHILD_SA_ESTABLISHED(st) \
-    ((st->st_state == STATE_V2_IPSEC_I || st->st_state == STATE_V2_IPSEC_R) && \
+    ((st->st_state->kind == STATE_V2_IPSEC_I || st->st_state->kind == STATE_V2_IPSEC_R) && \
       IS_CHILD_SA(st))
 
 #define IS_PARENT_SA_ESTABLISHED(st) \
-    ((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) \
-	&& !IS_CHILD_SA(st))
+    (((st)->st_state->kind == STATE_PARENT_I3 || (st)->st_state->kind == STATE_PARENT_R2) && \
+    !IS_CHILD_SA(st))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
-
-#define IS_PARENT_SA(st) (!IS_CHILD_SA(st))
-
-#define IS_IKE_SA(st) ( (st->st_clonedfrom == SOS_NOBODY) &&  (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) || \
-		IS_PARENT_SA(st)) )
-
-#define IS_PARENT_STATE(s) ((s) >= STATE_PARENT_I1 && (s) <= STATE_IKESA_DEL)
-#define IS_IKE_STATE(s) (IS_PHASE1(s) || IS_PHASE15(s) || IS_PARENT_STATE(s))
-
-#define IS_CHILD_SA_RESPONDER(st) \
-	((st)->st_state == STATE_V2_REKEY_IKE_R || \
-	  (st)->st_state == STATE_V2_CREATE_R || \
-	  (st)->st_state == STATE_V2_REKEY_CHILD_R)
-
-#define IS_CHILD_IPSECSA_RESPONSE(st) \
-	((st)->st_state == STATE_V2_REKEY_IKE_I || \
-	  (st)->st_state == STATE_V2_CREATE_I)
+#define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)
 
 /* kind of struct connection
  * Ordered (mostly) by concreteness.  Order is exploited.
  */
 
 enum connection_kind {
+	CK_INVALID = 0,	/* better name? */
 	CK_GROUP,       /* policy group: instantiates to template */
 	CK_TEMPLATE,    /* abstract connection, with wildcard */
 	CK_PERMANENT,   /* normal connection */
@@ -758,19 +880,19 @@ enum routing_t {
 #define shunt_erouted(rs) (erouted(rs) && (rs) != RT_ROUTED_TUNNEL)
 
 enum certpolicy {
-	cert_neversend   = 1,
-	cert_sendifasked = 2,   /* the default */
-	cert_alwayssend  = 3,
+	CERT_NEVERSEND   = 1,
+	CERT_SENDIFASKED = 2,   /* the default */
+	CERT_ALWAYSSEND  = 3,
 };
 
 /* this is the default setting. */
-#define cert_defaultcertpolicy cert_alwayssend
+#define cert_defaultcertpolicy CERT_ALWAYSSEND
 
 enum ikev1_natt_policy {
-	natt_both = 0, /* the default */
-	natt_rfc = 1,
-	natt_drafts = 2, /* Workaround for Cisco NAT-T bug */
-	natt_none = 3 /* Workaround for forcing non-encaps */
+	NATT_BOTH = 0, /* the default */
+	NATT_RFC = 1,
+	NATT_DRAFTS = 2, /* Workaround for Cisco NAT-T bug */
+	NATT_NONE = 3 /* Workaround for forcing non-encaps */
 };
 
 enum four_options {
@@ -780,34 +902,28 @@ enum four_options {
 	fo_insist  = 3          /* propose, and only accept if peer agrees */
 };
 
-enum esn_options {
-	esn_no = 1, /* default */
-	esn_yes = 2,
-	esn_either = 3,
-};
-
-enum encaps_options {
-	encaps_auto = 1, /* default */
-	encaps_no = 2,
-	encaps_yes = 3,
-};
-
-enum nic_offload_options {
-	nic_offload_no = 1,
-	nic_offload_yes = 2,
-	nic_offload_auto = 3,
-};
-
 enum ynf_options {
 	ynf_no   = 0,
 	ynf_yes  = 1,
 	ynf_force = 2,
 };
 
+enum yna_options {
+	yna_auto = 1, /* default */
+	yna_no = 2,
+	yna_yes = 3,
+};
+
+enum esn_options {
+	ESN_NO = 1, /* default */
+	ESN_YES = 2,
+	ESN_EITHER = 3,
+};
+
 enum saref_tracking {
-	sat_yes = 0,            /* SAref tracking via _updown - the default */
-	sat_no = 1,             /* no SAref tracking - third party will handle this */
-	sat_conntrack = 2,      /* Saref tracking using connmark optimizations */
+	SAT_YES = 0,            /* SAref tracking via _updown - the default */
+	SAT_NO = 1,             /* no SAref tracking - third party will handle this */
+	SAT_CONNTRACK = 2,      /* Saref tracking using connmark optimizations */
 };
 
 /* Policies for establishing an SA
@@ -846,12 +962,12 @@ enum sa_policy_bits {
 	 */
 	POLICY_PSK_IX = 0,
 	POLICY_RSASIG_IX = 1,
+	POLICY_ECDSA_IX = 2,
 	POLICY_AUTH_NEVER_IX,
 	POLICY_AUTH_NULL_IX,
 
 #define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
 
-	/* Quick Mode (IPSEC) attributes */
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
 	POLICY_AUTHENTICATE_IX,	/* must be second */
 	POLICY_COMPRESS_IX,	/* must be third */
@@ -860,6 +976,10 @@ enum sa_policy_bits {
 	POLICY_DISABLEARRIVALCHECK_IX,	/* suppress tunnel egress address checking */
 	POLICY_DECAP_DSCP_IX,	/* decapsulate ToS/DSCP bits */
 	POLICY_NOPMTUDISC_IX,
+	POLICY_MSDH_DOWNGRADE_IX, /* allow IKEv2 rekey to downgrade DH group - Microsoft bug */
+	POLICY_ALLOW_NO_SAN_IX, /* allow a certificate conn to not have IKE ID on cert SAN */
+	POLICY_DNS_MATCH_ID_IX, /* perform reverse DNS lookup on IP to confirm ID */
+	POLICY_SHA2_TRUNCBUG_IX, /* workaround old Linux kernel (android 4.x) */
 
 #define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_DISABLEARRIVALCHECK_IX)
@@ -893,6 +1013,7 @@ enum sa_policy_bits {
 	 */
 	POLICY_NEGO_PASS_IX,	/* install %pass instead of %hold during initial IKE */
 	POLICY_DONT_REKEY_IX,	/* don't rekey state either Phase */
+	POLICY_REAUTH_IX,	/* IKEv2 only initiate re-authentication */
 	POLICY_OPPORTUNISTIC_IX,	/* is this opportunistic? */
 	POLICY_GROUP_IX,	/* is this a group template? */
 	POLICY_GROUTED_IX,	/* do we want this group routed? */
@@ -910,11 +1031,14 @@ enum sa_policy_bits {
 	 */
 	POLICY_IKEV1_ALLOW_IX,	/* !accept IKEv1?  0x0100 0000 */
 	POLICY_IKEV2_ALLOW_IX,	/* accept IKEv2?   0x0200 0000 */
-	POLICY_IKEV2_PROPOSE_IX,	/* propose IKEv2?  0x0400 0000 */
-#define POLICY_IKEV2_MASK	LRANGE(POLICY_IKEV1_ALLOW_IX, POLICY_IKEV2_PROPOSE_IX)
 
 	POLICY_IKEV2_ALLOW_NARROWING_IX,	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
 	POLICY_IKEV2_PAM_AUTHORIZE_IX,
+	POLICY_SEND_REDIRECT_ALWAYS_IX,		/* next three policies are for RFC 5685 */
+	POLICY_SEND_REDIRECT_NEVER_IX,
+#define POLICY_SEND_REDIRECT_MASK \
+	LRANGE(POLICY_SEND_REDIRECT_ALWAYS_IX, POLICY_SEND_REDIRECT_NEVER_IX)
+	POLICY_ACCEPT_REDIRECT_YES_IX,
 
 	POLICY_SAREF_TRACK_IX,	/* Saref tracking via _updown */
 	POLICY_SAREF_TRACK_CONNTRACK_IX,	/* use conntrack optimization */
@@ -928,11 +1052,13 @@ enum sa_policy_bits {
 	POLICY_PPK_INSIST_IX,
 	POLICY_ESN_NO_IX,		/* send/accept ESNno */
 	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
-#define POLICY_IX_LAST	POLICY_ESN_YES_IX
+	POLICY_RSASIG_v1_5_IX,
+#define POLICY_IX_LAST	POLICY_RSASIG_v1_5_IX
 };
 
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
 #define POLICY_RSASIG	LELEM(POLICY_RSASIG_IX)
+#define POLICY_ECDSA   LELEM(POLICY_ECDSA_IX)
 #define POLICY_AUTH_NEVER	LELEM(POLICY_AUTH_NEVER_IX)
 #define POLICY_AUTH_NULL LELEM(POLICY_AUTH_NULL_IX)
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
@@ -943,12 +1069,17 @@ enum sa_policy_bits {
 #define POLICY_DISABLEARRIVALCHECK	LELEM(POLICY_DISABLEARRIVALCHECK_IX)	/* suppress tunnel egress address checking */
 #define POLICY_DECAP_DSCP	LELEM(POLICY_DECAP_DSCP_IX)	/* decap ToS/DSCP bits */
 #define POLICY_NOPMTUDISC	LELEM(POLICY_NOPMTUDISC_IX)
+#define POLICY_MSDH_DOWNGRADE	LELEM(POLICY_MSDH_DOWNGRADE_IX)
+#define POLICY_ALLOW_NO_SAN	LELEM(POLICY_ALLOW_NO_SAN_IX)
+#define POLICY_DNS_MATCH_ID	LELEM(POLICY_DNS_MATCH_ID_IX)
+#define POLICY_SHA2_TRUNCBUG	LELEM(POLICY_SHA2_TRUNCBUG_IX)
 #define POLICY_SHUNT0	LELEM(POLICY_SHUNT0_IX)
 #define POLICY_SHUNT1	LELEM(POLICY_SHUNT1_IX)
 #define POLICY_FAIL0	LELEM(POLICY_FAIL0_IX)
 #define POLICY_FAIL1	LELEM(POLICY_FAIL1_IX)
 #define POLICY_NEGO_PASS	LELEM(POLICY_NEGO_PASS_IX)	/* install %pass during initial IKE */
 #define POLICY_DONT_REKEY	LELEM(POLICY_DONT_REKEY_IX)	/* don't rekey state either Phase */
+#define POLICY_REAUTH	LELEM(POLICY_REAUTH_IX)	/* IKEv2 initiate reauthentication instead of rekey */
 #define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
 #define POLICY_GROUP	LELEM(POLICY_GROUP_IX)	/* is this a group template? */
 #define POLICY_GROUTED	LELEM(POLICY_GROUTED_IX)	/* do we want this group routed? */
@@ -960,9 +1091,11 @@ enum sa_policy_bits {
 #define POLICY_OVERLAPIP	LELEM(POLICY_OVERLAPIP_IX)	/* can two conns that have subnet=vhost: declare the same IP? */
 #define POLICY_IKEV1_ALLOW	LELEM(POLICY_IKEV1_ALLOW_IX)	/* !accept IKEv1?  0x0100 0000 */
 #define POLICY_IKEV2_ALLOW	LELEM(POLICY_IKEV2_ALLOW_IX)	/* accept IKEv2?   0x0200 0000 */
-#define POLICY_IKEV2_PROPOSE	LELEM(POLICY_IKEV2_PROPOSE_IX)	/* propose IKEv2?  0x0400 0000 */
 #define POLICY_IKEV2_ALLOW_NARROWING	LELEM(POLICY_IKEV2_ALLOW_NARROWING_IX)	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
-#define POLICY_IKEV2_PAM_AUTHORIZE     LELEM(POLICY_IKEV2_PAM_AUTHORIZE_IX)    /* non-standard, custom PAM authorize call on ID */
+#define POLICY_IKEV2_PAM_AUTHORIZE	LELEM(POLICY_IKEV2_PAM_AUTHORIZE_IX)    /* non-standard, custom PAM authorize call on ID */
+#define POLICY_SEND_REDIRECT_ALWAYS	LELEM(POLICY_SEND_REDIRECT_ALWAYS_IX)
+#define POLICY_SEND_REDIRECT_NEVER	LELEM(POLICY_SEND_REDIRECT_NEVER_IX)
+#define POLICY_ACCEPT_REDIRECT_YES	LELEM(POLICY_ACCEPT_REDIRECT_YES_IX)
 #define POLICY_SAREF_TRACK	LELEM(POLICY_SAREF_TRACK_IX)	/* Saref tracking via _updown */
 #define POLICY_SAREF_TRACK_CONNTRACK	LELEM(POLICY_SAREF_TRACK_CONNTRACK_IX)	/* use conntrack optimization */
 #define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)
@@ -973,12 +1106,22 @@ enum sa_policy_bits {
 #define POLICY_PPK_INSIST	LELEM(POLICY_PPK_INSIST_IX)
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
+#define POLICY_RSASIG_v1_5	LELEM(POLICY_RSASIG_v1_5_IX)
 
 #define NEGOTIATE_AUTH_HASH_SHA1		LELEM(IKEv2_AUTH_HASH_SHA1)	/* rfc7427 does responder support SHA1? */
 #define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_AUTH_HASH_SHA2_256)	/* rfc7427 does responder support SHA2-256?  */
 #define NEGOTIATE_AUTH_HASH_SHA2_384		LELEM(IKEv2_AUTH_HASH_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
 #define NEGOTIATE_AUTH_HASH_SHA2_512		LELEM(IKEv2_AUTH_HASH_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
 #define NEGOTIATE_AUTH_HASH_IDENTITY		LELEM(IKEv2_AUTH_HASH_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */
+
+enum sighash_policy_bits {
+	POL_SIGHASH_SHA2_256_IX,
+	POL_SIGHASH_SHA2_384_IX,
+	POL_SIGHASH_SHA2_512_IX,
+};
+#define POL_SIGHASH_SHA2_256 LELEM(POL_SIGHASH_SHA2_256_IX)
+#define POL_SIGHASH_SHA2_384 LELEM(POL_SIGHASH_SHA2_384_IX)
+#define POL_SIGHASH_SHA2_512 LELEM(POL_SIGHASH_SHA2_512_IX)
 
 /* Default policy for now is using RSA - this might change to ECC */
 #define POLICY_DEFAULT POLICY_RSASIG
@@ -1008,17 +1151,16 @@ enum keyword_host {
 };
 
 /*
- * reltated libunbound enumerated types
+ * related(???) libunbound enumerated types
  *
  * How authenticated is info that might have come from DNS?
  * In order of increasing confidence.
  */
 enum dns_auth_level {
-	DNSSEC_UNKNOWN,		/* didn't come from DNS like source */
-	DNSSEC_BOGUS,           /* UB returned BOGUS */
-	DNSSEC_INSECURE,        /* UB returned INSECURE */
-	PUBKEY_LOCAL,           /* came from local source, whack, plugin etc */
-	DNSSEC_SECURE,          /* UB returned SECURE */
+	/* 0 is reserved so uninitialized values are meaningless */
+	PUBKEY_LOCAL = 1,	/* came from local source, whack, plugin etc */
+	DNSSEC_INSECURE,	/* UB returned INSECURE */
+	DNSSEC_SECURE,		/* UB returned SECURE */
 
 	DNSSEC_ROOF
 };
@@ -1032,11 +1174,13 @@ enum PrivateKeyKind {
 	PKK_RSA,
 	PKK_XAUTH,
 	PKK_PPK,
+	PKK_ECDSA, /* should not be needed */
 	PKK_NULL,
+	PKK_INVALID,
 };
 
 #define XAUTH_PROMPT_TRIES 3
-#define MAX_USERNAME_LEN 128
+#define MAX_XAUTH_USERNAME_LEN 128
 #define XAUTH_MAX_PASS_LENGTH 128
 
 #define MIN_LIVENESS 1
@@ -1058,3 +1202,64 @@ enum pluto_exit_code {
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
 
 extern void init_pluto_constants(void);
+
+/*
+ * IPsec SA SPD policy priorities.
+ * A smaller value is a higher priority.
+ * The bands we use must have 2<<19 distinct values.
+ * manual by user	[0 * 1<<19, 1 * 1<<19)
+ * static conn		[1 * 1<<19, 2 * 1<<19)
+ * opportunistic	[2 * 1<<19, 3 * 1<<19)
+ * oe-anonymous		[3 * 1<<19, 4 * 1<<19)
+ */
+#define PLUTO_SPD_MANUAL_MAX	(1u * (1u << 19) - 1u)	/* not yet used */
+#define PLUTO_SPD_STATIC_MAX	(2u * (1u << 19) - 1u)
+#define PLUTO_SPD_OPPO_MAX	(3u * (1u << 19) - 1u)
+#define PLUTO_SPD_OPPO_ANON_MAX	(4u * (1u << 19) - 1u)
+
+/*
+ * Maximum data (inluding IKE HDR) allowed in a packet.
+ *
+ * v1 fragmentation is non-IETF magic voodoo we need to consider for interop:
+ * - www.cisco.com/en/US/docs/ios/sec_secure_connectivity/configuration/guide/sec_fragment_ike_pack.html
+ * - www.cisco.com/en/US/docs/ios-xml/ios/sec_conn_ikevpn/configuration/15-mt/sec-fragment-ike-pack.pdf
+ * - msdn.microsoft.com/en-us/library/cc233452.aspx
+ * - iOS/Apple racoon source ipsec-164.9 at www.opensource.apple.com (frak length 1280)
+ * - stock racoon source (frak length 552)
+ *
+ * v2 fragmentation is RFC7383.
+ *
+ * What is a sane and safe value? iOS/Apple uses 1280, stock racoon uses 552.
+ * Why is there no RFC to guide interop people here :/
+ *
+ * UDP packet overhead: the number of bytes of header and pseudo header
+ * - v4 UDP: 20 source addr, dest addr, protocol, length, source port, destination port, length, checksum
+ * - v6 UDP: 48 (similar)
+ *
+ * Other considerations:
+ * - optional non-ESP Marker: 4 NON_ESP_MARKER_SIZE
+ * - ISAKMP header
+ * - encryption representation overhead
+ */
+#define MIN_MAX_UDP_DATA_v4	(576 - 20)	/* this length must work */
+#define MIN_MAX_UDP_DATA_v6	(1280 - 48)	/* this length must work */
+
+// #define OVERHEAD_NON_FRAG_v1	(2*4 + 16)	/* ??? what is this number? */
+// #define OVERHEAD_NON_FRAG_v2	(2*4 + 16)	/* ??? what is this number? */
+
+/*
+ * ??? perhaps all current uses are not about fragment size, but how large
+ * the content of a packet (ie. excluding UDP headers) can be allowed before
+ * fragmentation must be considered.
+ */
+
+#define ISAKMP_V1_FRAG_OVERHEAD_IPv4	(2*4 + 16)	/* ??? */
+#define ISAKMP_V1_FRAG_MAXLEN_IPv4	(MIN_MAX_UDP_DATA_v4 - ISAKMP_V1_FRAG_OVERHEAD_IPv4)
+#define ISAKMP_V1_FRAG_OVERHEAD_IPv6	40	/* ??? */
+#define ISAKMP_V1_FRAG_MAXLEN_IPv6	(MIN_MAX_UDP_DATA_v6 - ISAKMP_V1_FRAG_OVERHEAD_IPv6)
+
+/* ??? it is unlikely that the v2 numbers should match the v1 numbers */
+#define ISAKMP_V2_FRAG_OVERHEAD_IPv4	(2*4 + 16)	/* ??? !!! */
+#define ISAKMP_V2_FRAG_MAXLEN_IPv4	(MIN_MAX_UDP_DATA_v4 - ISAKMP_V2_FRAG_OVERHEAD_IPv4)
+#define ISAKMP_V2_FRAG_OVERHEAD_IPv6	40	/* ??? !!! */
+#define ISAKMP_V2_FRAG_MAXLEN_IPv6	(MIN_MAX_UDP_DATA_v6 - ISAKMP_V1_FRAG_OVERHEAD_IPv6)

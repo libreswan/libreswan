@@ -1,0 +1,28 @@
+  <varlistentry>
+  <term><emphasis remap='B'>dnssec-enable</emphasis></term>
+  <listitem>
+<para>Whether pluto should perform dnssec validation using libunbound, provided libreswan
+was compiled with USE_DNSSEC. A value of <emphasis remap='B'>yes</emphasis> (the default)
+means pluto should perform DNSSEC validation. Note that pluto reads the file
+<emphasis remap='B'>/etc/resolv.conf</emphasis> to determine which nameservers to use.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>dnssec-rootkey-file</emphasis></term>
+  <listitem>
+<para>The location of the DNSSEC root zone public key file. The default is
+<emphasis remap='B'>/var/lib/unbound/root.key</emphasis> but this can be changed
+at compile time.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>dnssec-anchors</emphasis></term>
+  <listitem>
+<para>The location of a file containing additional DNSSEC Trust Anchors. This can be used
+when a network is using split-DNS and the internal hierarchy is using DNSSEC trust anchors.
+There is no default value.
+</para>
+  </listitem>
+  </varlistentry>

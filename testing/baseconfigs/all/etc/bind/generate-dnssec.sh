@@ -10,9 +10,9 @@ rm -f keys/K* signed/*.signed dsset/dsset* keys/testing.key
 sign_zone()
 {
 	zone=$1
-	dnssec-keygen -K keys -b 1024        -a RSASHA256 -n ZONE $zone;
-	dnssec-keygen -K keys -b 2048 -f KSK -a RSASHA256 -n ZONE $zone;
-	dnssec-signzone -S -K keys -x -f signed/${zone}.signed $zone
+	dnssec-keygen -r /dev/urandom -K keys -b 1024        -a RSASHA256 -n ZONE $zone;
+	dnssec-keygen -r /dev/urandom -K keys -b 2048 -f KSK -a RSASHA256 -n ZONE $zone;
+	dnssec-signzone -r /dev/urandom -S -K keys -x -f signed/${zone}.signed $zone
 }
 
 for parent in 192.in-addr.arpa libreswan.org;

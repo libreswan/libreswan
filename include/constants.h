@@ -1,4 +1,4 @@
-/* manifest constants
+/*
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -8,11 +8,12 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -24,15 +25,26 @@
 #ifndef _CONSTANTS_H_
 #define _CONSTANTS_H_
 
+#include <stddef.h> /* for size_t */
+#include <string.h>		/* for strcmp() */
+
+#include "shunk.h"
+
 struct lswlog;
 
-#include <stddef.h> /* for size_t */
+/* Some constants code likes to use. Useful? */
+
+enum {
+	secs_per_minute = 60,
+	secs_per_hour = 60 * secs_per_minute,
+	secs_per_day = 24 * secs_per_hour
+};
 
 /*
  * This file was split into internal contants (Libreswan/pluto related),
  * and external constants (defined by IETF, etc.)
  *
- * Constants which are kernel/IPsec related are in appropriate
+ * Constants that are kernel/IPsec related are in appropriate
  * libreswan / *.h files.
  *
  */
@@ -42,9 +54,6 @@ struct lswlog;
  * numbers back to names.
  * Any changes here should be reflected there.
  */
-
-#define elemsof(array) (sizeof(array) / sizeof(*(array)))	/* number of elements in an array */
-
 
 /*
  * min()/max() macros that also do
@@ -82,30 +91,23 @@ struct lswlog;
 #define PMIN(x,y) ((x) <= (y) ? (x) : (y))
 #define PMAX(x,y) ((x) >= (y) ? (x) : (y))
 
-/* Many routines return only success or failure, but wish to describe
- * the failure in a message.  We use the convention that they return
- * a NULL on success and a pointer to constant string on failure.
- * The fact that the string is a constant is limiting, but it
- * avoids storage management issues: the recipient is allowed to assume
- * that the string will live "long enough" (usually forever).
- * <libreswan.h> defines err_t for this return type.
+/*
+ * Libreswan was written before <stdbool.h> was standardized.
+ * We continue to use TRUE and FALSE because we think that they are clearer
+ * than true or false.
  */
-
-/* you'd think this should be builtin to compiler... */
 
 #include <stdbool.h> /* for 'bool' */
 
 #ifndef TRUE
-#  define TRUE 1
+#  define TRUE true
 #endif
 
 #ifndef FALSE
-#  define FALSE 0
+#  define FALSE false
 #endif
 
 #define NULL_FD (-1)	/* NULL file descriptor */
-#define dup_any(fd)  ((fd) == NULL_FD ? NULL_FD : dup((fd)))
-#define close_any(fd)  { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; } }
 
 #include <inttypes.h>
 
@@ -179,24 +181,6 @@ extern const char *bool_str(bool b);	/* bool -> string */
 extern char *jam_str(char *dest, size_t size, const char *src);
 extern char *add_str(char *buf, size_t size, char *hint, const char *src);
 
-/* set type with room for at least 64 elements for ALG opts
- * (was 32 in stock FS)
- */
-
-typedef uint_fast64_t lset_t;
-#define PRIxLSET    PRIxFAST64
-#define LELEM_ROOF  64	/* all elements must be less than this */
-#define LEMPTY ((lset_t)0)
-#define LELEM(opt) ((lset_t)1 << (opt))
-#define LRANGE(lwb, upb) LRANGES(LELEM(lwb), LELEM(upb))
-#define LRANGES(first, last) (last - first + last)
-#define LHAS(set, elem)  (((set) & LELEM(elem)) != LEMPTY)
-#define LIN(subset, set)  (((subset) & (set)) == (subset))
-#define LDISJOINT(a, b)  (((a) & (b)) == LEMPTY)
-/* LFIRST: find first element of a set (tricky use of twos complement) */
-#define LFIRST(s) ((s) & -(s))
-#define LSINGLETON(s) ((s) != LEMPTY && LFIRST(s) == (s))
-
 /* Routines to check and display values.
  *
  * WARNING: Some of these routines are not re-entrant because
@@ -231,8 +215,12 @@ typedef const struct enum_names enum_names;
 extern const char *enum_name(enum_names *ed, unsigned long val);
 extern const char *enum_short_name(enum_names *ed, unsigned long val);
 
+/* old names */
 size_t lswlog_enum(struct lswlog *, enum_names *en, unsigned long val);
 size_t lswlog_enum_short(struct lswlog *, enum_names *en, unsigned long val);
+/* new names */
+#define jam_enum lswlog_enum
+#define jam_enum_short lswlog_enum
 
 /* caller-allocated buffer for enum_showb */
 struct esb_buf {
@@ -268,11 +256,11 @@ extern int enum_search(enum_names *ed, const char *string);
  * found.
  *
  * Unlike enum_search() this compares strings both with and without
- * any prefixes and suffixes.  For instance, and assuming "ESP_" is
- * the prefix discarded by enum_short_name(), "blowfish" will match
- * "ESP_BLOWFISH(OBSOLETE)" while enum_search() will not.
+ * any prefix or suffix.  For instance, given the enum_name entry
+ * "ESP_BLOWFISH(OBSOLETE)" with prefix "ESP_", any of
+ * "esp_blowfish(obsolete)", "esp_blowfish" and "blowfish" will match.
  */
-extern int enum_match(enum_names *ed, const char *string);
+extern int enum_match(enum_names *ed, shunk_t string);
 
 /*
  * Printing enum enums.
@@ -302,30 +290,14 @@ const char *enum_enum_name(enum_enum_names *e, unsigned long table,
 const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
 			    unsigned long val, struct esb_buf *buf);
 
+/* old */
 size_t lswlog_enum_enum(struct lswlog *log, enum_enum_names *een,
 			unsigned long table, unsigned long val);
 size_t lswlog_enum_enum_short(struct lswlog *log, enum_enum_names *een,
 			      unsigned long table, unsigned long val);
-
-/* Printing lset_t values:
- *
- * These routines require a name table which is a NULL-terminated
- * sequence of strings.  That means that each bit in the set must
- * have a name.
- *
- * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
- * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
- *
- * lswlog_enum_lset_short() formats into a caller-supplied buffer -- only form
- */
-extern bool testset(const char *const table[], lset_t val);
-extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-ENTRANT */
-extern const char *bitnamesofb(const char *const table[],
-			       lset_t val,
-			       char *buf, size_t blen);
-
-size_t lswlog_enum_lset_short(struct lswlog *, enum_names *sd,
-			      const char *separator, lset_t val);
+/* new */
+#define jam_enum_enum lswlog_enum_enum
+#define jam_enum_enum_short lswlog_enum_enum_short
 
 /*
  * The sparser_name should be transformed into keyword_enum_value
@@ -345,11 +317,6 @@ struct keyword_enum_values {
 	const struct keyword_enum_value *values;
 	size_t valuesize;
 };
-
-extern struct keyword_enum_values kw_host_list;
-
-extern const char *keyword_name(struct keyword_enum_values *kevs,
-				unsigned int value);
 
 /* sparse_names is much like enum_names, except values are
  * not known to be contiguous or ordered.

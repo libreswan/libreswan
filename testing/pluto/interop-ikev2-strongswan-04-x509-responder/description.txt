@@ -5,5 +5,7 @@ the responder (east).
 This is the reverse test of interop-ikev2-strongswan-05
 
 By default the Authentication method now is Digital Signatures.
-We currently supoort RSA with SHA1  only.
+We currently supoort RSA-SHA2 and it's variants.
+
+Authentication should be successfull with rsa-sha2 (rsa-sh2_256)
 

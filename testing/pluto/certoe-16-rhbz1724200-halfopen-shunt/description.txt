@@ -1,0 +1,6 @@
+
+This is a test for an expired halfopen OE connection.
+It should _not_ install a shunt upon failure, if its state has been
+obsoleted by a newer incoming state that established the IPsec SA.
+
+This is a test for https://bugzilla.redhat.com/show_bug.cgi?id=1724200

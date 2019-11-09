@@ -11,7 +11,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -58,7 +58,7 @@
 #warning "No linux CryptoAPI found, install 2.4.22+ or 2.6.x"
 #define NO_CRYPTOAPI_SUPPORT
 #endif
-/*	Low freeswan header coupling	*/
+/*	Low Libreswan header coupling	*/
 #include "libreswan/ipsec_alg.h"
 
 #include <linux/crypto.h>
@@ -303,14 +303,14 @@ err:
  *      core encryption function: will use cx->ci to call actual cipher's
  *      cbc function
  */
-static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
-			     __u8 * in, int ilen, const __u8 * iv, int encrypt)
+static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 *key_e,
+			     __u8 *in, int ilen, const __u8 *iv, int encrypt)
 {
 	int error = 0;
 	struct crypto_tfm *tfm = (struct crypto_tfm *)key_e;
 	struct scatterlist sg = {
 		.page = virt_to_page(in),
-		.offset = (unsigned long)(in) % PAGE_SIZE,
+		.offset = (unsigned long)in % PAGE_SIZE,
 		.length = ilen,
 	};
 
@@ -361,15 +361,13 @@ static int setup_cipher_list(struct ipsec_alg_capi_cipher *clist)
 		 *      use a local ci to avoid touching cptr->ci,
 		 *      if register ipsec_alg success then bind cipher
 		 */
-		if ( setup_cipher(cptr->ciphername) ) {
+		if (setup_cipher(cptr->ciphername)) {
 			if (debug > 0)
 				printk(KERN_DEBUG "klips_debug:"
 				       "setup_cipher_list():"
 				       "ciphername=%s found\n",
 				       cptr->ciphername);
-			if (setup_ipsec_alg_capi_cipher(cptr) == 0) {
-
-			} else {
+			if (setup_ipsec_alg_capi_cipher(cptr) != 0) {
 				printk(KERN_ERR "klips_debug:"
 				       "setup_cipher_list():"
 				       "ciphername=%s failed ipsec_alg_register\n",

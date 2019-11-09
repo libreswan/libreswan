@@ -1,13 +1,13 @@
 /* tables of names for values defined in constants.h
  *
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2013-2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -25,8 +25,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <netinet/in.h>
+#ifdef NETKEY_SUPPORT
 #include "linux/xfrm.h" /* local (if configured) or system copy */
-#include <libreswan.h>
+#endif
 #include <libreswan/passert.h>
 
 #include "constants.h"
@@ -81,6 +82,7 @@ enum_names dpd_action_names = {
 	NULL
 };
 
+#ifdef NETKEY_SUPPORT
 /* netkey SA direction names */
 static const char *const netkey_sa_dir_name[] = {
 	"XFRM_IN",
@@ -94,6 +96,7 @@ enum_names netkey_sa_dir_names = {
 	NULL, /* prefix */
 	NULL
 };
+#endif
 
 /* systemd watchdog action names */
 static const char *const sd_action_name[] = {
@@ -113,36 +116,46 @@ enum_names sd_action_names = {
 
 /* Timer events */
 static const char *const timer_event_name[] = {
-	"EVENT_NULL",
+#define E(EVENT) [EVENT] = #EVENT
 
-	"EVENT_REINIT_SECRET",
-	"EVENT_SHUNT_SCAN",
-	"EVENT_PENDING_DDNS",
-	"EVENT_SD_WATCHDOG",
-	"EVENT_PENDING_PHASE2",
+	E(EVENT_NULL),
 
-	"EVENT_SO_DISCARD",
-	"EVENT_v1_RETRANSMIT",
-	"EVENT_v1_SEND_XAUTH",
-	"EVENT_SA_REPLACE",
-	"EVENT_SA_REPLACE_IF_USED",
-	"EVENT_v2_SA_REPLACE_IF_USED_IKE",
-	"EVENT_v2_SA_REPLACE_IF_USED",
-	"EVENT_SA_EXPIRE",
-	"EVENT_NAT_T_KEEPALIVE",
-	"EVENT_DPD",
-	"EVENT_DPD_TIMEOUT",
-	"EVENT_CRYPTO_TIMEOUT",
-	"EVENT_PAM_TIMEOUT",
+	E(EVENT_REINIT_SECRET),
+	E(EVENT_SHUNT_SCAN),
+	E(EVENT_PENDING_DDNS),
+	E(EVENT_SD_WATCHDOG),
+	E(EVENT_PENDING_PHASE2),
+	E(EVENT_CHECK_CRLS),
+	E(EVENT_REVIVE_CONNS),
+	E(EVENT_FREE_ROOT_CERTS),
+	E(EVENT_RESET_LOG_RATE_LIMIT),
+	E(EVENT_PROCESS_KERNEL_QUEUE),
 
-	"EVENT_v2_RETRANSMIT",
-	"EVENT_v2_RESPONDER_TIMEOUT",
-	"EVENT_v2_LIVENESS",
-	"EVENT_v2_RELEASE_WHACK",
-	"EVENT_v2_INITIATE_CHILD",
-	"EVENT_v2_SEND_NEXT_IKE",
-	"EVENT_v2_ADDR_CHANGE",
-	"EVENT_RETAIN",
+	E(GLOBAL_TIMERS_ROOF),
+
+	E(EVENT_SO_DISCARD),
+	E(EVENT_RETRANSMIT),
+
+	E(EVENT_SA_REKEY),
+	E(EVENT_SA_REPLACE),
+	E(EVENT_SA_EXPIRE),
+
+	E(EVENT_v1_SEND_XAUTH),
+	E(EVENT_v1_SA_REPLACE_IF_USED),
+	E(EVENT_NAT_T_KEEPALIVE),
+	E(EVENT_DPD),
+	E(EVENT_DPD_TIMEOUT),
+	E(EVENT_CRYPTO_TIMEOUT),
+	E(EVENT_PAM_TIMEOUT),
+
+	E(EVENT_v2_LIVENESS),
+	E(EVENT_v2_RELEASE_WHACK),
+	E(EVENT_v2_INITIATE_CHILD),
+	E(EVENT_v2_ADDR_CHANGE),
+	E(EVENT_v2_REDIRECT),
+	E(EVENT_RETAIN),
+
+#undef E
 };
 
 enum_names timer_event_names = {
@@ -153,70 +166,71 @@ enum_names timer_event_names = {
 };
 
 /* State of exchanges */
+#define S(STATE) [STATE] = #STATE
 static const char *const state_name[] = {
-	"STATE_UNDEFINED",
-	"STATE_UNUSED_1",
-	"STATE_UNUSED_2",
-	"STATE_MAIN_R0",
-	"STATE_MAIN_I1",
-	"STATE_MAIN_R1",
-	"STATE_MAIN_I2",
-	"STATE_MAIN_R2",
-	"STATE_MAIN_I3",
-	"STATE_MAIN_R3",
-	"STATE_MAIN_I4",
+	S(STATE_UNDEFINED),
+	S(STATE_MAIN_R0),
+	S(STATE_MAIN_I1),
+	S(STATE_MAIN_R1),
+	S(STATE_MAIN_I2),
+	S(STATE_MAIN_R2),
+	S(STATE_MAIN_I3),
+	S(STATE_MAIN_R3),
+	S(STATE_MAIN_I4),
 
-	"STATE_AGGR_R0",
-	"STATE_AGGR_I1",
-	"STATE_AGGR_R1",
-	"STATE_AGGR_I2",
-	"STATE_AGGR_R2",
+	S(STATE_AGGR_R0),
+	S(STATE_AGGR_I1),
+	S(STATE_AGGR_R1),
+	S(STATE_AGGR_I2),
+	S(STATE_AGGR_R2),
 
-	"STATE_QUICK_R0",
-	"STATE_QUICK_I1",
-	"STATE_QUICK_R1",
-	"STATE_QUICK_I2",
-	"STATE_QUICK_R2",
+	S(STATE_QUICK_R0),
+	S(STATE_QUICK_I1),
+	S(STATE_QUICK_R1),
+	S(STATE_QUICK_I2),
+	S(STATE_QUICK_R2),
 
-	"STATE_INFO",
-	"STATE_INFO_PROTECTED",
+	S(STATE_INFO),
+	S(STATE_INFO_PROTECTED),
 
-	"STATE_XAUTH_R0",
-	"STATE_XAUTH_R1",
-	"STATE_MODE_CFG_R0",
-	"STATE_MODE_CFG_R1",
-	"STATE_MODE_CFG_R2",
+	S(STATE_XAUTH_R0),
+	S(STATE_XAUTH_R1),
+	S(STATE_MODE_CFG_R0),
+	S(STATE_MODE_CFG_R1),
+	S(STATE_MODE_CFG_R2),
 
-	"STATE_MODE_CFG_I1",
+	S(STATE_MODE_CFG_I1),
 
-	"STATE_XAUTH_I0",
-	"STATE_XAUTH_I1",
+	S(STATE_XAUTH_I0),
+	S(STATE_XAUTH_I1),
 
-	"STATE_IKEv1_ROOF",
+	S(STATE_IKEv1_ROOF),
 
 	/* v2 */
-	"STATE_IKEv2_BASE",
-	"STATE_PARENT_I1",
-	"STATE_PARENT_I2",
-	"STATE_PARENT_I3",
-	"STATE_PARENT_R1",
-	"STATE_PARENT_R2",
-	"STATE_V2_CREATE_I0",
-	"STATE_V2_CREATE_I",
-	"STATE_V2_REKEY_IKE_I0",
-	"STATE_V2_REKEY_IKE_I",
-	"STATE_V2_REKEY_CHILD_I0",
-	"STATE_V2_REKEY_CHILD_I",
-	"STATE_V2_CREATE_R",
-	"STATE_V2_REKEY_IKE_R",
-	"STATE_V2_REKEY_CHILD_R",
-	"STATE_V2_IPSEC_I",
-	"STATE_V2_IPSEC_R",
-	"STATE_IKESA_DEL",
-	"STATE_CHILDSA_DEL",
+	S(STATE_PARENT_I0),
+	S(STATE_PARENT_I1),
+	S(STATE_PARENT_I2),
+	S(STATE_PARENT_I3),
+	S(STATE_PARENT_R0),
+	S(STATE_PARENT_R1),
+	S(STATE_PARENT_R2),
+	S(STATE_V2_CREATE_I0),
+	S(STATE_V2_CREATE_I),
+	S(STATE_V2_REKEY_IKE_I0),
+	S(STATE_V2_REKEY_IKE_I),
+	S(STATE_V2_REKEY_CHILD_I0),
+	S(STATE_V2_REKEY_CHILD_I),
+	S(STATE_V2_CREATE_R),
+	S(STATE_V2_REKEY_IKE_R),
+	S(STATE_V2_REKEY_CHILD_R),
+	S(STATE_V2_IPSEC_I),
+	S(STATE_V2_IPSEC_R),
+	S(STATE_IKESA_DEL),
+	S(STATE_CHILDSA_DEL),
 
-	"STATE_IKEv2_ROOF",
+	S(STATE_IKEv2_ROOF),
 };
+#undef S
 
 enum_names state_names = {
 	STATE_UNDEFINED, STATE_IKEv2_ROOF,
@@ -228,67 +242,68 @@ enum_names state_names = {
 /* story for state */
 
 static const char *const state_story[] = {
-	"not defined and probably dead (internal)",             /* STATE_UNDEFINED */
-	"STATE_UNUSED_1",
-	"STATE_UNUSED_2",
-	"expecting MI1",                                        /* STATE_MAIN_R0 */
-	"sent MI1, expecting MR1",                              /* STATE_MAIN_I1 */
-	"sent MR1, expecting MI2",                              /* STATE_MAIN_R1 */
-	"sent MI2, expecting MR2",                              /* STATE_MAIN_I2 */
-	"sent MR2, expecting MI3",                              /* STATE_MAIN_R2 */
-	"sent MI3, expecting MR3",                              /* STATE_MAIN_I3 */
-	"sent MR3, ISAKMP SA established",                      /* STATE_MAIN_R3 */
-	"ISAKMP SA established",                                /* STATE_MAIN_I4 */
+	[STATE_UNDEFINED] = "not defined and probably dead (internal)",
+	[STATE_MAIN_R0] = "expecting MI1",
+	[STATE_MAIN_I1] = "sent MI1, expecting MR1",
+	[STATE_MAIN_R1] = "sent MR1, expecting MI2",
+	[STATE_MAIN_I2] = "sent MI2, expecting MR2",
+	[STATE_MAIN_R2] = "sent MR2, expecting MI3",
+	[STATE_MAIN_I3] = "sent MI3, expecting MR3",
+	[STATE_MAIN_R3] = "sent MR3, ISAKMP SA established",
+	[STATE_MAIN_I4] = "ISAKMP SA established",
 
-	"expecting AI1",                                        /* STATE_AGGR_R0 */
-	"sent AI1, expecting AR1",                              /* STATE_AGGR_I1 */
-	"sent AR1, expecting AI2",                              /* STATE_AGGR_R1 */
-	"sent AI2, ISAKMP SA established",                      /* STATE_AGGR_I2 */
-	"ISAKMP SA established",                                /* STATE_AGGR_R2 */
+	[STATE_AGGR_R0] = "expecting AI1",
+	[STATE_AGGR_I1] = "sent AI1, expecting AR1",
+	[STATE_AGGR_R1] = "sent AR1, expecting AI2",
+	[STATE_AGGR_I2] = "sent AI2, ISAKMP SA established",
+	[STATE_AGGR_R2] = "ISAKMP SA established",
 
-	"expecting QI1",                                        /* STATE_QUICK_R0 */
-	"sent QI1, expecting QR1",                              /* STATE_QUICK_I1 */
-	"sent QR1, inbound IPsec SA installed, expecting QI2",  /* STATE_QUICK_R1 */
-	"sent QI2, IPsec SA established",                       /* STATE_QUICK_I2 */
-	"IPsec SA established",                                 /* STATE_QUICK_R2 */
+	[STATE_QUICK_R0] = "expecting QI1",
+	[STATE_QUICK_I1] = "sent QI1, expecting QR1",
+	[STATE_QUICK_R1] = "sent QR1, inbound IPsec SA installed, expecting QI2",
+	[STATE_QUICK_I2] = "sent QI2, IPsec SA established",
+	[STATE_QUICK_R2] = "IPsec SA established",
 
-	"got Informational Message in clear",                   /* STATE_INFO */
-	"got encrypted Informational Message",                  /* STATE_INFO_PROTECTED */
+	[STATE_INFO] = "got Informational Message in clear",
+	[STATE_INFO_PROTECTED] = "got encrypted Informational Message",
 
-	"XAUTH responder - optional CFG exchange",              /* STATE_XAUTH_R0 */
-	"XAUTH status sent, expecting Ack",                     /* STATE_XAUTH_R1 */
-	"ModeCfg Reply sent",                           /* STATE_MODE_CFG_R0 */
-	"ModeCfg Set sent, expecting Ack",              /* STATE_MODE_CFG_R1 */
-	"ModeCfg R2",                                   /* STATE_MODE_CFG_R2 */
+	[STATE_XAUTH_R0] = "XAUTH responder - optional CFG exchange",
+	[STATE_XAUTH_R1] = "XAUTH status sent, expecting Ack",
+	[STATE_MODE_CFG_R0] = "ModeCfg Reply sent",
+	[STATE_MODE_CFG_R1] = "ModeCfg Set sent, expecting Ack",
+	[STATE_MODE_CFG_R2] = "ModeCfg R2",
 
-	"ModeCfg inititator - awaiting CFG_reply",      /* STATE_MODE_CFG_I1 */
+	[STATE_MODE_CFG_I1] = "ModeCfg inititator - awaiting CFG_reply",
 
-	"XAUTH client - possibly awaiting CFG_request",          /* MODE_XAUTH_I0 */
-	"XAUTH client - possibly awaiting CFG_set",              /* MODE_XAUTH_I1 */
-	"invalid state - IKE roof",
-	"invalid state - IKEv2 base",
-	"sent v2I1, expected v2R1",             /* STATE_PARENT_I1 */
-	"sent v2I2, expected v2R2",		/* STATE_PARENT_I2 */
-	"PARENT SA established",		/* STATE_PARENT_I3 */
-	"received v2I1, sent v2R1",		/* STATE_PARENT_R1 */
-	"received v2I2, PARENT SA established",	/* STATE_PARENT_R2 */
-	"STATE_V2_CREATE_I0",
-	"sent IPsec Child req wait response",
-	"STATE_V2_REKEY_IKE_I0",
-	"STATE_V2_REKEY_IKE_I",
-	"STATE_V2_REKEY_CHILD_I0",
-	"STATE_V2_REKEY_CHILD_I",
-	"STATE_V2_CREATE_R",
-	"STATE_V2_REKEY_IKE_R",
-	"STATE_V2_REKEY_CHILD_R",
-	"IPsec SA established",		/* STATE_V2_IPSEC_I */
-	"IPsec SA established",		/* STATE_V2_IPSEC_R */
+	[STATE_XAUTH_I0] = "XAUTH client - possibly awaiting CFG_request",
+	[STATE_XAUTH_I1] = "XAUTH client - possibly awaiting CFG_set",
+
+	[STATE_IKEv1_ROOF] = "invalid state - IKE roof",
+
+	[STATE_PARENT_I0] = "waiting for KE to finish",
+	[STATE_PARENT_I1] = "sent v2I1, expected v2R1",
+	[STATE_PARENT_I2] = "sent v2I2, expected v2R2",
+	[STATE_PARENT_I3] = "PARENT SA established",
+	[STATE_PARENT_R0] = "processing SA_INIT request",
+	[STATE_PARENT_R1] = "received v2I1, sent v2R1",
+	[STATE_PARENT_R2] = "received v2I2, PARENT SA established",
+	[STATE_V2_CREATE_I0] = "STATE_V2_CREATE_I0",
+	[STATE_V2_CREATE_I] = "sent IPsec Child req wait response",
+	[STATE_V2_REKEY_IKE_I0] = "STATE_V2_REKEY_IKE_I0",
+	[STATE_V2_REKEY_IKE_I] = "STATE_V2_REKEY_IKE_I",
+	[STATE_V2_REKEY_CHILD_I0] = "STATE_V2_REKEY_CHILD_I0",
+	[STATE_V2_REKEY_CHILD_I] = "STATE_V2_REKEY_CHILD_I",
+	[STATE_V2_CREATE_R] = "STATE_V2_CREATE_R",
+	[STATE_V2_REKEY_IKE_R] = "STATE_V2_REKEY_IKE_R",
+	[STATE_V2_REKEY_CHILD_R] = "STATE_V2_REKEY_CHILD_R",
+	[STATE_V2_IPSEC_I] = "IPsec SA established",
+	[STATE_V2_IPSEC_R] = "IPsec SA established",
 
 	/* ??? better story needed for these */
-	"STATE_IKESA_DEL",	/* STATE_IKESA_DEL */
-	"STATE_CHILDSA_DEL",	/* STATE_CHILDSA_DEL */
+	[STATE_IKESA_DEL] = "STATE_IKESA_DEL",
+	[STATE_CHILDSA_DEL] = "STATE_CHILDSA_DEL",
 
-	"invalid state - IKEv2 roof",	/* STATE_IKEv2_ROOF */
+	[STATE_IKEv2_ROOF] = "invalid state - IKEv2 roof",
 };
 
 enum_names state_stories = {
@@ -321,25 +336,7 @@ enum_names natt_method_names = {
 	NULL
 };
 
-/* pluto crypto importance */
-static const char *const pluto_cryptoimportance_strings[] = {
-	"import:not set",
-	"import:respond to stranger",
-	"import:respond to friend",
-	"import:ongoing calculation",
-	"import:local rekey",
-	"import:admin initiate"
-};
-
-enum_names pluto_cryptoimportance_names = {
-	pcim_notset_crypto, pcim_demand_crypto,
-	ARRAY_REF(pluto_cryptoimportance_strings),
-	NULL, /* prefix */
-	NULL
-	};
-
 /* routing status names */
-
 static const char *const routing_story_strings[] = {
 	"unrouted",             /* RT_UNROUTED: unrouted */
 	"unrouted HOLD",        /* RT_UNROUTED_HOLD: unrouted, but HOLD shunt installed */
@@ -357,29 +354,33 @@ enum_names routing_story = {
 	NULL, /* prefix */
 	NULL };
 
-static const char *const stfstatus_names[] = {
-	"STF_IGNORE",
-	"STF_SUSPEND",
-	"STF_OK",
-	"STF_INTERNAL_ERROR",
-	"STF_FATAL",
-	"STF_DROP",
-	"STF_FAIL"
+static const char *const stf_status_strings[] = {
+#define A(S) [S] = #S
+	A(STF_SKIP_COMPLETE_STATE_TRANSITION),
+	A(STF_IGNORE),
+	A(STF_SUSPEND),
+	A(STF_OK),
+	A(STF_INTERNAL_ERROR),
+	A(STF_FATAL),
+	A(STF_FAIL),
+#undef A
 };
 
-enum_names stfstatus_name = {
-	STF_IGNORE, STF_FAIL,
-	ARRAY_REF(stfstatus_names),
+enum_names stf_status_names = {
+	0, elemsof(stf_status_strings)-1,
+	ARRAY_REF(stf_status_strings),
 	NULL, /* prefix */
 	NULL
 };
 
-/* Names for sa_policy_bits.
+/*
+ * Names for sa_policy_bits.
  * Note: we drop the POLICY_ prefix so that logs are more concise.
  */
 const char *const sa_policy_bit_names[] = {
 	"PSK",
 	"RSASIG",
+	"ECDSA",
 	"AUTH_NEVER",
 	"AUTHNULL",
 	"ENCRYPT",
@@ -390,12 +391,17 @@ const char *const sa_policy_bit_names[] = {
 	"DISABLEARRIVALCHECK",
 	"DECAP_DSCP",
 	"NOPMTUDISC",
+	"MSDH_DOWNGRADE",
+	"ALLOW_NO_SAN",
+	"DNS_MATCH_ID",
+	"SHA2_TRUNCBUG",
 	"SHUNT0",
 	"SHUNT1",
 	"FAIL0",
 	"FAIL1",
 	"NEGO_PASS",
 	"DONT_REKEY",
+	"REAUTH",
 	"OPPORTUNISTIC",
 	"GROUP",
 	"GROUTED",
@@ -407,9 +413,11 @@ const char *const sa_policy_bit_names[] = {
 	"OVERLAPIP",
 	"IKEV1_ALLOW",
 	"IKEV2_ALLOW",
-	"IKEV2_PROPOSE",
 	"IKEV2_ALLOW_NARROWING",
 	"IKEV2_PAM_AUTHORIZE",
+	"SEND_REDIRECT_ALWAYS",
+	"SEND_REDIRECT_NEVER",
+	"ACCEPT_REDIRECT_YES",
 	"SAREF_TRACK",
 	"SAREF_TRACK_CONNTRACK",
 	"IKE_FRAG_ALLOW",
@@ -420,6 +428,17 @@ const char *const sa_policy_bit_names[] = {
 	"PPK_INSIST",
 	"ESN_NO",
 	"ESN_YES",
+	"RSASIG_v1_5",
+	NULL	/* end for bitnamesof() */
+};
+
+/*
+ * Names for RFC 7427 IKEv2 AUTH signature hash algo sighash_policy_bits
+ */
+const char *const sighash_policy_bit_names[] = {
+	"SHA2_256",
+	"SHA2_384",
+	"SHA2_512",
 	NULL	/* end for bitnamesof() */
 };
 
@@ -428,6 +447,7 @@ static const char *const ikev2_asym_auth_names[] = {
 	"never",
 	"secret",
 	"rsasig",
+	"ecdsa",
 	"null",
 };
 
@@ -435,6 +455,20 @@ enum_names ikev2_asym_auth_name = {
 	AUTH_UNSET, AUTH_NULL,
 	ARRAY_REF(ikev2_asym_auth_names),
 	NULL, /* prefix */
+	NULL
+};
+
+static const char *const allow_global_redirect_name[] = {
+	"no",
+	"yes",
+	"auto",
+};
+
+enum_names allow_global_redirect_names = {
+	GLOBAL_REDIRECT_NO,
+	GLOBAL_REDIRECT_AUTO,
+	ARRAY_REF(allow_global_redirect_name),
+	NULL,
 	NULL
 };
 
@@ -453,16 +487,13 @@ static const char *const policy_fail_names[4] = {
 };
 
 static const char *const dns_auth_level_name[] = {
-	"DNSSEC_UNKNOWN",
-	"DNSSEC_BOGUS",
-	"DNSSEC_INSECURE",
 	"PUBKEY_LOCAL",
+	"DNSSEC_INSECURE",
 	"DNSSEC_SECURE",
-	"DNSSEC_ROOF",
 };
 
 enum_names dns_auth_level_names = {
-	DNSSEC_UNKNOWN, DNSSEC_ROOF,
+	PUBKEY_LOCAL, DNSSEC_ROOF-1,
 	ARRAY_REF(dns_auth_level_name),
 	NULL, /* prefix */
 	NULL
@@ -478,7 +509,7 @@ const char *prettypolicy(lset_t policy)
 				     policy &
 				     ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK),
 				     pbitnamesbuf, sizeof(pbitnamesbuf));
-	static char buf[200]; /* NOT RE-ENTRANT!  I hope that it is big enough! */
+	static char buf[512]; /* NOT RE-ENTRANT!  I hope that it is big enough! */
 	lset_t shunt = (policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
 	lset_t fail = (policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT;
 
@@ -486,10 +517,10 @@ const char *prettypolicy(lset_t policy)
 		pbitnamesbuf[0] = '\0';
 	snprintf(buf, sizeof(buf), "%s%s%s%s%s",
 		 pbitnamesbuf,
-		 shunt != 0 ? "+" : "",
-		 shunt != 0 ? policy_shunt_names[shunt] : "",
-		 fail != 0 ? "+failure" : "",
-		 fail != 0 ? policy_fail_names[fail] : "");
+		 shunt == POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT ?  "" : "+",
+		 shunt ==  POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT ? "" : policy_shunt_names[shunt],
+		 fail == POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "" : "+failure",
+		 fail == POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "" : policy_fail_names[fail]);
 	return buf;
 }
 
@@ -501,10 +532,11 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&state_names,
 	&state_stories,
 	&natt_method_names,
-	&pluto_cryptoimportance_names,
 	&routing_story,
-	&stfstatus_name,
+	&stf_status_names,
+#ifdef NETKEY_SUPPORT
 	&netkey_sa_dir_names,
+#endif
 };
 
 void init_pluto_constants(void) {

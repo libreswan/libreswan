@@ -1,0 +1,89 @@
+/testing/guestbin/swan-prep
+west #
+ setenforce 1
+west #
+ echo '@psk-west @psk-east: PSK "ThisIsHereToMisMatchABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
+west #
+ echo ': PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add ikev1-failtest
+002 added connection description "ikev1-failtest"
+west #
+ ipsec auto --add ikev1-aggr-failtest
+002 added connection description "ikev1-aggr-failtest"
+west #
+ ipsec auto --add ikev2-failtest
+002 added connection description "ikev2-failtest"
+west #
+ #ipsec whack --impair delete-on-retransmit
+west #
+ echo "initdone"
+initdone
+west #
+ # ike fail tests
+west #
+ ipsec auto --up ikev1-failtest
+002 "ikev1-failtest" #1: initiating Main Mode
+1v1 "ikev1-failtest" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+003 "ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
+003 "ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
+010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
+031 "ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits. No response (or no acceptable response) to our first IKEv1 message
+000 "ikev1-failtest" #1: starting keying attempt 2 of at most 1, but releasing whack
+west #
+ ipsec auto --delete ikev1-failtest
+002 "ikev1-failtest": terminating SAs using this connection
+002 "ikev1-failtest" #2: deleting state (STATE_MAIN_I1) and NOT sending notification
+west #
+ ipsec auto --up ikev1-aggr-failtest
+002 "ikev1-aggr-failtest" #3: initiating Aggressive Mode
+1v1 "ikev1-aggr-failtest" #3: STATE_AGGR_I1: sent AI1, expecting AR1
+002 "ikev1-aggr-failtest" #3: Peer ID is ID_FQDN: '@east-v1'
+002 "ikev1-aggr-failtest" #3: Peer ID is ID_FQDN: '@east-v1'
+003 "ikev1-aggr-failtest" #3: RSA Signature check (on @east-v1) failed (wrong key?); tried *000000000
+217 "ikev1-aggr-failtest" #3: STATE_AGGR_I1: INVALID_KEY_INFORMATION
+002 "ikev1-aggr-failtest" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+002 "ikev1-aggr-failtest" #3: deleting state (STATE_AGGR_I1) and NOT sending notification
+west #
+ ipsec auto --delete ikev1-aggr-failtest
+002 "ikev1-aggr-failtest": terminating SAs using this connection
+002 "ikev1-aggr-failtest" #4: deleting state (STATE_AGGR_I1) and NOT sending notification
+west #
+ ipsec auto --up ikev2-failtest
+002 "ikev2-failtest" #5: initiating v2 parent SA
+1v2 "ikev2-failtest" #5: initiate
+1v2 "ikev2-failtest" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "ikev2-failtest" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "ikev2-failtest" #6: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+036 "ikev2-failtest" #6: encountered fatal error in state STATE_PARENT_I2
+west #
+ ipsec auto --delete ikev2-failtest
+002 "ikev2-failtest": terminating SAs using this connection
+002 "ikev2-failtest" #5: deleting state (STATE_PARENT_I2) and NOT sending notification
+west #
+ echo done
+done
+west #
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ grep -E -i "IKE|ipsec-" /var/log/audit/audit.log
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-failtest" connstate=1 ike-version=1 auth=RSA_SIG cipher=none ksize=0 integ=none prf=none pfs=none raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-failtest" connstate=1 ike-version=1 auth=RSA_SIG cipher=none ksize=0 integ=none prf=none pfs=none raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-failtest" connstate=2 ike-version=1 auth=RSA_SIG cipher=none ksize=0 integ=none prf=none pfs=none raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-aggr-failtest" connstate=3 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-aggr-failtest" connstate=3 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-aggr-failtest" connstate=4 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev2-failtest" connstate=6 ike-version=2.0 auth=PRESHARED_KEY cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

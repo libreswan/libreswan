@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Rishabh</firstname><surname></surname><authorblurb><para></para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>IPSEC_LETSENCRYPT</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>3 August 2019</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec letsencrypt</refname>
+<refpurpose>invoke Opportunistic Encryption utilities</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>ipsec</command>
+    <arg choice='plain'><replaceable>letsencrypt</replaceable></arg>
+    <arg choice='opt'>--client </arg>
+    <arg choice='opt'>--server </arg>
+    <arg choice='opt'>--test </arg>
+    <arg choice='opt'>--disable </arg>
+    <arg choice='opt'>--help </arg>
+    <sbr/>
+    <arg choice='opt'><arg choice='plain'>--generate-certificate </arg><arg choice='plain'><replaceable>hostname</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--renew </arg><arg choice='plain'><replaceable>hostname</replaceable></arg></arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='examples'><title>EXAMPLES</title>
+<cmdsynopsis>
+  <command>ipsec</command>
+    <arg choice='plain'><replaceable>letsencrypt</replaceable></arg>
+    <arg choice='plain'>{ --client | --server | --test | --disable | -- help }</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+  <command>ipsec</command>
+    <arg choice='plain'><replaceable>letsencrypt</replaceable></arg>
+    <arg choice='plain'>{ --generate-certificate | --renew }</arg>
+    <arg choice='plain'><replaceable>hostname</replaceable></arg>
+</cmdsynopsis>
+</refsect1>
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Letsencrypt</emphasis>
+The command creates a secure Opportunistic Connection between the hosts commonly referred to as client and server.
+The client connects to the server and remains anonymous, whereas the server is authenticated before connecting to it.
+The server is not anonymous. The server uses Let's Encrypt certificates for authentication and encryption purposes.</para>
+
+<para>The
+<option>--client</option>
+operation is used for initial client setup.</para>
+
+<para>The
+<option>--server</option>
+operation is used for initial server setup.</para>
+
+<para>The
+<option>--test</option>
+operation is used for testing the configuration/connection.</para>
+
+<para>The
+<option>--generate-certificate hostname</option>
+operation is used for generating the certificate for the hostname.</para>
+
+<para>The
+<option>--renew hostname</option>
+operation is used for updating the generated certificate, it keeps the private key same.</para>
+
+<para>The
+<option>--disable</option>
+operation is used for disabling IPsec service.</para>
+
+<para>The
+<option>--help</option>
+operation is used for displaying all the available options.</para>
+</refsect1>
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+</para>
+</refsect1>
+<refsect1 id='history'><title>HISTORY</title>
+<para>Original Program written by &lt;<ulink url='https://github.com/Rishabh04-02/'>Rishabh</ulink>&gt; .</para>
+</refsect1>
+</refentry>

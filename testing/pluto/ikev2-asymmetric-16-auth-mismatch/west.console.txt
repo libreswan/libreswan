@@ -5,27 +5,21 @@ west #
 west #
  certutil -D -n west -d sql:/etc/ipsec.d
 west #
- certutil -D -n east -d sql:/etc/ipsec.d     to westinit
+ certutil -D -n east -d sql:/etc/ipsec.d
 west #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
- # confirm with a ping
+ # confirm clear text does not get through
 west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
@@ -38,12 +32,11 @@ west #
 000 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ikev2":   our auth:null, their auth:rsasig
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-ikev2":   labeled_ipsec:no;
 000 "westnet-eastnet-ikev2":   policy_label:unset;
 000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "westnet-eastnet-ikev2":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-ikev2":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2":   our idtype: ID_NULL; our id=ID_NULL; their idtype: %fromcert; their id=%fromcert
@@ -55,17 +48,15 @@ initdone
 west #
  # expected to fail
 west #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up  westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA
-133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: initiate
-133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "westnet-eastnet-ikev2" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
-002 "westnet-eastnet-ikev2" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+1v2 "westnet-eastnet-ikev2" #1: initiate
+1v2 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-002 "westnet-eastnet-ikev2" #2: Peer attempted NULL authentication but we want rsasig
+002 "westnet-eastnet-ikev2" #2: Peer attempted NULL authentication but we want rsasig in R2 Auth Payload
 036 "westnet-eastnet-ikev2" #2: encountered fatal error in state STATE_PARENT_I2
 west #
  echo done
@@ -77,11 +68,11 @@ OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
@@ -89,17 +80,16 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 Libreswan test CA for mainca - Libreswan                     CT,, 
 east-ec                                                      P,,  
-hashsha2                                                     P,,  
+hashsha1                                                     P,,  
 nic                                                          P,,  
 north                                                        P,,  
 road                                                         P,,  

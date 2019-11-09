@@ -1,8 +1,0 @@
-PATH="/usr/local/sbin:/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin"
-export PATH
-ipsec whack --name OEself --encrypt --tunnel --pfs --rsasig \
-	--host "192.1.2.23"  --nexthop "192.1.2.254" --updown "ipsec _updown"   \
-	--to --host "%opportunistic"  --nexthop "%direct" --updown "ipsec _updown"   \
-	--ipseclifetime "3600" --rekeymargin "540" \
-	--keyingtries "3"  --dontrekey  \
-	|| exit $?

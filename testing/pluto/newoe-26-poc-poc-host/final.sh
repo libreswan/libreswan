@@ -1,5 +1,5 @@
 : ==== cut ====
-ipsec look
+ipsec look # ../../pluto/bin/ipsec-look.sh
 ipsec auto --status
 : ==== tuc ====
 ../bin/check-for-core.sh

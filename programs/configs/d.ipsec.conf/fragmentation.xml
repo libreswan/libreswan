@@ -1,7 +1,7 @@
   <varlistentry>
   <term><emphasis remap='B'>fragmentation</emphasis></term>
   <listitem>
-<para>Whether or not to allow IKE fragmentation. Valid values are are
+<para>Whether or not to allow IKE fragmentation. Valid values are
 <emphasis remap='B'>yes</emphasis>, (the default), <emphasis remap='B'>no</emphasis>
 or <emphasis remap='B'>force</emphasis>.
     </para><para>

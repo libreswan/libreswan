@@ -318,7 +318,7 @@ Changes since 1.9 release by D. Hugh Redelmeier <hugh@mimosa.com>
 
 - replace signal(2) calls with sigaction(2) calls: glibc has further
   broken the semantics of signal(2).  We want slow system calls
-  to be interruptable and not be restarted.
+  to be interruptible and not be restarted.
 
 - improved error message for lack of preshared key by showing
   IDs that were used in lookup.  Collateral tidying.

@@ -4,7 +4,7 @@ east #
  certutil -d sql:/etc/ipsec.d -D -n west
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -14,6 +14,16 @@ east #
  echo "initdone"
 initdone
 east #
+east #
+ ipsec stop
+Redirecting to: [initsystem]
+east #
+ ipsec status
+whack: Pluto is not running (no "/run/pluto/pluto.ctl")
+east #
+ grep '^leak' /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
 east #
  ../bin/check-for-core.sh
 east #

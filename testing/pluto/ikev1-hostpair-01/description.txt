@@ -1,0 +1,9 @@
+IKEv1 host-to-host with NAT and XAUTH
+
+ikev2-hostpair-01 reconnects using a different pre-NAT IP so it gets
+a different port on the NAT router. This emulates switching network
+without notify. It should cause east to REPLACE the connection and
+get the same IP address back.
+
+On 3.23, this gives "cannot route -- route already in use" error,
+and traffic flow stops

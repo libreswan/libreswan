@@ -1,2 +1,2 @@
 
-using marking and VTI, map two IPsec SA's onto one VTI device
+using marking and VTI, map two IPsec SA's onto one VTI device using vti-shared=yes

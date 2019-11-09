@@ -1,4 +1,4 @@
-addconn failing in libreswan upto 3.21 in specific scenarios
+addconn failing in libreswan up to 3.21 in specific scenarios
 
 east is not used.
 

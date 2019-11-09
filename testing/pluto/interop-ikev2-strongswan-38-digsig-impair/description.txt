@@ -9,5 +9,7 @@ This is to ensure that Libreswan with default Authentication type as
 Digital Signatures (RFC 7427 )can still interop with an older version of strongswan that does not 
 support RFC 7427
 
+Authentication should be successfulk with RSA-SHA1 (old style RSA)
+
 
 

@@ -168,7 +168,7 @@ case "$1" in
 	echo "    init    will detect the init system used (systemd, upstart, sysvinit)"
 	echo " "
 	echo " output is currently a single line used by make/scripts for configuration and"
-	echo " installation of distribtion and init-system specific files"
+	echo " installation of distribution and init-system specific files"
 	echo
 	exit 1
 	;;

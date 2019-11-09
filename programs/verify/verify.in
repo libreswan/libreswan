@@ -14,7 +14,7 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -120,38 +120,6 @@ def plutocheck():
 	udp4500check()
 	ipsecsecretcheck()
 
-# This is pretty broken, as you can enable forwarding specificaly via iptables as well
-# It also won't find/exclude all kinds of interfaces. Also, lots of people have one
-# ethernet and one wifi interface, but don't want to bridge these.
-# So, mostly left here for historic reasons - candidate to be changed/removed
-def forwardcheck():
-	global retcode
-	try:
-		output = open("/proc/net/dev","r").read().strip()
-	except:
-		printfun("Checking for multiple interfaces")
-		retcode += 1
-		print_result("FAIL","UNEXPECTED KERNEL DEV LIST")
-	count = 0
-	for line in output.split("\n"):
-		if ":" in line:
-			if not "lo:" in line and not "ipsec" in line and not "mast" in line and not "virbr:" in line:
-				# let's count this as a real physical interface
-				count += 1
-	if count > 1:
-		printfun("Two or more interfaces found, checking IP forwarding")
-		try:
-			output = open("/proc/sys/net/ipv4/ip_forward","r").read().strip()
-		except:
-			print_result("FAIL","MISSING ip_forward proc file")
-			retcode += 1
-			return
-		if output == "1":
-			print_result("OK","OK")
-		else:
-			print_result("FAIL","FAILED")
-			retcode += 1
-
 def rpfiltercheck():
 	global retcode
 	fail = 0
@@ -255,7 +223,7 @@ def installstartcheck():
 		print_result("FAIL","FAILED")
 
 	printfun("Checking for IPsec support in kernel")
-	if not os.path.isfile("/proc/net/ipsec_eroute") and not os.path.isfile("/proc/net/pfkey"):
+	if not os.path.isfile("/proc/net/ipsec_eroute") and not os.path.isfile("/proc/sys/net/core/xfrm_acq_expires"):
 		print_result("FAIL","FAILED")
 		if "no kernel code presently loaded" in output:
 			print("\n The ipsec service should be started before running 'ipsec verify'\n")
@@ -331,7 +299,7 @@ def installchecknetkey():
 			print_result("OK","OK")
 		else:
 			print_result("FAIL","NOT DISABLED")
-			print("\n  Disable /proc/sys/net/ipv4/conf/*/%s or NETKEY will act on or cause sending of bogus ICMP redirects!\n"%option)
+			print("\n  Disable /proc/sys/net/ipv4/conf/*/%s or XFRM/NETKEY will act on or cause sending of bogus ICMP redirects!\n"%option)
 
 	printfun("         XFRM larval drop")
 	try:
@@ -354,9 +322,8 @@ def ipsecsecretcheck():
 		print(" (run ipsec verify as root to test ipsec.secrets)")
 		return
 
-	p = subprocess.Popen(["ipsec","secrets"], universal_newlines=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	p = subprocess.Popen(["ipsec","secrets"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, err = p.communicate()
-	output = output.decode(prefencoding)
 	if "ERROR" in output:
 		print_result("FAIL","PARSE ERROR")
 		for line in output.split("\n"):
@@ -386,7 +353,7 @@ def ipsecconfcheck():
 
 def configsetupcheck():
 	global retcode
-	p = subprocess.Popen(["ipsec","addconn","--configsetup"], universal_newlines=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	p = subprocess.Popen(["ipsec","addconn","--configsetup"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	configsetup, err = p.communicate()
 
 	# grab obsolete settings
@@ -395,7 +362,6 @@ def configsetupcheck():
 		print_result("OK","OK")
 	else:
 		print_result("WARN","OBSOLETE KEYWORD")
-		err = err.replace("Warning"," Warning")
 		print(err[:-1])
 
 def main():
@@ -410,7 +376,6 @@ def main():
 
 	installstartcheck()
 	ipsecconfcheck()
-	forwardcheck()
 	rpfiltercheck()
 	plutocheck()
 	cmdchecks()

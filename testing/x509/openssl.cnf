@@ -97,7 +97,7 @@ emailAddress		= optional
 
 ####################################################################
 [ req ]
-default_bits		= 1024
+default_bits		= 2048
 default_keyfile 	= privkey.pem
 distinguished_name	= req_distinguished_name
 attributes		= req_attributes
@@ -277,4 +277,8 @@ authorityKeyIdentifier=keyid:always,issuer:always
 
 	URI.1="http://nic.testing.libreswan.org/revoked.crl"
 	URI.2="ldap://nic.testing.libreswan.org/o=Libreswan, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)"
+
+[ ec-addon ]
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
 

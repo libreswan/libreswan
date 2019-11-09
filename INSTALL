@@ -10,12 +10,12 @@ nss-devel nspr-devel libevent-devel
 
 for systemd: pkgconfig hostname systemd-devel
 for pam/xauth: pam-devel
-for dnssec support: unbound-devel
+for dnssec support: unbound-devel ldns-devel
 for FIPS support: fipscheck-devel
 for libcap-ng support: libcap-ng-devel
-for CRL fetching support: openldap-devel curl-devel
+for CRL fetching support: libcurl-devel
+for CRL ldap fetching support: openldap-devel
 for audit support: audit-libs-devel
-for curl support: libcurl-devel
 
 Building userland
 -----------------

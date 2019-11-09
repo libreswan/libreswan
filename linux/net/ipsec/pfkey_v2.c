@@ -9,7 +9,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -295,8 +295,8 @@ int pfkey_list_insert_socket(struct socket *socketp,
 
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_list_insert_socket: "
-		    "allocating %lu bytes for socketp=0p%p\n",
-		    (unsigned long) sizeof(struct socket_list),
+		    "allocating %zu bytes for socketp=0p%p\n",
+		    sizeof(struct socket_list),
 		    socketp);
 
 	if ((socket_listp = (struct socket_list *)
@@ -377,8 +377,8 @@ int pfkey_list_insert_supported(struct ipsec_alg_supported *supported,
 
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_list_insert_supported: "
-		    "allocating %lu bytes for incoming, supported=0p%p, supported_list=0p%p\n",
-		    (unsigned long) sizeof(struct supported_list),
+		    "allocating %zu bytes for incoming, supported=0p%p, supported_list=0p%p\n",
+		    sizeof(struct supported_list),
 		    supported,
 		    supported_list);
 
@@ -658,7 +658,6 @@ static struct proto key_proto = {
 	.name     = "KEY",
 	.owner    = THIS_MODULE,
 	.obj_size = sizeof(struct sock),
-
 };
 #endif
 #if defined(NET_26_24_SKALLOC) || defined(NET_44_SKALLOC)
@@ -1297,7 +1296,6 @@ DEBUG_NO_STATIC int supported_add_all(int satype,
 		    (int)(size / sizeof(struct ipsec_alg_supported)));
 
 	for (i = 0; i < size / sizeof(struct ipsec_alg_supported); i++) {
-
 		const char *n = supported[i].ias_name;
 		if (n == NULL)
 			n = "unknown";

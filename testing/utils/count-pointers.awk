@@ -1,3 +1,20 @@
+
+# count-pointers.awk: scan pluto log counting certain allocations and deallocations
+#
+# Generall speaking, the log entries of interest look like
+#	new|reference|release .*-NAME@0xADDRESS.*
+#
+# The Pluto code seems to generate this seems to have suffered bit-rot.
+#
+# NAME values (only lower-case letters):
+#
+# key: PK11SymKey values
+# pe: pluto events
+# <secret->group->common.name>: DH group value???
+# chunk: chunk
+# bytes: ???
+# prf: ???
+
 BEGIN {
     status = 0
 }
@@ -48,7 +65,7 @@ func error(what) {
 END {
     for (key in counts) {
 	if (counts[key]) {
-	    print filename[key] ":" nr[key] ": " key " " counts[key] ":: " line[key]
+	    print filename[key] ":" nr[key] ": " key " " counts[key] ":: " line[key] | "sort -t: -k1,1 -k2,2n"
 	    status = 1
 	}
     }

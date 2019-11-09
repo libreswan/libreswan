@@ -202,7 +202,7 @@ All base64 numbers are entered as strings of base64 digits
  (0-9, A-Z, a-z, '+' and '/'), without spaces, preceded by '0s',
 where each hexadecimal digit represents 6 bits and '=' is used for padding.</para>
 
-<para>The deletion of an SA which has been grouped will result in the entire chain
+<para>The deletion of an SA that has been grouped will result in the entire chain
 being deleted.</para>
 
 <para>The form with no additional arguments lists the contents of
@@ -552,7 +552,7 @@ ipsec_spigrp(8), ipsec_klipsdebug(8), ipsec_spi(5)</para>
 
 <refsect1 id='history'><title>HISTORY</title>
 <para>Written for the Linux FreeS/WAN project
-&lt;<ulink url='http://www.freeswan.org/'>http://www.freeswan.org/</ulink>&gt;
+&lt;<ulink url='https://www.freeswan.org/'>https://www.freeswan.org/</ulink>&gt;
 by Richard Guy Briggs.</para>
 </refsect1>
 

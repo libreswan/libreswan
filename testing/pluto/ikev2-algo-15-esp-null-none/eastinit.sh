@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec whack --debug-all --impair allow-null-null
-ipsec auto --add westnet-eastnet-esp-null
-ipsec auto --status | grep westnet-eastnet-esp-null
+ipsec whack --impair allow-null-none
+ipsec auto --add esp=null-none
+ipsec auto --status | grep esp=null-none
 echo "initdone"

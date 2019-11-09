@@ -10,13 +10,14 @@
  * Copyright (C) 2013 Kim Heino <b@bbbs.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2013-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -24,6 +25,12 @@
  * for more details.
  *
  */
+
+#ifndef CONNECTIONS_H
+#define CONNECTIONS_H
+
+#include "fd.h"
+#include "proposals.h"
 
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
@@ -106,8 +113,8 @@
  * - a whole number
  * - larger is more important
  * - three subcomponents.  In order of decreasing significance:
- *   + length of source subnet mask (8 bits)
- *   + length of destination subnet mask (8 bits)
+ *   + length of source subnet mask (9 bits)
+ *   + length of destination subnet mask (9 bits)
  *   + bias (8 bit)
  * - a bias of 1 is added to allow prio BOTTOM_PRIO to be less than all
  *   normal priorities
@@ -116,12 +123,14 @@
  * - priority is inherited -- an instance of a policy has the same priority
  *   as the original policy, even though its subnets might be smaller.
  * - display format: n,m
+ *
+ * ??? These are NOT the same as sa_priorities but eventually they should be aligned.
  */
 typedef uint32_t policy_prio_t;
 #define BOTTOM_PRIO   ((policy_prio_t)0)        /* smaller than any real prio */
 
 #define set_policy_prio(c) { (c)->prio = \
-		  ((policy_prio_t)(c)->spd.this.client.maskbits << 16) \
+		  ((policy_prio_t)(c)->spd.this.client.maskbits << 17) \
 		| ((policy_prio_t)(c)->spd.that.client.maskbits << 8) \
 		|  (policy_prio_t)1; }
 
@@ -137,14 +146,17 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include <sys/queue.h>
 #include "id.h"    /* for struct id */
 #include "lmod.h"
+#include "reqid.h"
+#include "err.h"
+#include "state.h"
+#include "ip_endpoint.h"
 
-struct virtual_t;
+struct virtual_t;	/* opaque type */
 
 struct host_pair;	/* opaque type */
 
 struct end {
 	struct id id;
-	bool left;
 
 	enum keyword_host host_type;
 	char *host_addr_name;	/* string version from whack */
@@ -152,7 +164,9 @@ struct end {
 		host_addr,
 		host_nexthop,
 		host_srcip;
-	ip_subnet client, host_vtiip;
+	ip_subnet
+		client,
+		host_vtiip;
 
 	bool key_from_DNS_on_demand;
 	bool has_client;
@@ -160,10 +174,9 @@ struct end {
 	bool has_port_wildcard;
 	bool has_id_wildcards;
 	char *updown;
-	u_int16_t host_port;		/* where the IKE port is */
-	bool host_port_specific;	/* if TRUE, then IKE ports are tested for */
-	u_int16_t port;			/* port number, if per-port keying */
-	u_int8_t protocol;		/* transport-protocol number, if per-X keying */
+	uint16_t host_port;		/* where the IKE port is */
+	uint16_t port;			/* port number, if per-port keying */
+	uint8_t protocol;		/* transport-protocol number, if per-X keying */
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	cert_t cert;			/* end certificate */
@@ -175,9 +188,10 @@ struct end {
 
 	bool xauth_server;
 	bool xauth_client;
-	char *username;
+	char *xauth_username;
 	char *xauth_password;
 	ip_range pool_range;	/* store start of v4 addresspool */
+
 	/*
 	 * Track lease addresses.
 	 *
@@ -213,15 +227,33 @@ struct sa_mark {
 	uint32_t mask;
 	bool unique;
 };
+
 struct sa_marks {
 	struct sa_mark in;
 	struct sa_mark out;
 };
 
+/* this struct will be used for
+ * storing ephemeral stuff, that doesn't
+ * need i.e. to be stored to connection
+ * .conf files.
+ */
+struct ephemeral_variables {
+	int revive_delay;
+	/* RFC 5685 - IKEv2 Redirect Mechanism */
+	int num_redirects;
+	realtime_t first_redirect_time;
+	ip_address redirect_ip;		/* where to redirect */
+	ip_address old_gw_address;	/* address of old gateway */
+};
+
 struct connection {
 	char *name;
+	enum ike_version ike_version;
+	char *foodgroup;
 	char *connalias;
 	lset_t policy;
+	lset_t sighash_policy;
 	deltatime_t sa_ike_life_seconds;
 	deltatime_t sa_ipsec_life_seconds;
 	deltatime_t sa_rekey_margin;
@@ -240,22 +272,21 @@ struct connection {
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
 	int encapsulation;
-	enum nic_offload_options nic_offload;
+	enum yna_options nic_offload;
 
 	/* RFC 3706 DPD */
 	deltatime_t dpd_delay;		/* time between checks */
 	deltatime_t dpd_timeout;	/* time after which we are dead */
 	enum dpd_action dpd_action;	/* what to do when we die */
 
-	bool nat_keepalive;		/* Suppress sending NAT-T Keep-Alives */
+	bool nat_keepalive;		/* Send NAT-T Keep-Alives if we are behind NAT */
 	bool initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
 	bool cisco_unity;		/* Send Unity VID for cisco compatibility */
 	bool fake_strongswan;		/* Send the unversioned strongswan VID */
 	bool mobike;			/* Allow MOBIKE */
 	bool send_vendorid;		/* Send our vendorid? Security vs Debugging help */
-	bool sha2_truncbug;
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
-	enum encaps_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
+	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
 
     pam_handle_t *ptr_gtl_pam_session;       /* keep the handle alive for the as long as the connection is */
 
@@ -263,11 +294,7 @@ struct connection {
 #ifdef HAVE_NM
 	bool nmconfigured;
 #endif
-
-#ifdef HAVE_LABELED_IPSEC
-	bool labeled_ipsec;
 	char *policy_label;
-#endif
 
 	/* Cisco interop: remote peer type */
 	enum keyword_remotepeertype remotepeertype;
@@ -290,8 +317,7 @@ struct connection {
 	enum connection_kind kind;
 	const struct iface_port *interface;	/* filled in iff oriented */
 
-	bool initiated;
-	bool failed_ikev2;	/* tried ikev2, but failed */
+	struct ephemeral_variables temp_vars;
 
 	so_serial_t		/* state object serial number */
 		newest_isakmp_sa,
@@ -300,15 +326,11 @@ struct connection {
 	lmod_t extra_debugging;
 	lmod_t extra_impairing;
 
-	/* note: if the client is the gateway, the following must be equal */
-	sa_family_t addr_family;	/* between gateways */
-	sa_family_t tunnel_addr_family;	/* between clients */
-
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;
 
-	struct alg_info_esp *alg_info_esp;	/* ??? OK for AH too? */
-	struct alg_info_ike *alg_info_ike;
+	struct ike_proposals ike_proposals;
+	struct child_proposals child_proposals;
 
 	/*
 	 * The ALG_INFO converted to IKEv2 format.
@@ -316,9 +338,23 @@ struct connection {
 	 * Since they are allocated on-demand so there's no need to
 	 * worry about copying them when a connection object gets
 	 * cloned.
+	 *
+	 * For a child SA, two different proposals are used:
+	 *
+	 * - during the IKE_AUTH exchange a proposal stripped of any
+	 *   DH (it uses keying material from the IKE SA's SKSEED).
+	 *
+	 * - during a CREATE_CHILD_SA exchange, a mash up of the
+	 *   proposal and the IKE SA's DH algorithm.  Since the IKE
+	 *   SA's DH can change, it too is saved so a rebuild can be
+	 *   triggered.
+	 *
+	 * XXX: has to be a better way?
 	 */
-	struct ikev2_proposals *ike_proposals;
-	struct ikev2_proposals *esp_or_ah_proposals;
+	struct ikev2_proposals *v2_ike_proposals;
+	struct ikev2_proposals *v2_ike_auth_child_proposals;
+	struct ikev2_proposals *v2_create_child_proposals;
+	const struct dh_desc *v2_create_child_proposals_default_dh;
 
 	/* host_pair linkage */
 	struct host_pair *host_pair;
@@ -335,14 +371,15 @@ struct connection {
 	char *modecfg_domains;
 	char *modecfg_banner;
 
-	u_int8_t metric;	/* metric for tunnel routes */
-	u_int16_t connmtu;	/* mtu for tunnel routes */
-	u_int32_t statsval;	/* track what we have told statsd */
-	u_int16_t nflog_group;	/* NFLOG group - 0 means disabled  */
+	uint32_t metric;	/* metric for tunnel routes */
+	uint16_t connmtu;	/* mtu for tunnel routes */
+	uint32_t statsval;	/* track what we have told statsd */
+	uint16_t nflog_group;	/* NFLOG group - 0 means disabled  */
 	msgid_t ike_window;     /* IKE v2 window size 7296#section-2.3 */
-};
 
-extern void parse_mark_mask(const struct connection* c,int * mark, int * mask);
+	char *redirect_to;        /* RFC 5685 */
+	char *accept_redirect_to;
+};
 
 #define oriented(c) ((c).interface != NULL)
 extern bool orient(struct connection *c);
@@ -362,69 +399,56 @@ extern size_t format_end(char *buf, size_t buf_len,
 struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm);
 extern void initiate_connection(const char *name,
-				int whackfd,
+				fd_t whackfd,
 				lmod_t more_debugging,
 				lmod_t more_impairing,
-				enum crypto_importance importance,
 				char *remote_host);
 extern void restart_connections_by_peer(struct connection *c);
+extern void flush_revival(const struct connection *c);
 
-#ifdef HAVE_LABELED_IPSEC
 struct xfrm_user_sec_ctx_ike; /* forward declaration */
-#endif
 
 extern void initiate_ondemand(const ip_address *our_client,
 			     const ip_address *peer_client,
 			     int transport_proto,
 			     bool held,
-			     int whackfd,
-#ifdef HAVE_LABELED_IPSEC
+			     fd_t whackfd,
 			     struct xfrm_user_sec_ctx_ike *uctx,
-#endif
 			     err_t why);
-extern void terminate_connection(const char *name);
+
+extern void terminate_connection(const char *name, bool quiet);
 extern void release_connection(struct connection *c, bool relations);
 extern void delete_connection(struct connection *c, bool relations);
 extern void suppress_delete(struct connection *c);
 extern void delete_connections_by_name(const char *name, bool strict);
 extern void delete_every_connection(void);
 extern char *add_group_instance(struct connection *group,
-				const ip_subnet *target);
+				const ip_subnet *target,
+				uint8_t proto,
+				uint16_t sport,
+				uint16_t dport);
+
 extern void remove_group_instance(const struct connection *group,
 				  const char *name);
-extern void release_dead_interfaces(void);
-extern void check_orientations(void);
 extern struct connection *route_owner(struct connection *c,
 				      const struct spd_route *cur_spd,
 				      struct spd_route **srp,
 				      struct connection **erop,
 				      struct spd_route **esrp);
+
 extern struct connection *shunt_owner(const ip_subnet *ours,
 				      const ip_subnet *his);
 
-extern bool uniqueIDs;  /* --uniqueids? */
-extern void ISAKMP_SA_established(struct connection *c, so_serial_t serial);
-
-#define his_id_was_instantiated(c) ((c)->kind == CK_INSTANCE \
-				    && (id_is_ipaddr(&(c)->spd.that.id) ? \
-					sameaddr(&(c)->spd.that.id.ip_addr, \
-						 &(c)->spd.that.host_addr) : \
-					TRUE))
+#define remote_id_was_instantiated(c) \
+	( (c)->kind == CK_INSTANCE && \
+	  ( !id_is_ipaddr(&(c)->spd.that.id) || \
+	    sameaddr(&(c)->spd.that.id.ip_addr, &(c)->spd.that.host_addr) ) )
 
 struct state;   /* forward declaration of tag (defined in state.h) */
-extern struct connection
-*conn_by_name(const char *nm, bool strict, bool quiet);
 
-stf_status ikev2_find_host_connection(struct connection **cp,
-		const ip_address *me, u_int16_t my_port, const ip_address *him,
-		u_int16_t his_port, lset_t req_policy);
+extern struct connection *conn_by_name(const char *nm, bool strict, bool quiet);
 
 extern struct connection
-	*find_host_connection(const ip_address *me, u_int16_t my_port,
-		       const ip_address *him, u_int16_t his_port,
-		       lset_t req_policy, lset_t policy_exact_mask),
-	*find_next_host_connection(struct connection *c,
-		       lset_t req_policy, lset_t policy_exact_mask),
 	*refine_host_connection(const struct state *st, const struct id *peer_id,
 			const struct id *tarzan_id,
 			bool initiator, lset_t auth_policy /* used by ikev1 */,
@@ -432,10 +456,10 @@ extern struct connection
 	*find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,
-			const u_int8_t our_protocol,
-			const u_int16_t out_port,
-			const u_int8_t peer_protocol,
-			const u_int16_t peer_port),
+			const uint8_t our_protocol,
+			const uint16_t out_port,
+			const uint8_t peer_protocol,
+			const uint16_t peer_port),
 	*find_connection_for_clients(struct spd_route **srp,
 				      const ip_address *our_client,
 				      const ip_address *peer_client,
@@ -444,31 +468,50 @@ extern struct connection
 /* instantiating routines */
 
 struct alg_info;        /* forward declaration of tag (defined in alg_info.h) */
+
 extern struct connection *rw_instantiate(struct connection *c,
 					 const ip_address *him,
 					 const ip_subnet *his_net,
 					 const struct id *his_id);
-
+struct connection *oppo_instantiate(struct connection *c,
+				    const ip_address *him,
+				    const struct id *his_id,
+				    const ip_address *our_client,
+				    const ip_address *peer_client);
 extern struct connection *instantiate(struct connection *c,
 				      const ip_address *him,
 				      const struct id *his_id);
 
-extern struct connection *oppo_instantiate(struct connection *c,
-					   const ip_address *him,
-					   const struct id *his_id,
-					   const ip_address *our_client,
-					   const ip_address *peer_client);
-
 extern struct connection *build_outgoing_opportunistic_connection(
 		const ip_address *our_client,
-		const ip_address *peer_client);
+		const ip_address *peer_client,
+		const int transport_proto);
 
-/* worst case: "[" serial "] " myclient "=== ..." peer "===" hisclient '\0' */
+/* worst case: "[" serial "] " myclient "=== ..." peer "===" hisclient '\0' <cookie> */
 #define CONN_INST_BUF \
-	(2 + 10 + 1 + SUBNETTOT_BUF + 7 + ADDRTOT_BUF + 3 + SUBNETTOT_BUF + 1)
+	(2 + 10 + 1 + SUBNETTOT_BUF + 7 + ADDRTOT_BUF + 3 + SUBNETTOT_BUF + 1 + 1)
 
 extern char *fmt_conn_instance(const struct connection *c,
 			       char buf[CONN_INST_BUF]);
+
+/* publically useful? */
+void jam_connection_instance(struct lswlog *buf, const struct connection *c);
+void jam_connection(struct lswlog *buf, const struct connection *c);
+
+/*
+ * XXX: Instead of str_connection(), which would require a buffer big
+ * enough to fit an any length name, there's PRI_CONNECTION et.al.
+ */
+
+typedef struct {
+	char buf[CONN_INST_BUF];
+} connection_buf;
+
+const char *str_connection_instance(const struct connection *c,
+				    connection_buf *buf);
+
+#define PRI_CONNECTION "\"%s\"%s"
+#define pri_connection(C,B) (C)->name, str_connection_instance(C, B)
 
 /* operations on "pending", the structure representing Quick Mode
  * negotiations delayed until a Keying Channel has been negotiated.
@@ -476,21 +519,18 @@ extern char *fmt_conn_instance(const struct connection *c,
 
 struct pending; /* forward declaration (opaque outside connections.c) */
 
-extern void add_pending(int whack_sock,
-			struct state *isakmp_sa,
+extern void add_pending(fd_t whack_sock,
+			struct ike_sa *ike,
 			struct connection *c,
 			lset_t policy,
 			unsigned long try,
-			so_serial_t replacing
-#ifdef HAVE_LABELED_IPSEC
-			, struct xfrm_user_sec_ctx_ike *uctx
-#endif
-			);
+			so_serial_t replacing,
+			struct xfrm_user_sec_ctx_ike *uctx);
 
 extern void release_pending_whacks(struct state *st, err_t story);
-extern void unpend(struct state *st, struct connection *cc);
-extern void update_pending(struct state *os, struct state *ns);
-extern void flush_pending_by_state(struct state *st);
+extern void unpend(struct ike_sa *ike, struct connection *cc);
+extern void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike);
+extern void flush_pending_by_state(struct ike_sa *ike);
 
 extern void connection_discard(struct connection *c);
 extern void update_state_connection(struct state *st, struct connection *c);
@@ -511,32 +551,24 @@ extern void show_connections_status(void);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);
 
-/* export to pending.c */
-extern void host_pair_enqueue_pending(const struct connection *c,
-				      struct pending *p,
-				      struct pending **pnext);
-struct pending **host_pair_first_pending(const struct connection *c);
-
 void connection_check_ddns(void);
 
 void connection_check_phase2(void);
 void init_connections(void);
-
-extern void setup_client_ports(struct spd_route *sr);
 
 extern int foreach_connection_by_alias(const char *alias,
 				       int (*f)(struct connection *c,
 						void *arg),
 				       void *arg);
 
-extern struct connection *unoriented_connections;
-
-extern void update_host_pairs(struct connection *c);
-
 extern void unshare_connection_end(struct end *e);
 
-extern void liveness_clear_connection(struct connection *c, char *v);
+extern void liveness_clear_connection(struct connection *c, const char *v);
 
-extern void liveness_action(struct connection *c, const bool ikev2);
+extern void liveness_action(struct connection *c, enum ike_version ike_version);
 
-extern bool idr_wildmatch(const struct connection *c, const struct id *b);
+extern uint32_t calculate_sa_prio(const struct connection *c);
+
+so_serial_t get_newer_sa_from_connection(struct state *st);
+
+#endif

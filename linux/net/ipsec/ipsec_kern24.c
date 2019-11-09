@@ -2,7 +2,7 @@
  * Copyright 2005 (C) Michael Richardson <mcr@xelerance.com>
  * Copyright 2011-2012 (C) David McCullough <david_mccullough@mcafee.com>
  *
- * This is a file of functions which are present in 2.6 kernels,
+ * This is a file of functions that are present in 2.6 kernels,
  * but are not available by default in the 2.4 series.
  *
  * As such this code is usually from the Linux kernel, and is covered by
@@ -11,7 +11,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -37,8 +37,8 @@ static DEFINE_SPINLOCK(ratelimit_lock);
 int __printk_ratelimit(int ratelimit_jiffies, int ratelimit_burst)
 {
 	static unsigned long toks = 10 * 5 * HZ;
-	static unsigned long last_msg;
-	static int missed;
+	static unsigned long last_msg = 0;
+	static int missed = 0;
 	unsigned long flags;
 	unsigned long now = jiffies;
 

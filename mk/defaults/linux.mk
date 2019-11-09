@@ -1,3 +1,19 @@
+USE_NETKEY = true
+
+USERLAND_CFLAGS += -DTimeZoneOffset=timezone
+
+# This normally comes in via bind9/config.h
+# Fixes a warning in lib/libisc/random.c:44
+USERLAND_CFLAGS += -DHAVE_SYS_TYPES_H=1
+USERLAND_CFLAGS += -DHAVE_UNISTD_H=1
+
+# Not all environments set this? happened on a arm_tools cross compile
+USERLAND_CFLAGS += -Dlinux
+
+# udpfromto socket option for Linux
+USERLAND_CFLAGS += -DHAVE_UDPFROMTO=1
+USERLAND_CFLAGS += -DHAVE_IP_PKTINFO=1
+
 
 KLIPSSRC=${LIBRESWANSRCDIR}/linux/net/ipsec
 
@@ -8,26 +24,44 @@ MODBUILDDIR?=${LIBRESWANSRCDIR}/modobj
 
 MODULE_FLAGS:=KLIPSMODULE=true -f ${MODULE_DEFCONFIG}
 
-PORTINCLUDE=-I${LIBRESWANSRCDIR}/ports/linux/include
 PORTDEFINE=-DSCANDIR_HAS_CONST
 
-# include KLIPS support
-USE_KLIPS?=true
-
-# build modules, etc. for KLIPS.
-BUILD_KLIPS?=true
 BISONOSFLAGS=-g --verbose
 
-USE_LABELED_IPSEC?=true
+# Detect linux variants and releases.
 
-# Detect linux variants and releases (for now just fedora and assume
-# >= 22).
-ifneq ($(wildcard /etc/fedora-release),)
-LINUX_VARIANT?=fedora
+# So that the sub-shell is invoked only once, ":=" is used.  This in
+# turn means 'ifndef' is needed as := is unconditional.
+
+ifndef LINUX_VARIANT
+  ifneq ($(wildcard /etc/os-release),)
+    LINUX_VARIANT:=$(shell sed -n -e 's/^ID=//p' /etc/os-release)
+    export LINUX_VARIANT
+  endif
 endif
+#(info LINUX_VARIANT=$(LINUX_VARIANT))
+
+ifndef LINUX_VARIANT_VERSION
+  ifneq ($(wildcard /etc/os-release),)
+    LINUX_VARIANT_VERSION:=$(shell sed -n -e 's/^VERSION_ID=//p' /etc/os-release)
+    export LINUX_VARIANT_VERSION
+  endif
+endif
+#(info LINUX_VARIANT_VERSION=$(LINUX_VARIANT_VERSION))
 
 ifeq ($(LINUX_VARIANT),fedora)
-USE_FIPSCHECK?=true
-USE_LINUX_AUDIT?=true
-USE_SECCOMP?=true
+  USE_FIPSCHECK?=true
+  USE_LINUX_AUDIT?=true
+  USE_SECCOMP?=true
+  USE_LABELED_IPSEC?=true
+  # Assume that fedora 22 (used by test VMs) needs the hack
+  ifeq ($(LINUX_VARIANT_VERSION),22)
+    USE_GLIBC_KERN_FLIP_HEADERS=true
+  endif
+endif
+#(info USE_GLIBC_KERN_FLIP_HEADERS=$(USE_GLIBC_KERN_FLIP_HEADERS))
+
+ifndef NSS_CFLAGS
+  NSS_CFLAGS := $(shell pkg-config --cflags nss)
+  export NSS_CFLAGS
 endif

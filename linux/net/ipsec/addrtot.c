@@ -6,7 +6,7 @@
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/lgpl-2.1.txt>.
  *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -180,7 +180,7 @@ size_t dstlen;
 	if (dstlen > 0) {
 		if (dstlen < n)
 			p[dstlen - 1] = '\0';
-		strcpy(dst, p);
+		strcpy(dst, p);	/* clang 6.0.0 mistakenly thinks p is undefined */
 	}
 	return n;
 }
@@ -422,7 +422,6 @@ void regress(void)
 		else if (n == 0) {
 			printf("`%s' addrtot failed\n", r->input);
 			status = 1;
-
 		} else if (r->output == NULL) {
 			printf("`%s' addrtot succeeded unexpectedly '%c'\n",
 			       r->input, r->format);

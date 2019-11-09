@@ -1,11 +1,12 @@
 /* demultiplex incoming IKE messages
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -33,14 +34,12 @@
 #  include <sys/uio.h>          /* struct iovec */
 #endif
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"
 
 #include "defs.h"
-#include "cookie.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
@@ -59,7 +58,6 @@ static struct msg_digest *md_pool = NULL;
 /* free_md_pool is only used to avoid leak reports */
 void free_md_pool(void)
 {
-
 	for (;; ) {
 		struct msg_digest *md = md_pool;
 
@@ -88,16 +86,24 @@ struct msg_digest *alloc_md(const char *mdname)
 		md_pool = md->next;
 
 	*md = blank_md;
-	md->digest_roof = md->digest;
-
-	/* note: although there may be multiple msg_digests at once
-	 * (due to suspended state transitions), there is a single
-	 * global reply_buffer.  It will need to be saved and restored.
-	 */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	md->digest_roof = 0;
 
 	return md;
+}
+
+struct msg_digest *clone_md(struct msg_digest *md, const char *name)
+{
+	struct msg_digest *clone = alloc_md(name);
+	clone->fake_clone = true;
+	clone->md_inception = threadtime_start();
+	/* raw_packet */
+	clone->iface = md->iface; /* copy reference */
+	clone->sender = md->sender; /* copy value */
+	/* packet_pbs ... */
+	size_t packet_size = pbs_room(&md->packet_pbs);
+	void *packet_bytes = clone_bytes(md->packet_pbs.start, packet_size, name);
+	init_pbs(&clone->packet_pbs, packet_bytes, packet_size, name);
+	return clone;
 }
 
 void release_md(struct msg_digest *md)

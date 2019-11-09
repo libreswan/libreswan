@@ -5,7 +5,7 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -66,12 +66,13 @@ def host_script_tuples(directory):
     final_scripts = []
     _add_script(final_scripts, scripts, "final.sh", sorted(host_names))
 
-    # what's left is extra scripts, not exactly a smart way to do this
+    # What's left are ordered scripts.  Preserve the order that the
+    # host names appear in the file name.  For instance, the script
+    # 99-west-east.sh would be run on west then east.
     extra_scripts = []
     for script in sorted(scripts):
-        for host_name in sorted(host_names):
-            if re.search(host_name, script):
-                extra_scripts.append((host_name, script))
+        for host_name in re.findall("|".join(host_names), script):
+            extra_scripts.append((host_name, script))
 
     # append the final scripts
     all_scripts = []

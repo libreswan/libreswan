@@ -4,7 +4,7 @@ Initiator is configured as
 leftauthby=null 	leftid=%null
 rightauth=rsasig 	rightid="%fromcert"
 
-responder is configured with syemetric auth
+responder is configured with symmetric auth
 authby=null
 leftid="%null"
 rightid="%fromcert"

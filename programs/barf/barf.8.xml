@@ -22,7 +22,7 @@
 <cmdsynopsis>
   <command>ipsec</command>
     <arg choice='plain'><replaceable>barf</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'>--short </arg><arg choice='plain'>--maxlines <replaceable>&lt;100&gt;</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--short</arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -33,7 +33,7 @@ outputs (on standard output) a collection of debugging information
 (contents of files, selections from logs, etc.)
 related to the IPsec encryption/authentication system.
 It is primarily a convenience for remote debugging,
-a single command which packages up (and labels) all information
+a single command that packages up (and labels) all information
 that might be relevant to diagnosing a problem in IPsec.</para>
 
 
@@ -44,11 +44,6 @@ the log portion of
 <emphasis remap='I'>barf</emphasis>'s
 output, which can otherwise be extremely voluminous
 if debug logging is turned on.</para>
-
-<para><option>--maxlines &lt;100&gt;</option>
-option sets the length of some bits of information,
-currently netstat -rn.  Useful on boxes where the routing
-table is thousands of lines long.  Default is 100.</para>
 
 <para>On systems with systemd, ipsec barf will look for logs
 using the journalctl command. If the logfile= option is used,
@@ -93,7 +88,7 @@ it will resort to a brute-force search of most (non-compressed) files in
 
 <refsect1 id='history'><title>HISTORY</title>
 <para>Written for the Linux FreeS/WAN project
-&lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
+&lt;<ulink url='https://www.freeswan.org'>https://www.freeswan.org</ulink>&gt;
 by Henry Spencer.</para>
 </refsect1>
 
@@ -101,7 +96,7 @@ by Henry Spencer.</para>
 <para><emphasis remap='I'>Barf</emphasis>
 uses heuristics to try to pick relevant material out of the logs,
 and relevant messages
-which are not labelled with any of the tags that
+that are not labelled with any of the tags that
 <emphasis remap='I'>barf</emphasis>
 looks for will be lost.
 We think we've eliminated the last such case, but one never knows...</para>

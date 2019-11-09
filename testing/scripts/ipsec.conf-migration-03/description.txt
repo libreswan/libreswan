@@ -1,3 +1,0 @@
-These tests check that the V2 ipsec setup and auto scripts match the V1
-scripts, when intended changes have been taken into account.
-This compares a V1 from Ignat with a V2 emulation.

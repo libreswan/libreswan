@@ -4,11 +4,11 @@ west #
  certutil -d sql:/etc/ipsec.d -D -n east
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --add nss-cert-ocsp
 002 added connection description "nss-cert-ocsp"
@@ -19,13 +19,13 @@ west #
 000 "nss-cert-ocsp":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "nss-cert-ocsp":   our auth:rsasig, their auth:rsasig
 000 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "nss-cert-ocsp":   labeled_ipsec:no;
 000 "nss-cert-ocsp":   policy_label:unset;
 000 "nss-cert-ocsp":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "nss-cert-ocsp":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "nss-cert-ocsp":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "nss-cert-ocsp":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "nss-cert-ocsp":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "nss-cert-ocsp":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "nss-cert-ocsp":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-ocsp":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "nss-cert-ocsp":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=user-revoked@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
@@ -37,11 +37,11 @@ initdone
 west #
  ipsec auto --up nss-cert-ocsp
 002 "nss-cert-ocsp" #1: initiating v2 parent SA
-133 "nss-cert-ocsp" #1: STATE_PARENT_I1: initiate
-133 "nss-cert-ocsp" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "nss-cert-ocsp" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-134 "nss-cert-ocsp" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
-002 "nss-cert-ocsp" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+1v2 "nss-cert-ocsp" #1: initiate
+1v2 "nss-cert-ocsp" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "nss-cert-ocsp" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "nss-cert-ocsp" #2: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+036 "nss-cert-ocsp" #2: encountered fatal error in state STATE_PARENT_I2
 west #
  echo done
 done
@@ -50,6 +50,16 @@ west #
 west #
  grep -i "certificate revoked" /tmp/pluto.log
 west #
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ipsec status
+whack: Pluto is not running (no "/run/pluto/pluto.ctl")
+west #
+ grep '^leak' /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
 west #
  ../bin/check-for-core.sh
 west #

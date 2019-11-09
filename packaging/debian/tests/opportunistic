@@ -7,15 +7,19 @@ badstring='<HTML><BODY><HEAD><TITLE>OH noooooos!!</TITLE>'
 
 ping -c 5 oe.libreswan.org 2>&1
 
+dig +short -x  `dig +short oe.libreswan.org` ipseckey +trusted-key=/usr/share/dns/root.key +sigchase
+
 wget -q --tries=2 --timeout=5 -O "${AUTOPKGTEST_ARTIFACTS}/before.html" http://oe.libreswan.org/ 
+
+echo "0.0.0.0/0" > /etc/ipsec.d/policies/private-or-clear
 
 grep -F "$badstring" "${AUTOPKGTEST_ARTIFACTS}/before.html"
 
 systemctl status ipsec
 
-cp /usr/share/doc/libreswan/examples/oe-upgrade-authnull.conf /etc/ipsec.d/
+cp /usr/share/doc/libreswan/examples/oe-dnssec-client.conf /etc/ipsec.d/
 
-systemctl start ipsec
+systemctl restart ipsec
 
 systemctl status ipsec
 

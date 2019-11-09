@@ -1,0 +1,46 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and Strongswan on
+FreeBSD on the responder.
+
+This test is not yet meant to run automatically.
+
+The output on freebsd for the kernel state will be something like:
+
+root@freebsd:/usr/local/etc # setkey -D
+2001:db8:1:2::23 2001:db8:1:2::45
+	esp mode=tunnel spi=1675186937(0x63d952f9) reqid=1(0x00000001)
+	E: rijndael-cbc  1dd058ed 63905223 147979df 1865bfb3
+	A: hmac-sha1  fde84c78 b2c90386 600927e3 1eb3dcf8 3163d053
+	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
+	created: Feb  2 17:29:42 2019	current: Feb  2 17:37:19 2019
+	diff: 457(s)	hard: 3600(s)	soft: 2960(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=1 pid=1404 refcnt=1
+2001:db8:1:2::45 2001:db8:1:2::23
+	esp mode=tunnel spi=3301523791(0xc4c9414f) reqid=1(0x00000001)
+	E: rijndael-cbc  d32b7287 8e0ef003 3a2bac01 4b14d0c7
+	A: hmac-sha1  1a3b1fc7 091e76f5 860456f2 5342ceaa bc33a3d3
+	seq=0x00000000 replay=4 flags=0x00000000 state=mature 
+	created: Feb  2 17:29:42 2019	current: Feb  2 17:37:19 2019
+	diff: 457(s)	hard: 3600(s)	soft: 2611(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=0 pid=1404 refcnt=1
+root@freebsd:/usr/local/etc # setkey -DP
+192.0.1.0/24[any] 192.0.2.0/24[any] any
+	in ipsec
+	esp/tunnel/2001:db8:1:2::45-2001:db8:1:2::23/unique:1
+	created: Feb  2 17:29:42 2019  lastused: Feb  2 17:29:42 2019
+	lifetime: 9223372036854775807(s) validtime: 0(s)
+	spid=1 seq=1 pid=1405 scope=global 
+	refcnt=1
+192.0.2.0/24[any] 192.0.1.0/24[any] any
+	out ipsec
+	esp/tunnel/2001:db8:1:2::23-2001:db8:1:2::45/unique:1
+	created: Feb  2 17:29:42 2019  lastused: Feb  2 17:29:42 2019
+	lifetime: 9223372036854775807(s) validtime: 0(s)
+	spid=2 seq=0 pid=1405 scope=global 
+	refcnt=1
+

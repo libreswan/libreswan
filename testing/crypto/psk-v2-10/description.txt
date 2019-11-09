@@ -1,4 +1,0 @@
-This test does an PSK signature operation, and then does an
-PSK verification operation used to create the packet I2
-
-

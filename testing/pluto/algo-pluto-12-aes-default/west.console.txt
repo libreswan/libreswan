@@ -6,9 +6,11 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress-retransmits
 west #
  echo "initdone"
 initdone
@@ -18,17 +20,18 @@ west #
 west #
  ipsec auto --up westnet-eastnet-aes-default
 002 "westnet-eastnet-aes-default" #1: initiating Main Mode
-104 "westnet-eastnet-aes-default" #1: STATE_MAIN_I1: initiate
-106 "westnet-eastnet-aes-default" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-108 "westnet-eastnet-aes-default" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+1v1 "westnet-eastnet-aes-default" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "westnet-eastnet-aes-default" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "westnet-eastnet-aes-default" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-aes-default" #1: Peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-aes-default" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
-002 "westnet-eastnet-aes-default" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-117 "westnet-eastnet-aes-default" #2: STATE_QUICK_I1: initiate
+003 "westnet-eastnet-aes-default" #1: Authenticated using RSA with SHA-1
+004 "westnet-eastnet-aes-default" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
+002 "westnet-eastnet-aes-default" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+1v1 "westnet-eastnet-aes-default" #2: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "westnet-eastnet-aes-default" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-default
-002 "westnet-eastnet-aes-default": deleting non-instance connection
+002 "westnet-eastnet-aes-default": terminating SAs using this connection
 002 "westnet-eastnet-aes-default" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-aes-default" #2: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-default" #1: deleting state (STATE_MAIN_I4) and sending notification
@@ -40,17 +43,18 @@ west #
 west #
  ipsec auto --up westnet-eastnet-aes-128
 002 "westnet-eastnet-aes-128" #3: initiating Main Mode
-104 "westnet-eastnet-aes-128" #3: STATE_MAIN_I1: initiate
-106 "westnet-eastnet-aes-128" #3: STATE_MAIN_I2: sent MI2, expecting MR2
-108 "westnet-eastnet-aes-128" #3: STATE_MAIN_I3: sent MI3, expecting MR3
+1v1 "westnet-eastnet-aes-128" #3: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "westnet-eastnet-aes-128" #3: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "westnet-eastnet-aes-128" #3: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-aes-128" #3: Peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-aes-128" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 integ=sha group=MODP2048}
-002 "westnet-eastnet-aes-128" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-117 "westnet-eastnet-aes-128" #4: STATE_QUICK_I1: initiate
+003 "westnet-eastnet-aes-128" #3: Authenticated using RSA with SHA-1
+004 "westnet-eastnet-aes-128" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+002 "westnet-eastnet-aes-128" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+1v1 "westnet-eastnet-aes-128" #4: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "westnet-eastnet-aes-128" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-128
-002 "westnet-eastnet-aes-128": deleting non-instance connection
+002 "westnet-eastnet-aes-128": terminating SAs using this connection
 002 "westnet-eastnet-aes-128" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-aes-128" #4: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-128" #3: deleting state (STATE_MAIN_I4) and sending notification
@@ -62,17 +66,18 @@ west #
 west #
  ipsec auto --up westnet-eastnet-aes-256
 002 "westnet-eastnet-aes-256" #5: initiating Main Mode
-104 "westnet-eastnet-aes-256" #5: STATE_MAIN_I1: initiate
-106 "westnet-eastnet-aes-256" #5: STATE_MAIN_I2: sent MI2, expecting MR2
-108 "westnet-eastnet-aes-256" #5: STATE_MAIN_I3: sent MI3, expecting MR3
+1v1 "westnet-eastnet-aes-256" #5: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "westnet-eastnet-aes-256" #5: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "westnet-eastnet-aes-256" #5: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-aes-256" #5: Peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-aes-256" #5: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
-002 "westnet-eastnet-aes-256" #6: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-117 "westnet-eastnet-aes-256" #6: STATE_QUICK_I1: initiate
+003 "westnet-eastnet-aes-256" #5: Authenticated using RSA with SHA-1
+004 "westnet-eastnet-aes-256" #5: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
+002 "westnet-eastnet-aes-256" #6: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+1v1 "westnet-eastnet-aes-256" #6: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "westnet-eastnet-aes-256" #6: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-256
-002 "westnet-eastnet-aes-256": deleting non-instance connection
+002 "westnet-eastnet-aes-256": terminating SAs using this connection
 002 "westnet-eastnet-aes-256" #6: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-aes-256" #6: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-256" #5: deleting state (STATE_MAIN_I4) and sending notification
@@ -84,17 +89,18 @@ west #
 west #
  ipsec auto --up  westnet-eastnet-aes-mix-1
 002 "westnet-eastnet-aes-mix-1" #7: initiating Main Mode
-104 "westnet-eastnet-aes-mix-1" #7: STATE_MAIN_I1: initiate
-106 "westnet-eastnet-aes-mix-1" #7: STATE_MAIN_I2: sent MI2, expecting MR2
-108 "westnet-eastnet-aes-mix-1" #7: STATE_MAIN_I3: sent MI3, expecting MR3
+1v1 "westnet-eastnet-aes-mix-1" #7: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "westnet-eastnet-aes-mix-1" #7: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "westnet-eastnet-aes-mix-1" #7: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-aes-mix-1" #7: Peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-aes-mix-1" #7: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 integ=sha group=MODP2048}
-002 "westnet-eastnet-aes-mix-1" #8: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-117 "westnet-eastnet-aes-mix-1" #8: STATE_QUICK_I1: initiate
+003 "westnet-eastnet-aes-mix-1" #7: Authenticated using RSA with SHA-1
+004 "westnet-eastnet-aes-mix-1" #7: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+002 "westnet-eastnet-aes-mix-1" #8: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+1v1 "westnet-eastnet-aes-mix-1" #8: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "westnet-eastnet-aes-mix-1" #8: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-1
-002 "westnet-eastnet-aes-mix-1": deleting non-instance connection
+002 "westnet-eastnet-aes-mix-1": terminating SAs using this connection
 002 "westnet-eastnet-aes-mix-1" #8: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-aes-mix-1" #8: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-mix-1" #7: deleting state (STATE_MAIN_I4) and sending notification
@@ -106,17 +112,18 @@ west #
 west #
  ipsec auto --up  westnet-eastnet-aes-mix-2
 002 "westnet-eastnet-aes-mix-2" #9: initiating Main Mode
-104 "westnet-eastnet-aes-mix-2" #9: STATE_MAIN_I1: initiate
-106 "westnet-eastnet-aes-mix-2" #9: STATE_MAIN_I2: sent MI2, expecting MR2
-108 "westnet-eastnet-aes-mix-2" #9: STATE_MAIN_I3: sent MI3, expecting MR3
+1v1 "westnet-eastnet-aes-mix-2" #9: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "westnet-eastnet-aes-mix-2" #9: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "westnet-eastnet-aes-mix-2" #9: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-aes-mix-2" #9: Peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-aes-mix-2" #9: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
-002 "westnet-eastnet-aes-mix-2" #10: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
-117 "westnet-eastnet-aes-mix-2" #10: STATE_QUICK_I1: initiate
+003 "westnet-eastnet-aes-mix-2" #9: Authenticated using RSA with SHA-1
+004 "westnet-eastnet-aes-mix-2" #9: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
+002 "westnet-eastnet-aes-mix-2" #10: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+1v1 "westnet-eastnet-aes-mix-2" #10: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "westnet-eastnet-aes-mix-2" #10: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-2
-002 "westnet-eastnet-aes-mix-2": deleting non-instance connection
+002 "westnet-eastnet-aes-mix-2": terminating SAs using this connection
 002 "westnet-eastnet-aes-mix-2" #10: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-aes-mix-2" #10: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-mix-2" #9: deleting state (STATE_MAIN_I4) and sending notification
@@ -125,89 +132,89 @@ west #
 done
 west #
  grep -A 1 KEY_LENGTH /tmp/pluto.log
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 128 (0x80)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 128 (00 80)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 256 (0x100)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 256 (01 00)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 128 (0x80)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 128 (00 80)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 128 (0x80)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 128 (00 80)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 128 (0x80)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 128 (00 80)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 256 (0x100)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 256 (01 00)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 256 (0x100)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 256 (01 00)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 256 (0x100)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 256 (01 00)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 256 (0x100)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 256 (01 00)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 128 (0x80)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 128 (00 80)
 --
-|    af+type: KEY_LENGTH (0x8006)
-|    length/value: 128 (0x80)
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 128 (00 80)
 west #
 west #
  ../bin/check-for-core.sh

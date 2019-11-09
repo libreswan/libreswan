@@ -10,11 +10,11 @@ east #
  echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/clear-or-private
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair suppress-retransmits
 east #
  # give OE policies time to load
 east #
@@ -34,8 +34,14 @@ east #
  # you should see both RSA and NULL
 east #
  grep IKEv2_AUTH_ /tmp/pluto.log
+| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256 into IKEv2 Notify Payload
+| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256: 00 02
+| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384 into IKEv2 Notify Payload
+| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_384: 00 03
+| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512 into IKEv2 Notify Payload
+| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
-|    auth method: IKEv2_AUTH_RSA (0x1)
+|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 east #
 east #
  ../bin/check-for-core.sh

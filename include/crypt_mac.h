@@ -1,0 +1,40 @@
+/* mac result from PRF and HASH functions, for libreswan
+ *
+ * Copyright (C) 2019 Andrew Cagney
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ */
+
+#ifndef CRYPT_MAC_H
+#define CRYPT_MAC_H
+
+#include <stddef.h>	/* for size_t */
+#include <stdint.h>	/* for uint8_t */
+
+/*
+ * Structure big enough for all MAC results (returned by PRF and HASH
+ * functions).  See crypt_{prf,hash}_final_mac().
+ *
+ * XXX: the field names (noteably the counter intuitive .ptr) are
+ * chosen so that this structure is "hunk" like and works with hunk()
+ * macros.
+ */
+
+struct crypt_mac {
+	/* size of the mac in bytes */
+	size_t len;
+	/* XXX: see note above about why this is called .ptr */
+	uint8_t ptr[64/*aka MAX_DIGEST_LEN*/];
+};
+
+extern const struct crypt_mac empty_mac;
+
+#endif

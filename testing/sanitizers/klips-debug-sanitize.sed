@@ -1,3 +1,14 @@
+# kill complaint about loading module
+/\[ 00.00\] ipsec: loading out-of-tree module taints kernel/d
+
+# fix up KLIPS kernel lines
+/\[ 00.00\] KLIPS/ {
+
+  # ctx_size changes between f22 and f28
+  s/ ctx_size=[0-9]\+ / ctx_size=NN /
+
+}
+
 s/pid=\([0-9]*\)\./pid=987./
 s/(pid=\([0-9]*\))/(pid=987)/
 s/0p[A-Fa-f0-9]\{8\}/0pDEADF00D/g
@@ -20,5 +31,4 @@ s/key_e=......../key_e=ABCDABCD/
 s/ekp=......../ekp=ABCDABCD/
 /ipsec_alg_sa_init/d
 /experimental ipsec_alg_AES_MAC not registered/d
-s/^\[\s\+[0-9]\+.[0-9]\+\] /\[ 00.00] /g
 /ipsec: module verification failed.*$/d

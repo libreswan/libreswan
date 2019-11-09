@@ -2,5 +2,5 @@ Client Address Translation (CAT) test with address conflict on the client.
 Two servers, east and west. The east assign's west's public IP address via CP to road.
 Road can still reach west on the public IP address.
 
-Warning : cleint console output may not sanitized as swantest and
+Warning : client console output may not sanitized as swantest and
 scripts may not support sanitizing road.console.txt

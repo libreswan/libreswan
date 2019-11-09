@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 # swantest: run kvmpluto and dockerpluto tests
 #
@@ -7,7 +7,7 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -47,7 +47,7 @@ from contextlib import contextmanager
 try:
     import argparse
     import pexpect
-    import setproctitle
+    #import setproctitle
 except ImportError as e:
     module = str(e)[16:]
     sys.exit("we require the python module %s" % module)
@@ -1225,7 +1225,7 @@ def sent_virsh_cmd(args, all_hosts, c="shutdown"):
     tries = args.shutdownwait
     while len(running) and tries != 0:
         logging.info(
-            "Found %s guests [%s] running. Wait upto %d seconds to shutdown", len(
+            "Found %s guests [%s] running. Wait up to %d seconds to shutdown", len(
                 running),
             ' '.join(map(str, running)), tries)
 
@@ -1457,7 +1457,7 @@ def kill_zombie_tcpdump(signal=1):
 
 def kill_zombies(proctitle):
 
-    setproctitle.setproctitle(proctitle)
+    #setproctitle.setproctitle(proctitle)
     me = os.getpid()
     zombie_pids = subprocess.getoutput("pidof %s" % proctitle)
     for pid in (zombie_pids.split()):
@@ -1820,7 +1820,7 @@ def docker_stop_container(dname):
 
 def docker_start_container(dhost, dname, dimage):
 
-    cmd = "sudo docker run -h %s --privileged --net=none --name %s -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
+    cmd = "sudo docker run -h %s --privileged --net=none --name %s -v /home/build:/home/build -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
         dhost, dname, dimage)
     return (runcmd(cmd))
 
@@ -1833,9 +1833,7 @@ def docker_flush_eth0(dhost, dname):
 def docker_restart_network(test):
     for host in test["test_hosts"]:
         dname = host + "-" + test["name"]
-        runcmd("sudo docker exec -ti %s systemctl restart network.service" %
-               dname)
-
+        runcmd("sudo docker exec -ti %s /testing/guestbin/swan-transmogrify" % dname)
 
 def docker_add_route(test, dnamei, dnamer, dnamen):
 
@@ -2435,7 +2433,7 @@ def resanitize(args):
     # for h in DEFAULTCONFIG['swanhosts']:
     #       f = "OUTPUT/%s.console.diff"%h
     #       if  os.path.exists(f):
-    #               cmd = "egrep '^[+-]' %s | egrep -v '^(\+\+\+|---)' | sort -u | cmp -s - ../strongswan-star-diff"%f
+    #               cmd = "grep -E '^[+-]' %s | grep -E -v '^(\+\+\+|---)' | sort -u | cmp -s - ../strongswan-star-diff"%f
     #               (status, output) =  commands.getstatusoutput(cmd);
     #               if not status:
     #                       print "cp %s/OUTPUT/%s.console.txt %s/" % (testdir,h,testdir)
@@ -2448,7 +2446,7 @@ def check_host_netkey_stack():
     v_line = runcmd("ipsec version")
     if v_line.split()[3] != '(netkey)':
         logging.debug("no netkey stack found, try to load it %s", v_line)
-        runcmd("sudo /usr/local/sbin/ipsec _stackmanager start --netkey")
+        runcmd("sudo /usr/local/sbin/ipsec _stackmanager start --xfrm")
         v_line = runcmd("ipsec version")
         if v_line.split()[3] != '(netkey)':
             # give up
@@ -2730,7 +2728,7 @@ def setup_result_dir(args, to_create):
             pass
 
     if not ipsecversion:
-        # Lets assume the path is <LIBRESWANSRC>/testing/utis
+        # Let's assume the path is <LIBRESWANSRC>/testing/utis
         cwd = os.getcwd()
         dn = args.libreswandir
         os.chdir(dn)
@@ -2740,7 +2738,7 @@ def setup_result_dir(args, to_create):
         os.chdir(cwd)
         logging.debug("cd %s; %s ; IPSECVERSION %s", dn, cmd, ipsecversion)
     else:
-        logging.debug("IPSECVERSION %s was set in enviroment", ipsecversion)
+        logging.debug("IPSECVERSION %s was set in environment", ipsecversion)
 
     if ipsecversion and args.rerun:
         output_dir = output_dir + ipsecversion

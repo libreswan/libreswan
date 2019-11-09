@@ -1,2 +1,0 @@
-This tests parsing of a conn with an insane big ike= line. This is bug #897
-

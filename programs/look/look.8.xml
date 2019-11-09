@@ -38,7 +38,7 @@ done to combine the outputs.
 </para>
 <para>Some of the above commands, and therefore <emphasis remap='I'>ipsec look</emphasis>,
 are only supported with the KLIPS or MAST stack, and will give errors when used on BSD, Windows
-or Linux with NETKEY.</para>
+or Linux with XFRM/NETKEY.</para>
 </refsect1>
 
 
@@ -48,7 +48,7 @@ or Linux with NETKEY.</para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
-<para>Man page written for the Linux FreeS/WAN project &lt;<ulink url='http://www.freeswan.org/'>http://www.freeswan.org/</ulink>&gt;
+<para>Man page written for the Linux FreeS/WAN project &lt;<ulink url='https://www.freeswan.org/'>https://www.freeswan.org/</ulink>&gt;
 by Michael Richardson. Original program written by Henry Spencer.</para>
 
 

@@ -8,7 +8,7 @@ collect_diag () {
 	echo "=== start of diagnostics ==="
 	ipsec whack --trafficstatus >> $DIAG_OUT_FILE
 	ipsec status >> $DIAG_OUT_FILE
-	ip xfrm pol >> $DIAG_OUT_FILE
+	ip xfrm policy >> $DIAG_OUT_FILE
 	ip xfrm state >> $DIAG_OUT_FILE
 	ping -q -n -c 4 -I 192.0.1.254 192.0.2.254 2>&1 >> $DIAG_OUT_FILE
 	ipsec whack --trafficstatus >> $DIAG_OUT_FILE

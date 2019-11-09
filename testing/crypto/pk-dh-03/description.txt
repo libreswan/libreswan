@@ -1,3 +1,0 @@
-This test case does a 1536 bit g^x mod p calculation using
-the memory mapped Hifn 7956 device.
-The test vectors are taken from hdk/Release/diag/functional/hdk_diag_pkTestData.h

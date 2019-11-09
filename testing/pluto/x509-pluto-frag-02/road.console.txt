@@ -2,7 +2,7 @@
 Preparing X.509 files
 road #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
@@ -16,16 +16,18 @@ done
 road #
  ipsec auto --up x509
 002 "x509" #1: initiating Main Mode
-104 "x509" #1: STATE_MAIN_I1: initiate
-106 "x509" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "x509" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "x509" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 002 "x509" #1: I am sending my cert
 002 "x509" #1: I am sending a certificate request
-108 "x509" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+1v1 "x509" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+010 "x509" #1: STATE_MAIN_I3: retransmission; will wait 0.5 seconds for response
 002 "x509" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "x509" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-004 "x509" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
-002 "x509" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+IKE_FRAG_FORCE+ESN_NO
-117 "x509" #2: STATE_QUICK_I1: initiate
+003 "x509" #1: Authenticated using RSA with SHA-1
+004 "x509" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "x509" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+IKE_FRAG_FORCE+ESN_NO
+1v1 "x509" #2: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "x509" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 road #
  echo done
@@ -38,6 +40,24 @@ road #
 | sending IKE fragment id '1', number '3'
 | sending IKE fragment id '1', number '4'
 | sending IKE fragment id '1', number '5' (last)
+| sending IKE fragment id '1', number '1'
+| sending IKE fragment id '1', number '2'
+| sending IKE fragment id '1', number '3'
+| sending IKE fragment id '1', number '4'
+| sending IKE fragment id '1', number '5' (last)
+|    fragment id: 1 (00 01)
+|    fragment number: 1 (01)
+| received IKE fragment id '1', number '1'
+|    fragment id: 1 (00 01)
+|    fragment number: 2 (02)
+| received IKE fragment id '1', number '2'
+|    fragment id: 1 (00 01)
+|    fragment number: 3 (03)
+| received IKE fragment id '1', number '3'
+|    fragment id: 1 (00 01)
+|    fragment number: 4 (04)
+| received IKE fragment id '1', number '4'(last)
+|  updated IKE fragment state to respond using fragments without waiting for re-transmits
 road #
 road #
  ../bin/check-for-core.sh

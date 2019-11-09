@@ -43,7 +43,7 @@ while(<>) {
     print STDERR "inlook:$inlook ineroute:$ineroute intncfg: $intncfg inspigrp: $inspigrp inroute: $inroute\nProcessing $_\n";
   }
 
-  if(!$inlook && / ipsec look/) {
+  if(!$inlook && (/ ipsec look/ || /ipsec-look.sh/)) {
     $inlook=1;
 
     # also reset tunnel list.
@@ -56,9 +56,8 @@ while(<>) {
     # eat the date that is on the next line.
     print;
 
+    # skip date
     $_=<>;
-    # east Thu Nov  7 22:22:34 GMT 2002
-    s/(.*) ... ... .* ..:..:.. (?:GMT|EDT|EST|EET|CET|UTC) ..../\1 NOW/;
 
     $ineroute=1;
     $intncfg=0;
@@ -186,8 +185,6 @@ while(<>) {
 	$spinum = $2;
 	$spiip  = $3;
 
-	$rest = &sanitize_sadata($rest);
-
 	$key=$esp1.$spinum."@".$spiip;
 	$espline=$esp1."SPISPI@".$spiip.$rest;
 	$xname="esp";
@@ -203,8 +200,6 @@ while(<>) {
 	$ah1   = $1;
 	$spinum = $2;
 	$spiip  = $3;
-
-	$rest = &sanitize_sadata($rest);
 
 	$key=$ah1.$spinum."@".$spiip;
 	$ahline=$ah1."SPISPI@".$spiip.$rest;
@@ -224,8 +219,6 @@ while(<>) {
 	$spinum = $2;
 	$spiip  = $3;
 
-	$rest = &sanitize_sadata($rest);
-
 	$key=$tun1.$spinum."@".$spiip;
 	$tunline=$tun1."TUN#@".$spiip.$rest;
 	$xname="tun";
@@ -244,8 +237,6 @@ while(<>) {
 	$comp = $1;
 	$spinum = $2;
 	$spiip  = $3;
-
-	$rest = &sanitize_sadata($rest);
 
 	$key=$comp.$spinum."@".$spiip;
 	$compline=$comp."COMP#@".$spiip.$rest;
@@ -311,29 +302,5 @@ sub sourcerecord {
 
     $ips{$srcip}++;
   }
-}
-
-
-sub sanitize_sadata {
-  local($rest)=@_;
-
-  $rest =~ s/iv=0x[0-9a-f]{32}/iv=0xIVISFORRANDOM000IVISFORRANDOM000/;
-  $rest =~ s/iv=0x[0-9a-f]{16}/iv=0xIVISFORRANDOM000/;
-
-  $rest =~ s/jiffies=[0-9a-f]{10}/jiffies=0123456789/;
-
-  $rest =~ s/addtime\(.*,.*,.*\)//;
-  $rest =~ s/usetime\(.*,.*,.*\)//;
-  $rest =~ s/bytes\(.*\)//;
-  $rest =~ s/life\(c,s,h\)= //g;
-
-  $rest =~ s/bit=\S*//g;
-  $rest =~ s/idle=\S*//g;
-  $rest =~ s/refcount=\S*//g;
-  $rest =~ s/ref=\S*//g;
-  $rest =~ s/seq=\S*//g;
-  $rest =~ s/ratio=\S*//g;
-
-  $rest;
 }
 

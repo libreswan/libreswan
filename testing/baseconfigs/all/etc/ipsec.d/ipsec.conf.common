@@ -120,12 +120,6 @@ conn westnet-eastnet-sourceip
 	leftsourceip=192.0.1.254
 	also=westnet-eastnet
 
-# also processing split in two parts messes up with connaddrfamily checking
-# rewrite this now as work around as to not break ALL test cases :)
-#conn westnet-eastnet-6in4
-#   also=west-east-base-ipv4
-#   also=westnet-eastnet-ipv6
-
 conn westnet-eastnet-6in4
 	also=west-east-base-id-nss
 	left=192.1.2.45
@@ -134,16 +128,6 @@ conn westnet-eastnet-6in4
 	#rightnexthop=192.1.2.45
         leftsubnet=2001:db8:0:1::/64
         rightsubnet=2001:db8:0:2::/64
-        connaddrfamily=ipv6
-
-# Same issue for this conn
-#conn westnet-eastnet-4in6
-#	also=west-east-base-id-nss
-#	also=west-east-base-ipv6
-#	#connaddrfamily=ipv6
-#	also=westnet-ipv4
-#	also=eastnet-ipv4
-#	auto=ignore
 
 conn westnet-eastnet-4in6
 	also=west-east-base-id-nss
@@ -152,7 +136,6 @@ conn westnet-eastnet-4in6
 	#leftnexthop=2001:db8:1:2::23
 	right=2001:db8:1:2::23
 	#rightnexthop=2001:db8:1:2::45
-	#connaddrfamily=ipv6
 	leftsubnet=192.0.1.0/24
 	rightsubnet=192.0.2.0/24
 	auto=ignore
@@ -191,10 +174,6 @@ conn northnet-eastnet-ipv4
 	also=northnet-ipv4
 	also=eastnet-ipv4
 
-conn rad-eastnet-fqdn-ikev2
-	also=rad-eastnet-fqdn
-	ikev2=insist
-
 conn road-eastnet
 	also=road-east-base
 	also=road-east-base-id-nss
@@ -204,10 +183,6 @@ conn rad-eastnet-fqdn
 	also=road-east-base-fqdn-default-route
 	also=road-east-base-id-nss
 	also=eastnet-ipv4
-
-conn westnet-eastnet-fqdn-ikev2
-	also=westnet-eastnet-fqdn
-	ikev2=insist
 
 conn westnet-eastnet-fqdn
 	also=west-east-base-fqdn
@@ -219,7 +194,6 @@ conn westnet-eastnet-fqdn
 conn westnet-eastnet-ipv6
 	leftsubnet=2001:db8:0:1::/64
 	rightsubnet=2001:db8:0:2::/64
-	connaddrfamily=ipv6
 	#auto=start
 
 conn northnet-eastnet-ipv6
@@ -322,21 +296,18 @@ conn west-east-base-ipv4
 	rightnexthop=192.1.2.45
 
 conn west-east-base-ipv6
-	connaddrfamily=ipv6
 	left=2001:db8:1:2::45
 	leftnexthop=2001:db8:1:2::23
 	right=2001:db8:1:2::23
 	rightnexthop=2001:db8:1:2::45
 
 conn road-east-base-ipv6
-	connaddrfamily=ipv6
 	left=2001:db8:1:3::209
 	leftnexthop=2001:db8:1:3::254
 	right=2001:db8:1:2::23
 	rightnexthop=2001:db8:1:2::45
 
 conn north-east-base-ipv6
-	connaddrfamily=ipv6
 	left=2001:db8:1:3::33
 	leftnexthop=2001:db8:1:3::254
 	right=2001:db8:1:2::23
@@ -355,12 +326,11 @@ conn east-rightckaid
 
 conn west-leftrsasigkey
         leftrsasigkey=0sAQOm9dY/449sAWr8e3xtV4tJOQ1396zihfGYHkttpT6zlprRmVq8EPKX3vIo+V+SCfDI1BLkYG6cYJgQAX0mt4+VYi2H3c3e9tOPNbBQ0Bj1mfgE8f9hW7x/H8AE2OSMrDStesHaPC2MMK7WPFmxOpTT1Spzkb1ZXz5yv0obncWyK03nDSQ+d/l/LdadKe9wfXptorhhDEsJSgZxhHCFmo9SoYAG/cb8Pif6Fvoyg6nKgNsPSr/36VWOvSlNI6bcKrNdYqkhHr6D2Gk8AwpIjtM6EfKGWtEwZb3I9IOH/wSHMwVP4NiM/rMZTN2FQPNNbuhJFAYsH1lZBY8gsMpGP8kgfgQwfZqAbD8KiffTr9gVBDf5
-conn west-leftrsasigkey
+conn west-leftckaid
         leftckaid=b49f1aac9e456e7929c881973a0c6ad37f0f0350
 
 conn road-leftrsasigkey
 	leftrsasigkey=0sAQPHFfpyJ3Ck4fMKcCH5DD/iZRKH2f0Sy6/U4MLj3Xeg76rH1qKyMPJksMXmx6cnF1R6jjLJrP2/j7MzuXR0c90jgxFT1tSRDjZ+Z/yJHkis6douZp1uT+KYp9xBs6Q39QepnCNpg1SHe+oAp1urLUE00aMXHqdkLX//RXpdhVxz3WPnQK3rceZfIUOA9SNMPUoRLMqa1nnFwlFur8NumfUmHGfuij4wS8GTp5I0Noy/5tDT/ngLCmQERMqMg/3xLrUAdmGm3vFZZyttwlfg8n1rn9NGQYwxwv3EYHIIO7tW+wH8HVdOz3wPxG9ybyoO8zDboID5cMy7B6n513aZY0tqDxo3lcub6hf3VWJrioMF/0N4V929CIWc8WI1bmnHBAtLxBvSOImM3lbQyCxRVDIbfSfczTd6Tssa7NLOSO1DSJyK/DCfsVccqZjlhJNs2k3MleP18qWznXCuJI0IOw+M6Vql8E2cPC9/vBCVNByWdCn8q/uPS3GqCya18DKYkGr9MfWr
-        
 conn road-leftckaid
         leftckaid=1a15cce89273439c2bf4202ac1066ef259b0ef45
 
@@ -503,14 +473,14 @@ conn west-east-x509
         # Left security gateway, subnet behind it, next hop toward right.
         left=192.1.2.45
         leftrsasigkey=%cert
-        leftcert=west
+        #leftcert=west
         leftnexthop=192.1.2.23
         leftid=%fromcert
         # Right security gateway, subnet behind it, next hop toward left.
         right=192.1.2.23
         rightid=%fromcert
         rightrsasigkey=%cert
-        rightcert=east
+        #rightcert=east
         rightnexthop=192.1.2.45
 
 conn road-east-x509

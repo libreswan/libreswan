@@ -6,11 +6,12 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Coprright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -25,6 +26,12 @@
 
 # define DEFAULT_UPDOWN "ipsec _updown"
 
+#include "lset.h"
+#include "err.h"
+#include "ip_range.h"
+#include "ip_subnet.h"
+#include "lswcdefs.h"
+
 #ifndef _LIBRESWAN_H
 #include <libreswan.h>
 #include "constants.h"
@@ -38,10 +45,15 @@ enum keyword_set {
 	k_set     = TRUE,
 	k_default = 2
 };
-typedef char *ksf[KEY_STRINGS_MAX];
-typedef int knf[KEY_NUMERIC_MAX];
-typedef enum keyword_set str_set[KEY_STRINGS_MAX];
-typedef enum keyword_set int_set[KEY_NUMERIC_MAX];
+typedef char *ksf[KEY_STRINGS_ROOF];
+typedef int knf[KEY_NUMERIC_ROOF];
+typedef enum keyword_set str_set[KEY_STRINGS_ROOF];
+typedef enum keyword_set int_set[KEY_NUMERIC_ROOF];
+
+/*
+ * Note: string fields in struct starter_end and struct starter_conn
+ * should correspond to STR_FIELD calls in copy_conn_default() and confread_free_conn.
+ */
 
 struct starter_end {
 	sa_family_t addr_family;
@@ -57,13 +69,13 @@ struct starter_end {
 	enum keyword_pubkey rsakey1_type, rsakey2_type;
 	char *rsakey1;
 	char *rsakey2;
-	u_int16_t port;
-	u_int8_t protocol;
+	uint16_t port;
+	uint8_t protocol;
 	bool has_client_wildcard;
 	bool key_from_DNS_on_demand;
 	bool has_port_wildcard;
 	char *virt;
-	char *cert;
+	char *certx;
 	char *ckaid;
 	char *ca;
 	char *updown;
@@ -74,6 +86,11 @@ struct starter_end {
 	str_set strings_set;
 	int_set options_set;
 };
+
+/*
+ * Note: string fields in struct starter_end and struct starter_conn
+ * should correspond to STR_FIELD calls in copy_conn_default() and confread_free_conn.
+ */
 
 struct starter_conn {
 	TAILQ_ENTRY(starter_conn) link;
@@ -87,7 +104,9 @@ struct starter_conn {
 	int_set options_set;
 
 	lset_t policy;
-	char **alsos;
+	lset_t sighash_policy;
+
+	char **alsos;	/* pointer to NULL-terminated array of strings */
 
 	struct starter_end left, right;
 
@@ -103,8 +122,8 @@ struct starter_conn {
 		STATE_FAILED,
 	} state;
 
+	char *ike_crypto;
 	char *esp;
-	char *ike;
 	char *modecfg_dns;
 	char *modecfg_domains;
 	char *modecfg_banner;
@@ -113,6 +132,8 @@ struct starter_conn {
 	char *conn_mark_in;
 	char *conn_mark_out;
 	char *vti_iface;
+	char *redirect_to;
+	char *accept_redirect_to;
 	bool vti_routing;
 	bool vti_shared;
 };
@@ -134,15 +155,27 @@ struct starter_config {
 	TAILQ_HEAD(, starter_conn) conns;
 };
 
+/*
+ * accumulate errors in this struct.
+ * This is a string with newlines separating messages.
+ * The string is heap-allocated so the caller is responsible
+ * for freeing it.
+ */
+typedef struct {
+	char *errors;
+} starter_errors_t;
+
+extern void starter_error_append(starter_errors_t *perrl, const char *fmt, ...) PRINTF_LIKE(2);
+
+
+extern struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perr);
+extern void parser_free_conf(struct config_parsed *cfg);
+
 extern struct starter_config *confread_load(const char *file,
-					    err_t *perr,
-					    bool resolvip,
+					    starter_errors_t *perrl,
 					    const char *ctlsocket,
 					    bool setuponly);
-extern struct starter_conn *alloc_add_conn(struct starter_config *cfg,
-					   const char *name);
-void confread_free(struct starter_config *cfg);
 
-void ipsecconf_default_values(struct starter_config *cfg);
+extern void confread_free(struct starter_config *cfg);
 
 #endif /* _IPSEC_CONFREAD_H_ */

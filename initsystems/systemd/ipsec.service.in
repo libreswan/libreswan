@@ -26,6 +26,8 @@ ExecStartPre=@FINALSBINDIR@/ipsec --checknss
 ExecStartPre=@FINALSBINDIR@/ipsec --checknflog
 # Start the actual IKE daemon
 ExecStart=@FINALLIBEXECDIR@/pluto @SD_PLUTO_OPTIONS@ --config @FINALCONFFILE@ --nofork
+# Enable for portexcludes support
+# ExecStartPost=@FINALLIBEXECDIR@/portexcludes
 ExecStop=@FINALLIBEXECDIR@/whack --shutdown
 ExecStopPost=/sbin/ip xfrm policy flush
 ExecStopPost=/sbin/ip xfrm state flush

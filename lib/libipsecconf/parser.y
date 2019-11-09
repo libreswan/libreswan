@@ -1,5 +1,5 @@
 %{   /* -*- bison-mode -*- */
-/* FreeS/WAN config file parser (parser.y)
+/* Libreswan config file parser (parser.y)
  * Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Michael Richardson <mcr@sandelman.ottawa.on.ca>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
@@ -10,7 +10,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -361,11 +361,9 @@ void yyerror(const char *s)
 		parser_y_error(parser_errstring, ERRSTRING_LEN, s);
 }
 
-struct config_parsed *parser_load_conf(const char *file, err_t *perr)
+struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perrl)
 {
 	parser_errstring[0] = '\0';
-	if (perr != NULL)
-		*perr = NULL;
 
 	struct config_parsed *cfg = malloc(sizeof(struct config_parsed));
 
@@ -373,7 +371,9 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 		snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
 		goto err;
 	}
-	zero(cfg);	/* ??? pointer fields may not be NULLed */
+
+	static const struct config_parsed empty_config_parsed;	/* zero or null everywhere */
+	*cfg = empty_config_parsed;
 
 	FILE *f = streq(file, "-") ?
 		fdopen(STDIN_FILENO, "r") : fopen(file, "r");
@@ -398,17 +398,28 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 		}
 		save_errors = FALSE;
 		do {} while (yyparse() != 0);
-	} else if (parser_errstring[0] == '\0') {
-		/**
-		 * Config valid
-		 */
-		return cfg;
+		goto err;
 	}
-	/* falls through on error */
+
+	/* check all are kv_config */
+	for (const struct kw_list *kw = parser_cfg->config_setup;
+	     kw != NULL; kw = kw->next) {
+		if (!(kw->keyword.keydef->validity & kv_config)) {
+			snprintf(parser_errstring, sizeof(parser_errstring),
+				 "unexpected keyword '%s' in section 'config setup'",
+				 kw->keyword.keydef->keyname);
+			goto err;
+		}
+	}
+
+	/**
+	 * Config valid
+	 */
+	return cfg;
 
 err:
-	if (perr != NULL)
-		*perr = (err_t)strdup(parser_errstring);
+	starter_error_append(perrl, "%s", parser_errstring);
+
 	if (cfg != NULL)
 		parser_free_conf(cfg);
 

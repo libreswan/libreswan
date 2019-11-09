@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -13,46 +13,45 @@ initdone
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec auto --down westnet-eastnet-ikev2 ; fi
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_IPSEC_R) and sending notification
-005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=336B out=336B
-002 "westnet-eastnet-ikev2" #1: deleting state (STATE_PARENT_R2) and sending notification
+002 "westnet-eastnet-ikev2" #3: deleting state (STATE_V2_IPSEC_R) and sending notification
+005 "westnet-eastnet-ikev2" #3: ESP traffic information: in=336B out=336B
+002 "westnet-eastnet-ikev2" #2: deleting state (STATE_PARENT_R2) and sending notification
 east #
  if [ -f /var/run/charon.pid ]; then sleep 5 ; fi
 east #
  #
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 east NOW
 XFRM state:
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1042407 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then grep "message ID:" /tmp/pluto.log  ; fi
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 01
+ if [ -f /var/run/pluto/pluto.pid ]; then grep -E "Message ID: [0-9] " /tmp/pluto.log  ; fi
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 1 (00 00 00 01)
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east #

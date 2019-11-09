@@ -1,2 +1,0 @@
-KLIPS NETKEY interop test for SHA2-512
-

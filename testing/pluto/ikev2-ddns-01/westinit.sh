@@ -2,6 +2,5 @@
 grep right.libreswan.org /etc/hosts > /dev/null && echo "TEST FAILED - should not have /etc/hosts entry at start"
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-# will throw an error about bad unresolvable name
-ipsec auto --add named
+# will be slow because of the right dns name resolution failing
 echo "initdone"

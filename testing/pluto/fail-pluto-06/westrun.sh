@@ -1,2 +1,0 @@
-ipsec look
-echo done

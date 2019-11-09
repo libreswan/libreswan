@@ -2,13 +2,14 @@
 # IPsec startup and shutdown command
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2013, 2017 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013-2019 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2016 Kim B. Heino <b@bbbs.net>
+# Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -33,8 +34,14 @@ if [ $(ip addr list|grep -c cipsec) -ne 0 ]; then
     exit 1
 fi
 
-initsystem=unknown
-if [ -d /run/systemd/system ]; then
+initsystem=@INITSYSTEM@
+
+# this magic should go. build already decided initsystem.
+# it breaks inside a namespace take what was decided at build
+
+if [ "${initsystem}" = "docker" ]; then
+    initsystem="docker"
+elif [ -d /run/systemd/system ]; then
     initsystem=systemd
 elif [ -f /sbin/start ]; then
     if [ -r /etc/redhat-release ]; then
@@ -53,9 +60,16 @@ case "$1" in
 	# preliminaries
 	mkdir -p ${rundir}
 	chmod 700 ${rundir} > /dev/null 2>/dev/null
-	# starting a stack will unload any loaded stack first (same or different stack)
-	[ -f /proc/modules ] && ipsec _stackmanager start
-	# Finally start the pluto daemon in a restart loop
+
+	# if namespace testing, start pluto directly
+	echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+	    echo "Redirecting to: namespaces direct start via ipsec pluto"
+	    exec ipsec pluto --config /etc/ipsec.conf
+	fi
+
+	# start regular pluto daemon in a restart loop
 	if [ ${initsystem} = systemd ]; then
 	    systemctl status ipsec.service > /dev/null
 	    RETVAL=$?
@@ -78,6 +92,9 @@ case "$1" in
 	elif [ ${initsystem} = sysv ]; then
 	    echo "Redirecting to: /etc/init.d/ipsec start"
 	    exec /etc/init.d/ipsec start
+	elif [ ${initsystem} = docker ]; then
+	    echo "Redirecting to: /etc/init.d/ipsec start"
+	    exec /etc/init.d/ipsec start
 	else
 	    echo "Unknown init system in use - aborted"
 	    exit 3
@@ -86,6 +103,10 @@ case "$1" in
 	;;
   stop|--stop|_autostop)	# _autostop is same as stop
 	# Shut things down.
+
+	# if namespace testing, stop pluto directly
+	echo $SUDO_COMMAND | grep "/bin/nsenter " && exec ipsec whack --shutdown
+
 	if [ ${initsystem} = systemd ]; then
 	    echo "Redirecting to: systemctl stop ipsec.service"
 	    # don't exec, we need to cleanup the IPsec stack afterwards
@@ -102,6 +123,9 @@ case "$1" in
 	elif [ ${initsystem} = sysv ]; then
 	    echo "Redirecting to: /etc/init.d/ipsec stop"
 	    exec /etc/init.d/ipsec stop
+	elif [ ${initsystem} = docker ]; then
+	    echo "Redirecting to: /etc/init.d/ipsec stop"
+	    exec /etc/init.d/ipsec stop
 	else
 	    echo "Unknown init system in use - aborted"
 	    exit 3
@@ -111,7 +135,7 @@ case "$1" in
 
 	# If stack is non-modular, we want to force clean too
 	[ -f /proc/net/pf_key ] && ipsec eroute --clear
-	[ -f /proc/net/pfkey ] && ip xfrm state flush && ip xfrm policy flush
+	[ -f /proc/sys/net/core/xfrm_acq_expires ] && ip xfrm state flush && ip xfrm policy flush
 
 	# Cleaning up backup resolv.conf
 	if [ -e ${LIBRESWAN_RESOLV_CONF} ]; then
@@ -145,20 +169,11 @@ case "$1" in
 	exit 0
 	;;
     restart|--restart)
-	# assumes preparations for running have already been done, as service should be running now
+	# assumes preparations for running have already been done,
+	# as service should be running now
 	if [ ${initsystem} = systemd ]; then
-	    systemctl status ipsec.service > /dev/null
-	    RETVAL=$?
-	    if [ $RETVAL -ne 0 ]; then
-		echo "systemd: ipsec service is not running"
-		exit 1
-	    else
-		# do not use 'restart' because systemd is overly "smart"
-		# and will refuse the restart when stopped.
-		echo "Redirecting to: systemctl stop+start ipsec.service"
-		systemctl stop ipsec.service
-		exec systemctl start ipsec.service
-	    fi
+	    echo "Redirecting to: systemctl restart ipsec.service"
+	    exec systemctl restart ipsec.service
 	elif [ ${initsystem} = rhsysv ]; then
 	    echo "Redirecting to: service ipsec restart"
 	    exec service ipsec restart
@@ -169,6 +184,9 @@ case "$1" in
 	    echo "Redirecting to: rc-service ipsec restart"
 	    exec rc-service ipsec restart
 	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: /etc/init.d/ipsec restart"
+	    exec /etc/init.d/ipsec restart
+	elif [ ${initsystem} = docker ]; then
 	    echo "Redirecting to: /etc/init.d/ipsec restart"
 	    exec /etc/init.d/ipsec restart
 	else

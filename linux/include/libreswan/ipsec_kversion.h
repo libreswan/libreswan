@@ -13,7 +13,7 @@
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/lgpl-2.1.txt>.
  *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -582,10 +582,16 @@ typedef struct ctl_table ctl_table;
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 6, 0)
 # define HAS_AHASH
+# define HAS_SKCIPHER
 #endif
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 1, 14)
+/* seems to have been backported to as far back as 4.1.4 though */
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 11, 9)
 # define HAS_PRIV_DESTRUCTOR
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 20, 0)
+# define SYNC_SKCIPHER_REQUEST_ON_STACK(a,b) SKCIPHER_REQUEST_ON_STACK(a,b)
 #endif
 
 #endif /* _LIBRESWAN_KVERSIONS_H */

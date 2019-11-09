@@ -27,7 +27,7 @@ esac
 LANG=C export LANG
 LC_ALL=C export LC_ALL
 
-find linux -type f -print | grep -v CVS | egrep -v 'linux/Makefile' | sort | while read file
+find linux -type f -print | grep -v CVS | grep -v 'linux/Makefile' | sort | while read file
 do
   base=`basename $file`
   pname=`echo $file | sed -e 's,\.fs._.$,,' -e 's,\.os._.$,,'`

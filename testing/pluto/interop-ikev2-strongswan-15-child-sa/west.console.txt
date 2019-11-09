@@ -14,10 +14,17 @@ initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ N(INVAL_KE) ]
+peer didn't accept DH group ECP_256, it requested MODP_2048
+initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
+selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/MODP_2048
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2{1}
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]
@@ -25,6 +32,7 @@ authentication of 'east' with pre-shared key successful
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
+selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev2' established successfully
 west #
@@ -44,6 +52,7 @@ generating CREATE_CHILD_SA request 2 [ SA No TSi TSr ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed CREATE_CHILD_SA response 2 [ SA No TSi TSr ]
+selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev2b{2} established with SPIs SPISPI_i SPISPI_o and TS 192.0.100.0/24 === 192.0.200.0/24
 connection 'westnet-eastnet-ikev2b' established successfully
 west #
@@ -63,9 +72,13 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Shunted Connections:
+Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
+Bypass LAN 192.0.100.0/24:  192.0.100.0/24 === 192.0.100.0/24 PASS
+Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o

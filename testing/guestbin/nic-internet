@@ -1,0 +1,8 @@
+#!/bin/sh
+
+dhclient eth2
+# provide NAT
+iptables -t nat -I POSTROUTING -o eth2 -j MASQUERADE
+# Redirect DNS to a real public server
+iptables -t nat -I PREROUTING -d 192.1.2.254 -j DNAT --to-destination 8.8.8.8
+echo "internet uplink enabled"

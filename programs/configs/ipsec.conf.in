@@ -1,27 +1,18 @@
 # @FINALCONFDIR@/ipsec.conf - Libreswan IPsec configuration file
 #
-# Manual:     ipsec.conf.5
+# see 'man ipsec.conf' and 'man pluto' for more information
+#
+# For example configurations and documentation, see https://libreswan.org/wiki/
 
 config setup
-	# Normally, pluto logs via syslog. If you want to log to a file,
-	# specify below or to disable logging, eg for embedded systems, use
-	# the file name /dev/null
-	# Note: SElinux policies might prevent pluto writing to a log file at
-	#       an unusual location.
+	# Normally, pluto logs via syslog.
 	#logfile=/var/log/pluto.log
 	#
 	# Do not enable debug options to debug configuration issues!
 	#
-	# plutodebug "all", "none" or a combation from below:
-	# "raw crypt parsing emitting control controlmore kernel pfkey
-	#  natt x509 dpd dns oppo oppoinfo private".
-	# Note: "private" is not included with "all", as it can show confidential
-	#       information. It must be specifically specified
-	# examples:
 	# plutodebug="control parsing"
 	# plutodebug="all crypt"
-	# Again: only enable plutodebug when asked by a developer
-	#plutodebug=none
+	plutodebug=none
 	#
 	# NAT-TRAVERSAL support
 	# exclude networks used on server side by adding %v4:!a.b.c.0/24
@@ -30,10 +21,8 @@ config setup
 	# This range has never been announced via BGP (at least up to 2015)
 	virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:25.0.0.0/8,%v4:100.64.0.0/10,%v6:fd00::/8,%v6:fe80::/10
 
-# For example connections, see your distribution's documentation directory,
-# or https://libreswan.org/wiki/
-#
-# There is also a lot of information in the manual page, "man ipsec.conf"
-#
+# if it exists, include system wide crypto-policy defaults
+# include /etc/crypto-policies/back-ends/libreswan.config
+
 # It is best to add your IPsec connections as separate files in @IPSEC_CONFDDIR@/
 include @IPSEC_CONFDDIR@/*.conf

@@ -12,7 +12,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -22,22 +22,21 @@
 #ifndef _SECRETS_H
 #define _SECRETS_H
 
-#include "id.h"
-
 #include <nss.h>
 #include <pk11pub.h>
+
+#include "lswcdefs.h"
 #include "x509.h"
+#include "id.h"
+#include "err.h"
 #include "realtime.h"
+#include "ckaid.h"
 
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */
-
-/*
- * For rationale behind *_t? Blame chunk_t.
- */
-typedef struct {
-	SECItem *nss;
-} ckaid_t;
+struct pubkey;		/* forward */
+union pubkey_content;	/* forward */
+struct pubkey_type;	/* forward */
 
 struct RSA_public_key {
 	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
@@ -85,18 +84,26 @@ struct RSA_private_key {
 	struct RSA_public_key pub;
 };
 
-extern void free_RSA_public_content(struct RSA_public_key *rsa);
+struct ECDSA_public_key {
+	char keyid[KEYID_BUF];
+	unsigned int k;
+	chunk_t ecParams;
+	chunk_t pub; /* publicValue */
+	ckaid_t ckaid;
+};
 
-err_t rsa_pubkey_to_rfc_resource_record(chunk_t exponent, chunk_t modulus, chunk_t *rr);
-err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *exponent, chunk_t *modulus);
+struct ECDSA_private_key {
+	struct ECDSA_public_key pub;
+	chunk_t ecParams;
+	chunk_t pub_val; /* publicValue */
+	chunk_t privateValue;
+	chunk_t version;
+};
 
 err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
-err_t base64_to_rsa_pubkey(const char *rr, chunk_t *exponent, chunk_t *modulus);
 
-err_t pack_RSA_public_key(const struct RSA_public_key *rsa, chunk_t *pubkey);
 err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey);
-
-void DBG_log_RSA_public_key(const struct RSA_public_key *rsa);
+err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pubkey); /* ASKK */
 
 struct private_key_stuff {
 	enum PrivateKeyKind kind;
@@ -117,13 +124,12 @@ struct private_key_stuff {
 	union {
 		chunk_t preshared_secret;
 		struct RSA_private_key RSA_private_key;
+		struct ECDSA_private_key ECDSA_private_key;
 		/* struct smartcard *smartcard; */
 	} u;
 
 	chunk_t ppk;
 	chunk_t ppk_id;
-
-	char *filename;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -140,7 +146,24 @@ typedef int (*secret_eval)(struct secret *secret,
 
 extern struct secret *lsw_foreach_secret(struct secret *secrets,
 					 secret_eval func, void *uservoid);
-extern struct secret *lsw_get_defaultsecret(struct secret *secrets);
+
+union pubkey_content {
+	struct RSA_public_key rsa;
+	struct ECDSA_public_key ecdsa;
+};
+
+struct pubkey_type {
+	const char *name;
+	enum pubkey_alg alg;
+	enum PrivateKeyKind private_key_kind;
+	void (*free_pubkey_content)(union pubkey_content *pkc);
+	err_t (*unpack_pubkey_content)(union pubkey_content *pkc, chunk_t key);
+};
+
+extern const struct pubkey_type pubkey_type_rsa;
+extern const struct pubkey_type pubkey_type_ecdsa;
+
+const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg);
 
 /* public key machinery */
 struct pubkey {
@@ -149,65 +172,53 @@ struct pubkey {
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
 	realtime_t until_time;
-	u_int32_t dns_ttl; /* from wire. until_time is derived using this */
+	uint32_t dns_ttl; /* from wire. until_time is derived using this */
 	chunk_t issuer;
-	enum pubkey_alg alg;
-	union {
-		struct RSA_public_key rsa;
-	} u;
+	const struct pubkey_type *type;
+	union pubkey_content u;
 };
+
+/*
+ * XXX: While these fields seem to really belong in 'struct pubkey',
+ * moving them isn't so easy - code assumes the fields are also found
+ * in {RSA,ECDSA}_private_key's .pub.  Perhaps that structure have its
+ * own copy.
+ *
+ * All pointers are references into the underlying PK structure.
+ */
+
+const char *pubkey_keyid(const struct pubkey *pk);
+const ckaid_t *pubkey_ckaid(const struct pubkey *pk);
+unsigned pubkey_size(const struct pubkey *pk);
 
 struct pubkey_list {
 	struct pubkey *key;
 	struct pubkey_list *next;
 };
 
-/* struct used to prompt for a secret passphrase
- * from a console with file descriptor fd
- */
-#define MAX_PROMPT_PASS_TRIALS	5
-#define PROMPT_PASS_LEN		64
-
-typedef void (*pass_prompt_func)(int mess_no, const char *message,
-				 ...) PRINTF_LIKE (2);
-
-typedef struct {
-	char secret[PROMPT_PASS_LEN];
-	pass_prompt_func prompt;
-	int fd;
-} prompt_pass_t;
-
 extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 
-extern struct pubkey *public_key_from_rsa(const struct RSA_public_key *k);
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
 extern void free_remembered_public_keys(void);
 extern void delete_public_keys(struct pubkey_list **head,
 			       const struct id *id,
-			       enum pubkey_alg alg);
+			       const struct pubkey_type *type);
 extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
-
-bool ckaid_starts_with(ckaid_t ckaid, const char *start);
-char *ckaid_as_string(ckaid_t ckaid);
-err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
-err_t form_ckaid_nss(const SECItem *const nss_ckaid, ckaid_t *ckaid);
-void freeanyckaid(ckaid_t *ckaid);
-void DBG_log_ckaid(const char *prefix, ckaid_t ckaid);
 
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);
 
 extern err_t add_public_key(const struct id *id,
 			    enum dns_auth_level dns_auth_level,
-			    enum pubkey_alg alg,
+			    const struct pubkey_type *type,
 			    const chunk_t *key,
 			    struct pubkey_list **head);
 extern err_t add_ipseckey(const struct id *id,
-		enum dns_auth_level dns_auth_level,
-		enum pubkey_alg alg, u_int32_t ttl,
-		u_int32_t ttl_used, const chunk_t *key,
-		struct pubkey_list **head);
+			  enum dns_auth_level dns_auth_level,
+			  const struct pubkey_type *type, uint32_t ttl,
+			  uint32_t ttl_used, const chunk_t *key,
+			  struct pubkey_list **head);
 
 extern bool same_RSA_public_key(const struct RSA_public_key *a,
 				const struct RSA_public_key *b);
@@ -219,10 +230,10 @@ extern void lsw_load_preshared_secrets(struct secret **psecrets,
 				       const char *secrets_file);
 extern void lsw_free_preshared_secrets(struct secret **psecrets);
 
-extern bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk);
+extern bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *pk);
 
 extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
-						    struct pubkey *my_public_key,
+						    const struct pubkey *my_public_key,
 						    enum PrivateKeyKind kind);
 
 extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
@@ -231,19 +242,17 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    const struct id *his_id,
 					    bool asym);
 
-extern err_t lsw_update_dynamic_ppk_secret(char *fn);
 extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
-extern void lock_certs_and_keys(const char *who);
-extern void unlock_certs_and_keys(const char *who);
 extern err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert);
+extern err_t lsw_add_ecdsa_secret(struct secret **secrets, CERTCertificate *cert);
 extern struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert);
+extern struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert);
 
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);
 SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
 
 chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
-SECItem clone_chunk_as_secitem(chunk_t chunk, SECItemType type, const char *name);
 
 #endif /* _SECRETS_H */

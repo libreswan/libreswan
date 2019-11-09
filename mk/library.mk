@@ -8,14 +8,6 @@ include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk
 
-KLIPSD=${LIBRESWANSRCDIR}/linux/include
-KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
-
-VPATH+= ${KLIPSSRCDIR}
-OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
-
-# Original flags
-INCLUDES+=-I. -I${KLIPSSRCDIR} -I${KLIPSD}
 INCLUDES+=-I${LIBRESWANSRCDIR}/include
 # nss
 INCLUDES+=${NSSFLAGS}
@@ -49,3 +41,4 @@ $(LIB): $(OBJS) $(srcdir)/Makefile | $(builddir)
 	mv $(builddir)/$(LIB).tmp $(builddir)/$(LIB)
 
 include $(top_srcdir)/mk/depend.mk
+include $(top_srcdir)/mk/builddir.mk

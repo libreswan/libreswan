@@ -1,4 +1,0 @@
-This test does an RSA signature operation, and then does an RSA
-signature verification operation.
-
-

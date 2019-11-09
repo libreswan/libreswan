@@ -3,7 +3,7 @@
 # example-terminate.py
 #
 # This is a script that can be ADDED to the updown scripts. Normally this would
-# be addd to /usr/libexec/ipsec/_updown.netkey (for protostack=netkey)
+# be added to /usr/libexec/ipsec/_updown.netkey (for protostack=netkey)
 # This is an example that logs XAUTH users to /tmp/terminate.log when the
 # tunnel goes down:
 #

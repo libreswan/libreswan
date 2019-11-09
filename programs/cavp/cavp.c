@@ -1,12 +1,12 @@
-/*
- * Parse CAVP test vectors, for libreswan
+/* Parse CAVP test vectors, for libreswan (CAVP)
  *
- * Copyright (C) 2015-2017, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2018, Andrew Cagney
+ * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,406 +15,256 @@
  */
 
 #include <stdio.h>
-/* #include <stdbool.h> */
-#include <string.h>
-#include <stdlib.h>
-#include <regex.h>
 
-#include "constants.h"
-#include "lswlog.h"
-#include "lswalloc.h"
-#include "lswnss.h"
+#include "lswtool.h"
 #include "lswfips.h"
+#include "lswnss.h"
+#include "lswlog.h"
 #include "ike_alg.h"
-#include "crypt_symkey.h"
-#include "test_buffer.h"
 
 #include "cavp.h"
+#include "cavps.h"
+#include "cavp_parser.h"
+#include "cavp_entry.h"
 #include "cavp_print.h"
-#include "cavp_ikev1.h"
-#include "cavp_ikev2.h"
-#include "cavp_sha.h"
-#include "cavp_hmac.h"
-#include "cavp_gcm.h"
+#include "acvp.h"
 
-struct cavp *cavps[] = {
-	&cavp_ikev1_sig,
-	&cavp_ikev1_psk,
-	&cavp_ikev2,
-	&cavp_sha_msg,
-	&cavp_sha_monte,
-	&cavp_hmac,
-	&cavp_gcm,
-	NULL
-};
+#define I "  "
+#define II I I
+#define III I I I
+#define IOPT " " "       " "  "
+#define OPT  "-%-7s  %s\n"
 
-static struct cavp_entry *lookup_entry(struct cavp_entry *entries, const char *key)
+static void help(void)
 {
-	struct cavp_entry *entry;
-	for (entry = entries; entry->key != NULL; entry++) {
-		if (strcmp(entry->key, key) == 0) {
-			break;
+#define HELP_OPTIONS "-?|-h|-help"
+#define GLOBAL_OPTIONS "[-fips] [-json] [-v]"
+	printf("Usage: cavp ["HELP_OPTIONS"] " GLOBAL_OPTIONS " <test-option> ...\n");
+	printf("\n");
+	printf(I"Run CAVP/ACVP tests as specified either in a file or from the\n");
+	printf(I"command line:\n");
+	printf("\n");
+	printf(II""OPT, "fips", "force FIPS mode; must be the first option");
+	printf(II""IOPT"by default NSS determines FIPS mode\n");
+	printf(II""OPT, "json", "output each test result as a json record");
+	printf(II""OPT, "v", "verbose output");
+	printf(II"-h, -help, -?\n"II""IOPT"Print this help message\n");
+
+#define USAGE_FILE "cavp " GLOBAL_OPTIONS " [-<test>] <test-file>|-"
+	printf("\n");
+	printf("File mode: "USAGE_FILE"\n");
+	printf("\n");
+	printf(I"Run <test> using test vectors from <test-file> ('-' for stdin).\n");
+	printf(I"If -<test> is omitted then the <test> is determined by pattern\n");
+	printf(I"matching the <test-file> header:\n");
+	printf("\n");
+	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
+		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
+		for (const char *const *matchp = (*cavpp)->match; *matchp; matchp++) {
+			printf(II""IOPT"Match: %s\n", *matchp);
 		}
 	}
-	return entry;
-}
 
-enum what { HEADER, BODY, BLANK, CONFIG, DATA, IDLE, END } state = HEADER;
-
-const char *const whats[] = {
-	"HEADER", "BODY", "BLANK", "CONFIG", "DATA", "IDLE", "END",
-};
-
-static void error_state(enum what state, enum what what,
-			const char *message)
-{
-	fprintf(stderr, "\nbad state transition from %s(%d) to %s(%d)\n%s\n",
-		whats[state], state, whats[what], what, message);
-	exit(1);
-}
-
-static struct cavp *cavp;
-
-static void next_state(enum what what)
-{
-	switch (state) {
-	case HEADER:
-		switch (what) {
-		case BODY:
-			state = what;
-			break;
-		default:
-			error_state(state, what,
-				    "expecting header containing file type");
-		}
-		break;
-	case BODY:
-		switch (what) {
-		case CONFIG:
-			state = CONFIG;
-			break;
-		case BLANK:
-			break;
-		default:
-			error_state(state, what, "expecting config section");
-		}
-		break;
-	case CONFIG:
-		switch (what) {
-		case CONFIG:
-			break;
-		case BLANK:
-			cavp->print_config();
-			state = DATA;
-			break;
-		default:
-			error_state(state, what, "expecting data section");
-		}
-		break;
-	case DATA:
-		switch (what) {
-		case DATA:
-			break;
-		case BLANK:
-			cavp->run();
-			state = IDLE;
-			break;
-		case END:
-			cavp->run();
-			state = END;
-			break;
-		default:
-			error_state(state, what, "expecting EOF or CONFIG section");
-		}
-		break;
-	case IDLE:
-		switch (what) {
-		case CONFIG:
-			state = CONFIG;
-			break;
-		case DATA:
-			state = DATA;
-			break;
-		case END:
-			state = END;
-			break;
-		case BLANK:
-			break;
-		default:
-			error_state(state, what, "expecting config section");
-		}
-		break;
-	default:
-		error_state(state, what, "expecting the unexpected");
-		break;
-	}
-}
-
-const struct prf_desc *prf;
-const char *prf_name;
-
-void op_entry(struct cavp_entry *entry,
-	      const char *value UNUSED)
-{
-	*(entry->entry) = entry;
-}
-
-void op_chunk(struct cavp_entry *entry,
-	      const char *value)
-{
-	if (entry->chunk == NULL) {
-		fprintf(stderr, "missing chunk for '%s'\n", entry->key);
-		exit(1);
-	}
-	freeanychunk(*(entry->chunk));
-	*(entry->chunk) = decode_hex_to_chunk(entry->key, value);
-}
-
-void op_symkey(struct cavp_entry *entry,
-	       const char *value)
-{
-	release_symkey(__func__, "entry", entry->symkey);
-	chunk_t chunk = decode_hex_to_chunk(entry->key, value);
-	*(entry->symkey) = symkey_from_chunk("symkey", DBG_CRYPT,
-					     chunk);
-	freeanychunk(chunk);
-}
-
-void op_signed_long(struct cavp_entry *entry,
-		    const char *value)
-{
-	*(entry->signed_long) = strtol(value, NULL, 10);
-}
-
-void op_unsigned_long(struct cavp_entry *entry,
-		      const char *value)
-{
-	*(entry->unsigned_long) = strtoul(value, NULL, 10);
-}
-
-void op_ignore(struct cavp_entry *entry UNUSED,
-	       const char *value UNUSED)
-{
-}
-
-struct fields {
-	char *key;
-	char *value;
-};
-
-static struct fields parse_fields(char *line)
-{
-	struct fields fields = {
-		.key = line,
-	};
-	char *eq = strchr(line, '=');
-	if (eq != NULL) {
-		char *ke = eq;
-		while (ke > fields.key && ke[-1] == ' ') {
-			ke--;
-		}
-		*ke = '\0';
-	}
-	if (eq == NULL) {
-		fields.value = NULL;
-	} else {
-		fields.value = eq + 1;
-		while (*fields.value == ' ') {
-			fields.value++;
-		}
-	}
-	return fields;
-}
-
-/* size is arbitrary */
-static char line[65536];
-static int line_nr;
-
-static void cavp_parser()
-{
-	for (;;) {
-		line_nr++;
-		if (fgets(line, sizeof(line), stdin) == NULL) {
-			int error = ferror(stdin);
-			if (error != 0) {
-				fprintf(stderr, "unexpected error at line %d: %s(%d)\n",
-					line_nr, strerror(error), error);
-				exit(1);
-			}
-			break;
-		}
-		if (strlen(line) >= sizeof(line) - 1) {
-			fprintf(stderr, "line %d exceeded buffer length of %zu: %s\n",
-				line_nr, sizeof(line), line);
-			exit(1);
-		}
-		/* trim trailing cr/nl. */
-		int last = strlen(line) - 1;
-		while (last >= 0 && strchr("\r\n", line[last]) != NULL) {
-			last--;
-		}
-		line[last + 1] = '\0';
-		/* break the line up */
-		if (line[0] == '\0') {
-			next_state(BLANK);
-			/* blank */
-			print_line(line);
-		} else if (line[0] == '#') {
-			/* # .... comment */
-			if (cavp == NULL) {
-				for (struct cavp **cavpp = cavps;
-				     cavp == NULL && *cavpp != NULL;
-				     cavpp++) {
-					for (const char **match = (*cavpp)->match;
-					     cavp == NULL && *match != NULL;
-					     match++) {
-						regex_t regex;
-						if (regcomp(&regex, *match, REG_EXTENDED)) {
-							fprintf(stderr, "bad regex %s\n", *match);
-							exit(1);
-						}
-						if (regexec(&regex, line, 0, NULL, 0) == 0) {
-							cavp = *cavpp;
-							fprintf(stderr, "\ntest: %s (header matched '%s')\n\n",
-								cavp->description, *match);
-							next_state(BODY);
-						}
-						regfree(&regex);
-					}
+#define USAGE_PARAM "cavp " GLOBAL_OPTIONS " -<test> -<acvp-key> <acvp-value> ..."
+	printf("\n");
+	printf("Command mode: "USAGE_PARAM"\n");
+	printf("\n");
+	printf(I"Run <test> using <acvp-key>-<acvp-value> pairs specified on the\n");
+	printf(I"command line:\n");
+	printf("\n");
+	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
+		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
+		bool supported = false;
+		/* PRF? */
+		const char *sep = NULL;
+		for (const struct cavp_entry *config = (*cavpp)->config; config->key != NULL; config++) {
+			if (config->prf != NULL) {
+				supported = true;
+				if (sep == NULL) {
+					printf(III"-"ACVP_PRF_OPTION" ");
+					sep = "";
 				}
-			}
-			print_line(line);
-		} else if (line[0] == '[') {
-			next_state(CONFIG);
-			/* "[" <key> [ " "* "=" " "* <value> ] "]" */
-			char *rparen = strchr(line, ']');
-			*rparen = '\0';
-			struct fields fields = parse_fields(line + 1);
-			struct cavp_entry *entry = lookup_entry(cavp->config, fields.key);
-			if (entry->key == NULL) {
-				fprintf(stderr, "unknown config entry: ['%s' = '%s']\n",
-					fields.key, fields.value);
-				exit(1);
-			} else if (entry->op == NULL) {
-				fprintf(stderr, "ignoring config entry: ['%s' = '%s']\n",
-					fields.key, fields.value);
-			} else {
-				entry->op(entry, fields.value);
-			}
-		} else {
-			next_state(DATA);
-			struct fields fields = parse_fields(line);
-			struct cavp_entry *entry = lookup_entry(cavp->data, fields.key);
-			if (entry->key == NULL) {
-				fprintf(stderr, "unknown data entry: '%s' = '%s'\n",
-					fields.key, fields.value);
-				exit(1);
-			} else if (entry->op == NULL) {
-				fprintf(stderr, "ignoring data entry: '%s' = '%s'\n",
-					fields.key, fields.value);
-			} else {
-				entry->op(entry, fields.value);
+				printf("%s%s", sep, config->key);
+				sep = "|";
 			}
 		}
+		if (sep != NULL) {
+			printf("\n");
+		}
+		/* keylen */
+		for (const struct cavp_entry *config = (*cavpp)->config; config->key != NULL; config++) {
+			if (strstr(config->key, "DKM") != NULL) {
+				supported = true;
+				printf(III"-"ACVP_DKM_OPTION" <length-in-bits>\n");
+				break;
+			}
+		}
+		/* data */
+		for (const struct cavp_entry *entry = (*cavpp)->data; entry->key != NULL; entry++) {
+			if (entry->opt != NULL) {
+				supported = true;
+				printf(III"-%s <%s>\n", entry->opt, entry->key);
+			}
+		}
+		if (!supported) {
+			printf(III"Not supported\n");
+		}
 	}
-	next_state(END);
 }
+
+#undef OPT
+#undef III
+#undef II
+#undef I
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage:\n\n");
-	fprintf(stderr, "    cavp [ -TEST ] <test-vector>|-\n\n");
-	fprintf(stderr, "Where -TEST specifies the test type:\n\n");
-	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
-		fprintf(stderr, "    -%-8s %s\n",
-			(*cavpp)->alias,
-			(*cavpp)->description);
-	}
-	fprintf(stderr, "\n");
-	fprintf(stderr, "If -TEST is omitted then the test type is determined from the\n");
-	fprintf(stderr, "file header by matching one of the patterns:\n\n");
-	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
-		const char *sep = (*cavpp)->alias;
-		for (const char **matchp = (*cavpp)->match; *matchp; matchp++) {
-			fprintf(stderr, "    %-8s  '%s'\n", sep, *matchp);
-			sep = "";
-		}
-	}
+	printf("Usage: cavp "HELP_OPTIONS"\n");
+	printf("       "USAGE_FILE"\n");
+	printf("       "USAGE_PARAM"\n");
 }
 
 int main(int argc, char *argv[])
 {
+	log_to_stderr = false;
 	tool_init_log(argv[0]);
 
 	if (argc <= 1) {
 		usage();
 		exit(1);
 	}
+
+	const struct cavp *cavp = NULL;
+	bool use_acvp = false;
+	bool verbose = false;
+
 	char **argp = argv + 1;
 
-	/* a -XXX option? */
-	while ((*argp)[0] == '-') {
-		if (strcmp(*argp, "--") == 0) {
-			argp++;
-			break;
-		} else if (strcmp(*argp, "-fips") == 0) {
-			argp++;
-			lsw_set_fips_mode(LSW_FIPS_ON);
-		} else {
-			struct cavp **cavpp;
-			for (cavpp = cavps; *cavpp != NULL; cavpp++) {
-				if (strcmp(argv[1]+1, (*cavpp)->alias) == 0) {
-					cavp = *cavpp;
-					next_state(BODY);
-					fprintf(stderr, "test: %s\n", cavp->description);
-					break;
-				}
-			}
-			if (cavp == NULL) {
-				fprintf(stderr, "Unknown test %s\n", argv[1]);
-				usage();
-				exit(1);
-			}
-			argp++;
-		}
-	}
-	if (cavp == NULL) {
-		fprintf(stderr, "Guessing test type ...\n");
+	/* help must be at the front! */
+	if (strcmp(*argp, "-help") == 0 || strcmp(*argp, "--help") == 0 ||
+	    strcmp(*argp, "-?") == 0 || strcmp(*argp, "--?") == 0 ||
+	    strcmp(*argp, "-h") == 0 || strcmp(*argp, "--h") == 0) {
+		help();
+		return 0;
 	}
 
-	if (*argp == NULL) {
-		fprintf(stderr, "missing test file\n");
-		usage();
-		exit(1);
+	/* -fips must come first! */
+	if (strcmp(*argp, "-fips") == 0 || strcmp(*argp, "--fips") == 0) {
+		lsw_set_fips_mode(LSW_FIPS_ON);
+		argp++;
 	}
-	if (strcmp(*argp, "-") == 0) {
+
+	/* start NSS so crypto works while args are being parsed */
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(NULL, 0, NULL, err)) {
+		fprintf(stderr, "unexpected %s\n", err);
+		return 1;
+	}
+
+	for (; *argp != NULL; argp++) {
+		const char *arg = *argp;
+		/* end options? */
+		if (strcmp(arg, "--") == 0) {
+			argp++;
+			break;
+		}
+		/* read from stdin? */
+		if (strcmp(arg, "-") == 0) {
+			break;
+		}
+		/* assume file? */
+		if (*arg != '-') {
+			break;
+		}
+
+		/* strip leading '-' */
+		do {
+			arg++;
+		} while (arg[0] == '-');
+
+		/* First: try non-arg options */
+
+		const struct cavp **cavpp;
+		for (cavpp = cavps; *cavpp != NULL; cavpp++) {
+			if (strcmp(arg, (*cavpp)->alias) == 0) {
+				cavp = *cavpp;
+				fprintf(stderr, "test: %s\n", cavp->description);
+				break;
+			}
+		}
+		if (*cavpp != NULL) {
+			continue;
+		}
+
+		if (strcmp(arg, "json") == 0) {
+			cavp_print_json = true;
+			continue;
+		}
+		if (strcmp(arg, "v") == 0) {
+			verbose = true;
+			continue;
+		}
+		if (strcmp(arg, "fips") == 0) {
+			fprintf(stderr, "option '%s' must appear first\n", *argp);
+			return 0;
+		}
+
+		/* Second: try options with args */
+
+		if (argp[1] == NULL) {
+			fprintf(stderr, "missing argument for option '%s'\n", *argp);
+			return 0;
+		}
+
+		if (cavp != NULL && acvp_option(cavp, arg, argp[1])) {
+			argp++;
+			use_acvp = true;
+			continue;
+		} else {
+			fprintf(stderr, "option '%s' not recognized or invalid\n", *argp);
+			return 0;
+		}
+	}
+
+	if (!use_acvp && cavp == NULL) {
+		libreswan_log("Guessing test type ...");
+	}
+
+	if (use_acvp) {
+		libreswan_log("Using CMVP");
+	} else if (*argp == NULL) {
+		fprintf(stderr, "missing test file\n");
+		exit(1);
+	} else if (strcmp(*argp, "-") == 0) {
 		fprintf(stderr, "Reading from stdin\n");
+		argp++;
 	} else {
-		fprintf(stderr, "reading from %s\n", *argp);
+		fprintf(stderr, "Reading from %s\n", *argp);
 		if (freopen(*argp, "r", stdin) == NULL) {
 			perror("freopen");
 			exit(1);
 		}
+		argp++;
 	}
-	argp++;
 
 	if (*argp != NULL) {
-		fprintf(stderr, "unexpected %s", *argp);
-		usage();
+		fprintf(stderr, "unexpected option '%s'\n", *argp);
 		exit(1);
 	}
 
 	setbuf(stdout, NULL);
 
-	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(NULL, 0, NULL, err)) {
-		fprintf(stderr, "unexpected %s\n", err);
-		exit(1);
+	log_to_stderr = verbose;
+	init_ike_alg();
+
+	if (use_acvp) {
+		passert(cavp != NULL);
+		print_begin();
+		cavp->run_test();
+		print_end();
+	} else {
+		cavp_parser(cavp);
 	}
-
-	ike_alg_init();
-
-	cavp_parser();
 
 	lsw_nss_shutdown();
 	exit(0);

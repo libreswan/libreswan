@@ -1,0 +1,4 @@
+X.509 test where both peers have require-id-on-certificate=no for its
+peer. This means a certificate without SAN=<ip address> is allowed to
+continue despite the "mismatch" of IKE ID (usually the default IP address)
+and cert. This test uses left=/right= with IP addresses (not right=%any)

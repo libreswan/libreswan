@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -17,12 +17,11 @@ east #
 000 "westnet-eastnet-subnets/1x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/1x1":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-subnets/1x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-subnets/1x1":   labeled_ipsec:no;
 000 "westnet-eastnet-subnets/1x1":   policy_label:unset;
 000 "westnet-eastnet-subnets/1x1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-subnets/1x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "westnet-eastnet-subnets/1x1":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-subnets/1x1":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-subnets/1x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-subnets/1x1":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/1x1":   conn_prio: 28,28; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/1x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/1x1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
@@ -34,12 +33,11 @@ east #
 000 "westnet-eastnet-subnets/1x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/1x2":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-subnets/1x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-subnets/1x2":   labeled_ipsec:no;
 000 "westnet-eastnet-subnets/1x2":   policy_label:unset;
 000 "westnet-eastnet-subnets/1x2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-subnets/1x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "westnet-eastnet-subnets/1x2":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-subnets/1x2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-subnets/1x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-subnets/1x2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/1x2":   conn_prio: 28,30; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/1x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/1x2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
@@ -51,12 +49,11 @@ east #
 000 "westnet-eastnet-subnets/2x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/2x1":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-subnets/2x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-subnets/2x1":   labeled_ipsec:no;
 000 "westnet-eastnet-subnets/2x1":   policy_label:unset;
 000 "westnet-eastnet-subnets/2x1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-subnets/2x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "westnet-eastnet-subnets/2x1":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-subnets/2x1":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-subnets/2x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-subnets/2x1":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/2x1":   conn_prio: 28,28; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/2x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/2x1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
@@ -68,12 +65,11 @@ east #
 000 "westnet-eastnet-subnets/2x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/2x2":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-subnets/2x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-subnets/2x2":   labeled_ipsec:no;
 000 "westnet-eastnet-subnets/2x2":   policy_label:unset;
 000 "westnet-eastnet-subnets/2x2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-subnets/2x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "westnet-eastnet-subnets/2x2":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-subnets/2x2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-subnets/2x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-subnets/2x2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-subnets/2x2":   conn_prio: 28,30; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-subnets/2x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-subnets/2x2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
@@ -84,35 +80,34 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:
-src 192.0.2.16/28 dst 192.0.1.0/28 
-	dir out priority 2212 ptype main 
+src 192.0.2.64/30 dst 192.0.1.0/28
+	dir out priority 1040867 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.0.2.16/28 dst 192.0.1.128/28 
-	dir out priority 2212 ptype main 
+src 192.0.2.64/30 dst 192.0.1.128/28
+	dir out priority 1040867 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.0.2.64/30 dst 192.0.1.0/28 
-	dir out priority 2148 ptype main 
+src 192.0.2.16/28 dst 192.0.1.0/28
+	dir out priority 1041379 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.0.2.64/30 dst 192.0.1.128/28 
-	dir out priority 2148 ptype main 
+src 192.0.2.16/28 dst 192.0.1.128/28
+	dir out priority 1041379 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

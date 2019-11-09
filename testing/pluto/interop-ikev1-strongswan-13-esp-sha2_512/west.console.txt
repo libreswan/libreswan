@@ -5,22 +5,16 @@ west #
  ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
- # confirm with a ping
+ # confirm clear text does not get through
 west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
 west #
  ../../pluto/bin/strongswan-start.sh
 west #
@@ -36,6 +30,7 @@ parsed ID_PROT response 0 [ SA V V V ]
 received DPD vendor ID
 received FRAGMENTATION vendor ID
 received NAT-T (RFC 3947) vendor ID
+selected proposal: IKE:AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/ECP_256
 generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
@@ -51,6 +46,7 @@ generating QUICK_MODE request 0123456789 [ HASH SA No KE ID ID ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed QUICK_MODE response 0123456789 [ HASH SA No KE ID ID ]
+selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/MODP_1536/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev1' established successfully
 west #
@@ -67,7 +63,7 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west #
  if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
 Status of IKE charon daemon (strongSwan VERSION):
@@ -76,12 +72,14 @@ Status of IKE charon daemon (strongSwan VERSION):
 Listening IP addresses:
   192.0.1.254
   192.1.2.45
-  192.9.4.45
 Connections:
 westnet-eastnet-ikev1:  192.1.2.45...192.1.2.23  IKEv1
 westnet-eastnet-ikev1:   local:  [west] uses pre-shared key authentication
 westnet-eastnet-ikev1:   remote: [east] uses pre-shared key authentication
 westnet-eastnet-ikev1:   child:  192.0.1.0/24 === 192.0.2.0/24 TUNNEL
+Shunted Connections:
+Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
+Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev1[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev1[1]: IKEv1 SPIs: SPISPI_i* SPISPI_r, pre-shared key reauthentication in 2 hours

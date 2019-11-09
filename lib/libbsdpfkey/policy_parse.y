@@ -267,8 +267,8 @@ rule_check(void)
 			return -1;
 		}
 
-		if (p_mode != IPSEC_MODE_TRANSPORT
-		 && p_mode != IPSEC_MODE_TUNNEL) {
+		if (p_mode != IPSEC_MODE_TRANSPORT &&
+		    p_mode != IPSEC_MODE_TUNNEL) {
 			__ipsec_errcode = EIPSEC_INVAL_MODE;
 			return -1;
 		}

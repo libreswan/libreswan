@@ -1,13 +1,14 @@
 #! /bin/sh
 # quick look at current connections and related information
 # Copyright (C) 1998, 1999  Henry Spencer.
-# Copyright (C) 2012  Paul Wouters
+# Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2015 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2018-2019 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -61,7 +62,7 @@ done | awk '
 
 # tncfg (mostly as a divider line)
 if [ -f /proc/net/ipsec_tncfg ]; then
-    egrep -v 'NULL[ \t]+mtu=0\(0\)[ \t]+->[ \t]+0' /proc/net/ipsec_tncfg | \
+    grep -E -v 'NULL[ \t]+mtu=0\(0\)[ \t]+->[ \t]+0' /proc/net/ipsec_tncfg | \
 	paste -d % | sed 's/%/   /g' | sed 's/ -> /->/g'
 fi
 
@@ -70,12 +71,50 @@ if [ -f /proc/net/ipsec_spi ]; then
     sort /proc/net/ipsec_spi
 fi
 
-# xfrm for netkey
-if [ -f /proc/net/pfkey ]; then
+# xfrm
+if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
     echo "XFRM state:"
     ip xfrm state
     echo "XFRM policy:"
-    ip -o xfrm policy |grep -v "socket" | sort | tr '\\' '\012' | sed '/^\s*$/d'
+    # Force the order by feeding sort with lines prefixed by '[46]
+    # TYPE PRIORITY |'.
+    ip -o xfrm policy | {
+	# clean up the input: drop socket lines; strip trailing white
+	# space (either end of line or before \\); strip double \\s
+	sed -e '/socket/d' \
+	    -e 's/\s*\\/\\/g' \
+	    -e 's/\\\\/\\/g' \
+	    -e 's/[\\]*\s*$//g'
+    } | {
+	# Build the '<[46]> <type> <priority> |' prefix ready for
+	# sorting.  For each field, start with the assumption that the
+	# value is unknown (setting it to a default), and then adjust
+	# it as necessary.  For instance, for the protocol, start out
+	# assuming it is '4' (IPv4) and then if the line contains a
+	# ':' switch the prefix to '6' (IPv6).
+	sed -e 's/^/| /' \
+	    \
+	    -e 's/^/0 /' \
+	    -e 's/^0 \(.* priority \([0-9][0-9]*\)\)/\2 \1/' \
+	    \
+	    -e 's/^/0 /' \
+	    -e 's/^0 \(.*:.* type \([0-9][0-9]*\)\)/\2 \1/' \
+	    \
+	    -e 's/^/4 /' \
+	    -e 's/^4 \(.*:\)/6 \1/'
+    } | {
+	# sort by each of the prefixes individually, and then by the
+	# rest of the line.  Shorter forms like -n and -k1,3n don't do
+	# what is wanted.  XXX: Should add 'V' so .24. is before
+	# .200.?
+	sort -b -k1,1n -k2,2n -k3,3n -k5
+    } | {
+	# strip the sort prefixes
+	sed -e 's/^.* | //'
+    } | {
+	# convert \ into line breaks
+	tr '\\' '\012'
+    }
     echo "XFRM done"
 fi
 
@@ -96,17 +135,20 @@ if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
 fi
 
 echo ROUTING TABLES
-ip -4 route
-ip -6 route
+# The IP command includes extra and evoling white space
+{
+    ip -4 route
+    ip -6 route
+} | sed -e 's/  / /g' -e 's/ $//'
 
 if [ -f @IPSEC_NSSDIR@/cert9.db ]; then
     echo NSS_CERTIFICATES
     certutil -L -d sql:@IPSEC_NSSDIR@ | head -4
     certutil -L -d sql:@IPSEC_NSSDIR@ | \
-	egrep -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
+	grep -E -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
 elif [ -f @IPSEC_NSSDIR@/cert8.db ]; then
     echo NSS_CERTIFICATES
     certutil -L -d @IPSEC_NSSDIR@ | head -4
     certutil -L -d @IPSEC_NSSDIR@ | \
-	egrep -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
+	grep -E -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
 fi

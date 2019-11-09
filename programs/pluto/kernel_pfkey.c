@@ -11,14 +11,15 @@
  * Copyright (C) 2010 Henry N <henrynmail-lswan@yahoo.de>
  * Copyright (C) 2010 Ajay.V.Sarraju
  * Copyright (C) 2012 Roel van Meer <roel.vanmeer@bokxing.nl>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -54,6 +55,7 @@
 #include "connections.h"
 #include "state.h"
 #include "kernel.h"
+#include "kernel_sadb.h"
 #include "kernel_pfkey.h"
 #include "timer.h"
 #include "log.h"
@@ -62,7 +64,6 @@
 #include "nat_traversal.h"
 
 #include "lsw_select.h"
-#include "alg_info.h"
 #include "kernel_alg.h"
 #include "ip_address.h"
 
@@ -71,7 +72,7 @@
 
 int pfkeyfd = NULL_FD;
 
-typedef u_int32_t pfkey_seq_t;
+typedef uint32_t pfkey_seq_t;
 static pfkey_seq_t pfkey_seq = 0;       /* sequence number for our PF_KEY messages */
 
 
@@ -159,7 +160,6 @@ static inline unsigned eroute_type_to_pfkey_satype(enum eroute_type esatype)
 	switch (esatype) {
 	default:
 		bad_case(esatype);
-		return -1;
 
 	case ET_UNSPEC:
 		return K_SADB_SATYPE_UNSPEC;
@@ -384,7 +384,7 @@ void pfkey_register_response(const struct sadb_msg *msg)
 	switch (msg->sadb_msg_satype) {
 	case K_SADB_SATYPE_AH:
 	case K_SADB_SATYPE_ESP:
-		kernel_alg_register_pfkey(msg);
+		kernel_add_sadb_algs(msg, PFKEYv2_MAX_MSGSIZE);
 		break;
 	case K_SADB_X_SATYPE_COMP:
 		/* ??? There ought to be an extension to list the
@@ -451,15 +451,85 @@ static void process_pfkey_acquire(pfkey_buf *buf,
 		NULL : "conflicting address types") &&
 	    !(ugh = addrtosubnet(src, &ours)) &&
 	    !(ugh = addrtosubnet(dst, &his)))
-		record_and_initiate_opportunistic(&ours, &his, 0,
-#ifdef HAVE_LABELED_IPSEC
-						  NULL,
-#endif
-						  "%acquire-pfkey");
+		record_and_initiate_opportunistic(&ours, &his, 0, NULL,
+			  "%acquire-pfkey");
 
 	if (ugh != NULL)
 		libreswan_log("K_SADB_ACQUIRE message from KLIPS malformed: %s", ugh);
 
+}
+
+struct new_klips_mapp_nfo {
+	struct k_sadb_sa *sa;
+	ip_address src, dst;
+	uint16_t sport, dport;
+};
+
+static void nat_t_new_klips_mapp(struct state *st, void *data)
+{
+	struct new_klips_mapp_nfo *nfo = (struct new_klips_mapp_nfo *)data;
+
+	if (st->st_esp.present &&
+	    sameaddr(&st->st_remote_endpoint, &nfo->src) &&
+	    st->st_esp.our_spi == nfo->sa->sadb_sa_spi) {
+		ip_endpoint remote_endpoint = endpoint(&nfo->dst, nfo->dport);
+		nat_traversal_new_mapping(ike_sa(st), &remote_endpoint);
+	}
+}
+
+static void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg UNUSED,
+					    struct sadb_ext *extensions[K_SADB_EXT_MAX + 1])
+{
+	struct new_klips_mapp_nfo nfo;
+	struct sadb_address *srcx =
+		(void *) extensions[K_SADB_EXT_ADDRESS_SRC];
+	struct sadb_address *dstx =
+		(void *) extensions[K_SADB_EXT_ADDRESS_DST];
+	struct sockaddr *srca, *dsta;
+	err_t ugh = NULL;
+
+	nfo.sa = (void *) extensions[K_SADB_EXT_SA];
+
+	if (!nfo.sa || !srcx || !dstx) {
+		libreswan_log("K_SADB_X_NAT_T_NEW_MAPPING message from KLIPS malformed: got NULL params");
+		return;
+	}
+
+	srca = ((struct sockaddr *)(void *)&srcx[1]);
+	dsta = ((struct sockaddr *)(void *)&dstx[1]);
+
+	if (srca->sa_family != AF_INET || dsta->sa_family != AF_INET) {
+		ugh = "only AF_INET supported";
+	} else {
+		/* XXX: endpoint */
+		nfo.src = address_from_in_addr(&((const struct sockaddr_in *)srca)->sin_addr);
+		nfo.sport =
+			ntohs(((const struct sockaddr_in *)srca)->sin_port);
+		/* XXX: endpoint */
+		nfo.dst = address_from_in_addr(&((const struct sockaddr_in *)dsta)->sin_addr);
+		nfo.dport =
+			ntohs(((const struct sockaddr_in *)dsta)->sin_port);
+
+		DBG(DBG_NATT, {
+			said_buf text_said;
+			ip_said said;
+			ipstr_buf bs;
+			ipstr_buf bd;
+
+			said = said3(&nfo.src, nfo.sa->sadb_sa_spi, SA_ESP);
+			DBG_log("new klips mapping %s %s:%d %s:%d",
+				str_said(&said, 0, &text_said),
+				ipstr(&nfo.src, &bs), nfo.sport,
+				ipstr(&nfo.dst, &bd), nfo.dport);
+		});
+
+		for_each_state(nat_t_new_klips_mapp, &nfo, __func__);
+	}
+
+	if (ugh != NULL)
+		libreswan_log(
+			"K_SADB_X_NAT_T_NEW_MAPPING message from KLIPS malformed: %s",
+			ugh);
 }
 
 /* Handle PF_KEY messages from the kernel that are not dealt with
@@ -531,12 +601,8 @@ void pfkey_dequeue(void)
 	while (orphaned_holds != NULL && !pfkey_input_ready() && limit-- > 0)
 		record_and_initiate_opportunistic(&orphaned_holds->ours,
 						  &orphaned_holds->his,
-						  orphaned_holds->transport_proto
-#ifdef HAVE_LABELED_IPSEC
-						  , NULL
-#endif
-						  ,
-						  "%hold found-pfkey");
+						  orphaned_holds->transport_proto,
+						  NULL, "%hold found-pfkey");
 
 	if (limit <= 0) {
 		loglog(RC_LOG_SERIOUS,
@@ -570,8 +636,8 @@ static bool pfkey_build(int error,
 }
 
 /* pfkey_extensions_init + pfkey_build + pfkey_msg_hdr_build */
-static bool pfkey_msg_start(u_int8_t msg_type,
-			    u_int8_t satype,
+static bool pfkey_msg_start(uint8_t msg_type,
+			    uint8_t satype,
 			    const char *description,
 			    const char *text_said,
 			    struct sadb_ext *extensions[K_SADB_EXT_MAX + 1])
@@ -583,20 +649,23 @@ static bool pfkey_msg_start(u_int8_t msg_type,
 }
 
 /* pfkey_build + pfkey_address_build */
-static bool pfkeyext_address(u_int16_t exttype,
-			     const ip_address *address,
+static bool pfkeyext_address(uint16_t exttype,
+			     const ip_endpoint *endpoint,
 			     const char *description,
 			     const char *text_said,
 			     struct sadb_ext *extensions[K_SADB_EXT_MAX + 1])
 {
-	/* the following variable is only needed to silence
-	 * a warning caused by the fact that the argument
-	 * to sockaddrof is NOT pointer to const!
+	/*
+	 *
+	 * XXX: pfkey_address_build() extracts both the address and
+	 * the port, hence this code should expect an endpoint.
 	 */
-	ip_address t = *address;
+	ip_sockaddr sa;
+	size_t sa_len = endpoint_to_sockaddr(endpoint, &sa);
+	passert(sa_len > 0);
 
 	return pfkey_build(pfkey_address_build(extensions + exttype,
-					       exttype, 0, 0, sockaddrof(&t)),
+					       exttype, 0, 0, &sa.sa),
 			   description, text_said, extensions);
 }
 
@@ -680,12 +749,12 @@ logerr:
 					}
 				} else {
 					loglog(RC_LOG_SERIOUS,
-					       "ERROR: pfkey write() of %s message %u for %s %s truncated: %ld instead of %ld",
+					       "ERROR: pfkey write() of %s message %u for %s %s truncated: %zd instead of %zu",
 					       sparse_val_show(pfkey_type_names,
 							pfkey_msg->sadb_msg_type),
 					       pfkey_msg->sadb_msg_seq,
 					       description, text_said,
-					       (long)r, (long)len);
+					       r, len);
 					success = FALSE;
 				}
 
@@ -749,6 +818,7 @@ logerr:
 	return success;
 }
 
+#ifdef KLIPS
 /*  register SA types that can be negotiated */
 static void pfkey_register_proto(unsigned int sadb_register,
 				 unsigned satype, const char *satypename)
@@ -769,17 +839,9 @@ static void pfkey_register_proto(unsigned int sadb_register,
 	}
 }
 
-#ifdef KLIPS
 void klips_register_proto(unsigned satype, const char *satypename)
 {
 	return pfkey_register_proto(K_SADB_REGISTER, satype, satypename);
-}
-#endif
-
-#ifdef NETKEY_SUPPORT
-void netlink_register_proto(unsigned satype, const char *satypename)
-{
-	return pfkey_register_proto(SADB_REGISTER, satype, satypename);
 }
 #endif
 
@@ -820,14 +882,6 @@ static int kernelop2klips(enum pluto_sadb_operations op)
 		break;
 	}
 
-#if defined(KLIPS_MAST)
-	/* In mast mode, we never want to set an eroute.
-	 * Setting the POLICYONLY disables eroutes.
-	 */
-	if (kernel_ops->type == USE_MASTKLIPS)
-		klips_flags |= SADB_X_SAFLAGS_POLICYONLY;
-#endif
-
 	return klips_op | (klips_flags << KLIPS_OP_FLAG_SHIFT);
 }
 
@@ -848,7 +902,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      const ip_subnet *that_client,
 		      ipsec_spi_t cur_spi UNUSED,
 		      ipsec_spi_t new_spi,
-		      int sa_proto UNUSED,
+		      const struct ip_protocol *unused_sa_proto UNUSED,
 		      unsigned int transport_proto,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
@@ -856,30 +910,22 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      uint32_t sa_priority UNUSED,
 		      const struct sa_marks *sa_marks UNUSED,
 		      enum pluto_sadb_operations op,
-		      const char *text_said
-#ifdef HAVE_LABELED_IPSEC
-		      , const char *policy_label UNUSED
-#endif
-		      )
+		      const char *text_said,
+		      const char *policy_label UNUSED)
 {
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
-	ip_address
-		sflow_ska,
-		dflow_ska,
-		smask_ska,
-		dmask_ska;
 	int klips_op = kernelop2klips(op);
 
-	int sport = ntohs(portof(&this_client->addr));
-	int dport = ntohs(portof(&that_client->addr));
+	int sport = subnet_hport(this_client);
+	int dport = subnet_hport(that_client);
 	int satype;
 
-	networkof(this_client, &sflow_ska);
-	maskof(this_client, &smask_ska);
+	ip_address sflow_ska = subnet_prefix(this_client);
+	ip_address smask_ska = subnet_mask(this_client);
 	setportof(sport ? ~0 : 0, &smask_ska);
 
-	networkof(that_client, &dflow_ska);
-	maskof(that_client, &dmask_ska);
+	ip_address dflow_ska = subnet_prefix(that_client);
+	ip_address dmask_ska = subnet_mask(that_client);
 	setportof(dport ? ~0 : 0, &dmask_ska);
 
 	satype = eroute_type_to_pfkey_satype(esatype);
@@ -905,17 +951,6 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 					  "pfkey_addr_d add flow", text_said,
 					  extensions)))
 			return FALSE;
-#if defined(KLIPS_MAST)
-	} else if (kernel_ops->type == USE_MASTKLIPS) {
-		/* in mast mode, deletes also include the extension flags */
-		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
-						 K_SADB_EXT_SA,
-						 cur_spi, /* in network order */
-						 0, 0, 0, 0, klips_op >>
-						 KLIPS_OP_FLAG_SHIFT),
-				  "pfkey_sa del flow", text_said, extensions)))
-			return FALSE;
-#endif
 	}
 
 	if (!pfkeyext_address(K_SADB_X_EXT_ADDRESS_SRC_FLOW, &sflow_ska,
@@ -993,19 +1028,6 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 		if (!success)
 			return FALSE;
 	}
-
-#ifdef KLIPS_MAST
-	if (sa->ref != IPSEC_SAREF_NULL || sa->refhim != IPSEC_SAREF_NULL) {
-		success = pfkey_build(pfkey_saref_build(&extensions[
-							   K_SADB_X_EXT_SAREF],
-							sa->ref,
-							sa->refhim),
-				      "pfkey_key_sare Add SA",
-				      sa->text_said, extensions);
-		if (!success)
-			return FALSE;
-	}
-#endif
 
 	if (sa->outif != -1) {
 		success = pfkey_outif_build(&extensions[K_SADB_X_EXT_PLUMBIF],
@@ -1099,16 +1121,6 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 		error = pfkey_msg_parse(&pfb.msg, NULL, replies, EXT_BITS_IN);
 		if (error != 0)
 			libreswan_log("success on unparsable message - cannot happen");
-
-#ifdef KLIPS_MAST
-		if (replies[K_SADB_X_EXT_SAREF]) {
-			struct sadb_x_saref *sar = (struct sadb_x_saref *)
-				replies[K_SADB_X_EXT_SAREF];
-
-			sa->ref = sar->sadb_x_saref_me;
-			sa->refhim = sar->sadb_x_saref_him;
-		}
-#endif
 	}
 	return success;
 }
@@ -1353,16 +1365,13 @@ bool pfkey_shunt_eroute(const struct connection *c,
 	{
 		const ip_address *peer = &sr->that.host_addr;
 		char buf2[256];
-		const struct af_info *fam = aftoinfo(addrtypeof(peer));
-
-		if (fam == NULL)
-			fam = aftoinfo(AF_INET);
+		const ip_address any = address_any(address_type(peer));
 
 		snprintf(buf2, sizeof(buf2),
 			 "eroute_connection %s", opname);
 
 		return pfkey_raw_eroute(&sr->this.host_addr, &sr->this.client,
-					fam->any,
+					&any,
 					&sr->that.client,
 					htonl(spi),
 					htonl(spi),
@@ -1371,13 +1380,10 @@ bool pfkey_shunt_eroute(const struct connection *c,
 					ET_INT,
 					null_proto_info,
 					deltatime(0),
-					c->sa_priority,
+					calculate_sa_prio(c),
 					&c->sa_marks,
-					op, buf2
-#ifdef HAVE_LABELED_IPSEC
-					, c->policy_label
-#endif
-					);
+					op, buf2,
+					c->policy_label);
 	}
 }
 
@@ -1385,7 +1391,6 @@ bool pfkey_shunt_eroute(const struct connection *c,
 bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 		      unsigned op, const char *opname)
 {
-	unsigned int inner_proto;
 	enum eroute_type inner_esatype;
 	ipsec_spi_t inner_spi;
 	struct pfkey_proto_info proto_info[4];
@@ -1400,7 +1405,7 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 	proto_info[i].proto = 0;
 	tunnel = FALSE;
 
-	inner_proto = 0;
+	const struct ip_protocol *inner_proto = NULL;
 	inner_esatype = ET_UNSPEC;
 	inner_spi = 0;
 
@@ -1464,11 +1469,8 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 	return eroute_connection(sr,
 				 inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
-				 DEFAULT_IPSEC_SA_PRIORITY, NULL, op, opname
-#ifdef HAVE_LABELED_IPSEC
-				 , NULL
-#endif
-				 );
+				 0 /* KLIPS does not support priority */, NULL, op, opname,
+				 NULL /* KLIPS does not support secure labels */);
 }
 
 /*
@@ -1546,9 +1548,7 @@ void pfkey_scan_shunts(void)
 	int lino;
 	struct eroute_info *expired = NULL;
 
-	passert(kern_interface == USE_KLIPS || kern_interface == USE_MASTKLIPS);
-
-	event_schedule(EVENT_SHUNT_SCAN, bare_shunt_interval, NULL);
+	passert(kern_interface == USE_KLIPS);
 
 	DBG(DBG_CONTROL,
 	    DBG_log("scanning for shunt eroutes"));
@@ -1645,7 +1645,7 @@ void pfkey_scan_shunts(void)
 
 			context = "source subnet field malformed: ";
 			ugh = ttosubnet((char *)ff[0].ptr, ff[0].len, AF_UNSPEC,
-					&eri.ours);
+					'0', &eri.ours);
 			if (ugh != NULL)
 				break;
 
@@ -1653,7 +1653,7 @@ void pfkey_scan_shunts(void)
 
 			context = "destination subnet field malformed: ";
 			ugh = ttosubnet((char *)ff[2].ptr, ff[2].len, AF_UNSPEC,
-					&eri.his);
+					'0', &eri.his);
 			if (ugh != NULL)
 				break;
 
@@ -1696,30 +1696,16 @@ void pfkey_scan_shunts(void)
 						   eri.transport_proto) ==
 				    NULL &&
 				    shunt_owner(&eri.ours, &eri.his) == NULL) {
-					char ourst[SUBNETTOT_BUF];
-					char hist[SUBNETTOT_BUF];
-					char sat[SATOT_BUF];
-
-					subnettot(&eri.ours, 0, ourst,
-						  sizeof(ourst));
-					subnettot(&eri.his, 0, hist,
-						  sizeof(hist));
-					satot(&eri.said, 0, sat, sizeof(sat));
-
-					DBG(DBG_CONTROL, {
-						    int ourport =
-							    ntohs(portof(&eri.
-									 ours.
-									 addr));
-						    int hisport =
-							    ntohs(portof(&eri.
-									 his.
-									 addr));
-						    DBG_log("add orphaned shunt %s:%d -> %s:%d => %s:%d",
-							    ourst, ourport,
-							    hist, hisport, sat,
-							    eri.transport_proto);
-					    });
+					if (DBGP(DBG_BASE)) {
+						subnet_buf ourst;
+						subnet_buf hist;
+						said_buf sat;
+						DBG_log("add orphaned shunt %s -> %s => %s:%d",
+							str_subnet_port(&eri.ours, &ourst),
+							str_subnet_port(&eri.his, &hist),
+							str_said(&eri.said, 0, &sat),
+							eri.transport_proto);
+					}
 					eri.next = orphaned_holds;
 					orphaned_holds = clone_thing(eri,
 								     "orphaned %hold");
@@ -1770,10 +1756,9 @@ void pfkey_scan_shunts(void)
 	 */
 	while (expired != NULL) {
 		struct eroute_info *p = expired;
-		ip_address src, dst;
 
-		networkof(&p->ours, &src);
-		networkof(&p->his, &dst);
+		ip_address src = subnet_prefix(&p->ours);
+		ip_address dst = subnet_prefix(&p->his);
 
 		if (delete_bare_shunt(&src, &dst,
 				p->transport_proto, SPI_HOLD, /* what spi to use? */
@@ -1810,7 +1795,7 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 			char buf[1024];
 			char *line;
 			char text_said[SATOT_BUF];
-			u_int8_t proto = 0;
+			const struct ip_protocol *proto = NULL;
 			ip_address dst;
 			ip_said said;
 			ipsec_spi_t spi = 0;
@@ -1833,8 +1818,9 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 				break;
 			}
 
-			initsaid(&dst, spi, proto, &said);
-			satot(&said, 'x', text_said, SATOT_BUF);
+			said = said3(&dst, spi, proto);
+			jambuf_t jam = ARRAY_AS_JAMBUF(text_said);
+			jam_said(&jam, &said, 'x');
 
 			line = fgets(buf, sizeof(buf), f);
 			if (line == NULL) {
@@ -1886,17 +1872,6 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 	return ret;
 }
 
-void pfkey_set_debug(int cur_debug,
-		     libreswan_keying_debug_func_t debug_func,
-		     libreswan_keying_debug_func_t error_func)
-{
-	pfkey_lib_debug = (cur_debug & DBG_PFKEY ?
-			   PF_KEY_DEBUG_PARSE_MAX : PF_KEY_DEBUG_PARSE_NONE);
-
-	pfkey_debug_func = debug_func;
-	pfkey_error_func = error_func;
-}
-
 void pfkey_remove_orphaned_holds(int transport_proto,
 				 const ip_subnet *ours,
 				 const ip_subnet *his)
@@ -1912,8 +1887,8 @@ void pfkey_remove_orphaned_holds(int transport_proto,
 			if (samesubnet(ours, &p->ours) &&
 			    samesubnet(his, &p->his) &&
 			    transport_proto == p->transport_proto &&
-			    portof(&ours->addr) == portof(&p->ours.addr) &&
-			    portof(&his->addr) == portof(&p->his.addr)) {
+			    subnet_hport(ours) == subnet_hport(&p->ours) &&
+			    subnet_hport(his) == subnet_hport(&p->his)) {
 				*pp = p->next;
 				pfree(p);
 				break;
@@ -1921,28 +1896,3 @@ void pfkey_remove_orphaned_holds(int transport_proto,
 		}
 	}
 }
-
-#ifdef KLIPS_MAST
-bool pfkey_plumb_mast_device(int mast_dev)
-{
-	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
-	int error;
-
-	pfkey_extensions_init(extensions);
-
-	if ((error = pfkey_msg_hdr_build(&extensions[0],
-					 K_SADB_X_PLUMBIF,
-					 0, 0,
-					 ++pfkey_seq, pid)))
-		return FALSE;
-
-	if ((error = pfkey_outif_build(&extensions[K_SADB_X_EXT_PLUMBIF],
-				       mast_dev)))
-		return FALSE;
-
-	if (!finish_pfkey_msg(extensions, "configure_mast_device", "", NULL))
-		return FALSE;
-
-	return TRUE;
-}
-#endif  /* KLIPS_MAST */

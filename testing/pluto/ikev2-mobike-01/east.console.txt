@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -16,21 +16,21 @@ east #
 east #
  ip xfrm state
 src 192.1.8.22 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	enc cbc(aes) 0xKEY
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xENCKEY
 src 192.1.2.23 dst 192.1.8.22
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	enc cbc(aes) 0xKEY
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xENCKEY
 east #
- ip xfrm pol
+ ip xfrm policy
 src 192.0.2.0/24 dst 192.0.3.0/24 
-	dir out priority 2344 ptype main 
+	dir out priority 1042407 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.8.22
 src 192.0.3.0/24 dst 192.0.2.0/24 
-	dir fwd priority 2344 ptype main 
+	dir fwd priority 1042407 ptype main 
 	tmpl src 192.1.8.22 dst 192.1.2.23
 src 192.0.3.0/24 dst 192.0.2.0/24 
-	dir in priority 2344 ptype main 
+	dir in priority 1042407 ptype main 
 	tmpl src 192.1.8.22 dst 192.1.2.23
 east #
 east #

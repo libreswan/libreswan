@@ -10,7 +10,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -52,7 +52,7 @@ static bool lsw_conf_setdefault(void)
 	}
 
 	/* copy everything to the heap for consistency. */
-	global_oco.rootdir = clone_str("","rootdir");
+	global_oco.rootdir = clone_str("", "rootdir");
 
 	global_oco.confdir = clone_str(IPSEC_CONFDIR, "default conf ipsec_conf_dir");
 	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
@@ -180,15 +180,13 @@ int libreswan_selinux(void)
 {
 	char selinux_flag[1];
 	int n;
-	FILE *fd = fopen("/sys/fs/selinux/enforce","r");
+	FILE *fd = fopen("/sys/fs/selinux/enforce", "r");
 
 	if (fd == NULL) {
 		/* try new location first, then old location */
-		fd = fopen("/selinux/enforce","r");
+		fd = fopen("/selinux/enforce", "r");
 		if (fd == NULL) {
-			DBG(DBG_CONTROL,
-				DBG_log("SElinux: disabled, could not open /sys/fs/selinux/enforce or /selinux/enforce");
-				);
+			DBGF(DBG_CONTROL, "SElinux: disabled, could not open /sys/fs/selinux/enforce or /selinux/enforce");
 			return 0;
 		}
 	}

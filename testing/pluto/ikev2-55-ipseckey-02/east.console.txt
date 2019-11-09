@@ -1,11 +1,12 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add road-east
+002 "road-east": terminating SAs using this connection
 002 added connection description "road-east"
 east #
  ipsec auto --status | grep road-east
@@ -14,12 +15,11 @@ east #
 000 "road-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-east":   our auth:rsasig, their auth:rsasig
 000 "road-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "road-east":   labeled_ipsec:no;
 000 "road-east":   policy_label:unset;
 000 "road-east":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "road-east":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-east":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO; +rKOD;
+000 "road-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "road-east":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO; +rKOD;
 000 "road-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-east":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@road.testing.libreswan.org
@@ -30,7 +30,7 @@ east #
 east #
  ipsec auto --listpubkeys
 000  
-000 List of RSA Public Keys:
+000 List of Public Keys:
 000  
 000 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
 000        ID_FQDN '@east'
@@ -38,23 +38,14 @@ east #
  echo "initdone"
 initdone
 east #
- # east should have two public keys. including road fetched from dns
+ ipsec stop
+Redirecting to: [initsystem]
 east #
- ipsec auto --listpubkeys
-000  
-000 List of RSA Public Keys:
-000  
-000 TIMESTAMP, 3712 RSA Key AQPhNstk9 (no private key), until TIMESTAMP warning (expires in X days)
-000        ID_FQDN '@road.testing.libreswan.org'
-000 TIMESTAMP, 3104 RSA Key AQPHFfpyJ (no private key), until TIMESTAMP warning (expires in X days)
-000        ID_FQDN '@road.testing.libreswan.org'
-000 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
-000        ID_FQDN '@east'
+ sleep 2
 east #
- ipsec whack --trafficstatus
+ ipsec start
+Redirecting to: [initsystem]
 east #
+ /testing/pluto/bin/wait-until-pluto-started
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

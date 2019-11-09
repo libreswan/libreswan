@@ -1,0 +1,3 @@
+testing: the working of two clients behind NAT, with one not using IPsec.
+north and road will be the clients and they will both be behind nic as the NAT towards east.
+North will not use IPsec.

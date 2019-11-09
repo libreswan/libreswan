@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -60,5 +60,6 @@ size_t lswlog_nss_error(struct lswlog *log);
 size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism);
 size_t lswlog_nss_ckf(struct lswlog *buf, CK_FLAGS flags);
 size_t lswlog_nss_cka(struct lswlog *buf, CK_ATTRIBUTE_TYPE attribute);
+size_t lswlog_nss_secitem(struct lswlog *buf, const SECItem *secitem);
 
 #endif

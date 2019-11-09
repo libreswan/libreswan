@@ -49,12 +49,8 @@
       </varlistentry>
     </variablelist>
     <para>
-When SELinux runs in enforced mode, changing this requires a similar
-change in the SELinux policy for the pluto daemon.
-</para>
-<para>
-  On debian systems, the NSS database itself is not controlled by this
-  value, and is instead located in @IPSEC_NSSDIR@.
-</para>
+      When SELinux runs in enforced mode, changing this requires a similar
+      change in the SELinux policy for the pluto daemon.
+    </para>
   </listitem>
   </varlistentry>

@@ -12,12 +12,12 @@
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -41,7 +41,6 @@
 #include <sys/types.h>
 #include <signal.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -59,6 +58,7 @@
 #include "id.h"
 #include "keys.h"
 #include "crypt_dh.h"
+#include "ike_alg_dh_ops.h"
 #include "crypt_symkey.h"
 #include <nss.h>
 #include <pk11pub.h>
@@ -66,7 +66,7 @@
 #include "lswnss.h"
 
 struct dh_secret {
-	const struct oakley_group_desc *group;
+	const struct dh_desc *group;
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
 };
@@ -77,13 +77,13 @@ static void lswlog_dh_secret(struct lswlog *buf, struct dh_secret *secret)
 		secret->group->common.name, secret);
 }
 
-struct dh_secret *calc_dh_secret(const struct oakley_group_desc *group,
+struct dh_secret *calc_dh_secret(const struct dh_desc *group,
 				 chunk_t *local_ke)
 {
 	chunk_t ke = alloc_chunk(group->bytes, "local ke");
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
-	group->dhmke_ops->calc_secret(group, &privk, &pubk,
+	group->dh_ops->calc_secret(group, &privk, &pubk,
 				      ke.ptr, ke.len);
 	passert(privk != NULL);
 	passert(pubk != NULL);
@@ -109,10 +109,10 @@ PK11SymKey *calc_dh_shared(struct dh_secret *secret,
 			   chunk_t remote_ke)
 {
 	PK11SymKey *dhshared =
-		secret->group->dhmke_ops->calc_shared(secret->group,
-						      secret->privk,
-						      secret->pubk,
-						      remote_ke.ptr, remote_ke.len);
+		secret->group->dh_ops->calc_shared(secret->group,
+						   secret->privk,
+						   secret->pubk,
+						   remote_ke.ptr, remote_ke.len);
 	/*
 	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
 	 */
@@ -135,7 +135,7 @@ void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
 {
 	LSWDBGP(DBG_CRYPT, buf) {
 		lswlog_dh_secret(buf, *secret);
-		lswlogf(buf, "transfering ownership from helper %s to state #%lu",
+		lswlogf(buf, "transferring ownership from helper %s to state #%lu",
 			helper, st->st_serialno);
 	}
 	pexpect(st->st_dh_secret == NULL);
@@ -148,7 +148,7 @@ void transfer_dh_secret_to_helper(struct state *st,
 {
 	LSWDBGP(DBG_CRYPT, buf) {
 		lswlog_dh_secret(buf, st->st_dh_secret);
-		lswlogf(buf, "transfering ownership from state #%lu to helper %s",
+		lswlogf(buf, "transferring ownership from state #%lu to helper %s",
 			st->st_serialno, helper);
 	}
 	pexpect(*secret == NULL);
@@ -169,4 +169,56 @@ void free_dh_secret(struct dh_secret **secret)
 		pfree(*secret);
 		*secret = NULL;
 	}
+}
+
+struct crypto_task {
+	chunk_t remote_ke;
+	struct dh_secret *local_secret;
+	PK11SymKey *shared_secret;
+	dh_cb *cb;
+};
+
+static void compute_dh(struct crypto_task *task, int thread UNUSED)
+{
+	task->shared_secret = calc_dh_shared(task->local_secret,
+					     task->remote_ke);
+}
+
+static void cancel_dh(struct crypto_task **task)
+{
+	free_dh_secret(&(*task)->local_secret); /* must own */
+	freeanychunk((*task)->remote_ke);
+	release_symkey("DH", "secret", &(*task)->shared_secret);
+	pfreeany(*task);
+}
+
+static stf_status complete_dh(struct state *st,
+			      struct msg_digest **mdp,
+			      struct crypto_task **task)
+{
+	transfer_dh_secret_to_state("IKEv2 DH", &(*task)->local_secret, st);
+	freeanychunk((*task)->remote_ke);
+	pexpect(st->st_shared_nss == NULL);
+	release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);
+	st->st_shared_nss = (*task)->shared_secret;
+	stf_status status = (*task)->cb(st, mdp);
+	pfreeany(*task);
+	return status;
+}
+
+static const struct crypto_handler dh_handler = {
+	.name = "dh",
+	.cancelled_cb = cancel_dh,
+	.compute_fn = compute_dh,
+	.completed_cb = complete_dh,
+};
+
+void submit_dh(struct state *st, chunk_t remote_ke,
+	       dh_cb *cb, const char *name)
+{
+	struct crypto_task *task = alloc_thing(struct crypto_task, "dh");
+	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
+	transfer_dh_secret_to_helper(st, "DH", &task->local_secret);
+	task->cb = cb;
+	submit_crypto(st, task, &dh_handler, name);
 }

@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -15,42 +15,49 @@ east #
 east #
  hostname | grep west > /dev/null || ipsec whack --trafficstatus
 east #
- grep "message ID:" /tmp/pluto.log
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 02
-|    message ID:  00 00 00 02
-|    message ID:  00 00 00 03
-|    message ID:  00 00 00 03
-|    message ID:  00 00 00 04
-|    message ID:  00 00 00 04
-|    message ID:  00 00 00 05
-|    message ID:  00 00 00 05
-|    message ID:  00 00 00 06
-|    message ID:  00 00 00 06
-|    message ID:  00 00 00 07
-|    message ID:  00 00 00 07
-|    message ID:  00 00 00 08
-|    message ID:  00 00 00 08
-|    message ID:  00 00 00 09
-|    message ID:  00 00 00 0a
-|    message ID:  00 00 00 0b
-|    message ID:  00 00 00 0c
-|    message ID:  00 00 00 0d
-|    message ID:  00 00 00 0e
-|    message ID:  00 00 00 0f
+ grep "Message ID: [0-9][0-9]* " /tmp/pluto.log
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 2 (00 00 00 02)
+|    Message ID: 2 (00 00 00 02)
+|    Message ID: 3 (00 00 00 03)
+|    Message ID: 3 (00 00 00 03)
+|    Message ID: 4 (00 00 00 04)
+|    Message ID: 4 (00 00 00 04)
+|    Message ID: 5 (00 00 00 05)
+|    Message ID: 5 (00 00 00 05)
+|    Message ID: 6 (00 00 00 06)
+|    Message ID: 6 (00 00 00 06)
+|    Message ID: 7 (00 00 00 07)
+|    Message ID: 7 (00 00 00 07)
+|    Message ID: 8 (00 00 00 08)
+|    Message ID: 8 (00 00 00 08)
+|    Message ID: 9 (00 00 00 09)
+|    Message ID: 9 (00 00 00 09)
+|    Message ID: 10 (00 00 00 0a)
+|    Message ID: 10 (00 00 00 0a)
+|    Message ID: 11 (00 00 00 0b)
+|    Message ID: 11 (00 00 00 0b)
+|    Message ID: 12 (00 00 00 0c)
+|    Message ID: 12 (00 00 00 0c)
+|    Message ID: 13 (00 00 00 0d)
+|    Message ID: 13 (00 00 00 0d)
+|    Message ID: 14 (00 00 00 0e)
+|    Message ID: 15 (00 00 00 0f)
+|    Message ID: 14 (00 00 00 0e)
+|    Message ID: 15 (00 00 00 0f)
 east #
  # grep on east
 east #
  hostname | grep west > /dev/null || grep -A 1 "has not responded in" /tmp/pluto.log
 "westnet-eastnet-ipv4-psk-ikev2" #2: liveness_check - peer 192.1.2.45 has not responded in 30 seconds, with a timeout of 30, taking action:clear
-"westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 liveness: action - clearing connection kind CK_PERMANENT
+"westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 liveness action - clearing connection kind CK_PERMANENT
 east #
 east #
  ../bin/check-for-core.sh

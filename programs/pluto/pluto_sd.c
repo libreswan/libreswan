@@ -1,12 +1,14 @@
 /* pluto_sd.c
  * Status notifications for systemd
- * Copyright (c) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (c) 2016 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2016 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -22,10 +24,9 @@
 #include "pluto_sd.h"
 #include "lswlog.h"
 
-static unsigned long sd_secs = 0;
-
-void pluto_sd_init(void) {
-	static uint64_t sd_usecs;
+void pluto_sd_init(void)
+{
+	uint64_t sd_usecs;
 	int ret = sd_watchdog_enabled(0, &sd_usecs);
 
 	if (ret == 0) {
@@ -38,12 +39,13 @@ void pluto_sd_init(void) {
 	}
 
 	libreswan_log("systemd watchdog for ipsec service configured with timeout of %"PRIu64" usecs", sd_usecs);
-	sd_secs = sd_usecs / 2 / 1000000; /* suggestion from sd_watchdog_enabled(3) */
-	libreswan_log("watchdog: sending probes every %lu secs", sd_secs);
-        /* tell systemd that we have finished starting up */
+	uintmax_t sd_secs = sd_usecs / 2 / 1000000; /* suggestion from sd_watchdog_enabled(3) */
+	libreswan_log("watchdog: sending probes every %ju secs", sd_secs);
+	/* tell systemd that we have finished starting up */
 	pluto_sd(PLUTO_SD_START, SD_REPORT_NO_STATUS);
-        /* start the keepalive events */
-        event_schedule_s(EVENT_SD_WATCHDOG, sd_secs, NULL);
+	/* start the keepalive events */
+	enable_periodic_timer(EVENT_SD_WATCHDOG, sd_watchdog_event,
+			      deltatime(sd_secs));
 }
 
 /*
@@ -83,5 +85,4 @@ void pluto_sd(int action, int status)
 void sd_watchdog_event(void)
 {
 	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS);
-	event_schedule_s(EVENT_SD_WATCHDOG, sd_secs, NULL);
 }

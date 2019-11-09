@@ -1,0 +1,5 @@
+IKEv2 responder (east) replies with an unencrypted unknown critical payload in AUTH
+
+West gets to try and connect.
+
+Of course, including a critical payload in a response violates the RFC.

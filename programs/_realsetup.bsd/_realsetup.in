@@ -2,11 +2,12 @@
 #
 # IPsec startup and shutdown command
 # Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
+# Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -27,7 +28,7 @@ plutoctl=/var/run/pluto/pluto.ctl
 subsyslock=/var/lock/subsys/ipsec
 lock=/var/run/pluto/ipsec_setup.pid
 
-kamepfkey=/proc/net/pfkey
+xfrm_stat=/proc/sys/net/core/xfrm_acq_expires
 
 # defaults for "config setup" items
 IPSECuniqueids=${IPSECuniqueids:-yes}
@@ -90,7 +91,7 @@ case "$1" in
 
 	# announcement
 	# (Warning, changes to this log message may affect barf.)
-	version="`ipsec --version | awk 'NR == 1 { print $(3) }' | sed -e 's/^U\(.*\)\/K(.*/\1/'`"
+	version="$(ipsec --version | awk 'NR == 1 { print $(3) }' | sed -e 's/^U\(.*\)\/K(.*/\1/')"
 	case "$1" in
 	start|--start)	perform echo "\"Starting Libreswan IPsec $version...\""	;;
 	_autostart)	perform echo "\"Restarting Libreswan IPsec $version...\""	;;
@@ -105,7 +106,7 @@ case "$1" in
 			echo "\"...unable to start Libreswan IPsec, no $f!\"" ";" \
 			exit 1 ";" \
 			"}"
-	    done
+	done
 
 	# the meaning of $$ at a different runtime is questionable!
 	perform echo '$$' ">" $lock
@@ -118,7 +119,7 @@ case "$1" in
 
 	# misc pre-Pluto setup
 
-	perform test -d `dirname $subsyslock` "&&" touch $subsyslock
+	perform test -d $(dirname $subsyslock) "&&" touch $subsyslock
 
 	# Pluto
 	case "$1" in
@@ -130,11 +131,8 @@ case "$1" in
 			--uniqueids "\"$IPSECuniqueids\"" \
 			--nocrsend "\"$IPSECnocrsend\"" \
 			--strictcrlpolicy "\"$IPSECstrictcrlpolicy\"" \
-			--nat_traversal "\"$IPSECnat_traversal\"" \
 			--keep_alive "\"$IPSECkeep_alive\"" \
 			--protostack "\"$IPSECprotostack\"" \
-			--force_keepalive "\"$IPSECforce_keepalive\"" \
-			--disable_port_floating "\"$IPSECdisable_port_floating\"" \
 			--virtual_private "\"$IPSECvirtual_private\"" \
 			--crlcheckinterval "\"$IPSECcrlcheckinterval\"" \
 			--nhelpers "\"$IPSECnhelpers\"" \
@@ -186,14 +184,14 @@ case "$1" in
 	rm -f /var/run/pluto.pid
 
 	# When we exit we clean up (remove) the modules we are using, even the kame'ish ones
-	if test -e ${kamepfkey}; then
+	if test -e ${xfrm_stat}; then
 		lsmod 2>&1 | grep "^xfrm4_tunnel" > /dev/null && rmmod xfrm4_tunnel
 		lsmod 2>&1 | grep "^af_key" > /dev/null && rmmod af_key
 		# old name for xfrm4_tunnel
 		lsmod 2>&1 | grep "^xfrm_user" > /dev/null && rmmod xfrm_user
 	fi
 
-	perform test -d `dirname $subsyslock` "&&" rm -f $subsyslock
+	perform test -d $(dirname $subsyslock) "&&" rm -f $subsyslock
 
 	perform rm -f $lock $plutopid
 	perform echo "...Libreswan IPsec stopped" "|" $LOGONLY
@@ -219,7 +217,7 @@ case "$1" in
 
 	if test -s $plutopid
 	then
-		if ps -p `cat $plutopid` >/dev/null
+		if ps -p $(cat $plutopid) >/dev/null
 		then
 			plutokind=normal
 		elif ps -C pluto >/dev/null
@@ -235,21 +233,21 @@ case "$1" in
 
 	if test -r /proc/net/ipsec_eroute
 	then
-		if test " `wc -l < /proc/net/ipsec_eroute 2> /dev/null `" -gt 0
+		if test " $(wc -l /proc/net/ipsec_eroute 2> /dev/null )" -gt 0
 		then
-			eroutes=`wc -l < /proc/net/ipsec_eroute 2> /dev/null | sed s/\ //g`
+			eroutes=$(wc -l /proc/net/ipsec_eroute 2> /dev/null | sed -e 's/ //g')
 		fi
 	else
-		eroutes=`ipsec eroute 2> /dev/null | wc -l | sed s/\ //g`
+		eroutes=$(ipsec eroute 2> /dev/null | wc -l | sed -e 's/\ //g')
 	fi
 
 	if test "$haslock"
 	then
-		echo "IPsec running"  " - pluto pid: `cat $plutopid`"
+		echo "IPsec running"  " - pluto pid: $(cat $plutopid)"
 		# might not be a subsystem lock dir, ignore that issue
 		if test "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \)
 		then
-			echo "pluto pid `cat $plutopid`"
+			echo "pluto pid $(cat $plutopid)"
                         case "$eroutes" in
                         0)      echo "No tunnels up"    ;;
                         *)      echo "$eroutes tunnels up"      ;;
@@ -259,7 +257,7 @@ case "$1" in
 		echo "but..."
 		if test "$plutokind" != "normal"
 		then
-			echo "$plutokind Pluto running" " - pluto pid: `cat $plutopid`"
+			echo "$plutokind Pluto running" " - pluto pid: $(cat $plutopid)"
 		fi
 		case $klips in
 		maybe)	echo "KLIPS module is not loaded!"	;;

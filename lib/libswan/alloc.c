@@ -3,12 +3,12 @@
  * Header: "lswalloc.h"
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -25,7 +25,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <libreswan.h>
 
 #include "constants.h"
 #include "lswlog.h"
@@ -34,21 +33,12 @@
 
 bool leak_detective = FALSE;	/* must not change after first alloc! */
 
-const chunk_t empty_chunk = { NULL, 0 };
-
-static exit_log_func_t exit_log_func = NULL;	/* allow for customer to customize */
-
-void set_alloc_exit_log_func(exit_log_func_t func)
-{
-	exit_log_func = func;
-}
-
 /*
  * memory allocation
  *
  * --leak_detective puts a wrapper around each allocation and maintains
  * a list of live ones.  If a dead one is freed, an assertion MIGHT fail.
- * If the live list is currupted, that will often be detected.
+ * If the live list is corrupted, that will often be detected.
  * In the end, report_leaks() is called, and the names of remaining
  * live allocations are printed.  At the moment, it is hoped, not that
  * the list is empty, but that there will be no surprises.
@@ -77,7 +67,41 @@ static pthread_mutex_t leak_detective_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static union mhdr *allocs = NULL;
 
-static void *alloc_bytes_raw(size_t size, const char *name)
+static void install_allocation(union mhdr *p, size_t size, const char *name)
+{
+	p->i.name = name;
+	p->i.size = size;
+	p->i.magic = LEAK_MAGIC;
+	p->i.newer = NULL;
+	{
+		pthread_mutex_lock(&leak_detective_mutex);
+		p->i.older = allocs;
+		if (allocs != NULL)
+			allocs->i.newer = p;
+		allocs = p;
+		pthread_mutex_unlock(&leak_detective_mutex);
+	}
+}
+
+static void remove_allocation(union mhdr *p)
+{
+	pthread_mutex_lock(&leak_detective_mutex);
+	if (p->i.older != NULL) {
+		passert(p->i.older->i.newer == p);
+		p->i.older->i.newer = p->i.newer;
+	}
+	if (p->i.newer == NULL) {
+		passert(p == allocs);
+		allocs = p->i.older;
+	} else {
+		passert(p->i.newer->i.older == p);
+		p->i.newer->i.older = p->i.older;
+	}
+	pthread_mutex_unlock(&leak_detective_mutex);
+	p->i.magic = ~LEAK_MAGIC;
+}
+
+static void *allocate(void *(*alloc)(size_t), size_t size, const char *name)
 {
 	union mhdr *p;
 
@@ -91,36 +115,26 @@ static void *alloc_bytes_raw(size_t size, const char *name)
 		if (sizeof(union mhdr) + size < size)
 			return NULL;
 
-		p = malloc(sizeof(union mhdr) + size);
+		p = alloc(sizeof(union mhdr) + size);
 	} else {
-		p = malloc(size);
+		p = alloc(size);
 	}
 
 	if (p == NULL) {
-		if (exit_log_func != NULL) {
-			(*exit_log_func)("unable to malloc %lu bytes for %s",
-					(unsigned long) size, name);
-		}
-		abort();
+		PASSERT_FAIL("unable to allocate %zu bytes for %s", size, name);
 	}
 
 	if (leak_detective) {
-		p->i.name = name;
-		p->i.size = size;
-		p->i.magic = LEAK_MAGIC;
-		p->i.newer = NULL;
-		{
-			pthread_mutex_lock(&leak_detective_mutex);
-			p->i.older = allocs;
-			if (allocs != NULL)
-				allocs->i.newer = p;
-			allocs = p;
-			pthread_mutex_unlock(&leak_detective_mutex);
-		}
+		install_allocation(p, size, name);
 		return p + 1;
 	} else {
 		return p;
 	}
+}
+
+void *uninitialized_malloc(size_t size, const char *name)
+{
+	return allocate(malloc, size, name);
 }
 
 void pfree(void *ptr)
@@ -138,23 +152,10 @@ void pfree(void *ptr)
 			PASSERT_FAIL("pointer %p invalid, possible heap corruption or bad pointer (magic != LEAK_MAGIC or ~LEAK_MAGIC})", ptr);
 		}
 
-		{
-			pthread_mutex_lock(&leak_detective_mutex);
-			if (p->i.older != NULL) {
-				passert(p->i.older->i.newer == p);
-				p->i.older->i.newer = p->i.newer;
-			}
-			if (p->i.newer == NULL) {
-				passert(p == allocs);
-				allocs = p->i.older;
-			} else {
-				passert(p->i.newer->i.older == p);
-				p->i.newer->i.older = p->i.older;
-			}
-			pthread_mutex_unlock(&leak_detective_mutex);
-		}
+		remove_allocation(p);
 		/* stomp on memory!   Is another byte value better? */
 		memset(p, 0xEF, sizeof(union mhdr) + p->i.size);
+		/* put back magic */
 		p->i.magic = ~LEAK_MAGIC;
 		free(p);
 	} else {
@@ -178,7 +179,9 @@ void report_leaks(void)
 		pprev = p;
 		p = p->i.older;
 		n++;
-		if (p == NULL || pprev->i.name != p->i.name) {
+		if (p == NULL ||
+		    pprev->i.name != p->i.name ||
+		    pprev->i.size != p->i.size) {
 			/* filter out one-time leaks we prefer to not fix */
 			if (strstr(pprev->i.name, "(ignore)") == NULL) {
 				if (n != 1)
@@ -204,18 +207,64 @@ void report_leaks(void)
 		libreswan_log("leak detective found no leaks");
 }
 
+static void *zalloc(size_t size)
+{
+	return calloc(1, size);
+}
+
 void *alloc_bytes(size_t size, const char *name)
 {
-	void *p = alloc_bytes_raw(size, name);
-
-	memset(p, '\0', size);
-	return p;
+	return allocate(zalloc, size, name);
 }
 
 void *clone_bytes(const void *orig, size_t size, const char *name)
 {
-	void *p = alloc_bytes_raw(size, name);
+	void *p = uninitialized_malloc(size, name);
 
 	memcpy(p, orig, size);
 	return p;
+}
+
+/*
+ * Re-size something on the HEAP.
+ *
+ * Unlike the more traditional realloc() this code doesn't allow a
+ * NULL pointer.  The caller, which is presumably implementing some
+ * sort of realloc() wrapper, gets to handle this.  So as to avoid any
+ * confusion, give this a different name and function signature.
+ */
+
+void *uninitialized_realloc(void *ptr, size_t new_size, const char *name)
+{
+	if (ptr == NULL) {
+		return uninitialized_malloc(new_size, name);
+	} else if (leak_detective) {
+		union mhdr *p = ((union mhdr *)ptr) - 1;
+		passert(p->i.magic == LEAK_MAGIC);
+		remove_allocation(p);
+		p = realloc(p, sizeof(union mhdr) + new_size);
+		if (p == NULL) {
+		}
+		install_allocation(p, new_size, name);
+		return p+1;
+	} else {
+		return realloc(ptr, new_size);
+	}
+}
+
+void realloc_bytes(void **ptr, size_t old_size, size_t new_size, const char *name)
+{
+	if (*ptr == NULL) {
+		passert(old_size == 0);
+	} else if (leak_detective) {
+		union mhdr *p = ((union mhdr *)*ptr) - 1;
+		passert(p->i.magic == LEAK_MAGIC);
+		passert(p->i.size == old_size);
+	}
+	*ptr = uninitialized_realloc(*ptr, new_size, name);
+	/* XXX: old_size..new_size still uninitialized */
+	if (new_size > old_size) {
+		uint8_t *b = *ptr;
+		memset(b + old_size, '\0', new_size - old_size);
+	}
 }

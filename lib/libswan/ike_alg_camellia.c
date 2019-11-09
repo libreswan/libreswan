@@ -7,7 +7,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,19 +15,10 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-
-#include <libreswan.h>
-
-#include "constants.h"
-#include "lswlog.h"
 #include "ike_alg.h"
-
-#include "ike_alg_nss_cbc.h"
-#include "ike_alg_camellia.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_encrypt_ops.h"
+#include "sadb.h"
 
 /* Camellia is a drop-in replacement for AES */
 
@@ -44,19 +35,18 @@
 #endif
 
 typedef struct {
-	u_int32_t camellia_Nkey;                     // the number of words in the key input block
-	u_int32_t camellia_Nrnd;                     // the number of cipher rounds
-	u_int32_t camellia_e_key[CAMELLIA_KS_LENGTH];     // the encryption key schedule
-	u_int32_t camellia_d_key[CAMELLIA_KS_LENGTH];     // the decryption key schedule
+	uint32_t camellia_Nkey;                     // the number of words in the key input block
+	uint32_t camellia_Nrnd;                     // the number of cipher rounds
+	uint32_t camellia_e_key[CAMELLIA_KS_LENGTH];     // the encryption key schedule
+	uint32_t camellia_d_key[CAMELLIA_KS_LENGTH];     // the decryption key schedule
 } camellia_context;
 
-struct encrypt_desc ike_alg_encrypt_camellia_cbc =
+const struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 {
 	.common = {
 		.name = "camellia",
 		.fqn = "CAMELLIA_CBC",
-		.names = { "camellia", "camellia_cbc", },
-		.officname = "camellia",
+		.names = "camellia,camellia_cbc",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_CAMELLIA_CBC,
@@ -68,20 +58,26 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 		.mechanism = CKM_CAMELLIA_CBC,
 	},
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
-	.pad_to_blocksize = TRUE,
+	.pad_to_blocksize = true,
 	.wire_iv_size =       CAMELLIA_BLOCK_SIZE,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.encrypt_ops = &ike_alg_nss_cbc_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_cbc_ops,
+#ifdef SADB_X_EALG_CAMELLIACBC
+	.encrypt_sadb_ealg_id = SADB_X_EALG_CAMELLIACBC,
+#endif
+	.encrypt_netlink_xfrm_name = "cbc(camellia)",
+	.encrypt_tcpdump_name = "camellia",
+	.encrypt_ike_audit_name = "camellia",
+	.encrypt_kernel_audit_name = "CAMELLIA",
 };
 
-struct encrypt_desc ike_alg_encrypt_camellia_ctr =
+const struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 {
 	.common = {
 		.name = "camellia_ctr",
 		.fqn = "CAMELLIA_CTR",
-		.names = { "camellia_ctr", },
-		.officname = "camellia_ctr",
+		.names = "camellia_ctr",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_CAMELLIA_CTR,
@@ -90,8 +86,11 @@ struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 		},
 	},
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
-	.pad_to_blocksize = FALSE,
+	.pad_to_blocksize = false,
 	.wire_iv_size =	CAMELLIA_BLOCK_SIZE,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
-	.key_bit_lengths = { 256, 192, 128, }
+	.key_bit_lengths = { 256, 192, 128, },
+	.encrypt_tcpdump_name = "camellia_ctr",
+	.encrypt_ike_audit_name = "camellia_ctr",
+	.encrypt_kernel_audit_name = "CAMELLIA_CTR",
 };

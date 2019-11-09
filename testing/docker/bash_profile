@@ -1,0 +1,19 @@
+# User specific environment and startup programs
+PATH=$PATH:$HOME/bin
+export PATH
+export EDITOR=vi
+alias vi=vim
+source /usr/share/git-core/contrib/completion/git-prompt.sh
+#Fedora
+if [ -f /usr/share/git-core/contrib/completion/git-prompt.sh ]; then
+        source /usr/share/git-core/contrib/completion/git-prompt.sh
+        unalias rm cp mv
+fi
+# Debian/Ubuntu
+if [ -f /etc/bash_completion.d/git-prompt ]; then
+        source /etc/bash_completion.d/git-prompt
+fi
+PS1='\[\033[32m\]\u@\h\[\033[00m\]:\[\033[34m\]\w\[\033[31m\]$(__git_ps1)\[\033[00m\]\$'
+alias rebuild='D=$PWD; cd /home/build/libreswan; ipsec stop; rm -fr /home/build/libreswan/OBJ*; make install-base; cd $D'
+alias remake='D=$PWD; cd /home/build/libreswan; ipsec stop; make install-base; cd $D'
+alias gdbp='gdb -p `pidof pluto`'

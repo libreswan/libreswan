@@ -4,7 +4,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -17,10 +17,12 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "lswlog.h"
+#include "lswfips.h"
 
 #include "ike_alg.h"
 #include "test_buffer.h"
-#include "gcm_test_vectors.h"
+#include "ike_alg_test_gcm.h"
+#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 
 #include "nss.h"
 #include "pk11pub.h"
@@ -33,6 +35,7 @@
  */
 static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 	{
+		.description = "empty string",
 		.key ="0xcf063a34d4a9a76c2c86787d3f96db71",
 		.salted_iv = "0x113b9785971864c83b01c787",
 		.ciphertext = "",
@@ -41,6 +44,7 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 		.plaintext = ""
 	},
 	{
+		.description = "one block",
 		.key = "0xe98b72a9881a84ca6b76e0f43e68647a",
 		.salted_iv = "0x8b23299fde174053f3d652ba",
 		.ciphertext = "0x5a3c1cf1985dbb8bed818036fdd5ab42",
@@ -49,6 +53,7 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 		.plaintext = "0x28286a321293253c3e0aa2704a278032",
 	},
 	{
+		.description = "two blocks",
 		.key = "0xbfd414a6212958a607a0f5d3ab48471d",
 		.salted_iv = "0x86d8ea0ab8e40dcc481cd0e2",
 		.ciphertext = "0x62171db33193292d930bf6647347652c1ef33316d7feca99d54f1db4fcf513f8",
@@ -57,6 +62,7 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 		.plaintext = "0xa6b76a066e63392c9443e60272ceaeb9d25c991b0f2e55e2804e168c05ea591a",
 	},
 	{
+		.description = "two blocks with associated data",
 		.key = "0x006c458100fc5f4d62949d2c833b82d1",
 		.salted_iv = "0xa4e9c4bc5725a21ff42c82b2",
 		.ciphertext = "0xf39b4db3542d8542fb73fd2d66be568f26d7f814b3f87d1eceac3dd09a8d697e",
@@ -73,7 +79,7 @@ const struct gcm_test_vector *const aes_gcm_tests = aes_gcm_test_vectors;
 static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct gcm_test_vector *test)
 {
-	DBG(DBG_CRYPT, DBG_log("test_gcm_vector: enter"));
+	libreswan_log("  %s", test->description);
 
 	const size_t salt_size = encrypt_desc->salt_size;
 
@@ -109,7 +115,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 		DBG(DBG_CRYPT,  \
 		    DBG_log("test_gcm_vector: %s: aad-size=%zd salt-size=%zd wire-IV-size=%zd text-size=%zd tag-size=%zd",  \
 			    desc, aad.len, salt.len, wire_iv.len, len, tag.len);  \
-		    DBG_dump_chunk("test_gcm_vector: text+tag on call",  \
+		    DBG_dump_hunk("test_gcm_vector: text+tag on call",  \
 				   text_and_tag));  \
 		if (!encrypt_desc->encrypt_ops->do_aead(encrypt_desc,  \
 							salt.ptr, salt.len, \
@@ -118,11 +124,12 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 							text_and_tag.ptr, \
 							len, tag.len,	\
 							sym_key, enc) || \
-		    !verify_chunk_data("output ciphertext",  \
-				   to, text_and_tag.ptr) ||  \
-		    !verify_chunk_data("TAG", tag, text_and_tag.ptr + len))  \
-			ok = FALSE;  \
-		DBG(DBG_CRYPT, DBG_dump_chunk("test_gcm_vector: text+tag on return",  \
+		    !verify_bytes("output ciphertext", to.ptr, to.len,	\
+				  text_and_tag.ptr, to.len) ||		\
+		    !verify_bytes("TAG", tag.ptr, tag.len,		\
+				  text_and_tag.ptr + len, tag.len))	\
+			ok = FALSE;					\
+		DBG(DBG_CRYPT, DBG_dump_hunk("test_gcm_vector: text+tag on return",  \
 					      text_and_tag));  \
 	}
 
@@ -150,13 +157,13 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	return ok;
 }
 
-bool test_gcm_vectors(const struct encrypt_desc *encrypt_desc,
+bool test_gcm_vectors(const struct encrypt_desc *desc,
 		      const struct gcm_test_vector *tests)
 {
 	bool ok = TRUE;
 	const struct gcm_test_vector *test;
 	for (test = tests; test->key != NULL; test++) {
-		if (!test_gcm_vector(encrypt_desc, test)) {
+		if (!test_gcm_vector(desc, test)) {
 			ok = FALSE;
 		}
 	}

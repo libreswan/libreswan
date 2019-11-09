@@ -1,2 +1,0 @@
-This test checks that barf doesn't generate any error messages during
-a typical run.  Specifically meant to detect syntax errors in the script.

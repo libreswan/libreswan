@@ -4,9 +4,11 @@ east #
  certutil -D -n west -d sql:/etc/ipsec.d
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec whack --impair suppress-retransmits
 east #
  ipsec auto --add san
 002 added connection description "san"
@@ -16,8 +18,7 @@ initdone
 east #
  # confirm the right ID types were sent/received
 east #
- grep "ID type" /tmp/pluto.log
-|    ID type: ID_USER_FQDN (0x3)
+ grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_USER_FQDN (0x3)
 east #
 east #

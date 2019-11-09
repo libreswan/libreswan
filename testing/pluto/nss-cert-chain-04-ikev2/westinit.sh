@@ -7,4 +7,5 @@ ipsec start
 ipsec auto --add road-chain-B
 ipsec auto --status |grep road-chain-B
 certutil -L -d sql:/etc/ipsec.d
+ipsec whack --impair suppress-retransmits
 echo "initdone"

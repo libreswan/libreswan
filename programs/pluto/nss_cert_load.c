@@ -7,7 +7,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -21,7 +21,6 @@
 #include <errno.h>
 #include <limits.h>
 
-#include <libreswan.h>
 #include "ietf_constants.h"
 #include "constants.h"
 #include "lswlog.h"
@@ -89,11 +88,12 @@ CERTCertificate *get_cert_by_ckaid_from_nss(const char *ckaid)
 	if (ckaid == NULL) {
 		return NULL;
 	}
-	size_t buflen = strlen(ckaid);
-	char *buf = alloc_bytes(buflen, "ckaid"); /* good enough */
-	const char *ugh = ttodata(ckaid, 0, 16, buf, buflen, &buflen);
+	/* convert hex string ckaid to binary bin */
+	size_t binlen = (strlen(ckaid) + 1) / 2;
+	char *bin = alloc_bytes(binlen, "ckaid");
+	const char *ugh = ttodata(ckaid, 0, 16, bin, binlen, &binlen);
 	if (ugh != NULL) {
-		pfree(buf);
+		pfree(bin);
 		/* should have been rejected by whack? */
 		libreswan_log("invalid hex CKAID '%s': %s", ckaid, ugh);
 		return NULL;
@@ -101,13 +101,13 @@ CERTCertificate *get_cert_by_ckaid_from_nss(const char *ckaid)
 
 	SECItem ckaid_nss = {
 		.type = siBuffer,
-		.data = (void*) buf,
-		.len = buflen,
+		.data = (void*) bin,
+		.len = binlen,
 	};
 	ckaid_t ckaid_buf = {
 		.nss = &ckaid_nss,
 	};
 	CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(ckaid_buf);
-	pfree(buf);
+	pfree(bin);
 	return cert;
 }

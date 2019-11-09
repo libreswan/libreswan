@@ -12,4 +12,5 @@ ip route | grep default || ip route add default via 192.1.3.254
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add northnet-eastnet
+ipsec whack --impair suppress-retransmits
 echo "initdone"

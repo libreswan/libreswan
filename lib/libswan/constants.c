@@ -5,11 +5,12 @@
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
  * Copyright (C) 2016-2017 Andrew Cagney
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -28,13 +29,13 @@
 #include <limits.h>
 #include <netinet/in.h>
 
-#include <libreswan.h>
 #include <ietf_constants.h>
 #include <libreswan/passert.h>
 
 #include "constants.h"
 #include "enum_names.h"
 #include "lswlog.h"
+#include "ip_said.h"		/* for SPI_PASS et.al. */
 
 const char *bool_str(bool b)
 {
@@ -152,6 +153,30 @@ enum_names version_names = {
 	&version_names_1
 };
 
+static const char *const ike_version_liveness_name[] = {
+	"IKEv1 DPD",
+	"IKEv2 liveness",
+};
+
+enum_names ike_version_liveness_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(ike_version_liveness_name),
+	"IKE", /* prefix */
+	NULL,
+};
+
+static const char *const ike_version_name[] = {
+	"IKEv1",
+	"IKEv2",
+};
+
+enum_names ike_version_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(ike_version_name),
+	"IKE", /* prefix */
+	NULL,
+};
+
 /* Domain of Interpretation */
 static const char *const doi_name[] = {
 	"ISAKMP_DOI_ISAKMP",
@@ -168,6 +193,7 @@ enum_names doi_names = {
 
 /* kind of struct connection */
 static const char *const connection_kind_name[] = {
+	"CK_INVALID",
 	"CK_GROUP",	/* policy group: instantiates to template */
 	"CK_TEMPLATE",	/* abstract connection, with wildcard */
 	"CK_PERMANENT",	/* normal connection */
@@ -176,7 +202,7 @@ static const char *const connection_kind_name[] = {
 };
 
 enum_names connection_kind_names = {
-	CK_GROUP,
+	CK_INVALID,
 	CK_GOING_AWAY,
 	ARRAY_REF(connection_kind_name),
 	NULL, /* prefix */
@@ -239,9 +265,9 @@ static const char *const payload_name_ikev2[] = {
 	"ISAKMP_NEXT_v2NONE", /* same for IKEv1 */
 };
 
-/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-2 */
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-2 */
 /* dual-use: for enum_name and for bitnamesof */
-const char *const payload_name_ikev2_main[] = {
+static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",	/* 33 */
 	"ISAKMP_NEXT_v2KE",
 	"ISAKMP_NEXT_v2IDi",
@@ -294,7 +320,7 @@ enum_names ikev2_payload_names = {
 	ISAKMP_NEXT_v2NONE,
 	ISAKMP_NEXT_v2NONE,
 	ARRAY_REF(payload_name_ikev2),
-	NULL, /* prefix */
+	"ISAKMP_NEXT_v2", /* prefix */
 	&payload_names_ikev2_main
 };
 
@@ -315,6 +341,15 @@ enum_names payload_names_ikev1orv2 = {
 	&payload_names_ikev2copy_main
 };
 
+static enum_names *const payload_type_names_table[] = {
+	[IKEv1 - IKEv1] = &ikev1_payload_names,
+	[IKEv2 - IKEv1] = &ikev2_payload_names,
+};
+
+enum_enum_names payload_type_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(payload_type_names_table)
+};
 
 static const char *const ikev2_last_proposal_names[] = {
 	"v2_PROPOSAL_LAST",
@@ -364,10 +399,10 @@ static const char *const exchange_name_doi[] = {
 	"ISAKMP_XCHG_NGRP",
 };
 
-/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
 static const char *const exchange_name_ikev2[] = {
-	"ISAKMP_v2_SA_INIT", /* RFC 7296 */
-	"ISAKMP_v2_AUTH",
+	"ISAKMP_v2_IKE_SA_INIT", /* RFC 7296 */
+	"ISAKMP_v2_IKE_AUTH",
 	"ISAKMP_v2_CREATE_CHILD_SA",
 	"ISAKMP_v2_INFORMATIONAL",
 	"ISAKMP_v2_IKE_SESSION_RESUME", /* RFC 5753 */
@@ -403,15 +438,15 @@ enum_names ikev1_exchange_names = {
 	ISAKMP_XCHG_NONE,
 	ISAKMP_XCHG_MODE_CFG,
 	ARRAY_REF(exchange_name_ikev1),
-	NULL, /* prefix */
+	"ISAKMP_XCHG_", /* prefix */
 	&exchange_names_doi
 };
 
 enum_names ikev2_exchange_names = {
-	ISAKMP_v2_SA_INIT,
+	ISAKMP_v2_IKE_SA_INIT,
 	ISAKMP_v2_IKE_SESSION_RESUME,
 	ARRAY_REF(exchange_name_ikev2),
-	NULL, /* prefix */
+	"ISAKMP_v2_", /* prefix */
 	&exchange_names_private_use
 };
 
@@ -429,6 +464,16 @@ enum_names exchange_names_ikev1orv2 = {
 	ARRAY_REF(exchange_name_ikev1),
 	NULL, /* prefix */
 	&exchange_names_doi_and_v2
+};
+
+static enum_names *const exchange_type_names_table[] = {
+	[IKEv1 - IKEv1] = &ikev1_exchange_names,
+	[IKEv2 - IKEv1] = &ikev2_exchange_names,
+};
+
+enum_enum_names exchange_type_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(exchange_type_names_table),
 };
 
 /* Flag BITS */
@@ -634,6 +679,28 @@ enum_names ipcomp_transformid_names = {
 	NULL
 };
 
+/*
+ * IANA IKEv2 Hash Algorithms
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#hash-algorithms
+ */
+static const char *const notify_hash_algo_name[] = {
+        "IKEv2_AUTH_HASH_RESERVED",
+        "IKEv2_AUTH_HASH_SHA1",
+        "IKEv2_AUTH_HASH_SHA2_256",
+        "IKEv2_AUTH_HASH_SHA2_384",
+        "IKEv2_AUTH_HASH_SHA2_512",
+        "IKEv2_AUTH_HASH_IDENTITY"
+	/* 6-1023 Unassigned */
+};
+
+enum_names notify_hash_algo_names = {
+	IKEv2_AUTH_HASH_RESERVED,
+	IKEv2_AUTH_HASH_IDENTITY,
+	ARRAY_REF(notify_hash_algo_name),
+	"IKEv2_AUTH_HASH_", /* prefix */
+	NULL
+};
+
 /* Identification type values */
 
 static const char *const ike_idtype_name[] = {
@@ -717,7 +784,7 @@ enum_names ike_cert_type_names = {
 	CERT_PKCS7_WRAPPED_X509, CERT_X509_ATTRIBUTE,
 	/* only first part of ike_cert_type_name */
 	ike_cert_type_name, CERT_X509_ATTRIBUTE - CERT_PKCS7_WRAPPED_X509 + 1,
-	NULL, /* prefix */
+	"CERT_", /* prefix */
 	NULL
 };
 
@@ -726,7 +793,7 @@ static enum_names ikev2_cert_type_names_2 = {
 	CERT_KERBEROS_TOKENS, CERT_RAW_PUBLIC_KEY,
 	&ike_cert_type_name[CERT_KERBEROS_TOKENS-CERT_PKCS7_WRAPPED_X509],
 	CERT_RAW_PUBLIC_KEY-CERT_KERBEROS_TOKENS+1,
-	NULL, /* prefix */
+	"CERT_", /* prefix */
 	NULL
 };
 
@@ -734,7 +801,7 @@ enum_names ikev2_cert_type_names = {
 	CERT_PKCS7_WRAPPED_X509, CERT_X509_SIGNATURE,
 	ike_cert_type_name,
 	CERT_X509_SIGNATURE-CERT_PKCS7_WRAPPED_X509+1,
-	NULL, /* prefix */
+	"CERT_", /* prefix */
 	&ikev2_cert_type_names_2
 };
 
@@ -742,16 +809,16 @@ enum_names ikev2_cert_type_names = {
  * certificate request payload policy
  */
 static const char *const certpolicy_type_name[] = {
-	"cert_neversend",
-	"cert_sendifasked",
-	"cert_alwayssend",
+	"CERT_NEVERSEND",
+	"CERT_SENDIFASKED",
+	"CERT_ALWAYSSEND",
 };
 
 enum_names certpolicy_type_names = {
-	cert_neversend,
-	cert_alwayssend,
+	CERT_NEVERSEND,
+	CERT_ALWAYSSEND,
 	ARRAY_REF(certpolicy_type_name),
-	NULL, /* prefix */
+	"CERT_", /* prefix */
 	NULL
 };
 
@@ -993,11 +1060,12 @@ static const char *const auth_alg_name_stolen_use[] = {
 					 * comments from jjo, needs
 					 * verification
 					 */
+	"AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG",
 };
 
 static enum_names auth_alg_names_stolen_use = {
 	AUTH_ALGORITHM_AES_CMAC_96,
-	AUTH_ALGORITHM_NULL_KAME,
+	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG,
 	ARRAY_REF(auth_alg_name_stolen_use),
 	NULL, /* prefix */
 	NULL
@@ -1251,7 +1319,7 @@ enum_names oakley_enc_names = {
 
 /*
  * Oakley Hash Algorithm attribute
- * http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
  */
 
 /* these string names map via a lookup function to configuration sttrings */
@@ -1336,7 +1404,7 @@ enum_names oakley_auth_names = {
 
 /*
  * IKEv2 CP attribute name. Some of them are shared with XAUTH Attrib names.
- * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
  */
 static const char *const ikev2_cp_attribute_type_name[] = {
 	"IKEv2_CP_ATTR_RESERVED",
@@ -1365,13 +1433,12 @@ static const char *const ikev2_cp_attribute_type_name[] = {
 	"IKEv2_EXTERNAL_SOURCE_IP4_NAT_INFO", /* 3gpp */
 	"IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK", /* 3gpp */
 	"IKEv2_INTERNAL_DNS_DOMAIN", /* draft-ietf-ipsecme-split-dns */
-	/* "IKEv2_INTERNAL_DNSSEC_TA", draft-ietf-ipsecme-split-dns, no Code Point yet */
+	"IKEv2_INTERNAL_DNSSEC_TA", /* draft-ietf-ipsecme-split-dns */
 };
 
 enum_names ikev2_cp_attribute_type_names = {
 	IKEv2_CP_ATTR_RESERVED,
-	IKEv2_INTERNAL_DNS_DOMAIN,
-	/* IKEv2_INTERNAL_DNSSEC_TA, */
+	IKEv2_INTERNAL_DNSSEC_TA,
 	ARRAY_REF(ikev2_cp_attribute_type_name),
 	NULL, /* prefix */
 	NULL
@@ -1427,7 +1494,8 @@ enum_names ikev2_auth_names = {
 
 /* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_group_name[] = {
-	"OAKLEY_GROUP_MODP768", /* 1 */
+	"OAKLEY_GROUP_NONE", /* 0! RFC 7296 */
+	"OAKLEY_GROUP_MODP768",
 	"OAKLEY_GROUP_MODP1024",
 	"OAKLEY_GROUP_GP155(UNUSED)",
 	"OAKLEY_GROUP_GP185(UNUSED)",
@@ -1464,7 +1532,7 @@ static const char *const oakley_group_name[] = {
 };
 
 enum_names oakley_group_names = {
-	OAKLEY_GROUP_MODP768,
+	OAKLEY_GROUP_NONE,
 	OAKLEY_GROUP_CURVE448,
 	ARRAY_REF(oakley_group_name),
 	"OAKLEY_GROUP_", /* prefix */
@@ -1620,36 +1688,19 @@ enum_names ikev1_notify_names = {
 	&ikev1_notify_status_names
 };
 
-/*
-static const char *const ikev2_ppk_id_type_name[] = {
-	"PPK_ID_OPAQUE",
-	"PPK_ID_FIXED",
-};
-
-static enum_names ikev2_ppk_id_type_names = {
-	PPK_ID_OPAQUE,
-	PPK_ID_FIXED,
-	ARRAY_REF(ikev2_ppk_id_type_name),
-	NULL,
-	NULL
-};
-*/
-
 static const char *const ikev2_notify_name_private[] = {
-	"v2N_USE_PPK",
-	"v2N_PPK_IDENTITY",
-	"v2N_NO_PPK_AUTH",
+	"v2N_NULL_AUTH",	/* 40960, used for mixed OE */
 };
 
 static enum_names ikev2_notify_names_private = {
-	v2N_USE_PPK,
-	v2N_NO_PPK_AUTH,
+	v2N_NULL_AUTH,
+	v2N_NULL_AUTH,
 	ARRAY_REF(ikev2_notify_name_private),
 	"v2N_", /* prefix */
 	NULL
 };
 
-/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
 static const char *const ikev2_notify_name_16384[] = {
 	"v2N_INITIAL_CONTACT",    /* 16384 */
 	"v2N_SET_WINDOW_SIZE",
@@ -1699,11 +1750,17 @@ static const char *const ikev2_notify_name_16384[] = {
 	"v2N_SENDER_REQUEST_ID",
 	"v2N_IKEV2_FRAGMENTATION_SUPPORTED",    /* 16430 */
 	"v2N_SIGNATURE_HASH_ALGORITHMS",
+	"v2N_CLONE_IKE_SA_SUPPORTED",
+	"v2N_CLONE_IKE_SA",
+	"v2N_PUZZLE",
+	"v2N_USE_PPK", /* 16435 */
+	"v2N_PPK_IDENTITY",
+	"v2N_NO_PPK_AUTH",
 };
 
 static enum_names ikev2_notify_names_16384 = {
 	v2N_INITIAL_CONTACT,
-	v2N_SIGNATURE_HASH_ALGORITHMS,
+	v2N_NO_PPK_AUTH,
 	ARRAY_REF(ikev2_notify_name_16384),
 	"v2N_", /* prefix */
 	&ikev2_notify_names_private
@@ -1767,7 +1824,7 @@ enum_names ikev2_notify_names = {
 	&ikev2_notify_names_16384
 };
 
-/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-19 */
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-19 */
 static const char *const ikev2_ts_type_name[] = {
 	"IKEv2_TS_IPV4_ADDR_RANGE",
 	"IKEv2_TS_IPV6_ADDR_RANGE",
@@ -2010,63 +2067,19 @@ enum_names ikev2_trans_attr_descs = {
 	NULL
 };
 
-static ip_address ipv4_any, ipv6_any;
-static ip_subnet ipv4_wildcard, ipv6_wildcard;
-static ip_subnet ipv4_all, ipv6_all;
-
-const struct af_info af_inet4_info = {
-	AF_INET,
-	"AF_INET",
-	sizeof(struct in_addr),
-	sizeof(struct sockaddr_in),
-	32,
-	ID_IPV4_ADDR, ID_IPV4_ADDR_SUBNET, ID_IPV4_ADDR_RANGE,
-	&ipv4_any, &ipv4_wildcard, &ipv4_all,
-};
-
-const struct af_info af_inet6_info = {
-	AF_INET6,
-	"AF_INET6",
-	sizeof(struct in6_addr),
-	sizeof(struct sockaddr_in6),
-	128,
-	ID_IPV6_ADDR, ID_IPV6_ADDR_SUBNET, ID_IPV6_ADDR_RANGE,
-	&ipv6_any, &ipv6_wildcard, &ipv6_all,
-};
-
-const struct af_info *aftoinfo(int af)
-{
-	switch (af) {
-	case AF_INET:
-		return &af_inet4_info;
-
-	case AF_INET6:
-		return &af_inet6_info;
-
-	default:
-		return NULL;
-	}
-}
-
-bool subnetisnone(const ip_subnet *sn)
-{
-	ip_address base;
-
-	networkof(sn, &base);
-	return isanyaddr(&base) && subnetishost(sn);
-}
-
 static const char *const pkk_name[] = {
 	"PKK_PSK",
 	"PKK_RSA",
 	"PKK_XAUTH",
 	"PKK_PPK",
+	"PKK_ECDSA",
 	"PKK_NULL",
+	"PKK_INVALID",
 };
 
 enum_names pkk_names = {
 	PKK_PSK,
-	PKK_NULL,
+	PKK_INVALID,
 	ARRAY_REF(pkk_name),
 	NULL, /* prefix */
 	NULL
@@ -2075,7 +2088,7 @@ enum_names pkk_names = {
 /*
  * IKEv2 PPK ID types - draft-ietf-ipsecme-qr-ikev2-01
  */
-static const char *const ikev2_ppk_id_name[] = {
+static const char *const ikev2_ppk_id_type_name[] = {
 	/* 0 - Reserved */
 	"PPK_ID_OPAQUE",
 	"PPK_ID_FIXED",
@@ -2083,11 +2096,29 @@ static const char *const ikev2_ppk_id_name[] = {
 	/* 128 - 255 Private Use */
 };
 
-enum_names ikev2_ppk_id_names = {
+enum_names ikev2_ppk_id_type_names = {
 	PPK_ID_OPAQUE,
 	PPK_ID_FIXED,
-	ARRAY_REF(ikev2_ppk_id_name),
+	ARRAY_REF(ikev2_ppk_id_type_name),
 	"PPK_ID_", /* prefix */
+	NULL
+};
+
+/* IKEv2 Redirect Mechanism - RFC 5685 */
+static const char *const ikev2_redirect_gw_name[] = {
+	/* 0 - Reserved */
+	"GW_IPv4",
+	"GW_IPv6",
+	"GW_FQDN",
+	/* 4 - 240	Unassigned */
+	/* 241 - 255	Private Use */
+};
+
+enum_names ikev2_redirect_gw_names = {
+	GW_IPV4,
+	GW_FQDN,
+	ARRAY_REF(ikev2_redirect_gw_name),
+	"GW_",	/* prefix */
 	NULL
 };
 
@@ -2106,24 +2137,6 @@ enum_names spi_names = {
 	"%",	/* prefix */
 	NULL
 };
-
-/*
- * Values for right= and left=
- */
-static struct keyword_enum_value kw_host_values[] = {
-	{ "%defaultroute",  KH_DEFAULTROUTE },
-	{ "%any",           KH_ANY },
-	{ "%",              KH_IFACE },
-	{ "%oppo",          KH_OPPO },
-	{ "%opportunistic", KH_OPPO },
-	{ "%opportunisticgroup", KH_OPPOGROUP },
-	{ "%oppogroup",     KH_OPPOGROUP },
-	{ "%group",         KH_GROUP },
-	{ "%hostname",      KH_IPHOSTNAME }, /* makes no sense on input */
-};
-
-struct keyword_enum_values kw_host_list =
-	{ kw_host_values, elemsof(kw_host_values) };
 
 /*
  * Iterate over the enum_names returning all the valid indexes.
@@ -2274,13 +2287,9 @@ const char *strip_prefix(const char *s, const char *prefix)
  */
 int enum_search(enum_names *ed, const char *str)
 {
-	enum_names  *p;
-
-	for (p = ed; p != NULL; p = p->en_next_range) {
-		unsigned long en;
-
+	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
-		for (en = p->en_first; en <= p->en_last; en++) {
+		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
 			const char *ptr = p->en_names[en - p->en_first];
 
 			if (ptr != NULL && strcaseeq(ptr, str)) {
@@ -2292,15 +2301,11 @@ int enum_search(enum_names *ed, const char *str)
 	return -1;
 }
 
-int enum_match(enum_names *ed, const char *string)
+int enum_match(enum_names *ed, shunk_t string)
 {
-	enum_names  *p;
-
-	for (p = ed; p != NULL; p = p->en_next_range) {
-		unsigned long en;
-
+	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
-		for (en = p->en_first; en <= p->en_last; en++) {
+		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
 			const char *name = p->en_names[en - p->en_first];
 
 			if (name == NULL) {
@@ -2310,39 +2315,36 @@ int enum_match(enum_names *ed, const char *string)
 			passert(en <= INT_MAX);
 
 			/*
-			 * Try matching the entire name including any
-			 * prefix.  If needed, ignore any trailing
-			 * '(...)'
+			 * try matching all four variants of name:
+			 * with and without prefix en->en_prefix and
+			 * with and without suffix '(...)'
 			 */
-			if (strcaseeq(name, string)) {
-				return en;
-			}
-			if (strncaseeq(name, string, strlen(string))
-			    && name[strlen(string)] == '('
-			    && name[strlen(name) - 1] == ')') {
-				return en;
-			}
+			size_t name_len = strlen(name);
 
-			/*
-			 * Try matching the name minus any prefix.  If
-			 * needed, ignore any trailing '(...)'.
-			 */
-			if (ed->en_prefix == NULL) {
-				continue;
-			}
-			const char *short_name = strip_prefix(name, ed->en_prefix);
-			if (short_name == name) {
-				continue;
-			}
-			if (strcaseeq(short_name, string)) {
-				return en;
-			}
-			if (strncaseeq(short_name, string, strlen(string))
-			    && short_name[strlen(string)] == '('
-			    && short_name[strlen(short_name) - 1] == ')') {
-				return en;
-			}
+			/* pl: prefix length */
+			size_t pl = ed->en_prefix == NULL ? 0 :
+				strip_prefix(name, ed->en_prefix) - name;
 
+			/* suffix must not and will not overlap prefix */
+			const char *suffix = strchr(name + pl, '(');
+
+			/* sl: suffix length */
+			size_t sl = suffix != NULL && name[name_len - 1] == ')' ?
+				&name[name_len] - suffix : 0;
+
+#			define try(guard, f, b) ( \
+				(guard) && \
+				name_len - ((f) + (b)) == string.len && \
+				strncaseeq(name + (f), string.ptr, string.len))
+
+			if (try(true, 0, 0) ||
+			    try(sl > 0, 0, sl) ||
+			    try(pl > 0, pl, 0) ||
+			    try(pl > 0 && sl > 0, pl, sl))
+			{
+				return en;
+			}
+#			undef try
 		}
 	}
 	return -1;
@@ -2401,86 +2403,6 @@ size_t lswlog_enum_enum_short(struct lswlog *buf, enum_enum_names *een,
 		return lswlogf(buf, "%lu??%lu??", table, val);
 	}
 	return lswlog_enum_short(buf, en, val);
-}
-
-/*
- * construct a string to name the bits on in a set
- *
- * Result of bitnamesof may be in STATIC buffer -- NOT RE-ENTRANT!
- * Note: prettypolicy depends on internal details of bitnamesofb.
- * binamesofb is re-entrant since the caller provides the buffer.
- */
-const char *bitnamesofb(const char *const table[], lset_t val,
-			char *b, size_t blen)
-{
-	char *const roof = b + blen;
-	char *p = b;
-	lset_t bit;
-	const char *const *tp;
-
-	passert(blen != 0); /* need room for NUL */
-
-	/* if nothing gets filled in, default to "none" rather than "" */
-	(void) jam_str(b, blen, "none");
-
-	for (tp = table, bit = 01; val != 0; bit <<= 1) {
-		if (val & bit) {
-			const char *n = *tp;
-
-			if (p != b)
-				p = jam_str(p, (size_t)(roof - p), "+");
-
-			if (n == NULL || *n == '\0') {
-				/*
-				 * No name for this bit, so use hex.
-				 * if snprintf returns a different value from
-				 * strlen, truncation happened
-				 */
-				(void)snprintf(p, (size_t)(roof - p),
-					"0x%" PRIxLSET,
-					bit);
-				p += strlen(p);
-			} else {
-				p = jam_str(p, (size_t)(roof - p), n);
-			}
-			val -= bit;
-		}
-		/*
-		 * Move on in the table, but not past end.
-		 * This is a bit of a trick: while we are at stuck the end,
-		 * the loop will print out the remaining bits in hex.
-		 */
-		if (*tp != NULL)
-			tp++;
-	}
-	return b;
-}
-
-/*
- * NOT RE-ENTRANT!
- */
-const char *bitnamesof(const char *const table[], lset_t val)
-{
-	static char bitnamesbuf[8192]; /* I hope that it is big enough! */
-
-	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
-}
-
-/* test a set by seeing if all bits have names */
-bool testset(const char *const table[], lset_t val)
-{
-	lset_t bit;
-	const char *const *tp;
-
-	for (tp = table, bit = 01; val != 0; bit <<= 1, tp++) {
-		const char *n = *tp;
-
-		if (n == NULL || ((val & bit) && *n == '\0'))
-			return FALSE;
-
-		val &= ~bit;
-	}
-	return TRUE;
 }
 
 const char sparse_end[] = "end of sparse names";
@@ -2567,7 +2489,8 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_type_names,
 	&ikev2_trans_attr_descs,
 	&pkk_names,
-	&ikev2_ppk_id_names,
+	&ikev2_ppk_id_type_names,
+	&ikev2_redirect_gw_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)
@@ -2587,15 +2510,6 @@ void check_enum_names(enum_names *checklist[], size_t tl)
 
 void init_constants(void)
 {
-	happy(anyaddr(AF_INET, &ipv4_any));
-	happy(anyaddr(AF_INET6, &ipv6_any));
-
-	happy(addrtosubnet(&ipv4_any, &ipv4_wildcard));
-	happy(addrtosubnet(&ipv6_any, &ipv6_wildcard));
-
-	happy(initsubnet(&ipv4_any, 0, '0', &ipv4_all));
-	happy(initsubnet(&ipv6_any, 0, '0', &ipv6_all));
-
 	check_enum_names(ARRAY_REF(en_checklist));
 
 	/* check v2_transform_ID_enums, the only enum_enum_names */

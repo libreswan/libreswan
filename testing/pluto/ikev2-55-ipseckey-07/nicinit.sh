@@ -1,5 +1,7 @@
 /testing/guestbin/swan-prep --dnssec
-systemctl restart nsd
+setenforce Permissive
+systemctl start nsd-keygen
+/usr/sbin/nsd > /dev/null 2> /dev/null
 : ==== cut ====
 dig +short @127.0.0.1 north.testing.libreswan.org IPSECKEY
 dig +short @127.0.0.1 east.testing.libreswan.org IPSECKEY

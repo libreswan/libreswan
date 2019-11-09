@@ -1,0 +1,5 @@
+Two behind the same NAT, using authby=secret
+
+This tests for a bug present in 3.22 - 3.25 that would mangle the
+SPd rules when two clients are behind NAT when using ID_IPv4
+(eg not a group psk).

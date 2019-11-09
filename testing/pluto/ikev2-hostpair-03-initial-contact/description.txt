@@ -1,0 +1,10 @@
+IKEv2 host-to-host with NAT and CP.
+
+ikev2-hostpair-01 reconnects using the same IP, without sending any
+deletes. It does this 4 times. Since it sends Initial Contact,
+there should be no duplicate (old) IPsec SA states on east, and only
+one complete set of in/out/fwd policy rules.
+
+kev2-hostpair-02 does NOT use Initial Contact and does end up with
+multiple old lingering states.
+

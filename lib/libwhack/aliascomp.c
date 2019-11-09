@@ -5,7 +5,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -24,39 +24,29 @@
 #include "whack.h"
 
 /*
- * this is just like "strstr()", only it won't find matches
- * that are substrings (case-sensitive compare), but rather each match
- * must be anchored in front and after with whitespace and/or start/end
- * of string.
+ * lsw_alias_cmp: is name found in aliases?
  *
+ * aliases is a string of whitespace-separated names (or a NULL pointer).
+ * Assumption: names do not contain whitespace.
  */
-bool lsw_alias_cmp(const char *needle, const char *haystack)
+bool lsw_alias_cmp(const char *name, const char *aliases)
 {
-	int nlen = strlen(needle);
-	const char *s = haystack;
-
-	if (s == NULL)
+	if (aliases == NULL)
 		return FALSE;
 
-	while (*s != '\0') {
-		/* does it match, and does it end with a space?
-		 * check if things end at same place
-		 */
-		if (strneq(s, needle, nlen) &&
-		    (s[nlen] == ' ' || s[nlen] == '\t' || s[nlen] == '\0'))
-			return TRUE;
+	size_t nlen = strlen(name);
 
-		for (;; ) {
-			s++;
-			if (*s == '\0')
-				break; /* or return FALSE: we're done */
-			if (*s == ' ' || *s == '\t') {
-				/* at whitespace: start next scan right after */
-				s++;
-				break;
-			}
-		}
+	for (const char *s = aliases;;) {
+		s += strspn(s, " \t");	/* skip whitespace */
+
+		if (*s == '\0')
+			return FALSE;	/* string exhausted */
+
+		size_t aw = strcspn(s, " \t");	/* alias width */
+
+		if (aw == nlen && strneq(s, name, nlen))
+			return TRUE;	/* found */
+
+		s += aw;	/* skip this alias */
 	}
-
-	return FALSE;
 }

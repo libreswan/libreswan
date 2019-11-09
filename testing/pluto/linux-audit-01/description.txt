@@ -1,2 +1,0 @@
-NETKEY based test to verify AUDIT messages are logged by the kernel
-for service startup and shutdown and IKE SA's and IPSEC SA's events.

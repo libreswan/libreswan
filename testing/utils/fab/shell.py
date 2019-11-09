@@ -1,11 +1,11 @@
 # Stuff to talk to virsh, for libreswan
 #
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -33,11 +33,11 @@ STATUS_GROUP = "status"
 DOLLAR_GROUP = "dollar"
 
 # Patterns for each part of the above prompt
-USERNAME_PATTERN = "[-\.a-z0-9]+"
-HOSTNAME_PATTERN = "[-a-z0-9]+"
-BASENAME_PATTERN = "[-\.a-z0-9A-Z_~]+"
-STATUS_PATTERN = "| [0-9]+"
-DOLLAR_PATTERN = "[#\$]"
+USERNAME_PATTERN = r'[-.a-z0-9]+'
+HOSTNAME_PATTERN = r'[-a-z0-9]+'
+BASENAME_PATTERN = r'[-+=:,\.a-z0-9A-Z_~]+'
+STATUS_PATTERN = r'| [0-9]+'
+DOLLAR_PATTERN = r'[#\$]'
 
 def compile_prompt(logger, username=None, hostname=None):
     """Create a regex that matches PS1.
@@ -54,12 +54,16 @@ def compile_prompt(logger, username=None, hostname=None):
             dollar = "#"
         else:
             dollar = "$"
-    prompt = "\[(?P<" + USERNAME_GROUP + ">" + (username or USERNAME_PATTERN) + ")" + \
-             "@(?P<" + HOSTNAME_GROUP + ">"  + (hostname or HOSTNAME_PATTERN) + ")" + \
-             " (?P<" + BASENAME_GROUP + ">"  + (BASENAME_PATTERN) + ")" + \
-             "(?P<" + STATUS_GROUP + ">" + (STATUS_PATTERN) + ")" + \
-             "\](?P<" + DOLLAR_GROUP + ">"  + (dollar or DOLLAR_PATTERN)  + ")" + \
-             " "
+    prompt = (r'\[' +
+              r'(?P<' + USERNAME_GROUP + r'>' + (username or USERNAME_PATTERN) + r')' +
+              r'@' +
+              r'(?P<' + HOSTNAME_GROUP + r'>'  + (hostname or HOSTNAME_PATTERN) + r')' +
+              r' ' +
+              r'(?P<' + BASENAME_GROUP + r'>'  + (BASENAME_PATTERN) + ")" +
+              r'(?P<' + STATUS_GROUP + r'>' + (STATUS_PATTERN) + r')' +
+              r'\]' +
+              r'(?P<' + DOLLAR_GROUP + r'>'  + (dollar or DOLLAR_PATTERN)  + r')' +
+              r' ')
     logger.debug("prompt '%s'", prompt)
     return re.compile(prompt)
 
@@ -160,7 +164,7 @@ class Remote:
         number = str(random.randrange(1000000, 100000000))
         sync = "sync=" + number + "=cnyc"
         self.sendline("echo " + sync)
-        self.expect(sync + "\s+" + self.prompt.pattern, timeout=timeout)
+        self.expect(sync + r'\s+' + self.prompt.pattern, timeout=timeout)
         # Fix the prompt
         self.run("PS1='" + PS1 + "'")
         # Set noecho the PTY inside the VM (not pexpect's PTY).
@@ -195,6 +199,12 @@ class Remote:
 
     def sendline(self, line):
         return self.child.sendline(line)
+
+    def drain(self):
+        self.logger.debug("draining any existing output")
+        if self.expect([r'.+', pexpect.TIMEOUT], timeout=0) == 0:
+            self.logger.info("discarding '%s' and re-draining", self.child.match)
+            self.expect([r'.+', pexpect.TIMEOUT], timeout=0)
 
     def expect(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
         return self.child.expect(expect, timeout=timeout,

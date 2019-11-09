@@ -1,4 +1,0 @@
-Basic pluto with IKEv2 using PSK but west has been told to skip sending
-the KE payload. This is to confirm the fix for CVE-2013-6467, which
-affects libreswan up to 3.7 (and openswan up to at least 2.6.39)
-This test crashes those older versions

@@ -163,7 +163,7 @@ is used, these values are not available outside the NSS security database
 
 <refsect1 id='history'><title>HISTORY</title>
 <para>Originally written for the Linux FreeS/WAN project
-&lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
+&lt;<ulink url='https://www.freeswan.org'>https://www.freeswan.org</ulink>&gt;
 by Henry Spencer. Updated for the Libreswan Project by Paul Wouters.</para>
 <para>The <emphasis remap='I'>--round</emphasis> and <emphasis remap='I'>--noopt</emphasis>
 options were obsoleted as these were only used with the old non-library crypto code</para>

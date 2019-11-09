@@ -5,7 +5,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,18 +14,15 @@
  */
 
 #include <nss.h>
-extern void wake_fetch_thread(const char *who);
-extern void add_distribution_points(const generalName_t *newPoints,
-				    generalName_t **distributionPoints);
-extern void list_distribution_points(const generalName_t *gn);
+extern void list_crl_fetch_requests(bool utc);
 
 extern void init_fetch(void);
 extern void free_crl_fetch(void);
-extern void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp);
-extern void list_crl_fetch_requests(bool utc);
+extern void check_crls(void);
 
 extern char *curl_iface;
 extern long curl_timeout;
 extern bool crl_strict;
 extern bool ocsp_strict;
 extern bool ocsp_enable;
+extern bool ocsp_post;

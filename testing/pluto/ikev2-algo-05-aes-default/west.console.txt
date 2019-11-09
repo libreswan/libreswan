@@ -6,9 +6,11 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress-retransmits
 west #
  echo "initdone"
 initdone
@@ -18,15 +20,16 @@ west #
 west #
  ipsec auto --up westnet-eastnet-aes-default
 002 "westnet-eastnet-aes-default" #1: initiating v2 parent SA
-133 "westnet-eastnet-aes-default" #1: STATE_PARENT_I1: initiate
-133 "westnet-eastnet-aes-default" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-aes-default" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_256 integ=sha1_96 prf=sha group=MODP2048}
+1v2 "westnet-eastnet-aes-default" #1: initiate
+1v2 "westnet-eastnet-aes-default" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-aes-default" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-aes-default" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-aes-default" #2: Authenticated using RSA with SHA-1
 002 "westnet-eastnet-aes-default" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-aes-default" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-default
-002 "westnet-eastnet-aes-default": deleting non-instance connection
+002 "westnet-eastnet-aes-default": terminating SAs using this connection
 002 "westnet-eastnet-aes-default" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "westnet-eastnet-aes-default" #2: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-default" #1: deleting state (STATE_PARENT_I3) and sending notification
@@ -38,15 +41,16 @@ west #
 west #
  ipsec auto --up westnet-eastnet-aes-128
 002 "westnet-eastnet-aes-128" #3: initiating v2 parent SA
-133 "westnet-eastnet-aes-128" #3: STATE_PARENT_I1: initiate
-133 "westnet-eastnet-aes-128" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-aes-128" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
+1v2 "westnet-eastnet-aes-128" #3: initiate
+1v2 "westnet-eastnet-aes-128" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-aes-128" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-aes-128" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-aes-128" #4: Authenticated using RSA with SHA-1
 002 "westnet-eastnet-aes-128" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-aes-128" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-128
-002 "westnet-eastnet-aes-128": deleting non-instance connection
+002 "westnet-eastnet-aes-128": terminating SAs using this connection
 002 "westnet-eastnet-aes-128" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "westnet-eastnet-aes-128" #4: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-128" #3: deleting state (STATE_PARENT_I3) and sending notification
@@ -58,15 +62,16 @@ west #
 west #
  ipsec auto --up westnet-eastnet-aes-256
 002 "westnet-eastnet-aes-256" #5: initiating v2 parent SA
-133 "westnet-eastnet-aes-256" #5: STATE_PARENT_I1: initiate
-133 "westnet-eastnet-aes-256" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-aes-256" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_256 integ=sha1_96 prf=sha group=MODP2048}
+1v2 "westnet-eastnet-aes-256" #5: initiate
+1v2 "westnet-eastnet-aes-256" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-aes-256" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-aes-256" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-aes-256" #6: Authenticated using RSA with SHA-1
 002 "westnet-eastnet-aes-256" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-aes-256" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-256
-002 "westnet-eastnet-aes-256": deleting non-instance connection
+002 "westnet-eastnet-aes-256": terminating SAs using this connection
 002 "westnet-eastnet-aes-256" #6: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "westnet-eastnet-aes-256" #6: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-256" #5: deleting state (STATE_PARENT_I3) and sending notification
@@ -78,15 +83,16 @@ west #
 west #
  ipsec auto --up  westnet-eastnet-aes-mix-1
 002 "westnet-eastnet-aes-mix-1" #7: initiating v2 parent SA
-133 "westnet-eastnet-aes-mix-1" #7: STATE_PARENT_I1: initiate
-133 "westnet-eastnet-aes-mix-1" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-aes-mix-1" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
+1v2 "westnet-eastnet-aes-mix-1" #7: initiate
+1v2 "westnet-eastnet-aes-mix-1" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-aes-mix-1" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-aes-mix-1" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-aes-mix-1" #8: Authenticated using RSA with SHA-1
 002 "westnet-eastnet-aes-mix-1" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-aes-mix-1" #8: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-1
-002 "westnet-eastnet-aes-mix-1": deleting non-instance connection
+002 "westnet-eastnet-aes-mix-1": terminating SAs using this connection
 002 "westnet-eastnet-aes-mix-1" #8: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "westnet-eastnet-aes-mix-1" #8: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-mix-1" #7: deleting state (STATE_PARENT_I3) and sending notification
@@ -98,15 +104,16 @@ west #
 west #
  ipsec auto --up  westnet-eastnet-aes-mix-2
 002 "westnet-eastnet-aes-mix-2" #9: initiating v2 parent SA
-133 "westnet-eastnet-aes-mix-2" #9: STATE_PARENT_I1: initiate
-133 "westnet-eastnet-aes-mix-2" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-aes-mix-2" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_256 integ=sha1_96 prf=sha group=MODP2048}
+1v2 "westnet-eastnet-aes-mix-2" #9: initiate
+1v2 "westnet-eastnet-aes-mix-2" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-aes-mix-2" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 002 "westnet-eastnet-aes-mix-2" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-aes-mix-2" #10: Authenticated using RSA with SHA-1
 002 "westnet-eastnet-aes-mix-2" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-aes-mix-2" #10: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-2
-002 "westnet-eastnet-aes-mix-2": deleting non-instance connection
+002 "westnet-eastnet-aes-mix-2": terminating SAs using this connection
 002 "westnet-eastnet-aes-mix-2" #10: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "westnet-eastnet-aes-mix-2" #10: ESP traffic information: in=0B out=0B
 002 "westnet-eastnet-aes-mix-2" #9: deleting state (STATE_PARENT_I3) and sending notification
@@ -116,90 +123,72 @@ done
 west #
  : dump key-length attributes to the connsole - none can be zero
 west #
- grep -A 1 'af+type: IKEv2_KEY_LENGTH' /tmp/pluto.log
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+ grep -A 1 'af+type: AF+IKEv2_KEY_LENGTH' /tmp/pluto.log
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 --
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 256 (0x100)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
---
-|    af+type: IKEv2_KEY_LENGTH (0x800e)
-|    length/value: 128 (0x80)
+|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
 west #
 west #
  ../bin/check-for-core.sh

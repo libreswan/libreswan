@@ -1,12 +1,11 @@
 # Libreswan
 The Libreswan Project   https://libreswan.org/
 
-Libreswan is an IPsec implementation for Linux. It has support for most
-of the extensions (RFC + IETF drafts) related to IPsec, including
-IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
-Libreswan uses the native Linux IPsec stack (NETKEY/XFRM) per default.
-For more information about the alternative Libreswan kernel IPsec stack,
-see README.KLIPS.
+Libreswan is an Internet Key Exchange (IKE) implementation for Linux.
+It supports IKEv1 and IKEv2 and has support for most of the extensions
+(RFC + IETF drafts) related to IPsec, including IKEv2, X.509 Digital
+Certificates, NAT Traversal, and many others.  Libreswan uses the native
+Linux IPsec stack (NETKEY/XFRM) per default.
 
 Libreswan was forked from Openswan 2.6.38, which was forked from
 FreeS/WAN 2.04. See the CREDITS files for contributor acknowledgments.
@@ -31,9 +30,9 @@ version 2; see the LICENSE and CREDIT.* files. Some smaller parts have
 a different license.
 
 ## Requirements
-A recent Linux distribution based on either kernel 2.4.x, 2.6.x or 3.x
-are the currently supported platforms. Libreswan has been ported to
-Win2k/BSD/OSX as well.
+Recent Linux distributions based on kernel 2.x, 3.x or 4.x
+are supported platforms. Libreswan has been ported to
+Win2k/BSD/OSX in the past as well.
 
 Most distributions have native packaged support for Libreswan. Libreswan is
 available for RHEL, Fedora, Ubuntu, Debian, Arch, OpenWrt and more.
@@ -54,14 +53,12 @@ For Debian/Ubuntu
 	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
 	(unbound is build without event api, set USE_DNSSEC=false)
 
-For Fedora/RHEL7/CentOS7
+For Fedora/RHEL8/CentOS8/RHEL7/CentOS7
 
 	yum install audit-libs-devel bison curl-devel fipscheck-devel flex \
 		gcc ldns-devel libcap-ng-devel libevent-devel \
 		libseccomp-devel libselinux-devel make nspr-devel nss-devel \
 		pam-devel pkgconfig systemd-devel unbound-devel xmlto
-
-       (on rhel/centos unbound is too old, set USE_DNSSEC=false)
 
 For RHEL6/CentOS6
 
@@ -82,7 +79,16 @@ Runtime requirements (usually already present on the system)
 	Python is used for "ipsec verify", which helps debugging problems
 	python-ipaddress is used for "ipsec show", which shows tunnels
 
-## Compiling the userland and IKE daemon
+
+## Building for RPM based systems
+See packaging/ for an up to date spec file for your distribution. For example,
+to build for CentOS8, use: rpmbuild -ba packaging/centos/8/libreswan.spec
+
+## Building for DEB based systems
+The packaging/debian directly is used to build deb files. Simply issue the
+command: make deb
+
+## Compiling the userland and IKE daemon manually in /usr/local
 
     make programs
     sudo make install
@@ -100,16 +106,22 @@ the kernel sysctl values needs changing.
 ## Starting Libreswan
 The install will detect the init system used (systemd, upstart, sysvinit,
 openrc) and should integrate with the linux distribution. The service
-name is called "ipsec".  For example, on RHEL7, one would use:
+name is called "ipsec".  For example, on RHEL8, one would use:
 
     systemctl enable ipsec.service
     systemctl start ipsec.service
 
 If unsure of the specific init system used on the system, the "ipsec"
-command can also be used to start or stop the ipsec service:
+command can also be used to start or stop the ipsec service. This
+command will auto-detect the init system and invoke it:
 
     ipsec start
     ipsec stop
+
+## Status
+For a connection status overview, use: ipsec trafficstatus
+For a brief status overview, use: ipsec briefstatus
+For a machine readable global status, use: ipsec globalstatus
 
 ## Configuration
 Most of the libreswan configuration is stored in /etc/ipsec.conf and
@@ -165,7 +177,7 @@ at https://bugs.libreswan.org/
 
 ## Security Information
 All security issues found that require public disclosure will
-receive proper CVE tracking numbers (see http://mitre.org/) and
+receive proper CVE tracking numbers (see https://www.mitre.org/) and
 will be co-ordinated via the vendor-sec / oss-security lists. A
 complete list of known security vulnerabilities is available at:
 
@@ -177,7 +189,7 @@ Libreswan can join the development mailing list "swan-dev" or talk to the
 development team on IRC in #swan on irc.freenode.net
 
 For those who want to track things a bit more closely, the
-swan-commits@lists.libreswan.org mailinglist will mail all the commit
+swan-commits@lists.libreswan.org mailing list will mail all the commit
 messages when they happen. This list is quite busy during active
 development periods.
 
@@ -186,3 +198,7 @@ The most up to date documentation consists of the man pages that come
 with the software. Further documentation can be found at https://libreswan.org/
 and the wiki at https://libreswan.org/wiki/
 
+## KLIPS IPsec stack
+The KLIPS IPsec stack is no longer actively maintained or supported. Please
+migreate to using the Linux native netlink/XFRM stack. If you wish to have
+network interfaces like KLIPS has, please use the XFRMi (VTI) interfaces.

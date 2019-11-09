@@ -1,3 +1,0 @@
-This tests parsing of a config file with no EOL on last line,
-outside any section, which caused the parser to crash
-

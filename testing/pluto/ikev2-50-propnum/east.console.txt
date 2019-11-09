@@ -1,12 +1,14 @@
 ../../guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  ../../pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-propnum
 002 added connection description "westnet-eastnet-propnum"
+east #
+ ipsec whack --impair suppress-retransmits
 east #
  echo "initdone"
 initdone
@@ -18,49 +20,49 @@ east #
  grep -B 1 -e '|    last proposal: ' -A 3 -e '|    prop #: ' /tmp/pluto.log
 | ****parse IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_NON_LAST (0x2)
-|    length: 56 (0x38)
-|    prop #: 1 (0x1)
+|    length: 56 (00 38)
+|    prop #: 1 (01)
 |    proto ID: IKEv2_SEC_PROTO_IKE (0x1)
-|    spi size: 0 (0x0)
-|    # transforms: 5 (0x5)
+|    spi size: 0 (00)
+|    # transforms: 5 (05)
 --
 | ****parse IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_LAST (0x0)
-|    length: 40 (0x28)
-|    prop #: 2 (0x2)
+|    length: 40 (00 28)
+|    prop #: 2 (02)
 |    proto ID: IKEv2_SEC_PROTO_IKE (0x1)
-|    spi size: 0 (0x0)
-|    # transforms: 4 (0x4)
+|    spi size: 0 (00)
+|    # transforms: 4 (04)
 --
 | ****emit IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_LAST (0x0)
-|    prop #: 2 (0x2)
+|    prop #: 2 (02)
 |    proto ID: IKEv2_SEC_PROTO_IKE (0x1)
-|    spi size: 0 (0x0)
-|    # transforms: 4 (0x4)
+|    spi size: 0 (00)
+|    # transforms: 4 (04)
 --
 | ***parse IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_NON_LAST (0x2)
-|    length: 52 (0x34)
-|    prop #: 1 (0x1)
+|    length: 52 (00 34)
+|    prop #: 1 (01)
 |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
-|    spi size: 4 (0x4)
-|    # transforms: 4 (0x4)
+|    spi size: 4 (04)
+|    # transforms: 4 (04)
 --
 | ***parse IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_LAST (0x0)
-|    length: 36 (0x24)
-|    prop #: 2 (0x2)
+|    length: 36 (00 24)
+|    prop #: 2 (02)
 |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
-|    spi size: 4 (0x4)
-|    # transforms: 3 (0x3)
+|    spi size: 4 (04)
+|    # transforms: 3 (03)
 --
-| ******emit IKEv2 Proposal Substructure Payload:
+| *****emit IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_LAST (0x0)
-|    prop #: 1 (0x1)
+|    prop #: 1 (01)
 |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
-|    spi size: 4 (0x4)
-|    # transforms: 3 (0x3)
+|    spi size: 4 (04)
+|    # transforms: 3 (03)
 east #
 east #
  ../bin/check-for-core.sh

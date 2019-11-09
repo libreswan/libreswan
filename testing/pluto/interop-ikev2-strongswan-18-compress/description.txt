@@ -1,0 +1,69 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and Strongswan on
+the responder testing COMPRESSION
+
+The IPCOMP ip xfrm output is a little odd. It contains proto esp, proto comp
+and proto 4 (ipip) entries. It also changes the outer ESP as transport mode,
+even if it is really tunnel mode.
+
+We test with compressable pings to see the counter on the ipcomp SA increase,
+but one the counters always increases even if packets were not compressed.
+
+[root@west ~]# ip xfrm state
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xe1c4db39 reqid 16389 mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xf5e3f7b95e50702f0f116859218d117ab617d1e7 96
+	enc cbc(aes) 0x0604237096a2f5bb32b42b057471582649a3cc003685aad9af3aa9c8f9d640e5
+	anti-replay context: seq 0x8, oseq 0x0, bitmap 0x000000ff
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.23 dst 192.1.2.45
+	proto comp spi 0x0000a833 reqid 16390 mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+	anti-replay context: seq 0x0, oseq 0x0, bitmap 0x00000000
+src 192.1.2.23 dst 192.1.2.45
+	proto 4 spi 0xc0010217 reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
+	anti-replay context: seq 0x0, oseq 0x0, bitmap 0x00000000
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xc1697bd5 reqid 16389 mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0x26fed381a54de6e3e72646f7918c5e5c41f59751 96
+	enc cbc(aes) 0x47a49b7ad03a69d2756de74efa0dd13e2df6340a9a3b78fb3f04caf183141f95
+	anti-replay context: seq 0x0, oseq 0x8, bitmap 0x00000000
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.45 dst 192.1.2.23
+	proto comp spi 0x00003142 reqid 16390 mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+	anti-replay context: seq 0x0, oseq 0x0, bitmap 0x00000000
+src 192.1.2.45 dst 192.1.2.23
+	proto 4 spi 0xc001022d reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
+	anti-replay context: seq 0x0, oseq 0x0, bitmap 0x00000000
+
+Similarly, policy looks a little odd with mixup of tunnel/transport
+
+[root@west ~]# ip xfrm pol
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir out priority 1042407 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto comp reqid 16390 mode tunnel
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 16389 mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir fwd priority 1042407 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid 16390 mode tunnel
+		level use 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 16389 mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir in priority 1042407 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid 16390 mode tunnel
+		level use 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 16389 mode transport
+
+

@@ -4,12 +4,12 @@
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -19,6 +19,13 @@
 
 #ifndef _IKEV2_PRF_H
 #define _IKEV2_PRF_H
+
+#include "lswnss.h"
+#include "ike_spi.h"
+#include "chunk.h"
+#include "shunk.h"
+
+struct prf_desc;
 
 /*
  * IKE SA
@@ -39,7 +46,7 @@ PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyseed,
 				const chunk_t Ni, const chunk_t Nr,
-				const chunk_t SPIi, const chunk_t SPIr,
+				const ike_spis_t *ike_spis,
 				size_t required_bytes);
 
 /*
@@ -52,11 +59,11 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  size_t required_bytes);
 
 /*
- * Old way ...
+ * Authentication.
  */
 
-struct pluto_crypto_req;
-
-void calc_dh_v2(struct pluto_crypto_req *r);
+struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, chunk_t pss,
+				chunk_t first_packet, chunk_t nonce,
+				const struct crypt_mac *id_hash);
 
 #endif

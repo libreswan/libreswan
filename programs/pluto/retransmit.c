@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,23 +14,19 @@
  * for more details.
  */
 
-#include <stdbool.h>
-
 #include "defs.h"
 #include "state.h"
 #include "connections.h"
 #include "retransmit.h"
-
 #include "monotime.h"
 #include "deltatime.h"
-#include "timer.h"
-
+#include "server.h"
 #include "log.h"
 
 size_t lswlog_retransmit_prefix(struct lswlog *buf, struct state *st)
 {
 	return lswlogf(buf, "#%ld %s: retransmits: ",
-		       st->st_serialno, st->st_state_name);
+		       st->st_serialno, st->st_state->name);
 }
 
 unsigned long retransmit_count(struct state *st)
@@ -119,33 +115,17 @@ void clear_retransmits(struct state *st)
 	}
 }
 
-void start_retransmits(struct state *st, enum event_type type)
+void start_retransmits(struct state *st)
 {
 	struct connection *c = st->st_connection;
 	retransmit_t *rt = &st->st_retransmit;
 	rt->nr_duplicate_replies = 0;
 	rt->nr_retransmits = 0;
 	rt->limit = MAXIMUM_RETRANSMITS_PER_EXCHANGE;
-	rt->type = type;
 	/* correct values */
 	rt->timeout = c->r_timeout;
 	rt->delay = c->r_interval;
-	if (IMPAIR(RETRANSMITS)) {
-		/*
-		 * Trigger a quick timeout by using INTERVAL (initial
-		 * delay) as the timeout.
-		 *
-		 * Use this to force code into taking the error path.
-		 * Would a timeout of 0 be better?
-		 */
-		rt->timeout = c->r_interval;
-		LSWLOG(buf) {
-			lswlogs(buf, "IMPAIR RETRANSMITS: scheduling timeout in ");
-			lswlog_deltatime(buf, rt->timeout);
-			lswlogs(buf, " seconds");
-		}
-	}
-	if (IMPAIR(SEND_NO_RETRANSMITS)) {
+	if (IMPAIR(SUPPRESS_RETRANSMITS)) {
 		/*
 		 * Suppress retransmits by using the full TIMEOUT as
 		 * the delay.
@@ -156,14 +136,14 @@ void start_retransmits(struct state *st, enum event_type type)
 		 */
 		rt->delay = c->r_timeout;
 		LSWLOG(buf) {
-			lswlogs(buf, "IMPAIR: send-no-retransmits: scheduling timeout in ");
+			lswlogs(buf, "IMPAIR: suppressing retransmits; scheduling timeout in ");
 			lswlog_deltatime(buf, rt->delay);
 			lswlogs(buf, " seconds");
 		}
 	}
 	rt->start = mononow();
 	rt->delays = rt->delay;
-	event_schedule(rt->type, rt->delay, st);
+	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
 		lswlog_retransmit_prefix(buf, st);
 		lswlogs(buf, "first event in ");
@@ -194,9 +174,13 @@ enum retransmit_status retransmit(struct state *st)
 	 *
 	 * - trigger the retransmit timeout path after the first delay
 	 */
-	if (IMPAIR(RETRANSMITS)) {
-		libreswan_log("suppressing retransmit because IMPAIR_RETRANSMITS is set");
+	if (IMPAIR(TIMEOUT_ON_RETRANSMIT)) {
+		libreswan_log("IMPAIR: retransmit so timing out SA (may retry)");
 		return RETRANSMITS_TIMED_OUT;
+	}
+	if (IMPAIR(DELETE_ON_RETRANSMIT)) {
+		libreswan_log("IMPAIR: retransmit so deleting SA");
+		return DELETE_ON_RETRANSMIT;
 	}
 
 	/*
@@ -210,7 +194,7 @@ enum retransmit_status retransmit(struct state *st)
 	 *
 	 * One working theory as to the cause is that monotime uses
 	 * CLOCK_BOOTTIME (and/or CLOCK_MONOTONIC), while the
-	 * event-loop is still using gettimeofday.
+	 * event-loop library is still using gettimeofday.
 	 */
 	monotime_t now = mononow();
 	unsigned long nr_retransmits = retransmit_count(st);
@@ -219,7 +203,7 @@ enum retransmit_status retransmit(struct state *st)
 	deltatime_t waited = monotimediff(now, rt->start);
 	bool monotime_exceeds_limit = deltatime_cmp(waited, rt->timeout) >= 0;
 	LSWDBGP(DBG_RETRANSMITS, buf) {
-		lswlogs(buf, "retransmit: ");
+		lswlogs(buf, "retransmits: ");
 		lswlogs(buf, "current time ");
 		lswlog_monotime(buf, now);
 		/* number of packets so far */
@@ -240,8 +224,8 @@ enum retransmit_status retransmit(struct state *st)
 	if (retransmit_count_exceeded ||
 	    monotime_exceeds_limit ||
 	    deltatime_exceeds_limit) {
-		LSWLOG_LOG_WHACK(RC_NORETRANSMISSION, buf) {
-			lswlogf(buf, "%s: ", st->st_finite_state->fs_name);
+		LSWLOG_RC(RC_NORETRANSMISSION, buf) {
+			lswlogf(buf, "%s: ", st->st_state->name);
 			if (retransmit_count_exceeded) {
 				lswlogf(buf, "max number of retransmissions (%lu) reached after ",
 					nr_retransmits);
@@ -252,7 +236,7 @@ enum retransmit_status retransmit(struct state *st)
 				lswlogf(buf, " second timeout exceeded after %lu retransmits",
 					nr_retransmits);
 			}
-			switch (st->st_state) {
+			switch (st->st_state->kind) {
 			case STATE_MAIN_I3:
 			case STATE_AGGR_I2:
 				lswlogs(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
@@ -274,7 +258,7 @@ enum retransmit_status retransmit(struct state *st)
 				break;
 			default:
 				lswlogf(buf, ".  No response (or no acceptable response) to our %s message",
-					st->st_ikev2 ? "IKEv2" : "IKEv1");
+					enum_name(&ike_version_names, st->st_ike_version));
 				break;
 			}
 		}
@@ -284,12 +268,42 @@ enum retransmit_status retransmit(struct state *st)
 	double_delay(rt, nr_retransmits);
 	rt->nr_retransmits++;
 	rt->delays = deltatime_add(rt->delays, rt->delay);
-	event_schedule(rt->type, rt->delay, st);
-	LSWLOG_LOG_WHACK(RC_RETRANSMISSION, buf) {
+	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
+	LSWLOG_RC(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: retransmission; will wait ",
-			st->st_finite_state->fs_name);
+			st->st_state->name);
 		lswlog_deltatime(buf, rt->delay);
 		lswlogs(buf, " seconds for response");
 	}
 	return RETRANSMIT_YES;
+}
+
+void suppress_retransmits(struct state *st)
+{
+	retransmit_t *rt = &st->st_retransmit;
+	if (rt->limit == 0) {
+		LSWDBGP(DBG_CONTROL, buf) {
+			lswlog_retransmit_prefix(buf, st);
+			lswlogs(buf, "no retransmits to suppress");
+		}
+		return;
+	}
+
+	monotime_t now = mononow();
+	rt->delay = monotimediff(monotimesum(rt->start, rt->timeout), now);
+	rt->delays = deltatime_add(rt->delays, rt->delay);
+	/*
+	 * XXX: Can't call delete_event() because that calls
+	 * clear_retransmits().  However, got to wonder why
+	 * event_schedule() doesn't just wipe the old event
+	 * automatically?
+	 */
+	delete_pluto_event(&st->st_event);
+	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
+	LSWLOG_RC(RC_RETRANSMISSION, buf) {
+		lswlogf(buf, "%s: suppressing retransmits; will wait ",
+			st->st_state->name);
+		lswlog_deltatime(buf, rt->delay);
+		lswlogs(buf, " seconds for retry");
+	}
 }

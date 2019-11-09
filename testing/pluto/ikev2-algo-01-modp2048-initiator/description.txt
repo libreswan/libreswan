@@ -19,5 +19,7 @@ cause a negotiation failure in 2.6.06 and earlier, visible in the logs with:
 | state transition function for STATE_PARENT_R1 failed: NO_PROPOSAL_CHOSEN
 
 
+note: this test was updated from SHA1 to SHA2, since SHA1 is no longer in the list
+of default algorithms. It is not entirely clear this test is still testing anything.
 
 

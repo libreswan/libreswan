@@ -6,7 +6,7 @@
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/lgpl-2.1.txt>.
  *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -58,11 +58,8 @@ ip_address *dst;
 		 */
 		memset(&dst->u.v4, '\0', sizeof(dst->u.v4));
 #endif
-		dst->u.v4.sin_family = af;
+		SET_V4(*dst);
 		dst->u.v4.sin_port = 0;
-#ifdef NEED_SIN_LEN
-		dst->u.v4.sin_len = sizeof(struct sockaddr_in);
-#endif
 		memcpy((char *)&dst->u.v4.sin_addr.s_addr, src, srclen);
 		break;
 	case AF_INET6:
@@ -72,12 +69,9 @@ ip_address *dst;
 #if !defined(__KERNEL__)
 		memset(&dst->u.v6, '\0', sizeof(dst->u.v6));
 #endif
-		dst->u.v6.sin6_family = af;
+		SET_V6(*dst);
 		dst->u.v6.sin6_flowinfo = 0;            /* unused */
 		dst->u.v6.sin6_port = 0;
-#ifdef NEED_SIN_LEN
-		dst->u.v6.sin6_len = sizeof(struct sockaddr_in6);
-#endif
 		memcpy((char *)&dst->u.v6.sin6_addr, src, srclen);
 		break;
 	default:

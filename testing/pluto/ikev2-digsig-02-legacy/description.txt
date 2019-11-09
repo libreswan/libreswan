@@ -1,0 +1,4 @@
+Legacy (non-RFC 7427) IKEv2 RSA method - this method only supports RSA-SHA1
+non-legacy method does not support SHA1
+
+FIXME: it finds empty RFC 7427 and stops, instead of letting legacy continue

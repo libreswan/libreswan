@@ -1,6 +1,0 @@
-This tests parsing of a config file with subnets= set for both
-left and right.
-
-
-
-

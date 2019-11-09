@@ -2,13 +2,14 @@
 # STACK startup script
 # Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
-# Copyright (C) 2008-2015 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2008-2019 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -19,6 +20,12 @@
 # nothing to do if the kernel has no module loading/unloading support
 [ ! -f /proc/modules ] && exit 0
 
+# These prevent coverity warnings; variables come in via ipsec addconn call
+xfrmlifetime=""
+overridemtu=""
+fragicmp=""
+hidetos=""
+
 IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
 PATH=@FINALSBINDIR@:${PATH}
 export PATH
@@ -28,8 +35,8 @@ eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn  --configsetup | grep -v "#" | 
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
 
-kamepfkey=/proc/net/pfkey
-ipsecpfkey=/proc/net/ipsec/version
+xfrm_stat=/proc/sys/net/core/xfrm_acq_expires
+klipsstack=/proc/net/ipsec/version
 action="${1}"
 
 if [ -z "${action}" ]; then
@@ -44,11 +51,11 @@ stopnetkey() {
     # Validate wait option
     [ "${1}" = "--wait" -o "${1}" = "-w" ] && wait="${1}"
 
-    if [ -f ${kamepfkey} ]; then
+    if [ -f ${xfrm_stat} ]; then
 	ip xfrm state flush
 	ip xfrm policy flush
 	if [ -n "$(ip xfrm state)" -o -n "$(ip xfrm policy)" ]; then
-	    echo "NETKEY IPsec stack could not be cleared" >&2
+	    echo "XFRM IPsec stack could not be cleared" >&2
 	fi
 
 	if [ -f /proc/modules ]; then
@@ -65,19 +72,19 @@ stopnetkey() {
 	    for mod in xfrm_ipcomp ipcomp ipcomp6 ip_vti xfrm6_tunnel \
 		xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro \
 		xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel \
-		xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key \
-		xfrm_user
+		xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 \
+		xfrm_user xfrm_interface
 	    do
 		# first try and unload the modules without the 10s wait pause
-		if [ -n "$(egrep ^${mod} /proc/modules)" ]; then
+		if [ -n "$(grep ^${mod} /proc/modules)" ]; then
 		    # echo "unloading module ${mod}" >&2
 		    rmmod ${mod} 2>/dev/null
 		fi
 		# We only run rmmod again with --wait if requested
 		if [ -n "${wait}" -a \
-		    -n "$(egrep ^${mod} /proc/modules)" ]; then
+		    -n "$(grep ^${mod} /proc/modules)" ]; then
 		    # echo "unloading module ${mod} using --wait" >&2
-		    # we start rmmod to backgroud so unloading one module
+		    # we start rmmod to background so unloading one module
 		    # won't block
 		    rmmod ${wait} ${mod} 2>/dev/null &
 		fi
@@ -114,21 +121,21 @@ startnetkey() {
 
     cryptomodules
 
-    if [ -f ${ipsecpfkey} ]; then
-	echo "Warning: found KLIPS/MAST stack loaded - attempting to unload..." >&2
+    if [ -f ${klipsstack} ]; then
+	echo "Warning: found KLIPS stack loaded - attempting to unload..." >&2
 	stopklips
-	if [ -f ${ipsecpfkey} ]; then
-	    echo "FAILURE to unload KLIPS/MAST module" >&2
+	if [ -f ${klipsstack} ]; then
+	    echo "FAILURE to unload KLIPS module" >&2
 	    exit 1
 	fi
     fi
 
     if [ -f /proc/modules ]; then
-	# load all NETKEY modules
+	# load all XFRM modules
 	for mod in ipcomp6 xfrm_ipcomp ipcomp xfrm6_tunnel xfrm6_mode_tunnel \
 	    xfrm6_mode_beet xfrm6_mode_ro xfrm6_mode_transport \
 	    xfrm4_mode_transport xfrm4_mode_tunnel xfrm4_tunnel \
-	    xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key ip_vti
+	    xfrm4_mode_beet esp4 esp6 ah4 ah6 ip_vti xfrm_interface
 	do
 	    # echo -n "${mod} " >&2
 	    ${MODPROBE} ${mod} 2>/dev/null
@@ -140,13 +147,26 @@ startnetkey() {
     fi
     # Time before kernel ACQUIRE for ondemand/ Opportunistic expires
     # Also Time before reserved kernel SPI times out
-    [ -w /proc/sys/net/core/xfrm_acq_expires ] && \
-	echo ${xfrmlifetime} >/proc/sys/net/core/xfrm_acq_expires || : not writeable
+    xcur=$(cat /proc/sys/net/core/xfrm_acq_expires 2>/dev/null)
+    if [ -w /proc/sys/net/core/xfrm_acq_expires ]; then
+	if [ ${xfrmlifetime} -ne 0${xcur} ]; then
+	    echo "changing /proc/sys/net/core/xfrm_acq_expires from ${xcur} to ${xfrmlifetime}"
+	    echo ${xfrmlifetime} >/proc/sys/net/core/xfrm_acq_expires
+	fi
+    else
+	echo "WARNING: can not change /proc/sys/net/core/xfrm_acq_expires from ${xcur} to ${xfrmlifetime}" >&2
+    fi
+
+    # Fail on error in loading XFRM IPsec stack
+    if [ ! -f ${xfrm_stat} ]; then
+	echo "FAILURE in loading XFRM IPsec stack" >&2
+	exit 1
+    fi
 }
 
 stopklips() {
-    if [ -f ${ipsecpfkey} ]; then
-	# Bring down ipsecX and mast0 interfaces
+    if [ -f ${klipsstack} ]; then
+	# Bring down ipsecX interfaces
 	ifl=$(grep -v NULL /proc/net/ipsec_tncfg 2>/dev/null | sed -n -e "/^ipsec/s/ .*//p")
 	if [ -n "${ifl}" ]; then
 	    for iface in  ${ifl}; do
@@ -156,10 +176,6 @@ stopklips() {
 		# ipsec0 won't let itself be deleted
 		ipsec tncfg --delete ${iface}
 	    done
-	    # mast0 is not listed in ipsec_tncfg
-	    if [ -d /proc/sys/net/ipv4/conf/mast0 ]; then
-		ipsec tncfg --delete mast0
-	    fi
 	    [ -r /proc/net/ipsec_klipsdebug ] && ipsec klipsdebug --none
 	    [ -d /proc/net/ipsec/eroute ] && ipsec eroute --clear
 	    [ -d /proc/net/ipsec/spi ] && ipsec spi --clear
@@ -169,24 +185,10 @@ stopklips() {
 	    rmmod ipsec 2>/dev/null
 	fi
     fi
-    if [ -f ${ipsecpfkey} -o -n "$(lsmod | grep ^ipsec)" ]; then
-	echo "FAILURE to unload KLIPS/MAST module" >&2
+    if [ -f ${klipsstack} -o -n "$(lsmod | grep ^ipsec)" ]; then
+	echo "FAILURE to unload KLIPS module" >&2
 	exit 1
     fi
-}
-
-stopmast() {
-    stopklips
-    # Flush policy out in case of mast - NEW_IPSEC_CONN and IPSEC
-    # tables are created in _updown.mast on demand
-    grep ^mangle /proc/net/ip_tables_names >/dev/null 2>&1 && \
-	iptables -t mangle -F IPSEC >/dev/null 2>&1
-    grep ^mangle /proc/net/ip_tables_names >/dev/null 2>&1 && \
-	iptables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>&1
-    grep ^mangle /proc/net/ip6_tables_names >/dev/null 2>&1 && \
-	ip6tables -t mangle -F IPSEC >/dev/null 2>&1
-    grep ^mangle /proc/net/ip6_tables_names >/dev/null 2>&1 && \
-	ip6tables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>&1
 }
 
 stop() {
@@ -196,7 +198,7 @@ stop() {
 
 cryptomodules() {
     # load any OCF and CryptoAPI modules we might need for acceleration
-    # (OCF works for NETKEY and KLIPS/MAST)
+    # (OCF works for XFRM IPsec and KLIPS)
     # OCF cryptosoft is for kernel acceleration (ESP/AH)
     ${MODPROBE} cryptosoft 2>/dev/null
     # We skip cryptodev.ko because we no longer support /dev/crypto offloading
@@ -240,21 +242,13 @@ cryptomodules() {
     done
 }
 
-startmast() {
-    startklips
-}
-
 startklips() {
     cryptomodules
-    if [ -f ${kamepfkey} ]; then
-	echo "Warning: found NETKEY/XFRM stack loaded - attempting to unload..." >&2
+    if [ -f ${xfrm_stat} ]; then
+	echo "Warning: found possible XFRM IPsec stack loaded - attempting to unload..." >&2
 	stopnetkey --wait
-	if [ -f ${kamepfkey} ]; then
-	    echo "FAILURE to unload KLIPS/MAST module" >&2
-	    exit 1
-	fi
     fi
-    if [ ! -f ${ipsecpfkey} ]; then
+    if [ ! -f ${klipsstack} ]; then
 	# KLIPS-related paths
 	bareversion=$(uname -r | sed -e 's/\.nptl//' | sed -e 's/^\(2\.[0-9]\.[1-9][0-9]*-[1-9][0-9]*\(\.[0-9][0-9]*\)*\(\.x\)*\).*$/\1/')
 	case ${bareversion} in
@@ -272,8 +266,8 @@ startklips() {
 	    ${MODPROBE} ${modulename}
 	fi
 
-	if [ ! -f ${ipsecpfkey} ]; then
-	    echo "FAILURE to load KLIPS/MAST module" >&2
+	if [ ! -f ${klipsstack} ]; then
+	    echo "FAILURE to load KLIPS module" >&2
 	    exit 1
 	fi
 
@@ -283,53 +277,11 @@ startklips() {
 	fi
     fi
 
-    # If overridemtu present, need to change for all interfaces (ipsecX, mastX)
-    if [ ${stack} = "mast" ]; then
-	# we really just ignore the interfaces= line completely
-	# make sure this mast device exists, if not create it
-	virt="mast0"
-	if [ ! -d /sys/devices/virtual/net/${virt} ]; then
-	    # in mast mode we just create the virtual interface
-	    ipsec tncfg --create ${virt}
-	fi
-	# ensure the link is up, even if module was already loaded
-	ip link set ${virt} up
-	# detach all ipsecX devices
-	ipsec tncfg --clear
-	# remove any ipsecX interfaces, as we are using mastX
-	# Note: currently it seems klips cannot delete ipsec0
-	for device in $(ip -oneline link show | grep ipsec | cut -d: -f2 | sort -r)
-	do
-	    ipsec tncfg --delete ${device}
-	done
-	# PAUL: Shouldn't we configure an ip for mast0, but which one?
-	#	best guess is the defaultroute one?
-	# PAUL: We tell in the man page for ipsec.conf protostack= that
-	#	the user should do this
-
-	if [ "${overridemtu}" != "" ]; then
-		ip link set mtu ${overridemtu} dev ${virt}
-	else
-		# Double check the mtu is not 0
-		# if it is set it to a saner default
-		ip link show dev ${virt} | grep -q 'mtu 0 '
-		RETVAL=$?
-		if [ "${RETVAL}" -eq 0 ]; then
-			echo "Fixup of mtu on ${virt} to 16260" >&2
-			ip link set mtu 16260 dev ${virt}
-		fi
-	fi
-
-    elif [ ${stack} = "klips" ]; then
+    if [ ${stack} = "klips" ]; then
 	# in klips mode we attach it to the physical device
 	# clear tables out in case dregs have been left over
 	ipsec eroute --clear
 	ipsec spi --clear
-	# remove mast0 interface, as we are using ipsecX
-	for device in $(ip -oneline link show | grep mast0 | cut -d: -f2 | sort -r)
-	do
-	    ipsec tncfg --delete ${device}
-	done
 	# detach all ipsecX devices
 	ipsec tncfg --clear
 
@@ -415,7 +367,7 @@ if [ $(id -u) -ne 0 ]; then
     exit 4
 fi
 
-if [ "$2" = "--netkey" ]; then
+if [ "$2" = "--netkey" -o "$2" = "--xfrm" ]; then
 	# manual override for use in docker
 	stack=netkey
 else
@@ -423,7 +375,7 @@ else
 fi
 
 case ${stack} in
-    netkey|klips|mast|none)
+    netkey|klips|none)
 	;;
     auto)
 	echo "protostack=auto is not longer supported, defaulting to netkey" >&2
@@ -437,14 +389,14 @@ esac
 
 case ${action} in
     stop)
-	# We don't unload NETKEY/XFRM on stop - only when we detect a stack
+	# We don't unload XFRM IPsec on stop - only when we detect a stack
 	# change.
-	if [ -f ${ipsecpfkey} ]; then
+	if [ -f ${klipsstack} ]; then
 		ipsec eroute --clear
 		# this clears all IP addresses on ipsecX interfaces by
 		# unloading the module
 		stopklips
-	elif [ -f ${kamepfkey} ]; then
+	elif [ -f ${xfrm_stat} ]; then
 		ip xfrm state flush
 		ip xfrm policy flush
 		# module unloading skipped on purpose - can hang for a long
@@ -458,9 +410,6 @@ case ${action} in
 		;;
 	    klips)
 		startklips
-		;;
-	    mast)
-		startmast
 		;;
 	esac
 	;;

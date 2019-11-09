@@ -1,11 +1,11 @@
 /* lset modifiers, for libreswan
  *
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -16,7 +16,7 @@
 #ifndef _LMOD_H_
 #define _LMOD_H_
 
-/* #include "lset.h" */
+#include "lset.h"
 
 /*
  * lmod_t is for modifying an lset_t.
@@ -46,16 +46,16 @@ struct lmod_compat {
 };
 
 struct lmod_info {
-	const struct enum_names *names;
+	const enum_names *names;
 	lset_t all;
 	lset_t mask;
 	struct lmod_compat *compat;
 };
 
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
-	      const char *optarg);
+	      const char *optarg, bool enable);
 
-void lswlog_lmod(struct lswlog *buf, const struct enum_names *names,
+void lswlog_lmod(struct lswlog *buf, const enum_names *names,
 		 const char *separator, lmod_t mod);
 
 #endif

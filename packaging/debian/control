@@ -7,6 +7,7 @@ Uploaders:
 Vcs-Browser: https://github.com/libreswan/libreswan
 Vcs-Git: https://github.com/libreswan/libreswan
 Standards-Version: 4.1.0
+# Rules-Requires-Root: no # breaks jessie
 # libunbound-dev (>= 1.6.5~)  # this is not yet
 Build-Depends:
  bison,
@@ -43,13 +44,12 @@ Pre-Depends:
 Depends:
  bsdmainutils,
  dns-root-data,
- host,
- iproute2 | iproute (>= 20071016),
+ bind9-host,
+ iproute2,
  iptables,
  libnspr4,
  libnss3 (>= 3.16),
  libnss3-tools,
- libunbound2,
  systemd,
  ${misc:Depends},
  ${shlibs:Depends},
@@ -59,6 +59,7 @@ Provides:
  ike-server,
 Conflicts:
  ike-server,
+ strongswan-libcharon,
  strongswan-starter,
 Replaces:
  ike-server,

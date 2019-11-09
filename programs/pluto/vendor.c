@@ -1,16 +1,17 @@
 /* Libreswan ISAKMP VendorID Handling
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
- * Copyright (C) 2012-2014 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
- * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * See also https://github.com/royhills/ike-scan/blob/master/ike-vendor-ids
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -22,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -39,8 +39,8 @@
 #include "vendor.h"
 #include "quirks.h"
 #include "kernel.h"
-#include "ike_alg_md5.h"
 #include "crypt_hash.h"
+#include "ike_alg_hash.h"
 
 #include "nat_traversal.h"
 
@@ -62,6 +62,7 @@
  *  cf49908791073fb46439790fdeb6aeed981101ab0000000500000300
  *
  * Cisco:
+ *  1f07f70eaa6514d3b0fa96542a500100 (Cisco VPN Concentrator)
  *  1f07f70eaa6514d3b0fa96542a500300 (VPN 3000 version 3.0.0)
  *  1f07f70eaa6514d3b0fa96542a500301 (VPN 3000 version 3.0.1)
  *  1f07f70eaa6514d3b0fa96542a500305 (VPN 3000 version 3.0.5)
@@ -149,26 +150,92 @@ static struct vid_struct vid_tab[] = {
 
 	/* Implementation names */
 
+	/*
+	 * We send this VID to let people know this is opportunistic ipsec.
+	 * Keep this entry as the first - we look this in the table regularly
+	 */
+	{ VID_OPPORTUNISTIC, VID_STRING | VID_KEEP, "Opportunistic IPsec",
+	 "\x4f\x70\x70\x6f\x72\x74\x75\x6e\x69\x73\x74\x69\x63\x20\x49\x50\x73\x65\x63",
+	  NULL, 0},
+
 	{ VID_OPENPGP, VID_STRING, "OpenPGP10171", "OpenPGP", NULL, 0 },
 
 	DEC_MD5_VID(VID_KAME_RACOON, "KAME/racoon"),
-	{
-		VID_MS_NT5, VID_MD5HASH | VID_SUBSTRING_DUMPHEXA,
-		"MS NT5 ISAKMPOAKLEY", NULL, NULL, 0
-	},
-	/* http://msdn.microsoft.com/en-us/library/cc233476%28v=prot.10%29.aspx
-	   Windows 2000 00 00 00 02
-	   Windows XP 00 00 00 03
-	   Windows Server 2003 00 00 00 04
-	   Windows Vista 00 00 00 05
-	   Windows Server 2008 00 00 00 06
-	   Windows 7 00 00 00 07
-	   Windows Server 2008 R2 00 00 00 08
-	 */
 
-	/* These two VID's plus VID_MS_NT5 trigger GSS-API support */
+	/*
+	 * https://msdn.microsoft.com/en-us/library/cc233476.aspx
+	 * The first few are "MS NT5 ISAKMPOAKLEY" with a version number appended
+	 */
+	{ VID_MS_WIN2K, VID_KEEP, "Windows 2000" , NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x02",
+	  20 },
+	{ VID_MS_WINXP, VID_KEEP, "Windows XP" , NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x03",
+	  20 },
+	{ VID_MS_WIN2003, VID_KEEP, "Windows Server 2003" , NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x04",
+	  20 },
+	{ VID_MS_WINVISTA, VID_KEEP, "Windows Vista", NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x05",
+	  20 },
+	{ VID_MS_WIN2008, VID_KEEP, "Windows Server 2008", NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x06",
+	  20 },
+	{ VID_MS_WIN7, VID_KEEP, "Windows 7", NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x07",
+	  20 },
+	{ VID_MS_WIN2008R2, VID_KEEP, "Windows Server 2008 R2", NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x08",
+	  20 },
+	{ VID_MS_WINKSINK09, VID_KEEP, "Windows 8, 8.1, 10, Server 2012 R2, Server 2016", NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x09",
+	  20 },
+	{ VID_MS_WINKEYMODS_IKE, VID_KEEP, "Windows KEY_MODS (IKE)", NULL,
+	  "\x01\x52\x8b\xbb\xc0\x06\x96\x12\x18\x49\xab\x9a\x1c\x5b\x2a\x51\x00\x00\x00\x00",
+	  20 },
+	{ VID_MS_WINKEYMODS_AUTHIP, VID_KEEP, "Windows KEY_MODS (AUTHIP)", NULL,
+	  "\x01\x52\x8b\xbb\xc0\x06\x96\x12\x18\x49\xab\x9a\x1c\x5b\x2a\x51\x00\x00\x00\x01",
+	  20 },
+	{ VID_MS_WINKEYMODS_IKEv2, VID_KEEP, "Windows KEY_MODS (IKEv2)", NULL,
+	  "\x01\x52\x8b\xbb\xc0\x06\x96\x12\x18\x49\xab\x9a\x1c\x5b\x2a\x51\x00\x00\x00\x02",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH_NONE, VID_KEEP, "AUTHIP INIT KE DH NONE", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x00",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH1, VID_KEEP, "AUTHIP INIT KE DH1", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x01",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH2, VID_KEEP, "AUTHIP INIT KE DH2", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x02",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH14, VID_KEEP, "AUTHIP INIT KE DH14", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x03",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH19, VID_KEEP, "AUTHIP INIT KE DH19(ECP 256)", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x04",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH20, VID_KEEP, "AUTHIP INIT KE DH20(ECP 384)", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x05",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH21, VID_KEEP, "AUTHIP INIT KE DH21(ECP 521)", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x06",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DHMAX, VID_KEEP, "AUTHIP INIT KE DH MAX", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x07",
+	  20 },
+
+	DEC_MD5_VID(VID_MS_NLBS_PRESENT, "NLBS_PRESENT(NLB/MSCS fast failover supported)"),
+	DEC_MD5_VID(VID_MS_MAMIEEXISTS, "MS-MamieExists(AuthIP supported)"),
+	DEC_MD5_VID(VID_MS_CGAv1, "IKE CGA version 1"),
+	DEC_MD5_VID(VID_MS_NEGDISCCAP, "MS-Negotiation Discovery Capable"),
+	DEC_MD5_VID(VID_MS_XBOX_ONE_2013, "Microsoft Xbox One 2013"),
+	DEC_MD5_VID(VID_MS_XBOX_IKEv2, "Xbox IKEv2 Negotiation"),
+	DEC_MD5_VID(VID_MS_SEC_REALM_ID, "MSFT IPsec Security Realm Id"),
+
+	/* These two VID's plus VID_MS_NT5 trigger GSS-API support on Windows */
 	DEC_MD5_VID(VID_GSSAPILONG, "A GSS-API Authentication Method for IKE"),
 	DEC_MD5_VID(VID_GSSAPI, "GSSAPI"),
+
 
 	DEC_MD5_VID(VID_SSH_SENTINEL, "SSH Sentinel"),
 	DEC_MD5_VID(VID_SSH_SENTINEL_1_1, "SSH Sentinel 1.1"),
@@ -223,11 +290,22 @@ static struct vid_struct vid_tab[] = {
 	{ VID_CISCO_UNITY, VID_KEEP, NULL, "Cisco-Unity",
 	  "\x12\xf5\xf2\x8c\x45\x71\x68\xa9\x70\x2d\x9f\xe2\x74\xcc\x01\x00",
 	  16 },
+
+	/* 434953434f56504e2d5245562d3032 */
+	{ VID_CISCO_VPN_REV_02, VID_STRING, "CISCOVPN-REV-02",
+	  NULL, NULL, 0 },
+
 	{ VID_CISCO_UNITY_FWTYPE, VID_KEEP, NULL, "Cisco-Unity FW type",
 	  "\x80\x01\x00\x01\x80\x02\x00\x01\x80\x03\x00\x02", 12 },
+
 	/* 434953434f2d44454c4554452d524541534f4e */
 	{ VID_CISCO_DELETE_REASON, VID_STRING, "CISCO-DELETE-REASON",
 	  NULL, NULL, 0 },
+
+	/* 434953434f2d44594e414d49432d524f555445 */
+	{ VID_CISCO_DYNAMIC_ROUTE, VID_STRING, "CISCO-DYNAMIC-ROUTE",
+	  NULL, NULL, 0 },
+
 	/* 464c455856504e2d535550504f52544544 */
 	{ VID_CISCO_FLEXVPN_SUPPORTED, VID_STRING, "FLEXVPN-SUPPORTED",
 	  NULL, NULL, 0 },
@@ -301,8 +379,8 @@ static struct vid_struct vid_tab[] = {
 	  "\x3b\x90\x31\xdc\xe4\xfc\xf8\x8b\x48\x9a\x92\x39\x63\xdd\x0c\x49",
 	  16 },
 
-	/* Used by libreswan and openswan to detect bid-down attacks */
-	{ VID_MISC_IKEv2, VID_STRING | VID_KEEP, "IKEv2", "CAN-IKEv2", NULL,
+	/* Obsolete: Was used by libreswan and openswan to detect bid-down attacks */
+	{ VID_MISC_IKEv2, VID_STRING | VID_KEEP, "IKEv2", "CAN-IKEv2(obsolete)", NULL,
 	  0 },
 
 	/* VID is ASCII "HeartBeat_Notify" plus a few bytes (version?) */
@@ -315,15 +393,6 @@ static struct vid_struct vid_tab[] = {
 	{ VID_MACOSX, VID_STRING | VID_SUBSTRING_DUMPHEXA, "Mac OSX 10.x",
 	  "\x4d\xf3\x79\x28\xe9\xfc\x4f\xd1\xb3\x26\x21\x70\xd5\x15\xc6\x62",
 	  NULL, 0 },
-
-	/*
-	 * We send this VID to let people know this opportunistic ipsec
-	 * (we hope people thinking they are under attack will google for
-	 *  this string and find information about it)
-	 */
-	{ VID_OPPORTUNISTIC, VID_STRING | VID_KEEP, "Opportunistic IPsec",
-	 "\x4f\x70\x70\x6f\x72\x74\x75\x6e\x69\x73\x74\x69\x63\x20\x49\x50\x73\x65\x63",
-	  NULL, 0},
 
 	DEC_MD5_VID(VID_IKE_FRAGMENTATION, "FRAGMENTATION"),
 	DEC_MD5_VID(VID_INITIAL_CONTACT, "Vid-Initial-Contact"),
@@ -511,7 +580,7 @@ static struct vid_struct vid_tab[] = {
 		"\x08\xdb\x45\xe6\xcb\x01\xf8\x0b\xb5\x76\xe9\xa7\x8c\x0f\x54\xe1\x30\x0b\x88\x81", 20 },
 
 	/* END OF TABLE */
-	{ 0, 0, NULL, NULL, NULL, 0 }
+	{ VID_none, 0, NULL, NULL, NULL, 0 }
 };
 
 static const char hexdig[] = "0123456789abcdef";
@@ -527,7 +596,7 @@ void init_vendorid(void)
 {
 	struct vid_struct *vid;
 
-	for (vid = vid_tab; vid->id; vid++) {
+	for (vid = vid_tab; vid->id != VID_none; vid++) {
 		if (vid->flags & VID_SELF) {
 			vid->vid_len = strlen(vid->vid);
 		} else if (vid->flags & VID_STRING) {
@@ -543,8 +612,9 @@ void init_vendorid(void)
 
 			vid->vid = (char *)vidm;
 
-			struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_md5,
-								 "vendor id", DBG_CRYPT);
+			/* TODO: This use must allowed even with USE_MD5=false */
+			struct crypt_hash *ctx = crypt_hash_init("vendor id",
+								 &ike_alg_hash_md5);
 			crypt_hash_digest_bytes(ctx, "data", d, strlen(vid->data));
 			crypt_hash_final_bytes(&ctx, vidm, MD5_DIGEST_SIZE);
 			vid->vid_len = MD5_DIGEST_SIZE;
@@ -553,12 +623,11 @@ void init_vendorid(void)
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
 			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID (ignore)");
-			int i;
 
 			vid->vid = vidm;
 
-			struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_md5,
-								 "vendor id", DBG_CRYPT);
+			struct crypt_hash *ctx = crypt_hash_init("vendor id",
+								 &ike_alg_hash_md5);
 			crypt_hash_digest_bytes(ctx, "data", vid->data, strlen(vid->data));
 			crypt_hash_final_bytes(&ctx, hash, MD5_DIGEST_SIZE);
 
@@ -571,7 +640,7 @@ void init_vendorid(void)
 			memset(vidm + 2 + MD5_DIGEST_SIZE, '\0',
 			       FSWAN_VID_SIZE - (2 + MD5_DIGEST_SIZE));	/* pad hash */
 #endif
-			for (i = 2; i < FSWAN_VID_SIZE; i++) {
+			for (int i = 2; i < FSWAN_VID_SIZE; i++) {
 				vidm[i] &= 0x7f;
 				vidm[i] |= 0x40;
 			}
@@ -708,12 +777,12 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 		/* FALL THROUGH */
 	case VID_NATT_RFC:
 		if (md->quirks.qnat_traversal_vid < vid->id) {
-			DBG(DBG_NATT, DBG_log(" quirks.qnat_traversal_vid set to=%d ",
-					      vid->id));
+			DBG(DBG_NATT, DBG_log(" quirks.qnat_traversal_vid set to=%d [%s]",
+					      vid->id, vid->descr));
 			md->quirks.qnat_traversal_vid = vid->id;
 		} else {
 			DBG(DBG_NATT,
-			    DBG_log("Ignoring older NAT-T Vendor ID paylad [%s]",
+			    DBG_log("Ignoring older NAT-T Vendor ID payload [%s]",
 				    vid->descr));
 			vid_useful = FALSE;
 		}
@@ -793,15 +862,24 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 	/*
 	 * Find known VendorID in vid_tab
 	 */
-	for (pvid = vid_tab; pvid->id; pvid++) {
-		if (pvid->vid && vid && pvid->vid_len && len) {
+	for (pvid = vid_tab; pvid->id != VID_none; pvid++) {
+		/*
+		 * ??? if len == 0 we should skip the loop
+		 * (the loop doesn't change len).
+		 * But I strongly suspect that even without this check
+		 * nothing will match anyway, with the same result.
+		 *
+		 * ??? is there really a point in checking for
+		 * pvid->vid_len?
+		 */
+		if (pvid->vid != NULL && pvid->vid_len != 0 && len != 0) {
 			if (pvid->vid_len == len) {
 				if (memeq(pvid->vid, vid, len)) {
 					handle_known_vendorid(md, vid,
 							      len, pvid, ikev2);
 					return;
 				}
-			} else if ((pvid->vid_len < len) &&
+			} else if (pvid->vid_len < len &&
 				   (pvid->flags & VID_SUBSTRING)) {
 				if (memeq(pvid->vid, vid, pvid->vid_len)) {
 					handle_known_vendorid(md, vid, len,
@@ -815,22 +893,17 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 	/*
 	 * Unknown VendorID. Log the beginning.
 	 */
-	{
-		char log_vid[2 * MAX_LOG_VID_LEN + 1];
-		size_t i;
+	char log_vid[2 * MAX_LOG_VID_LEN + 1];
+	size_t i;
 
-		for (i = 0; (i < len) && (i < MAX_LOG_VID_LEN); i++) {
-			/*
-			 * clang 3.4 thinks the vid might be NULL; wrong
-			 */
-			log_vid[2 * i] = hexdig[(vid[i] >> 4) & 0xF];
-			log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];
-		}
-		log_vid[2 * i] = '\0';
-		loglog(RC_LOG_SERIOUS,
-		       "ignoring unknown Vendor ID payload [%s%s]",
-		       log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");
+	for (i = 0; i < len && i < MAX_LOG_VID_LEN; i++) {
+		log_vid[2 * i] = hexdig[(vid[i] >> 4) & 0xF];
+		log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];
 	}
+	log_vid[2 * i] = '\0';
+	loglog(RC_LOG_SERIOUS,
+	       "ignoring unknown Vendor ID payload [%s%s]",
+	       log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");
 }
 
 /**
@@ -841,13 +914,13 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
  * @param vid Int of VendorID to be sent (see vendor.h for the list)
  * @return bool True if successful
  */
-bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
+bool out_vid(uint8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 
-	for (pvid = vid_tab; pvid->id != vid; pvid++) /* stop at right vid */
-
-	passert(pvid->id != 0); /* we must find what we are trying to send */
+	passert(vid != 0);
+	for (pvid = vid_tab; pvid->id != vid; pvid++)
+		passert(pvid->id != VID_none); /* we must find what we are trying to send */
 
 	DBG(DBG_EMITTING,
 	    DBG_log("out_vid(): sending [%s]", pvid->descr));
@@ -857,28 +930,77 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 }
 
 /*
+ * out_vid_set: output all Vendor ID payloads for IKEv1.
+ *
+ * Next Payload has historically been tricky.  We dodge this
+ * by a couple of ways
+ *
+ * We always emit DPD VID.  So the our caller knows that the
+ * preceding NP must be ISAKMP_NEXT_VID.  This also means that
+ * each VID payload before DPD VID must have NP ISAKMP_NEXT_VID.
+ *
+ * It happens that VID payloads that are emitted here are the last payloads
+ * of the message so the DPD VID payload's NP must be ISAKMP_NEXT_NONE.
+ *
+ * If any changes make this NP calculation more tricky, we should
+ * exploit the NP backpatching logic in out_struct.
+ */
+
+bool out_vid_set(pb_stream *outs, const struct connection *c)
+{
+	/* cusomizeable Vendor ID */
+	if (c->send_vendorid) {
+		if (!ikev1_out_generic_raw(ISAKMP_NEXT_VID, &isakmp_vendor_id_desc, outs,
+					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
+			return FALSE;
+		}
+	}
+
+#define MAYBE_VID(q, vid) {  \
+	if (q) {  \
+		if (!out_vid(ISAKMP_NEXT_VID, outs, vid)) {  \
+			return FALSE;  \
+		}  \
+	}  \
+}
+
+	MAYBE_VID(c->cisco_unity, VID_CISCO_UNITY);
+	MAYBE_VID(c->fake_strongswan, VID_STRONGSWAN);
+	MAYBE_VID(c->policy & POLICY_IKE_FRAG_ALLOW, VID_IKE_FRAGMENTATION);
+	MAYBE_VID(c->spd.this.xauth_client || c->spd.this.xauth_server, VID_MISC_XAUTH);
+
+#undef MAYBE_VID
+
+	/*
+	 * DPD: last, unconditional, VID.
+	 * Note: because this is unconditional AND last
+	 * we know that all previous np must be ISAKMP_NEXT_VID.
+	 * There might be a successor payload generated by caller;
+	 * we count on backpatching to fix our np.
+	 */
+
+	if (!out_vid(ISAKMP_NEXT_NONE, outs, VID_MISC_DPD)) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/*
  * The VID table or entries are static
  */
 bool vid_is_oppo(const char *vid, size_t len)
 {
 	struct vid_struct *pvid;
 
-	/* stop at right vid in vidtable */
+	/* stop at right vid in vidtable (should be first entry) */
 	for (pvid = vid_tab; pvid->id != VID_OPPORTUNISTIC; pvid++)
+		passert(pvid->id != VID_none); /* we must find VID_OPPORTUNISTIC */
 
-	passert(pvid->id != 0); /* we must find VID_OPPORTUNISTIC */
-
-	if (pvid->vid_len != len) {
-		DBG(DBG_CONTROLMORE, DBG_log("VID is not VID_OPPORTUNISTIC: length differs"));
-		return FALSE;
-	}
-
-	if (memeq(vid, pvid->vid, len)) {
+	if (pvid->vid_len == len && memeq(vid, pvid->vid, len)) {
 		DBG(DBG_CONTROL, DBG_log("VID_OPPORTUNISTIC received"));
 		return TRUE;
 	} else {
-		DBG(DBG_CONTROLMORE, DBG_log("VID is not VID_OPPORTUNISTIC: content differs"));
 		return FALSE;
 	}
 }
-

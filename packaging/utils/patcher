@@ -5,7 +5,7 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -30,7 +30,7 @@ umask 022
 
 verbose=
 modifier=patch
-for dummy
+while [ $# != 0 ]
 do
 	case "$1" in
 	-v)	verbose=yes		;;
@@ -81,7 +81,7 @@ then
 		shift ; shift
 		need $patchfile
 
-		if egrep -q "$key" $it
+		if grep -E -q "$key" $it
 		then
 			# patched but no record of how
 			note "$it no longer needs patch $patchfile"
@@ -105,7 +105,7 @@ else
 		need $patchfile
 		md5sum $patchfile | awk '{print $1}' >>$tmp
 
-		if egrep -q "$key" $it.preipsec
+		if grep -E -q "$key" $it.preipsec
 		then
 			note "$it no longer needs patch $patchfile"
 		else

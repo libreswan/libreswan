@@ -12,7 +12,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -25,14 +25,18 @@
 #define _VENDOR_H_
 
 #include "known_vendorid.h"
+#include "packet.h"		/* for pb_stream */
+
+struct msg_digest;
 
 void init_vendorid(void);
 
-struct msg_digest;
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		     bool ikev2);
 
-bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid);
+bool out_vid(uint8_t np, pb_stream *outs, unsigned int vid);
+
+bool out_vid_set(pb_stream *outs, const struct connection *c);
 
 bool vid_is_oppo(const char *vid, size_t len);
 

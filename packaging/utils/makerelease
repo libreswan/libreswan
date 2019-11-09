@@ -8,7 +8,7 @@ then
 fi
 if [ -z "$VERSION" ]
 then
-	VERSION=`git tag | tail -1| sed -e "s/v//"`
+	VERSION=`git describe --tags --dirty | tail -1| sed -e "s/v//"`
 fi
 
 if [ -z "$FORCE" ]
@@ -44,11 +44,11 @@ git archive --format=tar --prefix=libreswan-$VERSION/ HEAD | gzip > release/libr
 	cd release
 	tar zxf libreswan-$VERSION.tar.gz
 	cd libreswan-$VERSION
-	echo "IPSECBASEVERSION?=$VERSION" > Makefile.ver
+	echo "IPSECBASEVERSION?=$VERSION" > mk/version.mk
 	sed -i "s/(unreleased)/(`C= LOCALE= LANG= date +"%B %d, %Y"`)/" CHANGES
-	for file in debian/NEWS debian/changelog `find packaging -type f | xargs grep IPSECBASEVERSION |sed "s/:.*$//"`
+	for file in `find packaging -type f | xargs grep IPSECBASEVERSION |sed "s/:.*$//"`
 	do
-		sed -i "s/IPSECBASEVERSION/$VERSION/" $file
+		sed -i "s/@IPSECBASEVERSION@/$VERSION/" $file
 	done
 	cd ..
 	tar zcf libreswan-$VERSION.tar.gz libreswan-$VERSION

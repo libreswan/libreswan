@@ -1,0 +1,221 @@
+#!/usr/bin/python2 -tt
+
+"""
+# OE's IPsec SA's are always setup as full host-to-host covering all protoports
+# This file specifies higher priority (lower number) rules to define exceptions
+# Exceptions will prevent ACQUIREs, but if gw responded to OE, tunnel will be
+#   up but exceptions will take priority and thus 'leak' in the clear.
+# NONE of these exceptions will overrule a staticly configured tunnel, unless
+#  a priority of <= XXX is specified
+
+# direction (in/out/both) | protocol | source IP@port range | dest IP@port range | prio
+
+# allow incoming port 22 cleartext
+# direction	Protocol	Source	Dest	Prio
+#in		tcp		any	22	1023
+
+# allow incoming DNS over udp and tcp in the clear
+#in		tcp		any	53	1023
+#in		udp		any	53	1023
+
+# allow in/out traffic to port 22 in cleartext
+#both		tcp		any	22	1023
+
+# Allow incoming port 443 unencrypted from 10/8
+#in		tcp	10.0.0.0/8	443	1023
+
+# Allow syslog to/from all nodes in 10/8
+#both		udp	10.0.0.0/8@514	10.0.0.0/8@514	1023
+"""
+
+from __future__ import print_function
+import os
+import subprocess
+import sys
+import time
+
+PORTFILE = "@IPSEC_CONFDDIR@/policies/portexcludes.conf"
+VERBOSE=False
+INWHACK = "ipsec whack --name portexclude-DIRECTION-FAMILY-LINENR --ipv4 --priority PRIORITY --pass --host 127.0.0.1 --client DESTNET --clientprotoport PROTO/DESTPORT --to --host 0.0.0.0 --client SOURCENET --clientprotoport PROTO/SOURCEPORT --route"
+OUTWHACK = "ipsec whack --name portexclude-DIRECTION-FAMILY-LINENR --ipv4 --priority PRIORITY --pass --host 127.0.0.1 --client SOURCENET --clientprotoport PROTO/SOURCEPORT --to --host 0.0.0.0 --client DESTNET --clientprotoport PROTO/DESTPORT --route"
+
+def clear_portrules():
+    global VERBOSE
+    try:
+        ret = subprocess.check_output(
+            "ipsec status", stderr=subprocess.STDOUT, shell=True)
+        for line in ret.split("\n"):
+            if "policy: AUTH_NEVER+TUNNEL+PASS+NEVER_NEGOTIATE" in line:
+                try:
+                    conn = line.split(" ")[1][:-1]
+                    if "portexclude" in conn:
+                        whackcmd = "ipsec whack --delete --name %s"%conn
+                        if VERBOSE:
+                            print(whackcmd)
+                        try:
+                            ret = subprocess.check_output(whackcmd,
+                                stderr=subprocess.STDOUT, shell=True)
+                        except subprocess.CalledProcessError as error:
+                            print(error.output.strip())
+                except:
+                    pass
+    except subprocess.CalledProcessError as error:
+        print(error.output.strip())
+
+
+def main():
+    global VERBOSE
+    CLEAR=False
+    """Main Program"""
+    if not os.path.isfile(PORTFILE):
+        # nothing to do
+        sys.exit()
+    if not os.path.isfile("@IPSEC_RUNDIR@/pluto.pid"):
+        sys.exit("libreswan service is not running")
+
+    try:
+        lines = open(PORTFILE, 'r').read().splitlines()
+    except IOError:
+        sys.exit("failed to open %s" % PORTFILE)
+
+    if len(sys.argv) > 1:
+        if "-v" in sys.argv or "--verbose" in sys.argv:
+            VERBOSE=True
+        if "-c" in sys.argv or "--clear" in sys.argv:
+            CLEAR=True
+        if "-w" in sys.argv or "--wait" in sys.argv:
+            time.sleep(5)
+
+    clear_portrules()
+    if CLEAR:
+        sys.exit()
+
+    linenr = 0
+    for line in lines:
+        linenr = linenr + 1
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+
+        try:
+            direction, proto, source, dest, prio = line.split()
+        except ValueError:
+            print("# skipped broken line %s"%linenr)
+            continue
+
+        if direction in ("in", "out"):
+            dorules(linenr, direction, proto, source, dest, prio)
+        else:
+            dorules(linenr, "in", proto, source, dest, prio)
+            # skip symmetric rules which don't need reverse rule
+            if source != dest:
+                dorules(linenr, "out", proto, source, dest, prio)
+
+# check if we need to expand a rule to ipv4 and ipv6
+# this happens when network is specified as "any" or when only
+# specifying a port number
+def dorules(linenr, direction, proto, source, dest, prio):
+    global VERBOSE
+
+    if "any" in source and "any" in dest:
+        print("Ignored rule for any* to any* which would cover ALL traffic")
+    if "any6" in source and ("any4" in dest or "." in dest):
+        print("Ignored rule on line %s - cannot mix ipv4 and ipv6"%linenr)
+    if "any4" in source and ("any6" in dest or ":" in dest):
+        print("Ignored rule on line %s - cannot mix ipv4 and ipv6"%linenr)
+    if "." in source and ":" in dest:
+        print("Ignored rule on line %s - cannot mix ipv4 and ipv6"%linenr)
+    if ":" in source and "." in dest:
+        print("Ignored rule on line %s - cannot mix ipv4 and ipv6"%linenr)
+
+    if source == "any6":
+        source = "::/0"
+    if source == "any4":
+        source = "0.0.0.0/0"
+    if dest == "any6":
+        dest = "::/0"
+    if dest == "any4":
+        dest = "0.0.0.0/0"
+
+    if source == "any" or source.isdigit():
+        if "." in dest:
+            dorule(linenr, direction, proto, "0.0.0.0/0", dest, prio, "ipv4")
+        elif ":" in dest:
+            dorule(linenr, direction, proto, "::/0", dest, prio, "ipv6")
+        else:
+            dorule(linenr, direction, proto, "0.0.0.0/0", dest, prio, "ipv4")
+            dorule(linenr, direction, proto, "::/0", dest, prio, "ipv6")
+
+    elif dest == "any" or dest.isdigit():
+        if "." in source:
+            dorule(linenr, direction, proto, source, dest, prio, "ipv4")
+        elif ":" in source:
+            dorule(linenr, direction, proto, source, "::/0", prio, "ipv6")
+        else:
+            dorule(linenr, direction, proto, source, dest, prio, "ipv4")
+            dorule(linenr, direction, proto, source, "::/0", prio, "ipv6")
+
+    elif "." in source:
+            dorule(linenr, direction, proto, source, dest, prio, "ipv4")
+    elif ":" in source:
+            dorule(linenr, direction, proto, source, dest, prio, "ipv6")
+
+def dorule(linenr, direction, proto, source, dest, prio, fam):
+    """Execute single rule"""
+    if direction == "in":
+        whackcmd = INWHACK
+    else:
+        whackcmd = OUTWHACK
+
+    whackcmd = whackcmd.replace("PRIORITY", prio)
+    whackcmd = whackcmd.replace("PROTO", proto)
+    whackcmd = whackcmd.replace("DIRECTION", direction)
+    whackcmd = whackcmd.replace("FAMILY", fam)
+    whackcmd = whackcmd.replace("LINENR", str(linenr))
+
+    sourceport = "0"
+    if "@" in source:
+        sourcenet, sourceport = source.split("@", 1)
+    elif source.isdigit():
+        sourceport = source
+        if fam == "ipv4":
+            sourcenet = "0.0.0.0/0"
+        else:
+            sourcenet = "::/0"
+    else:
+        sourcenet = source
+
+    destport = "0"
+    if "@" in dest:
+        destnet, destport = dest.split("@", 1)
+    elif dest.isdigit():
+        destport = dest
+        if fam == "ipv4":
+            destnet = "0.0.0.0/0"
+        else:
+            destnet = "::/0"
+    else:
+        destnet = dest
+
+    if fam == "ipv6":
+        whackcmd = whackcmd.replace("--ipv4", "--ipv6")
+        whackcmd = whackcmd.replace("host 127.0.0.1", "host ::1")
+        whackcmd = whackcmd.replace("host 0.0.0.0", "host ::0")
+
+    whackcmd = whackcmd.replace("SOURCENET", sourcenet)
+    whackcmd = whackcmd.replace("SOURCEPORT", sourceport)
+    whackcmd = whackcmd.replace("DESTNET", destnet)
+    whackcmd = whackcmd.replace("DESTPORT", destport)
+
+    if VERBOSE:
+        print(whackcmd)
+    try:
+        ret = subprocess.check_output(
+            whackcmd, stderr=subprocess.STDOUT, shell=True)
+        if VERBOSE:
+            print(ret.strip())
+    except subprocess.CalledProcessError as error:
+        print(error.output.strip())
+
+if __name__ == "__main__":
+    main()

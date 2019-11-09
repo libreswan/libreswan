@@ -34,7 +34,7 @@ subscript of <emphasis remap='I'>_c</emphasis>, <emphasis remap='I'>_b</emphasis
 or <emphasis remap='I'>_a</emphasis> can be used to refer to the different ICV variants
 where a means 8 bytes, b means 12 bytes and c means 16 bytes. The default
 when not using a subscript is the 16 byte ICV, the recommended value by RFC-4106.
-Therefor phase2alg=aes_gcm256-null is equivalent to phase2alg=aes_gcm_c256-null.
+Therefore phase2alg=aes_gcm256-null is equivalent to phase2alg=aes_gcm_c256-null.
 It is recommended to migrate to the _c versions (without specifying _c),
 as support for smaller ICV's might be removed in the near future.</para>
 
@@ -43,7 +43,7 @@ kernel stack used. Possible ciphers are aes, 3des, aes_ctr, aes_gcm,
 aes_ccm, camellia, serpent and twofish.</para>
 
 <para>Note that openswan and versions of libreswan up to 3.6 require manually
-adding the salt size to the key size. Therefor, to configure an older
+adding the salt size to the key size. Therefore, to configure an older
 version of openswan or libreswan, use: "phase2alg=aes_ccm_c-280-null" to
 interop with a new libreswan using "phase2alg=aes_ccm256". For
 CCM, the 'keysize' needs to be increased by 24, resulted in valid keysizes

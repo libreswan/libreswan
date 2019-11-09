@@ -10,7 +10,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -18,27 +18,24 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <libreswan.h>
-
-#include "constants.h"
-#include "lswlog.h"
 #include "libtwofish/twofish_cbc.h"
+#include "constants.h"		/* for BYTES_FOR_BITS() */
+#include "lswcdefs.h"		/* for UNUSED */
+#include "lswlog.h"
 #include "ike_alg.h"
-#include "ike_alg_twofish.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_encrypt_ops.h"
 #include "ietf_constants.h"
+#include "sadb.h"
 
 static void do_twofish(const struct encrypt_desc *alg UNUSED,
-		       u_int8_t *buf, size_t buf_size, PK11SymKey *key,
-		       u_int8_t *iv, bool enc)
+		       uint8_t *buf, size_t buf_size, PK11SymKey *key,
+		       uint8_t *iv, bool enc)
 {
 	twofish_context twofish_ctx;
 	char iv_bak[TWOFISH_CBC_BLOCK_SIZE];
 	char *new_iv = NULL;    /* logic will avoid copy to NULL */
-	u_int8_t *bare_key_ptr;
+	uint8_t *bare_key_ptr;
 	size_t bare_key_len;
 
 	/* unpack key from PK11SymKey (or crash!) */
@@ -78,6 +75,7 @@ static void twofish_check(const struct encrypt_desc *alg UNUSED)
 }
 
 static const struct encrypt_ops twofish_encrypt_ops = {
+	.backend = "twofish",
 	.check = twofish_check,
 	.do_crypt = do_twofish,
 };
@@ -87,8 +85,7 @@ const struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 	.common = {
 		.name = "twofish",
 		.fqn = "TWOFISH_CBC",
-		.names = { "twofish", "twofish_cbc", },
-		.officname = "twofish",
+		.names = "twofish,twofish_cbc",
 		.algo_type = IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_TWOFISH_CBC,
@@ -97,11 +94,18 @@ const struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 		},
 	},
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
-	.pad_to_blocksize = TRUE,
+	.pad_to_blocksize = true,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &twofish_encrypt_ops,
+#ifdef SADB_X_EALG_TWOFISHCBC
+	.encrypt_sadb_ealg_id = SADB_X_EALG_TWOFISHCBC,
+#endif
+	.encrypt_netlink_xfrm_name = "twofish",
+	.encrypt_tcpdump_name = "twofish",
+	.encrypt_ike_audit_name = "twofish",
+	.encrypt_kernel_audit_name = "TWOFISH",
 };
 
 const struct encrypt_desc ike_alg_encrypt_twofish_ssh =
@@ -109,8 +113,7 @@ const struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 	.common = {
 		.name = "twofish_ssh", /* We don't know if this is right */
 		.fqn = "TWOFISH_SSH", /* We don't know if this is right */
-		.names = { "twofish_ssh", "twofish_cbc_ssh", },
-		.officname = "twofish_ssh", /* We don't know if this is right */
+		.names = "twofish_ssh,twofish_cbc_ssh",
 		.algo_type = IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_TWOFISH_CBC_SSH,
@@ -119,9 +122,12 @@ const struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 		},
 	},
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
-	.pad_to_blocksize = TRUE,
+	.pad_to_blocksize = true,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &twofish_encrypt_ops,
+	.encrypt_tcpdump_name = "twofish_ssh", /* We don't know if this is right */
+	.encrypt_ike_audit_name = "twofish_ssh", /* We don't know if this is right */
+	.encrypt_kernel_audit_name = "TWOFISH_SSH", /* We don't know if this is right */
 };

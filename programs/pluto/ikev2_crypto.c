@@ -5,13 +5,14 @@
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -20,26 +21,18 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
 #include <unistd.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"
-#include "libswan.h"
 
 #include "defs.h"
-#include "cookie.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
@@ -52,14 +45,14 @@
 #include "ikev2.h"
 #include "ikev2_prf.h"
 #include "ike_alg.h"
-#include "alg_info.h"
 #include "kernel_alg.h"
 #include "crypt_symkey.h"
 #include "ikev2_prf.h"
 #include "kernel.h"
 
-void ikev2_derive_child_keys(struct state *st, enum original_role role)
+void ikev2_derive_child_keys(struct child_sa *child)
 {
+	struct state *st = &child->sa;
 	chunk_t ikeymat, rkeymat;
 	/* ??? note assumption that AH and ESP cannot be combined */
 	struct ipsec_proto_info *ipi =
@@ -117,49 +110,55 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for
 	 *    salt (AES_GCM_SALT_BYTES)
 	 */
-	chunk_t ni;
-	chunk_t nr;
-	setchunk(ni, st->st_ni.ptr, st->st_ni.len);
-	setchunk(nr, st->st_nr.ptr, st->st_nr.len);
 	PK11SymKey *shared = NULL;
-
 	if (st->st_pfs_group != NULL) {
 		DBG(DBG_CRYPT, DBG_log("#%lu %s add g^ir to child key %p",
 					st->st_serialno,
-					st->st_state_name,
+					st->st_state->name,
 					st->st_shared_nss));
 		shared = st->st_shared_nss;
 	}
 
 	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.ta_prf,
 						   st->st_skey_d_nss,
-						   shared, ni, nr,
+						   shared,
+						   st->st_ni,
+						   st->st_nr,
 						   ipi->keymat_len * 2);
 	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len);
-	ikeymat = chunk_from_symkey("initiator keys", DBG_CRYPT, ikey);
+	ikeymat = chunk_from_symkey("initiator to responder keys", ikey);
 	release_symkey(__func__, "ikey", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes(keymat, ipi->keymat_len,
 						 ipi->keymat_len);
-	rkeymat = chunk_from_symkey("responder keys:", DBG_CRYPT, rkey);
+	rkeymat = chunk_from_symkey("responder to initiator keys:", rkey);
 	release_symkey(__func__, "rkey", &rkey);
 
 	release_symkey(__func__, "keymat", &keymat);
 
-	if (role != ORIGINAL_INITIATOR) {
+	/*
+	 * The initiator stores outgoing initiator-to-responder keymat
+	 * in PEER, and incomming responder-to-initiator keymat in
+	 * OUR.
+	 */
+	switch (child->sa.st_sa_role) {
+	case SA_RESPONDER:
 		DBG(DBG_PRIVATE, {
-			    DBG_dump_chunk("our  keymat", ikeymat);
-			    DBG_dump_chunk("peer keymat", rkeymat);
+			    DBG_dump_hunk("our  keymat", ikeymat);
+			    DBG_dump_hunk("peer keymat", rkeymat);
 		    });
 		ipi->our_keymat = ikeymat.ptr;
 		ipi->peer_keymat = rkeymat.ptr;
-	} else {
+		break;
+	case SA_INITIATOR:
 		DBG(DBG_PRIVATE, {
-			    DBG_dump_chunk("our  keymat", rkeymat);
-			    DBG_dump_chunk("peer keymat", ikeymat);
+			    DBG_dump_hunk("our  keymat", rkeymat);
+			    DBG_dump_hunk("peer keymat", ikeymat);
 		    });
 		ipi->peer_keymat = ikeymat.ptr;
 		ipi->our_keymat = rkeymat.ptr;
+		break;
+	default:
+		bad_case(child->sa.st_sa_role);
 	}
-
 }

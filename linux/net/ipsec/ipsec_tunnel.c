@@ -12,7 +12,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -145,17 +145,14 @@ DEBUG_NO_STATIC int ipsec_tunnel_close(struct net_device *dev)
 
 static inline int ipsec_tunnel_xmit2(struct sk_buff *skb)
 {
-
 #ifdef NET_26   /* 2.6 kernels */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#  if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	return dst_output(dev_net(skb->dev), skb->sk, skb);
-#else
+#  else
 	return dst_output(skb);
-#endif
-
+#  endif
 #else
 	return ip_send(skb);
-
 #endif
 }
 
@@ -911,8 +908,8 @@ enum ipsec_xmit_value ipsec_tunnel_restore_hard_header(
 			       skb_headroom(ixs->skb));
 			ixs->stats->tx_errors++;
 			return IPSEC_XMIT_PUSHPULLERR;
-
 		}
+
 		skb_push(ixs->skb, ixs->hard_header_len);
 		{
 			int i;
@@ -1317,7 +1314,6 @@ DEBUG_NO_STATIC int ipsec_tunnel_set_mac_address(struct net_device *dev,
 		    "Revectored dev=%s->%s addr=0p%p\n",
 		    dev->name, prv->dev->name, addr);
 	return prv->set_mac_address(prv->dev, addr);
-
 }
 #endif /* HAVE_SET_MAC_ADDR */
 
@@ -1536,7 +1532,7 @@ DEBUG_NO_STATIC int ipsec_tunnel_clear(void)
 		if ((ret = ipsec_tunnel_detach(ipsecdev))) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 				    "klips_debug:ipsec_tunnel_clear: "
-				    "error %d detatching device %s from device %s.\n",
+				    "error %d detaching device %s from device %s.\n",
 				    ret, ipsecdev->name, prvdev->name);
 			return ret;
 		}
@@ -1907,7 +1903,9 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 	/* look very carefully at the scope of these compiler
 	   directives before changing anything... -- RGB */
 	case NETDEV_UNREGISTER:
+#ifdef NETDEV_UNREGISTER_FINAL
 	case NETDEV_UNREGISTER_FINAL:
+#endif
 		switch (event) {
 		case NETDEV_DOWN:
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
@@ -1927,6 +1925,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 				    dev->name,
 				    dev->flags);
 			break;
+#ifdef NETDEV_UNREGISTER_FINAL
 		case NETDEV_UNREGISTER_FINAL:
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 				    "klips_debug:ipsec_device_event: "
@@ -1934,6 +1933,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 				    dev->name,
 				    dev->flags);
 			break;
+#endif
 		}
 
 		/* find the attached physical device and detach it. */
@@ -2033,8 +2033,8 @@ int ipsec_tunnel_init(struct net_device *dev)
 
 	KLIPS_PRINT(debug_tunnel,
 		    "klips_debug:ipsec_tunnel_init: "
-		    "allocating %lu bytes initialising device: %s\n",
-		    (unsigned long) sizeof(struct ipsecpriv),
+		    "allocating %zu bytes initialising device: %s\n",
+		    sizeof(struct ipsecpriv),
 		    dev->name ? dev->name : "NULL");
 
 #ifdef ipsec_alloc_netdev
@@ -2203,9 +2203,9 @@ int ipsec_tunnel_init_devices(void)
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 		    "klips_debug:ipsec_tunnel_init_devices: "
-		    "creating and registering IPSEC_NUM_IF=%u devices, allocating %lu per device, IFNAMSIZ=%u.\n",
+		    "creating and registering IPSEC_NUM_IF=%u devices, allocating %zu per device, IFNAMSIZ=%u.\n",
 		    IPSEC_NUM_IF,
-		    (unsigned long) (sizeof(struct net_device) + IFNAMSIZ),
+		    sizeof(struct net_device) + IFNAMSIZ,
 		    IFNAMSIZ);
 
 	for (i = 0; i < IPSEC_NUM_IF; i++) {
@@ -2234,7 +2234,7 @@ int ipsec_tunnel_deletenum(int vifnum)
 
 	KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 	unregister_netdev(dev_ipsec);
-	KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
+	KLIPS_PRINT(debug_tunnel, "Unregistered %s\n", dev_ipsec->name);
 #ifndef ipsec_alloc_netdev
 	kfree(dev_ipsec->priv);
 	dev_ipsec->priv = NULL;
@@ -2277,7 +2277,7 @@ int ipsec_tunnel_cleanup_devices(void)
 		KLIPS_PRINT(debug_tunnel, "Unregistering %s\n",
 			    dev_ipsec->name);
 		unregister_netdev(dev_ipsec);
-		KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
+		KLIPS_PRINT(debug_tunnel, "Unregistered %s\n", dev_ipsec->name);
 #ifndef ipsec_alloc_netdev
 		kfree(dev_ipsec->priv);
 		dev_ipsec->priv = NULL;
@@ -2527,7 +2527,7 @@ DEBUG_NO_STATIC int ipsec_tunnel_attach(struct net_device *dev,
 
 #ifdef CONFIG_KLIPS_IPV6
 /*
- * stolen from ip6tables,  we need a copy incase iptables iscompiled out of
+ * stolen from ip6tables,  we need a copy in case iptables is compiled out of
  * the kernel.
  *
  * find the offset to specified header or the protocol number of last header

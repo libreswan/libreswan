@@ -1,0 +1,7 @@
+Create_CHILD SAs with east's pfs=no and esp=aes,aes;none
+
+West tries pfs={yes,no} X esp=aes;none
+
+All but pfs=yes esp=aes should interop.
+
+XXX: See ikev2-child-00-dh-hang.

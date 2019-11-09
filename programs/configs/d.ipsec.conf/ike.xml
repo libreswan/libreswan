@@ -50,7 +50,7 @@ example <emphasis>ike=3des-sha1;dh19</emphasis>.
 The RFC-5114 DH groups are extremely controversial and MUST NOT be used unless forced (administratively) by
 the other party. Support for these groups will most likely be removed in 2017, as it cannot be proven these
 DH groups do not have a cryptographic trapdoor embedded in them (a backdoor by the USG who provided these
-primes without revealing the seeds and generation process used). Due the the weakness od DH22, support for
+primes without revealing the seeds and generation process used). Due the the weakness of DH22, support for
 this group is not compiled in by default and can be re-enabled using USE_DH22=true.
 </para>
 <para>The modp syntax will be removed in favour of the dh syntax in the future</para>

@@ -1,7 +1,9 @@
-reference test for strongswan-strongswan interop with EAP
+reference test for strongswan-strongswan interop with EAP. This test case
+is the basis to test libreswan EAP support on client/server.
 
-This currently fails on timeout of crl/ocsp fetching. And throws
-some non-utf8 to the console. Disabling of crl/ocsp which is not
-used in this test can only be done by changing strongswan.conf
-to explicitely load all default modules except "revocation". This
-would break things when new modules are added :/
+For some reason the OCSP fetch fails, but it still establishes
+the connection as strongswan soft fails on this.
+
+EAP is used successfully on both ends.
+
+There is an issue with strongswan's output not being fully santized

@@ -20,17 +20,17 @@ struct db_context {
 /*
  *      Allocate a new db object
  */
-extern struct db_context *db_prop_new(u_int8_t protoid, int max_trans,
+extern struct db_context *db_prop_new(uint8_t protoid, int max_trans,
 				int max_attrs);
 
 /*	Free all resourses for this db */
 extern void db_destroy(struct db_context *ctx);
 
 /*	Start a new transform */
-extern void db_trans_add(struct db_context *ctx, u_int8_t transid);
+extern void db_trans_add(struct db_context *ctx, uint8_t transid);
 
 /*	Add a new attribute by value */
-extern void db_attr_add_values(struct db_context *ctx, enum ikev1_oakley_attr type, u_int16_t val);
+extern void db_attr_add_values(struct db_context *ctx, enum ikev1_oakley_attr type, uint16_t val);
 
 /*	Get proposal from db object */
 static __inline__ struct db_prop *db_prop_get(struct db_context *ctx)

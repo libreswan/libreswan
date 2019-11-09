@@ -8,7 +8,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -16,42 +16,21 @@
  * for more details.
  */
 
-#include <asm/types.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-/* #include <linux/netdevice.h> */
-#include <net/if.h>
-/* #include <linux/types.h> */ /* new */
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-#include <errno.h>
-
-/* #include <sys/socket.h> */
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-/* #include <linux/ip.h> */
-#include <netdb.h>
-
-#include <unistd.h>
-#include <getopt.h>
-#include <ctype.h>
 #include <stdio.h>
-#include <sys/wait.h>
 #include <stdlib.h>
-#include <libreswan.h>
+#include <getopt.h>
+#include <stdbool.h>
+#include <string.h>
 
-#include "sysdep.h"
-#include "constants.h"
+#include "err.h"
+#include "lswtool.h"
 #include "lswalloc.h"
 #include "lswconf.h"
 #include "lswlog.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
-#include "ipsecconf/starterlog.h"
-#include "ipsecconf/starterwhack.h"
 #include "ipsecconf/parser-controls.h"
+#include "ipsecconf/starterlog.h"
 
 static int verbose = 0;
 
@@ -83,12 +62,11 @@ int main(int argc, char *argv[])
 
 	int opt;
 	struct starter_config *cfg = NULL;
-	err_t err = NULL;
 	char *confdir = NULL;
 	char *configfile = NULL;
 	struct starter_conn *conn = NULL;
 	char *name = NULL;
-	bool setup = TRUE;
+	bool setup = true;
 
 	rootdir[0] = '\0';
 	rootdir2[0] = '\0';
@@ -101,7 +79,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'n':
-			setup = FALSE;
+			setup = false;
 			break;
 
 		case 'D':
@@ -134,7 +112,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (optind != argc) {
-		fprintf(stderr,"%s: unexpected arguments\n", progname);
+		fprintf(stderr, "%s: unexpected arguments\n", progname);
 		exit(4);
 	}
 
@@ -162,21 +140,28 @@ int main(int argc, char *argv[])
 	if (verbose)
 		printf("opening file: %s\n", configfile);
 
-	starter_use_log(verbose != 0, TRUE, verbose == 0);
+	starter_use_log(verbose != 0, true, verbose == 0);
 
-	cfg = confread_load(configfile, &err, FALSE, NULL, FALSE);
+	starter_errors_t errl = { NULL };
+	cfg = confread_load(configfile, &errl, NULL, false);
 
 	if (cfg == NULL) {
 		fprintf(stderr, "%s: config file \"%s\" cannot be loaded: %s\n",
-			progname, configfile, err);
+			progname, configfile, errl.errors);
+		pfreeany(errl.errors);
 		exit(3);
+	}
+	if (errl.errors != NULL) {
+		fprintf(stderr, "%s: config file \"%s\", ignoring: %s\n",
+			progname, configfile, errl.errors);
+		pfree(errl.errors);
 	}
 
 	/* load all conns marked as auto=add or better */
 	if (verbose) {
 		for (conn = cfg->conns.tqh_first;
-		conn != NULL;
-		conn = conn->link.tqe_next)
+		     conn != NULL;
+		     conn = conn->link.tqe_next)
 				printf("#conn %s loaded\n", conn->name);
 	}
 

@@ -2,11 +2,12 @@
  * Helper function for dealing with post-quantum preshared keys
  *
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,7 +15,6 @@
  * for more details.
  */
 
-#include <libreswan.h>
 
 #include "lswlog.h"
 
@@ -33,6 +33,8 @@
 #include "pluto_crypt.h"
 #include "ikev2.h"
 #include "ikev2_ppk.h"
+#include "ike_alg_hash.h"
+#include "crypt_mac.h"
 
 /*
  * used by initiator, to properly construct struct
@@ -49,20 +51,16 @@ bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl)
  * used by initiator to make chunk_t from ppk_id payload
  * for sending it in PPK_ID Notify Payload over the wire
  */
-chunk_t create_unified_ppk_id(struct ppk_id_payload *payl)
+bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *pbs)
 {
-	u_char type = PPK_ID_FIXED;	/* PPK_ID_FIXED */
-	const chunk_t *ppk_id = &payl->ppk_id;
-
-	chunk_t unified = alloc_chunk(ppk_id->len + 1, "Unified PPK_ID");
-	unified.ptr[0] = type;
-	memcpy(&unified.ptr[1], ppk_id->ptr, ppk_id->len);
-	return unified;
+	u_char type = PPK_ID_FIXED;
+	return out_raw(&type, sizeof(type), pbs, "PPK_ID_FIXED") &&
+		out_chunk(payl->ppk_id, pbs, "PPK_ID");
 }
 
 /*
  * used by responder, for extracting PPK_ID from IKEv2 Notify
- * PPK_ID Payload, we store PPK_ID and it's type in payl
+ * PPK_ID Payload, we store PPK_ID and its type in payl
  */
 bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 {
@@ -86,7 +84,7 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 	}
 
 	DBG(DBG_CONTROL, DBG_log("received PPK_ID type: %s",
-		enum_name(&ikev2_ppk_id_names, dst[0])));
+		enum_name(&ikev2_ppk_id_type_names, dst[0])));
 
 	idtype = (int)dst[0];
 	switch (idtype) {
@@ -97,73 +95,120 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 	case PPK_ID_OPAQUE:
 	default:
 		loglog(RC_LOG_SERIOUS, "PPK_ID type %d (%s) not supported",
-			idtype, enum_name(&ikev2_ppk_id_names, idtype));
+			idtype, enum_name(&ikev2_ppk_id_type_names, idtype));
 		return FALSE;
 	}
 
 	/* clone ppk id data without ppk id type byte */
 	clonetochunk(payl->ppk_id, dst + 1, len - 1, "PPK_ID data");
-	DBG(DBG_CONTROL, DBG_dump_chunk("Extracted PPK_ID", payl->ppk_id));
+	DBG(DBG_CONTROL, DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id));
 
 	return TRUE;
 }
 
-stf_status ikev2_calc_no_ppk_auth(struct connection *c, struct state *st, unsigned char *id_hash, chunk_t *no_ppk_auth)
+stf_status ikev2_calc_no_ppk_auth(struct state *st,
+				  const struct crypt_mac *id_hash,
+				  chunk_t *no_ppk_auth /* output */)
 {
+	struct connection *c = st->st_connection;
 	enum keyword_authby authby = c->spd.this.authby;
+
+	freeanychunk(*no_ppk_auth);	/* in case it was occupied */
+
 	switch (authby) {
 	case AUTH_RSASIG:
-		/* TODO */
-		break;
-	case AUTH_PSK:
-		if (ikev2_create_psk_auth(AUTH_PSK, st, id_hash, NULL, TRUE, no_ppk_auth))
+	{
+		const struct asn1_hash_blob *h = NULL;
+
+		if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
+			h = &asn1_rsa_pss_sha2_512;
+		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
+			h = &asn1_rsa_pss_sha2_384;
+		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
+			h = &asn1_rsa_pss_sha2_256;
+		} else if (c->sighash_policy == LEMPTY) {
+			/* RSA with SHA1 without Digsig: no oid blob appended */
+			if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
+						      id_hash, NULL, no_ppk_auth,
+						      IKEv2_AUTH_HASH_SHA1))
+			{
+				return STF_FAIL;
+			}
 			return STF_OK;
-		break;
-	default:
-		break;
+		} else {
+			loglog(RC_LOG_SERIOUS, "No compatible hash algo");
+			return STF_FAIL;
+		}
+
+		chunk_t hashval;
+
+		if (!ikev2_calculate_rsa_hash(st, st->st_original_role,
+					      id_hash, NULL, &hashval,
+					      h->hash_algo)) {
+			return STF_FAIL;
+		}
+
+		if (st->st_seen_hashnotify) {
+			/*
+			 * combine blobs to create no_ppk_auth:
+			 * - ASN.1 algo blob
+			 * - hashval
+			 */
+			int len = h->blob_sz + hashval.len;
+			u_char *blobs = alloc_bytes(len,
+				"bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
+
+			memcpy(&blobs[0], h->blob, h->blob_sz);
+			memcpy(&blobs[h->blob_sz], hashval.ptr, hashval.len);
+			freeanychunk(hashval);
+
+			setchunk(*no_ppk_auth, blobs, len);
+		}
+		return STF_OK;
 	}
-	return STF_INTERNAL_ERROR;
+	case AUTH_PSK:
+		/* store in no_ppk_auth */
+		if (!ikev2_create_psk_auth(AUTH_PSK, st, id_hash, no_ppk_auth)) {
+			return STF_INTERNAL_ERROR;
+		}
+		return STF_OK;
+
+	default:
+		bad_case(authby);
+	}
 }
 
 /* in X_no_ppk keys are stored keys that go into PRF, and we store result in sk_X */
-void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
-			PK11SymKey **sk_d, PK11SymKey **sk_pi, PK11SymKey **sk_pr,
-			PK11SymKey *sk_d_no_ppk,
-			PK11SymKey *sk_pi_no_ppk,
-			PK11SymKey *sk_pr_no_ppk)
+
+static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key, const struct prf_desc *prf_desc, const char *name)
 {
-	PK11SymKey *new_sk_pi, *new_sk_pr, *new_sk_d;
-	PK11SymKey *ppk_key = symkey_from_chunk("PPK Keying material", DBG_CRYPT, *ppk);
+	PK11SymKey *t = ikev2_prfplus(prf_desc, ppk_key, *sk, prf_desc->prf_key_size);
+	release_symkey(__func__, name, sk);
+	*sk = t;
+	DBG(DBG_PRIVATE, {
+		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk);
+		DBG_dump_hunk(name, chunk_sk);
+		freeanychunk(chunk_sk);
+	});
+}
 
-	DBG(DBG_CRYPT, DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
-			 DBG_dump_chunk("PPK:", *ppk));
+void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
+			PK11SymKey **sk_d,	/* updated */
+			PK11SymKey **sk_pi,	/* updated */
+			PK11SymKey **sk_pr)	/* updated */
+{
+	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk);
 
-	new_sk_d = ikev2_prfplus(prf_desc, ppk_key, sk_d_no_ppk, prf_desc->prf_key_size);
-	*sk_d = new_sk_d;
+	DBG(DBG_CRYPT, {
+		DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
+		DBG_dump_hunk("PPK:", *ppk);
+	});
 
-	new_sk_pi = ikev2_prfplus(prf_desc, ppk_key, sk_pi_no_ppk, prf_desc->prf_key_size);
-	*sk_pi = new_sk_pi;
+	DBGF(DBG_PRIVATE, "PPK recalculating SK_d, SK_pi, SK_pr");
 
-	new_sk_pr = ikev2_prfplus(prf_desc, ppk_key, sk_pr_no_ppk, prf_desc->prf_key_size);
-	*sk_pr = new_sk_pr;
+	ppk_recalc_one(sk_d, ppk_key, prf_desc, "sk_d");
+	ppk_recalc_one(sk_pi, ppk_key, prf_desc, "sk_pi");
+	ppk_recalc_one(sk_pr, ppk_key, prf_desc, "sk_pr");
 
-	if (DBGP(DBG_PRIVATE)) {
-		/* declaring chunks for dumping them beneath */
-		chunk_t chunk_sk_d = chunk_from_symkey("chunk_SK_d", DBG_CRYPT, *sk_d);
-		chunk_t chunk_sk_pi = chunk_from_symkey("chunk_SK_pi", DBG_CRYPT, *sk_pi);
-		chunk_t chunk_sk_pr = chunk_from_symkey("chunk_SK_pr", DBG_CRYPT, *sk_pr);
-
-		DBG(DBG_PRIVATE,
-		    DBG_log("PPK Finished recalculating SK_d, SK_pi, SK_pr");
-		    DBG_log("PPK Recalculated pointers: SK_d-key@%p, SK_pi-key@%p, SK_pr-key@%p",
-			     *sk_d, *sk_pi, *sk_pr);
-		    DBG_dump_chunk("new SK_d", chunk_sk_d);
-		    DBG_dump_chunk("new SK_pi", chunk_sk_pi);
-		    DBG_dump_chunk("new SK_pr", chunk_sk_pr));
-
-		freeanychunk(chunk_sk_d);
-		freeanychunk(chunk_sk_pi);
-		freeanychunk(chunk_sk_pr);
-	}
-
+	release_symkey(__func__, "PPK chunk", &ppk_key);
 }

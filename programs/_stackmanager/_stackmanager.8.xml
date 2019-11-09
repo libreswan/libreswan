@@ -9,7 +9,7 @@
 <refmeta>
 <refentrytitle>_STACKMANAGER</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>16 Nov 2012</refmiscinfo>
+<refmiscinfo class='date'>06 May 2019</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -25,7 +25,7 @@
     <cmdsynopsis>
       <command>ipsec</command>
       <arg choice="plain"><replaceable>_stackmanager start</replaceable>
-<arg choice="opt">--netkey</arg></arg>
+<arg choice="opt">--xfrm</arg></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -43,17 +43,17 @@ remap='I'>ipsec.conf</emphasis> configuration file.</para>
 
 <para>This involves loading and optionally unloading of the required
 kernel modules. Because the Linux kernel cannot autodetect most crypto
-related drivers on-demand, _stackmanager handles loading the hardware
-random number (RNG) device drivers, OpenBSD/FreeBSD Cryptographic
-Framework (OCF) drivers, CryptoAPI drivers, and the modules for the
-specific stack (Linux NETKEY/XFM or KLIPS/MAST). Probing for OCF supported
+related drivers on-demand, _stackmanager handles loading OpenBSD/FreeBSD
+Cryptographic Framework (OCF) drivers, CryptoAPI drivers, and the modules
+for the specific IPsec stack (Linux XFRM or KLIPS). Probing for OCF supported
 hardware is not supported - those modules must be loaded by the system
 before the start of the Libreswan sub system.</para>
-<para>When the --netkey option is given to the start command, the netkey stack is
-loaded regardless of the existence or contents of the ipsec.conf file. This is used
-for docker tests where the host system, which might not have libreswan installed,
-needs to run _stackmanager from the source tree to load the modules on the host so
-the modules are available inside the containers.</para>
+<para>When the --xfrm option is given to the start command, the XFRM stack
+is loaded regardless of the existence or contents of the ipsec.conf file.
+This is used for docker tests where the host system, which might not have
+libreswan installed, needs to run _stackmanager from the source tree to load
+the modules on the host so the modules are available inside
+the containers.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
@@ -69,7 +69,7 @@ the modules are available inside the containers.</para>
 <refsect1 id='history'><title>HISTORY</title>
 <para>This script was introduced in Libreswan. On the older Openswan systems, this functionality was split
 over various script files such as ipsec _startnetkey, ipsec _startklips, ipsec _realsetup and ipsec setup.
-Man page written for the Libreswan project &lt;<ulink url='http://www.libreswan.org/'>http://www.libreswan.org/</ulink>&gt;
+Man page written for the Libreswan project &lt;<ulink url='https://libreswan.org/'>https://libreswan.org/</ulink>&gt;
 by Paul Wouters. </para>
 
 </refsect1>

@@ -1,0 +1,14 @@
+diff --git a/programs/pluto/ikev1_main.c b/programs/pluto/ikev1_main.c
+index 30a1ea78d..c992f662d 100644
+--- a/programs/pluto/ikev1_main.c
++++ b/programs/pluto/ikev1_main.c
+@@ -2684,7 +2708,9 @@ bool accept_delete(struct msg_digest *md,
+ 					rc->policy &= ~POLICY_UP;
+ 					if (!shared_phase1_connection(rc)) {
+ 						flush_pending_by_connection(rc);
++						/* why loop? there can be only one IKE SA, just delete_state(st) ? */
+ 						delete_states_by_connection(rc, FALSE);
++						md->st = NULL;
+ 					}
+ 					reset_cur_connection();
+ 				}

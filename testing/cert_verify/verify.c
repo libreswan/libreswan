@@ -7,7 +7,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -152,30 +152,30 @@ static void set_usage(const char *ustr)
 static CERTCertList *get_trust_certlist(CERTCertDBHandle *handle,
 				     const char *name)
 {
-	CERTCertList *trustcl = NULL;
-	CERTCertList *tmpcl = NULL;
-	CERTCertificate *ca = NULL;
-	CERTCertListNode *node = NULL;
+	CERTCertificate *ca = CERT_FindCertByNickname(handle, name);
 
-	if ((ca = CERT_FindCertByNickname(handle, name)) == NULL) {
+	if (ca == NULL) {
 		printf("CERT_FindCertByNickname failed %d\n",
 				PORT_GetError());
 		return NULL;
 	}
+
+	CERTCertList *trustcl = NULL;
 
 	if (ca->isRoot) {
 		printf("trust anchor: %s\n",ca->subjectName);
 		trustcl = CERT_NewCertList();
 		CERT_AddCertToListTail(trustcl, ca);
 	} else {
-		tmpcl = CERT_GetCertChainFromCert(ca, PR_Now(), certUsageAnyCA);
+		CERTCertList *tmpcl =
+			CERT_GetCertChainFromCert(ca, PR_Now(), certUsageAnyCA);
 		if (tmpcl == NULL) {
 			printf("CERT_GetCertChainFromCert failed %d\n",
 					PORT_GetError());
 			return NULL;
 		}
-		for (node = CERT_LIST_HEAD(tmpcl); !CERT_LIST_END(node, tmpcl);
-				node = CERT_LIST_NEXT(node)) {
+		for (CERTCertListNode *node = CERT_LIST_HEAD(tmpcl);
+		     !CERT_LIST_END(node, tmpcl); node = CERT_LIST_NEXT(node)) {
 			printf("CERT list: %s\n", node->cert->subjectName);
 			if (node->cert->isRoot) {
 				trustcl = CERT_NewCertList();
@@ -200,7 +200,7 @@ static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
 	rev->chainTests.cert_rev_flags_per_method = cflags;
 }
 
-static unsigned int rev_val_flags(PRBool strict)
+static unsigned int rev_val_flags(PRBool strict, PRBool post)
 {
 	unsigned int flags = 0;
 	flags |= CERT_REV_M_TEST_USING_THIS_METHOD;
@@ -208,12 +208,16 @@ static unsigned int rev_val_flags(PRBool strict)
 		flags |= CERT_REV_M_REQUIRE_INFO_ON_MISSING_SOURCE;
 		flags |= CERT_REV_M_FAIL_ON_MISSING_FRESH_INFO;
 	}
+	if (post) {
+		flags |= CERT_REV_M_FORCE_POST_METHOD_FOR_OCSP;
+	}
 	return flags;
 }
 
 static void set_rev_params(CERTRevocationFlags *rev, PRBool crl,
 						     PRBool ocsp,
-						     PRBool strict)
+						     PRBool strict,
+						     PRBool post)
 {
 	CERTRevocationTests *rt = &rev->leafTests;
 	PRUint64 *rf = rt->cert_rev_flags_per_method;
@@ -222,11 +226,11 @@ static void set_rev_params(CERTRevocationFlags *rev, PRBool crl,
 	rt->number_of_preferred_methods = 0;
 
 	if (crl) {
-		rf[cert_revocation_method_crl] = rev_val_flags(strict);
+		rf[cert_revocation_method_crl] = rev_val_flags(strict, post);
 		rt->number_of_defined_methods++;
 	}
 	if (ocsp) {
-		rf[cert_revocation_method_ocsp] = rev_val_flags(strict);
+		rf[cert_revocation_method_ocsp] = rev_val_flags(strict, post);
 		rt->number_of_defined_methods++;
 	}
 }
@@ -241,6 +245,7 @@ int main(int argc, char *argv[])
 	PRBool crlcheck = PR_FALSE;
 	PRBool ocspcheck = PR_FALSE;
 	PRBool strict = PR_FALSE;
+	PRBool post = PR_FALSE;
 	CERTCertDBHandle *handle = NULL;
 	CERTCertificate **certout = NULL;
 	CERTVerifyLog vfy_log;
@@ -255,7 +260,7 @@ int main(int argc, char *argv[])
 	certs[1] = &c2;
 
 	int numcerts = 0;
-	while ((opt = getopt(argc, argv, "u:d:e:pn:s:coSr")) != -1) {
+	while ((opt = getopt(argc, argv, "u:d:e:pn:s:coSPr")) != -1) {
 		switch (opt) {
 			/* usage type */
 		case 'u':
@@ -281,6 +286,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'p':
 			use_pkix = 1;
+			break;
+		case 'P':
+			post = PR_TRUE;
 			break;
 		case 'n':
 			rightca_nick = optarg;
@@ -320,6 +328,8 @@ int main(int argc, char *argv[])
 		CERT_DisableOCSPDefaultResponder(handle);
 		if (strict)
 			CERT_SetOCSPFailureMode(ocspMode_FailureIsNotAVerificationFailure);
+		if (post)
+			CERT_ForcePostMethodForOCSP(PR_TRUE);
 	}
 
 	rv = CERT_ImportCerts(handle, 0, numcerts, certs, &certout, PR_FALSE,
@@ -369,7 +379,7 @@ int main(int argc, char *argv[])
 		cvin[in_idx++].value.scalar.b = PR_TRUE;
 
 		set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
-		set_rev_params(&rev, crlcheck, ocspcheck, strict);
+		set_rev_params(&rev, crlcheck, ocspcheck, strict, post);
 		cvin[in_idx].type = cert_pi_end;
 
 		cvout[0].type = cert_po_errorLog;

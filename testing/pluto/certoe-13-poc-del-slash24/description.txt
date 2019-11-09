@@ -1,0 +1,4 @@
+road initiates on-demand to east.
+east deletes the connection
+road should go back to ondemand-ready
+

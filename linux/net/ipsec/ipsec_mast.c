@@ -7,7 +7,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -223,8 +223,8 @@ enum ipsec_xmit_value ipsec_mast_send(struct ipsec_xmit_state *ixs)
 		ixs->stats->tx_errors++;
 		printk(KERN_WARNING
 		       "klips_error:ipsec_mast_send: "
-		       "tried to __skb_pull nh-data=%ld, %d available.  This should never happen, please report.\n",
-		       (unsigned long)(ixs->skb->nh.raw - ixs->skb->data),
+		       "tried to __skb_pull nh-data=%td, %d available.  This should never happen, please report.\n",
+		       ixs->skb->nh.raw - ixs->skb->data,
 		       ixs->skb->len);
 		return IPSEC_XMIT_PUSHPULLERR;
 	}
@@ -537,7 +537,6 @@ int ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	ipsec_xsm(ixs);
 	return 0;
-
 }
 
 DEBUG_NO_STATIC struct net_device_stats *ipsec_mast_get_stats(
@@ -642,7 +641,6 @@ DEBUG_NO_STATIC int ipsec_mast_set_mac_address(struct net_device *dev,
 
 	prv = prv;
 	return 0;
-
 }
 
 DEBUG_NO_STATIC void ipsec_mast_cache_update(struct hh_cache *hh,
@@ -876,8 +874,8 @@ int ipsec_mast_probe(struct net_device *dev)
 
 	KLIPS_PRINT(debug_mast,
 		    "klips_debug:ipsec_mast_probe: "
-		    "allocating %lu bytes initialising device: %s\n",
-		    (unsigned long) sizeof(struct mastpriv),
+		    "allocating %zu bytes initialising device: %s\n",
+		    sizeof(struct mastpriv),
 		    dev->name ? dev->name : "NULL");
 
 #ifndef USE_NETDEV_OPS
@@ -1031,7 +1029,7 @@ int ipsec_mast_deletenum(int vifnum)
 
 	KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 	unregister_netdev(dev_ipsec);
-	KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
+	KLIPS_PRINT(debug_tunnel, "Unregistered %s\n", dev_ipsec->name);
 #ifndef ipsec_alloc_netdev
 	kfree(dev_ipsec->priv);
 	dev_ipsec->priv = NULL;

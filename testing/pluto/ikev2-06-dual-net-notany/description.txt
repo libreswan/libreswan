@@ -1,0 +1,4 @@
+IKEv2 test with two subnets and without %any , but it is expected
+that the connection on the responder switches to the right one and both come up.
+
+

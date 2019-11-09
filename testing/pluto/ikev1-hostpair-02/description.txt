@@ -1,0 +1,6 @@
+IKEv1 host-to-host with NAT and XAUTH/ModeCFG.
+
+road reconnects using the same IP, without sending any
+deletes. It does this 4 times. Because no Initial Contact is used,
+the old ipsec SA states linger around until expiry.
+

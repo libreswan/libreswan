@@ -5,7 +5,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -40,6 +40,10 @@ size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism)
 		CASE(CKM_AES_CTR);
 		CASE(CKM_AES_GCM);
 		CASE(CKM_AES_MAC);
+		CASE(CKM_AES_ECB);
+#ifdef CKM_AES_XCBC_MAC
+		CASE(CKM_AES_XCBC_MAC);
+#endif
 
 		CASE(CKM_AES_KEY_GEN);
 
@@ -64,7 +68,21 @@ size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism)
 		CASE(CKM_DH_PKCS_DERIVE);
 		CASE(CKM_ECDH1_DERIVE);
 
+#ifdef CKM_NSS_IKE_PRF_DERIVE
+		CASE(CKM_NSS_IKE_PRF_DERIVE);
+#endif
+#ifdef CKM_NSS_IKE1_PRF_DERIVE
+		CASE(CKM_NSS_IKE1_PRF_DERIVE);
+#endif
+#ifdef CKM_NSS_IKE_PRF_PLUS_DERIVE
+		CASE(CKM_NSS_IKE_PRF_PLUS_DERIVE);
+#endif
+#ifdef CKM_NSS_IKE1_APP_B_PRF_DERIVE
+		CASE(CKM_NSS_IKE1_APP_B_PRF_DERIVE);
+#endif
+
 		CASE(CKM_VENDOR_DEFINED);
+
 
 #undef CASE
 

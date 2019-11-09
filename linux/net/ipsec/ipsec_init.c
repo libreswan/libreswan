@@ -8,7 +8,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -377,7 +377,7 @@ error_sadb_init:
 error_proc_init:
 	/* ipsec_proc_init() does not cleanup after itself, so we have to do
 	 * it here
-	 * TODO: ipsec_proc_init() should roll back what it chaned on failure
+	 * TODO: ipsec_proc_init() should roll back what it changed on failure
 	 */
 	ipsec_proc_cleanup();
 	ipsec_rcv_state_cache_cleanup();

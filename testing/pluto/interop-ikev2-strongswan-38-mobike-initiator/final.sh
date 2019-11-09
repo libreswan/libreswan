@@ -1,4 +1,4 @@
-ipsec look
+../../pluto/bin/ipsec-look.sh
 if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
 if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 : ==== cut ====

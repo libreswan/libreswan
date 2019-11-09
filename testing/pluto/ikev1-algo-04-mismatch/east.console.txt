@@ -1,11 +1,11 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair delete-on-retransmit
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 added connection description "westnet-eastnet-ipv4-psk-ikev1"

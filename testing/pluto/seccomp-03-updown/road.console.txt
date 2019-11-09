@@ -2,28 +2,40 @@
 road #
  # just start it so we try some resolv.conf rewriting
 road #
+ cp road-unbound.conf /etc/unbound/unbound.conf
+road #
+ unbound-control-setup > /dev/null 2>&1
+road #
  unbound
 road #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 road #
+ ipsec whack --impair suppress-retransmits
+road #
  echo "initdone"
 initdone
 road #
  ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiating v2 parent SA
-133 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: STATE_PARENT_I1: initiate
-133 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiate
+1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: Authenticated using authby=secret
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.0.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
+005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: Received INTERNAL_DNS_DOMAIN: test.tld
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: updating local nameserver for test.tld with 1.2.3.4 8.8.8.8
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok removed 0 rrsets, 0 messages and 0 key entries
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: ok
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: negotiated connection [100.64.0.1-100.64.0.1:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
 004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
@@ -32,17 +44,23 @@ road #
 road #
  sleep 5
 road #
- # confirm we updated unbound - should not be empty once DNS CP is added
+ # confirm we updated unbound - should not be empty once DNS CP is
+road #
+ # added
 road #
  unbound-control list_forwards
+test.tld. IN forward 8.8.8.8 1.2.3.4
 road #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=728B out=0B
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=0B out=0B
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: flushing local nameserver of test.tld
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: ok
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: ok removed 0 rrsets, 0 messages and 0 key entries
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: ok
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting state (STATE_PARENT_I3) and sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 instance with peer 192.1.2.23
-002 "westnet-eastnet-ipv4-psk-ikev2": unroute-client output: need at least a destination address
 road #
  # try some things to trigger new syscalls
 road #
@@ -57,29 +75,32 @@ road #
  ipsec secrets > /dev/null
 road #
  ipsec auto --delete westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": deleting non-instance connection
 road #
  ipsec stop
-Redirecting to: systemctl stop ipsec.service
+Redirecting to: [initsystem]
 road #
- # ensure seccomp did not kill pluto - should not show any hits once DNS CP is added
+ # ensure seccomp did not kill pluto - should not show any hits
 road #
  ausearch -ts recent -i -m SECCOMP
 <no matches>
 road #
- # and also test seccomp actually works
+ # Test seccomp actually works - that it records pluto crashing ....
 road #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 road #
- sleep 3
+ /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --seccomp-crashtest &
+ # Since whack hangs - it does not know that pluto died - run it in the
+road #
+ # background.  Give it a few seconds to do its job.
+road #
+ ipsec whack --seccomp-crashtest & sleep 2
 [x] PID
-road #
- # should show 1 entry now
 003 pluto is running with seccomp=enabled! pluto is expected to die!
 003 Performing seccomp security test using getsid() syscall
+road #
+ # should show 1 entry of pluto crashing now
 road #
  ausearch -ts recent -i -m SECCOMP | sed -e "s/ ip=[^ ]* / ip=XXX /" -e "s/ pid=[^ ]* / pid=XXX /" -e "s/msg=audit(.*) /msg=audit(XXX) /"
 ----

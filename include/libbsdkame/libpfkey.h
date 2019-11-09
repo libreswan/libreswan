@@ -32,9 +32,6 @@
  * SUCH DAMAGE.
  */
 
-/* used in osx compilation */
-#define SADB_X_SATYPE_TCPSIGNATURE    10
-#define SADB_X_AALG_TCP_MD5    11
 #define K_SADB_EXT_MAX 24
 
 struct sadb_msg;
@@ -43,52 +40,52 @@ extern void pfkey_spdump(struct sadb_msg *);
 
 struct sockaddr;
 struct sadb_alg;
-int ipsec_check_keylen(u_int, u_int, u_int);
-int ipsec_check_keylen2(u_int, u_int, u_int);
-int ipsec_get_keylen(u_int, u_int, struct sadb_alg *);
-u_int pfkey_set_softrate(u_int, u_int);
-u_int pfkey_get_softrate(u_int);
-int pfkey_send_getspi(int, u_int, u_int, struct sockaddr *, struct sockaddr *,
-		      u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-int pfkey_send_update(int, u_int, u_int, struct sockaddr *, struct sockaddr *,
-		      u_int32_t, u_int32_t, u_int, caddr_t, u_int, u_int,
-		      u_int, u_int,
-		      u_int, u_int32_t, u_int64_t, u_int64_t, u_int64_t,
-		      u_int32_t);
-int pfkey_send_add(int, u_int, u_int, struct sockaddr *, struct sockaddr *,
-		   u_int32_t, u_int32_t, u_int, caddr_t, u_int, u_int, u_int,
-		   u_int,
-		   u_int, u_int32_t, u_int64_t, u_int64_t, u_int64_t,
-		   u_int32_t);
-int pfkey_send_delete(int, u_int, u_int, struct sockaddr *, struct sockaddr *,
-		      u_int32_t);
-int pfkey_send_delete_all(int, u_int, u_int, struct sockaddr *,
+int ipsec_check_keylen(unsigned, unsigned, unsigned);
+int ipsec_check_keylen2(unsigned, unsigned, unsigned);
+int ipsec_get_keylen(unsigned, unsigned, struct sadb_alg *);
+unsigned pfkey_set_softrate(unsigned, unsigned);
+unsigned pfkey_get_softrate(unsigned);
+int pfkey_send_getspi(int, unsigned, unsigned, struct sockaddr *, struct sockaddr *,
+		      uint32_t, uint32_t, uint32_t, uint32_t);
+int pfkey_send_update(int, unsigned, unsigned, struct sockaddr *, struct sockaddr *,
+		      uint32_t, uint32_t, unsigned, caddr_t, unsigned, unsigned,
+		      unsigned, unsigned,
+		      unsigned, uint32_t, uint64_t, uint64_t, uint64_t,
+		      uint32_t);
+int pfkey_send_add(int, unsigned, unsigned, struct sockaddr *, struct sockaddr *,
+		   uint32_t, uint32_t, unsigned, caddr_t, unsigned, unsigned, unsigned,
+		   unsigned,
+		   unsigned, uint32_t, uint64_t, uint64_t, uint64_t,
+		   uint32_t);
+int pfkey_send_delete(int, unsigned, unsigned, struct sockaddr *, struct sockaddr *,
+		      uint32_t);
+int pfkey_send_delete_all(int, unsigned, unsigned, struct sockaddr *,
 			  struct sockaddr *);
-int pfkey_send_get(int, u_int, u_int, struct sockaddr *, struct sockaddr *,
-		   u_int32_t);
-int pfkey_send_register(int, u_int);
+int pfkey_send_get(int, unsigned, unsigned, struct sockaddr *, struct sockaddr *,
+		   uint32_t);
+int pfkey_send_register(int, unsigned);
 int pfkey_recv_register(int);
 int pfkey_set_supported(const struct sadb_msg *, int);
-int pfkey_send_flush(int, u_int);
-int pfkey_send_dump(int, u_int);
+int pfkey_send_flush(int, unsigned);
+int pfkey_send_dump(int, unsigned);
 int pfkey_send_promisc_toggle(int, int);
-int pfkey_send_spdadd(int, const struct sockaddr *, u_int,
-		      const struct sockaddr *, u_int,
-		      u_int, caddr_t, int, u_int32_t);
-int pfkey_send_spdadd2(int, struct sockaddr *, u_int, struct sockaddr *, u_int,
-		       u_int, u_int64_t, u_int64_t, caddr_t, int, u_int32_t);
-int pfkey_send_spdupdate(int, struct sockaddr *, u_int, struct sockaddr *,
-			 u_int, u_int, caddr_t, int, u_int32_t);
-int pfkey_send_spdupdate2(int, struct sockaddr *, u_int, struct sockaddr *,
-			  u_int, u_int, u_int64_t, u_int64_t, caddr_t, int,
-			  u_int32_t);
-int pfkey_send_spddelete(int, const struct sockaddr *, u_int,
+int pfkey_send_spdadd(int, const struct sockaddr *, unsigned,
+		      const struct sockaddr *, unsigned,
+		      unsigned, caddr_t, int, uint32_t);
+int pfkey_send_spdadd2(int, struct sockaddr *, unsigned, struct sockaddr *, unsigned,
+		       unsigned, uint64_t, uint64_t, caddr_t, int, uint32_t);
+int pfkey_send_spdupdate(int, struct sockaddr *, unsigned, struct sockaddr *,
+			 unsigned, unsigned, caddr_t, int, uint32_t);
+int pfkey_send_spdupdate2(int, struct sockaddr *, unsigned, struct sockaddr *,
+			  unsigned, unsigned, uint64_t, uint64_t, caddr_t, int,
+			  uint32_t);
+int pfkey_send_spddelete(int, const struct sockaddr *, unsigned,
 			 const struct sockaddr *,
-			 u_int, u_int, caddr_t, int, u_int32_t);
-int pfkey_send_spddelete2(int, u_int32_t);
-int pfkey_send_spdget(int, u_int32_t);
-int pfkey_send_spdsetidx(int, struct sockaddr *, u_int, struct sockaddr *,
-			 u_int, u_int, caddr_t, int, u_int32_t);
+			 unsigned, unsigned, caddr_t, int, uint32_t);
+int pfkey_send_spddelete2(int, uint32_t);
+int pfkey_send_spdget(int, uint32_t);
+int pfkey_send_spdsetidx(int, struct sockaddr *, unsigned, struct sockaddr *,
+			 unsigned, unsigned, caddr_t, int, uint32_t);
 int pfkey_send_spdflush(int);
 int pfkey_send_spddump(int);
 
@@ -99,15 +96,12 @@ int pfkey_send(int, struct sadb_msg *, int);
 int pfkey_align(struct sadb_msg *, caddr_t *);
 int pfkey_check(caddr_t *);
 
-/* like pfkey_send_add/update, but lets on specify the operation */
-int pfkey_send_x1(int, u_int, u_int, u_int, const struct sockaddr *,
-		  const struct sockaddr *, u_int32_t, u_int32_t, u_int,
+/* like pfkey_send_add/update, but lets one specify the operation */
+int pfkey_send_x1(int, unsigned, unsigned, unsigned, const struct sockaddr *,
+		  const struct sockaddr *, uint32_t, uint32_t, unsigned,
 		  caddr_t,
-		  u_int, u_int, u_int, u_int, u_int, u_int32_t, u_int32_t,
-		  u_int32_t, u_int32_t, u_int32_t);
-
-extern libreswan_keying_debug_func_t pfkey_debug_func;
-extern unsigned int bsdpfkey_lib_debug;
+		  unsigned, unsigned, unsigned, unsigned, unsigned, uint32_t, uint32_t,
+		  uint32_t, uint32_t, uint32_t);
 
 extern void foreach_supported_alg(void (*algregister)(int satype,
 						      int extype,

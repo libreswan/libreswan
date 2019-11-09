@@ -1,0 +1,11 @@
+Basic pluto with IKEv2 using X.509 on the responder (east), and Strongswan on
+the initiator (west).
+
+This is the reverse test of interop-ikev2-strongswan-04-x509-responder
+
+This is the basic test for Authentication method as Digital Signatures as 
+specified in RFC 7427. Currently supported for RSA-PSS.
+
+This includes a new notification of type SIGNATURE_HASH_ALGORITHMS.
+
+Authentication is successful with rsa-sha2_384

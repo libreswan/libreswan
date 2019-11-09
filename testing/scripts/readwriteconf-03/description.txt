@@ -1,2 +1,0 @@
-This test case is for processing of MAST configurations.
-

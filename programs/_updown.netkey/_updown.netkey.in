@@ -5,14 +5,14 @@
 # Copyright (C) 2003-2004 Nigel Metheringham
 # Copyright (C) 2002-2007 Michael Richardson <mcr@xelerance.com>
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
-# Copyright (C) 2003-2018 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2003-2019 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2011-2016 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2016 Antony Antony <antony@phenome.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -324,7 +324,7 @@ domain ${orig_domain}"
 search ${new_search}"
 	fi
 
-	orig_nameserver=$(grep --max-count 1 ^nameserver "${ETC_RESOLV_CONF}" | \
+	orig_nameserver=$(grep -m 1 ^nameserver "${ETC_RESOLV_CONF}" | \
 	    sed 's/^nameserver[[:space:]]\+//;s/[[:space:]]*\#.*//')
 	if [ -n "${orig_nameserver}" ]; then
 	    new_nameserver=$(echo $(echo "${PLUTO_PEER_DNS_INFO} ${orig_nameserver}" | tr [:space:] '\n' | awk '!a[$0]++'))
@@ -337,7 +337,6 @@ search ${new_search}"
 nameserver ${nameserver}"
 	done
 
-	rm -f -- "${ETC_RESOLV_CONF}"
 	echo "${new_resolv_conf}" > "${ETC_RESOLV_CONF}"
 	rc=$?
     fi
@@ -446,7 +445,7 @@ delsource() {
         return ${st}
     fi
     # Remove source ip if it's not used any more.
-    if [ $(ip -o route list src ${PLUTO_MY_SOURCEIP} | wc -l) -eq 0 ]; then
+    if [ -z "$(ip -o route list src ${PLUTO_MY_SOURCEIP})" ]; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
 	    interface="${VTI_IFACE}"
 	fi
@@ -485,16 +484,21 @@ delsource() {
 }
 
 doproxyarp() {
+    local cmd
+    cmd=${1}
     # Check if client has a single ip only client net
     if [ ${PLUTO_PEER_CLIENT#*/} = ${MAX_CIDR} ]; then
-	# Skip OE special connections
-	if [ ${PLUTO_PEER_CLIENT_NET} = 0.0.0.0 -o \
-	    ${PLUTO_PEER_CLIENT_NET} = "::" ]; then
+	# Skip OE special connections and direct host-host connections
+	if [ "${PLUTO_PEER_CLIENT_NET}" = "0.0.0.0" -o \
+	    "${PLUTO_PEER_CLIENT_NET}" = "::" -o \
+	    "${PLUTO_PEER_CLIENT_NET}" = "${PLUTO_PEER}" -o \
+	    "${PLUTO_MY_CLIENT_NET}" = "${PLUTO_ME}" ]
+	then
 	    return 0
 	fi
 	# check if client is routeable
 	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
-	    egrep -q -s -v " via |^local"; then
+	    grep -E -q -s -v " via |^local"; then
 	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
 		awk '{print $3}')
 	    if [ -r /sys/class/net/${iface}/address ]; then
@@ -502,9 +506,12 @@ doproxyarp() {
 	    fi
 	    # add/remove arp entry for the client on ethernet devices only
 	    if [ -n "${macaddr}" ]; then
-		if [ "$1" = add ]; then
+		if [ "${cmd}" = "add" ]; then
 		    ip neigh add proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface} \
 			lladdr ${macaddr} nud permanent
+		    # Force routing, required for proxyarp to work
+		    ROUTE=yes
+		    export ROUTE
 		else
 		    ip neigh del proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface}
 		fi
@@ -514,11 +521,26 @@ doproxyarp() {
 }
 
 doroute() {
+    local cmd
+    local oops
+    local st
+    cmd=${1}
     st=0
+    if [ ${cmd} != del ]; then
+	oops="$(eval ip route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
+	case "${oops}" in
+	    'RTNETLINK answers: No route to host'*)
+		# Routing is mandatory for IPsec
+		ROUTE=yes
+		;;
+	esac
+    fi
     # skip routing if it's not enabled or necessary
     if [ -z "${PLUTO_MY_SOURCEIP}" -a \
 	-z "${PLUTO_MTU}" -a \
-	"${ROUTE}" != yes ]; then
+	"${ROUTE}" != "yes" -a \
+	"${cmd}" != "del" ]
+    then
 	return 0
     fi
     parms="${PLUTO_PEER_CLIENT}"
@@ -533,9 +555,18 @@ doroute() {
 	parms2="via ${PLUTO_NEXT_HOP}"
     fi
     # route via proper interface according to routing table
-    if [ "${1}" = "del" ]; then
-	peer_interface=$(ip -o route get ${PLUTO_PEER_CLIENT} | \
-	    sed "s/^.*dev \([^ ]*\) .*/\1/")
+    if [ "${cmd}" = "del" ]; then
+	case "${PLUTO_PEER_CLIENT}" in
+	    "0.0.0.0/0")
+		# in case of default route we use half routes
+		peer_interface=$(ip -o route list exact 0.0.0.0/1 | \
+		    sed "s/^.*dev \([^ ]*\) .*/\1/")
+		;;
+	    *)
+		peer_interface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
+		    sed "s/^.*dev \([^ ]*\) .*/\1/")
+		;;
+	esac
     else
 	peer_interface=$(ip -o route get ${PLUTO_NEXT_HOP} | \
 	    sed "s/^.*dev \([^ ]*\) .*/\1/")
@@ -550,7 +581,7 @@ doroute() {
     parms2="${parms2} dev ${peer_interface%:*}${PLUTO_MTU:+ mtu ${PLUTO_MTU}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}} $IPROUTEARGS"
 
     # make sure whe have sourceip locally in this machine
-    if [ "$1" = "replace" -a -n "${PLUTO_MY_SOURCEIP}" ]; then
+    if [ "${cmd}" = "replace" -a -n "${PLUTO_MY_SOURCEIP}" ]; then
 	addsource
 	# use sourceip as route default source
 	parms2="${parms2} src ${PLUTO_MY_SOURCEIP}"
@@ -560,10 +591,10 @@ doroute() {
 	"0.0.0.0/0")
 	    # need to provide route that eclipses default, without
 	    # replacing it.
-	    it="ip route $1 0.0.0.0/1 ${parms2} && ip route $1 128.0.0.0/1 ${parms2}"
+	    it="ip route ${cmd} 0.0.0.0/1 ${parms2} && ip route ${cmd} 128.0.0.0/1 ${parms2}"
 	    ;;
 	*)
-	    it="ip route $1 ${parms} ${parms2}"
+	    it="ip route ${cmd} ${parms} ${parms2}"
 	    ;;
     esac
     oops="$(eval ${it} 2>&1)"
@@ -687,9 +718,11 @@ delvti() {
 		ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
 			src ${PLUTO_MY_SOURCEIP} ||:
 	fi
-	if [ "${VTI_SHARED}" = no -a "${PLUTO_CONN_KIND}" != CK_INSTANCE ]; then
-		ip tun del ${VTI_IFACE} ||:
-	fi
+	# TODO: we can't delete vti interface because we don't have proper reference
+	# counting.
+	#if [ "${VTI_SHARED}" = no -a "${PLUTO_CONN_KIND}" != CK_INSTANCE ]; then
+	#	ip tun del ${VTI_IFACE} ||:
+	#fi
    fi
 }
 
@@ -745,10 +778,12 @@ case "${PLUTO_VERB}" in
     up-client)
 	# connection to my client subnet coming up
 	# If you are doing a custom version, firewall commands go here.
+	addvtiiface
 	updateresolvconf
 	addcat
 	addsource
 	notifyNM connect
+	addvti
 	;;
     down-client)
 	# connection to my client subnet going down

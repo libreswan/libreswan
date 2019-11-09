@@ -3,7 +3,7 @@ ip addr show scope global
 # jacob two two for east?
 ipsec whack --trafficstatus 
 ipsec whack --trafficstatus 
-ipsec look
+../../pluto/bin/ipsec-look.sh
 # you should see both RSA and NULL
 grep IKEv2_AUTH_ /tmp/pluto.log 
 : ==== cut ====

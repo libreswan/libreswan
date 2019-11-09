@@ -17,18 +17,29 @@ fi
 
 directory=$1 ; shift
 port=$1 ; shift
+logfile=simple-http-server.log
+pidfile=simple-http-server.pid
 
 cd ${directory}
 
-# Will need to wait until this background process has printed
-# "starting" on stdout.
-python3 -m http.server ${port} "$@" &
-echo $! > simple-http-server.pid
+# Start the server in the background.
+#
+# Force un-buffered output so that the start-up message is immediately
+# written to the log file (without it the log file remains empty).
 
-# Wait for the server to start by probing it using netcat.
+python3 -u -m http.server ${port} "$@" > ${logfile} 2>&1 &
+echo $! > ${pidfile}
+
+# Wait for the server to start.  Check for both the "Serving ..." log
+# line and an open port.
+
 i=0
 while true ; do
-    if ncat 127.0.0.1 ${port} < /dev/null 2>/dev/null ; then
+    if test -s ${logfile} && ncat 127.0.0.1 ${port} < /dev/null 2>/dev/null ; then
+	# Strip off f28's extra text:
+	# f22: Serving HTTP on 0.0.0.0 port 80 ...
+	# f28: Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+	sed -e 's; (http://[^)]*);;' simple-http-server.log
 	exit 0
     fi
     i=$((i + 1))
@@ -37,4 +48,5 @@ while true ; do
 done
 
 echo Timeout waiting for HTTP server on ${port} to start
+cat ${logfile}
 exit 1

@@ -3,22 +3,26 @@
 %global with_efence 0
 %global with_development 0
 %global with_cavstests 1
+%global nss_version 3.41
+%global unbound_version 1.6.6
 # Libreswan config options
 %global libreswan_config \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
+    FINALMANDIR=%{_mandir} \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_prefix} \\\
     INITSYSTEM=systemd \\\
-    NSS_REQ_AVA_COPY=false \\\
     USE_DNSSEC=true \\\
     USE_FIPSCHECK=true \\\
+    USE_KLIPS=false \\\
     USE_LABELED_IPSEC=true \\\
     USE_LDAP=true \\\
     USE_LIBCAP_NG=true \\\
     USE_LIBCURL=true \\\
     USE_LINUX_AUDIT=true \\\
     USE_NM=true \\\
+    USE_NSS_IPSEC_PROFILE=true \\\
     USE_SECCOMP=true \\\
     USE_XAUTHPAM=true \\\
 %{nil}
@@ -26,7 +30,7 @@
 #global prever dr1
 
 Name: libreswan
-Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
+Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
 # version is generated in the release script
 Version: 3.23
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
@@ -38,44 +42,45 @@ Source1: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
 Source2: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source3: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
+
+BuildRequires: audit-libs-devel
 BuildRequires: bison
+BuildRequires: curl-devel
+BuildRequires: fipscheck-devel
 BuildRequires: flex
+BuildRequires: gcc
+BuildRequires: hostname
+BuildRequires: ldns-devel
+BuildRequires: libcap-ng-devel
+BuildRequires: libevent-devel
+BuildRequires: libseccomp-devel
+BuildRequires: libselinux-devel
+BuildRequires: nspr-devel
+BuildRequires: nss-devel >= %{nss_version}
+BuildRequires: openldap-devel
+BuildRequires: pam-devel
 BuildRequires: pkgconfig
 BuildRequires: systemd-devel
+BuildRequires: unbound-devel >= %{unbound_version}
+BuildRequires: xmlto
+%if 0%{with_efence}
+BuildRequires: ElectricFence
+%endif
+Requires: fipscheck%{_isa}
+Requires: iproute >= 2.6.8
+Requires: nss >= %{nss_version}
+Requires: nss-softokn
+Requires: nss-tools
+Requires: unbound-libs >= %{unbound_version}
 Requires(post): bash
 Requires(post): coreutils
 Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
-
 Conflicts: openswan < %{version}-%{release}
 Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
 Provides: openswan-doc = %{version}-%{release}
-
-BuildRequires: pkgconfig hostname
-BuildRequires: nss-devel >= 3.16.1
-BuildRequires: nspr-devel
-BuildRequires: pam-devel
-BuildRequires: libevent-devel
-BuildRequires: unbound-devel >= 1.6.0-6
-BuildRequires: ldns-devel
-BuildRequires: libseccomp-devel
-BuildRequires: libselinux-devel
-BuildRequires: fipscheck-devel
-Requires: fipscheck%{_isa}
-Buildrequires: audit-libs-devel
-BuildRequires: libcap-ng-devel
-BuildRequires: openldap-devel
-BuildRequires: curl-devel
-%if 0%{with_efence}
-BuildRequires: ElectricFence
-%endif
-BuildRequires: xmlto
-
-Requires: nss-tools
-Requires: nss-softokn
-Requires: iproute >= 2.6.8
 
 %description
 Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is
@@ -87,29 +92,38 @@ decrypted by the gateway at the other end of the tunnel.  The resulting
 tunnel is a virtual private network or VPN.
 
 This package contains the daemons and userland tools for setting up
-Libreswan. To build KLIPS, see the kmod-libreswan.spec file.
+Libreswan.
 
-Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
+Libreswan also supports IKEv2 (RFC7296) and Secure Labeling
 
 Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
+# Fedora should really figure this versioning out itself, not burden upstream
 sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/verify/verify.in
+sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/show/show.in
+sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/cert_verify/usage_test
+sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/pluto/ikev1-01-fuzzer/cve-2015-3204.py
+sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/pluto/ikev2-15-fuzzer/send_bad_packets.py
+sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/x509/dist_certs.py
+sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/_unbound-hook/_unbound-hook.in
+# enable crypto-policies support
+sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" programs/configs/ipsec.conf.in
+# linking to freebl is no longer needed
+sed -i "s/-lfreebl //" mk/config.mk
 
 %build
-%if 0%{with_efence}
-%global efence "-lefence"
-%endif
-
-#796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
 %if 0%{with_development}
-    USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+    OPTIMIZE_CFLAGS="%{?_hardened_cflags}" \
 %else
-    USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+    OPTIMIZE_CFLAGS="%{optflags}" \
 %endif
-    USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
+%if 0%{with_efence}
+    USE_EFENCE=true \
+%endif
+    USERLINK="%{?__global_ldflags}" \
     %{libreswan_config} \
     programs
 FS=$(pwd)
@@ -129,8 +143,9 @@ make \
     install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
+rm -rf %{buildroot}%{_libexecdir}/ipsec/*check
 
-install -d -m 0700 %{buildroot}%{_rundir}/pluto
+install -d -m 0755 %{buildroot}%{_rundir}/pluto
 # used when setting --perpeerlog without --perpeerlogbase
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
@@ -138,10 +153,6 @@ install -d %{buildroot}%{_sbindir}
 install -d %{buildroot}%{_sysconfdir}/sysctl.d
 install -m 0644 packaging/fedora/libreswan-sysctl.conf \
     %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
-
-install -d %{buildroot}%{_tmpfilesdir}
-install -m 0644 packaging/fedora/libreswan-tmpfiles.conf  \
-    %{buildroot}%{_tmpfilesdir}/libreswan.conf
 
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 
@@ -164,7 +175,7 @@ export NSS_DISABLE_HW_GCM=1
 %{buildroot}%{_libexecdir}/ipsec/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
 : starting CAVS test for IKEv1 RSASIG
-%{buildroot}%{_libexecdir}/ipsec/cavp -v1sig ikev1_dsa.fax | \
+%{buildroot}%{_libexecdir}/ipsec/cavp -v1dsa ikev1_dsa.fax | \
     diff -u ikev1_dsa.fax - > /dev/null
 : starting CAVS test for IKEv1 PSK
 %{buildroot}%{_libexecdir}/ipsec/cavp -v1psk ikev1_psk.fax | \
@@ -192,7 +203,7 @@ export NSS_DISABLE_HW_GCM=1
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
-%attr(0700,root,root) %dir %{_rundir}/pluto
+%attr(0755,root,root) %dir %{_rundir}/pluto
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
@@ -202,5 +213,7 @@ export NSS_DISABLE_HW_GCM=1
 %{_libdir}/fipscheck/pluto.hmac
 
 %changelog
-* Thu Jan 25 2018 Team Libreswan <team@libreswan.org> - 3.23-1
+
+* Sun Oct  7 2018 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+
 - Automated build from release tar ball

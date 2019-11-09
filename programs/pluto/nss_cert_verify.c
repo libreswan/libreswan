@@ -1,12 +1,14 @@
-/* pluto NSS certificate verification routines
+/* NSS certificate verification routines for libreswan
  *
- * Copyright (C) 2015 Matt Rogers <mrogers@libreswan.org>
- * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015,2018 Matt Rogers <mrogers@libreswan.org>
+ * Copyright (C) 2017-2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2018-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -24,42 +26,42 @@
 #include <time.h>
 #include <limits.h>
 #include <sys/types.h>
-#include <libreswan.h>
 #include "sysdep.h"
 #include "lswnss.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "x509.h"
 #include "nss_cert_verify.h"
+#include "lswfips.h" /* for libreswan_fipsmode() */
 #include "nss_err.h"
+#include "certs.h"
 #include <secder.h>
 #include <secerr.h>
 #include <certdb.h>
+#include <keyhi.h>
+#include <secpkcs7.h>
+#include "demux.h"
+#include "state.h"
+#include "pluto_timing.h"
+#include "root_certs.h"
+#include "ip_info.h"
 
 /*
  * set up the slot/handle/trust things that NSS needs
  */
-static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
+static bool prepare_nss_import(PK11SlotInfo **slot)
 {
 	/*
 	 * possibly need to handle passworded db case here
 	 */
 	*slot = PK11_GetInternalKeySlot();
 	if (*slot == NULL) {
-		    DBG(DBG_X509,
-			DBG_log("NSS PK11_GetInternalKeySlot error: %s",
-				nss_err_str(PORT_GetError())));
+		LSWDBGP(DBG_X509, buf) {
+			lswlogs(buf, "NSS: cert import calling PK11_GetInternalKeySlot() failed: ");
+			lswlog_nss_error(buf);
+		}
 		return FALSE;
 	}
-
-	*handle = CERT_GetDefaultCertDB();
-	if (*handle == NULL) {
-		    DBG(DBG_X509,
-			DBG_log("NSS error getting DB handle: %s",
-				nss_err_str(PORT_GetError())));
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -68,15 +70,15 @@ static bool crl_is_current(CERTSignedCrl *crl)
 	return SEC_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
 }
 
-static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
-				     CERTCertificate *cert)
+static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
+					CERTCertificate *cert)
 {
-	if (handle == NULL || cert == NULL)
-		return NULL;
+	if (!pexpect(handle != NULL) || !pexpect(cert != NULL))
+		return false;
 
-	DBG(DBG_X509,
-	    DBG_log("%s : looking for a CRL issued by %s", __FUNCTION__,
-							   cert->issuerName));
+	dbg("%s: looking for a CRL issued by %s",
+	    __func__, cert->issuerName);
+
 	/*
 	 * Use SEC_LookupCrls method instead of SEC_FindCrlByName.
 	 * For some reason, SEC_FindCrlByName was giving out bad pointers!
@@ -86,130 +88,63 @@ static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
 	CERTCrlHeadNode *crl_list = NULL;
 
 	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess) {
-		return NULL;
+		return false;
 	}
 
-	CERTCrlNode *crl_node = crl_list->first;
-	CERTSignedCrl *crl = NULL;
+	bool current = false;
 
-	while (crl_node != NULL) {
-		if (crl_node->crl != NULL &&
-				SECITEM_ItemsAreEqual(&cert->derIssuer,
-						 &crl_node->crl->crl.derName)) {
-			crl = crl_node->crl;
-			DBG(DBG_X509,
-			    DBG_log("%s : CRL found", __FUNCTION__));
+	for (CERTCrlNode *crl_node = crl_list->first; crl_node != NULL;
+	     crl_node = crl_node->next) {
+		CERTSignedCrl *crl = crl_node->crl;
+		if (crl != NULL &&
+		    SECITEM_ItemsAreEqual(&cert->derIssuer, &crl->crl.derName)) {
+			current = crl_is_current(crl);
+			dbg("%s: %s CRL found",
+				__func__, current ? "current" : "expired");
 			break;
 		}
-		crl_node = crl_node->next;
 	}
 
-	if (crl == NULL) {
-		PORT_FreeArena(crl_list->arena, PR_FALSE);
-	}
-
-	return crl;
+	PORT_FreeArena(crl_list->arena, PR_FALSE);
+	return current;
 }
 
-static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
-				 CERTCertificate *cert)
+static void log_bad_cert(const char *prefix, const char *usage, CERTVerifyLogNode *head)
 {
-	bool res = FALSE;
-	CERTSignedCrl *crl = get_issuer_crl(handle, cert);
+	/*
+	 * Usually there is only one error in the list, but sometimes
+	 * there are several.
+	 *
+	 * ??? When there are several, they (often? always?) seem to be
+	 *     duplicates, so we filter.
+	 */
+	const char *last_sn = NULL;
+	long last_error = 0;
 
-	if (crl != NULL) {
-		res = crl_is_current(crl);
-		if (crl->arena != NULL) {
-			PORT_FreeArena(crl->arena, PR_FALSE);
+	for (CERTVerifyLogNode *node = head; node != NULL; node = node->next) {
+		if (last_sn != NULL && streq(last_sn, node->cert->subjectName) &&
+		    last_error == node->error)
+			continue;	/* duplicate error */
+
+		last_sn = node->cert->subjectName;
+		last_error = node->error;
+		loglog(RC_LOG_SERIOUS, "Certificate %s failed %s verification",
+		       node->cert->subjectName, usage);
+		/* ??? we ignore node->depth and node->arg */
+		loglog(RC_LOG_SERIOUS, "%s: %s", prefix,
+		       nss_err_str(node->error));
+		/*
+		 * XXX: this redundant log message is to keep tests happy -
+		 * the above ERROR: line will have already explained the the
+		 * problem.
+		 *
+		 * Two things should change - drop the below, and prefix the
+		 * above with "NSS ERROR: ".
+		 */
+		if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
+			loglog(RC_LOG_SERIOUS, "certificate revoked!");
 		}
 	}
-
-	return res;
-}
-
-/*
- * check if any of the certificates have an outdated CRL.
- */
-static bool crl_update_check(CERTCertDBHandle *handle,
-				   CERTCertificate **chain,
-				   int chain_len)
-{
-	int i;
-
-	for (i = 0; i < chain_len && chain[i] != NULL; i++) {
-		if (!cert_issuer_has_current_crl(handle, chain[i])) {
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-static int nss_err_to_revfail(CERTVerifyLogNode *node)
-{
-	int ret = VERIFY_RET_FAIL;
-
-	if (node == NULL || node->cert == NULL) {
-		return ret;
-	}
-
-	loglog(RC_LOG_SERIOUS, "Certificate %s failed verification",
-		    node->cert->subjectName);
-	loglog(RC_LOG_SERIOUS, "ERROR: %s",
-		    nss_err_str(node->error));
-
-	if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
-		ret = VERIFY_RET_REVOKED;
-	}
-
-	return ret;
-}
-
-/*
- * Does a temporary import, which decodes the entire chain and allows
- * CERT_VerifyCert to verify the chain when passed the end certificate
- */
-static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
-						      SECItem *ders,
-						      int der_cnt)
-{
-	if (der_cnt < 1) {
-		DBG(DBG_X509, DBG_log("nothing to decode"));
-		return 0;
-	}
-
-	SECItem **derlist = PORT_Alloc(sizeof(SECItem *) * der_cnt);
-
-	int i;
-	int nonroot = 0;
-
-	for (i = 0; i < der_cnt; i++) {
-		if (!CERT_IsRootDERCert(&ders[i]))
-			derlist[nonroot++] = &ders[i];
-	}
-
-	int fin_count = 0;
-
-	if (nonroot < 1) {
-		DBG(DBG_X509, DBG_log("nothing to decode"));
-	} else {
-		SECStatus rv = CERT_ImportCerts(handle, 0, nonroot, derlist,
-						chain, PR_FALSE, PR_FALSE, NULL);
-		if (rv != SECSuccess || *chain == NULL) {
-			DBG(DBG_X509, DBG_log("NSS error decoding certs: %s",
-					       nss_err_str(PORT_GetError())));
-		} else {
-			CERTCertificate **cc;
-
-			for (cc = *chain; fin_count < nonroot && *cc != NULL; cc++) {
-				DBG(DBG_X509, DBG_log("decoded %s",
-					(*cc)->subjectName));
-				fin_count++;
-			}
-		}
-	}
-
-	PORT_Free(derlist);
-	return fin_count;
 }
 
 static void new_vfy_log(CERTVerifyLog *log)
@@ -220,45 +155,6 @@ static void new_vfy_log(CERTVerifyLog *log)
 	log->arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 }
 
-static CERTCertList *get_all_root_certs(void)
-{
-	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
-
-	if (slot == NULL)
-		return NULL;
-
-	if (PK11_NeedLogin(slot)) {
-		SECStatus rv = PK11_Authenticate(slot, PR_TRUE,
-				lsw_return_nss_password_file_info());
-		if (rv != SECSuccess)
-			return NULL;
-	}
-
-	CERTCertList *allcerts = PK11_ListCertsInSlot(slot);
-
-	if (allcerts == NULL)
-		return NULL;
-
-	CERTCertList *roots = CERT_NewCertList();
-
-	CERTCertListNode *node;
-
-	for (node = CERT_LIST_HEAD(allcerts); !CERT_LIST_END(node, allcerts);
-						node = CERT_LIST_NEXT(node)) {
-		if (CERT_IsCACert(node->cert, NULL) && node->cert->isRoot) {
-			CERT_DupCertificate(node->cert);
-			CERT_AddCertToListTail(roots, node->cert);
-		}
-	}
-
-	CERT_DestroyCertList(allcerts);
-
-	if (roots == NULL || CERT_LIST_EMPTY(roots))
-		return NULL;
-
-	return roots;
-}
-
 static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
 						       PRUint64 *cflags)
 {
@@ -266,7 +162,7 @@ static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
 	rev->chainTests.cert_rev_flags_per_method = cflags;
 }
 
-static unsigned int rev_val_flags(PRBool strict)
+static unsigned int rev_val_flags(PRBool strict, PRBool post)
 {
 	unsigned int flags = CERT_REV_M_TEST_USING_THIS_METHOD;
 
@@ -274,17 +170,21 @@ static unsigned int rev_val_flags(PRBool strict)
 		flags |= CERT_REV_M_REQUIRE_INFO_ON_MISSING_SOURCE;
 		flags |= CERT_REV_M_FAIL_ON_MISSING_FRESH_INFO;
 	}
+
+	if (post) {
+		flags |= CERT_REV_M_FORCE_POST_METHOD_FOR_OCSP;
+	}
 	return flags;
 }
 
-static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
-						     bool ocsp,
-						     bool ocsp_strict)
+static void set_rev_params(CERTRevocationFlags *rev,
+			   const struct rev_opts *rev_opts)
 {
 	CERTRevocationTests *rt = &rev->leafTests;
 	PRUint64 *rf = rt->cert_rev_flags_per_method;
-	DBG(DBG_X509, DBG_log("crl_strict: %d, ocsp: %d, ocsp_strict: %d",
-				crl_strict, ocsp, ocsp_strict));
+	dbg("crl_strict: %d, ocsp: %d, ocsp_strict: %d, ocsp_post: %d",
+	    rev_opts->crl_strict, rev_opts->ocsp,
+	    rev_opts->ocsp_strict, rev_opts->ocsp_post);
 
 	rt->number_of_defined_methods = cert_revocation_method_count;
 	rt->number_of_preferred_methods = 0;
@@ -292,178 +192,362 @@ static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
 	rf[cert_revocation_method_crl] |= CERT_REV_M_TEST_USING_THIS_METHOD;
 	rf[cert_revocation_method_crl] |= CERT_REV_M_FORBID_NETWORK_FETCHING;
 
-	if (ocsp) {
-		rf[cert_revocation_method_ocsp] = rev_val_flags(ocsp_strict);
+	if (rev_opts->ocsp) {
+		rf[cert_revocation_method_ocsp] = rev_val_flags(rev_opts->ocsp_strict,
+								rev_opts->ocsp_post);
 	}
 }
+
+/* SEC_ERROR_INADEQUATE_CERT_TYPE etc.: /usr/include/nss3/secerr.h */
 
 #define RETRYABLE_TYPE(err) ((err) == SEC_ERROR_INADEQUATE_CERT_TYPE || \
 			      (err) == SEC_ERROR_INADEQUATE_KEY_USAGE)
 
-static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
-						   CERTCertificate **end_out,
-						   bool *rev_opts)
+static bool verify_end_cert(CERTCertList *trustcl,
+			    const struct rev_opts *rev_opts,
+			    CERTCertificate *end_cert)
 {
-	CERTCertificate *end_cert = NULL;
-	CERTCertList *trustcl = get_all_root_certs();
-
-	if (trustcl == NULL) {
-		DBG(DBG_X509, DBG_log("X509: no trust anchor available for verification"));
-		return VERIFY_RET_SKIP;
-	}
-
-	int i;
-
-	for (i = 0; i < chain_len; i++) {
-		if (!CERT_IsCACert(chain[i], NULL)) {
-			end_cert = chain[i];
-			break;
-		}
-	}
-
-	if (end_cert == NULL) {
-		libreswan_log("X509: no EE-cert in chain!");
-		return VERIFY_RET_FAIL;
-	}
-
-
-	CERTVerifyLog *cur_log = NULL;
-	CERTVerifyLog vfy_log;
-	CERTVerifyLog vfy_log2;
-
-	new_vfy_log(&vfy_log);
-	new_vfy_log(&vfy_log2);
-
 	CERTRevocationFlags rev;
-	zero(&rev);	/* ??? are there pointer fields? */
+	zero(&rev);	/* ??? are there pointer fields?  YES, and different for different union members! */
 
 	PRUint64 revFlagsLeaf[2] = { 0, 0 };
 	PRUint64 revFlagsChain[2] = { 0, 0 };
 
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
-	set_rev_params(&rev, rev_opts[RO_CRL_S], rev_opts[RO_OCSP],
-						 rev_opts[RO_OCSP_S]);
-	int in_idx = 0;
-	CERTValInParam cvin[7];
-	CERTValOutParam cvout[3];
-	zero(&cvin);	/* ??? are there pointer fields? */
-	zero(&cvout);	/* ??? are there pointer fields? */
+	set_rev_params(&rev, rev_opts);
 
-	cvin[in_idx].type = cert_pi_revocationFlags;
-	cvin[in_idx++].value.pointer.revocation = &rev;
-
-	cvin[in_idx].type = cert_pi_useAIACertFetch;
-	cvin[in_idx++].value.scalar.b = rev_opts[RO_OCSP];
-
-	cvin[in_idx].type = cert_pi_trustAnchors;
-	cvin[in_idx++].value.pointer.chain = trustcl;
-
-	cvin[in_idx].type = cert_pi_useOnlyTrustAnchors;
-	cvin[in_idx++].value.scalar.b = PR_TRUE;
-
-	cvin[in_idx].type = cert_pi_end;
-
-	cvout[0].type = cert_po_errorLog;
-	cvout[0].value.pointer.log = cur_log = &vfy_log;
-	cvout[1].type = cert_po_certList;
-	cvout[1].value.pointer.chain = NULL;
-	cvout[2].type = cert_po_end;
-
-	/* kludge alert!!
-	 * verification may be performed twice: once with the
-	 * 'client' usage and once with 'server', which is an NSS
-	 * detail and not related to IKE. In the absence of a real
-	 * IKE profile being available for NSS, this covers more
-	 * KU/EKU combinations
-	 */
-
-	int fin;
-	SECCertificateUsage usage;
-
-	for (usage = certificateUsageSSLClient; ; usage = certificateUsageSSLServer) {
-		SECStatus rv = CERT_PKIXVerifyCert(end_cert, usage, cvin, cvout, NULL);
-
-		if (rv != SECSuccess || cur_log->count > 0) {
-			if (cur_log->count > 0 && cur_log->head != NULL) {
-				if (usage == certificateUsageSSLClient &&
-				    RETRYABLE_TYPE(cur_log->head->error)) {
-					/* try again, after some adjustments */
-					DBG(DBG_X509,
-					    DBG_log("retrying verification with the NSS serverAuth profile"));
-					/* ??? since we are about to overwrite cvout[1],
-					 * should we be doing:
-					 * if (cvout[1].value.pointer.chain != NULL)
-					 *	CERT_DestroyCertList(cvout[1].value.pointer.chain);
-					 */
-					cvout[0].value.pointer.log = cur_log = &vfy_log2;
-					cvout[1].value.pointer.chain = NULL;
-					continue;
-				} else {
-					fin = nss_err_to_revfail(cur_log->head);
-				}
-			} else {
-				/*
-				 * An rv != SECSuccess without CERTVerifyLog results should not
-				 * happen, but catch it anyway
-				 */
-				libreswan_log("X509: unspecified NSS verification failure");
-				fin = VERIFY_RET_FAIL;
-			}
-		} else {
-			DBG(DBG_X509, DBG_log("certificate is valid"));
-			*end_out = end_cert;
-			fin = VERIFY_RET_OK;
+	CERTValInParam cvin[] = {
+		{
+			.type = cert_pi_revocationFlags,
+			.value = { .pointer = { .revocation = &rev } }
+		},
+		{
+			.type = cert_pi_useAIACertFetch,
+			.value = { .scalar = { .b = rev_opts->ocsp ? PR_TRUE : PR_FALSE } }
+		},
+		{
+			.type = cert_pi_trustAnchors,
+			.value = { .pointer = { .chain = trustcl } }
+		},
+		{
+			.type = cert_pi_useOnlyTrustAnchors,
+			.value = { .scalar = { .b = PR_TRUE } }
+		},
+		{
+			.type = cert_pi_end
 		}
-		break;
+	};
+
+	struct usage_desc {
+		SECCertificateUsage usage;
+		const char *usageName;
+	};
+
+	static const struct usage_desc usages[] = {
+#ifdef NSS_IPSEC_PROFILE
+		{ certificateUsageIPsec, "IPsec" },
+#endif
+		{ certificateUsageSSLClient, "TLS Client" },
+		{ certificateUsageSSLServer, "TLS Server" }
+	};
+
+	bool verified = false;	/* more ways to fail than succeed */
+
+	CERTVerifyLog vfy_log;
+
+	CERTValOutParam cvout[] = {
+		{
+			.type = cert_po_errorLog,
+			.value = { .pointer = { .log = &vfy_log } }
+		},
+		{
+			.type = cert_po_certList,
+			.value = { .pointer = { .chain = NULL } }
+		},
+		{
+			.type = cert_po_end
+		}
+	};
+
+	for (const struct usage_desc *p = usages; ; p++) {
+		DBGF(DBG_X509, "verify_end_cert trying profile %s", p->usageName);
+
+		new_vfy_log(&vfy_log);
+		SECStatus rv = CERT_PKIXVerifyCert(end_cert, p->usage, cvin, cvout, NULL);
+
+		if (rv == SECSuccess) {
+			/* success! */
+			pexpect(vfy_log.count == 0 && vfy_log.head == NULL);
+			DBGF(DBG_X509, "certificate is valid (profile %s)", p->usageName);
+			verified = true;
+			break;
+		}
+
+		pexpect(rv == SECFailure);
+
+		/* Failure.  Can we try again? */
+
+		/*
+		 * The (error) log can have more than one entry
+		 * but we only test the first with RETRYABLE_TYPE.
+		 */
+		passert(vfy_log.count > 0 && vfy_log.head != NULL);
+
+		if (p == &usages[elemsof(usages) - 1] ||
+		    !RETRYABLE_TYPE(vfy_log.head->error)) {
+			/* we are a conclusive failure */
+			log_bad_cert("ERROR", p->usageName, vfy_log.head);
+			break;
+		}
+
+		/* this usage failed: prepare to repeat for the next one */
+
+		log_bad_cert("warning", p->usageName,  vfy_log.head);
+
+		PORT_FreeArena(vfy_log.arena, PR_FALSE);
+
+		/*
+		 * ??? observed squirrelly behaviour:
+		 * CERT_DestroyCertList(NULL) does something very odd:
+		 * at least sometimes terminating execution without a core file.
+		 * testing/pluto/ikev2-x509-02-eku illustrates this.
+		 * So we must make sure not to do that.
+		 */
+		if (cvout[1].value.pointer.chain != NULL) {
+			CERT_DestroyCertList(cvout[1].value.pointer.chain);
+			cvout[1].value.pointer.chain = NULL;
+		}
 	}
 
-	CERT_DestroyCertList(trustcl);
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
-	PORT_FreeArena(vfy_log2.arena, PR_FALSE);
 
+	/*
+	 * ??? observed squirrelly behaviour:
+	 * CERT_DestroyCertList(NULL) does something very odd:
+	 * at least sometimes terminating execution without a core file.
+	 * testing/pluto/ikev2-x509-23-no-ca illustrates this.
+	 * So we must make sure not to do that.
+	 */
 	if (cvout[1].value.pointer.chain != NULL) {
 		CERT_DestroyCertList(cvout[1].value.pointer.chain);
+		cvout[1].value.pointer.chain = NULL;
 	}
 
-	return fin;
+	return verified;
 }
 
-static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
-							  int max_i)
+/*
+ * check if any of the certificates have an outdated CRL.
+ *
+ * XXX: Why isn't NSS doing this for us?
+ */
+static bool crl_update_check(CERTCertDBHandle *handle,
+			     struct certs *certs)
 {
-	int i;
-
-	for (i = 0; i < chunk_n && i < max_i; i++) {
-		items[i] = same_chunk_as_dercert_secitem(chunks[i]);
+	for (struct certs *entry = certs; entry != NULL;
+	     entry = entry->next) {
+		if (!cert_issuer_has_current_crl(handle, entry->cert)) {
+			return true;
+		}
 	}
+	return false;
 }
 
-#define VFY_INVALID_USE(d, n) (d == NULL || \
-			       d[0].ptr == NULL || \
-			       d[0].len < 1 || \
-			       n < 1 || \
-			       n > MAX_CA_PATH_LEN)
+/*
+ * Does a temporary import of the DER certificate an appends it to the
+ * CERTS array.
+ */
+static void add_decoded_cert(CERTCertDBHandle *handle,
+			     struct certs **certs,
+			     SECItem der_cert)
+{
+	/*
+	 * Reject root certificates.
+	 *
+	 * XXX: Since NSS implements this by decoding the certificate
+	 * using CERT_DecodeDERCertificate(), examining, and then
+	 * deleting the certificate it isn't the most efficient (it
+	 * means decoding the certificate twice).  On the other hand
+	 * it does keep the certificate well away from the certificate
+	 * database (although it isn't clear if this is really a
+	 * problem?).  And it is what NSS does internally - first
+	 * check the certificate and then call
+	 * CERT_NewTempCertificate().  Presumably the decode operation
+	 * is considered "cheap".
+	 */
+	if (CERT_IsRootDERCert(&der_cert)) {
+		dbg("ignoring root certificate");
+		return;
+	}
+
+	/*
+	 * Import the cert into temporary storage.
+	 *
+	 * CERT_NewTempCertificate() calls *FindOrImport*() which,
+	 * presumably, checks for an existing certificate and returns
+	 * that if it is found.
+	 *
+	 * However, unlike CERT_ImportCerts() it doesn't do extra
+	 * hashing.
+	 *
+	 * NSS's vfrychain.c makes for interesting reading.
+	 */
+	CERTCertificate *cert = CERT_NewTempCertificate(handle, &der_cert,
+							NULL /*nickname*/,
+							PR_FALSE /*isperm*/,
+							PR_TRUE /* copyDER */);
+	if (cert == NULL) {
+		LSWDBGP(DBG_BASE, buf) {
+			lswlogs(buf, "NSS: decoding certs using CERT_ImportCerts() failed: ");
+			lswlog_nss_error(buf);
+		}
+		return;
+	}
+	dbg("decoded cert: %s", cert->subjectName);
+
+	/* extra verification */
+#ifdef FIPS_CHECK
+	if (libreswan_fipsmode()) {
+		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
+		passert(pk != NULL);
+		if ((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE) {
+			libreswan_log("FIPS: Rejecting peer cert with key size %d under %d",
+					pk->u.rsa.modulus.len * BITS_PER_BYTE,
+					FIPS_MIN_RSA_KEY_SIZE);
+			SECKEY_DestroyPublicKey(pk);
+			CERT_DestroyCertificate(cert);
+			return;
+		}
+		SECKEY_DestroyPublicKey(pk);
+	}
+#endif /* FIPS_CHECK */
+
+	/*
+	 * Append the certificate to the CERTS array.
+	 *
+	 * XXX: Caller doesn't seem to delete the reference to the
+	 * certificate (or at least the imported intermediate
+	 * certificates, for the end certificate things are less clear
+	 * as it escapes to x509.c only to then be leaked)?  Perhaps
+	 * that's the intend?  Over time accumulate a pool of imported
+	 * certificates in NSS's certificate database?
+	 */
+	add_cert(certs, cert);
+}
+
+/*
+ * Decode the cert payloads creating a list of temp certificates.
+ */
+static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
+					  enum ike_version ike_version,
+					  struct payload_digest *cert_payloads)
+{
+	struct certs *certs = NULL;
+	/* accumulate the known certificates */
+	dbg("checking for known CERT payloads");
+	for (struct payload_digest *p = cert_payloads; p != NULL; p = p->next) {
+		enum ike_cert_type cert_type;
+		const char *cert_name;
+		switch (ike_version) {
+		case IKEv2:
+			cert_type = p->payload.v2cert.isac_enc;
+			cert_name = enum_short_name(&ikev2_cert_type_names, cert_type);
+			break;
+		case IKEv1:
+			cert_type = p->payload.cert.isacert_type;
+			cert_name = enum_short_name(&ike_cert_type_names, cert_type);
+			break;
+		default:
+			bad_case(ike_version);
+		}
+		if (cert_name == NULL) {
+			loglog(RC_LOG_SERIOUS, "ignoring certificate with unknown type %d",
+			       cert_type);
+			continue;
+		}
+
+		dbg("saving certificate of type '%s'", cert_name);
+		/* convert remaining buffer to something nss likes */
+		shunk_t payload_hunk = pbs_in_left_as_shunk(&p->pbs);
+		/* NSS doesn't do const */
+		SECItem payload = {
+			.type = siDERCertBuffer,
+			.data = (void*)payload_hunk.ptr,
+			.len = payload_hunk.len,
+		};
+
+		switch (cert_type) {
+		case CERT_X509_SIGNATURE:
+			add_decoded_cert(handle, &certs, payload);
+			break;
+		case CERT_PKCS7_WRAPPED_X509:
+		{
+			SEC_PKCS7ContentInfo *contents = SEC_PKCS7DecodeItem(&payload, NULL, NULL, NULL, NULL,
+									     NULL, NULL, NULL);
+			if (contents == NULL) {
+				loglog(RC_LOG_SERIOUS, "Wrapped PKCS7 certificate payload could not be decoded");
+				continue;
+			}
+			if (!SEC_PKCS7ContainsCertsOrCrls(contents)) {
+				loglog(RC_LOG_SERIOUS, "Wrapped PKCS7 certificate payload did not contain any certificates");
+				SEC_PKCS7DestroyContentInfo(contents);
+				continue;
+			}
+			for (SECItem **cert_list = SEC_PKCS7GetCertificateList(contents);
+			     *cert_list; cert_list++) {
+				add_decoded_cert(handle, &certs, **cert_list);
+			}
+			SEC_PKCS7DestroyContentInfo(contents);
+			break;
+		}
+		default:
+			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload", cert_name);
+			break;
+		}
+	}
+	return certs;
+}
 
 /*
  * Decode and verify the chain received by pluto.
  * ee_out is the resulting end cert
  */
-int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out,
-							bool *rev_opts)
+struct certs *find_and_verify_certs(struct state *st,
+				    struct payload_digest *cert_payloads,
+				    const struct rev_opts *rev_opts,
+				    bool *crl_needed, bool *bad)
 {
-	if (VFY_INVALID_USE(ders, num_ders)) {
-		libreswan_log("X509: Invalid certificate (self-signed EE-cert attempted or MAX_CA_PATH_LEN reached");
-		return -1;
+	*crl_needed = false;
+	*bad = false;
+
+	if (!pexpect(cert_payloads != NULL)) {
+		/* logged by pexpect() */
+		return NULL;
 	}
 
-	SECItem si_ders[MAX_CA_PATH_LEN] = { {siBuffer, NULL, 0} };
-
-	chunks_to_si(ders, si_ders, num_ders, MAX_CA_PATH_LEN);
-
 	PK11SlotInfo *slot = NULL;
-	CERTCertDBHandle *handle = NULL;
-	if (!prepare_nss_import(&slot, &handle))
-		return -1;
+	if (!prepare_nss_import(&slot)) {
+		/* logged by above */
+		return NULL;
+	}
+
+	statetime_t root_time = statetime_start(st);
+	CERTCertList *root_certs = get_root_certs(); 	/* must not free */
+	statetime_stop(&root_time, "%s() calling get_root_certs()", __func__);
+	if (!pexpect(root_certs != NULL) || CERT_LIST_EMPTY(root_certs)) {
+		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
+		return NULL;
+	}
+
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
+
 	/*
 	 * In order for NSS to verify an entire chain, down to a
 	 * CA loaded permanently into the NSS db, a temporary import
@@ -471,109 +555,196 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 	 * cache. When CERT_VerifyCert is called against the end
 	 * certificate both permanent and in-memory cache are used
 	 * together to try to complete the chain.
+	 *
+	 * This routine populates certs[] with the imported
+	 * certificates.  For details read CERT_ImportCerts().
 	 */
-	CERTCertificate **cert_chain = NULL;
-	int chain_len = crt_tmp_import(handle, &cert_chain, si_ders, num_ders);
-
-	if (chain_len < 1) {
-		libreswan_log("X509: temporary cert import operation failed");
-		return -1;
+	statetime_t decode_time = statetime_start(st);
+	struct certs *certs = decode_cert_payloads(handle, st->st_ike_version,
+						   cert_payloads);
+	statetime_stop(&decode_time, "%s() calling decode_cert_payloads()", __func__);
+	if (certs == NULL) {
+		return NULL;
+	}
+	CERTCertificate *end_cert = make_end_cert_first(&certs);
+	if (end_cert == NULL) {
+		libreswan_log("X509: no EE-cert in chain!");
+		release_certs(&certs);
+		return NULL;
 	}
 
-	int ret = 0;
-
-	if (crl_update_check(handle, cert_chain, chain_len)) {
-		if (rev_opts[RO_CRL_S]) {
+	statetime_t crl_time = statetime_start(st);
+	*crl_needed = crl_update_check(handle, certs);
+	statetime_stop(&crl_time, "%s() calling crl_update_check()", __func__);
+	if (*crl_needed) {
+		if (rev_opts->crl_strict) {
+			*bad = true;
 			libreswan_log("missing or expired CRL in strict mode, failing pending update");
-			return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
+			release_certs(&certs);
+			return NULL;
 		}
 		DBG(DBG_X509, DBG_log("missing or expired CRL"));
-		ret |= VERIFY_RET_CRL_NEED;
 	}
 
-	ret |= vfy_chain_pkix(cert_chain, chain_len, ee_out, rev_opts);
-
-	return ret;
+	statetime_t verify_time = statetime_start(st);
+	bool end_ok = verify_end_cert(root_certs, rev_opts, end_cert);
+	*bad = !end_ok;
+	statetime_stop(&verify_time, "%s() calling verify_end_cert()", __func__);
+	if (!end_ok) {
+		release_certs(&certs);
+		return NULL;
+	}
+	return certs;
 }
 
-bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
+bool cert_VerifySubjectAltName(const CERTCertificate *cert,
+			       const struct id *id)
 {
-	SECStatus rv;
+	/*
+	 * Get a handle on the certificate's subject alt name.
+	 */
 	SECItem	subAltName;
-	PLArenaPool *arena = NULL;
-	CERTGeneralName *nameList = NULL;
-	CERTGeneralName *current = NULL;
-	bool san_ip = FALSE;
-	unsigned int len = strlen(name);
-	ip_address myip;
-
-	rv = CERT_FindCertExtension(cert, SEC_OID_X509_SUBJECT_ALT_NAME,
-			&subAltName);
+	SECStatus rv = CERT_FindCertExtension(cert, SEC_OID_X509_SUBJECT_ALT_NAME,
+					      &subAltName);
 	if (rv != SECSuccess) {
-		DBG(DBG_X509, DBG_log("certificate contains no subjectAltName extension"));
-		return FALSE;
+		id_buf name;
+		loglog(RC_LOG_SERIOUS, "certificate contains no subjectAltName extension to match %s '%s'",
+		       enum_name(&ike_idtype_names, id->kind),
+		       str_id(id, &name));
+		return false;
 	}
 
-	if (tnatoaddr(name, 0, AF_UNSPEC, &myip) == NULL)
-		san_ip = TRUE;
-
-	arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	/*
+	 * Now decode that into a circular buffer (yes not a list) so
+	 * the ID can be compared against it.
+	 */
+	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	passert(arena != NULL);
+	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
+	if (nameList == NULL) {
+		id_buf name;
+		loglog(RC_LOG_SERIOUS, "certificate subjectAltName extension failed to decode while looking for %s '%s'",
+		       enum_name(&ike_idtype_names, id->kind),
+		       str_id(id, &name));
+		/* XXX: is nss error set? */
+		PORT_FreeArena(arena, PR_FALSE);
+		return false;
+	}
 
-	nameList = current = CERT_DecodeAltNameExtension(arena, &subAltName);
-	passert(current != NULL);
+	/*
+	 * Convert the ID with no special escaping (other than that
+	 * specified for converting an ASN.1 DN to text).
+	 *
+	 * XXX: Is there any point in continuing when KIND isn't
+	 * ID_FQDN?  For instance, ID_DER_ASN1_DN (in fact, for DN,
+	 * code was calling this with the ID's first character - not
+	 * an @ - discarded making the value useless).
+	 *
+	 * XXX: Is this overkill?  For instance, since DNS ID has a
+	 * very limited character set, the escaping used is largely
+	 * academic - any escape character ('\', '?') is invalid and
+	 * can't match.
+	 */
+	char raw_id_buf[IDTOA_BUF];
+	jambuf_t raw_id_jambuf = ARRAY_AS_JAMBUF(raw_id_buf);
+	jam_id(&raw_id_jambuf, id, jam_raw_bytes);
+	const char *raw_id = raw_id_buf;
+	if (id->kind == ID_FQDN) {
+		if (pexpect(raw_id[0] == '@'))
+			raw_id++;
+	} else {
+		pexpect(raw_id[0] != '@');
+	}
 
-	do
-	{
+	/*
+	 * Try converting the ID to an address.  If it fails, assume
+	 * it is a DNS name?
+	 *
+	 * XXX: Is this a "smart" way of handling both an ID_*address*
+	 * and an ID_FQDN containing a textual IP address?
+	 */
+	ip_address myip;
+	bool san_ip = (tnatoaddr(raw_id, 0, AF_UNSPEC, &myip) == NULL);
+
+	/*
+	 * nameList is a pointer into a non-empty circular linked
+	 * list.  This loop visits each entry.
+	 *
+	 * We have visited each when we come back to the start.
+	 * We test only at the end, after we advance, because we want to visit
+	 * the first entry the first time we see it but stop when we get to it
+	 * the second time.
+	 */
+	CERTGeneralName *current = nameList;
+	do {
 		switch (current->type) {
 		case certDNSName:
 		case certRFC822Name:
+		{
 			if (san_ip)
 				break;
-			if (current->name.other.len == len) {
-				if (memcmp(current->name.other.data, name, len) == 0) {
-					DBG(DBG_X509, DBG_log("subjectAltname %s found in certificate", name));
-					PORT_FreeArena(arena, PR_FALSE);
-					return TRUE;
-				}
+			/*
+			 * Match the parameter name with the name in the certificate.
+			 * The name in the cert may start with "*."; that will match
+			 * any initial component in name (up to the first '.').
+			 */
+			/* we need to cast because name.other.data is unsigned char * */
+			const char *c_ptr = (const void *) current->name.other.data;
+			size_t c_len =  current->name.other.len;
+
+			const char *n_ptr = raw_id;
+			static const char wild[] = "*.";
+			const size_t wild_len = sizeof(wild) - 1;
+
+			if (c_len > wild_len && startswith(c_ptr, wild)) {
+				/* wildcard in cert: ignore first component of name */
+				c_ptr += wild_len;
+				c_len -= wild_len;
+				n_ptr = strchr(n_ptr, '.');
+				if (n_ptr == NULL)
+					break;	/* cannot match */
+
+				n_ptr++;	/* skip . */
 			}
 
-			if (current->name.other.len != 0 && current->name.other.len < IDTOA_BUF) {
-				char osan[IDTOA_BUF];
-
-				memcpy(osan,current->name.other.data, current->name.other.len);
-				osan[current->name.other.len] = '\0';
-				DBG(DBG_X509, DBG_log("subjectAltname (len=%d) %s not match %s", current->name.other.len, osan, name));
-			} else {
-				DBG(DBG_X509, DBG_log("subjectAltname <TOO BIG TO PRINT> does not match %s", name));
+			if (c_len == strlen(n_ptr) && strncaseeq(n_ptr, c_ptr, c_len)) {
+				LSWDBGP(DBG_BASE, buf) {
+					jam(buf, "subjectAltname '");
+					jam_sanitized_bytes(buf, raw_id, strlen(raw_id)),
+					jam(buf, "' matched '");
+					jam_sanitized_bytes(buf, current->name.other.data,
+							    current->name.other.len);
+					jam(buf, "' in certificate");
+				}
+				PORT_FreeArena(arena, PR_FALSE);
+				return TRUE;
 			}
 			break;
+		}
 
 		case certIPAddress:
+		{
 			if (!san_ip)
 				break;
-			if ((current->name.other.len == 4) && (addrtypeof(&myip) == AF_INET)) {
-				if (memcmp(current->name.other.data, &myip.u.v4.sin_addr.s_addr, 4) == 0) {
-					DBG(DBG_X509, DBG_log("subjectAltname IPv4 matches %s", name));
-					PORT_FreeArena(arena, PR_FALSE);
-					return TRUE;
-				} else {
-					DBG(DBG_X509, DBG_log("subjectAltname IPv4 does not match %s", name));
-					break;
-				}
+			/*
+			 * XXX: If one address is IPv4 and the other
+			 * is IPv6 then the hunk_memeq() check will
+			 * fail because the lengths are wrong.
+			 */
+			shunk_t as = address_as_shunk(&myip);
+			if (hunk_memeq(as, current->name.other.data,
+				       current->name.other.len)) {
+				address_buf b;
+				dbg("subjectAltname matches address %s",
+				    str_address(&myip, &b));
+				PORT_FreeArena(arena, PR_FALSE);
+				return true;
 			}
-			if ((current->name.other.len == 16) && (addrtypeof(&myip) == AF_INET6)) {
-				if (memcmp(current->name.other.data, &myip.u.v6.sin6_addr.s6_addr, 16) == 0) {
-					DBG(DBG_X509, DBG_log("subjectAltname IPv6 matches %s", name));
-					PORT_FreeArena(arena, PR_FALSE);
-					return TRUE;
-				} else {
-					DBG(DBG_X509, DBG_log("subjectAltname IPv6 does not match %s", name));
-					break;
-				}
-			}
-			DBG(DBG_X509, DBG_log("subjectAltnamea IP address family mismatch for %s", name));
+			address_buf b;
+			dbg("subjectAltname does not match address %s",
+			    str_address(&myip, &b));
 			break;
+		}
 
 		default:
 			break;
@@ -581,9 +752,35 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 		current = CERT_GetNextGeneralName(current);
 	} while (current != nameList);
 
-	loglog(RC_LOG_SERIOUS, "No matching subjectAltName found");
+	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+		jam(buf, "certificate subjectAltName extension does not match ");
+		lswlog_enum(buf, &ike_idtype_names, id->kind);
+		jam(buf, " '");
+		jam_sanitized_bytes(buf, raw_id, strlen(raw_id));
+		jam(buf, "'");
+	}
+
 	/* Don't free nameList, it's part of the arena. */
 	PORT_FreeArena(arena, PR_FALSE);
-	return FALSE;
+	return false;
 }
 
+SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain)
+{
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
+	SEC_PKCS7ContentInfo *content
+		= SEC_PKCS7CreateCertsOnly(cert,
+					   send_full_chain ? PR_TRUE : PR_FALSE,
+					   handle);
+	SECItem *pkcs7 = SEC_PKCS7EncodeItem(NULL, NULL, content,
+					     NULL, NULL, NULL);
+	SEC_PKCS7DestroyContentInfo(content);
+	return pkcs7;
+}

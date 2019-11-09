@@ -4,11 +4,13 @@
  * Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2013 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -16,159 +18,156 @@
  * for more details.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
+#include <stdlib.h>
+#include <getopt.h>
 #include <sys/stat.h>
-#include <limits.h>
-#include <fcntl.h>
-#include <string.h>
+#include <unistd.h>
 #include <errno.h>
 
-#include <netinet/in.h>
-
-#include <linux/netlink.h>
-#include <linux/rtnetlink.h>
-
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <ifaddrs.h>
-
-#include <unistd.h>
-#include <getopt.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <libreswan.h>
-#include "sysdep.h"
-#include "constants.h"
-#include "lswalloc.h"
-#include "lswconf.h"
 #include "lswlog.h"
+#include "lswcdefs.h"	/* for UNUSED */
+#include "lswalloc.h"
+#include "lswtool.h"
 #include "whack.h"
+#include "ipsecconf/parser-controls.h"
+#include "ipsecconf/starterlog.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
-#include "ipsecconf/starterlog.h"
 #include "ipsecconf/starterwhack.h"
-#include "ipsecconf/keywords.h"
-#include "ipsecconf/parser-controls.h"
-#include "ipsecconf/addr_lookup.h"
-
+#ifdef NETKEY_SUPPORT
+#include "addr_lookup.h"
+#endif
 #ifdef USE_DNSSEC
 # include "dnssec.h"
 #endif
 
 #ifdef HAVE_SECCOMP
-# include <seccomp.h>
-# define EXIT_SECCOMP_FAIL 8
+#define LSW_SECCOMP_EXIT_FAIL 8
+#include "lswseccomp.h"
 #endif
 
 const char *progname;
 static int verbose = 0;
 
+/*
+ * make options valid environment variables
+ */
+static char *environlize(const char *str)
+{
+	char *cpy = strndup(str, strlen(str));
+	char *cur = cpy;
+	while((cur = strchr(cur, '-')) != NULL) {
+		*cur++ = '_';
+	}
+	return cpy;
+}
 
 /*
  * See if conn's left or right is %defaultroute and resolve it.
+ *
+ * XXX: why not let pluto resolve all this like it is already doing?
+ * because of MOBIKE.
  */
-static
-void resolve_defaultroute(struct starter_conn *conn)
+static void resolve_defaultroute(struct starter_conn *conn UNUSED)
 {
+#ifdef NETKEY_SUPPORT
 	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0);
 	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0);
+#else /* !defined(NETKEY_SUPPORT) */
+	fprintf(stderr, "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()\n");
+	exit(7);	/* random code */
+#endif
 }
 
 #ifdef HAVE_SECCOMP
-static
-void init_seccomp_addconn(uint32_t def_action)
+static void init_seccomp_addconn(uint32_t def_action)
 {
-#define S_RULE_ADD(x) seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(x), 0)
 	scmp_filter_ctx ctx = seccomp_init(def_action);
-	int rc = 0;
-
 	if (ctx == NULL) {
-			printf("seccomp_init_addconn() failed!");
-			exit(EXIT_SECCOMP_FAIL);
+		fprintf(stderr, "seccomp_init_addconn() failed!");
+		exit(LSW_SECCOMP_EXIT_FAIL);
 	}
 
 	/*
-	 * because on bootup, addconn is started by pluto, any syscall
-	 * here MUST also appear in the syscall list for "main" inside pluto
+	 * Because on bootup, addconn is started by pluto, any syscall
+	 * here MUST also appear in the syscall list for "main" inside
+	 * pluto
 	 */
-	rc |= S_RULE_ADD(access);
-	rc |= S_RULE_ADD(arch_prctl);
-	rc |= S_RULE_ADD(brk);
-	rc |= S_RULE_ADD(bind);
-	rc |= S_RULE_ADD(clone);
-	rc |= S_RULE_ADD(close);
-	rc |= S_RULE_ADD(connect);
-	rc |= S_RULE_ADD(epoll_create);
-	rc |= S_RULE_ADD(epoll_ctl);
-	rc |= S_RULE_ADD(epoll_wait);
-	rc |= S_RULE_ADD(epoll_pwait);
-	rc |= S_RULE_ADD(exit_group);
-	rc |= S_RULE_ADD(fcntl);
-	rc |= S_RULE_ADD(fstat);
-	rc |= S_RULE_ADD(futex);
-	rc |= S_RULE_ADD(getdents);
-	rc |= S_RULE_ADD(getegid);
-	rc |= S_RULE_ADD(getpid);
-	rc |= S_RULE_ADD(getrlimit);
-	rc |= S_RULE_ADD(geteuid);
-	rc |= S_RULE_ADD(getgid);
-	rc |= S_RULE_ADD(getrandom);
-	rc |= S_RULE_ADD(getuid);
-	rc |= S_RULE_ADD(ioctl);
-	rc |= S_RULE_ADD(mmap);
-	rc |= S_RULE_ADD(lseek);
-	rc |= S_RULE_ADD(munmap);
-	rc |= S_RULE_ADD(mprotect);
-	rc |= S_RULE_ADD(open);
-	rc |= S_RULE_ADD(openat);
-	rc |= S_RULE_ADD(poll);
-	rc |= S_RULE_ADD(prctl);
-	rc |= S_RULE_ADD(read);
-	rc |= S_RULE_ADD(readlink);
-	rc |= S_RULE_ADD(recvfrom);
-	rc |= S_RULE_ADD(rt_sigaction);
-	rc |= S_RULE_ADD(rt_sigprocmask);
-	rc |= S_RULE_ADD(sendto);
-	rc |= S_RULE_ADD(setsockopt);
-	rc |= S_RULE_ADD(set_robust_list);
-	rc |= S_RULE_ADD(set_tid_address);
-	rc |= S_RULE_ADD(socket);
-	rc |= S_RULE_ADD(socketpair);
-	rc |= S_RULE_ADD(statfs);
-	rc |= S_RULE_ADD(uname);
-	rc |= S_RULE_ADD(write);
+	LSW_SECCOMP_ADD(ctx, access);
+	LSW_SECCOMP_ADD(ctx, arch_prctl);
+	LSW_SECCOMP_ADD(ctx, brk);
+	LSW_SECCOMP_ADD(ctx, bind);
+	LSW_SECCOMP_ADD(ctx, clone);
+	LSW_SECCOMP_ADD(ctx, clock_gettime);
+	LSW_SECCOMP_ADD(ctx, close);
+	LSW_SECCOMP_ADD(ctx, connect);
+	LSW_SECCOMP_ADD(ctx, epoll_create);
+	LSW_SECCOMP_ADD(ctx, epoll_ctl);
+	LSW_SECCOMP_ADD(ctx, epoll_wait);
+	LSW_SECCOMP_ADD(ctx, epoll_pwait);
+	LSW_SECCOMP_ADD(ctx, exit_group);
+	LSW_SECCOMP_ADD(ctx, fcntl);
+	LSW_SECCOMP_ADD(ctx, fstat);
+	LSW_SECCOMP_ADD(ctx, futex);
+	LSW_SECCOMP_ADD(ctx, getdents);
+	LSW_SECCOMP_ADD(ctx, getegid);
+	LSW_SECCOMP_ADD(ctx, getpid);
+	LSW_SECCOMP_ADD(ctx, getrlimit);
+	LSW_SECCOMP_ADD(ctx, geteuid);
+	LSW_SECCOMP_ADD(ctx, getgid);
+	LSW_SECCOMP_ADD(ctx, getrandom);
+	LSW_SECCOMP_ADD(ctx, getuid);
+	LSW_SECCOMP_ADD(ctx, ioctl);
+	LSW_SECCOMP_ADD(ctx, mmap);
+	LSW_SECCOMP_ADD(ctx, lseek);
+	LSW_SECCOMP_ADD(ctx, munmap);
+	LSW_SECCOMP_ADD(ctx, mprotect);
+	LSW_SECCOMP_ADD(ctx, open);
+	LSW_SECCOMP_ADD(ctx, openat);
+	LSW_SECCOMP_ADD(ctx, poll);
+	LSW_SECCOMP_ADD(ctx, prctl);
+	LSW_SECCOMP_ADD(ctx, read);
+	LSW_SECCOMP_ADD(ctx, readlink);
+	LSW_SECCOMP_ADD(ctx, recvfrom);
+	LSW_SECCOMP_ADD(ctx, rt_sigaction);
+	LSW_SECCOMP_ADD(ctx, rt_sigprocmask);
+	LSW_SECCOMP_ADD(ctx, sendto);
+	LSW_SECCOMP_ADD(ctx, setsockopt);
+	LSW_SECCOMP_ADD(ctx, set_robust_list);
+	LSW_SECCOMP_ADD(ctx, set_tid_address);
+	LSW_SECCOMP_ADD(ctx, sigreturn);
+	LSW_SECCOMP_ADD(ctx, socket);
+	LSW_SECCOMP_ADD(ctx, socketcall);
+	LSW_SECCOMP_ADD(ctx, socketpair);
+	LSW_SECCOMP_ADD(ctx, stat);
+	LSW_SECCOMP_ADD(ctx, statfs);
+	LSW_SECCOMP_ADD(ctx, uname);
+	LSW_SECCOMP_ADD(ctx, waitpid);
+	LSW_SECCOMP_ADD(ctx, write);
 
-	if (rc != 0) {
-		printf("seccomp_rule_add() failed!");
-		seccomp_release(ctx);
-		exit(EXIT_SECCOMP_FAIL);
-	}
+#ifdef USE_EFENCE
+	LSW_SECCOMP_ADD(ctx, madvise);
+#endif
 
-	rc = seccomp_load(ctx);
+	int rc = seccomp_load(ctx);
 	if (rc < 0) {
-		printf("seccomp_load() failed!");
+		fprintf(stderr, "seccomp_load() failed!");
 		seccomp_release(ctx);
-		exit(EXIT_SECCOMP_FAIL);
+		exit(LSW_SECCOMP_EXIT_FAIL);
 	}
-#undef S_RULE_ADD
 }
 #endif
 
 static const char *usage_string = ""
-	"Usage: addconn [--config file] [--rootdir dir] [--ctlsocket socketfile]\n"
+	"Usage: addconn [--config file] [--ctlsocket socketfile]\n"
 	"               [--varprefix prefix] [--noexport]\n"
 	"               [--verbose]\n"
 	"               [--configsetup]\n"
 	"               [--liststack]\n"
 	"               [--checkconfig]\n"
-	"               [--addall] [--autoall]\n"
+	"               [--autoall]\n"
 	"               [--listall] [--listadd] [--listroute] [--liststart]\n"
 	"               [--listignore]\n"
 	"               names\n";
@@ -185,7 +184,7 @@ static const struct option longopts[] =
 	{ "config", required_argument, NULL, 'C' },
 	{ "debug", no_argument, NULL, 'D' },
 	{ "verbose", no_argument, NULL, 'D' },
-	{ "addall", no_argument, NULL, 'a' },
+	{ "addall", no_argument, NULL, 'a' }, /* alias, backwards compat */
 	{ "autoall", no_argument, NULL, 'a' },
 	{ "listall", no_argument, NULL, 'A' },
 	{ "listadd", no_argument, NULL, 'L' },
@@ -195,7 +194,6 @@ static const struct option longopts[] =
 	{ "varprefix", required_argument, NULL, 'P' },
 	{ "ctlsocket", required_argument, NULL, 'c' },
 	{ "ctlbase", required_argument, NULL, 'c' }, /* backwards compatibility */
-	{ "rootdir", required_argument, NULL, 'R' },
 	{ "configsetup", no_argument, NULL, 'T' },
 	{ "liststack", no_argument, NULL, 'S' },
 	{ "checkconfig", no_argument, NULL, 'K' },
@@ -210,10 +208,12 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
+	tool_init_log(argv[0]);
+
 	int opt;
 	bool autoall = FALSE;
-	int configsetup = 0;
-	int checkconfig = 0;
+	bool configsetup = FALSE;
+	bool checkconfig = FALSE;
 	const char *export = "export"; /* display export before the foo=bar or not */
 	bool
 		dolist = FALSE,
@@ -228,7 +228,6 @@ int main(int argc, char *argv[])
 	int exit_status = 0;
 	struct starter_conn *conn = NULL;
 	const char *ctlsocket = NULL;
-	bool resolvip = TRUE; /* default to looking up names */
 
 #if 0
 	/* efence settings */
@@ -238,11 +237,6 @@ int main(int argc, char *argv[])
 	EF_PROTECT_BELOW = 1;
 	EF_PROTECT_FREE = 1;
 #endif
-
-	rootdir[0] = '\0';
-
-	tool_init_log(argv[0]);
-
 	while ((opt = getopt_long(argc, argv, "", longopts, 0)) != EOF) {
 		switch (opt) {
 		case 'h':
@@ -260,11 +254,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'T':
-			configsetup++;	/* ??? is this not idempotent? */
+			configsetup = TRUE;
 			break;
 
 		case 'K':
-			checkconfig++;	/* ??? is this not idempotent? */
+			checkconfig = TRUE;
 			break;
 
 		case 'N':
@@ -313,14 +307,9 @@ int main(int argc, char *argv[])
 			varprefix = optarg;
 			break;
 
-		case 'R':
-			printf("setting rootdir=%s\n", optarg);
-			jam_str(rootdir, sizeof(rootdir), optarg);
-			break;
-
 		case 'd':
 		case 'n':
-			printf("Warning: options --defaultroute and --defaultroutenexthop are obsolete and were ignored\n");
+			fprintf(stderr, "Warning: options --defaultroute and --defaultroutenexthop are obsolete and were ignored\n");
 			break;
 
 		default:
@@ -328,9 +317,32 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (autoall) {
+		/* pluto forks us, we might have to wait on it to create the socket */
+		struct stat sb;
+		int ws = 5; /* somewhat arbitrary */
+
+		while (ws > 0) {
+			int ret = stat(ctlsocket == NULL ? DEFAULT_CTL_SOCKET :
+				ctlsocket, &sb);
+
+			if (ret == -1) {
+				sleep(1);
+			} else {
+				break;
+			}
+			ws--;
+		}
+		if (ws == 0) {
+			fprintf(stderr, "ipsec addconn: timeout waiting on pluto socket %s - aborted\n",
+				ctlsocket);
+			exit(3);
+		}
+	}
+
 	/* if nothing to add, then complain */
 	if (optind == argc && !autoall && !dolist && !configsetup &&
-		!checkconfig)
+	    !checkconfig)
 		usage();
 
 	if (verbose > 3) {
@@ -352,28 +364,30 @@ int main(int argc, char *argv[])
 		strcat(configfile, "ipsec.conf");	/* safe: see allocation above */
 	}
 
-	if (verbose)
+	if (verbose > 0)
 		printf("opening file: %s\n", configfile);
 
 	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
-	if (configsetup || checkconfig || dolist) {
-		/* skip if we have no use for them... causes delays */
-		resolvip = FALSE;
-	}
-
 	struct starter_config *cfg = NULL;
 
 	{
-		err_t err = NULL;
+		starter_errors_t errl = { NULL };
 
-		cfg = confread_load(configfile, &err, resolvip, ctlsocket, configsetup);
+		cfg = confread_load(configfile, &errl, ctlsocket, configsetup);
 
 		if (cfg == NULL) {
 			fprintf(stderr, "cannot load config '%s': %s\n",
-				configfile, err);
+				configfile, errl.errors);
+			pfreeany(errl.errors);
 			exit(3);
-		} else if (checkconfig) {
+		}
+		if (errl.errors != NULL) {
+			fprintf(stderr, "addconn, in config '%s', ignoring: %s\n",
+				configfile, errl.errors);
+			pfree(errl.errors);
+		}
+		if (checkconfig) {
 			confread_free(cfg);
 			exit(0);
 		}
@@ -401,7 +415,7 @@ int main(int argc, char *argv[])
 #endif
 
 	if (autoall) {
-		if (verbose)
+		if (verbose > 0)
 			printf("loading all conns according to their auto= settings\n");
 
 		/*
@@ -411,16 +425,15 @@ int main(int argc, char *argv[])
 		 * slower.
 		 * This mimics behaviour of the old _plutoload
 		 */
-		if (verbose)
+		if (verbose > 0)
 			printf("  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
 
-		for (conn = cfg->conns.tqh_first;
-			conn != NULL;
-			conn = conn->link.tqe_next) {
+		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_ADD ||
 				conn->desired_state == STARTUP_ONDEMAND ||
-				conn->desired_state == STARTUP_START) {
-				if (verbose)
+				conn->desired_state == STARTUP_START)
+			{
+				if (verbose > 0)
 					printf(" %s", conn->name);
 				resolve_defaultroute(conn);
 				starter_whack_add_conn(cfg, conn);
@@ -433,126 +446,102 @@ int main(int argc, char *argv[])
 		 */
 		starter_whack_listen(cfg);
 
-		if (verbose)
-			printf("  Pass #2: Routing auto=route and auto=start connections\n");
+		if (verbose > 0)
+			printf("  Pass #2: Routing auto=route connections\n");
 
-		for (conn = cfg->conns.tqh_first;
-			conn != NULL;
-			conn = conn->link.tqe_next) {
-			if (conn->desired_state == STARTUP_ADD ||
-				conn->desired_state == STARTUP_ONDEMAND ||
-				conn->desired_state == STARTUP_START) {
-				if (verbose)
+		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
+			if (conn->desired_state == STARTUP_ONDEMAND)
+			{
+				if (verbose > 0)
 					printf(" %s", conn->name);
-				resolve_defaultroute(conn);
-				if (conn->desired_state == STARTUP_ONDEMAND ||
-				    conn->desired_state == STARTUP_START) {
+				if (conn->desired_state == STARTUP_ONDEMAND)
 					starter_whack_route_conn(cfg, conn);
-				}
 			}
 		}
 
-		if (verbose)
+		if (verbose > 0)
 			printf("  Pass #3: Initiating auto=start connections\n");
 
-		for (conn = cfg->conns.tqh_first;
-			conn != NULL;
-			conn = conn->link.tqe_next) {
+		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_START) {
-				if (verbose)
+				if (verbose > 0)
 					printf(" %s", conn->name);
 				starter_whack_initiate_conn(cfg, conn);
 			}
 		}
 
-		if (verbose)
+		if (verbose > 0)
 			printf("\n");
 	} else {
 		/* load named conns, regardless of their state */
 		int connum;
 
-		if (verbose)
+		if (verbose > 0)
 			printf("loading named conns:");
 		for (connum = optind; connum < argc; connum++) {
-			char *connname = argv[connum];
+			const char *connname = argv[connum];
 
-			if (verbose)
+			const char *p1 = "";	/* message prefix components */
+			const char *p2 = "";
+			const char *p3 = "";
+
+			if (verbose > 0)
 				printf(" %s", connname);
+
+			/* find first name match, if any */
 			for (conn = cfg->conns.tqh_first;
-				conn != NULL;
-				conn = conn->link.tqe_next) {
-				if (streq(conn->name, connname)) {
-					if (conn->state == STATE_ADDED) {
-						printf("\nconn %s already added\n",
-							conn->name);
-					} else if (conn->state ==
-						STATE_FAILED) {
-						printf("\nconn %s did not load properly\n",
-							conn->name);
-					} else {
-						resolve_defaultroute(conn);
-						exit_status =
-							starter_whack_add_conn(
-								cfg,
-								conn);
-						conn->state = STATE_ADDED;
-					}
-					break;
-				}
+			     conn != NULL && !streq(conn->name, connname);
+			     conn = conn->link.tqe_next) {
 			}
 
 			if (conn == NULL) {
-				/*
-				 * only if we don't find it, do we now look
-				 * for aliases
-				 */
+				/* We didn't find name; look for first alias */
+
+				p1 = "alias: ";
+				p2 = connname;
+				p3 = " ";
+
 				for (conn = cfg->conns.tqh_first;
-					conn != NULL;
-					conn = conn->link.tqe_next) {
-					if (conn->strings_set[KSCF_CONNALIAS] &&
-						lsw_alias_cmp(connname,
-							conn->
-							strings[KSCF_CONNALIAS]
-							)) {
-						if (conn->state ==
-							STATE_ADDED) {
-							printf("\nalias: %s conn %s already added\n",
-								connname,
-								conn->name);
-						} else if (conn->state ==
-							STATE_FAILED) {
-							printf("\nalias: %s conn %s did not load properly\n",
-								connname,
-								conn->name);
-						} else {
-							resolve_defaultroute(
-								conn);
-							exit_status =
-								starter_whack_add_conn(
-									cfg,
-									conn);
-							conn->state =
-								STATE_ADDED;
-						}
+				     conn != NULL;
+				     conn = conn->link.tqe_next) {
+					if (lsw_alias_cmp(connname,
+						conn->strings[KSCF_CONNALIAS]))
+					{
 						break;
 					}
 				}
 			}
 
 			if (conn == NULL) {
-				exit_status++;
-				if (!verbose) {
-					printf("conn '%s': not found (tried aliases)\n",
-						connname);
-				} else {
+				/* we found neither name nor alias */
+				exit_status += RC_UNKNOWN_NAME; /* cause non-zero exit code */
+				if (verbose > 0) {
 					printf(" (notfound)\n");
+				}
+				fprintf(stderr, "conn '%s': not found (tried aliases)\n",
+					connname);
+			} else {
+				/* found name or alias */
+				if (conn->state == STATE_ADDED) {
+					fprintf(stderr, "\n%s%s%sconn %s already added\n",
+						p1, p2, p3,
+						conn->name);
+				} else if (conn->state == STATE_FAILED) {
+					fprintf(stderr, "\n%s%s%sconn %s did not load properly\n",
+						p1, p2, p3,
+						conn->name);
+				} else {
+					resolve_defaultroute(conn);
+					exit_status = starter_whack_add_conn(
+						cfg, conn);
+					conn->state = STATE_ADDED;
 				}
 			}
 		}
 	}
 
 	if (listall) {
-		if (verbose)
+		if (verbose > 0)
 			printf("listing all conns\n");
 		for (conn = cfg->conns.tqh_first;
 			conn != NULL;
@@ -561,7 +550,7 @@ int main(int argc, char *argv[])
 		printf("\n");
 	} else {
 		if (listadd) {
-			if (verbose)
+			if (verbose > 0)
 				printf("listing all conns marked as auto=add\n");
 
 			/* list all conns marked as auto=add */
@@ -573,7 +562,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		if (listroute) {
-			if (verbose)
+			if (verbose > 0)
 				printf("listing all conns marked as auto=route and auto=start\n");
 
 			/*
@@ -590,7 +579,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (liststart && !listroute) {
-			if (verbose)
+			if (verbose > 0)
 				printf("listing all conns marked as auto=start\n");
 
 			/* list all conns marked as auto=start */
@@ -603,7 +592,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (listignore) {
-			if (verbose)
+			if (verbose > 0)
 				printf("listing all conns marked as auto=ignore\n");
 
 			/* list all conns marked as auto=start */
@@ -643,6 +632,12 @@ int main(int argc, char *argv[])
 			if ((kd->validity & kv_config) == 0)
 				continue;
 
+			/* don't print backwards compatible aliases */
+			if ((kd->validity & kv_alias) != 0)
+				continue;
+
+			char *safe_kwname = environlize(kd->keyname);
+
 			switch (kd->type) {
 			case kt_string:
 			case kt_filename:
@@ -650,20 +645,20 @@ int main(int argc, char *argv[])
 			case kt_loose_enum:
 				if (cfg->setup.strings[kd->field]) {
 					printf("%s %s%s='%s'\n",
-						export, varprefix, kd->keyname,
+						export, varprefix, safe_kwname,
 						cfg->setup.strings[kd->field]);
 				}
 				break;
 
 			case kt_bool:
 				printf("%s %s%s='%s'\n", export, varprefix,
-					kd->keyname,
+					safe_kwname,
 					bool_str(cfg->setup.options[kd->field]));
 				break;
 
 			case kt_list:
 				printf("%s %s%s='",
-					export, varprefix, kd->keyname);
+					export, varprefix, safe_kwname);
 				confwrite_list(stdout, "",
 					cfg->setup.options[kd->field],
 					kd);
@@ -671,19 +666,18 @@ int main(int argc, char *argv[])
 				break;
 
 			case kt_obsolete:
-				printf("# obsolete option '%s%s' ignored\n",
-					varprefix, kd->keyname);
 				break;
 
 			default:
 				if (cfg->setup.options[kd->field] ||
 					cfg->setup.options_set[kd->field]) {
 					printf("%s %s%s='%d'\n",
-						export, varprefix, kd->keyname,
+						export, varprefix, safe_kwname,
 						cfg->setup.options[kd->field]);
 				}
 				break;
 			}
+			free(safe_kwname);
 		}
 		confread_free(cfg);
 		exit(0);
@@ -693,5 +687,12 @@ int main(int argc, char *argv[])
 #ifdef USE_DNSSEC
 	unbound_ctx_free();
 #endif
+	/*
+	 * Only RC_ codes between RC_EXIT_FLOOR (RC_DUPNAME) and
+	 * RC_EXIT_ROOF (RC_NEW_V1_STATE) are errors Some starter code
+	 * above can also return -1 which is not a valid RC_ code
+	 */
+	if (exit_status > 0 && (exit_status < RC_EXIT_FLOOR || exit_status >= RC_EXIT_ROOF))
+		exit_status = 0;
 	exit(exit_status);
 }

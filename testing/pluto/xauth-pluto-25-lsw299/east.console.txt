@@ -5,12 +5,14 @@ east #
  echo "xroad:xOzlFlqtwJIu2:east-any:192.0.2.100" >> /etc/ipsec.d/passwd
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add east-any
 002 added connection description "east-any"
+east #
+ ipsec whack --impair suppress-retransmits
 east #
  echo initdone
 initdone
@@ -21,7 +23,7 @@ east #
 east #
 east #
  hostname | grep east > /dev/null && ipsec stop
-Redirecting to: systemctl stop ipsec.service
+Redirecting to: [initsystem]
 east #
  grep "^leak" /tmp/pluto.log
 leak-detective enabled

@@ -39,9 +39,9 @@ used, such as systemd or upstart, _plutorun is not used.</para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
-<para>Man page written for the Linux FreeS/WAN project &lt;<ulink url='http://www.freeswan.org/'>http://www.freeswan.org/</ulink>&gt;
+<para>Man page written for the Linux FreeS/WAN project &lt;<ulink url='https://www.freeswan.org/'>https://www.freeswan.org/</ulink>&gt;
 by Michael Richardson. Original program written by Henry Spencer.
-Updated for the Libreswan project &lt;<ulink url='http://www.libreswan.org/'>http://www.libreswan.org/</ulink>&gt; by Paul Wouters</para>
+Updated for the Libreswan project &lt;<ulink url='https://libreswan.org/'>https://libreswan.org/</ulink>&gt; by Paul Wouters</para>
 
 </refsect1>
 </refentry>

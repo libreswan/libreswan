@@ -1,0 +1,270 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ # AES: key-length required
+west #
+ # send AES_128; should work
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+002 added connection description "aes128"
+002 "aes128" #1: initiating v2 parent SA
+1v2 "aes128" #1: initiate
+1v2 "aes128" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "aes128" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "aes128" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "aes128" #2: Authenticated using authby=secret
+002 "aes128" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "aes128" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "aes128": terminating SAs using this connection
+002 "aes128" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "aes128" #2: ESP traffic information: in=84B out=84B
+002 "aes128" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "aes128": terminating SAs using this connection
+west #
+ ipsec whack --impair none
+west #
+ # send AES_0
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair ike-key-length-attribute:0
+west #
+ ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+002 added connection description "aes128"
+002 "aes128" #3: initiating v2 parent SA
+1v2 "aes128" #3: initiate
+002 "aes128" #3: IMPAIR: emitting fixed-length key-length attribute with 0 key
+1v2 "aes128" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "aes128" #3: STATE_PARENT_I1: received unauthenticated v2N_NO_PROPOSAL_CHOSEN - ignored
+002 "aes128" #3: IMPAIR: retransmit so deleting SA
+002 "aes128" #3: deleting state (STATE_PARENT_I1) and NOT sending notification
+west #
+ ipsec whack --impair none
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair child-key-length-attribute:0
+west #
+ ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+002 added connection description "aes128"
+002 "aes128" #4: initiating v2 parent SA
+1v2 "aes128" #4: initiate
+1v2 "aes128" #4: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "aes128" #4: IMPAIR: emitting fixed-length key-length attribute with 0 key
+1v2 "aes128" #5: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "aes128" #5: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
+000 "aes128" #5: scheduling retry attempt 1 of an unlimited number, but releasing whack
+west #
+ ipsec whack --impair none
+west #
+ # send AES_128_128; will work but probably should not
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ipsec whack --impair ike-key-length-attribute:duplicate
+west #
+ ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+002 added connection description "aes128"
+002 "aes128" #6: initiating v2 parent SA
+1v2 "aes128" #6: initiate
+002 "aes128" #6: IMPAIR: duplicating key-length attribute
+1v2 "aes128" #6: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "aes128" #7: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "aes128" #7: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "aes128" #7: Authenticated using authby=secret
+002 "aes128" #7: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "aes128" #7: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "aes128": terminating SAs using this connection
+002 "aes128" #7: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "aes128" #7: ESP traffic information: in=84B out=84B
+002 "aes128" #6: deleting state (STATE_PARENT_I3) and sending notification
+002 "aes128": terminating SAs using this connection
+west #
+ ipsec whack --impair none
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ipsec whack --impair child-key-length-attribute:duplicate
+west #
+ ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+002 added connection description "aes128"
+002 "aes128" #8: initiating v2 parent SA
+1v2 "aes128" #8: initiate
+1v2 "aes128" #8: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "aes128" #8: IMPAIR: duplicating key-length attribute
+1v2 "aes128" #9: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "aes128" #9: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "aes128" #9: Authenticated using authby=secret
+002 "aes128" #9: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "aes128" #9: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "aes128": terminating SAs using this connection
+002 "aes128" #9: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "aes128" #9: ESP traffic information: in=84B out=84B
+002 "aes128" #8: deleting state (STATE_PARENT_I3) and sending notification
+002 "aes128": terminating SAs using this connection
+west #
+ ipsec whack --impair none
+west #
+ # send AES; should fail
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair ike-key-length-attribute:omit
+west #
+ ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+002 added connection description "aes128"
+002 "aes128" #10: initiating v2 parent SA
+1v2 "aes128" #10: initiate
+002 "aes128" #10: IMPAIR: omitting fixed-size key-length attribute
+1v2 "aes128" #10: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "aes128" #10: STATE_PARENT_I1: received unauthenticated v2N_NO_PROPOSAL_CHOSEN - ignored
+002 "aes128" #10: IMPAIR: retransmit so deleting SA
+002 "aes128" #10: deleting state (STATE_PARENT_I1) and NOT sending notification
+west #
+ ipsec whack --impair none
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair child-key-length-attribute:omit
+west #
+ ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+002 added connection description "aes128"
+002 "aes128" #11: initiating v2 parent SA
+1v2 "aes128" #11: initiate
+1v2 "aes128" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "aes128" #11: IMPAIR: omitting fixed-size key-length attribute
+1v2 "aes128" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "aes128" #12: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
+000 "aes128" #12: scheduling retry attempt 1 of an unlimited number, but releasing whack
+west #
+ ipsec whack --impair none
+west #
+ # send AES_<>; should fail
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair emitting
+west #
+ ipsec whack --impair ike-key-length-attribute:empty
+west #
+ ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+002 added connection description "aes128"
+002 "aes128" #13: initiating v2 parent SA
+1v2 "aes128" #13: initiate
+002 "aes128" #13: IMPAIR: emitting variable-size key-length attribute with no key
+002 "aes128" #13: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
+1v2 "aes128" #13: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "aes128" #13: STATE_PARENT_I1: received unauthenticated v2N_INVALID_SYNTAX - ignored
+002 "aes128" #13: IMPAIR: retransmit so deleting SA
+002 "aes128" #13: deleting state (STATE_PARENT_I1) and NOT sending notification
+west #
+ ipsec whack --impair none
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair emitting
+west #
+ ipsec whack --impair ike-key-length-attribute:empty
+west #
+ ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+002 added connection description "aes128"
+002 "aes128" #14: initiating v2 parent SA
+1v2 "aes128" #14: initiate
+002 "aes128" #14: IMPAIR: emitting variable-size key-length attribute with no key
+002 "aes128" #14: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
+1v2 "aes128" #14: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "aes128" #14: STATE_PARENT_I1: received unauthenticated v2N_INVALID_SYNTAX - ignored
+002 "aes128" #14: IMPAIR: retransmit so deleting SA
+002 "aes128" #14: deleting state (STATE_PARENT_I1) and NOT sending notification
+west #
+ ipsec whack --impair none
+west #
+ # send 3DES; should work, key-length should be omitted
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
+002 added connection description "3des"
+002 "3des" #15: initiating v2 parent SA
+1v2 "3des" #15: initiate
+1v2 "3des" #15: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "3des" #16: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "3des" #16: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "3des" #16: Authenticated using authby=secret
+002 "3des" #16: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "3des" #16: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "3des": terminating SAs using this connection
+002 "3des" #16: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "3des" #16: ESP traffic information: in=84B out=84B
+002 "3des" #15: deleting state (STATE_PARENT_I3) and sending notification
+002 "3des": terminating SAs using this connection
+west #
+ ipsec whack --impair none
+west #
+ # send 3DES_0; should fail
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair ike-key-length-attribute:0
+west #
+ ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
+002 added connection description "3des"
+002 "3des" #17: initiating v2 parent SA
+1v2 "3des" #17: initiate
+002 "3des" #17: IMPAIR: emitting fixed-length key-length attribute with 0 key
+1v2 "3des" #17: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "3des" #18: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+002 "3des" #18: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "3des" #18: Authenticated using authby=secret
+002 "3des" #18: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "3des" #18: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "3des": terminating SAs using this connection
+002 "3des" #18: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "3des" #18: ESP traffic information: in=84B out=84B
+002 "3des" #17: deleting state (STATE_PARENT_I3) and sending notification
+002 "3des": terminating SAs using this connection
+west #
+ ipsec whack --impair none
+west #
+ # send 3DES_192; should work?
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair ike-key-length-attribute:192
+west #
+ ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
+002 added connection description "3des"
+002 "3des" #19: initiating v2 parent SA
+1v2 "3des" #19: initiate
+002 "3des" #19: IMPAIR: emitting fixed-length key-length attribute with 192 key
+1v2 "3des" #19: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "3des" #19: STATE_PARENT_I1: received unauthenticated v2N_NO_PROPOSAL_CHOSEN - ignored
+002 "3des" #19: IMPAIR: retransmit so deleting SA
+002 "3des" #19: deleting state (STATE_PARENT_I1) and NOT sending notification
+west #
+ ipsec whack --impair none
+west #
+ echo done
+done
+west #
+ grep INVALID_KEY_INFORMATION /tmp/pluto.log
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -1,0 +1,1 @@
+IKEv2 with IPCOMP, strongswan initiating

@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,9 +14,14 @@
  * for more details.
  */
 
-struct parser_protocol;
-struct parser_policy;
+#ifndef ALG_BYNAME_H
+#define ALG_BYNAME_H
+
+#include <shunk.h>
+
 struct ike_alg;
+struct proposal_parser;
+struct ike_alg_type;
 
 /*
  * Filter function to accept/reject an algorithm.
@@ -26,32 +31,19 @@ struct ike_alg;
  * messages better align with the input files.
  */
 
-bool alg_byname_ok(const struct parser_protocol *protocol,
-		   const struct parser_policy *const policy,
-		   const struct ike_alg *alg,
-		   const char *name,
-		   char *err_buf, size_t err_buf_len);
+bool alg_byname_ok(struct proposal_parser *parser,
+		   const struct ike_alg *alg, shunk_t print_name);
 
 /*
  * Helper functions to implement most of the lookup.
  */
 
-const struct ike_alg *encrypt_alg_byname(const struct parser_protocol *protocol,
-					 const struct parser_policy *const policy,
-					 char *err_buf, size_t err_buf_len,
-					 const char *name, size_t key_bit_length);
+const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
+					 shunk_t name, size_t key_bit_length,
+					 shunk_t print_name);
 
-const struct ike_alg *prf_alg_byname(const struct parser_protocol *protocol,
-				     const struct parser_policy *const policy,
-				     char *err_buf, size_t err_buf_len,
-				     const char *name, size_t key_bit_length);
+const struct ike_alg *alg_byname(struct proposal_parser *parser,
+				 const struct ike_alg_type *type,
+				 shunk_t name, shunk_t print_name);
 
-const struct ike_alg *integ_alg_byname(const struct parser_protocol *protocol,
-				       const struct parser_policy *const policy,
-				       char *err_buf, size_t err_buf_len,
-				       const char *name, size_t key_bit_length);
-
-const struct ike_alg *dh_alg_byname(const struct parser_protocol *protocol,
-				    const struct parser_policy *const policy,
-				    char *err_buf, size_t err_buf_len,
-				    const char *name, size_t key_bit_length);
+#endif

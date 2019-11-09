@@ -1,4 +1,4 @@
-ipsec look
+../../pluto/bin/ipsec-look.sh
 grep "minor version" /tmp/pluto.log >/dev/null && echo payload found
 : ==== cut ====
 ipsec auto --status

@@ -3,11 +3,13 @@
  * Copyright (C) 1996  John Ioannidis.
  * Copyright (C) 1998, 1999, 2000, 2001  Richard Guy Briggs.
  * Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -35,8 +37,8 @@
 #include <errno.h>
 #include <getopt.h>
 #include "socketwrapper.h"
+#include "lswtool.h"
 #include "lswlog.h"
-
 #include "libreswan/pfkey.h"
 #include "libreswan/pfkeyv2.h"
 #include "pfkey_help.h"
@@ -169,8 +171,9 @@ int debug = 0;
 int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
+
 	/* force pfkey logging */
-	pfkey_error_func = pfkey_debug_func = printf;
+	cur_debugging = DBG_BASE;
 
 	struct ifreq ifr;
 	struct ipsectunnelconf shc;
@@ -256,18 +259,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (stat("/proc/net/pfkey", &sts) == 0) {
-		fprintf(stderr,
-			"%s: NETKEY does not support virtual interfaces.\n",
-			progname);
-		exit(1);
-	}
-
 	if (argcount == 1) {
 		int ret = 1;
 		if ((stat("/proc/net/ipsec_tncfg", &sts)) != 0) {
 			fprintf(stderr,
-				"%s: No tncfg - no IPsec support in kernel (are the modules loaded?)\n",
+				"%s: No tncfg - no KLIPS IPsec support in kernel\n",
 				progname);
 		} else {
 			ret = system("cat /proc/net/ipsec_tncfg");

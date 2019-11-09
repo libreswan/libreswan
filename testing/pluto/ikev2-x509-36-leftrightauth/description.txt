@@ -1,0 +1,3 @@
+Basic pluto X.509 test, IKEv2, specifying leftauth/rightauth to RSA,
+confirming DigSig SHA2 use.
+

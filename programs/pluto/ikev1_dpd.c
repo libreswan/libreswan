@@ -10,13 +10,14 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013-2015 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2014-2016 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -33,9 +34,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <resolv.h>
-#include <sys/time.h>           /* for gettimeofday */
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -50,7 +49,6 @@
 #include "demux.h"      /* needs packet.h */
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
-#include "cookie.h"
 #include "server.h"
 #include "spdb.h"
 #include "timer.h"
@@ -101,17 +99,9 @@
  *
  * The above is the basic idea, but things are a bit more complicated because
  * multiple phase 2s can share the same phase 1 ISAKMP SA. Each phase 2 state
- * has its own DPD_EVENT. Further, we start a DPD_EVENT for phase 1 when it
- * gets established. This is because the phase 2 may never actually succeed
- * (usually due to authorization issues, which may be DNS or otherwise related)
- * and if the responding end dies (gets restarted, or the conn gets reloaded
- * with the right policy), then we may have a bum phase 1 SA, and we cannot
- * re-negotiate. (This happens WAY too often)
+ * has its own DPD_EVENT.
  *
- * The phase 2 dpd_init() will attempt to kill the phase 1 DPD_EVENT, if it
- * can, to reduce the amount of work.
- *
- * The st_last_dpd member which is used is always the one from the phase 1.
+ * The st_last_dpd member that is used is always the one from the phase 1.
  * So, if there are multiple phase 2s, then if any of them receive DPD data
  * they will update the st_last_dpd, so the test in #2 will avoid the traffic
  * for all by one phase 2.
@@ -128,49 +118,46 @@
 
 stf_status dpd_init(struct state *st)
 {
-	/**
-	 * Used to store the 1st state
-	 */
-	struct state *p1st;
+	bool peer_supports_dpd = st->hidden_variables.st_peer_supports_dpd;
+	bool want_dpd = dpd_active_locally(st);
 
-	/* find the related Phase 1 state */
-	p1st = find_state_ikev1(st->st_icookie, st->st_rcookie, 0);
+	if (IS_IKE_SA(st)) { /* so we log this only once */
+		DBG(DBG_DPD, DBG_log("DPD: dpd_init() called on ISAKMP SA"));
 
-	if (p1st == NULL) {
-		loglog(RC_LOG_SERIOUS, "could not find phase 1 state for DPD");
+		if (!peer_supports_dpd) {
+			DBG(DBG_DPD, DBG_log("DPD: Peer does not support Dead Peer Detection"));
+			if (want_dpd)
+				loglog(RC_LOG_SERIOUS,
+					"Configured DPD (RFC 3706) support not enabled because remote peer did not advertise DPD support");
+			return STF_OK;
+		} else {
+			DBG(DBG_DPD, DBG_log("DPD: Peer supports Dead Peer Detection"));
+		}
 
-		/*
-		 * if the phase 1 state has gone away, it really should have
-		 * deleted all of its children.
-		 * Why would this happen? because a quick mode SA can take
-		 * some time to create (DNS lookups for instance), and the phase 1
-		 * might have been taken down for some reason in the meantime.
-		 * We really cannot do anything here --- attempting to invoke
-		 * the DPD action would be a good idea, but we really should
-		 * do that outside this function.
-		 */
-		return STF_FAIL;
-	}
-
-	/* if it was enabled, and we haven't turned it on already */
-	if (p1st->hidden_variables.st_peer_supports_dpd) {
-		DBG(DBG_DPD, DBG_log("Dead Peer Detection (RFC 3706): enabled"));
-		if (st->st_dpd_event == NULL || ev_before(st->st_dpd_event,
-					st->st_connection->dpd_delay)) {
-			if (st->st_dpd_event != NULL)
-				delete_dpd_event(st);
-			event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
+		if (!want_dpd) {
+			DBG(DBG_DPD, DBG_log("DPD: not initializing DPD because DPD is disabled locally"));
+			return STF_OK;
 		}
 	} else {
-		loglog(RC_LOG_SERIOUS,
-			"Configured DPD (RFC 3706) support not enabled because remote peer did not advertise DPD support");
-	}
+		DBG(DBG_DPD, DBG_log("DPD: dpd_init() called on IPsec SA"));
+		if (!peer_supports_dpd || !want_dpd) {
+			DBG(DBG_DPD, DBG_log("DPD: Peer does not support Dead Peer Detection"));
+			return STF_OK;
+		}
 
-	if (p1st != st) {
-		/* st was not a phase 1 SA, so kill the DPD_EVENT on the phase 1 */
-		if (p1st->st_dpd_event != NULL &&
-		    p1st->st_dpd_event->ev_type == EVENT_DPD)
-			delete_dpd_event(p1st);
+		/* find the IKE SA */
+		struct state *p1st = find_state_ikev1(&st->st_ike_spis, 0);
+		if (p1st == NULL) {
+			loglog(RC_LOG_SERIOUS, "could not find phase 1 state for DPD");
+			return STF_FAIL;
+		}
+
+		if (st->st_dpd_event == NULL || ev_before(st->st_dpd_event,
+			st->st_connection->dpd_delay))
+		{
+			delete_dpd_event(st);
+			event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
+		}
 	}
 	return STF_OK;
 }
@@ -186,8 +173,7 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t tim
 	    monobefore(monotimesum(nw, timeout), p1st->st_dpd_event->ev_time)) {
 		DBG(DBG_DPD, DBG_log("DPD: scheduling timeout to %ld",
 				     (long)deltasecs(timeout)));
-		if (p1st->st_dpd_event != NULL)
-			delete_dpd_event(p1st);
+		delete_dpd_event(p1st);
 		event_schedule(EVENT_DPD_TIMEOUT, timeout, p1st);
 	}
 }
@@ -201,7 +187,7 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t tim
 static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		     deltatime_t delay, deltatime_t timeout)
 {
-	u_int32_t seqno;
+	uint32_t seqno;
 
 	DBG(DBG_DPD, {
 		char cib[CONN_INST_BUF];
@@ -313,14 +299,11 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 */
 	dpd_sched_timeout(p1st, nw, timeout);
 
-	DBG(DBG_DPD, {
-		ipstr_buf b;
-		DBG_log("DPD: sending R_U_THERE %u to %s:%d (state #%lu)",
-			 p1st->st_dpd_seqno,
-			 ipstr(&p1st->st_remoteaddr, &b),
-			 p1st->st_remoteport,
-			 p1st->st_serialno);
-	});
+	endpoint_buf b;
+	dbg("DPD: sending R_U_THERE %u to %s (state #%lu)",
+	    p1st->st_dpd_seqno,
+	    str_endpoint(&p1st->st_remote_endpoint, &b),
+	    p1st->st_serialno);
 
 	if (send_isakmp_notification(p1st, R_U_THERE,
 				     &seqno, sizeof(seqno)) != STF_IGNORE) {
@@ -354,11 +337,11 @@ static void p2_dpd_outI1(struct state *p2st)
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "DPD: could not find newest phase 1 state - initiating a new one");
-		liveness_action(p2st->st_connection, p2st->st_ikev2);
+		liveness_action(p2st->st_connection, p2st->st_ike_version);
 		return;
 	}
 
-	if (st->st_connection->newest_ipsec_sa != st->st_serialno) {
+	if (st->st_connection->newest_ipsec_sa != p2st->st_serialno) {
 		DBG(DBG_DPD,
 		    DBG_log("DPD: no need to send or schedule DPD for replaced IPsec SA"));
 		return;
@@ -373,7 +356,7 @@ void dpd_event(struct state *st)
 
 	set_cur_state(st);
 
-	if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state ))
+	if (IS_PHASE1(st->st_state->kind) || IS_PHASE15(st->st_state->kind))
 		p1_dpd_outI1(st);
 	else
 		p2_dpd_outI1(st);
@@ -392,7 +375,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 			pb_stream *pbs)
 {
 	monotime_t nw = mononow();
-	u_int32_t seqno;
+	uint32_t seqno;
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
 		loglog(RC_LOG_SERIOUS,
@@ -407,7 +390,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
-	if (!memeq(pbs->cur, p1st->st_icookie, COOKIE_SIZE)) {
+	if (!memeq(pbs->cur, p1st->st_ike_spis.initiator.bytes, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
 		DBG(DBG_DPD,
@@ -415,7 +398,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	}
 	pbs->cur += COOKIE_SIZE;
 
-	if (!memeq(pbs->cur, p1st->st_rcookie, COOKIE_SIZE)) {
+	if (!memeq(pbs->cur, p1st->st_ike_spis.responder.bytes, COOKIE_SIZE)) {
 		DBG(DBG_DPD,
 		    DBG_log("DPD: R_U_THERE has invalid rcookie (tolerated)"));
 	}
@@ -428,7 +411,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
-	seqno = ntohl(*(u_int32_t *)pbs->cur);
+	seqno = ntohl(*(uint32_t *)pbs->cur);
 	if (p1st->st_dpd_peerseqno && seqno <= p1st->st_dpd_peerseqno) {
 		loglog(RC_LOG_SERIOUS,
 		       "DPD: received old or duplicate R_U_THERE");
@@ -500,7 +483,7 @@ stf_status dpd_inR(struct state *p1st,
 		   struct isakmp_notification *const n,
 		   pb_stream *pbs)
 {
-	u_int32_t seqno;
+	uint32_t seqno;
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
 		loglog(RC_LOG_SERIOUS,
@@ -516,7 +499,7 @@ stf_status dpd_inR(struct state *p1st,
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
-	if (!memeq(pbs->cur, p1st->st_icookie, COOKIE_SIZE)) {
+	if (!memeq(pbs->cur, p1st->st_ike_spis.initiator.bytes, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
 		DBG(DBG_DPD,
@@ -524,7 +507,7 @@ stf_status dpd_inR(struct state *p1st,
 	}
 	pbs->cur += COOKIE_SIZE;
 
-	if (!memeq(pbs->cur, p1st->st_rcookie, COOKIE_SIZE)) {
+	if (!memeq(pbs->cur, p1st->st_ike_spis.responder.bytes, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
 		DBG(DBG_DPD,
@@ -539,7 +522,7 @@ stf_status dpd_inR(struct state *p1st,
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
-	seqno = ntohl(*(u_int32_t *)pbs->cur);
+	seqno = ntohl(*(uint32_t *)pbs->cur);
 	DBG(DBG_DPD,
 	    DBG_log("DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state=#%lu)",
 		    seqno, p1st->st_dpd_expectseqno, p1st->st_serialno));
@@ -581,6 +564,5 @@ stf_status dpd_inR(struct state *p1st,
 void dpd_timeout(struct state *st)
 {
 	set_cur_state(st);
-
-	liveness_action(st->st_connection, st->st_ikev2);
+	liveness_action(st->st_connection, st->st_ike_version);
 }

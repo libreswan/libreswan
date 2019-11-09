@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -352,8 +352,8 @@ enum ipsec_rcv_value ipsec_rcv_esp_post_decrypt(struct ipsec_rcv_state *irs)
 			      (irs->esphlen + pad));
 
 	/*
-	 * move the IP header forward by the size of the ESP header, which
-	 * will remove the the ESP header from the packet.
+	 * move the IP header forward by the size of the ESP header,
+	 * thus removing the the ESP header from the packet.
 	 *
 	 * XXX this is really unnecessary, since odds we are in tunnel
 	 *     mode, and we will be *removing* this IP header.

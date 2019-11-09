@@ -15,7 +15,7 @@ sleep 50
 echo "road should be retrying again. Remove the block"
 iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
-ipsec look
+../../pluto/bin/ipsec-look.sh
 echo "sleep 110 seconds"
 sleep 60
 ping -q -n -c 4 -I 192.0.2.100 192.1.2.23

@@ -1,0 +1,19 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add rw-westnet-pool-east
+002 added connection description "rw-westnet-pool-east"
+west #
+ echo "initdone"
+initdone
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

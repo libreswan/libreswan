@@ -1,0 +1,470 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet
+002 added connection description "westnet-eastnet"
+east #
+ echo "initdone"
+initdone
+east #
+east #
+ ipsec stop
+Redirecting to: [initsystem]
+east #
+ : what should be looked for?
+east #
+ sed -n -f payloads.sed /tmp/pluto.log
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #1: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+| received 'quick_inI1_outR1' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 36 (00 24)
+| received 'quick_inI2' message HASH(3) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 16 (00 10)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 3 (03)
+|    SPI size: 4 (04)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #3: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #4: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 4 (00 04)
+"westnet-eastnet" #4: received 'quick_inI1_outR1' message HASH(1) data is the wrong length (received 0 bytes but expected 32)
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 4 (00 04)
+"westnet-eastnet" #4: received 'quick_inI1_outR1' message HASH(1) data is the wrong length (received 0 bytes but expected 32)
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #5: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+"westnet-eastnet" #5: received 'quick_inI1_outR1' message HASH(1) data does not match computed value
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+"westnet-eastnet" #5: received 'quick_inI1_outR1' message HASH(1) data does not match computed value
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #6: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+| received 'quick_inI1_outR1' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 36 (00 24)
+| received 'quick_inI2' message HASH(3) data ok
+-- start message (D)
+|    next payload type: ISAKMP_NEXT_D (0xc)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 16 (00 10)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 3 (03)
+|    SPI size: 4 (04)
+|    number of SPIs: 1 (00 01)
+"westnet-eastnet" #6: message for STATE_INFO_PROTECTED is missing payloads ISAKMP_NEXT_HASH
+-- start message (D)
+|    next payload type: ISAKMP_NEXT_D (0xc)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+"westnet-eastnet" #6: message for STATE_INFO_PROTECTED is missing payloads ISAKMP_NEXT_HASH
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #8: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+| received 'quick_inI1_outR1' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 36 (00 24)
+| received 'quick_inI2' message HASH(3) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 4 (00 04)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 16 (00 10)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 3 (03)
+|    SPI size: 4 (04)
+|    number of SPIs: 1 (00 01)
+"westnet-eastnet" #8: received 'informational' message HASH(1) data is the wrong length (received 0 bytes but expected 32)
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 4 (00 04)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+"westnet-eastnet" #8: received 'informational' message HASH(1) data is the wrong length (received 0 bytes but expected 32)
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #10: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+| received 'quick_inI1_outR1' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 36 (00 24)
+| received 'quick_inI2' message HASH(3) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 16 (00 10)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 3 (03)
+|    SPI size: 4 (04)
+|    number of SPIs: 1 (00 01)
+"westnet-eastnet" #10: received 'informational' message HASH(1) data does not match computed value
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 28 (00 1c)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 1 (01)
+|    SPI size: 16 (10)
+|    number of SPIs: 1 (00 01)
+"westnet-eastnet" #10: received 'informational' message HASH(1) data does not match computed value
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #12: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+| received 'quick_inI1_outR1' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 36 (00 24)
+| received 'quick_inI2' message HASH(3) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 16 (00 10)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 3 (03)
+|    SPI size: 4 (04)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #14: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+| received 'quick_inI1_outR1' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 36 (00 24)
+| received 'quick_inI2' message HASH(3) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 16 (00 10)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 3 (03)
+|    SPI size: 4 (04)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #16: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+| received 'quick_inI1_outR1' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 36 (00 24)
+| received 'quick_inI2' message HASH(3) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 16 (00 10)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 3 (03)
+|    SPI size: 4 (04)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #18: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+| received 'quick_inI1_outR1' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 36 (00 24)
+| received 'quick_inI2' message HASH(3) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 16 (00 10)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 3 (03)
+|    SPI size: 4 (04)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #20: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+| received 'quick_inI1_outR1' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 36 (00 24)
+| received 'quick_inI2' message HASH(3) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 16 (00 10)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 3 (03)
+|    SPI size: 4 (04)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+-- start message (ID)
+|    next payload type: ISAKMP_NEXT_ID (0x5)
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 278 (01 16)
+"westnet-eastnet" #22: Authenticated using RSA with SHA-1
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA (0x1)
+|    length: 36 (00 24)
+| received 'quick_inI1_outR1' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 36 (00 24)
+| received 'quick_inI2' message HASH(3) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_D (0xc)
+|    length: 36 (00 24)
+| ***parse ISAKMP Delete Payload:
+|    next payload type: ISAKMP_NEXT_NONE (0x0)
+|    length: 16 (00 10)
+|    DOI: ISAKMP_DOI_IPSEC (0x1)
+|    protocol ID: 3 (03)
+|    SPI size: 4 (04)
+|    number of SPIs: 1 (00 01)
+| received 'informational' message HASH(1) data ok
+-- start message (HASH)
+|    next payload type: ISAKMP_NEXT_HASH (0x8)
+| Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

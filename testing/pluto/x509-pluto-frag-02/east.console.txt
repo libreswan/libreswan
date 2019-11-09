@@ -4,7 +4,7 @@ east #
  iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j LOGDROP
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -16,21 +16,41 @@ initdone
 east #
  grep "fragment" /tmp/pluto.log
 | peer supports fragmentation
-|    fragment id: 1 (0x1)
-|    fragment number: 1 (0x1)
+|    fragment id: 1 (00 01)
+|    fragment number: 1 (01)
 | received IKE fragment id '1', number '1'
-|    fragment id: 1 (0x1)
-|    fragment number: 2 (0x2)
+|    fragment id: 1 (00 01)
+|    fragment number: 2 (02)
 | received IKE fragment id '1', number '2'
-|    fragment id: 1 (0x1)
-|    fragment number: 3 (0x3)
+|    fragment id: 1 (00 01)
+|    fragment number: 3 (03)
 | received IKE fragment id '1', number '3'
-|    fragment id: 1 (0x1)
-|    fragment number: 4 (0x4)
+|    fragment id: 1 (00 01)
+|    fragment number: 4 (04)
 | received IKE fragment id '1', number '4'
-|    fragment id: 1 (0x1)
-|    fragment number: 5 (0x5)
+|    fragment id: 1 (00 01)
+|    fragment number: 5 (05)
 | received IKE fragment id '1', number '5'(last)
+|  updated IKE fragment state to respond using fragments without waiting for re-transmits
+|    fragment id: 1 (00 01)
+|    fragment number: 1 (01)
+| received IKE fragment id '1', number '1'
+|    fragment id: 1 (00 01)
+|    fragment number: 2 (02)
+| received IKE fragment id '1', number '2'
+|    fragment id: 1 (00 01)
+|    fragment number: 3 (03)
+| received IKE fragment id '1', number '3'
+|    fragment id: 1 (00 01)
+|    fragment number: 4 (04)
+| received IKE fragment id '1', number '4'
+|    fragment id: 1 (00 01)
+|    fragment number: 5 (05)
+| received IKE fragment id '1', number '5'(last)
+| sending IKE fragment id '1', number '1'
+| sending IKE fragment id '1', number '2'
+| sending IKE fragment id '1', number '3'
+| sending IKE fragment id '1', number '4' (last)
 |  updated IKE fragment state to respond using fragments without waiting for re-transmits
 east #
 east #

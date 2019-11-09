@@ -2,20 +2,23 @@
 
 # Run the pluto testsuite, for libreswan
 #
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+import signal
+import faulthandler
 import sys
 import argparse
+import os
 from datetime import datetime
 
 from fab import runner
@@ -28,10 +31,19 @@ from fab import ignore
 from fab import timing
 from fab import publish
 
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Run tests")
+
+    # If SIGUSR1, backtrace all threads; hopefully this is early
+    # enough.
+    faulthandler.register(signal.SIGUSR1)
+
+    parser = argparse.ArgumentParser(description="Run tests",
+                                     epilog="SIGUSR1 will dump all thread stacks")
 
     parser.add_argument("--verbose", "-v", action="count", default=0)
+    parser.add_argument("--pid-file", default="", help="file to store process id of KVMRUNNER");
 
     parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
                         help="a testsuite directory, a TESTLIST file, or a list of test directories")
@@ -50,12 +62,19 @@ def main():
     logger.info("Options:")
     logger.info("  directories: %s", args.directories)
     logger.info("  verbose: %s", args.verbose)
+    logger.info("  pid-file: %s", args.pid_file)
     testsuite.log_arguments(logger, args)
     runner.log_arguments(logger, args)
     logutil.log_arguments(logger, args)
     skip.log_arguments(logger, args)
     ignore.log_arguments(logger, args)
     publish.log_arguments(logger, args)
+
+    if args.pid_file:
+        pid = os.getpid()
+        logger.info("writing pid %d to '%s'", pid, args.pid_file)
+        with open(args.pid_file, "wt") as pidfile:
+            pidfile.write("%d\n" % os.getpid())
 
     tests = testsuite.load_testsuite_or_tests(logger, args.directories, args,
                                               log_level=logutil.INFO)
@@ -81,8 +100,8 @@ def main():
     test_stats.log_summary(logger.info, header="final test stats:", prefix="  ")
     result_stats.log_summary(logger.info, header="final test results:", prefix="  ")
 
-    end_time = datetime.now()
-    logger.info("run finished at %s after %s", end_time, end_time - timing.START_TIME)
+    stop_time = datetime.now()
+    logger.info("run finished at %s after %s", stop_time, stop_time - timing.START_TIME)
 
     return exit_code
 

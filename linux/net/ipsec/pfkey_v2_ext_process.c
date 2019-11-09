@@ -7,7 +7,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -504,7 +504,7 @@ int pfkey_address_process(struct sadb_ext *pfkey_ext,
 			ipsp->ips_said.dst.u.v4.sin_addr.s_addr =
 				((struct sockaddr_in*)(ipsp->ips_addr_d))->
 				sin_addr.s_addr;
-			ipsp->ips_said.dst.u.v4.sin_family      = AF_INET;
+			SET_V4(ipsp->ips_said.dst);
 			if (debug_pfkey)
 				sin_addrtot(ipsp->ips_addr_d, 0, ipaddr_txt,
 					    sizeof(ipaddr_txt));
@@ -516,7 +516,7 @@ int pfkey_address_process(struct sadb_ext *pfkey_ext,
 			ipsp->ips_said.dst.u.v6.sin6_addr =
 				((struct sockaddr_in6 *)(ipsp->ips_addr_d))->
 				sin6_addr;
-			ipsp->ips_said.dst.u.v6.sin6_family      = AF_INET6;
+			SET_V6(ipsp->ips_said.dst);
 			if (debug_pfkey)
 				sin_addrtot(ipsp->ips_addr_d, 0, ipaddr_txt,
 					    sizeof(ipaddr_txt));

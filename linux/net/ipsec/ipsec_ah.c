@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -95,9 +95,9 @@ enum ipsec_rcv_value ipsec_rcv_ah_checks(struct ipsec_rcv_state *irs,
 	    ((AHHMAC_HASHLEN + AHHMAC_RPLLEN) >> 2)) {
 		KLIPS_PRINT(debug_rcv & DB_RX_INAU,
 			    "klips_debug:ipsec_rcv: "
-			    "bad authenticator length %ld, expected %lu from %s.\n",
-			    (long)(irs->protostuff.ahstuff.ahp->ah_hl << 2),
-			    (unsigned long) sizeof(struct ahhdr),
+			    "bad authenticator length %ld, expected %zu from %s.\n",
+			    (long)irs->protostuff.ahstuff.ahp->ah_hl << 2,
+			    sizeof(struct ahhdr),
 			    irs->ipsaddr_txt);
 		if (irs->stats)
 			irs->stats->rx_errors++;
@@ -162,7 +162,6 @@ enum ipsec_rcv_value ipsec_rcv_ah_authcalc(struct ipsec_rcv_state *irs,
 
 #ifdef CONFIG_KLIPS_ALG
 	if (irs->ipsp->ips_alg_auth) {
-
 		if ((buf = kmalloc(sizeof(struct iphdr)+skb->len, GFP_KERNEL)) == NULL)
 			return IPSEC_RCV_ERRMEMALLOC;
 
@@ -238,8 +237,8 @@ enum ipsec_rcv_value ipsec_rcv_ah_decap(struct ipsec_rcv_state *irs)
 	irs->next_header  = ahp->ah_nh;
 
 	/*
-	 * move the IP header forward by the size of the AH header, which
-	 * will remove the the AH header from the packet.
+	 * move the IP header forward by the size of the AH header,
+	 * thus removing the the AH header from the packet.
 	 */
 	memmove((void *)(skb_network_header(skb) + ahhlen),
 		(void *)(skb_network_header(skb)), irs->iphlen);

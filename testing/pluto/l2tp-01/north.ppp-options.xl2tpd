@@ -9,7 +9,5 @@ mtu 1410
 mru 1410
 defaultroute
 debug
-lock
 proxyarp
 connect-delay 5000
-ppp debug

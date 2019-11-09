@@ -1,10 +1,23 @@
 # This file defines the set of CIDRs (network/mask-length) to which
-# communication should be private, if possible, but in the clear otherwise.
-# One IPv4 or IPv6 CIDR per line.
+# communication should be encrypted when possible, but will fallback
+# to in the clear otherwise.
 #
-# If the target has a TXT (later IPSECKEY) record that specifies
-# authentication material, we will require private (i.e. encrypted)
-# communications.  If no such record is found, communications will be
-# in the clear.
+# This is enforced (and can be tweaked) by setting the failureshunt=
+# to passthrough.
 #
+# One IPv4 or IPv6 CIDR per line, optionally specifying a further
+# narrowing of protocol, source port and destination port
+#
+# examples:
+# prefer to encrypt all traffic to an IPv4 or IPv6 host or subnet
+# 10.0.1.0/24
+# 10.1.1.1/32
+# 2a03:6000:1004:1::/64
+#
+# prefer to encrypt all smtp traffic to some host
+#  10.0.1.0/24  tcp  0  25
+# prefer encrypt all incoming smtp traffic
+#  0.0.0.0/0  tcp  25  0
+#
+# Ideally, enable this for every host on the internet
 # 0.0.0.0/0

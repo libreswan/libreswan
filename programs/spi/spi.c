@@ -5,11 +5,13 @@
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -60,11 +62,14 @@
 #include <libreswan/pfkey_debug.h> /* PF_KEY_DEBUG_PARSE_MAX */
 
 #include "lswlog.h"
-#include "alg_info.h"
+#include "lswtool.h"
+#include "proposals.h"
 #include "kernel_alg.h"
+#include "kernel_sadb.h"
 #include "pfkey_help.h"
 #include "ip_address.h"
-#include "lsw_select.h"
+#include "ip_said.h"
+#include "ip_info.h"
 
 struct encap_msghdr *em;
 
@@ -79,13 +84,15 @@ char scratch[2];
 unsigned char *iv = NULL, *enckey = NULL, *authkey = NULL;
 size_t ivlen = 0, enckeylen = 0, authkeylen = 0;
 ip_address edst, dst, src;
-int address_family = 0;
-unsigned char proto = 0;
+static const struct ip_info *address_family = NULL;
+const struct ip_protocol *proto = NULL;
 int alg = 0;
 
 #include <assert.h>
 const char *alg_string = NULL;          /* algorithm string */
-struct proposal_info *esp_info = NULL;       /* esp info from 1st (only) element */
+struct proposal *proposal = NULL;       /* esp info from 1st (only) element */
+struct algorithm *encrypt = NULL;
+struct algorithm *integ = NULL;
 int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
 
 unsigned long replay_window = 0;
@@ -146,7 +153,7 @@ static void usage(const char *s, FILE *f)
 	exit(-1);
 }
 
-static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
+static bool parse_life_options(uint32_t life[life_maxsever][life_maxtype],
 		       char *life_opt[life_maxsever][life_maxtype],
 		       char *myoptarg)
 {
@@ -284,9 +291,9 @@ static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		}
 		life_opt[life_severity][life_type] = optargt;
 		if (debug) {
-			fprintf(stdout, "%s lifetime %s set to %lu.\n",
+			fprintf(stdout, "%s lifetime %s set to %" PRIu32 ".\n",
 				progname, optargt,
-				(unsigned long)life[life_severity][life_type]);
+				life[life_severity][life_type]);
 		}
 		optargp = endptr + 1;
 	} while (*endptr != '\0');
@@ -386,8 +393,8 @@ static bool kernel_alg_proc_read(void)
 				sadb_alg.sadb_alg_minbits = minbits;
 				sadb_alg.sadb_alg_maxbits = maxbits;
 				sadb_alg.sadb_alg_reserved = 0;
-				kernel_alg_add(satype, supp_exttype,
-					       &sadb_alg);
+				kernel_add_sadb_alg(satype, supp_exttype,
+						    &sadb_alg);
 				break;
 			}
 			break;
@@ -404,72 +411,64 @@ static bool kernel_alg_proc_read(void)
  * are valid.
  */
 
-const struct parser_policy policy = {
-	.ikev1 = false,
-	.ikev2 = false,
+const struct proposal_policy policy = {
+	.version = 0, /* any? */
 	.alg_is_ok = kernel_alg_is_ok,
 };
 
 static int decode_esp(char *algname)
 {
-	char err_buf[256] = "";	/* ??? big enough? */
-	int esp_alg;
+	struct proposal_parser *parser = esp_proposal_parser(&policy);
+	struct proposals *proposals = proposals_from_str(parser, algname);
 
-	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(&policy, algname,
-								     err_buf, sizeof(err_buf));
-
-	if (alg_info != NULL) {
-		int esp_ealg_id, esp_aalg_id;
-
-		esp_alg = XF_OTHER_ALG;
-		if (alg_info->ai.alg_info_cnt > 1) {
-			fprintf(stderr, "%s: Invalid encryption algorithm '%s' "
-				"follows '--esp' option: lead too many(%d) "
-				"transforms\n",
-				progname, algname,
-				alg_info->ai.alg_info_cnt);
-			exit(1);
-		}
-		alg_string = algname;
-		esp_info = &alg_info->ai.proposals[0];
-		if (debug) {
-			fprintf(stdout,
-				"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
-				progname,
-				alg_info->ai.alg_info_cnt,
-				esp_info->encrypt->common.id[IKEv1_ESP_ID],
-				esp_info->integ->common.id[IKEv1_ESP_ID]);
-		}
-		esp_ealg_id = esp_info->encrypt->common.id[IKEv1_ESP_ID];
-		esp_aalg_id = esp_info->integ->common.id[IKEv1_ESP_ID];
-		if (kernel_alg_proc_read()) {
-
-			proc_read_ok++;
-
-			if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
-				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
-					"not present\n",
-					progname,
-					esp_ealg_id,
-					enum_name(&esp_transformid_names,
-						  esp_ealg_id));
-				exit(1);
-			}
-
-			if (!kernel_alg_integ_ok(esp_info->integ)) {
-				/* ??? this message looks badly worded */
-				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - alg not present\n",
-					progname, esp_aalg_id,
-					enum_name(&auth_alg_names,
-						  esp_aalg_id));
-				exit(1);
-			}
-		}
-	} else {
+	if (proposals == NULL) {
 		fprintf(stderr,
 			"%s: Invalid encryption algorithm '%s' follows '--esp' option %s\n",
-			progname, algname, err_buf);
+			progname, algname, parser->error);
 		exit(1);
+	}
+
+	if (nr_proposals(proposals) > 1) {
+		fprintf(stderr, "%s: Invalid encryption algorithm '%s' "
+			"follows '--esp' option: lead too many(%d) "
+			"transforms\n",
+			progname, algname,
+			nr_proposals(proposals));
+		exit(1);
+	}
+
+	/* global */
+	proposal = next_proposal(proposals, NULL);
+	encrypt = next_algorithm(proposal, PROPOSAL_encrypt, NULL);
+	integ = next_algorithm(proposal, PROPOSAL_integ, NULL);
+
+	int esp_alg = XF_OTHER_ALG;
+	alg_string = algname;
+	int esp_ealg_id = encrypt->desc->id[IKEv1_ESP_ID];
+	int esp_aalg_id = integ->desc->id[IKEv1_ESP_ID];
+	if (debug) {
+		fprintf(stdout,
+			"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
+			progname,
+			nr_proposals(proposals), esp_ealg_id, esp_aalg_id);
+	}
+	if (kernel_alg_proc_read()) {
+		proc_read_ok++;
+		if (!kernel_alg_encrypt_ok(encrypt_desc(encrypt->desc))) {
+			fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
+				"not present\n",
+				progname,
+				esp_ealg_id,
+				encrypt->desc->fqn);
+			exit(1);
+		}
+		if (!kernel_alg_integ_ok(integ_desc(integ->desc))) {
+			/* ??? this message looks badly worded */
+			fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - alg not present\n",
+				progname, esp_aalg_id,
+				integ->desc->fqn);
+			exit(1);
+		}
 	}
 	return esp_alg;
 }
@@ -503,7 +502,7 @@ static void decode_blob(const char *optarg, const char *name, unsigned char **pp
 }
 
 static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
-	char *lo[life_maxtype], u_int32_t l[life_maxtype])
+	char *lo[life_maxtype], uint32_t l[life_maxtype])
 {
 	if (lo[life_alloc] != NULL ||
 	    lo[life_bytes] != NULL ||
@@ -538,14 +537,14 @@ static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext
 int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
+
 	/* force pfkey logging */
-	pfkey_error_func = pfkey_debug_func = printf;
+	cur_debugging = DBG_BASE;
 
 	__u32 spi = 0;
 	int c;
 	ip_said said;
-	const char *error_s;
-	char ipsaid_txt[SATOT_BUF];
+	char ipsaid_txt[SATOT_BUF] = "(error)";
 
 	int outif = 0;
 	int error = 0;
@@ -559,8 +558,8 @@ int main(int argc, char *argv[])
 	struct sadb_msg *pfkey_msg;
 	char *edst_opt, *spi_opt, *proto_opt, *af_opt, *said_opt, *dst_opt,
 		*src_opt;
-	u_int32_t natt;
-	u_int16_t sport, dport;
+	uint32_t natt;
+	uint16_t sport, dport;
 	uint32_t life[life_maxsever][life_maxtype];
 	char *life_opt[life_maxsever][life_maxtype];
 	struct stat sts;
@@ -605,7 +604,7 @@ int main(int argc, char *argv[])
 
 		case 'g':
 			debug = TRUE;
-			pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
+			cur_debugging = DBG_BASE;
 			/* paul: this is a plutoism? cur_debugging = 0xffffffff; */
 			argcount--;
 			break;
@@ -745,7 +744,7 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			alg = XF_IP4;
-			address_family = AF_INET;
+			address_family = &ipv4_info;
 			if (debug) {
 				fprintf(stdout, "%s: Algorithm %d selected.\n",
 					progname,
@@ -761,7 +760,7 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			alg = XF_IP6;
-			address_family = AF_INET6;
+			address_family = &ipv6_info;
 			if (debug) {
 				fprintf(stdout, "%s: Algorithm %d selected.\n",
 					progname,
@@ -812,15 +811,17 @@ int main(int argc, char *argv[])
 					progname, optarg, edst_opt);
 				exit(1);
 			}
-			error_s = ttoaddr_num(optarg, 0, address_family, &edst);
-			if (error_s != NULL) {
-				if (error_s) {
+
+			{
+				err_t e = numeric_to_address(shunk1(optarg), address_family, &edst);
+				if (e != NULL) {
 					fprintf(stderr,
 						"%s: Error, %s converting --edst argument:%s\n",
-						progname, error_s, optarg);
+						progname, e, optarg);
 					exit(1);
 				}
 			}
+
 			edst_opt = optarg;
 			if (debug) {
 				ipstr_buf b;
@@ -901,23 +902,19 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			if (streq(optarg, "inet")) {
-				address_family = AF_INET;
-				/* currently we ensure that all addresses belong to the same address family */
-				anyaddr(address_family, &dst);
-				anyaddr(address_family, &edst);
-				anyaddr(address_family, &src);
+				address_family = &ipv4_info;
 			} else if (streq(optarg, "inet6")) {
-				address_family = AF_INET6;
-				/* currently we ensure that all addresses belong to the same address family */
-				anyaddr(address_family, &dst);
-				anyaddr(address_family, &edst);
-				anyaddr(address_family, &src);
+				address_family = &ipv6_info;
 			} else {
 				fprintf(stderr,
 					"%s: Invalid ADDRESS FAMILY parameter: %s.\n",
 					progname, optarg);
 				exit(1);
 			}
+			/* currently we ensure that all addresses belong to the same address family */
+			dst = address_any(address_family);
+			edst = address_any(address_family);
+			src = address_any(address_family);
 			af_opt = optarg;
 			break;
 
@@ -946,32 +943,41 @@ int main(int argc, char *argv[])
 					progname, optarg, spi_opt);
 				exit(1);
 			}
-			error_s = ttosa(optarg, 0, &said);
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting --sa argument:%s\n",
-					progname, error_s, optarg);
-				exit(1);
+
+			{
+				err_t e = ttosa(optarg, 0, &said);
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting --sa argument:%s\n",
+						progname, e, optarg);
+					exit(1);
+				}
+				/* always fill in ipsaid_txt */
+				jambuf_t buf = ARRAY_AS_JAMBUF(ipsaid_txt);
+				jam_said(&buf, &said, 0);
 			}
+
+			/* always set ipsaid_text */
+			jambuf_t ipsaid_buf = ARRAY_AS_JAMBUF(ipsaid_txt);
+			jam_said(&ipsaid_buf, &said, 0);
+
 			if (debug) {
-				satot(&said, 0, ipsaid_txt,
-				      sizeof(ipsaid_txt));
 				fprintf(stdout, "%s: said=%s.\n",
 					progname,
 					ipsaid_txt);
 			}
 			/* init the src and dst with the same address family */
-			if (address_family == 0) {
-				address_family = addrtypeof(&said.dst);
-			} else if (address_family != addrtypeof(&said.dst)) {
+			if (address_family == NULL) {
+				address_family = said_type(&said);
+			} else if (address_family != said_type(&said)) {
 				fprintf(stderr,
-					"%s: Error, specified address family (%d) is different that of SAID: %s\n",
-					progname, address_family, optarg);
+					"%s: Error, specified address family (%s) is different that of SAID: %s\n",
+					progname, address_family->ip_name, optarg);
 				exit(1);
 			}
-			anyaddr(address_family, &dst);
-			anyaddr(address_family, &edst);
-			anyaddr(address_family, &src);
+			dst = address_any(address_family);
+			edst = address_any(address_family);
+			src = address_any(address_family);
 			said_opt = optarg;
 			break;
 
@@ -1013,13 +1019,17 @@ int main(int argc, char *argv[])
 					progname, optarg, dst_opt);
 				exit(1);
 			}
-			error_s = ttoaddr_num(optarg, 0, address_family, &dst);
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting --dst argument:%s\n",
-					progname, error_s, optarg);
-				exit(1);
+
+			{
+				err_t e = numeric_to_address(shunk1(optarg), address_family, &dst);
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting --dst argument:%s\n",
+						progname, e, optarg);
+					exit(1);
+				}
 			}
+
 			dst_opt = optarg;
 			if (debug) {
 				ipstr_buf b;
@@ -1087,13 +1097,17 @@ int main(int argc, char *argv[])
 					progname, optarg, src_opt);
 				exit(1);
 			}
-			error_s = ttoaddr_num(optarg, 0, address_family, &src);
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting --src argument:%s\n",
-					progname, error_s, optarg);
-				exit(1);
+
+			{
+				err_t e = numeric_to_address(shunk1(optarg), address_family, &src);
+				if (e != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting --src argument:%s\n",
+						progname, e, optarg);
+					exit(1);
+				}
 			}
+
 			src_opt = optarg;
 			if (debug) {
 				ipstr_buf b;
@@ -1136,13 +1150,6 @@ int main(int argc, char *argv[])
 			progname);
 	}
 
-	if (stat("/proc/net/pfkey", &sts) == 0) {
-		fprintf(stderr,
-			"%s: NETKEY does not use the ipsec spi command. Use 'ip xfrm' instead.\n",
-			progname);
-		exit(1);
-	}
-
 	if (argcount == 1) {
 		int ret = 1;
 
@@ -1162,63 +1169,49 @@ int main(int argc, char *argv[])
 	case XF_OTHER_ALG:
 		/* validate keysizes */
 		if (proc_read_ok) {
-			const struct sadb_alg *alg_p;
-			size_t keylen, minbits, maxbits;
-			/*
-			 * XXX: According to "alg_info.h", TRANSID is
-			 * an "enum ipsec_cipher_algo".  This code
-			 * seems to assume that those values 1:1 map
-			 * onto the corresponding kernel SADB value?
-			 */
-			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
-							SADB_EXT_SUPPORTED_ENCRYPT,
-							esp_info->encrypt->common.id[IKEv1_ESP_ID]);
-			assert(alg_p != NULL);
-			keylen = enckeylen * 8;
-
-			minbits = alg_p->sadb_alg_minbits;
-			maxbits = alg_p->sadb_alg_maxbits;
-			/*
-			 * if explicit keylen told in encrypt algo, eg "aes128"
-			 * check actual keylen "equality"
-			 */
-			if (esp_info->enckeylen &&
-			    esp_info->enckeylen != keylen) {
-				fprintf(stderr, "%s: invalid encryption keylen=%d, "
-					"required %d by encrypt algo string=\"%s\"\n",
-					progname,
-					(int)keylen,
-					(int)esp_info->enckeylen,
-					alg_string);
-				exit(1);
-
+			{
+				int keylen = enckeylen * 8;
+				int minbits = encrypt_min_key_bit_length(encrypt_desc(encrypt->desc));
+				int maxbits = encrypt_max_key_bit_length(encrypt_desc(encrypt->desc));
+				/*
+				 * if explicit keylen told in encrypt
+				 * algo, eg "aes128" check actual
+				 * keylen "equality"
+				 */
+				if (encrypt->enckeylen &&
+				    encrypt->enckeylen != keylen) {
+					fprintf(stderr, "%s: invalid encryption keylen=%d, "
+						"required %d by encrypt algo string=\"%s\"\n",
+						progname,
+						keylen,
+						encrypt->enckeylen,
+						alg_string);
+					exit(1);
+				}
+				/* thanks DES for this sh*t */
+				if (minbits > keylen || maxbits < keylen) {
+					fprintf(stderr, "%s: invalid encryption keylen=%d, "
+						"must be between %d and %d bits\n",
+						progname,
+						keylen,
+						minbits,
+						maxbits);
+					exit(1);
+				}
 			}
-			/* thanks DES for this sh*t */
-
-			if (minbits > keylen || maxbits < keylen) {
-				fprintf(stderr, "%s: invalid encryption keylen=%d, "
-					"must be between %d and %d bits\n",
-					progname,
-					(int)keylen,
-					(int)minbits,
-					(int)maxbits);
-				exit(1);
-			}
-			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
-							SADB_EXT_SUPPORTED_AUTH,
-							esp_info->integ->integ_ikev1_ah_transform);
-			assert(alg_p);
-			keylen = authkeylen * 8;
-			minbits = alg_p->sadb_alg_minbits;
-			maxbits = alg_p->sadb_alg_maxbits;
-			if (minbits > keylen || maxbits < keylen) {
-				fprintf(stderr, "%s: invalid auth keylen=%d, "
-					"must be between %d and %d bits\n",
-					progname,
-					(int)keylen,
-					(int)minbits,
-					(int)maxbits);
-				exit(1);
+			{
+				int keylen = authkeylen * 8;
+				int minbits = integ_desc(integ->desc)->integ_keymat_size * 8;
+				int maxbits = integ_desc(integ->desc)->integ_keymat_size * 8;
+				if (minbits > keylen || maxbits < keylen) {
+					fprintf(stderr, "%s: invalid auth keylen=%d, "
+						"must be between %d and %d bits\n",
+						progname,
+						keylen,
+						minbits,
+						maxbits);
+					exit(1);
+				}
 			}
 		}
 		/*
@@ -1251,16 +1244,16 @@ int main(int argc, char *argv[])
 					progname);
 				exit(1);
 			}
-			initsaid(&edst, htonl(spi), proto, &said);
+			said = said3(&edst, htonl(spi), proto);
 		} else {
 			proto = said.proto;
 			spi = ntohl(said.spi);
 			edst = said.dst;
 		}
-		if ((address_family != 0) &&
-		    (address_family != addrtypeof(&said.dst))) {
+		if (address_family != NULL &&
+		    address_family != said_type(&said)) {
 			fprintf(stderr,
-				"%s: Defined address family and address family of SA missmatch.\n",
+				"%s: Defined address family and address family of SA mismatch.\n",
 				progname);
 			exit(1);
 		}
@@ -1328,7 +1321,7 @@ int main(int argc, char *argv[])
 
 	switch (alg) {
 	case XF_OTHER_ALG:
-		authalg = esp_info->integ->integ_ikev1_ah_transform;
+		authalg = integ_desc(integ->desc)->integ_ikev1_ah_transform;
 		if (debug) {
 			fprintf(stdout, "%s: debug: authalg=%d\n",
 				progname, authalg);
@@ -1345,7 +1338,7 @@ int main(int argc, char *argv[])
 		encryptalg = SADB_X_CALG_LZS;
 		break;
 	case XF_OTHER_ALG:
-		encryptalg = esp_info->encrypt->common.id[IKEv1_ESP_ID];
+		encryptalg = encrypt->desc->id[IKEv1_ESP_ID];
 		if (debug) {
 			fprintf(stdout, "%s: debug: encryptalg=%d\n",
 				progname, encryptalg);
@@ -1444,11 +1437,15 @@ int main(int argc, char *argv[])
 				progname, ipstr(&src, &b));
 		}
 
+		/* emit 0 port */
+		ip_endpoint src_e = endpoint(&src, 0);
+		ip_sockaddr src_sa;
+		passert(endpoint_to_sockaddr(&src_e, &src_sa) > 0);
 		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_SRC],
 					    SADB_EXT_ADDRESS_SRC,
 					    0,
 					    0,
-					    sockaddrof(&src));
+					    &src_sa.sa);
 		if (error != 0) {
 			ipstr_buf b;
 
@@ -1459,11 +1456,15 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
+		/* emit 0 port */
+		ip_endpoint edst_e = endpoint(&edst, 0);
+		ip_sockaddr edst_sa;
+		passert(endpoint_to_sockaddr(&edst_e, &edst_sa) > 0);
 		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_DST],
 					    SADB_EXT_ADDRESS_DST,
 					    0,
 					    0,
-					    sockaddrof(&edst));
+					    &edst_sa.sa);
 		if (error != 0) {
 			ipstr_buf b;
 
@@ -1507,8 +1508,8 @@ int main(int argc, char *argv[])
 					fprintf(stdout, "%s: key not provided (NULL alg?).\n",
 						progname);
 				break;
-
 			}
+
 			error = pfkey_key_build(&extensions[SADB_EXT_KEY_ENCRYPT],
 						SADB_EXT_KEY_ENCRYPT,
 						enckeylen * 8,
@@ -1520,6 +1521,7 @@ int main(int argc, char *argv[])
 				pfkey_extensions_free(extensions);
 				exit(1);
 			}
+
 			if (debug) {
 				fprintf(stdout,
 					"%s: key_e extension assembled.\n",
@@ -1577,7 +1579,6 @@ int main(int argc, char *argv[])
 			if (!success)
 				return FALSE;
 		}
-
 	}
 
 	if (debug) {
@@ -1721,10 +1722,9 @@ int main(int argc, char *argv[])
 			/* first, see if we got enough for an sadb_msg */
 			if ((size_t)readlen < sizeof(struct sadb_msg)) {
 				if (debug) {
-					printf("%s: runt packet of size: %ld (<%lu)\n",
-						progname, (long)readlen,
-						(unsigned long)sizeof(struct
-								      sadb_msg));
+					printf("%s: runt packet of size: %zd (<%zu)\n",
+						progname, readlen,
+						sizeof(struct sadb_msg));
 				}
 				continue;
 			}
@@ -1761,7 +1761,7 @@ int main(int argc, char *argv[])
 			if (pfkey_msg_parse(pfkey_msg, NULL, extensions,
 					    EXT_BITS_OUT)) {
 				if (debug) {
-					printf("%s: unparseable PF_KEY message.\n",
+					printf("%s: unparsable PF_KEY message.\n",
 						progname);
 				}
 				continue;

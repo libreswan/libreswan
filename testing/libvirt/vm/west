@@ -4,8 +4,8 @@ You can load this machine definition into libvirt using:
 -->
 <domain type='kvm'>
   <name>@@NAME@@</name>
-  <memory unit='KiB'>524288</memory>
-  <currentMemory unit='KiB'>524288</currentMemory>
+  <memory unit='KiB'>393216</memory>
+  <currentMemory unit='KiB'>393216</currentMemory>
   <vcpu>1</vcpu>
   <os>
     <type arch='x86_64' machine='pc-0.15'>hvm</type>
@@ -50,11 +50,6 @@ You can load this machine definition into libvirt using:
     <interface type='network'>
       <mac address='12:00:00:64:64:45'/>
       <source network='192_1_2'/>
-      <model type='virtio'/>
-    </interface>
-    <interface type='network'>
-      <mac address='12:00:00:32:64:45'/>
-      <source network='192_9_4'/>
       <model type='virtio'/>
     </interface>
     <serial type='pty'>

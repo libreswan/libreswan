@@ -1,4 +1,4 @@
-ipsec look
+../../pluto/bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 cat /tmp/xl2tpd.log

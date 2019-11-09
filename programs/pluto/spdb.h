@@ -2,14 +2,14 @@
  *
  * Copyright (C) 1998,1999,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -21,6 +21,7 @@
 #define _SPDB_H_
 
 #include "packet.h"
+#include "proposals.h"
 
 /* database of SA properties */
 
@@ -35,7 +36,7 @@ struct db_attr {
 						 */
 		enum ikev1_ipsec_attr ipsec;
 	} type;
-	u_int16_t val;
+	uint16_t val;
 };
 
 /*
@@ -67,7 +68,7 @@ struct db_attr {
 
 /* transform: an array of attributes */
 struct db_trans {
-	u_int16_t transid;	/* Transform-Id */
+	uint16_t transid;	/* Transform-Id */
 	struct db_attr *attrs;	/* [attr_cnt] attributes */
 	unsigned int attr_cnt;	/* number of attributes */
 };
@@ -77,7 +78,7 @@ struct db_trans {
  * Example: several different ESP transforms, any of which is OK.
  */
 struct db_prop {
-	u_int8_t protoid;	/* Protocol-Id */
+	uint8_t protoid;	/* Protocol-Id */
 	struct db_trans *trans;	/* [trans_cnt] transforms (disjunction) */
 	unsigned int trans_cnt;	/* number of transforms */
 	/* SPI size and value isn't part of DB */
@@ -111,8 +112,8 @@ struct db_sa {
  *
  * am == aggressive mode
  */
-extern struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c);
-extern struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c);
+extern struct db_sa *IKEv1_oakley_sadb(lset_t x, const struct connection *c);
+extern struct db_sa *IKEv1_oakley_am_sadb(lset_t x, const struct connection *c);
 
 /* The ipsec sadb is subscripted by a bitset with members
  * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS
@@ -136,7 +137,7 @@ extern struct db_sa ipsec_sadb[1 << 3];
 #define AD_PC(x) .props = (x), .prop_cnt = elemsof(x)
 
 extern bool ikev1_out_sa(pb_stream *outs,
-		   struct db_sa *sadb,
+		   const struct db_sa *sadb,
 		   struct state *st,
 		   bool oakley_mode,
 		   bool aggressive_mode,
@@ -171,12 +172,12 @@ extern void sa_log(struct db_sa *f);
 struct alg_info_ike;
 struct alg_info_esp;
 
-extern struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
+extern struct db_sa *oakley_alg_makedb(const struct ike_proposals proposals,
 				       enum ikev1_auth_method auth_method,
 				       bool single_dh);
 
 extern struct db_sa *kernel_alg_makedb(lset_t policy,
-				       struct alg_info_esp *ei,
+				       const struct child_proposals proposals,
 				       bool logit);
 
 #endif /*  _SPDB_H_ */

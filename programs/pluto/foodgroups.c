@@ -2,11 +2,13 @@
  * Copyright (C) 2002  D. Hugh Redelmeier.
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -22,7 +24,6 @@
 #include <stdlib.h>
 #include <limits.h> /* PATH_MAX */
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -37,6 +38,9 @@
 #include "lex.h"
 #include "log.h"
 #include "whack.h"
+#include "ip_info.h"
+
+#include <errno.h>
 
 /* Food group config files are found in directory fg_path */
 
@@ -67,6 +71,9 @@ struct fg_targets {
 	struct fg_targets *next;
 	struct fg_groups *group;
 	ip_subnet subnet;
+	uint8_t proto;
+	uint16_t sport;
+	uint16_t dport;
 	char *name; /* name of instance of group conn */
 };
 
@@ -81,13 +88,12 @@ static struct fg_targets *new_targets;
  */
 static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
 {
-	ip_address neta, maska, netb, maskb;
 	int r;
 
-	networkof(a, &neta);
-	maskof(a, &maska);
-	networkof(b, &netb);
-	maskof(b, &maskb);
+	ip_address neta = subnet_prefix(a);
+	ip_address maska = subnet_mask(a);
+	ip_address netb = subnet_prefix(b);
+	ip_address maskb = subnet_mask(b);
 	r = addrcmp(&neta, &netb);
 	if (r == 0)
 		r = addrcmp(&maska, &maskb);
@@ -109,7 +115,6 @@ static void read_foodgroup(struct fg_groups *g)
 	}
 	snprintf(fg_path, fg_path_space, "%s/%s", oco->policies_dir, fgn);
 	if (!lexopen(&flp_space, fg_path, TRUE)) {
-
 		DBG(DBG_CONTROL, {
 			    char cwd[PATH_MAX];
 			    DBG_log("no group file \"%s\" (pwd:%s)",
@@ -122,9 +127,9 @@ static void read_foodgroup(struct fg_groups *g)
 			switch (flp->bdry) {
 			case B_none:
 			{
-				const struct af_info *afi =
+				const struct ip_info *afi =
 					strchr(flp->tok, ':') == NULL ?
-					&af_inet4_info : &af_inet6_info;
+					&ipv4_info : &ipv6_info;
 				ip_subnet sn;
 				err_t ugh;
 
@@ -138,7 +143,7 @@ static void read_foodgroup(struct fg_groups *g)
 						ugh = addrtosubnet(&t, &sn);
 				} else {
 					ugh = ttosubnet(flp->tok, 0, afi->af,
-							&sn);
+							'x', &sn);
 				}
 
 				if (ugh != NULL) {
@@ -151,7 +156,69 @@ static void read_foodgroup(struct fg_groups *g)
 					       "\"%s\" line %d: unsupported Address Family \"%s\"",
 					       flp->filename, flp->lino,
 					       flp->tok);
+						(void)shift();
+						flushline(NULL);
 				} else {
+					char spport_str[256];
+					char dpport_str[256];
+					zero(spport_str);
+					zero(dpport_str);
+					int errl;
+					uint8_t proto = 0;
+					uint16_t sport = 0, dport = 0;
+					bool has_port_wildcard;
+
+					/* check for protocol and ports */
+					/* syntax then must be: proto sport dport */
+					(void)shift();
+					errl = flp->lino;
+					if (flp->bdry == B_none) {
+						jam_str(spport_str, sizeof(spport_str), flp->tok);
+						add_str(spport_str, sizeof(spport_str), spport_str, "/");
+						jam_str(dpport_str, sizeof(dpport_str), flp->tok);
+						add_str(dpport_str, sizeof(dpport_str), dpport_str, "/");
+						(void)shift();
+						if (flp->bdry == B_none) {
+							add_str(spport_str, sizeof(spport_str), spport_str, flp->tok);
+							ugh = ttoprotoport(spport_str, 0, &proto, &sport, &has_port_wildcard);
+							if (ugh == NULL && proto != 0 && proto != 50 && proto != 51) {
+								(void)shift();
+								if (flp->bdry == B_none) {
+									add_str(dpport_str, sizeof(dpport_str), dpport_str, flp->tok);
+									ugh = ttoprotoport(dpport_str, 0, &proto, &dport, &has_port_wildcard);
+									if (ugh == NULL) {
+										if (dport == 0 && (strlen(flp->tok) != 1 || flp->tok[0] != '0')) {
+											loglog(RC_LOG_SERIOUS,
+												"\"%s\" line %d: unknown destination port '%s' - port name did not resolve to a valid number",
+												flp->filename, errl, flp->tok);
+											break;
+										}
+									} else {
+										loglog(RC_LOG_SERIOUS,
+											"\"%s\" line %d: unknown destination port %s - port name did not resolve to a valid number",
+											flp->filename, errl, dpport_str);
+										break;
+									}
+								} else if (flp->bdry != B_file){
+									loglog(RC_LOG_SERIOUS,
+										"\"%s\" line %d: wrong number of arguments: either only specify CIDR, or specify CIDR proto source_port dest_port",
+										flp->filename, errl);
+								}
+							} else {
+								loglog(RC_LOG_SERIOUS,
+									"\"%s\" line %d: unknown protocol or port - names did not resolve to a number or protocol mistakenlly defined to be 0 or 50(esp) or 51(ah)",
+									flp->filename, errl);
+								break;
+							}
+						} else {
+							loglog(RC_LOG_SERIOUS,
+								"\"%s\" line %d: entry must either have only a destination CIDR, or 'CIDR proto source_port dest_port' specified",
+								flp->filename, errl);
+							break;
+						}
+					}
+					flushline(NULL);
+
 					/* Find where new entry ought to go in new_targets. */
 					struct fg_targets **pp;
 					int r;
@@ -165,25 +232,28 @@ static void read_foodgroup(struct fg_groups *g)
 						r = subnetcmp(lsn,
 							      &(*pp)->group->connection->spd.this.client);
 						if (r == 0) {
-							r = subnetcmp(&sn,
-								      &(*pp)->subnet);
+							r = subnetcmp(&sn, &(*pp)->subnet);
 						}
-
-						if (r <= 0)
+						if (r != 0)
 							break;
+
+						if (proto == (*pp)->proto &&
+						    sport == (*pp)->sport &&
+						    dport == (*pp)->dport) {
+							break;
+						}
 					}
 
 					if (r == 0) {
-						char source[SUBNETTOT_BUF];
-
-						subnettot(lsn, 0, source,
-							  sizeof(source));
+						subnet_buf source;
+						subnet_buf dest;
 						loglog(RC_LOG_SERIOUS,
-						       "\"%s\" line %d: subnet \"%s\", source %s, already \"%s\"",
+						       "\"%s\" line %d: subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
 						       flp->filename,
 						       flp->lino,
-						       flp->tok,
-						       source,
+						       str_subnet(&sn, &dest),
+						       proto, sport, dport,
+						       str_subnet(lsn, &source),
 						       (*pp)->group->connection->name);
 					} else {
 						struct fg_targets *f =
@@ -194,11 +264,13 @@ static void read_foodgroup(struct fg_groups *g)
 						f->next = *pp;
 						f->group = g;
 						f->subnet = sn;
+						f->proto = proto;
+						f->sport = sport;
+						f->dport = dport;
 						f->name = NULL;
 						*pp = f;
 					}
 				}
-				(void)shift(); /* next */
 				continue;
 			}
 
@@ -241,22 +313,17 @@ void load_groups(void)
 	}
 
 	/* dump new_targets */
-	DBG(DBG_CONTROL,
-	    {
-		    struct fg_targets *t;
-
-		    for (t = new_targets; t != NULL; t = t->next) {
-			    char asource[SUBNETTOT_BUF];
-			    char atarget[SUBNETTOT_BUF];
-
-			    subnettot(&t->group->connection->spd.this.client,
-				      0, asource, sizeof(asource));
-			    subnettot(&t->subnet, 0, atarget, sizeof(atarget));
-			    DBG_log("%s->%s %s",
-				    asource, atarget,
-				    t->group->connection->name);
-		    }
-	    });
+	if (DBG_BASE) {
+		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
+			subnet_buf asource;
+			subnet_buf atarget;
+			DBG_log("%s->%s %d sport %d dport %d %s",
+				str_subnet_port(&t->group->connection->spd.this.client, &asource),
+				str_subnet_port(&t->subnet, &atarget),
+				t->proto, t->sport, t->dport,
+				t->group->connection->name);
+		}
+	    }
 
 	/* determine and deal with differences between targets and new_targets.
 	 * structured like a merge.
@@ -272,6 +339,12 @@ void load_groups(void)
 
 			if (r == 0)
 				r = subnetcmp(&op->subnet, &np->subnet);
+			if (r == 0)
+				r = op->proto - np->proto;
+			if (r == 0)
+				r = op->sport - np->sport;
+			if (r == 0)
+				r = op->dport - np->dport;
 
 			if (r == 0 && op->group == np->group) {
 				/* unchanged -- steal name & skip over */
@@ -290,7 +363,8 @@ void load_groups(void)
 				if (r >= 0) {
 					np->name = add_group_instance(
 						np->group->connection,
-						&np->subnet);
+						&np->subnet, np->proto,
+						np->sport, np->dport);
 					np = np->next;
 				}
 			}
@@ -298,10 +372,11 @@ void load_groups(void)
 		for (; op != NULL; op = op->next)
 			remove_group_instance(op->group->connection, op->name);
 
-
-		for (; np != NULL; np = np->next)
+		for (; np != NULL; np = np->next) {
 			np->name = add_group_instance(np->group->connection,
-						      &np->subnet);
+						      &np->subnet, np->proto,
+						      np->sport, np->dport);
+		}
 
 		/* update: new_targets replaces targets */
 		free_targets();
@@ -380,37 +455,37 @@ void unroute_group(struct connection *c)
 
 void delete_group(const struct connection *c)
 {
-	struct fg_groups *g;
-
-	/* find and remove from groups */
-	{
-		struct fg_groups **pp;
-
-		for (pp = &groups; (g = *pp)->connection != c;
-		     pp = &(*pp)->next)
-			;
-
-		*pp = g->next;
+	/*
+	 * find and remove from groups
+	 */
+	struct fg_groups *g = NULL;
+	for (struct fg_groups **pp = &groups; *pp != NULL; pp = &(*pp)->next) {
+		if ((*pp)->connection == c) {
+			g = *pp;
+			*pp = g->next;
+			break;
+		}
 	}
 
-	/* find and remove from targets */
-	{
-		struct fg_targets **pp;
-
-		for (pp = &targets; *pp != NULL; ) {
+	/*
+	 * find and remove from targets
+	 */
+	if (pexpect(g != NULL)) {
+		struct fg_targets **pp = &targets;
+		while (*pp != NULL) {
 			struct fg_targets *t = *pp;
-
 			if (t->group == g) {
+				/* remove *PP but advance first */
 				*pp = t->next;
 				remove_group_instance(t->group->connection,
 						      t->name);
 				pfree(t);
 				/* pp is ready for next iteration */
 			} else {
+				/* advance PP */
 				pp = &t->next;
 			}
 		}
+		pfree(g);
 	}
-
-	pfree(g);
 }

@@ -5,7 +5,7 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -35,9 +35,12 @@ class Print(argutil.List):
     test_scripts = "test-scripts"
     test_status = "test-status"
     # results
+    start_time = "start-time"
+    stop_time = "stop-time"
     boot_time = "boot-time"
+    script_time = "script-time"
+    runtime = "runtime"
     diffs = "diffs"
-    end_time = "end-time"
     issues = "errors"                      # for historic reasons
     expected_result = "expected-result"    # test_status
     host_names = "host-names"              # test_host_names
@@ -45,13 +48,9 @@ class Print(argutil.List):
     output_directory = "output-directory"
     path = "path"
     result = "result"
-    runtime = "runtime"
     saved_output_directory = "saved-output-directory"
-    script_time = "script-time"
     scripts = "scripts"                    # test_scripts
-    start_time = "start-time"
     testing_directory = "testing-directory"
-    total_time = "total-time"
     baseline_directory = "baseline-directory"
     baseline_output_directory = "baseline-output-directory"
 
@@ -86,10 +85,12 @@ class JsonBuilder:
 
 class TextBuilder:
     def __init__(self, stream=sys.stdout):
+        self.eol = False
         self.sep = ""
         self.stream = stream
     def prefix(self, key, value):
         self.stream.write(value)
+        self.eol = True
     def add(self, *keyval, string=lambda s, sep: s and sep + str(s) or ""):
         # default is to print value as a string when it is "not
         # false".
@@ -97,16 +98,18 @@ class TextBuilder:
         value = keyval[-1]
         self.stream.write(string(value, self.sep))
         self.sep = " "
+        self.eol = True
     def flush(self):
-        self.stream.write("\n")
+        if self.eol:
+            self.stream.write("\n")
         self.stream.flush()
         self.sep = ""
+        self.eol = False
 
 
 def build_result(logger, result, baseline, args, what_to_print, b):
 
     # Print the test's name/path
-    debug_log = "debug.log"
 
     for p in what_to_print:
         if p is Print.path:
@@ -146,23 +149,15 @@ def build_result(logger, result, baseline, args, what_to_print, b):
         elif p is Print.baseline_output_directory:
             b.add(p, baseline and result.test.name in baseline and baseline[result.test.name].output_directory or None)
         elif p is Print.start_time:
-            b.add(p, result.grub(debug_log, r"starting debug log at (.*)$",
-                                 cast=jsonutil.ptime))
-        elif p is Print.end_time:
-            b.add(p, result.grub(debug_log, r"ending debug log at (.*)$",
-                                 cast=jsonutil.ptime))
+            b.add(p, result.start_time())
+        elif p is Print.stop_time:
+            b.add(p, result.stop_time())
         elif p is Print.runtime:
-            b.add(p, result.grub(debug_log, r": stop testing .* after (.*) second",
-                                 cast=float))
+            b.add(p, result.runtime())
         elif p is Print.boot_time:
-            b.add(p, result.grub(debug_log, r": stop booting domains after (.*) second",
-                                cast=float))
+            b.add(p, result.boot_time())
         elif p is Print.script_time:
-            b.add(p, result.grub(debug_log, r": stop running scripts .* after (.*) second",
-                                 cast=float))
-        elif p is Print.total_time:
-            b.add(p, result.grub(debug_log, r": stop processing test .* after (.*) second",
-                                 cast=float))
+            b.add(p, result.script_time())
         elif p is Print.diffs:
             continue # see below
         else:
@@ -170,9 +165,10 @@ def build_result(logger, result, baseline, args, what_to_print, b):
 
     if Print.diffs in what_to_print:
         for domain in result.diffs:
-            b.add(Print.diffs, domain, result.diffs[domain],
+            b.add(Print.diffs, domain,
+                  result.diffs[domain],
                   string=(lambda diff, sep: diff
-                          and (sep and "\n" or "") + "\n".join(diff)
+                          and (sep and "\n" or "") + b"\n".join(diff).decode()
                           or ""))
 
     b.flush()

@@ -1,0 +1,9 @@
+test system wide crypto policies.
+
+This test requires Fedora-28 or RHEL-8 / Centos-8 with the crypto-policies package installed
+
+This test is WIP because we are waiting for libreswan 3.28 to land into fedora f28 so that
+the crypto-policies can make use of the new proposal parser in libreswan.
+
+Note: this can be disabled using env variable NSS_IGNORE_SYSTEM_POLICY
+

@@ -89,7 +89,7 @@ argument and the length of the string, given as
 <emphasis remap='Fa'>len</emphasis>.
 The
 ipsec_set_policy();
-function returns pointer to a buffer which contains a properly formed
+function returns pointer to a buffer that contains a properly formed
 IPsec policy specification structure.
 The buffer is dynamically allocated, and must be freed by using the
 <citerefentry><refentrytitle>free</refentrytitle><manvolnum>3</manvolnum></citerefentry>
@@ -97,7 +97,7 @@ library function.</para>
 
 <para>The
 ipsec_get_policylen();
-function will returns the of the buffer which is needed when passing
+function will returns the address of the buffer that is needed when passing
 the specification structure to the
 <citerefentry><refentrytitle>setsockopt</refentrytitle><manvolnum>2</manvolnum></citerefentry>
 system call.</para>
@@ -177,7 +177,7 @@ means that matching packets are processed by IPsec.
 <literal>ipsec</literal>
 can be followed by one or more
 <replaceable>request</replaceable>
-string, which is formatted as:</para>
+strings, each formatted as:</para>
 <variablelist remap='Bl -tag -width discard'>
 <varlistentry>
 <term>

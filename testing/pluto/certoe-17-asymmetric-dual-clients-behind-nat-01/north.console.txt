@@ -1,0 +1,42 @@
+echo "init done, nothing to do on north. It will not use IPsec"
+init done, nothing to do on north. It will not use IPsec
+north #
+ # ping should succeed
+north #
+ echo "north is sending pings"
+north is sending pings
+north #
+ ping -n -c 5 -I 192.1.3.33 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.33 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=63 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=63 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=63 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=63 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=5 ttl=63 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+north #
+ echo "waiting while road sets up a tunnel to confirm there is no interference"
+waiting while road sets up a tunnel to confirm there is no interference
+north #
+ # ping should succeed
+north #
+ echo "north is sending pings again"
+north is sending pings again
+north #
+ ping -n -c 5 -I 192.1.3.33 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.33 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=63 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=63 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=63 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=63 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=5 ttl=63 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+north #
+ echo "pings sent"
+pings sent
+north #
+ 

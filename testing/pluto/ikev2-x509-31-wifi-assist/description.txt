@@ -1,0 +1,25 @@
+Wifi assist test case where road has a wifi and lte connection
+up with each conn getting its own IP address.
+
+It shows a problem on east:
+
+root@east ~]# ip xfrm pol
+src 192.0.2.0/24 dst 100.64.0.2/32 
+	dir out priority 1042399 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid 16393 mode tunnel
+src 192.0.2.0/24 dst 100.64.0.1/32 
+	dir out priority 1042399 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid 16393 mode tunnel
+src 100.64.0.1/32 dst 192.0.2.0/24 
+	dir fwd priority 1042399 ptype main 
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid 16393 mode tunnel
+src 100.64.0.1/32 dst 192.0.2.0/24 
+	dir in priority 1042399 ptype main 
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid 16393 mode tunnel
+
+
+It's lacking a fwd and an in policy ......

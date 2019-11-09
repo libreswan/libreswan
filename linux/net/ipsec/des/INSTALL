@@ -9,14 +9,14 @@ be 100.0.
 
 If possible use gcc v 2.7.?
 Turn on the maximum optimising (normally '-O3 -fomit-frame-pointer' for gcc)
-In recent times, some system compilers give better performace.
+In recent times, some system compilers give better performance.
 
 type 'make'
 
 run './destest' to check things are ok.
 run './rpw' to check the tty code for reading passwords works.
 run './speed' to see how fast those optimisations make the library run :-)
-run './des_opts' to determin the best compile time options.
+run './des_opts' to determine the best compile time options.
 
 The output from des_opts should be put in the makefile options and des_enc.c
 should be rebuilt.  For 64 bit computers, do not use the DES_PTR option.
@@ -63,7 +63,7 @@ operation of MSDOS.
 When building for glibc, ignore all of the above and just unpack into
 glibc-1.??/des and then gmake as per normal.
 
-As a final note on performace.  Certain CPUs like sparcs and Alpha often give
-a %10 speed difference depending on the link order.  It is rather anoying
+As a final note on performance.  Certain CPUs like sparcs and Alpha often give
+a %10 speed difference depending on the link order.  It is rather annoying
 when one program reports 'x' DES encrypts a second and another reports
 'x*0.9' the speed.

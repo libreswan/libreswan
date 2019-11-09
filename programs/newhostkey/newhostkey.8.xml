@@ -144,7 +144,7 @@
 
 <refsect1 id='history'><title>HISTORY</title>
 <para>Originally written for the Linux FreeS/WAN project
-&lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
+&lt;<ulink url='https://www.freeswan.org'>https://www.freeswan.org</ulink>&gt;
 by Henry Spencer. Updated by Paul Wouters</para>
 </refsect1>
 
@@ -157,7 +157,7 @@ amounts of CPU time.
 See <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 .</para>
 
-<para>A higher-level tool which could handle the clerical details of changing
+<para>A higher-level tool that could handle the clerical details of changing
 to a new key would be helpful.</para>
 
 </refsect1>

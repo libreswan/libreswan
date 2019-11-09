@@ -1,0 +1,79 @@
+diff --git a/include/pluto_constants.h b/include/pluto_constants.h
+index 5e3d67e64..fd0c14d47 100644
+--- a/include/pluto_constants.h
++++ b/include/pluto_constants.h
+@@ -411,6 +411,7 @@ enum {
+ 	IMPAIR_REPLAY_DUPLICATES_IX,		/* replay duplicates of each incoming packet */
+ 	IMPAIR_REPLAY_FORWARD_IX,		/* replay all earlier packets old-to-new */
+ 	IMPAIR_REPLAY_BACKWARD_IX,		/* replay all earlier packets new-to-old */
++	IMPAIR_IKEv1_DEL_WITH_NOTIFY_IX,	/* causes pluto send send IKE Delete with additional bogus Notify */
+ 
+ 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
+ };
+@@ -452,6 +453,7 @@ enum {
+ #define IMPAIR_REPLAY_DUPLICATES 	LELEM(IMPAIR_REPLAY_DUPLICATES_IX)
+ #define IMPAIR_REPLAY_FORWARD	 	LELEM(IMPAIR_REPLAY_FORWARD_IX)
+ #define IMPAIR_REPLAY_BACKWARD 		LELEM(IMPAIR_REPLAY_BACKWARD_IX)
++#define IMPAIR_IKEv1_DEL_WITH_NOTIFY 	LELEM(IMPAIR_IKEv1_DEL_WITH_NOTIFY_IX)
+ 
+ /* State of exchanges
+  *
+diff --git a/lib/libswan/debug_enum_names.c b/lib/libswan/debug_enum_names.c
+index 44d6e9866..59d6bd50c 100644
+--- a/lib/libswan/debug_enum_names.c
++++ b/lib/libswan/debug_enum_names.c
+@@ -103,6 +103,7 @@ static const char *impair_strings[] = {
+ 	I(IMPAIR_REPLAY_DUPLICATES, "impair-replay-duplicates"),
+ 	I(IMPAIR_REPLAY_FORWARD, "impair-replay-forward"),
+ 	I(IMPAIR_REPLAY_BACKWARD, "impair-replay-backward"),
++	I(IMPAIR_IKEv1_DEL_WITH_NOTIFY, "impair-ikev1-del-with-notify"),
+ };
+ 
+ const struct enum_names impair_names = {
+diff --git a/programs/pluto/ikev1_main.c b/programs/pluto/ikev1_main.c
+index 30a1ea78d..c992f662d 100644
+--- a/programs/pluto/ikev1_main.c
++++ b/programs/pluto/ikev1_main.c
+@@ -2424,18 +2427,39 @@ bool ikev1_delete_out(struct state *st)
+ 
+ 			ns--;
+ 			isad.isad_doi = ISAKMP_DOI_IPSEC;
+-			isad.isad_np = ns ==
+-				said ? ISAKMP_NEXT_NONE : ISAKMP_NEXT_D;
++			isad.isad_np = ns == said ? ISAKMP_NEXT_NONE : ISAKMP_NEXT_D;
+ 			isad.isad_spisize = sizeof(ipsec_spi_t);
+ 			isad.isad_protoid = ns->proto;
+-
+ 			isad.isad_nospi = 1;
++
++			if (DBGP(IMPAIR_IKEv1_DEL_WITH_NOTIFY))
++				isad.isad_np = ISAKMP_NEXT_N; /* Notify */
++
+ 			passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
+ 					   &del_pbs));
+ 			passert(out_raw(&ns->spi, sizeof(ipsec_spi_t),
+ 					&del_pbs,
+ 					"delete payload"));
+ 			close_output_pbs(&del_pbs);
++
++			if (DBGP(IMPAIR_IKEv1_DEL_WITH_NOTIFY)) {
++				pb_stream cruft_pbs;
++
++				libreswan_log("IMPAIR: adding bogus Notify payload after IKE Delete payload");
++				struct isakmp_notification isan = {
++					.isan_np = ISAKMP_NEXT_NONE,
++					.isan_doi = ISAKMP_DOI_IPSEC,
++					.isan_protoid = PROTO_ISAKMP,
++					.isan_spisize = COOKIE_SIZE * 2,
++					.isan_type = INVALID_PAYLOAD_TYPE,
++				};
++
++				passert(out_struct(&isan, &isakmp_notification_desc, &r_hdr_pbs,
++					&cruft_pbs));
++				passert(out_raw(&ns->spi, sizeof(ipsec_spi_t), &cruft_pbs,
++					"delete payload"));
++				close_output_pbs(&cruft_pbs);
++			}
+ 		}
+ 	}
+ 

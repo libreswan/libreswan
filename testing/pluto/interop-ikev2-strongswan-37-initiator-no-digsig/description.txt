@@ -1,0 +1,9 @@
+Basic pluto with IKEv2 using X.509 on the responder (east), and Strongswan on
+the initiator (west).
+
+This is the basic test for Authentication method NOT as Digital Signatures as 
+specified in RFC 7427. 
+
+Authentication is successful with RSA-SHA1 (old style rsa)
+
+

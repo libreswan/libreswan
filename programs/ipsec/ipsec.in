@@ -3,13 +3,13 @@
 # prefix command to run stuff from our programs directory
 #
 # Copyright (C) 1998-2002  Henry Spencer.
-# Copyright (C) 2013-2017  Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013-2018  Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2013-2016  Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -32,10 +32,8 @@ DBPW=""
 CACERTDIR="${IPSEC_CONFDDIR}/cacerts"
 CRLDIR="${IPSEC_CONFDDIR}/crls"
 CTLSOCKET="${IPSEC_RUNDIR}/pluto.ctl"
-ADDSOCKET=""
 
-IPSEC_DIR="${IPSEC_EXECDIR}"
-export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF IPSEC_RUNDIR CTLSOCKET
+export IPSEC_EXECDIR IPSEC_CONF IPSEC_RUNDIR CTLSOCKET
 
 # standardize PATH, and export it for everything else's benefit
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
@@ -62,7 +60,7 @@ fixversion() {
 	stack=" (klips)"
 	kv="$(awk '{print $NF}' /proc/net/ipsec_version)"
     else
-	if [ -f /proc/net/pfkey ]; then
+	if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
 	    stack=" (netkey)"
 	    kv="${version}"
 	else
@@ -80,7 +78,7 @@ fixversion() {
     version="${version}${stack} on $(uname -r)"
 }
 
-set_db_trusts() {
+set_nss_db_trusts() {
     # has to handle a NSS nick with spaces
     certutil -L -d "${IPSEC_NSSDIR_SQL}" | \
 	grep -E -v '(Trust Attributes|SSL,S/MIME,JAR/XPI|^)$' | \
@@ -97,206 +95,189 @@ set_db_trusts() {
     done
 }
 
-case "${1}" in
-    rundir|--rundir)
-	RUNDIR="${2}"
-	CTLSOCKET="${RUNDIR}/pluto.ctl"
-	shift;
-	shift;
-	;;
-esac
-case "${1}" in
-    ctlsocket|--ctlsocket)
-	CTLSOCKET="${2}"
-	shift;
-	shift;
-	;;
-esac
+ipsec_usage() {
+    echo "Usage: ipsec {command} [argument] ...>"
+    echo "Use --help for a list of commands, or see the ipsec(8) manual page"
+    echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
+    echo "See <https://libreswan.org> for more general info."
+    fixversion
+    echo "Linux Libreswan ${version}"
+    exit 2
+}
 
-case "${1}" in
-    '')
-	echo "Usage: ipsec <command> <argument ...>"
-	echo "Use --help for a list of commands, or see the ipsec(8) manual page"
-	echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
-	echo "See <http://www.libreswan.org> for more general info."
-	fixversion
-	echo "Linux Libreswan ${version}"
-	exit 0
-	;;
-    status|--status)
-	exec ${IPSEC_EXECDIR}/whack --ctlsocket ${CTLSOCKET} --status
-	;;
-    start|--start)
-	exec ipsec setup start
-	;;
-    stop|--stop)
-	exec ipsec setup stop
-	;;
-    restart|--restart)
-	# restart does not work when stopped in systemd - it's dumb
-	ipsec setup stop
-	exec ipsec setup start
-	;;
-    help|--help)
-	echo "Usage: ipsec <command> <argument ...>"
-	echo "where <command> is one of:"
-	echo ""
-	GOTTWO=""
-	for f in start stop restart status import initnss checknss checknflog \
-	    $(ls "${IPSEC_EXECDIR}" | egrep -v -i "${DONTMENTION}"); do
-	    if [ -z "${GOTTWO}" ]; then
-		# first of two entries
-		GOTTWO="${f}"
-	    else
-		# second of two entries, we can print
-		printf "\t%s" "${GOTTWO}"
-		if [ "${#GOTTWO}" -ge 16 ]; then
-		    printf  "\t"
-		elif [ "${#GOTTWO}" -ge 8 ]; then
-		    printf "\t\t"
-		else
-		    printf "\t\t\t"
-		fi
-		printf "%s\n" "${f}"
-		GOTTWO=""
-	    fi
-	done
-	if [ -n "${GOTTWO}" ]; then
-	    # leftover entry
+ipsec_help() {
+    echo "Usage: ipsec {command} [argument] ...>"
+    echo "where {command} is one of:"
+    echo ""
+    GOTTWO=""
+    for f in start stop restart status trafficstatus traffic globalstatus shuntstatus briefstatus fips import initnss checknss checknflog \
+	$(ls "${IPSEC_EXECDIR}" | grep -E -v -i "${DONTMENTION}"); do
+	if [ -z "${GOTTWO}" ]; then
+	    # first of two entries
+	    GOTTWO="${f}"
+	else
+	    # second of two entries, we can print
 	    printf "\t%s" "${GOTTWO}"
+	    if [ "${#GOTTWO}" -ge 16 ]; then
+		printf  "\t"
+	    elif [ "${#GOTTWO}" -ge 8 ]; then
+		printf "\t\t"
+	    else
+		printf "\t\t\t"
+	    fi
+	    printf "%s\n" "${f}"
+	    GOTTWO=""
 	fi
-	echo
-	echo "See also: man ipsec <command> or ipsec <command> --help"
-	echo "See <https://libreswan.org/> for more general info."
-	fixversion
-	echo "Linux Libreswan ${version}"
-	exit 0
-	;;
-    # some ubuntu/debian scripts use --versioncode, so let's keep the alias
-    version|--version|--versioncode)
-	fixversion
-	echo "Linux Libreswan ${version}"
-	exit 0
-	;;
-    --directory)
-	printf "%s\n" "${IPSEC_DIR}"
-	exit 0
-	;;
+    done
+    if [ -n "${GOTTWO}" ]; then
+	# leftover entry
+	printf "\t%s" "${GOTTWO}"
+    fi
+    echo
+    echo "See also: man ipsec <command> or ipsec <command> --help"
+    echo "See <https://libreswan.org/> for more general info."
+    fixversion
+    echo "Linux Libreswan ${version}"
+    exit 2
+}
 
-    --stopnflog|stopnflog)
-	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --ctlsocket ${CTLSOCKET} --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
-	if [ -z "${NFGROUP}" ]; then
-	    exit 0
-	fi
-	iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
-	iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+ipsec_stopnflog() {
+    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
+    if [ -z "${NFGROUP}" ]; then
 	exit 0
-	;;
+    fi
+    iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${NFGROUP}" --nflog-prefix all-ipsec
+    iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${NFGROUP}" --nflog-prefix all-ipsec
+    exit 0
+}
 
-    --checknflog|checknflog|nflog)
-	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --ctlsocket ${CTLSOCKET} --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
-	if [ -z "${NFGROUP}" ]; then
-	    OLDNFGROUP=$(iptables -L -n |grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
-	    if [ -n "${OLDNFGROUP}" ]; then
+ipsec_checknflog() {
+    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+    if [ -n "${NFGROUP}" ]; then
+	OLDNFGROUP=$(iptables -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
+	if [ -n "${OLDNFGROUP}" ]; then
+	    if [ "${NFGROUP}" = "${OLDNFGROUP}" ]; then
+		# nothing to do
+		echo "nflog ipsec capture enabled on nflog:${NFGROUP}"
+		exit 0
+	    else
+		# delete rules with old group number
 		echo "deleting rules with old nflog group ${OLDNFGROUP}"
 		iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
 		iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
 	    fi
-	    echo "nflog ipsec capture disabled"
-	    exit 0
-	else
-	    OLDNFGROUP=$(iptables -L -n |grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
-	    if [ -n "${OLDNFGROUP}" ]; then
-		if [ "${NFGROUP}" = "${OLDNFGROUP}" ]; then
-		    # nothing to do
-		    echo "nflog ipsec capture enabled on nflog:${NFGROUP}"
-		    exit 0
-		else
-		    # delete rules with old group number
-		    echo "deleting rules with old nflog group ${OLDNFGROUP}"
-		    iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
-		    iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+	fi
+	# insert rules with current group number
+	iptables -I INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+	iptables -I OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+	echo "nflog ipsec capture enabled on nflog:${NFGROUP}"
+    else
+	OLDNFGROUP=$(iptables -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
+	if [ -n "${OLDNFGROUP}" ]; then
+	    echo "deleting rules with old nflog group ${OLDNFGROUP}"
+	    iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${OLDNFGROUP}" --nflog-prefix all-ipsec
+	    iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${OLDNFGROUP}" --nflog-prefix all-ipsec
+	fi
+	echo "nflog ipsec capture disabled"
+    fi
+    exit 0
+}
+
+ipsec_sniff() {
+    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
+    tcpdump -n -i nflog:${NFGROUP}
+    exit 0
+}
+
+ipsec_import() {
+    if [ -z "${1}" ]; then
+	echo "Usage: ipsec import [--nssdir ${IPSEC_NSSDIR}] /path/to/pkcs.12" >&2
+	exit 1
+    fi
+
+    while [ ${#} -gt 0 ]; do
+	case "${1}" in
+	    --configdir)
+		echo "ipsec import warning: --configdir is obsoleted, use --nssdir" >&2
+		if [ -d "${2}" ]; then
+		    IPSEC_NSSDIR="${2}"
 		fi
-	    fi
-	    # insert rules with current group number
-	    iptables -I INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
-	    iptables -I OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
-	    echo "nflog ipsec capture enabled on nflog:${NFGROUP}"
-	fi
-	exit 0
-	;;
-
-    sniff|--sniff)
-	if [ -z "${2}" ]; then
-	    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --ctlsocket ${CTLSOCKET} --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
-	    tcpdump -n -i nflog:${NFGROUP}
-	else
-	    echo "conn specific coming soon"
-	fi
-	exit 0
-	;;
-
-    import|--import)
-	if [ -n "${2}" ]; then
-	    # A lot of nss commands use -d to specify NSS db location.
-	    # We use --nssdir.
-	    if [ "${2}" = "-d" -o \
-		"${2}" = "--configdir" -o \
-		"${2}" = "--nssdir" ]
-	    then
-		if [ -d "${3}" ]; then
-		    IPSEC_NSSDIR="${3}"
-		    if [ "${2}" = "--configdir" ]; then
-			echo "ipsec import warning: --configdir is obsoleted, use --nssdir" >&2
-		    fi
+		shift
+		;;
+	    -d|--nssdir)
+		if [ -d "${2}" ]; then
+		    IPSEC_NSSDIR="${2}"
+		fi
+		shift
+		# A lot of nss commands use -d to specify NSS db location.
+		# We use --nssdir.
+		;;
+	    *)
+		if [ -f "${1}" ]; then
+		    pkcs12bundle="${1}"
 		else
-		    echo "usage: ipsec import [--nssdir ${IPSEC_NSSDIR}] /path/to/pkcs.12" >&2
+		    echo "Usage: ipsec import [--nssdir ${IPSEC_NSSDIR}] /path/to/pkcs.12" >&2
 		    exit 1
 		fi
-		shift
-		shift
-	    fi
-	    if [ -f "${IPSEC_NSSDIR}/key4.db" -a \
-		-f "${IPSEC_NSSDIR}/cert9.db" ]
-	    then
-		IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
-	    else
-		echo "ERROR: NSS database files are missing, import aborted." >&2
-		echo "Initialize database with command \"ipsec initnss\"." >&2
-		exit 1
-	    fi
-	fi
-	if [ -z "${2}" -o ! -f "${2}" ]; then
-	    echo "usage: ipsec import [--nssdir ${IPSEC_NSSDIR}] /path/to/pkcs.12" >&2
+		;;
+	esac
+	shift
+    done
+
+    if [ -d "${IPSEC_NSSDIR}" -a -w "${IPSEC_NSSDIR}" ]; then
+	if [ -f "${IPSEC_NSSDIR}/key4.db" -a \
+	    -f "${IPSEC_NSSDIR}/cert9.db" ]
+	then
+	    IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
+	else
+	    echo "ERROR: NSS database files are missing, import aborted." >&2
+	    echo "Initialize database with command \"ipsec checknss\"." >&2
 	    exit 1
 	fi
-	pk12util -i "${2}" -d "${IPSEC_NSSDIR_SQL}"
+
+	pk12util -i "${pkcs12bundle}" -d "${IPSEC_NSSDIR_SQL}"
 	# check and correct trust bits
-	set_db_trusts
+	set_nss_db_trusts
 	exit 0
-	;;
-    initnss|--initnss|checknss|--checknss)
-	if [ -n "${2}" ]; then
-	    # A lot of nss commands use -d to specify NSS db location.
-	    # We use --nssdir.
-	    if [ "${2}" = "-d" -o \
-		"${2}" = "--configdir" -o \
-		"${2}" = "--nssdir" ]
-	    then
-		IPSEC_NSSDIR="${3}"
-		IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
-		if [ "${2}" = "--configdir" ]; then
-		    echo "ipsec initnss warning: --configdir is obsoleted, use --nssdir" >&2
-		fi
-	    else
-		echo "usage: ipsec initnss [--nssdir ${IPSEC_NSSDIR}]" >&2
+    else
+	echo "ERROR: destination directory \"${IPSEC_NSSDIR}\" is missing or permission denied" >&2
+	exit 1
+    fi
+}
+
+ipsec_checknss() {
+    while [ ${#} -gt 0 ]; do
+	case "${1}" in
+	    --checknss|checknss)
+		cmd=checknss
+		;;
+	    --initnss|initnss)
+		cmd=initnss
+		;;
+	    --settrusts)
+	        set_trusts=yes
+		;;
+	    --configdir)
+		echo "ipsec ${cmd} warning: --configdir is obsoleted, use --nssdir" >&2
+		IPSEC_NSSDIR="${2}"
+		shift
+		;;
+	    -d|--nssdir)
+		# A lot of nss commands use -d to specify NSS db location.
+		# We use --nssdir.
+		IPSEC_NSSDIR="${2}"
+		shift
+		;;
+	    *)
+		echo "Usage: ipsec ${cmd} [--nssdir ${IPSEC_NSSDIR}]" >&2
 		exit 1
-	    fi
-	fi
-	if [ ! -d "${IPSEC_NSSDIR}" ]; then
-	    echo "ERROR: destination directory \"${IPSEC_NSSDIR}\" is missing" >&2
-	    exit 1
-	fi
+		;;
+	esac
+	shift
+    done
+
+    if [ -d "${IPSEC_NSSDIR}" -a -w "${IPSEC_NSSDIR}" ]; then
+	IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 	# if we have old database
 	if [ -f "${IPSEC_NSSDIR}/cert8.db" -o \
 	    -f "${IPSEC_NSSDIR}/key3.db" -o \
@@ -314,7 +295,6 @@ case "${1}" in
 		# set safe umask
 		umask 077
 		echo "Migrating NSS db to ${IPSEC_NSSDIR_SQL}"
-
 		# this section works around a few certutil quirks
 		# to maintain the current password and merge keys
 		certutil -N -d sql:"${NSSTMP}" --empty-password
@@ -346,7 +326,6 @@ case "${1}" in
 		fi
 		# restore umask
 		umask ${umask}
-
 		certutil --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
 		    -d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
 		rc=$?
@@ -379,67 +358,190 @@ case "${1}" in
 		echo "NSS upgrade complete"
 	    fi
 	    exit 0
-	fi	# no old database
-
+	fi	# old database
 	if [ -f "${IPSEC_NSSDIR}/cert9.db" -o -f "${IPSEC_NSSDIR}/key4.db" ]; then
-	    if [ "${1}" = "checknss" -o "${1}" = "--checknss" ]; then
+	    if [ "${cmd}" = "initnss" ]; then
+		echo "NSS database already initialised - aborted"
+		echo "To wipe the old NSS database, issue: rm ${IPSEC_NSSDIR}/*.db"
+		exit 42
+	    else
+		if [ "${set_trusts}" = "yes" ]; then
+		    set_nss_db_trusts
+		fi
 		exit 0
 	    fi
-	    echo "NSS database already initialised - aborted"
-	    echo "To wipe the old NSS database, issue: rm ${IPSEC_NSSDIR}/*.db"
-	    exit 42
 	fi
-
 	echo "Initializing NSS database"
 	echo ""
-
 	certutil -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
 	if [ $? -gt 0 ]; then
 	    echo "Failed to initialize nss database ${IPSEC_NSSDIR_SQL}" >&2
 	    exit 4
 	fi
-	if [ -x "$(which restorecon)" ]; then
-	    restorecon -Rv "${IPSEC_NSSDIR}"
+	restorecon="$(which restorecon 2>/dev/null)"
+	if [ -n "${restorecon}" -a -x "${restorecon}" ]; then
+	    "${restorecon}" -Rv "${IPSEC_NSSDIR}"
 	fi
 	exit 0
-	;;
-    secrets)
-	"${IPSEC_EXECDIR}/whack" --ctlsocket ${CTLSOCKET} --rereadsecrets
-	exit $?
-	;;
-    rereadcrls|--rereadcrls)
-	echo "ipsec auto: --rereadcrls and /etc/ipsec.d/crls/ are obsoleted. did you mean: ipsec crls"
-	exit 1
-	;;
-    crls|fetchcrls)
-	"${IPSEC_EXECDIR}/whack" --ctlsocket ${CTLSOCKET} --fetchcrls
-	exit $?
-	;;
-    unbound|--unbound)
-	# activate the unbound ipsec module
-	unbound-control set_option ipsecmod-enabled: yes
-	exit $?
-	;;
-    --*)
-	printf "%s: unknown option \"%s\" (perhaps command name was omitted?)\n" "${0}" "${1}" >&2
-	exit 1
-	;;
-esac
-
-cmd="${1}"
-if [ "${cmd}" = "whack" ]; then
-     ADDSOCKET="--ctlsocket ${CTLSOCKET}"
-fi
-shift
-
-path="${IPSEC_EXECDIR}/${cmd}"
-
-if [ ! -x "${path}" ]; then
-    path="${IPSEC_EXECDIR}/${cmd}"
-    if [ ! -x "${path}" ]; then
-	printf "%s: unknown IPsec command \"%s\" (\"ipsec --help\" for list)\n" "${0}" "${cmd}" >&2
+    else
+	echo "ERROR: destination directory \"${IPSEC_NSSDIR}\" is missing or permission denied" >&2
 	exit 1
     fi
+}
+
+# Check for no options at all and return usage.
+if [ -z "${1}" ]; then
+    ipsec_usage
 fi
 
-exec "${path}" ${ADDSOCKET} "$@"
+while [ ${#} -gt 0 ]; do
+    case "${1}" in
+	--rundir)
+	    RUNDIR="${2}"
+	    CTLSOCKET="${RUNDIR}/pluto.ctl"
+	    export CTLSOCKET
+	    shift;
+	    shift;
+	    ;;
+	--ctlsocket)
+	    CTLSOCKET="${2}"
+	    export CTLSOCKET
+	    shift;
+	    shift;
+	    ;;
+	whack)
+	    # Whack command is special because --ctlsocket is a whack cmdline option
+	    # We need to make sure we don't give it twice
+	    shift
+	    if echo "${@}" | grep -q -- --ctlsocket; then
+		exec "${IPSEC_EXECDIR}/whack" "${@}"
+	    else
+		exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${@}"
+	    fi
+	    exit 0
+	    ;;
+	status|--status)
+	    cmd="whack"
+	    whackoption="--status"
+	    shift
+	    ;;
+	trafficstatus|--trafficstatus|traffic)
+	    cmd="whack"
+	    whackoption="--trafficstatus"
+	    shift
+	    ;;
+	fipsstatus|--fipsstatus|fips)
+	    cmd="whack"
+	    whackoption="--fipsstatus"
+	    shift
+	    ;;
+	globalstatus|--globalstatus)
+	    cmd="whack"
+	    whackoption="--globalstatus"
+	    shift
+	    ;;
+	shuntstatus|--shuntstatus)
+	    cmd="whack"
+	    whackoption="--shuntstatus"
+	    shift
+	    ;;
+	briefstatus|--briefstatus)
+	    cmd="whack"
+	    whackoption="--briefstatus"
+	    shift
+	    ;;
+	start|--start)
+	    cmd="setup"
+	    setupoption="--start"
+	    shift
+	    ;;
+	stop|--stop)
+	    cmd="setup"
+	    setupoption="--stop"
+	    shift
+	    ;;
+	letsencrypt)
+	    shift
+	    exec "${IPSEC_EXECDIR}/letsencrypt" "${@}"
+	    ;;
+	restart|--restart)
+	    cmd="setup"
+	    setupoption="--restart"
+	    shift
+	    ;;
+	help|--help)
+	    # if cmd is unset, this is help for ipsec command
+	    if [ -z "${cmd}" ]; then
+		ipsec_help
+	    fi
+	    ;;
+    	version|--version|--versioncode)
+	    # some ubuntu/debian scripts use --versioncode, so let's keep the alias
+	    fixversion
+	    echo "Linux Libreswan ${version}"
+	    exit 0
+	    ;;
+	--directory)
+	    printf "%s\n" "${IPSEC_EXECDIR}"
+	    exit 0
+	    ;;
+	--stopnflog|stopnflog)
+	    ipsec_stopnflog
+	    ;;
+	--checknflog|checknflog|nflog)
+	    ipsec_checknflog
+	    ;;
+	sniff|--sniff)
+	    ipsec_sniff
+	    ;;
+	import|--import)
+	    shift
+	    ipsec_import "${@}"
+	    ;;
+	checknss|--checknss|initnss|--initnss)
+	    ipsec_checknss "${@}"
+	    ;;
+	secrets)
+	    cmd="whack"
+	    whackoption="--rereadsecrets"
+	    shift
+	    ;;
+	rereadcrls|--rereadcrls)
+	    echo "ipsec auto: --rereadcrls and /etc/ipsec.d/crls/ are obsoleted. did you mean: ipsec crls"
+	    exit 1
+	    ;;
+	crls|fetchcrls)
+	    cmd="whack"
+	    whackoption="--fetchcrls"
+	    shift
+	    ;;
+	unbound|--unbound)
+	    # activate the unbound ipsec module
+	    unbound-control set_option ipsecmod-enabled: yes
+	    exit $?
+	    ;;
+	--*)
+	    printf "%s: unknown option \"%s\" (perhaps command name was omitted?)\n" "${0}" "${1}" >&2
+	    exit 1
+	    ;;
+	*)
+	    cmd="${1}"
+	    shift
+	    if [ -x "${IPSEC_EXECDIR}/${cmd}" ]; then
+		exec "${IPSEC_EXECDIR}/${cmd}" "${@}"
+	    else
+		printf "%s: unknown IPsec command \"%s\" (\"ipsec --help\" for list)\n" "${0}" "${cmd}" >&2
+		exit 1
+	    fi
+	    ;;
+    esac
+done
+
+case "${cmd}" in
+    setup)
+	exec "${IPSEC_EXECDIR}/setup" "${setupoption}"
+	;;
+    whack)
+	exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${whackoption}"
+	;;
+esac

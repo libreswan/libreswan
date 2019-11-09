@@ -1,0 +1,46 @@
+/testing/guestbin/swan-prep --x509 --x509name west-nosan
+Preparing X.509 files
+west #
+ certutil -D -n east -d sql:/etc/ipsec.d
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add ikev2-westnet-eastnet-x509-cr
+002 added connection description "ikev2-westnet-eastnet-x509-cr"
+west #
+ ipsec status | grep idtype
+000 "ikev2-westnet-eastnet-x509-cr":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: ID_IPV4_ADDR; their id=192.1.2.23(with %any)
+west #
+ #ipsec whack --impair suppress-retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr" #1: initiating Main Mode
+1v1 "ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+002 "ikev2-westnet-eastnet-x509-cr" #1: I am sending my cert
+002 "ikev2-westnet-eastnet-x509-cr" #1: I am sending a certificate request
+1v1 "ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "ikev2-westnet-eastnet-x509-cr" #1: certificate verified OK: E=user-east-nosan@testing.libreswan.org,CN=east-nosan.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+003 "ikev2-westnet-eastnet-x509-cr" #1: certificate contains no subjectAltName extension to match ID_IPV4_ADDR '192.1.2.23'
+002 "ikev2-westnet-eastnet-x509-cr" #1: Peer public key SubjectAltName does not match peer ID for this connection
+002 "ikev2-westnet-eastnet-x509-cr" #1: Peer ID is configured with %any - allowing unmatched ID
+003 "ikev2-westnet-eastnet-x509-cr" #1: Authenticated using RSA with SHA-1
+004 "ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "ikev2-westnet-eastnet-x509-cr" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+1v1 "ikev2-westnet-eastnet-x509-cr" #2: STATE_QUICK_I1: sent QI1, expecting QR1
+004 "ikev2-westnet-eastnet-x509-cr" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+west #
+ echo "done"
+done
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

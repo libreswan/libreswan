@@ -8,19 +8,19 @@ ipsec whack --trafficstatus
 ping -n -c 2 -I 192.1.3.209 7.7.7.7
 # letting acquire time out
 sleep 60
-ipsec look
+../../pluto/bin/ipsec-look.sh
 # conn timed out, shunt is now failureshunt=pass and should show up, ping will work
 ipsec whack --shuntstatus
 ping -n -c 2 -I 192.1.3.209 7.7.7.7
 # let failureshunt expire - both from bare shunt list as as kernel policy
 sleep 60
-ipsec look
+../../pluto/bin/ipsec-look.sh
 ipsec whack --shuntstatus
 sleep 60
-ipsec look
+../../pluto/bin/ipsec-look.sh
 ipsec whack --shuntstatus
 sleep 60
-ipsec look
+../../pluto/bin/ipsec-look.sh
 ipsec whack --shuntstatus
 killall ip > /dev/null 2> /dev/null
 cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt

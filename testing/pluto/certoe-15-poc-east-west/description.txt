@@ -1,0 +1,6 @@
+
+This shows a bug in being eclipsed over a non-default route
+
+east will show: cannot route -- route already in use for "private#192.1.2.45/32"
+west will not handle this nicely and crash with: "private#192.1.2.23/32"[1] ...192.1.2.23 #2: ABORT: ASSERTION FAILED: !erouted(rosr->routing) (in route_and_eroute() at kernel.c:3083)
+

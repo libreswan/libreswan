@@ -1,9 +1,11 @@
 #ifndef _DNSSEC_H
 # define _DNSSEC_H
 
+#include <stdbool.h>
 #include <event2/event.h>
 #include <unbound.h>
 
+#include "ip_address.h"
 
 extern void unbound_ctx_free(void);
 extern void unbound_sync_init(bool do_dnssec, const char *rootfile,
@@ -15,7 +17,7 @@ extern bool unbound_event_init(struct event_base *eb, bool do_dnssec,
 extern bool unbound_resolve(char *src, size_t srclen, int af,
 				ip_address *ipaddr);
 
-extern struct ub_ctx * get_unbound_ctx(void);
+extern struct ub_ctx *get_unbound_ctx(void);
 
 /*
  * returned in callback of ub_resolve_event

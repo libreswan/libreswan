@@ -1,0 +1,88 @@
+/testing/guestbin/swan-prep --46
+west #
+ ../../pluto/bin/wait-until-alive 2001:db8:0:2::254
+destination 2001:db8:0:2::254 is alive
+west #
+ # add two extra IPv6 addresses
+west #
+ ip addr show dev eth1 | grep 2001:db8:1:2::46  || ip addr add 2001:db8:1:2::46/64 dev eth1
+west #
+ ip addr show dev eth1 | grep 2001:db8:1:2::47  || ip addr add 2001:db8:1:2::47/64 dev eth1
+west #
+ ip6tables -A INPUT -i eth1 -s 2001:db8:0:2::254 -p ipv6-icmp -j DROP
+west #
+ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ ../../pluto/bin/ping-once.sh --down 2001:db8:0:2::254
+down
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up west1
+000 initiating all conns with alias='west1'
+021 no connection named "west1"
+west #
+ ipsec auto --up west2
+000 initiating all conns with alias='west2'
+021 no connection named "west2"
+west #
+ ipsec auto --up west3
+000 initiating all conns with alias='west3'
+021 no connection named "west3"
+west #
+ # ping will fail until we fix  up-client-v6 and add source address.
+west #
+ ping6 -c 2 -w 5 -I 2001:db8:0:3:1::0 2001:db8:0:2::254
+ping: bind icmp socket: Cannot assign requested address
+west #
+ echo done
+done
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+west NOW
+XFRM state:
+XFRM policy:
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority 1 ptype main
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+::1 dev lo proto kernel metric 256
+2001:db8:0:1::/64 dev eth0 proto kernel metric 256
+2001:db8:0:2::/64 via 2001:db8:1:2::23 dev eth1
+2001:db8:1:2::/64 dev eth1 proto kernel metric 256
+fe80::/64 dev eth1 proto kernel metric 256
+fe80::/64 dev eth0 proto kernel metric 256
+default via 2001:db8:1:2::254 dev eth1
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

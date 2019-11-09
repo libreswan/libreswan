@@ -8,11 +8,12 @@
  * Copyright (C) 2012-2017 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2016 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -42,8 +43,8 @@
 #include <prinit.h>
 #include <prmem.h>
 #include <plstr.h>
-#include <key.h>
-#include <keyt.h>
+#include <keyhi.h>
+#include <keythi.h>
 #include <nss.h>
 #include <pk11pub.h>
 #include <seccomon.h>
@@ -56,6 +57,7 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "lswlog.h"
+#include "lswtool.h"
 #include "lswconf.h"
 #include "lswnss.h"
 
@@ -125,7 +127,7 @@ static void UpdateNSS_RNG(int seedbits)
 {
 	SECStatus rv;
 	int seedbytes = BYTES_FOR_BITS(seedbits);
-	unsigned char *buf = alloc_bytes(seedbytes,"TLA seedmix");
+	unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
 	lsw_random(seedbytes, buf);
 	rv = PK11_RandomUpdate(buf, seedbytes);
@@ -266,10 +268,7 @@ int main(int argc, char *argv[])
 /*
  * generate an RSA signature key
  *
- * e is fixed at 3, without discussion.  That would not be wise if these
- * keys were to be used for encryption, but for signatures there are some
- * real speed advantages.
- * See also: https://www.imperialviolet.org/2012/03/16/rsae.html
+ * e is fixed at F4.
  */
 void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 {
@@ -285,15 +284,6 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 		exit(1);
 	}
 
-#ifdef FIPS_CHECK
-	if (PK11_IsFIPS() && !FIPSCHECK_verify(NULL, NULL)) {
-		fprintf(stderr,
-			"FIPS HMAC integrity verification test failed.\n");
-		exit(1);
-	}
-#endif
-
-	/* Good for now but someone may want to use a hardware token */
 	slot = lsw_nss_get_authenticated_slot(err);
 	if (slot == NULL) {
 		fprintf(stderr, "%s: %s\n", progname, err);

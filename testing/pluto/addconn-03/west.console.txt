@@ -11,7 +11,7 @@ west #
 Global routes 572
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
@@ -434,198 +434,23 @@ dst 192.0.22.23 via 192.1.2.254 dev eth1 src  table 254
 dst 192.0.22.24 via 192.1.2.254 dev eth1 src  table 254
 dst 192.0.22.25 via 192.1.2.254 dev eth1 src  table 254
 dst 192.0.22.26 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.27 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.28 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.29 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.30 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.31 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.32 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.33 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.34 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.35 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.36 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.37 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.38 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.39 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.40 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.41 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.42 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.43 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.44 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.45 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.46 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.47 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.48 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.49 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.50 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.51 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.52 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.53 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.54 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.55 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.56 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.57 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.58 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.59 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.60 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.61 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.62 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.63 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.64 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.65 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.66 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.67 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.68 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.69 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.70 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.71 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.72 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.73 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.74 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.75 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.76 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.77 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.78 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.79 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.80 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.81 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.82 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.83 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.84 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.85 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.86 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.87 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.88 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.89 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.90 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.91 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.92 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.93 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.94 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.95 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.96 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.97 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.98 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.99 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.100 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.101 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.102 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.103 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.104 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.105 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.106 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.107 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.108 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.109 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.110 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.111 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.112 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.113 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.114 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.115 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.116 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.117 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.118 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.119 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.120 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.121 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.122 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.123 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.124 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.125 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.126 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.127 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.128 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.129 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.130 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.131 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.132 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.133 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.134 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.135 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.136 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.137 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.138 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.139 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.140 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.141 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.142 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.143 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.144 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.145 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.146 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.147 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.148 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.149 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.150 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.151 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.152 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.153 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.154 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.155 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.156 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.157 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.158 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.159 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.160 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.161 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.162 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.163 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.164 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.165 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.166 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.167 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.168 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.169 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.170 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.171 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.172 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.173 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.174 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.175 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.176 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.177 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.178 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.179 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.180 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.181 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.182 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.183 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.184 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.185 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.186 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.187 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.188 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.189 via 192.1.2.254 dev eth1 src  table 254
-dst 192.0.22.190 via 192.1.2.254 dev eth1 src  table 254
-dst 192.1.2.0 via  dev eth1 src 192.1.2.45 table 254
-dst 192.9.4.0 via  dev eth2 src 192.9.4.45 table 254
-dst 127.0.0.0 via  dev lo src 127.0.0.1 table 255 (ignored)
-dst 127.0.0.0 via  dev lo src 127.0.0.1 table 255 (ignored)
-dst 127.0.0.1 via  dev lo src 127.0.0.1 table 255 (ignored)
-dst 127.255.255.255 via  dev lo src 127.0.0.1 table 255 (ignored)
-dst 192.0.1.0 via  dev eth0 src 192.0.1.254 table 255 (ignored)
-dst 192.0.1.254 via  dev eth0 src 192.0.1.254 table 255 (ignored)
-dst 192.0.1.255 via  dev eth0 src 192.0.1.254 table 255 (ignored)
-dst 192.1.2.0 via  dev eth1 src 192.1.2.45 table 255 (ignored)
-dst 192.1.2.45 via  dev eth1 src 192.1.2.45 table 255 (ignored)
-dst 192.1.2.255 via  dev eth1 src 192.1.2.45 table 255 (ignored)
-dst 192.9.4.0 via  dev eth2 src 192.9.4.45 table 255 (ignored)
-dst 192.9.4.45 via  dev eth2 src 192.9.4.45 table 255 (ignored)
-dst 192.9.4.255 via  dev eth2 src 192.9.4.45 table 255 (ignored)
+dst 192.0.22.27 via  dev  src  table 254
 seeking_src = 1, seeking_gateway = 0, has_peer = 0
 seeking_src = 1, seeking_gateway = 0, has_dst = 1
 dst 192.1.2.254 via  dev eth1 src 192.1.2.45 table 254
 set addr: 192.1.2.45
 seeking_src = 0, seeking_gateway = 0, has_peer = 1
-conn: "test" labeled_ipsec=0
-conn: "test" modecfgdns=(null)
-conn: "test" modecfgdomains=(null)
-conn: "test" modecfgbanner=(null)
-conn: "test" mark=(null)
-conn: "test" mark-in=(null)
-conn: "test" mark-out=(null)
-conn: "test" vti_iface=(null)
+conn: "test" modecfgdns=<unset>
+conn: "test" modecfgdomains=<unset>
+conn: "test" modecfgbanner=<unset>
+conn: "test" mark=<unset>
+conn: "test" mark-in=<unset>
+conn: "test" mark-out=<unset>
+conn: "test" vti_iface=<unset>
+conn: "test" redirect-to=<unset>
+conn: "test" accept-redirect-to=<unset>
+conn: "test" esp=<unset>
+conn: "test" ike=<unset>
 002 added connection description "test"
 west #
  # base line check - remove routes and try again

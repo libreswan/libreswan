@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -11,36 +11,35 @@ east #
  echo "initdone"
 initdone
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 east NOW
 XFRM state:
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1042407 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then grep "message ID:" /tmp/pluto.log  ; fi
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 00
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 01
-|    message ID:  00 00 00 02
-|    message ID:  00 00 00 02
+ if [ -f /var/run/pluto/pluto.pid ]; then grep -E "Message ID: [0-9] " /tmp/pluto.log  ; fi
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 0 (00 00 00 00)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 1 (00 00 00 01)
+|    Message ID: 2 (00 00 00 02)
+|    Message ID: 2 (00 00 00 02)
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east #

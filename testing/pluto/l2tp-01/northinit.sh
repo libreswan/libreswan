@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 iptables -F INPUT
 iptables -F OUTPUT
-# make sure that clear text does not get through
+# ensure that clear text does not get through
 # block port 22 via ipsec to confirm IPsec only covers 17/1701
 iptables -A OUTPUT -m policy --dir out --pol ipsec -p tcp --dport 22 -j REJECT
 iptables -A OUTPUT -o eth1 -d 192.1.2.23 -m policy --dir out --pol none -p udp --dport 1701 -j REJECT

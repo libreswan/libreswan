@@ -1,0 +1,8 @@
+This test will show that multiple IPSECKEY records all end up in the
+pluto cache. 
+
+The connection is testing east on custom ip 192.1.2.67, which has zero
+correct IPSECKEY records. The connection should NOT establish.
+
+On failure of AUTH, initiator _should_ send a DELETE so that east, who
+thinks everything is okay, will also delete its tunnel

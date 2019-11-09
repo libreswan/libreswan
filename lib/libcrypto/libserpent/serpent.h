@@ -3,9 +3,9 @@
 #ifdef __KERNEL__
 #include <linux/types.h>
 #else
-#include <sys/types.h>
-#define u32 u_int32_t
-#define u8 u_int8_t
+#include <stdint.h>
+#define u32 uint32_t
+#define u8 uint8_t
 #endif
 struct serpent_context {
 	u32 keyinfo[140];  /* storage for the key schedule         */

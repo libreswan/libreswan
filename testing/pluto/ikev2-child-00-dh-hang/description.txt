@@ -1,0 +1,33 @@
+ikev2: two CHILD SA connections, first should fail, but second should not hang
+
+- an IKE SA with CHILD is established
+
+- then the first CHILD_SA, with a bad proposal, is attemted
+
+  Because the CHILD SA initiator state doesn't expect the NO PROPOSAL
+  CHOSEN response it drops the packet:
+
+"westnet-eastnet-ikev2-10" #5: dropping unexpected CREATE_CHILD_SA message containing NO_PROPOSAL_CHOSEN notification; message payloads: SK; encrypted payloads: N; missing payloads: SA,Ni,TSi,TSr
+
+  The first CHILD_SA then starts retrying.  Presumably it deletes the
+  state as the next attempt will create a new one?
+
+"westnet-eastnet-ikev2-00" #3: IMPAIR: retransmit so timing out SA (may retry)
+"westnet-eastnet-ikev2-00" #3: starting keying attempt 2 of an unlimited number, but releasing whack
+"westnet-eastnet-ikev2-00" #3: deleting state (STATE_V2_CREATE_I)
+
+- the second CHILD_SA is then initiated and crypto started
+
+| adding Child Initiator KE and nonce ni work-order 4 for state #4
+
+  but when the crypto comes back things seem confused and it gets
+  re-suspended
+
+| #4 wait sending, add to send next list using parent #1 unacknowledged 1 next message id=3 ike exchange window 1
+| suspending state #4 and saving MD
+| #4 is busy; has a suspended MD
+| processing: [RE]START state #4 connection "westnet-eastnet-ikev2-10" 192.1.2.23 (in log_stf_suspend() at ikev2.c:2552)
+
+Once this is fixed, ikev2-child-01-dh-pfs=no-downgrade=no and
+ikev2-child-02-dh-pfs=yes-downgrade=yes should be updated to include
+all cases (and this test deleted).

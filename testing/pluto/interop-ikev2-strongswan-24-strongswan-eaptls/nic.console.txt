@@ -1,0 +1,30 @@
+#start ocsp server here
+nic #
+ cp /testing/x509/keys/nic.key /etc/ocspd/private/nic_key.pem
+nic #
+ cp /testing/x509/certs/nic.crt /etc/ocspd/certs/nic.pem
+nic #
+ cp /testing/x509/cacerts/mainca.crt /etc/ocspd/certs/mainca.pem
+nic #
+ cp /testing/x509/ocspd.conf /etc/ocspd/
+nic #
+ openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
+nic #
+ restorecon -R /etc/ocspd
+nic #
+ #stock ocspd.conf, used separate ones for different configs
+nic #
+ ocspd -v -d -c /etc/ocspd/ocspd.conf
+nic #
+ echo "initdone"
+initdone
+nic #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+nic #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+nic #
+nic #
+ ../bin/check-for-core.sh
+nic #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

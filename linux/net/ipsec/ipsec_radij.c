@@ -13,7 +13,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -192,7 +192,6 @@ int ipsec_makeroute(struct sockaddr_encap *eaddr,
 	size_t sa_len;
 
 	if (debug_eroute) {
-
 		{
 			char buf1[SUBNETTOA_BUF], buf2[SUBNETTOA_BUF];
 			if (eaddr->sen_type == SENT_IP6) {
@@ -213,8 +212,8 @@ int ipsec_makeroute(struct sockaddr_encap *eaddr,
 					     sizeof(sa));
 			KLIPS_PRINT(debug_eroute,
 				    "klips_debug:ipsec_makeroute: "
-				    "attempting to allocate %lu bytes to insert eroute for %s->%s, SA: %s, PID:%d, skb=0p%p, ident:%s->%s\n",
-				    (unsigned long) sizeof(struct eroute),
+				    "attempting to allocate %zu bytes to insert eroute for %s->%s, SA: %s, PID:%d, skb=0p%p, ident:%s->%s\n",
+				    sizeof(struct eroute),
 				    buf1,
 				    buf2,
 				    sa_len ? sa : " (error)",

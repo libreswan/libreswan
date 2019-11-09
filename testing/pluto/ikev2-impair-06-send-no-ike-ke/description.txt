@@ -1,0 +1,11 @@
+IKEv2: don't include the KE payload in the INIT packet
+
+Interop #1 omits KE from the request, which is rejected by the
+reponder.
+
+Interop #2 includes KE, but then gets no KE back from the responder.
+
+Basic pluto with IKEv2 using PSK but west has been told to skip
+sending the KE payload. This is to confirm the fix for CVE-2013-6467,
+which affects libreswan up to 3.7 (and openswan up to at least 2.6.39)
+This test crashes those older versions

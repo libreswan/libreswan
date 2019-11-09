@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -125,10 +125,6 @@ extern int pfkey_upmsg(struct socket *, struct sadb_msg *);
 extern int pfkey_upmsgsk(struct sock *, struct sadb_msg *);
 extern int pfkey_expire(struct ipsec_sa *, int);
 extern int pfkey_acquire(struct ipsec_sa *);
-#else /* ! __KERNEL__ */
-
-extern void pfkey_print(struct sadb_msg *msg, FILE *out);
-
 #endif /* __KERNEL__ */
 
 extern uint8_t satype2proto(uint8_t satype);

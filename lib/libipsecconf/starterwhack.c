@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004-2006 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2010-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2011 Mattias Walström <lazzer@vmlinux.org>
  * Copyright (C) 2012-2017 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
@@ -15,7 +15,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "sysdep.h"
 
@@ -51,6 +52,7 @@
 #include "whack.h"
 #include "id.h"
 #include "ip_address.h"
+#include "ip_info.h"
 
 static void update_ports(struct whack_message * m)
 {
@@ -82,7 +84,7 @@ static int send_reply(int sock, char *buf, ssize_t len)
 }
 
 static int starter_whack_read_reply(int sock,
-				char username[MAX_USERNAME_LEN],
+				char xauthusername[MAX_XAUTH_USERNAME_LEN],
 				char xauthpass[XAUTH_MAX_PASS_LENGTH],
 				int usernamelen,
 				int xauthpasslen)
@@ -184,22 +186,22 @@ static int starter_whack_read_reply(int sock,
 				case RC_USERPROMPT:
 					if (usernamelen == 0) {
 						usernamelen = whack_get_value(
-							username,
-							MAX_USERNAME_LEN);
+							xauthusername,
+							MAX_XAUTH_USERNAME_LEN);
 					}
 					if (usernamelen >
-						MAX_USERNAME_LEN) {
+						MAX_XAUTH_USERNAME_LEN) {
 						/*
 						 * for input >= 128,
 						 * useramelen would be 129
 						 */
 						usernamelen =
-							MAX_USERNAME_LEN;
+							MAX_XAUTH_USERNAME_LEN;
 						starter_log(LOG_LEVEL_ERR,
 							"username cannot be >= %d chars",
-							MAX_USERNAME_LEN);
+							MAX_XAUTH_USERNAME_LEN);
 					}
-					ret = send_reply(sock, username,
+					ret = send_reply(sock, xauthusername,
 							usernamelen);
 					if (ret != 0)
 						return ret;
@@ -273,10 +275,10 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 
 	/* read reply */
 	{
-		char username[MAX_USERNAME_LEN];
+		char xauthusername[MAX_XAUTH_USERNAME_LEN];
 		char xauthpass[XAUTH_MAX_PASS_LENGTH];
 
-		ret = starter_whack_read_reply(sock, username, xauthpass, 0,
+		ret = starter_whack_read_reply(sock, xauthusername, xauthpass, 0,
 					0);
 		close(sock);
 	}
@@ -286,7 +288,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 
 static void init_whack_msg(struct whack_message *msg)
 {
-	/* properly initialzes pointers to NULL */
+	/* properly initializes pointers to NULL */
 	static const struct whack_message zwm;
 
 	*msg = zwm;
@@ -323,18 +325,18 @@ static void set_whack_end(char *lr,
 	case KH_DEFAULTROUTE:
 	case KH_IPHOSTNAME:
 		/* note: we always copy the name string below */
-		anyaddr(l->addr_family, &w->host_addr);
+		w->host_addr = address_any(aftoinfo(l->addr_family));
 		break;
 
 	case KH_OPPO:
 	case KH_GROUP:
 	case KH_OPPOGROUP:
 		/* policy should have been set to OPPO */
-		anyaddr(l->addr_family, &w->host_addr);
+		w->host_addr = address_any(aftoinfo(l->addr_family));
 		break;
 
 	case KH_ANY:
-		anyaddr(l->addr_family, &w->host_addr);
+		w->host_addr = address_any(aftoinfo(l->addr_family));
 		break;
 
 	default:
@@ -355,7 +357,7 @@ static void set_whack_end(char *lr,
 		 * but, get the family set up right
 		 * XXX the nexthop type has to get into the whack message!
 		 */
-		anyaddr(addrtypeof(&l->addr), &w->host_nexthop);
+		w->host_nexthop = address_any(address_type(&l->addr));
 		break;
 
 	default:
@@ -364,26 +366,25 @@ static void set_whack_end(char *lr,
 		break;
 	}
 
-	if (!isanyaddr(&l->sourceip))
+	if (address_is_specified(&l->sourceip))
 		w->host_srcip = l->sourceip;
 
-	if (!isanyaddr(&l->vti_ip.addr))
+	if (subnet_is_specified(&l->vti_ip))
 		w->host_vtiip = l->vti_ip;
 
 	w->has_client = l->has_client;
 	if (l->has_client) {
 		w->client = l->subnet;
 	} else {
-		/* ??? is this a crude way of seting client to anyaddr? */
-		w->client.addr.u.v4.sin_family = l->addr_family;
+		w->client = (aftoinfo(l->addr_family)->all_addresses);
 	}
-	w->updown = l->strings[KSCF_UPDOWN];
+
 	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */
 	w->has_client_wildcard = l->has_client_wildcard;
 	w->has_port_wildcard = l->has_port_wildcard;
 
-	if (l->cert != NULL) {
-		w->pubkey = l->cert;
+	if (l->certx != NULL) {
+		w->pubkey = l->certx;
 		w->pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
 	}
 	if (l->ckaid != NULL) {
@@ -394,7 +395,7 @@ static void set_whack_end(char *lr,
 	if (l->options_set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];
 	else
-		w->sendcert = cert_alwayssend;
+		w->sendcert = CERT_ALWAYSSEND;
 
 	if (l->options_set[KNCF_AUTH])
 		w->authby = l->options[KNCF_AUTH];
@@ -411,7 +412,7 @@ static void set_whack_end(char *lr,
 	if (l->options_set[KNCF_XAUTHCLIENT])
 		w->xauth_client = l->options[KNCF_XAUTHCLIENT];
 	if (l->strings_set[KSCF_USERNAME])
-		w->username = l->strings[KSCF_USERNAME];
+		w->xauth_username = l->strings[KSCF_USERNAME];
 
 	if (l->options_set[KNCF_MODECONFIGSERVER])
 		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];
@@ -516,6 +517,13 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 	return 0;
 }
 
+static void conn_log_val(const struct starter_conn *conn,
+			 const char *name, const char *value)
+{
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" %s=%s",
+		    conn->name, name, value == NULL ? "<unset>" : value);
+}
+
 static int starter_whack_basic_add_conn(struct starter_config *cfg,
 					const struct starter_conn *conn)
 {
@@ -534,56 +542,57 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->right.addrtype == KH_IPHOSTNAME)
 		msg.dnshostname = conn->right.strings[KSCF_IP];
 
-	msg.nic_offload = conn->options[KBF_NIC_OFFLOAD];
-	msg.sa_ike_life_seconds = deltatime(conn->options[KBF_IKELIFETIME]);
-	msg.sa_ipsec_life_seconds = deltatime(conn->options[KBF_SALIFETIME]);
-	msg.sa_rekey_margin = deltatime(conn->options[KBF_REKEYMARGIN]);
-	msg.sa_rekey_fuzz = conn->options[KBF_REKEYFUZZ];
-	msg.sa_keying_tries = conn->options[KBF_KEYINGTRIES];
-	msg.sa_replay_window = conn->options[KBF_REPLAY_WINDOW];
+	msg.nic_offload = conn->options[KNCF_NIC_OFFLOAD];
+	msg.sa_ike_life_seconds = deltatime(conn->options[KNCF_IKELIFETIME]);
+	msg.sa_ipsec_life_seconds = deltatime(conn->options[KNCF_SALIFETIME]);
+	msg.sa_rekey_margin = deltatime(conn->options[KNCF_REKEYMARGIN]);
+	msg.sa_rekey_fuzz = conn->options[KNCF_REKEYFUZZ];
+	msg.sa_keying_tries = conn->options[KNCF_KEYINGTRIES];
+	msg.sa_replay_window = conn->options[KNCF_REPLAY_WINDOW];
 
-	msg.r_interval = deltatime_ms(conn->options[KBF_RETRANSMIT_INTERVAL_MS]);
-	msg.r_timeout = deltatime(conn->options[KBF_RETRANSMIT_TIMEOUT]);
+	msg.r_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);
+	msg.r_timeout = deltatime(conn->options[KNCF_RETRANSMIT_TIMEOUT]);
 
 	msg.policy = conn->policy;
+	msg.sighash_policy = conn->sighash_policy;
 
 	msg.connalias = conn->connalias;
 
-	msg.metric = conn->options[KBF_METRIC];
+	msg.metric = conn->options[KNCF_METRIC];
 
-	if (conn->options_set[KBF_CONNMTU])
-		msg.connmtu = conn->options[KBF_CONNMTU];
-	if (conn->options_set[KBF_PRIORITY])
-		msg.sa_priority = conn->options[KBF_PRIORITY];
-	if (conn->options_set[KBF_TFCPAD])
-		msg.sa_tfcpad = conn->options[KBF_TFCPAD];
-	if (conn->options_set[KBF_NO_ESP_TFC])
-		msg.send_no_esp_tfc = conn->options[KBF_NO_ESP_TFC];
-	if (conn->options_set[KBF_NFLOG_CONN])
-		msg.nflog_group = conn->options[KBF_NFLOG_CONN];
+	if (conn->options_set[KNCF_CONNMTU])
+		msg.connmtu = conn->options[KNCF_CONNMTU];
+	if (conn->options_set[KNCF_PRIORITY])
+		msg.sa_priority = conn->options[KNCF_PRIORITY];
+	if (conn->options_set[KNCF_TFCPAD])
+		msg.sa_tfcpad = conn->options[KNCF_TFCPAD];
+	if (conn->options_set[KNCF_NO_ESP_TFC])
+		msg.send_no_esp_tfc = conn->options[KNCF_NO_ESP_TFC];
+	if (conn->options_set[KNCF_NFLOG_CONN])
+		msg.nflog_group = conn->options[KNCF_NFLOG_CONN];
 
-	if (conn->options_set[KBF_REQID]) {
-		if (conn->options[KBF_REQID] <= 0 ||
-		    conn->options[KBF_REQID] > IPSEC_MANUAL_REQID_MAX) {
+	if (conn->options_set[KNCF_REQID]) {
+		if (conn->options[KNCF_REQID] <= 0 ||
+		    conn->options[KNCF_REQID] > IPSEC_MANUAL_REQID_MAX) {
 			starter_log(LOG_LEVEL_ERR,
 				"Ignoring reqid value - range must be 1-%u",
 				IPSEC_MANUAL_REQID_MAX);
 		} else {
-			msg.sa_reqid = conn->options[KBF_REQID];
+			msg.sa_reqid = conn->options[KNCF_REQID];
 		}
 	}
 
 	/* default to HOLD */
 	msg.dpd_action = DPD_ACTION_HOLD;
-	if (conn->options_set[KBF_DPDDELAY] &&
-		conn->options_set[KBF_DPDTIMEOUT]) {
-		msg.dpd_delay = deltatime(conn->options[KBF_DPDDELAY]);
-		msg.dpd_timeout = deltatime(conn->options[KBF_DPDTIMEOUT]);
-		if (conn->options_set[KBF_DPDACTION])
-			msg.dpd_action = conn->options[KBF_DPDACTION];
+	if (conn->options_set[KNCF_DPDDELAY] &&
+		conn->options_set[KNCF_DPDTIMEOUT]) {
+		msg.dpd_delay = deltatime(conn->options[KNCF_DPDDELAY]);
+		msg.dpd_timeout = deltatime(conn->options[KNCF_DPDTIMEOUT]);
+		if (conn->options_set[KNCF_DPDACTION])
+			msg.dpd_action = conn->options[KNCF_DPDACTION];
 
-		if (conn->options_set[KBF_REKEY] && !conn->options[KBF_REKEY]) {
-			if (conn->options[KBF_DPDACTION] ==
+		if (conn->options_set[KNCF_REKEY] && !conn->options[KNCF_REKEY]) {
+			if (conn->options[KNCF_DPDACTION] ==
 				DPD_ACTION_RESTART) {
 				starter_log(LOG_LEVEL_ERR,
 					"conn: \"%s\" warning dpdaction cannot be 'restart'  when rekey=no - defaulting to 'hold'",
@@ -592,111 +601,101 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 			}
 		}
 	} else {
-		if (conn->options_set[KBF_DPDDELAY]  ||
-			conn->options_set[KBF_DPDTIMEOUT] ||
-			conn->options_set[KBF_DPDACTION]) {
+		if (conn->options_set[KNCF_DPDDELAY]  ||
+			conn->options_set[KNCF_DPDTIMEOUT] ||
+			conn->options_set[KNCF_DPDACTION]) {
 			starter_log(LOG_LEVEL_ERR,
 				"conn: \"%s\" warning dpd settings are ignored unless both dpdtimeout= and dpddelay= are set",
 				conn->name);
 		}
 	}
 
-	if (conn->options_set[KBF_SEND_CA])
-		msg.send_ca = conn->options[KBF_SEND_CA];
+	if (conn->options_set[KNCF_SEND_CA])
+		msg.send_ca = conn->options[KNCF_SEND_CA];
 	else
 		msg.send_ca = CA_SEND_NONE;
 
 
-	if (conn->options_set[KBF_ENCAPS])
-               msg.encaps = conn->options[KBF_ENCAPS];
+	if (conn->options_set[KNCF_ENCAPS])
+		msg.encaps = conn->options[KNCF_ENCAPS];
 	else
-               msg.encaps = encaps_auto;
+		msg.encaps = yna_auto;
 
-	if (conn->options_set[KBF_NAT_KEEPALIVE])
-		msg.nat_keepalive = conn->options[KBF_NAT_KEEPALIVE];
+	if (conn->options_set[KNCF_NAT_KEEPALIVE])
+		msg.nat_keepalive = conn->options[KNCF_NAT_KEEPALIVE];
 	else
 		msg.nat_keepalive = TRUE;
 
-	if (conn->options_set[KBF_IKEV1_NATT])
-		msg.ikev1_natt = conn->options[KBF_IKEV1_NATT];
+	if (conn->options_set[KNCF_IKEV1_NATT])
+		msg.ikev1_natt = conn->options[KNCF_IKEV1_NATT];
 	else
-		msg.ikev1_natt = natt_both;
+		msg.ikev1_natt = NATT_BOTH;
 
 
 	/* Activate sending out own vendorid */
-	if (conn->options_set[KBF_SEND_VENDORID])
-		msg.send_vendorid = conn->options[KBF_SEND_VENDORID];
+	if (conn->options_set[KNCF_SEND_VENDORID])
+		msg.send_vendorid = conn->options[KNCF_SEND_VENDORID];
 
 	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
-	if (conn->options_set[KBF_INITIAL_CONTACT])
-		msg.initial_contact = conn->options[KBF_INITIAL_CONTACT];
+	if (conn->options_set[KNCF_INITIAL_CONTACT])
+		msg.initial_contact = conn->options[KNCF_INITIAL_CONTACT];
 
 	/* Activate their quircky behaviour - rumored to be needed for ModeCfg and RSA */
-	if (conn->options_set[KBF_CISCO_UNITY])
-		msg.cisco_unity = conn->options[KBF_CISCO_UNITY];
+	if (conn->options_set[KNCF_CISCO_UNITY])
+		msg.cisco_unity = conn->options[KNCF_CISCO_UNITY];
 
-	if (conn->options_set[KBF_VID_STRONGSWAN])
-		msg.fake_strongswan = conn->options[KBF_VID_STRONGSWAN];
+	if (conn->options_set[KNCF_VID_STRONGSWAN])
+		msg.fake_strongswan = conn->options[KNCF_VID_STRONGSWAN];
 
 	/* Active our Cisco interop code if set */
-	if (conn->options_set[KBF_REMOTEPEERTYPE])
-		msg.remotepeertype = conn->options[KBF_REMOTEPEERTYPE];
-
-	if (conn->options_set[KBF_SHA2_TRUNCBUG])
-		msg.sha2_truncbug = conn->options[KBF_SHA2_TRUNCBUG];
+	if (conn->options_set[KNCF_REMOTEPEERTYPE])
+		msg.remotepeertype = conn->options[KNCF_REMOTEPEERTYPE];
 
 #ifdef HAVE_NM
 	/* Network Manager support */
-	if (conn->options_set[KBF_NMCONFIGURED])
-		msg.nmconfigured = conn->options[KBF_NMCONFIGURED];
+	if (conn->options_set[KNCF_NMCONFIGURED])
+		msg.nmconfigured = conn->options[KNCF_NMCONFIGURED];
 
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	/* Labeled ipsec support */
-	if (conn->options_set[KBF_LABELED_IPSEC]) {
-		msg.labeled_ipsec = conn->options[KBF_LABELED_IPSEC];
+	if (conn->options_set[KSCF_POLICY_LABEL]) {
 		msg.policy_label = conn->policy_label;
 		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%s",
 			conn->name, msg.policy_label);
 	}
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" labeled_ipsec=%d",
-		conn->name, msg.labeled_ipsec);
-
 #endif
 
 	msg.modecfg_dns = conn->modecfg_dns;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdns=%s",
-		conn->name, msg.modecfg_dns);
+	conn_log_val(conn, "modecfgdns", msg.modecfg_dns);
 	msg.modecfg_domains = conn->modecfg_domains;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomains=%s",
-		conn->name, msg.modecfg_domains);
+	conn_log_val(conn, "modecfgdomains", msg.modecfg_domains);
 	msg.modecfg_banner = conn->modecfg_banner;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
-		conn->name, msg.modecfg_banner);
+	conn_log_val(conn, "modecfgbanner", msg.modecfg_banner);
 
 	msg.conn_mark_both = conn->conn_mark_both;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark=%s",
-		conn->name, msg.conn_mark_both);
+	conn_log_val(conn, "mark", msg.conn_mark_both);
 	msg.conn_mark_in = conn->conn_mark_in;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-in=%s",
-		conn->name, msg.conn_mark_in);
+	conn_log_val(conn, "mark-in", msg.conn_mark_in);
 	msg.conn_mark_out = conn->conn_mark_out;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-out=%s",
-		conn->name, msg.conn_mark_out);
+	conn_log_val(conn, "mark-out", msg.conn_mark_out);
 
 	msg.vti_iface = conn->vti_iface;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" vti_iface=%s",
-		conn->name, msg.vti_iface);
-	if (conn->options_set[KBF_VTI_ROUTING])
-		msg.vti_routing = conn->options[KBF_VTI_ROUTING];
-	if (conn->options_set[KBF_VTI_SHARED])
-		msg.vti_shared = conn->options[KBF_VTI_SHARED];
+	conn_log_val(conn, "vti_iface", msg.vti_iface);
+	if (conn->options_set[KNCF_VTI_ROUTING])
+		msg.vti_routing = conn->options[KNCF_VTI_ROUTING];
+	if (conn->options_set[KNCF_VTI_SHARED])
+		msg.vti_shared = conn->options[KNCF_VTI_SHARED];
 
-	if (conn->options_set[KBF_XAUTHBY])
-		msg.xauthby = conn->options[KBF_XAUTHBY];
-	if (conn->options_set[KBF_XAUTHFAIL])
-		msg.xauthfail = conn->options[KBF_XAUTHFAIL];
+	msg.redirect_to = conn->redirect_to;
+	conn_log_val(conn, "redirect-to", msg.redirect_to);
+	msg.accept_redirect_to = conn->accept_redirect_to;
+	conn_log_val(conn, "accept-redirect-to", msg.accept_redirect_to);
+
+	if (conn->options_set[KNCF_XAUTHBY])
+		msg.xauthby = conn->options[KNCF_XAUTHBY];
+	if (conn->options_set[KNCF_XAUTHFAIL])
+		msg.xauthfail = conn->options[KNCF_XAUTHFAIL];
 
 	set_whack_end("left",  &msg.left, &conn->left);
 	set_whack_end("right", &msg.right, &conn->right);
@@ -705,8 +704,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	update_ports(&msg);
 
 	msg.esp = conn->esp;
-	msg.ike = conn->ike;
-
+	conn_log_val(conn, "esp", msg.esp);
+	msg.ike = conn->ike_crypto;
+	conn_log_val(conn, "ike", msg.ike);
 
 	r = send_whack_msg(&msg, cfg->ctlsocket);
 	if (r != 0)
@@ -753,7 +753,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 	while (*subnets != '\0' && !(isspace(*subnets) || *subnets == ','))
 		subnets++;
 
-	e = ttosubnet(eln, subnets - eln, af, sn);
+	e = ttosubnet(eln, subnets - eln, af, '6', sn);
 	if (e != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets)",
@@ -774,7 +774,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
  *
  * This function goes through the set of N x M combinations of the subnets
  * defined in conn's "subnets=" declarations and synthesizes conns with
- * the proper left/right subnet setttings, and then calls operation(),
+ * the proper left/right subnet settings, and then calls operation(),
  * (which is usually add/delete/route/etc.)
  *
  */
@@ -897,7 +897,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 {
 	/* basic case, nothing special to synthize! */
 	if (!conn->left.strings_set[KSCF_SUBNETS] &&
-		!conn->right.strings_set[KSCF_SUBNETS])
+	    !conn->right.strings_set[KSCF_SUBNETS])
 		return starter_whack_basic_add_conn(cfg, conn);
 
 	return starter_permutate_conns(starter_whack_basic_add_conn,
@@ -920,7 +920,7 @@ int starter_whack_route_conn(struct starter_config *cfg,
 {
 	/* basic case, nothing special to synthize! */
 	if (!conn->left.strings_set[KSCF_SUBNETS] &&
-		!conn->right.strings_set[KSCF_SUBNETS])
+	    !conn->right.strings_set[KSCF_SUBNETS])
 		return starter_whack_basic_route_conn(cfg, conn);
 
 	return starter_permutate_conns(starter_whack_basic_route_conn,

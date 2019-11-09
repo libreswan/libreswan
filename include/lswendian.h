@@ -4,7 +4,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,9 +14,7 @@
 
 /* sets BYTE_ORDER, LITTLE_ENDIAN, and BIG_ENDIAN */
 
-#if defined(__CYGWIN__)
-# include <endian.h>
-#elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__)
 # include <machine/endian.h>
 #elif defined(linux)
 # if defined(i386) && !defined(__i386__)
@@ -28,7 +26,7 @@
 /* The problem (in RedHat 5.0) is the typing of the "longs" (32-bit values)
  * in the [nh]to[hn]l functions:
  * - <asm/byteorder.h> uses unsigned long
- * - <netinet/in.h> uses u_int32_t which is unsigned int
+ * - <netinet/in.h> uses uint32_t which is unsigned int
  * Since 64-bit machines are supported, <asm/byteorder.h> should be changed.
  * For now, we simply don't use <asm/byteorder.h>.
  */

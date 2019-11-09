@@ -7,7 +7,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -21,13 +21,14 @@
 #include "demux.h"
 #include "lswalloc.h"
 #include "state.h"
+#include "ike_spi.h"
 
 /*
  *  NAT-Traversal defines for nat_traversal type from nat_traversal.h
  */
 
 /**
- * NAT-Traversal methods which need NAT-D
+ * NAT-Traversal methods that need NAT-D
  */
 
 #if 0
@@ -39,14 +40,14 @@
 #endif
 
 /**
- * NAT-Traversal methods which need NAT-OA (Original Address)
+ * NAT-Traversal methods that need NAT-OA (Original Address)
  */
 #define NAT_T_WITH_NATOA \
 	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_05) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 /**
- * NAT-Traversal methods which use NAT-KeepAlive
+ * NAT-Traversal methods that use NAT-KeepAlive
  */
 #define NAT_T_WITH_KA \
 	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
@@ -54,13 +55,13 @@
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 
 /**
- * NAT-Traversal methods which use officials values (RFC)
+ * NAT-Traversal methods that use officials values (RFC)
  */
 #define NAT_T_WITH_RFC_VALUES \
 	LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC)
 
 /**
- * NAT-Traversal methods which use officials values (RFC) for encapsulation
+ * NAT-Traversal methods that use officials values (RFC) for encapsulation
  */
 #define NAT_T_WITH_ENCAPSULATION_RFC_VALUES \
 	( LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
@@ -79,9 +80,10 @@ extern bool nat_traversal_support_port_floating;
 /**
  * NAT-D
  */
-extern bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
-				   struct msg_digest *md);
-extern void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie);
+extern bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
+				   const struct msg_digest *md);
+extern void ikev2_natd_lookup(struct msg_digest *md,
+			      const ike_spi_t *ike_responder_spi);
 
 /**
  * NAT-OA
@@ -90,8 +92,14 @@ struct hidden_variables;	/* forward */
 
 void nat_traversal_natoa_lookup(struct msg_digest *md,
 				struct hidden_variables *hv);
-bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
+bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
 			     struct state *st, bool initiator);
+/*
+ * move initiator endpoints (src, dst) to NAT ports.
+ */
+void natify_initiator_endpoints(struct state *st, where_t where);
+void v1_maybe_natify_initiator_endpoints(struct state *st,
+					 where_t where);
 
 /**
  * NAT-keep_alive
@@ -106,8 +114,8 @@ extern int nat_traversal_espinudp_socket(int sk, const char *fam);
 /**
  * Vendor ID
  */
-bool nat_traversal_add_vid(u_int8_t np, pb_stream *outs);
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *st);
+bool nat_traversal_add_vid(uint8_t np, pb_stream *outs);
+bool nat_traversal_insert_vid(uint8_t np, pb_stream *outs, const struct connection *c);
 void set_nat_traversal(struct state *st, const struct msg_digest *md);
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
@@ -115,10 +123,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 /**
  * New NAT mapping
  */
-#ifdef __PFKEY_V2_H
-void process_pfkey_nat_t_new_mapping(struct sadb_msg *,
-				     struct sadb_ext *[K_SADB_EXT_MAX + 1]);
-#endif
+void nat_traversal_new_mapping(struct ike_sa *ike,
+			       const ip_endpoint *new_remote_endpoint);
 
 /**
  * IKE port floating
@@ -127,12 +133,13 @@ bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 			      bool in);
 /* NAT-T IKEv2 v2N */
 
-bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md);
+bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
+		       const ike_spi_t *ike_resonder_spi);
 
-bool ikev2_out_natd(struct state *st, u_int8_t np, ip_address *localaddr,
-			u_int16_t localport, ip_address *remoteaddr,
-			u_int16_t remoteport,  u_int8_t *rcookie,
-			pb_stream *outs);
+bool ikev2_out_natd(const ip_endpoint *local_endpoint,
+		    const ip_endpoint *remote_endpoint,
+		    const ike_spis_t *ike_spis,
+		    pb_stream *outs);
 
 /**
  * Encapsulation mode macro (see demux.c)

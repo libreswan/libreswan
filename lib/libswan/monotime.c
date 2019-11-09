@@ -1,13 +1,14 @@
 /* monotonic time, for libreswan
  *
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
- * Copyright (C) 2014  D. Hugh Redelmeier.
- * Copyright (C) 2015  Paul Wouters
+ * Copyright (C) 1998-2001  D. Hugh Redelmeier. <hugh@mimosa.com>
+ * Copyright (C) 2014  D. Hugh Redelmeier. <hugh@mimosa.com>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,12 +16,17 @@
  * for more details.
  */
 
-#include <stdbool.h>
-#include <unistd.h>	/* for _POSIX_MONOTONIC_CLOCK */
-#include <errno.h>
+#include <time.h>	/* for clock_*() + clockid_t */
+
+#include "constants.h"	/* for memeq() which is clearly not a constant */
+#include "lswlog.h"	/* for libreswan_exit_log_errno() */
 
 #include "monotime.h"
-#include "lswlog.h"
+
+monotime_t monotime(intmax_t seconds)
+{
+	return (monotime_t) { .mt = { .tv_sec = seconds, }, };
+}
 
 const monotime_t monotime_epoch = MONOTIME_EPOCH;
 
@@ -29,72 +35,39 @@ bool is_monotime_epoch(monotime_t t)
 	return memeq(&t, &monotime_epoch, sizeof(monotime_t));
 }
 
-/*
- * monotonic variant of time(2)
- *
- * NOT INTENDED TO BE REALTIME!
- *
- * NOTE: static initializer only happens at load time, so
- * delta/last_time are only set to 0 once, not each call.
- */
-
-static monotime_t mononow_fallback(void) {
-	static time_t delta = 0;
-	static time_t last_time = 0;
-
-	time_t n = time(NULL);	/* third best */
-
-	passert(n != (time_t)-1);
-	if (last_time > n) {
-		libreswan_log("time moved backwards %ld seconds",
-			(long)(last_time - n));
-		delta += last_time - n;
-	}
-	last_time = n;
-	return (monotime_t) {
-		.mt = {
-			.tv_sec = n,
-			.tv_usec = 0,
-		},
-	};
+clockid_t monotime_clockid(void)
+{
+#ifdef CLOCK_BOOTTIME
+	return CLOCK_BOOTTIME;	/* best */
+#else
+	return CLOCK_MONOTONIC;	/* second best */
+#endif
 }
 
 monotime_t mononow(void)
 {
-#ifdef _POSIX_MONOTONIC_CLOCK
 	struct timespec t;
-	int r = clock_gettime(
-#   ifdef CLOCK_BOOTTIME
-		CLOCK_BOOTTIME	/* best */
-#   else
-		CLOCK_MONOTONIC	/* second best */
-#   endif
-		, &t);
-
-	switch (r) {
-	case 0:
-		/* OK */
-		return (monotime_t) {
-			.mt = {
-				.tv_sec = t.tv_sec,
-				.tv_usec = t.tv_nsec / 1000,
-			},
-		};
-	case EINVAL:
-		libreswan_log("Invalid clock method for clock_gettime() - possibly compiled with mismatched kernel and glibc-headers ");
-		break;
-	case EPERM:
-		libreswan_log("No permission for clock_gettime()");
-		break;
-	case EFAULT:
-		libreswan_log("Invalid address space return by clock_gettime()");
-		break;
-	default:
-		libreswan_log("unknown clock_gettime() error: %d", r);
-		break;
+	int e = clock_gettime(monotime_clockid(), &t);
+	if (e != 0) {
+		libreswan_exit_log_errno(e, "clock_gettime(%d,...) in mononow() failed",
+					 monotime_clockid());
 	}
-#   endif
-	return mononow_fallback();
+	/* OK */
+	return (monotime_t) {
+		.mt = {
+			.tv_sec = t.tv_sec,
+			.tv_usec = t.tv_nsec / 1000,
+		},
+	};
+}
+
+struct timespec monotime_as_timespec(monotime_t t)
+{
+	struct timespec ts =  {
+		.tv_sec = t.mt.tv_sec,
+		.tv_nsec = t.mt.tv_usec * 1000,
+	};
+	return ts;
 }
 
 intmax_t monosecs(monotime_t m)
@@ -113,12 +86,10 @@ monotime_t monotimesum(monotime_t t, deltatime_t d)
 
 bool monobefore(monotime_t a, monotime_t b)
 {
-	return timercmp(&a.mt, &b.mt,<);
+	return timercmp(&a.mt, &b.mt, <);
 }
 
 deltatime_t monotimediff(monotime_t a, monotime_t b)
 {
-	struct timeval d;
-	timersub(&a.mt, &b.mt, &d);
-	return deltatime_ms((intmax_t)d.tv_sec * 1000 + d.tv_usec / 1000);
+	return deltatime_timevals_diff(a.mt, b.mt);
 }

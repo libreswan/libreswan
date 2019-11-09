@@ -1,3 +1,3 @@
-ipsec whack --debug-all --impair retransmits
+ipsec whack --impair suppress-retransmits
 ipsec auto --up road-eastnet-psk
 echo done

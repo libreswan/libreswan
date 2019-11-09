@@ -1,11 +1,11 @@
 # Test driver, for libreswan
 #
-# Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2019  Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -119,8 +119,8 @@ class TestDomain:
     def boot_and_login(self):
         self.console = remote.boot_to_login_prompt(self.domain, self.console)
         remote.login(self.domain, self.console)
-        test_directory = remote.directory(self.domain, self.console,
-                                          self.test.directory)
+        test_directory = remote.path(self.domain, self.console,
+                                     path=self.test.directory)
         if not test_directory:
             abspath = os.path.abspath(self.test.directory)
             self.logger.error("directory %s not mounted on %s", abspath, self.domain)
@@ -273,41 +273,57 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     publish.json_status(logger, args, "processing %s" % test_prefix)
     with logger.time("processing test %s", test_prefix):
 
+        # Ignoring the test completely?
+        #
+        # So that there's no possible confusion over the test being
+        # run; remove any pre-existing output.
 
-        # always perform post mortem on the test directory.
+        ignored, details = ignore.test(logger, args, test)
+        if ignored:
+            # The isdir() test followed by a simple move, while
+            # racy, should be good enough.
+            if os.path.isdir(test.output_directory):
+                logger.info("moving '%s' to '%s'", test.output_directory,
+                            backup_directory)
+                os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
+                os.rename(test.output_directory, backup_directory)
+            result_stats.add_ignored(test, ignored)
+            test_stats.add(test, "ignored")
+            logger.info("%s %s ignored (%s) %s",
+                        prefix, test_prefix, details, suffix)
+            return
+
+        # Skip the test, leaving old results?
+        #
+        # For instance, during a test re-run, skip any tests that are
+        # passing.
+        #
+        # The check below compares the test and expected output,
+        # ignoring any previous test result.  This way the results are
+        # consistent with kvmresults.py which always reflects the
+        # current sources.
+        #
+        # - modifying the expected output so that it no longer matches
+        #   the last result is a fail
+        #
+        # - modifying the expected output so that it matches the last
+        #   result is a pass
+
+        old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=False)
+        if skip.result(logger, args, old_result):
+            logger.info("%s %s skipped (previously %s) %s",
+                        prefix, test_prefix, old_result, suffix)
+            test_stats.add(test, "skipped")
+            result_stats.add_skipped(old_result)
+            publish.everything(logger, args, old_result)
+            return
+
+        # Running the test ...
+        #
+        # From now on the test will be run so need to perform post
+        # mortem.
+
         try:
-
-            ignored, details = ignore.test(logger, args, test)
-            if ignored:
-                # If there is any pre-existing output move it to
-                # backup.  Otherwise it looks like the test was run
-                # when it wasn't (and besides, the output is no longer
-                # applicable).
-                #
-                # The isdir() test followed by a simple move, while
-                # racy, should be good enough.
-                if os.path.isdir(test.output_directory):
-                    logger.info("moving '%s' to '%s'", test.output_directory,
-                                backup_directory)
-                    os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
-                    os.rename(test.output_directory, backup_directory)
-                result_stats.add_ignored(test, ignored)
-                test_stats.add(test, "ignored")
-                logger.info("%s %s ignored (%s) %s",
-                            prefix, test_prefix, details, suffix)
-                return
-
-            # Be lazy when gathering the results, don't run the
-            # sanitizer or diff.  Let post.mortem figure out if the
-            # test finished.
-
-            old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=True)
-            if skip.result(logger, args, old_result):
-                logger.info("%s %s skipped (previously %s) %s",
-                            prefix, test_prefix, old_result, suffix)
-                test_stats.add(test, "skipped")
-                result_stats.add_skipped(old_result)
-                return
 
             if old_result:
                 test_stats.add(test, "tests", "retry")
@@ -318,18 +334,21 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 logger.info("%s %s started ....", prefix, test_prefix)
             test_stats.add(test, "tests")
 
-            # Create just the OUTPUT/ directory; if it already exists,
-            # move any contents to BACKUP/.  Do it file-by-file so
-            # that, at no point, the OUTPUT/ directory is missing
-            # (having an OUTPUT/ directory implies the test was
-            # started).
+            # Create just the OUTPUT/ directory.
             #
-            # Don't create the path.  If the parent directory is
-            # missing, this will fail.
+            # If the directory already exists, copy the contents
+            # BACKUP/.  Do it file-by-file so that, at no point, the
+            # OUTPUT/ directory is missing (having an OUTPUT/
+            # directory implies the test was started).
             #
-            # By backing up each test just before it is started, a
-            # trail of what tests were attempted during each run is
-            # created.
+            # Don't try to create the path.  If the parent directory
+            # is missing, this and the entire script will crash.
+            # Someone did something nasty like deleted the parent
+            # directory.
+            #
+            # By backing up each test just before it is started,
+            # leaves a trail of what tests were attempted during a
+            # test run.
             #
             # XXX:
             #
@@ -344,9 +363,6 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
             try:
                 os.mkdir(test.output_directory)
-            except FileNotFoundError:
-                # Bail, something is messed up (for instance the parent directory doesn't exist).
-                return
             except FileExistsError:
                 logger.info("moving contents of '%s' to '%s'",
                             test.output_directory, backup_directory)
@@ -372,9 +388,14 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                     try:
                         test_domains = _boot_test_domains(logger, test, domain_prefix, boot_executor)
                     except pexpect.TIMEOUT:
-                        logger.exception("timeout while booting domains")
                         # Bail.  Being unable to boot the domains is a
                         # disaster.  The test is UNRESOLVED.
+                        logger.exception("timeout while booting domains")
+                        return
+                    except pexpect.EOF:
+                        # Bail.  Being unable to attach to the domains
+                        # is a disaster.  The test is UNRESOLVED.
+                        logger.exception("eof (disconnect) while booting domains")
                         return
 
                 # Run the scripts directly
@@ -400,21 +421,24 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                                 test_domain = test_domains[host]
                                 try:
                                     test_domain.read_file_run(script)
+                                except pexpect.TIMEOUT as e:
+                                    # A test ending with a timeout
+                                    # gets treated as a FAIL.  A
+                                    # timeout while running a test
+                                    # script is a sign that a command
+                                    # hung.
+                                    post_timeout = "%s %s:%s" % (post.TIMEOUT, host, script)
+                                    logger.warning("*** %s ***" % post_timeout)
+                                    test_domain.console.child.logfile.write("%s %s %s" % (post.LHS, post_timeout, post.RHS))
+                                    break
                                 except BaseException as e:
                                     # if there is an exception, write
                                     # it to the console
-                                    test_domain.console.child.logfile.write("\n*** exception running script %s ***\n%s" % (script, str(e)))
+                                    test_domain.console.child.logfile.write("\n%s %s %s:%s %rhs\n%s" % (post.LHS, post.EXCEPTION, host, script, post.RHS, str(e)))
                                     raise
 
                             for test_domain in test_domains.values():
                                 test_domain.console.child.logfile.write(post.DONE)
-
-                        except pexpect.TIMEOUT as e:
-                            # A test ending with a timeout gets
-                            # treated as unresolved.  Timeouts
-                            # shouldn't occure so human intervention
-                            # is required.
-                            logger.error("**** timeout out while running test script %s ****", script)
 
                         finally:
 
@@ -434,10 +458,11 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             with logger.time("post-mortem %s", test_prefix):
                 # The test finished; it is assumed that post.mortem
                 # can deal with a crashed test.
-                result = post.mortem(test, args, domain_prefix=domain_prefix,
-                                     update=True)
+                result = post.mortem(test, args, domain_prefix=domain_prefix)
                 logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
                             result.issues and " ", result.issues, suffix)
+
+            result.save()
 
             # If the test was run (a fresh run would delete RESULT)
             # and finished (resolved in POSIX terminology), emit
@@ -448,7 +473,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             #
             # XXX: this should go away.
 
-            if not os.path.isfile(test.result_file()) \
+            result_file = os.path.join(test.output_directory, "RESULT")
+            if not os.path.isfile(result_file) \
             and result.resolution.isresolved():
                 RESULT = {
                     jsonutil.result.testname: test.name,
@@ -460,11 +486,10 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                     jsonutil.result.runtime: round(test_runtime.seconds(), 1),
                     jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
                     jsonutil.result.script_time: round(test_script_time.seconds(), 1),
-                    jsonutil.result.total_time: round(test_runtime.seconds(), 1),
                 }
                 j = jsonutil.dumps(RESULT)
-                logger.debug("filling '%s' with json: %s", test.result_file(), j)
-                with open(test.result_file(), "w") as f:
+                logger.debug("filling '%s' with json: %s", result_file, j)
+                with open(result_file, "w") as f:
                     f.write(j)
                     f.write("\n")
 

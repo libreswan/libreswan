@@ -1,0 +1,23 @@
+Test to see we don't send INVALID_ID response to duplicated packet
+
+east:
+
+- jacob-two-two: causes a copy of each packet to be sent after a small
+  delay
+
+- replay-duplicates: as the responder, this should cause an immediate
+  re-transmit of the last response
+
+The actual number is less - while performing DH for instance is no
+packet to send out - so duplicates get dropped.  XXX: I'm not sure
+this explains everything.
+
+west:
+
+- replay-duplicates: for every one of the above, inject two copies
+
+- XXX: some states don't get properly tested because, during DH,
+  packets are simply dropped; replay-encrypted (injected after crypto
+  is working) and replay-corrupt should be implemented in IKEv1 :-)
+
+Howver, it still seems a few short.

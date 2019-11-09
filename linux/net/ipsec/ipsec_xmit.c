@@ -13,7 +13,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -382,7 +382,7 @@ void ipsec_print_ip(void *ip)
  *  2) How does this affect syncookies, mss_cache, dst cache ?
  *  3) Path MTU discovery handling needs to be reviewed.  For example,
  *     if we receive an ICMP 'packet too big' message from an intermediate
- *     router specifying it's next hop MTU, our stack may process this and
+ *     router specifying its next hop MTU, our stack may process this and
  *     adjust the MSS without taking our AH/ESP overheads into account.
  */
 
@@ -425,6 +425,7 @@ DEBUG_NO_STATIC u_int8_t ipsec_adjust_mss(struct sk_buff *skb,
 }
 #endif  /* MSS_HACK_DELETE_ME_PLEASE */
 
+/* NOTE: may return a pointer to a static buffer */
 DEBUG_NO_STATIC const char *ipsec_xmit_err(int err)
 {
 	static char tmp[32];
@@ -1125,11 +1126,11 @@ enum ipsec_xmit_value ipsec_xmit_ah(struct ipsec_xmit_state *ixs)
 
 #ifdef CONFIG_KLIPS_ALG
 	if (ixs->ixt_a) {
-
 		if (ixs->ipsp->ips_authalg != AH_SHA && ixs->ipsp->ips_authalg != AH_MD5) {
 			printk("KLIPS AH doesn't support authalg=%d yet\n",ixs->ipsp->ips_authalg);
 			return IPSEC_XMIT_AH_BADALG;
 		}
+
 		if ((buf = kmalloc(sizeof(struct iphdr)+ixs->skb->len, GFP_KERNEL)) == NULL)
 			return IPSEC_XMIT_ERRMEMALLOC;
 
@@ -1482,12 +1483,12 @@ static int create_hold_eroute(struct ipsec_xmit_state *ixs)
 	if (lsw_ip_hdr_version(ixs) == 6) {
 		struct in6_addr addr6_any = IN6ADDR_ANY_INIT;
 		hold_said.dst.u.v6.sin6_addr = addr6_any;
-		hold_said.dst.u.v6.sin6_family = AF_INET6;
+		SET_V6(hold_said.dst);
 	} else
 #endif
 	{
 		hold_said.dst.u.v4.sin_addr.s_addr = INADDR_ANY;
-		hold_said.dst.u.v4.sin_family = AF_INET;
+		SET_V4(hold_said.dst);
 	}
 
 	hold_eroute.er_eaddr.sen_len = sizeof(struct sockaddr_encap);
@@ -1764,6 +1765,10 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 				memset(&dst, 0, sizeof(dst));
 				src.sin6_family = AF_INET6;
 				dst.sin6_family = AF_INET6;
+#ifdef NEED_SIN_LEN
+				src.sin6_len = sizeof(struct sockaddr_in6);
+				dst.sin6_len = sizeof(struct sockaddr_in6);
+#endif
 				src.sin6_addr = lsw_ip6_hdr(ixs)->saddr;
 				dst.sin6_addr = lsw_ip6_hdr(ixs)->daddr;
 
@@ -1798,25 +1803,22 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 						nexthdr;
 
 					if (nexthdroff) {
-						if (nexthdr == IPPROTO_UDP)
+						if (nexthdr == IPPROTO_UDP) {
 							udphdr =
 								skb_header_pointer(
 									ixs->skb,
 									nexthdroff,
 									sizeof(*udphdr),
 									&_udphdr);
-
-
-						else if (nexthdr ==
-							 IPPROTO_TCP)
+						} else if (nexthdr ==
+							 IPPROTO_TCP) {
 							tcphdr =
 								skb_header_pointer(
 									ixs->skb,
 									nexthdroff,
 									sizeof(*tcphdr),
 									&_tcphdr);
-
-
+						}
 					}
 
 					if (ixs->eroute->er_eaddr.sen_sport6 !=
@@ -1862,7 +1864,6 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 				ipsec_xmit_trap_count++;
 
 				if (pfkey_acquire(&ixs->ips) == 0) {
-
 					/* note that we succeeded */
 					ipsec_xmit_trap_sendcount++;
 
@@ -1889,7 +1890,6 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 						ixs->skb = NULL;
 					}
 					/* whether or not the above succeeded, we continue */
-
 				}
 				if (ixs->stats)
 					ixs->stats->tx_dropped++;
@@ -1905,6 +1905,10 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 				memset(&dst, 0, sizeof(dst));
 				src.sin_family = AF_INET;
 				dst.sin_family = AF_INET;
+#ifdef NEED_SIN_LEN
+				src.sin_len = sizeof(struct sockaddr_in);
+				dst.sin_len = sizeof(struct sockaddr_in);
+#endif
 				src.sin_addr.s_addr = lsw_ip4_hdr(ixs)->saddr;
 				dst.sin_addr.s_addr = lsw_ip4_hdr(ixs)->daddr;
 
@@ -1971,7 +1975,6 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 				ipsec_xmit_trap_count++;
 
 				if (pfkey_acquire(&ixs->ips) == 0) {
-
 					/* note that we succeeded */
 					ipsec_xmit_trap_sendcount++;
 
@@ -1998,7 +2001,6 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 						ixs->skb = NULL;
 					}
 					/* whether or not the above succeeded, we continue */
-
 				}
 				if (ixs->stats)
 					ixs->stats->tx_dropped++;
@@ -2656,7 +2658,6 @@ static inline int ipsec_xmit_send2_mast(struct sk_buff *skb)
 #else
 	return ipsec_xmit_send2(dev_net(skb->dev), skb->sk, skb);
 #endif
-
 }
 
 enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs)
@@ -2873,9 +2874,8 @@ enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs)
 			ixs->stats->tx_errors++;
 		printk(KERN_WARNING
 		       "klips_error:ipsec_xmit_send: "
-		       "tried to __skb_pull nh-data=%ld, %d available.  This should never happen, please report.\n",
-		       (unsigned long)(skb_network_header(ixs->skb) -
-				       ixs->skb->data),
+		       "tried to __skb_pull nh-data=%td, %d available.  This should never happen, please report.\n",
+		       skb_network_header(ixs->skb) - ixs->skb->data,
 		       ixs->skb->len);
 		return IPSEC_XMIT_PUSHPULLERR;
 	}
@@ -3052,7 +3052,6 @@ void ipsec_xsm(struct ipsec_xmit_state *ixs)
 
 	more_allowed = 1000;
 	while (ixs->state != IPSEC_XSM_DONE && --more_allowed) {
-
 		ixs->next_state = xmit_state_table[ixs->state].next_state;
 
 		stat = xmit_state_table[ixs->state].action(ixs);

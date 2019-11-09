@@ -1,4 +1,4 @@
-Test CREATE_CHILD_SA to create additonal Child SA, with nhelpers=0 and pfs=yes
+Test CREATE_CHILD_SA to create additional Child SA, with nhelpers=0 and pfs=yes
 
 The crypto work will be done inline.
 West has two connections to east. Both will share one IKE SA.

@@ -1,0 +1,4 @@
+Basic pluto X.509 test, with send_cr and as a PKCS7 blob
+
+East does *NOT* have West's X.509 Cert locally.
+west is FORCED to send it. And visa versa.

@@ -2,10 +2,10 @@
   <term><emphasis remap='B'>nhelpers</emphasis></term>
   <listitem>
 <para>how many <emphasis remap='I'>pluto helpers</emphasis> are started
-to help with cryptographic operations. Pluto will start
-<emphasis remap='I'>(n-1)</emphasis> of them, where <emphasis remap='I'>n</emphasis>
-is the number of CPU's you have (including hypherthreaded CPU's).
-A value of 0 forces pluto to do all operations in the main
+to help with cryptographic operations. Pluto will start as many helpers as
+the number of CPU's, minus 1 to dedicate to the main thread.  For machines
+with less than 4 CPU's, an equal number of helpers to CPU's are started.
+A value of 0 forces pluto to do all operations inline using the main
 process. A value of -1 tells pluto to perform the above calculation. Any
 other value forces the number to that amount.
 </para>

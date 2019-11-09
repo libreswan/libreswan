@@ -5,5 +5,5 @@ If your PCF file contains an "encrypted" (obfuscated) password, then you
 can find the plaintext version by running the Linux Cisco VPN client within
 strace. See http://femto.cs.uiuc.edu/~sbond/vpnc/ for more information.
 
-ExecSum: "ltrace -i ./vpnclient connect ... 2>&1 | fgrep 805ac57" to decode
+ExecSum: "ltrace -i ./vpnclient connect ... 2>&1 | grep -F 805ac57" to decode
 the passwords. (client: vpnclient-linux-4.0.3.B-k9).

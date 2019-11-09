@@ -5,15 +5,17 @@
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/lgpl-2.1.txt>.
  *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-#include "internal.h"
-#include "libreswan.h"
+
+#include "ip_subnet.h"
+#include "ip_info.h" 	/* ipv6_info */
+#include "lswlog.h"	/* for dbg() */
 
 /*
  * initsubnet - initialize ip_subnet from address and count
@@ -31,10 +33,13 @@ ip_subnet *dst;
 	int n;
 	int c;
 	unsigned m;
-	int die;
+	bool die = false;
+	bool warn = 0;
 
 	dst->addr = *addr;
-	n = addrbytesptr_write(&dst->addr, &p);
+	chunk_t addr_chunk = address_as_chunk(&dst->addr);
+	n = addr_chunk.len;
+	p = addr_chunk.ptr; /* cast void* */
 	if (n == 0)
 		return "unknown address family";
 
@@ -45,6 +50,12 @@ ip_subnet *dst;
 	case 'x':
 		die = 1;
 		break;
+	case '6':
+		if (address_type(addr) == &ipv6_info)
+			die = 1;
+		warn = 1;
+		break;
+
 	default:
 		return "unknown clash-control value in initsubnet";
 	}
@@ -60,11 +71,14 @@ ip_subnet *dst;
 	c = count % 8;
 	if (n > 0 && c != 0)	/* partial byte */
 		m >>= c;
+
+	bool warning = false;
 	for (; n > 0; n--) {
 		if ((*p & m) != 0) {
 			if (die)
 				return "improper subnet, host-part bits on";
-
+			if (warn && !warning)
+				warning = true;
 			*p &= ~m;
 		}
 		m = 0xff;
@@ -72,24 +86,58 @@ ip_subnet *dst;
 	}
 
 	dst->maskbits = count;
+
+	if (warning) {
+		LSWLOG(buf) {
+			jam(buf, "WARNING:improper subnet mask, host-part bits on input ");
+			jam_address(buf, addr);
+			jam(buf, "/%d ", count);
+			jam(buf, " extracted subnet ");
+			jam_subnet(buf, dst);
+		}
+	}
+
 	return NULL;
 }
 
 /*
- * addrtosubnet - initialize ip_subnet from a single address
+ * addrtosubnet - initialize ip_subnet from an address:port
+ *
+ * XXX: yes, address:port; not address
+ *
+ * The [old] code copied END directly into .addr and because that was
+ * a sockaddr underneath it would include the port.  This means that
+ * code creating the client's subnet from the end's .host_addr is
+ * (intentional or otherwise) creating a subnet for address:port.  It
+ * might help explain why code keeps stuffing the client's port into
+ * .host_addr.
+ *
+ * NULL for success, else string literal
  */
-err_t	/* NULL for success, else string literal */
-addrtosubnet(addr, dst)
-const ip_address * addr;
-ip_subnet *dst;
+err_t endtosubnet(const ip_endpoint *endpoint, ip_subnet *dst, where_t where)
 {
-	int n;
-
-	dst->addr = *addr;
-	n = addrlenof(&dst->addr);
-	if (n == 0)
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (afi == NULL) {
+		/* actually AF_UNSPEC */
+		*dst = subnet_invalid;
 		return "unknown address family";
+	}
 
-	dst->maskbits = n * 8;
+	ip_subnet s;
+	if (endpoint_hport(endpoint) == 0) {
+		endpoint_buf eb_;
+		dbg("subnet from address %s "PRI_WHERE,
+		    str_endpoint(endpoint, &eb_),
+		    pri_where(where));
+		ip_address a = endpoint_address(endpoint);
+		s = subnet_from_address(&a);
+	} else {
+		endpoint_buf eb_;
+		dbg("subnet from endpoint %s "PRI_WHERE,
+		    str_endpoint(endpoint, &eb_),
+		    pri_where(where));
+		s = subnet_from_endpoint(endpoint);
+	}
+	*dst = s;
 	return NULL;
 }

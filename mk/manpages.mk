@@ -5,7 +5,7 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -31,7 +31,7 @@ TRANSFORMED_MANPAGES = $(addprefix $(builddir)/,$(addsuffix .tmp,$(MANPAGES)))
 # Given the file MANPAGE.[0-9].{xml,tmp}, generate a list of
 # <refname/> entries, including the section number.
 
-refnames = $(shell $(SHELL) $(top_srcdir)/packaging/utils/refnames.sh $(1))
+refnames = $(shell $(top_srcdir)/packaging/utils/refnames.sh $(1))
 
 # Man pages to build, since the list of generated man pages isn't
 # predictable (see refnames.sh) use a fake target to mark that each
@@ -68,7 +68,7 @@ $(builddir)/%.tmp: $(srcdir)/%.xml | $(builddir)
 	mv $@.tmp $@
 
 # Default rule for creating the man pages from the intermediate
-# (transormed) input.
+# (transformed) input.
 #
 # Note: XMLTO seems to fail even when it succeeds so ignore the exit
 # status and instead explicitlay check for the expected output files.

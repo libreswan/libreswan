@@ -4,3 +4,6 @@ group so it gets the default list that contains MODP2048.
 
 In libreswan-3.10 it caused the connection to fail. In libreswan-3.11,
 the for IKEv1 with multiple modp groups it wil prefer DH 2 or DH 5.
+
+NOTE: since we no longer compile with DH2 support, the test was changed
+to DH5 + DH14, although that might not be the full spirit of this test.

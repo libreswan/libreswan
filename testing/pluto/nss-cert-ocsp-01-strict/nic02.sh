@@ -1,2 +1,2 @@
-journalctl --no-pager -b -xn -u ocspd.service | egrep "status|request" | sed "s/^.*: //"
+journalctl --no-pager -b -xn -u ocspd.service | grep -E "status|request" | sed "s/^.*: //"
 : ==== end ====

@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# script used to gather/commit updated copyrights not done by the authors
+YEAR=2019
+
+cd ~/libreswan
+
+for i in `git log --since $YEAR/01/01 |grep ^commit | sed "s/commit //"`;
+do
+   export a=`git show $i | grep -E "Author" | sed "s/Author: //"`; 
+   for f in `git show $i | grep "+++ b\/" |sed "s/^......//"`;
+   do
+      sed -i "s/^\(.*Copyright ... ....\)\([-,]\)20.. $a/\1-$YEAR $a/" $f
+      sed -i "s/^\(.*Copyright ... ....\) $a/\1-$YEAR $a/" $f
+      # builds a list of copyright lines that still needs to added semi-manually
+      grep -E "Copyright.* $a" $f || echo "$f: Copyright (C) $YEAR $a"
+   done
+done

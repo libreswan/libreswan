@@ -20,5 +20,5 @@ jq --null-input \
    --arg start "${start_time}" \
    '{
   start_time: $start,
-  end_time: (now|todateiso8601),
+  stop_time: (now|todateiso8601),
 }'

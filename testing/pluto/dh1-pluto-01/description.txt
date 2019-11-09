@@ -1,7 +1,0 @@
-test similar with basic-pluto-05.
-
-It uses modp768 (DH1) instead of default.
-
-Note we do not build regularly with this enabled, so this test is not
-enabled by default.
-

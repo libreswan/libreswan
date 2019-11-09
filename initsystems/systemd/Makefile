@@ -2,13 +2,14 @@ ifndef top_srcdir
 include ../../mk/dirs.mk
 endif
 
-UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
-SYSTEMDFILE=ipsec.service
-SYSTEMDDIR=$(DESTDIR)$(UNITDIR)
+SYSTEMUNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
+UNITFILE=ipsec.service
+UNITDIR=$(DESTDIR)$(SYSTEMUNITDIR)
+SYSTEMTMPFILESDIR=$(shell pkg-config systemd --variable=tmpfilesdir)
+TMPFILESCONFIG=libreswan.conf
+TMPFILESDIR=$(DESTDIR)$(SYSTEMTMPFILESDIR)
 
 include $(top_srcdir)/Makefile.inc
-
-local-base: $(SYSTEMDFILE)
 
 # Use dependencies to force the order: LOCAL-BASE,
 # INSTALLSYSTEMDSERVICE, OLDINITDCHECK, POSTCHECK.
@@ -17,18 +18,37 @@ local-base: $(SYSTEMDFILE)
 # like local-base and installsystemdservice are allowed to run in
 # parallel)
 
+local-base: $(builddir)/$(UNITFILE) $(builddir)/$(TMPFILESCONFIG)
+
 local-install-base: installsystemdservice oldinitdcheck postcheck
 
-installsystemdservice: local-base
-	@mkdir -p $(SYSTEMDDIR)
-	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(SYSTEMDFILE) $(SYSTEMDDIR)
-	@if test $(SYSTEMDDIR) = $(UNITDIR) ; then \
-		systemctl --system daemon-reload ; \
+installtmpfilesconfig: local-base | $(TMPFILESDIR)
+	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(TMPFILESCONFIG) $(TMPFILESDIR)
+	@if test $(TMPFILESDIR) = $(SYSTEMTMPFILESDIR) ; then \
+		echo running: systemd-tmpfiles --create $(TMPFILESDIR)/$(TMPFILESCONFIG); \
+		systemd-tmpfiles --create $(TMPFILESDIR)/$(TMPFILESCONFIG); \
 	fi
+
+installsystemdservice: local-base | $(UNITDIR)
+	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(UNITFILE) $(UNITDIR)
+	@if test $(UNITDIR) = $(SYSTEMUNITDIR) ; then \
+		echo running: systemctl --system daemon-reload; \
+		systemctl --system daemon-reload || echo "failed restart" ; \
+	fi
+	@if test -f $(DESTDIR)/$(FINALLIBEXECDIR)/portexcludes; then \
+		echo fixing port excludes ; \
+		sed -Ei 's@^# (.*/portexcludes)$$@\1@' $(UNITDIR)/$(UNITFILE); \
+	fi
+
+$(UNITDIR):
+	mkdir -p $(UNITDIR)
+
+$(TMPFILESDIR):
+	mkdir -p $(TMPFILESDIR)
 
 oldinitdcheck: installsystemdservice
 	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \
-		if egrep -i '(openswan|libreswan)' $(DESTDIR)/etc/init.d/ipsec* > /dev/null 2>&1 ; then \
+		if grep -E -i '(openswan|libreswan)' $(DESTDIR)/etc/init.d/ipsec* > /dev/null 2>&1 ; then \
 			echo "WARNING: removing older SYSV style init files" ; \
 			echo "removing: " $(DESTDIR)/etc/init.d/ipsec* $(DESTDIR)/etc/rc*.d/[KS][0-9][0-9]ipsec* ; \
 			rm -f $(DESTDIR)/etc/init.d/ipsec* $(DESTDIR)/etc/rc*.d/[KS][0-9][0-9]ipsec* ; \
@@ -39,8 +59,8 @@ oldinitdcheck: installsystemdservice
 		fi ; \
 	fi
 
-postcheck: installsystemdservice oldinitdcheck
-	@if test -z "$(DESTDIR)" -a $(SYSTEMDDIR) = $(UNITDIR) -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
+postcheck: installsystemdservice installtmpfilesconfig oldinitdcheck
+	@if test -z "$(DESTDIR)" -a $(UNITDIR) = $(SYSTEMUNITDIR) -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
 		echo "DESTDIR='$(DESTDIR)'" ; \
 		echo "************************** WARNING ***********************************" ; \
 		echo "The ipsec service is currently disabled. To enable this service issue:" ; \
@@ -60,10 +80,11 @@ postcheck: installsystemdservice oldinitdcheck
 
 # XXX: identical to program.mk?
 
-%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver
-	@echo  'IN' $< '->' $(builddir)/$@
-	$(TRANSFORM_VARIABLES) < $< > $(builddir)/$@
-	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
-	@if [ "$(PROGRAM).in" = $< ]; then chmod +x $(builddir)/$@; fi
+$(builddir)/%: $(srcdir)/%.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
+	@echo  'IN' $< '->' $@
+	$(TRANSFORM_VARIABLES) < $< > $@
+	@if [ -x $< ]; then chmod +x $@; fi
+	@if [ "$(PROGRAM).in" = $< ]; then chmod +x $@; fi
 
 include ${top_srcdir}/mk/targets.mk
+include ${top_srcdir}/mk/builddir.mk

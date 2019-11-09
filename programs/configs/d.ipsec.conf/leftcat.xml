@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftcat</emphasis></term>
+  <listitem>
+<para>Whether to perform Client Address Translation ("CAT") when using Opportunistic IPsec behind NAT.
+Accepted values are <emphasis remap='B'>no</emphasis> (the default) and <emphasis remap='B'>yes</emphasis>.
+This option should only be enabled on the special Opportunistic IPsec connections, usually called "private"
+and "private-or-clear". When set, this option causes the given addresspool IP from the remote peer to be
+NATed with iptables. It will also install an additional IPsec SA policy to cover the pre-NAT IP. See
+the Opportunistic IPsec information on the libreswan website for more information and examples.
+</para>
+  </listitem>
+  </varlistentry>

@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep --x509 --x509name east-nosan
+Preparing X.509 files
+east #
+ certutil -D -n west -d sql:/etc/ipsec.d
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add ikev2-westnet-eastnet-x509-cr
+002 added connection description "ikev2-westnet-eastnet-x509-cr"
+east #
+ ipsec status | grep idtype
+000 "ikev2-westnet-eastnet-x509-cr":   our idtype: ID_FQDN; our id=@right; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
+east #
+ echo "initdone"
+initdone
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

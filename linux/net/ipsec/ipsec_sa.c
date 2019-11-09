@@ -9,7 +9,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -107,7 +107,7 @@ typedef struct {
 static int ipsec_saref_verify_slot(IPsecSAref_t ref);
 static int ipsec_SArefSubTable_alloc(unsigned table);
 static int ipsec_saref_freelist_init(void);
-static IPsecSAref_t ipsec_SAref_alloc(int *erorr); /* pass in error var by pointer */
+static IPsecSAref_t ipsec_SAref_alloc(int *error); /* pass in error var by pointer */
 
 static int ipsec_SAref_recycle(void)
 {
@@ -205,8 +205,8 @@ static int ipsec_SArefSubTable_alloc(unsigned table)
 
 	KLIPS_PRINT(debug_xform,
 		    "klips_debug:ipsec_SArefSubTable_alloc: "
-		    "allocating %lu bytes for table %u of %u.\n",
-		    (unsigned long) IPSEC_SA_REF_SUBTABLE_SIZE,
+		    "allocating %zu bytes for table %u of %u.\n",
+		    IPSEC_SA_REF_SUBTABLE_SIZE,
 		    table, IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES);
 
 	/* allocate another sub-table */
@@ -452,7 +452,6 @@ void ipsec_sa_untern(struct ipsec_sa *ips)
 			    "ref=%u -> %p but untern'ing %p\n", ref,
 			    IPsecSAref2SA(ref), ips);
 	}
-
 }
 
 int ipsec_sa_intern(struct ipsec_sa *ips)
@@ -1008,9 +1007,8 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 
 		if (ref_table < IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES) {
 			subtable = ipsec_sadb.refTable[ref_table];
-			if (subtable != NULL && subtable->entry[ref_entry] ==
-			    ips) {
-
+			if (subtable != NULL &&
+			    subtable->entry[ref_entry] == ips) {
 				subtable->entry[ref_entry] = NULL;
 			}
 		}
@@ -1272,8 +1270,8 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 
 			KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
 				    "ipsec_sa_init: "
-				    "allocating %lu bytes for md5_ctx.\n",
-				    (unsigned long) sizeof(struct md5_ctx));
+				    "allocating %zu bytes for md5_ctx.\n",
+				    sizeof(struct md5_ctx));
 			if ((ipsp->ips_key_a = (caddr_t)
 					       kmalloc(sizeof(struct md5_ctx),
 						       GFP_ATOMIC)) == NULL) {
@@ -1352,8 +1350,8 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 
 			KLIPS_PRINT(debug_pfkey && sysctl_ipsec_debug_verbose,
 				    "ipsec_sa_init: "
-				    "allocating %lu bytes for sha1_ctx.\n",
-				    (unsigned long) sizeof(struct sha1_ctx));
+				    "allocating %zu bytes for sha1_ctx.\n",
+				    sizeof(struct sha1_ctx));
 			if ((ipsp->ips_key_a = (caddr_t)
 					       kmalloc(sizeof(struct sha1_ctx),
 						       GFP_ATOMIC)) == NULL) {
@@ -1480,9 +1478,8 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				KLIPS_PRINT(
 					debug_pfkey && sysctl_ipsec_debug_verbose,
 					"ipsec_sa_init: "
-					"allocating %lu bytes for md5_ctx.\n",
-					(unsigned long) sizeof(struct
-							       md5_ctx));
+					"allocating %zu bytes for md5_ctx.\n",
+					sizeof(struct md5_ctx));
 				if ((ipsp->ips_key_a = (caddr_t)
 					kmalloc(sizeof(struct md5_ctx),
 						GFP_ATOMIC)) == NULL) {
@@ -1568,9 +1565,8 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				KLIPS_PRINT(
 					debug_pfkey && sysctl_ipsec_debug_verbose,
 					"ipsec_sa_init: "
-					"allocating %lu bytes for sha1_ctx.\n",
-					(unsigned long) sizeof(struct
-							       sha1_ctx));
+					"allocating %zu bytes for sha1_ctx.\n",
+					sizeof(struct sha1_ctx));
 				if ((ipsp->ips_key_a = (caddr_t)
 					kmalloc(sizeof(struct sha1_ctx),
 						GFP_ATOMIC)) == NULL) {

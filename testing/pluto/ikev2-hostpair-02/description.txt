@@ -1,0 +1,11 @@
+IKEv2 host-to-host with NAT and CP.
+
+ikev2-hostpair-02 reconnects using the same IP, without sending any
+deletes. It does this 4 times. Because no Initial Contact is used,
+the old ipsec SA states linger around until expiry.
+
+ikev2-hostpair-03-initial-contact uses Initial Contact where the
+old IPsec SA states are properly removed.
+
+While the old IPsec SA's are around, we should still have traffic
+flow on the latest one, using the same re-obtained lease IP

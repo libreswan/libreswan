@@ -1,0 +1,1 @@
+Test for ensuring we don't load a conn with left/rightsubnet of a different family

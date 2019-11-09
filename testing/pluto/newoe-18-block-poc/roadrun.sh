@@ -5,7 +5,7 @@ sleep 5
 # no tunnel and no bare shunts expected
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-ipsec look
+../../pluto/bin/ipsec-look.sh
 killall ip > /dev/null 2> /dev/null
 cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 # ping should fail on outgoing block rule

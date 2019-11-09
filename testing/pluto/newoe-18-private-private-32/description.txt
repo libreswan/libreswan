@@ -1,0 +1,8 @@
+OE uses /32 groups to verify instantiating does not conflict
+with the template conn. this verifies lsw#305
+
+This also tests that OE connections that are idle are purged. This is (for now)
+based on the rekey margin value until we support processing softidle reports from
+the kernel.
+
+

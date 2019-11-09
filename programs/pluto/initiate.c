@@ -10,14 +10,14 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Panagiotis Tamtamis <tamtamis@gmail.com>
- * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
- *
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -38,9 +38,7 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 
-#include <libreswan.h>
 #include "libreswan/pfkeyv2.h"
-#include "kameipsec.h"
 
 #include "sysdep.h"
 #include "constants.h"
@@ -64,7 +62,6 @@
 #include "log.h"
 #include "keys.h"
 #include "whack.h"
-#include "alg_info.h"
 #include "spdb.h"
 #include "ike_alg.h"
 #include "kernel_alg.h"
@@ -92,7 +89,7 @@ static void swap_ends(struct connection *c)
 	sr->that = t;
 
 	/*
-	 * incase of asymetric auth c->policy contains left.authby
+	 * in case of asymetric auth c->policy contains left.authby
 	 * This magic will help responder to find connction during INIT
 	 */
 	if (sr->this.authby != sr->that.authby)
@@ -104,6 +101,9 @@ static void swap_ends(struct connection *c)
 			break;
 		case AUTH_RSASIG:
 			c->policy |= POLICY_RSASIG;
+			break;
+		case AUTH_ECDSA:
+			c->policy |= POLICY_ECDSA;
 			break;
 		case AUTH_NULL:
 			c->policy |= POLICY_AUTH_NULL;
@@ -130,7 +130,7 @@ bool orient(struct connection *c)
 			for (;;) {
 				/* check if this interface matches this end */
 				if (sameaddr(&sr->this.host_addr,
-					     &p->ip_addr) &&
+					     &p->local_endpoint) &&
 				    (kern_interface != NO_KERNEL ||
 				     sr->this.host_port ==
 				     pluto_port)) {
@@ -148,7 +148,7 @@ bool orient(struct connection *c)
 								c->interface->ip_dev->id_rname,
 								p->ip_dev->id_rname);
 							}
-						terminate_connection(c->name);
+						terminate_connection(c->name, FALSE);
 						c->interface = NULL; /* withdraw orientation */
 						return FALSE;
 					}
@@ -157,7 +157,7 @@ bool orient(struct connection *c)
 
 				/* done with this interface if it doesn't match that end */
 				if (!(sameaddr(&sr->that.host_addr,
-					       &p->ip_addr) &&
+					       &p->local_endpoint) &&
 				      (kern_interface != NO_KERNEL ||
 				       sr->that.host_port ==
 				       pluto_port)))
@@ -167,43 +167,21 @@ bool orient(struct connection *c)
 			}
 		}
 	}
-	/*
-	 * If we are oriented, update asymmetric policy into the symmetric one
-	 * which is used by various connection lookup functions.
-	 * add_connection() guaranteed there were no conflicts.
-	 */
-	if (!NEVER_NEGOTIATE(c->policy) && c->spd.this.authby != AUTH_UNSET) {
-		switch (c->spd.this.authby) {
-		case AUTH_RSASIG:
-			c->policy |= POLICY_RSASIG;
-			break;
-		case AUTH_PSK:
-			c->policy |= POLICY_PSK;
-			break;
-		case AUTH_NULL:
-			c->policy |= POLICY_AUTH_NULL;
-			break;
-		default:
-			bad_case(c->spd.this.authby);
-			break;
-		}
-	}
 	return oriented(*c);
 }
 
 struct initiate_stuff {
-	int whackfd;
+	fd_t whackfd;
 	lmod_t more_debugging;
 	lmod_t more_impairing;
-	enum crypto_importance importance;
 	char *remote_host;
 };
 
 static int initiate_a_connection(struct connection *c, void *arg)
 {
+	threadtime_t inception  = threadtime_start();
 	struct initiate_stuff *is = (struct initiate_stuff *)arg;
-	int whackfd = is->whackfd;
-	enum crypto_importance importance = is->importance;
+	fd_t whackfd = is->whackfd;
 
 	set_cur_connection(c);
 
@@ -249,13 +227,13 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	}
 
 	if ((is->remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
 				loglog(RC_NOPEERIP,
 					"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 					enum_show(&connection_kind_names,
 						 c->kind));
+				dbg("connection '%s' +POLICY_UP", c->name);
 				c->policy |= POLICY_UP;
 				reset_cur_connection();
 				return 1;
@@ -287,6 +265,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 				"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
 				enum_show(&connection_kind_names, c->kind),
 					bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
+			dbg("connection '%s' +POLICY_UP", c->name);
 			c->policy |= POLICY_UP;
 			reset_cur_connection();
 			return 1;
@@ -301,7 +280,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 		}
 	}
 
-	if (LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
+	if (LIN(POLICY_IKEV2_ALLOW | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
 		c->kind == CK_TEMPLATE) {
 			c = instantiate(c, NULL, NULL);
 	}
@@ -309,41 +288,66 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	/* We will only request an IPsec SA if policy isn't empty
 	 * (ignoring Main Mode items).
 	 * This is a fudge, but not yet important.
-	 * If we are to proceed asynchronously, whackfd will be NULL_FD.
+	 *
+	 * XXX:  Is this still useful?
+	 *
+	 * In theory, by delaying the the kernel algorithm probe until
+	 * here when the connection is being initiated, it is possible
+	 * to detect kernel algorithms that have been loaded after
+	 * pluto has started or are only loaded on-demand.
+	 *
+	 * In reality, the kernel algorithm DB is "static": PFKEY is
+	 * only probed during startup(?); and XFRM, even if it does
+	 * support probing, is using static entries.  See
+	 * kernel_alg.c.
+	 *
+	 * Consequently:
+	 *
+	 * - when the connection's proposal suite is specified, the
+	 * algorithm parser will check the algorithms against the
+	 * kernel algorithm DB, so calling kernel_alg_makedb() to to
+	 * perform an identical check is redundant
+	 *
+	 * - when default proposals are used (CHILD_PROPOSALS.P==NULL)
+	 * (the parser can't see these) kernel_alg_makedb(NULL)
+	 * returns a static table and skips all checks
+	 *
+	 * - finally, kernel_alg_makedb() is IKEv1 only
+	 *
+	 * A better fix would be to feed the proposal parser the
+	 * default proposal suite.
+	 *
+	 * For moment leave call but make it IKEv1 only - for IKEv2
+	 * all it does is give spdb.c some busy work (and log bogus
+	 * stats).
+	 *
+	 * XXX: mumble something about c->ike_version
 	 */
-
-	if (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-
-		struct alg_info_esp *alg = c->alg_info_esp;
-		struct db_sa *phase2_sa = kernel_alg_makedb(
-			c->policy, alg, TRUE);
-
-		if (alg != NULL && phase2_sa == NULL) {
+	if ((c->policy & POLICY_IKEV1_ALLOW) &&
+	    (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE))) {
+		struct db_sa *phase2_sa =
+			kernel_alg_makedb(c->policy, c->child_proposals, TRUE);
+		if (c->child_proposals.p != NULL && phase2_sa == NULL) {
 			whack_log(RC_LOG_SERIOUS,
 				  "cannot initiate: no acceptable kernel algorithms loaded");
 			reset_cur_connection();
-			close_any(is->whackfd);
+			close_any(&is->whackfd);
 			return 0;
 		}
 		free_sa(&phase2_sa);
 	}
 
+	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
-	whackfd = dup(whackfd);
-	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, importance
-#ifdef HAVE_LABELED_IPSEC
-		  , NULL
-#endif
-		  );
-
+	whackfd = dup_any(whackfd);
+	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, &inception, NULL);
 	reset_cur_connection();
 	return 1;
 }
 
-void initiate_connection(const char *name, int whackfd,
+void initiate_connection(const char *name, fd_t whackfd,
 			 lmod_t more_debugging,
 			 lmod_t more_impairing,
-			 enum crypto_importance importance,
 			 char *remote_host)
 {
 	struct connection *c = conn_by_name(name, FALSE, FALSE);
@@ -354,14 +358,13 @@ void initiate_connection(const char *name, int whackfd,
 		.whackfd = whackfd,
 		.more_debugging = more_debugging,
 		.more_impairing = more_impairing,
-		.importance = importance,
 		.remote_host = remote_host,
 	};
 
 	if (c != NULL) {
 		if (!initiate_a_connection(c, &is))
 			whack_log(RC_FATAL, "failed to initiate %s", c->name);
-		close_any(is.whackfd);
+		close_any(&is.whackfd);
 		return;
 	}
 
@@ -373,7 +376,7 @@ void initiate_connection(const char *name, int whackfd,
 			  "no connection named \"%s\"", name);
 	}
 
-	close_any(is.whackfd);
+	close_any(&is.whackfd);
 }
 
 static bool same_host(const char *a_dnshostname, const ip_address *a_host_addr,
@@ -422,7 +425,7 @@ void restart_connections_by_peer(struct connection *const c)
 		{
 			/* This might delete c if CK_INSTANCE */
 			/* ??? is there a chance hp becomes dangling? */
-			terminate_connection(d->name);
+			terminate_connection(d->name, FALSE);
 		}
 		d = next;
 	}
@@ -443,9 +446,9 @@ void restart_connections_by_peer(struct connection *const c)
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
 					d->dnshostname, &d->spd.that.host_addr))
-				initiate_connection(d->name, NULL_FD,
+				initiate_connection(d->name, null_fd,
 						    empty_lmod, empty_lmod,
-						    pcim_demand_crypto, NULL);
+						    NULL);
 		}
 	}
 	pfreeany(dnshostname);
@@ -484,18 +487,17 @@ struct find_oppo_bundle {
 	policy_prio_t policy_prio;
 	ipsec_spi_t negotiation_shunt; /* in host order! */
 	ipsec_spi_t failure_shunt; /* in host order! */
-	int whackfd;
+	fd_t whackfd;
 };
 
 static void cannot_oppo(struct connection *c,
 			struct find_oppo_bundle *b,
 			err_t ughmsg)
 {
-	char pcb[ADDRTOT_BUF];
-	char ocb[ADDRTOT_BUF];
-
-	addrtot(&b->peer_client, 0, pcb, sizeof(pcb));
-	addrtot(&b->our_client, 0, ocb, sizeof(ocb));
+	address_buf ocb_buf;
+	const char *ocb = ipstr(&b->our_client, &ocb_buf);
+	address_buf pcb_buf;
+	const char *pcb = ipstr(&b->peer_client, &pcb_buf);
 
 	DBG(DBG_OPPO,
 	    libreswan_log("Cannot opportunistically initiate for %s to %s: %s",
@@ -599,18 +601,14 @@ static void cannot_oppo(struct connection *c,
 	}
 }
 
-static void initiate_ondemand_body(struct find_oppo_bundle *b
-#ifdef HAVE_LABELED_IPSEC
-				   , struct xfrm_user_sec_ctx_ike *uctx
-#endif
+static void initiate_ondemand_body(struct find_oppo_bundle *b,
+				   struct xfrm_user_sec_ctx_ike *uctx
 				  )
 {
+	threadtime_t inception = threadtime_start();
 	struct connection *c = NULL;
 	struct spd_route *sr;
-	char ours[ADDRTOT_BUF];
-	char his[ADDRTOT_BUF];
-	int ourport;
-	int hisport;
+	int ourport, hisport;
 	char demandbuf[256];
 	bool loggedit = FALSE;
 
@@ -618,22 +616,21 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 	 * First try for one that explicitly handles the clients.
 	 */
 
-	addrtot(&b->our_client, 0, ours, sizeof(ours));
-	addrtot(&b->peer_client, 0, his, sizeof(his));
+	address_buf ourb;
+	const char *ours = ipstr(&b->our_client, &ourb);
+	address_buf hisb;
+	const char *his = ipstr(&b->peer_client, &hisb);
+
 	ourport = ntohs(portof(&b->our_client));
 	hisport = ntohs(portof(&b->peer_client));
 
-#ifdef HAVE_LABELED_IPSEC
 	DBG(DBG_CONTROLMORE, {
 		if (uctx != NULL) {
-
-
 			DBG_log("received security label string: %.*s",
 				uctx->ctx.ctx_len,
 				uctx->sec_ctx_value);
 		}
 	});
-#endif
 
 	snprintf(demandbuf, sizeof(demandbuf),
 		 "initiate on demand from %s:%d to %s:%d proto=%d because: %s",
@@ -644,7 +641,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 	if (DBGP(DBG_OPPOINFO)) {
 		libreswan_log("%s", demandbuf);
 		loggedit = TRUE;
-	} else if (whack_log_fd != NULL_FD) {
+	} else if (fd_p(whack_log_fd)) {
 		whack_log(RC_COMMENT, "%s", demandbuf);
 		loggedit = TRUE;
 	}
@@ -666,7 +663,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 		 */
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
-			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
 
 		cannot_oppo(NULL, b, "no routed template covers this pair");
@@ -676,7 +672,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 	}  else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
-			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
 		loglog(RC_NOPEERIP,
 		       "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
@@ -691,7 +686,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 		 * negotiation is already being attempted.
 		 */
 
-		/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
+		/* If we are to proceed asynchronously, b->whackfd will be NULL_WHACKFD. */
 
 		if (c->kind == CK_INSTANCE) {
 			char cib[CONN_INST_BUF];
@@ -717,8 +712,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 			 * and the existing one. So we return without
 			 * doing anything
 			 */
-			libreswan_log("found existing state, ignoring instance \"%s\"%s, due to duplicate acquire",
-				c->name, fmt_conn_instance(c, cib));
+			libreswan_log("ignoring found existing connection instance \"%s\"%s that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
+				c->name, fmt_conn_instance(c, cib),
+				c->newest_isakmp_sa, c->newest_ipsec_sa);
 			return;
 #endif
 		}
@@ -743,17 +739,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
-			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
 
-
 		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
-				  SOS_NOBODY, pcim_local_crypto
-#ifdef HAVE_LABELED_IPSEC
-				  , uctx
-#endif
-				  );
-		b->whackfd = NULL_FD; /* protect from close */
+				  SOS_NOBODY, &inception, uctx);
+		b->whackfd = null_fd; /* protect from close */
 	} else {
 		/* We are handling an opportunistic situation.
 		 * This involves several DNS lookup steps that require suspension.
@@ -764,7 +754,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 		 * DNS query (if any).  It also selects the kind of the next step.
 		 * The second chunk initiates the next DNS query (if any).
 		 */
-		char mycredentialstr[IDTOA_BUF];
 
 		DBG(DBG_CONTROL, {
 			    char cib[CONN_INST_BUF];
@@ -773,7 +762,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 				    fmt_conn_instance(c, cib));
 		    });
 
-		idtoa(&sr->this.id, mycredentialstr, sizeof(mycredentialstr));
+		if (sr->routing == RT_ROUTED_PROSPECTIVE && eclipsable(sr)) {
+			dbg("route is eclipsed");
+			sr->routing = RT_ROUTED_ECLIPSED;
+			eclipse_count++;
+		}
 
 		passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
@@ -783,47 +776,86 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 
 
 
+			/*
+			 * KLIPS always has shunts without protoports.
+			 * XFRM always has shunts with protoports, even when no *protoport= settings in conn
+			 */
 			if (b->negotiation_shunt != SPI_HOLD ||
 				(b->transport_proto != 0 ||
-				portof(&b->our_client) != 0 ||
-				portof(&b->peer_client) != 0))
+				ourport != 0 ||
+				hisport != 0))
 			{
 				const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
 				const char *const addwidemsg = "oe-negotiating";
 				ip_subnet this_client, that_client;
+				int shunt_proto = b->transport_proto;
 
 				happy(addrtosubnet(&b->our_client, &this_client));
 				happy(addrtosubnet(&b->peer_client, &that_client));
-				/* negotiationshunt must be wider than bare shunt, esp on NETKEY */
-				setportof(0, &this_client.addr);
-				setportof(0, &that_client.addr);
+				/* OLD: negotiationshunt must be wider than bare shunt, esp on NETKEY */
+				/* if the connection we found has protoports, match those for the shunt */
+
+
+				setportof(0, &this_client.addr); /* always catch all ephemeral to dest */
+				setportof(0, &that_client.addr); /* default unless connection says otherwise */
+				if (b->transport_proto != 0) {
+					if (c->spd.that.protocol == 0) {
+						DBG(DBG_OPPO, DBG_log("shunt widened for protoports since conn does not limit protocols"));
+						shunt_proto = 0;
+						ourport = 0;
+						hisport =0;
+					} else {
+						if (hisport != 0) {
+							if (c->spd.that.port != 0) {
+								if (c->spd.that.port != hisport) {
+									loglog(RC_LOG_SERIOUS, "Dragons! connection port %d mismatches shunt dest port %d",
+										c->spd.that.port, hisport);
+								} else {
+									update_subnet_hport(&that_client, hisport);
+									DBG(DBG_OPPO, DBG_log("bare shunt destination port set to %d", hisport));
+								}
+							} else {
+								DBG(DBG_OPPO, DBG_log("not really expecting a shunt for dport 0 ?"));
+							}
+						} else {
+							DBG(DBG_OPPO, DBG_log("KLIPS might not support these shunts with protoport"));
+						}
+					}
+				} else {
+					DBG(DBG_OPPO, DBG_log("shunt not widened for oppo because no protoport received from the kernel for the shunt"));
+				}
 
 				DBG(DBG_OPPO,
 					DBG_log("going to initiate opportunistic, first installing %s negotiationshunt",
 						enum_short_name(&spi_names, b->negotiation_shunt)));
 
 				// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
+				/* if we have protoport= set, narrow to it. zero out ephemeral port */
+				if (shunt_proto != 0) {
+					if (c->spd.this.port != 0)
+						setportof(portof(&b->our_client), &this_client.addr);
+					if (c->spd.that.port != 0)
+						setportof(portof(&b->peer_client), &that_client.addr);
+				}
+
 				if (!raw_eroute(&b->our_client, &this_client,
 					&b->peer_client, &that_client,
 					htonl(SPI_HOLD), /* kernel induced */
 					htonl(b->negotiation_shunt),
-					SA_INT, 0, /* transport_proto */
+					SA_INT, shunt_proto,
 					ET_INT, null_proto_info,
 					deltatime(SHUNT_PATIENCE),
-					DEFAULT_IPSEC_SA_PRIORITY,
+					calculate_sa_prio(c),
 					NULL,
-					ERO_ADD, addwidemsg
-#ifdef HAVE_LABELED_IPSEC
-					, NULL
-#endif
-					))
+					ERO_ADD, addwidemsg,
+					NULL))
 				{
 					libreswan_log("adding bare wide passthrough negotiationshunt failed");
 				} else {
-					DBG(DBG_OPPO, DBG_log("added bare wide passthrough negotiationshunt succeeded (violating API)"));
-					add_bare_shunt(&this_client, &that_client, 0 /* broadened transport_proto */, SPI_HOLD, addwidemsg);
+					DBG(DBG_OPPO, DBG_log("added bare (possibly wided) passthrough negotiationshunt succeeded (violating API)"));
+					add_bare_shunt(&this_client, &that_client, shunt_proto, SPI_HOLD, addwidemsg);
 				}
-				/* now delete the (obsoleted) narrow bare kernel shunt - we have a broadened negotiationshunt replacement installed */
+				/* now delete the (obsoleted) narrow bare kernel shunt - we have a (possibly broadened) negotiationshunt replacement installed */
 				if (!delete_bare_shunt(&b->our_client, &b->peer_client,
 					b->transport_proto, SPI_HOLD /* kernel dictated */, delmsg))
 				{
@@ -836,7 +868,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 
 			c = build_outgoing_opportunistic_connection(
 				&b->our_client,
-				&b->peer_client);
+				&b->peer_client,
+				b->transport_proto);
 
 			if (c == NULL) {
 				/* We cannot seem to instantiate a suitable connection:
@@ -872,15 +905,32 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 				}
 				/* ??? c == NULL -- what can we do? */
 			} else {
-				/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
+				/* If we are to proceed asynchronously, b->whackfd will be NULL_WHACKFD. */
 				passert(c->kind == CK_INSTANCE);
 				passert(HAS_IPSEC_POLICY(c->policy));
 				passert(LHAS(LELEM(RT_UNROUTED) |
 					     LELEM(RT_ROUTED_PROSPECTIVE),
 					     c->spd.routing));
 				if (b->held) {
+					/* if we have protoport= set, narrow to it. zero out ephemeral port */
+					if (b->transport_proto != 0) {
+						if (c->spd.this.port != 0) {
+							setportof(htons(c->spd.this.port), &b->our_client);
+						}
+						if (c->spd.that.port != 0) {
+							setportof(htons(c->spd.that.port), &b->peer_client);
+						}
+					}
 					/* packet triggered - not whack triggered */
 					DBG(DBG_OPPO, DBG_log("assigning negotiation_shunt to connection"));
+					/* if we have protoport= set, narrow to it. zero out ephemeral port */
+					/* warning: we know ports in this_client/that_client are 0 so far */
+					if (c->spd.this.protocol != 0) {
+						if (c->spd.this.port != 0)
+							setportof(portof(&b->our_client), &c->spd.this.client.addr);
+						if (c->spd.that.port != 0)
+							setportof(portof(&b->peer_client), &c->spd.that.client.addr);
+					}
 					if (assign_holdpass(c, &c->spd,
 						   b->transport_proto,
 						   b->negotiation_shunt,
@@ -898,12 +948,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 					    b->want));
 
 				ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
-						  SOS_NOBODY, pcim_local_crypto
-#ifdef HAVE_LABELED_IPSEC
+						  SOS_NOBODY, &inception
 						  , NULL /* shall we pass uctx for opportunistic connections? */
-#endif
 						  );
-				b->whackfd = NULL_FD; /* protect from close */
+				b->whackfd = null_fd; /* protect from close */
 			}
 		}
 
@@ -919,17 +967,15 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 			}
 		});
 
-	close_any(b->whackfd);
+	close_any(&b->whackfd);
 }
 
 void initiate_ondemand(const ip_address *our_client,
 		      const ip_address *peer_client,
 		      int transport_proto,
 		      bool held,
-		      int whackfd,
-#ifdef HAVE_LABELED_IPSEC
+		      fd_t whackfd,
 		      struct xfrm_user_sec_ctx_ike *uctx,
-#endif
 		      err_t why)
 {
 	struct find_oppo_bundle b;
@@ -944,75 +990,8 @@ void initiate_ondemand(const ip_address *our_client,
 	b.negotiation_shunt = SPI_HOLD; /* until we found connection policy */
 	b.failure_shunt = SPI_HOLD; /* until we found connection policy */
 	b.whackfd = whackfd;
-	initiate_ondemand_body(&b
-#ifdef HAVE_LABELED_IPSEC
-				, uctx
-#endif
-	);
-}
 
-/*
- * an ISAKMP SA has been established.
- * Note the serial number, and release any connections with
- * the same peer ID but different peer IP address.
- */
-bool uniqueIDs = FALSE; /* --uniqueids? */
-
-/*
- * Called by IKEv1 and IKEv2 when the IKE SA is established.
- * It checks if the freshly established connection needs is
- * replacing an established version of itself.
- *
- * The use of uniqueIDs is mostly historic and might be removed
- * in a future version. It is ignored for PSK based connections,
- * which only act based on being a "server using PSK".
- */
-void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
-{
-	c->newest_isakmp_sa = serial;
-
-	/* NULL authentication can never replaced - it is all anonnymous */
-	if (LIN(POLICY_AUTH_NULL, c->policy) ||
-	   (c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
-
-		DBG(DBG_CONTROL, DBG_log("NULL Authentication - all clients appear identical"));
-		return;
-	}
-
-	/*
-	 * If we are a server and use PSK, all clients use the same group ID
-	 * Note that "xauth_server" also refers to IKEv2 CP
-	 */
-	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
-		DBG(DBG_CONTROL, DBG_log("We are a server using PSK and clients are using a group ID"));
-		return;
-	}
-
-	if (!uniqueIDs) {
-		DBG(DBG_CONTROL, DBG_log("uniqueIDs disabled, not contemplating releasing older self"));
-		return;
-	}
-
-	/*
-	 * for all existing connections: if the same Phase 1 IDs are used,
-	 * unorient that (old) connection - This is a replacement.
-	 */
-	struct connection *d;
-
-	for (d = connections; d != NULL; ) {
-		/* might move underneath us */
-		struct connection *next = d->ac_next;
-
-		if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
-		    (same_id(&c->spd.this.id, &d->spd.this.id) &&
-		     same_id(&c->spd.that.id, &d->spd.that.id)))
-		{
-		  DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
-		  suppress_delete(d); /* don't send a delete */
-		  release_connection(d, FALSE);
-		}
-		d = next;
-	}
+	initiate_ondemand_body(&b, uctx);
 }
 
 /* Find a connection that owns the shunt eroute between subnets.
@@ -1023,6 +1002,7 @@ struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 {
 	struct connection *c;
 
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = c->ac_next) {
 		const struct spd_route *sr;
 
@@ -1041,7 +1021,8 @@ struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 #define PENDING_DDNS_INTERVAL secs_per_minute
 
 /*
- * call me periodically to check to see if any DDNS tunnel can come up
+ * Call me periodically to check to see if any DDNS tunnel can come up.
+ * The order matters, we try to do the cheapest checks first.
  */
 
 static void connection_check_ddns1(struct connection *c)
@@ -1050,13 +1031,21 @@ static void connection_check_ddns1(struct connection *c)
 	ip_address new_addr;
 	const char *e;
 
-	if (NEVER_NEGOTIATE(c->policy))
-		return;
-
+	/* this is the cheapest check, so do it first */
 	if (c->dnshostname == NULL)
 		return;
 
-	if (!isanyaddr(&c->spd.that.host_addr)) {
+	/* should we let the caller get away with this? */
+	if (NEVER_NEGOTIATE(c->policy))
+		return;
+
+	/*
+	 * We do not update a resolved address once resolved. That might
+	 * be considered a bug. Can we count on liveness if the target
+	 * changed IP? The connection would * need to gets its host_addr
+	 * updated? Do we do that when terminating the conn?
+	 */
+	if (endpoint_is_specified(&c->spd.that.host_addr)) {
 		DBG(DBG_DNS, {
 			char cib[CONN_INST_BUF];
 			DBG_log("pending ddns: connection \"%s\"%s has address",
@@ -1097,8 +1086,38 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
+	/* do not touch what is not broken */
+	if ((c->newest_isakmp_sa != SOS_NOBODY) &&
+	    IS_IKE_SA_ESTABLISHED(state_with_serialno(c->newest_isakmp_sa)))
+		return;
+
+	/* This cannot currently be reached. If in the future we do, don't do weird things */
+	if (sameaddr(&new_addr, &c->spd.that.host_addr)) {
+		dbg("ddns: IP address unchanged for connection '%s'", c->name);
+		return;
+	}
+
+	ipstr_buf old,new;
 	/* I think this is ok now we check everything above ? */
+
+	/*
+	 * It seems DNS failure puts a connection into CK_TEMPLATE, so once the
+	 * resolve is fixed, it is manually placed in CK_PERMANENT here.
+	 * However, that is questionable, eg for connections that are templates
+	 * to begin with, such as those with narrowing=yes. These will mistakenly
+	 * be placed into CK_PERMANENT.
+	 */
+
+	DBG(DBG_DNS, {
+		char cib[CONN_INST_BUF];
+		dbg("ddns: changing connection \"%s\"%s to CK_PERMANENT", c->name,
+			fmt_conn_instance(c, cib));
+	});
 	c->kind = CK_PERMANENT;
+
+	dbg("ddns: Updating IP address for %s from %s to %s",
+		c->dnshostname, sensitive_ipstr(&c->spd.that.host_addr, &old),
+			sensitive_ipstr(&new_addr, &new));
 	c->spd.that.host_addr = new_addr;
 
 	/* a small bit of code from default_end to fixup the end point */
@@ -1106,20 +1125,24 @@ static void connection_check_ddns1(struct connection *c)
 	if (isanyaddr(&c->spd.this.host_nexthop))
 		c->spd.this.host_nexthop = c->spd.that.host_addr;
 
-	/* default client to subnet containing only self
-	 * XXX This may mean that the client's address family doesn't match
-	 * tunnel_addr_family.
-	 */
-	if (!c->spd.that.has_client)
+	/* default client to subnet containing only self */
+	if (!c->spd.that.has_client) {
+		/* XXX: this uses ADDRESS:PORT */
 		addrtosubnet(&c->spd.that.host_addr, &c->spd.that.client);
+	}
 
 	/*
 	 * reduce the work we do by updating all connections waiting for this
 	 * lookup
 	 */
 	update_host_pairs(c);
-	initiate_connection(c->name, NULL_FD, empty_lmod, empty_lmod,
-			    pcim_demand_crypto, NULL);
+	if (c->policy & POLICY_UP) {
+		dbg("ddns: re-initiating connection '%s'", c->name);
+		initiate_connection(c->name, null_fd, empty_lmod, empty_lmod, NULL);
+	} else {
+		dbg("ddns: : connection '%s' was updated, but does not want to be up",
+			c->name);
+	}
 
 	/* no host pairs, no more to do */
 	pexpect(c->host_pair != NULL);	/* ??? surely */
@@ -1127,44 +1150,29 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
-		if (c != d && same_in_some_sense(c, d))
-			initiate_connection(d->name, NULL_FD,
-					    empty_lmod, empty_lmod,
-					    pcim_demand_crypto, NULL);
+		if (c != d && same_in_some_sense(c, d) && (d->policy & POLICY_UP))
+			initiate_connection(d->name, null_fd,
+					    empty_lmod, empty_lmod, NULL);
 	}
 }
 
 void connection_check_ddns(void)
 {
 	struct connection *c, *cnext;
-	struct timeval tv1;
+	realtime_t tv1 = realnow();
 
-	gettimeofday(&tv1, NULL);
-
-	/* reschedule */
-	event_schedule_s(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
-
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = cnext) {
-		cnext = c->ac_next;
-		connection_check_ddns1(c);
-	}
-	for (c = unoriented_connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
 		connection_check_ddns1(c);
 	}
 	check_orientations();
 
-	DBG(DBG_DNS, {
-		struct timeval tv2;
-		unsigned long borrow;
-
-		gettimeofday(&tv2, NULL);
-		borrow = tv2.tv_usec < tv1.tv_usec ? 1 : 0;
-		DBG_log("elapsed time in %s for hostname lookup %lu.%06lu",
-			__func__,
-			(unsigned long)(tv2.tv_sec - borrow - tv2.tv_sec),
-			(unsigned long)(tv2.tv_usec + borrow * 1000000 - tv2.tv_usec));
-	});
+	LSWDBGP(DBG_DNS, buf) {
+		realtime_t tv2 = realnow();
+		lswlogf(buf, "elapsed time in %s for hostname lookup ", __func__);
+		lswlog_deltatime(buf, realtimediff(tv2, tv1));
+	};
 }
 
 /* time between scans of pending phase2 */
@@ -1178,9 +1186,7 @@ void connection_check_phase2(void)
 {
 	struct connection *c, *cnext;
 
-	/* reschedule */
-	event_schedule_s(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
-
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
 
@@ -1228,17 +1234,15 @@ void connection_check_phase2(void)
 				if (c->dnshostname != NULL) {
 					restart_connections_by_peer(c);
 				} else {
-					delete_event(p1st);
-					event_schedule_s(EVENT_SA_REPLACE, 0, p1st);
+					event_force(EVENT_SA_REPLACE, p1st);
 				}
 			} else {
 				/* start a new connection. Something wanted it up */
 				struct initiate_stuff is;
 
-				is.whackfd = NULL_FD;
+				is.whackfd = null_fd;
 				is.more_debugging = empty_lmod;
 				is.more_impairing = empty_lmod;
-				is.importance = pcim_local_crypto;
 				is.remote_host = NULL;
 
 				initiate_a_connection(c, &is);
@@ -1249,6 +1253,8 @@ void connection_check_phase2(void)
 
 void init_connections(void)
 {
-	event_schedule_s(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
-	event_schedule_s(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
+	enable_periodic_timer(EVENT_PENDING_DDNS, connection_check_ddns,
+			      deltatime(PENDING_DDNS_INTERVAL));
+	enable_periodic_timer(EVENT_PENDING_PHASE2, connection_check_phase2,
+			      deltatime(PENDING_PHASE2_INTERVAL));
 }

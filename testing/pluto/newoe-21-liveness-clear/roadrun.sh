@@ -4,7 +4,7 @@ sleep 5
 # should show established tunnel and no bare shunts
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-ipsec look
+../../pluto/bin/ipsec-look.sh
 # aggressively kill pluto without sending ike delete
 killall -9 pluto 
 sleep 50

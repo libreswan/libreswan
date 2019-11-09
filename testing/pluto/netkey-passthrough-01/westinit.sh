@@ -1,10 +1,10 @@
 /testing/guestbin/swan-prep
 # confirm that the network is alive
 ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
-# make sure that clear text does not get through
+# ensure that clear text does not get through
 iptables -A INPUT -i eth0 -s 192.1.2.23/32 -j LOGDROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-# confirm with a ping
+# confirm clear text does not get through
 ping -n -c 4 -I 192.1.2.45 192.1.2.23
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started

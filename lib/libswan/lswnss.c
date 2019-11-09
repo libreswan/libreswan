@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -174,7 +174,7 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 
 	SECKEYPrivateKeyListNode *node;
 	for (node = PRIVKEY_LIST_HEAD(list);
-             !PRIVKEY_LIST_END(node, list);
+	     !PRIVKEY_LIST_END(node, list);
 	     node = PRIVKEY_LIST_NEXT(node)) {
 
 		if (SECKEY_GetPrivateKeyType(node->key) != rsaKey) {

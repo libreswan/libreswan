@@ -2,7 +2,7 @@
 Preparing X.509 files
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -15,7 +15,7 @@ east #
  ipsec whack --shutdown
 002 shutting down
 east #
- grep leak /tmp/pluto.log
+ grep -e leak /tmp/pluto.log | grep -v -e '|'
 leak-detective enabled
 leak detective found no leaks
 east #

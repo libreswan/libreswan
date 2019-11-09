@@ -13,7 +13,7 @@ partof=$1 shift
 dig $item key >/dev/null
 
 echo "key 12334 $item" | ipsec lwdnsq --regress --serial --ignoreeof >/tmp/lookkey
-if fgrep "$partof" /tmp/lookkey >/dev/null
+if grep -F "$partof" /tmp/lookkey >/dev/null
 then
 	echo LOOK-FOR-KEY FOUND $partof
 else

@@ -1,0 +1,2 @@
+West should reject east's connection because its ID is not a SAN and no require-id-on-certificate=no is used on west
+

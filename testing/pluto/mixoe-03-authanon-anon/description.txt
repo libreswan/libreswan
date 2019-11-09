@@ -1,0 +1,8 @@
+mixed deployment OE
+
+In this case both east and road allow AUTHNULL and only the
+initiator allows (and starts with) authenticated.
+
+This tests places road in the clear-or-private group on east,
+otherwise east responds with initiating an anon OE connection
+without road getting a change to try its fallback policy.

@@ -1,7 +1,0 @@
-Basic pluto with IKEv2 using PSK on the initiator (west), and Strongswan on
-the responder.
-
-This tests ESP_CAST
-
-strongswan uses a wrong netlink identifier for cast, so for now this
-test is failing.

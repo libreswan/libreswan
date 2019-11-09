@@ -1,7 +1,0 @@
-Test of pluto looking up left=/right= names in DNS.
-
-Includes test of startup/shutdown with DNS *NOT* AVAILABLE.
-
-This test does not include having pluto notice that the names have changed.
-
-

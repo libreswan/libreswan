@@ -1,15 +1,15 @@
 /testing/guestbin/swan-prep
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  # see description.txt
 west #
  ! ipsec auto --add westnet-eastnet-ikev2
-036 right certificate with CKAID '<<CKAID#1>>' not found in NSS DB
-002 added connection description "westnet-eastnet-ikev2"
+003 failed to find certificate ckaid '<<CKAID#1>>' in the NSS database
+036 Failed to add connection "westnet-eastnet-ikev2" with invalid "right" certificate
 west #
  ipsec auto --add westnet-eastnet-ipv4
 002 added connection description "westnet-eastnet-ipv4"

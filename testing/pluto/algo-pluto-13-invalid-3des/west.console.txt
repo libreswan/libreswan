@@ -6,15 +6,15 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --debug-all --impair send-key-size-check all --impair retransmits
+ ipsec whack --impair send-key-size-check all --impair suppress-retransmits
 whack error: unexpected argument "all"
 west #
  ipsec auto --add westnet-eastnet-aes256
-036 Failed to add connection "westnet-eastnet-aes256", esp="3des333-sha1" is invalid: 3DES does not take variable key lengths, enc_alg="3des"(333), auth_alg="sha1", modp=""
+036 Failed to add connection "westnet-eastnet-aes256", esp="3des333-sha1" is invalid: 3DES does not take variable key lengths
 west #
  ipsec auto --status | grep westnet-eastnet-aes256
 west #

@@ -1,8 +1,10 @@
 # FROM fedora:27
 # MAINTAINER "Antony Antony" <antony@phenome.org>
 # ENV container docker
-# RUN dnf -y update;
 RUN dnf -y update
+# RUN mkdir -p /home/build/libreswan
+RUN mkdir -p /home/build/
+COPY . /home/build/libreswan
 RUN dnf -y install systemd; \
 (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
 rm -f /lib/systemd/system/multi-user.target.wants/*;\
@@ -15,9 +17,13 @@ rm -f /lib/systemd/system/anaconda.target.wants/*;
 # these first. If install breaks docker image will start, can debug.
 VOLUME [ "/sys/fs/cgroup" ]
 CMD ["/sbin/init"]
-RUN dnf install -y dnf-plugins-core git openssh-server openssh-clients \
-	vim-enhanced wget 
-RUN dnf install -y @development-tools
-RUN dnf builddep -y libreswan
-RUN wget -O libreswan.spec https://raw.githubusercontent.com/libreswan/libreswan/master/packaging/fedora/libreswan.spec
-RUN dnf builddep -y libreswan.spec
+RUN dnf install -y dnf-plugins-core git iproute openssh-server openssh-clients \
+	python3-pexpect sudo vim-enhanced wget
+RUN dnf install -y @development || dnf install -y @development-tools
+# F28 and later to support X509 Certificates, signed with SHA1
+RUN ls -l /usr/bin/update-crypto-policies && /usr/bin/update-crypto-policies --set LEGACY || true
+RUN echo "Do not add files here.  networkig is handled by systemd-networkd in\n/etc/systemd/nework\networkctl" > /etc/sysconfig/network-scripts/README.libreswan
+RUN ls
+RUN cd /home/build/libreswan; ls; make SUDO_CMD= install-rpm-build-dep && cd /
+RUN rm -fr /etc/sysconfig/network-scripts/ifcfg-ens3
+# RUN /home/build/libreswan/testing/guestbin/swan-transmogrify

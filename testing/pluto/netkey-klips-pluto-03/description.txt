@@ -1,9 +1,0 @@
-NETKEY and KLIPS interop test with netkey passthrough
-
-This adds a passthrough connection to verify its priority is higher
-(lower number) which can be seen in ip xfrm policy
-
-The passthrough is for ICMP, so with the higher priority, ICMP is not
-encrypted and should hit the firewall and our last ping command should fail.
-An additional netcat command to port 22 verifies that non-icmp is correctly
-encrypted.

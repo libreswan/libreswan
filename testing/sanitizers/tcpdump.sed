@@ -13,5 +13,11 @@
 
 # nflog
 # 15:49:06.782887 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id 1892, seq 1, length 64
+
 s/[0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9]* IP /IP /g
 s/, id [0-9]*, seq/, id XXXX, seq/g
+
+# new output from tcpdump-4.9.3-1.fc30.x86_64, really looks like a
+# stray debug line
+
+/dropped privs to tcpdump/d

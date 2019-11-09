@@ -5,12 +5,13 @@
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -24,7 +25,6 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#include <libreswan.h>
 
 #include <errno.h>
 
@@ -33,124 +33,11 @@
 #include "state.h"
 #include "log.h"
 #include "crypto.h"
-#include "alg_info.h"
 #include "ike_alg.h"
 #include "test_buffer.h"
 #include "connections.h"
-
-#include "ike_alg_camellia.h"
-#include "ike_alg_aes.h"
-
-#include "ctr_test_vectors.h"
-#include "cbc_test_vectors.h"
-#include "gcm_test_vectors.h"
-
+#include "ike_alg_integ.h"
 #include "kernel_alg.h"
-
-void init_crypto(void)
-{
-	ike_alg_init();
-
-	passert(test_cbc_vectors(&ike_alg_encrypt_camellia_cbc,
-				 camellia_cbc_tests));
-	passert(test_gcm_vectors(&ike_alg_encrypt_aes_gcm_16,
-				 aes_gcm_tests));
-	passert(test_ctr_vectors(&ike_alg_encrypt_aes_ctr,
-				 aes_ctr_tests));
-	passert(test_cbc_vectors(&ike_alg_encrypt_aes_cbc,
-				 aes_cbc_tests));
-
-	/*
-	 * Cross check IKE_ALG with legacy code.
-	 *
-	 * Showing that IKE_ALG provides equivalent information is the
-	 * first step to deleting the legacy code.
-	 */
-
-	/* crypto_req_keysize() */
-	for (const struct encrypt_desc **encryptp = next_encrypt_desc(NULL);
-	     encryptp != NULL; encryptp = next_encrypt_desc(encryptp)) {
-		const struct encrypt_desc *encrypt = *encryptp;
-		if (encrypt->common.id[IKEv1_ESP_ID] > 0) {
-			if (encrypt->keylen_omitted) {
-				passert_ike_alg(&encrypt->common,
-						crypto_req_keysize(CRK_ESPorAH,
-								   encrypt->common.id[IKEv1_ESP_ID])
-						== 0);
-			} else {
-				passert_ike_alg(&encrypt->common,
-						crypto_req_keysize(CRK_ESPorAH,
-								   encrypt->common.id[IKEv1_ESP_ID])
-						== encrypt->keydeflen);
-			}
-		}
-	}
-
-}
-
-/*
- * Return a required oakley or ipsec keysize or 0 if not required.
- * The first parameter uses 0 for ESP, and anything above that for
- * IKE major version
- */
-unsigned crypto_req_keysize(enum crk_proto ksproto, int algo)
-{
-	switch (ksproto) {
-
-	case CRK_ESPorAH:
-		switch (algo) {
-		case ESP_CAST:
-			return CAST_KEY_DEF_LEN;
-		case ESP_AES:
-			return AES_KEY_DEF_LEN;
-		case ESP_AES_CTR:
-			return AES_CTR_KEY_DEF_LEN;
-		case ESP_AES_CCM_8:
-		case ESP_AES_CCM_12:
-		case ESP_AES_CCM_16:
-			return AES_CCM_KEY_DEF_LEN;
-		case ESP_AES_GCM_8:
-		case ESP_AES_GCM_12:
-		case ESP_AES_GCM_16:
-			return AES_GCM_KEY_DEF_LEN;
-		case ESP_CAMELLIA:
-			return CAMELLIA_KEY_DEF_LEN;
-		case ESP_CAMELLIA_CTR:
-			return CAMELLIA_CTR_KEY_DEF_LEN;
-		case ESP_NULL_AUTH_AES_GMAC:
-			return AES_GMAC_KEY_DEF_LEN;
-		case ESP_3DES:
-			/* 0 means send no keylen */
-			return 0;
-		/* private use */
-		case ESP_SERPENT:
-			return SERPENT_KEY_DEF_LEN;
-		case ESP_TWOFISH:
-			return TWOFISH_KEY_DEF_LEN;
-		default:
-			return 0;
-		}
-
-	default:
-		bad_case(ksproto);
-	}
-}
-
-/*
- * Get the DH algorthm specified for the child (ESP or AH).
- *
- * If this is NULL and PFS is required then callers fall back to using
- * the parent's DH algorithm.
- */
-const struct oakley_group_desc *child_dh(const struct connection *c)
-{
-	if (c->alg_info_esp == NULL) {
-		/* using default propsal list */
-		return NULL;
-	}
-	/* might be NULL */
-	return c->alg_info_esp->esp_pfsgroup;
-}
 
 /*
  *      Show IKE algorithms for
@@ -159,9 +46,8 @@ const struct oakley_group_desc *child_dh(const struct connection *c)
  */
 void ike_alg_show_connection(const struct connection *c, const char *instance)
 {
-	const struct state *st;
-
-	if (c->alg_info_ike != NULL) {
+	if (c->ike_proposals.p != NULL
+	    && !default_proposals(c->ike_proposals.p)) {
 		/*
 		 * List the algorithms as found in alg_info_ike and as
 		 * will be fed into the proposal code.
@@ -193,28 +79,46 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlogf(buf, "\"%s\"%s:   IKE algorithms: ",
 				c->name, instance);
-			lswlog_alg_info(buf, &c->alg_info_ike->ai);
+			fmt_proposals(buf, c->ike_proposals.p);
 		}
 	}
-	st = state_with_serialno(c->newest_isakmp_sa);
+
+	const struct state *st = state_with_serialno(c->newest_isakmp_sa);
+
 	if (st != NULL) {
-		/*
-		 * Convert the crypt-suite into 'struct proposal_info'
-		 * so that the parser's print-alg code can be used.
-		 */
-		const struct proposal_info p = {
-			.encrypt = st->st_oakley.ta_encrypt,
-			.enckeylen = st->st_oakley.enckeylen,
-			.prf = st->st_oakley.ta_prf,
-			.integ = st->st_oakley.ta_integ,
-			.dh = st->st_oakley.ta_dh,
-		};
-		const char *v = st->st_ikev2 ? "IKEv2" : "IKE";
 		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlogf(buf,
 				"\"%s\"%s:   %s algorithm newest: ",
-				c->name, instance, v);
-			lswlog_proposal_info(buf, &p);
+				c->name, instance,
+				enum_name(&ike_version_names, st->st_ike_version));
+			const struct trans_attrs *ta = &st->st_oakley;
+			const char *sep = "";
+			if (ta->ta_encrypt != NULL) {
+				lswlogs(buf, sep); sep = "-";
+				lswlogs(buf, ta->ta_encrypt->common.fqn);
+				if (ta->enckeylen != 0) {
+					lswlogf(buf, "_%d", ta->enckeylen);
+				}
+			}
+			if (ta->ta_prf != NULL) {
+				lswlogs(buf, sep); sep = "-";
+				lswlogs(buf, ta->ta_prf->common.fqn);
+			}
+			/* XXX: should just print everything */
+			if (ta->ta_integ != NULL) {
+				if ((ta->ta_prf == NULL) ||
+				    (encrypt_desc_is_aead(ta->ta_encrypt) &&
+				     ta->ta_integ != &ike_alg_integ_none) ||
+				    (!encrypt_desc_is_aead(ta->ta_encrypt) &&
+				     ta->ta_integ->prf != ta->ta_prf)) {
+					lswlogs(buf, sep); sep = "-";
+					lswlogs(buf, ta->ta_integ->common.fqn);
+				}
+			}
+			if (ta->ta_dh != NULL) {
+				lswlogs(buf, sep); sep = "-";
+				lswlogs(buf, ta->ta_dh->common.fqn);
+			}
 		}
 	}
 }
@@ -257,20 +161,21 @@ void ike_alg_show_status(void)
 		const struct prf_desc *alg = (*algp);
 		if (ike_alg_is_ike(&(alg)->common)) {
 			whack_log(RC_COMMENT,
-				  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
-				  alg->common.ikev1_oakley_id,
-				  enum_name(&oakley_hash_names, alg->common.ikev1_oakley_id),
-				  alg->prf_output_size);
+				  "algorithm IKE PRF: name=%s, hashlen=%zu",
+				  alg->common.fqn, alg->prf_output_size);
 		}
 	}
 
-	for (const struct oakley_group_desc **gdescp = next_oakley_group(NULL);
-	     gdescp != NULL; gdescp = next_oakley_group(gdescp)) {
-		const struct oakley_group_desc *gdesc = *gdescp;
-		whack_log(RC_COMMENT,
-			  "algorithm IKE DH Key Exchange: name=%s, bits=%d",
-			  gdesc->common.name,
-			  (int)gdesc->bytes * BITS_PER_BYTE);
+	for (const struct dh_desc **gdescp = next_dh_desc(NULL);
+	     gdescp != NULL; gdescp = next_dh_desc(gdescp)) {
+		const struct dh_desc *gdesc = *gdescp;
+		if (gdesc->bytes > 0) {
+			/* nothing crazy like 'none' */
+			whack_log(RC_COMMENT,
+				  "algorithm IKE DH Key Exchange: name=%s, bits=%d",
+				  gdesc->common.name,
+				  (int)gdesc->bytes * BITS_PER_BYTE);
+		}
 	}
 
 	whack_log(RC_COMMENT, " "); /* spacer */

@@ -1,0 +1,61 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ certutil -D -n west -d sql:/etc/ipsec.d
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # down'ed conn must remain down
+east #
+ ipsec whack --impair revival
+east #
+ ipsec auto --add san
+002 added connection description "san"
+east #
+ echo "initdone"
+initdone
+east #
+ # confirm all verifications used the NSS IPsec profile and not TLS client/server profile
+east #
+ grep profile /tmp/pluto.log  | grep -v Starting
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+| verify_end_cert trying profile IPsec
+| certificate is valid (profile IPsec)
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

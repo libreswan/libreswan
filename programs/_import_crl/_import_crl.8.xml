@@ -32,7 +32,7 @@ in order to add or update a CRL in the NSS database (default: @IPSEC_NSSDIR@)</p
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
-<para>Man page written for the Libreswan project &lt;<ulink url='http://www.libreswan.org/'>http://www.libreswan.org/</ulink>&gt; by Matt Rogers</para>
+<para>Man page written for the Libreswan project &lt;<ulink url='https://libreswan.org/'>https://libreswan.org/</ulink>&gt; by Matt Rogers</para>
 
 </refsect1>
 </refentry>

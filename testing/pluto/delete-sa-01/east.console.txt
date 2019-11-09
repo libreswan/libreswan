@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -11,10 +11,10 @@ east #
 east #
  ipsec whack --label 'SAwest-east rightrsasigkey'  --keyid "@east" --pubkeyrsa "0sAQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv"
 east #
- ipsec whack --name SAwest-east --encrypt --tunnel --pfs --rsasig --host "192.1.2.23"  --nexthop "192.1.2.45" --updown "ipsec _updown" --id "@east" --to --host "%any" --nexthop "%direct" --updown "ipsec _updown" --id "@west" --ipseclifetime "28800" --rekeymargin "540" --keyingtries "1"
+ ipsec whack --name SAwest-east --ikev1-allow --encrypt --tunnel --pfs --rsasig --host "192.1.2.23"  --nexthop "192.1.2.45" --updown "ipsec _updown" --id "@east" --to --host "%any" --nexthop "%direct" --updown "ipsec _updown" --id "@west" --ipseclifetime "28800" --rekeymargin "540" --keyingtries "1"
 002 added connection description "SAwest-east"
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:
@@ -22,14 +22,17 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+east #
+ # up to 3.26 we printed a bogus message, this is checking that no longer happens
+east #
+ grep "received and ignored empty informational" /tmp/pluto.log
 east #
 east #
  ../bin/check-for-core.sh

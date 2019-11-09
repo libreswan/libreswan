@@ -15,7 +15,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -53,6 +53,7 @@
 #include "lswconf.h"
 #include "secrets.h"
 #include "lswnss.h"
+#include "lswtool.h"
 
 #include <nss.h>
 #include <keyhi.h>
@@ -101,10 +102,11 @@ struct option opts[] = {
 static void print(struct private_key_stuff *pks,
 		  int count, struct id *id, bool disclose)
 {
-	char idb[IDTOA_BUF] = "n/a";
-	if (id) {
-		idtoa(id, idb, IDTOA_BUF);
+	id_buf idbuf = { "n/a", };
+	if (id != NULL) {
+		str_id(id, &idbuf);
 	}
+	const char *idb = idbuf.buf;
 
 	char pskbuf[128] = "";
 	if (pks->kind == PKK_PSK || pks->kind == PKK_XAUTH) {
@@ -128,6 +130,7 @@ static void print(struct private_key_stuff *pks,
 			printf("    psk: \"%s\"\n", pskbuf);
 		break;
 
+	// only old/obsolete secrets entries use this
 	case PKK_RSA: {
 		printf("RSA");
 		char *keyid = pks->u.RSA_private_key.pub.keyid;
@@ -138,6 +141,11 @@ static void print(struct private_key_stuff *pks,
 		char *ckaid = ckaid_as_string(pks->u.RSA_private_key.pub.ckaid);
 		printf(" ckaid: %s\n", ckaid);
 		pfree(ckaid);
+		break;
+	}
+
+	// this never has a secret entry so shouldn't ne needed
+	case PKK_ECDSA: {
 		break;
 	}
 
@@ -154,6 +162,10 @@ static void print(struct private_key_stuff *pks,
 		/* can't happen but the compiler does not know that */
 		printf("NULL authentication -- cannot happen: %s\n", idb);
 		abort();
+
+	case PKK_INVALID:
+		printf("Invalid or unknown key: %s\n", idb);
+		exit(1);
 	}
 }
 
@@ -229,7 +241,7 @@ static char *pubkey_to_rfc3110_base64(const struct RSA_public_key *pub)
 	char* base64;
 	err_t err = rsa_pubkey_to_base64(pub->e, pub->n, &base64);
 	if (err) {
-		fprintf(stderr, "%s: unexpected error encoing RSA public key '%s'\n",
+		fprintf(stderr, "%s: unexpected error encoding RSA public key '%s'\n",
 			progname, err);
 		return NULL;
 	}

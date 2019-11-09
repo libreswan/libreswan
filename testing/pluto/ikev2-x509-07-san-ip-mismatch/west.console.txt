@@ -4,7 +4,7 @@ west #
  certutil -D -n east -d sql:/etc/ipsec.d
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
@@ -14,31 +14,27 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair suppress-retransmits
 west #
  # this should fail
 west #
  ipsec auto --up san
 002 "san" #1: initiating v2 parent SA
-133 "san" #1: STATE_PARENT_I1: initiate
-133 "san" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "san" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-134 "san" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
-002 "san" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+1v2 "san" #1: initiate
+1v2 "san" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+1v2 "san" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "san" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "san" #2: No matching subjectAltName found
-003 "san" #2: certificate does not contain ID_IP subjectAltName=192.1.2.123
+003 "san" #2: certificate subjectAltName extension does not match ID_IPV4_ADDR '192.1.2.123'
 002 "san" #2: Peer public key SubjectAltName does not match peer ID for this connection
 002 "san" #2: X509: CERT payload does not match connection ID
-224 "san" #2: STATE_PARENT_I2: v2N_AUTHENTICATION_FAILED
+002 "san" #2: X509: connection failed due to unmatched IKE ID in certificate SAN
 west #
  echo "done"
 done
 west #
  # confirm the right ID types were sent/received
 west #
- grep "ID type" /tmp/pluto.log
-|    ID type: ID_IPV4_ADDR (0x1)
+ grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_IPV4_ADDR (0x1)
 west #
 west #

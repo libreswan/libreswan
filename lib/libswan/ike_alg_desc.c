@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -49,13 +49,8 @@ const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg)
 	return (const struct encrypt_desc *)alg;
 }
 
-const struct oakley_group_desc *dh_desc(const struct ike_alg *alg)
+const struct dh_desc *dh_desc(const struct ike_alg *alg)
 {
 	passert(alg == NULL || alg->algo_type == IKE_ALG_DH);
-	return (const struct oakley_group_desc *)alg;
-}
-
-const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg)
-{
-	return dh_desc(alg);
+	return (const struct dh_desc *)alg;
 }

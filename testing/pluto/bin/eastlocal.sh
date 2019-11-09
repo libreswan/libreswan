@@ -34,11 +34,6 @@ then
         chmod 600 /tmp/strongswan/etc/ipsec.secrets
         touch /tmp/strongswan/etc/ipsec.secrets
 
-elif [ "$WEST_USERLAND" == "racoon2" ]
-then
-        # setup racoon
-        # note: tests do this manual - needs to be merged in
-	echo "racoon2 not yet merged into local scripts"
 else
 	# setup libreswan
 	mkdir -p /tmp/$TESTNAME

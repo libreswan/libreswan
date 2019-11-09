@@ -1,4 +1,18 @@
-/^\[ 00.00\] audit.*$/d
+# [  111.628924] -> [ 00.00]
+s/^\[\s\+[0-9]\+.[0-9]\+\] /\[ 00.00] /
+
+# XXX: Can kernel messages be split across two lines?
+
+# seemingly kernel messages end with ^M?
+/^\[ 00.00] .*/ {
+  / audit:/d
+  / kauditd_printk_skb:/d
+  / Netfilter messages via NETLINK/d
+  / IPsec XFRM device driver/d
+}
+
+# XXX: how many of these are still generated?
+
 /tracing thread pid = \(.*\)/d
 s/spawn \(.*\) single/spawn PATH single/
 s/Program invoked with \(.*\)\/start.sh/Program invoked with PATH\/start.sh/
@@ -106,9 +120,13 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 s/TTL=\([0-9]*\) ID=[0-9]* PROTO/TTL=\1 ID=XXXXX PROTO/
 s/ ID=[0-9]* SEQ=/ ID=XXXX SEQ=/g
 s/ LEN=[0-9]* / LEN=XXXX /g
+s/ FLOWLBL=[0-9]* / FLOWLBL=XXXXX /g
 /^.*CPU feature 'AVX registers' is not supported.*$/d
 /^.*hrtimer: interrupt took .*$/d
 /^.*Clocksource tsc unstabl.*$/d
 /^.*audit_printk.*$/d
-/^.*audit: type=.*$/d
 /^.*SELinux: unrecognized netlink message.*$/d
+/^.*clocksource.*$/d
+s/ qlen 1000$//
+/^type=PROCTITLE.*$/d
+/^\[ 00.00\] IN=.*$/d

@@ -10,7 +10,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -18,13 +18,32 @@
  * for more details.
  */
 
-struct pending; /* forward reference */
+#include "monotime.h"
+#include "fd.h"
+
 void flush_pending_by_connection(const struct connection *c);
 bool in_pending_use(const struct connection *c);
-void show_pending_phase2(const struct connection *c, const struct state *st);
+void show_pending_phase2(const struct connection *c, const struct ike_sa *ike);
 bool pending_check_timeout(const struct connection *c);
 
-extern struct connection *first_pending(const struct state *st,
+extern struct connection *first_pending(const struct ike_sa *ike,
 					lset_t *policy,
-					int *p_whack_sock);
+					fd_t *p_whack_sock);
 
+/*
+ * struct pending, the structure representing IPsec SA negotiations
+ * delayed until a Keying Channel (IKE SA) has been negotiated.
+ * Essentially, a pending call to quick_outI1 or ikev2 child initiate
+ */
+
+struct pending {
+	fd_t whack_sock;
+	struct ike_sa *ike;
+	struct connection *connection;
+	lset_t policy;
+	unsigned long try;
+	so_serial_t replacing;
+	monotime_t pend_time;
+	struct xfrm_user_sec_ctx_ike *uctx;
+	struct pending *next;
+};

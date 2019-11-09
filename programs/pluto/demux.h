@@ -1,13 +1,15 @@
 /* demultiplex incoming IKE messages
+ *
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
+ * Copyright (C) 2018-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -21,14 +23,14 @@
 #include "server.h"
 #include "packet.h"
 #include "quirks.h"
+#include "chunk.h"
+#include "ip_address.h"
+#include "pluto_timing.h"
 
 struct state;   /* forward declaration of tag */
 
 extern void init_demux(void);
 extern event_callback_routine comm_handle_cb;
-
-extern pb_stream reply_stream;
-extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 /* State transition function infrastructure
  *
@@ -56,8 +58,20 @@ extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 struct payload_digest {
 	pb_stream pbs;
+	/* Use IKEv2 term: "... the payload type" */
+	unsigned payload_type;
 	union payload payload;
-	struct payload_digest *next; /* of same kind */
+	struct payload_digest *next; /* of same type */
+};
+
+struct payload_summary {
+	bool parsed;
+	v2_notification_t n;
+	lset_t present;
+	lset_t repeated;
+	/* for response, can't use pointers */
+	uint8_t data[1];
+	size_t data_size;
 };
 
 /* message digest
@@ -68,10 +82,7 @@ struct msg_digest {
 	struct msg_digest *next;		/* for free list */
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
 	const struct iface_port *iface;		/* interface on which message arrived */
-	ip_address sender;			/* where message came from (network order) */
-	pb_stream packet_pbs;			/* whole packet */
-	pb_stream message_pbs;			/* message to be processed */
-	pb_stream clr_pbs;			/* (v2) decrypted packet (within v2E payload) */
+	ip_endpoint sender;			/* address:port where message came from */
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
 	enum state_kind from_state;		/* state we started in */
@@ -80,47 +91,77 @@ struct msg_digest {
 	bool new_iv_set;			/* (v1) */
 	struct state *st;			/* current state object */
 
-	enum original_role original_role;	/* (v2) */
-	msgid_t msgid_received;			/* (v2) - Host order! */
+	threadtime_t md_inception;		/* when was this started */
 
-	notification_t note;			/* reason for failure */
+	notification_t v1_note;			/* reason for failure */
 	bool dpd;				/* (v1) Peer supports RFC 3706 DPD */
 	bool ikev2;				/* Peer supports IKEv2 */
 	bool fragvid;				/* (v1) Peer supports FRAGMENTATION */
 	bool nortel;				/* (v1) Peer requires Nortel specific workaround */
 	bool event_already_set;			/* (v1) */
+	bool fake_clone;			/* is this a fake (clone) message */
+	bool fake_dne;				/* created as part of fake_md() */
+
+	/*
+	 * The packet PBS contains a message PBS and the message PBS
+	 * contains payloads one of which (for IKEv2) is the SK which
+	 * also contains payloads.
+	 *
+	 * Danger Will Robinson: since the digest contains a pbs
+	 * pointing at one of these PBS fields, and these fields point
+	 * at each other, their lifetime is the same as the
+	 * msg_digest.
+	 */
+	pb_stream packet_pbs;			/* whole packet */
+	pb_stream message_pbs;			/* message to be processed */
 
 #   define PAYLIMIT 30
-	struct payload_digest
-		digest[PAYLIMIT],
-		*digest_roof;
-	/* ??? It seems unlikely that chain will need to store payloads numbered as high as these.
-	 * ISAKMP_NEXT_NATD_DRAFTS, ISAKMP_NEXT_NATOA_DRAFTS and
-	 * ISAKMP_NEXT_IKE_FRAGMENTATION/ISAKMP_NEXT_v2IKE_FRAGMENTATION
-	 * probably make no sense here.
-	 * Also a v1 and a v2 version might make sense and be smaller.
+	struct payload_digest digest[PAYLIMIT];
+	unsigned digest_roof;
+
+	struct payload_summary message_payloads;	/* (v2) */
+	struct payload_summary encrypted_payloads;	/* (v2) */
+
+	/*
+	 * Indexed by next-payload.  IKEv1 and IKEv2 use the same
+	 * array but different ranges.
+	 *
+	 * Regardless of the IKE version, the index is always less
+	 * than LELEM_ROOF.  This is because the next-payload
+	 * (converted to a bit map) is also stored in lset_t (lset_t
+	 * has LELEM_ROOF as its bound). Any larger value, such as
+	 * v2IKE_FRAGMENTATION, must have been droped before things
+	 * get this far.
+	 *
+	 * XXX: While the real upper bound is closer to 53 (vs 64)
+	 * there's no value in shaving those few extra bytes - this
+	 * structure is transient.
+	 *
+	 * XXX: Even though the IKEv2 values start at 33, they are not
+	 * biased to save space.  This is because it would break the
+	 * 1:1 correspondance between the wire-value, this array, and
+	 * the lset_t bit (at one point the lset_t values were biased,
+	 * the result was confusing custom mapping code everywhere).
 	 */
-	struct payload_digest
-		*chain[(unsigned)ISAKMP_NEXT_ROOF>(unsigned)ISAKMP_NEXT_v2ROOF ? ISAKMP_NEXT_ROOF : ISAKMP_NEXT_v2ROOF];
+	struct payload_digest *chain[LELEM_ROOF];
 	struct isakmp_quirks quirks;
 };
 
+enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr);
+enum message_role v2_msg_role(const struct msg_digest *md);
+
 extern struct msg_digest *alloc_md(const char *mdname);
+struct msg_digest *clone_md(struct msg_digest *md, const char *name);
 extern void release_md(struct msg_digest *md);
 extern void release_any_md(struct msg_digest **mdp);
-
-typedef stf_status state_transition_fn(struct state *st, struct msg_digest *md);
-
-extern void fmt_ipsec_sa_established(struct state *st,
-				     char *sadetails, size_t sad_len);
-extern void fmt_isakmp_sa_established(struct state *st,
-				      char *sadetails, size_t sad_len);
+void schedule_md_event(const char *name, struct msg_digest *md);
 
 extern void free_md_pool(void);
 
 extern void process_packet(struct msg_digest **mdp);
-extern bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *before);
 
 extern char *cisco_stringify(pb_stream *pbs, const char *attr_name);
+
+extern void lswlog_msg_digest(struct lswlog *log, const struct msg_digest *md);
 
 #endif /* _DEMUX_H */

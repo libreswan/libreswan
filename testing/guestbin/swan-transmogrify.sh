@@ -47,9 +47,7 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 ff02::3 ip6-allhosts
 192.1.2.45 west.testing.libreswan.org west
-192.0.1.254 west-in  west-eth0
 192.1.2.23  east.testing.libreswan.org east
-192.0.2.254 east-in  east-eth0
 192.0.2.1   sunrise
 192.1.2.254 nic.testing.libreswan.org nic
 EOF

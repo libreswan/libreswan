@@ -1,8 +1,8 @@
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-ipsec look
-ipsec look
-grep "message ID:" /tmp/pluto.log
+../../pluto/bin/ipsec-look.sh
+../../pluto/bin/ipsec-look.sh
+grep -E "Message ID: [0-9] " /tmp/pluto.log
 # grep on east
 hostname |grep west > /dev/null || grep -A 1 "has not responded in" /tmp/pluto.log
 # A tunnel should have established

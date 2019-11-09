@@ -7,14 +7,14 @@
  * Copyright (C) 2008-2012 Paul Wouters
  * Copyright (C) 2008-2010 David McCullough.
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013,2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -23,7 +23,6 @@
  *
  */
 
-#include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -66,7 +65,6 @@ static void show_system_security(void)
 	whack_log(RC_COMMENT, "seccomp=unsupported");
 #endif
 	whack_log(RC_COMMENT, " ");     /* spacer */
-
 }
 
 void show_global_status(void)
@@ -79,6 +77,7 @@ void show_status(void)
 {
 	show_kernel_interface();
 	show_ifaces_status();
+	whack_log(RC_COMMENT, " ");     /* spacer */
 	show_system_security();
 	show_setup_plutomain();
 	show_debug_status();
@@ -86,12 +85,10 @@ void show_status(void)
 	show_virtual_private();
 	kernel_alg_show_status();
 	ike_alg_show_status();
-#ifndef NO_DB_OPS_STATS
 	db_ops_show_status();
-#endif
 	show_connections_status();
-	show_states_status();
-#ifdef KLIPS
+	show_states_status(FALSE);
+#if defined(NETKEY_SUPPORT) || defined(KLIPS)
 	show_shunt_status();
 #endif
 }
@@ -157,7 +154,7 @@ static void connection_state(struct state *st, void *data)
 	}
 
 	/* ignore undefined states (i.e. just deleted) */
-	if (st->st_state == STATE_UNDEFINED)
+	if (st->st_state->kind == STATE_UNDEFINED)
 		return;
 
 	if (IS_IKE_SA(st)) {
@@ -170,7 +167,7 @@ static void connection_state(struct state *st, void *data)
 		} else {
 			if (lc->phase1 < p1_init)
 				lc->phase1 = p1_init;
-			if (IS_ISAKMP_ENCRYPTED(st->st_state) &&
+			if (IS_ISAKMP_ENCRYPTED(st->st_state->kind) &&
 			    lc->phase1 < p1_encrypt)
 				lc->phase1 = p1_encrypt;
 			if (IS_ISAKMP_AUTHENTICATED(st->st_state) &&
@@ -185,7 +182,7 @@ static void connection_state(struct state *st, void *data)
 	if (st->st_connection != lc->conn)
 		return;
 
-	if (IS_PHASE15(st->st_state)) {
+	if (IS_PHASE15(st->st_state->kind)) {
 		if (lc->tunnel < tun_phase15)
 			lc->tunnel = tun_phase15;
 	}
@@ -204,13 +201,8 @@ static void connection_state(struct state *st, void *data)
 	}
 }
 
-void log_state(struct state *st, enum state_kind new_state)
+void binlog_state(struct state *st, enum state_kind new_state)
 {
-	char buf[1024];
-	struct log_conn_info lc;
-	struct connection *conn;
-	const char *tun = NULL, *p1 = NULL, *p2 = NULL;
-
 	if (pluto_stats_binary == NULL)
 		return;
 
@@ -220,7 +212,8 @@ void log_state(struct state *st, enum state_kind new_state)
 		return;
 	}
 
-	conn = st->st_connection;
+	struct connection *conn = st->st_connection;
+
 	if (conn == NULL || st->st_connection->name == NULL) {
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("log_state() called without st->st_connection or without st->st_connection->name"));
@@ -230,78 +223,75 @@ void log_state(struct state *st, enum state_kind new_state)
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state called for state update for connection %s ",
 		    conn->name));
-	zero(&lc);	/* OK: the two pointer fields handled below */
-	lc.conn = conn;
-	lc.ignore = NULL;
 
-	const struct finite_state *save_state = st->st_finite_state;
-	st->st_finite_state = finite_states[new_state];
-	for_each_state(connection_state, &lc);
-	st->st_finite_state = save_state;
+	struct log_conn_info lc = {
+		.conn = conn,
+		.ignore = NULL,
+		.tunnel = tun_down,
+		.phase1 = p1_none,
+		.phase2 = p2_none
+	};
 
-	if (conn->statsval ==
-	    (IPsecSAref2NFmark(st->st_ref) | LOG_CONN_STATSVAL(&lc))) {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("log_state for connection %s state change signature (%d) matches last one - skip logging",
-			    conn->name, conn->statsval));
-		return;
+	{
+		const struct finite_state *save_state = st->st_state;
+
+		st->st_state = finite_states[new_state];
+		for_each_state(connection_state, &lc, __func__);
+		st->st_state = save_state;
 	}
-	conn->statsval = IPsecSAref2NFmark(st->st_ref) |
-			 LOG_CONN_STATSVAL(&lc);
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("log_state set state change signature for connection %s to %d",
-		    conn->name, conn->statsval));
+
+	{
+		uint32_t sv = IPsecSAref2NFmark(st->st_ref) | LOG_CONN_STATSVAL(&lc);
+
+		if (conn->statsval == sv) {
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("log_state for connection %s state change signature (%d) matches last one - skip logging",
+				    conn->name, sv));
+			return;
+		}
+		conn->statsval = sv;
+		DBG(DBG_CONTROLMORE,
+			DBG_log("log_state set state change signature for connection %s to %d",
+				conn->name, sv));
+	}
+
+	const char *tun;
 
 	switch (lc.tunnel) {
-	case tun_phase1:
-		tun = "phase1";
-		break;
-	case tun_phase1up:
-		tun = "phase1up";
-		break;
-	case tun_phase15:
-		tun = "phase15";
-		break;
-	case tun_phase2:
-		tun = "phase2";
-		break;
-	case tun_up:
-		tun = "up";
-		break;
-	case tun_down:
-		tun = "down";
-		break;
-	default:
-		tun = "unchanged";
-		break;
+	case tun_phase1:	tun = "phase1";		break;
+	case tun_phase1up:	tun = "phase1up";	break;
+	case tun_phase15:	tun = "phase15";	break;
+	case tun_phase2:	tun = "phase2";		break;
+	case tun_up:		tun = "up";		break;
+	case tun_down:		tun = "down";		break;
+	default:		tun = "unchanged";	break;
 	}
+
+	const char *p1;
 
 	switch (lc.phase1) {
-	case p1_init:     p1 = "init";
-		break;
-	case p1_encrypt:  p1 = "encrypt";
-		break;
-	case p1_auth:     p1 = "auth";
-		break;
-	case p1_up:       p1 = "up";
-		break;
-	case p1_down:       p1 = "down";
-		break;
-	default:          p1 = "unchanged";
-		break;
+	case p1_init:	p1 = "init";	break;
+	case p1_encrypt:p1 = "encrypt";	break;
+	case p1_auth:	p1 = "auth";	break;
+	case p1_up:	p1 = "up";	break;
+	case p1_down:	p1 = "down";	break;
+	default:	p1 = "unchanged";break;
 	}
 
+	const char *p2;
+
 	switch (lc.phase2) {
-	case p2_neg:      p2 = "neg";
-		break;
-	case p2_up:       p2 = "up";
-		break;
-	default:          p2 = "down";
-		break;
+	case p2_neg:	p2 = "neg";	break;
+	case p2_up:	p2 = "up";	break;
+	default:	p2 = "down";	break;
 	}
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
 		    pluto_stats_binary, conn->name, tun, p1, p2));
+
+	/* ??? tun, p1, p2 cannot be NULL -- why handle that case? */
+
+	char buf[1024];
 
 	snprintf(buf, sizeof(buf), "%s "
 		 "%s ipsec-tunnel-%s if_stats /proc/net/dev/%s \\; "
@@ -325,7 +315,7 @@ void log_state(struct state *st, enum state_kind new_state)
 		 st->st_refhim == IPSEC_SAREF_NULL ? 0u :
 		 IPsecSAref2NFmark(st->st_refhim) | IPSEC_NFMARK_IS_SAREF_BIT);
 	if (system(buf) == -1) {
-		loglog(RC_LOG_SERIOUS,"statsbin= failed to send status update notification");
+		loglog(RC_LOG_SERIOUS, "statsbin= failed to send status update notification");
 	}
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state for connection %s completed", conn->name));

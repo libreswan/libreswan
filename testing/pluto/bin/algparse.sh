@@ -7,7 +7,9 @@ Usage:
 
     $0 <path-to-alg-parse> [ <test-files> ] [ | patch -p1 ]
 
-Piping to patch will apply the reported differences.
+Piping to patch will apply the reported differences.  For instance:
+
+    $0 'ipsec algparse'
 
 EOF
     exit 1
@@ -28,15 +30,20 @@ rc=0
 for file in "$@" ; do
 
     flags=
+    test=
     case "${file}" in
 	*-fips* ) flags="${flags} -fips" ;;
     esac
 
-    case "${file}" in
-	*.v1.* ) flags="${flags} -v1 -t" ;;
-	*.v2.* ) flags="${flags} -v2 -t" ;;
-	*.v.* ) flags="${flags} -v" ;;
-    esac
+    for opt in $(basename ${file} | sed -e 's/\./ /g'); do
+	case "${opt}" in
+	    v1 ) flags="${flags} -v1" test="-t" ;;
+	    v2 ) flags="${flags} -v2" test="-t" ;;
+	    pfs ) flags="${flags} -pfs" test="-t" ;;
+	    v ) test="-v" ;;
+	esac
+    done
+    flags="${flags} ${test}"
 
     echo ${algparse} ${flags} \# ${file} 1>&2
 
@@ -46,6 +53,7 @@ for file in "$@" ; do
 	       | diff -u ${file} - ; then
 	    :
 	else
+	    echo "fail: ${algparse} ${flags}" 1>&2
 	    rc=1
 	fi
     else

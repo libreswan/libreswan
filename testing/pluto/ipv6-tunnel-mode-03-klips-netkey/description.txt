@@ -1,2 +1,0 @@
-Basic pluto test using IPv6 (west using KLIPS, east using NETKEY):
-

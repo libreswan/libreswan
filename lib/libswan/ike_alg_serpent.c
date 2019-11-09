@@ -9,7 +9,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -17,16 +17,13 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <libreswan.h>
-
-#include "constants.h"
 #include "libserpent/serpent_cbc.h"
+#include "lswcdefs.h"		/* for UNUSED */
 #include "lswlog.h"
 #include "ike_alg.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_encrypt_ops.h"
+#include "sadb.h"
 
 #define  SERPENT_CBC_BLOCK_SIZE (128 / BITS_PER_BYTE)
 #define  SERPENT_KEY_MIN_LEN    128
@@ -34,13 +31,13 @@
 #define  SERPENT_KEY_MAX_LEN    256
 
 static void do_serpent(const struct encrypt_desc *alg UNUSED,
-		       u_int8_t *buf, size_t buf_size, PK11SymKey *key,
-		       u_int8_t *iv, bool enc)
+		       uint8_t *buf, size_t buf_size, PK11SymKey *key,
+		       uint8_t *iv, bool enc)
 {
 	serpent_context serpent_ctx;
-	u_int8_t iv_bak[SERPENT_CBC_BLOCK_SIZE];
-	u_int8_t *new_iv = buf + buf_size - SERPENT_CBC_BLOCK_SIZE;
-	u_int8_t *bare_key_ptr;
+	uint8_t iv_bak[SERPENT_CBC_BLOCK_SIZE];
+	uint8_t *new_iv = buf + buf_size - SERPENT_CBC_BLOCK_SIZE;
+	uint8_t *bare_key_ptr;
 	size_t bare_key_len;
 
 	/* unpack key from PK11SymKey (or crash!) */
@@ -76,6 +73,7 @@ static void serpent_check(const struct encrypt_desc *encrypt UNUSED)
 }
 
 static const struct encrypt_ops serpent_encrypt_ops = {
+	.backend = "serpent",
 	.check = serpent_check,
 	.do_crypt = do_serpent,
 };
@@ -85,8 +83,7 @@ const struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 	.common = {
 		.name = "serpent",
 		.fqn = "SERPENT_CBC",
-		.names = { "serpent", "serpent_cbc", },
-		.officname = "serpent",
+		.names = "serpent,serpent_cbc",
 		.algo_type = IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SERPENT_CBC,
@@ -95,9 +92,16 @@ const struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 		},
 	},
 	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,
-	.pad_to_blocksize = TRUE,
+	.pad_to_blocksize = true,
 	.wire_iv_size = SERPENT_CBC_BLOCK_SIZE,
 	.keydeflen = SERPENT_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &serpent_encrypt_ops,
+#ifdef SADB_X_EALG_SERPENTCBC
+	.encrypt_sadb_ealg_id = SADB_X_EALG_SERPENTCBC,
+#endif
+	.encrypt_netlink_xfrm_name = "serpent",
+	.encrypt_tcpdump_name = "serpent",
+	.encrypt_ike_audit_name = "serpent",
+	.encrypt_kernel_audit_name = "SERPENT",
 };

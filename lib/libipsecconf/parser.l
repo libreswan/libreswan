@@ -14,7 +14,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -160,7 +160,9 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 		char ebuf[128];
 
 		snprintf(ebuf, sizeof(ebuf),
-			"cannot open include filename: '%s': %s",
+			(strstr(iis->filename, "crypto-policies/back-ends/libreswan.config") == NULL) ?
+				"cannot open include filename: '%s': %s" :
+				"ignored loading default system-wide crypto-policies file '%s': %s",
 			iis->fileglob.gl_pathv[fcnt],
 			strerror(errno));
 		yyerror(ebuf);
@@ -258,7 +260,7 @@ int parser_y_include (const char *filename)
 	case 0:
 		/* success */
 
-		if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH) {
+		if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH - 1) {
 			yyerror("max inclusion depth reached");
 			return 1;
 		}

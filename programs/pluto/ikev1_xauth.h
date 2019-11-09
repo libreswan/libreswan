@@ -5,7 +5,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -16,6 +16,8 @@
 #ifndef XAUTH_H
 #define XAUTH_H
 
+#include "ikev1.h"
+
 struct state;	/* so state.h is not a prerequisite */
 struct msg_digest;	/* so demux.h is not a prerequisite */
 
@@ -24,12 +26,14 @@ extern stf_status xauth_send_request(struct state *st);
 extern stf_status modecfg_start_set(struct state *st);
 
 /* XAUTH state transitions */
-extern stf_status xauth_inR0(struct state *st, struct msg_digest *md);
-extern stf_status xauth_inR1(struct state *st, struct msg_digest *md);
-extern stf_status modecfg_inR0(struct state *st, struct msg_digest *md);
-extern stf_status modecfg_inR1(struct state *st, struct msg_digest *md);
-extern stf_status xauth_inI0(struct state *st, struct msg_digest *md);
-extern stf_status xauth_inI1(struct state *st, struct msg_digest *md);
+
+extern ikev1_state_transition_fn xauth_inR0;
+extern ikev1_state_transition_fn xauth_inR1;
+extern ikev1_state_transition_fn modecfg_inR0;
+extern ikev1_state_transition_fn modecfg_inR1;
+extern ikev1_state_transition_fn xauth_inI0;
+extern ikev1_state_transition_fn xauth_inI1;
+
 extern oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth);
 extern stf_status modecfg_send_request(struct state *st);
 

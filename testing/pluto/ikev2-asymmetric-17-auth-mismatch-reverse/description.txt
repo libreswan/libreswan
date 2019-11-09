@@ -1,0 +1,16 @@
+IKEv2 Mismatched authentication on the initiator (west), and on the responder.
+
+Responder is configured as
+leftauthby=null 	leftid=%null
+rightauth=rsasig 	rightid="%fromcert"
+
+Initiator is configured with symmetric auth
+authby=null
+leftid="%null"
+rightid="%fromcert"
+
+This test should not establish a connection. The initiator should reject it.
+
+Also, the initiator should REALLY send an encrypted informational to DELETE
+the conn, as east has it as established. Current output does not reflect the
+delete confirmation yet.

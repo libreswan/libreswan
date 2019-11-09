@@ -7,25 +7,25 @@ see
 <citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>.)
 Its contents are not security-sensitive. Configurations can be
 added using this configuration file or by using ipsec whack directly. This means
-that technically, the ipsec.conf file is optional, but a few warning might show
+that technically, the ipsec.conf file is optional, but a few warnings might show
 up when this file is missing.
 </para>
 
-<para>The file is a text file, consisting of one or more
+<para><emphasis remap='I'>ipsec.conf</emphasis> is a text file, consisting of one or more
 <emphasis remap='I'>sections</emphasis>.
 White space followed by
 <emphasis remap='B'>#</emphasis>
 followed by anything to the end of the line
 is a comment and is ignored,
-as are empty lines which are not within a section.</para>
+as are empty lines that are not within a section.</para>
 
-<para>A line which contains
+<para>A line that contains
 <emphasis remap='B'>include</emphasis>
 and a file name, separated by white space,
 is replaced by the contents of that file,
 preceded and followed by empty lines.
 If the file name is not a full pathname,
-it is considered to be relative to the directory containing the
+it is considered to be relative to the directory that contains the
 including file.
 Such inclusions can be nested.
 Only a single filename may be supplied, and it may not contain white space,
@@ -47,7 +47,7 @@ Note also the
 and
 <emphasis remap='B'>alsoflip</emphasis>
 parameters (described below) which permit splitting a single logical section
-(e.g. a connection description) into several actual sections.</para>
+(e.g. a connection description) into several distinct sections.</para>
 
 <para>The first significant line of the file may specify a version
 of this specification for backwards compatibility with freeswan and openswan. It
@@ -63,12 +63,12 @@ is ignored and unused. For compatibility with openswan, specify:</para>
 <emphasis remap='I'>type</emphasis>
 indicates what type of section follows, and
 <emphasis remap='I'>name</emphasis>
-is an arbitrary name which distinguishes the section from others
+is an arbitrary name that distinguishes the section from others
 of the same type.
 (Names must start with a letter and may contain only
 letters, digits, periods, underscores, and hyphens.)
 All subsequent non-empty lines
-which begin with white space are part of the section;
+that begin with white space are part of the section;
 comments within a section must begin with white space too.
 There may be only one section of a given type with a given name.</para>
 
@@ -102,7 +102,7 @@ nor may it be continued across more than one line.</para>
 (a sequence of digits) or a &ldquo;decimal number&rdquo;
 (sequence of digits optionally followed by `.' and another sequence of digits).</para>
 
-<para>There is currently one parameter which is available in any type of
+<para>There is currently one parameter that is available in any type of
 section:</para>
 <variablelist remap='TP'>
   <varlistentry>
@@ -162,7 +162,7 @@ improvements.</para>
 <emphasis remap='B'>%default</emphasis>
 specifies defaults for sections of the same type.
 For each parameter in it,
-any section of that type which does not have a parameter of the same name
+any section of that type that does not have a parameter of the same name
 gets a copy of the one from the
 <emphasis remap='B'>%default</emphasis>
 section.

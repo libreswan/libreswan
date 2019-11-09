@@ -1,337 +1,431 @@
-
----- ESP tests that should succeed ----
-[esp]
-	AES_CBC-HMAC_SHA1_96
-[esp=]
-	ERROR: String ended with invalid char, just after "" (state=ST_INI_EA)
-[esp=aes_gcm_a-128-null]
-	AES_GCM_8_128-NONE
-[esp=3des-sha1;modp1024]
-	3DES_CBC-HMAC_SHA1_96-MODP1024
-[esp=3des-sha1;modp1536]
-	3DES_CBC-HMAC_SHA1_96-MODP1536
-[esp=3des-sha1;modp2048]
-	3DES_CBC-HMAC_SHA1_96-MODP2048
-[esp=3des-sha1;dh21]
-	3DES_CBC-HMAC_SHA1_96-DH21
-[esp=3des-sha1;ecp_521]
-	3DES_CBC-HMAC_SHA1_96-DH21
-[esp=3des-sha1;dh23]
-	3DES_CBC-HMAC_SHA1_96-DH23
-[esp=3des-sha1;dh24]
-	3DES_CBC-HMAC_SHA1_96-DH24
-[esp=3des-sha1]
-	3DES_CBC-HMAC_SHA1_96
-[esp=null-sha1]
-	NULL-HMAC_SHA1_96
-[esp=aes]
-	AES_CBC-HMAC_SHA1_96
-[esp=aes_cbc]
-	AES_CBC-HMAC_SHA1_96
-[esp=aes-sha]
-	AES_CBC-HMAC_SHA1_96
-[esp=aes-sha1]
-	AES_CBC-HMAC_SHA1_96
-[esp=aes-sha2]
-	AES_CBC-HMAC_SHA2_256_128
-[esp=aes-sha256]
-	AES_CBC-HMAC_SHA2_256_128
-[esp=aes-sha384]
-	AES_CBC-HMAC_SHA2_384_192
-[esp=aes-sha512]
-	AES_CBC-HMAC_SHA2_512_256
-[esp=aes128-sha1]
-	AES_CBC_128-HMAC_SHA1_96
-[esp=aes128-aes_xcbc]
-	AES_CBC_128-AES_XCBC_96
-[esp=aes192-sha1]
-	AES_CBC_192-HMAC_SHA1_96
-[esp=aes256-sha1]
-	AES_CBC_256-HMAC_SHA1_96
-[esp=aes256-sha]
-	AES_CBC_256-HMAC_SHA1_96
-[esp=aes256-sha2]
-	AES_CBC_256-HMAC_SHA2_256_128
-[esp=aes256-sha2_256]
-	AES_CBC_256-HMAC_SHA2_256_128
-[esp=aes256-sha2_384]
-	AES_CBC_256-HMAC_SHA2_384_192
-[esp=aes256-sha2_512]
-	AES_CBC_256-HMAC_SHA2_512_256
-[esp=camellia]
-	CAMELLIA_CBC-HMAC_SHA1_96
-[esp=camellia128]
-	CAMELLIA_CBC_128-HMAC_SHA1_96
-[esp=camellia192]
-	CAMELLIA_CBC_192-HMAC_SHA1_96
-[esp=camellia256]
-	CAMELLIA_CBC_256-HMAC_SHA1_96
-[esp=aes_ccm]
-	AES_CCM_16-NONE
-[esp=aes_ccm_a-128-null]
-	AES_CCM_8_128-NONE
-[esp=aes_ccm_a-192-null]
-	AES_CCM_8_192-NONE
-[esp=aes_ccm_a-256-null]
-	AES_CCM_8_256-NONE
-[esp=aes_ccm_b-128-null]
-	AES_CCM_12_128-NONE
-[esp=aes_ccm_b-192-null]
-	AES_CCM_12_192-NONE
-[esp=aes_ccm_b-256-null]
-	AES_CCM_12_256-NONE
-[esp=aes_ccm_c-128-null]
-	AES_CCM_16_128-NONE
-[esp=aes_ccm_c-192-null]
-	AES_CCM_16_192-NONE
-[esp=aes_ccm_c-256-null]
-	AES_CCM_16_256-NONE
-[esp=aes_gcm]
-	AES_GCM_16-NONE
-[esp=aes_gcm_a-128-null]
-	AES_GCM_8_128-NONE
-[esp=aes_gcm_a-192-null]
-	AES_GCM_8_192-NONE
-[esp=aes_gcm_a-256-null]
-	AES_GCM_8_256-NONE
-[esp=aes_gcm_b-128-null]
-	AES_GCM_12_128-NONE
-[esp=aes_gcm_b-192-null]
-	AES_GCM_12_192-NONE
-[esp=aes_gcm_b-256-null]
-	AES_GCM_12_256-NONE
-[esp=aes_gcm_c-128-null]
+algparse -v2 'esp'
+	AES_GCM_16_256-NONE
 	AES_GCM_16_128-NONE
-[esp=aes_gcm_c-192-null]
-	AES_GCM_16_192-NONE
-[esp=aes_gcm_c-256-null]
-	AES_GCM_16_256-NONE
-[esp=aes_ccm_a-null]
-	AES_CCM_8-NONE
-[esp=aes_ccm_b-null]
-	AES_CCM_12-NONE
-[esp=aes_ccm_c-null]
-	AES_CCM_16-NONE
-[esp=aes_gcm_a-null]
-	AES_GCM_8-NONE
-[esp=aes_gcm_b-null]
-	AES_GCM_12-NONE
-[esp=aes_gcm_c-null]
-	AES_GCM_16-NONE
-[esp=aes_ccm-null]
-	AES_CCM_16-NONE
-[esp=aes_gcm-null]
-	AES_GCM_16-NONE
-[esp=aes_ccm-256-null]
-	AES_CCM_16_256-NONE
-[esp=aes_gcm-192-null]
-	AES_GCM_16_192-NONE
-[esp=aes_ccm_256-null]
-	AES_CCM_16_256-NONE
-[esp=aes_gcm_192-null]
-	AES_GCM_16_192-NONE
-[esp=aes_ccm_8-null]
-	AES_CCM_8-NONE
-[esp=aes_ccm_12-null]
-	AES_CCM_12-NONE
-[esp=aes_ccm_16-null]
-	AES_CCM_16-NONE
-[esp=aes_gcm_8-null]
-	AES_GCM_8-NONE
-[esp=aes_gcm_12-null]
-	AES_GCM_12-NONE
-[esp=aes_gcm_16-null]
-	AES_GCM_16-NONE
-[esp=aes_ccm_8-128-null]
-	AES_CCM_8_128-NONE
-[esp=aes_ccm_12-192-null]
-	AES_CCM_12_192-NONE
-[esp=aes_ccm_16-256-null]
-	AES_CCM_16_256-NONE
-[esp=aes_gcm_8-128-null]
+	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp='
+	ERROR: String ended with invalid char, just after ""
+algparse -v2 'esp=aes'
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes;modp2048'
+	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes-sha1'
+	AES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes-sha1'
+	AES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes-sha1-modp2048'
+	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+	AES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes-128'
+	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes-128-sha1'
+	AES_CBC_128-HMAC_SHA1_96
+algparse -v2 'esp=aes-128-sha1'
+	AES_CBC_128-HMAC_SHA1_96
+algparse -v2 'esp=aes-128-sha1-modp2048'
+	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+	AES_CBC_128-HMAC_SHA1_96
+algparse -v2 'esp=aes_gcm_a-128-null'
 	AES_GCM_8_128-NONE
-[esp=aes_gcm_12-192-null]
-	AES_GCM_12_192-NONE
-[esp=aes_gcm_16-256-null]
-	AES_GCM_16_256-NONE
-[esp=aes_ccm_8_128-null]
+algparse -v2 'esp=3des-sha1;modp1024'
+	ERROR: ESP DH algorithm 'modp1024' is not supported
+algparse -v2 'esp=3des-sha1;modp1536'
+	WARNING: ignoring ESP DH algorithm MODP1536 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=3des-sha1;modp2048'
+	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=3des-sha1;dh21'
+	WARNING: ignoring ESP DH algorithm DH21 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=3des-sha1;ecp_521'
+	WARNING: ignoring ESP DH algorithm DH21 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=3des-sha1;dh23'
+	ERROR: ESP DH algorithm 'dh23' is not supported
+algparse -v2 'esp=3des-sha1;dh24'
+	ERROR: ESP DH algorithm 'dh24' is not supported
+algparse -v2 'esp=3des-sha1'
+	3DES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=null-sha1'
+	NULL-HMAC_SHA1_96
+algparse -v2 'esp=aes_cbc'
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes-sha'
+	AES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes-sha1'
+	AES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes-sha2'
+	AES_CBC-HMAC_SHA2_256_128
+algparse -v2 'esp=aes-sha256'
+	AES_CBC-HMAC_SHA2_256_128
+algparse -v2 'esp=aes-sha384'
+	AES_CBC-HMAC_SHA2_384_192
+algparse -v2 'esp=aes-sha512'
+	AES_CBC-HMAC_SHA2_512_256
+algparse -v2 'esp=aes128-sha1'
+	AES_CBC_128-HMAC_SHA1_96
+algparse -v2 'esp=aes128-aes_xcbc'
+	AES_CBC_128-AES_XCBC_96
+algparse -v2 'esp=aes192-sha1'
+	AES_CBC_192-HMAC_SHA1_96
+algparse -v2 'esp=aes256-sha1'
+	AES_CBC_256-HMAC_SHA1_96
+algparse -v2 'esp=aes256-sha'
+	AES_CBC_256-HMAC_SHA1_96
+algparse -v2 'esp=aes256-sha2'
+	AES_CBC_256-HMAC_SHA2_256_128
+algparse -v2 'esp=aes256-sha2_256'
+	AES_CBC_256-HMAC_SHA2_256_128
+algparse -v2 'esp=aes256-sha2_384'
+	AES_CBC_256-HMAC_SHA2_384_192
+algparse -v2 'esp=aes256-sha2_512'
+	AES_CBC_256-HMAC_SHA2_512_256
+algparse -v2 'esp=camellia'
+	CAMELLIA_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=camellia128'
+	CAMELLIA_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=camellia192'
+	CAMELLIA_CBC_192-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=camellia256'
+	CAMELLIA_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes_ccm'
+	AES_CCM_16-NONE
+algparse -v2 'esp=aes_ccm_a-128-null'
 	AES_CCM_8_128-NONE
-[esp=aes_ccm_12_192-null]
+algparse -v2 'esp=aes_ccm_a-192-null'
+	AES_CCM_8_192-NONE
+algparse -v2 'esp=aes_ccm_a-256-null'
+	AES_CCM_8_256-NONE
+algparse -v2 'esp=aes_ccm_b-128-null'
+	AES_CCM_12_128-NONE
+algparse -v2 'esp=aes_ccm_b-192-null'
 	AES_CCM_12_192-NONE
-[esp=aes_ccm_16_256-null]
+algparse -v2 'esp=aes_ccm_b-256-null'
+	AES_CCM_12_256-NONE
+algparse -v2 'esp=aes_ccm_c-128-null'
+	AES_CCM_16_128-NONE
+algparse -v2 'esp=aes_ccm_c-192-null'
+	AES_CCM_16_192-NONE
+algparse -v2 'esp=aes_ccm_c-256-null'
 	AES_CCM_16_256-NONE
-[esp=aes_gcm_8_128-null]
+algparse -v2 'esp=aes_gcm'
+	AES_GCM_16-NONE
+algparse -v2 'esp=aes_gcm_a-128-null'
 	AES_GCM_8_128-NONE
-[esp=aes_gcm_12_192-null]
+algparse -v2 'esp=aes_gcm_a-192-null'
+	AES_GCM_8_192-NONE
+algparse -v2 'esp=aes_gcm_a-256-null'
+	AES_GCM_8_256-NONE
+algparse -v2 'esp=aes_gcm_b-128-null'
+	AES_GCM_12_128-NONE
+algparse -v2 'esp=aes_gcm_b-192-null'
 	AES_GCM_12_192-NONE
-[esp=aes_gcm_16_256-null]
+algparse -v2 'esp=aes_gcm_b-256-null'
+	AES_GCM_12_256-NONE
+algparse -v2 'esp=aes_gcm_c-128-null'
+	AES_GCM_16_128-NONE
+algparse -v2 'esp=aes_gcm_c-192-null'
+	AES_GCM_16_192-NONE
+algparse -v2 'esp=aes_gcm_c-256-null'
 	AES_GCM_16_256-NONE
-[esp=aes_ctr]
-	AES_CTR-HMAC_SHA1_96
-[esp=aesctr]
-	AES_CTR-HMAC_SHA1_96
-[esp=aes_ctr128]
-	AES_CTR_128-HMAC_SHA1_96
-[esp=aes_ctr192]
-	AES_CTR_192-HMAC_SHA1_96
-[esp=aes_ctr256]
-	AES_CTR_256-HMAC_SHA1_96
-[esp=serpent]
-	SERPENT_CBC-HMAC_SHA1_96
-[esp=twofish]
-	TWOFISH_CBC-HMAC_SHA1_96
-[esp=camellia_cbc_256-hmac_sha2_512_256;modp8192]
-	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
-[esp=null_auth_aes_gmac_256-null;modp8192]
-	NULL_AUTH_AES_GMAC_256-NONE-MODP8192
-[esp=3des-sha1;modp8192]
-	3DES_CBC-HMAC_SHA1_96-MODP8192
-[esp=3des-sha1-modp8192]
-	3DES_CBC-HMAC_SHA1_96-MODP8192
-[esp=aes-sha1,3des-sha1;modp8192]
-	AES_CBC-HMAC_SHA1_96-MODP8192
-	3DES_CBC-HMAC_SHA1_96-MODP8192
-[esp=aes-sha1-modp8192,3des-sha1-modp8192]
-	AES_CBC-HMAC_SHA1_96-MODP8192
-	3DES_CBC-HMAC_SHA1_96-MODP8192
-[esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192]
-	AES_CBC-HMAC_SHA1_96-MODP8192
-
----- ESP tests that should fail----
-[esp=3des168-sha1]
-	ERROR: 3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
-[esp=3des-null]
-	ERROR: non-AEAD ESP encryption algorithm '3des_cbc' cannot have 'none' as the integrity algorithm, enc_alg="3des"(0), auth_alg="null", modp=""
-[esp=aes128-null]
-	ERROR: non-AEAD ESP encryption algorithm 'aes' cannot have 'none' as the integrity algorithm, enc_alg="aes"(128), auth_alg="null", modp=""
-[esp=aes224-sha1]
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(224), auth_alg="sha1", modp=""
-[esp=aes512-sha1]
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(512), auth_alg="sha1", modp=""
-[esp=aes-sha1555]
-	ERROR: ESP integrity algorithm 'sha1555' is not recognized, enc_alg="aes"(0), auth_alg="sha1555", modp=""
-[esp=camellia666-sha1]
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="camellia"(666), auth_alg="sha1", modp=""
-[esp=blowfish]
-	ERROR: ESP encryption algorithm 'blowfish' is not supported, enc_alg="blowfish"(0), auth_alg="", modp=""
-[esp=des-sha1]
-	ERROR: ESP encryption algorithm 'des' is not supported, enc_alg="des"(0), auth_alg="sha1", modp=""
-[esp=aes_ctr666]
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ctr"(666), auth_alg="", modp=""
-[esp=aes128-sha2_128]
-	ERROR: ESP integrity algorithm 'sha2_128' is not recognized, enc_alg="aes"(128), auth_alg="sha2_128", modp=""
-[esp=aes256-sha2_256-4096]
-	ERROR: Invalid modulus, just after "aes256-sha2_256-" (state=ST_AA_END)
-[esp=aes256-sha2_256-128]
-	ERROR: Invalid modulus, just after "aes256-sha2_256-" (state=ST_AA_END)
-[esp=vanitycipher]
-	ERROR: ESP encryption algorithm 'vanitycipher' is not recognized, enc_alg="vanitycipher"(0), auth_alg="", modp=""
-[esp=ase-sah]
-	ERROR: ESP encryption algorithm 'ase' is not recognized, enc_alg="ase"(0), auth_alg="sah", modp=""
-[esp=aes-sah1]
-	ERROR: ESP integrity algorithm 'sah1' is not recognized, enc_alg="aes"(0), auth_alg="sah1", modp=""
-[esp=id3]
-	ERROR: ESP encryption algorithm 'id' is not recognized, enc_alg="id"(3), auth_alg="", modp=""
-[esp=aes-id3]
-	ERROR: ESP integrity algorithm 'id3' is not recognized, enc_alg="aes"(0), auth_alg="id3", modp=""
-[esp=aes_gcm-md5]
-	ERROR: AEAD ESP encryption algorithm 'aes_gcm_16' must have 'none' as the integrity algorithm, enc_alg="aes_gcm"(0), auth_alg="md5", modp=""
-[esp=mars]
-	ERROR: ESP encryption algorithm 'mars' is not supported, enc_alg="mars"(0), auth_alg="", modp=""
-[esp=aes_gcm-16]
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_gcm"(16), auth_alg="", modp=""
-[esp=aes_gcm-0]
-	ERROR: encryption key length is zero, enc_alg="aes_gcm"(0), auth_alg="", modp=""
-[esp=aes_gcm-123456789012345]
-	ERROR: encryption key length '123456789012345' WAY too big, enc_alg="aes_gcm"(123456789012345), auth_alg="", modp=""
-[esp=3des-sha1;dh22]
-	ERROR: ESP DH algorithm 'dh22' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="dh22"
-[esp=3des-sha1;modp8192,3des-sha2]
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
-[esp=3des-sha1-modp8192,3des-sha2;modp8192]
-	ERROR: ESP DH algorithm must appear once after last proposal
-
----- AH tests that should succeed ----
-[ah]
+algparse -v2 'esp=aes_ccm_a-null'
+	AES_CCM_8-NONE
+algparse -v2 'esp=aes_ccm_b-null'
+	AES_CCM_12-NONE
+algparse -v2 'esp=aes_ccm_c-null'
+	AES_CCM_16-NONE
+algparse -v2 'esp=aes_gcm_a-null'
+	AES_GCM_8-NONE
+algparse -v2 'esp=aes_gcm_b-null'
+	AES_GCM_12-NONE
+algparse -v2 'esp=aes_gcm_c-null'
+	AES_GCM_16-NONE
+algparse -v2 'esp=aes_ccm-null'
+	AES_CCM_16-NONE
+algparse -v2 'esp=aes_gcm-null'
+	AES_GCM_16-NONE
+algparse -v2 'esp=aes_ccm-256-null'
+	AES_CCM_16_256-NONE
+algparse -v2 'esp=aes_gcm-192-null'
+	AES_GCM_16_192-NONE
+algparse -v2 'esp=aes_ccm_256-null'
+	AES_CCM_16_256-NONE
+algparse -v2 'esp=aes_gcm_192-null'
+	AES_GCM_16_192-NONE
+algparse -v2 'esp=aes_ccm_8-null'
+	AES_CCM_8-NONE
+algparse -v2 'esp=aes_ccm_12-null'
+	AES_CCM_12-NONE
+algparse -v2 'esp=aes_ccm_16-null'
+	AES_CCM_16-NONE
+algparse -v2 'esp=aes_gcm_8-null'
+	AES_GCM_8-NONE
+algparse -v2 'esp=aes_gcm_12-null'
+	AES_GCM_12-NONE
+algparse -v2 'esp=aes_gcm_16-null'
+	AES_GCM_16-NONE
+algparse -v2 'esp=aes_ccm_8-128-null'
+	AES_CCM_8_128-NONE
+algparse -v2 'esp=aes_ccm_12-192-null'
+	AES_CCM_12_192-NONE
+algparse -v2 'esp=aes_ccm_16-256-null'
+	AES_CCM_16_256-NONE
+algparse -v2 'esp=aes_gcm_8-128-null'
+	AES_GCM_8_128-NONE
+algparse -v2 'esp=aes_gcm_12-192-null'
+	AES_GCM_12_192-NONE
+algparse -v2 'esp=aes_gcm_16-256-null'
+	AES_GCM_16_256-NONE
+algparse -v2 'esp=aes_ccm_8_128-null'
+	AES_CCM_8_128-NONE
+algparse -v2 'esp=aes_ccm_12_192-null'
+	AES_CCM_12_192-NONE
+algparse -v2 'esp=aes_ccm_16_256-null'
+	AES_CCM_16_256-NONE
+algparse -v2 'esp=aes_gcm_8_128-null'
+	AES_GCM_8_128-NONE
+algparse -v2 'esp=aes_gcm_12_192-null'
+	AES_GCM_12_192-NONE
+algparse -v2 'esp=aes_gcm_16_256-null'
+	AES_GCM_16_256-NONE
+algparse -v2 'esp=aes_ctr'
+	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aesctr'
+	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes_ctr128'
+	AES_CTR_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes_ctr192'
+	AES_CTR_192-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes_ctr256'
+	AES_CTR_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=serpent'
+	SERPENT_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=twofish'
+	TWOFISH_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	CAMELLIA_CBC_256-HMAC_SHA2_512_256
+algparse -v2 'esp=null_auth_aes_gmac_256-null;modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	NULL_AUTH_AES_GMAC_256-NONE
+algparse -v2 'esp=3des-sha1;modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=3des-sha1-modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes-sha1,3des-sha1;modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	AES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes-sha1-modp8192,3des-sha1-modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	AES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	AES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes;none'
+	WARNING: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes;none,aes'
+	WARNING: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes;none,aes;modp2048'
+	WARNING: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'esp=aes-sha1-none'
+	WARNING: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+	AES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes-sha1;none'
+	WARNING: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+	AES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=3des168-sha1'
+	ERROR: 3DES does not take variable key lengths
+algparse -v2 'esp=3des-null'
+	ERROR: non-AEAD ESP encryption algorithm '3des_cbc' cannot have 'none' as the integrity algorithm
+algparse -v2 'esp=aes128-null'
+	ERROR: non-AEAD ESP encryption algorithm 'aes' cannot have 'none' as the integrity algorithm
+algparse -v2 'esp=aes224-sha1'
+	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+algparse -v2 'esp=aes-224-sha1'
+	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+algparse -v2 'esp=aes0-sha1'
+	ERROR: encryption key length is zero
+algparse -v2 'esp=aes-0-sha1'
+	ERROR: encryption key length is zero
+algparse -v2 'esp=aes512-sha1'
+	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+algparse -v2 'esp=aes-sha1555'
+	ERROR: ESP integrity algorithm 'sha1555' is not recognized
+algparse -v2 'esp=camellia666-sha1'
+	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+algparse -v2 'esp=blowfish'
+	ERROR: ESP encryption algorithm 'blowfish' is not supported
+algparse -v2 'esp=des-sha1'
+	ERROR: ESP encryption algorithm 'des' is not supported
+algparse -v2 'esp=aes_ctr666'
+	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+algparse -v2 'esp=aes128-sha2_128'
+	ERROR: ESP integrity algorithm 'sha2_128' is not recognized
+algparse -v2 'esp=aes256-sha2_256-4096'
+	ERROR: ESP DH algorithm '4096' is not recognized
+algparse -v2 'esp=aes256-sha2_256-128'
+	ERROR: ESP DH algorithm '128' is not recognized
+algparse -v2 'esp=vanitycipher'
+	ERROR: ESP encryption algorithm 'vanitycipher' is not recognized
+algparse -v2 'esp=ase-sah'
+	ERROR: ESP encryption algorithm 'ase' is not recognized
+algparse -v2 'esp=aes-sah1'
+	ERROR: ESP integrity algorithm 'sah1' is not recognized
+algparse -v2 'esp=id3'
+	ERROR: ESP encryption algorithm 'id3' is not recognized
+algparse -v2 'esp=aes-id3'
+	ERROR: ESP integrity algorithm 'id3' is not recognized
+algparse -v2 'esp=aes_gcm-md5'
+	ERROR: AEAD ESP encryption algorithm 'aes_gcm_16' must have 'none' as the integrity algorithm
+algparse -v2 'esp=mars'
+	ERROR: ESP encryption algorithm 'mars' is not supported
+algparse -v2 'esp=aes_gcm-16'
+	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
+algparse -v2 'esp=aes_gcm-0'
+	ERROR: encryption key length is zero
+algparse -v2 'esp=aes_gcm-123456789012345'
+	ERROR: encryption key length '123456789012345' WAY too big
+algparse -v2 'esp=3des-sha1;dh22'
+	ERROR: ESP DH algorithm 'dh22' is not supported
+algparse -v2 'esp=3des-sha1;modp8192,3des-sha2'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA2_256_128
+algparse -v2 'esp=3des-sha1-modp8192,3des-sha2'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA2_256_128
+algparse -v2 'esp=3des-sha1-modp8192,3des-sha2-modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA2_256_128
+algparse -v2 'esp=3des-sha1-modp8192,3des-sha2;modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA2_256_128
+algparse -v2 'esp=3des-sha1;modp8192,3des-sha2-modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA2_256_128
+algparse -v2 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA2_256_128
+algparse -v2 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
+	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+	WARNING: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA2_256_128
+algparse -v2 'ah'
+	HMAC_SHA2_512_256
+	HMAC_SHA2_256_128
 	HMAC_SHA1_96
-[ah=]
-	ERROR: String ended with invalid char, just after "" (state=ST_INI_AA)
-[ah=md5]
+algparse -v2 'ah='
+	ERROR: String ended with invalid char, just after ""
+algparse -v2 'ah=md5'
 	HMAC_MD5_96
-[ah=sha]
+algparse -v2 'ah=sha'
 	HMAC_SHA1_96
-[ah=sha1]
+algparse -v2 'ah=sha;modp2048'
+	WARNING: ignoring AH DH algorithm MODP2048 as PFS policy is disabled
 	HMAC_SHA1_96
-[ah=sha2]
+algparse -v2 'ah=sha1'
+	HMAC_SHA1_96
+algparse -v2 'ah=sha2'
 	HMAC_SHA2_256_128
-[ah=sha256]
+algparse -v2 'ah=sha256'
 	HMAC_SHA2_256_128
-[ah=sha384]
+algparse -v2 'ah=sha384'
 	HMAC_SHA2_384_192
-[ah=sha512]
+algparse -v2 'ah=sha512'
 	HMAC_SHA2_512_256
-[ah=sha2_256]
+algparse -v2 'ah=sha2_256'
 	HMAC_SHA2_256_128
-[ah=sha2_384]
+algparse -v2 'ah=sha2_384'
 	HMAC_SHA2_384_192
-[ah=sha2_512]
+algparse -v2 'ah=sha2_512'
 	HMAC_SHA2_512_256
-[ah=aes_xcbc]
+algparse -v2 'ah=aes_xcbc'
 	AES_XCBC_96
-[ah=sha1-modp8192,sha1-modp8192,sha1-modp8192]
-	HMAC_SHA1_96-MODP8192
-
----- AH tests that should fail ----
-[ah=aes-sha1]
-	ERROR: AH integrity algorithm 'aes' is not recognized, enc_alg=""(0), auth_alg="aes", modp="sha1"
-[ah=vanityhash1]
-	ERROR: AH integrity algorithm 'vanityhash1' is not recognized, enc_alg=""(0), auth_alg="vanityhash1", modp=""
-[ah=aes_gcm_c-256]
-	ERROR: Invalid modulus, just after "aes_gcm_c-" (state=ST_AA_END)
-[ah=id3]
-	ERROR: AH integrity algorithm 'id3' is not recognized, enc_alg=""(0), auth_alg="id3", modp=""
-[ah=3des]
-	ERROR: AH integrity algorithm '3des' is not recognized, enc_alg=""(0), auth_alg="3des", modp=""
-[ah=null]
-	ERROR: AH cannot have 'none' as the integrity algorithm, enc_alg=""(0), auth_alg="null", modp=""
-[ah=aes_gcm]
-	ERROR: AH integrity algorithm 'aes_gcm' is not recognized, enc_alg=""(0), auth_alg="aes_gcm", modp=""
-[ah=aes_ccm]
-	ERROR: AH integrity algorithm 'aes_ccm' is not recognized, enc_alg=""(0), auth_alg="aes_ccm", modp=""
-[ah=ripemd]
-	ERROR: AH integrity algorithm 'ripemd' is not recognized, enc_alg=""(0), auth_alg="ripemd", modp=""
-
----- IKE tests that should succeed ----
-[ike]
-	AES_CBC-HMAC_SHA2_256-MODP2048
-	AES_CBC-HMAC_SHA2_512-MODP2048
-	AES_CBC-HMAC_SHA1-MODP2048
-	3DES_CBC-HMAC_SHA2_256-MODP2048
-	3DES_CBC-HMAC_SHA2_512-MODP2048
-	3DES_CBC-HMAC_SHA1-MODP2048
-[ike=]
-	ERROR: String ended with invalid char, just after "" (state=ST_INI_EA)
-[ike=3des-sha1]
-	3DES_CBC-HMAC_SHA1-MODP2048
-[ike=3des-sha1]
-	3DES_CBC-HMAC_SHA1-MODP2048
-[ike=3des-sha1;modp1536]
+algparse -v2 'ah=sha2-none'
+	WARNING: ignoring redundant AH DH algorithm NONE as PFS policy is disabled
+	HMAC_SHA2_256_128
+algparse -v2 'ah=sha2;none'
+	WARNING: ignoring redundant AH DH algorithm NONE as PFS policy is disabled
+	HMAC_SHA2_256_128
+algparse -v2 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192'
+	WARNING: ignoring AH DH algorithm MODP8192 as PFS policy is disabled
+	HMAC_SHA1_96
+algparse -v2 'ah=aes-sha1'
+	ERROR: AH integrity algorithm 'aes' is not recognized
+algparse -v2 'ah=vanityhash1'
+	ERROR: AH integrity algorithm 'vanityhash1' is not recognized
+algparse -v2 'ah=aes_gcm_c-256'
+	ERROR: AH integrity algorithm 'aes_gcm_c' is not recognized
+algparse -v2 'ah=id3'
+	ERROR: AH integrity algorithm 'id3' is not recognized
+algparse -v2 'ah=3des'
+	ERROR: AH integrity algorithm '3des' is not recognized
+algparse -v2 'ah=null'
+	ERROR: AH cannot have 'none' as the integrity algorithm
+algparse -v2 'ah=aes_gcm'
+	ERROR: AH integrity algorithm 'aes_gcm' is not recognized
+algparse -v2 'ah=aes_ccm'
+	ERROR: AH integrity algorithm 'aes_ccm' is not recognized
+algparse -v2 'ah=ripemd'
+	ERROR: AH integrity algorithm 'ripemd' is not recognized
+algparse -v2 'ike'
+	AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+	AES_CBC_128-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+algparse -v2 'ike='
+	ERROR: String ended with invalid char, just after ""
+algparse -v2 'ike=3des-sha1'
+	3DES_CBC-HMAC_SHA1-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+algparse -v2 'ike=3des-sha1'
+	3DES_CBC-HMAC_SHA1-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+algparse -v2 'ike=3des-sha1;modp1536'
 	3DES_CBC-HMAC_SHA1-MODP1536
-[ike=3des-sha1;dh21]
+algparse -v2 'ike=3des;dh21'
+	3DES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH21
+algparse -v2 'ike=3des-sha1;dh21'
 	3DES_CBC-HMAC_SHA1-DH21
-[ike=3des-sha1-ecp_521]
+algparse -v2 'ike=3des-sha1-ecp_521'
 	3DES_CBC-HMAC_SHA1-DH21
-[ike=aes_gcm]
-	AES_GCM_16-HMAC_SHA2_256-MODP2048
-	AES_GCM_16-HMAC_SHA2_512-MODP2048
-	AES_GCM_16-HMAC_SHA1-MODP2048
-[ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192]
+algparse -v2 'ike=aes_gcm'
+	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048+MODP3072+MODP4096+MODP8192+DH19+DH20+DH21+DH31
+algparse -v2 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
 	AES_CBC-HMAC_SHA1-MODP8192
-
----- IKE tests that should fail ----
-[ike=id2]
-	ERROR: IKE encryption algorithm 'id' is not recognized, enc_alg="id"(2), auth_alg="", modp=""
-[ike=3des-id2]
-	ERROR: IKE PRF algorithm 'id2' is not recognized, enc_alg="3des"(0), auth_alg="id2", modp=""
-[ike=aes_ccm]
-	ERROR: IKE encryption algorithm 'aes_ccm' is not supported, enc_alg="aes_ccm"(0), auth_alg="", modp=""
+algparse -v2 'ike=aes;none'
+	ERROR: IKE DH algorithm 'none' not permitted
+algparse -v2 'ike=id2'
+	ERROR: IKE encryption algorithm 'id2' is not recognized
+algparse -v2 'ike=3des-id2'
+	ERROR: IKE PRF algorithm 'id2' is not recognized
+algparse -v2 'ike=aes_ccm'
+	ERROR: IKE encryption algorithm 'aes_ccm' is not supported
+algparse -v2 'ike=aes_gcm-sha1-none-modp2048'
+	ERROR: 'modp2048' unexpected
+algparse -v2 'ike=aes_gcm+aes_gcm-sha1-none-modp2048'
+	WARNING: discarding duplicate algorithm 'aes_gcm_16'
+	ERROR: 'modp2048' unexpected
+algparse -v2 'ike=aes+aes_gcm'
+	ERROR: AEAD and non-AEAD IKE encryption algorithm can not be combined

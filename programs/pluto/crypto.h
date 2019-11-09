@@ -9,7 +9,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -75,41 +75,9 @@ extern void init_crypto(void);
 	memcpy((st)->st_new_iv, (tmp), (tmp_len)); \
     }
 
-/*
- * HMAC package (new code should use crypt_prf).
- */
-
-struct crypt_prf;
-struct prf_desc;        /* opaque */
-
-struct hmac_ctx {
-	struct crypt_prf *prf;
-	size_t hmac_digest_len;
-};
-
-extern void hmac_init(struct hmac_ctx *ctx,
-		      const struct prf_desc *prf_desc,
-		      /*const*/ PK11SymKey *symkey);
-
-extern void hmac_update(struct hmac_ctx *ctx,
-			const u_char *data,
-			size_t data_len);
-
-#define hmac_update_chunk(ctx, ch) hmac_update((ctx), (ch).ptr, (ch).len)
-
-extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
-
-enum crk_proto {
-	CRK_ESPorAH,
-};
-
-extern unsigned crypto_req_keysize(enum crk_proto ksproto, int algo);
-
 struct connection;
 
 void ike_alg_show_connection(const struct connection *c, const char *instance);
-
-const struct oakley_group_desc *child_dh(const struct connection *c);
 
 void ike_alg_show_status(void);
 

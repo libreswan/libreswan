@@ -1,3 +1,0 @@
-This tests parsing of a config file with various kinds of comment
-character (#) in places. It has been reported that does not always
-works as expected (compared to openswan 2.4)

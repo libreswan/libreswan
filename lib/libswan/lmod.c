@@ -1,11 +1,11 @@
 /* lset modifiers, for libreswan
  *
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -16,7 +16,6 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <stdbool.h>
 
 #include "constants.h"
 #include "lmod.h"
@@ -69,24 +68,27 @@ bool lmod_is_clr(lmod_t mod, lset_t clr)
 }
 
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
-	      const char *args)
+	      const char *args, bool enable)
 {
 	char *list = clone_str(args, "list"); /* must free */
 	bool ok = true;
 	const char *delim = "+, \t";
 	for (char *tmp = list, *elem = strsep(&tmp, delim);
 	     elem != NULL; elem = strsep(&tmp, delim)) {
-		if (streq(elem, "all")) {
+		if (enable && streq(elem, "all")) {
+			/* excludes --no-... all */
 			mod->clr = LEMPTY;
 			mod->set = info->all;
-		} else if (streq(elem, "none")) {
+		} else if (enable && streq(elem, "none")) {
+			/* excludes --no-... none */
 			mod->clr = info->mask;
 			mod->set = LEMPTY;
 		} else if (*elem != '\0') {
 			/* non-empty */
 			const char *arg = elem;
-			bool no = eat(arg, "no-");
-			int ix = enum_match(info->names, arg);
+			/* excludes --no-... no-... */
+			bool no = enable ? eat(arg, "no-") : true;
+			int ix = enum_match(info->names, shunk1(arg));
 			lset_t bit = LEMPTY;
 			if (ix >= 0) {
 				bit = LELEM(ix);

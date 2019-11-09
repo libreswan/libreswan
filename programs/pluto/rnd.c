@@ -5,11 +5,12 @@
  * Copyright (C) 2007-2008 Antony Antony <antony@xelerance.com>
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -17,6 +18,16 @@
  * for more details.
  *
  */
+
+#include "rnd.h"
+#include <pk11pub.h>
+#include "defs.h"
+#include "lswnss.h"
+#include "lswlog.h"
+#include "ike_spi.h"		/* for refresh_ike_spi_secret() */
+#include "ikev2_cookie.h"	/* for refresh_v2_cookie_secret() */
+
+#include "server.h"
 
 /* A true random number generator (we hope)
  *
@@ -55,45 +66,35 @@
  *   exchange.  Eventually, one per informational exchange.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/time.h>
-#include <fcntl.h>
-#include <time.h>
-
-#include <libreswan.h>
-
-#include "constants.h"
-#include "defs.h"
-#include "rnd.h"
-#include "log.h"
-#include "timer.h"
-
-#include <nss.h>
-#include <pk11pub.h>
-
-void get_rnd_bytes(u_char *buffer, int length)
+void get_rnd_bytes(void *buffer, size_t length)
 {
 	SECStatus rv = PK11_GenerateRandom(buffer, length);
-
 	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS RNG failed");
-		abort();
+		LSWLOG_PASSERT(buf) {
+			lswlogs(buf, "NSS RNG failed");
+			lswlog_nss_error(buf);
+		}
 	}
 }
 
-u_char secret_of_the_day[SHA1_DIGEST_SIZE];
-u_char ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
+void fill_rnd_chunk(chunk_t chunk)
+{
+	get_rnd_bytes(chunk.ptr, chunk.len);
+}
 
-void init_secret(void)
+static void refresh_secrets(void)
 {
 	/*
 	 * Generate the secret value for responder cookies, and
 	 * schedule an event for refresh.
 	 */
-	get_rnd_bytes(secret_of_the_day, sizeof(secret_of_the_day));
-	event_schedule_s(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
+	refresh_ike_spi_secret();
+	refresh_v2_cookie_secret();
+}
+
+void init_secret(void)
+{
+	enable_periodic_timer(EVENT_REINIT_SECRET, refresh_secrets,
+			      deltatime(EVENT_REINIT_SECRET_DELAY));
+	refresh_secrets();
 }

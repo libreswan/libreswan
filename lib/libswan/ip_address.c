@@ -2,108 +2,63 @@
  * low-level ip_address ugliness
  *
  * Copyright (C) 2000  Henry Spencer.
+ * Copyright (C) 2018  Andrew Cagney.
+ * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/lgpl-2.1.txt>.
  *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-#include "internal.h"
-#include "libreswan.h"
+
+#include "jambuf.h"
 #include "ip_address.h"
+#include "lswlog.h"		/* for libreswan_log() */
+#include "ip_info.h"
 
-/*
- * portof - get the port field of an ip_address in network order.
- *
- * Return -1 if ip_address isn't valid.
- */
-
-int nportof(const ip_address * src)
+ip_address address_from_shunk(const struct ip_info *afi, const shunk_t bytes)
 {
-	switch (src->u.v4.sin_family) {
-	case AF_INET:
-		return src->u.v4.sin_port;
-
-	case AF_INET6:
-		return src->u.v6.sin6_port;
-
-	default:
-		return -1;
-	}
+	passert(afi != NULL);
+	ip_address address = {
+		.version = afi->ip_version,
+	};
+	passert(afi->ip_size == bytes.len);
+	memcpy(address.bytes, bytes.ptr, bytes.len);
+	return address;
 }
 
-int hportof(const ip_address *src)
+ip_address address_from_in_addr(const struct in_addr *in)
 {
-	int nport = nportof(src);
-	if (nport >= 0) {
-		return ntohs(nport);
-	} else {
-		return -1;
-	}
+	return address_from_shunk(&ipv4_info, THING_AS_SHUNK(*in));
 }
 
-/*
- * setportof - set the network ordered port field of an ip_address
- */
-
-void nsetportof(int port /* network order */,
-		ip_address *dst)
+uint32_t ntohl_address(const ip_address *a)
 {
-	switch (dst->u.v4.sin_family) {
-	case AF_INET:
-		dst->u.v4.sin_port = port;
-		break;
-	case AF_INET6:
-		dst->u.v6.sin6_port = port;
-		break;
+	uint32_t u;
+	shunk_t s = address_as_shunk(a);
+	if (address_type(a) == &ipv4_info) {
+		memcpy(&u, s.ptr, s.len);
+	} else  {
+		/* IPv6 take bits 96 - 128 to compute size */
+		s.ptr += (s.len - sizeof(u));
+		memcpy(&u, s.ptr, sizeof(u));
 	}
+	return ntohl(u);
 }
 
-void hsetportof(int port /* host byte order */,
-		ip_address *dst)
+ip_address address_from_in6_addr(const struct in6_addr *in6)
 {
-	nsetportof(htons(port), dst);
+	return address_from_shunk(&ipv6_info, THING_AS_SHUNK(*in6));
 }
 
-/*
- * sockaddrof - get a pointer to the sockaddr hiding inside an ip_address
- */
-struct sockaddr *sockaddrof(const ip_address *src)
+const struct ip_info *address_type(const ip_address *address)
 {
-	switch (src->u.v4.sin_family) {
-	case AF_INET:
-		return (struct sockaddr *)&src->u.v4;
-
-	case AF_INET6:
-		return (struct sockaddr *)&src->u.v6;
-
-	default:
-		return NULL;	/* "can't happen" */
-	}
-}
-
-/*
- * sockaddrlenof - get length of the sockaddr hiding inside an ip_address
- *
- * Return 0 on error.
- */
-size_t sockaddrlenof(const ip_address * src)
-{
-	switch (src->u.v4.sin_family) {
-	case AF_INET:
-		return sizeof(src->u.v4);
-
-	case AF_INET6:
-		return sizeof(src->u.v6);
-
-	default:
-		return 0;
-	}
+	return ip_version_info(address->version);
 }
 
 /*
@@ -116,6 +71,294 @@ size_t sockaddrlenof(const ip_address * src)
 
 const char *ipstr(const ip_address *src, ipstr_buf *b)
 {
-	addrtot(src, 0, b->private_buf, sizeof(b->private_buf));
-	return b->private_buf;
+	return str_address(src, b);
+}
+
+const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b)
+{
+	return str_address_sensitive(src, b);
+}
+
+shunk_t address_as_shunk(const ip_address *address)
+{
+	if (address == NULL) {
+		return null_shunk;
+	}
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		return null_shunk;
+	}
+	return shunk2(address->bytes, afi->ip_size);
+}
+
+chunk_t address_as_chunk(ip_address *address)
+{
+	if (address == NULL) {
+		return empty_chunk;
+	}
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		return empty_chunk;
+	}
+	return chunk(address->bytes, afi->ip_size);
+}
+
+/*
+ * Implement https://tools.ietf.org/html/rfc5952
+ */
+
+static void jam_raw_ipv4_address(jambuf_t *buf, shunk_t a, char sepc)
+{
+	const char seps[2] = { sepc == 0 ? '.' : sepc, 0, };
+	const char *sep = "";
+	for (size_t i = 0; i < a.len; i++) {
+		const uint8_t *bytes = a.ptr;
+		jam(buf, "%s%"PRIu8, sep, bytes[i]);
+		sep = seps;
+	}
+}
+
+static void jam_raw_ipv6_address(jambuf_t *buf, shunk_t a, char sepc,
+				 shunk_t skip)
+{
+	const char seps[2] = { sepc == 0 ? ':' : sepc, 0, };
+	const void *ptr = a.ptr;
+	const char *sep = "";
+	const void *last = a.ptr + a.len - 2;
+	while (ptr <= last) {
+		if (ptr == skip.ptr) {
+			/* skip zero run */
+			jam(buf, "%s%s", seps, seps);
+			sep = "";
+			ptr += skip.len;
+		} else {
+			/*
+			 * suppress leading zeros in two-byte
+			 * big-endian hex value, need to cast away
+			 * ptr's sign
+			 */
+			const uint8_t *p = (const uint8_t*)ptr;
+			unsigned ia = (p[0] << 8) + p[1];
+			jam(buf, "%s%x", sep, ia);
+			sep = seps;
+			ptr += 2;
+		}
+	}
+}
+
+void jam_address_raw(jambuf_t *buf, const ip_address *address, char sepc)
+{
+	if (address == NULL) {
+		jam(buf, "<none>");
+		return;
+	}
+	shunk_t a = address_as_shunk(address);
+	int type = addrtypeof(address);
+	switch (type) {
+	case AF_INET: /* N.N.N.N */
+		jam_raw_ipv4_address(buf, a, sepc);
+		break;
+	case AF_INET6: /* N:N:...:N */
+		jam_raw_ipv6_address(buf, a, sepc, null_shunk);
+		break;
+	case AF_UNSPEC:
+		jam(buf, "<unspecified>");
+		break;
+	default:
+		jam(buf, "<invalid>");
+		break;
+	}
+}
+
+/*
+ * Find longest run of zero pairs that should be suppressed (need at
+ * least two).
+ */
+static shunk_t zeros_to_skip(shunk_t a)
+{
+	shunk_t zero = null_shunk;
+	const char *ptr = a.ptr;
+	const char *last = a.ptr + a.len - 2;
+	while (ptr <= last) {
+		unsigned l = 0;
+		for (l = 0; ptr + l <= last; l += 2) {
+			/* ptr is probably signed */
+			if (ptr[l+0] != 0 || ptr[l+1] != 0) {
+				break;
+			}
+		}
+		if (l > 2 && l > zero.len) {
+			zero = shunk2(ptr, l);
+			ptr += l;
+		} else {
+			ptr += 2;
+		}
+	}
+	return zero;
+}
+
+static void format_address_cooked(jambuf_t *buf, bool sensitive,
+				  const ip_address *address)
+{
+	/*
+	 * A NULL address can't be sensitive.
+	 */
+	if (address == NULL) {
+		jam(buf, "<none>");
+		return;
+	}
+	if (sensitive) {
+		jam(buf, "<ip-address>");
+		return;
+	}
+	shunk_t a = address_as_shunk(address);
+	int type = addrtypeof(address);
+	switch (type) {
+	case AF_INET: /* N.N.N.N */
+		jam_raw_ipv4_address(buf, a, 0);
+		break;
+	case AF_INET6: /* N:N:...:N */
+		jam_raw_ipv6_address(buf, a, 0, zeros_to_skip(a));
+		break;
+	case AF_UNSPEC:
+		jam(buf, "<unspecified>");
+		break;
+	default:
+		jam(buf, "<invalid>");
+		break;
+	}
+}
+
+void jam_address(jambuf_t *buf, const ip_address *address)
+{
+	format_address_cooked(buf, false, address);
+}
+
+void jam_address_sensitive(jambuf_t *buf, const ip_address *address)
+{
+	format_address_cooked(buf, !log_ip, address);
+}
+
+void jam_address_reversed(jambuf_t *buf, const ip_address *address)
+{
+	shunk_t bytes = address_as_shunk(address);
+	int type = addrtypeof(address);
+	switch (type) {
+	case AF_INET:
+	{
+		for (int i = bytes.len - 1; i >= 0; i--) {
+			const uint8_t *byte = bytes.ptr;
+			jam(buf, "%d.", byte[i]);
+		}
+		jam(buf, "IN-ADDR.ARPA.");
+		break;
+	}
+	case AF_INET6:
+	{
+		for (int i = bytes.len - 1; i >= 0; i--) {
+			const uint8_t *byte = bytes.ptr;
+			jam(buf, "%x.%x.", byte[i] & 0xf, byte[i] >> 4);
+		}
+		jam(buf, "IP6.ARPA.");
+		break;
+	}
+	case AF_UNSPEC:
+		jam(buf, "<unspecified>");
+		break;
+	default:
+		jam(buf, "<invalid>");
+		break;
+	}
+}
+
+const char *str_address_raw(const ip_address *src, char sep,
+			    address_buf *dst)
+{
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_address_raw(&buf, src, sep);
+	return dst->buf;
+}
+
+const char *str_address(const ip_address *src,
+			       address_buf *dst)
+{
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_address(&buf, src);
+	return dst->buf;
+}
+
+const char *str_address_sensitive(const ip_address *src,
+				  address_buf *dst)
+{
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_address_sensitive(&buf, src);
+	return dst->buf;
+}
+
+const char *str_address_reversed(const ip_address *src,
+				 address_reversed_buf *dst)
+{
+	jambuf_t buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_address_reversed(&buf, src);
+	return dst->buf;
+}
+
+const ip_address address_invalid = {
+	.version = 0,
+};
+
+ip_address address_any(const struct ip_info *info)
+{
+	if (info == NULL) {
+		/*
+		 * XXX: Loudly reject AF_UNSPEC, but don't crash.
+		 * Callers know the protocol of the "any" (IPv[46]
+		 * term) or "unspecified" (alternative IPv6 term)
+		 * address required.
+		 *
+		 * If there's a need for a function that also allows
+		 * AF_UNSPEC, then call that function
+		 * address_unspecified().
+		 */
+		PEXPECT_LOG("AF_UNSPEC unexpected");
+		return address_invalid;
+	} else {
+		return info->any_address;
+	}
+}
+
+bool address_is_any(const ip_address *address)
+{
+	const struct ip_info *type = address_type(address);
+	if (type == NULL) {
+		return false;
+	} else {
+		shunk_t addr = address_as_shunk(address);
+		shunk_t any = address_as_shunk(&type->any_address);
+		return hunk_eq(addr, any);
+	}
+}
+
+bool address_is_specified(const ip_address *address)
+{
+	const struct ip_info *type = address_type(address);
+	if (type == NULL) {
+		return false;
+	} else {
+		shunk_t addr = address_as_shunk(address);
+		shunk_t any = address_as_shunk(&type->any_address);
+		return !hunk_eq(addr, any);
+	}
+}
+
+bool address_is_loopback(const ip_address *address)
+{
+	const struct ip_info *type = address_type(address);
+	if (type == NULL) {
+		return false;
+	} else {
+		shunk_t addr = address_as_shunk(address);
+		shunk_t loopback = address_as_shunk(&type->loopback_address);
+		return hunk_eq(addr, loopback);
+	}
 }

@@ -2,12 +2,13 @@
  * Copyright (C) 1998-2001 D. Hugh Redelmeier.
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2008 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,14 +16,10 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <libreswan.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"
@@ -45,7 +42,6 @@
 
 #include "crypto.h"
 
-#include "alg_info.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "db_ops.h"
@@ -82,30 +78,29 @@ static struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
  * one DH group.
  */
 
-static struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
+static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					enum ikev1_auth_method auth_method,
 					bool single_dh);
 
-
-static struct alg_info_ike *ikev1_default_ike_info(void)
+static struct ike_proposals ikev1_default_ike_info(void)
 {
-	static const struct parser_policy policy = {
-		.ikev1 = TRUE,
+	static const struct proposal_policy policy = {
+		.version = IKEv1,
+		.check_pfs_vs_dh = false,
 		.alg_is_ok = ike_alg_is_ike,
+		.warning = libreswan_log,
 	};
-
-	char err[100];
-	struct alg_info_ike *defaults =
-		alg_info_ike_create_from_str(&policy, NULL,
-					     err, sizeof(err));
-	if (defaults == NULL) {
-		PEXPECT_LOG("Invalid IKEv1 default algorithms: %s", err);
+	struct proposal_parser *parser = ike_proposal_parser(&policy);
+	struct ike_proposals defaults = { .p = proposals_from_str(parser, NULL), };
+	if (defaults.p == NULL) {
+		PEXPECT_LOG("Invalid IKEv1 default algorithms: %s",
+			    parser->error);
 	}
-
+	free_proposal_parser(&parser);
 	return defaults;
 }
 
-struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
+struct db_sa *oakley_alg_makedb(const struct ike_proposals ike_proposals,
 				enum ikev1_auth_method auth_method,
 				bool single_dh)
 {
@@ -114,26 +109,25 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	 * standard defaults.
 	 */
 
-	if (ai == NULL) {
+	if (ike_proposals.p == NULL) {
 		DBG(DBG_CONTROL, DBG_log(
 			    "no specific IKE algorithms specified - using defaults"));
-		struct alg_info_ike *default_info
-			= ikev1_default_ike_info();
+		struct ike_proposals default_info = ikev1_default_ike_info();
 		struct db_sa *new_db = oakley_alg_mergedb(default_info,
 							  auth_method,
 							  single_dh);
-		pfree(default_info);
+		proposals_delref(&default_info.p);
 		return new_db;
 	} else {
-		return oakley_alg_mergedb(ai, auth_method, single_dh);
+		return oakley_alg_mergedb(ike_proposals, auth_method, single_dh);
 	}
 }
 
-struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
+struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 				 enum ikev1_auth_method auth_method,
 				 bool single_dh)
 {
-	passert(ai != NULL);
+	passert(ike_proposals.p != NULL);
 
 	struct db_sa *gsp = NULL;
 
@@ -150,26 +144,28 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 	 * when creating each item, we will use the first transform
 	 * from the base item as the template.
 	 */
-	FOR_EACH_IKE_INFO(ai, ike_info) {
+	FOR_EACH_PROPOSAL(ike_proposals.p, proposal) {
 		struct db_sa *emp_sp;
 
-		passert(ike_info->encrypt);
-		passert(ike_info->prf);
-		passert(ike_info->dh);
+		struct v1_proposal algs = v1_proposal(proposal);
 
-		unsigned ealg = ike_info->encrypt->common.ikev1_oakley_id;
-		unsigned halg = ike_info->prf->common.ikev1_oakley_id;
-		unsigned modp = ike_info->dh->group;
-		unsigned eklen = ike_info->enckeylen;
+		passert(algs.encrypt != NULL);
+		passert(algs.prf != NULL);
+		passert(algs.dh != NULL);
+
+		unsigned ealg = algs.encrypt->common.ikev1_oakley_id;
+		unsigned halg = algs.prf->common.ikev1_oakley_id;
+		unsigned modp = algs.dh->group;
+		unsigned eklen = algs.enckeylen;
 
 		DBG(DBG_CONTROL,
 		    DBG_log("oakley_alg_makedb() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
-			    ike_info->encrypt->common.name, ealg,
-			    ike_info->prf->common.name, halg,
-			    ike_info->dh->common.name, modp,
+			    algs.encrypt->common.name, ealg,
+			    algs.prf->common.name, halg,
+			    algs.dh->common.name, modp,
 			    eklen));
 
-		const struct encrypt_desc *enc_desc = ike_info->encrypt;
+		const struct encrypt_desc *enc_desc = algs.encrypt;
 		if (eklen != 0 && !encrypt_has_key_bit_length(enc_desc, eklen)) {
 			PEXPECT_LOG("IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid, should have been dropped",
 				    enc_desc->common.name,
@@ -234,10 +230,10 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 			hash->type.oakley == OAKLEY_PRF);
 		if (halg > 0) {
 			hash->val = halg;
-			if (ike_alg_enc_requires_integ(enc_desc)) {
-				hash->type.oakley = OAKLEY_HASH_ALGORITHM;
-			} else {
+			if (encrypt_desc_is_aead(enc_desc)) {
 				hash->type.oakley = OAKLEY_PRF;
+			} else {
+				hash->type.oakley = OAKLEY_HASH_ALGORITHM;
 			}
 		}
 
@@ -251,8 +247,11 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    ike_info->dh->group != last_modp) {
-			if (last_modp == OAKLEY_GROUP_MODP1024 ||
+		    algs.dh->group != last_modp) {
+			if (
+#ifdef USE_DH2
+			    last_modp == OAKLEY_GROUP_MODP1024 ||
+#endif
 			    last_modp == OAKLEY_GROUP_MODP1536) {
 				/*
 				 * The previous group will work on old Cisco gear,
@@ -266,13 +265,13 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 				}
 
 				loglog(RC_LOG_SERIOUS,
-				       "transform (%s,%s,%s keylen %ld) ignored.",
+				       "transform (%s,%s,%s keylen %d) ignored.",
 				       enum_name(&oakley_enc_names,
-						 ike_info->encrypt->common.ikev1_oakley_id),
+						 algs.encrypt->common.ikev1_oakley_id),
 				       enum_name(&oakley_hash_names,
-						 ike_info->prf->common.ikev1_oakley_id),
-				       ike_info->dh->common.name,
-				       (long)ike_info->enckeylen);
+						 algs.prf->common.ikev1_oakley_id),
+				       algs.dh->common.name,
+				       algs.enckeylen);
 				free_sa(&emp_sp);
 			} else {
 				/*
@@ -296,15 +295,13 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 		}
 
 		 if (emp_sp != NULL) {
-
 			 /*
 			  * Exclude 3des et.al. which do not include
 			  * default key lengths in the proposal.
 			  */
-			 if (ike_info->enckeylen == 0
-			     && !ike_info->encrypt->keylen_omitted) {
-
-				const struct encrypt_desc *enc_desc = ike_info->encrypt;
+			 if (algs.enckeylen == 0 &&
+			     !algs.encrypt->keylen_omitted) {
+				const struct encrypt_desc *enc_desc = algs.encrypt;
 				int def_ks = enc_desc->keydeflen;
 				passert(def_ks); /* ike=null not supported */
 				int max_ks = encrypt_max_key_bit_length(enc_desc);
@@ -374,7 +371,7 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 					emp_sp = NULL;
 				}
 			}
-			last_modp = ike_info->dh->group;
+			last_modp = algs.dh->group;
 		}
 
 		transcnt++;

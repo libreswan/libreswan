@@ -1,12 +1,13 @@
-/* time objects and functions, for libreswan
+/* time difference objects and functions, for libreswan
  *
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/lgpl-2.1.txt>.
  *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,12 +16,13 @@
  *
  */
 
-#ifndef _DELTATIME_H
-#define _DELTATIME_H    /* seen it, no need to see it again */
+#ifndef DELTATIME_H
+#define DELTATIME_H    /* seen it, no need to see it again */
 
-#include <sys/time.h>
-#include <time.h>
-#include <inttypes.h>
+#include <time.h>		/* for time_t */
+#include <sys/time.h>		/* for struct timeval */
+#include <stdint.h>		/* for intmax_t */
+#include <stdbool.h>		/* for bool */
 
 struct lswlog;
 
@@ -38,20 +40,22 @@ struct lswlog;
 /*
  * deltatime_t: relative time between events.  Presumed continuous.
  *
- * It seems that some compilers don't like the static constructor
- * DELTATIME() being strongly typed (that is using a cast like
- * (deltatime_t) {{...}}).  Get around this by providing both
- * DELTATIME() and deltatime(); and DELTATIME_MS() and deltatime_ms().
+ * A struct initializer for an object of static storage duration
+ * cannot include a compound literal (or a function call).
+ * DELTATIME_INIT is suitable for a struct initializer.
+ * It's optional in an initializer for an object of automatic storage duration.
+ * Because it lacks the cast, this macro should not be used in other contexts.
  * Sigh.
  */
 
-typedef struct { intmax_t ms; } deltatime_t;
+typedef struct { struct timeval dt; } deltatime_t;
 
-#define DELTATIME(S) { (intmax_t)((S) * 1000) }
+#define DELTATIME_INIT(S) { .dt = { .tv_sec = (S), } }
+
 deltatime_t deltatime(time_t secs);
-
-#define DELTATIME_MS(MS) { (MS) }
 deltatime_t deltatime_ms(intmax_t ms);
+
+deltatime_t deltatime_timevals_diff(struct timeval l, struct timeval r);
 
 /* sign(a - b) */
 int deltatime_cmp(deltatime_t a, deltatime_t b);
@@ -78,6 +82,17 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
 struct timeval deltatimeval(deltatime_t);
 
 /* output as "smart" seconds */
+
+typedef struct {
+	char buf[100]; /* true length ???? */
+} deltatime_buf;
+const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
+
+/* jam_deltatime() */
 size_t lswlog_deltatime(struct lswlog *buf, deltatime_t d);
+
+/* But what about -ve? */
+#define PRI_DELTATIME "%jd.%03jd"
+#define pri_deltatime(D) (deltamillisecs(D) / 1000), (deltamillisecs(D) % 1000)
 
 #endif

@@ -3,11 +3,13 @@
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003 Herbert Xu.
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -27,7 +29,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include <libreswan.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 
@@ -48,7 +49,6 @@
 #include "nat_traversal.h"
 #include "server.h"
 
-#include "alg_info.h"
 #include "kernel_alg.h"
 #include "ip_address.h"
 
@@ -177,7 +177,6 @@ add_entry:
 					/* matches nothing -- create a new entry */
 					int fd = create_socket(ifp, v->name,
 							       pluto_port);
-					ipstr_buf b;
 
 					if (fd < 0)
 						break;
@@ -197,21 +196,20 @@ add_entry:
 								 "virtual device name klips");
 					id->id_count++;
 
-					q->ip_addr = ifp->addr;
+					q->local_endpoint = endpoint(&ifp->addr, pluto_port);
 					q->fd = fd;
 					q->next = interfaces;
 					q->change = IFN_ADD;
-					q->port = pluto_port;
 					q->ike_float = FALSE;
 
 					interfaces = q;
 
+					endpoint_buf b;
 					libreswan_log(
-						"adding interface %s/%s %s:%d",
+						"adding interface %s/%s %s",
 						q->ip_dev->id_vname,
 						q->ip_dev->id_rname,
-						ipstr(&q->ip_addr, &b),
-						q->port);
+						str_endpoint(&q->local_endpoint, &b));
 
 					/*
 					 * right now, we do not support NAT-T on IPv6, because
@@ -234,21 +232,15 @@ add_entry:
 						q->ip_dev = id;
 						id->id_count++;
 
-						q->ip_addr = ifp->addr;
-						setportof(htons(pluto_nat_port),
-							  &q->ip_addr);
-						q->port = pluto_nat_port;
+						q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;
 						q->ike_float = TRUE;
 						interfaces = q;
-						libreswan_log(
-							"adding interface %s/%s %s:%d",
-							q->ip_dev->id_vname, q->ip_dev->id_rname,
-							ipstr(&q->
-							       ip_addr, &b),
-							q->port);
+						plog_global("adding interface %s/%s %s",
+							    q->ip_dev->id_vname, q->ip_dev->id_rname,
+							    str_endpoint(&q->local_endpoint, &b));
 					}
 					break;
 				}
@@ -256,7 +248,7 @@ add_entry:
 				/* search over if matching old entry found */
 				if (streq(q->ip_dev->id_rname, ifp->name) &&
 				    streq(q->ip_dev->id_vname, v->name) &&
-				    sameaddr(&q->ip_addr, &ifp->addr)) {
+				    sameaddr(&q->local_endpoint, &ifp->addr)) {
 					/* matches -- rejuvinate old entry */
 					q->change = IFN_KEEP;
 
@@ -266,7 +258,7 @@ add_entry:
 							  ifp->name) &&
 						    streq(q->ip_dev->id_vname,
 							  v->name) &&
-						    sameaddr(&q->ip_addr,
+						    sameaddr(&q->local_endpoint,
 							     &ifp->addr))
 							q->change = IFN_KEEP;
 					}
@@ -295,9 +287,9 @@ static bool klips_do_command(const struct connection *c, const struct spd_route 
 	char cmd[2048]; /* arbitrary limit on shell command length */
 	char common_shell_out_str[2048];
 
-	if (fmt_common_shell_out(common_shell_out_str,
-				 sizeof(common_shell_out_str), c, sr,
-				 st) == -1) {
+	if (!fmt_common_shell_out(common_shell_out_str,
+				  sizeof(common_shell_out_str), c, sr,
+				  st)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;
@@ -339,13 +331,12 @@ const struct kernel_ops klips_kernel_ops = {
 	.get_spi = NULL,
 	.eroute_idle = pfkey_was_eroute_idle,
 	.inbound_eroute = FALSE,
-	.policy_lifetime = FALSE,
+	.scan_shunts = pfkey_scan_shunts,
 	.init = init_pfkey,
 	.exceptsocket = NULL,
 	.docommand = klips_do_command,
-	.set_debug = pfkey_set_debug,
 	.remove_orphaned_holds = pfkey_remove_orphaned_holds,
-	.process_ifaces = klips_process_raw_ifaces,
+	.process_raw_ifaces = klips_process_raw_ifaces,
 	.kern_name = "klips",
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,

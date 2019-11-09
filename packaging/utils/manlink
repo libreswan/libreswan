@@ -24,9 +24,9 @@ do
 	if test " $them" = " "
 	then
 		them=$(	awk '/^\.SH[ \t]+NAME/,/^\.SH[ \t]+[^N]/' $m |
-			egrep -v '^\.' | tr '	,' '  ' |
+			grep -v '^\.' | tr '	,' '  ' |
 			sed -n '/  *\\*-  *.*/s///p' | tr -s ' ' '\012' |
-			egrep -v '^ipsec$' )
+			grep -v '^ipsec$' )
 	fi
 
 	# do it

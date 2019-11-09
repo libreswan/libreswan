@@ -1,13 +1,17 @@
+# XXX: can this optional sanitizer be merged into guest-ip*.sed which
+# is always run
+
 # this an aggressive sanitizer for "ip xfrm state" esp
-# carefull when mxixing this with "ipsec look"
+# careful when mxixing this with "ipsec look"
 # "ipsec look" sanitizer are similar
+
+# Paul: this is _crazy_, nothing is ephemeral here so it completely breaks
+#       everything that tries to use this. It seems like it tried to fixup
+#       older kernel vs newer kernel ip xfrm output or something ????
 /src 0.0.0.0\/0 dst 0.0.0.0\/0/d
 /socket \(in\|out\) priority 0 ptype main/d
 /src ::\/0 dst ::\/0/d
-s/^\tproto esp spi 0x[^ ]* reqid [0-9]*/\tproto esp spi 0xSPISPIXX reqid REQID/g
 /replay-window /d
 /auth-trunc hmac/d
-s/^\tenc \(.*\) \(0x.*\)/\tenc \1 0xKEY/g
-s/^\taead \(.*\) \(0x.*\)/\taead \1 0xKEY/g
 /^\tencap type espinudp sport/d
 /proto esp reqid/d

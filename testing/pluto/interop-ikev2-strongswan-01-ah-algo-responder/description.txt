@@ -1,0 +1,4 @@
+Interop AH algorithms with strongswan as the responder.
+Perform a rekey too to confirm AH rekeying picks proper keymat
+
+TODO: the check for replay-window line should not be sanitized out :/

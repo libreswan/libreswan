@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --x509 --x509name ../otherca/signedbyother
 Preparing X.509 files
-command 'PATH/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'' failed with status 255: certutil: could not find certificate named "Libreswan test CA for mainca - Libreswan": SEC_ERROR_UNRECOGNIZED_OID: Unrecognized Object Identifier.
+command 'PATH/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'' failed with status 255: certutil: could not find certificate named "Libreswan test CA for mainca - Libreswan": SEC_ERROR_...
 west #
  certutil -M -n 'Libreswan test CA for otherca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'
 west #
@@ -9,11 +9,11 @@ west #
  certutil -D -n east-ec -d sql:/etc/ipsec.d
 west #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --add westnet-eastnet-x509-cr
 002 added connection description "westnet-eastnet-x509-cr"
@@ -25,24 +25,20 @@ west #
 west #
  ipsec auto --up westnet-eastnet-x509-cr
 002 "westnet-eastnet-x509-cr" #1: initiating Main Mode
-002 "westnet-eastnet-x509-cr" #1: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
-104 "westnet-eastnet-x509-cr" #1: STATE_MAIN_I1: initiate
-002 "westnet-eastnet-x509-cr" #1: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
-106 "westnet-eastnet-x509-cr" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+1v1 "westnet-eastnet-x509-cr" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+1v1 "westnet-eastnet-x509-cr" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 002 "westnet-eastnet-x509-cr" #1: I am sending my cert
 002 "westnet-eastnet-x509-cr" #1: I am sending a certificate request
-002 "westnet-eastnet-x509-cr" #1: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
-108 "westnet-eastnet-x509-cr" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+1v1 "westnet-eastnet-x509-cr" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "westnet-eastnet-x509-cr" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-003 "westnet-eastnet-x509-cr" #1: received and ignored informational message
-002 "westnet-eastnet-x509-cr" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
-002 "westnet-eastnet-x509-cr" #1: IMPAIR RETRANSMITS: suppressing re-key
-002 "westnet-eastnet-x509-cr" #1: deleting state (STATE_MAIN_I3)
+003 "westnet-eastnet-x509-cr" #1: received and ignored notification payload: INVALID_ID_INFORMATION
+002 "westnet-eastnet-x509-cr" #1: IMPAIR: retransmit so deleting SA
+002 "westnet-eastnet-x509-cr" #1: deleting state (STATE_MAIN_I3) and NOT sending notification
 west #
  echo done
 done
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:
@@ -50,16 +46,15 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 Libreswan test CA for otherca - Libreswan                    CT,, 
-hashsha2                                                     P,,  
+hashsha1                                                     P,,  
 nic                                                          P,,  
 north                                                        P,,  
 road                                                         P,,  

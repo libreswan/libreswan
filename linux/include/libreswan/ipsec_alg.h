@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -37,7 +37,7 @@
 
 /*
  *	The following structs are used via pointers in ipsec_alg object to
- *	avoid ipsec_alg.h coupling with freeswan headers, thus simplifying
+ *	avoid ipsec_alg.h coupling with Libreswan headers, thus simplifying
  *	module development
  */
 struct ipsec_sa;
@@ -123,7 +123,7 @@ struct ipsec_alg_auth {
 
 /***************************************************************
 *
-*       INTERFACE for module loading,testing, and unloading
+*       INTERFACE for module loading, testing, and unloading
 *
 ***************************************************************/
 /*	-  registration calls   */

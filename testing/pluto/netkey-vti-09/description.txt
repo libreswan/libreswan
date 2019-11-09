@@ -1,3 +1,6 @@
 using marking and VTI, map two IPsec SA's onto one VTI device.
-The west configure the IP address on the VTI interface not on ethX.
-The east has its address configured on eth0
+west configure the IP address on the VTI interface, not on ethX.
+
+The second vti address also needs to appear on the vti interface.
+This currently is not happening
+

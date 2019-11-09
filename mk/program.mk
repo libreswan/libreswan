@@ -24,7 +24,6 @@ RM=rm
 CFLAGS += -pthread
 CFLAGS += $(USERLAND_CFLAGS)
 CFLAGS += $(PORTINCLUDE)
-CFLAGS += -I$(KLIPSINC)
 CFLAGS += -I$(top_srcdir)/include
 CFLAGS += $(NSSFLAGS)
 CFLAGS += $(CROSSFLAGS)
@@ -118,22 +117,24 @@ ifdef OBJS
 # instance something is removed), a re-link is triggered.
 
 $(PROGRAM): $(OBJS) $(srcdir)/Makefile
-	cd $(builddir) && $(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
+	cd $(builddir) && $(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLAND_LDFLAGS)
 
 include $(top_srcdir)/mk/depend.mk
 
 else
 
-%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver
+%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
 	@echo  'IN' $< '->' $(builddir)/$@
 	${TRANSFORM_VARIABLES} < $< > $(builddir)/$@
 	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
 	@if [ "${PROGRAM}.in" = $< ]; then chmod +x $(builddir)/$@; fi
 
-%: %.pl $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver
+%: %.pl $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
 	@echo  'PL' $< '->' $(builddir)/$@
 	@${TRANSFORM_VARIABLES} < $< > $(builddir)/$@
 	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
 	@if [ "${PROGRAM}.pl" = $< ]; then chmod +x $(builddir)/$@; fi
 
 endif
+
+include $(top_srcdir)/mk/builddir.mk

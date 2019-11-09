@@ -7,7 +7,7 @@
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -31,7 +31,7 @@ endif
 # The assembly version is incompatible with CONFIG_REGPARM=y The
 # CONFIG_REGPARM defines whether it uses registers or stack to pass
 # arguments and recent kernels (after 2.6.17 or 2.6.18) uses registers
-# unconditionally. Therefor, we disable the assembly version for ix86's
+# unconditionally. Therefore, we disable the assembly version for ix86's
 # completely.
 # #
 # the assembly version expects frame pointers, which are

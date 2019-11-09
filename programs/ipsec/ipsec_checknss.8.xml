@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry>
+<refentryinfo>
+  <author><firstname>Tuomo</firstname><surname>Soini</surname><authorblurb><para></para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>IPSEC_CHECKNSS</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>27 April 2018</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec checknss</refname>
+<refpurpose>Initialise the IPsec NSS database</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>ipsec checknss</command>
+    <arg choice='opt'><arg choice='plain'>--nssdir </arg><arg choice='plain'><replaceable>@IPSEC_NSSDIR@</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--settrusts </arg></arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Checknss</emphasis>
+Checks or initialises the NSS database where all private keys for RSA and
+certificate keypairs are stored. To remove an existing IPsec NSS database,
+remove all the *.db files and pkcs11.txt from the NSS data directory
+(default: @IPSEC_NSSDIR@).
+</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_initnss</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+
+
+<refsect1 id='bugs'><title>BUGS</title>
+<para>none</para>
+</refsect1>
+</refentry>
+

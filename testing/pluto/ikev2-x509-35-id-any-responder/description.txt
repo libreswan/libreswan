@@ -1,0 +1,2 @@
+Both sides set require-id-on-certificate=no, so it should succeeed despite that
+west/east do not have a SAN matching their IKE ID

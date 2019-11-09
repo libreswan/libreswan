@@ -5,7 +5,7 @@
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -13,19 +13,13 @@
  * for more details.
  */
 
-extern void quick_outI1(int whack_sock,
+#include "fd.h"
+
+extern void quick_outI1(fd_t whack_sock,
 			struct state *isakmp_sa,
 			struct connection *c,
 			lset_t policy,
 			unsigned long try,
-			so_serial_t replacing
-#ifdef HAVE_LABELED_IPSEC
-			, struct xfrm_user_sec_ctx_ike *uctx
-#endif
+			so_serial_t replacing,
+			struct xfrm_user_sec_ctx_ike *uctx
 			);
-
-extern state_transition_fn
-	quick_inI1_outR1,
-	quick_inR1_outI2,
-	quick_inI2;
-

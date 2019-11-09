@@ -3,7 +3,7 @@ Basic pluto with IKEv2 on the initiator (west), and on the responder.
 This test enables --impair-major-version-bump that will send a higher
 major version number on the responder. The connection should fail.
 
-See: http://tools.ietf.org/html/rfc5996#section-2.5
+See: https://tools.ietf.org/html/rfc5996#section-2.5
 
 The major version number should be incremented only if the packet
 formats or required actions have changed so dramatically that an
