@@ -286,8 +286,6 @@ road #
 |    Message ID: 0 (00 00 00 00)
 |    Message ID: 1 (00 00 00 01)
 |    Message ID: 1 (00 00 00 01)
-|    Message ID: 0 (00 00 00 00)
-|    Message ID: 0 (00 00 00 00)
 road #
  # grep on east
 road #

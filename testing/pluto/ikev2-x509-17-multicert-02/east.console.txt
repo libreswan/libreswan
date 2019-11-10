@@ -9,7 +9,6 @@ east #
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  ipsec checknss --settrusts
-correcting trust bits for west-ec
 correcting trust bits for Libreswan test CA for otherca - Libreswan
 east #
  ipsec start
