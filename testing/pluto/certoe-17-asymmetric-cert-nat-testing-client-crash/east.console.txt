@@ -23,6 +23,15 @@ east #
  echo "initdone"
 initdone
 east #
+ # checking the connections status
+east #
+ ipsec whack --trafficstatus
+006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='ID_NULL', lease=10.0.10.1/32
+east #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+east #
  # Two tunnels should have established with non-zero byte counters. East will have both of the road tunnels established
 east #
  ipsec whack --trafficstatus
@@ -40,6 +49,7 @@ OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: Authenticated using RSA with IKEv2_AUTH_HASH_SHA1
 east #
 east #
  ../bin/check-for-core.sh
