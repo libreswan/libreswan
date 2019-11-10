@@ -858,6 +858,20 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 	    enum_name(&state_category_names, st->st_state->category));
 }
 
+void discard_state(struct state **st)
+{
+	/*
+	 * try to stop revival and messages
+	 */
+	if (IS_IKE_SA(*st)) {
+		change_state(*st, STATE_IKESA_DEL);
+	} else {
+		change_state(*st, STATE_CHILDSA_DEL);
+	}
+	delete_state(*st);
+	*st = NULL;
+}
+
 /* delete a state object */
 void delete_state(struct state *st)
 {
