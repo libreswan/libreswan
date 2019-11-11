@@ -5101,61 +5101,34 @@ static stf_status add_mobike_response_payloads(
  */
 
 stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
-						 struct state *st,
+						 struct state *unused_st UNUSED,
 						 struct msg_digest *md)
 {
-	struct payload_digest *p;
 	int ndp = 0;	/* number Delete payloads for IPsec protocols */
-	bool del_ike = FALSE;	/* any IKE SA Deletions? */
+	bool del_ike = false;	/* any IKE SA Deletions? */
 	bool seen_and_parsed_redirect = FALSE;
+
 	/*
 	 * we need connection and boolean below
 	 * in a separate variables because we
 	 * do something with them after we delete
 	 * the state.
+	 *
+	 * XXX: which is of course broken; code should return
+	 * STF_ZOMBIFY and and let state machine clean things up.
 	 */
-	struct connection *c = st->st_connection;
-	bool do_unroute = st->st_sent_redirect && c->kind == CK_PERMANENT;
-	chunk_t cookie2 = EMPTY_CHUNK;
+	struct connection *c = ike->sa.st_connection;
+	bool do_unroute = ike->sa.st_sent_redirect && c->kind == CK_PERMANENT;
+	chunk_t cookie2 = empty_chunk;
 
 	/* Are we responding (as opposed to processing a response)? */
-	const bool responding = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) == 0;
-
-	DBG(DBG_PARSING, DBG_log("an informational %s ",
-				responding ? "request should send a response" :
-					     "response"));
-	/*
-	 * get parent
-	 *
-	 * ??? shouldn't st always be the parent?
-	 *
-	 * XXX: what about when the remote end sends the wrong msgid
-	 * and it matches one of the child requests?
-	 */
-	pexpect(&ike->sa == st);
-	pexpect(!IS_CHILD_SA(st));	/* ??? why would st be a child? */
-
-	if (IS_CHILD_SA(st)) {
-		/* we picked incomplete child, change to parent */
-		so_serial_t c_serialno = st->st_serialno;
-
-		st = state_with_serialno(st->st_clonedfrom);
-		if (st == NULL)
-			return STF_INTERNAL_ERROR;
-
-		dbg("switching MD.ST from #%lu to IKE #%lu; ulgh",
-		    md->st->st_serialno, st->st_serialno);
-		md->st = st;
-		set_cur_state(st);
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("Informational exchange matched Child SA #%lu - switched to its Parent SA #%lu",
-			c_serialno, st->st_serialno));
-	}
+	const bool responding = v2_msg_role(md) == MESSAGE_REQUEST;
+	dbg("an informational %s ", responding ? "request should send a response" : "response");
 
 	/*
 	 * Process NOTIFY payloads - ignore MOBIKE when deleting
 	 */
-	bool send_mobike_resp = FALSE;	/* only if responding */
+	bool send_mobike_resp = false;	/* only if responding */
 
 	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
 		if (responding) {
@@ -5164,7 +5137,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 			if (process_mobike_resp(md)) {
 				libreswan_log("MOBIKE response: updating IPsec SA");
 			} else {
-				DBG(DBG_CONTROL, DBG_log("MOBIKE response: not updating IPsec SA"));
+				dbg("MOBIKE response: not updating IPsec SA");
 			}
 		}
 	} else {
@@ -5180,7 +5153,8 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		 * - sanity checking
 		 */
 
-		for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
+		for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2D];
+		     p != NULL; p = p->next) {
 			struct ikev2_delete *v2del = &p->payload.v2delete;
 
 			switch (v2del->isad_protoid) {
@@ -5200,7 +5174,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
 
-				del_ike = TRUE;
+				del_ike = true;
 				break;
 
 			case PROTO_IPSEC_AH:
@@ -5268,9 +5242,9 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 			 "information exchange reply packet");
 
 		/* authenticated decrypted response - It's alive, alive! */
-		DBG(DBG_DPD, DBG_log("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness"));
-		st->st_last_liveness = mononow();
-		st->st_pend_liveness = FALSE;
+		dbg("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness");
+		ike->sa.st_last_liveness = mononow();
+		ike->sa.st_pend_liveness = false;
 
 		/* HDR out */
 
@@ -5283,7 +5257,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 
 		/* insert an Encryption payload header */
 
-		sk = open_v2SK_payload(&rbody, ike_sa(st));
+		sk = open_v2SK_payload(&rbody, ike);
 		if (!pbs_ok(&sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -5303,28 +5277,29 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 	 * session.
 	 */
 	if (seen_and_parsed_redirect)
-		event_force(EVENT_v2_REDIRECT, st);
+		event_force(EVENT_v2_REDIRECT, &ike->sa);
 
 	/*
 	 * Do the actual deletion.
 	 * If responding, build the body of the response.
 	 */
 
-	if (!responding && st->st_state->kind == STATE_IKESA_DEL) {
+	if (!responding && ike->sa.st_state->kind == STATE_IKESA_DEL) {
 		/*
 		 * this must be a response to our IKE SA delete request
 		 * Even if there are are other Delete Payloads,
 		 * they cannot matter: we delete the family.
 		 */
-		delete_my_family(st, TRUE);
-		md->st = st = NULL;
+		delete_my_family(&ike->sa, true);
+		md->st = NULL;
+		ike = NULL;
 	} else if (!responding && md->chain[ISAKMP_NEXT_v2D] == NULL) {
 		/*
 		 * A liveness update response is handled here
 		 */
-		DBG(DBG_DPD, DBG_log("Received an INFORMATIONAL non-delete request; updating liveness, no longer pending."));
-		st->st_last_liveness = mononow();
-		st->st_pend_liveness = FALSE;
+		dbg("Received an INFORMATIONAL non-delete request; updating liveness, no longer pending.");
+		ike->sa.st_last_liveness = mononow();
+		ike->sa.st_pend_liveness = false;
 	} else if (del_ike) {
 		/*
 		 * If we are deleting the Parent SA, the Child SAs will be torn down as well,
@@ -5342,9 +5317,8 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		 * If responding, build response Delete Payloads.
 		 * If there is no payload, this loop is a no-op.
 		 */
-		int pli = 0;	/* payload index */
-
-		for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
+		for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2D];
+		     p != NULL; p = p->next) {
 			struct ikev2_delete *v2del = &p->payload.v2delete;
 
 			switch (v2del->isad_protoid) {
@@ -5365,12 +5339,10 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 					if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
 						return STF_INTERNAL_ERROR;	/* cannot happen */
 
-					DBG(DBG_CONTROLMORE, DBG_log(
-						    "delete %s SA(0x%08" PRIx32 ")",
-						    enum_show(&ikev2_protocol_names,
-							    v2del->isad_protoid),
-						    ntohl((uint32_t)
-							  spi)));
+					dbg("delete %s SA(0x%08" PRIx32 ")",
+					    enum_show(&ikev2_protocol_names,
+						      v2del->isad_protoid),
+					    ntohl((uint32_t) spi));
 
 					/*
 					 * From 3.11.  Delete Payload:
@@ -5395,11 +5367,9 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 							    enum_show(&ikev2_protocol_names, v2del->isad_protoid),
 								ntohl((uint32_t)spi));
 					} else {
-						DBG(DBG_CONTROLMORE,
-							DBG_log("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
-								enum_show(&ikev2_protocol_names,
-									v2del->isad_protoid),
-								ntohl((uint32_t)spi)));
+						dbg("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
+						    enum_show(&ikev2_protocol_names,
+							      v2del->isad_protoid), ntohl((uint32_t)spi));
 
 						/* we just received a delete, don't send another delete */
 						dst->sa.st_suppress_del_notify = TRUE;
@@ -5427,12 +5397,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 
 				if (!del_ike && responding) {
 					/* build output Delete Payload */
-
-					passert(pli < ndp);
-					pli++;
 					struct ikev2_delete v2del_tmp = {
-						.isad_np = (pli == ndp) ?
-							ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2D,
 						.isad_protoid = v2del->isad_protoid,
 						.isad_spisize = v2del->isad_spisize,
 						.isad_nrspi = j,
@@ -5498,8 +5463,8 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		mobike_switch_remote(md, &mobike_remote);
 
 		/* ??? should we support fragmenting?  Maybe one day. */
-		record_outbound_ike_msg(st, &reply_stream, "reply packet for process_encrypted_informational_ikev2");
-		send_recorded_v2_ike_msg(st, "reply packet for process_encrypted_informational_ikev2");
+		record_outbound_ike_msg(&ike->sa, &reply_stream, "reply packet for process_encrypted_informational_ikev2");
+		send_recorded_v2_ike_msg(&ike->sa, "reply packet for process_encrypted_informational_ikev2");
 
 		/*
 		 * XXX: This code should be neither using record 'n'
@@ -5510,16 +5475,17 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		 * When DEL_IKE, the update isn't needed but what
 		 * ever.
 		 */
-		dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue hacking around delete_my_family()",
+		dbg_v2_msgid(ike, &ike->sa, "XXX: in %s() hacking around record 'n' send bypassing send queue hacking around delete_my_family()",
 			     __func__);
-		v2_msgid_update_sent(ike, st, md, MESSAGE_RESPONSE);
+		v2_msgid_update_sent(ike, &ike->sa, md, MESSAGE_RESPONSE);
 
-		mobike_reset_remote(st, &mobike_remote);
+		mobike_reset_remote(&ike->sa, &mobike_remote);
 
 		/* Now we can delete the IKE SA if we want to */
 		if (del_ike) {
-			delete_my_family(st, TRUE);
-			md->st = st = NULL;
+			delete_my_family(&ike->sa, true);
+			md->st = NULL;
+			ike = NULL;
 		}
 	}
 
