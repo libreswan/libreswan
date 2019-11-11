@@ -2596,7 +2596,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	    DBG_log("calling processor %s", svm->story));
 
 	statetime_t start = statetime_start(st);
-	stf_status e = svm->processor(st, md);
+	stf_status e = svm->processor(ike, st, md);
 	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
 
 	/*
