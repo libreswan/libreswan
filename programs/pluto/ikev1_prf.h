@@ -66,4 +66,12 @@ PK11SymKey *ikev1_appendix_b_keymat_e(const struct prf_desc *prf_desc,
 				      PK11SymKey *skeyid_e,
 				      unsigned required_keymat);
 
+chunk_t ikev1_section_5_keymat(const struct prf_desc *prf,
+			       PK11SymKey *SKEYID_d,
+			       PK11SymKey *g_xy,
+			       uint8_t protocol,
+			       shunk_t SPI,
+			       chunk_t NI_b, chunk_t Nr_b,
+			       unsigned required_keymat);
+
 #endif

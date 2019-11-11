@@ -85,3 +85,16 @@ PK11SymKey *ikev1_appendix_b_keymat_e(const struct prf_desc *prf_desc,
 {
 	return prf_desc->prf_ikev1_ops->appendix_b_keymat_e(prf_desc, encrypter, skeyid_e, required_keymat);
 }
+
+chunk_t ikev1_section_5_keymat(const struct prf_desc *prf,
+			       PK11SymKey *SKEYID_d,
+			       PK11SymKey *g_xy,
+			       uint8_t protocol,
+			       shunk_t SPI,
+			       chunk_t Ni_b, chunk_t Nr_b,
+			       unsigned required_keymat)
+{
+	return prf->prf_ikev1_ops->section_5_keymat(prf, SKEYID_d,
+						    g_xy, protocol, SPI,
+						    Ni_b, Nr_b, required_keymat);
+}

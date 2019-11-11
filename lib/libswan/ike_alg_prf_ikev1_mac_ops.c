@@ -162,6 +162,37 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 	return cryptkey;
 }
 
+static chunk_t section_5_keymat(const struct prf_desc *prf,
+				PK11SymKey *SKEYID_d,
+				PK11SymKey *g_xy,
+				uint8_t protocol,
+				shunk_t SPI,
+				chunk_t Ni_b, chunk_t Nr_b,
+				unsigned required_keymat)
+{
+	chunk_t keymat = empty_chunk;
+	struct crypt_mac keymat_n = empty_mac;
+	do {
+		struct crypt_prf *ctx = crypt_prf_init_symkey("KEYMAT K+1", prf, "SKEYID_d", SKEYID_d);
+		if (keymat_n.len != 0) {
+			crypt_prf_update_hunk(ctx, "Kn", keymat_n);
+		}
+		/* this could be pre-computed */
+		if (g_xy != NULL) {
+			crypt_prf_update_symkey(ctx, "g^xy", g_xy);
+		}
+		crypt_prf_update_thing(ctx, "protocol", protocol);
+		crypt_prf_update_hunk(ctx, "SPI", SPI);
+		crypt_prf_update_hunk(ctx, "Ni", Ni_b);
+		crypt_prf_update_hunk(ctx, "Nr", Nr_b);
+		/* finally */
+		keymat_n = crypt_prf_final_mac(&ctx, NULL);
+		/* gro */
+		append_chunk_hunk("KEYMAT += KEYMAT_n", &keymat, keymat_n);
+	} while (keymat.len < required_keymat);
+	return keymat;
+}
+
 const struct prf_ikev1_ops ike_alg_prf_ikev1_mac_ops = {
 	.backend = "native",
 	.signature_skeyid = signature_skeyid,
@@ -170,4 +201,5 @@ const struct prf_ikev1_ops ike_alg_prf_ikev1_mac_ops = {
 	.skeyid_a = skeyid_a,
 	.skeyid_e = skeyid_e,
 	.appendix_b_keymat_e = appendix_b_keymat_e,
+	.section_5_keymat = section_5_keymat,
 };
