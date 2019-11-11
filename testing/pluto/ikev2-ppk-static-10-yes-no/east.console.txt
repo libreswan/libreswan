@@ -34,7 +34,6 @@ east #
  grep "PPK AUTH calculated" /tmp/pluto.log
 east #
  ipsec whack --shutdown
-002 shutting down
 east #
  grep -e leak /tmp/pluto.log | grep -v -e '|'
 leak-detective enabled

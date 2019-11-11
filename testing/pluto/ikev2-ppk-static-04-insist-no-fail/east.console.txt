@@ -35,7 +35,6 @@ east #
 "westnet-eastnet-ipv4-psk-ppk" #1: PSK Authentication failed: AUTH mismatch in I2 Auth Payload!
 east #
  ipsec whack --shutdown
-002 shutting down
 east #
  grep -e leak /tmp/pluto.log | grep -v -e '|'
 leak-detective enabled

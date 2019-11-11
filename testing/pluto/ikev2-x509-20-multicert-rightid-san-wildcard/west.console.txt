@@ -39,7 +39,6 @@ west #
  hostname | grep east > /dev/null && grep switched /tmp/pluto.log
 west #
  ipsec whack --shutdown
-002 shutting down
 west #
 west #
  ../bin/check-for-core.sh

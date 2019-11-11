@@ -17,7 +17,6 @@ east #
  # if east was already down, the fuzzer crashed it
 east #
  hostname |grep east > /dev/null && ipsec whack --shutdown
-002 shutting down
 east #
 east #
  ../bin/check-for-core.sh

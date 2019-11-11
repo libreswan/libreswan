@@ -13,7 +13,6 @@ initdone
 east #
 east #
  ipsec whack --shutdown
-002 shutting down
 east #
 east #
  ../bin/check-for-core.sh

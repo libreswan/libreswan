@@ -81,7 +81,6 @@ west #
 "westnet-eastnet-ipv4-psk-ppk" #1: PPK AUTH calculated as initiator
 west #
  ipsec whack --shutdown
-002 shutting down
 west #
  grep -e leak /tmp/pluto.log | grep -v -e '|'
 leak-detective enabled

@@ -71,7 +71,6 @@ done
 west #
 west #
  ipsec whack --shutdown
-002 shutting down
 west #
 west #
  ../bin/check-for-core.sh

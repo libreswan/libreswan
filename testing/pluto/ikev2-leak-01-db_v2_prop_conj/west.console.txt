@@ -30,7 +30,6 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
 west #
  ipsec whack --shutdown
-002 shutting down
 west #
  grep -e leak /tmp/pluto.log | grep -v -e '|'
 leak-detective enabled

@@ -23,7 +23,6 @@ east #
 | state transition function for STATE_UNDEFINED failed: v2N_NO_PROPOSAL_CHOSEN
 east #
  ipsec whack --shutdown
-002 shutting down
 east #
  grep -e leak /tmp/pluto.log | grep -v -e '|'
 leak-detective enabled

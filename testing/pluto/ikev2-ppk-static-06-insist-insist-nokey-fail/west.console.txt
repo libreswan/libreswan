@@ -57,7 +57,6 @@ west #
  hostname | grep east > /dev/null && grep "PPK_ID not found" /tmp/pluto.log
 west #
  ipsec whack --shutdown
-002 shutting down
 west #
  grep -e leak /tmp/pluto.log | grep -v -e '|'
 leak-detective enabled
