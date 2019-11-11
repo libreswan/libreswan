@@ -459,24 +459,16 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 	const struct id *that_id = &c->spd.that.id;
 	bool reusable = can_reuse_lease(c);
 
-	/*
-	 * when reusable, this should be unique; see commented out
-	 * code below that logs the xauth name but doesn't use it?!?
-	 */
 	id_buf that_idb;
+	char thatstr[IDTOA_BUF + MAX_XAUTH_USERNAME_LEN];
 	const char *that_name = str_id(that_id, &that_idb);
 
+	jam_str(thatstr, sizeof(thatstr), that_name);
+
+	if(st->st_xauth_username != NULL)
+		add_str(thatstr, sizeof(thatstr), thatstr, st->st_xauth_username);
+
 	if (DBGP(DBG_BASE)) {
-#if 0
-		/* XXX: this does nothing other than change the id */
-		id_buf idb;
-		if (st->st_xauth_username != NULL) {
-			/* force different leases for different xauth users */
-			jam_str(idb.buf, sizeof(idb.buf), st->st_xauth_username);
-		} else {
-			str_id(thatid, &idb);
-		}
-#endif
 		/*
 		 * ??? what is that.client.addr and why do we care?
 		 *
@@ -489,13 +481,13 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 		connection_buf cb;
 		DBG_pool(false, pool, "requesting %s lease for connection "PRI_CONNECTION" with '%s' and old address %s",
 			 reusable ? "reusable" : "one-time",
-			 pri_connection(c, &cb), that_name,
+			 pri_connection(c, &cb), thatstr,
 			 str_subnet(&c->spd.that.client, &b));
 	}
 
 	struct lease *new_lease = NULL;
 	if (reusable) {
-		new_lease = recover_lease(c, that_name);
+		new_lease = recover_lease(c, thatstr);
 	}
 	if (new_lease == NULL) {
 		if (IS_EMPTY(pool, free_list)) {
@@ -558,7 +550,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 		}
 		free_lease_content(new_lease);
 		if (reusable) {
-			new_lease->reusable_name = clone_str(that_name, "lease name");
+			new_lease->reusable_name = clone_str(thatstr, "lease name");
 			hash_lease_id(pool, new_lease);
 		}
 		pool->nr_in_use++;
@@ -578,7 +570,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st UNUSED
 		DBG_lease(false, pool, new_lease,
 			  "assigning %s lease to "PRI_CONNECTION" with ID '%s' and that.client %s",
 			  reusable ? "reusable" : "one-time",
-			  pri_connection(c, &cb), that_name,
+			  pri_connection(c, &cb), thatstr,
 			  str_subnet(&c->spd.that.client, &a));
 	}
 
