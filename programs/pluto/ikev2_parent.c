@@ -1202,11 +1202,10 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
  * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
 stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike,
-							      struct state *st,
+							      struct state *unused_st UNUSED,
 							      struct msg_digest *md)
 {
-	pexpect(&ike->sa == st);
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		if (ntfy->payload.v2n.isan_spisize != 0) {
@@ -1221,40 +1220,42 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 		}
 
 		switch (ntfy->payload.v2n.isan_type) {
+
 		case v2N_COOKIE:
-		{
 			/*
-			 * Responder replied with N(COOKIE) for DOS avoidance.
-			 * See rfc5996bis-04 2.6.
-			 * Responder SPI ought to have been 0 (but might not be).
-			 * Our state should not advance.  Instead
-			 * we should send our I1 packet with the same cookie.
+			 * Responder replied with N(COOKIE) for DOS
+			 * avoidance.  See rfc5996bis-04 2.6.
+			 *
+			 * Responder SPI ought to have been 0 (but
+			 * might not be).  Our state should not
+			 * advance.  Instead we should send our I1
+			 * packet with the same cookie.
 			 */
 
 			/*
-			 * RFC-7296 Section 2.6:
-			 * The data associated with this notification MUST be
-			 * between 1 and 64 octets in length (inclusive)
+			 * RFC-7296 Section 2.6: The data associated
+			 * with this notification MUST be between 1
+			 * and 64 octets in length (inclusive)
 			 */
 			if (ntfy->payload.v2n.isan_length > IKEv2_MAX_COOKIE_SIZE) {
-				DBG(DBG_CONTROL, DBG_log("v2N_COOKIE notify payload too big - packet dropped"));
+				dbg("v2N_COOKIE notify payload too big - packet dropped");
 				return STF_IGNORE;
 			}
 
 			if (ntfy->next != NULL) {
-				DBG(DBG_CONTROL, DBG_log("ignoring Notify payloads after v2N_COOKIE"));
+				dbg("ignoring Notify payloads after v2N_COOKIE");
 			}
 
-			clonetochunk(st->st_dcookie,
-				ntfy->pbs.cur, pbs_left(&ntfy->pbs),
-				"saved received dcookie");
+			ike->sa.st_dcookie = clone_hunk(pbs_in_left_as_shunk(&ntfy->pbs),
+							"saved received dcookie");
 
-			DBG(DBG_CONTROLMORE,
-			    DBG_dump_hunk("dcookie received (instead of an R1):",
-					   st->st_dcookie);
-			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
+			if (DBGP(DBG_BASE)) {
+				DBG_dump_hunk("dcookie received (instead of an R1):",
+					      ike->sa.st_dcookie);
+				DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie");
+			}
 
-			if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			if (DBGP(DBG_OPPO) || (ike->sa.st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				libreswan_log("Received anti-DDOS COOKIE, resending I1 with cookie payload");
 			}
 
@@ -1263,7 +1264,6 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 			 * the Message ID counter code thinks this is
 			 * an initial outgoing message.
 			 */
-			struct ike_sa *ike = pexpect_ike_sa(st);
 			v2_msgid_init_ike(ike);
 			/*
 			 * XXX: Why?!?
@@ -1278,7 +1278,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 			 * number and assumed attributes.
 			 */
 			md->svm = finite_states[STATE_PARENT_I0]->v2_transitions;
-			change_state(st, STATE_PARENT_I0);
+			change_state(&ike->sa, STATE_PARENT_I0);
 			/*
 			 * XXX: Why?!?
 			 *
@@ -1294,79 +1294,73 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 			md->hdr.isa_flags &= ~ISAKMP_FLAGS_v2_MSG_R;
 			md->fake_dne = true;
 			/* re-send the SA_INIT request with cookies added */
-			return ikev2_parent_outI1_common(st);
-		}
-		case v2N_INVALID_KE_PAYLOAD:
-		{
-			/* careful of DDOS, only log with debugging on */
-			struct suggested_group sg;
+			return ikev2_parent_outI1_common(&ike->sa);
 
+		case v2N_INVALID_KE_PAYLOAD:
+			/* careful of DDOS, only log with debugging on? */
 			/* we treat this as a "retransmit" event to rate limit these */
-			if (!count_duplicate(st, MAXIMUM_INVALID_KE_RETRANS)) {
-				DBG(DBG_CONTROLMORE, DBG_log("ignoring received INVALID_KE packets - received too many (DoS?)"));
+			if (!count_duplicate(&ike->sa, MAXIMUM_INVALID_KE_RETRANS)) {
+				dbg("ignoring received INVALID_KE packets - received too many (DoS?)");
 				return STF_IGNORE;
 			}
 
 			if (ntfy->next != NULL) {
-				DBG(DBG_CONTROL, DBG_log("ignoring Notify payloads after v2N_INVALID_KE_PAYLOAD"));
+				dbg("ignoring Notify payloads after v2N_INVALID_KE_PAYLOAD");
 			}
 
-			if (!in_struct(&sg, &suggested_group_desc,
-				&ntfy->pbs, NULL))
-					return STF_IGNORE;
+			struct suggested_group sg;
+			if (!in_struct(&sg, &suggested_group_desc, &ntfy->pbs, NULL)) {
+				/* already logged */
+				return STF_IGNORE;
+			}
 
 			pstats(invalidke_recv_s, sg.sg_group);
-			pstats(invalidke_recv_u, st->st_oakley.ta_dh->group);
+			pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->group);
 
 			struct ikev2_proposals *ike_proposals =
 				get_v2_ike_proposals(c, "IKE SA initiator validating remote's suggested KE");
-
-			if (ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
-				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
-				/*
-				 * Since there must be a group object
-				 * for every local proposal, and
-				 * sg.sg_group matches one of the
-				 * local proposal groups, a lookup of
-				 * sg.sg_group must succeed.
-				 */
-				const struct dh_desc *new_group = ikev2_get_dh_desc(sg.sg_group);
-				passert(new_group);
-				libreswan_log("Received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",
-					      st->st_oakley.ta_dh->common.name,
-					      new_group->common.name);
-				st->st_oakley.ta_dh = new_group;
-				/* wipe our mismatched KE */
-				free_dh_secret(&st->st_dh_secret);
-				/* wipe out any saved RCOOKIE */
-				DBG(DBG_CONTROLMORE, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
-				rehash_state(st, &zero_ike_spi);
-				/*
-				 * Need to wind things back to the
-				 * point that the Message ID counter
-				 * code thinks this is an initial
-				 * message request.
-				 */
-				struct ike_sa *ike = pexpect_ike_sa(st);
-				v2_msgid_init_ike(ike);
-				/*
-				 * get a new KE
-				 */
-				request_ke_and_nonce("rekey outI", st,
-						     st->st_oakley.ta_dh,
-						     ikev2_parent_outI1_continue);
-				/* let caller delete current MD */
-				/* XXX: shouldn't this be STF_SUSPEND?!? */
-				return STF_IGNORE;
-			} else {
+			if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
 				struct esb_buf esb;
 				libreswan_log("Discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
-					      st->st_oakley.ta_dh->common.name,
+					      ike->sa.st_oakley.ta_dh->common.name,
 					      enum_show_shortb(&oakley_group_names,
 							       sg.sg_group, &esb));
 				return STF_IGNORE;
 			}
-		}
+
+			dbg("Suggested modp group is acceptable");
+			/*
+			 * Since there must be a group object for
+			 * every local proposal, and sg.sg_group
+			 * matches one of the local proposal groups, a
+			 * lookup of sg.sg_group must succeed.
+			 */
+			const struct dh_desc *new_group = ikev2_get_dh_desc(sg.sg_group);
+			passert(new_group != NULL);
+			libreswan_log("Received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",
+				      ike->sa.st_oakley.ta_dh->common.name,
+				      new_group->common.name);
+			ike->sa.st_oakley.ta_dh = new_group;
+			/* wipe our mismatched KE */
+			free_dh_secret(&ike->sa.st_dh_secret);
+			/* wipe out any saved SPIr */
+			dbg("zeroing any SPIr from unauthenticated INVALID_KE packet");
+			rehash_state(&ike->sa, &zero_ike_spi);
+			/*
+			 * Need to wind things back to the point that
+			 * the Message ID counter code thinks this is
+			 * an initial message request.
+			 */
+			v2_msgid_init_ike(ike);
+			/*
+			 * get a new KE
+			 */
+			request_ke_and_nonce("rekey outI", &ike->sa,
+					     ike->sa.st_oakley.ta_dh,
+					     ikev2_parent_outI1_continue);
+			/* let caller delete current MD */
+			/* XXX: shouldn't this be STF_SUSPEND?!? */
+			return STF_IGNORE;
 
 		default:
 			/*
@@ -1377,9 +1371,9 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 			 * Just log and forget.
 			 */
 			libreswan_log("%s: received unauthenticated %s - ignored",
-				 st->st_state->name,
-				 enum_name(&ikev2_notify_names,
-					   ntfy->payload.v2n.isan_type));
+				      ike->sa.st_state->name,
+				      enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type));
 		}
 	}
 	return STF_IGNORE;
