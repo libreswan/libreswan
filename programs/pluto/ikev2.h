@@ -44,7 +44,7 @@ extern void complete_v2_state_transition(struct state *st,
 extern stf_status ikev2_send_livenss_probe(struct state *st);
 
 typedef stf_status ikev2_state_transition_fn(struct ike_sa *ike,
-					     struct state *st/*IKE or CHILD*/,
+					     struct child_sa *child, /* could be NULL */
 					     struct msg_digest *md);
 
 extern ikev2_state_transition_fn process_encrypted_informational_ikev2;

@@ -833,11 +833,10 @@ static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* forward decl and
 static crypto_transition_fn ikev2_parent_inI1outR1_continue_tail;	/* forward decl and type assertion */
 
 stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
-				  struct state *unused_st, /*white lie*/
+				  struct child_sa *child,
 				  struct msg_digest *md)
 {
-	pexpect(&ike->sa == unused_st);
-	pexpect(md->st == &ike->sa);
+	pexpect(child == NULL);
 	struct connection *c = ike->sa.st_connection;
 	/* set up new state */
 	update_ike_endpoints(ike, md);
@@ -1200,9 +1199,10 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
  * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
 stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike,
-							      struct state *unused_st UNUSED,
+							      struct child_sa *child,
 							      struct msg_digest *md)
 {
+	pexpect(child == NULL);
 	struct connection *c = ike->sa.st_connection;
 
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
@@ -1378,9 +1378,16 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 }
 
 stf_status ikev2_auth_initiator_process_failure_notification(struct ike_sa *ike,
-							     struct state *st,
+							     struct child_sa *child,
 							     struct msg_digest *md)
 {
+	/*
+	 * XXX: ST here should be the IKE SA.  The state machine,
+	 * however, directs the AUTH response to the CHILD!
+	 */
+	pexpect(child != NULL);
+	struct state *st = &child->sa;
+
 	v2_notification_t n = md->svm->encrypted_payloads.notification;
 	pstat(ikev2_recv_notifies_e, n);
 	/*
@@ -1419,9 +1426,16 @@ stf_status ikev2_auth_initiator_process_failure_notification(struct ike_sa *ike,
 }
 
 stf_status ikev2_auth_initiator_process_unknown_notification(struct ike_sa *unused_ike UNUSED,
-							     struct state *st,
+							     struct child_sa *child,
 							     struct msg_digest *md)
 {
+	/*
+	 * XXX: ST here should be the IKE SA.  The state machine,
+	 * however, directs the AUTH response to the CHILD!
+	 */
+	pexpect(child != NULL);
+	struct state *st = &child->sa;
+
 	/*
 	 * 3.10.1.  Notify Message Types:
 	 *
@@ -1513,9 +1527,11 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct ike_sa *unus
 static crypto_req_cont_func ikev2_parent_inR1outI2_continue;	/* forward decl and type assertion */
 static crypto_transition_fn ikev2_parent_inR1outI2_tail;	/* forward decl and type assertion */
 
-stf_status ikev2_parent_inR1outI2(struct ike_sa *unused_ike UNUSED,
-				  struct state *st, struct msg_digest *md)
+stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
+				  struct child_sa *unused_child UNUSED,
+				  struct msg_digest *md)
 {
+	struct state *st = &ike->sa;
 	struct connection *c = st->st_connection;
 	struct payload_digest *ntfy;
 	ip_address redirect_ip;
@@ -2569,10 +2585,13 @@ static stf_status ikev2_start_pam_authorize(struct state *st)
 
 static crypto_req_cont_func ikev2_ike_sa_process_auth_request_no_skeyid_continue;	/* type asssertion */
 
-stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct ike_sa *unused_ike UNUSED,
-						       struct state *st,
+stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct ike_sa *ike,
+						       struct child_sa *child,
 						       struct msg_digest *md UNUSED)
 {
+	pexpect(child == NULL);
+	struct state *st = &ike->sa;
+
 	/* for testing only */
 	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
 		libreswan_log(
@@ -2628,10 +2647,12 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 						       struct msg_digest *md);
 
 stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
-					     struct state *st,
+					     struct child_sa *child,
 					     struct msg_digest *md)
 {
 	/* The connection is "up", start authenticating it */
+	pexpect(child == NULL);
+	struct state *st = &ike->sa;
 
 	/*
 	 * This log line establishes that the packet's been decrypted
@@ -3515,16 +3536,15 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
  * https://tools.ietf.org/html/rfc7296#section-2.21.2
  */
 
-stf_status ikev2_parent_inR2(struct ike_sa *ike, struct state *st, struct msg_digest *md)
+stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct msg_digest *md)
 {
+	pexpect(child != NULL);
+	struct state *st = &child->sa;
 	struct payload_digest *ntfy;
-	struct state *pst = st;
+	struct state *pst = &ike->sa;
 	bool got_transport = FALSE;
 	ip_address redirect_ip;
 	bool initiate_redirect = FALSE;
-
-	if (IS_CHILD_SA(st))
-		pst = state_with_serialno(st->st_clonedfrom);
 
 	bool ppk_seen_identity = FALSE;
 	/* Process NOTIFY payloads related to IKE SA */
@@ -4141,9 +4161,11 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 static crypto_req_cont_func ikev2_child_ike_inR_continue;
 
 stf_status ikev2_child_ike_inR(struct ike_sa *ike,
-			       struct state *st /* child state */,
+			       struct child_sa *child,
 			       struct msg_digest *md)
 {
+	pexpect(child != NULL);
+	struct state *st = &child->sa;
 	pexpect(ike != NULL);
 	pexpect(ike->sa.st_serialno == st->st_clonedfrom);
 	struct connection *c = st->st_connection;
@@ -4260,8 +4282,10 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 static dh_cb ikev2_child_inR_continue;
 
 stf_status ikev2_child_inR(struct ike_sa *unused_ike UNUSED,
-			   struct state *st, struct msg_digest *md)
+			   struct child_sa *child, struct msg_digest *md)
 {
+	pexpect(child != NULL);
+	struct state *st = &child->sa;
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, TRUE));
@@ -4354,9 +4378,12 @@ static stf_status ikev2_child_inR_continue(struct state *st,
 static crypto_req_cont_func ikev2_child_inIoutR_continue;
 
 stf_status ikev2_child_inIoutR(struct ike_sa *unused_ike UNUSED,
-			       struct state *st /* child state */,
+			       struct child_sa *child,
 			       struct msg_digest *md)
 {
+	pexpect(child != NULL);
+	struct state *st = &child->sa;
+
 	freeanychunk(st->st_ni); /* this is from the parent. */
 	freeanychunk(st->st_nr); /* this is from the parent. */
 
@@ -4535,9 +4562,11 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 static crypto_req_cont_func ikev2_child_ike_inIoutR_continue;
 
 stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
-				   struct state *st /* child state */,
+				   struct child_sa *child,
 				   struct msg_digest *md)
 {
+	pexpect(child != NULL); /* not yet emancipated */
+	struct state *st = &child->sa;
 	pexpect(ike != NULL);
 	struct connection *c = st->st_connection;
 
@@ -5093,9 +5122,10 @@ static stf_status add_mobike_response_payloads(
  */
 
 stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
-						 struct state *unused_st UNUSED,
+						 struct child_sa *child,
 						 struct msg_digest *md)
 {
+	pexpect(child == NULL);
 	int ndp = 0;	/* number Delete payloads for IPsec protocols */
 	bool del_ike = false;	/* any IKE SA Deletions? */
 	bool seen_and_parsed_redirect = FALSE;

@@ -2596,7 +2596,17 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	    DBG_log("calling processor %s", svm->story));
 
 	statetime_t start = statetime_start(st);
-	stf_status e = svm->processor(ike, st, md);
+	/*
+	 * XXX: for now pass in the possibly NULL child; suspect a
+	 * better model is to drop the child and instead have the IKE
+	 * SA run a nested state machine for the child.
+	 *
+	 * For instance, when a CREATE_CHILD_SA request arrives, pass
+	 * that to the IKE SA and then let it do all the create child
+	 * magic.
+	 */
+	struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
+	stf_status e = svm->processor(ike, child, md);
 	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
 
 	/*
