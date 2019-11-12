@@ -1,11 +1,8 @@
-ipsec whack --trafficstatus
+hostname | grep east > /dev/null && ipsec whack --trafficstatus
 # A tunnel should have established
-grep "negotiated connection" /tmp/pluto.log
+hostname | grep east > /dev/null && grep "negotiated connection" /tmp/pluto.log
 # you should see both RSA and NULL
-grep IKEv2_AUTH_ /tmp/pluto.log
-: ==== cut ====
-ipsec auto --status
-: ==== tuc ====
+hostname | grep east > /dev/null && grep IKEv2_AUTH_ /tmp/pluto.log
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 : ==== end ====

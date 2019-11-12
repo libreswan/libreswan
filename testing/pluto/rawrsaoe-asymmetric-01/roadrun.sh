@@ -8,4 +8,7 @@ ipsec whack --shuntstatus
 # ping should succeed through tunnel
 ping -n -c 2 -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
+grep "negotiated connection" /tmp/pluto.log
+# you should see both RSA and NULL
+grep IKEv2_AUTH_ /tmp/pluto.log
 echo done
