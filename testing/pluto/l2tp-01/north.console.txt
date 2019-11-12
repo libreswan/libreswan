@@ -62,7 +62,7 @@ north #
 north #
  echo quit | nc 192.0.2.254 22
 SSH-2.0-OpenSSH_XXX
-Invalid SSH identification string.
+Protocol mismatch.
 north #
  ip addr show dev ppp0 | sed "s/ qdisc.*$//"
 5: ppp0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1395

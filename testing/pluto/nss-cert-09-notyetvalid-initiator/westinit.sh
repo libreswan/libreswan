@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --x509 --x509name notyetvalid
 certutil -d sql:/etc/ipsec.d -D -n east
 ipsec _stackmanager start
 mkdir -p /var/run/pluto

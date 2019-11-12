@@ -78,9 +78,6 @@ north #
 north #
  ip route show scope global | grep 192.1.3.254 && ip route del default via 192.1.3.254
 default via 192.1.3.254 dev eth1
-192.0.1.0/24 via 192.1.3.254 dev eth1
-192.0.2.0/24 via 192.1.3.254 dev eth1
-192.1.2.0/24 via 192.1.3.254 dev eth1
 north #
  ip route show scope global | grep 192.1.8.254 || ip route add default via 192.1.8.254
 north #
