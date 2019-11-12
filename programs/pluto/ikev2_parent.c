@@ -833,18 +833,18 @@ static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* forward decl and
 static crypto_transition_fn ikev2_parent_inI1outR1_continue_tail;	/* forward decl and type assertion */
 
 stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
-				  struct state *st,
+				  struct state *unused_st, /*white lie*/
 				  struct msg_digest *md)
 {
-	pexpect(&ike->sa == st);
+	pexpect(&ike->sa == unused_st);
+	pexpect(md->st == &ike->sa);
 	struct connection *c = ike->sa.st_connection;
 	/* set up new state */
 	update_ike_endpoints(ike, md);
-	passert(st->st_ike_version == IKEv2);
-	passert(st->st_state->kind == STATE_PARENT_R0);
-	st->st_original_role = ORIGINAL_RESPONDER;
-	passert(st->st_sa_role == SA_RESPONDER);
-	pexpect(md->st == st);
+	passert(ike->sa.st_ike_version == IKEv2);
+	passert(ike->sa.st_state->kind == STATE_PARENT_R0);
+	ike->sa.st_original_role = ORIGINAL_RESPONDER;
+	passert(ike->sa.st_sa_role == SA_RESPONDER);
 	/* set by caller */
 	pexpect(md->from_state == STATE_PARENT_R0);
 	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
@@ -867,7 +867,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 						  /*expect_spi*/ FALSE,
 						  /*expect_accepted*/ FALSE,
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
-						  &st->st_accepted_ike_proposal,
+						  &ike->sa.st_accepted_ike_proposal,
 						  ike_proposals);
 	if (ret != STF_OK) {
 		if (pexpect(ret > STF_FAIL)) {
@@ -877,15 +877,15 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	}
 
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
-						st->st_accepted_ike_proposal));
+						ike->sa.st_accepted_ike_proposal));
 
 	/*
 	 * Convert what was accepted to internal form and apply some
 	 * basic validation.  If this somehow fails (it shouldn't but
 	 * ...), drop everything.
 	 */
-	if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
-					   &st->st_oakley)) {
+	if (!ikev2_proposal_to_trans_attrs(ike->sa.st_accepted_ike_proposal,
+					   &ike->sa.st_oakley)) {
 		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
 		/* STF_INTERNAL_ERROR doesn't delete ST */
 		return STF_FATAL;
@@ -896,7 +896,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	 * proposal.
 	 */
 	if (v2_reject_wrong_ke_for_proposal(NULL /*not encrypted*/, md,
-					    st->st_oakley.ta_dh)) {
+					    ike->sa.st_oakley.ta_dh)) {
 		/* already replied */
 		return STF_FATAL;
 	}
@@ -905,7 +905,7 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	 * Check and read the KE contents.
 	 */
 	/* note: v1 notification! */
-	if (!accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
+	if (!accept_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
 		       md->chain[ISAKMP_NEXT_v2KE])) {
 		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
 		return STF_FATAL;
@@ -920,12 +920,11 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 
 		case v2N_SIGNATURE_HASH_ALGORITHMS:
 			if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
-				if (st->st_seen_hashnotify) {
-					DBG(DBG_CONTROL,
-					    DBG_log("Ignoring duplicate Signature Hash Notify payload"));
+				if (ike->sa.st_seen_hashnotify) {
+					dbg("Ignoring duplicate Signature Hash Notify payload");
 				} else {
-					st->st_seen_hashnotify = TRUE;
-					if (!negotiate_hash_algo_from_notification(ntfy, st))
+					ike->sa.st_seen_hashnotify = TRUE;
+					if (!negotiate_hash_algo_from_notification(ntfy, &ike->sa))
 						return STF_FATAL;
 				}
 			} else {
@@ -934,16 +933,16 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 			break;
 
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-			st->st_seen_fragvid = TRUE;
+			ike->sa.st_seen_fragvid = TRUE;
 			break;
 
 		case v2N_USE_PPK:
-			st->st_seen_ppk = TRUE;
+			ike->sa.st_seen_ppk = TRUE;
 			break;
 
 		case v2N_REDIRECTED_FROM:	/* currently we don't check address in this payload */
 		case v2N_REDIRECT_SUPPORTED:
-			st->st_seen_redirect_sup = TRUE;
+			ike->sa.st_seen_redirect_sup = TRUE;
 			break;
 
 		case v2N_NAT_DETECTION_DESTINATION_IP:
@@ -962,22 +961,21 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 		case v2N_PPK_IDENTITY:
 		case v2N_NO_PPK_AUTH:
 		case v2N_MOBIKE_SUPPORTED:
-			DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify in wrong exchange - ignored",
-				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type)));
+			dbg("Received unauthenticated %s notify in wrong exchange - ignored",
+			    enum_name(&ikev2_notify_names,
+				      ntfy->payload.v2n.isan_type));
 			break;
 
 		default:
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("Received unauthenticated %s notify - ignored",
-				    enum_name(&ikev2_notify_names,
-					      ntfy->payload.v2n.isan_type)));
+			dbg("Received unauthenticated %s notify - ignored",
+			    enum_name(&ikev2_notify_names,
+				      ntfy->payload.v2n.isan_type));
 		}
 	}
 
 	/* calculate the nonce and the KE */
-	request_ke_and_nonce("ikev2_inI1outR1 KE", st,
-			     st->st_oakley.ta_dh,
+	request_ke_and_nonce("ikev2_inI1outR1 KE", &ike->sa,
+			     ike->sa.st_oakley.ta_dh,
 			     ikev2_parent_inI1outR1_continue);
 	return STF_SUSPEND;
 }
