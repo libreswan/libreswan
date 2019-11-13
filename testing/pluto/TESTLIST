@@ -373,6 +373,9 @@ kvmplutotest	ikev2-x509-35-id-any-responder		good
 
 kvmplutotest	ikev2-x509-36-leftrightauth		good
 
+kvmplutotest	ikev2-x509-37-fakeeast-westrsa		good
+kvmplutotest	ikev2-x509-37-fakeeast-westnoca		good
+
 kvmplutotest	ikev2-no-nhelpers-01			good
 
 kvmplutotest	ikev2-auth-null-01			good

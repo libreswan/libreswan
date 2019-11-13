@@ -1,0 +1,8 @@
+east sends a fake cert; west has no CA, and no east cert
+
+east uses *cert=west to authenticate west; it then respons with a fake
+cert
+
+west drops the cert payload because its contents can't be
+authenticated; it then tries to use ID payload to find a local cert
+but that fails also
