@@ -1,0 +1,42 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ certutil -d sql:/etc/ipsec.d -D -n "Libreswan test CA for mainca - Libreswan"
+east #
+ certutil -d sql:/etc/ipsec.d -D -n "west"
+east #
+ certutil -d sql:/etc/ipsec.d -A -n west -i west-alt.crt -t P,,
+east #
+ certutil -d sql:/etc/ipsec.d -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+road                                                         P,,  
+north                                                        P,,  
+hashsha1                                                     P,,  
+west-ec                                                      P,,  
+nic                                                          P,,  
+west                                                         P,,  
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-x509
+002 added connection description "westnet-eastnet-x509"
+east #
+ echo "initdone"
+initdone
+east #
+ # should confirm failure
+east #
+ hostname | grep east && grep "Signature check" /tmp/pluto.log
+east
+"westnet-eastnet-x509" #1: RSA Signature check (on C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org) failed (wrong key?); tried *AwEAAbRnp
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
