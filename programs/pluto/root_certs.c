@@ -71,10 +71,17 @@ CERTCertList *get_root_certs(void)
 	for (CERTCertListNode *node = CERT_LIST_HEAD(allcerts);
 	     !CERT_LIST_END(node, allcerts);
 	     node = CERT_LIST_NEXT(node)) {
-		if (CERT_IsCACert(node->cert, NULL) && node->cert->isRoot) {
-			CERTCertificate *dup = CERT_DupCertificate(node->cert);
-			CERT_AddCertToListTail(root_certs, dup);
+		if (!CERT_IsCACert(node->cert, NULL)) {
+			dbg("discarding non-CA cert %s", node->cert->subjectName);
+			continue;
 		}
+		if (!node->cert->isRoot) {
+			dbg("discarding non-root CA cert %s", node->cert->subjectName);
+			continue;
+		}
+		dbg("adding the CA+root cert %s", node->cert->subjectName);
+		CERTCertificate *dup = CERT_DupCertificate(node->cert);
+		CERT_AddCertToListTail(root_certs, dup);
 	}
 	CERT_DestroyCertList(allcerts);
 	threadtime_stop(&ca_time, SOS_NOBODY, "%s() filtering CAs", __func__);

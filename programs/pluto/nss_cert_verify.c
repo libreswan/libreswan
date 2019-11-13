@@ -269,6 +269,20 @@ static bool verify_end_cert(CERTCertList *trustcl,
 		}
 	};
 
+	if (DBGP(DBG_BASE)) {
+		DBG_log("%s verifying %s using:", __func__, end_cert->subjectName);
+		unsigned nr = 0;
+		for (CERTCertListNode *node = CERT_LIST_HEAD(trustcl);
+		     !CERT_LIST_END(node, trustcl);
+		     node = CERT_LIST_NEXT(node)) {
+			DBG_log("  trusted CA: %s", node->cert->subjectName);
+			nr++;
+		}
+		if (nr == 0) {
+			DBG_log("  but have no trusted CAs");
+		}
+	}
+
 	for (const struct usage_desc *p = usages; ; p++) {
 		DBGF(DBG_X509, "verify_end_cert trying profile %s", p->usageName);
 
@@ -534,7 +548,11 @@ struct certs *find_and_verify_certs(struct state *st,
 	statetime_t root_time = statetime_start(st);
 	CERTCertList *root_certs = get_root_certs(); 	/* must not free */
 	statetime_stop(&root_time, "%s() calling get_root_certs()", __func__);
-	if (!pexpect(root_certs != NULL) || CERT_LIST_EMPTY(root_certs)) {
+	if (root_certs == NULL) {
+		LOG_PEXPECT("NSS returned a null root certificate list which should not happen");
+		return NULL;
+	}
+	if (CERT_LIST_EMPTY(root_certs)) {
 		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
 		return NULL;
 	}
