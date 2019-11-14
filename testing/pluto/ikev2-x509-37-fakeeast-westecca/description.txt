@@ -1,0 +1,6 @@
+east sends a fake cert; west has an EC root CA so rejects it
+
+east uses *cert=west to authenticate west; it then respons with a fake
+cert
+
+west rejects the cert payload as it doesn't have the correct root CA.
