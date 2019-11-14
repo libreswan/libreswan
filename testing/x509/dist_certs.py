@@ -111,18 +111,42 @@ top_caname=""
 dirbase=""
 
 def reset_files():
-    for dir in ['fake', 'keys/', 'cacerts/', 'certs/', 'pkcs12/',
-                'pkcs12/curveca', 'pkcs12/mainca',
-                'pkcs12/otherca', 'pkcs12/badca', 'crls/',
-                'fake/keys/', 'fake/cacerts/', 'fake/certs/', 'fake/pkcs12/',
-                'fake/pkcs12/curveca', 'fake/pkcs12/mainca',
-                'fake/pkcs12/otherca', 'fake/pkcs12/badca', 'fake/crls/' ]:
+    for dir in ['keys/', 'cacerts/', 'certs/',
+                'pkcs12/',
+                'pkcs12/curveca',
+                'pkcs12/mainca',
+                'pkcs12/otherca',
+                'pkcs12/badca',
+                'crls/',
+                'fake',
+                'fake/keys/',
+                'fake/cacerts/',
+                'fake/certs/',
+                'fake/pkcs12/',
+                'fake/pkcs12/curveca',
+                'fake/pkcs12/mainec',
+                'fake/pkcs12/mainca',
+                'fake/pkcs12/otherca',
+                'fake/pkcs12/badca',
+                'fake/crls/' ]:
         if os.path.isdir(dir):
             shutil.rmtree(dir)
         os.mkdir(dir)
     for file in ['nss-pw']:
         if os.path.isfile(file):
             os.remove(file)
+
+def run(command, events=None, logfile=None):
+    # logfile=sys.stdout.buffer
+    print("", command)
+    output, status = pexpect.run(command, withexitstatus=True, events=events,
+                                 logfile=logfile,
+                                 cwd=dirbase and dirbase or ".")
+    if status:
+        print("")
+        print(output)
+        print("")
+        throw
 
 def writeout_cert(filename, item,
                   type=crypto.FILETYPE_PEM):
@@ -735,6 +759,87 @@ def create_ec_certs():
                     '-passin pass:foobar -passout pass:foobar'
                     % (name, name, name, name))
 
+def create_mainec_certs():
+    """ The OpenSSL module doesn't appear to have
+    support for curves so we do it with pexpect
+    """
+
+    print("creating main EC root cert")
+
+    #create CA
+    run('openssl ecparam '
+        '-name secp384r1 '
+        '-genkey '
+        '-noout '
+        '-out keys/mainec.key')
+    run('openssl req -x509 -new '
+        '-key keys/mainec.key '
+        '-out cacerts/mainec.crt '
+        '-days 3650 -set_serial 1',
+        # must match create_root_ca(<<mainca>>)
+        events = {
+            'Country Name': 'CA\r',
+            'State': 'Ontario\r',
+            'Locality': 'Toronto\r',
+            'Organization': 'Libreswan\r',
+            'Organizational': 'Test Department\r',
+            'Common': 'Libreswan test CA for mainca\r',
+            'Email': 'testing@libreswan.org\r',
+        })
+    run('openssl pkcs12 -export '
+        '-inkey keys/mainec.key '
+        '-in cacerts/mainec.crt '
+        '-name mainec '
+        '-certfile cacerts/mainec.crt '
+        '-caname "mainec" '
+        '-out pkcs12/mainec/mainec.p12 '
+        '-passin pass:foobar -passout pass:foobar')
+
+    print("creating main EC end certs")
+
+    serial = 2
+    for name in ['east', 'west', 'north', 'road']:
+        print("- creating %s-mainec"% name)
+        #create end certs; west is secp256r1
+        if name is 'west':
+            alg = "secp256r1"
+        else:
+            alg = "secp384r1"
+        run('openssl ecparam '
+            '-name '+alg+' '
+            '-genkey '
+            '-noout '
+            '-out keys/'+name+'-mainec.key ')
+        run('openssl req -extensions ec-addon '
+            '-config '+os.getcwd()+'/openssl.cnf '
+            '-x509 '
+            '-new '
+            '-key keys/'+name+'-mainec.key '
+            '-out certs/'+name+'-mainec.crt '
+            '-days 365 '
+            '-set_serial '+str(serial),
+            # must match create_mainca_end_certs()
+            events = {
+                'Country Name': 'CA\r',
+                'State': 'Ontario\r',
+                'Locality': 'Toronto\r',
+                'Organization': 'Libreswan\r',
+                'Organizational': 'Test Department\r',
+                'Common': name + '.testing.libreswan.org\r',
+                'Email': 'user-'+name+'@testing.libreswan.org\r',
+            })
+
+        serial += 1
+        #package p12
+        run('openssl pkcs12 -export '
+            '-inkey keys/'+name+'-mainec.key '
+            '-in certs/'+name+'-mainec.crt '
+            '-name '+name+'-mainec '
+            '-certfile cacerts/mainec.crt '
+            '-caname "mainec" '
+            '-out pkcs12/mainec/'+name+'-mainec.p12 '
+            '-passin pass:foobar -passout pass:foobar')
+
 
 def run_dist_certs():
     """ Generate the pluto test harness x509
@@ -814,6 +919,8 @@ def main():
     # create identical set to act as forged with identical parameters
     dirbase = "fake/"
     run_dist_certs()
+    # only fake
+    create_mainec_certs()
 
     create_nss_pw()
     os.chdir(cwd)
