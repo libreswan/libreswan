@@ -593,41 +593,55 @@ static bool try_all_keys(const char *pubkey_description,
 			 const struct connection *c, realtime_t now,
 			 struct tac_state *s)
 {
-	struct pubkey_list **pp = pubkey_db;
 
+	id_buf thatid;
+	dbg("trying all %s public keys for %s key that matches ID: %s",
+	    pubkey_description, s->type->name, str_id(&c->spd.that.id, &thatid));
+
+	/*
+	 * XXX: danger, serves double purpose of pruning expired
+	 * public keys, hence strange trailing pp pointer.
+	 */
+	struct pubkey_list **pp = pubkey_db;
 	for (struct pubkey_list *p = *pubkey_db; p != NULL; p = *pp) {
 		struct pubkey *key = p->key;
 
-		if (DBGP(DBG_BASE)) {
-			id_buf printkid;
-			id_buf thatid;
-			DBG_log("checking %s keyid '%s' for match with '%s'",
-				s->type->name,
-				str_id(&key->id, &printkid),
-				str_id(&c->spd.that.id, &thatid));
-		}
-
+		/* passed to trusted_ca_nss() */
 		int pl;	/* value ignored */
 
-		if (key->type == s->type &&
-		    same_id(&c->spd.that.id, &key->id) &&
-		    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
-			if (DBGP(DBG_BASE)) {
-				dn_buf buf;
-				DBG_log("%s key issuer CA is '%s'",
-					s->type->name,
-					str_dn_or_null(key->issuer, "%any", &buf));
-			}
-
-			/* check if found public key has expired */
-			if (!is_realtime_epoch(key->until_time) &&
-			    realbefore(key->until_time, now)) {
-				loglog(RC_LOG_SERIOUS,
-				       "cached %s public key has expired and has been deleted",
-					s->type->name);
-				*pp = free_public_keyentry(p);
-				continue; /* continue with next public key */
-			}
+		if (key->type != s->type) {
+			id_buf printkid;
+			dbg("  skipping '%s' with type %s",
+			    str_id(&key->id, &printkid), key->type->name);
+		} else if (!same_id(&c->spd.that.id, &key->id)) {
+			id_buf printkid;
+			dbg("  skipping '%s' with wrong ID",
+			    str_id(&key->id, &printkid));
+		} else if (!trusted_ca_nss(key->issuer, c->spd.that.ca, &pl)) {
+			id_buf printkid;
+			dn_buf buf;
+			dbg("  skipping '%s' with untrusted CA '%s'",
+			    str_id(&key->id, &printkid),
+			    str_dn_or_null(key->issuer, "%any", &buf));
+		} else if (!is_realtime_epoch(key->until_time) &&
+			   realbefore(key->until_time, now)) {
+			/*
+			 * XXX: danger: found public key has expired;
+			 * deleting mid loop.  Why only do this for
+			 * matched keys as the test is relatively
+			 * cheap?
+			 */
+			id_buf printkid;
+			loglog(RC_LOG_SERIOUS,
+			       "cached %s public key '%s' has expired and has been deleted",
+			       s->type->name, str_id(&key->id, &printkid));
+			*pp = free_public_keyentry(p);
+			continue; /* continue with next public key */
+		} else {
+			id_buf printkid;
+			dn_buf buf;
+			dbg("  trying '%s' issued by CA '%s'",
+			    str_id(&key->id, &printkid), str_dn_or_null(key->issuer, "%any", &buf));
 
 			statetime_t try_time = statetime_start(s->st);
 			bool ok = take_a_crack(s, key, pubkey_description);
