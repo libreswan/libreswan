@@ -75,8 +75,13 @@ const struct prf_desc ike_alg_prf_sha1 = {
 	.prf_output_size = SHA1_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_sha1,
 	.prf_mac_ops = &ike_alg_prf_mac_nss_ops,
+#ifdef USE_NSS_PRF
+	.prf_ikev1_ops = &ike_alg_prf_ikev1_nss_ops,
+	.prf_ikev2_ops = &ike_alg_prf_ikev2_nss_ops,
+#else
 	.prf_ikev1_ops = &ike_alg_prf_ikev1_mac_ops,
 	.prf_ikev2_ops = &ike_alg_prf_ikev2_mac_ops,
+#endif
 	.prf_ike_audit_name = "sha1",
 };
 

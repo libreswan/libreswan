@@ -255,7 +255,16 @@ ifeq ($(USE_XCBC),true)
 USERLAND_CFLAGS += -DUSE_XCBC
 endif
 
+# Use the NSS Key Derivation Function (KDF) instead of using the NSS
+# secure hash functions to build our own PRF. With this enabled,
+# libreswan itself no longer needs to be FIPS validated.
 #
+# Requires NSS > 3.44
+
+USE_NSS_PRF ?= false
+ifeq ($(USE_NSS_PRF),true)
+USERLAND_CFLAGS += -DUSE_NSS_PRF
+endif
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 USERLAND_CFLAGS+=-DSINGLE_CONF_DIR=1
