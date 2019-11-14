@@ -255,16 +255,17 @@ static bool verify_end_cert(CERTCertList *trustcl,
 
 	CERTVerifyLog vfy_log;
 
+	enum cvout_param {
+		cvout_errorLog,
+		cvout_end,
+	};
+
 	CERTValOutParam cvout[] = {
-		{
+		[cvout_errorLog] = {
 			.type = cert_po_errorLog,
 			.value = { .pointer = { .log = &vfy_log } }
 		},
-		{
-			.type = cert_po_certList,
-			.value = { .pointer = { .chain = NULL } }
-		},
-		{
+		[cvout_end] = {
 			.type = cert_po_end
 		}
 	};
@@ -319,33 +320,9 @@ static bool verify_end_cert(CERTCertList *trustcl,
 		log_bad_cert("warning", p->usageName,  vfy_log.head);
 
 		PORT_FreeArena(vfy_log.arena, PR_FALSE);
-
-		/*
-		 * ??? observed squirrelly behaviour:
-		 * CERT_DestroyCertList(NULL) does something very odd:
-		 * at least sometimes terminating execution without a core file.
-		 * testing/pluto/ikev2-x509-02-eku illustrates this.
-		 * So we must make sure not to do that.
-		 */
-		if (cvout[1].value.pointer.chain != NULL) {
-			CERT_DestroyCertList(cvout[1].value.pointer.chain);
-			cvout[1].value.pointer.chain = NULL;
-		}
 	}
 
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
-
-	/*
-	 * ??? observed squirrelly behaviour:
-	 * CERT_DestroyCertList(NULL) does something very odd:
-	 * at least sometimes terminating execution without a core file.
-	 * testing/pluto/ikev2-x509-23-no-ca illustrates this.
-	 * So we must make sure not to do that.
-	 */
-	if (cvout[1].value.pointer.chain != NULL) {
-		CERT_DestroyCertList(cvout[1].value.pointer.chain);
-		cvout[1].value.pointer.chain = NULL;
-	}
 
 	return verified;
 }
