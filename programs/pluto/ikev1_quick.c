@@ -634,8 +634,7 @@ void quick_outI1(fd_t whack_sock,
 		 struct xfrm_user_sec_ctx_ike *uctx
 		 )
 {
-	struct state *st = ikev1_duplicate_state(isakmp_sa);
-	st->st_whack_sock = dup_any(whack_sock);
+	struct state *st = ikev1_duplicate_state(isakmp_sa, whack_sock);
 	update_state_connection(st, c);
 	passert(c != NULL);
 
@@ -1229,7 +1228,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 	/* create our new state */
 	{
-		struct state *const st = ikev1_duplicate_state(p1st);
+		struct state *const st = ikev1_duplicate_state(p1st, null_fd);
 
 		/* first: fill in missing bits of our new state object
 		 * note: we don't copy over st_peer_pubkey, the public key

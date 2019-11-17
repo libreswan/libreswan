@@ -81,7 +81,8 @@ static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
 		update_state_connection(&child->sa, c);
 	} else {
 		child = ikev2_duplicate_state(ike, IPSEC_SA,
-					      SA_RESPONDER);
+					      SA_RESPONDER,
+					      null_fd);
 		update_state_connection(&child->sa, c);
 		binlog_refresh_state(&child->sa);
 		/*
@@ -159,7 +160,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		 */
 		pexpect(md->st != NULL);
 		pexpect(md->st == &ike->sa); /* passed in parent */
-		child = ikev2_duplicate_state(ike, IPSEC_SA, SA_RESPONDER);
+		child = ikev2_duplicate_state(ike, IPSEC_SA,
+					      SA_RESPONDER,
+					      null_fd);
 		binlog_refresh_state(&child->sa);
 		/*
 		 * XXX: This is to hack around the broken responder

@@ -805,9 +805,9 @@ extern void delete_states_by_connection(struct connection *c, bool relations);
 extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
-struct state *ikev1_duplicate_state(struct state *st);
+struct state *ikev1_duplicate_state(struct state *st, fd_t whackfd);
 struct child_sa *ikev2_duplicate_state(struct ike_sa *st, enum sa_type sa_type,
-				       enum sa_role sa_role);
+				       enum sa_role sa_role, fd_t whackfd);
 
 extern struct state
 	*state_with_serialno(so_serial_t sn),

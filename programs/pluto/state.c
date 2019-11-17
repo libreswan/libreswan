@@ -1463,7 +1463,8 @@ void delete_states_by_peer(const ip_address *peer)
  */
 static struct state *duplicate_state(struct state *st,
 				     enum sa_type sa_type,
-				     const struct finite_state *fs)
+				     const struct finite_state *fs,
+				     fd_t whackfd)
 {
 	struct state *nst;
 	char cib[CONN_INST_BUF];
@@ -1477,7 +1478,7 @@ static struct state *duplicate_state(struct state *st,
 	nst = new_state(st->st_ike_version, fs,
 			st->st_ike_spis.initiator,
 			st->st_ike_spis.responder,
-			sa_type, null_fd);
+			sa_type, whackfd);
 
 	DBG(DBG_CONTROL,
 		DBG_log("duplicating state object #%lu \"%s\"%s as #%lu for %s",
@@ -1566,16 +1567,19 @@ static struct state *duplicate_state(struct state *st,
 	return nst;
 }
 
-struct state *ikev1_duplicate_state(struct state *st)
+struct state *ikev1_duplicate_state(struct state *st,
+				    fd_t whackfd)
 {
-	return duplicate_state(st, IPSEC_SA, &state_undefined);
+	return duplicate_state(st, IPSEC_SA, &state_undefined, whackfd);
 }
 
 struct child_sa *ikev2_duplicate_state(struct ike_sa *ike,
 				       enum sa_type sa_type,
-				       enum sa_role role)
+				       enum sa_role role,
+				       fd_t whackfd)
 {
-	struct state *cst = duplicate_state(&ike->sa, sa_type, &state_undefined);
+	struct state *cst = duplicate_state(&ike->sa, sa_type,
+					    &state_undefined, whackfd);
 	cst->st_sa_role = role;
 	struct child_sa *child = pexpect_child_sa(cst);
 	v2_msgid_init_child(ike, child);

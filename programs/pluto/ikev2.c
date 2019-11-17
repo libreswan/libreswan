@@ -1245,12 +1245,14 @@ static struct child_sa *process_v2_child_ix(struct msg_digest *md,
 	if (md->from_state == STATE_V2_CREATE_R) {
 		what = "Child SA Request";
 		child = ikev2_duplicate_state(ike, IPSEC_SA,
-					      SA_RESPONDER);
+					      SA_RESPONDER,
+					      null_fd);
 		change_state(&child->sa, STATE_V2_CREATE_R);
 	} else {
 		what = "IKE Rekey Request";
 		child = ikev2_duplicate_state(ike, IKE_SA,
-					      SA_RESPONDER);
+					      SA_RESPONDER,
+					      null_fd);
 		change_state(&child->sa, STATE_V2_REKEY_IKE_R); /* start with this */
 	}
 

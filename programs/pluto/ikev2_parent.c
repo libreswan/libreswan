@@ -2139,10 +2139,24 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	ikev2_log_parentSA(pst);
 
-	/* XXX This is too early and many failures could lead to not needing a child state */
+	/*
+	 * XXX This is too early and many failures could lead to not
+	 * needing a child state.
+	 *
+	 * XXX: The problem isn't so much that the child state is
+	 * created - it provides somewhere to store all the child's
+	 * state - but that things switch to the child before the IKE
+	 * SA is finished.  Consequently, code is forced to switch
+	 * back to the IKE SA.
+	 *
+	 * Start with the CHILD SA bound to the same whackfd as it IKE
+	 * SA.  It might later change whe its discovered that the
+	 * child is for something pending?
+	 */
 	struct child_sa *child = ikev2_duplicate_state(pexpect_ike_sa(pst),
 						       IPSEC_SA,
-						       SA_INITIATOR);	/* child state */
+						       SA_INITIATOR,
+						       ike->sa.st_whack_sock);
 	struct state *cst = &child->sa;
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
@@ -5620,17 +5634,19 @@ void ikev2_initiate_child_sa(struct pending *p)
 
 	struct child_sa *child; /* to be determined */
 	if (sa_type == IPSEC_SA) {
-		child = ikev2_duplicate_state(ike, IPSEC_SA, SA_INITIATOR);
+		child = ikev2_duplicate_state(ike, IPSEC_SA,
+					      SA_INITIATOR,
+					      p->whack_sock);
 		st = &child->sa;
 	} else {
-		child = ikev2_duplicate_state(ike, IKE_SA, SA_INITIATOR);
+		child = ikev2_duplicate_state(ike, IKE_SA,
+					      SA_INITIATOR,
+					      p->whack_sock);
 		st = &child->sa;
 		st->st_oakley = ike->sa.st_oakley;
 		st->st_ike_rekey_spis.initiator = ike_initiator_spi();
 		st->st_ike_pred = ike->sa.st_serialno;
 	}
-
-	st->st_whack_sock = dup_any(p->whack_sock);/*on-heap*/
 	update_state_connection(st, c);
 
 	set_cur_state(st); /* we must reset before exit */
