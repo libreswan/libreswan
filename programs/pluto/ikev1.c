@@ -1871,7 +1871,8 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					ike_frag->next = old->next;
 					*i = ike_frag;
-					release_md(old->md);
+					pexpect(old->md != NULL);
+					release_any_md(&old->md);
 					pfree(old);
 					ike_frag = NULL;
 				}

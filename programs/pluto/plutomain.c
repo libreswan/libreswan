@@ -1843,7 +1843,6 @@ void exit_pluto(int status)
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
 	free_ifaces();	/* free interface list from memory */
-	free_md_pool();	/* free the md pool */
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */

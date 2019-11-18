@@ -689,7 +689,8 @@ static void release_v1fragments(struct state *st)
 		struct ike_frag *this = frag;
 
 		frag = this->next;
-		release_md(this->md);
+		pexpect(this->md != NULL);
+		release_any_md(&this->md);
 		pfree(this);
 	}
 
