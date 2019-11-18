@@ -26,6 +26,7 @@
 #include "chunk.h"
 #include "ip_address.h"
 #include "pluto_timing.h"
+#include "refcnt.h"
 
 struct state;   /* forward declaration of tag */
 
@@ -78,6 +79,7 @@ struct payload_summary {
  */
 
 struct msg_digest {
+	refcnt_t refcnt;
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
 	const struct iface_port *iface;		/* interface on which message arrived */
 	ip_endpoint sender;			/* address:port where message came from */
@@ -151,6 +153,7 @@ enum message_role v2_msg_role(const struct msg_digest *md);
 extern struct msg_digest *alloc_md(const char *mdname);
 struct msg_digest *clone_md(struct msg_digest *md, const char *name);
 extern void release_any_md(struct msg_digest **mdp);
+struct msg_digest *reference_md(struct msg_digest *md);
 
 void schedule_md_event(const char *name, struct msg_digest *md);
 

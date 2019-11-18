@@ -15,6 +15,7 @@
  *
  */
 
+#include "refcnt.h"
 #include "lswlog.h"
 
 #include "defs.h"
@@ -30,6 +31,7 @@ struct msg_digest *alloc_md(const char *mdname)
 	static const struct msg_digest blank_md;
 	struct msg_digest *md = alloc_thing(struct msg_digest, mdname);
 	*md = blank_md;
+	init_ref(md);
 	return md;
 }
 
@@ -48,7 +50,8 @@ struct msg_digest *clone_md(struct msg_digest *md, const char *name)
 	return clone;
 }
 
-static void free_mdp(struct msg_digest **mdp)
+static void free_mdp(struct msg_digest **mdp,
+		     where_t unused_where UNUSED)
 {
 	freeanychunk((*mdp)->raw_packet);
 	pfreeany((*mdp)->packet_pbs.start);
@@ -58,7 +61,10 @@ static void free_mdp(struct msg_digest **mdp)
 
 void release_any_md(struct msg_digest **mdp)
 {
-	if (*mdp != NULL) {
-		free_mdp(mdp);
-	}
+	delete_ref(mdp, free_mdp);
+}
+
+struct msg_digest *reference_md(struct msg_digest *md)
+{
+	return add_ref(md);
 }
