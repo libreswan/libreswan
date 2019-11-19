@@ -16,6 +16,7 @@
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2014 Antony Antony <antony@phenome.org>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -929,7 +930,14 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	if (st == NULL)
 		return;
 
+	if (st->st_interface->proto == IPPROTO_TCP)
+		return;
+
 	if (md != NULL) {
+
+		if(md->iface->proto == IPPROTO_TCP)
+			return;
+
 		/*
 		 * If source port/address has changed, update (including other
 		 * states and established kernel SA)

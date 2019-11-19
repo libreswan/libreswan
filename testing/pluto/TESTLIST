@@ -1106,3 +1106,10 @@ kvmplutotest	algo-esp-netkey-to-klips-ikev1			skiptest
 kvmplutotest	algo-esp-netkey-to-klips-ikev2			skiptest
 kvmplutotest	algo-esp-netkey-to-netkey-ikev1			good
 kvmplutotest	algo-esp-netkey-to-netkey-ikev2			good
+
+# TCP tests
+kvmplutotest	ikev2-03-basic-rawrsa-tcp	wip
+kvmplutotest	ikev2-04-basic-x509-tcp		wip
+kvmplutotest	ikev2-05-basic-psk-tcp		wip
+kvmplutotest	ikev2-17-rekey-ipsec-tcp	wip
+kvmplutotest	ikev2-25-rw-nat-tcp		wip

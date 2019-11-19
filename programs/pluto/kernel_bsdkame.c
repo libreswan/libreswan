@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -134,7 +135,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 				if (q == NULL) {
 					/* matches nothing -- create a new entry */
 					int fd = create_socket(ifp, ifp->name,
-							       pluto_port);
+							       pluto_port, IPPROTO_UDP);
 					if (fd < 0)
 						break;
 
@@ -179,7 +180,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					{
 						fd = create_socket(ifp,
 								   id->id_vname,
-								   pluto_nat_port);
+								   pluto_nat_port, IPPROTO_UDP);
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(

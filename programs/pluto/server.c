@@ -12,6 +12,7 @@
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -54,6 +55,9 @@
 
 #include <event2/event.h>
 #include <event2/event_struct.h>
+#include <event2/listener.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
 #include <event2/thread.h>
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
@@ -62,6 +66,9 @@
 #  include <sys/uio.h>          /* struct iovec */
 #endif
 
+#include <linux/ipsec.h>	/* TCP: for IPSEC_POLICY_BYPASS; DOES NOT BELONG! */
+#include <linux/pfkeyv2.h>	/* TCP: for said_x_policy;       DOES NOT BELONG! */
+#include <libreswan/pfkey.h>	/* TCP: for IPSEC_PFKEYv2_ALIGN; DOES NOT BELONG! */
 
 #include "sysdep.h"
 #include "socketwrapper.h"
@@ -283,9 +290,14 @@ void free_ifaces(void)
 
 struct raw_iface *static_ifn = NULL;
 
-int create_socket(const struct raw_iface *ifp, const char *v_name, int port)
+int create_socket(const struct raw_iface *ifp, const char *v_name, int port, int proto)
 {
-	int fd = socket(addrtypeof(&ifp->addr), SOCK_DGRAM, IPPROTO_UDP);
+	int fd;
+	if (proto == IPPROTO_UDP) {
+		fd = socket(addrtypeof(&ifp->addr), SOCK_DGRAM, IPPROTO_UDP);
+	} else {
+		fd = socket(addrtypeof(&ifp->addr), SOCK_STREAM, IPPROTO_TCP);
+	}
 	int fcntl_flags;
 	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
@@ -989,6 +1001,131 @@ void timer_list(void)
 	list_state_events(nw);
 }
 
+void event_cb(struct bufferevent *bev,
+		short events, void *arg UNUSED)
+{
+    if (events & BEV_EVENT_ERROR)
+            libreswan_log("There was an error in a bufferevent operation");
+    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+            bufferevent_free(bev);
+    }
+}
+
+/* TCP: move to kernel vector? */
+stf_status create_tcp_interface(struct state *st)
+{
+	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	evutil_make_socket_nonblocking(fd); /* TCP: missing error check? */
+
+	/* TCP: sockaddr will contain ADDR:PORT */
+	ip_sockaddr sockaddr;
+	size_t sockaddr_size = endpoint_to_sockaddr(&st->st_remote_endpoint, &sockaddr);
+
+	connect(fd, &sockaddr.sa, sockaddr_size); /* TCP: missing error check? */
+
+	/* TCP: kernel specific code (and seemingly BSDKAME only? */
+
+	/* Adding a socket bypass policy */
+	struct sadb_x_policy policy; /* TCP: = { .field ... }; */
+	int level, opt;
+
+	zero(&policy);
+	policy.sadb_x_policy_len = sizeof(policy) /
+					 IPSEC_PFKEYv2_ALIGN;
+	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
+	policy.sadb_x_policy_type = IPSEC_POLICY_BYPASS;
+	policy.sadb_x_policy_dir = IPSEC_DIR_INBOUND;
+	policy.sadb_x_policy_id = 0;
+
+	level = IPPROTO_IP;
+	opt = IP_IPSEC_POLICY;
+
+	if (setsockopt(fd, level, opt, &policy, sizeof(policy)) < 0) {
+		LOG_ERRNO(errno,
+		 	  "setsockopt IPSEC_POLICY in create_tcp_interface()");
+		/* TCP: missing close(fd)? */
+		return STF_FATAL;
+	}
+
+	policy.sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
+
+	if (setsockopt(fd, level, opt, &policy, sizeof(policy)) < 0) {
+		LOG_ERRNO(errno,
+			  "setsockopt IPSEC_POLICY in create_tcp_interface()");
+		/* TCP: missing close(fd)? */
+		return STF_FATAL;
+	}
+
+	struct iface_port *ifp = NULL;
+	ifp = alloc_thing(struct iface_port, "struct iface_port");
+
+	ifp->ip_dev = st->st_interface->ip_dev;
+
+	ifp->fd = fd;
+
+	ip_sockaddr myaddr;
+	socklen_t addr_size = sizeof(myaddr);
+	getsockname(ifp->fd, &myaddr.sa, &addr_size);
+
+	sockaddr_to_endpoint(&myaddr, addr_size, &ifp->local_endpoint); /* TCP:  missing error check? */
+	ifp->proto = IPPROTO_TCP;
+	ifp->change = IFN_ADD;
+	ifp->ike_float = TRUE;
+
+	ifp->bev = bufferevent_socket_new(pluto_eb, ifp->fd , BEV_OPT_CLOSE_ON_FREE);
+
+	if (ifp->bev == NULL){
+		libreswan_log("bufferevent could not be created");
+		close(ifp->fd);
+		pfree(ifp);
+		return STF_FATAL;
+	}
+
+	bufferevent_setcb(ifp->bev, read_cb, NULL, event_cb, ifp);
+	bufferevent_enable(ifp->bev, EV_READ|EV_WRITE);
+
+	/* Socket is now connected, send the IKETCP stream */
+
+	char temp[IKETCP_STREAM_PREFIX_LENGTH] = "IKETCP";
+
+	int ret = bufferevent_write(ifp->bev, (void *)temp, IKETCP_STREAM_PREFIX_LENGTH);
+	if (ret == -1) {
+		libreswan_log("Couldn't send stream prefix, closing connection");
+		bufferevent_free(ifp->bev);
+		pfree(ifp);
+		return STF_FATAL;
+	} 
+	st->st_interface = ifp;
+	return STF_OK;
+}
+
+static void accept_conn_cb(struct evconnlistener *listener UNUSED,
+		evutil_socket_t fd, struct sockaddr *address UNUSED, int socklen UNUSED,
+		void *arg)
+{
+	struct iface_port *ifp = NULL;
+	ifp = alloc_thing(struct iface_port, "struct iface_port");
+
+	memcpy(ifp,(struct iface_port *)arg,sizeof(struct iface_port));
+
+	ifp->bev = bufferevent_socket_new(
+		pluto_eb, fd, BEV_OPT_CLOSE_ON_FREE);
+
+ 	if (ifp->bev == NULL){
+		libreswan_log("couldn't create bufferevent, exit");
+		close(fd);
+		pfree(ifp);
+		return;
+	}
+
+	ifp->fd = fd;
+
+	bufferevent_setcb(ifp->bev, read_prefix_cb, NULL, event_cb, ifp);
+
+	bufferevent_enable(ifp->bev, EV_READ|EV_WRITE);
+}
+
 void find_ifaces(bool rm_dead)
 {
 	if (rm_dead)
@@ -1011,14 +1148,21 @@ void find_ifaces(bool rm_dead)
 
 		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 			delete_pluto_event(&ifp->pev);
-			ifp->pev = add_fd_read_event_handler(ifp->fd,
-							     comm_handle_cb,
-							     ifp, "ethX");
+			if (ifp->proto == IPPROTO_UDP) {
+				ifp->pev = add_fd_read_event_handler(ifp->fd,
+								     comm_handle_cb,
+								     ifp, "ethX");
+			} else {
+				struct evconnlistener *tcp_listener = evconnlistener_new(
+					pluto_eb, accept_conn_cb, ifp, LEV_OPT_CLOSE_ON_FREE,
+					-1, ifp->fd);
+				passert(tcp_listener!=NULL);
+			}
 			endpoint_buf b;
-			dbg("setup callback for interface %s %s fd %d",
+			dbg("setup callback for interface %s %s fd %d on %s",
 			    ifp->ip_dev->id_rname,
 			    str_endpoint(&ifp->local_endpoint, &b),
-			    ifp->fd);
+			    ifp->fd, ifp->proto == IPPROTO_UDP ? "UDP" : "TCP");
 		}
 	}
 }

@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -176,8 +177,7 @@ add_entry:
 				if (q == NULL) {
 					/* matches nothing -- create a new entry */
 					int fd = create_socket(ifp, v->name,
-							       pluto_port);
-
+							       pluto_port, IPPROTO_UDP);
 					if (fd < 0)
 						break;
 
@@ -221,7 +221,7 @@ add_entry:
 						    DBG_log("NAT-T KLIPS: calling nat_traversal_espinudp_socket"));
 						fd = create_socket(ifp,
 								   v->name,
-								   pluto_nat_port);
+								   pluto_nat_port, IPPROTO_UDP);
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(

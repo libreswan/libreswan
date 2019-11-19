@@ -4,6 +4,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2019 Andrew Cagney
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,6 +30,7 @@
 
 struct state;
 struct msg_digest;
+struct bufferevent;
 
 extern char *pluto_vendorid;
 
@@ -40,6 +42,9 @@ extern struct sockaddr_un info_addr;    /* address of control (info) socket */
 
 extern err_t init_ctl_socket(void);
 extern void delete_ctl_socket(void);
+
+extern void event_cb(struct bufferevent *bev, short events, void *arg); /* TCP: terrible name? */
+extern stf_status create_tcp_interface(struct state *st); /* TCP: terrible name? */
 
 extern bool listening;  /* should we pay attention to IKE messages? */
 extern enum ddos_mode pluto_ddos_mode; /* auto-detect or manual? */
@@ -78,6 +83,8 @@ struct iface_port {
 	bool ike_float;
 	enum { IFN_ADD, IFN_KEEP, IFN_DELETE } change;
 	struct pluto_event *pev;
+	struct bufferevent *bev; /* TCP: this is tcp only, does it belong? */
+	int proto; /* TCP: add UDP and TCP to ip_protocol? */
 };
 
 extern struct iface_port  *interfaces;   /* public interfaces */

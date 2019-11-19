@@ -13,6 +13,7 @@
  * Copyright (C) 2013-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -287,6 +288,9 @@ struct connection {
 	bool send_vendorid;		/* Send our vendorid? Security vs Debugging help */
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
+
+	bool tcponly;
+	int remote_tcpport;
 
 	/* Network Manager support */
 #ifdef HAVE_NM

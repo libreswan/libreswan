@@ -1,0 +1,5 @@
+Basic pluto using TCP encapsulation with IKEv2 using PSK on the initiator (west), and on the responder.
+
+Pluto first attempts on UDP, but falls back to TCP due to UDP/ESP being blocked
+
+

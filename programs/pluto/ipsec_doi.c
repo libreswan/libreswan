@@ -12,6 +12,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2014-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017-2018 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -546,6 +547,7 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
 		bool tfc = c->sa_tfcpad != 0 && !st->st_seen_no_tfc;
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
+		bool tcp = st->st_interface->proto == IPPROTO_TCP;
 
 		if (nat)
 			dbg("NAT-T: NAT Traversal detected - their IKE port is '%d'",
@@ -554,11 +556,12 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		dbg("NAT-T: encaps is '%s'",
 		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
 
-		lswlogf(buf, "%sESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
+		lswlogf(buf, "%sESP%s%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
 			ini,
 			nat ? "/NAT" : "",
 			esn ? "/ESN" : "",
 			tfc ? "/TFC" : "",
+			tcp ? "/TCP" : "",
 			ntohl(st->st_esp.attrs.spi),
 			ntohl(st->st_esp.our_spi));
 		lswlogf(buf, " xfrm=%s", st->st_esp.attrs.transattrs.ta_encrypt->common.fqn);

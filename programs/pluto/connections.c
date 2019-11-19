@@ -18,6 +18,7 @@
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1539,6 +1540,10 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 		/* RFC 5685 - IKEv2 Redirect mechanism */
 		c->redirect_to = clone_str(wm->redirect_to, "connection redirect_to");
 		c->accept_redirect_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
+
+		/* RFC 8229 TCP encap*/
+		c->remote_tcpport = wm->remote_tcpport;
+		c->tcponly = wm->tcponly;
 
 		/*
 		 * parse mark and mask values form the mark/mask string

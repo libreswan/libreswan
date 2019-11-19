@@ -29,6 +29,8 @@
 #include <unistd.h>	/* for usleep() */
 #include <errno.h>
 
+#include <event2/bufferevent.h>		/* TCP: for bufferevent_write() */
+
 #include "defs.h"
 
 #include "send.h"
@@ -76,6 +78,11 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	 */
 	size_t natt_bonus;
 
+	/* We need to send the length of packet if using TCP
+	 * tcp_packetsize is the size of the tcp length field in the header
+	 */
+	u_int16_t tcp_packetsize;
+
 	if (interface == NULL) {
 		libreswan_log("Cannot send packet - interface vanished!");
 		return FALSE;
@@ -111,8 +118,10 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 				  interface->ike_float ?
 				  NON_ESP_MARKER_SIZE : 0;
 
+	tcp_packetsize = interface->proto == IPPROTO_TCP ? IKE_TCP_LENGTH_FIELD_SIZE : 0;
+
 	const uint8_t *ptr;
-	size_t len = natt_bonus + a.len + b.len;
+	size_t len = tcp_packetsize + natt_bonus + a.len + b.len;
 	ssize_t wlen;
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
@@ -120,17 +129,22 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		return FALSE;
 	}
 
+	size_t network_len = htons(len); /* TCP: size_t isn't an exact size!!! uint32_t? */
+
 	if (len != a.len) {
 		/* copying required */
 
-		/* 1. non-ESP Marker (0x00 octets) */
-		memset(buf, 0x00, natt_bonus);
+		/* 1. packet length in header for TCP*/
+		memcpy(buf, &network_len, tcp_packetsize); /* TCP: not a sized value? */
 
-		/* 2. chunk a */
-		memcpy(buf + natt_bonus, a.ptr, a.len);
+		/* 2. non-ESP Marker (0x00 octets) */
+		memset(buf + tcp_packetsize, 0x00, natt_bonus);
 
-		/* 3. chunk b */
-		memcpy(buf + natt_bonus + a.len, b.ptr, b.len);
+		/* 3. chunk a */
+		memcpy(buf + tcp_packetsize + natt_bonus, a.ptr, a.len);
+
+		/* 4. chunk b */
+		memcpy(buf + tcp_packetsize + natt_bonus + a.len, b.ptr, b.len);
 
 		ptr = buf;
 	} else {
@@ -140,9 +154,10 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	if (DBGP(DBG_BASE)) {
 		endpoint_buf b;
 		endpoint_buf ib;
-		DBG_log("sending %zu bytes for %s through %s from %s to %s (using #%lu)",
+		DBG_log("sending %zu bytes for %s through %s %s from %s to %s (using #%lu)",
 			len,
 			where,
+			interface->proto == IPPROTO_TCP ? "TCP" : "UDP",
 			interface->ip_dev->id_rname,
 			str_endpoint(&interface->local_endpoint, &ib),
 			str_endpoint(&remote_endpoint, &b),
@@ -152,16 +167,21 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 
 	check_outgoing_msg_errqueue(interface, "sending a packet");
 
-	ip_sockaddr remote_sa;
-	size_t remote_sa_size = endpoint_to_sockaddr(&remote_endpoint, &remote_sa);
-	wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
+	if (interface->proto == IPPROTO_TCP && interface->bev != NULL) {
+		wlen = bufferevent_write(interface->bev,(void *)ptr,len);
+	} else {
+		ip_sockaddr remote_sa;
+		size_t remote_sa_size = endpoint_to_sockaddr(&remote_endpoint, &remote_sa);
+		wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
+	}
 
 	if (wlen != (ssize_t)len) {
 		if (!just_a_keepalive) {
 			endpoint_buf b;
-			LOG_ERRNO(errno, "sendto on %s to %s failed in %s",
+			LOG_ERRNO(errno, "sendto on %s to %s via %s failed in %s",
 				  interface->ip_dev->id_rname,
 				  str_sensitive_endpoint(&remote_endpoint, &b),
+				  interface->proto == IPPROTO_TCP ? "TCP" : "UDP",
 				  where);
 		}
 		return FALSE;
@@ -184,6 +204,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 
 		ip_sockaddr remote_sa;
 		size_t remote_sa_size = endpoint_to_sockaddr(&remote_endpoint, &remote_sa);
+		/* TCP: missing equivalent TCP code, does this make sense? */
 		wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
 		if (wlen != (ssize_t)len) {
 			if (!just_a_keepalive) {

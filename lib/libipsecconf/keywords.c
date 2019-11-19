@@ -8,6 +8,7 @@
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -460,6 +461,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "keep_alive",  kv_config | kv_alias,  kt_number,  KBF_KEEPALIVE, NULL, NULL, },  /* obsolete _ */
   { "keep-alive",  kv_config,  kt_number,  KBF_KEEPALIVE, NULL, NULL, },
 
+  { "listen-tcp", kv_config, kt_number, KBF_TCPPORT, NULL, NULL },
+
   { "listen",  kv_config,  kt_string,  KSF_LISTEN, NULL, NULL, },
   { "protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  &kw_proto_stack, NULL, },
   { "nhelpers",  kv_config,  kt_number,  KBF_NHELPERS, NULL, NULL, },
@@ -627,6 +630,10 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "disablearrivalcheck",  kv_conn,  kt_invertbool,  KNCF_ARRIVALCHECK, NULL, NULL, },
   { "failureshunt",  kv_conn,  kt_enum,  KNCF_FAILURESHUNT,  &kw_failureshunt_list, NULL, },
   { "negotiationshunt",  kv_conn,  kt_enum,  KNCF_NEGOTIATIONSHUNT,  &kw_negotiationshunt_list, NULL, },
+
+  { "tcponly",  kv_conn, kt_bool, KNCF_TCPONLY, NULL, NULL },
+  { "tcp-remoteport",  kv_conn, kt_number, KNCF_REMOTE_TCPPORT, NULL, NULL },
+
   { "connalias",  kv_conn | kv_processed,  kt_appendstring,  KSCF_CONNALIAS, NULL, NULL, },
 
   /* attributes of the phase2 policy */

@@ -11,6 +11,7 @@
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -503,6 +504,9 @@
 /* RFC3948: bytes of zeros, same size as ESP SPI */
 #define NON_ESP_MARKER_SIZE 4
 
+/* RFC8229: 2 bytes of tcp packet length */
+#define IKE_TCP_LENGTH_FIELD_SIZE 2
+#define IKETCP_STREAM_PREFIX_LENGTH 6
 
 /* ICMP type number for neighbor discovery */
 #define ICMP_NEIGHBOR_DISCOVERY 34816

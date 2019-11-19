@@ -23,6 +23,7 @@
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2019 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2434,7 +2435,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 			if (q == NULL) {
 				/* matches nothing -- create a new entry */
 				int fd = create_socket(ifp, v->name,
-						pluto_port);
+						       pluto_port,
+						       IPPROTO_UDP);
 
 				if (fd < 0)
 					break;
@@ -2456,6 +2458,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				id->id_nic_offload = netlink_detect_offload(ifp->name);
 
 				q->fd = fd;
+				q->proto = IPPROTO_UDP;
 				q->next = interfaces;
 				q->change = IFN_ADD;
 				q->local_endpoint = endpoint(&ifp->addr, pluto_port);
@@ -2477,9 +2480,9 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				 * it one tried to turn it on.
 				 */
 				if (addrtypeof(&ifp->addr) == AF_INET) {
-					fd = create_socket(ifp,
-							v->name,
-							pluto_nat_port);
+					fd = create_socket(ifp, v->name,
+							   pluto_nat_port,
+							   IPPROTO_UDP);
 					if (fd < 0)
 						break;
 					nat_traversal_espinudp_socket(
@@ -2492,6 +2495,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 					q->local_endpoint = endpoint(&ifp->addr, pluto_nat_port);
 					q->fd = fd;
+					q->proto = IPPROTO_UDP;
 					q->next = interfaces;
 					q->change = IFN_ADD;
 					q->ike_float = TRUE;
@@ -2501,6 +2505,31 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 						"adding interface %s/%s %s",
 						q->ip_dev->id_vname, q->ip_dev->id_rname,
 						str_endpoint(&q->local_endpoint, &b));
+				}
+
+				if (pluto_tcpport != 0) {
+					fd = create_socket(ifp, v->name,
+							   pluto_tcpport,
+							   IPPROTO_TCP);
+					if (fd < 0)
+						break;
+
+					q = alloc_thing(struct iface_port,
+							"struct iface_port");
+					q->ip_dev = id;
+					id->id_count++;
+
+					q->local_endpoint = endpoint(&ifp->addr, pluto_tcpport);
+					q->fd = fd;
+					q->proto = IPPROTO_TCP;
+					q->next = interfaces;
+					q->change = IFN_ADD;
+					q->ike_float = TRUE;
+					interfaces = q;
+					endpoint_buf b;
+					libreswan_log("adding TCP interface %s/%s %s",
+						      q->ip_dev->id_vname, q->ip_dev->id_rname,
+						      str_endpoint(&q->local_endpoint, &b));
 				}
 
 				break;
