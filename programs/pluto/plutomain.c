@@ -227,6 +227,9 @@ static const char compile_time_interop_options[] = ""
 #ifdef LIBLDAP
 	" LDAP(non-NSS)"
 #endif
+#ifdef USE_EFENCE
+	" EFENCE"
+#endif
 ;
 
 static char pluto_lock[sizeof(ctl_addr.sun_path)] =
@@ -476,6 +479,7 @@ uint16_t secctx_attr_type = SECCTX;
 
 enum {
 	OPT_OFFSET = 256, /* larger than largest char */
+	OPT_EFENCE_PROTECT,
 	OPT_DEBUG,
 	OPT_IMPAIR,
 	OPT_DNSSEC_ROOTKEY_FILE,
@@ -582,6 +586,7 @@ static const struct option long_opts[] = {
 	{ "selftest\0", no_argument, NULL, '5' },
 
 	{ "leak-detective\0", no_argument, NULL, 'X' },
+	{ "efence-protect\0", required_argument, NULL, OPT_EFENCE_PROTECT, },
 	{ "debug-none\0^", no_argument, NULL, 'N' },
 	{ "debug-all\0", no_argument, NULL, 'A' },
 	{ "debug\0", required_argument, NULL, OPT_DEBUG, },
@@ -664,8 +669,34 @@ static void set_dnssec_file_names (struct starter_config *cfg)
 }
 #endif
 
+#ifdef USE_EFENCE
+extern int EF_PROTECT_BELOW;
+extern int EF_PROTECT_FREE;
+#endif
+
 int main(int argc, char **argv)
 {
+	/*
+	 * Some options should to be processed before the first
+	 * malloc() call, so scan for them here.
+	 *
+	 * - leak-detective is immutable, it must come before the
+         *   first malloc()
+	 *
+	 * - efence-protect seems to be less strict, but enabling it
+	 *   early must be a good thing (TM) right
+	 */
+	for (int i = 1; i < argc; ++i) {
+		if (streq(argv[i], "--leak-detective"))
+			leak_detective = TRUE;
+#ifdef USE_EFENCE
+		else if (streq(argv[i], "--efence-protect")) {
+			EF_PROTECT_BELOW = 1;
+			EF_PROTECT_FREE = 1;
+		}
+#endif
+	}
+
 	/*
 	 * Identify the main thread.
 	 *
@@ -685,16 +716,6 @@ int main(int argc, char **argv)
 	 */
 	bool log_to_stderr_desired = FALSE;
 	bool log_to_file_desired = FALSE;
-
-	{
-		int i;
-
-		/* MUST BE BEFORE ANY allocs */
-		for (i = 1; i < argc; ++i) {
-			if (streq(argv[i], "--leak-detective"))
-				leak_detective = TRUE;
-		}
-	}
 
 	pluto_name = argv[0];
 
@@ -1397,6 +1418,21 @@ int main(int argc, char **argv)
 			confread_free(cfg);
 			continue;
 		}
+
+		case OPT_EFENCE_PROTECT:
+#ifdef USE_EFENCE
+			/*
+			 * This flag was already processed at the
+			 * start of main().  While it isn't immutable,
+			 * having it apply to all mallocs() is
+			 * presumably better.
+			 */
+			passert(EF_PROTECT_BELOW);
+			passert(EF_PROTECT_FREE);
+#else
+			libreswan_log("efence support is not enabled; option --efence-protect ignored");
+#endif
+			break;
 
 		case OPT_DEBUG:
 		{
