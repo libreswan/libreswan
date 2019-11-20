@@ -155,10 +155,10 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		if (c == NULL) {
 			endpoint_buf b;
 
-			loglog_md(whack_log_fd, RC_LOG_SERIOUS, md,
-				  "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
-				  str_endpoint(&md->sender, &b),
-				  bitnamesof(sa_policy_bit_names, policy));
+			loglog(RC_LOG_SERIOUS,
+				"initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
+				str_endpoint(&md->sender, &b),
+				bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		}
@@ -181,7 +181,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 
 	md->st = st;  /* (caller will reset cur_state) */
 	set_cur_state(st);
-	update_state_connection(st, c, HERE);
+	update_state_connection(st, c);
 	change_state(st, STATE_AGGR_R1);
 
 	st->st_policy = policy;	/* ??? not sure what's needed here */
@@ -1055,7 +1055,6 @@ static void aggr_outI1_continue(struct state *st,
 	 * MD.  This hacks around it.
 	 */
 	struct msg_digest *fake_md = alloc_md("msg_digest by aggr_outI1");
-	update_md_log_prefix(fake_md, HERE);
 	fake_md->st = st;
 	fake_md->smc = NULL;	/* ??? */
 	fake_md->from_state = STATE_UNDEFINED;	/* ??? */

@@ -204,10 +204,21 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
 #define LSWLOG(BUF) LSWLOG_RC(RC_LOG, BUF)
 
 /*
+ * Log, at level RC, to the whack log (if attached).
+ *
+ * XXX: See programs/pluto/log.h for interface; should only be used in
+ * pluto.  This code assumes that it is being called from the main
+ * thread.
+ *
  * LSWLOG_INFO() sends stuff just to "whack" (or for a tool STDERR?).
- * XXX: Should it send stuff out with level RC_COMMENT?  RC_PRINT
- * supresses the prefix at the other end?
+ * XXX: there is no prefix, bug?  Should it send stuff out with level
+ * RC_COMMENT?
  */
+
+#define LSWLOG_WHACK(RC, BUF)						\
+	LSWLOG_(whack_log_p(), BUF,					\
+		lswlog_log_prefix(BUF),					\
+		lswlog_to_whack_stream(BUF, RC))
 
 /* XXX: should be stdout?!? */
 #define LSWLOG_INFO(BUF)						\
@@ -321,6 +332,11 @@ void lswlog_dbg_pre(struct lswlog *buf);
  * (void) cast).
  */
 
+size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
+size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
+size_t lswlogs(struct lswlog *log, const char *string);
+size_t lswlogl(struct lswlog *log, struct lswlog *buf);
+
 /*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
@@ -398,6 +414,27 @@ void lswbuf(struct lswlog *log)
 	for (bool lswlog_p = PREDICATE; lswlog_p; lswlog_p = false)	\
 		LSWBUF_(BUF)						\
 			for (PREFIX; lswlog_p; lswlog_p = false, SUFFIX)
+
+/*
+ * Write a line of output to the FILE stream as a single block;
+ * includes an implicit new-line.
+ *
+ * For instance:
+ */
+
+#if 0
+void lswlog_file(FILE f)
+{
+	LSWLOG_FILE(f, buf) {
+		lswlogf(buf, "written to file");
+	}
+}
+#endif
+
+#define LSWLOG_FILE(FILE, BUF)						\
+	LSWLOG_(true, BUF,						\
+		,							\
+		lswlog_to_file_stream(BUF, FILE))
 
 /*
  * Log an expectation failure message to the error streams.  That is

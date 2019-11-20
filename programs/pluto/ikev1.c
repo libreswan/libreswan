@@ -1354,14 +1354,16 @@ void process_v1_packet(struct msg_digest **mdp)
 	case ISAKMP_XCHG_AGGR:
 	case ISAKMP_XCHG_IDPROT: /* part of a Main Mode exchange */
 		if (md->hdr.isa_msgid != v1_MAINMODE_MSGID) {
-			plog_md(md, "Message ID was 0x%08" PRIx32 " but should be zero in phase 1",
+			libreswan_log(
+				"Message ID was 0x%08" PRIx32 " but should be zero in phase 1",
 				md->hdr.isa_msgid);
 			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 			return;
 		}
 
 		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
-			plog_md(md, "Initiator Cookie must not be zero in phase 1 message");
+			libreswan_log(
+				"Initiator Cookie must not be zero in phase 1 message");
 			SEND_NOTIFICATION(INVALID_COOKIE);
 			return;
 		}
@@ -1371,7 +1373,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * initial message from initiator
 			 */
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-				plog_md(md, "initial phase 1 message is invalid: its Encrypted Flag is on");
+				libreswan_log("initial phase 1 message is invalid: its Encrypted Flag is on");
 				SEND_NOTIFICATION(INVALID_FLAGS);
 				return;
 			}
@@ -1394,8 +1396,8 @@ void process_v1_packet(struct msg_digest **mdp)
 					 * state that should be
 					 * discarded.
 					 */
-					plog_st(st, "discarding initial packet; already %s",
-						st->st_state->name);
+					libreswan_log("discarding initial packet; already %s",
+						      st->st_state->name);
 				}
 				pop_cur_state(old_state);
 				return;
@@ -1421,7 +1423,8 @@ void process_v1_packet(struct msg_digest **mdp)
 							   md->hdr.isa_msgid);
 
 				if (st == NULL) {
-					plog_md(md, "phase 1 message is part of an unknown exchange");
+					libreswan_log(
+						"phase 1 message is part of an unknown exchange");
 					/* XXX Could send notification back */
 					return;
 				}
@@ -1902,7 +1905,6 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					whole_md->iface = frag->md->iface;
 					whole_md->sender = frag->md->sender;
-					update_md_log_prefix(md, HERE);
 
 					/* Reassemble fragments in buffer */
 					frag = st->st_v1_rfrags;
@@ -2258,7 +2260,7 @@ void process_packet_tail(struct msg_digest **mdp)
 
 				default:
 					loglog(RC_LOG_SERIOUS,
-					       "%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
+						"%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 					       excuse,
 					       enum_show(&ikev1_payload_names, np));
 					if (!md->encrypted) {
@@ -3112,7 +3114,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (!do_command(st->st_connection,
 					&st->st_connection->spd,
 					"disconnectNM", st))
-				/* XXX: shh, lets tell no one */
 				DBG(DBG_CONTROL,
 				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
 		}
@@ -3148,13 +3149,14 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * Perhaps because the message hasn't been authenticated?
 		 * But then then any duplicate would lose too, I would think.
 		 */
+		whack_log(RC_NOTIFICATION + md->v1_note,
+			  "%s: %s", st->st_state->name, notify_name);
 
-		if (md->v1_note != NOTHING_WRONG) {
+		if (md->v1_note != NOTHING_WRONG)
 			SEND_NOTIFICATION(md->v1_note);
-		} else {
-			loglog(RC_NOTIFICATION + md->v1_note,
-			       "%s: %s", st->st_state->name, notify_name);
-		}
+
+		dbg("state transition function for %s failed: %s",
+		    st->st_state->name, notify_name);
 
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
@@ -3162,7 +3164,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (!do_command(st->st_connection,
 					&st->st_connection->spd,
 					"disconnectNM", st))
-				/* XXX: Shh - lets not tell anyone */
 				DBG(DBG_CONTROL,
 				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
 		}
@@ -3381,7 +3382,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 						   &peer);
 			}
 
-			update_state_connection(st, r, HERE);
+			update_state_connection(st, r);
 			c = r;	/* c not subsequently used */
 			/* redo from scratch so we read and check CERT payload */
 			DBG(DBG_CONTROL, DBG_log("retrying ike_decode_peer_id() with new conn"));

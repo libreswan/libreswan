@@ -1502,8 +1502,7 @@ static int certsntoa(CERTCertificate *cert, char *dst, size_t dstlen)
 			'x', dst, dstlen);
 }
 
-static void cert_detail_to_whacklog(struct whack_io *whackfd,
-				    CERTCertificate *cert)
+static void cert_detail_to_whacklog(CERTCertificate *cert)
 {
 	bool is_CA = CERT_IsCACert(cert, NULL);
 	bool is_root = cert->isRoot;
@@ -1520,9 +1519,9 @@ static void cert_detail_to_whacklog(struct whack_io *whackfd,
 	KeyType pub_k_t = SECKEY_GetPublicKeyType(pub_k);
 
 
-	whack_log(whackfd, RC_COMMENT, " ");
+	whack_log(RC_COMMENT, " ");
 
-	whack_log(whackfd, RC_COMMENT, "%s%s certificate \"%s\" - SN: %s",
+	whack_log(RC_COMMENT, "%s%s certificate \"%s\" - SN: %s",
 		is_root ? "Root " : "",
 		is_CA ? "CA" : "End",
 		cert->nickname, print_sn);
@@ -1530,30 +1529,30 @@ static void cert_detail_to_whacklog(struct whack_io *whackfd,
 	{
 		dn_buf sbuf;
 
-		whack_log(whackfd, RC_COMMENT, "  subject: %s",
+		whack_log(RC_COMMENT, "  subject: %s",
 			dntoasi(&sbuf, cert->derSubject));
 	}
 
 	{
 		dn_buf ibuf;
 
-		whack_log(whackfd, RC_COMMENT, "  issuer: %s",
+		whack_log(RC_COMMENT, "  issuer: %s",
 			dntoasi(&ibuf, cert->derIssuer));
 	}
 
 	{
 		char before[256];
 		if (cert_detail_notbefore_to_str(before, sizeof(before), cert))
-			whack_log(whackfd, RC_COMMENT, "  not before: %s", before);
+			whack_log(RC_COMMENT, "  not before: %s", before);
 	}
 
 	{
 		char after[256];
 		if (cert_detail_notafter_to_str(after, sizeof(after), cert))
-			whack_log(whackfd, RC_COMMENT, "  not after: %s", after);
+			whack_log(RC_COMMENT, "  not after: %s", after);
 	}
 
-	whack_log(whackfd, RC_COMMENT, "  %d bit%s%s",
+	whack_log(RC_COMMENT, "  %d bit%s%s",
 		SECKEY_PublicKeyStrengthInBits(pub_k),
 		pub_k_t == rsaKey ? " RSA" : "(other)",
 		has_priv ? ": has private key" : "");
@@ -1571,12 +1570,12 @@ static bool is_cert_of_type(CERTCertificate *cert, show_cert_t type)
 
 static void crl_detail_to_whacklog(CERTCrl *crl)
 {
-	whack_log(whackfd, RC_COMMENT, " ");
+	whack_log(RC_COMMENT, " ");
 
 	{
 		dn_buf ibuf;
 
-		whack_log(whackfd, RC_COMMENT, "issuer: %s",
+		whack_log(RC_COMMENT, "issuer: %s",
 			dntoasi(&ibuf, crl->derName));
 	}
 
@@ -1587,21 +1586,21 @@ static void crl_detail_to_whacklog(CERTCrl *crl)
 			while (crl->entries[entries] != NULL)
 				entries++;
 		}
-		whack_log(whackfd, RC_COMMENT, "revoked certs: %d", entries);
+		whack_log(RC_COMMENT, "revoked certs: %d", entries);
 	}
 
 	{
 		char lu[256];
 
 		if (crl_time_to_str(lu, sizeof(lu), &crl->lastUpdate))
-			whack_log(whackfd, RC_COMMENT, "updates: this %s", lu);
+			whack_log(RC_COMMENT, "updates: this %s", lu);
 	}
 
 	{
 		char nu[256];
 
 		if (crl_time_to_str(nu, sizeof(nu), &crl->nextUpdate))
-			whack_log(whackfd, RC_COMMENT, "         next %s", nu);
+			whack_log(RC_COMMENT, "         next %s", nu);
 	}
 }
 
@@ -1616,8 +1615,8 @@ static void crl_detail_list(void)
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	passert(handle != NULL);
 
-	whack_log(whackfd, RC_COMMENT, " ");
-	whack_log(whackfd, RC_COMMENT, "List of CRLs:");
+	whack_log(RC_COMMENT, " ");
+	whack_log(RC_COMMENT, "List of CRLs:");
 
 	CERTCrlHeadNode *crl_list = NULL;
 
@@ -1666,8 +1665,8 @@ static void cert_detail_list(show_cert_t type)
 		bad_case(type);
 	}
 
-	whack_log(whackfd, RC_COMMENT, " ");
-	whack_log(whackfd, RC_COMMENT, "List of X.509 %s Certificates:", tstr);
+	whack_log(RC_COMMENT, " ");
+	whack_log(RC_COMMENT, "List of X.509 %s Certificates:", tstr);
 
 	CERTCertList *certs = get_all_certificates();
 

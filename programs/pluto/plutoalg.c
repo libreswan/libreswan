@@ -283,7 +283,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	 */
 	if (c->child_proposals.p != NULL &&
 	    !default_proposals(c->child_proposals.p)) {
-		WHACK_LOG(RC_COMMENT, buf) {
+		LSWLOG_WHACK(RC_COMMENT, buf) {
 			/*
 			 * If DH (PFS) was specified in the esp= or
 			 * ah= line then the below will display it

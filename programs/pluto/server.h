@@ -29,7 +29,6 @@
 
 struct state;
 struct msg_digest;
-struct whack_io;
 
 extern char *pluto_vendorid;
 
@@ -88,10 +87,10 @@ extern bool pluto_drop_oppo_null;
 extern struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint);
 extern bool use_interface(const char *rifn);
 extern void find_ifaces(bool rm_dead);
-extern void show_ifaces_status(struct whack_io *whackfd);
+extern void show_ifaces_status(void);
 extern void free_ifaces(void);
-extern void show_debug_status(struct whack_io *whackfd);
-extern void show_fips_status(struct whack_io *whackfd);
+extern void show_debug_status(void);
+extern void show_fips_status(void);
 extern void call_server(char *conffile);
 extern void init_event_base(void);
 typedef void event_callback_routine(evutil_socket_t, const short, void *);

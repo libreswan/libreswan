@@ -133,83 +133,32 @@ extern void log_pop_from(ip_address old_from, where_t where);
  *   available?  Or should this be merged with above.
  */
 
-
-struct logger {
-	void (*write)(jambuf_t *buf, enum rc_type);
-};
-
-extern struct logger plog_stream, whack_stream, DBG_stream, loglog_stream;
-
-void logger_raw(struct logger *,
-		enum rc_type,
-		const struct state *st,
-		const struct connection *c,
-		const ip_endpoint *from,
-		const char *message, ...) PRINTF_LIKE(6);
-
-#define plog_global(MESSAGE, ...) logger_raw(&plog_stream, RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_from(FROM, MESSAGE, ...) logger_raw(&plog_stream, RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
-#define plog_md(MD, MESSAGE, ...) logger_raw(&plog_stream, RC_COMMENT, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
-#define plog_c(C, MESSAGE, ...) logger_raw(&plog_stream, RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_st(ST, MESSAGE, ...) logger_raw(&plog_stream, RC_COMMENT, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
-
-void log_global(struct logger *, enum rc_type, const char *message, ...);
-void log_from(struct logger *, enum rc_type, const ip_endpoint *from, const char *message, ...);
-void log_c(struct logger *, enum rc_type, const struct connection *c, const char *message, ...);
-void log_st(struct logger *, enum rc_type, const struct state *st, const char *message, ...);
-
-#define loglog_global(RC, MESSAGE, ...) log_global(loglog_stream, RC_COMMENT, MESSAGE,##__VA_ARGS__);
-#define loglog_from(RC, FROM, MESSAGE, ...) log_from(loglog_stream, RC_COMMENT, FROM, MESSAGE,##__VA_ARGS__);
-#define loglog_md(RC, MD, MESSAGE, ...) log_from(loglog_stream, RC_COMMENT, &(MD)->sender, MESSAGE,##__VA_ARGS__);
-#define loglog_c(RC, C, MESSAGE, ...) log_c(loglog_stream, RC_COMMENT, C, MESSAGE,##__VA_ARGS__);
-#define loglog_st(RC, ST, MESSAGE, ...) log_st(loglog_stream, RC_COMMENT, ST, MESSAGE,##__VA_ARGS__);
-
-/* unconditional */
-#define DBG_global(RC, MESSAGE, ...) logger_raw(DBG_stream, RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
-#define DBG_from(RC, FROM, MESSAGE, ...) logger_raw(DBG_stream, RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
-#define DBG_md(RC, MD, MESSAGE, ...) logger_raw(DBG_stream, RC_COMMENT, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
-#define DBG_c(RC, C, MESSAGE, ...) logger_raw(DBG_stream, RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
-#define DBG_st(RC, ST, MESSAGE, ...) logger_raw(DBG_stream, RC_COMMENT, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
-
-#define dbg_md(MD, MESSAGE, ...)					\
-	{								\
-		if (DBGP(DBG_BASE)) {					\
-			DBG_raw(RC_COMMENT, NULL, NULL, &(MD)->sender,	\
-				MESSAGE,##__VA_ARGS__);			\
-		}							\
-	}
-
-/* whack only */
-log_raw_fn whack_log_raw;
-
-/*
- * XXX: an abstract way to create and log a jambuf
- *
- * RC is a hack because loglog() needs somewhere to save the RC so it
- * can be used in the .write() function (very long standing issue).
- *
- * It falls short as a way to pass a logger into a library: it is
- * single use (could pass in the initializer function); it would
- * require RC/ST/C/FROM being passed (existing code instead relies on
- * global state).
- */
-
-struct logjam {
-	int rc;
-	char buf[LOG_WIDTH];
-	void (*write)(struct logjam *log);
-	jambuf_t jam;
-};
-
-typedef void (log_jam_fn)(struct logjam *jam,
-			  enum rc_type,
+typedef void (log_raw_fn)(enum rc_type,
 			  const struct state *st,
 			  const struct connection *c,
-			  const ip_endpoint *from);
+			  const ip_endpoint *from,
+			  const char *message, ...) PRINTF_LIKE(5);
 
-log_jam_fn plog_jam;
-log_jam_fn loglog_jam;
-log_jam_fn DBG_jam;
+#define PLOG_RAW(STATE, CONNECTION, FROM, BUF)				\
+	LSWLOG_(true, BUF,						\
+		jam_log_prefix(BUF, STATE, CONNECTION, FROM),		\
+		lswlog_to_log_stream(BUF))
+
+log_raw_fn plog_raw;
+
+#define plog_global(MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_from(FROM, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
+#define plog_md(MD, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
+#define plog_connection(C, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_st(ST, MESSAGE, ...) plog_raw(RC_COMMENT, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+
+log_raw_fn loglog_raw;
+
+#define loglog_st(ST, RC, MESSAGE, ...) loglog_raw(RC, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
+
+/* unconditional */
+log_raw_fn DBG_raw;
+
 
 /*
  * rate limited logging
@@ -226,47 +175,31 @@ void jam_log_prefix(struct lswlog *buf,
 		    const struct connection *c,
 		    const ip_address *from);
 
-void update_md_log_prefix(struct msg_digest *md, where_t where);
-void update_connection_log_prefix(struct connection *c, where_t where);
-void update_state_log_prefix(struct state *st, where_t where);
-
 extern void pluto_init_log(void);
 void init_rate_log(void);
 extern void close_log(void);
 extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 
+
 /*
- * whack logging
+ * struct lswlog primitives
  */
-
-void whack_log_raw(struct whack_io *, enum rc_type,
-		   const struct state *st,
-		   const struct connection *c,
-		   const ip_endpoint *from,
-		   const char *message, ...) PRINTF_LIKE(6);
-
 bool whack_log_p(void);
 
-/* global */
-#define whack_log(FD, RC, FMT, ...) whack_log_raw(FD, RC, NULL, NULL, NULL, \
-						  FMT,##__VA_ARGS__)
-#define whack_log_st(RD, RC, ST, FMT, ...) whack_log_raw(RD, RC, ST, NULL, NULL, \
-						     FMT,##__VA_ARGS__)
-/* no NNN prefix; rename to whack_print()? */
-#define whack_log_comment(FMT, ...) whack_log_raw(RD, RC_PRINT, NULL, NULL, NULL, \
-						  FMT,##__VA_ARGS__)
-
-#define WHACK_LOG(RC, BUF)						\
-	LSWLOG_(whack_log_p(), BUF, /*no prefix*/,			\
-		lswlog_to_whack_stream(BUF, RC))
-
+void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
+/*
+ * Like whack_log(RC_COMMENT, ...) but suppress the 'NNN ' prefix.
+ *
+ * XXX: whack_log_comment() -> whack_print().
+ */
+#define whack_log_comment(FMT, ...) whack_log(RC_PRINT, FMT,##__VA_ARGS__)
 
 /* show status, usually on whack log */
-extern void show_status(struct whack_io *);
+extern void show_status(void);
 
-extern void show_setup_plutomain(struct whack_io *);
-extern void show_setup_natt(struct whack_io *);
-extern void show_global_status(struct whack_io *);
+extern void show_setup_plutomain(void);
+extern void show_setup_natt(void);
+extern void show_global_status(void);
 
 enum linux_audit_kind {
 	LAK_PARENT_START,

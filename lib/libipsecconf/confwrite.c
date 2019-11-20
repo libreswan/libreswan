@@ -24,9 +24,8 @@
 #include <assert.h>
 #include <sys/queue.h>
 
-#include "jambuf.h"
-#include "lswlog.h"		/* for LSWLOG_FILE() */
 #include "constants.h"
+#include "lswlog.h"
 #include "lmod.h"
 #include "ip_address.h"
 
@@ -154,10 +153,12 @@ static void confwrite_int(FILE *out,
 				unsigned long val = options[k->field];
 
 				if (val != 0) {
-					fprintf(out, "\t%s%s=\"", side, k->keyname);
-					jambuf_t buf = file_as_jambuf(out);
-					lswlog_enum_lset_short(&buf, k->info->names, ",", val);
-					fprintf(out, "\"");
+					LSWLOG_FILE(out, buf) {
+						lswlogf(buf, "\t%s%s=\"", side, k->keyname);
+						lswlog_enum_lset_short(buf, k->info->names,
+								       ",", val);
+						lswlogf(buf, "\"");
+					}
 				}
 			}
 			break;

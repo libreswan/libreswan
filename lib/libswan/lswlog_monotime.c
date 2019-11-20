@@ -13,8 +13,11 @@
  * License for more details.
  */
 
-#include "jambuf.h"
+#include <inttypes.h>
+
+#include "constants.h"
 #include "monotime.h"
+#include "lswlog.h"
 
 size_t lswlog_monotime(struct lswlog *buf, monotime_t m)
 {

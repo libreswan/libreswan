@@ -39,7 +39,7 @@ static __inline__ struct db_prop *db_prop_get(struct db_context *ctx)
 }
 
 /*	Show stats (allocation, etc) */
-void db_ops_show_status(struct whack_io *whackfd);
+void db_ops_show_status(void);
 
 extern void db_print(struct db_context *ctx);
 

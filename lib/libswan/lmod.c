@@ -17,8 +17,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "jambuf.h"
+#include "constants.h"
 #include "lmod.h"
+#include "lswlog.h"
 #include "lswalloc.h"
 
 const lmod_t empty_lmod = {

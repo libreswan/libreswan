@@ -1,5 +1,4 @@
-/*
- * logging, for libreswan
+/* expectation failure, for libreswan
  *
  * Copyright (C) 2017 Andrew Cagney
  *
@@ -12,31 +11,40 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
+ *
  */
 
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
+
 #include "lswlog.h"
+#include "lswalloc.h"
 
-size_t lswlog_enum_lset_short(struct lswlog *buf, enum_names *en,
-			      const char *separator, lset_t val)
+/*
+ * Constructor
+ */
+
+size_t lswlogvf(struct lswlog *log, const char *format, va_list ap)
 {
-	unsigned int e;
+	return jam_va_list(log, format, ap);
+}
 
-	/* if nothing gets filled in, default to "none" rather than "" */
-	if (val == LEMPTY) {
-		return lswlogs(buf, "none");
-	}
+size_t lswlogf(struct lswlog *log, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	size_t n = jam_va_list(log, format, ap);
+	va_end(ap);
+	return n;
+}
 
-	size_t size = 0;
-	const char *sep = "";
-	for (e = 0; val != 0; e++) {
-		lset_t bit = LELEM(e);
+size_t lswlogs(struct lswlog *log, const char *string)
+{
+	return jam_string(log, string);
+}
 
-		if (val & bit) {
-			size += lswlogs(buf, sep);
-			sep = separator;
-			size += lswlog_enum_short(buf, en, e);
-			val -= bit;
-		}
-	}
-	return size;
+size_t lswlogl(struct lswlog *log, struct lswlog *buf)
+{
+	return jam_jambuf(log, buf);
 }

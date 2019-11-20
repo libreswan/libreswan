@@ -29,24 +29,20 @@
  * The octal equivalent would be something like '\376' but who uses
  * octal :-)
  */
-#define ARRAYBUF_CANARY ((char) -2)
-
-static struct jammer arraybuf; /* forward */
+#define JAMBUF_CANARY ((char) -2)
 
 /*
  * This is the one place where PASSERT() can't be used - it will
  * recursively end up back here!
  */
-static void arraybuf_assert(jambuf_t *buf)
+static void assert_jambuf(jambuf_t *buf)
 {
 #define A(ASSERTION) if (!(ASSERTION)) abort()
 	A(buf->dots != NULL);
-	A(buf->jammer == &arraybuf);
 	/* termination */
-	char *array = buf->handle;
-	A(buf->total >= buf->roof || array[buf->total] == '\0');
-	A(array[buf->roof-1] == '\0');
-	A(array[buf->roof-0] == ARRAYBUF_CANARY);
+	A(buf->total >= buf->roof || buf->array[buf->total] == '\0');
+	A(buf->array[buf->roof-1] == '\0');
+	A(buf->array[buf->roof-0] == JAMBUF_CANARY);
 #undef A
 }
 
@@ -67,17 +63,16 @@ jambuf_t array_as_jambuf(char *array, size_t sizeof_array)
 		      __func__, array, sizeof_array);
 	/* pointers back at buf */
 	jambuf_t buf = {
-		.handle = array,
+		.array = array,
 		.total = 0,
 		.roof = sizeof_array - 1,
 		.dots = "...",
-		.jammer = &arraybuf,
 	};
-	array[buf.roof-1] = array[buf.total] = '\0';
-	array[buf.roof-0] = ARRAYBUF_CANARY;
-	arraybuf_assert(&buf);
+	buf.array[buf.roof-1] = buf.array[buf.total] = '\0';
+	buf.array[buf.roof-0] = JAMBUF_CANARY;
+	assert_jambuf(&buf);
 	jambuf_debugf("\t->{.array=%p,.total=%zu,.roof=%zu,.dots='%s'}\n",
-		      array, buf.total, buf.roof, buf.dots);
+		      buf.array, buf.total, buf.roof, buf.dots);
 	return buf;
 }
 
@@ -85,30 +80,28 @@ jambuf_t array_as_jambuf(char *array, size_t sizeof_array)
  * Determine where, within LOG's message buffer, to write the string.
  */
 
-struct arraybuf_dest {
+struct dest {
 	/* next character position (always points at '\0') */
 	char *cursor;
 	/* free space */
 	size_t size;
 };
 
-static struct arraybuf_dest arraybuf_dest(jambuf_t *buf)
+static struct dest dest(jambuf_t *buf)
 {
-	arraybuf_assert(buf);
 	/*
 	 * Where will the next message be written?
 	 */
-	char *array = buf->handle;
-	struct arraybuf_dest d = {
+	struct dest d = {
 		.cursor = NULL,
 		.size = 0,
 	};
 	if (buf->total < buf->roof) {
-		d.cursor = array + buf->total;
+		d.cursor = buf->array + buf->total;
 		d.size = buf->roof - buf->total;
 	} else {
 		/* point start at terminating '\0' */
-		d.cursor = array + buf->roof - 1;
+		d.cursor = buf->array + buf->roof - 1;
 		d.size = 0;
 	}
 	passert(d.cursor[0] == '\0');
@@ -121,23 +114,22 @@ static struct arraybuf_dest arraybuf_dest(jambuf_t *buf)
  * The output needs to be truncated, overwrite the end of the buffer
  * with DOTS.
  */
-static void arraybuf_truncate(jambuf_t *buf)
+static void truncate_buf(jambuf_t *buf)
 {
-	jambuf_debugf("arraybuf_truncate(.buf=%p)\n", buf);
+	jambuf_debugf("truncate_buf(.buf=%p)\n", buf);
 	jambuf_debugf("\tlength=%zu\n", buf->total);
 	jambuf_debugf("\tdots=%s\n", buf->dots);
 	/*
 	 * buffer is full to overflowing
 	 */
-	char *array = buf->handle;
 	passert(buf->total >= buf->roof);
-	passert(array[buf->roof - 1] == '\0');
-	passert(array[buf->roof - 2] != '\0');
+	passert(buf->array[buf->roof - 1] == '\0');
+	passert(buf->array[buf->roof - 2] != '\0');
 	/*
 	 * Backfill with DOTS.
 	 */
 	passert(buf->roof > strlen(buf->dots));
-	char *dest = array + buf->roof - strlen(buf->dots) - 1;
+	char *dest = buf->array + buf->roof - strlen(buf->dots) - 1;
 	jambuf_debugf("\tdest=%p\n", dest);
 	memcpy(dest, buf->dots, strlen(buf->dots) + 1);
 }
@@ -150,9 +142,10 @@ static void arraybuf_truncate(jambuf_t *buf)
  * trailing NUL, that should have been written to the buffer.
  */
 
-static size_t arraybuf_jam_raw_bytes(jambuf_t *buf, const void *string, size_t n)
+size_t jam_raw_bytes(jambuf_t *buf, const void *string, size_t n)
 {
-	struct arraybuf_dest d = arraybuf_dest(buf);
+	assert_jambuf(buf);
+	struct dest d = dest(buf);
 
 	buf->total += n;
 	if (d.size > n) {
@@ -173,16 +166,16 @@ static size_t arraybuf_jam_raw_bytes(jambuf_t *buf, const void *string, size_t n
 		/*
 		 * ... and then go back and blat the end with DOTS.
 		 */
-		arraybuf_truncate(buf);
+		truncate_buf(buf);
 	}
-	arraybuf_assert(buf);
+	assert_jambuf(buf);
 	return n;
 }
 
-static size_t arraybuf_jam_va_list(jambuf_t *buf, const char *format, va_list ap)
+size_t jam_va_list(jambuf_t *buf, const char *format, va_list ap)
 {
-	arraybuf_assert(buf);
-	struct arraybuf_dest d = arraybuf_dest(buf);
+	assert_jambuf(buf);
+	struct dest d = dest(buf);
 
 	/*
 	 * N (the return value) is the number of characters, not
@@ -209,9 +202,9 @@ static size_t arraybuf_jam_va_list(jambuf_t *buf, const char *format, va_list ap
 		 * fit - d.size-1 characters were written.  Truncate
 		 * the buffer.
 		 */
-		arraybuf_truncate(buf);
+		truncate_buf(buf);
 	}
-	arraybuf_assert(buf);
+	assert_jambuf(buf);
 	return n;
 }
 
@@ -248,31 +241,29 @@ size_t jam_jambuf(jambuf_t *buf, jambuf_t *jambuf)
 	return jam_raw_bytes(buf, s.ptr, s.len);
 }
 
-static bool arraybuf_ok(jambuf_t *buf)
+bool jambuf_ok(jambuf_t *buf)
 {
-	arraybuf_assert(buf);
+	assert_jambuf(buf);
 	return buf->total < buf->roof;
 }
 
 const char *jambuf_cursor(jambuf_t *buf)
 {
-	/* arraybuf only */
-	arraybuf_assert(buf);
-	struct arraybuf_dest d = arraybuf_dest(buf);
+	assert_jambuf(buf);
+	struct dest d = dest(buf);
 	return d.cursor;
 }
 
 shunk_t jambuf_as_shunk(jambuf_t *buf)
 {
-	/* arraybuf only */
-	struct arraybuf_dest d = arraybuf_dest(buf);
-	char *array = buf->handle;
-	return shunk2(array, d.cursor - array);
+	assert_jambuf(buf);
+	struct dest d = dest(buf);
+	return shunk2(buf->array, d.cursor - buf->array);
 }
 
 jampos_t jambuf_get_pos(jambuf_t *buf)
 {
-	arraybuf_assert(buf);
+	assert_jambuf(buf);
 	jampos_t pos = {
 		.total = buf->total,
 	};
@@ -281,7 +272,7 @@ jampos_t jambuf_get_pos(jambuf_t *buf)
 
 void jambuf_set_pos(jambuf_t *buf, const jampos_t *pos)
 {
-	arraybuf_assert(buf);
+	assert_jambuf(buf);
 	if (pos->total >= buf->roof) {
 		/* "set" was already overflowed */
 		buf->total = pos->total;
@@ -294,8 +285,7 @@ void jambuf_set_pos(jambuf_t *buf, const jampos_t *pos)
 		 * from an overflow (can't recover when pos->total has
 		 * been scribbled on with dots).
 		 */
-		char *array = buf->handle;
-		array[pos->total] = '\0';
+		buf->array[pos->total] = '\0';
 		buf->total = pos->total;
 	} else {
 		/*
@@ -304,57 +294,5 @@ void jambuf_set_pos(jambuf_t *buf, const jampos_t *pos)
 		 */
 		buf->total = buf->roof;
 	}
-	arraybuf_assert(buf);
-}
-
-static struct jammer arraybuf = {
-	.jambuf_ok = arraybuf_ok,
-	.jam_va_list = arraybuf_jam_va_list,
-	.jam_raw_bytes = arraybuf_jam_raw_bytes,
-};
-
-bool jambuf_ok(jambuf_t *buf)
-{
-	return buf->jammer->jambuf_ok(buf);
-}
-
-size_t jam_raw_bytes(jambuf_t *buf, const void *bytes, size_t nr)
-{
-	return buf->jammer->jam_raw_bytes(buf, bytes, nr);
-}
-
-size_t jam_va_list(jambuf_t *buf, const char *format, va_list ap)
-{
-	return buf->jammer->jam_va_list(buf, format, ap);
-}
-
-static bool filebuf_ok(jambuf_t *buf)
-{
-	/* is this meaningless? */
-	return ferror(buf->handle) || feof(buf->handle);
-}
-
-static size_t filebuf_jam_va_list(jambuf_t *buf, const char *format, va_list ap)
-{
-	return vfprintf(buf->handle, format, ap);
-}
-
-static size_t filebuf_jam_raw_bytes(jambuf_t *buf, const void *bytes, size_t nr)
-{
-	return fwrite(bytes, nr, 1, buf->handle);
-}
-
-static struct jammer filebuf = {
-	.jambuf_ok = filebuf_ok,
-	.jam_va_list = filebuf_jam_va_list,
-	.jam_raw_bytes = filebuf_jam_raw_bytes,
-};
-
-jambuf_t file_as_jambuf(FILE *file)
-{
-	jambuf_t buf = {
-		.handle = file,
-		.jammer = &filebuf,
-	};
-	return buf;
+	assert_jambuf(buf);
 }

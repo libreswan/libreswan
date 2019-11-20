@@ -67,9 +67,10 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 		if (proposals != NULL) {				\
 			pexpect(parser->error[0] == '\0');		\
 			FOR_EACH_PROPOSAL(proposals, proposal) {	\
-				printf("\t");				\
-				jambuf_t buf = file_as_jambuf(stdout);	\
-				fmt_proposal(&buf, proposal);		\
+				LSWLOG_FILE(stdout, log) {		\
+					lswlogf(log, "\t");		\
+					fmt_proposal(log, proposal);	\
+				}					\
 			}						\
 			proposals_delref(&proposals);			\
 			if (expected == FAIL) {				\

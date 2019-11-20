@@ -457,7 +457,7 @@ void show_pending_phase2(const struct connection *c, const struct ike_sa *ike)
 			char cip[CONN_INST_BUF];
 			fmt_conn_instance(p->connection, cip);
 
-			WHACK_LOG(RC_COMMENT, buf) {
+			LSWLOG_WHACK(RC_COMMENT, buf) {
 				lswlogf(buf, "#%lu: pending ", p->ike->sa.st_serialno);
 				lswlogs(buf, (ike->sa.st_ike_version == IKEv2) ? "CHILD SA" : "Phase 2");
 				lswlogf(buf, " for \"%s\"%s", p->connection->name,

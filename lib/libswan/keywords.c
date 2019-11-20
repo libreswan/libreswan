@@ -13,9 +13,8 @@
  * for more details.
  */
 
-#include "jambuf.h"
-#include "libreswan/passert.h"
 #include "keywords.h"
+#include "lswlog.h"
 
 const struct keyword *keyword_by_name(const struct keywords *keywords,
 				      shunk_t name)

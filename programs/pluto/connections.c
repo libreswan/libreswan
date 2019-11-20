@@ -116,7 +116,7 @@ struct connection *conn_by_name(const char *nm, bool strict, bool quiet)
 	for (prev = NULL, p = connections; ; prev = p, p = p->ac_next) {
 		if (p == NULL) {
 			if (strict && !quiet) {
-				whack_log(whackfd, RC_UNKNOWN_NAME,
+				whack_log(RC_UNKNOWN_NAME,
 					"no connection named \"%s\"", nm);
 			}
 			break;
@@ -298,7 +298,6 @@ static void discard_connection(struct connection *c,
 	free_ikev2_proposals(&c->v2_create_child_proposals);
 	c->v2_create_child_proposals_default_dh = NULL; /* static pointer */
 
-	pfreeany(c->c_log_prefix);
 	pfree(c);
 }
 
@@ -619,14 +618,20 @@ size_t format_end(char *buf,
  * format topology of a connection.
  * Two symmetric ends separated by ...
  */
+#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
 
-static void jam_connection_topology(jambuf_t *buf,
-				    const struct connection *c,
-				    const struct spd_route *sr)
+static char *format_connection(char *buf, size_t buf_len,
+			const struct connection *c,
+			const struct spd_route *sr)
 {
-	jam_end(buf, &sr->this, &sr->that, true, LEMPTY, false);
-	jam(buf, "...");
-	jam_end(buf, &sr->that, &sr->this, false, c->policy, oriented(*c));
+	size_t w =
+		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY, FALSE);
+
+	snprintf(buf + w, buf_len - w, "...");
+	w += strlen(buf + w);
+	(void) format_end(buf + w, buf_len - w, &sr->that, &sr->this, FALSE, c->policy,
+		oriented(*c));
+	return buf;
 }
 
 /* spd_route's with end's get copied in xauth.c */
@@ -940,7 +945,7 @@ static bool load_end_cert_and_preload_secret(const char *which, const char *pubk
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
 		if (pk->u.rsa.modulus.len * BITS_PER_BYTE < FIPS_MIN_RSA_KEY_SIZE) {
-			whack_log(whackfd, RC_FATAL,
+			whack_log(RC_FATAL,
 				"FIPS: Rejecting cert with key size %d which is under %d",
 				pk->u.rsa.modulus.len * BITS_PER_BYTE,
 				FIPS_MIN_RSA_KEY_SIZE);
@@ -1070,7 +1075,6 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	 * have something to log.
 	 */
 	c->name = clone_str(wm->name, "connection name");
-	update_connection_log_prefix(c, HERE);
 
 	if (conn_by_name(wm->name, FALSE, FALSE) != NULL) {
 		loglog(RC_DUPNAME, "attempt to redefine connection \"%s\"",
@@ -1789,20 +1793,19 @@ void add_connection(const struct whack_message *wm)
 	if (extract_connection(wm, c)) {
 		/* log all about this connection */
 		libreswan_log("added connection description \"%s\"", c->name);
-		if (DBGP(DBG_BASE)) {
-			DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
-				deltasecs(c->sa_ike_life_seconds),
-				deltasecs(c->sa_ipsec_life_seconds),
-				deltasecs(c->sa_rekey_margin),
-				c->sa_rekey_fuzz,
-				c->sa_keying_tries,
-				c->sa_replay_window,
-				prettypolicy(c->policy),
-				NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
-			LSWLOG_DEBUG(buf) {
-				jam_connection_topology(buf, c, &c->spd);
-			}
-		}
+		DBG(DBG_CONTROL, {
+				DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
+					deltasecs(c->sa_ike_life_seconds),
+					deltasecs(c->sa_ipsec_life_seconds),
+					deltasecs(c->sa_rekey_margin),
+					c->sa_rekey_fuzz,
+					c->sa_keying_tries,
+					c->sa_replay_window,
+					prettypolicy(c->policy),
+					NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
+				char topo[CONN_BUF_LEN];
+				DBG_log("%s", format_connection(topo, sizeof(topo), c, &c->spd));
+			});
 	} else {
 		/*
 		 * Don't log here - it's assumed that
@@ -1852,7 +1855,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 		return NULL;
 	} else {
 		struct connection *t = clone_thing(*group, "group instance");
-		t->c_log_prefix = NULL; /* update later */
+
 		t->foodgroup = clone_str(t->name, "cloned from groupname"); /* not set in group template */
 		t->name = namebuf;	/* trick: unsharing will clone this for us */
 
@@ -1901,9 +1904,8 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 		/* route if group is routed */
 		if (group->policy & POLICY_GROUTED) {
 			if (!trap_connection(t))
-				whack_log(whackfd, RC_ROUTE, "could not route");
+				whack_log(RC_ROUTE, "could not route");
 		}
-		update_connection_log_prefix(t, HERE);
 		return clone_str(t->name, "group instance name");
 	}
 }
@@ -1938,7 +1940,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 
 	c->instance_serial++;
 	d = clone_thing(*c, "instantiated connection");
-	d->c_log_prefix = NULL; /* update later */
 	if (his_id != NULL) {
 		int wildcards;	/* value ignored */
 
@@ -1988,8 +1989,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 			global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 		}
 	}
-
-	update_connection_log_prefix(d, HERE);
 
 	/* assumption: orientation is the same as c's */
 	connect_to_host_pair(d);
@@ -2269,16 +2268,17 @@ struct connection *oppo_instantiate(struct connection *c,
 {
 	struct connection *d = instantiate(c, him, his_id);
 
-	if (DBGP(DBG_BASE)) {
-		DBG_log("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
-			d->name, c->name,
-			enum_name(&routing_story, c->spd.routing),
-			enum_name(&routing_story, d->spd.routing));
-		LSWLOG_DEBUG(buf) {
-			jam(buf, "new oppo instance: ");
-			jam_connection_topology(buf, d, &d->spd);
-		}
-	}
+	DBGF(DBG_CONTROL, "oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
+		d->name, c->name,
+		enum_name(&routing_story, c->spd.routing),
+		enum_name(&routing_story, d->spd.routing));
+	DBG(DBG_CONTROL, {
+			char instbuf[512];
+
+			DBG_log("new oppo instance: %s",
+				format_connection(instbuf,
+					sizeof(instbuf), d, &d->spd));
+		});
 
 	passert(d->spd.spd_next == NULL);
 
@@ -2334,14 +2334,15 @@ struct connection *oppo_instantiate(struct connection *c,
 	if (routed(c->spd.routing))
 		d->instance_initiation_ok = TRUE;
 
-	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "oppo_instantiate() instantiated ");
-		jam_connection(buf, d);
-		jam(buf, ": ");
-		jam_connection_topology(buf, d, &d->spd);
-	}
+	DBG(DBG_CONTROL, {
+		char topo[CONN_BUF_LEN];
+		char inst[CONN_INST_BUF];
 
-	update_connection_log_prefix(d, HERE);
+		DBG_log("oppo_instantiate() instantiated \"%s\"%s: %s",
+			fmt_conn_instance(d, inst),
+			d->name,
+			format_connection(topo, sizeof(topo), d, &d->spd));
+	});
 	return d;
 }
 
@@ -3628,21 +3629,20 @@ static void show_one_sr(const struct connection *c,
 			const struct spd_route *sr,
 			const char *instance)
 {
-	WHACK_LOG(RC_COMMENT, buf) {
-		jam_connection(buf, c);
-		jam(buf, ": ");
-		jam_connection_topology(buf, c, sr);
-		jam(buf, "; %s; eroute owner: #%lu",
-		    enum_name(&routing_story, sr->routing),
-		    sr->eroute_owner);
-	}
+	char topo[CONN_BUF_LEN];
+	ipstr_buf thisipb, thatipb;
+
+	whack_log(RC_COMMENT, "\"%s\"%s: %s; %s; eroute owner: #%lu",
+		c->name, instance,
+		format_connection(topo, sizeof(topo), c, sr),
+		enum_name(&routing_story, sr->routing),
+		sr->eroute_owner);
 
 #define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(h, &ipb) : "unset")
 
 		/* note: this macro generates a pair of arguments */
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
-	ipstr_buf thisipb, thatipb;
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		c->name, instance,
@@ -3667,7 +3667,7 @@ static void show_one_sr(const struct connection *c,
 		((END).CLIENT ? "BOTH??" : "server") : \
 		((END).CLIENT ? "client" : "none"))
 
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"\"%s\"%s:   xauth us:%s, xauth them:%s, %s my_username=%s; their_username=%s",
 		c->name, instance,
 		/*
@@ -3689,13 +3689,13 @@ static void show_one_sr(const struct connection *c,
 
 	struct esb_buf auth1, auth2;
 
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"\"%s\"%s:   our auth:%s, their auth:%s",
 		c->name, instance,
 		enum_show_shortb(&ikev2_asym_auth_name, sr->this.authby, &auth1),
 		enum_show_shortb(&ikev2_asym_auth_name, sr->that.authby, &auth2));
 
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s%s, cat:%s;",
 		c->name, instance,
 		COMBO(sr->this, modecfg_server, modecfg_client),
@@ -3710,13 +3710,13 @@ static void show_one_sr(const struct connection *c,
 #undef COMBO
 
 	if (c->modecfg_banner != NULL) {
-		whack_log(whackfd, RC_COMMENT, "\"%s\"%s: banner:%s;",
+		whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
 		c->name, instance, c->modecfg_banner);
 	}
 
 	const char *policy_label;
 	policy_label = (c->policy_label == NULL) ? "unset" : c->policy_label;
-	whack_log(whackfd, RC_COMMENT, "\"%s\"%s:   policy_label:%s;",
+	whack_log(RC_COMMENT, "\"%s\"%s:   policy_label:%s;",
 		  c->name, instance, policy_label);
 }
 
@@ -3751,7 +3751,7 @@ void show_one_connection(const struct connection *c)
 	/* Show CAs */
 	if (c->spd.this.ca.ptr != NULL || c->spd.that.ca.ptr != NULL) {
 		dn_buf this_ca, that_ca;
-		whack_log(whackfd, RC_COMMENT,
+		whack_log(RC_COMMENT,
 			  "\"%s\"%s:   CAs: '%s'...'%s'",
 			  c->name,
 			  instance,
@@ -3759,7 +3759,7 @@ void show_one_connection(const struct connection *c)
 			  str_dn_or_null(c->spd.that.ca, "%any", &that_ca));
 	}
 
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"\"%s\"%s:   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		c->name,
 		instance,
@@ -3770,14 +3770,14 @@ void show_one_connection(const struct connection *c)
 		c->sa_rekey_fuzz,
 		c->sa_keying_tries);
 
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   retransmit-interval: %jdms; retransmit-timeout: %jds;",
 		  c->name,
 		  instance,
 		  deltamillisecs(c->r_interval),
 		  deltasecs(c->r_timeout));
 
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
 		  c->name, instance,
 		  bool_str(c->initial_contact),
@@ -3787,12 +3787,12 @@ void show_one_connection(const struct connection *c)
 		  bool_str(c->send_no_esp_tfc));
 
 	if (c->policy_next != NULL) {
-		whack_log(whackfd, RC_COMMENT,
+		whack_log(RC_COMMENT,
 			"\"%s\"%s:   policy_next: %s",
 			c->name, instance, c->policy_next->name);
 	}
 
-	whack_log(whackfd, RC_COMMENT, "\"%s\"%s:   policy: %s%s%s%s%s;",
+	whack_log(RC_COMMENT, "\"%s\"%s:   policy: %s%s%s%s%s;",
 		  c->name, instance,
 		  prettypolicy(c->policy),
 		  NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",
@@ -3827,7 +3827,7 @@ void show_one_connection(const struct connection *c)
 		strcpy(satfcstr, "none");
 
 	fmt_policy_prio(c->prio, prio);
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %u; mtu: %s; sa_prio:%s; sa_tfc:%s;",
 		  c->name, instance,
 		  prio,
@@ -3849,7 +3849,7 @@ void show_one_connection(const struct connection *c)
 		strcpy(markstr, "unset");
 	}
 
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; "
 		  "vti-routing:%s; vti-shared:%s;"
 		 " nic-offload:%s;"
@@ -3866,7 +3866,7 @@ void show_one_connection(const struct connection *c)
 		id_buf thisidb;
 		id_buf thatidb;
 
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
 		c->name, instance,
 		enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
@@ -3876,7 +3876,7 @@ void show_one_connection(const struct connection *c)
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
 		c->name, instance,
 		enum_name(&dpd_action_names, c->dpd_action),
@@ -3891,7 +3891,7 @@ void show_one_connection(const struct connection *c)
 		);
 
 	if (!lmod_empty(c->extra_debugging)) {
-		WHACK_LOG(RC_COMMENT, buf) {
+		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlogf(buf, "\"%s\"%s:   debug: ",
 				c->name, instance);
 			lswlog_lmod(buf, &debug_names, "+", c->extra_debugging);
@@ -3899,14 +3899,14 @@ void show_one_connection(const struct connection *c)
 	}
 
 	if (!lmod_empty(c->extra_impairing)) {
-		WHACK_LOG(RC_COMMENT, buf) {
+		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlogf(buf, "\"%s\"%s:   impair: ",
 				c->name, instance);
 			lswlog_lmod(buf, &impair_names, "+", c->extra_impairing);
 		}
 	}
 
-	whack_log(whackfd, RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu;",
 		c->name,
 		instance,
@@ -3914,7 +3914,7 @@ void show_one_connection(const struct connection *c)
 		c->newest_ipsec_sa);
 
 	if (c->connalias != NULL) {
-		whack_log(whackfd, RC_COMMENT,
+		whack_log(RC_COMMENT,
 			"\"%s\"%s:   aliases: %s",
 			c->name,
 			instance,
@@ -3931,9 +3931,9 @@ void show_connections_status(void)
 	int active = 0;
 	struct connection *c;
 
-	whack_log(whackfd, RC_COMMENT, " "); /* spacer */
-	whack_log(whackfd, RC_COMMENT, "Connection list:"); /* spacer */
-	whack_log(whackfd, RC_COMMENT, " "); /* spacer */
+	whack_log(RC_COMMENT, " "); /* spacer */
+	whack_log(RC_COMMENT, "Connection list:"); /* spacer */
+	whack_log(RC_COMMENT, " "); /* spacer */
 
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = c->ac_next) {
@@ -3962,10 +3962,10 @@ void show_connections_status(void)
 			show_one_connection(array[i]);
 
 		pfree(array);
-		whack_log(whackfd, RC_COMMENT, " "); /* spacer */
+		whack_log(RC_COMMENT, " "); /* spacer */
 	}
 
-	whack_log(whackfd, RC_COMMENT, "Total IPsec connections: loaded %d, active %d",
+	whack_log(RC_COMMENT, "Total IPsec connections: loaded %d, active %d",
 		count, active);
 }
 
@@ -4021,31 +4021,15 @@ void connection_discard(struct connection *c)
  * - update the connection->state hash table
  *
  * - discard the old connection when not in use
- *
- * - update the state's logging prefix
  */
-void update_state_connection(struct state *st, struct connection *c, where_t where)
+void update_state_connection(struct state *st, struct connection *c)
 {
 	struct connection *old = st->st_connection;
 
 	if (old != c) {
-		/*
-		 * Switch everythng to the new connection, including
-		 * the log name.
-		 */
 		st->st_connection = c;
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		rehash_state_connection(st);
-		update_state_log_prefix(st, where);
-		/*
-		 * With the new log name in place, possibly delete the
-		 * old connection.
-		 *
-		 * XXX: Needing the state's log-prefix updated before
-		 * deleting the connection shouldn't matter except
-		 * cur==ST so logging gets attributed to the state and
-		 * that needs the prefix updated.
-		 */
 		if (old != NULL) {
 			/*
 			 * Hack to see cur_connection needs to be

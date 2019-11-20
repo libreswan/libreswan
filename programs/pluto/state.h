@@ -53,7 +53,6 @@
 #include "pluto_timing.h"	/* for statetime_t */
 #include "ikev2_msgid.h"
 #include "ip_endpoint.h"
-#include "log.h"		/* for log_raw_fn */
 
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
@@ -323,7 +322,6 @@ struct state {
 	so_serial_t st_clonedfrom;              /* serial number of parent */
 	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */
 	so_serial_t st_ipsec_pred;		/* replacing established IPsec SA */
-	char *st_log_prefix;			/* put in front of all log messages */
 
 #ifdef XAUTH_HAVE_PAM
 	struct xauth *st_xauth;			/* per state xauth/pam thread */
@@ -862,9 +860,6 @@ extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st, int
 extern void fmt_state(struct state *st, const monotime_t n,
 		      char *state_buf, const size_t state_buf_len,
 		      char *state_buf2, const size_t state_buf_len2);
-extern void log_state(enum rc_type rc, log_raw_fn *log,
-		      struct state *st, const monotime_t n,
-		      const char *prefix1, const char *prefix2);
 
 extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
@@ -890,7 +885,7 @@ extern bool state_is_busy(const struct state *st);
 extern bool verbose_state_busy(const struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
-extern void show_globalstate_status(struct whack_io *);
+extern void show_globalstate_status(void);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
