@@ -1016,6 +1016,8 @@ stf_status create_tcp_interface(struct state *st)
 {
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
+	libreswan_log("PAUL: create_tcp_interface() called");
+
 	evutil_make_socket_nonblocking(fd); /* TCP: missing error check? */
 
 	/* TCP: sockaddr will contain ADDR:PORT */
@@ -1057,6 +1059,14 @@ stf_status create_tcp_interface(struct state *st)
 		return STF_FATAL;
 	}
 
+       /* Configure socket for ESPinTCP */
+       if (kernel_ops->espintcp != NULL) {
+               kernel_ops->espintcp(fd);
+               libreswan_log("PAUL: called espintcp()");
+       } else {
+               loglog(RC_LOG_SERIOUS, "Do not know how to enable ESPinTCP for this IPsec stack");
+        }
+
 	struct iface_port *ifp = NULL;
 	ifp = alloc_thing(struct iface_port, "struct iface_port");
 
@@ -1076,7 +1086,7 @@ stf_status create_tcp_interface(struct state *st)
 	ifp->bev = bufferevent_socket_new(pluto_eb, ifp->fd , BEV_OPT_CLOSE_ON_FREE);
 
 	if (ifp->bev == NULL){
-		libreswan_log("bufferevent could not be created");
+		loglog(RC_LOG_SERIOUS, "PAUL:bufferevent could not be created");
 		close(ifp->fd);
 		pfree(ifp);
 		return STF_FATAL;
@@ -1091,11 +1101,12 @@ stf_status create_tcp_interface(struct state *st)
 
 	int ret = bufferevent_write(ifp->bev, (void *)temp, IKETCP_STREAM_PREFIX_LENGTH);
 	if (ret == -1) {
-		libreswan_log("Couldn't send stream prefix, closing connection");
+		loglog(RC_LOG_SERIOUS, "PAUL: Couldn't send stream prefix, closing connection");
 		bufferevent_free(ifp->bev);
 		pfree(ifp);
 		return STF_FATAL;
 	} 
+	loglog(RC_LOG_SERIOUS, "PAUL: sent IKETCP prefix.");
 	st->st_interface = ifp;
 	return STF_OK;
 }

@@ -1055,4 +1055,5 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,
 	.v6holes = NULL,
+	.espintcp = NULL,
 };

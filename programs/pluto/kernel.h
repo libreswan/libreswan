@@ -246,6 +246,7 @@ struct kernel_ops {
 	err_t (*migrate_sa_check)(void);
 	bool (*migrate_sa)(struct state *st);
 	bool (*v6holes)();
+	bool (*espintcp)(int sock);
 	bool (*poke_ipsec_policy_hole)(const struct raw_iface *ifp, int fd);
 };
 

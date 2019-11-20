@@ -39,7 +39,15 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+
 #include <sys/socket.h>
+#ifndef SOL_TCP
+# define SOL_TCP		6
+#endif
+#ifndef TCP_ULP
+# define TCP_ULP			31
+#endif
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
@@ -2887,6 +2895,38 @@ static bool netlink_poke_ipsec_policy_hole(const struct raw_iface *ifp, int fd)
 	return true;
 }
 
+static bool netlink_espintcp(int fd)
+{
+	int ret;
+	struct xfrm_userpolicy_info policy = {
+		.action = XFRM_POLICY_ALLOW,
+		.sel.family = AF_INET,
+	};
+
+	policy.dir = XFRM_POLICY_OUT;
+	ret = setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy, sizeof(policy));
+	if (ret) {
+		LOG_ERRNO(errno, "setsockopt() XFRM_POLICY_OUT failed in netlink_espintcp()");
+		return FALSE;
+	}
+	policy.dir = XFRM_POLICY_IN;
+	ret = setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy, sizeof(policy));
+	if (ret) {
+		LOG_ERRNO(errno, "setsockopt() XFRM_POLICY_IN failed in netlink_espintcp()");
+		return FALSE;
+	}
+
+	ret = setsockopt(fd, SOL_TCP, TCP_ULP, "espintcp", sizeof("espintcp"));
+	if (ret) {
+		LOG_ERRNO(errno, "setsockopt() XFRM_POLICY_IN failed in netlink_espintcp()");
+		return FALSE;
+	}
+
+	DBG(DBG_KERNEL, DBG_log("set ESPinTCP socket options"));
+	return TRUE;
+}
+
+
 const struct kernel_ops netkey_kernel_ops = {
 	.kern_name = "netkey",
 	.type = USE_NETKEY,
@@ -2921,5 +2961,6 @@ const struct kernel_ops netkey_kernel_ops = {
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,
 	.v6holes = netlink_v6holes,
+	.espintcp = netlink_espintcp,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
 };

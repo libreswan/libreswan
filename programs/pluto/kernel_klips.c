@@ -341,4 +341,5 @@ const struct kernel_ops klips_kernel_ops = {
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,
 	.v6holes = NULL,
+	.espintcp = NULL,
 };

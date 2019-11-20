@@ -183,6 +183,11 @@ enum retransmit_status retransmit(struct state *st)
 		return DELETE_ON_RETRANSMIT;
 	}
 
+	if (st->st_connection->tcponly) {
+		libreswan_log("PAUL: retransmit skipped because tcponly");
+		return RETRANSMIT_NO;
+	}
+
 	/*
 	 * Exceeded limits - timeout or number of retransmits?
 	 *
