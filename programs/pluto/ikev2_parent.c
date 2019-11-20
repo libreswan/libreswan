@@ -2190,11 +2190,22 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	 * alone.  The CHILD SA doesn't really exist until after the
 	 * IKE SA has processed and approved of the response to this
 	 * IKE_AUTH request.
+	 *
+	 * XXX: Danger!
+	 *
+	 * Set the replace timeout but ensure it is larger than the
+	 * retransmit timeout (the default for both is 60-seconds and
+	 * it would appear that libevent can sometimes deliver the
+	 * retransmit before the replay).  This way the retransmit
+	 * will timeout and initiate the replace (but if things really
+	 * really screw up the replace will kick in).
 	 */
 
 	pexpect(md->svm->timeout_event == EVENT_RETRANSMIT); /* for CST */
 	delete_event(pst);
-	event_schedule(EVENT_SA_REPLACE, deltatime(PLUTO_HALFOPEN_SA_LIFE), pst);
+	deltatime_t halfopen = deltatime_max(deltatime_mulu(ike->sa.st_connection->r_timeout, 2),
+					     deltatime(PLUTO_HALFOPEN_SA_LIFE));
+	event_schedule(EVENT_SA_REPLACE, halfopen, pst);
 	change_state(pst, STATE_PARENT_I2);
 
 	/*
