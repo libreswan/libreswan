@@ -23,8 +23,6 @@ extern const enum_names impair_names;
 extern const enum_names impair_help;
 extern const struct lmod_info impair_lmod_info;
 
-extern enum_names state_names;
-extern enum_names state_stories;
 extern enum_names connection_kind_names;
 extern enum_names routing_story;
 extern enum_names certpolicy_type_names;
