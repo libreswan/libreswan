@@ -115,6 +115,7 @@ uint16_t pluto_xfrmlifetime = 300;
  * figured out if the array or separate objects for each state is
  * better.
  */
+
 struct finite_state state_undefined = {
 	.kind = STATE_UNDEFINED,
 	.name = "STATE_UNDEFINED",
@@ -123,8 +124,26 @@ struct finite_state state_undefined = {
 	.category = CAT_IGNORE,
 };
 
+struct finite_state state_ikev1_roof = {
+	.kind = STATE_IKEv1_ROOF,
+	.name = "STATE_IKEv1_ROOF",
+	.short_name = "IKEv1_ROOF",
+	.story = "invalid state - IKEv1 roof",
+	.category = CAT_IGNORE,
+};
+
+struct finite_state state_ikev2_roof = {
+	.kind = STATE_IKEv2_ROOF,
+	.name = "STATE_IKEv2_ROOF",
+	.short_name = "IKEv2_ROOF",
+	.story = "invalid state - IKEv2 roof",
+	.category = CAT_IGNORE,
+};
+
 const struct finite_state *finite_states[STATE_IKE_ROOF] = {
 	[STATE_UNDEFINED] = &state_undefined,
+	[STATE_IKEv1_ROOF] &state_ikev1_roof,
+	[STATE_IKEv2_ROOF] &state_ikev2_roof,
 };
 
 /*
@@ -590,6 +609,16 @@ struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
  */
 void init_states(void)
 {
+	/* did IKEv1/IKEv2 do their job? */
+	for (unsigned kind = 0; kind < elemsof(finite_states); kind++) {
+		const struct finite_state *s = finite_states[kind];
+		passert(s != NULL);
+		passert(s->name != NULL);
+		passert(s->short_name != NULL);
+		passert(s->story != NULL);
+		passert(s->kind == kind);
+		passert(s->category != CAT_UNKNOWN);
+	}
 	init_oneshot_timer(EVENT_REVIVE_CONNS, revive_conns);
 }
 

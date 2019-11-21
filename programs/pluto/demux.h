@@ -29,7 +29,6 @@
 
 struct state;   /* forward declaration of tag */
 
-extern void init_demux(void);
 extern event_callback_routine comm_handle_cb;
 
 /* State transition function infrastructure

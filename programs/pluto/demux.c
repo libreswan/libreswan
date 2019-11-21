@@ -70,16 +70,6 @@
 #include "pluto_stats.h"
 #include "ikev2_send.h"
 
-/* This file does basic header checking and demux of
- * incoming packets.
- */
-
-void init_demux(void)
-{
-	init_ikev1();
-	init_ikev2();
-}
-
 /*
  * read the message.
  *

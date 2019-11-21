@@ -64,6 +64,8 @@
 #include "ikev2_redirect.h"
 #include "root_certs.h"		/* for init_root_certs() */
 #include "hostpair.h"		/* for init_host_pair() */
+#include "ikev1.h"		/* for init_ikev1() */
+#include "ikev2.h"		/* for init_ikev2() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1793,6 +1795,8 @@ int main(int argc, char **argv)
 	/* obsoleted by nss code: init_rnd_pool(); */
 	init_root_certs();
 	init_secret();
+	init_ikev1();
+	init_ikev2();
 	init_states();
 	init_connections();
 	init_host_pair();
@@ -1809,7 +1813,6 @@ int main(int argc, char **argv)
 	}
 
 	init_crypto_helpers(nhelpers);
-	init_demux();
 	init_kernel();
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
