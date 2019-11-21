@@ -3028,8 +3028,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		 * (this is not a good reason).
 		 */
 		change_state(st, svm->next_state);
-		dbg("Message ID: updating counters for #%lu to "PRI_MSGID" after switching state",
-		    md->st->st_serialno, md->hdr.isa_msgid);
+		dbg("Message ID: updating counters for #%lu after switching state ...",
+		    st->st_serialno);
 		v2_msgid_update_recv(ike_sa(st), st, md);
 		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
 		/*

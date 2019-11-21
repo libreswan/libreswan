@@ -561,15 +561,20 @@ static void initiate_next(struct state *st, void *context UNUSED)
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
 {
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
-	intmax_t unack = (initiator->sent - initiator->recv);
 	/*
 	 * If there appears to be space and there's a pending
 	 * initiate, poke the IKE SA so it tries to initiate things.
 	 */
-	if (unack < ike->sa.st_connection->ike_window &&
-	    initiator->pending != NULL) {
-		dbg_v2_msgid(ike, &ike->sa, "wakeing IKE SA (unack %jd)", unack);
-		schedule_callback(__func__, ike->sa.st_serialno,
-				  initiate_next, NULL);
+	if (initiator->pending != NULL) {
+		intmax_t unack = (initiator->sent - initiator->recv);
+		if (unack < ike->sa.st_connection->ike_window) {
+			dbg_v2_msgid(ike, &ike->sa, "wakeing IKE SA for next message initiator (unack %jd)", unack);
+			schedule_callback(__func__, ike->sa.st_serialno,
+					  initiate_next, NULL);
+		} else {
+			dbg_v2_msgid(ike, NULL, "next message initiator blocked by outstanding response (unack %jd)", unack);
+		}
+	} else {
+		dbg_v2_msgid(ike, NULL, "no pending message initiators to schedule");
 	}
 }

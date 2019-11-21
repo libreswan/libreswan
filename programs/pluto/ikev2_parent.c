@@ -5844,6 +5844,8 @@ static void ikev2_child_outI_continue(struct state *st,
 		unpack_KE_from_helper(st, r, &st->st_gi);
 	}
 
+	dbg("adding CHILD SA #%lu to IKE SA #%lu message initiator queue",
+	    child->sa.st_serialno, ike->sa.st_serialno);
 	v2_msgid_queue_initiator(ike, &child->sa, ikev2_child_outI_continue_2);
 	complete_v2_state_transition(&child->sa, mdp, STF_SUSPEND);
 	/* return STF_SUSPEND */
