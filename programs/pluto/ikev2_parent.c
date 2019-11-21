@@ -3202,7 +3202,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 		/* must have enough to build an CHILD_SA */
-		stf_status ret = ikev2_child_sa_respond(md, &sk.pbs,
+		stf_status ret = ikev2_child_sa_respond(ike, NULL, md, &sk.pbs,
 							ISAKMP_v2_IKE_AUTH);
 
 		/* note: st: parent; md->st: child */
@@ -4807,7 +4807,8 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 			/* Should "just work", not working is a screw up */
 			return STF_INTERNAL_ERROR;
 		}
-		ret = ikev2_child_sa_respond(request_md, &sk.pbs,
+		ret = ikev2_child_sa_respond(ike, child,
+					     request_md, &sk.pbs,
 					     ISAKMP_v2_CREATE_CHILD_SA);
 	}
 

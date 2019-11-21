@@ -204,7 +204,9 @@ extern bool ikev2_verify_psk_auth(enum keyword_authby authby,
 
 extern void ikev2_derive_child_keys(struct child_sa *child);
 
-extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
+extern stf_status ikev2_child_sa_respond(struct ike_sa *ike,
+					 struct child_sa *child,
+					 struct msg_digest *md,
 					 pb_stream *outpbs,
 					 enum isakmp_xchg_types isa_xchg);
 

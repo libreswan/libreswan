@@ -119,33 +119,29 @@ static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
  * The caller could have done the linux_audit_conn() call, except one case
  * here deletes the state before returning an STF error
  */
-stf_status ikev2_child_sa_respond(struct msg_digest *md,
+stf_status ikev2_child_sa_respond(struct ike_sa *ike,
+				  struct child_sa *child,
+				  struct msg_digest *md,
 				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
 	struct connection *c = md->st->st_connection;
 
-	/*
-	 * MD->ST could be a parent (AUTH) or pre-created child
-	 * (CHILD_SA).
-	 */
-	struct ike_sa *ike = ike_sa(md->st);
-	struct child_sa *child; /* to-be-determined */
-
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
 	    md->st->st_ipsec_pred != SOS_NOBODY) {
 		/* this is Child SA rekey we already have child state object */
-		child = pexpect_child_sa(md->st);
+		pexpect(child != NULL);
 	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		/*
 		 * XXX: unlike above and below, this also screws
 		 * around with the connection.
 		 */
+		pexpect(child == NULL);
 		child = ikev2_cp_reply_state(ike, md, isa_xchg);
 		if (child == NULL)
 			return STF_INTERNAL_ERROR;
 	} else if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		child = pexpect_child_sa(md->st);
+		pexpect(child != NULL);
 	} else {
 		/* ??? is this only for AUTH exchange? */
 		pexpect(isa_xchg == ISAKMP_v2_IKE_AUTH); /* see calls */
@@ -160,6 +156,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		 */
 		pexpect(md->st != NULL);
 		pexpect(md->st == &ike->sa); /* passed in parent */
+		pexpect(child == NULL);
 		child = ikev2_duplicate_state(ike, IPSEC_SA,
 					      SA_RESPONDER,
 					      null_fd);
@@ -187,7 +184,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	/* switch to child */
 	dbg("switching MD.ST from #%lu to CHILD #%lu; ulgh",
-	    md->st->st_serialno, cst->st_serialno);
+	    md->st != NULL ? md->st->st_serialno : 0, cst->st_serialno);
 	md->st = cst;
 	c = cst->st_connection;
 
