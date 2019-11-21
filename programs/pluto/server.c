@@ -663,8 +663,18 @@ static struct pluto_event *free_event_entry(struct pluto_event **evp)
 	return next;
 }
 
-void free_pluto_event_list(void)
+void free_server(void)
 {
+	if (pluto_eb == NULL) {
+		/*
+		 * exit_pluto() can call free_server() before
+		 * init_server(); mumble something about using
+		 * atexit().
+		 */
+		dbg("server event base not initialized");
+		return;
+	}
+
 	struct pluto_event **head = &pluto_events_head;
 	while (*head != NULL)
 		*head = free_event_entry(head);
@@ -1332,7 +1342,7 @@ static void libevent_free(void *ptr)
 }
 #endif
 
-void init_event_base(void)
+void init_server(void)
 {
 	/*
 	 * "... if you are going to call this function, you should do

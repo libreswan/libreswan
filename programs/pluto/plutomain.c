@@ -1786,7 +1786,7 @@ int main(int argc, char **argv)
 /* Initialize all of the various features */
 
 	init_state_db();
-	init_event_base();
+	init_server();
 
 	init_rate_log();
 	init_nat_traversal(keep_alive);
@@ -1885,7 +1885,7 @@ void exit_pluto(int status)
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
-	free_pluto_event_list(); /* no libevent evnts beyond this point */
+	free_server(); /* no libevent evnts beyond this point */
 	free_pluto_main();	/* our static chars */
 
 #ifdef USE_DNSSEC
