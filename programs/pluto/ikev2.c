@@ -3403,6 +3403,17 @@ void complete_v2_state_transition(struct state *st,
 		passert(st != NULL);
 		loglog_st(st, RC_FATAL, "encountered fatal error in state %s",
 			  st->st_state->name);
+		switch (v2_msg_role(md)) {
+		case MESSAGE_RESPONSE:
+			dbg("Message ID: forcing a response received update");
+			v2_msgid_update_recv(ike, st, md);
+			break;
+		case MESSAGE_REQUEST:
+			dbg("Message ID: exchange zombie as no response?");
+			break;
+		case NO_MESSAGE:
+			break;
+		}
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
 		md->st = st = NULL;
