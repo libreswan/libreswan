@@ -159,6 +159,7 @@
 #include "ip_address.h"
 #include "ikev1_hash.h"
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
+#include "ikev1_states.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -749,106 +750,12 @@ void init_ikev1(void)
 	 * contain constant pointers and this writeable array to just
 	 * go away.
 	 */
-	static struct finite_state v1_states[STATE_IKEv1_ROOF - STATE_IKEv1_FLOOR];
 	for (enum state_kind kind = STATE_IKEv1_FLOOR; kind < STATE_IKEv1_ROOF; kind++) {
-
-		/* skip hardwired states */
-		if (finite_states[kind] != NULL) {
-			continue;
-		}
-
 		/* fill in using static struct */
-		struct finite_state *fs = &v1_states[kind - STATE_IKEv1_FLOOR];
-		fs->kind = kind;
+		const struct finite_state *fs = &v1_states[kind - STATE_IKEv1_FLOOR];
+		passert(fs->kind == kind);
+		passert(finite_states[kind] == NULL);
 		finite_states[kind] = fs;
-
-		fs->name = enum_name(&state_names, fs->kind);
-		fs->short_name = enum_short_name(&state_names, fs->kind);
-		fs->story = enum_name(&state_stories, fs->kind);
-
-		/*
-		 * Initialize .fs_category
-		 *
-		 * If/when struct finite_state is converted to a static
-		 * structure, this all goes away.
-		 */
-		enum state_category cat;
-		switch (fs->kind) {
-
-		case STATE_AGGR_R0:
-		case STATE_AGGR_I1:
-		case STATE_MAIN_R0:
-		case STATE_MAIN_I1:
-			/*
-			 * Count I1 as half-open too because with ondemand,
-			 * a plaintext packet (that is spoofed) will
-			 * trigger an outgoing IKE SA.
-			 */
-			cat = CAT_HALF_OPEN_IKE_SA;
-			break;
-
-		case STATE_MAIN_R1:
-		case STATE_MAIN_R2:
-		case STATE_MAIN_I2:
-		case STATE_MAIN_I3:
-		case STATE_AGGR_R1:
-			/*
-			 * All IKEv1 MAIN modes except the first
-			 * (half-open) and last ones are not
-			 * authenticated.
-			 */
-			cat = CAT_OPEN_IKE_SA;
-			break;
-
-		case STATE_MAIN_I4:
-		case STATE_MAIN_R3:
-		case STATE_AGGR_I2:
-		case STATE_AGGR_R2:
-		case STATE_XAUTH_I0:
-		case STATE_XAUTH_I1:
-		case STATE_XAUTH_R0:
-		case STATE_XAUTH_R1:
-			/*
-			 * IKEv1 established states.
-			 *
-			 * XAUTH, seems to a second level of authentication
-			 * performed after the connection is established and
-			 * authenticated.
-			 */
-			cat = CAT_ESTABLISHED_IKE_SA;
-			break;
-
-		case STATE_QUICK_I1: /* this is not established yet? */
-		case STATE_QUICK_I2:
-		case STATE_QUICK_R0: /* shouldn't we cat_ignore this? */
-		case STATE_QUICK_R1:
-		case STATE_QUICK_R2:
-			/*
-			 * IKEv1: QUICK is for child connections children.
-			 * Probably won't occur as a parent?
-			 */
-			cat = CAT_ESTABLISHED_CHILD_SA;
-			break;
-
-		case STATE_MODE_CFG_I1:
-		case STATE_MODE_CFG_R1:
-		case STATE_MODE_CFG_R2:
-			/*
-			 * IKEv1: Post established negotiation.
-			 */
-			cat = CAT_ESTABLISHED_IKE_SA;
-			break;
-
-		case STATE_INFO:
-		case STATE_INFO_PROTECTED:
-		case STATE_MODE_CFG_R0:
-			cat = CAT_INFORMATIONAL;
-			break;
-
-		default:
-			bad_case(fs->kind);
-		}
-		fs->category = cat;
 	}
 
 	/*
