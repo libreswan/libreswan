@@ -623,14 +623,14 @@ void init_ikev2(void)
 	dbg("checking IKEv2 state table");
 
 	/*
-	 * Fill in the states.
+	 * Fill in FINITE_STATES[].
 	 *
 	 * This is a hack until each finite-state is a separate object
 	 * with corresponding edges (aka microcodes).
 	 *
-	 * XXX: Long term goal is to have a constant finite_states[]
-	 * contain constant pointers and this writeable array to just
-	 * go away.
+	 * XXX: Long term goal is to have a constant FINITE_STATES[]
+	 * contain constant pointers and this static writeable array
+	 * to just go away.
 	 */
 	for (enum state_kind kind = STATE_IKEv2_FLOOR; kind < STATE_IKEv2_ROOF; kind++) {
 		/* fill in using static struct */
@@ -656,21 +656,42 @@ void init_ikev2(void)
 		const struct finite_state *to = finite_states[t->next_state];
 		passert(to != NULL);
 
-		DBGF(DBG_TMI, "processing IKEv2 state transition %s -> %s (%s)",
-		     from->short_name, to->short_name, t->story);
+		if (DBGP(DBG_BASE)) {
+			if (from->nr_transitions == 0) {
+				LSWLOG_DEBUG(buf) {
+					jam(buf, "  ");
+					lswlog_finite_state(buf, from);
+					jam(buf, ":");
+				}
+			}
+			const char *send;
+			switch (t->send) {
+			case NO_MESSAGE: send = ""; break;
+			case MESSAGE_REQUEST: send = " send-request"; break;
+			case MESSAGE_RESPONSE: send = " send-response"; break;
+			default: bad_case(t->send);
+			}
+			DBG_log("    -> %s %s%s (%s)", to->short_name,
+				enum_short_name(&timer_event_names,
+						t->timeout_event),
+				send, t->story);
+		}
 
 		/*
-		 * Point .fs_v2_microcode at the first transition.
-		 * All other microcodes for that state should follow
-		 * immediately after (or to put it another way,
-		 * previous should match).
+		 * Point .fs_v2_microcode at the first transition for
+		 * the from state.  All other transitions for the from
+		 * state should follow immediately after (or to put it
+		 * another way, previous should match).
 		 */
 		if (from->v2_transitions == NULL) {
+			/* start of the next state */
+			passert(from->nr_transitions == 0);
 			from->v2_transitions = t;
 		} else {
 			passert(t[-1].state == t->state);
 		}
 		from->nr_transitions++;
+
 
 		/*
 		 * Pack expected payloads et.al. into a structure.
@@ -689,39 +710,7 @@ void init_ikev2(void)
 		if (t->opt_enc_payloads != LEMPTY) {
 			t->encrypted_payloads.optional = t->opt_enc_payloads;
 		}
-	}
 
-	/*
-	 * Finally list/verify the states.
-	 */
-	if (DBGP(DBG_BASE)) {
-		for (enum state_kind kind = STATE_IKEv2_FLOOR; kind < STATE_IKEv2_ROOF; kind++) {
-			const struct finite_state *from = finite_states[kind];
-			passert(from != NULL);
-			LSWLOG_DEBUG(buf) {
-				jam(buf, "  ");
-				lswlog_finite_state(buf, from);
-				jam(buf, ":");
-				if (from->nr_transitions == 0) {
-					lswlogs(buf, " <none>");
-				}
-			}
-			for (unsigned ti = 0; ti < from->nr_transitions; ti++) {
-				const struct state_v2_microcode *t = &from->v2_transitions[ti];
-				const struct finite_state *to = finite_states[t->next_state];
-				const char *send;
-				switch (t->send) {
-				case NO_MESSAGE: send = ""; break;
-				case MESSAGE_REQUEST: send = " send-request"; break;
-				case MESSAGE_RESPONSE: send = " send-request"; break;
-				default: bad_case(t->send);
-				}
-				DBG_log("    -> %s %s%s (%s)", to->short_name,
-					enum_short_name(&timer_event_names,
-							t->timeout_event),
-					send, t->story);
-			}
-		}
 	}
 }
 

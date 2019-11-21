@@ -740,15 +740,14 @@ void init_ikev1(void)
 	DBGF(DBG_CONTROL, "checking IKEv1 state table");
 
 	/*
-	 * Fill in the states.
+	 * Fill in FINITE_STATES[].
 	 *
-	 * This is a hack until each finite-state is a stand-alone
-	 * object with corresponding state transitions (aka edges or
-	 * microcodes).
+	 * This is a hack until each finite-state is a separate object
+	 * with corresponding edges (aka microcodes).
 	 *
-	 * XXX: Long term goal is to have a constant finite_states[]
-	 * contain constant pointers and this writeable array to just
-	 * go away.
+	 * XXX: Long term goal is to have a constant FINITE_STATES[]
+	 * contain constant pointers and this static writeable array
+	 * to just go away.
 	 */
 	for (enum state_kind kind = STATE_IKEv1_FLOOR; kind < STATE_IKEv1_ROOF; kind++) {
 		/* fill in using static struct */
@@ -784,9 +783,18 @@ void init_ikev1(void)
 		const struct finite_state *to = finite_states[next_state];
 		passert(to != NULL);
 
-		if (t->message == NULL) {
-			PEXPECT_LOG("transition %s -> %s missing .message",
-				    from->short_name, to->short_name);
+		if (DBGP(DBG_BASE)) {
+			if (from->nr_transitions == 0) {
+				LSWLOG_DEBUG(buf) {
+					lswlogs(buf, "  ");
+					lswlog_finite_state(buf, from);
+					lswlogs(buf, ":");
+				}
+			}
+			DBG_log("    -> %s %s (%s)", to->short_name,
+				enum_short_name(&timer_event_names,
+						t->timeout_event),
+				t->message);
 		}
 
 		/*
@@ -803,6 +811,11 @@ void init_ikev1(void)
 			passert(t[-1].state == t->state);
 		}
 		from->nr_transitions++;
+
+		if (t->message == NULL) {
+			PEXPECT_LOG("transition %s -> %s missing .message",
+				    from->short_name, to->short_name);
+		}
 
 		/*
 		 * Copy (actually merge) the flags that apply to the
@@ -851,31 +864,6 @@ void init_ikev1(void)
 				PEXPECT_LOG("transition %s -> %s (%s) missing HASH protection",
 					    from->short_name, to->short_name,
 					    t->message);
-			}
-		}
-	}
-
-	/*
-	 * Finally list the states.
-	 */
-	if (DBGP(DBG_BASE)) {
-		for (enum state_kind kind = STATE_IKEv1_FLOOR; kind < STATE_IKEv1_ROOF; kind++) {
-			const struct finite_state *from = finite_states[kind];
-			passert(from != NULL);
-			LSWLOG_DEBUG(buf) {
-				lswlogs(buf, "  ");
-				lswlog_finite_state(buf, from);
-				lswlogs(buf, ":");
-				if (from->nr_transitions == 0) {
-					lswlogs(buf, " <none>");
-				}
-			}
-			for (unsigned ti = 0; ti < from->nr_transitions; ti++) {
-				const struct state_v1_microcode *t = &from->v1_transitions[ti];
-				const struct finite_state *to = finite_states[t->next_state];
-				DBG_log("    -> %s %s", to->short_name,
-					enum_short_name(&timer_event_names,
-							t->timeout_event));
 			}
 		}
 	}

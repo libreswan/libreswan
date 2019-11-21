@@ -262,7 +262,7 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 		lswlogf(buf, " category: ");
 		lswlog_enum_short(buf, &state_category_names, fs->category);
 		/* no enum_name available? */
-		lswlogf(buf, " flags: "PRI_LSET, fs->flags);
+		lswlogf(buf, "; flags: "PRI_LSET, fs->flags);
 	}
 }
 
