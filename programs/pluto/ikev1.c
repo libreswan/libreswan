@@ -2370,7 +2370,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		if (needed != 0) {
 			loglog(RC_LOG_SERIOUS,
 			       "message for %s is missing payloads %s",
-			       enum_name(&state_names, from_state),
+			       finite_states[from_state]->name,
 			       bitnamesof(payload_name_ikev1, needed));
 			if (!md->encrypted) {
 				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
@@ -2704,9 +2704,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			st->st_msgid_reserved = TRUE;
 		}
 
-		DBG(DBG_CONTROL, DBG_log("IKEv1: transition from state %s to state %s",
-			      enum_name(&state_names, from_state),
-			      enum_name(&state_names, smc->next_state)));
+		dbg("IKEv1: transition from state %s to state %s",
+		    finite_states[from_state]->name,
+		    finite_states[smc->next_state]->name);
 
 		change_state(st, smc->next_state);
 
@@ -2793,11 +2793,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				IMPAIR(SEND_NO_MAIN_R2)) {
 				/* record-only so we propely emulate packet drop */
 				record_outbound_ike_msg(st, &reply_stream,
-					enum_name(&state_names, from_state));
+							finite_states[from_state]->name);
 				libreswan_log("IMPAIR: Skipped sending STATE_MAIN_R2 response packet");
 			} else {
 				record_and_send_v1_ike_msg(st, &reply_stream,
-					enum_name(&state_names, from_state));
+							   finite_states[from_state]->name);
 			}
 		}
 

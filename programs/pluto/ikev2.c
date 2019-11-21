@@ -2450,8 +2450,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 */
 			dbg("state #%lu forced to match CREATE_CHILD_SA from %s->%s by ignoring from state",
 			    st->st_serialno,
-			    enum_short_name(&state_names, svm->state),
-			    enum_short_name(&state_names, svm->next_state));
+			    finite_states[svm->state]->name,
+			    finite_states[svm->next_state]->name);
 		}
 
 		/* must be the right state machine entry */
@@ -2990,9 +2990,9 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
 
 	if (from_state != svm->next_state) {
-		DBG(DBG_CONTROL, DBG_log("IKEv2: transition from state %s to state %s",
-			      enum_name(&state_names, from_state),
-			      enum_name(&state_names, svm->next_state)));
+		dbg("IKEv2: transition from state %s to state %s",
+		    finite_states[from_state]->name,
+		    finite_states[svm->next_state]->name);
 	}
 
 	/*
@@ -3213,7 +3213,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		    str_endpoint(&st->st_remote_endpoint, &b),
 		    str_endpoint(&st->st_interface->local_endpoint, &b2));
 
-		send_recorded_v2_ike_msg(pst, enum_name(&state_names, from_state));
+		send_recorded_v2_ike_msg(pst, finite_states[from_state]->name);
 	}
 
 	if (w == RC_SUCCESS) {
@@ -3433,16 +3433,16 @@ void complete_v2_state_transition(struct state *st,
 		if (md != NULL && md->from_state != STATE_UNDEFINED/*0?*/ &&
 		    md->from_state != from_state->kind) {
 			jam(buf, " md.from_state=");
-			lswlog_enum_short(buf, &state_names, md->from_state);
+			jam_string(buf, finite_states[md->from_state]->name);
 		}
 		if (md != NULL && md->svm != NULL &&
 		    md->svm->state != from_state->kind) {
 			jam(buf, " md.svm.state[from]=");
-			lswlog_enum_short(buf, &state_names, md->svm->state);
+			jam_string(buf, finite_states[md->svm->state]->name);
 		}
 		jam(buf, " %s->", from_state->short_name);
 		if (md != NULL && md->svm != NULL) {
-			lswlog_enum_short(buf, &state_names, md->svm->next_state);
+			jam_string(buf, finite_states[md->svm->next_state]->name);
 		} else {
 			jam(buf, "NULL");
 		}

@@ -3090,12 +3090,14 @@ void show_globalstate_status(void)
 	whack_log_comment("current.states.iketype.open="PRI_CAT,
 			  cat_count[CAT_OPEN_IKE_SA]);
 	for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
+		const struct finite_state *ss = finite_states[s];
 		whack_log_comment("current.states.enumerate.%s="PRI_CAT,
-			enum_name(&state_names, s), state_count[s]);
+				  ss->name, state_count[s]);
 	}
 	for (enum state_kind s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
+		const struct finite_state *ss = finite_states[s];
 		whack_log_comment("current.states.enumerate.%s="PRI_CAT,
-			enum_name(&state_names, s), state_count[s]);
+				  ss->name, state_count[s]);
 	}
 }
 
