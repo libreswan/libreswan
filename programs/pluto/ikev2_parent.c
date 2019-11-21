@@ -3202,9 +3202,20 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 		/* must have enough to build an CHILD_SA */
-		stf_status ret = ikev2_child_sa_respond(ike, NULL, md, &sk.pbs,
-							ISAKMP_v2_IKE_AUTH);
-
+		struct child_sa *child = NULL;
+		stf_status ret;
+		ret = ikev2_auth_child_responder(ike, &child, md);
+		if (ret != STF_OK) {
+			pexpect(child == NULL);
+			LSWDBGP(DBG_CONTROL, buf) {
+				lswlogs(buf, "ikev2_child_sa_responder() returned ");
+				lswlog_v2_stf_status(buf, ret);
+			}
+			return ret; /* we should continue building a valid reply packet */
+		}
+		pexpect(child != NULL);
+		ret = ikev2_child_sa_respond(ike, child, md, &sk.pbs,
+					     ISAKMP_v2_IKE_AUTH);
 		/* note: st: parent; md->st: child */
 		if (ret != STF_OK) {
 			LSWDBGP(DBG_CONTROL, buf) {

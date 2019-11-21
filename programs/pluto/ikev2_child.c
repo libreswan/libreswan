@@ -119,33 +119,24 @@ static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
  * The caller could have done the linux_audit_conn() call, except one case
  * here deletes the state before returning an STF error
  */
-stf_status ikev2_child_sa_respond(struct ike_sa *ike,
-				  struct child_sa *child,
-				  struct msg_digest *md,
-				  pb_stream *outpbs,
-				  enum isakmp_xchg_types isa_xchg)
+
+stf_status ikev2_auth_child_responder(struct ike_sa *ike,
+				      struct child_sa **child_out,
+				      struct msg_digest *md)
 {
 	struct connection *c = md->st->st_connection;
+	struct child_sa *child;
+	pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
 
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
-	    md->st->st_ipsec_pred != SOS_NOBODY) {
-		/* this is Child SA rekey we already have child state object */
-		pexpect(child != NULL);
-	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		/*
 		 * XXX: unlike above and below, this also screws
 		 * around with the connection.
 		 */
-		pexpect(child == NULL);
-		child = ikev2_cp_reply_state(ike, md, isa_xchg);
+		child = ikev2_cp_reply_state(ike, md, ISAKMP_v2_IKE_AUTH);
 		if (child == NULL)
 			return STF_INTERNAL_ERROR;
-	} else if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		pexpect(child != NULL);
 	} else {
-		/* ??? is this only for AUTH exchange? */
-		pexpect(isa_xchg == ISAKMP_v2_IKE_AUTH); /* see calls */
-		pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
 		/*
 		 * While this function is called with MD->ST pointing
 		 * at either an IKE SA or CHILD SA, this code path
@@ -156,10 +147,9 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		 */
 		pexpect(md->st != NULL);
 		pexpect(md->st == &ike->sa); /* passed in parent */
-		pexpect(child == NULL);
 		child = ikev2_duplicate_state(ike, IPSEC_SA,
 					      SA_RESPONDER,
-					      null_fd);
+					      null_fd/* XXX: IKE's whack-fd? */);
 		binlog_refresh_state(&child->sa);
 		/*
 		 * XXX: This is to hack around the broken responder
@@ -180,6 +170,17 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 		}
 	}
+	*child_out = child;
+	return STF_OK;
+}
+
+stf_status ikev2_child_sa_respond(struct ike_sa *ike,
+				  struct child_sa *child,
+				  struct msg_digest *md,
+				  pb_stream *outpbs,
+				  enum isakmp_xchg_types isa_xchg)
+{
+	struct connection *c = md->st->st_connection;
 	struct state *cst = &child->sa;	/* child state */
 
 	/* switch to child */
