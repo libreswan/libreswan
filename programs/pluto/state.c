@@ -582,13 +582,6 @@ struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 				     ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, whack_sock);
 	st->st_sa_role = sa_role;
-	st->st_msgid_lastack = v2_INVALID_MSGID;
-	st->st_msgid_lastrecv = v2_INVALID_MSGID;
-	st->st_msgid_nextuse = 0;
-	dbg("Message ID: init #%lu: msgid="PRI_MSGID" lastack="PRI_MSGID" nextuse="PRI_MSGID" lastrecv="PRI_MSGID" lastreplied="PRI_MSGID,
-	    st->st_serialno, st->st_msgid,
-	    st->st_msgid_lastack, st->st_msgid_nextuse,
-	    st->st_msgid_lastrecv, st->st_msgid_lastreplied);
 	const struct finite_state *fs = finite_states[kind];
 	change_state(st, fs->kind);
 	struct ike_sa *ike = pexpect_ike_sa(st);
