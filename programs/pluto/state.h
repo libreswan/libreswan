@@ -396,12 +396,11 @@ struct state {
 
 	/** IKEv1-only things **/
 
-	msgid_t st_msgid;                       /* MSG-ID from header.
-						   Network Order! */
-	bool st_msgid_reserved;			/* is msgid reserved yet? */
-
-	msgid_t st_msgid_phase15;               /* msgid for phase 1.5 - Network Order! */
-
+	struct {
+		msgid_t id;             /* MSG-ID from header. Network Order?!? */
+		bool reserved;		/* is msgid reserved yet? */
+		msgid_t phase15;        /* msgid for phase 1.5 - Network Order! */
+	} st_v1_msgid;
 	/* only for a state representing an ISAKMP SA */
 	struct msgid_list *st_used_msgids;	/* used-up msgids */
 

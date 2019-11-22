@@ -211,7 +211,7 @@ static void fixup_xauth_hash(struct state *st,
 			     struct v1_hash_fixup *hash_fixup,
 			     const uint8_t *roof)
 {
-	fixup_v1_HASH(st, hash_fixup, st->st_msgid_phase15, roof);
+	fixup_v1_HASH(st, hash_fixup, st->st_v1_msgid.phase15, roof);
 }
 
 /**
@@ -509,7 +509,7 @@ static stf_status modecfg_send_set(struct state *st)
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_msgid_phase15,
+			.isa_msgid = st->st_v1_msgid.phase15,
 		};
 
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
@@ -528,7 +528,7 @@ static stf_status modecfg_send_set(struct state *st)
 	/* should become a conn option */
 	/* client-side is not yet implemented for this - only works with SoftRemote clients */
 	/* SoftRemote takes the IV for XAUTH from phase2, where Libreswan takes it from phase1 */
-	init_phase2_iv(st, &st->st_msgid_phase15);
+	init_phase2_iv(st, &st->st_v1_msgid.phase15);
 #endif
 
 /* XXX This does not include IPv6 at this point */
@@ -566,9 +566,9 @@ static stf_status modecfg_send_set(struct state *st)
  */
 stf_status modecfg_start_set(struct state *st)
 {
-	if (st->st_msgid_phase15 == v1_MAINMODE_MSGID) {
+	if (st->st_v1_msgid.phase15 == v1_MAINMODE_MSGID) {
 		/* pick a new message id */
-		st->st_msgid_phase15 = generate_msgid(st);
+		st->st_v1_msgid.phase15 = generate_msgid(st);
 	}
 	st->hidden_variables.st_modecfg_vars_set = TRUE;
 
@@ -594,7 +594,7 @@ stf_status xauth_send_request(struct state *st)
 		      st->st_state->short_name);
 
 	/* this is the beginning of a new exchange */
-	st->st_msgid_phase15 = generate_msgid(st);
+	st->st_v1_msgid.phase15 = generate_msgid(st);
 	change_state(st, STATE_XAUTH_R0);
 
 	/* HDR out */
@@ -604,7 +604,7 @@ stf_status xauth_send_request(struct state *st)
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_msgid_phase15,
+			.isa_msgid = st->st_v1_msgid.phase15,
 		};
 
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
@@ -658,7 +658,7 @@ stf_status xauth_send_request(struct state *st)
 
 	close_output_pbs(&reply);
 
-	init_phase2_iv(st, &st->st_msgid_phase15);
+	init_phase2_iv(st, &st->st_v1_msgid.phase15);
 
 	if (!ikev1_encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
@@ -709,7 +709,7 @@ stf_status modecfg_send_request(struct state *st)
 	libreswan_log("modecfg: Sending IP request (MODECFG_I1)");
 
 	/* this is the beginning of a new exchange */
-	st->st_msgid_phase15 = generate_msgid(st);
+	st->st_v1_msgid.phase15 = generate_msgid(st);
 	change_state(st, STATE_MODE_CFG_I1);
 
 	/* HDR out */
@@ -719,7 +719,7 @@ stf_status modecfg_send_request(struct state *st)
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_msgid_phase15,
+			.isa_msgid = st->st_v1_msgid.phase15,
 		};
 
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
@@ -777,7 +777,7 @@ stf_status modecfg_send_request(struct state *st)
 
 	close_output_pbs(&reply);
 
-	init_phase2_iv(st, &st->st_msgid_phase15);
+	init_phase2_iv(st, &st->st_v1_msgid.phase15);
 
 	if (!ikev1_encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
@@ -811,7 +811,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
 
 	/* pick a new message id */
-	st->st_msgid_phase15 = generate_msgid(st);
+	st->st_v1_msgid.phase15 = generate_msgid(st);
 
 	/* HDR out */
 	{
@@ -820,7 +820,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_msgid_phase15,
+			.isa_msgid = st->st_v1_msgid.phase15,
 		};
 
 		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
@@ -866,7 +866,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 
 	close_output_pbs(&reply);
 
-	init_phase2_iv(st, &st->st_msgid_phase15);
+	init_phase2_iv(st, &st->st_v1_msgid.phase15);
 
 	if (!ikev1_encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
@@ -1113,7 +1113,7 @@ static void ikev1_xauth_callback(struct state *st,
 		xauth_send_status(st, XAUTH_STATUS_OK);
 
 		if (st->quirks.xauth_ack_msgid)
-			st->st_msgid_phase15 = v1_MAINMODE_MSGID;
+			st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 
 		jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), name);
 	} else {
@@ -1402,21 +1402,21 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
 	if (!st->st_connection->spd.this.modecfg_server) {
 		DBG(DBG_CONTROL,
 		    DBG_log("Not server, starting new exchange"));
-		st->st_msgid_phase15 = v1_MAINMODE_MSGID;
+		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
 	if (st->st_connection->spd.this.modecfg_server &&
 	    st->hidden_variables.st_modecfg_vars_set) {
 		DBG(DBG_CONTROL,
 		    DBG_log("modecfg server, vars are set. Starting new exchange."));
-		st->st_msgid_phase15 = v1_MAINMODE_MSGID;
+		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
 	if (st->st_connection->spd.this.modecfg_server &&
 	    st->st_connection->policy & POLICY_MODECFG_PULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("modecfg server, pull mode. Starting new exchange."));
-		st->st_msgid_phase15 = v1_MAINMODE_MSGID;
+		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 	return STF_OK;
 }
@@ -1449,7 +1449,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 
 	DBG(DBG_CONTROLMORE, DBG_log("arrived in modecfg_inR0"));
 
-	st->st_msgid_phase15 = md->hdr.isa_msgid;
+	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
 	default:
@@ -1508,7 +1508,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 		}
 
 		/* they asked us, we reponded, msgid is done */
-		st->st_msgid_phase15 = v1_MAINMODE_MSGID;
+		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
 	libreswan_log("modecfg_inR0(STF_OK)");
@@ -1534,7 +1534,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 
 	DBG(DBG_CONTROL, DBG_log("modecfg_inI2"));
 
-	st->st_msgid_phase15 = md->hdr.isa_msgid;
+	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	/* CHECK that SET has been received. */
 
@@ -1620,7 +1620,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 	 * we are done with this exchange, clear things so
 	 * that we can start phase 2 properly
 	 */
-	st->st_msgid_phase15 = v1_MAINMODE_MSGID;
+	st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	if (resp != LEMPTY)
 		st->hidden_variables.st_modecfg_vars_set = TRUE;
 
@@ -1648,7 +1648,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 	DBG(DBG_CONTROL, DBG_log("modecfg_inR1: received mode cfg reply"));
 
-	st->st_msgid_phase15 = md->hdr.isa_msgid;
+	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
 	default:
@@ -1881,7 +1881,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 	}
 
 	/* we are done with this exchange, clear things so that we can start phase 2 properly */
-	st->st_msgid_phase15 = v1_MAINMODE_MSGID;
+	st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	if (resp != LEMPTY)
 		st->hidden_variables.st_modecfg_vars_set = TRUE;
 
@@ -2162,7 +2162,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		return STF_FAIL;
 	}
 
-	st->st_msgid_phase15 = md->hdr.isa_msgid;
+	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
 	default:
@@ -2336,7 +2336,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	}
 
 	/* reset the message ID */
-	st->st_msgid_phase15 = v1_MAINMODE_MSGID;
+	st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 
 	DBG(DBG_CONTROLMORE, DBG_log("xauth_inI0(STF_OK)"));
 	return STF_OK;
@@ -2416,7 +2416,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 	}
 	DBG(DBG_CONTROLMORE, DBG_log("Continuing with xauth_inI1"));
 
-	st->st_msgid_phase15 = md->hdr.isa_msgid;
+	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
 	default:

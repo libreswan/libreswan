@@ -42,7 +42,7 @@ static bool state_plausable(struct state *st,
 	if (st->st_ike_version != ike_version) {
 		return false;
 	}
-	if (v1_msgid != NULL && st->st_msgid != *v1_msgid) {
+	if (v1_msgid != NULL && st->st_v1_msgid.id != *v1_msgid) {
 		return false;
 	}
 	if (role != NULL && st->st_sa_role != *role) {

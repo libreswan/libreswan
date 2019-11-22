@@ -655,7 +655,7 @@ void quick_outI1(fd_t whack_sock,
 	st->st_myuserport = c->spd.this.port;
 	st->st_peeruserport = c->spd.that.port;
 
-	st->st_msgid = generate_msgid(isakmp_sa);
+	st->st_v1_msgid.id = generate_msgid(isakmp_sa);
 	change_state(st, STATE_QUICK_I1); /* from STATE_UNDEFINED */
 
 	binlog_refresh_state(st);
@@ -689,7 +689,7 @@ void quick_outI1(fd_t whack_sock,
 			lswlogf(buf, " to replace #%lu", replacing);
 		}
 		lswlogf(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
-			isakmp_sa->st_serialno, st->st_msgid);
+			isakmp_sa->st_serialno, st->st_v1_msgid.id);
 		if (st->st_connection->child_proposals.p != NULL) {
 			fmt_proposals(buf, st->st_connection->child_proposals.p);
 		} else {
@@ -758,7 +758,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 					  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_QUICK,
-			.isa_msgid = st->st_msgid,
+			.isa_msgid = st->st_v1_msgid.id,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
 		};
 		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
@@ -855,11 +855,11 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	}
 
 	/* finish computing  HASH(1), inserting it in output */
-	fixup_v1_HASH(st, &hash_fixup, st->st_msgid, rbody.cur);
+	fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, rbody.cur);
 
 	/* encrypt message, except for fixed part of header */
 
-	init_phase2_iv(isakmp_sa, &st->st_msgid);
+	init_phase2_iv(isakmp_sa, &st->st_v1_msgid.id);
 	restore_new_iv(st, isakmp_sa->st_new_iv, isakmp_sa->st_new_iv_len);
 
 	if (!ikev1_encrypt_message(&rbody, st)) {
@@ -1242,7 +1242,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		st->st_try = 0; /* not our job to try again from start */
 
-		st->st_msgid = md->hdr.isa_msgid;
+		st->st_v1_msgid.id = md->hdr.isa_msgid;
 
 		restore_new_iv(st, b->new_iv, b->new_iv_len);
 
@@ -1469,7 +1469,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	}
 
 	libreswan_log("responding to Quick Mode proposal {msgid:%08" PRIx32 "}",
-		      st->st_msgid);
+		      st->st_v1_msgid.id);
 	{
 		char instbuf[END_BUF];
 		const struct connection *c = st->st_connection;
@@ -1560,7 +1560,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	}
 
 	/* Compute reply HASH(2) and insert in output */
-	fixup_v1_HASH(st, &hash_fixup, st->st_msgid, rbody.cur);
+	fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, rbody.cur);
 
 	/* Derive new keying material */
 	compute_keymats(st);
@@ -1784,7 +1784,7 @@ stf_status quick_inR1_outI2_tail(struct msg_digest *md,
 		}
 #endif
 
-		fixup_v1_HASH(st, &hash_fixup, st->st_msgid, NULL);
+		fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, NULL);
 	}
 
 	/* Derive new keying material */

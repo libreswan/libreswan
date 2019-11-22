@@ -1391,7 +1391,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				/* XXX Could send notification back */
 				return;
 			}
-			st->st_msgid_reserved = FALSE;
+			st->st_v1_msgid.reserved = FALSE;
 
 			init_phase2_iv(st, &md->hdr.isa_msgid);
 			new_iv_set = TRUE;
@@ -1484,7 +1484,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 				return;
 			}
-			st->st_msgid_reserved = FALSE;
+			st->st_v1_msgid.reserved = FALSE;
 
 			/* Quick Mode Initial IV */
 			init_phase2_iv(st, &md->hdr.isa_msgid);
@@ -2396,7 +2396,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					       "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
 					       enum_show(&ikev1_notify_names,
 							 p->payload.notification.isan_type),
-					       st->st_msgid,
+					       st->st_v1_msgid.id,
 					       p->payload.notification.isan_length);
 					DBG_dump_pbs(&p->pbs);
 				}
@@ -2585,18 +2585,18 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			st->st_seen_nortel_vid = TRUE;
 		}
 
-		if (!st->st_msgid_reserved &&
+		if (!st->st_v1_msgid.reserved &&
 		    IS_CHILD_SA(st) &&
-		    st->st_msgid != v1_MAINMODE_MSGID) {
+		    st->st_v1_msgid.id != v1_MAINMODE_MSGID) {
 			struct state *p1st = state_with_serialno(
 				st->st_clonedfrom);
 
 			if (p1st != NULL) {
 				/* do message ID reservation */
-				reserve_msgid(p1st, st->st_msgid);
+				reserve_msgid(p1st, st->st_v1_msgid.id);
 			}
 
-			st->st_msgid_reserved = TRUE;
+			st->st_v1_msgid.reserved = TRUE;
 		}
 
 		dbg("IKEv1: transition from state %s to state %s",
@@ -2623,7 +2623,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			libreswan_log("XAUTH completed; ModeCFG skipped as per configuration");
 			change_state(st, aggrmode ? STATE_AGGR_I2 : STATE_MAIN_I4);
-			st->st_msgid_phase15 = v1_MAINMODE_MSGID;
+			st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 		}
 
 		/* Schedule for whatever timeout is specified */

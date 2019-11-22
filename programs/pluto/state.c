@@ -1821,12 +1821,12 @@ struct v1_msgid_filter {
 static bool v1_msgid_predicate(struct state *st, void *context)
 {
 	struct v1_msgid_filter *filter = context;
-	dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
+	dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_v1_msgid.phase15=%08" PRIx32,
 	    st->st_serialno, filter->msgid,
-	    st->st_msgid, st->st_msgid_phase15);
-	if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
-	     filter->msgid == st->st_msgid_phase15) ||
-	    filter->msgid == st->st_msgid) {
+	    st->st_v1_msgid.id, st->st_v1_msgid.phase15);
+	if ((st->st_v1_msgid.phase15 != v1_MAINMODE_MSGID &&
+	     filter->msgid == st->st_v1_msgid.phase15) ||
+	    filter->msgid == st->st_v1_msgid.id) {
 		dbg("p15 state object #%lu found, in %s",
 		    st->st_serialno, st->st_state->name);
 		return true;
