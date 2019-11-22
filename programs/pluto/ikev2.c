@@ -3408,7 +3408,7 @@ void complete_v2_state_transition(struct state *st,
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:
 			dbg("Message ID: forcing a response received update");
-			v2_msgid_update_recv(ike, st, md);
+			v2_msgid_update_recv(ike, NULL, md);
 			break;
 		case MESSAGE_REQUEST:
 			dbg("Message ID: exchange zombie as no response?");

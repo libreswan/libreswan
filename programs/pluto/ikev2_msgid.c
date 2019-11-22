@@ -338,9 +338,20 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 {
 	/* extend msgid */
 	intmax_t msgid = md->hdr.isa_msgid;
+
+	/* save old value, and add shortcut to new */
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
-	const struct v2_msgid_wip old_receiver = receiver->st_v2_msgid_wip;
+
+	/*
+	 * If the receiver is known, save a copy of the old values.
+	 *
+	 * The receiver (CHILD SA) gets lost (deleted) when processing
+	 * an IKE_AUTH response and authentication fails.  When this
+	 * happens all that matters is that the IKE SA is updated.
+	 */
+	const struct v2_msgid_wip old_receiver =
+		receiver != NULL ? receiver->st_v2_msgid_wip : empty_v2_msgid_wip;
 
 	enum message_role receiving = v2_msg_role(md);
 
@@ -353,19 +364,21 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		 * when sending the response that things really
 		 * finish?
 		 */
-		if (DBGP(DBG_BASE) &&
-		    receiver->st_v2_msgid_wip.responder != msgid) {
-			FAIL_V2_MSGID(ike, receiver,
-				      "wip.responder=%jd == msgid=%jd",
-				      receiver->st_v2_msgid_wip.responder, msgid);
+		if (receiver != NULL) {
+			if (DBGP(DBG_BASE) &&
+			    receiver->st_v2_msgid_wip.responder != msgid) {
+				FAIL_V2_MSGID(ike, receiver,
+					      "wip.responder=%jd == msgid=%jd",
+					      receiver->st_v2_msgid_wip.responder, msgid);
+			}
+			receiver->st_v2_msgid_wip.responder = -1;
+		} else {
+			FAIL_V2_MSGID(ike, NULL, "XXX: message request receiver lost!?!");
 		}
-		receiver->st_v2_msgid_wip.responder = -1;
 		/* last request we received */
 		new->responder.recv = msgid;
 		break;
 	case MESSAGE_RESPONSE:
-		/* last response we received */
-		new->initiator.recv = msgid;
 		/*
 		 * Since the response has been successfully processed,
 		 * clear WIP.INITIATOR.  This way duplicate
@@ -377,28 +390,44 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		 * before update_recv() breaking the assumption that
 		 * WIP.INITIATOR is the old MSGID.
 		 */
-		if (old_receiver.initiator > msgid) {
-			/*
-			 * Hack around record 'n' send calling
-			 * update_sent() (setting WIP.INITIATOR to
-			 * the next request) midway through
-			 * processing.
-			 *
-			 * Getting rid of record 'n' send will fix
-			 * this hack.
-			 */
-			dbg_v2_msgid(ike, receiver, "XXX: receiver.wip.initiator %jd != receiver.msgid %jd - suspect record'n'called update_sent() before update_recv()",
-				     old_receiver.initiator, msgid);
-		} else {
-			if (DBGP(DBG_BASE) && old_receiver.initiator != msgid) {
-				FAIL_V2_MSGID(ike, receiver,
-					      "receiver.wip.initiator=%jd == receiver.msgid=%jd",
-					      old_receiver.initiator, msgid);
+		if (receiver != NULL) {
+			if (old_receiver.initiator > msgid) {
+				/*
+				 * Hack around record 'n' send calling
+				 * update_sent() (setting
+				 * WIP.INITIATOR to the next request)
+				 * midway through processing.
+				 *
+				 * Getting rid of record 'n' send will
+				 * fix this hack.
+				 */
+				dbg_v2_msgid(ike, receiver, "XXX: receiver.wip.initiator %jd != receiver.msgid %jd - suspect record'n'called update_sent() before update_recv()",
+					     old_receiver.initiator, msgid);
+			} else {
+				if (DBGP(DBG_BASE) && old_receiver.initiator != msgid) {
+					FAIL_V2_MSGID(ike, receiver,
+						      "receiver.wip.initiator=%jd == receiver.msgid=%jd",
+						      old_receiver.initiator, msgid);
+				}
+				receiver->st_v2_msgid_wip.initiator = -1;
 			}
-			receiver->st_v2_msgid_wip.initiator = -1;
+			/* this is what matters */
+			pexpect(receiver->st_v2_msgid_wip.initiator != msgid);
+		} else {
+			/*
+			 * For instance, the IKE_AUTH response is
+			 * rejected and the child (which was the
+			 * receiver) is deleted before this code is
+			 * called.
+			 *
+			 * XXX: if the IKE SA is made the receiver
+			 * this problem goes away.
+			 */
+			dbg("Message ID: IKE #%lu XXX: message response receiver lost; probably a deleted child",
+			    ike->sa.st_serialno);
 		}
-		/* this is what matters */
-		pexpect(receiver->st_v2_msgid_wip.initiator != msgid);
+		/* last response we received */
+		new->initiator.recv = msgid;
 		break;
 	case NO_MESSAGE:
 		dbg("Message ID: IKE #%lu skipping update_recv as MD is fake",
