@@ -42,6 +42,7 @@
 #include "ip_endpoint.h"
 #include "impair.h"
 #include "demux.h"	/* for struct msg_digest */
+#include "pending.h"
 
 bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
@@ -388,16 +389,8 @@ static void peerlog_raw(char *b)
 	}
 }
 
-static void whack_raw(struct lswlog *buf, enum rc_type rc)
+static void jambuf_to_whack_fd(struct lswlog *buf, fd_t wfd, enum rc_type rc)
 {
-	/*
-	 * Using globals so never from a helper thread
-	 */
-	passert(in_main_thread());
-	/* aka whack_log_p() */
-	fd_t wfd = (fd_p(whack_log_fd) ? whack_log_fd :
-		    cur_state != NULL ? cur_state->st_whack_sock :
-		    null_fd);
 	if (!fd_p(wfd)) {
 		return;
 	}
@@ -433,6 +426,26 @@ static void whack_raw(struct lswlog *buf, enum rc_type rc)
 
 	/* write to whack socket, but suppress possible SIGPIPE */
 	sendmsg(wfd.fd, &msg, MSG_NOSIGNAL);
+}
+
+static void whack_raw(jambuf_t *buf, enum rc_type rc)
+{
+	/*
+	 * Override more specific STATE WHACKFD with global whack.
+	 *
+	 * Why?  Because it matches existing behaviour (which is a
+	 * pretty lame reason).
+	 *
+	 * But does it make a difference?  Maybe when there's one
+	 * whack attached to an establishing state while
+	 * simultaneously there's a whack trying to delete that same
+	 * state?
+	 */
+	passert(in_main_thread()); /* whack_log_fd is global */
+	fd_t wfd = (fd_p(whack_log_fd) ? whack_log_fd :
+		    cur_state != NULL ? cur_state->st_whack_sock :
+		    null_fd);
+	jambuf_to_whack_fd(buf, wfd, rc);
 }
 
 /*
@@ -725,4 +738,18 @@ void init_rate_log(void)
 	enable_periodic_timer(EVENT_RESET_LOG_RATE_LIMIT,
 			      reset_log_rate_limit,
 			      RESET_LOG_RATE_LIMIT);
+}
+
+void log_pending(const struct pending *pending, const char *message, ...)
+{
+	LSWBUF(buf) {
+		jam_log_prefix(buf, NULL/*st*/, pending->connection/*c*/, NULL/*sender*/);
+		va_list ap;
+		va_start(ap, message);
+		jam_va_list(buf, message, ap);
+		va_end(ap);
+		lswlog_to_log_stream(buf);
+		jambuf_to_whack_fd(buf, pending->whack_sock, RC_COMMENT);
+		/* XXX: also WHACK_LOG_FD if different? */
+	}
 }

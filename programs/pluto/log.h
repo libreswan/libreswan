@@ -30,6 +30,7 @@
 struct state;
 struct connection;
 struct msg_digest;
+struct pending;
 
 /* moved common code to library file */
 #include "libreswan/passert.h"
@@ -95,6 +96,18 @@ extern void log_pop_from(ip_address old_from, where_t where);
 
 #define push_cur_from(NEW) log_push_from(NEW, HERE)
 #define pop_cur_from(OLD) log_pop_from(OLD, HERE)
+
+/*
+ * Direct a log message, including applicable prefix, to the log file.
+ * If whack is attached to the object, send the message to whack at
+ * level RC_COMMENT as well.
+ *
+ * Unlike libreswan_log() et.al., this never logs to the global
+ * WHACK_LOG_FD.  It should probably be tweaked to, when WHACK_LOG_FD
+ * is open and different to the object's whack-fd, also log there.
+ */
+
+void log_pending(const struct pending *pending, const char *msg, ...) PRINTF_LIKE(2);
 
 /*
  * Direct a log message, possibly prefix with the supplied context
