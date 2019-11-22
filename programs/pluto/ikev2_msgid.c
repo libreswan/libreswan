@@ -25,50 +25,96 @@
 #include "state_db.h"		/* for ike_sa_by_serialno() */
 
 /*
- * Logging utilities, can these share code?
+ * Logging.
  */
 
-static void jam_v2_msgid(struct lswlog *buf,
-			 struct ike_sa *ike, struct state *st,
-			 const char *fmt, va_list ap)
+static const char *jam_prefix(jambuf_t *buf, struct ike_sa *ike, struct state *wip_sa)
 {
-	jam(buf, "Message ID: #%lu", ike->sa.st_serialno);
-	if (st != NULL && IS_CHILD_SA(st)) {
-		jam(buf, ".#%lu", st->st_serialno);
+	jam(buf, "Message ID: ");
+	const char *who;
+	if (wip_sa == NULL) {
+		who = "lost";
+		jam(buf, "CHILD #%lu.#LOST", ike->sa.st_serialno);
+	} else if (IS_CHILD_SA(wip_sa)) {
+		who = "child";
+		jam(buf, "CHILD #%lu.#%lu", ike->sa.st_serialno, wip_sa->st_serialno);
+	} else {
+		who = "ike";
+		jam(buf, "IKE #%lu", ike->sa.st_serialno);
 	}
-	jam(buf, " ");
-	jam_va_list(buf, fmt, ap);
-	jam(buf, ";");
-	const struct v2_msgid_windows *w = &ike->sa.st_v2_msgid_windows;
-	jam(buf, " initiator.sent=%jd", w->initiator.sent);
-	jam(buf, " initiator.recv=%jd", w->initiator.recv);
-	jam(buf, " responder.sent=%jd", w->responder.sent);
-	jam(buf, " responder.recv=%jd", w->responder.recv);
-	if (st != NULL) {
-		const struct v2_msgid_wip *wip = &st->st_v2_msgid_wip;
-		jam(buf, " wip.initiator=%jd", wip->initiator);
-		jam(buf, " wip.responder=%jd", wip->responder);
+	return who;
+}
+
+static void jam_ike_window(jambuf_t *buf, const char *what,
+			   const struct v2_msgid_window *old,
+			   const struct v2_msgid_window *new)
+{
+	jam(buf, " ike.%s.sent=%jd", what, old->sent);
+	if (new != NULL && old->sent != new->sent) {
+		jam(buf, "->%jd", new->sent);
+	}
+	jam(buf, " ike.%s.recv=%jd", what, old->recv);
+	if (new != NULL && old->recv != new->recv) {
+		jam(buf, "->%jd", new->recv);
 	}
 }
 
-void dbg_v2_msgid(struct ike_sa *ike, struct state *st,
+static void jam_ike_windows(jambuf_t *buf,
+			    const struct v2_msgid_windows *old,
+			    const struct v2_msgid_windows *new)
+{
+	jam_ike_window(buf, "initiator", &old->initiator,
+		       new != NULL ? &new->initiator : NULL);
+	jam_ike_window(buf, "responder", &old->responder,
+		       new != NULL ? &new->responder : NULL);
+}
+
+static void jam_wip_sa(jambuf_t *buf, const char *who,
+		       const struct v2_msgid_wip *old,
+		       const struct v2_msgid_wip *new)
+{
+	jam(buf, " %s.wip.initiator=%jd", who, old->initiator);
+	if (new != NULL && old->initiator != new->initiator) {
+		jam(buf, "->%jd", new->initiator);
+	}
+	jam(buf, " %s.wip.responder=%jd", who, old->responder);
+	if (new != NULL && old->responder != new->responder) {
+		jam(buf, "->%jd", new->responder);
+	}
+}
+
+static void jam_v2_msgid(struct lswlog *buf,
+			 struct ike_sa *ike, struct state *wip_sa,
+			 const char *fmt, va_list ap)
+{
+	const char *who = jam_prefix(buf, ike, wip_sa);
+	jam(buf, " ");
+	jam_va_list(buf, fmt, ap);
+	jam(buf, ";");
+	jam_ike_windows(buf, &ike->sa.st_v2_msgid_windows, NULL);
+	if (wip_sa != NULL) {
+		jam_wip_sa(buf, who, &wip_sa->st_v2_msgid_wip, NULL);
+	}
+}
+
+void dbg_v2_msgid(struct ike_sa *ike, struct state *wip_sa,
 		  const char *fmt, ...)
 {
 	LSWDBGP(DBG_BASE, buf) {
 		va_list ap;
 		va_start(ap, fmt);
-		jam_v2_msgid(buf, ike, st, fmt, ap);
+		jam_v2_msgid(buf, ike, wip_sa, fmt, ap);
 		va_end(ap);
 	}
 }
 
-void fail_v2_msgid(where_t where, struct ike_sa *ike, struct state *st,
+void fail_v2_msgid(where_t where, struct ike_sa *ike, struct state *wip_sa,
 		   const char *fmt, ...)
 {
 	LSWLOG_PEXPECT_WHERE(where, buf) {
 		va_list ap;
 		va_start(ap, fmt);
-		jam_v2_msgid(buf, ike, st, fmt, ap);
+		jam_v2_msgid(buf, ike, wip_sa, fmt, ap);
 		va_end(ap);
 	}
 }
@@ -81,55 +127,29 @@ void fail_v2_msgid(where_t where, struct ike_sa *ike, struct state *st,
  * between calls.
  */
 
-static void jam_msgids(struct lswlog *buf, const char *what,
-		       enum message_role message, intmax_t msgid,
-		       struct ike_sa *ike, const struct v2_msgid_windows *old_windows,
-		       struct state *wip, const struct v2_msgid_wip *old_wip)
-
+static void dbg_msgids_update(const char *what,
+			      enum message_role message, intmax_t msgid,
+			      struct ike_sa *ike, const struct v2_msgid_windows *old_windows,
+			      struct state *wip_sa, const struct v2_msgid_wip *old_wip)
 {
-	jam(buf, "Message ID: %s #%lu",
-	    what, ike->sa.st_serialno);
-	if (IS_CHILD_SA(wip)) {
-		jam(buf, ".#%lu", wip->st_serialno);
-	}
+	if (DBGP(DBG_BASE)) {
+		LSWLOG_DEBUG(buf) {
+			const char *who = jam_prefix(buf, ike, wip_sa);
+			jam(buf, " %s", what);
 
-	switch (message) {
-	case MESSAGE_REQUEST: jam(buf, " request %jd", msgid); break;
-	case MESSAGE_RESPONSE: jam(buf, " response %jd", msgid); break;
-	case NO_MESSAGE: break;
-	default: bad_case(message);
-	}
+			switch (message) {
+			case MESSAGE_REQUEST: jam(buf, " request %jd", msgid); break;
+			case MESSAGE_RESPONSE: jam(buf, " response %jd", msgid); break;
+			case NO_MESSAGE: break;
+			default: bad_case(message);
+			}
 
-	jam(buf, "; ike:");
+			jam_ike_windows(buf, old_windows, &ike->sa.st_v2_msgid_windows);
 
-	jam(buf, " initiator.sent=%jd", old_windows->initiator.sent);
-	if (old_windows->initiator.sent != ike->sa.st_v2_msgid_windows.initiator.sent) {
-		jam(buf, "->%jd", ike->sa.st_v2_msgid_windows.initiator.sent);
-	}
-	jam(buf, " initiator.recv=%jd", old_windows->initiator.recv);
-	if (old_windows->initiator.recv != ike->sa.st_v2_msgid_windows.initiator.recv) {
-		jam(buf, "->%jd", ike->sa.st_v2_msgid_windows.initiator.recv);
-	}
-
-	jam(buf, " responder.sent=%jd", old_windows->responder.sent);
-	if (old_windows->responder.sent != ike->sa.st_v2_msgid_windows.responder.sent) {
-		jam(buf, "->%jd", ike->sa.st_v2_msgid_windows.responder.sent);
-	}
-	jam(buf, " responder.recv=%jd", old_windows->responder.recv);
-	if (old_windows->responder.recv != ike->sa.st_v2_msgid_windows.responder.recv) {
-		jam(buf, "->%jd", ike->sa.st_v2_msgid_windows.responder.recv);
-	}
-
-	if (IS_CHILD_SA(wip)) {
-		jam(buf, "; child:");
-	}
-	jam(buf, " wip.initiator=%jd", old_wip->initiator);
-	if (old_wip->initiator != wip->st_v2_msgid_wip.initiator) {
-		jam(buf, "->%jd", wip->st_v2_msgid_wip.initiator);
-	}
-	jam(buf, " wip.responder=%jd", old_wip->responder);
-	if (old_wip->responder != wip->st_v2_msgid_wip.responder) {
-		jam(buf, "->%jd", wip->st_v2_msgid_wip.responder);
+			if (wip_sa != NULL) {
+				jam_wip_sa(buf, who, old_wip, &wip_sa->st_v2_msgid_wip);
+			}
+		}
 	}
 }
 
@@ -163,14 +183,10 @@ void v2_msgid_init_ike(struct ike_sa *ike)
 	ike->sa.st_v2_msgid_windows = empty_v2_msgid_windows;
 	struct v2_msgid_wip old_wip = ike->sa.st_v2_msgid_wip;
 	ike->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
-	if (DBGP(DBG_BASE)) {
-		LSWLOG_DEBUG(buf) {
-			/* pretend there's a sender */
-			jam_msgids(buf, "init_ike", NO_MESSAGE, -1,
-				   ike, &old_windows,
-				   &ike->sa, &old_wip);
-		}
-	}
+	/* pretend there's a sender */
+	dbg_msgids_update("initialize-ike", NO_MESSAGE, -1,
+			  ike, &old_windows,
+			  &ike->sa, &old_wip);
 }
 
 void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child)
@@ -178,14 +194,10 @@ void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child)
 	child->sa.st_v2_msgid_windows = empty_v2_msgid_windows;
 	struct v2_msgid_wip old_child = child->sa.st_v2_msgid_wip;
 	child->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
-	if (DBGP(DBG_BASE)) {
-		LSWLOG_DEBUG(buf) {
-			/* pretend there's a sender */
-			jam_msgids(buf, "init_child", NO_MESSAGE, -1,
-				   ike, &ike->sa.st_v2_msgid_windows, /* unchanged */
-				   &child->sa, &old_child);
-		}
-	}
+	/* pretend there's a sender */
+	dbg_msgids_update("initialize-child", NO_MESSAGE, -1,
+			  ike, &ike->sa.st_v2_msgid_windows, /* unchanged */
+			  &child->sa, &old_child);
 }
 
 void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
@@ -206,13 +218,9 @@ void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
 			      responder->st_v2_msgid_wip.responder);
 	}
 	responder->st_v2_msgid_wip.responder = msgid;
-	if (DBGP(DBG_BASE)) {
-		LSWLOG_DEBUG(buf) {
-			jam_msgids(buf, "start-responder", role, msgid,
-				   ike, &ike->sa.st_v2_msgid_windows,
-				   responder, &wip);
-		}
-	}
+	dbg_msgids_update("start-responder", role, msgid,
+			  ike, &ike->sa.st_v2_msgid_windows,
+			  responder, &wip);
 }
 
 /*
@@ -240,13 +248,9 @@ void v2_msgid_switch_responder(struct ike_sa *ike, struct child_sa *child,
 				      ike->sa.st_v2_msgid_wip.responder, msgid);
 		}
 		ike->sa.st_v2_msgid_wip.responder = -1;
-		if (DBGP(DBG_BASE)) {
-			LSWLOG_DEBUG(buf) {
-				jam_msgids(buf, "switch-from", role, msgid,
-					   ike, &ike->sa.st_v2_msgid_windows,
-					   &ike->sa, &wip);
-			}
-		}
+		dbg_msgids_update("switch-responder-from", role, msgid,
+				  ike, &ike->sa.st_v2_msgid_windows,
+				  &ike->sa, &wip);
 	}
 	/* in with the new */
 	{
@@ -258,13 +262,9 @@ void v2_msgid_switch_responder(struct ike_sa *ike, struct child_sa *child,
 				      child->sa.st_v2_msgid_wip.responder);
 		}
 		child->sa.st_v2_msgid_wip.responder = msgid;
-		if (DBGP(DBG_BASE)) {
-			LSWLOG_DEBUG(buf) {
-				jam_msgids(buf, "switch-to", role, msgid,
-					   ike, &ike->sa.st_v2_msgid_windows,
-					   &child->sa, &wip);
-			}
-		}
+		dbg_msgids_update("switch-responder-to", role, msgid,
+				  ike, &ike->sa.st_v2_msgid_windows,
+				  &child->sa, &wip);
 	}
 }
 
@@ -286,13 +286,9 @@ void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 				      ike->sa.st_v2_msgid_wip.initiator, msgid);
 		}
 		ike->sa.st_v2_msgid_wip.initiator = -1;
-		if (DBGP(DBG_BASE)) {
-			LSWLOG_DEBUG(buf) {
-				jam_msgids(buf, "switch-from", role, msgid,
-					   ike, &ike->sa.st_v2_msgid_windows,
-					   &ike->sa, &wip);
-			}
-		}
+		dbg_msgids_update("switch-initiator-from", role, msgid,
+				  ike, &ike->sa.st_v2_msgid_windows,
+				  &ike->sa, &wip);
 	}
 	/* in with the new */
 	{
@@ -304,13 +300,9 @@ void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 				      child->sa.st_v2_msgid_wip.initiator);
 		}
 		child->sa.st_v2_msgid_wip.initiator = msgid;
-		if (DBGP(DBG_BASE)) {
-			LSWLOG_DEBUG(buf) {
-				jam_msgids(buf, "switch-to", role, msgid,
-					   ike, &ike->sa.st_v2_msgid_windows,
-					   &child->sa, &wip);
-			}
-		}
+		dbg_msgids_update("switch-initiator-to", role, msgid,
+				  ike, &ike->sa.st_v2_msgid_windows,
+				  &child->sa, &wip);
 	}
 }
 
@@ -336,13 +328,9 @@ void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
 			      responder->st_v2_msgid_wip.responder, msgid);
 	}
 	responder->st_v2_msgid_wip.responder = -1;
-	if (DBGP(DBG_BASE)) {
-		LSWLOG_DEBUG(buf) {
-			jam_msgids(buf, "cancel-responder", role, msgid,
-				   ike, &ike->sa.st_v2_msgid_windows,
-				   responder, &wip);
-		}
-	}
+	dbg_msgids_update("cancel-responder", role, msgid,
+			  ike, &ike->sa.st_v2_msgid_windows,
+			  responder, &wip);
 }
 
 void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
@@ -420,12 +408,8 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		bad_case(receiving);
 	}
 
-	if (DBGP(DBG_BASE)) {
-		LSWLOG_DEBUG(buf) {
-			jam_msgids(buf, "recv", receiving, msgid,
-				   ike, &old, receiver, &old_receiver);
-		}
-	}
+	dbg_msgids_update("update-received", receiving, msgid,
+			  ike, &old, receiver, &old_receiver);
 }
 
 void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
@@ -485,12 +469,8 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		bad_case(sending);
 	}
 
-	if (DBGP(DBG_BASE)) {
-		LSWLOG_DEBUG(buf) {
-			jam_msgids(buf, "sent", sending, msgid,
-				   ike, &old, sender, &old_sender);
-		}
-	}
+	dbg_msgids_update("update-sent", sending, msgid,
+			  ike, &old, sender, &old_sender);
 }
 
 void v2_msgid_free(struct state *st)
@@ -567,14 +547,16 @@ void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
 	 */
 	if (initiator->pending != NULL) {
 		intmax_t unack = (initiator->sent - initiator->recv);
+		/* if this returns NULL, thats ok; will log "LOST" */
+		struct state *wip_sa = state_by_serialno(initiator->pending->st_serialno);
 		if (unack < ike->sa.st_connection->ike_window) {
-			dbg_v2_msgid(ike, &ike->sa, "wakeing IKE SA for next message initiator (unack %jd)", unack);
+			dbg_v2_msgid(ike, wip_sa, "wakeing IKE SA for next initiator (unack %jd)", unack);
 			schedule_callback(__func__, ike->sa.st_serialno,
 					  initiate_next, NULL);
 		} else {
-			dbg_v2_msgid(ike, NULL, "next message initiator blocked by outstanding response (unack %jd)", unack);
+			dbg_v2_msgid(ike, wip_sa, "next initiator blocked by outstanding response (unack %jd)", unack);
 		}
 	} else {
-		dbg_v2_msgid(ike, NULL, "no pending message initiators to schedule");
+		dbg_v2_msgid(ike, &ike->sa, "no pending message initiators to schedule");
 	}
 }
