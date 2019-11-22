@@ -84,6 +84,18 @@ void add_pending(fd_t whack_sock,
 		}
 	}
 
+	DBG(DBG_CONTROL, {
+		ipstr_buf b;
+		char ciba[CONN_INST_BUF];
+		char cibb[CONN_INST_BUF];
+		struct connection *cb = ike->sa.st_connection;
+		DBG_log("Queuing pending IPsec SA negotiating with %s \"%s\"%s IKE SA #%lu \"%s\"%s",
+			ipstr(&c->spd.that.host_addr, &b),
+			c->name, fmt_conn_instance(c, ciba),
+			ike->sa.st_serialno,
+			cb->name, fmt_conn_instance(cb, cibb));
+		});
+
 	p = alloc_thing(struct pending, "struct pending");
 	p->whack_sock = dup_any(whack_sock); /*on heap*/
 	p->ike = ike;
@@ -100,13 +112,6 @@ void add_pending(fd_t whack_sock,
 			    p->uctx->sec_ctx_value,
 			    p->uctx->ctx.ctx_len));
 	}
-
-	address_buf b;
-	connection_buf cibb;
-	struct connection *cb = ike->sa.st_connection;
-	log_pending(p, "queuing pending IPsec SA negotiating with %s IKE SA #%lu "PRI_CONNECTION"",
-		    ipstr(&c->spd.that.host_addr, &b),
-		    ike->sa.st_serialno, pri_connection(cb, &cibb));
 
 	host_pair_enqueue_pending(c, p, &p->next);
 }
