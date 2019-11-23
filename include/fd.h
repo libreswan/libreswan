@@ -52,6 +52,8 @@ void close_any_fd(fd_t *fd, where_t where);
  */
 bool fd_p(fd_t fd);
 
+bool same_fd(fd_t l, fd_t r);
+
 /*
  * printf("fd "PRI_FD, PRI_fd(whackfd))
  *
@@ -62,4 +64,3 @@ bool fd_p(fd_t fd);
 #define PRI_fd(FD) ((FD).fd)
 
 #endif
- 

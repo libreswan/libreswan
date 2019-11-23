@@ -123,19 +123,6 @@ void add_pending(fd_t whack_sock,
  * We go to some trouble to tell each whack, but to not tell it twice.
  */
 
-static bool same_fd(const struct stat *stst, fd_t fd)
-{
-	struct stat pst;
-	if (!fd_p(fd)) {
-		return false;
-	} else if (fstat(fd.fd, &pst) != 0) {
-		return false;
-	} else {
-		return (stst->st_dev == pst.st_dev &&
-			stst->st_ino == pst.st_ino);
-	}
-}
-
 void release_pending_whacks(struct state *st, err_t story)
 {
 	/*
@@ -145,23 +132,10 @@ void release_pending_whacks(struct state *st, err_t story)
 	 *
 	 * If the socket is valid, close it.
 	 */
-	struct stat stst;
 	if (!fd_p(st->st_whack_sock)) {
 		dbg("%s: state #%lu has no whack fd",
 		     __func__, st->st_serialno);
-		zero(&stst);
-	} else if (fstat(st->st_whack_sock.fd, &stst) != 0) {
-		int e = errno;
-		LSWDBGP(DBG_CONTROL, buf) {
-			lswlogf(buf, "%s: state #%lu stat("PRI_FD") failed ",
-				__func__, st->st_serialno, PRI_fd(st->st_whack_sock));
-			jam(buf, " "PRI_ERRNO, pri_errno(e));
-		}
-		/* presumably dead */
-		st->st_whack_sock = null_fd;
-		zero(&stst);
-	} else {
-		release_any_whack(st, HERE, "releasing pending whacks");
+		return;
 	}
 
 	/*
@@ -178,11 +152,11 @@ void release_pending_whacks(struct state *st, err_t story)
 	struct ike_sa *ike_with_same_whack = NULL;
 	if (IS_CHILD_SA(st)) {
 		struct ike_sa *ike = ike_sa(st);
-		if (same_fd(&stst, ike->sa.st_whack_sock)) {
+		if (same_fd(st->st_whack_sock, ike->sa.st_whack_sock)) {
 			ike_with_same_whack = ike;
 			release_any_whack(&ike->sa, HERE, "release pending whacks state's IKE SA");
 		} else {
-			dbg("isolated child, no point looking for pending children");
+			release_any_whack(st, HERE, "releasing isolated child");
 			return;
 		}
 	} else {
@@ -210,7 +184,7 @@ void release_pending_whacks(struct state *st, err_t story)
 		    PRI_fd(p->ike->sa.st_whack_sock),
 		    PRI_fd(p->whack_sock));
 		if (p->ike == ike_with_same_whack && fd_p(p->whack_sock)) {
-			if (!same_fd(&stst, p->whack_sock)) {
+			if (!same_fd(st->st_whack_sock, p->whack_sock)) {
 				passert(!fd_p(whack_log_fd));
 				whack_log_fd = p->whack_sock;
 				whack_log(RC_COMMENT,
@@ -221,6 +195,7 @@ void release_pending_whacks(struct state *st, err_t story)
 			close_any(&p->whack_sock);/*on-heap*/
 		}
 	}
+	release_any_whack(st, HERE, "releasing child");
 }
 
 /*

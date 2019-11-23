@@ -15,6 +15,7 @@
 
 #include <unistd.h>
 #include <errno.h>
+#include <sys/stat.h>
 
 #include "lswlog.h"
 #include "fd.h"
@@ -29,6 +30,29 @@ const fd_t null_fd = {
 bool fd_p(fd_t fd)
 {
 	return fd.fd >= 0;
+}
+
+bool same_fd(fd_t l, fd_t r)
+{
+	if (!fd_p(l) || !fd_p(r)) {
+		return false;
+	}
+	struct stat l_stat;
+	if (fstat(l.fd, &l_stat) != 0) {
+		int e = errno;
+		dbg("stat("PRI_FD") failed "PRI_ERRNO"",
+		    PRI_fd(l), pri_errno(e));
+		return false;
+	}
+	struct stat r_stat;
+	if (fstat(r.fd, &r_stat) != 0) {
+		int e = errno;
+		dbg("stat("PRI_FD") failed "PRI_ERRNO"",
+		    PRI_fd(r), pri_errno(e));
+		return false;
+	}
+	return (l_stat.st_dev == r_stat.st_dev &&
+		l_stat.st_ino == r_stat.st_ino);
 }
 
 fd_t new_fd(int fd, const char *code, where_t where)
