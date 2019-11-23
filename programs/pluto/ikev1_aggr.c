@@ -44,6 +44,7 @@
 #include "fd.h"
 #include "hostpair.h"
 #include "ikev1_message.h"
+#include "pending.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
@@ -1015,7 +1016,7 @@ void aggr_outI1(fd_t whack_sock,
 	if (HAS_IPSEC_POLICY(policy))
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
-			    uctx);
+			    uctx, true/*part of initiate*/);
 
 	if (predecessor == NULL) {
 		libreswan_log("initiating Aggressive Mode");

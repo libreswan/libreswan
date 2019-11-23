@@ -21,6 +21,15 @@
 #include "monotime.h"
 #include "fd.h"
 
+void add_pending(fd_t whack_sock,
+		 struct ike_sa *ike,
+		 struct connection *c,
+		 lset_t policy,
+		 unsigned long try,
+		 so_serial_t replacing,
+		 struct xfrm_user_sec_ctx_ike *uctx,
+		 bool part_of_initiate);
+
 void flush_pending_by_connection(const struct connection *c);
 bool in_pending_use(const struct connection *c);
 void show_pending_phase2(const struct connection *c, const struct ike_sa *ike);
@@ -44,6 +53,7 @@ struct pending {
 	unsigned long try;
 	so_serial_t replacing;
 	monotime_t pend_time;
+	bool part_of_initiate;
 	struct xfrm_user_sec_ctx_ike *uctx;
 	struct pending *next;
 };

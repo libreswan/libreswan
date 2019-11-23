@@ -233,7 +233,8 @@ void ipsecdoi_initiate(fd_t whack_sock,
 			/* leave our Phase 2 negotiation pending */
 			add_pending(whack_sock, pexpect_ike_sa(st),
 				    c, policy, try,
-				    replacing, uctx);
+				    replacing, uctx,
+				    false/*part of initiate*/);
 		} else if (st->st_ike_version == IKEv2) {
 			struct pending p = {
 				.whack_sock = whack_sock, /*on-stack*/

@@ -740,6 +740,19 @@ void init_rate_log(void)
 			      RESET_LOG_RATE_LIMIT);
 }
 
+
+void dbg_pending(const struct pending *pending, const char *message, ...)
+{
+	LSWDBGP(DBG_BASE, buf) {
+		jam_log_prefix(buf, NULL/*st*/, pending->connection/*c*/, NULL/*sender*/);
+		va_list ap;
+		va_start(ap, message);
+		jam_va_list(buf, message, ap);
+		va_end(ap);
+		lswlog_to_debug_stream(buf);
+	}
+}
+
 void log_pending(const struct pending *pending, const char *message, ...)
 {
 	LSWBUF(buf) {

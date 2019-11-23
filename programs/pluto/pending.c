@@ -62,9 +62,9 @@ void add_pending(fd_t whack_sock,
 		 struct connection *c,
 		 lset_t policy,
 		 unsigned long try,
-		 so_serial_t replacing
-		 , struct xfrm_user_sec_ctx_ike *uctx
-		 )
+		 so_serial_t replacing,
+		 struct xfrm_user_sec_ctx_ike *uctx,
+		 bool part_of_initiate)
 {
 	struct pending *p, **pp;
 
@@ -84,18 +84,6 @@ void add_pending(fd_t whack_sock,
 		}
 	}
 
-	DBG(DBG_CONTROL, {
-		ipstr_buf b;
-		char ciba[CONN_INST_BUF];
-		char cibb[CONN_INST_BUF];
-		struct connection *cb = ike->sa.st_connection;
-		DBG_log("Queuing pending IPsec SA negotiating with %s \"%s\"%s IKE SA #%lu \"%s\"%s",
-			ipstr(&c->spd.that.host_addr, &b),
-			c->name, fmt_conn_instance(c, ciba),
-			ike->sa.st_serialno,
-			cb->name, fmt_conn_instance(cb, cibb));
-		});
-
 	p = alloc_thing(struct pending, "struct pending");
 	p->whack_sock = dup_any(whack_sock); /*on heap*/
 	p->ike = ike;
@@ -104,6 +92,7 @@ void add_pending(fd_t whack_sock,
 	p->try = try;
 	p->replacing = replacing;
 	p->pend_time = mononow();
+	p->part_of_initiate = part_of_initiate; /* useful */
 	p->uctx = NULL;
 	if (uctx != NULL) {
 		p->uctx = clone_thing(*uctx, "pending security context");
@@ -112,6 +101,18 @@ void add_pending(fd_t whack_sock,
 			    p->uctx->sec_ctx_value,
 			    p->uctx->ctx.ctx_len));
 	}
+
+	/*
+	 * If this is part of an initiate then there's already enough
+	 * going on; no need to log this action.
+	*/
+	log_pending_fn *log = part_of_initiate ? dbg_pending : log_pending;
+	address_buf b;
+	connection_buf cibb;
+	struct connection *cb = ike->sa.st_connection;
+	log(p, "queuing pending IPsec SA negotiating with %s IKE SA #%lu "PRI_CONNECTION"",
+	    ipstr(&c->spd.that.host_addr, &b),
+	    ike->sa.st_serialno, pri_connection(cb, &cibb));
 
 	host_pair_enqueue_pending(c, p, &p->next);
 }

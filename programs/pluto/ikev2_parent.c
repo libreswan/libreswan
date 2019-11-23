@@ -547,8 +547,8 @@ void ikev2_parent_outI1(fd_t whack_sock,
 				"Labeled ipsec is not supported with ikev2 yet");
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
-			    st->sec_ctx
-			    );
+			    st->sec_ctx,
+			    true/*part of initiate*/);
 	}
 
 	if (predecessor != NULL) {

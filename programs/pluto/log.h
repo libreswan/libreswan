@@ -107,7 +107,9 @@ extern void log_pop_from(ip_address old_from, where_t where);
  * is open and different to the object's whack-fd, also log there.
  */
 
-void log_pending(const struct pending *pending, const char *msg, ...) PRINTF_LIKE(2);
+typedef void (log_pending_fn)(const struct pending *pending, const char *msg, ...) PRINTF_LIKE(2);
+log_pending_fn log_pending;
+log_pending_fn dbg_pending;
 
 /*
  * Direct a log message, possibly prefix with the supplied context

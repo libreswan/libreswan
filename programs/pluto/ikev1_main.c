@@ -119,7 +119,8 @@ void main_outI1(fd_t whack_sock,
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ?
 			    SOS_NOBODY : predecessor->st_serialno,
-			    uctx);
+			    uctx,
+			    true/* part of initiate */);
 	}
 
 	/* For main modes states, sec ctx is always null */

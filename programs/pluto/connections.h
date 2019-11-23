@@ -517,14 +517,6 @@ const char *str_connection_instance(const struct connection *c,
 
 struct pending; /* forward declaration (opaque outside connections.c) */
 
-extern void add_pending(fd_t whack_sock,
-			struct ike_sa *ike,
-			struct connection *c,
-			lset_t policy,
-			unsigned long try,
-			so_serial_t replacing,
-			struct xfrm_user_sec_ctx_ike *uctx);
-
 extern void release_pending_whacks(struct state *st, err_t story);
 extern void unpend(struct ike_sa *ike, struct connection *cc);
 extern void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike);

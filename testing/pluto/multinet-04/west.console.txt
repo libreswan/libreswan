@@ -36,6 +36,7 @@ west #
 000 initiating all conns with alias='westnets-eastnet'
 002 "westnets-eastnet/2x0" #1: initiating Main Mode
 1v1 "westnets-eastnet/2x0" #1: STATE_MAIN_I1: sent MI1, expecting MR1
+000 "westnets-eastnet/1x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "westnets-eastnet/2x0"
 1v1 "westnets-eastnet/2x0" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 1v1 "westnets-eastnet/2x0" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnets-eastnet/2x0" #1: Peer ID is ID_FQDN: '@east'
