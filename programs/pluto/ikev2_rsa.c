@@ -54,11 +54,10 @@
 #include "ietf_constants.h"
 #include "ikev2_sighash.h"
 
-static const u_char der_digestinfo[] = {
+static const uint8_t rsa_sha1_der_header[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
 	0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14
 };
-static const int der_digestinfo_len = sizeof(der_digestinfo);
 
 bool ikev2_calculate_rsa_hash(struct state *st,
 			      enum original_role role,
@@ -80,14 +79,6 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
 	const struct RSA_private_key *k = &pks->u.RSA_private_key;
 	unsigned int sz = k->pub.k;
-
-	/*
-	 * Allocate large enough space for any digest.
-	 * Bound could be tightened because the signature octets are
-	 * only concatenated to a SHA1 hash.
-	 */
-	unsigned char signed_octets[MAX_DIGEST_LEN + RSA_SHA1_SIGNED_OCTETS];
-	size_t signed_len;
 
 	/* XXX: table lookup? */
 	const struct hash_desc *hasher;
@@ -112,13 +103,20 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 						     st->st_firstpacket_me,
 						     hasher);
 
+	/*
+	 * Allocate large enough space for any digest.  Bound could be
+	 * tightened because the signature octets are only
+	 * concatenated to a SHA1.
+	 */
+	unsigned char signed_octets[sizeof(rsa_sha1_der_header) + sizeof(hash.ptr/*array*/)];
+	size_t signed_len;
+
 	switch (hash_algo) {
 	case IKEv2_AUTH_HASH_SHA1:
 		/* old style RSA with SHA1 */
-		passert(der_digestinfo_len + hash.len <= sizeof(signed_octets));
-		memcpy(signed_octets, der_digestinfo, der_digestinfo_len);
-		memcpy(signed_octets + der_digestinfo_len, hash.ptr, hash.len);
-		signed_len = der_digestinfo_len + hash.len;
+		memcpy(signed_octets, &rsa_sha1_der_header, sizeof(rsa_sha1_der_header));
+		memcpy(signed_octets + sizeof(rsa_sha1_der_header), hash.ptr, hash.len);
+		signed_len = sizeof(rsa_sha1_der_header) + hash.len;
 		break;
 	case IKEv2_AUTH_HASH_SHA2_256:
 	case IKEv2_AUTH_HASH_SHA2_384:
