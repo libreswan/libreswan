@@ -132,18 +132,22 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 		       what, type, received_hash.len, st->st_oakley.ta_prf->prf_output_size);
 		return false;
 	}
-	/* compute the expected hash */
-	uint8_t hash_val[MAX_DIGEST_LEN];
-	passert(sizeof(hash_val) >= st->st_oakley.ta_prf->prf_output_size);
+	/*
+	 * Create a fixup pointing at COMPUTED_HASH so that
+	 * fixup_v1_HASH() will fill it in.
+	 */
+	struct crypt_mac computed_hash = {
+		.len = st->st_oakley.ta_prf->prf_output_size,
+	};
 	struct v1_hash_fixup expected = {
-		.hash_data = chunk(hash_val, st->st_oakley.ta_prf->prf_output_size),
+		.hash_data = chunk(computed_hash.ptr, computed_hash.len),
 		.body = received_hash.ptr + received_hash.len,
 		.what = what,
 		.hash_type = type,
 	};
 	fixup_v1_HASH(st, &expected, md->hdr.isa_msgid, md->message_pbs.roof);
 	/* does it match? */
-	if (!hunk_eq(received_hash, expected.hash_data)) {
+	if (!hunk_eq(received_hash, computed_hash)) {
 		if (DBGP(DBG_BASE)) {
 			DBG_log("received %s HASH_DATA:", what);
 			DBG_dump_hunk(NULL, received_hash);
