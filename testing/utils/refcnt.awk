@@ -21,6 +21,10 @@
 #	[|:] addref .*@0xADDRESS[(NNN)].*
 #	[|:] delref .*@0xADDRESS[(NNN)].*
 #
+# and optionally:
+#
+#       [|:] freeref .*@0xADDRESS[(NNN)].*
+#
 
 BEGIN {
     status = 0
@@ -38,8 +42,8 @@ func debug(what) {
     }
 }
 
-func error(what, key, message) {
-    print "ERROR: " what ": '" key "' " message
+func error(key, message) {
+    print "ERROR: " op ": '" key "' " message
     if (key in history) {
 	print history[key]
     }
@@ -67,12 +71,12 @@ func error(what, key, message) {
 op == "new" {
     debug("new")
     if ((key in counts) && counts[key] != 0) {
-	error("newref", key, "already in use")
+	error(key, "already in use")
     }
     counts[key] = 1
     history[key] = NR ": " $0
     if (count >= 0 && count != counts[key]) {
-	error("newref", key, "has wrong count " count "; expecting" counts[key])
+	error(key, "has wrong count " count "; expecting" counts[key])
     }
     next
 }
@@ -80,15 +84,15 @@ op == "new" {
 op == "add" {
     debug("add")
     if (!(key in counts)) {
-	error("addref", key, "unknown")
+	error(key, "unknown")
     } else if (counts[key] == 0) {
-	error("addref", key, "already released")
+	error(key, "already released")
     } else {
 	history[key] = history[key] "\n" NR ": " $0
 	counts[key]++
     }
     if (count >= 0 && count != counts[key]) {
-	error("addref", key, "has wrong count")
+	error(key, "has wrong count")
     }
     next
 }
@@ -96,32 +100,53 @@ op == "add" {
 op == "del" {
     debug("del")
     if (!(key in counts)) {
-	error("delref", key, "unknown")
+	error(key, "unknown")
     } else if (counts[key] == 0) {
-	error("delref", key, "already released")
+	error(key, "already released")
     } else {
 	history[key] = history[key] "\n" NR ": " $0
 	counts[key]--
     }
     if (count >= 0 && count != counts[key]) {
-	error("delref", key, "has wrong count")
+	error(key, "has wrong count")
     }
     next
 }
 
+op == "free" {
+    debug("free")
+    if (!(key in counts)) {
+	error(key, "unknown")
+    } else if (counts[key] != 0) {
+	error(key, "already released")
+    } else {
+	history[key] = history[key] "\n" NR ": " $0
+    }
+    if (count >= 0 && count != counts[key]) {
+	error(key, "has wrong count")
+    }
+    next
+}
+
+op != "" {
+    error(key, "operation unknown")
+}
+
 /@0x/ {
+    op = "use"
     if (key in counts) {
 	if (counts[key] == 0) {
-	    error("ref", key, "use after free")
+	    error(key, "use after free")
 	}
     }
 }
 
 END {
     # this is in random order, oops
+    op = ""
     for (key in counts) {
 	if (counts[key]) {
-	    error("", key, "has count " counts[key])
+	    error(key, "has count " counts[key])
 	}
     }
     exit status

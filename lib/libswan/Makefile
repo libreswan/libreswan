@@ -102,6 +102,7 @@ OBJS += deltatime.o
 OBJS += realtime.o
 OBJS += monotime.o
 
+OBJS += refcnt.o
 OBJS += debug.o
 OBJS += impair.o
 OBJS += keywords.o
