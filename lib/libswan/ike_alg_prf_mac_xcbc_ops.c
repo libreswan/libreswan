@@ -192,15 +192,19 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		     dkey_sz, prf_desc->prf_key_size);
 		/*
 		 * right pad with zeros
+		 *
+		 * make a local reference to the the (read-only)
+		 * draft_key and manipulate that
 		 */
 		chunk_t zeros = alloc_chunk(prf_desc->prf_key_size - dkey_sz, "zeros");
-		/* make a local "readonly copy" and manipulate that */
-		PK11SymKey *tmp = reference_symkey("xcbc", "tmp", draft_key);
-		append_symkey_hunk("tmp+=0", &tmp, zeros);
-		freeanychunk(zeros);
+		PK11SymKey *local_draft_key = reference_symkey("xcbc", "local_draft_key", draft_key);
+		append_symkey_hunk("local_draft_key+=0", &local_draft_key, zeros);
 		key = prf_key_from_symkey_bytes(name, prf_desc,
-						0, prf_desc->prf_key_size, tmp);
-		release_symkey(name, "tmp", &tmp);
+						0, prf_desc->prf_key_size,
+						local_draft_key);
+		/* free all in reverse order */
+		release_symkey(name, "local_draft_key", &local_draft_key);
+		freeanychunk(zeros);
 	} else if (dkey_sz > prf_desc->prf_key_size) {
 		DBGF(DBG_CRYPT, "XCBC: Key %zd>%zd too big, rehashing to size",
 		     dkey_sz, prf_desc->prf_key_size);
@@ -208,13 +212,15 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		 * put the key through the mac with a zero key
 		 */
 		chunk_t zeros = alloc_chunk(prf_desc->prf_key_size, "zeros");
-		PK11SymKey *zero_key = prf_key_from_hunk(key_name, prf_desc, zeros);
-		freeanychunk(zeros);
-		chunk_t draft_chunk = chunk_from_symkey(key_name, draft_key);
+		PK11SymKey *zero_key = prf_key_from_hunk("zero_key", prf_desc, zeros);
+		chunk_t draft_chunk = chunk_from_symkey("draft_chunk", draft_key);
 		chunk_t key_chunk = xcbc_mac(prf_desc, zero_key, draft_chunk);
-		freeanychunk(draft_chunk);
 		key = prf_key_from_hunk(key_name, prf_desc, key_chunk);
+		/* free all in reverse order */
 		freeanychunk(key_chunk);
+		freeanychunk(draft_chunk);
+		release_symkey(name, "zero_key", &zero_key);
+		freeanychunk(zeros);
 	} else {
 		DBGF(DBG_CRYPT, "XCBC: Key %zd=%zd just right",
 		     dkey_sz, prf_desc->prf_key_size);
