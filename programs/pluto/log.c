@@ -62,7 +62,7 @@ char *pluto_stats_binary = NULL;
  * (apparently) If the context provides a whack file descriptor,
  * messages should be copied to it -- see whack_log()
  */
-fd_t whack_log_fd = { .fd = NULL_FD, };      /* only set during whack_handle() */
+fd_t whack_log_fd = NULL;      /* only set during whack_handle() */
 
 /*
  * Context for logging.
@@ -425,7 +425,7 @@ static void jambuf_to_whack_fd(struct lswlog *buf, fd_t wfd, enum rc_type rc)
 	};
 
 	/* write to whack socket, but suppress possible SIGPIPE */
-	sendmsg(wfd.fd, &msg, MSG_NOSIGNAL);
+	fd_sendmsg(wfd, &msg, MSG_NOSIGNAL, HERE);
 }
 
 static void whack_raw(jambuf_t *buf, enum rc_type rc)

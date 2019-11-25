@@ -675,9 +675,9 @@ void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
  */
 void release_any_whack(struct state *st, where_t where, const char *why)
 {
-	dbg("releasing #%lu's "PRI_FD" because %s "PRI_WHERE"",
-	    st->st_serialno, PRI_fd(st->st_whack_sock), why, pri_where(where));
-	close_any(&st->st_whack_sock);
+	dbg("releasing #%lu's "PRI_FD" because %s",
+	    st->st_serialno, PRI_fd(st->st_whack_sock), why);
+	close_any_fd(&st->st_whack_sock, where);
 }
 
 static void release_v2fragments(struct state *st)

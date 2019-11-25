@@ -28,21 +28,30 @@
 
 #include "where.h"
 
-typedef struct { int fd; } fd_t;
+struct msghdr;
+
+/* opaque and reference counted */
+typedef struct fd *fd_t;
 
 /*
  * A magic value such that: fd_p(null_fd)==false
  */
-extern const fd_t null_fd;
+#define null_fd ((fd_t) NULL)
 
-#define NEW_FD(CODE) new_fd((CODE), #CODE, HERE)
-fd_t new_fd(int fd, const char *code, where_t where);
+fd_t fd_accept(int socket, where_t where);
 
 #define dup_any(FD) dup_any_fd((FD), HERE)
 fd_t dup_any_fd(fd_t fd, where_t where);
 
 #define close_any(FD) close_any_fd((FD), HERE)
 void close_any_fd(fd_t *fd, where_t where);
+
+void fd_leak(fd_t *fd, where_t where);
+
+ssize_t fd_sendmsg(fd_t fd, const struct msghdr *msg,
+		   int flags, where_t where);
+ssize_t fd_read(fd_t fd, void *buf, size_t nbytes,
+		where_t where);
 
 /*
  * Is FD valid (as in something non-negative)?
@@ -55,12 +64,13 @@ bool fd_p(fd_t fd);
 bool same_fd(fd_t l, fd_t r);
 
 /*
- * printf("fd "PRI_FD, PRI_fd(whackfd))
+ * dbg("fd "PRI_FD, pri_fd(whackfd))
  *
  * PRI_... names are consistent with shunk_t and hopefully avoid
  * clashes with reserved PRI* names.
  */
-#define PRI_FD "fd@%d"
-#define PRI_fd(FD) ((FD).fd)
+#define PRI_FD "fd-fd@%p"
+#define pri_fd(FD) (FD)
+#define PRI_fd pri_fd /* XXX: tbd */
 
 #endif

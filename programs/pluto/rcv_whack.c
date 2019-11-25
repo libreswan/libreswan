@@ -602,17 +602,9 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 {
 	threadtime_t start = threadtime_start();
 	{
-		struct sockaddr_un whackaddr;
-		socklen_t whackaddrlen = sizeof(whackaddr);
-		fd_t whackfd = NEW_FD(accept(fd, (struct sockaddr *)&whackaddr,
-					     &whackaddrlen));
-		if (!fd_p(whackfd)) {
-			LOG_ERRNO(errno, "accept() failed in whack_handle()");
-			return;
-		}
-		if (fcntl(whackfd.fd, F_SETFD, FD_CLOEXEC) < 0) {
-			LOG_ERRNO(errno, "failed to set CLOEXEC in whack_handle()");
-			close_any(&whackfd);
+		fd_t whackfd = fd_accept(fd, HERE);
+		if (whackfd == NULL) {
+			/* already logged */
 			return;
 		}
 		whack_log_fd = whackfd;
@@ -627,8 +619,7 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 			 * which means that the entire exit process is
 			 * radio silent.
 			 */
-			dbg("leaking "PRI_FD"; will be closed/released when pluto exits",
-			    PRI_fd(whackfd));
+			fd_leak(&whackfd, HERE);
 			/* XXX: shutdown the event loop */
 			exit_pluto(PLUTO_EXIT_OK);
 		} else {
@@ -649,7 +640,7 @@ static bool whack_handle(fd_t whackfd)
 	 */
 	struct whack_message msg = { .magic = 0, };
 
-	ssize_t n = read(whackfd.fd, &msg, sizeof(msg));
+	ssize_t n = fd_read(whackfd, &msg, sizeof(msg), HERE);
 	if (n <= 0) {
 		LOG_ERRNO(errno, "read() failed in whack_handle()");
 		return false; /* don't shutdown */
@@ -725,7 +716,7 @@ bool whack_prompt_for(fd_t whackfd,
 
 	whack_log_fd = savewfd;
 
-	n = read(whackfd.fd, ansbuf, ansbuf_len);
+	n = fd_read(whackfd, ansbuf, ansbuf_len, HERE);
 
 	if (n == -1) {
 		whack_log(RC_LOG_SERIOUS, "read(whackfd) failed: %s",

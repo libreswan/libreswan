@@ -85,7 +85,7 @@ bool refcnt_delete(const char *what, const void *pointer,
 			dbg("delref "#O"@NULL "PRI_WHERE"", pri_where(WHERE)); \
 		} else if (refcnt_delete(#O, *(O), &(*(O))->refcnt,	\
 					 WHERE)) {			\
-			FREE(O);					\
+			FREE(O, WHERE);					\
 			passert(*(O) == NULL);				\
 		} else {						\
 			*(O) = NULL; /* kill pointer */			\
