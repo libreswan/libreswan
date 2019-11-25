@@ -201,7 +201,7 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		append_symkey_hunk("local_draft_key+=0", &local_draft_key, zeros);
 		key = prf_key_from_symkey_bytes(name, prf_desc,
 						0, prf_desc->prf_key_size,
-						local_draft_key);
+						local_draft_key, HERE);
 		/* free all in reverse order */
 		release_symkey(name, "local_draft_key", &local_draft_key);
 		freeanychunk(zeros);
@@ -226,7 +226,7 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		     dkey_sz, prf_desc->prf_key_size);
 		key = prf_key_from_symkey_bytes(key_name, prf_desc,
 						0, prf_desc->prf_key_size,
-						draft_key);
+						draft_key, HERE);
 	}
 	struct prf_context *prf = alloc_thing(struct prf_context, "prf context");
 	*prf = (struct prf_context) {

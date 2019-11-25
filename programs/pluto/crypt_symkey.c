@@ -255,7 +255,8 @@ static PK11SymKey *symkey_from_symkey(const char *result_name,
 				      PK11SymKey *base_key,
 				      CK_MECHANISM_TYPE target,
 				      CK_FLAGS flags,
-				      size_t key_offset, size_t key_size)
+				      size_t key_offset, size_t key_size,
+				      where_t where)
 {
 	/* spell out all the parameters */
 	CK_EXTRACT_PARAMS bs = key_offset * BITS_PER_BYTE;
@@ -273,7 +274,7 @@ static PK11SymKey *symkey_from_symkey(const char *result_name,
 
 	return crypt_derive(base_key, derive, &param,
 			    result_name, target,
-			    operation, key_size, flags, HERE);
+			    operation, key_size, flags, where);
 }
 
 
@@ -405,7 +406,7 @@ PK11SymKey *symkey_from_bytes(const char *name, const uint8_t *bytes, size_t siz
 	CK_FLAGS flags = 0;
 	CK_MECHANISM_TYPE target = CKM_EXTRACT_KEY_FROM_KEY;
 	PK11SymKey *key = symkey_from_symkey(name, tmp, target, flags,
-					     0, sizeof_bytes);
+					     0, sizeof_bytes, HERE);
 	passert(key != NULL);
 	release_symkey(name, "tmp", &tmp);
 	return key;
@@ -413,7 +414,8 @@ PK11SymKey *symkey_from_bytes(const char *name, const uint8_t *bytes, size_t siz
 
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
-				   const uint8_t *bytes, size_t sizeof_bytes)
+				   const uint8_t *bytes, size_t sizeof_bytes,
+				   where_t where)
 {
 	PK11SymKey *scratch = ephemeral_symkey();
 	PK11SymKey *tmp = merge_symkey_bytes(name, scratch, bytes, sizeof_bytes,
@@ -421,14 +423,16 @@ PK11SymKey *encrypt_key_from_bytes(const char *name,
 					     CKM_EXTRACT_KEY_FROM_KEY);
 	passert(tmp != NULL);
 	PK11SymKey *key = encrypt_key_from_symkey_bytes(name, encrypt,
-							0, sizeof_bytes, tmp);
+							0, sizeof_bytes,
+							tmp, where);
 	passert(key != NULL);
 	release_symkey(name, "tmp", &tmp);
 	return key;
 }
 
 PK11SymKey *prf_key_from_bytes(const char *name, const struct prf_desc *prf,
-			       const uint8_t *bytes, size_t sizeof_bytes)
+			       const uint8_t *bytes, size_t sizeof_bytes,
+			       where_t where)
 {
 	PK11SymKey *scratch = ephemeral_symkey();
 	PK11SymKey *tmp = merge_symkey_bytes(name, scratch, bytes, sizeof_bytes,
@@ -436,7 +440,8 @@ PK11SymKey *prf_key_from_bytes(const char *name, const struct prf_desc *prf,
 					     CKM_EXTRACT_KEY_FROM_KEY);
 	passert(tmp != NULL);
 	PK11SymKey *key = prf_key_from_symkey_bytes(name, prf,
-						    0, sizeof_bytes, tmp);
+						    0, sizeof_bytes,
+						    tmp, where);
 	passert(key != NULL);
 	release_symkey(name, "tmp", &tmp);
 	return key;
@@ -515,7 +520,8 @@ void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs)
 PK11SymKey *prf_key_from_symkey_bytes(const char *name,
 				      const struct prf_desc *prf,
 				      size_t symkey_start_byte, size_t sizeof_symkey,
-				      PK11SymKey *source_key)
+				      PK11SymKey *source_key,
+				      where_t where)
 {
 	/*
 	 * NSS expects a key's mechanism to match the NSS algorithm
@@ -538,7 +544,8 @@ PK11SymKey *prf_key_from_symkey_bytes(const char *name,
 		mechanism = prf->nss.mechanism;
 	}
 	return symkey_from_symkey(name, source_key, mechanism, flags,
-				  symkey_start_byte, sizeof_symkey);
+				  symkey_start_byte, sizeof_symkey,
+				  where);
 }
 
 /*
@@ -551,7 +558,7 @@ PK11SymKey *prf_key_from_symkey_bytes(const char *name,
 PK11SymKey *encrypt_key_from_symkey_bytes(const char *name,
 					  const struct encrypt_desc *encrypt,
 					  size_t symkey_start_byte, size_t sizeof_symkey,
-					  PK11SymKey *source_key)
+					  PK11SymKey *source_key, where_t where)
 {
 	/*
 	 * NSS expects a key's mechanism to match the NSS algorithm
@@ -574,18 +581,21 @@ PK11SymKey *encrypt_key_from_symkey_bytes(const char *name,
 		mechanism = encrypt->nss.mechanism;
 	}
 	return symkey_from_symkey(name, source_key, mechanism, flags,
-				  symkey_start_byte, sizeof_symkey);
+				  symkey_start_byte, sizeof_symkey,
+				  where);
 }
 
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
-				  size_t next_byte, size_t sizeof_key)
+				  size_t next_byte, size_t sizeof_key,
+				  where_t where)
 {
 	if (sizeof_key == 0) {
 		return NULL;
 	} else {
 		return symkey_from_symkey("result", source_key,
 					  CKM_EXTRACT_KEY_FROM_KEY,
-					  0, next_byte, sizeof_key);
+					  0, next_byte, sizeof_key,
+					  where);
 	}
 }
 

@@ -93,7 +93,8 @@ void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs);
 PK11SymKey *prf_key_from_symkey_bytes(const char *name,
 				      const struct prf_desc *prf,
 				      size_t symkey_start_byte, size_t sizeof_symkey,
-				      PK11SymKey *source_key);
+				      PK11SymKey *source_key,
+				      where_t where);
 
 /*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ALG key (i.e.,
@@ -107,7 +108,8 @@ PK11SymKey *prf_key_from_symkey_bytes(const char *name,
 PK11SymKey *encrypt_key_from_symkey_bytes(const char *name,
 					  const struct encrypt_desc *encrypt,
 					  size_t symkey_start_byte, size_t sizeof_symkey,
-					  PK11SymKey *source_key);
+					  PK11SymKey *source_key,
+					  where_t where);
 
 /*
  * Extract wire material from a symkey.
@@ -133,15 +135,19 @@ PK11SymKey *symkey_from_bytes(const char *name,
 
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
-				   const uint8_t *bytes, size_t sizeof_bytes);
+				   const uint8_t *bytes, size_t sizeof_bytes,
+				   where_t where);
+/* XXX: can't pass HERE aka '{,}' to macros */
 #define encrypt_key_from_hunk(NAME, ENCRYPT, HUNK)			\
-	encrypt_key_from_bytes(NAME, ENCRYPT, (HUNK).ptr, (HUNK).len)
+	encrypt_key_from_bytes(NAME, ENCRYPT, (HUNK).ptr, (HUNK).len, HERE)
 
 PK11SymKey *prf_key_from_bytes(const char *name,
 			       const struct prf_desc *prf,
-			       const uint8_t *bytes, size_t sizeof_bytes);
-#define prf_key_from_hunk(NAME, PRF, HUNK)			\
-	prf_key_from_bytes(NAME, PRF, (HUNK).ptr, (HUNK).len)
+			       const uint8_t *bytes, size_t sizeof_bytes,
+			       where_t where);
+/* XXX: can't pass HERE aka '{,}' to macros */
+#define prf_key_from_hunk(NAME, PRF, HUNK)				\
+	prf_key_from_bytes(NAME, PRF, (HUNK).ptr, (HUNK).len, HERE)
 
 /*
  * Extract SIZEOF_KEY bytes of keying material as a KEY.
@@ -152,7 +158,8 @@ PK11SymKey *prf_key_from_bytes(const char *name,
  * Offset into the SYMKEY is in BYTES.
  */
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
-				  size_t next_byte, size_t sizeof_key);
+				  size_t next_byte, size_t sizeof_key,
+				  where_t where);
 
 /*
  * XOR a symkey with a chunk.

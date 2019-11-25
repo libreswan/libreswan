@@ -188,7 +188,7 @@ static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 	 * CKM_CONCATENATE_BASE_AND_KEY - work around this by
 	 * returning a copy of the key.
 	 */
-	PK11SymKey *g_ir = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp));
+	PK11SymKey *g_ir = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE);
 	DBG(DBG_CRYPT,
 	    DBG_log("NSS: extracted-key@%p from ECDH temp-key@%p (CKM_CONCATENATE_BASE_AND_KEY hack)",
 		    g_ir, temp));

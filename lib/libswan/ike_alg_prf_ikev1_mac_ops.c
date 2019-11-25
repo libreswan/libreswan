@@ -131,7 +131,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 	if (sizeof_symkey(skeyid_e) >= required_keymat) {
 		return encrypt_key_from_symkey_bytes("keymat", encrypter,
 						     0, required_keymat,
-						     skeyid_e);
+						     skeyid_e, HERE);
 	}
 	/* K1 = prf(skeyid_e, 0) */
 	PK11SymKey *keymat;
@@ -157,7 +157,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 	release_symkey(__func__, "old_k:final", &old_k);
 	PK11SymKey *cryptkey = encrypt_key_from_symkey_bytes("cryptkey", encrypter,
 							     0, required_keymat,
-							     keymat);
+							     keymat, HERE);
 	release_symkey(__func__, "keymat", &keymat);
 	return cryptkey;
 }
