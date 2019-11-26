@@ -2021,7 +2021,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				 st->st_new_iv, st->st_new_iv_len);
 			DBG_log("decrypted payload (starts at offset %td):",
 				md->message_pbs.cur - md->message_pbs.roof);
-			DBG_dump("", md->message_pbs.start,
+			DBG_dump(NULL, md->message_pbs.start,
 				 md->message_pbs.roof - md->message_pbs.start);
 		}
 	} else {

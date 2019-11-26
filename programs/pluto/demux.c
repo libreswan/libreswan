@@ -212,7 +212,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	    str_endpoint(&ifp->local_endpoint, &b2));
 
 	if (DBGP(DBG_RAW)) {
-		DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs));
+		DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));
 	}
 
 	pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
@@ -453,7 +453,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		lswlogf(buf, " (%d bytes)", (int)pbs_room(&md->packet_pbs));
 	}
 	if (DBGP(DBG_RAW)) {
-		DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs));
+		DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));
 	}
 
 	process_md(&md);
