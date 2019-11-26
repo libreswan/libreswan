@@ -843,6 +843,7 @@ kvmplutotest	ipv6-tunnel-mode-04-rw			good
 kvmplutotest	ikev2-ipv6-transport-mode-02-netkey-netkey	good
 kvmplutotest	interop-ikev2-strongswan-47-addresspool-ipv6	good
 kvmplutotest	ipv6-addresspool-01-ikev2		good
+kvmplutotest	ipv6-addresspool-02-ikev2		wip
 kvmplutotest	ipv6-addresspool-02-3-clients-ikev2	good
 
 
