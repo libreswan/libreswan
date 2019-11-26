@@ -319,17 +319,13 @@ int resolve_defaultroute_one(struct starter_end *host,
 
 		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
 		has_dst = TRUE;
-		if (seeking_src && seeking_gateway &&
-			host->addr_family == AF_INET) {
+		if (seeking_src && seeking_gateway) {
 			/*
 			 * If we have only peer IP and no gateway/src we must
 			 * do two queries:
 			 * 1) find out gateway for dst
 			 * 2) find out src for that gateway
 			 * Doing both in one query returns src for dst.
-			 *
-			 * (IPv6 returns link-local for gateway so we can and
-			 * do seek both in one query.)
 			 */
 			seeking_src = FALSE;
 			query_again = 1;
