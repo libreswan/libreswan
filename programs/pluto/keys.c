@@ -50,7 +50,7 @@
 #include "fetch.h"
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
-
+#include "crypt_mac.h"
 #include "nat_traversal.h"
 
 #include <prerror.h>
@@ -383,15 +383,14 @@ int sign_hash_ECDSA(const struct ECDSA_private_key *k,
 }
 
 err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
-			       const u_char *hash_val, size_t hash_len,
-			       const u_char *sig_val, size_t sig_len,
+			       const struct crypt_mac *hash,
+			       const uint8_t *sig_val, size_t sig_len,
 			       enum notify_payload_hash_algorithms hash_algo)
 {
 	SECKEYPublicKey *publicKey;
 	PRArenaPool *arena;
 	SECStatus retVal;
 	SECItem nss_n, nss_e;
-	SECItem signature, data;
 
 	/* Converting n and e to form public key in SECKEYPublicKey data structure */
 
@@ -440,16 +439,20 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		SECKEY_DestroyPublicKey(publicKey);
 		return "12NSS error: Not able to copy modulus or exponent or both while forming SECKEYPublicKey structure";
 	}
-	signature.type = siBuffer;
-	signature.data = DISCARD_CONST(unsigned char *, sig_val);
-	signature.len  = (unsigned int)sig_len;
 
-	data.type = siBuffer;
+	SECItem signature = {
+		.type = siBuffer,
+		.data = DISCARD_CONST(unsigned char *, sig_val),
+		.len  = (unsigned int)sig_len,
+	};
 
 	if (hash_algo == 0 /* ikev1*/ ||
 	    hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style rsa with SHA1*/) {
-		data.len = (unsigned int)sig_len;
-		data.data = alloc_bytes(data.len, "NSS decrypted signature");
+		SECItem data = {
+			.type = siBuffer,
+			.len = sig_len,
+			.data = alloc_bytes(sig_len, "NSS decrypted signature"),
+		};
 
 		if (PK11_VerifyRecover(publicKey, &signature, &data,
 				       lsw_return_nss_password_file_info()) ==
@@ -463,7 +466,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 			    DBG_log("NSS RSA verify: decrypting signature is failed"));
 			return "13" "NSS error: Not able to decrypt";
 		}
-		if (!memeq(data.data + data.len - hash_len, hash_val, hash_len)) {
+		if (!memeq(data.data + data.len - hash->len, hash->ptr, hash->len)) {
 			pfree(data.data);
 			loglog(RC_LOG_SERIOUS, "RSA Signature NOT verified");
 			return "14" "NSS error: Not able to verify";
@@ -489,11 +492,12 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 			bad_case(hash_algo);
 		}
 
-		unsigned char *hash_data = alloc_bytes(hash_len + 1 , "hash length");
-
-		data.len = hash_len + 1;
-		memcpy(hash_data , DISCARD_CONST(u_char *, hash_val), hash_len);
-		data.data = hash_data;
+		struct crypt_mac hash_data = *hash; /* cast away const */
+		SECItem data = {
+			.len = hash_data.len,
+			.data = hash_data.ptr,
+			.type = siBuffer,
+		};
 
 		LSWDBGP(DBG_CRYPT, buf) {
 			lswlogs(buf, "data: ");
@@ -511,12 +515,10 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 			    DBG_log("NSS RSA verify: decrypting signature is failed"));
 			return "13" "NSS error: Not able to decrypt";
 		}
-
-		pfree(hash_data);
 	}
 
 	DBG(DBG_CRYPT,
-	    DBG_dump("NSS RSA verify: hash value: ", hash_val, hash_len));
+	    DBG_dump_hunk("NSS RSA verify: hash value: ", *hash));
 
 	pfree(n.ptr);
 	pfree(e.ptr);
@@ -542,13 +544,11 @@ struct tac_state {
 	const struct pubkey_type *type;
 	/* check_signature's args that take_a_crack needs */
 	struct state *st;
-	const u_char *hash_val;
-	size_t hash_len;
+	const struct crypt_mac *hash;
 	const pb_stream *sig_pbs;
 	enum notify_payload_hash_algorithms hash_algo;
 
-	err_t (*try_signature)(const u_char hash_val[MAX_DIGEST_LEN],
-			       size_t hash_len,
+	err_t (*try_signature)(const struct crypt_mac *hash,
 			       const pb_stream *sig_pbs,
 			       struct pubkey *kr,
 			       struct state *st,
@@ -566,7 +566,7 @@ static bool take_a_crack(struct tac_state *s,
 			 const char *story)
 {
 	s->tried_cnt++;
-	err_t ugh = (s->try_signature)(s->hash_val, s->hash_len, s->sig_pbs,
+	err_t ugh = (s->try_signature)(s->hash, s->sig_pbs,
 				       kr, s->st, s->hash_algo);
 
 	const char *key_id_str = pubkey_keyid(kr);
@@ -656,25 +656,17 @@ static bool try_all_keys(const char *pubkey_description,
 }
 
 stf_status check_signature_gen(struct state *st,
-			       const u_char hash_val[MAX_DIGEST_LEN],
-			       size_t hash_len,
+			       const struct crypt_mac *hash,
 			       const pb_stream *sig_pbs,
 			       enum notify_payload_hash_algorithms hash_algo,
 			       const struct pubkey_type *type,
-			       err_t (*try_signature)(
-				       const u_char hash_val[MAX_DIGEST_LEN],
-				       size_t hash_len,
-				       const pb_stream *sig_pbs,
-				       struct pubkey *kr,
-				       struct state *st,
-				       enum notify_payload_hash_algorithms hash_algo))
+			       try_signature_fn *try_signature)
 {
 	const struct connection *c = st->st_connection;
 	struct tac_state s = {
 		.type = type,
 		.st = st,
-		.hash_val = hash_val,
-		.hash_len = hash_len,
+		.hash = hash,
 		.sig_pbs = sig_pbs,
 		.hash_algo = hash_algo,
 		.try_signature = try_signature,

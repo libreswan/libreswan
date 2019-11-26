@@ -342,8 +342,7 @@ size_t v1_sign_hash_RSA(const struct connection *c,
  * it is not: the knowledge of the private key allows more efficient (i.e.
  * different) computation for encryption.
  */
-static err_t try_RSA_signature_v1(const u_char hash_val[MAX_DIGEST_LEN],
-				size_t hash_len,
+static err_t try_RSA_signature_v1(const struct crypt_mac *hash,
 				const pb_stream *sig_pbs, struct pubkey *kr,
 				struct state *st,
 				enum notify_payload_hash_algorithms hash_algo UNUSED /* for ikev2 only */)
@@ -358,7 +357,7 @@ static err_t try_RSA_signature_v1(const u_char hash_val[MAX_DIGEST_LEN],
 		return "1" "SIG length does not match public key length";
 	}
 
-	err_t ugh = RSA_signature_verify_nss(k, hash_val, hash_len, sig_val,
+	err_t ugh = RSA_signature_verify_nss(k, hash, sig_val,
 					sig_len, 0 /* for ikev2 only */);
 	if (ugh != NULL)
 		return ugh;
@@ -375,14 +374,11 @@ static err_t try_RSA_signature_v1(const u_char hash_val[MAX_DIGEST_LEN],
 }
 
 static stf_status RSA_check_signature(struct state *st,
-				const u_char hash_val[MAX_DIGEST_LEN],
-				size_t hash_len,
-				const pb_stream *sig_pbs,
-				enum notify_payload_hash_algorithms hash_algo
-					UNUSED /* for ikev2 only */)
+				      struct crypt_mac *hash,
+				      const pb_stream *sig_pbs,
+				      enum notify_payload_hash_algorithms hash_algo UNUSED /* for ikev2 only */)
 {
-	return check_signature_gen(st, hash_val, hash_len,
-				   sig_pbs, 0 /* for ikev2 only */,
+	return check_signature_gen(st, hash, sig_pbs, 0 /* for ikev2 only */,
 				   &pubkey_type_rsa, try_RSA_signature_v1);
 }
 
@@ -1533,7 +1529,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 
 	case OAKLEY_RSA_SIG:
 	{
-		r = RSA_check_signature(st, hash.ptr, hash.len,
+		r = RSA_check_signature(st, &hash,
 					&md->chain[ISAKMP_NEXT_SIG]->pbs, 0 /* for ikev2 only*/);
 		if (r != STF_OK) {
 			dbg("received '%s' message SIG_%s data did not match computed value",

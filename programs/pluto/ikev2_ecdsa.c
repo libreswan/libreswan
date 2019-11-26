@@ -159,8 +159,8 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	return true;
 }
 
-static err_t try_ECDSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
-				    size_t hash_len,
+static try_signature_fn try_ECDSA_signature_v2; /* type assert */
+static err_t try_ECDSA_signature_v2(const struct crypt_mac *hash,
 				    const pb_stream *sig_pbs, struct pubkey *kr,
 				    struct state *st,
 				    enum notify_payload_hash_algorithms hash_algo UNUSED)
@@ -251,15 +251,17 @@ static err_t try_ECDSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
 
 	/*
 	 * put the hash somewhere writable; so it can later be logged?
+	 *
+	 * XXX: cast away const?
 	 */
-	SECItem hash = {
+	struct crypt_mac hash_data = *hash;
+	SECItem hash_item = {
 		.type = siBuffer,
-		.data = PORT_ArenaZAlloc(arena, hash_len),
-		.len = hash_len,
+		.data = hash_data.ptr,
+		.len = hash_data.len,
 	};
-	memcpy(hash.data, hash_val, hash_len);
 
-	if (PK11_Verify(publicKey, raw_signature, &hash,
+	if (PK11_Verify(publicKey, raw_signature, &hash_item,
 			lsw_return_nss_password_file_info()) != SECSuccess) {
 		LSWLOG(buf) {
 			lswlogs(buf, "NSS: verifying AUTH hash using PK11_Verify() failed:");
@@ -307,8 +309,6 @@ stf_status ikev2_verify_ecdsa_hash(struct state *st,
 	struct crypt_mac calc_hash = v2_calculate_sighash(st, invertrole, idhash,
 							  st->st_firstpacket_him,
 							  hasher);
-	return check_signature_gen(st, calc_hash.ptr, calc_hash.len,
-				   sig_pbs, hash_algo,
-				   &pubkey_type_ecdsa,
-				   try_ECDSA_signature_v2);
+	return check_signature_gen(st, &calc_hash, sig_pbs, hash_algo,
+				   &pubkey_type_ecdsa, try_ECDSA_signature_v2);
 }

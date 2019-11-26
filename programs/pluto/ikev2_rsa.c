@@ -161,8 +161,9 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	return TRUE;
 }
 
-static err_t try_RSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
-				  size_t hash_len,
+static try_signature_fn try_RSA_signature_v2; /* type assertion */
+
+static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
 				  const pb_stream *sig_pbs, struct pubkey *kr,
 				  struct state *st,
 				  enum notify_payload_hash_algorithms hash_algo)
@@ -178,8 +179,7 @@ static err_t try_RSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
 	if (sig_len != k->k)
 		return "1" "SIG length does not match public key length";
 
-	err_t ugh = RSA_signature_verify_nss(k, hash_val, hash_len, sig_val,
-					     sig_len, hash_algo);
+	err_t ugh = RSA_signature_verify_nss(k, hash, sig_val, sig_len, hash_algo);
 	if (ugh != NULL)
 		return ugh;
 
@@ -221,8 +221,7 @@ stf_status ikev2_verify_rsa_hash(struct state *st,
 	struct crypt_mac hash = v2_calculate_sighash(st, invertrole, idhash,
 						     st->st_firstpacket_him,
 						     hasher);
-	stf_status retstat = check_signature_gen(st, hash.ptr, hash.len,
-						 sig_pbs, hash_algo,
+	stf_status retstat = check_signature_gen(st, &hash, sig_pbs, hash_algo,
 						 &pubkey_type_rsa, try_RSA_signature_v2);
 	statetime_stop(&start, "%s()", __func__);
 	return retstat;

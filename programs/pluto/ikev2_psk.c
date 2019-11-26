@@ -63,9 +63,6 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 						    const chunk_t firstpacket)
 {
 	const struct connection *c = st->st_connection;
-	const size_t hash_len = st->st_oakley.ta_prf->prf_output_size;
-
-	passert(hash_len <= MAX_DIGEST_LEN);
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
 	DBG(DBG_CONTROL, DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
@@ -173,13 +170,13 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	DBG(DBG_CRYPT,
 	    DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
 	    DBG_dump_hunk(nonce_name, *nonce);
-	    DBG_dump("idhash", idhash, hash_len));
+	    DBG_dump_hunk("idhash", *idhash));
 
 	/*
 	 * RFC 4306 2.15:
 	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
 	 */
-	passert(idhash->len == hash_len);
+	passert(idhash->len == st->st_oakley.ta_prf->prf_output_size);
 	return ikev2_psk_auth(st->st_oakley.ta_prf, *pss, firstpacket, *nonce, idhash);
 }
 
