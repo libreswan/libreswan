@@ -276,10 +276,17 @@ int resolve_defaultroute_one(struct starter_end *host,
 
 	/* Fill netlink request */
 	netlink_query_init(msgbuf, host->addr_family);
-	if (host->nexttype == KH_IPADDR) {
+	if (host->nexttype == KH_IPADDR && peer->addr_family == AF_INET) {
 		/*
 		 * My nexthop (gateway) is specified.
 		 * We need to figure out our source IP to get there.
+		 */
+
+		/*
+		 * AA_2019 Why use nexthop and not peer->addr to look up src address
+		 * the lore is there is (old) bug when looking up IPv4 src
+		 * IPv6 with gateway link local address will return link local
+		 * address and not the global address
 		 */
 		netlink_query_add(msgbuf, RTA_DST, &host->nexthop);
 		has_dst = TRUE;
