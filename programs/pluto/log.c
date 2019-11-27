@@ -627,58 +627,6 @@ void set_debugging(lset_t deb)
 	cur_debugging = deb;
 }
 
-void plog_raw(enum rc_type unused_rc UNUSED,
-	      const struct state *st,
-	      const struct connection *c,
-	      const ip_endpoint *from,
-	      const char *message, ...)
-{
-	PLOG_RAW(st, c, from, buf) {
-		va_list ap;
-		va_start(ap, message);
-		jam_va_list(buf, message, ap);
-		va_end(ap);
-	}
-}
-
-void loglog_raw(enum rc_type rc,
-		const struct state *st,
-		const struct connection *c,
-		const ip_endpoint *from,
-		const char *message, ...)
-{
-	LSWBUF(buf) {
-		jam_log_prefix(buf, st, c, from);
-		va_list ap;
-		va_start(ap, message);
-		jam_va_list(buf, message, ap);
-		va_end(ap);
-		lswlog_to_log_stream(buf);
-		if (whack_log_p()) {
-			lswlog_to_whack_stream(buf, rc);
-		}
-	}
-}
-
-void DBG_raw(enum rc_type unused_rc UNUSED,
-	     const struct state *st,
-	     const struct connection *c,
-	     const ip_endpoint *from,
-	     const char *message, ...)
-{
-	LSWBUF(buf) {
-		jam(buf, DEBUG_PREFIX);
-		if (DBGP(DBG_ADD_PREFIX)) {
-			jam_log_prefix(buf, st, c, from);
-		}
-		va_list ap;
-		va_start(ap, message);
-		jam_va_list(buf, message, ap);
-		va_end(ap);
-		lswlog_to_log_stream(buf);
-	}
-}
-
 #define RATE_LIMIT 1000
 static unsigned nr_rate_limited_logs;
 
@@ -782,6 +730,14 @@ static void broadcast(lset_t rc_flags, fd_t object_fd,
 				}
 			}
 			break;
+		case NO_STREAM:
+			/*
+			 * XXX: Like writing to /dev/null - go through
+			 * the motions but with no result.  Code
+			 * really really should not call this function
+			 * with this flag.
+			 */
+			break;
 		default:
 			bad_case(only);
 		}
@@ -806,6 +762,17 @@ void log_pending(lset_t rc_flags, const struct pending *pending,
 	va_start(ap, format);
 	broadcast(rc_flags, pending->whack_sock,
 		  NULL/*ST*/, pending->connection, NULL/*from*/,
+		  format, ap);
+	va_end(ap);
+}
+
+void log_state(lset_t rc_flags, const struct state *st,
+	       const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	broadcast(rc_flags, st->st_whack_sock,
+		  st/*ST*/, NULL/*connection**/, NULL/*from*/,
 		  format, ap);
 	va_end(ap);
 }

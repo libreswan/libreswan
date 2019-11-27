@@ -3871,8 +3871,8 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 		 *
 		 * The older child should have discarded this state.
 		 */
-		plog_st(&child->sa, "CHILD SA to rekey #%lu vanished abort this exchange",
-			child->sa.st_ipsec_pred);
+		plog_state(&child->sa, "CHILD SA to rekey #%lu vanished abort this exchange",
+			   child->sa.st_ipsec_pred);
 		return false;
 	}
 

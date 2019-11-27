@@ -1762,14 +1762,14 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					break;
 				}
 
-				log_raw_fn *logger;
+				enum stream logger;
 				if (packet_len == 1 && buffer[0] == 0xff &&
 				    (cur_debugging & DBG_NATT) == 0) {
 					/*
 					 * don't log NAT-T keepalive related errors unless NATT debug is
 					 * enabled
 					 */
-					logger = NULL;
+					logger = NO_STREAM;
 				} else if (sender != NULL && sender->st_connection != NULL &&
 					   LDISJOINT(sender->st_connection->policy, POLICY_OPPORTUNISTIC)) {
 					/*
@@ -1795,8 +1795,8 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					 * explicit parameter to the
 					 * logging system?
 					 */
-					logger = loglog_raw;
-				} else {
+					logger = ALL_STREAMS;
+				} else if (DBGP(DBG_BASE)) {
 					/*
 					 * Since this output is forced
 					 * using DBGP, report the
@@ -1806,19 +1806,21 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					 * matter - it just gets
 					 * ignored.
 					 */
-					logger = DBG_raw;
+					logger = DEBUG_STREAM;
+				} else {
+					logger = NO_STREAM;
 				}
-				if (logger != NULL) {
+				if (logger != NO_STREAM) {
 					endpoint_buf epb;
-					logger(RC_COMMENT, sender/*could be null*/,
-					       NULL/*connection*/, NULL/*endpoint*/,
-					       "ERROR: asynchronous network error report on %s (%s)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]",
-					       ifp->ip_dev->id_rname,
-					       str_endpoint(&ifp->local_endpoint, &epb),
-					       fromstr,
-					       offstr,
-					       strerror(ee->ee_errno),
-					       ee->ee_errno, orname);
+					log_message(logger, sender/*could be null*/,
+						    NULL/*connection*/, NULL/*endpoint*/,
+						    "ERROR: asynchronous network error report on %s (%s)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]",
+						    ifp->ip_dev->id_rname,
+						    str_endpoint(&ifp->local_endpoint, &epb),
+						    fromstr,
+						    offstr,
+						    strerror(ee->ee_errno),
+						    ee->ee_errno, orname);
 				}
 			} else if (cm->cmsg_level == SOL_IP &&
 				   cm->cmsg_type == IP_PKTINFO) {

@@ -103,12 +103,21 @@ extern void log_pop_from(ip_address old_from, where_t where);
  * By default send it to the log file and any attached whacks (both
  * globally and the object).
  *
- * If LOG_ONLY, DEBUG_ONLY or WHACK_ONLY is ORed into rc_flags, then
- * only send the message to the specified destination.
+ * If any *_STREAM flag is specified then only send the message to
+ * that stream.
  *
- * XXX: what about error level logging; what about having debug
- * specified as a flag.  Should these be made flags so that both the
- * SYSLOG level can also be encoded?
+ * XXX:
+ *
+ * - how should this handle the error stream (i.e., the log stream
+ *   with severity LOG_ERR)
+ *
+ * - what about having debug logging's prefix (this currently uses the
+ *   same prefix as for normal logging).
+ *
+ * - this can't replace whack_log() which _only_ sends messages to the
+ *   global whack
+ *
+ * - should these be made bits so they can be combined?
  */
 
 enum stream {
@@ -122,9 +131,13 @@ enum stream {
 	 * 0xffff overflows an 8-bit value.
 	 */
 	RC_MASK =  0x0fff,
-	LOG_STREAM = 0x1000,	/* send utterance to the log file */
-	DEBUG_STREAM,		/* send utterance to the debug file */
-	WHACK_STREAM,		/* send utterance to whack */
+	/* log the utterance with severity LOG_WARNING */
+	LOG_STREAM = 0x1000,
+	/* log the utterance adding prefix "|" and severity LOG_DEBUG */
+	DEBUG_STREAM,
+	/* send utterance to whack with RC_* */
+	WHACK_STREAM,
+	/* don't utter anything; place holder */
 	NO_STREAM,
 };
 
@@ -138,69 +151,36 @@ void log_pending(lset_t rc_flags,
 		 const struct pending *pending,
 		 const char *format, ...) PRINTF_LIKE(3);
 
-/*
- * Direct a log message, possibly prefix with the supplied context
- * (ST, C, MD, FROM), to either log file, whack, or debug stream; or
- * some combination of those three :-/
- *
- * Todays proposed naming convention:
- *
- *   {plog,loglog,wlog,dbg}_{global,from,md,c,st,raw}()
- *
- * {plog,loglog,wlog,dbg} -> plog: write to pluto's log file (but not
- * whack); wlog: write to whack (but not pluto's log file); loglog:
- * write to both; dbg: a debug log record to pluto's log file (but not
- * whack).
- *
- * {global,from,md,c,st} -> global: no context prefix; from: endpoint
- * as prefix; md: endpoint from md as prefix; c: connection+instance
- * as prefix; st: state+connection as prefix; raw: takes all
- * parameters with the most detailed non-NULL value being prefered.
- *
- * XXX:
- *
- * - many of the above combinations are meaningless
- *
- * - As a way of encouraging the use of log functions that include the
- *   context, the context free log function is given the annoyngly
- *   long name plog_global() and not the shorter plog().
- *
- * - instead of a custom whack+pluto logging function, should whack
- *   logging be decided by a flag in 'c' and/or 'st'?  Suspect that is
- *   how things have largely managed to work, and if whack is
- *   monitoring a state or connection then all messages for that state
- *   or connection should be sent there
- *
- * - in addition there is rate_log(md), should it send to whack when
- *   available?  Or should this be merged with above.
- */
+void log_state(lset_t rc_flags,
+	       const struct state *st,
+	       const char *format, ...)	PRINTF_LIKE(3);
 
-typedef void (log_raw_fn)(enum rc_type,
-			  const struct state *st,
-			  const struct connection *c,
-			  const ip_endpoint *from,
-			  const char *message, ...) PRINTF_LIKE(5);
+/*
+ * Wrappers.
+ *
+ * XXX: do these help or hinder - would calling log_state() directly
+ * be better (if slightly more text)?  For the moment stick with the
+ * wrappers so changing the underlying implementation is easier.
+ *
+ * XXX: what about dbg_state() et.al.?  Since these always add a
+ * prefix the debate is open.  However, when cur_state is deleted
+ * (sure ...), the debug-prefix macro will break.
+ *
+ * XXX: what about whack_log()?  That only sends messages to the
+ * global whack (and never the objects whack).  Likely easier to stick
+ * with whack_log() and manually add the prefix as needed.
+ */
 
 #define PLOG_RAW(STATE, CONNECTION, FROM, BUF)				\
 	LSWLOG_(true, BUF,						\
 		jam_log_prefix(BUF, STATE, CONNECTION, FROM),		\
 		lswlog_to_log_stream(BUF))
 
-log_raw_fn plog_raw;
-
-#define plog_global(MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_from(FROM, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
-#define plog_md(MD, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
-#define plog_connection(C, MESSAGE, ...) plog_raw(RC_COMMENT, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_st(ST, MESSAGE, ...) plog_raw(RC_COMMENT, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
-
-log_raw_fn loglog_raw;
-
-#define loglog_st(ST, RC, MESSAGE, ...) loglog_raw(RC, ST, NULL, NULL, MESSAGE,##__VA_ARGS__);
-
-/* unconditional */
-log_raw_fn DBG_raw;
-
+#define plog_global(MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_from(FROM, MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
+#define plog_md(MD, MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
+#define plog_connection(C, MESSAGE, ...) log_message(LOG_STREAM, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_state(ST, MESSAGE, ...) log_state(LOG_STREAM, ST, MESSAGE,##__VA_ARGS__);
 
 /*
  * rate limited logging

@@ -324,13 +324,13 @@ static bool whack_process(fd_t whackfd, const struct whack_message *const m)
 					m->whack_deletestateno);
 		} else {
 			set_cur_state(st);
-			plog_st(st, "received whack to delete %s state #%lu %s",
-				enum_name(&ike_version_names, st->st_ike_version),
-				st->st_serialno,
-				st->st_state->name);
+			plog_state(st, "received whack to delete %s state #%lu %s",
+				   enum_name(&ike_version_names, st->st_ike_version),
+				   st->st_serialno,
+				   st->st_state->name);
 
 			if ((st->st_ike_version == IKEv2) && !IS_CHILD_SA(st)) {
-				plog_st(st, "Also deleting any corresponding CHILD_SAs");
+				plog_state(st, "Also deleting any corresponding CHILD_SAs");
 				delete_my_family(st, FALSE);
 				/* note: no md->st to clear */
 			} else {
