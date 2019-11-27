@@ -1127,18 +1127,15 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	return st->st_v2_rfrags->count == st->st_v2_rfrags->total;
 }
 
-static struct child_sa *process_v2_child_ix(struct msg_digest *md,
-					    struct ike_sa *ike)
+static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
+					    const struct state_v2_microcode *svm)
 {
 	/* for log */
 	const char *what;
 	const char *why = "";
 
-	/* this an IKE request and not a response */
-	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
-
 	struct child_sa *child; /* to-be-determined */
-	if (md->from_state == STATE_V2_CREATE_R) {
+	if (svm->state == STATE_V2_CREATE_R) {
 		what = "Child SA Request";
 		child = ikev2_duplicate_state(ike, IPSEC_SA,
 					      SA_RESPONDER,
@@ -1154,17 +1151,14 @@ static struct child_sa *process_v2_child_ix(struct msg_digest *md,
 
 	binlog_refresh_state(&child->sa);
 
-	LSWDBGP(DBG_BASE, buf) {
-		jam_connection(buf, ike->sa.st_connection);
-		jam(buf, " #%lu received %s CREATE_CHILD_SA%s from ",
-		    ike->sa.st_serialno,
-		    what, why);
-		jam_endpoint(buf, &md->sender);
-		jam(buf, " Child ");
-		jam_connection(buf, child->sa.st_connection);
-		jam(buf, " #%lu in %s will process it further",
-		    child->sa.st_serialno, child->sa.st_state->name);
-	}
+	connection_buf ibuf;
+	connection_buf cbuf;
+	dbg(PRI_CONNECTION" #%lu received %s CREATE_CHILD_SA%s Child "PRI_CONNECTION" #%lu in %s will process it further",
+	    pri_connection(ike->sa.st_connection, &ibuf),
+	    ike->sa.st_serialno,
+	    what, why,
+	    pri_connection(child->sa.st_connection, &cbuf),
+	    child->sa.st_serialno, child->sa.st_state->name);
 
 	return child;
 }
@@ -2439,7 +2433,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		return;
 	}
 
-	md->from_state = svm->state;
 	md->svm = svm;
 
 	if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
@@ -2465,7 +2458,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			child = pexpect_child_sa(st);
 		} else {
 			pexpect(IS_IKE_SA(st));
-			child = process_v2_child_ix(md, ike);
+			child = process_v2_child_ix(ike, svm);
 			v2_msgid_switch_responder(ike, child, md);
 		}
 
@@ -2878,7 +2871,7 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 {
 	const struct state_v2_microcode *svm = md->svm;
-	enum state_kind from_state = md->from_state;
+	enum state_kind from_state = svm->state;
 	struct connection *c = st->st_connection;
 	struct state *pst;
 	enum rc_type w;
@@ -3297,10 +3290,8 @@ void complete_v2_state_transition(struct state *st,
 	 */
 	struct msg_digest *md = (mdp != NULL ? (*mdp) /*NULL?*/ : NULL);
 	set_cur_state(st); /* might have changed */ /* XXX: huh? */
-	/* get the from state */
-	const struct finite_state *from_state = (st != NULL ? st->st_state
-						 : finite_states[STATE_UNDEFINED]);
-	const char *from_state_name = from_state->name;
+	const char *from_state_name =
+		(st != NULL ? st->st_state->short_name : "<null-state>");
 
 	/*
 	 * XXX/SML:  There is no need to abort here in all cases where st is
@@ -3325,26 +3316,23 @@ void complete_v2_state_transition(struct state *st,
 	 */
 
 	LSWDBGP(DBG_BASE, buf) {
-		lswlogf(buf, "#%lu complete_v2_state_transition()",
+		jam(buf, "#%lu complete_v2_state_transition()",
 			(st == NULL ? SOS_NOBODY : st->st_serialno));
-		if (md != NULL && md->from_state != STATE_UNDEFINED/*0?*/ &&
-		    md->from_state != from_state->kind) {
-			jam(buf, " md.from_state=");
-			jam_string(buf, finite_states[md->from_state]->name);
-		}
-		if (md != NULL && md->svm != NULL &&
-		    md->svm->state != from_state->kind) {
-			jam(buf, " md.svm.state[from]=");
-			jam_string(buf, finite_states[md->svm->state]->name);
-		}
-		jam(buf, " %s->", from_state->short_name);
-		if (md != NULL && md->svm != NULL) {
-			jam_string(buf, finite_states[md->svm->next_state]->name);
+		jam(buf, " %s -> ", from_state_name);
+		if (md == NULL) {
+			jam_string(buf, "<null-md>");
+		} else if (md->svm == NULL) {
+			jam_string(buf, "<null-md-svm>");
 		} else {
-			jam(buf, "NULL");
+			jam_string(buf, finite_states[md->svm->next_state]->short_name);
 		}
-		lswlogf(buf, " with status ");
+		jam(buf, " with status ");
 		lswlog_v2_stf_status(buf, result);
+		if (md != NULL && md->svm != NULL && st != NULL &&
+		    md->svm->state != st->st_state->kind) {
+			jam(buf, " (md.svm.state[from]=%s",
+			    finite_states[md->svm->state]->short_name);
+		}
 	}
 
 	/* audit log failures - success is audit logged in ikev2_ike_sa_established() */

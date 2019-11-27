@@ -84,7 +84,7 @@ struct msg_digest {
 	ip_endpoint sender;			/* address:port where message came from */
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
-	enum state_kind from_state;		/* state we started in */
+	enum state_kind v1_from_state;		/* (v1) state we started in */
 	const struct state_v1_microcode *smc;	/* (v1) microcode for initial state */
 	const struct state_v2_microcode *svm;	/* (v2) microcode for initial state */
 	bool new_iv_set;			/* (v1) */

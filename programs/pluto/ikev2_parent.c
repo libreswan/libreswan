@@ -246,12 +246,12 @@ static struct msg_digest *fake_md(struct state *st)
 {
 	struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
 	fake_md->st = st;
-	fake_md->from_state = st->st_state->kind;
 	fake_md->hdr.isa_msgid = v2_INVALID_MSGID;
 	fake_md->hdr.isa_version = (IKEv2_MAJOR_VERSION << ISA_MAJ_SHIFT);
 	fake_md->fake_dne = true;
 	/* asume first microcode is valid */
 	fake_md->svm = st->st_state->v2_transitions;
+	pexpect(fake_md->svm->state == st->st_state->kind);
 	return fake_md;
 }
 
@@ -844,8 +844,8 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 	ike->sa.st_original_role = ORIGINAL_RESPONDER;
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
 	/* set by caller */
-	pexpect(md->from_state == STATE_PARENT_R0);
 	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
+	pexpect(md->svm->state == STATE_PARENT_R0);
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {

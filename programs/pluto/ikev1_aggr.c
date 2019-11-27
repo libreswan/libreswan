@@ -1058,7 +1058,7 @@ static void aggr_outI1_continue(struct state *st,
 	struct msg_digest *fake_md = alloc_md("msg_digest by aggr_outI1");
 	fake_md->st = st;
 	fake_md->smc = NULL;	/* ??? */
-	fake_md->from_state = STATE_UNDEFINED;	/* ??? */
+	fake_md->v1_from_state = STATE_UNDEFINED;	/* ??? */
 	fake_md->fake_dne = true;
 
 	complete_v1_state_transition(&fake_md, e);

@@ -1893,7 +1893,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * (may be suspended due to crypto operation not yet complete)
 	 */
 	md->st = st;
-	md->from_state = from_state;
+	md->v1_from_state = from_state;
 	md->smc = smc;
 	md->new_iv_set = new_iv_set;
 
@@ -1941,7 +1941,7 @@ void process_packet_tail(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
 	struct state *st = md->st;
-	enum state_kind from_state = md->from_state;
+	enum state_kind from_state = md->v1_from_state;
 	const struct state_v1_microcode *smc = md->smc;
 	bool new_iv_set = md->new_iv_set;
 	bool self_delete = FALSE;
@@ -2534,7 +2534,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	/* safe to refer to *md */
 
-	enum state_kind from_state = md->from_state;
+	enum state_kind from_state = md->v1_from_state;
 
 	struct state *st = md->st;
 	set_cur_state(st); /* might have changed */
