@@ -138,4 +138,42 @@ extern ikev1_state_transition_fn quick_inI1_outR1;
 extern ikev1_state_transition_fn quick_inR1_outI2;
 extern ikev1_state_transition_fn quick_inI2;
 
+/* macros to manipulate IVs in state */
+
+#define update_iv(st)	{ \
+	passert((st)->st_new_iv_len <= sizeof((st)->st_iv)); \
+	(st)->st_iv_len = (st)->st_new_iv_len; \
+	memcpy((st)->st_iv, (st)->st_new_iv, (st)->st_new_iv_len); \
+    }
+
+#define set_ph1_iv_from_new(st)	{ \
+	passert((st)->st_new_iv_len <= sizeof((st)->st_ph1_iv)); \
+	(st)->st_ph1_iv_len = (st)->st_new_iv_len; \
+	memcpy((st)->st_ph1_iv, (st)->st_new_iv, (st)->st_ph1_iv_len); \
+ }
+
+#define save_iv(st, tmp, tmp_len) { \
+	passert((st)->st_iv_len <= sizeof((tmp))); \
+	(tmp_len) = (st)->st_iv_len; \
+	memcpy((tmp), (st)->st_iv, (tmp_len)); \
+    }
+
+#define restore_iv(st, tmp, tmp_len) { \
+	passert((tmp_len) <= sizeof((st)->st_iv)); \
+	(st)->st_iv_len = (tmp_len); \
+	memcpy((st)->st_iv, (tmp), (tmp_len)); \
+    }
+
+#define save_new_iv(st, tmp, tmp_len)	{ \
+	passert((st)->st_new_iv_len <= sizeof((tmp))); \
+	(tmp_len) = (st)->st_new_iv_len; \
+	memcpy((tmp), (st)->st_new_iv, (tmp_len)); \
+    }
+
+#define restore_new_iv(st, tmp, tmp_len)	{ \
+	passert((tmp_len) <= sizeof((st)->st_new_iv)); \
+	(st)->st_new_iv_len = (tmp_len); \
+	memcpy((st)->st_new_iv, (tmp), (tmp_len)); \
+    }
+
 #endif

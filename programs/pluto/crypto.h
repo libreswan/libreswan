@@ -26,55 +26,6 @@
 
 extern void init_crypto(void);
 
-/* unification of cryptographic encoding/decoding algorithms
- *
- * The IV is taken from and returned to st->st_new_iv.
- * This allows the old IV to be retained.
- * Use update_iv to commit to the new IV (for example, once a packet has
- * been validated).
- */
-
-#define MAX_OAKLEY_KEY_LEN_OLD  (3 * DES_CBC_BLOCK_SIZE)
-#define MAX_OAKLEY_KEY_LEN  (256 / BITS_PER_BYTE)
-
-/* macros to manipulate IVs in state */
-
-#define update_iv(st)	{ \
-	passert((st)->st_new_iv_len <= sizeof((st)->st_iv)); \
-	(st)->st_iv_len = (st)->st_new_iv_len; \
-	memcpy((st)->st_iv, (st)->st_new_iv, (st)->st_new_iv_len); \
-    }
-
-#define set_ph1_iv_from_new(st)	{ \
-	passert((st)->st_new_iv_len <= sizeof((st)->st_ph1_iv)); \
-	(st)->st_ph1_iv_len = (st)->st_new_iv_len; \
-	memcpy((st)->st_ph1_iv, (st)->st_new_iv, (st)->st_ph1_iv_len); \
- }
-
-#define save_iv(st, tmp, tmp_len) { \
-	passert((st)->st_iv_len <= sizeof((tmp))); \
-	(tmp_len) = (st)->st_iv_len; \
-	memcpy((tmp), (st)->st_iv, (tmp_len)); \
-    }
-
-#define restore_iv(st, tmp, tmp_len) { \
-	passert((tmp_len) <= sizeof((st)->st_iv)); \
-	(st)->st_iv_len = (tmp_len); \
-	memcpy((st)->st_iv, (tmp), (tmp_len)); \
-    }
-
-#define save_new_iv(st, tmp, tmp_len)	{ \
-	passert((st)->st_new_iv_len <= sizeof((tmp))); \
-	(tmp_len) = (st)->st_new_iv_len; \
-	memcpy((tmp), (st)->st_new_iv, (tmp_len)); \
-    }
-
-#define restore_new_iv(st, tmp, tmp_len)	{ \
-	passert((tmp_len) <= sizeof((st)->st_new_iv)); \
-	(st)->st_new_iv_len = (tmp_len); \
-	memcpy((st)->st_new_iv, (tmp), (tmp_len)); \
-    }
-
 struct connection;
 
 void ike_alg_show_connection(const struct connection *c, const char *instance);
