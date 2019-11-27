@@ -336,9 +336,6 @@ void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
 void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			  struct msg_digest *md)
 {
-	/* extend msgid */
-	intmax_t msgid = md->hdr.isa_msgid;
-
 	/* save old value, and add shortcut to new */
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
@@ -354,6 +351,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		receiver != NULL ? receiver->st_v2_msgid_wip : empty_v2_msgid_wip;
 
 	enum message_role receiving = v2_msg_role(md);
+	intmax_t msgid;
 
 	switch (receiving) {
 	case MESSAGE_REQUEST:
@@ -364,6 +362,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		 * when sending the response that things really
 		 * finish?
 		 */
+		msgid = md->hdr.isa_msgid; /* zero-extended */
 		if (receiver != NULL) {
 			if (DBGP(DBG_BASE) &&
 			    receiver->st_v2_msgid_wip.responder != msgid) {
@@ -390,6 +389,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		 * before update_recv() breaking the assumption that
 		 * WIP.INITIATOR is the old MSGID.
 		 */
+		msgid = md->hdr.isa_msgid; /* zero-extended */
 		if (receiver != NULL) {
 			if (old_receiver.initiator > msgid) {
 				/*
@@ -432,6 +432,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 	case NO_MESSAGE:
 		dbg("Message ID: IKE #%lu skipping update_recv as MD is fake",
 		    ike->sa.st_serialno);
+		msgid = -1;
 		return;
 	default:
 		bad_case(receiving);
