@@ -21,18 +21,22 @@
 
 /*
  * Structure big enough for all MAC results (returned by PRF and HASH
- * functions).  See crypt_{prf,hash}_final_mac().
+ * functions) returned by crypt_{prf,hash}_final_mac().
+ *
+ * See also ike_alg_init() for runtime check that the array is big
+ * enough.
  *
  * XXX: the field names (noteably the counter intuitive .ptr) are
  * chosen so that this structure is "hunk" like and works with hunk()
  * macros.
+ *
  */
 
 struct crypt_mac {
 	/* size of the mac in bytes */
 	size_t len;
 	/* XXX: see note above about why this is called .ptr */
-	uint8_t ptr[64/*aka MAX_DIGEST_LEN*/];
+	uint8_t ptr[64/*see ike_alg_init() for size check*/];
 };
 
 extern const struct crypt_mac empty_mac;
