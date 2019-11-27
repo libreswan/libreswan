@@ -40,6 +40,7 @@
 #include "crypto.h"
 #include "chunk.h"
 #include "ike_spi.h"
+#include "crypt_mac.h"
 
 struct state;
 struct msg_digest;
@@ -223,7 +224,7 @@ struct pcr_v1_dh {
 	PK11SymKey *skeyid_a;
 	PK11SymKey *skeyid_e;
 	PK11SymKey *enc_key;
-	chunk_t new_iv;
+	struct crypt_mac new_iv;
 };
 
 /* response */

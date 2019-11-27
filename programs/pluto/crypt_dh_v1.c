@@ -49,7 +49,6 @@ void cancelled_v1_dh(struct pcr_v1_dh *dh)
 	release_symkey("cancelled IKEv1 DH", "skeyid_a", &dh->skeyid_a);
 	release_symkey("cancelled IKEv1 DH", "skeyid_e", &dh->skeyid_e);
 	release_symkey("cancelled IKEv1 DH", "enc_key", &dh->enc_key);
-	freeanychunk(dh->new_iv);
 }
 
 /*
@@ -118,7 +117,6 @@ bool finish_dh_secretiv(struct state *st,
 		passert(dhr->new_iv.len > 0);
 		memcpy(st->st_new_iv, dhr->new_iv.ptr, dhr->new_iv.len);
 		st->st_new_iv_len = dhr->new_iv.len;
-		freeanychunk(dhr->new_iv);
 		return TRUE;
 	}
 }
@@ -193,7 +191,7 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 			    PK11SymKey **skeyid_d_out,	/* output */
 			    PK11SymKey **skeyid_a_out,	/* output */
 			    PK11SymKey **skeyid_e_out,	/* output */
-			    chunk_t *new_iv,	/* output */
+			    struct crypt_mac *new_iv,	/* output */
 			    PK11SymKey **enc_key_out	/* output */
 			    )
 {
@@ -273,7 +271,7 @@ static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 		struct crypt_hash *ctx = crypt_hash_init("new IV", hasher);
 		crypt_hash_digest_hunk(ctx, "GI", gi);
 		crypt_hash_digest_hunk(ctx, "GR", gr);
-		*new_iv = clone_hunk(crypt_hash_final_mac(&ctx), "new IV");
+		*new_iv = crypt_hash_final_mac(&ctx);
 	}
 }
 
