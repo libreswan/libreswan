@@ -113,11 +113,8 @@ bool finish_dh_secretiv(struct state *st,
 	if (st->st_shared_nss == NULL) {
 		return FALSE;
 	} else {
-		passert(dhr->new_iv.len <= MAX_DIGEST_LEN);
-		passert(dhr->new_iv.len > 0);
-		memcpy(st->st_new_iv, dhr->new_iv.ptr, dhr->new_iv.len);
-		st->st_new_iv_len = dhr->new_iv.len;
-		return TRUE;
+		st->st_v1_new_iv = dhr->new_iv;
+		return true;
 	}
 }
 

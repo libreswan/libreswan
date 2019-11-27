@@ -582,25 +582,17 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	passert(h != NULL);
 
 	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("last Phase 1 IV:",
-			 st->st_ph1_iv, st->st_ph1_iv_len);
-	}
-
-	st->st_new_iv_len = h->hash_digest_size;
-	passert(st->st_new_iv_len <= sizeof(st->st_new_iv));
-
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("current Phase 1 IV:",
-			 st->st_iv, st->st_iv_len);
+		DBG_dump_hunk("last Phase 1 IV:", st->st_v1_ph1_iv);
+		DBG_dump_hunk("current Phase 1 IV:", st->st_v1_iv);
 	}
 
 	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h);
-	crypt_hash_digest_bytes(ctx, "PH1_IV", st->st_ph1_iv, st->st_ph1_iv_len);
+	crypt_hash_digest_hunk(ctx, "PH1_IV", st->st_v1_ph1_iv);
 	passert(*msgid != 0);
 	passert(sizeof(msgid_t) == sizeof(uint32_t));
 	msgid_t raw_msgid = htonl(*msgid);
 	crypt_hash_digest_thing(ctx, "MSGID", raw_msgid);
-	crypt_hash_final_bytes(&ctx, st->st_new_iv, st->st_new_iv_len);
+	st->st_v1_new_iv = crypt_hash_final_mac(&ctx);
 }
 
 static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
@@ -860,7 +852,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	/* encrypt message, except for fixed part of header */
 
 	init_phase2_iv(isakmp_sa, &st->st_v1_msgid.id);
-	restore_new_iv(st, isakmp_sa->st_new_iv, isakmp_sa->st_new_iv_len);
+	restore_new_iv(st, isakmp_sa->st_v1_new_iv);
 
 	if (!ikev1_encrypt_message(&rbody, st)) {
 		reset_cur_state();
@@ -927,8 +919,7 @@ struct verify_oppo_bundle {
 				 */
 	struct msg_digest *md;
 	struct p2id my, his;
-	unsigned int new_iv_len; /* p1st's might change */
-	u_char new_iv[MAX_DIGEST_LEN];
+	struct crypt_mac new_iv;
 	/* int whackfd; */	/* not needed because we are Responder */
 };
 
@@ -1041,7 +1032,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		b.his.port = b.my.port = 0;
 	}
 	b.md = md;
-	save_new_iv(p1st, b.new_iv, b.new_iv_len);
+	save_new_iv(p1st, b.new_iv);
 
 	/*
 	 * FIXME - DAVIDM
@@ -1244,7 +1235,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 		st->st_v1_msgid.id = md->hdr.isa_msgid;
 
-		restore_new_iv(st, b->new_iv, b->new_iv_len);
+		restore_new_iv(st, b->new_iv);
 
 		set_cur_state(st);      /* (caller will reset) */
 		dbg("switching MD.ST from #%lu to CHILD #%lu; ulgh",

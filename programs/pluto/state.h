@@ -39,6 +39,7 @@
 #include "monotime.h"
 #include "reqid.h"
 #include "fd.h"
+#include "crypt_mac.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -417,15 +418,11 @@ struct state {
 	const struct state_v2_microcode *st_v2_next_transition;
 #endif
 
-	/* Initialization Vectors for IKE encryption */
+	/* Initialization Vectors for IKEv1 IKE encryption */
 
-	u_char st_new_iv[MAX_DIGEST_LEN];	/* tentative IV (calculated from current packet) */
-	u_char st_iv[MAX_DIGEST_LEN];           /* accepted IV (after packet passes muster) */
-	u_char st_ph1_iv[MAX_DIGEST_LEN];       /* IV at end of phase 1 */
-
-	unsigned int st_new_iv_len;
-	unsigned int st_iv_len;
-	unsigned int st_ph1_iv_len;
+	struct crypt_mac st_v1_new_iv;	/* tentative IV (calculated from current packet) */
+	struct crypt_mac st_v1_iv;		/* accepted IV (after packet passes muster) */
+	struct crypt_mac st_v1_ph1_iv;	/* IV at end of phase 1 */
 
 	/* end of IKEv1-only things */
 

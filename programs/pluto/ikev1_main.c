@@ -413,7 +413,7 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump("encrypting:", enc_start, enc_len);
-		DBG_dump("IV:", st->st_new_iv, st->st_new_iv_len);
+		DBG_dump_hunk("IV:", st->st_v1_new_iv);
 		DBG_log("unpadded size is: %u", (unsigned int)enc_len);
 	}
 
@@ -437,8 +437,8 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 	    DBG_log("encrypting %zu using %s", enc_len,
 		    st->st_oakley.ta_encrypt->common.fqn));
 
-	passert(st->st_new_iv_len >= e->enc_blocksize);
-	st->st_new_iv_len = e->enc_blocksize;   /* truncate */
+	passert(st->st_v1_new_iv.len >= e->enc_blocksize);
+	st->st_v1_new_iv.len = e->enc_blocksize;   /* truncate */
 
 	/* close just before encrypting so NP backpatching isn't confused */
 	if (!ikev1_close_message(pbs, st))
@@ -446,11 +446,11 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 
 	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
 				 st->st_enc_key_nss,
-				 st->st_new_iv, TRUE);
+				 st->st_v1_new_iv.ptr, TRUE);
 
 	update_iv(st);
 	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("next IV:", st->st_iv, st->st_iv_len);
+		DBG_dump_hunk("next IV:", st->st_v1_iv);
 	}
 
 	return TRUE;
@@ -1737,8 +1737,8 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	/* Last block of Phase 1 (R3), kept for Phase 2 IV generation */
 	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("last encrypted block of Phase 1:",
-			 st->st_new_iv, st->st_new_iv_len);
+		DBG_dump_hunk("last encrypted block of Phase 1:",
+			      st->st_v1_new_iv);
 	}
 
 	set_ph1_iv_from_new(st);
@@ -1895,13 +1895,11 @@ stf_status send_isakmp_notification(struct state *st,
 	 * because there are no retransmissions...
 	 */
 	{
-		u_char old_new_iv[MAX_DIGEST_LEN];
-		unsigned int old_new_iv_len;
-		u_char old_iv[MAX_DIGEST_LEN];
-		unsigned int old_iv_len;
+		struct crypt_mac old_new_iv;
+		struct crypt_mac old_iv;
 
-		save_iv(st, old_iv, old_iv_len);
-		save_new_iv(st, old_new_iv, old_new_iv_len);
+		save_iv(st, old_iv);
+		save_new_iv(st, old_new_iv);
 
 		init_phase2_iv(st, &msgid);
 		if (!ikev1_encrypt_message(&rbody, st))
@@ -1910,8 +1908,8 @@ stf_status send_isakmp_notification(struct state *st,
 		send_ike_msg_without_recording(st, &reply_stream, "ISAKMP notify");
 
 		/* get back old IV for this state */
-		restore_iv(st, old_iv, old_iv_len);
-		restore_new_iv(st, old_new_iv, old_new_iv_len);
+		restore_iv(st, old_iv);
+		restore_new_iv(st, old_new_iv);
 	}
 
 	return STF_IGNORE;
@@ -1967,10 +1965,11 @@ static void send_notification(struct state *sndst, notification_t type,
 			return;
 		}
 
-		if (sndst->st_iv_len != 0) {
+		if (sndst->st_v1_iv.len != 0) {
 			LSWLOG(buf) {
 				jam(buf, "payload malformed.  IV: ");
-				jam_dump_bytes(buf, sndst->st_iv, sndst->st_iv_len);
+				jam_dump_bytes(buf, sndst->st_v1_iv.ptr,
+					       sndst->st_v1_iv.len);
 			}
 		}
 
@@ -2063,10 +2062,9 @@ static void send_notification(struct state *sndst, notification_t type,
 	if (encst != NULL) {
 		/* Encrypt message (preserve st_iv) */
 		/* ??? why not preserve st_new_iv? */
-		u_char old_iv[MAX_DIGEST_LEN];
-		unsigned old_iv_len;
+		struct crypt_mac old_iv;
 
-		save_iv(encst, old_iv, old_iv_len);
+		save_iv(encst, old_iv);
 
 		if (!IS_ISAKMP_SA_ESTABLISHED(encst->st_state)) {
 			update_iv(encst);
@@ -2074,7 +2072,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		init_phase2_iv(encst, &msgid);
 		passert(ikev1_encrypt_message(&r_hdr_pbs, encst));
 
-		restore_iv(encst, old_iv, old_iv_len);
+		restore_iv(encst, old_iv);
 	} else {
 		close_output_pbs(&r_hdr_pbs);
 	}
@@ -2305,10 +2303,9 @@ void send_v1_delete(struct state *st)
 	 * - we need to preserve (save/restore) st_tpacket.
 	 */
 	{
-		u_char old_iv[MAX_DIGEST_LEN];
-		unsigned int old_iv_len;
+		struct crypt_mac old_iv;
 
-		save_iv(p1st, old_iv, old_iv_len);
+		save_iv(p1st, old_iv);
 		init_phase2_iv(p1st, &msgid);
 
 		passert(ikev1_encrypt_message(&r_hdr_pbs, p1st));
@@ -2316,7 +2313,7 @@ void send_v1_delete(struct state *st)
 		send_ike_msg_without_recording(p1st, &reply_pbs, "delete notify");
 
 		/* get back old IV for this state */
-		restore_iv(p1st, old_iv, old_iv_len);
+		restore_iv(p1st, old_iv);
 	}
 }
 

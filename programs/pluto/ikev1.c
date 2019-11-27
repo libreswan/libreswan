@@ -1994,31 +1994,29 @@ void process_packet_tail(struct msg_digest **mdp)
 
 		/* Decrypt everything after header */
 		if (!new_iv_set) {
-			if (st->st_iv_len == 0) {
+			if (st->st_v1_iv.len == 0) {
 				init_phase2_iv(st, &md->hdr.isa_msgid);
 			} else {
 				/* use old IV */
-				restore_new_iv(st, st->st_iv, st->st_iv_len);
+				restore_new_iv(st, st->st_v1_iv);
 			}
 		}
 
-		passert(st->st_new_iv_len >= e->enc_blocksize);
-		st->st_new_iv_len = e->enc_blocksize;   /* truncate */
+		passert(st->st_v1_new_iv.len >= e->enc_blocksize);
+		st->st_v1_new_iv.len = e->enc_blocksize;   /* truncate */
 
 		if (DBGP(DBG_CRYPT)) {
 			DBG_log("decrypting %u bytes using algorithm %s",
 				(unsigned) pbs_left(&md->message_pbs),
 				st->st_oakley.ta_encrypt->common.fqn);
-			DBG_dump("IV before:",
-				 st->st_new_iv, st->st_new_iv_len);
+			DBG_dump_hunk("IV before:", st->st_v1_new_iv);
 		}
 		e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
 					 pbs_left(&md->message_pbs),
 					 st->st_enc_key_nss,
-					 st->st_new_iv, FALSE);
+					 st->st_v1_new_iv.ptr, FALSE);
 		if (DBGP(DBG_CRYPT)) {
-			DBG_dump("IV after:",
-				 st->st_new_iv, st->st_new_iv_len);
+			DBG_dump_hunk("IV after:", st->st_v1_new_iv);
 			DBG_log("decrypted payload (starts at offset %td):",
 				md->message_pbs.cur - md->message_pbs.roof);
 			DBG_dump(NULL, md->message_pbs.start,
