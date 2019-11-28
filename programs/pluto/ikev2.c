@@ -3253,17 +3253,6 @@ void complete_v2_state_transition(struct state *st,
 				  struct msg_digest **mdp,
 				  stf_status result)
 {
-	struct ike_sa *ike = ike_sa(st);
-
-	/*
-	 * XXX; If MD.ST is set, make certain it is consistent with
-	 * ST.  Eventually .ST will become v1 only be deleted.
-	 */
-	pexpect(mdp == NULL ||
-		*mdp == NULL ||
-		(*mdp)->st == NULL ||
-		(*mdp)->st == st);
-
 	/* statistics */
 	/* this really depends on the type of error whether it is an IKE or IPsec fail */
 	if (result > STF_FAIL) {
@@ -3273,27 +3262,76 @@ void complete_v2_state_transition(struct state *st,
 	}
 
 	/*
-	 * Since this is a state machine, there really should always
-	 * be a state.
+	 * XXX: If MD and MD.ST are non-NULL, expect MD.ST to point to
+	 * ST.
 	 *
-	 * Unfortunately #1: instead of always having a state and
-	 * passing it round, state transition functions create the
-	 * state locally and then try to tunnel it back using the
-	 * received message's digest - *MDP->st.  The big offenders
-	 * are IKE_SA_INIT and IKE_AUTH reponders
+	 * An exchange initiator doesn't have an MD but code insists
+	 * that it should be and creates one (look for fake_md()).
+	 * This is presumably because MD / MD.ST are being used to:
 	 *
-	 * Unfortunately #2: the initiator of an exchange doesn't have
-	 * a received message's digest, but that's ok one is sometimes
-	 * created using fake_md().
+	 * - store the state transition; but that information really
+             belongs in ST
 	 *
-	 * Hence, expect any of MDP, *MDP, or *MDP->st to be NULL.
+	 * - store the CHILD SA when created midway through a state
+         *   transition (see IKE_AUTH); but that should be either a
+         *   nested or separate transition
+	 *
+	 * - signal that the SA was deleted mid-transition by clearing
+	 *   MD.ST (so presumably it was previously set); but that
+	 *   should be handled by returning an STF_deleteme and having
+	 *   this code delete the SA.
 	 */
-	struct msg_digest *md = (mdp != NULL ? (*mdp) /*NULL?*/ : NULL);
-	set_cur_state(st); /* might have changed */ /* XXX: huh? */
-	const char *from_state_name =
-		(st != NULL ? st->st_state->name : "<null-state>");
+	passert(mdp != NULL);
+	struct msg_digest *md = *mdp;
+	if (md != NULL) {
+		if (md->st != NULL) {
+			if (st == NULL) {
+				/* can't happen, both must be null */
+				LOG_PEXPECT("MD.ST contains the unknown %s SA #%lu; expecting NULL",
+					    IS_CHILD_SA(md->st) ? "CHILD" : "IKE",
+					    md->st->st_serialno);
+			} else if (md->st != st) {
+				/* can't happen, must match */
+				LOG_PEXPECT("MD.ST contains the unknown %s SA #%lu; expecting the %s SA #%lu",
+					    IS_CHILD_SA(md->st) ? "CHILD" : "IKE",
+					    md->st->st_serialno,
+					    IS_CHILD_SA(st) ? "CHILD" : "IKE",
+					    st->st_serialno);
+			} else {
+				dbg("MD.ST contains the %s SA #%lu",
+				    IS_CHILD_SA(st) ? "CHILD" : "IKE",
+				    st->st_serialno);
+			}
+		} else if (st != NULL) {
+			dbg("MD.ST contains NULL and ST is %s SA #%lu",
+			    IS_CHILD_SA(st) ? "CHILD" : "IKE",
+			    st->st_serialno);
+		} else {
+			dbg("MD.ST contains NULL and ST is NULL");
+		}
+	} else if (st != NULL) {
+		dbg("MD.ST does not exist and ST is %s #%lu",
+		    IS_CHILD_SA(st) ? "CHILD" : "IKE",
+		    st->st_serialno);
+	} else {
+		dbg("MD.ST does not exist and ST is NULL");
+	}
 
 	/*
+	 * XXX: yes, ST can be NULL.
+	 *
+	 * What happens is code deletes ST part way through a state
+	 * transition and then tries to signal this by setting MD.ST
+	 * to NULL (presumably it was previously set to ST).  This
+	 * function is then called with MD.ST instead of simply ST.
+	 *
+	 * Of course all the intervening code still has references to
+	 * the now-defunct state in local ST et.al. variables.  What
+	 * could possibly go wrong .....
+	 *
+	 * The relevant code should instead return STF_deleteme
+	 * (STF_ZOMBIFY?)  so that the delete can be performed here.
+	 *
 	 * XXX/SML:  There is no need to abort here in all cases where st is
 	 * null, so moved this precondition to where it's needed.  Some previous
 	 * logic appears to have been tooled to handle null state, and state might
@@ -3314,10 +3352,43 @@ void complete_v2_state_transition(struct state *st,
 	 * that causes us to delete the IKE state.  In fact, that can be an
 	 * STF_OK and yet have no remaining state object at this point.
 	 */
+	if (st == NULL) {
+		/* see above */
+		pexpect(md == NULL || md->st == NULL);
+		if (result == STF_OK) {
+			/*
+			 * For instance, the successful transition of
+			 * STATE_IKESA_DEL.
+			 */
+			dbg("STF_OK but no state object remains");
+		} else if (result == STF_FAIL) {
+			/* already logged by "delete" */
+			dbg("STF_FAIL but no state object remains");
+		} else if (result > STF_FAIL) {
+			v2_notification_t notification = result - STF_FAIL;
+			/* already logged by "delete" */
+			dbg("STF_FAIL+%s but no state object remains",
+			    enum_name(&ikev2_notify_names, notification));
+			if (v2_msg_role(md) == MESSAGE_REQUEST) {
+				/* will log? */
+				send_v2N_response_from_md(md, notification, NULL);
+			}
+		} else {
+			LSWLOG_PEXPECT(buf) {
+				jam(buf, "NULL ST has unexpected status ");
+				lswlog_v2_stf_status(buf, result);
+			}
+		}
+		return;
+	}
+
+	struct ike_sa *ike = ike_sa(st);
+	/* struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL; */
+	set_cur_state(st); /* might have changed */ /* XXX: huh? */
+	const char *from_state_name = st->st_state->short_name;
 
 	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "#%lu complete_v2_state_transition()",
-			(st == NULL ? SOS_NOBODY : st->st_serialno));
+		jam(buf, "#%lu complete_v2_state_transition()", st->st_serialno);
 		jam(buf, " %s -> ", from_state_name);
 		if (md == NULL) {
 			jam_string(buf, "<null-md>");
@@ -3328,7 +3399,7 @@ void complete_v2_state_transition(struct state *st,
 		}
 		jam(buf, " with status ");
 		lswlog_v2_stf_status(buf, result);
-		if (md != NULL && md->svm != NULL && st != NULL &&
+		if (md != NULL && md->svm != NULL &&
 		    md->svm->state != st->st_state->kind) {
 			jam(buf, " (md.svm.state[from]=%s",
 			    finite_states[md->svm->state]->short_name);
@@ -3373,13 +3444,8 @@ void complete_v2_state_transition(struct state *st,
 		return;
 
 	case STF_OK:
-		if (st == NULL) {
-			/* this happens for the successful transition of STATE_IKESA_DEL */
-			DBG(DBG_CONTROL, DBG_log("STF_OK but no state object remains"));
-		} else {
-			/* advance the state */
-			success_v2_state_transition(st, md);
-		}
+		/* advance the state */
+		success_v2_state_transition(st, md);
 		break;
 
 	case STF_INTERNAL_ERROR:
@@ -3409,62 +3475,47 @@ void complete_v2_state_transition(struct state *st,
 		md->st = st = NULL;
 		break;
 
-	default:
-		passert(result >= STF_FAIL);
-		v2_notification_t notification = result > STF_FAIL ?
-			result - STF_FAIL : v2N_NOTHING_WRONG;
+	case STF_FAIL:
+		/* XXX: clearly this log line is silly and needs fixing! */
+		whack_log(RC_NOTIFICATION, "%s: %s",
+			  from_state_name,
+			  enum_name(&ikev2_notify_names, v2N_NOTHING_WRONG));
+		break;
+
+	default: /* STF_FAIL+notification */
+		passert(result > STF_FAIL);
+		/*
+		 * XXX: For IKEv2, this code path isn't sufficient - a
+		 * message request can result in a response that
+		 * contains both a success and a fail.  Better to
+		 * record the responses and and then return
+		 * STF_ZOMBIFY signaling both that the message should
+		 * be sent and the state deleted.
+		 */
+		v2_notification_t notification = result - STF_FAIL;
 		whack_log(RC_NOTIFICATION + notification,
 			  "%s: %s",
 			  from_state_name,
 			  enum_name(&ikev2_notify_names, notification));
 
-		if (notification != v2N_NOTHING_WRONG) {
-			/*
-			 * XXX: For IKEv2, this code path isn't
-			 * sufficient - a message request can result
-			 * in a response that contains both a success
-			 * and a fail.  Better to respond directly; or
-			 * better still, record the response and send
-			 * using that - look for comments about
-			 * STF_ZOMBIFY.
-			 */
-			/* Only the responder sends a notification */
-			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
-				struct state *pst = st;
-
-				DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
-				/* We are the exchange responder */
-				if (st != NULL && IS_CHILD_SA(st)) {
-					pst = state_with_serialno(
-							st->st_clonedfrom);
-				}
-
-				if (st == NULL) {
-					send_v2N_response_from_md(md, notification, NULL);
-				} else {
-					send_v2N_response_from_state(ike_sa(pst), md,
-								     notification,
-								     NULL/*no data*/);
-					if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
-						delete_state(st);
-					} else {
-						dbg("forcing #%lu to a discard event",
-						    st->st_serialno);
-						delete_event(st);
-						event_schedule_s(EVENT_SO_DISCARD,
-								 MAXIMUM_RESPONDER_WAIT,
-								 st);
-					}
-				}
+		/* Only the responder sends a notification */
+		if (v2_msg_role(md) == MESSAGE_REQUEST) {
+			dbg("sending a notification reply");
+			send_v2N_response_from_state(ike, md,
+						     notification,
+						     NULL/*no data*/);
+			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
+				delete_state(st);
+				md->st = st = NULL;
+			} else {
+				dbg("forcing #%lu to a discard event",
+				    st->st_serialno);
+				delete_event(st);
+				event_schedule_s(EVENT_SO_DISCARD,
+						 MAXIMUM_RESPONDER_WAIT,
+						 st);
 			}
 		}
-
-		DBG(DBG_CONTROL,
-		    DBG_log("state transition function for %s failed: %s",
-			    from_state_name,
-			    notification == v2N_NOTHING_WRONG ?
-				"<no reason given>" :
-				enum_name(&ikev2_notify_names, notification)));
 		break;
 	}
 }
