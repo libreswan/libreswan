@@ -740,29 +740,72 @@ void init_rate_log(void)
 			      RESET_LOG_RATE_LIMIT);
 }
 
-
-void dbg_pending(const struct pending *pending, const char *message, ...)
+static void broadcast(lset_t rc_flags, fd_t object_fd,
+		      const struct state *st,
+		      const struct connection *c,
+		      const ip_endpoint *from,
+		      const char *message, va_list ap)
 {
-	LSWDBGP(DBG_BASE, buf) {
-		jam_log_prefix(buf, NULL/*st*/, pending->connection/*c*/, NULL/*sender*/);
-		va_list ap;
-		va_start(ap, message);
+	lset_t rc = rc_flags & RC_MASK;
+	enum stream only = rc_flags & ~RC_MASK;
+	LSWBUF(buf) {
+		if (only == DEBUG_STREAM) {
+			jam(buf, DEBUG_PREFIX);
+		}
+		/*
+		 * XXX: Always include a prefix; even when
+		 * DEBUG_STREAM.  Presumably the message is written
+		 * with the assumption that it is prefixed by some
+		 * context.  If this wasn't the intend, the caller
+		 * would have used dbg().
+		 *
+		 * Can a shorter prefix be used?
+		 */
+		/* jam_debug_prefix(buf, st, c, from) */
+		jam_log_prefix(buf, st, c, from);
 		jam_va_list(buf, message, ap);
-		va_end(ap);
-		lswlog_to_debug_stream(buf);
+		switch (only) {
+		case DEBUG_STREAM:
+			lswlog_to_debug_stream(buf);
+			break;
+		case ALL_STREAMS:
+		case LOG_STREAM:
+		case WHACK_STREAM:
+			if (only != WHACK_STREAM) {
+				lswlog_to_log_stream(buf);
+			}
+			if (only != LOG_STREAM &&
+			    in_main_thread()) {
+				jambuf_to_whack_fd(buf, object_fd, rc);
+				if (!same_fd(object_fd, whack_log_fd)) {
+					jambuf_to_whack_fd(buf, whack_log_fd, rc);
+				}
+			}
+			break;
+		default:
+			bad_case(only);
+		}
 	}
 }
 
-void log_pending(const struct pending *pending, const char *message, ...)
+void log_message(lset_t rc_flags,
+		 const struct state *st, const struct connection *c, const ip_address *from,
+		 const char *format, ...)
 {
-	LSWBUF(buf) {
-		jam_log_prefix(buf, NULL/*st*/, pending->connection/*c*/, NULL/*sender*/);
-		va_list ap;
-		va_start(ap, message);
-		jam_va_list(buf, message, ap);
-		va_end(ap);
-		lswlog_to_log_stream(buf);
-		jambuf_to_whack_fd(buf, pending->whack_sock, RC_COMMENT);
-		/* XXX: also WHACK_LOG_FD if different? */
-	}
+	va_list ap;
+	va_start(ap, format);
+	fd_t whackfd = (st != NULL ? st->st_whack_sock : null_fd);
+	broadcast(rc_flags, whackfd, st, c, from, format, ap);
+	va_end(ap);
+}
+
+void log_pending(lset_t rc_flags, const struct pending *pending,
+		 const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	broadcast(rc_flags, pending->whack_sock,
+		  NULL/*ST*/, pending->connection, NULL/*from*/,
+		  format, ap);
+	va_end(ap);
 }

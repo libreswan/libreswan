@@ -105,15 +105,17 @@ void add_pending(fd_t whack_sock,
 	/*
 	 * If this is part of an initiate then there's already enough
 	 * going on; no need to log this action.
-	*/
-	log_pending_fn *log = part_of_initiate ? dbg_pending : log_pending;
-	address_buf b;
-	connection_buf cibb;
-	struct connection *cb = ike->sa.st_connection;
-	log(p, "queuing pending IPsec SA negotiating with %s IKE SA #%lu "PRI_CONNECTION"",
-	    ipstr(&c->spd.that.host_addr, &b),
-	    ike->sa.st_serialno, pri_connection(cb, &cibb));
-
+	 */
+	enum stream only = part_of_initiate ? (DBGP(DBG_BASE) ? DEBUG_STREAM : NO_STREAM) : ALL_STREAMS;
+	if (only != NO_STREAM) {
+		address_buf b;
+		connection_buf cibb;
+		struct connection *cb = ike->sa.st_connection;
+		log_pending(only | RC_COMMENT, p,
+			    "queuing pending IPsec SA negotiating with %s IKE SA #%lu "PRI_CONNECTION"",
+			    ipstr(&c->spd.that.host_addr, &b),
+			    ike->sa.st_serialno, pri_connection(cb, &cibb));
+	}
 	host_pair_enqueue_pending(c, p, &p->next);
 }
 

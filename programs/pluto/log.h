@@ -98,18 +98,45 @@ extern void log_pop_from(ip_address old_from, where_t where);
 #define pop_cur_from(OLD) log_pop_from(OLD, HERE)
 
 /*
- * Direct a log message, including applicable prefix, to the log file.
- * If whack is attached to the object, send the message to whack at
- * level RC_COMMENT as well.
+ * Broadcast a log message.
  *
- * Unlike libreswan_log() et.al., this never logs to the global
- * WHACK_LOG_FD.  It should probably be tweaked to, when WHACK_LOG_FD
- * is open and different to the object's whack-fd, also log there.
+ * By default send it to the log file and any attached whacks (both
+ * globally and the object).
+ *
+ * If LOG_ONLY, DEBUG_ONLY or WHACK_ONLY is ORed into rc_flags, then
+ * only send the message to the specified destination.
+ *
+ * XXX: what about error level logging; what about having debug
+ * specified as a flag.  Should these be made flags so that both the
+ * SYSLOG level can also be encoded?
  */
 
-typedef void (log_pending_fn)(const struct pending *pending, const char *msg, ...) PRINTF_LIKE(2);
-log_pending_fn log_pending;
-log_pending_fn dbg_pending;
+enum stream {
+	/*
+	 * This means that a simple RC_* code will go to both whack
+	 * and and the log files.
+	 */
+	ALL_STREAMS = 0,
+	/*
+	 * Mask the RC, see comment above about how RC_NOTIFICATION +
+	 * 0xffff overflows an 8-bit value.
+	 */
+	RC_MASK =  0x0fff,
+	LOG_STREAM = 0x1000,	/* send utterance to the log file */
+	DEBUG_STREAM,		/* send utterance to the debug file */
+	WHACK_STREAM,		/* send utterance to whack */
+	NO_STREAM,
+};
+
+void log_message(lset_t rc_flags,
+		 const struct state *st,
+		 const struct connection *c,
+		 const ip_address *from,
+		 const char *format, ...) PRINTF_LIKE(5);
+
+void log_pending(lset_t rc_flags,
+		 const struct pending *pending,
+		 const char *format, ...) PRINTF_LIKE(3);
 
 /*
  * Direct a log message, possibly prefix with the supplied context
