@@ -4263,7 +4263,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 		    ORIGINAL_INITIATOR,
 		    ike->sa.st_skey_d_nss, /* only IKE has SK_d */
 		    ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
-		    &ike->sa.st_ike_rekey_spis,
+		    &child->sa.st_ike_rekey_spis, /* new SPIs */
 		    ikev2_child_ike_inR_continue);
 	return STF_SUSPEND;
 }
