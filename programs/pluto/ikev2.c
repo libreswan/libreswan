@@ -3291,7 +3291,7 @@ void complete_v2_state_transition(struct state *st,
 	struct msg_digest *md = (mdp != NULL ? (*mdp) /*NULL?*/ : NULL);
 	set_cur_state(st); /* might have changed */ /* XXX: huh? */
 	const char *from_state_name =
-		(st != NULL ? st->st_state->short_name : "<null-state>");
+		(st != NULL ? st->st_state->name : "<null-state>");
 
 	/*
 	 * XXX/SML:  There is no need to abort here in all cases where st is
