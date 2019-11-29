@@ -649,9 +649,19 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 void ikev2_parent_outI1_continue(struct state *st, struct msg_digest **mdp,
 				 struct pluto_crypto_req *r)
 {
-	DBG(DBG_CONTROL,
-		DBG_log("ikev2_parent_outI1_continue for #%lu",
-			st->st_serialno));
+	dbg("%s() for #%lu %s",
+	     __func__, st->st_serialno, st->st_state->name);
+
+	struct msg_digest *md = *mdp;
+	pexpect(v2_msg_role(md) == NO_MESSAGE); /* i.e., MD==NULL */
+	pexpect(md == NULL || md->st == NULL || md->st == st);
+
+ 	struct ike_sa *ike = pexpect_ike_sa(st);
+ 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+
+	/* I1 is from INVALID KE */
+	pexpect(st->st_state->kind == STATE_PARENT_I0 ||
+		st->st_state->kind == STATE_PARENT_I1);
 
 	unpack_KE_from_helper(st, r, &st->st_gi);
 	unpack_nonce(&st->st_ni, r);
@@ -982,11 +992,18 @@ static void ikev2_parent_inI1outR1_continue(struct state *st,
 					    struct msg_digest **mdp,
 					    struct pluto_crypto_req *r)
 {
-	DBG(DBG_CONTROL,
-		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
-			st->st_serialno));
+	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
+	    __func__, st->st_serialno, st->st_state->name);
 
-	passert(*mdp != NULL);
+	struct msg_digest *md = *mdp;
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
+
+	pexpect(st->st_state->kind == STATE_PARENT_R0);
+
 	stf_status e = ikev2_parent_inI1outR1_continue_tail(st, *mdp, r);
 	/* replace (*mdp)->st with st ... */
 	complete_v2_state_transition((*mdp)->st, mdp, e);
@@ -1730,11 +1747,16 @@ static void ikev2_parent_inR1outI2_continue(struct state *st,
 					    struct msg_digest **mdp,
 					    struct pluto_crypto_req *r)
 {
-	DBG(DBG_CONTROL,
-		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
-			st->st_serialno));
+	dbg("%s() for #%lu %s: g^{xy} calculated, sending I2",
+	    __func__, st->st_serialno, st->st_state->name);
 
-	passert(*mdp != NULL);
+	struct msg_digest *md = *mdp;
+	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
+ 	struct ike_sa *ike = pexpect_ike_sa(st);
+ 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+
 	stf_status e = ikev2_parent_inR1outI2_tail(st, *mdp, r);
 	/* replace (*mdp)->st with st ... */
 	complete_v2_state_transition((*mdp)->st, mdp, e);
@@ -2540,6 +2562,18 @@ static void ikev2_pam_continue(struct state *st,
 			       const char *name UNUSED,
 			       bool success)
 {
+	dbg("%s() for #%lu %s",
+	     __func__, st->st_serialno, st->st_state->name);
+
+	struct msg_digest *md = *mdp;
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
+ 	struct ike_sa *ike = pexpect_ike_sa(st);
+ 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
+
+	pexpect(st->st_state->kind == STATE_PARENT_R1);
+
 	stf_status stf;
 	if (success) {
 		stf = ikev2_parent_inI2outR2_auth_tail(st, *mdp, success);
@@ -2643,11 +2677,17 @@ static void ikev2_ike_sa_process_auth_request_no_skeyid_continue(struct state *s
 								 struct msg_digest **mdp,
 								 struct pluto_crypto_req *r)
 {
-	DBG(DBG_CONTROL,
-		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
-			st->st_serialno));
+	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
+	    __func__, st->st_serialno, st->st_state->name);
 
-	passert(*mdp != NULL); /* IKE_AUTH request */
+	struct msg_digest *md = *mdp;
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
+ 	struct ike_sa *ike = pexpect_ike_sa(st);
+ 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
+
+	pexpect(st->st_state->kind == STATE_PARENT_R1);
 
 	/* extract calculated values from r */
 
@@ -4272,26 +4312,26 @@ static void ikev2_child_ike_inR_continue(struct state *st,
 					 struct msg_digest **mdp,
 					 struct pluto_crypto_req *r)
 {
-	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I);
-
-	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
-	pexpect(st->st_sa_role == SA_INITIATOR);
-	pexpect(*mdp != NULL);
-	pexpect(v2_msg_role(*mdp) == MESSAGE_RESPONSE);
-	pexpect((*mdp)->st == st);
-
-	dbg("%s for #%lu %s",
+	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
-	/* and a parent? */
+	struct msg_digest *md = *mdp;
+	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
 	struct ike_sa *ike = ike_sa(st);
+	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
+	pexpect(child->sa.st_sa_role == SA_INITIATOR);
+
+	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I);
+
+	/* and a parent? */
 	if (ike == NULL) {
 		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
 			    st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
 		return;
 	}
-	passert(ike != NULL);
 
 	stf_status e = STF_OK;
 	bool only_shared_false = false;
@@ -4368,7 +4408,18 @@ stf_status ikev2_child_inR(struct ike_sa *unused_ike UNUSED,
 static stf_status ikev2_child_inR_continue(struct state *st,
 					   struct msg_digest **mdp)
 {
+	dbg("%s() for #%lu %s",
+	     __func__, st->st_serialno, st->st_state->name);
+
+	/* initiator getting back an answer */
 	struct msg_digest *md = *mdp;
+	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
+	struct ike_sa *ike = ike_sa(st);
+	struct child_sa *child = pexpect_child_sa(st);
+	pexpect(child->sa.st_sa_role == SA_INITIATOR);
+
 	/*
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality
@@ -4377,18 +4428,8 @@ static stf_status ikev2_child_inR_continue(struct state *st,
 	pexpect(st->st_state->kind == STATE_V2_CREATE_I ||
 		st->st_state->kind == STATE_V2_REKEY_CHILD_I);
 
-	/* initiator getting back an answer */
-	pexpect(IS_CHILD_SA(st));
-	pexpect(st->st_sa_role == SA_INITIATOR);
-	pexpect(md != NULL);
-	pexpect(md->st == st);
-	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
-
-	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state->name);
-
 	/* and a parent? */
-	if (ike_sa(st) == NULL) {
+	if (ike == NULL) {
 		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
 			    st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
@@ -4500,6 +4541,18 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 					 struct msg_digest **mdp,
 					 struct pluto_crypto_req *r)
 {
+	dbg("%s() for #%lu %s",
+	     __func__, st->st_serialno, st->st_state->name);
+
+	/* responder processing request */
+	struct msg_digest *md = *mdp;
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
+	struct ike_sa *ike = ike_sa(st);
+	struct child_sa *child = pexpect_child_sa(st);
+	pexpect(child->sa.st_sa_role == SA_RESPONDER);
+
 	/*
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality
@@ -4510,17 +4563,6 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 	 */
 	pexpect(st->st_state->kind == STATE_V2_CREATE_R ||
 		st->st_state->kind == STATE_V2_REKEY_CHILD_R);
-
-	/* responder processing request */
-	struct child_sa *child = pexpect_child_sa(st);
-	struct ike_sa *ike = ike_sa(st);
-
-	pexpect(st->st_sa_role == SA_RESPONDER);
-	pexpect(*mdp != NULL);
-	pexpect((*mdp)->st == st);
-
-	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state->name);
 
 	/* and a parent? */
 	if (ike == NULL) {
@@ -4550,7 +4592,19 @@ static void ikev2_child_inIoutR_continue(struct state *st,
 static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 							struct msg_digest **mdp)
 {
+
+	dbg("%s() for #%lu %s",
+	     __func__, st->st_serialno, st->st_state->name);
+
+	/* 'child' responding to request */
 	struct msg_digest *md = *mdp;
+	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
+	struct ike_sa *ike = ike_sa(st);
+	struct child_sa *child = pexpect_child_sa(st);
+	passert(child->sa.st_sa_role == SA_RESPONDER);
+
 	/*
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality
@@ -4559,19 +4613,8 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
 	pexpect(st->st_state->kind == STATE_V2_CREATE_R ||
 		st->st_state->kind == STATE_V2_REKEY_CHILD_R);
 
-	/* 'child' responding to request */
-	passert(md != NULL);
-	pexpect(md->st == st);
-	passert(st->st_sa_role == SA_RESPONDER);
-	passert(v2_msg_role(md) == MESSAGE_REQUEST);
-	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
-	struct ike_sa *ike = ike_sa(&child->sa);
-
-	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state->name);
-
 	/* didn't loose parent? */
-	if (ike_sa(st) == NULL) {
+	if (ike == NULL) {
 		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
 			    st->st_serialno, st->st_clonedfrom);
 		/* XXX: release child? */
@@ -4691,27 +4734,28 @@ static void ikev2_child_ike_inIoutR_continue(struct state *st,
 					     struct msg_digest **mdp,
 					     struct pluto_crypto_req *r)
 {
-	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R);
-
-	/* responder processing request */
-	pexpect(IS_CHILD_SA(st)); /* not yet emancipated */
-	pexpect(st->st_sa_role == SA_RESPONDER);
-	pexpect(*mdp != NULL);
-	pexpect((*mdp)->st == st);
-	pexpect(v2_msg_role(*mdp) == MESSAGE_REQUEST);
-
-	dbg("%s for #%lu %s",
+	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
-	/* and a parent? */
+	/* responder processing request */
+
+	struct msg_digest *md = *mdp;
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
 	struct ike_sa *ike = ike_sa(st);
+	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
+	pexpect(child->sa.st_sa_role == SA_RESPONDER);
+
+	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R);
+
+	/* and a parent? */
 	if (ike == NULL) {
 		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
 			    st->st_serialno, st->st_clonedfrom);
 		/* XXX: release what? */
 		return;
 	}
-	passert(ike != NULL);
 
 	pexpect(r->pcr_type == pcr_build_ke_and_nonce);
 	pexpect((*mdp)->chain[ISAKMP_NEXT_v2KE] != NULL);
@@ -4737,22 +4781,22 @@ static void ikev2_child_ike_inIoutR_continue_continue(struct state *st,
 						      struct msg_digest **mdp,
 						      struct pluto_crypto_req *r)
 {
-	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R);
-
-	/* 'child' responding to request */
-	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
-	struct ike_sa *ike = ike_sa(&child->sa);
-
-	passert(*mdp != NULL);
-	pexpect((*mdp)->st == st);
-	passert(st->st_sa_role == SA_RESPONDER);
-	passert(v2_msg_role(*mdp) == MESSAGE_REQUEST);
-
-	dbg("%s for #%lu %s",
+	dbg("%s() for #%lu %s",
 	     __func__, st->st_serialno, st->st_state->name);
 
+	/* 'child' responding to request */
+	struct msg_digest *md = *mdp;
+	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == st);
+
+	struct ike_sa *ike = ike_sa(st);
+	struct child_sa *child = pexpect_child_sa(st); /* not yet emancipated */
+	passert(child->sa.st_sa_role == SA_RESPONDER);
+
+	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_R);
+
 	/* didn't loose parent? */
-	if (ike_sa(st) == NULL) {
+	if (ike == NULL) {
 		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
 			    st->st_serialno, st->st_clonedfrom);
 		/* XXX: release child? */
@@ -5818,6 +5862,18 @@ static void ikev2_child_outI_continue(struct state *st,
 				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
 {
+	dbg("%s() for #%lu %s",
+	     __func__, st->st_serialno, st->st_state->name);
+
+	/* child initiating exchange */
+	struct msg_digest *md = *mdp;
+	pexpect(v2_msg_role(md) == NO_MESSAGE); /* i.e., MD==NULL */
+	pexpect(md == NULL || md->st == NULL || md->st == st);
+
+	struct ike_sa *ike = ike_sa(st);
+	struct child_sa *child = pexpect_child_sa(st);
+	pexpect(child->sa.st_sa_role == SA_INITIATOR);
+
 	/*
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality
@@ -5827,25 +5883,17 @@ static void ikev2_child_outI_continue(struct state *st,
 		st->st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
 		st->st_state->kind == STATE_V2_REKEY_IKE_I0);
 
-	/* child initiating exchange */
-	struct child_sa *child = pexpect_child_sa(st);
-	struct ike_sa *ike = ike_sa(&child->sa);
-	pexpect(child->sa.st_sa_role == SA_INITIATOR);
-
-	/* initiating, so *MDP should be NULL; later */
-	if (*mdp == NULL) {
-		*mdp = fake_md(st);
-	}
-
-	dbg("%s for #%lu %s",
-	     __func__, st->st_serialno, st->st_state->name);
-
 	/* and a parent? */
 	if (ike == NULL) {
 		PEXPECT_LOG("sponsoring child state #%lu has no parent state #%lu",
 			    st->st_serialno, st->st_clonedfrom);
 		/* XXX: release child? */
 		return;
+	}
+
+	/* initiating, so *MDP should be NULL; later */
+	if (*mdp == NULL) {
+		*mdp = fake_md(st);
 	}
 
 	/* IKE SA => DH */
