@@ -20,7 +20,6 @@ east #
 | #2 complete_v2_state_transition() UNDEFINED -> V2_IPSEC_R with status STF_FAIL+v2N_NO_PROPOSAL_CHOSEN (md.svm.state[from]=PARENT_R1
 "westnet-eastnet-ipv4-psk-ikev2" #2: responding to IKE_AUTH message (ID 1) from 192.1.2.45:500 with encrypted notification NO_PROPOSAL_CHOSEN
 |    Notify Message Type: v2N_NO_PROPOSAL_CHOSEN (0xe)
-| state transition function for UNDEFINED failed: v2N_NO_PROPOSAL_CHOSEN
 east #
  ipsec whack --shutdown
 east #
