@@ -2246,15 +2246,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * dropped.
 			 */
 			if (!ikev2_decrypt_msg(st, md)) {
-				libreswan_log("encrypted payload seems to be corrupt; dropping packet");
-				/*
-				 * XXX: Setting/clearing md->st is to
-				 * prop up nested code needing ST but
-				 * not having it as a parameter.
-				 */
-				md->st = st;
-				/* replace (*mdp)->st with st ... */
-				complete_v2_state_transition((*mdp)->st, mdp, STF_IGNORE);
+				log_state(RC_LOG, st, "encrypted payload seems to be corrupt; dropping packet");
+				complete_v2_state_transition(st, mdp, STF_IGNORE);
 				return;
 			}
 			/*
@@ -2307,14 +2300,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				default:
 					bad_case(v2_msg_role(md));
 				}
-				/*
-				 * XXX: Setting/clearing md->st is to
-				 * prop up nested code needing ST but
-				 * not having it as a parameter.
-				 */
-				md->st = st;
-				/* replace (*mdp)->st with st ... */
-				complete_v2_state_transition((*mdp)->st, mdp, STF_FATAL);
+				complete_v2_state_transition(st, mdp, STF_FATAL);
 				return;
 			}
 		} /* else { go ahead } */

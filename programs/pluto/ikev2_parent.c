@@ -666,12 +666,16 @@ void ikev2_parent_outI1_continue(struct state *st, struct msg_digest **mdp,
 	unpack_KE_from_helper(st, r, &st->st_gi);
 	unpack_nonce(&st->st_ni, r);
 	stf_status e = ikev2_parent_outI1_common(st);
-	/* needed by complete state transition */
+
+	/*
+	 * XXX: complete state transition expects (*mdp).svm to be
+	 * non-NULL, and SVM comes from ST's current state.
+	 */
 	if (*mdp == NULL) {
 		*mdp = fake_md(st);
 	}
-	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition((*mdp)->st, mdp, e);
+
+	complete_v2_state_transition(st, mdp, e);
 }
 
 static stf_status ikev2_parent_outI1_common(struct state *st)
@@ -1004,9 +1008,19 @@ static void ikev2_parent_inI1outR1_continue(struct state *st,
 
 	pexpect(st->st_state->kind == STATE_PARENT_R0);
 
+	/*
+	 * XXX: sanity check that this call does not screw around with
+	 * MD.ST (it isn't creating a child, and can return STF_FATAL
+	 * et.al.)
+	 */
+	md->st = st;
+
 	stf_status e = ikev2_parent_inI1outR1_continue_tail(st, *mdp, r);
-	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition((*mdp)->st, mdp, e);
+
+	if (!pexpect(md->st == st)) {
+		st = md->st;
+	}
+	complete_v2_state_transition(st, mdp, e);
 }
 
 /*
