@@ -153,17 +153,9 @@ enum_names version_names = {
 	&version_names_1
 };
 
-static const char *const ike_version_liveness_name[] = {
-	"IKEv1 DPD",
-	"IKEv2 liveness",
-};
-
-enum_names ike_version_liveness_names = {
-	IKEv1, IKEv2,
-	ARRAY_REF(ike_version_liveness_name),
-	"IKE", /* prefix */
-	NULL,
-};
+/*
+ * IKEv1 vs IKEv2 language.
+ */
 
 static const char *const ike_version_name[] = {
 	"IKEv1",
@@ -177,7 +169,44 @@ enum_names ike_version_names = {
 	NULL,
 };
 
+static const char *const ike_version_liveness_name[] = {
+	"DPD",
+	"liveness",
+};
+
+enum_names ike_version_liveness_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(ike_version_liveness_name),
+	NULL, /* prefix */
+	NULL,
+};
+
+static const char *const ike_version_child_name[] = {
+	"IPsec",
+	"CHILD",
+};
+
+enum_names ike_version_child_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(ike_version_child_name),
+	NULL, /* prefix */
+	NULL,
+};
+
+static const char *const ike_version_ike_name[] = {
+	"IKE",
+	"ISAKMP",
+};
+
+enum_names ike_version_ike_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(ike_version_ike_name),
+	NULL, /* prefix */
+	NULL,
+};
+
 /* Domain of Interpretation */
+
 static const char *const doi_name[] = {
 	"ISAKMP_DOI_ISAKMP",
 	"ISAKMP_DOI_IPSEC",
