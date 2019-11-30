@@ -360,7 +360,7 @@ void pluto_init_log(void)
  * The compiler will likely inline these.
  */
 
-static void stdlog_raw(char *b)
+static void stdlog_raw(const char *prefix, char *message)
 {
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		FILE *out = log_to_stderr ? stderr : pluto_log_fp;
@@ -369,23 +369,23 @@ static void stdlog_raw(char *b)
 			char now[34] = "";
 			struct realtm t = local_realtime(realnow());
 			strftime(now, sizeof(now), "%b %e %T", &t.tm);
-			fprintf(out, "%s.%06ld: %s\n", now, t.microsec, b);
+			fprintf(out, "%s.%06ld: %s%s\n", now, t.microsec, prefix, message);
 		} else {
-			fprintf(out, "%s\n", b);
+			fprintf(out, "%s%s\n", prefix, message);
 		}
 	}
 }
 
-static void syslog_raw(int severity, char *b)
+static void syslog_raw(int severity, const char *prefix, char *message)
 {
 	if (log_to_syslog)
-		syslog(severity, "%s", b);
+		syslog(severity, "%s%s", prefix, message);
 }
 
-static void peerlog_raw(char *b)
+static void peerlog_raw(const char *prefix, char *message)
 {
 	if (log_to_perpeer) {
-		peerlog(cur_connection, b);
+		peerlog(cur_connection, prefix, message);
 	}
 }
 
@@ -496,23 +496,23 @@ void lswlog_log_prefix(struct lswlog *buf)
 	jam_log_prefix(buf, cur_state, cur_connection, from);
 }
 
-static void log_raw(struct lswlog *buf, int severity)
+static void log_raw(int severity, const char *prefix, struct lswlog *buf)
 {
-	stdlog_raw(buf->array);
-	syslog_raw(severity, buf->array);
-	peerlog_raw(buf->array);
+	stdlog_raw(prefix, buf->array);
+	syslog_raw(severity, prefix, buf->array);
+	peerlog_raw(prefix, buf->array);
 	/* not whack */
 }
 
 void lswlog_to_debug_stream(struct lswlog *buf)
 {
-	log_raw(buf, LOG_DEBUG);
+	log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);
 	/* not whack */
 }
 
 void lswlog_to_error_stream(struct lswlog *buf)
 {
-	log_raw(buf, LOG_ERR);
+	log_raw(LOG_ERR, "", buf);
 	if (in_main_thread()) {
 		/* don't whack-log from helper threads */
 		whack_raw(buf, RC_LOG_SERIOUS);
@@ -521,13 +521,13 @@ void lswlog_to_error_stream(struct lswlog *buf)
 
 void lswlog_to_log_stream(struct lswlog *buf)
 {
-	log_raw(buf, LOG_WARNING);
+	log_raw(LOG_WARNING, "", buf);
 	/* not whack */
 }
 
 void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc)
 {
-	log_raw(buf, LOG_WARNING);
+	log_raw(LOG_WARNING, "", buf);
 	if (in_main_thread()) {
 		/* don't whack-log from helper threads */
 		whack_raw(buf, rc);
@@ -688,18 +688,57 @@ void init_rate_log(void)
 			      RESET_LOG_RATE_LIMIT);
 }
 
+static void log_whack(enum rc_type rc, fd_t object_fd, jambuf_t *buf)
+{
+	if (in_main_thread()) {
+		jambuf_to_whack_fd(buf, object_fd, rc);
+		if (!same_fd(object_fd, whack_log_fd)) {
+			jambuf_to_whack_fd(buf, whack_log_fd, rc);
+		}
+	}
+}
+
+void log_jambuf(lset_t rc_flags, fd_t object_fd, jambuf_t *buf)
+{
+	enum rc_type rc = rc_flags & RC_MASK;
+	enum stream only = rc_flags & ~RC_MASK;
+	switch (only) {
+	case DEBUG_STREAM:
+		log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);
+		break;
+	case ALL_STREAMS:
+		log_raw(LOG_WARNING, "", buf);
+		log_whack(rc, object_fd, buf);
+		break;
+	case LOG_STREAM:
+		log_raw(LOG_WARNING, "", buf);
+		break;
+	case WHACK_STREAM:
+		log_whack(rc, object_fd, buf);
+		break;
+	case ERROR_STREAM:
+		log_raw(LOG_ERR, "", buf);
+		log_whack(rc, object_fd, buf);
+		break;
+	case NO_STREAM:
+		/*
+		 * XXX: Like writing to /dev/null - go through the
+		 * motions but with no result.  Code really really
+		 * should not call this function with this flag.
+		 */
+		break;
+	default:
+		bad_case(only);
+	}
+}
+
 static void broadcast(lset_t rc_flags, fd_t object_fd,
 		      const struct state *st,
 		      const struct connection *c,
 		      const ip_endpoint *from,
 		      const char *message, va_list ap)
 {
-	lset_t rc = rc_flags & RC_MASK;
-	enum stream only = rc_flags & ~RC_MASK;
 	LSWBUF(buf) {
-		if (only == DEBUG_STREAM) {
-			jam(buf, DEBUG_PREFIX);
-		}
 		/*
 		 * XXX: Always include a prefix; even when
 		 * DEBUG_STREAM.  Presumably the message is written
@@ -712,35 +751,7 @@ static void broadcast(lset_t rc_flags, fd_t object_fd,
 		/* jam_debug_prefix(buf, st, c, from) */
 		jam_log_prefix(buf, st, c, from);
 		jam_va_list(buf, message, ap);
-		switch (only) {
-		case DEBUG_STREAM:
-			lswlog_to_debug_stream(buf);
-			break;
-		case ALL_STREAMS:
-		case LOG_STREAM:
-		case WHACK_STREAM:
-			if (only != WHACK_STREAM) {
-				lswlog_to_log_stream(buf);
-			}
-			if (only != LOG_STREAM &&
-			    in_main_thread()) {
-				jambuf_to_whack_fd(buf, object_fd, rc);
-				if (!same_fd(object_fd, whack_log_fd)) {
-					jambuf_to_whack_fd(buf, whack_log_fd, rc);
-				}
-			}
-			break;
-		case NO_STREAM:
-			/*
-			 * XXX: Like writing to /dev/null - go through
-			 * the motions but with no result.  Code
-			 * really really should not call this function
-			 * with this flag.
-			 */
-			break;
-		default:
-			bad_case(only);
-		}
+		log_jambuf(rc_flags, object_fd, buf);
 	}
 }
 

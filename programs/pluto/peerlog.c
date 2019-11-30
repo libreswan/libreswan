@@ -230,7 +230,7 @@ static void unlocked_open_peerlog(struct connection *c)
 
 /* log a line to cur_connection's log */
 static void unlocked_peerlog(struct connection *cur_connection,
-			     const char *m)
+			     const char *prefix, const char *message)
 {
 	if (cur_connection == NULL) {
 		/* we cannot log it in this case. Oh well. */
@@ -246,8 +246,8 @@ static void unlocked_peerlog(struct connection *cur_connection,
 
 		struct realtm now = local_realtime(realnow());
 		strftime(datebuf, sizeof(datebuf), "%Y-%m-%d %T", &now.tm);
-		fprintf(cur_connection->log_file, "%s %s\n",
-			datebuf, m);
+		fprintf(cur_connection->log_file, "%s %s%s\n",
+			datebuf, prefix, message);
 
 		/* now move it to the front of the list */
 		CIRCLEQ_REMOVE(&perpeer_list, cur_connection, log_link);
@@ -256,9 +256,9 @@ static void unlocked_peerlog(struct connection *cur_connection,
 }
 
 /* log a line to cur_connection's log */
-void peerlog(struct connection *cur_connection, const char *m)
+void peerlog(struct connection *cur_connection, const char *prefix, const char *message)
 {
 	pthread_mutex_lock(&peerlog_mutex);
-	unlocked_peerlog(cur_connection, m);
+	unlocked_peerlog(cur_connection, prefix, message);
 	pthread_mutex_unlock(&peerlog_mutex);
 }
