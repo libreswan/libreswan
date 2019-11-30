@@ -504,12 +504,6 @@ static void log_raw(int severity, const char *prefix, struct lswlog *buf)
 	/* not whack */
 }
 
-void lswlog_to_debug_stream(struct lswlog *buf)
-{
-	log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);
-	/* not whack */
-}
-
 void lswlog_to_error_stream(struct lswlog *buf)
 {
 	log_raw(LOG_ERR, "", buf);

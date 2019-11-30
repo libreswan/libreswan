@@ -188,12 +188,17 @@ enum stream {
 
 void log_jambuf(lset_t rc_flags, fd_t object_fd, jambuf_t *buf);
 
+size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
+
+/*
+ * XXX: since the following all use the global CUR_STATE to get
+ * OBJECT_FD, they can't be implemented using log_jambuf().
+ */
+
 void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc);
 void lswlog_to_log_stream(struct lswlog *buf);
-void lswlog_to_debug_stream(struct lswlog *buf);
-void lswlog_to_error_stream(struct lswlog *buf);
 void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type rc);
-size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
+void lswlog_to_error_stream(struct lswlog *buf);
 
 /*
  * Log to the default stream(s):
@@ -320,12 +325,10 @@ void DBG_dump(const char *label, const void *p, size_t len);
 	}
 #define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
-void lswlog_dbg_pre(struct lswlog *buf);
-
 #define LSWDBG_(PREDICATE, BUF)						\
 	LSWLOG_(PREDICATE, BUF,						\
-		lswlog_dbg_pre(BUF),					\
-		lswlog_to_debug_stream(BUF))
+		/*no-prefix*/,						\
+		log_jambuf(DEBUG_STREAM, null_fd, BUF))
 
 #define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
 #define LSWLOG_DEBUG(BUF) LSWDBG_(true, BUF)

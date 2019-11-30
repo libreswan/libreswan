@@ -20,6 +20,8 @@
 
 #include "lswlog.h"
 
+lset_t cur_debugging = DBG_NONE;	/* default to reporting nothing */
+
 void DBG_log(const char *message, ...)
 {
 	LSWLOG_DEBUG(buf) {
