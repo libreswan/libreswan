@@ -140,7 +140,7 @@ void log_state(lset_t rc_flags,
 #define PLOG_RAW(STATE, CONNECTION, FROM, BUF)				\
 	LSWLOG_(true, BUF,						\
 		jam_log_prefix(BUF, STATE, CONNECTION, FROM),		\
-		lswlog_to_log_stream(BUF))
+		log_jambuf(LOG_STREAM, null_fd, BUF))
 
 #define plog_global(MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
 #define plog_from(FROM, MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);

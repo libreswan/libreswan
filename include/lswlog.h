@@ -196,7 +196,6 @@ size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
  */
 
 void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc);
-void lswlog_to_log_stream(struct lswlog *buf);
 void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type rc);
 void lswlog_to_error_stream(struct lswlog *buf);
 

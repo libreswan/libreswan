@@ -116,14 +116,9 @@ void lswlog_to_error_stream(struct lswlog *buf)
 	fprintf(stderr, "%s\n", buf->array);
 }
 
-void lswlog_to_log_stream(struct lswlog *buf)
+void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc UNUSED)
 {
 	if (log_to_stderr) {
 		fprintf(stderr, "%s\n", buf->array);
 	}
-}
-
-void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc UNUSED)
-{
-	lswlog_to_log_stream(buf);
 }

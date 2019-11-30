@@ -513,12 +513,6 @@ void lswlog_to_error_stream(struct lswlog *buf)
 	}
 }
 
-void lswlog_to_log_stream(struct lswlog *buf)
-{
-	log_raw(LOG_WARNING, "", buf);
-	/* not whack */
-}
-
 void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc)
 {
 	log_raw(LOG_WARNING, "", buf);
@@ -645,7 +639,7 @@ static void rate_log_raw(const char *prefix,
 		jam_string(buf, prefix);
 		jam_log_prefix(buf, NULL/*st*/, NULL/*c*/, &md->sender);
 		jam_va_list(buf, message, ap);
-		lswlog_to_log_stream(buf);
+		log_jambuf(LOG_STREAM, null_fd, buf);
 	}
 }
 
