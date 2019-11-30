@@ -125,20 +125,15 @@ enum stream {
 	 * This means that a simple RC_* code will go to both whack
 	 * and and the log files.
 	 */
-	ALL_STREAMS = 0,
-	/*
-	 * Mask the RC, see comment above about how RC_NOTIFICATION +
-	 * 0xffff overflows an 8-bit value.
-	 */
-	RC_MASK =  0x0fff,
-	/* log the utterance with severity LOG_WARNING */
-	LOG_STREAM = 0x1000,
-	/* log the utterance adding prefix "|" and severity LOG_DEBUG */
-	DEBUG_STREAM,
-	/* send utterance to whack with RC_* */
-	WHACK_STREAM,
-	/* don't utter anything; place holder */
-	NO_STREAM,
+	/* Mask the whack RC; max value is 64435+200 */
+	RC_MASK		= 0x0fffff,
+	/*                                 Severity     Whack Prefix */
+	ALL_STREAMS     = 0x000000,	/* LOG_WARNING   yes         */
+	LOG_STREAM	= 0x100000,	/* LOG_WARNING   no          */
+	DEBUG_STREAM	= 0x200000,	/* LOG_DEBUG     no    "| "  */
+	WHACK_STREAM	= 0x300000,	/*    N/A        yes         */
+	ERROR_STREAM	= 0x400000,	/* LOG_ERR       no          */
+	NO_STREAM	= 0xf00000,	/* n/a */
 };
 
 void log_message(lset_t rc_flags,
