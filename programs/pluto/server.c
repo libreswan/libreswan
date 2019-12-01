@@ -555,7 +555,8 @@ static void list_global_timers(monotime_t now)
 			const char *what = (event_get_events(&gt->ev) & EV_PERSIST) ? "periodic" : "one-shot";
 			deltatime_t delay = monotimediff(due, now);
 			deltatime_buf delay_buf;
-			whack_log(RC_LOG, "global %s timer %s is scheduled for %jd (in %s seconds)",
+			whack_log(RC_COMMENT,
+				  "global %s timer %s is scheduled for %jd (in %s seconds)",
 				  what, gt->name,
 				  monosecs(due), /* XXX: useful? */
 				  str_deltatime(delay, &delay_buf));
@@ -634,7 +635,7 @@ static void list_signal_handlers(void)
 		struct signal_handler *se = &signal_handlers[i];
 		if (event_initialized(&se->ev) &&
 		    event_pending(&se->ev, EV_SIGNAL, NULL) > 0) {
-			whack_log(RC_LOG, "signal event handler %s", se->name);
+			whack_log(RC_COMMENT, "signal event handler %s", se->name);
 		}
 	}
 }
@@ -977,7 +978,8 @@ void timer_list(void)
 {
 	monotime_t nw = mononow();
 
-	whack_log(RC_LOG, "It is now: %jd seconds since monotonic epoch",
+	whack_log(RC_COMMENT,
+		  "it is now: %jd seconds since monotonic epoch",
 		  monosecs(nw));
 
 	list_global_timers(nw);
@@ -993,7 +995,7 @@ void timer_list(void)
 				 monosecs(ev->ev_time),
 				 deltasecs(monotimediff(ev->ev_time, nw)));
 		}
-		whack_log(RC_LOG, "event %s is %s", ev->ev_name, buf);
+		whack_log(RC_COMMENT, "event %s is %s", ev->ev_name, buf);
 	}
 
 	list_state_events(nw);
