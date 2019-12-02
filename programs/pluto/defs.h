@@ -40,6 +40,11 @@ enum sa_type {
 #define SA_TYPE_ROOF (IPSEC_SA+1)
 };
 
+extern enum_names v1_sa_type_names;
+extern enum_names v2_sa_type_names;
+extern enum_enum_names sa_type_names;
+
+
 /* warns a predefined interval before expiry */
 extern const char *check_expiry(realtime_t expiration_date,
 				time_t warning_interval, bool strict);

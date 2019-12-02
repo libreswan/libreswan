@@ -552,6 +552,19 @@ void ikev2_parent_outI1(fd_t whack_sock,
 	}
 
 	if (predecessor != NULL) {
+		/*
+		 * XXX: can PREDECESSOR be a child?  Idle speculation
+		 * would suggest it can: perhaps it's a state that
+		 * hasn't yet emancipated, or the child from a must
+		 * remain up connection.
+		 */
+		dbg("predecessor #%lu: %s SA; %s %s; %s",
+		    predecessor->st_serialno,
+		    IS_CHILD_SA(predecessor) ? "CHILD" : "IKE",
+		    IS_V2_ESTABLISHED(predecessor->st_state) ? "established" : "establishing?",
+		    enum_enum_name(&sa_type_names, predecessor->st_ike_version,
+				   predecessor->st_establishing_sa),
+		    predecessor->st_state->name);
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			libreswan_log("initiating v2 parent SA to replace #%lu",
 				predecessor->st_serialno);
@@ -562,7 +575,7 @@ void ikev2_parent_outI1(fd_t whack_sock,
 			else
 				st->st_ike_pred = predecessor->st_serialno;
 		}
-		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
+		update_pending(ike_sa(predecessor), pexpect_ike_sa(st));
 		whack_log(RC_NEW_V2_STATE + STATE_PARENT_I1,
 			  "%s: initiate, replacing #%lu",
 			  st->st_state->name,

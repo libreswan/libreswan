@@ -32,6 +32,7 @@
 
 #include "constants.h"
 #include "enum_names.h"
+#include "defs.h"
 
 /*
  * To obsolete or convert to runtime options:
@@ -351,6 +352,44 @@ enum_names dns_auth_level_names = {
 	NULL
 };
 
+/*
+ * enum sa_type
+ */
+
+static const char *const v1_sa_type_name[] = {
+	[IKE_SA] = "ISAKMP SA",
+	[IPSEC_SA] = "IPsec SA"
+};
+
+enum_names v1_sa_type_names = {
+	SA_TYPE_FLOOR, SA_TYPE_ROOF-1,
+	ARRAY_REF(v1_sa_type_name),
+	NULL, /* prefix */
+	NULL,
+};
+
+static const char *const v2_sa_type_name[] = {
+	[IKE_SA] = "IKE SA",
+	[IPSEC_SA] = "CHILD SA"
+};
+
+enum_names v2_sa_type_names = {
+	SA_TYPE_FLOOR, SA_TYPE_ROOF-1,
+	ARRAY_REF(v2_sa_type_name),
+	NULL, /* prefix */
+	NULL,
+};
+
+static enum_names *sa_type_name[] = {
+	[IKEv1 - IKEv1] = &v1_sa_type_names,
+	[IKEv2 - IKEv1] = &v2_sa_type_names,
+};
+
+enum_enum_names sa_type_names = {
+	IKEv1, IKEv2,
+	ARRAY_REF(sa_type_name),
+};
+
 /* print a policy: like bitnamesof, but it also does the non-bitfields.
  * Suppress the shunt and fail fields if 0.
  */
@@ -387,6 +426,8 @@ static const enum_names *pluto_enum_names_checklist[] = {
 #ifdef NETKEY_SUPPORT
 	&netkey_sa_dir_names,
 #endif
+	&v1_sa_type_names,
+	&v2_sa_type_names,
 };
 
 void init_pluto_constants(void) {
