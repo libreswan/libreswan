@@ -103,17 +103,19 @@ struct key_add_continuation {
 static int whack_route_connection(struct connection *c,
 				  UNUSED void *arg)
 {
-	set_cur_connection(c);
+	struct connection *old = push_cur_connection(c);
 
-	if (!oriented(*c))
-		whack_log(RC_ORIENT,
-			"we cannot identify ourselves with either end of this connection");
-	else if (c->policy & POLICY_GROUP)
+	if (!oriented(*c)) {
+		/* XXX: why whack only? */
+		log_connection(RC_ORIENT|WHACK_STREAM, c,
+			       "we cannot identify ourselves with either end of this connection");
+	} else if (c->policy & POLICY_GROUP) {
 		route_group(c);
-	else if (!trap_connection(c))
-		whack_log(RC_ROUTE, "could not route");
-
-	reset_cur_connection();
+	} else if (!trap_connection(c)) {
+		/* XXX: why whack only? */
+		log_connection(RC_ROUTE|WHACK_STREAM, c, "could not route");
+	}
+	pop_cur_connection(old);
 	return 1;
 }
 

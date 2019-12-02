@@ -408,8 +408,8 @@ void route_group(struct connection *c)
 {
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
-		loglog(RC_ROUTE,
-		       "cannot route an ISAKMP-only group connection");
+		log_connection(RC_ROUTE, c,
+			       "cannot route an ISAKMP-only group connection");
 	} else {
 		struct fg_groups *g = find_group(c);
 		struct fg_targets *t;
@@ -422,11 +422,16 @@ void route_group(struct connection *c)
 								    FALSE, FALSE);
 
 				if (ci != NULL) {
-					set_cur_connection(ci);
+					/*
+					 * XXX: why whack only?
+					 * Shouldn't this leave a
+					 * breadcrumb in the log file?
+					 */
+					struct connection *old = push_cur_connection(ci); /* for trap_connection() */
 					if (!trap_connection(ci))
-						whack_log(RC_ROUTE,
-							  "could not route");
-					set_cur_connection(c);
+						log_connection(WHACK_STREAM|RC_ROUTE, c,
+							       "could not route");
+					pop_cur_connection(old);
 				}
 			}
 		}
