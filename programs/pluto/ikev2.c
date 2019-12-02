@@ -3514,10 +3514,8 @@ void complete_v2_state_transition(struct state *st,
 		break;
 
 	case STF_FAIL:
-		/* XXX: clearly this log line is silly and needs fixing! */
-		whack_log(RC_NOTIFICATION, "%s: %s",
-			  from_state_name,
-			  enum_name(&ikev2_notify_names, v2N_NOTHING_WRONG));
+		log_state(RC_NOTIFICATION, st, "state transition '%s' failed",
+			  transition->story);
 		break;
 
 	default: /* STF_FAIL+notification */
@@ -3531,11 +3529,6 @@ void complete_v2_state_transition(struct state *st,
 		 * be sent and the state deleted.
 		 */
 		v2_notification_t notification = result - STF_FAIL;
-		whack_log(RC_NOTIFICATION + notification,
-			  "%s: %s",
-			  from_state_name,
-			  enum_name(&ikev2_notify_names, notification));
-
 		/* Only the responder sends a notification */
 		if (v2_msg_role(md) == MESSAGE_REQUEST) {
 			dbg("sending a notification reply");
@@ -3554,6 +3547,10 @@ void complete_v2_state_transition(struct state *st,
 						 MAXIMUM_RESPONDER_WAIT,
 						 st);
 			}
+		} else {
+			log_state(RC_NOTIFICATION+notification, st,
+				  "state transition '%s' failed with %s",
+				  transition->story, enum_name(&ikev2_notify_names, notification));
 		}
 		break;
 	}

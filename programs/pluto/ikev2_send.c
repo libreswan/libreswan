@@ -285,11 +285,16 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
 	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
 
+	/*
+	 * XXX: this will prefix with cur_state.  For this code path
+	 * is it ever different to the IKE SA?
+	 */
 	endpoint_buf b;
-	libreswan_log("responding to %s message (ID %u) from %s with encrypted notification %s",
-		      exchange_name, md->hdr.isa_msgid,
-		      str_sensitive_endpoint(&ike->sa.st_remote_endpoint, &b),
-		      notify_name);
+	loglog(RC_NOTIFICATION+ntype,
+	       "responding to %s message (ID %u) from %s with encrypted notification %s",
+	       exchange_name, md->hdr.isa_msgid,
+	       str_sensitive_endpoint(&ike->sa.st_remote_endpoint, &b),
+	       notify_name);
 
 	/*
 	 * For encrypted messages, the EXCHANGE TYPE can't be SA_INIT.
