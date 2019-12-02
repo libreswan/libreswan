@@ -609,26 +609,6 @@ void libreswan_exit(enum rc_type rc)
 	exit_pluto(rc);
 }
 
-void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type rc)
-{
-	pexpect(whack_log_p());
-	whack_raw(buf, rc);
-}
-
-bool whack_log_p(void)
-{
-	if (!in_main_thread()) {
-		PEXPECT_LOG("%s", "whack_log*() must be called from the main thread");
-		return false;
-	}
-
-	fd_t wfd = fd_p(whack_log_fd) ? whack_log_fd :
-	      cur_state != NULL ? cur_state->st_whack_sock :
-	      null_fd;
-
-	return fd_p(wfd);
-}
-
 /* emit message to whack.
  * form is "ddd statename text\n" where
  * - ddd is a decimal status code (RC_*) as described in whack.h
@@ -637,15 +617,23 @@ bool whack_log_p(void)
 
 void whack_log(enum rc_type rc, const char *message, ...)
 {
-	if (whack_log_p()) {
-		LSWBUF(buf) {
-			lswlog_log_prefix(buf);
+	if (!in_main_thread()) {
+		LSWLOG_PEXPECT(buf) {
+			jam(buf, "whack_log() must be called from the main thread: ");
 			va_list args;
 			va_start(args, message);
-			lswlogvf(buf, message, args);
+			jam_va_list(buf, message, args);
 			va_end(args);
-			lswlog_to_whack_stream(buf, rc);
 		}
+		return;
+	}
+
+	LSWBUF(buf) {
+		va_list args;
+		va_start(args, message);
+		jam_va_list(buf, message, args);
+		va_end(args);
+		jambuf_to_whack_fd(buf, whack_log_fd, rc);
 	}
 }
 

@@ -106,11 +106,6 @@ void log_jambuf(lset_t rc_flags, fd_t unused_object_fd UNUSED, jambuf_t *buf)
 	}
 }
 
-void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type unused_rc UNUSED)
-{
-	fprintf(stderr, "%s\n", buf->array);
-}
-
 void lswlog_to_error_stream(struct lswlog *buf)
 {
 	fprintf(stderr, "%s\n", buf->array);

@@ -180,9 +180,9 @@ extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 /*
  * struct lswlog primitives
  */
-bool whack_log_p(void);
 
 void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
+
 /*
  * Like whack_log(RC_COMMENT, ...) but suppress the 'NNN ' prefix.
  *
