@@ -79,7 +79,7 @@ ssize_t fd_sendmsg(fd_t fd, const struct msghdr *msg,
 		LSWBUF(buf) {
 			jam(buf, "EXPECTATION FAILED: fd is NULL "PRI_WHERE"",
 			    pri_where(where));
-			lswlog_to_log_stream(buf);
+			log_jambuf(LOG_STREAM, null_fd, buf);
 		}
 		return -1;
 	}
@@ -91,7 +91,7 @@ ssize_t fd_sendmsg(fd_t fd, const struct msghdr *msg,
 		LSWBUF(buf) {
 			jam(buf, "EXPECTATION FAILED: fd is not magic "PRI_WHERE"",
 			    pri_where(where));
-			lswlog_to_log_stream(buf);
+			log_jambuf(LOG_STREAM, null_fd, buf);
 		}
 		return -1;
 	}

@@ -30,6 +30,7 @@
 #include "libreswan/passert.h"
 #include "constants.h"		/* for DBG_... */
 #include "where.h"		/* used by macros */
+#include "fd.h"
 
 /* Build up a diagnostic in a static buffer -- NOT RE-ENTRANT.
  * Although this would be a generally useful function, it is very
@@ -164,13 +165,39 @@ struct lswlog;
  * ignored; for instance fwrite() :-/
  */
 
-void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc);
-void lswlog_to_log_stream(struct lswlog *buf);
-void lswlog_to_debug_stream(struct lswlog *buf);
-void lswlog_to_error_stream(struct lswlog *buf);
-void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type rc);
+/*
+ * By default messages are broadcast (to both log files and whack),
+ * mix-in one of these options to limit this.
+ */
+
+enum stream {
+	/*
+	 * This means that a simple RC_* code will go to both whack
+	 * and and the log files.
+	 */
+	/* Mask the whack RC; max value is 64435+200 */
+	RC_MASK		= 0x0fffff,
+	/*                                 Severity     Whack Prefix */
+	ALL_STREAMS     = 0x000000,	/* LOG_WARNING   yes         */
+	LOG_STREAM	= 0x100000,	/* LOG_WARNING   no          */
+	DEBUG_STREAM	= 0x200000,	/* LOG_DEBUG     no    "| "  */
+	WHACK_STREAM	= 0x300000,	/*    N/A        yes         */
+	ERROR_STREAM	= 0x400000,	/* LOG_ERR       no          */
+	NO_STREAM	= 0xf00000,	/* n/a */
+};
+
+void log_jambuf(lset_t rc_flags, fd_t object_fd, jambuf_t *buf);
+
 size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
 
+/*
+ * XXX: since the following all use the global CUR_STATE to get
+ * OBJECT_FD, they can't be implemented using log_jambuf().
+ */
+
+void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc);
+void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type rc);
+void lswlog_to_error_stream(struct lswlog *buf);
 
 /*
  * Log to the default stream(s):
@@ -297,12 +324,10 @@ void DBG_dump(const char *label, const void *p, size_t len);
 	}
 #define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
-void lswlog_dbg_pre(struct lswlog *buf);
-
 #define LSWDBG_(PREDICATE, BUF)						\
 	LSWLOG_(PREDICATE, BUF,						\
-		lswlog_dbg_pre(BUF),					\
-		lswlog_to_debug_stream(BUF))
+		/*no-prefix*/,						\
+		log_jambuf(DEBUG_STREAM, null_fd, BUF))
 
 #define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
 #define LSWLOG_DEBUG(BUF) LSWDBG_(true, BUF)

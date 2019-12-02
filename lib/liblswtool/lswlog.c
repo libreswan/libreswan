@@ -75,12 +75,38 @@ void lswlog_log_prefix(struct lswlog *buf)
 	lswlogf(buf, "%s%s", progname, prog_suffix);
 }
 
-void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type unused_rc UNUSED)
+void log_jambuf(lset_t rc_flags, fd_t unused_object_fd UNUSED, jambuf_t *buf)
 {
-	fprintf(stderr, "%s\n", buf->array);
+	enum stream only = rc_flags & ~RC_MASK;
+	switch (only) {
+	case DEBUG_STREAM:
+		fprintf(stderr, "%s%s\n", DEBUG_PREFIX, buf->array);
+		break;
+	case ALL_STREAMS:
+	case LOG_STREAM:
+		if (log_to_stderr) {
+			fprintf(stderr, "%s\n", buf->array);
+		}
+		break;
+	case WHACK_STREAM:
+		fprintf(stderr, "%s\n", buf->array);
+		break;
+	case ERROR_STREAM:
+		fprintf(stderr, "%s\n", buf->array);
+		break;
+	case NO_STREAM:
+		/*
+		 * XXX: Like writing to /dev/null - go through the
+		 * motions but with no result.  Code really really
+		 * should not call this function with this flag.
+		 */
+		break;
+	default:
+		bad_case(only);
+	}
 }
 
-void lswlog_to_debug_stream(struct lswlog *buf)
+void lswlog_to_whack_stream(struct lswlog *buf, enum rc_type unused_rc UNUSED)
 {
 	fprintf(stderr, "%s\n", buf->array);
 }
@@ -90,14 +116,9 @@ void lswlog_to_error_stream(struct lswlog *buf)
 	fprintf(stderr, "%s\n", buf->array);
 }
 
-void lswlog_to_log_stream(struct lswlog *buf)
+void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc UNUSED)
 {
 	if (log_to_stderr) {
 		fprintf(stderr, "%s\n", buf->array);
 	}
-}
-
-void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc UNUSED)
-{
-	lswlog_to_log_stream(buf);
 }

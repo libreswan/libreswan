@@ -38,6 +38,6 @@ void peerlog_close(void);
 void perpeer_logfree(struct connection *c);
 
 /* log to the peers */
-void peerlog(struct connection *cur_connection, const char *buf);
+void peerlog(struct connection *cur_connection, const char *prefix, const char *message);
 
 #endif /* _PLUTO_PEERLOG_H */
