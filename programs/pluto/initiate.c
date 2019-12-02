@@ -516,13 +516,10 @@ static void cannot_oppo(struct connection *c,
 	address_buf pcb_buf;
 	const char *pcb = ipstr(&b->peer_client, &pcb_buf);
 
-	DBG(DBG_OPPO,
-	    libreswan_log("Cannot opportunistically initiate for %s to %s: %s",
-			  ocb, pcb, ughmsg));
-
-	whack_log(RC_OPPOFAILURE,
-		  "Cannot opportunistically initiate for %s to %s: %s",
-		  ocb, pcb, ughmsg);
+	enum stream logger = (DBGP(DBG_OPPO) ? ALL_STREAMS : WHACK_STREAM);
+	log_connection(logger | RC_OPPOFAILURE, c,
+		       "cannot opportunistically initiate for %s to %s: %s",
+		       ocb, pcb, ughmsg);
 
 	if (c != NULL && c->policy_next != NULL) {
 		/* there is some policy that comes afterwards */
@@ -585,10 +582,10 @@ static void cannot_oppo(struct connection *c,
 		});
 
 		if (!route_and_eroute(c, shunt_spd, st)) {
-			whack_log(RC_OPPOFAILURE,
-				  "failed to instantiate shunt policy %s for %s to %s",
-				  c->name,
-				  ocb, pcb);
+			log_connection(WHACK_STREAM|RC_OPPOFAILURE, c,
+				       "failed to instantiate shunt policy %s for %s to %s",
+				       c->name,
+				       ocb, pcb);
 		}
 		return;
 	}
