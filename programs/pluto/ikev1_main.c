@@ -1923,10 +1923,11 @@ stf_status send_isakmp_notification(struct state *st,
  * those calls pass a fake state as sndst.
  * Note: msgid is in different order here from other calls :/
  */
-static void send_notification(struct state *sndst, notification_t type,
-			struct state *encst,
-			msgid_t msgid, u_char *icookie, u_char *rcookie,
-			u_char protoid)
+static void send_notification(struct state *sndst /*possibly fake*/,
+			      notification_t type,
+			      struct state *encst,
+			      msgid_t msgid, u_char *icookie, u_char *rcookie,
+			      u_char protoid)
 {
 	/* buffer in which to marshal our notification.
 	 * We don't use reply_buffer/reply_stream because they might be in use.
@@ -1996,11 +1997,17 @@ static void send_notification(struct state *sndst, notification_t type,
 		encst = NULL;
 
 	{
+		/*
+		 * This will pick up cur_state, if any (which means it
+		 * is still relying on cur_state :-().  Can't use
+		 * SNDST as that may be fake.
+		 */
 		endpoint_buf b;
-		libreswan_log("sending %snotification %s to %s",
-			      encst ? "encrypted " : "",
-			      enum_name(&ikev1_notify_names, type),
-			      str_endpoint(&sndst->st_remote_endpoint, &b));
+		loglog(RC_NOTIFICATION + type,
+		       "sending %snotification %s to %s",
+		       encst ? "encrypted " : "",
+		       enum_name(&ikev1_notify_names, type),
+		       str_endpoint(&sndst->st_remote_endpoint, &b));
 	}
 
 	init_out_pbs(&pbs, buffer, sizeof(buffer), "notification msg");

@@ -3042,11 +3042,15 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * Perhaps because the message hasn't been authenticated?
 		 * But then then any duplicate would lose too, I would think.
 		 */
-		whack_log(RC_NOTIFICATION + md->v1_note,
-			  "%s: %s", st->st_state->name, notify_name);
 
-		if (md->v1_note != NOTHING_WRONG)
+		if (md->v1_note != NOTHING_WRONG) {
+			/* this will log */
 			SEND_NOTIFICATION(md->v1_note);
+		} else {
+			/* XXX: why whack only? */
+			log_state(WHACK_STREAM | (RC_NOTIFICATION + md->v1_note), st,
+				  "state transition failed: %s", notify_name);
+		}
 
 		dbg("state transition function for %s failed: %s",
 		    st->st_state->name, notify_name);
