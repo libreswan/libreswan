@@ -28,8 +28,7 @@ west #
  # should succeed
 west #
  ipsec auto --up nss-cert-correct
-002 "nss-cert-correct" #1: initiating v2 parent SA
-1v2 "nss-cert-correct" #1: initiate
+1v2 "nss-cert-correct" #1: initiating IKEv2 IKE SA
 1v2 "nss-cert-correct" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "nss-cert-correct" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "nss-cert-correct" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -47,8 +46,7 @@ west #
  # should fail on mismatched ID
 west #
  ipsec auto --up nss-cert-incorrect
-002 "nss-cert-incorrect" #3: initiating v2 parent SA
-1v2 "nss-cert-incorrect" #3: initiate
+1v2 "nss-cert-incorrect" #3: initiating IKEv2 IKE SA
 1v2 "nss-cert-incorrect" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "nss-cert-incorrect" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "nss-cert-incorrect" #4: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA

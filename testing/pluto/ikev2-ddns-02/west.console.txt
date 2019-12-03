@@ -38,8 +38,7 @@ west #
 west #
  ipsec whack --ddns
 002 updating pending dns lookups
-002 "named" #1: initiating v2 parent SA
-1v2 "named" #1: initiate
+1v2 "named" #1: initiating IKEv2 IKE SA
 west #
  # give conn time to establish by itself
 west #
