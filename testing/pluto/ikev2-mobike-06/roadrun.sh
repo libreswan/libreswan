@@ -7,24 +7,15 @@ sleep 5
 # remove this end ip next one will take over
 ip addr show scope global dev eth0 | grep -v valid_lft
 # delete the routes down to simulate WiFi link down.
-ip route del default
-ip route del 192.1.33.0/24
-ifdown eth0
-sed -i '/IPADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0
-sed -i '/GATEWAY/d' /etc/sysconfig/network-scripts/ifcfg-eth0
-echo "IPADDR=192.1.33.222" >> /etc/sysconfig/network-scripts/ifcfg-eth0
-echo "GATEWAY=192.1.33.254" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+ip addr del 192.1.3.209/24 dev eth0
+ip route del default via 192.1.3.254 dev eth0
+sleep 2
+ip addr add 192.1.33.222/24 dev eth0
 sleep 2
 # the client is still on the dev lo.
 # would the traffic leak in plain
-ip addr show dev lo
 # let libreswan detect change and initiate MOBIKE update
-ifup eth0
-# restore config files while we wait
-sed -i '/IPADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0
-sed -i '/GATEWAY/d' /etc/sysconfig/network-scripts/ifcfg-eth0
-echo "IPADDR=192.1.3.209" >> /etc/sysconfig/network-scripts/ifcfg-eth0
-echo "GATEWAY=192.1.3.254" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+ip route add default via 192.1.33.254 dev eth0
 sleep 10
 # ip addr show scope global dev eth0 | grep -v -E '(valid_lft|ether|noqueue)'
 ip addr show scope global dev eth0 | grep -v valid_lft
