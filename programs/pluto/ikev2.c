@@ -2247,6 +2247,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 */
 			if (!ikev2_decrypt_msg(st, md)) {
 				log_state(RC_LOG, st, "encrypted payload seems to be corrupt; dropping packet");
+				/* XXX: clears WIP by calling v2_msgid_cancel_responder() */
 				complete_v2_state_transition(st, mdp, STF_IGNORE);
 				return;
 			}
@@ -2366,8 +2367,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			    v2_msg_role(md) == MESSAGE_REQUEST) {
 				pexpect(st->st_v2_msgid_wip.responder == 0);
 				send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
+				/* XXX: calls delete_state() */
 				complete_v2_state_transition(st, mdp, STF_FATAL);
 			} else {
+				/* XXX: clears WIP by calling v2_msgid_cancel_responder() */
 				complete_v2_state_transition(st, mdp, STF_IGNORE);
 			}
 			return;
@@ -2391,6 +2394,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			if (v2_msg_role(md) == MESSAGE_REQUEST) {
 				send_v2N_response_from_state(ike, md, v2N_INVALID_SYNTAX, NULL);
 			}
+			/* XXX: calls delete_state() */
 			complete_v2_state_transition(st, mdp, STF_FATAL);
 			return;
 		}
@@ -2415,6 +2419,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 */
 		libreswan_log("no useful state microcode entry found for incoming packet");
 		/* "dropping message with no matching microcode" */
+		/* XXX: clears wip by calling v2_msgid_cancel_responder() */
 		complete_v2_state_transition(st, mdp, STF_IGNORE);
 		return;
 	}
@@ -2854,21 +2859,22 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 				 md->svm->next_state);
 }
 
-static void success_v2_state_transition(struct state *st, struct msg_digest *md)
+static void success_v2_state_transition(struct state *st, struct msg_digest *md,
+					const struct state_v2_microcode *transition)
 {
-	const struct state_v2_microcode *svm = md->svm;
-	enum state_kind from_state = svm->state;
+	/*
+	 * XXX: the transition's from state can lie - it may be
+	 * different to the ST's state!
+	 */
+	enum state_kind from_state = transition->state;
 	struct connection *c = st->st_connection;
-	struct state *pst;
 	enum rc_type w;
 	struct ike_sa *ike = ike_sa(st);
 
-	pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
-
-	if (from_state != svm->next_state) {
-		dbg("IKEv2: transition from state %s to state %s",
+	if (from_state != transition->next_state) {
+		dbg("transitioning from state %s to state %s",
 		    finite_states[from_state]->name,
-		    finite_states[svm->next_state]->name);
+		    finite_states[transition->next_state]->name);
 	}
 
 	/*
@@ -2886,10 +2892,10 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		 * itself becomes its own IKE SA (making the operation
 		 * futile).
 		 */
-		dbg("Message ID: updating counters for #%lu to "PRI_MSGID" before emancipating",
-		    md->st->st_serialno, md->hdr.isa_msgid);
+		dbg("Message ID: updating counters for #%lu before emancipating",
+		    st->st_serialno);
 		v2_msgid_update_recv(ike_sa(st), st, md);
-		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
+		v2_msgid_update_sent(ike_sa(st), st, md, transition->send);
 		/*
 		 * XXX: should this be merged with the code sending
 		 * with transitions message?  And do this before ST
@@ -2903,11 +2909,11 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		 * IDs as that is what the update function expects
 		 * (this is not a good reason).
 		 */
-		change_state(st, svm->next_state);
+		change_state(st, transition->next_state);
 		dbg("Message ID: updating counters for #%lu after switching state ...",
 		    st->st_serialno);
 		v2_msgid_update_recv(ike_sa(st), st, md);
-		v2_msgid_update_sent(ike_sa(st), st, md, svm->send);
+		v2_msgid_update_sent(ike_sa(st), st, md, transition->send);
 		/*
 		 * XXX: should this be merged with the code sending
 		 * this transitions message?
@@ -2925,7 +2931,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	passert(st->st_state->kind >= STATE_IKEv2_FLOOR);
 	passert(st->st_state->kind <  STATE_IKEv2_ROOF);
 
-	if (svm->flags & SMF2_ESTABLISHED) {
+	if (transition->flags & SMF2_ESTABLISHED) {
 		/*
 		 * Count successful transition into an established state.
 		 *
@@ -2952,7 +2958,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	 * Tell whack and logs our progress - unless OE or a state
 	 * transition we're not telling anyone about, then be quiet.
 	 */
-	if ((svm->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
+	if ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
 	    (c != NULL && (c->policy & POLICY_OPPORTUNISTIC))) {
 		LSWDBGP(DBG_BASE, buf) {
 			lswlogf(buf, "%s: %s", st->st_state->name,
@@ -2974,7 +2980,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 	}
 
 	/* if requested, send the new reply packet */
-	if (svm->send != NO_MESSAGE) {
+	if (transition->send != NO_MESSAGE) {
 		/*
 		 * Adjust NAT but not for initial state (initial
 		 * outbound message?).
@@ -3078,7 +3084,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 			/* from_state = STATE_REKEY_IKE_R */
 			/* from_state = ??? */
 			/* adjust our destination port if necessary */
-			nat_traversal_change_port_lookup(md, pst);
+			nat_traversal_change_port_lookup(md, &ike->sa);
 		}
 
 		endpoint_buf b;
@@ -3089,7 +3095,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 		    str_endpoint(&st->st_remote_endpoint, &b),
 		    str_endpoint(&st->st_interface->local_endpoint, &b2));
 
-		send_recorded_v2_ike_msg(pst, finite_states[from_state]->name);
+		send_recorded_v2_ike_msg(&ike->sa, finite_states[from_state]->name);
 	}
 
 	if (w == RC_SUCCESS) {
@@ -3109,7 +3115,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 
 	/* Schedule for whatever timeout is specified */
 	{
-		enum event_type kind = svm->timeout_event;
+		enum event_type kind = transition->timeout_event;
 		struct connection *c = st->st_connection;
 
 		switch (kind) {
@@ -3134,8 +3140,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md)
 			 * Is there really no case where we want to set no  timer?
 			 * more likely an accident?
 			 */
-			DBG_log("V2 microcode entry (%s) has unspecified timeout_event",
-					svm->story);
+			LOG_PEXPECT("V2 microcode entry (%s) has unspecified timeout_event",
+				    transition->story);
 			break;
 
 		case EVENT_RETAIN:
@@ -3373,76 +3379,121 @@ void complete_v2_state_transition(struct state *st,
 	set_cur_state(st); /* might have changed */ /* XXX: huh? */
 	const char *from_state_name = st->st_state->short_name;
 
+	/*
+	 * Try to get the transition that is being completed ...
+	 *
+	 * For the moment this comes from the (presumably non-NULL)
+	 * MD.SVM.
+	 *
+	 * XXX: However, when a packet is bad and no transition is
+	 * selected, this code is still called:
+	 *
+	 * STF_IGNORE: to undo the v2_msgid_start_responder() call;
+	 * better would probably be to move that call to after a
+	 * transition has been found (but fragmentation makes this
+	 * messy).
+	 *
+	 * STF_FATAL: to discard a state in response to a bad exchange
+	 * (for instance a protected packet's contents are bogus).
+	 *
+	 * Long term, this value should be extracted from the state
+	 * and .st_v2_state_transition - it just isn't possible to
+	 * squeeze both the IKE and CHILD transitions into MD.ST.
+	 */
+	const struct state_v2_microcode *transition = md != NULL ? md->svm : NULL;
+	static const struct state_v2_microcode undefined_transition = {
+		.story = "suspect message",
+		.state = STATE_UNDEFINED,
+		.next_state = STATE_UNDEFINED,
+	};
+	if (transition == NULL) {
+		if (result != STF_FATAL && result != STF_IGNORE) {
+			LOG_PEXPECT("state #%lu has no transition", st->st_serialno);
+		} else {
+			dbg("no transition for FATAL or IGNORE");
+		}
+		transition = &undefined_transition;
+	}
+
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "#%lu complete_v2_state_transition()", st->st_serialno);
-		jam(buf, " %s -> ", from_state_name);
-		if (md == NULL) {
-			jam_string(buf, "<null-md>");
-		} else if (md->svm == NULL) {
-			jam_string(buf, "<null-md-svm>");
-		} else {
-			jam_string(buf, finite_states[md->svm->next_state]->short_name);
-		}
+		jam(buf, " %s -> %s", from_state_name,
+		    finite_states[transition->next_state]->short_name);
 		jam(buf, " with status ");
 		lswlog_v2_stf_status(buf, result);
-		if (md != NULL && md->svm != NULL &&
-		    md->svm->state != st->st_state->kind) {
-			jam(buf, " (md.svm.state[from]=%s",
-			    finite_states[md->svm->state]->short_name);
+		/* also dump any divergence */
+		if (md == NULL) {
+			jam(buf, "; md=NULL");
+		} else if (md->svm == NULL) {
+			jam(buf, "; md.svm=NULL");
+		} else if (md->svm != transition) {
+			jam(buf, "; md.svm=%s->%s",
+			    finite_states[transition->state]->short_name,
+			    finite_states[transition->next_state]->short_name);
+		}
+		if (transition->state != st->st_state->kind) {
+			jam(buf, "; transition.[from]state=%s",
+			    finite_states[transition->state]->short_name);
 		}
 	}
 
 	/* audit log failures - success is audit logged in ikev2_ike_sa_established() */
 	if (result > STF_OK) {
-		pexpect(st != NULL); /* we really need this for logging details */
-		if (st != NULL) {
-			linux_audit_conn(st, IS_IKE_SA_ESTABLISHED(st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
-		}
+		linux_audit_conn(st, IS_IKE_SA_ESTABLISHED(st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
 	}
 
 	switch (result) {
 
 	case STF_SUSPEND:
-		if (pexpect(st != NULL)) {
-			/*
-			 * If this transition was triggered by an
-			 * incoming packet, save it.
-			 *
-			 * XXX: some initiator code creates a fake MD
-			 * (there isn't a real one); save that as
-			 * well.
-			 */
-			if (*mdp != NULL) {
-				suspend_md(st, mdp);
-				passert(*mdp == NULL); /* ownership transferred */
-			}
-			log_stf_suspend(st, result);
+		/*
+		 * If this transition was triggered by an
+		 * incoming packet, save it.
+		 *
+		 * XXX: some initiator code creates a fake MD
+		 * (there isn't a real one); save that as
+		 * well.
+		 */
+		if (*mdp != NULL) {
+			suspend_md(st, mdp);
+			passert(*mdp == NULL); /* ownership transferred */
 		}
+		log_stf_suspend(st, result);
 		return;
 
 	case STF_IGNORE:
-		/* logged above */
-		if (pexpect(st != NULL) && pexpect(md != NULL)) {
-			if (v2_msg_role(md) == MESSAGE_REQUEST) {
-				v2_msgid_cancel_responder(ike, st, md);
-			}
+		/*
+		 * logged above
+		 *
+		 * XXX: really?  Suspect this means to say logged
+		 * where STF_IGNORE is returned.
+		 *
+		 * XXX: even when a packet is invalid and no
+		 * transition is selected (TRANSITION==NULL) this code
+		 * is executed - caller needs to cancel the responder
+		 * processing the message.
+		 */
+		if (v2_msg_role(md) == MESSAGE_REQUEST) {
+			v2_msgid_cancel_responder(ike, st, md);
 		}
 		return;
 
 	case STF_OK:
 		/* advance the state */
-		success_v2_state_transition(st, md);
+		success_v2_state_transition(st, md, transition);
 		break;
 
 	case STF_INTERNAL_ERROR:
-		passert(st != NULL);
 		log_state(RC_INTERNALERR, st, "state transition function for %s had internal error",
 			  st->st_state->name);
 		release_pending_whacks(st, "internal error");
 		break;
 
 	case STF_FATAL:
-		passert(st != NULL);
+		/*
+		 * XXX: even when a packet is invalid and no
+		 * transition is selected (TRANSITION==NULL) this code
+		 * is executed - caller needs to kill the state.
+		 */
 		log_state(RC_FATAL, st, "encountered fatal error in state %s",
 			  st->st_state->name);
 		switch (v2_msg_role(md)) {
@@ -3458,7 +3509,8 @@ void complete_v2_state_transition(struct state *st,
 		}
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
-		md->st = st = NULL;
+		/* kill all st pointers */
+		st = NULL; ike = NULL; if (md != NULL) md->st = NULL;
 		break;
 
 	case STF_FAIL:
@@ -3492,7 +3544,8 @@ void complete_v2_state_transition(struct state *st,
 						     NULL/*no data*/);
 			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
 				delete_state(st);
-				md->st = st = NULL;
+				/* kill all st pointers */
+				st = NULL; ike = NULL; md->st = NULL;
 			} else {
 				dbg("forcing #%lu to a discard event",
 				    st->st_serialno);
