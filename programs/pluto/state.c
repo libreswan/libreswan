@@ -116,7 +116,7 @@ uint16_t pluto_xfrmlifetime = 300;
  * better.
  */
 
-struct finite_state state_undefined = {
+static struct finite_state state_undefined = {
 	.kind = STATE_UNDEFINED,
 	.name = "STATE_UNDEFINED",
 	.short_name = "UNDEFINED",
@@ -124,7 +124,7 @@ struct finite_state state_undefined = {
 	.category = CAT_IGNORE,
 };
 
-struct finite_state state_ikev1_roof = {
+static struct finite_state state_ikev1_roof = {
 	.kind = STATE_IKEv1_ROOF,
 	.name = "STATE_IKEv1_ROOF",
 	.short_name = "IKEv1_ROOF",
@@ -132,7 +132,7 @@ struct finite_state state_ikev1_roof = {
 	.category = CAT_IGNORE,
 };
 
-struct finite_state state_ikev2_roof = {
+static struct finite_state state_ikev2_roof = {
 	.kind = STATE_IKEv2_ROOF,
 	.name = "STATE_IKEv2_ROOF",
 	.short_name = "IKEv2_ROOF",
