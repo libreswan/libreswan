@@ -40,7 +40,7 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet-ikev2
-002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 IKE SA
 1v1 "westnet-eastnet-ikev2" #1: initiate
 1v1 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "westnet-eastnet-ikev2" #1: Received unauthenticated INVALID_KE_PAYLOAD response to DH MODP2048; resending with suggested DH DH19

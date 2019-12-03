@@ -42,8 +42,7 @@ west #
  # stock certificate test
 west #
  ipsec auto --up west
-002 "west" #1: initiating v2 parent SA
-1v2 "west" #1: initiate
+1v2 "west" #1: initiating IKEv2 IKE SA
 1v2 "west" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -61,8 +60,7 @@ west #
  # following tests should work
 west #
  ipsec auto --up west-bcCritical
-002 "west-bcCritical" #3: initiating v2 parent SA
-1v2 "west-bcCritical" #3: initiate
+1v2 "west-bcCritical" #3: initiating IKEv2 IKE SA
 1v2 "west-bcCritical" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-bcCritical" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-bcCritical" #4: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -80,8 +78,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-ekuOmit
-002 "west-ekuOmit" #5: initiating v2 parent SA
-1v2 "west-ekuOmit" #5: initiate
+1v2 "west-ekuOmit" #5: initiating IKEv2 IKE SA
 1v2 "west-ekuOmit" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ekuOmit" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-ekuOmit" #6: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -99,8 +96,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-bcOmit
-002 "west-bcOmit" #7: initiating v2 parent SA
-1v2 "west-bcOmit" #7: initiate
+1v2 "west-bcOmit" #7: initiating IKEv2 IKE SA
 1v2 "west-bcOmit" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-bcOmit" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-bcOmit" #8: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -118,8 +114,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-ekuCritical-eku-ipsecIKE
-002 "west-ekuCritical-eku-ipsecIKE" #9: initiating v2 parent SA
-1v2 "west-ekuCritical-eku-ipsecIKE" #9: initiate
+1v2 "west-ekuCritical-eku-ipsecIKE" #9: initiating IKEv2 IKE SA
 1v2 "west-ekuCritical-eku-ipsecIKE" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ekuCritical-eku-ipsecIKE" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-ekuCritical-eku-ipsecIKE" #10: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -137,8 +132,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-eku-serverAuth
-002 "west-eku-serverAuth" #11: initiating v2 parent SA
-1v2 "west-eku-serverAuth" #11: initiate
+1v2 "west-eku-serverAuth" #11: initiating IKEv2 IKE SA
 1v2 "west-eku-serverAuth" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-eku-serverAuth" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-eku-serverAuth" #12: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -156,8 +150,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-ku-nonRepudiation
-002 "west-ku-nonRepudiation" #13: initiating v2 parent SA
-1v2 "west-ku-nonRepudiation" #13: initiate
+1v2 "west-ku-nonRepudiation" #13: initiating IKEv2 IKE SA
 1v2 "west-ku-nonRepudiation" #13: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ku-nonRepudiation" #14: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-ku-nonRepudiation" #14: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -175,8 +168,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-sanCritical
-002 "west-sanCritical" #15: initiating v2 parent SA
-1v2 "west-sanCritical" #15: initiate
+1v2 "west-sanCritical" #15: initiating IKEv2 IKE SA
 1v2 "west-sanCritical" #15: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-sanCritical" #16: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-sanCritical" #16: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -196,8 +188,7 @@ west #
  # This one works now - older NSS versions relied on NSS TLS fallback
 west #
  ipsec auto --up west-ekuCritical
-002 "west-ekuCritical" #17: initiating v2 parent SA
-1v2 "west-ekuCritical" #17: initiate
+1v2 "west-ekuCritical" #17: initiating IKEv2 IKE SA
 1v2 "west-ekuCritical" #17: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ekuCritical" #18: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-ekuCritical" #18: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -215,8 +206,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-kuCritical
-002 "west-kuCritical" #19: initiating v2 parent SA
-1v2 "west-kuCritical" #19: initiate
+1v2 "west-kuCritical" #19: initiating IKEv2 IKE SA
 1v2 "west-kuCritical" #19: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-kuCritical" #20: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-kuCritical" #20: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -234,8 +224,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-kuOmit
-002 "west-kuOmit" #21: initiating v2 parent SA
-1v2 "west-kuOmit" #21: initiate
+1v2 "west-kuOmit" #21: initiating IKEv2 IKE SA
 1v2 "west-kuOmit" #21: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-kuOmit" #22: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-kuOmit" #22: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -253,8 +242,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-eku-clientAuth
-002 "west-eku-clientAuth" #23: initiating v2 parent SA
-1v2 "west-eku-clientAuth" #23: initiate
+1v2 "west-eku-clientAuth" #23: initiating IKEv2 IKE SA
 1v2 "west-eku-clientAuth" #23: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-eku-clientAuth" #24: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-eku-clientAuth" #24: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -272,8 +260,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-eku-ipsecIKE
-002 "west-eku-ipsecIKE" #25: initiating v2 parent SA
-1v2 "west-eku-ipsecIKE" #25: initiate
+1v2 "west-eku-ipsecIKE" #25: initiating IKEv2 IKE SA
 1v2 "west-eku-ipsecIKE" #25: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-eku-ipsecIKE" #26: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-eku-ipsecIKE" #26: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -291,8 +278,7 @@ west #
  sleep 2
 west #
  ipsec auto --up west-ku-keyAgreement-digitalSignature
-002 "west-ku-keyAgreement-digitalSignature" #27: initiating v2 parent SA
-1v2 "west-ku-keyAgreement-digitalSignature" #27: initiate
+1v2 "west-ku-keyAgreement-digitalSignature" #27: initiating IKEv2 IKE SA
 1v2 "west-ku-keyAgreement-digitalSignature" #27: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ku-keyAgreement-digitalSignature" #28: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-ku-keyAgreement-digitalSignature" #28: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -312,8 +298,7 @@ west #
  # fails on older versions of NSS only
 west #
  ipsec auto --up west-ekuCritical-eku-emailProtection
-002 "west-ekuCritical-eku-emailProtection" #29: initiating v2 parent SA
-1v2 "west-ekuCritical-eku-emailProtection" #29: initiate
+1v2 "west-ekuCritical-eku-emailProtection" #29: initiating IKEv2 IKE SA
 1v2 "west-ekuCritical-eku-emailProtection" #29: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ekuCritical-eku-emailProtection" #30: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-ekuCritical-eku-emailProtection" #30: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
@@ -333,8 +318,7 @@ west #
  # following tests should fail (but it does not?)
 west #
  ipsec auto --up west-ekuBOGUS-bad
-002 "west-ekuBOGUS-bad" #31: initiating v2 parent SA
-1v2 "west-ekuBOGUS-bad" #31: initiate
+1v2 "west-ekuBOGUS-bad" #31: initiating IKEv2 IKE SA
 1v2 "west-ekuBOGUS-bad" #31: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "west-ekuBOGUS-bad" #32: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west-ekuBOGUS-bad" #32: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA

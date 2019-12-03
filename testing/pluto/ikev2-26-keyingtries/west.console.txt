@@ -30,8 +30,7 @@ west #
  # this should fail, our testing cannot wait for whack to release, so use async
 west #
  ipsec auto --up --asynchronous westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating v2 parent SA
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiate
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 IKE SA
 west #
  sleep 30
 west #
