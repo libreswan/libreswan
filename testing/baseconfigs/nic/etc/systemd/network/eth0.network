@@ -3,7 +3,7 @@ Name=eth0
 
 [Network]
 Address=192.1.2.254
-Address=2001:db8:1:2::45/64
+Address=2001:db8:1:2::254/64
 IPForward=yes
 IPv6DuplicateAddressDetection=no
 IPv6AcceptRouterAdvertisements=false
@@ -16,4 +16,16 @@ GatewayOnlink=yes
 [Route]
 Gateway=192.1.2.23
 Destination=192.0.2.0/24
+GatewayOnlink=yes
+
+
+[Route]
+Gateway=2001:db8:1:2::45
+Destination=2001:db8:0:1::/64
+GatewayOnlink=yes
+
+
+[Route]
+Gateway=2001:db8:1:2::23
+Destination=2001:db8:0:2::/64
 GatewayOnlink=yes
