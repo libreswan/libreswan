@@ -190,7 +190,7 @@ RMFLAGS = -f
 .SUFFIXES:
 .SUFFIXES: .c .o
 
-OBJS += connections.o initiate.o terminate.o
+OBJS += connections.o initiate.o terminate.o ikev2_rekey_now.o
 OBJS += cbc_test_vectors.o
 OBJS += ctr_test_vectors.o
 OBJS += gcm_test_vectors.o
