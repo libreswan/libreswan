@@ -1468,6 +1468,7 @@ void ikev2_process_packet(struct msg_digest *md)
 		switch (v2_msg_role(md)) {
 
 		case MESSAGE_REQUEST:
+		{
 			/* The initiator must send: IKE_I && !MSG_R */
 			if (expected_local_ike_role != SA_RESPONDER) {
 				rate_log(md, "dropping IKE_SA_INIT request with conflicting IKE initiator flag");
@@ -1740,8 +1741,10 @@ void ikev2_process_packet(struct msg_digest *md)
 			pop_cur_state(SOS_NOBODY);
 			statetime_stop(&start, "%s()", __func__);
 			return;
+		}
 
 		case MESSAGE_RESPONSE:
+		{
 			/* The responder must send: !IKE_I && MSG_R. */
 			if (expected_local_ike_role != SA_INITIATOR) {
 				rate_log(md, "dropping IKE_SA_INIT response with conflicting IKE initiator flag");
@@ -1783,20 +1786,56 @@ void ikev2_process_packet(struct msg_digest *md)
 				 * Since there isn't someone's playing
 				 * games.  Drop the packet.
 				 */
-				rate_log(md, "no matching state for IKE_SA_INIT response; discarding packet");
+				rate_log(md, "dropping IKE_SA_INIT response no matching IKE ISA");
 				return;
 			}
-			/*
-			 * Set ST to the state that is currently
-			 * processing the message, if it exists.
-			 * Pretty easy as it is the IKE SA or nothing
-			 * at all.
-			 */
-			pexpect(md->hdr.isa_msgid == 0); /* per above */
-			break;
+
+			if (ike->sa.st_state->kind != STATE_PARENT_I1 ||
+			    ike->sa.st_v2_msgid_windows.initiator.sent != 0 ||
+			    ike->sa.st_v2_msgid_windows.initiator.recv != -1 ||
+			    ike->sa.st_v2_msgid_wip.initiator != 0) {
+				/*
+				 * This doesn't seem right; drop the
+				 * packet.
+				 */
+				rate_log(md, "dropping IKE_SA_INIT response as unexpected for matching IKE SA #%lu",
+					 ike->sa.st_serialno);
+				return;
+			}
+
+			if (verbose_state_busy(&ike->sa)) {
+				return;
+			}
+
+			dbg("unpacking clear payloads");
+			struct logger log = STATE_LOGGER(&ike->sa);
+			md->message_payloads = ikev2_decode_payloads(&log, md, &md->message_pbs,
+								     md->hdr.isa_np);
+			if (md->message_payloads.n != v2N_NOTHING_WRONG) {
+				/* already logged */
+				return;
+			}
+
+			/* transition? */
+			const struct state_v2_microcode *transition =
+				find_v2_state_transition(ike->sa.st_state, md);
+			if (transition == NULL) {
+				/* already logged */
+				return;
+			}
+
+			statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
+			push_cur_state(&ike->sa);
+			v2_dispatch(ike, &ike->sa, md, transition);
+			pop_cur_state(SOS_NOBODY);
+			statetime_stop(&start, "%s()", __func__);
+			return;
+		}
+
 		default:
 			bad_case(v2_msg_role(md));
 		}
+
 	} else if (v2_msg_role(md) == MESSAGE_REQUEST) {
 		/*
 		 * A (possibly new) request; start with the IKE SA
