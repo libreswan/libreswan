@@ -58,6 +58,20 @@ enum ike_version {
 #define FIPS_IKE_SA_LIFETIME_MAXIMUM secs_per_hour * 24
 #define FIPS_MIN_RSA_KEY_SIZE 2048 /* 112 bits, see SP800-131A */
 
+/*
+ * XFRM_INF is ~(uint64_t)0 insted using ~(int64_)0 here.
+ * cfg->conn_default.options[kbf] only support int.
+ * ~(uint64_t)0 would cause error.
+ * error: overflow in conversion from ‘long unsigned int’ to ‘int’ changes value
+ * from ‘18446744073709551615’ to ‘-1’ [-Werror=overflow]
+ *
+ * May be add support for uint64_t.
+ * Otherwise a 40G link (with FIPS) would need rekey every minute
+ */
+#define IPSEC_SA_LIFEBYTES_DEFAULT ~(int64_t)0 /* XFRM_INF, including xfrm.h is probably over doing it */
+#define IPSEC_SA_LIFEPACKETS_DEFAULT ~(int64_t)0 /* XFRM_INF, including xfrm.h is probably over doing it */
+#define IPSEC_SA_LIFEBYTES_SOFT_LIMIT_PERCENTAGE 80
+
 #define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
 #define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )
 

@@ -1333,9 +1333,10 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	dbg("%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
 
 	/* TODO expose limits to kernel_sa via config */
-	req.p.lft.soft_byte_limit = XFRM_INF;
+	req.p.lft.soft_byte_limit = sa->sa_lifebytes * IPSEC_SA_LIFEBYTES_SOFT_LIMIT_PERCENTAGE / 100;
+	dbg("AA_2019 set soft_byte_limit %llu ", req.p.lft.soft_byte_limit);
 	req.p.lft.soft_packet_limit = XFRM_INF;
-	req.p.lft.hard_byte_limit = XFRM_INF;
+	req.p.lft.hard_byte_limit = sa->sa_lifebytes;
 	req.p.lft.hard_packet_limit = XFRM_INF;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.p)));

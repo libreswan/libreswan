@@ -1743,6 +1743,8 @@ static bool extract_connection(const struct whack_message *wm,
 		c->nic_offload = wm->nic_offload;
 		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
 		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
+		c->sa_ipsec_life_bytes = wm->sa_ipsec_life_bytes;
+		c->sa_ipsec_life_packets = wm->sa_ipsec_life_packets;
 		c->sa_rekey_margin = wm->sa_rekey_margin;
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
@@ -2104,11 +2106,13 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	/* connection is good-to-go: log against it */
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
-	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
+	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; ipsec_life_bytes %" PRIu64 " ipsec_life_packets %" PRIu64 " keyingtries: %lu; replay_window: %u; policy: %s%s",
 	    deltasecs(c->sa_ike_life_seconds),
 	    deltasecs(c->sa_ipsec_life_seconds),
 	    deltasecs(c->sa_rekey_margin),
 	    c->sa_rekey_fuzz,
+	    c->sa_ipsec_life_bytes,
+	    c->sa_ipsec_life_packets,
 	    c->sa_keying_tries,
 	    c->sa_replay_window,
 	    str_policy(c->policy, &pb),
@@ -4067,7 +4071,7 @@ void show_one_connection(struct show *s,
 	}
 
 	show_comment(s,
-		"\"%s\"%s:   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
+		"\"%s\"%s:   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; ipsec_life_bytes %" PRIu64 "; ipsec_life_packets %" PRIu64 "; keyingtries: %lu;",
 		c->name,
 		instance,
 		deltasecs(c->sa_ike_life_seconds),
@@ -4075,6 +4079,8 @@ void show_one_connection(struct show *s,
 		c->sa_replay_window,
 		deltasecs(c->sa_rekey_margin),
 		c->sa_rekey_fuzz,
+		c->sa_ipsec_life_bytes,
+		c->sa_ipsec_life_packets,
 		c->sa_keying_tries);
 
 	show_comment(s,

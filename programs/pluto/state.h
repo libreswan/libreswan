@@ -424,6 +424,7 @@ struct state {
 	struct v2_incoming_fragments *st_v2_incoming[MESSAGE_ROLE_ROOF];
 
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
+	bool st_kernel_sa_expired;  /* received expire in one direction */
 	struct ikev2_proposal *st_accepted_ike_proposal;
 	struct ikev2_proposal *st_accepted_esp_or_ah_proposal;
 
@@ -893,4 +894,6 @@ void suppress_delete_notify(const struct ike_sa *ike,
 
 void list_state_events(struct show *s, monotime_t now);
 
+struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
+					 ip_address *dst);
 #endif /* _STATE_H */

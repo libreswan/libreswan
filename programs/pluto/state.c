@@ -1693,11 +1693,14 @@ struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_sp
 struct v2_spi_filter {
 	uint8_t protoid;
 	ipsec_spi_t outbound_spi;
+	ipsec_spi_t our_spi;
+	ip_address *dst;
 };
 
 static bool v2_spi_predicate(struct state *st, void *context)
 {
 	struct v2_spi_filter *filter = context;
+	bool ret = false;
 
 	struct ipsec_proto_info *pr;
 	switch (filter->protoid) {
@@ -1714,9 +1717,27 @@ static bool v2_spi_predicate(struct state *st, void *context)
 	if (pr->present) {
 		if (pr->attrs.spi == filter->outbound_spi) {
 			dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
-			    st->st_serialno,
-			    st->st_state->name);
-			return true;
+					st->st_serialno,
+					st->st_state->name);
+			ret = true;
+			if (filter->dst != NULL) {
+				ret = false;
+				if (sameaddr(&st->st_connection->spd.that.host_addr,
+							filter->dst))
+					ret = true;
+			}
+		} else if (filter->our_spi > 0 &&
+				filter->our_spi == pr->our_spi) {
+			dbg("v2 CHILD SA #%lu found using their our SPI, in %s",
+					st->st_serialno,
+					st->st_state->name);
+			ret = true;
+			if (filter->dst != NULL) {
+				ret = false;
+				if (sameaddr(&st->st_connection->spd.this.host_addr,
+							filter->dst))
+					ret = true;
+			}
 		}
 #if 0
 		/* see function description above */
@@ -1728,7 +1749,25 @@ static bool v2_spi_predicate(struct state *st, void *context)
 		}
 #endif
 	}
-	return false;
+	return ret;
+}
+
+struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
+					 ip_address *dst)
+{
+	struct v2_spi_filter filter = {
+		.protoid = protoid,
+		.outbound_spi = spi,
+		.our_spi = spi,
+		.dst = dst,
+	};
+
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
+		if (v2_spi_predicate(st, &filter))
+			break;
+	};
+	return pexpect_child_sa(st);
 }
 
 struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
