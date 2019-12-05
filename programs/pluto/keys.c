@@ -68,6 +68,7 @@
 #include "lswnss.h"
 #include "secrets.h"
 #include "ike_alg_hash.h"
+#include "pluto_timing.h"
 
 static struct secret *pluto_secrets = NULL;
 
@@ -1112,17 +1113,26 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 err_t load_nss_cert_secret(CERTCertificate *cert)
 {
+	threadtime_t start = threadtime_start();
+	err_t err;
 	if (cert == NULL) {
-		return "NSS cert not found";
+		err = "NSS cert not found";
+	} else {
+		switch (nss_cert_key_kind(cert)) {
+		case PKK_RSA:
+			err = lsw_add_rsa_secret(&pluto_secrets, cert);
+			break;
+		case PKK_ECDSA:
+			err = lsw_add_ecdsa_secret(&pluto_secrets, cert);
+			break;
+		default:
+			err = "NSS cert not supported";
+			break;
+		}
 	}
-	switch (nss_cert_key_kind(cert)) {
-	case PKK_RSA:
-		return lsw_add_rsa_secret(&pluto_secrets, cert);
-	case PKK_ECDSA:
-		return lsw_add_ecdsa_secret(&pluto_secrets, cert);
-	default:
-		return "NSS cert not supported";
-	}
+	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
+			cert->nickname);
+	return err;
 }
 
 static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t buflen)
