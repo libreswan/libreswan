@@ -26,10 +26,12 @@
 #include <limits.h>
 #include <unistd.h>
 #include <errno.h>
+#include <inttypes.h>
 #define YYDEBUG 1
 
 #include "deltatime.h"
 #include "timescale.h"
+#include "binary-iec-60027-2.h"
 
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser.h"	/* includes parser.tab.h" */
@@ -72,6 +74,8 @@ static struct starter_comments_list *parser_comments;
 %token <k>      TIMEWORD
 %token <k>      BOOLWORD
 %token <k>      PERCENTWORD
+%token <k>      BINARYWORD
+%token <k>      BYTEWORD
 %token <k>      COMMENT
 %%
 
@@ -184,6 +188,8 @@ statement_kw:
 		case kt_number:
 		case kt_time:
 		case kt_percent:
+		case kt_binary:
+		case kt_byte:
 			yyerror("keyword value is a keyword, but type not a string");
 			assert(kw.keydef->type != kt_bool);
 			break;
@@ -248,6 +254,8 @@ statement_kw:
 		case kt_number:
 		case kt_time:
 		case kt_percent:
+		case kt_binary:
+		case kt_byte:
 			yyerror("valid keyword, but value is not a number");
 			assert(kw.keydef->type != kt_bool);
 			break;
@@ -324,6 +332,42 @@ statement_kw:
 		new_parser_kw(&$1, NULL, $<num>3);
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
+	| BINARYWORD EQUAL INTEGER {
+		struct keyword *kw = &$1;
+		unsigned long b = $3;
+		new_parser_kw(kw, NULL, b);
+	}
+	| BINARYWORD EQUAL STRING {
+		struct keyword *kw = &$1;
+		const char *const str = $3;
+		unsigned long b;
+
+		diag_t diag = ttobinary(str, &b, 0 /* no B prefix */);
+		if (diag != NULL) {
+			yyerror(str_diag(diag));
+			pfree_diag(&diag);
+		} else {
+			new_parser_kw(kw, NULL, b);
+		}
+	}
+	| BYTEWORD EQUAL INTEGER {
+		struct keyword *kw = &$1;
+		unsigned long b = $3;
+		new_parser_kw(kw, NULL, b);
+	}
+	| BYTEWORD EQUAL STRING {
+		struct keyword *kw = &$1;
+		const char *const str = $3;
+		unsigned long b;
+
+		diag_t diag = ttobinary(str, &b, 1 /* with B prefix */);
+		if (diag != NULL) {
+			yyerror(str_diag(diag));
+			pfree_diag(&diag);
+		} else {
+			new_parser_kw(kw, NULL, b);
+		}
+	}
 	;
 %%
 

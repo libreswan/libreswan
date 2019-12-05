@@ -354,6 +354,8 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_number:
 		case kt_time:
 		case kt_percent:
+		case kt_binary:
+		case kt_byte:
 			/* all treated as a number for now */
 			assert(f < elemsof(cfg->setup.options));
 			cfg->setup.options[f] = kw->number;
@@ -893,6 +895,8 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_number:
 	case kt_time:
 	case kt_percent:
+	case kt_binary:
+	case kt_byte:
 		/* all treated as a number for now */
 		assert(opt_floor <= field && field < opt_roof);
 

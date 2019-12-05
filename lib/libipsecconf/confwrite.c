@@ -161,6 +161,8 @@ static void confwrite_int(FILE *out,
 			break;
 
 		case kt_time: /* special number, but do work later XXX */
+		case kt_binary:
+		case kt_byte:
 		case kt_number:
 			if (options_set[k->field])
 				fprintf(out, "\t%s%s=%d\n", side, k->keyname,
@@ -228,6 +230,8 @@ static void confwrite_str(FILE *out,
 			break;
 
 		case kt_time:
+		case kt_binary:
+		case kt_byte:
 			/* special number, not a string */
 			break;
 
