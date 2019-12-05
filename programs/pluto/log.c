@@ -744,7 +744,9 @@ static void broadcast(lset_t rc_flags, fd_t object_fd,
 }
 
 void log_message(lset_t rc_flags,
-		 const struct state *st, const struct connection *c, const ip_address *from,
+		 const struct state *st,
+		 const struct connection *c,
+		 const ip_endpoint *from,
 		 const char *format, ...)
 {
 	va_list ap;
@@ -772,6 +774,30 @@ void log_state(lset_t rc_flags, const struct state *st,
 	va_start(ap, format);
 	broadcast(rc_flags, st->st_whack_sock,
 		  st/*ST*/, NULL/*connection**/, NULL/*from*/,
+		  format, ap);
+	va_end(ap);
+}
+
+void log_connection(lset_t rc_flags, const struct connection *c,
+		    const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	broadcast(rc_flags,
+		  null_fd, /* no object FD */
+		  NULL/*state*/, c/*connection**/, NULL/*from*/,
+		  format, ap);
+	va_end(ap);
+}
+
+void log_from(lset_t rc_flags, const ip_endpoint *from,
+	      const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	broadcast(rc_flags,
+		  null_fd, /* no object FD */
+		  NULL/*state*/, NULL/*connection**/, from/*from*/,
 		  format, ap);
 	va_end(ap);
 }

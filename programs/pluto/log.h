@@ -110,7 +110,7 @@ extern void log_pop_from(ip_address old_from, where_t where);
 void log_message(lset_t rc_flags,
 		 const struct state *st,
 		 const struct connection *c,
-		 const ip_address *from,
+		 const ip_endpoint *from,
 		 const char *format, ...) PRINTF_LIKE(5);
 
 void log_pending(lset_t rc_flags,
@@ -120,6 +120,17 @@ void log_pending(lset_t rc_flags,
 void log_state(lset_t rc_flags,
 	       const struct state *st,
 	       const char *format, ...)	PRINTF_LIKE(3);
+
+void log_connection(lset_t rc_flags,
+		    const struct connection *c,
+		    const char *format, ...)	PRINTF_LIKE(3);
+
+#define log_md(FLAGS, MD, MESSAGE, ...) \
+	log_from(FLAGS, &(MD)->sender, MESSAGE,##__VA_ARGS__)
+
+void log_from(lset_t rc_flags,
+	      const ip_endpoint *from,
+	      const char *format, ...)	PRINTF_LIKE(3);
 
 /*
  * Wrappers.
@@ -143,9 +154,9 @@ void log_state(lset_t rc_flags,
 		log_jambuf(LOG_STREAM, null_fd, BUF))
 
 #define plog_global(MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_from(FROM, MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, FROM, MESSAGE,##__VA_ARGS__);
-#define plog_md(MD, MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, &(MD)->sender, MESSAGE,##__VA_ARGS__);
-#define plog_connection(C, MESSAGE, ...) log_message(LOG_STREAM, NULL, C, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_from(FROM, MESSAGE, ...) log_from(LOG_STREAM, FROM, MESSAGE,##__VA_ARGS__);
+#define plog_md(MD, MESSAGE, ...) log_md(LOG_STREAM, MD, MESSAGE,##__VA_ARGS__);
+#define plog_connection(C, MESSAGE, ...) log_connection(LOG_STREAM, C, MESSAGE,##__VA_ARGS__);
 #define plog_state(ST, MESSAGE, ...) log_state(LOG_STREAM, ST, MESSAGE,##__VA_ARGS__);
 
 /*
