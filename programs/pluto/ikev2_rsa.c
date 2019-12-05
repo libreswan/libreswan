@@ -139,7 +139,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 		/* now generate signature blob */
 		u_char sig_val[RSA_MAX_OCTETS];
 		statetime_t sign_time = statetime_start(st);
-		int shr = sign_hash_RSA(k, signed_octets, signed_len,
+		int shr = sign_hash_RSA(pks, signed_octets, signed_len,
 					sig_val, sz, hash_algo);
 		statetime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);
 		if (shr == 0)

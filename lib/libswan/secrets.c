@@ -61,6 +61,7 @@
 #include "lswconf.h"
 #include "lswnss.h"
 #include "ip_info.h"
+#include "nss_cert_load.h"
 
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
@@ -234,6 +235,7 @@ static void RSA_unpack_secret_content(struct private_key_stuff *pks,
 
 static void RSA_free_secret_content(struct private_key_stuff *pks)
 {
+	SECKEY_DestroyPrivateKey(pks->private_key);
 	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
 	RSA_free_public_content(&rsak->pub);
 }
@@ -304,6 +306,7 @@ static void ECDSA_unpack_secret_content(struct private_key_stuff *pks,
 
 static void ECDSA_free_secret_content(struct private_key_stuff *pks)
 {
+	SECKEY_DestroyPrivateKey(pks->private_key);
 	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
 	dbg("leaking ECDSA content?");
 	/* ??? what about freeing the rest of the key? */
@@ -369,7 +372,7 @@ const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
 	}
 }
 
-static const ckaid_t *privkey_ckaid(struct private_key_stuff *pks)
+static const ckaid_t *privkey_ckaid(const struct private_key_stuff *pks)
 {
 	switch (pks->pubkey_type->alg) {
 	case PUBKEY_ALG_RSA:
@@ -421,52 +424,35 @@ struct secret *lsw_foreach_secret(struct secret *secrets,
 	return NULL;
 }
 
-struct secret_byid {
-	enum PrivateKeyKind kind;
-	const struct pubkey *my_public_key;
-};
-
-static int lsw_check_secret_byid(struct secret *secret UNUSED,
-				struct private_key_stuff *pks,
-				void *uservoid)
+static struct secret *find_pubkey_secret_by_ckaid(struct secret *secrets,
+						  const struct pubkey_type *type,
+						  const SECItem *pubkey_ckaid)
 {
-	struct secret_byid *sb = (struct secret_byid *)uservoid;
-
-	DBG(DBG_CONTROL,
-		DBG_log("searching for certificate %s:%s vs %s:%s",
-			enum_name(&pkk_names, pks->kind),
-			(pks->kind == PKK_RSA ?
-				pks->u.RSA_private_key.pub.keyid :
-			 pks->kind == PKK_ECDSA ?
-				pks->u.ECDSA_private_key.pub.keyid : "N/A"),
-			enum_name(&pkk_names, sb->kind),
-			pks->kind == PKK_RSA ? sb->my_public_key->u.rsa.keyid :
-			pks->kind == PKK_ECDSA ? sb->my_public_key->u.ecdsa.keyid :
-				"unknown public key algorithm");
-		);
-	if (pks->kind == sb->kind) {
-		if (pks->kind == PKK_RSA &&
-			same_RSA_public_key(&pks->u.RSA_private_key.pub,
-				&sb->my_public_key->u.rsa))
-			return 0;
-		/* TODO */
-		if (pks->kind == PKK_ECDSA /* && placerholder for ECDSA */)
-			return 0;
+	for (struct secret *s = secrets; s != NULL; s = s->next) {
+		const struct private_key_stuff *pks = &s->pks;
+		dbg("trying secret %s:%s",
+		    enum_name(&pkk_names, pks->kind),
+		    (pks->kind == PKK_RSA ? pks->u.RSA_private_key.pub.keyid :
+		     pks->kind == PKK_ECDSA ? pks->u.ECDSA_private_key.pub.keyid :
+		     "N/A"));
+		if (s->pks.pubkey_type == type) {
+			const ckaid_t *s_ckaid = privkey_ckaid(pks);
+			if (ckaid_eq_nss(s_ckaid, pubkey_ckaid)) {
+				dbg("matched");
+				return s;
+			}
+		}
 	}
-
-	return 1;
+	return NULL;
 }
 
 struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
-					const struct pubkey *my_public_key,
-					enum PrivateKeyKind kind)
+					     const struct pubkey *public_key)
 {
-	struct secret_byid sb;
-
-	sb.kind = kind;
-	sb.my_public_key = my_public_key;
-
-	return lsw_foreach_secret(secrets, lsw_check_secret_byid, &sb);
+	dbg("searching for secret matching public key %s:%s",
+	    public_key->type->name, pubkey_keyid(public_key));
+	return find_pubkey_secret_by_ckaid(secrets, public_key->type,
+					   pubkey_ckaid(public_key)->nss);
 }
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
@@ -881,6 +867,33 @@ struct secret *lsw_get_ppk_by_id(struct secret *s, chunk_t ppk_id)
 	return NULL;
 }
 
+static SECKEYPrivateKey *copy_private_key(SECKEYPrivateKey *private_key)
+{
+	SECKEYPrivateKey *unpacked_key = NULL;
+	if (private_key->pkcs11Slot != NULL) {
+		PK11SlotInfo *slot = PK11_ReferenceSlot(private_key->pkcs11Slot);
+		if (slot != NULL) {
+			dbg("copying key using reference slot");
+			unpacked_key = PK11_CopyTokenPrivKeyToSessionPrivKey(slot, private_key);
+			PK11_FreeSlot(slot);
+		}
+	}
+	if (unpacked_key == NULL) {
+		CK_MECHANISM_TYPE mech = PK11_MapSignKeyType(private_key->keyType);
+		PK11SlotInfo *slot = PK11_GetBestSlot(mech, NULL);
+		if (slot != NULL) {
+			dbg("copying key using mech/slot");
+			unpacked_key = PK11_CopyTokenPrivKeyToSessionPrivKey(slot, private_key);
+			PK11_FreeSlot(slot);
+		}
+	}
+	if (unpacked_key == NULL) {
+		dbg("copying key using SECKEY_CopyPrivateKey()");
+		unpacked_key = SECKEY_CopyPrivateKey(private_key);
+	}
+	return unpacked_key;
+}
+
 /*
  * Parse fields of RSA private key.
  *
@@ -986,6 +999,30 @@ static err_t lsw_process_rsa_secret(struct private_key_stuff *pks)
 		/* let caller recover from mess */
 		return err;
 	}
+
+	/* now try to find the private key in NSS */
+
+	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
+	if (!pexpect(slot != NULL)) {
+		return "NSS: has no internal slot ....";
+	}
+
+	SECKEYPrivateKey *private_key = PK11_FindKeyByKeyID(slot, rsak->pub.ckaid.nss,
+							    lsw_return_nss_password_file_info());
+	if (private_key == NULL) {
+		dbg("NSS: can't find the private key using the NSS CKAID");
+		CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(rsak->pub.ckaid);
+		if (cert == NULL) {
+			return "can't find the private key matching the NSS CKAID";
+		}
+		private_key = PK11_FindKeyByAnyCert(cert, lsw_return_nss_password_file_info());
+		CERT_DestroyCertificate(cert);
+		if (private_key == NULL) {
+			return "can't find the private key (the certificate found using NSS CKAID has no matching private key)";
+		}
+	}
+	pks->private_key = copy_private_key(private_key);
+	SECKEY_DestroyPrivateKey(private_key);
 
 	return pks->pubkey_type->secret_sane(pks);
 }
@@ -1614,28 +1651,26 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 	return pk;
 }
 
-static struct secret *find_pubkey_secret_by_ckaid(struct secret *secrets,
-						  const struct pubkey_type *type,
-						  SECItem *cert_ckaid)
-{
-	for (struct secret *s = secrets; s != NULL; s = s->next) {
-		if (s->pks.pubkey_type == type) {
-			const ckaid_t *s_ckaid = privkey_ckaid(&s->pks);
-			if (ckaid_eq_nss(s_ckaid, cert_ckaid)) {
-				return s;
-			}
-		}
-	}
-	return NULL;
-}
-
 static err_t add_pubkey_ckaid_secret(struct secret **secrets, const struct pubkey_type *type,
-				     SECKEYPublicKey *pubk, SECItem *cert_ckaid)
+				     SECKEYPublicKey *pubk, SECItem *cert_ckaid,
+				     CERTCertificate *cert)
 {
 	struct secret *s = alloc_thing(struct secret, "pubkey secret");
 	s->pks.pubkey_type = type;
 	s->pks.kind = type->private_key_kind;
 	s->pks.line = 0;
+
+	/* make an unpacked copy of the private key */
+
+	SECKEYPrivateKey *private_key =
+		PK11_FindKeyByAnyCert(cert,
+				      lsw_return_nss_password_file_info());
+	if (private_key == NULL)
+		return "NSS: cert private key not found";
+
+	s->pks.private_key = copy_private_key(private_key);
+	SECKEY_DestroyPrivateKey(private_key);
+	private_key = NULL;
 
 	type->unpack_secret_content(&s->pks, pubk, cert_ckaid);
 
@@ -1697,19 +1732,7 @@ static err_t add_pubkey_secret(struct secret **secrets, CERTCertificate *cert,
 
 	dbg("adding %s secret for certificate: %s", type->name, cert->nickname);
 
-	/* only a check */
-	{
-		SECKEYPrivateKey *privk =
-			PK11_FindKeyByAnyCert(cert,
-					      lsw_return_nss_password_file_info());
-		if (privk == NULL) {
-			SECITEM_FreeItem(cert_ckaid, PR_TRUE);
-			return "NSS: cert private key not found";
-		}
-		SECKEY_DestroyPrivateKey(privk);
-	}
-
-	err_t err = add_pubkey_ckaid_secret(secrets, type, pubk, cert_ckaid);
+	err_t err = add_pubkey_ckaid_secret(secrets, type, pubk, cert_ckaid, cert);
 	SECITEM_FreeItem(cert_ckaid, PR_TRUE);
 	return err;
 }

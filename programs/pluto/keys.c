@@ -174,52 +174,15 @@ enum PrivateKeyKind nss_cert_key_kind(CERTCertificate *cert)
 }
 
 /* returns the length of the result on success; 0 on failure */
-int sign_hash_RSA(const struct RSA_private_key *k,
+int sign_hash_RSA(const struct private_key_stuff *pks,
 		  const u_char *hash_val, size_t hash_len,
 		  u_char *sig_val, size_t sig_len,
 		  enum notify_payload_hash_algorithms hash_algo)
 {
-	SECKEYPrivateKey *privateKey = NULL;
-	SECItem signature;
-	SECItem data;
-	PK11SlotInfo *slot = NULL;
-
-	DBG(DBG_CRYPT, DBG_log("RSA_sign_hash: Started using NSS"));
-
-	slot = PK11_GetInternalKeySlot();
-	if (slot == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "RSA_sign_hash: Unable to find (slot security) device (err %d)",
-		       PR_GetError());
+	dbg("RSA_sign_hash: Started using NSS");
+	if (!pexpect(pks->private_key != NULL)) {
+		dbg("no private key!");
 		return 0;
-	}
-
-	/* XXX: is there no way to detect if we _need_ to authenticate ?? */
-	if (PK11_Authenticate(slot, PR_FALSE,
-			       lsw_return_nss_password_file_info()) == SECSuccess) {
-		DBG(DBG_CRYPT,
-		    DBG_log("NSS: Authentication to NSS successful"));
-	} else {
-		DBG(DBG_CRYPT,
-		    DBG_log("NSS: Authentication to NSS either failed or not required,if NSS DB without password"));
-	}
-
-	privateKey = PK11_FindKeyByKeyID(slot, k->pub.ckaid.nss,
-					 lsw_return_nss_password_file_info());
-	if (privateKey == NULL) {
-		DBG(DBG_CRYPT,
-		    DBG_log("NSS: Can't find the private key from the NSS CKA_ID"));
-		CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(k->pub.ckaid);
-		if (cert == NULL) {
-			loglog(RC_LOG_SERIOUS, "Can't find the certificate or private key from the NSS CKA_ID");
-			return 0;
-		}
-		privateKey = PK11_FindKeyByAnyCert(cert, lsw_return_nss_password_file_info());
-		CERT_DestroyCertificate(cert);
-		if (privateKey == NULL) {
-			loglog(RC_LOG_SERIOUS, "Can't find the private key from the certificate (found using NSS CKA_ID");
-			return 0;
-		}
 	}
 
 	/*
@@ -234,28 +197,28 @@ int sign_hash_RSA(const struct RSA_private_key *k,
 	 *
 	 * Let's find out.
 	 */
-	pexpect((int)sig_len == PK11_SignatureLen(privateKey));
 
-	PK11_FreeSlot(slot);
+	pexpect((int)sig_len == PK11_SignatureLen(pks->private_key));
 
-	data.type = siBuffer;
-	data.len = hash_len;
-	data.data = DISCARD_CONST(u_char *, hash_val);
+	SECItem data = {
+		.type = siBuffer,
+		.len = hash_len,
+		.data = DISCARD_CONST(u_char *, hash_val),
+	};
 
-	signature.len = sig_len;
-	signature.data = sig_val;
+	SECItem signature = {
+		.len = sig_len,
+		.data = sig_val,
+	};
 
 	if (hash_algo == 0 /* ikev1*/ ||
-		hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style rsa with SHA1*/) {
-		{
-			SECStatus s = PK11_Sign(privateKey, &signature, &data);
-
-			if (s != SECSuccess) {
-				loglog(RC_LOG_SERIOUS,
-					"RSA_sign_hash: sign function failed (%d)",
-					PR_GetError());
-				return 0;
-			}
+	    hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style rsa with SHA1*/) {
+		SECStatus s = PK11_Sign(pks->private_key, &signature, &data);
+		if (s != SECSuccess) {
+			loglog(RC_LOG_SERIOUS,
+			       "RSA_sign_hash: sign function failed (%d)",
+			       PR_GetError());
+			return 0;
 		}
 	} else { /* Digital signature scheme with rsa-pss*/
 		CK_RSA_PKCS_PSS_PARAMS mech;
@@ -274,84 +237,32 @@ int sign_hash_RSA(const struct RSA_private_key *k,
 			bad_case(hash_algo);
 		}
 		SECItem mechItem = { siBuffer, (unsigned char *)&mech, sizeof(mech) };
+		SECStatus s = PK11_SignWithMechanism(pks->private_key, CKM_RSA_PKCS_PSS,
+						     &mechItem, &signature, &data);
 
-		{
-			SECStatus s = PK11_SignWithMechanism(privateKey, CKM_RSA_PKCS_PSS,
-					&mechItem, &signature, &data);
-
-			if (s != SECSuccess) {
-				loglog(RC_LOG_SERIOUS,
-					"RSA_sign_hash: sign function failed (%d)",
-					PR_GetError());
-				return 0;
-			}
+		if (s != SECSuccess) {
+			loglog(RC_LOG_SERIOUS,
+			       "RSA_sign_hash: sign function failed (%d)",
+			       PR_GetError());
+			return 0;
 		}
 	}
 
-	SECKEY_DestroyPrivateKey(privateKey);
-
-	DBG(DBG_CRYPT, DBG_log("RSA_sign_hash: Ended using NSS"));
+	dbg("RSA_sign_hash: Ended using NSS");
 	return signature.len;
 }
 
-int sign_hash_ECDSA(const struct ECDSA_private_key *k,
+int sign_hash_ECDSA(const struct private_key_stuff *pks,
 		    const u_char *hash_val, size_t hash_len,
 		    u_char *sig_val, size_t sig_len)
 {
-	SECKEYPrivateKey *privateKey = NULL;
-	PK11SlotInfo *slot = NULL;
-	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Started using NSS"));
 
-	slot = PK11_GetInternalKeySlot();
-	if (slot == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "ECDSA_sign_hash: Unable to find (slot security) device (err %d)",
-		       PR_GetError());
+	if (!pexpect(pks->private_key != NULL)) {
+		dbg("no private key!");
 		return 0;
 	}
 
-	/* XXX: is there no way to detect if we _need_ to authenticate ?? */
-	if (PK11_Authenticate(slot, PR_FALSE,
-			       lsw_return_nss_password_file_info()) == SECSuccess) {
-		DBG(DBG_CRYPT,
-		    DBG_log("NSS: Authentication to NSS successful"));
-	} else {
-		DBG(DBG_CRYPT,
-		    DBG_log("NSS: Authentication to NSS either failed or not required,if NSS DB without password"));
-	}
-
-	DBG(DBG_CRYPT, DBG_dump("nss", k->pub.ckaid.nss->data, k->pub.ckaid.nss->len));
-
-	CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(k->pub.ckaid);
-
-	LSWDBGP(DBG_BASE, buf) {
-		lswlogf(buf, "got cert form ckaid");
-		lswlog_nss_error(buf);
-	}
-
-	privateKey = PK11_FindKeyByAnyCert(cert, lsw_return_nss_password_file_info());
-	DBGF(DBG_CRYPT, "keyType %d",privateKey->keyType);
-
-	if (privateKey == NULL) {
-		LSWDBGP(DBG_CRYPT, buf) {
-			lswlogf(buf, "NSS: Can't find the private key from the NSS CKA_ID");
-			lswlog_nss_error(buf);
-		}
-
-		CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(k->pub.ckaid);
-		if (cert == NULL) {
-			loglog(RC_LOG_SERIOUS, "Can't find the certificate or private key from the NSS CKA_ID");
-			return 0;
-		}
-		privateKey = PK11_FindKeyByAnyCert(cert, lsw_return_nss_password_file_info());
-		CERT_DestroyCertificate(cert);
-		if (privateKey == NULL) {
-			loglog(RC_LOG_SERIOUS, "Can't find the private key from the certificate (found using NSS CKA_ID");
-			return 0;
-		}
-	}
-
-	PK11_FreeSlot(slot);
+	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Started using NSS"));
 
 	/* point hash at HASH_VAL */
 	SECItem hash = {
@@ -363,13 +274,13 @@ int sign_hash_ECDSA(const struct ECDSA_private_key *k,
 	/* point signature at the SIG_VAL buffer */
 	SECItem signature = {
 		.type = siBuffer,
-		.len = PK11_SignatureLen(privateKey),
+		.len = PK11_SignatureLen(pks->private_key),
 		.data = sig_val,
 	};
 	DBGF(DBG_CRYPT, "ECDSA signature.len %d", signature.len);
 	passert(signature.len <= sig_len);
 
-	SECStatus s = PK11_Sign(privateKey, &signature, &hash);
+	SECStatus s = PK11_Sign(pks->private_key, &signature, &hash);
 	DBG(DBG_CRYPT, DBG_dump("sig_from_nss", signature.data, signature.len));
 	if (s != SECSuccess) {
 		LSWDBGP(DBG_CRYPT, buf) {
@@ -378,7 +289,6 @@ int sign_hash_ECDSA(const struct ECDSA_private_key *k,
 		}
 		return 0;
 	}
-	SECKEY_DestroyPrivateKey(privateKey);
 
 	DBG(DBG_CRYPT, DBG_log("ECDSA_sign_hash: Ended using NSS"));
 	return signature.len;
@@ -773,6 +683,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 				enum_name(&pkk_names, kind));
 		}
 
+		dbg("allocating public key using connection's certificate; only to throw it a way");
 		/* from here on: must free my_public_key */
 		struct pubkey *my_public_key;
 		switch (kind) {
@@ -793,7 +704,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 
 		dbg("finding secret using public key");
 		struct secret *best = lsw_find_secret_by_public_key(pluto_secrets,
-								    my_public_key, kind);
+								    my_public_key);
 		if (best == NULL) {
 			const char *nickname = cert_nickname(&c->spd.this.cert);
 			dbg("private key for cert %s not found in local cache; loading from NSS DB",
@@ -806,7 +717,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 				    nickname, err);
 			} else {
 				best = lsw_find_secret_by_public_key(pluto_secrets,
-								     my_public_key, kind);
+								     my_public_key);
 			}
 		}
 		/*

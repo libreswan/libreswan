@@ -72,9 +72,6 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 		return false; /* failure: no key to use */
 	}
 
-	/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash() */
-	const struct ECDSA_private_key *k = &pks->u.ECDSA_private_key;
-
 	DBGF(DBG_CRYPT, "ikev2_calculate_ecdsa_hash get_ECDSA_private_key");
 	/* XXX: use struct hash_desc and a lookup? */
 	const struct hash_desc *hasher;
@@ -113,7 +110,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	 */
 	uint8_t sig_val[BYTES_FOR_BITS(1056)];
 	statetime_t sign_time = statetime_start(st);
-	size_t shr = sign_hash_ECDSA(k, hash.ptr, hash.len,
+	size_t shr = sign_hash_ECDSA(pks, hash.ptr, hash.len,
 				     sig_val, sizeof(sig_val));
 	statetime_stop(&sign_time, "%s() calling sign_hash_ECDSA()", __func__);
 

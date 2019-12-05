@@ -314,7 +314,7 @@ size_t v1_sign_hash_RSA(const struct connection *c,
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash->len < sz &&
 		sz <= sig_size);
-	int shr = sign_hash_RSA(k, hash->ptr, hash->len, sig_val, sz, 0 /* for ikev2 only */);
+	int shr = sign_hash_RSA(pks, hash->ptr, hash->len, sig_val, sz, 0 /* for ikev2 only */);
 	passert(shr == 0 || (int)sz == shr);
 	return shr;
 }

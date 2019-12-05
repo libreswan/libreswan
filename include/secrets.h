@@ -132,6 +132,7 @@ struct private_key_stuff {
 	chunk_t ppk_id;
 	/* for PKI */
 	const struct pubkey_type *pubkey_type;
+	SECKEYPrivateKey *private_key;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -240,8 +241,7 @@ extern void lsw_free_preshared_secrets(struct secret **psecrets);
 extern bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *pk);
 
 extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
-						    const struct pubkey *my_public_key,
-						    enum PrivateKeyKind kind);
+						    const struct pubkey *my_public_key);
 
 extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    enum PrivateKeyKind kind,
