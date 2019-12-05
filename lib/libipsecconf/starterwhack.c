@@ -493,6 +493,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_ike_life_seconds = deltatime_ms(conn->options[KNCF_IKELIFETIME_MS]);
 	msg.sa_ipsec_life_seconds = deltatime_ms(conn->options[KNCF_SALIFETIME_MS]);
 	msg.sa_rekey_margin = deltatime_ms(conn->options[KNCF_REKEYMARGIN_MS]);
+	msg.sa_ipsec_max_bytes = conn->options[KNCF_IPSEC_MAXBYTES];
+	msg.sa_ipsec_max_packets = conn->options[KNCF_IPSEC_PACKETS];
 	msg.sa_rekey_fuzz = conn->options[KNCF_REKEYFUZZ];
 	msg.sa_keying_tries = conn->options[KNCF_KEYINGTRIES];
 	msg.sa_replay_window = conn->options[KNCF_REPLAY_WINDOW];
