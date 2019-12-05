@@ -310,7 +310,8 @@ struct kernel_sa {
 	const char *nic_offload_dev;
 	uint32_t xfrm_if_id;
 	struct sa_mark mark_set; /* config keyword mark-out */
-
+	uint64_t sa_ipsec_max_bytes;
+	uint64_t sa_ipsec_max_packets;
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 };
 

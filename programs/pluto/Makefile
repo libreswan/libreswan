@@ -260,6 +260,8 @@ OBJS += root_certs.o
 OBJS += pluto_timing.o
 OBJS += pluto_shutdown.o
 OBJS += nss_cert_reread.o
+OBJS += rekeyfuzz.o
+
 
 # Archives
 OBJS += $(LIBRESWANLIB)
