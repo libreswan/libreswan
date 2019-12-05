@@ -2565,6 +2565,7 @@ class NS_IF():
         self.gwv4 = None
         self.gwv6 = None
         self.br = None
+        self.macaddress = None
 
         if ifpre:
             self.hif = 'h' + hostname + "e" + ifpre + \
@@ -2607,6 +2608,8 @@ class NS_GuestNetwork():
             self.eth1.routes = ['route add 192.0.1.0/24 via 192.1.2.45',
                                 'route add 2001:db8:0:1::/64 via 2001:db8:1:2::45']
             self.eth1.br = "brswan12-" + self.tcsum
+            self.eth0.macaddress = "12:00:00:dc:bc:ff"
+            self.eth1.macaddress = "12:00:00:dc:bc:ff"
 
         elif hostname == "west":
             self.eth0.ipv4 = "192.0.1.254/24"
@@ -2621,6 +2624,8 @@ class NS_GuestNetwork():
             self.eth1.routes = ['route add 192.0.2.0/24 via 192.1.2.23',
                                 'route add 2001:db8:0:2::/64 via 2001:db8:1:2::23']
             self.eth1.br = "brswan12-" + self.tcsum
+            self.eth0.macaddress = "12:00:00:ab:cd:ff"
+            self.eth1.macaddress = "12:00:00:64:64:45"
 
         elif hostname == "road":
             self.eth0.ipv4 = "192.1.3.209/24"
@@ -2628,6 +2633,7 @@ class NS_GuestNetwork():
             self.eth0.ipv6 = "2001:db8:1:3::209/64"
             self.eth0.gwv6  = "2001:db8:1:3::254"
             self.eth0.br = "brswan13-" + self.tcsum
+            self.eth0.macaddress = "12:00:00:ab:cd:02"
 
         elif hostname == "north":
             self.eth0.ipv4 = "192.0.3.254/24"
@@ -2640,6 +2646,8 @@ class NS_GuestNetwork():
             self.eth1.ipv6 = "2001:db8:1:3::33/64"
             self.eth1.gwv6  = "2001:db8:1:3::254"
             self.eth1.br = "brswan13-" + self.tcsum
+            self.eth0.macaddress = "12:00:00:de:cd:49"
+            self.eth1.macaddress = "12:00:00:96:96:49"
 
         elif hostname == "nic":
             self.eth0.ipv4 = "192.1.2.254/24"
@@ -2655,6 +2663,8 @@ class NS_GuestNetwork():
             self.eth1.br = "brswan13-" + self.tcsum
             self.eth1.routes = ['route add 192.0.3.0/24 via 192.1.3.33',
                                 'route add 2001:db8:0:3::/64 via 2001:db8:1:3::33']
+            self.eth0.macaddress = "12:00:00:de:ad:ba"
+            self.eth1.macaddress = "12:00:00:32:64:ba"
 
         else:
             raise Exception("ERROR: unknown host name: '%s'" % hostname)
@@ -2723,6 +2733,9 @@ class NS_GuestNetwork():
         sudo_shell_run(cmd, self.shell)
 
         cmd = "%s link set %s name %s" % (DEF.ip_c, eth.gif, eth.name)
+        sudo_shell_run(cmd, self.shell)
+
+        cmd = "%s link set dev %s address %s" % (DEF.ip_c, eth.name, eth.macaddress)
         sudo_shell_run(cmd, self.shell)
 
         cmd = "%s -4 addr add %s dev %s" % (DEF.ip_c, eth.ipv4, eth.name)
