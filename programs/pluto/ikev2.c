@@ -2836,13 +2836,9 @@ void log_ipsec_sa_established(const char *m, const struct state *st)
 			b->ipprotoid);
 }
 
-static void ikev2_child_emancipate(struct msg_digest *md)
+static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,
+				   const struct state_v2_microcode *transition)
 {
-	/* st grow up to be an IKE parent. not child anymore.  */
-
-	struct child_sa *to = pexpect_child_sa(md->st);
-	struct ike_sa *from = ike_sa(md->st);
-
 	/* initialze the the new IKE SA. reset and message ID */
 	to->sa.st_clonedfrom = SOS_NOBODY;
 	v2_msgid_init_ike(pexpect_ike_sa(&to->sa));
@@ -2855,8 +2851,8 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	v2_migrate_children(from, to);
 
 	/* child is now a parent */
-	ikev2_ike_sa_established(pexpect_ike_sa(&to->sa), md->svm,
-				 md->svm->next_state);
+	ikev2_ike_sa_established(pexpect_ike_sa(&to->sa),
+				 transition, transition->next_state);
 }
 
 static void success_v2_state_transition(struct state *st, struct msg_digest *md,
@@ -2902,7 +2898,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		 * turns into its own IKE.
 		 */
 		v2_msgid_schedule_next_initiator(ike);
-		ikev2_child_emancipate(md);
+		ikev2_child_emancipate(ike, pexpect_child_sa(st),
+				       transition);
 	} else  {
 		/*
 		 * XXX: need to change state before updating Message
