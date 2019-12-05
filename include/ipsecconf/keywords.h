@@ -364,6 +364,7 @@ enum keyword_type {
 	kt_rsasigkey,           /* a public key, or set of values */
 	kt_number,              /* an integer */
 	kt_time,                /* a number representing time */
+	kt_bytes,		/* a number representing bytes */
 	kt_percent,             /* a number representing percentage */
 	kt_range,               /* ip address range 1.2.3.4-1.2.3.10 */
 	kt_ipaddr,              /* an IP address */

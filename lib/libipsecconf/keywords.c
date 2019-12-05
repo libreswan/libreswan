@@ -517,6 +517,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "keylife",  kv_conn | kv_alias,  kt_time,  KNCF_SALIFETIME, NULL, NULL, },
   { "lifetime",  kv_conn | kv_alias,  kt_time,  KNCF_SALIFETIME, NULL, NULL, },
   { "salifetime",  kv_conn,  kt_time,  KNCF_SALIFETIME, NULL, NULL, },
+  { "salifebytes",  kv_conn,  kt_bytes,  KNCF_SALIFETIME, NULL, NULL, },
 
   { "retransmit-timeout",  kv_conn,  kt_time,  KNCF_RETRANSMIT_TIMEOUT, NULL, NULL, },
   { "retransmit-interval",  kv_conn,  kt_number,  KNCF_RETRANSMIT_INTERVAL_MS, NULL, NULL, },
@@ -668,6 +669,9 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 		break;
 	case kt_time:
 		keywordtype = TIMEWORD;
+		break;
+	case kt_bytes:
+		keywordtype = BYTEWORD;
 		break;
 	case kt_comment:
 		keywordtype = COMMENT;

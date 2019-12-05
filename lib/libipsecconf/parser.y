@@ -69,9 +69,11 @@ static struct starter_comments_list *parser_comments;
 %token <k>      TIMEWORD
 %token <k>      BOOLWORD
 %token <k>      PERCENTWORD
+%token <k>      BYTEWORD
 %token <k>      COMMENT
 
 %type <num>	duration
+%type <num>	bytes
 %%
 
 /*
@@ -182,6 +184,7 @@ statement_kw:
 		case kt_invertbool:
 		case kt_number:
 		case kt_time:
+		case kt_bytes:
 		case kt_percent:
 			yyerror("keyword value is a keyword, but type not a string");
 			assert(kw.keydef->type != kt_bool);
@@ -246,6 +249,7 @@ statement_kw:
 		case kt_invertbool:
 		case kt_number:
 		case kt_time:
+		case kt_bytes:
 		case kt_percent:
 			yyerror("valid keyword, but value is not a number");
 			assert(kw.keydef->type != kt_bool);
@@ -267,6 +271,9 @@ statement_kw:
 		new_parser_kw(&$1, NULL, $<num>3);
 	}
 	| TIMEWORD EQUAL duration {
+		new_parser_kw(&$1, NULL, $3);
+	}
+	| BYTEWORD EQUAL bytes {
 		new_parser_kw(&$1, NULL, $3);
 	}
 	| PERCENTWORD EQUAL STRING {
@@ -299,6 +306,60 @@ statement_kw:
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
 	;
+bytes:
+	INTEGER {
+		$$ = $1;
+	}
+	| STRING {
+		const char *const str = $1;
+		/*const*/ char *endptr;
+		char buf[80];
+
+		unsigned long val = (errno = 0, strtoul(str, &endptr, 10));
+		int strtoul_errno = errno;
+
+		if (endptr == str) {
+			snprintf(buf, sizeof(buf), "bad bytes value \"%s\"", str);
+			yyerror(buf);
+		} else {
+			bool bad_suffix = FALSE;
+			uint64_t scale;
+
+			if (*endptr == '\0') {
+				/* bytes: no scaling */
+				scale = 1;
+			} else if (endptr[1] == '\0') {
+				/* single character suffix */
+				switch (*endptr) {
+					case 'B': scale = 1; break;
+					case 'K': scale = bytes_per_kilobyte; break;
+					case 'M': scale = bytes_per_megabyte; break;
+					case 'G': scale = bytes_per_gigabyte; break;
+					case 'T': scale = bytes_per_terabyte; break;
+					case 'P': scale = bytes_per_petabyte; break;
+					case 'E': scale = bytes_per_exabyte; break;
+					default:
+						bad_suffix = TRUE;
+				}
+			} else {
+				bad_suffix = TRUE;
+			}
+
+			if (bad_suffix) {
+				snprintf(buf, sizeof(buf),
+					"bad bytes multiplier \"%s\" on %s",
+					endptr, str);
+				yyerror(buf);
+			} else if (strtoul_errno != 0 || UINT_MAX / scale < val) {
+				snprintf(buf, sizeof(buf),
+					"bytes too large: \"%s\" is more than %u bytes",
+					str, UINT_MAX);
+				yyerror(buf);
+			} else {
+				$$ = val * scale;
+			}
+		}
+	};
 
 duration:
 	INTEGER {

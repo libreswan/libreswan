@@ -40,6 +40,15 @@ enum {
 	secs_per_day = 24 * secs_per_hour
 };
 
+enum bytes {
+	bytes_per_kilobyte = 1024UL,
+	bytes_per_megabyte = 1024UL * bytes_per_kilobyte,
+	bytes_per_gigabyte = 1024UL * bytes_per_megabyte,
+	bytes_per_terabyte = 1024UL * bytes_per_gigabyte,
+	bytes_per_petabyte = 1024UL * bytes_per_terabyte,
+	bytes_per_exabyte  = 1024UL * bytes_per_petabyte, /* 2^64 bytes 18.4467441 exabytes */
+};
+
 /*
  * This file was split into internal constants (Libreswan/pluto related),
  * and external constants (defined by IETF, etc.)
