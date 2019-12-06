@@ -44,20 +44,22 @@ static void rekey_st(struct connection *c, enum sa_type sa_type)
 static int rekey_connection_now(struct connection *c,  void *arg)
 {
 	enum sa_type sa_type = *(enum sa_type *)arg;
+	int ret = 0;
 
 	set_cur_connection(c);
 
 	if (sa_type == IKE_SA && c->newest_isakmp_sa == SOS_NOBODY) {
 		libreswan_log("can not rekey IKE SA, newest IKE SA is SOS_NOBODY");
-		return 1;
+		ret = 1;
 	} else if (sa_type == IPSEC_SA && c->newest_ipsec_sa == SOS_NOBODY) {
 		libreswan_log("can not rekey IPsec SA, newest IPsec SA is SOS_NOBODY");
-		return 1;
+		ret = 1;
+	} else {
+		rekey_st(c, sa_type);
 	}
+	reset_cur_connection();
 
-	rekey_st(c, sa_type);
-
-	return 0;
+	return ret;
 }
 
 void rekey_now(const char *name, enum sa_type sa_type)
