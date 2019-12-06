@@ -15,26 +15,8 @@
  * for more details.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-
-#include "ietf_constants.h"
-#include "constants.h"
-#include "lswlog.h"
-#include "lswalloc.h"
 #include "lswnss.h"
-#include "asn1.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
-#include "pem.h"
-
-#include <nss.h>
-#include <pk11pub.h>
-#include <cert.h>
+#include "lswlog.h"
 
 #include "nss_cert_load.h"
 
