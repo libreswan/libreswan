@@ -41,14 +41,11 @@ west #
 1v1 "westnet-eastnet-ipv4-psk" #3: STATE_MAIN_I1: sent MI1, expecting MR1
 1v1 "westnet-eastnet-ipv4-psk" #3: STATE_MAIN_I2: sent MI2, expecting MR2
 003 "westnet-eastnet-ipv4-psk" #3: KE has 0 byte DH public value; 256 required
-217 "westnet-eastnet-ipv4-psk" #3: STATE_MAIN_I2: INVALID_KEY_INFORMATION
-002 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk" #3: KE has 0 byte DH public value; 256 required
-217 "westnet-eastnet-ipv4-psk" #3: STATE_MAIN_I2: INVALID_KEY_INFORMATION
-002 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk" #3: KE has 0 byte DH public value; 256 required
-217 "westnet-eastnet-ipv4-psk" #3: STATE_MAIN_I2: INVALID_KEY_INFORMATION
-002 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 031 "westnet-eastnet-ipv4-psk" #3: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
 000 "westnet-eastnet-ipv4-psk" #3: starting keying attempt 2 of an unlimited number, but releasing whack
 west #

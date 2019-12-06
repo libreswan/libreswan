@@ -33,8 +33,7 @@ west #
 003 "ikev2-westnet-eastnet-x509-cr" #1: certificate contains no subjectAltName extension to match ID_FQDN '@right'
 002 "ikev2-westnet-eastnet-x509-cr" #1: Peer public key SubjectAltName does not match peer ID for this connection
 002 "ikev2-westnet-eastnet-x509-cr" #1: X509: CERT payload does not match connection ID
-218 "ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I3: INVALID_ID_INFORMATION
-002 "ikev2-westnet-eastnet-x509-cr" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
+218 "ikev2-westnet-eastnet-x509-cr" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 031 "ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I3: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 000 "ikev2-westnet-eastnet-x509-cr" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
