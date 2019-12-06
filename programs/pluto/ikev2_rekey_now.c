@@ -38,7 +38,12 @@ static void rekey_st(struct connection *c, enum sa_type sa_type)
 		libreswan_log("unknown SA type %d", sa_type);
 		return;
 	}
-	event_force(EVENT_SA_REKEY, st);
+	if (c->ike_version == IKEv1) {
+		/* the behaviour of IKEv1 is not clear, so lets block it for now */
+		loglog(RC_FATAL, "--rekey-ike-now and --rekey-ipsec-now requires ikev2");
+	} else {
+		event_force(EVENT_SA_REKEY, st);
+	}
 }
 
 static int rekey_connection_now(struct connection *c,  void *arg)
