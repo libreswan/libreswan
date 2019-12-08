@@ -192,6 +192,13 @@ struct v2_ike_tfrag {
 	chunk_t cipher;
 };
 
+struct v2_id_payload {
+	struct ikev2_id header;
+	chunk_t data;
+	/* MAC of part of header + data */
+	struct crypt_mac mac;
+};
+
 /*
  * internal state that
  * should get copied by god... to the child SA state.
@@ -453,6 +460,12 @@ struct state {
 	char *st_active_redirect_gw;	/* needed for sending of REDIRECT in informational */
 
 	/** end of IKEv2-only things **/
+
+	/*
+	 * Identity sent across the wire in the ID[ir] payload as part
+	 * of authentication (proof of identity).
+	 */
+	struct v2_id_payload st_v2_id_payload;
 
 	char *st_seen_cfg_dns; /* obtained internal nameserver IP's */
 	char *st_seen_cfg_domains; /* obtained internal domain names */

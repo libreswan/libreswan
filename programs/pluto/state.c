@@ -1229,6 +1229,7 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_ni);
 	freeanychunk(st->st_nr);
 	freeanychunk(st->st_dcookie);
+	freeanychunk(st->st_v2_id_payload.data);
 
 #    define free_any_nss_symkey(p)  release_symkey(__func__, #p, &(p))
 	free_any_nss_symkey(st->st_shared_nss);

@@ -1984,6 +1984,26 @@ static bool need_configuration_payload(const struct connection *const pc,
 		(!pc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST)));
 }
 
+static struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *ike,
+					   const char *key_name, PK11SymKey *key)
+{
+	/*
+	 * InitiatorIDPayload = PayloadHeader | RestOfInitIDPayload
+	 * RestOfInitIDPayload = IDType | RESERVED | InitIDData
+	 * MACedIDForR = prf(SK_pr, RestOfInitIDPayload)
+	 */
+	struct crypt_prf *id_ctx = crypt_prf_init_symkey(id_name, ike->sa.st_oakley.ta_prf,
+							 key_name, key);
+	/* skip PayloadHeader; hash: IDType | RESERVED */
+	crypt_prf_update_bytes(id_ctx, "IDType | RESERVED",
+			       &ike->sa.st_v2_id_payload.header.isai_type,
+			       sizeof(ike->sa.st_v2_id_payload.header) - NSIZEOF_isakmp_generic);
+	/* hash: InitIDData */
+	crypt_prf_update_hunk(id_ctx, "InitIDData",
+			      ike->sa.st_v2_id_payload.data);
+	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
+}
+
 static struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
 				   const char *id_name, shunk_t id_payload,
 				   const char *key_name, PK11SymKey *key)
@@ -2954,6 +2974,29 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	}
 
 	/*
+	 * Construct the IDr payload and store it in state so that it
+	 * can be emitted later.  Then use that to construct the
+	 * "MACedIDFor[R]".
+	 *
+	 * Code assumes that struct ikev2_id's "IDType|RESERVED" is
+	 * laid out the same as the packet.
+	 */
+
+	if (ike->sa.st_peer_wants_null) {
+		/* make it the Null ID */
+		ike->sa.st_v2_id_payload.header.isai_type = ID_NULL;
+		ike->sa.st_v2_id_payload.data = empty_chunk;
+	} else {
+		shunk_t data;
+		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&c->spd.this, &data);
+		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my id");
+	}
+
+	/* will be signed in auth payload */
+	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDr", ike, "st_skey_pr_nss",
+							  ike->sa.st_skey_pr_nss);
+
+	/*
 	 * Now create child state.
 	 * As we will switch to child state, force the parent to the
 	 * new state now.
@@ -3062,36 +3105,15 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	}
 
 	/* send out the IDr payload */
-	struct crypt_mac idhash_out;
 
 	{
-		shunk_t id_b;
-		struct ikev2_id r_id;
-		if (st->st_peer_wants_null) {
-			id_b = empty_shunk;
-			r_id = (struct ikev2_id) {
-				.isai_np = ISAKMP_NEXT_v2NONE,
-				.isai_type = ID_NULL,
-				/* critical bit zero */
-			};
-		} else {
-			r_id = build_v2_id_payload(&c->spd.this, &id_b);
-		}
-
-		uint8_t *id_start = sk.pbs.cur;
 		pb_stream r_id_pbs;
-		if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
-				&r_id_pbs) ||
-		    !out_chunk(id_b, &r_id_pbs, "my identity"))
+		if (!out_struct(&ike->sa.st_v2_id_payload.header,
+				&ikev2_id_r_desc, &sk.pbs, &r_id_pbs) ||
+		    !out_chunk(ike->sa.st_v2_id_payload.data,
+			       &r_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
-
 		close_output_pbs(&r_id_pbs);
-
-		/* calculate hash of IDi for AUTH below */
-		size_t id_len = sk.pbs.cur - id_start;
-		idhash_out = v2_id_hash(ike, "IDi verify hash",
-					"IDr", shunk2(id_start, id_len),
-					"skey pr", st->st_skey_pr_nss);
 	}
 
 	DBG(DBG_CONTROLMORE,
@@ -3132,7 +3154,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	    DBG_log("going to assemble AUTH payload"));
 
 	/* now send AUTH payload */
-	stf_status authstat = emit_v2AUTH(ike, &idhash_out, &sk.pbs, NULL);
+
+	stf_status authstat = emit_v2AUTH(ike, &ike->sa.st_v2_id_payload.mac,
+					  &sk.pbs, NULL);
 	/* ??? NULL - don't calculate additional NULL_AUTH ??? */
 	if (authstat != STF_OK)
 		return authstat;
