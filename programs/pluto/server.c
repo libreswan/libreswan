@@ -806,13 +806,14 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		pexpect(status == STF_SKIP_COMPLETE_STATE_TRANSITION);
 		threadtime_stop(&start, e->serialno, "resume %s", e->name);
 	} else {
-		so_serial_t old_state = push_cur_state(st);
+		pexpect(push_cur_state(st) == SOS_NOBODY);
 		statetime_t start = statetime_start(st);
 		struct msg_digest *md = unsuspend_md(st);
+
 		/* trust nothing */
 		struct msg_digest *old_md = md;
+		so_serial_t old_st_serialno = st->st_serialno;
 		enum ike_version ike_version = st->st_ike_version;
-
 
 		/* run the callback */
 		stf_status status = e->callback(st, &md, e->context);
@@ -825,15 +826,21 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		} else {
 			/* no stealing MD */
 			pexpect(old_md == md);
-			/* no switching ST */
-			pexpect(md == NULL || md->st == NULL || md->st == st);
 			/* don't trust ST */
 			/* XXX: mumble something about struct ike_version */
 			switch (ike_version) {
 			case IKEv1:
+				/* no switching ST */
+				pexpect(md == NULL || md->st == NULL || md->st->st_serialno == old_st_serialno);
 				complete_v1_state_transition(&md, status);
 				break;
 			case IKEv2:
+				/* get grumpy when ST is switched */
+				if (md != NULL && md->st != NULL && md->st->st_serialno != old_st_serialno) {
+					dbg("XXX: resume for #%lu switched MD.ST to #%lu",
+					    old_st_serialno, md->st->st_serialno);
+					st = md->st;
+				}
 				complete_v2_state_transition(st, &md, status);
 				break;
 			default:
@@ -842,7 +849,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		}
 		release_any_md(&md);
 		statetime_stop(&start, "resume %s", e->name);
-		pop_cur_state(old_state);
+		pop_cur_state(SOS_NOBODY);
 	}
 	passert(e->event != NULL);
 	event_free(e->event);
