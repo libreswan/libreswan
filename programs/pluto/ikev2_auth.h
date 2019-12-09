@@ -21,8 +21,8 @@
 #include "chunk.h"
 #include "packet.h"		/* for pbs_out */
 
-struct crypt_mac;
 struct state;
+struct connection;
 struct ike_sa;
 
 struct crypt_mac v2_calculate_sighash(const struct state *st,
@@ -39,5 +39,15 @@ shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
 			      enum keyword_authby authby);
 bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
 			    pb_stream *a_pbs, enum keyword_authby authby);
+
+struct hash_signature v2_auth_signature(struct ike_sa *ike,
+					const struct crypt_mac *sighash,
+					const struct hash_desc *hash_algo,
+					enum keyword_authby authby);
+
+bool emit_v2_auth(struct ike_sa *ike,
+		  const struct hash_signature *auth_sig,
+		  const struct crypt_mac *idhash,
+		  pb_stream *outpbs);
 
 #endif

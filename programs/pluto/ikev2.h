@@ -18,6 +18,7 @@ struct pluto_crypto_req;
 struct spd_route;
 struct crypt_mac;
 struct hash_desc;
+struct payload_digest;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);

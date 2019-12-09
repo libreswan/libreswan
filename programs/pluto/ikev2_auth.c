@@ -30,6 +30,16 @@
 #include "state.h"
 #include "log.h"
 #include "connections.h"
+#include "keys.h"
+#include "secrets.h"
+#include "ikev2_message.h"
+#include "ikev2.h"
+#include "keys.h"
+
+static const uint8_t rsa_sha1_der_header[] = {
+	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
+	0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14
+};
 
 struct crypt_mac v2_calculate_sighash(const struct state *st,
 				      enum original_role role,
@@ -187,6 +197,145 @@ bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
 		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
 		return false;
 	}
+	return true;
+}
 
+struct hash_signature v2_auth_signature(struct ike_sa *ike,
+					const struct crypt_mac *hash_to_sign,
+					const struct hash_desc *hash_algo,
+					enum keyword_authby authby)
+{
+	statetime_t start = statetime_start(&ike->sa);
+	const struct connection *c = ike->sa.st_connection;
+
+	/*
+	 * Allocate large enough space for any digest.
+	 * Bound could be tightened because the signature octets are
+	 * only concatenated to a SHA1 hash.
+	 */
+	unsigned char hash_octets[sizeof(rsa_sha1_der_header) + sizeof(hash_to_sign->ptr/*an array*/)];
+	size_t hash_len;
+
+	switch (hash_algo->common.ikev2_alg_id) {
+	case IKEv2_AUTH_HASH_SHA1:
+		/* old style RSA with SHA1 */
+		memcpy(hash_octets, &rsa_sha1_der_header, sizeof(rsa_sha1_der_header));
+		memcpy(hash_octets + sizeof(rsa_sha1_der_header),
+		       hash_to_sign->ptr, hash_to_sign->len);
+		hash_len = sizeof(rsa_sha1_der_header) + hash_to_sign->len;
+		break;
+
+	case IKEv2_AUTH_HASH_SHA2_256:
+	case IKEv2_AUTH_HASH_SHA2_384:
+	case IKEv2_AUTH_HASH_SHA2_512:
+		hash_len = hash_to_sign->len;
+		passert(hash_len <= sizeof(hash_octets));
+		memcpy(hash_octets, hash_to_sign->ptr, hash_to_sign->len);
+		break;
+
+	default:
+		bad_case(hash_algo->common.ikev2_alg_id);
+	}
+
+	DBG(DBG_CRYPT,
+	    DBG_dump("v2rsa octets", hash_octets, hash_len));
+
+	struct hash_signature sig = { .len = 0, };
+	switch (authby) {
+	case AUTH_RSASIG:
+	{
+		const struct pubkey_type *type = &pubkey_type_rsa;
+		const struct private_key_stuff *pks = get_connection_private_key(c, type);
+		if (pks == NULL) {
+			libreswan_log("No %s private key found", type->name);
+			break; /* failure: no key to use */
+		}
+		/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
+		const struct RSA_private_key *k = &pks->u.RSA_private_key;
+		unsigned int sz = k->pub.k;
+		passert(RSA_MIN_OCTETS <= sz && 4 + hash_len < sz &&
+			sz <= RSA_MAX_OCTETS);
+		statetime_t sign_time = statetime_start(&ike->sa);
+		passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
+		sig = sign_hash_RSA(pks, hash_octets, hash_len, hash_algo);
+		statetime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);
+		break;
+	}
+	case AUTH_ECDSA:
+	{
+		const struct pubkey_type *type = &pubkey_type_ecdsa;
+		const struct private_key_stuff *pks = get_connection_private_key(c, type);
+		if (pks == NULL) {
+			libreswan_log("no %s private key for connection", type->name);
+			break; /* failure: no key to use */
+		}
+
+		/*
+		 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
+		 * where 1056 is coming from.
+		 * It is the largest of the signature lengths amongst
+		 * ECDSA 256, 384, and 521.
+		 */
+		statetime_t sign_time = statetime_start(&ike->sa);
+		passert(sizeof(sig.ptr/*array*/) >= BYTES_FOR_BITS(1056));
+		sig = sign_hash_ECDSA(pks, hash_to_sign->ptr, hash_to_sign->len);
+		statetime_stop(&sign_time, "%s() calling sign_hash_ECDSA()", __func__);
+		break;
+	}
+	default:
+		bad_case(authby);
+	}
+	passert(sig.len <= sizeof(sig.ptr));
+	statetime_stop(&start, "%s()", __func__);
+	return sig;
+}
+
+bool emit_v2_auth(struct ike_sa *ike,
+		  const struct hash_signature *auth_sig,
+		  const struct crypt_mac *id_payload_mac,
+		  pb_stream *outpbs)
+{
+	enum keyword_authby authby = v2_auth_by(ike);
+
+	struct ikev2_auth a = {
+		.isaa_critical = build_ikev2_critical(false),
+		.isaa_auth_method = v2_auth_method(ike, authby),
+	};
+
+	pb_stream a_pbs;
+	if (!out_struct(&a, &ikev2_auth_desc, outpbs, &a_pbs)) {
+		return false;
+	}
+
+	switch (a.isaa_auth_method) {
+	case IKEv2_AUTH_RSA:
+		if (!pbs_out_hunk(*auth_sig, &a_pbs, "signature")) {
+			return false;
+		}
+		break;
+
+	case IKEv2_AUTH_DIGSIG:
+	{
+		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
+		if (!emit_v2_asn1_hash_blob(hash_algo, &a_pbs, authby) ||
+		    !pbs_out_hunk(*auth_sig, &a_pbs, "signature")) {
+			return false;
+		}
+		break;
+	}
+
+	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_NULL:
+		/* emit */
+		if (!ikev2_emit_psk_auth(authby, &ike->sa, id_payload_mac, &a_pbs)) {
+			loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
+			return false;
+		}
+		break;
+
+	default:
+		bad_case(a.isaa_auth_method);
+	}
+	close_output_pbs(&a_pbs);
 	return true;
 }

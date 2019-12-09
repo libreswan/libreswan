@@ -38,7 +38,7 @@
 #include "keys.h" /* needs state.h */
 #include "id.h"
 #include "connections.h"
-
+#include "crypt_prf.h"
 #include "crypto.h"
 #include "x509.h"
 #include "pluto_x509.h"
@@ -2936,6 +2936,35 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDr", ike, "st_skey_pr_nss",
 							  ike->sa.st_skey_pr_nss);
 
+	struct hash_signature auth_sig = { .len = 0, };
+	{
+		enum keyword_authby authby = v2_auth_by(ike);
+		switch (authby) {
+		case AUTH_RSASIG:
+		case AUTH_ECDSA:
+		{
+			const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
+			struct crypt_mac hash_to_sign = v2_calculate_sighash(&ike->sa, ORIGINAL_RESPONDER,
+									     &ike->sa.st_v2_id_payload.mac,
+									     ike->sa.st_firstpacket_me,
+									     hash_algo);
+			auth_sig = v2_auth_signature(ike, &hash_to_sign,
+						     hash_algo, authby);
+			if (auth_sig.len == 0) {
+				loglog(RC_LOG_SERIOUS, "Failed to find our key");
+				return STF_FATAL;
+			}
+			break;
+		}
+		case AUTH_PSK:
+		case AUTH_NULL:
+			break;
+		case AUTH_NEVER:
+		default:
+			bad_case(authby);
+		}
+	}
+
 	/*
 	 * Now create child state.
 	 * As we will switch to child state, force the parent to the
@@ -3095,11 +3124,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	/* now send AUTH payload */
 
-	stf_status authstat = emit_v2AUTH(ike, &ike->sa.st_v2_id_payload.mac,
-					  &sk.pbs, NULL);
-	/* ??? NULL - don't calculate additional NULL_AUTH ??? */
-	if (authstat != STF_OK)
-		return authstat;
+	if (!emit_v2_auth(ike, &auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 		/* must have enough to build an CHILD_SA */
