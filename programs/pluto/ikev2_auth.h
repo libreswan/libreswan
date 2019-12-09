@@ -24,6 +24,11 @@
 struct state;
 struct connection;
 struct ike_sa;
+struct hash_signature;
+struct msg_digest;
+struct hash_desc;
+struct logger;
+struct private_key_stuff;
 
 struct crypt_mac v2_calculate_sighash(const struct state *st,
 				      enum original_role role,
@@ -40,14 +45,25 @@ shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
 bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
 			    pb_stream *a_pbs, enum keyword_authby authby);
 
-struct hash_signature v2_auth_signature(struct ike_sa *ike,
+struct hash_signature v2_auth_signature(struct logger *logger,
 					const struct crypt_mac *sighash,
 					const struct hash_desc *hash_algo,
-					enum keyword_authby authby);
+					enum keyword_authby authby,
+					const struct private_key_stuff *pks);
 
 bool emit_v2_auth(struct ike_sa *ike,
 		  const struct hash_signature *auth_sig,
 		  const struct crypt_mac *idhash,
 		  pb_stream *outpbs);
+
+typedef stf_status (v2_auth_signature_cb)(struct ike_sa *ike,
+					  struct msg_digest *md,
+					  const struct hash_signature *sighash_sig);
+
+stf_status submit_v2_auth_signature(struct ike_sa *ike,
+				    const struct crypt_mac *sighash,
+				    const struct hash_desc *hash_algo,
+				    enum keyword_authby authby,
+				    v2_auth_signature_cb *cb);
 
 #endif

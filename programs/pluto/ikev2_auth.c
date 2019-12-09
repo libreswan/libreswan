@@ -200,13 +200,13 @@ bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
 	return true;
 }
 
-struct hash_signature v2_auth_signature(struct ike_sa *ike,
+struct hash_signature v2_auth_signature(struct logger *logger,
 					const struct crypt_mac *hash_to_sign,
 					const struct hash_desc *hash_algo,
-					enum keyword_authby authby)
+					enum keyword_authby authby,
+					const struct private_key_stuff *pks)
 {
-	statetime_t start = statetime_start(&ike->sa);
-	const struct connection *c = ike->sa.st_connection;
+	logtime_t start = logtime_start(logger);
 
 	/*
 	 * Allocate large enough space for any digest.
@@ -244,49 +244,36 @@ struct hash_signature v2_auth_signature(struct ike_sa *ike,
 	switch (authby) {
 	case AUTH_RSASIG:
 	{
-		const struct pubkey_type *type = &pubkey_type_rsa;
-		const struct private_key_stuff *pks = get_connection_private_key(c, type);
-		if (pks == NULL) {
-			libreswan_log("No %s private key found", type->name);
-			break; /* failure: no key to use */
-		}
 		/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
 		const struct RSA_private_key *k = &pks->u.RSA_private_key;
 		unsigned int sz = k->pub.k;
 		passert(RSA_MIN_OCTETS <= sz && 4 + hash_len < sz &&
 			sz <= RSA_MAX_OCTETS);
-		statetime_t sign_time = statetime_start(&ike->sa);
+		logtime_t sign_time = logtime_start(logger);
 		passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
 		sig = sign_hash_RSA(pks, hash_octets, hash_len, hash_algo);
-		statetime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);
+		logtime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);
 		break;
 	}
 	case AUTH_ECDSA:
 	{
-		const struct pubkey_type *type = &pubkey_type_ecdsa;
-		const struct private_key_stuff *pks = get_connection_private_key(c, type);
-		if (pks == NULL) {
-			libreswan_log("no %s private key for connection", type->name);
-			break; /* failure: no key to use */
-		}
-
 		/*
 		 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
 		 * where 1056 is coming from.
 		 * It is the largest of the signature lengths amongst
 		 * ECDSA 256, 384, and 521.
 		 */
-		statetime_t sign_time = statetime_start(&ike->sa);
+		logtime_t sign_time = logtime_start(logger);
 		passert(sizeof(sig.ptr/*array*/) >= BYTES_FOR_BITS(1056));
 		sig = sign_hash_ECDSA(pks, hash_to_sign->ptr, hash_to_sign->len);
-		statetime_stop(&sign_time, "%s() calling sign_hash_ECDSA()", __func__);
+		logtime_stop(&sign_time, "%s() calling sign_hash_ECDSA()", __func__);
 		break;
 	}
 	default:
 		bad_case(authby);
 	}
 	passert(sig.len <= sizeof(sig.ptr));
-	statetime_stop(&start, "%s()", __func__);
+	logtime_stop(&start, "%s()", __func__);
 	return sig;
 }
 

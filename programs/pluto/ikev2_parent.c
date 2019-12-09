@@ -93,6 +93,7 @@
 #include "ip_info.h"
 #include "iface.h"
 #include "ikev2_auth.h"
+#include "keys.h"
 
 struct mobike {
 	ip_endpoint remote;
@@ -2895,6 +2896,8 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	return ikev2_parent_inI2outR2_auth_tail(st, md, TRUE);
 }
 
+static v2_auth_signature_cb ikev2_parent_inI2outR2_auth_signature_continue; /* type check */
+
 static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						   struct msg_digest *md,
 						   bool pam_status)
@@ -2936,7 +2939,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDr", ike, "st_skey_pr_nss",
 							  ike->sa.st_skey_pr_nss);
 
-	struct hash_signature auth_sig = { .len = 0, };
 	{
 		enum keyword_authby authby = v2_auth_by(ike);
 		switch (authby) {
@@ -2948,23 +2950,28 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 									     &ike->sa.st_v2_id_payload.mac,
 									     ike->sa.st_firstpacket_me,
 									     hash_algo);
-			auth_sig = v2_auth_signature(ike, &hash_to_sign,
-						     hash_algo, authby);
-			if (auth_sig.len == 0) {
-				loglog(RC_LOG_SERIOUS, "Failed to find our key");
-				return STF_FATAL;
-			}
-			break;
+			return submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, authby,
+							ikev2_parent_inI2outR2_auth_signature_continue);
 		}
 		case AUTH_PSK:
 		case AUTH_NULL:
-			break;
+		{
+			struct hash_signature sig = { .len = 0, };
+			return ikev2_parent_inI2outR2_auth_signature_continue(ike, md, &sig);
+		}
 		case AUTH_NEVER:
 		default:
 			bad_case(authby);
 		}
 	}
+}
 
+static stf_status ikev2_parent_inI2outR2_auth_signature_continue(struct ike_sa *ike,
+								 struct msg_digest *md,
+								 const struct hash_signature *auth_sig)
+{
+	struct connection *c = ike->sa.st_connection;
+	struct state *st = &ike->sa; /* avoid rename for now */
 	/*
 	 * Now create child state.
 	 * As we will switch to child state, force the parent to the
@@ -3124,7 +3131,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	/* now send AUTH payload */
 
-	if (!emit_v2_auth(ike, &auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
+	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
