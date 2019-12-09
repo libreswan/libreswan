@@ -71,12 +71,34 @@ west #
  ipsec whack --trafficstatus
 006 #2: "ipv4-psk-ikev2-transport", type=ESP, add_time=1234567890, inBytes=256, outBytes=256, id='@east'
 west #
+ # test rekey
+west #
+ ipsec whack --rekey-ipsec-now --name ipv4-psk-ikev2-transport
+west #
+ # confirm transport mode is still part after rekey
+west #
+ ip xfrm state |grep mode
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
+west #
  echo done
 done
 west #
  ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
