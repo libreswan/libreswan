@@ -44,7 +44,7 @@ sleep 13
 west #
  sleep 13
 west #
- ipsec whack --rekey-ike-now --name west
+ ipsec whack --rekey-ike --name west
 west #
  ping -W 4 -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -70,7 +70,7 @@ sleep 21
 west #
  sleep 21
 west #
- ipsec whack --rekey-ike-now --name west
+ ipsec whack --rekey-ike --name west
 west #
  ping -W 4 -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

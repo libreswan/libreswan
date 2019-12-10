@@ -73,7 +73,7 @@ west #
 west #
  # test rekey
 west #
- ipsec whack --rekey-ipsec-now --name ipv4-psk-ikev2-transport
+ ipsec whack --rekey-ipsec --name ipv4-psk-ikev2-transport
 west #
  # confirm transport mode is still part after rekey
 west #

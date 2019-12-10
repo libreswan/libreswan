@@ -421,6 +421,8 @@
           <arg choice="opt">--remote-host <replaceable>ip-address</replaceable></arg>
 
         <arg choice="plain">--terminate</arg>
+        <arg choice="plain">--rekey-ike</arg>
+        <arg choice="plain">--rekey-ipsec</arg>
       </group>
 
       <arg choice="plain">--name
@@ -2243,7 +2245,37 @@
         </varlistentry>
       </variablelist>
 
-      <para>Ending an connection</para>
+      <para>Rekeying a connection</para>
+
+      <variablelist remap="tp">
+        <varlistentry>
+          <term><option>--rekey-ipsec</option></term>
+
+          <term><option>--name</option>&nbsp;<emphasis
+          remap="i">connection-name</emphasis></term>
+
+          <listitem>
+            <para>the rekey-ipsec form tells <emphasis
+            remap="b">pluto</emphasis> to rekey the IPsec SA (child SA) of
+            the specified connection. It does not affect the IKE SA (parent SA)</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--rekey-ike</option></term>
+
+          <term><option>--name</option>&nbsp;<emphasis
+          remap="i">connection-name</emphasis></term>
+
+          <listitem>
+            <para>the rekey-ike form tells <emphasis
+            remap="b">pluto</emphasis> to rekey the IKE SA (parent SA) of
+            the specified connection. It does not affect the IPsec SAs (child SAs)</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>Ending a connection</para>
 
       <variablelist remap="tp">
         <varlistentry>

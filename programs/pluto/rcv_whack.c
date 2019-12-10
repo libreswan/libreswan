@@ -283,14 +283,14 @@ static bool whack_process(fd_t whackfd, const struct whack_message *const m)
 		}
 	}
 
-	if (m->whack_rekey_ike_now) {
+	if (m->whack_rekey_ike) {
 		if (m->name == NULL)
 			whack_log(RC_FATAL, "received whack command to rekey IKE SA of connection, but did not receive the connection name - ignored");
 		else
 			rekey_now(m->name, IKE_SA);
 	}
 
-	if (m->whack_rekey_ipsec_now) {
+	if (m->whack_rekey_ipsec) {
 		if (m->name == NULL)
 			whack_log(RC_FATAL, "received whack command to rekey IPsec SA of connection, but did not receive the connection name - ignored");
 		else

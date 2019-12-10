@@ -155,6 +155,9 @@ static void help(void)
 		"	--name <connection_name> [--asynchronous] \\\n"
 		"	[--username <name>] [--xauthpass <pass>]\n"
 		"\n"
+		"rekey: whack (--rekey-ike | --rekey-ipsec) \\\n"
+		"	--name <connection_name> [--asynchronous] \\\n"
+		"\n"
 		"active redirect: whack --redirect [--name <connection_name> | --peer-ip <ip-address>] \\\n"
 		"	--gateway <ip-address>\n"
 		"\n"
@@ -299,8 +302,8 @@ enum option_enums {
 	OPT_UNLISTEN,
 	OPT_IKEBUF,
 	OPT_IKE_MSGERR,
-	OPT_REKEY_IKE_NOW,
-	OPT_REKEY_IPSEC_NOW,
+	OPT_REKEY_IKE,
+	OPT_REKEY_IPSEC,
 
 	OPT_ACTIVE_REDIRECT,
 	OPT_ACTIVE_REDIRECT_PEER,
@@ -586,8 +589,8 @@ static const struct option long_opts[] = {
 
 	{ "asynchronous", no_argument, NULL, OPT_ASYNC + OO },
 
-	{ "rekey-ike-now", no_argument, NULL, OPT_REKEY_IKE_NOW + OO },
-	{ "rekey-ipsec-now", no_argument, NULL, OPT_REKEY_IPSEC_NOW + OO },
+	{ "rekey-ike", no_argument, NULL, OPT_REKEY_IKE + OO },
+	{ "rekey-ipsec", no_argument, NULL, OPT_REKEY_IPSEC + OO },
 	/* list options */
 
 	{ "utc", no_argument, NULL, LST_UTC + OO },
@@ -1243,12 +1246,12 @@ int main(int argc, char **argv)
 			msg.whack_terminate = TRUE;
 			continue;
 
-		case OPT_REKEY_IKE_NOW: /* --rekey-ike-now */
-			msg.whack_rekey_ike_now = TRUE;
+		case OPT_REKEY_IKE: /* --rekey-ike */
+			msg.whack_rekey_ike = TRUE;
 			continue;
 
-		case OPT_REKEY_IPSEC_NOW: /* --rekey-ipsec-now */
-			msg.whack_rekey_ipsec_now = TRUE;
+		case OPT_REKEY_IPSEC: /* --rekey-ipsec */
+			msg.whack_rekey_ipsec = TRUE;
 			continue;
 
 		case OPT_DELETE:	/* --delete */
@@ -2396,8 +2399,8 @@ int main(int argc, char **argv)
 		       LELEM(OPT_INITIATE) | LELEM(OPT_TERMINATE) |
 		       LELEM(OPT_DELETE) |  LELEM(OPT_DELETEID) |
 		       LELEM(OPT_DELETEUSER) | LELEM(OPT_CD) |
-		       LELEM(OPT_REKEY_IKE_NOW) |
-		       LELEM(OPT_REKEY_IPSEC_NOW))) {
+		       LELEM(OPT_REKEY_IKE) |
+		       LELEM(OPT_REKEY_IPSEC))) {
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
 	} else if (msg.whack_options == LEMPTY) {
@@ -2427,7 +2430,7 @@ int main(int argc, char **argv)
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
 	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest ||
-	      msg.whack_rekey_ike_now || msg.whack_rekey_ipsec_now))
+	      msg.whack_rekey_ike || msg.whack_rekey_ipsec))
 		diag("no action specified; try --help for hints");
 
 	/* do the logic for --redirect command */

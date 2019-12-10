@@ -282,8 +282,8 @@ struct whack_message {
 	long unsigned int whack_deletestateno;
 
 	/* rekey now */
-	bool whack_rekey_ike_now; /* rekey the latest ike now */
-	bool whack_rekey_ipsec_now;  /* rekey latest ipsec now */
+	bool whack_rekey_ike; /* rekey the latest ike now */
+	bool whack_rekey_ipsec;  /* rekey latest ipsec now */
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;
