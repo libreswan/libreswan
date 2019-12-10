@@ -1904,7 +1904,6 @@ static stf_status xauth_client_resp(struct state *st,
 			     uint16_t ap_id)
 {
 	char xauth_username[MAX_XAUTH_USERNAME_LEN];
-	struct connection *c = st->st_connection;
 
 	struct v1_hash_fixup hash_fixup;
 	if (!emit_xauth_hash("XAUTH: client response", st, &hash_fixup, rbody)) {
@@ -1963,9 +1962,7 @@ static stf_status xauth_client_resp(struct state *st,
 							return STF_FATAL;
 						}
 
-						if (!whack_prompt_for(st->
-							st_whack_sock,
-							c->name,
+						if (!whack_prompt_for(st,
 							"Username",
 							TRUE,
 							xauth_username,
@@ -2047,9 +2044,7 @@ static stf_status xauth_client_resp(struct state *st,
 							return STF_FATAL;
 						}
 
-						if (!whack_prompt_for(st->
-								      st_whack_sock,
-								      c->name,
+						if (!whack_prompt_for(st,
 								      "Password",
 								      FALSE,
 								      xauth_password,

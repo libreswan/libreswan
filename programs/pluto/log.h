@@ -54,11 +54,8 @@ extern char *pluto_stats_binary;
  */
 extern fd_t whack_log_fd;                        /* only set during whack_handle() */
 
-extern bool whack_prompt_for(fd_t whackfd,
-			     const char *prompt1,
-			     const char *prompt2,
-			     bool echo,
-			     char *ansbuf, size_t ansbuf_len);
+extern bool whack_prompt_for(struct state *st, const char *prompt,
+			     bool echo, char *ansbuf, size_t ansbuf_len);
 
 /* for pushing state to other subsystems */
 #define binlog_refresh_state(st) binlog_state((st), (st)->st_state->kind)

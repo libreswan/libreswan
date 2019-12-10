@@ -428,6 +428,45 @@ static void jambuf_to_whack_fd(struct lswlog *buf, fd_t wfd, enum rc_type rc)
 	fd_sendmsg(wfd, &msg, MSG_NOSIGNAL, HERE);
 }
 
+/*
+ * interactive input from the whack user, using current whack_fd
+ */
+bool whack_prompt_for(struct state *st, const char *prompt,
+		      bool echo, char *ansbuf, size_t ansbuf_len)
+{
+	dbg("prompting whack for %s", prompt);
+
+	/*
+	 * XXX: This includes the connection name twice: first from
+	 * the state prefix; and second explictly.  Only reason is so
+	 * that tests are happy.
+	 */
+	LSWBUF(buf) {
+		/* XXX: one of these is redundant */
+		jam_log_prefix(buf, st, NULL/*connection*/, NULL/*from*/);
+		jam(buf, "%s ", st->st_connection->name);
+		/* the real message */
+		jam(buf, "prompt for %s:", prompt);
+		jambuf_to_whack_fd(buf, st->st_whack_sock,
+				   echo ? RC_USERPROMPT : RC_ENTERSECRET);
+	}
+
+	ssize_t n = fd_read(st->st_whack_sock, ansbuf, ansbuf_len, HERE);
+	if (n == -1) {
+		log_state(RC_LOG_SERIOUS, st, "read(whackfd) failed: %s",
+			  strerror(errno));
+		return false;
+	}
+
+	if (n == 0) {
+		log_state(RC_LOG_SERIOUS, st, "no %s entered, aborted", prompt);
+		return false;
+	}
+
+	ansbuf[ansbuf_len - 1] = '\0'; /* ensure buffer is NULL terminated */
+	return true;
+}
+
 static void whack_raw(jambuf_t *buf, enum rc_type rc)
 {
 	/*
