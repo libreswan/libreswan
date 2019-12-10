@@ -222,10 +222,17 @@ int parser_y_include (const char *filename)
 		try = filename;
 		globresult = glob(try, GB, globugh_include, &globbuf);
 		if (globresult == GLOB_NOMATCH) {
-			/* no files found... */
-			starter_log(LOG_LEVEL_ERR,
-				"warning: could not open include filename: '%s'",
-				filename);
+			if (strchr(filename,'*') == NULL) {
+				/* not a wildcard, throw error */
+				starter_log(LOG_LEVEL_ERR,
+					"warning: could not open include filename: '%s'",
+					filename);
+			} else {
+				/* don't throw an error, just log a warning */
+				starter_log(LOG_LEVEL_DEBUG,
+					"could not open include wildcard filename(s): '%s'",
+					filename);
+			}
 		}
 	} else {
 		/* try prefixing with rootdir */
@@ -235,9 +242,17 @@ int parser_y_include (const char *filename)
 		globresult = glob(try, GB, globugh_include, &globbuf);
 		if (globresult == GLOB_NOMATCH) {
 			if (rootdir2[0] == '\0') {
-				starter_log(LOG_LEVEL_ERR,
-					"warning: could not open include filename '%s' (tried '%s')",
-					filename, newname);
+				if (strchr(filename,'*') == NULL) {
+					/* not a wildcard, throw error */
+					starter_log(LOG_LEVEL_ERR,
+						"warning: could not open include filename '%s' (tried '%s')",
+						filename, newname);
+				} else {
+					/* don't throw an error, just log a warning */
+					starter_log(LOG_LEVEL_DEBUG,
+						"could not open include wildcard filename(s) '%s' (tried '%s')",
+						filename, newname);
+				}
 			} else {
 				/* try again, prefixing with rootdir2 */
 				globfree(&globbuf);
