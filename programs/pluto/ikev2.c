@@ -122,6 +122,10 @@ enum smf2_flags {
 	SMF2_ESTABLISHED = LELEM(9),
 };
 
+static void v2_dispatch(struct ike_sa *ike, struct state *st,
+			struct msg_digest **mdp,
+			const struct state_v2_microcode *transition);
+
 /*
  * IKEv2 has slightly different states than IKEv1.
  *
@@ -2403,8 +2407,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		return;
 	}
 
-	md->svm = svm;
-
 	if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
 		/*
 		 * XXX: This code was embedded in the end of the FSM
@@ -2441,10 +2443,16 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		st = &child->sa;
 	}
 
-	md->st = st;
+	v2_dispatch(ike, st, mdp, svm);
+}
 
-	DBG(DBG_CONTROL,
-	    DBG_log("Now let's proceed with state specific processing"));
+static void v2_dispatch(struct ike_sa *ike, struct state *st,
+			struct msg_digest **mdp,
+			const struct state_v2_microcode *svm)
+{
+	struct msg_digest *md = *mdp;
+	md->st = st;
+	md->svm = svm;
 
 	DBG(DBG_PARSING, {
 		    if (pbs_left(&md->message_pbs) != 0)
