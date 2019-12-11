@@ -74,53 +74,6 @@
 #include "ip_endpoint.h"
 #include "hostpair.h"		/* for find_v2_host_connection() */
 
-enum smf2_flags {
-	/*
-	 * Is this a message request or response?
-	 *
-	 * Requests have the (R) bit clear, and responses have the (R)
-	 * bit set.
-	 *
-	 * Don't assume one of these flags are present.  Some state
-	 * processors internally deal with both the request and the
-	 * reply.
-	 *
-	 * In general, the relationship MSG_R != IKE_I does not hold
-	 * (it just holds during the initial exchange).
-	 */
-	SMF2_MESSAGE_RESPONSE = LELEM(5),
-	SMF2_MESSAGE_REQUEST = LELEM(6),
-
-	/*
-	 * Should the SK (secured-by-key) decryption and verification
-	 * be skipped?
-	 *
-	 * The original responder, when it receives the encrypted AUTH
-	 * payload, isn't yet ready to decrypt it - receiving the
-	 * packet is what triggers the DH calculation needed before
-	 * encryption can occur.
-	 */
-	SMF2_NO_SKEYSEED = LELEM(7),
-
-	/*
-	 * Suppress logging of a successful state transition.
-	 *
-	 * This is here simply to stop liveness check transitions
-	 * filling up the log file.
-	 */
-	SMF2_SUPPRESS_SUCCESS_LOG = LELEM(8),
-
-	/*
-	 * If this state transition is successful then the SA is
-	 * encrypted and authenticated.
-	 *
-	 * XXX: The flag currently works for CHILD SAs but not IKE SAs
-	 * (but it should).  This is because IKE SAs currently bypass
-	 * the complete state transition code when establishing.  See
-	 * also danger note below.
-	 */
-	SMF2_ESTABLISHED = LELEM(9),
-};
 
 static void v2_dispatch(struct ike_sa *ike, struct state *st,
 			struct msg_digest **mdp,
@@ -224,38 +177,6 @@ static void v2_dispatch(struct ike_sa *ike, struct state *st,
 /* Short forms for building payload type sets */
 
 #define P(N) LELEM(ISAKMP_NEXT_v2##N)
-
-/* From RFC 5996:
- *
- * 3.10 "Notify Payload": N payload may appear in any message
- *
- *      During the initial exchange (SA_INIT) (i.e., DH has been
- *      established) the notify payload can't be encrypted.  For all
- *      other exchanges it should be part of the SK (encrypted)
- *      payload (but beware the DH failure exception).
- *
- * 3.11 "Delete Payload": multiple D payloads may appear in an
- *	Informational exchange
- *
- * 3.12 "Vendor ID Payload": (multiple) may appear in any message
- *
- *      During the initial exchange (SA_INIT) (i.e., DH has been
- *      established) the vendor payload can't be encrypted.  For all
- *      other exchanges it should be part of the SK (encrypted)
- *      payload (but beware the DH failure exception).
- *
- * 3.15 "Configuration Payload":
- * 1.4 "The INFORMATIONAL Exchange": (multiple) Configuration Payloads
- *	may appear in an Informational exchange
- * 2.19 "Requesting an Internal Address on a Remote Network":
- *	In all cases, the CP payload MUST be inserted before the SA payload.
- *	In variations of the protocol where there are multiple IKE_AUTH
- *	exchanges, the CP payloads MUST be inserted in the messages
- *	containing the SA payloads.
- */
-
-static const lset_t everywhere_payloads = P(N) | P(V);	/* can appear in any packet */
-static const lset_t repeatable_payloads = P(N) | P(D) | P(CP) | P(V) | P(CERT) | P(CERTREQ);	/* if one can appear, many can appear */
 
 /*
  * IKEv2 State transitions (aka microcodes).
@@ -899,120 +820,6 @@ static struct payload_summary ikev2_decode_payloads(struct state *st,
 	}
 
 	return summary;
-}
-
-static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
-							 const struct payload_summary *summary,
-							 const struct ikev2_expected_payloads *payloads)
-{
-	/*
-	 * Convert SKF onto SK for the comparison (but only when it is
-	 * on its own).
-	 */
-	lset_t seen = summary->present;
-	if ((seen & (P(SKF)|P(SK))) == P(SKF)) {
-		seen &= ~P(SKF);
-		seen |= P(SK);
-	}
-
-	lset_t req_payloads = payloads->required;
-	lset_t opt_payloads = payloads->optional;
-
-	struct ikev2_payload_errors errors = {
-		.bad = false,
-		.excessive = summary->repeated & ~repeatable_payloads,
-		.missing = req_payloads & ~seen,
-		.unexpected = seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads,
-	};
-
-	if ((errors.excessive | errors.missing | errors.unexpected) != LEMPTY) {
-		errors.bad = true;
-	}
-
-	if (payloads->notification != v2N_NOTHING_WRONG) {
-		bool found = false;
-		for (struct payload_digest *pd = md->chain[ISAKMP_NEXT_v2N];
-		     pd != NULL; pd = pd->next) {
-			if (pd->payload.v2n.isan_type == payloads->notification) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			errors.bad = true;
-			errors.notification = payloads->notification;
-		}
-	}
-
-	return errors;
-}
-
-/* report problems - but less so when OE */
-static void log_v2_payload_errors(struct state *st, struct msg_digest *md,
-				  const struct ikev2_payload_errors *errors)
-{
-	if (!DBGP(DBG_OPPO)) {
-		/*
-		 * ??? this logic is contorted.
-		 * If we have no state, we act as if this is opportunistic.
-		 * But if there is a state, but no connection,
-		 * we act as if this is NOT opportunistic.
-		 */
-		if (st == NULL ||
-		    (st->st_connection != NULL &&
-		     (st->st_connection->policy & POLICY_OPPORTUNISTIC)))
-		{
-			return;
-		}
-	}
-
-	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
-		const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
-		lswlogs(buf, "dropping unexpected ");
-		lswlog_enum_short(buf, &ikev2_exchange_names, ix);
-		lswlogs(buf, " message");
-		/* we want to print and log the first notify payload */
-		struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
-		if (ntfy != NULL) {
-			lswlogs(buf, " containing ");
-			lswlog_enum_short(buf, &ikev2_notify_names,
-					  ntfy->payload.v2n.isan_type);
-			if (ntfy->next != NULL) {
-				lswlogs(buf, "...");
-			}
-			lswlogs(buf, " notification");
-		}
-		if (md->message_payloads.parsed) {
-			lswlogf(buf, "; message payloads: ");
-			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       md->message_payloads.present);
-		}
-		if (md->encrypted_payloads.parsed) {
-			lswlogf(buf, "; encrypted payloads: ");
-			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       md->encrypted_payloads.present);
-		}
-		if (errors->missing != LEMPTY) {
-			lswlogf(buf, "; missing payloads: ");
-			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       errors->missing);
-		}
-		if (errors->unexpected != LEMPTY) {
-			lswlogf(buf, "; unexpected payloads: ");
-			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       errors->unexpected);
-		}
-		if (errors->excessive != LEMPTY) {
-			lswlogf(buf, "; excessive payloads: ");
-			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       errors->excessive);
-		}
-		if (errors->notification != v2N_NOTHING_WRONG) {
-			lswlogs(buf, "; missing notification ");
-			lswlog_enum_short(buf, &ikev2_notify_names,
-					  errors->notification);
-		}
-	}
 }
 
 static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
@@ -2076,6 +1883,18 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
 	const enum isakmp_xchg_types ix = (*mdp)->hdr.isa_xchg;
+
+	/*
+	 * XXX: Unlike find_v2_state_transition(), the below scans
+	 * every single state transition and then, in the case of a
+	 * CREATE_CHILD_SA, ignores the "from" state.
+	 *
+	 * XXX: Unlike find_v2_state_transition(), this code detects
+	 * and decrypts packets and fragments in the middle of the
+	 * lookup.  Being more agressive with decrypting fragments
+	 * will likely force that logic to be moved to before this
+	 * lookup.
+	 */
 
 	const struct state_v2_microcode *svm;
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
