@@ -2303,25 +2303,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 */
 		if (message_payload_status.bad) {
 			/*
-			 * A very messed up message.  Should only
-			 * consider responding when IKE_SA_INIT
-			 * request?  Code above should have rejected
-			 * any message with invalid integrity.
-			 *
-			 * XXX: how can one complete a state
-			 * transition on something that was never
-			 * started?  because the state may need
-			 * deleting.
+			 * A very messed up message - none of the
+			 * state transitions recognized it!.
 			 */
 			log_v2_payload_errors(st, md, &message_payload_status);
-			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT &&
-			    md->hdr.isa_msgid == 0 &&
-			    v2_msg_role(md) == MESSAGE_REQUEST) {
-				pexpect(st->st_v2_msgid_wip.responder == -1);
-				send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
-				/* XXX: calls delete_state() */
-				complete_v2_state_transition(st, md, STF_FATAL);
-			}
 			return;
 		}
 		if (encrypted_payload_status.bad) {
