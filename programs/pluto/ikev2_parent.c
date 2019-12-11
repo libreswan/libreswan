@@ -1247,6 +1247,8 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 {
 	pexpect(child == NULL);
 	struct connection *c = ike->sa.st_connection;
+	/* not yet updated */
+	pexpect(ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
 
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		if (ntfy->payload.v2n.isan_spisize != 0) {
@@ -1384,9 +1386,6 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct ike_sa *ike
 			ike->sa.st_oakley.ta_dh = new_group;
 			/* wipe our mismatched KE */
 			free_dh_secret(&ike->sa.st_dh_secret);
-			/* wipe out any saved SPIr */
-			dbg("zeroing any SPIr from unauthenticated INVALID_KE packet");
-			rehash_state(&ike->sa, &zero_ike_spi);
 			/*
 			 * Need to wind things back to the point that
 			 * the Message ID counter code thinks this is
@@ -1603,6 +1602,13 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
+	/*
+	 * XXX: this iteration over the notifies modifies state
+	 * _before_ the code's committed to creating an SA.  Hack this
+	 * by resetting any flags that might be set.
+	 */
+	st->st_seen_fragvid = false;
+	st->st_seen_ppk = false;
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		if (ntfy->payload.v2n.isan_type >= v2N_STATUS_FLOOR) {
 			pstat(ikev2_recv_notifies_s, ntfy->payload.v2n.isan_type);
@@ -1743,29 +1749,21 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	}
 
 	/*
-	 * Check v2N_NAT_DETECTION_DESTINATION_IP or/and
-	 * v2N_NAT_DETECTION_SOURCE_IP, and when detected float the
-	 * endpoints.
+	 * Initiate the calculation of g^xy.
 	 *
-	 * 2.23.  NAT Traversal
-	 *
-	 * The IKE initiator MUST check the NAT_DETECTION_SOURCE_IP or
-	 * NAT_DETECTION_DESTINATION_IP payloads if present, and if
-	 * they do not match the addresses in the outer packet, MUST
-	 * tunnel all future IKE and ESP packets associated with this
-	 * IKE SA over UDP port 4500.
+	 * Form and pass in the full SPI[ir] that will eventually be
+	 * used by this IKE SA.  Only once DH has been computed and
+	 * the SA is secure (but not authenticated) should the state's
+	 * IKE SPIr be updated.
 	 */
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
-		ikev2_natd_lookup(md, &st->st_ike_spis.responder);
-		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
-			natify_initiator_endpoints(st, HERE);
-		}
-	}
-
-	/* initiate calculation of g^xy */
+	pexpect(ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
+	ike->sa.st_ike_rekey_spis = (ike_spis_t) {
+		.initiator = ike->sa.st_ike_spis.initiator,
+		.responder = md->hdr.isa_ike_responder_spi,
+	};
 	start_dh_v2(st, "ikev2_inR1outI2 KE",
 		    ORIGINAL_INITIATOR,
-		    NULL, NULL, &st->st_ike_spis,
+		    NULL, NULL, &st->st_ike_rekey_spis,
 		    ikev2_parent_inR1outI2_continue);
 	return STF_SUSPEND;
 }
@@ -2143,6 +2141,42 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		 */
 		pstat_sa_failed(pst, REASON_CRYPTO_FAILED);
 		return STF_FAIL + v2N_INVALID_SYNTAX; /* STF_FATAL? */
+	}
+
+	/*
+	 * All systems are go.
+	 *
+	 * Since DH succeeded, a secure (but unauthenticated) SA
+	 * (channel) is available.  From this point on, should things
+	 * go south, the state needs to be abandoned (but it shouldn't
+	 * happen).
+	 */
+
+	/*
+	 * Since systems are go, start updating the state, starting
+	 * with SPIr.
+	 */
+	rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
+
+	/*
+	 * Check v2N_NAT_DETECTION_DESTINATION_IP or/and
+	 * v2N_NAT_DETECTION_SOURCE_IP, and when detected float the
+	 * endpoints.
+	 *
+	 * 2.23.  NAT Traversal
+	 *
+	 * The IKE initiator MUST check the NAT_DETECTION_SOURCE_IP or
+	 * NAT_DETECTION_DESTINATION_IP payloads if present, and if
+	 * they do not match the addresses in the outer packet, MUST
+	 * tunnel all future IKE and ESP packets associated with this
+	 * IKE SA over UDP port 4500.
+	 */
+
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+		ikev2_natd_lookup(md, &ike->sa.st_ike_spis.responder);
+		if (ike->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
+			natify_initiator_endpoints(&ike->sa, HERE);
+		}
 	}
 
 	/*

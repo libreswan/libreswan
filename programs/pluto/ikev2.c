@@ -2037,29 +2037,6 @@ static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
 		}
 	}
 
-	if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT &&
-	    v2_msg_role(md) == MESSAGE_RESPONSE) {
-		if (pexpect(md->hdr.isa_msgid == 0) &&
-		    pexpect(ike != NULL)) {
-			/*
-			 * Responder provided a cookie, record it.
-			 *
-			 * XXX: This is being done far too early.  The
-			 * packet should first get some validation.
-			 * It might also be an INVALID_KE or COOKIE
-			 * response in which case SPIr shouldn't be
-			 * updated at all.
-			 *
-			 * XXX: Previously this was being done even
-			 * earlier - as part of the code above looking
-			 * for IKE SA initiator.  At least by moving
-			 * it here it is delayed until after other
-			 * processing has completed.
-			 */
-			rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
-		}
-	}
-
 	/*
 	 * Flag the state as responding to a request.
 	 *
