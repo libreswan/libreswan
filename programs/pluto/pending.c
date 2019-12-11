@@ -187,12 +187,14 @@ void release_pending_whacks(struct state *st, err_t story)
 		    PRI_fd(p->whack_sock));
 		if (p->ike == ike_with_same_whack && fd_p(p->whack_sock)) {
 			if (!same_fd(st->st_whack_sock, p->whack_sock)) {
-				passert(!fd_p(whack_log_fd));
-				whack_log_fd = p->whack_sock;
-				whack_log(RC_COMMENT,
-					  "%s for IKE SA, but releasing whack for pending IPSEC SA",
-					  story);
-				whack_log_fd = null_fd;
+				/* XXX: why not the log file? */
+				log_pending(WHACK_STREAM|RC_COMMENT, p,
+					    "%s for IKE SA, but releasing whack for pending %s",
+					    story,
+					    /* IPsec SA or CHILD SA */
+					    enum_enum_name(&sa_type_names,
+							   p->connection->ike_version,
+							   IPSEC_SA));
 			}
 			close_any(&p->whack_sock);/*on-heap*/
 		}
