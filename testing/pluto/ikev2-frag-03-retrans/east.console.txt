@@ -18,10 +18,10 @@ east #
 east #
  grep "received duplicate [^ ]* message request .* fragment" /tmp/pluto.log
 "westnet-eastnet-ikev2" #1: received duplicate IKE_AUTH message request (Message ID 1, fragment 1); retransmitting response
-| Message ID: CHILD #1.#LOST received duplicate IKE_AUTH message request (Message ID 1, fragment 2); discarded as not fragment 1; ike.initiator.sent=-1 ike.initiator.recv=-1 ike.responder.sent=1 ike.responder.recv=1
-| Message ID: CHILD #1.#LOST received duplicate IKE_AUTH message request (Message ID 1, fragment 3); discarded as not fragment 1; ike.initiator.sent=-1 ike.initiator.recv=-1 ike.responder.sent=1 ike.responder.recv=1
-| Message ID: CHILD #1.#LOST received duplicate IKE_AUTH message request (Message ID 1, fragment 4); discarded as not fragment 1; ike.initiator.sent=-1 ike.initiator.recv=-1 ike.responder.sent=1 ike.responder.recv=1
-| Message ID: CHILD #1.#LOST received duplicate IKE_AUTH message request (Message ID 1, fragment 5); discarded as not fragment 1; ike.initiator.sent=-1 ike.initiator.recv=-1 ike.responder.sent=1 ike.responder.recv=1
+| Message ID: CHILD #1.#LOST received duplicate IKE_AUTH message request (Message ID 1, fragment 2); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.responder.sent=1 ike.responder.recv=1
+| Message ID: CHILD #1.#LOST received duplicate IKE_AUTH message request (Message ID 1, fragment 3); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.responder.sent=1 ike.responder.recv=1
+| Message ID: CHILD #1.#LOST received duplicate IKE_AUTH message request (Message ID 1, fragment 4); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.responder.sent=1 ike.responder.recv=1
+| Message ID: CHILD #1.#LOST received duplicate IKE_AUTH message request (Message ID 1, fragment 5); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.responder.sent=1 ike.responder.recv=1
 east #
  ../../pluto/bin/ipsec-look.sh
 east NOW

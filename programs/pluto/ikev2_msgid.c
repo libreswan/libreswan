@@ -90,7 +90,7 @@ static void jam_v2_msgid(struct lswlog *buf,
 	const char *who = jam_prefix(buf, ike, wip_sa);
 	jam(buf, " ");
 	jam_va_list(buf, fmt, ap);
-	jam(buf, ";");
+	jam(buf, ":");
 	jam_ike_windows(buf, &ike->sa.st_v2_msgid_windows, NULL);
 	if (wip_sa != NULL) {
 		jam_wip_sa(buf, who, &wip_sa->st_v2_msgid_wip, NULL);
@@ -138,14 +138,14 @@ static void dbg_msgids_update(const char *what,
 			jam(buf, " %s", what);
 
 			switch (message) {
-			case MESSAGE_REQUEST: jam(buf, " request %jd", msgid); break;
-			case MESSAGE_RESPONSE: jam(buf, " response %jd", msgid); break;
+			case MESSAGE_REQUEST: jam(buf, " message request %jd", msgid); break;
+			case MESSAGE_RESPONSE: jam(buf, " message response %jd", msgid); break;
 			case NO_MESSAGE: break;
 			default: bad_case(message);
 			}
+			jam(buf, ":");
 
 			jam_ike_windows(buf, old_windows, &ike->sa.st_v2_msgid_windows);
-
 			if (wip_sa != NULL) {
 				jam_wip_sa(buf, who, old_wip, &wip_sa->st_v2_msgid_wip);
 			}
@@ -184,7 +184,7 @@ void v2_msgid_init_ike(struct ike_sa *ike)
 	struct v2_msgid_wip old_wip = ike->sa.st_v2_msgid_wip;
 	ike->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
 	/* pretend there's a sender */
-	dbg_msgids_update("initialize-ike", NO_MESSAGE, -1,
+	dbg_msgids_update("initializing (IKE SA)", NO_MESSAGE, -1,
 			  ike, &old_windows,
 			  &ike->sa, &old_wip);
 }
@@ -195,7 +195,7 @@ void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child)
 	struct v2_msgid_wip old_child = child->sa.st_v2_msgid_wip;
 	child->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
 	/* pretend there's a sender */
-	dbg_msgids_update("initialize-child", NO_MESSAGE, -1,
+	dbg_msgids_update("initializing (CHILD SA)", NO_MESSAGE, -1,
 			  ike, &ike->sa.st_v2_msgid_windows, /* unchanged */
 			  &child->sa, &old_child);
 }
@@ -214,11 +214,11 @@ void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
 	if (DBGP(DBG_BASE) &&
 	    responder->st_v2_msgid_wip.responder != -1) {
 		FAIL_V2_MSGID(ike, responder,
-			      "responder->st_v2_msgid_wip.responder=%jd == -1",
+			      "responder->st_v2_msgid_wip.responder == -1; was %jd",
 			      responder->st_v2_msgid_wip.responder);
 	}
 	responder->st_v2_msgid_wip.responder = msgid;
-	dbg_msgids_update("start-responder", role, msgid,
+	dbg_msgids_update("responder starting", role, msgid,
 			  ike, &ike->sa.st_v2_msgid_windows,
 			  responder, &wip);
 }
@@ -244,11 +244,11 @@ void v2_msgid_switch_responder(struct ike_sa *ike, struct child_sa *child,
 		if (DBGP(DBG_BASE) &&
 		    ike->sa.st_v2_msgid_wip.responder != msgid) {
 			FAIL_V2_MSGID(ike, &child->sa,
-				      "ike->sa.st_v2_msgid_wip.responder=%jd == msgid=%jd",
-				      ike->sa.st_v2_msgid_wip.responder, msgid);
+				      "ike->sa.st_v2_msgid_wip.responder == %jd(msgid); was %jd",
+				      msgid, ike->sa.st_v2_msgid_wip.responder);
 		}
 		ike->sa.st_v2_msgid_wip.responder = -1;
-		dbg_msgids_update("switch-responder-from", role, msgid,
+		dbg_msgids_update("switching from IKE SA responder", role, msgid,
 				  ike, &ike->sa.st_v2_msgid_windows,
 				  &ike->sa, &wip);
 	}
@@ -258,11 +258,11 @@ void v2_msgid_switch_responder(struct ike_sa *ike, struct child_sa *child,
 		if (DBGP(DBG_BASE) &&
 		    child->sa.st_v2_msgid_wip.responder != -1) {
 			FAIL_V2_MSGID(ike, &child->sa,
-				      "child->sa.st_v2_msgid_wip.responder=%jd == -1",
+				      "child->sa.st_v2_msgid_wip.responder == -1; was %jd",
 				      child->sa.st_v2_msgid_wip.responder);
 		}
 		child->sa.st_v2_msgid_wip.responder = msgid;
-		dbg_msgids_update("switch-responder-to", role, msgid,
+		dbg_msgids_update("switching to CHILD SA responder", role, msgid,
 				  ike, &ike->sa.st_v2_msgid_windows,
 				  &child->sa, &wip);
 	}
@@ -282,11 +282,11 @@ void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 		if (DBGP(DBG_BASE) &&
 		    ike->sa.st_v2_msgid_wip.initiator != msgid) {
 			FAIL_V2_MSGID(ike, &child->sa,
-				      "ike->sa.st_v2_msgid_wip.initiator=%jd == msgid=%jd",
-				      ike->sa.st_v2_msgid_wip.initiator, msgid);
+				      "ike->sa.st_v2_msgid_wip.initiator == %jd(msgid); was %jd",
+				      msgid, ike->sa.st_v2_msgid_wip.initiator);
 		}
 		ike->sa.st_v2_msgid_wip.initiator = -1;
-		dbg_msgids_update("switch-initiator-from", role, msgid,
+		dbg_msgids_update("switching from IKE SA initiator", role, msgid,
 				  ike, &ike->sa.st_v2_msgid_windows,
 				  &ike->sa, &wip);
 	}
@@ -296,11 +296,11 @@ void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 		if (DBGP(DBG_BASE) &&
 		    child->sa.st_v2_msgid_wip.initiator != -1) {
 			FAIL_V2_MSGID(ike, &child->sa,
-				      "child->sa.st_v2_msgid_wip.initiator=%jd == -1",
+				      "child->sa.st_v2_msgid_wip.initiator == -1; was %jd",
 				      child->sa.st_v2_msgid_wip.initiator);
 		}
 		child->sa.st_v2_msgid_wip.initiator = msgid;
-		dbg_msgids_update("switch-initiator-to", role, msgid,
+		dbg_msgids_update("switching to CHILD SA initiator", role, msgid,
 				  ike, &ike->sa.st_v2_msgid_windows,
 				  &child->sa, &wip);
 	}
@@ -309,8 +309,8 @@ void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
 			       const struct msg_digest *md)
 {
-	enum message_role role = v2_msg_role(md);
-	if (!pexpect(role == MESSAGE_REQUEST)) {
+	enum message_role msg_role = v2_msg_role(md);
+	if (!pexpect(msg_role == MESSAGE_REQUEST)) {
 		return;
 	}
 	/* extend msgid */
@@ -324,11 +324,11 @@ void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
 	if (DBGP(DBG_BASE) &&
 	    responder->st_v2_msgid_wip.responder != msgid) {
 		FAIL_V2_MSGID(ike, responder,
-			      "responder->st_v2_msgid_wip.responder=%jd == msgid=%jd",
-			      responder->st_v2_msgid_wip.responder, msgid);
+			      "responder->st_v2_msgid_wip.responder == %jd(msgid); was %jd",
+			      msgid, responder->st_v2_msgid_wip.responder);
 	}
 	responder->st_v2_msgid_wip.responder = -1;
-	dbg_msgids_update("cancel-responder", role, msgid,
+	dbg_msgids_update("cancelling responder", msg_role, msgid,
 			  ike, &ike->sa.st_v2_msgid_windows,
 			  responder, &wip);
 }
@@ -353,8 +353,10 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 	enum message_role receiving = v2_msg_role(md);
 	intmax_t msgid;
 
+	const char *update_received_story;
 	switch (receiving) {
 	case MESSAGE_REQUEST:
+		update_received_story = "updating responder received";
 		/*
 		 * Processing request finished.  Scrub it as wip.
 		 *
@@ -367,8 +369,8 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			if (DBGP(DBG_BASE) &&
 			    receiver->st_v2_msgid_wip.responder != msgid) {
 				FAIL_V2_MSGID(ike, receiver,
-					      "wip.responder=%jd == msgid=%jd",
-					      receiver->st_v2_msgid_wip.responder, msgid);
+					      "wip.responder == %jd(msgid); was %jd",
+					      msgid, receiver->st_v2_msgid_wip.responder);
 			}
 			receiver->st_v2_msgid_wip.responder = -1;
 		} else {
@@ -378,6 +380,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		new->responder.recv = msgid;
 		break;
 	case MESSAGE_RESPONSE:
+		update_received_story = "updating initiator received";
 		/*
 		 * Since the response has been successfully processed,
 		 * clear WIP.INITIATOR.  This way duplicate
@@ -406,8 +409,8 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			} else {
 				if (DBGP(DBG_BASE) && old_receiver.initiator != msgid) {
 					FAIL_V2_MSGID(ike, receiver,
-						      "receiver.wip.initiator=%jd == receiver.msgid=%jd",
-						      old_receiver.initiator, msgid);
+						      "receiver.wip.initiator == %jd(msgid); was %jd",
+						      msgid, old_receiver.initiator);
 				}
 				receiver->st_v2_msgid_wip.initiator = -1;
 			}
@@ -438,7 +441,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		bad_case(receiving);
 	}
 
-	dbg_msgids_update("update-received", receiving, msgid,
+	dbg_msgids_update(update_received_story, receiving, msgid,
 			  ike, &old, receiver, &old_receiver);
 }
 
@@ -448,9 +451,12 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 	struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_wip old_sender = sender->st_v2_msgid_wip;
+
 	intmax_t msgid;
+	const char *update_sent_story;
 	switch (sending) {
 	case MESSAGE_REQUEST:
+		update_sent_story = "updating initiator sent";
 		/*
 		 * pluto is initiating a new exchange.
 		 *
@@ -467,7 +473,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		 */
 		if (DBGP(DBG_BASE) && old_sender.initiator != -1) {
 			FAIL_V2_MSGID(ike, sender,
-				      "sender.wip.initiator=%jd == -1",
+				      "sender.wip.initiator == -1; was %jd",
 				      old_sender.initiator);
 		}
 #else
@@ -478,6 +484,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 #endif
 		break;
 	case MESSAGE_RESPONSE:
+		update_sent_story = "updating responder sent";
 		/*
 		 * pluto is responding to MD.
 		 *
@@ -499,7 +506,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		bad_case(sending);
 	}
 
-	dbg_msgids_update("update-sent", sending, msgid,
+	dbg_msgids_update(update_sent_story, sending, msgid,
 			  ike, &old, sender, &old_sender);
 }
 

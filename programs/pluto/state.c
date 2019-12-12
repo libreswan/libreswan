@@ -3042,10 +3042,12 @@ bool verbose_state_busy(const struct state *st)
 	}
 	if (st->st_suspended_md != NULL) {
 		/* not whack */
+		/* XXX: why not whack? */
+		/* XXX: can this and below be merged; is there always an offloaded task? */
 		plog_state(st, "discarding packet received during asynchronous work (DNS or crypto) in %s",
 			   st->st_state->name);
 	} else if (st->st_offloaded_task != NULL) {
-		libreswan_log("message received while calculating. Ignored.");
+		log_state(RC_LOG, st, "message received while calculating. Ignored.");
 	}
 	return true;
 }
