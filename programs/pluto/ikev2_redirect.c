@@ -34,6 +34,7 @@
 #include "kernel.h"		/* needed for del_spi */
 #include "ip_info.h"
 #include "ikev2_redirect.h"
+#include "initiate.h"
 
 /*
  * Structure of REDIRECT Notify payload from RFC 5685.
@@ -323,9 +324,7 @@ void initiate_redirect(struct state *st)
 	libreswan_log("initiating a redirect to new gateway (address: %s)",
 			sensitive_ipstr(&redirect_ip, &b));
 
-	initiate_connection(c->name, st->st_whack_sock,
-			    empty_lmod, empty_lmod,
-			    NULL);
+	initiate_connections_by_name(c->name, st->st_whack_sock, NULL);
 
 	event_force(EVENT_SA_EXPIRE, right_state);
 	/*

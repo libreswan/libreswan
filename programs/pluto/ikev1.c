@@ -160,6 +160,7 @@
 #include "ikev1_hash.h"
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 #include "ikev1_states.h"
+#include "initiate.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -1116,8 +1117,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 								    endpoint_hport(&tmp_c->host_pair->remote));
 
 				/* Initiating connection to the redirected peer */
-				initiate_connection(tmp_name, tmp_whack_sock,
-						    empty_lmod, empty_lmod, NULL);
+				initiate_connections_by_name(tmp_name, tmp_whack_sock, NULL);
 				close_any(&tmp_whack_sock);
 			}
 			return STF_IGNORE;

@@ -75,6 +75,7 @@
 #include "ip_address.h" /* for setportof() */
 #include "crl_queue.h"
 #include "pluto_sd.h"
+#include "initiate.h"
 
 #include "pluto_stats.h"
 
@@ -503,11 +504,8 @@ static bool whack_process(fd_t whackfd, const struct whack_message *const m)
 					pass_remote = TRUE;
 				}
 			}
-			initiate_connection(m->name,
-					    (m->whack_async ? null_fd : whackfd),
-					    m->debugging,
-					    m->impairing,
-					    pass_remote ? m->remote_host : NULL);
+			initiate_connections_by_name(m->name, (m->whack_async ? null_fd : whackfd),
+						     pass_remote ? m->remote_host : NULL);
 		}
 	}
 

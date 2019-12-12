@@ -69,7 +69,7 @@
 #include "ikev1_xauth.h"
 #include "nat_traversal.h"
 #include "ip_address.h"
-
+#include "initiate.h"
 #include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
@@ -172,27 +172,19 @@ bool orient(struct connection *c)
 
 struct initiate_stuff {
 	fd_t whackfd;
-	lmod_t more_debugging;
-	lmod_t more_impairing;
-	char *remote_host;
+	const char *remote_host;
 };
 
-static int initiate_a_connection(struct connection *c, void *arg)
+bool initiate_connection(struct connection *c, fd_t whackfd, const char *remote_host)
 {
 	threadtime_t inception  = threadtime_start();
-	struct initiate_stuff *is = (struct initiate_stuff *)arg;
-
 	struct connection *old = push_cur_connection(c);
 
-	/* turn on any extra debugging asked for */
-	lmod_merge(&c->extra_debugging, is->more_debugging);
-	lmod_merge(&c->extra_impairing, is->more_impairing);
-
 	/* If whack supplied a remote IP, fill it in if we can */
-	if (is->remote_host != NULL && isanyaddr(&c->spd.that.host_addr)) {
+	if (remote_host != NULL && isanyaddr(&c->spd.that.host_addr)) {
 		ip_address remote_ip;
 
-		ttoaddr_num(is->remote_host, 0, AF_UNSPEC, &remote_ip);
+		ttoaddr_num(remote_host, 0, AF_UNSPEC, &remote_ip);
 
 		if (c->kind != CK_TEMPLATE) {
 			log_connection(RC_NOPEERIP, c,
@@ -208,7 +200,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 		 */
 		log_connection(RC_LOG|WHACK_STREAM, c,
 			       "instantiated connection "PRI_CONNECTION" with remote IP set to %s",
-			       pri_connection(d, &cb), is->remote_host);
+			       pri_connection(d, &cb), remote_host);
 		/* flip cur_connection */
 		c = d;
 		pop_cur_connection(old);
@@ -234,7 +226,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 		return 0;
 	}
 
-	if ((is->remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+	if ((remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
 				log_connection(RC_NOPEERIP, c,
@@ -360,35 +352,35 @@ static int initiate_a_connection(struct connection *c, void *arg)
 
 	dbg("connection '%s' +POLICY_UP", c->name);
 	c->policy |= POLICY_UP;
-	ipsecdoi_initiate(is->whackfd, c, c->policy, 1, SOS_NOBODY, &inception, NULL);
+	ipsecdoi_initiate(whackfd, c, c->policy, 1, SOS_NOBODY, &inception, NULL);
 	pop_cur_connection(old);
 	return 1;
 }
 
-void initiate_connection(const char *name, fd_t whackfd,
-			 lmod_t more_debugging,
-			 lmod_t more_impairing,
-			 char *remote_host)
+static int initiate_a_connection(struct connection *c, void *arg)
 {
-	struct connection *c = conn_by_name(name, FALSE, FALSE);
-	int count;
+	const struct initiate_stuff *is = arg;
+	return initiate_connection(c, is->whackfd, is->remote_host) ? 1 : 0;
+}
 
+void initiate_connections_by_name(const char *name, fd_t whackfd,
+				  const char *remote_host)
+{
 	passert(name != NULL);
-	struct initiate_stuff is = {
-		.whackfd = whackfd, /*on-stack*/
-		.more_debugging = more_debugging,
-		.more_impairing = more_impairing,
-		.remote_host = remote_host,
-	};
 
+	struct connection *c = conn_by_name(name, FALSE, FALSE);
 	if (c != NULL) {
-		if (!initiate_a_connection(c, &is))
+		if (!initiate_connection(c, whackfd, remote_host))
 			whack_log(RC_FATAL, "failed to initiate %s", c->name);
 		return;
 	}
 
 	loglog(RC_COMMENT, "initiating all conns with alias='%s'", name);
-	count = foreach_connection_by_alias(name, initiate_a_connection, &is);
+	struct initiate_stuff is = {
+		.whackfd = whackfd, /*on-stack*/
+		.remote_host = remote_host,
+	};
+	int count = foreach_connection_by_alias(name, initiate_a_connection, &is);
 
 	if (count == 0) {
 		whack_log(RC_UNKNOWN_NAME,
@@ -463,9 +455,7 @@ void restart_connections_by_peer(struct connection *const c)
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
 					d->dnshostname, &d->spd.that.host_addr))
-				initiate_connection(d->name, null_fd,
-						    empty_lmod, empty_lmod,
-						    NULL);
+				initiate_connections_by_name(d->name, null_fd, NULL);
 		}
 	}
 	pfreeany(dnshostname);
@@ -1148,7 +1138,7 @@ static void connection_check_ddns1(struct connection *c)
 	update_host_pairs(c);
 	if (c->policy & POLICY_UP) {
 		dbg("ddns: re-initiating connection '%s'", c->name);
-		initiate_connection(c->name, null_fd, empty_lmod, empty_lmod, NULL);
+		initiate_connections_by_name(c->name, null_fd, NULL);
 	} else {
 		dbg("ddns: : connection '%s' was updated, but does not want to be up",
 			c->name);
@@ -1161,8 +1151,7 @@ static void connection_check_ddns1(struct connection *c)
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
 		if (c != d && same_in_some_sense(c, d) && (d->policy & POLICY_UP))
-			initiate_connection(d->name, null_fd,
-					    empty_lmod, empty_lmod, NULL);
+			initiate_connections_by_name(d->name, null_fd, NULL);
 	}
 }
 
@@ -1250,8 +1239,6 @@ void connection_check_phase2(void)
 				/* start a new connection. Something wanted it up */
 				struct initiate_stuff is = {
 					.whackfd = null_fd/*on-stack*/,
-					.more_debugging = empty_lmod,
-					.more_impairing = empty_lmod,
 					.remote_host = NULL,
 				};
 				initiate_a_connection(c, &is);

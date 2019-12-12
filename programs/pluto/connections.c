@@ -104,9 +104,14 @@ static bool idr_wildmatch(const struct end *this, const struct id *b);
 /*
  * Find a connection by name.
  *
- * If strict, don't accept a CK_INSTANCE.
- * Move the winner (if any) to the front.
- * If none is found, and strict, a diagnostic is logged to whack.
+ * strict: don't accept a CK_INSTANCE.
+ * quiet: don't log failure
+ *
+ * If none is found, and strict&&!queit, a diagnostic is logged to
+ * whack.
+ *
+ * XXX: Fun fact: this function re-orders the list, moving the entry
+ * to the front as a side effect (ulgh)!.
  */
 struct connection *conn_by_name(const char *nm, bool strict, bool quiet)
 {

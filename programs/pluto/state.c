@@ -73,7 +73,7 @@
 #include "enum_names.h"
 #include "crypt_dh.h"
 #include "hostpair.h"
-
+#include "initiate.h"
 #include "kernel.h"
 
 #include <nss.h>
@@ -244,9 +244,26 @@ void revive_conns(void)
 	 * DELAY.  See note above in add_revival().
 	 */
 	while (revivals != NULL) {
-		libreswan_log("Initiating connection %s which received a Delete/Notify but must remain up per local policy",
-			revivals->name);
-		initiate_connection(revivals->name, null_fd, empty_lmod, empty_lmod, NULL);
+		libreswan_log("initiating connection %s which received a Delete/Notify but must remain up per local policy",
+			      revivals->name);
+		struct connection *c = conn_by_name(revivals->name,
+						    TRUE/*strict: don't accept CK_INSTANCE*/,
+						    TRUE/*quiet: be quiet on failure; see below*/);
+		/*
+		 * Above call. with quiet=false, would try to log
+		 * using whack_log(); but that's useless as the global
+		 * whack_log_fd is only valid while in the whack
+		 * handler.
+		 */
+		if (c == NULL) {
+			loglog(RC_UNKNOWN_NAME, "no connection named \"%s\"", revivals->name);
+		} else if (!initiate_connection(c, null_fd, NULL)) {
+			log_connection(RC_FATAL, c, "failed to initiate connection");
+		}
+		/*
+		 * Danger! The free_revival() call removes head,
+		 * replacing it with the next in the list.
+		 */
 		free_revival(&revivals);
 	}
 }

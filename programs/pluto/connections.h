@@ -396,11 +396,6 @@ extern size_t format_end(char *buf, size_t buf_len,
 
 struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm);
-extern void initiate_connection(const char *name,
-				fd_t whackfd,
-				lmod_t more_debugging,
-				lmod_t more_impairing,
-				char *remote_host);
 extern void restart_connections_by_peer(struct connection *c);
 extern void flush_revival(const struct connection *c);
 
