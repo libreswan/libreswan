@@ -3081,35 +3081,35 @@ bool drop_new_exchanges(void)
 	return cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_max_halfopen;
 }
 
-void show_globalstate_status(void)
+void show_globalstate_status(fd_t whackfd)
 {
 	unsigned shunts = show_shunt_count();
 
-	whack_log_comment("config.setup.ike.ddos_threshold=%u", pluto_ddos_threshold);
-	whack_log_comment("config.setup.ike.max_halfopen=%u", pluto_max_halfopen);
+	whack_print(whackfd, "config.setup.ike.ddos_threshold=%u", pluto_ddos_threshold);
+	whack_print(whackfd, "config.setup.ike.max_halfopen=%u", pluto_max_halfopen);
 
 	/* technically shunts are not a struct state's - but makes it easier to group */
-	whack_log_comment("current.states.all="PRI_CAT, shunts + total_sa());
-	whack_log_comment("current.states.ipsec="PRI_CAT, cat_count[CAT_ESTABLISHED_CHILD_SA]);
-	whack_log_comment("current.states.ike="PRI_CAT, total_ike_sa());
-	whack_log_comment("current.states.shunts=%u", shunts);
-	whack_log_comment("current.states.iketype.anonymous="PRI_CAT,
+	whack_print(whackfd, "current.states.all="PRI_CAT, shunts + total_sa());
+	whack_print(whackfd, "current.states.ipsec="PRI_CAT, cat_count[CAT_ESTABLISHED_CHILD_SA]);
+	whack_print(whackfd, "current.states.ike="PRI_CAT, total_ike_sa());
+	whack_print(whackfd, "current.states.shunts=%u", shunts);
+	whack_print(whackfd, "current.states.iketype.anonymous="PRI_CAT,
 			  cat_count_ike_sa[CAT_ANONYMOUS]);
-	whack_log_comment("current.states.iketype.authenticated="PRI_CAT,
+	whack_print(whackfd, "current.states.iketype.authenticated="PRI_CAT,
 			  cat_count_ike_sa[CAT_AUTHENTICATED]);
-	whack_log_comment("current.states.iketype.halfopen="PRI_CAT,
+	whack_print(whackfd, "current.states.iketype.halfopen="PRI_CAT,
 			  cat_count[CAT_HALF_OPEN_IKE_SA]);
-	whack_log_comment("current.states.iketype.open="PRI_CAT,
+	whack_print(whackfd, "current.states.iketype.open="PRI_CAT,
 			  cat_count[CAT_OPEN_IKE_SA]);
 	for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
 		const struct finite_state *ss = finite_states[s];
-		whack_log_comment("current.states.enumerate.%s="PRI_CAT,
-				  ss->name, state_count[s]);
+		whack_print(whackfd, "current.states.enumerate.%s="PRI_CAT,
+			    ss->name, state_count[s]);
 	}
 	for (enum state_kind s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
 		const struct finite_state *ss = finite_states[s];
-		whack_log_comment("current.states.enumerate.%s="PRI_CAT,
-				  ss->name, state_count[s]);
+		whack_print(whackfd, "current.states.enumerate.%s="PRI_CAT,
+			    ss->name, state_count[s]);
 	}
 }
 

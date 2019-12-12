@@ -532,7 +532,7 @@ static bool whack_process(fd_t whackfd, const struct whack_message *const m)
 		show_status();
 
 	if (m->whack_global_status)
-		show_global_status();
+		show_global_status(whackfd);
 
 	if (m->whack_clear_stats)
 		clear_pluto_stats();

@@ -178,24 +178,31 @@ extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 
 
 /*
- * struct lswlog primitives
+ * Whack only logging.
+ *
+ * None of these functions add a contex prefix (such as connection
+ * name).  If that's really really needed then use
+ * log_*(WHACK_STREAM,...) above.
+ *
+ * whack_print() output completely suppresses the 'NNN ' prefix.  It
+ * also requires a valid whackfd.  It should only be used by raw-print
+ * commands, namely 'show global-stats'.
+ *
+ * whack_show() output includes the '000 ' prefix (RC_COMMENT).  It
+ * also requires a valid whackfd.  It should only be used by show
+ * commands.
  */
 
 void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
-
-/*
- * Like whack_log(RC_COMMENT, ...) but suppress the 'NNN ' prefix.
- *
- * XXX: whack_log_comment() -> whack_print().
- */
-#define whack_log_comment(FMT, ...) whack_log(RC_PRINT, FMT,##__VA_ARGS__)
+void whack_print(fd_t whackfd, const char *message, ...) PRINTF_LIKE(2);
+void whack_show(fd_t whackfd, const char *message, ...) PRINTF_LIKE(2);
 
 /* show status, usually on whack log */
 extern void show_status(void);
 
 extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
-extern void show_global_status(void);
+extern void show_global_status(fd_t whackfd);
 
 enum linux_audit_kind {
 	LAK_PARENT_START,

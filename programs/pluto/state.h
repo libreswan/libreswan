@@ -881,7 +881,7 @@ extern bool state_is_busy(const struct state *st);
 extern bool verbose_state_busy(const struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
-extern void show_globalstate_status(void);
+extern void show_globalstate_status(fd_t whackfd);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
