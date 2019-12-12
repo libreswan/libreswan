@@ -782,7 +782,7 @@ void log_jambuf(lset_t rc_flags, fd_t object_fd, jambuf_t *buf)
 static void broadcast(lset_t rc_flags, fd_t object_fd,
 		      const struct state *st,
 		      const struct connection *c,
-		      const ip_endpoint *from,
+		      const struct msg_digest *md,
 		      const char *message, va_list ap)
 {
 	LSWBUF(buf) {
@@ -796,7 +796,7 @@ static void broadcast(lset_t rc_flags, fd_t object_fd,
 		 * Can a shorter prefix be used?
 		 */
 		/* jam_debug_prefix(buf, st, c, from) */
-		jam_log_prefix(buf, st, c, from);
+		jam_log_prefix(buf, st, c, md != NULL ? &md->sender : NULL);
 		jam_va_list(buf, message, ap);
 		log_jambuf(rc_flags, object_fd, buf);
 	}
@@ -805,13 +805,13 @@ static void broadcast(lset_t rc_flags, fd_t object_fd,
 void log_message(lset_t rc_flags,
 		 const struct state *st,
 		 const struct connection *c,
-		 const ip_endpoint *from,
+		 const struct msg_digest *md,
 		 const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
 	fd_t whackfd = (st != NULL ? st->st_whack_sock : null_fd);
-	broadcast(rc_flags, whackfd, st, c, from, format, ap);
+	broadcast(rc_flags, whackfd, st, c, md, format, ap);
 	va_end(ap);
 }
 
@@ -821,7 +821,7 @@ void log_pending(lset_t rc_flags, const struct pending *pending,
 	va_list ap;
 	va_start(ap, format);
 	broadcast(rc_flags, pending->whack_sock,
-		  NULL/*ST*/, pending->connection, NULL/*from*/,
+		  NULL/*ST*/, pending->connection, NULL/*MD*/,
 		  format, ap);
 	va_end(ap);
 }
@@ -832,7 +832,7 @@ void log_state(lset_t rc_flags, const struct state *st,
 	va_list ap;
 	va_start(ap, format);
 	broadcast(rc_flags, st->st_whack_sock,
-		  st/*ST*/, NULL/*connection**/, NULL/*from*/,
+		  st/*ST*/, NULL/*connection**/, NULL/*MD*/,
 		  format, ap);
 	va_end(ap);
 }
@@ -844,19 +844,19 @@ void log_connection(lset_t rc_flags, const struct connection *c,
 	va_start(ap, format);
 	broadcast(rc_flags,
 		  null_fd, /* no object FD */
-		  NULL/*state*/, c/*connection**/, NULL/*from*/,
+		  NULL/*state*/, c/*connection**/, NULL/*MD*/,
 		  format, ap);
 	va_end(ap);
 }
 
-void log_from(lset_t rc_flags, const ip_endpoint *from,
-	      const char *format, ...)
+void log_md(lset_t rc_flags, const struct msg_digest *md,
+	    const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
 	broadcast(rc_flags,
 		  null_fd, /* no object FD */
-		  NULL/*state*/, NULL/*connection**/, from/*from*/,
+		  NULL/*state*/, NULL/*connection**/, md/*MD*/,
 		  format, ap);
 	va_end(ap);
 }

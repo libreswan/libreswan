@@ -108,39 +108,51 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	/* we do not do anything with *to* addresses yet... we will */
 
 	/*
-	 * Try to decode the from address and then use it to report
-	 * any actual I/O error.  As a special case, when sockaddr is
-	 * empty, generate custom error messages (why? the text isn't
-	 * the best).
+	 * Try to decode the from address.
+	 *
+	 * If that fails report some sense of error and then always
+	 * give up.
 	 */
 	ip_endpoint sender;
 	const char *from_ugh = sockaddr_to_endpoint(&from, from_len, &sender);
-	if (packet_len == -1) {
-		if (from_len == sizeof(from) &&
-		    all_zero((const void *)&from, sizeof(from))) {
-			if (packet_errno == ECONNREFUSED) {
-				/*
-				 * Tone down scary message for vague event: We
-				 * get "connection refused" in response to
-				 * some datagram we sent, but we cannot tell
-				 * which one.
-				 */
-				plog_global("some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)");
-			} else {
-				plog_global("recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: undisclosed "PRI_ERRNO,
-					    ifp->ip_dev->id_rname, pri_errno(packet_errno));
-			}
-		} else if (from_ugh != NULL) {
-			plog_global("recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
-				    ifp->ip_dev->id_rname, from_ugh, pri_errno(packet_errno));
+	if (from_ugh != NULL) {
+		if (packet_len >= 0) {
+			/* technically it worked, but returned value was useless */
+			plog_global("recvfrom on %s returned malformed source sockaddr: %s",
+				    ifp->ip_dev->id_rname, from_ugh);
+		} else if (from_len == sizeof(from) &&
+			   all_zero((const void *)&from, sizeof(from)) &&
+			   packet_errno == ECONNREFUSED) {
+			/*
+			 * Tone down scary message for vague event: We
+			 * get "connection refused" in response to
+			 * some datagram we sent, but we cannot tell
+			 * which one.
+			 */
+			plog_global("recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
+				    ifp->ip_dev->id_rname);
 		} else {
-			plog_from(&sender, "recvfrom on %s failed "PRI_ERRNO,
-				  ifp->ip_dev->id_rname, pri_errno(packet_errno));
+			/* if from==0, this prints "unspecified", not "undisclosed", oops */
+			plog_global("recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
+				    ifp->ip_dev->id_rname, from_ugh,
+				    pri_errno(packet_errno));
 		}
 		return NULL;
-	} else if (from_ugh != NULL) {
-		plog_from(&sender, "recvfrom on %s returned malformed source sockaddr: %s",
-			  ifp->ip_dev->id_rname, from_ugh);
+	}
+
+	/*
+	 * Managed to decode the from address; fudge up an MD so that
+	 * it be used as log context prefix.
+	 */
+
+	struct msg_digest stack_md = {
+		.iface = ifp,
+		.sender = sender,
+	};
+
+	if (packet_len < 0) {
+		plog_md(&stack_md, "recvfrom on %s failed "PRI_ERRNO,
+			ifp->ip_dev->id_rname, pri_errno(packet_errno));
 		return NULL;
 	}
 
@@ -148,13 +160,13 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		uint32_t non_esp;
 
 		if (packet_len < (int)sizeof(uint32_t)) {
-			plog_from(&sender, "too small packet (%d)",
-				  packet_len);
+			plog_md(&stack_md, "too small packet (%d)",
+				packet_len);
 			return NULL;
 		}
 		memcpy(&non_esp, _buffer, sizeof(uint32_t));
 		if (non_esp != 0) {
-			plog_from(&sender, "has no Non-ESP marker");
+			plog_md(&stack_md, "has no Non-ESP marker");
 			return NULL;
 		}
 		_buffer += sizeof(uint32_t);
@@ -172,7 +184,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		    packet_len >= NON_ESP_MARKER_SIZE &&
 		    memeq(_buffer, non_ESP_marker,
 			   NON_ESP_MARKER_SIZE)) {
-			plog_from(&sender, "mangled with potential spurious non-esp marker");
+			plog_md(&stack_md, "mangled with potential spurious non-esp marker");
 			return NULL;
 		}
 	}
@@ -194,14 +206,11 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	 * Clone actual message contents and set up md->packet_pbs to
 	 * describe it.
 	 */
-	struct msg_digest *md = alloc_md("msg_digest in read_packet");
-	md->iface = ifp;
-	md->sender = sender;
-
-	init_pbs(&md->packet_pbs
-		 , clone_bytes(_buffer, packet_len,
-			       "message buffer in read_packet()")
-		 , packet_len, "packet");
+	struct msg_digest *md = clone_thing(stack_md, "msg_digest in read_packet");
+	init_pbs(&md->packet_pbs,
+		 clone_bytes(_buffer, packet_len,
+			     "message buffer in read_packet()"),
+		 packet_len, "packet");
 
 	endpoint_buf eb;
 	endpoint_buf b2;

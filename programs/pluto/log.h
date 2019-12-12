@@ -107,7 +107,7 @@ extern void log_pop_from(ip_address old_from, where_t where);
 void log_message(lset_t rc_flags,
 		 const struct state *st,
 		 const struct connection *c,
-		 const ip_endpoint *from,
+		 const struct msg_digest *md,
 		 const char *format, ...) PRINTF_LIKE(5);
 
 void log_pending(lset_t rc_flags,
@@ -122,12 +122,23 @@ void log_connection(lset_t rc_flags,
 		    const struct connection *c,
 		    const char *format, ...)	PRINTF_LIKE(3);
 
-#define log_md(FLAGS, MD, MESSAGE, ...) \
-	log_from(FLAGS, &(MD)->sender, MESSAGE,##__VA_ARGS__)
+/*
+ * XXX: log_md() should never be called directly - *log_md() is only
+ * useful when in the packet (MD) event handler.  Since this means it
+ * isn't in the whack event handler there can't be a whack calling
+ * log_md(RC) is useless.
+ */
 
-void log_from(lset_t rc_flags,
-	      const ip_endpoint *from,
-	      const char *format, ...)	PRINTF_LIKE(3);
+void log_md(lset_t rc_flags,
+	    const struct msg_digest *md,
+	    const char *format, ...) PRINTF_LIKE(3);
+#define plog_md(MD, MESSAGE, ...) log_md(LOG_STREAM, MD, MESSAGE,##__VA_ARGS__)
+#define dbg_md(MD, MESSAGE, ...)					\
+	{								\
+		if (DBGP(DBG_BASE)) {					\
+			log_md(DEBUG_STREAM, MD, MESSAGE,##__VA_ARGS__); \
+		}							\
+	}
 
 /*
  * Wrappers.
@@ -151,8 +162,6 @@ void log_from(lset_t rc_flags,
 		log_jambuf(LOG_STREAM, null_fd, BUF))
 
 #define plog_global(MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
-#define plog_from(FROM, MESSAGE, ...) log_from(LOG_STREAM, FROM, MESSAGE,##__VA_ARGS__);
-#define plog_md(MD, MESSAGE, ...) log_md(LOG_STREAM, MD, MESSAGE,##__VA_ARGS__);
 #define plog_connection(C, MESSAGE, ...) log_connection(LOG_STREAM, C, MESSAGE,##__VA_ARGS__);
 #define plog_state(ST, MESSAGE, ...) log_state(LOG_STREAM, ST, MESSAGE,##__VA_ARGS__);
 
