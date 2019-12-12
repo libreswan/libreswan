@@ -48,6 +48,8 @@ KVM_UPGRADE_PACKAGES ?= \
     git \
     glibc-devel \
     hping3 \
+    htop \
+    iftop \
     ike-scan \
     iproute \
     iptables \
