@@ -242,10 +242,12 @@ void revive_conns(void)
 	/*
 	 * XXX: Revive all listed connections regardless of their
 	 * DELAY.  See note above in add_revival().
+	 *
+	 * XXX: since this is called from the event loop, the global
+	 * whack_log_fd is invalid so specifying RC isn't exactly
+	 * useful.
 	 */
 	while (revivals != NULL) {
-		libreswan_log("initiating connection %s which received a Delete/Notify but must remain up per local policy",
-			      revivals->name);
 		struct connection *c = conn_by_name(revivals->name,
 						    TRUE/*strict: don't accept CK_INSTANCE*/,
 						    TRUE/*quiet: be quiet on failure; see below*/);
@@ -256,9 +258,13 @@ void revive_conns(void)
 		 * handler.
 		 */
 		if (c == NULL) {
-			loglog(RC_UNKNOWN_NAME, "no connection named \"%s\"", revivals->name);
-		} else if (!initiate_connection(c, null_fd, NULL)) {
-			log_connection(RC_FATAL, c, "failed to initiate connection");
+			loglog(RC_UNKNOWN_NAME, "failed to initiate connection \"%s\" which received a Delete/Notify but must remain up per local policy; connection no longer exists", revivals->name);
+		} else {
+			log_connection(RC_LOG, c,
+				       "initiating connection which received a Delete/Notify but must remain up per local policy");
+			if (!initiate_connection(c, null_fd, NULL)) {
+				log_connection(RC_FATAL, c, "failed to initiate connection");
+			}
 		}
 		/*
 		 * Danger! The free_revival() call removes head,
@@ -1135,7 +1141,7 @@ void delete_state(struct state *st)
 			 * Presumably this is an old state that has
 			 * either been rekeyed or replaced.
 			 *
-			 * XXX: Should not even be here through!  The
+			 * XXX: Should not even be here though!  The
 			 * old IKE SA should be going through delete
 			 * state transition that, at the end, cleanly
 			 * deletes it with none of this guff.
@@ -1143,11 +1149,11 @@ void delete_state(struct state *st)
 			dbg("IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
 			    st->st_serialno, c->name, newer_sa);
 		} else if (impair_revival) {
-			libreswan_log("IMPAIR: skipping revival of connection '%s' that is supposed to remain up",
-				      c->name);
+			log_state(RC_LOG, st,
+				  "IMPAIR: skipping revival of connection that is supposed to remain up");
 		} else {
-			plog_state(st, "deleting IKE SA for connection '%s' but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
-				   c->name);
+			/* XXX: why not whack? */
+			plog_state(st, "deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS");
 			add_revival(c);
 		}
 	}

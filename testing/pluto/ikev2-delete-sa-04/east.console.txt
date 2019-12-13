@@ -22,8 +22,8 @@ east #
  # confirm the revive conn code triggered
 east #
  hostname | grep east > /dev/null && grep -e 'but must remain up per local policy' -e '^[^|].*EVENT_REVIVE_CONNS' /tmp/pluto.log
-"west-east-auto" #1: deleting IKE SA for connection 'west-east-auto' but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
-Initiating connection west-east-auto which received a Delete/Notify but must remain up per local policy
+"west-east-auto" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+"west-east-auto": initiating connection which received a Delete/Notify but must remain up per local policy
 east #
 east #
  ../bin/check-for-core.sh
