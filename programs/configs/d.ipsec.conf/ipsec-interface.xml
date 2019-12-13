@@ -1,0 +1,26 @@
+<varlistentry>
+<term><emphasis remap='B'>ipsec-interface</emphasis></term>
+<listitem>
+<para>
+Create a new IPsec interface or use an existing interface (type xfrm) for
+"Routing based VPNs" (as opposed to "Policy based VPNs").
+<emphasis remap='I'>ipsec-interface=yes</emphasis> will create an interface
+<emphasis>ipsec1</emphasis> <emphasis remap='I'>ipsec-interface=X</emphasis>
+where X is the if_id, create new <emphasis>ipsecX</emphasis>
+or use an existing ipsecX -- created by systemd-networkd, or OpenWRT network config.
+<emphasis remap='I'>ipsec-interface=no</emphasis> disable the interface.
+</para>
+<para>
+The ipsec-interface, aka xfrmi, can be used to route egress traffic
+for encryption, and decrypted traffic will ingress from this interface,
+this connection. All traffic that is routed to this interface will be automatically
+encrypted when there is a IPsec SA policy covering the
+source/destination traffic. Tools such as tcpdump, iptables or tools that need traffic counters can be
+used on all cleartext pre-encrypt and post-decrypt traffic on the device.
+IPsec interfaces are currently only supported on Linux with XFRM/NETKEY. The
+_updown script handles certain Linux specific interfaces settings
+required for proper functioning (forwarding, routing rules for IPsec/ESP traffic).
+When the leftsubet is equal to rightsubnet the routing should be manged by administrators.
+</para>
+</listitem>
+</varlistentry>
