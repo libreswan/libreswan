@@ -1283,7 +1283,6 @@ static struct state *find_v2_sa_by_responder_wip(struct ike_sa *ike, const msgid
  * But if it is a fragment, much of this is skipped.
  */
 static bool is_duplicate_request(struct ike_sa *ike,
-				 struct state *responder,
 				 struct msg_digest *md)
 {
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
@@ -1293,32 +1292,28 @@ static bool is_duplicate_request(struct ike_sa *ike,
 	dbg("#%lu st.st_msgid_lastrecv %jd md.hdr.isa_msgid %08jx",
 	    ike->sa.st_serialno, ike->sa.st_v2_msgid_windows.responder.recv, msgid);
 
-	/* only a true responder */
-	pexpect(responder == NULL ||
-		responder->st_v2_msgid_wip.responder == msgid);
-
 	/* the sliding window is really small?!? */
 	pexpect(ike->sa.st_v2_msgid_windows.responder.recv ==
 		ike->sa.st_v2_msgid_windows.responder.sent);
 
-	if (msgid < ike->sa.st_v2_msgid_windows.responder.recv) {
+	if (msgid < ike->sa.st_v2_msgid_windows.responder.sent) {
 		/*
-		 * this is an OLD retransmit. we can't do anything
+		 * this is an OLD retransmit and out sliding window
+		 * holds only the most recent response. we can't do
+		 * anything
 		 */
-		pexpect(responder == NULL);
-		libreswan_log("received too old retransmit: %jd < %jd",
-			      msgid, ike->sa.st_v2_msgid_windows.responder.recv);
+		log_state(RC_LOG, &ike->sa,
+			  "received too old retransmit: %jd < %jd",
+			  msgid, ike->sa.st_v2_msgid_windows.responder.sent);
 		return true;
-	}
-
-	if (msgid == ike->sa.st_v2_msgid_windows.responder.sent) {
+	} else if (msgid == ike->sa.st_v2_msgid_windows.responder.sent) {
 		/*
 		 * This was the last request processed and,
 		 * presumably, a response was sent.  Retransmit the
 		 * saved response (the response was saved right?).
 		 */
 		if (ike->sa.st_tpacket.len == 0 && ike->sa.st_v2_tfrags == NULL) {
-			FAIL_V2_MSGID(ike, responder,
+			FAIL_V2_MSGID(ike, &ike->sa,
 				      "retransmission for messsage %jd exchange %s failed responder.sent %jd - there is no stored message or fragments to retransmit",
 				      msgid, enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 				      ike->sa.st_v2_msgid_windows.responder.sent);
@@ -1338,39 +1333,65 @@ static bool is_duplicate_request(struct ike_sa *ike,
 			fragment = skf.isaskf_number;
 		}
 		if (fragment == 0) {
-			libreswan_log("received duplicate %s message request (Message ID %jd); retransmitting response",
-				      enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-				      msgid);
+			log_state(RC_LOG, &ike->sa,
+				  "received duplicate %s message request (Message ID %jd); retransmitting response",
+				  enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+				  msgid);
 			send_recorded_v2_ike_msg(&ike->sa, "ikev2-responder-retransmit");
 		} else if (fragment == 1) {
-			libreswan_log("received duplicate %s message request (Message ID %jd, fragment %u); retransmitting response",
-				      enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-				      msgid, fragment);
+			log_state(RC_LOG, &ike->sa,
+				  "received duplicate %s message request (Message ID %jd, fragment %u); retransmitting response",
+				  enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+				  msgid, fragment);
 			send_recorded_v2_ike_msg(&ike->sa, "ikev2-responder-retransmt (fragment 1)");
 		} else {
-			dbg_v2_msgid(ike, responder,
+			dbg_v2_msgid(ike, &ike->sa,
 				     "received duplicate %s message request (Message ID %jd, fragment %u); discarded as not fragment 1",
 				     enum_short_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 				     msgid, fragment);
 		}
 		return true;
+	} else {
+		/* all that is left */
+		pexpect(msgid > ike->sa.st_v2_msgid_windows.responder.sent);
 	}
 
-	/* all that is left */
-	pexpect(msgid > ike->sa.st_v2_msgid_windows.responder.sent);
+	/*
+	 * Is something already processing this request?
+	 *
+	 * Processing only starts for real once a responder has
+	 * accumulated all fragments and obtained KEYMAT.
+	 */
+	{
+		struct state *responder = find_v2_sa_by_responder_wip(ike, md->hdr.isa_msgid);
+		/* only a true responder */
+		pexpect(responder == NULL ||
+			responder->st_v2_msgid_wip.responder == msgid);
+		if (responder != NULL) {
+			/* this generates the log message */
+			pexpect(verbose_state_busy(responder));
+			return true;
+		}
+	}
 
-	if (responder != NULL && responder->st_v2_rfrags == NULL) {
+	/*
+	 * The IKE SA responder, having accumulated all the fragments
+	 * for the IKE_AUTH request, is computing the SKEYSEED.  When
+	 * SKEYSEED finishes .st_v2_rfrags is wiped and the Message
+	 * IDs updated to flag that the message as work-in-progress
+	 * (so above check will have succeeded).
+	 */
+	if (state_is_busy(&ike->sa)) {
 		/*
-		 * Packet currently being processed.  Having
-		 * .st_v2_rfrag==NULL could mean either that all the
-		 * fragments have been re-assembled, or there were
-		 * never any fragments.
-		 *
 		 * To keep tests happy, try to output text matching
-		 * verbose_state_busy().
-		 *
-		 * If things are fragmented, only log the first
-		 * fragment.
+		 * verbose_state_busy(); but with some extra detail.
+		 */
+#if 0
+		/*
+		 * XXX: hang onto this code for now - it shows how to
+		 * lightly unpack fragments.  Will be useful when
+		 * fragmentation code is moved out of the state lookup
+		 * code.
 		 */
 		unsigned fragment = 0;
 		if (md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
@@ -1382,47 +1403,35 @@ static bool is_duplicate_request(struct ike_sa *ike,
 			fragment = skf.isaskf_number;
 		}
 		if (fragment == 0) {
-			libreswan_log("discarding packet received during asynchronous work (DNS or crypto) in %s",
-				      responder->st_state->name);
-		} else if (fragment <= 1) {
-			libreswan_log("discarding fragments received during asynchronous work (DNS or crypto) in %s",
-				      responder->st_state->name);
+			log_state(RC_LOG, &ike->sa,
+				  "discarding packet received during asynchronous work (DNS or crypto) in %s",
+				  ike->sa.st_state->name);
+		} else if (fragment == 1) {
+			log_state(RC_LOG, &ike->sa,
+				  "discarding fragments received during asynchronous work (DNS or crypto) in %s",
+				  ike->sa.st_state->name);
 		} else {
-			dbg_v2_msgid(ike, responder, "discarding fragments received during asynchronous work (DNS or crypto) in %s",
-				     responder->st_state->name);
+			dbg_v2_msgid(ike, &ike->sa,
+				     "discarding fragment %u received during asynchronous work (DNS or crypto) in %s",
+				     fragment, ike->sa.st_state->name);
 		}
+#else
+		log_state(RC_LOG, &ike->sa,
+			  "discarding packet received during asynchronous work (DNS or crypto) in %s",
+			  ike->sa.st_state->name);
+#endif
 		return true;
 	}
 
-	/*
-	 * For instance, the IKE SA initiator, having accumulated all
-	 * the fragments for the IKE_AUTH response, is computing the
-	 * SKEYSEED (which needs to happen before the fragments can be
-	 * decrypted and merged into a single message).
-	 */
-	if (responder != NULL &&
-	    responder->st_v2_rfrags != NULL &&
-	    responder->st_v2_rfrags->count == responder->st_v2_rfrags->total) {
-		/* bogus message to keep test results happy */
-		libreswan_log("discarding packet received during asynchronous work (DNS or crypto) in %s",
-			      responder->st_state->name);
-		return true;
-	}
-
-	/*
-	 * Since the above has detected and rejected a request that is
-	 * already been processed, can this happen?
-	 */
-	if (responder != NULL && verbose_state_busy(responder)) {
-		return true;
-	}
-
-	if (responder != NULL) {
-		pexpect(responder->st_v2_rfrags != NULL &&
-			responder->st_v2_rfrags->count < responder->st_v2_rfrags->total);
-		dbg_v2_msgid(ike, responder, "not a duplicate - responder is accumulating fragments");
+	if (ike->sa.st_v2_rfrags != NULL) {
+		pexpect(ike->sa.st_v2_rfrags->count < ike->sa.st_v2_rfrags->total);
+		dbg_v2_msgid(ike, &ike->sa,
+			     "not a duplicate - responder is accumulating fragments for message request %jd",
+			     msgid);
 	} else {
-		dbg_v2_msgid(ike, responder, "not a duplicate - message is new");
+		dbg_v2_msgid(ike, &ike->sa,
+			     "not a duplicate - message request %jd is new",
+			     msgid);
 	}
 
 	return false;
@@ -1516,8 +1525,9 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * XXX: rate_log() sends to whack which, while making
 		 * sense, but churns the test output.
 		 */
-		libreswan_log("%s message response with Message ID %jd has no matching SA",
-			      enum_name(&ikev2_exchange_names, md->hdr.isa_xchg), msgid);
+		log_state(RC_LOG, &ike->sa,
+			  "%s message response with Message ID %jd has no matching SA",
+			  enum_name(&ikev2_exchange_names, md->hdr.isa_xchg), msgid);
 		return true;
 	}
 
@@ -1935,66 +1945,11 @@ static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
 	struct msg_digest *md = *mdp;
 
 	/*
-	 * Use the IKE SA to find the state (ST) responsible for the
-	 * message.  This could be NULL and this could be the IKE SA.
-	 *
-	 * XXX: this and the duplicate code should be merged.
+	 * Deal with duplicate messages and busy states.
 	 */
 	struct state *st;
 	switch (v2_msg_role(md)) {
 	case MESSAGE_REQUEST:
-		st = find_v2_sa_by_responder_wip(ike, md->hdr.isa_msgid);
-		break;
-	case MESSAGE_RESPONSE:
-		st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
-		break;
-	default:
-		bad_case(v2_msg_role(md));
-	}
-
-	/*
-	 * If there's a state responsible for the message (i.e., ST
-	 * could stil be NULL), attribute all further logging to that
-	 * state; else the IKE SA.
-	 *
-	 * XXX: why the need to constantly pick a single winner and
-	 * switch to it?  Because tests expect messages to be logged
-	 * against a specific state.  It would be better of that code
-	 * specified that state as a parameter.
-	 */
-	if (st != NULL) {
-		/* XXX: debug-logging here is redundant */
-		push_cur_state(st);
-	} else if (ike != NULL) {
-		push_cur_state(&ike->sa);
-	}
-
-	/*
-	 * Now that cur-state has been set for logging, log if this
-	 * packet is really bogus.
-	 *
-	 * XXX: case in point of tests expecting this to be logged
-	 * against the child should it be found.
-	 */
-	if (md->fake_clone) {
-		libreswan_log("IMPAIR: processing a fake (cloned) message");
-	}
-
-	/*
-	 * Deal with duplicate messages and busy states.
-	 */
-	switch (v2_msg_role(md)) {
-	case MESSAGE_REQUEST:
-		/*
-		 * When ST!=NULL then there is a state processing
-		 * MSGID and the message should be dropped.  But wait,
-		 * ST!= NULL also occures when there's something
-		 * accumulating fragments.  duplicate() gets to sort
-		 * out the mess.
-		 */
-		if (is_duplicate_request(ike, st, md)) {
-			return;
-		}
 		/*
 		 * The IKE SA always processes requests.
 		 *
@@ -2003,12 +1958,39 @@ static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
 		 * that.
 		 *
 		 * The other quirk is with fragments; but the only
-		 * case that matters it is the IKE SA accumulating
+		 * case that matters it when the IKE SA accumulating
 		 * them.
 		 */
+		if (md->fake_clone) {
+			log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
+		}
+		/*
+		 * Is this duplicate?
+		 *
+		 * If MD is a fragment then it isn't considered a
+		 * duplicate.
+		 */
+		if (is_duplicate_request(ike, md)) {
+			return;
+		}
 		st = &ike->sa;
 		break;
 	case MESSAGE_RESPONSE:
+		/*
+		 * This is the response to an earlier request; use the
+		 * IKE SA to find the state that initiated the
+		 * exchange (sent that request).
+		 *
+		 * If the response is a fragment then ST will be
+		 * non-NULL; is_duplicate_state() gets to figure out
+		 * if the fragments are complete or need to wait
+		 * longer.
+		 */
+		st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
+		if (md->fake_clone) {
+			log_state(RC_LOG, st != NULL ? st : &ike->sa,
+				  "IMPAIR: processing a fake (cloned) message");
+		}
 		if (is_duplicate_response(ike, st, md)) {
 			return;
 		}
@@ -2017,6 +1999,19 @@ static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
 	default:
 		bad_case(v2_msg_role(md));
 	}
+
+	/*
+	 * Now that the state that is to process the message has been
+	 * selected, switch logging to it.
+	 *
+	 * XXX: why the need to constantly pick a single winner and
+	 * switch to it?  Because tests expect messages to be logged
+	 * against a specific state.  It would be better of that code
+	 * specified that state as a parameter.
+	 */
+	passert(st != NULL);
+	/* XXX: debug-logging this is redundant */
+	push_cur_state(st);
 
 	/*
 	 * If not already done above in the IKE_SA_INIT responder code
@@ -2041,23 +2036,6 @@ static void ike_process_packet(struct msg_digest **mdp, struct ike_sa *ike)
 			 */
 			return;
 		}
-	}
-
-	/*
-	 * Flag the state as responding to a request.
-	 *
-	 * The processing completes once the response has been sent
-	 * out, or things die and the state is deleted, or there's an
-	 * STF_IGNORE and the response is cancelled (for instance an
-	 * encrypted packet is corrupt).
-	 *
-	 * If the state is collecting fragments then it will have been
-	 * here before.  Hence the extra filter.  Is there something
-	 * better?
-	 */
-	if (v2_msg_role(md) == MESSAGE_REQUEST &&
-	    st->st_v2_rfrags == NULL) {
-		v2_msgid_start_responder(ike, st, md);
 	}
 
 	ikev2_process_state_packet(ike, st, mdp);
@@ -2230,23 +2208,22 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 */
 			if (!ikev2_decrypt_msg(st, md)) {
 				log_state(RC_LOG, st, "encrypted payload seems to be corrupt; dropping packet");
-				/* XXX: clears WIP by calling v2_msgid_cancel_responder() */
-				complete_v2_state_transition(st, mdp, STF_IGNORE);
 				return;
 			}
 			/*
-			 * Unpack the protected (but possibly not
-			 * authenticated) contents.
+			 * The message is protected - the integrity
+			 * check passed - so it was definitly sent by
+			 * the other end of the secured IKE SA.
 			 *
-			 * When unpacking an AUTH packet, the other
-			 * end hasn't yet been authenticated (and an
+			 * However, for an AUTH packet, the other end
+			 * hasn't yet been authenticated (and an
 			 * INFORMATIONAL exchange immediately
 			 * following AUTH be due to failed
 			 * authentication).
 			 *
-			 * If there's something wrong, then the IKE SA
-			 * gets abandoned, but a new new one may be
-			 * initiated.
+			 * If there's something wrong with the message
+			 * contents, then the IKE SA gets abandoned,
+			 * but a new new one may be initiated.
 			 *
 			 * See "2.21.2.  Error Handling in IKE_AUTH"
 			 * and "2.21.3.  Error Handling after IKE SA
@@ -2259,10 +2236,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * causes a delete, it says nothing for
 			 * exchanges that follow.
 			 *
-			 * For moment treat it the same ?!?!?!.  Given
-			 * the PAYLOAD ID that should identify the
-			 * problem isn't being returned this is the
-			 * least of our problems.
+			 * For moment treat it the same.  Given the
+			 * PAYLOAD ID that should identify the problem
+			 * isn't being returned this is the least of
+			 * our problems.
 			 */
 			struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
 			md->encrypted_payloads = ikev2_decode_payloads(st, md, &sk->pbs,
@@ -2271,15 +2248,28 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				switch (v2_msg_role(md)) {
 				case MESSAGE_REQUEST:
 				{
+					/*
+					 * Send back a protected error
+					 * response.  Need to first
+					 * put the IKE SA into
+					 * responder mode.
+					 */
+					v2_msgid_start_responder(ike, &ike->sa, md);
 					chunk_t data = chunk(md->encrypted_payloads.data,
 							     md->encrypted_payloads.data_size);
-					send_v2N_response_from_state(ike_sa(st), *mdp,
+					send_v2N_response_from_state(ike, *mdp,
 								     md->encrypted_payloads.n,
 								     &data);
 					break;
 				}
 				case MESSAGE_RESPONSE:
-					/* drop packet */
+					/*
+					 * Can't respond so kill the
+					 * IKE SA.  The secured
+					 * message contained crap so
+					 * there's little that can be
+					 * done.
+					 */
 					break;
 				default:
 					bad_case(v2_msg_role(md));
@@ -2348,13 +2338,10 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT &&
 			    md->hdr.isa_msgid == 0 &&
 			    v2_msg_role(md) == MESSAGE_REQUEST) {
-				pexpect(st->st_v2_msgid_wip.responder == 0);
+				pexpect(st->st_v2_msgid_wip.responder == -1);
 				send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
 				/* XXX: calls delete_state() */
 				complete_v2_state_transition(st, mdp, STF_FATAL);
-			} else {
-				/* XXX: clears WIP by calling v2_msgid_cancel_responder() */
-				complete_v2_state_transition(st, mdp, STF_IGNORE);
 			}
 			return;
 		}
@@ -2372,9 +2359,16 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * transition on something that was never
 			 * started?  Since this is fatal, the state
 			 * needs to be deleted.
+			 *
+			 * XXX: an alternative would be to treat this
+			 * like some new but as-of-yet not supported
+			 * message combination so just ignore it (but
+			 * update Message IDs).
 			 */
 			log_v2_payload_errors(st, md, &encrypted_payload_status);
 			if (v2_msg_role(md) == MESSAGE_REQUEST) {
+				pexpect(ike->sa.st_v2_msgid_wip.responder == -1);
+				v2_msgid_start_responder(ike, &ike->sa, md);
 				send_v2N_response_from_state(ike, md, v2N_INVALID_SYNTAX, NULL);
 			}
 			/* XXX: calls delete_state() */
@@ -2402,8 +2396,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 */
 		libreswan_log("no useful state microcode entry found for incoming packet");
 		/* "dropping message with no matching microcode" */
-		/* XXX: clears wip by calling v2_msgid_cancel_responder() */
-		complete_v2_state_transition(st, mdp, STF_IGNORE);
 		return;
 	}
 
@@ -2431,7 +2423,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		} else {
 			pexpect(IS_IKE_SA(st));
 			child = process_v2_child_ix(ike, svm);
-			v2_msgid_switch_responder(ike, child, md);
 		}
 
 		/*
@@ -2453,6 +2444,18 @@ static void v2_dispatch(struct ike_sa *ike, struct state *st,
 	struct msg_digest *md = *mdp;
 	md->st = st;
 	md->svm = svm;
+
+	/*
+	 * For the responder, update the work-in-progress Message ID
+	 * window (since work has commenced).
+	 *
+	 * Exclude the SKEYSEED calculation - the message has yet to
+	 * be decrypted so true work on the message is yet to comence.
+	 */
+	if (v2_msg_role(md) == MESSAGE_REQUEST &&
+	    !(svm->flags & SMF2_NO_SKEYSEED)) {
+		v2_msgid_start_responder(ike, st, md);
+	}
 
 	DBG(DBG_PARSING, {
 		    if (pbs_left(&md->message_pbs) != 0)

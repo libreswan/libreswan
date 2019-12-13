@@ -2711,13 +2711,6 @@ stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct ike_sa *ike,
 	pexpect(child == NULL);
 	struct state *st = &ike->sa;
 
-	/* for testing only */
-	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
-		libreswan_log(
-			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
-		return STF_IGNORE;
-	}
-
 	/*
 	 * the initiator sent us an encrypted payload. We need to calculate
 	 * our g^xy, and skeyseed values, and then decrypt the payload.
@@ -2778,6 +2771,13 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	/* The connection is "up", start authenticating it */
 	pexpect(child == NULL);
 	struct state *st = &ike->sa;
+
+	/* for testing only */
+	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
+		libreswan_log(
+			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		return STF_IGNORE;
+	}
 
 	/*
 	 * This log line establishes that the packet's been decrypted
