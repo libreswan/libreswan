@@ -57,7 +57,7 @@
  * queue an IPsec SA negotiation pending completion of a
  * suitable phase 1 (IKE SA)
  */
-void add_pending(fd_t whack_sock,
+void add_pending(struct fd *whack_sock,
 		 struct ike_sa *ike,
 		 struct connection *c,
 		 lset_t policy,
@@ -183,8 +183,8 @@ void release_pending_whacks(struct state *st, err_t story)
 	for (struct pending *p = *pp; p != NULL; p = p->next) {
 		dbg("%s: IKE SA #%lu "PRI_FD" has pending CHILD SA with socket "PRI_FD,
 		    __func__, p->ike->sa.st_serialno,
-		    PRI_fd(p->ike->sa.st_whack_sock),
-		    PRI_fd(p->whack_sock));
+		    pri_fd(p->ike->sa.st_whack_sock),
+		    pri_fd(p->whack_sock));
 		if (p->ike == ike_with_same_whack && fd_p(p->whack_sock)) {
 			if (!same_fd(st->st_whack_sock, p->whack_sock)) {
 				/* XXX: why not the log file? */
@@ -312,7 +312,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 
 struct connection *first_pending(const struct ike_sa *ike,
 				 lset_t *policy,
-				 fd_t *p_whack_sock)
+				 struct fd **p_whack_sock)
 {
 	struct pending **pp, *p;
 

@@ -15,7 +15,7 @@
 
 #include "fd.h"
 
-extern void quick_outI1(fd_t whack_sock,
+extern void quick_outI1(struct fd *whack_sock,
 			struct state *isakmp_sa,
 			struct connection *c,
 			lset_t policy,

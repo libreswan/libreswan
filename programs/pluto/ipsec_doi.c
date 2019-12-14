@@ -195,7 +195,7 @@ static initiator_function *pick_initiator(struct connection *c,
 	}
 }
 
-void ipsecdoi_initiate(fd_t whack_sock,
+void ipsecdoi_initiate(struct fd *whack_sock,
 		       struct connection *c,
 		       lset_t policy,
 		       unsigned long try,

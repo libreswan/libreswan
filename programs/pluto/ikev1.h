@@ -58,7 +58,7 @@ extern bool ikev1_ship_KE(struct state *st,
 /* **MAIN MODE FUNCTIONS** in ikev1_main.c */
 
 /* extern initiator_function main_outI1; */
-extern void main_outI1(fd_t whack_sock,
+extern void main_outI1(struct fd *whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,
@@ -67,7 +67,7 @@ extern void main_outI1(fd_t whack_sock,
 		       struct xfrm_user_sec_ctx_ike *uctx);
 
 /* extern initiator_function aggr_outI1; */
-extern void aggr_outI1(fd_t whack_sock,
+extern void aggr_outI1(struct fd *whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,

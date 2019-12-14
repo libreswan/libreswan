@@ -62,7 +62,7 @@ char *pluto_stats_binary = NULL;
  * (apparently) If the context provides a whack file descriptor,
  * messages should be copied to it -- see whack_log()
  */
-fd_t whack_log_fd = NULL;      /* only set during whack_handle() */
+struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
 
 /*
  * Context for logging.
@@ -389,7 +389,7 @@ static void peerlog_raw(const char *prefix, char *message)
 	}
 }
 
-static void jambuf_to_whack_fd(struct lswlog *buf, fd_t wfd, enum rc_type rc)
+static void jambuf_to_whack_fd(struct lswlog *buf, struct fd *wfd, enum rc_type rc)
 {
 	if (!fd_p(wfd)) {
 		return;
@@ -481,7 +481,7 @@ static void whack_raw(jambuf_t *buf, enum rc_type rc)
 	 * state?
 	 */
 	passert(in_main_thread()); /* whack_log_fd is global */
-	fd_t wfd = (fd_p(whack_log_fd) ? whack_log_fd :
+	struct fd *wfd = (fd_p(whack_log_fd) ? whack_log_fd :
 		    cur_state != NULL ? cur_state->st_whack_sock :
 		    null_fd);
 	jambuf_to_whack_fd(buf, wfd, rc);
@@ -637,7 +637,7 @@ void whack_log(enum rc_type rc, const char *message, ...)
 	}
 }
 
-void whack_print(fd_t whackfd, const char *message, ...)
+void whack_print(struct fd *whackfd, const char *message, ...)
 {
 	pexpect(fd_p(whackfd));
 	pexpect(in_main_thread());
@@ -653,7 +653,7 @@ void whack_print(fd_t whackfd, const char *message, ...)
 	}
 }
 
-void whack_show(fd_t whackfd, const char *message, ...)
+void whack_show(struct fd *whackfd, const char *message, ...)
 {
 	pexpect(fd_p(whackfd));
 	pexpect(in_main_thread());
@@ -735,7 +735,7 @@ void init_rate_log(void)
 			      RESET_LOG_RATE_LIMIT);
 }
 
-static void log_whack(enum rc_type rc, fd_t object_fd, jambuf_t *buf)
+static void log_whack(enum rc_type rc, struct fd *object_fd, jambuf_t *buf)
 {
 	if (in_main_thread()) {
 		jambuf_to_whack_fd(buf, object_fd, rc);
@@ -745,7 +745,7 @@ static void log_whack(enum rc_type rc, fd_t object_fd, jambuf_t *buf)
 	}
 }
 
-void log_jambuf(lset_t rc_flags, fd_t object_fd, jambuf_t *buf)
+void log_jambuf(lset_t rc_flags, struct fd *object_fd, jambuf_t *buf)
 {
 	enum rc_type rc = rc_flags & RC_MASK;
 	enum stream only = rc_flags & ~RC_MASK;
@@ -779,7 +779,7 @@ void log_jambuf(lset_t rc_flags, fd_t object_fd, jambuf_t *buf)
 	}
 }
 
-static void broadcast(lset_t rc_flags, fd_t object_fd,
+static void broadcast(lset_t rc_flags, struct fd *object_fd,
 		      const struct state *st,
 		      const struct connection *c,
 		      const struct msg_digest *md,
@@ -810,7 +810,7 @@ void log_message(lset_t rc_flags,
 {
 	va_list ap;
 	va_start(ap, format);
-	fd_t whackfd = (st != NULL ? st->st_whack_sock : null_fd);
+	struct fd *whackfd = (st != NULL ? st->st_whack_sock : null_fd);
 	broadcast(rc_flags, whackfd, st, c, md, format, ap);
 	va_end(ap);
 }

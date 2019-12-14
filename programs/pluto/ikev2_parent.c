@@ -510,7 +510,7 @@ static crypto_req_cont_func ikev2_parent_outI1_continue;
 
 /* extern initiator_function ikev2_parent_outI1; */	/* type assertion */
 
-void ikev2_parent_outI1(fd_t whack_sock,
+void ikev2_parent_outI1(struct fd *whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,

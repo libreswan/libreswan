@@ -31,26 +31,26 @@
 struct msghdr;
 
 /* opaque and reference counted */
-typedef struct fd *fd_t;
+struct fd;
 
 /*
  * A magic value such that: fd_p(null_fd)==false
  */
-#define null_fd ((fd_t) NULL)
+#define null_fd ((struct fd *) NULL)
 
-fd_t fd_accept(int socket, where_t where);
+struct fd *fd_accept(int socket, where_t where);
 
 #define dup_any(FD) dup_any_fd((FD), HERE)
-fd_t dup_any_fd(fd_t fd, where_t where);
+struct fd *dup_any_fd(struct fd *fd, where_t where);
 
 #define close_any(FD) close_any_fd((FD), HERE)
-void close_any_fd(fd_t *fd, where_t where);
+void close_any_fd(struct fd **fd, where_t where);
 
-void fd_leak(fd_t *fd, where_t where);
+void fd_leak(struct fd **fd, where_t where);
 
-ssize_t fd_sendmsg(fd_t fd, const struct msghdr *msg,
+ssize_t fd_sendmsg(struct fd *fd, const struct msghdr *msg,
 		   int flags, where_t where);
-ssize_t fd_read(fd_t fd, void *buf, size_t nbytes,
+ssize_t fd_read(struct fd *fd, void *buf, size_t nbytes,
 		where_t where);
 
 /*
@@ -59,9 +59,9 @@ ssize_t fd_read(fd_t fd, void *buf, size_t nbytes,
  * Use fd_p() to check the wrapped return value from functions like
  * open(2) (which return -1 on failure).
  */
-bool fd_p(fd_t fd);
+bool fd_p(struct fd *fd);
 
-bool same_fd(fd_t l, fd_t r);
+bool same_fd(struct fd *l, struct fd *r);
 
 /*
  * dbg("fd "PRI_FD, pri_fd(whackfd))
@@ -71,6 +71,5 @@ bool same_fd(fd_t l, fd_t r);
  */
 #define PRI_FD "fd-fd@%p"
 #define pri_fd(FD) (FD)
-#define PRI_fd pri_fd /* XXX: tbd */
 
 #endif

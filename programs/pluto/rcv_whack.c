@@ -193,7 +193,7 @@ static void key_add_request(const struct whack_message *msg)
 /*
  * handle a whack message.
  */
-static bool whack_process(fd_t whackfd, const struct whack_message *const m)
+static bool whack_process(struct fd *whackfd, const struct whack_message *const m)
 {
 	/*
 	 * May be needed in future:
@@ -609,14 +609,14 @@ static bool whack_process(fd_t whackfd, const struct whack_message *const m)
 	return false; /* don't shut down */
 }
 
-static bool whack_handle(fd_t whackfd);
+static bool whack_handle(struct fd *whackfd);
 
 void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 		     void *arg UNUSED)
 {
 	threadtime_t start = threadtime_start();
 	{
-		fd_t whackfd = fd_accept(fd, HERE);
+		struct fd *whackfd = fd_accept(fd, HERE);
 		if (whackfd == NULL) {
 			/* already logged */
 			return;
@@ -646,7 +646,7 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 /*
  * Handle a whack request.
  */
-static bool whack_handle(fd_t whackfd)
+static bool whack_handle(struct fd *whackfd)
 {
 	/*
 	 * properly initialize msg - needed because short reads are

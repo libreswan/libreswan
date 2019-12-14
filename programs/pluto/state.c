@@ -545,7 +545,7 @@ static struct state *new_state(enum ike_version ike_version,
 			       const struct finite_state *fs,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
-			       enum sa_type sa_type, fd_t whackfd)
+			       enum sa_type sa_type, struct fd *whackfd)
 {
 	static so_serial_t next_so = SOS_FIRST;
 	union sas *sas = alloc_thing(union sas, "struct state in new_state()");
@@ -576,7 +576,7 @@ static struct state *new_state(enum ike_version ike_version,
 	return st;
 }
 
-struct ike_sa *new_v1_istate(fd_t whackfd)
+struct ike_sa *new_v1_istate(struct fd *whackfd)
 {
 	struct state *st = new_state(IKEv1, &state_undefined, ike_initiator_spi(),
 				     zero_ike_spi, IKE_SA, whackfd);
@@ -599,7 +599,7 @@ struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 			    const ike_spi_t ike_initiator_spi,
 			    const ike_spi_t ike_responder_spi,
 			    struct connection *c, lset_t policy,
-			    int try, fd_t whack_sock)
+			    int try, struct fd *whack_sock)
 {
 	struct state *st = new_state(IKEv2, &state_undefined,
 				     ike_initiator_spi, ike_responder_spi,
@@ -699,7 +699,7 @@ void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
 void release_any_whack(struct state *st, where_t where, const char *why)
 {
 	dbg("releasing #%lu's "PRI_FD" because %s",
-	    st->st_serialno, PRI_fd(st->st_whack_sock), why);
+	    st->st_serialno, pri_fd(st->st_whack_sock), why);
 	close_any_fd(&st->st_whack_sock, where);
 }
 
@@ -1509,7 +1509,7 @@ void delete_states_by_peer(const ip_address *peer)
 static struct state *duplicate_state(struct state *st,
 				     enum sa_type sa_type,
 				     const struct finite_state *fs,
-				     fd_t whackfd)
+				     struct fd *whackfd)
 {
 	struct state *nst;
 	char cib[CONN_INST_BUF];
@@ -1613,7 +1613,7 @@ static struct state *duplicate_state(struct state *st,
 }
 
 struct state *ikev1_duplicate_state(struct state *st,
-				    fd_t whackfd)
+				    struct fd *whackfd)
 {
 	return duplicate_state(st, IPSEC_SA, &state_undefined, whackfd);
 }
@@ -1621,7 +1621,7 @@ struct state *ikev1_duplicate_state(struct state *st,
 struct child_sa *ikev2_duplicate_state(struct ike_sa *ike,
 				       enum sa_type sa_type,
 				       enum sa_role role,
-				       fd_t whackfd)
+				       struct fd *whackfd)
 {
 	struct state *cst = duplicate_state(&ike->sa, sa_type,
 					    &state_undefined, whackfd);
@@ -3087,7 +3087,7 @@ bool drop_new_exchanges(void)
 	return cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_max_halfopen;
 }
 
-void show_globalstate_status(fd_t whackfd)
+void show_globalstate_status(struct fd *whackfd)
 {
 	unsigned shunts = show_shunt_count();
 

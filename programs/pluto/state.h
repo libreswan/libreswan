@@ -342,7 +342,7 @@ struct state {
 	bool st_suppress_del_notify;            /* suppress sending DELETE - eg replaced conn */
 
 	struct connection *st_connection;       /* connection for this SA */
-	fd_t st_whack_sock;                /* fd for our Whack TCP socket.
+	struct fd *st_whack_sock;                /* fd for our Whack TCP socket.
 						 * Single copy: close when
 						 * freeing struct.
 						 */
@@ -781,13 +781,13 @@ extern bool states_use_connection(const struct connection *c);
 
 /* state functions */
 
-struct ike_sa *new_v1_istate(fd_t whackfd);
+struct ike_sa *new_v1_istate(struct fd *whackfd);
 struct ike_sa *new_v1_rstate(struct msg_digest *md);
 struct ike_sa *new_v2_state(enum state_kind kind, enum sa_role sa_role,
 			    const ike_spi_t ike_initiator_spi,
 			    const ike_spi_t ike_responder_spi,
 			    struct connection *c, lset_t policy,
-			    int try, fd_t whack_sock);
+			    int try, struct fd *whack_sock);
 
 extern void init_states(void);
 extern void rehash_state(struct state *st,
@@ -801,9 +801,9 @@ extern void delete_states_by_connection(struct connection *c, bool relations);
 extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
-struct state *ikev1_duplicate_state(struct state *st, fd_t whackfd);
+struct state *ikev1_duplicate_state(struct state *st, struct fd *whackfd);
 struct child_sa *ikev2_duplicate_state(struct ike_sa *st, enum sa_type sa_type,
-				       enum sa_role sa_role, fd_t whackfd);
+				       enum sa_role sa_role, struct fd *whackfd);
 
 extern struct state
 	*state_with_serialno(so_serial_t sn),
@@ -881,7 +881,7 @@ extern bool state_is_busy(const struct state *st);
 extern bool verbose_state_busy(const struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
-extern void show_globalstate_status(fd_t whackfd);
+extern void show_globalstate_status(struct fd *whackfd);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md);

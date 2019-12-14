@@ -26,7 +26,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				struct msg_digest **mdp);
 
 /* extern initiator_function ikev2_parent_outI1; */
-extern void ikev2_parent_outI1(fd_t whack_sock,
+extern void ikev2_parent_outI1(struct fd *whack_sock,
 			      struct connection *c,
 			      struct state *predecessor,
 			      lset_t policy,

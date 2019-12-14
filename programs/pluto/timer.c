@@ -286,7 +286,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 					enum_show(&timer_event_names, type),
 					st->st_serialno,
 					st->st_state->name,
-					 PRI_fd(st->st_whack_sock)));
+					 pri_fd(st->st_whack_sock)));
 		passert(st->st_rel_whack_event == ev);
 		st->st_rel_whack_event = NULL;
 		release_pending_whacks(st, "release whack");

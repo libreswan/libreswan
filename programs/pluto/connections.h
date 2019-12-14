@@ -405,7 +405,7 @@ extern void initiate_ondemand(const ip_address *our_client,
 			     const ip_address *peer_client,
 			     int transport_proto,
 			     bool held,
-			     fd_t whackfd,
+			     struct fd *whackfd,
 			     struct xfrm_user_sec_ctx_ike *uctx,
 			     err_t why);
 

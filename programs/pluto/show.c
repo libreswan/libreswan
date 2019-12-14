@@ -67,7 +67,7 @@ static void show_system_security(void)
 	whack_log(RC_COMMENT, " ");     /* spacer */
 }
 
-void show_global_status(fd_t whackfd)
+void show_global_status(struct fd *whackfd)
 {
 	show_globalstate_status(whackfd);
 	show_pluto_stats(whackfd);

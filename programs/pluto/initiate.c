@@ -171,11 +171,12 @@ bool orient(struct connection *c)
 }
 
 struct initiate_stuff {
-	fd_t whackfd;
+	struct fd *whackfd;
 	const char *remote_host;
 };
 
-bool initiate_connection(struct connection *c, fd_t whackfd, const char *remote_host)
+bool initiate_connection(struct connection *c, struct fd *whackfd,
+			 const char *remote_host)
 {
 	threadtime_t inception  = threadtime_start();
 	struct connection *old = push_cur_connection(c);
@@ -363,7 +364,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	return initiate_connection(c, is->whackfd, is->remote_host) ? 1 : 0;
 }
 
-void initiate_connections_by_name(const char *name, fd_t whackfd,
+void initiate_connections_by_name(const char *name, struct fd *whackfd,
 				  const char *remote_host)
 {
 	passert(name != NULL);
@@ -494,7 +495,7 @@ struct find_oppo_bundle {
 	policy_prio_t policy_prio;
 	ipsec_spi_t negotiation_shunt; /* in host order! */
 	ipsec_spi_t failure_shunt; /* in host order! */
-	fd_t whackfd;
+	struct fd *whackfd;
 };
 
 static void cannot_oppo(struct connection *c,
@@ -974,7 +975,7 @@ void initiate_ondemand(const ip_address *our_client,
 		      const ip_address *peer_client,
 		      int transport_proto,
 		      bool held,
-		      fd_t whackfd,
+		      struct fd *whackfd,
 		      struct xfrm_user_sec_ctx_ike *uctx,
 		      err_t why)
 {

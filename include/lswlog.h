@@ -30,7 +30,7 @@
 #include "libreswan/passert.h"
 #include "constants.h"		/* for DBG_... */
 #include "where.h"		/* used by macros */
-#include "fd.h"
+#include "fd.h"			/* for null_fd */
 
 /* Build up a diagnostic in a static buffer -- NOT RE-ENTRANT.
  * Although this would be a generally useful function, it is very
@@ -186,7 +186,7 @@ enum stream {
 	NO_STREAM	= 0xf00000,	/* n/a */
 };
 
-void log_jambuf(lset_t rc_flags, fd_t object_fd, jambuf_t *buf);
+void log_jambuf(lset_t rc_flags, struct fd *object_fd, jambuf_t *buf);
 
 size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
 

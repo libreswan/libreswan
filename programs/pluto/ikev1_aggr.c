@@ -979,7 +979,7 @@ static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
  * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
  */
 /* extern initiator_function aggr_outI1; */	/* type assertion */
-void aggr_outI1(fd_t whack_sock,
+void aggr_outI1(struct fd *whack_sock,
 		struct connection *c,
 		struct state *predecessor,
 		lset_t policy,

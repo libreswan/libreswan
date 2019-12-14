@@ -53,7 +53,7 @@ extern unsigned long pstats_xauth_started;
 extern unsigned long pstats_xauth_stopped;
 extern unsigned long pstats_xauth_aborted;
 
-extern void show_pluto_stats(fd_t whackfd);
+extern void show_pluto_stats(struct fd *whackfd);
 extern void clear_pluto_stats(void);
 
 /*

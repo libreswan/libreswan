@@ -21,7 +21,7 @@
 #include "monotime.h"
 #include "fd.h"
 
-void add_pending(fd_t whack_sock,
+void add_pending(struct fd *whack_sock,
 		 struct ike_sa *ike,
 		 struct connection *c,
 		 lset_t policy,
@@ -37,7 +37,7 @@ bool pending_check_timeout(const struct connection *c);
 
 extern struct connection *first_pending(const struct ike_sa *ike,
 					lset_t *policy,
-					fd_t *p_whack_sock);
+					struct fd **p_whack_sock);
 
 /*
  * struct pending, the structure representing IPsec SA negotiations
@@ -46,7 +46,7 @@ extern struct connection *first_pending(const struct ike_sa *ike,
  */
 
 struct pending {
-	fd_t whack_sock;
+	struct fd *whack_sock;
 	struct ike_sa *ike;
 	struct connection *connection;
 	lset_t policy;
