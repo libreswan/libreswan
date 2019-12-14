@@ -32,7 +32,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair suppress-retransmits
+ ipsec whack --impair delete-on-retransmit
 west #
  # this should fail
 west #
@@ -46,7 +46,8 @@ west #
  echo "done"
 done
 west #
- hostname | grep east > /dev/null && grep -E ": ERROR:|: X509:" /tmp/pluto.log
+ grep ": AUTHENTICATION_FAILED" /tmp/pluto.log
+"ikev2-westnet-eastnet-x509-cr" #2: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 west #
 west #
  ../bin/check-for-core.sh

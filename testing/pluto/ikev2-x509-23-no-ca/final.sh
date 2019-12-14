@@ -1,4 +1,4 @@
-hostname | grep east > /dev/null && grep -E ": ERROR:|: X509:" /tmp/pluto.log
+grep ": AUTHENTICATION_FAILED" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
