@@ -207,15 +207,15 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 	return ctx_new;
 }
 
-void kernel_alg_show_status(void)
+void kernel_alg_show_status(struct fd *whackfd)
 {
-	whack_log(RC_COMMENT, "Kernel algorithms supported:");
-	whack_log(RC_COMMENT, " "); /* spacer */
+	whack_comment(whackfd, "Kernel algorithms supported:");
+	whack_comment(whackfd, " "); /* spacer */
 
 	for (const struct encrypt_desc **alg_p = next_kernel_encrypt_desc(NULL);
 	     alg_p != NULL; alg_p = next_kernel_encrypt_desc(alg_p)) {
 		const struct encrypt_desc *alg = *alg_p;
-		whack_log(RC_COMMENT,
+		whack_comment(whackfd,
 			  "algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
 			  alg->common.fqn,
 			  encrypt_min_key_bit_length(alg),
@@ -225,16 +225,18 @@ void kernel_alg_show_status(void)
 	for (const struct integ_desc **alg_p = next_kernel_integ_desc(NULL);
 	     alg_p != NULL; alg_p = next_kernel_integ_desc(alg_p)) {
 		const struct integ_desc *alg = *alg_p;
-		whack_log(RC_COMMENT,
+		whack_comment(whackfd,
 			  "algorithm AH/ESP auth: name=%s, key-length=%zu",
 			  alg->common.fqn,
 			  alg->integ_keymat_size * BITS_PER_BYTE);
 	}
 
-	whack_log(RC_COMMENT, " "); /* spacer */
+	whack_comment(whackfd, " "); /* spacer */
 }
 
-void kernel_alg_show_connection(const struct connection *c, const char *instance)
+void kernel_alg_show_connection(struct fd *whackfd,
+				const struct connection *c,
+				const char *instance)
 {
 	const char *satype;
 
@@ -310,7 +312,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	const struct state *st = state_with_serialno(c->newest_ipsec_sa);
 
 	if (st != NULL && st->st_esp.present) {
-		whack_log(RC_COMMENT,
+		whack_comment(whackfd,
 			  "\"%s\"%s:   %s algorithm newest: %s_%03d-%s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
@@ -321,7 +323,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	}
 
 	if (st != NULL && st->st_ah.present) {
-		whack_log(RC_COMMENT,
+		whack_comment(whackfd,
 			  "\"%s\"%s:   %s algorithm newest: %s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,

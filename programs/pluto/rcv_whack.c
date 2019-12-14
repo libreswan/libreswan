@@ -414,7 +414,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		load_preshared_secrets();
 
 	if (m->whack_list & LIST_PUBKEYS)
-		list_public_keys(m->whack_utc, m->whack_check_pub_keys);
+		list_public_keys(whackfd, m->whack_utc,
+				 m->whack_check_pub_keys);
 
 	if (m->whack_purgeocsp)
 		clear_ocsp_cache();
@@ -428,23 +429,23 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 #endif
 
 	if (m->whack_list & LIST_PSKS)
-		list_psks();
+		list_psks(whackfd);
 
 	if (m->whack_list & LIST_CERTS)
-		list_certs();
+		list_certs(whackfd);
 
 	if (m->whack_list & LIST_CACERTS)
-		list_authcerts();
+		list_authcerts(whackfd);
 
 	if (m->whack_list & LIST_CRLS) {
-		list_crls();
+		list_crls(whackfd);
 #if defined(LIBCURL) || defined(LIBLDAP)
-		list_crl_fetch_requests(m->whack_utc);
+		list_crl_fetch_requests(whackfd, m->whack_utc);
 #endif
 	}
 
 	if (m->whack_list & LIST_EVENTS)
-		timer_list();
+		timer_list(whackfd);
 
 	if (m->whack_key) {
 		/* add a public key */
@@ -529,7 +530,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 	}
 
 	if (m->whack_status)
-		show_status();
+		show_status(whackfd);
 
 	if (m->whack_global_status)
 		show_global_status(whackfd);
@@ -541,13 +542,13 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		show_traffic_status(m->name);
 
 	if (m->whack_shunt_status)
-		show_shunt_status();
+		show_shunt_status(whackfd);
 
 	if (m->whack_fips_status)
-		show_fips_status();
+		show_fips_status(whackfd);
 
 	if (m->whack_brief_status)
-		show_states_status(TRUE);
+		show_states_status(whackfd, TRUE);
 
 #ifdef HAVE_SECCOMP
 	if (m->whack_seccomp_crashtest) {
@@ -681,7 +682,7 @@ static bool whack_handle(struct fd *whackfd)
 			if (msg.magic == WHACK_BASIC_MAGIC) {
 				/* Only basic commands.  Simpler inter-version compatibility. */
 				if (msg.whack_status)
-					show_status();
+					show_status(whackfd);
 				/* bail early, but without complaint */
 				return false; /* don't shutdown */
 			}

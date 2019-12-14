@@ -22,7 +22,7 @@ struct connection;
 struct spd_route;
 struct end;
 
-extern void show_virtual_private(void);
+extern void show_virtual_private(struct fd *whackfd);
 
 extern void init_virtual_ip(const char *private_list);
 extern void free_virtual_ip(void);

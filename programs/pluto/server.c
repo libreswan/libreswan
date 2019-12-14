@@ -540,7 +540,8 @@ static void free_global_timers(void)
 	}
 }
 
-static void list_global_timers(monotime_t now)
+static void list_global_timers(struct fd *whackfd,
+			       monotime_t now)
 {
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
 		struct global_timer *gt = &global_timers[u];
@@ -555,7 +556,7 @@ static void list_global_timers(monotime_t now)
 			const char *what = (event_get_events(&gt->ev) & EV_PERSIST) ? "periodic" : "one-shot";
 			deltatime_t delay = monotimediff(due, now);
 			deltatime_buf delay_buf;
-			whack_log(RC_COMMENT,
+			whack_comment(whackfd,
 				  "global %s timer %s is scheduled for %jd (in %s seconds)",
 				  what, gt->name,
 				  monosecs(due), /* XXX: useful? */
@@ -629,13 +630,13 @@ static void free_signal_handlers(void)
 	}
 }
 
-static void list_signal_handlers(void)
+static void list_signal_handlers(struct fd *whackfd)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
 		if (event_initialized(&se->ev) &&
 		    event_pending(&se->ev, EV_SIGNAL, NULL) > 0) {
-			whack_log(RC_COMMENT, "signal event handler %s", se->name);
+			whack_comment(whackfd, "signal event handler %s", se->name);
 		}
 	}
 }
@@ -981,16 +982,16 @@ struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 /*
  * dump list of events to whacklog
  */
-void timer_list(void)
+void timer_list(struct fd *whackfd)
 {
 	monotime_t nw = mononow();
 
-	whack_log(RC_COMMENT,
+	whack_comment(whackfd,
 		  "it is now: %jd seconds since monotonic epoch",
 		  monosecs(nw));
 
-	list_global_timers(nw);
-	list_signal_handlers();
+	list_global_timers(whackfd, nw);
+	list_signal_handlers(whackfd);
 
 	for (struct pluto_event *ev = pluto_events_head;
 	     ev != NULL; ev = ev->next) {
@@ -1002,7 +1003,7 @@ void timer_list(void)
 				 monosecs(ev->ev_time),
 				 deltasecs(monotimediff(ev->ev_time, nw)));
 		}
-		whack_log(RC_COMMENT, "event %s is %s", ev->ev_name, buf);
+		whack_comment(whackfd, "event %s is %s", ev->ev_name, buf);
 	}
 
 	list_state_events(nw);
@@ -1052,13 +1053,13 @@ struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint
 	return NULL;
 }
 
-void show_ifaces_status(void)
+void show_ifaces_status(struct fd *whackfd)
 {
 	struct iface_port *p;
 
 	for (p = interfaces; p != NULL; p = p->next) {
 		endpoint_buf b;
-		whack_log(RC_COMMENT, "interface %s/%s %s",
+		whack_comment(whackfd, "interface %s/%s %s",
 			  p->ip_dev->id_vname, p->ip_dev->id_rname,
 			  str_endpoint(&p->local_endpoint, &b));
 	}
@@ -1077,14 +1078,14 @@ void show_debug_status(void)
 	}
 }
 
-void show_fips_status(void)
+void show_fips_status(struct fd *whackfd)
 {
 #ifdef FIPS_CHECK
 	bool fips = libreswan_fipsmode();
 #else
 	bool fips = FALSE;
 #endif
-	whack_log(RC_COMMENT, "FIPS mode %s", !fips ?
+	whack_comment(whackfd, "FIPS mode %s", !fips ?
 #ifdef FIPS_CHECK
 		"disabled" :
 #else

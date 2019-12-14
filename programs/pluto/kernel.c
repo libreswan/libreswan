@@ -1118,10 +1118,10 @@ unsigned show_shunt_count(void)
 	return i;
 }
 
-void show_shunt_status(void)
+void show_shunt_status(struct fd *whackfd)
 {
-	whack_log(RC_COMMENT, "Bare Shunt list:"); /* spacer */
-	whack_log(RC_COMMENT, " "); /* spacer */
+	whack_comment(whackfd, "Bare Shunt list:"); /* spacer */
+	whack_comment(whackfd, " "); /* spacer */
 	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
 		subnet_buf ourst;
@@ -1131,7 +1131,7 @@ void show_shunt_status(void)
 		char prio[POLICY_PRIO_BUF];
 		fmt_policy_prio(bs->policy_prio, prio);
 
-		whack_log(RC_COMMENT, "%s -%d-> %s => %s %s    %s",
+		whack_comment(whackfd, "%s -%d-> %s => %s %s    %s",
 			  str_subnet_port(&(bs)->ours, &ourst),
 			  bs->transport_proto,
 			  str_subnet_port(&(bs)->his, &hist),
@@ -2596,10 +2596,10 @@ void init_kernel(void)
 	}
 }
 
-void show_kernel_interface(void)
+void show_kernel_interface(struct fd *whackfd)
 {
 	if (kernel_ops != NULL) {
-		whack_log(RC_COMMENT, "using kernel interface: %s",
+		whack_comment(whackfd, "using kernel interface: %s",
 			kernel_ops->kern_name);
 	}
 }

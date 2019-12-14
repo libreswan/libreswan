@@ -24,6 +24,7 @@
 #include "monotime.h"
 
 struct state;   /* forward declaration */
+struct fd;
 
 struct pluto_event {
 	enum event_type ev_type;        /* Event type if time based */
@@ -47,7 +48,7 @@ extern void delete_state_event(struct state *st, struct pluto_event **ev);
 #define delete_liveness_event(ST) delete_state_event((ST), &(ST)->st_liveness_event)
 #define delete_dpd_event(ST) delete_state_event((ST), &(ST)->st_dpd_event)
 
-extern void timer_list(void);
+extern void timer_list(struct fd *whackfd);
 extern char *revive_conn;
 
 /*

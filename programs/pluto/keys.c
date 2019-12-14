@@ -129,13 +129,13 @@ static int print_secrets(struct secret *secret,
 	return 1;
 }
 
-void list_psks(void)
+void list_psks(struct fd *whackfd)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
-	whack_log(RC_COMMENT, " ");
-	whack_log(RC_COMMENT, "List of Pre-shared secrets (from %s)",
+	whack_comment(whackfd, " ");
+	whack_comment(whackfd, "List of Pre-shared secrets (from %s)",
 		  oco->secretsfile);
-	whack_log(RC_COMMENT, " ");
+	whack_comment(whackfd, " ");
 	lsw_foreach_secret(pluto_secrets, print_secrets, NULL);
 }
 
@@ -1041,14 +1041,14 @@ err_t add_ipseckey(const struct id *id,
 /*
  *  list all public keys in the chained list
  */
-void list_public_keys(bool utc, bool check_pub_keys)
+void list_public_keys(struct fd *whackfd, bool utc, bool check_pub_keys)
 {
 	struct pubkey_list *p = pluto_pubkeys;
 
 	if (!check_pub_keys) {
-		whack_log(RC_COMMENT, " ");
-		whack_log(RC_COMMENT, "List of Public Keys:");
-		whack_log(RC_COMMENT, " ");
+		whack_comment(whackfd, " ");
+		whack_comment(whackfd, "List of Public Keys:");
+		whack_comment(whackfd, " ");
 	}
 
 	while (p != NULL) {
@@ -1090,14 +1090,14 @@ void list_public_keys(bool utc, bool check_pub_keys)
 				/* XXX could be ikev2_idtype_names */
 				id_buf idb;
 
-				whack_log(RC_COMMENT, "       %s '%s'",
+				whack_comment(whackfd, "       %s '%s'",
 					enum_show(&ike_idtype_names,
 						    key->id.kind),
 					str_id(&key->id, &idb));
 
 				if (key->issuer.len > 0) {
 					dn_buf b;
-					whack_log(RC_COMMENT,
+					whack_comment(whackfd,
 						  "       Issuer '%s'",
 						  str_dn(key->issuer, &b));
 				}

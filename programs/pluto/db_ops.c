@@ -258,9 +258,9 @@ void db_attr_add_values(struct db_context *ctx,  enum ikev1_oakley_attr type, ui
 	db_attr_add(ctx, &attr);
 }
 
-void db_ops_show_status(void)
+void db_ops_show_status(struct fd *whackfd)
 {
-	whack_log(RC_COMMENT, "stats db_ops: "
+	whack_comment(whackfd, "stats db_ops: "
 		  DB_OPS_STATS_DESC " :"
 		  DB_OPS_STATS_STR("context")
 		  DB_OPS_STATS_STR("trans")

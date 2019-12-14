@@ -653,7 +653,7 @@ void whack_print(struct fd *whackfd, const char *message, ...)
 	}
 }
 
-void whack_show(struct fd *whackfd, const char *message, ...)
+void whack_comment(struct fd *whackfd, const char *message, ...)
 {
 	pexpect(fd_p(whackfd));
 	pexpect(in_main_thread());

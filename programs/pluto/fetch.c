@@ -700,10 +700,11 @@ static void merge_crl_fetch_request(struct crl_fetch_request *request)
 /*
  * list all distribution points
  */
-static void list_distribution_points(const generalName_t *first_gn)
+static void list_distribution_points(struct fd *whackfd,
+				     const generalName_t *first_gn)
 {
 	for (const generalName_t *gn = first_gn; gn != NULL; gn = gn->next) {
-		whack_log(RC_COMMENT, "       %s '%.*s'",
+		whack_comment(whackfd, "       %s '%.*s'",
 			gn == first_gn ? "distPts:" : "        ",
 			(int)gn->name.len,
 			gn->name.ptr);
@@ -713,16 +714,16 @@ static void list_distribution_points(const generalName_t *first_gn)
 /*
  *  list all fetch requests in the chained list
  */
-void list_crl_fetch_requests(bool utc)
+void list_crl_fetch_requests(struct fd *whackfd, bool utc)
 {
 	lock_crl_fetch_list("list_crl_fetch_requests");
 
 	fetch_req_t *req = crl_fetch_reqs;
 
 	if (req != NULL) {
-		whack_log(RC_COMMENT, " ");
-		whack_log(RC_COMMENT, "List of CRL fetch requests:");
-		whack_log(RC_COMMENT, " ");
+		whack_comment(whackfd, " ");
+		whack_comment(whackfd, "List of CRL fetch requests:");
+		whack_comment(whackfd, " ");
 	}
 
 	for (; req != NULL; req = req->next) {
@@ -731,9 +732,9 @@ void list_crl_fetch_requests(bool utc)
 			lswlogf(buf, ", trials: %d", req->trials);
 		}
 		dn_buf buf;
-		whack_log(RC_COMMENT, "       issuer:  '%s'",
+		whack_comment(whackfd, "       issuer:  '%s'",
 			  str_dn(req->issuer, &buf));
-		list_distribution_points(req->distributionPoints);
+		list_distribution_points(whackfd, req->distributionPoints);
 	}
 
 	unlock_crl_fetch_list("list_crl_fetch_requests");

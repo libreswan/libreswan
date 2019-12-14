@@ -987,10 +987,10 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	pexpect_st_local_endpoint(st);
 }
 
-void show_setup_natt(void)
+void show_setup_natt(struct fd *whackfd)
 {
-	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",
+	whack_comment(whackfd, " ");     /* spacer */
+	whack_comment(whackfd, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",
 		  bool_str(nat_traversal_enabled),
 		  (long) deltasecs(nat_kap),
 		  pluto_nat_port);

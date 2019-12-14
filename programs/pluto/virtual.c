@@ -431,9 +431,10 @@ err_t check_virtual_net_allowed(const struct connection *c,
 	return why;
 }
 
-static void show_virtual_private_kind(const char *kind,
-	const ip_subnet *private_net,
-	int private_net_len)
+static void show_virtual_private_kind(struct fd *whackfd,
+				      const char *kind,
+				      const ip_subnet *private_net,
+				      int private_net_len)
 {
 	if (private_net != NULL) {
 		bool trunc = FALSE;
@@ -454,20 +455,24 @@ static void show_virtual_private_kind(const char *kind,
 				break;
 			}
 		}
-		whack_log(RC_COMMENT, "- %s subnet%s: %s",
+		whack_comment(whackfd, "- %s subnet%s: %s",
 			kind, i == 1? "" : "s", all);
 		if (trunc)
-			whack_log(RC_COMMENT, "showing only %d of %d!",
+			whack_comment(whackfd, "showing only %d of %d!",
 				i, private_net_len);
 	}
 }
 
-void show_virtual_private(void)
+void show_virtual_private(struct fd *whackfd)
 {
 	if (nat_traversal_enabled) {
-		whack_log(RC_COMMENT, "virtual-private (%%priv):");
-		show_virtual_private_kind("allowed", private_net_incl, private_net_incl_len);
-		show_virtual_private_kind("excluded", private_net_excl, private_net_excl_len);
-		whack_log(RC_COMMENT, " ");     /* spacer */
+		whack_comment(whackfd, "virtual-private (%%priv):");
+		show_virtual_private_kind(whackfd, "allowed",
+					  private_net_incl,
+					  private_net_incl_len);
+		show_virtual_private_kind(whackfd, "excluded",
+					  private_net_excl,
+					  private_net_excl_len);
+		whack_comment(whackfd, " ");     /* spacer */
 	}
 }

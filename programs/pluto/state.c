@@ -2542,24 +2542,24 @@ void show_traffic_status(const char *name)
 	}
 }
 
-void show_states_status(bool brief)
+void show_states_status(struct fd *whackfd, bool brief)
 {
-	whack_log(RC_COMMENT, " ");             /* spacer */
-	whack_log(RC_COMMENT, "State Information: DDoS cookies %s, %s new IKE connections",
+	whack_comment(whackfd, " ");             /* spacer */
+	whack_comment(whackfd, "State Information: DDoS cookies %s, %s new IKE connections",
 		  require_ddos_cookies() ? "REQUIRED" : "not required",
 		  drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
 
-	whack_log(RC_COMMENT, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
+	whack_comment(whackfd, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
 		  total_ike_sa(),
 		  cat_count[CAT_HALF_OPEN_IKE_SA],
 		  cat_count[CAT_OPEN_IKE_SA],
 		  cat_count_ike_sa[CAT_AUTHENTICATED],
 		  cat_count_ike_sa[CAT_ANONYMOUS]);
-	whack_log(RC_COMMENT, "IPsec SAs: total("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
+	whack_comment(whackfd, "IPsec SAs: total("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
 		  cat_count[CAT_ESTABLISHED_CHILD_SA],
 		  cat_count_child_sa[CAT_AUTHENTICATED],
 		  cat_count_child_sa[CAT_ANONYMOUS]);
-	whack_log(RC_COMMENT, " ");             /* spacer */
+	whack_comment(whackfd, " ");             /* spacer */
 
 	if (brief)
 		return;
@@ -2578,9 +2578,9 @@ void show_states_status(bool brief)
 			char state_buf2[LOG_WIDTH];
 			fmt_state(st, n, state_buf, sizeof(state_buf),
 				  state_buf2, sizeof(state_buf2));
-			whack_log(RC_COMMENT, "%s", state_buf);
+			whack_comment(whackfd, "%s", state_buf);
 			if (state_buf2[0] != '\0')
-				whack_log(RC_COMMENT, "%s", state_buf2);
+				whack_comment(whackfd, "%s", state_buf2);
 
 			/* show any associated pending Phase 2s */
 			if (IS_IKE_SA(st))
@@ -2588,7 +2588,7 @@ void show_states_status(bool brief)
 						    pexpect_ike_sa(st));
 		}
 
-		whack_log(RC_COMMENT, " "); /* spacer */
+		whack_comment(whackfd, " "); /* spacer */
 		pfree(array);
 	}
 }

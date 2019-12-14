@@ -1902,37 +1902,37 @@ void exit_pluto(int status)
 	exit(status);	/* exit, with our error code */
 }
 
-void show_setup_plutomain(void)
+void show_setup_plutomain(struct fd *whackfd)
 {
-	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
-	whack_log(RC_COMMENT, " ");	/* spacer */
-	whack_log(RC_COMMENT, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s",
+	whack_comment(whackfd, "config setup options:");	/* spacer */
+	whack_comment(whackfd, " ");	/* spacer */
+	whack_comment(whackfd, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s",
 		oco->confdir,
 		conffile, /* oco contains only a copy of hardcoded default */
 		oco->secretsfile,
 		oco->confddir);
 
-	whack_log(RC_COMMENT, "nssdir=%s, dumpdir=%s, statsbin=%s",
+	whack_comment(whackfd, "nssdir=%s, dumpdir=%s, statsbin=%s",
 		oco->nssdir,
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
 #ifdef USE_DNSSEC
-	whack_log(RC_COMMENT, "dnssec-rootkey-file=%s, dnssec-trusted=%s",
+	whack_comment(whackfd, "dnssec-rootkey-file=%s, dnssec-trusted=%s",
 		pluto_dnssec_rootfile == NULL ? "<unset>" : pluto_dnssec_rootfile,
 		pluto_dnssec_trusted == NULL ? "<unset>" : pluto_dnssec_trusted);
 #endif
 
-	whack_log(RC_COMMENT, "sbindir=%s, libexecdir=%s",
+	whack_comment(whackfd, "sbindir=%s, libexecdir=%s",
 		IPSEC_SBINDIR,
 		IPSEC_EXECDIR);
 
-	whack_log(RC_COMMENT, "pluto_version=%s, pluto_vendorid=%s, audit-log=%s",
+	whack_comment(whackfd, "pluto_version=%s, pluto_vendorid=%s, audit-log=%s",
 		ipsec_version_code(),
 		pluto_vendorid,
 		bool_str(log_to_audit));
 
-	whack_log(RC_COMMENT,
+	whack_comment(whackfd,
 		"nhelpers=%d, uniqueids=%s, "
 		"dnssec-enable=%s, "
 		"perpeerlog=%s, logappend=%s, logip=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
@@ -1946,14 +1946,14 @@ void show_setup_plutomain(void)
 		(intmax_t) pluto_xfrmlifetime
 	);
 
-	whack_log(RC_COMMENT,
+	whack_comment(whackfd,
 		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",
 		pluto_max_halfopen,
 		pluto_ddos_threshold,
 		(pluto_ddos_mode == DDOS_AUTO) ? "auto" :
 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 
-	whack_log(RC_COMMENT,
+	whack_comment(whackfd,
 		"ikeport=%d, ikebuf=%d, msg_errqueue=%s, strictcrlpolicy=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_port,
 		pluto_sock_bufsize,
@@ -1964,33 +1964,33 @@ void show_setup_plutomain(void)
 		pluto_nflog_group
 		);
 
-	whack_log(RC_COMMENT,
+	whack_comment(whackfd,
 		"ocsp-enable=%s, ocsp-strict=%s, ocsp-timeout=%d, ocsp-uri=%s",
 		bool_str(ocsp_enable),
 		bool_str(ocsp_strict),
 		ocsp_timeout,
 		ocsp_uri != NULL ? ocsp_uri : "<unset>"
 		);
-	whack_log(RC_COMMENT,
+	whack_comment(whackfd,
 		"ocsp-trust-name=%s",
 		ocsp_trust_name != NULL ? ocsp_trust_name : "<unset>"
 		);
 
-	whack_log(RC_COMMENT,
+	whack_comment(whackfd,
 		"ocsp-cache-size=%d, ocsp-cache-min-age=%d, ocsp-cache-max-age=%d, ocsp-method=%s",
 		ocsp_cache_size, ocsp_cache_min_age, ocsp_cache_max_age,
 		ocsp_method == OCSP_METHOD_GET ? "get" : "post"
 		);
 
-	whack_log(RC_COMMENT,
+	whack_comment(whackfd,
 		"global-redirect=%s, global-redirect-to=%s",
 		enum_name(&allow_global_redirect_names, global_redirect),
 		global_redirect_to != NULL ? global_redirect_to : "<unset>"
 		);
 
 #ifdef HAVE_LABELED_IPSEC
-	whack_log(RC_COMMENT, "secctx-attr-type=%d", secctx_attr_type);
+	whack_comment(whackfd, "secctx-attr-type=%d", secctx_attr_type);
 #else
-	whack_log(RC_COMMENT, "secctx-attr-type=<unsupported>");
+	whack_comment(whackfd, "secctx-attr-type=<unsupported>");
 #endif
 }

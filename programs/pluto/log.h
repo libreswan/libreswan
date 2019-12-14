@@ -197,20 +197,19 @@ extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
  * also requires a valid whackfd.  It should only be used by raw-print
  * commands, namely 'show global-stats'.
  *
- * whack_show() output includes the '000 ' prefix (RC_COMMENT).  It
+ * whack_comment() output includes the '000 ' prefix (RC_COMMENT).  It
  * also requires a valid whackfd.  It should only be used by show
  * commands.
  */
 
 void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
 void whack_print(struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
-void whack_show(struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
+void whack_comment(struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 
-/* show status, usually on whack log */
-extern void show_status(void);
+extern void show_status(struct fd *whackfd);
 
-extern void show_setup_plutomain(void);
-extern void show_setup_natt(void);
+extern void show_setup_plutomain(struct fd *whackfd);
+extern void show_setup_natt(struct fd *whackfd);
 extern void show_global_status(struct fd *whackfd);
 
 enum linux_audit_kind {
