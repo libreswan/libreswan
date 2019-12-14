@@ -57,7 +57,7 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_PARENT_I1: received unauthenticated v2N_UNSUPPORTED_CRITICAL_PAYLOAD - ignored
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting state (STATE_PARENT_I1) and NOT sending notification
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: skipping revival of connection 'westnet-eastnet-ipv4-psk-ikev2' that is supposed to remain up
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  echo done
 done

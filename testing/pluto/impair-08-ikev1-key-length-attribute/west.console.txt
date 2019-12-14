@@ -54,7 +54,7 @@ west #
 003 "aes128" #3: received and ignored notification payload: BAD_PROPOSAL_SYNTAX
 002 "aes128" #3: IMPAIR: retransmit so deleting SA
 002 "aes128" #3: deleting state (STATE_MAIN_I1) and NOT sending notification
-002 "aes128" #3: IMPAIR: skipping revival of connection 'aes128' that is supposed to remain up
+002 "aes128" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec whack --impair none
 west #
@@ -99,7 +99,7 @@ west #
 003 "aes128" #6: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "aes128" #6: IMPAIR: retransmit so deleting SA
 002 "aes128" #6: deleting state (STATE_MAIN_I1) and NOT sending notification
-002 "aes128" #6: IMPAIR: skipping revival of connection 'aes128' that is supposed to remain up
+002 "aes128" #6: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec whack --impair none
 west #
@@ -281,7 +281,7 @@ west #
 003 "3des" #19: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "3des" #19: IMPAIR: retransmit so deleting SA
 002 "3des" #19: deleting state (STATE_MAIN_I1) and NOT sending notification
-002 "3des" #19: IMPAIR: skipping revival of connection '3des' that is supposed to remain up
+002 "3des" #19: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec whack --impair none
 west #
