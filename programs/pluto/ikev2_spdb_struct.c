@@ -328,8 +328,8 @@ static void jam_transforms(jambuf_t *buf, enum ikev2_trans_type type,
 	};
 }
 
-static void jam_proposal(jambuf_t *buf, int propnum,
-			   const struct ikev2_proposal *proposal)
+static void jam_v2_proposal(jambuf_t *buf, int propnum,
+			    const struct ikev2_proposal *proposal)
 {
 	if (propnum != 0) {
 		jam(buf, "%d:", propnum);
@@ -362,7 +362,7 @@ static void jam_chosen_proposal(jambuf_t *buf,
 				jambuf_t *proposals)
 {
 	jam_string(buf, "proposal ");
-	jam_proposal(buf, best_proposal->propnum, best_proposal);
+	jam_v2_proposal(buf, best_proposal->propnum, best_proposal);
 	jam_string(buf, " chosen from remote proposals ");
 	jam_jambuf(buf, proposals);
 }
@@ -372,11 +372,12 @@ void DBG_log_ikev2_proposal(const char *prefix,
 {
 	LSWLOG_DEBUG(buf) {
 		jam(buf, "%s ikev2_proposal: ", prefix);
-		jam_proposal(buf, proposal->propnum, proposal);
+		jam_v2_proposal(buf, proposal->propnum, proposal);
 	}
 }
 
-static void jam_proposals(jambuf_t *buf, const struct ikev2_proposals *proposals)
+static void jam_v2_proposals(jambuf_t *buf,
+			     const struct ikev2_proposals *proposals)
 {
 	passert(proposals->proposal[0].protoid == 0);
 	const char *proposal_sep = "";
@@ -385,7 +386,7 @@ static void jam_proposals(jambuf_t *buf, const struct ikev2_proposals *proposals
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
 		jam_string(buf, proposal_sep);
 		proposal_sep = " ";
-		jam_proposal(buf, propnum, proposal);
+		jam_v2_proposal(buf, propnum, proposal);
 	}
 }
 
@@ -396,7 +397,7 @@ static void plog_connection_proposals(const char *prefix, struct connection *c, 
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
 		PLOG_RAW(NULL/*STATE*/, c, NULL/*FROM*/, buf) {
 			jam_string(buf, prefix);
-			jam_proposal(buf, propnum, proposal);
+			jam_v2_proposal(buf, propnum, proposal);
 		}
 	}
 }
@@ -1894,7 +1895,7 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 		LSWDBGP(DBG_CONTROL, buf) {
 			jam(buf, "using existing local IKE proposals for connection %s (%s): ",
 				c->name, why);
-			jam_proposals(buf, c->v2_ike_proposals);
+			jam_v2_proposals(buf, c->v2_ike_proposals);
 		}
 		return c->v2_ike_proposals;
 	}
@@ -1959,7 +1960,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 		LSWDBGP(DBG_CONTROL, buf) {
 			jam(buf, "using existing local ESP/AH proposals for %s (%s): ",
 				c->name, why);
-			jam_proposals(buf, *child_proposals);
+			jam_v2_proposals(buf, *child_proposals);
 		}
 		return *child_proposals;
 	}
