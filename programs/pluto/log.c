@@ -628,12 +628,11 @@ void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, .
 		return;
 	}
 
-	LSWBUF(buf) {
+	WHACK_LOG(rc, whackfd, buf) {
 		va_list args;
 		va_start(args, message);
 		jam_va_list(buf, message, args);
 		va_end(args);
-		jambuf_to_whack(buf, whackfd, rc);
 	}
 }
 

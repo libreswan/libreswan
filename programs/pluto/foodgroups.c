@@ -301,7 +301,7 @@ static void free_targets(void)
 	}
 }
 
-void load_groups(const struct fd *whackfd)
+void load_groups(struct fd *whackfd)
 {
 	passert(new_targets == NULL);
 

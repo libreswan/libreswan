@@ -241,11 +241,6 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
  * RC_COMMENT?
  */
 
-#define LSWLOG_WHACK(RC, BUF)						\
-	LSWLOG_(true, BUF,						\
-		lswlog_log_prefix(BUF),					\
-		log_jambuf(WHACK_STREAM|RC, null_fd, BUF))
-
 /* XXX: should be stdout?!? */
 #define LSWLOG_INFO(BUF)						\
 	LSWLOG_(true, BUF, , log_jambuf(WHACK_STREAM|RC_PRINT, null_fd, buf))

@@ -2090,7 +2090,8 @@ static void jam_state_traffic(jambuf_t *buf, struct state *st)
 	}
 }
 
-static void whack_log_state_traffic(enum rc_type rc, struct state *st)
+static void whack_log_state_traffic(const struct fd *whackfd,
+				    enum rc_type rc, struct state *st)
 {
 	if (IS_IKE_SA(st))
 		return; /* ignore non-IPsec states */
@@ -2099,7 +2100,7 @@ static void whack_log_state_traffic(enum rc_type rc, struct state *st)
 		return; /* ignore non established states */
 
 	/* whack-log-global - no prefix */
-	LSWLOG_WHACK(rc, buf) {
+	WHACK_LOG(rc, whackfd, buf) {
 		/* note: this mutates *st by calling get_sa_info */
 		jam_state_traffic(buf, st);
 	}
@@ -2419,18 +2420,19 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 	return array;
 }
 
-static int whack_log_newest_state_traffic(struct connection *c, void *arg UNUSED)
+static int whack_log_newest_state_traffic(struct connection *c, void *arg)
 {
+	struct fd *whackfd = arg;
 	struct state *st = state_by_serialno(c->newest_ipsec_sa);
 
 	if (st == NULL)
 		return 0;
 
-	whack_log_state_traffic(RC_INFORMATIONAL_TRAFFIC, st);
+	whack_log_state_traffic(whackfd, RC_INFORMATIONAL_TRAFFIC, st);
 	return 1;
 }
 
-void show_traffic_status(const char *name)
+void show_traffic_status(const struct fd *whackfd, const char *name)
 {
 	if (name == NULL) {
 		struct state **array = sort_states(state_compare_serial,
@@ -2440,7 +2442,9 @@ void show_traffic_status(const char *name)
 		if (array != NULL) {
 			int i;
 			for (i = 0; array[i] != NULL; i++) {
-				whack_log_state_traffic(RC_INFORMATIONAL_TRAFFIC, array[i]);
+				whack_log_state_traffic(whackfd,
+							RC_INFORMATIONAL_TRAFFIC,
+							array[i]);
 			}
 			pfree(array);
 		}
@@ -2448,14 +2452,16 @@ void show_traffic_status(const char *name)
 		struct connection *c = conn_by_name(name, true/*strict*/);
 
 		if (c != NULL) {
-			(void) whack_log_newest_state_traffic(c, NULL);
+			/* cast away const sillyness */
+			whack_log_newest_state_traffic(c, (void*)whackfd);
 		} else {
+			/* cast away const sillyness */
 			int count = foreach_connection_by_alias(name,
 								whack_log_newest_state_traffic,
-								NULL);
+								(void*)whackfd);
 			if (count == 0) {
-				loglog(RC_UNKNOWN_NAME,
-				       "no such connection or aliased connection named \"%s\"", name);
+				whack_log(RC_UNKNOWN_NAME, whackfd,
+					  "no such connection or aliased connection named \"%s\"", name);
 			}
 		}
 	}
@@ -2503,7 +2509,7 @@ void show_states_status(const struct fd *whackfd, bool brief)
 
 			/* show any associated pending Phase 2s */
 			if (IS_IKE_SA(st))
-				show_pending_phase2(st->st_connection,
+				show_pending_phase2(whackfd, st->st_connection,
 						    pexpect_ike_sa(st));
 		}
 
@@ -3213,42 +3219,42 @@ void ISAKMP_SA_established(const struct state *pst)
 	c->newest_isakmp_sa = pst->st_serialno;
 }
 
-static void whack_log_state_event(struct state *st, struct pluto_event *pe,
-				  monotime_t now)
+static void whack_log_state_event(const struct fd *whackfd, struct state *st,
+				  struct pluto_event *pe, monotime_t now)
 {
 	if (pe != NULL) {
 		pexpect(st == pe->ev_state);
-		LSWLOG_WHACK(RC_LOG, buf) {
-			lswlogf(buf, "event %s is ", pe->ev_name);
+		WHACK_LOG(RC_LOG, whackfd, buf) {
+			jam(buf, "event %s is ", pe->ev_name);
 			if (pe->ev_type == EVENT_NULL) {
-				lswlogf(buf, "not timer based");
+				jam(buf, "not timer based");
 			} else {
-				lswlogf(buf, "schd: %jd (in %jds)",
-					monosecs(pe->ev_time),
-					deltasecs(monotimediff(pe->ev_time, now)));
+				jam(buf, "schd: %jd (in %jds)",
+				    monosecs(pe->ev_time),
+				    deltasecs(monotimediff(pe->ev_time, now)));
 			}
 			if (st->st_connection != NULL) {
 				/* fmt_connection(buf, st->st_connection); */
 				char cib[CONN_INST_BUF];
-				lswlogf(buf, " \"%s\"%s",
-					st->st_connection->name,
-					fmt_conn_instance(st->st_connection, cib));
+				jam(buf, " \"%s\"%s",
+				    st->st_connection->name,
+				    fmt_conn_instance(st->st_connection, cib));
 			}
-			lswlogf(buf, "  #%lu", st->st_serialno);
+			jam(buf, "  #%lu", st->st_serialno);
 		}
 	}
 }
 
-void list_state_events(monotime_t now)
+void list_state_events(const struct fd *whackfd, monotime_t now)
 {
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_OLD2NEW(st) {
-		whack_log_state_event(st, st->st_event, now);
-		whack_log_state_event(st, st->st_liveness_event, now);
-		whack_log_state_event(st, st->st_rel_whack_event, now);
-		whack_log_state_event(st, st->st_send_xauth_event, now);
-		whack_log_state_event(st, st->st_addr_change_event, now);
-		whack_log_state_event(st, st->st_dpd_event, now);
+		whack_log_state_event(whackfd, st, st->st_event, now);
+		whack_log_state_event(whackfd, st, st->st_liveness_event, now);
+		whack_log_state_event(whackfd, st, st->st_rel_whack_event, now);
+		whack_log_state_event(whackfd, st, st->st_send_xauth_event, now);
+		whack_log_state_event(whackfd, st, st->st_addr_change_event, now);
+		whack_log_state_event(whackfd, st, st->st_dpd_event, now);
 	}
 }

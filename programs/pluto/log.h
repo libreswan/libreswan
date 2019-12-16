@@ -242,8 +242,12 @@ void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, .
 void whack_print(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 void whack_comment(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 
-extern void show_status(const struct fd *whackfd);
+#define WHACK_LOG(RC, WHACKFD, BUF)					\
+	LSWLOG_(true, BUF,						\
+		lswlog_log_prefix(BUF),					\
+		log_jambuf(RC|WHACK_STREAM, WHACKFD, BUF))
 
+extern void show_status(const struct fd *whackfd);
 extern void show_setup_plutomain(const struct fd *whackfd);
 extern void show_setup_natt(const struct fd *whackfd);
 extern void show_global_status(const struct fd *whackfd);

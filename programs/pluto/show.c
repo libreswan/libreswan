@@ -82,7 +82,7 @@ void show_status(const struct fd *whackfd)
 	whack_comment(whackfd, " ");     /* spacer */
 	show_system_security(whackfd);
 	show_setup_plutomain(whackfd);
-	show_debug_status();
+	show_debug_status(whackfd);
 	show_setup_natt(whackfd);
 	show_virtual_private(whackfd);
 	kernel_alg_show_status(whackfd);

@@ -722,7 +722,7 @@ static void merge_crl_fetch_request(struct crl_fetch_request *request)
 /*
  * list all distribution points
  */
-static void list_distribution_points(const struct fd *whackfd,
+static void list_distribution_points(struct fd *whackfd,
 				     const generalName_t *first_gn)
 {
 	for (const generalName_t *gn = first_gn; gn != NULL; gn = gn->next) {
@@ -736,7 +736,7 @@ static void list_distribution_points(const struct fd *whackfd,
 /*
  *  list all fetch requests in the chained list
  */
-void list_crl_fetch_requests(const struct fd *whackfd, bool utc)
+void list_crl_fetch_requests(struct fd *whackfd, bool utc)
 {
 	lock_crl_fetch_list("list_crl_fetch_requests");
 
@@ -749,10 +749,10 @@ void list_crl_fetch_requests(const struct fd *whackfd, bool utc)
 	}
 
 	for (; req != NULL; req = req->next) {
-		LSWLOG_WHACK(RC_COMMENT, buf) {
-			lswlog_realtime(buf, req->installed, utc);
-			lswlogf(buf, ", trials: %d", req->trials);
-		}
+		realtime_buf rtb;
+		whack_comment(whackfd, "%s, trials: %d",
+			      str_realtime(req->installed, utc, &rtb),
+			      req->trials);
 		dn_buf buf;
 		whack_comment(whackfd, "       issuer:  '%s'",
 			  str_dn(req->issuer, &buf));

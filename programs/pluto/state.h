@@ -839,7 +839,7 @@ extern void initialize_new_state(struct state *st,
 				 lset_t policy,
 				 int try);
 
-extern void show_traffic_status(const char *name);
+extern void show_traffic_status(const struct fd *whackfd, const char *name);
 extern void show_states_status(const struct fd *whackfd, bool brief);
 
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
@@ -898,6 +898,6 @@ extern bool uniqueIDs;  /* --uniqueids? */
 extern void ISAKMP_SA_established(const struct state *pst);
 extern void revive_conns(void);
 
-void list_state_events(monotime_t now);
+void list_state_events(const struct fd *whackfd, monotime_t now);
 
 #endif /* _STATE_H */

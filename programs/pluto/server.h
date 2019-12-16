@@ -51,7 +51,7 @@ extern bool pluto_sock_errqueue; /* Enable MSG_ERRQUEUE on IKE socket */
 extern enum pluto_ddos_mode ddos_mode;
 extern bool pluto_drop_oppo_null;
 
-extern void show_debug_status(void);
+extern void show_debug_status(const struct fd *whackfd);
 extern void show_fips_status(const struct fd *whackfd);
 extern void call_server(char *conffile);
 typedef void event_callback_routine(evutil_socket_t, const short, void *);

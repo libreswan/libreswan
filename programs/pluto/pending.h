@@ -32,7 +32,9 @@ void add_pending(struct fd *whack_sock,
 
 void flush_pending_by_connection(const struct connection *c);
 bool in_pending_use(const struct connection *c);
-void show_pending_phase2(const struct connection *c, const struct ike_sa *ike);
+void show_pending_phase2(const struct fd *whackfd,
+			 const struct connection *c,
+			 const struct ike_sa *ike);
 bool pending_check_timeout(const struct connection *c);
 
 extern struct connection *first_pending(const struct ike_sa *ike,
