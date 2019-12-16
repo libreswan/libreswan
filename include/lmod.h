@@ -16,6 +16,7 @@
 #ifndef _LMOD_H_
 #define _LMOD_H_
 
+#include "jambuf.h"
 #include "lset.h"
 
 /*
@@ -55,7 +56,7 @@ struct lmod_info {
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	      const char *optarg, bool enable);
 
-void lswlog_lmod(struct lswlog *buf, const enum_names *names,
-		 const char *separator, lmod_t mod);
+size_t jam_lmod(jambuf_t *buf, const enum_names *names,
+		const char *separator, lmod_t mod);
 
 #endif

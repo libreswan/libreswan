@@ -370,7 +370,7 @@ void append_algorithm(struct proposal_parser *parser,
 	*end = clone_thing(new_algorithm, "alg");
 }
 
-void fmt_proposal(struct lswlog *log,
+void jam_proposal(struct lswlog *log,
 		  const struct proposal *proposal)
 {
 	const char *ps = "";
@@ -427,7 +427,7 @@ void fmt_proposal(struct lswlog *log,
 	}
 }
 
-void fmt_proposals(struct lswlog *log, const struct proposals *proposals)
+void jam_proposals(struct lswlog *log, const struct proposals *proposals)
 {
 	const char *sep = "";
 	FOR_EACH_PROPOSAL(proposals, proposal) {

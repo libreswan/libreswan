@@ -3938,17 +3938,17 @@ void show_one_connection(const struct fd *whackfd,
 
 	if (!lmod_empty(c->extra_debugging)) {
 		LSWLOG_WHACK(RC_COMMENT, buf) {
-			lswlogf(buf, "\"%s\"%s:   debug: ",
-				c->name, instance);
-			lswlog_lmod(buf, &debug_names, "+", c->extra_debugging);
+			jam(buf, "\"%s\"%s:   debug: ",
+			    c->name, instance);
+			jam_lmod(buf, &debug_names, "+", c->extra_debugging);
 		}
 	}
 
 	if (!lmod_empty(c->extra_impairing)) {
 		LSWLOG_WHACK(RC_COMMENT, buf) {
-			lswlogf(buf, "\"%s\"%s:   impair: ",
-				c->name, instance);
-			lswlog_lmod(buf, &impair_names, "+", c->extra_impairing);
+			jam(buf, "\"%s\"%s:   impair: ",
+			    c->name, instance);
+			jam_lmod(buf, &impair_names, "+", c->extra_impairing);
 		}
 	}
 

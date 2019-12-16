@@ -216,30 +216,28 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 				lset_t new_impairing = lmod(old_impairing, m->impairing);
 				set_debugging(cur_debugging | new_debugging);
 				LSWDBGP(DBG_CONTROL, buf) {
-					lswlogs(buf, "old debugging ");
-					lswlog_enum_lset_short(buf, &debug_names,
-							       "+", old_debugging);
-					lswlogs(buf, " + ");
-					lswlog_lmod(buf, &debug_names,
-						    "+", m->debugging);
+					jam(buf, "old debugging ");
+					jam_enum_lset_short(buf, &debug_names,
+							    "+", old_debugging);
+					jam(buf, " + ");
+					jam_lmod(buf, &debug_names, "+", m->debugging);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
-					lswlogs(buf, "new debugging = ");
-					lswlog_enum_lset_short(buf, &debug_names,
-							       "+", new_debugging);
+					jam(buf, "new debugging = ");
+					jam_enum_lset_short(buf, &debug_names,
+							    "+", new_debugging);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
-					lswlogs(buf, "old impairing ");
-					lswlog_enum_lset_short(buf, &impair_names,
-							       "+", old_impairing);
-					lswlogs(buf, " + ");
-					lswlog_lmod(buf, &impair_names,
-						    "+", m->impairing);
+					jam(buf, "old impairing ");
+					jam_enum_lset_short(buf, &impair_names,
+							    "+", old_impairing);
+					jam(buf, " + ");
+					jam_lmod(buf, &impair_names, "+", m->impairing);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
-					lswlogs(buf, "new impairing = ");
-					lswlog_enum_lset_short(buf, &impair_names,
-							       "+", new_impairing);
+					jam(buf, "new impairing = ");
+					jam_enum_lset_short(buf, &impair_names,
+							    "+", new_impairing);
 				}
 				set_debugging(new_debugging | new_impairing);
 				process_impair(&m->impairment);
@@ -251,17 +249,17 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 				} else if (c != NULL) {
 					c->extra_debugging = m->debugging;
 					LSWDBGP(DBG_CONTROL, buf) {
-						lswlogf(buf, "\"%s\" extra_debugging = ",
-							c->name);
-						lswlog_lmod(buf, &debug_names,
-							    "+", c->extra_debugging);
+						jam(buf, "\"%s\" extra_debugging = ",
+						    c->name);
+						jam_lmod(buf, &debug_names,
+							 "+", c->extra_debugging);
 					}
 					c->extra_impairing = m->impairing;
 					LSWDBGP(DBG_CONTROL, buf) {
-						lswlogf(buf, "\"%s\" extra_impairing = ",
-							c->name);
-						lswlog_lmod(buf, &impair_names,
-							    "+", c->extra_impairing);
+						jam(buf, "\"%s\" extra_impairing = ",
+						    c->name);
+						jam_lmod(buf, &impair_names,
+							 "+", c->extra_impairing);
 					}
 					process_impair(&m->impairment);
 				}

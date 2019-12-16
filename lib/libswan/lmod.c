@@ -118,12 +118,14 @@ bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	return ok;
 }
 
-void lswlog_lmod(struct lswlog *buf, enum_names *names,
-		 const char *separator, lmod_t mod)
+size_t jam_lmod(struct lswlog *buf, enum_names *names,
+		const char *separator, lmod_t mod)
 {
-	lswlog_enum_lset_short(buf, names, separator, mod.set);
+	size_t s = 0;
+	s += jam_enum_lset_short(buf, names, separator, mod.set);
 	if (mod.clr != LEMPTY) {
-		lswlogs(buf, " - ");
-		lswlog_enum_lset_short(buf, names, separator, mod.clr);
+		s += jam(buf, " - ");
+		s += jam_enum_lset_short(buf, names, separator, mod.clr);
 	}
+	return s;
 }

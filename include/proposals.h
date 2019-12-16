@@ -29,6 +29,7 @@
 #include "constants.h"
 #include "ike_alg.h"
 #include "shunk.h"
+#include "jambuf.h"
 
 struct alg_info;
 struct proposal_protocol;
@@ -189,9 +190,11 @@ struct child_proposals {
 	struct proposals *p;
 };
 
-void fmt_proposal(struct lswlog *log,
+void jam_proposal(jambuf_t *log,
 		  const struct proposal *proposal);
-void fmt_proposals(struct lswlog *log, const struct proposals *proposals);
+void jam_proposals(jambuf_t *log, const struct proposals *proposals);
+#define fmt_proposal jam_proposal /* XXX: TBD */
+#define fmt_proposals jam_proposals /* XXX: TBD */
 
 /*
  * Iterate through all the proposals and the proposal's algorithms.

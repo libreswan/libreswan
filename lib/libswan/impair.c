@@ -457,18 +457,19 @@ static uintmax_t value_of(const struct impairment *cr)
 	}
 }
 
-static void lswlog_impairment(struct lswlog *buf, const struct impairment *cr)
+static void jam_impairment(jambuf_t *buf,
+			   const struct impairment *cr)
 {
 	if (cr->how_keynum != NULL) {
-		lswlogf(buf, "%s:", cr->what);
+		jam(buf, "%s:", cr->what);
 		unsigned value = value_of(cr);
 		const struct keyword *kw = keyword_by_value(cr->how_keynum, value);
 		if (kw != NULL) {
-			lswlogs(buf, kw->sname);
+			jam_string(buf, kw->sname);
 		} else if (value >= cr->how_keynum->nr_values) {
-			lswlogf(buf, "%zu", value - cr->how_keynum->nr_values);
+			jam(buf, "%zu", value - cr->how_keynum->nr_values);
 		} else {
-			lswlogf(buf, "?%u?", value);
+			jam(buf, "?%u?", value);
 		}
 	} else {
 		/* only bool for now */
@@ -485,7 +486,7 @@ static void lswlog_impairment(struct lswlog *buf, const struct impairment *cr)
 	}
 }
 
-void lswlog_impairments(struct lswlog *buf, const char *prefix, const char *sep)
+void jam_impairments(jambuf_t *buf, const char *prefix, const char *sep)
 {
 	/* is there anything enabled? */
 	lset_t cur_impairing = (cur_debugging & IMPAIR_MASK);
@@ -500,17 +501,17 @@ void lswlog_impairments(struct lswlog *buf, const char *prefix, const char *sep)
 	if (!enabled && cur_impairing == LEMPTY) {
 		return;
 	}
-	lswlogs(buf, prefix);
+	jam_string(buf, prefix);
 	if (cur_impairing != LEMPTY) {
 		/* avoid LEMPTY being printed as "none" */
-		lswlog_enum_lset_short(buf, &impair_names, sep, cur_impairing);
+		jam_enum_lset_short(buf, &impair_names, sep, cur_impairing);
 	}
 	const char *s = "";
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *cr = &impairments[ci];
 		if (value_of(cr) != 0) {
-			lswlogs(buf, s); s = sep;
-			lswlog_impairment(buf, cr);
+			jam_string(buf, s); s = sep;
+			jam_impairment(buf, cr);
 		}
 	}
 }
@@ -538,7 +539,7 @@ void process_impair(const struct whack_impair *wc)
 			if (value_of(cr) != 0) {
 				/* XXX: should be whack log? */
 				LSWLOG_INFO(buf) {
-					lswlog_impairment(buf, cr);
+					jam_impairment(buf, cr);
 				}
 			}
 		}
@@ -565,7 +566,7 @@ void process_impair(const struct whack_impair *wc)
 			bad_case(cr->sizeof_value);
 	}
 	LSWDBGP(DBG_BASE, buf) {
-		lswlog_impairment(buf, cr);
+		jam_impairment(buf, cr);
 	}
 }
 
