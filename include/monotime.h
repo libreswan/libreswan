@@ -62,11 +62,17 @@ bool monobefore(monotime_t a, monotime_t b);
 deltatime_t monotimediff(monotime_t a, monotime_t b);
 intmax_t monosecs(monotime_t m);
 
-/* output as "smart" seconds */
-size_t lswlog_monotime(struct lswlog *buf, monotime_t d);
-
 /* for pthread_cond_timedwait() */
 clockid_t monotime_clockid(void);
 struct timespec monotime_as_timespec(monotime_t);
+
+typedef struct {
+	/* slightly over size */
+	char buf[sizeof("-18446744073709551615.1000000")+1/*canary*/]; /* true length ???? */
+} monotime_buf;
+
+const char *str_monotime(monotime_t d, monotime_buf *buf);
+size_t jam_monotime(jambuf_t *buf, monotime_t d);
+#define lswlog_monotime jam_monotime /* XXX: TBD */
 
 #endif

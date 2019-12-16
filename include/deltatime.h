@@ -24,7 +24,7 @@
 #include <stdint.h>		/* for intmax_t */
 #include <stdbool.h>		/* for bool */
 
-struct lswlog;
+#include "jambuf.h"
 
 /*
  * XXX: This value isn't typed so what is it really the max of?
@@ -84,12 +84,19 @@ struct timeval deltatimeval(deltatime_t);
 /* output as "smart" seconds */
 
 typedef struct {
-	char buf[100]; /* true length ???? */
+	/* slightly over size */
+	char buf[sizeof("-18446744073709551615.1000000")+1/*canary*/]; /* true length ???? */
 } deltatime_buf;
+
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
+size_t jam_deltatime(jambuf_t *buf, deltatime_t d);
+#define lswlog_deltatime jam_deltatime /* XXX: TBD */
 
 /* jam_deltatime() */
-size_t lswlog_deltatime(struct lswlog *buf, deltatime_t d);
+
+/*
+ * legacy.
+ */
 
 /* But what about -ve? */
 #define PRI_DELTATIME "%jd.%03jd"

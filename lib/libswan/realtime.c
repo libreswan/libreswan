@@ -102,3 +102,32 @@ struct realtm utc_realtime(realtime_t t)
 	tm.microsec = t.rt.tv_usec;
 	return tm;
 }
+
+/*
+ *  Display a date either in local or UTC time
+ */
+size_t jam_realtime(jambuf_t *buf, const realtime_t rtm, bool utc)
+{
+	static const char *months[] = {
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	};
+	size_t s = 0;
+	if (is_realtime_epoch(rtm)) {
+		s += jam(buf, "--- -- --:--:--%s----", (utc) ? " UTC " : " ");
+	} else {
+		struct realtm t = (utc ? utc_realtime : local_realtime)(rtm);
+		s += jam(buf, "%s %02d %02d:%02d:%02d%s%04d",
+			 months[t.tm.tm_mon], t.tm.tm_mday, t.tm.tm_hour,
+			 t.tm.tm_min, t.tm.tm_sec,
+			 (utc) ? " UTC " : " ", t.tm.tm_year + 1900);
+	}
+	return s;
+}
+
+const char *str_realtime(realtime_t r, bool utc, realtime_buf *buf)
+{
+	jambuf_t jambuf = ARRAY_AS_JAMBUF(buf->buf);
+	jam_realtime(&jambuf, r, utc);
+	return buf->buf;
+}

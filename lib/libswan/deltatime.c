@@ -153,8 +153,7 @@ static size_t frac(struct lswlog *buf, intmax_t usec)
 	return lswlogf(buf, ".%0*jd", precision, usec);
 }
 
-/* fmt_deltatime() */
-size_t lswlog_deltatime(struct lswlog *buf, deltatime_t d)
+size_t jam_deltatime(jambuf_t *buf, deltatime_t d)
 {
 	size_t s = 0;
 	if (d.dt.tv_sec < 0) {

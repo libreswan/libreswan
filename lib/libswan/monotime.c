@@ -93,3 +93,16 @@ deltatime_t monotimediff(monotime_t a, monotime_t b)
 {
 	return deltatime_timevals_diff(a.mt, b.mt);
 }
+
+size_t jam_monotime(jambuf_t *buf, monotime_t m)
+{
+	/* convert it to time-since-epoch and log that */
+	return lswlog_deltatime(buf, monotimediff(m, monotime_epoch));
+}
+
+const char *str_monotime(monotime_t m, monotime_buf *buf)
+{
+	jambuf_t jambuf = ARRAY_AS_JAMBUF(buf->buf);
+	jam_monotime(&jambuf, m);
+	return buf->buf;
+}

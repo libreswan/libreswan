@@ -51,13 +51,28 @@ typedef struct { struct timeval rt; } realtime_t;
 extern const realtime_t realtime_epoch;
 
 realtime_t realtime(time_t time);
+
+/*
+ * Formatting.
+ */
+
+typedef struct {
+	char buf[sizeof("--- -- --:--:-- UTC ----")+1/*canary*/];
+} realtime_buf;
+
+const char *str_realtime(realtime_t r, bool utc, realtime_buf *buf);
+size_t jam_realtime(jambuf_t *buf, realtime_t r, bool utc);
+#define lswlog_realtime jam_realtime /* XXX: TBD */
+
+/*
+ * math
+ */
+
 realtime_t realtimesum(realtime_t t, deltatime_t d);
 bool is_realtime_epoch(realtime_t t);
 bool realbefore(realtime_t a, realtime_t b);
 deltatime_t realtimediff(realtime_t a, realtime_t b);
 realtime_t realnow(void);
-
-void lswlog_realtime(struct lswlog *buf, realtime_t r, bool utc);
 
 struct realtm {
 	struct tm tm;
