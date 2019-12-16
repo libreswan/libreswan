@@ -301,7 +301,7 @@ static void free_targets(void)
 	}
 }
 
-void load_groups(void)
+void load_groups(struct fd *whackfd)
 {
 	passert(new_targets == NULL);
 
@@ -364,6 +364,7 @@ void load_groups(void)
 				}
 				if (r >= 0) {
 					np->name = add_group_instance(
+						whackfd,
 						np->group->connection,
 						&np->subnet, np->proto,
 						np->sport, np->dport);
@@ -375,7 +376,8 @@ void load_groups(void)
 			remove_group_instance(op->group->connection, op->name);
 
 		for (; np != NULL; np = np->next) {
-			np->name = add_group_instance(np->group->connection,
+			np->name = add_group_instance(whackfd,
+						      np->group->connection,
 						      &np->subnet, np->proto,
 						      np->sport, np->dport);
 		}

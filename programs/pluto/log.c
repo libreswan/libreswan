@@ -389,9 +389,9 @@ static void peerlog_raw(const char *prefix, char *message)
 	}
 }
 
-static void jambuf_to_whack_fd(struct lswlog *buf, struct fd *wfd, enum rc_type rc)
+static void jambuf_to_whack(struct lswlog *buf, struct fd *whackfd, enum rc_type rc)
 {
-	if (!fd_p(wfd)) {
+	if (!fd_p(whackfd)) {
 		return;
 	}
 
@@ -425,7 +425,7 @@ static void jambuf_to_whack_fd(struct lswlog *buf, struct fd *wfd, enum rc_type 
 	};
 
 	/* write to whack socket, but suppress possible SIGPIPE */
-	fd_sendmsg(wfd, &msg, MSG_NOSIGNAL, HERE);
+	fd_sendmsg(whackfd, &msg, MSG_NOSIGNAL, HERE);
 }
 
 /*
@@ -447,8 +447,8 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 		jam(buf, "%s ", st->st_connection->name);
 		/* the real message */
 		jam(buf, "prompt for %s:", prompt);
-		jambuf_to_whack_fd(buf, st->st_whack_sock,
-				   echo ? RC_USERPROMPT : RC_ENTERSECRET);
+		jambuf_to_whack(buf, st->st_whack_sock,
+				echo ? RC_USERPROMPT : RC_ENTERSECRET);
 	}
 
 	ssize_t n = fd_read(st->st_whack_sock, ansbuf, ansbuf_len, HERE);
@@ -481,10 +481,10 @@ static void whack_raw(jambuf_t *buf, enum rc_type rc)
 	 * state?
 	 */
 	passert(in_main_thread()); /* whack_log_fd is global */
-	struct fd *wfd = (fd_p(whack_log_fd) ? whack_log_fd :
+	struct fd *whackfd = (fd_p(whack_log_fd) ? whack_log_fd :
 		    cur_state != NULL ? cur_state->st_whack_sock :
 		    null_fd);
-	jambuf_to_whack_fd(buf, wfd, rc);
+	jambuf_to_whack(buf, whackfd, rc);
 }
 
 /*
@@ -615,7 +615,7 @@ void libreswan_exit(enum pluto_exit_code rc)
  * - text is a human-readable annotation
  */
 
-void whack_log(enum rc_type rc, const char *message, ...)
+void whack_log(enum rc_type rc, struct fd *whackfd, const char *message, ...)
 {
 	if (!in_main_thread()) {
 		LSWLOG_PEXPECT(buf) {
@@ -633,7 +633,7 @@ void whack_log(enum rc_type rc, const char *message, ...)
 		va_start(args, message);
 		jam_va_list(buf, message, args);
 		va_end(args);
-		jambuf_to_whack_fd(buf, whack_log_fd, rc);
+		jambuf_to_whack(buf, whackfd, rc);
 	}
 }
 
@@ -649,7 +649,7 @@ void whack_print(struct fd *whackfd, const char *message, ...)
 		va_start(args, message);
 		jam_va_list(buf, message, args);
 		va_end(args);
-		jambuf_to_whack_fd(buf, whackfd, RC_PRINT);
+		jambuf_to_whack(buf, whackfd, RC_PRINT);
 	}
 }
 
@@ -665,7 +665,7 @@ void whack_comment(struct fd *whackfd, const char *message, ...)
 		va_start(args, message);
 		jam_va_list(buf, message, args);
 		va_end(args);
-		jambuf_to_whack_fd(buf, whackfd, RC_COMMENT);
+		jambuf_to_whack(buf, whackfd, RC_COMMENT);
 	}
 }
 
@@ -735,12 +735,12 @@ void init_rate_log(void)
 			      RESET_LOG_RATE_LIMIT);
 }
 
-static void log_whack(enum rc_type rc, struct fd *object_fd, jambuf_t *buf)
+static void log_whack(enum rc_type rc, struct fd *whackfd, jambuf_t *buf)
 {
 	if (in_main_thread()) {
-		jambuf_to_whack_fd(buf, object_fd, rc);
-		if (!same_fd(object_fd, whack_log_fd)) {
-			jambuf_to_whack_fd(buf, whack_log_fd, rc);
+		jambuf_to_whack(buf, whackfd, rc);
+		if (!same_fd(whackfd, whack_log_fd)) {
+			jambuf_to_whack(buf, whack_log_fd, rc);
 		}
 	}
 }

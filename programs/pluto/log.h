@@ -206,7 +206,7 @@ extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
  * commands.
  */
 
-void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
+void whack_log(enum rc_type rc, struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
 void whack_print(struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 void whack_comment(struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 

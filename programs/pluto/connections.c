@@ -96,7 +96,8 @@ struct connection *connections = NULL;
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
-static bool load_end_cert_and_preload_secret(const char *which, const char *pubkey,
+static bool load_end_cert_and_preload_secret(struct fd *whackfd,
+					     const char *which, const char *pubkey,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end);
 
@@ -712,8 +713,9 @@ static void unshare_connection(struct connection *c)
 		reference_xfrmi(c);
 }
 
-static int extract_end(struct end *dst, const struct whack_end *src,
-			const char *which)
+static int extract_end(struct fd *whackfd,
+		       struct end *dst, const struct whack_end *src,
+		       const char *which)
 {
 	bool same_ca = 0;
 
@@ -752,7 +754,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 		}
 	}
 
-	if (!load_end_cert_and_preload_secret(which/*side*/, src->pubkey,
+	if (!load_end_cert_and_preload_secret(whackfd, which/*side*/, src->pubkey,
 					      src->pubkey_type, dst)) {
 		return -1;
 	}
@@ -885,7 +887,8 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-static bool load_end_cert_and_preload_secret(const char *which, const char *pubkey,
+static bool load_end_cert_and_preload_secret(struct fd *whackfd,
+					     const char *which, const char *pubkey,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end)
 {
@@ -946,10 +949,10 @@ static bool load_end_cert_and_preload_secret(const char *which, const char *pubk
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
 		if (pk->u.rsa.modulus.len * BITS_PER_BYTE < FIPS_MIN_RSA_KEY_SIZE) {
-			whack_log(RC_FATAL,
-				"FIPS: Rejecting cert with key size %d which is under %d",
-				pk->u.rsa.modulus.len * BITS_PER_BYTE,
-				FIPS_MIN_RSA_KEY_SIZE);
+			whack_log(RC_FATAL, whackfd,
+				  "FIPS: Rejecting cert with key size %d which is under %d",
+				  pk->u.rsa.modulus.len * BITS_PER_BYTE,
+				  FIPS_MIN_RSA_KEY_SIZE);
 			SECKEY_DestroyPublicKey(pk);
 			CERT_DestroyCertificate(cert);
 			return false;
@@ -1070,7 +1073,9 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
  * was freshy allocated so no duplication should be needed (or at
  * least shouldn't be) (look for strange free() vs delref() sequence).
  */
-static bool extract_connection(const struct whack_message *wm, struct connection *c)
+static bool extract_connection(struct fd *whackfd,
+			       const struct whack_message *wm,
+			       struct connection *c)
 {
 	/*
 	 * Give the connection a name early so that all error paths
@@ -1610,13 +1615,13 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	 * orient() set up .local and .remote pointers or indexes
 	 * accordingly?
 	 */
-	int same_leftca = extract_end(&c->spd.this, &wm->left, "left");
+	int same_leftca = extract_end(whackfd, &c->spd.this, &wm->left, "left");
 	if (same_leftca < 0) {
 		loglog(RC_FATAL, "Failed to add connection \"%s\" with invalid \"left\" certificate",
 		       c->name);
 		return false;
 	}
-	int same_rightca = extract_end(&c->spd.that, &wm->right, "right");
+	int same_rightca = extract_end(whackfd, &c->spd.that, &wm->right, "right");
 	if (same_rightca < 0) {
 		loglog(RC_FATAL, "Failed to add connection \"%s\" with invalid \"right\" certificate",
 		       c->name);
@@ -1800,11 +1805,11 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	return true;
 }
 
-void add_connection(const struct whack_message *wm)
+void add_connection(struct fd *whackfd, const struct whack_message *wm)
 {
 	struct connection *c = alloc_thing(struct connection,
 					   "struct connection");
-	if (extract_connection(wm, c)) {
+	if (extract_connection(whackfd, wm, c)) {
 		/* log all about this connection */
 		libreswan_log("added connection description \"%s\"", c->name);
 		DBG(DBG_CONTROL, {
@@ -1837,7 +1842,8 @@ void add_connection(const struct whack_message *wm)
  * Returns name of new connection.  NULL on failure (duplicated name).
  * Caller is responsible for pfreeing name.
  */
-char *add_group_instance(struct connection *group, const ip_subnet *target,
+char *add_group_instance(struct fd *whackfd,
+			 struct connection *group, const ip_subnet *target,
 			 uint8_t proto , uint16_t sport , uint16_t dport)
 {
 	passert(group->kind == CK_GROUP);
@@ -1918,7 +1924,8 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 		/* route if group is routed */
 		if (group->policy & POLICY_GROUTED) {
 			if (!trap_connection(t))
-				whack_log(RC_ROUTE, "could not route");
+				whack_log(RC_ROUTE, whackfd,
+					  "could not route");
 		}
 		return clone_str(t->name, "group instance name");
 	}

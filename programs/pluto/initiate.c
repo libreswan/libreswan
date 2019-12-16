@@ -372,7 +372,8 @@ void initiate_connections_by_name(const char *name, struct fd *whackfd,
 	struct connection *c = conn_by_name(name, false/*!strict*/);
 	if (c != NULL) {
 		if (!initiate_connection(c, whackfd, remote_host))
-			whack_log(RC_FATAL, "failed to initiate %s", c->name);
+			whack_log(RC_FATAL, whackfd,
+				  "failed to initiate %s", c->name);
 		return;
 	}
 
@@ -384,7 +385,7 @@ void initiate_connections_by_name(const char *name, struct fd *whackfd,
 	int count = foreach_connection_by_alias(name, initiate_a_connection, &is);
 
 	if (count == 0) {
-		whack_log(RC_UNKNOWN_NAME,
+		whack_log(RC_UNKNOWN_NAME, whackfd,
 			  "no connection named \"%s\"", name);
 	}
 }
@@ -607,8 +608,7 @@ static void cannot_oppo(struct connection *c,
 }
 
 static void initiate_ondemand_body(struct find_oppo_bundle *b,
-				   struct xfrm_user_sec_ctx_ike *uctx
-				  )
+				   struct xfrm_user_sec_ctx_ike *uctx)
 {
 	threadtime_t inception = threadtime_start();
 	struct connection *c = NULL;
@@ -647,7 +647,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		libreswan_log("%s", demandbuf);
 		loggedit = TRUE;
 	} else if (fd_p(whack_log_fd)) {
-		whack_log(RC_COMMENT, "%s", demandbuf);
+		whack_log(RC_COMMENT, b->whackfd, "%s", demandbuf);
 		loggedit = TRUE;
 	}
 

@@ -125,8 +125,9 @@ static int whack_route_connection(struct connection *c,
 }
 
 static int whack_unroute_connection(struct connection *c,
-				    UNUSED void *arg)
+				    void *arg)
 {
+	struct fd *whackfd = arg;
 	const struct spd_route *sr;
 	int fail = 0;
 
@@ -138,8 +139,8 @@ static int whack_unroute_connection(struct connection *c,
 			fail++;
 	}
 	if (fail > 0) {
-		whack_log(RC_RTBUSY,
-			"cannot unroute: route busy");
+		whack_log(RC_RTBUSY, whackfd,
+			  "cannot unroute: route busy");
 	} else if (c->policy & POLICY_GROUP) {
 		unroute_group(c);
 	} else {
@@ -150,7 +151,7 @@ static int whack_unroute_connection(struct connection *c,
 	return 1;
 }
 
-static void do_whacklisten(void)
+static void do_whacklisten(struct fd *whackfd)
 {
 	fflush(stderr);
 	fflush(stdout);
@@ -165,7 +166,7 @@ static void do_whacklisten(void)
 	stale_xfrmi_interfaces();
 #endif
 	load_preshared_secrets();
-	load_groups();
+	load_groups(whackfd);
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
 #endif
@@ -215,7 +216,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 #ifdef FIPS_CHECK
 			if (libreswan_fipsmode()) {
 				if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
-					whack_log(RC_FATAL, "FIPS: --debug-private is not allowed in FIPS mode, aborted");
+					whack_log(RC_FATAL, whackfd,
+						  "FIPS: --debug-private is not allowed in FIPS mode, aborted");
 					return false; /*don't shutdown*/
 				}
 			}
@@ -266,7 +268,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 			} else if (!m->whack_connection) {
 				struct connection *c = conn_by_name(m->name, true/*strict*/);
 				if (c == NULL) {
-					whack_log(RC_UNKNOWN_NAME,
+					whack_log(RC_UNKNOWN_NAME, whackfd,
 						  "no connection named \"%s\"", m->name);
 				} else if (c != NULL) {
 					c->extra_debugging = m->debugging;
@@ -297,14 +299,16 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 	if (m->whack_rekey_ike) {
 		if (m->name == NULL)
-			whack_log(RC_FATAL, "received whack command to rekey IKE SA of connection, but did not receive the connection name or state number - ignored");
+			whack_log(RC_FATAL, whackfd,
+				  "received whack command to rekey IKE SA of connection, but did not receive the connection name or state number - ignored");
 		else
 			rekey_now(m->name, IKE_SA);
 	}
 
 	if (m->whack_rekey_ipsec) {
 		if (m->name == NULL)
-			whack_log(RC_FATAL, "received whack command to rekey IPsec SA of connection, but did not receive the connection name or state number - ignored");
+			whack_log(RC_FATAL, whackfd,
+				  "received whack command to rekey IPsec SA of connection, but did not receive the connection name or state number - ignored");
 		else
 			rekey_now(m->name, IPSEC_SA);
 	}
@@ -315,7 +319,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 	 */
 	if (m->whack_delete) {
 		if (m->name == NULL) {
-			whack_log(RC_FATAL, "received whack command to delete a connection, but did not receive the connection name - ignored");
+			whack_log(RC_FATAL, whackfd,
+				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			terminate_connection(m->name, TRUE);
 			delete_connections_by_name(m->name, !m->whack_connection);
@@ -324,7 +329,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 	if (m->whack_deleteuser) {
 		if (m->name == NULL ) {
-			whack_log(RC_FATAL, "received whack command to delete a connection by username, but did not receive the username - ignored");
+			whack_log(RC_FATAL, whackfd,
+				  "received whack command to delete a connection by username, but did not receive the username - ignored");
 		} else {
 			plog_global("received whack to delete connection by user %s",
 				    m->name);
@@ -335,7 +341,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 	if (m->whack_deleteid) {
 		if (m->name == NULL ) {
-			whack_log(RC_FATAL, "received whack command to delete a connection by id, but did not receive the id - ignored");
+			whack_log(RC_FATAL, whackfd,
+				  "received whack command to delete a connection by id, but did not receive the id - ignored");
 		} else {
 			plog_global("received whack to delete connection by id %s",
 				    m->name);
@@ -369,10 +376,10 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 	}
 
 	if (m->whack_crash)
-		delete_states_by_peer(&m->whack_crash_peer);
+		delete_states_by_peer(whackfd, &m->whack_crash_peer);
 
 	if (m->whack_connection) {
-		add_connection(m);
+		add_connection(whackfd, m);
 	}
 
 	if (m->active_redirect) {
@@ -406,7 +413,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 	/* process "listen" before any operation that could require it */
 	if (m->whack_listen)
-		do_whacklisten();
+		do_whacklisten(whackfd);
 
 	if (m->whack_unlisten) {
 		libreswan_log("no longer listening for IKE messages");
@@ -465,7 +472,8 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 	if (m->whack_route) {
 		if (!listening) {
-			whack_log(RC_DEAF, "need --listen before --route");
+			whack_log(RC_DEAF, whackfd,
+				  "need --listen before --route");
 		} else {
 			struct connection *c = conn_by_name(m->name, true/*strict*/);
 
@@ -474,9 +482,9 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 			} else if (0 == foreach_connection_by_alias(m->name,
 						whack_route_connection,
 						NULL)) {
-				whack_log(RC_ROUTE,
-					"no connection or alias '%s'",
-					m->name);
+				whack_log(RC_ROUTE, whackfd,
+					  "no connection or alias '%s'",
+					  m->name);
 			}
 		}
 	}
@@ -485,21 +493,21 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		passert(m->name != NULL);
 
 		struct connection *c = conn_by_name(m->name, true/*strict*/);
-
 		if (c != NULL) {
-			whack_unroute_connection(c, NULL);
+			whack_unroute_connection(c, whackfd);
 		} else if (0 == foreach_connection_by_alias(m->name,
-						whack_unroute_connection,
-						NULL)) {
-			whack_log(RC_ROUTE,
-				"no connection or alias '%s'",
-				m->name);
+							    whack_unroute_connection,
+							    whackfd)) {
+			whack_log(RC_ROUTE, whackfd,
+				  "no connection or alias '%s'",
+				  m->name);
 		}
 	}
 
 	if (m->whack_initiate) {
 		if (!listening) {
-			whack_log(RC_DEAF, "need --listen before --initiate");
+			whack_log(RC_DEAF, whackfd,
+				  "need --listen before --initiate");
 		} else {
 			ip_address testip;
 			const char *oops;
@@ -509,8 +517,9 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 				oops = ttoaddr(m->remote_host, 0, AF_UNSPEC, &testip);
 
 				if (oops != NULL) {
-					whack_log(RC_NOPEERIP, "remote host IP address '%s' is invalid: %s",
-						m->remote_host, oops);
+					whack_log(RC_NOPEERIP, whackfd,
+						  "remote host IP address '%s' is invalid: %s",
+						  m->remote_host, oops);
 				} else {
 					pass_remote = TRUE;
 				}
@@ -522,7 +531,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 
 	if (m->whack_oppo_initiate) {
 		if (!listening) {
-			whack_log(RC_DEAF,
+			whack_log(RC_DEAF, whackfd,
 				  "need --listen before opportunistic initiation");
 		} else {
 			initiate_ondemand(&m->oppo_my_client,
