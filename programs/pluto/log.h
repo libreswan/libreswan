@@ -123,10 +123,6 @@ void log_state(lset_t rc_flags,
 	       const struct state *st,
 	       const char *format, ...)	PRINTF_LIKE(3);
 
-void log_connection(lset_t rc_flags,
-		    const struct connection *c,
-		    const char *format, ...)	PRINTF_LIKE(3);
-
 /*
  * Log with no context.
  *
@@ -165,6 +161,24 @@ void log_md(lset_t rc_flags,
 	}
 
 /*
+ * Log with a connection context.
+ *
+ * Unlike state and pending, connections do not have an attached
+ * WHACKFD.  Instead connection operations only log to whack when
+ * being called by the whack event handler (where WHACKFD is passed
+ * down).  If whack needs to remain attached after the whack event
+ * handler returns then the WHACKFD parameter is duped into to either
+ * a state or pending struct.
+ */
+
+void log_connection(lset_t rc_flags, struct fd *whackfd,
+		    const struct connection *c,
+		    const char *format, ...) PRINTF_LIKE(4);
+
+#define plog_connection(C, MESSAGE, ...)				\
+	log_connection(LOG_STREAM, null_fd, C, MESSAGE,##__VA_ARGS__)
+
+/*
  * Wrappers.
  *
  * XXX: do these help or hinder - would calling log_state() directly
@@ -185,7 +199,6 @@ void log_md(lset_t rc_flags,
 		jam_log_prefix(BUF, STATE, CONNECTION, FROM),		\
 		log_jambuf(LOG_STREAM, null_fd, BUF))
 
-#define plog_connection(C, MESSAGE, ...) log_connection(LOG_STREAM, C, MESSAGE,##__VA_ARGS__);
 #define plog_state(ST, MESSAGE, ...) log_state(LOG_STREAM, ST, MESSAGE,##__VA_ARGS__);
 
 /*

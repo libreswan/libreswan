@@ -85,19 +85,20 @@
 #include "pluto_stats.h"
 
 static int whack_route_connection(struct connection *c,
-				  UNUSED void *arg)
+				  void *arg)
 {
+	struct fd *whackfd = arg;
 	struct connection *old = push_cur_connection(c);
 
 	if (!oriented(*c)) {
 		/* XXX: why whack only? */
-		log_connection(RC_ORIENT|WHACK_STREAM, c,
+		log_connection(RC_ORIENT|WHACK_STREAM, whackfd, c,
 			       "we cannot identify ourselves with either end of this connection");
 	} else if (c->policy & POLICY_GROUP) {
-		route_group(c);
+		route_group(whackfd, c);
 	} else if (!trap_connection(c)) {
 		/* XXX: why whack only? */
-		log_connection(RC_ROUTE|WHACK_STREAM, c, "could not route");
+		log_connection(RC_ROUTE|WHACK_STREAM, whackfd, c, "could not route");
 	}
 	pop_cur_connection(old);
 	return 1;
@@ -455,10 +456,10 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 			struct connection *c = conn_by_name(m->name, true/*strict*/);
 
 			if (c != NULL) {
-				whack_route_connection(c, NULL);
+				whack_route_connection(c, whackfd);
 			} else if (0 == foreach_connection_by_alias(m->name,
-						whack_route_connection,
-						NULL)) {
+								    whack_route_connection,
+								    whackfd)) {
 				whack_log(RC_ROUTE, whackfd,
 					  "no connection or alias '%s'",
 					  m->name);

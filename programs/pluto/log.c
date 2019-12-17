@@ -854,13 +854,13 @@ void log_state(lset_t rc_flags, const struct state *st,
 	va_end(ap);
 }
 
-void log_connection(lset_t rc_flags, const struct connection *c,
+void log_connection(lset_t rc_flags, struct fd *global_whackfd,
+		    const struct connection *c,
 		    const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	broadcast(rc_flags,
-		  in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
+	broadcast(rc_flags, global_whackfd,
 		  null_fd, /* no object FD */
 		  NULL/*state*/, c/*connection**/, NULL/*MD*/,
 		  format, ap);

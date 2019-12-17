@@ -241,6 +241,7 @@ static void add_revival(struct connection *c)
 
 void revive_conns(void)
 {
+	struct fd *whackfd = null_fd; /*no-whack*/
 	/*
 	 * XXX: Revive all listed connections regardless of their
 	 * DELAY.  See note above in add_revival().
@@ -261,10 +262,11 @@ void revive_conns(void)
 		if (c == NULL) {
 			loglog(RC_UNKNOWN_NAME, "failed to initiate connection \"%s\" which received a Delete/Notify but must remain up per local policy; connection no longer exists", revivals->name);
 		} else {
-			log_connection(RC_LOG, c,
+			log_connection(RC_LOG, whackfd, c,
 				       "initiating connection which received a Delete/Notify but must remain up per local policy");
-			if (!initiate_connection(c, null_fd, NULL)) {
-				log_connection(RC_FATAL, c, "failed to initiate connection");
+			if (!initiate_connection(c, whackfd, NULL)) {
+				log_connection(RC_FATAL, whackfd, c,
+					       "failed to initiate connection");
 			}
 		}
 		/*
