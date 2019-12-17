@@ -420,8 +420,7 @@ void route_group(struct connection *c)
 		g->connection->policy |= POLICY_GROUTED;
 		for (t = targets; t != NULL; t = t->next) {
 			if (t->group == g) {
-				struct connection *ci = conn_by_name(t->name,
-								    FALSE, FALSE);
+				struct connection *ci = conn_by_name(t->name, false/*!strict*/);
 
 				if (ci != NULL) {
 					/*
@@ -449,7 +448,7 @@ void unroute_group(struct connection *c)
 	g->connection->policy &= ~POLICY_GROUTED;
 	for (t = targets; t != NULL; t = t->next) {
 		if (t->group == g) {
-			struct connection *ci = conn_by_name(t->name, FALSE, FALSE);
+			struct connection *ci = conn_by_name(t->name, false/*!strict*/);
 
 			if (ci != NULL) {
 				set_cur_connection(ci);

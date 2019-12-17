@@ -89,7 +89,7 @@ void rekey_now(const char *str, enum sa_type sa_type)
 	if (str == err || *err != '\0') {
 
 		/* str is a connection name */
-		struct connection *c = conn_by_name(str, TRUE, TRUE);
+		struct connection *c = conn_by_name(str, true/*strict*/);
 		if (c != NULL) {
 			while (c != NULL) {
 				if (streq(c->name, str) &&

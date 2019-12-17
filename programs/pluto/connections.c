@@ -106,7 +106,6 @@ static bool idr_wildmatch(const struct end *this, const struct id *b);
  * Find a connection by name.
  *
  * strict: don't accept a CK_INSTANCE.
- * quiet: don't log failure
  *
  * If none is found, and strict&&!queit, a diagnostic is logged to
  * whack.
@@ -114,17 +113,13 @@ static bool idr_wildmatch(const struct end *this, const struct id *b);
  * XXX: Fun fact: this function re-orders the list, moving the entry
  * to the front as a side effect (ulgh)!.
  */
-struct connection *conn_by_name(const char *nm, bool strict, bool quiet)
+struct connection *conn_by_name(const char *nm, bool strict)
 {
 	struct connection *p, *prev;
 
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (prev = NULL, p = connections; ; prev = p, p = p->ac_next) {
 		if (p == NULL) {
-			if (strict && !quiet) {
-				whack_log(RC_UNKNOWN_NAME,
-					"no connection named \"%s\"", nm);
-			}
 			break;
 		}
 		if (streq(p->name, nm) &&
@@ -341,13 +336,13 @@ void delete_connections_by_name(const char *name, bool strict)
 	bool f = FALSE;
 
 	passert(name != NULL);
-	struct connection *c = conn_by_name(name, strict, TRUE);
+	struct connection *c = conn_by_name(name, strict);
 
 	if (c == NULL) {
 		(void)foreach_connection_by_alias(name, delete_connection_wrap,
 						  &f);
 	} else {
-		for (; c != NULL; c = conn_by_name(name, FALSE, FALSE))
+		for (; c != NULL; c = conn_by_name(name, false/*!strict*/))
 			delete_connection(c, FALSE);
 	}
 }
@@ -1088,7 +1083,7 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 	 */
 	c->name = clone_str(wm->name, "connection name");
 
-	if (conn_by_name(wm->name, FALSE, FALSE) != NULL) {
+	if (conn_by_name(wm->name, false/*!strict*/) != NULL) {
 		loglog(RC_DUPNAME, "attempt to redefine connection \"%s\"",
 			wm->name);
 		return false;
@@ -1872,7 +1867,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 		}
 	}
 
-	if (conn_by_name(namebuf, FALSE, FALSE) != NULL) {
+	if (conn_by_name(namebuf, false/*!strict*/) != NULL) {
 		loglog(RC_DUPNAME,
 			"group name + target yields duplicate name \"%s\"",
 			namebuf);

@@ -261,10 +261,11 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 				set_debugging(new_debugging | new_impairing);
 				process_impair(&m->impairment);
 			} else if (!m->whack_connection) {
-				struct connection *c = conn_by_name(m->name,
-								   TRUE, FALSE);
-
-				if (c != NULL) {
+				struct connection *c = conn_by_name(m->name, true/*strict*/);
+				if (c == NULL) {
+					whack_log(RC_UNKNOWN_NAME,
+						  "no connection named \"%s\"", m->name);
+				} else if (c != NULL) {
 					c->extra_debugging = m->debugging;
 					LSWDBGP(DBG_CONTROL, buf) {
 						lswlogf(buf, "\"%s\" extra_debugging = ",
@@ -463,8 +464,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 		if (!listening) {
 			whack_log(RC_DEAF, "need --listen before --route");
 		} else {
-			struct connection *c = conn_by_name(m->name,
-							TRUE, TRUE);
+			struct connection *c = conn_by_name(m->name, true/*strict*/);
 
 			if (c != NULL) {
 				whack_route_connection(c, NULL);
@@ -481,7 +481,7 @@ static bool whack_process(struct fd *whackfd, const struct whack_message *const 
 	if (m->whack_unroute) {
 		passert(m->name != NULL);
 
-		struct connection *c = conn_by_name(m->name, TRUE, TRUE);
+		struct connection *c = conn_by_name(m->name, true/*strict*/);
 
 		if (c != NULL) {
 			whack_unroute_connection(c, NULL);

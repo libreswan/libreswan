@@ -96,7 +96,7 @@ void terminate_connection(const char *name, bool quiet)
 	 * But at least one is required (enforced by conn_by_name).
 	 * Don't log an error if not found before we checked aliases
 	 */
-	struct connection *c = conn_by_name(name, TRUE, TRUE);
+	struct connection *c = conn_by_name(name, true/*strict*/);
 
 	if (c != NULL) {
 		while (c != NULL) {

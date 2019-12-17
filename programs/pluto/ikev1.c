@@ -1000,7 +1000,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 				/* to find and store the connection associated with tmp_name */
 				/* ??? how do we know that tmp_name hasn't been freed? */
-				struct connection *tmp_c = conn_by_name(tmp_name, FALSE, FALSE);
+				struct connection *tmp_c = conn_by_name(tmp_name, false/*!strict*/);
 
 				if (DBGP(DBG_BASE)) {
 					address_buf npb;

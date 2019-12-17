@@ -249,8 +249,7 @@ void revive_conns(void)
 	 */
 	while (revivals != NULL) {
 		struct connection *c = conn_by_name(revivals->name,
-						    TRUE/*strict: don't accept CK_INSTANCE*/,
-						    TRUE/*quiet: be quiet on failure; see below*/);
+						    true/*strict: don't accept CK_INSTANCE*/);
 		/*
 		 * Above call. with quiet=false, would try to log
 		 * using whack_log(); but that's useless as the global
@@ -2437,7 +2436,7 @@ void show_traffic_status(const char *name)
 			pfree(array);
 		}
 	} else {
-		struct connection *c = conn_by_name(name, TRUE, TRUE);
+		struct connection *c = conn_by_name(name, true/*strict*/);
 
 		if (c != NULL) {
 			(void) whack_log_newest_state_traffic(c, NULL);

@@ -369,7 +369,7 @@ void initiate_connections_by_name(const char *name, struct fd *whackfd,
 {
 	passert(name != NULL);
 
-	struct connection *c = conn_by_name(name, FALSE, FALSE);
+	struct connection *c = conn_by_name(name, false/*!strict*/);
 	if (c != NULL) {
 		if (!initiate_connection(c, whackfd, remote_host))
 			whack_log(RC_FATAL, "failed to initiate %s", c->name);
