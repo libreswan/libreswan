@@ -4246,17 +4246,19 @@ uint32_t calculate_sa_prio(const struct connection *c)
 
 	uint32_t protow = c->spd.this.protocol == 0 ? 0 : 1;	/* (1 bit) */
 
+
+	/*
+	 * For transport mode or /32 to /32, the client mask bits are
+	 * set based on the host_addr parameters.
+	 */
 	uint32_t srcw, dstw;	/* each max 128 (8 bits) */
+	srcw = c->spd.this.client.maskbits;
+	dstw = c->spd.that.client.maskbits;
 
-	if (LIN(POLICY_TUNNEL, c->policy)) {
-		srcw = c->spd.this.client.maskbits;
-		dstw = c->spd.that.client.maskbits;
-	} else {
-		srcw = address_type(&c->spd.this.host_addr)->mask_cnt;
-		dstw = address_type(&c->spd.that.host_addr)->mask_cnt;
-	}
+	/* ensure an instance of a template/OE-group always has preference */
+	uint32_t instw = (c->kind == CK_INSTANCE ? 0u : 1u);
 
-	uint32_t prio = pmax - (portsw << 17 | protow << 16 | srcw << 8 | dstw);
+	uint32_t prio = pmax - (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
 
 	DBGF(DBG_CONTROL, "priority calculation of connection \"%s\" is %#" PRIx32,
 		c->name, prio);

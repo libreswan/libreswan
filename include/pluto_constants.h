@@ -1206,16 +1206,16 @@ extern void init_pluto_constants(void);
 /*
  * IPsec SA SPD policy priorities.
  * A smaller value is a higher priority.
- * The bands we use must have 2<<19 distinct values.
- * manual by user	[0 * 1<<19, 1 * 1<<19)
- * static conn		[1 * 1<<19, 2 * 1<<19)
- * opportunistic	[2 * 1<<19, 3 * 1<<19)
- * oe-anonymous		[3 * 1<<19, 4 * 1<<19)
+ * The bands we use must have 2<<20 distinct values.
+ * manual by user	[0 * 1<<20, 1 * 1<<20)
+ * static conn		[1 * 1<<20, 2 * 1<<20)
+ * opportunistic	[2 * 1<<20, 3 * 1<<20)
+ * oe-anonymous		[3 * 1<<20, 4 * 1<<20)
  */
-#define PLUTO_SPD_MANUAL_MAX	(1u * (1u << 19) - 1u)	/* not yet used */
-#define PLUTO_SPD_STATIC_MAX	(2u * (1u << 19) - 1u)
-#define PLUTO_SPD_OPPO_MAX	(3u * (1u << 19) - 1u)
-#define PLUTO_SPD_OPPO_ANON_MAX	(4u * (1u << 19) - 1u)
+#define PLUTO_SPD_MANUAL_MAX	(1u * (1u << 20) - 1u)	/* not yet used */
+#define PLUTO_SPD_STATIC_MAX	(2u * (1u << 20) - 1u)
+#define PLUTO_SPD_OPPO_MAX	(3u * (1u << 20) - 1u)
+#define PLUTO_SPD_OPPO_ANON_MAX	(4u * (1u << 20) - 1u)
 
 /*
  * Maximum data (inluding IKE HDR) allowed in a packet.
