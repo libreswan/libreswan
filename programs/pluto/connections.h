@@ -312,6 +312,7 @@ struct connection {
 	 */
 	int ipsec_mode;			/* tunnel or transport or IKEv1 ... */
 	enum yna_options nic_offload;
+	enum keyword_auto desired_state;
 
 	/* RFC 3706 DPD */
 	deltatime_t dpd_delay;		/* time between checks */

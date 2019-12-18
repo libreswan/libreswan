@@ -186,6 +186,7 @@ struct whack_message {
 	deltatime_t r_interval; /* in msec */
 	enum yna_options nic_offload;
 	uint32_t xfrm_if_id;
+	enum keyword_auto desired_state;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
 	deltatime_t dpd_delay;

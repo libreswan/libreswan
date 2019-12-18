@@ -512,6 +512,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->right.addrtype == KH_IPHOSTNAME)
 		msg.dnshostname = conn->right.strings[KSCF_IP];
 
+	msg.desired_state = conn->options[KNCF_AUTO];
 	msg.nic_offload = conn->options[KNCF_NIC_OFFLOAD];
 	msg.sa_ike_life_seconds = deltatime(conn->options[KNCF_IKELIFETIME]);
 	msg.sa_ipsec_life_seconds = deltatime(conn->options[KNCF_SALIFETIME]);
@@ -534,6 +535,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 	msg.connalias = conn->connalias;
 	msg.sa_clone_id = conn->sa_clone_id;
+	msg.desired_state = conn->desired_state;
 
 	msg.metric = conn->options[KNCF_METRIC];
 
