@@ -22,13 +22,13 @@ src 192.1.2.23 dst 192.1.33.209
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 0.0.0.0/0 dst 192.0.3.10/32
-	dir out priority 1048543 ptype main
+	dir out priority 2097087 ptype main
 	tmpl src 192.1.2.23 dst 192.1.33.209
 src 192.0.3.10/32 dst 0.0.0.0/0
-	dir fwd priority 1048543 ptype main
+	dir fwd priority 2097087 ptype main
 	tmpl src 192.1.33.209 dst 192.1.2.23
 src 192.0.3.10/32 dst 0.0.0.0/0
-	dir in priority 1048543 ptype main
+	dir in priority 2097087 ptype main
 	tmpl src 192.1.33.209 dst 192.1.2.23
 XFRM done
 IPSEC mangle TABLES

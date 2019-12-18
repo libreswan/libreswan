@@ -231,11 +231,11 @@ src 192.0.1.128/28 dst 192.0.2.64/30
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.0.1.0/28 dst 192.0.2.16/28
-	dir out priority 1041379 ptype main
+	dir out priority 2082758 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.0.1.128/28 dst 192.0.2.16/28
-	dir out priority 1041379 ptype main
+	dir out priority 2082758 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done

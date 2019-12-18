@@ -72,15 +72,15 @@ src 192.1.3.209 dst 192.1.2.23
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 XFRM policy:
 src 0.0.0.0/0 dst 192.0.2.1/32
-	dir fwd priority 1040383 ptype main
+	dir fwd priority 2080767 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 0.0.0.0/0 dst 192.0.2.1/32
-	dir in priority 1040383 ptype main
+	dir in priority 2080767 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 192.0.2.1/32 dst 0.0.0.0/0
-	dir out priority 1040383 ptype main
+	dir out priority 2080767 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 XFRM done
