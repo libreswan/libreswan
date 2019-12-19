@@ -139,6 +139,9 @@ setup() {
         restorecon "@IPSEC_NSSDIR@/$configFileName"
     fi
 
+    # Removing the temporary directories
+    rm -rf "$DIR1 $DIR2"
+
     echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
 }
 
@@ -188,6 +191,9 @@ generate_certificate() {
     crontab cert-renewal
     rm cert-renewal
 
+    # Removing the temporary directories
+    rm -rf "$DIR"
+
     echo "try running 'ipsec restart' to load the latest certificates"
 
     echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
@@ -225,6 +231,9 @@ update_certificate() {
 
     # restarting ipsec to load all certificates
     ipsec restart
+
+    # Removing the temporary directories
+    rm -rf "$DIR"
 
     # To confirm the success try running the test connection script on the client
     echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
