@@ -107,16 +107,21 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- # aggressively kill pluto without sending ike delete
+ # kill pluto without sending ike delete
 road #
- killall -9 pluto
+ ipsec whack --impair send-no-delete
 road #
- sleep 50
+ ipsec stop
+Redirecting to: [initsystem]
+road #
+ sleep 40
 road #
  ipsec start
 Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
+road #
+ sleep 10
 road #
  ipsec whack --trafficstatus
 road #

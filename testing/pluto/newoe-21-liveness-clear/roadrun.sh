@@ -5,11 +5,13 @@ sleep 5
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 ../../pluto/bin/ipsec-look.sh
-# aggressively kill pluto without sending ike delete
-killall -9 pluto 
-sleep 50
+# kill pluto without sending ike delete
+ipsec whack --impair send-no-delete
+ipsec stop
+sleep 40
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
+sleep 10
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 # ensure for tests acquires expire before our failureshunt=2m
