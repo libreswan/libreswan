@@ -239,6 +239,10 @@ if os.path.isfile("/var/log/audit/audit.log"):
     if os.path.isfile("/lib/systemd/system/auditd.service"):
         subprocess.getoutput("/usr/bin/systemctl restart auditd.service")
 
+# disable some daemons that could cause noise packets getting encrypted
+subprocess.getoutput("/usr/bin/systemctl stop chronyd")
+subprocess.getoutput("/usr/bin/systemctl stop sssd")
+
 # ensure cores are just dropped, not sent to aobrt-hook-ccpp or systemd.
 # setting /proc/sys/kernel/core_pattern to "core" or a pattern does not
 # work. And you cannot use shell redirection ">". So we hack it with "tee"
