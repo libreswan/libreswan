@@ -41,7 +41,8 @@ road #
 000 "v6-transport":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "v6-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "v6-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "v6-transport":   policy: RSASIG+ENCRYPT+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "v6-transport":   policy: RSASIG+ECDSA+ENCRYPT+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "v6-transport":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "v6-transport":   conn_prio: 128,128; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "v6-transport":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
@@ -56,7 +57,7 @@ road #
 1v2 "v6-transport" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 1v2 "v6-transport" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "v6-transport" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "v6-transport" #2: Authenticated using RSA with SHA-1
+003 "v6-transport" #2: Authenticated using RSA with IKEv2_AUTH_HASH_SHA2_512
 002 "v6-transport" #2: negotiated connection [2001:db8:1:3::209-2001:db8:1:3::209:0-65535 0] -> [2001:db8:1:2::23-2001:db8:1:2::23:0-65535 0]
 004 "v6-transport" #2: STATE_V2_IPSEC_I: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
@@ -88,11 +89,11 @@ src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 	sel src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128 
 XFRM policy:
 src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128
-	dir in priority 1015679 ptype main
+	dir in priority 2031358 ptype main
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
 src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128
-	dir out priority 1015679 ptype main
+	dir out priority 2031358 ptype main
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
 src ::/0 dst ::/0 proto ipv6-icmp type 135
@@ -113,9 +114,10 @@ NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.3.254 dev eth0
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+::1 dev lo proto kernel metric 256
 2001:db8:1:3::/64 dev eth0 proto kernel metric 256
 fe80::/64 dev eth0 proto kernel metric 256
-default via 2001:db8:1:3::254 dev eth0 metric 1
+default via 2001:db8:1:3::254 dev eth0
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

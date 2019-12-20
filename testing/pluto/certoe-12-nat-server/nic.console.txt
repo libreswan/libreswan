@@ -15,7 +15,7 @@ nic #
     link/ether 12:00:00:de:ad:ba brd ff:ff:ff:ff:ff:ff
     inet 192.1.2.254/24 brd 192.1.2.255 scope global eth0
        valid_lft forever preferred_lft forever
-    inet6 2001:db8:1:2::45/64 scope global
+    inet6 2001:db8:1:2::254/64 scope global
        valid_lft forever preferred_lft forever
 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default
     link/ether 12:00:00:32:64:ba brd ff:ff:ff:ff:ff:ff

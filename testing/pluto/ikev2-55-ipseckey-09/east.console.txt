@@ -38,4 +38,24 @@ east #
  echo "initdone"
 initdone
 east #
- 
+ # east should have two public keys. including road fetched from dns
+east #
+ ipsec auto --listpubkeys
+000  
+000 List of Public Keys:
+000  
+000 TIMESTAMP, 3184 RSA Key AwXXXXXXX (no private key), until TIMESTAMP warning (expires in X days)
+000        ID_FQDN '@road.testing.libreswan.org'
+000 TIMESTAMP, 3104 RSA Key AQPHFfpyJ (no private key), until TIMESTAMP warning (expires in X days)
+000        ID_FQDN '@road.testing.libreswan.org'
+000 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
+000        ID_FQDN '@east'
+east #
+ ipsec whack --trafficstatus
+006 #5: "road-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@road.testing.libreswan.org'
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

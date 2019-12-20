@@ -89,7 +89,7 @@ west #
  ping -q -c 4 -n -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
+4 packets transmitted, 2 received, 50% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ping -q -c 4 -n -I 192.0.1.254 192.1.2.23
@@ -107,7 +107,7 @@ west #
  # Tunnels should be back up now
 west #
  ipsec whack --trafficstatus
-006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
+006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
 006 #8: "west-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
 006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
 west #
@@ -161,15 +161,15 @@ src 192.1.2.45 dst 192.1.2.23
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32
-	dir fwd priority 2080703 ptype main
+	dir fwd priority 2080702 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.2.45/32
-	dir in priority 2080703 ptype main
+	dir in priority 2080702 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 192.1.2.45/32 dst 192.1.2.23/32
-	dir out priority 2080703 ptype main
+	dir out priority 2080702 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.1.2.45/32
@@ -185,15 +185,15 @@ src 192.1.2.45/32 dst 192.0.2.0/24
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.1.2.23/32
-	dir out priority 2084799 ptype main
+	dir out priority 2084798 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.0.1.0/24
-	dir fwd priority 2084799 ptype main
+	dir fwd priority 2084798 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.0.1.0/24
-	dir in priority 2084799 ptype main
+	dir in priority 2084798 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 XFRM done
