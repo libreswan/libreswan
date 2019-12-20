@@ -15,9 +15,9 @@
 
 #include "refcnt.h"
 
-#define DEBUG_LOG(WHAT)					\
-	dbg("%s %s@%p(%u) "PRI_WHERE"",			\
-	    WHAT, what, pointer, refcnt->count,		\
+#define DEBUG_LOG(OLD, WHAT)					\
+	dbg("%s %s@%p(%u->%u) "PRI_WHERE"",			\
+	    WHAT, what, pointer, old, refcnt->count,		\
 	    pri_where(where))
 
 void refcnt_init(const char *what, const void *pointer,
@@ -27,8 +27,8 @@ void refcnt_init(const char *what, const void *pointer,
 	if (refcnt->count != 0) {
 		log_pexpect(where, "refcnt should be 0");
 	}
-	refcnt->count = 1;
-	DEBUG_LOG("newref");
+	unsigned old = refcnt->count++;
+	DEBUG_LOG(old, "newref");
 }
 
 void refcnt_add(const char *what, const void *pointer,
@@ -38,18 +38,21 @@ void refcnt_add(const char *what, const void *pointer,
 	if (refcnt->count == 0) {
 		log_pexpect(where, "refcnt should be non-0");
 	}
-	refcnt->count++;
-	DEBUG_LOG("addref");
+	unsigned old = refcnt->count++;
+	DEBUG_LOG(old, "addref");
 }
 
 bool refcnt_delete(const char *what, const void *pointer,
 		   refcnt_t *refcnt, where_t where)
 {
 	/* on main thread */
+	unsigned old;
 	if (refcnt->count == 0) {
 		log_pexpect(where, "refcnt should be non-0");
+		old = 0;
 	} else {
-		refcnt->count--;}
-	DEBUG_LOG("delref");
+		old = refcnt->count--;
+	}
+	DEBUG_LOG(old, "delref");
 	return refcnt->count == 0;
 }

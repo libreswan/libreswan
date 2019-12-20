@@ -58,8 +58,8 @@ func error(key, message) {
     debug("key='" key "'")
 }
 
-/@0x[0-9a-fA-F]*\([0-9]*\)/ {
-    count = gensub(/.*@0x[0-9a-fA-F]*([0-9]*).*/, "\\1", 1)
+/@0x[0-9a-fA-F]*\([0-9]*->[0-9]*\)/ {
+    count = gensub(/.*@0x[0-9a-fA-F]*\([0-9]*->([0-9]*)\).*/, "\\1", 1)
     debug("count='" count "'")
 }
 
