@@ -38,6 +38,12 @@ extern void ipsecdoi_initiate(struct fd *whack_sock, struct connection *c,
 			      const threadtime_t *inception,
 			      chunk_t sec_label);
 
+extern void ipsecdoi_clone_initiate(struct fd *whack_sock,
+		uint32_t clone_cpu_id,
+		struct connection *c,
+		const threadtime_t *inception,
+		struct xfrm_user_sec_ctx_ike *uctx);
+
 extern void ipsecdoi_replace(struct state *st, unsigned long try);
 
 extern void init_phase2_iv(struct state *st, const msgid_t *msgid);

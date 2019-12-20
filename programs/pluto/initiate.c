@@ -241,28 +241,6 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	return true;
 }
 
-static int initiate_clones(const char *name,  struct fd *whackfd, void *arg)
-{
-	char tmpconnname[256];
-	struct connection *c;
-	int count = 0;
-
-	snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", name, CLONE_SA_HEAD);
-	c = conn_by_name(tmpconnname, TRUE);
-	if (c != NULL && c->sa_clones > 0) {
-		uint32_t i = 0;
-		count += initiate_a_connection(c, arg);
-		for (i = 1; i <= c->sa_clones; i++) {
-			snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", name, i);
-			c = conn_by_name(tmpconnname, TRUE);
-			passert(c != NULL);
-			count += initiate_a_connection(c, whackfd, arg);
-		}
-	}
-
-	return count;
-}
-
 static int initiate_a_connection(struct connection *c, struct fd *whackfd, void *arg)
 {
 	const struct initiate_stuff *is = arg;
@@ -274,6 +252,29 @@ static int initiate_a_connection(struct connection *c, struct fd *whackfd, void 
 	close_any(&c->logger->global_whackfd);
 	return result;
 }
+
+static int initiate_clones(const char *name,  struct fd *whackfd, void *arg)
+{
+	char tmpconnname[256];
+	struct connection *c;
+	int count = 0;
+
+	snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", name, CLONE_SA_HEAD);
+	c = conn_by_name(tmpconnname, TRUE);
+	if (c != NULL && c->sa_clones > 0) {
+		uint32_t i = 0;
+		count += initiate_a_connection(c, whackfd, arg);
+		for (i = 1; i <= c->sa_clones; i++) {
+			snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", name, i);
+			c = conn_by_name(tmpconnname, TRUE);
+			passert(c != NULL);
+			count += initiate_a_connection(c, whackfd, arg);
+		}
+	}
+
+	return count;
+}
+
 
 void initiate_connections_by_name(const char *name, const char *remote_host,
 				  struct fd *whackfd, bool background)
@@ -300,7 +301,7 @@ void initiate_connections_by_name(const char *name, const char *remote_host,
 		.remote_host = remote_host,
 	};
 
-	inf count = initiate_clones(name, whackfd, &is); /* try as clones */
+	int count = initiate_clones(name, whackfd, &is); /* try as clones */
 	if (count == 0) {
 		/* try as simple alias */
 		loglog(RC_COMMENT, "try initiating all conns with alias='%s'", name);
@@ -676,6 +677,13 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
 		    str_endpoint(&b->local.client, &b1),
 		    str_endpoint(&b->remote.client, &b2));
+
+		if (c->sa_clones > 0 &&  c->desired_state == STARTUP_ONDEMAND) {
+			ipsecdoi_clone_initiate(b->whackfd,
+					b->clone_cpu_id, c,
+					&inception, sec_label);
+		}
+
 		return;
 	}
 

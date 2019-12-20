@@ -83,6 +83,35 @@
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
 #include "orient.h"
 
+void ipsecdoi_clone_initiate(struct fd *whack_sock,
+		uint32_t clone_cpu_id,
+		struct connection *c,
+		const threadtime_t *inception,
+		struct xfrm_user_sec_ctx_ike *uctx)
+{
+	/* head one is already initiated, now initiate pcpu one */
+
+	uint32_t sa_clone_id = clone_cpu_id + 1;
+	if (sa_clone_id <= c->sa_clones) {
+		char tmpconnname[256];
+		snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", c->connalias, sa_clone_id);
+
+		dbg("initiate clone sa %s for cpu id %u/%u (starting 0)",  tmpconnname, sa_clone_id, c->sa_clones);
+		struct connection *cc = conn_by_name(tmpconnname, TRUE);
+		if (cc == NULL) {
+
+			libreswan_log("can not find clone %s in connection list", tmpconnname);
+		} else {
+			ipsecdoi_initiate(whack_sock, cc, cc->policy, 1,
+					SOS_NOBODY, inception, uctx);
+
+		}
+
+	} else {
+		libreswan_log(" can not initiate clone instance %u > %u clones.", clone_cpu_id, c->sa_clones);
+	}
+}
+
 void ipsecdoi_initiate(struct fd *whack_sock,
 		       struct connection *c,
 		       lset_t policy,
