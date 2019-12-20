@@ -203,7 +203,7 @@ static void set_rev_params(CERTRevocationFlags *rev,
 #define RETRYABLE_TYPE(err) ((err) == SEC_ERROR_INADEQUATE_CERT_TYPE || \
 			      (err) == SEC_ERROR_INADEQUATE_KEY_USAGE)
 
-static bool verify_end_cert(CERTCertList *trustcl,
+static bool verify_end_cert(const struct root_certs *root_certs,
 			    const struct rev_opts *rev_opts,
 			    CERTCertificate *end_cert)
 {
@@ -227,7 +227,7 @@ static bool verify_end_cert(CERTCertList *trustcl,
 		},
 		{
 			.type = cert_pi_trustAnchors,
-			.value = { .pointer = { .chain = trustcl } }
+			.value = { .pointer = { .chain = root_certs->trustcl, } }
 		},
 		{
 			.type = cert_pi_useOnlyTrustAnchors,
@@ -273,6 +273,7 @@ static bool verify_end_cert(CERTCertList *trustcl,
 	if (DBGP(DBG_BASE)) {
 		DBG_log("%s verifying %s using:", __func__, end_cert->subjectName);
 		unsigned nr = 0;
+		CERTCertList *trustcl = root_certs->trustcl;
 		for (CERTCertListNode *node = CERT_LIST_HEAD(trustcl);
 		     !CERT_LIST_END(node, trustcl);
 		     node = CERT_LIST_NEXT(node)) {
@@ -503,10 +504,12 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
  * Decode and verify the chain received by pluto.
  * ee_out is the resulting end cert
  */
-struct certs *find_and_verify_certs(struct state *st,
+
+struct certs* find_and_verify_certs(struct state *st,
 				    struct payload_digest *cert_payloads,
 				    const struct rev_opts *rev_opts,
-				    bool *crl_needed, bool *bad)
+				    bool *crl_needed, bool *bad,
+				    const struct root_certs *root_certs)
 {
 	*crl_needed = false;
 	*bad = false;
@@ -522,14 +525,7 @@ struct certs *find_and_verify_certs(struct state *st,
 		return NULL;
 	}
 
-	statetime_t root_time = statetime_start(st);
-	CERTCertList *root_certs = get_root_certs(); 	/* must not free */
-	statetime_stop(&root_time, "%s() calling get_root_certs()", __func__);
-	if (root_certs == NULL) {
-		LOG_PEXPECT("NSS returned a null root certificate list which should not happen");
-		return NULL;
-	}
-	if (CERT_LIST_EMPTY(root_certs)) {
+	if (root_certs_empty(root_certs)) {
 		libreswan_log("No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.");
 		return NULL;
 	}

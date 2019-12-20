@@ -67,6 +67,7 @@
 #include "ikev2_message.h"	/* for build_ikev2_critical() */
 #include "ike_alg_hash.h"
 #include "certs.h"
+#include "root_certs.h"
 
 /* new NSS code */
 #include "pluto_x509.h"
@@ -709,8 +710,11 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 
 	bool crl_needed = false;
 	bool bad = false;
+	struct root_certs *root_certs = root_certs_addref(HERE); /* must-release */
 	struct certs *certs = find_and_verify_certs(st, cert_payloads,
-						    &rev_opts, &crl_needed, &bad);
+						    &rev_opts, &crl_needed, &bad,
+						    root_certs);
+	root_certs_delref(&root_certs, HERE);
 
 	/* either something went wrong, or there were no certs */
 	if (certs == NULL) {

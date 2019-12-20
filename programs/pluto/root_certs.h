@@ -17,10 +17,19 @@
 #define ROOT_CERTS_H
 
 #include "lswnss.h"
+#include "refcnt.h"
+#include "where.h"
 
 void init_root_certs(void);
 void free_root_certs(void);
 
-CERTCertList *get_root_certs(void);
+struct root_certs {
+	refcnt_t refcnt;
+	CERTCertList *trustcl;
+};
 
-#endif /* NSS_CERT_VFY_H */
+struct root_certs *root_certs_addref(where_t where);
+void root_certs_delref(struct root_certs **, where_t where);
+bool root_certs_empty(const struct root_certs *);
+
+#endif
