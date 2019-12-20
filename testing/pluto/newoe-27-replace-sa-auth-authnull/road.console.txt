@@ -56,15 +56,15 @@ src 192.1.3.209 dst 192.1.2.23
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.3.209/32
-	dir fwd priority 2080703 ptype main
+	dir fwd priority 2080702 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32
-	dir in priority 2080703 ptype main
+	dir in priority 2080702 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.23/32
-	dir out priority 2080703 ptype main
+	dir out priority 2080702 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.1.2.253/32 dst 192.1.3.209/32
@@ -165,7 +165,7 @@ road #
  # verify no packets were dropped due to missing SPD policies
 road #
  grep -v -P "\t0$" /proc/net/xfrm_stat
-XfrmOutNoStates         	1
+XfrmOutNoStates         	2
 road #
 road #
  ../bin/check-for-core.sh

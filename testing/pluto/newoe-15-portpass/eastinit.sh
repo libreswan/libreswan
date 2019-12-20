@@ -1,4 +1,5 @@
 /testing/guestbin/swan-prep
+#pidof sshd || (/usr/sbin/sshd -p 22 > /dev/null 2>/dev/null) > /dev/null 2>/dev/null # for namespaces
 cp policies/* /etc/ipsec.d/policies/
 echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 ipsec start
