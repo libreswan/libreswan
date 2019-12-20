@@ -3001,6 +3001,7 @@ struct msg_digest *unsuspend_md(struct state *st)
 	st->st_suspended_md = NULL;
 	st->st_suspended_md_func = NULL;
 	st->st_suspended_md_line = 0;
+	dbg("unsuspending #%lu MD %p", st->st_serialno, md);
 	return md;
 }
 
@@ -3026,8 +3027,8 @@ bool state_is_busy(const struct state *st)
 	 * XXX: what about xauth? It sets ST_SUSPENDED_MD.
 	 */
 	if (st->st_suspended_md != NULL) {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("#%lu is busy; has a suspended MD", st->st_serialno));
+		dbg("#%lu is busy; has suspended MD %p",
+		    st->st_serialno, st->st_suspended_md);
 		return true;
 	}
 	/*
@@ -3036,20 +3037,19 @@ bool state_is_busy(const struct state *st)
 	 */
 	if (st->st_v1_offloaded_task_in_background) {
 		pexpect(st->st_offloaded_task != NULL);
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("#%lu is idle; has background offloaded task", st->st_serialno));
+		dbg("#%lu is idle; has background offloaded task",
+		    st->st_serialno);
 		return false;
 	}
 	/*
 	 * If this state is busy calculating.
 	 */
 	if (st->st_offloaded_task != NULL) {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("#%lu is busy; has an offloaded task",
-			    st->st_serialno));
+		dbg("#%lu is busy; has an offloaded task",
+		    st->st_serialno);
 		return true;
 	}
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu is idle", st->st_serialno));
+	dbg("#%lu is idle", st->st_serialno);
 	return false;
 }
 
