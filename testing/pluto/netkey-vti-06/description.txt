@@ -5,8 +5,3 @@ This test sets up a "routed vpn" with a 192.1.2.45/32 <-> 192.1.2.23/32 policy
 It is to confirm VTI works with host routes (reference with net-to-net)
 
 This testcase works on 4.0.4 (and prob 3.x as well)
-
-East shows hits in XfrmInTmplMismatch because it received plaintext packets during
-the first part of the test when road sends packets that are supposed to be encrypted
-in the clear. East's xfrm stack drops those packets.
-
