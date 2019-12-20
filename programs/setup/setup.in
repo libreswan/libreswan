@@ -105,7 +105,7 @@ case "$1" in
 	# Shut things down.
 
 	# if namespace testing, stop pluto directly
-	echo "Redirecting to: [stop manually]"
+	echo $SUDO_COMMAND | grep "/bin/nsenter " && echo "Redirecting to: [stop manually]"
 	echo $SUDO_COMMAND | grep "/bin/nsenter " && ipsec whack --shutdown
 	echo $SUDO_COMMAND | grep "/bin/nsenter " && exec ip xfrm state flush
 
