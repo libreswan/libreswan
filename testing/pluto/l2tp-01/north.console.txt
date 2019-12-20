@@ -55,7 +55,7 @@ north #
  # should be non-zero counters if l2tp worked
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east-l2tp", type=ESP, add_time=1234567890, inBytes=530, outBytes=506, id='@east'
+006 #2: "north-east-l2tp", type=ESP, add_time=1234567890, inBytes=536, outBytes=506, id='@east'
 north #
 north #
  # testing passthrough of non-l2tp/ipsec traffic
@@ -90,11 +90,11 @@ src 192.1.3.33 dst 192.1.2.23
 	sel src 192.1.3.33/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.3.33/32 proto udp sport 1701 dport 1701
-	dir in priority 712671 ptype main
+	dir in priority 1425342 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.1.3.33/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701
-	dir out priority 712671 ptype main
+	dir out priority 1425342 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done

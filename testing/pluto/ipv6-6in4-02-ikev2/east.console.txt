@@ -26,15 +26,15 @@ src 192.1.2.23 dst 192.1.2.45
 east #
  ip xfrm policy
 src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
-	dir out priority 1032127 ptype main 
+	dir out priority 2064254 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
-	dir fwd priority 1032127 ptype main 
+	dir fwd priority 2064254 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
-	dir in priority 1032127 ptype main 
+	dir in priority 2064254 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src ::/0 dst ::/0 

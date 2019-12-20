@@ -63,15 +63,15 @@ src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 2001:db8:0:2::/64 dst 2001:db8:0:3:1::/128
-	dir fwd priority 1015743 ptype main
+	dir fwd priority 2031487 ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 		proto esp reqid REQID mode tunnel
 src 2001:db8:0:2::/64 dst 2001:db8:0:3:1::/128
-	dir in priority 1015743 ptype main
+	dir in priority 2031487 ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 		proto esp reqid REQID mode tunnel
 src 2001:db8:0:3:1::/128 dst 2001:db8:0:2::/64
-	dir out priority 1015743 ptype main
+	dir out priority 2031487 ptype main
 	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
 src ::/0 dst ::/0 proto ipv6-icmp type 135
