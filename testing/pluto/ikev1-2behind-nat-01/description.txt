@@ -6,3 +6,6 @@ north. This fails on east with:
 
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: Signature check (on C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org) failed (wrong key?); tried *AwEAAdrh2
 
+Paul: this seems fixed, but of course the way the test is setup, it will
+cause an eroute already in use since both road and north would get the
+same src/dst subnets. 
