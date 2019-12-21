@@ -1,0 +1,10 @@
+# east is not used
+east #
+ echo done
+done
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

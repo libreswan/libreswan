@@ -1,0 +1,27 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ # give auto's time to load
+west #
+ sleep 5
+west #
+ # this should show phase2alg picked is aes128-sha1, not null-sha1
+west #
+ ipsec status |grep good |grep ESP
+000 "good":   ESP algorithms: AES_CBC_128-HMAC_SHA1_96
+west #
+ echo done
+done
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

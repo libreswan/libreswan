@@ -61,7 +61,7 @@ kvmplutotest	basic-pluto-01-failtest		good
 kvmplutotest	basic-pluto-01-nosecrets	good
 kvmplutotest	basic-pluto-02			good
 kvmplutotest	basic-pluto-03			good
-kvmplutotest	basic-pluto-04			wip
+kvmplutotest	basic-pluto-04			good
 kvmplutotest    basic-pluto-07-sourceip		good
 
 kvmplutotest	linux-audit-01-ok		good
