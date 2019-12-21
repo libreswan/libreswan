@@ -210,7 +210,7 @@ kvmplutotest	ikev2-algo-12-aes-aes_cmac		good
 kvmplutotest	ikev2-algo-14-esp-null_auth_aes_gmac-none	good
 kvmplutotest	ikev2-algo-15-esp-null-none		good
 kvmplutotest	ikev2-algo-16-newer-dh			good
-kvmplutotest	ikev2-algo-17-no-sha1-01		wip
+kvmplutotest	ikev2-algo-17-no-sha1-01		good
 kvmplutotest	netkey-algo-aes_gcm-01			good
 kvmplutotest	netkey-algo-aes_gcm-02			good
 kvmplutotest	netkey-algo-aes_gcm-03			good
