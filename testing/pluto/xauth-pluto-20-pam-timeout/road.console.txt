@@ -38,10 +38,9 @@ road #
 road #
  # next one should succed and ping pass throguh
 road #
- ipsec auto --add xauth-road-eastnet
-002 "xauth-road-eastnet": terminating SAs using this connection
-002 "xauth-road-eastnet" #2: deleting state (STATE_MAIN_I2) and NOT sending notification
-002 added connection description "xauth-road-eastnet"
+ # prevent false positive on deleting I1 or I2 by redirecting to /dev/null
+road #
+ ipsec auto --add xauth-road-eastnet > /dev/null
 road #
  ipsec whack --xauthname 'gooduser' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
 002 "xauth-road-eastnet" #3: initiating Main Mode
