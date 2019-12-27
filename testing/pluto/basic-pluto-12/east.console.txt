@@ -6,6 +6,8 @@ east #
 east #
  #iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 east #
+ (test -z $(ip netns identify) || PATH/sbin/sshd -p 22 > /dev/null 2>/dev/null &)
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #

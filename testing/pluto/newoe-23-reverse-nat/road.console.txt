@@ -47,7 +47,7 @@ road #
 road #
  echo "PLAINTEXT" | nc -s 192.1.3.209 192.1.2.123 22
 SSH-2.0-OpenSSH_XXX
-Protocol mismatch.
+Invalid SSH identification string.
 road #
  # time for IKE from east to fail
 road #
@@ -57,7 +57,7 @@ road #
 road #
  echo "PLAINTEXT" | nc -s 192.1.3.209 192.1.2.123 22
 SSH-2.0-OpenSSH_XXX
-Protocol mismatch.
+Invalid SSH identification string.
 road #
  killall ip > /dev/null 2> /dev/null
 road #

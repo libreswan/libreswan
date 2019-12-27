@@ -37,7 +37,7 @@ west #
 west #
  echo take-passthrough-unencrpted | nc -s 192.0.1.254 192.0.2.254 22
 SSH-2.0-OpenSSH_XXX
-Protocol mismatch.
+Invalid SSH identification string.
 west #
  # still zero
 west #
@@ -49,8 +49,10 @@ Ncat: Connection refused.
 west #
  # this moved through the tunnel, so non-zero
 west #
- ipsec whack --trafficstatus
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=40, outBytes=60, id='@east'
+ # workaround for diff err msg between fedora versions resulting in diff byte count
+west #
+ ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
+006 #2: "westnet-eastnet", [...]
 west #
  echo done
 done
