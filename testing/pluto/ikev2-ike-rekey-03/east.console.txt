@@ -36,10 +36,9 @@ east #
 000 #13: "westnet-eastnet-ikev2b":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
 000 #14: "westnet-eastnet-ikev2c":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
 east #
- # there should be only one IKE_INIT exchange created
+ # there should be only one IKE_INIT exchange created on west
 east #
- grep "STATE_UNDEFINED(ignore) => STATE_PARENT" /tmp/pluto.log  |grep parent
-| parent state #1: STATE_UNDEFINED(ignore) => STATE_PARENT_R1(half-open-ike)
+ hostname | grep west > /dev/null && grep "STATE_PARENT_I1: sent v2I1, expected v2R1" /tmp/pluto.log
 east #
 east #
  ../bin/check-for-core.sh
