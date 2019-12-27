@@ -18,3 +18,4 @@ s/  / /g
 s/auth=0/auth=OAKLEY__0/g
 # and embedded group separators
 s/ res=\([a-z]*\)'\o035/ res=\1'^]/
+/^.* kauditd_printk_skb: .*$/d
