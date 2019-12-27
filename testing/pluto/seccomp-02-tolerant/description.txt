@@ -1,5 +1,8 @@
 Basic pluto test with seccomp enabled.
 
+This test fails when using namespaces because auditd does not
+yet have support for namespaces.
+
 Once established and disconnected, we run the seccomp
 test. In tolerant mode, pluto will tell us what happened,
 but continue.
