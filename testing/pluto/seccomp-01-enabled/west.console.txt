@@ -3,8 +3,7 @@ Preparing X.509 files
 west #
  ipsec _stackmanager start
 west #
- service auditd stop
-Stopping logging: [ OK ]
+ service auditd stop > /dev/null 2> /dev/null
 west #
  rm -f /var/log/audit/audit.log
 west #
