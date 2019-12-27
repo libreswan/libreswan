@@ -56,11 +56,9 @@ west #
 west #
  rm -fr /tmp/nflog-50.pcap
 west #
- tcpdump -c 8 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 &
-[B] PID
+ (tcpdump -c 8 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 >/dev/null 2>/dev/null &)
 west #
  ping -n -c 5 -I 192.0.1.254 192.0.2.254
-tcpdump: listening on nflog:50, link-type NFLOG (Linux netfilter log messages), capture size 262144 bytes
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
@@ -72,10 +70,6 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  cp  /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
-8 packets captured
-8 packets received by filter
-0 packets dropped by kernel
-[1]+  Done                    tcpdump -c 8 -s 0 -w /tmp/nflog-50.pcap -i nflog:50
 west #
  tcpdump -n -r OUTPUT/nflog-50.pcap
 reading from file OUTPUT/nflog-50.pcap, link-type NFLOG (Linux netfilter log messages)
