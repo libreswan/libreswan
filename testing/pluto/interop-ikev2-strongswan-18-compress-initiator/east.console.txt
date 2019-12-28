@@ -73,7 +73,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #
  ip xfrm state
 src 192.1.2.45 dst 192.1.2.23

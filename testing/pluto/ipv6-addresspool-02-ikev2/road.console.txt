@@ -102,7 +102,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 road #
 road #
  ../bin/check-for-core.sh

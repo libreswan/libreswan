@@ -58,7 +58,7 @@ Certificate Nickname                                         Trust Attributes
 strongEast                                                   u,u,u
 strongSwan CA - strongSwan                                   CT,, 
 east #
- if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #
 east #
  ../bin/check-for-core.sh

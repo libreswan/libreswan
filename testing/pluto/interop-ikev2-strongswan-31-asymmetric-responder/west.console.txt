@@ -99,7 +99,7 @@ north                                                        P,,
 road                                                         P,,  
 west                                                         u,u,u
 west #
- if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 west #
 west #
  ../bin/check-for-core.sh
