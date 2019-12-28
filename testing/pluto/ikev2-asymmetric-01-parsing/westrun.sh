@@ -20,12 +20,9 @@ echo "all remaining tests should fail"
 # whack testing
 ipsec whack --name failtestmanual1 --ikev2-allow --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
 ipsec whack --name failtestmanual2 --ikev1-allow --encrypt --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
-ipsec whack --name failtestmanual3 --psk --encrypt --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
-ipsec whack --name failtestmanual4 --rsasig --encrypt --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
 # parser testing
 ipsec auto --add failtest0
 ipsec auto --add failtest1
-ipsec auto --add failtest2
 ipsec auto --add failtest3
 ipsec auto --add failtest4
 ipsec auto --add failtest5
