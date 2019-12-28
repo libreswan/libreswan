@@ -586,7 +586,7 @@ if not args.namespace: # inside namespace this would kill pluto from other ns
         if os.path.isfile("/usr/sbin/restorecon") and selinux == 'Enforcing':
             subprocess.getoutput("restorecon -Rv /etc/ipsec.* /var/lib/ipsec /usr/local/libexec/ipsec /usr/local/sbin/ipsec")
 
-for pidfile in ("/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/spmd.pid", "/var/run/starter.charon.pid"):
+for pidfile in ("/var/run/pluto/pluto.pid", "/var/run/strongswan/charon.pid", "/var/run/charon.pid", "/var/run/spmd.pid", "/var/run/starter.charon.pid"):
     if os.path.isfile(pidfile):
         os.unlink(pidfile)
 
