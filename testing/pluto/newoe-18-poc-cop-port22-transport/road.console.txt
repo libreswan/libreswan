@@ -25,7 +25,8 @@ road #
  # use a static source port just to prevent false positive on larval state port
 road #
  echo TRIGGER-OE | nc -s 192.1.3.209 -p 42599 192.1.2.23 22
-Ncat: Connection refused.
+SSH-2.0-OpenSSH_XXX
+Invalid SSH identification string.
 road #
  # wait on OE retransmits and rekeying
 road #
