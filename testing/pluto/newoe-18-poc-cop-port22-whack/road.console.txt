@@ -51,8 +51,10 @@ road #
 road #
  # show non-zero counters
 road #
- ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24-(0--6--22)"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=377, outBytes=435, id='ID_NULL'
+ # workaround for diff err msg between fedora versions resulting in diff byte count
+road #
+ ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
+006 #2: "private-or-clear#192.1.2.0/24-(0--6--22)"[1] ...192.1.2.23, [...]
 road #
  echo done
 done

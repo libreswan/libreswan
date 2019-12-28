@@ -1,4 +1,5 @@
 /testing/guestbin/swan-prep
+(test -z $(ip netns identify) || /usr/sbin/sshd -p 22 > /dev/null 2>/dev/null &)
 cp east-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 cp policies/* /etc/ipsec.d/policies/
 # the order is changed in newoe-18-poc-cop-port22-both-reorder

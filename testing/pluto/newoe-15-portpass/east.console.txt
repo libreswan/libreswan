@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 east #
- #pidof sshd || (PATH/sbin/sshd -p 22 > /dev/null 2>/dev/null) > /dev/null 2>/dev/null # for namespaces
+ (test -z $(ip netns identify) || PATH/sbin/sshd -p 22 > /dev/null 2>/dev/null &)
 east #
  cp policies/* /etc/ipsec.d/policies/
 east #
