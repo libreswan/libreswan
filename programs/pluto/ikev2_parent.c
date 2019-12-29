@@ -402,7 +402,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 		for (hap = ha; ; hap++) {
 			if (hap == &ha[elemsof(ha)]) {
-				libreswan_log("No acceptable ASN.1 signature hash proposal included for %s in %s",
+				libreswan_log("No acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s in %s",
 					enum_name(&ikev2_asym_auth_name, that_authby), context);
 				DBG(DBG_BASE, {
 					size_t dl = min(pbs_left(pbs),
