@@ -84,13 +84,17 @@ while true ; do
     # Force ${branch} to be identical to ${remote} by using --ff-only
     # - if it fails the script dies.
 
-    status "updating repo"
+    status "updating repository"
     ( cd ${repodir} && git fetch || true )
     ( cd ${repodir} && git merge --ff-only )
 
-    # by default, only test new commits.
+    # by default, only test new commits with an upgraded repo
     if test -z "${first_commit}" ; then
 	first_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
+	status "purging existing KVMs"
+	( cd ${repodir} && make kvm-purge )
+	status "upgrading base KVM"
+	( cd ${repodir} && make kvm-upgrade )
     fi
 
     # Update the summary web page
@@ -156,8 +160,9 @@ while true ; do
 	if ! run ${target} ; then
 	    # force the next run to test HEAD++; hopefully that will
 	    # contain the fix (or at least contain the damage).
+	    status "${target} barfed, restarting with HEAD"
 	    first_commit=
-	    break
+	    continue
 	fi
     done
 
@@ -168,10 +173,9 @@ while true ; do
 
     status "checking KVMs"
     if grep '"output-missing"' "${resultsdir}/results.json" ; then
-	status "corrupt domains detected, deleting old"
-	( cd ${repodir} && make kvm-purge )
-	status "corrupt domains detected, building fresh domains"
-	( cd ${repodir} && make kvm-install-test-domains )
+	status "corrupt domains detected, restarting with HEAD"
+	first_commit=
+	continue
     fi
 
     # loop back to code updating summary dir
