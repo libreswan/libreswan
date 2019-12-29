@@ -12,8 +12,8 @@ initdone
 north #
  # one ping to trigger IKE
 north #
- ../../pluto/bin/one-ping.sh -I 192.0.3.254 192.0.2.254
-down
+ ../../pluto/bin/ping-once.sh --forget -I 192.0.3.254 192.0.2.254
+fired and forgotten
 north #
  ../../pluto/bin/wait-for-whack-trafficstatus.sh north-east
 006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
