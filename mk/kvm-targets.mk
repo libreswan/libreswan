@@ -354,6 +354,9 @@ kvm-modified:
 .PHONY: kvm-modified-test kvm-modified-check
 kvm-modified-test kvm-modified-check:
 	$(MAKE) kvm-test KVM_TESTS="$(KVM_MODIFIED_TESTS)"
+.PHONY: kvm-modified-retest kvm-modified-recheck
+kvm-modified-retest kvm-modified-recheck:
+	$(MAKE) kvm-retest KVM_TESTS="$(KVM_MODIFIED_TESTS)"
 .PHONY: kvm-modified-results
 kvm-modified-results:
 	$(KVMRESULTS) $(KVM_MODIFIED_TESTS)
@@ -1282,9 +1285,10 @@ Standard targets and operations:
                         compare against KVM_BASELINE when defined
     kvm-modified
     kvm-modified-check
+    kvm-modified-recheck
     kvm-modified-results
     kvm-modified-diffs
-                      - list/run/examine any tests with modified files
+                      - list/check/examine any tests with modified files
 
   To print make variables:
 
