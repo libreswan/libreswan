@@ -116,27 +116,34 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 		uint16_t h_value = ntohs(nh_value);
 
 		switch (h_value)  {
-		/* We no longer support SHA1 (as per RFC8247) */
+		/* We no longer support SHA1 (as per RFC 8247) */
 		case IKEv2_AUTH_HASH_SHA2_256:
 			if (sighash_policy & POL_SIGHASH_SHA2_256) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_256;
+				dbg("received AUTH_HASH_SHA2_256 which is allowed by local policy");
 			}
 			break;
 		case IKEv2_AUTH_HASH_SHA2_384:
 			if (sighash_policy & POL_SIGHASH_SHA2_384) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_384;
+				dbg("received AUTH_HASH_SHA2_384 which is allowed by local policy");
 			}
 			break;
 		case IKEv2_AUTH_HASH_SHA2_512:
 			if (sighash_policy & POL_SIGHASH_SHA2_512) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_512;
+				dbg("received AUTH_HASH_SHA2_512 which is allowed by local policy");
 			}
 			break;
+		case IKEv2_AUTH_HASH_SHA1:
+			dbg("received and ignored IKEv2_AUTH_HASH_SHA1 - it is no longer allowed as per RFC 8247");
+			break;
 		case IKEv2_AUTH_HASH_IDENTITY:
-			st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_IDENTITY;
+			//st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_IDENTITY;
+			dbg("received unsupported AUTH_HASH_IDENTITY - ignored");
 			break;
 		default:
-			libreswan_log("Received and ignored hash algorithm %d", h_value);
+			libreswan_log("Received and ignored unknown hash algorithm %d", h_value);
 		}
 	}
 	return true;
@@ -201,7 +208,9 @@ static bool ikev2_try_asn1_hash_blob(enum notify_payload_hash_algorithms hash_al
 	uint8_t in_blob[ASN1_LEN_ALGO_IDENTIFIER +
 		PMAX(ASN1_SHA1_ECDSA_SIZE,
 			PMAX(ASN1_SHA2_RSA_PSS_SIZE, ASN1_SHA2_ECDSA_SIZE))];
-	DBGF(DBG_CONTROLMORE, "looking for ASN.1 blob for %d, %d", authby, hash_algo);
+	DBGF(DBG_CONTROLMORE, "looking for ASN.1 blob for method %s for hash_algo %s",
+		enum_name(&ikev2_asym_auth_name, authby),
+		enum_name(&notify_hash_algo_names, hash_algo));
 	return
 		pexpect(b != NULL) &&	/* we know this hash */
 		pbs_left(a_pbs) >= b->blob_sz && /* the stream has enough octets */
@@ -386,14 +395,15 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			{ NEGOTIATE_AUTH_HASH_SHA2_512, IKEv2_AUTH_HASH_SHA2_512 },
 			{ NEGOTIATE_AUTH_HASH_SHA2_384, IKEv2_AUTH_HASH_SHA2_384 },
 			{ NEGOTIATE_AUTH_HASH_SHA2_256, IKEv2_AUTH_HASH_SHA2_256 },
+			// { NEGOTIATE_AUTH_HASH_IDENTITY, IKEv2_AUTH_HASH_IDENTITY },
 		};
 			
 		const struct hash_alts *hap;
 
 		for (hap = ha; ; hap++) {
 			if (hap == &ha[elemsof(ha)]) {
-				libreswan_log("No acceptable ASN.1 hash blob found for %d in %s",
-					that_authby, context);
+				libreswan_log("No acceptable ASN.1 signature hash proposal included for %s in %s",
+					enum_name(&ikev2_asym_auth_name, that_authby), context);
 				DBG(DBG_BASE, {
 					size_t dl = min(pbs_left(pbs),
 						(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
@@ -407,10 +417,11 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 			if ((hn & hap->neg) && ikev2_try_asn1_hash_blob(hap->algo, pbs, that_authby))
 				break;
+
+		dbg("st_hash_negotiated policy does not match hash algorithm %s", enum_name(&notify_hash_algo_names, hap->algo));
 		}
 
 		/* try to match the hash */
-
 		stf_status authstat;
 
 		switch (that_authby) {
@@ -2036,12 +2047,16 @@ static stf_status emit_v2AUTH(struct ike_sa *ike,
 	{
 		enum notify_payload_hash_algorithms hash_algo;
 
+		/* RFC 8420 IDENTITY algo not supported yet */
 		if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_512;
+			dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_512");
 		} else if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_384;
+			dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_384");
 		} else if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_256;
+			dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_256");
 		} else {
 			loglog(RC_LOG_SERIOUS, "DigSig: no compatible DigSig hash algo");
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
