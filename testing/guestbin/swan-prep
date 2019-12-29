@@ -26,15 +26,19 @@ def path_touch(dst, mode=None):
     else:
         Path(dst).touch()
 
-def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False):
+def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False, wipe_old_dst=False):
 
     if touch_src_file and mkdir_src:
         print("conflicting options touch_src_file and mkdir_src");
 
-    if mkdir_src and not os.path.isdir(src):
+    if mkdir_src and not os.path.isdir(src) and not touch_src_file:
         os.makedirs(src)
-    if touch_src_file and not os.path.isfile(dst) and not os.path.islink(dst):
+
+    if touch_src_file :
         path_touch(src, mode)
+
+    if wipe_old_dst:
+        wipe_old(dst)
 
     if os.path.isdir(src):
         if not os.path.isdir(dst) and not os.path.islink(dst):
@@ -54,6 +58,9 @@ def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False):
 
     o = subprocess.run(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
                         encoding='utf-8')
+    if o.returncode:
+        print("mount_bind failed %s" % cmd)
+
     return o.returncode
 
 def lsw_cp_file(src, dst, mode=None, nsbasepath=''):
@@ -254,52 +261,43 @@ fp.close()
 
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
     # copy in base configs
+    prefix = ""
 
     if hostname != "nic":
-        if userland == "strongswan":
-            prefix = "strongswan/"
-        else:
-            prefix = ""
-
         if args.namespace:
             nsbasepath="%s/NS/%s" % (testpath, hostname) #will create testpath/NS/hostname/*
             if not os.path.isdir(nsbasepath):
                 os.makedirs(nsbasepath)
 
-            src = "%s/etc" % (nsbasepath)
-            if not os.path.isdir(src):
-                os.mkdir(src)
+            ipsec_d_dir = "strongswan/" if userland == "strongswan" else "ipsec.d"
 
-            src = "%s/etc/%sipsec.d" % (nsbasepath, prefix)
-            dst = "/etc/%sipsec.d" % prefix
-
-            if mount_bind(src, dst, mkdir_src=True):
+            src = "%s/etc/%s" % (nsbasepath, ipsec_d_dir)
+            dst = "/etc/%s" % (ipsec_d_dir)
+            if mount_bind(src, dst, mkdir_src=True,  wipe_old_dst=True):
                 sys.exit(1)
 
-            wipe_old("/run/pluto")
             src = "%s/run/pluto" % (nsbasepath)
-            if not os.path.isdir(src):
-                os.makedirs(src)
-            dst="/run/pluto"
-            if mount_bind(src, dst):
+            if args.userland in ("libreswan", "openswan"):
+                dst = "/run/pluto"
+            elif args.userland in ("strongswan"):
+                dst="/run/strongswan"
+
+            if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=False):
                 sys.exit(1)
 
-            wipe_old("/run/strongswan")
-            src = "%s/run/strongswan" % (nsbasepath)
-            if not os.path.isdir(src):
-                os.makedirs(src)
-            dst="/run/strongswan"
-            if mount_bind(src, dst):
-                sys.exit(1)
-
-        # this brings in the nss *.db files that are path-specific -
-        # they have pathnames hardcoded inside the file
-        # shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname,
-        # "/etc/").  This default database contains a default key-pair
-        # for basic testing.
-        distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, "/etc/ipsec.d/")
-        # fill in any missing dirs
-
+        if args.userland in ("libreswan", "openswan"):
+            # this brings in the nss *.db files that are path-specific -
+            # they have pathnames hardcoded inside the file
+            # shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname,
+            # "/etc/").  This default database contains a default key-pair
+            # for basic testing.
+            distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, "/etc/ipsec.d/")
+            # fill in any missing dirs
+        elif args.userland in ("strongswan"):
+            prefix = "strongswan/"
+            dst = "/etc/strongswan/ipsec.d"
+            if not os.path.isdir(dst):
+                os.mkdir(dst)
 
         for dir in ("/etc/%sipsec.d" % prefix, "/etc/%sipsec.d/policies" % prefix, "/etc/%sipsec.d/cacerts" % prefix, "/etc/%sipsec.d/crls" % prefix, "/etc/%sipsec.d/certs" % prefix, "/etc/%sipsec.d/private" % prefix):
             if not os.path.isdir(dir):
@@ -325,7 +323,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
                 print("conflicting files %s %s" % (ipsecconf, h_ipsecconf))
             else:
                 ipsecconf = h_ipsecconf
-        elif not os.path.isfile(ipsecconf):
+        elif not os.path.isfile(ipsecconf) and args.userland in ("libreswan", "openswan") :
             ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf" % hostname
 
         if os.path.isfile(h_ipsecsecrets):
@@ -383,13 +381,13 @@ sysconfigd = "%s/etc/sysconfig" % (nsbasepath)
 if not os.path.isdir(sysconfigd):
     os.mkdir(sysconfigd)
 
-if args.fips:
-    # the test also requires using a modutil cmd which we cannot run here
-    shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
-else:
-
-    lsw_cp_file("/testing/baseconfigs/all/etc/sysconfig/pluto", "/etc/sysconfig/pluto",
-            nsbasepath=nsbasepath)
+if args.userland in ("libreswan", "openswan"):
+    if args.fips and args.userland in ("libreswan", "openswan"):
+        # the test also requires using a modutil cmd which we cannot run here
+        shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
+    else:
+        lsw_cp_file("/testing/baseconfigs/all/etc/sysconfig/pluto", "/etc/sysconfig/pluto",
+                nsbasepath=nsbasepath)
     if os.path.isfile("/etc/system-fips"):
         wipe_old("/etc/system-fips") # would work? would remove file from real system? AA_201902
 
