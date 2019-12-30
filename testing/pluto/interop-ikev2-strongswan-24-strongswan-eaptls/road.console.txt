@@ -22,18 +22,18 @@ initiating IKE_SA rw-eap[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
 sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(MULT_AUTH) ]
+parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(CHDLESS_SUP) N(MULT_AUTH) ]
 selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_256/MODP_3072
 sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 establishing CHILD_SA rw-eap{1}
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr CPRQ(ADDR DNS) SA TSi TSr N(MOBIKE_SUP) N(NO_ADD_ADDR) N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ EF(2/2) ]
-received fragment #2 of 2, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ EF(1/2) ]
-received fragment #1 of 2, reassembled fragmented IKE message (XXX bytes)
+received fragment #1 of 2, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(2/2) ]
+received fragment #2 of 2, reassembled fragmented IKE message (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
 received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
@@ -92,6 +92,8 @@ sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
 parsed IKE_AUTH response 7 [ EAP/REQ/TLS ]
 generating IKE_AUTH request 8 [ EAP/RES/TLS ]
+sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
+retransmit 1 of request with message ID 8
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
 parsed IKE_AUTH response 8 [ EAP/REQ/TLS ]

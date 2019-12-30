@@ -1,5 +1,5 @@
 # confirm the right ID types were sent/received
-grep "ID type" /tmp/pluto.log | sort | uniq
+hostname | grep east > /dev/null &&  grep "ID type" /tmp/pluto.log | sort | uniq
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

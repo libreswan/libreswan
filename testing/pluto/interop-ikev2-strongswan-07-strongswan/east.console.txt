@@ -26,6 +26,18 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 		level use 
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 1 mode transport
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir fwd priority 175423 ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir in priority 175423 ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir out priority 175423 ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir fwd priority 175423 ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir in priority 175423 ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir out priority 175423 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
@@ -85,6 +97,9 @@ westnet-eastnet-ikev2:  192.1.2.23...192.1.2.45  IKEv2
 westnet-eastnet-ikev2:   local:  [east] uses pre-shared key authentication
 westnet-eastnet-ikev2:   remote: [west] uses pre-shared key authentication
 westnet-eastnet-ikev2:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL
+Shunted Connections:
+Bypass LAN 192.0.2.0/24:  192.0.2.0/24 === 192.0.2.0/24 PASS
+Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.2.45[west]
 westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r*, pre-shared key reauthentication in 2 hours

@@ -1,3 +1,3 @@
 # this should succeed
-strongswan up san
+strongswan up san | grep -v libcurl
 echo "done"

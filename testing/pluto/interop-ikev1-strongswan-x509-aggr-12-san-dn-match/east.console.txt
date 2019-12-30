@@ -16,7 +16,7 @@ initdone
 east #
  # confirm the right ID types were sent/received
 east #
- grep "ID type" /tmp/pluto.log | sort | uniq
+ hostname | grep east > /dev/null &&  grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_DER_ASN1_DN (0x9)
 |    ID type: ID_IPV4_ADDR (0x1)
 east #

@@ -16,14 +16,12 @@ west #
  ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- setenforce 0
-west #
  ../../pluto/bin/strongswan-start.sh
 west #
  echo "initdone"
 initdone
 west #
- strongswan up westnet-eastnet-ikev2
+ strongswan up westnet-eastnet-ikev2 | grep -v libcurl
 initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
@@ -61,11 +59,9 @@ received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Depa
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
-libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org port 2560: No route to host
 ocsp request to http://nic.testing.libreswan.org:2560 failed
 ocsp check failed, fallback to crl
   fetching crl from 'http://nic.testing.libreswan.org/revoked.crl' ...
-libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org port 80: No route to host
 crl fetching failed
 certificate status is not available
   reached self-signed root ca with a path length of 0
@@ -96,6 +92,8 @@ west #
 done
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then grep "Authenticated using RSA" /tmp/pluto.log ; fi
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:
