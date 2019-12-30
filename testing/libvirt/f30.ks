@@ -164,6 +164,8 @@ WantedBy=shutdown.target reboot.target poweroff.target
 EOD
 
 systemctl disable firewalld.service
+systemctl disable chronyd.service
+systemctl disable sssd.service
 systemctl enable systemd-networkd
 systemctl enable systemd-networkd-wait-online
 systemctl enable iptables.service
