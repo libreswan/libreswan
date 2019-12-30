@@ -23,3 +23,4 @@ s/ip_vti0@NONE: <NOARP> mtu [0-9]* /ip_vti0@NONE: <NOARP> mtu XXXX /
 /^.*Terminated.*ip -s xfrm monitor.*$/d
 # sshd on fedora 30 and 31 have slightly different error msgs
 s/^Protocol mismatch\.$/Invalid SSH identification string./g
+/^.*for ASN.1 blob for method.*$/d
