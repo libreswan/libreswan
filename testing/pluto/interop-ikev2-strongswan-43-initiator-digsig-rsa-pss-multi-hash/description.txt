@@ -15,3 +15,9 @@ rsa-sha2_512,rsa-sha2_384,rsa-sha2_256.
 In this case Digital signature authentication is successful through rsa-sha2_512
 
 Note: test seems setup to not use a Certificate Agency?
+
+Caveat: strongswan with authby=rsasig accepts RSA-PSS SHA2 signatures,
+but responds with RSAv1.5 SHA2 signatures, which we refuse. According
+to RFC 7427/8247 RSA-PSS SHA2 is MUST and RSAv1.5 SHA2 is MAY implement.
+Workaround is to explicitly configure strongswan for RSA-PSS
+

@@ -9,3 +9,7 @@ We currently supoort RSA-PSS with SHA2 (SHA2_256,SHA2_384 and SHA2_512)
 
 This testcase tests the auth scheme with rsa-sha2 (rsa-sha2_256)
 
+Caveat: strongswan with authby=rsasig accepts RSA-PSS SHA2 signatures,
+but responds with RSAv1.5 SHA2 signatures, which we refuse. According
+to RFC 7427/8247 RSA-PSS SHA2 is MUST and RSAv1.5 SHA2 is MAY implement.
+Workaround is to explicitly configure strongswan for RSA-PSS

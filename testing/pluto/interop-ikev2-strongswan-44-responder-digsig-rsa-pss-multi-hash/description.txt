@@ -5,5 +5,11 @@ the responder (east).
 This is the reverse test of interop-ikev2-strongswan-05
 
 By default the Authentication method now is Digital Signatures.
-We currently supoort RSA with SHA1  only.
+We currently supoort RSA with SHA2  only. RSA-SHA1 must use legacy
+method.
+
+Caveat: strongswan with authby=rsasig accepts RSA-PSS SHA2 signatures,
+but responds with RSAv1.5 SHA2 signatures, which we refuse. According
+to RFC 7427/8247 RSA-PSS SHA2 is MUST and RSAv1.5 SHA2 is MAY implement.
+Workaround is to explicitly configure strongswan for RSA-PSS
 
