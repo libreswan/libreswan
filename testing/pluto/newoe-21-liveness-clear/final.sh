@@ -1,4 +1,4 @@
-ipsec whack --trafficstatus
+hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 ../../pluto/bin/ipsec-look.sh
 ../../pluto/bin/ipsec-look.sh

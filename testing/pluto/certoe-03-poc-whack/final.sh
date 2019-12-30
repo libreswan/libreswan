@@ -1,5 +1,5 @@
 ../../pluto/bin/ipsec-look.sh
-ipsec whack --trafficstatus 
+hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 # A tunnel should have established
 grep "negotiated connection" /tmp/pluto.log
 # you should see both RSA and NULL

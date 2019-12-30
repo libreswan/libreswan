@@ -1,6 +1,6 @@
 # No tunnels should have established but a shunt should exist
-ipsec whack --trafficstatus
-ipsec whack --shuntstatus
+hostname | grep nic > /dev/null || ipsec whack --trafficstatus
+hostname | grep nic > /dev/null || ipsec whack --shuntstatus
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

@@ -48,7 +48,7 @@ north #
  echo done
 done
 north #
- ipsec whack --trafficstatus
+ hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 006 #2: "northnet-eastnet/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 006 #3: "northnet-eastnet/0x2", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
 north #

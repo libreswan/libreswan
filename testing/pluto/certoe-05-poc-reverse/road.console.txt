@@ -143,7 +143,7 @@ done
 road #
  # A tunnel should have established with non-zero byte counters
 road #
- ipsec whack --trafficstatus
+ hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
 road #
  grep "negotiated connection" /tmp/pluto.log

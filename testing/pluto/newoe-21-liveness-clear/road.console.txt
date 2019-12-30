@@ -147,7 +147,7 @@ road #
  echo done
 done
 road #
- ipsec whack --trafficstatus
+ hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL'
 road #
  ipsec whack --shuntstatus

@@ -1,5 +1,5 @@
 # A tunnel should have established with non-zero byte counters
-ipsec whack --trafficstatus 
+hostname | grep nic > /dev/null || ipsec whack --trafficstatus 
 # you should see both RSA and NULL
 grep IKEv2_AUTH_ /tmp/pluto.log
 : ==== cut ====

@@ -59,7 +59,7 @@ road #
  echo done
 done
 road #
- ipsec whack --trafficstatus
+ hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 006 #2: "road-east-vti", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 road #
  grep -v -P "\t0$" /proc/net/xfrm_stat
