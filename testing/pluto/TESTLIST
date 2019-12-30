@@ -245,7 +245,7 @@ kvmplutotest	ikev1-algo-ike-sha2-03			good
 kvmplutotest	ikev1-algo-04-mismatch			good
 kvmplutotest	ikev1-algo-05-3des-sha2			good
 
-kvmplutotest	interop-ikev2-strongswan-aes_xcbc	wip
+kvmplutotest	interop-ikev2-strongswan-aes_xcbc	good
 
 # ESN tests
 kvmplutotest	ikev2-algo-esn-01			good

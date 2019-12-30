@@ -1,4 +1,2 @@
-Testing IKEv2 with aes_xcbc. While we implement all the code, NSS does not
-implement it yet. So this test will fail for now.
+Testing IKEv2 and ESP with aes_xcbc as integ/prf algorithm.
 
-Is it a valid algo for PRF?
