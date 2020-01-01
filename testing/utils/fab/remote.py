@@ -25,6 +25,14 @@ from fab import logutil
 
 MOUNTS = {}
 
+LOGIN = "root"
+LOGIN_PROMPT = "login: $"
+LOGIN_PROMPT_TIMEOUT = 120
+
+PASSWORD = "swan"
+PASSWORD_PROMPT = "Password: $"
+PASSWORD_PROMPT_TIMEOUT = 5
+
 def mounts(domain):
     """Return a table of 9p mounts for the given domain"""
     # maintain a local cache
@@ -107,23 +115,6 @@ def path(domain, console, path):
 
 SHUTDOWN_TIMEOUT = 20
 START_TIMEOUT = 20
-LOGIN_PROMPT_TIMEOUT = 120
-
-def _wait_for_login_prompt(domain, console, timeout, also_expect=[]):
-    # If match is non-empty, append it, so the first index is 1
-    timer = timing.Lapsed()
-    # Create a new list, otherwise the default [] ends up containing
-    # lots of login prompts ...
-    matches = ["login: "] + also_expect
-    domain.logger.debug("waiting %d seconds for %s",
-                        timeout, " or ".join(ascii(match) for match in matches))
-    match = console.expect(matches, timeout=timeout)
-    # always report a prompt match, let caller decide if other cases
-    # should be verbose.
-    domain.logger.log(match == 0 and logutil.INFO or logutil.DEBUG,
-                      "%s matched after %s", ascii(matches[match]), timer)
-    return match
-
 
 # Assuming the machine is booted, try to log-in.
 
@@ -131,56 +122,57 @@ LOGIN_TIMEOUT = 10
 PASSWORD_TIMEOUT = 5
 SHELL_TIMEOUT = 5
 
-def _login(domain, console, username, password, login_timeout, password_timeout, shell_timeout):
+def _login(domain, console, login, password,
+           lapsed_time, timeout):
 
-    lapsed_time = timing.Lapsed()
+    tries = 0
+    while True:
+        if tries > 3:
+            domain.logger.error("giving up after %s and %d attempts at logging in",
+                                lapsed_time, tries)
+            raise pexpect.TIMEOUT()
+        tries = tries + 1
 
-    domain.logger.info("waiting %s seconds for login prompt; %s seconds for password prompt; %s seconds for shell prompt",
-                       login_timeout, password_timeout, shell_timeout)
-    domain.logger.debug("console prompt: %s", console.prompt.pattern)
+        match = console.expect([LOGIN_PROMPT, PASSWORD_PROMPT, console.prompt],
+                               timeout=timeout)
+        if match == 0:
+            console.sendline(login)
+            timeout=PASSWORD_TIMEOUT
+            domain.logger.info("got login prompt after %s; sending '%s' and waiting %s seconds for password prompt",
+                               lapsed_time, login, timeout)
+            continue
+        elif match == 1:
+            timeout=SHELL_TIMEOUT
+            console.sendline(password)
+            domain.logger.info("got password prompt after %s; sending '%s' and waiting %s seconds for shell prompt",
+                               lapsed_time, password, timeout)
+            continue
+        elif match == 2:
+            # shell prompt
+            domain.logger.info("we're in after %s!", lapsed_time)
+            break
 
-    domain.logger.debug("sending control-c+carriage return, waiting %s seconds for login or shell prompt", login_timeout)
-    console.sendintr()
-    console.sendline("")
-    console.sendline("")
-    console.sendline("")
-    if _wait_for_login_prompt(domain, console, timeout=login_timeout,
-                              also_expect=[console.prompt]) == 1:
-        # shell prompt
-        domain.logger.info("We're in after %s!  Someone forgot to log out ...", lapsed_time)
-        return
-
-    domain.logger.debug("sending username '%s' waiting %s seconds for password or shell prompt", \
-                        username, password_timeout)
-    console.sendline(username)
-    if console.expect(["Password: ", console.prompt], timeout=password_timeout):
-        # shell prompt
-        domain.logger.info("We're in after %s! No password ...", lapsed_time)
-        return
-
-    domain.logger.debug("sending password '%s', waiting %s seconds for shell prompt",
-                        password, shell_timeout)
-    console.sendline(password)
-    console.expect(console.prompt, timeout=shell_timeout)
-    domain.logger.info("We're in after %s!", lapsed_time)
+    console.sync()
+    return console
 
 
-# The machine is assumed to be booted.
+# The machine is assumed to be booted; but its state is unknown.
 
-def login(domain, console,
-          username="root", password="swan",
-          login_timeout=LOGIN_TIMEOUT,
-          password_timeout=PASSWORD_TIMEOUT,
-          shell_timeout=SHELL_TIMEOUT):
+def login(domain, console, login=LOGIN, password=PASSWORD):
     if not console:
         domain.logger.error("domain not running")
         return None
+
+    lapsed_time = timing.Lapsed()
+    timeout=LOGIN_TIMEOUT
+    domain.logger.info("sending control-c+carriage return, waiting %s seconds for login (or shell) prompt",
+                       timeout)
+    console.sendintr()
+    console.sendline("")
+
     # try to login
-    _login(domain, console, username=username, password=password,
-           login_timeout=login_timeout,
-           password_timeout=password_timeout,
-           shell_timeout=shell_timeout)
-    console.sync()
+    return _login(domain, console, login=login, password=password,
+                  lapsed_time=lapsed_time, timeout=timeout)
 
 
 # Get a domain running with an attatched console.  Should be really
@@ -223,10 +215,12 @@ def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
         return None
     domain.logger.info("waiting %d seconds for domain to shutdown", shutdown_timeout)
     domain.shutdown()
-    if console.expect([pexpect.EOF,pexpect.TIMEOUT], timeout=shutdown_timeout):
+    if console.expect([pexpect.EOF, pexpect.TIMEOUT],
+                      timeout=shutdown_timeout):
         domain.logger.error("timeout waiting for shutdown, destroying it")
         domain.destroy()
-        if console.expect([pexpect.EOF,pexpect.TIMEOUT], timeout=shutdown_timeout):
+        if console.expect([pexpect.EOF, pexpect.TIMEOUT],
+                          timeout=shutdown_timeout):
             domain.logger.error("timeout waiting for destroy, giving up")
             return True
         return False
@@ -253,13 +247,16 @@ def _reboot_to_login_prompt(domain, console):
         # pexpect's pattern matcher is buggy and, if there is too much
         # output, it may not match "reboot".  virsh's behaviour is
         # also buggy, see further down.
-        match = _wait_for_login_prompt(domain, console, timeout=timeout,
-                                       also_expect=["reboot: Power down\r\n",
-                                                    pexpect.EOF,
-                                                    pexpect.TIMEOUT])
+        match = console.expect([LOGIN_PROMPT,
+                                "reboot: Power down\r\n",
+                                pexpect.EOF,
+                                pexpect.TIMEOUT],
+                               timeout=timeout)
         if match == 0:
+            # login prompt (reboot message was missed)
             return console
         elif match == 1:
+            # reboot message
             domain.logger.info("domain rebooted after %s", timer)
         elif match == 2:
             # On F26, in response to the reset(?), virsh will
@@ -295,7 +292,7 @@ def _reboot_to_login_prompt(domain, console):
     # Now wait for login prompt.  If this second attempt fails then
     # either a .TIMEOUT or a .EOF exception will be thrown and the
     # test will be aborted (marked as unresolved).
-    _wait_for_login_prompt(domain, console, timeout=LOGIN_PROMPT_TIMEOUT)
+    console.expect([LOGIN_PROMPT], timeout=LOGIN_PROMPT_TIMEOUT)
     return console
 
 
@@ -305,5 +302,20 @@ def boot_to_login_prompt(domain, console):
         return _reboot_to_login_prompt(domain, console)
     else:
         console = _start(domain, timeout=START_TIMEOUT)
-        _wait_for_login_prompt(domain, console, timeout=LOGIN_PROMPT_TIMEOUT)
+        console.expect([LOGIN_PROMPT], timeout=LOGIN_PROMPT_TIMEOUT)
         return console
+
+
+def boot_and_login(domain, console, login=LOGIN, password=PASSWORD):
+
+    console = boot_to_login_prompt(domain, console)
+    if not console:
+        domain.logger.error("domain not running")
+        return None
+    # try to login
+    timeout = PASSWORD_TIMEOUT
+    domain.logger.info("got login prompt; sending '%s' and waiting %s seconds for password (or shell) prompt", \
+                       login, timeout)
+    console.sendline(login)
+    return _login(domain, console, login=login, password=password,
+                  lapsed_time=timing.Lapsed(), timeout=timeout)

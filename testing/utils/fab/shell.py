@@ -16,7 +16,9 @@ import os
 import random
 import pexpect
 import re
+
 from fab import logutil
+from fab import timing
 
 TIMEOUT = 10
 
@@ -207,8 +209,11 @@ class Remote:
             self.expect([r'.+', pexpect.TIMEOUT], timeout=0)
 
     def expect(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
-        return self.child.expect(expect, timeout=timeout,
-                                 searchwindowsize=searchwindowsize)
+        timer = timing.Lapsed()
+        match = self.child.expect(expect, timeout=timeout,
+                                  searchwindowsize=searchwindowsize)
+        self.logger.debug("%s matched after %s", ascii(expect[match]), timer)
+        return match
 
     def expect_exact(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
         return self.child.expect_exact(expect, timeout=timeout,

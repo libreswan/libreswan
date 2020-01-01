@@ -96,20 +96,22 @@ def main():
     interactive = args.mode == "interactive" or (not args.command and args.boot == None and not args.shutdown)
 
     # Get the current console, this will be None if the machine is
-    # shutoff.
+    # shutoff (and forced to none if a cold boot)
+
     console = domain.console()
-    if args.boot:
-        if args.boot is Boot.cold and console:
-            remote.shutdown(domain, console)
-            console = None
-        console = remote.boot_to_login_prompt(domain, console)
-    elif (interactive or batch) and not console:
-        console = remote.boot_to_login_prompt(domain, console)
+    if args.boot is Boot.cold and console:
+        remote.shutdown(domain, console)
+        console = None
 
     status = 0
-    if interactive or batch:
+    if args.boot and not (interactive or batch):
+        console = remote.boot_to_login_prompt(domain, console)
 
-        remote.login(domain, console)
+    elif interactive or batch:
+        if console:
+            remote.login(domain, console)
+        else:
+            console = remote.boot_and_login(domain, console)
 
         if args.chdir and os.path.isabs(args.chdir):
             chdir = args.chdir

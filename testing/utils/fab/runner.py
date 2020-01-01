@@ -102,7 +102,7 @@ class TestDomain:
         if console:
             log("sending ^] to close virsh; expecting EOF")
             console.sendcontrol("]")
-            console.expect(pexpect.EOF)
+            console.expect([pexpect.EOF])
         # close the old console.
         if self.console:
             output = self.console.output()
@@ -117,8 +117,7 @@ class TestDomain:
         remote.shutdown(self.domain)
 
     def boot_and_login(self):
-        self.console = remote.boot_to_login_prompt(self.domain, self.console)
-        remote.login(self.domain, self.console)
+        self.console = remote.boot_and_login(self.domain, self.console)
         test_directory = remote.path(self.domain, self.console,
                                      path=self.test.directory)
         if not test_directory:
