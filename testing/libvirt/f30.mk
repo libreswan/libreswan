@@ -100,7 +100,7 @@ KVM_UPGRADE_PACKAGES ?= \
     wget \
     xl2tpd \
     xmlto \
-    strongswan \
+    https://kojipkgs.fedoraproject.org//packages/strongswan/5.8.2/2.fc30/x86_64/strongswan-5.8.2-2.fc30.x86_64.rpm \
     libfaketime \
 
 
