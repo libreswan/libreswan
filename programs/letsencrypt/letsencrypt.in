@@ -35,8 +35,8 @@ HostName=$2
 check_root() {
     # Checking if the command is run as root, This command needs to be run as root
     if [ ${EUID} -ne 0 ]; then
-        echo "This command should be run as root."
-        exit
+	echo "This command should be run as root."
+	exit 1
     fi
 }
 
@@ -45,9 +45,9 @@ test() {
     # Checking for any existing OE connections
     oeExisting=$(ipsec traffic | grep private)
     if [ ! -z "$oeExisting" ]; then
-        echo "Existing OE Connections Found. Please stop the connections using 'ipsec restart' and try again."
-        echo "$oeExisting"
-        exit
+	echo "Existing OE Connections Found. Please stop the connections using 'ipsec restart' and try again."
+	echo "$oeExisting"
+	exit 1
     fi
 
     # Establishing an OE connection and sending pings to letsencrypt.libreswan.org server
@@ -57,12 +57,12 @@ test() {
     # Checking the success of establishing OE connection
     oeSuccess=$(ipsec traffic | grep private)
     if [ -z "$oeSuccess" ]; then
-        echo "Failed to establish an OE connection. try 'ipsec restart' and test again using 'ipsec letsencrypt --test'."
-        exit
+	echo "Failed to establish an OE connection. try 'ipsec restart' and test again using 'ipsec letsencrypt --test'."
+	exit 1
     else
-        echo "OE Connection established successfully."
-        # Displaying connection status
-        ipsec traffic | grep private
+	echo "OE Connection established successfully."
+	# Displaying connection status
+	ipsec traffic | grep private
     fi
 }
 
@@ -70,9 +70,9 @@ test() {
 setup() {
     # Installing for client or server?
     if [ "$ServerClient" = "--client" ]; then
-        echo "Installing for Client."
+	echo "Installing for Client."
     else
-        echo "Installing for Server."
+	echo "Installing for Server."
     fi
 
     # Downloading the letsencrypt certificates
@@ -95,35 +95,35 @@ setup() {
     # Downloading the CA certificates
     wget_output=$(wget -q -P "$DIR1" "$CERT1" "$CERT2")
     if [ $? -ne 0 ]; then
-        echo "CA Certificates NOT Found OR Saving the certificates in directory failed."
-        exit
+	echo "ERROR: CA Certificates NOT Found OR Saving the certificates in directory failed."
+	exit 1
     fi
 
     # Downloading the Intermediate certificates
     wget_output=$(wget -q -P "$DIR2" "$CERT3" "$CERT4")
     if [ $? -ne 0 ]; then
-        echo "Intermediate Certificates NOT Found OR Saving the certificates in directory failed."
-        exit
+	echo "ERROR: Intermediate Certificates NOT Found OR Saving the certificates in directory failed."
+	exit 1
     fi
 
     # Checking if nss database exists
     dbFileCount=$(ls "@IPSEC_NSSDIR@"/*.db 2>/dev/null | wc -l)
     if [ $dbFileCount -eq 0 ]; then
-        # NSS database does not exist. Initializing the nss database
-        ipsec initnss
+	# NSS database does not exist. Initializing the nss database
+	ipsec initnss
     fi
 
     # Importing the CA certificates in NSS database
     echo "Importing the downloaded certificates into the database"
     for file in "$DIR1"/*; do
-        file=${file##*/}
-        certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "$DIR1"/"$file" -t "CT,,"
+	file=${file##*/}
+	certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "$DIR1"/"$file" -t "CT,,"
     done
 
     # Importing the Intermediate certificates in NSS database
     for file in "$DIR2"/*; do
-        file=${file##*/}
-        certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "$DIR2"/"$file" -t "u,u,u"
+	file=${file##*/}
+	certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "$DIR2"/"$file" -t "u,u,u"
     done
 
     # restore umask
@@ -131,11 +131,11 @@ setup() {
 
     # Copying the required configuration
     if [ "$ServerClient" = "--server" ]; then
-        configFile="@FINALDOCDIR@/examples/oe-letsencrypt-server.conf"
-        configFileName="oe-letsencrypt-server.conf"
+	configFile="@FINALDOCDIR@/examples/oe-letsencrypt-server.conf"
+	configFileName="oe-letsencrypt-server.conf"
     else
-        configFile="@FINALDOCDIR@/examples/oe-letsencrypt-client.conf"
-        configFileName="oe-letsencrypt-client.conf"
+	configFile="@FINALDOCDIR@/examples/oe-letsencrypt-client.conf"
+	configFileName="oe-letsencrypt-client.conf"
     fi
 
     echo "Saving the required configuration"
@@ -144,7 +144,7 @@ setup() {
     # restoring the security context of @IPSEC_NSSDIR@/$configFileName using restorecon.
     checkRestorecon=$(which restorecon 2>/dev/null)
     if [ -n "${checkRestorecon}" -a -x "${checkRestorecon}" ]; then
-        restorecon "@IPSEC_NSSDIR@/$configFileName"
+	restorecon "@IPSEC_NSSDIR@/$configFileName"
     fi
 
     echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
@@ -155,10 +155,10 @@ generate_certificate() {
     # Generating the certificate using Certbot
     certBotInstalled=$(which certbot 2>/dev/null)
     if [ -n "${certBotInstalled}" -a -x "${certBotInstalled}" ]; then
-        certbot certonly --webroot -d "$HostName"
+	certbot certonly --webroot -d "$HostName"
     else
-        echo "Certbot not installed. Please install Certbot and try again."
-        exit
+	echo "ERROR: Certbot not installed. Please install Certbot and try again."
+	exit 1
     fi
 
     # set secure umask
@@ -172,8 +172,8 @@ generate_certificate() {
 
     wget_output=$(wget -q -P "$DIR" "$CERT4")
     if [ $? -ne 0 ]; then
-        echo "Certificates NOT Found OR Saving the certificate in directory failed"
-        exit
+	echo "ERROR: Certificates NOT Found OR Saving the certificate in directory failed"
+	exit 1
     fi
 
     # Now generating the #pkcs12 (.p12) file
@@ -215,8 +215,8 @@ update_certificate() {
 
     wget_output=$(wget -q -P "$DIR" "$CERT4")
     if [ $? -ne 0 ]; then
-        echo "Certificates NOT Found OR Saving the certificate in directory failed"
-        exit
+	echo "ERROR: Certificates NOT Found OR Saving the certificate in directory failed"
+	exit 1
     fi
 
     # Now generating the #pkcs12 (.p12) file
@@ -247,10 +247,10 @@ manual_cert_renew() {
     # Renewing the certificate using Certbot
     certBotInstalled=$(which certbot 2>/dev/null)
     if [ -n "${certBotInstalled}" -a -x "${certBotInstalled}" ]; then
-        certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate $HostName'
+	certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate $HostName'
     else
-        echo "Certbot not installed. Please install Certbot and try again."
-        exit
+	echo "ERROR: Certbot not installed. Please install Certbot and try again."
+	exit 1
     fi
 }
 
