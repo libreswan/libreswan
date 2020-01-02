@@ -44,9 +44,9 @@ check_root() {
 test() {
     # Checking for any existing OE connections
     oeExisting=$(ipsec traffic | grep private)
-    if [ ! -z "$oeExisting" ]; then
+    if [ ! -z "${oeExisting}" ]; then
 	echo "Existing OE Connections Found. Please stop the connections using 'ipsec restart' and try again."
-	echo "$oeExisting"
+	echo "${oeExisting}"
 	exit 1
     fi
 
@@ -107,8 +107,8 @@ setup() {
     fi
 
     # Checking if nss database exists
-    dbFileCount=$(ls "@IPSEC_NSSDIR@"/*.db 2>/dev/null | wc -l)
-    if [ $dbFileCount -eq 0 ]; then
+    dbFileCheck=$(ls "@IPSEC_NSSDIR@"/*.db 2>/dev/null)
+    if [ -z "${dbFileCheck}" ]; then
 	# NSS database does not exist. Initializing the nss database
 	ipsec initnss
     fi
@@ -286,37 +286,36 @@ help() {
     echo "usage: 'ipsec letsencrypt --disable'"
 }
 
-case $1 in
-
-"--test")
-    check_root
-    test
-    ;;
-"--server" | "--client")
-    check_root
-    setup
-    ;;
-"--generate-certificate")
-    check_root
-    generate_certificate
-    ;;
-"--update-certificate")
-    check_root
-    update_certificate
-    ;;
-"--renew")
-    check_root
-    manual_cert_renew
-    ;;
-"--disable")
-    check_root
-    disable_ipsec
-    ;;
-"--help")
-    help
-    ;;
-*)
-    echo "[argument] $1 not found"
-    echo "try: 'ipsec letsencrypt --help' for help"
-    ;;
+case "${1}" in
+    --test)
+	check_root
+	test
+	;;
+    --server|--client)
+	check_root
+	setup
+	;;
+    --generate-certificate)
+	check_root
+	generate_certificate
+	;;
+    --update-certificate)
+	check_root
+	update_certificate
+	;;
+    --renew)
+	check_root
+	manual_cert_renew
+	;;
+    --disable)
+	check_root
+	disable_ipsec
+	;;
+    --help)
+	help
+	;;
+    *)
+	echo "[argument] \"${1}\" not found"
+	echo "try: 'ipsec letsencrypt --help' for help"
+	;;
 esac
