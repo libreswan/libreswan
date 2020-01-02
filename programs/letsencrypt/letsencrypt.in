@@ -150,6 +150,9 @@ setup() {
 	restorecon "@IPSEC_CONFDDIR@/$configFileName"
     fi
 
+    # Removing the temporary directories
+    rm -rf "${CERTDIR1}" "${CERTDIR2}"
+
     echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
 }
 
@@ -210,6 +213,9 @@ generate_certificate() {
 	rm cert-renewal
     fi
 
+    # Removing the temporary directory
+    rm -fr "${CERTDIR}"
+
     echo "try running 'ipsec restart' to load the latest certificates"
 
     echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
@@ -251,6 +257,9 @@ update_certificate() {
 
     # restarting ipsec to load all certificates
     ipsec restart
+
+    # Removing the temporary directory
+    rm -fr "${CERTDIR}"
 
     # To confirm the success try running the test connection script on the client
     echo "To confirm the success try running 'ipsec letsencrypt --test' on the client"
