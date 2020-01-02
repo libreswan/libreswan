@@ -43,9 +43,10 @@ check_root() {
 # function for testing OE connection
 test() {
     # Checking for any existing OE connections
-    oeExisting=$(ipsec traffic | grep private)
+    oeExisting=$(ipsec trafficstatus | grep private)
     if [ ! -z "${oeExisting}" ]; then
-	echo "Existing OE Connections Found. Please stop the connections using 'ipsec restart' and try again."
+	echo "Existing OE Connections Found."
+	echo "Please stop the connections using 'ipsec restart' and try again."
 	echo "${oeExisting}"
 	exit 1
     fi
@@ -55,21 +56,22 @@ test() {
     ping -4 -c 5 letsencrypt.libreswan.org &>/dev/null
 
     # Checking the success of establishing OE connection
-    oeSuccess=$(ipsec traffic | grep private)
-    if [ -z "$oeSuccess" ]; then
-	echo "Failed to establish an OE connection. try 'ipsec restart' and test again using 'ipsec letsencrypt --test'."
+    oeSuccess=$(ipsec trafficstatus | grep private)
+    if [ -z "${oeSuccess}" ]; then
+	echo "Failed to establish an OE connection."
+	echo "Try 'ipsec restart' and test again using 'ipsec letsencrypt --test'."
 	exit 1
     else
 	echo "OE Connection established successfully."
 	# Displaying connection status
-	ipsec traffic | grep private
+	ipsec trafficstatus | grep private
     fi
 }
 
 # Function for performaing Initial setup
 setup() {
     # Installing for client or server?
-    if [ "$ServerClient" = "--client" ]; then
+    if [ "${ServerClient}" = "--client" ]; then
 	echo "Installing for Client."
     else
 	echo "Installing for Server."
@@ -81,28 +83,29 @@ setup() {
     # set secure umask
     umask 077
 
-    DIR1=$(mktemp -d)
+    CERTDIR1=$(mktemp -d)
     if [ $? -gt 0 ]; then
 	echo "ERROR: could not crete temp directory"
 	exit 1
     fi
-    DIR2=$(mktemp -d)
+    CERTDIR2=$(mktemp -d)
     if [ $? -gt 0 ]; then
 	echo "ERROR: could not crete temp directory"
 	exit 1
     fi
 
     # Downloading the CA certificates
-    wget_output=$(wget -q -P "$DIR1" "$CERT1" "$CERT2")
+    wget_output=$(wget -q -P "${CERTDIR1}" "${CERT1}" "${CERT2}")
     if [ $? -ne 0 ]; then
 	echo "ERROR: CA Certificates NOT Found OR Saving the certificates in directory failed."
 	exit 1
     fi
 
     # Downloading the Intermediate certificates
-    wget_output=$(wget -q -P "$DIR2" "$CERT3" "$CERT4")
+    wget_output=$(wget -q -P "${CERTDIR2}" "${CERT3}" "${CERT4}")
     if [ $? -ne 0 ]; then
-	echo "ERROR: Intermediate Certificates NOT Found OR Saving the certificates in directory failed."
+	echo "ERROR: Intermediate Certificates NOT Found OR"
+	echo "Saving the certificates in directory failed."
 	exit 1
     fi
 
@@ -115,22 +118,22 @@ setup() {
 
     # Importing the CA certificates in NSS database
     echo "Importing the downloaded certificates into the database"
-    for file in "$DIR1"/*; do
+    for file in "${CERTDIR1}"/*; do
 	file=${file##*/}
-	certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "$DIR1"/"$file" -t "CT,,"
+	certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "${CERTDIR1}"/"${file}" -t "CT,,"
     done
 
     # Importing the Intermediate certificates in NSS database
-    for file in "$DIR2"/*; do
+    for file in "${CERTDIR2}"/*; do
 	file=${file##*/}
-	certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "$DIR2"/"$file" -t "u,u,u"
+	certutil -A -d "sql:@IPSEC_NSSDIR@" -n "${file%.pem.txt}" -i "${CERTDIR2}"/"${file}" -t "u,u,u"
     done
 
     # restore umask
     umask ${umask}
 
     # Copying the required configuration
-    if [ "$ServerClient" = "--server" ]; then
+    if [ "${ServerClient}" = "--server" ]; then
 	configFile="@FINALDOCDIR@/examples/oe-letsencrypt-server.conf"
 	configFileName="oe-letsencrypt-server.conf"
     else
@@ -139,7 +142,7 @@ setup() {
     fi
 
     echo "Saving the required configuration"
-    cp "$configFile" "@IPSEC_CONFDDIR@/"
+    cp "${configFile}" "@IPSEC_CONFDDIR@/"
 
     # restoring the security context of @IPSEC_CONFDDIR@/$configFileName using restorecon.
     checkRestorecon=$(which restorecon 2>/dev/null)
@@ -155,7 +158,7 @@ generate_certificate() {
     # Generating the certificate using Certbot
     certBotInstalled=$(which certbot 2>/dev/null)
     if [ -n "${certBotInstalled}" -a -x "${certBotInstalled}" ]; then
-	certbot certonly --webroot -d "$HostName"
+	certbot certonly --webroot -d "${HostName}"
     else
 	echo "ERROR: Certbot not installed. Please install Certbot and try again."
 	exit 1
@@ -164,26 +167,26 @@ generate_certificate() {
     # set secure umask
     umask 077
 
-    DIR=$(mktemp -d)
+    CERTDIR=$(mktemp -d)
     if [ $? -gt 0 ]; then
 	echo "ERROR: could not crete temp directory"
 	exit 1
     fi
 
-    wget_output=$(wget -q -P "$DIR" "$CERT4")
+    wget_output=$(wget -q -P "${CERTDIR}" "${CERT4}")
     if [ $? -ne 0 ]; then
 	echo "ERROR: Certificates NOT Found OR Saving the certificate in directory failed"
 	exit 1
     fi
 
     # Now generating the #pkcs12 (.p12) file
-    LetsEncryptCertDir="/etc/letsencrypt/live/$HostName"
+    LetsEncryptCertDir="/etc/letsencrypt/live/${HostName}"
 
-    openssl pkcs12 -export -inkey "$LetsEncryptCertDir/privkey.pem" -in "$LetsEncryptCertDir/fullchain.pem" -CAfile "$DIR/$CERT4NAME" -out "$LetsEncryptCertDir/generatedCertificate.p12"
+    openssl pkcs12 -export -inkey "${LetsEncryptCertDir}/privkey.pem" -in "${LetsEncryptCertDir}/fullchain.pem" -CAfile "${CERTDIR}/${CERT4NAME}" -out "${LetsEncryptCertDir}/generatedCertificate.p12"
 
     # Importing the certificate in nss database
     echo "Importing the certificate in database. Password for PKCS12 file is the same as the Export Password you entered above."
-    pk12util -d "sql:@IPSEC_NSSDIR@" -i "$LetsEncryptCertDir/generatedCertificate.p12"
+    pk12util -d "sql:@IPSEC_NSSDIR@" -i "${LetsEncryptCertDir}/generatedCertificate.p12"
 
     # restore umask
     umask ${umask}
@@ -192,13 +195,20 @@ generate_certificate() {
     certutil -L -d "sql:@IPSEC_NSSDIR@"
 
     # Now generating the certbot configuration for reusing key
-    LetsEncryptConfFile="/etc/letsencrypt/renewal/$HostName.conf"
-    echo "reuse_key = True" >>"$LetsEncryptConfFile"
+    LetsEncryptConfFile="/etc/letsencrypt/renewal/${HostName}.conf"
+    echo "reuse_key = True" >>"${LetsEncryptConfFile}"
 
     # creating a crontab fot automatic cert renewals
-    echo "0 1 * * * certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate $HostName'" >>cert-renewal
-    crontab cert-renewal
-    rm cert-renewal
+    if [ -d /etc/cron.d ]; then
+	if [ ! -f /etc/cron.d/ipsec-cert-renewal ]; then
+	    echo "0 1 * * * root certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate ${HostName}'" \
+		>>/etc/cron.d/ipsec-cert-renewal
+	fi
+    else
+	echo "0 1 * * * certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate ${HostName}'" >>cert-renewal
+	crontab cert-renewal
+	rm cert-renewal
+    fi
 
     echo "try running 'ipsec restart' to load the latest certificates"
 
@@ -211,22 +221,26 @@ update_certificate() {
     # set secure umask
     umask 077
 
-    DIR=$(mktemp -d)
+    CERTDIR=$(mktemp -d)
 
-    wget_output=$(wget -q -P "$DIR" "$CERT4")
+    wget_output=$(wget -q -P "${CERTDIR}" "${CERT4}")
     if [ $? -ne 0 ]; then
 	echo "ERROR: Certificates NOT Found OR Saving the certificate in directory failed"
 	exit 1
     fi
 
     # Now generating the #pkcs12 (.p12) file
-    LetsEncryptCertDir="/etc/letsencrypt/live/$HostName"
+    LetsEncryptCertDir="/etc/letsencrypt/live/${HostName}"
 
-    openssl pkcs12 -export -inkey "$LetsEncryptCertDir/privkey.pem" -in "$LetsEncryptCertDir/fullchain.pem" -CAfile "$DIR/$CERT4NAME" -out "$LetsEncryptCertDir/generatedCertificate.p12"
+    openssl pkcs12 -export -inkey "${LetsEncryptCertDir}/privkey.pem" \
+	-in "${LetsEncryptCertDir}/fullchain.pem" \
+	-CAfile "${CERTDIR}/${CERT4NAME}" \
+	-out "${LetsEncryptCertDir}/generatedCertificate.p12"
 
     # Importing the certificate in nss database
-    echo "Importing the certificate in database. Password for PKCS12 file is the same as the Export Password you entered above."
-    pk12util -d "sql:@IPSEC_NSSDIR@" -i "$LetsEncryptCertDir/generatedCertificate.p12"
+    echo "Importing the certificate in database."
+    echo "Password for PKCS12 file is the same as the Export Password you entered above."
+    pk12util -d "sql:@IPSEC_NSSDIR@" -i "${LetsEncryptCertDir}/generatedCertificate.p12"
 
     # restore umask
     umask ${umask}
@@ -247,7 +261,7 @@ manual_cert_renew() {
     # Renewing the certificate using Certbot
     certBotInstalled=$(which certbot 2>/dev/null)
     if [ -n "${certBotInstalled}" -a -x "${certBotInstalled}" ]; then
-	certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate $HostName'
+	certbot renew --deploy-hook 'ipsec letsencrypt --update-certificate ${HostName}'
     else
 	echo "ERROR: Certbot not installed. Please install Certbot and try again."
 	exit 1
