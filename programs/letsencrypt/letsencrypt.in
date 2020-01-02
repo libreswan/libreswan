@@ -82,7 +82,15 @@ setup() {
     umask 077
 
     DIR1=$(mktemp -d)
+    if [ $? -gt 0 ]; then
+	echo "ERROR: could not crete temp directory"
+	exit 1
+    fi
     DIR2=$(mktemp -d)
+    if [ $? -gt 0 ]; then
+	echo "ERROR: could not crete temp directory"
+	exit 1
+    fi
 
     # Downloading the CA certificates
     wget_output=$(wget -q -P "$DIR1" "$CERT1" "$CERT2")
@@ -157,6 +165,10 @@ generate_certificate() {
     umask 077
 
     DIR=$(mktemp -d)
+    if [ $? -gt 0 ]; then
+	echo "ERROR: could not crete temp directory"
+	exit 1
+    fi
 
     wget_output=$(wget -q -P "$DIR" "$CERT4")
     if [ $? -ne 0 ]; then
