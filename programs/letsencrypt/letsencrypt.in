@@ -85,12 +85,12 @@ setup() {
 
     CERTDIR1=$(mktemp -d)
     if [ $? -gt 0 ]; then
-	echo "ERROR: could not crete temp directory"
+	echo "ERROR: could not create temp directory"
 	exit 1
     fi
     CERTDIR2=$(mktemp -d)
     if [ $? -gt 0 ]; then
-	echo "ERROR: could not crete temp directory"
+	echo "ERROR: could not create temp directory"
 	exit 1
     fi
 
@@ -172,7 +172,7 @@ generate_certificate() {
 
     CERTDIR=$(mktemp -d)
     if [ $? -gt 0 ]; then
-	echo "ERROR: could not crete temp directory"
+	echo "ERROR: could not create temp directory"
 	exit 1
     fi
 
