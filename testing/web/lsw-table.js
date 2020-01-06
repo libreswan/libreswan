@@ -217,7 +217,8 @@ function lsw_table_body(table) {
 	})
 	.on("click", function(row) {
 	    if (row.table.select.row) {
-		lsw_table_select_row(table.id, row.data)
+		console.log("click", row.data)
+		lsw_table_select_rows(table.id, new Set([row.data]))
 	    }
 	})
 	// add the row data
@@ -242,11 +243,15 @@ function lsw_table_body(table) {
 	})
 }
 
-function lsw_table_select_row(table_id, selection) {
+function lsw_table_select_rows(table_id, selections) {
+
+    console.log("selecting rows", selections)
+
     // toggle SELECTION's "background"
     d3.selectAll("tbody." + table_id + " > tr")
 	.filter(function(row) {
-	    return row.data == selection
+	    console.log("filter", row.data, selections, selections.has(row.data))
+	    return selections.has(row.data)
 	})
 	.style("background-color", function(row) {
 	    // XXX: row.selected still used when rebuilding the table
@@ -262,7 +267,8 @@ function lsw_table_select_row(table_id, selection) {
 		    ? "lightgrey"
 		    : "transparent")
 	})
-    // select all with non-blank backgrounds
+
+    // select rows all with non-blank (i.e., selected) backgrounds
     var data = d3.selectAll("tbody." + table_id + " > tr")
 	.filter(function(row) {
 	    // var background = d3.select(this).style("background-color")

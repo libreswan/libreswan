@@ -194,17 +194,24 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 	return l.commit.committer.date - r.commit.committer.date
     })
 
-    // Use the commit<->test_run and commit.parent[] links created
-    // above to find the commits unique to this test run.  Cross link
-    // those additional commits back to the test.
+    summary.test_run_by_directory = []
+    for (const test_run of summary.test_runs) {
 
-    summary.test_runs.forEach(function(test_run) {
+	// Create a dictionary of directory->test_run so that
+	// ?run=<directory> can find them
+
+	summary.test_run_by_directory[test_run.directory] = test_run
+
+	// Use the commit<->test_run and commit.parent[] links created
+	// above to find the commits unique to this test run.  Cross
+	// link those additional commits back to the test.
+
 	test_run.commits = lsw_summary_commits(test_run.commit)
-	test_run.commits.forEach(function(commit) {
+	for (const commit of test_run.commits) {
 	    // One of these assignments is redundant, oops.
 	    commit.test_run = test_run;
-	})
-    })
+	}
+    }
 
     return summary
 }
