@@ -102,13 +102,17 @@ extern void log_pop_from(ip_address old_from, where_t where);
  *
  * If any *_STREAM flag is specified then only send the message to
  * that stream.
+ *
+ * log_message() is a catch-all for code that may or may not have ST.
+ * For instance a responder decoding a message may not yet have
+ * created the state.  It will will use ST, MD, or nothing as the
+ * prefix, and logs to ST's whackfd when possible.
  */
 
 void log_message(lset_t rc_flags,
 		 const struct state *st,
-		 const struct connection *c,
 		 const struct msg_digest *md,
-		 const char *format, ...) PRINTF_LIKE(5);
+		 const char *format, ...) PRINTF_LIKE(4);
 
 void log_pending(lset_t rc_flags,
 		 const struct pending *pending,
@@ -161,7 +165,7 @@ void log_md(lset_t rc_flags,
 		jam_log_prefix(BUF, STATE, CONNECTION, FROM),		\
 		log_jambuf(LOG_STREAM, null_fd, BUF))
 
-#define plog_global(MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_global(MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, MESSAGE,##__VA_ARGS__);
 #define plog_connection(C, MESSAGE, ...) log_connection(LOG_STREAM, C, MESSAGE,##__VA_ARGS__);
 #define plog_state(ST, MESSAGE, ...) log_state(LOG_STREAM, ST, MESSAGE,##__VA_ARGS__);
 

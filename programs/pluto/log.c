@@ -804,14 +804,13 @@ static void broadcast(lset_t rc_flags, struct fd *object_fd,
 
 void log_message(lset_t rc_flags,
 		 const struct state *st,
-		 const struct connection *c,
 		 const struct msg_digest *md,
 		 const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
 	struct fd *whackfd = (st != NULL ? st->st_whack_sock : null_fd);
-	broadcast(rc_flags, whackfd, st, c, md, format, ap);
+	broadcast(rc_flags, whackfd, st, NULL/*connection*/, md, format, ap);
 	va_end(ap);
 }
 
