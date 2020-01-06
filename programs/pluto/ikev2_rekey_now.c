@@ -27,7 +27,12 @@
 #include "timer.h"
 #include "state_db.h"
 
-static void rekey_st(struct connection *c, enum sa_type sa_type)
+static void rekey_by_state(struct state *st)
+{
+		event_force(EVENT_SA_REKEY, st);
+}
+
+static void rekey_by_conn(struct connection *c, enum sa_type sa_type)
 {
 	struct state *st = NULL;
 	if (sa_type == IPSEC_SA) {
@@ -60,14 +65,14 @@ static int rekey_connection_now(struct connection *c,  void *arg)
 		libreswan_log("can not rekey IPsec SA, newest IPsec SA is SOS_NOBODY");
 		ret = 1;
 	} else {
-		rekey_st(c, sa_type);
+		rekey_by_conn(c, sa_type);
 	}
 	reset_cur_connection();
 
 	return ret;
 }
 
-void rekey_now(const char *name, enum sa_type sa_type)
+void rekey_now(const char *str, enum sa_type sa_type)
 {
 	/*
 	 * Loop because more than one may match (master and instances)
@@ -76,24 +81,43 @@ void rekey_now(const char *name, enum sa_type sa_type)
 	 *
 	 * connection instances may need more work to work ???
 	 */
-	struct connection *c = conn_by_name(name, TRUE, TRUE);
 
-	if (c != NULL) {
-		while (c != NULL) {
-			if (streq(c->name, name) &&
-			    c->kind >= CK_PERMANENT &&
-			    !NEVER_NEGOTIATE(c->policy)) {
-				(void)rekey_connection_now(c, &sa_type);
+	/* see if we got a stat enumber or name */
+	char *err = NULL;
+	int num = strtol(str, &err, 0);
+
+	if (str == err || *err != '\0') {
+
+		/* str is a connection name */
+		struct connection *c = conn_by_name(str, TRUE, TRUE);
+		if (c != NULL) {
+			while (c != NULL) {
+				if (streq(c->name, str) &&
+				    c->kind >= CK_PERMANENT &&
+				    !NEVER_NEGOTIATE(c->policy)) {
+					(void)rekey_connection_now(c, &sa_type);
+				}
+				c = c->ac_next;
 			}
-			c = c->ac_next;
+		} else {
+			int count = foreach_connection_by_alias(str, rekey_connection_now, &sa_type);
+			if (count == 0) {
+				loglog(RC_UNKNOWN_NAME, "no such connection or aliased connection named \"%s\"", str);
+			} else {
+				loglog(RC_COMMENT, "terminated %d connections from aliased connection \"%s\"",
+					count, str);
+			}
 		}
 	} else {
-		int count = foreach_connection_by_alias(name, rekey_connection_now, &sa_type);
-		if (count == 0) {
-			loglog(RC_UNKNOWN_NAME, "no such connection or aliased connection named \"%s\"", name);
+		/* str is a state number - this overrides ike vs ipsec rekey command */
+		struct state *st = state_by_serialno(num);
+		struct connection *c = st->st_connection;
+		if (IS_IKE_SA(st)) {
+			libreswan_log("rekeying IKE SA state #%d of connection %s", num, c->name);
+			rekey_by_state(st);
 		} else {
-			loglog(RC_COMMENT, "terminated %d connections from aliased connection \"%s\"",
-				count, name);
+			libreswan_log("rekeying IPsec SA state #%d of connection %s", num, c->name);
+			rekey_by_state(st);
 		}
 	}
 }
