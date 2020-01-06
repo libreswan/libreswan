@@ -588,7 +588,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 
 	const char *en = enum_name(&timer_event_names, type);
 	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
-	DBG(DBG_LIFECYCLE, DBG_log("%s: new %s-pe@%p", __func__, en, ev));
+	dbg("%s: newref %s-pe@%p", __func__, en, ev);
 
 	ev->ev_type = type;
 	ev->ev_name = en;
