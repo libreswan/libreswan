@@ -22,6 +22,7 @@ v3.30 (unreleased)
 * X509: SAN checks should confirm IKE peer ID on responder too [Paul]
 * letsencrypt: new command "ipsec letsencrypt" [Rishabh]
 * _updown: Fix to work for iproute >= 5.1 [Paul]
+* _updown: Add IPv6 routing support [Tuomo]
 * libswan: Don't leak ECDSA pubkey on form_ckaid_ecdsa() failure [Paul]
 * libswan: Close netlink socket on send error in netlink_query() [Paul]
 * whack: Added whack --ddns to trigger DNS refresh event manually [Paul]
