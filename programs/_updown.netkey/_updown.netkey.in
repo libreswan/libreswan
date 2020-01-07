@@ -5,7 +5,7 @@
 # Copyright (C) 2003-2004 Nigel Metheringham
 # Copyright (C) 2002-2007 Michael Richardson <mcr@xelerance.com>
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
-# Copyright (C) 2003-2019 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2003-2020 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2011-2016 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2016 Antony Antony <antony@phenome.org>
 #
@@ -232,10 +232,18 @@ uproute() {
     ip route flush cache
 }
 
+uproute6() {
+    doroute6 replace
+}
+
 downroute() {
     doroute del
     ip route flush cache
     doproxyarp delete
+}
+
+downroute6() {
+    doroute6 del
 }
 
 downrule() {
@@ -436,6 +444,37 @@ addsource() {
     return ${st}
 }
 
+addsource6() {
+    local interface
+    local st
+    interface=lo
+    st=0
+    if [ -z "${PLUTO_MY_SOURCEIP}" ]; then
+        return ${st}
+    fi
+    # check if given sourceip is local and add as alias if not
+    if ! ip -6 -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
+	it="ip -6 addr add ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface} scope ${SCOPE}"
+	oops="$(eval ${it} 2>&1)"
+	st=$?
+	if [ -z "${oops}" -a ${st} -ne 0 ]; then
+	    oops="silent error, exit status ${st}"
+	fi
+	case "${oops}" in
+	    'RTNETLINK answers: File exists'*)
+		# should not happen, but ... ignore if the
+		# address was already assigned on interface
+		oops=""
+		st=0
+		;;
+	esac
+	if [ -n "${oops}" -o ${st} -ne 0 ]; then
+	    echo "$0: addsource6 \"${it}\" failed (${oops})" >&2
+	fi
+    fi
+    return ${st}
+}
+
 delsource() {
     local interface
     local st
@@ -478,6 +517,50 @@ delsource() {
 	esac
 	if [ -n "${oops}" -o ${st} -ne 0 ]; then
 	    echo "$0: delsource \"${it}\" failed (${oops})" >&2
+	fi
+    fi
+    return ${st}
+}
+
+delsource6() {
+    local interface
+    local st
+    interface=lo
+    st=0
+    if [ -z "${PLUTO_MY_SOURCEIP}" ]; then
+        return ${st}
+    fi
+    # Remove source ip if it's not used any more.
+    if [ -z "$(ip -6 -o route list src ${PLUTO_MY_SOURCEIP})" ]; then
+	# If there is no ip we just return
+	if ! ip -6 -o addr list dev ${interface} scope ${SCOPE} | \
+	    grep -q ${PLUTO_MY_SOURCEIP}/${MAX_CIDR}
+	then
+	    return ${st}
+	fi
+	it="ip -6 addr del ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface}"
+	oops="$(eval ${it} 2>&1)"
+	st=$?
+	if [ -z "${oops}" -a ${st} -ne 0 ]; then
+	    oops="silent error, exit status ${st}"
+	fi
+	case "${oops}" in
+	    'RTNETLINK answers: File exists'*)
+		# should not happen, but ... ignore if the
+		# address was already assigned on interface
+		oops=""
+		st=0
+		;;
+	    'RTNETLINK answers: Cannot assign'*)
+		# Address is not there to remove or is there with different
+		# netmask and in that case we must not remove it so we ignore
+		# the error.
+		oops=""
+		st=0
+		;;
+	esac
+	if [ -n "${oops}" -o ${st} -ne 0 ]; then
+	    echo "$0: delsource6 \"${it}\" failed (${oops})" >&2
 	fi
     fi
     return ${st}
@@ -612,6 +695,98 @@ doroute() {
     esac
     if [ -n "${oops}" -o ${st} -ne 0 ]; then
 	echo "$0: doroute \"${it}\" failed (${oops})" >&2
+    fi
+    return ${st}
+}
+
+doroute6() {
+    local cmd
+    local oops
+    local st
+    cmd=${1}
+    st=0
+    if [ ${cmd} != del ]; then
+	oops="$(eval ip -6 route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
+	case "${oops}" in
+	    'RTNETLINK answers: No route to host'*)
+		# Routing is mandatory for IPsec
+		ROUTE=yes
+		;;
+	esac
+    fi
+    # skip routing if it's not enabled or necessary
+    if [ -z "${PLUTO_MY_SOURCEIP}" -a \
+	-z "${PLUTO_MTU}" -a \
+	"${ROUTE}" != "yes" -a \
+	"${cmd}" != "del" ]
+    then
+	return 0
+    fi
+    parms="${PLUTO_PEER_CLIENT}"
+    parms2=${IPRARGS}
+    # nexthop is not needed on ppp interfaces. unset it to make cases
+    # work, where left is set but no leftnexthop (e.g. left=%defaultroute)
+    if ip link show "${PLUTO_INTERFACE%:*}" | grep -q POINTOPOINT; then
+	POINTPOINT=yes
+    fi
+    # use nexthop if nexthop is not %direct and POINTPOINT is not set
+    if [ "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" -a -z "${POINTPOINT}" ]; then
+	parms2="via ${PLUTO_NEXT_HOP}"
+    fi
+    # route via proper interface according to routing table
+    if [ "${cmd}" = "del" ]; then
+	case "${PLUTO_PEER_CLIENT}" in
+	    "::/0")
+		# in case of default route we use half routes
+		peer_interface=$(ip -6 -o route list exact 2000::/3 | \
+		    sed "s/^.*dev \([^ ]*\) .*/\1/")
+		;;
+	    *)
+		peer_interface=$(ip -6 -o route get ${PLUTO_PEER_CLIENT_NET} | \
+		    sed "s/^.*dev \([^ ]*\) .*/\1/")
+		;;
+	esac
+    else
+	peer_interface=$(ip -6 -o route get ${PLUTO_NEXT_HOP} | \
+	    sed "s/^.*dev \([^ ]*\) .*/\1/")
+    fi
+    if [ -z "${peer_interface}" ]; then
+	peer_interface=${PLUTO_INTERFACE}
+    fi
+    parms2="${parms2} dev ${peer_interface%:*}${PLUTO_MTU:+ mtu ${PLUTO_MTU}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}} $IPROUTEARGS"
+
+    # make sure whe have sourceip locally in this machine
+    if [ "${cmd}" = "replace" -a -n "${PLUTO_MY_SOURCEIP}" ]; then
+	addsource6
+	# use sourceip as route default source
+	parms2="${parms2} src ${PLUTO_MY_SOURCEIP}"
+    fi
+
+    case "${PLUTO_PEER_CLIENT}" in
+	"::/0")
+	    # need to provide route that eclipses default, without
+	    # replacing it.
+	    it="ip -6 route ${cmd} 2000::/3 ${parms2}"
+	    ;;
+	*)
+	    it="ip -6 route ${cmd} ${parms} ${parms2}"
+	    ;;
+    esac
+    oops="$(eval ${it} 2>&1)"
+    st=$?
+    if [ -z "${oops}" -a ${st} -ne 0 ]; then
+	oops="silent error, exit status ${st}"
+    fi
+    case "${oops}" in
+	'RTNETLINK answers: No such process'*)
+	    # should not happen, but ... ignore if the
+	    # route was already removed
+	    oops=""
+	    st=0
+	    ;;
+    esac
+    if [ -n "${oops}" -o ${st} -ne 0 ]; then
+	echo "$0: doroute6 \"${it}\" failed (${oops})" >&2
     fi
     return ${st}
 }
@@ -803,9 +978,12 @@ case "${PLUTO_VERB}" in
 	;;
     route-host-v6|route-client-v6)
 	# connection to me or my client subnet being routed
+	uproute6
 	;;
     unroute-host-v6|unroute-client-v6)
 	# connection to me or my client subnet being unrouted
+	downroute6
+	delsource6
 	;;
     up-host-v6)
 	# connection to me coming up
@@ -817,10 +995,13 @@ case "${PLUTO_VERB}" in
 	;;
     up-client-v6)
 	# connection to my client subnet coming up
+	addsource6
+	updateresolvconf
 	# If you are doing a custom version, firewall commands go here.
 	;;
     down-client-v6)
 	# connection to my client subnet going down
+	restoreresolvconf
 	# If you are doing a custom version, firewall commands go here.
 	;;
     *)	echo "$0: unknown verb \"${PLUTO_VERB}\" or parameter \"${1}\"" >&2
