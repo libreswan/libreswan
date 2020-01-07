@@ -1,4 +1,4 @@
-# both ends should only show 1 tunnel`
+# road should have one tunnel, east should have two (from both IPs road used)
 ipsec whack --trafficstatus
 # check for a counting bug where total SA's is wrong on east
 ipsec status | grep 'authenticated'

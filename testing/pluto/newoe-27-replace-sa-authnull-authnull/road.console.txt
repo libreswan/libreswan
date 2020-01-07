@@ -9,10 +9,6 @@ Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- # ensure for tests acquires expire before our failureshunt=2m
-road #
- echo 30 > /proc/sys/net/core/xfrm_acq_expires
-road #
  # give OE policies time to load
 road #
  sleep 5
@@ -38,72 +34,6 @@ road #
 000 Bare Shunt list:
 000  
 road #
- ../../pluto/bin/ipsec-look.sh
-road NOW
-XFRM state:
-src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
-	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
-XFRM policy:
-src 192.1.2.253/32 dst 192.1.3.209/32
-	dir fwd priority 3129279 ptype main
-src 192.1.2.253/32 dst 192.1.3.209/32
-	dir in priority 3129279 ptype main
-src 192.1.2.254/32 dst 192.1.3.209/32
-	dir fwd priority 3129279 ptype main
-src 192.1.2.254/32 dst 192.1.3.209/32
-	dir in priority 3129279 ptype main
-src 192.1.3.209/32 dst 192.1.2.253/32
-	dir out priority 3129279 ptype main
-src 192.1.3.209/32 dst 192.1.2.254/32
-	dir out priority 3129279 ptype main
-src 192.1.3.209/32 dst 192.1.3.253/32
-	dir out priority 3129279 ptype main
-src 192.1.3.209/32 dst 192.1.3.254/32
-	dir out priority 3129279 ptype main
-src 192.1.3.253/32 dst 192.1.3.209/32
-	dir fwd priority 3129279 ptype main
-src 192.1.3.253/32 dst 192.1.3.209/32
-	dir in priority 3129279 ptype main
-src 192.1.3.254/32 dst 192.1.3.209/32
-	dir fwd priority 3129279 ptype main
-src 192.1.3.254/32 dst 192.1.3.209/32
-	dir in priority 3129279 ptype main
-src 192.1.2.23/32 dst 192.1.3.209/32
-	dir fwd priority 4177855 ptype main
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32
-	dir in priority 4177855 ptype main
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.23/32
-	dir out priority 4177855 ptype main
-	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.0/24
-	dir out priority 4177870 ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
-XFRM done
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
-ROUTING TABLES
-default via 192.1.3.254 dev eth0
-192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-road #
  # ping should succeed through tunnel
 road #
  ping -n -c 2 -I 192.1.3.209 192.1.2.23
@@ -116,6 +46,8 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
+road #
+ # prevent delete notify
 road #
  killall -9 pluto
 road #
@@ -133,9 +65,8 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
- # give OE time to establish
-road #
- sleep 5
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
 road #
  # test the new tunnel works properly
 road #
@@ -148,13 +79,42 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 3 packets transmitted, 3 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
+ # Now immitate a second indepdent client to east to show this 2nd client doesn't kill 1st client
+road #
+ killall -9 pluto
+road #
+ ip addr del 192.1.3.209/24 dev eth0
+road #
+ ip addr add 192.1.3.210/24 dev eth0
+road #
+ ip route add 0.0.0.0/0 via 192.1.3.254
+road #
+ ipsec restart
+Redirecting to: [initsystem]
+road #
+ # wait on OE to load
+road #
+ sleep 5
+road #
+ ping -n -c 2 -I 192.1.3.210 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.210 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+2 packets transmitted, 1 received, 50% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ sleep 1
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL'
+road #
  echo done
 done
 road #
- # both ends should only show 1 tunnel`
+ # road should have one tunnel, east should have two (from both IPs road used)
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL'
 road #
  # check for a counting bug where total SA's is wrong on east
 road #
@@ -165,7 +125,7 @@ road #
  # verify no packets were dropped due to missing SPD policies
 road #
  grep -v -P "\t0$" /proc/net/xfrm_stat
-XfrmOutNoStates         	2
+XfrmOutNoStates         	3
 road #
 road #
  ../bin/check-for-core.sh
