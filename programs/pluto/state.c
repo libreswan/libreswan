@@ -3211,13 +3211,9 @@ void append_st_cfg_domain(struct state *st, char *domain)
 void ISAKMP_SA_established(const struct state *pst)
 {
 	struct connection *c = pst->st_connection;
+	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) || c->spd.that.authby == AUTH_NULL);
 
-	/* NULL authentication can never replaced - it is all anonymous */
-	if (LIN(POLICY_AUTH_NULL, c->policy) ||
-	    c->spd.that.authby == AUTH_NULL ||
-	    c->spd.this.authby == AUTH_NULL) {
-		DBG(DBG_CONTROL, DBG_log("NULL Authentication - all clients appear identical"));
-	} else if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
 		/*
 		 * If we are a server and use PSK, all clients use the same group ID
 		 * Note that "xauth_server" also refers to IKEv2 CP
@@ -3236,13 +3232,23 @@ void ISAKMP_SA_established(const struct state *pst)
 			/* might move underneath us */
 			struct connection *next = d->ac_next;
 
+			/* if old IKE SA is same as new IKE sa and non-auth isn't overwrting auth */
 			if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
 			    same_id(&c->spd.this.id, &d->spd.this.id) &&
 			    same_id(&c->spd.that.id, &d->spd.that.id))
 			{
-				DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
-				suppress_delete(d); /* don't send a delete */
-				release_connection(d, FALSE); /* this deletes the states */
+				bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) || d->spd.that.authby == AUTH_NULL);
+				bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
+
+				if (same_remote_ip && (!old_is_nullauth && authnull)) {
+					libreswan_log("cannot replace old authenticated connection with authnull connection");
+				} else if (!same_remote_ip && old_is_nullauth && authnull) {
+						libreswan_log("NULL auth ID for different IP's cannot replace each other");
+				} else {
+					DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
+					suppress_delete(d); /* don't send a delete */
+					release_connection(d, FALSE); /* this deletes the states */
+				}
 			}
 			d = next;
 		}
