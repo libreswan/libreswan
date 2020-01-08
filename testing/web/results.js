@@ -60,7 +60,7 @@ function results(div_id, json_file) {
 		    }
 		    let br = false
 		    let html = ""
-		    test_host_names.forEach(function(host) {
+		    for (const host of test_host_names) {
 			if (br) {
 			    html += "<br/>"
 			}
@@ -72,7 +72,7 @@ function results(div_id, json_file) {
 			    return
 			}
 			sep = ""
-			result.errors[host].forEach(function(error) {
+			for (const error of result.errors[host]) {
 			    html += sep
 			    sep = ", "
 			    let href = null
@@ -123,8 +123,8 @@ function results(div_id, json_file) {
 			    } else {
 				html += value
 			    }
-			})
-		    })
+			}
+		    }
 		    return html
 		},
 	    },

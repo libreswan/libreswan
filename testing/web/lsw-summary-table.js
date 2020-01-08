@@ -34,27 +34,27 @@ function lsw_summary_table(table_id, summary) {
 
     // First form a nested table of what titles there could be
     let kinds_seen = {}
-    summary.test_runs.forEach(function(test_run) {
+    for (const test_run of summary.test_runs) {
 	// kind
 	if (test_run.totals) {
-	    Object.keys(test_run.totals).forEach(function(kind) {
+	    for (const kind of Object.keys(test_run.totals)) {
 		let statuses = test_run.totals[kind]
 		let statuses_seen = kinds_seen[kind] = kinds_seen[kind] || {}
 		// status
-		Object.keys(statuses).forEach(function(status) {
+		for (const status of Object.keys(statuses)) {
 		    let results = statuses[status]
 		    let results_seen = statuses_seen[status] = statuses_seen[status] || {}
 		    // result
-		    Object.keys(results).forEach(function(result) {
+		    for (const result of Object.keys(results)) {
 			results_seen[result] = {}
-		    })
-		})
-	    })
+		    }
+		}
+	    }
 	}
-    })
+    }
 
     // Walk this multi-level table to create the headings.
-    lsw_filter_first_list(["kvmplutotest"], kinds_seen).forEach(function(kind) {
+    for (const kind of lsw_filter_first_list(["kvmplutotest"], kinds_seen)) {
 
 	// XXX: Exclude some historic kinds since they are no longer
 	// used and just waste space.
@@ -68,7 +68,7 @@ function lsw_summary_table(table_id, summary) {
 	statuses_columns.title = kind
 	columns.push(statuses_columns);
 
-	lsw_filter_first_list(["good", "wip"], statuses_seen).forEach(function(status) {
+	for (const status of lsw_filter_first_list(["good", "wip"], statuses_seen)) {
 
 	    // XXX: Exclude some historic status values since they are
 	    // no longer used and just waste space.
@@ -81,7 +81,7 @@ function lsw_summary_table(table_id, summary) {
 	    results_columns.title = status
 	    statuses_columns.push(results_columns);
 
-	    lsw_filter_first_list(["passed", "failed"], results_seen).forEach(function(result) {
+	    for (const result of lsw_filter_first_list(["passed", "failed"], results_seen)) {
 		result_column = {
 		    title: {
 			"passed": "pass",
@@ -102,9 +102,9 @@ function lsw_summary_table(table_id, summary) {
 		    },
 		}
 		results_columns.push(result_column)
-	    })
-	})
-    })
+	    }
+	}
+    }
 
     //
     // Add an untested column.
@@ -120,21 +120,21 @@ function lsw_summary_table(table_id, summary) {
     // should have been tested (if it does something bad happened and
     // the test run can be discarded).
 
-    summary.test_runs.forEach(function(test_run) {
+    for (const test_run of summary.test_runs) {
 	test_run.untested = 0
 	if (!test_run.totals) {
 	    return
 	}
-	Object.keys(test_run.totals).forEach(function(kind) {
+	for (const kind of Object.keys(test_run.totals)) {
 	    let kind_totals = test_run.totals[kind]
-	    Object.keys(kind_totals).forEach(function(status) {
+	    for (const status of Object.keys(kind_totals)) {
 		let status_totals = kind_totals[status]
 		if (status_totals.untested) {
 		    test_run.untested += status_totals.untested
 		}
-	    })
-	})
-    })
+	    }
+	}
+    }
 
     columns.push({
 	title: "Untested",
@@ -237,11 +237,11 @@ function lsw_filter_first_list(firsts, map) {
 	return first in map
     })
     // and then append any thing else in sort order
-    Object.keys(map).sort().forEach(function(element) {
+    for (const element of Object.keys(map).sort()) {
 	if (list.indexOf(element) < 0) {
 	    list.push(element)
 	}
-    })
+    }
 
     return list
 }

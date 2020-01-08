@@ -94,9 +94,9 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 
     summary.current = status
     if (current) {
-	Object.keys(current).forEach(function(key) {
+	for (const key of Object.keys(current)) {
 	    status[key] = current[key]
-	})
+	}
     }
     // probably redundant; but easier
     lsw_cleanup_dates(summary.current, ["date"])
@@ -136,16 +136,16 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
     // Using the above hash->commit table, fill in the .parent[] and
     // .children[] fields from the relevant hashes.
 
-    summary.commits.forEach(function (commit) {
-	commit.parent_hashes.forEach(function (parent_hash) {
+    for (const commit of summary.commits) {
+	for (parent_hash of commit.parent_hashes) {
 	    let parent = commit_by_hash[parent_hash]
 	    if (parent) {
 		// cross link the parent and child
 		commit.parents.push(parent)
 		parent.children.push(commit)
 	    }
-	})
-    })
+	}
+    }
 
     // Clean up the result values discarding anything strange.
     //
@@ -218,13 +218,13 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 
 function lsw_commit_texts(commits) {
     let subject = ""
-    commits.forEach(function(commit) {
+    for (const commit of commits) {
 	subject = (subject
 		   + lsw_date2iso(commit.committer.date)
 		   + ": "
 		   + commit.subject
 		   + "\n")
-    })
+    }
     return subject
 }
 
@@ -283,7 +283,7 @@ var lsw_abbrev_hash_length = 9
 function lsw_commits_html(commits) {
     html = ""
     html += "<table class=\"commits\"><tbody class=\"commits\">"
-    commits.forEach(function(commit) {
+    for (const commit of commits) {
 	html += "<tr class=\"" + commit.interesting + "\" title=\"interesting commit: " + commit.interesting + "\">"
 	html += "<td class=\"date\">"
 	html += lsw_date2iso(commit.committer.date)
@@ -300,7 +300,7 @@ function lsw_commits_html(commits) {
 	html += lsw_html_escape(commit.subject)
 	html += "</td>"
 	html += "</tr>"
-    })
+    }
     html += "</tbody></table>"
     return html
 }
@@ -311,12 +311,12 @@ function lsw_errors_html(errors) {
     let html = ""
     if (errors) {
 	html += "<div class=\"errors\">"
-	Object.keys(errors).sort().forEach(function(error) {
+	for (const error of Object.keys(errors).sort()) {
 	    // only real errors are UPPER CASE?
 	    if (error == error.toUpperCase()) {
 		html += error + ": " + errors[error] + "<br>"
 	    }
-	})
+	}
 	html += "</div>"
     }
     return html

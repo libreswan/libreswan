@@ -17,7 +17,7 @@ function lsw_table_headers(recursion, start, table, headers) {
     let this_row = 0
     if (table.length) {
 	table.span = 0
-	table.forEach(function(column) {
+	for (const column of table) {
 	    // Keep track of the number of rows below this one.
 	    let rows_below = lsw_table_headers(recursion + 1,
 					       start + table.span,
@@ -30,7 +30,7 @@ function lsw_table_headers(recursion, start, table, headers) {
 	    }
 	    this_row = Math.max(this_row, rows_below)
 	    table.span += column.span
-	})
+	}
 	// If this row is missing, add it with skips to the left; but
 	// not the very first row as that has no title.
 	if (recursion > 0) {
@@ -58,8 +58,8 @@ function lsw_table(table) {
 
     // Fuge up "table.column" inheritance
 
-    table.headers.forEach(function(header) {
-	header.forEach(function(column) {
+    for (const header of table.headers) {
+	for (const column of header) {
 	    if (column.title === undefined) {
 		column.title = ""
 	    }
@@ -85,8 +85,8 @@ function lsw_table(table) {
 		    }
 		}
 	    }
-	})
-    })
+	}
+    }
 
     // Fudge up "table.sort" inheritance.
 
@@ -109,7 +109,7 @@ function lsw_table(table) {
     // Compute the table rows from the table.data
 
     table.rows = []
-    table.data.forEach(function(data) {
+    for (const data of table.data) {
 	let row = {
 	    data: data,
 	    // XXX: selected used to rebuild the table after a sort.
@@ -117,15 +117,15 @@ function lsw_table(table) {
 	    table: table,
 	    columns: []
 	}
-	table.headers[table.headers.length - 1].forEach(function(column) {
+	for (const column of table.headers[table.headers.length - 1]) {
 	    row.columns.push({
 		text: column.html(data),
 		row: row,
 		column: column,
 	    })
-	})
+	}
 	table.rows.push(row)
-    })
+    }
 
     // Create the table; and save the table wide data.
 
@@ -159,10 +159,10 @@ function lsw_table(table) {
 	    let styles = column.style && column.style.header
 	    if (styles) {
 		let selection = d3.select(this)
-		Object.keys(styles).forEach(function(name) {
+		for (const name of Object.keys(styles)) {
 		    value = styles[name]
 		    selection.style(name, value)
-		})
+		}
 	    }
 	})
 	.attr("colspan", function(column) {
@@ -235,10 +235,10 @@ function lsw_table_body(table) {
 	    let styles = element.column.style && element.column.style.body
 	    if (styles) {
 		let selection = d3.select(this)
-		Object.keys(styles).forEach(function(name) {
+		for (const name of Object.keys(styles)) {
 		    value = styles[name]
 		    selection.style(name, value)
-		})
+		}
 	    }
 	})
 }

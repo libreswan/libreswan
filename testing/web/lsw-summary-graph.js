@@ -43,7 +43,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     //
     let empty_test_runs = []
     let full_test_runs = []
-    summary.test_runs.forEach(function(test_run) {
+    for (const test_run of summary.test_runs) {
 	// Drop anything that doesn't have a result.
 	if (test_run.totals) {
 	    full_test_runs.push(test_run)
@@ -55,7 +55,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	} else {
 	    empty_test_runs.push(test_run)
 	}
-    })
+    }
     console.log("empty_test_runs:", empty_test_runs.length)
     console.log("full_test_runs:", full_test_runs.length)
 
@@ -67,43 +67,43 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 
     let sum_text = []
     let sum_klass = []
-    lsw_status_names.forEach(function(status_name) {
-	lsw_count_names.forEach(function(count_name) {
+    for (const status_name of lsw_status_names) {
+	for (const count_name of lsw_count_names) {
 	    // all but first have "+" prepended
 	    sum_text.push((sum_text.length ? "+" : "") + status_name + ":" + count_name)
 	    sum_klass.push(count_name)
-	})
-    })
+	}
+    }
     sum_text.push("+untested")
     sum_klass.push("untested")
 
     let sums = {}
-    full_test_runs.forEach(function(test_run) {
+    for (const test_run of full_test_runs) {
 	let totals = test_run.totals
 	// Tally up the totals that we're interested in.
 	let total = 0
 	let sum = []
-	lsw_kind_names.forEach(function(kind_name) {
+	for (const kind_name of lsw_kind_names) {
 	    let kind = (totals.hasOwnProperty(kind_name)
 			? totals[kind_name]
 			: {})
-	    lsw_status_names.forEach(function(status_name) {
+	    for (const status_name of lsw_status_names) {
 		let status = (kind.hasOwnProperty(status_name)
 			      ? kind[status_name]
 			      : {})
-		lsw_count_names.forEach(function(count_name) {
+		for (const count_name of lsw_count_names) {
 		    let count = (status.hasOwnProperty(count_name)
 				 ? status[count_name]
 				 : 0)
 		    total += count
 		    sum.push(total)
-		})
-	    })
-	})
+		}
+	    }
+	}
 	// finally grand total as "untested"
 	sum.push(test_run.total)
 	sums[test_run.commit.hash] = sum
-    })
+    }
 
     //
     // Set up the graph dimensions and scale

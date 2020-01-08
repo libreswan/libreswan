@@ -13,14 +13,14 @@ function lsw_compare_test_runs(test_runs) {
     // may be sparse so maintain an array of the actual requests
     let requested_runs = []
 
-    test_runs.forEach(function(run) {
+    for (const run of test_runs) {
 	if (run.directory !== undefined &&
 	    run.test_results === undefined) {
 	    requested_runs.push(run)
 	    let request = run.directory + "/results.json"
 	    queue.defer(d3.json, request)
 	}
-    })
+    }
 
     // what happens if there is more than one load?
 
@@ -44,28 +44,28 @@ function lsw_compare_table(test_runs) {
     // (possibly sparse) array of directory results.
 
     let test_dictionary = {}
-    test_runs.forEach(function(run, index) {
+    test_runs.forEach(function(run, run_index) {
 	if (run.test_results) {
-	    run.test_results.forEach(function(test_result) {
+	    for (const test_result of run.test_results) {
 		let name = test_result.test_name
 		if (test_dictionary[name] === undefined) {
 		    test_dictionary[name] = new Array(test_runs.length)
 		}
-		test_dictionary[name][index] = test_result
-	    })
+		test_dictionary[name][run_index] = test_result
+	    }
 	}
     })
 
     // Convert the test dictionary into an array.
 
     let results = []
-    Object.keys(test_dictionary).forEach(function(test_name) {
+    for (const test_name of Object.keys(test_dictionary)) {
 	let test_results = test_dictionary[test_name]
 	results.push({
 	    test_name: test_name,
 	    test_results: test_results,
 	})
-    })
+    }
 
     // Filter the results array leaving only stuff that needs to be
     // displayed.
@@ -86,12 +86,12 @@ function lsw_compare_table(test_runs) {
 	    // is detected.
 	    let error_string = function(test_result) {
 		let errors = "errors"
-		Object.keys(test_result.errors).sort().forEach(function(host) {
+		for (const host of Object.keys(test_result.errors).sort()) {
 		    errors += ":" + host
-		    test_result.errors[host].sort().forEach(function(error) {
+		    for (const error of test_result.errors[host].sort()) {
 			errors += ":" + error
-		    })
-		})
+		    }
+		}
 		return errors
 	    }
 	    let baseline_errors = error_string(baseline)
@@ -135,8 +135,8 @@ function lsw_compare_table(test_runs) {
 
     let same_kind = undefined
     let same_status = undefined
-    results.forEach(function(test) {
-	test.test_results.forEach(function(result) {
+    for (const test of results) {
+	for (const result of test.test_results) {
 	    if (result) {
 		same_kind = (same_kind === undefined ? result.test_kind
 			     : same_kind == result.test_kind ? same_kind
@@ -145,8 +145,8 @@ function lsw_compare_table(test_runs) {
 			     : same_status == result.test_status ? same_status
 			     : false)
 	    }
-	})
-    })
+	}
+    }
 
     if (same_kind) {
 	columns.push({
@@ -267,7 +267,7 @@ function lsw_compare_table(test_runs) {
 		let br = false
 		let html = ""
 		let directory = this.directory
-		test_host_names.forEach(function(host) {
+		for (const host of test_host_names) {
 		    if (br) {
 			html += "<br/>"
 		    }
@@ -279,7 +279,7 @@ function lsw_compare_table(test_runs) {
 			return
 		    }
 		    sep = ""
-		    result.errors[host].forEach(function(error) {
+		    for (const error of result.errors[host]) {
 			html += sep
 			sep = ", "
 			let href = null
@@ -308,8 +308,8 @@ function lsw_compare_table(test_runs) {
 			} else {
 			    html += value
 			}
-		    })
-		})
+		    }
+		}
 		return html
 	    },
 	})
