@@ -46,6 +46,8 @@ PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
+ sleep 2
+road #
  ipsec whack --trafficstatus
 006 #2: "road-east", username=xroad, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
 road #

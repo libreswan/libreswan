@@ -18,13 +18,6 @@ north #
 north #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 north #
- # confirm clear text does not get through
-north #
- ping -c 4 -n -I 192.0.3.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
-north #
  ipsec start
 Redirecting to: [initsystem]
 north #
