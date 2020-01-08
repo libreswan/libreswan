@@ -1544,7 +1544,7 @@ bool assign_holdpass(const struct connection *c,
 						htonl(negotiation_shunt),
 						SA_INT, ET_INT,
 						null_proto_info,
-						calculate_sa_prio(c),
+						calculate_sa_prio(c, FALSE),
 						NULL,
 						op,
 						reason,
@@ -2282,7 +2282,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				esatype,		/* esatype */
 				proto_info,		/* " */
 				deltatime(0),		/* lifetime */
-				calculate_sa_prio(c),	/* priority */
+				calculate_sa_prio(c, FALSE),	/* priority */
 				&c->sa_marks,		/* IPsec SA marks */
 				ERO_ADD_INBOUND,	/* op */
 				"add inbound",		/* opname */
@@ -2393,7 +2393,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 					ET_ESP : ET_UNSPEC,
 				null_proto_info,
 				deltatime(0),
-				calculate_sa_prio(c),
+				calculate_sa_prio(c, FALSE),
 				&c->sa_marks,
 				ERO_DEL_INBOUND,
 				"delete inbound",
@@ -3001,7 +3001,7 @@ bool route_and_eroute(struct connection *c,
 						ET_INT,
 						null_proto_info,
 						deltatime(SHUNT_PATIENCE),
-						calculate_sa_prio(c),
+						calculate_sa_prio(c, FALSE),
 						NULL,
 						ERO_REPLACE,
 						"restore",

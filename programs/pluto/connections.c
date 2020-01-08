@@ -4219,7 +4219,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr)
 }
 
 /* sa priority and type should really go into kernel_sa */
-uint32_t calculate_sa_prio(const struct connection *c)
+uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 {
 	if (c->sa_priority != 0) {
 		DBGF(DBG_CONTROL, "priority calculation of connection \"%s\" overruled by connection specification of %#" PRIx32,
@@ -4254,6 +4254,10 @@ uint32_t calculate_sa_prio(const struct connection *c)
 	uint32_t srcw, dstw;	/* each max 128 (8 bits) */
 	srcw = c->spd.this.client.maskbits;
 	dstw = c->spd.that.client.maskbits;
+	/* if opportunistic, override the template destination mask with /32 or /128 */
+	if (oe_shunt) {
+		dstw = (addrtypeof(&c->spd.that.host_addr) == AF_INET) ? 32 : 128;
+	}
 
 	/* ensure an instance of a template/OE-group always has preference */
 	uint32_t instw = (c->kind == CK_INSTANCE ? 0u : 1u);

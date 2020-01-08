@@ -2132,7 +2132,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				inner_esatype, proto_info + i,
-				calculate_sa_prio(c), &c->sa_marks, op, opname,
+				calculate_sa_prio(c, FALSE), &c->sa_marks, op, opname,
 				st->st_connection->policy_label);
 }
 
@@ -2269,7 +2269,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				ET_INT,
 				null_proto_info,
 				deltatime(0),
-				calculate_sa_prio(c),
+				calculate_sa_prio(c, FALSE),
 				&c->sa_marks,
 				op, buf2,
 				c->policy_label))
@@ -2296,7 +2296,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				  ET_INT,
 				  null_proto_info,
 				  deltatime(0),
-				  calculate_sa_prio(c),
+				  calculate_sa_prio(c, FALSE),
 				  &c->sa_marks,
 				  op, buf2,
 				  c->policy_label);
