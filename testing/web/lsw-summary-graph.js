@@ -262,6 +262,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 		return y(sums[test_run.commit.hash][sum_index])
 	    })
 	    .on("click", function(test_run) {
+		console.log("click graph", test_run)
 		lsw_summary_graph_click_test_run(table_id, test_run)
 		d3.event.stopPropagation()
 	    })

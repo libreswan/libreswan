@@ -1,5 +1,4 @@
 function lsw_summary_graph_click_test_run(table_id, summary_test_run) {
-    console.log("click-test_run", table_id, summary_test_run)
     window.location = "../" + summary_test_run.directory
 }
 

@@ -217,7 +217,7 @@ function lsw_table_body(table) {
 	})
 	.on("click", function(row) {
 	    if (row.table.select.row) {
-		console.log("click", row.data)
+		console.log("click row", row.data)
 		lsw_table_select_rows(table.id, new Set([row.data]))
 	    }
 	})
@@ -250,7 +250,6 @@ function lsw_table_select_rows(table_id, selections) {
     // toggle SELECTION's "background"
     d3.selectAll("tbody." + table_id + " > tr")
 	.filter(function(row) {
-	    console.log("filter", row.data, selections, selections.has(row.data))
 	    return selections.has(row.data)
 	})
 	.style("background-color", function(row) {
