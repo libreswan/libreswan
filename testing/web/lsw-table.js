@@ -14,16 +14,16 @@
 // This is effectively a leaf walk.
 
 function lsw_table_headers(recursion, start, table, headers) {
-    var this_row = 0
+    let this_row = 0
     if (table.length) {
 	table.span = 0
 	table.forEach(function(column) {
 	    // Keep track of the number of rows below this one.
-	    var rows_below = lsw_table_headers(recursion + 1,
+	    let rows_below = lsw_table_headers(recursion + 1,
 					       start + table.span,
 					       column, headers)
 	    // If this column is short a few rows, add them.
-	    for (var row = rows_below; row < this_row; row++) {
+	    for (let row = rows_below; row < this_row; row++) {
 		headers[row].push({
 		    span: column.span
 		})
@@ -74,8 +74,8 @@ function lsw_table(table) {
 	    }
 	    if (column.sort === undefined) {
 		column.sort = function(l, r) {
-		    var lv = column.value(l)
-		    var rv = column.value(r)
+		    let lv = column.value(l)
+		    let rv = column.value(r)
 		    if (lv < rv) {
 			return -1
 		    } else if (lv > rv) {
@@ -110,7 +110,7 @@ function lsw_table(table) {
 
     table.rows = []
     table.data.forEach(function(data) {
-	var row = {
+	let row = {
 	    data: data,
 	    // XXX: selected used to rebuild the table after a sort.
 	    selected: false,
@@ -156,9 +156,9 @@ function lsw_table(table) {
 	    return column && column.title || ""
 	})
 	.each(function(column) {
-	    var styles = column.style && column.style.header
+	    let styles = column.style && column.style.header
 	    if (styles) {
-		var selection = d3.select(this)
+		let selection = d3.select(this)
 		Object.keys(styles).forEach(function(name) {
 		    value = styles[name]
 		    selection.style(name, value)
@@ -203,7 +203,7 @@ function lsw_table_body(table) {
     d3.selectAll("tbody." + table.id)
 	.remove()
 
-    var tr = d3.select("table." + table.id)
+    let tr = d3.select("table." + table.id)
 	.append("tbody").attr("class", table.id)
 	.selectAll("tr")
 	.data(function(table) {
@@ -232,9 +232,9 @@ function lsw_table_body(table) {
 	    return element.text
 	})
 	.each(function(element, index) {
-	    var styles = element.column.style && element.column.style.body
+	    let styles = element.column.style && element.column.style.body
 	    if (styles) {
-		var selection = d3.select(this)
+		let selection = d3.select(this)
 		Object.keys(styles).forEach(function(name) {
 		    value = styles[name]
 		    selection.style(name, value)
@@ -256,7 +256,7 @@ function lsw_table_select_rows(table_id, selections) {
 	    // XXX: row.selected still used when rebuilding the table
 	    // after a sort.
 	    row.selected = !row.selected
-	    // var background = d3.select(this).style("background-color")
+	    // let background = d3.select(this).style("background-color")
 	    //
 	    // lightgrey comes back as some rgb value, chrome and
 	    // firefox have different defaults.  Perhaps a style?
@@ -268,9 +268,9 @@ function lsw_table_select_rows(table_id, selections) {
 	})
 
     // select rows all with non-blank (i.e., selected) backgrounds
-    var data = d3.selectAll("tbody." + table_id + " > tr")
+    let data = d3.selectAll("tbody." + table_id + " > tr")
 	.filter(function(row) {
-	    // var background = d3.select(this).style("background-color")
+	    // let background = d3.select(this).style("background-color")
 	    // return background != "" && background != "transparent"
 	    return row.selected
 	})
@@ -280,6 +280,6 @@ function lsw_table_select_rows(table_id, selections) {
 	})
 
     // now tell the client found in the table's data.
-    var table = d3.select("table." + table_id).data()[0]
+    let table = d3.select("table." + table_id).data()[0]
     table.select.row(data)
 }

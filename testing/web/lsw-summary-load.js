@@ -23,7 +23,7 @@ function lsw_directory_hash(path) {
     if (!path) {
 	return undefined
     }
-    var npath = path.replace(/.*-g([^-]*)-.*/, "$1")
+    let npath = path.replace(/.*-g([^-]*)-.*/, "$1")
     if (npath == path) {
 	return undefined
     }
@@ -31,8 +31,8 @@ function lsw_directory_hash(path) {
 }
 
 function lsw_summary_load(prefix, f) {
-    var now = Date()
-    var q = d3.queue()
+    let now = Date()
+    let q = d3.queue()
     q.defer(d3.json, prefix + "status.json?" + now)
     q.await(function(error, status) {
 	if (error) {
@@ -43,7 +43,7 @@ function lsw_summary_load(prefix, f) {
 
 	// Generate a tag for fetching big stuff that changes once
 	// per-directory.
-	var tag = "?"
+	let tag = "?"
 	if (status) {
 	    if (status.directory) {
 		// a current directory, assume commits.json was
@@ -62,7 +62,7 @@ function lsw_summary_load(prefix, f) {
 	}
 
 	// pull in the commits and subdirectories.
-	var q = d3.queue()
+	let q = d3.queue()
 	q.defer(d3.json, prefix + "commits.json" + tag)
 	q.defer(d3.json, prefix + "summaries.json" + tag)
 	// also fetch the current directory's summary; it might not be
@@ -79,7 +79,7 @@ function lsw_summary_load(prefix, f) {
 	    console.log("summaries:", summaries.length)
 	    console.log("current:", current)
 
-	    var summary = lsw_summary_cleanup(status, commits, summaries, current)
+	    let summary = lsw_summary_cleanup(status, commits, summaries, current)
 	    f(summary)
 	})
     })
@@ -88,7 +88,7 @@ function lsw_summary_load(prefix, f) {
 function lsw_summary_cleanup(status, commits, summaries, current) {
 
 
-    var summary = {}
+    let summary = {}
 
     // Create "summary.current" by merging current into status.
 
@@ -105,7 +105,7 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
     // Clean up the commits discarding anything strange.  Accumulate a
     // table containing all the commits.
 
-    var commit_by_hash = []
+    let commit_by_hash = []
     summary.commits = commits.filter(function (commit) {
 	// Fix values
 	if (!lsw_cleanup_dates(commit.author, ["date"])) {
@@ -117,7 +117,7 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 	    return false
 	}
 	// add to the lookup table
-	var hash = commit.hash
+	let hash = commit.hash
 	if (!hash) {
 	    console.log("discarding commit with no hash", commit)
 	    return false
@@ -138,7 +138,7 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 
     summary.commits.forEach(function (commit) {
 	commit.parent_hashes.forEach(function (parent_hash) {
-	    var parent = commit_by_hash[parent_hash]
+	    let parent = commit_by_hash[parent_hash]
 	    if (parent) {
 		// cross link the parent and child
 		commit.parents.push(parent)
@@ -171,13 +171,13 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 	    return false
 	}
 	// Try to cross link commit and test_run
-	var hash = test_run.hash
+	let hash = test_run.hash
 	if (!hash) {
 	    console.warn("discarding test run", test_run, "at", index, "with a missing .hash")
 	    return false
 	}
 	// Cross link when possible.
-	var commit = commit_by_hash[hash]
+	let commit = commit_by_hash[hash]
 	if (!commit) {
 	    console.warn("discarding test run", test_run, "at", index, "with commit matching .hash")
 	    return false
@@ -217,7 +217,7 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 }
 
 function lsw_commit_texts(commits) {
-    var subject = ""
+    let subject = ""
     commits.forEach(function(commit) {
 	subject = (subject
 		   + lsw_date2iso(commit.committer.date)
@@ -232,12 +232,12 @@ function lsw_commit_texts(commits) {
 // all commits for a test_run.
 
 function lsw_summary_commits(commit) {
-    var commits = []
+    let commits = []
     if (commit) {
 	commits.push(commit)
-	var parents = commit.parents.slice()
+	let parents = commit.parents.slice()
 	while (parents.length) {
-	    var parent = parents.shift()
+	    let parent = parents.shift()
 	    if (parent.test_run) {
 		// stop when there is a test_run
 		continue
@@ -308,7 +308,7 @@ function lsw_commits_html(commits) {
 // Return the errors as a blob of HTML.
 
 function lsw_errors_html(errors) {
-    var html = ""
+    let html = ""
     if (errors) {
 	html += "<div class=\"errors\">"
 	Object.keys(errors).sort().forEach(function(error) {

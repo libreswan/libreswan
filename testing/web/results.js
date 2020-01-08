@@ -9,7 +9,7 @@ function results(div_id, json_file) {
 	    return console.warn(error)
 	}
 
-	var columns = [
+	let columns = [
 	    {
 		title: "Test",
 		value: function(result) {
@@ -50,7 +50,7 @@ function results(div_id, json_file) {
 		    if (!result || result.result == "untested") {
 			return ""
 		    }
-		    var test_host_names = (result.test_host_names !== undefined
+		    let test_host_names = (result.test_host_names !== undefined
 					   ? result.test_host_names
 					   : result.host_names !== undefined
 					   ? result.host_names
@@ -58,8 +58,8 @@ function results(div_id, json_file) {
 		    if (!test_host_names) {
 			return ""
 		    }
-		    var br = false
-		    var html = ""
+		    let br = false
+		    let html = ""
 		    test_host_names.forEach(function(host) {
 			if (br) {
 			    html += "<br/>"
@@ -75,8 +75,8 @@ function results(div_id, json_file) {
 			result.errors[host].forEach(function(error) {
 			    html += sep
 			    sep = ", "
-			    var href = null
-			    var value = ""
+			    let href = null
+			    let value = ""
 			    if (error == "passed") {
 				value = "passed"
 			    } else if (error == "baseline-missing") {

@@ -2,9 +2,9 @@
 
 function lsw_summary_table(table_id, summary) {
 
-    var now = new Date()
+    let now = new Date()
 
-    var columns = []
+    let columns = []
 
     columns.push({
 	title: "Commits",
@@ -33,17 +33,17 @@ function lsw_summary_table(table_id, summary) {
     //
 
     // First form a nested table of what titles there could be
-    var kinds_seen = {}
+    let kinds_seen = {}
     summary.test_runs.forEach(function(test_run) {
 	// kind
 	if (test_run.totals) {
 	    Object.keys(test_run.totals).forEach(function(kind) {
-		var statuses = test_run.totals[kind]
-		var statuses_seen = kinds_seen[kind] = kinds_seen[kind] || {}
+		let statuses = test_run.totals[kind]
+		let statuses_seen = kinds_seen[kind] = kinds_seen[kind] || {}
 		// status
 		Object.keys(statuses).forEach(function(status) {
-		    var results = statuses[status]
-		    var results_seen = statuses_seen[status] = statuses_seen[status] || {}
+		    let results = statuses[status]
+		    let results_seen = statuses_seen[status] = statuses_seen[status] || {}
 		    // result
 		    Object.keys(results).forEach(function(result) {
 			results_seen[result] = {}
@@ -63,8 +63,8 @@ function lsw_summary_table(table_id, summary) {
 	if (kind == "umlplutotest") return
 	if (kind == "kvpllutotest") return
 
-	var statuses_seen = kinds_seen[kind]
-	var statuses_columns = []
+	let statuses_seen = kinds_seen[kind]
+	let statuses_columns = []
 	statuses_columns.title = kind
 	columns.push(statuses_columns);
 
@@ -76,8 +76,8 @@ function lsw_summary_table(table_id, summary) {
 	    if (status == "skiptest") return
 	    if (status == "goos") return
 
-	    var results_seen = statuses_seen[status]
-	    var results_columns = []
+	    let results_seen = statuses_seen[status]
+	    let results_columns = []
 	    results_columns.title = status
 	    statuses_columns.push(results_columns);
 
@@ -126,9 +126,9 @@ function lsw_summary_table(table_id, summary) {
 	    return
 	}
 	Object.keys(test_run.totals).forEach(function(kind) {
-	    var kind_totals = test_run.totals[kind]
+	    let kind_totals = test_run.totals[kind]
 	    Object.keys(kind_totals).forEach(function(status) {
-		var status_totals = kind_totals[status]
+		let status_totals = kind_totals[status]
 		if (status_totals.untested) {
 		    test_run.untested += status_totals.untested
 		}
@@ -191,7 +191,7 @@ function lsw_summary_table(table_id, summary) {
     columns.push({
 	title: "Directory",
 	html: function(row) {
-	    var a = ("<a href=\"" + row.directory + "\">"
+	    let a = ("<a href=\"" + row.directory + "\">"
 		     + row.directory
 		     + "</a>")
 	    if (row == summary.current) {
@@ -233,7 +233,7 @@ function lsw_summary_table(table_id, summary) {
 
 function lsw_filter_first_list(firsts, map) {
     // force firsts to the front
-    var list = firsts.filter(function(first) {
+    let list = firsts.filter(function(first) {
 	return first in map
     })
     // and then append any thing else in sort order

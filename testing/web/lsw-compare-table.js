@@ -8,16 +8,16 @@ function lsw_compare_test_runs(test_runs) {
 
     // Filter out the "current" row?
 
-    var queue = d3.queue()
+    let queue = d3.queue()
 
     // may be sparse so maintain an array of the actual requests
-    var requested_runs = []
+    let requested_runs = []
 
     test_runs.forEach(function(run) {
 	if (run.directory !== undefined &&
 	    run.test_results === undefined) {
 	    requested_runs.push(run)
-	    var request = run.directory + "/results.json"
+	    let request = run.directory + "/results.json"
 	    queue.defer(d3.json, request)
 	}
     })
@@ -30,7 +30,7 @@ function lsw_compare_test_runs(test_runs) {
 	}
 
 	// fill in the now-loaded results.
-	for (var i = 0; i < results.length; i++) {
+	for (let i = 0; i < results.length; i++) {
 	    requested_runs[i].test_results = results[i]
 	}
 
@@ -43,11 +43,11 @@ function lsw_compare_table(test_runs) {
     // Create a test_dictionary mapping each test name onto a
     // (possibly sparse) array of directory results.
 
-    var test_dictionary = {}
+    let test_dictionary = {}
     test_runs.forEach(function(run, index) {
 	if (run.test_results) {
 	    run.test_results.forEach(function(test_result) {
-		var name = test_result.test_name
+		let name = test_result.test_name
 		if (test_dictionary[name] === undefined) {
 		    test_dictionary[name] = new Array(test_runs.length)
 		}
@@ -58,9 +58,9 @@ function lsw_compare_table(test_runs) {
 
     // Convert the test dictionary into an array.
 
-    var results = []
+    let results = []
     Object.keys(test_dictionary).forEach(function(test_name) {
-	var test_results = test_dictionary[test_name]
+	let test_results = test_dictionary[test_name]
 	results.push({
 	    test_name: test_name,
 	    test_results: test_results,
@@ -76,7 +76,7 @@ function lsw_compare_table(test_runs) {
 	results = results.filter(function(test) {
 	    // Use result[0] as a baseline that all other results
 	    // should match
-	    var baseline = test.test_results[0]
+	    let baseline = test.test_results[0]
 	    // A missing result is presumably from it being
 	    // added/deleted, always display it.
 	    if (!baseline) {
@@ -84,8 +84,8 @@ function lsw_compare_table(test_runs) {
 	    }
 	    // For the errors, convert them to a string so any change
 	    // is detected.
-	    var error_string = function(test_result) {
-		var errors = "errors"
+	    let error_string = function(test_result) {
+		let errors = "errors"
 		Object.keys(test_result.errors).sort().forEach(function(host) {
 		    errors += ":" + host
 		    test_result.errors[host].sort().forEach(function(error) {
@@ -94,7 +94,7 @@ function lsw_compare_table(test_runs) {
 		})
 		return errors
 	    }
-	    var baseline_errors = error_string(baseline)
+	    let baseline_errors = error_string(baseline)
 	    return test.test_results.slice(1).some(function(current) {
 		if (!current) {
 		    return true
@@ -115,7 +115,7 @@ function lsw_compare_table(test_runs) {
 	})
     }
 
-    var columns = [
+    let columns = [
 	{
 	    title: "Test Name",
 	    style: {
@@ -133,8 +133,8 @@ function lsw_compare_table(test_runs) {
     // entire table, exclude them in the side-by-side comparison.
     // Instead display them once, next to name.
 
-    var same_kind = undefined
-    var same_status = undefined
+    let same_kind = undefined
+    let same_status = undefined
     results.forEach(function(test) {
 	test.test_results.forEach(function(result) {
 	    if (result) {
@@ -167,7 +167,7 @@ function lsw_compare_table(test_runs) {
     }
 
     test_runs.forEach(function(run, run_index) {
-	var results_column = []
+	let results_column = []
 	results_column.title = lsw_commits_html(run.commits)
 	results_column.style = {
 	    header: {
@@ -180,11 +180,11 @@ function lsw_compare_table(test_runs) {
 		directory: run.directory,
 		title: "Kind",
 		value: function(row) {
-		    var result = row.test_results[run_index]
+		    let result = row.test_results[run_index]
 		    if (result == undefined) {
 			return ""
 		    }
-		    var value = result.test_kind
+		    let value = result.test_kind
 		    if (value == undefined) {
 			return ""
 		    }
@@ -197,11 +197,11 @@ function lsw_compare_table(test_runs) {
 		directory: run.directory,
 		title: "Status",
 		value: function(row) {
-		    var result = row.test_results[run_index]
+		    let result = row.test_results[run_index]
 		    if (result == undefined) {
 			return ""
 		    }
-		    var value = result.test_status
+		    let value = result.test_status
 		    if (value == undefined) {
 			return ""
 		    }
@@ -213,18 +213,18 @@ function lsw_compare_table(test_runs) {
 	    directory: run.directory,
 	    title: "Result",
 	    value: function(row) {
-		var result = row.test_results[run_index]
+		let result = row.test_results[run_index]
 		if (result == undefined) {
 		    return ""
 		}
-		var value = result.result
+		let value = result.result
 		if (value == undefined) {
 		    return ""
 		}
 		return value
 	    },
 	    html: function(row) {
-		var value = this.value(row)
+		let value = this.value(row)
 		if (value) {
 		    return ("<a href=\""
 			    + this.directory + "/" + row.test_name + "/OUTPUT"
@@ -252,11 +252,11 @@ function lsw_compare_table(test_runs) {
 		},
 	    },
 	    html: function(row) {
-		var result = row.test_results[run_index]
+		let result = row.test_results[run_index]
 		if (result == undefined) {
 		    return ""
 		}
-		var test_host_names = (result.test_host_names !== undefined
+		let test_host_names = (result.test_host_names !== undefined
 				       ? result.test_host_names
 				       : result.host_names !== undefined
 				       ? result.host_names
@@ -264,9 +264,9 @@ function lsw_compare_table(test_runs) {
 		if (!test_host_names) {
 		    return ""
 		}
-		var br = false
-		var html = ""
-		var directory = this.directory
+		let br = false
+		let html = ""
+		let directory = this.directory
 		test_host_names.forEach(function(host) {
 		    if (br) {
 			html += "<br/>"
@@ -282,8 +282,8 @@ function lsw_compare_table(test_runs) {
 		    result.errors[host].forEach(function(error) {
 			html += sep
 			sep = ", "
-			var href = null
-			var value = ""
+			let href = null
+			let value = ""
 			if (error == "passed") {
 			    value = "passed"
 			} else if (error == "baseline-missing") {

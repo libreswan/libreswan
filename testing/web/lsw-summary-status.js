@@ -4,9 +4,9 @@ function lsw_summary_status(id, status) {
 	return
     }
 
-    var now = new Date()
+    let now = new Date()
 
-    var columns = [
+    let columns = [
 	{
 	    title: "Current Time",
 	    value: function(status) {
