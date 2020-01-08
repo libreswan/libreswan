@@ -17,6 +17,7 @@ nic #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 nic #
  grep "negotiated connection" /tmp/pluto.log
+grep: /tmp/pluto.log: No such file or directory
 nic #
  grep IKEv2_AUTH_ OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_AUTH_HASH_SHA2_256 into IKEv2 Notify Payload

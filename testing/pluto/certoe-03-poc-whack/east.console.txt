@@ -90,7 +90,7 @@ north                                                        P,,
 west                                                         P,,  
 west-ec                                                      P,,  
 east #
- ipsec whack --trafficstatus
+ hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 006 #2: "clear-or-private#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
 east #
  # A tunnel should have established

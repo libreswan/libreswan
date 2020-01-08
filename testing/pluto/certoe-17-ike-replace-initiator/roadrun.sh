@@ -9,8 +9,7 @@ sleep 20
 ping -n -c 4 -I 192.1.3.209 192.1.2.23
 sleep 20
 ping -n -c 4 -I 192.1.3.209 192.1.2.23
-#
-grep "STATE_" OUTPUT/road.console.verbose.txt
+ipsec status | grep "STATE_" 
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 echo done

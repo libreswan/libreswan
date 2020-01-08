@@ -4,8 +4,7 @@ nic #
 nic #
  ../../pluto/bin/ipsec-look.sh
 nic #
- ipsec whack --trafficstatus
--bash: ipsec: command not found
+ hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 nic #
  # A tunnel should have established
 nic #
