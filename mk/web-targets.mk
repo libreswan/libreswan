@@ -47,6 +47,9 @@ endif
 ifndef WEB_TIME
 WEB_TIME := $(shell $(WEB_SOURCEDIR)/now.sh)
 endif
+ifndef WEB_TESTSDIR
+WEB_TESTSDIR := $(WEB_SUMMARYDIR)/tests
+endif
 endif
 
 #
@@ -73,10 +76,12 @@ $(WEB_SUMMARYDIR):
 # directory, do a full update so that all the previous runs are
 # included.
 
-.PHONY: web-test-prep web-page web
+.PHONY: web-test-prep web-test-post web-page web
 web-test-prep:
+web-test-post:
 ifdef WEB_ENABLED
-web-test-prep: web-results-html web-summarydir
+web-test-prep: web-results-html web-summarydir web-testsdir
+web-test-post: web-tests-json
 endif
 
 #
@@ -105,6 +110,22 @@ web-summarydir:
 
 .PHONY: web-resultsdir
 web-resultsdir:
+
+#
+# Create the tests directory
+#
+
+ifdef WEB_ENABLED
+
+web-testsdir: | $(WEB_TESTSDIR)
+$(WEB_TESTSDIR):
+	mkdir $@
+
+.PHONY:
+web-tests-json:
+	$(WEB_SOURCEDIR)/json-tests.sh $(WEB_REPODIR) $(WEB_TESTSDIR) $(WEB_RESULTSDIR)
+
+endif
 
 #
 # Create or update just the summary web page.

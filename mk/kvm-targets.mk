@@ -299,9 +299,8 @@ define kvm-test
 $(1): 		$$(KVM_QMUDIR_OK) \
 		$$(KVM_ENTROPY_OK) \
 		kvm-keys \
-		kvm-shutdown-local-domains \
-		web-test-prep
-	$$(if $$(WEB_ENABLED),,@$(MAKE) -s web-pages-disabled)
+		kvm-shutdown-local-domains
+	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
 	: kvm-test target=$(1) param=$(2)
 	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
 	$$(KVMRUNNER) \
@@ -313,7 +312,7 @@ $(1): 		$$(KVM_QMUDIR_OK) \
 			--publish-results $$(WEB_RESULTSDIR) \
 			--publish-status $$(WEB_SUMMARYDIR)/status.json) \
 		$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
-	$$(if $$(WEB_ENABLED),,@$(MAKE) -s web-pages-disabled)
+	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-post, -s web-pages-disabled)
 endef
 
 # XXX: $(file < "x") tries to open '"x"' !!!
