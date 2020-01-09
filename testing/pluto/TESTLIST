@@ -137,7 +137,7 @@ kvmplutotest	ikev2-12-transport-psk			good
 kvmplutotest	ikev2-13-ah				good
 kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey-ipsec			good
-kvmplutotest	ikev2-20-ikesa-reauth			wip
+kvmplutotest	ikev2-20-ikesa-reauth			good
 kvmplutotest	ikev2-18-x509-alias			wip
 kvmplutotest	ikev2-16-alias-whack-up			good
 kvmplutotest	ikev2-16-alias-whack-start		good
@@ -287,7 +287,7 @@ kvmplutotest	ikev2-impair-04-corrupt-auth-sk-payload	good
 kvmplutotest	ikev1-impair-05-send-zero-ike-ke	good
 kvmplutotest	ikev2-impair-05-send-zero-ike-ke	good
 
-kvmplutotest	ikev1-impair-06-send-no-ike-ke		wip
+kvmplutotest	ikev1-impair-06-send-no-ike-ke		good
 kvmplutotest	ikev2-impair-06-send-no-ike-ke		good
 
 kvmplutotest	ikev1-impair-07-send-empty-ike-ke	good
@@ -440,7 +440,7 @@ kvmplutotest	newoe-03-oeself				good
 kvmplutotest	newoe-04-pass-pass			good
 kvmplutotest	newoe-05-hold-pass			good
 kvmplutotest	newoe-06-prio				good
-kvmplutotest	newoe-07-ike-replace-initiator		wip
+kvmplutotest	newoe-07-ike-replace-initiator		good
 kvmplutotest	newoe-07-ike-replace-initiator-esp	good
 kvmplutotest	newoe-08-restart			good
 kvmplutotest	newoe-09-mutual				good
@@ -453,7 +453,7 @@ kvmplutotest	newoe-13-block				good
 kvmplutotest	newoe-14-clear-in-block-clear		good
 kvmplutotest	newoe-15-portpass			good
 kvmplutotest	newoe-16-pass-hold			good
-kvmplutotest	newoe-17-block-in-clear-clear		wip
+kvmplutotest	newoe-17-block-in-clear-clear		good
 #
 kvmplutotest 	newoe-18-poc-poc 			good
 kvmplutotest 	newoe-18-poc-cop 			good
@@ -541,7 +541,7 @@ kvmplutotest	newoe-18-poc-cop-port22-whack		good
 kvmplutotest	newoe-18-poc-cop-port22			good
 kvmplutotest	newoe-18-poc-cop-port22-transport	good
 kvmplutotest	newoe-18-poc-cop-port22-both		good
-kvmplutotest	newoe-18-poc-cop-port22-both-reorder	wip
+kvmplutotest	newoe-18-poc-cop-port22-both-reorder	good
 
 kvmplutotest	mixoe-01-authanon-authanon		good
 kvmplutotest	mixoe-02-anon-authanon			good
@@ -608,8 +608,8 @@ kvmplutotest	ikev2-child-ipsec-retransmit	good
 kvmplutotest	ikev2-56-restart		skiptest
 kvmplutotest	ikev2-child-restart-mismatch 	wip
 kvmplutotest	ikev2-cp-01-resolvconf	good
-kvmplutotest	ikev2-child-rekey		wip
-kvmplutotest	ikev2-child-rekey-01		wip
+kvmplutotest	ikev2-child-rekey		good
+kvmplutotest	ikev2-child-rekey-01		good
 kvmplutotest	ikev2-child-rekey-02		wip
 kvmplutotest	ikev2-child-rekey-03		wip
 kvmplutotest	ikev2-child-dual-asym-01	wip
@@ -887,7 +887,7 @@ kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-01	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-02	good
 kvmplutotest	interop-ikev2-strongswan-21-transport-03	good
-kvmplutotest	interop-ikev2-strongswan-21-transport-04	wip
+kvmplutotest	interop-ikev2-strongswan-21-transport-04	good
 kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
 kvmplutotest	interop-ikev2-strongswan-28-reauth		good
 kvmplutotest	interop-ikev2-strongswan-29-rekey		good
@@ -911,8 +911,7 @@ kvmplutotest	interop-ikev2-pluto-01-integ-none		good
 kvmplutotest	ikev2-digsig-01-defaults		good
 kvmplutotest	ikev2-digsig-02-legacy			good
 kvmplutotest	ikev2-digsig-03-rsa-sha2		good
-# 04 works but test times out due to another whack fd leak
-kvmplutotest	ikev2-digsig-04-mismatch		wip
+kvmplutotest	ikev2-digsig-04-mismatch		good
 kvmplutotest	ikev2-digsig-05-rsasig-rsa1		good
 
 #################################################################
