@@ -81,9 +81,9 @@ road #
 road #
  # jacob two two for east?
 road #
- ipsec whack --trafficstatus
+ hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 road #
- ipsec whack --trafficstatus
+ hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 road #
  ../../pluto/bin/ipsec-look.sh
 road NOW
