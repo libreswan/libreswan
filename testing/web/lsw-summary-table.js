@@ -122,15 +122,14 @@ function lsw_summary_table(table_id, summary) {
 
     for (const test_run of summary.test_runs) {
 	test_run.untested = 0
-	if (!test_run.totals) {
-	    return
-	}
-	for (const kind of Object.keys(test_run.totals)) {
-	    let kind_totals = test_run.totals[kind]
-	    for (const status of Object.keys(kind_totals)) {
-		let status_totals = kind_totals[status]
-		if (status_totals.untested) {
-		    test_run.untested += status_totals.untested
+	if (test_run.totals) {
+	    for (const kind of Object.keys(test_run.totals)) {
+		let kind_totals = test_run.totals[kind]
+		for (const status of Object.keys(kind_totals)) {
+		    let status_totals = kind_totals[status]
+		    if (status_totals.untested) {
+			test_run.untested += status_totals.untested
+		    }
 		}
 	    }
 	}
