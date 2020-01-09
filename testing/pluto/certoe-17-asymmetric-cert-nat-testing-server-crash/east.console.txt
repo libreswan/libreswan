@@ -30,7 +30,9 @@ east #
 east #
  # killing service ipsec
 east #
- killall -9 pluto
+ ipsec whack --impair send-no-delete
+east #
+ipsec stop
 east #
  #eck if  tunnel is up
 east #

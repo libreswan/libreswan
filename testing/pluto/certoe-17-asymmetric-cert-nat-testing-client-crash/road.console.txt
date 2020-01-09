@@ -58,7 +58,9 @@ Crashing the client.
 road #
  # killing service ipsec
 road #
- killall -9 pluto
+ ipsec whack --impair send-no-delete
+road #
+ ipsec stop
 road #
  #check if  tunnel is up
 road #

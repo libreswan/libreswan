@@ -8,7 +8,7 @@ ipsec whack --shuntstatus
 ping -n -c 2 -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 # prevent delete notify
-killall -9 pluto
+ipsec whack --impair send-no-delete
 ipsec restart
 /testing/pluto/bin/wait-until-pluto-started
 # give OE policies time to load

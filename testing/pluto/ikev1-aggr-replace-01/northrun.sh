@@ -4,7 +4,7 @@ ipsec auto --up north-east
 ip addr del 192.1.3.33/24 dev eth1
 ip addr add 192.1.3.34/24 dev eth1
 ip route add 0.0.0.0/0 via 192.1.3.254 dev eth1
-killall -9 pluto
+ipsec whack --impair send-no-delete
 ipsec restart
 /testing/pluto/bin/wait-until-pluto-started
 # temp while the test still fails

@@ -63,7 +63,9 @@ west #
 west #
  # kill pluto; host may send ICMP unreachble. with iptables it won't
 west #
- killall -9 pluto
+ ipsec whack --impair send-no-delete
+west #
+ ipsec stop
 west #
  # give east time to trigger dpd, which shows up in final.sh
 west #

@@ -11,7 +11,7 @@ ipsec whack --trafficstatus
 echo "Waiting 15 seconds..."
 sleep 15
 echo "Crashing east"
-ssh 192.1.2.23 killall -9 pluto
+ssh 192.1.2.23 ipsec stop # should really use the new *.sh functionality
 echo "Waiting to see if we detect phase2 is still up - no DPD restart"
 sleep 15
 sleep 15

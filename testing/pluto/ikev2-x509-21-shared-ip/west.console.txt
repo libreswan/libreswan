@@ -32,9 +32,9 @@ west #
  ipsec whack --trafficstatus
 006 #2: "other", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@othereast.other.libreswan.org'
 west #
- killall -9 pluto
+ ipsec whack --impair send-no-delete
 west #
- ipsec start
+ ipsec restart
 Redirecting to: [initsystem]
 west #
  /testing/pluto/bin/wait-until-pluto-started

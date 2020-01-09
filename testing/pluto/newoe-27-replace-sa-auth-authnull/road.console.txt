@@ -118,7 +118,7 @@ road #
  ipsec whack --trafficstatus
 006 #2: "authenticated", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
 road #
- killall -9 pluto
+ ipsec whack --impair send-no-delete
 road #
  ipsec restart
 Redirecting to: [initsystem]

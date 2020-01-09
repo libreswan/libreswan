@@ -49,7 +49,7 @@ road #
 road #
  # prevent delete notify
 road #
- killall -9 pluto
+ ipsec whack --impair send-no-delete
 road #
  ipsec restart
 Redirecting to: [initsystem]

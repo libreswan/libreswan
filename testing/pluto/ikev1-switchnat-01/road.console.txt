@@ -29,9 +29,9 @@ road #
 1v1 "road1" #2: STATE_QUICK_I1: sent QI1, expecting QR1
 004 "road1" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
- killall -9 pluto
+ ipsec whack --impair send-no-delete
 road #
- ipsec start
+ ipsec restart
 Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started

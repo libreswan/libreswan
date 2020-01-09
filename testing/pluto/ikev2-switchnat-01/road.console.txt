@@ -26,9 +26,9 @@ road #
 002 "road1" #2: negotiated connection [1.2.3.4-1.2.3.4:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "road1" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
- killall -9 pluto
+ ipsec whack --impair send-no-delete
 road #
- ipsec start
+ ipsec restart
 Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
