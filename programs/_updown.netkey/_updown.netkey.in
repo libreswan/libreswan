@@ -454,7 +454,7 @@ addsource6() {
     fi
     # check if given sourceip is local and add as alias if not
     if ! ip -6 -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
-	it="ip -6 addr add ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface} scope ${SCOPE}"
+	it="ip -6 addr add ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface} scope global"
 	oops="$(eval ${it} 2>&1)"
 	st=$?
 	if [ -z "${oops}" -a ${st} -ne 0 ]; then
@@ -533,7 +533,7 @@ delsource6() {
     # Remove source ip if it's not used any more.
     if [ -z "$(ip -6 -o route list src ${PLUTO_MY_SOURCEIP})" ]; then
 	# If there is no ip we just return
-	if ! ip -6 -o addr list dev ${interface} scope ${SCOPE} | \
+	if ! ip -6 -o addr list dev ${interface} scope global | \
 	    grep -q ${PLUTO_MY_SOURCEIP}/${MAX_CIDR}
 	then
 	    return ${st}
