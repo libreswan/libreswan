@@ -32,9 +32,9 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 80(108) bytes of data.
 8 packets transmitted, 8 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- # this suhould have something like westnet-eastnet-ikev2{3} and no packet loss.
+ # this should have something like westnet-eastnet-ikev2{3} and no packet loss.
 west #
- sleep 5
+ sleep 10 # give strongswan change to remove DELETED, TUNNEL state
 west #
  strongswan status | grep -v libcurl
 Shunted Connections:

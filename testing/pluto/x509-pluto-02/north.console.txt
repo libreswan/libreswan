@@ -1,5 +1,4 @@
-north #
- /testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --x509
 Preparing X.509 files
 north #
  # ensure that clear text does not get through
