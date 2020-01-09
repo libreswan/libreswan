@@ -617,7 +617,6 @@ define create-kvm-domain
 		--import \
 		--noautoconsole \
 		--noreboot
-	$(KVM_F28_HACK)
 endef
 
 define destroy-kvm-domain
