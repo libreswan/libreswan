@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "outDir": "@@DEST_DIR@@",
+        "allowJs": true,
+        "target": "es2015"
+    },
+    "include": [
+        "@@SOURCE_DIR@@/*"
+    ]
+}

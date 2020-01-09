@@ -139,8 +139,9 @@ ifdef WEB_ENABLED
 .PHONY: web-summary-html
 web-site web-summarydir: web-summary-html
 web-summary-html: $(WEB_SUMMARYDIR)/index.html
-$(WEB_SUMMARYDIR)/index.html: $(WEB_SOURCES) | $(WEB_SUMMARYDIR)
-	cp $(WEB_SOURCES) $(WEB_SUMMARYDIR)
+$(WEB_SUMMARYDIR)/index.html: $(WEB_SOURCES) $(WEB_SUMMARYDIR)/tsconfig.json | $(WEB_SUMMARYDIR)
+	tsc --project $(WEB_SUMMARYDIR)/tsconfig.json
+	cp $(filter-out %.js, $(WEB_SOURCES)) $(WEB_SUMMARYDIR)
 	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/index.html
 
 endif
@@ -260,8 +261,9 @@ web-resultsdir: web-results-html web-results-json
 web-results-html: $(WEB_RESULTSDIR)/index.html
 web-results-json: $(WEB_RESULTSDIR)/summary.json
 
-$(WEB_RESULTSDIR)/index.html: $(WEB_SOURCES) | $(WEB_RESULTSDIR)
-	cp $(WEB_SOURCES) $(WEB_RESULTSDIR)
+$(WEB_RESULTSDIR)/index.html: $(WEB_SOURCES) $(WEB_RESULTSDIR)/tsconfig.json | $(WEB_RESULTSDIR)
+	tsc --project $(WEB_RESULTSDIR)/tsconfig.json
+	cp $(filter-out %.js, $(WEB_SOURCES)) $(WEB_RESULTSDIR)
 	cp $(WEB_SOURCEDIR)/results.html $(WEB_RESULTSDIR)/index.html
 
 $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
@@ -275,6 +277,13 @@ $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
 		--publish-results $(WEB_RESULTSDIR) \
 		--publish-hash $(WEB_HASH) \
 		testing/pluto
+	mv $@.tmp $@
+
+%/tsconfig.json: $(WEB_SOURCEDIR)/tsconfig.json.in mk/web-targets.mk | %
+	sed -e 's;@@DEST_DIR@@;$(realpath $(dir $@));' \
+	    -e 's;@@SOURCE_DIR@@;$(realpath $(WEB_SOURCEDIR));' \
+	    $(WEB_SOURCEDIR)/tsconfig.json.in \
+	    > $@.tmp
 	mv $@.tmp $@
 
 $(WEB_RESULTSDIR): | $(WEB_SUMMARYDIR)
