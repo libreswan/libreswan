@@ -1,3 +1,2 @@
 RSA-SHA2 vs RSA-SHA1 strict, it should fail
 
-a leaking whack socket causes this test to timeout 
