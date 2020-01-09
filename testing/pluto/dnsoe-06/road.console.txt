@@ -67,7 +67,7 @@ road #
 |    auth method: IKEv2_AUTH_NULL (0xd)
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 road #
- # no ipsec tunnel should be up
+ # NO ipsec tunnel should be up
 road #
  ipsec whack --trafficstatus
 road #
