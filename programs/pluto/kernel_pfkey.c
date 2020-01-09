@@ -1380,7 +1380,7 @@ bool pfkey_shunt_eroute(const struct connection *c,
 					ET_INT,
 					null_proto_info,
 					deltatime(0),
-					calculate_sa_prio(c),
+					calculate_sa_prio(c, false),
 					&c->sa_marks,
 					op, buf2,
 					c->policy_label);
