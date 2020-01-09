@@ -12,6 +12,10 @@ west #
  echo "initdone"
 initdone
 west #
+
+[ Paul: shouldn't west be doing something ??? ]
+
+
 west #
  ../bin/check-for-core.sh
 west #
