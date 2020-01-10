@@ -5,6 +5,7 @@
 REF_CONSOLE_FIXUPS="nocr.sed"
 
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS kern-list-fixups.sed"
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS kernel-failed-to-disable-lr0.sed"
 
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS cut-postfinal.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS host-prompt-sanitize.sed"
