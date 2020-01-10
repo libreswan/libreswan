@@ -325,9 +325,6 @@ class TestResult:
             if self.grub(raw_output_filename, r"GPFAULT"):
                 self.issues.add(Issues.GPFAULT, host_name)
                 self.resolution.failed()
-            if self.grub(raw_output_filename, r"\[ *\d+\.\d+\] Call Trace:"):
-                self.issues.add(Issues.KERNEL, host_name)
-                self.resolution.failed()
 
             # Check that the host's raw output is complete.
             #
@@ -369,15 +366,21 @@ class TestResult:
                 continue
             self.sanitized_output[host_name] = sanitized_output
 
+            self.logger.debug("host %s checking sanitized console output for issues",
+                              host_name)
             if self.grep(sanitized_output, r"\(null\)"):
                 self.issues.add(Issues.PRINTF_NULL, host_name)
                 self.resolution.failed()
-
             if self.grep(sanitized_output, r"[^ -~\r\n\t]"):
                 # Console contains \r\n; this won't detect \n embedded
                 # in the middle of a log line.  Audit emits embedded
                 # escapes!
                 self.issues.add(Issues.ISCNTRL, host_name)
+                self.resolution.failed()
+            if self.grep(sanitized_output, r"\[ *\d+\.\d+\] Call Trace:"):
+                # the sanitizer strips out the bogus backtrace "failed
+                # to disable LRO"; hence checking the sanitized output
+                self.issues.add(Issues.KERNEL, host_name)
                 self.resolution.failed()
 
             expected_output_path = test.testing_directory("pluto", test.name,
