@@ -276,37 +276,37 @@ function lsw_compare_table(test_runs) {
 		    if (result.errors[host] === undefined
 			|| result.errors[host].length == 0) {
 			html += "passed"
-			return
-		    }
-		    sep = ""
-		    for (const error of result.errors[host]) {
-			html += sep
-			sep = ", "
-			let href = null
-			let value = ""
-			if (error == "passed") {
-			    value = "passed"
-			} else if (error == "baseline-missing") {
-			    // Probably a new test.
-			    value = "previous-missing"
-			} else if (error == "output-different"
-				   || error == "output-whitespace") {
-			    href = result.output_directory + "/" + host + ".console.diff"
-			    value = error
-			} else if (error == "output-unchecked") {
-			    href = result.output_directory + "/" + host + ".console.txt"
-			    value = error
-			} else if (error == "output-truncated") {
-			    href = result.output_directory + "/" + host + ".console.verbose.txt"
-			    value = error
-			} else {
-			    href = result.output_directory
-			    value = error
-			}
-			if (href) {
-			    html += "<a href=\"" + directory + "/" + href + "\">" + value + "</a>"
-			} else {
-			    html += value
+		    } else {
+			let sep = ""
+			for (const error of result.errors[host]) {
+			    html += sep
+			    sep = ", "
+			    let href = null
+			    let value = ""
+			    if (error == "passed") {
+				value = "passed"
+			    } else if (error == "baseline-missing") {
+				// Probably a new test.
+				value = "previous-missing"
+			    } else if (error == "output-different"
+				       || error == "output-whitespace") {
+				href = result.output_directory + "/" + host + ".console.diff"
+				value = error
+			    } else if (error == "output-unchecked") {
+				href = result.output_directory + "/" + host + ".console.txt"
+				value = error
+			    } else if (error == "output-truncated") {
+				href = result.output_directory + "/" + host + ".console.verbose.txt"
+				value = error
+			    } else {
+				href = result.output_directory
+				value = error
+			    }
+			    if (href) {
+				html += "<a href=\"" + directory + "/" + href + "\">" + value + "</a>"
+			    } else {
+				html += value
+			    }
 			}
 		    }
 		}
