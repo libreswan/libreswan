@@ -650,10 +650,6 @@ kvmplutotest	x509-pluto-03		good
 kvmplutotest	x509-pluto-04		good
 kvmplutotest	x509-pluto-05		good
 
-kvmplutotest	ikev2-x509-pluto-05	good
-kvmplutotest	ikev2-x509-pluto-05-mismatch	good
-kvmplutotest	ikev2-x509-pluto-05-forged	good
-
 kvmplutotest	x509-pluto-frag-00	good
 kvmplutotest	x509-pluto-frag-01	good
 kvmplutotest	x509-pluto-frag-02	good
