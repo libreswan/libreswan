@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015-2019 Andrew Cagney
+# Copyright (C) 2015-2020 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -118,6 +118,19 @@ VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCED
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
 KVM_OS_VARIANT ?= $(KVM_GUEST_OS)
 VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
+
+VIRT_INSTALL_COMMAND = \
+	$(VIRT_INSTALL) \
+	$(VIRT_OS_VARIANT) \
+	--vcpus=1 \
+	--nographics \
+	$(VIRT_CPU) \
+	$(VIRT_GATEWAY) \
+	$(VIRT_RND) \
+	$(VIRT_SECURITY) \
+	$(VIRT_SOURCEDIR) \
+	$(VIRT_TESTINGDIR) \
+	--noreboot
 
 #
 # Hosts
@@ -599,26 +612,6 @@ kvm-iso: $(KVM_ISO)
 $(KVM_ISO): | $(KVM_POOLDIR)
 	cd $(KVM_POOLDIR) && wget $(KVM_ISO_URL)
 
-define create-kvm-domain
-	: create-kvm-domain path=$(1) domain=$(notdir $(1))
-	$(VIRT_INSTALL) \
-		--name $(notdir $(1)) \
-		$(VIRT_OS_VARIANT) \
-		--vcpus=1 \
-		--memory 512 \
-		--nographics \
-		--disk cache=writeback,path=$(1).qcow2 \
-		$(VIRT_CPU) \
-		$(VIRT_GATEWAY) \
-		$(VIRT_RND) \
-		$(VIRT_SECURITY) \
-		$(VIRT_SOURCEDIR) \
-		$(VIRT_TESTINGDIR) \
-		--import \
-		--noautoconsole \
-		--noreboot
-endef
-
 define destroy-kvm-domain
 	: destroy-kvm-domain domain=$(1)
 	if $(VIRSH) domstate $(1) 2>/dev/null | grep running > /dev/null ; then \
@@ -665,28 +658,18 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ks: \
 		$(KVM_KICKSTART_FILE) \
 		$(KVM_GATEWAY_FILE) \
 		$(KVM_POOLDIR)
+	: Confirm that there is a tty - else virt-install fails mysteriously
+	tty
 	$(call destroy-kvm-domain,$(KVM_BASE_DOMAIN))
 	: delete any old disk and let virt-install create the image
 	rm -f '$(basename $@).qcow2'
-	: Confirm that there is a tty - else virt-install fails mysteriously
-	tty
-	: XXX: Passing $(VIRT_SECURITY) to virt-install causes it to panic
-	$(VIRT_INSTALL) \
+	$(VIRT_INSTALL_COMMAND) \
 		--name=$(KVM_BASE_DOMAIN) \
-		$(VIRT_OS_VARIANT) \
-		--vcpus=1 \
 		--memory 1024 \
-		--nographics \
 		--disk size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
-		$(VIRT_CPU) \
-		$(VIRT_GATEWAY) \
-		$(VIRT_RND) \
-		$(VIRT_SOURCEDIR) \
-		$(VIRT_TESTINGDIR) \
 		--location=$(KVM_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
-		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0" \
-		--noreboot
+		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 	: the reboot message from virt-install can be ignored
 	touch $@
 
@@ -790,7 +773,12 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
 	: build-domain $@
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
-	$(call create-kvm-domain,$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN))
+	$(VIRT_INSTALL_COMMAND) \
+		--name $(KVM_BUILD_DOMAIN) \
+		--memory 1024 \
+		--import \
+		--disk cache=writeback,path=$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
+		--noautoconsole
 	$(VIRSH) dumpxml $(KVM_BUILD_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_BUILD_DOMAIN)
