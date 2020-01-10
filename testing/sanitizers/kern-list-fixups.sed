@@ -3,8 +3,8 @@ s/^\[\s\+[0-9]\+.[0-9]\+\] /\[ 00.00] /
 
 # XXX: Can kernel messages be split across two lines?
 
-# seemingly kernel messages end with ^M?
-/^\[ 00.00] .*/ {
+# seemingly kernel messages end with
+/^\[ 00.00] .*/ {
   / audit:/d
   / kauditd_printk_skb:/d
   / Netfilter messages via NETLINK/d

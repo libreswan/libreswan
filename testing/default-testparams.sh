@@ -1,6 +1,11 @@
 #!/bin/sh
 
-REF_CONSOLE_FIXUPS="kern-list-fixups.sed nocr.sed"
+# start by stripping out trailing CR (aka ^M) from \n being printed to
+# a TTY
+REF_CONSOLE_FIXUPS="nocr.sed"
+
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS kern-list-fixups.sed"
+
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS cut-postfinal.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS host-prompt-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS east-prompt-splitline.pl"
