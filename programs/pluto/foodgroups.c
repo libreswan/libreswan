@@ -148,9 +148,10 @@ static void read_foodgroup(struct fg_groups *g)
 
 				if (ugh != NULL) {
 					loglog(RC_LOG_SERIOUS,
-					       "\"%s\" line %d: %s \"%s\"",
+					       "\"%s\" line %d ignored: %s \"%s\"",
 					       flp->filename, flp->lino, ugh,
 					       flp->tok);
+						flushline(NULL);
 				} else if ((afi->af != AF_INET) && (afi->af != AF_INET6)) {
 					loglog(RC_LOG_SERIOUS,
 					       "\"%s\" line %d: unsupported Address Family \"%s\"",
@@ -203,6 +204,7 @@ static void read_foodgroup(struct fg_groups *g)
 									loglog(RC_LOG_SERIOUS,
 										"\"%s\" line %d: wrong number of arguments: either only specify CIDR, or specify CIDR proto source_port dest_port",
 										flp->filename, errl);
+									break;
 								}
 							} else {
 								loglog(RC_LOG_SERIOUS,
