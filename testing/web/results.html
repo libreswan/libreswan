@@ -34,11 +34,13 @@
       <div id="graph"></div>
       <br/>
       <div id="title">
-	<!-- should tester.sh generate a table for this? -->
-	<h3>build logs</h3>
-	<a href="kvm-shutdown.log">make kvm-shutdown</a>
-	&amp;&amp;
+	<!-- tester.sh generates make.json, this should use it? -->
+	<h3>build logs (some may be missing)</h3>
 	<a href="distclean.log">make distclean</a>
+	&amp;&amp;
+	<a href="kvm-purge.log">make kvm-purge</a>
+	&amp;&amp;
+	<a href="kvm-shutdown.log">make kvm-shutdown</a>
 	&amp;&amp;
 	<a href="kvm-install.log">make kvm-install</a>
 	&amp;&amp;

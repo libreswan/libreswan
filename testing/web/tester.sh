@@ -26,19 +26,10 @@ webdir=$(dirname $0)
 makedir=$(cd ${webdir}/../.. && pwd)
 utilsdir=${makedir}/testing/utils
 first_commit=
-
-status() {
-    ${webdir}/json-status.sh --json ${summarydir}/status.json "$@"
-    cat <<EOF
-
---------------------------------------
-
-    $*
-
---------------------------------------
-
-EOF
-}
+# start with new domains
+kvm_setup=kvm-purge
+json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
+status=${json_status}
 
 run() (
     href="<a href=\"$(basename ${resultsdir})/$1.log\">$1</a>"
@@ -76,6 +67,10 @@ run() (
 
 while true ; do
 
+    # start with basic status
+
+    status=${json_status}
+
     # Update the repo.
     #
     # Time has passed (a run finished, woke up from sleep, or the
@@ -84,42 +79,43 @@ while true ; do
     # Force ${branch} to be identical to ${remote} by using --ff-only
     # - if it fails the script dies.
 
-    status "updating repository"
+    ${status} "updating repository"
     ( cd ${repodir} && git fetch || true )
     ( cd ${repodir} && git merge --ff-only )
-
-    # by default, only test new commits with an upgraded repo
-    if test -z "${first_commit}" ; then
-	first_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
-	status "purging existing KVMs"
-	( cd ${repodir} && make kvm-purge )
-	status "upgrading base KVM"
-	( cd ${repodir} && make kvm-upgrade )
-    fi
 
     # Update the summary web page
     #
     # This will add any new commits found in ${repodir} (added by
     # above fetch) and merge the results from the last test run.
 
-    status "updating summary"
+    ${status} "updating summary"
     make -C ${makedir} web-summarydir \
 	 WEB_REPODIR=${repodir} \
 	 WEB_RESULTSDIR= \
 	 WEB_SUMMARYDIR=${summarydir}
 
-    # find something to do
+    # Select the next commit to test
     #
-    # If there is nothing to do then sleep for a bit.
+    # Will search [HEAD..first_commit] for something interesting and
+    # untested.
+    #
+    # When recovering from an error (and when just starting) set
+    # first_commit to HEAD so that only a new commit, which hopefully
+    # fixes, the barf will be tested (if there's no new commit things
+    # go idle).
 
-    status "looking for work"
+    if test -z "${first_commit}" ; then
+	first_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
+    fi
+
+    ${status} "looking for work"
     if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${first_commit}) ; then \
 	# Seemlingly nothing to do; github gets updated up every 15
 	# minutes so sleep for less than that
 	seconds=$(expr 10 \* 60)
 	now=$(date +%s)
 	future=$(expr ${now} + ${seconds})
-	status "idle; will retry $(date -u -d @${future} +%H:%M)"
+	${status} "idle; will retry $(date -u -d @${future} +%H:%M)"
 	sleep ${seconds}
 	continue
     fi
@@ -127,17 +123,19 @@ while true ; do
     # Now discard everything back to the commit to be tested, making
     # that HEAD.  This could have side effects such as switching
     # branches, take care.
+    #
+    # When first starting and/or recovering this does nothing as the
+    # repo is already at head.
 
-    status "checking out ${commit}"
+    ${status} "checking out ${commit}"
     ( cd ${repodir} && git reset --hard ${commit} )
 
-    # Mimic how web-targets.mki computes RESULTSDIR.
+    # Mimic how web-targets.mki computes RESULTSDIR; switch to
+    # directory specific status.
 
     resultsdir=${summarydir}/$(${webdir}/gime-git-description.sh ${repodir})
     gitstamp=$(basename ${resultsdir})
-    status="${webdir}/json-status.sh \
-      --json ${summarydir}/status.json \
-      --directory ${gitstamp}"
+    status="${json_status} --directory ${gitstamp}"
 
     # create the resultsdir and point the summary at it.
 
@@ -150,19 +148,32 @@ while true ; do
 	 WEB_RESULTSDIR=${resultsdir} \
 	 WEB_SUMMARYDIR=${summarydir}
 
-    #
-    # run the testsuite
+    # Run the testsuite
     #
     # This list should match results.html.  Should a table be
     # generated?
+    #
+    # ${kvm_setup} flip-flops between kvm-shutdown (typical) and
+    # kvm-purge (first starting, or error recovery).  For kvm-purge,
+    # since it is only invoked when the REPO is at HEAD, the upgrade /
+    # transmogrify it triggers will always be for the latest changes.
 
-    for target in kvm-shutdown distclean kvm-install kvm-keys kvm-test ; do
+    targets="distclean ${kvm_setup} kvm-install kvm-keys kvm-test"
+    kvm_setup=kvm-shutdown
+    for target in ${targets}; do
+	# generate json of the progress
+	touch ${resultsdir}/${target}.log
+	${webdir}/json-make.sh --json ${resultsdir}/make.json --resultsdir ${resultsdir} ${targets}
+	# run the target on hand
 	if ! run ${target} ; then
-	    # force the next run to test HEAD++; hopefully that will
-	    # contain the fix (or at least contain the damage).
-	    status "${target} barfed, restarting with HEAD"
+	    # force the next run to test HEAD++ using rebuilt and
+	    # updated domains; hopefully that will contain the fix (or
+	    # at least contain the damage).
+	    ${status} "${target} barfed, restarting with HEAD"
 	    first_commit=
-	    continue
+	    kvm_setup=kvm-purge
+	    # continue is below
+	    break
 	fi
     done
 
@@ -171,11 +182,11 @@ while true ; do
     # A result with output-missing is good sign that the VMs have
     # become corrupt and need a rebuild.
 
-    status "checking KVMs"
+    ${status} "checking KVMs"
     if grep '"output-missing"' "${resultsdir}/results.json" ; then
-	status "corrupt domains detected, restarting with HEAD"
+	${status} "corrupt domains detected, restarting with HEAD"
 	first_commit=
-	continue
+	kvm_setup=kvm-purge
     fi
 
     # loop back to code updating summary dir

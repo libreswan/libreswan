@@ -33,16 +33,31 @@ while test $# -gt 0; do
     esac
 done
 
-jq --null-input \
-   --arg details "${details}" \
-   --arg directory "${directory}" \
-   '
+
+cat <<EOF 1>&2
+
+--------------------------------------
+
+    ${details}
+
+--------------------------------------
+
+EOF
+
+{
+    jq --null-input \
+       --arg details "${details}" \
+       --arg directory "${directory}" \
+       '
 if ($directory|length) > 0 then { directory: $directory } else {} end
 | .date = (now|todateiso8601)
 | .details = $details
-' | if test -n "${json}" ; then
-    cat > ${json}.tmp
-    mv ${json}.tmp ${json}
-else
-    cat
-fi
+'
+} | {
+    if test -n "${json}" ; then
+	cat > ${json}.tmp
+	mv ${json}.tmp ${json}
+    else
+	cat
+    fi
+}
