@@ -508,8 +508,11 @@ class guest (threading.Thread):
 
         remote = Remote(child, self.dname)
         child.setecho(False)  # this does not seems to work
-        remote.run("stty sane")
-        remote.run("stty -onlcr")
+        # space prefix ensures it won't show up in host's bash_history.
+        # setting HISTFILE to null further prevents all bash history logging in the shell
+        remote.run(" stty sane")
+        remote.run(" stty -onlcr")
+        remote.run(" export HISTFILE=/dev/null")
 
 # end of class
 
@@ -3082,7 +3085,7 @@ def localhost_sudo(args, testname):
                      username="root")
     if s:
         logger.info("sudo pexpect '%s' pid %d", cmd, s.child.pid)
-        s.sendline('TERM=dumb; export TERM; unset LS_COLORS')
+        s.sendline('export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS')
         s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
         # this has to before shell.run()
         s.chdir("%s/testing/pluto/%s" % (args.libreswandir, testname))
@@ -3381,7 +3384,7 @@ class Vshell(shell.Remote):
         self.initialize(directory)
 
     def initialize(self, directory):
-        self.sendline('TERM=dumb; export TERM; unset LS_COLORS')
+        self.sendline(' export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS')
         self.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
         # this has to before shell.run()
         self.chdir(directory)
@@ -3535,7 +3538,7 @@ class Namespace:
             # next few lines are bit hackery to get the local prompt behave
             # carefull changing the order
             # s.child.delaybeforesend = 0.1
-            s.sendline('TERM=dumb; export TERM; unset LS_COLORS')
+            s.sendline(' export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS')
             s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
             # this has to before shell.run()
             s.chdir("%s/testing/pluto/%s" % (test.args.libreswandir, test.name))
