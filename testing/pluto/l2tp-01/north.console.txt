@@ -49,8 +49,6 @@ north #
  echo "c server" > /var/run/xl2tpd/l2tp-control
 north #
  sleep 5
-[ 00.00] PPP BSD Compression module registered
-[ 00.00] PPP Deflate Compression module registered
 north #
  # should be non-zero counters if l2tp worked
 north #
