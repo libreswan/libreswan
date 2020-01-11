@@ -32,12 +32,13 @@ east #
 east #
  ipsec whack --impair send-no-delete
 east #
-ipsec stop
+ ipsec stop
+Redirecting to: [initsystem]
 east #
  #eck if  tunnel is up
 east #
  ipsec whack --trafficstatus
-whack: is Pluto running?  connect() for "/run/pluto/pluto.ctl" failed (111 Connection refused)
+whack: Pluto is not running (no "/run/pluto/pluto.ctl")
 east #
  # restart ipsec service
 east #
