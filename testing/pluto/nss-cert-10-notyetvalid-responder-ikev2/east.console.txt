@@ -23,8 +23,7 @@ initdone
 east #
  # only expected to show failure on west
 east #
- grep "ERROR" /tmp/pluto.log
-east #
+ grep "Certificate rejected" /tmp/pluto.log
 east #
  ../bin/check-for-core.sh
 east #

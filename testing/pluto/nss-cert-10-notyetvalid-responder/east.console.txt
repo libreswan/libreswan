@@ -25,7 +25,6 @@ east #
 east #
  grep "ERROR" /tmp/pluto.log
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
