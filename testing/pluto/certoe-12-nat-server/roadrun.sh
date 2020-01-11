@@ -7,6 +7,4 @@ sleep 1
 # should show established tunnel and no bare shunts
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-killall ip > /dev/null 2> /dev/null
-cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 echo done
