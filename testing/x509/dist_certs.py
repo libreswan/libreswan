@@ -220,12 +220,14 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
         if "." in cnstr:
             ee = cnstr.split(".")[0]
             print("EE:%s"% ee)
-            if ee == "west" or ee == "east":
+            if ee == "west" or ee == "east" or ee == "semiroad":
                 SAN += ", email:%s@testing.libreswan.org"%ee
                 if ee == "west":
                     SAN += ", IP:192.1.2.45"
-                else:
+                if ee == "east":
                     SAN += ", IP:192.1.2.23"
+                if ee == "semiroad":
+                    SAN += ", IP:192.1.3.209"
             if ee == "otherwest" or ee == "othereast":
                 SAN += ", email:%s@other.libreswan.org"%ee
         if 'sanCritical' in cnstr:
@@ -892,7 +894,7 @@ def run_dist_certs():
                         'notyetvalid','notvalidanymore',
                         'signedbyother','otherwest','othereast','wrongdnorg',
                         'unwisechar','spaceincn','hashsha1',
-                        'cnofca','revoked', 'badwest', 'badeast')
+                        'cnofca','revoked', 'badwest', 'badeast', 'semiroad')
     # Add chain roots here
     chain_ca_roots =   ('east_chain', 'west_chain')
 
