@@ -326,6 +326,7 @@ kvmplutotest	ikev1-x509-aggr-13-san-dn-mismatch	good
 kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
 
 kvmplutotest	ikev2-x509-01				good
+kvmplutotest	ikev2-x509-01-nss-debug			good
 kvmplutotest	ikev2-x509-02-eku			good
 # smoketest will replace -eku test
 kvmplutotest	ikev2-x509-02-smoketest			wip
