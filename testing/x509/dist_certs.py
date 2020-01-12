@@ -111,7 +111,7 @@ top_caname=""
 dirbase=""
 
 def reset_files():
-    for dir in ['keys/', 'cacerts/', 'certs/',
+    for dir in ['keys/', 'cacerts/', 'certs/', 'selfsigned/',
                 'pkcs12/',
                 'pkcs12/curveca',
                 'pkcs12/mainca',
@@ -199,7 +199,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 
 
     # Create Basic Constraints
-    if isCA or 'selfsigned' in cnstr:
+    if isCA:
         if "badca" in str(issuer.get_subject().commonName):
             bc = "CA:FALSE"
         else:
@@ -236,7 +236,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 
     # Create Key Usage (KU)
     ku_str = 'digitalSignature'
-    if isCA or ocsp or 'selfsigned' in cnstr:
+    if isCA or ocsp:
         ku_str = 'digitalSignature,keyCertSign,cRLSign'
     # check for custom Key Usage
     if '-ku-' in cnstr:
@@ -840,6 +840,18 @@ def create_mainec_certs():
             '-out pkcs12/mainec/'+name+'-mainec.p12 '
             '-passin pass:foobar -passout pass:foobar')
 
+def create_self_signed():
+    """ Create self-signed certs - uses openssl >= 1.1.1 syntax
+    """
+    for name in ['east', 'west', 'north', 'road']:
+        cmd = 'openssl req -x509 -newkey rsa:2048 -sha256 -days 3650 -nodes -keyout ' \
+            +name+'-selfsigned.key -out '+name+'-selfsigned.cert -subj /CN=' \
+            +name+'-selfsigned.testing.libreswan.org -addext subjectAltName=DNS:' \
+            +name+'.testing.libreswan.org'
+        run(cmd)
+        cmd = 'openssl pkcs12 -export -out '+name+'-selfsigned.p12 -inkey '+name+'-selfsigned.key -in ' \
+              +name+'-selfsigned.cert -certfile '+name+'-selfsigned.cert -passout=file:../nss-pw'
+        run(cmd)
 
 def run_dist_certs():
     """ Generate the pluto test harness x509
@@ -849,7 +861,6 @@ def run_dist_certs():
     basic_pluto_cas =  ('mainca', 'otherca', 'badca')
     # Add end certs here
     mainca_end_certs = ('nic','east','west', 'road', 'north', # standard certs
-                        'west-selfsigned','east-selfsigned', # selfsigned should validate if pre-loaded
                         'west-eku-clientAuth', 'east-eku-clientAuth', # should be enough to validate
                         'west-eku-serverAuth', 'east-eku-serverAuth', # should be enough to validate
                         'west-bcOmit', 'eastbcOmit', # Basic Contraints should not be needed
@@ -915,18 +926,19 @@ def main():
 
     dirbase = ""
     run_dist_certs()
-
     # create identical set to act as forged with identical parameters
     dirbase = "fake/"
     run_dist_certs()
     # only fake
     create_mainec_certs()
+    dirbase = ""
 
     create_nss_pw()
+    os.chdir("selfsigned/")
+    create_self_signed()
     os.chdir(cwd)
 
     print("finished!")
-
 
 if __name__ == "__main__":
     main()
