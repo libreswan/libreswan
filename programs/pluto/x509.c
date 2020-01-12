@@ -920,13 +920,7 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
 	} else {
 		if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/)) {
-			/*
-			 * XXX: Below message is confusing - it refers
-			 * to both a public key (its a certificate)
-			 * and the subjectAltName (ID_DER_ASN1_DN does
-			 * not check that).
-			 */
-			libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
+			libreswan_log("Peer CERT payload SubjectAltName does not match peer ID for this connection");
 			return LSW_CERT_MISMATCHED_ID;
 		}
 		dbg("SAN ID matched, updating that.cert");
