@@ -28,7 +28,6 @@ west #
 002 "ikev2-westnet-eastnet-x509-cr" #2: certificate verified OK: E=user-east-nosan@testing.libreswan.org,CN=east-nosan.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "ikev2-westnet-eastnet-x509-cr" #2: certificate contains no subjectAltName extension to match ID_FQDN '@right'
 002 "ikev2-westnet-eastnet-x509-cr" #2: Peer CERT payload SubjectAltName does not match peer ID for this connection
-002 "ikev2-westnet-eastnet-x509-cr" #2: X509: CERT payload does not match connection ID
 002 "ikev2-westnet-eastnet-x509-cr" #2: X509: connection failed due to unmatched IKE ID in certificate SAN
 west #
  echo "done"

@@ -41,6 +41,7 @@ west #
 west #
  grep "ERROR" /tmp/pluto.log
 "nss-cert" #1: ERROR: Peer's Certificate has expired.
+"nss-cert" #2: ERROR: Peer's Certificate has expired.
 west #
  ../bin/check-for-core.sh
 west #

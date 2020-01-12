@@ -26,7 +26,6 @@ west #
 002 "ikev2-westnet-eastnet-x509-cr" #2: certificate verified OK: E=user-east-nosan@testing.libreswan.org,CN=east-nosan.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "ikev2-westnet-eastnet-x509-cr" #2: certificate contains no subjectAltName extension to match ID_IPV4_ADDR '192.1.2.23'
 002 "ikev2-westnet-eastnet-x509-cr" #2: Peer CERT payload SubjectAltName does not match peer ID for this connection
-002 "ikev2-westnet-eastnet-x509-cr" #2: X509: CERT payload does not match connection ID
 002 "ikev2-westnet-eastnet-x509-cr" #2: X509: connection allows unmatched IKE ID and certificate SAN
 003 "ikev2-westnet-eastnet-x509-cr" #2: Authenticated using RSA with IKEv2_AUTH_HASH_SHA2_512
 002 "ikev2-westnet-eastnet-x509-cr" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
