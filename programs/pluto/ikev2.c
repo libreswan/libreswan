@@ -2385,13 +2385,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			 */
 			libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
 			libreswan_log("X509: CERT payload does not match connection ID");
-			if (initiator) {
-				if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-					libreswan_log("X509: connection failed due to unmatched IKE ID in certificate SAN");
-					return FALSE;
-				}
-				libreswan_log("X509: connection allows unmatched IKE ID and certificate SAN");
+			if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+				libreswan_log("X509: connection failed due to unmatched IKE ID in certificate SAN");
+				return FALSE;
 			}
+			libreswan_log("X509: connection allows unmatched IKE ID and certificate SAN");
 		}
 	}
 
