@@ -4,3 +4,7 @@ if they appear as subjectAltName (SAN) on the certificate.
 
 Since the IP used as ID is not an IP on the SAN, the connection
 should fail
+
+
+Since east fails, this test does not verify west would fail. This
+test really needs a -responder version too.
