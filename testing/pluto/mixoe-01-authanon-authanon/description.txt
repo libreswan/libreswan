@@ -2,3 +2,6 @@ mixed deployment OE
 
 In this case both east and road allow CERT and AUTHNULL, and
 a connection should establish authenticated with CERTs
+
+This uses "semiroad" certificate because it needs a proper
+SAN on the certificate for the IP address.
