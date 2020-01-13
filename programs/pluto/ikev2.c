@@ -413,13 +413,23 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
+	/*
+	 * request --> [N(REKEY_SA),]
+	 * [CP(CFG_REQUEST),]
+	 * [N(IPCOMP_SUPPORTED)+,]
+	 * [N(USE_TRANSPORT_MODE),]
+	 * [N(ESP_TFC_PADDING_NOT_SUPPORTED),]
+	 * [N(NON_FIRST_FRAGMENTS_ALSO),]
+	 * SA, Ni, [KEi,] TSi, TSr,
+	 * [V+][N+]
+	 */
 	{ .story      = "Process CREATE_CHILD_SA IPsec SA Response",
 	  .state      = STATE_V2_CREATE_I,
 	  .next_state = STATE_V2_IPSEC_I,
 	  .flags      = SMF2_MESSAGE_RESPONSE | SMF2_ESTABLISHED,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(KE) | P(N),
+	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
 	  .processor  = ikev2_child_inR,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -431,7 +441,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(KE) | P(N),
+	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
 	  .processor  = ikev2_child_inIoutR,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
