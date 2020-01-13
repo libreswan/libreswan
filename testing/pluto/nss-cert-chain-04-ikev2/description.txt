@@ -1,2 +1,5 @@
 test connection switching of road warrior with certificate chain
 	pass
+
+Use require-id-on-certificate=no to allow the odd peer IKE ID that the test is using
+without those being a SubjectAltName on the cert.

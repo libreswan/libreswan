@@ -1,4 +1,4 @@
-certutil -L -d sql:/etc/ipsec.d
+hostname | grep east > /dev/null && grep switched /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
