@@ -1,0 +1,12 @@
+east does not yet run libreswan. Road attempts OE, and installs a %pass.
+east is then started and triggered by a packet and initiated OE to
+road. Road must replace the %pass with the tunnel.
+
+because both ends are private-or-clear, and the ping on east sends more
+than one ping, both ends will trigger OE to each other.
+
+NOTE: we end up with two states but one set of policies in the kernel ????
+      This might cause problems if one of the two tunnels is deleted
+
+NOTE: road shows a %pass bare shunt in pluto, but when shunt is deleted, not
+      the shunt but the tunnel out policy is deleted.
