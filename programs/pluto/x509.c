@@ -843,7 +843,6 @@ bool match_certs_id(const struct certs *certs,
 		}
 
 		int wildcards;  /* value ignored */
-		// bool m = match_dn_any_order_wild(peer_id->name, end_cert_der_subject, &wildcards);
 		bool m = match_dn_any_order_wild(end_cert_der_subject, peer_id->name, &wildcards);
 		if (!m) {
 			/*
