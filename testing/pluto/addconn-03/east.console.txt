@@ -1,5 +1,0 @@
-echo "initdone"
-initdone
-east #
- ../bin/check-for-core.sh
-

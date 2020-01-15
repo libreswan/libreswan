@@ -1,12 +1,5 @@
 /testing/guestbin/swan-prep
 west #
- # to clean routes from previous roun - if there were any
-west #
- systemctl restart network.service
-west #
- echo "initdone"
-initdone
-west #
  ./ips.sh
 Global routes 572
 west #
@@ -463,8 +456,6 @@ west #
 west #
  # ipsec addconn --verbose test
 west #
- echo done
-done
-west #
  ../bin/check-for-core.sh
-
+west #
+ 

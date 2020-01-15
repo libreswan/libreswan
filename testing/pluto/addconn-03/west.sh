@@ -1,3 +1,4 @@
+/testing/guestbin/swan-prep
 ./ips.sh
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
@@ -7,4 +8,4 @@ ipsec addconn --verbose test
 # ipsec start
 # C=`ip -o route show scope global |wc -l`; echo "Global routes $C"
 # ipsec addconn --verbose test
-echo done
+../bin/check-for-core.sh
