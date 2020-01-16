@@ -5,7 +5,7 @@ Name=eth0
 Address=192.1.2.254
 Address=2001:db8:1:2::254/64
 IPForward=yes
-IPv6DuplicateAddressDetection=no
+IPv6DuplicateAddressDetection=0
 IPv6AcceptRouterAdvertisements=false
 
 [Route]

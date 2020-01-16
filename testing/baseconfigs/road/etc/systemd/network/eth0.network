@@ -7,5 +7,5 @@ Gateway=192.1.3.254
 Address=2001:db8:1:3::209/64
 Gateway=2001:db8:1:3::254
 IPForward=yes
-IPv6DuplicateAddressDetection=no
+IPv6DuplicateAddressDetection=0
 IPv6AcceptRouterAdvertisements=false
