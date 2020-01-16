@@ -24,6 +24,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
+
 #include <pthread.h>	/* pthread.h must be first include file */
 #include <stddef.h>
 #include <stdlib.h>
@@ -921,9 +922,7 @@ static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void lock_certs_and_keys(const char *who)
 {
 	pthread_mutex_lock(&certs_and_keys_mutex);
-	DBG(DBG_CONTROLMORE,
-		DBG_log("certs and keys locked by '%s'", who);
-		);
+	dbg("certs and keys locked by '%s'", who);
 }
 
 /*
@@ -931,9 +930,7 @@ static void lock_certs_and_keys(const char *who)
  */
 static void unlock_certs_and_keys(const char *who)
 {
-	DBG(DBG_CONTROLMORE,
-		DBG_log("certs and keys unlocked by '%s'", who);
-		);
+	dbg("certs and keys unlocked by '%s'", who);
 	pthread_mutex_unlock(&certs_and_keys_mutex);
 }
 
@@ -989,8 +986,7 @@ static void process_secret(struct secret **psecrets,
 			ugh = "ERROR: bad RSA key syntax";
 		} else if (tokeq("{")) {
 			/* raw RSA key in NSS */
-			ugh = lsw_process_rsa_secret(
-					&s->pks.u.RSA_private_key);
+			ugh = lsw_process_rsa_secret(&s->pks.u.RSA_private_key);
 		} else {
 			/* RSA key in certificate in NSS */
 			ugh = "WARNING: The :RSA secrets entries for X.509 certificates are no longer needed";
@@ -1458,13 +1454,13 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 			freeanyckaid(&ckaid);
 			return NULL;
 		}
-		e = clone_secitem_as_chunk(nsspk->u.rsa.publicExponent, "e");
-		n = clone_secitem_as_chunk(nsspk->u.rsa.modulus, "n");
+		e = clone_secitem_as_chunk(nsspk->u.rsa.publicExponent, "RSA e");
+		n = clone_secitem_as_chunk(nsspk->u.rsa.modulus, "RSA n");
 		SECKEY_DestroyPublicKey(nsspk);
 	}
 	/* free: ckaid, n, e */
 
-	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
+	struct pubkey *pk = alloc_thing(struct pubkey, "RSA pubkey");
 	pk->u.rsa.e = e;
 	pk->u.rsa.n = n;
 	pk->u.rsa.ckaid = ckaid;
@@ -1501,8 +1497,8 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 			return NULL;
 		}
 
-		pub = clone_secitem_as_chunk(nsspk->u.ec.publicValue, "pub");
-		ecParams = clone_secitem_as_chunk(nsspk->u.ec.DEREncodedParams, "ecParams");
+		pub = clone_secitem_as_chunk(nsspk->u.ec.publicValue, "ECDSA pub");
+		ecParams = clone_secitem_as_chunk(nsspk->u.ec.DEREncodedParams, "ECDSA ecParams");
 
 		DBG_dump("pub", nsspk->u.ec.publicValue.data, nsspk->u.ec.publicValue.len);
 		DBG_dump("ecParams", nsspk->u.ec.DEREncodedParams.data, nsspk->u.ec.DEREncodedParams.len);
@@ -1516,7 +1512,7 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 	}
 
 
-	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
+	struct pubkey *pk = alloc_thing(struct pubkey, "ECDSA pubkey");
 	pk->u.ecdsa.pub = pub;
 	pk->u.ecdsa.k = k;
 	pk->u.ecdsa.ecParams = ecParams;
@@ -1695,8 +1691,7 @@ out:
 static err_t lsw_extract_nss_cert_privkey_RSA(struct RSA_private_key *rsak,
 					  CERTCertificate *cert)
 {
-	DBG(DBG_CRYPT,
-	    DBG_log("extracting the RSA private key for %s", cert->nickname));
+	dbg("extracting the RSA private key for %s", cert->nickname);
 
 	err_t ugh = add_ckaid_to_rsa_privkey(rsak, cert);
 
@@ -1768,10 +1763,10 @@ static const struct ECDSA_private_key *get_nss_cert_privkey_ECDSA(struct secret 
 err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
 {
 	if (get_nss_cert_privkey_RSA(*secrets, cert) != NULL) {
-		DBG(DBG_CONTROL, DBG_log("secrets entry for %s already exists",
-					 cert->nickname));
+		dbg("secrets entry for certificate already exists: %s", cert->nickname);
 		return NULL;
 	}
+	dbg("adding RSA secret for certificate: %s", cert->nickname);
 
 	struct secret *s = alloc_thing(struct secret, "RSA secret");
 	s->pks.kind = PKK_RSA;

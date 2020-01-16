@@ -999,6 +999,7 @@ static bool load_end_cert_and_preload_secret(const char *which, const char *pubk
 	 * That case is handled by refine_host_connection /
 	 * get_psk.
 	 */
+	dbg("preload cert/secret for connection: %s", cert->nickname);
 	err_t ugh = load_nss_cert_secret(cert);
 	if (ugh != NULL) {
 		dbg("warning: no secret key loaded for %s certificate with %s %s: %s",

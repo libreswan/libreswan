@@ -782,20 +782,19 @@ static struct secret *lsw_get_secret(const struct connection *c,
 			return NULL;
 		}
 
+		dbg("finding secret using public key");
 		struct secret *best = lsw_find_secret_by_public_key(pluto_secrets,
-						     my_public_key, kind);
+								    my_public_key, kind);
 		if (best == NULL) {
 			const char *nickname = cert_nickname(&c->spd.this.cert);
-			DBG(DBG_CONTROL,
-			    DBG_log("%s() private key for cert %s not found in local cache; loading from NSS DB",
-				    __func__, nickname));
+			dbg("private key for cert %s not found in local cache; loading from NSS DB",
+			    nickname);
 
 			err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert);
 			if (err != NULL) {
 				/* ??? should this be logged? */
-				DBG(DBG_CONTROL,
-				    DBG_log("%s() private key for cert %s not found in NSS DB (%s)",
-					    __func__, nickname, err));
+				dbg("private key for cert %s not found in NSS DB (%s)",
+				    nickname, err);
 			} else {
 				best = lsw_find_secret_by_public_key(pluto_secrets,
 								     my_public_key, kind);
