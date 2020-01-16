@@ -2,7 +2,7 @@
 Name=eth0
 
 [Network]
-Address=192.1.2.254
+Address=192.1.2.254/24
 Address=2001:db8:1:2::254/64
 IPForward=yes
 IPv6DuplicateAddressDetection=0
