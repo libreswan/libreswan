@@ -26,7 +26,7 @@ clearpart --all --initlabel
 part / --asprimary --grow
 # part swap --size 1024
 
-services --disabled=sm-client,sendmail,network,smartd,crond,atd,systemd-resolved
+services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
 %packages
 
@@ -58,29 +58,46 @@ dracut-network
 
 %post
 
-ip addr show scope global >> /var/tmp/network.log
-networkctl >> /var/tmp/network.log
+# Everything interesting happens after the domain is rebooted.  Namely
+# upgrade / install missing packages; and transmogrify the
+# configuration.
 
-# > F28 selinux set to permissive while debugging systemd-networkd
-# systemd-networkd.service: Failed to set up mount namespacing: Permission denied
-# systemd-networkd.service: Failed at step NAMESPACE spawning /usr/lib/systemd/systemd-networkd: Permission denied
-# systemd[1]: systemd-networkd.service: Main process exited, code=exited, status=226/NAMESPACE
+#
+# Configure eth0 so that it comes up after a reboot
+#
+# How come this machine still uses legacy names?
+
+# Without this systemd-networkd fails to start with:
+#
+#   systemd-networkd.service: Failed to set up mount namespacing: Permission denied
+#   systemd-networkd.service: Failed at step NAMESPACE spawning /usr/lib/systemd/systemd-networkd: Permission denied
+#   systemd[1]: systemd-networkd.service: Main process exited, code=exited, status=226/NAMESPACE
+
 selinux --permissive
 /usr/bin/sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 
-# dracut does not create systemd-networkd config, so create one
-# https://bugzilla.redhat.com/show_bug.cgi?id=1582941
-cat > /etc/systemd/network/eth0.network << EOF
+# Configure swanbase's network.  Once the domain is transmogrified
+# (and hostname changes) systemd-networkd will ignore this. The kernel
+# parameters net.ifnames=0 biosdevname=0 forces eth0 et.al. to be
+# used.
+
+cat > /etc/systemd/network/swanbase.eth0.network << EOF
 [Match]
 Name=eth0
-
+Host=swanbase
 [Network]
 DHCP=yes
-
 EOF
+
+systemctl enable systemd-networkd.servide
+systemctl enable systemd-networkd-wait-online.service
+systemctl disable systemd-resolved
 
 # F28 dracut leaves network config files there. remove it to be safe
 rm -fr /etc/sysconfig/network-scripts/i*
+
+# Danger: the transmogrify scripts use the presence of this file as an
+# indicator that systemd-networkd is being used.
 
 cat > /etc/sysconfig/network-scripts/README.libreswan << EOF
 Do not add files here.  networkig is handled by systemd-networkd
