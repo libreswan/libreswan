@@ -20,7 +20,14 @@ timezone --utc America/New_York
 
 network --hostname swanbase
 
-bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,115200 rd_NO_PLYMOUTH net.ifnames=0 biosdevname=0"
+# See kernel and dracut documentation:
+#   net.ifnames=0 biosdevname=0: call network interfaces eth0...
+#   plymouth.enable=0: disable the plymouth bootsplash completely
+
+bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,115200 plymouth.enable=0 net.ifnames=0 biosdevname=0"
+
+# start with a blank disk
+
 zerombr
 clearpart --all --initlabel
 part / --asprimary --grow
