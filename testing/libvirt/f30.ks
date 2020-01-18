@@ -22,7 +22,7 @@ part / --asprimary --grow
 
 services --disabled=sm-client,sendmail,network,smartd,crond,atd,systemd-resolved
 
-%packages --ignoremissing
+%packages
 
 # Full list of RPMs to install (see also fedoraXX.mk)
 
