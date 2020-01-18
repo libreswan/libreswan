@@ -114,25 +114,47 @@ EOF
 
 rpm -qa > /var/tmp/rpm-qa-darcut-fedora.log
 
-mkdir /testing /source
-
 cat << EOD >> /etc/issue
 
 The root password is "swan"
 EOD
 
-# Once the machine has rebooted testing and swansource will be
-# available and mounted automatically.
+#
+# Mount /testing, /source, and /pool (swanbase only) using 9p (will
+# be available after a reboot).
+#
 
-cat << EOD >> /etc/fstab
-testing /testing 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:var_log_t:s0 0 0
-swansource /source 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0 0 0
-tmpfs                   /dev/shm                tmpfs   defaults        0 0
-tmpfs                   /tmp                    tmpfs   defaults        0 0
-devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
-sysfs                   /sys                    sysfs   defaults        0 0
-proc                    /proc                   proc    defaults        0 0
+# load 9p modules in time for auto mounts
+cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
+9pnet_virtio
 EOD
+
+for mount in testing source pool ; do
+
+    what=${mount}
+    condition_host="# "
+    case ${mount} in
+    source) what=swansource;;
+    pool) condition_host=;;
+    esac
+
+    cat <<EOF >/etc/systemd/system/${mount}.mount
+[Unit]
+  Description=libreswan ${mount}
+  ${condition_host}ConditionHost=swanbase
+[Mount]
+  What=${what}
+  Where=/${mount}
+  Type=9p
+  Options=defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0
+[Install]
+  WantedBy=multi-user.target
+EOF
+
+    mkdir /${mount}
+    systemctl enable ${mount}.mount
+done
+
 
 cat << EOD >> /etc/rc.d/rc.local
 #!/bin/sh
@@ -164,10 +186,6 @@ alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
 export EDITOR=vim
 EOD
 
-cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
-# load 9p modules in time for auto mounts
-9pnet_virtio
-EOD
 cat << EOD > /etc/modules-load.d/virtio-rng.conf
 # load virtio RNG device to get entropy from the host
 # Note it should also be loaded on the host

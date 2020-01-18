@@ -116,6 +116,7 @@ VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',
 VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
 VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=swansource
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
+VIRT_POOLDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_POOLDIR),target=pool
 KVM_OS_VARIANT ?= $(KVM_GUEST_OS)
 VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
 
@@ -130,6 +131,7 @@ VIRT_INSTALL_COMMAND = \
 	$(VIRT_SECURITY) \
 	$(VIRT_SOURCEDIR) \
 	$(VIRT_TESTINGDIR) \
+	$(VIRT_POOLDIR) \
 	--noreboot
 
 #
