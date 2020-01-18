@@ -52,11 +52,6 @@ dracut-network
 
 %post
 
-# Paul needs this due to broken isp
-#ifconfig eth0 mtu 1400
-# Tuomo switched to this alternative work-around for pmtu issues
-sysctl -w net.ipv4.tcp_mtu_probing=1
-
 ip addr show scope global >> /var/tmp/network.log
 networkctl >> /var/tmp/network.log
 
