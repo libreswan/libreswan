@@ -73,16 +73,6 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	/* NOTE: on system with limited stack, buf could be made static */
 	uint8_t buf[MAX_OUTPUT_UDP_SIZE];
 
-	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
-	 * natt_bonus is the size of the addition (0 if not needed).
-	 */
-	size_t natt_bonus;
-
-	/* We need to send the length of packet if using TCP
-	 * tcp_packetsize is the size of the tcp length field in the header
-	 */
-	u_int16_t tcp_packetsize;
-
 	if (interface == NULL) {
 		libreswan_log("Cannot send packet - interface vanished!");
 		return FALSE;
@@ -114,37 +104,55 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		return FALSE;
 	}
 
-	natt_bonus = !just_a_keepalive &&
-				  interface->ike_float ?
-				  NON_ESP_MARKER_SIZE : 0;
+	/*
+	 * If we are doing NATT (i.e., over UDP) or using TCP then a 0
+	 * non-ESP_Marker prefix needs to be added.  ESP/AH packets
+	 * will have this non-zero.
+	 */
+	size_t non_esp_marker_size = (interface->proto == IPPROTO_TCP ||
+				      (!just_a_keepalive && interface->ike_float)) ? NON_ESP_MARKER_SIZE : 0;
 
-	tcp_packetsize = interface->proto == IPPROTO_TCP ? IKE_TCP_LENGTH_FIELD_SIZE : 0;
+	/*
+	 * For TCP, need to prefeix everything with a 2-byte packet
+	 * length.
+	 */
+	size_t tcp_length_field_size = interface->proto == IPPROTO_TCP ? IKE_TCP_LENGTH_FIELD_SIZE : 0;
 
 	const uint8_t *ptr;
-	size_t len = tcp_packetsize + natt_bonus + a.len + b.len;
-	ssize_t wlen;
+	size_t len = tcp_length_field_size + non_esp_marker_size + a.len + b.len;
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
 		loglog(RC_LOG_SERIOUS, "send_ike_msg(): really too big %zu bytes", len);
 		return FALSE;
 	}
 
-	size_t network_len = htons(len); /* TCP: size_t isn't an exact size!!! uint32_t? */
+	/* TCP: need a generic hton() and ntoh() function */
+	passert(IKE_TCP_LENGTH_FIELD_SIZE == 2);
+	uint16_t tcp_length_field = htons(len);
 
+	/*
+	 * TCP: doesn't need this shuffle - it can make multiple write
+	 * calls - and UDP et.al. can use a multi-buffer send.
+	 */
 	if (len != a.len) {
 		/* copying required */
+		size_t cursor = 0;
 
-		/* 1. packet length in header for TCP*/
-		memcpy(buf, &network_len, tcp_packetsize); /* TCP: not a sized value? */
+		/* 1. packet length in header for TCP */
+		memcpy(buf + cursor, &tcp_length_field, tcp_length_field_size);
+		cursor += tcp_length_field_size;
 
-		/* 2. non-ESP Marker (0x00 octets) */
-		memset(buf + tcp_packetsize, 0x00, natt_bonus);
+		/* 2. non-ESP Marker (0x00 octets) for UDP and/or TCP */
+		memset(buf + cursor, 0x00, non_esp_marker_size);
+		cursor += non_esp_marker_size;
 
 		/* 3. chunk a */
-		memcpy(buf + tcp_packetsize + natt_bonus, a.ptr, a.len);
+		memcpy(buf + cursor, a.ptr, a.len);
+		cursor += a.len;
 
 		/* 4. chunk b */
-		memcpy(buf + tcp_packetsize + natt_bonus + a.len, b.ptr, b.len);
+		memcpy(buf + cursor, b.ptr, b.len);
+		cursor += b.len;
 
 		ptr = buf;
 	} else {
@@ -167,18 +175,25 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 
 	check_outgoing_msg_errqueue(interface, "sending a packet");
 
-	if (interface->proto == IPPROTO_TCP && interface->bev != NULL) {
-		wlen = bufferevent_write(interface->bev,(void *)ptr,len);
+	int error;
+	ssize_t wlen;
+	if (interface->proto == IPPROTO_TCP && pexpect(interface->bev != NULL)) {
+		/*
+		 * Need to map bufferevent's 0 or -1 onto len or 0.
+		 */
+		errno = 0; /* TCP: is errno meaningful here? */
+		wlen = bufferevent_write(interface->bev, ptr, len) == 0 ? len : 0;
 	} else {
 		ip_sockaddr remote_sa;
 		size_t remote_sa_size = endpoint_to_sockaddr(&remote_endpoint, &remote_sa);
 		wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
 	}
+	error = errno;
 
 	if (wlen != (ssize_t)len) {
 		if (!just_a_keepalive) {
 			endpoint_buf b;
-			LOG_ERRNO(errno, "sendto on %s to %s via %s failed in %s",
+			LOG_ERRNO(error, "send on %s to %s via %s failed in %s",
 				  interface->ip_dev->id_rname,
 				  str_sensitive_endpoint(&remote_endpoint, &b),
 				  interface->proto == IPPROTO_TCP ? "TCP" : "UDP",
