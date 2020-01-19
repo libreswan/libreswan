@@ -530,8 +530,8 @@ kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-crash	good
 kvmplutotest	certoe-17-asymmetric-dual-clients-behind-nat-01		good
 kvmplutotest	certoe-18-pass-then-go-slash24		wip
 kvmplutotest	certoe-18-pass-then-go-slash32		wip
-kvmplutotest	certoe-18-pass-then-go-slash24-keying1	good
-kvmplutotest	certoe-18-pass-then-go-slash32-keying1	wip
+kvmplutotest	certoe-18-pass-then-go-slash24-keyingtries1	good
+kvmplutotest	certoe-18-pass-then-go-slash32-keyingtries1	wip
 
 kvmplutotest	rawrsaoe-asymmetric-nat			good
 kvmplutotest	rawrsaoe-asymmetric-01			good
