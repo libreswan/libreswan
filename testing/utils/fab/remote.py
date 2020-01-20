@@ -81,7 +81,7 @@ def mount_point(domain, console, device):
         mount = fstab[device]
         domain.logger.debug("using fstab entry for %s (%s) from cache", device, mount)
         return mount;
-    console.sendline("awk '$1==\"" + device + "\" { print $2 }' < /etc/fstab")
+    console.sendline("df --output=source,target | awk '$1==\"" + device + "\" { print $2 }'")
     status, match = console.expect_prompt("(/\S+)")
     mount = match.group(1)
     fstab[device] = mount
