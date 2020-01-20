@@ -4,16 +4,22 @@ text
 reboot
 lang en_US.UTF-8
 keyboard us
-# F30 will install network using systemd-networkd
-network --bootproto=dhcp --hostname swanbase
-#
-# static network does not work with recent dracut, use kernel args instead
-# network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
 rootpw swan
 firewall --disable
 
 timezone --utc America/New_York
 # firstboot --disable
+
+# Need to set hostname, scripts use hostname==swanbase as a marker
+# indicating that the domain hasn't been transmogrified (provided we
+# ignore base's transmogrification).
+
+# Don't enable the network.  That's handled in %post when
+# systemd-networkd is configured (the machine only needs to come
+# online after a reboot).
+
+network --hostname swanbase
+
 bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,115200 rd_NO_PLYMOUTH net.ifnames=0 biosdevname=0"
 zerombr
 clearpart --all --initlabel
