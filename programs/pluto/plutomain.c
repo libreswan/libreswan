@@ -1207,6 +1207,7 @@ int main(int argc, char **argv)
 		case '5':	/* --selftest */
 			selftest_only = TRUE;
 			log_to_stderr_desired = TRUE;
+			log_with_timestamp = FALSE;
 			fork_desired = FALSE;
 			continue;
 
