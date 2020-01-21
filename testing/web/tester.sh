@@ -158,7 +158,7 @@ while true ; do
     # since it is only invoked when the REPO is at HEAD, the upgrade /
     # transmogrify it triggers will always be for the latest changes.
 
-    targets="distclean ${kvm_setup} kvm-install kvm-keys kvm-test"
+    targets="distclean ${kvm_setup} kvm-keys kvm-install kvm-test"
     kvm_setup=kvm-shutdown
     for target in ${targets}; do
 	# generate json of the progress
