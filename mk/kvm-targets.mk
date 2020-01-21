@@ -311,7 +311,7 @@ define kvm-test
 .PHONY: $(1)
 $(1): 		$$(KVM_QMUDIR_OK) \
 		$$(KVM_ENTROPY_OK) \
-		kvm-keys \
+		kvm-keys-ok \
 		kvm-shutdown-local-domains
 	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
 	: kvm-test target=$(1) param=$(2)
@@ -401,22 +401,20 @@ kvm-modified-diffs:
 # Get around this by running a copy of dist_certs.py placed in /tmp.
 
 KVM_KEYS_EXPIRATION_DAY = 7
-KVM_KEYS_EXPIRED = find testing/x509/*/ -mtime +$(KVM_KEYS_EXPIRATION_DAY)
+KVM_KEYS_EXPIRED = find testing/x509/*/ -type f -mtime +$(KVM_KEYS_EXPIRATION_DAY) -ls
 
 .PHONY: kvm-keys
 kvm-keys: $(KVM_KEYS)
-	$(MAKE) --no-print-directory kvm-keys-up-to-date
 
 $(KVM_KEYS):	$(top_srcdir)/testing/x509/dist_certs.py \
 		$(top_srcdir)/testing/x509/openssl.cnf \
 		$(top_srcdir)/testing/x509/strongswan-ec-gen.sh \
 		$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh \
 		$(KVM_QEMUDIR_OK) \
-		$(KVM_ENTROPY_OK) \
-		| \
-		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+		$(KVM_ENTROPY_OK)
 	: invoke phony target to shut things down and delete old keys
 	$(MAKE) kvm-shutdown-local-domains
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 	$(MAKE) kvm-keys-clean
 	:
 	: disable FIPS
@@ -463,13 +461,20 @@ $(KVM_KEYS_CLEAN_TARGETS):
 	rm -f testing/x509/kvm-keys.tar
 
 # For moment don't force keys to be re-built.
-.PHONY: kvm-keys-up-to-date
-kvm-keys-up-to-date:
-	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
-		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
-		$(KVM_KEYS_EXPIRED) | sed -e 's/^/  /' ; \
-		echo "run 'make kvm-keys-clean kvm-keys' to force an update" ; \
-		exit 1 ; \
+.PHONY: kvm-keys-ok
+kvm-keys-ok:
+	@if test ! -r $(KVM_KEYS); then							\
+		echo "" ;								\
+		echo "The KVM keys are missing; was 'make kvm-install' run?" ;		\
+		echo "" ;								\
+		exit 1 ;								\
+	elif test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then				\
+		echo "" ;								\
+		echo "The following KVM keys are too old:" ;				\
+		$(KVM_KEYS_EXPIRED) ;							\
+		echo "run 'make kvm-keys-clean kvm-keys' to force an update" ;		\
+		echo "" ;								\
+		exit 1 ;								\
 	fi
 
 #
@@ -987,6 +992,7 @@ endif
 kvm-install: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-$(domain))
 	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
 	$(MAKE) $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS), install-kvm-domain-$(domain))
+	$(MAKE) kvm-keys
 
 #
 # kvmsh-HOST
