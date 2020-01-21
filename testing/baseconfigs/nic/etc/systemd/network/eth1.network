@@ -14,15 +14,5 @@ Destination=192.0.3.0/24
 GatewayOnlink=yes
 
 [Route]
-Gateway=192.1.2.45
-Destination=192.0.1.0/24
-GatewayOnlink=yes
-
-[Route]
-Gateway=192.1.2.23
-Destination=192.0.2.0/24
-GatewayOnlink=yes
-
-[Route]
 Destination=2001:db8:0:3::/64
 Gateway=2001:db8:1:3::33
