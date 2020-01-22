@@ -1,29 +1,11 @@
-# remove all dates used in ipsec auto --listall. there are two forms tha tappear:
-# Oct 13 15:14:00 2015
+# remove all dates used in ipsec auto --listall. there are three forms that appear:
+# Mon Jan 20 12:54:56 UTC 2020
 # Mon Oct 13 15:14:00 2015
+# Oct 13 15:14:00 2015
 #
-# Someone smarter than me, please turn this into one super regexp
-#
-s/Mon ... .. ..:..:.. 20../TIMESTAMP/g
-s/Tue ... .. ..:..:.. 20../TIMESTAMP/g
-s/Wed ... .. ..:..:.. 20../TIMESTAMP/g
-s/Thu ... .. ..:..:.. 20../TIMESTAMP/g
-s/Fri ... .. ..:..:.. 20../TIMESTAMP/g
-s/Sat ... .. ..:..:.. 20../TIMESTAMP/g
-s/Sun ... .. ..:..:.. 20../TIMESTAMP/g
-s/Jan .. ..:..:.. 20../TIMESTAMP/g
-s/Feb .. ..:..:.. 20../TIMESTAMP/g
-s/Mar .. ..:..:.. 20../TIMESTAMP/g
-s/Apr .. ..:..:.. 20../TIMESTAMP/g
-s/May .. ..:..:.. 20../TIMESTAMP/g
-s/Apr .. ..:..:.. 20../TIMESTAMP/g
-s/Jun .. ..:..:.. 20../TIMESTAMP/g
-s/Jul .. ..:..:.. 20../TIMESTAMP/g
-s/Aug .. ..:..:.. 20../TIMESTAMP/g
-s/Sep .. ..:..:.. 20../TIMESTAMP/g
-s/Oct .. ..:..:.. 20../TIMESTAMP/g
-s/Nov .. ..:..:.. 20../TIMESTAMP/g
-s/Dec .. ..:..:.. 20../TIMESTAMP/g
+s/\(Mon\|Tue\|Wed\|Thu\|Fri\|Sat\|Sun\) ... .. ..:..:.. ... 20../TIMESTAMP/g
+s/\(Mon\|Tue\|Wed\|Thu\|Fri\|Sat\|Sun\) ... .. ..:..:.. 20../TIMESTAMP/g
+s/\(Jan\|Feb\|Mar\|Apr\|May\|Jun\|Jul\|Aug\|Sep\|Oct\|Nov\|Dec\) .. ..:..:.. 20../TIMESTAMP/g
 s/expires in [0-9]* days/expires in X days/g
 # lie!
 s/expires in [0-9]* hours/expires in X days/g
