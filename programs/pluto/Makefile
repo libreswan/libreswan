@@ -81,7 +81,7 @@ endif
 ifeq ($(USE_NETKEY),true)
 OBJS += kernel_netlink.o
 ifeq ($(USE_XFRM_INTERFACE),true)
-OBJS += xfrm_interface.o
+OBJS += kernel_xfrm_interface.o
 endif
 endif
 
