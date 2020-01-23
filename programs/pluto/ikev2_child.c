@@ -62,7 +62,7 @@
 #include "ikev2_ts.h"
 #include "ip_info.h"
 #ifdef USE_XFRM_INTERFACE
-# include "xfrm_interface.h"
+# include "kernel_xfrm_interface.h"
 #endif
 
 static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,

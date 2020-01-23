@@ -78,7 +78,7 @@
 #include "initiate.h"
 
 #ifdef USE_XFRM_INTERFACE
-# include "xfrm_interface.h"
+# include "kernel_xfrm_interface.h"
 #endif
 
 #include "pluto_stats.h"

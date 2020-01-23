@@ -88,7 +88,7 @@
 #include "ikev2.h"		/* for complete_v2_state_transition() */
 
 #ifdef USE_XFRM_INTERFACE
-#include "xfrm_interface.h"
+#include "kernel_xfrm_interface.h"
 #endif
 
 #include "nat_traversal.h"

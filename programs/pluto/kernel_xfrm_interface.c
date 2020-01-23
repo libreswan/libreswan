@@ -34,8 +34,8 @@
 #include "lswlog.h"
 #include "connections.h"
 #include "server.h" /* for struct iface_port */
-#include "xfrm_interface.h"
-#include "netlink_reply.h"
+#include "kernel_xfrm_interface.h"
+#include "kernel_xfrm_reply.h"
 
 #if !defined(USE_XFRM_INTERFACE) || !defined(NETKEY_SUPPORT)
 # error this file should only compile when NETKEY_SUPPORT & USE_XFRM_INTERFACE are defined

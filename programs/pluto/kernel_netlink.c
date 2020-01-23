@@ -83,7 +83,7 @@
 #include "ike_alg_encrypt.h"
 #include "ip_address.h"
 #include "ip_info.h"
-# include "xfrm_interface.h"
+# include "kernel_xfrm_interface.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC

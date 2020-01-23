@@ -89,7 +89,7 @@
 #include "ip_info.h"
 #include "keyhi.h" /* for SECKEY_DestroyPublicKey */
 #include "state_db.h"
-# include "xfrm_interface.h"
+# include "kernel_xfrm_interface.h"
 
 struct connection *connections = NULL;
 

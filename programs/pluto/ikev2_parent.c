@@ -85,7 +85,7 @@
 #include "ikev2_msgid.h"
 #include "state_db.h"
 #ifdef USE_XFRM_INTERFACE
-# include "xfrm_interface.h"
+# include "kernel_xfrm_interface.h"
 #endif
 
 #include "crypt_symkey.h" /* for release_symkey */
