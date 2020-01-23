@@ -1851,7 +1851,7 @@ volatile bool exiting_pluto = false;
  *  1 general discomfort
  * 10 lock file exists
  */
-void exit_pluto(int status)
+void exit_pluto(enum pluto_exit_code status)
 {
 	/*
 	 * Tell the world, well actually all the threads, that pluto

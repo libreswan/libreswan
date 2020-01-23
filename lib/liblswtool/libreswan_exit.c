@@ -18,7 +18,7 @@
 
 #include "lswlog.h"
 
-void libreswan_exit(enum rc_type rc)
+void libreswan_exit(enum pluto_exit_code rc)
 {
 	exit(rc);
 }

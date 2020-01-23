@@ -266,7 +266,7 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
  * debugging much easier.
  */
 
-void libreswan_exit(enum rc_type rc) NEVER_RETURNS;
+void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
 void libreswan_log_errno(int e, const char *message, ...) PRINTF_LIKE(2);
 void libreswan_exit_log_errno(int e, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
 

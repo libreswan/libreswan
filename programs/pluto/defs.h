@@ -50,7 +50,16 @@ extern const char *check_expiry(realtime_t expiration_date,
 				time_t warning_interval, bool strict);
 
 /*
- * Cleanly exit Pluto
+ * Messily exit Pluto
+ *
+ * This code tries to shutdown pluto while the event loop is still
+ * active and while worker threads are still running.  Funny enough,
+ * it occasionally crashes or spews garbage, for instance:
+ *
+ * - a worker thread trying to access NSS after NSS has been shutdown
+ *
+ * - scary leak-detective errors because there are events sitting in
+ *   the event queue
  *
  * The global EXITING_PLUTO is there as a hint to long running threads
  * that they should also shutdown (it should be tested in the thread's
@@ -63,7 +72,7 @@ extern const char *check_expiry(realtime_t expiration_date,
  */
 
 extern volatile bool exiting_pluto;
-extern void exit_pluto(int /*status*/) NEVER_RETURNS;
+extern void exit_pluto(enum pluto_exit_code status) NEVER_RETURNS;
 
 typedef uint32_t msgid_t;      /* Host byte ordered */
 #define PRI_MSGID "%"PRIu32

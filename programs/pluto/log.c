@@ -604,7 +604,7 @@ void exit_log(const char *message, ...)
 	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
-void libreswan_exit(enum rc_type rc)
+void libreswan_exit(enum pluto_exit_code rc)
 {
 	exit_pluto(rc);
 }
