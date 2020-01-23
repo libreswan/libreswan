@@ -1,12 +1,12 @@
 # Minimal Kickstart file for fedora
+
 install
 text
 reboot
 lang en_US.UTF-8
 keyboard us
 rootpw swan
-firewall --disable
-
+# UTC???
 timezone --utc America/New_York
 # firstboot --disable
 
@@ -33,33 +33,28 @@ clearpart --all --initlabel
 part / --asprimary --grow
 # part swap --size 1024
 
-services --disabled=sm-client,sendmail,network,smartd,crond,atd
-
 %packages
 
-# Full list of RPMs to install (see also fedoraXX.mk)
-
-# Since it is fast and local, try to install everything here using the
-# install DVD image.  Anything missing will be fixed up later in
-# %post. The option --ignoremissing is specified so we don't have to
-# juggle what is enabled / disabled here.
-
-# Note: The problem is that the DVD doesn't contain "Everything" -
-# that repo only becomes available during %post when it is enabled.
-# To get around this, %post installing a few things that were missed.
-# The easiest way to figure out if something ALSO needs to be listed
-# in %post is to look in "Packaging/" on the DVD.  I just wish this
-# could go in a separate file so post could do the fix up
-# automatically.
+# Minimal list of RPMs to install; see fNN.mk for the full list which
+# are installed after a reboot and when the netork is up.
 
 @core
-dracut-network
--sendmail
--libreswan
 
-# NetworkManager causes problems and steals our interfaces despite
-# NM_CONTROLLED="no".
+# don't confuse things
+-libreswan
+# only one network config
 -NetworkManager
+-network-scripts
+# misc
+-firewalld
+-at
+-sendmail
+# ntp
+-crony
+# cron
+-cronie
+# System Security Services Daemon (i.e., real PAM)
+-sssd
 
 %end
 
@@ -206,9 +201,6 @@ Type=oneshot
 WantedBy=shutdown.target reboot.target poweroff.target
 EOD
 
-systemctl disable firewalld.service
-systemctl disable chronyd.service
-systemctl disable sssd.service
 systemctl enable systemd-networkd
 systemctl enable systemd-networkd-wait-online
 systemctl enable iptables.service
