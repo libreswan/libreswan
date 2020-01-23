@@ -1,0 +1,3 @@
+ipsec-ineterface is added manually simulating systemd or OpenWRT behaviour
+Pluto will use the interface configured ipsec-interface=17 
+Pluto will not delete it either.

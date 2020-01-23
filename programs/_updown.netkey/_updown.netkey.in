@@ -60,7 +60,7 @@ export LC_ALL
 #		must be sent.
 #
 #	PLUTO_INTERFACE
-#		is the name of the ipsec interface to be used.
+#		is the name of the real interace used for encrypted, IKE traffic
 #
 #	PLUTO_ME
 #		is the IP address of our host.
@@ -157,6 +157,10 @@ export LC_ALL
 #		The username (XAUTH or GSSAPI) that was authenticated (if any)
 #		for this SA
 #
+# 	PLUTO_VIRT_INTERFACE
+#		is the name of the real interace used for encrypted, IKE traffic
+#
+#
 #	XAUTH_FAILED
 #		If xauthfail=soft this will be set to 1 if XAUTH authentication
 #		failed. If xauthfail=hard, the updown scripts never run.
@@ -206,9 +210,11 @@ while [ $# -gt 0 ]; do
 	    case ${2} in
 		[Yy]*)
 		    ROUTE=yes
+		    PROXY_ARP_ROUTE=no
 		    ;;
 		*)
 		    ROUTE=
+		    PROXY_ARP_ROUTE=
 		    ;;
 	    esac
 	    shift; shift
@@ -415,6 +421,7 @@ addsource() {
     local st
     interface=lo
     st=0
+
     if [ -z "${PLUTO_MY_SOURCEIP}" ]; then
         return ${st}
     fi
@@ -422,6 +429,8 @@ addsource() {
     if ! ip -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
 	    interface="${VTI_IFACE}"
+	elif [ -n "${PLUTO_XFRMI_ROUTE}" ]; then
+	    interface=${PLUTO_VIRT_INTERFACE}
 	fi
 	it="ip addr add ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface} scope ${SCOPE}"
 	oops="$(eval ${it} 2>&1)"
@@ -487,6 +496,8 @@ delsource() {
     if [ -z "$(ip -o route list src ${PLUTO_MY_SOURCEIP})" ]; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
 	    interface="${VTI_IFACE}"
+	elif [ -n ${PLUTO_XFRMI_ROUTE} ]; then
+		interface=${PLUTO_VIRT_INTERFACE}
 	fi
 	# If there is no ip we just return
 	if ! ip -o addr list dev ${interface} scope ${SCOPE} | \
@@ -593,8 +604,8 @@ doproxyarp() {
 		    ip neigh add proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface} \
 			lladdr ${macaddr} nud permanent
 		    # Force routing, required for proxyarp to work
-		    ROUTE=yes
-		    export ROUTE
+		    PROXY_ARP_ROUTE=yes
+		    export PROXY_ARP_ROUTE
 		else
 		    ip neigh del proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface}
 		fi
@@ -603,29 +614,79 @@ doproxyarp() {
     fi
 }
 
+do_ip()
+{
+    local cmd="$1"
+
+    oops="$(eval ${cmd} 2>&1)"
+    st=$?
+
+    if [ -z "${oops}" -a ${st} -ne 0 ]; then
+	oops="silent error, exit status ${st}"
+    fi
+
+    case "${oops}" in
+	'RTNETLINK answers: No such process'*)
+	    # should not happen, but ... ignore if the
+	    # route was already removed
+	    oops=""
+	    st=0
+	    ;;
+    esac
+
+    if [ -n "${oops}" -a ${st} -ne 0 ]; then
+	echo "$0: doroute \"${cmd}\" failed (${oops})" >&2
+    fi
+
+    return ${st}
+}
+
 doroute() {
     local cmd
     local oops
     local st
     cmd=${1}
     st=0
+    local IPSEC_R_TABLE=50
+    local XRMI_RULE="no"
+    local XFRMI_ROUTE=${PLUTO_XFRMI_ROUTE}
+
     if [ ${cmd} != del ]; then
 	oops="$(eval ip route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
 	case "${oops}" in
 	    'RTNETLINK answers: No route to host'*)
-		# Routing is mandatory for IPsec
-		ROUTE=yes
+		if [ "${XFRMI_ROUTE}" = no ]; then
+			# Routing is mandatory for IPsec
+			ROUTE=yes
+		fi
 		;;
 	esac
     fi
+
+    if [ -n "${PLUTO_XFRMI_FWMARK}" ]; then
+	    XFRMI_RULE=yes #we have to add "ip rules" and "ip route table"
+	    ROUTE=no #XFRMI_ROUTE will add the route
+    fi
+
     # skip routing if it's not enabled or necessary
     if [ -z "${PLUTO_MY_SOURCEIP}" -a \
 	-z "${PLUTO_MTU}" -a \
-	"${ROUTE}" != "yes" -a \
+	"${PROXY_ARP_ROUTE}" != yes -a \
 	"${cmd}" != "del" ]
     then
-	return 0
+	PROXY_ARP_ROUTE=no
     fi
+
+    if [ -n "${PLUTO_MY_SOURCEIP}" -o -n "${PLUTO_MTU}" ]
+    then
+	    ROUTE=yes
+    fi
+
+    if [ "${PLUTO_PEER_CLIENT}" =  "${PLUTO_MY_CLIENT}" ]; then
+	XFRMI_ROUTE="samesubnets";
+	echo "leftsubet == rightsubnet = ${PLUTO_PEER_CLIENT} can not add route"
+    fi
+
     parms="${PLUTO_PEER_CLIENT}"
     parms2=${IPRARGS}
     # nexthop is not needed on ppp interfaces. unset it to make cases
@@ -633,9 +694,16 @@ doroute() {
     if ip link show "${PLUTO_INTERFACE%:*}" | grep -q POINTOPOINT; then
 	POINTPOINT=yes
     fi
+    local esp_nexthop
+    local esp_peer_interface
+    esp_nexthop=" "
     # use nexthop if nexthop is not %direct and POINTPOINT is not set
     if [ "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" -a -z "${POINTPOINT}" ]; then
-	parms2="via ${PLUTO_NEXT_HOP}"
+	# XFRM interface needs no nexthop
+	if [ -z "${PLUTO_XFRMI_ROUTE}"  ]; then
+	   parms2="via ${PLUTO_NEXT_HOP}"
+	fi
+	esp_nexthop="via ${PLUTO_NEXT_HOP} "
     fi
     # route via proper interface according to routing table
     if [ "${cmd}" = "del" ]; then
@@ -654,14 +722,30 @@ doroute() {
 	peer_interface=$(ip -o route get ${PLUTO_NEXT_HOP} | \
 	    sed "s/^.*dev \([^ ]*\) .*/\1/")
     fi
+
+    esp_peer_interface=$(ip -o route get ${PLUTO_NEXT_HOP} from ${PLUTO_ME} | \
+            sed "s/^.*\(dev [^ ]*\) .*/\1/")
+    if [ -z "${esp_peer_interface}" ]; then
+	    esp_peer_interface="dev ${PLUTO_INTERFACE}"
+    fi
+
+    if [ -z "${peer_interface}" ]; then
+	peer_interface=${PLUTO_INTERFACE}
+    fi
+
+    if [ "${PLUTO_XFRMI_ROUTE}" = "yes" ]; then
+	peer_interface=${PLUTO_VIRT_INTERFACE}
+    fi
+
     if [ -n "${VTI_IFACE}" ]; then
 	addsource
 	peer_interface="${VTI_IFACE}"
     fi
-    if [ -z "${peer_interface}" ]; then
-	peer_interface=${PLUTO_INTERFACE}
-    fi
-    parms2="${parms2} dev ${peer_interface%:*}${PLUTO_MTU:+ mtu ${PLUTO_MTU}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}} $IPROUTEARGS"
+
+    parms2="${parms2}${PLUTO_MTU:+ mtu ${PLUTO_MTU}}"
+    parms2="${parms2}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}} ${IPROUTEARGS}"
+
+    parms2="${parms2} dev ${peer_interface%:*}"
 
     # make sure whe have sourceip locally in this machine
     if [ "${cmd}" = "replace" -a -n "${PLUTO_MY_SOURCEIP}" ]; then
@@ -680,23 +764,40 @@ doroute() {
 	    it="ip route ${cmd} ${parms} ${parms2}"
 	    ;;
     esac
-    oops="$(eval ${it} 2>&1)"
-    st=$?
-    if [ -z "${oops}" -a ${st} -ne 0 ]; then
-	oops="silent error, exit status ${st}"
+
+    if [ "${ROUTE}" = yes -o "${XFRMI_ROUTE}" = yes -o "${PROXY_ARP_ROUTE}" = yes ]; then
+	do_ip "${it}"
+	st=$?
+	if [ ${st} -ne 0 ]; then
+	    return ${st}
+	fi
     fi
-    case "${oops}" in
-	'RTNETLINK answers: No such process'*)
-	    # should not happen, but ... ignore if the
-	    # route was already removed
-	    oops=""
-	    st=0
-	    ;;
-    esac
-    if [ -n "${oops}" -o ${st} -ne 0 ]; then
-	echo "$0: doroute \"${it}\" failed (${oops})" >&2
+
+    if [ "${XFRMI_RULE}" = "yes" ]; then
+	espipro="ip route ${cmd} ${PLUTO_PEER}/${MAX_CIDR} ${esp_nexthop} ${esp_peer_interface%:*} table ${IPSEC_R_TABLE}"
+	do_ip "${espipro}"
+
+	st=$?
+        if [ ${st} -ne 0 ]; then
+            return ${st}
+        fi
+
+	iprulecmd="${cmd}"
+	if [ "${cmd}" = "replace" ]; then
+	    iprulecmd="add"
+	fi
+
+	ipru="ip rule ${iprulecmd} prio 100 to ${parms}"
+	ipru="${ipru} fwmark ${PLUTO_XFRMI_FWMARK} lookup ${IPSEC_R_TABLE}"
+
+	do_ip "${ipru}"
+	st=$?
+	if [ ${st} -ne 0 ]; then
+	    return ${st}
+	fi
+
     fi
-    return ${st}
+    return 0
 }
 
 doroute6() {

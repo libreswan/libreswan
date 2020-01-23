@@ -79,7 +79,10 @@ OBJS += kernel_pfkey.o
 endif
 
 ifeq ($(USE_NETKEY),true)
-OBJS += kernel_netlink.o
+OBJS += kernel_xfrm.o
+ifeq ($(USE_XFRM_INTERFACE),true)
+OBJS += kernel_xfrm_interface.o
+endif
 endif
 
 ifeq ($(USE_KLIPS),true)

@@ -1,0 +1,4 @@
+A routed subnet-to-subnet tunnel using xfrmi interface systemd-networkd
+
+this test NEED systemd-networkd not likely to run in simple namespace.
+It could run under docker/podman.

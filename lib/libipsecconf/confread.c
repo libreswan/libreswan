@@ -163,6 +163,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_CLIENTADDRFAMILY, AF_UNSPEC);
 
 	DOPT(KNCF_AUTO, STARTUP_IGNORE);
+	DOPT(KNCF_XFRM_IF_ID, yn_no);
 
 # undef DOPT
 
@@ -199,7 +200,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->left.updown = clone_str(DEFAULT_UPDOWN, "conn default left updown");
 	d->right.updown = clone_str(DEFAULT_UPDOWN, "conn default right updown");
-
 	/* ==== end of conn %default ==== */
 }
 
@@ -380,6 +380,39 @@ static bool load_setup(struct starter_config *cfg,
 	return err;
 }
 
+static bool validate_ip_netmask(const char *value, ip_subnet *ip, const char *leftright, char *err_p,
+		starter_errors_t *perrl)
+{
+	bool err = FALSE;
+#  define ERR_FOUND(...) { starter_error_append(perrl, __VA_ARGS__); err = TRUE; }
+
+	if (strchr(value, '/') == NULL) {
+		ERR_FOUND("%s%s=%s needs address/mask", leftright, err_p, value);
+	} else {
+		/*
+		 * ttosubnet() helpfully sets the IP address to the lowest IP
+		 * in the subnet. Which is great for subnets but we want to
+		 * retain the specific IP in this case.
+		 * So we subsequently overwrite the IP address of the subnet.
+		 */
+		err_t er = ttosubnet(value, 0, AF_UNSPEC,
+				'0' /* allow host bits */, ip);
+		if (er != NULL) {
+			ERR_FOUND("bad addr %s%s=%s [%s]",
+					leftright, err_p, value, er);
+		} else {
+			er = tnatoaddr(value, strchr(value, '/') - value, AF_UNSPEC, &ip->addr);
+			if (er != NULL) {
+				ERR_FOUND("bad addr in subnet for %s%s=%s [%s]",
+						leftright, err_p, value, er);
+			}
+		}
+	}
+
+	return err;
+#  undef ERR_FOUND
+}
+
 /**
  * Validate that yes in fact we are one side of the tunnel
  *
@@ -503,29 +536,8 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	if (end->strings_set[KSCF_VTI_IP]) {
-		char *value = end->strings[KSCF_VTI_IP];
-
-		if (strchr(value, '/') == NULL) {
-			ERR_FOUND("%svti= needs address/mask", leftright);
-		} else {
-			/*
-			 * ttosubnet() helpfully sets the IP address to the lowest IP
-			 * in the subnet. Which is great for subnets but we want to
-			 * retain the specific IP in this case.
-			 * So we subsequently overwrite the IP address of the subnet.
-			 */
-			er = ttosubnet(value, 0, AF_UNSPEC, '0', &end->vti_ip);
-			if (er != NULL) {
-				ERR_FOUND("bad addr %svti=%s [%s]",
-					  leftright, value, er);
-			} else {
-				er = tnatoaddr(value, strchr(value, '/') - value, AF_UNSPEC, &end->vti_ip.addr);
-				if (er != NULL) {
-					ERR_FOUND("bad addr in subnet for %svti=%s [%s]",
-						leftright, value, er);
-				}
-			}
-		}
+		err = validate_ip_netmask(end->strings[KSCF_VTI_IP],
+				&end->vti_ip, leftright, "vti", perrl);
 	}
 
 	/* validate the KSCF_SUBNET */
@@ -668,6 +680,13 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->has_client = TRUE;
 			end->has_client_wildcard = FALSE;
 		}
+		if (end->strings_set[KSCF_IFACE_IP]) {
+			ERR_FOUND("can  not specify  %siface-ip=%s and  %sssourceip=%s",
+					leftright,
+					end->strings[KSCF_IFACE_IP],
+					leftright,
+					end->strings[KSCF_SOURCEIP]);
+		}
 	}
 
 	/* copy certificate path name */
@@ -729,6 +748,21 @@ static bool validate_end(struct starter_conn *conn_st,
 					addresspool);
 		}
 	}
+
+	if (end->strings_set[KSCF_IFACE_IP]) {
+		err = validate_ip_netmask(end->strings[KSCF_IFACE_IP],
+				&end->ifaceip, leftright, "iface-ip", perrl);
+		if (end->strings_set[KSCF_SOURCEIP]) {
+			ERR_FOUND("can  not specify  %siface-ip=%s and  %sssourceip=%s",
+					leftright,
+					end->strings[KSCF_IFACE_IP],
+					leftright,
+					end->strings[KSCF_SOURCEIP]);
+		}
+
+	}
+
+
 
 	if (end->options_set[KNCF_XAUTHSERVER] ||
 	    end->options_set[KNCF_XAUTHCLIENT])

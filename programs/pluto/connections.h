@@ -166,7 +166,8 @@ struct end {
 		host_srcip;
 	ip_subnet
 		client,
-		host_vtiip;
+		host_vtiip,
+		ifaceip;
 
 	bool key_from_DNS_on_demand;
 	bool has_client;
@@ -268,6 +269,8 @@ struct connection {
 	char *vti_iface;
 	bool vti_routing; /* should updown perform routing into the vti device */
 	bool vti_shared; /* should updown leave remote empty and not cleanup device on down */
+	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
+
 	deltatime_t r_interval; /* initial retransmit time, doubles each time */
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;

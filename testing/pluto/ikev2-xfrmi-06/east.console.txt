@@ -1,0 +1,58 @@
+/testing/guestbin/swan-prep
+east #
+ # confirm that the network is alive
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add eastnet-road
+002 added connection description "eastnet-road"
+east #
+ echo "initdone"
+initdone
+east #
+ ip addr show dev lo
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 state UNKNOWN
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+east #
+ ip addr show dev eth0
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
+    link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
+    inet 192.0.2.254/24 brd 192.0.2.255 scope global eth0
+       valid_lft forever preferred_lft forever
+east #
+ ip addr show dev ipsec1
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+east #
+ ip -s link show ipsec1
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    RX: bytes  packets  errors  dropped overrun mcast   
+    168        2        0       0       0       0       
+    TX: bytes  packets  errors  dropped carrier collsns 
+    168        2        0       0       0       0       
+east #
+ ip rule show
+0:	from all lookup local
+32766:	from all lookup main
+32767:	from all lookup default
+east #
+ ip route show
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.0.2.1 dev ipsec1 scope link
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+east #
+ ip route show table 50
+Error: ipv4: FIB table does not exist.
+Dump terminated
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

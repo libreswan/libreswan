@@ -1,0 +1,176 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet
+002 added connection description "westnet-eastnet-0"
+002 added connection description "westnet-eastnet-1"
+002 added connection description "westnet-eastnet-2"
+east #
+ ipsec auto --status | grep westnet-eastnet
+000 "westnet-eastnet-0": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-0":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-0":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-0":   our auth:secret, their auth:secret
+000 "westnet-eastnet-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-0":   labeled_ipsec:no;
+000 "westnet-eastnet-0":   policy_label:unset;
+000 "westnet-eastnet-0":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
+000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-0":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-0":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-0":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "westnet-eastnet-0":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-0":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-0":   aliases: westnet-eastnet
+000 "westnet-eastnet-1": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-1":   our auth:secret, their auth:secret
+000 "westnet-eastnet-1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-1":   labeled_ipsec:no;
+000 "westnet-eastnet-1":   policy_label:unset;
+000 "westnet-eastnet-1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
+000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-1":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "westnet-eastnet-1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-1":   aliases: westnet-eastnet
+000 "westnet-eastnet-2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-2":   our auth:secret, their auth:secret
+000 "westnet-eastnet-2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-2":   labeled_ipsec:no;
+000 "westnet-eastnet-2":   policy_label:unset;
+000 "westnet-eastnet-2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
+000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-2":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "westnet-eastnet-2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "westnet-eastnet-2":   aliases: westnet-eastnet
+east #
+ ipsec whack --impair suppress-retransmits
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+006 #3: "westnet-eastnet-1", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@west'
+006 #4: "westnet-eastnet-2", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@west'
+east #
+ # policies and state should be multiple
+east #
+ ip xfrm state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+east #
+ ip xfrm policy
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir out priority 1042407 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir fwd priority 1042407 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir in priority 1042407 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+east #
+ ipsec auto --status | grep westnet-eastnet
+000 "westnet-eastnet-0": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; erouted; eroute owner: #2
+000 "westnet-eastnet-0":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-0":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-0":   our auth:secret, their auth:secret
+000 "westnet-eastnet-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-0":   labeled_ipsec:no;
+000 "westnet-eastnet-0":   policy_label:unset;
+000 "westnet-eastnet-0":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
+000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-0":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-0":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-0":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "westnet-eastnet-0":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-0":   newest ISAKMP SA: #1; newest IPsec SA: #2;
+000 "westnet-eastnet-0":   aliases: westnet-eastnet
+000 "westnet-eastnet-0":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
+000 "westnet-eastnet-0":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+000 "westnet-eastnet-1": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; erouted; eroute owner: #3
+000 "westnet-eastnet-1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-1":   our auth:secret, their auth:secret
+000 "westnet-eastnet-1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-1":   labeled_ipsec:no;
+000 "westnet-eastnet-1":   policy_label:unset;
+000 "westnet-eastnet-1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
+000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-1":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "westnet-eastnet-1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-1":   newest ISAKMP SA: #0; newest IPsec SA: #3;
+000 "westnet-eastnet-1":   aliases: westnet-eastnet
+000 "westnet-eastnet-1":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+000 "westnet-eastnet-2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; erouted; eroute owner: #4
+000 "westnet-eastnet-2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-2":   our auth:secret, their auth:secret
+000 "westnet-eastnet-2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-2":   labeled_ipsec:no;
+000 "westnet-eastnet-2":   policy_label:unset;
+000 "westnet-eastnet-2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
+000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-2":   policy: PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "westnet-eastnet-2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-2":   newest ISAKMP SA: #0; newest IPsec SA: #4;
+000 "westnet-eastnet-2":   aliases: westnet-eastnet
+000 "westnet-eastnet-2":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+000 #1: "westnet-eastnet-0":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #2: "westnet-eastnet-0":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "westnet-eastnet-0" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
+000 #3: "westnet-eastnet-1":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet-1" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=168B ESPout=168B! ESPmax=0B 
+000 #4: "westnet-eastnet-2":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "westnet-eastnet-2" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=168B ESPout=168B! ESPmax=0B 
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

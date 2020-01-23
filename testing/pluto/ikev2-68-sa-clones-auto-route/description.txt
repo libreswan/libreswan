@@ -1,0 +1,6 @@
+Install ondemand per CPU Child SAs + one catch all SA auto=ondemand.
+
+RFC 7296 2.8
+"IKEv2 deliberately allows parallel SAs with the same Traffic Selectors between common endpoints."
+
+This test need kernel/xfrm support to distribute traffic N CPU, using N per CPU sub SAs.

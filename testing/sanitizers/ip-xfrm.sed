@@ -15,3 +15,5 @@
 /auth-trunc hmac/d
 /^\tencap type espinudp sport/d
 /proto esp reqid/d
+s/aead rfc4106(gcm(aes)) .* \([0-9 ]*\)/aead rfc4106(gcm(aes)) KEY \1/
+s/proto esp spi 0x.* reqid/proto esp spi 0xSPISPI reqid/g

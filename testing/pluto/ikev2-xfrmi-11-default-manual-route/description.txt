@@ -1,0 +1,2 @@
+both subnets are 0.0.0.0/0 pluto will not add any routes.
+admins add route.

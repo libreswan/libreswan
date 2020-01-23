@@ -93,6 +93,7 @@ d.ipsec.conf/tfc.xml
 d.ipsec.conf/nflog.xml
 d.ipsec.conf/mark.xml
 d.ipsec.conf/vti.xml
+d.ipsec.conf/ipsec-interface.xml
 d.ipsec.conf/priority.xml
 d.ipsec.conf/sendca.xml
 d.ipsec.conf/disablearrivalcheck.xml

@@ -84,11 +84,12 @@
 #include "hostpair.h"
 #include "lswfips.h"
 #include "crypto.h"
-#include "kernel_netlink.h"
+#include "kernel_xfrm.h"
 #include "ip_address.h"
 #include "ip_info.h"
 #include "keyhi.h" /* for SECKEY_DestroyPublicKey */
 #include "state_db.h"
+# include "kernel_xfrm_interface.h"
 
 struct connection *connections = NULL;
 
@@ -232,6 +233,9 @@ static void discard_connection(struct connection *c,
 
 	if (c->pool != NULL)
 		unreference_addresspool(c);
+
+	if (IS_XFRMI && c->xfrmi != NULL)
+		unreference_xfrmi(c);
 
 	/* free up any logging resources */
 	perpeer_logfree(c);
@@ -710,6 +714,9 @@ static void unshare_connection(struct connection *c)
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
+
+	if (IS_XFRMI && c->xfrmi != NULL)
+		reference_xfrmi(c);
 }
 
 static int extract_end(struct end *dst, const struct whack_end *src,
@@ -771,7 +778,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 	dst->host_srcip = src->host_srcip;
 	dst->host_vtiip = src->host_vtiip;
 	dst->client = src->client;
-
+	dst->ifaceip = src->ifaceip;
 	dst->modecfg_server = src->modecfg_server;
 	dst->modecfg_client = src->modecfg_client;
 	dst->cat = src->cat;
@@ -1577,6 +1584,18 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 		c->vti_iface = clone_str(wm->vti_iface, "connection vti_iface");
 		c->vti_routing = wm->vti_routing;
 		c->vti_shared = wm->vti_shared;
+#ifdef USE_XFRM_INTERFACE
+		if (wm->xfrm_if_id != yn_no) {
+			err_t err = xfrm_iface_supported();
+			if (err == NULL) {
+				if (setup_xfrm_interface(c, wm->xfrm_if_id))
+					return false;
+			} else {
+				libreswan_log_rc(RC_FATAL, "ipsec-interface=%u not supported. %s", wm->xfrm_if_id, err);
+				return false;
+			}
+		}
+#endif
 	}
 
 #ifdef HAVE_NM
@@ -3730,6 +3749,7 @@ void show_one_connection(struct fd *whackfd,
 			 const struct connection *c)
 {
 	const char *ifn;
+	char ifnstr[2 *  IFNAMSIZ + 2];  /* id_rname@id_vname\0 */
 	char instance[1 + 10 + 1];
 	char prio[POLICY_PRIO_BUF];
 	char mtustr[8];
@@ -3738,7 +3758,29 @@ void show_one_connection(struct fd *whackfd,
 	char nflogstr[8];
 	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
 
-	ifn = oriented(*c) ? c->interface->ip_dev->id_rname : "";
+	if (oriented(*c)) {
+		if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
+			char *n = jam_str(ifnstr, sizeof(ifnstr),
+					c->xfrmi->name);
+			add_str(ifnstr, sizeof(ifnstr), n, "@");
+			add_str(ifnstr, sizeof(ifnstr), n,
+					c->interface->ip_dev->id_rname);
+			ifn = ifnstr;
+		} else if (strcmp(c->interface->ip_dev->id_rname,
+					c->interface->ip_dev->id_vname) != 0) {
+			/* example ipsec0@eth1 KLIPS */
+			char *n = jam_str(ifnstr, sizeof(ifnstr),
+					c->interface->ip_dev->id_vname);
+			add_str(ifnstr, sizeof(ifnstr), n, "@");
+			add_str(ifnstr, sizeof(ifnstr), n,
+					c->interface->ip_dev->id_rname);
+			ifn = ifnstr;
+		} else {
+			ifn = c->interface->ip_dev->id_rname;
+		}
+	} else {
+		ifn = "";
+	};
 
 	instance[0] = '\0';
 	if (c->kind == CK_INSTANCE && c->instance_serial != 0)

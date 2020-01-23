@@ -94,7 +94,8 @@ struct whack_end {
 		   host_nexthop,
 		   host_srcip;
 	ip_subnet  client,
-		   host_vtiip;
+		   host_vtiip,
+		   ifaceip;
 
 	bool key_from_DNS_on_demand;
 	enum whack_pubkey_type pubkey_type;
@@ -177,6 +178,7 @@ struct whack_message {
 	deltatime_t r_timeout; /* in secs */
 	deltatime_t r_interval; /* in msec */
 	enum yna_options nic_offload;
+	uint32_t xfrm_if_id;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
 	deltatime_t dpd_delay;
