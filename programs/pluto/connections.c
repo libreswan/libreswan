@@ -84,7 +84,7 @@
 #include "hostpair.h"
 #include "lswfips.h"
 #include "crypto.h"
-#include "kernel_netlink.h"
+#include "kernel_xfrm.h"
 #include "ip_address.h"
 #include "ip_info.h"
 #include "keyhi.h" /* for SECKEY_DestroyPublicKey */

@@ -72,7 +72,7 @@
 #include "server.h"
 #include "nat_traversal.h"
 #include "state.h"
-#include "kernel_netlink.h"
+#include "kernel_xfrm.h"
 #include "kernel_pfkey.h"
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
