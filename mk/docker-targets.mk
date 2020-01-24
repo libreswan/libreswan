@@ -81,10 +81,16 @@ ifeq ($(DISTRO), centos)
 		DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)6-min-packages
 		LOCAL_MAKE_FLAGS += USE_DNSSEC=$(D_USE_DNSSEC)
 		LOCAL_MAKE_FLAGS += USE_NSS_IPSEC_PROFILE=$(D_USE_NSS_IPSEC_PROFILE)
+		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE=false
+	endif
+
+	ifeq ($(DISTRO_REL), 8)
+		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE=false
 	endif
 
 	ifeq ($(DISTRO_REL), 8)
 		# CentOS 8 Fedora 28 based so it should be able to handle basic build
+		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE=false
 		DOCKERFILE_PKG = $(D)/Dockerfile-fedora-min-packages
 	endif
 
