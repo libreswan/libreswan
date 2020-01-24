@@ -1,22 +1,5 @@
 #!/bin/sh
 
-# script to  push to github branches for travis tests.
-# This not used to push tog github.com/libreswan/
-#
-# to push to https://travis-ci.org/antonyantony/libreswan/
-#
-# Copyright (C) 2017-2019 Antony Antony <antony@phenome.org>
-#
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
-
 set -eu
 
 verbose=${verbose-''}
@@ -36,7 +19,7 @@ function info() {
     fi
 }
 
-BRANCHES="master travis-fedora-30 travis-fedora-29 travis-fedora-28 travis-fedora-rawhide travis-centos-8 travis-centos-7 travis-centos-6 travis-ubuntu-xenial travis-ubuntu-bionic travis-ubuntu-cosmic travis-ubuntu-disco travis-ubuntu-eoan travis-debian-experimental travis-debian-sid travis-debian-bullseye travis-debian-buster travis-debian-stretch travis-debian-jessie"
+BRANCHES="master travis-fedora-31 travis-fedora-30 travis-fedora-29 travis-fedora-28 travis-fedora-rawhide travis-centos-8 travis-centos-7 travis-centos-6 travis-ubuntu-xenial travis-ubuntu-bionic travis-ubuntu-cosmic travis-ubuntu-disco travis-ubuntu-eoan travis-debian-experimental travis-debian-sid travis-debian-bullseye travis-debian-buster travis-debian-stretch travis-debian-jessie"
 
 DIR="${DIR:-/home/build/git/libreswan}"
 FETCH_REMOTE=yes
@@ -127,10 +110,11 @@ git_work()
 	HEAD_ID_START=`git rev-parse --short HEAD`
 	if [ "${FETCH_REMOTE}" = "yes" ]; then
 		git fetch origin
+		git reset --hard origin/master
 	fi
 	HEAD_ID_END=$(git rev-parse --short HEAD)
 	if [ "${HEAD_ID_END}" = "${HEAD_ID_START}" ] ; then
-		echo "${DATE} IGNORE ${HEAD_ID_START} NOTHING NEW"
+		echo "${TIME} IGNORE ${HEAD_ID_START} NOTHING NEW"
 		return 0
 	fi
 	git reset --hard origin/master
