@@ -100,12 +100,14 @@ static const struct keyword_enum_value kw_ynf_values[] = {
 
 static const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_values);
 
+#ifdef USE_XFRM_INTERFACE
 /* Values for no/yes, used by ipsec-interface */
 static const struct keyword_enum_value kw_yn_values[] = {
 	{ "yes",	yn_yes  },
 	{ "no",		yn_no },
 };
 static const struct keyword_enum_values kw_yn_list = VALUES_INITIALIZER(kw_yn_values);
+#endif
 
 /* Values for yes/no/auto, used by encapsulation and nic-offload */
 static const struct keyword_enum_value kw_yna_values[] = {
