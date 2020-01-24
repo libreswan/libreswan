@@ -682,9 +682,10 @@ doroute() {
 	    ROUTE=yes
     fi
 
-    if [ "${PLUTO_PEER_CLIENT}" =  "${PLUTO_MY_CLIENT}" ]; then
-	XFRMI_ROUTE="samesubnets";
-	echo "leftsubet == rightsubnet = ${PLUTO_PEER_CLIENT} can not add route"
+    if [ "${PLUTO_PEER_CLIENT}" =  "${PLUTO_MY_CLIENT}" -a \
+	    "${PLUTO_XFRMI_ROUTE}" = yes ]; then
+		XFRMI_ROUTE="samesubnets";
+		echo "leftsubet == rightsubnet = ${PLUTO_PEER_CLIENT} can not add route"
     fi
 
     parms="${PLUTO_PEER_CLIENT}"
