@@ -84,7 +84,7 @@ ifeq ($(DISTRO), centos)
 		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE=false
 	endif
 
-	ifeq ($(DISTRO_REL), 8)
+	ifeq ($(DISTRO_REL), 7)
 		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE=false
 	endif
 
