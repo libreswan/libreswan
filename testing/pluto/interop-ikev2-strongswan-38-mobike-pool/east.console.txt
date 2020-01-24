@@ -16,20 +16,29 @@ east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 3658 dport 4500 addr 0.0.0.0
 src 192.1.2.23 dst 192.1.2.254
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 3658 addr 0.0.0.0
 XFRM policy:
 src 192.0.2.0/24 dst 192.0.3.10/32
 	dir out priority 2084799 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
 src 192.0.3.10/32 dst 192.0.2.0/24
 	dir fwd priority 2084799 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 src 192.0.3.10/32 dst 192.0.2.0/24
 	dir in priority 2084799 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

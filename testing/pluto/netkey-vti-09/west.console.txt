@@ -130,15 +130,19 @@ west #
  ip xfrm state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 west #
  ip xfrm policy
@@ -146,26 +150,48 @@ src 10.0.1.0/24 dst 10.0.2.0/24
 	dir out priority 2084814 ptype main 
 	mark 0x15/0xffffffff 
 	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 src 10.0.2.0/24 dst 10.0.1.0/24 
 	dir fwd priority 2084814 ptype main 
 	mark 0x14/0xffffffff 
 	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
 src 10.0.2.0/24 dst 10.0.1.0/24 
 	dir in priority 2084814 ptype main 
 	mark 0x14/0xffffffff 
 	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2084814 ptype main 
 	mark 0x15/0xffffffff 
 	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir fwd priority 2084814 ptype main 
 	mark 0x14/0xffffffff 
 	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir in priority 2084814 ptype main 
 	mark 0x14/0xffffffff 
 	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
 west #
 west #
  ../bin/check-for-core.sh
