@@ -22,7 +22,7 @@ east #
  ip addr show dev eth0
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
     link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
-    inet 192.0.2.254/24 brd 192.0.2.255 scope global eth0
+    inet 192.0.2.254/24 scope global eth0
        valid_lft forever preferred_lft forever
 east #
  ip addr show dev ipsec1
@@ -50,7 +50,6 @@ east #
  ip route show table 50
 Error: ipv4: FIB table does not exist.
 Dump terminated
-east #
 east #
  ../bin/check-for-core.sh
 east #

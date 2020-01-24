@@ -64,40 +64,10 @@ west #
  echo done
 done
 west #
-west TIMESTAMP
-XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid 16389 mode tunnel
-	output-mark 0x1
-	aead rfc4106(gcm(aes)) KEY 128
-	if_id 0x1
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid 16389 mode tunnel
-	output-mark 0x1
-	aead rfc4106(gcm(aes)) KEY 128
-	if_id 0x1
-XFRM policy:
-	dir fwd priority 2097150 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-	if_id 0x1
-	dir in priority 2097150 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-	if_id 0x1
-	dir out priority 2097150 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-	if_id 0x1
-XFRM done
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.1.0/24 dev ipsec1 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 dev ipsec1 scope link
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+ ipsec whack --trafficstatus
+006 #2: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
+west #
+ : ==== tuc ====
 west #
  ipsec auto --status
 000 using kernel interface: netkey
@@ -224,8 +194,6 @@ west #
 000  
 000 Bare Shunt list:
 000  
-west #
- : ==== tuc ====
 west #
  ../bin/check-for-core.sh
 west #

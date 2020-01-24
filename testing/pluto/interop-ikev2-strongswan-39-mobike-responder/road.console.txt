@@ -119,7 +119,7 @@ road #
 default via 192.1.33.254 dev eth0
 road #
  ip addr show scope global
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
     link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
     inet 192.1.33.222/24 scope global eth0
        valid_lft forever preferred_lft forever
