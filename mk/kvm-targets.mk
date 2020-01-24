@@ -361,22 +361,23 @@ kvm-results:
 kvm-diffs:
 	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE)) --print diffs
 
-KVM_MODIFIED_TESTS = $$(git status testing/pluto | awk '/modified:/ { print $$2 }' | cut -d/ -f1-3 | sort -u)
+KVM_MODIFIED_TESTS = git status testing/pluto | awk '/(modified|deleted):/ { print $$2 }' | cut -d/ -f1-3 | sort -u
+
 .PHONY: kvm-modified
 kvm-modified:
-	echo $(KVM_MODIFIED_TESTS)
+	@$(KVM_MODIFIED_TESTS)
 .PHONY: kvm-modified-test kvm-modified-check
 kvm-modified-test kvm-modified-check:
-	$(MAKE) kvm-test KVM_TESTS="$(KVM_MODIFIED_TESTS)"
+	$(MAKE) kvm-test KVM_TESTS="$$($(KVM_MODIFIED_TESTS))"
 .PHONY: kvm-modified-retest kvm-modified-recheck
 kvm-modified-retest kvm-modified-recheck:
-	$(MAKE) kvm-retest KVM_TESTS="$(KVM_MODIFIED_TESTS)"
+	$(MAKE) kvm-retest KVM_TESTS="$$($(KVM_MODIFIED_TESTS))"
 .PHONY: kvm-modified-results
 kvm-modified-results:
-	$(KVMRESULTS) $(KVM_MODIFIED_TESTS)
+	$(KVMRESULTS) $$($(KVM_MODIFIED_TESTS))
 .PHONY: kvm-modified-diffs
 kvm-modified-diffs:
-	$(KVMRESULTS) --print diffs $(KVM_MODIFIED_TESTS)
+	$(KVMRESULTS) --print diffs $$($(KVM_MODIFIED_TESTS))
 
 
 #
