@@ -47,7 +47,7 @@ OBJS += constants.o \
 	lswconf.o \
 	lswfips.o \
 	rangetosubnet.o sameaddr.o \
-	secrets.o subnettot.o \
+	secrets.o \
 	subnettypeof.o ttoaddr.o ttodata.o ttoprotoport.o \
 	ttosa.o ttosubnet.o ttoul.o \
 	secitem_chunk.o \

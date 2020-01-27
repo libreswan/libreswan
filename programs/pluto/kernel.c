@@ -560,14 +560,12 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
 					c->xfrmi->if_id);
 		} else {
-			ipstr_buf bpeer;
-			char peerclient_str[SUBNETTOT_BUF];
-			subnettot(&sr->that.client, 0, peerclient_str,
-					sizeof(peerclient_str));
-			jam(buf, "PLUTO_XFRMI_FWMARK='' ");
+			address_buf bpeer;
+			subnet_buf peerclient_str;
 			dbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
-					ipstr(&sr->that.host_addr, &bpeer),
-					peerclient_str);
+			    str_address(&sr->that.host_addr, &bpeer),
+			    str_subnet(&sr->that.client, &peerclient_str));
+			jam(buf, "PLUTO_XFRMI_FWMARK='' ");
 		}
 	}
 	jam(buf, "VTI_IFACE='%s' ", c->vti_iface ? c->vti_iface : "");

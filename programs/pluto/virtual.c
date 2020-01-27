@@ -442,10 +442,11 @@ static void show_virtual_private_kind(struct fd *whackfd,
 		int i;
 
 		for (i = 0; i < private_net_len; i++) {
-			char sn[SUBNETTOT_BUF];
 			const char *sep = *all == '\0'? "" : ", ";
 
-			subnettot(&private_net[i], 0, sn, sizeof(sn));
+			subnet_buf snb;
+			const char *sn = str_subnet(&private_net[i], &snb);
+
 			if (strlen(all) + strlen(sep) +  strlen(sn) <
 					sizeof(all)) {
 				strcat(all, sep);	/* safe: see allocation above */
