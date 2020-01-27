@@ -1236,7 +1236,7 @@ static bool load_conn(
 	KW_POLICY_FLAG(KNCF_PFS, POLICY_PFS);
 
 	/* reset authby= flags */
-	if (conn->options_set[KSCF_AUTHBY]) {
+	if (conn->strings_set[KSCF_AUTHBY]) {
 
 		conn->policy &= ~POLICY_ID_AUTH_MASK;
 		conn->sighash_policy = LEMPTY;
