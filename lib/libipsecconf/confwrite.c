@@ -342,13 +342,11 @@ static void confwrite_side(FILE *out,
 			str_subnet(&end->vti_ip, &as));
 	}
 
-	if (!isanyaddr(&end->ifaceip.addr)) {
-			char as[ADDRTOT_BUF];
-
-			subnettot(&end->ifaceip, 0, as, sizeof(as));
-			fprintf(out, "\t%sifaceip=%s\n", side, as);
+	if (subnet_is_specified(&end->ifaceip)) {
+		subnet_buf as;
+		fprintf(out, "\t%siface-ip=%s\n", side,
+			str_subnet(&end->ifaceip, &as));
 	}
-
 
 	if (end->rsakey1 != NULL && end->rsakey1[0] != '\0')
 		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsakey1);
