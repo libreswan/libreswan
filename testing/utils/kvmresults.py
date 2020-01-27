@@ -161,7 +161,7 @@ def main():
         return 1
 
     result_stats = stats.Results()
-    exit_code = 1 # assume a barf
+    exit_code = 125 # assume a 'git bisect' barf
     try:
         exit_code = results(logger, tests, baseline, args, result_stats)
     finally:
@@ -183,6 +183,8 @@ def stderr_log(fmt, *args):
 def results(logger, tests, baseline, args, result_stats):
 
     failures = 0
+    unresolved = 0
+    passed = 0
 
     for test in tests:
 
@@ -219,9 +221,13 @@ def results(logger, tests, baseline, args, result_stats):
                     continue
             result_stats.add_result(result)
 
-            if result.resolution not in [post.Resolution.PASSED,
-                                         post.Resolution.UNTESTED,
-                                         post.Resolution.UNSUPPORTED]:
+            if result.resolution in [post.Resolution.PASSED,
+                                     post.Resolution.UNTESTED,
+                                     post.Resolution.UNSUPPORTED]:
+                passed = passed + 1
+            elif result.resolution in [post.Resolution.UNRESOLVED]:
+                unresolved = unresolved + 1
+            else:
                 failures = failures + 1
 
             publish.test_files(logger, args, result)
@@ -246,6 +252,8 @@ def results(logger, tests, baseline, args, result_stats):
     # exit code
     if args.exit_ok:
         return 0
+    elif unresolved:
+        return 125 # 'git bisect' magic for don't know
     elif failures:
         return 1
     else:

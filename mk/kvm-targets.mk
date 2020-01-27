@@ -997,6 +997,12 @@ kvm-install: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-
 	$(MAKE) $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS), install-kvm-domain-$(domain))
 	$(MAKE) kvm-keys
 
+.PHONY: kvm-bisect
+kvm-bisect:
+	: 125 is git bisect magic for 'skip'
+	$(MAKE) kvm-install || exit 125
+	$(MAKE) kvm-test kvm-diffs $(if $(KVM_TESTS),KVM_TESTS="$(KVM_TESTS)")
+
 #
 # kvmsh-HOST
 #
@@ -1284,6 +1290,14 @@ Standard targets and operations:
     kvm-modified-results
     kvm-modified-diffs
                       - list/check/examine any tests with modified files
+
+  To run 'git bisect':
+
+    git bisect start; git bisect good ...; gid bisect bad ...; then
+    git bisect run make kvm-bisect KVM_TESTS=test/that/changed
+                      - kvm-bisect is roughly equivalent to:
+                             make kvm-install || exit 125
+                             make kvm-test kvm-diffs KVM_TESTS=...
 
   To print make variables:
 
