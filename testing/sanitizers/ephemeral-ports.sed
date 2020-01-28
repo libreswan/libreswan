@@ -21,12 +21,8 @@ b end
   # - according to IANA: 49152-65535
   # - according to Linux: 32768-61000
   # the below matches 30000-..  which is good enough
-  / sport [3-6][0-9][0-9][0-9][0-9] / {
-    s/ sport [0-9]\+ / sport EPHEMERAL /g;
-  }
-  / dport [3-6][0-9][0-9][0-9][0-9] / {
-    s/ dport [0-9]\+ / dport EPHEMERAL /g;
-  }
+  s/ sport [3-6][0-9][0-9][0-9][0-9] / sport EPHEMERAL /g
+  s/ dport [3-6][0-9][0-9][0-9][0-9] / dport EPHEMERAL /g;
 
 b match
 
