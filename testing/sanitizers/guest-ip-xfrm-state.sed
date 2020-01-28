@@ -1,8 +1,8 @@
 # match: ip (|-[46]) xfrm state ...
 
-/^ ip xfrm state/ b match
-/^ ip -4 xfrm state/ b match
-/^ ip -6 xfrm state/ b match
+/^ ip xfrm state$/ b match
+/^ ip -4 xfrm state$/ b match
+/^ ip -6 xfrm state$/ b match
 b end
 
 :match
