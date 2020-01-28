@@ -2,25 +2,33 @@
 <term><emphasis remap='B'>ipsec-interface</emphasis></term>
 <listitem>
 <para>
-Create a new IPsec interface or use an existing interface (type xfrm) for
-"Routing based VPNs" (as opposed to "Policy based VPNs").
-<emphasis remap='I'>ipsec-interface=yes</emphasis> will create an interface
-<emphasis>ipsec1</emphasis> <emphasis remap='I'>ipsec-interface=X</emphasis>
-where X is the if_id, create new <emphasis>ipsecX</emphasis>
-or use an existing ipsecX -- created by systemd-networkd, or OpenWRT network config.
-<emphasis remap='I'>ipsec-interface=no</emphasis> disable the interface.
+Create or use an existing virtual interface <emphasis remap='I'>ipsecXXX</emphasis> for "Routing
+based VPNs" (as opposed to "Policy based VPNs"). Valid options are <emphasis remap='I'>yes</emphasis>,
+<emphasis remap='I'>no</emphasis> or a number. When using a number, the IPsec interface created
+and/or used will use that number as part of the interface name. For example setting
+<emphasis remap='I'>ipsec-interface=5</emphasis> will create and/or use the <emphasis>ipsec5</emphasis>
+interface. The value <emphasis remap='I'>0</emphasis> cannot be used and is interpreted as
+<emphasis remap='I'>no</emphasis>. The value <emphasis remap='I'>yes</emphasis> is interpreted as the
+number 1, and thus will use the interface named <emphasis>ipsec1</emphasis>. An IP address can be
+configured for this interface via the <emphasis remap='I'>iface-ip=</emphasis> option.
 </para>
 <para>
-The ipsec-interface, aka xfrmi, can be used to route egress traffic
-for encryption, and decrypted traffic will ingress from this interface,
-this connection. All traffic that is routed to this interface will be automatically
-encrypted when there is a IPsec SA policy covering the
-source/destination traffic. Tools such as tcpdump, iptables or tools that need traffic counters can be
-used on all cleartext pre-encrypt and post-decrypt traffic on the device.
-IPsec interfaces are currently only supported on Linux with XFRM/NETKEY. The
-_updown script handles certain Linux specific interfaces settings
-required for proper functioning (forwarding, routing rules for IPsec/ESP traffic).
-When the leftsubet is equal to rightsubnet the routing should be manged by administrators.
+The ipsec-interface is used to route outbound traffic that needs to be encrypted, and will decrypt
+inbound traffic that arrives on this interface. All traffic that is routed to this interface will
+be automatically encrypted providing the IPsec SA policy covers this traffic. Traffic not matching
+the IPsec SA will be dropped. Tools such as tcpdump, iptables, ifconfig and tools that need traffic
+counters can be used on all cleartext pre-encrypt and post-decrypt traffic on the device. When
+<emphasis remap='I'>leftsubnet=</emphasis> is equal to <emphasis remap='I'>rightsubnet=</emphasis>,
+the routing needs to be manged by an external routing daemon or manually by the administrator.
+</para>
+<para>
+This option is currently only supported on Linux kernels 4.19 or later when compiled with XFRMi support
+(<emphasis>CONFIG_XFRM_INTERFACE</emphasis>). The number of the ipsecX device corresponds with the
+<emphasis>XFRM IF_ID</emphasis> policy option of the IPsec SA in the Linux kernel. On Linux, XFRMi
+interfaces can be managed by libreswan automatically or can be preconfigured on the system using
+the existing init system or via networking tools such as systemd-networkd and NetworkManager. The
+_updown script handles certain Linux specific interfaces settings required for proper functioning,
+such as forwarding and routing rules for IPsec traffic.
 </para>
 </listitem>
 </varlistentry>
