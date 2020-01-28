@@ -1705,9 +1705,6 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 
 		packet_len = recvmsg(ifp->fd, &emh, MSG_ERRQUEUE);
 
-		if (emh.msg_flags & MSG_TRUNC)
-			libreswan_log("recvmsg: received truncated IKE packet (MSG_TRUNC)");
-
 		if (packet_len == -1) {
 			if (errno == EAGAIN) {
 				/* 32 is picked from thin air */
@@ -1727,6 +1724,17 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 				break;
 			}
 		} else {
+			/*
+			 * Getting back a truncated IKE datagram a big
+			 * deal - find_likely_sender() only needs the
+			 * header when figuring out which state sent
+			 * the packet.
+			 */
+			if (DBGP(DBG_BASE) && (emh.msg_flags & MSG_TRUNC)) {
+				DBG_log("recvmsg(,, MSG_ERRQUEUE) on %s returned a truncated (IKE) datagram (MSG_TRUNC)",
+					ifp->ip_dev->id_rname);
+			}
+
 			sender = find_likely_sender((size_t) packet_len,
 						    buffer, sizeof(buffer));
 		}
