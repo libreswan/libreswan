@@ -8,5 +8,9 @@ than one ping, both ends will trigger OE to each other.
 NOTE: we end up with two states but one set of policies in the kernel ????
       This might cause problems if one of the two tunnels is deleted
 
-NOTE: road shows a %pass bare shunt in pluto, but when shunt is deleted, not
-      the shunt but the tunnel out policy is deleted.
+NOTE: this test case no longer needs to wait for shuntlifetime= because
+      the shunt is now immediately replaced when an IPsec SA that matches
+      the (now obsolete) %pass is installed. Test can be updated later to
+      not wait for a shuntscan check. The pluto shunt table entry
+      is deleted. the netlink call to delete the kernel policy it cut
+      short in the case of %pass shunts, since it auto-replaces already.

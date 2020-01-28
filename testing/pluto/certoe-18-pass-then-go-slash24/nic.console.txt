@@ -2,8 +2,8 @@ iptables -t nat -F
 nic #
  iptables -F
 nic #
+ # to ensure no packets sneak through a %pass shunt, drop them on nic
 nic #
- ../bin/check-for-core.sh
+ iptables -I FORWARD -s 0.0.0.0/0 -d 0.0.0.0/0 -p icmp -j DROP
 nic #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 
