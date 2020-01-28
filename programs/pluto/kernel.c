@@ -174,6 +174,7 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 					"bare shunt");
 
 	bs->why = why;
+	bs->from_cn = NULL;
 	bs->ours = *ours;
 	bs->his = *his;
 	bs->transport_proto = transport_proto;
@@ -1132,6 +1133,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 
 	*pp = p->next;
 	DBG_bare_shunt("delete", p);
+	pfreeany(p->from_cn);
 	pfree(p);
 }
 
@@ -1356,7 +1358,19 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 	DBG(DBG_KERNEL,
 		DBG_log("%s specific host-to-host bare shunt",
 			repl ? "replacing" : "removing"));
-	if (raw_eroute(&null_host, &this_client,
+	if (kern_interface == USE_NETKEY && strstr(why, "IGNORE_ON_XFRM:") != NULL) {
+		dbg("skipping raw_eroute because IGNORE_ON_XFRM");
+		struct bare_shunt **bs_pp = bare_shunt_ptr(
+			&this_client,
+			&that_client,
+			transport_proto);
+
+		free_bare_shunt(bs_pp);
+		libreswan_log("raw_eroute() to op='%s' with transport_proto='%d' kernel shunt skipped - deleting from pluto shunt table",
+			repl ? "replace" : "delete",
+			transport_proto);
+		return TRUE;
+	} else if (raw_eroute(&null_host, &this_client,
 			&null_host, &that_client,
 			htonl(cur_shunt_spi),
 			htonl(new_shunt_spi),
@@ -2830,8 +2844,7 @@ bool route_and_eroute(struct connection *c,
 	passert(bspp == NULL || ero == NULL);   /* only one non-NULL */
 
 	if (bspp != NULL || ero != NULL) {
-		/* We're replacing an eroute */
-
+		dbg("we are replacing an eroute");
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
 			eroute_installed = shunt_eroute(c, sr,
@@ -3537,6 +3550,9 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 		bs->count = 0;
 		bs->last_activity = mononow();
+		if (strstr(c->name, "/32") != NULL || strstr(c->name, "/128") != NULL) {
+			bs->from_cn = clone_str(c->name, "conn name in bare shunt");
+		}
 
 		bs->next = bare_shunts;
 		bare_shunts = bs;
@@ -3566,16 +3582,25 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 /* XXX move to proper kernel_ops in kernel_netlink */
 void expire_bare_shunts(void)
 {
-	DBG(DBG_OPPO, DBG_log("expiring aged bare shunts from shunt table"));
+	DBG(DBG_OPPO, DBG_log("checking for aged bare shunts from shunt table to expire"));
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
+		struct connection *c = NULL;
 
 		if (age > deltasecs(pluto_shunt_lifetime)) {
 			DBG_bare_shunt("expiring old", bsp);
+			if (bsp->from_cn != NULL) {
+				c = conn_by_name(bsp->from_cn, FALSE, FALSE);
+				if (c != NULL) {
+					if (!shunt_eroute(c, &c->spd, RT_ROUTED_PROSPECTIVE, ERO_ADD, "add")) {
+						libreswan_log("trap shunt install failed ");
+					}
+				}
+			}
 			if (!delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
 				bsp->transport_proto, ntohl(bsp->said.spi),
-				"expire_bare_shunt")) {
+				bsp->from_cn == NULL ? "expire_bare_shunt" : "IGNORE_ON_XFRM: expire_bare_shunt")) {
 					loglog(RC_LOG_SERIOUS, "failed to delete bare shunt");
 			}
 			passert(bsp != *bspp);

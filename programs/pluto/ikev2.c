@@ -2919,8 +2919,9 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 
 			/*
 			 * If this was an OE connection, check for removing a potential
-			 * matching bare shunt entry - bare shunts are always %pass and
-			 * for xfrm/netlink have a reqid=0
+			 * matching bare shunt entry - bare shunts are always a %pass or
+			 * %hold SPI but are found regardless of whether we passed in
+			 * SPI_PASS or SPI_HOLD ?
 			 */
 			if (LIN(POLICY_OPPORTUNISTIC, c->policy)) {
 				struct spd_route *sr = &c->spd;
@@ -2932,7 +2933,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 						&c->spd.that.host_addr,
 						c->spd.this.protocol,
 						SPI_PASS /* else its not bare */,
-						"installed IPsec SA replaced old bare shunt")) {
+						/* this text is used to signal the low level :/ */
+						"IGNORE_ON_XFRM: installed IPsec SA replaced old bare shunt")) {
 							loglog(RC_LOG_SERIOUS, "Failed to delete old bare shunt");
 					}
 				}

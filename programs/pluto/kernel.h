@@ -326,6 +326,8 @@ struct bare_shunt {
 	 * Simple rule: use a string literal.
 	 */
 	const char *why;
+	/* the conncetion from where it came - used to re-load /32 conns */
+	char *from_cn;
 
 	struct bare_shunt *next;
 };
