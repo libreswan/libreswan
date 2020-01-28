@@ -103,7 +103,6 @@ ip_address said_address(const ip_said *said);
  */
 
 extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
-extern size_t satot(const ip_said *src, int format, char *bufptr, size_t buflen);
 #define SATOT_BUF       sizeof(said_buf)
 
 #endif

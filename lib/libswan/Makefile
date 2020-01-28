@@ -78,7 +78,6 @@ OBJS += addrtot.o
 OBJS += addrtypeof.o
 OBJS += anyaddr.o
 OBJS += datatot.o
-OBJS += satot.o
 OBJS += ultot.o
 
 OBJS += proposals.o
