@@ -1,8 +1,8 @@
 # match: ip (|-[46]) xfrm policy ...
 
-/^ ip xfrm policy/ b match
-/^ ip -4 xfrm policy/ b match
-/^ ip -6 xfrm policy/ b match
+/^ ip xfrm policy$/ b match
+/^ ip -4 xfrm policy$/ b match
+/^ ip -6 xfrm policy$/ b match
 b end
 
 :match

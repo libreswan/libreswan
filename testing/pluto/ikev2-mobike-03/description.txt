@@ -5,12 +5,6 @@ IPsec connection is established. Pluto will detect address deleted and
 find the second adddress as new source address. Initiate MOBIKE probe
 , when response arrive migrate the SA.
 
-limitations to keep in mind:
-Initiator and Responder:
-NAT support need Linux Kernel 4.13 or xfrm migration patches from it.
-CONFIG_XFRM_MIGRATE=y should be enabled in the kernel
-esp=aes256-sha2 use AES CBC for now. AES GCMi (AEAD algs) fails to migrate.
-
 Initiator:
 On the initiator "that" 0.0.0.0/0 with IKEv2 CP may not work.
 server assigned address can't be used to rech "that".

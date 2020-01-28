@@ -1,5 +1,6 @@
-../../pluto/bin/ipsec-look.sh
 ipsec whack --trafficstatus
+ip xfrm state
+ip xfrm policy
 grep "MOBIKE " /tmp/pluto.log
 sleep 7
 : ==== cut ====

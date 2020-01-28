@@ -6,11 +6,11 @@ Redirecting to: [initsystem]
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet
-002 added connection description "westnet-eastnet"
-east #
  ipsec auto --add failureshunt
 002 added connection description "failureshunt"
+east #
+ ipsec auto --add westnet-eastnet
+002 added connection description "westnet-eastnet"
 east #
  ipsec status
 000 using kernel interface: netkey
@@ -106,38 +106,36 @@ east #
 000  
 000 Connection list:
 000  
-000 "failureshunt": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "failureshunt":     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=west; my_updown=ipsec _updown;
+000 "failureshunt": 192.1.2.23<192.1.2.23>...192.1.2.45<192.1.2.45>; unrouted; eroute owner: #0
+000 "failureshunt":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "failureshunt":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "failureshunt":   our auth:rsasig, their auth:rsasig
 000 "failureshunt":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "failureshunt":   policy_label:unset;
-000 "failureshunt":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "failureshunt":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "failureshunt":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "failureshunt":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "failureshunt":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5+failurePASS;
-000 "failureshunt":   v2-auth-hash-policy: none;
-000 "failureshunt":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "failureshunt":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5+failurePASS;
+000 "failureshunt":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+000 "failureshunt":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "failureshunt":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "failureshunt":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org
+000 "failureshunt":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
 000 "failureshunt":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "failureshunt":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=west; my_updown=ipsec _updown;
+000 "westnet-eastnet": 192.1.2.23<192.1.2.23>...192.1.2.45<192.1.2.45>; unrouted; eroute owner: #0
+000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "westnet-eastnet":   policy_label:unset;
-000 "westnet-eastnet":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "westnet-eastnet":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "westnet-eastnet":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "westnet-eastnet":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org
+000 "westnet-eastnet":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
 000 "westnet-eastnet":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
