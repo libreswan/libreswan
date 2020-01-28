@@ -86,6 +86,7 @@
 #include "monotime.h"
 #include "ikev1.h"		/* for complete_v1_state_transition() */
 #include "ikev2.h"		/* for complete_v2_state_transition() */
+#include "state_db.h"
 
 #ifdef USE_XFRM_INTERFACE
 #include "kernel_xfrm_interface.h"
@@ -1563,6 +1564,89 @@ void call_server(char *conffile)
  */
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
+static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
+					size_t sizeof_buffer)
+{
+	if (packet_len > sizeof_buffer) {
+		/*
+		 * When the message is too big it is truncated.  But
+		 * what about the returned packet length?  Force
+		 * truncation.
+		 */
+		dbg("MSG_ERRQUEUE packet longer than %zu bytes; truncated", sizeof_buffer);
+		packet_len = sizeof_buffer;
+	}
+	if (packet_len < sizeof(struct isakmp_hdr)) {
+		dbg("MSG_ERRQUEUE packet is smaller than an IKE header");
+		return NULL;
+	}
+	pb_stream packet_pbs;
+	init_pbs(&packet_pbs, buffer, packet_len, __func__);
+	struct isakmp_hdr hdr;
+	if (!in_struct(&hdr, &raw_isakmp_hdr_desc, &packet_pbs, NULL)) {
+		/*
+		 * XXX:
+		 *
+		 * When in_struct() fails it logs an obscure and
+		 * typically context free error (for instance, cur_*
+		 * is unset when processing error messages); and
+		 * there's no clean for this or calling code to pass
+		 * in context.
+		 *
+		 * Fortunately, since the buffer is large enough to
+		 * hold the header, there's really not much left that
+		 * can trigger an error (everything in ISAKMP_HDR_DESC
+		 * that involves validation has its type set to FT_NAT
+		 * in RAW_ISAKMP_HDR_DESC).
+		 */
+		libreswan_log("MSG_ERRQUEUE packet IKE header is corrupt");
+		return NULL;
+	}
+	enum ike_version ike_version = hdr_ike_version(&hdr);
+	struct state *st;
+	switch (ike_version) {
+	case IKEv1:
+		/* might work? */
+		st = state_by_ike_spis(ike_version,
+				       NULL/*ignore-clonedfrom*/,
+				       NULL/*ignore-v1_msgid*/,
+				       NULL/*ignore-role*/,
+				       &hdr.isa_ike_spis,
+				       NULL, NULL,
+				       __func__);
+		break;
+	case IKEv2:
+	{
+		/*
+		 * Since this end sent the message mapping IKE_I is
+		 * straight forward.
+		 */
+		enum sa_role ike_role = (hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) ? SA_INITIATOR : SA_RESPONDER;
+		so_serial_t clonedfrom = SOS_NOBODY;
+		st = state_by_ike_spis(ike_version,
+				       &clonedfrom/*IKE*/,
+				       NULL/*ignore-v1_msgid*/,
+				       &ike_role,
+				       &hdr.isa_ike_spis,
+				       NULL, NULL,
+				       __func__);
+		break;
+	}
+	default:
+		dbg("MSG_ERRQUEUE packet IKE header version unknown");
+		return NULL;
+	}
+	if (st == NULL) {
+		dbg("MSG_ERRQUEUE packet has no matching %s SA",
+		    enum_name(&ike_version_names, ike_version));
+		return NULL;
+	}
+	dbg("MSG_ERRQUEUE packet matches %s SA #%lu",
+	    enum_name(&ike_version_names, ike_version),
+	    st->st_serialno);
+	return st;
+}
+
 static bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *before)
 {
 	struct pollfd pfd;

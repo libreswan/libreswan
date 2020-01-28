@@ -809,8 +809,6 @@ extern struct state
 	*find_phase2_state_to_delete(const struct state *p1st, uint8_t protoid,
 			     ipsec_spi_t spi, bool *bogus),
 	*find_phase1_state(const struct connection *c, lset_t ok_states);
-struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
-				 size_t sizeof_buffer);
 
 struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid);
 struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
