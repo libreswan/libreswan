@@ -47,11 +47,62 @@ road #
 road #
  ip xfrm state
 src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+road #
+ ip xfrm policy
+src 192.0.3.10/32 dst 0.0.0.0/0 
+	dir out priority 2080767 ptype main 
+	tmpl src 192.1.3.209 dst 192.1.2.23
+src 0.0.0.0/0 dst 192.0.3.10/32 
+	dir fwd priority 2080767 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
+src 0.0.0.0/0 dst 192.0.3.10/32 
+	dir in priority 2080767 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
+src 192.0.2.0/24 dst 192.1.3.209/32 
+	dir fwd priority 3129295 ptype main 
+src 192.0.2.0/24 dst 192.1.3.209/32 
+	dir in priority 3129295 ptype main 
+src 192.1.3.209/32 dst 192.0.2.0/24 
+	dir out priority 3129295 ptype main 
+src 192.1.2.0/24 dst 192.1.3.209/32 
+	dir fwd priority 3129295 ptype main 
+src 192.1.2.0/24 dst 192.1.3.209/32 
+	dir in priority 3129295 ptype main 
+src 192.1.3.209/32 dst 192.1.2.0/24 
+	dir out priority 3129295 ptype main 
+src 192.1.2.129/32 dst 192.1.3.209/32 
+	dir fwd priority 3129279 ptype main 
+src 192.1.2.129/32 dst 192.1.3.209/32 
+	dir in priority 3129279 ptype main 
+src 192.1.3.209/32 dst 192.1.2.129/32 
+	dir out priority 3129279 ptype main 
+src 192.1.2.130/32 dst 192.1.3.209/32 
+	dir fwd priority 3129279 ptype main 
+src 192.1.2.130/32 dst 192.1.3.209/32 
+	dir in priority 3129279 ptype main 
+src 192.1.3.209/32 dst 192.1.2.130/32 
+	dir out priority 3129279 ptype main 
+src 192.1.2.254/32 dst 192.1.3.209/32 
+	dir fwd priority 3129279 ptype main 
+src 192.1.2.254/32 dst 192.1.3.209/32 
+	dir in priority 3129279 ptype main 
+src 192.1.3.209/32 dst 192.1.2.254/32 
+	dir out priority 3129279 ptype main 
+src 192.0.2.252/30 dst 192.1.3.209/32 
+	dir fwd priority 3129283 ptype main 
+src 192.0.2.252/30 dst 192.1.3.209/32 
+	dir in priority 3129283 ptype main 
+src 192.1.3.209/32 dst 192.0.2.252/30 
+	dir out priority 3129283 ptype main 
+src 192.1.3.252/30 dst 192.1.3.209/32 
+	dir fwd priority 3129283 ptype main 
+src 192.1.3.252/30 dst 192.1.3.209/32 
+	dir in priority 3129283 ptype main 
+src 192.1.3.209/32 dst 192.1.3.252/30 
+	dir out priority 3129283 ptype main 
 road #
  sleep 5
 road #
@@ -105,16 +156,67 @@ road #
  echo done
 done
 road #
- ip xfrm state
-src 192.1.2.23 dst 192.1.33.222
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xENCKEY
-src 192.1.33.222 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xENCKEY
-road #
  ipsec whack --trafficstatus
 006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='192.1.2.23', lease=192.0.3.10/32
+road #
+ ip xfrm state
+src 192.1.2.23 dst 192.1.33.222
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+src 192.1.33.222 dst 192.1.2.23
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+road #
+ ip xfrm policy
+src 192.0.3.10/32 dst 0.0.0.0/0 
+	dir out priority 2080767 ptype main 
+	tmpl src 192.1.33.222 dst 192.1.2.23
+src 0.0.0.0/0 dst 192.0.3.10/32 
+	dir fwd priority 2080767 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.33.222
+src 0.0.0.0/0 dst 192.0.3.10/32 
+	dir in priority 2080767 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.33.222
+src 192.0.2.0/24 dst 192.1.3.209/32 
+	dir fwd priority 3129295 ptype main 
+src 192.0.2.0/24 dst 192.1.3.209/32 
+	dir in priority 3129295 ptype main 
+src 192.1.3.209/32 dst 192.0.2.0/24 
+	dir out priority 3129295 ptype main 
+src 192.1.2.0/24 dst 192.1.3.209/32 
+	dir fwd priority 3129295 ptype main 
+src 192.1.2.0/24 dst 192.1.3.209/32 
+	dir in priority 3129295 ptype main 
+src 192.1.3.209/32 dst 192.1.2.0/24 
+	dir out priority 3129295 ptype main 
+src 192.1.2.129/32 dst 192.1.3.209/32 
+	dir fwd priority 3129279 ptype main 
+src 192.1.2.129/32 dst 192.1.3.209/32 
+	dir in priority 3129279 ptype main 
+src 192.1.3.209/32 dst 192.1.2.129/32 
+	dir out priority 3129279 ptype main 
+src 192.1.2.130/32 dst 192.1.3.209/32 
+	dir fwd priority 3129279 ptype main 
+src 192.1.2.130/32 dst 192.1.3.209/32 
+	dir in priority 3129279 ptype main 
+src 192.1.3.209/32 dst 192.1.2.130/32 
+	dir out priority 3129279 ptype main 
+src 192.1.2.254/32 dst 192.1.3.209/32 
+	dir fwd priority 3129279 ptype main 
+src 192.1.2.254/32 dst 192.1.3.209/32 
+	dir in priority 3129279 ptype main 
+src 192.1.3.209/32 dst 192.1.2.254/32 
+	dir out priority 3129279 ptype main 
+src 192.0.2.252/30 dst 192.1.3.209/32 
+	dir fwd priority 3129283 ptype main 
+src 192.0.2.252/30 dst 192.1.3.209/32 
+	dir in priority 3129283 ptype main 
+src 192.1.3.209/32 dst 192.0.2.252/30 
+	dir out priority 3129283 ptype main 
+src 192.1.3.252/30 dst 192.1.3.209/32 
+	dir fwd priority 3129283 ptype main 
+src 192.1.3.252/30 dst 192.1.3.209/32 
+	dir in priority 3129283 ptype main 
+src 192.1.3.209/32 dst 192.1.3.252/30 
+	dir out priority 3129283 ptype main 
 road #
 road #
  ../bin/check-for-core.sh

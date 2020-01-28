@@ -6,4 +6,3 @@ fail to find an alternative source adddress.
 
 Later on a new address is added. Pluto will detect this and send MOBIKE probe.
 When the mobike response arrive migrate the SA.
-

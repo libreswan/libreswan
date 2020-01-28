@@ -44,11 +44,7 @@ road #
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xENCKEY
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 0.0.0.0/0 dst 192.0.3.10/32
 	dir fwd priority 2080767 ptype main
@@ -83,13 +79,9 @@ road #
 road #
  # remove this end ip next one will take over
 road #
- ip addr show  scope global
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
-    link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
-    inet 192.1.3.209/24 brd 192.1.3.255 scope global eth0
-       valid_lft forever preferred_lft forever
-3: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN group default
-    link/ipip 0.0.0.0 brd 0.0.0.0
+ ../bin/ip-addr-show.sh
+eth0 inet 192.1.3.209/24
+lo inet 192.0.3.10/32
 road #
  ip route
 0.0.0.0/1 dev eth0 scope link src 192.0.3.10
@@ -106,11 +98,8 @@ road #
 road #
  sleep 5
 road #
- ip addr show  scope global
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
-    link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
-3: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN group default
-    link/ipip 0.0.0.0 brd 0.0.0.0
+ ../bin/ip-addr-show.sh
+lo inet 192.0.3.10/32
 road #
  ip route
 road #
@@ -123,7 +112,9 @@ road #
  # let libreswan detect change and do a MOBIKE update
 road #
  ping -W 1 -q -n -c 2 -I 192.0.3.10 192.1.2.23
-bind: Cannot assign requested address
+PING 192.1.2.23 (192.1.2.23) from 192.0.3.10 : 56(84) bytes of data.
+--- 192.1.2.23 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
  sleep 10
 road #
@@ -154,39 +145,23 @@ road #
  echo done
 done
 road #
- ../../pluto/bin/ipsec-look.sh
-road NOW
-XFRM state:
-src 192.1.2.23 dst 192.1.33.209
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xENCKEY
-src 192.1.33.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xENCKEY
-XFRM policy:
-src 0.0.0.0/0 dst 192.0.3.10/32
-	dir fwd priority 2080767 ptype main
-	tmpl src 192.1.2.23 dst 192.1.33.209
-src 0.0.0.0/0 dst 192.0.3.10/32
-	dir in priority 2080767 ptype main
-	tmpl src 192.1.2.23 dst 192.1.33.209
-src 192.0.3.10/32 dst 0.0.0.0/0
-	dir out priority 2080767 ptype main
-	tmpl src 192.1.33.209 dst 192.1.2.23
-XFRM done
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
-ROUTING TABLES
-0.0.0.0/1 via 192.1.33.254 dev eth0 src 192.0.3.10
-default via 192.1.33.254 dev eth0
-128.0.0.0/1 via 192.1.33.254 dev eth0 src 192.0.3.10
-192.1.33.0/24 dev eth0 proto kernel scope link src 192.1.33.209
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-road #
  ipsec whack --trafficstatus
 006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23', lease=192.0.3.10/32
+road #
+ ip xfrm state
+src 192.1.2.23 dst 192.1.33.209
+src 192.1.33.209 dst 192.1.2.23
+road #
+ ip xfrm policy
+src 192.0.3.10/32 dst 0.0.0.0/0 
+	dir out priority 2080767 ptype main 
+	tmpl src 192.1.33.209 dst 192.1.2.23
+src 0.0.0.0/0 dst 192.0.3.10/32 
+	dir fwd priority 2080767 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.33.209
+src 0.0.0.0/0 dst 192.0.3.10/32 
+	dir in priority 2080767 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.33.209
 road #
  grep "MOBIKE " /tmp/pluto.log
 | #1 MOBIKE new source address 192.1.33.209 remote 192.1.2.23:500 and gateway 192.1.33.254
@@ -194,12 +169,6 @@ road #
 | TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response 
 | #2 pst=#1 MOBIKE update local address 192.1.3.209:500 -> 192.1.33.209:500
 "road-eastnet"[1] 192.1.2.23 #1:  success MOBIKE update local address 192.1.3.209:500 -> 192.1.33.209:500
-"road-eastnet"[1] 192.1.2.23 #1: MOBIKE response: updating IPsec SA
-| #1 MOBIKE new source address 192.1.33.209 remote 192.1.2.23:500 and gateway 192.1.33.254
-| TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response 
-| TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response 
-| #2 pst=#1 MOBIKE update local address 192.1.33.209:500 -> 192.1.33.209:500
-"road-eastnet"[1] 192.1.2.23 #1:  success MOBIKE update local address 192.1.33.209:500 -> 192.1.33.209:500
 "road-eastnet"[1] 192.1.2.23 #1: MOBIKE response: updating IPsec SA
 road #
  sleep 7
