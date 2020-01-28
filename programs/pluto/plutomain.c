@@ -904,7 +904,7 @@ int main(int argc, char **argv)
 			pluto_drop_oppo_null = TRUE;
 			continue;
 
-		case '9':	/* --expire-bare-shunt <interval> */
+		case '9':	/* --expire-shunt-interval <interval> */
 		{
 			unsigned long d = 0;
 			ugh = ttoulb(optarg, 0, 10, 1000, &d);
