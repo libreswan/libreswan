@@ -73,6 +73,7 @@
 #include "ikev2_states.h"
 #include "ip_endpoint.h"
 #include "hostpair.h"		/* for find_v2_host_connection() */
+#include "kernel.h"
 
 
 static void v2_dispatch(struct ike_sa *ike, struct state *st,
@@ -2914,7 +2915,28 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			dbg("unpending #%lu's IKE SA #%lu", st->st_serialno,
 			    ike->sa.st_serialno);
 			/* a better call unpend in ikev2_ike_sa_established? */
-			unpend(ike, st->st_connection);
+			unpend(ike, c);
+
+			/*
+			 * If this was an OE connection, check for removing a potential
+			 * matching bare shunt entry - bare shunts are always %pass and
+			 * for xfrm/netlink have a reqid=0
+			 */
+			if (LIN(POLICY_OPPORTUNISTIC, c->policy)) {
+				struct spd_route *sr = &c->spd;
+				struct bare_shunt **bs = bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol);
+
+				if (bs != NULL) {
+					dbg("deleting old bare shunt");
+					if (!delete_bare_shunt(&c->spd.this.host_addr,
+						&c->spd.that.host_addr,
+						c->spd.this.protocol,
+						SPI_PASS /* else its not bare */,
+						"installed IPsec SA replaced old bare shunt")) {
+							loglog(RC_LOG_SERIOUS, "Failed to delete old bare shunt");
+					}
+				}
+			}
 			release_any_whack(&ike->sa, HERE, "IKEv2 transitions finished so releaseing IKE SA");
 		}
 	}
@@ -3408,7 +3430,6 @@ void lswlog_v2_stf_status(struct lswlog *buf, unsigned status)
 }
 
 /* used by parent and child to emit v2N_IPCOMP_SUPPORTED if appropriate */
-#include "kernel.h"
 bool emit_v2N_compression(struct state *cst,
 			bool OK,
 			pb_stream *s)
