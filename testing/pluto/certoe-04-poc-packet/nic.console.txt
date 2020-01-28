@@ -2,8 +2,6 @@ iptables -t nat -F
 nic #
  iptables -F
 nic #
-nic #
- ../bin/check-for-core.sh
-nic #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+ echo initdone
+initdone
 
