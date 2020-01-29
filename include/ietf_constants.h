@@ -1710,7 +1710,7 @@ enum ipsec_authentication_algo {
 	/* IKEv2 1024 - 65535 Reserved for private use */
 	AH_AES_CMAC_96 = 250,      /* IKEv2=8 */
 	AH_NULL = 251,		/* comes from kame? */
-	AH_SHA2_256_TRUNC = 252,	/* our own stolen value */
+	AH_SHA2_256_TRUNCBUG = 252,	/* our own stolen value */
 };
 
 /*

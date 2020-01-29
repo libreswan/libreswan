@@ -128,7 +128,7 @@ const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 	},
 	.integ_keymat_size = SHA2_256_DIGEST_SIZE,
 	.integ_output_size = BYTES_FOR_BITS(96),
-	.integ_ikev1_ah_transform = AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG, /* YES, not AH_... */
+	.integ_ikev1_ah_transform = AH_SHA2_256_TRUNCBUG,
 #ifdef SADB_X_AALG_SHA2_256HMAC_TRUNCBUG
 	.integ_sadb_aalg_id = SADB_X_AALG_SHA2_256HMAC_TRUNCBUG,
 #endif

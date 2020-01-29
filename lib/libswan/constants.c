@@ -590,7 +590,7 @@ static const char *const ah_transform_name_private_use[] = {
 
 static enum_names ah_transformid_names_private_use = {
 	AH_AES_CMAC_96,
-	AH_SHA2_256_TRUNC,
+	AH_SHA2_256_TRUNCBUG,
 	ARRAY_REF(ah_transform_name_private_use),
 	NULL, /* prefix */
 	NULL
