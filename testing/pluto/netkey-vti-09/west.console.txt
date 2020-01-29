@@ -16,7 +16,7 @@ west #
  # remove this address from eth0. It will come back on vti
 west #
  ip addr show dev eth0 | grep 192.0.1.254 && ip addr del 192.0.1.254/24 dev eth0
-    inet 192.0.1.254/24 brd 192.0.1.255 scope global eth0
+    inet 192.0.1.254/24 scope global eth0
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -98,7 +98,7 @@ west #
     link/ether 12:00:00:ab:cd:ff brd ff:ff:ff:ff:ff:ff
 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
     link/ether 12:00:00:64:64:45 brd ff:ff:ff:ff:ff:ff
-    inet 192.1.2.45/24 brd 192.1.2.255 scope global eth1
+    inet 192.1.2.45/24 scope global eth1
        valid_lft forever preferred_lft forever
 4: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN group default
     link/ipip 0.0.0.0 brd 0.0.0.0

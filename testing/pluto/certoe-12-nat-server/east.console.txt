@@ -14,11 +14,11 @@ east #
  ip addr show scope global
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
     link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
-    inet 192.0.2.254/24 brd 192.0.2.255 scope global eth0
+    inet 192.0.2.254/24 scope global eth0
        valid_lft forever preferred_lft forever
 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
     link/ether 12:00:00:64:64:23 brd ff:ff:ff:ff:ff:ff
-    inet 192.1.2.23/24 brd 192.1.2.255 scope global eth1
+    inet 192.1.2.23/24 scope global eth1
        valid_lft forever preferred_lft forever
 east #
  ipsec start

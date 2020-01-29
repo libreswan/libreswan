@@ -8,9 +8,17 @@ nic #
 nic #
  iptables -X
 nic #
- iptables -t nat -A POSTROUTING -p udp --sport 4500 -j SNAT --to-source 192.1.2.254:3503-3504
+ # port for the first address
 nic #
- iptables -t nat -A POSTROUTING -p udp --sport 500 -j SNAT --to-source 192.1.2.254:2503-2504
+ iptables -t nat -A POSTROUTING -s 192.1.3.209 -p udp --sport 4500 -j SNAT --to-source 192.1.2.254:3503-3509
+nic #
+ iptables -t nat -A POSTROUTING -s 192.1.3.209 -p udp --sport 500 -j SNAT --to-source 192.1.2.254:2503-2509
+nic #
+ # for the second address use different port range
+nic #
+ iptables -t nat -A POSTROUTING -s 192.1.33.222 -p udp --sport 4500 -j SNAT --to-source 192.1.2.254:6503-6509
+nic #
+ iptables -t nat -A POSTROUTING -s 192.1.33.222 -p udp --sport 500 -j SNAT --to-source 192.1.2.254:5503-5509
 nic #
  iptables -t nat -A POSTROUTING --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.254
 nic #
@@ -23,8 +31,10 @@ Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
-SNAT       udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:4500 to:192.1.2.254:3503-3504
-SNAT       udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:500 to:192.1.2.254:2503-2504
+SNAT       udp  --  192.1.3.209          0.0.0.0/0            udp spt:4500 to:192.1.2.254:3503-3509
+SNAT       udp  --  192.1.3.209          0.0.0.0/0            udp spt:500 to:192.1.2.254:2503-2509
+SNAT       udp  --  192.1.33.222         0.0.0.0/0            udp spt:4500 to:192.1.2.254:6503-6509
+SNAT       udp  --  192.1.33.222         0.0.0.0/0            udp spt:500 to:192.1.2.254:5503-5509
 SNAT       all  --  0.0.0.0/0            0.0.0.0/0            to:192.1.2.254
 nic #
  iptables -L -n
