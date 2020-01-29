@@ -11,3 +11,5 @@ s/qdisc fq_codel state UP group default/state UP/
 s/noop state DOWN mode DEFAULT group default/state DOWN/
 s/noqueue state DOWN group default qlen [0-9]*/state DOWN/
 s/qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000/state UNKNOWN/
+#s/ brd 192.1.3.255 scope /scope /
+s/ brd [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\} scope/ scope/
