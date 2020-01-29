@@ -265,6 +265,8 @@ endif
 USE_XFRM_HEADER_COPY?=true
 XFRM_LIFETIME_DEFAULT?=30
 
+USE_XFRM_INTERFACE_IFLA_HEADER?=false
+
 # Some systems have a bogus combination of glibc and kernel-headers which
 # causes a conflict in the IPv6 defines. Try enabling this option as a workaround
 # when you see errors related to 'struct in6_addr'

@@ -173,6 +173,10 @@ static bool link_add_nl_msg(const char *if_name,
 			strlen(link_type));
 
 	struct rtattr *xfrm_link = nl_addattr_nest(&req->n, sizeof(struct nl_ifinfomsg_req), IFLA_INFO_DATA);
+	/*
+	 * IFLA_XFRM_IF_ID was added to mainline kernel 4.19 linux/if_link.h
+	 * with older kernel headers 'make USE_XFRM_INTERFACE_IFLA_HEADER=true'
+	 */
 	nl_addattr32(&req->n, 1024, IFLA_XFRM_IF_ID, if_id);
 
 	if (dev_name != NULL) {

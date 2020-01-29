@@ -67,6 +67,12 @@ ifeq ($(USE_XFRM_HEADER_COPY),true)
 CFLAGS+=-I ${LIBRESWANSRCDIR}/programs/pluto/linux-copy
 endif
 
+ifeq ($(USE_XFRM_INTERFACE), true)
+ifeq ($(USE_XFRM_INTERFACE_IFLA_HEADER), true)
+CFLAGS+=-I ${LIBRESWANSRCDIR}/programs/pluto/linux-extra-if-link -DUSE_XFRM_INTERFACE_IFLA_HEADER
+endif
+endif
+
 ifeq ($(USE_GLIBC_KERN_FLIP_HEADERS),true)
 CFLAGS+=-DGLIBC_KERN_FLIP_HEADERS
 endif
