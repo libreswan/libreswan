@@ -328,7 +328,8 @@ struct state;
 extern struct pluto_crypto_req_cont *new_pcrc(crypto_req_cont_func fn,
 					      const char *name);
 
-extern void init_crypto_helpers(int nhelpers);
+extern void start_crypto_helpers(int nhelpers);
+extern void stop_crypto_helpers(void);
 
 extern void send_crypto_helper_request(struct state *st,
 				       struct pluto_crypto_req_cont *cn);

@@ -36,7 +36,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
-
+#include <unistd.h>		/* for pipe2() */
+#include <fcntl.h>		/* for fcntl() et.al. */
 
 #include "sysdep.h"
 #include "constants.h"
@@ -190,7 +191,24 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n);
 /* may be NULL if we are to do all the work ourselves */
 static struct pluto_crypto_worker *pc_workers = NULL;
 
-static int pc_workers_cnt = 0;	/* number of workers threads */
+static int nr_helpers_started = 0;	/* number of workers threads */
+
+/*
+ * PIPE for reporting shutdown down threads.
+ *
+ * When a helper thread exits, it writes its struct
+ * pluto_crypto_worker object to the pipe.  The main thread then
+ * expects to read NR_HELPERS_STARTED pointers.
+ *
+ * Can't use join as there isn't a way to ensure that the thread being
+ * waited on is the next to exit; and can't wait on any thread as
+ * there may be more than we see here; and besides these get
+ * daemonized?
+ */
+static struct {
+	int send;
+	int recv;
+} helper_exited;
 
 /* pluto crypto operations */
 static const char *const pluto_cryptoop_strings[] = {
@@ -381,7 +399,7 @@ static void *pluto_crypto_helper_thread(void *arg)
 		    w->pcw_helpernum, status));
 #endif
 
-	while(!exiting_pluto) {
+	while (true) {
 		w->pcw_pcrc_id = 0;
 		w->pcw_pcrc_serialno = SOS_NOBODY;
 		struct pluto_crypto_req_cont *cn = NULL;
@@ -389,46 +407,60 @@ static void *pluto_crypto_helper_thread(void *arg)
 		{
 			/*
 			 * Search the backlog[] for something to do.
-			 * If needed sleep.
+			 * If needed wait.
 			 */
-			for (;;) {
-				/* get oldest; if any */
-				FOR_EACH_LIST_ENTRY_OLD2NEW(&backlog, cn) {
-					/* CN is the first entry */
-					goto found_work;
+			pexpect(cn == NULL);
+			while (!exiting_pluto) {
+				/* grab the next entry, if there is one */
+				pexpect(cn == NULL);
+				FOR_EACH_LIST_ENTRY_OLD2NEW(&backlog, cn) { break; }
+				if (cn != NULL) {
+					/*
+					 * Assign the entry to this
+					 * thread, removing it from
+					 * the backlog.
+					 */
+					remove_list_entry(&cn->pcrc_backlog);
+					cn->pcrc_helpernum = w->pcw_helpernum;
+					w->pcw_pcrc_id = cn->pcrc_id;
+					w->pcw_pcrc_serialno = cn->pcrc_serialno;
+					break;
 				}
-				DBG(DBG_CONTROL, DBG_log("crypto helper %d waiting (nothing to do)",
-							 w->pcw_helpernum));
+				dbg("crypto helper %d waiting (nothing to do)",
+				    w->pcw_helpernum);
 				pthread_cond_wait(&backlog_cond, &backlog_mutex);
-				DBG(DBG_CONTROL, DBG_log("crypto helper %d resuming",
-							 w->pcw_helpernum));
+				dbg("crypto helper %d resuming", w->pcw_helpernum);
 			}
-		found_work:
-			/*
-			 * Assign the entry to this thread, removing
-			 * it from the backlog.
-			 */
-			remove_list_entry(&cn->pcrc_backlog);
-			cn->pcrc_helpernum = w->pcw_helpernum;
-			w->pcw_pcrc_id = cn->pcrc_id;
-			w->pcw_pcrc_serialno = cn->pcrc_serialno;
+			if (cn == NULL) {
+				/*
+				 * No CN implies pluto is exiting but
+				 * not reverse - could grab a CN in
+				 * parallel to pluto starting to exit.
+				 */
+				pexpect(exiting_pluto);
+			}
 		}
 		pthread_mutex_unlock(&backlog_mutex);
+		if (cn == NULL) {
+			/* per above, must be shutting down */
+			break;
+		}
 		if (!cn->pcrc_cancelled) {
-			DBG(DBG_CONTROL,
-			    DBG_log("crypto helper %d starting work-order %u for state #%lu",
-				    w->pcw_helpernum, w->pcw_pcrc_id,
-				    w->pcw_pcrc_serialno));
+			dbg("crypto helper %d starting work-order %u for state #%lu",
+			    w->pcw_helpernum, w->pcw_pcrc_id,
+			    w->pcw_pcrc_serialno);
 			pluto_do_crypto_op(cn, w->pcw_helpernum);
 		}
-		DBG(DBG_CONTROL,
-		    DBG_log("crypto helper %d sending results from work-order %u for state #%lu to event queue",
-			    w->pcw_helpernum, w->pcw_pcrc_id,
-			    w->pcw_pcrc_serialno));
+		dbg("crypto helper %d sending results from work-order %u for state #%lu to event queue",
+		    w->pcw_helpernum, w->pcw_pcrc_id,
+		    w->pcw_pcrc_serialno);
 		schedule_resume("sending helper answer", w->pcw_pcrc_serialno,
 				handle_helper_answer, cn);
 	}
 	dbg("shutting down helper thread %d", w->pcw_helpernum);
+	if (write(helper_exited.send, &w, sizeof(w)) != sizeof(w)) {
+		LOG_ERRNO(errno, "problem writing to helper exit pipe");
+	}
 	return NULL;
 }
 
@@ -697,12 +729,12 @@ static void init_crypto_helper_delay(void)
  * more requests than average.
  *
  */
-void init_crypto_helpers(int nhelpers)
+void start_crypto_helpers(int nhelpers)
 {
 	int i;
 
 	pc_workers = NULL;
-	pc_workers_cnt = 0;
+	nr_helpers_started = 0;
 
 	init_list(&backlog_info, &backlog);
 	init_crypto_helper_delay();
@@ -730,17 +762,72 @@ void init_crypto_helpers(int nhelpers)
 	}
 
 	if (nhelpers > 0) {
-		libreswan_log("starting up %d crypto helpers",
-			      nhelpers);
+		libreswan_log("starting up %d crypto helpers", nhelpers);
+
+		/*
+		 * Set up a pipe for shutting down the threads.
+		 */
+		int exit_pipe[2];
+		if (pipe(exit_pipe) < 0) {
+			EXIT_LOG_ERRNO(errno, "problem creating helper exit pipe");
+		}
+		for (unsigned i = 0; i < elemsof(exit_pipe); i++) {
+			if (fcntl(exit_pipe[i], F_SETFD, FD_CLOEXEC) < 0) {
+				EXIT_LOG_ERRNO(errno, "problem setting FD_CLOEXE on helper exit pipe");
+			}
+			/* Only BSD has O_NOSIGPIPE */
+		}
+		helper_exited.send = exit_pipe[1];
+		helper_exited.recv = exit_pipe[0];
+
+		/*
+		 * create the threads.  Set nr_helpers_started after
+		 * the threads have been created so that shutdown code
+		 * only tries to run when there really are threads.
+		 */
 		pc_workers = alloc_bytes(sizeof(*pc_workers) * nhelpers,
 					 "pluto crypto helpers (ignore)");
-		pc_workers_cnt = nhelpers;
-
-		for (i = 0; i < nhelpers; i++)
+		for (i = 0; i < nhelpers; i++) {
 			init_crypto_helper(&pc_workers[i], i);
+		}
+		nr_helpers_started = nhelpers;
 	} else {
 		libreswan_log(
 			"no crypto helpers will be started; all cryptographic operations will be done inline");
+	}
+}
+
+/*
+ * Repeatedly nudge the helper threads until they all exit.
+ *
+ * Note that pthread_join() doesn't work here: an any-thread join may
+ * end up joining an unrelated thread (for instance the CRL helper);
+ * and a specific thread join may block waiting for the wrong thread.
+ */
+
+void stop_crypto_helpers(void)
+{
+	if (nr_helpers_started > 0) {
+		unsigned remaining = nr_helpers_started;
+		do {
+			/* poke threads waiting for work */
+			pthread_mutex_lock(&backlog_mutex);
+			pthread_cond_signal(&backlog_cond);
+			pthread_mutex_unlock(&backlog_mutex);
+			/* wait for one to die; add timeout? */
+			struct pluto_crypto_worker *w = NULL;
+			if (read(helper_exited.recv, &w, sizeof(w)) < 0 ||
+			    w == NULL/*er!!!*/) {
+				LOG_ERRNO(errno, "error reading helper exit pipe");
+				/* give up; too much risk of a hang */
+				return;
+			}
+			dbg("crypto helper thread %d exited", w->pcw_helpernum);
+			remaining--;
+		} while (remaining > 0);
+		plog_global("%d crypto helpers shutdown", nr_helpers_started);
+	} else {
+		dbg("no crypto helpers to shutdown");
 	}
 }
 

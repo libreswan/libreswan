@@ -1816,7 +1816,7 @@ int main(int argc, char **argv)
 		exit(PLUTO_EXIT_OK);
 	}
 
-	init_crypto_helpers(nhelpers);
+	start_crypto_helpers(nhelpers);
 	init_kernel();
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
@@ -1858,9 +1858,6 @@ void exit_pluto(enum pluto_exit_code status)
 	 * is exiting and they should quit.  Even if pthread_cancel()
 	 * weren't buggy, using it correctly would be hard, so use
 	 * this instead.
-	 *
-	 * XXX: All threads need to be told to quit before things like
-	 * NSS can be closed.  So a TODO is to join those threads.
 	 */
 	exiting_pluto = true;
 
@@ -1869,6 +1866,25 @@ void exit_pluto(enum pluto_exit_code status)
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, status);
  #endif
+
+	/*
+	 * Wait for the crypto-helper threads to notice EXITING_PLUTO
+	 * and exit (if necessary, wake any sleeping helpers from
+	 * their slumber).  Without this any helper using NSS after
+	 * the code below has shutdown the NSS DB will crash.
+	 *
+	 * This does not try to delete any tasks left waiting on the
+	 * helper queue.  Instead, code further down deleting
+	 * connections (which in turn deletes states) should clean
+	 * that up?
+	 *
+	 * This also does not try to delete any completed tasks
+	 * waiting on the event loop.  One theory is for the helper
+	 * code to be changed so that helper tasks can be "cancelled"
+	 * after the've completed?
+	 */
+	stop_crypto_helpers();
+
 	free_root_certs();
 	free_preshared_secrets();
 	free_remembered_public_keys();
