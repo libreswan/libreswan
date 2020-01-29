@@ -1,0 +1,13 @@
+/testing/guestbin/swan-prep  --x509
+Preparing X.509 files
+east #
+ certutil -D -n road -d sql:/etc/ipsec.d
+east #
+ certutil -D -n east -d sql:/etc/ipsec.d
+east #
+ # ipsec not used for this test
+east #
+ echo "initdone"
+initdone
+east #
+ 
