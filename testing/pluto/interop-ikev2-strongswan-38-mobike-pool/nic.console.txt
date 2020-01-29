@@ -1,18 +1,24 @@
-iptables -t nat -F
+ip addr show dev eth1 | grep 192.1.33.254 || ip addr add 192.1.33.254/24 dev eth1
+nic #
+ ip addr show dev eth1 | grep 192.1.2.250 || ip addr add 192.1.3.250/24 dev eth0
+nic #
+ iptables -t nat -F
 nic #
  iptables -F
 nic #
  iptables -X
 nic #
- # NAT
+ # port for the first address
 nic #
- ip addr show dev eth1 | grep 192.1.33.254 || ip addr add 192.1.33.254/24 dev eth1
+ iptables -t nat -A POSTROUTING -s 192.1.3.209 -p udp --sport 4500 -j SNAT --to-source 192.1.2.254:3503-3509
 nic #
- # sport range only has two ports
+ iptables -t nat -A POSTROUTING -s 192.1.3.209 -p udp --sport 500 -j SNAT --to-source 192.1.2.254:2503-2509
 nic #
- iptables -t nat -A POSTROUTING -p udp --sport 4500 -j SNAT --to-source 192.1.2.254:3503-3504
+ # for the second address use different port range
 nic #
- iptables -t nat -A POSTROUTING -p udp --sport 500 -j SNAT --to-source 192.1.2.254:2503-2504
+ iptables -t nat -A POSTROUTING -s 192.1.33.222 -p udp --sport 4500 -j SNAT --to-source 192.1.2.254:6503-6509
+nic #
+ iptables -t nat -A POSTROUTING -s 192.1.33.222 -p udp --sport 500 -j SNAT --to-source 192.1.2.254:5503-5509
 nic #
  iptables -t nat -A POSTROUTING --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.254
 nic #
@@ -25,8 +31,10 @@ Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
-SNAT       udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:4500 to:192.1.2.254:3503-3504
-SNAT       udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:500 to:192.1.2.254:2503-2504
+SNAT       udp  --  192.1.3.209          0.0.0.0/0            udp spt:4500 to:192.1.2.254:3503-3509
+SNAT       udp  --  192.1.3.209          0.0.0.0/0            udp spt:500 to:192.1.2.254:2503-2509
+SNAT       udp  --  192.1.33.222         0.0.0.0/0            udp spt:4500 to:192.1.2.254:6503-6509
+SNAT       udp  --  192.1.33.222         0.0.0.0/0            udp spt:500 to:192.1.2.254:5503-5509
 SNAT       all  --  0.0.0.0/0            0.0.0.0/0            to:192.1.2.254
 nic #
  iptables -L -n
