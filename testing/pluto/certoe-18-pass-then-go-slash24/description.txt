@@ -14,3 +14,7 @@ NOTE: this test case no longer needs to wait for shuntlifetime= because
       not wait for a shuntscan check. The pluto shunt table entry
       is deleted. the netlink call to delete the kernel policy it cut
       short in the case of %pass shunts, since it auto-replaces already.
+
+NOTE: A keyingtries=0 really makes no sense for OE. After the first keying try
+the failure shunt is installed. And the keying attempts should die or else they
+are just added from all nodes that dont run OE.

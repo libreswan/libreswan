@@ -12,3 +12,9 @@ NOTE: road shows a %pass bare shunt in pluto, but not in ip xfrm pol?
 
 same as certoe-18-pass-then-go-slash24 but now the OE policy on road is a /32
 
+NOTE: the timer is not really needed anymore because the IPsec SA triggers
+the %pass shunt removal.
+
+NOTE: A keyingtries=0 really makes no sense for OE. After the first keying try
+the failure shunt is installed. And the keying attempts should die or else they
+are just added from all nodes that dont run OE.
