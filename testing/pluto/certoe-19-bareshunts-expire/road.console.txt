@@ -1,0 +1,133 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+road #
+ certutil -D -n east -d sql:/etc/ipsec.d
+road #
+ cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
+road #
+ echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/private
+road #
+ echo "192.1.4.66/32"  >> /etc/ipsec.d/policies/private-or-clear
+road #
+ # scan every 10s
+road #
+ ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 10
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ # give OE policies time to load
+road #
+ sleep 5
+road #
+ echo "initdone"
+initdone
+road #
+ #sleep 30; # enable to get time to attach ip xfrm monitor
+road #
+ # trigger a private-or-clear and check for shunt and shunt expiry
+road #
+ ping -n -c 1 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+--- 192.1.2.23 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time XXXX
+road #
+ # wait on OE retransmits and rekeying
+road #
+ sleep 3
+road #
+ # should show nothing in shuntstatus (shunt is not bare, but with conn), should show up in xfrm policy and show partial STATE
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+road #
+ ip -o xfrm pol | grep 192.1.2.23
+src 192.1.3.209/32 dst 192.1.2.23/32 \	dir out priority 3129278 ptype main \
+road #
+ ipsec status | grep STATE_
+000 #1: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_RETRANSMIT in XXs; idle;
+road #
+ sleep 10
+road #
+ # should show %pass in shuntstatus and xfrm policy and without partial STATE
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+000 192.1.3.209/32:0 -0-> 192.1.2.23/32:0 => %pass 0    oe-failing
+road #
+ ip -o xfrm pol | grep 192.1.2.23
+src 192.1.3.209/32 dst 192.1.2.23/32 \	dir out priority 3129278 ptype main \
+road #
+ ipsec status | grep STATE_
+road #
+ sleep 35
+road #
+ # should show no more shunts for 192.1.2.23, no xfrm policy and no STATE's
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+road #
+ ip -o xfrm pol | grep 192.1.2.23
+road #
+ ipsec status | grep STATE_
+road #
+ # repeat test with a %hold shunt - but it really shouldn't matter
+road #
+ # trigger a private and check for shunt and shunt expiry
+road #
+ ping -n -c 1 -I 192.1.3.209 192.1.3.46
+PING 192.1.3.46 (192.1.3.46) from 192.1.3.209 : 56(84) bytes of data.
+--- 192.1.3.46 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time XXXX
+road #
+ # wait on OE retransmits and rekeying
+road #
+ sleep 3
+road #
+ # should show nothing in shuntstatus (shunt is not bare, but with conn),
+road #
+ # should show nothing in xfrm policy because SPI_HOLD (drop) is a no-op for XFRM as the larval state causes it already
+road #
+ # and should show show partial STATE
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+road #
+ ip -o xfrm pol | grep 192.1.3.46
+road #
+ ipsec status | grep STATE_
+000 #2: "private#192.1.3.0/24"[1] ...192.1.3.46:500 STATE_PARENT_I1 (sent v2I1, expected v2R1); EVENT_RETRANSMIT in XXs; idle;
+road #
+ sleep 10
+road #
+ # should show %pass in shuntstatus and xfrm policy and without partial STATE
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+000 192.1.3.209/32:0 -0-> 192.1.3.46/32:0 => %drop 0    oe-failing
+road #
+ ip -o xfrm pol | grep 192.1.3.46
+road #
+ ipsec status | grep STATE_
+road #
+ sleep 35
+road #
+ # should show no more shunts for 192.1.3.46, no xfrm policy and no STATE's
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+road #
+ ip -o xfrm pol | grep 192.1.3.46
+road #
+ ipsec status | grep STATE_
+road #
+ 

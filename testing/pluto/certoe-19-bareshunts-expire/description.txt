@@ -1,0 +1,4 @@
+Timing sensitive bare shunt testing.
+
+Note: we should really get a shunt for %drop when using XFRM.
+
