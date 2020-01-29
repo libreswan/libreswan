@@ -58,8 +58,7 @@ static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					 chunk_t pre_shared_key,
 					 chunk_t Ni, chunk_t Nr)
 {
-	PK11SymKey *psk = prf_key_from_bytes("psk", prf_desc,
-                                     pre_shared_key.ptr, pre_shared_key.len);
+	PK11SymKey *psk = prf_key_from_hunk("psk", prf_desc, pre_shared_key);
 	PK11SymKey *skeyid;
 	if (psk == NULL) {
 		return NULL;
