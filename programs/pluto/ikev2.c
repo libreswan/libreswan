@@ -938,9 +938,9 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[skf->isaskf_number];
 	passert(frag->cipher.ptr == NULL);
 	frag->iv = e_pbs->cur - md->packet_pbs.start;
-	clonetochunk(frag->cipher, md->packet_pbs.start,
-		     e_pbs->roof - md->packet_pbs.start,
-		     "incoming IKEv2 encrypted fragment");
+	frag->cipher = clone_bytes_as_chunk(md->packet_pbs.start,
+					    e_pbs->roof - md->packet_pbs.start,
+					    "incoming IKEv2 encrypted fragment");
 
 	if (skf->isaskf_number == 1) {
 		st->st_v2_rfrags->first_np = skf->isaskf_np;

@@ -1073,7 +1073,7 @@ static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
 		sz += SHA1_DIGEST_SIZE;
 	}
 	passert(sz <= sizeof(combined_hash));
-	clonetochunk(result, combined_hash, sz, "combined CERTREQ hash");
+	result = clone_bytes_as_chunk(combined_hash, sz, "combined CERTREQ hash");
 	DBG(DBG_CRYPT, DBG_dump_hunk("Combined CERTREQ hashes", result));
 	return result;
 }
@@ -1083,8 +1083,6 @@ static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
 static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert)
 {
 	unsigned char sighash[SHA1_DIGEST_SIZE];
-	chunk_t result = EMPTY_CHUNK;
-
 	zero(&sighash);
 
 /* TODO: This should use SHA1 even if USE_SHA1 is disabled for IKE/IPsec */
@@ -1094,7 +1092,7 @@ static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert)
 				cert->derPublicKey.data,
 				cert->derPublicKey.len);
 	crypt_hash_final_bytes(&ctx, sighash, sizeof(sighash));
-	clonetochunk(result, sighash, SHA1_DIGEST_SIZE, "pkey hash");
+	chunk_t result = clone_bytes_as_chunk(sighash, SHA1_DIGEST_SIZE, "pkey hash");
 
 	return result;
 }

@@ -216,7 +216,7 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 
 		if (ugh == NULL) {
 			/* make a copy, allocating the exact space required */
-			clonetochunk(*keyval, keyspace, bin_len, "ipseckey from dns");
+			*keyval = clone_bytes_as_chunk(keyspace, bin_len, "ipseckey from dns");
 		}
 		pfreeany(keyspace);
 	}

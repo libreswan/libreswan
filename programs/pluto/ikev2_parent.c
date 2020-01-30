@@ -5170,8 +5170,8 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 				} else {
 					const pb_stream *dc_pbs = &ntfy->pbs;
 
-					clonetochunk(*cookie2, dc_pbs->cur, pbs_left(dc_pbs),
-							"saved cookie2");
+					*cookie2 = clone_bytes_as_chunk(dc_pbs->cur, pbs_left(dc_pbs),
+									"saved cookie2");
 					DBG_dump_hunk("MOBIKE COOKIE2 received:", *cookie2);
 				}
 			} else {

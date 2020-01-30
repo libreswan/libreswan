@@ -400,7 +400,7 @@ void duplicate_id(struct id *dst, const struct id *src)
 	free_id_content(dst);
 	dst->kind = src->kind;
 	dst->ip_addr = src->ip_addr;
-	clonetochunk(dst->name, src->name.ptr, src->name.len, "copy of id");
+	dst->name = clone_hunk(src->name, "copy of id");
 }
 
 static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bool *const has_wild)

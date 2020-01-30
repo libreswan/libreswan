@@ -58,9 +58,10 @@ chunk_t chunk(void *ptr, size_t len);
 #define THING_AS_CHUNK(THING) chunk(&(THING), sizeof(THING))
 
 chunk_t alloc_chunk(size_t count, const char *name);
+/* name follows free_id_contents()'s lead */
 void free_chunk_contents(chunk_t *chunk); /* blats *CHUNK */
 
-/* result is always a WRITEABLE chunk */
+/* result is always a WRITEABLE chunk; NULL->NULL */
 #define clone_hunk(HUNK, NAME) ({					\
 			typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
 			clone_bytes_as_chunk(hunk_.ptr, hunk_.len, NAME); \
@@ -72,6 +73,7 @@ chunk_t clone_chunk_chunk(chunk_t first, chunk_t second, const char *name);
 /* always NUL terminated; NULL is NULL */
 char *clone_chunk_as_string(chunk_t chunk, const char *name);
 
+/* BYTES==NULL => NULL_CHUNK */
 chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name);
 
 bool chunk_eq(chunk_t a, chunk_t b);
@@ -104,9 +106,5 @@ chunk_t chunk_from_hex(const char *hex, const char *name);
 
 /* replaced by chunk() */
 #define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
-
-/* replaced by clone_chunk() */
-#define clonetochunk(ch, addr, size, name) \
-	{ (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
 
 #endif

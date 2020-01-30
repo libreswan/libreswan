@@ -100,7 +100,7 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 	}
 
 	/* clone ppk id data without ppk id type byte */
-	clonetochunk(payl->ppk_id, dst + 1, len - 1, "PPK_ID data");
+	payl->ppk_id = clone_bytes_as_chunk(dst + 1, len - 1, "PPK_ID data");
 	DBG(DBG_CONTROL, DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id));
 
 	return TRUE;

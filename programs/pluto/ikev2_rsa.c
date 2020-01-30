@@ -147,7 +147,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 
 		passert(shr == (int)sz);
 		if (no_ppk_auth != NULL) {
-			clonetochunk(*no_ppk_auth, sig_val, sz, "NO_PPK_AUTH chunk");
+			*no_ppk_auth = clone_bytes_as_chunk(sig_val, sz, "NO_PPK_AUTH chunk");
 			DBG(DBG_PRIVATE, DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth));
 		} else {
 			if (!out_raw(sig_val, sz, a_pbs, "rsa signature"))

@@ -648,9 +648,7 @@ void unshare_connection_end(struct end *e)
 		passert(e->cert.u.nss_cert != NULL);
 	}
 
-	if (e->ca.ptr != NULL)
-		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
-
+	e->ca = clone_hunk(e->ca, "ca string");
 	e->updown = clone_str(e->updown, "updown");
 	e->xauth_username = clone_str(e->xauth_username, "xauth username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");

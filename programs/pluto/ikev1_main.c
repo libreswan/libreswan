@@ -174,8 +174,8 @@ void main_outI1(struct fd *whack_sock,
 		passert(st->st_p1isa.ptr == NULL);
 
 		/* save initiator SA for later HASH */
-		clonetochunk(st->st_p1isa, sa_start, rbody.cur - sa_start,
-			"sa in main_outI1");
+		st->st_p1isa = clone_bytes_as_chunk(sa_start, rbody.cur - sa_start,
+						    "sa in main_outI1");
 	}
 
 	/* send Vendor IDs */

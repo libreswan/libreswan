@@ -1989,8 +1989,9 @@ void process_packet_tail(struct msg_digest **mdp)
 		/* XXX Detect weak keys */
 
 		/* grab a copy of raw packet (for duplicate packet detection) */
-		clonetochunk(md->raw_packet, md->packet_pbs.start,
-			     pbs_room(&md->packet_pbs), "raw packet");
+		md->raw_packet = clone_bytes_as_chunk(md->packet_pbs.start,
+						      pbs_room(&md->packet_pbs),
+						      "raw packet");
 
 		/* Decrypt everything after header */
 		if (!new_iv_set) {
@@ -2457,10 +2458,10 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 		}
 	} else {
 		/* this may be a repeat, but it will work */
-		pfreeany(st->st_rpacket.ptr);
-		clonetochunk(st->st_rpacket,
-			     md->packet_pbs.start,
-			     pbs_room(&md->packet_pbs), "raw packet");
+		free_chunk_contents(&st->st_rpacket);
+		st->st_rpacket = clone_bytes_as_chunk(md->packet_pbs.start,
+						      pbs_room(&md->packet_pbs),
+						      "raw packet");
 	}
 }
 

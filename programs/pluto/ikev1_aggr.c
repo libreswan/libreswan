@@ -1117,8 +1117,8 @@ static stf_status aggr_outI1_tail(struct state *st,
 
 		/* save initiator SA for later HASH */
 		passert(st->st_p1isa.ptr == NULL); /* no leak! */
-		clonetochunk(st->st_p1isa, sa_start, rbody.cur - sa_start,
-			     "sa in aggr_outI1");
+		st->st_p1isa = clone_bytes_as_chunk(sa_start, rbody.cur - sa_start,
+						    "sa in aggr_outI1");
 	}
 
 	/* KE out */

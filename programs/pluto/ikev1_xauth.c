@@ -2020,11 +2020,8 @@ static stf_status xauth_client_resp(struct state *st,
 							struct private_key_stuff
 								*pks = lsw_get_pks(s);
 
-							clonetochunk(
-								st->st_xauth_password,
-								pks->u.preshared_secret.ptr,
-								pks->u.preshared_secret.len,
-								"savedxauth password");
+							st->st_xauth_password = clone_hunk(pks->u.preshared_secret,
+											   "saved xauth password");
 						}
 					}
 

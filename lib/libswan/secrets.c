@@ -666,7 +666,7 @@ static err_t lsw_process_psk_secret(chunk_t *psk)
 		if (len < 8) {
 			loglog(RC_LOG_SERIOUS, "WARNING: using a weak secret (PSK)");
 		}
-		clonetochunk(*psk, flp->tok + 1, len, "PSK");
+		*psk = clone_bytes_as_chunk(flp->tok + 1, len, "PSK");
 		(void) shift();
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
@@ -687,7 +687,7 @@ static err_t lsw_process_psk_secret(chunk_t *psk)
 			ugh = builddiag("PSK data malformed (%s): %s", ugh,
 					flp->tok);
 		} else {
-			clonetochunk(*psk, buf, sz, "PSK");
+			*psk = clone_bytes_as_chunk(buf, sz, "PSK");
 			(void) shift();
 		}
 	}
@@ -706,8 +706,8 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 	err_t ugh = NULL;
 
 	if (*flp->tok == '"' || *flp->tok == '\'') {
-		clonetochunk(*xauth, flp->tok + 1, flp->cur - flp->tok  - 2,
-			"XAUTH");
+		*xauth = clone_bytes_as_chunk(flp->tok + 1, flp->cur - flp->tok  - 2,
+					      "XAUTH");
 		(void) shift();
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
@@ -728,7 +728,7 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 			ugh = builddiag("PSK data malformed (%s): %s", ugh,
 					flp->tok);
 		} else {
-			clonetochunk(*xauth, buf, sz, "XAUTH");
+			*xauth = clone_bytes_as_chunk(buf, sz, "XAUTH");
 			(void) shift();
 		}
 	}
@@ -749,7 +749,7 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 	if (*flp->tok == '"' || *flp->tok == '\'') {
 		size_t len = flp->cur - flp->tok - 2;
 
-		clonetochunk(*ppk_id, flp->tok + 1, len, "PPK ID");
+		*ppk_id = clone_bytes_as_chunk(flp->tok + 1, len, "PPK ID");
 	} else {
 		ugh = "No quotation marks found. PPK ID should be in quotation marks";
 		return ugh;
@@ -764,7 +764,7 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 	if (*flp->tok == '"' || *flp->tok == '\'') {
 		size_t len = flp->cur - flp->tok - 2;
 
-		clonetochunk(*ppk, flp->tok + 1, len, "PPK");
+		*ppk = clone_bytes_as_chunk(flp->tok + 1, len, "PPK");
 		(void) shift();
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
@@ -786,7 +786,7 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 					flp->tok);
 			freeanychunk(*ppk_id);
 		} else {
-			clonetochunk(*ppk, buf, sz, "PPK");
+			*ppk = clone_bytes_as_chunk(buf, sz, "PPK");
 			(void) shift();
 		}
 	}
@@ -871,7 +871,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 			DBG(DBG_CONTROLMORE, DBG_log("saving %s", p->name));
 			DBG(DBG_PRIVATE, DBG_dump(p->name, bv, bvlen));
 			chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
-			clonetochunk(*n, bv, bvlen, p->name);
+			*n = clone_bytes_as_chunk(bv, bvlen, p->name);
 			DBG(DBG_PRIVATE, DBG_dump_hunk(p->name, *n));
 		} else {
 			DBG(DBG_CONTROL, DBG_log("ignoring %s", p->name));
@@ -1590,10 +1590,10 @@ static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 		goto out;
 	}
 
-	clonetochunk(rsak->pub.e, pubk->u.rsa.publicExponent.data,
-		     pubk->u.rsa.publicExponent.len, "e");
-	clonetochunk(rsak->pub.n, pubk->u.rsa.modulus.data,
-		     pubk->u.rsa.modulus.len, "n");
+	rsak->pub.e = clone_bytes_as_chunk(pubk->u.rsa.publicExponent.data,
+					   pubk->u.rsa.publicExponent.len, "e");
+	rsak->pub.n = clone_bytes_as_chunk(pubk->u.rsa.modulus.data,
+					   pubk->u.rsa.modulus.len, "n");
 	ugh = form_ckaid_nss(certCKAID, &rsak->pub.ckaid);
 	if (ugh != NULL) {
 		/* let caller clean up mess */
@@ -1661,8 +1661,8 @@ static err_t add_ckaid_to_ecdsa_privkey(struct ECDSA_private_key *ecdsak,
 		goto out;
 	}
 
-	clonetochunk(ecdsak->pub.pub, pubk->u.ec.publicValue.data,
-		pubk->u.ec.publicValue.len, "pub");
+	ecdsak->pub.pub = clone_bytes_as_chunk(pubk->u.ec.publicValue.data,
+					       pubk->u.ec.publicValue.len, "pub");
 	ugh = form_ckaid_nss(certCKAID, &ecdsak->pub.ckaid);
 	if (ugh != NULL) {
 		/* let caller clean up mess */

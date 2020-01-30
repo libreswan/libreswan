@@ -123,7 +123,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	}
 
 	if (no_ppk_auth != NULL) {
-		clonetochunk(*no_ppk_auth, sig_val, shr, "NO_PPK_AUTH chunk");
+		*no_ppk_auth = clone_bytes_as_chunk(sig_val, shr, "NO_PPK_AUTH chunk");
 		DBG(DBG_PRIVATE, DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth));
 		return true;
 	}
