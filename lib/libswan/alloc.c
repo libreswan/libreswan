@@ -217,11 +217,23 @@ void *alloc_bytes(size_t size, const char *name)
 	return allocate(zalloc, size, name);
 }
 
+/*
+ * Note:
+ * orig=NULL; size=0 -> NULL
+ * orig=PTR; size=0 -> new PTR (for instance a shunk with PTR = "")
+ * orig=PTR; size>0 -> new PTR
+ */
 void *clone_bytes(const void *orig, size_t size, const char *name)
 {
-	void *p = uninitialized_malloc(size, name);
-
-	memcpy(p, orig, size);
+	void *p;
+	if (orig == NULL) {
+		passert(size == 0);
+		p = NULL;
+	} else {
+		/* even when size is 0, allocate something */
+		p = uninitialized_malloc(size, name);
+		memcpy(p, orig, size);
+	}
 	return p;
 }
 

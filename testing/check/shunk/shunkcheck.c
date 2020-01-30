@@ -20,7 +20,8 @@
 
 #include "constants.h"		/* for str_bool() */
 #include "lswcdefs.h"		/* for elemsof() */
-#include "shunk.h" /* shunk_t */
+#include "shunk.h"
+#include "chunk.h"
 
 unsigned fails;
 
@@ -322,6 +323,39 @@ static void shunk_null_empty_check(void)
 	}
 }
 
+static void shunk_clone_check(void)
+{
+	static const struct test {
+		const char *s;
+	} tests[] = {
+		/*
+		 * Like strings, NULL and EMPTY ("") shunks are
+		 * considered different.
+		 */
+		{ NULL, },
+		{ "", },
+		{ "a", },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_S(stdout, "");
+		shunk_t s = shunk1(t->s);
+		chunk_t c = clone_hunk(s, "c");
+		if (c.len != s.len) {
+			FAIL_S("clone_hunk(s).len returned %zu, expecting %zu",
+			       c.len, s.len);
+		}
+		if (c.ptr == NULL && s.ptr != NULL) {
+			FAIL_S("clone_hunk(s).ptr returned NULL, expecting non-NULL");
+		}
+		if (c.ptr != NULL && s.ptr == NULL) {
+			FAIL_S("clone_hunk(s).ptr returned non-NULL, expecting NULL");
+		}
+		free_chunk_content(&c);
+	}
+}
+
 int main(int argc UNUSED, char *argv[] UNUSED)
 {
 	hunk_eq_check();
@@ -329,6 +363,7 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	shunk_slice_check();
 	shunk_token_check();
 	shunk_span_check();
+	shunk_clone_check();
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

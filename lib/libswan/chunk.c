@@ -71,11 +71,12 @@ char *clone_chunk_as_string(chunk_t chunk, const char *name)
 
 chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name)
 {
-	if (bytes == NULL) {
-		return empty_chunk;
-	} else {
-		return chunk(clone_bytes(bytes, sizeof_bytes, name), sizeof_bytes);
-	}
+	/*
+	 * orig=NULL; size=0 -> NULL
+	 * orig=PTR; size=0 -> new PTR (for instance a shunk with PTR = "")
+	 * orig=PTR; size>0 -> new PTR
+	 */
+	return chunk(clone_bytes(bytes, sizeof_bytes, name), sizeof_bytes);
 }
 
 bool chunk_eq(chunk_t a, chunk_t b)

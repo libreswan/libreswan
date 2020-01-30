@@ -27,9 +27,14 @@
 /* memory allocation */
 
 extern void pfree(void *ptr);
+
+/* Never returns NULL; allocates 0 bytes as 1-byte */
 extern void *alloc_bytes(size_t size, const char *name);
+
+/* clone's NULL bytes as NULL bytes, not 1-byte */
 extern void *clone_bytes(const void *orig, size_t size,
-			  const char *name);
+			 const char *name);
+
 void realloc_bytes(void **ptr, size_t old_size, size_t new_size, const char *name);
 
 extern bool leak_detective;
