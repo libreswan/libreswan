@@ -1142,8 +1142,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 						struct id_list,
 						"id_list");
 
-					i->id = id;
-					unshare_id_content(&i->id);
+					i->id = clone_id(&id, "parsed id");
 					i->next = s->ids;
 					s->ids = i;
 					DBG(DBG_CONTROL, {
@@ -1387,12 +1386,11 @@ void install_public_key(struct pubkey *pk, struct pubkey_list **head)
 	struct pubkey_list *p =
 		alloc_thing(struct pubkey_list, "pubkey entry");
 
-	unshare_id_content(&pk->id);
+	/* XXX: how screwed up is this? */
+	pk->id = clone_id(&pk->id, "install public key id");
 
-	/* copy issuer dn */
-	if (pk->issuer.ptr != NULL)
-		pk->issuer.ptr = clone_bytes(pk->issuer.ptr, pk->issuer.len,
-					"issuer dn");
+	/* copy issuer dn; XXX: how screwed up is this? */
+	pk->issuer = clone_hunk(pk->issuer, "install public key issuer");
 
 	/* store the time the public key was installed */
 	pk->installed_time = realnow();

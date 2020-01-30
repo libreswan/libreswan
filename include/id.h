@@ -67,8 +67,9 @@ const char *str_id(const struct id *id, id_buf *buf);
  * Operations.
  */
 
-extern void unshare_id_content(struct id *id);
-extern void free_id_content(struct id *id);
+struct id clone_id(const struct id *id, const char *why);
+extern void free_id_content(struct id *id); /* also blats ID */
+
 extern bool any_id(const struct id *a);
 extern bool same_id(const struct id *a, const struct id *b);
 #define MAX_WILDCARDS	15
@@ -78,10 +79,16 @@ extern int id_count_wildcards(const struct id *id);
 #define id_is_ipaddr(id) ((id)->kind == ID_IPV4_ADDR || (id)->kind == \
 			  ID_IPV6_ADDR)
 
-extern void duplicate_id(struct id *dst, const struct id *src);
 extern bool same_dn_any_order(chunk_t a, chunk_t b);
 
 /* returns ID Type; and points body at Identification Data */
 enum ike_id_type id_to_payload(const struct id *id, const ip_address *host, shunk_t *body);
+
+/*
+ * Old stuff.
+ */
+
+void unshare_id_content(struct id *id); /* use clone_id() */
+void duplicate_id(struct id *dst, const struct id *src); /* use free_id_content; clone_id() */
 
 #endif

@@ -233,6 +233,16 @@ void unshare_id_content(struct id *id)
 	}
 }
 
+struct id clone_id(const struct id *src, const char *name)
+{
+	struct id dst = {
+		.kind = src->kind,
+		.ip_addr = src->ip_addr,
+		.name = clone_hunk(src->name, name),
+	};
+	return dst;
+}
+
 void free_id_content(struct id *id)
 {
 	switch (id->kind) {
@@ -240,13 +250,14 @@ void free_id_content(struct id *id)
 	case ID_USER_FQDN:
 	case ID_DER_ASN1_DN:
 	case ID_KEY_ID:
-		freeanychunk(id->name);
+		free_chunk_content(&id->name);
 		break;
 	case ID_FROMCERT:
 	case ID_NONE:
 	case ID_NULL:
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
+		pexpect(id->name.ptr == NULL);
 		break;
 	default:
 		bad_case(id->kind);
@@ -398,9 +409,7 @@ void duplicate_id(struct id *dst, const struct id *src)
 {
 	passert(dst->name.ptr == NULL || dst->name.ptr != src->name.ptr);
 	free_id_content(dst);
-	dst->kind = src->kind;
-	dst->ip_addr = src->ip_addr;
-	dst->name = clone_hunk(src->name, "copy of id");
+	*dst = clone_id(src, "copy of id");
 }
 
 static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bool *const has_wild)
