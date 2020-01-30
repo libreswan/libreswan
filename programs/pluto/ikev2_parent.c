@@ -3015,6 +3015,9 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
 		loglog(RC_LOG_SERIOUS, "Requested PPK_ID not found and connection requires a valid PPK");
 		freeanychunk(null_auth);
+		send_v2N_response_from_state(ike, md,
+					     v2N_AUTHENTICATION_FAILED,
+					     NULL/*no data*/);
 		return STF_FATAL;
 	}
 
