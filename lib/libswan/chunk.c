@@ -38,7 +38,7 @@ chunk_t alloc_chunk(size_t count, const char *name)
 	return chunk(ptr, count);
 }
 
-void free_chunk_contents(chunk_t *chunk)
+void free_chunk_content(chunk_t *chunk)
 {
 	pfreeany(chunk->ptr);
 	*chunk = EMPTY_CHUNK;

@@ -58,8 +58,6 @@ chunk_t chunk(void *ptr, size_t len);
 #define THING_AS_CHUNK(THING) chunk(&(THING), sizeof(THING))
 
 chunk_t alloc_chunk(size_t count, const char *name);
-/* name follows free_id_contents()'s lead */
-void free_chunk_contents(chunk_t *chunk); /* blats *CHUNK */
 
 /* result is always a WRITEABLE chunk; NULL->NULL */
 #define clone_hunk(HUNK, NAME) ({					\
@@ -75,6 +73,16 @@ char *clone_chunk_as_string(chunk_t chunk, const char *name);
 
 /* BYTES==NULL => NULL_CHUNK */
 chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name);
+
+/*
+ * Free contents of chunk (if any) and blat chunk.
+ */
+
+void free_chunk_content(chunk_t *chunk); /* blats *CHUNK */
+
+/*
+ * misc ops.
+ */
 
 bool chunk_eq(chunk_t a, chunk_t b);
 

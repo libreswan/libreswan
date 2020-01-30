@@ -2595,13 +2595,13 @@ void ikev2_log_parentSA(const struct state *st)
 		chunk_t ai = chunk_from_symkey("ai", st->st_skey_ai_nss);
 		char tai[3 + 2 * BYTES_FOR_BITS(256)] = "";
 		(void)datatot(ai.ptr, ai.len, 'x', tai, sizeof(tai));
-		free_chunk_contents(&ai);
+		free_chunk_content(&ai);
 
 		/* v2 IKE encryption key for initiator (256 bit bound) */
 		chunk_t ei = chunk_from_symkey("ei", st->st_skey_ei_nss);
 		char tei[3 + 2 * BYTES_FOR_BITS(256)] = "";
 		(void)datatot(ei.ptr, ei.len, 'x', tei, sizeof(tei));
-		free_chunk_contents(&ei);
+		free_chunk_content(&ei);
 
 		DBG_log("ikev2 I %s %s %s:%s %s%s:%s",
 			tispi, trspi,
@@ -2612,13 +2612,13 @@ void ikev2_log_parentSA(const struct state *st)
 		chunk_t ar = chunk_from_symkey("ar", st->st_skey_ar_nss);
 		char tar[3 + 2 * BYTES_FOR_BITS(256)] = "";
 		(void)datatot(ar.ptr, ar.len, 'x', tar, sizeof(tar));
-		free_chunk_contents(&ar);
+		free_chunk_content(&ar);
 
 		/* v2 IKE encryption key for responder (256 bit bound) */
 		chunk_t er = chunk_from_symkey("er", st->st_skey_er_nss);
 		char ter[3 + 2 * BYTES_FOR_BITS(256)] = "";
 		(void)datatot(er.ptr, er.len, 'x', ter, sizeof(ter));
-		free_chunk_contents(&er);
+		free_chunk_content(&er);
 
 		DBG_log("ikev2 R %s %s %s:%s %s%s:%s",
 			tispi, trspi,
@@ -3415,7 +3415,7 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 			name, len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
 		return v2N_INVALID_SYNTAX; /* ??? */
 	}
-	free_chunk_contents(dest);
+	free_chunk_content(dest);
 	*dest = clone_hunk(pbs_in_left_as_shunk(nonce_pbs), "nonce");
 	passert(len == dest->len);
 	return v2N_NOTHING_WRONG;

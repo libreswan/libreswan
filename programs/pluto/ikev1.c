@@ -2458,7 +2458,7 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 		}
 	} else {
 		/* this may be a repeat, but it will work */
-		free_chunk_contents(&st->st_rpacket);
+		free_chunk_content(&st->st_rpacket);
 		st->st_rpacket = clone_bytes_as_chunk(md->packet_pbs.start,
 						      pbs_room(&md->packet_pbs),
 						      "raw packet");

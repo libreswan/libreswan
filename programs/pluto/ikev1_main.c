@@ -393,7 +393,7 @@ notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
 		       name, IKEv1_MINIMUM_NONCE_SIZE, IKEv1_MAXIMUM_NONCE_SIZE);
 		return PAYLOAD_MALFORMED; /* ??? */
 	}
-	free_chunk_contents(dest);
+	free_chunk_content(dest);
 	*dest = clone_hunk(pbs_in_left_as_shunk(nonce_pbs), "nonce");
 	passert(len == dest->len);
 	return NOTHING_WRONG;
@@ -736,7 +736,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		return STF_INTERNAL_ERROR;
 
 	/* save initiator SA for HASH */
-	free_chunk_contents(&st->st_p1isa);
+	free_chunk_content(&st->st_p1isa);
 	st->st_p1isa = clone_hunk(pbs_in_as_shunk(&sa_pd->pbs), "sa in main_inI1_outR1()");
 
 	return STF_OK;
