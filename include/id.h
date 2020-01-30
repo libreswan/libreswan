@@ -90,7 +90,6 @@ enum ike_id_type id_to_payload(const struct id *id, const ip_address *host, shun
  * Old stuff.
  */
 
-void unshare_id_content(struct id *id); /* use clone_id() */
 void duplicate_id(struct id *dst, const struct id *src); /* use free_id_content; clone_id() */
 
 #endif

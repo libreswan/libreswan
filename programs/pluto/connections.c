@@ -641,7 +641,7 @@ static char *format_connection(char *buf, size_t buf_len,
 /* spd_route's with end's get copied in xauth.c */
 void unshare_connection_end(struct end *e)
 {
-	unshare_id_content(&e->id);
+	e->id = clone_id(&e->id, "unshare connection id");
 
 	if (e->cert.u.nss_cert != NULL) {
 		e->cert.u.nss_cert = CERT_DupCertificate(e->cert.u.nss_cert);

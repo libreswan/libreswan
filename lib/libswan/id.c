@@ -251,32 +251,6 @@ const char *str_id(const struct id *id, id_buf *dst)
 	return dst->buf;
 }
 
-/*
- * Make private copy of string in struct id.
- * This is needed if the result of atoid is to be kept.
- */
-void unshare_id_content(struct id *id)
-{
-	switch (id->kind) {
-	case ID_FQDN:
-	case ID_USER_FQDN:
-	case ID_DER_ASN1_DN:
-	case ID_KEY_ID:
-		id->name.ptr = clone_bytes(id->name.ptr, id->name.len,
-					"keep id name");
-		/* Somehow assert we have a valid id here? */
-		break;
-	case ID_FROMCERT:
-	case ID_NONE:
-	case ID_NULL:
-	case ID_IPV4_ADDR:
-	case ID_IPV6_ADDR:
-		break;
-	default:
-		bad_case(id->kind);
-	}
-}
-
 struct id clone_id(const struct id *src, const char *name)
 {
 	struct id dst = {
