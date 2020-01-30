@@ -3591,7 +3591,7 @@ void expire_bare_shunts(void)
 		if (age > deltasecs(pluto_shunt_lifetime)) {
 			DBG_bare_shunt("expiring old", bsp);
 			if (bsp->from_cn != NULL) {
-				c = conn_by_name(bsp->from_cn, FALSE, FALSE);
+				c = conn_by_name(bsp->from_cn, FALSE);
 				if (c != NULL) {
 					if (!shunt_eroute(c, &c->spd, RT_ROUTED_PROSPECTIVE, ERO_ADD, "add")) {
 						libreswan_log("trap shunt install failed ");
