@@ -21,12 +21,12 @@ endif
 
 # Distribution & Release sepcfic config option.
 DISTRO_CONF =
-DISTRO_CONF += $(shell grep -qE 'jessie' /etc/os-release && echo USE_DNSSEC=false)
+DISTRO_CONF += $(shell grep -qE 'jessie|stretch' /etc/os-release && echo USE_DNSSEC=false)
 DISTRO_CONF += $(shell grep -qE 'jessie|xenial' /etc/os-release && echo USE_GLIBC_KERN_FLIP_HEADERS=true)
 DISTRO_CONF += $(shell grep -qE 'bionic|cosmic|jessie|stretch|xenial' /etc/os-release && echo USE_NSS_IPSEC_PROFILE=false)
 DISTRO_CONF += $(shell grep -qE 'jessie|stretch|xenial' /etc/os-release && echo USE_NSS_AVA_COPY=true)
 DISTRO_CONF += $(shell grep -qE 'jessie|stretch' /etc/os-release && echo USE_DH31=false)
-DISTRO_CONF += $(shell grep -qE 'xenial|stretch' /etc/os-release && echo USE_UNBOUND_EVENT_H_COPY=true)
+DISTRO_CONF += $(shell grep -qE 'xenial' /etc/os-release && echo USE_UNBOUND_EVENT_H_COPY=true)
 DISTRO_CONF += $(shell grep -qE 'jessie|stretch|xenial|bionic|cosmic' /etc/os-release && echo USE_XFRM_INTERFACE=false)
 
 override_dh_auto_build:
