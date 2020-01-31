@@ -384,64 +384,77 @@ int sign_hash_ECDSA(const struct ECDSA_private_key *k,
 }
 
 err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
-			       const struct crypt_mac *hash,
+			       const struct crypt_mac *expected_hash,
 			       const uint8_t *sig_val, size_t sig_len,
 			       enum notify_payload_hash_algorithms hash_algo)
 {
-	SECKEYPublicKey *publicKey;
-	PRArenaPool *arena;
 	SECStatus retVal;
-	SECItem nss_n, nss_e;
-
-	/* Converting n and e to form public key in SECKEYPublicKey data structure */
-
-	arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-	if (arena == NULL) {
-		PORT_SetError(SEC_ERROR_NO_MEMORY);
-		return "10" "NSS error: Not enough memory to create arena";
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
+			      *expected_hash);
 	}
 
-	publicKey = (SECKEYPublicKey *)
-		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
-	if (publicKey == NULL) {
-		PORT_FreeArena(arena, PR_FALSE);
-		PORT_SetError(SEC_ERROR_NO_MEMORY);
-		return "11" "NSS error: Not enough memory to create publicKey";
+	/*
+	 * Create a public key storing all keying material in an
+	 * arena.  The arena's lifetime is tied to and released by the
+	 * key.
+	 *
+	 * Danger:
+	 *
+	 * Need to use SECKEY_DestroyPublicKey() to release any
+	 * allocated memory; not SECITEM_FreeArena(); and not both!
+	 *
+	 * A look at SECKEY_DestroyPublicKey()'s source shows that it
+	 * releases the allocated public key by freeing the arena,
+	 * hence only that is needed.
+	 */
+	SECKEYPublicKey *publicKey;
+	{
+		PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+		if (arena == NULL) {
+			PORT_SetError(SEC_ERROR_NO_MEMORY); /* why? */
+			return "10""NSS error: Not enough memory to create arena";
+		}
+		publicKey = PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
+		if (publicKey == NULL) {
+			PORT_FreeArena(arena, PR_FALSE);
+			PORT_SetError(SEC_ERROR_NO_MEMORY); /* why? */
+			return "11""NSS error: Not enough memory to create publicKey";
+		}
+		publicKey->arena = arena;
 	}
 
-	publicKey->arena = arena;
 	publicKey->keyType = rsaKey;
 	publicKey->pkcs11Slot = NULL;
 	publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
-	/* make a local copy.  */
-	chunk_t n = clone_hunk(k->n, "n");
-	chunk_t e = clone_hunk(k->e, "e");
+	/* Converting n and e to form public key in SECKEYPublicKey data structure */
 
-	/* Converting n and e to nss_n and nss_e */
-	nss_n.data = n.ptr;
-	nss_n.len = (unsigned int)n.len;
-	nss_n.type = siBuffer;
-
-	nss_e.data = e.ptr;
-	nss_e.len = (unsigned int)e.len;
-	nss_e.type = siBuffer;
-
-	retVal = SECITEM_CopyItem(arena, &publicKey->u.rsa.modulus, &nss_n);
-	if (retVal == SECSuccess) {
-		retVal = SECITEM_CopyItem(arena,
-					  &publicKey->u.rsa.publicExponent,
-					  &nss_e);
-	}
-
+	const SECItem nss_n = {
+		.type = siBuffer,
+		.data = k->n.ptr,
+		.len = k->n.len,
+	};
+	retVal = SECITEM_CopyItem(publicKey->arena, &publicKey->u.rsa.modulus, &nss_n);
 	if (retVal != SECSuccess) {
-		pfree(n.ptr);
-		pfree(e.ptr);
 		SECKEY_DestroyPublicKey(publicKey);
-		return "12NSS error: Not able to copy modulus or exponent or both while forming SECKEYPublicKey structure";
+		return "12""NSS error: unable to copy modulus while forming SECKEYPublicKey structure";
 	}
 
-	SECItem signature = {
+	const SECItem nss_e = {
+		.type = siBuffer,
+		.data = k->e.ptr,
+		.len = k->e.len,
+	};
+	retVal = SECITEM_CopyItem(publicKey->arena,
+				  &publicKey->u.rsa.publicExponent,
+				  &nss_e);
+	if (retVal != SECSuccess) {
+		SECKEY_DestroyPublicKey(publicKey);
+		return "12""NSS error: unable to copy exponent while forming SECKEYPublicKey structure";
+	}
+
+	const SECItem encrypted_signature = {
 		.type = siBuffer,
 		.data = DISCARD_CONST(unsigned char *, sig_val),
 		.len  = (unsigned int)sig_len,
@@ -449,36 +462,41 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 
 	if (hash_algo == 0 /* ikev1*/ ||
 	    hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style rsa with SHA1*/) {
-		SECItem data = {
+		SECItem decrypted_signature = {
 			.type = siBuffer,
-			.len = sig_len,
-			.data = alloc_bytes(sig_len, "NSS decrypted signature"),
 		};
-
-		if (PK11_VerifyRecover(publicKey, &signature, &data,
-				       lsw_return_nss_password_file_info()) ==
-		    SECSuccess ) {
-			LSWDBGP(DBG_CRYPT, buf) {
-				lswlogs(buf, "NSS RSA verify: decrypted sig: ");
-				lswlog_nss_secitem(buf, &data);
-			}
-		} else {
-			DBG(DBG_CRYPT,
-			    DBG_log("NSS RSA verify: decrypting signature is failed"));
-			return "13" "NSS error: Not able to decrypt";
+		if (SECITEM_AllocItem(publicKey->arena, &decrypted_signature,
+				      sig_len) == NULL) {
+			SECKEY_DestroyPublicKey(publicKey);
+			return "12""NSS error: unable to allocate space for decrypted signature";
 		}
-		if (!memeq(data.data + data.len - hash->len, hash->ptr, hash->len)) {
-			pfree(data.data);
+
+		if (PK11_VerifyRecover(publicKey, &encrypted_signature,
+				       &decrypted_signature,
+				       lsw_return_nss_password_file_info()) != SECSuccess) {
+			dbg("NSS RSA verify: decrypting signature is failed");
+			SECKEY_DestroyPublicKey(publicKey);
+			return "13""NSS error: Not able to decrypt";
+		}
+
+		LSWDBGP(DBG_CRYPT, buf) {
+			lswlogs(buf, "NSS RSA verify: decrypted sig: ");
+			lswlog_nss_secitem(buf, &decrypted_signature);
+		}
+
+		/* hash at end? See above for length check */
+		passert(decrypted_signature.len >= expected_hash->len);
+		uint8_t *start = (decrypted_signature.data
+				  + decrypted_signature.len
+				  - expected_hash->len);
+		if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
 			loglog(RC_LOG_SERIOUS, "RSA Signature NOT verified");
-			return "14" "NSS error: Not able to verify";
+			SECKEY_DestroyPublicKey(publicKey);
+			return "14""NSS error: Not able to verify";
 		}
-
-		pfree(data.data);
 	} else {
 		/* Digital signature scheme with RSA-PSS */
 		CK_RSA_PKCS_PSS_PARAMS mech;
-		SECItem mechItem = { siBuffer, (unsigned char *)&mech, sizeof(mech) };
-
 		switch (hash_algo) {
 		case IKEv2_AUTH_HASH_SHA2_256:
 			mech = rsa_pss_sha2_256;
@@ -492,40 +510,30 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		default:
 			bad_case(hash_algo);
 		}
+		const SECItem hash_mech_item = {
+			.type = siBuffer,
+			.data = (unsigned char *)&mech,
+			.len = sizeof(mech),
+		};
 
-		struct crypt_mac hash_data = *hash; /* cast away const */
-		SECItem data = {
+		struct crypt_mac hash_data = *expected_hash; /* cast away const */
+		const SECItem expected_hash_item = {
 			.len = hash_data.len,
 			.data = hash_data.ptr,
 			.type = siBuffer,
 		};
 
-		LSWDBGP(DBG_CRYPT, buf) {
-			lswlogs(buf, "data: ");
-			lswlog_nss_secitem(buf, &data);
-		}
-
-		if (PK11_VerifyWithMechanism(publicKey, CKM_RSA_PKCS_PSS,  &mechItem, &signature, &data,
-				       lsw_return_nss_password_file_info()) == SECSuccess) {
-			LSWDBGP(DBG_CRYPT, buf) {
-				lswlogs(buf, "NSS RSA verify: decrypted sig: ");
-				lswlog_nss_secitem(buf, &data);
-			}
-		} else {
-			DBG(DBG_CRYPT,
-			    DBG_log("NSS RSA verify: decrypting signature is failed"));
-			return "13" "NSS error: Not able to decrypt";
+		if (PK11_VerifyWithMechanism(publicKey, CKM_RSA_PKCS_PSS,
+					     &hash_mech_item, &encrypted_signature,
+					     &expected_hash_item,
+					     lsw_return_nss_password_file_info()) != SECSuccess) {
+			dbg("NSS RSA verify: decrypting signature is failed");
+			SECKEY_DestroyPublicKey(publicKey);
+			return "13""NSS error: Not able to decrypt";
 		}
 	}
 
-	DBG(DBG_CRYPT,
-	    DBG_dump_hunk("NSS RSA verify: hash value: ", *hash));
-
-	pfree(n.ptr);
-	pfree(e.ptr);
 	SECKEY_DestroyPublicKey(publicKey);
-
-	DBG(DBG_CRYPT, DBG_log("RSA Signature verified"));
 
 	return NULL;
 }
