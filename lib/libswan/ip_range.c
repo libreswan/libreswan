@@ -168,6 +168,8 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	ip_subnet v6_subnet;
 	er = ttosubnet(src, 0, AF_INET6, '6', &v6_subnet);
 	if (er == NULL) {
+		if (v6_subnet.addr.hport != 0)
+			return "port must be zero for IPv6 addresspool";
 		tmp = range_from_subnet(&v6_subnet);
 		tmp.is_subnet = true;
 		afi = &ipv6_info;
