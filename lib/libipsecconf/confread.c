@@ -380,14 +380,14 @@ static bool load_setup(struct starter_config *cfg,
 	return err;
 }
 
-static bool validate_ip_netmask(const char *value, ip_subnet *ip, const char *leftright, char *err_p,
+static bool validate_ip_cider(const char *value, ip_subnet *ip, const char *leftright, char *err_p,
 		starter_errors_t *perrl)
 {
 	bool err = FALSE;
 #  define ERR_FOUND(...) { starter_error_append(perrl, __VA_ARGS__); err = TRUE; }
 
 	if (strchr(value, '/') == NULL) {
-		ERR_FOUND("%s%s=%s needs address/mask", leftright, err_p, value);
+		ERR_FOUND("%s%s=%s needs address/prefix length", leftright, err_p, value);
 	} else {
 		/*
 		 * ttosubnet() helpfully sets the IP address to the lowest IP
@@ -401,9 +401,12 @@ static bool validate_ip_netmask(const char *value, ip_subnet *ip, const char *le
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 					leftright, err_p, value, er);
 		} else {
+			if (ip->addr.hport != 0)
+				ERR_FOUND("bad ip address port is not allowed %sinterface-ip=%s", leftright, value)
+
 			er = tnatoaddr(value, strchr(value, '/') - value, AF_UNSPEC, &ip->addr);
 			if (er != NULL) {
-				ERR_FOUND("bad addr in subnet for %s%s=%s [%s]",
+				ERR_FOUND("bad ip address in %s%s=%s [%s]",
 						leftright, err_p, value, er);
 			}
 		}
@@ -536,7 +539,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	if (end->strings_set[KSCF_VTI_IP]) {
-		err = validate_ip_netmask(end->strings[KSCF_VTI_IP],
+		err = validate_ip_cider(end->strings[KSCF_VTI_IP],
 				&end->vti_ip, leftright, "vti", perrl);
 	}
 
@@ -680,10 +683,10 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->has_client = TRUE;
 			end->has_client_wildcard = FALSE;
 		}
-		if (end->strings_set[KSCF_IFACE_IP]) {
-			ERR_FOUND("can  not specify  %siface-ip=%s and  %sssourceip=%s",
+		if (end->strings_set[KSCF_INTERFACE_IP]) {
+			ERR_FOUND("can  not specify  %sinterface-ip=%s and  %sssourceip=%s",
 					leftright,
-					end->strings[KSCF_IFACE_IP],
+					end->strings[KSCF_INTERFACE_IP],
 					leftright,
 					end->strings[KSCF_SOURCEIP]);
 		}
@@ -749,13 +752,13 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	if (end->strings_set[KSCF_IFACE_IP]) {
-		err = validate_ip_netmask(end->strings[KSCF_IFACE_IP],
-				&end->ifaceip, leftright, "iface-ip", perrl);
+	if (end->strings_set[KSCF_INTERFACE_IP]) {
+		err = validate_ip_cider(end->strings[KSCF_INTERFACE_IP],
+				&end->ifaceip, leftright, "interface-ip", perrl);
 		if (end->strings_set[KSCF_SOURCEIP]) {
-			ERR_FOUND("can  not specify  %siface-ip=%s and  %sssourceip=%s",
+			ERR_FOUND("can  not specify  %sinterface-ip=%s and  %sssourceip=%s",
 					leftright,
-					end->strings[KSCF_IFACE_IP],
+					end->strings[KSCF_INTERFACE_IP],
 					leftright,
 					end->strings[KSCF_SOURCEIP]);
 		}

@@ -141,7 +141,7 @@ enum keyword_string_conn_field {
 	KSCF_PROTOPORT,	/* left/right */
 	KSCF_SOURCEIP,	/* left/right */
 	KSCF_VTI_IP,	/* left/right */
-	KSCF_IFACE_IP,  /* left/right */
+	KSCF_INTERFACE_IP,  /* left/right */
 	KSCF_USERNAME,	/* left/right */
 	KSCF_ADDRESSPOOL,	/* left/right */
 	KSCF_SUBNET,	/* left/right */

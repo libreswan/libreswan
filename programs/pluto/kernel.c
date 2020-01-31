@@ -441,7 +441,7 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	}
 
 	if (!isanyaddr(&sr->this.ifaceip.addr)) {
-		jam(buf, "IFACE_IP='");
+		jam(buf, "INTERFACE_IP='");
 		jam_subnet(buf, &sr->this.ifaceip);
 		jam(buf, "' ");
 	}
