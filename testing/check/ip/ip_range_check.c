@@ -198,6 +198,9 @@ static void check_ttorange__to__str_range(void)
 		{ 6, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 		{ 6, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967294, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 		{ 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 4294967295, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ 6, "2001:db8:0:7::/97:0", 2147483648, "2001:db8:0:7::/97", }, /* would be nice to error on this too */
+		/* no port */
+		{ 6, "2001:db8:0:7::/97:30", -1, NULL},
 		/* wrong order */
 		{ 4, "1.2.3.4-1.2.3.3", -1, NULL, },
 		{ 6, "::2-::1", -1, NULL, },
