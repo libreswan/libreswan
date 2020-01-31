@@ -728,10 +728,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 		err_t ugh = atoid(src->id, &dst->id);
 		if (ugh != NULL) {
 			loglog(RC_BADID, "bad %s --id: %s (ignored)", which,
-				ugh);
-			dst->id = empty_id; /* ignore bad one */
-		} else {
-			unshare_id_content(&dst->id);
+			       ugh);
 		}
 	}
 

@@ -1012,7 +1012,7 @@ err_t add_public_key(const struct id *id, /* ASKK */
 
 	/* first: algorithm-specific decoding of key chunk */
 	type->unpack_pubkey_content(&pk->u, *key);
-	pk->id = *id;
+	pk->id = clone_id(id, "public key id");
 	pk->dns_auth_level = dns_auth_level;
 	pk->type = type;
 	pk->until_time = realtime_epoch;
@@ -1036,7 +1036,7 @@ err_t add_ipseckey(const struct id *id,
 	pk->dns_ttl = ttl;
 	pk->installed_time = realnow();
 	pk->until_time = realtimesum(pk->installed_time, deltatime(ttl_used));
-	pk->id = *id;
+	pk->id = clone_id(id, "ipsec keyid");
 	pk->dns_auth_level = dns_auth_level;
 	pk->type = type;
 	pk->issuer = EMPTY_CHUNK; /* ipseckey has no issuer */

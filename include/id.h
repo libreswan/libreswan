@@ -44,7 +44,7 @@ extern const struct id empty_id;	/* ID_NONE */
  * parsing.
  */
 
-err_t atoid(char *src, struct id *id);
+err_t atoid(const char *src, struct id *id);
 
 /*
  * Formattting.

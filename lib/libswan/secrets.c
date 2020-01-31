@@ -1142,7 +1142,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 						struct id_list,
 						"id_list");
 
-					i->id = clone_id(&id, "parsed id");
+					i->id = id;
 					i->next = s->ids;
 					s->ids = i;
 					DBG(DBG_CONTROL, {

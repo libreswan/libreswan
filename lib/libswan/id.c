@@ -45,118 +45,162 @@
 #include "ip_info.h"
 
 /*
- * Convert textual form of id into a (temporary) struct id.
- *
- * Note that if the id is to be kept, unshare_id_content will be necessary.
- * This function should be split into parts so the boolean arguments can be
- * removed -- Paul
- *
- * XXX: since caller is almost immediately calling
- * unshare_id_content() why not merge it.
+ * Convert textual form of id into a struct id.
  */
-err_t atoid(char *src, struct id *id)
+err_t atoid(const char *src, struct id *id)
 {
-	err_t ugh = NULL;
-
 	*id = empty_id;
 
 	if (streq("%fromcert", src)) {
-		id->kind = ID_FROMCERT;
-	} else if (streq("%none", src)) {
-		id->kind = ID_NONE;
-	} else if (streq("%null", src)) {
-		id->kind = ID_NULL;
-	} else if (strchr(src, '=') != NULL) {
-		/* we interpret this as an ASCII X.501 ID_DER_ASN1_DN */
-		id->kind = ID_DER_ASN1_DN;
+		*id = (struct id) {
+			.kind = ID_FROMCERT,
+		};
+		return NULL;
+	}
+
+	if (streq("%none", src)) {
+		*id = (struct id) {
+			.kind = ID_NONE,
+		};
+		return NULL;
+	}
+
+	if (streq("%null", src)) {
+		*id = (struct id) {
+			.kind = ID_NULL,
+		};
+		return NULL;
+	}
+
+	if (strchr(src, '=') != NULL) {
 		/*
+		 * We interpret this as an ASCII X.501 ID_DER_ASN1_DN.
+		 *
 		 * convert from LDAP style or openssl x509 -subject style
 		 * to ASN.1 DN
 		 * discard optional @ character in front of DN
 		 */
-		ugh = atodn((*src == '@') ? src + 1 : src, &id->name);
-	} else if (strchr(src, '@') == NULL) {
-		if (streq(src, "%any") || streq(src, "0.0.0.0")) {
-			/* any ID will be accepted */
-			id->kind = ID_NONE;
-		} else {
-			/*
-			 * !!! this test is not sufficient for distinguishing
-			 * address families.
-			 * We need a notation to specify that a FQDN is to be
-			 * resolved to IPv6.
-			 */
-			const struct ip_info *afi = strchr(src, ':') == NULL ?
-				&ipv4_info :
-				&ipv6_info;
-
-			id->kind = afi->id_addr;
-			ugh = ttoaddr(src, 0, afi->af, &id->ip_addr);
+		chunk_t name; /* shunk_t */
+		err_t ugh = atodn((*src == '@') ? src + 1 : src, &name);
+		if (ugh != NULL) {
+			return ugh;
 		}
-	} else {
-		if (*src == '@') {
-			if (*(src + 1) == '#') {
-				/*
-				 * if there is a second specifier (#) on the
-				 * line we interpret this as ID_KEY_ID
-				 */
-				id->kind = ID_KEY_ID;
-				id->name.ptr = (unsigned char *)src;
-				/* discard @~, convert from hex to bin */
-				ugh = ttodata(src + 2, 0, 16,
-					(char *)id->name.ptr,
-					strlen(src), &id->name.len);
-			} else if (*(src + 1) == '~') {
-				/*
-				 * if there is a second specifier (~) on the
-				 * line we interpret this as a binary
-				 * ID_DER_ASN1_DN
-				 */
-				id->kind = ID_DER_ASN1_DN;
-				id->name.ptr = (unsigned char *)src;
-				/* discard @~, convert from hex to bin */
-				ugh = ttodata(src + 2, 0, 16,
-					(char *)id->name.ptr,
-					strlen(src), &id->name.len);
-			} else if (*(src + 1) == '[') {
-				/*
-				 * if there is a second specifier ([) on the
-				 * line we interpret this as a text ID_KEY_ID,
-				 * and we remove a trailing ", if there is one.
-				 */
-				int len = strlen(src + 2);
-
-				id->kind = ID_KEY_ID;
-				id->name.ptr = (unsigned char *)src + 2;
-
-				/*
-				 * Start of name.ptr is srv+2 so len is 2
-				 * smaller than the length of src and the
-				 * terminator character is at src[len+2].
-				 * Therefore, the last character is src[len+1]
-				 */
-				if (src[len + 1] == ']') {
-					src[len + 1] = '\0';
-					len--;
-				}
-				id->name.len = len;
-			} else {
-				id->kind = ID_FQDN;
-				/* discard @ */
-				id->name.ptr = (unsigned char *)src + 1;
-				id->name.len = strlen(src) - 1;
-			}
-		} else {
-			/*
-			 * We leave in @, as per DOI 4.6.2.4
-			 * (but DNS wants . instead).
-			 */
-			id->kind = ID_USER_FQDN;
-			id->name.ptr = (unsigned char *)src;
-			id->name.len = strlen(src);
-		}
+		*id = (struct id) {
+			.kind = ID_DER_ASN1_DN,
+			.name = clone_hunk(name, "asn1"),
+		};
+		return NULL;
 	}
-	return ugh;
+
+	if (streq(src, "%any") || streq(src, "0.0.0.0")) {
+		/* any ID will be accepted */
+		*id = (struct id) {
+			.kind = ID_NONE,
+		};
+		return NULL;
+	}
+
+	if (strchr(src, '@') == NULL) {
+		/*
+		 * !!! this test is not sufficient for distinguishing
+		 * address families.
+		 *
+		 * We need a notation to specify that a FQDN is to be
+		 * resolved to IPv6.
+		 */
+		const struct ip_info *afi = strchr(src, ':') == NULL ?
+			&ipv4_info :
+			&ipv6_info;
+		ip_address addr;
+		err_t ugh = domain_to_address(shunk1(src), afi, &addr);
+		if (ugh != NULL) {
+			return ugh;
+		}
+		*id = (struct id) {
+			.kind = afi->id_addr,
+			.ip_addr = addr,
+		};
+		return NULL;
+	}
+
+	if (strneq(src, "@#", 2)) {
+		/*
+		 * if there is a second specifier (#) on the line we
+		 * interpret this as ID_KEY_ID.
+		 *
+		 * Discard @#, convert from hex to bin.
+		 */
+		src += 2; /* drop "@#" */
+		chunk_t name = alloc_chunk(strlen(src) / 2, "key id");
+		err_t ugh = ttodata(src, 0, 16, (void*)name.ptr, name.len, &name.len);
+		if (ugh != NULL) {
+			free_chunk_content(&name);
+			return ugh;
+		}
+		*id = (struct id) {
+			.kind = ID_KEY_ID,
+			.name = name,
+		};
+		return NULL;
+	}
+
+	if (strneq(src, "@~", 2)) {
+		/*
+		 * if there is a second specifier (~) on the line we
+		 * interpret this as a binary ID_DER_ASN1_DN.
+		 *
+		 * discard @~, convert from hex to bin.
+		 */
+		src += 2; /* drop "@~" */
+		chunk_t name = alloc_chunk(strlen(src) / 2, "dn id");
+		err_t ugh = ttodata(src + 2, 0, 16, (void*)name.ptr, name.len, &name.len);
+		if (ugh != NULL) {
+			free_chunk_content(&name);
+			return ugh;
+		}
+		*id = (struct id) {
+			.kind = ID_DER_ASN1_DN,
+			.name = name,
+		};
+		return NULL;
+	}
+
+	if (strneq(src, "@[", 2)) {
+		/*
+		 * if there is a second specifier ([) on the line we
+		 * interpret this as a text ID_KEY_ID, and we remove a
+		 * trailing "]", if there is one.
+		 */
+		src += 2; /* drop "@[" */
+		int len = strlen(src);
+		if (src[len-1] == ']') {
+			len -= 1; /* drop trailing "]" */
+		}
+		*id = (struct id) {
+			.kind = ID_KEY_ID,
+			.name = clone_bytes_as_chunk(src, len, "key id"),
+		};
+		return NULL;
+	}
+
+	if (*src == '@') {
+		*id = (struct id) {
+			.kind = ID_FQDN,
+			/* discard @ */
+			.name = clone_bytes_as_chunk(src + 1, strlen(src)-1, "fqdn id"),
+		};
+		return NULL;
+	}
+
+	/*
+	 * We leave in @, as per DOI 4.6.2.4 (but DNS wants
+	 * . instead).
+	 */
+	*id = (struct id) {
+		.kind = ID_USER_FQDN,
+		.name = clone_bytes_as_chunk(src, strlen(src), "DOI 4.6.2.4"),
+	};
+	return NULL;
 }
 
 void jam_id(jambuf_t *buf, const struct id *id, jam_bytes_fn *jam_bytes)

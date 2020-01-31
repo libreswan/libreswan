@@ -179,22 +179,25 @@ static void key_add_request(const struct whack_message *msg)
 
 	if (ugh != NULL) {
 		loglog(RC_BADID, "bad --keyid \"%s\": %s", msg->keyid, ugh);
-	} else {
-		if (!msg->whack_addkey)
-			delete_public_keys(&pluto_pubkeys, &keyid,
-					   pubkey_alg_type(msg->pubkey_alg));
-
-		if (msg->keyval.len != 0) {
-			DBG_dump_hunk("add pubkey", msg->keyval);
-			ugh = add_public_key(&keyid, PUBKEY_LOCAL,
-					     pubkey_alg_type(msg->pubkey_alg),
-					     &msg->keyval, &pluto_pubkeys);
-			if (ugh != NULL)
-				loglog(RC_LOG_SERIOUS, "%s", ugh);
-		} else {
-				loglog(RC_LOG_SERIOUS, "error: Key without keylength from whack not added to key list (needs DNS lookup?)");
-		}
+		return;
 	}
+
+	if (!msg->whack_addkey)
+		delete_public_keys(&pluto_pubkeys, &keyid,
+				   pubkey_alg_type(msg->pubkey_alg));
+
+	if (msg->keyval.len != 0) {
+		DBG_dump_hunk("add pubkey", msg->keyval);
+		ugh = add_public_key(&keyid, PUBKEY_LOCAL,
+				     pubkey_alg_type(msg->pubkey_alg),
+				     &msg->keyval, &pluto_pubkeys);
+		if (ugh != NULL) {
+			loglog(RC_LOG_SERIOUS, "%s", ugh);
+		}
+	} else {
+		loglog(RC_LOG_SERIOUS, "error: Key without keylength from whack not added to key list (needs DNS lookup?)");
+	}
+	free_id_content(&keyid);
 }
 
 /*
