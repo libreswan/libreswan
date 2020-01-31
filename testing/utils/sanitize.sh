@@ -25,13 +25,6 @@ fi
 . ${LIBRESWANSRCDIR}/testing/pluto/setup.sh
 . ${LIBRESWANSRCDIR}/testing/utils/functions.sh
 
-if [ -f eastinit.sh ] ; then
-        RESPONDER=east
-else
-        P=`pwd`
-        echo "can't identify RESPONDER no $P/eastinit.sh"
-        exit 1
-fi
 set +e
 consoles=`ls *.console.txt 2>/dev/null || echo "NOFILES"`
 set -e
