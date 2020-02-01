@@ -30,6 +30,7 @@ v3.30 (unreleased)
 * KLIPS: Support for kernels >= 4.20 with SYNC_SKCIPHER_REQUEST_ON_STACK [Paul]
 * KLIPS: Userland tools compile fixes [Hugh/Paul]
 * building: No longer build with DH2(modp1024) support (see RFC 8247) [Paul]
+* building: add config for PYTHON_BINARY, default being /usr/bin/python [Tuomo]
 * packaging: fedora30 requires gcc to be listed as BuildRequires: [Paul]
 * packaging: Add Debian stretch specific configs and more cleanup [Antony]
 * packaging: make deb jessie and xenial config detection [Antony]
