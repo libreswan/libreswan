@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!@PYTHON_BINARY@
 #
 # Copyright (C) 2018 Paul Wouters <pwouters@redhat.com>
 #

@@ -179,7 +179,7 @@ FINALRCDIR?=$(shell for d in $(INC_RCDIRS) ; \
 		fi ; done ; echo $(INC_RCDEFAULT) )
 RCDIR?=$(DESTDIR)$(FINALRCDIR)
 
-
+PYTHON_BINARY ?= /usr/bin/python
 
 ### kernel pathnames
 
@@ -477,6 +477,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_SECRETS_FILE@:$(IPSEC_SECRETS_FILE):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
+			-e "s:@PYTHON_BINARY@:$(PYTHON_BINARY):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
 			-e "s:@SD_TYPE@:$(SD_TYPE):g" \
 			-e "s:@SD_RESTART_TYPE@:$(SD_RESTART_TYPE):g" \
