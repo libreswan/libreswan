@@ -16,6 +16,7 @@
     INITSYSTEM=systemd \\\
     NSS_REQ_AVA_COPY=false \\\
     NSS_HAS_IPSEC_PROFILE=true \\\
+    PYTHON_BINARY=%{__python3} \\\
     USE_DNSSEC=true \\\
     USE_FIPSCHECK=true \\\
     USE_LABELED_IPSEC=true \\\
@@ -98,10 +99,9 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
-pathfix.py -i %{__python3} -pn programs/verify/verify.in programs/show/show.in \
+pathfix.py -i %{__python3} -pn \
   testing/cert_verify/usage_test testing/pluto/ikev1-01-fuzzer/cve-2015-3204.py \
-  testing/pluto/ikev2-15-fuzzer/send_bad_packets.py testing/x509/dist_certs.py \
-  programs/_unbound-hook/_unbound-hook.in
+  testing/pluto/ikev2-15-fuzzer/send_bad_packets.py testing/x509/dist_certs.py
 
 # replace unsupported KLIPS README
 echo "KLIPS is not supported with RHEL8" > README.KLIPS

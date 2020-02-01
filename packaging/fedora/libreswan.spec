@@ -13,6 +13,7 @@
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_prefix} \\\
     INITSYSTEM=systemd \\\
+    PYTHON_BINARY=%{__python3} \\\
     USE_DNSSEC=true \\\
     USE_FIPSCHECK=true \\\
     USE_KLIPS=false \\\
@@ -100,14 +101,6 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
-# Fedora should really figure this versioning out itself, not burden upstream
-sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/verify/verify.in
-sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/show/show.in
-sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/cert_verify/usage_test
-sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/pluto/ikev1-01-fuzzer/cve-2015-3204.py
-sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/pluto/ikev2-15-fuzzer/send_bad_packets.py
-sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/x509/dist_certs.py
-sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/_unbound-hook/_unbound-hook.in
 # enable crypto-policies support
 sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" programs/configs/ipsec.conf.in
 # linking to freebl is no longer needed
