@@ -16,6 +16,7 @@
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_prefix} \\\
     INITSYSTEM=sysvinit \\\
+    PYTHON_BINARY=%{__python} \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
     USE_FIPSCHECK=true \\\
     USE_KLIPS=false \\\

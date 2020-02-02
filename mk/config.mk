@@ -179,7 +179,8 @@ FINALRCDIR?=$(shell for d in $(INC_RCDIRS) ; \
 		fi ; done ; echo $(INC_RCDEFAULT) )
 RCDIR?=$(DESTDIR)$(FINALRCDIR)
 
-PYTHON_BINARY ?= /usr/bin/python
+# PYTHON_BINARY is used for python scripts shebang
+PYTHON_BINARY ?= /usr/bin/python3
 
 ### kernel pathnames
 
