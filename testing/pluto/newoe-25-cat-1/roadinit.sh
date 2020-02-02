@@ -7,7 +7,7 @@ ipsec start
 ipsec whack --impair suppress-retransmits
 ipsec auto --add road-east
 ipsec auto --add road-west
-# give OE a chance to load conns
+# give OE a chance to load conns; what exactly is this waiting for?
 sleep 3
 ipsec auto --status
 echo "initdone"

@@ -19,7 +19,7 @@ road #
  ipsec auto --add road-west
 conn 'road-west': not found (tried aliases)
 road #
- # give OE a chance to load conns
+ # give OE a chance to load conns; what exactly is this waiting for?
 road #
  sleep 3
 road #
@@ -267,6 +267,8 @@ road #
  echo "initdone"
 initdone
 road #
+ # why more sleep?
+road #
  sleep 5
 road #
  ipsec whack --trafficstatus
@@ -311,25 +313,27 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
+ # trigger OE
+road #
+ ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+down
+road #
+ ../../pluto/bin/wait-for-whack-trafficstatus.sh '"private-or-clear#192.1.2.0/24"'
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL', lease=10.0.10.1/32
+road #
  # ping should succeed through tunnel
 road #
- ping -n -c 4 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
 road #
  echo done
 done
 road #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
 road #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)
