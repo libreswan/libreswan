@@ -25,11 +25,26 @@ summarydir=$(cd $1 && pwd) ; shift
 webdir=$(dirname $0)
 makedir=$(cd ${webdir}/../.. && pwd)
 utilsdir=${makedir}/testing/utils
-first_commit=
-# start with new domains
+
+# start with new shiny domains
+
 kvm_setup=kvm-purge
+
+# Select the oldest commit to test.
+#
+# Will search [HEAD..oldest_commit] for something interesting and
+# untested.
+#
+# When recovering from an error (and when just starting) set
+# oldest_commit to HEAD so that only a new commit, which hopefully
+# fixes, the barf will be tested (if there's no new commit things go
+# idle).
+
+oldest_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
+
 json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
 status=${json_status}
+
 
 run() (
     href="<a href=\"$(basename ${resultsdir})/$1.log\">$1</a>"
@@ -96,20 +111,11 @@ while true ; do
 
     # Select the next commit to test
     #
-    # Will search [HEAD..first_commit] for something interesting and
+    # Will search [HEAD..oldest_commit] for something interesting and
     # untested.
-    #
-    # When recovering from an error (and when just starting) set
-    # first_commit to HEAD so that only a new commit, which hopefully
-    # fixes, the barf will be tested (if there's no new commit things
-    # go idle).
-
-    if test -z "${first_commit}" ; then
-	first_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
-    fi
 
     ${status} "looking for work"
-    if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${first_commit}) ; then \
+    if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${oldest_commit}) ; then \
 	# Seemlingly nothing to do; github gets updated up every 15
 	# minutes so sleep for less than that
 	seconds=$(expr 10 \* 60)
@@ -153,9 +159,9 @@ while true ; do
     # This list should match results.html.  Should a table be
     # generated?
     #
-    # ${kvm_setup} flip-flops between kvm-shutdown (typical) and
-    # kvm-purge (first starting, or error recovery).  For kvm-purge,
-    # since it is only invoked when the REPO is at HEAD, the upgrade /
+    # ${kvm_setup} starts out as kvm-purge but then filps to
+    # kvm-shutdown.  For kvm-purge, since it is only invoked when the
+    # script is first changing and the REPO is at HEAD, the upgrade /
     # transmogrify it triggers will always be for the latest changes.
 
     targets="distclean ${kvm_setup} kvm-keys kvm-install kvm-test"
@@ -170,10 +176,7 @@ while true ; do
 	    # updated domains; hopefully that will contain the fix (or
 	    # at least contain the damage).
 	    ${status} "${target} barfed, restarting with HEAD"
-	    first_commit=
-	    kvm_setup=kvm-purge
-	    # continue is below
-	    break
+	    exec $0 ${repodir} ${summarydir}
 	fi
     done
 
@@ -185,8 +188,7 @@ while true ; do
     ${status} "checking KVMs"
     if grep '"output-missing"' "${resultsdir}/results.json" ; then
 	${status} "corrupt domains detected, restarting with HEAD"
-	first_commit=
-	kvm_setup=kvm-purge
+	exec $0 ${repodir} ${summarydir}
     fi
 
     # loop back to code updating summary dir
