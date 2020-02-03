@@ -35,7 +35,7 @@ struct msg_digest *alloc_md(const char *mdname)
 	return md;
 }
 
-struct msg_digest *clone_md(struct msg_digest *md, const char *name)
+struct msg_digest *clone_raw_md(struct msg_digest *md, const char *name)
 {
 	struct msg_digest *clone = alloc_md(name);
 	clone->fake_clone = true;

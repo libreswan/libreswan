@@ -451,7 +451,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 {
 	/* not whack FD yet is expected to be reset! */
 	pexpect_reset_globals();
-	struct msg_digest *md = clone_md(orig, fmt /* good enough */);
+	struct msg_digest *md = clone_raw_md(orig, fmt /* good enough */);
 
 	LSWLOG(buf) {
 		lswlogs(buf, "IMPAIR: start processing ");
@@ -505,7 +505,7 @@ static void save_any_md_for_replay(struct msg_digest **mdp)
 	if (mdp != NULL && *mdp != NULL) {
 		init_list(&replay_info, &replay_packets);
 		struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
-		e->md = clone_md(*mdp, "copy of real message");
+		e->md = clone_raw_md(*mdp, "copy of real message");
 		e->nr = ++replay_count; /* yes; pre-increment */
 		e->entry = list_entry(&replay_info, e); /* back-link */
 		insert_list_entry(&replay_packets, &e->entry);

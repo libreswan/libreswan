@@ -151,9 +151,11 @@ enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr);
 enum message_role v2_msg_role(const struct msg_digest *md);
 
 extern struct msg_digest *alloc_md(const char *mdname);
-struct msg_digest *clone_md(struct msg_digest *md, const char *name);
 extern void release_any_md(struct msg_digest **mdp);
 struct msg_digest *reference_md(struct msg_digest *md);
+
+/* only the buffer */
+struct msg_digest *clone_raw_md(struct msg_digest *md, const char *name);
 
 void schedule_md_event(const char *name, struct msg_digest *md);
 

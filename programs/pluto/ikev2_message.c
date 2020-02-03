@@ -771,7 +771,7 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 		if (IMPAIR(REPLAY_ENCRYPTED) && !md->fake_clone) {
 			libreswan_log("IMPAIR: cloning incoming encrypted message and scheduling its replay");
 			schedule_md_event("replay encrypted message",
-					  clone_md(md, "copy of encrypted message"));
+					  clone_raw_md(md, "copy of encrypted message"));
 		}
 		if (IMPAIR(CORRUPT_ENCRYPTED) && !md->fake_clone) {
 			libreswan_log("IMPAIR: corrupting incoming encrypted message's SK payload's first byte");
