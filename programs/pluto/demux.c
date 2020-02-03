@@ -379,7 +379,6 @@ static void process_md(struct msg_digest **mdp)
 	ip_address old_from = push_cur_from((*mdp)->sender);
 	process_packet(mdp);
 	pop_cur_from(old_from);
-	release_any_md(mdp);
 	reset_cur_state();
 	reset_cur_connection();
 }
@@ -398,7 +397,7 @@ static void process_md(struct msg_digest **mdp)
  * enormous input packet buffer, an auto.
  */
 
-static bool impair_incoming(struct msg_digest **mdp);
+static bool impair_incoming(struct msg_digest *md);
 
 void comm_handle_cb(evutil_socket_t unused_fd UNUSED,
 		    const short unused_event UNUSED,
@@ -427,9 +426,10 @@ void comm_handle_cb(evutil_socket_t unused_fd UNUSED,
 	struct msg_digest *md = read_packet(ifp);
 	if (md != NULL) {
 		md->md_inception = md_start;
-		if (!impair_incoming(&md)) {
+		if (!impair_incoming(md)) {
 			process_md(&md);
 		}
+		md_delref(&md, HERE);
 		pexpect(md == NULL);
 	}
 	threadtime_stop(&md_start, SOS_NOBODY,
@@ -468,6 +468,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 	}
 
 	process_md(&md);
+	md_delref(&md, HERE);
 
 	LSWLOG(buf) {
 		lswlogf(buf, "IMPAIR: stop processing ");
@@ -502,23 +503,23 @@ static const struct list_info replay_info = {
 	.jam = jam_replay_entry,
 };
 
-static void save_any_md_for_replay(struct msg_digest **mdp)
+static void save_md_for_replay(bool already_impaired, struct msg_digest *md)
 {
-	if (mdp != NULL && *mdp != NULL) {
+	if (!already_impaired) {
 		init_list(&replay_info, &replay_packets);
 		struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
-		e->md = clone_raw_md(*mdp, "copy of real message");
+		e->md = clone_raw_md(md, "copy of real message");
 		e->nr = ++replay_count; /* yes; pre-increment */
 		e->entry = list_entry(&replay_info, e); /* back-link */
 		insert_list_entry(&replay_packets, &e->entry);
-		release_any_md(mdp);
 	}
 }
 
-static bool impair_incoming(struct msg_digest **mdp)
+static bool impair_incoming(struct msg_digest *md)
 {
+	bool impaired = false;
 	if (IMPAIR(REPLAY_DUPLICATES)) {
-		save_any_md_for_replay(mdp);
+		save_md_for_replay(impaired, md);
 		/* MD is the most recent entry */
 		struct replay_entry *e = NULL;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
@@ -526,25 +527,27 @@ static bool impair_incoming(struct msg_digest **mdp)
 			process_md_clone(e->md, "duplicate packet");
 			break;
 		}
+		impaired = true;
 	}
 	if (IMPAIR(REPLAY_FORWARD)) {
-		save_any_md_for_replay(mdp);
+		save_md_for_replay(impaired, md);
 		struct replay_entry *e = NULL;
 		FOR_EACH_LIST_ENTRY_OLD2NEW(&replay_packets, e) {
 			process_md_clone(e->md, "replay forward: packet %lu of %lu",
 					 e->nr, replay_count);
 		}
+		impaired = true;
 	}
 	if (IMPAIR(REPLAY_BACKWARD)) {
-		save_any_md_for_replay(mdp);
+		save_md_for_replay(impaired, md);
 		struct replay_entry *e = NULL;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
 			process_md_clone(e->md, "start replay backward: packet %lu of %lu",
 					 e->nr, replay_count);
 		}
+		impaired = true;
 	}
-	/* MDP NULL implies things were impaired */
-	return *mdp == NULL;
+	return impaired;
 }
 
 static callback_cb handle_md_event; /* type assertion */
@@ -553,6 +556,7 @@ static void handle_md_event(struct state *st, void *context)
 	pexpect(st == NULL);
 	struct msg_digest *md = context;
 	process_md(&md);
+	md_delref(&md, HERE);
 	pexpect(md == NULL);
 	pexpect_reset_globals();
 }
