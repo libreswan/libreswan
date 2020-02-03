@@ -203,10 +203,12 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	}
 
 	/*
-	 * Clone actual message contents and set up md->packet_pbs to
-	 * describe it.
+	 * Create the real message digest; and set up md->packet_pbs
+	 * to describe it.
 	 */
-	struct msg_digest *md = clone_thing(stack_md, "msg_digest in read_packet");
+	struct msg_digest *md = alloc_md("msg_digest in read_packet");
+	md->sender = stack_md.sender;
+	md->iface = stack_md.iface;
 	init_pbs(&md->packet_pbs,
 		 clone_bytes(_buffer, packet_len,
 			     "message buffer in read_packet()"),
