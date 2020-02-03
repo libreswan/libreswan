@@ -30,6 +30,7 @@ struct msg_digest *alloc_md(const char *mdname)
 	static const struct msg_digest blank_md;
 	struct msg_digest *md = alloc_thing(struct msg_digest, mdname);
 	*md = blank_md;
+	init_ref(md);
 	return md;
 }
 
@@ -48,7 +49,13 @@ struct msg_digest *clone_raw_md(struct msg_digest *md, const char *name)
 	return clone;
 }
 
-static void free_mdp(struct msg_digest **mdp)
+struct msg_digest *md_addref(struct msg_digest *md, where_t where)
+{
+	return ref_add(md, where);
+}
+
+static void free_mdp(struct msg_digest **mdp,
+		     where_t unused_where UNUSED)
 {
 	freeanychunk((*mdp)->raw_packet);
 	pfreeany((*mdp)->packet_pbs.start);
@@ -56,9 +63,7 @@ static void free_mdp(struct msg_digest **mdp)
 	*mdp = NULL;
 }
 
-void release_any_md(struct msg_digest **mdp)
+void md_delref(struct msg_digest **mdp, where_t where)
 {
-	if (*mdp != NULL) {
-		free_mdp(mdp);
-	}
+	ref_delete(mdp, free_mdp, where);
 }

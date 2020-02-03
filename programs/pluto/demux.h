@@ -26,6 +26,8 @@
 #include "chunk.h"
 #include "ip_address.h"
 #include "pluto_timing.h"
+#include "refcnt.h"
+#include "where.h"
 
 struct state;   /* forward declaration of tag */
 
@@ -78,6 +80,7 @@ struct payload_summary {
  */
 
 struct msg_digest {
+	refcnt_t refcnt;
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
 	const struct iface_port *iface;		/* interface on which message arrived */
 	ip_endpoint sender;			/* address:port where message came from */
@@ -149,7 +152,8 @@ enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr);
 enum message_role v2_msg_role(const struct msg_digest *md);
 
 extern struct msg_digest *alloc_md(const char *mdname);
-extern void release_any_md(struct msg_digest **mdp);
+struct msg_digest *md_addref(struct msg_digest *md, where_t where);
+void md_delref(struct msg_digest **mdp, where_t where);
 
 /* only the buffer */
 struct msg_digest *clone_raw_md(struct msg_digest *md, const char *name);
@@ -161,5 +165,10 @@ extern void process_packet(struct msg_digest **mdp);
 extern char *cisco_stringify(pb_stream *pbs, const char *attr_name);
 
 extern void lswlog_msg_digest(struct lswlog *log, const struct msg_digest *md);
+
+/*
+ * old stuff.
+ */
+#define release_any_md(MDP) md_delref(MDP, HERE)
 
 #endif /* _DEMUX_H */
