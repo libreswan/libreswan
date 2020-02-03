@@ -22,7 +22,6 @@ W4 = $(or $(word 4, $(subst -, ,$1)), $(value 2))
 FIRST_TARGET ?=$@	# keep track of original target
 DISTRO ?= fedora	# default distro
 DISTRO_REL ?= 30 	# default release
-EXCLUDE_RPM_ARCH ?= --exclude='*.i686'
 
 D_USE_UNBOUND_EVENT_H_COPY ?= true
 D_USE_DNSSEC ?= false
@@ -39,6 +38,7 @@ REPO_POWERTOOLS = $(shell grep -qE '^ID="centos"' /etc/os-release && echo "--ena
 PKG_INSTALL = $(SUDO_CMD) $(PKG_CMD) $(REPO_POWERTOOLS) install -y
 PKG_UPGRADE = $(SUDO_CMD) $(PKG_CMD) $(REPO_POWERTOOLS) upgrade -y
 PKG_DEBUGINFO_INSTALL = $(SUDO_CMD) $(PKG_CMD) $(REPO_POWERTOOLS) debuginfo-install -y
+PKG_DEBUGINFO_UPGRADE = $(SUDO_CMD) $(PKG_CMD) $(REPO_POWERTOOLS) upgrade --enablerepo=*-debuginfo "*-debuginfo" -y
 
 # end of configurable variables
 
@@ -127,9 +127,11 @@ install-testing-rpm-dep: install-rpm-build-dep install-rpm-run-dep
 	$(if $(KVM_UPGRADE_PACKAGES), $(PKG_UPGRADE) $(KVM_UPGRADE_PACKAGES))
 	$(if $(KVM_DEBUGINFO_INSTALL), $(if $(KVM_DEBUGINFO), \
                 $(PKG_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO)))
+	$(if $(KVM_DEBUGINFO_INSTALL), $(if $(KVM_DEBUGINFO), \
+		$(PKG_DEBUGINFO_UPGRADE)))
 
 .PHONY: install-rpm-run-dep
-RUN_RPMS = $$($(PKG_CMD) deplist $(EXCLUDE_RPM_ARCH) libreswan | awk '/provider:/ {print $$2}' | sort -u)
+RUN_RPMS = $$($(PKG_CMD) deplist --arch $$(uname -m) --forcearch $$(uname -m) libreswan | awk '/provider:/ {print $$2}' | sort -u)
 install-rpm-run-dep:
 	 $(PKG_INSTALL) --skip-broken $(RUN_RPMS)
 
