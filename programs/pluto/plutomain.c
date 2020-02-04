@@ -1820,7 +1820,7 @@ int main(int argc, char **argv)
 	init_kernel();
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
-	init_fetch();
+	start_crl_fetch_helper();
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
@@ -1896,6 +1896,12 @@ void exit_pluto(enum pluto_exit_code status)
 	 */
 
 #if defined(LIBCURL) || defined(LIBLDAP)
+	/*
+	 * Wait for the CRL fetch handler to finish its current task.
+	 * Without this CRL fetch requests are left hanging and, after
+	 * the NSS DB has been closed (below), the helper can crash.
+	 */
+	stop_crl_fetch_helper();
 	free_crl_fetch();	/* free chain of crl fetch requests */
 #endif
 

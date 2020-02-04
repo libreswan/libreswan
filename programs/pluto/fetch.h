@@ -13,10 +13,11 @@
  * for more details.
  */
 
-#include <nss.h>
 extern void list_crl_fetch_requests(struct fd *whackfd, bool utc);
 
-extern void init_fetch(void);
+extern void start_crl_fetch_helper(void);
+extern void stop_crl_fetch_helper(void);
+
 extern void free_crl_fetch(void);
 extern void check_crls(void);
 

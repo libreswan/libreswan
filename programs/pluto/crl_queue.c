@@ -22,6 +22,7 @@
 #include "crl_queue.h"
 #include "lswnss.h"
 #include "realtime.h"
+#include "defs.h"		/* for exiting_pluto */
 
 static pthread_mutex_t crl_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t crl_queue_cond = PTHREAD_COND_INITIALIZER;
@@ -120,6 +121,8 @@ void free_crl_fetch_requests(struct crl_fetch_request **requests)
  *
  * When the requests are merged into the fetch queue, their order gets
  * re-reversed putting oldest first.
+ *
+ * Allow NULL - this is used to wake up the fetch helper.
  */
 void add_crl_fetch_requests(struct crl_fetch_request *requests)
 {
@@ -132,6 +135,7 @@ void add_crl_fetch_requests(struct crl_fetch_request *requests)
 	/* add to front of queue */
 	pthread_mutex_lock(&crl_queue_mutex);
 	{
+		/* if end's NULL; just wake the helper */
 		if (end != NULL) {
 			end->next = crl_fetch_requests;
 			crl_fetch_requests = requests;
@@ -148,16 +152,29 @@ struct crl_fetch_request *get_crl_fetch_requests(void)
 	struct crl_fetch_request *requests = NULL;
 	pthread_mutex_lock(&crl_queue_mutex);
 	{
-		while (crl_fetch_requests == NULL) {
+		while (!exiting_pluto) {
+			/* if there's something grab it */
+			if (crl_fetch_requests != NULL) {
+				dbg("grabbing crl_queue contents");
+				requests = crl_fetch_requests;
+				crl_fetch_requests = NULL;
+				break;
+			}
 			dbg("waiting for crl_queue to fill");
 			int status = pthread_cond_wait(&crl_queue_cond,
-							    &crl_queue_mutex);
+						       &crl_queue_mutex);
 			if (status != 0) {
 				break;
 			} /* else ? */
 		}
-		requests = crl_fetch_requests;
-		crl_fetch_requests = NULL;
+		/*
+		 * REQUEST == NULL implies EXITING_PLUTO but not the
+		 * reverse.  Could grab a request while pluto is
+		 * starting to exit.
+		 */
+		if (requests == NULL) {
+			pexpect(exiting_pluto);
+		}
 	}
 	pthread_mutex_unlock(&crl_queue_mutex);
 	return requests;

@@ -62,7 +62,7 @@ struct fetch_req {
 /* chained list of crl fetch requests */
 static fetch_req_t *crl_fetch_reqs = NULL;
 
-static pthread_t thread;
+static pthread_t fetch_thread_id;
 static pthread_mutex_t crl_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static const char *crl_fetch_list_mutex_who;
 
@@ -524,9 +524,13 @@ static void *fetch_thread(void *arg UNUSED)
 {
 	dbg("fetch thread started");
 
-	while (!exiting_pluto) {
+	while (true) {
 		dbg("fetching crl requests (may block)");
 		struct crl_fetch_request *requests = get_crl_fetch_requests();
+		if (requests == NULL) {
+			pexpect(exiting_pluto);
+			break;
+		}
 
 		/*
 		 * Merge in the next batch of newest-to-oldest ordered
@@ -536,7 +540,6 @@ static void *fetch_thread(void *arg UNUSED)
 		 * prepended, and since the oldest request is
 		 * processed last, it is put right at the front.
 		 */
-
 		dbg("merging new fetch requests");
 		for (struct crl_fetch_request *r = requests; r != NULL; r = r->next) {
 			merge_crl_fetch_request(r);
@@ -561,7 +564,7 @@ static void *fetch_thread(void *arg UNUSED)
 /*
  * initializes curl and starts the fetching thread
  */
-void init_fetch(void)
+void start_crl_fetch_helper(void)
 {
 	/*
 	 * XXX: CRT checking is probably really a periodic timer,
@@ -580,12 +583,31 @@ void init_fetch(void)
 			libreswan_log("libcurl could not be initialized, status = %d",
 			     status);
 #endif
-		status = pthread_create(&thread, NULL, fetch_thread, NULL);
+		status = pthread_create(&fetch_thread_id, NULL, fetch_thread, NULL);
 		if (status != 0)
 			libreswan_log(
 				"could not start thread for fetching certificate, status = %d",
 				status);
 		schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5));
+	}
+}
+
+void stop_crl_fetch_helper(void)
+{
+	if (deltasecs(crl_check_interval) > 0) {
+		/*
+		 * Log before blocking.  If the CRL fetch helper is
+		 * currently fetching a CRL, this could take a bit.
+		 */
+		plog_global("shutting down the CRL fetch helper thread");
+		pexpect(exiting_pluto);
+		/* wake the sleeping dragon from its slumber */
+		add_crl_fetch_requests(NULL);
+		/* use a timer? */
+		int status = pthread_join(fetch_thread_id, NULL);
+		if (status != 0) {
+			LOG_ERRNO(status, "problem waiting for crl fetch thread to exit");
+		}
 	}
 }
 
