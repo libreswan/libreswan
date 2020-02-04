@@ -75,4 +75,9 @@ stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs);
 bool ikev2_send_certreq_INIT_decision(const struct state *st,
 				      enum original_role role);
 
+#if defined(LIBCURL) || defined(LIBLDAP)
+bool find_fetch_dn(SECItem *dn, struct connection *c,
+		   CERTCertificate *cert);
+#endif
+
 #endif /* _PLUTO_X509_H */

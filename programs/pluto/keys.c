@@ -596,6 +596,7 @@ stf_status check_signature_gen(struct state *st,
 			str_dn_or_null(c->spd.that.ca, "%any", &buf));
 	}
 
+	pexpect(st->st_remote_certs.processed);
 	if (try_all_keys("remote certificates",
 			 &st->st_remote_certs.pubkey_db,
 			 c, now, &s) ||

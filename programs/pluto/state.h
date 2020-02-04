@@ -521,6 +521,8 @@ struct state {
 	 */
 	bool st_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
 	struct {
+		bool processed;		/* do this once, may not be any */
+		bool harmless;		/* something nasty */
 		struct certs *verified;	/* list; first is EE */
 		struct pubkey_list *pubkey_db;
 	} st_remote_certs;

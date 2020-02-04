@@ -643,8 +643,8 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
  * Do our best to find the CA for the fetch request
  * However, this might be overkill, and only spd.this.ca should be used
  */
-static bool find_fetch_dn(SECItem *dn, struct connection *c,
-				       CERTCertificate *cert)
+bool find_fetch_dn(SECItem *dn, struct connection *c,
+		   CERTCertificate *cert)
 {
 	if (dn == NULL) {
 		DBG(DBG_X509, DBG_log("%s invalid use", __func__));
@@ -770,12 +770,23 @@ static bool decode_certs(struct state *st, struct payload_digest *cert_payloads)
 bool v2_decode_certs(struct ike_sa *ike, struct msg_digest *md)
 {
 	passert(ike->sa.st_ike_version == IKEv2);
-	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
-	if (cert_payloads == NULL) {
-		return true;
+	if (ike->sa.st_remote_certs.processed) {
+		dbg("already processed remote certs");
+		return ike->sa.st_remote_certs.harmless;
 	}
 	/* Process the known certificates */
-	return decode_certs(&ike->sa, cert_payloads);
+	ike->sa.st_remote_certs.processed = true;
+	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
+	bool harmless;
+	if (cert_payloads == NULL) {
+		harmless = true;
+	} else if (decode_certs(&ike->sa, cert_payloads)) {
+		harmless = true;
+	} else {
+		harmless = false;
+	}
+	ike->sa.st_remote_certs.harmless = harmless;
+	return harmless;
 }
 
 /*
@@ -897,6 +908,21 @@ lsw_cert_ret v1_process_certs(struct msg_digest *md)
 	struct ike_sa *ike = ike_sa(st);
 	struct connection *c = st->st_connection;
 	passert(st->st_ike_version == IKEv1);
+
+	/*
+	 * At least one set of certs have been processed; and at least
+	 * once.
+	 *
+	 * The way this code is called is broken (see functions
+	 * ikev1_decode_peer_id() and oakley_id_and_auth()):
+	 *
+	 * - it is repeatedly called to decode the same cert payload
+	 * (causing a cert payload the be decoded multiple times)
+	 *
+	 * - it is called to decode cert payloads that aren't there
+         * (for instance the first agressive request)
+	 */
+	st->st_remote_certs.processed = true;
 
 	/* if we already verified ID, no need to do it again */
 	if (st->st_peer_alt_id) {

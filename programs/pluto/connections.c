@@ -2755,6 +2755,7 @@ struct connection *refine_host_connection(const struct state *st,
 	/*
 	 * Find the PEER's CA, check the per-state DB first.
 	 */
+	pexpect(st->st_remote_certs.processed);
 	chunk_t peer_ca = get_peer_ca(&st->st_remote_certs.pubkey_db, peer_id);
 
 	if (chunk_eq(peer_ca, empty_chunk)) {

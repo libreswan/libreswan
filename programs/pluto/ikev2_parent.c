@@ -94,6 +94,7 @@
 #include "iface.h"
 #include "ikev2_auth.h"
 #include "keys.h"
+#include "cert_decode_helper.h"
 
 struct mobike {
 	ip_endpoint remote;
@@ -2659,12 +2660,32 @@ stf_status ikev2_ike_sa_process_auth_request(struct ike_sa *ike,
 	return e;
 }
 
+static stf_status v2_inI2outR2_post_cert_decode(struct state *st,
+						struct msg_digest *md);
+
 static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 						       struct msg_digest *md)
 {
 	struct ike_sa *ike = ike_sa(st);
-	stf_status ret;
-	enum ikev2_auth_method atype;
+
+	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
+	if (cert_payloads != NULL) {
+		submit_cert_decode(ike, st, md, cert_payloads,
+				   v2_inI2outR2_post_cert_decode,
+				   "responder decoding certificates");
+		return STF_SUSPEND;
+	} else {
+		dbg("no certs to decode");
+		ike->sa.st_remote_certs.processed = true;
+		ike->sa.st_remote_certs.harmless = true;
+	}
+	return v2_inI2outR2_post_cert_decode(st, md);
+}
+
+static stf_status v2_inI2outR2_post_cert_decode(struct state *st,
+						struct msg_digest *md)
+{
+	struct ike_sa *ike = ike_sa(st);
 
 	ikev2_log_parentSA(st);
 
@@ -2676,17 +2697,6 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 
 	nat_traversal_change_port_lookup(md, st); /* shouldn't this be pst? */
 
-	if (!v2_decode_certs(ike, md)) {
-		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
-		pexpect(ike->sa.st_remote_certs.verified == NULL);
-		/*
-		 * The 'end-cert' was bad so all the certs have been
-		 * tossed.  However, since this is the responder
-		 * stumble on.  There might be a connection that still
-		 * authenticates (after a switch?).
-		 */
-		loglog(RC_LOG_SERIOUS, "X509: CERT payload bogus or revoked");
-	}
 	/* this call might update connection in md->st */
 	if (!ikev2_decode_peer_id(md)) {
 		event_force(EVENT_SA_EXPIRE, st);
@@ -2696,9 +2706,9 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
-	atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
+	enum ikev2_auth_method atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, atype)) {
-		ret = idi_ipseckey_fetch(md);
+		stf_status ret = idi_ipseckey_fetch(md);
 		if (ret != STF_OK) {
 			loglog(RC_LOG_SERIOUS, "DNS: IPSECKEY not found or usable");
 			return ret;
@@ -3498,14 +3508,13 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
  * https://tools.ietf.org/html/rfc7296#section-2.21.2
  */
 
+static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *md);
+
 stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct msg_digest *md)
 {
 	pexpect(child != NULL);
 	struct state *st = &child->sa;
 	struct state *pst = &ike->sa;
-	bool got_transport = FALSE;
-	ip_address redirect_ip;
-	bool initiate_redirect = FALSE;
 
 	/* Process NOTIFY payloads related to IKE SA */
 	if (!decode_v2N_ike_auth_response(md)) {
@@ -3522,6 +3531,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 		if (!LIN(POLICY_ACCEPT_REDIRECT_YES, st->st_connection->policy)) {
 			dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
 		} else {
+			ip_address redirect_ip;
 			err_t err = parse_redirect_payload(&md->v2N.redirect->pbs,
 							   st->st_connection->accept_redirect_to,
 							   NULL,
@@ -3530,14 +3540,25 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", err);
 			} else {
 				/* initiate later, because we need to wait for AUTH succees */
-				initiate_redirect = TRUE;
 				st->st_connection->temp_vars.redirect_ip = redirect_ip;
 			}
 		}
 	}
 	st->st_seen_no_tfc = md->v2N.esp_tfc_padding_not_supported; /* Technically, this should be only on the child state */
-	got_transport = md->v2N.use_transport_mode;
 
+#ifdef NOT_YET
+	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
+	if (cert_payloads != NULL) {
+		submit_cert_decode(ike, st, md, cert_payloads,
+				   v2_inR2_post_cert_decode,
+				   "initiator decoding certificates");
+		return STF_SUSPEND;
+	} else {
+		dbg("no certs to decode");
+		ike->sa.st_remote_certs.processed = true;
+		ike->sa.st_remote_certs.harmless = true;
+	}
+#else
 	/*
 	 * On the initiator, we can STF_FATAL on IKE SA errors, because no
 	 * packet needs to be sent anymore. And we cannot recover. Unlike
@@ -3552,6 +3573,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 	 */
 	if (!v2_decode_certs(ike, md)) {
 		pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+		pexpect(ike->sa.st_remote_certs.processed);
 		pexpect(ike->sa.st_remote_certs.verified == NULL);
 		/*
 		 * One of the certs was bad; no point switching
@@ -3561,6 +3583,15 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		return STF_FATAL;
 	}
+#endif
+	return v2_inR2_post_cert_decode(st, md);
+}
+
+static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *md)
+{
+	passert(md != NULL);
+	struct ike_sa *ike = ike_sa(st);
+	struct state *pst = &ike->sa;
 
 	/* XXX this call might change connection in md->st! */
 	if (!ikev2_decode_peer_id(md)) {
@@ -3666,7 +3697,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 	}
 
 	/* AUTH is ok, we can trust the notify payloads */
-	if (got_transport) { /* FIXME: use new RFC logic turning this into a request, not requirement */
+	if (md->v2N.use_transport_mode) { /* FIXME: use new RFC logic turning this into a request, not requirement */
 		if (LIN(POLICY_TUNNEL, st->st_connection->policy)) {
 			loglog(RC_LOG_SERIOUS, "local policy requires Tunnel Mode but peer requires required Transport Mode");
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN; /* applies only to Child SA */
@@ -3678,7 +3709,7 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 		}
 	}
 
-	if (initiate_redirect) {
+	if (md->v2N.redirect) {
 		st->st_redirected_in_auth = TRUE;
 		event_force(EVENT_v2_REDIRECT, st);
 		return STF_SUSPEND;
