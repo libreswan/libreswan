@@ -2332,6 +2332,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		return FALSE;
 	}
 	bool initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
+	bool must_switch = FALSE;
 
 	struct payload_digest *const id_him = initiator ?
 		md->chain[ISAKMP_NEXT_v2IDr] : md->chain[ISAKMP_NEXT_v2IDi];
@@ -2390,9 +2391,12 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			libreswan_log("Peer CERT payload SubjectAltName does not match peer ID for this connection");
 			if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 				libreswan_log("X509: connection failed due to unmatched IKE ID in certificate SAN");
-				return FALSE;
+				if (initiator)
+					return FALSE; /* cannot switch but switching required */
+				must_switch = TRUE;
+			} else {
+				libreswan_log("X509: connection allows unmatched IKE ID and certificate SAN");
 			}
-			libreswan_log("X509: connection allows unmatched IKE ID and certificate SAN");
 		}
 	}
 
@@ -2457,6 +2461,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 		if (authby != AUTH_NEVER) {
 			struct connection *r = NULL;
+			id_buf peer_str;
 
 			if (authby != AUTH_NULL) {
 				r = refine_host_connection(
@@ -2472,19 +2477,29 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 						str_id(&peer_id, &peer_str));
 				}
 				/* can we continue with what we had? */
+				if (must_switch) {
+					loglog(RC_LOG_SERIOUS, "Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
+					      str_id(&peer_id, &peer_str));
+					return FALSE;
+				}
+				/* if X.509, we should have valid peer/san */
+				if (ike->sa.st_remote_certs.verified != NULL && ike->sa.st_peer_alt_id == FALSE) {
+					loglog(RC_LOG_SERIOUS, "Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
+					      str_id(&peer_id, &peer_str));
+					return FALSE;
+				}
 				if (!ike->sa.st_peer_alt_id &&
 				    !same_id(&c->spd.that.id, &peer_id) &&
 				    c->spd.that.id.kind != ID_FROMCERT)
 				{
 					if (LIN(POLICY_AUTH_NULL, c->policy) &&
 					    tip != NULL && tip->kind == ID_NULL) {
-						id_buf peer_str;
 						libreswan_log("Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
 							      str_id(&peer_id, &peer_str));
 						ike->sa.st_peer_wants_null = TRUE;
 					} else {
 						id_buf peer_str;
-						libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
+						loglog(RC_LOG_SERIOUS, "Peer ID '%s' mismatched on first found connection and no better connection found",
 							      str_id(&peer_id, &peer_str));
 						return FALSE;
 					}
@@ -2512,6 +2527,11 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				/* redo from scratch so we read and check CERT payload */
 				DBGF(DBG_X509, "retrying ikev2_decode_peer_id_and_certs() with new conn");
 				return decode_peer_id_counted(ike, md, depth + 1);
+			} else if (must_switch) {
+					id_buf peer_str;
+					loglog(RC_LOG_SERIOUS, "Peer ID '%s' mismatched on first found connection and no better connection found",
+							      str_id(&peer_id, &peer_str));
+					return FALSE;
 			}
 
 			if (c->spd.that.has_id_wildcards) {
