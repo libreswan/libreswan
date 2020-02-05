@@ -8,3 +8,7 @@ If you want to rekey correctly run the test manually (with patience).
 
 NOTE: this test seems to suffer from flow control issues, so reference output
 not committed.
+
+NOTE: timers can be replaced by rekey-ike and rekey-ipsec whack commands
+
+NOTE: seems to trigger: dropping unexpected ISAKMP_v2_CREATE_CHILD_SA message containing v2N_TS_UNACCEPTABLE 
