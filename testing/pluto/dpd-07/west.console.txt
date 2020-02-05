@@ -66,7 +66,6 @@ west #
 west #
  iptables -I OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 west #
-west #
  # DPD should have triggered now
 west #
  echo "Tunnel should be down"
@@ -105,7 +104,6 @@ west #
 done
 west #
  # no tunnels left, Ma!
-west #
 west #
  ../bin/check-for-core.sh
 west #

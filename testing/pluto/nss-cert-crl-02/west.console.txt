@@ -53,7 +53,6 @@ west #
 west #
  ipsec auto --listall | grep -A10 "List of CRLs" | grep -E 'Issuer|Entry|Serial'
 west #
-west #
  ipsec stop
 Redirecting to: [initsystem]
 west #

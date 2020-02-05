@@ -11,9 +11,7 @@ east #
  echo "initdone"
 initdone
 east #
-east #
  ipsec whack --shutdown
-east #
 east #
  ../bin/check-for-core.sh
 east #

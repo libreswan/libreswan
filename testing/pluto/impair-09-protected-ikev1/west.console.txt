@@ -373,7 +373,6 @@ west #
  echo done
 done
 west #
-west #
  ipsec stop
 Redirecting to: [initsystem]
 west #

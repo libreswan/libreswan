@@ -14,7 +14,6 @@ east #
  ipsec whack --trafficstatus
 006 #2: "eastnet-any"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.45'
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

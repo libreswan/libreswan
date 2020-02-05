@@ -13,7 +13,6 @@ east #
  echo initdone
 initdone
 east #
-east #
  grep "^leak" /tmp/pluto.log
 leak-detective enabled
 leak detective found no leaks

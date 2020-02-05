@@ -51,7 +51,6 @@ west #
 | #3 complete_v2_state_transition() PARENT_I1 -> PARENT_I2 with status STF_FAIL+v2N_INVALID_SYNTAX
 "westnet-eastnet-ipv4-psk-ikev2" #3: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
 west #
-west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

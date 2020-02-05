@@ -93,7 +93,6 @@ west #
  grep "minor version" /tmp/pluto.log >/dev/null && echo payload found
 payload found
 west #
-west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

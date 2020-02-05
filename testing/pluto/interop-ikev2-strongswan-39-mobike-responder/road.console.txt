@@ -193,7 +193,6 @@ road #
 road #
  sleep 7
 road #
-road #
  ../bin/check-for-core.sh
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

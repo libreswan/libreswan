@@ -16,7 +16,6 @@ east #
  grep "liveness: no need to send"  /tmp/pluto.log
 | liveness: no need to send or schedule DPD for replaced IPsec SA
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

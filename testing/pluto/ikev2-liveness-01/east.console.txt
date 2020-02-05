@@ -59,7 +59,6 @@ east #
 "westnet-eastnet-ipv4-psk-ikev2" #2: liveness_check - peer 192.1.2.45 has not responded in 30 seconds, with a timeout of 30, taking action:clear
 "westnet-eastnet-ipv4-psk-ikev2" #2: liveness action - clearing connection kind CK_PERMANENT
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

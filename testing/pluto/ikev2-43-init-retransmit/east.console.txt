@@ -51,7 +51,6 @@ east #
 | sending 432 bytes for ikev2-responder-retransmit through eth1 from 192.1.2.23:500 to 192.1.2.45:500 (using #1)
 | sending 225 bytes for ikev2-responder-retransmit through eth1 from 192.1.2.23:500 to 192.1.2.45:500 (using #1)
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

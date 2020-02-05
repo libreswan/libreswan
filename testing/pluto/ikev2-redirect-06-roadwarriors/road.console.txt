@@ -57,7 +57,6 @@ road #
  ipsec whack --trafficstatus
 006 #2: "road-east", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
 road #
-road #
  ../bin/check-for-core.sh
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

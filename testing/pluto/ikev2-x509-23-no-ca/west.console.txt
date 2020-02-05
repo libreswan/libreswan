@@ -49,7 +49,6 @@ west #
  grep ": AUTHENTICATION_FAILED" /tmp/pluto.log
 "ikev2-westnet-eastnet-x509-cr" #2: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 west #
-west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

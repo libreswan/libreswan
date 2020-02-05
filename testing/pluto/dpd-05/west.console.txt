@@ -64,7 +64,6 @@ west #
 west #
  iptables -I OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 west #
-west #
  # DPD should have triggered now
 west #
  echo "Tunnel should be down"
@@ -137,7 +136,6 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
 west #
  ../bin/check-for-core.sh
 west #

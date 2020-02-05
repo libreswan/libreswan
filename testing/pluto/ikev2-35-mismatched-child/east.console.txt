@@ -24,7 +24,6 @@ east #
 |    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
 |    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

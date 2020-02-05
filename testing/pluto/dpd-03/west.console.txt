@@ -50,7 +50,6 @@ west #
 west #
  sleep 10
 west #
-west #
  sleep 10
 west #
  : Create the block
@@ -58,7 +57,6 @@ west #
  iptables -I INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 west #
  sleep 10
-west #
 west #
  sleep 10
 west #
@@ -125,7 +123,6 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
 west #
  ../bin/check-for-core.sh
 west #

@@ -55,7 +55,6 @@ west #
 005 "ikev2-base" #2: ESP traffic information: in=336B out=336B
 002 "ikev2-base" #1: deleting state (STATE_PARENT_I3) and sending notification
 west #
-west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

@@ -157,7 +157,6 @@ Certificate Nickname                                         Trust Attributes
 west #
  ../../pluto/bin/xfrmcheck.sh
 west #
-west #
  ipsec whack --shutdown
 west #
  ../bin/check-for-core.sh

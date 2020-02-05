@@ -194,7 +194,6 @@ north                                                        P,,
 road                                                         P,,  
 west                                                         u,u,u
 west #
-west #
  grep Totals /tmp/nss.log
                    Totals       6764         70ms
 west #
@@ -243,7 +242,6 @@ C_CloseAllSessions                 1          0 z       0.00us      0.00%
 west #
  echo "for nspr logs, look at the verbose console log in OUTPUT"
 for nspr logs, look at the verbose console log in OUTPUT
-west #
 west #
  ../bin/check-for-core.sh
 west #

@@ -52,7 +52,6 @@ east #
  grep ISAKMP_FLAG_MSG_RESERVED_BIT6 /tmp/pluto.log >/dev/null && echo payload found
 payload found
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

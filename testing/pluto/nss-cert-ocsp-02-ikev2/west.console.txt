@@ -49,7 +49,6 @@ west #
 west #
  grep -i "certificate revoked" /tmp/pluto.log
 west #
-west #
  ipsec stop
 Redirecting to: [initsystem]
 west #

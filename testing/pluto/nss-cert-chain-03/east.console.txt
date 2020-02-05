@@ -52,7 +52,6 @@ east #
 leak-detective enabled
 leak detective found no leaks
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

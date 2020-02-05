@@ -54,7 +54,6 @@ west #
 west #
  ipsec auto --listcrls | grep issuer
 west #
-west #
  ipsec stop
 Redirecting to: [initsystem]
 west #

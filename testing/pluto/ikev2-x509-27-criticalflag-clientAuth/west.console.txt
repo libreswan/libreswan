@@ -103,7 +103,6 @@ west #
 west #
  hostname | grep east > /dev/null && grep "verify_end_cert trying profile" /tmp/pluto.log
 west #
-west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

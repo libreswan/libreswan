@@ -78,7 +78,6 @@ east #
  hostname | grep east > /dev/null && grep switched /tmp/pluto.log
 "road-A"[1] 192.1.2.45 #1: switched from "road-A"[1] 192.1.2.45 to "road-chain-B"
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

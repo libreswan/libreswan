@@ -54,7 +54,6 @@ road #
  echo done
 done
 road #
-road #
  grep "^leak" /tmp/pluto.log
 leak-detective enabled
 leak detective found no leaks

@@ -100,7 +100,6 @@ IMPAIR: start processing replay forward: packet 5 of 5 (76 bytes)
 "westnet-eastnet" #2: STATE_QUICK_R2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 IMPAIR: stop processing replay forward: packet 5 of 5
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

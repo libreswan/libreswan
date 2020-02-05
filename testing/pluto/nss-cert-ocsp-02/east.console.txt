@@ -37,7 +37,6 @@ east #
  grep -i "certificate revoked" /tmp/pluto.log
 "nss-cert-ocsp" #1: certificate revoked!
 east #
-east #
  ipsec stop
 Redirecting to: [initsystem]
 east #

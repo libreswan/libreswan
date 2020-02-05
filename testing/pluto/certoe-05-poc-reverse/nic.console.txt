@@ -30,7 +30,6 @@ OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_AUTH_HASH_SHA2_512: 00 0
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 nic #
-nic #
  ../bin/check-for-core.sh
 nic #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

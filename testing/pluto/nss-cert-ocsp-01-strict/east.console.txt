@@ -14,7 +14,6 @@ east #
  echo "initdone"
 initdone
 east #
-east #
  ipsec stop
 Redirecting to: [initsystem]
 east #

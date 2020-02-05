@@ -27,7 +27,6 @@ east #
 "ikev2-westnet-eastnet-x509-cr" #1: No Certificate Authority in NSS Certificate DB! Certificate payloads discarded.
 "ikev2-westnet-eastnet-x509-cr" #1: Digital Signature authentication using rsasig failed in I2 Auth Payload
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

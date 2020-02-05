@@ -136,7 +136,6 @@ east #
  hostname |grep west > /dev/null || ipsec stop
 Redirecting to: [initsystem]
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

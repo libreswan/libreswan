@@ -59,7 +59,6 @@ west #
  ipsec whack --trafficstatus
 006 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
-west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

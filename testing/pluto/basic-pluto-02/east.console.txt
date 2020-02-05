@@ -33,7 +33,6 @@ Certificate Nickname                                         Trust Attributes
 east #
  ../../pluto/bin/xfrmcheck.sh
 east #
-east #
  ipsec whack --shutdown
 east #
  ../bin/check-for-core.sh

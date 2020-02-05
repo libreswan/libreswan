@@ -380,7 +380,6 @@ west #
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
 west #
-west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

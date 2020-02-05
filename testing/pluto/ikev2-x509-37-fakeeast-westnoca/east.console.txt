@@ -67,7 +67,6 @@ Certificate Nickname                                         Trust Attributes
 east                                                         u,u,u
 west                                                         u,u,u
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

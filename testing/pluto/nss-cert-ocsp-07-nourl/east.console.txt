@@ -38,7 +38,6 @@ east #
 east #
  hostname |grep nic && journalctl /sbin/ocspd --no-pager | tail -n 20 |grep TRYLATER
 east #
-east #
  ipsec stop
 Redirecting to: [initsystem]
 east #

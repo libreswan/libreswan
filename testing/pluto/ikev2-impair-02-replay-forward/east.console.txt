@@ -99,7 +99,6 @@ IMPAIR: start processing replay forward: packet 5 of 5 (65 bytes)
 "westnet-eastnet" #1: deleting state (STATE_IKESA_DEL) and NOT sending notification
 IMPAIR: stop processing replay forward: packet 5 of 5
 east #
-east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

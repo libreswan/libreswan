@@ -12,7 +12,6 @@ north #
 north #
  cp north.ipsec1.netdev  /etc/systemd/network/ipsec1.netdev
 north #
-north #
  echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
 north #
  ipsec start
@@ -82,7 +81,6 @@ done
 north #
  ipsec whack --trafficstatus
 006 #2: "north", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-north #
 north #
  ../bin/check-for-core.sh
 north #

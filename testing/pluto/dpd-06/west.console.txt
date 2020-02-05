@@ -52,7 +52,6 @@ west #
 west #
  sleep 10
 west #
-west #
  sleep 10
 west #
  echo Create the block
@@ -65,7 +64,6 @@ west #
  sleep 10
 west #
  sleep 10
-west #
 west #
  # remove the block
 west #
@@ -120,7 +118,6 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
 west #
  ../bin/check-for-core.sh
 west #

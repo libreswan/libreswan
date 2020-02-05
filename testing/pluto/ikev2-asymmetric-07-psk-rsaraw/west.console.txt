@@ -77,7 +77,6 @@ OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #2: Authenticated using RSA with IKEv2_AUTH_HASH_SHA1
 west #
-west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

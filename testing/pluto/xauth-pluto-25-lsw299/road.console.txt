@@ -56,7 +56,6 @@ done
 road #
  hostname | grep east > /dev/null && ipsec whack --trafficstatus
 road #
-road #
  hostname | grep east > /dev/null && ipsec stop
 road #
  grep "^leak" /tmp/pluto.log
