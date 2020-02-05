@@ -412,7 +412,6 @@ kvmplutotest	nflog-03-conns				good
 kvmplutotest	netkey-vti-01				good
 kvmplutotest	netkey-vti-02				good
 kvmplutotest	netkey-vti-03				good
-kvmplutotest	netkey-vti-04				wip
 kvmplutotest	netkey-vti-05				good
 kvmplutotest	netkey-vti-06				good
 kvmplutotest	netkey-vti-07				wip

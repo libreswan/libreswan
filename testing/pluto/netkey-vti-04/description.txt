@@ -1,7 +1,0 @@
-
-Using a single VTI device for all incoming roadwarriors on a connection
-
-Currently hits a VTI problem on east, which can be seen by the 100% packet
-loss of the ping on road. tcpdump shows the ping is encrypted, decrypted
-and replied to but never makes it out of east encrypted. The route is
-properly going into the VTI device....
