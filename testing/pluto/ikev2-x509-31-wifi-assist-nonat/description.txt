@@ -1,0 +1,8 @@
+Wifi assist test case where road has a wifi and lte connection
+up with each conn getting its own IP address.
+
+Compared to ikev2-x509-31-wifi-assist this is a more realistic
+test, as the LTE and WIFI device show up as two different IPs
+to east - whether those two are real or NAT'ed should not really
+matter.
+

@@ -364,6 +364,7 @@ kvmplutotest	ikev2-x509-28-del-nssdb-cert		good
 kvmplutotest	ikev2-x509-29-selfsigned		good
 kvmplutotest	ikev2-x509-30-mismatch-ignore		good
 kvmplutotest	ikev2-x509-31-wifi-assist		wip
+kvmplutotest	ikev2-x509-31-wifi-assist-nonat		good
 kvmplutotest	ikev2-x509-38-failureshunt		wip
 
 
