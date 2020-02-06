@@ -1026,39 +1026,6 @@ stf_status create_tcp_interface(struct state *st)
 
 	connect(fd, &sockaddr.sa, sockaddr_size); /* TCP: missing error check? */
 
-	/* TCP: kernel specific code (and seemingly BSDKAME only? */
-
-	/* Adding a socket bypass policy */
-	struct sadb_x_policy policy; /* TCP: = { .field ... }; */
-	int level, opt;
-
-	zero(&policy);
-	policy.sadb_x_policy_len = sizeof(policy) /
-					 IPSEC_PFKEYv2_ALIGN;
-	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
-	policy.sadb_x_policy_type = IPSEC_POLICY_BYPASS;
-	policy.sadb_x_policy_dir = IPSEC_DIR_INBOUND;
-	policy.sadb_x_policy_id = 0;
-
-	level = IPPROTO_IP;
-	opt = IP_IPSEC_POLICY;
-
-	if (setsockopt(fd, level, opt, &policy, sizeof(policy)) < 0) {
-		LOG_ERRNO(errno,
-		 	  "setsockopt IPSEC_POLICY in create_tcp_interface()");
-		/* TCP: missing close(fd)? */
-		return STF_FATAL;
-	}
-
-	policy.sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
-
-	if (setsockopt(fd, level, opt, &policy, sizeof(policy)) < 0) {
-		LOG_ERRNO(errno,
-			  "setsockopt IPSEC_POLICY in create_tcp_interface()");
-		/* TCP: missing close(fd)? */
-		return STF_FATAL;
-	}
-
        /* Configure socket for ESPinTCP */
        if (kernel_ops->espintcp != NULL) {
                kernel_ops->espintcp(fd);
