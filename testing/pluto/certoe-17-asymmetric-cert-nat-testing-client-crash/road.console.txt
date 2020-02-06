@@ -23,7 +23,7 @@ road #
  echo "initdone"
 initdone
 road #
- # check traffic and shunt status
+ # check traffic and shunt status - should be empty
 road #
  ipsec whack --trafficstatus
 road #
@@ -53,35 +53,23 @@ road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
- echo "Crashing the client."
-Crashing the client.
-road #
- # killing service ipsec
+ # Emulate crashing the client
 road #
  ipsec whack --impair send-no-delete
 road #
  ipsec stop
+Redirecting to: [initsystem]
 road #
- #check if  tunnel is up
-road #
- ipsec whack --trafficstatus
-whack: is Pluto running?  connect() for "/run/pluto/pluto.ctl" failed (111 Connection refused)
+ # waiting on east to check
 road #
  # restart ipsec service
 road #
- systemctl start ipsec
+ ipsec start
+Redirecting to: [initsystem]
 road #
  # give OE conns time to load
 road #
  sleep 5
-road #
- # check traffic and shunt status
-road #
- ipsec whack --trafficstatus
-road #
- ipsec whack --shuntstatus
-000 Bare Shunt list:
-000  
 road #
  # trigger ping, this will be lost
 road #
@@ -105,4 +93,19 @@ road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.2/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.2/32
 road #
- 
+ # A tunnel should have established with non-zero byte counters
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.2/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.2/32
+road #
+ grep "negotiated connection" /tmp/pluto.log
+"private-or-clear#192.1.2.0/24"[1] 10.0.10.2/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.2-10.0.10.2:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+road #
+ grep "auth method: IKEv2_AUTH_" /tmp/pluto.log
+|    auth method: IKEv2_AUTH_NULL (0xd)
+|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
