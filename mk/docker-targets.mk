@@ -89,7 +89,6 @@ ifeq ($(DISTRO), centos)
 	endif
 
 	ifeq ($(DISTRO_REL), 8)
-		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE_IFLA_HEADER=true
 		# CentOS 8 Fedora 28 based so it should be able to handle basic build
 		DOCKERFILE_PKG = $(D)/Dockerfile-fedora-min-packages
 	endif
