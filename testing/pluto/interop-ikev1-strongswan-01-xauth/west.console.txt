@@ -67,8 +67,6 @@ west #
 002 "westnet-eastnet-ikev1": terminating SAs using this connection
 002 "westnet-eastnet-ikev1" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-ikev1" #2: ESP traffic information: in=336B out=336B XAUTHuser=use3
-002 "westnet-eastnet-ikev1" #2: down-client output: restoring resolvconf
-002 "westnet-eastnet-ikev1" #2: down-client output: Problem in restoring the resolv.conf, as there is no backup file
 002 "westnet-eastnet-ikev1" #1: deleting state (STATE_MAIN_I4) and sending notification
 west #
  echo done
