@@ -59,6 +59,8 @@ road #
  echo done
 done
 road #
+ # 4 dropped packets should be visible on east because road leaked them
+road #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 006 #2: "road-east-vti", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 road #
