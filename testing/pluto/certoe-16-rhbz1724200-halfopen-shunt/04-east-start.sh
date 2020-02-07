@@ -6,6 +6,8 @@ ipsec start
 sleep 5
 iptables -D INPUT -p UDP --dport 500 -j DROP
 # trigger OE
-ping -n -c3 192.1.3.209
-sleep 3
+ping -n -c 1 192.1.3.209
+sleep 2
+ping -n -c 2 192.1.3.209
+sleep 2
 ipsec trafficstatus
