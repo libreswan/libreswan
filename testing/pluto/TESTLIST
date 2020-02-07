@@ -163,7 +163,7 @@ kvmplutotest	ikev2-49-hub-spoke			good
 kvmplutotest	ikev2-50-propnum			good
 kvmplutotest	ikev2-51-rw-nat-ikeport			good
 kvmplutotest	ikev2-53-clean-pending			good
-kvmplutotest	ikev2-59-multiple-acquires-alias	wip
+kvmplutotest	ikev2-59-multiple-acquires-alias	good
 kvmplutotest	ikev2-59-alias-ondemand			wip
 kvmplutotest	ikev2-59-alias-retransmit		wip
 kvmplutotest	ikev2-59-multiple-acquires 		wip
@@ -636,7 +636,7 @@ kvmplutotest	ikev2-child-restart-mismatch 	wip
 kvmplutotest	ikev2-cp-01-resolvconf	good
 kvmplutotest	ikev2-child-rekey		good
 kvmplutotest	ikev2-child-rekey-01		good
-kvmplutotest	ikev2-child-rekey-02		wip
+kvmplutotest	ikev2-child-rekey-02		good
 kvmplutotest	ikev2-child-rekey-03		wip
 kvmplutotest	ikev2-child-dual-asym-01	good
 kvmplutotest	ikev2-ike-rekey-01		good
@@ -739,7 +739,7 @@ kvmplutotest	xauth-pluto-25-mixed-addresspool good
 kvmplutotest	xauth-pluto-25-lsw299	good
 kvmplutotest	xauth-pluto-26		good
 kvmplutotest	xauth-pluto-27		good
-kvmplutotest	xauth-pluto-28-twobehindnat	wip
+kvmplutotest	xauth-pluto-28-twobehindnat	good
 
 #
 # Aggressive Mode Pluto Tests
@@ -978,7 +978,7 @@ kvmplutotest	fips-04-ikev2-md5			good
 kvmplutotest	fips-05-ikev1-gcm			skiptest
 kvmplutotest	fips-06-ikev1-3des-sha1			good
 kvmplutotest	fips-07-ikev2-3des-sha256		good
-kvmplutotest	fips-08-ikev2-x509			wip # needs a stronger key
+kvmplutotest	fips-08-ikev2-x509			good
 kvmplutotest	fips-09-ikev2-gcm			good
 kvmplutotest	fips-10-ikev2-psk			good
 kvmplutotest    fips-11-ikev2-esp-dh                    good
