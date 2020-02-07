@@ -49,9 +49,12 @@ road #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=168, outBytes=168
 road #
- # change ip, emulating switching network
+ # change ip, emulating sudden switching network
 road #
- killall -9 pluto
+ ipsec whack --impair send-no-delete
+road #
+ ipsec stop
+Redirecting to: [initsystem]
 road #
  ifconfig eth0 192.1.3.210 netmask 255.255.255.0
 road #
@@ -132,7 +135,13 @@ road #
 road #
  # should show no hits
 road #
- grep INVALID_IKE_SPI /tmp/pluto.log
+ hostname | grep nic || grep INVALID_IKE_SPI /tmp/pluto.log
+road #
+ hostname | grep nic || grep MSG_TRUNC /tmp/pluto.log
+road #
+ hostname | grep nic || grep "cannot route" /tmp/pluto.log
+road #
+ hostname | grep nic || grep "retransmitting in response" /tmp/pluto.log
 road #
  ../bin/check-for-core.sh
 road #
