@@ -4,7 +4,10 @@ ipsec whack --shuntstatus
 ../../pluto/bin/ipsec-look.sh
 killall ip > /dev/null 2> /dev/null
 cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
-# ping should succeed through tunnel
-ping -n -c 4 -I 192.1.3.209 192.1.2.23
-ping -n -c 4 -I 192.1.3.209 192.1.2.45
+# ping should succeed through tunnel after triggering
+ping -n -c 1 -I 192.1.3.209 192.1.2.23
+ping -n -c 1 -I 192.1.3.209 192.1.2.45
+sleep 3
+ping -n -c 3 -I 192.1.3.209 192.1.2.23
+ping -n -c 3 -I 192.1.3.209 192.1.2.45
 echo done
