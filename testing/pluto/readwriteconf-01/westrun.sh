@@ -1,2 +1,2 @@
-/usr/local/libexec/ipsec/readwriteconf
+ipsec readwriteconf
 echo done
