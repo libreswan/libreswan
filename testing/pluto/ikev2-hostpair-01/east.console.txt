@@ -14,7 +14,7 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec status | grep eastnet
+ ipsec status | grep eastnet | sed "s/192.1.2.254:[0-9]* STATE_/192.1.2.254:PORT STATE_/"
 000 "roadnet-eastnet-ipv4-psk-ikev2": 192.1.2.23/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...%any[%fromcert,+MC+S=C]; unrouted; eroute owner: #0
 000 "roadnet-eastnet-ipv4-psk-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "roadnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -51,8 +51,8 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   newest ISAKMP SA: #3; newest IPsec SA: #4;
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
-000 #3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:34057 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:34057 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
+000 #3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
 000 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
 east #
  # should show no hits
