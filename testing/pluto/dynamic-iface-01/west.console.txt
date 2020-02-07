@@ -31,10 +31,11 @@ west #
 west #
  ip addr add 192.1.2.66/24 dev eth1
 west #
- /sbin/arping -c 1 -U -I eth1 192.1.2.66
+ arping -c 1 -U -I eth1 192.1.2.66
 ARPING 192.1.2.66 from 192.1.2.66 eth1
+Unicast reply from 192.1.2.66 [CE:E0:51:43:95:A3]  418.142ms
 Sent 1 probes (1 broadcast(s))
-Received 0 response(s)
+Received 1 response(s)
 west #
  ipsec auto --ready
 002 listening for IKE messages
@@ -60,15 +61,18 @@ west #
 west #
  ip addr del 192.1.2.66/24 dev eth1
 west #
- ipsec auto --ready
+ # filter the error, it sometimes changes which network error happens (22 vs 101)
+west #
+ ipsec auto --ready | sed "s/failed in delete notify.*$/failed in delete notify [...]/"
 002 listening for IKE messages
 002 shutting down interface eth1/eth1 192.1.2.66:4500
 002 shutting down interface eth1/eth1 192.1.2.66:500
 002 "float-east" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "float-east" #4: ESP traffic information: in=0B out=0B
-003 ERROR: "float-east" #4: sendto on eth1 to 192.1.2.23:500 failed in delete notify. Errno 22: Invalid argument
+003 ERROR: "float-east" #4: sendto on eth1 to 192.1.2.23:500 failed in delete notify [...]
 002 "float-east" #3: deleting state (STATE_MAIN_I4) and sending notification
-003 ERROR: "float-east" #3: sendto on eth1 to 192.1.2.23:500 failed in delete notify. Errno 22: Invalid argument
+003 ERROR: "float-east" #3: sendto on eth1 to 192.1.2.23:500 failed in delete notify [...]
+002 unroute-host output: RTNETLINK answers: Network is unreachable
 002 "float-east": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"

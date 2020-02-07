@@ -1,10 +1,11 @@
 ipsec auto --up  west-east
 ip addr add 192.1.2.66/24 dev eth1
-/sbin/arping -c 1 -U -I eth1 192.1.2.66
+arping -c 1 -U -I eth1 192.1.2.66
 ipsec auto --ready
 ipsec auto --up float-east
 ip addr del 192.1.2.66/24 dev eth1
-ipsec auto --ready
+# filter the error, it sometimes changes which network error happens (22 vs 101)
+ipsec auto --ready | sed "s/failed in delete notify.*$/failed in delete notify [...]/"
 ipsec auto --up west-float
 # wait for pending cleanups
 sleep 30
