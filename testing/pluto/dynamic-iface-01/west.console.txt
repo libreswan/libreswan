@@ -33,9 +33,8 @@ west #
 west #
  arping -c 1 -U -I eth1 192.1.2.66
 ARPING 192.1.2.66 from 192.1.2.66 eth1
-Unicast reply from 192.1.2.66 [CE:E0:51:43:95:A3]  418.142ms
 Sent 1 probes (1 broadcast(s))
-Received 1 response(s)
+Received 0 response(s)
 west #
  ipsec auto --ready
 002 listening for IKE messages
