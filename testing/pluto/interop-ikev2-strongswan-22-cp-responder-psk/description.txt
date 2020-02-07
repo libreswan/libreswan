@@ -1,6 +1,12 @@
 Libreswan(road) to Strongswan IKEv2 using PSK the initiator (road).
 The initiator request and IP address using CP. The responder has an addresspool.
 
+Note: since strongswan seems to need special handling for proxyarp, a confirmation
+ping is not used in this test case.
+
+Note: All below errors are fixed when using current strongswan version. These are
+left just in case we ever see regression.
+
 Note: this test currently fails for strongswan 5.6.1 but works in 5.8.2
 libreswan initiator sends its default proposal, using AES, AES_GCM and
 MODP2048 in the KE payload, but also accepting ECP groups.
