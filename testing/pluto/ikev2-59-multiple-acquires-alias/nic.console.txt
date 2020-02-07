@@ -1,0 +1,20 @@
+iptables -t nat -F
+nic #
+ iptables -F
+nic #
+ iptables -t nat -L
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+nic #
+ sysctl -w net.ipv6.conf.all.forwarding=1
+net.ipv6.conf.all.forwarding = 1
+nic #
+ echo done
+done
+
