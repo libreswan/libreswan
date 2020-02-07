@@ -38,4 +38,6 @@ void free_crl_fetch_requests(struct crl_fetch_request **request);
 void add_crl_fetch_requests(struct crl_fetch_request *requests);
 struct crl_fetch_request *get_crl_fetch_requests(void);
 
+void free_crl_queue(void);
+
 #endif

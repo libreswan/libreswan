@@ -66,6 +66,7 @@
 #include "hostpair.h"		/* for init_host_pair() */
 #include "ikev1.h"		/* for init_ikev1() */
 #include "ikev2.h"		/* for init_ikev2() */
+#include "crl_queue.h"		/* for free_crl_queue() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1902,7 +1903,16 @@ void exit_pluto(enum pluto_exit_code status)
 	 * the NSS DB has been closed (below), the helper can crash.
 	 */
 	stop_crl_fetch_helper();
-	free_crl_fetch();	/* free chain of crl fetch requests */
+	/*
+	 * free the crl list that the fetch-helper is currently
+	 * processing
+	 */
+	free_crl_fetch();
+	/*
+	 * free the crl requests that are waiting to be picked and
+	 * processed by the fetch-helper.
+	 */
+	free_crl_queue();
 #endif
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */

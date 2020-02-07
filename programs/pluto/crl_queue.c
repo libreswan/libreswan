@@ -179,3 +179,14 @@ struct crl_fetch_request *get_crl_fetch_requests(void)
 	pthread_mutex_unlock(&crl_queue_mutex);
 	return requests;
 }
+
+void free_crl_queue(void)
+{
+	pexpect(exiting_pluto);
+	/* technical overkill - thread is dead */
+	pthread_mutex_lock(&crl_queue_mutex);
+	struct crl_fetch_request *requests = crl_fetch_requests;
+	crl_fetch_requests = NULL;
+	free_crl_fetch_requests(&requests);
+	pthread_mutex_unlock(&crl_queue_mutex);
+}
