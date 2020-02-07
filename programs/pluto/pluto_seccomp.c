@@ -57,10 +57,6 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, wait4);
 	}
 
-#ifdef USE_EFENCE
-	LSW_SECCOMP_ADD(ctx, madvise);
-#endif
-
 	/* needed for pluto and updown, not helpers */
 	if (main) {
 		LSW_SECCOMP_ADD(ctx, accept);
@@ -129,11 +125,13 @@ static void init_seccomp(uint32_t def_action, bool main)
 
 	LSW_SECCOMP_ADD(ctx, arch_prctl);
 	LSW_SECCOMP_ADD(ctx, exit_group);
+	LSW_SECCOMP_ADD(ctx, exit);
 	LSW_SECCOMP_ADD(ctx, gettid);
 	LSW_SECCOMP_ADD(ctx, gettimeofday);
 	LSW_SECCOMP_ADD(ctx, fstat);
 	LSW_SECCOMP_ADD(ctx, futex);
 	LSW_SECCOMP_ADD(ctx, lseek);
+	LSW_SECCOMP_ADD(ctx, madvise);
 	LSW_SECCOMP_ADD(ctx, mmap);
 	LSW_SECCOMP_ADD(ctx, mprotect);
 	LSW_SECCOMP_ADD(ctx, nanosleep);
