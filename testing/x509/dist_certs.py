@@ -915,6 +915,7 @@ def create_nss_pw():
 
 def main():
     outdir = os.path.dirname(sys.argv[0])
+    pexpect.run("./%s/strongswan-ec-gen.sh"%(outdir))
     cwd = os.getcwd()
     os.chdir(outdir)
     global dates
