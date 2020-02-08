@@ -187,10 +187,10 @@ if o.returncode:
 if re.match(r'eth0@if\d+', ifname):
     args.namespace = True
 
-subprocess.run(["ipsec", "stop"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii") # gentle try before wiping files and killall
 
 # Setup pluto.log softlink and bindmount in namespace
 if hostname != "nic":
+    subprocess.run(["ipsec", "stop"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii") # gentle try before wiping files and killall
 
     outputdir = "%s/OUTPUT/" % testpath
     if not os.path.isdir(outputdir):
@@ -536,8 +536,6 @@ if userland == "strongswan" and args.x509:
         shutil.copy("/testing/x509/certs/%s.crt" %
                     certname, "/etc/strongswan/ipsec.d/certs/")
 
-
-
 if hostname != "nic" and not args.ipv:
     subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
     subprocess.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=1")
@@ -548,13 +546,13 @@ if args.ipv6:
  
     if not args.namespace: # AA_201902 check if this works inside ns
         if os.path.isfile("/usr/bin/systemctl"):
-            subprocess.getoutput("systemctl restart network.service")
+            subprocess.getoutput("systemctl restart systemd-networkd")
         else:
             subprocess.getoutput("service network restart")
 
-if args.dnssec:
-        subprocess.getoutput("service nsd start")
-        subprocess.getoutput("service unbound start")
+if args.dnssec not args.namespace
+        subprocess.getoutput("systemctl nsd start")
+        subprocess.getoutput("systemctl unbound start")
 
 if not os.path.isfile("/root/.gdbinit"):
     fp = open("/root/.gdbinit", "w")
