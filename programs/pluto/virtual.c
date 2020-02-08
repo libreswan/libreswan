@@ -187,6 +187,8 @@ void init_virtual_ip(const char *private_list)
 	} else {
 		loglog(RC_LOG_SERIOUS,
 		       "%d bad entries in virtual-private - none loaded", bad);
+		pfreeany(private_net_incl);
+		private_net_incl = NULL;
 	}
 }
 
@@ -388,6 +390,9 @@ err_t check_virtual_net_allowed(const struct connection *c,
 	if (virt->flags & F_VIRTUAL_HOST && !subnetishost(peer_net)) {
 		return "only virtual host single IPs are allowed";
 	}
+
+	if (private_net_incl == NULL)
+		return "no virtual-private= networks allowed";
 
 	if (virt->flags & F_VIRTUAL_NO) {
 		if (subnetishost(peer_net) && addrinsubnet(his_addr, peer_net))
