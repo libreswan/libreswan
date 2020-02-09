@@ -1,10 +1,12 @@
-#once unbound work properly replace the next lines
-nic #
- sed -i 's/5353/53/' /etc/nsd/nsd.conf
+# once unbound work properly replace the next lines
 nic #
  #/testing/guestbin/swan-prep --dnssec
 nic #
+ # sed -i 's/5353/53/' /etc/nsd/nsd.conf
+nic #
  setenforce Permissive
+nic #
+ /testing/guestbin/swan-prep --nsd
 nic #
  systemctl start nsd-keygen
 nic #
