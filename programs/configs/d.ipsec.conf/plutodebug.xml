@@ -3,19 +3,21 @@
   <listitem>
 <para>how much Pluto debugging output should be logged. An empty value,
 or the magic value <emphasis remap='B'>none</emphasis>, means no debug
-output (the default).  The magic value <emphasis remap='B'>all</emphasis>
-means full output.  Otherwise only the specified types of output
+output (the default). Otherwise only the specified types of output
 (a quoted list, names without the <option>--debug-</option> prefix,
 separated by white space) are enabled;
-for details on available debugging types, see
-<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 </para>
-<para>A few special debugging options are not included with  <emphasis remap='B'>all</emphasis>
-and must be specifically added to be enabled. These special values currently are
-<emphasis remap='B'>private</emphasis> (for sensitive key material),
-<emphasis remap='B'>crypt</emphasis> (for all crypto related operations),
-<emphasis remap='B'>whackwatch</emphasis> (to not release the whack when it normally would),
-and <emphasis remap='B'>add-prefix</emphasis> (for special prefix pre-pending)
+<para>The current option values are <emphasis remap='B'>base</emphasis>
+that represents moderate amounts of information, 
+<emphasis remap='B'>cpu-usage</emphasis> for getting timing/load based
+information (best used without any other debugging options),
+<emphasis remap='B'>crypt</emphasis> for all crypto related operations and
+<emphasis remap='B'>tmi</emphasis> (Too Much Information) for excessive
+logging. To log any sensitive private key or password material, use the
+special <emphasis remap='B'>private</emphasis> value.
+</para>
+<para>The old plutodebug options (control, controlmore, x509, kernel,
+etc) are mapped to either base or tmi. Note that <emphasis remap='B'>all</emphasis> maps to <emphasis remap='B'>base</emphasis> and not <emphasis remap='B'>tmi</emphasis>.
 </para>
   </listitem>
   </varlistentry>
