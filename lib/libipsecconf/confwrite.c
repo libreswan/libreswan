@@ -344,7 +344,7 @@ static void confwrite_side(FILE *out,
 
 	if (subnet_is_specified(&end->ifaceip)) {
 		subnet_buf as;
-		fprintf(out, "\t%siface-ip=%s\n", side,
+		fprintf(out, "\t%sinterface-ip=%s\n", side,
 			str_subnet(&end->ifaceip, &as));
 	}
 
