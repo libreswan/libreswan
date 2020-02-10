@@ -27,6 +27,18 @@ KVM_KERNEL_PACKAGES ?= \
     kernel-headers$(KVM_KERNEL_VERSION) \
     kernel-modules-extra$(KVM_KERNEL_VERSION)
 
+# Strongswan is brokenly dependent on libgcrypt.
+#
+# Because it calls gcry_check_version(GCRYPT_VERSION) (where
+# GCRYPT_VERSION is defined in gcrypt.h) it must be installed with a
+# version of libgcrypt >= the version it was built against.  Good luck
+# trying to describe that using RPM's .spec file (%buildrequires
+# libgcrypt-devel isn't sufficient).
+
+KVM_STRONGSWAN_PACKAGES = \
+    https://kojipkgs.fedoraproject.org//packages/strongswan/5.8.2/2.fc30/x86_64/strongswan-5.8.2-2.fc30.x86_64.rpm \
+    libgcrypt
+
 KVM_INSTALL_PACKAGES ?= \
     $(KVM_KERNEL_PACKAGES) \
     $(KVM_UPGRADE_PACKAGES)
@@ -100,7 +112,7 @@ KVM_UPGRADE_PACKAGES ?= \
     wget \
     xl2tpd \
     xmlto \
-    strongswan \
+    $(KVM_STRONGSWAN_PACKAGES) \
     libfaketime \
 
 
