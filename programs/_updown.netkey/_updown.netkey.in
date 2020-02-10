@@ -195,9 +195,24 @@ fi
 
 BACKUP_RESOLV_CONF=@IPSEC_RUNDIR@/libreswan-resolv-conf-backup
 ETC_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
-MAX_CIDR=32	# for ipv4
-[ "${PLUTO_CONN_ADDRFAMILY}" = ipv6 ] &&  MAX_CIDR=128
-SCOPE=50	# Use scope 50 to verify ip was added by addsource()
+
+case "${PLUTO_CONN_ADDRFAMILY}" in
+    ipv4)
+	FAMILY=4
+	MAX_CIDR=32
+	SCOPE=50	# Use scope 50 to verify ip was added by addsource()
+	;;
+    ipv6)
+	FAMILY=6
+	MAX_CIDR=128
+	SCOPE=global
+	;;
+    *)
+	echo "unkown address family \"${PLUTO_CONN_ADDRFAMILY}\"" >&2
+	exit 1
+	;;
+esac
+export FAMILY MAX_CIDR SCOPE
 
 # Ignore parameter custom
 if [ "${1}" = "custom" ]; then
@@ -235,27 +250,16 @@ done
 uproute() {
     doproxyarp add
     doroute replace
-    ip route flush cache
-}
-
-uproute6() {
-    doroute6 replace
 }
 
 downroute() {
     doroute del
-    ip route flush cache
     doproxyarp delete
-}
-
-downroute6() {
-    doroute6 del
 }
 
 downrule() {
     if [ -n "${PLUTO_MY_SOURCEIP}" -a 0${PLUTO_IS_PEER_CISCO} -eq 1 ]; then
 	doroute del
-	ip route flush cache
     fi
 }
 
@@ -424,7 +428,7 @@ addsource() {
         return ${st}
     fi
     # check if given sourceip is local and add as alias if not
-    if ! ip -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
+    if ! ip -${FAMILY} -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
 	    interface="${VTI_IFACE}"
 	elif [ -n "${PLUTO_XFRMI_ROUTE}" ]; then
@@ -451,39 +455,9 @@ addsource() {
     return ${st}
 }
 
-addsource6() {
-    local interface
-    local st
-    interface=lo
-    st=0
-    if [ -z "${PLUTO_MY_SOURCEIP}" ]; then
-        return ${st}
-    fi
-    # check if given sourceip is local and add as alias if not
-    if ! ip -6 -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
-	it="ip -6 addr add ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface} scope global"
-	oops="$(eval ${it} 2>&1)"
-	st=$?
-	if [ -z "${oops}" -a ${st} -ne 0 ]; then
-	    oops="silent error, exit status ${st}"
-	fi
-	case "${oops}" in
-	    'RTNETLINK answers: File exists'*)
-		# should not happen, but ... ignore if the
-		# address was already assigned on interface
-		oops=""
-		st=0
-		;;
-	esac
-	if [ -n "${oops}" -o ${st} -ne 0 ]; then
-	    echo "$0: addsource6 \"${it}\" failed (${oops})" >&2
-	fi
-    fi
-    return ${st}
-}
-
 delsource() {
     local interface
+    local oops
     local st
     interface=lo
     st=0
@@ -491,19 +465,19 @@ delsource() {
         return ${st}
     fi
     # Remove source ip if it's not used any more.
-    if [ -z "$(ip -o route list src ${PLUTO_MY_SOURCEIP})" ]; then
+    if [ -z "$(ip -${FAMILY} -o route list src ${PLUTO_MY_SOURCEIP})" ]; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
 	    interface="${VTI_IFACE}"
 	elif [ -n "${PLUTO_XFRMI_ROUTE}" ]; then
 	    interface=${PLUTO_VIRT_INTERFACE}
 	fi
 	# If there is no ip we just return
-	if ! ip -o addr list dev ${interface} scope ${SCOPE} | \
+	if ! ip -${FAMILY} -o addr list dev ${interface} scope ${SCOPE} | \
 	    grep -q ${PLUTO_MY_SOURCEIP}/${MAX_CIDR}
 	then
 	    return ${st}
 	fi
-	it="ip addr del ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface}"
+	it="ip -${FAMILY} addr del ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface}"
 	oops="$(eval ${it} 2>&1)"
 	st=$?
 	if [ -z "${oops}" -a ${st} -ne 0 ]; then
@@ -531,52 +505,9 @@ delsource() {
     return ${st}
 }
 
-delsource6() {
-    local interface
-    local st
-    interface=lo
-    st=0
-    if [ -z "${PLUTO_MY_SOURCEIP}" ]; then
-        return ${st}
-    fi
-    # Remove source ip if it's not used any more.
-    if [ -z "$(ip -6 -o route list src ${PLUTO_MY_SOURCEIP})" ]; then
-	# If there is no ip we just return
-	if ! ip -6 -o addr list dev ${interface} scope global | \
-	    grep -q ${PLUTO_MY_SOURCEIP}/${MAX_CIDR}
-	then
-	    return ${st}
-	fi
-	it="ip -6 addr del ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface}"
-	oops="$(eval ${it} 2>&1)"
-	st=$?
-	if [ -z "${oops}" -a ${st} -ne 0 ]; then
-	    oops="silent error, exit status ${st}"
-	fi
-	case "${oops}" in
-	    'RTNETLINK answers: File exists'*)
-		# should not happen, but ... ignore if the
-		# address was already assigned on interface
-		oops=""
-		st=0
-		;;
-	    'RTNETLINK answers: Cannot assign'*)
-		# Address is not there to remove or is there with different
-		# netmask and in that case we must not remove it so we ignore
-		# the error.
-		oops=""
-		st=0
-		;;
-	esac
-	if [ -n "${oops}" -o ${st} -ne 0 ]; then
-	    echo "$0: delsource6 \"${it}\" failed (${oops})" >&2
-	fi
-    fi
-    return ${st}
-}
-
 doproxyarp() {
     local cmd
+    local iface
     cmd=${1}
     # Check if client has a single ip only client net
     if [ ${PLUTO_PEER_CLIENT#*/} = ${MAX_CIDR} ]; then
@@ -589,10 +520,10 @@ doproxyarp() {
 	    return 0
 	fi
 	# check if client is routeable
-	if ip -o route get ${PLUTO_PEER_CLIENT_NET} 2>/dev/null | \
+	if ip -${FAMILY} -o route get ${PLUTO_PEER_CLIENT_NET} 2>/dev/null | \
 	    grep -E -q -s -v " via |^local"
 	then
-	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} 2>/dev/null | \
+	    iface=$(ip -${FAMILY} -o route get ${PLUTO_PEER_CLIENT_NET} 2>/dev/null | \
 		awk '{print $3}')
 	    if [ -r /sys/class/net/${iface}/address ]; then
 		macaddr=$(cat /sys/class/net/${iface}/address)
@@ -600,13 +531,13 @@ doproxyarp() {
 	    # add/remove arp entry for the client on ethernet devices only
 	    if [ -n "${macaddr}" ]; then
 		if [ "${cmd}" = "add" ]; then
-		    ip neigh add proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface} \
+		    ip -${FAMILY} neigh add proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface} \
 			lladdr ${macaddr} nud permanent
 		    # Force routing, required for proxyarp to work
 		    PROXY_ARP_ROUTE=yes
 		    export PROXY_ARP_ROUTE
 		else
-		    ip neigh del proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface}
+		    ip -${FAMILY} neigh del proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface}
 		fi
 	    fi
 	fi
@@ -642,16 +573,24 @@ do_ip()
 
 doroute() {
     local cmd
+    local esp_nexthop
+    local esp_peer_interface
+    local espipro
+    local ipru
+    local route_table
     local oops
+    local parms
+    local parms2
     local st
+    local xfrmi_route
+    local xfrmi_rule
     cmd=${1}
+    route_table=50
     st=0
-    local IPSEC_R_TABLE=50
-    local XRMI_RULE=no
-    local XFRMI_ROUTE="${PLUTO_XFRMI_ROUTE}"
+    xfrmi_route="${PLUTO_XFRMI_ROUTE}"
 
     if [ ${cmd} != del ]; then
-	oops="$(ip route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
+	oops="$(ip -${FAMILY} route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
 	case "${oops}" in
 	    'RTNETLINK answers: No route to host'*)
 		if [ -z "${PLUTO_XFRMI_ROUTE}" ]; then
@@ -662,8 +601,8 @@ doroute() {
     fi
 
     if [ -n "${PLUTO_XFRMI_FWMARK}" ]; then
-	XFRMI_RULE=yes	# we have to add "ip rules" and "ip route table"
-	ROUTE=no	# XFRMI_ROUTE will add the route
+	xfrmi_rule=yes	# we have to add "ip rules" and "ip route table"
+	ROUTE=no	# xfrmi_route will add the route
     fi
 
     # skip routing if it's not enabled or necessary
@@ -675,15 +614,14 @@ doroute() {
 	PROXY_ARP_ROUTE=no
     fi
 
-    if [ -n "${PLUTO_MY_SOURCEIP}" -o -n "${PLUTO_MTU}" ]
-    then
-	    ROUTE=yes
+    if [ -n "${PLUTO_MY_SOURCEIP}" -o -n "${PLUTO_MTU}" ]; then
+	ROUTE=yes
     fi
 
     if [ "${PLUTO_PEER_CLIENT}" =  "${PLUTO_MY_CLIENT}" -a \
 	"${PLUTO_XFRMI_ROUTE}" = yes ]
     then
-	XFRMI_ROUTE="samesubnets";
+	xfrmi_route="samesubnets";
 	echo "leftsubet == rightsubnet = ${PLUTO_PEER_CLIENT} can not add route"
     fi
 
@@ -694,9 +632,6 @@ doroute() {
     if ip link show "${PLUTO_INTERFACE%:*}" | grep -q POINTOPOINT; then
 	POINTPOINT=yes
     fi
-    local esp_nexthop
-    local esp_peer_interface
-    esp_nexthop=" "
     # use nexthop if nexthop is not %direct and POINTPOINT is not set
     if [ "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" -a -z "${POINTPOINT}" ]; then
 	# XFRM interface needs no nexthop
@@ -710,11 +645,16 @@ doroute() {
 	case "${PLUTO_PEER_CLIENT}" in
 	    "0.0.0.0/0")
 		# in case of default route we use half routes
-		peer_interface=$(ip -o route list exact 0.0.0.0/1 | \
+		peer_interface=$(ip -${FAMILY} -o route list exact 0.0.0.0/1 | \
+		    sed "s/^.*dev \([^ ]*\) .*/\1/")
+		;;
+	    "::/0")
+		# in case of default route we use half routes
+		peer_interface=$(ip -${FAMILY} -o route list exact 2000::/3 | \
 		    sed "s/^.*dev \([^ ]*\) .*/\1/")
 		;;
 	    *)
-		peer_interface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
+		peer_interface=$(ip -${FAMILY} -o route get ${PLUTO_PEER_CLIENT_NET} | \
 		    sed "s/^.*dev \([^ ]*\) .*/\1/")
 		;;
 	esac
@@ -723,10 +663,10 @@ doroute() {
 	    sed "s/^.*dev \([^ ]*\) .*/\1/")
     fi
 
-    esp_peer_interface=$(ip -o route get ${PLUTO_NEXT_HOP} from ${PLUTO_ME} | \
-	sed "s/^.*\(dev [^ ]*\) .*/\1/")
+    esp_peer_interface=$(ip -${FAMILY} -o route get ${PLUTO_NEXT_HOP} \
+	from ${PLUTO_ME} | sed "s/^.*\(dev [^ ]*\) .*/\1/")
     if [ -z "${esp_peer_interface}" ]; then
-	    esp_peer_interface="dev ${PLUTO_INTERFACE}"
+	esp_peer_interface="dev ${PLUTO_INTERFACE}"
     fi
 
     if [ -z "${peer_interface}" ]; then
@@ -758,15 +698,21 @@ doroute() {
 	"0.0.0.0/0")
 	    # need to provide route that eclipses default, without
 	    # replacing it.
-	    it="ip route ${cmd} 0.0.0.0/1 ${parms2} && ip route ${cmd} 128.0.0.0/1 ${parms2}"
+	    it="ip -${FAMILY} route ${cmd} 0.0.0.0/1 ${parms2} && \
+		ip -${FAMILY} route ${cmd} 128.0.0.0/1 ${parms2}"
+	    ;;
+	"::/0")
+	    # need to provide route that eclipses default, without
+	    # replacing it.
+	    it="ip -${FAMILY} route ${cmd} 2000::/3 ${parms2}"
 	    ;;
 	*)
-	    it="ip route ${cmd} ${parms} ${parms2}"
+	    it="ip -${FAMILY} route ${cmd} ${parms} ${parms2}"
 	    ;;
     esac
 
     if [ "${ROUTE}" = yes -o \
-	"${XFRMI_ROUTE}" = yes -o \
+	"${xfrmi_route}" = yes -o \
 	"${PROXY_ARP_ROUTE}" = yes ]
     then
 	do_ip "${it}"
@@ -776,8 +722,8 @@ doroute() {
 	fi
     fi
 
-    if [ "${XFRMI_RULE}" = "yes" ]; then
-	espipro="ip route ${cmd} ${PLUTO_PEER}/${MAX_CIDR} ${esp_nexthop} ${esp_peer_interface%:*} table ${IPSEC_R_TABLE}"
+    if [ "${xfrmi_rule}" = "yes" ]; then
+	espipro="ip -${FAMILY} route ${cmd} ${PLUTO_PEER}/${MAX_CIDR} ${esp_nexthop} ${esp_peer_interface%:*} table ${route_table}"
 	do_ip "${espipro}"
 
 	st=$?
@@ -790,8 +736,8 @@ doroute() {
 	    iprulecmd="add"
 	fi
 
-	ipru="ip rule ${iprulecmd} prio 100 to ${parms}"
-	ipru="${ipru} fwmark ${PLUTO_XFRMI_FWMARK} lookup ${IPSEC_R_TABLE}"
+	ipru="ip -${FAMILY} rule ${iprulecmd} prio 100 to ${parms}"
+	ipru="${ipru} fwmark ${PLUTO_XFRMI_FWMARK} lookup ${route_table}"
 
 	do_ip "${ipru}"
 	st=$?
@@ -801,98 +747,6 @@ doroute() {
 
     fi
     return 0
-}
-
-doroute6() {
-    local cmd
-    local oops
-    local st
-    cmd=${1}
-    st=0
-    if [ ${cmd} != del ]; then
-	oops="$(ip -6 route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
-	case "${oops}" in
-	    'RTNETLINK answers: No route to host'*)
-		# Routing is mandatory for IPsec
-		ROUTE=yes
-		;;
-	esac
-    fi
-    # skip routing if it's not enabled or necessary
-    if [ -z "${PLUTO_MY_SOURCEIP}" -a \
-	-z "${PLUTO_MTU}" -a \
-	"${ROUTE}" != "yes" -a \
-	"${cmd}" != "del" ]
-    then
-	return 0
-    fi
-    parms="${PLUTO_PEER_CLIENT}"
-    parms2=${IPRARGS}
-    # nexthop is not needed on ppp interfaces. unset it to make cases
-    # work, where left is set but no leftnexthop (e.g. left=%defaultroute)
-    if ip link show "${PLUTO_INTERFACE%:*}" | grep -q POINTOPOINT; then
-	POINTPOINT=yes
-    fi
-    # use nexthop if nexthop is not %direct and POINTPOINT is not set
-    if [ "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" -a -z "${POINTPOINT}" ]; then
-	parms2="via ${PLUTO_NEXT_HOP}"
-    fi
-    # route via proper interface according to routing table
-    if [ "${cmd}" = "del" ]; then
-	case "${PLUTO_PEER_CLIENT}" in
-	    "::/0")
-		# in case of default route we use half routes
-		peer_interface=$(ip -6 -o route list exact 2000::/3 | \
-		    sed "s/^.*dev \([^ ]*\) .*/\1/")
-		;;
-	    *)
-		peer_interface=$(ip -6 -o route get ${PLUTO_PEER_CLIENT_NET} | \
-		    sed "s/^.*dev \([^ ]*\) .*/\1/")
-		;;
-	esac
-    else
-	peer_interface=$(ip -6 -o route get ${PLUTO_NEXT_HOP} | \
-	    sed "s/^.*dev \([^ ]*\) .*/\1/")
-    fi
-    if [ -z "${peer_interface}" ]; then
-	peer_interface=${PLUTO_INTERFACE}
-    fi
-    parms2="${parms2} dev ${peer_interface%:*}${PLUTO_MTU:+ mtu ${PLUTO_MTU}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}} $IPROUTEARGS"
-
-    # make sure whe have sourceip locally in this machine
-    if [ "${cmd}" = "replace" -a -n "${PLUTO_MY_SOURCEIP}" ]; then
-	addsource6
-	# use sourceip as route default source
-	parms2="${parms2} src ${PLUTO_MY_SOURCEIP}"
-    fi
-
-    case "${PLUTO_PEER_CLIENT}" in
-	"::/0")
-	    # need to provide route that eclipses default, without
-	    # replacing it.
-	    it="ip -6 route ${cmd} 2000::/3 ${parms2}"
-	    ;;
-	*)
-	    it="ip -6 route ${cmd} ${parms} ${parms2}"
-	    ;;
-    esac
-    oops="$(eval ${it} 2>&1)"
-    st=$?
-    if [ -z "${oops}" -a ${st} -ne 0 ]; then
-	oops="silent error, exit status ${st}"
-    fi
-    case "${oops}" in
-	'RTNETLINK answers: No such process'*)
-	    # should not happen, but ... ignore if the
-	    # route was already removed
-	    oops=""
-	    st=0
-	    ;;
-    esac
-    if [ -n "${oops}" -o ${st} -ne 0 ]; then
-	echo "$0: doroute6 \"${it}\" failed (${oops})" >&2
-    fi
-    return ${st}
 }
 
 # TODO: We need to specify CIDR mask but our _MASK variables are in old school format
@@ -1056,13 +910,13 @@ case "${PLUTO_VERB}" in
 	;;
     up-client)
 	# connection to my client subnet coming up
-	# If you are doing a custom version, firewall commands go here.
 	addvtiiface
 	updateresolvconf
 	addcat
 	addsource
 	notifyNM connect
 	addvti
+	# If you are doing a custom version, firewall commands go here.
 	;;
     down-client)
 	# connection to my client subnet going down
@@ -1070,9 +924,9 @@ case "${PLUTO_VERB}" in
 	delnflog
 	delcat
 	delvti
-	# If you are doing a custom version, firewall commands go here.
 	restoreresolvconf
 	notifyNM disconnect
+	# If you are doing a custom version, firewall commands go here.
 	;;
     #
     # IPv6
@@ -1082,12 +936,12 @@ case "${PLUTO_VERB}" in
 	;;
     route-host-v6|route-client-v6)
 	# connection to me or my client subnet being routed
-	uproute6
+	uproute
 	;;
     unroute-host-v6|unroute-client-v6)
 	# connection to me or my client subnet being unrouted
-	downroute6
-	delsource6
+	downroute
+	delsource
 	;;
     up-host-v6)
 	# connection to me coming up
@@ -1099,13 +953,15 @@ case "${PLUTO_VERB}" in
 	;;
     up-client-v6)
 	# connection to my client subnet coming up
-	addsource6
+	addsource
 	updateresolvconf
+	notifyNM connect
 	# If you are doing a custom version, firewall commands go here.
 	;;
     down-client-v6)
 	# connection to my client subnet going down
 	restoreresolvconf
+	notifyNM disconnect
 	# If you are doing a custom version, firewall commands go here.
 	;;
     *)	echo "$0: unknown verb \"${PLUTO_VERB}\" or parameter \"${1}\"" >&2
