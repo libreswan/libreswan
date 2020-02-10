@@ -494,8 +494,8 @@ delsource() {
     if [ -z "$(ip -o route list src ${PLUTO_MY_SOURCEIP})" ]; then
 	if [ -n "${VTI_IFACE}" -a "${VTI_ROUTING}" = yes ]; then
 	    interface="${VTI_IFACE}"
-	elif [ -n ${PLUTO_XFRMI_ROUTE} ]; then
-		interface=${PLUTO_VIRT_INTERFACE}
+	elif [ -n "${PLUTO_XFRMI_ROUTE}" ]; then
+	    interface=${PLUTO_VIRT_INTERFACE}
 	fi
 	# If there is no ip we just return
 	if ! ip -o addr list dev ${interface} scope ${SCOPE} | \
@@ -647,24 +647,23 @@ doroute() {
     cmd=${1}
     st=0
     local IPSEC_R_TABLE=50
-    local XRMI_RULE="no"
+    local XRMI_RULE=no
     local XFRMI_ROUTE=${PLUTO_XFRMI_ROUTE}
 
     if [ ${cmd} != del ]; then
-	oops="$(eval ip route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
+	oops="$(ip route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
 	case "${oops}" in
 	    'RTNETLINK answers: No route to host'*)
 		if [ "${XFRMI_ROUTE}" = no ]; then
-			# Routing is mandatory for IPsec
-			ROUTE=yes
+		    ROUTE=yes	# Routing is mandatory for IPsec
 		fi
 		;;
 	esac
     fi
 
     if [ -n "${PLUTO_XFRMI_FWMARK}" ]; then
-	    XFRMI_RULE=yes #we have to add "ip rules" and "ip route table"
-	    ROUTE=no #XFRMI_ROUTE will add the route
+	XFRMI_RULE=yes	# we have to add "ip rules" and "ip route table"
+	ROUTE=no	# XFRMI_ROUTE will add the route
     fi
 
     # skip routing if it's not enabled or necessary
@@ -682,9 +681,10 @@ doroute() {
     fi
 
     if [ "${PLUTO_PEER_CLIENT}" =  "${PLUTO_MY_CLIENT}" -a \
-	    "${PLUTO_XFRMI_ROUTE}" = yes ]; then
-		XFRMI_ROUTE="samesubnets";
-		echo "leftsubet == rightsubnet = ${PLUTO_PEER_CLIENT} can not add route"
+	"${PLUTO_XFRMI_ROUTE}" = yes ]
+    then
+	XFRMI_ROUTE="samesubnets";
+	echo "leftsubet == rightsubnet = ${PLUTO_PEER_CLIENT} can not add route"
     fi
 
     parms="${PLUTO_PEER_CLIENT}"
@@ -724,7 +724,7 @@ doroute() {
     fi
 
     esp_peer_interface=$(ip -o route get ${PLUTO_NEXT_HOP} from ${PLUTO_ME} | \
-            sed "s/^.*\(dev [^ ]*\) .*/\1/")
+	sed "s/^.*\(dev [^ ]*\) .*/\1/")
     if [ -z "${esp_peer_interface}" ]; then
 	    esp_peer_interface="dev ${PLUTO_INTERFACE}"
     fi
@@ -765,7 +765,10 @@ doroute() {
 	    ;;
     esac
 
-    if [ "${ROUTE}" = yes -o "${XFRMI_ROUTE}" = yes -o "${PROXY_ARP_ROUTE}" = yes ]; then
+    if [ "${ROUTE}" = yes -o \
+	"${XFRMI_ROUTE}" = yes -o \
+	"${PROXY_ARP_ROUTE}" = yes ]
+    then
 	do_ip "${it}"
 	st=$?
 	if [ ${st} -ne 0 ]; then
@@ -807,7 +810,7 @@ doroute6() {
     cmd=${1}
     st=0
     if [ ${cmd} != del ]; then
-	oops="$(eval ip -6 route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
+	oops="$(ip -6 route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
 	case "${oops}" in
 	    'RTNETLINK answers: No route to host'*)
 		# Routing is mandatory for IPsec
