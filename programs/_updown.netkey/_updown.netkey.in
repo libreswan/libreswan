@@ -943,19 +943,19 @@ addvtiiface() {
 	    else
 		# check there was no conflict if we are sharing - might be sensitive to /sbin/ip differences
 		if [ "${VTI_SHARED}" = yes ]; then
-			#test: ip/ip remote 3.4.5.6 local 1.2.3.4 ttl inherit key 5
-			cur="$(ip tun show ${VTI_IFACE})"
-			new="${VTI_IFACE}: ip/ip  remote any  local ${PLUTO_ME}  ttl inherit  key ${CONNMARK_OUT%/*}"
-			if [ "${cur}" != "${new}" ]; then
-				echo "vti interface \"${VTI_IFACE}\" already exists with conflicting setting"
-				echo "existing: ${cur}"
-				echo "wanted  : ${new}"
-			else
-				# temp debug
-				echo "vti interface already exists with identical parameters, OK"
-			fi
+		    #test: ip/ip remote 3.4.5.6 local 1.2.3.4 ttl inherit key 5
+		    cur="$(ip tun show ${VTI_IFACE})"
+		    new="${VTI_IFACE}: ip/ip  remote any  local ${PLUTO_ME}  ttl inherit  key ${CONNMARK_OUT%/*}"
+		    if [ "${cur}" != "${new}" ]; then
+			echo "vti interface \"${VTI_IFACE}\" already exists with conflicting setting"
+			echo "existing: ${cur}"
+			echo "wanted  : ${new}"
+		    else
+			# temp debug
+			echo "vti interface already exists with identical parameters, OK"
+		    fi
 		else
-			echo "vti interface \"${VTI_IFACE}\" already exists with conflicting setting (perhaps need vti-sharing=yes ?"
+		    echo "vti interface \"${VTI_IFACE}\" already exists with conflicting setting (perhaps need vti-sharing=yes ?"
 		fi
 	    fi
 	fi
@@ -994,8 +994,8 @@ addvti() {
 delvti() {
     if [ -n "${VTI_IFACE}" -a -d /proc/sys/net/ipv4/conf/${VTI_IFACE} ]; then
 	if [ "${VTI_ROUTING}" = yes ]; then
-		ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
-			src ${PLUTO_MY_SOURCEIP} ||:
+	    ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
+		src ${PLUTO_MY_SOURCEIP} ||:
 	fi
 	# TODO: we can't delete vti interface because we don't have proper reference
 	# counting.
