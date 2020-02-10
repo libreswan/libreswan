@@ -648,13 +648,13 @@ doroute() {
     st=0
     local IPSEC_R_TABLE=50
     local XRMI_RULE=no
-    local XFRMI_ROUTE=${PLUTO_XFRMI_ROUTE}
+    local XFRMI_ROUTE="${PLUTO_XFRMI_ROUTE}"
 
     if [ ${cmd} != del ]; then
 	oops="$(ip route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
 	case "${oops}" in
 	    'RTNETLINK answers: No route to host'*)
-		if [ "${XFRMI_ROUTE}" = no ]; then
+		if [ -n "${PLUTO_XFRMI_ROUTE}" ]; then
 		    ROUTE=yes	# Routing is mandatory for IPsec
 		fi
 		;;
