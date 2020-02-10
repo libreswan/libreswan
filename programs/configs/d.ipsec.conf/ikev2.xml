@@ -7,7 +7,9 @@ signifying only IKEv1 is accepted, or <emphasis remap='B'>yes</emphasis>,
 signifying only IKEv2 is accepted. Previous versions allowed the keywords
 <emphasis remap='B'>propose</emphasis> or <emphasis remap='B'>permit</emphasis>
 that would allow either IKEv1 or IKEv2, but this is no longer supported. The
-permit option is interpreted as no and the propose option is interpreted as yes.
+permit option is interpreted as no and the propose option is interpreted as
+yes. Older versions also supported keyword
+<emphasis remap='B'>insist</emphasis> which is now interpreted as yes.
 </para>
   </listitem>
   </varlistentry>
