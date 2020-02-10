@@ -654,7 +654,7 @@ doroute() {
 	oops="$(ip route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
 	case "${oops}" in
 	    'RTNETLINK answers: No route to host'*)
-		if [ -n "${PLUTO_XFRMI_ROUTE}" ]; then
+		if [ -z "${PLUTO_XFRMI_ROUTE}" ]; then
 		    ROUTE=yes	# Routing is mandatory for IPsec
 		fi
 		;;
