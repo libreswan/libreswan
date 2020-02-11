@@ -145,7 +145,7 @@ const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
  */
 
 /* AF=AF_UNSPEC, ADDR = 0; aka all zeros */
-const ip_address address_invalid;
+extern const ip_address address_invalid;
 
 /* returns NULL when address_invalid */
 const struct ip_info *address_type(const ip_address *address);
