@@ -83,14 +83,14 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		/* add ESP auth attr (if present) */
 		if (algs.integ != &ike_alg_integ_none) {
 			db_attr_add_values(db_ctx,
-					   AUTH_ALGORITHM,
+					   OAKLEY_HASH_ALGORITHM,
 					   algs.integ->common.id[IKEv1_ESP_ID]);
 		}
 
 		/* add keylength if specified in esp= string */
 		if (algs.enckeylen != 0) {
 			db_attr_add_values(db_ctx,
-					   KEY_LENGTH,
+					   OAKLEY_KEY_LENGTH,
 					   algs.enckeylen);
 		} else {
 			/* no key length - if required add default here and add another max entry */
@@ -98,18 +98,18 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				      : algs.encrypt->keydeflen);
 
 			if (def_ks != 0) {
-				db_attr_add_values(db_ctx, KEY_LENGTH, def_ks);
+				db_attr_add_values(db_ctx, OAKLEY_KEY_LENGTH, def_ks);
 				/* add this trans again with max key size */
 				int max_ks = encrypt_max_key_bit_length(algs.encrypt);
 				if (def_ks != max_ks) {
 					db_trans_add(db_ctx, ealg_i);
 					if (algs.integ != &ike_alg_integ_none) {
 						db_attr_add_values(db_ctx,
-							AUTH_ALGORITHM,
+							OAKLEY_HASH_ALGORITHM,
 							algs.integ->common.id[IKEv1_ESP_ID]);
 					}
 					db_attr_add_values(db_ctx,
-							   KEY_LENGTH,
+							   OAKLEY_KEY_LENGTH,
 							   max_ks);
 				}
 			}
@@ -119,7 +119,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		db_trans_add(db_ctx, aalg_i);
 
 		/* add ESP auth attr */
-		db_attr_add_values(db_ctx, AUTH_ALGORITHM,
+		db_attr_add_values(db_ctx, OAKLEY_HASH_ALGORITHM,
 				   algs.integ->common.id[IKEv1_ESP_ID]);
 	}
 
