@@ -20,8 +20,8 @@
 
 #include "packet.h"
 
-enum allow_global_redirect global_redirect;
-char *global_redirect_to;
+extern enum allow_global_redirect global_redirect;
+extern char *global_redirect_to;
 
 /*
  * Emit IKEv2 Notify Redirect payload.

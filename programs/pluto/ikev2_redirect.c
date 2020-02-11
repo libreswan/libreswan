@@ -36,6 +36,9 @@
 #include "ikev2_redirect.h"
 #include "initiate.h"
 
+enum allow_global_redirect global_redirect;
+char *global_redirect_to;
+
 /*
  * Structure of REDIRECT Notify payload from RFC 5685.
  * The second part (Notification data) is interesting to us.
