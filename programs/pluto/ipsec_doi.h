@@ -24,7 +24,7 @@ struct payload_digest;
 struct state;
 struct lswlog;
 
-struct xfrm_user_sec_ctx_ike *uctx; /* forward declaration */
+extern struct xfrm_user_sec_ctx_ike *uctx; /* forward declaration */
 
 typedef void initiator_function(struct fd *whack_sock,
 				struct connection *c,
