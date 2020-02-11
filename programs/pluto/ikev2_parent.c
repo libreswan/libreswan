@@ -1115,7 +1115,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	}
 
 	/* Ni in */
-	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
+	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_outI1_common */
 
@@ -1725,7 +1725,7 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 	}
 
 	/* Ni in */
-	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Ni"));
+	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Ni"));
 
 	/* We're missing processing a CERTREQ in here */
 
@@ -4337,7 +4337,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 	struct connection *c = st->st_connection;
 
 	/* Ni in */
-	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
+	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =
@@ -4452,7 +4452,7 @@ stf_status ikev2_child_inR(struct ike_sa *unused_ike UNUSED,
 {
 	pexpect(child != NULL);
 	struct state *st = &child->sa;
-	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
+	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, TRUE));
 
@@ -4555,7 +4555,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *unused_ike UNUSED,
 	freeanychunk(st->st_nr); /* this is from the parent. */
 
 	/* Ni in */
-	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
+	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
 
@@ -4746,7 +4746,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 	freeanychunk(st->st_nr); /* this is from the parent. */
 
 	/* Ni in */
-	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
+	v2RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =

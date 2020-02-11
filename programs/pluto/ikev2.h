@@ -80,9 +80,9 @@ extern stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest * md);
 /* ??? why are there so many copies of this routine (ikev2.h, ikev1_continuations.h, ipsec_doi.c).
  * Sometimes more than one copy is defined!
  */
-#define RETURN_STF_FAILURE(f) { \
-	notification_t res = (f); \
-	if (res != NOTHING_WRONG) { \
+#define v2RETURN_STF_FAILURE(f) { \
+	v2_notification_t res = (f); \
+	if (res != v2N_NOTHING_WRONG) { \
 		  return STF_FAIL + res; \
 	} \
 }
