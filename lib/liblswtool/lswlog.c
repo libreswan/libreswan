@@ -38,7 +38,8 @@
 
 bool log_to_stderr = TRUE;	/* should log go to stderr? */
 
-const char *progname = "";
+const char *progname;
+
 static const char *prog_suffix = "";
 
 void tool_init_log(const char *name)

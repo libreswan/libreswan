@@ -46,7 +46,6 @@
 #include "lswseccomp.h"
 #endif
 
-const char *progname;
 static int verbose = 0;
 
 /*
