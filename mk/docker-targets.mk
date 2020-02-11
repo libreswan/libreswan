@@ -96,10 +96,19 @@ ifeq ($(DISTRO), centos)
 endif
 
 ifeq ($(DISTRO), fedora)
+	ifeq ($(DISTRO_REL), rawhide)
+		TWEAKS += rawhide-remove-dnf-update
+	endif
+
 	MAKE_BASE = base
 	MAKE_INSTLL_BASE = install-base
 	LOCAL_MAKE_FLAGS =
 endif
+
+.PHONY: rawhide-remove-dnf-update
+rawhide-remove-dnf-update:
+	# on rawhide RUN dnf -y update could be a bad idea
+	$(shell sed -i '/RUN dnf -y update/d' testing/docker/dockerfile)
 
 .PHONY: dockerfile-remove-libreswan-spec
 dockerfile-remove-libreswan-spec:
