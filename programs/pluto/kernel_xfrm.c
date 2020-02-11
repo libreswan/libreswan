@@ -1476,7 +1476,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			fill_and_terminate(algo.alg_name, name,
 					sizeof(algo.alg_name));
 			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
-			algo.alg_key[0] = '\0'; /* make coverity happy */
 
 			attr->rta_type = XFRMA_ALG_CRYPT;
 			attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
