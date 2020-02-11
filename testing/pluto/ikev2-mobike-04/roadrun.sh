@@ -17,8 +17,8 @@ ip route
 ip addr show dev eth0 | grep 192.1.33.209 || ip addr add 192.1.33.209/24 dev eth0
 ip route show scope global | grep 192.1.33.254 || ip route add default via 192.1.33.254
 # let libreswan detect change and do a MOBIKE update
-ping -W 1 -q -n -c 2 -I 192.0.3.10 192.1.2.23
 sleep 10
+ping -W 1 -q -n -c 2 -I 192.0.3.10 192.1.2.23
 ip addr show  scope global
 ip route
 # MOBIKE ping should work

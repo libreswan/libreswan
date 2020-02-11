@@ -392,7 +392,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 	}
 
 	if (private_net_incl == NULL)
-		return "no virtual-private= networks allowed";
+		return NULL;
 
 	if (virt->flags & F_VIRTUAL_NO) {
 		if (subnetishost(peer_net) && addrinsubnet(his_addr, peer_net))
