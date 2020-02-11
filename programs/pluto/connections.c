@@ -3743,7 +3743,7 @@ void show_one_connection(struct fd *whackfd,
 {
 	const char *ifn;
 	char ifnstr[2 *  IFNAMSIZ + 2];  /* id_rname@id_vname\0 */
-	char instance[1 + 10 + 1];
+	char instance[32];
 	char prio[POLICY_PRIO_BUF];
 	char mtustr[8];
 	char sapriostr[13];

@@ -5772,7 +5772,7 @@ void ikev2_rekey_ike_start(struct ike_sa *ike)
 void ikev2_initiate_child_sa(struct pending *p)
 {
 	struct state *st;
-	char replacestr[32];
+	char replacestr[256];
 	enum state_kind new_state = STATE_UNDEFINED;
 	enum sa_type sa_type = IPSEC_SA;
 	struct ike_sa *ike = p->ike;
