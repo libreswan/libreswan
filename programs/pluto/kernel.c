@@ -517,6 +517,9 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 		jam(buf, "PLUTO_MY_SOURCEIP='");
 		jam_address(buf, &sr->this.host_srcip);
 		jam(buf, "' ");
+		if (st != NULL)
+			jam(buf, "PLUTO_MOBIKE_EVENT='%s' ",
+					st->st_mobike_del_src_ip ? "yes" : "");
 	}
 
 	jam(buf, "PLUTO_IS_PEER_CISCO='%u' ", c->remotepeertype /* ??? kind of odd printing an enum with %u */);
@@ -1062,7 +1065,9 @@ void migration_down(struct connection *c,  struct state *st)
 		/* only unroute if no other connection shares it */
 		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
 			(void) do_command(c, sr, "down", st);
+			st->st_mobike_del_src_ip = true;
 			(void) do_command(c, sr, "unroute", st);
+			st->st_mobike_del_src_ip = false;
 		}
 	}
 }
