@@ -69,6 +69,7 @@ v3.30 (unreleased)
 * building: Add new USE_NSS_PRF, to use KDF from NSS [Robert Relyea/Andrew]
 * building: Add USE_PRF_AES_XCBC, replaces USE_XCBC [Paul]
 * building: Fixes for NetBSD build [Andrew]
+* building: Fixes for gcc10 [Paul]
 * packaging: fedora30 requires gcc to be listed as BuildRequires: [Paul]
 * packaging: Add Debian stretch specific configs and more cleanup [Antony]
 * packaging: make deb jessie and xenial config detection [Antony]
