@@ -14,6 +14,7 @@
     INC_USRLOCAL=%{_prefix} \\\
     INITSYSTEM=systemd \\\
     PYTHON_BINARY=%{__python3} \\\
+    SHELL_BINARY=%{_bindir}/sh \\\
     USE_DNSSEC=true \\\
     USE_FIPSCHECK=true \\\
     USE_KLIPS=false \\\
