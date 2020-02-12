@@ -84,8 +84,9 @@ struct db_ops_stats {
 static struct db_ops_stats db_context_st = DB_OPS_ZERO;
 static struct db_ops_stats db_trans_st = DB_OPS_ZERO;
 static struct db_ops_stats db_attrs_st = DB_OPS_ZERO;
-static __inline__ void * alloc_bytes_st(size_t size, const char *str,
-					struct db_ops_stats *st)
+
+static void * alloc_bytes_st(size_t size, const char *str,
+			     struct db_ops_stats *st)
 {
 	void *ptr = alloc_bytes(size, str);
 
@@ -95,6 +96,7 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
 		st->st_maxsz = size;
 	return ptr;
 }
+
 #define ALLOC_BYTES_ST(z, s, st) alloc_bytes_st(z, s, &(st));
 #define PFREE_ST(p, st)         { st.st_curr_cnt--; pfree(p);  }
 
@@ -256,6 +258,11 @@ void db_attr_add_values(struct db_context *ctx,  enum ikev1_ipsec_attr type, uin
 	attr.type.ipsec = type;
 	attr.val = val;
 	db_attr_add(ctx, &attr);
+}
+
+struct db_prop *db_prop_get(struct db_context *ctx)
+{
+	return &ctx->prop;
 }
 
 void db_ops_show_status(struct fd *whackfd)
