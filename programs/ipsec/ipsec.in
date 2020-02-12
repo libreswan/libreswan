@@ -1,4 +1,4 @@
-#!/bin/sh
+#!@SHELL_BINARY@
 #
 # prefix command to run stuff from our programs directory
 #

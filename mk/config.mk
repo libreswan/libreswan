@@ -182,6 +182,9 @@ RCDIR?=$(DESTDIR)$(FINALRCDIR)
 # PYTHON_BINARY is used for python scripts shebang
 PYTHON_BINARY ?= /usr/bin/python3
 
+# SHELL_BINARY is used for sh scripts shebang
+SHELL_BINARY ?= /bin/sh
+
 ### kernel pathnames
 
 # Kernel location:  where patches are inserted, where kernel builds are done.
@@ -481,6 +484,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@PYTHON_BINARY@:$(PYTHON_BINARY):g" \
+			-e "s:@SHELL_BINARY@:$(SHELL_BINARY):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
 			-e "s:@SD_TYPE@:$(SD_TYPE):g" \
 			-e "s:@SD_RESTART_TYPE@:$(SD_RESTART_TYPE):g" \

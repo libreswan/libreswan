@@ -1,4 +1,4 @@
-#!/bin/sh
+#!@SHELL_BINARY@
 # STACK startup script
 # Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>

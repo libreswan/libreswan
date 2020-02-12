@@ -1,4 +1,4 @@
-#!/bin/sh
+#!@SHELL_BINARY@
 #
 # IPsec startup and shutdown command
 # Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
