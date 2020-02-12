@@ -612,7 +612,7 @@ for ipt in ("iptables", "ip6tables"):
     subprocess.getoutput("%s -A LOGDROP -j LOG" % ipt)
     subprocess.getoutput("%s -A LOGDROP -j DROP" % ipt)
 
-if not args.namespace: # inside namespace this would kill pluto from other ns
+if not args.namespace and hostname != "nic": # inside namespace this would kill pluto from other ns
     # shouldn't happen early on? now wiped run time files pid etc.
     # this is probably a last resort? may be a more gentle attempt at the begining.
     #
