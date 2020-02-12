@@ -944,6 +944,8 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 
 	if (ret_idi != STF_SUSPEND && ret_idi != STF_OK) {
 		return ret_idi;
+	} else if (ret_idi == STF_SUSPEND) {
+		st->ipseckey_dnsr = dnsr_idi;
 	}
 
 	if (LIN(st->st_connection->policy, POLICY_DNS_MATCH_ID)) {
@@ -955,17 +957,19 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 				free_ipseckey_dns(dnsr_idi);
 				return STF_FAIL;
 			}
-
 			ret_a = dns_qry_start(dnsr_a);
 		}
 	}
 
+	if (ret_a == STF_SUSPEND)
+		st->ipseckey_fwd_dnsr = dnsr_a;
+
 	if (ret_a != STF_SUSPEND && ret_a != STF_OK) {
 		free_ipseckey_dns(dnsr_idi);
+	} else if (ret_idi == STF_OK && ret_a == STF_OK) {
+		/* cache hit, call back is already called */
+		return STF_OK;
 	} else if (ret_a == STF_SUSPEND || ret_idi == STF_SUSPEND) {
-		/* all success */
-		st->ipseckey_dnsr = dnsr_idi;
-		st->ipseckey_fwd_dnsr = dnsr_a;
 		return STF_SUSPEND;
 	}
 
