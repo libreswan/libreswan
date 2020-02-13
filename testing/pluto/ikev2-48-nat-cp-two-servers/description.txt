@@ -1,4 +1,4 @@
-IKEv2 RW non default subnet on the server, east.
+Both east and west would assign same address, from the addresspool
+and road would use it with lfeftcat.
 
-Note: this test is incomplete. West is initialised but does not do
-anything
+IKEv2 RW non default subnet on the server, east.

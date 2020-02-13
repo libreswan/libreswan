@@ -1,3 +1,1 @@
 IKEv2 RW non default subnet on the server, east.
-
-Paul: I don't undeerstand this test. West is configured but not used ??

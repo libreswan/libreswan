@@ -12,10 +12,8 @@ west #
  echo "initdone"
 initdone
 west #
-
-[ Paul: shouldn't west be doing something ??? ]
-
-
+ ipsec trafficstatus
+006 #2: "rw-westnet-pool-east"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.100/32
 west #
  ../bin/check-for-core.sh
 west #

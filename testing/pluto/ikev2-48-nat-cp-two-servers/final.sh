@@ -1,3 +1,4 @@
+ipsec trafficstatus
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

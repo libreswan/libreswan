@@ -157,8 +157,8 @@ kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
 kvmplutotest	ikev2-48-nat-cp-start			good
 kvmplutotest	ikev2-48-nat-cp-nondefault		good
-kvmplutotest	ikev2-48-nat-cp-two-servers-same	wip
-kvmplutotest	ikev2-48-nat-cp-two-servers		wip
+kvmplutotest	ikev2-48-nat-cp-two-servers-same	good
+kvmplutotest	ikev2-48-nat-cp-two-servers		good
 kvmplutotest	ikev2-49-hub-spoke			good
 kvmplutotest	ikev2-50-propnum			good
 kvmplutotest	ikev2-51-rw-nat-ikeport			good
