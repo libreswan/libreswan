@@ -388,6 +388,7 @@ struct state {
 	const struct iface_port *st_interface;  /* where to send from */
 #define pexpect_st_local_endpoint(ST) /* see above */
 
+	bool st_mobike_del_src_ip;		/* for mobike migrate unroute */
 	/* IKEv2 MOBIKE probe copies */
 	ip_address st_mobike_remote_endpoint;
 	ip_address st_deleted_local_addr;	/* kernel deleted address */

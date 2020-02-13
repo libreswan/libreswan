@@ -43,6 +43,11 @@ if [ -n "${ifface}" ] ; then
 	ifface="show dev ${ifface}"
 fi
 
+# dump raw version of what ../bin/ip-addr-show.sh manges
+echo ==== cut ====
+ip addr ${ifface}
+echo ==== tuc ====
+
 ip -o addr ${ifface} | {
 		sed 's/^[0-9][0-9]*:\ //;s/\\//;s/\ \ */ /g;/scope\ \(local\|host\|link\)/d'
 	} | {

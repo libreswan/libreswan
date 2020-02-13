@@ -477,6 +477,11 @@ delsource() {
 	then
 	    return ${st}
 	fi
+
+	if [ -n "${PLUTO_MOBIKE_EVENT}" ] ; then
+		return ${st}
+	fi
+
 	it="ip -${FAMILY} addr del ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${interface}"
 	oops="$(eval ${it} 2>&1)"
 	st=$?
