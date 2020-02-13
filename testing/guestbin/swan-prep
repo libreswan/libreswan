@@ -26,6 +26,18 @@ def path_touch(dst, mode=None):
     else:
         Path(dst).touch()
 
+def rsync_ap(srs, dst, timer=20):
+
+    cmd = "/usr/bin/rsync --delete -q -aP"
+    cmd += " %s %s" % (src, dst)
+
+    try:
+        output = subprocess.check_output(cmd, shell=True, timeout=timer, stderr=subprocess.STDOUT)
+    except subprocess.TimeoutExpired:
+        print( "EXCEPTION TIMEOUT ? cmd %s , cwd %s" % (os.getcwd(), cmd))
+    except subprocess.CalledProcessError as e:
+         print ("EXCEPTION ? cwd %s , %s %s" % (os.getcwd(), cmd, e.output))
+
 def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False, wipe_old_dst=False):
 
     if touch_src_file and mkdir_src:
@@ -129,6 +141,8 @@ parser.add_argument('--x509', '-x', action='store_true',
                     help='create X509 NSS file by importing test certs')
 parser.add_argument('--dnssec', '-d', action='store_true',
                     help='start nsd and unbound for DNSSEC - meant only for nic')
+parser.add_argument('--nsd', action='store_true',
+                    help='start nsd only for DNSSEC')
 parser.add_argument('--x509name', '-X', action='store', default="",
                     help='create X509 NSS file by importing test certs')
 parser.add_argument('--fips', '-f', action='store_true',
@@ -170,8 +184,7 @@ if not os.path.isdir(testpath):
 
 testname = os.path.basename(testpath)
 
-nsbasepath = ''
-namespace=''
+namespace = ''
 
 #this does not work:)
 if not args.namespace:
@@ -187,10 +200,16 @@ if o.returncode:
 if re.match(r'eth0@if\d+', ifname):
     args.namespace = True
 
-subprocess.run(["ipsec", "stop"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii") # gentle try before wiping files and killall
+if args.namespace:
+    nsbasepath="%s/NS/%s" % (testpath, hostname) #will create testpath/NS/hostname/*
+    if not os.path.isdir(nsbasepath):
+        os.makedirs(nsbasepath)
+else:
+    nsbasepath = ''
 
 # Setup pluto.log softlink and bindmount in namespace
 if hostname != "nic":
+    subprocess.run(["ipsec", "stop"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii") # gentle try before wiping files and killall
 
     outputdir = "%s/OUTPUT/" % testpath
     if not os.path.isdir(outputdir):
@@ -209,6 +228,7 @@ if hostname != "nic":
     wipe_old(tmplink)
 
     Path(daemonlogfile).touch(mode=0o777)
+
     if args.namespace :
         mount_bind(daemonlogfile, tmplink, touch_src_file=True)
     else :
@@ -263,51 +283,48 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
     # copy in base configs
     prefix = ""
 
-    if hostname != "nic":
-        if args.namespace:
-            nsbasepath="%s/NS/%s" % (testpath, hostname) #will create testpath/NS/hostname/*
-            if not os.path.isdir(nsbasepath):
-                os.makedirs(nsbasepath)
+if hostname != "nic":
 
-            ipsec_d_dir = "strongswan/" if userland == "strongswan" else "ipsec.d"
+    ipsec_d_dir = "strongswan/" if userland == "strongswan" else "ipsec.d"
 
-            src = "%s/etc/%s" % (nsbasepath, ipsec_d_dir)
-            dst = "/etc/%s" % (ipsec_d_dir)
-            if mount_bind(src, dst, mkdir_src=True,  wipe_old_dst=True):
-                sys.exit(1)
+    src = "%s/etc/%s" % (nsbasepath, ipsec_d_dir)
+    dst = "/etc/%s" % (ipsec_d_dir)
+    if args.namespace :
+        if mount_bind(src, dst, mkdir_src=True,  wipe_old_dst=True):
+            sys.exit(1)
 
-            src = "%s/run/pluto" % (nsbasepath)
-            if args.userland in ("libreswan", "openswan"):
-                dst = "/run/pluto"
-            elif args.userland in ("strongswan"):
-                dst="/run/strongswan"
+    if args.userland in ("libreswan", "openswan"):
+        dst = "/run/pluto"
+    elif args.userland in ("strongswan"):
+        dst="/run/strongswan"
+    src = "%s%s" % (nsbasepath, dst)
+    if args.namespace :
+        if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=False):
+            sys.exit(1)
 
-            if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=False):
-                sys.exit(1)
+    if args.userland in ("libreswan", "openswan"):
+        # this brings in the nss *.db files that are path-specific -
+        # they have pathnames hardcoded inside the file
+        # shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname,
+        # "/etc/").  This default database contains a default key-pair
+        # for basic testing.
+        distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, "/etc/ipsec.d/")
+        # fill in any missing dirs
+    elif args.userland in ("strongswan"):
+        prefix = "strongswan/"
+        dst = "/etc/strongswan/ipsec.d"
+        if not os.path.isdir(dst):
+            os.mkdir(dst)
 
-        if args.userland in ("libreswan", "openswan"):
-            # this brings in the nss *.db files that are path-specific -
-            # they have pathnames hardcoded inside the file
-            # shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname,
-            # "/etc/").  This default database contains a default key-pair
-            # for basic testing.
-            distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, "/etc/ipsec.d/")
-            # fill in any missing dirs
-        elif args.userland in ("strongswan"):
-            prefix = "strongswan/"
-            dst = "/etc/strongswan/ipsec.d"
-            if not os.path.isdir(dst):
-                os.mkdir(dst)
-
-        for dir in ("/etc/%sipsec.d" % prefix, "/etc/%sipsec.d/policies" % prefix, "/etc/%sipsec.d/cacerts" % prefix, "/etc/%sipsec.d/crls" % prefix, "/etc/%sipsec.d/certs" % prefix, "/etc/%sipsec.d/private" % prefix):
-            if not os.path.isdir(dir):
-                os.mkdir(dir)
-                if "private" in dir:
-                    os.chmod(dir, 0o700)
-            else:
-                oldfiles = glob.glob("%s/*.der"%dir) + glob.glob("%s/*.crt"%dir) + glob.glob("%s/*.pem"%dir) + glob.glob("%s/*.key"%dir)
-                for oldfile in oldfiles:
-                    os.unlink(oldfile)
+    for dir in ("/etc/%sipsec.d" % prefix, "/etc/%sipsec.d/policies" % prefix, "/etc/%sipsec.d/cacerts" % prefix, "/etc/%sipsec.d/crls" % prefix, "/etc/%sipsec.d/certs" % prefix, "/etc/%sipsec.d/private" % prefix):
+        if not os.path.isdir(dir):
+            os.mkdir(dir)
+            if "private" in dir:
+                os.chmod(dir, 0o700)
+        else:
+            oldfiles = glob.glob("%s/*.der"%dir) + glob.glob("%s/*.crt"%dir) + glob.glob("%s/*.pem"%dir) + glob.glob("%s/*.key"%dir)
+            for oldfile in oldfiles:
+                os.unlink(oldfile)
 
         # test specific files
         ipsecconf = "%s/ipsec.conf" % (testpath)
@@ -379,9 +396,9 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 
 sysconfigd = "%s/etc/sysconfig" % (nsbasepath)
 if not os.path.isdir(sysconfigd):
-    os.mkdir(sysconfigd)
+    os.makedirs(sysconfigd)
 
-if args.userland in ("libreswan", "openswan"):
+if args.userland in ("libreswan", "openswan") and hostname != "nic":
     if args.fips and args.userland in ("libreswan", "openswan"):
         # the test also requires using a modutil cmd which we cannot run here
         shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
@@ -536,8 +553,6 @@ if userland == "strongswan" and args.x509:
         shutil.copy("/testing/x509/certs/%s.crt" %
                     certname, "/etc/strongswan/ipsec.d/certs/")
 
-
-
 if hostname != "nic" and not args.ipv:
     subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
     subprocess.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=1")
@@ -548,13 +563,39 @@ if args.ipv6:
  
     if not args.namespace: # AA_201902 check if this works inside ns
         if os.path.isfile("/usr/bin/systemctl"):
-            subprocess.getoutput("systemctl restart network.service")
+            subprocess.getoutput("systemctl restart systemd-networkd")
         else:
             subprocess.getoutput("service network restart")
 
-if args.dnssec:
-        subprocess.getoutput("service nsd start")
-        subprocess.getoutput("service unbound start")
+if args.dnssec and not args.namespace:
+        subprocess.getoutput("systemctl nsd start")
+        subprocess.getoutput("systemctl unbound start")
+
+if args.nsd or args.dnssec:
+    if args.namespace:
+        dst = "/etc/nsd"
+        src = "%s%s" % (nsbasepath, dst)
+
+        if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
+            sys.exit(1)
+
+        dst ="/run/nsd"
+        src = "%s%s" % (nsbasepath, dst)
+        if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
+            sys.exit(1)
+
+        if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
+            print("failed to mount_bind src=%s dst %s" % (src, dst))
+            sys.exit(1)
+
+        src = '/testing/baseconfigs/nic/etc/nsd'
+        dst = '/etc'
+        rsync_ap(src, dst);
+        cmd = "../../pluto/bin/nsd-start.sh --restart"
+        output = subprocess.check_output(cmd, shell=True, timeout=20, stderr=subprocess.STDOUT)
+    else:
+        subprocess.getoutput("systemctl nsd start")
+
 
 if not os.path.isfile("/root/.gdbinit"):
     fp = open("/root/.gdbinit", "w")
@@ -571,7 +612,7 @@ for ipt in ("iptables", "ip6tables"):
     subprocess.getoutput("%s -A LOGDROP -j LOG" % ipt)
     subprocess.getoutput("%s -A LOGDROP -j DROP" % ipt)
 
-if not args.namespace: # inside namespace this would kill pluto from other ns
+if not args.namespace and hostname != "nic": # inside namespace this would kill pluto from other ns
     # shouldn't happen early on? now wiped run time files pid etc.
     # this is probably a last resort? may be a more gentle attempt at the begining.
     #
