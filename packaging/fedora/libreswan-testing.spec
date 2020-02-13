@@ -2,6 +2,8 @@
 # These are rpm macros and are 0 or 1
 %global with_efence 1
 %global with_development 1
+%global nss_version 3.41
+%global unbound_version 1.6.6
 %global with_cavstests 0
 %global _exec_prefix %{_prefix}/local
 %global initsystem @INITSYSTEM@
@@ -17,6 +19,11 @@
     INC_USRLOCAL=%{_exec_prefix} \\\
     IPSECVERSION=%{IPSECVERSION} \\\
     INITSYSTEM=%{initsystem} \\\
+    USE_NSS_IPSEC_PROFILE=true \\\
+    PYTHON_BINARY=%{__python3} \\\
+    SHELL_BINARY=%{_prefix}/bin/sh \\\
+%{nil}
+
 %{nil}
 
 #global prever rc1
@@ -38,15 +45,11 @@ Source1: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
 Source2: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source3: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
+BuildRequires: gcc
 BuildRequires: bison
 BuildRequires: flex
 BuildRequires: pkgconfig
 BuildRequires: systemd-devel
-Requires(post): bash
-Requires(post): coreutils
-Requires(post): systemd
-Requires(preun): systemd
-Requires(postun): systemd
 
 Conflicts: openswan < %{version}-%{release}
 Obsoletes: openswan < %{version}-%{release}
@@ -95,17 +98,18 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
-sed -i "s:/usr/bin/python$:/usr/bin/python3:" programs/verify/verify.in
-sed -i "s:/usr/bin/python$:/usr/bin/python3:" programs/show/show.in
-sed -i "s:/usr/bin/python$:/usr/bin/python3:" programs/_unbound-hook/_unbound-hook.in
+sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" programs/configs/ipsec.conf.in
 
 %build
-%if 0%{with_efence}
-%global efence "-lefence"
-%endif
-
-#796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
+%if 0%{with_development}
+    OPTIMIZE_CFLAGS="%{?_hardened_cflags}" \
+%else
+    OPTIMIZE_CFLAGS="%{optflags}" \
+%endif
+%if 0%{with_efence}
+    USE_EFENCE=true \
+%endif
     %{libreswan_config} \
     programs
 FS=$(pwd)
