@@ -21,7 +21,7 @@
     INITSYSTEM=%{initsystem} \\\
     USE_NSS_IPSEC_PROFILE=true \\\
     PYTHON_BINARY=%{__python3} \\\
-    SHELL_BINARY=%{_prefix}/bin/sh \\\
+    SHELL_BINARY=%{_bindir}/sh \\\
 %{nil}
 
 %{nil}
