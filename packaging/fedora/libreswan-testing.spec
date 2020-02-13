@@ -5,7 +5,6 @@
 %global nss_version 3.41
 %global unbound_version 1.6.6
 %global with_cavstests 0
-%global _exec_prefix %{_prefix}/local
 %global initsystem @INITSYSTEM@
 # Libreswan config options
 %global libreswan_config \\\
