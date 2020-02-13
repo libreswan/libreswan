@@ -110,6 +110,7 @@ KVM_UPGRADE_PACKAGES ?= \
     valgrind \
     vim-enhanced \
     wget \
+    wireshark-cli \
     xl2tpd \
     xmlto \
     $(KVM_STRONGSWAN_PACKAGES) \
