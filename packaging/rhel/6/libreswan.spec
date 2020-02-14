@@ -29,6 +29,7 @@
     USE_NSS_IPSEC_PROFILE=false \\\
     USE_SECCOMP=false \\\
     USE_XAUTHPAM=true \\\
+    USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
 %{nil}
 
 #global prever rc1
