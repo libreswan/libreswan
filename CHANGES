@@ -1,7 +1,9 @@
 
 See also https://libreswan.org/
 
-v3.30 (February 2020)
+v3.31 (unreleased)
+
+v3.30 (February 13, 2020)
 * WARNING: This is the last release that supports the KLIPS stack,
            use the new ipsec-interface= virtual interfaces instead.
 * XFRM: Fix detection on kernels without xfrm_stat (debian et all) [Paul]
