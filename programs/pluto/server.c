@@ -1067,13 +1067,6 @@ stf_status create_tcp_interface(struct state *st)
 		}
 	}
 
-#if 0
-	dbg("XXX: TCP: sleeping on the job");
-	fsync(fd); fsync(fd); fsync(fd);
-	sleep(1);
-	fsync(fd); fsync(fd); fsync(fd);
-#endif
-
 	/*
 	 * Tell the kernel to load up the ESPINTCP Upper Layer
 	 * Protocol.
