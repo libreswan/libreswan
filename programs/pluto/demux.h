@@ -32,8 +32,6 @@ struct state;   /* forward declaration of tag */
 
 extern void init_demux(void);
 extern event_callback_routine comm_handle_cb;
-extern void read_cb(struct bufferevent *bev, void *arg);	/* TCP: terrible name */
-extern void read_prefix_cb(struct bufferevent *bev, void *arg);	/* TCP: terrible name */
 
 /* State transition function infrastructure
  *

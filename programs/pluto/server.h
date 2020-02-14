@@ -43,7 +43,6 @@ extern struct sockaddr_un info_addr;    /* address of control (info) socket */
 extern err_t init_ctl_socket(void);
 extern void delete_ctl_socket(void);
 
-extern void event_cb(struct bufferevent *bev, short events, void *arg); /* TCP: terrible name? */
 extern stf_status create_tcp_interface(struct state *st); /* TCP: terrible name? */
 
 extern bool listening;  /* should we pay attention to IKE messages? */
@@ -83,8 +82,11 @@ struct iface_port {
 	bool ike_float;
 	enum { IFN_ADD, IFN_KEEP, IFN_DELETE } change;
 	struct pluto_event *pev;
-	struct bufferevent *bev; /* TCP: this is tcp only, does it belong? */
 	int proto; /* TCP: add UDP and TCP to ip_protocol? */
+	/* tcp only */
+	struct evconnlistener *tcp_listener;
+	bool tcp_espintcp_enabled;
+	ip_endpoint tcp_remote_endpoint;
 };
 
 extern struct iface_port  *interfaces;   /* public interfaces */

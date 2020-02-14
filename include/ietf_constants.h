@@ -504,9 +504,8 @@
 /* RFC3948: bytes of zeros, same size as ESP SPI */
 #define NON_ESP_MARKER_SIZE 4
 
-/* RFC8229: 2 bytes of tcp packet length */
-#define IKE_TCP_LENGTH_FIELD_SIZE 2
-#define IKETCP_STREAM_PREFIX_LENGTH 6
+/* RFC8229: prefix at start of tcp stream (no NUL) */
+#define IKE_IN_TCP_PREFIX { 'I', 'K', 'E', 'T', 'C', 'P', }
 
 /* ICMP type number for neighbor discovery */
 #define ICMP_NEIGHBOR_DISCOVERY 34816

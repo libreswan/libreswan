@@ -880,14 +880,6 @@ void discard_state(struct state **st)
 	*st = NULL;
 }
 
-static void write_cb(struct bufferevent *bev, void *arg)
-{
-	struct iface_port *ifp = arg;
-	bufferevent_free(bev);
-	/* TCP: free ifp.bev? ifp.lots of other stuff? */
-	pfree(ifp);
-}
-
 /* delete a state object */
 void delete_state(struct state *st)
 {
@@ -1151,11 +1143,9 @@ void delete_state(struct state *st)
 
 	release_any_whack(st, HERE, "deleting state");
 
-	/* Freeing bufferevent */
-
 	if (st->st_interface->proto == IPPROTO_TCP && IS_IKE_SA(st)) {
-		bufferevent_setcb(st->st_interface->bev, read_cb,
-				  write_cb, event_cb, (void *)st->st_interface);
+		dbg("TCP: freeing interface; release instead?");
+		pfree((void*)/*TCP: hack*/st->st_interface);
 	}
 
 	/* from here on we are just freeing RAM */

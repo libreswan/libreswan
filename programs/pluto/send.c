@@ -28,6 +28,7 @@
 
 #include <unistd.h>	/* for usleep() */
 #include <errno.h>
+#include <fcntl.h>
 
 #include <event2/bufferevent.h>		/* TCP: for bufferevent_write() */
 
@@ -112,45 +113,30 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	size_t non_esp_marker_size = (interface->proto == IPPROTO_TCP ||
 				      (!just_a_keepalive && interface->ike_float)) ? NON_ESP_MARKER_SIZE : 0;
 
-	/*
-	 * For TCP, need to prefeix everything with a 2-byte packet
-	 * length.
-	 */
-	size_t tcp_length_field_size = interface->proto == IPPROTO_TCP ? IKE_TCP_LENGTH_FIELD_SIZE : 0;
-
 	const uint8_t *ptr;
-	size_t len = tcp_length_field_size + non_esp_marker_size + a.len + b.len;
-
+	size_t len = non_esp_marker_size + a.len + b.len;
 	if (len > MAX_OUTPUT_UDP_SIZE) {
 		loglog(RC_LOG_SERIOUS, "send_ike_msg(): really too big %zu bytes", len);
 		return FALSE;
 	}
 
-	/* TCP: need a generic hton() and ntoh() function */
-	passert(IKE_TCP_LENGTH_FIELD_SIZE == 2);
-	uint16_t tcp_length_field = htons(len);
-
 	/*
-	 * TCP: doesn't need this shuffle - it can make multiple write
-	 * calls - and UDP et.al. can use a multi-buffer send.
+	 * Is this shuffle needed? Can use a multi-buffer send be
+	 * used?
 	 */
 	if (len != a.len) {
 		/* copying required */
 		size_t cursor = 0;
 
-		/* 1. packet length in header for TCP */
-		memcpy(buf + cursor, &tcp_length_field, tcp_length_field_size);
-		cursor += tcp_length_field_size;
-
-		/* 2. non-ESP Marker (0x00 octets) for UDP and/or TCP */
+		/* non-ESP Marker (0x00 octets) for UDP and/or TCP */
 		memset(buf + cursor, 0x00, non_esp_marker_size);
 		cursor += non_esp_marker_size;
 
-		/* 3. chunk a */
+		/* chunk a */
 		memcpy(buf + cursor, a.ptr, a.len);
 		cursor += a.len;
 
-		/* 4. chunk b */
+		/* chunk b */
 		memcpy(buf + cursor, b.ptr, b.len);
 		cursor += b.len;
 
@@ -162,10 +148,10 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	if (DBGP(DBG_BASE)) {
 		endpoint_buf b;
 		endpoint_buf ib;
-		DBG_log("sending %zu bytes for %s through %s %s from %s to %s (using #%lu)",
+		DBG_log("%s: sending %zu bytes for %s through %s from %s to %s (using #%lu)",
+			interface->proto == IPPROTO_TCP ? "TCP" : "UDP",
 			len,
 			where,
-			interface->proto == IPPROTO_TCP ? "TCP" : "UDP",
 			interface->ip_dev->id_rname,
 			str_endpoint(&interface->local_endpoint, &ib),
 			str_endpoint(&remote_endpoint, &b),
@@ -175,28 +161,40 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 
 	check_outgoing_msg_errqueue(interface, "sending a packet");
 
-	int error;
 	ssize_t wlen;
-	if (interface->proto == IPPROTO_TCP && pexpect(interface->bev != NULL)) {
-		/*
-		 * Need to map bufferevent's 0 or -1 onto len or 0.
-		 */
-		errno = 0; /* TCP: is errno meaningful here? */
-		wlen = bufferevent_write(interface->bev, ptr, len) == 0 ? len : 0;
+	if (interface->proto == IPPROTO_TCP) {
+
+		dbg("TCP: switching off NONBLOCK before write");
+		int flags = fcntl(interface->fd, F_GETFL, 0);
+		if (flags == -1) {
+			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
+		}
+		if (fcntl(interface->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
+			LOG_ERRNO(errno, "TCP: write - fcntl(F_GETFL)");
+		}
+
+		wlen = write(interface->fd, ptr, len);
+
+		dbg("TCP: restoring flags 0-%o after write", flags);
+		if (fcntl(interface->fd, F_SETFL, flags) == -1) {
+			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
+		}
+		dbg("TCP: flags restored");
+
 	} else {
 		ip_sockaddr remote_sa;
 		size_t remote_sa_size = endpoint_to_sockaddr(&remote_endpoint, &remote_sa);
 		wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa, remote_sa_size);
 	}
-	error = errno;
+	int error = errno;
 
 	if (wlen != (ssize_t)len) {
 		if (!just_a_keepalive) {
 			endpoint_buf b;
-			LOG_ERRNO(error, "send on %s to %s via %s failed in %s",
+			LOG_ERRNO(error, "%s: send on %s to %s failed in %s",
+				  interface->proto == IPPROTO_TCP ? "TCP" : "UDP",
 				  interface->ip_dev->id_rname,
 				  str_sensitive_endpoint(&remote_endpoint, &b),
-				  interface->proto == IPPROTO_TCP ? "TCP" : "UDP",
 				  where);
 		}
 		return FALSE;

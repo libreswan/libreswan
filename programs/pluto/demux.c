@@ -110,36 +110,41 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 #endif
 
 	int packet_errno;
+	ip_endpoint sender;
+	const char *from_ugh;
 	if (ifp->proto == IPPROTO_TCP) {
 
-		struct evbuffer *input = bufferevent_get_input(ifp->bev);
-		ev_uint16_t len_encoded;
-		int tcp_length = 0;
-
-		int len_in_buf = evbuffer_get_length(input);
-		if (len_in_buf < IKE_TCP_LENGTH_FIELD_SIZE)
-			return FALSE;
-
-		evbuffer_copyout(input, &len_encoded, IKE_TCP_LENGTH_FIELD_SIZE);
-		tcp_length = ntohs(len_encoded);
-
-		if (len_in_buf < tcp_length) {
-			/* The entire packet hasn't arrived yet. */
-			return FALSE;
+		dbg("TCP: switching off NONBLOCK before read");
+		int flags = fcntl(ifp->fd, F_GETFL, 0);
+		if (flags == -1) {
+			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
+		}
+		if (fcntl(ifp->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
+			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
 		}
 
-		evbuffer_drain(input, IKE_TCP_LENGTH_FIELD_SIZE); /*discard the length field */
-		packet_len = evbuffer_remove(input, bigbuffer, tcp_length-IKE_TCP_LENGTH_FIELD_SIZE); /* TCP: where is MAX_INPUT_UDP_SIZE used? */
-
-		/* getting the from address for tcp connections */
-		getpeername(ifp->fd, &from.sa, &from_len);
-
 		/*
-		 * TCP: is this even meaningful? Old code picked up
-		 * what evern was left in ERRNO after all the above
-		 * calls ...
+		 * Reads the entire packet _without_ length, if buffer
+		 * isn't big enough packet is truncated.
 		 */
+		dbg("TCP: reading input");
+		errno = 0;
+		packet_len = read(ifp->fd, bigbuffer, sizeof(bigbuffer));
 		packet_errno = errno;
+		dbg("TCP: read returned %d "PRI_ERRNO"",
+		    packet_len, pri_errno(packet_errno));
+		if (packet_len >= 0) {
+			DBG_dump(NULL, _buffer, packet_len); /* TCP: DBGP()??? */
+		}
+
+		dbg("TCP: restoring flags 0-%o after read", flags);
+		if (fcntl(ifp->fd, F_SETFL, flags) == -1) {
+			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
+		}
+		dbg("TCP: flags restored");
+
+		from_ugh = NULL;
+		sender = ifp->tcp_remote_endpoint;
 
 	} else {
 
@@ -154,6 +159,8 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 				      &from.sa, &from_len);
 #endif
 		packet_errno = errno; /* save!!! */
+
+		from_ugh = sockaddr_to_endpoint(&from, from_len, &sender);
 	}
 
 
@@ -165,8 +172,6 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	 * empty, generate custom error messages (why? the text isn't
 	 * the best).
 	 */
-	ip_endpoint sender;
-	const char *from_ugh = sockaddr_to_endpoint(&from, from_len, &sender);
 	if (packet_len == -1) {
 		if (from_len == sizeof(from) &&
 		    all_zero((const void *)&from, sizeof(from))) {
@@ -196,6 +201,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		return NULL;
 	}
 
+	dbg("checking floating esp marker");
 	if (ifp->ike_float) {
 		uint32_t non_esp;
 
@@ -206,22 +212,19 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		}
 		memcpy(&non_esp, _buffer, sizeof(uint32_t));
 		if (non_esp != 0) {
-			plog_from(&sender, "has no Non-ESP marker");
-			/* could be an ESP packet, log here */
-			if (ifp->proto == IPPROTO_TCP){
-				plog_from(&sender, "received an ESPinTCP packet, TCP encap is working");
-				DBG_dump("ESPinTCP packet", _buffer, packet_len); /* TCP: DBGP()??? */
-			}
+			plog_from(&sender, "has non-zero ESP marker");
 			return NULL;
 		}
 		_buffer += sizeof(uint32_t);
 		packet_len -= sizeof(uint32_t);
+		dbg("tossed ESP marker");
 	}
 
 	/* We think that in 2013 Feb, Apple iOS Racoon
 	 * sometimes generates an extra useless buggy confusing
 	 * Non ESP Marker
 	 */
+	dbg("checking broken apple esp marker");
 	{
 		static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
 			{ 0x00, };
@@ -234,6 +237,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		}
 	}
 
+	dbg("checking broken kernel esp marker");
 	if (packet_len == 1 && _buffer[0] == 0xff) {
 		/**
 		 * NAT-T Keep-alive packets should be discared by kernel ESPinUDP
@@ -251,14 +255,14 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	 * Clone actual message contents and set up md->packet_pbs to
 	 * describe it.
 	 */
+	dbg("creating md");
 	struct msg_digest *md = alloc_md("msg_digest in read_packet");
 	md->iface = ifp;
 	md->sender = sender;
 
-	init_pbs(&md->packet_pbs
-		 , clone_bytes(_buffer, packet_len,
-			       "message buffer in read_packet()")
-		 , packet_len, "packet");
+	void *bytes = clone_bytes(_buffer, packet_len,
+				  "message buffer in read_packet()");
+	init_pbs(&md->packet_pbs, bytes, packet_len, "packet");
 
 	endpoint_buf eb;
 	endpoint_buf b2;
@@ -430,77 +434,6 @@ static void process_md(struct msg_digest **mdp)
 	release_any_md(mdp);
 	reset_cur_state();
 	reset_cur_connection();
-}
-
-/*
- * TCP: this looks identical to comm_handle_cb() but without the error
- * handling?
- */
-
-void read_cb(struct bufferevent *unused_bev UNUSED, void *arg)
-{
-	struct iface_port *ifp = arg;
-
-	threadtime_t md_start = threadtime_start();
-	struct msg_digest *md = read_packet(ifp);
-	if (md != NULL) {
-		md->md_inception = md_start;
-		if (!impair_incoming(&md)) {
-			process_md(&md);
-		}
-		pexpect(md == NULL);
-	}
-	threadtime_stop(&md_start, SOS_NOBODY,
-			"%s() reading and processing packet", __func__);
-	pexpect_reset_globals();
-}
-
-void read_prefix_cb(struct bufferevent *unused_bev UNUSED, void *arg)
-{
-       struct iface_port *ifp = (struct iface_port *)arg;
-
-       bufferevent_disable(ifp->bev, EV_READ | EV_WRITE);
-
-       u_int8_t buf[IKETCP_STREAM_PREFIX_LENGTH];
-
-       struct evbuffer *input = bufferevent_get_input(ifp->bev);
-
-       int prefix_len = evbuffer_remove(input, buf, IKETCP_STREAM_PREFIX_LENGTH);
-
-       if ((prefix_len != IKETCP_STREAM_PREFIX_LENGTH) || strcmp((const char *)buf,"IKETCP")) {
-               /* discard this tcp connection */
-               libreswan_log("Did not receive the TCP stream prefix, closing socket");
-               bufferevent_free(ifp->bev);
-               pfree(ifp);
-               return;
-       }
-
-       libreswan_log("accepting this TCP connection, stream prefix received");
-
-       int len_in_buf = evbuffer_get_length(input);
-
-       if (len_in_buf > 0) {
-	       /*
-		* TCP: this looks identical to read_cb() which looks
-		* identical to comm_handle_cb() but without the error
-		* handling?
-		*/
-	       threadtime_t md_start = threadtime_start();
-	       struct msg_digest *md = read_packet(ifp);
-	       if (md != NULL) {
-		       md->md_inception = md_start;
-		       if (!impair_incoming(&md)) {
-			       process_md(&md);
-		       }
-		       pexpect(md == NULL);
-	       }
-	       threadtime_stop(&md_start, SOS_NOBODY,
-			       "%s() reading and processing packet", __func__);
-	       pexpect_reset_globals();
-       }
-
-       bufferevent_setcb(ifp->bev, read_cb, NULL, event_cb, ifp);
-       bufferevent_enable(ifp->bev, EV_READ|EV_WRITE);
 }
 
 /* wrapper for read_packet and process_packet

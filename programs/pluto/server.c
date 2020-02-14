@@ -52,6 +52,7 @@
 #include <sys/resource.h>
 #include <sys/wait.h>		/* for wait() and WIFEXITED() et.al. */
 #include <resolv.h>
+#include <linux/tcp.h>		/* for #define TCP_ULP */
 
 #include <event2/event.h>
 #include <event2/event_struct.h>
@@ -65,10 +66,6 @@
 #  include <linux/errqueue.h>
 #  include <sys/uio.h>          /* struct iovec */
 #endif
-
-#include <linux/ipsec.h>	/* TCP: for IPSEC_POLICY_BYPASS; DOES NOT BELONG! */
-#include <linux/pfkeyv2.h>	/* TCP: for said_x_policy;       DOES NOT BELONG! */
-#include <libreswan/pfkey.h>	/* TCP: for IPSEC_PFKEYv2_ALIGN; DOES NOT BELONG! */
 
 #include "sysdep.h"
 #include "socketwrapper.h"
@@ -1001,107 +998,196 @@ void timer_list(void)
 	list_state_events(nw);
 }
 
-void event_cb(struct bufferevent *bev,
-		short events, void *arg UNUSED)
-{
-    if (events & BEV_EVENT_ERROR)
-            libreswan_log("There was an error in a bufferevent operation");
-    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
-            bufferevent_free(bev);
-    }
-}
+/*
+ * Open a TCP socket connected to st_remote_endpoint.  Since this end
+ * opend the socket, this end sends the IKE-in-TCP magic word.
+ */
 
-/* TCP: move to kernel vector? */
 stf_status create_tcp_interface(struct state *st)
 {
+	dbg("TCP: opening socket");
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-	libreswan_log("PAUL: create_tcp_interface() called");
-
-	evutil_make_socket_nonblocking(fd); /* TCP: missing error check? */
-
-	/* TCP: sockaddr will contain ADDR:PORT */
-	ip_sockaddr sockaddr;
-	size_t sockaddr_size = endpoint_to_sockaddr(&st->st_remote_endpoint, &sockaddr);
-
-	connect(fd, &sockaddr.sa, sockaddr_size); /* TCP: missing error check? */
-
-       /* Configure socket for ESPinTCP */
-       if (kernel_ops->espintcp != NULL) {
-               kernel_ops->espintcp(fd);
-               libreswan_log("PAUL: called espintcp()");
-       } else {
-               loglog(RC_LOG_SERIOUS, "Do not know how to enable ESPinTCP for this IPsec stack");
-        }
-
-	struct iface_port *ifp = NULL;
-	ifp = alloc_thing(struct iface_port, "struct iface_port");
-
-	ifp->ip_dev = st->st_interface->ip_dev;
-
-	ifp->fd = fd;
-
-	ip_sockaddr myaddr;
-	socklen_t addr_size = sizeof(myaddr);
-	getsockname(ifp->fd, &myaddr.sa, &addr_size);
-
-	sockaddr_to_endpoint(&myaddr, addr_size, &ifp->local_endpoint); /* TCP:  missing error check? */
-	ifp->proto = IPPROTO_TCP;
-	ifp->change = IFN_ADD;
-	ifp->ike_float = TRUE;
-
-	ifp->bev = bufferevent_socket_new(pluto_eb, ifp->fd , BEV_OPT_CLOSE_ON_FREE);
-
-	if (ifp->bev == NULL){
-		loglog(RC_LOG_SERIOUS, "PAUL:bufferevent could not be created");
-		close(ifp->fd);
-		pfree(ifp);
+	if (fd < 0) {
+		LOG_ERRNO(errno, "TCP: socket() failed");
 		return STF_FATAL;
 	}
 
-	bufferevent_setcb(ifp->bev, read_cb, NULL, event_cb, ifp);
-	bufferevent_enable(ifp->bev, EV_READ|EV_WRITE);
+	/*
+	 * Connect
+	 *
+	 * TCP: THIS LOOKS LIKE A BLOCKING CALL
+	 *
+	 * TCP: Assume st_remote_endpoint is the intended remote?
+	 * Should this instead look in the connection?
+	 */
+
+	dbg("TCP: connecting");
+	{
+		ip_sockaddr remote_sockaddr;
+		size_t remote_sockaddr_size = endpoint_to_sockaddr(&st->st_remote_endpoint, &remote_sockaddr);
+		if (connect(fd, &remote_sockaddr.sa, remote_sockaddr_size) < 0) {
+			LOG_ERRNO(errno, "TCP: connect() failed");
+			close(fd);
+			return STF_FATAL;
+		}
+	}
+
+	dbg("TCP: getting local randomly assigned port");
+	ip_endpoint local_endpoint;
+	{
+		ip_sockaddr local_sockaddr; /* port gets assigned randomly */
+		socklen_t local_sockaddr_size = sizeof(local_sockaddr);
+		if (getsockname(fd, &local_sockaddr.sa, &local_sockaddr_size) < 0) {
+			LOG_ERRNO(errno, "TCP: failed to get local TCP address");
+			close(fd);
+			return STF_FATAL;
+		}
+		err_t err = sockaddr_to_endpoint(&local_sockaddr, local_sockaddr_size,
+						 &local_endpoint);
+		if (err != NULL) {
+			libreswan_log("TCP: failed to get local TCP address, %s", err);
+			close(fd);
+			return STF_FATAL;
+		}
+	}
+
+	dbg("TCP: making things non-blocking");
+	evutil_make_socket_nonblocking(fd); /* TCP: ignore errors? */
+	evutil_make_socket_closeonexec(fd); /* TCP: ignore errors? */
 
 	/* Socket is now connected, send the IKETCP stream */
 
-	char temp[IKETCP_STREAM_PREFIX_LENGTH] = "IKETCP";
+	dbg("TCP: sending IKE-in-TCP prefix");
+	{
+		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
+		if (write(fd, iketcp, sizeof(iketcp)) != (ssize_t)sizeof(iketcp)) {
+			LOG_ERRNO(errno, "TCP: send of IKE-in-TCP prefix");
+			close(fd);
+			return STF_FATAL;
+		}
+	}
 
-	int ret = bufferevent_write(ifp->bev, (void *)temp, IKETCP_STREAM_PREFIX_LENGTH);
-	if (ret == -1) {
-		loglog(RC_LOG_SERIOUS, "PAUL: Couldn't send stream prefix, closing connection");
-		bufferevent_free(ifp->bev);
-		pfree(ifp);
+#if 0
+	dbg("XXX: TCP: sleeping on the job");
+	fsync(fd); fsync(fd); fsync(fd);
+	sleep(1);
+	fsync(fd); fsync(fd); fsync(fd);
+#endif
+
+	/*
+	 * Tell the kernel to load up the ESPINTCP Upper Layer
+	 * Protocol.
+	 *
+	 * From this point on all writes are auto-wrapped in their
+	 * length and reads are auto-blocked.
+	 */
+	if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
+		LOG_ERRNO(errno, "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
+		close(fd);
 		return STF_FATAL;
-	} 
-	loglog(RC_LOG_SERIOUS, "PAUL: sent IKETCP prefix.");
-	st->st_interface = ifp;
+	}
+
+	struct iface_port *ifp = NULL;
+	ifp = alloc_thing(struct iface_port, "struct iface_port");
+	ifp->ip_dev = st->st_interface->ip_dev; /* TCP: XXX: refcnt? */
+	ifp->fd = fd;
+	ifp->proto = IPPROTO_TCP;
+	ifp->change = IFN_ADD;
+	ifp->ike_float = TRUE;
+	ifp->local_endpoint = local_endpoint;
+	ifp->tcp_remote_endpoint = st->st_remote_endpoint;
+	ifp->tcp_espintcp_enabled = true;
+
+	ifp->pev = add_fd_read_event_handler(ifp->fd,
+					     comm_handle_cb,
+					     ifp, "iketcpX");
+
+	st->st_interface = ifp; /* TCP: leaks old st_interface? */
 	return STF_OK;
 }
 
-static void accept_conn_cb(struct evconnlistener *listener UNUSED,
-		evutil_socket_t fd, struct sockaddr *address UNUSED, int socklen UNUSED,
-		void *arg)
+static void read_ike_in_tcp_cb(evutil_socket_t fd,
+			       const short event,
+			       void *arg)
 {
-	struct iface_port *ifp = NULL;
-	ifp = alloc_thing(struct iface_port, "struct iface_port");
+	struct iface_port *ifp = (struct iface_port *)arg;
 
-	memcpy(ifp,(struct iface_port *)arg,sizeof(struct iface_port));
-
-	ifp->bev = bufferevent_socket_new(
-		pluto_eb, fd, BEV_OPT_CLOSE_ON_FREE);
-
- 	if (ifp->bev == NULL){
-		libreswan_log("couldn't create bufferevent, exit");
-		close(fd);
-		pfree(ifp);
+	if (ifp->tcp_espintcp_enabled) {
+		comm_handle_cb(fd, event, arg);
 		return;
 	}
 
+	dbg("TCP: reading IKETCP prefix");
+	const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
+	uint8_t buf[sizeof(iketcp)];
+	ssize_t len = read(fd, buf, sizeof(buf));
+	if (len != sizeof(buf)) {
+		libreswan_log("TCP: problem reading IKETCP prefix - returned %zd bytes but expecting %zu",
+			      len, sizeof(buf));
+		close(fd);
+		return;
+	}
+
+	dbg("TCP: verifying IKETCP prefix");
+	if (!memeq(buf, iketcp, len)) {
+		/* discard this tcp connection */
+		libreswan_log("TCP: did not receive the IKE-in-TCP stream prefix, closing socket");
+		close(fd);
+		return;
+	}
+
+	libreswan_log("TCP: accepting connection, stream prefix received");
+
+	/*
+	 * Tell the kernel to load up the ESPINTCP Upper Layer
+	 * Protocol.
+	 *
+	 * From this point on all writes are auto-wrapped in their
+	 * length and reads are auto-blocked.
+	 */
+	dbg("TCP: enabling ESPINTCP");
+	if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
+		LOG_ERRNO(errno, "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp(), closing socket");
+		close(fd);
+		return;
+	}
+
+	/*
+	 * TCP: Should hack the callback to the non-IKETCP version,
+	 * but this is easier - it seems changing the event handler
+	 * while in the event handler isn't allowed.
+	 */
+	ifp->tcp_espintcp_enabled = true;
+}
+
+static void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
+				 int fd,
+				 struct sockaddr *sockaddr, int sockaddr_len,
+				 void *arg)
+{
+	struct iface_port *socket_ifp = arg;
+
+	ip_sockaddr sa = { .sa = *sockaddr, };
+	ip_endpoint tcp_remote_endpoint;
+	err_t err = sockaddr_to_endpoint(&sa, sockaddr_len, &tcp_remote_endpoint);
+	if (err) {
+		libreswan_log("TCP: invalid remote address: %s", err);
+		close(fd);
+		return;
+	}
+
+	struct iface_port *ifp = alloc_thing(struct iface_port, "struct iface_port");
 	ifp->fd = fd;
+	ifp->proto = IPPROTO_TCP;
+	ifp->change = IFN_ADD;
+	ifp->ike_float = TRUE;
+	ifp->ip_dev = socket_ifp->ip_dev; /*TCP: refcnt */
+	ifp->tcp_remote_endpoint = tcp_remote_endpoint;
+	ifp->local_endpoint = socket_ifp->local_endpoint;
 
-	bufferevent_setcb(ifp->bev, read_prefix_cb, NULL, event_cb, ifp);
-
-	bufferevent_enable(ifp->bev, EV_READ|EV_WRITE);
+	ifp->pev = add_fd_read_event_handler(ifp->fd,
+					     read_ike_in_tcp_cb,
+					     ifp, "iketcpX");
 }
 
 void find_ifaces(bool rm_dead)
@@ -1126,15 +1212,25 @@ void find_ifaces(bool rm_dead)
 
 		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 			delete_pluto_event(&ifp->pev);
-			if (ifp->proto == IPPROTO_UDP) {
+			switch (ifp->proto) {
+			case IPPROTO_UDP:
 				ifp->pev = add_fd_read_event_handler(ifp->fd,
 								     comm_handle_cb,
 								     ifp, "ethX");
-			} else {
-				struct evconnlistener *tcp_listener = evconnlistener_new(
-					pluto_eb, accept_conn_cb, ifp, LEV_OPT_CLOSE_ON_FREE,
-					-1, ifp->fd);
-				passert(tcp_listener!=NULL);
+				break;
+			case IPPROTO_TCP:
+				if (ifp->tcp_listener == NULL) {
+					ifp->tcp_listener = evconnlistener_new(pluto_eb, accept_ike_in_tcp_cb,
+									       ifp, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_CLOSE_ON_EXEC,
+									       -1, ifp->fd);
+					if (ifp->tcp_listener == NULL) {
+						libreswan_log("TCP: failed to create IKE-in-TCP listener");
+						continue;
+					}
+				}
+				break;
+			default:
+				bad_case(ifp->proto);
 			}
 			endpoint_buf b;
 			dbg("setup callback for interface %s %s fd %d on %s",
