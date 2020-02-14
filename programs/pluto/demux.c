@@ -114,15 +114,6 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	const char *from_ugh;
 	if (ifp->proto == IPPROTO_TCP) {
 
-		dbg("TCP: switching off NONBLOCK before read");
-		int flags = fcntl(ifp->fd, F_GETFL, 0);
-		if (flags == -1) {
-			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
-		}
-		if (fcntl(ifp->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
-			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
-		}
-
 		/*
 		 * Reads the entire packet _without_ length, if buffer
 		 * isn't big enough packet is truncated.
@@ -136,13 +127,6 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		if (packet_len >= 0) {
 			DBG_dump(NULL, _buffer, packet_len); /* TCP: DBGP()??? */
 		}
-
-		dbg("TCP: restoring flags 0-%o after read", flags);
-		if (fcntl(ifp->fd, F_SETFL, flags) == -1) {
-			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
-		}
-		dbg("TCP: flags restored");
-
 		from_ugh = NULL;
 		sender = ifp->tcp_remote_endpoint;
 
