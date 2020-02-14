@@ -1,6 +1,6 @@
 UNITTEST=verify
 CFLAGS+=${NSSFLAGS}
-LDFLAGS+=$(NSS_LDFLAGS)
+LDFLAGS+=$(NSS_LDFLAGS) -lnspr4
 SOURCES1=verify.c
 verify: ${SOURCES1}
 programs checkprograms: ${UNITTEST}
