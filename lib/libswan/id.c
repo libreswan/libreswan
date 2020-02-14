@@ -54,19 +54,19 @@
  * XXX: since caller is almost immediately calling
  * unshare_id_content() why not merge it.
  */
-err_t atoid(char *src, struct id *id, bool oe_only)
+err_t atoid(char *src, struct id *id)
 {
 	err_t ugh = NULL;
 
 	*id = empty_id;
 
-	if (!oe_only && streq("%fromcert", src)) {
+	if (streq("%fromcert", src)) {
 		id->kind = ID_FROMCERT;
-	} else if (!oe_only && streq("%none", src)) {
+	} else if (streq("%none", src)) {
 		id->kind = ID_NONE;
-	} else if (!oe_only && streq("%null", src)) {
+	} else if (streq("%null", src)) {
 		id->kind = ID_NULL;
-	} else if (!oe_only && strchr(src, '=') != NULL) {
+	} else if (strchr(src, '=') != NULL) {
 		/* we interpret this as an ASCII X.501 ID_DER_ASN1_DN */
 		id->kind = ID_DER_ASN1_DN;
 		/*
@@ -95,7 +95,7 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 		}
 	} else {
 		if (*src == '@') {
-			if (!oe_only && *(src + 1) == '#') {
+			if (*(src + 1) == '#') {
 				/*
 				 * if there is a second specifier (#) on the
 				 * line we interpret this as ID_KEY_ID
@@ -106,7 +106,7 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 				ugh = ttodata(src + 2, 0, 16,
 					(char *)id->name.ptr,
 					strlen(src), &id->name.len);
-			} else if (!oe_only && *(src + 1) == '~') {
+			} else if (*(src + 1) == '~') {
 				/*
 				 * if there is a second specifier (~) on the
 				 * line we interpret this as a binary
@@ -118,7 +118,7 @@ err_t atoid(char *src, struct id *id, bool oe_only)
 				ugh = ttodata(src + 2, 0, 16,
 					(char *)id->name.ptr,
 					strlen(src), &id->name.len);
-			} else if (!oe_only && *(src + 1) == '[') {
+			} else if (*(src + 1) == '[') {
 				/*
 				 * if there is a second specifier ([) on the
 				 * line we interpret this as a text ID_KEY_ID,

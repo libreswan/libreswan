@@ -1128,7 +1128,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 					id.ip_addr = address_any(&ipv6_info);
 					ugh = NULL;
 				} else {
-					ugh = atoid(flp->tok, &id, FALSE);
+					ugh = atoid(flp->tok, &id);
 				}
 
 				if (ugh != NULL) {

@@ -175,7 +175,7 @@ static void key_add_request(const struct whack_message *msg)
 {
 	plog_global("add keyid %s", msg->keyid);
 	struct id keyid;
-	err_t ugh = atoid(msg->keyid, &keyid, FALSE);
+	err_t ugh = atoid(msg->keyid, &keyid);
 
 	if (ugh != NULL) {
 		loglog(RC_BADID, "bad --keyid \"%s\": %s", msg->keyid, ugh);

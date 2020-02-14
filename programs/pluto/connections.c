@@ -725,7 +725,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 	if (src->id == NULL) {
 		dst->id.kind = ID_NONE;
 	} else {
-		err_t ugh = atoid(src->id, &dst->id, FALSE);
+		err_t ugh = atoid(src->id, &dst->id);
 		if (ugh != NULL) {
 			loglog(RC_BADID, "bad %s --id: %s (ignored)", which,
 				ugh);

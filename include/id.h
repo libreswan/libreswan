@@ -1,6 +1,7 @@
 /* identity representation, as in IKE ID Payloads (RFC 2407 DOI 4.6.2.1)
+ *
  * Copyright (C) 1999-2001  D. Hugh Redelmeier
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019-2020 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -42,7 +43,8 @@ extern const struct id empty_id;	/* ID_NONE */
 /*
  * parsing.
  */
-extern err_t atoid(char *src, struct id *id, bool oe_only);
+
+err_t atoid(char *src, struct id *id);
 
 /*
  * Formattting.
