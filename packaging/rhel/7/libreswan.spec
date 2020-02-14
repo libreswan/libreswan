@@ -28,11 +28,12 @@
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
     USE_NSS_PRF=true \\\
 %{nil}
+
 #global prever rc1
 
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
-Version: IPSECBASEVERSION
+Version: 3.30
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -218,5 +219,5 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 
 %changelog
-* Sun Oct  7 2018 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Thu Feb 13 2020 Team Libreswan <team@libreswan.org> - 3.30-1
 - Automated build from release tar ball
