@@ -18,6 +18,7 @@ v3.30 (unreleased)
 * IKEv2: calculate_sa_prio() now allows OE shunt to override priority [Paul]
 * IKEv2: calculate_sa_prio() support for /32 template vs instance [Hugh/Paul]
 * IKEv2: IPv6 support for addresspool= option [Antony]
+* IKEv2: Updated support for MOBIKE triggered events [Antony]
 * IKEv2: Support reconnecting authnull clients [Paul]
 * IKEv2: New whack commands --rekey-ike and --rekey-ipsec [Antony]
 * IKEv2: Prefer RFC 7427 Digital Signatures for default authby=rsasig [Sahana]
