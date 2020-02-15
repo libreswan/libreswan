@@ -1,0 +1,14 @@
+iptables -F
+nic #
+ iptables -X
+nic #
+ iptables -t nat -L
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
