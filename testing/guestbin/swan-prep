@@ -552,6 +552,9 @@ if userland == "strongswan" and args.x509:
     for certname in ("west", "east", "road", "north", "hashsha1", "west-ec", "east-ec"):
         shutil.copy("/testing/x509/certs/%s.crt" %
                     certname, "/etc/strongswan/ipsec.d/certs/")
+if args.namespace:
+    # good idea for namespace. KVM sysctl.conf get copid.
+    subprocess.getoutput("sysctl -p /testing/baseconfigs/all/etc/sysctl.conf")
 
 if hostname != "nic" and not args.ipv:
     subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
