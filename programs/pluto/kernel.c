@@ -36,6 +36,12 @@
 #include <sys/utsname.h>
 #include <sys/ioctl.h>
 
+/* TCP: build barf */
+#include <linux/udp.h>			/* for TCP_ENCAP_ESPINTCP and UDP_ENCAP_ESPINUDP */
+#ifndef TCP_ENCAP_ESPINTCP
+#define TCP_ENCAP_ESPINTCP 7
+#endif
+
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -1905,8 +1911,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		uint16_t natt_sport = 0, natt_dport = 0;
 		ip_address natt_oa;
 
-		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
-			natt_type = ESPINUDP_WITH_NON_ESP;
+		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
+		    st->st_interface->proto == IPPROTO_TCP) {
+			natt_type = (st->st_interface->proto == IPPROTO_TCP ? TCP_ENCAP_ESPINTCP
+				     : ESPINUDP_WITH_NON_ESP);
 			if (inbound) {
 				natt_sport = endpoint_hport(&st->st_remote_endpoint);
 				natt_dport = endpoint_hport(&st->st_interface->local_endpoint);
@@ -1915,6 +1923,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				natt_dport = endpoint_hport(&st->st_remote_endpoint);
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
+			dbg("natt/tcp sa type=%d sport=%d dport=%d",
+			    natt_type, natt_sport, natt_dport);
 		}
 
 		DBG(DBG_CONTROL,

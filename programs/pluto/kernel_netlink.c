@@ -41,18 +41,18 @@
 #include <string.h>
 
 #include <sys/socket.h>
-#ifndef SOL_TCP
-# define SOL_TCP		6
-#endif
-#ifndef TCP_ULP
-# define TCP_ULP			31
-#endif
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
+
+#include <linux/udp.h>			/* for TCP_ENCAP_ESPINTCP and UDP_ENCAP_ESPINUDP */
+#ifndef TCP_ENCAP_ESPINTCP
+#define TCP_ENCAP_ESPINTCP 7
+#endif
+
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -846,8 +846,10 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 {
 	const struct connection *const c = st->st_connection;
 
-	const uint8_t natt_type = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ?
-		ESPINUDP_WITH_NON_ESP : 0;
+	const uint8_t natt_type =
+		(st->st_interface->proto == IPPROTO_TCP) ? TCP_ENCAP_ESPINTCP :
+		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? ESPINUDP_WITH_NON_ESP : 0;
+	dbg("TCP: natt type %d", (int)natt_type);
 
 	const struct ip_protocol *proto;
 	struct ipsec_proto_info *proto_info;
@@ -1009,6 +1011,8 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa)
 	}
 
 	if (sa->natt_type != 0) {
+		dbg("adding xfrm_encap_templ when migrating sa type=%d sport=%d dport=%d",
+		    sa->natt_type, sa->natt_sport, sa->natt_dport);
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		struct xfrm_encap_tmpl natt;
 
@@ -1483,6 +1487,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	if (sa->natt_type != 0) {
+		dbg("adding xfrm-encap-tmpl when adding sa type=%d sport=%d dport=%d",
+		    sa->natt_type, sa->natt_sport, sa->natt_dport);
 		struct xfrm_encap_tmpl natt;
 
 		natt.encap_type = sa->natt_type;
