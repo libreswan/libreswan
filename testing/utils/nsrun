@@ -2662,7 +2662,7 @@ class NS_GuestNetwork():
                                 'route add 2001:db8:0:2::/64 via 2001:db8:1:2::23']
 
             self.eth1.ipv4 = "192.1.3.254/24"
-            self.eth0.ipv6 = "2001:db8:1:3::254/64"
+            self.eth1.ipv6 = "2001:db8:1:3::254/64"
             self.eth1.br = "brswan13-" + self.tcsum
             self.eth1.routes = ['route add 192.0.3.0/24 via 192.1.3.33',
                                 'route add 2001:db8:0:3::/64 via 2001:db8:1:3::33']
