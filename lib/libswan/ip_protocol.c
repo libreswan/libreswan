@@ -41,6 +41,20 @@ const struct ip_protocol ip_protocol_ipip = {
 	.name = "IPIP",
 };
 
+const struct ip_protocol ip_protocol_tcp = {
+	.description = "Transmission Control",
+	.prefix = "tcp",
+	.protoid = 6,
+	.name = "TCP",
+};
+
+const struct ip_protocol ip_protocol_udp = {
+	.description = "User Datagram",
+	.prefix = "udp",
+	.protoid = 17,
+	.name = "UDP",
+};
+
 const struct ip_protocol ip_protocol_esp = {
 	.description = "Encapsulated Security Payload",
 	.prefix = "esp",
@@ -75,6 +89,8 @@ const struct ip_protocol ip_protocol_int = {
 static const struct ip_protocol *ip_protocols[] = {
 	&ip_protocol_icmp,
 	&ip_protocol_ipip,
+	&ip_protocol_tcp,
+	&ip_protocol_udp,
 	&ip_protocol_esp,
 	&ip_protocol_ah,
 	&ip_protocol_comp,

@@ -43,8 +43,10 @@ struct ip_protocol {
 
 extern const struct ip_protocol ip_protocol_icmp;	/* Internet Control Message */
 extern const struct ip_protocol ip_protocol_ipip;	/* IPv4 encapsulation */
+extern const struct ip_protocol ip_protocol_tcp;	/* any host internal protocol */
+extern const struct ip_protocol ip_protocol_udp;	/* any host internal protocol */
 extern const struct ip_protocol ip_protocol_esp;	/* Encapsulated Security Payload */
-extern const struct ip_protocol ip_protocol_ah;	/* Authentication Header */
+extern const struct ip_protocol ip_protocol_ah;		/* Authentication Header */
 extern const struct ip_protocol ip_protocol_comp;	/* IP Payload Compression Protocol */
 extern const struct ip_protocol ip_protocol_int;	/* any host internal protocol */
 
