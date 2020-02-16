@@ -92,11 +92,6 @@ INC_PREFIX=$(INC_USRLOCAL)
 $(warning Warning: Overriding INC_PREFIX with deprecated variable INC_USRLOCAL)
 endif
 
-# PUBDIR is where the "ipsec" command goes; beware, many things define PATH
-# settings which are assumed to include PUBDIR (or at least, to include *some*
-# copy of the "ipsec" command).
-PUBDIR?=$(DESTDIR)$(INC_PREFIX)/sbin
-
 # LIBEXECDIR is where sub-commands get put, FINALLIBEXECDIR is where
 # the "ipsec" command will look for them when it is run.
 FINALLIBEXECDIR?=$(INC_PREFIX)/libexec/ipsec
@@ -109,6 +104,11 @@ endif
 # SBINDIR is where the user interface command goes.
 FINALSBINDIR?=$(INC_PREFIX)/sbin
 SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
+
+# Error out if somebody try to use deprecated PUBDIR.
+ifdef PUBDIR
+$(error ERROR: deprecated variable PUBDIR is set, use SBINDIR instead)
+endif
 
 # where the appropriate manpage tree is located
 FINALMANDIR?=$(INC_PREFIX)/share/man
