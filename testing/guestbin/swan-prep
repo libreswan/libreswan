@@ -572,11 +572,8 @@ if args.ipv6:
         else:
             subprocess.getoutput("service network restart")
 
-if args.dnssec and not args.namespace:
-    subprocess.getoutput("systemctl unbound start")
 
 if args.nsd or args.dnssec:
-
 
     if args.namespace:
         dst = "/etc/nsd"
@@ -594,9 +591,9 @@ if args.nsd or args.dnssec:
             print("failed to mount_bind src=%s dst %s" % (src, dst))
             sys.exit(1)
 
-        src = '/testing/baseconfigs/nic/etc/nsd/*'
-        dst = '/etc/nsd/'
-        rsync_ap(src, dst);
+    src = '/testing/baseconfigs/nic/etc/nsd'
+    dst = '/etc/'
+    rsync_ap(src, dst);
 
     if args.dnssec:
         # nsd listen on port 5353 and unbound listen on port 53
@@ -606,11 +603,39 @@ if args.nsd or args.dnssec:
         subprocess.getoutput("sed -i 's/port: 5353$/port: 53/' /etc/nsd/server.d/nsd-server-libreswan.conf")
 
     if args.namespace:
-        cmd = "../../pluto/bin/nsd-start.sh restart"
+        cmd = "../../pluto/bin/nsd-start.sh start"
         output = subprocess.check_output(cmd, shell=True, timeout=20, stderr=subprocess.STDOUT)
     else:
-        subprocess.getoutput("systemctl nsd start")
+        subprocess.getoutput("systemctl start nsd-keygen")
+        subprocess.getoutput("systemctl start nsd")
 
+    # now unbound
+    if args.dnssec:
+        if args.namespace:
+            dst = "/etc/unbound"
+            src = "%s%s" % (nsbasepath, dst)
+
+            if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
+                sys.exit(1)
+
+            dst ="/run/unbouund"
+            src = "%s%s" % (nsbasepath, dst)
+            if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
+                sys.exit(1)
+
+            if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
+                print("failed to mount_bind src=%s dst %s" % (src, dst))
+                sys.exit(1)
+
+        src = '/testing/baseconfigs/nic/etc/unbound'
+        dst = '/etc/'
+        rsync_ap(src, dst);
+
+        if args.namespace:
+            cmd = "../../pluto/bin/unbound-start.sh restart"
+            subprocess.check_output(cmd, shell=True, timeout=120, stderr=subprocess.STDOUT)
+        else:
+            subprocess.getoutput("systemctl start unbound")
 
 if not os.path.isfile("/root/.gdbinit"):
     fp = open("/root/.gdbinit", "w")
