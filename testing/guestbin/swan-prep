@@ -130,6 +130,8 @@ if os.path.isfile("/usr/libexec/ipsec/pluto"):
 ipv = 0
 ipv6 = 0
 parser = argparse.ArgumentParser(description='swan-prep arguments')
+exclusive_grp_dnsserver = parser.add_mutually_exclusive_group()
+
 parser.add_argument('--testpath', '-t', action='store',
                     default=os.getcwd(), help="Test directory full path %s " % os.getcwd())
 parser.add_argument('--hostname', '-H', action='store',
@@ -139,9 +141,9 @@ parser.add_argument('--userland', '-u', action='store',
                     default='libreswan', help='which userland to prepare')
 parser.add_argument('--x509', '-x', action='store_true',
                     help='create X509 NSS file by importing test certs')
-parser.add_argument('--dnssec', '-d', action='store_true',
+exclusive_grp_dnsserver.add_argument('--dnssec', '-d', action='store_true',
                     help='start nsd and unbound for DNSSEC - meant only for nic')
-parser.add_argument('--nsd', action='store_true',
+exclusive_grp_dnsserver.add_argument('--nsd', action='store_true',
                     help='start nsd only for DNSSEC')
 parser.add_argument('--x509name', '-X', action='store', default="",
                     help='create X509 NSS file by importing test certs')
@@ -571,10 +573,11 @@ if args.ipv6:
             subprocess.getoutput("service network restart")
 
 if args.dnssec and not args.namespace:
-        subprocess.getoutput("systemctl nsd start")
-        subprocess.getoutput("systemctl unbound start")
+    subprocess.getoutput("systemctl unbound start")
 
 if args.nsd or args.dnssec:
+
+
     if args.namespace:
         dst = "/etc/nsd"
         src = "%s%s" % (nsbasepath, dst)
@@ -591,10 +594,19 @@ if args.nsd or args.dnssec:
             print("failed to mount_bind src=%s dst %s" % (src, dst))
             sys.exit(1)
 
-        src = '/testing/baseconfigs/nic/etc/nsd'
-        dst = '/etc'
+        src = '/testing/baseconfigs/nic/etc/nsd/*'
+        dst = '/etc/nsd/'
         rsync_ap(src, dst);
-        cmd = "../../pluto/bin/nsd-start.sh --restart"
+
+    if args.dnssec:
+        # nsd listen on port 5353 and unbound listen on port 53
+        subprocess.getoutput("sed -i 's/port: 53$/port: 5353/' /etc/nsd/server.d/nsd-server-libreswan.conf")
+    else:
+        #nsd listen on port 53
+        subprocess.getoutput("sed -i 's/port: 5353$/port: 53/' /etc/nsd/server.d/nsd-server-libreswan.conf")
+
+    if args.namespace:
+        cmd = "../../pluto/bin/nsd-start.sh restart"
         output = subprocess.check_output(cmd, shell=True, timeout=20, stderr=subprocess.STDOUT)
     else:
         subprocess.getoutput("systemctl nsd start")
