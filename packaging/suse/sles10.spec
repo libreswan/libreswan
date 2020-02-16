@@ -68,11 +68,10 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
 # Suse has no %{_libexecdir} directory, put it all in libdir instead (yuck)
 %{__make} \
   USERCOMPILE='-g $(RPM_OPT_FLAGS) -DGCC_LINT' \
-  INC_PREFIX=%{_prefix} \
+  PREFIX=%{_prefix} \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
   MANDIR=%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
-  INC_RCDIRS='/etc/init.d /etc/rc.d/init.d /etc/rc.d /sbin/init.d' \
+  FINALINITDDIR=%{_initrddir} \
   FINALDOCDIR=%{_prefix}/share/doc/packages/libreswan \
   programs
 %if %{buildklips}
@@ -89,10 +88,10 @@ done
 %install
 %{__make} \
   DESTDIR=%{buildroot} \
-  INC_PREFIX=%{_prefix} \
+  PREFIX=%{_prefix} \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
   MANDIR=%{buildroot}%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
+  FINALINITDDIR=%{_initrddir} \
   install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan

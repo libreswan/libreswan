@@ -11,8 +11,7 @@
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
-    INC_RCDEFAULT=%{_initrddir} \\\
-    INC_PREFIX=%{_prefix} \\\
+    PREFIX=%{_prefix} \\\
     INITSYSTEM=systemd \\\
     NSS_REQ_AVA_COPY=false \\\
     NSS_HAS_IPSEC_PROFILE=true \\\

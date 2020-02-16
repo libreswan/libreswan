@@ -57,9 +57,6 @@ include ${LIBRESWANSRCDIR}/mk/objdir.mk
 # is, to say the least, a little weird.  It's "historic".
 include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 
-# Variables in this file with names starting with INC_ are not for use
-# by Makefiles that include this file; they are subject to change without warning.
-#
 # "Final" and "finally" refer to where the files will end up on the
 # running IPsec system, as opposed to where they get installed by our
 # Makefiles.  (The two are different for cross-compiles and the like,
@@ -83,18 +80,18 @@ include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 DESTDIR?=
 
 # "PREFIX" part of tree, used in building other pathnames.
-INC_PREFIX?=/usr/local
+PREFIX?=/usr/local
 
-# Compatibility with old INC_USRLOCAL which was changed to INC_PREFIX.
-# We will overwrite INC_PREFIX with INC_USRLOCAL untill libreswan 3.32
+# Compatibility with old INC_USRLOCAL which was changed to PREFIX.
+# We will overwrite PREFIX with INC_USRLOCAL untill libreswan 3.32
 ifdef INC_USRLOCAL
-INC_PREFIX=$(INC_USRLOCAL)
-$(warning Warning: Overriding INC_PREFIX with deprecated variable INC_USRLOCAL)
+PREFIX=$(INC_USRLOCAL)
+$(warning Warning: Overriding PREFIX with deprecated variable INC_USRLOCAL)
 endif
 
 # LIBEXECDIR is where sub-commands get put, FINALLIBEXECDIR is where
 # the "ipsec" command will look for them when it is run.
-FINALLIBEXECDIR?=$(INC_PREFIX)/libexec/ipsec
+FINALLIBEXECDIR?=$(PREFIX)/libexec/ipsec
 LIBEXECDIR?=$(DESTDIR)$(FINALLIBEXECDIR)
 
 ifdef BINDIR
@@ -102,7 +99,7 @@ $(error ERROR: Deprecated BINDIR variable set, use LIBEXECDIR instead)
 endif
 
 # SBINDIR is where the user interface command goes.
-FINALSBINDIR?=$(INC_PREFIX)/sbin
+FINALSBINDIR?=$(PREFIX)/sbin
 SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
 
 # Error out if somebody try to use deprecated PUBDIR.
@@ -111,10 +108,10 @@ $(error ERROR: deprecated variable PUBDIR is set, use SBINDIR instead)
 endif
 
 # where the appropriate manpage tree is located
-FINALMANDIR?=$(INC_PREFIX)/share/man
+FINALMANDIR?=$(PREFIX)/share/man
 ifdef INC_MANDIR
-FINALMANDIR=$(INC_PREFIX}/${INC_MANDIR}
-$(warning Warning: Deprecated INC_MANDIR variable used)
+FINALMANDIR=$(PREFIX}/${INC_MANDIR}
+$(warning Warning: Overriding FINALMANDIR with deprecated INC_MANDIR variable)
 endif
 # the full pathname
 MANDIR?=$(DESTDIR)$(FINALMANDIR)
@@ -158,12 +155,12 @@ PPKDIR?=$(DESTDIR)$(FINALPPKDIR)
 
 # We will overwrite FINALDOCDIR with INC_DOCDIR untill libreswan 3.32
 ifdef INC_DOCDIR
-FINALDOCDIR=$(INC_PREFIX}/$(INC_DOCDIR)/libreswan
+FINALDOCDIR=$(PREFIX}/$(INC_DOCDIR)/libreswan
 $(warning Warning: Overriding FINALDOCDIR with deprecated INC_DOCDIR variable)
 endif
 
 # Documentation directory
-FINALDOCDIR?=$(INC_PREFIX)/share/doc/libreswan
+FINALDOCDIR?=$(PREFIX)/share/doc/libreswan
 DOCDIR?=$(DESTDIR)$(FINALDOCDIR)
 
 # sample configuration files go into
@@ -183,22 +180,33 @@ INITSYSTEM ?= $(shell $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 DOCKER_PLUTONOFORK?=--nofork
 
 # An attempt is made to automatically figure out where boot/shutdown scripts
-# will finally go:  the first directory in INC_RCDIRS that exists gets them.
-# If none of those exists (or INC_RCDIRS is empty), INC_RCDEFAULT gets them.
-# With a non-null DESTDIR, INC_RCDEFAULT will be used unless one of the
-# INC_RCDIRS directories has been pre-created under DESTDIR.
-INC_RCDIRS?=/etc/rc.d/init.d /etc/rc.d /etc/init.d /sbin/init.d
-INC_RCDEFAULT?=/etc/rc.d/init.d
+# will finally go:  the first directory in INITDDIRS that exists gets them.
+# If none of those exists (or INITDDIRS is empty), INITDDIR_DEFAULT gets them.
+# With a non-null DESTDIR, INITDDIR_DEFAULT will be used unless one of the
+# INITDDIRS directories has been pre-created under DESTDIR.
+INITDDIRS?=/etc/rc.d/init.d /etc/init.d
+INITDDIR_DEFAULT?=/etc/init.d
 
-# RCDIR is where boot/shutdown scripts go; FINALRCDIR is where they think
+# We will overwrite INITDDIRS with INC_RCDIRS untill libreswan 3.32
+ifdef INC_RCDIRS
+INITDDIRS=$(INC_RCDIRS)
+$(warning Warning: Overriding INITDDIRS with deprecated variable INC_RCDIRS)
+endif
+# We will overwrite INITDDIR_DEFAULT with INC_RCDEFAULT untill libreswan 3.32
+ifdef INC_RCDEFAULT
+INITDDIR_DEFAULT=$(INC_RCDEFAULT)
+$(warning Warning: Overriding INITDDIR_DEFAULT with deprecated variable INC_RCDEFAULT)
+endif
+
+# INITDDIR is where boot/shutdown scripts go; FINALINITDDIR is where they think
 # will finally be (so utils/Makefile can create a symlink in LIBEXECDIR to
 # the place where the boot/shutdown script will finally be, rather than
 # the place where it is installed).
-FINALRCDIR?=$(shell for d in $(INC_RCDIRS) ; \
+FINALINITDDIR?=$(shell for d in $(INITDDIRS) ; \
 		do if test -d $(DESTDIR)/$$d ; \
 		then echo $$d ; exit 0 ; \
-		fi ; done ; echo $(INC_RCDEFAULT) )
-RCDIR?=$(DESTDIR)$(FINALRCDIR)
+		fi ; done ; echo $(INITDDIR_DEFAULT) )
+INITDDIR?=$(DESTDIR)$(FINALINITDDIR)
 
 # PYTHON_BINARY is used for python scripts shebang
 PYTHON_BINARY ?= /usr/bin/python3
@@ -437,7 +445,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
 			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
 			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):g" \
-			-e "s:@FINALRCDIR@:$(FINALRCDIR):g" \
+			-e "s:@FINALINITDDIR@:$(FINALINITDDIR):g" \
 			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@FINALSYSCONFDIR@:$(FINALSYSCONFDIR):g" \
 			-e "s:@FINALVARDIR@:$(FINALVARDIR):g" \

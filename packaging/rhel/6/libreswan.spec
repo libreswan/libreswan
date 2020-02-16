@@ -13,8 +13,8 @@
     FINALMANDIR=%{_mandir} \\\
     FINALRUNDIR=%{_rundir}/pluto \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
-    INC_RCDEFAULT=%{_initrddir} \\\
-    INC_PREFIX=%{_prefix} \\\
+    FINALINITDDIR=%{_initrddir} \\\
+    PREFIX=%{_prefix} \\\
     INITSYSTEM=sysvinit \\\
     PYTHON_BINARY=%{__python} \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\

@@ -8,7 +8,6 @@ SRCDIR?=${LIBRESWANSRCDIR}/initsystems/docker/
 INITDFILE=$(builddir)/ipsec.init
 SYSCONFIGFILE=$(builddir)/sysconfig.pluto
 SUBDIRS=
-INITDDIR=$(RCDIR)
 SYSCONFIGDIR=$(SYSCONFDIR)/sysconfig
 SYSVINIT_DEFAULT_START?=
 
