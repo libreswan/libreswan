@@ -111,11 +111,20 @@ FINALSBINDIR?=$(INC_PREFIX)/sbin
 SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
 
 # where the appropriate manpage tree is located
-# location within INC_PREFIX
-INC_MANDIR?=man
-FINALMANDIR=$(INC_PREFIX)/$(INC_MANDIR)
+FINALMANDIR?=$(INC_PREFIX)/share/man
+ifdef INC_MANDIR
+FINALMANDIR=$(INC_PREFIX}/${INC_MANDIR}
+$(warning Warning: Deprecated INC_MANDIR variable used)
+endif
 # the full pathname
-MANTREE?=$(DESTDIR)$(FINALMANDIR)
+MANDIR?=$(DESTDIR)$(FINALMANDIR)
+
+# Compatibility with old MANTREE which was changed to MANDIR.
+# We will overwrite MANDIR with MANTREE untill libreswan 3.32
+ifdef MANTREE
+MANDIR=$(MANTREE)
+$(warning Warning: Overriding MANDIR with deprecated variable MANTREE)
+endif
 
 # where configuration files go
 FINALSYSCONFDIR?=/etc

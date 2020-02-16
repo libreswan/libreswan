@@ -70,7 +70,7 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
   USERCOMPILE='-g $(RPM_OPT_FLAGS) -DGCC_LINT' \
   INC_PREFIX=%{_prefix} \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
-  MANTREE=%{_mandir} \
+  MANDIR=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   INC_RCDIRS='/etc/init.d /etc/rc.d/init.d /etc/rc.d /sbin/init.d' \
   INC_DOCDIR=share/doc/packages \
@@ -91,7 +91,7 @@ done
   DESTDIR=%{buildroot} \
   INC_PREFIX=%{_prefix} \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
-  MANTREE=%{buildroot}%{_mandir} \
+  MANDIR=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   install
 FS=$(pwd)
