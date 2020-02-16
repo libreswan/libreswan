@@ -73,7 +73,7 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
   MANDIR=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   INC_RCDIRS='/etc/init.d /etc/rc.d/init.d /etc/rc.d /sbin/init.d' \
-  INC_DOCDIR=share/doc/packages \
+  FINALDOCDIR=%{_prefix}/share/doc/packages/libreswan \
   programs
 %if %{buildklips}
 FS=$(pwd)

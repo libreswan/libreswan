@@ -70,7 +70,7 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
   USERCOMPILE='-g $(RPM_OPT_FLAGS) -DGCC_LINT' \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
   FINALMANDIR=%{_mandir} \
-  INC_DOCDIR=share/doc/packages \
+  FINALDOCDIR=%{_prefix}/share/doc/packages/libreswan \
   INC_RCDEFAULT=%{_initrddir} \
   INC_RCDIRS='/etc/init.d /etc/rc.d/init.d /etc/rc.d /sbin/init.d' \
   INC_PREFIX=%{_prefix} \

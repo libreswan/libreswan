@@ -156,13 +156,20 @@ NSSDIR?=$(DESTDIR)$(FINALNSSDIR)
 FINALPPKDIR?=$(FINALCONFDDIR)
 PPKDIR?=$(DESTDIR)$(FINALPPKDIR)
 
+# We will overwrite FINALDOCDIR with INC_DOCDIR untill libreswan 3.32
+ifdef INC_DOCDIR
+FINALDOCDIR=$(INC_PREFIX}/$(INC_DOCDIR)/libreswan
+$(warning Warning: Overriding FINALDOCDIR with deprecated INC_DOCDIR variable)
+endif
+
+# Documentation directory
+FINALDOCDIR?=$(INC_PREFIX)/share/doc/libreswan
+DOCDIR?=$(DESTDIR)$(FINALDOCDIR)
+
 # sample configuration files go into
-INC_DOCDIR?=share/doc
-FINALEXAMPLECONFDIR?=$(INC_PREFIX)/$(INC_DOCDIR)/libreswan
+FINALEXAMPLECONFDIR?=$(FINALDOCDIR)
 EXAMPLECONFDIR?=$(DESTDIR)$(FINALEXAMPLECONFDIR)
 
-FINALDOCDIR?=$(INC_PREFIX)/$(INC_DOCDIR)/libreswan
-DOCDIR?=$(DESTDIR)$(FINALDOCDIR)
 
 # where per-conn pluto logs go
 FINALVARDIR?=/var
