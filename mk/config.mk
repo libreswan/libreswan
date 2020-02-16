@@ -97,20 +97,18 @@ endif
 # copy of the "ipsec" command).
 PUBDIR?=$(DESTDIR)$(INC_PREFIX)/sbin
 
-# BINDIR is where sub-commands get put, FINALBINDIR is where the "ipsec"
-# command will look for them when it is run. Also called LIBEXECDIR.
+# LIBEXECDIR is where sub-commands get put, FINALLIBEXECDIR is where
+# the "ipsec" command will look for them when it is run.
 FINALLIBEXECDIR?=$(INC_PREFIX)/libexec/ipsec
 LIBEXECDIR?=$(DESTDIR)$(FINALLIBEXECDIR)
 
-FINALBINDIR?=$(FINALLIBEXECDIR)
-BINDIR?=$(LIBEXECDIR)
-
+ifdef BINDIR
+$(error ERROR: Deprecated BINDIR variable set, use LIBEXECDIR instead)
+endif
 
 # SBINDIR is where the user interface command goes.
 FINALSBINDIR?=$(INC_PREFIX)/sbin
 SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
-
-
 
 # where the appropriate manpage tree is located
 # location within INC_PREFIX
@@ -177,9 +175,9 @@ INC_RCDIRS?=/etc/rc.d/init.d /etc/rc.d /etc/init.d /sbin/init.d
 INC_RCDEFAULT?=/etc/rc.d/init.d
 
 # RCDIR is where boot/shutdown scripts go; FINALRCDIR is where they think
-# will finally be (so utils/Makefile can create a symlink in BINDIR to the
-# place where the boot/shutdown script will finally be, rather than the
-# place where it is installed).
+# will finally be (so utils/Makefile can create a symlink in LIBEXECDIR to
+# the place where the boot/shutdown script will finally be, rather than
+# the place where it is installed).
 FINALRCDIR?=$(shell for d in $(INC_RCDIRS) ; \
 		do if test -d $(DESTDIR)/$$d ; \
 		then echo $$d ; exit 0 ; \
@@ -417,7 +415,6 @@ IPSEC_SECRETS_FILE ?= $(FINALCONFDIR)/ipsec.secrets
 TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
-			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
 			-e "s:@FINALCONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
 			-e "s:@FINALCONFFILE@:$(FINALCONFFILE):g" \
@@ -433,7 +430,6 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_RUNDIR@:$(FINALRUNDIR):g" \
 			-e "s:@IPSEC_NSSDIR@:$(FINALNSSDIR):g" \
 			-e "s:@IPSEC_PPKDIR@:$(FINALPPKDIR):g" \
-			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \

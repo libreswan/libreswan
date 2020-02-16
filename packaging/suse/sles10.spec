@@ -69,7 +69,6 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
 %{__make} \
   USERCOMPILE='-g $(RPM_OPT_FLAGS) -DGCC_LINT' \
   INC_PREFIX=%{_prefix} \
-  FINALBINDIR=%{_libdir}/ipsec \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
@@ -91,7 +90,6 @@ done
 %{__make} \
   DESTDIR=%{buildroot} \
   INC_PREFIX=%{_prefix} \
-  FINALBINDIR=%{_libdir}/ipsec \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
