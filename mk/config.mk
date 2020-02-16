@@ -82,17 +82,24 @@ include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 # it; DESTDIR itself should never appear in any other Makefile.
 DESTDIR?=
 
-# "local" part of tree, used in building other pathnames
-INC_USRLOCAL?=/usr/local
+# "PREFIX" part of tree, used in building other pathnames.
+INC_PREFIX?=/usr/local
+
+# Compatibility with old INC_USRLOCAL which was changed to INC_PREFIX.
+# We will overwrite INC_PREFIX with INC_USRLOCAL untill libreswan 3.32
+ifdef INC_USRLOCAL
+INC_PREFIX=$(INC_USRLOCAL)
+$(warning Warning: Overriding INC_PREFIX with deprecated variable INC_USRLOCAL)
+endif
 
 # PUBDIR is where the "ipsec" command goes; beware, many things define PATH
 # settings which are assumed to include PUBDIR (or at least, to include *some*
 # copy of the "ipsec" command).
-PUBDIR?=$(DESTDIR)$(INC_USRLOCAL)/sbin
+PUBDIR?=$(DESTDIR)$(INC_PREFIX)/sbin
 
 # BINDIR is where sub-commands get put, FINALBINDIR is where the "ipsec"
 # command will look for them when it is run. Also called LIBEXECDIR.
-FINALLIBEXECDIR?=$(INC_USRLOCAL)/libexec/ipsec
+FINALLIBEXECDIR?=$(INC_PREFIX)/libexec/ipsec
 LIBEXECDIR?=$(DESTDIR)$(FINALLIBEXECDIR)
 
 FINALBINDIR?=$(FINALLIBEXECDIR)
@@ -100,15 +107,15 @@ BINDIR?=$(LIBEXECDIR)
 
 
 # SBINDIR is where the user interface command goes.
-FINALSBINDIR?=$(INC_USRLOCAL)/sbin
+FINALSBINDIR?=$(INC_PREFIX)/sbin
 SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
 
 
 
 # where the appropriate manpage tree is located
-# location within INC_USRLOCAL
+# location within INC_PREFIX
 INC_MANDIR?=man
-FINALMANDIR=$(INC_USRLOCAL)/$(INC_MANDIR)
+FINALMANDIR=$(INC_PREFIX)/$(INC_MANDIR)
 # the full pathname
 MANTREE?=$(DESTDIR)$(FINALMANDIR)
 
@@ -144,10 +151,10 @@ PPKDIR?=$(DESTDIR)$(FINALPPKDIR)
 
 # sample configuration files go into
 INC_DOCDIR?=share/doc
-FINALEXAMPLECONFDIR?=$(INC_USRLOCAL)/$(INC_DOCDIR)/libreswan
+FINALEXAMPLECONFDIR?=$(INC_PREFIX)/$(INC_DOCDIR)/libreswan
 EXAMPLECONFDIR?=$(DESTDIR)$(FINALEXAMPLECONFDIR)
 
-FINALDOCDIR?=$(INC_USRLOCAL)/$(INC_DOCDIR)/libreswan
+FINALDOCDIR?=$(INC_PREFIX)/$(INC_DOCDIR)/libreswan
 DOCDIR?=$(DESTDIR)$(FINALDOCDIR)
 
 # where per-conn pluto logs go

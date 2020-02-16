@@ -33,7 +33,7 @@ override_dh_auto_build:
 	$(MAKE) programs \
 		ARCH=$(DEB_HOST_ARCH) \
 		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
-		INC_USRLOCAL=/usr \
+		INC_PREFIX=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
 		PUBDIR=/usr/sbin \
 		INC_MANDIR=share/man \
@@ -50,7 +50,7 @@ override_dh_auto_install-arch:
 	$(MAKE) install \
 		ARCH=$(DEB_HOST_ARCH) \
 		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
-		INC_USRLOCAL=/usr \
+		INC_PREFIX=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
 		INC_MANDIR=share/man \
 		FINALNSSDIR=/var/lib/ipsec/nss \

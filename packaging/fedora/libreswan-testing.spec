@@ -16,7 +16,7 @@
     FINALRUNDIR=%{_rundir}/pluto \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     INC_RCDEFAULT=%{_initrddir} \\\
-    INC_USRLOCAL=%{_exec_prefix} \\\
+    INC_PREFIX=%{_exec_prefix} \\\
     IPSECVERSION=%{IPSECVERSION} \\\
     INITSYSTEM=%{initsystem} \\\
     USE_NSS_IPSEC_PROFILE=true \\\

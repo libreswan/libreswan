@@ -74,7 +74,7 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
   INC_DOCDIR=share/doc/packages \
   INC_RCDEFAULT=%{_initrddir} \
   INC_RCDIRS='/etc/init.d /etc/rc.d/init.d /etc/rc.d /sbin/init.d' \
-  INC_USRLOCAL=%{_prefix} \
+  INC_PREFIX=%{_prefix} \
   programs
 %if %{buildklips}
 FS=$(pwd)
@@ -94,7 +94,7 @@ done
   FINALLIBEXECDIR=%{_libdir}/ipsec \
   FINALMANDIR=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
-  INC_USRLOCAL=%{_prefix} \
+  INC_PREFIX=%{_prefix} \
   install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan

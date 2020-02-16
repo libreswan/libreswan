@@ -14,7 +14,7 @@
     FINALRUNDIR=%{_rundir}/pluto \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     INC_RCDEFAULT=%{_initrddir} \\\
-    INC_USRLOCAL=%{_prefix} \\\
+    INC_PREFIX=%{_prefix} \\\
     INITSYSTEM=sysvinit \\\
     PYTHON_BINARY=%{__python} \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\

@@ -11,7 +11,7 @@
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     INC_RCDEFAULT=%{_initrddir} \\\
-    INC_USRLOCAL=%{_prefix} \\\
+    INC_PREFIX=%{_prefix} \\\
     INITSYSTEM=systemd \\\
     PYTHON_BINARY=%{__python} \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\

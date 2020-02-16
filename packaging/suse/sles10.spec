@@ -68,7 +68,7 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
 # Suse has no %{_libexecdir} directory, put it all in libdir instead (yuck)
 %{__make} \
   USERCOMPILE='-g $(RPM_OPT_FLAGS) -DGCC_LINT' \
-  INC_USRLOCAL=%{_prefix} \
+  INC_PREFIX=%{_prefix} \
   FINALBINDIR=%{_libdir}/ipsec \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
   MANTREE=%{_mandir} \
@@ -90,7 +90,7 @@ done
 %install
 %{__make} \
   DESTDIR=%{buildroot} \
-  INC_USRLOCAL=%{_prefix} \
+  INC_PREFIX=%{_prefix} \
   FINALBINDIR=%{_libdir}/ipsec \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
   MANTREE=%{buildroot}%{_mandir} \

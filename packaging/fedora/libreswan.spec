@@ -11,7 +11,7 @@
     FINALMANDIR=%{_mandir} \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     INC_RCDEFAULT=%{_initrddir} \\\
-    INC_USRLOCAL=%{_prefix} \\\
+    INC_PREFIX=%{_prefix} \\\
     INITSYSTEM=systemd \\\
     PYTHON_BINARY=%{__python3} \\\
     SHELL_BINARY=%{_bindir}/sh \\\
