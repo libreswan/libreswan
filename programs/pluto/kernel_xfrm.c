@@ -817,15 +817,15 @@ static bool netlink_get_sa_policy(const struct kernel_sa *sa,
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
 	req.id.dir = sa->nk_dir;	/* clang 6.0.0 thinks RHS is garbage or undefined */
-	req.id.sel.family = address_type(sa->src)->af;
+	req.id.sel.family = address_type(sa->src.address)->af;
 
-	ip2xfrm(&sa->src_client->addr, &req.id.sel.saddr);
-	ip2xfrm(&sa->dst_client->addr, &req.id.sel.daddr);
-	req.id.sel.prefixlen_s = sa->src_client->maskbits;
-	req.id.sel.prefixlen_d = sa->dst_client->maskbits;
+	ip2xfrm(&sa->src.client->addr, &req.id.sel.saddr);
+	ip2xfrm(&sa->dst.client->addr, &req.id.sel.daddr);
+	req.id.sel.prefixlen_s = sa->src.client->maskbits;
+	req.id.sel.prefixlen_d = sa->dst.client->maskbits;
 
-	req.id.sel.sport = subnet_nport(sa->src_client);
-	req.id.sel.dport = subnet_nport(sa->dst_client);
+	req.id.sel.sport = subnet_nport(sa->src.client);
+	req.id.sel.dport = subnet_nport(sa->dst.client);
 
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp, "Get policy",
 			      sa->text_said)) {
@@ -852,15 +852,15 @@ static bool netlink_get_sa_policy(const struct kernel_sa *sa,
 static void  set_migration_attr(const struct kernel_sa *sa,
 		struct xfrm_user_migrate *m)
 {
-	ip2xfrm(sa->src, &m->old_saddr);
-	ip2xfrm(sa->dst, &m->old_daddr);
-	ip2xfrm(sa->nsrc, &m->new_saddr);
-	ip2xfrm(sa->ndst, &m->new_daddr);
+	ip2xfrm(sa->src.address, &m->old_saddr);
+	ip2xfrm(sa->dst.address, &m->old_daddr);
+	ip2xfrm(sa->src.new_address, &m->new_saddr);
+	ip2xfrm(sa->dst.new_address, &m->new_daddr);
 
 	m->proto = sa->proto->protoid;
 	m->mode = XFRM_MODE_TUNNEL;  /* AA_201705 hard coded how to figure this out */
 	m->reqid = sa->reqid;
-	m->old_family = m->new_family = address_type(sa->src)->af;
+	m->old_family = m->new_family = address_type(sa->src.address)->af;
 }
 
 static bool create_xfrm_migrate_sa(struct state *st, const int dir,
@@ -910,8 +910,8 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			dst = &c->spd.this.host_addr;
 			src_client = &c->spd.that.client;
 			dst_client = &c->spd.this.client;
-			sa.nsrc = src;
-			sa.ndst = &st->st_mobike_local_endpoint;
+			sa.src.new_address = src;
+			sa.dst.new_address = &st->st_mobike_local_endpoint;
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, dst, sa.spi, proto);
 			if (encap_type != 0) {
@@ -923,8 +923,8 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			dst = &c->spd.that.host_addr;
 			src_client = &c->spd.this.client;
 			dst_client = &c->spd.that.client;
-			sa.nsrc = &st->st_mobike_local_endpoint;
-			sa.ndst = dst;
+			sa.src.new_address = &st->st_mobike_local_endpoint;
+			sa.dst.new_address = dst;
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (encap_type != 0) {
@@ -943,8 +943,8 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			dst = &c->spd.this.host_addr;
 			src_client = &c->spd.that.client;
 			dst_client = &c->spd.this.client;
-			sa.nsrc = &st->st_mobike_remote_endpoint;
-			sa.ndst = &c->spd.this.host_addr;
+			sa.src.new_address = &st->st_mobike_remote_endpoint;
+			sa.dst.new_address = &c->spd.this.host_addr;
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (encap_type != 0) {
@@ -957,8 +957,8 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			dst = &c->spd.that.host_addr;
 			src_client = &c->spd.this.client;
 			dst_client = &c->spd.that.client;
-			sa.nsrc = &c->spd.this.host_addr;
-			sa.ndst = &st->st_mobike_remote_endpoint;
+			sa.src.new_address = &c->spd.this.host_addr;
+			sa.dst.new_address = &st->st_mobike_remote_endpoint;
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, dst, sa.spi, proto);
 
@@ -970,14 +970,13 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		}
 	}
 
-	sa.src = src;
-	sa.dst = dst;
+	sa.src.address = src;
+	sa.dst.address = dst;
 	sa.text_said = text_said;
-	sa.src_client = src_client;
-	sa.dst_client = dst_client;
-
-	sa.encap_sport = encap_sport;
-	sa.encap_dport = encap_dport;
+	sa.src.client = src_client;
+	sa.dst.client = dst_client;
+	sa.src.encap_port = encap_sport;
+	sa.dst.encap_port = encap_dport;
 
 	char reqid_buf[ULTOT_BUF + 32];
 	endpoint_buf ra;
@@ -1035,8 +1034,8 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa)
 		struct xfrm_encap_tmpl natt;
 
 		natt.encap_type = sa->encap_type;
-		natt.encap_sport = ntohs(sa->encap_sport);
-		natt.encap_dport = ntohs(sa->encap_dport);
+		natt.encap_sport = ntohs(sa->src.encap_port);
+		natt.encap_dport = ntohs(sa->dst.encap_port);
 		zero(&natt.encap_oa);
 
 		attr->rta_type = XFRMA_ENCAP;
@@ -1218,12 +1217,12 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = replace ? XFRM_MSG_UPDSA : XFRM_MSG_NEWSA;
 
-	ip2xfrm(sa->src, &req.p.saddr);
-	ip2xfrm(sa->dst, &req.p.id.daddr);
+	ip2xfrm(sa->src.address, &req.p.saddr);
+	ip2xfrm(sa->dst.address, &req.p.id.daddr);
 
 	req.p.id.spi = sa->spi;
 	req.p.id.proto = esatype2proto(sa->esatype);
-	req.p.family = addrtypeof(sa->src);
+	req.p.family = addrtypeof(sa->src.address);
 	/*
 	 * This requires ipv6 modules. It is required to support 6in4 and 4in6
 	 * tunnels in linux 2.6.25+
@@ -1256,21 +1255,21 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		 * the peer. Here we substitute real client ip with NATD ip.
 		 */
 		if (sa->inbound == 0) {
-			addrtosubnet(sa->dst, &dst_tmp);
+			addrtosubnet(sa->dst.address, &dst_tmp);
 			dst = &dst_tmp;
 		} else {
-			dst = sa->dst_client;
+			dst = sa->dst.client;
 		}
 
 		if (sa->inbound == 1) {
-			addrtosubnet(sa->src, &src_tmp);
+			addrtosubnet(sa->src.address, &src_tmp);
 			src = &src_tmp;
 		} else {
-			src = sa->src_client;
+			src = sa->src.client;
 		}
 
-		req.p.sel.sport = subnet_nport(sa->src_client);
-		req.p.sel.dport = subnet_nport(sa->dst_client);
+		req.p.sel.sport = subnet_nport(sa->src.client);
+		req.p.sel.dport = subnet_nport(sa->dst.client);
 
 		/*
 		 * As per RFC 4301/5996, icmp type is put in the most
@@ -1336,7 +1335,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * To avoid breaking backward compatibility, we use a new flag
 	 * (XFRM_STATE_ALIGN4) do change original behavior.
 	*/
-	if (sa->esatype == ET_AH && addrtypeof(sa->src) == AF_INET) {
+	if (sa->esatype == ET_AH && addrtypeof(sa->src.address) == AF_INET) {
 		DBG(DBG_KERNEL, DBG_log("netlink: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1"));
 		req.p.flags |= XFRM_STATE_ALIGN4;
 	}
@@ -1507,8 +1506,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		struct xfrm_encap_tmpl natt;
 
 		natt.encap_type = sa->encap_type;
-		natt.encap_sport = ntohs(sa->encap_sport);
-		natt.encap_dport = ntohs(sa->encap_dport);
+		natt.encap_sport = ntohs(sa->src.encap_port);
+		natt.encap_dport = ntohs(sa->dst.encap_port);
 		zero(&natt.encap_oa);
 
 		attr->rta_type = XFRMA_ENCAP;
@@ -1541,7 +1540,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	if (sa->nic_offload_dev) {
 		struct xfrm_user_offload xuo = {
 			.flags = (sa->inbound ? XFRM_OFFLOAD_INBOUND : 0) |
-				(addrtypeof(sa->src) == AF_INET6 ? XFRM_OFFLOAD_IPV6 : 0),
+				(addrtypeof(sa->src.address) == AF_INET6 ? XFRM_OFFLOAD_IPV6 : 0),
 			.ifindex = if_nametoindex(sa->nic_offload_dev),
 		};
 
@@ -1607,10 +1606,10 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = XFRM_MSG_DELSA;
 
-	ip2xfrm(sa->dst, &req.id.daddr);
+	ip2xfrm(sa->dst.address, &req.id.daddr);
 
 	req.id.spi = sa->spi;
-	req.id.family = addrtypeof(sa->src);
+	req.id.family = addrtypeof(sa->src.address);
 	req.id.proto = sa->proto->protoid;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
@@ -2617,10 +2616,10 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	req.n.nlmsg_flags = NLM_F_REQUEST;
 	req.n.nlmsg_type = XFRM_MSG_GETSA;
 
-	ip2xfrm(sa->dst, &req.id.daddr);
+	ip2xfrm(sa->dst.address, &req.id.daddr);
 
 	req.id.spi = sa->spi;
-	req.id.family = addrtypeof(sa->src);
+	req.id.family = addrtypeof(sa->src.address);
 	req.id.proto = sa->proto->protoid;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));

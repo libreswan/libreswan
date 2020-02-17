@@ -1666,8 +1666,8 @@ bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 	struct kernel_sa sa = {
 		.spi = spi,
 		.proto = proto,
-		.src = src,
-		.dst = dest,
+		.src.address = src,
+		.dst.address = dest,
 		.text_said = text_said,
 	};
 
@@ -1767,10 +1767,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	int encap_oneshot = mode;
 
 	struct kernel_sa said_boilerplate = {
-		.src = &src.addr,
-		.dst = &dst.addr,
-		.src_client = &src_client,
-		.dst_client = &dst_client,
+		.src.address = &src.addr,
+		.dst.address = &dst.addr,
+		.src.client = &src_client,
+		.dst.client = &dst_client,
 		.inbound = inbound,
 		.add_selector = add_selector,
 		.transport_proto = c->spd.this.protocol,
@@ -2117,8 +2117,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->mode = encap_oneshot;
 		said_next->reqid = reqid_esp(c->spd.reqid);
 
-		said_next->encap_sport = encap_sport;
-		said_next->encap_dport = encap_dport;
+		said_next->src.encap_port = encap_sport;
+		said_next->dst.encap_port = encap_dport;
 		said_next->encap_type = encap_type;
 		said_next->natt_oa = &natt_oa;
 		said_next->text_said = text_esp;
@@ -2395,7 +2395,7 @@ fail:
 			if (said_next->proto != 0) {
 				(void) del_spi(said_next->spi,
 					said_next->proto,
-					&src.addr, said_next->dst);
+					&src.addr, said_next->dst.address);
 			}
 		}
 		return FALSE;
@@ -3420,8 +3420,8 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	struct kernel_sa sa = {
 		.spi = spi,
 		.proto = proto,
-		.src = src,
-		.dst = dst,
+		.src.address = src,
+		.dst.address = dst,
 		.text_said = text_said,
 	};
 

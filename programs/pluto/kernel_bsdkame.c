@@ -881,8 +881,8 @@ static bool bsdkame_sag_eroute(const struct state *st,
 
 static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 {
-	const struct sockaddr *saddr = (const struct sockaddr *)sa->src;
-	const struct sockaddr *daddr = (const struct sockaddr *)sa->dst;
+	const struct sockaddr *saddr = (const struct sockaddr *)sa->src.address;
+	const struct sockaddr *daddr = (const struct sockaddr *)sa->dst.address;
 	char keymat[256];
 	int ret, mode, satype;
 
