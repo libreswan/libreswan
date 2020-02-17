@@ -195,10 +195,6 @@ algparse -v1 'esp=aes_ctr192'
 	AES_CTR_192-HMAC_SHA1_96
 algparse -v1 'esp=aes_ctr256'
 	AES_CTR_256-HMAC_SHA1_96
-algparse -v1 'esp=serpent'
-	SERPENT_CBC-HMAC_SHA1_96
-algparse -v1 'esp=twofish'
-	TWOFISH_CBC-HMAC_SHA1_96
 algparse -v1 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192'
 	WARNING: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256

@@ -10,9 +10,6 @@ algparse:   AES_GCM_12              IKEv1:     ESP     IKEv2: IKE ESP     FIPS  
 algparse:   AES_GCM_8               IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aes_gcm_a
 algparse:   AES_CTR                 IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aesctr
 algparse:   AES_CBC                 IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aes
-algparse:   SERPENT_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  serpent
-algparse:   TWOFISH_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  twofish
-algparse:   TWOFISH_SSH             IKEv1: IKE         IKEv2: IKE ESP           {256,192,*128}  twofish_cbc_ssh
 algparse:   NULL_AUTH_AES_GMAC      IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  aes_gmac
 algparse:   NULL                    IKEv1:     ESP     IKEv2:     ESP           []
 algparse:   CHACHA20_POLY1305       IKEv1:             IKEv2: IKE ESP           [*256]  chacha20poly1305

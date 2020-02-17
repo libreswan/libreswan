@@ -190,10 +190,6 @@ algparse -v1 -pfs 'esp=aes_ctr192'
 	AES_CTR_192-HMAC_SHA1_96
 algparse -v1 -pfs 'esp=aes_ctr256'
 	AES_CTR_256-HMAC_SHA1_96
-algparse -v1 -pfs 'esp=serpent'
-	SERPENT_CBC-HMAC_SHA1_96
-algparse -v1 -pfs 'esp=twofish'
-	TWOFISH_CBC-HMAC_SHA1_96
 algparse -v1 -pfs 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192'
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
 algparse -v1 -pfs 'esp=null_auth_aes_gmac_256-null;modp8192'

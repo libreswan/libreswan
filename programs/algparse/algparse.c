@@ -303,8 +303,6 @@ static void test(void)
 	esp(true, "aes_ctr128");
 	esp(true, "aes_ctr192");
 	esp(true, "aes_ctr256");
-	esp(!fips, "serpent");
-	esp(!fips, "twofish");
 
 	esp(!fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
 	esp(true, "null_auth_aes_gmac_256-null;modp8192"); /* long */

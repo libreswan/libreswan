@@ -264,18 +264,6 @@ static void compute_proto_keymat(struct state *st,
 			needed_len += AES_CCM_SALT_BYTES;
 			break;
 
-		case ESP_CAST:
-			/* CAST can use 40-28 bits but requires padding up to 128
-			 * We use a minimum of 128bits to avoid padding
-			 * This is also the max keysize for cast128
-			 */
-			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
-				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
-			}
-			/* minimum = default = maximum */
-			needed_len = CAST_KEY_DEF_LEN / BITS_PER_BYTE;
-			break;
-
 		case ESP_CAMELLIA:
 			/* if an attribute is set, then use that! */
 			if (st->st_esp.attrs.transattrs.enckeylen == 0) {
@@ -287,24 +275,12 @@ static void compute_proto_keymat(struct state *st,
 				/* XXX: obtained from peer - was it verified for validity yet? */
 			}
 			break;
+
+		case ESP_CAST:
 		case ESP_TWOFISH:
 		case ESP_SERPENT:
-			/* valid keysize enforced before we get here */
-			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
-				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
-					st->st_esp.attrs.transattrs.enckeylen == 192 ||
-					st->st_esp.attrs.transattrs.enckeylen == 256);
-				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
-			} else {
-				/*
-				 * If no keylength set, pick mandatory to implement default
-				 * {TWOFISH,SERPENT}_DEF_KEY_LEN = 128
-				 */
-				needed_len = 128 / BITS_PER_BYTE;
-			}
-			break;
-
 		/* ESP_SEED is for IKEv1 only and not supported. Its number in IKEv2 has been re-used */
+			bad_case(pi->attrs.transattrs.ta_ikev1_encrypt);
 
 		default:
 			/* bytes */

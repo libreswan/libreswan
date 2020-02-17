@@ -167,21 +167,27 @@ OBJS += ike_alg_desc.o
 ifeq ($(USE_3DES),true)
 OBJS += ike_alg_3des.o
 endif
+ifeq ($(USE_AES),true)
 OBJS += ike_alg_aes.o
+endif
+ifeq ($(USE_CAMELLIA),true)
 OBJS += ike_alg_camellia.o
-ifeq ($(USE_CAST),true)
-OBJS += ike_alg_cast.o
 endif
+
 OBJS += ike_alg_dh.o
+
+ifeq ($(USE_MD5),true)
 OBJS += ike_alg_md5.o
-OBJS += ike_alg_none.o
-ifeq ($(USE_SERPENT),true)
-OBJS += ike_alg_serpent.o
 endif
+
+OBJS += ike_alg_none.o
+
+ifeq ($(USE_SHA1),true)
 OBJS += ike_alg_sha1.o
+endif
+
+ifeq ($(USE_SHA2),true)
 OBJS += ike_alg_sha2.o
-ifeq ($(USE_TWOFISH),true)
-OBJS += ike_alg_twofish.o
 endif
 
 OBJS += crypt_mac.o

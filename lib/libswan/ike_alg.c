@@ -653,16 +653,6 @@ static const struct encrypt_desc *encrypt_descriptors[] = {
 	&ike_alg_encrypt_aes_ctr,
 	&ike_alg_encrypt_aes_cbc,
 #endif
-#ifdef USE_SERPENT
-	&ike_alg_encrypt_serpent_cbc,
-#endif
-#ifdef USE_TWOFISH
-	&ike_alg_encrypt_twofish_cbc,
-	&ike_alg_encrypt_twofish_ssh,
-#endif
-#ifdef USE_CAST
-	&ike_alg_encrypt_cast_cbc,
-#endif
 	&ike_alg_encrypt_null_integ_aes_gmac,
 	&ike_alg_encrypt_null,
 #ifdef USE_CHACHA

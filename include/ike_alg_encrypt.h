@@ -30,24 +30,11 @@ extern const struct encrypt_desc ike_alg_encrypt_camellia_cbc;
 extern const struct encrypt_desc ike_alg_encrypt_camellia_ctr;
 #endif
 
-#ifdef USE_TWOFISH
-extern const struct encrypt_desc ike_alg_encrypt_twofish_ssh;
-extern const struct encrypt_desc ike_alg_encrypt_twofish_cbc;
-#endif
-
 #ifdef USE_3DES
 extern const struct encrypt_desc ike_alg_encrypt_3des_cbc;
 #endif
 
-#ifdef USE_SERPENT
-extern const struct encrypt_desc ike_alg_encrypt_serpent_cbc;
-#endif
-
 extern const struct encrypt_desc ike_alg_encrypt_null;
-
-#ifdef USE_CAST
-extern const struct encrypt_desc ike_alg_encrypt_cast_cbc;
-#endif
 
 #ifdef USE_CHACHA
 extern const struct encrypt_desc ike_alg_encrypt_chacha20_poly1305;

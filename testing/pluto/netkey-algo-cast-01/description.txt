@@ -1,5 +1,0 @@
-Basic pluto test, except the policy has been adjusted to permit only
-CAST for for phase 2. This uses NETKEY.
-
-This tests for a bug that used the wrong cast identifier for NETKEY.
-This was fixed in libreswan 3.9

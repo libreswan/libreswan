@@ -776,8 +776,6 @@ kvmplutotest	psk-pluto-05		good
 #
 # tests using alternative ESP algorithms
 #
-kvmplutotest	netkey-algo-twofish-01	good
-kvmplutotest	netkey-algo-serpent-01	good
 kvmplutotest	netkey-algo-camellia-01	good
 kvmplutotest	netkey-algo-null-01	good
 kvmplutotest	netkey-algo-null-02	good
@@ -819,8 +817,6 @@ kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512		good
 kvmplutotest	interop-ikev1-strongswan-12-esp-sha2_256 		good
 kvmplutotest	interop-ikev1-strongswan-13-esp-sha2_512 		good
 kvmplutotest	interop-ikev1-strongswan-14-camellia			good
-kvmplutotest	interop-ikev1-strongswan-15-twofish			good
-kvmplutotest	interop-ikev1-strongswan-16-serpent			good
 kvmplutotest	interop-ikev1-strongswan-17-compress			good
 kvmplutotest	interop-ikev1-strongswan-x509-aggr-12-san-dn-match	good
 kvmplutotest	interop-ikev1-strongswan-x509-aggr-13-san-dn-match-responder good
@@ -1061,12 +1057,6 @@ kvmplutotest  	ikev2-gssapi-01			skiptest
 #################################################################
 kvmplutotest	ikev2-leak-01-db_v2_prop_conj	good
 kvmplutotest	ikev2-leak-02-no-psk		good
-
-#################################################################
-# old algorithm tests
-#################################################################
-kvmplutotest	ikev2-algo-08-cast				skiptest
-kvmplutotest	netkey-algo-cast-01				skiptest
 
 # seccomp
 kvmplutotest	seccomp-01-enabled		good

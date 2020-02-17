@@ -20,11 +20,4 @@ endif
 
 include $(top_srcdir)/Makefile.inc
 
-ifeq ($(USE_SERPENT),true)
-SUBDIRS+=libserpent
-endif
-ifeq ($(USE_TWOFISH),true)
-SUBDIRS+=libtwofish
-endif
-
 include $(top_srcdir)/mk/subdirs.mk

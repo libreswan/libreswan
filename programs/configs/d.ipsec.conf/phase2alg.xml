@@ -40,7 +40,7 @@ as support for smaller ICV's might be removed in the near future.</para>
 
 <para>The supported algorithms depend on the libreswan version, OS and
 kernel stack used. Possible ciphers are aes, 3des, aes_ctr, aes_gcm,
-aes_ccm, camellia, serpent and twofish.</para>
+aes_ccm, camellia and chacha20_poly1305.</para>
 
 <para>Note that openswan and versions of libreswan up to 3.6 require manually
 adding the salt size to the key size. Therefore, to configure an older

@@ -17,7 +17,6 @@ Copyright:
 License: LGPL-2.1+
 
 Files:
- lib/libcrypto/libserpent/*
  lib/libswan/initsaid.c
  lib/libswan/initsubnet.c
  lib/libswan/internal.h

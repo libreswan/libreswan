@@ -43,9 +43,6 @@ Encryption algorithms:
   AES_GCM_8               IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aes_gcm_a
   AES_CTR                 IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aesctr
   AES_CBC                 IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  aes
-  SERPENT_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  serpent
-  TWOFISH_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  twofish
-  TWOFISH_SSH             IKEv1: IKE         IKEv2: IKE ESP           {256,192,*128}  twofish_cbc_ssh
   NULL_AUTH_AES_GMAC      IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  aes_gmac
   NULL                    IKEv1:     ESP     IKEv2:     ESP           []
   CHACHA20_POLY1305       IKEv1:             IKEv2: IKE ESP           [*256]  chacha20poly1305

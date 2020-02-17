@@ -184,11 +184,6 @@ ifeq ($(USE_AES),true)
 USERLAND_CFLAGS+=-DUSE_AES
 endif
 
-USE_CAST ?= $(ALL_ALGS)
-ifeq ($(USE_CAST),true)
-USERLAND_CFLAGS += -DUSE_CAST
-endif
-
 USE_CAMELLIA ?= true
 ifeq ($(USE_CAMELLIA),true)
 USERLAND_CFLAGS += -DUSE_CAMELLIA
@@ -229,12 +224,6 @@ ifeq ($(USE_MD5),true)
 USERLAND_CFLAGS += -DUSE_MD5
 endif
 
-USE_SERPENT?=true
-ifeq ($(USE_SERPENT),true)
-USERLAND_CFLAGS += -DUSE_SERPENT
-LIBSERPENT = ${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
-endif
-
 USE_SHA1 ?= true
 ifeq ($(USE_SHA1),true)
 USERLAND_CFLAGS += -DUSE_SHA1
@@ -243,12 +232,6 @@ endif
 USE_SHA2 ?= true
 ifeq ($(USE_SHA2),true)
 USERLAND_CFLAGS += -DUSE_SHA2
-endif
-
-USE_TWOFISH?=true
-ifeq ($(USE_TWOFISH),true)
-USERLAND_CFLAGS += -DUSE_TWOFISH
-LIBTWOFISH= ${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 endif
 
 # Used mostly for IoT

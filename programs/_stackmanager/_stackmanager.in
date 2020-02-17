@@ -231,8 +231,8 @@ cryptomodules() {
     # kernel directory does not match uname -m on x86_64 :(
     modules=$(ls /lib/modules/$(uname -r)/kernel/arch/*/crypto/* 2>/dev/null)
     modules="aesni-intel aes-x86_64 geode-aes aes aes_generic des sha512 \
-	sha256 md5 cbc xcbc ecb twofish blowfish serpent ccm gcm ctr cts \
-	deflate cast5 cast6 lzo sha256_generic sha512_generic camellia \
+	sha256 md5 cbc xcbc ecb ccm gcm ctr cts \
+	deflate lzo sha256_generic sha512_generic camellia \
 	cmac chacha20poly1305 ${modules}"
     for module in ${modules}
     do

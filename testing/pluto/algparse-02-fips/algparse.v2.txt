@@ -199,10 +199,6 @@ algparse -fips -v2 'esp=aes_ctr192'
 	AES_CTR_192-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes_ctr256'
 	AES_CTR_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
-algparse -fips -v2 'esp=serpent'
-	ERROR: ESP encryption algorithm 'serpent' is not supported
-algparse -fips -v2 'esp=twofish'
-	ERROR: ESP encryption algorithm 'twofish' is not supported
 algparse -fips -v2 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192'
 	ERROR: ESP encryption algorithm 'camellia_cbc_256' is not supported
 algparse -fips -v2 'esp=null_auth_aes_gmac_256-null;modp8192'

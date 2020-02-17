@@ -40,9 +40,6 @@ OBJS += $(addprefix $(abs_top_builddir)/programs/pluto/, $(PLUTOOBJS))
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
-OBJS += $(LIBSERPENT)
-OBJS += $(LIBTWOFISH)
-
 LDFLAGS += $(NSS_LDFLAGS)
 LDFLAGS += $(NSPR_LDFLAGS)
 
