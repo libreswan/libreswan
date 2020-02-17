@@ -1053,51 +1053,51 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 			return FALSE;
 	}
 
-	if (sa->natt_type != 0) {
+	if (sa->encap_type != 0) {
 		success = pfkey_build(pfkey_x_nat_t_type_build(
 					      &extensions[
 						      K_SADB_X_EXT_NAT_T_TYPE],
-					      sa->natt_type),
+					      sa->encap_type),
 				      "pfkey_nat_t_type Add ESP SA",
 				      sa->text_said, extensions);
 		DBG(DBG_KERNEL,
-		    DBG_log("setting natt_type to %d", sa->natt_type));
+		    DBG_log("setting encap_type to %d", sa->encap_type));
 		if (!success)
 			return FALSE;
 
-		if (sa->natt_sport != 0) {
+		if (sa->encap_sport != 0) {
 			success = pfkey_build(pfkey_x_nat_t_port_build(
 						      &extensions[
 							      K_SADB_X_EXT_NAT_T_SPORT
 						      ],
 						      K_SADB_X_EXT_NAT_T_SPORT,
-						      sa->natt_sport),
+						      sa->encap_sport),
 					      "pfkey_nat_t_sport Add ESP SA",
 					      sa->text_said, extensions);
 			DBG(DBG_KERNEL,
-			    DBG_log("setting natt_sport to %d",
-				    sa->natt_sport));
+			    DBG_log("setting encap_sport to %d",
+				    sa->encap_sport));
 			if (!success)
 				return FALSE;
 		}
 
-		if (sa->natt_dport != 0) {
+		if (sa->encap_dport != 0) {
 			success = pfkey_build(pfkey_x_nat_t_port_build(
 						      &extensions[
 							      K_SADB_X_EXT_NAT_T_DPORT
 						      ],
 						      K_SADB_X_EXT_NAT_T_DPORT,
-						      sa->natt_dport),
+						      sa->encap_dport),
 					      "pfkey_nat_t_dport Add ESP SA",
 					      sa->text_said, extensions);
 			DBG(DBG_KERNEL,
-			    DBG_log("setting natt_dport to %d",
-				    sa->natt_dport));
+			    DBG_log("setting encap_dport to %d",
+				    sa->encap_dport));
 			if (!success)
 				return FALSE;
 		}
 
-		if (sa->natt_type != 0 && !isanyaddr(sa->natt_oa)) {
+		if (sa->encap_type != 0 && !isanyaddr(sa->natt_oa)) {
 			success = pfkeyext_address(K_SADB_X_EXT_NAT_T_OA,
 						   sa->natt_oa,
 						   "pfkey_nat_t_oa Add ESP SA",
@@ -1418,8 +1418,8 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 
 		i--;
 		proto_info[i].proto = IPPROTO_AH;
-		proto_info[i].encapsulation = st->st_ah.attrs.encapsulation;
-		tunnel |= proto_info[i].encapsulation ==
+		proto_info[i].mode = st->st_ah.attrs.mode;
+		tunnel |= proto_info[i].mode ==
 			  ENCAPSULATION_MODE_TUNNEL;
 		proto_info[i].reqid = reqid_ah(sr->reqid);
 	}
@@ -1431,8 +1431,8 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 
 		i--;
 		proto_info[i].proto = IPPROTO_ESP;
-		proto_info[i].encapsulation = st->st_esp.attrs.encapsulation;
-		tunnel |= proto_info[i].encapsulation ==
+		proto_info[i].mode = st->st_esp.attrs.mode;
+		tunnel |= proto_info[i].mode ==
 			  ENCAPSULATION_MODE_TUNNEL;
 		proto_info[i].reqid = reqid_esp(sr->reqid);
 	}
@@ -1444,9 +1444,9 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 
 		i--;
 		proto_info[i].proto = IPPROTO_COMP;
-		proto_info[i].encapsulation =
-			st->st_ipcomp.attrs.encapsulation;
-		tunnel |= proto_info[i].encapsulation ==
+		proto_info[i].mode =
+			st->st_ipcomp.attrs.mode;
+		tunnel |= proto_info[i].mode ==
 			  ENCAPSULATION_MODE_TUNNEL;
 		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
 	}
@@ -1462,9 +1462,9 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 		inner_proto = SA_IPIP;
 		inner_esatype = ET_IPIP;
 
-		proto_info[i].encapsulation = ENCAPSULATION_MODE_TUNNEL;
+		proto_info[i].mode = ENCAPSULATION_MODE_TUNNEL;
 		for (j = i + 1; proto_info[j].proto; j++)
-			proto_info[j].encapsulation =
+			proto_info[j].mode =
 				ENCAPSULATION_MODE_TRANSPORT;
 	}
 

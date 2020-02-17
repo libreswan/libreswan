@@ -688,7 +688,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				tmpl[i].optional = proto_info[i].proto == IPPROTO_COMP && dir != XFRM_POLICY_OUT;
 				tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
 				tmpl[i].family = addrtypeof(that_host);
-				tmpl[i].mode = proto_info[i].encapsulation == ENCAPSULATION_MODE_TUNNEL;
+				tmpl[i].mode = proto_info[i].mode == ENCAPSULATION_MODE_TUNNEL;
 
 				if (!tmpl[i].mode)
 					continue;
@@ -780,8 +780,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			req.u.id.dir = XFRM_POLICY_FWD;
 		} else if (!ok) {
 			break;
-		} else if (proto_info[0].encapsulation !=
-				ENCAPSULATION_MODE_TUNNEL &&
+		} else if (proto_info[0].mode != ENCAPSULATION_MODE_TUNNEL &&
 			   esatype != ET_INT) {
 			break;
 		} else {
@@ -870,7 +869,7 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 {
 	const struct connection *const c = st->st_connection;
 
-	const uint8_t natt_type = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ?
+	const uint8_t encap_type = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ?
 		ESPINUDP_WITH_NON_ESP : 0;
 
 	const struct ip_protocol *proto;
@@ -890,13 +889,13 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		.nk_dir = dir,
 		.proto = proto,
 		.reqid = reqid_esp(c->spd.reqid),
-		.natt_type = natt_type,
+		.encap_type = encap_type,
 	};
 
 	ip_endpoint new_endpoint;
 	uint16_t old_port;
-	uint16_t natt_sport = 0;
-	uint16_t natt_dport = 0;
+	uint16_t encap_sport = 0;
+	uint16_t encap_dport = 0;
 	const ip_address *src, *dst;
 	const ip_subnet *src_client, *dst_client;
 
@@ -916,9 +915,9 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.ndst = &st->st_mobike_local_endpoint;
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, dst, sa.spi, proto);
-			if (natt_type != 0) {
-				natt_sport = endpoint_hport(&st->st_remote_endpoint);
-				natt_dport = endpoint_hport(&st->st_mobike_local_endpoint);
+			if (encap_type != 0) {
+				encap_sport = endpoint_hport(&st->st_remote_endpoint);
+				encap_dport = endpoint_hport(&st->st_mobike_local_endpoint);
 			}
 		} else {
 			src = &c->spd.this.host_addr;
@@ -929,9 +928,9 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.ndst = dst;
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, src, sa.spi, proto);
-			if (natt_type != 0) {
-				natt_sport = endpoint_hport(&st->st_mobike_local_endpoint);
-				natt_dport = endpoint_hport(&st->st_remote_endpoint);
+			if (encap_type != 0) {
+				encap_sport = endpoint_hport(&st->st_mobike_local_endpoint);
+				encap_dport = endpoint_hport(&st->st_remote_endpoint);
 			}
 		}
 	} else {
@@ -949,10 +948,10 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.ndst = &c->spd.this.host_addr;
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, src, sa.spi, proto);
-			if (natt_type != 0) {
-				natt_sport = endpoint_hport(&st->st_mobike_remote_endpoint);
+			if (encap_type != 0) {
+				encap_sport = endpoint_hport(&st->st_mobike_remote_endpoint);
 				pexpect_st_local_endpoint(st);
-				natt_dport = endpoint_hport(&st->st_interface->local_endpoint);
+				encap_dport = endpoint_hport(&st->st_interface->local_endpoint);
 			}
 		} else {
 			src = &c->spd.this.host_addr;
@@ -964,10 +963,10 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, dst, sa.spi, proto);
 
-			if (natt_type != 0) {
+			if (encap_type != 0) {
 				pexpect_st_local_endpoint(st);
-				natt_sport = endpoint_hport(&st->st_interface->local_endpoint);
-				natt_dport = endpoint_hport(&st->st_mobike_remote_endpoint);
+				encap_sport = endpoint_hport(&st->st_interface->local_endpoint);
+				encap_dport = endpoint_hport(&st->st_mobike_remote_endpoint);
 			}
 		}
 	}
@@ -978,8 +977,8 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	sa.src_client = src_client;
 	sa.dst_client = dst_client;
 
-	sa.natt_sport = natt_sport;
-	sa.natt_dport = natt_dport;
+	sa.encap_sport = encap_sport;
+	sa.encap_dport = encap_dport;
 
 	char reqid_buf[ULTOT_BUF + 32];
 	endpoint_buf ra;
@@ -1032,13 +1031,13 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa)
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
-	if (sa->natt_type != 0) {
+	if (sa->encap_type != 0) {
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		struct xfrm_encap_tmpl natt;
 
-		natt.encap_type = sa->natt_type;
-		natt.encap_sport = ntohs(sa->natt_sport);
-		natt.encap_dport = ntohs(sa->natt_dport);
+		natt.encap_type = sa->encap_type;
+		natt.encap_sport = ntohs(sa->encap_sport);
+		natt.encap_dport = ntohs(sa->encap_dport);
 		zero(&natt.encap_oa);
 
 		attr->rta_type = XFRMA_ENCAP;
@@ -1230,7 +1229,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * This requires ipv6 modules. It is required to support 6in4 and 4in6
 	 * tunnels in linux 2.6.25+
 	 */
-	if (sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+	if (sa->mode == ENCAPSULATION_MODE_TUNNEL) {
 		DBG(DBG_KERNEL, DBG_log("netlink: enabling tunnel mode"));
 		req.p.mode = XFRM_MODE_TUNNEL;
 		req.p.flags |= XFRM_STATE_AF_UNSPEC;
@@ -1490,7 +1489,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
 			if (sa->tfcpad != 0 &&
-			    sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+			    sa->mode == ENCAPSULATION_MODE_TUNNEL) {
 				DBG(DBG_KERNEL,
 					DBG_log("netlink: setting TFC to %" PRIu32 " (up to PMTU)",
 						sa->tfcpad));
@@ -1505,12 +1504,12 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		}
 	}
 
-	if (sa->natt_type != 0) {
+	if (sa->encap_type != 0) {
 		struct xfrm_encap_tmpl natt;
 
-		natt.encap_type = sa->natt_type;
-		natt.encap_sport = ntohs(sa->natt_sport);
-		natt.encap_dport = ntohs(sa->natt_dport);
+		natt.encap_type = sa->encap_type;
+		natt.encap_sport = ntohs(sa->encap_sport);
+		natt.encap_dport = ntohs(sa->encap_dport);
 		zero(&natt.encap_oa);
 
 		attr->rta_type = XFRMA_ENCAP;
@@ -2130,8 +2129,8 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 		i--;
 		proto_info[i].proto = IPPROTO_AH;
-		proto_info[i].encapsulation = st->st_ah.attrs.encapsulation;
-		tunnel |= proto_info[i].encapsulation ==
+		proto_info[i].mode = st->st_ah.attrs.mode;
+		tunnel |= proto_info[i].mode ==
 			ENCAPSULATION_MODE_TUNNEL;
 		proto_info[i].reqid = reqid_ah(sr->reqid);
 	}
@@ -2143,8 +2142,8 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 		i--;
 		proto_info[i].proto = IPPROTO_ESP;
-		proto_info[i].encapsulation = st->st_esp.attrs.encapsulation;
-		tunnel |= proto_info[i].encapsulation ==
+		proto_info[i].mode = st->st_esp.attrs.mode;
+		tunnel |= proto_info[i].mode ==
 			ENCAPSULATION_MODE_TUNNEL;
 		proto_info[i].reqid = reqid_esp(sr->reqid);
 	}
@@ -2156,9 +2155,9 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 		i--;
 		proto_info[i].proto = IPPROTO_COMP;
-		proto_info[i].encapsulation =
-			st->st_ipcomp.attrs.encapsulation;
-		tunnel |= proto_info[i].encapsulation ==
+		proto_info[i].mode =
+			st->st_ipcomp.attrs.mode;
+		tunnel |= proto_info[i].mode ==
 			ENCAPSULATION_MODE_TUNNEL;
 		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
 	}
@@ -2174,9 +2173,9 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 		inner_proto = SA_IPIP;
 		inner_esatype = ET_IPIP;
 
-		proto_info[i].encapsulation = ENCAPSULATION_MODE_TUNNEL;
+		proto_info[i].mode = ENCAPSULATION_MODE_TUNNEL;
 		for (j = i + 1; proto_info[j].proto; j++)
-			proto_info[j].encapsulation =
+			proto_info[j].mode =
 				ENCAPSULATION_MODE_TRANSPORT;
 	}
 	
@@ -2311,7 +2310,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 	 * function there's a weird test involving both SA_PROTO and
 	 * ESATYPE.
 	 */
-	const struct ip_protocol *sa_proto = c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ?
+	const struct ip_protocol *sa_proto = c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 		SA_ESP : SA_INT;
 
 	if (!netlink_raw_eroute(&sr->this.host_addr, &sr->this.client,

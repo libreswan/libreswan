@@ -98,12 +98,12 @@ bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 const struct pfkey_proto_info null_proto_info[2] = {
 	{
 		.proto = IPPROTO_ESP,
-		.encapsulation = ENCAPSULATION_MODE_TRANSPORT,
+		.mode = ENCAPSULATION_MODE_TRANSPORT,
 		.reqid = 0
 	},
 	{
 		.proto = 0,
-		.encapsulation = 0,
+		.mode = 0,
 		.reqid = 0
 	}
 };
@@ -1748,17 +1748,17 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	}
 
 	/*
-	 * encapsulation: encapsulation mode called for
+	 * mode: encapsulation mode called for
 	 * encap_oneshot: copy of "encapsultion" but reset to
 	 *	ENCAPSULATION_MODE_TRANSPORT after use.
 	 */
-	int encapsulation = ENCAPSULATION_MODE_TRANSPORT;
+	int mode = ENCAPSULATION_MODE_TRANSPORT;
 	bool add_selector;
 
-	if (st->st_ah.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
-	    st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
-	    st->st_ipcomp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL) {
-		encapsulation = ENCAPSULATION_MODE_TUNNEL;
+	if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
+	    st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
+	    st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
+		mode = ENCAPSULATION_MODE_TUNNEL;
 		add_selector = FALSE; /* Don't add selectors for tunnel mode */
 	} else {
 		/*
@@ -1767,9 +1767,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		add_selector = TRUE;
 	}
-	c->encapsulation = encapsulation;
+	c->ipsec_mode = mode;
 
-	int encap_oneshot = encapsulation;
+	int encap_oneshot = mode;
 
 	struct kernel_sa said_boilerplate = {
 		.src = &src.addr,
@@ -1786,7 +1786,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 	if (kernel_ops->inbound_eroute) {
 		inner_spi = SPI_PASS;
-		if (encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+		if (mode == ENCAPSULATION_MODE_TUNNEL) {
 			/* If we are tunnelling, set up IP in IP pseudo SA */
 			proto = SA_IPIP;
 			esatype = ET_IPIP;
@@ -1796,7 +1796,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			proto = SA_ESP;
 			esatype = ET_ESP;
 		}
-	} else if (encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+	} else if (mode == ENCAPSULATION_MODE_TUNNEL) {
 		/*
 		 * XXX hack alert -- we SHOULD NOT HAVE TO HAVE A DIFFERENT SPI
 		 * XXX FOR IP-in-IP ENCAPSULATION!
@@ -1908,7 +1908,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->spi = ipcomp_spi;
 		said_next->esatype = ET_IPCOMP;
 		said_next->compalg = compalg;
-		said_next->encapsulation = encap_oneshot;
+		said_next->mode = encap_oneshot;
 		said_next->reqid = reqid_ipcomp(c->spd.reqid);
 		said_next->text_said = text_ipcomp;
 
@@ -1958,18 +1958,18 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			peer_keymat;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 
-		uint8_t natt_type = 0;
-		uint16_t natt_sport = 0, natt_dport = 0;
+		uint8_t encap_type = 0;
+		uint16_t encap_sport = 0, encap_dport = 0;
 		ip_address natt_oa;
 
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
-			natt_type = ESPINUDP_WITH_NON_ESP;
+			encap_type = ESPINUDP_WITH_NON_ESP;
 			if (inbound) {
-				natt_sport = endpoint_hport(&st->st_remote_endpoint);
-				natt_dport = endpoint_hport(&st->st_interface->local_endpoint);
+				encap_sport = endpoint_hport(&st->st_remote_endpoint);
+				encap_dport = endpoint_hport(&st->st_interface->local_endpoint);
 			} else {
-				natt_sport = endpoint_hport(&st->st_interface->local_endpoint);
-				natt_dport = endpoint_hport(&st->st_remote_endpoint);
+				encap_sport = endpoint_hport(&st->st_interface->local_endpoint);
+				encap_dport = endpoint_hport(&st->st_remote_endpoint);
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
 		}
@@ -2119,12 +2119,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->authkey = esp_dst_keymat + encrypt_keymat_size;
 		said_next->authkeylen = integ_keymat_size; /* BYTES */
 
-		said_next->encapsulation = encap_oneshot;
+		said_next->mode = encap_oneshot;
 		said_next->reqid = reqid_esp(c->spd.reqid);
 
-		said_next->natt_sport = natt_sport;
-		said_next->natt_dport = natt_dport;
-		said_next->natt_type = natt_type;
+		said_next->encap_sport = encap_sport;
+		said_next->encap_dport = encap_dport;
+		said_next->encap_type = encap_type;
 		said_next->natt_oa = &natt_oa;
 		said_next->text_said = text_esp;
 
@@ -2211,7 +2211,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->authalg = authalg;
 		said_next->authkeylen = st->st_ah.keymat_len;
 		said_next->authkey = ah_dst_keymat;
-		said_next->encapsulation = encap_oneshot;
+		said_next->mode = encap_oneshot;
 		said_next->reqid = reqid_ah(c->spd.reqid);
 		said_next->text_said = text_ah;
 		said_next->replay_window = c->sa_replay_window;
@@ -2279,37 +2279,37 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	if (inbound && (c->policy & POLICY_DISABLEARRIVALCHECK) == 0 &&
 		(kernel_ops->inbound_eroute ?
 			c->spd.eroute_owner == SOS_NOBODY :
-			encapsulation == ENCAPSULATION_MODE_TUNNEL)) {
+			mode == ENCAPSULATION_MODE_TUNNEL)) {
 		struct pfkey_proto_info proto_info[4];
 		int i = 0;
 
 		/*
 		 * ??? why does this code care about
-		 * st->st_*.attrs.encapsulation?
+		 * st->st_*.attrs.mode?
 		 * We have gone do some trouble to compute
-		 * "encapsulation".  And later code uses
-		 * "encapsulation".
+		 * "mode".  And later code uses
+		 * "mode".
 		 */
 		if (st->st_ipcomp.present) {
 			proto_info[i].proto = IPPROTO_COMP;
-			proto_info[i].encapsulation =
-				st->st_ipcomp.attrs.encapsulation;
+			proto_info[i].mode =
+				st->st_ipcomp.attrs.mode;
 			proto_info[i].reqid = reqid_ipcomp(c->spd.reqid);
 			i++;
 		}
 
 		if (st->st_esp.present) {
 			proto_info[i].proto = IPPROTO_ESP;
-			proto_info[i].encapsulation =
-				st->st_esp.attrs.encapsulation;
+			proto_info[i].mode =
+				st->st_esp.attrs.mode;
 			proto_info[i].reqid = reqid_esp(c->spd.reqid);
 			i++;
 		}
 
 		if (st->st_ah.present) {
 			proto_info[i].proto = IPPROTO_AH;
-			proto_info[i].encapsulation =
-				st->st_ah.attrs.encapsulation;
+			proto_info[i].mode =
+				st->st_ah.attrs.mode;
 			proto_info[i].reqid = reqid_ah(c->spd.reqid);
 			i++;
 		}
@@ -2317,15 +2317,15 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		proto_info[i].proto = 0;
 
 		/*
-		 * ??? why is encapsulation overwitten ONLY if
+		 * ??? why is mode overwitten ONLY if
 		 * kernel_ops->inbound_eroute?
 		 */
 		if (kernel_ops->inbound_eroute &&
-			encapsulation == ENCAPSULATION_MODE_TUNNEL) {
-			proto_info[0].encapsulation =
+			mode == ENCAPSULATION_MODE_TUNNEL) {
+			proto_info[0].mode =
 				ENCAPSULATION_MODE_TUNNEL;
 			for (i = 1; proto_info[i].proto; i++)
-				proto_info[i].encapsulation =
+				proto_info[i].mode =
 					ENCAPSULATION_MODE_TRANSPORT;
 		}
 
@@ -2450,10 +2450,10 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				&c->spd.this.host_addr,
 				&c->spd.this.client,
 				SPI_PASS, SPI_PASS,
-				c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ?
+				c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 					SA_ESP : NULL,
 				c->spd.this.protocol,
-				c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ?
+				c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 					ET_ESP : ET_UNSPEC,
 				null_proto_info,
 				deltatime(0),

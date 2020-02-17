@@ -300,7 +300,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			//cst->st_ipcomp.attrs.spi = uniquify_his_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
 			cst->st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 			cst->st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
-			cst->st_ipcomp.attrs.encapsulation = ENCAPSULATION_MODE_TUNNEL; /* always? */
+			cst->st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
 			cst->st_ipcomp.present = TRUE;
 			cst->st_seen_use_ipcomp = TRUE;
 			break;
@@ -375,11 +375,11 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		} else {
 			DBG(DBG_CONTROL, DBG_log("Local policy is transport mode and received USE_TRANSPORT_MODE"));
 			if (cst->st_esp.present) {
-				cst->st_esp.attrs.encapsulation =
+				cst->st_esp.attrs.mode =
 					ENCAPSULATION_MODE_TRANSPORT;
 			}
 			if (cst->st_ah.present) {
-				cst->st_ah.attrs.encapsulation =
+				cst->st_ah.attrs.mode =
 					ENCAPSULATION_MODE_TRANSPORT;
 			}
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */

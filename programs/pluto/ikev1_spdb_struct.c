@@ -1865,7 +1865,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		.spi = 0,                                               /* spi */
 		.life_seconds = DELTATIME_INIT(IPSEC_SA_LIFETIME_DEFAULT),	/* life_seconds */
 		.life_kilobytes = SA_LIFE_DURATION_K_DEFAULT,           /* life_kilobytes */
-		.encapsulation = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
+		.mode = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 	};
 
 	switch (proto) {
@@ -2071,7 +2071,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				val = ENCAPSULATION_MODE_TUNNEL;
 				break;
 			}
-			attrs->encapsulation = val;
+			attrs->mode = val;
 			break;
 
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
@@ -2158,7 +2158,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			 * the default value of Transport Mode is assumed."
 			 * This contradicts/overrides the DOI (quoted below).
 			 */
-			attrs->encapsulation = ENCAPSULATION_MODE_TRANSPORT;
+			attrs->mode = ENCAPSULATION_MODE_TRANSPORT;
 		} else {
 			/* ??? Technically, RFC 2407 (IPSEC DOI) 4.5 specifies that
 			 * the default is "unspecified (host-dependent)".
@@ -2605,7 +2605,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			ah_attrs.spi = ah_spi;
 			inner_proto = IPPROTO_AH;
-			if (ah_attrs.encapsulation ==
+			if (ah_attrs.mode ==
 			    ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
 		}
@@ -2656,10 +2656,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				}
 
 				if (ah_seen &&
-				    ah_attrs.encapsulation !=
-				      esp_attrs.encapsulation) {
+				    ah_attrs.mode !=
+				      esp_attrs.mode) {
 					loglog(RC_LOG_SERIOUS,
-					       "Skipped bogus proposal where AH and ESP transforms disagree about encapsulation");
+					       "Skipped bogus proposal where AH and ESP transforms disagree about mode");
 					continue; /* try another */
 				}
 
@@ -2670,7 +2670,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			esp_attrs.spi = esp_spi;
 			inner_proto = IPPROTO_ESP;
-			if (esp_attrs.encapsulation ==
+			if (esp_attrs.mode ==
 			    ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
@@ -2762,17 +2762,17 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				}
 
 				if (ah_seen &&
-				    ah_attrs.encapsulation !=
-				      ipcomp_attrs.encapsulation) {
+				    ah_attrs.mode !=
+				      ipcomp_attrs.mode) {
 					/* ??? This should be an error, but is it? */
 					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log("AH and IPCOMP transforms disagree about encapsulation; TUNNEL presumed"));
+					    DBG_log("AH and IPCOMP transforms disagree about mode; TUNNEL presumed"));
 				} else if (esp_seen &&
-					   esp_attrs.encapsulation !=
-					     ipcomp_attrs.encapsulation) {
+					   esp_attrs.mode !=
+					     ipcomp_attrs.mode) {
 					/* ??? This should be an error, but is it? */
 					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log("ESP and IPCOMP transforms disagree about encapsulation; TUNNEL presumed"));
+					    DBG_log("ESP and IPCOMP transforms disagree about mode; TUNNEL presumed"));
 				}
 
 				break; /* we seem to be happy */
@@ -2781,7 +2781,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				continue; /* we didn't find a nice one */
 			ipcomp_attrs.spi = ipcomp_cpi;
 			inner_proto = IPPROTO_COMP;
-			if (ipcomp_attrs.encapsulation ==
+			if (ipcomp_attrs.mode ==
 			    ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
 		}

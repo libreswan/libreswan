@@ -2289,11 +2289,11 @@ void fmt_state(struct state *st, const monotime_t now,
 		}
 
 #if defined(NETKEY_SUPPORT) || defined(KLIPS)
-		if (st->st_ah.attrs.encapsulation ==
+		if (st->st_ah.attrs.mode ==
 			ENCAPSULATION_MODE_TUNNEL ||
-			st->st_esp.attrs.encapsulation ==
+			st->st_esp.attrs.mode ==
 			ENCAPSULATION_MODE_TUNNEL ||
-			st->st_ipcomp.attrs.encapsulation ==
+			st->st_ipcomp.attrs.mode ==
 			ENCAPSULATION_MODE_TUNNEL) {
 			add_said(&c->spd.that.host_addr, st->st_tunnel_out_spi,
 				SA_IPIP);

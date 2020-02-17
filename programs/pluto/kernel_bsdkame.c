@@ -886,7 +886,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	char keymat[256];
 	int ret, mode, satype;
 
-	if (sa->encapsulation == ENCAPSULATION_MODE_TUNNEL)
+	if (sa->mode == ENCAPSULATION_MODE_TUNNEL)
 		mode = IPSEC_MODE_TUNNEL;
 	else
 		mode = IPSEC_MODE_TRANSPORT;

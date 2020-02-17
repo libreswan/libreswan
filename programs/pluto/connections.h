@@ -274,7 +274,13 @@ struct connection {
 	deltatime_t r_interval; /* initial retransmit time, doubles each time */
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
-	int encapsulation;
+	/*
+	 * XXX: this field is used by the kernel to remember the mode
+	 * that the IPsec SA was installed as so that the delete knows
+	 * how to delete it.  Shouldn't that be part of the CHILD SA's
+	 * state?
+	 */
+	int ipsec_mode;			/* tunnel or transport or IKEv1 ... */
 	enum yna_options nic_offload;
 
 	/* RFC 3706 DPD */

@@ -3594,11 +3594,11 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("Initiator policy is transport, responder sends v2N_USE_TRANSPORT_MODE, setting CHILD SA to transport mode"));
 					if (st->st_esp.present) {
-						st->st_esp.attrs.encapsulation
+						st->st_esp.attrs.mode
 							= ENCAPSULATION_MODE_TRANSPORT;
 					}
 					if (st->st_ah.present) {
-						st->st_ah.attrs.encapsulation
+						st->st_ah.attrs.mode
 							= ENCAPSULATION_MODE_TRANSPORT;
 					}
 				}
@@ -3641,7 +3641,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 				//st->st_ipcomp.attrs.spi = uniquify_his_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
 				st->st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 				st->st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
-				st->st_ipcomp.attrs.encapsulation = ENCAPSULATION_MODE_TUNNEL; /* always? */
+				st->st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
 				st->st_ipcomp.present = TRUE;
 				st->st_seen_use_ipcomp = TRUE;
 				break;

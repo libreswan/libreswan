@@ -1637,7 +1637,7 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 	proto_info->our_lastused = mononow();
 	proto_info->peer_lastused = mononow();
 
-	proto_info->attrs.encapsulation = ENCAPSULATION_MODE_TUNNEL;
+	proto_info->attrs.mode = ENCAPSULATION_MODE_TUNNEL;
 
 	return TRUE;
 }
