@@ -33,10 +33,6 @@ extern const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug;
 extern const struct integ_desc ike_alg_integ_hmac_md5_96;
 #endif
 
-#ifdef USE_RIPEMD
-extern const struct integ_desc ike_alg_integ_hmac_ripemd_160_96;
-#endif
-
 /*
  * IKEv2 RFC 7296 uses the term "NONE" when referring to no integrity.
  * For instance: ... MUST either offer no integrity algorithm or a

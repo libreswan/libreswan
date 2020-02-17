@@ -229,11 +229,6 @@ ifeq ($(USE_MD5),true)
 USERLAND_CFLAGS += -DUSE_MD5
 endif
 
-USE_RIPEMD ?= $(ALL_ALGS)
-ifeq ($(USE_RIPEMD),true)
-USERLAND_CFLAGS += -DUSE_RIPEMD
-endif
-
 USE_SERPENT?=true
 ifeq ($(USE_SERPENT),true)
 USERLAND_CFLAGS += -DUSE_SERPENT

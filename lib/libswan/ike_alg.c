@@ -579,9 +579,6 @@ static const struct integ_desc *integ_descriptors[] = {
 	&ike_alg_integ_aes_xcbc,
 	&ike_alg_integ_aes_cmac,
 #endif
-#ifdef USE_RIPEMD
-	&ike_alg_integ_hmac_ripemd_160_96,
-#endif
 	&ike_alg_integ_none,
 };
 
