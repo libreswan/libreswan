@@ -421,6 +421,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
+			       const uint32_t xfrm_if_id UNUSED,
 			       enum pluto_sadb_operations op,
 			       const char *text_said UNUSED,
 			       const char *policy_label UNUSED)
@@ -872,6 +873,7 @@ static bool bsdkame_sag_eroute(const struct state *st,
 				  deltatime(0),            /* use lifetime unused */
 				  0,		/* sa_priority */
 				  NULL,		/* sa_marks */
+				  0,		/* xfrm_if_id */
 				  op,
 				  NULL,         /* text_said unused */
 				  NULL);        /*unused*/
