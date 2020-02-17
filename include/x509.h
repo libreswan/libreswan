@@ -86,8 +86,8 @@ extern int dn_count_wildcards(chunk_t dn);
 extern err_t atodn(const char *src, chunk_t *dn);
 extern void free_generalNames(generalName_t *gn, bool free_name);
 extern void load_crls(void);
-extern void list_authcerts(struct fd *whackfd);
-extern void list_crls(struct fd *whackfd);
+extern void list_authcerts(const struct fd *whackfd);
+extern void list_crls(const struct fd *whackfd);
 extern void clear_ocsp_cache(void);
 
 /*

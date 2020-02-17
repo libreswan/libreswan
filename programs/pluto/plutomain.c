@@ -1938,7 +1938,7 @@ void exit_pluto(enum pluto_exit_code status)
 	exit(status);	/* exit, with our error code */
 }
 
-void show_setup_plutomain(struct fd *whackfd)
+void show_setup_plutomain(const struct fd *whackfd)
 {
 	whack_comment(whackfd, "config setup options:");	/* spacer */
 	whack_comment(whackfd, " ");	/* spacer */

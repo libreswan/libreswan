@@ -1498,7 +1498,7 @@ static int certsntoa(CERTCertificate *cert, char *dst, size_t dstlen)
 			'x', dst, dstlen);
 }
 
-static void cert_detail_to_whacklog(struct fd *whackfd,
+static void cert_detail_to_whacklog(const struct fd *whackfd,
 				    CERTCertificate *cert)
 {
 	bool is_CA = CERT_IsCACert(cert, NULL);
@@ -1565,7 +1565,7 @@ static bool is_cert_of_type(CERTCertificate *cert, show_cert_t type)
 	return CERT_IsCACert(cert, NULL) == (type == CERT_TYPE_CA);
 }
 
-static void crl_detail_to_whacklog(struct fd *whackfd, CERTCrl *crl)
+static void crl_detail_to_whacklog(const struct fd *whackfd, CERTCrl *crl)
 {
 	whack_comment(whackfd, " ");
 
@@ -1601,7 +1601,7 @@ static void crl_detail_to_whacklog(struct fd *whackfd, CERTCrl *crl)
 	}
 }
 
-static void crl_detail_list(struct fd *whackfd)
+static void crl_detail_list(const struct fd *whackfd)
 {
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -1647,7 +1647,7 @@ CERTCertList *get_all_certificates(void)
 	return PK11_ListCertsInSlot(slot);
 }
 
-static void cert_detail_list(struct fd *whackfd, show_cert_t type)
+static void cert_detail_list(const struct fd *whackfd, show_cert_t type)
 {
 	char *tstr;
 
@@ -1679,12 +1679,12 @@ static void cert_detail_list(struct fd *whackfd, show_cert_t type)
 	CERT_DestroyCertList(certs);
 }
 
-void list_crls(struct fd *whackfd)
+void list_crls(const struct fd *whackfd)
 {
 	crl_detail_list(whackfd);
 }
 
-void list_certs(struct fd *whackfd)
+void list_certs(const struct fd *whackfd)
 {
 	cert_detail_list(whackfd, CERT_TYPE_END);
 }
@@ -1699,7 +1699,7 @@ const char *cert_nickname(const cert_t *cert)
 			cert->u.nss_cert->nickname : NULL;
 }
 
-void list_authcerts(struct fd *whackfd)
+void list_authcerts(const struct fd *whackfd)
 {
 	cert_detail_list(whackfd, CERT_TYPE_CA);
 }

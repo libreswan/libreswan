@@ -96,7 +96,7 @@ struct connection *connections = NULL;
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
-static bool load_end_cert_and_preload_secret(struct fd *whackfd,
+static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 					     const char *which, const char *pubkey,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end);
@@ -713,7 +713,7 @@ static void unshare_connection(struct connection *c)
 		reference_xfrmi(c);
 }
 
-static int extract_end(struct fd *whackfd,
+static int extract_end(const struct fd *whackfd,
 		       struct end *dst, const struct whack_end *src,
 		       const char *which)
 {
@@ -887,7 +887,7 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-static bool load_end_cert_and_preload_secret(struct fd *whackfd,
+static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 					     const char *which, const char *pubkey,
 					     enum whack_pubkey_type pubkey_type,
 					     struct end *dst_end)
@@ -1073,7 +1073,7 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
  * was freshy allocated so no duplication should be needed (or at
  * least shouldn't be) (look for strange free() vs delref() sequence).
  */
-static bool extract_connection(struct fd *whackfd,
+static bool extract_connection(const struct fd *whackfd,
 			       const struct whack_message *wm,
 			       struct connection *c)
 {
@@ -1805,7 +1805,7 @@ static bool extract_connection(struct fd *whackfd,
 	return true;
 }
 
-void add_connection(struct fd *whackfd, const struct whack_message *wm)
+void add_connection(const struct fd *whackfd, const struct whack_message *wm)
 {
 	struct connection *c = alloc_thing(struct connection,
 					   "struct connection");
@@ -1842,7 +1842,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
  * Returns name of new connection.  NULL on failure (duplicated name).
  * Caller is responsible for pfreeing name.
  */
-char *add_group_instance(struct fd *whackfd,
+char *add_group_instance(const struct fd *whackfd,
 			 struct connection *group, const ip_subnet *target,
 			 uint8_t proto , uint16_t sport , uint16_t dport)
 {
@@ -3646,7 +3646,7 @@ static int connection_compare_qsort(const void *a, const void *b)
 				*(const struct connection *const *)b);
 }
 
-static void show_one_sr(struct fd *whackfd,
+static void show_one_sr(const struct fd *whackfd,
 			const struct connection *c,
 			const struct spd_route *sr,
 			const char *instance)
@@ -3742,7 +3742,7 @@ static void show_one_sr(struct fd *whackfd,
 		  c->name, instance, policy_label);
 }
 
-void show_one_connection(struct fd *whackfd,
+void show_one_connection(const struct fd *whackfd,
 			 const struct connection *c)
 {
 	const char *ifn;
@@ -3971,7 +3971,7 @@ void show_one_connection(struct fd *whackfd,
 	kernel_alg_show_connection(whackfd, c, instance);
 }
 
-void show_connections_status(struct fd *whackfd)
+void show_connections_status(const struct fd *whackfd)
 {
 	int count = 0;
 	int active = 0;

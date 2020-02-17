@@ -18,4 +18,4 @@ extern void route_group(struct connection *c);
 extern void unroute_group(struct connection *c);
 extern void delete_group(const struct connection *c);
 
-extern void load_groups(struct fd *whackfd);
+extern void load_groups(const struct fd *whackfd);

@@ -1462,7 +1462,7 @@ void delete_states_by_connection(struct connection *c, bool relations)
  * peer is among those given.
  * This function is only called for ipsec whack --crash peer
  */
-void delete_states_by_peer(struct fd *whackfd, const ip_address *peer)
+void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 {
 	address_buf peer_buf;
 	const char *peerstr = ipstr(peer, &peer_buf);
@@ -2452,7 +2452,7 @@ void show_traffic_status(const char *name)
 	}
 }
 
-void show_states_status(struct fd *whackfd, bool brief)
+void show_states_status(const struct fd *whackfd, bool brief)
 {
 	whack_comment(whackfd, " ");             /* spacer */
 	whack_comment(whackfd, "State Information: DDoS cookies %s, %s new IKE connections",
@@ -2999,9 +2999,9 @@ bool drop_new_exchanges(void)
 	return cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_max_halfopen;
 }
 
-void show_globalstate_status(struct fd *whackfd)
+void show_globalstate_status(const struct fd *whackfd)
 {
-	unsigned shunts = show_shunt_count();
+	unsigned shunts = shunt_count();
 
 	whack_print(whackfd, "config.setup.ike.ddos_threshold=%u", pluto_ddos_threshold);
 	whack_print(whackfd, "config.setup.ike.max_halfopen=%u", pluto_max_halfopen);

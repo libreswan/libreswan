@@ -436,7 +436,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 	return why;
 }
 
-static void show_virtual_private_kind(struct fd *whackfd,
+static void show_virtual_private_kind(const struct fd *whackfd,
 				      const char *kind,
 				      const ip_subnet *private_net,
 				      int private_net_len)
@@ -469,7 +469,7 @@ static void show_virtual_private_kind(struct fd *whackfd,
 	}
 }
 
-void show_virtual_private(struct fd *whackfd)
+void show_virtual_private(const struct fd *whackfd)
 {
 	if (nat_traversal_enabled) {
 		whack_comment(whackfd, "virtual-private (%%priv):");

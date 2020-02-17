@@ -127,7 +127,7 @@ static int whack_route_connection(struct connection *c,
 static int whack_unroute_connection(struct connection *c,
 				    void *arg)
 {
-	struct fd *whackfd = arg;
+	const struct fd *whackfd = arg;
 	const struct spd_route *sr;
 	int fail = 0;
 
@@ -151,7 +151,7 @@ static int whack_unroute_connection(struct connection *c,
 	return 1;
 }
 
-static void do_whacklisten(struct fd *whackfd)
+static void do_whacklisten(const struct fd *whackfd)
 {
 	fflush(stderr);
 	fflush(stdout);

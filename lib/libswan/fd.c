@@ -68,7 +68,7 @@ void fd_leak(struct fd **fdp, where_t where)
 	ref_delete(fdp, free_fd, where);
 }
 
-ssize_t fd_sendmsg(struct fd *fd, const struct msghdr *msg,
+ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg,
 		   int flags, where_t where)
 {
 	if (fd == NULL) {
@@ -126,7 +126,7 @@ struct fd *fd_accept(int socket, where_t where)
 	return fdt;
 }
 
-ssize_t fd_read(struct fd *fd, void *buf, size_t nbytes, where_t where)
+ssize_t fd_read(const struct fd *fd, void *buf, size_t nbytes, where_t where)
 {
 	if (fd == NULL) {
 		log_pexpect(where, "null "PRI_FD"", pri_fd(fd));
@@ -139,7 +139,7 @@ ssize_t fd_read(struct fd *fd, void *buf, size_t nbytes, where_t where)
 	return read(fd->fd, buf, nbytes);
 }
 
-bool fd_p(struct fd *fd)
+bool fd_p(const struct fd *fd)
 {
 	if (fd == NULL) {
 		return false;
@@ -151,7 +151,7 @@ bool fd_p(struct fd *fd)
 	return true;
 }
 
-bool same_fd(struct fd *l, struct fd *r)
+bool same_fd(const struct fd *l, const struct fd *r)
 {
 	return fd_p(l) && fd_p(r) && l == r;
 }

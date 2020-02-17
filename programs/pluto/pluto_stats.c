@@ -311,7 +311,7 @@ void pstat_sa_established(struct state *st)
  * Output.
  */
 
-static void whack_pluto_stat(struct fd *whackfd, const struct pluto_stat *stat)
+static void whack_pluto_stat(const struct fd *whackfd, const struct pluto_stat *stat)
 {
 	unsigned long other = stat->count[stat->roof - stat->floor];
 	for (unsigned long e = stat->floor; e < stat->roof; e++) {
@@ -337,7 +337,7 @@ static void clear_pluto_stat(const struct pluto_stat *stat)
 /*
  * Some arrays start at 1, some start at 0, some start at ...
  */
-static void enum_stats(struct fd *whackfd, enum_names *names, unsigned long start,
+static void enum_stats(const struct fd *whackfd, enum_names *names, unsigned long start,
 		       unsigned long elemsof_count,
 		       const char *what, unsigned long count[])
 {
@@ -368,7 +368,7 @@ static void enum_stats(struct fd *whackfd, enum_names *names, unsigned long star
 		}							\
 	}
 
-void show_pluto_stats(struct fd *whackfd)
+void show_pluto_stats(const struct fd *whackfd)
 {
 	whack_print(whackfd, "total.ipsec.type.all=%lu", pstats_ipsec_sa);
 	whack_print(whackfd, "total.ipsec.type.esp=%lu", pstats_ipsec_esp);

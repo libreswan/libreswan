@@ -1142,7 +1142,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 	pfree(p);
 }
 
-unsigned show_shunt_count(void)
+unsigned shunt_count(void)
 {
 	unsigned i = 0;
 
@@ -1154,7 +1154,7 @@ unsigned show_shunt_count(void)
 	return i;
 }
 
-void show_shunt_status(struct fd *whackfd)
+void show_shunt_status(const struct fd *whackfd)
 {
 	whack_comment(whackfd, "Bare Shunt list:"); /* spacer */
 	whack_comment(whackfd, " "); /* spacer */
@@ -2660,7 +2660,7 @@ void init_kernel(void)
 	}
 }
 
-void show_kernel_interface(struct fd *whackfd)
+void show_kernel_interface(const struct fd *whackfd)
 {
 	if (kernel_ops != NULL) {
 		whack_comment(whackfd, "using kernel interface: %s",

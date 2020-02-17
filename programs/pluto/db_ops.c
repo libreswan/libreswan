@@ -265,7 +265,7 @@ struct db_prop *db_prop_get(struct db_context *ctx)
 	return &ctx->prop;
 }
 
-void db_ops_show_status(struct fd *whackfd)
+void db_ops_show_status(const struct fd *whackfd)
 {
 	whack_comment(whackfd, "stats db_ops: "
 		  DB_OPS_STATS_DESC " :"

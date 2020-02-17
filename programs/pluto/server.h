@@ -87,10 +87,10 @@ extern bool pluto_drop_oppo_null;
 extern struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint);
 extern bool use_interface(const char *rifn);
 extern void find_ifaces(bool rm_dead);
-extern void show_ifaces_status(struct fd *whackfd);
+extern void show_ifaces_status(const struct fd *whackfd);
 extern void free_ifaces(void);
 extern void show_debug_status(void);
-extern void show_fips_status(struct fd *whackfd);
+extern void show_fips_status(const struct fd *whackfd);
 extern void call_server(char *conffile);
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
 void fire_timer_photon_torpedo(struct event **evp, event_callback_fn cb, void *arg,

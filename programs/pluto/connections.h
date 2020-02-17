@@ -398,7 +398,7 @@ extern size_t format_end(char *buf, size_t buf_len,
 			 bool is_left, lset_t policy, bool filter_rnh);
 
 struct whack_message;   /* forward declaration of tag whack_msg */
-extern void add_connection(struct fd *whackfd, const struct whack_message *wm);
+extern void add_connection(const struct fd *whackfd, const struct whack_message *wm);
 extern void restart_connections_by_peer(struct connection *c);
 extern void flush_revival(const struct connection *c);
 
@@ -418,7 +418,7 @@ extern void delete_connection(struct connection *c, bool relations);
 extern void suppress_delete(struct connection *c);
 extern void delete_connections_by_name(const char *name, bool strict);
 extern void delete_every_connection(void);
-extern char *add_group_instance(struct fd *whack,
+extern char *add_group_instance(const struct fd *whack,
 				struct connection *group,
 				const ip_subnet *target,
 				uint8_t proto,
@@ -536,9 +536,9 @@ extern struct connection *eclipsed(const struct connection *c, struct spd_route 
 
 /* print connection status */
 
-extern void show_one_connection(struct fd *whackfd,
+extern void show_one_connection(const struct fd *whackfd,
 				const struct connection *c);
-extern void show_connections_status(struct fd *whackfd);
+extern void show_connections_status(const struct fd *whackfd);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);
 

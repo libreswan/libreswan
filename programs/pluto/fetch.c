@@ -722,7 +722,7 @@ static void merge_crl_fetch_request(struct crl_fetch_request *request)
 /*
  * list all distribution points
  */
-static void list_distribution_points(struct fd *whackfd,
+static void list_distribution_points(const struct fd *whackfd,
 				     const generalName_t *first_gn)
 {
 	for (const generalName_t *gn = first_gn; gn != NULL; gn = gn->next) {
@@ -736,7 +736,7 @@ static void list_distribution_points(struct fd *whackfd,
 /*
  *  list all fetch requests in the chained list
  */
-void list_crl_fetch_requests(struct fd *whackfd, bool utc)
+void list_crl_fetch_requests(const struct fd *whackfd, bool utc)
 {
 	lock_crl_fetch_list("list_crl_fetch_requests");
 

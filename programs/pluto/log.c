@@ -62,7 +62,7 @@ char *pluto_stats_binary = NULL;
  * (apparently) If the context provides a whack file descriptor,
  * messages should be copied to it -- see whack_log()
  */
-struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
+const struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
 
 /*
  * Context for logging.
@@ -389,7 +389,7 @@ static void peerlog_raw(const char *prefix, char *message)
 	}
 }
 
-static void jambuf_to_whack(struct lswlog *buf, struct fd *whackfd, enum rc_type rc)
+static void jambuf_to_whack(struct lswlog *buf, const struct fd *whackfd, enum rc_type rc)
 {
 	if (!fd_p(whackfd)) {
 		return;
@@ -481,7 +481,7 @@ static void whack_raw(jambuf_t *buf, enum rc_type rc)
 	 * state?
 	 */
 	passert(in_main_thread()); /* whack_log_fd is global */
-	struct fd *whackfd = (fd_p(whack_log_fd) ? whack_log_fd :
+	const struct fd *whackfd = (fd_p(whack_log_fd) ? whack_log_fd :
 		    cur_state != NULL ? cur_state->st_whack_sock :
 		    null_fd);
 	jambuf_to_whack(buf, whackfd, rc);
@@ -615,7 +615,7 @@ void libreswan_exit(enum pluto_exit_code rc)
  * - text is a human-readable annotation
  */
 
-void whack_log(enum rc_type rc, struct fd *whackfd, const char *message, ...)
+void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...)
 {
 	if (!in_main_thread()) {
 		LSWLOG_PEXPECT(buf) {
@@ -637,7 +637,7 @@ void whack_log(enum rc_type rc, struct fd *whackfd, const char *message, ...)
 	}
 }
 
-void whack_print(struct fd *whackfd, const char *message, ...)
+void whack_print(const struct fd *whackfd, const char *message, ...)
 {
 	pexpect(fd_p(whackfd));
 	pexpect(in_main_thread());
@@ -653,7 +653,7 @@ void whack_print(struct fd *whackfd, const char *message, ...)
 	}
 }
 
-void whack_comment(struct fd *whackfd, const char *message, ...)
+void whack_comment(const struct fd *whackfd, const char *message, ...)
 {
 	pexpect(fd_p(whackfd));
 	pexpect(in_main_thread());
@@ -735,7 +735,7 @@ void init_rate_log(void)
 			      RESET_LOG_RATE_LIMIT);
 }
 
-static void log_whack(enum rc_type rc, struct fd *whackfd, jambuf_t *buf)
+static void log_whack(enum rc_type rc, const struct fd *whackfd, jambuf_t *buf)
 {
 	if (in_main_thread()) {
 		jambuf_to_whack(buf, whackfd, rc);
@@ -745,7 +745,7 @@ static void log_whack(enum rc_type rc, struct fd *whackfd, jambuf_t *buf)
 	}
 }
 
-void log_jambuf(lset_t rc_flags, struct fd *object_fd, jambuf_t *buf)
+void log_jambuf(lset_t rc_flags, const struct fd *object_fd, jambuf_t *buf)
 {
 	enum rc_type rc = rc_flags & RC_MASK;
 	enum stream only = rc_flags & ~RC_MASK;
@@ -779,7 +779,7 @@ void log_jambuf(lset_t rc_flags, struct fd *object_fd, jambuf_t *buf)
 	}
 }
 
-static void broadcast(lset_t rc_flags, struct fd *object_fd,
+static void broadcast(lset_t rc_flags, const struct fd *object_fd,
 		      const struct state *st,
 		      const struct connection *c,
 		      const struct msg_digest *md,
@@ -809,7 +809,7 @@ void log_message(lset_t rc_flags,
 {
 	va_list ap;
 	va_start(ap, format);
-	struct fd *whackfd = (st != NULL ? st->st_whack_sock : null_fd);
+	const struct fd *whackfd = (st != NULL ? st->st_whack_sock : null_fd);
 	broadcast(rc_flags, whackfd, st, NULL/*connection*/, md, format, ap);
 	va_end(ap);
 }

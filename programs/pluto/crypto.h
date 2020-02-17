@@ -30,6 +30,6 @@ struct connection;
 
 void ike_alg_show_connection(const struct connection *c, const char *instance);
 
-void ike_alg_show_status(struct fd *whackfd);
+void ike_alg_show_status(const struct fd *whackfd);
 
 #endif /* _CRYPTO_H */

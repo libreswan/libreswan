@@ -841,7 +841,7 @@ extern void initialize_new_state(struct state *st,
 				 int try);
 
 extern void show_traffic_status(const char *name);
-extern void show_states_status(struct fd *whackfd, bool brief);
+extern void show_states_status(const struct fd *whackfd, bool brief);
 
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
 
@@ -855,7 +855,7 @@ extern void fmt_state(struct state *st, const monotime_t n,
 		      char *state_buf, const size_t state_buf_len,
 		      char *state_buf2, const size_t state_buf_len2);
 
-extern void delete_states_by_peer(struct fd *whackfd, const ip_address *peer);
+extern void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
 extern void v1_delete_state_by_username(struct state *st, void *name);
@@ -879,7 +879,7 @@ extern bool state_is_busy(const struct state *st);
 extern bool verbose_state_busy(const struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
-extern void show_globalstate_status(struct fd *whackfd);
+extern void show_globalstate_status(const struct fd *whackfd);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md);

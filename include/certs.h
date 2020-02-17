@@ -63,7 +63,7 @@ typedef struct {
 
 const char *cert_nickname(const cert_t *cert);
 
-extern void list_certs(struct fd *whackfd);
+extern void list_certs(const struct fd *whackfd);
 
 /*
  * Maintain a list of certificates.

@@ -548,7 +548,7 @@ static void free_global_timers(void)
 	}
 }
 
-static void list_global_timers(struct fd *whackfd,
+static void list_global_timers(const struct fd *whackfd,
 			       monotime_t now)
 {
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
@@ -638,7 +638,7 @@ static void free_signal_handlers(void)
 	}
 }
 
-static void list_signal_handlers(struct fd *whackfd)
+static void list_signal_handlers(const struct fd *whackfd)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
@@ -989,7 +989,7 @@ struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
 /*
  * dump list of events to whacklog
  */
-void timer_list(struct fd *whackfd)
+void timer_list(const struct fd *whackfd)
 {
 	monotime_t nw = mononow();
 
@@ -1060,7 +1060,7 @@ struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint
 	return NULL;
 }
 
-void show_ifaces_status(struct fd *whackfd)
+void show_ifaces_status(const struct fd *whackfd)
 {
 	struct iface_port *p;
 
@@ -1085,7 +1085,7 @@ void show_debug_status(void)
 	}
 }
 
-void show_fips_status(struct fd *whackfd)
+void show_fips_status(const struct fd *whackfd)
 {
 #ifdef FIPS_CHECK
 	bool fips = libreswan_fipsmode();

@@ -207,7 +207,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 	return ctx_new;
 }
 
-void kernel_alg_show_status(struct fd *whackfd)
+void kernel_alg_show_status(const struct fd *whackfd)
 {
 	whack_comment(whackfd, "Kernel algorithms supported:");
 	whack_comment(whackfd, " "); /* spacer */
@@ -234,7 +234,7 @@ void kernel_alg_show_status(struct fd *whackfd)
 	whack_comment(whackfd, " "); /* spacer */
 }
 
-void kernel_alg_show_connection(struct fd *whackfd,
+void kernel_alg_show_connection(const struct fd *whackfd,
 				const struct connection *c,
 				const char *instance)
 {

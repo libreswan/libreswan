@@ -987,7 +987,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	pexpect_st_local_endpoint(st);
 }
 
-void show_setup_natt(struct fd *whackfd)
+void show_setup_natt(const struct fd *whackfd)
 {
 	whack_comment(whackfd, " ");     /* spacer */
 	whack_comment(whackfd, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",

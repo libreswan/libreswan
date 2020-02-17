@@ -2,8 +2,8 @@ struct connection;
 struct esp_info;
 
 /* status info */
-extern void kernel_alg_show_status(struct fd *whackfd);
-extern void kernel_alg_show_connection(struct fd *whackfd,
+extern void kernel_alg_show_status(const struct fd *whackfd);
+extern void kernel_alg_show_connection(const struct fd *whackfd,
 				       const struct connection *c,
 				       const char *instance);
 

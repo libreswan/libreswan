@@ -42,7 +42,7 @@
 #include "crypto.h"
 #include "db_ops.h"
 
-static void show_system_security(struct fd *whackfd)
+static void show_system_security(const struct fd *whackfd)
 {
 	int selinux = libreswan_selinux();
 #ifdef FIPS_CHECK
@@ -67,13 +67,13 @@ static void show_system_security(struct fd *whackfd)
 	whack_comment(whackfd, " ");     /* spacer */
 }
 
-void show_global_status(struct fd *whackfd)
+void show_global_status(const struct fd *whackfd)
 {
 	show_globalstate_status(whackfd);
 	show_pluto_stats(whackfd);
 }
 
-void show_status(struct fd *whackfd)
+void show_status(const struct fd *whackfd)
 {
 	show_kernel_interface(whackfd);
 	show_ifaces_status(whackfd);

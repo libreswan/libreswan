@@ -52,7 +52,7 @@ extern char *pluto_stats_binary;
  * If the context provides a whack file descriptor, messages
  * should be copied to it -- see whack_log()
  */
-extern struct fd *whack_log_fd;                        /* only set during whack_handle() */
+extern const struct fd *whack_log_fd;                        /* only set during whack_handle() */
 
 extern bool whack_prompt_for(struct state *st, const char *prompt,
 			     bool echo, char *ansbuf, size_t ansbuf_len);
@@ -206,15 +206,15 @@ extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
  * commands.
  */
 
-void whack_log(enum rc_type rc, struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
-void whack_print(struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
-void whack_comment(struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
+void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
+void whack_print(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
+void whack_comment(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 
-extern void show_status(struct fd *whackfd);
+extern void show_status(const struct fd *whackfd);
 
-extern void show_setup_plutomain(struct fd *whackfd);
-extern void show_setup_natt(struct fd *whackfd);
-extern void show_global_status(struct fd *whackfd);
+extern void show_setup_plutomain(const struct fd *whackfd);
+extern void show_setup_natt(const struct fd *whackfd);
+extern void show_global_status(const struct fd *whackfd);
 
 enum linux_audit_kind {
 	LAK_PARENT_START,

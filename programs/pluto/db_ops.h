@@ -36,7 +36,7 @@ extern void db_attr_add_values(struct db_context *ctx, enum ikev1_ipsec_attr typ
 struct db_prop *db_prop_get(struct db_context *ctx);
 
 /*	Show stats (allocation, etc) */
-void db_ops_show_status(struct fd *whackfd);
+void db_ops_show_status(const struct fd *whackfd);
 
 extern void db_print(struct db_context *ctx);
 

@@ -129,7 +129,7 @@ static int print_secrets(struct secret *secret,
 	return 1;
 }
 
-void list_psks(struct fd *whackfd)
+void list_psks(const struct fd *whackfd)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
 	whack_comment(whackfd, " ");
@@ -1048,7 +1048,7 @@ err_t add_ipseckey(const struct id *id,
 /*
  *  list all public keys in the chained list
  */
-void list_public_keys(struct fd *whackfd, bool utc, bool check_pub_keys)
+void list_public_keys(const struct fd *whackfd, bool utc, bool check_pub_keys)
 {
 	struct pubkey_list *p = pluto_pubkeys;
 
