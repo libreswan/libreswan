@@ -77,30 +77,30 @@ include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 # reside rather than where install puts them, are exempt from this.)
 # The prefixing is done in this file, so as to have central control over
 # it; DESTDIR itself should never appear in any other Makefile.
-DESTDIR?=
+DESTDIR ?=
 
 # "PREFIX" part of tree, used in building other pathnames.
-PREFIX?=/usr/local
+PREFIX ?= /usr/local
 
 # Compatibility with old INC_USRLOCAL which was changed to PREFIX.
 # We will overwrite PREFIX with INC_USRLOCAL untill libreswan 3.32
 ifdef INC_USRLOCAL
-PREFIX=$(INC_USRLOCAL)
+PREFIX = $(INC_USRLOCAL)
 $(warning Warning: Overriding PREFIX with deprecated variable INC_USRLOCAL)
 endif
 
 # LIBEXECDIR is where sub-commands get put, FINALLIBEXECDIR is where
 # the "ipsec" command will look for them when it is run.
-FINALLIBEXECDIR?=$(PREFIX)/libexec/ipsec
-LIBEXECDIR?=$(DESTDIR)$(FINALLIBEXECDIR)
+FINALLIBEXECDIR ?= $(PREFIX)/libexec/ipsec
+LIBEXECDIR ?= $(DESTDIR)$(FINALLIBEXECDIR)
 
 ifdef BINDIR
 $(error ERROR: Deprecated BINDIR variable set, use LIBEXECDIR instead)
 endif
 
 # SBINDIR is where the user interface command goes.
-FINALSBINDIR?=$(PREFIX)/sbin
-SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
+FINALSBINDIR ?= $(PREFIX)/sbin
+SBINDIR ?= $(DESTDIR)$(FINALSBINDIR)
 
 # Error out if somebody try to use deprecated PUBDIR.
 ifdef PUBDIR
@@ -108,93 +108,92 @@ $(error ERROR: deprecated variable PUBDIR is set, use SBINDIR instead)
 endif
 
 # where the appropriate manpage tree is located
-FINALMANDIR?=$(PREFIX)/share/man
+FINALMANDIR ?= $(PREFIX)/share/man
 ifdef INC_MANDIR
-FINALMANDIR=$(PREFIX}/${INC_MANDIR}
+FINALMANDIR = $(PREFIX}/${INC_MANDIR}
 $(warning Warning: Overriding FINALMANDIR with deprecated INC_MANDIR variable)
 endif
 # the full pathname
-MANDIR?=$(DESTDIR)$(FINALMANDIR)
+MANDIR ?= $(DESTDIR)$(FINALMANDIR)
 
 # Compatibility with old MANTREE which was changed to MANDIR.
 # We will overwrite MANDIR with MANTREE untill libreswan 3.32
 ifdef MANTREE
-MANDIR=$(MANTREE)
+MANDIR = $(MANTREE)
 $(warning Warning: Overriding MANDIR with deprecated variable MANTREE)
 endif
 
 # where configuration files go
-FINALSYSCONFDIR?=/etc
+FINALSYSCONFDIR ?= /etc
 
 # run dir - defaults to /run/pluto
 # Some older systems might need to set this to /var/run/pluto
-# DEFAULT_RUNDIR=/run/pluto
-FINALRUNDIR?=/run/pluto
-RUNDIR?=$(DESTDIR)$(FINALRUNDIR)
+FINALRUNDIR ?= /run/pluto
+RUNDIR ?= $(DESTDIR)$(FINALRUNDIR)
 
 # final configuration file
-FINALCONFFILE?=$(FINALSYSCONFDIR)/ipsec.conf
-CONFFILE?=$(DESTDIR)$(FINALCONFFILE)
+FINALCONFFILE ?= $(FINALSYSCONFDIR)/ipsec.conf
+CONFFILE ?= $(DESTDIR)$(FINALCONFFILE)
 
-FINALCONFDIR?=$(FINALSYSCONFDIR)
+FINALCONFDIR ?= $(FINALSYSCONFDIR)
 
-CONFDIR?=$(DESTDIR)$(FINALCONFDIR)
-SYSCONFDIR?=$(DESTDIR)$(FINALSYSCONFDIR)
+CONFDIR ?= $(DESTDIR)$(FINALCONFDIR)
+SYSCONFDIR ?= $(DESTDIR)$(FINALSYSCONFDIR)
 
-FINALCONFDDIR?=$(FINALCONFDIR)/ipsec.d
-CONFDDIR?=$(DESTDIR)$(FINALCONFDDIR)
+FINALCONFDDIR ?= $(FINALCONFDIR)/ipsec.d
+CONFDDIR ?= $(DESTDIR)$(FINALCONFDDIR)
 
-FINALNSSDIR?=/etc/ipsec.d
-# Debian uses /var/lib/ipsec
-#FINALNSSDIR?=/var/lib/ipsec
-NSSDIR?=$(DESTDIR)$(FINALNSSDIR)
+FINALNSSDIR ?= /etc/ipsec.d
+# Debian uses /var/lib/ipsec/nss
+#FINALNSSDIR ?= /var/lib/ipsec/nss
+NSSDIR ?= $(DESTDIR)$(FINALNSSDIR)
 
 # where dynamic PPKs go, for now
-FINALPPKDIR?=$(FINALCONFDDIR)
-PPKDIR?=$(DESTDIR)$(FINALPPKDIR)
+FINALPPKDIR ?= $(FINALCONFDDIR)
+PPKDIR ?= $(DESTDIR)$(FINALPPKDIR)
 
 # We will overwrite FINALDOCDIR with INC_DOCDIR untill libreswan 3.32
 ifdef INC_DOCDIR
-FINALDOCDIR=$(PREFIX}/$(INC_DOCDIR)/libreswan
+FINALDOCDIR = $(PREFIX}/$(INC_DOCDIR)/libreswan
 $(warning Warning: Overriding FINALDOCDIR with deprecated INC_DOCDIR variable)
 endif
 
 # Documentation directory
-FINALDOCDIR?=$(PREFIX)/share/doc/libreswan
-DOCDIR?=$(DESTDIR)$(FINALDOCDIR)
+FINALDOCDIR ?= $(PREFIX)/share/doc/libreswan
+DOCDIR ?= $(DESTDIR)$(FINALDOCDIR)
 
 # sample configuration files go into
-FINALEXAMPLECONFDIR?=$(FINALDOCDIR)
-EXAMPLECONFDIR?=$(DESTDIR)$(FINALEXAMPLECONFDIR)
+FINALEXAMPLECONFDIR ?= $(FINALDOCDIR)
+EXAMPLECONFDIR ?= $(DESTDIR)$(FINALEXAMPLECONFDIR)
 
 
 # where per-conn pluto logs go
-FINALVARDIR?=/var
-VARDIR?=$(DESTDIR)$(FINALVARDIR)
-FINALLOGDIR?=$(FINALVARDIR)/log
-LOGDIR?=$(DESTDIR)$(FINALLOGDIR)
+FINALVARDIR ?= /var
+VARDIR ?= $(DESTDIR)$(FINALVARDIR)
+FINALLOGDIR ?= $(FINALVARDIR)/log
+LOGDIR ?= $(DESTDIR)$(FINALLOGDIR)
 
 # Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
 INITSYSTEM ?= $(shell $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
-DOCKER_PLUTONOFORK?=--nofork
+DOCKER_PLUTONOFORK ?= --nofork
 
 # An attempt is made to automatically figure out where boot/shutdown scripts
 # will finally go:  the first directory in INITDDIRS that exists gets them.
 # If none of those exists (or INITDDIRS is empty), INITDDIR_DEFAULT gets them.
 # With a non-null DESTDIR, INITDDIR_DEFAULT will be used unless one of the
 # INITDDIRS directories has been pre-created under DESTDIR.
-INITDDIRS?=/etc/rc.d/init.d /etc/init.d
-INITDDIR_DEFAULT?=/etc/init.d
+INITDDIRS ?= /etc/rc.d/init.d /etc/init.d
+INITDDIR_DEFAULT ?= /etc/init.d
 
 # We will overwrite INITDDIRS with INC_RCDIRS untill libreswan 3.32
 ifdef INC_RCDIRS
-INITDDIRS=$(INC_RCDIRS)
+INITDDIRS = $(INC_RCDIRS)
 $(warning Warning: Overriding INITDDIRS with deprecated variable INC_RCDIRS)
 endif
 # We will overwrite INITDDIR_DEFAULT with INC_RCDEFAULT untill libreswan 3.32
 ifdef INC_RCDEFAULT
-INITDDIR_DEFAULT=$(INC_RCDEFAULT)
+INITDDIR_DEFAULT = $(INC_RCDEFAULT)
 $(warning Warning: Overriding INITDDIR_DEFAULT with deprecated variable INC_RCDEFAULT)
 endif
 
@@ -202,11 +201,11 @@ endif
 # will finally be (so utils/Makefile can create a symlink in LIBEXECDIR to
 # the place where the boot/shutdown script will finally be, rather than
 # the place where it is installed).
-FINALINITDDIR?=$(shell for d in $(INITDDIRS) ; \
+FINALINITDDIR ?= $(shell for d in $(INITDDIRS) ; \
 		do if test -d $(DESTDIR)/$$d ; \
 		then echo $$d ; exit 0 ; \
 		fi ; done ; echo $(INITDDIR_DEFAULT) )
-INITDDIR?=$(DESTDIR)$(FINALINITDDIR)
+INITDDIR ?= $(DESTDIR)$(FINALINITDDIR)
 
 # PYTHON_BINARY is used for python scripts shebang
 PYTHON_BINARY ?= /usr/bin/python3
@@ -219,13 +218,13 @@ SHELL_BINARY ?= /bin/sh
 # What command to use to load the modules. openwrt does not have modprobe
 # Using -b enables blacklisting - this is needed for some known bad
 # versions of crypto acceleration modules.
-MODPROBEBIN?=modprobe
-MODPROBEARGS?=--quiet --use-blacklist
+MODPROBEBIN ?= modprobe
+MODPROBEARGS ?= --quiet --use-blacklist
 
 ### misc installation stuff
 
 # what program to use when installing things
-INSTALL?=install
+INSTALL ?= install
 
 # flags to the install program, for programs, manpages, and config
 # files -b has install make backups (n.b., unlinks original), --suffix
@@ -240,7 +239,7 @@ INSTMANFLAGS ?= -m 0644
 INSTCONFFLAGS ?= -m 0644
 
 # flags for bison, overrode in packages/default/foo
-BISONOSFLAGS?=
+BISONOSFLAGS ?=
 
 # XXX: Don't add NSSFLAGS to USERLAND_CFLAGS for now.  It needs to go
 # after -I$(top_srcdir)/include and fixing that is an entirely
@@ -256,7 +255,7 @@ NSPR_LDFLAGS ?= -lnspr4
 # Use local copy of nss function CERT_CompareAVA
 # See https://bugzilla.mozilla.org/show_bug.cgi?id=1336487
 # This work-around is needed with nss versions before 3.30.
-USE_NSS_AVA_COPY?=false
+USE_NSS_AVA_COPY ?= false
 ifeq ($(USE_NSS_AVA_COPY),true)
 NSSFLAGS += -DNSS_REQ_AVA_COPY
 endif
@@ -264,7 +263,7 @@ endif
 # Use nss IPsec profile for X509 validation. This is less restrictive
 # on EKU's. Enable when using NSS >= 3.41 (or RHEL-7.6 / RHEL-8.0)
 # See https://bugzilla.mozilla.org/show_bug.cgi?id=1252891
-USE_NSS_IPSEC_PROFILE?=true
+USE_NSS_IPSEC_PROFILE ?= true
 ifeq ($(USE_NSS_IPSEC_PROFILE),true)
 NSSFLAGS += -DNSS_IPSEC_PROFILE
 endif
@@ -273,39 +272,39 @@ endif
 # that do not ship linux/xfrm.h, or when the shipped version is too
 # old. Since we ship some not-yet merged ipsec-next offload code, this
 # is currently true for basically all distro's
-USE_XFRM_HEADER_COPY?=true
-XFRM_LIFETIME_DEFAULT?=30
+USE_XFRM_HEADER_COPY ?= true
+XFRM_LIFETIME_DEFAULT ?= 30
 
-USE_XFRM_INTERFACE_IFLA_HEADER?=false
+USE_XFRM_INTERFACE_IFLA_HEADER ?= false
 
 # Some systems have a bogus combination of glibc and kernel-headers which
 # causes a conflict in the IPv6 defines. Try enabling this option as a workaround
 # when you see errors related to 'struct in6_addr'
-USE_GLIBC_KERN_FLIP_HEADERS?=false
+USE_GLIBC_KERN_FLIP_HEADERS ?= false
 
 # When compiling on a system where unbound is missing the required unbound-event.h
 # include file, enable this workaround option that will enable an included copy of
 # this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
-USE_UNBOUND_EVENT_H_COPY?=false
+USE_UNBOUND_EVENT_H_COPY ?= false
 
 # Install the portexclude service for policies/portexcludes.conf policies
 # Disabled per default for now because it requires python[23]
-USE_PORTEXCLUDES?=false
+USE_PORTEXCLUDES ?= false
 
 # The default DNSSEC root key location is set to /var/lib/unbound/root.key
 # DEFAULT_DNSSEC_ROOTKEY_FILE=/var/lib/unbound/root.key
 
 # To build with clang, use: scan-build make programs
 #GCC=clang
-GCC?=gcc
+GCC ?= gcc
 
-MAKE?=make
+MAKE ?= make
 
 # Enable AddressSanitizer - see https://libreswan.org/wiki/Compiling_with_AddressSanitizer
 # requires clang or gcc >= 4.8 and libasan. Do not combine with Electric Fence and do not
 # run pluto with --leak-detective
-# ASAN=-fsanitize=address
-ASAN?=
+# ASAN = -fsanitize=address
+ASAN ?=
 
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
@@ -313,10 +312,10 @@ ASAN?=
 # You can also run this before starting libreswan on glibc systems:
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
-PORTINCLUDE?=
+PORTINCLUDE ?=
 
 # look for POD2MAN command
-POD2MAN?=$(shell which pod2man | grep / | head -n1)
+POD2MAN ?= $(shell which pod2man | grep / | head -n1)
 
 ## build environment variations
 #
@@ -326,16 +325,16 @@ POD2MAN?=$(shell which pod2man | grep / | head -n1)
 #       you may or maynot have
 
 # Enable support for DNSSEC. This requires the unbound and ldns libraries.
-USE_DNSSEC?=true
+USE_DNSSEC ?= true
 
 # For systemd start/stop notifications and watchdog feature
 # We only enable this by default if used INITSYSTEM is systemd
 ifeq ($(INITSYSTEM),systemd)
-USE_SYSTEMD_WATCHDOG?=true
-SD_RESTART_TYPE?="on-failure"
-SD_PLUTO_OPTIONS?="--leak-detective"
+USE_SYSTEMD_WATCHDOG ?= true
+SD_RESTART_TYPE ?= on-failure
+SD_PLUTO_OPTIONS ?= --leak-detective
 else
-USE_SYSTEMD_WATCHDOG?=false
+USE_SYSTEMD_WATCHDOG ?= false
 endif
 
 # Figure out ipsec.service file Type= option
@@ -343,48 +342,48 @@ ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SD_TYPE=notify
 SD_WATCHDOGSEC?=200
 else
-SD_WATCHDOGSEC?=0
+SD_WATCHDOGSEC ?= 0
 SD_TYPE=simple
 endif
 
 # Do we want all the configuration files like ipsec.conf and ipsec.secrets
 # and any certificates to be in a single directory defined by
 # FINALCONFDDIR?
-USE_SINGLE_CONF_DIR?=false
+USE_SINGLE_CONF_DIR ?= false
 
 # Build support for KEY RR
 # this will become false in the future, as all OE sites transition to
 # using IPSECKEY instead of KEY records.  See references to 'Flag Day'
 # Except this to change in Q1 2011
-USE_KEYRR?=true
+USE_KEYRR ?= true
 
 # Build support for integrity check for libreswan on startup
-USE_FIPSCHECK?=false
-FIPSPRODUCTCHECK?=/etc/system-fips
+USE_FIPSCHECK ?= false
+FIPSPRODUCTCHECK ?= /etc/system-fips
 
 # Enable Labeled IPsec Functionality (requires SElinux)
-USE_LABELED_IPSEC?=false
+USE_LABELED_IPSEC ?= false
 
 # Enable seccomp support (whitelist allows syscalls)
-USE_SECCOMP?=false
+USE_SECCOMP ?= false
 
 # Support for Network Manager
-USE_NM?=true
+USE_NM ?= true
 
 # Include LDAP support (currently used for fetching CRLs)
-USE_LDAP?=false
+USE_LDAP ?= false
 
 # Include libcurl support (currently used for fetching CRLs)
-USE_LIBCURL?=true
+USE_LIBCURL ?= true
 
 # Do we want to limit the number of ipsec connections artificially
-USE_IPSEC_CONNECTION_LIMIT?=false
-IPSEC_CONNECTION_LIMIT?=250
+USE_IPSEC_CONNECTION_LIMIT ?= false
+IPSEC_CONNECTION_LIMIT ?= 250
 
 # For Angstrom linux with broken popen() set to true. See bug #1067
-HAVE_BROKEN_POPEN?=false
+HAVE_BROKEN_POPEN ?= false
 
-NONINTCONFIG=oldconfig
+NONINTCONFIG = oldconfig
 
 -include ${LIBRESWANSRCDIR}/Makefile.ver
 
@@ -394,16 +393,16 @@ ifndef IPSECVERSION
  ifeq ($(VERSION_ADD_GIT_DIRTY),true)
   ADD_GIT_DIRTY = --add-git-diry
  endif
-IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${ADD_GIT_DIRTY} ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
+IPSECVERSION := $(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${ADD_GIT_DIRTY} ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
 export IPSECVERSION
 endif
 ifndef IPSECVIDVERSION
 # VID is a somewhat shortened version, eg "3.5" or "3.5-xxx"
-IPSECVIDVERSION:=$(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
+IPSECVIDVERSION := $(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
 export IPSECVIDVERSION
 endif
 
-OBJDIRTOP?=${LIBRESWANSRCDIR}/${OBJDIR}
+OBJDIRTOP ?= ${LIBRESWANSRCDIR}/${OBJDIR}
 
 #
 #  Paranoia says to export these just to sure:
@@ -412,21 +411,21 @@ export OBJDIRTOP
 
 ### paths within the source tree
 
-LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
+LIBSWANDIR = ${LIBRESWANSRCDIR}/lib/libswan
 
 # Need to specify absolute paths as 'make' (checks dependencies) and
 # 'ld' (does the link) are run from different directories.
-LIBRESWANLIB=$(abs_top_builddir)/lib/libswan/libswan.a
-LSWTOOLLIB=$(abs_top_builddir)/lib/liblswtool/liblswtool.a
-BSDPFKEYLIB=$(abs_top_builddir)/lib/libbsdpfkey/libbsdpfkey.a
+LIBRESWANLIB = $(abs_top_builddir)/lib/libswan/libswan.a
+LSWTOOLLIB = $(abs_top_builddir)/lib/liblswtool/liblswtool.a
+BSDPFKEYLIB = $(abs_top_builddir)/lib/libbsdpfkey/libbsdpfkey.a
 
 # XXX: $(LSWTOOLLIB) has circular references to $(LIBRESWANLIB).
-LSWTOOLLIBS=$(LSWTOOLLIB) $(LIBRESWANLIB)
+LSWTOOLLIBS = $(LSWTOOLLIB) $(LIBRESWANLIB)
 
-LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
+LIBDESSRCDIR = ${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
 
-WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a
-IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
+WHACKLIB = ${OBJDIRTOP}/lib/libwhack/libwhack.a
+IPSECCONFLIB = ${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
@@ -471,15 +470,15 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@DOCKER_PLUTONOFORK@:$(DOCKER_PLUTONOFORK):g" \
 
 # For KVM testing setup
-#POOL?=${LIBRESWANSRCDIR}/pool
-POOL?=/vol/pool
+#POOL ?= ${LIBRESWANSRCDIR}/pool
+POOL ?= /vol/pool
 # support types are fedora and ubuntu
-OSTYPE?=fedora
-OSMEDIA?=http://download.fedoraproject.org/pub/fedora/linux/releases/28/Server/x86_64/os/
+OSTYPE ?= fedora
+OSMEDIA ?= http://download.fedoraproject.org/pub/fedora/linux/releases/28/Server/x86_64/os/
 
 # Ubuntu media
-# OSTYPE?=ubuntu
-# OSMEDIA?=http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
+# OSTYPE ?= ubuntu
+# OSMEDIA ?= http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
 
 # Now that all the configuration variables are defined, use them to
 # define USERLAND_CFLAGS and USERLAND_LDFLAGS
