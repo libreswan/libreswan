@@ -29,5 +29,5 @@ For a minimal install (no manpages) type:
 	sudo make install-base
 
 The file Makefile.inc.local can be used to enable/disable features
-configured by mk/config.mk and mk/userland-cflags.mk
+configured by mk/config.mk.
 
