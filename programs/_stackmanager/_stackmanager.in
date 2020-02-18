@@ -221,7 +221,6 @@ case ${action} in
 	    netkey)
 		startnetkey
 		;;
-		;;
 	esac
 	;;
     restart)
