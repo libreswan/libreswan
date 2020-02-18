@@ -1,4 +1,4 @@
-grep "fragment" /tmp/pluto.log
+grep "fragment" /tmp/pluto.log | grep -v delref
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

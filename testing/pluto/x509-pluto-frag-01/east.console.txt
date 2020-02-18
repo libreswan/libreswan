@@ -16,7 +16,7 @@ east #
  echo "initdone"
 initdone
 east #
- grep "fragment" /tmp/pluto.log
+ grep "fragment" /tmp/pluto.log | grep -v delref
 | peer supports fragmentation
 |    fragment id: 1 (00 01)
 |    fragment number: 1 (01)
