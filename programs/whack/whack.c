@@ -114,7 +114,7 @@ static void help(void)
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
 		"	[--tfc <size>] [--send-no-esp-tfc] \\\n"
 		"	[--ikev1-allow | --ikev2-allow] \\\n"
-		"	[--allow-narrowing] [--sareftrack] [--sarefconntrack] \\\n"
+		"	[--allow-narrowing] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
 		"	[--esn ] [--no-esn] [--decap-dscp] [--nopmtudisc] [--mobike] \\\n"
 #ifdef HAVE_NM
@@ -145,7 +145,6 @@ static void help(void)
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
 		"	[--donotrekey ] [--reauth ] \\\n"
-		"	[--disablearrivalcheck ] \\\n"
 		"	[--nic-offload ] \\\n"
 		"	--to\n"
 		"\n"
@@ -651,8 +650,6 @@ static const struct option long_opts[] = {
 	PS("aggressive", AGGRESSIVE),
 	PS("aggrmode", AGGRESSIVE), /*  backwards compatibility */
 
-	PS("disablearrivalcheck", DISABLEARRIVALCHECK),
-
 	{ "initiateontraffic", no_argument, NULL,
 		CDP_SHUNT +(POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
 	{ "pass", no_argument, NULL,
@@ -758,9 +755,6 @@ static const struct option long_opts[] = {
 #ifdef XAUTH_HAVE_PAM
 	PS("ikev2-pam-authorize", IKEV2_PAM_AUTHORIZE),
 #endif
-	PS("sareftrack", SAREF_TRACK),
-	PS("sarefconntrack", SAREF_TRACK_CONNTRACK),
-
 	PS("ikefrag-allow", IKE_FRAG_ALLOW),
 	PS("ikefrag-force", IKE_FRAG_FORCE),
 	PS("no-ikepad", NO_IKEPAD),
@@ -1674,8 +1668,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_COMPRESS_IX:
 		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
 		case CDP_SINGLETON + POLICY_PFS_IX:	/* --pfs */
-		/* --disablearrivalcheck */
-		case CDP_SINGLETON + POLICY_DISABLEARRIVALCHECK_IX:
 
 		/* --negopass */
 		case CDP_SINGLETON + POLICY_NEGO_PASS_IX:
@@ -1703,11 +1695,6 @@ int main(int argc, char **argv)
 
 		/* --mobike */
 		case CDP_SINGLETON + POLICY_MOBIKE_IX:
-
-		/* --sareftrack */
-		case CDP_SINGLETON + POLICY_SAREF_TRACK_IX:
-		/* --sarefconntrack */
-		case CDP_SINGLETON + POLICY_SAREF_TRACK_CONNTRACK_IX:
 
 		/* --ikefrag-allow */
 		case CDP_SINGLETON + POLICY_IKE_FRAG_ALLOW_IX:

@@ -31,27 +31,3 @@ For a minimal install (no manpages) type:
 The file Makefile.inc.local can be used to enable/disable features
 configured by mk/config.mk and mk/userland-cflags.mk
 
-Optional building alternative KLIPS IPsec stack
------------------------------------------------
-
-On Linux 2.6 or higher for the running kernel:
-
-	make module
-	sudo make module_install
-
-Build for a kernel different from the running kernel:
-
-	make KERNELSRC=//usr/src/kernel/linux-9.42 module
-
-Building KLIPS kernel module for the old Linux 2.4 kernel
-
-	make module24
-	sudo make minstall24
-
-When using KLIPS with OCF:
-
-	make CONFIG_KLIPS_OCF=y MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/ocf/config-all.hmodules module module_install
-
-When called in openwrt/packaging/libreswan/Makefile to build kmod-libreswan
-
-	make MODULE_DEFCONFIG=$${LIBRESWANSRCDIR}/packaging/openwrt/defconfig MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/openwrt/config-all.h module

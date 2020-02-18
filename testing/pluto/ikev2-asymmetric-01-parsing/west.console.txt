@@ -217,35 +217,35 @@ Showing policies of all loaded connections
 west #
  ipsec status | grep -E 'policy: |our auth:'
 000 "test-default":   our auth:rsasig, their auth:rsasig
-000 "test-default":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "test-default":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "test-default":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "test-v1-rsasig":   our auth:rsasig, their auth:rsasig
-000 "test-v1-rsasig":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "test-v1-rsasig":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "test-v1-secret":   our auth:secret, their auth:secret
-000 "test-v1-secret":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "test-v1-secret":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "test1":   our auth:secret, their auth:secret
-000 "test1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "test1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "test1":   v2-auth-hash-policy: none;
 000 "test2":   our auth:rsasig, their auth:rsasig
-000 "test2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "test2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "test2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "test3":   our auth:null, their auth:null
-000 "test3":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "test3":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "test3":   v2-auth-hash-policy: none;
 000 "test5":   our auth:secret, their auth:rsasig
-000 "test5":   policy: ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "test5":   policy: ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "test5":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "test6":   our auth:null, their auth:rsasig
-000 "test6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "test6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "test6":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "test7":   our auth:secret, their auth:secret
-000 "test7":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "test7":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "test7":   v2-auth-hash-policy: none;
 000 "test8":   our auth:null, their auth:null
-000 "test8":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "test8":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
 000 "test8":   v2-auth-hash-policy: none;
 000 "test9":   our auth:rsasig, their auth:rsasig
-000 "test9":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "test9":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "test9":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "testmanual1":   our auth:secret, their auth:rsasig
 000 "testmanual1":   policy: ENCRYPT+IKEV2_ALLOW;

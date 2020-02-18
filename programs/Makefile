@@ -1,5 +1,3 @@
-# Makefile for the KLIPS interface utilities
-#
 # Copyright (C) 1998, 1999  Henry Spencer.
 # Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
@@ -24,7 +22,7 @@ SUBDIRS=
 
 SUBDIRS+=pluto
 SUBDIRS+=whack
-SUBDIRS+=proc addconn
+SUBDIRS+=addconn
 SUBDIRS+=configs _plutorun _stackmanager
 SUBDIRS+=_secretcensor _updown _unbound-hook
 SUBDIRS+=auto barf verify show ipsec look newhostkey
@@ -39,9 +37,6 @@ ifeq ($(USE_PORTEXCLUDES),true)
 SUBDIRS+=portexcludes
 endif
 
-ifeq ($(USE_KLIPS),true)
-SUBDIRS+= _updown.klips eroute klipsdebug pf_key spi spigrp tncfg
-endif
 ifeq ($(USE_NETKEY),true)
 SUBDIRS+= _updown.netkey
 endif

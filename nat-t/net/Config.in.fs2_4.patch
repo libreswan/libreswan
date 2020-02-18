@@ -1,8 +1,0 @@
---- linux/net/Config.in.orig	Fri Feb  9 14:34:13 2001
-+++ linux/net/Config.in	Thu Feb 22 19:40:08 2001
-@@ -88,3 +88,5 @@
- endmenu
- 
-+bool 'IPSEC NAT-Traversal' CONFIG_IPSEC_NAT_TRAVERSAL
-+
- endmenu

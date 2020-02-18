@@ -55,10 +55,7 @@ KVM_ALL_ALGS ?= false
 KVM_USE_SECCOMP ?= true
 KVM_USE_LABELED_IPSEC ?= true
 KVM_SD_RESTART_TYPE=no
-KVM_USE_KLIPS ?= true
 KVM_USE_FIPSCHECK ?= true
-
-KVM_KLIPS_MODULE ?= false
 
 KVM_MAKEFLAGS ?= \
 	USE_EFENCE=$(KVM_USE_EFENCE) \
@@ -67,7 +64,6 @@ KVM_MAKEFLAGS ?= \
 	USE_LABELED_IPSEC=$(KVM_USE_LABELED_IPSEC) \
 	USE_NSS_IPSEC_PROFILE=$(KVM_USE_NSS_IPSEC_PROFILE) \
 	SD_RESTART_TYPE=$(KVM_SD_RESTART_TYPE) \
-	USE_KLIPS=$(KVM_USE_KLIPS) \
 	USE_NSS_PRF=$(KVM_USE_NSS_PRF) \
 	USE_FIPSCHECK=$(KVM_USE_FIPSCHECK)
 
@@ -956,9 +952,6 @@ else
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'export OBJDIR=$(KVM_OBJDIR)'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) base'
 endif
-ifeq ($(KVM_KLIPS_MODULE),true)
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) module'
-endif
 	: install will run $(KVMSH) --shutdown $(1)
 
 .PHONY: kvm-build
@@ -984,9 +977,6 @@ else
 ifeq ($(KVM_USE_FIPSCHECK),true)
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) install-fipshmac'
 endif
-endif
-ifeq ($(KVM_KLIPS_MODULE),true)
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) module_install'
 endif
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
 	$(KVMSH) --shutdown $(KVM_BUILD_DOMAIN)

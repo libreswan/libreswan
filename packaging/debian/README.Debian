@@ -67,7 +67,4 @@ FHS.
 6) IPsec Kernel Support
 
 Note: This package uses the in-kernel IPsec stack, which is available
-in all recent stock Debian kernel images.  This packaging does not
-currently support KLIPS or KLIPS/MAST.
-
- -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>, Wed, 22 Jun 2016 17:58:47 -0400
+in all recent stock Debian kernel images.

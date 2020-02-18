@@ -166,9 +166,6 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_XFRM_INTERFACE
 	" XFRMI"
 #endif
-#ifdef KLIPS
-	" KLIPS"
-#endif
 	" esp-hw-offload"
 #if USE_FORK
 	" FORK"
@@ -532,17 +529,12 @@ static const struct option long_opts[] = {
 	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "no-dnssec\0", no_argument, NULL, 'R' },
-	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
 	{ "nokernel\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
 	{ "use-nostack\0",  no_argument, NULL, 'n' },
 	{ "use-none\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
-	{ "useklips\0>use-klips",  no_argument, NULL, 'k' },	/* redundant spelling */
-	{ "use-klips\0",  no_argument, NULL, 'k' },
 	{ "use-auto\0>use-netkey",  no_argument, NULL, 'K' },   /* redundant spelling (sort of) */
 	{ "usenetkey\0>use-netkey", no_argument, NULL, 'K' },	/* redundant spelling */
 	{ "use-netkey\0", no_argument, NULL, 'K' },
-	{ "use-mast\0",   no_argument, NULL, 'M' },
-	{ "use-mastklips\0",   no_argument, NULL, 'M' },
 	{ "use-bsdkame\0",   no_argument, NULL, 'F' },
 	{ "interface\0<ifname|ifaddr>", required_argument, NULL, 'i' },
 	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' },
@@ -914,10 +906,6 @@ int main(int argc, char **argv)
 			bare_shunt_interval = deltatime(d);
 			continue;
 		}
-
-		case 'k':	/* --use-klips */
-			kern_interface = USE_KLIPS;
-			continue;
 
 		case 'L':	/* --listen ip_addr */
 		{
@@ -1409,8 +1397,6 @@ int main(int argc, char **argv)
 				libreswan_log(
 					"The option protostack=auto is obsoleted, falling back to protostack=netkey\n");
 				kern_interface = USE_NETKEY;
-			} else if (streq(protostack, "klips")) {
-				kern_interface = USE_KLIPS;
 			} else if (streq(protostack, "netkey") ||
 				streq(protostack, "native")) {
 				kern_interface = USE_NETKEY;

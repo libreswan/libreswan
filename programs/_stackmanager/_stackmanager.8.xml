@@ -43,11 +43,9 @@ remap='I'>ipsec.conf</emphasis> configuration file.</para>
 
 <para>This involves loading and optionally unloading of the required
 kernel modules. Because the Linux kernel cannot autodetect most crypto
-related drivers on-demand, _stackmanager handles loading OpenBSD/FreeBSD
-Cryptographic Framework (OCF) drivers, CryptoAPI drivers, and the modules
-for the specific IPsec stack (Linux XFRM or KLIPS). Probing for OCF supported
-hardware is not supported - those modules must be loaded by the system
-before the start of the Libreswan sub system.</para>
+related drivers on-demand, _stackmanager handles loading the modules
+for the specific IPsec stack.
+</para>
 <para>When the --xfrm option is given to the start command, the XFRM stack
 is loaded regardless of the existence or contents of the ipsec.conf file.
 This is used for docker tests where the host system, which might not have

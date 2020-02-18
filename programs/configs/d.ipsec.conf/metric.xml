@@ -2,10 +2,8 @@
   <term><emphasis remap='B'>metric</emphasis></term>
   <listitem>
 <para>
-Set the metric for the routes to the ipsecX or mastX interface. This makes it
-possible to do host failover from another interface to ipsec using
-route management. This value is passed to the _updown scripts as
-PLUTO_METRIC. This option is only available with KLIPS or MAST on Linux.
+Set the metric for added routes. This value is passed to the _updown scripts as
+PLUTO_METRIC.
 
 Acceptable values are positive numbers, with the default being <emphasis remap='B'>1</emphasis>.
 </para>

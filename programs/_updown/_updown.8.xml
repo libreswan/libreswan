@@ -22,7 +22,7 @@
 <para><emphasis remap='I'>_updown</emphasis>
 is invoked by pluto when it has brought up a new connection. This script
 is used to insert the appropriate routing entries for IPsec operation on
-some kernel IPsec stacks, such as KLIPS and MAST, and may do other
+some kernel IPsec stacks, and may do other
 necessary work that is kernel or user specific, such as defining custom
 firewall rules.
 The interface to the script is documented in the pluto man page.</para>

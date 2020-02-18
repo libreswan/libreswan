@@ -110,13 +110,6 @@ findlog() {	# findlog string fallbackstring possiblefile ...
 
 if [ ! -x /usr/bin/journalctl -a ! -x /bin/journalctl ]; then
     # no systemd, need to figure out log file location
-    findlog "${fstart}" "klips" messages syslog auth.log daemon.log
-    if [ "${findlog_file}" = "/dev/null" ]; then
-	echo "Unable to find KLIPS messages, typically found in /var/log/messages or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logrotate) or we do not understand your logging configuration."
-    fi
-    klog=${findlog_file}
-    kline=${findlog_startline}
-
     findlog "$pstart" "Pluto" secure auth.log daemon.log debug
     if [ "${findlog_file}" = "/dev/null" ]; then
 	echo "Unable to find Pluto messages, typically found in /var/log/secure or equivalent. You may need to run Libreswan for the first time; alternatively, your log files have been emptied (ie, logrotate) or we do not understand your logging configuration."
@@ -157,22 +150,6 @@ _________________________ version
 ipsec --version
 _________________________ /proc/version
 cat /proc/version
-_________________________ /proc/net/ipsec_eroute
-if [ -r /proc/net/ipsec_eroute ]; then
-    sort -sg -k 3 /proc/net/ipsec_eroute || cat /proc/net/ipsec_eroute
-fi
-_________________________ /proc/net/ipsec_spi
-if [ -r /proc/net/ipsec_spi ]; then
-    cat /proc/net/ipsec_spi
-fi
-_________________________ /proc/net/ipsec_spigrp
-if [ -r /proc/net/ipsec_spigrp ]; then
-    cat /proc/net/ipsec_spigrp
-fi
-_________________________ /proc/net/ipsec_tncfg
-if [ -r /proc/net/ipsec_tncfg ]; then
-    cat /proc/net/ipsec_tncfg
-fi
 if [ -r /proc/sys/net/core/xfrm_acq_expires ]; then
     _________________________ ip-xfrm-state
     ip xfrm state
@@ -225,7 +202,7 @@ _________________________ uptime
 uptime
 _________________________ ps
 # -i ppid picks up the header
-ps alxwf | grep -E -i 'ppid|pluto|ipsec|klips'
+ps alxwf | grep -E -i 'ppid|pluto|ipsec'
 _________________________ ipsec/conf
 ipsec readwriteconf --config @IPSEC_CONF@
 _________________________ ipsec/secrets
@@ -278,16 +255,6 @@ do
     fi
 
 done
-_________________________ /proc/net/ipsec_version
-if [ -r /proc/net/ipsec_version ]; then
-    cat /proc/net/ipsec_version
-else
-    if [ -r /proc/sys/net/core/xfrm_acq_expires ]; then
-	echo "XFRM ($(uname -r)) support detected "
-    else
-	echo "no KLIPS or XFRM support detected"
-    fi
-fi
 _________________________ iptables
 if [ -e /proc/net/ip_tables_names ]; then
     if [ -r /sbin/iptables-save -o -r /usr/sbin/iptables-save ]; then
@@ -324,20 +291,11 @@ if [ -f /proc/modules ]; then
 else
     echo "kernel without module support"
 fi
-_________________________ /proc/meminfo
-cat /proc/meminfo
-#obsolete? not on my klips system
-#_________________________ dev/ipsec-ls
-#ls -l /dev/ipsec*
-_________________________ /proc/net/ipsec-ls
-if [ -f /proc/net/ipsec_version ]; then
-    ls -l /proc/net/ipsec_*
-fi
 _________________________ usr/src/linux/.config
 if [ -f /proc/config.gz ]; then
-    zcat /proc/config.gz | grep -E 'CONFIG_IPSEC|CONFIG_KLIPS|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|CONFIG_HW_RANDOM|CONFIG_CRYPTO_DEV|_XFRM'
+    zcat /proc/config.gz | grep -E 'IPSEC|ESP|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|_XFRM'
 elif [ -f /lib/modules/$(uname -r)/build/.config ]; then
-    cat /lib/modules/$(uname -r)/build/.config | grep -E 'CONFIG_IPSEC|CONFIG_KLIPS|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|CONFIG_HW_RANDOM|CONFIG_CRYPTO_DEV|_XFRM'
+    cat /lib/modules/$(uname -r)/build/.config | grep -E 'IPSEC|ESP|CONFIG_NET_KEY|CONFIG_INET|CONFIG_IP|_XFRM'
 else
     echo "no .config file found, cannot list kernel properties"
 fi
@@ -370,14 +328,12 @@ else
     fi
 fi
 
-_________________________ lib/modules-netif_rx
-modulegoo kernel/net/ipv4/ipip.o netif_rx
 _________________________ kern.debug
 if [ -f ${LOGS}/kern.debug ]; then
     tail -100 ${LOGS}/kern.debug
 fi
 _________________________ klog
-dmesg | grep -E -i "klips|ipsec"
+dmesg | grep -E -i "xfrm|ipsec|esp"
 _________________________ plog
 if [ -x /usr/bin/journalctl -o -x /bin/journalctl ]; then
     journalctl -u ipsec.service --no-pager --since "24 hours ago" | \

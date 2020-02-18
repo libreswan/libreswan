@@ -231,59 +231,7 @@ def installstartcheck():
 	else:
 		print_result("OK","OK")
 
-	# we know we have some stack, so continue
-	if os.path.isfile("/proc/net/ipsec_eroute"):
-		installcheckklips()
-	else:
-		installchecknetkey()
-
-def installcheckklips():
-	global retcode
-	# NAT-T patch check
-	printfun(" KLIPS: checking for NAT Traversal support")
-	try:
-		natt = open("/sys/module/ipsec/parameters/natt_available","r").read().strip()
-		if natt == "1":
-			print_result("WARN","OLD STYLE")
-		elif natt == "2":
-			print_result("OK","OK")
-		else:
-			print_result("FAIL","UNKNOWN CODE")
-	except:
-		print_result("WARN","OLD/MISSING")
-
-	# OCF patch check
-	printfun(" KLIPS: checking for OCF crypto offload support ")
-	try:
-		ocf = open("/sys/module/ipsec/parameters/ocf_available","r").read().strip()
-		if ocf == "1":
-			print_result("OK","OK")
-		elif ocf == "0":
-			print_result("WARN","N/A")
-		else:
-			print_result("FAIL","UNKNOWN CODE")
-	except:
-		print_result("WARN","N/A")
-
-	# SAref patch check
-	saref = ""
-	printfun(" KLIPS: IPsec SAref kernel support")
-	try:
-		saref = open("/proc/net/ipsec/saref","r").read().strip()
-		if "refinfo patch applied" in saref:
-			print_result("OK","OK")
-		else:
-			print_result("WARN","N/A")
-
-	except:
-		print_result("WARN","N/A")
-
-	# SAref bind patch check
-	printfun(" KLIPS: IPsec SAref Bind kernel support")
-	if "bindref patch applied" in saref:
-		print_result("OK","OK")
-	else:
-		print_result("WARN","N/A")
+	installchecknetkey()
 
 def installchecknetkey():
 	global retcode

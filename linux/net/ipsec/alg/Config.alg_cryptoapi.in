@@ -1,6 +1,0 @@
-if [ "$CONFIG_IPSEC_ALG" = "y" ]; then
-  dep_tristate '        CRYPTOAPI ciphers support (needs cryptoapi patch)' CONFIG_IPSEC_ALG_CRYPTOAPI $CONFIG_CRYPTO
-  if [ "$CONFIG_IPSEC_ALG_CRYPTOAPI" != "n" ]; then
-    bool '          CRYPTOAPI proprietary ciphers ' CONFIG_IPSEC_ALG_NON_LIBRE
-  fi
-fi

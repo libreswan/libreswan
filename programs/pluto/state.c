@@ -2288,7 +2288,7 @@ void fmt_state(struct state *st, const monotime_t now,
 					"! IPCOMPmax=");
 		}
 
-#if defined(NETKEY_SUPPORT) || defined(KLIPS)
+#if defined(NETKEY_SUPPORT)
 		if (st->st_ah.attrs.mode ==
 			ENCAPSULATION_MODE_TUNNEL ||
 			st->st_esp.attrs.mode ==

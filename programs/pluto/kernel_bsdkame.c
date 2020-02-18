@@ -324,7 +324,7 @@ static void bsdkame_pfkey_register(void)
 	pfkey_send_register(pfkeyfd, SADB_SATYPE_ESP);
 	pfkey_recv_register(pfkeyfd);
 
-	can_do_IPcomp = FALSE; /* until we get a response from KLIPS */
+	can_do_IPcomp = FALSE; /* It can probably do it - we just need to check out how */
 	pfkey_send_register(pfkeyfd, SADB_X_SATYPE_IPCOMP);
 	pfkey_recv_register(pfkeyfd);
 

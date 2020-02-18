@@ -27,18 +27,9 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>Look</emphasis>
-is used to get a quick overview of what the status of Libreswan is. It is
+is used to get a quick overview of what the status of Libreswan is.
 the equivalent to running the commands
-<emphasis remap='I'>ipsec eroute</emphasis>,
-<emphasis remap='I'>ipsec spigrp</emphasis>,
-<emphasis remap='I'>ipsec tncfg</emphasis>,
-<emphasis remap='I'>ipsec spi</emphasis> and
-<emphasis remap='I'>netstat -rn</emphasis>. However a bit of processing is
-done to combine the outputs.
 </para>
-<para>Some of the above commands, and therefore <emphasis remap='I'>ipsec look</emphasis>,
-are only supported with the KLIPS or MAST stack, and will give errors when used on BSD, Windows
-or Linux with XFRM/NETKEY.</para>
 </refsect1>
 
 

@@ -72,12 +72,10 @@ endif
 #
 # Kernel support
 #
-# set in mk/defaults/*.mk
-
+# These are really set in mk/defaults/*.mk
+#
 # support Linux kernel's NETLINK_XFRM (aka XFRM/NETKEY) (aka "native")
 USE_NETKEY?=false
-# support Linux KLIPS kernel module (KLIPS requires PFKEYv2)
-USE_KLIPS?=false
 # support BSD/KAME kernels (on *BSD and OSX)?
 USE_BSDKAME?=false
 
@@ -90,18 +88,8 @@ ifeq ($(USE_XFRM_INTERFACE), true)
 endif
 endif
 
-ifeq ($(USE_KLIPS),true)
-USERLAND_CFLAGS+=-DKLIPS
-USERLAND_CFLAGS+=-DPFKEY
-endif
-
 ifeq ($(USE_BSDKAME),true)
 USE_NETKEY?=false
-USE_KLIPS?=false
-endif
-
-
-ifeq ($(USE_BSDKAME),true)
 USERLAND_CFLAGS += -DBSD_KAME
 endif
 

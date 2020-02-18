@@ -96,7 +96,6 @@ d.ipsec.conf/vti.xml
 d.ipsec.conf/ipsec-interface.xml
 d.ipsec.conf/priority.xml
 d.ipsec.conf/sendca.xml
-d.ipsec.conf/disablearrivalcheck.xml
 d.ipsec.conf/labeled-ipsec.xml
 d.ipsec.conf/policy-label.xml
 d.ipsec.conf/failureshunt.xml
@@ -110,7 +109,6 @@ d.ipsec.conf/ike-socket.xml
 d.ipsec.conf/ikeport.xml
 d.ipsec.conf/nflog-all.xml
 d.ipsec.conf/nat_traversal.xml
-d.ipsec.conf/disable_port_floating.xml
 d.ipsec.conf/force_keepalive.xml
 d.ipsec.conf/nat-ikeport.xml
 d.ipsec.conf/keep-alive.xml
@@ -126,10 +124,7 @@ d.ipsec.conf/crl-strict.xml
 d.ipsec.conf/curl-iface.xml
 d.ipsec.conf/curl-timeout.xml
 d.ipsec.conf/ocsp-global.xml
-d.ipsec.conf/forwardcontrol.xml
-d.ipsec.conf/rp_filter.xml
 d.ipsec.conf/syslog.xml
-d.ipsec.conf/klipsdebug.xml
 d.ipsec.conf/plutodebug.xml
 d.ipsec.conf/uniqueids.xml
 d.ipsec.conf/logfile.xml
@@ -151,9 +146,6 @@ d.ipsec.conf/nssdir.xml
 d.ipsec.conf/secretsfile.xml
 d.ipsec.conf/perpeerlog.xml
 d.ipsec.conf/perpeerlogdir.xml
-d.ipsec.conf/fragicmp.xml
-d.ipsec.conf/hidetos.xml
-d.ipsec.conf/overridemtu.xml
 d.ipsec.conf/seccomp.xml
 d.ipsec.conf/dnssec.xml
 d.ipsec.conf/configsectionsend.xml

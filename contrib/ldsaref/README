@@ -1,8 +1,0 @@
-This tool is used for testing the setsockopt IP_IPSEC_BINDREF option
-which allows a socket to be "bound" to a SAref.  Each packet sent on
-that socket, as long as it's routed through mast0, will use the SA
-associated with the SAref.  Example use case:
-
-        saref 123 nc 192.168.0.1 80
-
-given that 123 is a valid refhim value seen in ipsec auto --status.

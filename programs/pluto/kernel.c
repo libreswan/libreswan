@@ -58,7 +58,6 @@
 #include "timer.h"
 #include "kernel.h"
 #include "kernel_xfrm.h"
-#include "kernel_pfkey.h"
 #include "kernel_nokernel.h"
 #include "kernel_bsdkame.h"
 #include "packet.h"
@@ -211,9 +210,6 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 	 * Add the kernel shunt to the pluto bare shunt list.
 	 * We need to do this because the %hold shunt was installed by kernel
 	 * and we want to keep track of it inside pluto.
-	 * WARNING: there is different behaviour between KLIPS and NETKEY, and
-	 *          it might be that netkey causes duplicate acquires when the
-	 *          proc value is different from our internal value?
 	 */
 
 	ip_address sp = subnet_prefix(ours);
@@ -235,7 +231,6 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 			  TRUE, null_fd, uctx, "acquire");
 
 	if (kernel_ops->remove_orphaned_holds != NULL) {
-		/* remove from KLIPS's list */
 		DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt"));
 		(*kernel_ops->remove_orphaned_holds)
 			(transport_proto, ours, his);
@@ -2270,13 +2265,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/*
 	 * Add an inbound eroute to enforce an arrival check.
 	 *
-	 * If inbound, and policy does not specify DISABLEARRIVALCHECK,
+	 * If inbound,
 	 * ??? and some more mysterious conditions,
-	 * tell KLIPS to enforce the IP addresses appropriate for this tunnel.
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	if (inbound && (c->policy & POLICY_DISABLEARRIVALCHECK) == 0 &&
+	if (inbound &&
 		(kernel_ops->inbound_eroute ?
 			c->spd.eroute_owner == SOS_NOBODY :
 			mode == ENCAPSULATION_MODE_TUNNEL)) {
@@ -2563,7 +2557,7 @@ void init_kernel(void)
 {
 	struct utsname un;
 
-#if defined(NETKEY_SUPPORT) || defined(KLIPS)
+#if defined(NETKEY_SUPPORT)
 	struct stat buf;
 #endif
 
@@ -2581,18 +2575,6 @@ void init_kernel(void)
 		libreswan_log("Using Linux XFRM/NETKEY IPsec kernel support code on %s",
 			kversion);
 		kernel_ops = &netkey_kernel_ops;
-		break;
-#endif
-
-#if defined(KLIPS)
-	case USE_KLIPS:
-		if (stat("/proc/net/pf_key", &buf) != 0) {
-			libreswan_log("No KLIPS kernel interface detected");
-			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
-		}
-		libreswan_log("Using KLIPS IPsec interface code on %s",
-			kversion);
-		kernel_ops = &klips_kernel_ops;
 		break;
 #endif
 
@@ -3282,7 +3264,6 @@ void delete_ipsec_sa(struct state *st)
 	}
 
 	switch (kern_interface) {
-	case USE_KLIPS:
 	case USE_NETKEY:
 		{
 			/*

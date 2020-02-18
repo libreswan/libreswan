@@ -50,7 +50,6 @@
 #include "timer.h"
 #include "kernel.h"
 #include "kernel_xfrm.h"
-#include "kernel_pfkey.h"
 #include "kernel_nokernel.h"
 #include "packet.h"
 #include "x509.h"
@@ -192,29 +191,6 @@ struct raw_iface *find_raw_ifaces4(void)
 			continue; /* not interesting */
 		}
 
-		/* ignore if our interface names were specified, and this isn't one - for KLIPS/MAST only */
-		if (pluto_ifn_roof != 0 &&
-		    kern_interface == USE_KLIPS) {
-			int i;
-
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("interfaces= specified, applying filter"));
-
-			for (i = 0; i != pluto_ifn_roof; i++)
-				if (streq(ri.name, pluto_ifn[i])) {
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("interface name '%s' found in interfaces= line",
-						    ri.name));
-					break;
-				}
-
-			if (i == pluto_ifn_roof) {
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("interface name '%s' not present in interfaces= line - skipped",
-					    ri.name));
-				continue; /* not found -- skip */
-			}
-		}
 		/* Find out stuff about this interface.  See netdevice(7). */
 		zero(&auxinfo); /* paranoia */
 		memcpy(auxinfo.ifr_name, buf[j].ifr_name, IFNAMSIZ-1);
@@ -335,13 +311,6 @@ struct raw_iface *find_raw_ifaces6(void)
 	 * Documentation of format?
 	 * RTFS: linux-2.2.16/net/ipv6/addrconf.c:iface_proc_info()
 	 *       linux-2.4.9-13/net/ipv6/addrconf.c:iface_proc_info()
-	 *
-	 * Sample from Gerhard's laptop:
-	 *	00000000000000000000000000000001 01 80 10 80       lo
-	 *	30490009000000000000000000010002 02 40 00 80   ipsec0
-	 *	30490009000000000000000000010002 07 40 00 80     eth0
-	 *	fe80000000000000025004fffefd5484 02 0a 20 80   ipsec0
-	 *	fe80000000000000025004fffefd5484 07 0a 20 80     eth0
 	 *
 	 * Each line contains:
 	 * - IPv6 address: 16 bytes, in hex, no punctuation

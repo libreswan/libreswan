@@ -72,8 +72,6 @@ enum keyword_string_config_field {
  * Indices for .setup.option[], .setup.options_set[]
  */
 enum keyword_numeric_config_field {
-	KBF_FRAGICMP,
-	KBF_HIDETOS,
 	KBF_UNIQUEIDS,
 	KBF_DO_DNSSEC,
 	KBF_LOGTIME,
@@ -84,7 +82,6 @@ enum keyword_numeric_config_field {
 	KBF_IKEBUF,
 	KBF_IKE_ERRQUEUE,
 	KBF_PERPEERLOG,
-	KBF_OVERRIDEMTU,
 	KBF_XFRMLIFETIME,
 	KBF_CRL_STRICT,
 	KBF_CRL_CHECKINTERVAL,
@@ -100,7 +97,6 @@ enum keyword_numeric_config_field {
 	KBF_SEEDBITS,
 	KBF_DROP_OPPO_NULL,
 	KBF_KEEPALIVE,
-	KBF_KLIPSDEBUG,
 	KBF_PLUTODEBUG,
 	KBF_NHELPERS,
 	KBF_SHUNTLIFETIME,
@@ -231,7 +227,6 @@ enum keyword_numeric_conn_field {
 	KNCF_COMPRESS,
 	KNCF_KEYINGTRIES,
 	KNCF_REPLAY_WINDOW,
-	KNCF_ARRIVALCHECK,
 	KNCF_IKELIFETIME,
 	KNCF_RETRANSMIT_TIMEOUT,
 	KNCF_RETRANSMIT_INTERVAL_MS,

@@ -17,7 +17,6 @@
     SHELL_BINARY=%{_bindir}/sh \\\
     USE_DNSSEC=true \\\
     USE_FIPSCHECK=true \\\
-    USE_KLIPS=false \\\
     USE_LABELED_IPSEC=true \\\
     USE_LDAP=true \\\
     USE_LIBCAP_NG=true \\\

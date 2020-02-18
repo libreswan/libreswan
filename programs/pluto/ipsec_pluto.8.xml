@@ -271,8 +271,6 @@
           <arg choice="opt">dh24</arg>
         </group></arg>
 
-      <arg choice="opt">--disablearrivalcheck</arg>
-
       <arg choice="opt">--ikelifetime <replaceable>seconds</replaceable></arg>
 
       <arg choice="opt">--ipseclifetime
@@ -1748,16 +1746,6 @@
             support the weak and broken <emphasis remap="B">modp768</emphasis>
             (DHgroup 1), but this requires a manual recompile and is strongly
             discouraged.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--disablearrivalcheck</option></term>
-
-          <listitem>
-            <para>If the connection is a tunnel, allow packets arriving
-            through the tunnel to have any source and destination
-            addresses.</para>
           </listitem>
         </varlistentry>
 

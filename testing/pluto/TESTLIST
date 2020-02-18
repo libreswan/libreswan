@@ -1100,23 +1100,8 @@ kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 
 kvmplutotest	bad-nexthop-01		wip
 
-# Interop the XFRM and KLIPS kernels (this requires the KLIPS kernel
-# module and that only works on 3.x kernels).
-
-kvmplutotest	algo-ah-klips-to-klips-ikev1			skiptest
-kvmplutotest	algo-ah-klips-to-klips-ikev2			skiptest
-kvmplutotest	algo-ah-klips-to-netkey-ikev1			skiptest
-kvmplutotest	algo-ah-klips-to-netkey-ikev2			skiptest
-kvmplutotest	algo-ah-netkey-to-klips-ikev1			skiptest
-kvmplutotest	algo-ah-netkey-to-klips-ikev2			skiptest
 kvmplutotest	algo-ah-netkey-to-netkey-ikev1			good
 kvmplutotest	algo-ah-netkey-to-netkey-ikev2			good
 
-kvmplutotest	algo-esp-klips-to-klips-ikev1			skiptest
-kvmplutotest	algo-esp-klips-to-klips-ikev2			skiptest
-kvmplutotest	algo-esp-klips-to-netkey-ikev1			skiptest
-kvmplutotest	algo-esp-klips-to-netkey-ikev2			skiptest
-kvmplutotest	algo-esp-netkey-to-klips-ikev1			skiptest
-kvmplutotest	algo-esp-netkey-to-klips-ikev2			skiptest
 kvmplutotest	algo-esp-netkey-to-netkey-ikev1			good
 kvmplutotest	algo-esp-netkey-to-netkey-ikev2			good
