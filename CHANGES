@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.31 (unreleased)
+* KLIPS: support for KLIPS completely removed [Paul]
 * pluto: support for deprecated algos removed: serpent, twofish, cast [Paul]
 
 v3.30 (February 13, 2020)
