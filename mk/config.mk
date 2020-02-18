@@ -32,7 +32,7 @@ if-enabled = $(if $(filter true, $($(strip $(1)))),$(2),$(3))
 #
 #
 # TODO: Some creative ifeq ($(BUILDENV,xxx) to automatically determine
-# where we are building on and disable things (eg KLIPS on OSX)
+# where we are building on and disable things
 
 #  Doc:		man make
 #  Doc:		http://www.gnu.org/software/make/manual/make.html
@@ -483,6 +483,317 @@ OSMEDIA ?= http://download.fedoraproject.org/pub/fedora/linux/releases/28/Server
 # Now that all the configuration variables are defined, use them to
 # define USERLAND_CFLAGS and USERLAND_LDFLAGS
 
-include ${LIBRESWANSRCDIR}/mk/userland.mk
+# -D... goes in here
+USERLAND_CFLAGS += -std=gnu99
+
+#
+# Options that really belong in CFLAGS (making for an intuitive way to
+# override them).
+#
+# Unfortunately this file is shared with the kernel which seems to
+# have its own ideas on CFLAGS.
+#
+
+DEBUG_CFLAGS ?= -g
+USERLAND_CFLAGS += $(DEBUG_CFLAGS)
+
+# eventually: -Wshadow -pedantic?
+WERROR_CFLAGS ?= -Werror -Wno-missing-field-initializers
+USERLAND_CFLAGS += $(WERROR_CFLAGS)
+WARNING_CFLAGS ?= -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
+USERLAND_CFLAGS += $(WARNING_CFLAGS)
+
+# _FORTIFY_SOURCE requires at least -O.  Gentoo, pre-defines
+# _FORTIFY_SOURCE (to what? who knows!); force it to our preferred
+# value.
+OPTIMIZE_CFLAGS ?= -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
+USERLAND_CFLAGS += $(OPTIMIZE_CFLAGS)
+
+# Dumping ground for an arbitrary set of flags.  Should probably be
+# separated out.
+USERCOMPILE ?= -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
+USERLAND_CFLAGS += $(USERCOMPILE)
+
+# Basic linking flags
+USERLINK ?= -Wl,-z,relro,-z,now -pie
+USERLAND_LDFLAGS += -Wl,--as-needed
+USERLAND_LDFLAGS += $(USERLINK) $(ASAN)
+
+# Build/link against the more pedantic ElectricFence memory allocator;
+# used when testing.
+USE_EFENCE ?= false
+ifeq ($(USE_EFENCE),true)
+USERLAND_CFLAGS += -DUSE_EFENCE
+USERLAND_LDFLAGS += -lefence
+endif
+
+ifdef EFENCE
+$(error ERROR: EFENCE is replaced by USE_EFENCE)
+endif
+
+#
+# Configuration options.
+#
+# Sometimes the make variable is called USE_<feature> and the C macro
+# is called HAVE_<feature>, but not always.
+#
+
+#
+# Kernel support
+#
+# These are really set in mk/defaults/*.mk
+
+# support Linux kernel's NETLINK_XFRM (aka XFRM/NETKEY) (aka "native")
+USE_NETKEY ?= false
+# support BSD/KAME kernels (on *BSD and OSX)?
+USE_BSDKAME ?= false
+
+USE_XFRM_INTERFACE ?= true
+
+ifeq ($(USE_NETKEY),true)
+USERLAND_CFLAGS += -DNETKEY_SUPPORT
+ifeq ($(USE_XFRM_INTERFACE), true)
+USERLAND_CFLAGS += -DUSE_XFRM_INTERFACE
+endif
+endif
+
+ifeq ($(USE_BSDKAME),true)
+USE_NETKEY ?= false
+USERLAND_CFLAGS += -DBSD_KAME
+endif
+
+ifeq ($(USE_DNSSEC),true)
+USERLAND_CFLAGS += -DUSE_DNSSEC
+UNBOUND_LDFLAGS ?= -lunbound -lldns
+DEFAULT_DNSSEC_ROOTKEY_FILE ?= "/var/lib/unbound/root.key"
+USERLAND_CFLAGS += -DDEFAULT_DNSSEC_ROOTKEY_FILE=\"${DEFAULT_DNSSEC_ROOTKEY_FILE}\"
+endif
+
+ifeq ($(USE_FIPSCHECK),true)
+USERLAND_CFLAGS += -DFIPS_CHECK
+USERLAND_CFLAGS += -DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\"
+FIPSCHECK_LDFLAGS ?= -lfipscheck
+endif
+
+ifeq ($(USE_LABELED_IPSEC),true)
+USERLAND_CFLAGS += -DHAVE_LABELED_IPSEC
+endif
+
+ifeq ($(USE_SECCOMP),true)
+USERLAND_CFLAGS += -DHAVE_SECCOMP
+SECCOMP_LDFLAGS = -lseccomp
+endif
+
+ifeq ($(USE_LIBCURL),true)
+USERLAND_CFLAGS += -DLIBCURL
+CURL_LDFLAGS ?= -lcurl
+endif
+
+# Build support for the Linux Audit system
+
+USE_LINUX_AUDIT ?= false
+ifeq ($(USE_LINUX_AUDIT),true)
+USERLAND_CFLAGS += -DUSE_LINUX_AUDIT
+LINUX_AUDIT_LDFLAGS ?= -laudit
+endif
+
+ifeq ($(USE_SYSTEMD_WATCHDOG),true)
+USERLAND_CFLAGS += -DUSE_SYSTEMD_WATCHDOG
+SYSTEMD_WATCHDOG_LDFLAGS ?= -lsystemd
+endif
+
+ifeq ($(USE_LDAP),true)
+USERLAND_CFLAGS += -DLIBLDAP
+LDAP_LDFLAGS ?= -lldap -llber
+endif
+
+ifeq ($(USE_NM),true)
+USERLAND_CFLAGS+=-DHAVE_NM
+endif
+
+# Link with -lrt (only for glibc versions before 2.17)
+RT_LDFLAGS ?= -lrt
+
+# include PAM support for XAUTH when available on the platform
+
+USE_XAUTHPAM?=true
+ifeq ($(USE_XAUTHPAM),true)
+USERLAND_CFLAGS += -DXAUTH_HAVE_PAM
+XAUTHPAM_LDFLAGS ?= -lpam
+endif
+
+#
+# Algorithms (encryption, PRF, DH, ....)
+#
+# See https://tools.ietf.org/html/rfc8247 for what should be enabled
+# by default.
+#
+
+ALL_ALGS ?= false
+
+USE_3DES ?= true
+ifeq ($(USE_3DES),true)
+USERLAND_CFLAGS += -DUSE_3DES
+endif
+
+USE_AES ?= true
+ifeq ($(USE_AES),true)
+USERLAND_CFLAGS += -DUSE_AES
+endif
+
+USE_CAMELLIA ?= true
+ifeq ($(USE_CAMELLIA),true)
+USERLAND_CFLAGS += -DUSE_CAMELLIA
+endif
+
+USE_CHACHA?=true
+ifeq ($(USE_CHACHA),true)
+USERLAND_CFLAGS += -DUSE_CHACHA
+endif
+
+USE_DH2 ?= false
+ifeq ($(USE_DH2),true)
+USERLAND_CFLAGS += -DUSE_DH2
+endif
+
+USE_DH22 ?= $(ALL_ALGS)
+ifeq ($(USE_DH22),true)
+USERLAND_CFLAGS += -DUSE_DH22
+endif
+
+USE_DH23 ?= $(ALL_ALGS)
+ifeq ($(USE_DH23),true)
+USERLAND_CFLAGS += -DUSE_DH23
+endif
+
+USE_DH24 ?= $(ALL_ALGS)
+ifeq ($(USE_DH24),true)
+USERLAND_CFLAGS += -DUSE_DH24
+endif
+
+USE_DH31 ?= true
+ifeq ($(USE_DH31),true)
+USERLAND_CFLAGS += -DUSE_DH31
+endif
+
+USE_MD5 ?= true
+ifeq ($(USE_MD5),true)
+USERLAND_CFLAGS += -DUSE_MD5
+endif
+
+USE_SHA1 ?= true
+ifeq ($(USE_SHA1),true)
+USERLAND_CFLAGS += -DUSE_SHA1
+endif
+
+USE_SHA2 ?= true
+ifeq ($(USE_SHA2),true)
+USERLAND_CFLAGS += -DUSE_SHA2
+endif
+
+# Used mostly for IoT
+USE_PRF_AES_XCBC ?= true
+ifeq ($(USE_PRF_AES_XCBC),true)
+USERLAND_CFLAGS += -DUSE_PRF_AES_XCBC
+endif
+
+# Use the NSS Key Derivation Function (KDF) instead of using the NSS
+# secure hash functions to build our own PRF. With this enabled,
+# libreswan itself no longer needs to be FIPS validated.
+#
+# Requires NSS > 3.44
+
+USE_NSS_PRF ?= false
+ifeq ($(USE_NSS_PRF),true)
+USERLAND_CFLAGS += -DUSE_NSS_PRF
+endif
+
+ifeq ($(USE_SINGLE_CONF_DIR),true)
+USERLAND_CFLAGS += -DSINGLE_CONF_DIR=1
+endif
+
+USERLAND_CFLAGS += -DDEFAULT_RUNDIR=\"$(FINALRUNDIR)\"
+USERLAND_CFLAGS += -DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\"
+USERLAND_CFLAGS += -DIPSEC_CONF=\"$(FINALCONFFILE)\"
+USERLAND_CFLAGS += -DIPSEC_CONFDDIR=\"$(FINALCONFDDIR)\"
+USERLAND_CFLAGS += -DIPSEC_NSSDIR=\"$(FINALNSSDIR)\"
+USERLAND_CFLAGS += -DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
+USERLAND_CFLAGS += -DIPSEC_EXECDIR=\"$(FINALLIBEXECDIR)\"
+USERLAND_CFLAGS += -DIPSEC_SBINDIR=\"${FINALSBINDIR}\"
+USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(FINALVARDIR)\"
+USERLAND_CFLAGS += -DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\"
+USERLAND_CFLAGS += -DIPSEC_SECRETS_FILE=\"$(IPSEC_SECRETS_FILE)\"
+# Ensure that calls to NSPR's PR_ASSERT() really do abort.  While all
+# calls should have been eliminated (replaced by passert()), keep this
+# definition just in case.
+USERLAND_CFLAGS += -DFORCE_PR_ASSERT
+
+# stick with RETRANSMIT_INTERVAL_DEFAULT as makefile variable name
+ifdef RETRANSMIT_INTERVAL_DEFAULT
+USERLAND_CFLAGS += -DRETRANSMIT_INTERVAL_DEFAULT_MS="$(RETRANSMIT_INTERVAL_DEFAULT)"
+endif
+
+ifeq ($(HAVE_BROKEN_POPEN),true)
+USERLAND_CFLAGS += -DHAVE_BROKEN_POPEN
+endif
+
+# Do things like create a daemon using the sequence fork()+exit().  If
+# you don't have or don't want to use fork() disable this.
+USE_FORK ?= true
+ifeq ($(USE_FORK),true)
+USERLAND_CFLAGS += -DUSE_FORK=1
+else
+USERLAND_CFLAGS += -DUSE_FORK=0
+endif
+
+# Where possible use vfork() instead of fork().  For instance, when
+# creating a child process, use the call sequence vfork()+exec().
+#
+# Systems with nommu, which do not have fork(), should set this.
+USE_VFORK ?= false
+ifeq ($(USE_VFORK),true)
+USERLAND_CFLAGS += -DUSE_VFORK=1
+else
+USERLAND_CFLAGS += -DUSE_VFORK=0
+endif
+
+# Where possible use daemon() instead of fork()+exit() to create a
+# daemon (detached) processes.
+#
+# Some system's don't support daemon() and some systems don't support
+# fork().  Since the daemon call can lead to a race it isn't the
+# preferred option.
+USE_DAEMON ?= false
+ifeq ($(USE_DAEMON),true)
+USERLAND_CFLAGS += -DUSE_DAEMON=1
+else
+USERLAND_CFLAGS += -DUSE_DAEMON=0
+endif
+
+# OSX, for instance, doesn't have this call.
+USE_PTHREAD_SETSCHEDPRIO ?= true
+ifeq ($(USE_PTHREAD_SETSCHEDPRIO),true)
+USERLAND_CFLAGS += -DUSE_PTHREAD_SETSCHEDPRIO=1
+else
+USERLAND_CFLAGS += -DUSE_PTHREAD_SETSCHEDPRIO=0
+endif
+
+ifeq ($(origin GCC_LINT),undefined)
+GCC_LINT = -DGCC_LINT
+endif
+USERLAND_CFLAGS += $(GCC_LINT)
+
+# Enable ALLOW_MICROSOFT_BAD_PROPOSAL
+USERLAND_CFLAGS += -DALLOW_MICROSOFT_BAD_PROPOSAL
+
+# some systems require -lcrypt when calling crypt() some do not.
+CRYPT_LDFLAGS ?= -lcrypt
+
+# Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
+USE_LIBCAP_NG ?= true
+ifeq ($(USE_LIBCAP_NG),true)
+USERLAND_CFLAGS += -DHAVE_LIBCAP_NG
+LIBCAP_NG_LDFLAGS ?= -lcap-ng
+endif
 
 endif
