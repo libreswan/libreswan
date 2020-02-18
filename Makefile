@@ -190,7 +190,7 @@ release:
 	packaging/utils/makerelease
 
 local-install:
-	@if test -z "$(DESTDIR)" -a -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
+	@if test -z "$(DESTDIR)" -a -x /usr/sbin/selinuxenabled -a $(SBINDIR) != "$(DESTDIR)/usr/sbin" ; then \
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \
 		echo "SElinux is present on this system and the prefix path is not /usr." ; \

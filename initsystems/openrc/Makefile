@@ -7,7 +7,6 @@ SRCDIR?=${LIBRESWANSRCDIR}/initsystems/openrc/
 
 INITDFILE=$(builddir)/ipsec.init
 SUBDIRS=
-INITDDIR=$(RCDIR)
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 

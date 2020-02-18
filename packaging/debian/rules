@@ -33,10 +33,8 @@ override_dh_auto_build:
 	$(MAKE) programs \
 		ARCH=$(DEB_HOST_ARCH) \
 		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
-		INC_USRLOCAL=/usr \
+		PREFIX=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
-		PUBDIR=/usr/sbin \
-		INC_MANDIR=share/man \
 		FINALNSSDIR=/var/lib/ipsec/nss \
 		USE_LDAP=true \
 		USE_FIPSCHECK=false \
@@ -50,15 +48,13 @@ override_dh_auto_install-arch:
 	$(MAKE) install \
 		ARCH=$(DEB_HOST_ARCH) \
 		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
-		INC_USRLOCAL=/usr \
+		PREFIX=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
-		INC_MANDIR=share/man \
 		FINALNSSDIR=/var/lib/ipsec/nss \
 		USE_LDAP=true \
 		USE_FIPSCHECK=false \
 		$(ENABLE_LIBCAP_NG) \
 		$(ENABLE_SELINUX) \
-		PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
 		DESTDIR=$(CURDIR)/debian/libreswan \
 		$(DISTRO_CONF)
 

@@ -11,17 +11,17 @@
 %global libreswan_config \\\
     FINALDOCDIR=%{_pkgdocdir} \\\
     FINALEXAMPLECONFDIR=%{_pkgdocdir} \\\
+    FINALINITDDIR=%{_initddir} \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     FINALRUNDIR=%{_rundir}/pluto \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
-    INC_RCDEFAULT=%{_initrddir} \\\
-    INC_USRLOCAL=%{_exec_prefix} \\\
-    IPSECVERSION=%{IPSECVERSION} \\\
     INITSYSTEM=%{initsystem} \\\
-    USE_NSS_IPSEC_PROFILE=true \\\
+    IPSECVERSION=%{IPSECVERSION} \\\
+    PREFIX=%{_exec_prefix} \\\
     PYTHON_BINARY=%{__python3} \\\
     SHELL_BINARY=%{_prefix}/bin/sh \\\
+    USE_NSS_IPSEC_PROFILE=true \\\
 %{nil}
 
 %{nil}
