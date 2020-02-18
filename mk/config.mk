@@ -346,17 +346,6 @@ SD_WATCHDOGSEC ?= 0
 SD_TYPE=simple
 endif
 
-# Do we want all the configuration files like ipsec.conf and ipsec.secrets
-# and any certificates to be in a single directory defined by
-# FINALCONFDDIR?
-USE_SINGLE_CONF_DIR ?= false
-
-# Build support for KEY RR
-# this will become false in the future, as all OE sites transition to
-# using IPSECKEY instead of KEY records.  See references to 'Flag Day'
-# Except this to change in Q1 2011
-USE_KEYRR ?= true
-
 # Build support for integrity check for libreswan on startup
 USE_FIPSCHECK ?= false
 FIPSPRODUCTCHECK ?= /etc/system-fips
@@ -706,10 +695,6 @@ endif
 USE_NSS_PRF ?= false
 ifeq ($(USE_NSS_PRF),true)
 USERLAND_CFLAGS += -DUSE_NSS_PRF
-endif
-
-ifeq ($(USE_SINGLE_CONF_DIR),true)
-USERLAND_CFLAGS += -DSINGLE_CONF_DIR=1
 endif
 
 USERLAND_CFLAGS += -DDEFAULT_RUNDIR=\"$(FINALRUNDIR)\"

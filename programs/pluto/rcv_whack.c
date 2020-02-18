@@ -83,28 +83,6 @@
 
 #include "pluto_stats.h"
 
-/* bits loading keys from asynchronous DNS */
-
-enum key_add_attempt {
-	ka_TXT,
-#ifdef USE_KEYRR
-	ka_KEY,
-#endif
-	ka_roof /* largest value + 1 */
-};
-
-struct key_add_common {
-	int refCount;
-	char *diag[ka_roof];
-	int whack_fd;
-	bool success;
-};
-
-struct key_add_continuation {
-	struct key_add_common *common;  /* common data */
-	enum key_add_attempt lookingfor;
-};
-
 static int whack_route_connection(struct connection *c,
 				  UNUSED void *arg)
 {

@@ -35,11 +35,7 @@
 
 static struct lsw_conf_options global_oco;
 
-#ifdef SINGLE_CONF_DIR
-#define SUBDIRNAME(X) ""
-#else
 #define SUBDIRNAME(X) X
-#endif
 
 /*
  * Fill in the basics, return true, of lsw_conf_calculate should be

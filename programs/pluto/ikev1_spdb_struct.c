@@ -1621,25 +1621,12 @@ rsasig_common:
 						   r_sa_pbs, NULL));
 
 				/* Proposal */
-#ifdef EMIT_ISAKMP_SPI
-				r_proposal.isap_spisize = COOKIE_SIZE;
-#else
 				r_proposal.isap_spisize = 0;
-#endif
 				r_proposal.isap_notrans = 1;
 				passert(out_struct(&r_proposal,
 						   &isakmp_proposal_desc,
 						   r_sa_pbs,
 						   &r_proposal_pbs));
-
-				/* SPI */
-#ifdef EMIT_ISAKMP_SPI
-				passert(out_raw(my_cookie, COOKIE_SIZE,
-						&r_proposal_pbs, "SPI"));
-				r_proposal.isap_spisize = COOKIE_SIZE;
-#else
-				/* none (0) */
-#endif
 
 				/* Transform */
 				r_trans.isat_np = ISAKMP_NEXT_NONE;

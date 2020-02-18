@@ -242,7 +242,6 @@ CFLAGS += $(EXTRA_DEFINES) \
 	$(KEYRR_DEFINES) \
 	${LABELED_IPSEC_DEFS} \
 	${SYSTEMD_NOTIFY_DEFS} \
-	${CURL_DEFS}\
-	${SINGLE_CONF_DIR}
+	${CURL_DEFS}
 
 include $(top_srcdir)/mk/program.mk
