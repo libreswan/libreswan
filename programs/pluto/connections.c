@@ -927,7 +927,8 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 		}
 		cert = get_cert_by_ckaid_from_nss(pubkey);
 		if (cert == NULL) {
-			loglog(RC_LOG_SERIOUS, "failed to find certificate ckaid '%s' in the NSS database",
+			whack_log(RC_LOG_SERIOUS, whackfd,
+				"failed to find certificate ckaid '%s' in the NSS database",
 			       pubkey);
 			return false;
 		}
@@ -937,7 +938,8 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 		pexpect(pubkey == NULL);
 		return true;
 	default:
-		libreswan_log("warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
+		whack_log(RC_LOG_SERIOUS, whackfd,
+			"warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
 		/* recoverable screwup? */
 		return true;
 	}
