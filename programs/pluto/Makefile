@@ -78,21 +78,13 @@ CFLAGS+=-DGLIBC_KERN_FLIP_HEADERS
 endif
 
 # where to find libreswan headers
-HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto
-
-ifeq ($(USE_KLIPS),true)
-OBJS += kernel_pfkey.o
-endif
+HDRDIRS +=-I${LIBRESWANSRCDIR}/include
 
 ifeq ($(USE_NETKEY),true)
 OBJS += kernel_xfrm.o
 ifeq ($(USE_XFRM_INTERFACE),true)
 OBJS += kernel_xfrm_interface.o
 endif
-endif
-
-ifeq ($(USE_KLIPS),true)
-OBJS += kernel_klips.o
 endif
 
 ifeq ($(USE_BSDKAME),true)
@@ -179,10 +171,6 @@ LDFLAGS += -levent_pthreads
 
 LDFLAGS += $(LDAP_LDFLAGS)
 
-ifeq ($(USE_KLIPS),true)
-# Linux always supports udpfromto
-UDPFROMTO_SRCS=udpfromto.c
-endif
 ifeq ($(USE_NETKEY),true)
 # Linux always supports udpfromto
 UDPFROMTO_SRCS=udpfromto.c

@@ -72,10 +72,9 @@ enum ike_version {
 
 enum kernel_interface {
 	NO_KERNEL = 1,
-	USE_KLIPS = 2,
-	USE_NETKEY= 3,
+	USE_NETKEY= 2,
+	USE_BSDKAME = 3,
 	USE_WIN2K = 4,
-	USE_BSDKAME = 6,
 };
 
 /* RFC 3706 Dead Peer Detection */
@@ -927,12 +926,6 @@ enum esn_options {
 	ESN_EITHER = 3,
 };
 
-enum saref_tracking {
-	SAT_YES = 0,            /* SAref tracking via _updown - the default */
-	SAT_NO = 1,             /* no SAref tracking - third party will handle this */
-	SAT_CONNTRACK = 2,      /* Saref tracking using connmark optimizations */
-};
-
 /* Policies for establishing an SA
  *
  * These are used to specify attributes (eg. encryption) and techniques
@@ -980,7 +973,6 @@ enum sa_policy_bits {
 	POLICY_COMPRESS_IX,	/* must be third */
 	POLICY_TUNNEL_IX,
 	POLICY_PFS_IX,
-	POLICY_DISABLEARRIVALCHECK_IX,	/* suppress tunnel egress address checking */
 	POLICY_DECAP_DSCP_IX,	/* decapsulate ToS/DSCP bits */
 	POLICY_NOPMTUDISC_IX,
 	POLICY_MSDH_DOWNGRADE_IX, /* allow IKEv2 rekey to downgrade DH group - Microsoft bug */
@@ -989,7 +981,7 @@ enum sa_policy_bits {
 	POLICY_SHA2_TRUNCBUG_IX, /* workaround old Linux kernel (android 4.x) */
 
 #define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
-#define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_DISABLEARRIVALCHECK_IX)
+#define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_NOPMTUDISC_IX)
 
 	/* shunt attributes: what to do when routed without tunnel (2 bits) */
 	POLICY_SHUNT0_IX,
@@ -1047,9 +1039,6 @@ enum sa_policy_bits {
 	LRANGE(POLICY_SEND_REDIRECT_ALWAYS_IX, POLICY_SEND_REDIRECT_NEVER_IX)
 	POLICY_ACCEPT_REDIRECT_YES_IX,
 
-	POLICY_SAREF_TRACK_IX,	/* Saref tracking via _updown */
-	POLICY_SAREF_TRACK_CONNTRACK_IX,	/* use conntrack optimization */
-
 	POLICY_IKE_FRAG_ALLOW_IX,
 	POLICY_IKE_FRAG_FORCE_IX,
 #define POLICY_IKE_FRAG_MASK	LRANGE(POLICY_IKE_FRAG_ALLOW_IX,POLICY_IKE_FRAG_FORCE_IX)
@@ -1073,7 +1062,6 @@ enum sa_policy_bits {
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
 #define POLICY_PFS	LELEM(POLICY_PFS_IX)
-#define POLICY_DISABLEARRIVALCHECK	LELEM(POLICY_DISABLEARRIVALCHECK_IX)	/* suppress tunnel egress address checking */
 #define POLICY_DECAP_DSCP	LELEM(POLICY_DECAP_DSCP_IX)	/* decap ToS/DSCP bits */
 #define POLICY_NOPMTUDISC	LELEM(POLICY_NOPMTUDISC_IX)
 #define POLICY_MSDH_DOWNGRADE	LELEM(POLICY_MSDH_DOWNGRADE_IX)
@@ -1103,8 +1091,6 @@ enum sa_policy_bits {
 #define POLICY_SEND_REDIRECT_ALWAYS	LELEM(POLICY_SEND_REDIRECT_ALWAYS_IX)
 #define POLICY_SEND_REDIRECT_NEVER	LELEM(POLICY_SEND_REDIRECT_NEVER_IX)
 #define POLICY_ACCEPT_REDIRECT_YES	LELEM(POLICY_ACCEPT_REDIRECT_YES_IX)
-#define POLICY_SAREF_TRACK	LELEM(POLICY_SAREF_TRACK_IX)	/* Saref tracking via _updown */
-#define POLICY_SAREF_TRACK_CONNTRACK	LELEM(POLICY_SAREF_TRACK_CONNTRACK_IX)	/* use conntrack optimization */
 #define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)
 #define POLICY_IKE_FRAG_FORCE	LELEM(POLICY_IKE_FRAG_FORCE_IX)
 #define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */

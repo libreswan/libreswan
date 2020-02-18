@@ -62,7 +62,7 @@ and the output format is subject to change without warning.</para>
 has to figure out which files in
 <filename>/var/log</filename>
 contain the IPsec log messages.
-It looks for KLIPS and general log messages first in
+It looks for general log messages first in
 <emphasis remap='I'>messages</emphasis>
 and
 <emphasis remap='I'>syslog</emphasis>,

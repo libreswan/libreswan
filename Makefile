@@ -36,7 +36,7 @@ SRCDIR?=$(shell pwd)/
 # dummy default rule
 def help:
 	@echo
-	@echo "To build and install on a recent Linux kernel that has NETKEY:"
+	@echo "To build and install on a recent Linux kernel:"
 	@echo
 	@echo "   make all && sudo make install"
 	@echo
@@ -45,25 +45,14 @@ def help:
 	@echo "   make base && sudo make install-base"
 	@echo
 	@echo "See the files INSTALL and README for more general information,"
-	@echo "and details on how to build / install on KLIPS and other systems"
 	@echo
 	@echo "To build debian packages: make deb"
-	@echo "To build fedora/rhel/centos rpms, see packaging/"
+	@echo "To build fedora/rhel/centos rpms: make rpm"
 	@echo
 	@false
 
 .PHONY: def help
 
-PATCHES=linux
-# where KLIPS goes in the kernel
-# note, some of the patches know the last part of this path
-KERNELKLIPS=$(KERNELSRC)/net/ipsec
-KERNELCRYPTODES=$(KERNELSRC)/crypto/ciphers/des
-KERNELLIBFREESWAN=$(KERNELSRC)/lib/libfreeswan
-KERNELLIBZLIB=$(KERNELSRC)/lib/zlib
-KERNELINCLUDE=$(KERNELSRC)/include
-
-MAKEUTILS=packaging/utils
 ERRCHECK=${MAKEUTILS}/errcheck
 KVUTIL=${MAKEUTILS}/kernelversion
 KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
@@ -98,10 +87,6 @@ endif
 
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
 
-# kernel details
-# what variant of our patches should we use, and where is it
-KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
-
 # directories visited by all recursion
 
 # programs
@@ -113,7 +98,7 @@ OBJDIRTOP=${ABSOBJDIR}
 .PHONY: local-clean-base
 local-clean-base:
 	$(foreach file,$(RPMTMPDIR) $(RPMDEST) out.*build out.*install, \
-		rm -rf $(file) ; )	# but leave out.kpatch
+		rm -rf $(file) ; )
 
 # Delete absolutely everything.
 #
@@ -244,6 +229,3 @@ install-fipshmac:
 include ${LIBRESWANSRCDIR}/mk/docker-targets.mk
 include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk
 include ${LIBRESWANSRCDIR}/mk/web-targets.mk
-ifeq ($(USE_KLIPS),true)
-include ${LIBRESWANSRCDIR}/mk/kernel.mk
-endif

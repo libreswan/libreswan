@@ -69,8 +69,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 # define SOPT(kbf, v)  { cfg->setup.options[kbf] = (v) ; }
 
-	SOPT(KBF_FRAGICMP, FALSE); /* see sysctl_ipsec_icmp in ipsec_proc.c */
-	SOPT(KBF_HIDETOS, TRUE);
 	SOPT(KBF_LOGTIME, TRUE);
 	SOPT(KBF_LOGAPPEND, TRUE);
 	SOPT(KBF_LOGIP, TRUE);
@@ -172,7 +170,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_ECDSA | POLICY_RSASIG | POLICY_RSASIG_v1_5 | /* authby= */
 		POLICY_ENCRYPT | POLICY_PFS |
 		POLICY_IKEV2_ALLOW |
-		POLICY_SAREF_TRACK |         /* sareftrack=yes */
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      	     /* esn=no */
 
@@ -1442,25 +1439,6 @@ static bool load_conn(
 		}
 	}
 
-	if (conn->options_set[KNCF_SAREFTRACK]) {
-		conn->policy &= ~(POLICY_SAREF_TRACK | POLICY_SAREF_TRACK_CONNTRACK);
-
-		switch (conn->options[KNCF_SAREFTRACK]) {
-		case SAT_YES:
-			/* this is the default */
-			conn->policy |= POLICY_SAREF_TRACK;
-			break;
-
-		case SAT_CONNTRACK:
-			conn->policy |= POLICY_SAREF_TRACK |
-					POLICY_SAREF_TRACK_CONNTRACK;
-			break;
-
-		case SAT_NO:
-			break;
-		}
-	}
-
 	/* read in the authby string and translate to policy bits
 	 * this is the symmetric (left+right) version
 	 * there is also leftauthby/rightauthby version stored in 'end'
@@ -1545,8 +1523,8 @@ static bool load_conn(
 	if (NEVER_NEGOTIATE(conn->policy)) {
 		/* remove IPsec related options */
 		conn->policy &= ~(POLICY_PFS | POLICY_COMPRESS | POLICY_ESN_NO |
-			POLICY_ESN_YES | POLICY_SAREF_TRACK | POLICY_DECAP_DSCP |
-			POLICY_NOPMTUDISC | POLICY_SAREF_TRACK_CONNTRACK) &
+			POLICY_ESN_YES | POLICY_DECAP_DSCP |
+			POLICY_NOPMTUDISC) &
 			/* remove IKE related options */
 			~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
 			POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE);

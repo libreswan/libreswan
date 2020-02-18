@@ -39,7 +39,7 @@ static bool warning_or_false(struct proposal_parser *parser,
 	if (parser->policy->ignore_parser_errors) {
 		/*
 		 * XXX: the algorithm might be unknown, or might be
-		 * known but not enabled due to FIPS or KLIPS, or ...?
+		 * known but not enabled due to FIPS, or ...?
 		 */
 		parser->policy->warning("ignoring %s %s %s algorithm '"PRI_SHUNK"'",
 					enum_name(&ike_version_names, parser->policy->version),
@@ -329,8 +329,8 @@ static bool parse_proposal(struct proposal_parser *parser,
 	 * invalid algorithms are instead skipped and this can result
 	 * in a proposal with no encryption algorithm.
 	 *
-	 * For instance, the encryption algorithm "AES_GCM" will be
-	 * invalid when ESP and KLIPS.  Normally this proposal will be
+	 * For instance, the encryption algorithm "AES_GCM" might be
+	 * invalid on some IPsec stacks.  Normally this proposal will be
 	 * rejected, but when IGNORE_PARSER_ERRORS (for default
 	 * proposals) the code will instead stumble on.
 	 */

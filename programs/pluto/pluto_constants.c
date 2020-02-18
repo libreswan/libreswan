@@ -55,14 +55,12 @@
 
 static const char *const kern_interface_name[] = {
 	"no-kernel", /* run without stack */
-	"klips",
 	"netkey",
+	"bsdkame",
 	"win2k",
-	"mastklips",
-	"bsdkame"
 };
 enum_names kern_interface_names = {
-	NO_KERNEL, USE_BSDKAME,
+	NO_KERNEL, USE_WIN2K,
 	ARRAY_REF(kern_interface_name),
 	NULL, /* prefix */
 	NULL
@@ -241,7 +239,6 @@ const char *const sa_policy_bit_names[] = {
 	"COMPRESS",
 	"TUNNEL",
 	"PFS",
-	"DISABLEARRIVALCHECK",
 	"DECAP_DSCP",
 	"NOPMTUDISC",
 	"MSDH_DOWNGRADE",
@@ -271,8 +268,6 @@ const char *const sa_policy_bit_names[] = {
 	"SEND_REDIRECT_ALWAYS",
 	"SEND_REDIRECT_NEVER",
 	"ACCEPT_REDIRECT_YES",
-	"SAREF_TRACK",
-	"SAREF_TRACK_CONNTRACK",
 	"IKE_FRAG_ALLOW",
 	"IKE_FRAG_FORCE",
 	"NO_IKEPAD",

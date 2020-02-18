@@ -551,8 +551,6 @@ bool ikev1_out_sa(pb_stream *outs,
 			 * All ESPs in an SA will share a single SPI.
 			 * All AHs in an SAwill share a single SPI.
 			 * AHs' SPI will be distinct from ESPs'.
-			 * This latter is needed because KLIPS doesn't
-			 * use the protocol when looking up a (dest, protocol, spi).
 			 * ??? If multiple ESPs are composed, how should their SPIs
 			 * be allocated?
 			 */

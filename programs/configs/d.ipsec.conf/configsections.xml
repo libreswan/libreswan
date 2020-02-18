@@ -13,10 +13,8 @@ Here's an example:</para>
 <!-- .ta 1c -->
 <emphasis remap='B'>
 config setup
-	interfaces="ipsec0=eth1 ipsec1=ppp0"
-	klipsdebug=none
-	plutodebug=control
-	protostack=auto
+	logfile=/var/log/pluto.log
+	plutodebug=all
 </emphasis>
 </literallayout> <!-- .fi -->
 

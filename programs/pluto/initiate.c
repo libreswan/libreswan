@@ -685,8 +685,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		/* We've found a connection that can serve.
 		 * Do we have to initiate it?
 		 * Not if there is currently an IPSEC SA.
-		 * But if there is an IPSEC SA, then KLIPS would not
-		 * have generated the acquire.  So we assume that there isn't one.
 		 * This may be redundant if a non-opportunistic
 		 * negotiation is already being attempted.
 		 */
@@ -781,7 +779,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 
 
 			/*
-			 * KLIPS always has shunts without protoports.
 			 * XFRM always has shunts with protoports, even when no *protoport= settings in conn
 			 */
 			if (b->negotiation_shunt != SPI_HOLD ||
@@ -821,8 +818,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 							} else {
 								DBG(DBG_OPPO, DBG_log("not really expecting a shunt for dport 0 ?"));
 							}
-						} else {
-							DBG(DBG_OPPO, DBG_log("KLIPS might not support these shunts with protoport"));
 						}
 					}
 				} else {

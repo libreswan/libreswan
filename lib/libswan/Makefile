@@ -141,9 +141,6 @@ OBJS += lswlog_passert.o
 # XXX: More is coming as it gets cleaned up and made more library
 # like.
 
-# not much left using this
-CFLAGS += -I$(top_srcdir)/lib/libcrypto
-
 OBJS += ike_alg.o
 OBJS += ike_alg_test.o
 OBJS += ike_alg_dh_nss_ecp_ops.o
@@ -202,17 +199,6 @@ endif
 
 ifeq ($(USE_DNSSEC),true)
 OBJS += unbound.o
-endif
-
-ifeq ($(USE_KLIPS),true)
-CFLAGS += -DKLIPS
-endif
-
-ifeq ($(USE_KLIPS),true)
-CFLAGS += -DPFKEYV2
-OBJS += pfkey_sock.o pfkey_error.o
-OBJS += pfkey_v2_build.o pfkey_v2_ext_bits.o pfkey_v2_parse.o
-OBJS += pfkey_v2_debug.o
 endif
 
 # Original flags; this is a mess.

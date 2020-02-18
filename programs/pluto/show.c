@@ -88,7 +88,7 @@ void show_status(const struct fd *whackfd)
 	db_ops_show_status(whackfd);
 	show_connections_status(whackfd);
 	show_states_status(whackfd, FALSE);
-#if defined(NETKEY_SUPPORT) || defined(KLIPS)
+#if defined(NETKEY_SUPPORT)
 	show_shunt_status(whackfd);
 #endif
 }

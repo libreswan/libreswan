@@ -22,9 +22,6 @@
 
 # These prevent coverity warnings; variables come in via ipsec addconn call
 xfrmlifetime=""
-overridemtu=""
-fragicmp=""
-hidetos=""
 
 IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
 PATH=@FINALSBINDIR@:${PATH}
@@ -36,7 +33,6 @@ test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
 
 xfrm_stat=/proc/sys/net/core/xfrm_acq_expires
-klipsstack=/proc/net/ipsec/version
 action="${1}"
 
 if [ -z "${action}" ]; then
@@ -121,15 +117,6 @@ startnetkey() {
 
     cryptomodules
 
-    if [ -f ${klipsstack} ]; then
-	echo "Warning: found KLIPS stack loaded - attempting to unload..." >&2
-	stopklips
-	if [ -f ${klipsstack} ]; then
-	    echo "FAILURE to unload KLIPS module" >&2
-	    exit 1
-	fi
-    fi
-
     if [ -f /proc/modules ]; then
 	# load all XFRM modules
 	for mod in ipcomp6 xfrm_ipcomp ipcomp xfrm6_tunnel xfrm6_mode_tunnel \
@@ -164,61 +151,11 @@ startnetkey() {
     fi
 }
 
-stopklips() {
-    if [ -f ${klipsstack} ]; then
-	# Bring down ipsecX interfaces
-	ifl=$(grep -v NULL /proc/net/ipsec_tncfg 2>/dev/null | sed -n -e "/^ipsec/s/ .*//p")
-	if [ -n "${ifl}" ]; then
-	    for iface in  ${ifl}; do
-		ip link set ${iface} down
-		ip addr flush dev ${iface}
-		ipsec tncfg --detach --virtual ${iface}
-		# ipsec0 won't let itself be deleted
-		ipsec tncfg --delete ${iface}
-	    done
-	    [ -r /proc/net/ipsec_klipsdebug ] && ipsec klipsdebug --none
-	    [ -d /proc/net/ipsec/eroute ] && ipsec eroute --clear
-	    [ -d /proc/net/ipsec/spi ] && ipsec spi --clear
-	fi
-
-	if [ -f /proc/modules ]; then
-	    rmmod ipsec 2>/dev/null
-	fi
-    fi
-    if [ -f ${klipsstack} -o -n "$(lsmod | grep ^ipsec)" ]; then
-	echo "FAILURE to unload KLIPS module" >&2
-	exit 1
-    fi
-}
-
 stop() {
     stopnetkey
-    stopklips
 }
 
 cryptomodules() {
-    # load any OCF and CryptoAPI modules we might need for acceleration
-    # (OCF works for XFRM IPsec and KLIPS)
-    # OCF cryptosoft is for kernel acceleration (ESP/AH)
-    ${MODPROBE} cryptosoft 2>/dev/null
-    # We skip cryptodev.ko because we no longer support /dev/crypto offloading
-    # (the overhead of cryptodev is not worth it even on embedded platforms)
-
-    if [ -d /sys/module/ocf ]; then
-	# OCF tuning - If we have enough bogomips and RAM,
-	# use bigger OCF queues
-	bogomips=$(grep -i bogomips /proc/cpuinfo | head -1 | awk '{print $3;}' | sed "s/\..*$//")
-	ram=$(head -1 /proc/meminfo | awk '{print $2;}')
-	limit=1000
-	if [ ${bogomips} -gt 1000 ]; then
-	    if [ ${ram} -gt 262143 ]; then
-		limit=10000
-		#echo "OCF limit set to ${limit}" >&2
-	    fi
-	fi
-	echo ${limit} >/sys/module/ocf/parameters/crypto_q_max
-    fi
-
     # load the most common ciphers/algo's
     # padlock must load before aes module - though does not exist on newer
     # kernels
@@ -242,124 +179,6 @@ cryptomodules() {
     done
 }
 
-startklips() {
-    cryptomodules
-    if [ -f ${xfrm_stat} ]; then
-	echo "Warning: found possible XFRM IPsec stack loaded - attempting to unload..." >&2
-	stopnetkey --wait
-    fi
-    if [ ! -f ${klipsstack} ]; then
-	# KLIPS-related paths
-	bareversion=$(uname -r | sed -e 's/\.nptl//' | sed -e 's/^\(2\.[0-9]\.[1-9][0-9]*-[1-9][0-9]*\(\.[0-9][0-9]*\)*\(\.x\)*\).*$/\1/')
-	case ${bareversion} in
-	    2.4*)
-		modulename=ipsec.o
-		;;
-	    *)
-		modulename=ipsec.ko
-		;;
-	esac
-	# modprobe does not like specifying .o or .ko, but insmod needs it
-	if [ "$(basename "@MODPROBEBIN@")" = "modprobe" ]; then
-	    ${MODPROBE} ipsec
-	else
-	    ${MODPROBE} ${modulename}
-	fi
-
-	if [ ! -f ${klipsstack} ]; then
-	    echo "FAILURE to load KLIPS module" >&2
-	    exit 1
-	fi
-
-	if [ -d /sys/module/ocf ]; then
-	    echo ${limit} >/sys/module/ipsec/parameters/ipsec_irs_cache_allocated_max
-	    echo ${limit} >/sys/module/ipsec/parameters/ipsec_ixs_cache_allocated_max
-	fi
-    fi
-
-    if [ ${stack} = "klips" ]; then
-	# in klips mode we attach it to the physical device
-	# clear tables out in case dregs have been left over
-	ipsec eroute --clear
-	ipsec spi --clear
-	# detach all ipsecX devices
-	ipsec tncfg --clear
-
-	phys=$(ip ro li | grep default | sed "s/^.* dev \([^ ]*\) .*$/\1/")
-
-	if [ -z "${interfaces}" ]; then
-		interfaces="%defaultroute"
-		if [ -z "$phys" ]; then
-			echo "ERROR: no default route found and no interfaces= option set"
-			exit 1
-		fi
-	fi
-
-	for iface in ${interfaces}; do
-	    if [ "${iface}" = "%none" ]; then
-		echo "ignoring obsolete interface %none" >&2
-		continue
-	    elif [ "${iface}" = "%defaultroute" ]; then
-		virt="ipsec0"
-	    else
-		virt="$(expr ${iface} : '\([^=]*\)=.*')"
-		phys="$(expr ${iface} : '[^=]*=\(.*\)')"
-	    fi
-	    # ipsecX might not exist yet
-	    if [ ! -d /sys/devices/virtual/net/${virt} ]; then
-		ipsec tncfg --create ${virt}
-	    fi
-	    ipsec tncfg --attach --virtual ${virt} --physical ${phys}
-
-	    # configure all the IPv4/IPv6 addresses (including point-to-point)
-	    ip addr show dev ${phys} label ${phys} | \
-		awk '$1 == "inet" || ($1 == "inet6" && !/ dynamic/) {
-		    cmd = "ip addr add"
-		    if ($1 == "inet")
-			sub(" [^ ]+:[^ ]+"," ")
-		    sub("secondary","")
-		    sub("/.*","",$2)
-		    sub("dynamic","")
-		    for (i = 2; i < NF; i++) {
-			if ($i == "brd" || $i == "peer" || $i == "secondary")
-			    i++
-			else
-			    cmd = cmd " " $i
-		    }
-		    if ($NF != phys)
-			cmd = cmd " " $NF
-		    cmd = cmd " dev " virt ">/dev/null 2>/dev/null"
-		    system(cmd)
-		}' phys=${phys} virt=${virt}
-	    ip link set up dev ${virt}
-
-	    if [ "${overridemtu}" != "" ]; then
-		ip link set mtu ${overridemtu} dev ${virt}
-	    else
-	    	# Double check the mtu is not 0
-	    	# if it is set it to a saner default
-	    	ip link show dev ${virt} | grep -q 'mtu 0 '
-	    	RETVAL=$?
-	    	if [ "${RETVAL}" -eq 0 ]; then
-		    echo "Fixup of mtu on ${virt} to 16260" >&2
-		    ip link set mtu 16260 dev ${virt}
-	    	fi
-	    fi
-	done
-
-    elif [ ${stack} = "none" ]; then
-	echo "protostack=none selected - No IPsec SA's will be injected into the kernel" >&2
-    fi
-
-    # global module options for KLIPS
-    if [ "${fragicmp}" = "yes" ]; then
-	echo 1 >/proc/sys/net/ipsec/icmp
-    fi
-    if [ "${hidetos}" = "no" ]; then
-	echo 0 >/proc/sys/net/ipsec/tos
-    fi
-}
-
 # Start the actual work
 
 if [ $(id -u) -ne 0 ]; then
@@ -375,10 +194,10 @@ else
 fi
 
 case ${stack} in
-    netkey|klips|none)
+    netkey|none)
 	;;
-    auto)
-	echo "protostack=auto is not longer supported, defaulting to netkey" >&2
+    auto|mast|klips)
+	echo "protostack= values auto, klips and mast are not longer supported, defaulting to netkey" >&2
 	stack=netkey
 	;;
     *)
@@ -389,14 +208,8 @@ esac
 
 case ${action} in
     stop)
-	# We don't unload XFRM IPsec on stop - only when we detect a stack
-	# change.
-	if [ -f ${klipsstack} ]; then
-		ipsec eroute --clear
-		# this clears all IP addresses on ipsecX interfaces by
-		# unloading the module
-		stopklips
-	elif [ -f ${xfrm_stat} ]; then
+	# We don't unload XFRM IPsec on stop
+	if [ -f ${xfrm_stat} ]; then
 		ip xfrm state flush
 		ip xfrm policy flush
 		# module unloading skipped on purpose - can hang for a long
@@ -408,8 +221,6 @@ case ${action} in
 	    netkey)
 		startnetkey
 		;;
-	    klips)
-		startklips
 		;;
 	esac
 	;;

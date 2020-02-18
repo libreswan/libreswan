@@ -193,6 +193,6 @@ with the software. Further documentation can be found at https://libreswan.org/
 and the wiki at https://libreswan.org/wiki/
 
 ## KLIPS IPsec stack
-The KLIPS IPsec stack is no longer actively maintained or supported. Please
-migreate to using the Linux native netlink/XFRM stack. If you wish to have
-network interfaces like KLIPS has, please use the XFRMi (VTI) interfaces.
+The KLIPS IPsec stack has been removed. Please use the netlink/XFRM stack.
+If you wish to have network interfaces like KLIPS had, please use the XFRMi
+interfaces via the ipsec-interface= keyword.

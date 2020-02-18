@@ -27,7 +27,6 @@
     USE_NM=true \\\
     USE_SECCOMP=true \\\
     USE_XAUTHPAM=true \\\
-    USE_KLIPS=false \\\
     USE_NSS_PRF=true \\\
 %{nil}
 

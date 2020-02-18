@@ -1,4 +1,4 @@
-# Makefile for the KLIPS interface utilities
+# Makefile for the interface utilities
 #
 # Copyright (C) 1998, 1999  Henry Spencer.
 # Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
@@ -20,7 +20,7 @@ endif
 
 include $(top_srcdir)/Makefile.inc
 
-SUBDIRS=libswan libcrypto libwhack libipsecconf
+SUBDIRS=libswan libwhack libipsecconf
 SUBDIRS += liblswtool
 
 ifeq ($(USE_BSDKAME),true)

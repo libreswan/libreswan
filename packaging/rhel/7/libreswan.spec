@@ -8,7 +8,6 @@
 %global nss_version 3.36.0-7.1
 # Libreswan config options
 %global libreswan_config \\\
-    USE_KLIPS=false \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     INC_RCDEFAULT=%{_initrddir} \\\

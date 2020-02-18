@@ -115,10 +115,6 @@ export LC_ALL
 #
 #	PLUTO_CONNECTION_TYPE
 #
-#	PLUTO_MY_REF/PLUTO_PEER_REF
-#		KLIPSng(mast) references to the SA to be used in each
-#		direction.
-#
 #	PLUTO_STACK
 #		The kernel level IPstack used (see protostack=)
 #

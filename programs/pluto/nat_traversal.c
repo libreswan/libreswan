@@ -42,9 +42,6 @@
 #include <sys/ioctl.h>
 #include <netinet/udp.h>
 
-#include <libreswan/ipsec_tunnel.h>
-#include <libreswan/ipsec_param.h>
-
 #include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"
@@ -89,22 +86,6 @@ static bool nat_kap_event = FALSE;
 
 void init_nat_traversal(deltatime_t keep_alive_period)
 {
-	{
-		FILE *f = fopen("/proc/net/ipsec/natt", "r");
-
-		/* ??? this only checks if the file starts with '0'; seems sloppy */
-		if (f != NULL) {
-			int n = getc(f);
-
-			if (n == '0') {
-				nat_traversal_enabled = FALSE;
-				libreswan_log("  KLIPS does not have NAT-Traversal built in (see /proc/net/ipsec/natt)");
-			}
-			fclose(f);
-		}
-	}
-
-
 	if (deltamillisecs(keep_alive_period) != 0)
 		nat_kap = keep_alive_period;
 
@@ -682,7 +663,7 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 		/*
 		 * Was ESPINUDP_WITH_NON_ESP (aka 2) defined in
 		 * "libreswan.h" which smells like something intended
-		 * for the KLIPS module. <netinet/udp.h> defines the
+		 * for the old KLIPS module. <netinet/udp.h> defines the
 		 * below across linux and *BSD.
 		 */
 		const int sol_value = UDP_ENCAP_ESPINUDP;
@@ -705,36 +686,6 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 #else
 	DBG(DBG_NATT,
 		DBG_log("NAT-Traversal: ESPINUDP() support for sockopt style NAT-T family not compiled in"));
-#endif
-
-#if defined(KLIPS)
-	if (kern_interface == USE_KLIPS) {
-		struct ifreq ifr;
-		int *fdp = (int *) &ifr.ifr_data;
-		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying old ioctl style NAT-T"));
-		zero(&ifr);
-		const char *const ifn = "ipsec0"; /* mast must use ipsec0 too */
-		fill_and_terminate(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
-		fdp[0] = sk;
-		fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
-		int r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr); /* private to KLIPS only */
-		if (r == -1) {
-			DBG(DBG_NATT,
-				DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for old ioctl style NAT-T family %s (errno=%d)",
-					ESPINUDP_WITH_NON_ESP, fam, errno));
-		} else {
-			DBG(DBG_NATT,
-				DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for old ioctl style NAT-T family %s",
-					ESPINUDP_WITH_NON_ESP, fam));
-			return r;
-		}
-	} else {
-		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP() support for ioctl style NAT-T family not available for this kernel"));
-	}
-#else
-	DBG(DBG_NATT,
-		DBG_log("NAT-Traversal: ESPINUDP() support for ioctl style NAT-T family not compiled in"));
 #endif
 
 	/* all methods failed to detect NAT-T support */

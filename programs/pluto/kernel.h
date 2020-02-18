@@ -434,10 +434,6 @@ static inline bool compatible_overlapping_connections(const struct connection *a
 	       LIN(POLICY_OVERLAPIP, a->policy & b->policy);
 }
 
-#ifdef KLIPS
-extern const struct kernel_ops klips_kernel_ops;
-#endif
-
 extern void show_kernel_interface(const struct fd *whackfd);
 extern void free_kernelfd(void);
 extern void expire_bare_shunts(void);

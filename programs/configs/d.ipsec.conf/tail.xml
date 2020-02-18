@@ -99,12 +99,6 @@ where the remote IP address is specified as
 <literal>0.0.0.0</literal>,
 and that is considered to be the &ldquo;participant&rdquo; for such connections.</para>
 
-<para>In principle it might be necessary to control MTU on an
-interface-by-interface basis,
-rather than with the single global override that
-<emphasis remap='B'>overridemtu</emphasis>
-provides. This feature is planned for a future release.</para>
-
 <para>If conns are to be added before DNS is available,
 <emphasis remap='B'>left=</emphasis><emphasis remap='I'>FQDN</emphasis>,
 <emphasis remap='B'>leftnextop=</emphasis><emphasis remap='I'>FQDN</emphasis>,

@@ -387,8 +387,7 @@ int create_socket(const struct raw_iface *ifp, const char *v_name, int port)
 
 	/*
 	 * NETKEY requires us to poke an IPsec policy hole that allows
-	 * IKE packets, unlike KLIPS which implicitly always allows
-	 * plaintext IKE.  This installs one IPsec policy per socket
+	 * IKE packets. This installs one IPsec policy per socket
 	 * but this function is called for each: IPv4 port 500 and
 	 * 4500 IPv6 port 500
 	 */

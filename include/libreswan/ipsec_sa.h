@@ -205,7 +205,6 @@ struct ipsec_sa {
 	struct ident ips_ident_s;               /* identity src */
 	struct ident ips_ident_d;               /* identity dst */
 
-	/* these are included even if CONFIG_KLIPS_IPCOMP is off */
 	__u16 ips_comp_adapt_tries;             /* ipcomp self-adaption tries */
 	__u16 ips_comp_adapt_skip;              /* ipcomp self-adaption to-skip */
 	__u64 ips_comp_ratio_cbytes;            /* compressed bytes */

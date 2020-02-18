@@ -236,11 +236,10 @@ static const struct keyword_enum_value kw_rsasigkey_values[] = {
 static const struct keyword_enum_values kw_rsasigkey_list = VALUES_INITIALIZER(kw_rsasigkey_values);
 
 /*
- * Values for protostack={netkey, klips, mast or none }
+ * Values for protostack={netkey, none, mast or none }
  */
 static const struct keyword_enum_value kw_proto_stack_list[] = {
 	{ "none",         NO_KERNEL },
-	{ "klips",        USE_KLIPS },
 	{ "auto",         USE_NETKEY }, /* auto now means netkey */
 	{ "netkey",       USE_NETKEY },
 	{ "native",       USE_NETKEY },
@@ -251,17 +250,6 @@ static const struct keyword_enum_value kw_proto_stack_list[] = {
 };
 
 static const struct keyword_enum_values kw_proto_stack = VALUES_INITIALIZER(kw_proto_stack_list);
-
-/*
- * Values for sareftrack={yes, no, conntrack }
- */
-static const struct keyword_enum_value kw_sareftrack_values[] = {
-	{ "yes",          SAT_YES },
-	{ "no",           SAT_NO },
-	{ "conntrack",    SAT_CONNTRACK },
-};
-
-static const struct keyword_enum_values kw_sareftrack_list = VALUES_INITIALIZER(kw_sareftrack_values);
 
 /*
  *  Cisco interop: remote peer type
@@ -308,30 +296,6 @@ static struct keyword_enum_value kw_host_values[] = {
 
 static struct keyword_enum_values kw_host_list =
 	{ kw_host_values, elemsof(kw_host_values) };
-
-static const struct keyword_enum_value kw_klipsdebug_values[] = {
-	{ "all",      LRANGE(KDF_XMIT, KDF_COMP) },
-	{ "none",     0 },
-	{ "verbose",  LELEM(KDF_VERBOSE) },
-	{ "xmit",     LELEM(KDF_XMIT) },
-	{ "tunnel-xmit", LELEM(KDF_XMIT) },
-	{ "netlink",  LELEM(KDF_NETLINK) },
-	{ "xform",    LELEM(KDF_XFORM) },
-	{ "eroute",   LELEM(KDF_EROUTE) },
-	{ "spi",      LELEM(KDF_SPI) },
-	{ "radij",    LELEM(KDF_RADIJ) },
-	{ "esp",      LELEM(KDF_ESP) },
-	{ "ah",       LELEM(KDF_AH) },
-	{ "rcv",      LELEM(KDF_RCV) },
-	{ "tunnel",   LELEM(KDF_TUNNEL) },
-	{ "pfkey",    LELEM(KDF_PFKEY) },
-	{ "comp",     LELEM(KDF_COMP) },
-	{ "nat-traversal", LELEM(KDF_NATT) },
-	{ "nattraversal", LELEM(KDF_NATT) },
-	{ "natt",     LELEM(KDF_NATT) },
-};
-
-static const struct keyword_enum_values kw_klipsdebug_list = VALUES_INITIALIZER(kw_klipsdebug_values);
 
 static const struct keyword_enum_value kw_phase2types_values[] = {
 	/* note: these POLICY bits happen to fit in an unsigned int */
@@ -401,7 +365,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL, NULL, },
   { "syslog",  kv_config,  kt_string,  KSF_SYSLOG, NULL, NULL, },
-  { "klipsdebug",  kv_config,  kt_list,  KBF_KLIPSDEBUG,  &kw_klipsdebug_list, NULL, },
   { "plutodebug",  kv_config,  kt_lset,  KBF_PLUTODEBUG, NULL, &debug_lmod_info, },
   { "logfile",  kv_config,  kt_filename,  KSF_LOGFILE, NULL, NULL, },
   { "plutostderrlog",  kv_config | kv_alias,  kt_filename,  KSF_LOGFILE, NULL, NULL, },  /* obsolete */
@@ -422,11 +385,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "statsbin",  kv_config,  kt_dirname,  KSF_STATSBINARY, NULL, NULL, },
   { "perpeerlog",  kv_config,  kt_bool,  KBF_PERPEERLOG, NULL, NULL, },
   { "perpeerlogdir",  kv_config,  kt_dirname,  KSF_PERPEERDIR, NULL, NULL, },
-  { "fragicmp",  kv_config,  kt_bool,  KBF_FRAGICMP, NULL, NULL, },
-  { "hidetos",  kv_config,  kt_bool,  KBF_HIDETOS, NULL, NULL, },
   { "uniqueids",  kv_config,  kt_bool,  KBF_UNIQUEIDS, NULL, NULL, },
   { "shuntlifetime",  kv_config,  kt_time,  KBF_SHUNTLIFETIME, NULL, NULL, },
-  { "overridemtu",  kv_config,  kt_number,  KBF_OVERRIDEMTU, NULL, NULL, },
   { "global-redirect", kv_config, kt_string, KSF_GLOBAL_REDIRECT, NULL, NULL },
   { "global-redirect-to", kv_config, kt_string, KSF_GLOBAL_REDIRECT_TO, NULL, NULL, },
 
@@ -556,7 +516,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "redirect-to",  kv_conn,  kt_string,  KSCF_REDIRECT_TO, NULL, NULL, },
   { "accept-redirect",  kv_conn,  kt_enum, KNCF_ACCEPT_REDIRECT, &kw_yna_list, NULL, },
   { "accept-redirect-to",  kv_conn,  kt_string, KSCF_ACCEPT_REDIRECT_TO, NULL, NULL, },
-  { "sareftrack",  kv_conn | kv_processed,  kt_enum,  KNCF_SAREFTRACK,  &kw_sareftrack_list, NULL, },
   { "pfs",  kv_conn,  kt_bool,  KNCF_PFS, NULL, NULL, },
 
   { "nat_keepalive",  kv_conn | kv_alias,  kt_bool,  KNCF_NAT_KEEPALIVE, NULL, NULL, },  /* obsolete _ */
@@ -637,7 +596,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "keyingtries",  kv_conn,  kt_number,  KNCF_KEYINGTRIES, NULL, NULL, },
   { "replay-window",  kv_conn,  kt_number,  KNCF_REPLAY_WINDOW, NULL, NULL, },
   { "ikelifetime",  kv_conn,  kt_time,  KNCF_IKELIFETIME, NULL, NULL, },
-  { "disablearrivalcheck",  kv_conn,  kt_invertbool,  KNCF_ARRIVALCHECK, NULL, NULL, },
   { "failureshunt",  kv_conn,  kt_enum,  KNCF_FAILURESHUNT,  &kw_failureshunt_list, NULL, },
   { "negotiationshunt",  kv_conn,  kt_enum,  KNCF_NEGOTIATIONSHUNT,  &kw_negotiationshunt_list, NULL, },
   { "connalias",  kv_conn | kv_processed,  kt_appendstring,  KSCF_CONNALIAS, NULL, NULL, },

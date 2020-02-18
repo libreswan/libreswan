@@ -185,29 +185,8 @@ PYTHON_BINARY ?= /usr/bin/python3
 # SHELL_BINARY is used for sh scripts shebang
 SHELL_BINARY ?= /bin/sh
 
-### kernel pathnames
-
-# Kernel location:  where patches are inserted, where kernel builds are done.
-
-# this is a hack using the wildcard to look for existence of a file/dir
-ifneq ($(wildcard /usr/src/linux-2.6),)
-KERNELSRC?=/usr/src/linux-2.6
-else
-ifneq ($(wildcard /usr/src/linux-2.4),)
-KERNELSRC?=/usr/src/linux-2.4
-else
-KERNELSRC?=/lib/modules/$(shell uname -r)/build
-endif
-endif
-
-# where kernel configuration outputs are located
-KCFILE=$(KERNELSRC)/.config
-ACFILE=$(KERNELSRC)/include/linux/autoconf.h
-VERFILE=$(KERNELSRC)/include/linux/version.h
-
-# where KLIPS kernel module is install
-OSMOD_DESTDIR?=net/ipsec
-
+# used by _stackmanager
+#
 # What command to use to load the modules. openwrt does not have modprobe
 # Using -b enables blacklisting - this is needed for some known bad
 # versions of crypto acceleration modules.
@@ -302,33 +281,10 @@ ASAN?=
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
 
-KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # You can also run this before starting libreswan on glibc systems:
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
 PORTINCLUDE?=
-
-# command used to link/copy KLIPS into kernel source tree
-# There are good reasons why this is "ln -s"; only people like distribution
-# builders should ever change it.
-KLIPSLINK?=ln -s -f
-
-# extra options for use in kernel build
-KERNMAKEOPTS?=
-
-# kernel Makefile targets to be done before build
-# Can be overridden if you are *sure* your kernel doesn't need them.  (2.2.xx
-# and later reportedly do not.)
-KERNDEP?=dep
-KERNCLEAN?=clean
-
-# kernel make name:  zImage for 2.0.xx, bzImage for 2.2.xx and later, and
-# boot on non-x86s (what ever happened to standards?)
-INC_B?=$(shell test -d $(DIRIN22) && echo b)
-KERNEL?=$(shell if expr " `uname -m`" : ' i.86' >/dev/null ; \
-	then echo $(INC_B)zImage ; \
-	else echo boot ; \
-	fi)
 
 # look for POD2MAN command
 POD2MAN?=$(shell which pod2man | grep / | head -n1)
@@ -427,8 +383,6 @@ export OBJDIRTOP
 
 ### paths within the source tree
 
-KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
-
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 
 # Need to specify absolute paths as 'make' (checks dependencies) and
@@ -448,10 +402,7 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
 export LIBRESWANLIB LSWTOOLLIB
-export LIBDESSRCDIR
 export WHACKLIB IPSECCONFLIB
-
-#KERNELBUILDMFLAGS=--debug=biv V=1
 
 IPSEC_SECRETS_FILE ?= $(FINALCONFDIR)/ipsec.secrets
 
