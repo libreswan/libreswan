@@ -14,12 +14,6 @@
  * for more details.
  */
 
-#include <linux/if_link.h>
-#if defined(USE_XFRM_INTERFACE_IFLA_HEADER)
-/* kernel header linux/if_link.h < 4.19 may need this extra */
-# include "if_link_extra.h"
-#endif
-#include "linux/xfrm.h"
 #include "err.h"
 
 #if defined(NETKEY_SUPPORT) && defined(USE_XFRM_INTERFACE)
