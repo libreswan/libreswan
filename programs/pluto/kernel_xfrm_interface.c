@@ -14,6 +14,9 @@
  * for more details.
  */
 
+#if !defined(linux) || !defined(USE_XFRM_INTERFACE) || !defined(NETKEY_SUPPORT)
+# error this file should only compile on Linux when NETKEY_SUPPORT & USE_XFRM_INTERFACE are defined
+#endif
 
 #include <errno.h>
 #include <fcntl.h>
@@ -40,10 +43,6 @@
 #include "server.h" /* for struct iface_port */
 #include "kernel_xfrm_interface.h"
 #include "kernel_xfrm_reply.h"
-
-#if !defined(USE_XFRM_INTERFACE) || !defined(NETKEY_SUPPORT)
-# error this file should only compile when NETKEY_SUPPORT & USE_XFRM_INTERFACE are defined
-#endif
 
 #define IPSEC1_XFRM_IF_ID (1U)
 #define IFINFO_REPLY_BUFFER_SIZE (32768 + NL_BUFMARGIN)
