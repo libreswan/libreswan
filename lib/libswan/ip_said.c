@@ -157,17 +157,17 @@ size_t dstlen;
 	return len;
 }
 
-void jam_said(jambuf_t *buf, const ip_said *said, int format)
+void jam_said(jambuf_t *buf, const ip_said *said)
 {
 	char t[SATOT_BUF];
-	satot(said, format, t, sizeof(t));
+	satot(said, 0, t, sizeof(t));
 	jam_string(buf, t);
 }
 
-const char *str_said(const ip_said *said, int format, said_buf *buf)
+const char *str_said(const ip_said *said, said_buf *buf)
 {
 	jambuf_t b = ARRAY_AS_JAMBUF(buf->buf);
-	jam_said(&b, said, format);
+	jam_said(&b, said);
 	return buf->buf;
 }
 

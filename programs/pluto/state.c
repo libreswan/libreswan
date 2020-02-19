@@ -2185,7 +2185,7 @@ void fmt_state(struct state *st, const monotime_t now,
 		{							\
 			ip_said s = said3(ADST, ASPI, APROTO);		\
 			jam(&buf, " ");					\
-			jam_said(&buf, &s, 0);				\
+			jam_said(&buf, &s);				\
 		}
 
 		/*

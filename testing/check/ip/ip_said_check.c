@@ -24,72 +24,63 @@
 static void check_str_said(void)
 {
 	static const struct test {
-		char format;
 		char *in;
 		char *out;	/* NULL means error expected */
 		bool fudge;
 	} tests[] = {
-		{ 0, "esp257@1.2.3.0", "esp.101@1.2.3.0" },
-		{ 0, "ah0x20@1.2.3.4", "ah.20@1.2.3.4" },
-		{ 0, "tun20@1.2.3.4", "tun.14@1.2.3.4" },
-		{ 0, "comp20@1.2.3.4", "comp.14@1.2.3.4" },
-		{ 0, "esp257@::1", "esp:101@::1" },
-		{ 0, "esp257@0bc:12de::1", "esp:101@bc:12de::1" },
-		{ 0, "esp78@1049:1::8007:2040", "esp:4e@1049:1::8007:2040" },
-		{ 0, "esp0x78@1049:1::8007:2040", "esp:78@1049:1::8007:2040" },
-		{ 0, "ah78@1049:1::8007:2040", "ah:4e@1049:1::8007:2040" },
-		{ 0, "ah0x78@1049:1::8007:2040", "ah:78@1049:1::8007:2040" },
-		{ 0, "tun78@1049:1::8007:2040", "tun:4e@1049:1::8007:2040" },
-		{ 0, "tun0x78@1049:1::8007:2040", "tun:78@1049:1::8007:2040" },
-		{ 0, "duk99@3ffe:370:400:ff::9001:3001", NULL },
-		{ 0, "esp78x@1049:1::8007:2040", NULL },
-		{ 0, "esp0x78@1049:1:0xfff::8007:2040", NULL },
-		{ 0, "es78@1049:1::8007:2040", NULL },
-		{ 0, "", NULL },
-		{ 0, "_", NULL },
-		{ 0, "ah2.2", NULL },
-		{ 0, "goo2@1.2.3.4", NULL },
-		{ 0, "esp9@1.2.3.4", "esp.9@1.2.3.4" },
-		{ 0, "espp9@1.2.3.4", NULL },
-		{ 0, "es9@1.2.3.4", NULL },
-		{ 0, "ah@1.2.3.4", NULL },
-		{ 0, "esp7x7@1.2.3.4", NULL },
-		{ 0, "esp77@1.0x2.3.4", NULL },
-		{ 0, PASSTHROUGHNAME, PASSTHROUGH4NAME },
-		{ 0, PASSTHROUGH6NAME, PASSTHROUGH6NAME },
-		{ 0, "%pass", "%pass" },
-		{ 0, "int256@0.0.0.0", "%pass" },
-		{ 0, "%drop", "%drop" },
-		{ 0, "int257@0.0.0.0", "%drop" },
-		{ 0, "%reject", "%reject" },
-		{ 0, "int258@0.0.0.0", "%reject" },
-		{ 0, "%hold", "%hold" },
-		{ 0, "int259@0.0.0.0", "%hold" },
-		{ 0, "%trap", "%trap" },
-		{ 0, "int260@0.0.0.0", "%trap" },
-		{ 0, "%trapsubnet", "%trapsubnet" },
-		{ 0, "int261@0.0.0.0", "%trapsubnet" },
+		{ "esp257@1.2.3.0", "esp.101@1.2.3.0" },
+		{ "ah0x20@1.2.3.4", "ah.20@1.2.3.4" },
+		{ "tun20@1.2.3.4", "tun.14@1.2.3.4" },
+		{ "comp20@1.2.3.4", "comp.14@1.2.3.4" },
+		{ "esp257@::1", "esp:101@::1" },
+		{ "esp257@0bc:12de::1", "esp:101@bc:12de::1" },
+		{ "esp78@1049:1::8007:2040", "esp:4e@1049:1::8007:2040" },
+		{ "esp0x78@1049:1::8007:2040", "esp:78@1049:1::8007:2040" },
+		{ "ah78@1049:1::8007:2040", "ah:4e@1049:1::8007:2040" },
+		{ "ah0x78@1049:1::8007:2040", "ah:78@1049:1::8007:2040" },
+		{ "tun78@1049:1::8007:2040", "tun:4e@1049:1::8007:2040" },
+		{ "tun0x78@1049:1::8007:2040", "tun:78@1049:1::8007:2040" },
+		{ "duk99@3ffe:370:400:ff::9001:3001", NULL },
+		{ "esp78x@1049:1::8007:2040", NULL },
+		{ "esp0x78@1049:1:0xfff::8007:2040", NULL },
+		{ "es78@1049:1::8007:2040", NULL },
+		{ "", NULL },
+		{ "_", NULL },
+		{ "ah2.2", NULL },
+		{ "goo2@1.2.3.4", NULL },
+		{ "esp9@1.2.3.4", "esp.9@1.2.3.4" },
+		{ "espp9@1.2.3.4", NULL },
+		{ "es9@1.2.3.4", NULL },
+		{ "ah@1.2.3.4", NULL },
+		{ "esp7x7@1.2.3.4", NULL },
+		{ "esp77@1.0x2.3.4", NULL },
+		{ PASSTHROUGHNAME, PASSTHROUGH4NAME },
+		{ PASSTHROUGH6NAME, PASSTHROUGH6NAME },
+		{ "%pass", "%pass" },
+		{ "int256@0.0.0.0", "%pass" },
+		{ "%drop", "%drop" },
+		{ "int257@0.0.0.0", "%drop" },
+		{ "%reject", "%reject" },
+		{ "int258@0.0.0.0", "%reject" },
+		{ "%hold", "%hold" },
+		{ "int259@0.0.0.0", "%hold" },
+		{ "%trap", "%trap" },
+		{ "int260@0.0.0.0", "%trap" },
+		{ "%trapsubnet", "%trapsubnet" },
+		{ "int261@0.0.0.0", "%trapsubnet" },
 		/* was "int.106@0.0.0.0" */
-		{ 0, "int262@0.0.0.0", "%unk-262" },
-		{ 0, "esp9@1.2.3.4", "unk.9@1.2.3.4", .fudge = true, },
-		{ 0, "unk77.9@1.2.3.4", NULL, },
-
-		/* XXX: 'f' is never used!?! */
-		{ 'f', "esp0xa9@1.2.3.4", "esp.000000a9@1.2.3.4" },
-		/* XXX: 'x' is only used once and in some strange pfkey code */
-		{ 'x', "esp0xa9@1.2.3.4", "esp0xa9@1.2.3.4" },
+		{ "int262@0.0.0.0", "%unk-262" },
+		{ "esp9@1.2.3.4", "unk.9@1.2.3.4", .fudge = true, },
+		{ "unk77.9@1.2.3.4", NULL, },
 
 		/* buffer size? */
-		{ 0, "esp.3a7292a2@192.1.2.24", "esp.3a7292a2@192.1.2.24" },
-		{ 0, "esp:3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", "esp:3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", },
-		{ 'x', "esp0x3a7292a2@192.1.2.24", "esp0x3a7292a2@192.1.2.24" },
-		{ 'x', "esp0x3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", "esp0x3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", },
+		{ "esp.3a7292a2@192.1.2.24", "esp.3a7292a2@192.1.2.24" },
+		{ "esp:3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", "esp:3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", },
 	};
 
 #define PRINT_SA(FILE, FMT, ...)					\
-	PRINT(FILE, " '%s' format: '%c' fudge: %s"FMT,			\
-	      t->in, t->format != 0 ? t->format : '0',			\
-	      bool_str(t->fudge),##__VA_ARGS__);
+	PRINT(FILE, " '%s' fudge: %s"FMT,				\
+	      t->in, bool_str(t->fudge),##__VA_ARGS__);
 
 #define FAIL_SA(FMT, ...)						\
 	{								\
@@ -123,7 +114,7 @@ static void check_str_said(void)
 
 		/* now convert it back */
 		said_buf buf;
-		const char *out = str_said(&sa, t->format, &buf);
+		const char *out = str_said(&sa, &buf);
 		if (out == NULL) {
 			FAIL_SA("str_said() failed");
 		} else if (!strcaseeq(t->out, out)) {

@@ -129,7 +129,7 @@ static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 			str_subnet_port(&bs->ours, &ourst),
 			bs->transport_proto,
 			str_subnet_port(&bs->his, &hist),
-			str_said(&bs->said, 0, &sat),
+			str_said(&bs->said, &sat),
 			prio, bs->why);
 	}
 }
@@ -148,7 +148,7 @@ static void log_bare_shunt(const char *op, const struct bare_shunt *bs)
 		      str_subnet_port(&bs->ours, &ourst),
 		      bs->transport_proto,
 		      str_subnet_port(&bs->his, &hist),
-		      str_said(&bs->said, 0, &sat),
+		      str_said(&bs->said, &sat),
 		      prio, bs->why);
 }
 
@@ -1098,7 +1098,7 @@ void set_text_said(char *text_said, const ip_address *dst,
 {
 	ip_said said = said3(dst, spi, sa_proto);
 	jambuf_t jam = array_as_jambuf(text_said, SATOT_BUF);
-	jam_said(&jam, &said, 0);
+	jam_said(&jam, &said);
 }
 
 /* find an entry in the bare_shunt table.
@@ -1166,7 +1166,7 @@ void show_shunt_status(const struct fd *whackfd)
 			  str_subnet_port(&(bs)->ours, &ourst),
 			  bs->transport_proto,
 			  str_subnet_port(&(bs)->his, &hist),
-			  str_said(&(bs)->said, 0, &sat),
+			  str_said(&(bs)->said, &sat),
 			  prio, bs->why);
 	}
 }
