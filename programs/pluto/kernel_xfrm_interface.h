@@ -14,11 +14,9 @@
  * for more details.
  */
 
-#if defined(linux) && defined(NETKEY_SUPPORT)
-
 #include "err.h"
 
-#if defined(USE_XFRM_INTERFACE)
+#if defined(linux) && defined(NETKEY_SUPPORT) && defined(USE_XFRM_INTERFACE)
 /* how to check defined(XFRMA_IF_ID) && defined(IFLA_XFRM_LINK)? those are enums */
 # define IS_XFRMI TRUE
 #else
@@ -46,5 +44,3 @@ extern err_t xfrm_iface_supported(void);
 extern void free_xfrmi_ipsec1(void);
 extern void unreference_xfrmi(struct connection *c);
 extern void reference_xfrmi(struct connection *c);
-
-#endif
