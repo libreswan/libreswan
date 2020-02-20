@@ -56,7 +56,7 @@ export LC_ALL
 #		is the next hop to which packets bound for the peer
 #		must be sent.
 #
-#	PLUTO_INTERFACE
+#	PLUTO_VIRT_INTERFACE
 #		is the name of the ipsec interface to be used.
 #
 #	PLUTO_ME
@@ -331,7 +331,7 @@ addsource() {
     st=0
     # check if given sourceip is local and add as alias if not
     if ! ip -o route get ${PLUTO_MY_SOURCEIP} | grep -q ^local; then
-	it="ip addr add ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${PLUTO_INTERFACE%:*}"
+	it="ip addr add ${PLUTO_MY_SOURCEIP}/${MAX_CIDR} dev ${PLUTO_VIRT_INTERFACE%:*}"
 	oops="$(eval ${it} 2>&1)"
 	st=$?
 	if [ -z "${oops}" -a ${st} -ne 0 ]; then
@@ -355,7 +355,7 @@ addsource() {
 changesource() {
     st=0
     parms="${PLUTO_PEER_CLIENT}"
-    parms2="dev ${PLUTO_INTERFACE}"
+    parms2="dev ${PLUTO_VIRT_INTERFACE}"
     parms3="src ${PLUTO_MY_SOURCEIP}"
     if [ -n "${IPROUTETABLE}" ]; then
 	parms3="${parms3} table ${IPROUTETABLE}"
@@ -484,11 +484,11 @@ doroute() {
     if [ -n "${PLUTO_NEXT_HOP}" -a "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" ]; then
 	# nexthop is not needed on ppp interfaces. unset it to make cases
 	# work, where left is set but no leftnexthop (e.g. left=%defaultroute)
-	ip link show "${PLUTO_INTERFACE%:*}" | grep -qs POINTOPOINT && unset PLUTO_NEXT_HOP
+	ip link show "${PLUTO_VIRT_INTERFACE%:*}" | grep -qs POINTOPOINT && unset PLUTO_NEXT_HOP
 
 	# skip routing via nexthop if it is not reachable through any
 	# directly connected network (but via default route only):
-	ip route list match "${PLUTO_NEXT_HOP}" dev "${PLUTO_INTERFACE}" | \
+	ip route list match "${PLUTO_NEXT_HOP}" dev "${PLUTO_VIRT_INTERFACE}" | \
 	    grep -qs -v default || unset PLUTO_NEXT_HOP
 
 	if [ -n "${PLUTO_NEXT_HOP}" ]; then
@@ -496,7 +496,7 @@ doroute() {
 	fi
     fi
 
-    parms2="${parms2} dev ${PLUTO_INTERFACE}${PLUTO_MTU:+ mtu ${PLUTO_MTU}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}}"
+    parms2="${parms2} dev ${PLUTO_VIRT_INTERFACE}${PLUTO_MTU:+ mtu ${PLUTO_MTU}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}}"
     parms3="${IPROUTEARGS}"
     if [ -n "${IPROUTETABLE}" ]; then
 	parms3="${parms3} table ${IPROUTETABLE}"
