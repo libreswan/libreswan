@@ -62,7 +62,6 @@
 #include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
-#include "udpfromto.h"
 #include "ip_sockaddr.h"
 #include "ip_address.h"
 #include "ip_endpoint.h"
@@ -87,25 +86,11 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	ip_sockaddr from;
 	zero(&from);
 	socklen_t from_len = sizeof(from);
-#if defined(HAVE_UDPFROMTO)
-	ip_sockaddr to;
-	zero(&to);
-	socklen_t to_len   = sizeof(to);
-#endif
 
-#if defined(HAVE_UDPFROMTO)
-	packet_len = recvfromto(ifp->fd, bigbuffer,
-				sizeof(bigbuffer), /*flags*/ 0,
-				&from.sa, &from_len,
-				&to.sa, &to_len);
-#else
 	packet_len = recvfrom(ifp->fd, bigbuffer,
 			      sizeof(bigbuffer), /*flags*/ 0,
 			      &from.sa, &from_len);
-#endif
 	int packet_errno = errno; /* save!!! */
-
-	/* we do not do anything with *to* addresses yet... we will */
 
 	/*
 	 * Try to decode the from address.

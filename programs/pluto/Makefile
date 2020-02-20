@@ -172,16 +172,6 @@ LDFLAGS += -levent_pthreads
 
 LDFLAGS += $(LDAP_LDFLAGS)
 
-ifeq ($(USE_NETKEY),true)
-# Linux always supports udpfromto
-UDPFROMTO_SRCS=udpfromto.c
-endif
-ifeq ($(USE_BSDKAME),true)
-# BSD always supports udpfromto
-UDPFROMTO_SRCS=udpfromto.c
-endif
-OBJS += $(UDPFROMTO_SRCS:.c=.o)
-
 RM = /bin/rm
 RMFLAGS = -f
 

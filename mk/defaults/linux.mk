@@ -5,11 +5,6 @@ USERLAND_CFLAGS += -DTimeZoneOffset=timezone
 # Not all environments set this? happened on a arm_tools cross compile
 USERLAND_CFLAGS += -Dlinux
 
-# udpfromto socket option for Linux
-USERLAND_CFLAGS += -DHAVE_UDPFROMTO=1
-USERLAND_CFLAGS += -DHAVE_IP_PKTINFO=1
-
-
 PORTDEFINE=-DSCANDIR_HAS_CONST
 
 BISONOSFLAGS=-g --verbose
