@@ -815,7 +815,7 @@ static void broadcast(lset_t rc_flags,
 }
 
 void log_message(lset_t rc_flags,
-		 struct fd *global_whackfd,
+		 const struct fd *global_whackfd,
 		 const struct state *st,
 		 const struct msg_digest *md,
 		 const char *format, ...)

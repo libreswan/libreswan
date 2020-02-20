@@ -903,8 +903,9 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 		cert_source = "nickname";
 		cert = get_cert_by_nickname_from_nss(pubkey);
 		if (cert == NULL) {
-			loglog(RC_LOG_SERIOUS, "failed to find certificate named '%s' in the NSS database",
-				pubkey);
+			loglog_global(RC_LOG_SERIOUS, whackfd,
+				      "failed to find certificate named '%s' in the NSS database",
+				      pubkey);
 			return false;
 		}
 		break;
@@ -927,9 +928,9 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 		}
 		cert = get_cert_by_ckaid_from_nss(pubkey);
 		if (cert == NULL) {
-			whack_log(RC_LOG_SERIOUS, whackfd,
-				"failed to find certificate ckaid '%s' in the NSS database",
-			       pubkey);
+			loglog_global(RC_LOG_SERIOUS, whackfd,
+				      "failed to find certificate ckaid '%s' in the NSS database",
+				      pubkey);
 			return false;
 		}
 		break;
@@ -938,8 +939,8 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 		pexpect(pubkey == NULL);
 		return true;
 	default:
-		whack_log(RC_LOG_SERIOUS, whackfd,
-			"warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
+		loglog_global(RC_LOG_SERIOUS, whackfd,
+			      "warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
 		/* recoverable screwup? */
 		return true;
 	}
@@ -951,10 +952,10 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
 		if (pk->u.rsa.modulus.len * BITS_PER_BYTE < FIPS_MIN_RSA_KEY_SIZE) {
-			whack_log(RC_FATAL, whackfd,
-				  "FIPS: Rejecting cert with key size %d which is under %d",
-				  pk->u.rsa.modulus.len * BITS_PER_BYTE,
-				  FIPS_MIN_RSA_KEY_SIZE);
+			loglog_global(RC_FATAL, whackfd,
+				      "FIPS: Rejecting cert with key size %d which is under %d",
+				      pk->u.rsa.modulus.len * BITS_PER_BYTE,
+				      FIPS_MIN_RSA_KEY_SIZE);
 			SECKEY_DestroyPublicKey(pk);
 			CERT_DestroyCertificate(cert);
 			return false;
@@ -970,8 +971,9 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
 			secCertTimeValid) {
-		loglog(RC_LOG_SERIOUS, "%s certificate \'%s\' is expired or not yet valid",
-		       which, pubkey);
+		loglog_global(RC_LOG_SERIOUS, whackfd,
+			      "%s certificate \'%s\' is expired or not yet valid",
+			      which, pubkey);
 		CERT_DestroyCertificate(cert);
 		return false;
 	}
