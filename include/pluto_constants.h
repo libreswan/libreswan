@@ -344,7 +344,7 @@ typedef enum {
 #define MIN_OUTPUT_UDP_SIZE		1024
 #define MAX_OUTPUT_UDP_SIZE            65536
 
-#define MAX_IKE_FRAGMENTS       16
+#define MAX_IKE_FRAGMENTS       32 /* Windows has been observed to send 29 fragments :/ */
 
 #define KERNEL_PROCESS_Q_PERIOD 1 /* seconds */
 #define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
