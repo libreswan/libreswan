@@ -34,7 +34,7 @@ def main():
     source = None
     if dest:
         try:
-            ipdst = ipaddress.ip_address(unicode(dest))
+            ipdst = ipaddress.ip_address(dest)
         except Exception:
             sys.exit("%s is not a valid destination IP address" % dest)
 
@@ -57,7 +57,7 @@ def main():
         if "/" in dest:
             dest = dest.split("/")[0]
         try:
-            ipsrc = ipaddress.ip_address(unicode(source))
+            ipsrc = ipaddress.ip_address(source)
         except Exception:
             sys.exit("%s is not a valid sourc IP address" % source)
         if ipsrc.version != ipdst.version:
@@ -78,11 +78,11 @@ def main():
             if src == "" and word == "src":
                 src = data[i + 1]
                 if dest:
-                    polsrc = ipaddress.ip_network(unicode(data[i + 1]))
+                    polsrc = ipaddress.ip_network(data[i + 1])
             if dst == "" and word == "dst":
                 dst = data[i + 1]
                 if dest:
-                    poldst = ipaddress.ip_network(unicode(data[i + 1]))
+                    poldst = ipaddress.ip_network(data[i + 1])
             if word == "reqid":
                 reqid = data[i + 1]
         if reqid != "0":
