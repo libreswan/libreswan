@@ -1610,7 +1610,6 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 		if (!negotiate_hash_algo_from_notification(md->v2N.signature_hash_algorithms, st)) {
 			return STF_FATAL;
 		}
-		libreswan_log("Impair: Ignoring the hash notify in IKE_SA_INIT Response");
 	}
 
 	/*
