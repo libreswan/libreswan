@@ -2,8 +2,16 @@
 See also https://libreswan.org/
 
 v3.31 (unreleased)
-* KLIPS: support for KLIPS completely removed [Paul]
-* pluto: support for deprecated algos removed: serpent, twofish, cast [Paul]
+* KLIPS: Support for KLIPS completely removed [Paul]
+* pluto: Support for deprecated algos removed: serpent, twofish, cast [Paul]
+* pluto: Increase maximum number of IKE fragments accepted to 32 [Paul]
+* show: Fixup for python3 version of ipaddress module [Paul]
+* IKEv2: Decode notify payloads into the message digest [Andrew]
+* building: Remove support for SINGLE_CONF_DIR, EMIT_ISAKMP_SPI, USE_KEYRR [Paul]
+            and TEST_INDECENT_PROPOSAL
+* building: Merge userland.mk into config.mk to simplify makefiles [Tuomo]
+* building: Deprecate INC_ variables [Tuomo]
+* building: Remove all support for SERPENT, TWOFISH, CAST and RIPEMD [Paul]
 
 v3.30 (February 13, 2020)
 * WARNING: This is the last release that supports the KLIPS stack,
