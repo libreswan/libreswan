@@ -98,6 +98,7 @@ KVM_UPGRADE_PACKAGES ?= \
     python3-pyOpenSSL \
     python3-pexpect \
     rpm-build \
+    rsync \
     screen \
     strace \
     systemd-devel \
