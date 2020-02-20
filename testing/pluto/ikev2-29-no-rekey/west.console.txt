@@ -68,12 +68,12 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec status
 000 using kernel interface: netkey
-000 interface lo/lo 127.0.0.1:4500
-000 interface lo/lo 127.0.0.1:500
-000 interface eth0/eth0 192.0.1.254:4500
-000 interface eth0/eth0 192.0.1.254:500
-000 interface eth1/eth1 192.1.2.45:4500
-000 interface eth1/eth1 192.1.2.45:500
+000 interface lo 127.0.0.1:4500
+000 interface lo 127.0.0.1:500
+000 interface eth0 192.0.1.254:4500
+000 interface eth0 192.0.1.254:500
+000 interface eth1 192.1.2.45:4500
+000 interface eth1 192.1.2.45:500
 000  
 000  
 000 fips mode=disabled;
@@ -198,12 +198,12 @@ west #
 west #
  ipsec status
 000 using kernel interface: netkey
-000 interface lo/lo 127.0.0.1:4500
-000 interface lo/lo 127.0.0.1:500
-000 interface eth0/eth0 192.0.1.254:4500
-000 interface eth0/eth0 192.0.1.254:500
-000 interface eth1/eth1 192.1.2.45:4500
-000 interface eth1/eth1 192.1.2.45:500
+000 interface lo 127.0.0.1:4500
+000 interface lo 127.0.0.1:500
+000 interface eth0 192.0.1.254:4500
+000 interface eth0 192.0.1.254:500
+000 interface eth1 192.1.2.45:4500
+000 interface eth1 192.1.2.45:500
 000  
 000  
 000 fips mode=disabled;
