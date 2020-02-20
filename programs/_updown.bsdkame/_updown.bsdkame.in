@@ -55,7 +55,7 @@ LC_ALL=C export LC_ALL
 #              must be sent.
 #
 #       PLUTO_INTERFACE
-#              is the name of the ipsec interface to be used.
+#              is the name of the real interace used by encrypted traffic and IKE traffic
 #
 #       PLUTO_ME
 #              is the IP address of our host.
@@ -116,6 +116,9 @@ LC_ALL=C export LC_ALL
 #
 #       PLUTO_SA_REQID
 #               When using KAME or XFRM/NETKEY, the IPsec SA reqid value
+#
+# 	PLUTO_VIRT_INTERFACE
+#               is the name of ipsec interface used by clear traffic in/out
 
 # check parameter(s)
 case "$1:$*" in
