@@ -735,17 +735,20 @@ void init_rate_log(void)
 			      RESET_LOG_RATE_LIMIT);
 }
 
-static void log_whack(enum rc_type rc, const struct fd *whackfd, jambuf_t *buf)
+static void log_whacks(enum rc_type rc, const struct fd *global_whackfd,
+		       const struct fd *object_whackfd, jambuf_t *buf)
 {
-	if (in_main_thread()) {
-		jambuf_to_whack(buf, whackfd, rc);
-		if (!same_fd(whackfd, whack_log_fd)) {
-			jambuf_to_whack(buf, whack_log_fd, rc);
-		}
+	if (fd_p(object_whackfd)) {
+		jambuf_to_whack(buf, object_whackfd, rc);
+	}
+	if (fd_p(global_whackfd) &&
+	    !same_fd(object_whackfd, global_whackfd)) {
+		jambuf_to_whack(buf, global_whackfd, rc);
 	}
 }
 
-void log_jambuf(lset_t rc_flags, const struct fd *object_fd, jambuf_t *buf)
+static void broadcast_jambuf(lset_t rc_flags, const struct fd *global_whackfd,
+			     const struct fd *object_whackfd, jambuf_t *buf)
 {
 	enum rc_type rc = rc_flags & RC_MASK;
 	enum stream only = rc_flags & ~RC_MASK;
@@ -755,17 +758,17 @@ void log_jambuf(lset_t rc_flags, const struct fd *object_fd, jambuf_t *buf)
 		break;
 	case ALL_STREAMS:
 		log_raw(LOG_WARNING, "", buf);
-		log_whack(rc, object_fd, buf);
+		log_whacks(rc, global_whackfd, object_whackfd, buf);
 		break;
 	case LOG_STREAM:
 		log_raw(LOG_WARNING, "", buf);
 		break;
 	case WHACK_STREAM:
-		log_whack(rc, object_fd, buf);
+		log_whacks(rc, global_whackfd, object_whackfd, buf);
 		break;
 	case ERROR_STREAM:
 		log_raw(LOG_ERR, "", buf);
-		log_whack(rc, object_fd, buf);
+		log_whacks(rc, global_whackfd, object_whackfd, buf);
 		break;
 	case NO_STREAM:
 		/*
@@ -779,7 +782,16 @@ void log_jambuf(lset_t rc_flags, const struct fd *object_fd, jambuf_t *buf)
 	}
 }
 
-static void broadcast(lset_t rc_flags, const struct fd *object_fd,
+void log_jambuf(lset_t rc_flags, const struct fd *object_fd, jambuf_t *buf)
+{
+	broadcast_jambuf(rc_flags,
+			 in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
+			 object_fd, buf);
+}
+
+static void broadcast(lset_t rc_flags,
+		      const struct fd *global_whackfd,
+		      const struct fd *object_whackfd,
 		      const struct state *st,
 		      const struct connection *c,
 		      const struct msg_digest *md,
@@ -798,19 +810,21 @@ static void broadcast(lset_t rc_flags, const struct fd *object_fd,
 		/* jam_debug_prefix(buf, st, c, from) */
 		jam_log_prefix(buf, st, c, md != NULL ? &md->sender : NULL);
 		jam_va_list(buf, message, ap);
-		log_jambuf(rc_flags, object_fd, buf);
+		broadcast_jambuf(rc_flags, global_whackfd, object_whackfd, buf);
 	}
 }
 
 void log_message(lset_t rc_flags,
+		 const struct fd *global_whackfd,
 		 const struct state *st,
 		 const struct msg_digest *md,
 		 const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	const struct fd *whackfd = (st != NULL ? st->st_whack_sock : null_fd);
-	broadcast(rc_flags, whackfd, st, NULL/*connection*/, md, format, ap);
+	const struct fd *object_whackfd = (st != NULL ? st->st_whack_sock : null_fd);
+	broadcast(rc_flags, global_whackfd, object_whackfd,
+		  st, NULL/*connection*/, md, format, ap);
 	va_end(ap);
 }
 
@@ -819,7 +833,9 @@ void log_pending(lset_t rc_flags, const struct pending *pending,
 {
 	va_list ap;
 	va_start(ap, format);
-	broadcast(rc_flags, pending->whack_sock,
+	broadcast(rc_flags,
+		  in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
+		  pending->whack_sock,
 		  NULL/*ST*/, pending->connection, NULL/*MD*/,
 		  format, ap);
 	va_end(ap);
@@ -830,7 +846,9 @@ void log_state(lset_t rc_flags, const struct state *st,
 {
 	va_list ap;
 	va_start(ap, format);
-	broadcast(rc_flags, st->st_whack_sock,
+	broadcast(rc_flags,
+		  in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
+		  st->st_whack_sock,
 		  st/*ST*/, NULL/*connection**/, NULL/*MD*/,
 		  format, ap);
 	va_end(ap);
@@ -842,6 +860,7 @@ void log_connection(lset_t rc_flags, const struct connection *c,
 	va_list ap;
 	va_start(ap, format);
 	broadcast(rc_flags,
+		  in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
 		  null_fd, /* no object FD */
 		  NULL/*state*/, c/*connection**/, NULL/*MD*/,
 		  format, ap);
@@ -854,7 +873,8 @@ void log_md(lset_t rc_flags, const struct msg_digest *md,
 	va_list ap;
 	va_start(ap, format);
 	broadcast(rc_flags,
-		  null_fd, /* no object FD */
+		  in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
+		  null_fd/* no object FD */,
 		  NULL/*state*/, NULL/*connection**/, md/*MD*/,
 		  format, ap);
 	va_end(ap);

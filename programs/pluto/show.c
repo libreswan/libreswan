@@ -41,6 +41,7 @@
 #include "plutoalg.h"
 #include "crypto.h"
 #include "db_ops.h"
+#include "kernel_xfrm_interface.h"
 
 static void show_system_security(const struct fd *whackfd)
 {
@@ -302,7 +303,7 @@ void binlog_state(struct state *st, enum state_kind new_state)
 
 		 pluto_stats_binary,
 		 conn->interface ? "push" : "drop", conn->name,
-		 conn->interface ? conn->interface->ip_dev->id_vname : "",
+		 (conn->xfrmi != NULL && conn->xfrmi->name != NULL) ? conn->xfrmi->name : "",
 		 tun ? "push" : "drop", conn->name, tun ? tun : "",
 		 p1  ? "push" : "drop", conn->name, p1  ? p1  : "",
 		 p2  ? "push" : "drop", conn->name, p2  ? p2  : "",

@@ -149,8 +149,6 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					q->ip_dev = id;
 					id->id_rname = clone_str(ifp->name,
 								 "real device name");
-					id->id_vname = clone_str(ifp->name,
-								 "virtual device name bsd");
 					id->id_count++;
 
 					q->local_endpoint = endpoint(&ifp->addr, pluto_port);
@@ -163,8 +161,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 
 					endpoint_buf b;
 					libreswan_log(
-						"adding interface %s/%s %s",
-						q->ip_dev->id_vname,
+						"adding interface %s %s",
 						q->ip_dev->id_rname,
 						str_endpoint(&q->local_endpoint, &b));
 
@@ -178,7 +175,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					    addrtypeof(&ifp->addr) == AF_INET)
 					{
 						fd = create_socket(ifp,
-								   id->id_vname,
+								   id->id_rname,
 								   pluto_nat_port);
 						if (fd < 0)
 							break;
@@ -207,7 +204,6 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 
 				/* search over if matching old entry found */
 				if (streq(q->ip_dev->id_rname, ifp->name) &&
-				    streq(q->ip_dev->id_vname, ifp->name) &&
 				    sameaddr(&q->local_endpoint, &ifp->addr)) {
 					/* matches -- rejuvinate old entry */
 					q->change = IFN_KEEP;
@@ -215,8 +211,6 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					/* look for other interfaces to keep (due to NAT-T) */
 					for (q = q->next; q; q = q->next) {
 						if (streq(q->ip_dev->id_rname,
-							  ifp->name) &&
-						    streq(q->ip_dev->id_vname,
 							  ifp->name) &&
 						    sameaddr(&q->local_endpoint,
 							     &ifp->addr))
@@ -881,8 +875,8 @@ static bool bsdkame_sag_eroute(const struct state *st,
 
 static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 {
-	const struct sockaddr *saddr = (const struct sockaddr *)sa->src;
-	const struct sockaddr *daddr = (const struct sockaddr *)sa->dst;
+	const struct sockaddr *saddr = (const struct sockaddr *)sa->src.address;
+	const struct sockaddr *daddr = (const struct sockaddr *)sa->dst.address;
 	char keymat[256];
 	int ret, mode, satype;
 

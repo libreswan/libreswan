@@ -426,6 +426,7 @@ kvmplutotest	netkey-tfc-03				good
 
 kvmplutotest 	ikev2-xfrmi-01				good
 kvmplutotest 	ikev2-xfrmi-02				good
+kvmplutotest 	ikev2-xfrmi-02-responder		wip
 kvmplutotest 	ikev2-xfrmi-03				good
 kvmplutotest 	ikev2-xfrmi-04				good
 kvmplutotest 	ikev2-xfrmi-05-remote-access-client	good
@@ -438,6 +439,7 @@ kvmplutotest 	ikev2-xfrmi-11-default-manual-route	good
 kvmplutotest	ikev2-xfrmi-11-vti-default-route	good
 kvmplutotest	ikev2-xfrmi-11-default-route		good
 kvmplutotest	ikev2-xfrmi-12-two-default-routes	good
+kvmplutotest	ikev2-xfrmi-13-multiple-tunnels		good
 
 kvmplutotest	netkey-decap-dscp-01			good
 kvmplutotest	netkey-nopmtudisc-01			good

@@ -166,8 +166,8 @@ const struct ip_blit set_bits = { .and = 0x00/*don't care*/, .or = 0xff, };
 const struct ip_blit keep_bits = { .and = 0xff, .or = 0x00, };
 
 ip_address subnet_blit(const ip_subnet *src,
-			  const struct ip_blit *prefix,
-			  const struct ip_blit *host)
+			  const struct ip_blit *routing_prefix,
+			  const struct ip_blit *host_id)
 {
 	/* strip port; copy type */
 	ip_address mask = endpoint_address(&src->addr);
@@ -179,39 +179,47 @@ ip_address subnet_blit(const ip_subnet *src,
 
 	uint8_t *p = raw.ptr; /* cast void* */
 
-	/* the cross over byte */
+	/*
+	 * Split the byte array into:
+	 *
+	 *    leading | xbyte:xbit | trailing
+	 *
+	 * where LEADING only contains ROUTING_PREFIX bits, TRAILING
+	 * only contains HOST_ID bits, and XBYTE is the cross over and
+	 * contains the first HOST_ID bit at big (aka PPC) endian
+	 * position XBIT.
+	 */
 	size_t xbyte = src->maskbits / BITS_PER_BYTE;
 	unsigned xbit = src->maskbits % BITS_PER_BYTE;
 
-	/* leading bytes: & PREFIX->AND | PREFIX->OR */
-	unsigned b = 0;
-	for (; b < xbyte; b++) {
-		p[b] &= prefix->and;
-		p[b] |= prefix->or;
+	/* leading bytes only contain the ROUTING_PREFIX */
+	for (unsigned b = 0; b < xbyte; b++) {
+		p[b] &= routing_prefix->and;
+		p[b] |= routing_prefix->or;
 	}
 
 	/*
-	 * cross over: & {PREFIX,HOST}_AND | {PREFIX,HOST}_OR
+	 * Handle the cross over byte:
+	 *
+	 *    & {ROUTING_PREFIX,HOST_ID}->and | {ROUTING_PREFIX,HOST_ID}->or
+	 *
+	 * the hmask's shift is a little counter intuitive - it clears
+	 * the first (most significant) XBITs.
 	 *
 	 * tricky logic:
-	 * - b == xbyte
 	 * - if xbyte == raw.len we must not access p[xbyte]
-	 * - if xbyte == raw.len, xbit will be 0
-	 * - if xbit == 0, the loop for trailing bytes will
-	 *   perform the required operation slightly more efficiently
-	 * So we guard this step with xbit != 0 instead of b < raw.len
 	 */
-	if (xbit != 0) {
-		uint8_t hmask = 0xFF >> xbit;
-		p[b] &= (prefix->and & ~hmask) | (host->and & hmask);
-		p[b] |= (prefix->or & ~hmask) | (host->or & hmask);
-		b++;
+	if (xbyte < raw.len) {
+		uint8_t hmask = 0xFF >> xbit; /* clear MSBs */
+		uint8_t pmask = ~hmask; /* set MSBs */
+		p[xbyte] &= (routing_prefix->and & pmask) | (host_id->and & hmask);
+		p[xbyte] |= (routing_prefix->or & pmask) | (host_id->or & hmask);
 	}
 
-	/* trailing bytes: & HOST->AND | HOST->OR */
-	for (; b < raw.len; b++) {
-		p[b] &= host->and;
-		p[b] |= host->or;
+	/* trailing bytes only contain the HOST_ID */
+	for (unsigned b = xbyte + 1; b < raw.len; b++) {
+		p[b] &= host_id->and;
+		p[b] |= host_id->or;
 	}
 
 	return mask;

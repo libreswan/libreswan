@@ -103,6 +103,25 @@ struct msg_digest {
 	bool fake_clone;			/* is this a fake (clone) message */
 	bool fake_dne;				/* created as part of fake_md() */
 
+	struct {
+		bool fragmentation_supported;
+		bool use_ppk;
+		struct payload_digest *no_ppk_auth;
+		struct payload_digest *ppk_identity;
+		bool redirected_from;
+		bool redirect_supported;
+		struct payload_digest *redirect;
+		bool nat_detection_source_ip;
+		bool nat_detection_destination_ip;
+		struct payload_digest *signature_hash_algorithms;
+		struct payload_digest *null_auth;
+		bool esp_tfc_padding_not_supported;
+		bool use_transport_mode;
+		bool mobike_supported;
+		bool initial_contact;
+		struct payload_digest *ipcomp_supported;
+	} v2N;
+
 	/*
 	 * The packet PBS contains a message PBS and the message PBS
 	 * contains payloads one of which (for IKEv2) is the SK which

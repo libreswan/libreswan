@@ -51,6 +51,7 @@ OBJS =
 OBJS += send.o
 OBJS += ikev1_send.o
 
+OBJS += ikev2_notify.o
 OBJS += ikev2_send.o
 OBJS += ikev2_message.o
 OBJS += ikev2_cookie.o

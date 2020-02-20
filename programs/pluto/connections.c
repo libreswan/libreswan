@@ -903,8 +903,9 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 		cert_source = "nickname";
 		cert = get_cert_by_nickname_from_nss(pubkey);
 		if (cert == NULL) {
-			loglog(RC_LOG_SERIOUS, "failed to find certificate named '%s' in the NSS database",
-				pubkey);
+			loglog_global(RC_LOG_SERIOUS, whackfd,
+				      "failed to find certificate named '%s' in the NSS database",
+				      pubkey);
 			return false;
 		}
 		break;
@@ -927,9 +928,9 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 		}
 		cert = get_cert_by_ckaid_from_nss(pubkey);
 		if (cert == NULL) {
-			whack_log(RC_LOG_SERIOUS, whackfd,
-				"failed to find certificate ckaid '%s' in the NSS database",
-			       pubkey);
+			loglog_global(RC_LOG_SERIOUS, whackfd,
+				      "failed to find certificate ckaid '%s' in the NSS database",
+				      pubkey);
 			return false;
 		}
 		break;
@@ -938,8 +939,8 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 		pexpect(pubkey == NULL);
 		return true;
 	default:
-		whack_log(RC_LOG_SERIOUS, whackfd,
-			"warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
+		loglog_global(RC_LOG_SERIOUS, whackfd,
+			      "warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
 		/* recoverable screwup? */
 		return true;
 	}
@@ -951,10 +952,10 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
 		if (pk->u.rsa.modulus.len * BITS_PER_BYTE < FIPS_MIN_RSA_KEY_SIZE) {
-			whack_log(RC_FATAL, whackfd,
-				  "FIPS: Rejecting cert with key size %d which is under %d",
-				  pk->u.rsa.modulus.len * BITS_PER_BYTE,
-				  FIPS_MIN_RSA_KEY_SIZE);
+			loglog_global(RC_FATAL, whackfd,
+				      "FIPS: Rejecting cert with key size %d which is under %d",
+				      pk->u.rsa.modulus.len * BITS_PER_BYTE,
+				      FIPS_MIN_RSA_KEY_SIZE);
 			SECKEY_DestroyPublicKey(pk);
 			CERT_DestroyCertificate(cert);
 			return false;
@@ -970,8 +971,9 @@ static bool load_end_cert_and_preload_secret(const struct fd *whackfd,
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
 			secCertTimeValid) {
-		loglog(RC_LOG_SERIOUS, "%s certificate \'%s\' is expired or not yet valid",
-		       which, pubkey);
+		loglog_global(RC_LOG_SERIOUS, whackfd,
+			      "%s certificate \'%s\' is expired or not yet valid",
+			      which, pubkey);
 		CERT_DestroyCertificate(cert);
 		return false;
 	}
@@ -1583,6 +1585,11 @@ static bool extract_connection(const struct fd *whackfd,
 		c->vti_shared = wm->vti_shared;
 #ifdef USE_XFRM_INTERFACE
 		if (wm->xfrm_if_id != yn_no) {
+			if (c->ike_version == IKEv1) {
+				loglog(RC_FATAL, "Failed to add connection \"%s\" : ipsec-interface MUST have ikev2",
+						wm->name);
+				return false;
+			}
 			err_t err = xfrm_iface_supported();
 			if (err == NULL) {
 				if (setup_xfrm_interface(c, wm->xfrm_if_id))
@@ -3761,15 +3768,6 @@ void show_one_connection(const struct fd *whackfd,
 		if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
 			char *n = jam_str(ifnstr, sizeof(ifnstr),
 					c->xfrmi->name);
-			add_str(ifnstr, sizeof(ifnstr), n, "@");
-			add_str(ifnstr, sizeof(ifnstr), n,
-					c->interface->ip_dev->id_rname);
-			ifn = ifnstr;
-		} else if (strcmp(c->interface->ip_dev->id_rname,
-					c->interface->ip_dev->id_vname) != 0) {
-			/* example ipsec0@eth1 KLIPS */
-			char *n = jam_str(ifnstr, sizeof(ifnstr),
-					c->interface->ip_dev->id_vname);
 			add_str(ifnstr, sizeof(ifnstr), n, "@");
 			add_str(ifnstr, sizeof(ifnstr), n,
 					c->interface->ip_dev->id_rname);

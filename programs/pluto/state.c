@@ -75,6 +75,7 @@
 #include "hostpair.h"
 #include "initiate.h"
 #include "kernel.h"
+#include "kernel_xfrm_interface.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -1393,10 +1394,15 @@ void delete_states_dead_interfaces(void)
 	FOR_EACH_STATE_NEW2OLD(this) {
 		if (this->st_interface &&
 		    this->st_interface->change == IFN_DELETE) {
+			char *id_vname = NULL;
+			struct connection *c = this->st_connection;
+			if (c->xfrmi != NULL && c->xfrmi->name != NULL)
+				id_vname = c->xfrmi->name;
+			else
+				id_vname = this->st_interface->ip_dev->id_rname;
 			libreswan_log(
 				"deleting lasting state #%lu on interface (%s) which is shutting down",
-				this->st_serialno,
-				this->st_interface->ip_dev->id_vname);
+				this->st_serialno, id_vname);
 			delete_state(this);
 			/* note: no md->st to clear */
 		}
@@ -2185,7 +2191,7 @@ void fmt_state(struct state *st, const monotime_t now,
 		{							\
 			ip_said s = said3(ADST, ASPI, APROTO);		\
 			jam(&buf, " ");					\
-			jam_said(&buf, &s, 0);				\
+			jam_said(&buf, &s);				\
 		}
 
 		/*

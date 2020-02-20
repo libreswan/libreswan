@@ -129,7 +129,7 @@ static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 			str_subnet_port(&bs->ours, &ourst),
 			bs->transport_proto,
 			str_subnet_port(&bs->his, &hist),
-			str_said(&bs->said, 0, &sat),
+			str_said(&bs->said, &sat),
 			prio, bs->why);
 	}
 }
@@ -148,7 +148,7 @@ static void log_bare_shunt(const char *op, const struct bare_shunt *bs)
 		      str_subnet_port(&bs->ours, &ourst),
 		      bs->transport_proto,
 		      str_subnet_port(&bs->his, &hist),
-		      str_said(&bs->said, 0, &sat),
+		      str_said(&bs->said, &sat),
 		      prio, bs->why);
 }
 
@@ -390,8 +390,6 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 
 	if (c->xfrmi != NULL && c->xfrmi->name != NULL)
 		id_vname = c->xfrmi->name;
-	else if (c->interface != NULL)
-		id_vname = c->interface->ip_dev->id_vname;
 	else
 		id_vname = "NULL";
 
@@ -1098,7 +1096,7 @@ void set_text_said(char *text_said, const ip_address *dst,
 {
 	ip_said said = said3(dst, spi, sa_proto);
 	jambuf_t jam = array_as_jambuf(text_said, SATOT_BUF);
-	jam_said(&jam, &said, 0);
+	jam_said(&jam, &said);
 }
 
 /* find an entry in the bare_shunt table.
@@ -1166,7 +1164,7 @@ void show_shunt_status(const struct fd *whackfd)
 			  str_subnet_port(&(bs)->ours, &ourst),
 			  bs->transport_proto,
 			  str_subnet_port(&(bs)->his, &hist),
-			  str_said(&(bs)->said, 0, &sat),
+			  str_said(&(bs)->said, &sat),
 			  prio, bs->why);
 	}
 }
@@ -1666,8 +1664,8 @@ bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 	struct kernel_sa sa = {
 		.spi = spi,
 		.proto = proto,
-		.src = src,
-		.dst = dest,
+		.src.address = src,
+		.dst.address = dest,
 		.text_said = text_said,
 	};
 
@@ -1767,10 +1765,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	int encap_oneshot = mode;
 
 	struct kernel_sa said_boilerplate = {
-		.src = &src.addr,
-		.dst = &dst.addr,
-		.src_client = &src_client,
-		.dst_client = &dst_client,
+		.src.address = &src.addr,
+		.dst.address = &dst.addr,
+		.src.client = &src_client,
+		.dst.client = &dst_client,
 		.inbound = inbound,
 		.add_selector = add_selector,
 		.transport_proto = c->spd.this.protocol,
@@ -2117,8 +2115,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->mode = encap_oneshot;
 		said_next->reqid = reqid_esp(c->spd.reqid);
 
-		said_next->encap_sport = encap_sport;
-		said_next->encap_dport = encap_dport;
+		said_next->src.encap_port = encap_sport;
+		said_next->dst.encap_port = encap_dport;
 		said_next->encap_type = encap_type;
 		said_next->natt_oa = &natt_oa;
 		said_next->text_said = text_esp;
@@ -2395,7 +2393,7 @@ fail:
 			if (said_next->proto != 0) {
 				(void) del_spi(said_next->spi,
 					said_next->proto,
-					&src.addr, said_next->dst);
+					&src.addr, said_next->dst.address);
 			}
 		}
 		return FALSE;
@@ -3420,8 +3418,8 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	struct kernel_sa sa = {
 		.spi = spi,
 		.proto = proto,
-		.src = src,
-		.dst = dst,
+		.src.address = src,
+		.dst.address = dst,
 		.text_said = text_said,
 	};
 

@@ -65,7 +65,6 @@ extern bool pluto_sock_errqueue; /* Enable MSG_ERRQUEUE on IKE socket */
 struct iface_dev {
 	LIST_ENTRY(iface_dev) id_entry;
 	int id_count;
-	char *id_vname; /* virtual (ipsec) device name */
 	char *id_rname; /* real device name */
 	bool id_nic_offload;
 };

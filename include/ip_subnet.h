@@ -132,8 +132,8 @@ extern const struct ip_blit clear_bits;
 extern const struct ip_blit keep_bits;
 
 ip_address subnet_blit(const ip_subnet *in,
-		       const struct ip_blit *network,
-		       const struct ip_blit *host);
+		       const struct ip_blit *routing_prefix,
+		       const struct ip_blit *host_id);
 
 /*
  * old

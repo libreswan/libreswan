@@ -646,7 +646,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 	if (DBGP(DBG_OPPOINFO)) {
 		libreswan_log("%s", demandbuf);
 		loggedit = TRUE;
-	} else if (fd_p(whack_log_fd)) {
+	} else if (fd_p(b->whackfd)) {
 		whack_log(RC_COMMENT, b->whackfd, "%s", demandbuf);
 		loggedit = TRUE;
 	}

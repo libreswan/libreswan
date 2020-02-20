@@ -60,7 +60,7 @@ export LC_ALL
 #		must be sent.
 #
 #	PLUTO_INTERFACE
-#		is the name of the real interace used for encrypted, IKE traffic
+#		is the name of the real interace used by encrypted traffic and IKE traffic
 #
 #	PLUTO_ME
 #		is the IP address of our host.
@@ -157,7 +157,7 @@ export LC_ALL
 #		for this SA
 #
 # 	PLUTO_VIRT_INTERFACE
-#		is the name of the real interace used for encrypted, IKE traffic
+#		is the name of ipsec interface used by clear traffic in/out
 #
 #
 #	XAUTH_FAILED

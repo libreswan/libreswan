@@ -94,15 +94,36 @@ enum eroute_type {
 #define esatype2proto(X) ((int)(X))
 #define proto2esatype(X) ((enum eroute_type)(X))
 
+/*
+ * The CHILD (IPsec, kernel) SA has two IP ends.
+ */
+
+struct kernel_end {
+	/*
+	 * For ESP/AH which is carried by raw IP packets, only an
+	 * address is needed to identify an end.  However when
+	 * encapsulated (in UDP or TCP) the port is also needed.
+	 *
+	 * XXX: why is this a pointer and not simply the value?
+	 */
+	const ip_address *address;
+	int encap_port;
+	/*
+	 * This is not the subnet you're looking for: the transport
+	 * selector or packet filter.
+	 */
+	const ip_subnet *client;
+	/*
+	 * XXX: for mobike? does this need a port or is the port
+	 * optional or unchanging? perhaps the port is assumed to be
+	 * embedded in the address (making it an endpoint)
+	 */
+	const ip_address *new_address;
+};
+
 struct kernel_sa {
-	const ip_address *src;
-	const ip_address *dst;
-
-	const ip_address *ndst;		/* netlink migration new destination */
-	const ip_address *nsrc;		/* netlink migration new source */
-
-	const ip_subnet *src_client;
-	const ip_subnet *dst_client;
+	struct kernel_end src;
+	struct kernel_end dst;
 
 	bool inbound;
 	int  nk_dir;			/* netky has 3, in,out & fwd */
@@ -143,8 +164,6 @@ struct kernel_sa {
 
 	int mode;		/* transport or tunnel */
 	uint8_t encap_type;	/* TCP or UDP */
-	uint16_t encap_sport;
-	uint16_t encap_dport;
 	ip_address *natt_oa;
 	const char *text_said;
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
@@ -152,12 +171,6 @@ struct kernel_sa {
 	uint32_t xfrm_if_id;
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
-	/*
-	 * Below two enties need to enabled and used,
-	 * instead of getting passed
-	 * uint32_t sa_priority;
-	 * struct sa_marks *sa_marks;
-	 */
 };
 
 struct raw_iface {

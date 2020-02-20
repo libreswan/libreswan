@@ -226,7 +226,6 @@ static void mark_ifaces_dead(void)
 static void free_dead_iface_dev(struct iface_dev *id)
 {
 	if (--id->id_count == 0) {
-		pfree(id->id_vname);
 		pfree(id->id_rname);
 
 		LIST_REMOVE(id, id_entry);
@@ -244,8 +243,7 @@ static void free_dead_ifaces(void)
 	for (p = interfaces; p != NULL; p = p->next) {
 		if (p->change == IFN_DELETE) {
 			endpoint_buf b;
-			libreswan_log("shutting down interface %s/%s %s",
-				      p->ip_dev->id_vname,
+			libreswan_log("shutting down interface %s %s",
 				      p->ip_dev->id_rname,
 				      str_endpoint(&p->local_endpoint, &b));
 			some_dead = TRUE;
@@ -1065,8 +1063,8 @@ void show_ifaces_status(const struct fd *whackfd)
 
 	for (p = interfaces; p != NULL; p = p->next) {
 		endpoint_buf b;
-		whack_comment(whackfd, "interface %s/%s %s",
-			  p->ip_dev->id_vname, p->ip_dev->id_rname,
+		whack_comment(whackfd, "interface %s %s",
+			  p->ip_dev->id_rname,
 			  str_endpoint(&p->local_endpoint, &b));
 	}
 }
@@ -1920,6 +1918,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 				if (logger != NO_STREAM) {
 					endpoint_buf epb;
 					log_message(logger,
+						    null_fd/*whack*/,
 						    sender/*could be null*/, NULL/*md*/,
 						    "ERROR: asynchronous network error report on %s (%s)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]",
 						    ifp->ip_dev->id_rname,

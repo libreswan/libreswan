@@ -88,8 +88,8 @@ typedef struct {
 	char buf[5 + ULTOT_BUF + 1 + sizeof(address_buf)];
 } said_buf;
 
-void jam_said(jambuf_t *buf, const ip_said *said, int format);
-const char *str_said(const ip_said *said, int format, said_buf *buf);
+void jam_said(jambuf_t *buf, const ip_said *said);
+const char *str_said(const ip_said *said, said_buf *buf);
 
 /*
  * Details.
