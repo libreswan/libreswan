@@ -110,9 +110,10 @@ extern void log_pop_from(ip_address old_from, where_t where);
  */
 
 void log_message(lset_t rc_flags,
+		 struct fd *global_whackfd,
 		 const struct state *st,
 		 const struct msg_digest *md,
-		 const char *format, ...) PRINTF_LIKE(4);
+		 const char *format, ...) PRINTF_LIKE(5);
 
 void log_pending(lset_t rc_flags,
 		 const struct pending *pending,
@@ -165,7 +166,10 @@ void log_md(lset_t rc_flags,
 		jam_log_prefix(BUF, STATE, CONNECTION, FROM),		\
 		log_jambuf(LOG_STREAM, null_fd, BUF))
 
-#define plog_global(MESSAGE, ...) log_message(LOG_STREAM, NULL, NULL, MESSAGE,##__VA_ARGS__);
+#define plog_global(MESSAGE, ...) log_message(LOG_STREAM,		\
+					      NULL/*global_whackfd*/,	\
+					      NULL/*STATE*/, NULL/*MD*/, \
+					      MESSAGE,##__VA_ARGS__)
 #define plog_connection(C, MESSAGE, ...) log_connection(LOG_STREAM, C, MESSAGE,##__VA_ARGS__);
 #define plog_state(ST, MESSAGE, ...) log_state(LOG_STREAM, ST, MESSAGE,##__VA_ARGS__);
 

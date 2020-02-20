@@ -815,6 +815,7 @@ static void broadcast(lset_t rc_flags,
 }
 
 void log_message(lset_t rc_flags,
+		 struct fd *global_whackfd,
 		 const struct state *st,
 		 const struct msg_digest *md,
 		 const char *format, ...)
@@ -822,9 +823,7 @@ void log_message(lset_t rc_flags,
 	va_list ap;
 	va_start(ap, format);
 	const struct fd *object_whackfd = (st != NULL ? st->st_whack_sock : null_fd);
-	broadcast(rc_flags,
-		  in_main_thread() ? whack_log_fd/*GLOBAL*/ : null_fd,
-		  object_whackfd,
+	broadcast(rc_flags, global_whackfd, object_whackfd,
 		  st, NULL/*connection*/, md, format, ap);
 	va_end(ap);
 }
