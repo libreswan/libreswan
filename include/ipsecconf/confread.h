@@ -62,7 +62,7 @@ struct starter_end {
 	ip_address addr, nexthop, sourceip;
 	bool has_client;
 	ip_subnet subnet, vti_ip;
-	ip_subnet  ifaceip;
+	ip_subnet ifaceip;
 	char *iface;
 	char *id;
 	enum keyword_authby authby;

@@ -2502,8 +2502,6 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				q->ip_dev = id;
 				id->id_rname = clone_str(ifp->name,
 							"real device name");
-				id->id_vname = clone_str(v->name,
-							"virtual device name netlink");
 				id->id_count++;
 				id->id_nic_offload = netlink_detect_offload(ifp->name);
 
@@ -2517,8 +2515,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 				endpoint_buf b;
 				libreswan_log(
-					"adding interface %s/%s (%s) %s",
-					q->ip_dev->id_vname,
+					"adding interface %s (%s) %s",
 					q->ip_dev->id_rname,
 					"esp-hw-offload not supported by kernel",
 					str_endpoint(&q->local_endpoint, &b));
@@ -2550,8 +2547,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					interfaces = q;
 					endpoint_buf b;
 					libreswan_log(
-						"adding interface %s/%s %s",
-						q->ip_dev->id_vname, q->ip_dev->id_rname,
+						"adding interface %s %s",
+						q->ip_dev->id_rname,
 						str_endpoint(&q->local_endpoint, &b));
 				}
 
@@ -2560,7 +2557,6 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 			/* search over if matching old entry found */
 			if (streq(q->ip_dev->id_rname, ifp->name) &&
-			    streq(q->ip_dev->id_vname, v->name) &&
 			    /* XXX: should this be endpoint_eq(, ifp->addr, pluto_port)? */
 			    sameaddr(&q->local_endpoint, &ifp->addr)) {
 				/* matches -- rejuvinate old entry */
@@ -2572,7 +2568,6 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				 */
 				for (q = q->next; q; q = q->next) {
 					if (streq(q->ip_dev->id_rname, ifp->name) &&
-						streq(q->ip_dev->id_vname, v->name) &&
 						sameaddr(&q->local_endpoint, &ifp->addr))
 						q->change = IFN_KEEP;
 				}

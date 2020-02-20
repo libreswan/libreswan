@@ -390,8 +390,6 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 
 	if (c->xfrmi != NULL && c->xfrmi->name != NULL)
 		id_vname = c->xfrmi->name;
-	else if (c->interface != NULL)
-		id_vname = c->interface->ip_dev->id_vname;
 	else
 		id_vname = "NULL";
 

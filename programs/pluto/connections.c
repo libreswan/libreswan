@@ -3765,15 +3765,6 @@ void show_one_connection(const struct fd *whackfd,
 			add_str(ifnstr, sizeof(ifnstr), n,
 					c->interface->ip_dev->id_rname);
 			ifn = ifnstr;
-		} else if (strcmp(c->interface->ip_dev->id_rname,
-					c->interface->ip_dev->id_vname) != 0) {
-			/* example ipsec0@eth1 KLIPS */
-			char *n = jam_str(ifnstr, sizeof(ifnstr),
-					c->interface->ip_dev->id_vname);
-			add_str(ifnstr, sizeof(ifnstr), n, "@");
-			add_str(ifnstr, sizeof(ifnstr), n,
-					c->interface->ip_dev->id_rname);
-			ifn = ifnstr;
 		} else {
 			ifn = c->interface->ip_dev->id_rname;
 		}
