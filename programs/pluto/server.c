@@ -287,8 +287,6 @@ void free_ifaces(void)
 #endif
 }
 
-struct raw_iface *static_ifn = NULL;
-
 int create_socket(const struct raw_iface *ifp, const char *v_name, int port)
 {
 	int fd = socket(addrtypeof(&ifp->addr), SOCK_DGRAM, IPPROTO_UDP);
@@ -1021,7 +1019,6 @@ void find_ifaces(bool rm_dead)
 	if (kernel_ops->process_raw_ifaces != NULL) {
 		kernel_ops->process_raw_ifaces(find_raw_ifaces4());
 		kernel_ops->process_raw_ifaces(find_raw_ifaces6());
-		kernel_ops->process_raw_ifaces(static_ifn);
 	}
 
 	if (rm_dead)
