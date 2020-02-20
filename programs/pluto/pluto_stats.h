@@ -19,6 +19,8 @@
 #ifndef _PLUTO_STATS_H
 #define _PLUTO_STATS_H
 
+enum delete_reason;
+
 struct pluto_stat {
 	const enum_names *names;
 	const char *what;

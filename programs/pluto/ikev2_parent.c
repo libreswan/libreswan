@@ -81,6 +81,7 @@
 #include "addr_lookup.h"
 #include "impair.h"
 #include "ikev2_message.h"
+#include "ikev2_notify.h"
 #include "ikev2_ts.h"
 #include "ikev2_msgid.h"
 #include "state_db.h"
@@ -951,66 +952,25 @@ stf_status ikev2_parent_inI1outR1(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	bool seen_nat = FALSE;
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		switch(ntfy->payload.v2n.isan_type) {
-		case v2N_COOKIE:
-			/* already handled earlier */
-			break;
+	if (!decode_v2N_ike_sa_init_request(md)) {
+		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
+		return STF_FATAL;
+	}
 
-		case v2N_SIGNATURE_HASH_ALGORITHMS:
-			if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
-				if (ike->sa.st_seen_hashnotify) {
-					dbg("Ignoring duplicate Signature Hash Notify payload");
-				} else {
-					ike->sa.st_seen_hashnotify = TRUE;
-					if (!negotiate_hash_algo_from_notification(ntfy, &ike->sa))
-						return STF_FATAL;
-				}
-			} else {
-				libreswan_log("Impair: Ignoring the Signature hash notify in IKE_SA_INIT Request");
-			}
-			break;
-
-		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-			ike->sa.st_seen_fragvid = TRUE;
-			break;
-
-		case v2N_USE_PPK:
-			ike->sa.st_seen_ppk = TRUE;
-			break;
-
-		case v2N_REDIRECTED_FROM:	/* currently we don't check address in this payload */
-		case v2N_REDIRECT_SUPPORTED:
-			ike->sa.st_seen_redirect_sup = TRUE;
-			break;
-
-		case v2N_NAT_DETECTION_DESTINATION_IP:
-		case v2N_NAT_DETECTION_SOURCE_IP:
-			if (!seen_nat) {
-				/* they used zero - our (the responder) SPI was unknown */
-				ikev2_natd_lookup(md, &zero_ike_spi);
-				seen_nat = TRUE; /* only do it once */
-			}
-			break;
-
-		/* These are not supposed to appear in IKE_INIT */
-		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-		case v2N_USE_TRANSPORT_MODE:
-		case v2N_IPCOMP_SUPPORTED:
-		case v2N_PPK_IDENTITY:
-		case v2N_NO_PPK_AUTH:
-		case v2N_MOBIKE_SUPPORTED:
-			dbg("Received unauthenticated %s notify in wrong exchange - ignored",
-			    enum_name(&ikev2_notify_names,
-				      ntfy->payload.v2n.isan_type));
-			break;
-
-		default:
-			dbg("Received unauthenticated %s notify - ignored",
-			    enum_name(&ikev2_notify_names,
-				      ntfy->payload.v2n.isan_type));
-		}
+	/* extract results */
+	ike->sa.st_seen_fragvid = md->v2N.fragmentation_supported;
+	ike->sa.st_seen_ppk = md->v2N.use_ppk;
+	ike->sa.st_seen_redirect_sup = (md->v2N.redirected_from ||
+					md->v2N.redirect_supported);
+	if (md->v2N.nat_detection_source_ip ||
+	    md->v2N.nat_detection_destination_ip) {
+		/* they used zero - our (the responder) SPI was unknown */
+		ikev2_natd_lookup(md, &zero_ike_spi);
+	}
+	if (md->v2N.signature_hash_algorithms != NULL) {
+		if (!negotiate_hash_algo_from_notification(md->v2N.signature_hash_algorithms, &ike->sa))
+			return STF_FATAL;
+		ike->sa.st_seen_hashnotify = true;
 	}
 
 	/* calculate the nonce and the KE */
@@ -1590,7 +1550,6 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 {
 	struct state *st = &ike->sa;
 	struct connection *c = st->st_connection;
-	struct payload_digest *ntfy;
 	ip_address redirect_ip;
 
 	/* for testing only */
@@ -1617,92 +1576,41 @@ stf_status ikev2_parent_inR1outI2(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
+	if (!decode_v2N_ike_sa_init_response(md)) {
+		return STF_FATAL;
+	}
+
 	/*
 	 * XXX: this iteration over the notifies modifies state
 	 * _before_ the code's committed to creating an SA.  Hack this
 	 * by resetting any flags that might be set.
 	 */
-	st->st_seen_fragvid = false;
-	st->st_seen_ppk = false;
-	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		if (ntfy->payload.v2n.isan_type >= v2N_STATUS_FLOOR) {
-			pstat(ikev2_recv_notifies_s, ntfy->payload.v2n.isan_type);
+	ike->sa.st_seen_fragvid = false;
+	ike->sa.st_seen_ppk = false;
+	ike->sa.st_seen_fragvid = md->v2N.fragmentation_supported;
+	ike->sa.st_seen_ppk = md->v2N.use_ppk;
+	if (md->v2N.redirect != NULL) {
+		if (!LIN(POLICY_ACCEPT_REDIRECT_YES, ike->sa.st_connection->policy)) {
+			dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
 		} else {
-			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
-		}
-
-		switch (ntfy->payload.v2n.isan_type) {
-		case v2N_COOKIE:
-		case v2N_INVALID_KE_PAYLOAD:
-		case v2N_NO_PROPOSAL_CHOSEN:
-			DBG(DBG_CONTROL, DBG_log("%s cannot appear with other payloads",
-				enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type)));
-			return STF_FAIL + v2N_INVALID_SYNTAX;
-
-		case v2N_MOBIKE_SUPPORTED:
-		case v2N_USE_TRANSPORT_MODE:
-		case v2N_IPCOMP_SUPPORTED:
-		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-		case v2N_PPK_IDENTITY:
-		case v2N_NO_PPK_AUTH:
-		case v2N_INITIAL_CONTACT:
-			DBG(DBG_CONTROL, DBG_log("%s: received %s which is not valid in the IKE_SA_INIT Exchange - ignoring it",
-				st->st_state->name,
-				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type)));
-			break;
-
-		case v2N_NAT_DETECTION_SOURCE_IP:
-		case v2N_NAT_DETECTION_DESTINATION_IP:
-			/* we do handle these further down */
-			break;
-		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-			st->st_seen_fragvid = TRUE;
-			break;
-
-		case v2N_USE_PPK:
-			st->st_seen_ppk = TRUE;
-			break;
-
-		case v2N_REDIRECT:
-		{
-			DBG(DBG_CONTROL, DBG_log("received v2N_REDIRECT in IKE_SA_INIT reply"));
-
-			if (!LIN(POLICY_ACCEPT_REDIRECT_YES, st->st_connection->policy)) {
-				DBG(DBG_CONTROL, DBG_log("ignoring v2N_REDIRECT, we don't accept being redirected"));
-				break;
-			}
-
-			err_t e = parse_redirect_payload(&ntfy->pbs,
+			err_t err = parse_redirect_payload(&md->v2N.redirect->pbs,
 							   c->accept_redirect_to,
-							   &st->st_ni,
+							   &ike->sa.st_ni,
 							   &redirect_ip);
-			if (e != NULL) {
-				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", e);
-			} else {
-				st->st_connection->temp_vars.redirect_ip = redirect_ip;
+			if (err == NULL) {
+				ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
 				event_force(EVENT_v2_REDIRECT, st);
 				return STF_SUSPEND;
 			}
-			break;
+			loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", err);
 		}
-		case v2N_SIGNATURE_HASH_ALGORITHMS:
-			if (!IMPAIR(IGNORE_HASH_NOTIFY_RESPONSE)) {
-				st->st_seen_hashnotify = TRUE;
-				if (!negotiate_hash_algo_from_notification(ntfy, st))
-					return STF_FATAL;
-			} else {
-				libreswan_log("Impair: Ignoring the hash notify in IKE_SA_INIT Response");
-			}
-			break;
-
-		default:
-			DBG(DBG_CONTROL, DBG_log("%s: received %s but ignoring it",
-				st->st_state->name,
-				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type)));
+	}
+	if (md->v2N.signature_hash_algorithms != NULL) {
+		ike->sa.st_seen_hashnotify = TRUE;
+		if (!negotiate_hash_algo_from_notification(md->v2N.signature_hash_algorithms, st)) {
+			return STF_FATAL;
 		}
+		libreswan_log("Impair: Ignoring the hash notify in IKE_SA_INIT Response");
 	}
 
 	/*
@@ -2890,68 +2798,50 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	lset_t policy = st->st_connection->policy;
 	bool found_ppk = FALSE;
-	bool ppkid_seen = FALSE;
-	bool noppk_seen = FALSE;
 	chunk_t null_auth = EMPTY_CHUNK;
-	struct payload_digest *ntfy;
+
+	if (!decode_v2N_ike_auth_request(md)) {
+		/* send unprotected notify? */
+		return STF_FATAL;
+	}
 
 	/*
 	 * The NOTIFY payloads we receive in the IKE_AUTH request are either
 	 * related to the IKE SA, or the Child SA. Here we only process the
 	 * ones related to the IKE SA.
 	 */
-	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		switch (ntfy->payload.v2n.isan_type) {
-		case v2N_PPK_IDENTITY:
-		{
-			struct ppk_id_payload payl;
-
-			DBG(DBG_CONTROL, DBG_log("received PPK_IDENTITY"));
-			if (ppkid_seen) {
-				loglog(RC_LOG_SERIOUS, "Only one PPK_IDENTITY payload may be present");
-				return STF_FATAL;
-			}
-			ppkid_seen = TRUE;
-
-			if (!extract_ppk_id(&ntfy->pbs, &payl)) {
-				DBG(DBG_CONTROL, DBG_log("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!"));
-				return STF_FATAL;
-			}
-
-			const chunk_t *ppk = get_ppk_by_id(&payl.ppk_id);
-			freeanychunk(payl.ppk_id);
-			if (ppk != NULL)
-				found_ppk = TRUE;
-
-			if (found_ppk && LIN(POLICY_PPK_ALLOW, policy)) {
-				ppk_recalculate(ppk, st->st_oakley.ta_prf,
-						&st->st_skey_d_nss,
-						&st->st_skey_pi_nss,
-						&st->st_skey_pr_nss);
-				st->st_ppk_used = TRUE;
-				libreswan_log("PPK AUTH calculated as responder");
-			} else {
-				libreswan_log("ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
-			}
-			break;
+	if (md->v2N.ppk_identity != NULL) {
+		dbg("received PPK_IDENTITY");
+		struct ppk_id_payload payl;
+		if (!extract_ppk_id(&md->v2N.ppk_identity->pbs, &payl)) {
+			dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
+			return STF_FATAL;
 		}
 
-		case v2N_NO_PPK_AUTH:
-		{
-			pb_stream pbs = ntfy->pbs;
-			size_t len = pbs_left(&pbs);
+		const chunk_t *ppk = get_ppk_by_id(&payl.ppk_id);
+		freeanychunk(payl.ppk_id);
+		if (ppk != NULL) {
+			found_ppk = TRUE;
+		}
 
-			DBG(DBG_CONTROL, DBG_log("received NO_PPK_AUTH"));
-			if (noppk_seen) {
-				loglog(RC_LOG_SERIOUS, "Only one NO_PPK_AUTH payload may be present");
-				return STF_FATAL;
-			}
-			noppk_seen = TRUE;
-
-			if (LIN(POLICY_PPK_INSIST, policy)) {
-				DBG(DBG_CONTROL, DBG_log("Ignored NO_PPK_AUTH data - connection insists on PPK"));
-				break;
-			}
+		if (found_ppk && LIN(POLICY_PPK_ALLOW, policy)) {
+			ppk_recalculate(ppk, st->st_oakley.ta_prf,
+					&st->st_skey_d_nss,
+					&st->st_skey_pi_nss,
+					&st->st_skey_pr_nss);
+			st->st_ppk_used = TRUE;
+			libreswan_log("PPK AUTH calculated as responder");
+		} else {
+			libreswan_log("ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
+		}
+	}
+	if (md->v2N.no_ppk_auth != NULL) {
+		pb_stream pbs = md->v2N.no_ppk_auth->pbs;
+		size_t len = pbs_left(&pbs);
+		dbg("received NO_PPK_AUTH");
+		if (LIN(POLICY_PPK_INSIST, policy)) {
+			dbg("Ignored NO_PPK_AUTH data - connection insists on PPK");
+		} else {
 
 			chunk_t no_ppk_auth = alloc_chunk(len, "NO_PPK_AUTH");
 
@@ -2962,48 +2852,27 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			}
 			freeanychunk(st->st_no_ppk_auth);	/* in case this was already occupied */
 			st->st_no_ppk_auth = no_ppk_auth;
-			break;
-		}
-
-		case v2N_MOBIKE_SUPPORTED:
-			DBG(DBG_CONTROLMORE, DBG_log("received v2N_MOBIKE_SUPPORTED %s",
-				st->st_sent_mobike ?
-					"and sent" : "while it did not sent"));
-			st->st_seen_mobike = TRUE;
-			break;
-
-		case v2N_NULL_AUTH:
-		{
-			pb_stream pbs = ntfy->pbs;
-			size_t len = pbs_left(&pbs);
-
-			DBG(DBG_CONTROL, DBG_log("received v2N_NULL_AUTH"));
-			null_auth = alloc_chunk(len, "NULL_AUTH");
-			if (!in_raw(null_auth.ptr, len, &pbs, "NULL_AUTH extract")) {
-				loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NULL_AUTH from Notify payload", len);
-				freeanychunk(null_auth);
-				return STF_FATAL;
-			}
-			break;
-		}
-		case v2N_INITIAL_CONTACT:
-			DBG(DBG_CONTROLMORE, DBG_log("received v2N_INITIAL_CONTACT"));
-			st->st_seen_initialc = TRUE;
-			break;
-
-		/* Child SA related NOTIFYs are processed later in ikev2_process_ts_and_rest() */
-		case v2N_USE_TRANSPORT_MODE:
-		case v2N_IPCOMP_SUPPORTED:
-		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-			break;
-
-		default:
-			DBG(DBG_CONTROLMORE, DBG_log("Received unknown/unsupported notify %s - ignored",
-				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type)));
-			break;
 		}
 	}
+	if (md->v2N.mobike_supported) {
+		dbg("received v2N_MOBIKE_SUPPORTED %s",
+		    st->st_sent_mobike ?
+		    "and sent" : "while it did not sent");
+		st->st_seen_mobike = true;
+	}
+	if (md->v2N.null_auth != NULL) {
+		pb_stream pbs = md->v2N.null_auth->pbs;
+		size_t len = pbs_left(&pbs);
+
+		dbg("received v2N_NULL_AUTH");
+		null_auth = alloc_chunk(len, "NULL_AUTH");
+		if (!in_raw(null_auth.ptr, len, &pbs, "NULL_AUTH extract")) {
+			loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NULL_AUTH from Notify payload", len);
+			freeanychunk(null_auth);
+			return STF_FATAL;
+		}
+	}
+	st->st_seen_initialc = md->v2N.initial_contact;
 
 	/*
 	 * If we found proper PPK ID and policy allows PPK, use that.
@@ -3558,102 +3427,60 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, TRUE));
 
 	/* examine notification payloads for Child SA properties */
-	{
-		struct payload_digest *ntfy;
+	if (!decode_v2N_ike_auth_child(md)) {
+		return STF_FATAL;
+	}
 
-		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-			/*
-			 * https://tools.ietf.org/html/rfc7296#section-3.10.1
-			 *
-			 * Types in the range 0 - 16383 are intended for reporting errors.  An
-			 * implementation receiving a Notify payload with one of these types
-			 * that it does not recognize in a response MUST assume that the
-			 * corresponding request has failed entirely.  Unrecognized error types
-			 * in a request and status types in a request or response MUST be
-			 * ignored, and they should be logged.
-			 *
-			 * No known error notify would allow us to continue, so we can fail
-			 * whether the error notify is known or unknown.
-			 */
-			if (ntfy->payload.v2n.isan_type < v2N_INITIAL_CONTACT) {
-				loglog(RC_LOG_SERIOUS, "received ERROR NOTIFY (%d): %s ",
-					ntfy->payload.v2n.isan_type,
-					enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
-				return STF_FATAL;
+	/* check for Child SA related NOTIFY payloads */
+	if (md->v2N.use_transport_mode) {
+		if (st->st_connection->policy & POLICY_TUNNEL) {
+			/* This means we did not send v2N_USE_TRANSPORT, however responder is sending it in now, seems incorrect */
+			dbg("Initiator policy is tunnel, responder sends v2N_USE_TRANSPORT_MODE notification in inR2, ignoring it");
+		} else {
+			dbg("Initiator policy is transport, responder sends v2N_USE_TRANSPORT_MODE, setting CHILD SA to transport mode");
+			if (st->st_esp.present) {
+				st->st_esp.attrs.mode = ENCAPSULATION_MODE_TRANSPORT;
 			}
-
-			/* check for Child SA related NOTIFY payloads */
-			switch (ntfy->payload.v2n.isan_type) {
-			case v2N_USE_TRANSPORT_MODE:
-			{
-				if (st->st_connection->policy & POLICY_TUNNEL) {
-					/* This means we did not send v2N_USE_TRANSPORT, however responder is sending it in now, seems incorrect */
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("Initiator policy is tunnel, responder sends v2N_USE_TRANSPORT_MODE notification in inR2, ignoring it"));
-				} else {
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("Initiator policy is transport, responder sends v2N_USE_TRANSPORT_MODE, setting CHILD SA to transport mode"));
-					if (st->st_esp.present) {
-						st->st_esp.attrs.mode
-							= ENCAPSULATION_MODE_TRANSPORT;
-					}
-					if (st->st_ah.present) {
-						st->st_ah.attrs.mode
-							= ENCAPSULATION_MODE_TRANSPORT;
-					}
-				}
-				break;
+			if (st->st_ah.present) {
+				st->st_ah.attrs.mode = ENCAPSULATION_MODE_TRANSPORT;
 			}
-			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-			{
-				DBG(DBG_CONTROLMORE, DBG_log("Received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC"));
-				st->st_seen_no_tfc = TRUE;
-				break;
-			}
-			case v2N_IPCOMP_SUPPORTED:
-			{
-				pb_stream pbs = ntfy->pbs;
-				size_t len = pbs_left(&pbs);
-				struct ikev2_notify_ipcomp_data n_ipcomp;
+		}
+	}
+	st->st_seen_no_tfc = md->v2N.esp_tfc_padding_not_supported;
+	if (md->v2N.ipcomp_supported) {
+		pb_stream pbs = md->v2N.ipcomp_supported->pbs;
+		size_t len = pbs_left(&pbs);
+		struct ikev2_notify_ipcomp_data n_ipcomp;
 
-				DBG(DBG_CONTROLMORE, DBG_log("received v2N_IPCOMP_SUPPORTED of length %zd", len));
-				if ((st->st_connection->policy & POLICY_COMPRESS) == LEMPTY) {
-					loglog(RC_LOG_SERIOUS, "Unexpected IPCOMP request as our connection policy did not indicate support for it");
-					return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-				}
+		dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
+		if ((st->st_connection->policy & POLICY_COMPRESS) == LEMPTY) {
+			loglog(RC_LOG_SERIOUS, "Unexpected IPCOMP request as our connection policy did not indicate support for it");
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
 
-				if (!in_struct(&n_ipcomp, &ikev2notify_ipcomp_data_desc, &pbs, NULL)) {
-					return STF_FATAL;
-				}
+		if (!in_struct(&n_ipcomp, &ikev2notify_ipcomp_data_desc, &pbs, NULL)) {
+			return STF_FATAL;
+		}
 
-				if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
-					loglog(RC_LOG_SERIOUS, "Unsupported IPCOMP compression method %d",
-						n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
-					return STF_FATAL;
-				}
+		if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
+			loglog(RC_LOG_SERIOUS, "Unsupported IPCOMP compression method %d",
+			       n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
+			return STF_FATAL;
+		}
 
-				if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
-					loglog(RC_LOG_SERIOUS, "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
-					return STF_FATAL;
-				}
-				DBG(DBG_CONTROL, DBG_log("Received compression CPI=%d", n_ipcomp.ikev2_cpi));
+		if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
+			loglog(RC_LOG_SERIOUS, "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
+			return STF_FATAL;
+		}
+		dbg("Received compression CPI=%d", n_ipcomp.ikev2_cpi);
 
-				//st->st_ipcomp.attrs.spi = uniquify_his_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
-				st->st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
-				st->st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
-				st->st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
-				st->st_ipcomp.present = TRUE;
-				st->st_seen_use_ipcomp = TRUE;
-				break;
-			}
-			default:
-				DBG(DBG_CONTROLMORE,
-					DBG_log("ignored received NOTIFY (%d): %s ",
-						ntfy->payload.v2n.isan_type,
-						enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type)));
-			}
-		} /* for */
-	} /* notification block */
+		//st->st_ipcomp.attrs.spi = uniquify_his_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
+		st->st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
+		st->st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
+		st->st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
+		st->st_ipcomp.present = TRUE;
+		st->st_seen_use_ipcomp = TRUE;
+	}
 
 	ikev2_derive_child_keys(child);
 
@@ -3706,65 +3533,43 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 {
 	pexpect(child != NULL);
 	struct state *st = &child->sa;
-	struct payload_digest *ntfy;
 	struct state *pst = &ike->sa;
 	bool got_transport = FALSE;
 	ip_address redirect_ip;
 	bool initiate_redirect = FALSE;
-
 	bool ppk_seen_identity = FALSE;
+
 	/* Process NOTIFY payloads related to IKE SA */
-	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		switch (ntfy->payload.v2n.isan_type) {
-		case v2N_COOKIE:
-			DBG(DBG_CONTROLMORE, DBG_log("Ignoring bogus COOKIE notify in IKE_AUTH rpely"));
-			break;
-		case v2N_MOBIKE_SUPPORTED:
-			DBG(DBG_CONTROLMORE, DBG_log("received v2N_MOBIKE_SUPPORTED %s",
-						pst->st_sent_mobike ?
-						"and sent" : "while it did not sent"));
-			st->st_seen_mobike = pst->st_seen_mobike = TRUE;
-			break;
-		case v2N_PPK_IDENTITY:
-			DBG(DBG_CONTROL, DBG_log("received v2N_PPK_IDENTITY, responder used PPK"));
-			ppk_seen_identity = TRUE;
-			break;
-		case v2N_REDIRECT:
-		{
-			DBG(DBG_CONTROL, DBG_log("received v2N_REDIRECT in IKE_AUTH reply"));
-
-			if (!LIN(POLICY_ACCEPT_REDIRECT_YES, st->st_connection->policy)) {
-				DBG(DBG_CONTROL, DBG_log("ignoring v2N_REDIRECT, we don't accept being redirected"));
-				break;
-			}
-
-			err_t e = parse_redirect_payload(&ntfy->pbs,
+	if (!decode_v2N_ike_auth_response(md)) {
+		LOG_PEXPECT("decode notify failed, what should happen next");
+		return STF_FATAL;
+	}
+	if (md->v2N.mobike_supported) {
+		dbg("received v2N_MOBIKE_SUPPORTED %s",
+		    pst->st_sent_mobike ? "and sent" : "while it did not sent");
+		st->st_seen_mobike = pst->st_seen_mobike = true;
+	}
+	ppk_seen_identity = md->v2N.ppk_identity;
+	if (md->v2N.redirect != NULL) {
+		dbg("received v2N_REDIRECT in IKE_AUTH reply");
+		if (!LIN(POLICY_ACCEPT_REDIRECT_YES, st->st_connection->policy)) {
+			dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
+		} else {
+			err_t err = parse_redirect_payload(&md->v2N.redirect->pbs,
 							   st->st_connection->accept_redirect_to,
 							   NULL,
 							   &redirect_ip);
-			if (e != NULL) {
-				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", e);
+			if (err != NULL) {
+				loglog(RC_LOG_SERIOUS, "warning: parsing of v2N_REDIRECT payload failed: %s", err);
 			} else {
 				/* initiate later, because we need to wait for AUTH succees */
 				initiate_redirect = TRUE;
 				st->st_connection->temp_vars.redirect_ip = redirect_ip;
 			}
-			break;
-		}
-		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-			DBG(DBG_CONTROLMORE, DBG_log("Received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC"));
-			st->st_seen_no_tfc = TRUE; /* Technically, this should be only on the child state */
-			break;
-		case v2N_USE_TRANSPORT_MODE:
-			DBG(DBG_CONTROLMORE, DBG_log("Received v2N_USE_TRANSPORT_MODE in IKE_AUTH reply"));
-			got_transport = TRUE;
-			break;
-		default:
-			DBG(DBG_CONTROLMORE, DBG_log("Received %s notify - ignored",
-				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type)));
 		}
 	}
+	st->st_seen_no_tfc = md->v2N.esp_tfc_padding_not_supported; /* Technically, this should be only on the child state */
+	got_transport = md->v2N.use_transport_mode;
 
 	/*
 	 * On the initiator, we can STF_FATAL on IKE SA errors, because no

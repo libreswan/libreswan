@@ -1,0 +1,316 @@
+/*
+ * IKEv2 notify routines, for Libreswan
+ *
+ * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
+ * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2010,2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2010-2019 Tuomo Soini <tis@foobar.fi
+ * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ */
+
+#include "defs.h"
+#include "ikev2_notify.h"
+#include "demux.h"
+#include "pluto_stats.h"
+
+bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
+{
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+	     ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_COOKIE:
+			/* already handled earlier */
+			break;
+
+		case v2N_SIGNATURE_HASH_ALGORITHMS:
+			if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
+				if (md->v2N.signature_hash_algorithms != NULL) {
+					dbg("ignoring duplicate Signature Hash Notify payload");
+				} else {
+					md->v2N.signature_hash_algorithms = ntfy;
+				}
+			} else {
+				libreswan_log("IMPAIR: ignoring the Signature hash notify in IKE_SA_INIT Request");
+			}
+			break;
+
+		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
+			md->v2N.fragmentation_supported = true;
+			break;
+
+		case v2N_USE_PPK:
+			md->v2N.fragmentation_supported = true;
+			break;
+
+		case v2N_REDIRECTED_FROM:	/* currently we don't check address in this payload */
+			md->v2N.redirected_from = true;
+			break;
+
+		case v2N_REDIRECT_SUPPORTED:
+			md->v2N.redirect_supported = true;
+			break;
+
+		case v2N_NAT_DETECTION_SOURCE_IP:
+			md->v2N.nat_detection_source_ip = true;
+			break;
+		case v2N_NAT_DETECTION_DESTINATION_IP:
+			md->v2N.nat_detection_destination_ip = true;
+			break;
+
+		/* These are not supposed to appear in IKE_INIT */
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+		case v2N_USE_TRANSPORT_MODE:
+		case v2N_IPCOMP_SUPPORTED:
+		case v2N_PPK_IDENTITY:
+		case v2N_NO_PPK_AUTH:
+		case v2N_MOBIKE_SUPPORTED:
+			dbg("received unauthenticated %s notify in wrong exchange - ignored",
+			    enum_name(&ikev2_notify_names,
+				      ntfy->payload.v2n.isan_type));
+			break;
+
+		default:
+			dbg("received unauthenticated %s notify - ignored",
+			    enum_name(&ikev2_notify_names,
+				      ntfy->payload.v2n.isan_type));
+		}
+	}
+	return true;
+}
+
+bool decode_v2N_ike_sa_init_response(struct msg_digest *md)
+{
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+	     ntfy != NULL; ntfy = ntfy->next) {
+		if (ntfy->payload.v2n.isan_type >= v2N_STATUS_FLOOR) {
+			pstat(ikev2_recv_notifies_s, ntfy->payload.v2n.isan_type);
+		} else {
+			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
+		}
+
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_COOKIE:
+		case v2N_INVALID_KE_PAYLOAD:
+		case v2N_NO_PROPOSAL_CHOSEN:
+			dbg("%s cannot appear with other payloads",
+			    enum_name(&ikev2_notify_names,
+				      ntfy->payload.v2n.isan_type));
+			return false;
+
+		case v2N_MOBIKE_SUPPORTED:
+		case v2N_USE_TRANSPORT_MODE:
+		case v2N_IPCOMP_SUPPORTED:
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+		case v2N_PPK_IDENTITY:
+		case v2N_NO_PPK_AUTH:
+		case v2N_INITIAL_CONTACT:
+			dbg("received %s which is not valid in the IKE_SA_INIT exchange - ignoring it",
+			    enum_name(&ikev2_notify_names,
+				      ntfy->payload.v2n.isan_type));
+			break;
+
+		case v2N_NAT_DETECTION_SOURCE_IP:
+			/* we do handle these further down */
+			md->v2N.nat_detection_source_ip = true;
+			break;
+
+		case v2N_NAT_DETECTION_DESTINATION_IP:
+			/* we do handle these further down */
+			md->v2N.nat_detection_destination_ip = true;
+			break;
+
+		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
+			md->v2N.fragmentation_supported = true;
+			break;
+
+		case v2N_USE_PPK:
+			md->v2N.use_ppk = true;
+			break;
+
+		case v2N_REDIRECT:
+			dbg("received v2N_REDIRECT in IKE_SA_INIT reply");
+			md->v2N.redirect = ntfy;
+			break;
+
+		case v2N_SIGNATURE_HASH_ALGORITHMS:
+			if (!IMPAIR(IGNORE_HASH_NOTIFY_RESPONSE)) {
+				md->v2N.signature_hash_algorithms = ntfy;
+			} else {
+				libreswan_log("IMPAIR: ignoring the hash notify in IKE_SA_INIT response");
+			}
+			break;
+
+		default:
+			dbg("received %s but ignoring it",
+			    enum_name(&ikev2_notify_names,
+				      ntfy->payload.v2n.isan_type));
+		}
+	}
+	return true;
+}
+
+bool decode_v2N_ike_auth_request(struct msg_digest *md)
+{
+	/*
+	 * The NOTIFY payloads we receive in the IKE_AUTH request are either
+	 * related to the IKE SA, or the Child SA. Here we only process the
+	 * ones related to the IKE SA.
+	 */
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+	     ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+
+		case v2N_PPK_IDENTITY:
+			dbg("received PPK_IDENTITY");
+			if (md->v2N.ppk_identity != NULL) {
+				loglog(RC_LOG_SERIOUS, "only one PPK_IDENTITY payload may be present");
+				return false;
+			}
+			md->v2N.ppk_identity = ntfy;
+			break;
+
+		case v2N_NO_PPK_AUTH:
+			dbg("received NO_PPK_AUTH");
+			if (md->v2N.no_ppk_auth != NULL) {
+				loglog(RC_LOG_SERIOUS, "only one NO_PPK_AUTH payload may be present");
+				return false;
+			}
+			md->v2N.no_ppk_auth = ntfy;
+			break;
+
+		case v2N_MOBIKE_SUPPORTED:
+			dbg("received v2N_MOBIKE_SUPPORTED");
+			md->v2N.mobike_supported = true;
+			break;
+
+		case v2N_NULL_AUTH:
+			dbg("received v2N_NULL_AUTH");
+			md->v2N.null_auth = ntfy;
+			break;
+
+		case v2N_INITIAL_CONTACT:
+			dbg("received v2N_INITIAL_CONTACT");
+			md->v2N.initial_contact = true;
+			break;
+
+		/* Child SA related NOTIFYs are processed later in ikev2_process_ts_and_rest() */
+		case v2N_USE_TRANSPORT_MODE:
+		case v2N_IPCOMP_SUPPORTED:
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			break;
+
+		default:
+			dbg("received unknown/unsupported notify %s - ignored",
+			    enum_name(&ikev2_notify_names,
+					ntfy->payload.v2n.isan_type));
+			break;
+		}
+	}
+	return true;
+}
+
+bool decode_v2N_ike_auth_response(struct msg_digest *md)
+{
+	/* Process NOTIFY payloads related to IKE SA */
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+	     ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_COOKIE:
+			dbg("Ignoring bogus COOKIE notify in IKE_AUTH rpely");
+			break;
+		case v2N_MOBIKE_SUPPORTED:
+			dbg("received v2N_MOBIKE_SUPPORTED");
+			md->v2N.mobike_supported = true;
+			break;
+		case v2N_PPK_IDENTITY:
+			DBG(DBG_CONTROL, DBG_log("received v2N_PPK_IDENTITY, responder used PPK"));
+			md->v2N.ppk_identity = ntfy;
+			break;
+		case v2N_REDIRECT:
+			dbg("received v2N_REDIRECT in IKE_AUTH reply");
+			md->v2N.redirect = ntfy;
+			break;
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			dbg("received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC");
+			md->v2N.esp_tfc_padding_not_supported = true;
+			break;
+		case v2N_USE_TRANSPORT_MODE:
+			dbg("received v2N_USE_TRANSPORT_MODE in IKE_AUTH reply");
+			md->v2N.use_transport_mode = true;
+			break;
+		default:
+			dbg("received %s notify - ignored",
+			    enum_name(&ikev2_notify_names,
+				      ntfy->payload.v2n.isan_type));
+		}
+	}
+	return true;
+}
+
+bool decode_v2N_ike_auth_child(struct msg_digest *md)
+{
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+	     ntfy != NULL; ntfy = ntfy->next) {
+		/*
+		 * https://tools.ietf.org/html/rfc7296#section-3.10.1
+		 *
+		 * Types in the range 0 - 16383 are intended for
+		 * reporting errors.  An implementation receiving a
+		 * Notify payload with one of these types that it does
+		 * not recognize in a response MUST assume that the
+		 * corresponding request has failed entirely.
+		 * Unrecognized error types in a request and status
+		 * types in a request or response MUST be ignored, and
+		 * they should be logged.
+		 *
+		 * No known error notify would allow us to continue,
+		 * so we can fail whether the error notify is known or
+		 * unknown.
+		 */
+		if (ntfy->payload.v2n.isan_type < v2N_INITIAL_CONTACT) {
+			loglog(RC_LOG_SERIOUS, "received ERROR NOTIFY (%d): %s ",
+			       ntfy->payload.v2n.isan_type,
+			       enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
+			return false;
+		}
+
+		/* check for Child SA related NOTIFY payloads */
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_USE_TRANSPORT_MODE:
+			md->v2N.use_transport_mode = true;
+			break;
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			dbg("received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC");
+			md->v2N.esp_tfc_padding_not_supported = true;
+			break;
+		case v2N_IPCOMP_SUPPORTED:
+			dbg("received v2N_IPCOMP_SUPPORTED");
+			md->v2N.ipcomp_supported = ntfy;
+			break;
+		default:
+			dbg("ignored received NOTIFY (%d): %s ",
+			    ntfy->payload.v2n.isan_type,
+			    enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
+		}
+	}
+	return true;
+}
