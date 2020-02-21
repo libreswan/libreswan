@@ -1022,6 +1022,11 @@ static bool bsdkame_except_socket(int socketfd, int family)
 	return TRUE;
 }
 
+static void bsdkame_shutdown(void)
+{
+	dbg("%s: nothing to do", __func__);
+}
+
 const struct kernel_ops bsdkame_kernel_ops = {
 	type: USE_BSDKAME,
 	kern_name: "bsdkame",
@@ -1043,6 +1048,7 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.inbound_eroute = FALSE,
 	.scan_shunts = expire_bare_shunts,
 	.init = bsdkame_init_pfkey,
+	.shutdown = bsdkame_shutdown,
 	.exceptsocket = bsdkame_except_socket,
 	.docommand = bsdkame_do_command,
 	.remove_orphaned_holds = bsdkame_remove_orphaned_holds,

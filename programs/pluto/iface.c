@@ -33,7 +33,6 @@
 #include "hostpair.h"			/* for release_dead_interfaces() */
 #include "state.h"			/* for delete_states_dead_interfaces() */
 #include "server.h"			/* for *_pluto_event() */
-#include "kernel_xfrm_interface.h"	/* for free_xfrmi_ipsec1() */
 #include "kernel.h"
 #include "demux.h"
 #include "iface_udp.h"
@@ -109,9 +108,6 @@ void free_ifaces(void)
 {
 	mark_ifaces_dead();
 	free_dead_ifaces();
-#ifdef USE_XFRM_INTERFACE
-	free_xfrmi_ipsec1();
-#endif
 }
 
 static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,

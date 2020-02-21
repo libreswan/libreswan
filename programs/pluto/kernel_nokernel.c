@@ -103,12 +103,17 @@ static void nokernel_scan_shunts(void)
 {
 }
 
+static void nokernel_shutdown(void)
+{
+}
+
 const struct kernel_ops nokernel_kernel_ops = {
 	.type = NO_KERNEL,
 	.async_fdp = NULL,
 	.route_fdp = NULL,
 
 	.init = init_nokernel,
+	.shutdown = nokernel_shutdown,
 	.pfkey_register = nokernel_register,
 	.pfkey_register_response = nokernel_register_response,
 	.process_queue = nokernel_dequeue,
