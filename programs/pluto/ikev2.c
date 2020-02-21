@@ -74,6 +74,7 @@
 #include "ip_endpoint.h"
 #include "hostpair.h"		/* for find_v2_host_connection() */
 #include "kernel.h"
+#include "iface.h"
 
 
 static void v2_dispatch(struct ike_sa *ike, struct state *st,

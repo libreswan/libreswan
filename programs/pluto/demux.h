@@ -30,6 +30,7 @@
 #include "where.h"
 
 struct state;   /* forward declaration of tag */
+struct iface_port;
 
 struct packet {
 	ssize_t len;

@@ -67,6 +67,7 @@
 #include "ikev1.h"		/* for init_ikev1() */
 #include "ikev2.h"		/* for init_ikev2() */
 #include "crl_queue.h"		/* for free_crl_queue() */
+#include "iface.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"

@@ -63,6 +63,7 @@
 #include "retry.h"
 #include "fetch.h"		/* for check_crls() */
 #include "pluto_stats.h"
+#include "iface.h"
 
 /*
  * This file has the event handling routines. Events are

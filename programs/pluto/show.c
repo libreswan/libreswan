@@ -42,6 +42,7 @@
 #include "crypto.h"
 #include "db_ops.h"
 #include "kernel_xfrm_interface.h"
+#include "iface.h"
 
 static void show_system_security(const struct fd *whackfd)
 {

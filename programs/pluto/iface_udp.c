@@ -42,6 +42,7 @@
 #include "kernel.h"
 #include "iface_udp.h"
 #include "server.h"		/* for pluto_sock_bufsize */
+#include "iface.h"
 #include "demux.h"
 #include "state_db.h"		/* for state_by_ike_spis() */
 #include "log.h"

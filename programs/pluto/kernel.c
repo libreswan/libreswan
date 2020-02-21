@@ -80,6 +80,7 @@
 #include "ip_info.h"
 #include "lswfips.h" /* for libreswan_fipsmode() */
 # include "kernel_xfrm_interface.h"
+#include "iface.h"
 
 /* which kernel interface to use */
 enum kernel_interface kern_interface = USE_NETKEY;

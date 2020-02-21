@@ -91,6 +91,7 @@
 
 #include "crypt_symkey.h" /* for release_symkey */
 #include "ip_info.h"
+#include "iface.h"
 
 struct mobike {
 	ip_endpoint remote;

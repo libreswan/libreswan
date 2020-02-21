@@ -161,6 +161,7 @@
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
 #include "ikev1_states.h"
 #include "initiate.h"
+#include "iface.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"

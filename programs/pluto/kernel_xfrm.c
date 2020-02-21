@@ -84,6 +84,7 @@
 #include "ip_address.h"
 #include "ip_info.h"
 # include "kernel_xfrm_interface.h"
+#include "iface.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC

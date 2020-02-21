@@ -76,6 +76,7 @@
 #include "initiate.h"
 #include "kernel.h"
 #include "kernel_xfrm_interface.h"
+#include "iface.h"
 
 #include <nss.h>
 #include <pk11pub.h>

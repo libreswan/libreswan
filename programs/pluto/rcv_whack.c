@@ -76,6 +76,7 @@
 #include "crl_queue.h"
 #include "pluto_sd.h"
 #include "initiate.h"
+#include "iface.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"

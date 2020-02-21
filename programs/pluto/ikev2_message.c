@@ -42,6 +42,7 @@
 #include "crypt_prf.h"
 #include "send.h"	/* record_outbound_ike_message() */
 #include "ip_info.h"
+#include "iface.h"
 
 /*
  * Determine the IKE version we will use for the IKE packet

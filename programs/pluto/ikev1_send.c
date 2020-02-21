@@ -34,6 +34,7 @@
 #include "server.h"
 #include "connections.h"
 #include "ip_info.h"
+#include "iface.h"
 
 /*
  * (IKE v1) send fragments of packet.

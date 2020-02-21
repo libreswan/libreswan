@@ -45,6 +45,7 @@
 #include "hostpair.h"
 #include "ikev1_message.h"
 #include "pending.h"
+#include "iface.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R

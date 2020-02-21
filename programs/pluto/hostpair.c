@@ -66,6 +66,7 @@
 #include "ip_address.h"
 #include "ip_info.h"
 #include "hash_table.h"
+#include "iface.h"
 
 #include "virtual.h"	/* needs connections.h */
 

@@ -90,6 +90,7 @@
 #include "send.h"
 #include "ikev1_send.h"
 #include "nss_cert_verify.h"
+#include "iface.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.

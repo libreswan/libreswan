@@ -57,6 +57,7 @@
 #include "server.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
+#include "iface.h"
 
 /* for CIRCLEQ_ENTRY */
 #include <sys/queue.h>

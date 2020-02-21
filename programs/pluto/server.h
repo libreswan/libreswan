@@ -19,7 +19,6 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
-#include <sys/queue.h>
 #include <event2/event.h>	/* from libevent devel */
 #include <event2/event_struct.h>
 #include "timer.h"
@@ -49,45 +48,9 @@ extern unsigned int pluto_ddos_threshold; /* Max incoming IKE before activating 
 extern deltatime_t pluto_shunt_lifetime; /* lifetime before we cleanup bare shunts (for OE) */
 extern unsigned int pluto_sock_bufsize; /* pluto IKE socket buffer */
 extern bool pluto_sock_errqueue; /* Enable MSG_ERRQUEUE on IKE socket */
-
-/* interface: a terminal point for IKE traffic, IPsec transport mode
- * and IPsec tunnels.
- * Essentially:
- * - an IP device (eg. eth1), and
- * - its partner, an ipsec device (eg. ipsec0), and
- * - their shared IP address (eg. 10.7.3.2)
- * Note: the port for IKE is always implicitly UDP/pluto_port.
- *
- * The iface is a unique IP address on a system. It may be used
- * by multiple port numbers. In general, two conns have the same
- * interface if they have the same iface_port->iface_alias.
- */
-struct iface_dev {
-	LIST_ENTRY(iface_dev) id_entry;
-	int id_count;
-	char *id_rname; /* real device name */
-	bool id_nic_offload;
-};
-
-struct iface_port {
-	struct iface_dev   *ip_dev;
-	ip_endpoint local_endpoint;	/* interface IP address:port */
-	int fd;                 /* file descriptor of socket for IKE UDP messages */
-	struct iface_port *next;
-	bool ike_float;
-	enum { IFN_ADD, IFN_KEEP, IFN_DELETE } change;
-	struct pluto_event *pev;
-};
-
-extern struct iface_port  *interfaces;   /* public interfaces */
 extern enum pluto_ddos_mode ddos_mode;
 extern bool pluto_drop_oppo_null;
 
-extern struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint);
-extern bool use_interface(const char *rifn);
-extern void find_ifaces(bool rm_dead);
-extern void show_ifaces_status(const struct fd *whackfd);
-extern void free_ifaces(void);
 extern void show_debug_status(void);
 extern void show_fips_status(const struct fd *whackfd);
 extern void call_server(char *conffile);

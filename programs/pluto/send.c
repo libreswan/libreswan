@@ -40,6 +40,7 @@
 #include "pluto_stats.h"
 #include "ip_endpoint.h"
 #include "iface_udp.h"
+#include "iface.h"
 
 /* send_ike_msg logic is broken into layers.
  * The rest of the system thinks it is simple.

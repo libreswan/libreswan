@@ -59,6 +59,7 @@
 #include "keys.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "iface.h"
 
 #ifdef HAVE_BROKEN_POPEN
 /*

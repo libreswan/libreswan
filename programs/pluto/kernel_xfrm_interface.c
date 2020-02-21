@@ -43,6 +43,7 @@
 #include "server.h" /* for struct iface_port */
 #include "kernel_xfrm_interface.h"
 #include "kernel_xfrm_reply.h"
+#include "iface.h"
 
 #define IPSEC1_XFRM_IF_ID (1U)
 #define IFINFO_REPLY_BUFFER_SIZE (32768 + NL_BUFMARGIN)

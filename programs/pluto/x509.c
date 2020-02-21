@@ -68,6 +68,7 @@
 #include "ike_alg_hash.h"
 #include "certs.h"
 #include "root_certs.h"
+#include "iface.h"
 
 /* new NSS code */
 #include "pluto_x509.h"
