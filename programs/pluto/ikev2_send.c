@@ -279,7 +279,14 @@ void send_v2N_spi_response_from_state(struct ike_sa *ike,
 		return;
 	}
 
-	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* always responding */
+	/*
+	 * Never send a response to a response.
+	 */
+	if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
+		/* always responding */
+		return;
+	}
+
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
 
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;

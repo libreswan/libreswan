@@ -58,7 +58,7 @@ bool decode_v2N_ike_sa_init_request(struct msg_digest *md)
 			break;
 
 		case v2N_USE_PPK:
-			md->v2N.fragmentation_supported = true;
+			md->v2N.use_ppk = true;
 			break;
 
 		case v2N_REDIRECTED_FROM:	/* currently we don't check address in this payload */

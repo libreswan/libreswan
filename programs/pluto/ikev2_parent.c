@@ -3536,7 +3536,6 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 	bool got_transport = FALSE;
 	ip_address redirect_ip;
 	bool initiate_redirect = FALSE;
-	bool ppk_seen_identity = FALSE;
 
 	/* Process NOTIFY payloads related to IKE SA */
 	if (!decode_v2N_ike_auth_response(md)) {
@@ -3548,7 +3547,6 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 		    pst->st_sent_mobike ? "and sent" : "while it did not sent");
 		st->st_seen_mobike = pst->st_seen_mobike = true;
 	}
-	ppk_seen_identity = md->v2N.ppk_identity;
 	if (md->v2N.redirect != NULL) {
 		dbg("received v2N_REDIRECT in IKE_AUTH reply");
 		if (!LIN(POLICY_ACCEPT_REDIRECT_YES, st->st_connection->policy)) {
@@ -3607,18 +3605,15 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 
 	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
 
-	if (ppk_seen_identity) {
+	if (md->v2N.ppk_identity != NULL) {
 		if (!LIN(POLICY_PPK_ALLOW, c->policy)) {
 			loglog(RC_LOG_SERIOUS, "Received PPK_IDENTITY but connection does not allow PPK");
 			return STF_FATAL;
 		}
 	} else {
 		if (LIN(POLICY_PPK_INSIST, c->policy)) {
-			loglog(RC_LOG_SERIOUS, "Failed to receive PPK confirmation and connection has ppk=insist");
-			struct ike_sa *ike = ike_sa(st);
-			send_v2N_response_from_state(ike, md,
-						     v2N_AUTHENTICATION_FAILED,
-						     NULL/*no data*/);
+			loglog(RC_LOG_SERIOUS, "failed to receive PPK confirmation and connection has ppk=insist");
+			dbg("should be initiating a notify that kills the state");
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
@@ -3630,7 +3625,8 @@ stf_status ikev2_parent_inR2(struct ike_sa *ike, struct child_sa *child, struct 
 	 * the connection to continue without PPK by using our NO_PPK_AUTH
 	 * payload. We should revert our key material to NO_PPK versions.
 	 */
-	if (pst->st_seen_ppk && !ppk_seen_identity && LIN(POLICY_PPK_ALLOW, c->policy)) {
+	if (pst->st_seen_ppk && md->v2N.ppk_identity == NULL &&
+	    LIN(POLICY_PPK_ALLOW, c->policy)) {
 		/* discard the PPK based calculations */
 
 		libreswan_log("Peer wants to continue without PPK - switching to NO_PPK");
