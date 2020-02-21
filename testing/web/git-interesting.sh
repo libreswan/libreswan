@@ -89,7 +89,6 @@ if git show "${gitrev}^{commit}" \
        mk \
        programs \
        include \
-       linux \
        testing/pluto \
        testing/sanitizers \
        testing/baseconfigs \
