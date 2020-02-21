@@ -187,6 +187,7 @@ OBJS += test_buffer.o
 OBJS += pending.o crypto.o defs.o
 OBJS += ike_spi.o
 OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
+OBJS += iface_udp.o
 OBJS += peerlog.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o hostpair.o

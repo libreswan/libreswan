@@ -70,6 +70,7 @@
 #include "connections.h"
 #include "kernel.h"
 #include "server.h"
+#include "iface_udp.h"
 #include "nat_traversal.h"
 #include "state.h"
 #include "kernel_xfrm.h"
@@ -2485,8 +2486,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 			/* search is over if at end of list */
 			if (q == NULL) {
 				/* matches nothing -- create a new entry */
-				int fd = create_socket(ifp, v->name,
-						pluto_port);
+				int fd = create_udp_socket(ifp, v->name,
+							   pluto_port);
 
 				if (fd < 0)
 					break;
@@ -2526,9 +2527,9 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				 * it one tried to turn it on.
 				 */
 				if (addrtypeof(&ifp->addr) == AF_INET) {
-					fd = create_socket(ifp,
-							v->name,
-							pluto_nat_port);
+					fd = create_udp_socket(ifp,
+							       v->name,
+							       pluto_nat_port);
 					if (fd < 0)
 						break;
 					nat_traversal_espinudp_socket(

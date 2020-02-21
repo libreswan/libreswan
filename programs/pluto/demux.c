@@ -76,114 +76,18 @@
  * buffer and then copy it to a new, properly sized buffer.
  */
 
-static struct msg_digest *read_packet(const struct iface_port *ifp)
+static struct msg_digest *read_message(const struct iface_port *ifp,
+				       read_packet_fn *read_packet)
 {
-	int packet_len;
 	/* ??? this buffer seems *way* too big */
 	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
-
-	uint8_t *_buffer = bigbuffer;
-	ip_sockaddr from;
-	zero(&from);
-	socklen_t from_len = sizeof(from);
-
-	packet_len = recvfrom(ifp->fd, bigbuffer,
-			      sizeof(bigbuffer), /*flags*/ 0,
-			      &from.sa, &from_len);
-	int packet_errno = errno; /* save!!! */
-
-	/*
-	 * Try to decode the from address.
-	 *
-	 * If that fails report some sense of error and then always
-	 * give up.
-	 */
-	ip_endpoint sender;
-	const char *from_ugh = sockaddr_to_endpoint(&from, from_len, &sender);
-	if (from_ugh != NULL) {
-		if (packet_len >= 0) {
-			/* technically it worked, but returned value was useless */
-			plog_global("recvfrom on %s returned malformed source sockaddr: %s",
-				    ifp->ip_dev->id_rname, from_ugh);
-		} else if (from_len == sizeof(from) &&
-			   all_zero((const void *)&from, sizeof(from)) &&
-			   packet_errno == ECONNREFUSED) {
-			/*
-			 * Tone down scary message for vague event: We
-			 * get "connection refused" in response to
-			 * some datagram we sent, but we cannot tell
-			 * which one.
-			 */
-			plog_global("recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
-				    ifp->ip_dev->id_rname);
-		} else {
-			/* if from==0, this prints "unspecified", not "undisclosed", oops */
-			plog_global("recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
-				    ifp->ip_dev->id_rname, from_ugh,
-				    pri_errno(packet_errno));
-		}
-		return NULL;
-	}
-
-	/*
-	 * Managed to decode the from address; fudge up an MD so that
-	 * it be used as log context prefix.
-	 */
-
-	struct msg_digest stack_md = {
-		.iface = ifp,
-		.sender = sender,
+	struct packet packet = {
+		.ptr = bigbuffer,
+		.len = sizeof(bigbuffer),
 	};
 
-	if (packet_len < 0) {
-		plog_md(&stack_md, "recvfrom on %s failed "PRI_ERRNO,
-			ifp->ip_dev->id_rname, pri_errno(packet_errno));
-		return NULL;
-	}
-
-	if (ifp->ike_float) {
-		uint32_t non_esp;
-
-		if (packet_len < (int)sizeof(uint32_t)) {
-			plog_md(&stack_md, "too small packet (%d)",
-				packet_len);
-			return NULL;
-		}
-		memcpy(&non_esp, _buffer, sizeof(uint32_t));
-		if (non_esp != 0) {
-			plog_md(&stack_md, "has no Non-ESP marker");
-			return NULL;
-		}
-		_buffer += sizeof(uint32_t);
-		packet_len -= sizeof(uint32_t);
-	}
-
-	/* We think that in 2013 Feb, Apple iOS Racoon
-	 * sometimes generates an extra useless buggy confusing
-	 * Non ESP Marker
-	 */
-	{
-		static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
-			{ 0x00, };
-		if (ifp->ike_float &&
-		    packet_len >= NON_ESP_MARKER_SIZE &&
-		    memeq(_buffer, non_ESP_marker,
-			   NON_ESP_MARKER_SIZE)) {
-			plog_md(&stack_md, "mangled with potential spurious non-esp marker");
-			return NULL;
-		}
-	}
-
-	if (packet_len == 1 && _buffer[0] == 0xff) {
-		/**
-		 * NAT-T Keep-alive packets should be discared by kernel ESPinUDP
-		 * layer. But bogus keep-alive packets (sent with a non-esp marker)
-		 * can reach this point. Complain and discard them.
-		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?
-		 */
-		endpoint_buf eb;
-		dbg("NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
-		    str_endpoint(&sender, &eb)); /* sensitive? */
+	if (!read_packet(ifp, &packet)) {
+		/* already logged */
 		return NULL;
 	}
 
@@ -192,18 +96,18 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	 * to describe it.
 	 */
 	struct msg_digest *md = alloc_md("msg_digest in read_packet");
-	md->sender = stack_md.sender;
-	md->iface = stack_md.iface;
+	md->sender = packet.sender;
+	md->iface = ifp;
 	init_pbs(&md->packet_pbs,
-		 clone_bytes(_buffer, packet_len,
+		 clone_bytes(packet.ptr, packet.len,
 			     "message buffer in read_packet()"),
-		 packet_len, "packet");
+		 packet.len, "packet");
 
 	endpoint_buf eb;
 	endpoint_buf b2;
 	dbg("*received %d bytes from %s on %s (%s)",
 	    (int) pbs_room(&md->packet_pbs),
-	    str_endpoint(&sender, &eb),
+	    str_endpoint(&md->sender, &eb),
 	    ifp->ip_dev->id_rname,
 	    str_endpoint(&ifp->local_endpoint, &b2));
 
@@ -384,31 +288,11 @@ static void process_md(struct msg_digest **mdp)
 
 static bool impair_incoming(struct msg_digest *md);
 
-void comm_handle_cb(evutil_socket_t unused_fd UNUSED,
-		    const short unused_event UNUSED,
-		    void *arg)
+void handle_packet_cb(const struct iface_port *ifp,
+		      read_packet_fn *read_packet)
 {
-	const struct iface_port *ifp = arg;
-	/*
-	 * Even though select(2) says that there is a message, it
-	 * might only be a MSG_ERRQUEUE message.  At least sometimes
-	 * that leads to a hanging recvfrom.  To avoid what appears to
-	 * be a kernel bug, check_msg_errqueue uses poll(2) and tells
-	 * us if there is anything for us to read.
-	 *
-	 * This is early enough that teardown isn't required:
-	 * just return on failure.
-	 */
-	threadtime_t errqueue_start = threadtime_start();
-	bool errqueue_ok = check_incoming_msg_errqueue(ifp, "read_packet");
-	threadtime_stop(&errqueue_start, SOS_NOBODY,
-			"%s() calling check_incoming_msg_errqueue()", __func__);
-	if (!errqueue_ok) {
-		return; /* no normal message to read */
-	}
-
 	threadtime_t md_start = threadtime_start();
-	struct msg_digest *md = read_packet(ifp);
+	struct msg_digest *md = read_message(ifp, read_packet);
 	if (md != NULL) {
 		md->md_inception = md_start;
 		if (!impair_incoming(md)) {

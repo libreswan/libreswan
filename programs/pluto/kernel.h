@@ -264,8 +264,6 @@ struct kernel_ops {
 	bool (*poke_ipsec_policy_hole)(const struct raw_iface *ifp, int fd);
 };
 
-extern int create_socket(const struct raw_iface *ifp, const char *v_name, int port);
-
 #ifndef IPSECDEVPREFIX
 # define IPSECDEVPREFIX "ipsec"
 #endif

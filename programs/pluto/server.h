@@ -177,7 +177,4 @@ extern int pluto_fork(const char *name, so_serial_t serialno,
 		      int op(void *context),
 		      pluto_fork_cb *callback, void *context);
 
-bool check_incoming_msg_errqueue(const struct iface_port *ifp, const char *before);
-void check_outgoing_msg_errqueue(const struct iface_port *ifp, const char *before);
-
 #endif /* _SERVER_H */
